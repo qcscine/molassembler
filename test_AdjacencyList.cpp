@@ -4,6 +4,7 @@
 #include <memory>
 #include <algorithm>
 #include <iostream>
+#include <random>
 #include "AdjacencyList.hpp"
 
 using namespace MoleculeManip;
@@ -48,7 +49,7 @@ ostream& operator << (
     return os;
 }
 
-BOOST_AUTO_TEST_CASE( fault_tolerant_inserts ) {
+BOOST_AUTO_TEST_CASE( adding_bonds_order_stability ) {
     // instantiate an object
     std::shared_ptr<AdjacencyList> test_object = std::make_shared<
         MinimalAdjacencyList
@@ -57,13 +58,16 @@ BOOST_AUTO_TEST_CASE( fault_tolerant_inserts ) {
     // generate all valid combinations if insertable atoms
     std::vector<PairOfAtomIndices> combinations = all_valid_combinations(
         1,
-        20
+        50
     );
 
     // make a random sequence
-    std::random_shuffle(
+    std::shuffle(
         combinations.begin(),
-        combinations.end()
+        combinations.end(),
+        std::mt19937{
+            std::random_device{}()
+        }
     );
 
     for(const auto& combination : combinations) {
