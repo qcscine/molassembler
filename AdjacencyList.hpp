@@ -4,6 +4,15 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
+#include <cassert>
+
+/* TODO
+ * - valid index checking for MinimalAdjacencyList is incorrect as soon as 
+ *   atoms are removed -> the counter cannot just be decremented for the
+ *   _valid* functions to work properly, gaps in the indices can appear.
+ *   this MUST be reliable
+ * - testing with common interface
+ */
 
 using namespace std;
 
@@ -32,18 +41,26 @@ namespace MoleculeManip {
     using AtomIndexType = uint16_t; // 65k max is sufficient
 
     /* derived types */
-    using TupleType = tuple<
+    using EdgeType = tuple<
         AtomIndexType,
         AtomIndexType,
         BondType
     >;
 
-    struct TupleTypeHelpers {
+    struct EdgeTypeHelpers {
+        /*!
+         * Lexicographical less-than operator for a tuple and two atom indices
+         * \param tuple The tuple 
+         * \param a The first atom index
+         * \param a The second atom index
+         * \returns Whether the tuple is smaller than the tuple defined by the
+         *  two atom indices.
+         */
         static bool _tuple_lex_lt_than_idxs(
-            const TupleType& tuple,
+            const EdgeType& tuple,
             const AtomIndexType& a,
             const AtomIndexType& b
-        ) {
+        ) noexcept {
             return (
                 std::get<0>(tuple) < a
                 || (
@@ -53,11 +70,19 @@ namespace MoleculeManip {
             );
         }
 
+        /*!
+         * Lexicographical greater than operator for a tuple and two atom indices
+         * \param tuple The tuple 
+         * \param a The first atom index
+         * \param a The second atom index
+         * \returns Whether the tuple is greater than the tuple defined by the
+         *  two atom indices.
+         */
         static bool _tuple_lex_gt_than_idxs(
-            const TupleType& tuple,
+            const EdgeType& tuple,
             const AtomIndexType& a,
             const AtomIndexType& b
-        ) {
+        ) noexcept {
             return (
                 std::get<0>(tuple) > a 
                 || (
@@ -67,10 +92,17 @@ namespace MoleculeManip {
             );
         }
 
+        /*!
+         * Lexicographical less-than operator for two EdgeTypes
+         * \param a The first tuple 
+         * \param b The second tuple
+         * \returns Whether the first tuple is smaller than the second
+         *  lexicographically
+         */
         static bool tuple_lt(
-            const TupleType& a,
-            const TupleType& b
-        ) {
+            const EdgeType& a,
+            const EdgeType& b
+        ) noexcept {
             return (
                 std::get<0>(a) < std::get<0>(b)
                 || (
@@ -80,11 +112,28 @@ namespace MoleculeManip {
             );
         }
 
+        /*!
+         * Binary searches an ordered vector of edge tuples for a specified 
+         * edge, returning whether it was found and the position in the 
+         * container it was found at.
+         * \param[in] container The vector containing the edge tuples.
+         * \param[in] a The first atom index of the edge
+         * \param[in] b The second atom index of the edge
+         * \returns A pair containing whether it was found, and the position in
+         *  the container it was found at. 
+         * \pre a, b must fulfill a < b
+         * \note Is O( log(N) ), where
+         * - N is the number of edges stored in the container
+         */
         static std::pair<bool, EdgeIndexType> binary_search(
-            const std::vector<TupleType>& container,
+            const std::vector<EdgeType>& container,
             const AtomIndexType& a,
             const AtomIndexType& b
         ) noexcept {
+            /* important safeguard, otherwise
+             *  unsigned_type right = container.size() - 1
+             * is an underflow
+             */
             if(container.size() == 0) return make_pair(false, 0);
 
             // bind the lexicographical comparison functions to the indices
@@ -101,6 +150,7 @@ namespace MoleculeManip {
                 b
             );
 
+            // initialize L, M, R
             unsigned_type left = 0;
             unsigned_type right = container.size() - 1;
             unsigned_type middle;
@@ -114,11 +164,12 @@ namespace MoleculeManip {
                     left = middle + 1;
                     continue;
                 } else if(tuple_is_greater(container[middle])) {
-                    // Underflow guard
+                    // underflow safeguard
                     if(middle == 0) right = middle;
                     else right = middle - 1;
                     continue;
                 } else { // implicit if tuple_equals(container[middle])
+                    // found it!
                     return make_pair(
                         true, 
                         middle
@@ -126,14 +177,31 @@ namespace MoleculeManip {
                 }
             }
 
+            // search fails
             return make_pair(false, 0);
         }
 
+        /*!
+         * Binary searches an ordered vector of edge tuples and returns an
+         * index before which the specified edge can be inserted.
+         * \param[in] container The vector containing the edge tuples.
+         * \param[in] a The first atom index of the edge
+         * \param[in] b The second atom index of the edge
+         * \returns The position within the container before which the
+         *  specified edge can be inserted.
+         * \pre a, b must fulfill a < b
+         * \note Is O( log(N) ), where
+         * - N is the number of edges stored in the container
+         */
         static EdgeIndexType binary_search_insert_position(
-            const vector<TupleType>& container,
+            const vector<EdgeType>& container,
             const AtomIndexType& a, 
             const AtomIndexType& b
         ) noexcept {
+            /* important safeguard, otherwise
+             *  unsigned_type right = container.size() - 1;
+             * causes an underflow
+             */
             if(container.size() == 0) {
                 return 0;
             }
@@ -151,6 +219,7 @@ namespace MoleculeManip {
                 b
             );
 
+            // initializations
             unsigned_type left = 0;
             unsigned_type right = container.size() - 1;
             unsigned_type middle;
@@ -159,7 +228,7 @@ namespace MoleculeManip {
             /* auto print_state = [&](const unsigned_type& counter) -> void {
                 std::cout << counter << ": " << left << " " << middle << " " << right << std::endl;
             }; */
-            /* auto print_tuple = [](const TupleType& tuple) -> void {
+            /* auto print_tuple = [](const EdgeType& tuple) -> void {
                 std::cout << "(" << std::get<0>(tuple) << ", ";
                 std::cout << std::get<1>(tuple) << ", ";
                 std::cout << std::get<2>(tuple) << ")" << std::endl;
@@ -186,7 +255,7 @@ namespace MoleculeManip {
                 }
 
                 if(tuple_is_greater(container[middle])) {
-                    // Must guard against underflow 
+                    // underflow safeguard
                     if(middle == 0) right = middle;
                     else right = middle - 1; 
                     continue;
@@ -213,11 +282,10 @@ namespace MoleculeManip {
         /*!
          * Add an atom to the AdjacencyList.
          */
-        virtual void add_atom() noexcept = 0;
+        virtual void add_atom() = 0;
 
         /*!
-         * Adds a bond to the AdjacencyList. No checks are made, and no
-         * exceptions are thrown.
+         * Adds a bond to the AdjacencyList. 
          * \param[in] a The first atom index
          * \param[in] b The second atom index
          * \param[in] bond_type The bond type to register
@@ -226,7 +294,7 @@ namespace MoleculeManip {
             const AtomIndexType& a,
             const AtomIndexType& b,
             const BondType& bond_type
-        ) noexcept = 0;
+        ) = 0;
 
         /*!
          * Checks whether two atoms are bonded.
@@ -237,7 +305,7 @@ namespace MoleculeManip {
         virtual bool bond_exists(
             const AtomIndexType& a,
             const AtomIndexType& b
-        ) const noexcept = 0;
+        ) const = 0;
 
         /*!
          * Checks whether two atoms are bonded by the specified BondType.
@@ -250,7 +318,7 @@ namespace MoleculeManip {
             const AtomIndexType& a,
             const AtomIndexType& b,
             const BondType& bond_type
-        ) const noexcept = 0;
+        ) const = 0;
 
         /*!
          * Gets the BondType between two atoms.
@@ -261,7 +329,7 @@ namespace MoleculeManip {
         virtual BondType get_bond_type(
             const AtomIndexType& a,
             const AtomIndexType& b
-        ) const noexcept = 0;
+        ) const = 0;
 
         /*!
          * Get a vector of all bonds outwards from an atom.
@@ -274,7 +342,7 @@ namespace MoleculeManip {
                 AtomIndexType,
                 BondType
             >
-        > get_bond_pairs(const AtomIndexType& a) const noexcept = 0;
+        > get_bond_pairs(const AtomIndexType& a) const = 0;
 
         /*!
          * Get a vector of all bonded atom indices.
@@ -283,13 +351,13 @@ namespace MoleculeManip {
          */
         virtual vector<AtomIndexType> get_bonded_atom_indices(
             const AtomIndexType& a
-        ) const noexcept = 0;
+        ) const = 0;
 
         /*!
          * Checks whether the list is ordered.
          * \returns whether the list is ordered.
          */
-        virtual bool is_ordered() const noexcept = 0;
+        virtual bool is_ordered() const = 0;
 
         /*!
          * Removes an atom from the AdjacencyList. 
@@ -297,7 +365,7 @@ namespace MoleculeManip {
          */
         virtual void remove_atom(
             const AtomIndexType& a
-        ) noexcept = 0;
+        ) = 0;
 
         /*!
          * Removes a bond from the AdjacencyList. If the bond doesn't exist,
@@ -308,7 +376,7 @@ namespace MoleculeManip {
         virtual void remove_bond(
             const AtomIndexType& a,
             const AtomIndexType& b
-        ) noexcept = 0;
+        ) = 0;
 
     };
 
@@ -351,25 +419,62 @@ namespace MoleculeManip {
     class MinimalAdjacencyList : public AdjacencyList {
     private:
     /* Private members */
-        std::vector<TupleType> _edges;
+        std::vector<EdgeType> _edges;
+        unsigned_type _num_atoms = 0;
+        std::vector<AtomIndexType> _atom_indices;
+
+        /*!
+         * Checks whether the supplied atom index is valid, i.e. in range.
+         * \param[in] a The atom index to check
+         * \returns whether the supplied atom index is valid, i.e. in range.
+         */
+        inline bool _valid_atom_index(const AtomIndexType& a) const noexcept {
+            return a < _num_atoms;
+        }
+
+        /*!
+         * Checks whether the supplied atom indices are valid, i.e. in range 
+         * and not identical.
+         * \param[in] a The first atom index to check
+         * \param[in] b The second atom index to check
+         * \returns whether the supplied atom indices are valid.
+         */
+        inline bool _valid_atom_indices(
+            const AtomIndexType& a,
+            const AtomIndexType& b
+        ) const noexcept {
+            return (
+                _valid_atom_index(a)
+                && _valid_atom_index(b)
+                && a != b
+            );
+        }
 
     public:
-        /* Do nothing.
-         * In this implementation, atoms exist only when bonds to them exist.
-         * Is O(1)
-         */
-        void add_atom() noexcept {}
 
-        /* a, b must fulfill: a != b.
-         * Is O( log(E) ), where
-         * - E is the number of stored edges
+        /*!
+         * Adds an atom to the AdjacencyList. In this implementation, atoms
+         * exist only when bonds to them exist.
+         * \note Is O(1)
+         */
+        void add_atom() noexcept override final {
+            _num_atoms++;
+        }
+
+        /*!
+         * Adds a bond to the AdjacencyList. 
+         * \pre a, b must fulfill: a != b.
+         * \note Is O( log(E) ), where
+         *  - E is the number of stored edges
          */
         void add_bond(
             const AtomIndexType& a,
             const AtomIndexType& b,
             const BondType& bond_type
         ) noexcept override final {
-            auto pos = TupleTypeHelpers::binary_search_insert_position(
+            assert(_valid_atom_indices(a, b));
+
+            auto pos = EdgeTypeHelpers::binary_search_insert_position(
                 _edges,
                 std::min(a, b), 
                 std::max(a, b)
@@ -384,15 +489,22 @@ namespace MoleculeManip {
             );
         }
 
-        /*
-         * Is O( log(E) ), where
+        /*!
+         * Checks whether two atoms are bonded.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \returns Whether two atoms are bonded or not.
+         * \pre a, b must fulfill: a != b.
+         * \note Is O( log(E) ), where
          * - E is the number of stored edges
          */
         bool bond_exists(
             const AtomIndexType& a,
             const AtomIndexType& b
         ) const noexcept override final {
-            auto found_and_pos_pair = TupleTypeHelpers::binary_search(
+            assert(_valid_atom_indices(a, b));
+
+            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
                 _edges,
                 std::min(a, b),
                 std::max(a, b)
@@ -400,8 +512,14 @@ namespace MoleculeManip {
             return found_and_pos_pair.first;
         }
 
-        /* a, b must fulfill a != b
-         * Is O( log(E) ), where
+        /*!
+         * Checks whether two atoms are bonded by the specified BondType.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \param[in] bond_type The bond type to check
+         * \returns Whether the two atoms are bonded as specified.
+         * \pre a, b must fulfill a != b
+         * \note Is O( log(E) ), where
          * - E is the number of stored edges
          */
         bool bond_exists(
@@ -409,7 +527,9 @@ namespace MoleculeManip {
             const AtomIndexType& b,
             const BondType& bond_type
         ) const noexcept override final {
-            auto found_and_pos_pair = TupleTypeHelpers::binary_search(
+            assert(_valid_atom_indices(a, b));
+            
+            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
                 _edges,
                 std::min(a, b),
                 std::max(a, b)
@@ -424,16 +544,25 @@ namespace MoleculeManip {
             );
         }
 
-        /* A bond must exist for a, b for this to work correctly.
-         * a, b must fulfill a != b
-         * Is O( log(E) ), where
+        /*!
+         * Gets the BondType between two atoms.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \returns The bondtype between the atoms.
+         * \pre A bond must exist for a, b for this to work correctly. In case 
+         *  no bond exists for a,b this will erroneously return
+         *  BondType::Single
+         * \pre a, b must fulfill a != b
+         * \note Is O( log(E) ), where
          * - E is the number of stored edges
          */
         BondType get_bond_type(
             const AtomIndexType& a,
             const AtomIndexType& b
         ) const noexcept override final {
-            auto found_and_pos_pair = TupleTypeHelpers::binary_search(
+            assert(_valid_atom_indices(a, b));
+
+            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
                 _edges,
                 std::min(a, b),
                 std::max(a, b)
@@ -449,7 +578,12 @@ namespace MoleculeManip {
             );
         }
 
-        /* Is O(E), where
+        /*!
+         * Get a vector of all bonds outwards from an atom.
+         * \param[in] a The atom index
+         * \returns A vector of all bonds outwards from an atom as std::pairs,
+         *  first is the BondType, second the atom index.
+         * \note Is O(E), where
          * - E is the number of stored edges
          */
         vector<
@@ -458,6 +592,8 @@ namespace MoleculeManip {
                 BondType
             >
         > get_bond_pairs(const AtomIndexType& a) const noexcept override final {
+            assert(_valid_atom_index(a));
+
             vector<
                 pair<
                     AtomIndexType,
@@ -489,12 +625,18 @@ namespace MoleculeManip {
             return bond_list;
         }
 
-        /* is O(E), where
+        /*!
+         * Get a vector of all bonded atom indices.
+         * \param[in] a The atom index
+         * \returns A vector all bonded atom indices.
+         * \note is O(E), where
          * - E is the number of stored edges
          */
         vector<AtomIndexType> get_bonded_atom_indices(
             const AtomIndexType& a
         ) const noexcept override final {
+            assert(_valid_atom_index(a));
+
             vector<AtomIndexType> bonded_atom_indices;
 
             auto it = _edges.begin();
@@ -519,27 +661,18 @@ namespace MoleculeManip {
             return bonded_atom_indices;
         }
 
+        /*!
+         * Checks whether the list is ordered.
+         * \returns whether the list is ordered.
+         */
         bool is_ordered() const noexcept override final {
-            auto lt = [](
-                const TupleType& a,
-                const TupleType& b
-            ) {
-                return (
-                    std::get<0>(a) < std::get<0>(b)
-                    || (
-                        std::get<0>(a) == std::get<0>(b)
-                        && std::get<1>(a) < std::get<1>(b)
-                    )
-                );
-            };
-
             /* - Can't think of a way to put this in functional paradigm
              * - Not allowed to use indices if you want to be able to use list 
              *   in template instantiation
              * - List will be terrible anyway because random access is O(N)
              */
             for(EdgeIndexType i = 0; i < _edges.size() - 1; i++) {
-                if(!lt(
+                if(!EdgeTypeHelpers::tuple_lt(
                     _edges[i],
                     _edges[i+1]
                 )) {
@@ -549,15 +682,19 @@ namespace MoleculeManip {
             return true;
         }
 
-        /* is O(E), where
+        /*!
+         * Removes an atom from the AdjacencyList. 
+         * \param[in] a The atom index
+         * \note is O(E), where
          * - E is the number of stored edges
          */
         void remove_atom(
             const AtomIndexType& a
         ) noexcept override final {
+            assert(_valid_atom_index(a));
+
             /* check if the AtomIndexType is present in the edges, remove if so
              */
-
             _edges.erase(
                 std::remove_if(
                     _edges.begin(),
@@ -573,15 +710,22 @@ namespace MoleculeManip {
 
         }
 
-        /* a, b must fulfill a != b 
-         * is O( log(E) ), where
+        /*!
+         * Removes a bond from the AdjacencyList. If the bond doesn't exist,
+         * the function call is ignored.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \pre a, b must fulfill a != b 
+         * \note is O( log(E) ), where
          * - E is the number of stored edges
          */
         void remove_bond(
             const AtomIndexType& a,
             const AtomIndexType& b
         ) noexcept override final {
-            auto found_and_pos_pair = TupleTypeHelpers::binary_search(
+            assert(_valid_atom_indices(a, b));
+
+            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
                 _edges,
                 std::min(a, b),
                 std::max(a, b)
@@ -597,21 +741,57 @@ namespace MoleculeManip {
     class FastAdjacencyList : public AdjacencyList {
     private:
     /* Private members */
-        std::vector<TupleType> _edges;
+        std::vector<EdgeType> _edges;
         std::vector<
             std::vector<
                 AtomIndexType
             >
         > _adjacencies;
 
+        /*!
+         * Checks whether the supplied atom index is valid, i.e. in range.
+         * \param[in] a The atom index to check
+         * \returns whether the supplied atom index is valid, i.e. in range.
+         */
+        inline bool _valid_atom_index(const AtomIndexType& a) const noexcept {
+            return a < _adjacencies.size();
+        }
+
+        /*!
+         * Checks whether the supplied atom indices are valid, i.e. in range 
+         * and not identical.
+         * \param[in] a The first atom index to check
+         * \param[in] b The second atom index to check
+         * \returns whether the supplied atom indices are valid.
+         */
+        inline bool _valid_atom_indices(
+            const AtomIndexType& a,
+            const AtomIndexType& b
+        ) const noexcept {
+            return (
+                _valid_atom_index(a)
+                && _valid_atom_index(b)
+                && a != b
+            );
+        }
+
     public:
-        /* is O(1) */
+        /*!
+         * Add an atom to the AdjacencyList.
+         * \note is O(1)
+         */
         void add_atom() noexcept override final {
             // add an empty vector to _adjacencies at the end.
             _adjacencies.emplace_back();
         };
 
-        /* is O( log(E) ), where
+        /*!
+         * Adds a bond to the AdjacencyList. 
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \param[in] bond_type The bond type to register
+         * \pre a, b must fulfill a != b
+         * \note is O( log(E) ), where
          * - E is the number of stored edges
          */
         void add_bond(
@@ -619,7 +799,9 @@ namespace MoleculeManip {
             const AtomIndexType& b,
             const BondType& bond_type
         ) noexcept override final {
-            auto insert_position = TupleTypeHelpers::binary_search_insert_position(
+            assert(_valid_atom_indices(a, b));
+
+            auto insert_position = EdgeTypeHelpers::binary_search_insert_position(
                 _edges,
                 std::min(a, b),
                 std::max(a, b)
@@ -638,13 +820,21 @@ namespace MoleculeManip {
             _adjacencies[b].emplace_back(a);
         }
 
-        /* is O( B ), where
+        /*!
+         * Checks whether two atoms are bonded.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \returns Whether two atoms are bonded or not.
+         * \pre a, b must fulfill a != b
+         * \note is O( B ), where
          * - B is the number of stored bonds for atom a
          */
         bool bond_exists(
             const AtomIndexType& a,
             const AtomIndexType& b
         ) const noexcept override final {
+            assert(_valid_atom_indices(a, b));
+
             /* could binary search the edge list immediately, but linear search
              * in the adjacency list is probably faster if we don't need to 
              * know the bond type
@@ -656,7 +846,14 @@ namespace MoleculeManip {
             ) != _adjacencies[a].end();
         }
 
-        /* is O( log(E) ), where
+        /*!
+         * Checks whether two atoms are bonded by the specified BondType.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \param[in] bond_type The bond type to check
+         * \returns Whether the two atoms are bonded as specified.
+         * \pre a, b must fulfill: a != b.
+         * \note is O( log(E) ), where
          * - E is the number of stored edges
          */
         virtual bool bond_exists(
@@ -664,10 +861,12 @@ namespace MoleculeManip {
             const AtomIndexType& b,
             const BondType& bond_type
         ) const noexcept {
+            assert(_valid_atom_indices(a, b));
+
             /* for this case, checking the adjacency list is not good enough
              * the bond information is only in the edge list, binary search it
              */
-            auto found_and_pos_pair = TupleTypeHelpers::binary_search(
+            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
                 _edges,
                 std::min(a, b),
                 std::max(a, b)
@@ -682,14 +881,22 @@ namespace MoleculeManip {
             );
         }
 
-        /* is O( log(E) ), where
+        /*!
+         * Gets the BondType between two atoms.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \returns The bondtype between the atoms.
+         * \pre a, b must fulfill: a != b.
+         * \note is O( log(E) ), where
          * - E is the number of stored edges
          */
         BondType get_bond_type(
             const AtomIndexType& a,
             const AtomIndexType& b
         ) const noexcept override final {
-            auto found_and_pos_pair = TupleTypeHelpers::binary_search(
+            assert(_valid_atom_indices(a, b));
+
+            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
                 _edges,
                 std::min(a, b),
                 std::max(a, b)
@@ -705,11 +912,15 @@ namespace MoleculeManip {
             );
         }
 
-        /* is O( B log (E) ), where
+        /*!
+         * Get a vector of all bonds outwards from an atom.
+         * \param[in] a The atom index
+         * \returns A vector of all bonds outwards from an atom as std::pairs,
+         *  first is the BondType, second the atom index.
+         * \note is O( B log (E) ), where
          * - B is the number of bonds from atom a
          * - E is the number of stored edges
-         *
-         * => O( log (E) ) with small constants
+         * -> O( log (E) ) with small constants
          */
         vector<
             pair<
@@ -717,6 +928,8 @@ namespace MoleculeManip {
                 BondType
             >
         > get_bond_pairs(const AtomIndexType& a) const noexcept override final {
+            assert(_valid_atom_index(a));
+
             /* We can get a full list of connections and how they are
              * ordered in the edge list from the adjacencies.
              */
@@ -732,7 +945,7 @@ namespace MoleculeManip {
              * searching the edges
              */
             for(const auto& bonded_atom_index : bonded_to) {
-                auto found_and_index_pair = TupleTypeHelpers::binary_search(
+                auto found_and_index_pair = EdgeTypeHelpers::binary_search(
                     _edges,
                     std::min(a, bonded_atom_index),
                     std::max(a, bonded_atom_index)
@@ -751,17 +964,28 @@ namespace MoleculeManip {
             return bond_pairs;
         }
 
-        /* is O(1) */
+        /*!
+         * Get a vector of all bonded atom indices.
+         * \param[in] a The atom index
+         * \returns A vector all bonded atom indices.
+         * \note is O(1)
+         */
         vector<AtomIndexType> get_bonded_atom_indices(
             const AtomIndexType& a
         ) const noexcept override final {
+            assert(_valid_atom_index(a));
+
             return _adjacencies[a];
         }
 
-        /* is O(E) */
+        /*!
+         * Checks whether the list is ordered.
+         * \returns whether the list is ordered.
+         * \note is O(E) 
+         */
         bool is_ordered() const noexcept override final {
             for(EdgeIndexType i = 0; i < _edges.size() - 1; i++) {
-                if(!TupleTypeHelpers::tuple_lt(
+                if(!EdgeTypeHelpers::tuple_lt(
                     _edges[i],
                     _edges[i+1]
                 )) {
@@ -771,23 +995,27 @@ namespace MoleculeManip {
             return true;
         }
 
-        /* is O( B log (E) + sum_all(e_i) ), where 
+        /*!
+         * Removes an atom from the AdjacencyList. 
+         * \param[in] a The atom index
+         * \note is O( B log (E) + sum_all(e_i) ), where 
          * - B is the number of bonds the atom being removed has
          * - E is the number of stored edges
          * - e_i are the number of edges of the atoms bonded to the atom being
          *   removed
-         *
-         * => O( log (E) ) with some constants involved
+         * -> O( log (E) ) with some constants involved
          */
         void remove_atom(
             const AtomIndexType& a
         ) noexcept override final {
+            assert(_valid_atom_index(a));
+
             // must update edges and adjacencies 
             auto bonded_to = _adjacencies[a];
 
             // erase all edges to and from this atom
             for(const auto& bonded_atom_index : bonded_to) {
-                auto found_and_index_pair = TupleTypeHelpers::binary_search(
+                auto found_and_index_pair = EdgeTypeHelpers::binary_search(
                     _edges,
                     std::min(a, bonded_atom_index),
                     std::max(a, bonded_atom_index)
@@ -818,16 +1046,23 @@ namespace MoleculeManip {
 
         }
 
-        /* is O( e_a + e_b + log (E) ), where
+        /*!
+         * Removes a bond from the AdjacencyList. If the bond doesn't exist,
+         * the function does not throw.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \pre a, b must fulfill: a != b.
+         * \note is O( e_a + e_b + log (E) ), where
          * - e_i is the number of edges involving atom i
          * - E is the number of stored edges
-         *
-         * => O( log(E) ) with negligible constants
+         * -> O( log(E) ) with negligible constants
          */
         void remove_bond(
             const AtomIndexType& a,
             const AtomIndexType& b
         ) noexcept {
+            assert(_valid_atom_indices(a, b));
+
             // must update _edges and _adjacencies
             _adjacencies[a].erase(
                 std::remove(
@@ -843,7 +1078,7 @@ namespace MoleculeManip {
                     a
                 )
             );
-            auto found_and_pos_pair = TupleTypeHelpers::binary_search(
+            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
                 _edges,
                 std::min(a, b),
                 std::max(a, b)

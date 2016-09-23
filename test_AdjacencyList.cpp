@@ -10,15 +10,15 @@
 using namespace MoleculeManip;
 
 using PairOfAtomIndices = std::pair<
-    AdjacencyList::AtomIndexType,
-    AdjacencyList::AtomIndexType
+    AtomIndexType,
+    AtomIndexType
 >;
 
 std::vector<PairOfAtomIndices> all_valid_combinations(
-    const AdjacencyList::AtomIndexType& lower_bound,
-    const AdjacencyList::AtomIndexType& upper_bound
+    const AtomIndexType& lower_bound,
+    const AtomIndexType& upper_bound
 ) {
-    using unsigned_t = AdjacencyList::AtomIndexType;
+    using unsigned_t = AtomIndexType;
     std::vector<PairOfAtomIndices> return_vector;
 
     for(unsigned_t i = lower_bound; i <= upper_bound; i++) {
@@ -49,16 +49,21 @@ ostream& operator << (
     return os;
 }
 
-BOOST_AUTO_TEST_CASE( adding_bonds_order_stability ) {
+/* MinimalAdjacencyList tests */
+
+BOOST_AUTO_TEST_CASE( minimal_operation_stability ) {
     // instantiate an object
     std::shared_ptr<AdjacencyList> test_object = std::make_shared<
         MinimalAdjacencyList
     >();
 
+    AtomIndexType lower = 1;
+    AtomIndexType upper = 50;
+
     // generate all valid combinations if insertable atoms
     std::vector<PairOfAtomIndices> combinations = all_valid_combinations(
-        1,
-        50
+        lower,
+        upper
     );
 
     // make a random sequence
@@ -70,6 +75,7 @@ BOOST_AUTO_TEST_CASE( adding_bonds_order_stability ) {
         }
     );
 
+    // add the bonds
     for(const auto& combination : combinations) {
         test_object->add_bond(
             combination.first,
