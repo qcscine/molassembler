@@ -7,7 +7,8 @@
 #include <cassert>
 
 /* TODO
- * - testing with common interface
+ * - Nothing ensures that the molecular graph stays connected. 
+ *   Either store chords or detect disconnects in remove_* functions
  */
 
 using namespace std;
@@ -304,19 +305,20 @@ namespace MoleculeManip {
     /*!
      * Stores information about interconnectivity between atoms.
      */
-    class AdjacencyList {
+    class AbstractConnectivityManager {
     public:
-        virtual ~AdjacencyList() {};
+        virtual ~AbstractConnectivityManager() {};
 
     /* Public member functions (in alphabetical order) */
 
         /*!
-         * Add an atom to the AdjacencyList.
+         * Add an atom to the ConnectivityManager.
+         * \returns The index of the new atom.
          */
-        virtual void add_atom() = 0;
+        virtual AtomIndexType add_atom() = 0;
 
         /*!
-         * Adds a bond to the AdjacencyList. 
+         * Adds a bond to the ConnectivityManager. 
          * \param[in] a The first atom index
          * \param[in] b The second atom index
          * \param[in] bond_type The bond type to register
@@ -384,7 +386,7 @@ namespace MoleculeManip {
         ) const = 0;
 
         /*!
-         * Removes an atom from the AdjacencyList. 
+         * Removes an atom from the ConnectivityManager. 
          * \param[in] a The atom index
          */
         virtual void remove_atom(
@@ -392,7 +394,7 @@ namespace MoleculeManip {
         ) = 0;
 
         /*!
-         * Removes a bond from the AdjacencyList. If the bond doesn't exist,
+         * Removes a bond from the ConnectivityManager. If the bond doesn't exist,
          * the function call is ignored.
          * \param[in] a The first atom index
          * \param[in] b The second atom index
@@ -415,9 +417,10 @@ namespace MoleculeManip {
     /* Implementation complexity comparison
      * ====================================
      *
+     * in big-O notation
      * 
-     * big-O notation              Minimal   Fast
-     *                             -------   -------
+     * function name               Minimal   Fast
+     * ------------------------    -------   -------
      * add_atom                    1         1
      * add_bond                    log E     log E
      * bond_exists (1)             log E     log b 
@@ -449,7 +452,7 @@ namespace MoleculeManip {
      * list.
      */
 
-    class MinimalAdjacencyList : public AdjacencyList {
+    class MinimalConnectivityManager : public AbstractConnectivityManager {
     private:
     /* Private members */
         std::vector<EdgeType> _edges;
@@ -489,16 +492,18 @@ namespace MoleculeManip {
     public:
 
         /*!
-         * Adds an atom to the AdjacencyList. In this implementation, atoms
+         * Adds an atom to the ConnectivityManager. In this implementation, atoms
          * exist only when bonds to them exist.
+         * \returns The index of the new atom.
          * \note Is O(1)
          */
-        void add_atom() noexcept override final {
+        AtomIndexType add_atom() noexcept override final {
             _atom_exists.emplace_back(true);
+            return _atom_exists.size()-1;
         }
 
         /*!
-         * Adds a bond to the AdjacencyList. 
+         * Adds a bond to the ConnectivityManager. 
          * \pre a, b must fulfill: a != b.
          * \note Is O( log(E) ), where
          *  - E is the number of stored edges
@@ -698,44 +703,7 @@ namespace MoleculeManip {
         }
 
         /*!
-         * A debug helper function. Checks that the internal state is valid.
-         * \note is O(E)
-         */
-        std::pair<bool, std::string> validate() const noexcept override final {
-            // is the edge list ordered
-            if(!EdgeTypeHelpers::is_ordered(_edges)) {
-                return make_pair(
-                    false,
-                    "The list of edges is unordered."
-                );
-            }
-
-            // every edge contains valid atom indices
-            for(const auto& edge: _edges) {
-                if(!_valid_atom_indices(
-                    std::get<0>(edge), 
-                    std::get<1>(edge)
-                )) {
-                    return std::make_pair(
-                        false,
-                        std::string("One or both atom indices (")
-                            + std::to_string(std::get<0>(edge))
-                            + ", "
-                            + std::to_string(std::get<1>(edge))
-                            +") are invalid."
-                    );
-                }
-            }
-
-            return make_pair(
-                true,
-                "Passed all checks"
-            );
-        }
-
-
-        /*!
-         * Removes an atom from the AdjacencyList. 
+         * Removes an atom from the ConnectivityManager. 
          * \param[in] a The atom index
          * \note is O(E), where
          * - E is the number of stored edges
@@ -767,7 +735,7 @@ namespace MoleculeManip {
         }
 
         /*!
-         * Removes a bond from the AdjacencyList. If the bond doesn't exist,
+         * Removes a bond from the ConnectivityManager. If the bond doesn't exist,
          * the function call is ignored.
          * \param[in] a The first atom index
          * \param[in] b The second atom index
@@ -792,9 +760,45 @@ namespace MoleculeManip {
                 );
             }
         }
+
+        /*!
+         * A debug helper function. Checks that the internal state is valid.
+         * \note is O(E)
+         */
+        std::pair<bool, std::string> validate() const noexcept override final {
+            // is the edge list ordered
+            if(!EdgeTypeHelpers::is_ordered(_edges)) {
+                return make_pair(
+                    false,
+                    "The list of edges is unordered."
+                );
+            }
+
+            // every edge contains valid atom indices
+            for(const auto& edge: _edges) {
+                if(!_valid_atom_indices(
+                    std::get<0>(edge), 
+                    std::get<1>(edge)
+                )) {
+                    return std::make_pair(
+                        false,
+                        "One or both atom indices ("s
+                            + std::to_string(std::get<0>(edge))
+                            + ", "
+                            + std::to_string(std::get<1>(edge))
+                            +") are invalid."
+                    );
+                }
+            }
+
+            return make_pair(
+                true,
+                "Passed all checks"
+            );
+        }
     };
 
-    class FastAdjacencyList : public AdjacencyList {
+    class FastConnectivityManager : public AbstractConnectivityManager {
     private:
     /* Private members */
         std::vector<EdgeType> _edges;
@@ -837,18 +841,21 @@ namespace MoleculeManip {
 
     public:
         /*!
-         * Add an atom to the AdjacencyList.
+         * Add an atom to the ConnectivityManager.
+         * \returns The index of the new atom.
          * \note is O(1)
          */
-        void add_atom() noexcept override final {
+        AtomIndexType add_atom() noexcept override final {
             // add an empty vector to _adjacencies at the end.
             _adjacencies.emplace_back();
             // add an entry to _atom_exists
             _atom_exists.emplace_back(true);
+
+            return _atom_exists.size() - 1;
         };
 
         /*!
-         * Adds a bond to the AdjacencyList. 
+         * Adds a bond to the ConnectivityManager. 
          * \param[in] a The first atom index
          * \param[in] b The second atom index
          * \param[in] bond_type The bond type to register
@@ -922,7 +929,7 @@ namespace MoleculeManip {
             const AtomIndexType& a,
             const AtomIndexType& b,
             const BondType& bond_type
-        ) const noexcept {
+        ) const noexcept override final {
             assert(_valid_atom_indices(a, b));
 
             /* for this case, checking the adjacency list is not good enough
@@ -1069,7 +1076,7 @@ namespace MoleculeManip {
                     if(!_valid_atom_indices(from, to)) {
                         return std::make_pair(
                             false,
-                            std::string("One or both atom indices (")
+                            "One or both atom indices ("s
                                 + std::to_string(from)
                                 + ", "
                                 + std::to_string(to)
@@ -1084,7 +1091,7 @@ namespace MoleculeManip {
                     if(!found_and_pos_pair.first) {
                         return std::make_pair(
                             false,
-                            std::string("The edge (") 
+                            "The edge ("s 
                                 + std::to_string(from)
                                 + ", "
                                 + std::to_string(to)
@@ -1104,7 +1111,7 @@ namespace MoleculeManip {
                 )) {
                     return std::make_pair(
                         false,
-                        std::string("One or both atom indices (")
+                        "One or both atom indices ("s
                             + std::to_string(std::get<0>(edge))
                             + ", "
                             + std::to_string(std::get<1>(edge))
@@ -1129,7 +1136,7 @@ namespace MoleculeManip {
                 )) {
                     return std::make_pair(
                         false,
-                        std::string("The edge(")
+                        "The edge("s
                             + std::to_string(std::get<0>(edge))
                             + ", "
                             + std::to_string(std::get<1>(edge))
@@ -1144,7 +1151,7 @@ namespace MoleculeManip {
                 )) {
                     return std::make_pair(
                         false,
-                        std::string("The edge(")
+                        "The edge("s
                             + std::to_string(std::get<0>(edge))
                             + ", "
                             + std::to_string(std::get<1>(edge))
@@ -1162,7 +1169,7 @@ namespace MoleculeManip {
 
 
         /*!
-         * Removes an atom from the AdjacencyList. 
+         * Removes an atom from the ConnectivityManager. 
          * \param[in] a The atom index
          * \note is O( B log (E) + sum_all(e_i) ), where 
          * - B is the number of bonds the atom being removed has
@@ -1213,7 +1220,7 @@ namespace MoleculeManip {
         }
 
         /*!
-         * Removes a bond from the AdjacencyList. If the bond doesn't exist,
+         * Removes a bond from the ConnectivityManager. If the bond doesn't exist,
          * the function does not throw.
          * \param[in] a The first atom index
          * \param[in] b The second atom index
@@ -1226,7 +1233,7 @@ namespace MoleculeManip {
         void remove_bond(
             const AtomIndexType& a,
             const AtomIndexType& b
-        ) noexcept {
+        ) noexcept override final {
             assert(_valid_atom_indices(a, b));
 
             // must update _edges and _adjacencies

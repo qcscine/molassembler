@@ -1,5 +1,5 @@
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE AdjacencyListTests
+#define BOOST_TEST_MODULE ConnectivityManagerTests
 #include <boost/test/unit_test.hpp>
 #include <boost/test/test_case_template.hpp>
 #include <boost/mpl/list.hpp>
@@ -8,7 +8,7 @@
 #include <iostream>
 #include <random>
 
-#include "AdjacencyList.hpp"
+#include "ConnectivityManager.hpp"
 
 using namespace MoleculeManip;
 
@@ -52,12 +52,12 @@ ostream& operator << (
 }
 
 typedef boost::mpl::list<
-    MinimalAdjacencyList,
-    FastAdjacencyList
+    MinimalConnectivityManager,
+    FastConnectivityManager
 > test_types;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(insert_stability, T, test_types) {
-    std::shared_ptr<AdjacencyList> test_object = std::make_shared<T>();
+    std::shared_ptr<AbstractConnectivityManager> test_object = std::make_shared<T>();
 
     AtomIndexType n_atoms = 50;
 
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(insert_stability, T, test_types) {
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(get_bond_correctness, T, test_types) {
 
-    std::shared_ptr<AdjacencyList> test_object = std::make_shared<T>();
+    std::shared_ptr<AbstractConnectivityManager> test_object = std::make_shared<T>();
     AtomIndexType n_atoms = 50;
 
     // generate all valid combinations of insertable atoms
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(get_bond_correctness, T, test_types) {
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(remove_bond_stability, T, test_types) {
-    std::shared_ptr<AdjacencyList> test_object = std::make_shared<T>();
+    std::shared_ptr<AbstractConnectivityManager> test_object = std::make_shared<T>();
     AtomIndexType n_atoms = 50;
 
     // generate all valid combinations of insertable atoms
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(remove_bond_stability, T, test_types) {
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(remove_atom_stability, T, test_types) {
-    std::shared_ptr<AdjacencyList> test_object = std::make_shared<T>();
+    std::shared_ptr<AbstractConnectivityManager> test_object = std::make_shared<T>();
     AtomIndexType n_atoms = 50;
 
     // generate all valid combinations of insertable atoms
