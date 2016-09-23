@@ -7,10 +7,6 @@
 #include <cassert>
 
 /* TODO
- * - valid index checking for MinimalAdjacencyList is incorrect as soon as 
- *   atoms are removed -> the counter cannot just be decremented for the
- *   _valid* functions to work properly, gaps in the indices can appear.
- *   this MUST be reliable
  * - testing with common interface
  */
 
@@ -47,6 +43,9 @@ namespace MoleculeManip {
         BondType
     >;
 
+    /*!
+     * Contains static functions for common operations with EdgeTypes
+     */
     struct EdgeTypeHelpers {
         /*!
          * Lexicographical less-than operator for a tuple and two atom indices
@@ -71,7 +70,8 @@ namespace MoleculeManip {
         }
 
         /*!
-         * Lexicographical greater than operator for a tuple and two atom indices
+         * Lexicographical greater than operator for a tuple and two atom
+         * indices
          * \param tuple The tuple 
          * \param a The first atom index
          * \param a The second atom index
@@ -110,6 +110,34 @@ namespace MoleculeManip {
                     && std::get<1>(a) < std::get<1>(b)
                 )
             );
+        }
+
+        /*!
+         * Checks whether a list of EdgeTypes is ordered.
+         * \param 
+         * \returns whether the list is ordered.
+         * \note is O(E) 
+         */
+        static bool is_ordered(
+            const std::vector<EdgeType>& container
+        ) noexcept {
+            /* this is a necessary underflow guard:
+             * in the loop condition all types are unsigned:
+             *  i < container.size() - 1
+             * if container.size() is 0, the expression is an underflow
+             */
+            if(container.size() == 0) return true;
+
+            for(EdgeIndexType i = 0; i < container.size() - 1; i++) {
+                if(!tuple_lt(
+                    container[i],
+                    container[i+1]
+                )) {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /*!
@@ -168,7 +196,7 @@ namespace MoleculeManip {
                     if(middle == 0) right = middle;
                     else right = middle - 1;
                     continue;
-                } else { // implicit if tuple_equals(container[middle])
+                } else { // not smaller and not greater -> equals
                     // found it!
                     return make_pair(
                         true, 
@@ -273,6 +301,9 @@ namespace MoleculeManip {
         }
     };
 
+    /*!
+     * Stores information about interconnectivity between atoms.
+     */
     class AdjacencyList {
     public:
         virtual ~AdjacencyList() {};
@@ -307,8 +338,7 @@ namespace MoleculeManip {
             const AtomIndexType& b
         ) const = 0;
 
-        /*!
-         * Checks whether two atoms are bonded by the specified BondType.
+        /* Checks whether a specified edge exists.
          * \param[in] a The first atom index
          * \param[in] b The second atom index
          * \param[in] bond_type The bond type to check
@@ -354,12 +384,6 @@ namespace MoleculeManip {
         ) const = 0;
 
         /*!
-         * Checks whether the list is ordered.
-         * \returns whether the list is ordered.
-         */
-        virtual bool is_ordered() const = 0;
-
-        /*!
          * Removes an atom from the AdjacencyList. 
          * \param[in] a The atom index
          */
@@ -378,13 +402,21 @@ namespace MoleculeManip {
             const AtomIndexType& b
         ) = 0;
 
+        /*!
+         * Validate the current state of the instance.
+         * \returns A pair containing whether the state is valid, and an 
+         *  explanation.
+         */
+        virtual std::pair<bool, std::string> validate() const noexcept = 0;
+
     };
 
 
     /* Implementation complexity comparison
      * ====================================
      *
-     *                             Minimal   Fast
+     * 
+     * big-O notation              Minimal   Fast
      *                             -------   -------
      * add_atom                    1         1
      * add_bond                    log E     log E
@@ -395,12 +427,13 @@ namespace MoleculeManip {
      * get_bonded_atom_indices     E         1
      * remove_atom                 E         log E
      * remove_bond                 log E     log E
+     * validate                    E         E
      *
-     * storage                     E         ~3E
+     * storage                     E         E
      *
      *
      * E is the number of stored edges
-     * b is the number of stored edges for atom a, b << E
+     * b is the number of stored edges for atom i, b << E
      *
      *
      * Summary of implementation differences
@@ -420,8 +453,8 @@ namespace MoleculeManip {
     private:
     /* Private members */
         std::vector<EdgeType> _edges;
-        unsigned_type _num_atoms = 0;
         std::vector<AtomIndexType> _atom_indices;
+        std::vector<bool> _atom_exists;
 
         /*!
          * Checks whether the supplied atom index is valid, i.e. in range.
@@ -429,7 +462,10 @@ namespace MoleculeManip {
          * \returns whether the supplied atom index is valid, i.e. in range.
          */
         inline bool _valid_atom_index(const AtomIndexType& a) const noexcept {
-            return a < _num_atoms;
+            return (
+                a < _atom_exists.size()
+                && _atom_exists[a]
+            );
         }
 
         /*!
@@ -458,7 +494,7 @@ namespace MoleculeManip {
          * \note Is O(1)
          */
         void add_atom() noexcept override final {
-            _num_atoms++;
+            _atom_exists.emplace_back(true);
         }
 
         /*!
@@ -662,25 +698,41 @@ namespace MoleculeManip {
         }
 
         /*!
-         * Checks whether the list is ordered.
-         * \returns whether the list is ordered.
+         * A debug helper function. Checks that the internal state is valid.
+         * \note is O(E)
          */
-        bool is_ordered() const noexcept override final {
-            /* - Can't think of a way to put this in functional paradigm
-             * - Not allowed to use indices if you want to be able to use list 
-             *   in template instantiation
-             * - List will be terrible anyway because random access is O(N)
-             */
-            for(EdgeIndexType i = 0; i < _edges.size() - 1; i++) {
-                if(!EdgeTypeHelpers::tuple_lt(
-                    _edges[i],
-                    _edges[i+1]
+        std::pair<bool, std::string> validate() const noexcept override final {
+            // is the edge list ordered
+            if(!EdgeTypeHelpers::is_ordered(_edges)) {
+                return make_pair(
+                    false,
+                    "The list of edges is unordered."
+                );
+            }
+
+            // every edge contains valid atom indices
+            for(const auto& edge: _edges) {
+                if(!_valid_atom_indices(
+                    std::get<0>(edge), 
+                    std::get<1>(edge)
                 )) {
-                    return false;
+                    return std::make_pair(
+                        false,
+                        std::string("One or both atom indices (")
+                            + std::to_string(std::get<0>(edge))
+                            + ", "
+                            + std::to_string(std::get<1>(edge))
+                            +") are invalid."
+                    );
                 }
             }
-            return true;
+
+            return make_pair(
+                true,
+                "Passed all checks"
+            );
         }
+
 
         /*!
          * Removes an atom from the AdjacencyList. 
@@ -692,6 +744,9 @@ namespace MoleculeManip {
             const AtomIndexType& a
         ) noexcept override final {
             assert(_valid_atom_index(a));
+
+            // set the index to false
+            _atom_exists[a] = false;
 
             /* check if the AtomIndexType is present in the edges, remove if so
              */
@@ -705,7 +760,8 @@ namespace MoleculeManip {
                             || std::get<1>(tuple) == a
                         );
                     }
-                )
+                ),
+                _edges.end()
             );
 
         }
@@ -747,6 +803,7 @@ namespace MoleculeManip {
                 AtomIndexType
             >
         > _adjacencies;
+        std::vector<bool> _atom_exists;
 
         /*!
          * Checks whether the supplied atom index is valid, i.e. in range.
@@ -754,7 +811,10 @@ namespace MoleculeManip {
          * \returns whether the supplied atom index is valid, i.e. in range.
          */
         inline bool _valid_atom_index(const AtomIndexType& a) const noexcept {
-            return a < _adjacencies.size();
+            return (
+                a < _adjacencies.size()
+                && _atom_exists[a]
+            );
         }
 
         /*!
@@ -783,6 +843,8 @@ namespace MoleculeManip {
         void add_atom() noexcept override final {
             // add an empty vector to _adjacencies at the end.
             _adjacencies.emplace_back();
+            // add an entry to _atom_exists
+            _atom_exists.emplace_back(true);
         };
 
         /*!
@@ -979,21 +1041,125 @@ namespace MoleculeManip {
         }
 
         /*!
-         * Checks whether the list is ordered.
-         * \returns whether the list is ordered.
-         * \note is O(E) 
+         * A debug helper function. Checks that the internal state is valid.
+         * \note is O(E)
          */
-        bool is_ordered() const noexcept override final {
-            for(EdgeIndexType i = 0; i < _edges.size() - 1; i++) {
-                if(!EdgeTypeHelpers::tuple_lt(
-                    _edges[i],
-                    _edges[i+1]
-                )) {
-                    return false;
+        std::pair<bool, std::string> validate() const noexcept override final {
+            // basic checks
+            if(_adjacencies.size() != _atom_exists.size()) {
+                return make_pair(
+                    false,
+                    "The size of _adjacencies and _atom_exists is mismatched."
+                );
+            }
+
+            // is the edge list ordered
+            if(!EdgeTypeHelpers::is_ordered(_edges)) {
+                return make_pair(
+                    false,
+                    "The list of edges is unordered."
+                );
+            }
+
+            /* all bonds specified in _adjacencies are present in _edges and
+             *  all specified atom indices are valid
+             */
+            for(AtomIndexType from = 0; from < _adjacencies.size(); from++) {
+                for(const auto& to : _adjacencies[from]) {
+                    if(!_valid_atom_indices(from, to)) {
+                        return std::make_pair(
+                            false,
+                            std::string("One or both atom indices (")
+                                + std::to_string(from)
+                                + ", "
+                                + std::to_string(to)
+                                +") are invalid."
+                        );
+                    }
+                    auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
+                        _edges,
+                        std::min(from, to),
+                        std::max(from, to)
+                    );
+                    if(!found_and_pos_pair.first) {
+                        return std::make_pair(
+                            false,
+                            std::string("The edge (") 
+                                + std::to_string(from)
+                                + ", "
+                                + std::to_string(to)
+                                +") in _adjacencies is not in _edges."
+                        );
+                    }
                 }
             }
-            return true;
+
+            /* all edges in _edges are also in _adjacencies and involve only 
+             * valid atom indices
+             */
+            for(const auto& edge : _edges) {
+                if(!_valid_atom_indices(
+                    std::get<0>(edge), 
+                    std::get<1>(edge)
+                )) {
+                    return std::make_pair(
+                        false,
+                        std::string("One or both atom indices (")
+                            + std::to_string(std::get<0>(edge))
+                            + ", "
+                            + std::to_string(std::get<1>(edge))
+                            +") are invalid."
+                    );
+                }
+                auto check_edge_in_adjacencies = [](
+                    const vector<AtomIndexType>& haystack,
+                    const AtomIndexType& needle
+                ) -> bool {
+                    return std::find(
+                        haystack.begin(),
+                        haystack.end(),
+                        needle
+                    ) != haystack.end();
+                };
+
+                // check forwards
+                if(!check_edge_in_adjacencies(
+                    _adjacencies[std::get<0>(edge)],
+                    std::get<1>(edge)
+                )) {
+                    return std::make_pair(
+                        false,
+                        std::string("The edge(")
+                            + std::to_string(std::get<0>(edge))
+                            + ", "
+                            + std::to_string(std::get<1>(edge))
+                            + ") in _edges is not in _adjacencies (forward)"
+                    );
+                }
+
+                // check backwards
+                if(!check_edge_in_adjacencies(
+                    _adjacencies[std::get<1>(edge)],
+                    std::get<0>(edge)
+                )) {
+                    return std::make_pair(
+                        false,
+                        std::string("The edge(")
+                            + std::to_string(std::get<0>(edge))
+                            + ", "
+                            + std::to_string(std::get<1>(edge))
+                            + ") in _edges is not in _adjacencies (backward)"
+                    );
+                }
+            }
+            
+            // passed all
+            return std::make_pair(
+                true,
+                "Passed all tests"
+            );
         }
+
 
         /*!
          * Removes an atom from the AdjacencyList. 
@@ -1039,11 +1205,11 @@ namespace MoleculeManip {
                 );
             }
 
-            // remove the atom from adjacencies
-            _adjacencies.erase(
-                _adjacencies.begin() + a
-            );
+            // remove all entries from this atom in adjacencies
+            _adjacencies[a] = std::vector<AtomIndexType>();
 
+            // set _atom_exists to false for this index
+            _atom_exists[a] = false;
         }
 
         /*!
@@ -1089,5 +1255,6 @@ namespace MoleculeManip {
                 );
             }
         };
+
     };
 }
