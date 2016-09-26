@@ -8,9 +8,9 @@
 #include <type_traits>
 
 #include "ConnectivityManager.hpp"
+#include "numeric/numeric.hpp"
 
 /* TODO
- * - fails! not enough testing done?
  */
 
 using namespace MoleculeManip;
@@ -21,13 +21,14 @@ using PairOfAtomIndices = std::pair<
 >;
 
 std::vector<PairOfAtomIndices> all_valid_combinations(
-    const AtomIndexType& n_atoms
+    const AtomIndexType& lower,
+    const AtomIndexType& upper
 ) {
     using unsigned_t = AtomIndexType;
     std::vector<PairOfAtomIndices> return_vector;
 
-    for(unsigned_t i = 0; i < n_atoms; i++) {
-        for(unsigned_t j = i + 1; j < n_atoms; j++) {
+    for(unsigned_t i = lower; i < upper; i++) {
+        for(unsigned_t j = i + 1; j < upper; j++) {
             return_vector.emplace_back(i, j);
         }
     }
@@ -49,80 +50,13 @@ ostream& operator << (
     return os;
 }
 
-unsigned average(
-    const std::vector<unsigned>& values
-) {
-    if(values.size() == 0) return 0;
-    else return std::floor(
-            (double) std::accumulate(
-            values.begin(),
-            values.end(),
-            0
-        ) / (double) values.size()
-    );
-}
-
-unsigned stddev(
-    const std::vector<unsigned>& values,
-    const unsigned& average
-) {
-    unsigned intermediate = std::accumulate(
-        values.begin(),
-        values.end(),
-        0,
-        [&average](const unsigned& carry, const unsigned& value) {
-            return (
-                carry 
-                + std::pow(
-                    value - average,
-                    2
-                )
-            );
-        }
-    );
-    return std::sqrt( (double) intermediate / (double) values.size() );
-}
-
-
-vector<unsigned> map_average(
-    const std::vector<
-        std::vector<unsigned>
-    >& list_values
-) {
-    vector<unsigned> mapped;
-    for(const auto& values: list_values) {
-        mapped.push_back(
-            average(values)
-        );
-    }
-    return mapped;
-}
-
-vector<unsigned> map_stddev(
-    const std::vector<
-        std::vector<unsigned>
-    >& list_values,
-    const std::vector<unsigned>& averages
-) {
-    assert(list_values.size() == averages.size());
-    vector<unsigned> mapped;
-    for(unsigned i = 0; i < averages.size(); i++) {
-        mapped.push_back(
-            stddev(
-                list_values[i],
-                averages[i]
-            )
-        );
-    }
-
-    return mapped;
-}
 
 template<typename T>
 unsigned time_wrap_nullary_callable(
     const T& nullary_callable
 ) {
     using namespace std::chrono;
+
     time_point<system_clock> start, end;
     start = system_clock::now();
 
@@ -131,7 +65,7 @@ unsigned time_wrap_nullary_callable(
     end = system_clock::now();
     duration<double> elapsed = end - start;
 
-    return elapsed.count() * 1e6;
+    return elapsed.count() * 1e9;
 }
 
 template<typename T>
@@ -139,32 +73,46 @@ std::vector<unsigned> performance_test(
     T& test_instance,
     const AtomIndexType& n_atoms
 ) {
+    test_instance -> reset();
     std::vector<unsigned> exec_times;
 
-    // generate all valid combinations if insertable atoms
-    std::vector<PairOfAtomIndices> combinations = all_valid_combinations(
-        n_atoms
+    // add the required number of atoms
+    std::vector<AtomIndexType> atom_indices;
+    std::vector<unsigned> current_exec_times;
+    
+    for(AtomIndexType i = 0; i < n_atoms; i++) {
+        AtomIndexType temp; 
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
+                temp = test_instance -> add_atom();
+            }
+        ));
+        atom_indices.push_back(
+            temp
+        );
+    }
+
+    exec_times.push_back(
+        numeric::average(current_exec_times)
     );
 
-    // make a list of AtomIndexTypes
-    std::vector<AtomIndexType> atom_indices(n_atoms);
-    std::iota(
+    // generate the combinations from the lower and upper bound on atom indices
+    std::vector<PairOfAtomIndices> combinations = all_valid_combinations(
+        atom_indices[0],
+        atom_indices[atom_indices.size() - 1]
+    );
+
+    // shuffle the atom indices and combinations
+    std::shuffle(
         atom_indices.begin(),
         atom_indices.end(),
-        0
-    );
-
-    // make a random sequence
-    std::shuffle(
-        combinations.begin(),
-        combinations.end(),
         std::mt19937{
             std::random_device{}()
         }
     );
     std::shuffle(
-        atom_indices.begin(),
-        atom_indices.end(),
+        combinations.begin(),
+        combinations.end(),
         std::mt19937{
             std::random_device{}()
         }
@@ -180,84 +128,87 @@ std::vector<unsigned> performance_test(
     //      Perhaps do this by storing chords
 
     // oh well, for now, let's just truncate the damn thing
-    combinations.resize(4 * n_atoms);
-
-    // add the atoms
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(AtomIndexType i = 0; i < n_atoms; i++) {
-                test_instance -> add_atom();
-            }
-        }
-    ));
+    if( 4 * n_atoms < combinations.size()) combinations.resize(4 * n_atoms);
     
     // add bonds
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(const auto& combination : combinations) {
+    current_exec_times.clear();
+    for(const auto& combination : combinations) {
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
                 test_instance -> add_bond(
                     combination.first,
                     combination.second,
                     BondType::Single
                 );
             }
-        }
-    ));
+        ));
+    }
+    exec_times.push_back(numeric::average(current_exec_times));
 
     // bond_exists (1)
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(const auto& combination : combinations) {
+    current_exec_times.clear();
+    for(const auto& combination: combinations) {
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
                 test_instance -> bond_exists(
                     combination.first,
                     combination.second
                 );
             }
-        }
-    ));
+        ));
+    }
+    exec_times.push_back(numeric::average(current_exec_times));
 
     // bond_exists (2)
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(const auto& combination : combinations) {
+    current_exec_times.clear();
+    for(const auto& combination: combinations) {
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
                 test_instance -> bond_exists(
                     combination.first,
                     combination.second,
                     BondType::Single
                 );
             }
-        }
-    ));
+        ));
+    }
+    exec_times.push_back(numeric::average(current_exec_times));
 
     // get_bond_type
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(const auto& combination : combinations) {
+    current_exec_times.clear();
+    for(const auto& combination: combinations) {
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
                 test_instance -> bond_exists(
                     combination.first,
                     combination.second
                 );
             }
-        }
-    ));
+        ));
+    }
+    exec_times.push_back(numeric::average(current_exec_times));
 
     // get_bond_pairs
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(const auto& atom_index : atom_indices) {
+    current_exec_times.clear();
+    for(const auto& atom_index: atom_indices) {
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
                 test_instance -> get_bond_pairs(atom_index);
             }
-        }
-    ));
+        ));
+    }
+    exec_times.push_back(numeric::average(current_exec_times));
 
     // get_bonded_atom_indices
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(const auto& atom_index : atom_indices) {
+    current_exec_times.clear();
+    for(const auto& atom_index: atom_indices) {
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
                 test_instance -> get_bonded_atom_indices(atom_index);
             }
-        }
-    ));
+        ));
+    }
+    exec_times.push_back(numeric::average(current_exec_times));
 
     // validate
     exec_times.push_back(time_wrap_nullary_callable(
@@ -267,16 +218,18 @@ std::vector<unsigned> performance_test(
     ));
 
     // remove_bond
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(const auto& combination : combinations) {
+    current_exec_times.clear();
+    for(const auto& combination: combinations) {
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
                 test_instance -> remove_bond(
                     combination.first,
                     combination.second
                 );
             }
-        }
-    ));
+        ));
+    }
+    exec_times.push_back(numeric::average(current_exec_times));
 
     // re-add all bonds
     for(const auto& combination : combinations) {
@@ -287,16 +240,16 @@ std::vector<unsigned> performance_test(
         );
     }
 
-    // remove_atom
-    exec_times.push_back(time_wrap_nullary_callable(
-        [&]() {
-            for(const auto& atom_index : atom_indices) {
+    // remove_all atoms
+    current_exec_times.clear();
+    for(const auto& atom_index: atom_indices) {
+        current_exec_times.push_back(time_wrap_nullary_callable(
+            [&]() {
                 test_instance -> remove_atom(atom_index);
             }
-        }
-    ));
-
-    std::cout << std::endl;
+        ));
+    }
+    exec_times.push_back(numeric::average(current_exec_times));
 
     return exec_times;
 }
@@ -333,8 +286,8 @@ int main() {
         "remove_atom"
     };
 
-    const unsigned repeat = 10;
-    const unsigned max_n_atoms = 100;
+    const unsigned repeat = 100;
+    const unsigned max_n_atoms = 1000;
 
     for(auto& test_pair : test_pairs) {
         std::cout << "For class " << test_pair.first << std::endl;
@@ -345,24 +298,29 @@ int main() {
             std::vector<unsigned>
         > function_stddevs (function_aliases.size(), std::vector<unsigned>());
 
-        for(unsigned n_atoms = 10; n_atoms <= max_n_atoms; n_atoms++) {
+        for(unsigned n_atoms = 10; n_atoms <= max_n_atoms; n_atoms += 55) {
             std::vector<
                 std::vector<unsigned>
-            > microsecond_exec_times;
+            > microsecond_exec_times (function_aliases.size(), std::vector<unsigned>());
 
             for(unsigned i = 0; i < repeat; i++) {
-                microsecond_exec_times.push_back(
-                    performance_test(
-                        test_pair.second,
-                        n_atoms
-                    )
+                auto iteration = performance_test(
+                    test_pair.second,
+                    n_atoms
                 );
+                for(unsigned j = 0; j < iteration.size(); j++) {
+                    microsecond_exec_times[j].push_back(
+                        iteration[j]
+                    );
+                }
             }
 
-            auto averages = map_average(microsecond_exec_times);
-            auto stddevs = map_stddev(
-                microsecond_exec_times,
-                averages
+            /* due to the odd way microsecond_exec_times is constructed,
+             * these must be constructed differently
+             */
+            auto averages = numeric::map_average(microsecond_exec_times);
+            auto stddevs = numeric::map_population_stddev(
+                microsecond_exec_times
             );
 
             /* now I have 
@@ -374,6 +332,7 @@ int main() {
              * function_stddevs[function_index] = [stddev_2, stddev_3, ...]
              */
 
+            assert(averages.size() == function_averages.size());
             for(unsigned i = 0; i < averages.size(); i++) {
                 function_averages[i].push_back(averages[i]);
                 function_stddevs[i].push_back(stddevs[i]);

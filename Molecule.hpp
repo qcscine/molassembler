@@ -1,6 +1,6 @@
 #include <iostream>
 #include "AtomSet.h"
-#include "ConnectivityManager.hpp"
+#include "ConnectivityManager/ConnectivityManager.hpp"
 
 namespace MoleculeManip {
     struct Molecule {

@@ -19,3 +19,41 @@ Files
   set of initial structures.
 
   Thought as a start to re-implement the structure generation project.
+
+
+Interface
+---------
+
+- How do I want to conceptualize a Molecule, and how should working with one
+  look in practice?
+
+  Current idea::
+
+  // Constructors
+  // 1 reads file, creates adjacency list if file type does not contain
+  // connectivity information
+  Molecule init_from_file(Filename("asdf.xyz")); 
+  // 2 from Delib AtomSet, detects adjacency list
+  Delib::AtomSet atom_set();
+  Molecule init_from_AtomSet(atom_set); 
+  // 3 copy constructor
+  Molecule copy_from_other(init);
+
+  // Permutators
+  vector<Molecule> structures = {
+      init_from_file, 
+      init_from_AtomSet,
+      copy_from_other
+  };
+
+  structures = permute_hydrogen_replacements(structures);
+  
+  // code in permutator
+  vector<Molecule> permute_*(const vector<Molecule>& structures) {
+      vector<Molecule> permutated;
+      for(const auto& molecule : structures) {
+      }
+  }
+
+
+

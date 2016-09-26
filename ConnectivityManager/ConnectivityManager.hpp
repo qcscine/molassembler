@@ -33,9 +33,17 @@ namespace MoleculeManip {
         Quintuple,
         Sextuple
     };
+
+    /*
     using unsigned_type = unsigned;
     using EdgeIndexType = uint32_t;
     using AtomIndexType = uint16_t; // 65k max is sufficient
+    */
+    // TODO temp for testing
+    using unsigned_type = long long unsigned;
+    using EdgeIndexType = uint64_t;
+    using AtomIndexType = uint64_t; // 65k max is sufficient
+
 
     /* derived types */
     using EdgeType = tuple<
@@ -404,6 +412,8 @@ namespace MoleculeManip {
             const AtomIndexType& b
         ) = 0;
 
+        virtual void reset() = 0;
+
         /*!
          * Validate the current state of the instance.
          * \returns A pair containing whether the state is valid, and an 
@@ -423,7 +433,7 @@ namespace MoleculeManip {
      * ------------------------    -------   -------
      * add_atom                    1         1
      * add_bond                    log E     log E
-     * bond_exists (1)             log E     log b 
+     * bond_exists (1)             log E     b_i
      * bond_exists (2)             log E     log E
      * get_bond_type               log E     log E
      * get_bond_pairs              E         log E
@@ -436,7 +446,7 @@ namespace MoleculeManip {
      *
      *
      * E is the number of stored edges
-     * b is the number of stored edges for atom i, b << E
+     * b_i is the number of stored edges for atom i, b_i << E,
      *
      *
      * Summary of implementation differences
@@ -450,13 +460,23 @@ namespace MoleculeManip {
      *
      * All implementations make use of binary searches in the ordered edge
      * list.
+     *
+     *
+     * Performance
+     * ===========
+     *
+     * Benchmarking reveals that execution times cross for get_bond_pairs at 
+     * roughly N = 300 atoms with E = 4N edges. Above 300 atoms, Fast is faster.
+     * In general, graph modification operations are more expensive for Fast,
+     * but access to the data is cheaper.
+     *
+     * Detailed graphs are in graphs/speed.pdf
      */
 
     class MinimalConnectivityManager : public AbstractConnectivityManager {
     private:
     /* Private members */
         std::vector<EdgeType> _edges;
-        std::vector<AtomIndexType> _atom_indices;
         std::vector<bool> _atom_exists;
 
         /*!
@@ -465,11 +485,24 @@ namespace MoleculeManip {
          * \returns whether the supplied atom index is valid, i.e. in range.
          */
         inline bool _valid_atom_index(const AtomIndexType& a) const noexcept {
+            bool retval = (
+                a < _atom_exists.size()
+                && _atom_exists[a]
+            );
+            if(!retval) {
+                std::cout << "Called _valid_atom_index with (" << a << "). " 
+                    << "_atom_exists.size() = " << _atom_exists.size()
+                    << ", _atom_exists[a] = " << (_atom_exists[a] ? "T" : "F" )
+                    << std::endl;
+            }
+            return retval;
+        }
+        /*inline bool _valid_atom_index(const AtomIndexType& a) const noexcept {
             return (
                 a < _atom_exists.size()
                 && _atom_exists[a]
             );
-        }
+        }*/
 
         /*!
          * Checks whether the supplied atom indices are valid, i.e. in range 
@@ -482,24 +515,39 @@ namespace MoleculeManip {
             const AtomIndexType& a,
             const AtomIndexType& b
         ) const noexcept {
+            bool retval = (
+                _valid_atom_index(a)
+                && _valid_atom_index(b)
+                && a != b
+            );
+            if(!retval) {
+                std::cout << "Called _valid_atom_indices with (" << a << ", " 
+                    << b << ")." << std::endl;
+            }
+            return retval;
+        }
+        /*inline bool _valid_atom_indices(
+            const AtomIndexType& a,
+            const AtomIndexType& b
+        ) const noexcept {
             return (
                 _valid_atom_index(a)
                 && _valid_atom_index(b)
                 && a != b
             );
-        }
+        }*/
 
     public:
 
         /*!
-         * Adds an atom to the ConnectivityManager. In this implementation, atoms
-         * exist only when bonds to them exist.
+         * Adds an atom to the ConnectivityManager. In this implementation,
+         * atoms exist only when bonds to them exist.
          * \returns The index of the new atom.
          * \note Is O(1)
          */
         AtomIndexType add_atom() noexcept override final {
             _atom_exists.emplace_back(true);
-            return _atom_exists.size()-1;
+            return _atom_exists.size() - 1;
         }
 
         /*!
@@ -759,6 +807,11 @@ namespace MoleculeManip {
                     _edges.begin() + found_and_pos_pair.second
                 );
             }
+        }
+
+        void reset() override final {
+            _edges = std::vector<EdgeType>();
+            _atom_exists = std::vector<bool>();
         }
 
         /*!
@@ -1048,6 +1101,111 @@ namespace MoleculeManip {
         }
 
         /*!
+         * Removes an atom from the ConnectivityManager. 
+         * \param[in] a The atom index
+         * \note is O( B log (E) + sum_all(e_i) ), where 
+         * - B is the number of bonds the atom being removed has
+         * - E is the number of stored edges
+         * - e_i are the number of edges of the atoms bonded to the atom being
+         *   removed
+         * -> O( log (E) ) with some constants involved
+         */
+        void remove_atom(
+            const AtomIndexType& a
+        ) noexcept override final {
+            assert(_valid_atom_index(a));
+
+            // must update edges and adjacencies 
+            auto bonded_to = _adjacencies[a];
+
+            // erase all edges to and from this atom
+            for(const auto& bonded_atom_index : bonded_to) {
+                auto found_and_index_pair = EdgeTypeHelpers::binary_search(
+                    _edges,
+                    std::min(a, bonded_atom_index),
+                    std::max(a, bonded_atom_index)
+                );
+
+                if(found_and_index_pair.first) {
+                    _edges.erase(
+                        _edges.begin() + found_and_index_pair.second
+                    );
+                }
+            }
+
+            // remove all other mentions in _adjacencies
+            for(const auto& bonded_atom_index : bonded_to) {
+                _adjacencies[bonded_atom_index].erase(
+                    std::remove(
+                        _adjacencies[bonded_atom_index].begin(),
+                        _adjacencies[bonded_atom_index].end(),
+                        a
+                    )
+                );
+            }
+
+            // remove all entries from this atom in adjacencies
+            _adjacencies[a] = std::vector<AtomIndexType>();
+
+            // set _atom_exists to false for this index
+            _atom_exists[a] = false;
+        }
+
+        /*!
+         * Removes a bond from the ConnectivityManager. If the bond doesn't exist,
+         * the function does not throw.
+         * \param[in] a The first atom index
+         * \param[in] b The second atom index
+         * \pre a, b must fulfill: a != b.
+         * \note is O( e_a + e_b + log (E) ), where
+         * - e_i is the number of edges involving atom i
+         * - E is the number of stored edges
+         * -> O( log(E) ) with negligible constants
+         */
+        void remove_bond(
+            const AtomIndexType& a,
+            const AtomIndexType& b
+        ) noexcept override final {
+            assert(_valid_atom_indices(a, b));
+
+            // must update _edges and _adjacencies
+            _adjacencies[a].erase(
+                std::remove(
+                    _adjacencies[a].begin(),
+                    _adjacencies[a].end(),
+                    b
+                )
+            );
+            _adjacencies[b].erase(
+                std::remove(
+                    _adjacencies[b].begin(),
+                    _adjacencies[b].end(),
+                    a
+                )
+            );
+            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
+                _edges,
+                std::min(a, b),
+                std::max(a, b)
+            );
+            if(found_and_pos_pair.first) {
+                _edges.erase(
+                    _edges.begin() + found_and_pos_pair.second
+                );
+            }
+        };
+
+        void reset() override final {
+            _edges = std::vector<EdgeType>();
+            _adjacencies = std::vector<
+                std::vector<
+                    AtomIndexType
+                >
+            >();
+            _atom_exists = std::vector<bool>();
+        }
+
+        /*!
          * A debug helper function. Checks that the internal state is valid.
          * \note is O(E)
          */
@@ -1166,102 +1324,5 @@ namespace MoleculeManip {
                 "Passed all tests"
             );
         }
-
-
-        /*!
-         * Removes an atom from the ConnectivityManager. 
-         * \param[in] a The atom index
-         * \note is O( B log (E) + sum_all(e_i) ), where 
-         * - B is the number of bonds the atom being removed has
-         * - E is the number of stored edges
-         * - e_i are the number of edges of the atoms bonded to the atom being
-         *   removed
-         * -> O( log (E) ) with some constants involved
-         */
-        void remove_atom(
-            const AtomIndexType& a
-        ) noexcept override final {
-            assert(_valid_atom_index(a));
-
-            // must update edges and adjacencies 
-            auto bonded_to = _adjacencies[a];
-
-            // erase all edges to and from this atom
-            for(const auto& bonded_atom_index : bonded_to) {
-                auto found_and_index_pair = EdgeTypeHelpers::binary_search(
-                    _edges,
-                    std::min(a, bonded_atom_index),
-                    std::max(a, bonded_atom_index)
-                );
-
-                if(found_and_index_pair.first) {
-                    _edges.erase(
-                        _edges.begin() + found_and_index_pair.second
-                    );
-                }
-            }
-
-            // remove all other mentions in _adjacencies
-            for(const auto& bonded_atom_index : bonded_to) {
-                _adjacencies[bonded_atom_index].erase(
-                    std::remove(
-                        _adjacencies[bonded_atom_index].begin(),
-                        _adjacencies[bonded_atom_index].end(),
-                        a
-                    )
-                );
-            }
-
-            // remove all entries from this atom in adjacencies
-            _adjacencies[a] = std::vector<AtomIndexType>();
-
-            // set _atom_exists to false for this index
-            _atom_exists[a] = false;
-        }
-
-        /*!
-         * Removes a bond from the ConnectivityManager. If the bond doesn't exist,
-         * the function does not throw.
-         * \param[in] a The first atom index
-         * \param[in] b The second atom index
-         * \pre a, b must fulfill: a != b.
-         * \note is O( e_a + e_b + log (E) ), where
-         * - e_i is the number of edges involving atom i
-         * - E is the number of stored edges
-         * -> O( log(E) ) with negligible constants
-         */
-        void remove_bond(
-            const AtomIndexType& a,
-            const AtomIndexType& b
-        ) noexcept override final {
-            assert(_valid_atom_indices(a, b));
-
-            // must update _edges and _adjacencies
-            _adjacencies[a].erase(
-                std::remove(
-                    _adjacencies[a].begin(),
-                    _adjacencies[a].end(),
-                    b
-                )
-            );
-            _adjacencies[b].erase(
-                std::remove(
-                    _adjacencies[b].begin(),
-                    _adjacencies[b].end(),
-                    a
-                )
-            );
-            auto found_and_pos_pair = EdgeTypeHelpers::binary_search(
-                _edges,
-                std::min(a, b),
-                std::max(a, b)
-            );
-            if(found_and_pos_pair.first) {
-                _edges.erase(
-                    _edges.begin() + found_and_pos_pair.second
-                );
-            }
-        };
-
     };
 }
