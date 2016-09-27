@@ -4,18 +4,6 @@
 #include <cassert>
 #include <functional>
 
-template<typename T>
-std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
-    for(unsigned i = 0; i < vector.size(); i++) {
-        os << vector[i];
-        if(i != vector.size() - 1) {
-            os << ", ";
-        }
-    }
-
-    return os;
-}
-
 using Assignment = std::vector<char>;
 
 struct EquivalentAssignmentGenerationInstructions {
@@ -76,51 +64,30 @@ const std::vector<
         };
     },
 };
-const std::vector<
-    std::function<Assignment(const Assignment&)>
-> EquivalentAssignmentGenerationInstructions::c2_rotations  = {
-    /* These are three pairs of switches, so e.g.
-     * 13 25 46 means 1 <-> 3, 2 <-> 5, 4 <-> 6
-     */
-    [](const Assignment& a) -> Assignment {
-        // 13 25 46
-        return { a[2], a[4], a[0], a[5], a[1], a[3] };
-    },
-    [](const Assignment& a) -> Assignment {
-        // 13 26 45
-        return { a[2], a[5], a[0], a[4], a[3], a[1] };
-    },
-    [](const Assignment& a) -> Assignment {
-        // 15 24 36
-        return { a[4], a[3], a[5], a[1], a[0], a[2] };
-    },
-    [](const Assignment& a) -> Assignment {
-        // 16 24 35
-        return { a[5], a[3], a[4], a[1], a[2], a[0] };
-    },
-    [](const Assignment& a) -> Assignment {
-        // 12 34 56
-        return { a[1], a[0], a[3], a[2], a[5], a[4]  };
-    },
-    [](const Assignment& a) -> Assignment {
-        // 14 23 56
-        return { a[3], a[2], a[1], a[0], a[5], a[4] };
-    }
-};
 
 bool is_equivalent_assignment(
     const Assignment& a,
     const Assignment& b
 ) {
-    Assignment variant;
-    // try c4 rotations
-    for(const auto& c4_rotation_function: 
-        EquivalentAssignmentGenerationInstructions::c4_rotations
-    ) {
-        // overwrite variant with a again
-        variant = a;
-        for(unsigned i = 0; i < 3; i++) {
-            variant = c4_rotation_function(variant);
+    Assignment variant = a;
+    unsigned rotation_function_index;
+    // try all combinations of c4 rotations
+    for(unsigned i = 0; i < 6; i++) {
+        /* spin
+         *
+         * but which function?
+         *
+         * sequence in dependence of i is
+         * index i 0 1 2 3 4 5 
+         * group g 1 3 2 1 3 2 = 3 - ( (i + 2) % 3 )
+         * index [] = 2 - ( (i + 2) % 3)
+         */
+        rotation_function_index = 2 - ( (i + 2) % 3 );
+
+        for(unsigned j = 0; j < 4; j++) {
+            variant = EquivalentAssignmentGenerationInstructions::c4_rotations[
+                rotation_function_index
+            ](variant);
             if(std::equal(
                 variant.begin(),
                 variant.end(),
@@ -129,31 +96,32 @@ bool is_equivalent_assignment(
                 return true;
             }
         }
-    }
 
-    // try c2 rotations
-    for(const auto& c2_rotation_function:
-        EquivalentAssignmentGenerationInstructions::c2_rotations
-    ) {
-        variant = c2_rotation_function(a);
-        if(std::equal(
-            variant.begin(),
-            variant.end(),
-            b.begin()
-        )) {
-            return true;
-        }
+        /* rotate to next top position
+         *
+         * but which rotation to use?
+         *
+         * sequence in dependence of i
+         * index i 0 1 2 3 4 5
+         * group g 2 1 3 2 1 3 = 3 - ( (i + 1) % 3)
+         * index [] = 2 - ( (i + 1) % 3
+         */
+        
+        rotation_function_index = 2 - ( (i + 1) % 3 );
+        variant = EquivalentAssignmentGenerationInstructions::c4_rotations[
+            rotation_function_index
+        ](variant);
     }
 
     return false;
 }
 
-int main() {
+std::vector<Assignment> unique_assignments(const Assignment& initial) {
     std::vector<
         std::vector<char>
     > unique_assignments;
 
-    std::vector<char> assignment = {'A', 'A', 'A', 'B', 'B', 'B'};
+    std::vector<char> assignment = initial;
 
     do {
         bool current_assignment_is_distinct = std::accumulate(
@@ -179,7 +147,6 @@ int main() {
             }
         );
         if(current_assignment_is_distinct) {
-            std::cout << assignment << std::endl;
             unique_assignments.push_back(assignment);
         }
     } while(std::next_permutation(
@@ -187,7 +154,5 @@ int main() {
         assignment.end()
     ));
 
-    std::cout << " -> " << unique_assignments.size() << std::endl;
-
-    return 0;
+    return unique_assignments;
 }
