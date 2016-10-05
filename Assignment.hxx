@@ -1,5 +1,10 @@
 /* Public members */
 /*  Constructors */
+/*!
+ * Constructs an Assignment from a list of ligand characters.
+ * \tparam Symmetry A SymmetryInformation derived class template.
+ * \param characters A vector of chars signifying abstract ligands.
+ */
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
@@ -19,6 +24,15 @@ Assignment<Symmetry>::Assignment(
   sortOccupations();
 }
 
+
+/*!
+ * Construct an Assignment from a list of ligand characters and a list of 
+ * bonded indices referencing the ligand characters.
+ * \tparam Symmetry A SymmetryInformation derived class template.
+ * \param characters A vector of chars signifying abstract ligands.
+ * \param pairedIndices A vector of pairs. Describes which ligand characters 
+ *  are bonded to one another.
+ */
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
@@ -46,7 +60,7 @@ Assignment<Symmetry>::Assignment(
     );
 
     // create a group from the pair
-    std::vector<bool> group (false, Symmetry<>::size);
+    std::vector<bool> group (Symmetry<>::size, false);
     group.at(indexPair.first) = true;
     group.at(indexPair.second) = true;
 
@@ -72,14 +86,18 @@ Assignment<Symmetry>::Assignment(
 }
 
 /* Public members */
-
+/*!
+ * Determines if two Assignment instances are rotationally superimposable. This
+ * function exploits the rotations defined in the template parameter Symmetry
+ * to check equivalence.
+ */
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
->
-bool Assignment<Symmetry>::isRotationallySuperimposable(
+> bool Assignment<Symmetry>::isRotationallySuperimposable(
   const Assignment<Symmetry>& other
 ) const {
+
   // add the initial structure to a set of Assignments
   std::set<Assignment> enumeratedAssignments = {other};   
 
@@ -89,7 +107,14 @@ bool Assignment<Symmetry>::isRotationallySuperimposable(
   // initialize 
   std::vector<unsigned> chain = {0};
   unsigned depth = 0;
-  while(chain.at(0) <= linkLimit) {
+  while(chain.at(0) < linkLimit) {
+    // TEMP
+    /*std::cout << "chain: ";
+    for(const auto& link : chain) {
+      std::cout << link << " ";
+    }
+    std::cout << std::endl;*/
+
     // perform instruction
     Assignment<Symmetry> generated = other;
     for(const auto& link: chain) {
@@ -138,8 +163,7 @@ bool Assignment<Symmetry>::isRotationallySuperimposable(
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
->
-bool Assignment<Symmetry>::operator < (
+> bool Assignment<Symmetry>::operator < (
   const Assignment<Symmetry>& other
 ) const {
   if(
@@ -177,8 +201,7 @@ bool Assignment<Symmetry>::operator < (
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
->
-bool Assignment<Symmetry>::operator == (
+> bool Assignment<Symmetry>::operator == (
   const Assignment<Symmetry>& other
 ) const {
   // compare characters
@@ -203,11 +226,13 @@ bool Assignment<Symmetry>::operator == (
 }
 
 /* Private members */
+/*!
+ * Compares two reduced group representations
+ */
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
->
-bool Assignment<Symmetry>::_reducedGroupsAreEqual(
+> bool Assignment<Symmetry>::_reducedGroupsAreEqual(
   const std::vector<
     std::vector<unsigned>
   >& a,
@@ -245,11 +270,13 @@ bool Assignment<Symmetry>::_reducedGroupsAreEqual(
   return true;
 }
 
+/*!
+ * Reduces the bool vector groups to pairs of connected indices.
+ */
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
->
-std::vector<
+> std::vector<
   std::vector<unsigned>
 > Assignment<Symmetry>::_reduceGroups() const {
   std::vector<
@@ -281,11 +308,13 @@ std::vector<
   return groupReduction;
 }
 
+/*!
+ * ostream operator for easier debugging
+ */
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
->
-std::ostream& operator << (
+> std::ostream& operator << (
   std::ostream& os,
   const Assignment<Symmetry>& a
 ) {

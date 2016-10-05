@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
   Assignment<PermSymmetry::Octahedral> instance(
     {'A', 'A', 'A', 'A', 'A', 'A'}
   );
-  Assignment<PermSymmetry::Octahedral> instance_with_bonded_ligands(
+  Assignment<PermSymmetry::Octahedral> instanceWithBondedLigands(
     {'A', 'A', 'A', 'A', 'A', 'A'},
     {
       std::make_pair(0,1),
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
     instance.ligandConnectionsAreOrdered() == true
   );
   BOOST_CHECK(
-    instance_with_bonded_ligands.ligandConnectionsAreOrdered() == true
+    instanceWithBondedLigands.ligandConnectionsAreOrdered() == true
   );
 }
 
