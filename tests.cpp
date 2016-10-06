@@ -231,13 +231,111 @@ void run_tests(
       for(const auto& uniqueAssignment: unique) {
         std::cout << uniqueAssignment << std::endl;
       }
-    } else {
-      std::cout << "Passed, got " << expectedUnique << std::endl;
-    }
+    } 
   }
 }
 
+/* Tetrahedral tests */
+/* These were though up myself */
+BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
+  run_tests<PermSymmetry::Tetrahedral>({
+    // M_A
+    std::make_tuple(
+      std::vector<char>(4, 'A'),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      1
+    ),
+    // M_A3B
+    std::make_tuple(
+      std::vector<char>({'A', 'A', 'A', 'B'}),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      1
+    ),
+    // M_A2B2
+    std::make_tuple(
+      std::vector<char>({'A', 'A', 'B', 'B'}),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      1
+    ),
+    // M_A2BC
+    std::make_tuple(
+      std::vector<char>({'A', 'A', 'B', 'C'}),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      1
+    ),
+    // M_ABCD
+    std::make_tuple(
+      std::vector<char>({'A', 'B', 'C', 'D'}),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      2
+    )
+  });
+}
+
+/* Square Planar tests */
+/* These were thought up myself */
+BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
+  run_tests<PermSymmetry::SquarePlanar>({
+    // M_A
+    std::make_tuple(
+      std::vector<char>(4, 'A'),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      1
+    ),
+    // M_A3B
+    std::make_tuple(
+      std::vector<char>({'A', 'A', 'A', 'B'}),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      1
+    ),
+    // M_A2B2
+    std::make_tuple(
+      std::vector<char>({'A', 'A', 'B', 'B'}),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      2
+    ),
+    // M_A2BC
+    std::make_tuple(
+      std::vector<char>({'A', 'A', 'B', 'C'}),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      2
+    ),
+    // M_ABCD
+    std::make_tuple(
+      std::vector<char>({'A', 'B', 'C', 'D'}),
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >(),
+      3
+    )
+  });
+}
+
 /* Octahedral tests */
+/* Expected values taken from
+ * Miessler, Gary L., Tarr, Donald A.: Inorganic Chemistry, Third Edition.
+ * Do not know whether these are correct! They are "all calculated using a 
+ * computer program [...]."
+ * The reference however is useful: WE Bennett, Inorg. Chem. 1969
+ */
 BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
   run_tests<PermSymmetry::Octahedral>(
     {

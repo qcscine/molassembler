@@ -66,7 +66,7 @@ std::vector<
   Assignment<Symmetry>
 > uniqueAssignments(
   const Assignment<Symmetry>& initial,
-  const bool& removeTransSpanningGroups = false
+  const bool& removeTransSpanningGroups = true
 ) {
   std::vector<
     Assignment<Symmetry>
@@ -100,7 +100,8 @@ std::vector<
         uniqueAssignments.begin(),
         uniqueAssignments.end(),
         predicateHasTransArrangedPairs<Symmetry>
-      )
+      ),
+      uniqueAssignments.end()
     );
     return uniqueAssignments;
   } else return uniqueAssignments;

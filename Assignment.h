@@ -10,14 +10,6 @@
 #include "AssignmentColumn.h"
 
 /* TODO
- * - reduceGroups needs serious testing
- * - make Assignment a template of the underlying SymmetryInformation derived 
- *   class, use its static functions to generalize the methods involved
- * - isRotationallySuperimposable could be refactored to separate out the 
- *   generation of equivalent structures with a lambda parameter which does the 
- *   equivalence check and returns a bool to break. That would allow reuse of 
- *   the code in the algorithm generating uniques, potentially leading to a 
- *   significant speedup
  */
 
 /* NOTES
@@ -102,6 +94,10 @@ public:
     );
   }
 
+  /*!
+   * Generates the next permutation of positionOccupations in which the 
+   * ligand connections are ordered.
+   */
   virtual bool nextPermutation() override final {
     while(std::next_permutation(
       positionOccupations.begin(),
@@ -114,6 +110,9 @@ public:
     return false;
   };
 
+  /*!
+   * Applies a rotation function to the positionOccupations
+   */
   virtual void applyRotation(
     std::function<
       std::vector<AssignmentColumn>(
@@ -126,6 +125,10 @@ public:
 
 
   /* Information */
+  /*!
+   * Checks whether the list of AssignmentColumns (positionOccupations) is
+   * ordered.
+   */
   virtual bool occupationsAreOrdered() const override final {
     return std::is_sorted(
       positionOccupations.begin(),
@@ -133,6 +136,16 @@ public:
     );
   }
 
+  /*!
+   * Checks whether the ligand connections specified in the AssignmentColumns
+   * are ordered. In a row wise view of the data in the columns:
+   * 1010
+   * 0101
+   * is ordered, but
+   * 0101
+   * 1010
+   * is not, although both sets of bit vectors have the same meaning.
+   */
   virtual bool ligandConnectionsAreOrdered() const override final {
     // shortcut if rowView will be empty
     if(positionOccupations[0].groups.size() == 0) return true;
@@ -159,14 +172,31 @@ public:
     return true;
   }
 
+  /*!
+   * Checks whether this Assignment is rotationally superimposable with another.
+   */
   bool isRotationallySuperimposable(
     const Assignment<Symmetry>& other
   ) const;
 
+  /*!
+   * Generates a set of all rotational equivalents of this Assignment as 
+   * defined by its symmetry template parameter.
+   */
   std::set<
     Assignment<Symmetry>
   > generateAllRotations() const;
 
+  /*!
+   * Implementation of the generation of a set of all rotational equivalents of
+   * this Assignment as defined by its symmetry template parameter. Takes an 
+   * interrupt callback as an argument to which it passes *this and a new 
+   * rotational structure every time one is found. If the callback returns
+   * true, the generation of assignments is terminated and a pair containing
+   * the set of generated assignments and a boolean with the value true is 
+   * returned. If the generation is allowed to finish, the full set and the 
+   * boolean false are returned.
+   */
   std::pair<
     std::set<
       Assignment<Symmetry>
