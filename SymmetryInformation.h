@@ -1,7 +1,9 @@
 #ifndef LIB_SYMMETRY_INFORMATION_HPP
 #define LIB_SYMMETRY_INFORMATION_HPP
 
+#ifndef UNUSED
 #define UNUSED(x) (void)(x)
+#endif
 
 #include <vector>
 #include <functional>

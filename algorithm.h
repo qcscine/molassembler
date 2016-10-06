@@ -70,34 +70,27 @@ std::vector<
 ) {
   std::vector<
     Assignment<Symmetry>
-  > uniqueAssignments;
+  > uniqueAssignments = {initial};
+
+  auto rotationsSet = initial.generateAllRotations();
 
   Assignment<Symmetry> assignment = initial;
 
   do {
-    bool currentAssignmentIsDistinct = std::accumulate(
-      uniqueAssignments.begin(),
-      uniqueAssignments.end(),
-      true,
-      [&assignment](
-        const bool& carry,
-        const Assignment<Symmetry>& uniqueAssignment
-      ) {
-        if(carry) { 
-          // only bother to compute if the accumulation is still true
-          return (
-            carry
-            && !uniqueAssignment.isRotationallySuperimposable(
-              assignment
-            )
-          );
-        } else {
-          return carry;
-        }
-      }
-    );
+    bool currentAssignmentIsDistinct = rotationsSet.count(
+      assignment
+    ) == 0;
     if(currentAssignmentIsDistinct) {
       uniqueAssignments.push_back(assignment);
+      /* C++17
+      rotationsSet.merge(
+        assignment.generateAllRotations()
+      ); */
+      auto assignmentRotations = assignment.generateAllRotations();
+      rotationsSet.insert(
+        assignmentRotations.begin(),
+        assignmentRotations.end()
+      );
     }
   } while(assignment.nextPermutation());
 

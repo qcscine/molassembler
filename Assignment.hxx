@@ -1,3 +1,7 @@
+#ifndef UNUSED
+#define UNUSED(x) (void)(x)
+#endif
+
 /* Public members */
 /*  Constructors */
 /*!
@@ -91,15 +95,134 @@ Assignment<Symmetry>::Assignment(
  * function exploits the rotations defined in the template parameter Symmetry
  * to check equivalence.
  */
+//template<
+//  template<typename T = AssignmentColumn>
+//  class Symmetry
+//> bool Assignment<Symmetry>::isRotationallySuperimposable(
+//  const Assignment<Symmetry>& other
+//) const {
+//
+//  // add the initial structure to a set of Assignments
+//  std::set<Assignment> enumeratedAssignments = {other};   
+//
+//  // Systematically explore all rotations
+//  // maximum element is the size of the rotation vector
+//  unsigned linkLimit = Symmetry<>::rotations.size();
+//
+//  // initialize 
+//  std::vector<unsigned> chain = {0};
+//  std::vector<
+//    Assignment<Symmetry>
+//  > chainStructures = {other};
+//  unsigned depth = 0;
+//
+//  // begin loop
+//  while(chain.at(0) < linkLimit) {
+//    // TEMP
+//    /*std::cout << "chain: ";
+//    for(const auto& link : chain) {
+//      std::cout << link << " ";
+//    }
+//    std::cout << std::endl;*/
+//
+//    // perform rotation
+//    // copy the last element in chainStructures
+//    Assignment<Symmetry> generated = chainStructures.at(
+//      chainStructures.size() - 1
+//    );
+//    // apply the rotation referenced by the last link in chain
+//    generated.applyRotation(
+//      Symmetry<>::rotations[
+//        chain.at(
+//          chain.size() - 1
+//        )
+//      ].first
+//    );
+//
+//    // is it something new?
+//    if(enumeratedAssignments.count(generated) == 0) {
+//      // is it the same as this?
+//      if(*this == generated) {
+//        return true;
+//      }
+//      // add it to the set
+//      enumeratedAssignments.insert(generated);
+//      // add it to chainStructures
+//      chainStructures.push_back(generated);
+//      // increase depth, add a link
+//      depth++;
+//      chain.emplace_back(0);
+//    } else {
+//      // if we are not at the maximum instruction
+//      if(chain.at(depth) < linkLimit - 1) {
+//        chain.at(depth)++;
+//      } else {
+//        // collapse the chain until we are at an incrementable position
+//        while(
+//          depth > 0
+//          && chain.at(depth) == linkLimit - 1
+//        ) {
+//          chain.pop_back();
+//          chainStructures.pop_back();
+//          depth--;
+//        }
+//
+//        chain.at(depth)++;
+//      }
+//    }
+//  }
+//
+//  /* we've enumerated all possible rotations of the Assignment other, none of 
+//   * those have matched *this. So...
+//   */
+//  return false;
+//}
+
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> std::set<
+    Assignment<Symmetry>
+> Assignment<Symmetry>::generateAllRotations() const {
+  return _generateAllRotations(
+    [](const Assignment<Symmetry>& a, const Assignment<Symmetry>& b) -> bool {
+      UNUSED(a);
+      UNUSED(b);
+      return false;
+    }
+  ).first;
+}
+
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
 > bool Assignment<Symmetry>::isRotationallySuperimposable(
   const Assignment<Symmetry>& other
 ) const {
+  return _generateAllRotations(
+    [&other](const Assignment<Symmetry>& a, const Assignment<Symmetry>& b) -> bool {
+      UNUSED(a);
+      return b == other;
+    }
+  ).second;
+}
+
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> std::pair<
+  std::set<
+    Assignment<Symmetry>
+  >,
+  bool
+>Assignment<Symmetry>::_generateAllRotations(
+  std::function<
+    bool(const Assignment<Symmetry>&, const Assignment<Symmetry>&)
+  > interruptCallbackOnNewAssignment
+) const {
 
   // add the initial structure to a set of Assignments
-  std::set<Assignment> enumeratedAssignments = {other};   
+  std::set<Assignment> enumeratedAssignments = {*this};   
 
   // Systematically explore all rotations
   // maximum element is the size of the rotation vector
@@ -109,18 +232,11 @@ template<
   std::vector<unsigned> chain = {0};
   std::vector<
     Assignment<Symmetry>
-  > chainStructures = {other};
+  > chainStructures = {*this};
   unsigned depth = 0;
 
   // begin loop
   while(chain.at(0) < linkLimit) {
-    // TEMP
-    /*std::cout << "chain: ";
-    for(const auto& link : chain) {
-      std::cout << link << " ";
-    }
-    std::cout << std::endl;*/
-
     // perform rotation
     // copy the last element in chainStructures
     Assignment<Symmetry> generated = chainStructures.at(
@@ -130,16 +246,18 @@ template<
     generated.applyRotation(
       Symmetry<>::rotations[
         chain.at(
-          chain.size() -1
+          chain.size() - 1
         )
       ].first
     );
 
     // is it something new?
     if(enumeratedAssignments.count(generated) == 0) {
-      // is it the same as this?
-      if(*this == generated) {
-        return true;
+      /* give a chance to interrupt if a condition for *this and the newly
+       *  generated structures is fulfilled
+       */
+      if(interruptCallbackOnNewAssignment(*this, generated)) {
+        return make_pair(enumeratedAssignments, true);
       }
       // add it to the set
       enumeratedAssignments.insert(generated);
@@ -168,68 +286,8 @@ template<
     }
   }
 
-  /* we've enumerated all possible rotations of the Assignment other, none of 
-   * those have matched *this. So...
-   */
-  return false;
+  return make_pair(enumeratedAssignments, false);
 }
-
-/*template<
-  template<typename T = AssignmentColumn>
-  class Symmetry
-> std::set<
-  Assignment<Symmetry>
-> Assignment<Symmetry>::generateAllRotations() const {
-  std::set<
-    Assignment<Symmetr>
-  > rotations = {*this};
-
-  // Systematically explore all rotations
-  // maximum element is the size of the rotation vector
-  unsigned linkLimit = Symmetry<>::rotations.size();
-  // initialize 
-  std::vector<unsigned> chain = {0};
-  unsigned depth = 0;
-  while(chain.at(0) < linkLimit) {
-    // perform instruction
-    Assignment<Symmetry> generated = other;
-    for(const auto& link: chain) {
-      generated.applyRotation(
-        Symmetry<>::rotations[link].first
-      );
-    }
-
-    // is it something new?
-    if(enumeratedAssignments.count(generated) == 0) {
-      // is it the same as this?
-      if(*this == generated) {
-        return true;
-      }
-      // add it to the set
-      enumeratedAssignments.insert(generated);
-      // increase depth, add a link
-      depth++;
-      chain.emplace_back(0);
-    } else {
-      // if we are not at the maximum instruction
-      if(chain.at(depth) < linkLimit - 1) {
-        chain.at(depth)++;
-      } else {
-        // collapse the chain until we are at an incrementable position
-        while(
-          depth > 0
-          && chain.at(depth) == linkLimit - 1
-        ) {
-          chain.pop_back();
-          depth--;
-        }
-
-        chain.at(depth)++;
-      }
-    }
-  }
-
-} */
 
 /* Operators */
 template<

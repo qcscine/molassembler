@@ -113,6 +113,7 @@ public:
     }
     return false;
   };
+
   virtual void applyRotation(
     std::function<
       std::vector<AssignmentColumn>(
@@ -165,6 +166,17 @@ public:
   std::set<
     Assignment<Symmetry>
   > generateAllRotations() const;
+
+  std::pair<
+    std::set<
+      Assignment<Symmetry>
+    >,
+    bool
+  > _generateAllRotations(
+    std::function<
+      bool(const Assignment<Symmetry>&, const Assignment<Symmetry>&)
+    > interruptCallbackOnNewAssignment
+  ) const;
 
   /* Operators */
   bool operator < (
