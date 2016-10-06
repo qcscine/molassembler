@@ -104,9 +104,15 @@ template<
   // Systematically explore all rotations
   // maximum element is the size of the rotation vector
   unsigned linkLimit = Symmetry<>::rotations.size();
+
   // initialize 
   std::vector<unsigned> chain = {0};
+  std::vector<
+    Assignment<Symmetry>
+  > chainStructures = {other};
   unsigned depth = 0;
+
+  // begin loop
   while(chain.at(0) < linkLimit) {
     // TEMP
     /*std::cout << "chain: ";
@@ -115,13 +121,19 @@ template<
     }
     std::cout << std::endl;*/
 
-    // perform instruction
-    Assignment<Symmetry> generated = other;
-    for(const auto& link: chain) {
-      generated.applyRotation(
-        Symmetry<>::rotations[link].first
-      );
-    }
+    // perform rotation
+    // copy the last element in chainStructures
+    Assignment<Symmetry> generated = chainStructures.at(
+      chainStructures.size() - 1
+    );
+    // apply the rotation referenced by the last link in chain
+    generated.applyRotation(
+      Symmetry<>::rotations[
+        chain.at(
+          chain.size() -1
+        )
+      ].first
+    );
 
     // is it something new?
     if(enumeratedAssignments.count(generated) == 0) {
@@ -131,6 +143,8 @@ template<
       }
       // add it to the set
       enumeratedAssignments.insert(generated);
+      // add it to chainStructures
+      chainStructures.push_back(generated);
       // increase depth, add a link
       depth++;
       chain.emplace_back(0);
@@ -145,6 +159,7 @@ template<
           && chain.at(depth) == linkLimit - 1
         ) {
           chain.pop_back();
+          chainStructures.pop_back();
           depth--;
         }
 
