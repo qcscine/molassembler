@@ -159,6 +159,63 @@ template<
   return false;
 }
 
+/*template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> std::set<
+  Assignment<Symmetry>
+> Assignment<Symmetry>::generateAllRotations() const {
+  std::set<
+    Assignment<Symmetr>
+  > rotations = {*this};
+
+  // Systematically explore all rotations
+  // maximum element is the size of the rotation vector
+  unsigned linkLimit = Symmetry<>::rotations.size();
+  // initialize 
+  std::vector<unsigned> chain = {0};
+  unsigned depth = 0;
+  while(chain.at(0) < linkLimit) {
+    // perform instruction
+    Assignment<Symmetry> generated = other;
+    for(const auto& link: chain) {
+      generated.applyRotation(
+        Symmetry<>::rotations[link].first
+      );
+    }
+
+    // is it something new?
+    if(enumeratedAssignments.count(generated) == 0) {
+      // is it the same as this?
+      if(*this == generated) {
+        return true;
+      }
+      // add it to the set
+      enumeratedAssignments.insert(generated);
+      // increase depth, add a link
+      depth++;
+      chain.emplace_back(0);
+    } else {
+      // if we are not at the maximum instruction
+      if(chain.at(depth) < linkLimit - 1) {
+        chain.at(depth)++;
+      } else {
+        // collapse the chain until we are at an incrementable position
+        while(
+          depth > 0
+          && chain.at(depth) == linkLimit - 1
+        ) {
+          chain.pop_back();
+          depth--;
+        }
+
+        chain.at(depth)++;
+      }
+    }
+  }
+
+} */
+
 /* Operators */
 template<
   template<typename T = AssignmentColumn>

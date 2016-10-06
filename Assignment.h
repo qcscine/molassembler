@@ -13,6 +13,11 @@
  * - reduceGroups needs serious testing
  * - make Assignment a template of the underlying SymmetryInformation derived 
  *   class, use its static functions to generalize the methods involved
+ * - isRotationallySuperimposable could be refactored to separate out the 
+ *   generation of equivalent structures with a lambda parameter which does the 
+ *   equivalence check and returns a bool to break. That would allow reuse of 
+ *   the code in the algorithm generating uniques, potentially leading to a 
+ *   significant speedup
  */
 
 /* NOTES
@@ -20,6 +25,9 @@
  *   the class definition since templates may not be virtual
  */
 
+/*!
+ * This class exists to allow polymorphic use of it's derived class Assignment.
+ */
 struct AbstractAssignment {
   /* public members */
   virtual void sortOccupations() = 0;
@@ -42,6 +50,16 @@ struct AbstractAssignment {
   ) const = 0; */
 };
 
+/*!
+ * This class represents a simplified model of a sterically unique assignment
+ * of a set of ligands to a stereocenter. It exists to uniquely identify the 
+ * steric configuration at this stereocenter, and provides methods to assist
+ * a systematic generation of all possible configurations. It is generalized 
+ * over a number of symmetries which are encoded elsewhere and that serve as 
+ * template parameter to this class.
+ * \tparam Symmetry The template class specifying which symmetry is to be 
+ *  enforced.
+ */
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
@@ -143,6 +161,10 @@ public:
   bool isRotationallySuperimposable(
     const Assignment<Symmetry>& other
   ) const;
+
+  std::set<
+    Assignment<Symmetry>
+  > generateAllRotations() const;
 
   /* Operators */
   bool operator < (

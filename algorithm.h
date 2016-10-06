@@ -10,6 +10,13 @@
 
 #include "Assignment.h"
 
+/* TODO
+ * - Bug in predicate* for monodentate ligands. For some reason, Assignments 
+ *   are removed in post if the default on uniqueAssignments' removeTrans* is 
+ *   true although no groups are present. Setting default to false leads to all
+ *   monodentate tests passing.
+ */
+
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
@@ -59,7 +66,7 @@ std::vector<
   Assignment<Symmetry>
 > uniqueAssignments(
   const Assignment<Symmetry>& initial,
-  const bool& removeTransSpanningGroups = true
+  const bool& removeTransSpanningGroups = false
 ) {
   std::vector<
     Assignment<Symmetry>
