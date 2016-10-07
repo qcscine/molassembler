@@ -9,6 +9,27 @@
 /* TODO
  * - Nothing ensures that the molecular graph stays connected. 
  *   Either store chords or detect disconnects in remove_* functions
+ *
+ *   -> If the state of the ConnectivityManager is to be connected at ALL
+ *   times, then the API of add_atom must change and remove_atom and
+ *   remove_bond need added checks to ensure there is only one component in the
+ *   graph. If add_bond is to exist only as::
+ *
+ *   AtomIndexType add_atom(
+ *       const AtomIndexType& bonded_to,
+ *       const BondType& bond_type
+ *   )
+ *
+ *   then the ConnectivityManager must initialize with at least one atom. 
+ *   This however awkardly forces dependencies of the class to initialize
+ *   similarly :(
+ *
+ * - How to represent aromatic structures internally? With alternating bonds or
+ *   with an additional bond type? Clear preference for an additional bond type
+ *   for easier parsing and deduction of min-max distances for distance
+ *   geometry
+ *
+ * - Graph algorithms -> ring detection, component detection
  */
 
 using namespace std;

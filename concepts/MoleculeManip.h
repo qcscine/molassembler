@@ -1,4 +1,4 @@
-#include "I_MolecularGraph.hpp"
+#include "I_MolecularGraph.h"
 
 namespace MoleculeManip {
     using MoleculeContainer = std::list<Molecule>;

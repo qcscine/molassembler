@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 #include "AtomSet.h"
-#include "Molecule.hpp"
+#include "Molecule.h"
 
 namespace MoleculeManip {
 
