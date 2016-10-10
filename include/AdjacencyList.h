@@ -1,8 +1,12 @@
+#ifndef INCLUDE_ADJACENCY_LIST_H
+#define INCLUDE_ADJACENCY_LIST_H
+
 #include <vector>
 #include <algorithm>
 #include <cassert>
 
 #include "common_typedefs.h"
+#include "EdgeList.h"
 
 namespace MoleculeManip {
 
@@ -27,8 +31,37 @@ private:
     return a < _adjacencies.size();
   }
 
+  bool _areValidIndices(
+    const AtomIndexType& a,
+    const AtomIndexType& b
+  ) const {
+    return (
+      _isValidIndex(a)
+      && _isValidIndex(b)
+      && a != b
+    );
+  }
+
 public:
 /* Public member functions */
+  /* Constructors */
+  AdjacencyList() = default;
+  AdjacencyList(
+    const EdgeList& edges
+  ) {
+    for(const auto& edge: edges) {
+      // resize if indices do not fit
+      if(std::max(edge.i, edge.j) >= _adjacencies.size()) {
+        _adjacencies.resize(std::max(edge.i, edge.j) + 1);
+      }
+      addAdjacency(edge.i, edge.j);
+    }
+    if(!validate()) {
+      throw std::runtime_error(
+        "Constructing AdjacencyList from EdgeList yielded invalid state!"
+      );
+    }
+  }
   /* Modification */
   /*!
    * Adds an empty vector for a new vertex to the underlying data 
@@ -48,6 +81,8 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) noexcept {
+    assert(_areValidIndices(a, b));
+
     _adjacencies[a].emplace_back(b);
     _adjacencies[b].emplace_back(a);
   }
@@ -68,6 +103,8 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) {
+    assert(_areValidIndices(a, b));
+
     _adjacencies[a].erase(
       std::remove(
         _adjacencies[a].begin(),
@@ -103,6 +140,8 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const noexcept {
+    assert(_areValidIndices(a, b));
+
     return std::find(
       _adjacencies[a].begin(),
       _adjacencies[a].end(),
@@ -122,6 +161,24 @@ public:
     return _adjacencies[a];
   }
 
+  /*!
+   * Checks if the current state of the list is valid
+   */
+  bool validate() const {
+    // There is an inverse for every forward bond type
+    for(unsigned i = 0; i < _adjacencies.size(); i++) {
+      auto adjacents = getAdjacencies(i);
+      for(const auto& adjacency: adjacents) {
+        if(adjacency >= _adjacencies.size()) return false;
+        if(!isAdjacent(adjacency, i)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
 /* Operators */
   const std::vector<AtomIndexType>& operator[](const AtomIndexType& a) const {
     assert(_isValidIndex(a));
@@ -130,3 +187,5 @@ public:
 };
 
 } // eo namespace MoleculeManip
+
+#endif

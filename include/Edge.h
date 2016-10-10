@@ -1,5 +1,5 @@
-#ifndef INCLUDE_MOLECULE_EDGE_HPP
-#define INCLUDE_MOLECULE_EDGE_HPP
+#ifndef INCLUDE_MOLECULE_EDGE_H
+#define INCLUDE_MOLECULE_EDGE_H
 
 #include <cassert>
 

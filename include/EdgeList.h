@@ -1,3 +1,6 @@
+#ifndef INCLUDE_EDGE_LIST_H
+#define INCLUDE_EDGE_LIST_H
+
 #include <algorithm>
 #include <vector>
 #include <functional>
@@ -151,6 +154,13 @@ private:
   }
 
 public:
+/* Constructors */
+  EdgeList() = default;
+  EdgeList(const std::vector<Edge>& edges) {
+    for(const auto& edge : edges) {
+      add(edge);
+    }
+  }
 
 /* Modification */
   void add(const Edge& edge) noexcept {
@@ -224,6 +234,10 @@ public:
     );
   }
 
+  unsigned size() const noexcept {
+    return _edges.size();
+  }
+
 /* Iterators */
   std::vector<Edge>::const_iterator begin() const {
     return _edges.cbegin();
@@ -234,3 +248,5 @@ public:
 }; 
 
 } // eo namespace
+
+#endif

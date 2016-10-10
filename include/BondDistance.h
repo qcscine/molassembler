@@ -1,5 +1,5 @@
-#ifndef INCLUDE_BOND_DISTANCE_HPP
-#define INCLUDE_BOND_DISTANCE_HPP
+#ifndef INCLUDE_BOND_DISTANCE_H
+#define INCLUDE_BOND_DISTANCE_H
 
 #include <cmath>
 #include "ElementTypes.h" // Delib

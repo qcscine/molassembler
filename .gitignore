@@ -3,3 +3,5 @@ Makefile
 *.swp
 *.svg
 *.pdf
+*.out
+build/

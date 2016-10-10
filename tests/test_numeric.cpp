@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 
-#include "numeric.hpp"
+#include "numeric.h"
 
 template<typename T>
 std::ostream& operator << (

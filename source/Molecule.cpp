@@ -84,6 +84,8 @@ AtomIndexType Molecule::addAtom(
   ));
 
   _elements.push_back(elementType);
+
+  return addedIndex;
 }
 
 void Molecule::addBond(
@@ -138,6 +140,15 @@ void Molecule::removeBond(
     a,
     b
   );
+}
+
+std::ostream& operator << (
+  std::ostream& os,
+  const Molecule& mol
+) {
+  os << mol._adjacencies.size() << " adjacencies, "
+    << mol._edges.size() << " edges." << std::endl;
+  return os;
 }
 
 } // eo namespace

@@ -1,3 +1,10 @@
+TODO
+----
+
+- Test IO
+- Transition to CTest ?
+
+
 Files
 -----
 

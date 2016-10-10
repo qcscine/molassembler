@@ -9,9 +9,9 @@ using namespace MoleculeManip;
 BOOST_AUTO_TEST_CASE( edge_all ) {
   unsigned a = 0, b = 2, c = 1, d = 4;
   // instantiate
-  Edge instance(std::make_tuple(0, 1, BondType::Single));
-  Edge biggerInstance(std::make_tuple(a, b, BondType::Double));
-  Edge evenBiggerInstance(std::make_tuple(c, d, BondType::Triple));
+  Edge instance(0, 1, BondType::Single);
+  Edge biggerInstance(a, b, BondType::Double);
+  Edge evenBiggerInstance(c, d, BondType::Triple);
 
   // member lexicographical comparisons
   BOOST_CHECK(instance.smallerThan(a, b));

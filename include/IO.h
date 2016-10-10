@@ -2,6 +2,7 @@
 #define INCLUDE_MOLECULE_IO_H
 
 #include "Molecule.h"
+#include "GraphAlgorithms.h"
 
 #include <fstream>
 
@@ -65,7 +66,8 @@ private:
         stringCopy.begin(),
         stringCopy.end(),
         ' '
-      )
+      ),
+      stringCopy.end()
     );
     return stringCopy;
   }
@@ -86,7 +88,7 @@ private:
       _elements.push_back(
         Delib::ElementInfo::instance()[
           _removeAllSpaces(
-            line.substr(32, 3)
+            line.substr(31, 3)
           )
         ].first
       );
@@ -103,8 +105,9 @@ private:
     if(version == MOLFileVersion::V2000) {
       // Extract bond information
       unsigned i, j, bty;
-      i = std::atoi(line.substr(0, 3).c_str());
-      j = std::atoi(line.substr(3, 3).c_str());
+      // MOLFile indices are 1-based, thus subtract one
+      i = std::atoi(line.substr(0, 3).c_str()) - 1; 
+      j = std::atoi(line.substr(3, 3).c_str()) - 1;
       bty = std::atoi(line.substr(6, 3).c_str());
 
       // WARNING: this can throw if queries are set!
@@ -131,7 +134,7 @@ public:
   }
 
   /*!
-   * Throwing!
+   * Throws in a myriad of cases!
    */
   virtual Molecule readSingle(const std::string& filename) override {
     assert(canReadFile(filename));
@@ -174,7 +177,6 @@ public:
         state = State::AtomBlock;
       } else if(state == State::AtomBlock) {
         std::getline(file, line);
-
        _parseAtomBlockLine(
           formatVersion,
           line
@@ -197,7 +199,17 @@ public:
       }
     }
 
-    // TODO ensure adjacencies is connected
+    // Ensure that the Molecule is connected, no fragments are contained
+    unsigned nComponents = GraphAlgorithms::num_connected_components(
+      _adjacencies
+    );
+    if(nComponents != 1) {
+      throw std::runtime_error(
+        std::string("File is not a single molecule, but contains ")
+          + std::to_string(nComponents)
+          + " components."
+      );
+    }
 
     return Molecule(
       _elements,
