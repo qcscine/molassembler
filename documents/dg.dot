@@ -1,7 +1,8 @@
 digraph G {
   subgraph cluster_0 {
     label = "Molecule";
-    "Delib::AtomSet" -> "Molecule";
+    "Delib::PositionCollection" -> "Molecule";
+    "Delib::ElementTypeCollection" -> "Molecule";
     "AdjacencyList" -> "Molecule";
     "EdgeList" -> "Molecule";
     "GraphFeatureList" -> "Molecule";
@@ -10,6 +11,6 @@ digraph G {
   "DistanceBoundsMatrix" -> "MetricMatrix" [label="part. metr."];
   "MetricMatrix" -> "Collection4D" [label="embed"];
   "MetricMatrix" -> "Collection3D" [label="embed"];
-  "Collection4D" -> "Delib::AtomSet" [label="refine"];
-  "Collection3D" -> "Delib::AtomSet" [label="refine"];
+  "Collection4D" -> "Delib::PositionCollection" [label="refine"];
+  "Collection3D" -> "Delib::PositionCollection" [label="refine"];
 }

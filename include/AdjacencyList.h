@@ -53,6 +53,13 @@ public:
   }
 
   /*!
+   * Clears the entire list.
+   */
+  void clear() noexcept {
+    _adjacencies.clear();
+  }
+
+  /*!
    * Removes an adjacency.
    * \param a The first index
    * \param b The second index

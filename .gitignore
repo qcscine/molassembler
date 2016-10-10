@@ -1,2 +1,5 @@
 .syntastic
 Makefile
+*.swp
+*.svg
+*.pdf

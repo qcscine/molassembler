@@ -165,6 +165,10 @@ public:
     );
   }
 
+  void clear() noexcept {
+    _edges.clear();
+  }
+
   void remove(const Edge& edge) noexcept {
     _remove(edge.i, edge.j);
   }
