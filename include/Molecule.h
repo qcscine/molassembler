@@ -13,6 +13,7 @@
 #include "common_typedefs.h"
 #include "AdjacencyList.h"
 #include "EdgeList.h"
+#include "GraphFeatureList.h"
 
 namespace MoleculeManip {
 
@@ -35,7 +36,7 @@ private:
   // The information on interconnectedness of the atoms
   AdjacencyList _adjacencies;
   EdgeList _edges;
-  // + GraphFeatureList
+  GraphFeatureList _features;
   
   /* Private member functions */
   bool _validAtomIndex(const AtomIndexType& a) const;
@@ -85,10 +86,10 @@ public:
   );
 
   /* Information retrieval */
-  /*Delib::ElementType getElementType(
+  Delib::ElementType getElementType(
     const AtomIndexType& a
-  );
-  bool bond_exists(
+  ) const;
+  /*bool bond_exists(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const;
@@ -107,9 +108,24 @@ public:
       BondType
     >
   > get_bond_pairs(const AtomIndexType& a) const;
-  std::vector<AtomIndexType> get_bonded_atom_indices(
+  */
+
+  std::vector<AtomIndexType> getBondedAtomIndices(
     const AtomIndexType& a
-  ) const;*/
+  ) const;
+
+  std::pair<
+    std::vector<AtomIndexType>, // the sorted list of substituent priorities
+    std::set< // a set of pairs of AtomIndexTypes that are EQUAL
+      std::pair<
+        AtomIndexType,
+        AtomIndexType
+      >
+    >
+  > rankCIPPriority(
+    const AtomIndexType& a,
+    const std::vector<AtomIndexType>& excludeAdjacent
+  ) const;
 
   /* Testing */
   std::pair<bool, std::string> validate() const noexcept;

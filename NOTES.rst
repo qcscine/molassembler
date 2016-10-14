@@ -3,6 +3,9 @@ TODO
 
 - Test IO
 - Transition to CTest ?
+- Change unscoped enums to scoped enums with enum class
+- Use ranking of substituents to produce consistent numbering of atoms and 
+  identification of identicality
 
 
 Files

@@ -1,5 +1,24 @@
 #include "Molecule.h"
 
+/* TODO
+ * - implement remaining functions, importantly the operator ==
+ * - consider how to interface GraphFeatures with Molecule, there is a need for
+ *   information flow between both:: Molecule operator == needs to be able
+ *   to compare GraphFeatures and GraphFeatures need access to element types
+ *   and edges
+ * - Molecule operator == can be implemented in myriad ways, suggest some 
+ *   heuristics before going for testing graph isomorphism:
+ *
+ *   1. #vertices, #edges O(1)
+ *   2. comparison of GraphFeatures 
+ *      - same amount
+ *      - exactly the same
+ *   3. isomorphism
+ *
+ *   maybe also consider the Wiener index, global clustering and algebraic
+ *   connectivity
+ */
+
 namespace MoleculeManip {
 
 /* Constructors */
@@ -140,6 +159,137 @@ void Molecule::removeBond(
     a,
     b
   );
+}
+
+Delib::ElementType Molecule::getElementType(
+  const AtomIndexType& a
+) const {
+  assert(_validAtomIndex(a));
+  return _elements[a];
+}
+
+std::vector<AtomIndexType> Molecule::getBondedAtomIndices(
+  const AtomIndexType& a
+) const {
+  assert(_validAtomIndex(a));
+  return _adjacencies.getAdjacencies(a);
+}
+
+/* TODO
+ * - does not treat correctly:
+ *   - cycles
+ *   - stereocenters (Z over E, R over S (?))
+ *   - double and triple bond ghost atom splitting
+ * - unsure about sub-lists. is this approach even remotely correct?
+ * - FUCK CIP rules -> maybe just use the unsigned values of assignments in
+ *   GraphFeatures and rank branches with that.
+ * - test
+ */
+std::pair<
+  std::vector<AtomIndexType>, // the sorted list of substituent priorities
+  std::set< // a set of pairs of AtomIndexTypes that are EQUAL
+    std::pair<
+      AtomIndexType,
+      AtomIndexType
+    >
+  >
+> Molecule::rankCIPPriority(
+  const AtomIndexType& a,
+  const std::vector<AtomIndexType>& excludeAdjacent 
+) const {
+  auto toRank = _adjacencies.getAdjacencies(a);
+  std::set<
+    std::pair<
+      AtomIndexType,
+      AtomIndexType
+    >
+  > equalPairs;
+
+  // remove excludes from toRank
+  toRank.erase(
+    std::remove_if(
+      toRank.begin(),
+      toRank.end(),
+      [&excludeAdjacent](const AtomIndexType& atomIndex) {
+        return std::find(
+          excludeAdjacent.begin(),
+          excludeAdjacent.end(),
+          atomIndex
+        ) != excludeAdjacent.end();
+      }
+    ),
+    toRank.end()
+  );
+
+  auto getZ = [this](const AtomIndexType& a) -> int {
+    return static_cast<int>(getElementType(a));
+  };
+
+  auto BFSIterate = [this, getZ](
+    std::set<AtomIndexType> visitedSet,
+    std::vector<AtomIndexType> seeds,
+    std::multiset<int, std::greater<int> > Zs
+  ) {
+    std::vector<AtomIndexType> newSeeds;
+    for(const auto& index : seeds) {
+      auto adjacent = getBondedAtomIndices(index);
+      for(const auto& potentialSeed : adjacent) {
+        // if not in visitedSet
+        if(visitedSet.count(potentialSeed) == 0) {
+          // add it to the set and new seeds
+          visitedSet.insert(potentialSeed);
+          newSeeds.push_back(potentialSeed);
+
+          // add it's Z to Zs
+          Zs.insert(getZ(potentialSeed));
+        } // else skip
+      }
+    }
+
+    // overwrite seeds
+    seeds = newSeeds;
+  };
+  
+  // sort toRank according to CIP
+  std::sort(
+    toRank.begin(),
+    toRank.end(),
+    [&a, this, getZ, BFSIterate, &equalPairs](
+      const AtomIndexType& lhs,
+      const AtomIndexType& rhs
+    ) {
+      std::set<AtomIndexType> lhsVisited = {a}, rhsVisited = {a};
+      std::vector<AtomIndexType> lhsSeeds = {lhs}, rhsSeeds = {rhs};
+      std::multiset<
+        int,
+        std::greater<int> // in CIP, list of Z is ordered DESC
+      > lhsZ = { getZ(lhs) }, rhsZ = { getZ(rhs) };
+      while(
+          lhsSeeds.size() != 0
+          || rhsSeeds.size() != 0
+      ) {
+        // compare lists
+        if(lhsZ < rhsZ) return true;
+        else if(lhsZ > rhsZ) return false;
+
+        // iterate along the bonds
+        BFSIterate(lhsVisited, lhsSeeds, lhsZ);
+        BFSIterate(rhsVisited, rhsSeeds, rhsZ);
+      }
+
+      // all equal -> add to equalPairs
+      equalPairs.emplace(
+        std::min(lhs, rhs),
+        std::max(lhs, rhs)
+      );
+      return false;
+    }
+  );
+
+  return {
+    toRank,
+    equalPairs
+  };
 }
 
 std::ostream& operator << (

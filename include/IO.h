@@ -200,7 +200,7 @@ public:
     }
 
     // Ensure that the Molecule is connected, no fragments are contained
-    unsigned nComponents = GraphAlgorithms::num_connected_components(
+    unsigned nComponents = GraphAlgorithms::numConnectedComponents(
       _adjacencies
     );
     if(nComponents != 1) {

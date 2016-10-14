@@ -1,9 +1,10 @@
 #ifndef INCLUDE_GRAPH_ALGORITHMS_H
 #define INCLUDE_GRAPH_ALGORITHMS_H
 
-#include "AdjacencyList.h"
+#include "TreeAlgorithms.h"
 #include <iostream>
 #include <deque> 
+#include <set>
 
 /* TODO
  * - Test -> We have a infinite loop of some sort, maybe an out of bounds error
@@ -26,7 +27,7 @@ namespace GraphAlgorithms {
  * \returns A vector of unsigned numbers that maps AtomIndexType -> 
  * ConnectedComponentType.
  */
-std::vector<unsigned> _connected_components(const AdjacencyList& adjacencies) {
+std::vector<unsigned> _connectedComponents(const AdjacencyList& adjacencies) {
   if(adjacencies.size() == 0) return {};
 
   std::vector<unsigned> visited (
@@ -109,8 +110,8 @@ std::vector<unsigned> _connected_components(const AdjacencyList& adjacencies) {
  * \param adjacencies The AdjacencyList instance to process
  * \returns The number of connected components in the AdjacencyList.
  */
-unsigned num_connected_components(const AdjacencyList& adjacencies) {
-  auto visited = _connected_components(adjacencies);
+unsigned numConnectedComponents(const AdjacencyList& adjacencies) {
+  auto visited = _connectedComponents(adjacencies);
   if(visited.size() == 0) return 0;
   else return *max_element(visited.begin(), visited.end());
 }
@@ -124,8 +125,8 @@ unsigned num_connected_components(const AdjacencyList& adjacencies) {
  */
 std::vector<
   std::vector<AtomIndexType>
-> connected_component_groups(const AdjacencyList& adjacencies) {
-  auto visited = _connected_components(adjacencies);
+> connectedComponentGroups(const AdjacencyList& adjacencies) {
+  auto visited = _connectedComponents(adjacencies);
 
   // guard against 0-length
   if(visited.size() == 0) return std::vector<
@@ -152,6 +153,150 @@ std::vector<
 
   return groups;
 } 
+
+/* Prerequisite: AdjacencyList has a single connected component. */
+std::vector<
+  std::vector<
+    AtomIndexType
+  >
+> detectCycles(const AdjacencyList& adjacencies) {
+  /* Rough outline of algorithm:
+   *
+   * Create a top-down tree from the AdjacencyList using a DFS-like algorithm
+   * to detect ring closure atoms (by detecting vertices that have been visited
+   * before). The stored key in a node is the atom's index. Store node pointers
+   * to repeated nodes.
+   *
+   * Then traverse the tree upwards from repeated nodes simultaneously until we hit 
+   * a common ancestor. The common path is then the cycle.
+   */
+  auto treeStruct = BasicTree::makeTree(adjacencies);
+  std::cout << treeStruct.rootPtr << std::endl;
+
+  std::vector<
+    std::vector<
+      AtomIndexType
+    >
+  > cycles;
+
+  for(auto& candidateNodePtr : treeStruct.duplicateNodes) {
+    AtomIndexType currentIndex = candidateNodePtr -> key;
+    // get matching ptr from visited
+    assert(treeStruct.nodes[candidateNodePtr -> key]);
+    auto matchingPtr = treeStruct.nodes[candidateNodePtr -> key].value();
+
+    // traverse the tree up to common ancestor
+
+    std::pair<
+      std::vector<AtomIndexType>,
+      std::vector<AtomIndexType>
+    > backtrackingPaths = { {candidateNodePtr -> key}, {matchingPtr -> key} };
+
+    std::pair<
+      std::set<AtomIndexType>,
+      std::set<AtomIndexType>
+    > backtrackingPathSets = {};
+
+    std::vector<AtomIndexType> intersection;
+    std::set_intersection(
+      backtrackingPathSets.first.begin(),
+      backtrackingPathSets.first.end(),
+      backtrackingPathSets.second.begin(),
+      backtrackingPathSets.second.end(),
+      std::back_inserter(intersection)
+    );
+
+    std::experimental::optional<
+      std::vector<AtomIndexType>
+    > optionFoundWhileBacktracking;
+
+    while(
+      candidateNodePtr -> parentOption
+      && matchingPtr -> parentOption
+      && intersection.size() == 0
+    ) {
+      /* Special case:
+       * Entire ring is in single branch. In this case, if one of the
+       * backtracking pointers encounters the current index as a key, then that
+       * backtracking chain is a ring!
+       */
+      // move up the tree one step for both pointers if you can
+      if(candidateNodePtr -> parentOption) {
+        candidateNodePtr = candidateNodePtr -> parentOption.value();
+        if(candidateNodePtr -> key == currentIndex) {
+          optionFoundWhileBacktracking = backtrackingPaths.first;
+          break;
+        }
+        backtrackingPaths.first.push_back(candidateNodePtr -> key);
+        backtrackingPathSets.first.insert(candidateNodePtr -> key);
+      }
+      if(matchingPtr -> parentOption) {
+        matchingPtr = matchingPtr -> parentOption.value();
+        if(matchingPtr -> key == currentIndex) {
+          optionFoundWhileBacktracking = backtrackingPaths.second;
+          break;
+        }
+        backtrackingPaths.second.push_back(matchingPtr -> key);
+        backtrackingPathSets.second.insert(matchingPtr -> key);
+      }
+
+      // recompute the intersection
+      intersection.clear();
+      std::set_intersection(
+        backtrackingPathSets.first.begin(),
+        backtrackingPathSets.first.end(),
+        backtrackingPathSets.second.begin(),
+        backtrackingPathSets.second.end(),
+        std::back_inserter(intersection)
+      );
+    }
+    
+    if(optionFoundWhileBacktracking) {
+      cycles.push_back(optionFoundWhileBacktracking.value());
+    } else {
+      // the intersection is the "pivot" between both backtracking paths
+      /*for(const auto& index: intersection) {
+        std::cout << index << ", ";
+      }
+      std::cout << std::endl;*/
+      assert(intersection.size() == 1);
+
+      /* ring chain is then:
+       * backtrackingPaths.first (forwards) up to but not including intersection[0]
+       * + backtrackingPaths.second (backwards) from intersection[0] up to but not
+       *    including backtrackingPaths.second[0] (this would be duplicate with
+       *    backtrackingPaths.first[0], the common ring index)
+       */
+
+      std::vector<AtomIndexType> cycleChain;
+
+      std::copy(
+        backtrackingPaths.first.begin(),
+        std::find( // position of the pivot
+          backtrackingPaths.first.begin(),
+          backtrackingPaths.first.end(),
+          intersection[0]
+        ),
+        std::back_inserter(cycleChain)
+      );
+
+      std::copy(
+        std::find( // position of pivot in reverse iteration
+          backtrackingPaths.second.rbegin(),
+          backtrackingPaths.second.rend(),
+          intersection[0]
+        ),
+        backtrackingPaths.second.rend() - 1, // beginning + 1 (skip duplicate)
+        std::back_inserter(cycleChain)
+      );
+
+      // add to cycles
+      cycles.push_back(cycleChain);
+    }
+  }
+
+  return cycles;
+}
 
 } // eo namespace GraphAlgorithms
 

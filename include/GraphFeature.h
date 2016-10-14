@@ -1,3 +1,6 @@
+#ifndef INCLUDE_GRAPH_FEATURES_H
+#define INCLUDE_GRAPH_FEATURES_H
+
 #include <vector>
 #include <set>
 #include <algorithm>
@@ -5,21 +8,22 @@
 
 #include "common_typedefs.h"
 
+// Detection algorithm headers
+#include "AdjacencyList.h"
+#include "EdgeList.h"
+#include "Types/ElementTypeCollection.h" // Delib
+
+/* TODO
+ * change the abstract base class to include self-detection algorithms in 
+ * Molecules. In order to directly access the private members of Molecule, all
+ * GraphFeature derived classes must be friends of the Molecule class.
+ */
+
 namespace MoleculeManip {
+
+namespace GraphFeatures {
+
 // TODO temp names
-using DistanceConstraint = std::tuple<
-  AtomIndexType, // i
-  AtomIndexType, // j
-  double, // lower
-  double // uper
->;
-using ChiralityConstraint = std::tuple<
-  AtomIndexType, // i
-  AtomIndexType, // j
-  AtomIndexType, // k
-  AtomIndexType, // l
-  double // target
->;
 using Assignment = unsigned;
 
 class GraphFeature {
@@ -30,6 +34,15 @@ public:
    * Assign this feature
    */
   virtual void assign(const Assignment& assignment) = 0;
+  /*!
+   * Find instances of this feature in a Molecule.
+   */
+  virtual std::vector<GraphFeature> detectAll(
+    const Delib::ElementTypeCollection& elements,
+    const AdjacencyList& adjacencies,
+    const EdgeList& edges
+  );
+
   /* Information */
   /*!
    * Return a string specifying the type of feature 
@@ -65,5 +78,8 @@ public:
   virtual bool assigned() const = 0;
 };
 
+} // eo namespace GraphFeatures
 
 } // eo namespace
+
+#endif
