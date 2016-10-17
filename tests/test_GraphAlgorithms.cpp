@@ -71,14 +71,8 @@ BOOST_AUTO_TEST_CASE( cycle_detection_triangle ) {
     })
   );
 
-  /* should be expanded as
-   * 0
-   * |
-   * 1
-   * |
-   * 2
-   * |
-   * 0
+  /* is expanded as:
+   * 0-1-2-0
    */  
 
   auto result = GraphAlgorithms::detectCycles(test);

@@ -162,13 +162,45 @@ std::vector<
 > detectCycles(const AdjacencyList& adjacencies) {
   /* Rough outline of algorithm:
    *
-   * Create a top-down tree from the AdjacencyList using a DFS-like algorithm
-   * to detect ring closure atoms (by detecting vertices that have been visited
+   * Create a top-down tree from the AdjacencyList using a DFS-like algorithm.
+   * Detect ring closure atoms (by detecting vertices that have been visited
    * before). The stored key in a node is the atom's index. Store node pointers
    * to repeated nodes.
    *
    * Then traverse the tree upwards from repeated nodes simultaneously until we hit 
    * a common ancestor. The common path is then the cycle.
+   *
+   * e.g. 
+   *  
+   *    0
+   *   / \
+   *  1 – 2
+   *
+   * is expanded into a tree, starting from 0, as:
+   *
+   * root/top ->   0 – 1 – 2 – 0   <- leaf/bottom
+   *               ^           ^
+   * repeated:     a           b
+   *
+   * then, as long as one of both node pointers has a parentOption and the sets 
+   * of node keys of both pointers' traversal up the tree have an empty 
+   * intersection, we move the pointers up the tree. If along the way we 
+   * re-encounter the duplicate key, that pointer's traversal path is the cycle
+   * set.
+   *
+   * step: 0 – 1 – 2 – 0    aSet = {}, bSet = {2}
+   *       ^       ^
+   *       a       b
+   *
+   * step: 0 – 1 – 2 – 0    aSet = {}, bSet = {2, 1}
+   *       ^   ^
+   *       a   b
+   *
+   * step: 0 – 1 – 2 – 0    aSet = {}, bSet = {2, 1, 0}
+   *       ^^                                        ^
+   *       ab                                        REPEAT FOUND
+   *
+   * -> Due to found repeating key, {2, 1, 0} is the cycle.
    */
   auto treeStruct = BasicTree::makeTree(adjacencies);
   std::cout << treeStruct.rootPtr << std::endl;
@@ -210,11 +242,17 @@ std::vector<
       std::vector<AtomIndexType>
     > optionFoundWhileBacktracking;
 
+    //std::cout << "Constructing path for candidate: " << candidateNodePtr -> key << std::endl;
+
     while(
-      candidateNodePtr -> parentOption
-      && matchingPtr -> parentOption
-      && intersection.size() == 0
+      (
+        candidateNodePtr -> parentOption
+        || matchingPtr -> parentOption
+      ) && intersection.size() == 0
     ) {
+      /*std::cout << "Step" << std::endl
+        << candidateNodePtr << std::endl
+        << matchingPtr << std::endl;*/
       /* Special case:
        * Entire ring is in single branch. In this case, if one of the
        * backtracking pointers encounters the current index as a key, then that

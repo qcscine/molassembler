@@ -30,26 +30,12 @@ BOOST_AUTO_TEST_CASE( tree_output ) {
     0
   );
 
-  std::shared_ptr<NodeType> child = std::make_shared<NodeType>(
-    rootPtr,
-    1
-  );
+  auto child = addChild<AtomIndexType>(rootPtr, 4);
+  addChild<AtomIndexType>(child, 9);
+  addChild<AtomIndexType>(child, 5);
 
-  std::shared_ptr<NodeType> child2 = std::make_shared<NodeType>(
-    rootPtr,
-    2
-  );
-
-  rootPtr -> addChild(child);
-  rootPtr -> addChild(child2);
-
-  auto childChild = std::make_shared<NodeType>(
-    rootPtr,
-    3
-  );
-
-  child -> addChild(childChild);
-
+  auto child2 = addChild<AtomIndexType>(rootPtr, 3);
+  addChild<AtomIndexType>(child2, 6);
 
   std::cout << rootPtr << std::endl;
 
@@ -72,6 +58,9 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
    * 2
    * |
    * 0
+   *
+   * 0-1-2-0
+   *  `2
    */  
 
   auto treeStruct = makeTree(test);

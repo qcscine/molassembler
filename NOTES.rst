@@ -6,6 +6,8 @@ TODO
 - Change unscoped enums to scoped enums with enum class
 - Use ranking of substituents to produce consistent numbering of atoms and 
   identification of identicality
+- If anything starts failing, improve test coverage. Only basic tests for many
+  components so far.
 
 
 Files

@@ -48,14 +48,6 @@ struct Node {
     key(passKey)
   {};
 
-  /* Modification */
-  void addChild(const T& key) {
-    children.emplace_back(
-      std::make_shared<Node>(*this),
-      key
-    );
-  }
-
   void addChild(const std::shared_ptr<Node>& nodePtr) {
     children.push_back(nodePtr);
   }
@@ -71,6 +63,26 @@ struct Node {
 };
 
 template<typename T>
+std::shared_ptr<
+  Node<T>
+> addChild(
+  std::shared_ptr<
+    Node<T>
+  > nodePtr,
+  const T& key
+) {
+  nodePtr -> children.push_back(
+    std::make_shared<
+      Node<T>
+    >(
+      nodePtr,
+      key
+    )
+  );
+  return nodePtr -> children.back();
+}
+
+template<typename T>
 std::ostream& operator << (
     std::ostream& os,
     const std::shared_ptr<
@@ -83,6 +95,12 @@ std::ostream& operator << (
 
   std::map<T, unsigned> rowMap;
 
+  auto printRows = [&os](const std::vector<std::string>& rowVector) {
+    for(const auto& row : rowVector) {
+      os << row << std::endl;
+    }
+  };
+
   std::deque<
     std::shared_ptr<
       Node<T>
@@ -94,6 +112,8 @@ std::ostream& operator << (
   bool firstRow = true;
 
   while(nodesToVisit.size() != 0) {
+    //printRows(horizontal);
+
     auto current = nodesToVisit[0];
     nodesToVisit.pop_front();
 
@@ -109,7 +129,7 @@ std::ostream& operator << (
       for(const auto& childrenPtr : current -> children) {
         std::stringstream row;
         if(firstRow) row << current -> key << "-" << childrenPtr -> key;
-        else row << " -" << childrenPtr -> key;
+        else row << " `" << childrenPtr -> key;
 
         horizontal.push_back(row.str());
         rowMap[childrenPtr -> key] = rowNumber;
@@ -123,8 +143,8 @@ std::ostream& operator << (
     } else {
       firstRow = true;
       // get row this child key is in
-      std::cout << "accessing index " << current -> key << " in map: " 
-        << std::endl << rowMap << std::endl;
+      /*std::cout << "accessing index " << current -> key << " in map: " 
+        << std::endl << rowMap << std::endl;*/
       auto row = rowMap.at(current -> key);
       auto rowNumber = row;
       for(const auto& childrenPtr : current -> children) {
@@ -141,7 +161,7 @@ std::ostream& operator << (
           rowNumber += 1;
         } else {
           std::stringstream rowSS;
-          rowSS << initialSpace << "-" << childrenPtr -> key;
+          rowSS << std::string(initialSpace, ' ') << "`" << childrenPtr -> key;
           rowMap[childrenPtr -> key] = rowNumber;
           horizontal.insert(
             horizontal.begin() + rowNumber,
@@ -149,7 +169,7 @@ std::ostream& operator << (
           );
           // increase all unvisited map keys > rowNumber by one
           for(const auto& mapping : rowMap) {
-            if(mapping.second > rowNumber) {
+            if(mapping.second >= rowNumber) {
               rowMap.at(mapping.first) += 1;
             }
           }
@@ -159,9 +179,7 @@ std::ostream& operator << (
     }
   }
 
-  for(const auto& row : horizontal) {
-    os << row << std::endl;
-  }
+  printRows(horizontal);
 
   return os;
 }

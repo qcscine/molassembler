@@ -31,7 +31,7 @@ struct MakeTreeReturnType {
 };
 
 std::shared_ptr<NodeType> makeNodeRecursive(
-  const AdjacencyList& adjacencies,
+  AdjacencyList& adjacencies, // this is modified in the recursive calls!
   MakeTreeReturnType& workStruct,
   const AtomIndexType& index,
   std::experimental::optional<
@@ -46,19 +46,23 @@ std::shared_ptr<NodeType> makeNodeRecursive(
     workStruct.duplicateNodes.emplace_back(node);
   } else {
     workStruct.nodes[index] = node;
-    for(const auto& adjacency : adjacencies.getAdjacencies(index)) {
+    //for(const auto& adjacency : adjacencies.getAdjacencies(index)) {
+    while(adjacencies.getAdjacencies(index).size() != 0) {
+      auto adjacency = adjacencies.getAdjacencies(index)[0];
       if(!( // exclude parent value from children nodes
           node -> parentOption
           && node -> parentOption.value() -> key == adjacency // was index before
       )) {
-        node -> addChild(
-          makeNodeRecursive( // recursive call
-            adjacencies,
-            workStruct,
-            adjacency, 
-            node  // a copy of the shared_ptr node is passed to optional ctor
-          )
-        );
+          // remove adjacency
+          adjacencies.removeAdjacency(index, adjacency);
+          node -> addChild(
+            makeNodeRecursive( // recursive call
+              adjacencies,
+              workStruct,
+              adjacency, 
+              node  // a copy of the shared_ptr node is passed to optional ctor
+            )
+          );
       }
     }
   }
@@ -70,9 +74,10 @@ MakeTreeReturnType makeTree(
   const AdjacencyList& adjacencies
 ) {
   MakeTreeReturnType workStruct(adjacencies); // passed to reveal size
+  AdjacencyList adjacencyCopy = adjacencies;
 
   workStruct.rootPtr = makeNodeRecursive(
-    adjacencies,
+    adjacencyCopy,
     workStruct,
     0,
     std::experimental::nullopt
