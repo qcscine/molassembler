@@ -1,0 +1,58 @@
+digraph G {
+  "AdjacencyList" -> "EdgeList";
+  "EdgeList" -> "Edge";
+  "Edge" -> "common_typedefs";
+
+  //"AromaticRing" -> "GraphFeature";
+  "AromaticRing" -> "CommonTrig";
+  "CommonTrig" -> "BondDistance";
+  "BondDistance" -> "common_typedefs";
+  "AromaticRing" -> "Molecule";
+  //"Molecule" -> "AdjacencyList";
+  "Molecule" -> "GraphFeatureList";
+  "GraphFeatureList" -> "GraphFeature";
+  "GraphFeature" -> "AdjacencyList";
+  //"GraphFeature" -> "EdgeList";
+
+  //"EZStereocenter" -> "GraphFeature";
+  "EZStereocenter" -> "Molecule";
+
+  "GraphAlgorithms" -> "TreeAlgorithms";
+  "TreeAlgorithms" -> "Tree";
+  "TreeAlgorithms" -> "AdjacencyList";
+
+  "IO" -> "Molecule";
+  "IO" -> "GraphAlgorithms";
+
+  "common_typedefs" -> "<tuple>";
+  "Edge" -> "<cassert>";
+  "EdgeList" -> "<algorithm>";
+  "EdgeList" -> "<vector>";
+  "EdgeList" -> "<functional>";
+  "EdgeList" -> "<cassert>";
+  "AdjacencyList" -> "<vector>";
+  "AdjacencyList" -> "<cassert>";
+  "AdjacencyList" -> "<algorithm>";
+  "GraphFeature" -> "<vector>";
+  "GraphFeature" -> "<memory>";
+  "GraphFeature" -> "<set>";
+  "GraphFeature" -> "<algorithm>";
+  "GraphFeatureList" -> "<map>";
+  "Molecule" -> "<iostream>";
+  "Molecule" -> "<set>";
+  "AromaticRing" -> "<math.h>";
+  "EZStereocenter" -> "<experimental/optional>";
+  "Tree" -> "<experimental/optional>";
+  "Tree" -> "<memory>";
+  "Tree" -> "<vector>";
+  "Tree" -> "<iostream>";
+  "Tree" -> "<deque>";
+  "Tree" -> "<sstream>";
+  "Tree" -> "<map>";
+  "GraphAlgorithms" -> "<iostream>";
+  "GraphAlgorithms" -> "<deque>";
+  "GraphAlgorithms" -> "<set>";
+  "IO" -> "<fstream>";
+
+
+}

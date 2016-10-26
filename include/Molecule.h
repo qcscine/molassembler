@@ -10,10 +10,9 @@
 #include "Types/ElementTypeCollection.h"
 
 // Custom headers
-#include "common_typedefs.h"
 #include "AdjacencyList.h"
 #include "EdgeList.h"
-#include "GraphFeatureList.h"
+#include "StereocenterList.h"
 
 namespace MoleculeManip {
 
@@ -36,7 +35,7 @@ private:
   // The information on interconnectedness of the atoms
   AdjacencyList _adjacencies;
   EdgeList _edges;
-  GraphFeatureList _features;
+  StereocenterList _features;
   
   /* Private member functions */
   bool _validAtomIndex(const AtomIndexType& a) const;

@@ -21,12 +21,12 @@
 
 namespace MoleculeManip {
 
-namespace GraphFeatures {
+namespace Stereocenters {
 
 // TODO temp names
 using Assignment = unsigned;
 
-class GraphFeature {
+class Stereocenter {
 public:
 /* Public member functions */
   /* Modification */
@@ -34,18 +34,10 @@ public:
    * Assign this feature
    */
   virtual void assign(const Assignment& assignment) = 0;
-  /*!
-   * Find instances of this feature in a Molecule.
-   */
-  virtual std::vector<GraphFeature> detectAll(
-    const Delib::ElementTypeCollection& elements,
-    const AdjacencyList& adjacencies,
-    const EdgeList& edges
-  );
 
   /* Information */
   /*!
-   * Return a string specifying the type of feature 
+   * Return a string specifying the type of stereocenter
    */
   virtual std::string type() const = 0;
   /*!
@@ -60,18 +52,10 @@ public:
    * Return a list of chirality constraints
    */
   virtual std::vector<ChiralityConstraint> chiralityConstraints() const = 0;
-  /*
-   * Return the number of possible isomers stemming from this feature
-   */
-  //virtual unsigned numIsomers() const = 0;
   /*!
    * Return the list of possible assignments at this feature
    */
   virtual std::vector<Assignment> assignments() const = 0;
-  /*!
-   * Return whether this GraphFeature has Assignments
-   */
-  virtual bool hasAssignments() const = 0;
   /*!
    * Return whether this feature has been assigned or not
    */

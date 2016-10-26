@@ -1,0 +1,24 @@
+digraph G {
+  graph [fontname = "Arial"];
+  node [fontname = "Arial"];
+  edge [fontname = "Arial"];
+
+  subgraph cluster_0 {
+    label = "Molecule";
+    "Delib::ElementTypeCollection" -> "Molecule";
+    "AdjacencyList" -> "Molecule";
+    "EdgeList" -> "Molecule";
+    "GraphFeatureList" -> "Molecule";
+  }
+  "Molecule" -> "DistanceConstraints";
+  "Molecule" -> "ChiralityConstraints";
+  "DistanceConstraints" -> "DistanceBoundsMatrix";
+  "DistanceBoundsMatrix" -> "MetricMatrix";
+  "MetricMatrix" -> "Collection4D";
+  "MetricMatrix" -> "Collection3D" [color="gray"];
+  "Collection4D" -> "Delib::PositionCollection";
+  "Collection3D" -> "Delib::PositionCollection" [color="gray"];
+  "ChiralityConstraints" -> "Delib::PositionCollection";
+
+  "Collection3D" [color="gray", fontcolor="gray"];
+}

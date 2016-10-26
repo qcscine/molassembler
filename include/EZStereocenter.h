@@ -1,7 +1,7 @@
 #ifndef INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
 #define INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
 
-#include "GraphFeature.h"
+#include "Stereocenter.h"
 #include "Molecule.h"
 #include <experimental/optional>
 
@@ -9,9 +9,9 @@
 
 namespace MoleculeManip {
 
-namespace GraphFeatures {
+namespace Stereocenters {
 
-class EZStereocenter : public GraphFeature {
+class EZStereocenter : public Stereocenter {
 private:
   const std::pair<AtomIndexType, AtomIndexType> _atomPair;
   const Molecule* _molPtr;
@@ -47,7 +47,7 @@ public:
 
 };
 
-} // eo namespace GraphFeatures
+} // eo namespace Stereocenters
 
 } // eo namespace
 

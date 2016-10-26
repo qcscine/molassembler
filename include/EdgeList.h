@@ -5,10 +5,9 @@
 #include <vector>
 #include <functional>
 #include <cassert>
+#include <experimental/optional>
 
 #include "Edge.h"
-#include "common_typedefs.h"
-
 
 namespace MoleculeManip {
 
@@ -32,7 +31,7 @@ private:
    * \note Is O( log(N) ), where
    * - N is the number of edges stored in the container
    */
-  std::pair<bool, EdgeIndexType> _binarySearch(
+  std::experimental::optional<EdgeIndexType> _binarySearch(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const noexcept {
@@ -40,7 +39,7 @@ private:
      *  unsigned_type right = _edges.size() - 1
      * is an underflow
      */
-    if(_edges.size() == 0) return std::make_pair(false, 0);
+    if(_edges.size() == 0) return {};
 
     // initialize L, M, R
     unsigned_type left = 0;
@@ -62,15 +61,12 @@ private:
         continue;
       } else { // not smaller and not greater -> equals
         // found it!
-        return std::make_pair(
-          true, 
-          middle
-        );
+        return middle;
       }
     }
 
     // search fails
-    return std::make_pair(false, 0);
+    return {};
   }
 
   /*!
@@ -142,13 +138,13 @@ private:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) {
-    auto found_and_pos_pair = _binarySearch(
+    auto foundOption = _binarySearch(
       a,
       b
     );
-    if(found_and_pos_pair.first) {
+    if(foundOption) {
       _edges.erase(
-        _edges.begin() + found_and_pos_pair.second
+        _edges.begin() + foundOption.value()
       );
     }
   }
@@ -224,7 +220,7 @@ public:
     return true;
   }
 
-  std::pair<bool, EdgeIndexType> search(
+  std::experimental::optional<EdgeIndexType> search(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const noexcept {

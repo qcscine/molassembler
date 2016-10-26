@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cassert>
 
-#include "common_typedefs.h"
 #include "EdgeList.h"
 
 namespace MoleculeManip {

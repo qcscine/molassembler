@@ -43,7 +43,7 @@ T lawOfSinesAngle(
   );
 }
 
-/* TODO maybe this belongs into a GraphFeatureHelpers.h
+/* TODO maybe this belongs into a StereocentersHelpers.h
  *  along with many other such cases...
  */
 double getRingOneFourDistance(

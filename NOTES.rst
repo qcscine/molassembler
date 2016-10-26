@@ -1,6 +1,16 @@
 TODO
 ----
 
+1. Remove AromaticRing from GraphFeatures, it's a part of DG, but keep the code
+2. Rename GraphFeatures to Stereocenters
+3. Write the CN4Stereocenter class with all members, required algorithms
+   (e.g. substituent ranking)
+4. Implement a function that permutes all CN4Stereocenter instances
+5. Implement basic DG
+6. Demonstrate functionality with a very simple example, e.g. CH(Cl)(Br)(I)
+   MOLFile, then permute and generate 3D structures of both stereoisomers.
+
+
 - Test IO
 - Transition to CTest ?
 - Change unscoped enums to scoped enums with enum class
@@ -8,29 +18,37 @@ TODO
   identification of identicality
 - If anything starts failing, improve test coverage. Only basic tests for many
   components so far.
+- Should PositionCollection really be a member of Molecule? I don't think so
+- Should AromaticRing really be a GraphFeature? Isn't that somewhat a misnomer
+  anyway? The whole necessity for their existence was that the connectivity of
+  vertices and edges is sometimes insufficient to fully specify a molecule's
+  shape. Is an aromatic ring such a thing? The property of specific local
+  connectivities on specific types of atoms + a cycle directly leads to the
+  planarity of the involved atoms. It's not something that HAS to be specified
+  separately for those atoms. Separately, for DG, this special property has to
+  be detected for generated structures to be more reasonable, but also not
+  necessarily from the start.
+- Integrate DG. It's an essential part of the whole project, so include it.
 
 
-Files
------
+Sequence of things to write
+---------------------------
 
-- I_MoleculeCollection.hpp
+1. GraphFeatures
 
-  An abstract base class defining the basic interface for a MolecularGraph
-  class. This should store pointers to Molecule instances and hand them out to
-  classes that want to work with them.
+   - AromaticRing detection algorithm
+     - Unfortunately includes some notion of what aromaticity is... :(
+   - Substituent ranking algorithm
+   - EZStereocenter
+   - CoordinationStereocenter generalized GraphFeature and derived classes based
+     on specific symmetries
 
-- Molecule.hpp
+2. Caching of properties, e.g. GraphFeatures (these must be invalidated when
+   atoms involved in them are removed)
 
-  A struct that will contain all info required of a molecule. Only few
-  algorithms, operators will be contained here
+3. DG
 
-- MoleculeManip.hpp
-
-  Examples of functions that can manipulate collections of molecules to
-  structure generation ends and a sample implementation of folding them onto a
-  set of initial structures.
-
-  Thought as a start to re-implement the structure generation project.
+#. Import of XYZ files is important, but this contains no CTAB, no BO matrix.
 
 
 Interface

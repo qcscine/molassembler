@@ -1,0 +1,30 @@
+digraph G {
+  graph [fontname = "Arial"];
+  node [fontname = "Arial"];
+  edge [fontname = "Arial"];
+
+  "AdjacencyList" -> "EdgeList";
+  "EdgeList" -> "Edge";
+  "Edge" -> "common_typedefs";
+
+  //"AromaticRing" -> "GraphFeature";
+  "AromaticRing" -> "CommonTrig";
+  "CommonTrig" -> "BondDistance";
+  "BondDistance" -> "common_typedefs";
+  "AromaticRing" -> "Molecule";
+  //"Molecule" -> "AdjacencyList";
+  "Molecule" -> "GraphFeatureList";
+  "GraphFeatureList" -> "GraphFeature";
+  "GraphFeature" -> "AdjacencyList";
+  //"GraphFeature" -> "EdgeList";
+
+  //"EZStereocenter" -> "GraphFeature";
+  "EZStereocenter" -> "Molecule";
+
+  "GraphAlgorithms" -> "TreeAlgorithms";
+  "TreeAlgorithms" -> "Tree";
+  "TreeAlgorithms" -> "AdjacencyList";
+
+  "IO" -> "Molecule";
+  "IO" -> "GraphAlgorithms";
+}

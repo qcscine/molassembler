@@ -3,15 +3,15 @@
 
 #include <map>
 
-#include "GraphFeature.h"
+#include "Stereocenter.h"
 
 namespace MoleculeManip {
 
-class GraphFeatureList {
+class StereocenterList {
 private:
   std::vector<
     std::shared_ptr<
-      GraphFeatures::GraphFeature
+      Stereocenters::Stereocenter
     >
   > _features;
 
@@ -26,7 +26,7 @@ public:
       std::remove_if(
         _features.begin(),
         _features.end(),
-        [&a](const std::shared_ptr<GraphFeatures::GraphFeature>& featurePtr) {
+        [&a](const std::shared_ptr<Stereocenters::Stereocenter>& featurePtr) {
           return (
             featurePtr -> involvedAtoms()
           ).count(a) == 1;
@@ -36,7 +36,7 @@ public:
     );
   }
 
-  void add(const std::shared_ptr<GraphFeatures::GraphFeature>& featurePtr) {
+  void add(const std::shared_ptr<Stereocenters::Stereocenter>& featurePtr) {
     _features.push_back(featurePtr);
   }
 
@@ -49,7 +49,7 @@ public:
     AtomIndexType,
     std::vector<
       std::shared_ptr<
-        GraphFeatures::GraphFeature
+        Stereocenters::Stereocenter
       >
     >
   > getAtomIndexMapping() const {
@@ -57,7 +57,7 @@ public:
       AtomIndexType,
       std::vector<
         std::shared_ptr<
-          GraphFeatures::GraphFeature
+          Stereocenters::Stereocenter
         >
       >
     > mapping;
@@ -81,14 +81,14 @@ public:
   /* Iterators */
   std::vector<
     std::shared_ptr<
-      GraphFeatures::GraphFeature
+      Stereocenters::Stereocenter
     >
   >::const_iterator begin() const {
     return _features.cbegin();
   }
   std::vector<
     std::shared_ptr<
-      GraphFeatures::GraphFeature
+      Stereocenters::Stereocenter
     >
   >::const_iterator end() const {
     return _features.cend();
