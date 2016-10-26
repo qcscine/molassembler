@@ -8,8 +8,10 @@
 #include <cassert>
 #include <functional>
 
-#include "algorithm.h"
+#include "GenerateUniques.h"
 #include "SymmetryInformation.h"
+
+using namespace UniqueAssignments;
 
 /* TODO
  * - investigate failures!

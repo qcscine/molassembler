@@ -1,5 +1,5 @@
-#ifndef LIB_ASSIGNMENT_HPP
-#define LIB_ASSIGNMENT_HPP
+#ifndef LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_H
+#define LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_H
 
 #include <vector>
 #include <algorithm>
@@ -16,6 +16,8 @@
  * - The implementation of Assignment's virtual members cannot be put outside
  *   the class definition since templates may not be virtual
  */
+
+namespace UniqueAssignments {
 
 /*!
  * This class exists to allow polymorphic use of it's derived class Assignment.
@@ -218,5 +220,7 @@ public:
 };
 
 #include "Assignment.hxx"
+
+} // eo namespace
 
 #endif

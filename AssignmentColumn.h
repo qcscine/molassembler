@@ -1,8 +1,10 @@
-#ifndef INCLUDE_LIB_ASSIGNMENT_COLUMN_HPP
-#define INCLUDE_LIB_ASSIGNMENT_COLUMN_HPP
+#ifndef INCLUDE_LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_COLUMN_H
+#define INCLUDE_LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_COLUMN_H
 
 #include <vector>
 #include <cassert>
+
+namespace UniqueAssignments {
 
 struct AssignmentColumn {
   char character;
@@ -24,5 +26,7 @@ struct AssignmentColumn {
 };
 
 #include "AssignmentColumn.hxx"
+
+} // eo namespace
 
 #endif

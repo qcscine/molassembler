@@ -1,5 +1,5 @@
-#ifndef LIB_UNIQUE_ASSIGNMENTS_ALGORITHM_HPP
-#define LIB_UNIQUE_ASSIGNMENTS_ALGORITHM_HPP
+#ifndef LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
+#define LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
 
 #include <vector>
 #include <algorithm>
@@ -16,6 +16,8 @@
  *   true although no groups are present. Setting default to false leads to all
  *   monodentate tests passing.
  */
+
+namespace UniqueAssignments {
 
 template<
   template<typename T = AssignmentColumn>
@@ -106,5 +108,7 @@ std::vector<
     return uniqueAssignments;
   } else return uniqueAssignments;
 }
+
+} // eo namespace
 
 #endif
