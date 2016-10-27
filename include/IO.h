@@ -2,7 +2,7 @@
 #define INCLUDE_MOLECULE_IO_H
 
 #include "Molecule.h"
-#include "GraphAlgorithms.h"
+#include "AdjacencyListAlgorithms.h"
 
 #include <fstream>
 
@@ -200,7 +200,7 @@ public:
     }
 
     // Ensure that the Molecule is connected, no fragments are contained
-    unsigned nComponents = GraphAlgorithms::numConnectedComponents(
+    unsigned nComponents = AdjacencyListAlgorithms::numConnectedComponents(
       _adjacencies
     );
     if(nComponents != 1) {

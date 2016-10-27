@@ -1,5 +1,5 @@
-#ifndef INCLUDE_GRAPH_ALGORITHMS_H
-#define INCLUDE_GRAPH_ALGORITHMS_H
+#ifndef INCLUDE_ADJACENCYLIST_ALGORITHMS_H
+#define INCLUDE_ADJACENCYLIST_ALGORITHMS_H
 
 #include "TreeAlgorithms.h"
 #include <iostream>
@@ -12,13 +12,13 @@
  * 
  * NOTES
  * - Yes, it has to be a deque. A queue, although seemingly the minimal 
- *   functionality needed here for the FIFO structure, does not offer traversal,
- *   which we need here.
+ *   functionality needed here for the FIFO structure, does not offer traversal
+ *   without removal, which we need here.
  */
 
 namespace MoleculeManip {
 
-namespace GraphAlgorithms {
+namespace AdjacencyListAlgorithms {
 
 /*!
  * Connected Components algorithm. Returns a vector of unsigned numbers 
@@ -336,7 +336,7 @@ std::vector<
   return cycles;
 }
 
-} // eo namespace GraphAlgorithms
+} // eo namespace AdjacencyListAlgorithms
 
 }
 

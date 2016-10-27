@@ -8,6 +8,10 @@
 #include "Stereocenter.h"
 #include "CommonTrig.h"
 #include "Molecule.h"
+#include "Cache.h"
+#include "StdlibTypeAlgorithms.h"
+#include "UniqueAssignments/GenerateUniques.h"
+#include "UniqueAssignments/SymmetryInformation.h"
 
 namespace MoleculeManip {
 
@@ -15,45 +19,178 @@ namespace Stereocenters {
 
 class CN4Stereocenter : public Stereocenter {
 private:
-  std::experimental::optional<Assignment> _assignment;
+/* Typedefs */
+  using AssignmentType = UniqueAssignments::Assignment<
+    PermSymmetry::Tetrahedral
+  >;
+
+/* Private data */
+  const Molecule* _molPtr;
+  const AtomIndexType _centerAtom;
+
+  std::experimental::optional<unsigned> _assignment;
+  /* mutable so as to allow caching, then const qualified functions can check 
+   *  and edit the cache
+   */
+  /*mutable std::experimental::optional<
+    std::vector<AssignmentType>
+  > _assignmentsListCache;*/
+
+  mutable Cache _cache = Cache({
+    std::make_pair(
+      "assignmentsList",
+      [this]() {
+        return UniqueAssignments::uniqueAssignments(
+          AssignmentType(
+            _reduceSubstituents()
+          )
+        );
+      }
+    )
+  });
+
+/* Private member functions */
+  std::vector<char> _reduceSubstituents() const {
+    // OLD ––––––––––––––––––
+    std::vector<AtomIndexType> rankedSubstituentNextAtomIndices;
+    std::set<
+      std::pair<
+        AtomIndexType,
+        AtomIndexType
+      >
+    > equalSubstituentPairsSet;
+
+    std::tie(
+      rankedSubstituentNextAtomIndices,
+      equalSubstituentPairsSet
+    ) = _molPtr -> rankCIPPriority(
+      _centerAtom,
+      {} // nothing to exclude
+    );
+
+    /* C++17 structured binding improvement assuming tuples are still
+     * convertible to pairs
+    auto [
+      rankedSubstituentNextAtomIndices,
+      equalSubstituentPairsSet
+    ] = _molPtr -> rankCIPPriority(
+      _centerAtom,
+      {}
+    );
+    */
+
+    // restructure the set of pairs to a vector of non-overlapping sets
+    auto setsVector = StdlibTypeAlgorithms::makeIndividualSets(
+      equalSubstituentPairsSet
+    );
+
+    /* so now we have e.g.
+     * setsVector = vector{set{1, 4}, set{2}, set{3}};
+     * rankedSubstituentNextAtomIndices = vector{ 2, 1, 4, 3};
+     * -> reduce to {A, B, B, C}
+     */
+
+    // create a mapping between indices and ligand symbols
+    std::map<
+      AtomIndexType,
+      char
+    > indexSymbolMap;
+
+    const char initialChar = 'A';
+    for(const auto& index : rankedSubstituentNextAtomIndices) {
+      // find position in setsVector
+      unsigned posInSetsVector = 0;
+      while(
+        setsVector[posInSetsVector].count(index) == 0 
+        && posInSetsVector < setsVector.size()
+      ) {
+        posInSetsVector++;
+      }
+      indexSymbolMap[index] = initialChar + posInSetsVector;
+    }
+
+    std::vector<char> ligandSymbols (rankedSubstituentNextAtomIndices.size());
+    std::transform(
+      rankedSubstituentNextAtomIndices.begin(),
+      rankedSubstituentNextAtomIndices.end(),
+      ligandSymbols.begin(),
+      [&indexSymbolMap](const auto& index) {
+        return indexSymbolMap.at(index);
+      }
+    );
+
+    return ligandSymbols;
+
+    /* TODO no use of connectivity information as of yet to determine whether 
+     * ligands are bridged!
+     */
+  }
 
 public:
 /* Public member functions */
+  /* Construction */
+  CN4Stereocenter(
+    const Molecule* molPtr,
+    const AtomIndexType& center
+  ) : 
+    _molPtr(molPtr),
+    _centerAtom (center)
+  {};
   /* Modification */
   /*!
    * Assign this feature
    */
-  virtual void assign(const Assignment& assignment) override final {
-
+  virtual void assign(const unsigned& assignment) override final {
+    assert(
+      assignment 
+      < _cache.getOrGenerate<
+        std::vector<AssignmentType>
+      >("assignmentsList").size()
+    );
+    _assignment = assignment;
   }
 
   /* Information */
   /*!
    * Return a string specifying the type of stereocenter
    */
-  virtual std::string type() const = 0;
+  virtual std::string type() const override final {
+    return "CN4Stereocenter";
+  }
   /*!
    * Return a set of involved atom indices
    */
-  virtual std::set<AtomIndexType> involvedAtoms() const = 0;
+  virtual std::set<AtomIndexType> involvedAtoms() const override final {
+    return std::set<AtomIndexType>({_centerAtom});
+  }
   /*!
    * Return a list of distance constraints
    */
-  virtual std::vector<DistanceConstraint> distanceConstraints() const = 0;
+  virtual std::vector<DistanceConstraint> distanceConstraints() const override final {
+    std::vector<DistanceConstraint> constraints;
+    const auto neighbors = _molPtr -> getBondedAtomIndices(_centerAtom);
+    for(unsigned i = 0; i < neighbors.size(); i++) {
+      for(unsigned j = i + 1; j < neighbors.size(); j++) {
+
+      }
+    }
+  }
   /*!
    * Return a list of chirality constraints
    */
   virtual std::vector<ChiralityConstraint> chiralityConstraints() const = 0;
   /*!
-   * Return the list of possible assignments at this feature
+   * Return the number of possible assignments at this feature
    */
-  virtual std::vector<Assignment> assignments() const {
-
+  virtual unsigned assignments() const override final {
+    return _cache.getOrGenerate<
+      std::vector<AssignmentType>
+    >("assignmentsList").size();
   }
   /*!
    * Return whether this feature has been assigned or not
    */
-  virtual bool assigned() const {
+  virtual bool assigned() const override final {
     // Fundamentals TS
     return (bool) _assignment;
     // C++17

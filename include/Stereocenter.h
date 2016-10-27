@@ -23,9 +23,6 @@ namespace MoleculeManip {
 
 namespace Stereocenters {
 
-// TODO temp names
-using Assignment = unsigned;
-
 class Stereocenter {
 public:
 /* Public member functions */
@@ -33,7 +30,7 @@ public:
   /*!
    * Assign this feature
    */
-  virtual void assign(const Assignment& assignment) = 0;
+  virtual void assign(const unsigned& assignment) = 0;
 
   /* Information */
   /*!
@@ -55,7 +52,7 @@ public:
   /*!
    * Return the list of possible assignments at this feature
    */
-  virtual std::vector<Assignment> assignments() const = 0;
+  virtual unsigned assignments() const = 0;
   /*!
    * Return whether this feature has been assigned or not
    */

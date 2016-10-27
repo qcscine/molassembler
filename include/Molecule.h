@@ -4,6 +4,7 @@
 // STL
 #include <iostream>
 #include <set>
+#include <experimental/optional>
 
 // Delib
 #include "Types/PositionCollection.h"
