@@ -28,15 +28,13 @@ private:
   const Molecule* _molPtr;
   const AtomIndexType _centerAtom;
 
+  // State of whether it is assigned, and if so, in which (of _cache["assignmentlist"])
   std::experimental::optional<unsigned> _assignment;
-  /* mutable so as to allow caching, then const qualified functions can check 
-   *  and edit the cache
-   */
-  /*mutable std::experimental::optional<
-    std::vector<AssignmentType>
-  > _assignmentsListCache;*/
 
-  mutable Cache _cache = Cache({
+  /* mutable so as to allow const qualified member functions to read and edit
+   * the cache
+   */
+  mutable Cache _cache {
     std::make_pair(
       "assignmentsList",
       [this]() {
@@ -47,7 +45,7 @@ private:
         );
       }
     )
-  });
+  };
 
 /* Private member functions */
   std::vector<char> _reduceSubstituents() const {
@@ -79,10 +77,36 @@ private:
     );
     */
 
-    // restructure the set of pairs to a vector of non-overlapping sets
+    /* restructure the set of pairs to a vector of non-overlapping sets
+     * e.g. set{pair{1, 3}, pair{1, 4}, pair{2, 5}} 
+     *  -> vector{set{1, 3, 4}, set{2, 5}}
+     */
     auto setsVector = StdlibTypeAlgorithms::makeIndividualSets(
       equalSubstituentPairsSet
     );
+
+    // Add lone substituents to setsVector
+    for(const auto& index: rankedSubstituentNextAtomIndices) {
+      // if the current substituent index is not in any of the sets
+      if(!std::accumulate(
+        setsVector.begin(),
+        setsVector.end(),
+        false,
+        [&index](const bool& carry, const std::set<AtomIndexType>& set) {
+          return (
+            carry
+            || set.count(index) == 1
+          );
+        }
+      )) {
+        // add a single-atom set
+        setsVector.push_back(
+          std::move(
+            std::set<AtomIndexType>{index}
+          )
+        );
+      }
+    }
 
     /* so now we have e.g.
      * setsVector = vector{set{1, 4}, set{2}, set{3}};
@@ -136,6 +160,7 @@ public:
     _molPtr(molPtr),
     _centerAtom (center)
   {};
+
   /* Modification */
   /*!
    * Assign this feature
@@ -157,12 +182,14 @@ public:
   virtual std::string type() const override final {
     return "CN4Stereocenter";
   }
+
   /*!
    * Return a set of involved atom indices
    */
   virtual std::set<AtomIndexType> involvedAtoms() const override final {
     return std::set<AtomIndexType>({_centerAtom});
   }
+
   /*!
    * Return a list of distance constraints
    */
@@ -175,10 +202,12 @@ public:
       }
     }
   }
+
   /*!
    * Return a list of chirality constraints
    */
   virtual std::vector<ChiralityConstraint> chiralityConstraints() const = 0;
+
   /*!
    * Return the number of possible assignments at this feature
    */
@@ -187,6 +216,7 @@ public:
       std::vector<AssignmentType>
     >("assignmentsList").size();
   }
+
   /*!
    * Return whether this feature has been assigned or not
    */

@@ -1,8 +1,11 @@
+CONTINUE AT
+-----------
+
+
+
 TODO
 ----
 
-1. Remove AromaticRing from GraphFeatures, it's a part of DG, but keep the code
-2. Rename GraphFeatures to Stereocenters
 3. Write the CN4Stereocenter class with all members, required algorithms
    (e.g. substituent ranking)
 4. Implement a function that permutes all CN4Stereocenter instances
@@ -29,6 +32,9 @@ TODO
   be detected for generated structures to be more reasonable, but also not
   necessarily from the start.
 - Integrate DG. It's an essential part of the whole project, so include it.
+- IO.h: will have to be changed eventually to call DG to generate a 3D
+  structure if there is none.  Maybe cache 3D structures? Additionally,
+  modernize it to use C++17's filesystem TS
 
 
 Sequence of things to write

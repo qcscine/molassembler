@@ -27,20 +27,23 @@ public:
 /* Constructors */
   Cache() = default;
   Cache(
-    const std::vector<
+    const std::initializer_list<
       std::pair<
         std::string,
         std::function<
-          std::experimental::any()
+          std::experimental::any()  
         >
       >
-    >& generatorsInit
+    >& initList
   ) {
     // add all generators
-    for(const auto& pair: generatorsInit) {
+    for(const auto& pair: initList) {
       _generationMap[pair.first] = pair.second;
     }
   }
+
+      
+
 
 /* Public member functions */
   /* Modification */

@@ -89,6 +89,15 @@ public:
   Delib::ElementType getElementType(
     const AtomIndexType& a
   ) const;
+  AtomIndexType getNumAtoms() const {
+    return _elements.size();
+  }
+  EdgeIndexType getNumBonds() const {
+    return _edges.size();
+  }
+  const EdgeList& getEdgeList() const {
+    return _edges;
+  }
   /*bool bond_exists(
     const AtomIndexType& a,
     const AtomIndexType& b
