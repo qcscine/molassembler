@@ -1,4 +1,5 @@
 #include "Molecule.h"
+//#include "CN4Stereocenter.h"
 
 /* TODO
  * - implement remaining functions, importantly the operator ==
@@ -49,8 +50,10 @@ Molecule::Molecule(
 ) : 
   _elements(elements),
   _adjacencies(adjacencies),
-  _edges(edges)
-{}
+  _edges(edges) { 
+
+  _detectStereocenters();
+}
 
 Molecule::Molecule(
   const Delib::ElementTypeCollection& elements,
@@ -61,10 +64,33 @@ Molecule::Molecule(
   _elements(elements),
   _positions(positions),
   _adjacencies(adjacencies),
-  _edges(edges)
-{}
+  _edges(edges) {
+  
+  _detectStereocenters();
+}
 
 /* Private member functions */
+void Molecule::_detectStereocenters() {
+  /*for(unsigned i = 0; i < _adjacencies.size(); i++) {
+    if(_adjacencies[i].size() == 4) {
+      std::shared_ptr<
+        Stereocenters::CN4Stereocenter
+      > newStereocenter = std::make_shared<
+        Stereocenters::CN4Stereocenter
+      >(
+        this,
+        i
+      );
+
+      if(newStereocenter -> assignments() > 1) {
+        _stereocenters.add(
+          std::move(newStereocenter)
+        );
+      }
+    }
+  }*/
+}
+
 bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
   return (
     a < _adjacencies.size()
@@ -193,7 +219,7 @@ std::pair<
       AtomIndexType
     >
   >
-> Molecule::rankCIPPriority(
+> Molecule::rankPriority(
   const AtomIndexType& a,
   const std::vector<AtomIndexType>& excludeAdjacent 
 ) const {
@@ -296,8 +322,105 @@ std::ostream& operator << (
   std::ostream& os,
   const Molecule& mol
 ) {
-  os << mol._adjacencies.size() << " adjacencies, "
-    << mol._edges.size() << " edges." << std::endl;
+  std::map<
+    std::string,
+    std::string
+  > elementBGColorMap {
+    {"H", "white"},
+    {"C", "gray"},
+    {"N", "blue"},
+    {"O", "red"}
+  };
+
+  std::map<
+    std::string,
+    std::string
+  > elementFGColorMap {
+    {"H", "black"},
+    {"C", "white"},
+    {"N", "white"},
+    {"O", "white"}
+  };
+
+  auto getSymbolString = [&](const AtomIndexType& index) -> std::string {
+    return Delib::ElementInfo::instance()[mol._elements.at(index)].symbol();
+  };
+
+  auto nodeLabel = [&](const AtomIndexType& index) {
+    auto symbol = getSymbolString(index);
+    if(elementBGColorMap.count(symbol) > 0) {
+      return std::string("\"")
+        + std::to_string(index)
+        + "\"";
+    } else {
+      return std::string("\"")
+        + std::to_string(index)
+        + symbol
+        + "\"";
+    }
+  };
+
+  auto nodeProperties = [&](const std::string& symbolString) -> std::string {
+    if(symbolString == "H") {
+      return std::string(" [fillcolor=")
+        + elementBGColorMap.at("H")
+        + ", fontcolor="
+        + elementFGColorMap.at("H")
+        + ", fontsize=10, width=.3, fixedsize=true]";
+    } else if(elementBGColorMap.count(symbolString) == 1) {
+      return std::string(" [fillcolor=")
+        + elementBGColorMap.at(symbolString)
+        + ", fontcolor="
+        + elementFGColorMap.at(symbolString)
+        + "]";
+    } else return " [fillcolor=white, fontcolor=black]";
+  };
+
+
+  /*os << mol._adjacencies.size() << " adjacencies, "
+    << mol._edges.size() << " edges." << std::endl;*/
+  os << "graph G {\n  graph [fontname = \"Arial\", layout = neato];\n"
+    << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
+    << "  edge [fontname = \"Arial\"];\n";
+
+  std::map<
+    std::string,
+    std::vector<
+      std::string
+    >
+  > elementNameLabelListMap;
+
+  // group elements together
+  for(unsigned i = 0; i < mol._elements.size(); i++) {
+    if(elementNameLabelListMap.count(getSymbolString(i)) == 0) {
+      elementNameLabelListMap[
+        getSymbolString(i)
+      ] = {
+        nodeLabel(i)
+      };
+    } else {
+      elementNameLabelListMap.at(
+        getSymbolString(i)
+      ).push_back(
+        nodeLabel(i)
+      );
+    }
+  }
+
+  for(const auto& symbolLabelListPair : elementNameLabelListMap) {
+    os << "  node" << nodeProperties(symbolLabelListPair.first) << "\n ";
+    for(const auto& label : symbolLabelListPair.second) {
+      os << " " << label;
+    }
+    os << ";\n";
+  }
+
+  for(const auto& edge: mol._edges) {
+    os << "\n  " << nodeLabel(edge.i) << " -- " << nodeLabel(edge.j);
+  }
+
+  os << ";\n}\n";
+
   return os;
 }
 

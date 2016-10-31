@@ -24,14 +24,21 @@ include_directories(SYSTEM
 
 set(HEADERS_all
   include/AdjacencyList.h
-  include/AromaticRing.h
+  include/AdjacencyListAlgorithms.h
   include/BondDistance.h
+  include/CN4Stereocenter.h
+  include/Cache.h
   include/CommonTrig.h
   include/Edge.h
   include/EdgeList.h
-  include/GraphFeature.h
   include/IO.h
   include/Molecule.h
+  include/StdlibTypeAlgorithms.h
+  include/Stereocenter.h
+  include/StereocenterList.h
+  include/Tree.h
+  include/TreeAlgorithms.h
+  include/Version.h
   include/common_typedefs.h
   include/numeric.h
 )

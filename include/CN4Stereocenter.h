@@ -63,7 +63,7 @@ private:
     std::tie(
       rankedSubstituentNextAtomIndices,
       equalSubstituentPairsSet
-    ) = _molPtr -> rankCIPPriority(
+    ) = _molPtr -> rankPriority(
       _centerAtom,
       {} // nothing to exclude
     );
@@ -73,7 +73,7 @@ private:
     auto [
       rankedSubstituentNextAtomIndices,
       equalSubstituentPairsSet
-    ] = _molPtr -> rankCIPPriority(
+    ] = _molPtr -> rankPriority(
       _centerAtom,
       {}
     );

@@ -1,0 +1,27 @@
+graph G {
+  graph [fontname = "Arial", layout = neato];
+  node [fontname = "Arial", shape = circle, style = filled];
+  edge [fontname = "Arial"];
+  node [fillcolor=gray, fontcolor=white] "0" "1" "2" "3" "4" "5" ;
+  node [fillcolor=white, fontcolor=black, fontsize=10, width=.3, fixedsize=true] "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" ;
+
+  "0" -- "1"
+  "0" -- "7"
+  "0" -- "14"
+  "0" -- "15"
+  "1" -- "2"
+  "1" -- "16"
+  "1" -- "17"
+  "2" -- "3"
+  "2" -- "4"
+  "2" -- "5"
+  "3" -- "6"
+  "3" -- "18"
+  "3" -- "19"
+  "4" -- "8"
+  "4" -- "10"
+  "4" -- "12"
+  "5" -- "9"
+  "5" -- "11"
+  "5" -- "13";
+}

@@ -27,7 +27,7 @@ public:
     _molPtr(molPtr)
   {};
 
-  virtual void assign(const Assignment& assignment) override final {
+  virtual void assign(const unsigned& assignment) override final {
   
   }
 
@@ -38,12 +38,6 @@ public:
   virtual std::set<AtomIndexType> involvedAtoms() const override final {
     return {_atomPair.first, _atomPair.second};
   }
-
-  virtual std::vector<DistanceConstraint> distanceConstraints() const override final {
-    
-  }
-
-
 
 };
 

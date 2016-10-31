@@ -9,9 +9,9 @@ using namespace MoleculeManip;
 
 BOOST_AUTO_TEST_CASE( read_mol ) {
   // instantiate reader
-  IO::MOLFileReader molReader;
+  IO::MOLFileHandler molHandler;
   try {
-    Molecule mol = molReader.readSingle("2,2-dimethybutane.mol");
+    Molecule mol = molHandler.readSingle("2,2-dimethybutane.mol");
     std::cout << mol << std::endl;
   } catch(const std::exception& e) {
     std::cout << e.what() << std::endl;

@@ -36,9 +36,10 @@ private:
   // The information on interconnectedness of the atoms
   AdjacencyList _adjacencies;
   EdgeList _edges;
-  StereocenterList _features;
+  StereocenterList _stereocenters;
   
   /* Private member functions */
+  void _detectStereocenters();
   bool _validAtomIndex(const AtomIndexType& a) const;
   bool _validAtomIndices(
     const AtomIndexType& a,
@@ -135,7 +136,7 @@ public:
         AtomIndexType
       >
     >
-  > rankCIPPriority(
+  > rankPriority(
     const AtomIndexType& a,
     const std::vector<AtomIndexType>& excludeAdjacent
   ) const;
