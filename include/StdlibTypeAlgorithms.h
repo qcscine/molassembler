@@ -2,6 +2,7 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <functional>
 
 template<typename T>
 std::ostream& operator << (std::ostream& os, const std::set<T>& rhs) {
@@ -148,6 +149,27 @@ std::vector<
   // merge sets with overlap
   mergeOverlappingSetsInplace(sets);
   return sets;
+}
+
+template<typename T1, typename T2, typename ReturnType>
+ReturnType minMaxAdaptor(
+  const std::function<
+    ReturnType(const T1&, const T2&)
+  >& function,
+  const T1& a,
+  const T2& b
+) {
+  return function(
+    std::min(a, b),
+    std::max(a, b)
+  );
+}
+
+template<typename T>
+std::function<
+  typename std::enable_if_t<std::is_function<T>::value, T>
+> makeFunction(T *t) {
+    return { t };
 }
 
 } // eo namespace

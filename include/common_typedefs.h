@@ -32,7 +32,7 @@ using DistanceConstraint = std::tuple<
   AtomIndexType, // i
   AtomIndexType, // j
   double, // lower
-  double // uper
+  double // upper
 >;
 
 using ChiralityConstraint = std::tuple<

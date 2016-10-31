@@ -42,13 +42,12 @@ public:
    */
   virtual std::set<AtomIndexType> involvedAtoms() const = 0;
   /*!
-   * Return a list of distance constraints
+   * Return a list of distance constraints and chirality constraints
    */
-  virtual std::vector<DistanceConstraint> distanceConstraints() const = 0;
-  /*!
-   * Return a list of chirality constraints
-   */
-  virtual std::vector<ChiralityConstraint> chiralityConstraints() const = 0;
+  virtual std::pair<
+    std::vector<DistanceConstraint>,
+    std::vector<ChiralityConstraint>
+  > collectConstraints() const = 0;
   /*!
    * Return the list of possible assignments at this feature
    */

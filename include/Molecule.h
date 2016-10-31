@@ -98,6 +98,14 @@ public:
   const EdgeList& getEdgeList() const {
     return _edges;
   }
+  BondType getBondType(
+    const AtomIndexType& a,
+    const AtomIndexType& b
+  ) const {
+    auto edgeIndexOption = _edges.search(a, b);
+    assert(edgeIndexOption);
+    return _edges.get(edgeIndexOption.value()).bondType;
+  }
   /*bool bond_exists(
     const AtomIndexType& a,
     const AtomIndexType& b
@@ -106,10 +114,6 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b,
     const BondType& bond_type
-  ) const;
-  BondType get_bond_type(
-    const AtomIndexType& a,
-    const AtomIndexType& b
   ) const;
   std::vector<
     std::pair<
