@@ -490,4 +490,41 @@ std::ostream& operator << (
   return os;
 }
 
+std::pair<
+  std::vector<DistanceConstraint>,
+  std::vector<ChiralityConstraint>
+> Molecule::getStereocenterConstraints() const {
+  std::vector<DistanceConstraint> distanceConstraints;
+  std::vector<ChiralityConstraint> chiralityConstraints;
+
+  auto addToConstraints = [&](
+    const std::pair<
+      std::vector<DistanceConstraint>,
+      std::vector<ChiralityConstraint>
+    >& constraints
+  ) -> void {
+    std::copy(
+      constraints.first.begin(),
+      constraints.first.end(),
+      std::back_inserter(distanceConstraints)
+    );
+    std::copy(
+      constraints.second.begin(),
+      constraints.second.end(),
+      std::back_inserter(chiralityConstraints)
+    );
+  };
+
+  for(const auto& stereocenterPtr: _stereocenters) {
+    addToConstraints(
+      stereocenterPtr -> collectConstraints()
+    );
+  }
+
+  return {
+    std::move(distanceConstraints),
+    std::move(chiralityConstraints)
+  };
+}
+
 } // eo namespace

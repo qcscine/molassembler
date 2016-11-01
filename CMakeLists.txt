@@ -50,6 +50,7 @@ set(HEADERS_all
 
 # sources definition
 set(SOURCES_all
+  source/UniqueAssignments/AssignmentColumn.cpp
   source/Molecule.cpp
   source/Stereocenter.cpp
   source/CN4Stereocenter.cpp

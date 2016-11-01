@@ -91,6 +91,12 @@ public:
   Delib::ElementType getElementType(
     const AtomIndexType& a
   ) const;
+
+  std::pair<
+    std::vector<DistanceConstraint>,
+    std::vector<ChiralityConstraint>
+  > getStereocenterConstraints() const;
+      
   AtomIndexType getNumAtoms() const;
   EdgeIndexType getNumBonds() const;
   const EdgeList& getEdgeList() const; 

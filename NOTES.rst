@@ -1,13 +1,11 @@
 CONTINUE AT
 -----------
-
+Constraint collection and population of DistanceBoundsMatrix
 
 
 TODO
 ----
 
-3. Write the CN4Stereocenter class with all members, required algorithms
-   (e.g. substituent ranking)
 4. Implement a function that permutes all CN4Stereocenter instances
 5. Implement basic DG
 6. Demonstrate functionality with a very simple example, e.g. CH(Cl)(Br)(I)
