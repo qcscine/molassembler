@@ -1,5 +1,5 @@
 #include "Molecule.h"
-//#include "CN4Stereocenter.h"
+#include "CN4Stereocenter.h"
 
 /* TODO
  * - implement remaining functions, importantly the operator ==
@@ -18,6 +18,7 @@
  *
  *   maybe also consider the Wiener index, global clustering and algebraic
  *   connectivity
+ *
  */
 
 namespace MoleculeManip {
@@ -71,8 +72,11 @@ Molecule::Molecule(
 
 /* Private member functions */
 void Molecule::_detectStereocenters() {
-  /*for(unsigned i = 0; i < _adjacencies.size(); i++) {
-    if(_adjacencies[i].size() == 4) {
+  for(unsigned i = 0; i < _adjacencies.size(); i++) {
+    if(
+      _adjacencies[i].size() == 4 
+      && hydrogenCount(i) < 2 // reduces amount of superfluous constructions
+    ) {
       std::shared_ptr<
         Stereocenters::CN4Stereocenter
       > newStereocenter = std::make_shared<
@@ -88,7 +92,7 @@ void Molecule::_detectStereocenters() {
         );
       }
     }
-  }*/
+  }
 }
 
 bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
@@ -194,6 +198,38 @@ Delib::ElementType Molecule::getElementType(
   return _elements[a];
 }
 
+AtomIndexType Molecule::getNumAtoms() const {
+  return _elements.size();
+}
+
+EdgeIndexType Molecule::getNumBonds() const {
+  return _edges.size();
+}
+
+const EdgeList& Molecule::getEdgeList() const {
+  return _edges;
+}
+
+BondType Molecule::getBondType(
+  const AtomIndexType& a,
+  const AtomIndexType& b
+) const {
+  auto edgeIndexOption = _edges.search(a, b);
+  assert(edgeIndexOption);
+  return _edges.get(edgeIndexOption.value()).bondType;
+}
+
+unsigned Molecule::hydrogenCount(const AtomIndexType& a) const {
+  assert(_validAtomIndex(a));
+  unsigned count = 0;
+  for(const auto& adjacentIndex : _adjacencies[a]) {
+    if(getElementType(adjacentIndex) == Delib::ElementType::H) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
 std::vector<AtomIndexType> Molecule::getBondedAtomIndices(
   const AtomIndexType& a
 ) const {
@@ -252,9 +288,9 @@ std::pair<
   };
 
   auto BFSIterate = [this, getZ](
-    std::set<AtomIndexType> visitedSet,
-    std::vector<AtomIndexType> seeds,
-    std::multiset<int, std::greater<int> > Zs
+    std::set<AtomIndexType>& visitedSet,
+    std::vector<AtomIndexType>& seeds,
+    std::multiset<int, std::greater<int> >& Zs
   ) {
     std::vector<AtomIndexType> newSeeds;
     for(const auto& index : seeds) {
@@ -276,11 +312,11 @@ std::pair<
     seeds = newSeeds;
   };
   
-  // sort toRank according to CIP
+  // sort toRank according to CIP-like rules
   std::sort(
     toRank.begin(),
     toRank.end(),
-    [&a, this, getZ, BFSIterate, &equalPairs](
+    [&a, this, &getZ, &BFSIterate, &equalPairs](
       const AtomIndexType& lhs,
       const AtomIndexType& rhs
     ) {
@@ -291,8 +327,8 @@ std::pair<
         std::greater<int> // in CIP, list of Z is ordered DESC
       > lhsZ = { getZ(lhs) }, rhsZ = { getZ(rhs) };
       while(
-          lhsSeeds.size() != 0
-          || rhsSeeds.size() != 0
+          lhsSeeds.size() > 0
+          || rhsSeeds.size() > 0
       ) {
         // compare lists
         if(lhsZ < rhsZ) return true;
@@ -318,10 +354,8 @@ std::pair<
   };
 }
 
-std::ostream& operator << (
-  std::ostream& os,
-  const Molecule& mol
-) {
+void Molecule::_dumpGraphviz(std::ostream& os) const {
+
   std::map<
     std::string,
     std::string
@@ -343,7 +377,7 @@ std::ostream& operator << (
   };
 
   auto getSymbolString = [&](const AtomIndexType& index) -> std::string {
-    return Delib::ElementInfo::instance()[mol._elements.at(index)].symbol();
+    return Delib::ElementInfo::instance()[_elements.at(index)].symbol();
   };
 
   auto nodeLabel = [&](const AtomIndexType& index) {
@@ -376,9 +410,20 @@ std::ostream& operator << (
     } else return " [fillcolor=white, fontcolor=black]";
   };
 
+  auto edgeProperties = [&](
+    const std::string& symbolFrom,
+    const std::string& symbolTo
+  ) {
+    if(
+      symbolFrom == "H" 
+      || symbolTo == "H"
+    ) {
+      return " [len=0.5]";
+    } else {
+      return "";
+    }
+  };
 
-  /*os << mol._adjacencies.size() << " adjacencies, "
-    << mol._edges.size() << " edges." << std::endl;*/
   os << "graph G {\n  graph [fontname = \"Arial\", layout = neato];\n"
     << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
     << "  edge [fontname = \"Arial\"];\n";
@@ -391,7 +436,7 @@ std::ostream& operator << (
   > elementNameLabelListMap;
 
   // group elements together
-  for(unsigned i = 0; i < mol._elements.size(); i++) {
+  for(unsigned i = 0; i < _elements.size(); i++) {
     if(elementNameLabelListMap.count(getSymbolString(i)) == 0) {
       elementNameLabelListMap[
         getSymbolString(i)
@@ -415,12 +460,33 @@ std::ostream& operator << (
     os << ";\n";
   }
 
-  for(const auto& edge: mol._edges) {
-    os << "\n  " << nodeLabel(edge.i) << " -- " << nodeLabel(edge.j);
+  for(const auto& edge: _edges) {
+    os << "\n  " << nodeLabel(edge.i) << " -- " << nodeLabel(edge.j) 
+      << edgeProperties(
+        getSymbolString(edge.i),
+        getSymbolString(edge.j)
+      ) 
+      << ";";
   }
 
-  os << ";\n}\n";
+  os << "\n}\n";
+}
 
+std::ostream& operator << (
+  std::ostream& os,
+  const Molecule& mol
+) {
+  os << "Begin graphviz –––––––––––––––\n\n";
+  mol._dumpGraphviz(os);
+  os << "\n––––––––––––––––– End graphviz\n\n";
+
+  if(mol._stereocenters.size() > 0) {
+    os << "Stereocenter information:\n";
+    for(const auto& stereocenterPtr: mol._stereocenters) {
+      os << stereocenterPtr << std::endl;
+    }
+  }
+  
   return os;
 }
 

@@ -45,6 +45,7 @@ private:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const;
+  void _dumpGraphviz(std::ostream& os) const;
 
 public:
 /* Constructors */
@@ -90,23 +91,14 @@ public:
   Delib::ElementType getElementType(
     const AtomIndexType& a
   ) const;
-  AtomIndexType getNumAtoms() const {
-    return _elements.size();
-  }
-  EdgeIndexType getNumBonds() const {
-    return _edges.size();
-  }
-  const EdgeList& getEdgeList() const {
-    return _edges;
-  }
+  AtomIndexType getNumAtoms() const;
+  EdgeIndexType getNumBonds() const;
+  const EdgeList& getEdgeList() const; 
   BondType getBondType(
     const AtomIndexType& a,
     const AtomIndexType& b
-  ) const {
-    auto edgeIndexOption = _edges.search(a, b);
-    assert(edgeIndexOption);
-    return _edges.get(edgeIndexOption.value()).bondType;
-  }
+  ) const;
+  unsigned hydrogenCount(const AtomIndexType& a) const;
   /*bool bond_exists(
     const AtomIndexType& a,
     const AtomIndexType& b

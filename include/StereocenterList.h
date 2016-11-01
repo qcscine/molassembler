@@ -88,6 +88,9 @@ public:
 
     return mapping;
   }
+  unsigned size() const {
+    return _features.size();
+  }
 
   /* Iterators */
   // Begin and end const iterators for easy traversal

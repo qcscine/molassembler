@@ -1,12 +1,14 @@
-#ifndef INCLUDE_GRAPH_FEATURES_H
-#define INCLUDE_GRAPH_FEATURES_H
+#ifndef INCLUDE_STEREOCENTERS_H
+#define INCLUDE_STEREOCENTERS_H
 
 #include <vector>
 #include <set>
 #include <algorithm>
 #include <memory>
+#include <experimental/optional>
 
 #include "common_typedefs.h"
+#include "StdlibTypeAlgorithms.h"
 
 // Detection algorithm headers
 #include "AdjacencyList.h"
@@ -20,6 +22,16 @@
  */
 
 namespace MoleculeManip {
+
+// Predeclaration
+namespace Stereocenters {
+class Stereocenter;
+}
+
+std::basic_ostream<char>& operator << (
+  std::basic_ostream<char>& os,
+  const std::shared_ptr<Stereocenters::Stereocenter>& stereocenterPtr
+);
 
 namespace Stereocenters {
 
@@ -37,10 +49,12 @@ public:
    * Return a string specifying the type of stereocenter
    */
   virtual std::string type() const = 0;
+
   /*!
    * Return a set of involved atom indices
    */
   virtual std::set<AtomIndexType> involvedAtoms() const = 0;
+
   /*!
    * Return a list of distance constraints and chirality constraints
    */
@@ -48,17 +62,24 @@ public:
     std::vector<DistanceConstraint>,
     std::vector<ChiralityConstraint>
   > collectConstraints() const = 0;
+
   /*!
    * Return the list of possible assignments at this feature
    */
   virtual unsigned assignments() const = 0;
+
   /*!
    * Return whether this feature has been assigned or not
    */
-  virtual bool assigned() const = 0;
+  virtual std::experimental::optional<unsigned> assigned() const = 0;
+
+  friend std::basic_ostream<char>& MoleculeManip::operator << (
+    std::basic_ostream<char>& os,
+    const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& stereocenterPtr
+  );
 };
 
-} // eo namespace GraphFeatures
+} // eo namespace Stereocenters
 
 } // eo namespace
 

@@ -23,12 +23,17 @@ include_directories(SYSTEM
 )
 
 set(HEADERS_all
+  include/UniqueAssignments/Assignment.h
+  include/UniqueAssignments/AssignmentColumn.h
+  include/UniqueAssignments/GenerateUniques.h
+  include/UniqueAssignments/SymmetryInformation.h
   include/AdjacencyList.h
   include/AdjacencyListAlgorithms.h
   include/BondDistance.h
   include/CN4Stereocenter.h
   include/Cache.h
   include/CommonTrig.h
+  include/EZStereocenter.h
   include/Edge.h
   include/EdgeList.h
   include/IO.h
@@ -46,6 +51,8 @@ set(HEADERS_all
 # sources definition
 set(SOURCES_all
   source/Molecule.cpp
+  source/Stereocenter.cpp
+  source/CN4Stereocenter.cpp
 )
 
 # specify targets
@@ -55,7 +62,7 @@ add_library(molecule STATIC ${SOURCES_all} ${HEADERS_all})
 if( UNIX )
   add_definitions(-fPIC)
 endif()
-target_compile_options(molecule PUBLIC -std=c++14 -Wall -Wpedantic -Wextra)
+target_compile_options(molecule PUBLIC -g -std=c++1z -Wall -Wpedantic -Wextra)
 
 # Linking
 target_link_libraries(molecule ${DELIB_LIBRARY})

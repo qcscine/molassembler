@@ -1,3 +1,6 @@
+#ifndef STDLIB_TYPE_ALGORITHMS_H
+#define STDLIB_TYPE_ALGORITHMS_H
+
 #include <iostream>
 #include <set>
 #include <vector>
@@ -173,3 +176,5 @@ std::function<
 }
 
 } // eo namespace
+
+#endif
