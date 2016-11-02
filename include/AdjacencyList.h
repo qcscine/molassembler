@@ -4,6 +4,10 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <Eigen/Core>
+
+// temporary, for debug
+#include <iostream>
 
 #include "EdgeList.h"
 
@@ -122,11 +126,108 @@ public:
 
   /* Information */
   /*!
-   * Returns the size of the AdjacencyList
-   * \returns The size of the AdjacencyList
+   * Get a matrix of inter-vertex distances.
+   * NOTE: This works only if the Molecule is connected
    */
-  AtomIndexType size() const noexcept {
-    return _adjacencies.size();
+  Eigen::Matrix<unsigned, Eigen::Dynamic, Eigen::Dynamic> distancesMatrix() const {
+    auto N = _adjacencies.size();
+    Eigen::Matrix<unsigned, Eigen::Dynamic, Eigen::Dynamic> distances;
+    distances.resize(N, N);
+    distances.setZero();
+
+    auto strictUpperView = distances.triangularView<Eigen::StrictlyUpper>();
+
+    auto minMaxAccess = [&strictUpperView](
+      const unsigned& i,
+      const unsigned& j
+    ) -> decltype(strictUpperView(1, 2))& {
+      return strictUpperView(
+        std::min(i, j),
+        std::max(i, j)
+      );
+    };
+
+    // First pass, fill in with direct adjacencies
+    for(unsigned i = 0; i < N; i++) {
+      for(const auto& adjacentIndex: _adjacencies[i]) {
+        if(i < adjacentIndex) {
+          distances(i, adjacentIndex) = 1;
+        }
+      }
+    }
+
+    // Second pass, summing up, row-wise
+    // OBOEs say WHAT UP IN THIS CRIB YALL
+    for(unsigned i = 0; i < N; i++) { // for every row
+      // store whether the rows below have been added in
+      // addedIn[j] says whether the row i+j+1 has been added in
+      std::vector<bool> addedIn (N, false);
+      addedIn[i] = true;
+
+      while(
+        !std::all_of( // as long as not all addedIn's are true
+          addedIn.begin(),
+          addedIn.end(),
+          [](const auto& boolean) {
+            return boolean;
+          }
+        )
+      ) {
+        // pick first row not added in yet whose value in the current row is > 0
+        unsigned rowToAdd = 0;
+        for(unsigned j = 0; j < N; j++) {
+          if(
+            !addedIn[j] 
+            && minMaxAccess(i, j) > 0
+          ) {
+            rowToAdd = j;
+            break;
+          }
+        }
+
+        // add it to the current row
+        // for every element in the row specified by rowToAdd
+        for(unsigned j = rowToAdd + 1; j < N; j++) {
+          auto replacementDistance = (minMaxAccess(rowToAdd, j) > 0) 
+            ? (
+              minMaxAccess(rowToAdd, j)
+              + minMaxAccess(i, rowToAdd)
+            )
+            : 0;
+          if(
+            i != j
+            && (
+              minMaxAccess(i, j) == 0
+              || (
+                minMaxAccess(i, j) > replacementDistance
+                && replacementDistance != 0
+              )
+            )
+          ) {
+            minMaxAccess(i, j) = replacementDistance;
+          }
+        }
+
+        // mark addedIn
+        addedIn[rowToAdd] = true;
+
+        std::cout << distances << std::endl << std::endl;
+      }
+    }
+
+    return distances; 
+  }
+
+  /*!
+   * Get a list of adjacencies for a specified index
+   * \param a The index to get
+   * \returns The list of adjacencies for that index.
+   */
+  std::vector<AtomIndexType> getAdjacencies(
+    const AtomIndexType& a
+  ) const {
+    assert(_isValidIndex(a));
+    return _adjacencies[a];
   }
 
   /*!
@@ -149,15 +250,11 @@ public:
   }
 
   /*!
-   * Get a list of adjacencies for a specified index
-   * \param a The index to get
-   * \returns The list of adjacencies for that index.
+   * Returns the size of the AdjacencyList
+   * \returns The size of the AdjacencyList
    */
-  std::vector<AtomIndexType> getAdjacencies(
-    const AtomIndexType& a
-  ) const {
-    assert(_isValidIndex(a));
-    return _adjacencies[a];
+  AtomIndexType size() const noexcept {
+    return _adjacencies.size();
   }
 
   /*!

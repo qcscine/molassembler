@@ -1,15 +1,18 @@
 digraph G {
-  graph [fontname = "Arial"];
-  node [fontname = "Arial"];
+  graph [fontname = "Arial", fontsize=12];
+  node [fontname = "Arial", fontsize=12];
   edge [fontname = "Arial"];
 
-  subgraph cluster_0 {
+  /*subgraph cluster_0 {
     label = "Molecule";
+    "optional<Delib::PositionCollection>" -> "Molecule";
     "Delib::ElementTypeCollection" -> "Molecule";
     "AdjacencyList" -> "Molecule";
     "EdgeList" -> "Molecule";
-    "GraphFeatureList" -> "Molecule";
-  }
+    "StereocenterList" -> "Molecule";
+  }*/
+  "Collection3D" [color="gray", fontcolor="gray"];
+
   "Molecule" -> "DistanceConstraints";
   "Molecule" -> "ChiralityConstraints";
   "DistanceConstraints" -> "DistanceBoundsMatrix";
@@ -19,6 +22,4 @@ digraph G {
   "Collection4D" -> "Delib::PositionCollection";
   "Collection3D" -> "Delib::PositionCollection" [color="gray"];
   "ChiralityConstraints" -> "Delib::PositionCollection";
-
-  "Collection3D" [color="gray", fontcolor="gray"];
 }

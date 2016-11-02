@@ -95,7 +95,7 @@ public:
   std::pair<
     std::vector<DistanceConstraint>,
     std::vector<ChiralityConstraint>
-  > getStereocenterConstraints() const;
+  > getConstraints() const;
       
   AtomIndexType getNumAtoms() const;
   EdgeIndexType getNumBonds() const;

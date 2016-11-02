@@ -287,45 +287,50 @@ std::pair<
         )
       );
 
-      cayleyMenger(i + 1, j + 1) = CommonTrig::lawOfCosines(
-        a,
-        b,
-        ijAngle
+      cayleyMenger(i + 1, j + 1) = pow(
+        CommonTrig::lawOfCosines(
+          a,
+          b,
+          ijAngle
+        ),
+        2
       );
     }
   }
 
-  // top row of cayleyMenger matrix
-  for(unsigned i = 1; i < 5; i++) {
-    cayleyMenger(0, i) = 1;
-  }
+  // if no assignment has been made, skip determinant and chirality constraint
+  // C++17 _assignment.has_value()
+  if((bool) _assignment) { 
+    // top row of cayleyMenger matrix
+    for(unsigned i = 1; i < 5; i++) {
+      cayleyMenger(0, i) = 1;
+    }
 
-  // get the determinant
-  auto determinant = static_cast<
-    Eigen::Matrix<double, 5, 5>
-  >(
-    std::move(
+    // get the determinant
+    auto determinant = static_cast<
+      Eigen::Matrix<double, 5, 5>
+    >(
       cayleyMenger.selfadjointView<Eigen::Upper>()
-    )
-  ).determinant();
+    ).determinant();
 
-  auto chiralityTarget = sqrt(
-    determinant / 8.0
-  );
+    auto chiralityTarget = sqrt(
+      determinant / 8.0
+    );
 
-  // switch target value depending on current assignment
-  // TODO as soon as a full flow from reading a stereocenter to writing one
-  // is completed, confirm or alter this if (==0 or ==1), one of both is 
-  // correct.
-  if(_assignment.value() % 2 == 0) chiralityTarget *= -1.0;
+    // switch target value depending on current assignment
+    // TODO as soon as a full flow from reading a stereocenter to writing one
+    // is completed, confirm or alter this if (==0 or ==1), one of both is 
+    // correct.
+    if(_assignment.value() % 2 == 0) chiralityTarget *= -1.0;
 
-  chiralityConstraints.emplace_back(
-    neighbors[0],
-    neighbors[1],
-    neighbors[2],
-    neighbors[3],
-    chiralityTarget
-  );
+    chiralityConstraints.emplace_back(
+      neighbors[0],
+      neighbors[1],
+      neighbors[2],
+      neighbors[3],
+      chiralityTarget
+    );
+  }
 
   return make_pair(
     std::move(distanceConstraints),

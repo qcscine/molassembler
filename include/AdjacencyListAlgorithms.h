@@ -8,7 +8,7 @@
 
 /* TODO
  * - Test -> We have a infinite loop of some sort, maybe an out of bounds error
- * - Cycle detection -> see Tucker, Alan. "Applied Combinatorics p.49
+ * - Cycle detection -> see Tucker, Alan. "Applied Combinatorics" p.49
  * 
  * NOTES
  * - Yes, it has to be a deque. A queue, although seemingly the minimal 

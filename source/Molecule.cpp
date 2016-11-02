@@ -493,7 +493,7 @@ std::ostream& operator << (
 std::pair<
   std::vector<DistanceConstraint>,
   std::vector<ChiralityConstraint>
-> Molecule::getStereocenterConstraints() const {
+> Molecule::getConstraints() const {
   std::vector<DistanceConstraint> distanceConstraints;
   std::vector<ChiralityConstraint> chiralityConstraints;
 
