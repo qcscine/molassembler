@@ -156,6 +156,30 @@ public:
       }
     }
 
+    auto copyInRow = [&minMaxAccess, &N](
+      const unsigned& sourceRow,
+      const unsigned& targetRow 
+    ) {
+      for(unsigned col = targetRow + 1; col < N; col++) {
+        // C++17 if-init opportunity!
+        if(
+          col != sourceRow 
+          && minMaxAccess(sourceRow, col) != 0
+        ) {
+          auto replacementDistance = (
+            minMaxAccess(sourceRow, col)
+            + minMaxAccess(targetRow, sourceRow)
+          );
+          if(
+            minMaxAccess(targetRow, col) == 0
+            || minMaxAccess(targetRow, col) > replacementDistance
+          ) {
+            minMaxAccess(targetRow, col) = replacementDistance;
+          }
+        }
+      }
+    };
+
     // Second pass, summing up, row-wise
     // OBOEs say WHAT UP IN THIS CRIB YALL
     for(unsigned i = 0; i < N; i++) { // for every row
@@ -164,58 +188,43 @@ public:
       std::vector<bool> addedIn (N, false);
       addedIn[i] = true;
 
-      while(
+      for(
+        unsigned counter = 1;
         !std::all_of( // as long as not all addedIn's are true
           addedIn.begin(),
           addedIn.end(),
           [](const auto& boolean) {
             return boolean;
           }
-        )
+        );
+        counter++
       ) {
-        // pick first row not added in yet whose value in the current row is > 0
-        unsigned rowToAdd = 0;
+
+        // Find rows that have value equal to current counter
+        std::vector<unsigned> rowsToCopy;
         for(unsigned j = 0; j < N; j++) {
           if(
-            !addedIn[j] 
-            && minMaxAccess(i, j) > 0
-          ) {
-            rowToAdd = j;
-            break;
-          }
-        }
-
-        // add it to the current row
-        // for every element in the row specified by rowToAdd
-        for(unsigned j = rowToAdd + 1; j < N; j++) {
-          auto replacementDistance = (minMaxAccess(rowToAdd, j) > 0) 
-            ? (
-              minMaxAccess(rowToAdd, j)
-              + minMaxAccess(i, rowToAdd)
-            )
-            : 0;
-          if(
             i != j
-            && (
-              minMaxAccess(i, j) == 0
-              || (
-                minMaxAccess(i, j) > replacementDistance
-                && replacementDistance != 0
-              )
-            )
+            && !addedIn[j]
+            && minMaxAccess(i, j) == counter
           ) {
-            minMaxAccess(i, j) = replacementDistance;
+            rowsToCopy.push_back(j);
           }
         }
 
-        // mark addedIn
-        addedIn[rowToAdd] = true;
+        if(rowsToCopy.size() == 0) break;
 
-        std::cout << distances << std::endl << std::endl;
+        // copy them in
+        for(const auto& copyIndex : rowsToCopy) {
+          copyInRow(i, copyIndex);
+          addedIn[copyIndex] = true;
+        }
       }
     }
 
-    return distances; 
+    return static_cast<
+      decltype(distances)
+    >(distances.selfadjointView<Eigen::Upper>());
   }
 
   /*!

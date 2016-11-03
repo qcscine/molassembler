@@ -7,7 +7,9 @@
 
 using namespace MoleculeManip;
 
-BOOST_AUTO_TEST_CASE(asdf) {
+BOOST_AUTO_TEST_CASE(distancesMatrix) {
+  // TODO this desperately needs more and better tests
+  
   AdjacencyList testList(
     EdgeList({
       Edge(0, 1, BondType::Single),

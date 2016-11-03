@@ -1,5 +1,6 @@
 #include "Molecule.h"
 #include "CN4Stereocenter.h"
+#include "BondDistance.h"
 
 /* TODO
  * - implement remaining functions, importantly the operator ==
@@ -490,41 +491,110 @@ std::ostream& operator << (
   return os;
 }
 
-std::pair<
-  std::vector<DistanceConstraint>,
-  std::vector<ChiralityConstraint>
-> Molecule::getConstraints() const {
-  std::vector<DistanceConstraint> distanceConstraints;
-  std::vector<ChiralityConstraint> chiralityConstraints;
+Eigen::Matrix<
+  double, 
+  Eigen::Dynamic,
+  Eigen::Dynamic
+> Molecule::getDistanceBoundsMatrix() const {
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> boundsMatrix;
+  boundsMatrix.resize(getNumAtoms(), getNumAtoms());
+  boundsMatrix.setZero();
+  boundsMatrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
 
-  auto addToConstraints = [&](
-    const std::pair<
-      std::vector<DistanceConstraint>,
-      std::vector<ChiralityConstraint>
-    >& constraints
-  ) -> void {
-    std::copy(
-      constraints.first.begin(),
-      constraints.first.end(),
-      std::back_inserter(distanceConstraints)
-    );
-    std::copy(
-      constraints.second.begin(),
-      constraints.second.end(),
-      std::back_inserter(chiralityConstraints)
+  auto upperBound = [&boundsMatrix](
+    const unsigned& i,
+    const unsigned& j
+  ) -> decltype(boundsMatrix(1, 2))& {
+    return boundsMatrix(
+      std::min(i, j),
+      std::max(i, j)
     );
   };
 
-  for(const auto& stereocenterPtr: _stereocenters) {
-    addToConstraints(
-      stereocenterPtr -> collectConstraints()
+  auto lowerBound = [&boundsMatrix](
+    const unsigned& i,
+    const unsigned& j
+  ) -> decltype(boundsMatrix(1, 2))& {
+    return boundsMatrix(
+      std::max(i, j),
+      std::min(i, j)
     );
+  };
+
+  auto processDistanceConstraint = [&upperBound, &lowerBound](
+    const DistanceConstraint& constraint
+  ) {
+    AtomIndexType i, j;
+    double lower, upper;
+
+    std::tie(i, j, lower, upper) = constraint;
+    /*std::cout << "(" << i << ", " << j << "): [" << lower << ", " << upper << "]"
+      << ", currently [" << lowerBound(i, j) << ", " << upperBound(i, j) << "]" 
+      << std::endl;*/
+
+    assert(i != j);
+
+    // does applying the constraint reduce slack?
+    if(
+      upperBound(i, j) > upper // lower constraint
+      && upper > lowerBound(i, j) // and it's bigger than the lower bound
+    ) {
+      upperBound(i, j) = upper;
+    }
+
+    if(
+      lowerBound(i, j) < lower
+      && lower < upperBound(i, j) 
+    ) {
+      lowerBound(i, j) = lower;
+    }
+  };
+
+  auto bondDistancesMatrix = _adjacencies.distancesMatrix();
+
+  for(unsigned i = 0; i < bondDistancesMatrix.rows(); i++) {
+    for(unsigned j = i + 1; j < bondDistancesMatrix.cols(); j++) {
+      if(bondDistancesMatrix(i, j) == 1) {
+        auto distance = Bond::calculateBondDistance(
+          getElementType(i),
+          getElementType(j),
+          getBondType(i, j)
+        );
+        processDistanceConstraint(
+          DistanceConstraint(
+            i,
+            j,
+            0.99 * distance,
+            1.01 * distance
+          )
+        );
+      } else if(bondDistancesMatrix(i, j) >= 4) {
+        processDistanceConstraint(
+          DistanceConstraint(
+            i,
+            j,
+            (
+              Bond::vdwRadii.at(getElementType(i))
+              + Bond::vdwRadii.at(getElementType(j))
+            ),
+            100
+          )
+        );
+      }
+    }
   }
 
-  return {
-    std::move(distanceConstraints),
-    std::move(chiralityConstraints)
-  };
+  for(const auto& stereocenterPtr: _stereocenters) {
+    auto newDistanceConstraints = (
+      stereocenterPtr -> collectConstraints()
+    ).first;
+
+    for(const auto& newConstraint : newDistanceConstraints) {
+      processDistanceConstraint(newConstraint);
+    }
+  }
+
+  return boundsMatrix;
 }
 
 } // eo namespace

@@ -92,10 +92,11 @@ public:
     const AtomIndexType& a
   ) const;
 
-  std::pair<
-    std::vector<DistanceConstraint>,
-    std::vector<ChiralityConstraint>
-  > getConstraints() const;
+  Eigen::Matrix<
+    double,
+    Eigen::Dynamic,
+    Eigen::Dynamic
+  > getDistanceBoundsMatrix() const;
       
   AtomIndexType getNumAtoms() const;
   EdgeIndexType getNumBonds() const;
@@ -121,6 +122,10 @@ public:
     >
   > get_bond_pairs(const AtomIndexType& a) const;
   */
+
+  const AdjacencyList& getAdjacencyList() const {
+    return _adjacencies;
+  }
 
   std::vector<AtomIndexType> getBondedAtomIndices(
     const AtomIndexType& a

@@ -27,6 +27,9 @@ set(HEADERS_all
   include/UniqueAssignments/AssignmentColumn.h
   include/UniqueAssignments/GenerateUniques.h
   include/UniqueAssignments/SymmetryInformation.h
+  include/DistanceGeometry/DistanceGeometry.h
+  include/DistanceGeometry/MetricMatrix.h
+  include/DistanceGeometry/generateConformation.h
   include/AdjacencyList.h
   include/AdjacencyListAlgorithms.h
   include/BondDistance.h
