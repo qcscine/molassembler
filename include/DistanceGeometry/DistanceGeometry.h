@@ -23,7 +23,7 @@ enum class EmbeddingOption {
   fourDimensional
 };
 
-} // eo namespace
+} // eo namespace DistanceGeometry
 
 // Implementation
 /* Internal functions */

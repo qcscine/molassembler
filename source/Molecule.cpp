@@ -4,6 +4,9 @@
 #include "UniqueAssignments/SymmetryInformation.h"
 #include "CommonTrig.h"
 
+#include "GraphDistanceMatrix.h"
+#include "AdjacencyMatrix.h"
+
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 
 // Delib
@@ -498,74 +501,14 @@ std::ostream& operator << (
   return os;
 }
 
-Eigen::Matrix<
-  double, 
-  Eigen::Dynamic,
-  Eigen::Dynamic
-> Molecule::getDistanceBoundsMatrix() const {
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> boundsMatrix;
-  boundsMatrix.resize(getNumAtoms(), getNumAtoms());
-  boundsMatrix.setZero();
-  boundsMatrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
+DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const {
 
-  //DistanceGeometry::DistanceBoundsMatrix distanceBounds(getNumAtoms());
-
-  auto upperBound = [&boundsMatrix](
-    const unsigned& i,
-    const unsigned& j
-  ) -> decltype(boundsMatrix(1, 2))& {
-    return boundsMatrix(
-      std::min(i, j),
-      std::max(i, j)
-    );
-  };
-
-  auto lowerBound = [&boundsMatrix](
-    const unsigned& i,
-    const unsigned& j
-  ) -> decltype(boundsMatrix(1, 2))& {
-    return boundsMatrix(
-      std::max(i, j),
-      std::min(i, j)
-    );
-  };
+  DistanceGeometry::DistanceBoundsMatrix distanceBounds(getNumAtoms());
 
   /* TODO NOTE WARNING
-   * This section is currently severely flawed
-   * - stereocenter information may be ignored or duplicated due to order of 
-   *   processing
    * - VSEPR imitation is shit
    * - no local charges settable (is this required?)
    */
-
-  auto processDistanceConstraint = [&upperBound, &lowerBound](
-    const DistanceConstraint& constraint
-  ) {
-    AtomIndexType i, j;
-    double lower, upper;
-
-    std::tie(i, j, lower, upper) = constraint;
-    /*std::cout << "(" << i << ", " << j << "): [" << lower << ", " << upper << "]"
-      << ", currently [" << lowerBound(i, j) << ", " << upperBound(i, j) << "]" 
-      << std::endl;*/
-
-    assert(i != j);
-
-    // does applying the constraint reduce slack?
-    if(
-      upperBound(i, j) > upper // lower constraint
-      && upper > lowerBound(i, j) // and it's bigger than the lower bound
-    ) {
-      upperBound(i, j) = upper;
-    }
-
-    if(
-      lowerBound(i, j) < lower
-      && lower < upperBound(i, j) 
-    ) {
-      lowerBound(i, j) = lower;
-    }
-  };
 
   // Populate with stereocenter constraints first
   for(const auto& stereocenterPtr: _stereocenters) {
@@ -573,62 +516,47 @@ Eigen::Matrix<
       stereocenterPtr -> collectConstraints()
     ).first;
 
-    for(const auto& newConstraint : newDistanceConstraints) {
-      processDistanceConstraint(newConstraint);
-    }
+    distanceBounds.processDistanceConstraints(newDistanceConstraints);
   }
 
-  auto bondDistancesMatrix = _adjacencies.distancesMatrix();
+  auto bondDistancesMatrix = GraphDistanceMatrix(
+    AdjacencyMatrix(
+      _adjacencies
+    )
+  );
 
-  for(unsigned i = 0; i < bondDistancesMatrix.rows(); i++) {
-    for(unsigned j = i + 1; j < bondDistancesMatrix.cols(); j++) {
+  // TODO extract chain between i-j from bondDistancesMatrix, use function below
+  for(unsigned i = 0; i < bondDistancesMatrix.N; i++) {
+    for(unsigned j = i + 1; j < bondDistancesMatrix.N; j++) {
       // has constraint information already been added for this pair?
       if(
         !(
-          upperBound(i, j) == 100 
-          || lowerBound(i, j) == 0
+          distanceBounds.upperBound(i, j) == 100 
+          || distanceBounds.lowerBound(i, j) == 0
         )
       ) {
         // then go to the next pair
         continue;
       }
 
-      if(bondDistancesMatrix(i, j) == 1) {
-        auto distance = Bond::calculateBondDistance(
-          getElementType(i),
-          getElementType(j),
-          getBondType(i, j)
-        );
-        processDistanceConstraint(
-          DistanceConstraint(
-            i,
-            j,
-            0.99 * distance,
-            1.01 * distance
-          )
-        );
-      // TODO else if's for distances 2 and 3 -> very tricky, read up on LFT first!
-      } else if(bondDistancesMatrix(i, j) >= 4) {
-        processDistanceConstraint(
-          DistanceConstraint(
-            i,
-            j,
-            (
-              AtomInfo::vdwRadius(getElementType(i))
-              + AtomInfo::vdwRadius(getElementType(j))
-            ),
-            100
+      std::vector<
+        std::vector<AtomIndexType>
+      > chains = bondDistancesMatrix.extractChains(i, j);
+
+      for(const auto& chain: chains) {
+        distanceBounds.processDistanceConstraints(
+          _createConstraint(
+            chain
           )
         );
       }
     }
   }
 
-
-  return boundsMatrix;
+  return distanceBounds;
 }
 
-std::experimental::optional<DistanceConstraint> Molecule::_createConstraint(
+std::vector<DistanceConstraint> Molecule::_createConstraint(
   const std::vector<AtomIndexType>& chain
 ) const {
   auto& i = chain.front();
@@ -641,12 +569,14 @@ std::experimental::optional<DistanceConstraint> Molecule::_createConstraint(
         getElementType(j),
         getBondType(i, j)
       );
-      return DistanceConstraint(
-        i,
-        j,
-        0.99 * distance,
-        1.01 * distance
-      );
+      return {
+        DistanceConstraint(
+          i,
+          j,
+          0.99 * distance,
+          1.01 * distance
+        )
+      };
     }
     case 3: {
       auto& intermediate = chain[1];
@@ -684,12 +614,14 @@ std::experimental::optional<DistanceConstraint> Molecule::_createConstraint(
           angle.value() * M_PI / 180.0
         );
 
-        return DistanceConstraint(
-          i,
-          j,
-          0.95 * distance,
-          1.05 * distance
-        );
+        return {
+          DistanceConstraint(
+            i,
+            j,
+            0.95 * distance,
+            1.05 * distance
+          )
+        };
       } else {
         return {};
       }
@@ -699,15 +631,17 @@ std::experimental::optional<DistanceConstraint> Molecule::_createConstraint(
       return {};
     }
     default: {
-      return DistanceConstraint(
-        i,
-        j,
-        (
-          AtomInfo::vdwRadius(getElementType(i))
-          + AtomInfo::vdwRadius(getElementType(j))
-        ),
-        100
-      );
+      return {
+        DistanceConstraint(
+          i,
+          j,
+          (
+            AtomInfo::vdwRadius(getElementType(i))
+            + AtomInfo::vdwRadius(getElementType(j))
+          ),
+          100
+        )
+      };
     }
   }
 

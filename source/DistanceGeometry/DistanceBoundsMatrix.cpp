@@ -1,5 +1,5 @@
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include <random>
+#include <cassert>
 
 namespace MoleculeManip {
 
@@ -60,32 +60,34 @@ double DistanceBoundsMatrix::lowerBound(
   );
 }
 
-void DistanceBoundsMatrix::processDistanceConstraint(
-  const DistanceConstraint& constraint
+void DistanceBoundsMatrix::processDistanceConstraints(
+  const std::vector<DistanceConstraint>& constraints
 ) {
-  AtomIndexType i, j;
-  double lower, upper;
+  for(const auto& constraint : constraints) {
+    AtomIndexType i, j;
+    double lower, upper;
 
-  std::tie(i, j, lower, upper) = constraint;
-  /*std::cout << "(" << i << ", " << j << "): [" << lower << ", " << upper << "]"
-    << ", currently [" << lowerBound(i, j) << ", " << upperBound(i, j) << "]" 
-    << std::endl;*/
+    std::tie(i, j, lower, upper) = constraint;
+    /*std::cout << "(" << i << ", " << j << "): [" << lower << ", " << upper << "]"
+      << ", currently [" << lowerBound(i, j) << ", " << upperBound(i, j) << "]" 
+      << std::endl;*/
 
-  assert(i != j);
+    assert(i != j);
 
-  // does applying the constraint reduce slack?
-  if(
-    upperBound(i, j) > upper // lower constraint
-    && upper > lowerBound(i, j) // and it's bigger than the lower bound
-  ) {
-    upperBound(i, j) = upper;
-  }
+    // does applying the constraint reduce slack?
+    if(
+      upperBound(i, j) > upper // lower constraint
+      && upper > lowerBound(i, j) // and it's bigger than the lower bound
+    ) {
+      upperBound(i, j) = upper;
+    }
 
-  if(
-    lowerBound(i, j) < lower
-    && lower < upperBound(i, j) 
-  ) {
-    lowerBound(i, j) = lower;
+    if(
+      lowerBound(i, j) < lower
+      && lower < upperBound(i, j) 
+    ) {
+      lowerBound(i, j) = lower;
+    }
   }
 }
 

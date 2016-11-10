@@ -154,6 +154,17 @@ std::vector<
   return sets;
 }
 
+template<typename T>
+std::vector<T> copyMerge(
+  const std::vector<T>& a,
+  const std::vector<T>& b
+) {
+  std::vector<T> returnVector(a.size()+b.size());
+  returnVector.insert(returnVector.end(), a.begin(), a.end());
+  returnVector.insert(returnVector.end(), b.begin(), b.end());
+  return returnVector;
+}
+
 template<typename T1, typename T2, typename ReturnType>
 ReturnType minMaxAdaptor(
   const std::function<

@@ -4,7 +4,6 @@
 #include "DistanceGeometry/DistanceGeometry.h"
 
 #include <Eigen/Core>
-#include <cassert>
 #include <random>
 
 
@@ -44,7 +43,9 @@ public:
     const unsigned& j
   ) const;
 
-  void processDistanceConstraint(const DistanceConstraint& constraint);
+  void processDistanceConstraints(
+    const std::vector<DistanceConstraint>& constraints
+  );
 
   /*!
    * Returns a distance matrix with randomly chosen distances between the

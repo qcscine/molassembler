@@ -4,7 +4,6 @@
 // STL
 #include <iostream>
 #include <set>
-#include <experimental/optional>
 
 // Delib
 #include "Types/PositionCollection.h"
@@ -14,6 +13,7 @@
 #include "AdjacencyList.h"
 #include "EdgeList.h"
 #include "StereocenterList.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 
 namespace MoleculeManip {
 
@@ -46,7 +46,7 @@ private:
     const AtomIndexType& b
   ) const;
   void _dumpGraphviz(std::ostream& os) const;
-  std::experimental::optional<DistanceConstraint> _createConstraint(
+  std::vector<DistanceConstraint> _createConstraint(
     const std::vector<AtomIndexType>& chain
   ) const;
 
@@ -95,11 +95,7 @@ public:
     const AtomIndexType& a
   ) const;
 
-  Eigen::Matrix<
-    double,
-    Eigen::Dynamic,
-    Eigen::Dynamic
-  > getDistanceBoundsMatrix() const;
+  DistanceGeometry::DistanceBoundsMatrix getDistanceBoundsMatrix() const;
 
   int formalCharge(const AtomIndexType& a) const;
   int oxidationState(const AtomIndexType& a) const;
