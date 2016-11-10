@@ -1,10 +1,11 @@
-#include <vector>
-#include <Eigen/Core>
-
+#include "Molecule.h"
 #include "Types/PositionCollection.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "DistanceGeometry/MetricMatrix.h"
-#include "Molecule.h"
+
+#include <vector>
+#include <Eigen/Core>
 
 namespace MoleculeManip {
 
@@ -26,7 +27,11 @@ Delib::PositionCollection generateConformation(
   bool acceptableConformation;
 
   do {
-    MetricMatrix metric(distanceBoundsMatrix);
+    MetricMatrix metric(
+      distanceBoundsMatrix.generateDistanceMatrix(
+        metrization
+      )
+    );
     embedded = metric.embed(embedding);
 
     acceptableConformation = refine(embedded, embedding, molecule);

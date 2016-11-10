@@ -2,10 +2,10 @@
 #define INCLUDE_DG_DISTANCE_BOUNDS_MATRIX_HPP
 
 #include "DistanceGeometry/DistanceGeometry.h"
+#include "common_typedefs.h"
 
 #include <Eigen/Core>
 #include <random>
-
 
 namespace MoleculeManip {
 
@@ -51,7 +51,9 @@ public:
    * Returns a distance matrix with randomly chosen distances between the
    * bounds
    */
-  Eigen::MatrixXd generateDistanceMatrix() const;
+  Eigen::MatrixXd generateDistanceMatrix(
+    const MetrizationOption& metrization
+  ) const;
 };
 
 } // eo namespace DistanceGeometry

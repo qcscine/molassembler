@@ -1,12 +1,6 @@
 #ifndef DISTANCE_GEOMETRY_HPP
 #define DISTANCE_GEOMETRY_HPP
 
-#include <vector>
-#include <Eigen/Core>
-
-#include "Types/PositionCollection.h"
-#include "Molecule.h"
-
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
@@ -19,8 +13,8 @@ enum class MetrizationOption {
 };
 
 enum class EmbeddingOption {
-  threeDimensional,
-  fourDimensional
+  threeDimensional = 3,
+  fourDimensional = 4
 };
 
 } // eo namespace DistanceGeometry

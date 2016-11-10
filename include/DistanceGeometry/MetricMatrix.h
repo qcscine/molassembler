@@ -17,13 +17,13 @@ private:
 public:
   /* Constructors */
   MetricMatrix() = delete;
-  MetricMatrix(const Eigen::MatrixXd& matrix);
+  MetricMatrix(Eigen::MatrixXd&& matrix);
 
   /*!
    * Embeds itself into 3D or 4D space depending on the embedding option,
    * returning a dynamically sized Matrix
    */
-  Eigen::MatrixXd embed(const EmbeddingOption& embedding);
+  Eigen::MatrixXd embed(const EmbeddingOption& embedding) const;
 };
 
 } // eo namespace DistanceGeometry

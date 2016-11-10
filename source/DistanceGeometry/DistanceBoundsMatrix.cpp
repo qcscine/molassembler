@@ -91,7 +91,10 @@ void DistanceBoundsMatrix::processDistanceConstraints(
   }
 }
 
-Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix() const {
+// TODO alter behavior due to metrizationOption!
+Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
+  const MetrizationOption& metrization
+) const {
 
   Eigen::MatrixXd distances;
   distances.resize(_N, _N);

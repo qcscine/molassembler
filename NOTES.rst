@@ -1,8 +1,8 @@
 CONTINUE AT
 -----------
-Finish DistanceGeometry/DistanceBoundsMatrix and refactor Molecule's constraint
-collection to return that type
-Constraint collection and population of DistanceBoundsMatrix
+- Constraint collection and population of DistanceBoundsMatrix -> 3/4 lengths, 
+  caching of calculated i-j distances for lookup
+- Metrization during distance matrix generation in DistanceBoundsMatrix
 
 
 TODO
