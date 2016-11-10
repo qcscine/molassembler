@@ -1,5 +1,7 @@
 CONTINUE AT
 -----------
+Finish DistanceGeometry/DistanceBoundsMatrix and refactor Molecule's constraint
+collection to return that type
 Constraint collection and population of DistanceBoundsMatrix
 
 
@@ -33,6 +35,15 @@ TODO
 - IO.h: will have to be changed eventually to call DG to generate a 3D
   structure if there is none.  Maybe cache 3D structures? Additionally,
   modernize it to use C++17's filesystem TS
+- Use LFT to determine which geometry? MO-level calculations, perhaps
+  approximable with low cost
+
+
+Is atomic charge fully determined?
+----------------------------------
+
+The information present is the atom type of the center atom, the atom types of
+all neighbors, and the bond types.
 
 
 Sequence of things to write

@@ -46,6 +46,9 @@ private:
     const AtomIndexType& b
   ) const;
   void _dumpGraphviz(std::ostream& os) const;
+  std::experimental::optional<DistanceConstraint> _createConstraint(
+    const std::vector<AtomIndexType>& chain
+  ) const;
 
 public:
 /* Constructors */
@@ -97,6 +100,9 @@ public:
     Eigen::Dynamic,
     Eigen::Dynamic
   > getDistanceBoundsMatrix() const;
+
+  int formalCharge(const AtomIndexType& a) const;
+  int oxidationState(const AtomIndexType& a) const;
       
   AtomIndexType getNumAtoms() const;
   EdgeIndexType getNumBonds() const;

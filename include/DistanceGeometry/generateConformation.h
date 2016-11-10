@@ -2,7 +2,9 @@
 #include <Eigen/Core>
 
 #include "Types/PositionCollection.h"
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "DistanceGeometry/DistanceGeometry.h"
+#include "DistanceGeometry/MetricMatrix.h"
+#include "Molecule.h"
 
 namespace MoleculeManip {
 
@@ -11,20 +13,20 @@ namespace DistanceGeometry {
 bool refine(
   Eigen::MatrixXd& embedded,
   const EmbeddingOption& embedding,
-  const MoleculeManip::Molecule& molecule
+  const Molecule& molecule
 );
 
 Delib::PositionCollection generateConformation(
-  const MoleculeManip::Molecule& molecule,
+  const Molecule& molecule,
   const MetrizationOption& metrization,
   const EmbeddingOption& embedding
 ) {
-  DistanceBoundsMatrix distanceBounds(molecule);
+  auto distanceBoundsMatrix = molecule.getDistanceBoundsMatrix();
   Eigen::MatrixXd embedded;
   bool acceptableConformation;
 
   do {
-    MetricMatrix metric = distanceBounds.toMetricMatrix(metrization);
+    MetricMatrix metric(distanceBoundsMatrix);
     embedded = metric.embed(embedding);
 
     acceptableConformation = refine(embedded, embedding, molecule);
