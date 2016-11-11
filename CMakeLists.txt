@@ -27,11 +27,14 @@ set(HEADERS_all
   include/UniqueAssignments/AssignmentColumn.h
   include/UniqueAssignments/GenerateUniques.h
   include/UniqueAssignments/SymmetryInformation.h
+  include/DistanceGeometry/DistanceBoundsMatrix.h
   include/DistanceGeometry/DistanceGeometry.h
   include/DistanceGeometry/MetricMatrix.h
   include/DistanceGeometry/generateConformation.h
   include/AdjacencyList.h
   include/AdjacencyListAlgorithms.h
+  include/AdjacencyMatrix.h
+  include/AtomInfo.h
   include/BondDistance.h
   include/CN4Stereocenter.h
   include/Cache.h
@@ -39,6 +42,7 @@ set(HEADERS_all
   include/EZStereocenter.h
   include/Edge.h
   include/EdgeList.h
+  include/GraphDistanceMatrix.h
   include/IO.h
   include/Molecule.h
   include/StdlibTypeAlgorithms.h
@@ -53,10 +57,14 @@ set(HEADERS_all
 
 # sources definition
 set(SOURCES_all
+  source/DistanceGeometry/DistanceBoundsMatrix.cpp
+  source/DistanceGeometry/MetricMatrix.cpp
   source/UniqueAssignments/AssignmentColumn.cpp
+  source/AdjacencyMatrix.cpp
+  source/CN4Stereocenter.cpp
+  source/GraphDistanceMatrix.cpp
   source/Molecule.cpp
   source/Stereocenter.cpp
-  source/CN4Stereocenter.cpp
 )
 
 # specify targets

@@ -3,6 +3,12 @@ CONTINUE AT
 - Constraint collection and population of DistanceBoundsMatrix -> 3/4 lengths, 
   caching of calculated i-j distances for lookup
 - Metrization during distance matrix generation in DistanceBoundsMatrix
+- At step 7 of DG steps from p.15
+- Conjugate gradient descent?
+  To check if a matrix is positive definite, compute its eigenvalues, ensure
+  all are positive OR perform an LDL(T) decomposition. If the latter works at 
+  all, it's positive definite. To use conjugate gradient, reformulate the
+  entire problem as quadratic form.
 
 
 TODO

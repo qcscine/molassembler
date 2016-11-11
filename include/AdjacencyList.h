@@ -4,10 +4,6 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
-#include <Eigen/Core>
-
-// temporary, for debug
-#include <iostream>
 
 #include "EdgeList.h"
 
@@ -21,29 +17,6 @@ private:
       AtomIndexType
     >
   > _adjacencies;
-
-  /* Private member functions */
-  /*!
-   * Ensures the passed index is in range.
-   * \param a The index to check
-   * \returns Whether the index is in range.
-   */
-  bool _isValidIndex(
-    const AtomIndexType& a
-  ) const {
-    return a < _adjacencies.size();
-  }
-
-  bool _areValidIndices(
-    const AtomIndexType& a,
-    const AtomIndexType& b
-  ) const {
-    return (
-      _isValidIndex(a)
-      && _isValidIndex(b)
-      && a != b
-    );
-  }
 
 public:
 /* Public member functions */
@@ -84,10 +57,8 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) noexcept {
-    assert(_areValidIndices(a, b));
-
-    _adjacencies[a].emplace_back(b);
-    _adjacencies[b].emplace_back(a);
+    _adjacencies.at(a).emplace_back(b);
+    _adjacencies.at(b).emplace_back(a);
   }
 
   /*!
@@ -106,19 +77,17 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) {
-    assert(_areValidIndices(a, b));
-
-    _adjacencies[a].erase(
+    _adjacencies.at(a).erase(
       std::remove(
-        _adjacencies[a].begin(),
-        _adjacencies[a].end(),
+        _adjacencies.at(a).begin(),
+        _adjacencies.at(a).end(),
         b
       )
     );
-    _adjacencies[b].erase(
+    _adjacencies.at(b).erase(
       std::remove(
-        _adjacencies[b].begin(),
-        _adjacencies[b].end(),
+        _adjacencies.at(b).begin(),
+        _adjacencies.at(b).end(),
         a
       )
     );
@@ -133,8 +102,7 @@ public:
   std::vector<AtomIndexType> getAdjacencies(
     const AtomIndexType& a
   ) const {
-    assert(_isValidIndex(a));
-    return _adjacencies[a];
+    return _adjacencies.at(a);
   }
 
   /*!
@@ -147,13 +115,11 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const noexcept {
-    assert(_areValidIndices(a, b));
-
     return std::find(
-      _adjacencies[a].begin(),
-      _adjacencies[a].end(),
+      _adjacencies.at(a).begin(),
+      _adjacencies.at(a).end(),
       b
-    ) != _adjacencies[a].end();
+    ) != _adjacencies.at(a).end();
   }
 
   /*!
@@ -184,8 +150,7 @@ public:
 
 /* Operators */
   const std::vector<AtomIndexType>& operator[](const AtomIndexType& a) const {
-    assert(_isValidIndex(a));
-    return _adjacencies[a];
+    return _adjacencies.at(a);
   }
 };
 
