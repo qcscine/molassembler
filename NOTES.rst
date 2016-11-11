@@ -9,6 +9,11 @@ CONTINUE AT
   all are positive OR perform an LDL(T) decomposition. If the latter works at 
   all, it's positive definite. To use conjugate gradient, reformulate the
   entire problem as quadratic form.
+- Change AdjacencyMatrix implementation to avoid most vexing parse, see test
+  file for details
+- Change AdjacencyMatrix implementation to use a bool matrix, or at least
+  unsigned
+- Change GraphDistanceMatrix implementation to use unsigned, not double
 
 
 Things that need more tests
@@ -20,7 +25,6 @@ Things that need more tests
 - CN4Stereocenter
 - Cache
 - CommonTrig
-- EdgeList (?)
 - GraphDistanceMatrix
 - IO
 - Molecule (when finished)
