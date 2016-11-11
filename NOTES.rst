@@ -11,6 +11,31 @@ CONTINUE AT
   entire problem as quadratic form.
 
 
+Things that need more tests
+---------------------------
+
+- AdjacencyListAlgorithms
+- AdjacencyMatrix
+- BondDistance
+- CN4Stereocenter
+- Cache
+- CommonTrig
+- EdgeList (?)
+- GraphDistanceMatrix
+- IO
+- Molecule (when finished)
+- StdlibTypeAlgorithms
+- StereocenterList
+- Tree
+- TreeAlgorithms
+- DistanceGeometry
+  
+  - DistanceBoundsMatrix
+  - MetricMatrix
+  - generateConformation (when finished)
+
+
+
 TODO
 ----
 
@@ -20,13 +45,13 @@ TODO
    MOLFile, then permute and generate 3D structures of both stereoisomers.
 
 
+
+
 - Test IO
 - Transition to CTest ?
 - Change unscoped enums to scoped enums with enum class
 - Use ranking of substituents to produce consistent numbering of atoms and 
   identification of identicality
-- If anything starts failing, improve test coverage. Only basic tests for many
-  components so far.
 - Should PositionCollection really be a member of Molecule? I don't think so
 - Should AromaticRing really be a GraphFeature? Isn't that somewhat a misnomer
   anyway? The whole necessity for their existence was that the connectivity of

@@ -225,9 +225,9 @@ BondType Molecule::getBondType(
   const AtomIndexType& a,
   const AtomIndexType& b
 ) const {
-  auto edgeIndexOption = _edges.search(a, b);
-  assert(edgeIndexOption);
-  return _edges.get(edgeIndexOption.value()).bondType;
+  auto edgeOption = _edges.get(a, b);
+  assert(edgeOption);
+  return edgeOption.value().bondType;
 }
 
 unsigned Molecule::hydrogenCount(const AtomIndexType& a) const {

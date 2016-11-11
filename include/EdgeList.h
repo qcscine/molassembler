@@ -190,9 +190,20 @@ public:
   }
 
 /* Information */
-  inline Edge get(const EdgeIndexType& position) const noexcept {
-    assert(position < _edges.size());
-    return _edges[position];
+  std::experimental::optional<Edge> get(
+    const AtomIndexType& a,
+    const AtomIndexType& b
+  ) const noexcept {
+    auto searchOption = _binarySearch(
+      std::min(a, b),
+      std::max(a, b)
+    );
+    
+    if(searchOption) {
+      return _edges.at(searchOption.value());
+    } else {
+      return {};
+    }
   }
 
   /*!
@@ -201,7 +212,7 @@ public:
    * \returns whether the list is ordered.
    * \note is O(E) 
    */
-  bool is_ordered() const noexcept {
+  bool isOrdered() const noexcept {
     /* this is a necessary underflow guard:
      * in the loop condition all types are unsigned:
      *  i < _edges.size() - 1
@@ -218,16 +229,6 @@ public:
     }
 
     return true;
-  }
-
-  std::experimental::optional<EdgeIndexType> search(
-    const AtomIndexType& a,
-    const AtomIndexType& b
-  ) const noexcept {
-    return _binarySearch(
-      std::min(a, b),
-      std::max(a, b)
-    );
   }
 
   unsigned size() const noexcept {
