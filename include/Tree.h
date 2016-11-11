@@ -79,7 +79,7 @@ std::shared_ptr<
       key
     )
   );
-  return nodePtr -> children.back();
+  return nodePtr -> children.back(); // return pointer to just added node
 }
 
 template<typename T>

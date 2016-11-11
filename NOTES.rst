@@ -20,12 +20,10 @@ Things that need more tests
 ---------------------------
 
 - AdjacencyListAlgorithms
-- AdjacencyMatrix
 - BondDistance
 - CN4Stereocenter
 - Cache
 - CommonTrig
-- GraphDistanceMatrix
 - IO
 - Molecule (when finished)
 - StdlibTypeAlgorithms
@@ -49,14 +47,20 @@ TODO
    MOLFile, then permute and generate 3D structures of both stereoisomers.
 
 
-
-
-- Test IO
+- Maybe the GraphDistanceMatrix constructor can be simplified dramatically.
+  Idea: Start with all values that are 1. Their up-right-down-left neighbors
+  are set as 2 if they are not 1. Then do the same for 2, but set their direct
+  neighbors as 3. I'm not sure this is correct, and to find out if it is, just
+  shuffle the matrix rows and columns a little and see if the observation that
+  adjacent values are +- 1 is still valid (I'm pretty sure it isn't).
+- Revert to normal types in common_typedefs.h
 - Transition to CTest ?
-- Change unscoped enums to scoped enums with enum class
+- Add hooks to git to automatically build a release version on commit and run
+  the tests
 - Use ranking of substituents to produce consistent numbering of atoms and 
   identification of identicality
 - Should PositionCollection really be a member of Molecule? I don't think so
+  Perhaps optionally
 - Should AromaticRing really be a GraphFeature? Isn't that somewhat a misnomer
   anyway? The whole necessity for their existence was that the connectivity of
   vertices and edges is sometimes insufficient to fully specify a molecule's
@@ -65,7 +69,8 @@ TODO
   planarity of the involved atoms. It's not something that HAS to be specified
   separately for those atoms. Separately, for DG, this special property has to
   be detected for generated structures to be more reasonable, but also not
-  necessarily from the start.
+  necessarily from the start. But watch out, don't forget to integrate it at
+  some point! It's currently in include/repurpose/
 - Integrate DG. It's an essential part of the whole project, so include it.
 - IO.h: will have to be changed eventually to call DG to generate a 3D
   structure if there is none.  Maybe cache 3D structures? Additionally,
