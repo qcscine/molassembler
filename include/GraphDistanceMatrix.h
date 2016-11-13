@@ -8,7 +8,7 @@ namespace MoleculeManip {
 
 class GraphDistanceMatrix {
 private:
-  Eigen::MatrixXd _matrix;
+  Eigen::Matrix<unsigned, Eigen::Dynamic, Eigen::Dynamic> _matrix;
 
   void _transformToDistances();
   void _copyInRow(
@@ -21,7 +21,6 @@ public:
 
   GraphDistanceMatrix() = delete;
   GraphDistanceMatrix(const AdjacencyMatrix& adjacencyMatrix);
-  GraphDistanceMatrix(AdjacencyMatrix&& adjacencyMatrix);
 
   std::vector<
     std::vector<AtomIndexType>
@@ -30,11 +29,11 @@ public:
     const AtomIndexType& j
   );
 
-  double& operator () (
+  unsigned& operator () (
     const AtomIndexType& i,
     const AtomIndexType& j
   );
-  double operator () (
+  unsigned operator () (
     const AtomIndexType& i,
     const AtomIndexType& j
   ) const;

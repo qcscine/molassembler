@@ -16,7 +16,7 @@ AdjacencyMatrix::AdjacencyMatrix(const AdjacencyList& adjacencyList)
   }
 }
 
-double& AdjacencyMatrix::operator () (
+bool& AdjacencyMatrix::operator () (
   const AtomIndexType& i,
   const AtomIndexType& j
 ) {
@@ -26,7 +26,7 @@ double& AdjacencyMatrix::operator () (
   );
 }
 
-double AdjacencyMatrix::operator () (
+bool AdjacencyMatrix::operator () (
   const AtomIndexType& i,
   const AtomIndexType& j
 ) const {

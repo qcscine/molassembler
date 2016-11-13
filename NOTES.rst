@@ -11,10 +11,6 @@ CONTINUE AT
   entire problem as quadratic form.
 - Change AdjacencyMatrix implementation to avoid most vexing parse, see test
   file for details
-- Change AdjacencyMatrix implementation to use a bool matrix, or at least
-  unsigned
-- Change GraphDistanceMatrix implementation to use unsigned, not double
-
 
 Things that need more tests
 ---------------------------

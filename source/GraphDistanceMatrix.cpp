@@ -10,16 +10,11 @@ GraphDistanceMatrix::GraphDistanceMatrix(const AdjacencyMatrix& adjacencyMatrix)
   // copy in from adjacencyMatrix
   for(AtomIndexType i = 0; i < N; i++) {
     for(AtomIndexType j = i + 1; j < N; j++) {
-      this->operator()(i, j) = adjacencyMatrix(i, j);
+      this->operator()(i, j) = static_cast<unsigned>(
+        adjacencyMatrix(i, j) // is boolean
+      );
     }
   }
-
-  _transformToDistances();
-}
-
-GraphDistanceMatrix::GraphDistanceMatrix(AdjacencyMatrix&& adjacencyMatrix) 
-: N(adjacencyMatrix.N) { // both are const, cannot move
-  std::swap(_matrix, adjacencyMatrix.getMatrixRef());
 
   _transformToDistances();
 }
@@ -154,7 +149,7 @@ std::vector<
   return chains;
 }
 
-double& GraphDistanceMatrix::operator () (
+unsigned& GraphDistanceMatrix::operator () (
   const AtomIndexType& i,
   const AtomIndexType& j
 ) {
@@ -164,7 +159,7 @@ double& GraphDistanceMatrix::operator () (
   );
 }
 
-double GraphDistanceMatrix::operator () (
+unsigned GraphDistanceMatrix::operator () (
   const AtomIndexType& i,
   const AtomIndexType& j
 ) const {

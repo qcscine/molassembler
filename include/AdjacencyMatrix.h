@@ -8,7 +8,7 @@ namespace MoleculeManip {
 
 class AdjacencyMatrix {
 private:
-  Eigen::MatrixXd _matrix;
+  Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> _matrix;
 
 public:
   const unsigned N;
@@ -16,15 +16,15 @@ public:
   AdjacencyMatrix() = delete;
   AdjacencyMatrix(const AdjacencyList& adjacencyList);
 
-  Eigen::MatrixXd& getMatrixRef() {
+  Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>& getMatrixRef() {
     return _matrix;
   }
 
-  double& operator () (
+  bool& operator () (
     const AtomIndexType& i,
     const AtomIndexType& j
   );
-  double operator () (
+  bool operator () (
     const AtomIndexType& i,
     const AtomIndexType& j
   ) const;
