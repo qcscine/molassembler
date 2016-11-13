@@ -45,15 +45,15 @@ BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
       testInstance(
         edge.j, // since order shouldn't matter
         edge.i
-      ) == 1
+      ) // the positions are boolean already
     );
   }
 
   /* 3 */
-  testInstance(5, 2) = 1;
+  testInstance(5, 2) = true;
 
   /* 2 */
-  BOOST_CHECK(testInstance.getMatrixRef()(2, 5) == 1);
+  BOOST_CHECK(testInstance.getMatrixRef()(2, 5));
   // This is faulty, we cannot say anything about the state of the lower matrix
   // BOOST_CHECK(testInstance.getMatrixRef()(5, 2) == 0);
 

@@ -16,16 +16,9 @@ enum class BondType : uint8_t {
     Aromatic
 };
 
-/*
 using unsigned_type = unsigned;
 using EdgeIndexType = uint32_t;
 using AtomIndexType = uint16_t; // 65k max is sufficient
-*/
-// TODO temp for testing
-using unsigned_type = long long unsigned;
-using EdgeIndexType = uint64_t;
-using AtomIndexType = uint64_t; // 65k max is sufficient
-
 
 /* derived types */
 using DistanceConstraint = std::tuple<
