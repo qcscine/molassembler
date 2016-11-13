@@ -53,7 +53,7 @@ public:
    */
   Eigen::MatrixXd generateDistanceMatrix(
     const MetrizationOption& metrization
-  ) const;
+  );
 };
 
 } // eo namespace DistanceGeometry

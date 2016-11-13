@@ -69,6 +69,18 @@ struct Edge {
       )
     );
   }
+  bool operator == (const Edge& other) const {
+    return (
+      this -> i == other.i
+      && this -> j == other.j
+      && this -> bondType == other.bondType
+    );
+  }
+  bool operator != (const Edge& other) const {
+    return !(
+      this -> operator == (other)
+    );
+  }
 };
 
 }

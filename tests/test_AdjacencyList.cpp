@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(init_from_EdgeList) {
   BOOST_REQUIRE(testList.validate());
 
   /* 9 */
-  BOOST_CHECK(testList.size() == 7); // is maximum AtomIndexType supplied here
+  BOOST_CHECK(testList.size() == 8); // is maximum AtomIndexType supplied here
 
   for(const auto& edge: edgeList) {
     /* 8 */
@@ -52,16 +52,16 @@ BOOST_AUTO_TEST_CASE(init_from_EdgeList) {
 
   /* 4 */
   testList.addAdjacency(7, 0);
-  BOOST_CHECK(testList.size() == 7); // size is unchanged
+  BOOST_CHECK(testList.size() == 8); // size is unchanged
 
   /* 3 */
   testList.addSlot();
-  BOOST_CHECK(testList.size() == 8); // size changes
+  BOOST_CHECK(testList.size() == 9); // size changes
   BOOST_REQUIRE(testList.validate());
 
   /* 6 */
   testList.removeAdjacency(2, 3);
-  BOOST_CHECK(testList.size() == 8); // size unchanged
+  BOOST_CHECK(testList.size() == 9); // size unchanged
   BOOST_REQUIRE(testList.validate());
 
 }

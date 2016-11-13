@@ -7,14 +7,14 @@ cmake_minimum_required(VERSION 3.5.1)
 
 # local path configuration
 set(Delib_LIBRARY_DIR "/home/jan-grimo/PhD/code/delib2-0/build")
-set(Delib_INCLUDE_DIR "/home/jan-grimo/PhD/code/delib2-0/include")
+set(Delib_INCLUDE_DIR "/home/jan-grimo/PhD/code/delib2-0/src")
 
 # declaration
 project(Molecule)
 
 # dependencies
 find_package (Eigen3 REQUIRED)
-find_library(DELIB_LIBRARY delib ${Delib_LIBRARY_DIR})
+find_library(DELIB_LIBRARY DelibStatic ${Delib_LIBRARY_DIR})
 
 include_directories(SYSTEM
   ${EIGEN3_INCLUDE_DIRS}

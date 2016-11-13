@@ -46,7 +46,11 @@ struct Node {
   }
 
   std::shared_ptr<Node>& addChild(const T& key) {
-    children.emplace_back(key);
+    children.push_back(
+      std::make_shared<Node>(
+        key
+      )
+    );
     return children.back();
   }
 
