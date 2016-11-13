@@ -13,7 +13,7 @@ using NodeType = BasicTree::Node<AtomIndexType>;
 struct MakeTreeReturnType {
   std::shared_ptr<NodeType> rootPtr;
   std::vector<
-    std::experimental::optional<
+    boost::optional<
       std::shared_ptr<NodeType>
     >
   > nodes;
@@ -23,10 +23,10 @@ struct MakeTreeReturnType {
 
   MakeTreeReturnType(const AdjacencyList& adjacencies) {
     nodes = std::vector<
-      std::experimental::optional<
+      boost::optional<
         std::shared_ptr<NodeType>
       >
-    >(adjacencies.size(), std::experimental::nullopt);
+    >(adjacencies.size(), boost::make_optional<std::shared_ptr<NodeType> >({})); // TODO does boost have nullopt?
   }
 };
 
@@ -34,7 +34,7 @@ std::shared_ptr<NodeType> makeNodeRecursive(
   AdjacencyList& adjacencies, // this is modified in the recursive calls!
   MakeTreeReturnType& workStruct,
   const AtomIndexType& index,
-  std::experimental::optional<
+  boost::optional<
     std::shared_ptr<NodeType>
   > parentPtrOption 
 ) {
@@ -80,7 +80,9 @@ MakeTreeReturnType makeTree(
     adjacencyCopy,
     workStruct,
     0,
-    std::experimental::nullopt
+    boost::optional<
+      std::shared_ptr<NodeType>
+    >()
   );
 
   return workStruct;
@@ -88,7 +90,7 @@ MakeTreeReturnType makeTree(
 
 
  /* const AtomIndexType& index,
-  std::experimental::optional<
+  boost::optional<
     std::shared_ptr<NodeType> 
   >& parentPtrOption
 ) {

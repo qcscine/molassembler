@@ -1,5 +1,5 @@
-#include <experimental/optional>
-#include <experimental/any>
+#include <boost/optional.hpp>
+#include <boost/any.hpp>
 #include <map>
 #include <string>
 #include <functional>
@@ -14,12 +14,12 @@ private:
 /* Private members */
   std::map<
     std::string,
-    std::experimental::any
+    boost::any
   > _cache;
   std::map<
     std::string,
     std::function<
-      std::experimental::any()
+      boost::any()
     >
   > _generationMap;
 
@@ -31,7 +31,7 @@ public:
       std::pair<
         std::string,
         std::function<
-          std::experimental::any()  
+          boost::any()  
         >
       >
     >& initList
@@ -59,7 +59,7 @@ public:
   template<typename T>
   T getOrGenerate(const std::string& key) {
     if(_cache.count(key) == 1) {
-      return std::experimental::any_cast<T>(
+      return boost::any_cast<T>(
         _cache.at(key)
       );
     } else {
@@ -69,7 +69,7 @@ public:
         key,
         _generationMap.at(key)() // calling it!
       );
-      return std::experimental::any_cast<T>(
+      return boost::any_cast<T>(
         _cache.at(key)
       );
     } 
@@ -87,14 +87,14 @@ public:
 
   /* Information */
   template<typename T>
-  std::experimental::optional<T> getOption(const std::string& key) const {
+  boost::optional<T> getOption(const std::string& key) const {
     if(_cache.count(key) == 1) {
-      return std::experimental::optional<T>(
-        std::experimental::any_cast<T>(
+      return boost::optional<T>(
+        boost::any_cast<T>(
           _cache.at(key)
         )
       );
-    } else return std::experimental::nullopt;
+    } else return {};
   }
 
 

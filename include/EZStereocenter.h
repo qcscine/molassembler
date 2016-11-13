@@ -3,7 +3,7 @@
 
 #include "Stereocenter.h"
 #include "Molecule.h"
-#include <experimental/optional>
+#include <boost/optional.hpp>
 
 /* TODO largely unfinished */
 
@@ -15,7 +15,7 @@ class EZStereocenter : public Stereocenter {
 private:
   const std::pair<AtomIndexType, AtomIndexType> _atomPair;
   const Molecule* _molPtr;
-  std::experimental::optional<bool> _isZ;
+  boost::optional<bool> _isZ;
 
 public:
   EZStereocenter() = delete;

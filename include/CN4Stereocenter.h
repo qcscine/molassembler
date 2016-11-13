@@ -1,9 +1,9 @@
 #ifndef INCLUDE_CN4_STEREOCENTER_H
 #define INCLUDE_CN4_STEREOCENTER_H
 
-#include <experimental/optional>
 
 #include "ElementTypes.h"
+#include <boost/optional.hpp>
 
 #include "Stereocenter.h"
 #include "Molecule.h"
@@ -28,7 +28,7 @@ private:
   const AtomIndexType _centerAtom;
 
   //! State of whether it is assigned, and if so, in which 
-  std::experimental::optional<unsigned> _assignment;
+  boost::optional<unsigned> _assignment;
 
   //! Mapping between next neighbor atom index and symbolic ligand character
   std::map<
@@ -131,7 +131,7 @@ public:
   /*!
    * Return whether this feature has been assigned or not
    */
-  virtual std::experimental::optional<unsigned> assigned() const override final {
+  virtual boost::optional<unsigned> assigned() const override final {
     return _assignment;
   }
 };

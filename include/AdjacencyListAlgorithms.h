@@ -238,7 +238,7 @@ std::vector<
       std::back_inserter(intersection)
     );
 
-    std::experimental::optional<
+    boost::optional<
       std::vector<AtomIndexType>
     > optionFoundWhileBacktracking;
 

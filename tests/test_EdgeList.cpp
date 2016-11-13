@@ -82,11 +82,11 @@ BOOST_AUTO_TEST_CASE( edgelist_all ) {
   /* 7 */
   BOOST_CHECK(
     testInstance.get(9, 0)
-    == std::experimental::nullopt
+    == boost::optional<Edge>()
   );
   BOOST_CHECK(
     testInstance.get(5, 4)
-    != std::experimental::nullopt
+    != boost::optional<Edge>()
   );
 
 

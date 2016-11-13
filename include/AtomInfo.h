@@ -3,7 +3,7 @@
 
 #include <map>
 #include <vector>
-#include <experimental/optional>
+#include <boost/optional.hpp>
 #include "ElementTypes.h"
 
 namespace MoleculeManip {
@@ -323,7 +323,7 @@ bool isMainGroupElement(const Delib::ElementType& elementType) {
   return elementData.at(elementType).valenceElectrons({'d', 'f'}) == 0;
 }
 
-std::experimental::optional<uint8_t> mainGroupVE(const Delib::ElementType& elementType) {
+boost::optional<uint8_t> mainGroupVE(const Delib::ElementType& elementType) {
   if(elementData.at(elementType).valenceElectrons({'d', 'f'}) == 0) {
     return elementData.at(elementType).valenceElectrons({'s', 'p'});
   } else {

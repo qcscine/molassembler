@@ -5,7 +5,7 @@
 #include <vector>
 #include <functional>
 #include <cassert>
-#include <experimental/optional>
+#include <boost/optional.hpp>
 
 #include "Edge.h"
 
@@ -31,7 +31,7 @@ private:
    * \note Is O( log(N) ), where
    * - N is the number of edges stored in the container
    */
-  std::experimental::optional<EdgeIndexType> _binarySearch(
+  boost::optional<EdgeIndexType> _binarySearch(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const noexcept {
@@ -190,7 +190,7 @@ public:
   }
 
 /* Information */
-  std::experimental::optional<Edge> get(
+  boost::optional<Edge> get(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const noexcept {

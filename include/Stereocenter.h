@@ -5,7 +5,7 @@
 #include <set>
 #include <algorithm>
 #include <memory>
-#include <experimental/optional>
+#include <boost/optional.hpp>
 
 #include "common_typedefs.h"
 #include "StdlibTypeAlgorithms.h"
@@ -71,7 +71,7 @@ public:
   /*!
    * Return whether this feature has been assigned or not
    */
-  virtual std::experimental::optional<unsigned> assigned() const = 0;
+  virtual boost::optional<unsigned> assigned() const = 0;
 
   friend std::basic_ostream<char>& MoleculeManip::operator << (
     std::basic_ostream<char>& os,

@@ -10,7 +10,7 @@ CONTINUE AT
   all, it's positive definite. To use conjugate gradient, reformulate the
   entire problem as quadratic form.
 - Change AdjacencyMatrix implementation to avoid most vexing parse, see test
-  file for details
+  file for details, additionally look up where it comes from!
 
 Things that need tests
 ----------------------
@@ -24,14 +24,12 @@ Things that need tests
 - Molecule (when finished)
 - StdlibTypeAlgorithms
 - StereocenterList
-- Tree
 - TreeAlgorithms
 - DistanceGeometry
   
   - DistanceBoundsMatrix
   - MetricMatrix
   - generateConformation (when finished)
-
 
 
 TODO
@@ -42,6 +40,10 @@ TODO
 6. Demonstrate functionality with a very simple example, e.g. CH(Cl)(Br)(I)
    MOLFile, then permute and generate 3D structures of both stereoisomers.
 
+- cppcheck
+- Consider re-separating distance and chirality constraint collection. Caching
+  it during distance constraint collection and forcing calculation of distance
+  constraints if only chirality constraints are requested is VERY awkward.
 - Transition to CTest ?
 - Add hooks to git to automatically build a release version on commit and run
   the tests

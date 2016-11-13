@@ -582,7 +582,7 @@ std::vector<DistanceConstraint> Molecule::_createConstraint(
       auto& intermediate = chain[1];
       // TODO continue here
       // no considerations of charge at all so far, not even VSEPR
-      std::experimental::optional<double> angle;
+      boost::optional<double> angle;
       // determine which symmetry applies at intermediate position, angle
       auto nLigands = getBondedAtomIndices(intermediate).size();
       if(nLigands == 2) {

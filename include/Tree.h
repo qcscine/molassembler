@@ -1,7 +1,7 @@
 #ifndef INCLUDE_BASIC_TREE_H
 #define INCLUDE_BASIC_TREE_H
 
-#include <experimental/optional>
+#include <boost/optional.hpp>
 #include <memory>
 #include <vector>
 #include <iostream>
@@ -24,7 +24,7 @@ std::ostream& operator << (std::ostream& os, const std::map<T1, T2>& map) {
 template<typename T>
 struct Node {
 /* Public members */
-  std::experimental::optional<
+  boost::optional<
     std::shared_ptr<
       Node
     >
