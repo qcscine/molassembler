@@ -9,14 +9,13 @@ using namespace MoleculeManip;
 
 /*       AdjacencyListAlgorithms listing
  * t  #  -------------------------------
- *    1  _connectedComponents
- *    2  numConnectedComponents
- *    3  connectedComponentGroups
+ * y  1  _connectedComponents
+ * y  2  numConnectedComponents
+ * y  3  connectedComponentGroups
  *    4  detectCycles
  */
 
 // MORE AdjacencyList instances to test with
-//
 using namespace AdjacencyListAlgorithms;
 
 template<typename T>

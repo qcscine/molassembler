@@ -40,16 +40,14 @@ struct Node {
 /* Public member functions */
   /* Constructors */
   Node(const T& passKey) : key(passKey) {};
-  Node(
-    const std::shared_ptr<Node>& nodePtr,
-    const T& passKey
-  ) : 
-    parentOption(nodePtr),
-    key(passKey)
-  {};
 
   void addChild(const std::shared_ptr<Node>& nodePtr) {
     children.push_back(nodePtr);
+  }
+
+  std::shared_ptr<Node>& addChild(const T& key) {
+    children.emplace_back(key);
+    return children.back();
   }
 
   /* Information */
@@ -61,26 +59,6 @@ struct Node {
     return children.size() == 0;
   }
 };
-
-template<typename T>
-std::shared_ptr<
-  Node<T>
-> addChild(
-  std::shared_ptr<
-    Node<T>
-  > nodePtr,
-  const T& key
-) {
-  nodePtr -> children.push_back(
-    std::make_shared<
-      Node<T>
-    >(
-      nodePtr,
-      key
-    )
-  );
-  return nodePtr -> children.back(); // return pointer to just added node
-}
 
 template<typename T>
 std::ostream& operator << (

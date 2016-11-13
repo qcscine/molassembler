@@ -30,12 +30,13 @@ BOOST_AUTO_TEST_CASE( tree_output ) {
     0
   );
 
-  auto child = addChild<AtomIndexType>(rootPtr, 4);
-  addChild<AtomIndexType>(child, 9);
-  addChild<AtomIndexType>(child, 5);
+  //auto child = addChild<AtomIndexType>(rootPtr, 4);
+  auto childPtr = rootPtr -> addChild(4);
+  childPtr -> addChild(9);
+  childPtr -> addChild(5);
 
-  auto child2 = addChild<AtomIndexType>(rootPtr, 3);
-  addChild<AtomIndexType>(child2, 6);
+  auto child2Ptr = rootPtr -> addChild(3);
+  child2Ptr -> addChild(6);
 
   std::cout << rootPtr << std::endl;
 
