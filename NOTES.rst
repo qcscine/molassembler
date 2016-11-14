@@ -38,7 +38,6 @@ TODO
 6. Demonstrate functionality with a very simple example, e.g. CH(Cl)(Br)(I)
    MOLFile, then permute and generate 3D structures of both stereoisomers.
 
-- cppcheck
 - Consider re-separating distance and chirality constraint collection. Caching
   it during distance constraint collection and forcing calculation of distance
   constraints if only chirality constraints are requested is VERY awkward.
