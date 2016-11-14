@@ -157,6 +157,11 @@ public:
       add(edge);
     }
   }
+  EdgeList(std::initializer_list<Edge> edges) {
+    for(const auto& edge : edges) {
+      add(edge);
+    }
+  }
 
 /* Modification */
   void add(const Edge& edge) noexcept {

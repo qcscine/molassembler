@@ -9,8 +9,6 @@ CONTINUE AT
   all are positive OR perform an LDL(T) decomposition. If the latter works at 
   all, it's positive definite. To use conjugate gradient, reformulate the
   entire problem as quadratic form.
-- Change AdjacencyMatrix implementation to avoid most vexing parse, see test
-  file for details, additionally look up where it comes from!
 
 Things that need tests
 ----------------------

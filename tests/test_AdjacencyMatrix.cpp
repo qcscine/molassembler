@@ -14,7 +14,7 @@ using namespace MoleculeManip;
  */
 
 BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
-  EdgeList edges({
+  EdgeList edges{
     Edge(0, 1, BondType::Single),
     Edge(1, 2, BondType::Single),
     Edge(1, 4, BondType::Single),
@@ -23,19 +23,15 @@ BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
     Edge(4, 5, BondType::Single),
     Edge(5, 6, BondType::Single),
     Edge(5, 7, BondType::Single)
-  });
+  };
 
   /* 1 */
-  /* TODO change implementation to avoid "most vexing parse":
-   * AdjacencyMatrix testInstance( ... );
-   *
-   * -> can be interpreted as function declaration! How to avoid?
-   */
-  auto testInstance = AdjacencyMatrix(
-    AdjacencyList(
+  // use uniform initialization syntax to avoid most vexing parse
+  AdjacencyMatrix testInstance {
+    AdjacencyList {
       edges
-    )
-  );
+    }
+  };
 
   BOOST_CHECK(testInstance.N == 8);
 

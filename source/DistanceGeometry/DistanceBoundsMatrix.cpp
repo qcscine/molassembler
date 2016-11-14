@@ -94,7 +94,7 @@ void DistanceBoundsMatrix::processDistanceConstraints(
 // TODO alter behavior due to metrizationOption!
 Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
   const MetrizationOption& metrization
-) { // cannot be const since it alters the randomEngine state!
+) const { // cannot be const since it alters the randomEngine state!
 
   Eigen::MatrixXd distances;
   distances.resize(_N, _N);

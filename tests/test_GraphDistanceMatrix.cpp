@@ -14,7 +14,7 @@ using namespace MoleculeManip;
  */
 
 BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
-  EdgeList edges({
+  EdgeList edges {
     Edge(0, 1, BondType::Single),
     Edge(1, 2, BondType::Single),
     Edge(1, 4, BondType::Single),
@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
     Edge(4, 5, BondType::Single),
     Edge(5, 6, BondType::Single),
     Edge(5, 7, BondType::Single)
-  });
+  };
 
   /* AdjacencyMatrix(AdjacencyList(EdgeList))
    *

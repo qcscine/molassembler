@@ -21,7 +21,7 @@ using namespace MoleculeManip;
  */
 
 BOOST_AUTO_TEST_CASE( edgelist_all ) {
-  std::vector<Edge> edges = {
+  std::vector<Edge> edges {
     Edge(0, 1, BondType::Single),
     Edge(1, 2, BondType::Single),
     Edge(1, 4, BondType::Single),

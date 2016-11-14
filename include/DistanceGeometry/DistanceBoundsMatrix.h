@@ -18,7 +18,7 @@ private:
   const unsigned _N;
   std::vector<unsigned> _seeds;
   std::seed_seq _seedSequence;
-  std::mt19937 _randomEngine;
+  mutable std::mt19937 _randomEngine;
 
 public:
   /* Constructors */
@@ -53,7 +53,7 @@ public:
    */
   Eigen::MatrixXd generateDistanceMatrix(
     const MetrizationOption& metrization
-  );
+  ) const;
 };
 
 } // eo namespace DistanceGeometry
