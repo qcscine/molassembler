@@ -1,4 +1,0 @@
-digraph G {
-  "AromaticRing" -> "GraphFeature";
-  "EZStereocenter" -> "GraphFeature";
-}

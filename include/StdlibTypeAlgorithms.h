@@ -91,10 +91,7 @@ std::vector<
   std::set<T>
 > makeIndividualSets(
   const std::set<
-    std::pair<
-      T,
-      T
-    >
+    std::pair<T, T>
   >& pairsSet
 ) {
 
@@ -159,7 +156,8 @@ std::vector<T> copyMerge(
   const std::vector<T>& a,
   const std::vector<T>& b
 ) {
-  std::vector<T> returnVector(a.size()+b.size());
+  std::vector<T> returnVector;
+  returnVector.reserve(a.size() + b.size());
   returnVector.insert(returnVector.end(), a.begin(), a.end());
   returnVector.insert(returnVector.end(), b.begin(), b.end());
   return returnVector;

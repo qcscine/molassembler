@@ -3,28 +3,53 @@ digraph G {
   node [fontname = "Arial"];
   edge [fontname = "Arial"];
 
+  "AdjacencyListAlgorithms" -> "TreeAlgorithms";
+
   "AdjacencyList" -> "EdgeList";
+
   "EdgeList" -> "Edge";
+
   "Edge" -> "common_typedefs";
 
-  //"AromaticRing" -> "GraphFeature";
-  "AromaticRing" -> "CommonTrig";
   "CommonTrig" -> "BondDistance";
-  "BondDistance" -> "common_typedefs";
-  "AromaticRing" -> "Molecule";
-  //"Molecule" -> "AdjacencyList";
-  "Molecule" -> "GraphFeatureList";
-  "GraphFeatureList" -> "GraphFeature";
-  "GraphFeature" -> "AdjacencyList";
-  //"GraphFeature" -> "EdgeList";
 
-  //"EZStereocenter" -> "GraphFeature";
+  "BondDistance" -> "AtomInfo";
+  "BondDistance" -> "common_typedefs";
+
+  "Molecule" -> "StereocenterList";
+  "Molecule" -> "DG/DistanceBoundsMatrix";
+
+  "StereocenterList" -> "Stereocenter";
+
+  "Stereocenter" -> "AdjacencyList";
+  "Stereocenter" -> "StdlibTypeAlgorithms";
+
   "EZStereocenter" -> "Molecule";
 
-  "GraphAlgorithms" -> "TreeAlgorithms";
   "TreeAlgorithms" -> "Tree";
   "TreeAlgorithms" -> "AdjacencyList";
 
   "IO" -> "Molecule";
-  "IO" -> "GraphAlgorithms";
+  "IO" -> "Version";
+  "IO" -> "AdjacencyListAlgorithms";
+
+  "AdjacencyMatrix" -> "AdjacencyList";
+
+  "GraphDistanceMatrix" -> "AdjacencyMatrix";
+
+  "CN4Stereocenter" -> "Molecule";
+  "CN4Stereocenter" -> "UA/Assignment";
+  "CN4Stereocenter" -> "UA/SymmetryInformation";
+
+  "DG/DistanceBoundsMatrix" -> "common_typedefs";
+  "DG/DistanceBoundsMatrix" -> "DG/DistanceGeometry";
+  "DG/generateConformation" -> "DG/MetricMatrix";
+  "DG/generateConformation" -> "Molecule";
+
+  "DG/MetricMatrix" -> "DG/DistanceGeometry";
+
+  "UA/Assignment" -> "UA/AssignmentColumn";
+  "UA/GenerateUniques" -> "UA/Assignment";
+
+  "UA/SymmetryInformation";
 }
