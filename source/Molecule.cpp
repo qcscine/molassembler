@@ -564,7 +564,7 @@ std::vector<DistanceConstraint> Molecule::_createConstraint(
 
   switch(chain.size()) {
     case 2: {
-      auto distance = Bond::calculateBondDistance(
+      auto distance = Bond::distanceCalculator.get(
         getElementType(i),
         getElementType(j),
         getBondType(i, j)
@@ -598,12 +598,12 @@ std::vector<DistanceConstraint> Molecule::_createConstraint(
       } 
 
       if((bool) angle) {
-        auto a = Bond::calculateBondDistance(
+        auto a = Bond::distanceCalculator.get(
           getElementType(i),
           getElementType(intermediate),
           getBondType(i, intermediate)
         );
-        auto b = Bond::calculateBondDistance(
+        auto b = Bond::distanceCalculator.get(
           getElementType(intermediate),
           getElementType(j),
           getBondType(intermediate, j)

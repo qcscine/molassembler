@@ -60,7 +60,7 @@ unsigned int ackermann(unsigned int m, unsigned int n) {
 class Foo {
 private:
   /* 2 */
-  mutable Cache _cache {
+  mutable Cache<std::string> _cache {
     std::make_pair(
       "bigNumber",
       [this]() {
@@ -94,7 +94,7 @@ using namespace std::string_literals;
 
 BOOST_AUTO_TEST_CASE( cache_all ) {
   /* 1 */
-  Cache cache;
+  Cache<std::string> cache;
 
   /* 3 */
   std::vector<std::string> keys {"number", "string", "vector"};

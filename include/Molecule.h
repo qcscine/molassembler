@@ -14,6 +14,8 @@
 #include "EdgeList.h"
 #include "StereocenterList.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "Cache.h"
+#include "BondDistance.h"
 
 namespace MoleculeManip {
 
@@ -33,10 +35,27 @@ private:
   // The set of QC data on the atoms
   Delib::ElementTypeCollection _elements;
   Delib::PositionCollection _positions;
+
   // The information on interconnectedness of the atoms
   AdjacencyList _adjacencies;
   EdgeList _edges;
   StereocenterList _stereocenters;
+
+  // The Cache
+  // TODO distance calculation cache should not be local to a molecule, and it
+  // is not invalidated by modifications on a molecule
+  /*using CacheKeyType = unsigned;
+  enum class CacheItems: CacheKeyType {
+    IdealDistanceCalculations
+  };
+  mutable Cache<CacheItems> _cache {
+    std::make_pair(
+      CacheItems::IdealDistanceCalculations,
+      []() {
+        return Bond::DistanceCalculator();
+      }
+    )
+  };*/
   
   /* Private member functions */
   void _detectStereocenters();

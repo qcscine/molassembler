@@ -1,3 +1,6 @@
+#ifndef INCLUDE_CACHE_H
+#define INCLUDE_CACHE_H
+
 #include <boost/optional.hpp>
 #include <boost/any.hpp>
 #include <map>
@@ -6,16 +9,17 @@
 #include <cassert>
 #include <vector>
 
+template<typename KeyType>
 class Cache {
 private:
 /* Private members */
   std::map<
-    std::string,
+    KeyType,
     boost::any
   > _cache;
 
   std::map<
-    std::string,
+    KeyType,
     std::function<
       boost::any()
     >
@@ -27,7 +31,7 @@ public:
   Cache(
     const std::initializer_list<
       std::pair<
-        std::string,
+        KeyType,
         std::function<
           boost::any()  
         >
@@ -40,10 +44,11 @@ public:
     }
   }
 
+
 /* Public member functions */
   /* Modification */
   template<typename T>
-  void add(const std::string& key, const T& value) {
+  void add(const KeyType& key, const T& value) {
     _cache.emplace(
       key,
       value // perfect forwarding
@@ -52,7 +57,7 @@ public:
 
 
   template<typename T>
-  T getGeneratable(const std::string& key) {
+  T getGeneratable(const KeyType& key) {
     // if this is false, user has violated contract
     assert(_generationMap.count(key) == 1);
 
@@ -76,7 +81,7 @@ public:
    */
   template<typename T>
   void changeGeneratable(
-    const std::string& key,
+    const KeyType& key,
     std::function<
       void(T*)
     > modifyingUnaryFunction
@@ -106,7 +111,7 @@ public:
     _cache.clear();
   }
 
-  void invalidate(const std::string& key) {
+  void invalidate(const KeyType& key) {
     if(_cache.count(key) == 1) {
       _cache.erase(key);
     }
@@ -114,7 +119,7 @@ public:
 
   /* Information */
   template<typename T>
-  boost::optional<T> getOption(const std::string& key) const {
+  boost::optional<T> getOption(const KeyType& key) const {
     if(_cache.count(key) == 1) {
       return boost::optional<T>(
         boost::any_cast<T>(
@@ -125,9 +130,11 @@ public:
   }
 
 
-  bool has(const std::string& key) const {
+  bool has(const KeyType& key) const {
     return (_cache.count(key) > 0)
       ? true
       : false;
   }
 };
+
+#endif
