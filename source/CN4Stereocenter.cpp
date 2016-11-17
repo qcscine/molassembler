@@ -211,14 +211,9 @@ void CN4Stereocenter::assign(const unsigned& assignment) {
   }
 }
 
-std::pair<
-  std::vector<DistanceConstraint>,
-  std::vector<ChiralityConstraint>
-> CN4Stereocenter::collectConstraints() const {
-
+std::vector<DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
   // create the required vectors
   std::vector<DistanceConstraint> distanceConstraints;
-  std::vector<ChiralityConstraint> chiralityConstraints; 
 
   const auto neighbors = _molPtr -> getBondedAtomIndices(_centerAtom);
 
@@ -298,13 +293,28 @@ std::pair<
     }
   }
 
+  // top row of cayleyMenger matrix
+  for(unsigned i = 1; i < 5; i++) {
+    cayleyMenger(0, i) = 1;
+  }
+
+  // the Option is mutable, change it here
+  cayleyMengerOption = cayleyMenger;
+
+  return distanceConstraints;
+}
+
+std::vector<ChiralityConstraint> CN4Stereocenter::chiralityConstraints() const {
+  // if the option has not been generated yet, run distanceConstraints
+  if(!(bool) cayleyMengerOption) {
+    distanceConstraints();
+  }
+
   // if no assignment has been made, skip determinant and chirality constraint
   // C++17 _assignment.has_value()
   if((bool) _assignment) { 
-    // top row of cayleyMenger matrix
-    for(unsigned i = 1; i < 5; i++) {
-      cayleyMenger(0, i) = 1;
-    }
+    const auto neighbors = _molPtr -> getBondedAtomIndices(_centerAtom);
+    auto& cayleyMenger = cayleyMengerOption.value();
 
     // get the determinant
     auto determinant = static_cast<
@@ -323,19 +333,18 @@ std::pair<
     // correct.
     if(_assignment.value() % 2 == 0) chiralityTarget *= -1.0;
 
-    chiralityConstraints.emplace_back(
-      neighbors[0],
-      neighbors[1],
-      neighbors[2],
-      neighbors[3],
-      chiralityTarget
-    );
+    return {
+      ChiralityConstraint (
+        neighbors[0],
+        neighbors[1],
+        neighbors[2],
+        neighbors[3],
+        chiralityTarget
+      )
+    };
+  } else {
+    return {};
   }
-
-  return make_pair(
-    std::move(distanceConstraints),
-    std::move(chiralityConstraints)
-  );
 }
 
 } // eo namespace Stereocenters

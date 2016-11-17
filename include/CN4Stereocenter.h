@@ -42,6 +42,14 @@ private:
   //! List of unique Assignments
   std::vector<AssignmentType> _uniqueAssignments;
 
+  /*! 
+   * If distanceConstraints is called before chiralityConstraints, then 
+   * this option has a value
+   */
+  mutable boost::optional<
+    Eigen::Matrix<double, 5, 5>
+  > cayleyMengerOption;
+
 /* Private member functions */
   /*!
    * Reduce substituent atoms at central atom to a mapping of their indices to
@@ -94,14 +102,19 @@ public:
   }
 
   /*!
-   * Return a list of distance and chirality constraints. Generates 1-2 and 1-3
-   * distance constraints for the central atom and its next neighbors. The 
-   * target volume of the chirality constraint created by the tetrahedron is 
-   * calculated using internal coordinates (the Cayley-Menger determinant),
-   * always leading to V > 0, so depending on the current assignment, the sign 
-   * of the result is switched. The formula used later in chirality constraint
-   * calculation for explicit coordinates is adjusted by V' = 6 V to avoid an 
-   * unnecessary factor, so we do that here too:
+   * Return a list of distance constraints. Generates 1-2 and 1-3 distance
+   * constraints for the central atom and its next neighbors. 
+   */
+  virtual std::vector<DistanceConstraint> distanceConstraints() const override final;
+
+  /*!
+   * Return a list of chirality constraints.  The target volume of the
+   * chirality constraint created by the tetrahedron is calculated using
+   * internal coordinates (the Cayley-Menger determinant), always leading to V
+   * > 0, so depending on the current assignment, the sign of the result is
+   * switched. The formula used later in chirality constraint calculation for
+   * explicit coordinates is adjusted by V' = 6 V to avoid an unnecessary
+   * factor, so we do that here too:
    *               
    *    288 V²  = |...|               | substitute V' = 6 V
    * -> 8 (V')² = |...|               
@@ -116,10 +129,7 @@ public:
    *          |  ...              0 |
    *
    */
-  virtual std::pair<
-    std::vector<DistanceConstraint>,
-    std::vector<ChiralityConstraint>
-  > collectConstraints() const override final;
+  virtual std::vector<ChiralityConstraint> chiralityConstraints() const override final;
 
   /*!
    * Return the number of possible assignments at this feature
