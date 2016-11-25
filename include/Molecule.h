@@ -115,6 +115,7 @@ public:
   ) const;
 
   DistanceGeometry::DistanceBoundsMatrix getDistanceBoundsMatrix() const;
+  std::vector<ChiralityConstraint> getChiralityConstraints() const;
 
   int formalCharge(const AtomIndexType& a) const;
   int oxidationState(const AtomIndexType& a) const;

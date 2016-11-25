@@ -512,11 +512,9 @@ DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const
 
   // Populate with stereocenter constraints first
   for(const auto& stereocenterPtr: _stereocenters) {
-    auto newDistanceConstraints = (
-      stereocenterPtr -> collectConstraints()
-    ).first;
-
-    distanceBounds.processDistanceConstraints(newDistanceConstraints);
+    distanceBounds.processDistanceConstraints(
+      stereocenterPtr -> distanceConstraints()
+    );
   }
 
   auto bondDistancesMatrix = GraphDistanceMatrix(
@@ -645,6 +643,16 @@ std::vector<DistanceConstraint> Molecule::_createConstraint(
     }
   }
 
+}
+
+std::vector<ChiralityConstraint> Molecule::getChiralityConstraints() const {
+  std::vector<ChiralityConstraint> constraints;
+  for(const auto& stereocenterPtr : _stereocenters) {
+    for(const auto& distanceConstraint : stereocenterPtr -> chiralityConstraints() ) {
+      constraints.push_back(distanceConstraint);
+    }
+  }
+  return constraints;
 }
 
 } // eo namespace

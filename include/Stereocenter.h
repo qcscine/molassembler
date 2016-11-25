@@ -57,6 +57,7 @@ public:
 
   //!  Return a list of distance constraints
   virtual std::vector<DistanceConstraint> distanceConstraints() const = 0;
+
   //!  Return a list of chirality constraints
   virtual std::vector<ChiralityConstraint> chiralityConstraints() const = 0;
 

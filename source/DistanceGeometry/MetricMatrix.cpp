@@ -82,7 +82,7 @@ Eigen::MatrixXd MetricMatrix::embed(
 
   // reverse because smallest are listed first by Eigen
   Eigen::VectorXd eigenValues = eigenSolver.eigenvalues().reverse();
-  eigenValues.conservativeResize(dimensionality);
+  eigenValues.conservativeResize(dimensionality); // dimensionality x 1
 
   Eigen::MatrixXd L;
   L.resize(dimensionality, dimensionality);
@@ -96,9 +96,15 @@ Eigen::MatrixXd MetricMatrix::embed(
   V.resize(
     V.rows(),
     dimensionality
-  );
+  ); // now Natoms x dimensionality
 
-  return V * L;
+  /* V * L
+   * (Natoms x dimensionality) · (dimensionality x dimensionality )
+   * -> (Natoms x dimensionality)
+   * transpose (V * L)
+   * -> dimensionality x Natoms
+   */
+  return (V * L).transpose(); 
 }
 
 } // eo namespace DistanceGeometry

@@ -4,11 +4,7 @@ CONTINUE AT
   caching of calculated i-j distances for lookup
 - Metrization during distance matrix generation in DistanceBoundsMatrix
 - At step 7 of DG steps from p.15
-- Conjugate gradient descent?
-  To check if a matrix is positive definite, compute its eigenvalues, ensure
-  all are positive OR perform an LDL(T) decomposition. If the latter works at 
-  all, it's positive definite. To use conjugate gradient, reformulate the
-  entire problem as quadratic form.
+- Minimization in generateConfiguration.hpp
 
 Things that need tests
 ----------------------
@@ -38,10 +34,8 @@ TODO
 6. Demonstrate functionality with a very simple example, e.g. CH(Cl)(Br)(I)
    MOLFile, then permute and generate 3D structures of both stereoisomers.
 
+- Experiment whether row-major matrix storage is faster
 - Atom removal safety of code -> getNumAtoms, getNumBonds, etc.
-- Consider re-separating distance and chirality constraint collection. Caching
-  it during distance constraint collection and forcing calculation of distance
-  constraints if only chirality constraints are requested is VERY awkward.
 - Transition to CTest ?
 - Add hooks to git to automatically build a release version on commit and run
   the tests
