@@ -65,6 +65,11 @@ BOOST_AUTO_TEST_CASE( DGRefinementProblemCorrectness ) {
     DGRefinementProblem<double>
   > DGConjugatedGradientDescentSolver;
 
+  cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
+  stopCriteria.iterations = 15;
+  stopCriteria.fDelta = 1e-5;
+
+  DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
   DGConjugatedGradientDescentSolver.minimize(problem, vectorizedPositions);
 
   std::cout << "Vectorized positions post minimization: " << std::endl;

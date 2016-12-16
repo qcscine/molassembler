@@ -4,7 +4,7 @@ CONTINUE AT
   caching of calculated i-j distances for lookup
 - Metrization during distance matrix generation in DistanceBoundsMatrix
 - At step 7 of DG steps from p.15
-- Minimization in generateConfiguration.hpp
+- Minimization in generateConfiguration.h
 
 Things that need tests
 ----------------------

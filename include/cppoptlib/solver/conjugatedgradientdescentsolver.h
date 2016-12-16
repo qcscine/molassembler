@@ -23,6 +23,9 @@ class ConjugatedGradientDescentSolver : public ISolver<ProblemType, 1> {
    * @param objFunc [description]
    */
   void minimize(ProblemType &objFunc, TVector &x0) {
+    TVector x_old(x0.size());
+    Scalar value_old, value = objFunc(x0);
+
     TVector grad(x0.rows());
     TVector grad_old(x0.rows());
     TVector Si(x0.rows());
@@ -30,6 +33,9 @@ class ConjugatedGradientDescentSolver : public ISolver<ProblemType, 1> {
 
     this->m_current.reset();
     do {
+      if(this->m_stop.xDelta > 0) x_old = x0;
+      value_old = value;
+
       objFunc.gradient(x0, grad);
 
       if (this->m_current.iterations == 0) {
@@ -39,16 +45,20 @@ class ConjugatedGradientDescentSolver : public ISolver<ProblemType, 1> {
         Si = -grad + beta * Si_old;
       }
 
-      const double rate = Armijo<ProblemType, 1>::linesearch(x0, Si, objFunc) ;
+      const double rate = Armijo<ProblemType, 1>::linesearch(x0, Si, objFunc);
 
       x0 = x0 + rate * Si;
 
       grad_old = grad;
       Si_old = Si;
 
+      value = objFunc(x0);
+
+      this->m_current.iterations += 1;
+      if(this->m_stop.xDelta > 0) this->m_current.xDelta = (x0 - x_old).norm();
+      this->m_current.fDelta = fabs(value - value_old);
       this->m_current.gradNorm = grad.template lpNorm<Eigen::Infinity>();
-      // std::cout << "iter: "<<iter<< " f = " <<  objFunc.value(x0) << " ||g||_inf "<<gradNorm   << std::endl;
-      ++this->m_current.iterations;
+
       this->m_status = checkConvergence(this->m_stop, this->m_current);
     } while (objFunc.callback(this->m_current, x0) && (this->m_status == Status::Continue) );
 

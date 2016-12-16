@@ -5,6 +5,10 @@
 #include "common_typedefs.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 
+// only as long as callback exists in its current form
+#include <iostream>
+#include <iomanip>
+
 #include <Eigen/Dense>
 
 namespace MoleculeManip {
@@ -199,8 +203,19 @@ public:
 
       // A and B
       for(AtomIndexType i = 0; i < N; i++) {
+        /* Skipping i == alpha is exceptionally important, for the reason that 
+         * if i == alpha, although mathematically it would be assumed that
+         * _A(i, i) == 0 and _B(i, i) == 0, nevertheless both the upper and 
+         * lower bound for this situation are 0, leading to zeroes on 
+         * denominators, leading to NaNs!
+         */
+        if(i == alpha) continue; 
         localGradient += _A(v, i, alpha) + _B(v, alpha, i);
       }
+
+      /* Maybe refactor above into two separate loops, one from 0 -> alpha - 1,
+       * then another from alpha + 1 -> N - 1?
+       */
 
       // C 
       for(const auto& chiralityConstraint: _constraints) {
@@ -249,6 +264,19 @@ public:
       grad(3 * alpha + 2) = localGradient(2);
     }
   }
+
+  bool callback(
+    const cppoptlib::Criteria<T>& state,
+    const TVector& x
+  ) {
+    std::cout << "(" << std::setw(2) << state.iterations << ")"
+              << " ||dx|| = " << std::fixed << std::setw(8) << std::setprecision(4) << state.gradNorm
+              << " ||x|| = "  << std::setw(6) << x.norm()
+              << " f(x) = "   << std::setw(8) << value(x)
+              << " x = [" << std::setprecision(8) << x.transpose() << "]" << std::endl;
+    return true;
+  }
+
 };
 
 } // eo namespace DistanceGeometry
