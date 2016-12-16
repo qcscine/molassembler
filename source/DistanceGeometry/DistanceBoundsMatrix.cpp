@@ -98,6 +98,7 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
 
   Eigen::MatrixXd distances;
   distances.resize(_N, _N);
+  distances.setZero();
 
   auto upperTriangle = distances.triangularView<Eigen::StrictlyUpper>();
 

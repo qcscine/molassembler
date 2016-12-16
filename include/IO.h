@@ -5,6 +5,8 @@
 #include "Version.h"
 #include "AdjacencyListAlgorithms.h"
 
+#include "ElementInfo.h" // Delib
+
 #include <fstream>
 #include <iomanip>
 #include <ctime>
@@ -106,11 +108,11 @@ private:
 
       // Element name
       _elements.push_back(
-        Delib::ElementInfo::instance()[
+        Delib::ElementInfo::elementTypeForSymbol(
           _removeAllSpaces(
             line.substr(31, 3)
           )
-        ].first
+        )
       );
 
       // Update adjacencies
@@ -197,7 +199,7 @@ private:
         state = State::AtomBlock;
       } else if(state == State::AtomBlock) {
         auto symbolStringLambda = [](const Delib::ElementType& elementType) {
-          return Delib::ElementInfo::instance()[elementType].symbol();
+          return Delib::ElementInfo::symbol(elementType);
         };
         for(unsigned i = 0; i < molecule.getNumAtoms(); i++) {
           fout << std::setprecision(4)

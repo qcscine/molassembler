@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "DistanceGeometry/MetricMatrix.h"
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE ConnectivityManagerTests
@@ -35,18 +36,23 @@ BOOST_AUTO_TEST_CASE( MetricMatrixTests ) {
   testBounds.lowerBound(1, 2) = 1;
   testBounds.lowerBound(1, 3) = 0.5;
   testBounds.lowerBound(2, 3) = 1;
-
-  auto distancesMatrix = testBounds.generateDistanceMatrix(
+    
+  auto distanceMatrix = testBounds.generateDistanceMatrix(
     MetrizationOption::off
   );
 
-  for(unsigned i = 0; i < N; i++) {
-    for(unsigned j = i + 1; j < N; j++) {
-      BOOST_CHECK(
-        distancesMatrix(i, j) <= testBounds.upperBound(i, j)
-        && distancesMatrix(i, j) >= testBounds.lowerBound(i, j)
-      );
-    }
-  }
+  std::cout << "Distance Matrix: " << std::endl;
+  std::cout << distanceMatrix << std::endl << std::endl;
 
+  MetricMatrix metric(
+    std::move(distanceMatrix)
+  );
+
+  std::cout << "Metric Matrix: " << std::endl;
+  std::cout << metric << std::endl << std::endl;
+
+  auto embedded = metric.embed(EmbeddingOption::threeDimensional);
+
+  std::cout << "Embedded positions: " << std::endl;
+  std::cout << embedded << std::endl << std::endl;
 }

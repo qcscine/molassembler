@@ -27,6 +27,7 @@ set(HEADERS_all
   include/UniqueAssignments/AssignmentColumn.h
   include/UniqueAssignments/GenerateUniques.h
   include/UniqueAssignments/SymmetryInformation.h
+  include/DistanceGeometry/DGRefinementProblem.h
   include/DistanceGeometry/DistanceBoundsMatrix.h
   include/DistanceGeometry/DistanceGeometry.h
   include/DistanceGeometry/MetricMatrix.h
@@ -61,6 +62,8 @@ set(SOURCES_all
   source/DistanceGeometry/MetricMatrix.cpp
   source/UniqueAssignments/AssignmentColumn.cpp
   source/AdjacencyMatrix.cpp
+  source/AtomInfo.cpp
+  source/BondDistance.cpp
   source/CN4Stereocenter.cpp
   source/GraphDistanceMatrix.cpp
   source/Molecule.cpp

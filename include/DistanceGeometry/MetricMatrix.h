@@ -24,6 +24,9 @@ public:
    * returning a dynamically sized Matrix
    */
   Eigen::MatrixXd embed(const EmbeddingOption& embedding) const;
+
+  // Operators
+  friend std::ostream& operator << (std::ostream& os, const MetricMatrix& matrix);
 };
 
 } // eo namespace DistanceGeometry

@@ -11,6 +11,7 @@ namespace DistanceGeometry {
 MetricMatrix::MetricMatrix(Eigen::MatrixXd&& distances) {
   const AtomIndexType N = distances.rows();
   _matrix.resize(N, N);
+  _matrix.setZero();
 
   Eigen::VectorXd D0(N);
   /* D_{i}² =   (1/N) * sum_{j}(distances[i, j]) 
@@ -91,9 +92,9 @@ Eigen::MatrixXd MetricMatrix::embed(
 
   Eigen::MatrixXd V = eigenSolver.eigenvectors();
   // Eigen has its own concept of rows and columns, I would have thought it's 
-  // columns. But tests have shown it has to be rowwise.
-  V = V.rowwise().reverse();
-  V.resize(
+  // columns. But tests have shown it has to be row-wise.
+  V.rowwise().reverseInPlace();
+  V.conservativeResize(
     V.rows(),
     dimensionality
   ); // now Natoms x dimensionality
@@ -105,6 +106,14 @@ Eigen::MatrixXd MetricMatrix::embed(
    * -> dimensionality x Natoms
    */
   return (V * L).transpose(); 
+}
+
+std::ostream& operator << (
+  std::ostream& os,
+  const MetricMatrix& matrix
+) {
+  os << matrix._matrix;
+  return os;
 }
 
 } // eo namespace DistanceGeometry
