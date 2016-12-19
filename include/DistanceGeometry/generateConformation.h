@@ -99,6 +99,8 @@ Delib::PositionCollection generateConformation(
   Eigen::MatrixXd embeddedPositions;
   bool acceptableConformation;
 
+  // Refinement initialization
+
   DGRefinementProblem<double> problem(
     chiralityConstraints,
     distanceBoundsMatrix
@@ -107,6 +109,14 @@ Delib::PositionCollection generateConformation(
   cppoptlib::ConjugatedGradientDescentSolver<
     DGRefinementProblem<double>
   > DGConjugatedGradientDescentSolver;
+
+  cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
+  stopCriteria.iterations = 1000;
+  stopCriteria.fDelta = 1e-5;
+
+  DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
+
+  // Begin main loop
 
   do {
 

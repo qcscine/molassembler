@@ -8,7 +8,7 @@ namespace DistanceGeometry {
 /* Enum types */
 enum class MetrizationOption {
   off,
-  partial,
+//  partial, // -> unimplemented
   full
 };
 

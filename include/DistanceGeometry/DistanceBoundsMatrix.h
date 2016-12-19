@@ -20,10 +20,14 @@ private:
   std::seed_seq _seedSequence;
   mutable std::mt19937 _randomEngine;
 
+  /* Constructor helper */
+  void _initRandomEngine();
+
 public:
   /* Constructors */
   DistanceBoundsMatrix() = delete;
   DistanceBoundsMatrix(const unsigned& N);
+  DistanceBoundsMatrix(Eigen::MatrixXd matrix);
 
   /* Accessor & Modifier */
   decltype(_matrix(1, 2))& upperBound(

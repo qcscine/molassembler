@@ -17,8 +17,9 @@ enum class BondType : uint8_t {
 };
 
 using unsigned_type = unsigned;
-using EdgeIndexType = uint32_t;
-using AtomIndexType = uint16_t; // 65k max is sufficient
+
+using EdgeIndexType = unsigned;
+using AtomIndexType = unsigned; 
 
 /* derived types */
 using DistanceConstraint = std::tuple<

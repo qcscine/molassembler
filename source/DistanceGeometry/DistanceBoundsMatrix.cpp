@@ -10,6 +10,18 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) : _N(N) {
   _matrix.setZero();
   _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
 
+  _initRandomEngine();
+}
+
+DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) : 
+  _matrix(matrix),
+  _N(matrix.rows()) {
+  assert(matrix.rows() == matrix.cols());
+
+  _initRandomEngine();
+}
+
+void DistanceBoundsMatrix::_initRandomEngine() {
 #ifdef NDEBUG
   std::random_device randomDevice;
   for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
@@ -102,14 +114,49 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
 
   auto upperTriangle = distances.triangularView<Eigen::StrictlyUpper>();
 
-  for(unsigned i = 0; i < _N; i++) {
-    for(unsigned j = i + 1; j < _N; j++) {
+  /* Learned some important points from papers:
+   * - Going from end to end uniformly negatively affects conformational 
+   *   sampling. It is preferable to traverse the list of atoms at random.
+   * - 
+   */
+
+  std::vector<AtomIndexType>  indices(_N);
+  std::iota(
+    indices.begin(),
+    indices.end(),
+    0
+  );
+
+  std::shuffle(
+    indices.begin(),
+    indices.end(),
+    _randomEngine
+  );
+
+  for(AtomIndexType idx = 0; idx < _N; idx++) {
+    AtomIndexType i = indices.at(idx);
+    for(AtomIndexType j = 0; j < _N; j++) {
+      if(
+        i == j
+        || upperTriangle(
+          std::min(i, j),
+          std::max(i, j)
+        ) > 0
+      ) continue; // skip on-diagonal and already-chosen elements
+
       std::uniform_real_distribution<> uniformDistribution(
         lowerBound(i, j),
         upperBound(i, j)
       );
-      upperTriangle(i, j) = uniformDistribution(_randomEngine);
+
+      upperTriangle(
+        std::min(i, j),
+        std::max(i, j)
+      ) = uniformDistribution(_randomEngine);
+
+      // triangle-smooth bounds matrix with new information
     }
+
   }
 
   return distances;

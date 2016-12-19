@@ -60,20 +60,6 @@ private:
     );
   }
 
-  T _evaluateConstraintsValue(const TVector& v) {
-    T sum, intermediate;
-    AtomIndexType a, b, c, d;
-    double targetVal;
-
-    for(const auto& chiralityConstraint: _constraints) {
-      std::tie(a, b, c, d, targetVal) = chiralityConstraint;
-      intermediate = targetVal - _getTetrahedronReducedVolume(v, a, b, c, d);
-      sum += intermediate * intermediate;
-    }
-
-    return sum;
-  }
-
   const Eigen::Vector3d _A(
     const TVector& v,
     const AtomIndexType& i, 
@@ -155,8 +141,7 @@ public:
     _constraints(constraints), 
     _bounds(bounds) {}
 
-  T value(const TVector& v) {
-    assert(v.size() % 3 == 0);
+  T distanceError(const TVector& v) {
     T error = 0, distance;
     const AtomIndexType N = v.size() / 3;
     for(unsigned i = 0; i < N; i++) {
@@ -185,11 +170,35 @@ public:
       }
     }
 
-    error += _evaluateConstraintsValue(v);
-
     return error;
   }
 
+  T chiralError(const TVector& v) {
+    T sum, intermediate;
+    AtomIndexType a, b, c, d;
+    T targetVal;
+
+    for(const auto& chiralityConstraint: _constraints) {
+      std::tie(a, b, c, d, targetVal) = chiralityConstraint;
+      intermediate = targetVal - _getTetrahedronReducedVolume(v, a, b, c, d);
+      sum += intermediate * intermediate;
+    }
+
+    return sum;
+  }
+
+  /*! 
+   * Required for cppoptlib: Calculates value for specified coordinates.
+   */
+  T value(const TVector& v) {
+    assert(v.size() % 3 == 0);
+
+    return distanceError(v) + chiralError(v);
+  }
+
+  /*!
+   * Required for cppoptlib: Calculates gradient for specified coordinates.
+   */
   void gradient(const TVector& v, TVector& grad) {
     // this is where it gets VERY interesting
     const AtomIndexType N = v.size() / 3;
