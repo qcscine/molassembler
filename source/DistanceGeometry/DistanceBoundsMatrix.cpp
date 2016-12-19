@@ -153,11 +153,11 @@ void DistanceBoundsMatrix::triangleInequalitySmooth(
       double
     >;
 
-    std::vector<BoundTupleType> upperBounds;
+    std::vector<BoundTupleType> bounds;
 
     for(AtomIndexType i = 0; i < _N; i++) {
       for(AtomIndexType j = i + 1; j < _N; j++) {
-        upperBounds.emplace_back(
+        bounds.emplace_back(
           i,
           j,
           upperBound(i, j)
@@ -165,19 +165,19 @@ void DistanceBoundsMatrix::triangleInequalitySmooth(
       }
     }
 
-    VectorView<BoundTupleType> sortedView(upperBounds);
+    VectorView<BoundTupleType> sortedView(bounds);
     sortedView.sort([](const BoundTupleType& a, const BoundTupleType& b) {
       return std::get<2>(a) > std::get<2>(b);
     });
 
-    VectorView<BoundTupleType> filteredView(upperBounds);
+    VectorView<BoundTupleType> filteredView(bounds);
 
     AtomIndexType i, j;
     double bound;
     for(const BoundTupleType& boundToImprove: sortedView) {
       std::tie(i, j, bound) = boundToImprove;
       
-      // filter upperBounds by keeping only tuples containing i OR j
+      // filter bounds by keeping only tuples containing i OR j
       filteredView.filter([&i, &j](const BoundTupleType& a) -> bool {
         return !(
           (
@@ -221,6 +221,74 @@ void DistanceBoundsMatrix::triangleInequalitySmooth(
 
         // improves upper bound if smaller!
         if(sumPartial < bound) upperBound(i, j) = sumPartial;
+      }
+
+      filteredView.resetFilters(false);
+    }
+
+    bounds.clear();
+
+    for(AtomIndexType i = 0; i < _N; i++) {
+      for(AtomIndexType j = i + 1; j < _N; j++) {
+        bounds.emplace_back(
+          i,
+          j,
+          lowerBound(i, j)
+        );
+      }
+    }
+
+    sortedView.sort([](const BoundTupleType& a, const BoundTupleType& b) {
+      return std::get<2>(a) < std::get<2>(b);
+    });
+
+    for(const BoundTupleType& boundToImprove: sortedView) {
+      std::tie(i, j, bound) = boundToImprove;
+      
+      // filter bounds by keeping only tuples containing i OR j
+      filteredView.filter([&i, &j](const BoundTupleType& a) -> bool {
+        return !(
+          (
+            std::get<0>(a) == i 
+            && std::get<1>(a) != j
+          ) || (
+            std::get<0>(a) == j
+            && std::get<1>(a) != i
+          )
+        );
+      });
+
+      // try all i - k - j  partial sums to see if they're smaller than i - j
+      for(AtomIndexType k = 0; k < _N; k++) {
+        if(k == i || k == j) continue;
+
+        double sumPartial = 0;
+        unsigned found = 0;
+
+        // traverse the tuple list for i-k and j-k
+        for(const auto& potentialPartialTuple : filteredView) {
+          if( (
+              std::get<0>(potentialPartialTuple) == i
+              && std::get<1>(potentialPartialTuple) == k
+            ) || (
+              std::get<0>(potentialPartialTuple) == k
+              && std::get<1>(potentialPartialTuple) == i
+            ) || (
+              std::get<0>(potentialPartialTuple) == j
+              && std::get<1>(potentialPartialTuple) == k
+            ) || (
+              std::get<0>(potentialPartialTuple) == k
+              && std::get<1>(potentialPartialTuple) == j
+            ) 
+          ) {
+            sumPartial += std::get<2>(potentialPartialTuple);
+            found += 1;
+            if(found == 2) break;
+          }
+        }
+
+        // improves lower bound if greater!
+        if(sumPartial > bound) lowerBound(i, j) = sumPartial;
       }
 
       filteredView.resetFilters(false);
