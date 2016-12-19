@@ -24,6 +24,11 @@ private:
   void _initRandomEngine();
 
 public:
+  enum class SmoothingAlgorithm {
+    Naive,
+    Custom
+  };
+
   /* Constructors */
   DistanceBoundsMatrix() = delete;
   DistanceBoundsMatrix(const unsigned& N);
@@ -50,6 +55,8 @@ public:
   void processDistanceConstraints(
     const std::vector<DistanceConstraint>& constraints
   );
+
+  void triangleInequalitySmooth(const SmoothingAlgorithm& algorithmChoice);
 
   /*!
    * Returns a distance matrix with randomly chosen distances between the

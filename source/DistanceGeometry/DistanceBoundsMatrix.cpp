@@ -1,4 +1,5 @@
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "VectorView.h"
 #include <cassert>
 
 namespace MoleculeManip {
@@ -103,6 +104,131 @@ void DistanceBoundsMatrix::processDistanceConstraints(
   }
 }
 
+void DistanceBoundsMatrix::triangleInequalitySmooth(
+  const SmoothingAlgorithm& algorithmChoice
+) {
+
+  if(algorithmChoice == SmoothingAlgorithm::Naive) {
+    double ijUpper, ijLower, ikjUpper, ikjLower;
+
+    for(AtomIndexType i = 0; i < _N; i++) {
+      for(AtomIndexType j = i + 1; j < _N; j++) {
+        ijUpper = upperBound(i, j);
+        ijLower = lowerBound(i, j);
+
+        for(AtomIndexType k = j + 1; k < _N; k++) {
+          ikjUpper = upperBound(i, k) + upperBound(j, k);
+          ikjLower = lowerBound(i, k) + lowerBound(j, k);
+
+          if(ikjUpper < ijUpper) {
+            upperBound(i, j) = ikjUpper;
+            ijUpper = ikjUpper;
+          }
+
+          if(ikjLower > ijLower) {
+            lowerBound(i, j) = ikjLower;
+            ijLower = ikjLower;
+          }
+        }
+      }
+    }
+  } else if(algorithmChoice == SmoothingAlgorithm::Custom) {
+    /* 1. reformat upper Triangle to i, j, double tuples
+     * 2. re-order list to double DESC
+     * 3. pick top tuple. use smallest tuples i - k - j to lower i-j bound
+     *
+     * The idea being that if we improve the highest values first we will have
+     * some sort of advantage. This problem I see with the naive implementation
+     * is that triangle inequality bounds smoothing since information
+     * propagates (at worst) a bond per full run (I think).  Predicated on the
+     * idea that information is gained at improvements of large gaps, doing
+     * these first gives at least two-bond propagation per run. But this is
+     * largely hyperbole, I have no proof. Hence the implementation for
+     * testing.
+     */
+
+    using BoundTupleType = std::tuple<
+      AtomIndexType,
+      AtomIndexType,
+      double
+    >;
+
+    std::vector<BoundTupleType> upperBounds;
+
+    for(AtomIndexType i = 0; i < _N; i++) {
+      for(AtomIndexType j = i + 1; j < _N; j++) {
+        upperBounds.emplace_back(
+          i,
+          j,
+          upperBound(i, j)
+        );
+      }
+    }
+
+    VectorView<BoundTupleType> sortedView(upperBounds);
+    sortedView.sort([](const BoundTupleType& a, const BoundTupleType& b) {
+      return std::get<2>(a) > std::get<2>(b);
+    });
+
+    VectorView<BoundTupleType> filteredView(upperBounds);
+
+    AtomIndexType i, j;
+    double bound;
+    for(const BoundTupleType& boundToImprove: sortedView) {
+      std::tie(i, j, bound) = boundToImprove;
+      
+      // filter upperBounds by keeping only tuples containing i OR j
+      filteredView.filter([&i, &j](const BoundTupleType& a) -> bool {
+        return !(
+          (
+            std::get<0>(a) == i 
+            && std::get<1>(a) != j
+          ) || (
+            std::get<0>(a) == j
+            && std::get<1>(a) != i
+          )
+        );
+      });
+
+      // try all i - k - j  partial sums to see if they're smaller than i - j
+      for(AtomIndexType k = 0; k < _N; k++) {
+        if(k == i || k == j) continue;
+
+        double sumPartial = 0;
+        unsigned found = 0;
+
+        // traverse the tuple list for i-k and j-k
+        for(const auto& potentialPartialTuple : filteredView) {
+          if( (
+              std::get<0>(potentialPartialTuple) == i
+              && std::get<1>(potentialPartialTuple) == k
+            ) || (
+              std::get<0>(potentialPartialTuple) == k
+              && std::get<1>(potentialPartialTuple) == i
+            ) || (
+              std::get<0>(potentialPartialTuple) == j
+              && std::get<1>(potentialPartialTuple) == k
+            ) || (
+              std::get<0>(potentialPartialTuple) == k
+              && std::get<1>(potentialPartialTuple) == j
+            ) 
+          ) {
+            sumPartial += std::get<2>(potentialPartialTuple);
+            found += 1;
+            if(found == 2) break;
+          }
+        }
+
+        // improves upper bound if smaller!
+        if(sumPartial < bound) upperBound(i, j) = sumPartial;
+      }
+
+      filteredView.resetFilters(false);
+    }
+
+  }
+}
+
 // TODO alter behavior due to metrizationOption!
 Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
   const MetrizationOption& metrization
@@ -117,7 +243,6 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
   /* Learned some important points from papers:
    * - Going from end to end uniformly negatively affects conformational 
    *   sampling. It is preferable to traverse the list of atoms at random.
-   * - 
    */
 
   std::vector<AtomIndexType>  indices(_N);
@@ -154,7 +279,9 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
         std::max(i, j)
       ) = uniformDistribution(_randomEngine);
 
-      // triangle-smooth bounds matrix with new information
+      /* re-smooth bounds matrix with new information if full metrization is
+       * chosen
+       */
     }
 
   }
