@@ -10,6 +10,64 @@ const std::vector<
     >,
     uint8_t
   >
+> Linear<T>::rotations = {
+  std::make_pair(
+    [](const std::vector<T>& a) -> std::vector<T> {
+      // C2
+      return {
+        a[1],
+        a[0]
+      };
+    },
+    2
+  )
+};
+
+template<typename T>
+const std::vector<
+  std::pair<
+    std::function<
+      std::vector<T>(
+        const std::vector<T>&
+      )
+    >,
+    uint8_t
+  >
+> TrigonalPlanar<T>::rotations = {
+  std::make_pair(
+    [](const std::vector<T>& a) -> std::vector<T> {
+      // C3
+      return {
+        a[1],
+        a[2],
+        a[0]
+      };
+    },
+    3
+  ),
+  std::make_pair(
+    [](const std::vector<T>& a) -> std::vector<T> {
+      // C2
+      return {
+        a[0],
+        a[2],
+        a[1]
+      };
+    },
+    2
+  )
+};
+
+template<typename T>
+const std::vector<
+  std::pair<
+    std::function<
+      std::vector<T>(
+        const std::vector<T>&
+      )
+    >,
+    uint8_t
+  >
 > Tetrahedral<T>::rotations = {
   std::make_pair(
     [](const std::vector<T>& a) -> std::vector<T> { 

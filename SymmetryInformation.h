@@ -5,6 +5,8 @@
 #define UNUSED(x) (void)(x)
 #endif
 
+// C++17 Replace all UNUSED(x) with [[maybe_unused]] x at their declarations
+
 #include <vector>
 #include <functional>
 #include <cassert>
@@ -29,7 +31,7 @@ struct SymmetryInformation {
     >
   > rotations;
 
-  static double angle(
+  static double constexpr angle(
     const uint8_t& a,
     const uint8_t& b
   );
@@ -38,6 +40,76 @@ struct SymmetryInformation {
   /* TODO 
    * - more members to extract embedding and refinement constraints 
    */
+};
+
+/* 2 */
+template<typename T>
+struct Linear : public SymmetryInformation {
+  /* 1 – (_) – 2 */
+  static constexpr unsigned size = 2;
+
+  static const std::vector<
+    std::pair<
+      std::function<
+        std::vector<T>(
+          const std::vector<T>&
+        )
+      >,
+      uint8_t
+    > 
+  > rotations;
+
+  static double constexpr angle(
+    const uint8_t& a,
+    const uint8_t& b
+  ) {
+    UNUSED(a);
+    UNUSED(b);
+    return 180;
+  }
+};
+
+/* NOTE: There should be Bent (2), but since the angle is completely 
+ * unspecifiable, this has not been added.
+ */
+
+/* 3 */
+template<typename T>
+struct TrigonalPlanar : public SymmetryInformation {
+  /* Positions are enumerated as
+   *
+   *     1
+   *     |
+   *    (_)
+   *   /   \
+   *  2     3
+   *
+   * This is not quite ideal since the angles are thoroughly misrepresented, 
+   * but all positions including the central atom are in one plane. The angles
+   * are idealized as 120°.
+   */
+
+  static constexpr unsigned size = 3;
+
+  static const std::vector<
+    std::pair<
+      std::function<
+        std::vector<T>(
+          const std::vector<T>&
+        )
+      >,
+      uint8_t
+    > 
+  > rotations;
+
+  static double constexpr angle(
+    const uint8_t& a,
+    const uint8_t& b
+  ) {
+    UNUSED(a);
+    UNUSED(b);
+    return 120;
+  }
 };
 
 /* 4 */
@@ -77,7 +149,7 @@ struct Tetrahedral : public SymmetryInformation {
     >
   > rotations;
 
-  static double angle(
+  static double constexpr angle(
     const uint8_t& a,
     const uint8_t& b
   ) {
@@ -112,7 +184,7 @@ struct SquarePlanar : public SymmetryInformation {
     >
   > rotations;
 
-  static double angle(
+  static double constexpr angle(
     const uint8_t& a,
     const uint8_t& b
   ) {
@@ -164,7 +236,7 @@ struct SquarePyramidal : public SymmetryInformation {
     >
   > rotations;
 
-  static double angle(
+  static double constexpr angle(
     const uint8_t& a,
     const uint8_t& b
   ) {
@@ -220,7 +292,7 @@ struct TrigonalBiPyramidal : public SymmetryInformation {
     >
   > pseudorotations;
 
-  static double angle(
+  static double constexpr angle(
     const uint8_t& a,
     const uint8_t& b
   ) {
@@ -275,7 +347,7 @@ struct Octahedral : public SymmetryInformation {
     >
   > rotations;
 
-  static double angle(
+  static double constexpr angle(
     const uint8_t& a,
     const uint8_t& b
   ) {

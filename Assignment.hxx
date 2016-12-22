@@ -24,8 +24,6 @@ Assignment<Symmetry>::Assignment(
       std::vector<bool>()
     );
   }
-
-  sortOccupations();
 }
 
 
@@ -84,100 +82,9 @@ Assignment<Symmetry>::Assignment(
       columnGroupBitVector
     );
   }
-
-  // sort the positionOccupations
-  sortOccupations();
 }
 
 /* Public members */
-/*!
- * Determines if two Assignment instances are rotationally superimposable. This
- * function exploits the rotations defined in the template parameter Symmetry
- * to check equivalence.
- */
-//template<
-//  template<typename T = AssignmentColumn>
-//  class Symmetry
-//> bool Assignment<Symmetry>::isRotationallySuperimposable(
-//  const Assignment<Symmetry>& other
-//) const {
-//
-//  // add the initial structure to a set of Assignments
-//  std::set<Assignment> enumeratedAssignments = {other};   
-//
-//  // Systematically explore all rotations
-//  // maximum element is the size of the rotation vector
-//  unsigned linkLimit = Symmetry<>::rotations.size();
-//
-//  // initialize 
-//  std::vector<unsigned> chain = {0};
-//  std::vector<
-//    Assignment<Symmetry>
-//  > chainStructures = {other};
-//  unsigned depth = 0;
-//
-//  // begin loop
-//  while(chain.at(0) < linkLimit) {
-//    // TEMP
-//    /*std::cout << "chain: ";
-//    for(const auto& link : chain) {
-//      std::cout << link << " ";
-//    }
-//    std::cout << std::endl;*/
-//
-//    // perform rotation
-//    // copy the last element in chainStructures
-//    Assignment<Symmetry> generated = chainStructures.at(
-//      chainStructures.size() - 1
-//    );
-//    // apply the rotation referenced by the last link in chain
-//    generated.applyRotation(
-//      Symmetry<>::rotations[
-//        chain.at(
-//          chain.size() - 1
-//        )
-//      ].first
-//    );
-//
-//    // is it something new?
-//    if(enumeratedAssignments.count(generated) == 0) {
-//      // is it the same as this?
-//      if(*this == generated) {
-//        return true;
-//      }
-//      // add it to the set
-//      enumeratedAssignments.insert(generated);
-//      // add it to chainStructures
-//      chainStructures.push_back(generated);
-//      // increase depth, add a link
-//      depth++;
-//      chain.emplace_back(0);
-//    } else {
-//      // if we are not at the maximum instruction
-//      if(chain.at(depth) < linkLimit - 1) {
-//        chain.at(depth)++;
-//      } else {
-//        // collapse the chain until we are at an incrementable position
-//        while(
-//          depth > 0
-//          && chain.at(depth) == linkLimit - 1
-//        ) {
-//          chain.pop_back();
-//          chainStructures.pop_back();
-//          depth--;
-//        }
-//
-//        chain.at(depth)++;
-//      }
-//    }
-//  }
-//
-//  /* we've enumerated all possible rotations of the Assignment other, none of 
-//   * those have matched *this. So...
-//   */
-//  return false;
-//}
-
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
@@ -199,12 +106,18 @@ template<
 > bool Assignment<Symmetry>::isRotationallySuperimposable(
   const Assignment<Symmetry>& other
 ) const {
-  return _generateAllRotations(
-    [&other](const Assignment<Symmetry>& a, const Assignment<Symmetry>& b) -> bool {
-      UNUSED(a);
-      return b == other;
-    }
-  ).second;
+  return (
+    this->reducedIsEqual(other) 
+    || _generateAllRotations(
+      [&other](
+        const Assignment<Symmetry>& a,
+        const Assignment<Symmetry>& b
+      ) -> bool {
+        UNUSED(a);
+        return b.reducedIsEqual(other);
+      }
+    ).second
+  );
 }
 
 template<
@@ -289,6 +202,36 @@ template<
   return make_pair(enumeratedAssignments, false);
 }
 
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> bool Assignment<Symmetry>::reducedIsEqual (
+  const Assignment<Symmetry>& other
+) const {
+  if(
+    this -> positionOccupations.size()
+    != other.positionOccupations.size()
+  ) return false;
+
+  for(unsigned i = 0; i < Symmetry<>::size; i++) {
+    if(
+      this -> positionOccupations[i].character != 
+        other.positionOccupations[i].character
+    ) {
+      return false;
+    }
+  }
+
+  if(!_reducedGroupsAreEqual(
+    _reduceGroups(),
+    other._reduceGroups()
+  )) {
+    return false;
+  }
+
+  return true;
+}
+
 /* Operators */
 template<
   template<typename T = AssignmentColumn>
@@ -331,9 +274,23 @@ template<
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
+> bool Assignment<Symmetry>::operator > (
+  const Assignment<Symmetry>& other
+) const {
+  return other < *this;
+}
+
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
 > bool Assignment<Symmetry>::operator == (
   const Assignment<Symmetry>& other
 ) const {
+  if(
+    this -> positionOccupations.size()
+    != other.positionOccupations.size()
+  ) return false;
+
   // compare characters
   for(unsigned i = 0; i < Symmetry<>::size; i++) {
     if(
@@ -344,15 +301,34 @@ template<
     }
   }
 
-  // compare reduced groups
+  // compare AssignmentColumns
+  for(unsigned i = 0; i < this -> positionOccupations.size(); i++) {
+    if(
+      this -> positionOccupations[i]
+      != other.positionOccupations[i]
+    ) {
+      return false;
+    }   
+  }
+
+/*  // compare reduced groups
   if(!_reducedGroupsAreEqual(
     _reduceGroups(),
     other._reduceGroups()
   )) {
     return false;
-  }
+  }*/
   
   return true;
+}
+
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> bool Assignment<Symmetry>::operator != (
+  const Assignment<Symmetry>& other
+) const {
+  return !(*this == other);
 }
 
 /* Private members */
@@ -409,6 +385,7 @@ template<
 > std::vector<
   std::vector<unsigned>
 > Assignment<Symmetry>::_reduceGroups() const {
+
   std::vector<
     std::vector<unsigned>
   > groupReduction;
@@ -427,7 +404,7 @@ template<
     }
   }
 
-  // sort! this is required from _reducedGroupsAreEqual
+  // sort! this is required for _reducedGroupsAreEqual
   for(auto& reducedGroup : groupReduction) {
     std::sort(
       reducedGroup.begin(),
@@ -436,6 +413,35 @@ template<
   }
 
   return groupReduction;
+}
+
+//! Converts positionOccupations into a string
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> std::string Assignment<Symmetry>::toString() const {
+
+  std::vector<
+    std::stringstream
+  > streams (
+    1 + positionOccupations[0].groups.size()
+  );
+
+  for(const auto& column : positionOccupations ) {
+    streams[0] << column.character << " ";
+    for(unsigned i = 0; i < column.groups.size(); i++) {
+      streams[i + 1] << (column.groups[i] ? "T" : "F") << " ";
+    }
+  }
+
+  std::stringstream out;
+
+  for(unsigned i = 0; i < streams.size(); i++) {
+    out << streams[i].str(); 
+    if(i != streams.size() - 1) out << std::endl; 
+  }
+
+  return out.str();
 }
 
 /*!
@@ -448,23 +454,7 @@ template<
   std::ostream& os,
   const Assignment<Symmetry>& a
 ) {
-  // make group.size + 1 stringstreams
-  std::vector<
-    std::stringstream
-  > streams (
-    1 + a.positionOccupations[0].groups.size()
-  );
-
-  for(const auto& column : a.positionOccupations ) {
-    streams[0] << column.character << " ";
-    for(unsigned i = 0; i < column.groups.size(); i++) {
-      streams[i + 1] << (column.groups[i] ? "T" : "F") << " ";
-    }
-  }
-
-  for(const auto& stream : streams) {
-    os << stream.str() << std::endl;
-  }
+  os << a.toString();
 
   return os;
 }
