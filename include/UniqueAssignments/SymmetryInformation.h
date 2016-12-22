@@ -367,6 +367,6 @@ struct Octahedral : public SymmetryInformation {
 
 } // eo namespace PermSymmetry
 
-#include "SymmetryInformation.hxx"
+#include "UniqueAssignments/SymmetryInformation.hxx"
 
 #endif

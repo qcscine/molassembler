@@ -291,6 +291,7 @@ void DistanceBoundsMatrix::triangleInequalitySmooth(
         if(sumPartial > bound) lowerBound(i, j) = sumPartial;
       }
 
+      // avoid recalculation of sorting / filters when clearing the filters
       filteredView.resetFilters(false);
     }
 
@@ -300,7 +301,7 @@ void DistanceBoundsMatrix::triangleInequalitySmooth(
 // TODO alter behavior due to metrizationOption!
 Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
   const MetrizationOption& metrization
-) const { // cannot be const since it alters the randomEngine state!
+) const {
 
   Eigen::MatrixXd distances;
   distances.resize(_N, _N);

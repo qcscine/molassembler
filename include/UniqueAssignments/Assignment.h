@@ -7,8 +7,9 @@
 #include <sstream>
 #include <set>
 #include <map>
+#include <cassert>
 
-#include "AssignmentColumn.h"
+#include "UniqueAssignments/AssignmentColumn.h"
 
 /* TODO
  */
@@ -19,31 +20,6 @@
  */
 
 namespace UniqueAssignments {
-
-/*!
- * This class exists to allow polymorphic use of it's derived class Assignment.
- */
-struct AbstractAssignment {
-  /* public members */
-  virtual void sortOccupations() = 0;
-  virtual bool nextPermutation() = 0;
-  virtual void applyRotation(
-    std::function<
-      std::vector<AssignmentColumn>(
-        const std::vector<AssignmentColumn>&
-      )
-    > rotationFunction
-  ) = 0;
-  virtual bool occupationsAreOrdered() const = 0;
-  virtual bool ligandConnectionsAreOrdered() const = 0;
-  /* NOTE: the function below is needed, but the derived class should have 
-   * two functions: one for const shared_ptr<Abstract>&, * one for const Derived&
-   * solution to casting problem is in testing/cpp/inheritance_function_types
-   */
-  /*virtual bool isRotationallySuperimposable(
-    const std::shared_ptr<AbstractAssignment>& other
-  ) const = 0; */
-};
 
 /*!
  * This class represents a simplified model of a sterically unique assignment
@@ -59,7 +35,7 @@ template<
   template<typename T = AssignmentColumn>
   class Symmetry
 >
-struct Assignment : public AbstractAssignment {
+struct Assignment {
 private:
 /* Private member functions */
   std::vector<
@@ -92,7 +68,7 @@ public:
   );
 
   /* Modification */
-  virtual void sortOccupations() override final {
+  void sortOccupations() {
     std::sort(
       positionOccupations.begin(),
       positionOccupations.end()
@@ -103,7 +79,7 @@ public:
    * Generates the next permutation of positionOccupations in which the 
    * ligand connections are ordered.
    */
-  virtual bool nextPermutation() override final {
+  bool nextPermutation() {
     while(std::next_permutation(
       positionOccupations.begin(),
       positionOccupations.end()
@@ -118,13 +94,13 @@ public:
   /*!
    * Applies a rotation function to the positionOccupations
    */
-  virtual void applyRotation(
+  void applyRotation(
     std::function<
       std::vector<AssignmentColumn>(
         const std::vector<AssignmentColumn>&
       )
     > rotationFunction
-  ) override final {
+  ) {
     positionOccupations = rotationFunction(positionOccupations);
   }
 
@@ -162,7 +138,7 @@ public:
    * Checks whether the list of AssignmentColumns (positionOccupations) is
    * ordered.
    */
-  virtual bool occupationsAreOrdered() const override final {
+  bool occupationsAreOrdered() const {
     return std::is_sorted(
       positionOccupations.begin(),
       positionOccupations.end()
@@ -179,7 +155,7 @@ public:
    * 1010
    * is not, although both sets of bit vectors have the same meaning.
    */
-  virtual bool ligandConnectionsAreOrdered() const override final {
+  bool ligandConnectionsAreOrdered() const {
     // shortcut if rowView will be empty
     if(positionOccupations[0].groups.size() == 0) return true;
 
@@ -241,16 +217,29 @@ public:
     > interruptCallbackOnNewAssignment
   ) const;
 
+  //! Converts positionOccupations into a string for display
+  std::string toString() const;
+
+  bool reducedIsEqual(
+    const Assignment<Symmetry>& other
+  ) const;
+
   /* Operators */
   bool operator < (
+    const Assignment<Symmetry>& other
+  ) const;
+  bool operator > (
     const Assignment<Symmetry>& other
   ) const;
   bool operator == (
     const Assignment<Symmetry>& other
   ) const;
+  bool operator != (
+    const Assignment<Symmetry>& other
+  ) const;
 };
 
-#include "Assignment.hxx"
+#include "UniqueAssignments/Assignment.hxx"
 
 } // eo namespace
 

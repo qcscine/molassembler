@@ -24,8 +24,6 @@ Assignment<Symmetry>::Assignment(
       std::vector<bool>()
     );
   }
-
-  sortOccupations();
 }
 
 
@@ -84,9 +82,6 @@ Assignment<Symmetry>::Assignment(
       columnGroupBitVector
     );
   }
-
-  // sort the positionOccupations
-  sortOccupations();
 }
 
 /* Public members */
@@ -111,12 +106,18 @@ template<
 > bool Assignment<Symmetry>::isRotationallySuperimposable(
   const Assignment<Symmetry>& other
 ) const {
-  return _generateAllRotations(
-    [&other](const Assignment<Symmetry>& a, const Assignment<Symmetry>& b) -> bool {
-      UNUSED(a);
-      return b == other;
-    }
-  ).second;
+  return (
+    this->reducedIsEqual(other) 
+    || _generateAllRotations(
+      [&other](
+        const Assignment<Symmetry>& a,
+        const Assignment<Symmetry>& b
+      ) -> bool {
+        UNUSED(a);
+        return b.reducedIsEqual(other);
+      }
+    ).second
+  );
 }
 
 template<
@@ -201,6 +202,36 @@ template<
   return make_pair(enumeratedAssignments, false);
 }
 
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> bool Assignment<Symmetry>::reducedIsEqual (
+  const Assignment<Symmetry>& other
+) const {
+  if(
+    this -> positionOccupations.size()
+    != other.positionOccupations.size()
+  ) return false;
+
+  for(unsigned i = 0; i < Symmetry<>::size; i++) {
+    if(
+      this -> positionOccupations[i].character != 
+        other.positionOccupations[i].character
+    ) {
+      return false;
+    }
+  }
+
+  if(!_reducedGroupsAreEqual(
+    _reduceGroups(),
+    other._reduceGroups()
+  )) {
+    return false;
+  }
+
+  return true;
+}
+
 /* Operators */
 template<
   template<typename T = AssignmentColumn>
@@ -243,9 +274,23 @@ template<
 template<
   template<typename T = AssignmentColumn>
   class Symmetry
+> bool Assignment<Symmetry>::operator > (
+  const Assignment<Symmetry>& other
+) const {
+  return other < *this;
+}
+
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
 > bool Assignment<Symmetry>::operator == (
   const Assignment<Symmetry>& other
 ) const {
+  if(
+    this -> positionOccupations.size()
+    != other.positionOccupations.size()
+  ) return false;
+
   // compare characters
   for(unsigned i = 0; i < Symmetry<>::size; i++) {
     if(
@@ -256,15 +301,34 @@ template<
     }
   }
 
-  // compare reduced groups
+  // compare AssignmentColumns
+  for(unsigned i = 0; i < this -> positionOccupations.size(); i++) {
+    if(
+      this -> positionOccupations[i]
+      != other.positionOccupations[i]
+    ) {
+      return false;
+    }   
+  }
+
+/*  // compare reduced groups
   if(!_reducedGroupsAreEqual(
     _reduceGroups(),
     other._reduceGroups()
   )) {
     return false;
-  }
+  }*/
   
   return true;
+}
+
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> bool Assignment<Symmetry>::operator != (
+  const Assignment<Symmetry>& other
+) const {
+  return !(*this == other);
 }
 
 /* Private members */
@@ -321,6 +385,7 @@ template<
 > std::vector<
   std::vector<unsigned>
 > Assignment<Symmetry>::_reduceGroups() const {
+
   std::vector<
     std::vector<unsigned>
   > groupReduction;
@@ -339,7 +404,7 @@ template<
     }
   }
 
-  // sort! this is required from _reducedGroupsAreEqual
+  // sort! this is required for _reducedGroupsAreEqual
   for(auto& reducedGroup : groupReduction) {
     std::sort(
       reducedGroup.begin(),
@@ -348,6 +413,35 @@ template<
   }
 
   return groupReduction;
+}
+
+//! Converts positionOccupations into a string
+template<
+  template<typename T = AssignmentColumn>
+  class Symmetry
+> std::string Assignment<Symmetry>::toString() const {
+
+  std::vector<
+    std::stringstream
+  > streams (
+    1 + positionOccupations[0].groups.size()
+  );
+
+  for(const auto& column : positionOccupations ) {
+    streams[0] << column.character << " ";
+    for(unsigned i = 0; i < column.groups.size(); i++) {
+      streams[i + 1] << (column.groups[i] ? "T" : "F") << " ";
+    }
+  }
+
+  std::stringstream out;
+
+  for(unsigned i = 0; i < streams.size(); i++) {
+    out << streams[i].str(); 
+    if(i != streams.size() - 1) out << std::endl; 
+  }
+
+  return out.str();
 }
 
 /*!
@@ -360,23 +454,7 @@ template<
   std::ostream& os,
   const Assignment<Symmetry>& a
 ) {
-  // make group.size + 1 stringstreams
-  std::vector<
-    std::stringstream
-  > streams (
-    1 + a.positionOccupations[0].groups.size()
-  );
-
-  for(const auto& column : a.positionOccupations ) {
-    streams[0] << column.character << " ";
-    for(unsigned i = 0; i < column.groups.size(); i++) {
-      streams[i + 1] << (column.groups[i] ? "T" : "F") << " ";
-    }
-  }
-
-  for(const auto& stream : streams) {
-    os << stream.str() << std::endl;
-  }
+  os << a.toString();
 
   return os;
 }

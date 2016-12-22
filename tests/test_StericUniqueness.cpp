@@ -8,8 +8,10 @@
 #include <cassert>
 #include <functional>
 
-#include "GenerateUniques.h"
-#include "SymmetryInformation.h"
+#include "UniqueAssignments/GenerateUniques.h"
+#include "UniqueAssignments/SymmetryInformation.h"
+
+#include "LogicalOperatorTests.h"
 
 using namespace UniqueAssignments;
 
@@ -149,27 +151,6 @@ BOOST_AUTO_TEST_CASE( assignment_instantiation ) {
   Assignment<PermSymmetry::Octahedral> octa(
     std::vector<char>(6, 'A')
   );
-
-  // and use them polymorphically
-  std::vector<
-    std::shared_ptr<AbstractAssignment>
-  > container = {
-    std::make_shared<
-      Assignment<PermSymmetry::Tetrahedral>
-    >(std::vector<char>(4, 'A')),
-    std::make_shared<
-      Assignment<PermSymmetry::SquarePlanar>
-    >(std::vector<char>(4, 'A')),
-    std::make_shared<
-      Assignment<PermSymmetry::SquarePyramidal>
-    >(std::vector<char>(5, 'A')),
-    std::make_shared<
-      Assignment<PermSymmetry::TrigonalBiPyramidal>
-    >(std::vector<char>(5, 'A')),
-    std::make_shared<
-      Assignment<PermSymmetry::Octahedral>
-    >(std::vector<char>(6, 'A')),
-  };
 }
 
 BOOST_AUTO_TEST_CASE( assignment_basics ) {
@@ -185,13 +166,14 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
       std::make_pair(4,5)
     }
   );
-  // all constructors sort the ligands
+
+/*  // all constructors sort the ligands
   BOOST_CHECK(
     instance.ligandConnectionsAreOrdered() == true
   );
   BOOST_CHECK(
     instanceWithBondedLigands.ligandConnectionsAreOrdered() == true
-  );
+  );*/
 }
 
 template<
@@ -227,9 +209,8 @@ void run_tests(
     BOOST_CHECK(unique.size() == expectedUnique );
     if(unique.size() != expectedUnique) {
       std::cout << "Mismatch: Expected " << expectedUnique
-        << " assignments for: " << assignment << ", got " 
-        << unique.size() << std::endl;
-      std::cout << "Unique assignments: " << std::endl;
+        << " assignments for: \n" << assignment << ", got " 
+        << unique.size() << " assignments:" << std::endl;
       for(const auto& uniqueAssignment: unique) {
         std::cout << uniqueAssignment << std::endl;
       }
@@ -237,8 +218,57 @@ void run_tests(
   }
 }
 
+BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
+  Assignment<PermSymmetry::Octahedral> a {
+    {'A', 'A', 'A', 'B', 'B', 'B'},
+    {
+      std::make_pair(2, 3),
+      std::make_pair(1, 4),
+      std::make_pair(0, 5)
+    }
+  };
+  Assignment<PermSymmetry::Octahedral> b {
+    {'A', 'A', 'B', 'A', 'B', 'B'},
+    {
+      std::make_pair(3, 5),
+      std::make_pair(1, 2),
+      std::make_pair(0, 4)
+    }
+  };
+
+  // one and only one of the following can be true for any Assignments a and b
+  BOOST_CHECK(OperatorTests::testLogicalOperators(a, b));
+
+  BOOST_CHECK(a.isRotationallySuperimposable(b));
+  BOOST_CHECK(b.isRotationallySuperimposable(a));
+
+  /* Contrived example of two that have inconsistent logical operators, just
+   * reordered op pairs. Will evaluate == but also < w/ current impl.
+   */
+  Assignment<PermSymmetry::Octahedral> c {
+    {'A', 'A', 'A', 'B', 'B', 'B'},
+    {
+      std::make_pair(2, 3),
+      std::make_pair(1, 4),
+      std::make_pair(0, 5)
+    }
+  };
+  Assignment<PermSymmetry::Octahedral> d {
+    {'A', 'A', 'A', 'B', 'B', 'B'},
+    {
+      std::make_pair(1, 4),
+      std::make_pair(2, 3),
+      std::make_pair(0, 5)
+    }
+  };
+
+  BOOST_CHECK(OperatorTests::testLogicalOperators(c, d));
+  BOOST_CHECK(c.isRotationallySuperimposable(d));
+  BOOST_CHECK(d.isRotationallySuperimposable(c));
+}
+
 /* Tetrahedral tests */
-/* These were though up myself */
+/* These were thought up myself */
 BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
   run_tests<PermSymmetry::Tetrahedral>({
     // M_A
@@ -437,119 +467,119 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
   );
 }
 
-//BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
-//  run_tests<PermSymmetry::Octahedral>(
-//    {
-//      // M(A-A)_3
-//      std::make_tuple(
-//        std::vector<char>({'A', 'A', 'A', 'A', 'A', 'A'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(2, 3),
-//          std::make_pair(4, 5)
-//        }),
-//        2
-//        /* NOTE: besides the two cis-cis-cis enantiomers, there are
-//         * cis-cis-trans and trans-trans-trans isomers, these are removed by
-//         * default!
-//         */
-//      ),
-//      // M(A-B)_3
-//      std::make_tuple(
-//        std::vector<char>({'A', 'B', 'A', 'B', 'A', 'B'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(2, 3),
-//          std::make_pair(4, 5)
-//        }),
-//        4
-//      ),
-//      // M(A-B)_2 CD
-//      std::make_tuple(
-//        std::vector<char>({'A', 'B', 'A', 'B', 'C', 'D'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(2, 3)
-//        }),
-//        11
-//      ),
-//      // M(A-A)(B-C)DE
-//      std::make_tuple(
-//        std::vector<char>({'A', 'A', 'B', 'C', 'D', 'E'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(2, 3)
-//        }),
-//        10
-//      ),
-//      // M(A-B)(C-D)EF
-//      std::make_tuple(
-//        std::vector<char>({'A', 'B', 'C', 'D', 'E', 'F'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(2, 3)
-//        }),
-//        20
-//      ),
-//      // M(A-B-A)CDE
-//      std::make_tuple(
-//        std::vector<char>({'A', 'B', 'A', 'C', 'D', 'E'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(1, 2)
-//        }),
-//        9
-//      ),
-//      // M(A-B-C)_2
-//      std::make_tuple(
-//        std::vector<char>({'A', 'B', 'C', 'A', 'B', 'C'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(1, 2),
-//          std::make_pair(3, 4),
-//          std::make_pair(4, 5)
-//        }),
-//        11 
-//      ),
-//      // M(A-B-B-A)CD
-//      std::make_tuple(
-//        std::vector<char>({'A', 'B', 'B', 'A', 'C', 'D'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(1, 2),
-//          std::make_pair(2, 3)
-//        }),
-//        7
-//      ),
-//      // M(A-B-C-B-A)D
-//      std::make_tuple(
-//        std::vector<char>({'A', 'B', 'C', 'B', 'A', 'D'}),
-//        std::vector<
-//          std::pair<unsigned, unsigned>
-//        >({
-//          std::make_pair(0, 1),
-//          std::make_pair(1, 2),
-//          std::make_pair(2, 3),
-//          std::make_pair(3, 4)
-//        }),
-//        7
-//      )
-//    }
-//  );
-//}
+BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
+  run_tests<PermSymmetry::Octahedral>(
+    {
+      // M(A-A)_3
+      std::make_tuple(
+        std::vector<char>({'A', 'A', 'A', 'A', 'A', 'A'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(2, 3),
+          std::make_pair(4, 5)
+        }),
+        2
+        /* NOTE: besides the two cis-cis-cis enantiomers, there are
+         * cis-cis-trans and trans-trans-trans isomers, these are removed by
+         * default!
+         */
+      ),
+      // M(A-B)_3
+      std::make_tuple(
+        std::vector<char>({'A', 'B', 'A', 'B', 'A', 'B'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(2, 3),
+          std::make_pair(4, 5)
+        }),
+        4 // TODO ERROR: get 16
+      ),
+      // M(A-B)_2 CD
+      std::make_tuple(
+        std::vector<char>({'A', 'B', 'A', 'B', 'C', 'D'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(2, 3)
+        }),
+        11 // TODO ERROR: get 20
+      ),
+      // M(A-A)(B-C)DE
+      std::make_tuple(
+        std::vector<char>({'A', 'A', 'B', 'C', 'D', 'E'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(2, 3)
+        }),
+        10
+      ),
+      // M(A-B)(C-D)EF
+      std::make_tuple(
+        std::vector<char>({'A', 'B', 'C', 'D', 'E', 'F'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(2, 3)
+        }),
+        20
+      ),
+      // M(A-B-A)CDE
+      std::make_tuple(
+        std::vector<char>({'A', 'B', 'A', 'C', 'D', 'E'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(1, 2)
+        }),
+        9 // TODO ERROR: get 18
+      ),
+      // M(A-B-C)_2
+      std::make_tuple(
+        std::vector<char>({'A', 'B', 'C', 'A', 'B', 'C'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(1, 2),
+          std::make_pair(3, 4),
+          std::make_pair(4, 5)
+        }),
+        11 // TODO ERROR: get 12
+      ),
+      // M(A-B-B-A)CD
+      std::make_tuple(
+        std::vector<char>({'A', 'B', 'B', 'A', 'C', 'D'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(1, 2),
+          std::make_pair(2, 3)
+        }),
+        7 // TODO ERROR: get 14
+      ),
+      // M(A-B-C-B-A)D
+      std::make_tuple(
+        std::vector<char>({'A', 'B', 'C', 'B', 'A', 'D'}),
+        std::vector<
+          std::pair<unsigned, unsigned>
+        >({
+          std::make_pair(0, 1),
+          std::make_pair(1, 2),
+          std::make_pair(2, 3),
+          std::make_pair(3, 4)
+        }),
+        7 // TODO ERROR: get 9
+      )
+    }
+  );
+}
