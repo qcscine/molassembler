@@ -20,48 +20,29 @@ namespace PermSymmetry {
 struct SymmetryInformation {
   /*static const unsigned size;
 
-  static std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    >
+  static const std::vector<
+    std::vector<unsigned>
   > rotations;
 
   static double constexpr angle(
-    const uint8_t& a,
-    const uint8_t& b
+    const unsigned& a,
+    const unsigned& b
   );
   */
-
-  /* TODO 
-   * - more members to extract embedding and refinement constraints 
-   */
 };
 
 /* 2 */
-template<typename T>
 struct Linear : public SymmetryInformation {
   /* 1 – (_) – 2 */
   static constexpr unsigned size = 2;
 
   static const std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    > 
+    std::vector<unsigned>
   > rotations;
 
   static double constexpr angle(
-    const uint8_t& a,
-    const uint8_t& b
+    const unsigned& a,
+    const unsigned& b
   ) {
     UNUSED(a);
     UNUSED(b);
@@ -74,7 +55,6 @@ struct Linear : public SymmetryInformation {
  */
 
 /* 3 */
-template<typename T>
 struct TrigonalPlanar : public SymmetryInformation {
   /* Positions are enumerated as
    *
@@ -92,19 +72,12 @@ struct TrigonalPlanar : public SymmetryInformation {
   static constexpr unsigned size = 3;
 
   static const std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    > 
+    std::vector<unsigned>
   > rotations;
 
   static double constexpr angle(
-    const uint8_t& a,
-    const uint8_t& b
+    const unsigned& a,
+    const unsigned& b
   ) {
     UNUSED(a);
     UNUSED(b);
@@ -113,7 +86,6 @@ struct TrigonalPlanar : public SymmetryInformation {
 };
 
 /* 4 */
-template<typename T>
 struct Tetrahedral : public SymmetryInformation {
   /* Positions are enumerated as
    *
@@ -139,19 +111,12 @@ struct Tetrahedral : public SymmetryInformation {
   static constexpr unsigned size = 4;
 
   static const std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    >
+    std::vector<unsigned>
   > rotations;
 
   static double constexpr angle(
-    const uint8_t& a,
-    const uint8_t& b
+    const unsigned& a,
+    const unsigned& b
   ) {
     /* Signal unused on purpose */
     UNUSED(a);
@@ -160,7 +125,6 @@ struct Tetrahedral : public SymmetryInformation {
   }
 };
 
-template<typename T>
 struct SquarePlanar : public SymmetryInformation {
   /* Positions are enumerated as
    *
@@ -174,19 +138,12 @@ struct SquarePlanar : public SymmetryInformation {
   static constexpr unsigned size = 4;
 
   static const std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    >
+    std::vector<unsigned>
   > rotations;
 
   static double constexpr angle(
-    const uint8_t& a,
-    const uint8_t& b
+    const unsigned& a,
+    const unsigned& b
   ) {
     assert(a < size && b < size && a != b);
     if((a + b) % 2 == 1) {
@@ -200,7 +157,6 @@ struct SquarePlanar : public SymmetryInformation {
 };
 
 /* 5 */
-template<typename T>
 struct SquarePyramidal : public SymmetryInformation {
   /* Positions are enumerated as
    *
@@ -226,19 +182,12 @@ struct SquarePyramidal : public SymmetryInformation {
   static constexpr unsigned size = 5;
 
   static const std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    >
+    std::vector<unsigned>
   > rotations;
 
   static double constexpr angle(
-    const uint8_t& a,
-    const uint8_t& b
+    const unsigned& a,
+    const unsigned& b
   ) {
     assert(a < size && b < size && a != b && a < b);
     if(b < 4 && (a + b) % 2 == 0) {
@@ -253,7 +202,6 @@ struct SquarePyramidal : public SymmetryInformation {
   }
 };
 
-template<typename T>
 struct TrigonalBiPyramidal : public SymmetryInformation {
   /* Positions are enumerated as
    *
@@ -271,30 +219,16 @@ struct TrigonalBiPyramidal : public SymmetryInformation {
   static constexpr unsigned size = 5;
 
   static const std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    >
+    std::vector<unsigned>
   > rotations;
 
   static const std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    >
+    std::vector<unsigned>
   > pseudorotations;
 
   static double constexpr angle(
-    const uint8_t& a,
-    const uint8_t& b
+    const unsigned& a,
+    const unsigned& b
   ) {
     assert(a < size && b < size && a != b && a < b);
     if(b < 3) {
@@ -316,7 +250,6 @@ struct TrigonalBiPyramidal : public SymmetryInformation {
 
 
 /* 6 */
-template<typename T>
 struct Octahedral : public SymmetryInformation {
   /* Positions are enumerated as
    *
@@ -337,19 +270,12 @@ struct Octahedral : public SymmetryInformation {
   static constexpr unsigned size = 6;
 
   static const std::vector<
-    std::pair<
-      std::function<
-        std::vector<T>(
-          const std::vector<T>&
-        )
-      >,
-      uint8_t
-    >
+    std::vector<unsigned>
   > rotations;
 
   static double constexpr angle(
-    const uint8_t& a,
-    const uint8_t& b
+    const unsigned& a,
+    const unsigned& b
   ) {
     assert(a < size && b < size && a != b && a < b);
     if(
@@ -365,8 +291,67 @@ struct Octahedral : public SymmetryInformation {
   }
 };
 
-} // eo namespace PermSymmetry
+// Rotation data
 
-#include "SymmetryInformation.hxx"
+const std::vector<
+  std::vector<unsigned>
+> Linear::rotations = {
+  {1, 0}
+};
+
+const std::vector<
+  std::vector<unsigned>
+> TrigonalPlanar::rotations = {
+  {1, 2, 0}, // C3
+  {0, 2, 1} // C2
+};
+
+const std::vector<
+  std::vector<unsigned>
+> Tetrahedral::rotations = {
+  {0, 3, 1, 2},
+  {2, 1, 3, 0},
+  {3, 0, 2, 1},
+  {1, 2, 0, 3}
+};
+
+const std::vector<
+  std::vector<unsigned>
+> SquarePlanar::rotations = {
+  {3, 0, 1, 2}, // C4
+  {1, 0, 3, 2}, // C2
+  {3, 2, 1, 0}  // C2'
+}; 
+
+const std::vector<
+  std::vector<unsigned>
+> SquarePyramidal::rotations = {
+  {3, 0, 1, 2, 4} // C4
+}; 
+
+const std::vector<
+  std::vector<unsigned>
+> TrigonalBiPyramidal::rotations = {
+  {2, 0, 1, 3, 4}, // C3
+  {0, 2, 1, 4, 3}, // C2 on 1
+  {2, 1, 0, 4, 3}, // C2 on 2
+  {1, 0, 2, 4, 3} // C2 on 3
+}; 
+
+const std::vector<
+  std::vector<unsigned>
+> TrigonalBiPyramidal::pseudorotations = {
+  {0, 4, 3, 2, 1} // Pseudorotation with 1 fixed combines with C3 for all
+}; 
+
+const std::vector<
+  std::vector<unsigned>
+> Octahedral::rotations = {
+  {3, 0, 1, 2, 4, 5}, // vertical C4
+  {0, 5, 2, 4, 1, 3}, // horizontal C4
+  {4, 1, 5, 3, 2, 0} // horizontal C4'
+}; 
+
+} // eo namespace PermSymmetry
 
 #endif

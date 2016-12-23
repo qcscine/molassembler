@@ -15,34 +15,19 @@
 
 namespace UniqueAssignments {
 
-template<
-  template<typename T = AssignmentColumn>
-  class Symmetry
->
+template<class Symmetry>
 bool predicateHasTransArrangedPairs(
   const Assignment<Symmetry>& assignment
 ) {
-  // for every group in the positionOccupations
-  for(
-    unsigned i = 0;
-    i < assignment.positionOccupations[0].groups.size();
-    i++
-  ) {
-    std::vector<unsigned> pair;
-    for(unsigned j = 0; j < Symmetry<>::size; j++) {
-      // i is the row index, j the column index
-      if(assignment.positionOccupations.at(j).groups.at(i)) pair.push_back(j);
-    }
+  // for every pair in links
+  for(const auto& indexPair : assignment.links) {
     if(
-      Symmetry<>::angle(
-        pair[0],
-        pair[1]
+      Symmetry::angle(
+        indexPair.first,
+        indexPair.second
       ) == 180.0
-    ) {
-      return true;
-    }
+    ) return true;
   }
-
   return false;
 }
 
@@ -56,10 +41,7 @@ bool predicateHasTransArrangedPairs(
  *  to cis arrangements. Xantphos (with bridge length 7 is the smallest 
  *  trans-spanning ligand mentioned in Wikipedia).
  */
-template<
-  template<typename T = AssignmentColumn>
-  class Symmetry
->
+template<class Symmetry>
 std::vector<
   Assignment<Symmetry>
 > uniqueAssignments(
@@ -85,8 +67,8 @@ std::vector<
   // make a copy of initial so we can modify it by permutation
   Assignment<Symmetry> assignment = initial;
 
-  // sort the occupations so we begin with the lowest permutation
-  assignment.sortOccupations();
+  // ensure we start with the lowest permutation
+  assignment.lowestPermutation();
 
   // The provided assignment is the first unique assignment
   std::vector<
@@ -99,7 +81,7 @@ std::vector<
   // go through all possible permutations of columns
   while(assignment.nextPermutation()) {
     // is the current assignment not contained within the set of rotations?
-    // TODO here is the problem, but to use reducedIsEqual on the full set of 
+    // TODO here is the problem, but to use operator ==  on the full set of 
     // rotations is a heavy penalty to pay :( All advantages of the set, gone
     if(
       rotationsSet.count(assignment) == 0
@@ -110,7 +92,7 @@ std::vector<
         [&assignment](const bool& carry, const Assignment<Symmetry>& compare) {
           return (
             carry
-            || assignment.reducedIsEqual(compare)
+            || assignment == compare
           );
         }
       )

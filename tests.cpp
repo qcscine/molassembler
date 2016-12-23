@@ -31,109 +31,6 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE( assignment_column ) {
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      {true, false, true}
-    ) == AssignmentColumn(
-      'A',
-      {true, false, true}
-    )
-  );
-
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      {true, false, true}
-    ) != AssignmentColumn(
-      'A',
-      {false, false, true}
-    )
-  );
-
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      {true, false, true}
-    ) != AssignmentColumn(
-      'B',
-      {true, false, true}
-    )
-  );
-
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      {true, false, true}
-    ) < AssignmentColumn(
-      'B',
-      {true, false, true}
-    )
-  );
-
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      {true, false, false}
-    ) < AssignmentColumn(
-      'A',
-      {true, false, true}
-    )
-  );
-
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      {false, false, true}
-    ) < AssignmentColumn(
-      'A',
-      {true, false, false}
-    )
-  );
-
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      std::vector<bool>()
-    ) == AssignmentColumn(
-      'A',
-      std::vector<bool>()
-    )
-  );
-
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      std::vector<bool>()
-    ) < AssignmentColumn(
-      'B',
-      std::vector<bool>()
-    )
-  );
-
-  BOOST_CHECK(
-    AssignmentColumn(
-      'A',
-      {true}
-    ) < AssignmentColumn(
-      'B',
-      {false}
-    )
-  );
-  BOOST_CHECK(
-    (
-      AssignmentColumn(
-        'B',
-        {false}
-      ) < AssignmentColumn(
-        'A',
-        {true}
-      )
-    ) == false
-  );
-}
-
 BOOST_AUTO_TEST_CASE( assignment_instantiation ) {
   // can make instances of all symmetries
   Assignment<PermSymmetry::Tetrahedral> tetr(
@@ -166,25 +63,14 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
       std::make_pair(4,5)
     }
   );
-
-/*  // all constructors sort the ligands
-  BOOST_CHECK(
-    instance.ligandConnectionsAreOrdered() == true
-  );
-  BOOST_CHECK(
-    instanceWithBondedLigands.ligandConnectionsAreOrdered() == true
-  );*/
 }
 
-template<
-  template<typename T>
-  class Symmetry
->
+template<class Symmetry>
 void run_tests(
   const std::vector<
     std::tuple<
       std::vector<char>, // characters
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >, // pairs
       unsigned // expectedUnique
@@ -193,7 +79,7 @@ void run_tests(
 ) {
   for(const auto& tuple: test_cases) {
     std::vector<char> characters;
-    std::vector<
+    std::set<
       std::pair<unsigned, unsigned>
     > pairs;
     unsigned expectedUnique;
@@ -274,7 +160,7 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
     // M_A
     std::make_tuple(
       std::vector<char>(4, 'A'),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       1
@@ -282,7 +168,7 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
     // M_A3B
     std::make_tuple(
       std::vector<char>({'A', 'A', 'A', 'B'}),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       1
@@ -290,7 +176,7 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
     // M_A2B2
     std::make_tuple(
       std::vector<char>({'A', 'A', 'B', 'B'}),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       1
@@ -298,7 +184,7 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
     // M_A2BC
     std::make_tuple(
       std::vector<char>({'A', 'A', 'B', 'C'}),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       1
@@ -306,7 +192,7 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
     // M_ABCD
     std::make_tuple(
       std::vector<char>({'A', 'B', 'C', 'D'}),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       2
@@ -321,7 +207,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
     // M_A
     std::make_tuple(
       std::vector<char>(4, 'A'),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       1
@@ -329,7 +215,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
     // M_A3B
     std::make_tuple(
       std::vector<char>({'A', 'A', 'A', 'B'}),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       1
@@ -337,7 +223,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
     // M_A2B2
     std::make_tuple(
       std::vector<char>({'A', 'A', 'B', 'B'}),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       2
@@ -345,7 +231,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
     // M_A2BC
     std::make_tuple(
       std::vector<char>({'A', 'A', 'B', 'C'}),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       2
@@ -353,7 +239,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
     // M_ABCD
     std::make_tuple(
       std::vector<char>({'A', 'B', 'C', 'D'}),
-      std::vector<
+      std::set<
         std::pair<unsigned, unsigned>
       >(),
       3
@@ -374,7 +260,7 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
       // M_A
       std::make_tuple(
         std::vector<char>(6, 'A'),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         1
@@ -382,21 +268,21 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
       // M_AB
       std::make_tuple(
         std::vector<char>({'A', 'A', 'A', 'A', 'A', 'B'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         1
       ),
       std::make_tuple(
         std::vector<char>({'A', 'A', 'A', 'A', 'B', 'B'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         2
       ),
       std::make_tuple(
         std::vector<char>({'A', 'A', 'A', 'B', 'B', 'B'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         2
@@ -410,21 +296,21 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
        */
       std::make_tuple(
         std::vector<char>({'A', 'A', 'A', 'A', 'B', 'C'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         2
       ),
       std::make_tuple(
         std::vector<char>({'A', 'A', 'A', 'B', 'B', 'C'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         3
       ),
       std::make_tuple(
         std::vector<char>({'A', 'A', 'B', 'B', 'C', 'C'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         6
@@ -435,14 +321,14 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
        */
       std::make_tuple(
         std::vector<char>({'A', 'A', 'A', 'B', 'C', 'D'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         5
       ),
       std::make_tuple(
         std::vector<char>({'A', 'A', 'B', 'B', 'C', 'D'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         8
@@ -450,7 +336,7 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
       // M_ABCDE
       std::make_tuple(
         std::vector<char>({'A', 'A', 'B', 'C', 'D', 'E'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         15
@@ -458,7 +344,7 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
       // M_ABCDEF
       std::make_tuple(
         std::vector<char>({'A', 'B', 'C', 'D', 'E', 'F'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >(),
         30
@@ -473,7 +359,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-A)_3
       std::make_tuple(
         std::vector<char>({'A', 'A', 'A', 'A', 'A', 'A'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
@@ -489,7 +375,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-B)_3
       std::make_tuple(
         std::vector<char>({'A', 'B', 'A', 'B', 'A', 'B'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
@@ -501,7 +387,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-B)_2 CD
       std::make_tuple(
         std::vector<char>({'A', 'B', 'A', 'B', 'C', 'D'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
@@ -512,7 +398,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-A)(B-C)DE
       std::make_tuple(
         std::vector<char>({'A', 'A', 'B', 'C', 'D', 'E'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
@@ -523,7 +409,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-B)(C-D)EF
       std::make_tuple(
         std::vector<char>({'A', 'B', 'C', 'D', 'E', 'F'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
@@ -534,7 +420,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-B-A)CDE
       std::make_tuple(
         std::vector<char>({'A', 'B', 'A', 'C', 'D', 'E'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
@@ -545,7 +431,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-B-C)_2
       std::make_tuple(
         std::vector<char>({'A', 'B', 'C', 'A', 'B', 'C'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
@@ -558,7 +444,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-B-B-A)CD
       std::make_tuple(
         std::vector<char>({'A', 'B', 'B', 'A', 'C', 'D'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
@@ -570,7 +456,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       // M(A-B-C-B-A)D
       std::make_tuple(
         std::vector<char>({'A', 'B', 'C', 'B', 'A', 'D'}),
-        std::vector<
+        std::set<
           std::pair<unsigned, unsigned>
         >({
           std::make_pair(0, 1),
