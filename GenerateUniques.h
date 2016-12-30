@@ -112,7 +112,7 @@ std::vector<
     } 
   }
 
-  /* Unnecessary now
+  /*
   // Manual recheck of all pairs
   for(auto it = uniqueAssignments.begin(); it != uniqueAssignments.end() - 1; it++) {
     for(auto jt = it + 1; jt != uniqueAssignments.end(); jt++) {
