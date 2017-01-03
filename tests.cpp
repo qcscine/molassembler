@@ -16,7 +16,6 @@
 using namespace UniqueAssignments;
 
 /* TODO
- * - investigate failures!
  */
 
 template<typename T>
@@ -107,6 +106,84 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
       instanceCopy.toString() 
       == "chars {F, E, A, B, C, D}, links {[0, 1], [2, 3], [4, 5]}"
     );
+  }
+}
+
+BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
+  Assignment<PermSymmetry::Octahedral> single {
+    {'A', 'A', 'A', 'A', 'A', 'A'},
+    {
+      std::make_pair(0,1),
+      std::make_pair(2,3),
+      std::make_pair(4,5)
+    }
+  };
+
+  bool pass = true;
+
+  do {
+    for(unsigned i = 0; i < 6 && pass; i++) {
+      for(unsigned j = i + 1; j < 6 && pass; j++) {
+        if(!OperatorTests::XOR(
+            single.columnSmaller(i, j),
+            single.columnSmaller(j, i),
+            !single.columnSmaller(i, j) && !single.columnSmaller(j, i)
+        )) {
+          pass = false;
+        }
+      }
+    }
+  } while(single.nextPermutation() && pass);
+
+  BOOST_CHECK(pass);
+}
+
+BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
+  Assignment<PermSymmetry::Octahedral> testCase {
+    {'A', 'A', 'C', 'D', 'B', 'B'},
+    {
+      std::make_pair(0, 5),
+      std::make_pair(1, 4)
+    }
+  };
+
+  auto isAorB = [](const char& test) -> bool {
+    return (
+      test == 'A'
+      || test == 'B'
+    );
+  };
+
+  auto testInstance = [&isAorB](
+    const Assignment<PermSymmetry::Octahedral>& instance
+  ) {
+    return std::accumulate(
+      instance.links.begin(),
+      instance.links.end(),
+      true,
+      [&isAorB, &instance](
+        const bool& carry,
+        const std::pair<unsigned, unsigned>& pair
+      ) {
+        return (
+          carry
+          && isAorB(
+            instance.characters.at(
+              pair.first
+            )
+          ) && isAorB(
+            instance.characters.at(
+              pair.second
+            )
+          )
+        );
+      }
+    );
+  };
+
+  auto allRotations = testCase.generateAllRotations();
+  for(const auto& copy : allRotations) {
+    BOOST_CHECK(testInstance(copy));
   }
 }
 

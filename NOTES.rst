@@ -1,7 +1,6 @@
 TODO
 ----
 
-- Add more tests
+- MORE TESTS
 - Refactor
 - Document
-- Proper namespacing
