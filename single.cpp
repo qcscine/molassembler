@@ -67,6 +67,7 @@ void run_tests(
       : Assignment<Symmetry>(characters, pairs);
 
     auto unique = uniqueAssignments(assignment);
+
     BOOST_CHECK(unique.size() == expectedUnique );
     if(unique.size() != expectedUnique) {
       std::cout << "Mismatch: Expected " << expectedUnique
@@ -76,6 +77,33 @@ void run_tests(
         std::cout << uniqueAssignment << std::endl;
       }
     } 
+
+
+    /*std::cout << std::endl << "Custom rotations of found uniques" << std::endl;
+    // just for this one case
+    for(const auto& uniqueAssignment: unique) {
+      auto rotations = uniqueAssignment.generateAllRotations();
+      auto it = std::find_if(
+        rotations.begin(),
+        rotations.end(),
+        [](const Assignment<Symmetry>& rotation) -> bool {
+          if(
+            rotation.characters[2] == 'B' 
+            && rotation.characters[3] == 'A'
+            && rotation.links.count(
+              std::make_pair<unsigned, unsigned>(2, 3)
+            ) == 1
+          ) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      );
+      if(it != rotations.end()) {
+        std::cout << *it << std::endl;
+      }
+    }*/
   }
 }
 
@@ -106,6 +134,55 @@ BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
   } while(single.nextPermutation() && pass);
 
   BOOST_CHECK(pass);
+}
+
+BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
+  Assignment<PermSymmetry::Octahedral> testCase {
+    {'A', 'A', 'C', 'D', 'B', 'B'},
+    {
+      std::make_pair(0, 5),
+      std::make_pair(1, 4)
+    }
+  };
+
+  auto isAorB = [](const char& test) -> bool {
+    return (
+      test == 'A'
+      || test == 'B'
+    );
+  };
+
+  auto testInstance = [&isAorB](
+    const Assignment<PermSymmetry::Octahedral>& instance
+  ) {
+    return std::accumulate(
+      instance.links.begin(),
+      instance.links.end(),
+      true,
+      [&isAorB, &instance](
+        const bool& carry,
+        const std::pair<unsigned, unsigned>& pair
+      ) {
+        return (
+          carry
+          && isAorB(
+            instance.characters.at(
+              pair.first
+            )
+          ) && isAorB(
+            instance.characters.at(
+              pair.second
+            )
+          )
+        );
+      }
+    );
+  };
+
+  auto allRotations = testCase.generateAllRotations();
+  for(const auto& copy : allRotations) {
+    BOOST_CHECK(testInstance(copy));
+  }
 }
 
 BOOST_AUTO_TEST_CASE( lowestPermutation) {

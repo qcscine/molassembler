@@ -5,16 +5,11 @@
 #include <algorithm>
 #include <functional>
 #include <cassert>
-#include <iostream>
 #include <sstream>
 
 #include "Assignment.h"
 
 /* TODO
- * - Refactor generation of unique assignments to avoid trans-spanning ligands
- *   differently, i.e. by skipping permutations with trans-spanning ligands 
- *   entirely instead of doing the work of including them, generating all their
- *   permutations etc., and then removing them at the end.
  */
 
 namespace UniqueAssignments {
@@ -74,6 +69,15 @@ std::vector<
   // ensure we start with the lowest permutation
   assignment.lowestPermutation();
 
+  /* in case we want to skip trans pairs, the initial assignment must also not
+   * have any trans spanning pairs
+   */
+  if(removeTransSpanningGroups) {
+    while(predicateHasTransArrangedPairs<Symmetry>(assignment)) {
+      assignment.nextPermutation();
+    }
+  }
+
   // The provided assignment is the first unique assignment
   std::vector<
     Assignment<Symmetry>
@@ -81,30 +85,21 @@ std::vector<
 
   // generate the initial assignment's set of rotations
   auto rotationsSet = assignment.generateAllRotations();
-  std::cout << "#rotations in starting set: " << rotationsSet.size() << std::endl;
 
   // go through all possible permutations of columns
   while(assignment.nextPermutation()) {
-    std::cout << "new permutation: " << assignment << std::endl;
+    if(
+      removeTransSpanningGroups 
+      && predicateHasTransArrangedPairs<Symmetry>(assignment)
+    ) continue; // skip permutations with trans pairs if desired
+
     // is the current assignment not contained within the set of rotations?
-    // TODO here is the problem, but to use operator ==  on the full set of 
-    // rotations is a heavy penalty to pay :( All advantages of the set, gone
     if(
       rotationsSet.count(assignment) == 0
-      /*&& !std::accumulate(
-        rotationsSet.begin(),
-        rotationsSet.end(),
-        false,
-        [&assignment](const bool& carry, const Assignment<Symmetry>& compare) {
-          return (
-            carry
-            || assignment == compare
-          );
-        }
-      )*/
     ) {
       // if so, it is a unique assignment, so add it to the list
       uniqueAssignments.push_back(assignment);
+
       // and add its rotations to the set
       /* C++17
       rotationsSet.merge(
@@ -116,22 +111,8 @@ std::vector<
         assignmentRotations.end()
       );
 
-      std::cout << "-> added new! now " << rotationsSet.size() << " rotations." << std::endl;
-    } else {
-      std::cout << "-> is contained in set of rotations." << std::endl;
-    }
+    } 
   }
-
-  if(removeTransSpanningGroups) {
-    uniqueAssignments.erase(
-      std::remove_if(
-        uniqueAssignments.begin(),
-        uniqueAssignments.end(),
-        predicateHasTransArrangedPairs<Symmetry>
-      ),
-      uniqueAssignments.end()
-    );
-  } 
     
   return uniqueAssignments;
 }

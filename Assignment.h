@@ -9,7 +9,6 @@
 #include <map>
 #include <cassert>
 #include <string>
-#include <iostream>
 
 #include "SymmetryRotations.h"
 
@@ -45,6 +44,20 @@ decltype(auto) minMaxAdapt(
     std::min(a, b),
     std::max(a, b)
   );
+}
+
+template<typename T>
+std::string toString(const T& container) {
+  std::stringstream sstream;
+  sstream << "{";
+  unsigned nItems = container.size();
+  for(const auto& item : container) {
+    sstream << item;
+    if(--nItems != 0) sstream << ", ";
+  }
+  sstream << "}";
+
+  return sstream.str();
 }
 
 } // eo namespace Util
@@ -235,7 +248,6 @@ public:
        * test columnSmaller(i + 1, i).
        */
       if(columnSmaller(i + 1, i)) { 
-        // std::cout << "columnSmaller(" << i + 1 << ", " << i << ") is true" << std::endl;
         isSorted = false;
         break;
       }
@@ -294,12 +306,17 @@ public:
     const LinksSetType& links,
     const unsigned& rotationFunctionIndex
   ) {
+
     auto rotateIndex = [&rotationFunctionIndex](
       const unsigned& from
     ) -> unsigned {
-      return Symmetry::rotations.at(
-        rotationFunctionIndex
-      ).at(from);
+      const auto& symVec = Symmetry::rotations.at(rotationFunctionIndex);
+
+      return std::find(
+        symVec.begin(),
+        symVec.end(),
+        from
+      ) - symVec.begin();
     };
 
     LinksSetType retSet;
@@ -538,17 +555,14 @@ std::pair<
   unsigned depth = 0;
 
   // begin loop
-  while(chain.at(0) < linkLimit) {
+  while(chain.front() < linkLimit) {
     // perform rotation
     // copy the last element in chainStructures
-    Assignment<Symmetry> generated = chainStructures.at(
-      chainStructures.size() - 1
-    );
+    Assignment<Symmetry> generated = chainStructures.back();
+
     // apply the rotation referenced by the last link in chain
     generated.applyRotation(
-      chain.at(
-        chain.size() - 1
-      )
+      chain.back()
     );
 
     // is it something new?
@@ -559,10 +573,13 @@ std::pair<
       if(interruptCallbackOnNewAssignment(*this, generated)) {
         return make_pair(enumeratedAssignments, true);
       }
+
       // add it to the set
       enumeratedAssignments.insert(generated);
+
       // add it to chainStructures
       chainStructures.push_back(generated);
+
       // increase depth, add a link
       depth++;
       chain.emplace_back(0);
