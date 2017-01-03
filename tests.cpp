@@ -52,17 +52,74 @@ BOOST_AUTO_TEST_CASE( assignment_instantiation ) {
 
 BOOST_AUTO_TEST_CASE( assignment_basics ) {
   // Constructors
-  Assignment<PermSymmetry::Octahedral> instance(
-    {'A', 'A', 'A', 'A', 'A', 'A'}
-  );
   Assignment<PermSymmetry::Octahedral> instanceWithBondedLigands(
-    {'A', 'A', 'A', 'A', 'A', 'A'},
+    {'A', 'B', 'C', 'D', 'E', 'F'},
     {
       std::make_pair(0,1),
       std::make_pair(2,3),
       std::make_pair(4,5)
     }
   );
+
+  
+  { // columnSwap
+    auto instanceCopy = instanceWithBondedLigands;
+    instanceCopy.columnSwap(0, 1);
+    BOOST_CHECK(
+      instanceCopy.toString()
+      == "chars {B, A, C, D, E, F}, links {[0, 1], [2, 3], [4, 5]}"
+    );
+
+    instanceCopy.columnSwap(3, 4);
+    BOOST_CHECK(
+      instanceCopy.toString()
+      == "chars {B, A, C, E, D, F}, links {[0, 1], [2, 4], [3, 5]}"
+    );
+
+    instanceCopy.columnSwap(0, 5);
+    BOOST_CHECK(
+      instanceCopy.toString()
+      == "chars {F, A, C, E, D, B}, links {[0, 3], [1, 5], [2, 4]}"
+    );
+  }
+
+  { // columnSmaller
+    auto instanceCopy = instanceWithBondedLigands;
+    BOOST_CHECK(
+      instanceCopy.columnSmaller(0, 1)
+      && instanceCopy.columnSmaller(1, 2)
+      && instanceCopy.columnSmaller(2, 3)
+      && instanceCopy.columnSmaller(3, 4)
+      && instanceCopy.columnSmaller(4, 5)
+    );
+  }
+
+  { // reverseColumns
+    auto instanceCopy = instanceWithBondedLigands;
+    instanceCopy.reverseColumns(0, 6);
+    BOOST_CHECK(
+      instanceCopy.toString() 
+      == "chars {F, E, D, C, B, A}, links {[0, 1], [2, 3], [4, 5]}"
+    );
+
+    instanceCopy.reverseColumns(2, 6);
+    BOOST_CHECK(
+      instanceCopy.toString() 
+      == "chars {F, E, A, B, C, D}, links {[0, 1], [2, 3], [4, 5]}"
+    );
+  }
+}
+
+BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
+  Assignment<PermSymmetry::Octahedral> octahedralInstance(
+    {'A', 'B', 'C', 'D', 'E', 'F'}
+  );
+
+  BOOST_CHECK(
+    octahedralInstance.generateAllRotations().size()
+    == 24 // 4 C4 cases on each of 6 A position selections
+  );
+  
 }
 
 template<class Symmetry>
@@ -382,7 +439,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(2, 3),
           std::make_pair(4, 5)
         }),
-        4 // TODO ERROR: get 16
+        4 
       ),
       // M(A-B)_2 CD
       std::make_tuple(
@@ -393,7 +450,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(0, 1),
           std::make_pair(2, 3)
         }),
-        11 // TODO ERROR: get 20
+        11 // TODO ERROR: get 10
       ),
       // M(A-A)(B-C)DE
       std::make_tuple(
@@ -426,7 +483,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(0, 1),
           std::make_pair(1, 2)
         }),
-        9 // TODO ERROR: get 18
+        9 
       ),
       // M(A-B-C)_2
       std::make_tuple(
@@ -439,7 +496,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(3, 4),
           std::make_pair(4, 5)
         }),
-        11 // TODO ERROR: get 12
+        11 // TODO ERROR: get 9
       ),
       // M(A-B-B-A)CD
       std::make_tuple(
@@ -451,7 +508,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(1, 2),
           std::make_pair(2, 3)
         }),
-        7 // TODO ERROR: get 14
+        7
       ),
       // M(A-B-C-B-A)D
       std::make_tuple(
@@ -464,7 +521,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(2, 3),
           std::make_pair(3, 4)
         }),
-        7 // TODO ERROR: get 9
+        7 
       )
     }
   );

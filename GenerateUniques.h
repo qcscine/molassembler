@@ -11,6 +11,10 @@
 #include "Assignment.h"
 
 /* TODO
+ * - Refactor generation of unique assignments to avoid trans-spanning ligands
+ *   differently, i.e. by skipping permutations with trans-spanning ligands 
+ *   entirely instead of doing the work of including them, generating all their
+ *   permutations etc., and then removing them at the end.
  */
 
 namespace UniqueAssignments {
@@ -73,19 +77,21 @@ std::vector<
   // The provided assignment is the first unique assignment
   std::vector<
     Assignment<Symmetry>
-  > uniqueAssignments = {assignment};
+  > uniqueAssignments {assignment};
 
   // generate the initial assignment's set of rotations
   auto rotationsSet = assignment.generateAllRotations();
+  std::cout << "#rotations in starting set: " << rotationsSet.size() << std::endl;
 
   // go through all possible permutations of columns
   while(assignment.nextPermutation()) {
+    std::cout << "new permutation: " << assignment << std::endl;
     // is the current assignment not contained within the set of rotations?
     // TODO here is the problem, but to use operator ==  on the full set of 
     // rotations is a heavy penalty to pay :( All advantages of the set, gone
     if(
       rotationsSet.count(assignment) == 0
-      && !std::accumulate(
+      /*&& !std::accumulate(
         rotationsSet.begin(),
         rotationsSet.end(),
         false,
@@ -95,7 +101,7 @@ std::vector<
             || assignment == compare
           );
         }
-      )
+      )*/
     ) {
       // if so, it is a unique assignment, so add it to the list
       uniqueAssignments.push_back(assignment);
@@ -109,21 +115,12 @@ std::vector<
         assignmentRotations.begin(),
         assignmentRotations.end()
       );
-    } 
-  }
 
-  /*
-  // Manual recheck of all pairs
-  for(auto it = uniqueAssignments.begin(); it != uniqueAssignments.end() - 1; it++) {
-    for(auto jt = it + 1; jt != uniqueAssignments.end(); jt++) {
-      if(it->isRotationallySuperimposable(*jt)) {
-        std::cout << "Found superimposable pair: [" 
-          << it - uniqueAssignments.begin() << ", "
-          << jt - uniqueAssignments.begin() << "]." << std::endl;
-      }
+      std::cout << "-> added new! now " << rotationsSet.size() << " rotations." << std::endl;
+    } else {
+      std::cout << "-> is contained in set of rotations." << std::endl;
     }
   }
-  */
 
   if(removeTransSpanningGroups) {
     uniqueAssignments.erase(

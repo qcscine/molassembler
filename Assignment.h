@@ -8,10 +8,14 @@
 #include <set>
 #include <map>
 #include <cassert>
+#include <string>
+#include <iostream>
 
 #include "SymmetryRotations.h"
 
 #include "boost/optional.hpp"
+
+namespace Util {
 
 template<typename Comparable>
 boost::optional<bool> compareSmaller(
@@ -22,6 +26,28 @@ boost::optional<bool> compareSmaller(
   else if(b < a) return false;
   else return {};
 }
+
+std::set<unsigned> removeIndexFromSet(
+  std::set<unsigned> indexSet,
+  unsigned toRemove
+) {
+  indexSet.erase(toRemove);
+  return indexSet;
+}
+
+template<typename Function, typename T1, typename T2>
+decltype(auto) minMaxAdapt(
+  Function function,
+  T1 a,
+  T2 b
+) {
+  return function(
+    std::min(a, b),
+    std::max(a, b)
+  );
+}
+
+} // eo namespace Util
 
 /* TODO
  * - update documentation
@@ -104,7 +130,7 @@ public:
     links = std::move(newLinks);
   }
 
-  std::set<unsigned> makeConnectedIndicesSet(const unsigned& index) {
+  std::set<unsigned> makeConnectedIndicesSet(const unsigned& index) const {
       std::set<unsigned> connectedIndices;
 
       for(const auto& pair: links) {
@@ -122,16 +148,17 @@ public:
   bool columnSmaller(
     const unsigned& a,
     const unsigned& b
-  ) {
+  ) const {
     if(links.size() == 0) return characters[a] < characters[b];
 
-    return compareSmaller(
+    return Util::compareSmaller(
       characters[a],
       characters[b]
     ).value_or(
-      compareSmaller(
-        makeConnectedIndicesSet(a),
-        makeConnectedIndicesSet(b)
+      Util::compareSmaller(
+        // see if this does the trick
+        Util::removeIndexFromSet(makeConnectedIndicesSet(a), b),
+        Util::removeIndexFromSet(makeConnectedIndicesSet(b), a)
       ).value_or(
         false
       )
@@ -149,9 +176,12 @@ public:
   /* Modification */
   void lowestPermutation() {
     /* laziest way to implement is to call nextPermutation until it returns 
-     * false, at which point the data structure is reset to lowest permutation.
+     * false, at which point the data structure is reset to its lowest
+     * permutation.
      */
-    while(nextPermutation()) continue;
+    if(!isSortedAsc()) {
+      while(nextPermutation()) continue;
+    }
   }
 
   /*!
@@ -159,10 +189,13 @@ public:
    * ligand connections are ordered.
    */
   bool nextPermutation() {
-    /* 
-     * This is where it gets interesting. The elements we are permuting are the
-     * characters ALONG with their indices in passLinks, and a permutation 
-     * must be a different operation than a rotation.
+    /* This is where it gets interesting. The elements we are permuting are the
+     * characters ALONG with their indices in passLinks, and a permutation must
+     * be a different operation than a rotation.
+     *
+     * The algorithm here is a copy of std::next_permutation, modified from
+     * iterator-based to index-based and using the custom comparison and
+     * swapping functions defined in-class.
      */
     unsigned i = characters.size() - 1, j, k;
 
@@ -171,19 +204,13 @@ public:
 
       if(
         i != 0 
-        && columnSmaller(
-          --i,
-          j
-        )
+        && columnSmaller(--i, j)
       ) {
         k = characters.size();
 
         while(
           k != 0 
-          && !columnSmaller(
-            i,
-            --k
-          )
+          && !columnSmaller(i, --k)
         ) continue;
 
         columnSwap(i, k);
@@ -196,6 +223,56 @@ public:
         return false;
       }
     }
+  }
+
+  bool isSortedAsc() {
+    bool isSorted = true;
+    for(unsigned i = 0; i < characters.size() - 1; i++) {
+      /* It is a mistake with to test !columnSmaller(i, i + 1) as equal columns
+       * can arise, e.g. chars {A, A}, links {[0, 1]}, in which 
+       * columnSmaller(0, 1) = false. Using abovementioned test also places the
+       * restriction of monotonic increase upon the columns. It is better to
+       * test columnSmaller(i + 1, i).
+       */
+      if(columnSmaller(i + 1, i)) { 
+        // std::cout << "columnSmaller(" << i + 1 << ", " << i << ") is true" << std::endl;
+        isSorted = false;
+        break;
+      }
+    }
+    
+    return isSorted;
+  }
+
+  bool previousPermutation() {
+
+    unsigned i = characters.size() - 1, j, k;
+
+    while(true) {
+      j = i;
+
+      if(
+        i != 0 
+        && columnSmaller(j, --i)
+      ) {
+        k = characters.size();
+
+        while(
+          k != 0 
+          && !columnSmaller(--k, i)
+        ) continue;
+
+        columnSwap(i, k);
+        reverseColumns(j, characters.size());
+        return true;
+      }
+
+      if(i == 0) {
+        reverseColumns(0, characters.size());
+        return false;
+      }
+    }
+
   }
 
   std::vector<char> rotateCharacters(
@@ -229,7 +306,13 @@ public:
 
     for(const auto& pair : links) {
       retSet.emplace(
-        std::make_pair(
+        Util::minMaxAdapt(
+          std::function<
+            std::pair<unsigned, unsigned>(
+              unsigned,
+              unsigned
+            )
+          >(std::make_pair<unsigned, unsigned>),
           rotateIndex(pair.first),
           rotateIndex(pair.second)
         )
@@ -422,7 +505,28 @@ std::pair<
   // add the initial structure to a set of Assignments
   std::set<Assignment> enumeratedAssignments = {*this};   
 
-  // Systematically explore all rotations
+  /* Systematically explore all rotations:
+   * The chain exists to keep track of which rotations starting from the base
+   * structure we have already explored, and which to perform next on which 
+   * intermediate structure. Say we have 4 rotations defined in the current
+   * symmetry, then linkLimit is 4.
+   *
+   * Chain initially is {0} and chainStructures is {copy of *this}. 
+   * So in the loop we copy out the last element of chainStructures and perform
+   * the rotation 0 on it. 
+   *
+   * If it's something new, we add it to a set of generated structures, push it
+   * onto the chain of structures, and add an instruction to perform the
+   * rotation 0 on the new structure.
+   *
+   * If it isn't something new, we increment the instruction at the end of 
+   * the chain. If that happens to be linkLimit, then we pop off the last 
+   * elements of both chains and increment the instruction at the new end 
+   * position.
+   *
+   * This leads to a tree traversal that prunes the tree whenever an
+   * instruction produces a structure that has already been seen.
+   */
   // maximum element is the size of the rotation vector
   unsigned linkLimit = Symmetry::rotations.size();
 
@@ -490,7 +594,7 @@ template<class Symmetry>
 bool Assignment<Symmetry>::operator < (
   const Assignment<Symmetry>& other
 ) const {
-  return compareSmaller(
+  return Util::compareSmaller(
     this -> characters,
     other.characters
   ).value_or(

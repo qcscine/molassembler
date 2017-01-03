@@ -33,6 +33,15 @@ bool testLogicalOperators(const T& a, const T& b) {
   );
 }
 
+template<typename T>
+bool testOperatorSmaller(const T& a, const T& b) {
+  return XOR(
+    a < b,
+    b < a, 
+    !(a < b) && !(b < a) // a != b expressed with < only
+  );
+}
+
 } // eo namespace OperatorTests
 
 #endif
