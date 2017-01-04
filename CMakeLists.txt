@@ -1,5 +1,5 @@
 # How to make this into a library?
-# Dynamic / static? It would be shit if this add-on to Delib would supersede it
+# Dynamic / static? It would be shit if this add-on to Delib would supercede it
 
 # oldest tested version of cmake used (too lazy to figure out newest compatible
 # cmake version)
@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION 3.5.1)
 # local path configuration
 set(Delib_LIBRARY_DIR "/home/jan-grimo/PhD/code/delib2-0/build")
 set(Delib_INCLUDE_DIR "/home/jan-grimo/PhD/code/delib2-0/src")
-set(Assignmentlib_INCLUDE_DIR "/home/jan-grimo/PhD/projects/steric_uniqueness")
+set(Assignmentlib_INCLUDE_DIR "/home/jan-grimo/PhD/projects/libs")
 
 # declaration
 project(Molecule)
