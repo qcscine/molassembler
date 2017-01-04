@@ -6,6 +6,8 @@
 
 #include "boost/optional.hpp"
 
+namespace UniqueAssignments {
+
 namespace Util {
 
 template<typename Comparable>
@@ -53,5 +55,7 @@ std::string toString(const T& container) {
 }
 
 } // eo namespace Util
+
+} // eo namespace UniqueAssignments
 
 #endif

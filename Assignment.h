@@ -251,7 +251,7 @@ public:
         }
       }
 
-      return std::move(connectedIndices);
+      return connectedIndices;
   }
 
 

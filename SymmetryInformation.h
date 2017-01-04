@@ -1,15 +1,9 @@
 #ifndef LIB_SYMMETRY_INFORMATION_H
 #define LIB_SYMMETRY_INFORMATION_H
 
-#ifndef UNUSED
-#define UNUSED(x) (void)(x)
-#endif
-
-// C++17 Replace all UNUSED(x) with [[maybe_unused]] x at their declarations
-
-#include <vector>
 #include <functional>
 #include <cassert>
+#include <array>
 
 /* TODO
  * - conditional rotations?
@@ -20,8 +14,9 @@ namespace PermSymmetry {
 struct SymmetryInformation {
   /*static const unsigned size;
 
-  static const std::vector<
-    std::vector<unsigned>
+  static const std::array<
+    std::array<unsigned, _size_>,
+    _number_of_rotations_
   > rotations;
 
   static double constexpr angle(
@@ -36,16 +31,17 @@ struct Linear : public SymmetryInformation {
   /* 1 – (_) – 2 */
   static constexpr unsigned size = 2;
 
-  static const std::vector<
-    std::vector<unsigned>
-  > rotations;
+  static constexpr std::array<
+    std::array<unsigned, 2>,
+    1
+  > rotations {{
+    {{1, 0}}
+  }};
 
   static double constexpr angle(
-    const unsigned& a,
-    const unsigned& b
+    const unsigned& a __attribute__((unused)),
+    const unsigned& b __attribute__((unused))
   ) {
-    UNUSED(a);
-    UNUSED(b);
     return 180;
   }
 };
@@ -71,16 +67,18 @@ struct TrigonalPlanar : public SymmetryInformation {
 
   static constexpr unsigned size = 3;
 
-  static const std::vector<
-    std::vector<unsigned>
-  > rotations;
+  static constexpr std::array<
+    std::array<unsigned, 3>,
+    2
+  > rotations {{ //c++11 quirk
+    {{1, 2, 0}}, // C3
+    {{0, 2, 1}} // C2
+  }};
 
   static double constexpr angle(
-    const unsigned& a,
-    const unsigned& b
+    const unsigned& a __attribute__((unused)),
+    const unsigned& b __attribute__((unused))
   ) {
-    UNUSED(a);
-    UNUSED(b);
     return 120;
   }
 };
@@ -110,17 +108,20 @@ struct Tetrahedral : public SymmetryInformation {
    */
   static constexpr unsigned size = 4;
 
-  static const std::vector<
-    std::vector<unsigned>
-  > rotations;
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    4
+  > rotations {{
+    {{0, 3, 1, 2}},
+    {{2, 1, 3, 0}},
+    {{3, 0, 2, 1}},
+    {{1, 2, 0, 3}}
+  }};
 
   static double constexpr angle(
-    const unsigned& a,
-    const unsigned& b
+    const unsigned& a __attribute__((unused)),
+    const unsigned& b __attribute__((unused))
   ) {
-    /* Signal unused on purpose */
-    UNUSED(a);
-    UNUSED(b);
     return 109.5;
   }
 };
@@ -137,9 +138,14 @@ struct SquarePlanar : public SymmetryInformation {
    */
   static constexpr unsigned size = 4;
 
-  static const std::vector<
-    std::vector<unsigned>
-  > rotations;
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    3
+  > rotations {{
+    {{3, 0, 1, 2}}, // C4
+    {{1, 0, 3, 2}}, // C2
+    {{3, 2, 1, 0}}  // C2'
+  }};
 
   static double constexpr angle(
     const unsigned& a,
@@ -181,9 +187,12 @@ struct SquarePyramidal : public SymmetryInformation {
    */
   static constexpr unsigned size = 5;
 
-  static const std::vector<
-    std::vector<unsigned>
-  > rotations;
+  static constexpr std::array<
+    std::array<unsigned, 5>,
+    1
+  > rotations {{
+    {{3, 0, 1, 2, 4}} // C4
+  }};
 
   static double constexpr angle(
     const unsigned& a,
@@ -218,13 +227,22 @@ struct TrigonalBiPyramidal : public SymmetryInformation {
    */
   static constexpr unsigned size = 5;
 
-  static const std::vector<
-    std::vector<unsigned>
-  > rotations;
+  static constexpr std::array<
+    std::array<unsigned, 5>,
+    4
+  > rotations {{
+    {{2, 0, 1, 3, 4}}, // C3
+    {{0, 2, 1, 4, 3}}, // C2 on 1
+    {{2, 1, 0, 4, 3}}, // C2 on 2
+    {{1, 0, 2, 4, 3}} // C2 on 3
+  }};
 
-  static const std::vector<
-    std::vector<unsigned>
-  > pseudorotations;
+  static constexpr std::array<
+    std::array<unsigned, 5>,
+    1
+  > pseudorotations {{
+    {{0, 4, 3, 2, 1}} // Pseudorotation with 1 fixed combines with C3 for all
+  }};
 
   static double constexpr angle(
     const unsigned& a,
@@ -269,9 +287,14 @@ struct Octahedral : public SymmetryInformation {
    */
   static constexpr unsigned size = 6;
 
-  static const std::vector<
-    std::vector<unsigned>
-  > rotations;
+  static constexpr std::array<
+    std::array<unsigned, 6>,
+    3
+  > rotations {{
+    {{3, 0, 1, 2, 4, 5}}, // vertical C4
+    {{0, 5, 2, 4, 1, 3}}, // horizontal C4
+    {{4, 1, 5, 3, 2, 0}} // horizontal C4'
+  }};
 
   static double constexpr angle(
     const unsigned& a,
@@ -291,66 +314,49 @@ struct Octahedral : public SymmetryInformation {
   }
 };
 
-// Rotation data
+constexpr unsigned Linear::size;
+constexpr unsigned TrigonalPlanar::size;
+constexpr unsigned Tetrahedral::size;
+constexpr unsigned SquarePlanar::size;
+constexpr unsigned SquarePyramidal::size;
+constexpr unsigned TrigonalBiPyramidal::size;
+constexpr unsigned Octahedral::size;
 
-const std::vector<
-  std::vector<unsigned>
-> Linear::rotations = {
-  {1, 0}
-};
+constexpr std::array<
+  std::array<unsigned, 2>,
+  1
+> Linear::rotations;
 
-const std::vector<
-  std::vector<unsigned>
-> TrigonalPlanar::rotations = {
-  {1, 2, 0}, // C3
-  {0, 2, 1} // C2
-};
+constexpr std::array<
+  std::array<unsigned, 3>,
+  2
+> TrigonalPlanar::rotations;
 
-const std::vector<
-  std::vector<unsigned>
-> Tetrahedral::rotations = {
-  {0, 3, 1, 2},
-  {2, 1, 3, 0},
-  {3, 0, 2, 1},
-  {1, 2, 0, 3}
-};
+constexpr std::array<
+  std::array<unsigned, 4>,
+  4
+> Tetrahedral::rotations;
 
-const std::vector<
-  std::vector<unsigned>
-> SquarePlanar::rotations = {
-  {3, 0, 1, 2}, // C4
-  {1, 0, 3, 2}, // C2
-  {3, 2, 1, 0}  // C2'
-}; 
+constexpr std::array<
+  std::array<unsigned, 4>,
+  3
+> SquarePlanar::rotations;
 
-const std::vector<
-  std::vector<unsigned>
-> SquarePyramidal::rotations = {
-  {3, 0, 1, 2, 4} // C4
-}; 
+constexpr std::array<
+  std::array<unsigned, 5>,
+  1
+> SquarePyramidal::rotations;
 
-const std::vector<
-  std::vector<unsigned>
-> TrigonalBiPyramidal::rotations = {
-  {2, 0, 1, 3, 4}, // C3
-  {0, 2, 1, 4, 3}, // C2 on 1
-  {2, 1, 0, 4, 3}, // C2 on 2
-  {1, 0, 2, 4, 3} // C2 on 3
-}; 
+constexpr std::array<
+  std::array<unsigned, 5>,
+  4
+> TrigonalBiPyramidal::rotations;
 
-const std::vector<
-  std::vector<unsigned>
-> TrigonalBiPyramidal::pseudorotations = {
-  {0, 4, 3, 2, 1} // Pseudorotation with 1 fixed combines with C3 for all
-}; 
+constexpr std::array<
+  std::array<unsigned, 6>,
+  3
+> Octahedral::rotations;
 
-const std::vector<
-  std::vector<unsigned>
-> Octahedral::rotations = {
-  {3, 0, 1, 2, 4, 5}, // vertical C4
-  {0, 5, 2, 4, 1, 3}, // horizontal C4
-  {4, 1, 5, 3, 2, 0} // horizontal C4'
-}; 
 
 } // eo namespace PermSymmetry
 
