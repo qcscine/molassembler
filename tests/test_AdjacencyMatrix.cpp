@@ -1,10 +1,5 @@
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
-
+#include "BoostTestingHeader.h"
 #include "AdjacencyMatrix.h"
-
-using namespace MoleculeManip;
 
 /*   Member listing
  * y 1 AdjacencyList constructor
@@ -14,6 +9,7 @@ using namespace MoleculeManip;
  */
 
 BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
+  using namespace MoleculeManip;
   EdgeList edges{
     Edge(0, 1, BondType::Single),
     Edge(1, 2, BondType::Single),

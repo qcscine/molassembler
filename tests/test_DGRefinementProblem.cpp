@@ -1,17 +1,13 @@
+#include "BoostTestingHeader.h"
 #include <iostream>
 
 #include "DistanceGeometry/generateConformation.h"
 #include "cppoptlib/solver/conjugatedgradientdescentsolver.h"
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
-
-using namespace MoleculeManip;
-using namespace MoleculeManip::DistanceGeometry;
-
-
 BOOST_AUTO_TEST_CASE( DGRefinementProblemCorrectness ) {
+  using namespace MoleculeManip;
+  using namespace MoleculeManip::DistanceGeometry;
+
   unsigned N = 4;
 
   Eigen::MatrixXd distanceBounds;

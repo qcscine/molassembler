@@ -2,13 +2,10 @@
 #define INCLUDE_ADJACENCYLIST_ALGORITHMS_H
 
 #include "TreeAlgorithms.h"
-#include <iostream>
 #include <deque> 
 #include <set>
 
 /* TODO
- * - Test -> We have a infinite loop of some sort, maybe an out of bounds error
- * - Cycle detection -> see Tucker, Alan. "Applied Combinatorics" p.49
  * 
  * NOTES
  * - Yes, it has to be a deque. A queue, although seemingly the minimal 
@@ -203,7 +200,6 @@ std::vector<
    * -> Due to found repeating key, {2, 1, 0} is the cycle.
    */
   auto treeStruct = BasicTree::makeTree(adjacencies);
-  std::cout << treeStruct.rootPtr << std::endl;
 
   std::vector<
     std::vector<

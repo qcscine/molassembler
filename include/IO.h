@@ -277,7 +277,7 @@ public:
     _adjacencies.clear();
     _edges.clear();
     
-    unsigned atomBlockSize, bondBlockSize;
+    unsigned atomBlockSize = 0, bondBlockSize = 0;
     std::string line;
 
     while(state != State::End) {

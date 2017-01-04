@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <functional>
 
+/* ostream operators for sets, pairs and vectors */
 template<typename T>
 std::ostream& operator << (std::ostream& os, const std::set<T>& rhs) {
   os << "set{";
@@ -161,6 +162,45 @@ std::vector<T> copyMerge(
   returnVector.insert(returnVector.end(), a.begin(), a.end());
   returnVector.insert(returnVector.end(), b.begin(), b.end());
   return returnVector;
+}
+
+template<typename T>
+std::set<T> vectorToSet(const std::vector<T>& a) {
+  return std::set<T>(a.begin(), a.end());
+}
+
+template<typename T>
+bool vectorOfSetsEqual(
+  const std::vector<
+    std::set<T>
+  >& a,
+  const std::vector<
+    std::set<T>
+  >& b
+) {
+  return (
+    a.size() == b.size() 
+    /* if a and b are same-sized, then finding a match for every element in a 
+     * in b is sufficient
+     */
+    && std::all_of( 
+      a.begin(),
+      a.end(),
+      [&b](const auto& setI) {
+        return std::accumulate(
+          b.begin(),
+          b.end(),
+          false,
+          [&setI](const bool& carry, const auto& setJ) {
+            return (
+              carry 
+              || setI == setJ
+            );
+          }
+        );
+      }
+    )
+  );
 }
 
 template<typename T1, typename T2, typename ReturnType>

@@ -1,3 +1,5 @@
+#include "BoostTestingHeader.h"
+
 #include <iostream>
 #include <vector>
 #include <map>
@@ -6,21 +8,17 @@
 
 #include "Cache.h"
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
-
 // Some help functions for testing
-template<typename T>
-unsigned time_wrap_nullary_callable(
-    const T& nullary_callable
+template<typename Function>
+unsigned timeWrapNullaryCallable(
+    const Function& nullaryCallable
 ) {
     using namespace std::chrono;
 
     time_point<system_clock> start, end;
     start = system_clock::now();
 
-    nullary_callable();
+    nullaryCallable();
     
     end = system_clock::now();
     duration<double> elapsed = end - start;
@@ -90,9 +88,9 @@ public:
   }
 };
 
-using namespace std::string_literals;
-
 BOOST_AUTO_TEST_CASE( cache_all ) {
+  using namespace std::string_literals;
+
   /* 1 */
   Cache<std::string> cache;
 
@@ -141,17 +139,21 @@ BOOST_AUTO_TEST_CASE( cache_all ) {
 
   /* 2, 4, 5 */
   Foo bar;
-  std::cout << "Calculation: " << time_wrap_nullary_callable(
+  unsigned calculationTime = timeWrapNullaryCallable(
     [&]() {
       bar.getAckermann41();
     }
-  ) << "ms" << std::endl;
-  std::cout << "From cache: " << time_wrap_nullary_callable(
-    [&]() {
-      bar.getAckermann41();
-    }
-  ) << "ms" << std::endl;
+  );
 
+  unsigned fetchTime = timeWrapNullaryCallable(
+    [&]() {
+      bar.getAckermann41();
+    }
+  );
+
+  BOOST_CHECK(calculationTime > 10 * fetchTime);
+
+  // test modification of the cache
   bar.changeCacheValue();
   BOOST_CHECK(bar.getAckermann41() == 4);
 }

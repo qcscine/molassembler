@@ -1,13 +1,10 @@
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
-
+#include "BoostTestingHeader.h"
 #include <iostream>
 #include "IO.h"
 
-using namespace MoleculeManip;
-
 BOOST_AUTO_TEST_CASE( read_mol ) {
+  using namespace MoleculeManip;
+
   // instantiate reader
   IO::MOLFileHandler molHandler;
   try {

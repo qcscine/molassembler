@@ -1,6 +1,4 @@
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
+#include "BoostTestingHeader.h"
 
 #include "StdlibTypeAlgorithms.h"
 
@@ -15,8 +13,6 @@
  *   6 makeFunction
  */
 
-using namespace StdlibTypeAlgorithms;
-
 bool firstSmallerSecond(
   const unsigned& a,
   const unsigned& b
@@ -24,40 +20,9 @@ bool firstSmallerSecond(
   return a < b;
 }
 
-template<typename T>
-bool vectorOfSetsEqual(
-  const std::vector<
-    std::set<T>
-  >& a,
-  const std::vector<
-    std::set<T>
-  >& b
-) {
-  return std::all_of(
-    a.begin(),
-    a.end(),
-    [&b](const auto& setI) {
-      return std::accumulate(
-        b.begin(),
-        b.end(),
-        false,
-        [&setI](const bool& carry, const auto& setJ) {
-          return (
-            carry 
-            || std::equal(
-              setI.begin(),
-              setI.end(),
-              setJ.begin(),
-              setJ.end()
-            )
-          );
-        }
-      );
-    }
-  );
-}
-
 BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
+  using namespace StdlibTypeAlgorithms;
+
   /* 1, 2 (2 just calls 1) */
   std::vector<
     std::set<unsigned>
@@ -68,7 +33,7 @@ BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
   };
 
   BOOST_CHECK(
-    vectorOfSetsEqual(
+    StdlibTypeAlgorithms::vectorOfSetsEqual(
       mergeOverlappingSets(
         testSetList
       ),
@@ -91,7 +56,7 @@ BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
   };
 
   BOOST_CHECK(
-    vectorOfSetsEqual(
+    StdlibTypeAlgorithms::vectorOfSetsEqual(
       makeIndividualSets(
         pairsSet
       ),

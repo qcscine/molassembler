@@ -1,24 +1,12 @@
+#include "BoostTestingHeader.h"
 #include <iostream>
 
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
+BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
+  using namespace MoleculeManip;
+  using namespace MoleculeManip::DistanceGeometry;
 
-using namespace MoleculeManip;
-using namespace MoleculeManip::DistanceGeometry;
-
-Eigen::Vector3d getPos(
-  const Eigen::MatrixXd& positions,
-  const AtomIndexType& index
-) {
-  Eigen::Vector3d retv;
-  retv = positions.col(index);
-  return retv;
-}
-
-BOOST_AUTO_TEST_CASE( MetricMatrixTests ) {
   unsigned N = 4;
 
   DistanceBoundsMatrix testBounds(N);

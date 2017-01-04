@@ -1,12 +1,9 @@
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
-
+#include "BoostTestingHeader.h"
 #include "Edge.h"
 
-using namespace MoleculeManip;
-
 BOOST_AUTO_TEST_CASE( edge_all ) {
+  using namespace MoleculeManip;
+
   unsigned a = 0, b = 2, c = 1, d = 4;
   // instantiate
   Edge instance(0, 1, BondType::Single);

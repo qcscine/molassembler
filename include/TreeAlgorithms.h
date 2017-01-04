@@ -11,22 +11,31 @@ using namespace MoleculeManip;
 using NodeType = BasicTree::Node<AtomIndexType>;
 
 struct MakeTreeReturnType {
+  // A pointer to the root node of the resulting tree
   std::shared_ptr<NodeType> rootPtr;
+
+  // A vector (why optionals?) of pointers to the nodes
   std::vector<
     boost::optional<
       std::shared_ptr<NodeType>
     >
   > nodes;
+
+  // A vector of pointers to duplicate nodes
   std::vector<
     std::shared_ptr<NodeType> 
   > duplicateNodes;
 
+  // Constructor with AdjacencyList
   MakeTreeReturnType(const AdjacencyList& adjacencies) {
     nodes = std::vector<
       boost::optional<
         std::shared_ptr<NodeType>
       >
-    >(adjacencies.size(), boost::make_optional<std::shared_ptr<NodeType> >({})); // TODO does boost have nullopt?
+    >(
+      adjacencies.size(),
+      boost::none
+    ); 
   }
 };
 
@@ -80,22 +89,11 @@ MakeTreeReturnType makeTree(
     adjacencyCopy,
     workStruct,
     0,
-    boost::optional<
-      std::shared_ptr<NodeType>
-    >()
+    boost::none
   );
 
   return workStruct;
 }
-
-
- /* const AtomIndexType& index,
-  boost::optional<
-    std::shared_ptr<NodeType> 
-  >& parentPtrOption
-) {
-
-}*/
 
 }
 

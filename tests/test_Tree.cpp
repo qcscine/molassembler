@@ -1,8 +1,5 @@
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
+#include "BoostTestingHeader.h"
 #include <iostream>
-
 #include "Tree.h"
 
 

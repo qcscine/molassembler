@@ -1,11 +1,10 @@
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
+#include "BoostTestingHeader.h"
+
 #include <iostream>
 
 #include "AdjacencyListAlgorithms.h"
+#include "StdlibTypeAlgorithms.h"
 
-using namespace MoleculeManip;
 
 /*       AdjacencyListAlgorithms listing
  * t  #  -------------------------------
@@ -15,26 +14,10 @@ using namespace MoleculeManip;
  *    4  detectCycles
  */
 
-// MORE AdjacencyList instances to test with
-using namespace AdjacencyListAlgorithms;
-
-template<typename T>
-bool vectorToSetEquals(
-  const std::vector<T>& a,
-  const std::vector<T>& b
-) {
-  std::set<T> setA(a.begin(), a.end());
-  std::set<T> setB(b.begin(), b.end());
-
-  return std::equal(
-    setA.begin(),
-    setA.end(),
-    setB.begin(),
-    setB.end()
-  );
-}
-
 BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
+  using namespace MoleculeManip;
+  using namespace AdjacencyListAlgorithms;
+
   auto testInstance = AdjacencyList(
     EdgeList({
       Edge(0, 1, BondType::Single),
@@ -73,10 +56,8 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
   };
 
   BOOST_CHECK(
-    vectorToSetEquals(
-      groupsVectors,
-      expectedGroups
-    )
+    StdlibTypeAlgorithms::vectorToSet(groupsVectors) 
+    == StdlibTypeAlgorithms::vectorToSet(expectedGroups)
   );
 
 }

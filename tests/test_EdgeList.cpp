@@ -1,10 +1,5 @@
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
-
+#include "BoostTestingHeader.h"
 #include "EdgeList.h"
-
-using namespace MoleculeManip;
 
 /* List of EdgeList functions
  *
@@ -21,6 +16,8 @@ using namespace MoleculeManip;
  */
 
 BOOST_AUTO_TEST_CASE( edgelist_all ) {
+  using namespace MoleculeManip;
+
   std::vector<Edge> edges {
     Edge(0, 1, BondType::Single),
     Edge(1, 2, BondType::Single),
