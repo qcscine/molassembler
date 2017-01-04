@@ -4,7 +4,8 @@
 #include <Eigen/LU>
 #include "CommonTrig.h"
 #include "StdlibTypeAlgorithms.h"
-#include "UniqueAssignments/GenerateUniques.h"
+
+#include "steric_uniqueness/GenerateUniques.h"
 
 namespace MoleculeManip {
 
@@ -164,9 +165,9 @@ void CN4Stereocenter::assign(const unsigned& assignment) {
     _assignment = assignment;
 
     /* save a mapping of next neighbor indices to symmetry positions after
-     * assigning (AtomIndexType -> uint8_t).
+     * assigning (AtomIndexType -> unsigned).
      *
-     * First get the symmetry position mapping (char -> uint8_t)
+     * First get the symmetry position mapping (char -> unsigned)
      * this is e.g. map{'A' -> vector{0,2,3}, 'B' -> vector{1}}
      */
     auto charSymmetryPositionsMap = _uniqueAssignments[
@@ -187,7 +188,7 @@ void CN4Stereocenter::assign(const unsigned& assignment) {
       /* reference for better readability: the current character's symmetry
        * positions list:
        */
-      std::vector<uint8_t>& symmetryPositionsList = charSymmetryPositionsMap.at(
+      std::vector<unsigned>& symmetryPositionsList = charSymmetryPositionsMap.at(
         indexCharPair.second // current character
       );
 
@@ -261,7 +262,7 @@ std::vector<DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
 
       auto ijAngle = StdlibTypeAlgorithms::minMaxAdaptor( 
         StdlibTypeAlgorithms::makeFunction(
-          PermSymmetry::Tetrahedral<UniqueAssignments::AssignmentColumn>::angle
+          PermSymmetry::Tetrahedral::angle
         ),
         _neighborSymmetryPositionMap.at(neighbors[i]),
         _neighborSymmetryPositionMap.at(neighbors[j])

@@ -3,12 +3,14 @@
 
 
 #include "ElementTypes.h"
+
 #include <boost/optional.hpp>
 
 #include "Stereocenter.h"
 #include "Molecule.h"
-#include "UniqueAssignments/Assignment.h"
-#include "UniqueAssignments/SymmetryInformation.h"
+
+#include "steric_uniqueness/Assignment.h"
+#include "steric_uniqueness/SymmetryInformation.h"
 
 namespace MoleculeManip {
 
@@ -36,8 +38,11 @@ private:
     char
   > _neighborCharMap;
 
-  //! Mapping between next neighbor AtomIndexTypes to Permutational Symmetry positions
-  std::map<AtomIndexType, uint8_t> _neighborSymmetryPositionMap;
+  /*! 
+   * Mapping between next neighbor AtomIndexTypes to Permutational Symmetry
+   * positions
+   */
+  std::map<AtomIndexType, unsigned> _neighborSymmetryPositionMap;
 
   //! List of unique Assignments
   std::vector<AssignmentType> _uniqueAssignments;
