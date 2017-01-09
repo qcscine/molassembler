@@ -13,8 +13,6 @@
  */
 
 /* TODO
- * - it's obvious this API is shit... Having to notify the children of their
- *   parent shared_ptr ?? The fuck was I thinking
  */
 
 BOOST_AUTO_TEST_CASE( treeTests ) {
@@ -37,13 +35,11 @@ BOOST_AUTO_TEST_CASE( treeTests ) {
 
   // 4 (key addChild)
   auto secondChildPtr = firstInstancePtr -> addChild(9);
-  secondChildPtr -> parentWeakPtr = firstInstancePtr;
 
   BOOST_CHECK(!secondChildPtr -> isRoot());
   BOOST_CHECK(secondChildPtr -> isLeaf());
 
   auto thirdChildPtr = firstInstancePtr -> addChild(11);
-  thirdChildPtr -> parentWeakPtr = firstInstancePtr;
 
   BOOST_CHECK(!thirdChildPtr -> isRoot());
   BOOST_CHECK(thirdChildPtr -> isLeaf());

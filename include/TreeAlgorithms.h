@@ -40,9 +40,6 @@ std::shared_ptr<NodeType> makeNodeRecursive(
   > parentPtrOption 
 ) {
   auto nodePtr = std::make_shared<NodeType>(index);
-  if(parentPtrOption) {
-    nodePtr -> parentWeakPtr = parentPtrOption.value();
-  }
 
   if(workStruct.nodes[index]) { // if this index has been registered before
     // do not add any children to it, stop here
@@ -104,19 +101,6 @@ MakeTreeReturnType makeTree(
 
   return workStruct;
 }
-
-// TODO add refactor here, then test and finally replace
-/*MakeTreeReturnType _makeTree(
-  const AdjacencyList& adjacencies
-) {
-  MakeTreeReturnType workStruct;
-  workStruct.nodes.resize(adjacencies.size(), boost::none);
-
-  AdjacencyList adjacencyCopy = adjacencies;
-
-  workStruct.rootPtr = std::make_shared<NodeType>(0);
-  workStruct.nodes[0] = workStruct.rootPtr;
-} */
 
 }
 

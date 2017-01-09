@@ -22,15 +22,9 @@ std::ostream& operator << (std::ostream& os, const std::map<T1, T2>& map) {
 }
 
 /* TODO
- * - boost::optional<
- *     std::weak_ptr<
- *       Node
- *     >
- *   > parentOption is overkill, a simple weak_ptr will do just fine, but will
- *   alter all dependent code.
  */
 template<typename T>
-struct Node {
+struct Node : std::enable_shared_from_this<Node<T>> {
 /* Public members */
   std::weak_ptr<
     Node
@@ -56,9 +50,9 @@ struct Node {
 
   //! Add a child using an existing node
   void addChild(const std::shared_ptr<Node>& nodePtr) {
+    // C++17 change to weak_from_this
+    nodePtr -> parentWeakPtr = this -> shared_from_this();
     children.push_back(nodePtr);
-    // cannot notify child that we are parent since this object cannot
-    // reference a shared_ptr to itself
   }
 
   //! Create a child with a new key
@@ -68,6 +62,7 @@ struct Node {
         key
       )
     );
+    children.back() -> parentWeakPtr = this -> shared_from_this();
     return children.back();
   }
 
@@ -106,6 +101,7 @@ struct Node {
       function(*current);
     }
   }
+
   bool isRoot() const {
     /* if the weak pointer is "expired", i.e. use_count is zero, then this 
      * Node has no parent. This should, given algorithm correctness, only be 
