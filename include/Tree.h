@@ -32,11 +32,9 @@ std::ostream& operator << (std::ostream& os, const std::map<T1, T2>& map) {
 template<typename T>
 struct Node {
 /* Public members */
-  boost::optional<
-    std::weak_ptr<
-      Node
-    >
-  > parentOption;
+  std::weak_ptr<
+    Node
+  > parentWeakPtr;
 
   std::vector<
     std::shared_ptr<
@@ -54,7 +52,7 @@ struct Node {
       Node<T>
     >& parentPtr,
     const T& passKey
-  ) : parentOption(parentPtr), key(passKey) {}
+  ) : parentWeakPtr(parentPtr), key(passKey) {}
 
   //! Add a child using an existing node
   void addChild(const std::shared_ptr<Node>& nodePtr) {
@@ -109,7 +107,15 @@ struct Node {
     }
   }
   bool isRoot() const {
-    return !parentOption;
+    /* if the weak pointer is "expired", i.e. use_count is zero, then this 
+     * Node has no parent. This should, given algorithm correctness, only be 
+     * the case where this is the root pointer.
+     *
+     * During destruction, child nodes are destroyed first, since they do not 
+     * own their parents through shared_ptr. Nodes with children are destroyed
+     * as soon as their children have been destroyed.
+     */
+    return parentWeakPtr.expired(); 
   }
 
   bool isLeaf() const {

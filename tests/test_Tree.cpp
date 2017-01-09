@@ -12,6 +12,11 @@
  *    5  isLeaf
  */
 
+/* TODO
+ * - it's obvious this API is shit... Having to notify the children of their
+ *   parent shared_ptr ?? The fuck was I thinking
+ */
+
 BOOST_AUTO_TEST_CASE( treeTests ) {
   using NodeType = BasicTree::Node<unsigned>;
 
@@ -31,11 +36,15 @@ BOOST_AUTO_TEST_CASE( treeTests ) {
   BOOST_CHECK(!firstInstancePtr -> isLeaf());
 
   // 4 (key addChild)
-  auto secondChild = firstInstancePtr -> addChild(9);
-  BOOST_CHECK(!secondChild -> isRoot());
-  BOOST_CHECK(secondChild -> isLeaf());
+  auto secondChildPtr = firstInstancePtr -> addChild(9);
+  secondChildPtr -> parentWeakPtr = firstInstancePtr;
 
-  auto thirdChild = firstInstancePtr -> addChild(11);
-  BOOST_CHECK(!thirdChild -> isRoot());
-  BOOST_CHECK(thirdChild -> isLeaf());
+  BOOST_CHECK(!secondChildPtr -> isRoot());
+  BOOST_CHECK(secondChildPtr -> isLeaf());
+
+  auto thirdChildPtr = firstInstancePtr -> addChild(11);
+  thirdChildPtr -> parentWeakPtr = firstInstancePtr;
+
+  BOOST_CHECK(!thirdChildPtr -> isRoot());
+  BOOST_CHECK(thirdChildPtr -> isLeaf());
 }

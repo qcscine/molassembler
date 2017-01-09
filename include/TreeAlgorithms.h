@@ -40,7 +40,9 @@ std::shared_ptr<NodeType> makeNodeRecursive(
   > parentPtrOption 
 ) {
   auto nodePtr = std::make_shared<NodeType>(index);
-  nodePtr -> parentOption = parentPtrOption;
+  if(parentPtrOption) {
+    nodePtr -> parentWeakPtr = parentPtrOption.value();
+  }
 
   if(workStruct.nodes[index]) { // if this index has been registered before
     // do not add any children to it, stop here

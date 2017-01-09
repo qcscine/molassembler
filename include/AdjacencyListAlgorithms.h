@@ -242,8 +242,8 @@ std::vector<
 
     while(
       (
-        candidateNodePtr -> parentOption
-        || matchingPtr -> parentOption
+        !(candidateNodePtr -> isRoot())
+        || !(matchingPtr -> isRoot())
       ) && intersection.size() == 0
     ) {
       /*std::cout << "Step" << std::endl
@@ -255,8 +255,8 @@ std::vector<
        * backtracking chain is a ring!
        */
       // move up the tree one step for both pointers if you can
-      if(candidateNodePtr -> parentOption) {
-        candidateNodePtr = (candidateNodePtr -> parentOption.value()).lock();
+      //if(candidateNodePtr -> parentOption) {
+      if(candidateNodePtr = (candidateNodePtr -> parentWeakPtr).lock()) {
         if(candidateNodePtr -> key == currentIndex) {
           optionFoundWhileBacktracking = backtrackingPaths.first;
           break;
@@ -264,8 +264,7 @@ std::vector<
         backtrackingPaths.first.push_back(candidateNodePtr -> key);
         backtrackingPathSets.first.insert(candidateNodePtr -> key);
       }
-      if(matchingPtr -> parentOption) {
-        matchingPtr = (matchingPtr -> parentOption.value()).lock();
+      if(matchingPtr = (matchingPtr -> parentWeakPtr).lock()) {
         if(matchingPtr -> key == currentIndex) {
           optionFoundWhileBacktracking = backtrackingPaths.second;
           break;
