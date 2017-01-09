@@ -2,6 +2,7 @@
 #define INCLUDE_ADJACENCYLIST_ALGORITHMS_H
 
 #include "TreeAlgorithms.h"
+#include "template_magic/templateMagic.h"
 #include <deque> 
 #include <set>
 
@@ -329,6 +330,78 @@ std::vector<
   }
 
   return cycles;
+}
+
+// WARNING: Assumes atom indices are monotonous starting from 0!
+template<typename Function>
+void BFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  Function&& function
+) {
+  std::vector<bool> visited (
+    adjacencyList.size(), 
+    false
+  );
+  std::deque<AtomIndexType> toVisit {initial};
+
+  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
+    auto current = toVisit.front();
+    toVisit.pop_front();
+
+    visited[current] = true;
+
+    std::copy_if(
+      adjacencyList[current].begin(),
+      adjacencyList[current].end(),
+      std::back_inserter(toVisit),
+      [&visited, &toVisit](const AtomIndexType& idx) {
+        return (
+          !visited[idx] 
+          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
+        );
+      }
+    );
+
+    // allow bool false return values to break
+    if(!function(current)) break;
+  }
+}
+
+// WARNING: Assumes atom indices are monotonous starting from 0!
+template<typename Function>
+void DFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  Function&& function
+) {
+  std::vector<bool> visited (
+    adjacencyList.size(), 
+    false
+  );
+  std::deque<AtomIndexType> toVisit {initial};
+
+  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
+    auto current = toVisit.front();
+    toVisit.pop_front();
+
+    visited[current] = true;
+
+    std::copy_if(
+      adjacencyList[current].begin(),
+      adjacencyList[current].end(),
+      std::front_inserter(toVisit),
+      [&visited, &toVisit](const AtomIndexType& idx) {
+        return (
+          !visited[idx]
+          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
+        );
+      }
+    );
+
+    // allow bool false return values to break
+    if(!function(current)) break;
+  }
 }
 
 } // eo namespace AdjacencyListAlgorithms

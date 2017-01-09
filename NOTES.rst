@@ -35,9 +35,10 @@ TODO
 7. Refactor Tree and TreeAlgorithms. The API is shit. If you call
    node.addChild(childPtr), you can't inform the child that it has a parent.
 
-- Add BFS and DFS visitors to AdjacencyListAlgorithms
 - Experiment whether row-major matrix storage is faster
-- Atom removal safety of code -> getNumAtoms, getNumBonds, etc.
+- Atom removal safety of code -> getNumAtoms, getNumBonds, etc. Make the full
+  set of data be contiguous every time (atom indices range from 0 -> nAtoms - 1
+  AdjacencyList may also be prone to errors in this regard
 - Transition to CTest ?
 - Add hooks to git to automatically build a release version on commit and run
   the tests
