@@ -25,7 +25,6 @@ Things that need tests
   - MetricMatrix
   - generateConformation (when finished)
 
-
 TODO
 ----
 
@@ -33,7 +32,10 @@ TODO
 5. Implement basic DG
 6. Demonstrate functionality with a very simple example, e.g. CH(Cl)(Br)(I)
    MOLFile, then permute and generate 3D structures of both stereoisomers.
+7. Refactor Tree and TreeAlgorithms. The API is shit. If you call
+   node.addChild(childPtr), you can't inform the child that it has a parent.
 
+- Add BFS and DFS visitors to AdjacencyListAlgorithms
 - Experiment whether row-major matrix storage is faster
 - Atom removal safety of code -> getNumAtoms, getNumBonds, etc.
 - Transition to CTest ?
@@ -57,6 +59,7 @@ TODO
   modernize it to use C++17's filesystem TS
 - Use LFT to determine which geometry? MO-level calculations, perhaps
   approximable with low cost
+- Consider fuzz testing
 
 
 Is atomic charge fully determined?

@@ -17,7 +17,9 @@ BOOST_AUTO_TEST_CASE( treeTests ) {
 
   // 1
   auto firstInstancePtr = std::make_shared<NodeType>(4);
+
   BOOST_CHECK(firstInstancePtr -> key == 4);
+
   // 5, 6
   BOOST_CHECK(firstInstancePtr -> isRoot());
   BOOST_CHECK(firstInstancePtr -> isLeaf());

@@ -25,66 +25,74 @@ struct MakeTreeReturnType {
   std::vector<
     std::shared_ptr<NodeType> 
   > duplicateNodes;
-
-  // Constructor with AdjacencyList
-  MakeTreeReturnType(const AdjacencyList& adjacencies) {
-    nodes = std::vector<
-      boost::optional<
-        std::shared_ptr<NodeType>
-      >
-    >(
-      adjacencies.size(),
-      boost::none
-    ); 
-  }
 };
 
+/* TODO 
+ * - This algorithm is in dire need of a refactor. It's reaaaally hard to work
+ *   with and has led to some abstruse APIs in Tree.h which make no sense
+ */
 std::shared_ptr<NodeType> makeNodeRecursive(
-  AdjacencyList& adjacencies, // this is modified in the recursive calls!
+  AdjacencyList& adjacencies, 
   MakeTreeReturnType& workStruct,
   const AtomIndexType& index,
   boost::optional<
     std::shared_ptr<NodeType>
   > parentPtrOption 
 ) {
-  auto node = std::make_shared<NodeType>(index);
-  node -> parentOption = parentPtrOption;
+  auto nodePtr = std::make_shared<NodeType>(index);
+  nodePtr -> parentOption = parentPtrOption;
 
-  if(workStruct.nodes[index]) {
-    // do not add any children
-    workStruct.duplicateNodes.emplace_back(node);
+  if(workStruct.nodes[index]) { // if this index has been registered before
+    // do not add any children to it, stop here
+    workStruct.duplicateNodes.emplace_back(nodePtr);
   } else {
-    workStruct.nodes[index] = node;
-    //for(const auto& adjacency : adjacencies.getAdjacencies(index)) {
+    /* record that we have registered this node by copying it's pointer into
+     * workStruct.nodes
+     */
+    workStruct.nodes[index] = nodePtr;
+
+    // as long as there are adjacencies for this index in the AdjacencyList
     while(adjacencies.getAdjacencies(index).size() != 0) {
-      auto adjacency = adjacencies.getAdjacencies(index)[0];
-      if(!( // exclude parent value from children nodes
-          node -> parentOption
-          && node -> parentOption.value() -> key == adjacency // was index before
+      // pick the first adjacency
+      auto adjacency = adjacencies.getAdjacencies(index).front();
+
+      /* Since adjacencies are bi-directional (A has an entry for B and B has
+       * an entry for A), we must exclude this node's parent from recursion
+       */
+      if(!( 
+          parentPtrOption
+          && (parentPtrOption.value()) -> key == adjacency 
       )) {
-          // remove adjacency
-          adjacencies.removeAdjacency(index, adjacency);
-          node -> addChild(
-            makeNodeRecursive( // recursive call
-              adjacencies,
-              workStruct,
-              adjacency, 
-              node  // a copy of the shared_ptr node is passed to optional ctor
-            )
-          );
+        // remove adjacency (this removes both entries)
+        adjacencies.removeAdjacency(index, adjacency);
+
+        // add children to the current node by recursion
+        nodePtr -> addChild(
+          makeNodeRecursive( 
+            adjacencies, // same adjacencyList
+            workStruct, // same struct
+            adjacency, // the new index is the current adjacency index
+            nodePtr // a copy of the shared_ptr is passed to optional ctor
+          )
+        );
       }
     }
   }
 
-  return node;
+  return nodePtr;
 }
 
 MakeTreeReturnType makeTree(
   const AdjacencyList& adjacencies
 ) {
-  MakeTreeReturnType workStruct(adjacencies); // passed to reveal size
+  // initialize return struct
+  MakeTreeReturnType workStruct; 
+  workStruct.nodes.resize(adjacencies.size(), boost::none);
+
+  // copy AdjacencyList
   AdjacencyList adjacencyCopy = adjacencies;
 
+  // enter recursive call
   workStruct.rootPtr = makeNodeRecursive(
     adjacencyCopy,
     workStruct,
@@ -94,6 +102,19 @@ MakeTreeReturnType makeTree(
 
   return workStruct;
 }
+
+// TODO add refactor here, then test and finally replace
+/*MakeTreeReturnType _makeTree(
+  const AdjacencyList& adjacencies
+) {
+  MakeTreeReturnType workStruct;
+  workStruct.nodes.resize(adjacencies.size(), boost::none);
+
+  AdjacencyList adjacencyCopy = adjacencies;
+
+  workStruct.rootPtr = std::make_shared<NodeType>(0);
+  workStruct.nodes[0] = workStruct.rootPtr;
+} */
 
 }
 

@@ -21,14 +21,23 @@ std::ostream& operator << (std::ostream& os, const std::map<T1, T2>& map) {
   return os;
 }
 
+/* TODO
+ * - boost::optional<
+ *     std::weak_ptr<
+ *       Node
+ *     >
+ *   > parentOption is overkill, a simple weak_ptr will do just fine, but will
+ *   alter all dependent code.
+ */
 template<typename T>
 struct Node {
 /* Public members */
   boost::optional<
-    std::shared_ptr<
+    std::weak_ptr<
       Node
     >
   > parentOption;
+
   std::vector<
     std::shared_ptr<
       Node
@@ -39,11 +48,19 @@ struct Node {
 
 /* Public member functions */
   /* Constructors */
-  Node(const T& passKey) : key(passKey) {};
+  Node(const T& passKey) : key(passKey) {}
+  Node(
+    std::shared_ptr<
+      Node<T>
+    >& parentPtr,
+    const T& passKey
+  ) : parentOption(parentPtr), key(passKey) {}
 
   //! Add a child using an existing node
   void addChild(const std::shared_ptr<Node>& nodePtr) {
     children.push_back(nodePtr);
+    // cannot notify child that we are parent since this object cannot
+    // reference a shared_ptr to itself
   }
 
   //! Create a child with a new key

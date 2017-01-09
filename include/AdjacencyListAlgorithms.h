@@ -256,7 +256,7 @@ std::vector<
        */
       // move up the tree one step for both pointers if you can
       if(candidateNodePtr -> parentOption) {
-        candidateNodePtr = candidateNodePtr -> parentOption.value();
+        candidateNodePtr = (candidateNodePtr -> parentOption.value()).lock();
         if(candidateNodePtr -> key == currentIndex) {
           optionFoundWhileBacktracking = backtrackingPaths.first;
           break;
@@ -265,7 +265,7 @@ std::vector<
         backtrackingPathSets.first.insert(candidateNodePtr -> key);
       }
       if(matchingPtr -> parentOption) {
-        matchingPtr = matchingPtr -> parentOption.value();
+        matchingPtr = (matchingPtr -> parentOption.value()).lock();
         if(matchingPtr -> key == currentIndex) {
           optionFoundWhileBacktracking = backtrackingPaths.second;
           break;

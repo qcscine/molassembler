@@ -8,7 +8,8 @@ cmake_minimum_required(VERSION 3.5.1)
 # local path configuration
 set(Delib_LIBRARY_DIR "/home/jan-grimo/PhD/code/delib2-0/build")
 set(Delib_INCLUDE_DIR "/home/jan-grimo/PhD/code/delib2-0/src")
-set(Assignmentlib_INCLUDE_DIR "/home/jan-grimo/PhD/projects/libs")
+set(libs_INCLUDE_DIR "/home/jan-grimo/PhD/projects/libs")
+set(AssignmentLib_LIBRARY_DIR "/home/jan-grimo/PhD/projects/libs/steric_uniqueness/build")
 
 # declaration
 project(Molecule)
@@ -16,11 +17,12 @@ project(Molecule)
 # dependencies
 find_package (Eigen3 REQUIRED)
 find_library(DELIB_LIBRARY DelibStatic ${Delib_LIBRARY_DIR})
+find_library(ASSIGNMENT_LIBRARY Assignment ${AssignmentLib_LIBRARY_DIR})
 
 include_directories(SYSTEM
   ${EIGEN3_INCLUDE_DIRS}
   ${Delib_INCLUDE_DIR}
-  ${Assignmentlib_INCLUDE_DIR}
+  ${libs_INCLUDE_DIR}
   include
 )
 
@@ -77,4 +79,4 @@ endif()
 target_compile_options(molecule PUBLIC -g -std=c++14 -Wall -Wpedantic -Wextra)
 
 # Linking
-target_link_libraries(molecule ${DELIB_LIBRARY})
+target_link_libraries(molecule ${DELIB_LIBRARY} ${ASSIGNMENT_LIBRARY})

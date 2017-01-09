@@ -23,12 +23,14 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) :
 }
 
 void DistanceBoundsMatrix::_initRandomEngine() {
+
 #ifdef NDEBUG
   std::random_device randomDevice;
   for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
 #else 
   _seeds.emplace_back(2721813754);
 #endif
+
   _seedSequence = std::seed_seq(_seeds.begin(), _seeds.end());
   _randomEngine.seed(_seedSequence);
 }
