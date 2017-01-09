@@ -6,7 +6,7 @@
 namespace MoleculeManip {
 
 /* Common typedefs */
-enum class BondType : uint8_t {
+enum class BondType : unsigned {
     Single,
     Double,
     Triple,

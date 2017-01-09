@@ -220,7 +220,7 @@ std::vector<DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
 
   // 1-2 constraints
   for(unsigned i = 0; i < neighbors.size(); i++) {
-    double a = Bond::distanceCalculator.get(
+    double a = Bond::calculateBondDistance(
       _molPtr -> getElementType(neighbors[i]),
       _molPtr -> getElementType(_centerAtom),
       _molPtr -> getBondType(
@@ -243,7 +243,7 @@ std::vector<DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
   // 1-3 constraints, store distance for volume calculation later
   for(unsigned i = 0; i < neighbors.size(); i++) {
     for(unsigned j = i + 1; j < neighbors.size(); j++) {
-      double a = Bond::distanceCalculator.get(
+      double a = Bond::calculateBondDistance(
         _molPtr -> getElementType(neighbors[i]),
         _molPtr -> getElementType(_centerAtom),
         _molPtr -> getBondType(
@@ -251,7 +251,7 @@ std::vector<DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
           _centerAtom
         )
       );
-      double b = Bond::distanceCalculator.get(
+      double b = Bond::calculateBondDistance(
         _molPtr -> getElementType(neighbors[j]),
         _molPtr -> getElementType(_centerAtom),
         _molPtr -> getBondType(
