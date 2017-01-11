@@ -4,7 +4,7 @@
 
 BOOST_AUTO_TEST_CASE( makeTreeTest ) {
   using namespace MoleculeManip;
-  using namespace BasicTree;
+  using namespace Tree;
 
   using NodeType = Node<AtomIndexType>;
 
@@ -42,7 +42,8 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       BFSVisitSequence.push_back(nodePtr -> key);
       return true;
     };
-    BFSVisit(
+
+    TreeAlgorithms::BFSVisit(
       treePtr,
       BFSVisitor
     );
@@ -57,7 +58,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       return true;
     };
 
-    DFSVisit(
+    TreeAlgorithms::DFSVisit(
       treePtr,
       DFSVisitor
     );

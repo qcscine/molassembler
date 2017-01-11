@@ -3,29 +3,29 @@
 
 #include "Tree.h"
 
-namespace BasicTree {
+namespace TreeAlgorithms {
 
 template<
   typename T,
   template<
     class = std::deque<
       std::weak_ptr<
-        Node<T>
+        Tree::Node<T>
       >
     >
   > class Inserter,
   typename UnaryFunction
 >
 void DequeVisit(
-  std::shared_ptr<Node<T>>& rootPtr,
+  std::shared_ptr<Tree::Node<T>>& rootPtr,
   UnaryFunction&& visitor
 ) {
   std::deque<
-    std::weak_ptr<Node<T>>
+    std::weak_ptr<Tree::Node<T>>
   > toVisit {rootPtr};
 
   while(toVisit.size() > 0) {
-    if(std::shared_ptr<Node<T>> current = toVisit.front().lock()) {
+    if(std::shared_ptr<Tree::Node<T>> current = toVisit.front().lock()) {
       toVisit.pop_front(); // remove before copy-in!
 
       /* Two Inserter instantiation cases:
@@ -52,7 +52,7 @@ void DequeVisit(
 
 template<typename T, typename UnaryFunction>
 void BFSVisit(
-  std::shared_ptr<Node<T>>& rootPtr,
+  std::shared_ptr<Tree::Node<T>>& rootPtr,
   UnaryFunction&& visitor
 ) {
   DequeVisit<T, std::back_insert_iterator, UnaryFunction>(
@@ -63,7 +63,7 @@ void BFSVisit(
 
 template<typename T, typename UnaryFunction>
 void DFSVisit(
-  std::shared_ptr<Node<T>>& rootPtr,
+  std::shared_ptr<Tree::Node<T>>& rootPtr,
   UnaryFunction&& visitor
 ) {
   DequeVisit<T, std::front_insert_iterator, UnaryFunction>(

@@ -9,7 +9,7 @@
 #include <map>
 
 
-namespace BasicTree {
+namespace Tree {
 
 template<typename T1, typename T2>
 std::ostream& operator << (std::ostream& os, const std::map<T1, T2>& map) {
@@ -21,6 +21,7 @@ std::ostream& operator << (std::ostream& os, const std::map<T1, T2>& map) {
 }
 
 /* TODO
+ * - nice initializer? No clue what form or how to do it
  */
 template<typename T>
 struct Node : std::enable_shared_from_this<Node<T>> {
@@ -64,7 +65,6 @@ struct Node : std::enable_shared_from_this<Node<T>> {
     children.back() -> parentWeakPtr = this -> shared_from_this();
     return children.back();
   }
-
 
   /* Information */
   //! Execute a lambda for every Node in the tree
@@ -117,7 +117,11 @@ struct Node : std::enable_shared_from_this<Node<T>> {
     return children.size() == 0;
   }
 
-  //! Converts this tree into graphviz format
+  /*! Converts this tree into graphviz format
+   * TODO assumes that an ordered pair of a node's key and it's parent's key
+   * are unique in a tree, which is true for trees made from an adjacencyList,
+   * but not nearly all trees.
+   */
   std::string toString() const {
     std::stringstream graphViz, connections;
     std::map<
@@ -186,6 +190,36 @@ struct Node : std::enable_shared_from_this<Node<T>> {
 
     return graphViz.str();
   }
+
+  bool operator == (const Node& other) {
+    if(isLeaf() && other.isLeaf()) {
+      return key == other.key;
+    } else if(!isLeaf() && !other.isLeaf()) {
+      return (
+        key == other.key
+        && children.size() == other.children.size()
+        && std::is_permutation(
+          children.begin(),
+          children.end(),
+          other.children.begin(),
+          [](
+            const std::shared_ptr<Node<T>>& a,
+            const std::shared_ptr<Node<T>>& b
+          ) {
+            return *a == *b;
+          }
+        )
+      );
+    } else {
+      return false;
+    }
+  }
+
+  bool operator != (const Node& other) {
+    return !(
+      *this == other
+    );
+  }
 };
 
 template<typename T>
@@ -197,6 +231,44 @@ std::ostream& operator << (
 ) {
   os << rootPtr -> toString();
   return os;
+}
+
+// Tree construction helper functions
+template<typename T>
+std::shared_ptr<Node<T>> nodePtr(
+  const T& key
+) {
+  return std::make_shared<Node<T>>(key);
+}
+
+template<typename T>
+std::shared_ptr<Node<T>> nodePtr(
+  const T& key,
+  const std::initializer_list<
+    std::shared_ptr<Node<T>>
+  >& children
+) {
+  auto returnNode = nodePtr(key);
+
+  for(const auto& child : children) {
+    returnNode -> addChild(child);
+  }
+
+  return returnNode;
+}
+
+template<typename T>
+std::shared_ptr<Node<T>> nodePtr(
+  const T& key,
+  const std::initializer_list<T>& children
+) {
+  auto returnNode = nodePtr(key);
+
+  for(const auto& child : children) {
+    returnNode -> addChild(child);
+  }
+
+  return returnNode;
 }
 
 } // eo namespace

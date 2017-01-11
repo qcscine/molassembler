@@ -107,19 +107,14 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
       })
     );
 
-    std::string expectedString = "digraph tree {\n"
-      "  aa[label=\"0\"];\n"
-      "  ab[label=\"1\"];\n"
-      "  ac[label=\"2\"];\n"
-      "  ad[label=\"2\"];\n"
-      "  aa -> ab;\n"
-      "  aa -> ac;\n"
-      "  ab -> ad;\n"
-      "}\n";
-
     auto treePtr = makeTree(test);
 
-    BOOST_CHECK(treePtr -> toString() == expectedString);
+    auto comparisonTreePtr = Tree::nodePtr(0u, {
+      Tree::nodePtr(1u, {2u}),
+      Tree::nodePtr(2u)
+    });
+
+    BOOST_CHECK(*treePtr == *comparisonTreePtr);
   }
   { // BFS, DFS testing
     AdjacencyList test(
@@ -137,26 +132,19 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
 
     auto treePtr = makeTree(test, 0);
 
-    std::string expectedString = "digraph tree {\n"
-      "  aa[label=\"0\"];\n"
-      "  ab[label=\"1\"];\n"
-      "  ac[label=\"2\"];\n"
-      "  ad[label=\"4\"];\n"
-      "  ae[label=\"3\"];\n"
-      "  af[label=\"3\"];\n"
-      "  ag[label=\"5\"];\n"
-      "  ah[label=\"6\"];\n"
-      "  ai[label=\"7\"];\n"
-      "  aa -> ab;\n"
-      "  ab -> ac;\n"
-      "  ab -> ad;\n"
-      "  ac -> ae;\n"
-      "  ad -> af;\n"
-      "  ad -> ag;\n"
-      "  ag -> ah;\n"
-      "  ag -> ai;\n"
-      "}\n";
+    auto comparisonTreePtr = Tree::nodePtr(0u, {
+      Tree::nodePtr(1u, {
+        Tree::nodePtr(2u, {3u}),
+        Tree::nodePtr(4u, {
+          Tree::nodePtr(3u),
+          Tree::nodePtr(5u, {6u, 7u})
+        })
+      })
+    });
 
-    BOOST_CHECK(treePtr -> toString() == expectedString);
+    BOOST_CHECK(*treePtr == *comparisonTreePtr);
+  }
+  { // order independence of tree generation on sequence in AdjacencyList
+
   }
 }

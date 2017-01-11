@@ -4,7 +4,7 @@ namespace MoleculeManip {
 
 namespace AdjacencyListAlgorithms {
 
-using NodeType = BasicTree::Node<AtomIndexType>;
+using NodeType = Tree::Node<AtomIndexType>;
 
 std::shared_ptr<NodeType> makeTree(
   const AdjacencyList& adjacencies,
