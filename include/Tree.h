@@ -4,7 +4,6 @@
 #include <boost/optional.hpp>
 #include <memory>
 #include <vector>
-#include <iostream>
 #include <deque>
 #include <sstream>
 #include <map>
@@ -120,19 +119,70 @@ struct Node : std::enable_shared_from_this<Node<T>> {
 
   //! Converts this tree into graphviz format
   std::string toString() const {
-    std::stringstream graphViz;
+    std::stringstream graphViz, connections;
+    std::map<
+      std::pair<T, boost::optional<T>>, // own key, parent key
+      std::string // ID
+    > nodeIDMap;
+    std::array<unsigned, 2> charIndices {97, 97}; // 'a', 'a'
+
+    auto incrementCharIndices = [&charIndices]() {
+      if(charIndices[1] == 122) {
+        charIndices[0]++;
+        charIndices[1] = 97;
+      } else {
+        charIndices[1]++;
+      }
+    };
+
+    auto getNewID = [&charIndices, &incrementCharIndices]() {
+      std::string ID;
+      ID += char(charIndices[0]);
+      ID += char(charIndices[1]);
+      incrementCharIndices();
+      return ID;
+    };
+
     graphViz << "digraph tree {\n";
 
     forEach(
-      [&graphViz](const Node<T>& node) -> void {
-        for(const auto& childPtr : node.children) {
-          graphViz << "  \"" << node.key << "\" -> \"" << childPtr -> key 
-            << "\";\n";
+      [
+        &graphViz,
+        &connections,
+        &nodeIDMap,
+        &getNewID
+      ](const Node<T>& node) -> void {
+        if(auto parentPtr = node.parentWeakPtr.lock()) {
+          auto newID = getNewID();
+          // add pair to nodeIDMap
+          nodeIDMap[
+            std::make_pair(node.key, parentPtr -> key)
+          ] = newID;
+
+          // get parent ID, for that we need its parent's key too
+          auto parentParentKey = boost::make_optional<T>();
+          if(auto parentParentPtr = parentPtr -> parentWeakPtr.lock()) {
+            parentParentKey = parentParentPtr -> key;
+          }
+
+          graphViz << "  " << newID << "[label=\"" << node.key << "\"];\n";
+
+          connections << "  "
+            << nodeIDMap.at(std::make_pair(parentPtr -> key, parentParentKey))
+            << " -> " << newID <<  ";\n";
+        } else { // for root pointer
+          auto newID = getNewID();
+          nodeIDMap[
+            std::make_pair(node.key, boost::none)
+          ] = newID;
+          
+          graphViz << "  " << newID << "[label=\"" << node.key << "\"];\n";
+          // do not add a connection
         }
       }
     );
 
-    graphViz << "}\n";
+    graphViz << connections.str() << "}\n";
 
     return graphViz.str();
   }

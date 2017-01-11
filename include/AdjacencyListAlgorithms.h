@@ -1,8 +1,10 @@
 #ifndef INCLUDE_ADJACENCYLIST_ALGORITHMS_H
 #define INCLUDE_ADJACENCYLIST_ALGORITHMS_H
 
-#include "TreeAlgorithms.h"
+#include "AdjacencyList.h"
+#include "Tree.h"
 #include "template_magic/templateMagic.h"
+
 #include <deque> 
 #include <set>
 
@@ -12,11 +14,149 @@
  * - Yes, it has to be a deque. A queue, although seemingly the minimal 
  *   functionality needed here for the FIFO structure, does not offer traversal
  *   without removal, which we need here.
+ *
  */
 
 namespace MoleculeManip {
 
 namespace AdjacencyListAlgorithms {
+
+// WARNING: Assumes atom indices are monotonous starting from 0!
+template<typename Function>
+void BFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  Function&& function
+) {
+  std::vector<bool> visited (
+    adjacencyList.size(), 
+    false
+  );
+  std::deque<AtomIndexType> toVisit {initial};
+
+  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
+    auto current = toVisit.front();
+    toVisit.pop_front();
+
+    visited[current] = true;
+
+    std::copy_if(
+      adjacencyList[current].begin(),
+      adjacencyList[current].end(),
+      std::back_inserter(toVisit),
+      [&visited, &toVisit](const AtomIndexType& idx) {
+        return (
+          !visited[idx] 
+          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
+        );
+      }
+    );
+
+    // allow bool false return values to break
+    if(!function(current)) break;
+  }
+}
+
+// WARNING: Assumes atom indices are monotonous starting from 0!
+template<typename Function>
+void DFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  Function&& function
+) {
+  std::vector<bool> visited (
+    adjacencyList.size(), 
+    false
+  );
+  std::deque<AtomIndexType> toVisit {initial};
+
+  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
+    auto current = toVisit.front();
+    toVisit.pop_front();
+
+    visited[current] = true;
+
+    std::copy_if(
+      adjacencyList[current].begin(),
+      adjacencyList[current].end(),
+      std::front_inserter(toVisit),
+      [&visited, &toVisit](const AtomIndexType& idx) {
+        return (
+          !visited[idx]
+          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
+        );
+      }
+    );
+
+    // allow bool false return values to break
+    if(!function(current)) break;
+  }
+}
+
+/* Tree-related algorithms */
+
+using NodeType = BasicTree::Node<AtomIndexType>;
+std::shared_ptr<NodeType> makeTree(
+  const AdjacencyList& adjacencies,
+  const AtomIndexType& startingFrom
+) {
+  std::shared_ptr<NodeType> rootPtr = std::make_shared<NodeType>(startingFrom);
+
+  std::map<
+    AtomIndexType,
+    std::weak_ptr<NodeType>
+  > existingNodePtrMap {
+    {startingFrom, rootPtr}
+  };
+  
+  auto indexVisitor = [
+    &rootPtr,
+    &adjacencies,
+    &existingNodePtrMap,
+    &startingFrom
+  ](const auto& atomIndex) -> bool {
+    // skip initial visit
+    if(atomIndex == startingFrom) return true;
+
+    for(const auto& adjacent: adjacencies.getAdjacencies(atomIndex)) {
+      if(existingNodePtrMap.count(adjacent) == 1) {
+        auto newNode = std::make_shared<NodeType>(atomIndex);
+        if(auto parentPtr = existingNodePtrMap.at(adjacent).lock()) {
+          parentPtr -> addChild(newNode);
+        }
+
+        // add to existing NodePtrMap
+        // ISSUE: there can now be multiple nodes for a key
+        // SOLUTION: add it only if it does not exist, this ensures further
+        //  adjacents are only added once, and to the shortest path
+        if(existingNodePtrMap.count(atomIndex) == 0) {
+          existingNodePtrMap[atomIndex] = newNode;
+        }
+      }
+    }
+    
+    return true;
+  };
+
+  BFSVisit(
+    adjacencies,
+    startingFrom,
+    indexVisitor
+  );
+
+  return rootPtr;
+}
+
+std::shared_ptr<NodeType> makeTree(
+  const AdjacencyList& adjacencies
+) {
+  return makeTree(
+    adjacencies,
+    0
+  );
+}
+
+// Independent algorithms
 
 /*!
  * Connected Components algorithm. Returns a vector of unsigned numbers 
@@ -151,258 +291,6 @@ std::vector<
 
   return groups;
 } 
-
-/* Prerequisite: AdjacencyList has a single connected component. */
-std::vector<
-  std::vector<
-    AtomIndexType
-  >
-> detectCycles(const AdjacencyList& adjacencies) {
-  /* Rough outline of algorithm:
-   *
-   * Create a top-down tree from the AdjacencyList using a DFS-like algorithm.
-   * Detect ring closure atoms (by detecting vertices that have been visited
-   * before). The stored key in a node is the atom's index. Store node pointers
-   * to repeated nodes.
-   *
-   * Then traverse the tree upwards from repeated nodes simultaneously until we hit 
-   * a common ancestor. The common path is then the cycle.
-   *
-   * e.g. 
-   *  
-   *    0
-   *   / \
-   *  1 – 2
-   *
-   * is expanded into a tree, starting from 0, as:
-   *
-   * root/top ->   0 – 1 – 2 – 0   <- leaf/bottom
-   *               ^           ^
-   * repeated:     a           b
-   *
-   * then, as long as one of both node pointers has a parentOption and the sets 
-   * of node keys of both pointers' traversal up the tree have an empty 
-   * intersection, we move the pointers up the tree. If along the way we 
-   * re-encounter the duplicate key, that pointer's traversal path is the cycle
-   * set.
-   *
-   * step: 0 – 1 – 2 – 0    aSet = {}, bSet = {2}
-   *       ^       ^
-   *       a       b
-   *
-   * step: 0 – 1 – 2 – 0    aSet = {}, bSet = {2, 1}
-   *       ^   ^
-   *       a   b
-   *
-   * step: 0 – 1 – 2 – 0    aSet = {}, bSet = {2, 1, 0}
-   *       ^^                                        ^
-   *       ab                                        REPEAT FOUND
-   *
-   * -> Due to found repeating key, {2, 1, 0} is the cycle.
-   */
-  auto treeStruct = BasicTree::makeTree(adjacencies);
-
-  std::vector<
-    std::vector<
-      AtomIndexType
-    >
-  > cycles;
-
-  for(auto& candidateNodePtr : treeStruct.duplicateNodes) {
-    AtomIndexType currentIndex = candidateNodePtr -> key;
-    // get matching ptr from visited
-    assert(treeStruct.nodes[candidateNodePtr -> key]);
-    auto matchingPtr = treeStruct.nodes[candidateNodePtr -> key].value();
-
-    // traverse the tree up to common ancestor
-
-    std::pair<
-      std::vector<AtomIndexType>,
-      std::vector<AtomIndexType>
-    > backtrackingPaths = { {candidateNodePtr -> key}, {matchingPtr -> key} };
-
-    std::pair<
-      std::set<AtomIndexType>,
-      std::set<AtomIndexType>
-    > backtrackingPathSets = {};
-
-    std::vector<AtomIndexType> intersection;
-    std::set_intersection(
-      backtrackingPathSets.first.begin(),
-      backtrackingPathSets.first.end(),
-      backtrackingPathSets.second.begin(),
-      backtrackingPathSets.second.end(),
-      std::back_inserter(intersection)
-    );
-
-    boost::optional<
-      std::vector<AtomIndexType>
-    > optionFoundWhileBacktracking;
-
-    //std::cout << "Constructing path for candidate: " << candidateNodePtr -> key << std::endl;
-
-    while(
-      (
-        !(candidateNodePtr -> isRoot())
-        || !(matchingPtr -> isRoot())
-      ) && intersection.size() == 0
-    ) {
-      /*std::cout << "Step" << std::endl
-        << candidateNodePtr << std::endl
-        << matchingPtr << std::endl;*/
-      /* Special case:
-       * Entire ring is in single branch. In this case, if one of the
-       * backtracking pointers encounters the current index as a key, then that
-       * backtracking chain is a ring!
-       */
-      // move up the tree one step for both pointers if you can
-      //if(candidateNodePtr -> parentOption) {
-      if(candidateNodePtr = (candidateNodePtr -> parentWeakPtr).lock()) {
-        if(candidateNodePtr -> key == currentIndex) {
-          optionFoundWhileBacktracking = backtrackingPaths.first;
-          break;
-        }
-        backtrackingPaths.first.push_back(candidateNodePtr -> key);
-        backtrackingPathSets.first.insert(candidateNodePtr -> key);
-      }
-      if(matchingPtr = (matchingPtr -> parentWeakPtr).lock()) {
-        if(matchingPtr -> key == currentIndex) {
-          optionFoundWhileBacktracking = backtrackingPaths.second;
-          break;
-        }
-        backtrackingPaths.second.push_back(matchingPtr -> key);
-        backtrackingPathSets.second.insert(matchingPtr -> key);
-      }
-
-      // recompute the intersection
-      intersection.clear();
-      std::set_intersection(
-        backtrackingPathSets.first.begin(),
-        backtrackingPathSets.first.end(),
-        backtrackingPathSets.second.begin(),
-        backtrackingPathSets.second.end(),
-        std::back_inserter(intersection)
-      );
-    }
-    
-    if(optionFoundWhileBacktracking) {
-      cycles.push_back(optionFoundWhileBacktracking.value());
-    } else {
-      // the intersection is the "pivot" between both backtracking paths
-      /*for(const auto& index: intersection) {
-        std::cout << index << ", ";
-      }
-      std::cout << std::endl;*/
-      assert(intersection.size() == 1);
-
-      /* ring chain is then:
-       * backtrackingPaths.first (forwards) up to but not including intersection[0]
-       * + backtrackingPaths.second (backwards) from intersection[0] up to but not
-       *    including backtrackingPaths.second[0] (this would be duplicate with
-       *    backtrackingPaths.first[0], the common ring index)
-       */
-
-      std::vector<AtomIndexType> cycleChain;
-
-      std::copy(
-        backtrackingPaths.first.begin(),
-        std::find( // position of the pivot
-          backtrackingPaths.first.begin(),
-          backtrackingPaths.first.end(),
-          intersection[0]
-        ),
-        std::back_inserter(cycleChain)
-      );
-
-      std::copy(
-        std::find( // position of pivot in reverse iteration
-          backtrackingPaths.second.rbegin(),
-          backtrackingPaths.second.rend(),
-          intersection[0]
-        ),
-        backtrackingPaths.second.rend() - 1, // beginning + 1 (skip duplicate)
-        std::back_inserter(cycleChain)
-      );
-
-      // add to cycles
-      cycles.push_back(cycleChain);
-    }
-  }
-
-  return cycles;
-}
-
-// WARNING: Assumes atom indices are monotonous starting from 0!
-template<typename Function>
-void BFSVisit(
-  const AdjacencyList& adjacencyList,
-  const AtomIndexType& initial,
-  Function&& function
-) {
-  std::vector<bool> visited (
-    adjacencyList.size(), 
-    false
-  );
-  std::deque<AtomIndexType> toVisit {initial};
-
-  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
-    auto current = toVisit.front();
-    toVisit.pop_front();
-
-    visited[current] = true;
-
-    std::copy_if(
-      adjacencyList[current].begin(),
-      adjacencyList[current].end(),
-      std::back_inserter(toVisit),
-      [&visited, &toVisit](const AtomIndexType& idx) {
-        return (
-          !visited[idx] 
-          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
-        );
-      }
-    );
-
-    // allow bool false return values to break
-    if(!function(current)) break;
-  }
-}
-
-// WARNING: Assumes atom indices are monotonous starting from 0!
-template<typename Function>
-void DFSVisit(
-  const AdjacencyList& adjacencyList,
-  const AtomIndexType& initial,
-  Function&& function
-) {
-  std::vector<bool> visited (
-    adjacencyList.size(), 
-    false
-  );
-  std::deque<AtomIndexType> toVisit {initial};
-
-  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
-    auto current = toVisit.front();
-    toVisit.pop_front();
-
-    visited[current] = true;
-
-    std::copy_if(
-      adjacencyList[current].begin(),
-      adjacencyList[current].end(),
-      std::front_inserter(toVisit),
-      [&visited, &toVisit](const AtomIndexType& idx) {
-        return (
-          !visited[idx]
-          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
-        );
-      }
-    );
-
-    // allow bool false return values to break
-    if(!function(current)) break;
-  }
-}
 
 } // eo namespace AdjacencyListAlgorithms
 

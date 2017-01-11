@@ -18,6 +18,14 @@
 
 namespace MoleculeManip {
 
+/* TODO
+ * - A Molecule should NOT have a PositionCollection as a member. This class
+ *   should only contain the graph information required to generate one, 
+ *   nothing else. As soon as a strategy to extract the current assignment of a
+ *   stereocenter from its 3D coordinates exists, add this to the IO class and 
+ *   remove the saving of 3D coordinates for Molecule
+ */
+
 class Molecule {
 private:
 /* private members */

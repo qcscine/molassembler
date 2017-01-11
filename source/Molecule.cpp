@@ -5,6 +5,7 @@
 #include "CommonTrig.h"
 
 #include "GraphDistanceMatrix.h"
+#include "AdjacencyListAlgorithms.h"
 #include "AdjacencyMatrix.h"
 
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
@@ -503,51 +504,28 @@ std::ostream& operator << (
 
 DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const {
 
+  const double oneTwoDelta = 0.01;
+
   DistanceGeometry::DistanceBoundsMatrix distanceBounds(getNumAtoms());
 
-  /* TODO NOTE WARNING
-   * - VSEPR imitation is shit
-   * - no local charges settable (is this required?)
+  /* enter all 1-2 distance bounds into the matrix for reference, they will be
+   * required often
    */
 
-  // Populate with stereocenter constraints first
-  for(const auto& stereocenterPtr: _stereocenters) {
-    distanceBounds.processDistanceConstraints(
-      stereocenterPtr -> distanceConstraints()
-    );
-  }
+  for(AtomIndexType i = 0; i < _adjacencies.size(); i++) {
+    for(const auto& j: _adjacencies.getAdjacencies(i)) {
+      // avoid duplicate work by avoiding i > j cases
+      if(i > j) continue;
 
-  auto bondDistancesMatrix = GraphDistanceMatrix(
-    AdjacencyMatrix(
-      _adjacencies
-    )
-  );
+      // enter the constraints for i, j
+      auto distance = Bond::calculateBondDistance(
+        getElementType(i),
+        getElementType(j),
+        getBondType(i, j)
+      );
 
-  // TODO extract chain between i-j from bondDistancesMatrix, use function below
-  for(unsigned i = 0; i < bondDistancesMatrix.N; i++) {
-    for(unsigned j = i + 1; j < bondDistancesMatrix.N; j++) {
-      // has constraint information already been added for this pair?
-      if(
-        !(
-          distanceBounds.upperBound(i, j) == 100 
-          || distanceBounds.lowerBound(i, j) == 0
-        )
-      ) {
-        // then go to the next pair
-        continue;
-      }
-
-      std::vector<
-        std::vector<AtomIndexType>
-      > chains = bondDistancesMatrix.extractChains(i, j);
-
-      for(const auto& chain: chains) {
-        distanceBounds.processDistanceConstraints(
-          _createConstraint(
-            chain
-          )
-        );
-      }
+      distanceBounds.upperBound(i, j) = (1 + oneTwoDelta) * distance;
+      distanceBounds.lowerBound(i, j) = (1 - oneTwoDelta) * distance;
     }
   }
 

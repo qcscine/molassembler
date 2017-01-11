@@ -1,7 +1,5 @@
 #include "BoostTestingHeader.h"
 
-#include <iostream>
-
 #include "AdjacencyListAlgorithms.h"
 #include "StdlibTypeAlgorithms.h"
 
@@ -91,4 +89,66 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
       0, 1, 4, 5, 7, 6, 3, 2
     })
   );
+
+  { // expansion
+    AdjacencyList test(
+      EdgeList({
+        Edge(0, 1, BondType::Single),
+        Edge(0, 2, BondType::Single),
+        Edge(1, 2, BondType::Single)
+      })
+    );
+
+    std::string expectedString = "digraph tree {\n"
+      "  aa[label=\"0\"];\n"
+      "  ab[label=\"1\"];\n"
+      "  ac[label=\"2\"];\n"
+      "  ad[label=\"2\"];\n"
+      "  aa -> ab;\n"
+      "  aa -> ac;\n"
+      "  ab -> ad;\n"
+      "}\n";
+
+    auto treePtr = makeTree(test);
+
+    BOOST_CHECK(treePtr -> toString() == expectedString);
+  }
+  { // BFS, DFS testing
+    AdjacencyList test(
+      EdgeList({
+        Edge(0, 1, BondType::Single),
+        Edge(1, 2, BondType::Single),
+        Edge(1, 4, BondType::Single),
+        Edge(2, 3, BondType::Single),
+        Edge(3, 4, BondType::Single),
+        Edge(4, 5, BondType::Single),
+        Edge(5, 6, BondType::Single),
+        Edge(5, 7, BondType::Single)
+      })
+    );
+
+    auto treePtr = makeTree(test, 0);
+
+    std::string expectedString = "digraph tree {\n"
+      "  aa[label=\"0\"];\n"
+      "  ab[label=\"1\"];\n"
+      "  ac[label=\"2\"];\n"
+      "  ad[label=\"4\"];\n"
+      "  ae[label=\"3\"];\n"
+      "  af[label=\"3\"];\n"
+      "  ag[label=\"5\"];\n"
+      "  ah[label=\"6\"];\n"
+      "  ai[label=\"7\"];\n"
+      "  aa -> ab;\n"
+      "  ab -> ac;\n"
+      "  ab -> ad;\n"
+      "  ac -> ae;\n"
+      "  ad -> af;\n"
+      "  ad -> ag;\n"
+      "  ag -> ah;\n"
+      "  ag -> ai;\n"
+      "}\n";
+
+    BOOST_CHECK(treePtr -> toString() == expectedString);
+  }
 }

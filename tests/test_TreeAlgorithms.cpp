@@ -1,11 +1,14 @@
 #include "BoostTestingHeader.h"
 #include "TreeAlgorithms.h"
+#include "AdjacencyListAlgorithms.h"
 
 BOOST_AUTO_TEST_CASE( makeTreeTest ) {
   using namespace MoleculeManip;
   using namespace BasicTree;
 
-  { // output
+  using NodeType = Node<AtomIndexType>;
+
+  { 
     std::shared_ptr<NodeType> rootPtr = std::make_shared<NodeType>(
       0
     );
@@ -17,27 +20,50 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
 
     auto child2Ptr = rootPtr -> addChild(3);
     child2Ptr -> addChild(6);
-
-    std::string expectedString = "digraph tree {\n  \"0\" -> \"4\";\n"
-      "  \"0\" -> \"3\";\n  \"4\" -> \"9\";\n  \"4\" -> \"5\";\n"
-      "  \"3\" -> \"6\";\n}\n";
-
-    BOOST_CHECK(rootPtr -> toString() == expectedString);
   }
-  { // expansion
+  { // BFS, DFS testing
     AdjacencyList test(
       EdgeList({
         Edge(0, 1, BondType::Single),
-        Edge(0, 2, BondType::Single),
-        Edge(1, 2, BondType::Single)
+        Edge(1, 2, BondType::Single),
+        Edge(1, 4, BondType::Single),
+        Edge(2, 3, BondType::Single),
+        Edge(3, 4, BondType::Single),
+        Edge(4, 5, BondType::Single),
+        Edge(5, 6, BondType::Single),
+        Edge(5, 7, BondType::Single)
       })
     );
 
-    std::string expectedString = "digraph tree {\n  \"0\" -> \"1\";\n"
-      "  \"1\" -> \"2\";\n  \"2\" -> \"0\";\n}\n";
+    auto treePtr = AdjacencyListAlgorithms::makeTree(test);
 
-    auto treeStruct = makeTree(test);
+    std::vector<AtomIndexType> BFSVisitSequence;
+    auto BFSVisitor = [&BFSVisitSequence](const auto& nodePtr) {
+      BFSVisitSequence.push_back(nodePtr -> key);
+      return true;
+    };
+    BFSVisit(
+      treePtr,
+      BFSVisitor
+    );
 
-    BOOST_CHECK(treeStruct.rootPtr -> toString() == expectedString);
+    BOOST_CHECK(BFSVisitSequence == std::vector<AtomIndexType>({
+      0, 1, 2, 4, 3, 3, 5, 6, 7
+    }));
+
+    std::vector<AtomIndexType> DFSVisitSequence;
+    auto DFSVisitor = [&DFSVisitSequence](const auto& nodePtr) {
+      DFSVisitSequence.push_back(nodePtr -> key);
+      return true;
+    };
+
+    DFSVisit(
+      treePtr,
+      DFSVisitor
+    );
+
+    BOOST_CHECK(DFSVisitSequence == std::vector<AtomIndexType>({
+      0, 1, 4, 5, 7, 6, 3, 2, 3
+    }));
   }
 }
