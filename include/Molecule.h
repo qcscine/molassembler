@@ -11,7 +11,7 @@
 
 // Custom headers
 #include "AdjacencyList.h"
-#include "EdgeList.h"
+#include "Edges.h"
 #include "StereocenterList.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "BondDistance.h"
@@ -45,7 +45,7 @@ private:
 
   // The information on interconnectedness of the atoms
   AdjacencyList _adjacencies;
-  EdgeList _edges;
+  Edges _edges;
   StereocenterList _stereocenters;
   
   /* Private member functions */
@@ -71,14 +71,14 @@ public:
   Molecule(
     const Delib::ElementTypeCollection& elements,
     const AdjacencyList& adjacencies,
-    const EdgeList& edges
+    const Edges& edges
   );
 
   Molecule(
     const Delib::ElementTypeCollection& elements,
     const Delib::PositionCollection& positions,
     const AdjacencyList& adjacencies,
-    const EdgeList& edges
+    const Edges& edges
   );
 
   AtomIndexType addAtom(
@@ -113,7 +113,7 @@ public:
       
   AtomIndexType getNumAtoms() const;
   EdgeIndexType getNumBonds() const;
-  const EdgeList& getEdgeList() const; 
+  const Edges& getEdges() const; 
   BondType getBondType(
     const AtomIndexType& a,
     const AtomIndexType& b

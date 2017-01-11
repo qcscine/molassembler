@@ -10,15 +10,15 @@
 
 BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
   using namespace MoleculeManip;
-  EdgeList edges{
-    Edge(0, 1, BondType::Single),
-    Edge(1, 2, BondType::Single),
-    Edge(1, 4, BondType::Single),
-    Edge(2, 3, BondType::Single),
-    Edge(3, 4, BondType::Single),
-    Edge(4, 5, BondType::Single),
-    Edge(5, 6, BondType::Single),
-    Edge(5, 7, BondType::Single)
+  Edges edges{
+    {{0, 1}, BondType::Single},
+    {{1, 2}, BondType::Single},
+    {{1, 4}, BondType::Single},
+    {{2, 3}, BondType::Single},
+    {{3, 4}, BondType::Single},
+    {{4, 5}, BondType::Single},
+    {{5, 6}, BondType::Single},
+    {{5, 7}, BondType::Single}
   };
 
   /* 1 */
@@ -35,8 +35,8 @@ BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
     /* 4 */
     BOOST_CHECK(
       testInstance(
-        edge.j, // since order shouldn't matter
-        edge.i
+        edge.first.second, // since order shouldn't matter
+        edge.first.first
       ) // the positions are boolean already
     );
   }

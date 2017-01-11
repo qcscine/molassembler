@@ -12,7 +12,6 @@
 
 // Detection algorithm headers
 #include "AdjacencyList.h"
-#include "EdgeList.h"
 #include "Types/ElementTypeCollection.h" // Delib
 
 /* TODO

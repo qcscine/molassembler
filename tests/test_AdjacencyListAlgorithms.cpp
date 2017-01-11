@@ -3,6 +3,14 @@
 #include "AdjacencyListAlgorithms.h"
 #include "StdlibTypeAlgorithms.h"
 
+/* TODO
+ * - A potential problem: tree generation can change according to the order 
+ *   that nodes of the AdjacencyList graph are visited in by BFS. To test, use
+ *   a five ring variant of the existing adjacencylist and make random
+ *   permutations of the order of adjacencylist addition (without Edges 
+ *   intermediate, it orders it's parameters)
+ */
+
 
 /*       AdjacencyListAlgorithms listing
  * t  #  -------------------------------
@@ -17,15 +25,15 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
   using namespace AdjacencyListAlgorithms;
 
   auto testInstance = AdjacencyList(
-    EdgeList({
-      Edge(0, 1, BondType::Single),
-      Edge(1, 2, BondType::Single),
-      Edge(1, 4, BondType::Single),
-      Edge(2, 3, BondType::Single),
-      Edge(3, 4, BondType::Single),
-      Edge(4, 5, BondType::Single),
-      Edge(5, 6, BondType::Single),
-      Edge(5, 7, BondType::Single)
+    Edges({
+      {{0, 1}, BondType::Single},
+      {{1, 2}, BondType::Single},
+      {{1, 4}, BondType::Single},
+      {{2, 3}, BondType::Single},
+      {{3, 4}, BondType::Single},
+      {{4, 5}, BondType::Single},
+      {{5, 6}, BondType::Single},
+      {{5, 7}, BondType::Single}
     })
   );
 
@@ -92,10 +100,10 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
 
   { // expansion
     AdjacencyList test(
-      EdgeList({
-        Edge(0, 1, BondType::Single),
-        Edge(0, 2, BondType::Single),
-        Edge(1, 2, BondType::Single)
+      Edges({
+        {{0, 1}, BondType::Single},
+        {{0, 2}, BondType::Single},
+        {{1, 2}, BondType::Single}
       })
     );
 
@@ -115,15 +123,15 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
   }
   { // BFS, DFS testing
     AdjacencyList test(
-      EdgeList({
-        Edge(0, 1, BondType::Single),
-        Edge(1, 2, BondType::Single),
-        Edge(1, 4, BondType::Single),
-        Edge(2, 3, BondType::Single),
-        Edge(3, 4, BondType::Single),
-        Edge(4, 5, BondType::Single),
-        Edge(5, 6, BondType::Single),
-        Edge(5, 7, BondType::Single)
+      Edges({
+        {{0, 1}, BondType::Single},
+        {{1, 2}, BondType::Single},
+        {{1, 4}, BondType::Single},
+        {{2, 3}, BondType::Single},
+        {{3, 4}, BondType::Single},
+        {{4, 5}, BondType::Single},
+        {{5, 6}, BondType::Single},
+        {{5, 7}, BondType::Single}
       })
     );
 

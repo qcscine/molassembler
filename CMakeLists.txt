@@ -41,8 +41,7 @@ set(HEADERS_all
   include/Cache.h
   include/CommonTrig.h
   include/EZStereocenter.h
-  include/Edge.h
-  include/EdgeList.h
+  include/Edges.h
   include/GraphDistanceMatrix.h
   include/IO.h
   include/Molecule.h
@@ -60,6 +59,7 @@ set(HEADERS_all
 set(SOURCES_all
   source/DistanceGeometry/DistanceBoundsMatrix.cpp
   source/DistanceGeometry/MetricMatrix.cpp
+  source/AdjacencyListAlgorithms.cpp
   source/AdjacencyMatrix.cpp
   source/AtomInfo.cpp
   source/BondDistance.cpp

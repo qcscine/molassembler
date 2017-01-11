@@ -49,17 +49,17 @@ Molecule::Molecule(
   _adjacencies.addSlot();
   _adjacencies.addAdjacency(0, 1);
   // update _edges
-  _edges.add(Edge(
+  _edges.add(
     0,
     1,
     bondType
-  ));
+  );
 }
 
 Molecule::Molecule(
   const Delib::ElementTypeCollection& elements,
   const AdjacencyList& adjacencies,
-  const EdgeList& edges
+  const Edges& edges
 ) : 
   _elements(elements),
   _adjacencies(adjacencies),
@@ -72,7 +72,7 @@ Molecule::Molecule(
   const Delib::ElementTypeCollection& elements,
   const Delib::PositionCollection& positions,
   const AdjacencyList& adjacencies,
-  const EdgeList& edges
+  const Edges& edges
 ) : 
   _elements(elements),
   _positions(positions),
@@ -138,11 +138,11 @@ AtomIndexType Molecule::addAtom(
     addedIndex
   );
 
-  _edges.add(Edge(
+  _edges.add(
     bondedToIndex,
     addedIndex,
     bondType
-  ));
+  );
 
   _elements.push_back(elementType);
 
@@ -160,11 +160,11 @@ void Molecule::addBond(
     b
   );
 
-  _edges.add(Edge(
+  _edges.add(
     a,
     b,
     bondType
-  ));
+  );
 }
 
 void Molecule::removeAtom(const AtomIndexType& a) {
@@ -218,7 +218,7 @@ EdgeIndexType Molecule::getNumBonds() const {
   return _edges.size();
 }
 
-const EdgeList& Molecule::getEdgeList() const {
+const Edges& Molecule::getEdges() const {
   return _edges;
 }
 
@@ -228,7 +228,7 @@ BondType Molecule::getBondType(
 ) const {
   auto edgeOption = _edges.get(a, b);
   assert(edgeOption);
-  return edgeOption.value().bondType;
+  return edgeOption.value();
 }
 
 unsigned Molecule::hydrogenCount(const AtomIndexType& a) const {
@@ -473,10 +473,11 @@ void Molecule::_dumpGraphviz(std::ostream& os) const {
   }
 
   for(const auto& edge: _edges) {
-    os << "\n  " << nodeLabel(edge.i) << " -- " << nodeLabel(edge.j) 
+    os << "\n  " << nodeLabel(edge.first.first) << " -- " 
+      << nodeLabel(edge.first.second)
       << edgeProperties(
-        getSymbolString(edge.i),
-        getSymbolString(edge.j)
+        getSymbolString(edge.first.first),
+        getSymbolString(edge.first.second)
       ) 
       << ";";
   }

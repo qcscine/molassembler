@@ -55,7 +55,7 @@ private:
   Delib::ElementTypeCollection _elements;
   Delib::PositionCollection _positions;
   AdjacencyList _adjacencies;
-  EdgeList _edges;
+  Edges _edges;
 
   const std::map<std::string, MOLFileVersion> _versionMap {
     {"V2000", MOLFileVersion::V2000}
@@ -134,11 +134,11 @@ private:
 
       // WARNING: this can throw if queries are set! No graceful error handling.
       // update edges
-      _edges.add(Edge(
+      _edges.add(
         i,
         j,
         _bondTypeMap.at(bty)
-      ));
+      );
 
       // add adjacencies
       _adjacencies.addAdjacency(i, j);
@@ -229,10 +229,10 @@ private:
         }
         state = State::BondBlock;
       } else if(state == State::BondBlock) {
-        for(const auto& edge: molecule.getEdgeList()) {
-          fout << std::setw(3) << edge.i // 111 (index of 1st atom)
-            << std::setw(3) << edge.j  // 222 (index of 2nd atom)
-            << std::setw(3) << _bondTypeUnsignedMap.at(edge.bondType) // ttt (bond type)
+        for(const auto& edge: molecule.getEdges()) {
+          fout << std::setw(3) << edge.first.first // 111 (index of 1st atom)
+            << std::setw(3) << edge.first.second  // 222 (index of 2nd atom)
+            << std::setw(3) << _bondTypeUnsignedMap.at(edge.second) // ttt (bond type)
             << std::setw(3) << 0u // sss (bond stereo, ignored for now)
             << std::setw(3) << 0u // xxx (unused)
             << std::setw(3) << 0u // rrr (bond topology) -> distant TODO

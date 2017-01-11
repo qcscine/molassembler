@@ -5,8 +5,6 @@
 #include "../tests/test_DGDistanceBoundsMatrix.cpp"
 #include "../tests/test_DGMetricMatrix.cpp"
 #include "../tests/test_DGRefinementProblem.cpp"
-#include "../tests/test_Edge.cpp"
-#include "../tests/test_EdgeList.cpp"
 #include "../tests/test_GraphDistanceMatrix.cpp"
 #include "../tests/test_IO.cpp"
 #include "../tests/test_StdlibTypeAlgorithms.cpp"

@@ -6,7 +6,7 @@
 /*       AdjacencyList member listing
  * t  #  ------------------------------
  *    1  Default constructor
- * y  2  Constructor from EdgeList
+ * y  2  Constructor from Edges
  * y  3  addSlot()
  * y  4  addAdjacency()
  *    5  clear()
@@ -18,18 +18,18 @@
  *    11 operator[]
  */
 
-BOOST_AUTO_TEST_CASE(init_from_EdgeList) {
+BOOST_AUTO_TEST_CASE(init_from_Edges) {
   using namespace MoleculeManip;
 
-  EdgeList edgeList {
-    Edge(0, 1, BondType::Single),
-    Edge(1, 2, BondType::Single),
-    Edge(1, 4, BondType::Single),
-    Edge(2, 3, BondType::Single),
-    Edge(3, 4, BondType::Single),
-    Edge(4, 5, BondType::Single),
-    Edge(5, 6, BondType::Single),
-    Edge(5, 7, BondType::Single)
+  Edges edgeList {
+    {{0, 1}, BondType::Single},
+    {{1, 2}, BondType::Single},
+    {{1, 4}, BondType::Single},
+    {{2, 3}, BondType::Single},
+    {{3, 4}, BondType::Single},
+    {{4, 5}, BondType::Single},
+    {{5, 6}, BondType::Single},
+    {{5, 7}, BondType::Single}
   };
 
   /* 2 */
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(init_from_EdgeList) {
 
   for(const auto& edge: edgeList) {
     /* 8 */
-    BOOST_CHECK(testList.isAdjacent(edge.i, edge.j));
+    BOOST_CHECK(testList.isAdjacent(edge.first.first, edge.first.second));
   }
 
   /* 4 */

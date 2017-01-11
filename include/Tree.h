@@ -160,7 +160,7 @@ struct Node : std::enable_shared_from_this<Node<T>> {
           ] = newID;
 
           // get parent ID, for that we need its parent's key too
-          auto parentParentKey = boost::make_optional<T>();
+          boost::optional<T> parentParentKey = boost::none;
           if(auto parentParentPtr = parentPtr -> parentWeakPtr.lock()) {
             parentParentKey = parentParentPtr -> key;
           }

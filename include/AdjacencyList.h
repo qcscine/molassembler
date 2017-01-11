@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "EdgeList.h"
+#include "Edges.h"
 
 namespace MoleculeManip {
 
@@ -23,18 +23,18 @@ public:
   /* Constructors */
   AdjacencyList() = default;
   AdjacencyList(
-    const EdgeList& edges
+    const Edges& edges
   ) {
     for(const auto& edge: edges) {
       // resize if indices do not fit
-      if(std::max(edge.i, edge.j) >= _adjacencies.size()) {
-        _adjacencies.resize(std::max(edge.i, edge.j) + 1);
+      if(edge.first.second >= _adjacencies.size()) {
+        _adjacencies.resize(edge.first.second + 1);
       }
-      addAdjacency(edge.i, edge.j);
+      addAdjacency(edge.first.first, edge.first.second);
     }
     if(!validate()) {
       throw std::runtime_error(
-        "Constructing AdjacencyList from EdgeList yielded invalid state!"
+        "Constructing AdjacencyList from Edges yielded invalid state!"
       );
     }
   }
