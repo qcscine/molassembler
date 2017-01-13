@@ -65,38 +65,74 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
     StdlibTypeAlgorithms::vectorToSet(groupsVectors) 
     == StdlibTypeAlgorithms::vectorToSet(expectedGroups)
   );
+  { // test BFS / DFS without depth limitation
+    std::vector<AtomIndexType> BFSVisitSequence;
+    BFSVisit(
+      testInstance,
+      0,
+      [&BFSVisitSequence](const AtomIndexType& index) -> bool {
+        BFSVisitSequence.push_back(index);
+        return true;
+      }
+    );
+    BOOST_CHECK(
+      BFSVisitSequence 
+      == std::vector<AtomIndexType>({
+        0, 1, 2, 4, 3, 5, 6, 7
+      })
+    );
 
-  std::vector<AtomIndexType> BFSVisitSequence;
-  BFSVisit(
-    testInstance,
-    0,
-    [&BFSVisitSequence](const AtomIndexType& index) -> bool {
-      BFSVisitSequence.push_back(index);
-      return true;
-    }
-  );
-  BOOST_CHECK(
-    BFSVisitSequence 
-    == std::vector<AtomIndexType>({
-      0, 1, 2, 4, 3, 5, 6, 7
-    })
-  );
+    std::vector<AtomIndexType> DFSVisitSequence;
+    DFSVisit(
+      testInstance,
+      0,
+      [&DFSVisitSequence](const AtomIndexType& index) -> bool {
+        DFSVisitSequence.push_back(index);
+        return true;
+      }
+    );
+    BOOST_CHECK(
+      DFSVisitSequence 
+      == std::vector<AtomIndexType>({
+        0, 1, 4, 5, 7, 6, 3, 2
+      })
+    );
+  }
+  { // test BFS / DFS with depth limitation
+    std::vector<AtomIndexType> BFSVisitSequence;
+    BFSVisit(
+      testInstance,
+      0,
+      [&BFSVisitSequence](const AtomIndexType& index) -> bool {
+        BFSVisitSequence.push_back(index);
+        return true;
+      },
+      4
+    );
+    BOOST_CHECK(
+      BFSVisitSequence 
+      == std::vector<AtomIndexType>({
+        0, 1, 2, 4, 3, 5 
+      })
+    );
 
-  std::vector<AtomIndexType> DFSVisitSequence;
-  DFSVisit(
-    testInstance,
-    0,
-    [&DFSVisitSequence](const AtomIndexType& index) -> bool {
-      DFSVisitSequence.push_back(index);
-      return true;
-    }
-  );
-  BOOST_CHECK(
-    DFSVisitSequence 
-    == std::vector<AtomIndexType>({
-      0, 1, 4, 5, 7, 6, 3, 2
-    })
-  );
+    std::vector<AtomIndexType> DFSVisitSequence;
+    DFSVisit(
+      testInstance,
+      0,
+      [&DFSVisitSequence](const AtomIndexType& index) -> bool {
+        DFSVisitSequence.push_back(index);
+        return true;
+      },
+      4
+    );
+    BOOST_CHECK(
+      DFSVisitSequence 
+      == std::vector<AtomIndexType>({
+        0, 1, 4, 5, 3, 2
+      })
+    );
+  }
 
   { // expansion
     AdjacencyList test(
@@ -116,7 +152,7 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
 
     BOOST_CHECK(*treePtr == *comparisonTreePtr);
   }
-  { // BFS, DFS testing
+  { // Tree expansion testing
     AdjacencyList test(
       Edges({
         {{0, 1}, BondType::Single},

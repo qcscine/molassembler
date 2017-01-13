@@ -3,18 +3,13 @@
 
 #include "AdjacencyList.h"
 #include "Tree.h"
+#include "Traits.h"
 #include "template_magic/templateMagic.h"
 
 #include <deque> 
 #include <type_traits>
 
 /* TODO
- * - Try to refactor BFS/DFS functions. constrain which function is called by
- *   SFINAE, all side effects of the copy_if lambda can be refactored out too
- *   along with the inserter, just the call of the function probably isn't
- * - There should be a variant of BFS/DFS (with maxDepth signature) that
- *   accepts a unary function and only passes the atomindex. The function
- *   should not have to be Binary
  *
  * NOTES
  * - Yes, it has to be a deque. A queue, although seemingly the minimal 
@@ -27,6 +22,35 @@ namespace MoleculeManip {
 
 namespace AdjacencyListAlgorithms {
 
+namespace detail {
+
+// Call visitor if Function is Binary
+template<typename Function>
+std::enable_if_t<
+  Traits::is_callable<Function(AtomIndexType, unsigned)>::value,
+  bool
+> callVisitor(
+  Function&& function,
+  const AtomIndexType& current,
+  const unsigned& depth
+) {
+  return function(current, depth);
+}
+
+// Call visitor if Function is Unary
+template<typename Function>
+std::enable_if_t<
+  Traits::is_callable<Function(AtomIndexType)>::value,
+  bool
+> callVisitor(
+  Function&& function,
+  const AtomIndexType& current,
+  const unsigned& depth __attribute__ ((unused))
+) {
+  return function(current);
+}
+
+} // eo namespace detail
 
 // WARNING: Assumes atom indices are monotonous starting from 0!
 template<
@@ -55,7 +79,7 @@ void DequeVisit(
       adjacencyList[current].begin(),
       adjacencyList[current].end(),
       Inserter<>(toVisit),
-      [&visited, &toVisit](const AtomIndexType& idx) {
+      [&](const AtomIndexType& idx) {
         return (
           !visited[idx]
           && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
@@ -99,12 +123,12 @@ void BFSVisit(
 template<
   template<class = std::deque<AtomIndexType> 
   > class Inserter,
-  class BinaryFunction
+  class UnaryOrBinaryFunction
 >
 void DequeVisit(
   const AdjacencyList& adjacencyList,
   const AtomIndexType& initial,
-  BinaryFunction&& function,
+  UnaryOrBinaryFunction&& function,
   const unsigned& maxDepth
 ) {
   std::vector<bool> visited (
@@ -130,13 +154,7 @@ void DequeVisit(
       adjacencyList[current].begin(),
       adjacencyList[current].end(),
       Inserter<>(toVisit),
-      [
-        &visited, 
-        &toVisit,
-        &depthMap,
-        &current,
-        &maxDepth
-      ](const AtomIndexType& idx) {
+      [&](const AtomIndexType& idx) {
         bool toCopy = (
           !visited[idx] 
           && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
@@ -152,9 +170,21 @@ void DequeVisit(
     );
 
     // allow bool false return values to break
-    if(!function(current, depthMap[current])) break;
+    // if(!function(current, depthMap[current])) break;
+    /* - allow bool false return values to break
+     * - use callVisitor to distinguish between unary and binary function
+     *   instantiation
+     */
+    if(!(
+      detail::callVisitor(
+        std::forward<UnaryOrBinaryFunction>(function),
+        current,
+        depthMap[current]
+      )
+    )) break;
   }
 }
+
 
 template<typename BinaryFunction>
 void BFSVisit(
