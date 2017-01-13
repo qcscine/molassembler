@@ -145,6 +145,19 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
     BOOST_CHECK(*treePtr == *comparisonTreePtr);
   }
   { // order independence of tree generation on sequence in AdjacencyList
+    Edges edges({
+      {{0, 1}, BondType::Single},
+      {{1, 2}, BondType::Single},
+      {{1, 4}, BondType::Single},
+      {{2, 3}, BondType::Single},
+      {{3, 4}, BondType::Single},
+      {{4, 5}, BondType::Single},
+      {{5, 6}, BondType::Single},
+      {{5, 7}, BondType::Single}
+    });
 
+    for(unsigned i = 0; i < 100; i++) {
+
+    }
   }
 }

@@ -6,9 +6,16 @@
 #include "template_magic/templateMagic.h"
 
 #include <deque> 
+#include <type_traits>
 
 /* TODO
- * 
+ * - Try to refactor BFS/DFS functions. constrain which function is called by
+ *   SFINAE, all side effects of the copy_if lambda can be refactored out too
+ *   along with the inserter, just the call of the function probably isn't
+ * - There should be a variant of BFS/DFS (with maxDepth signature) that
+ *   accepts a unary function and only passes the atomindex. The function
+ *   should not have to be Binary
+ *
  * NOTES
  * - Yes, it has to be a deque. A queue, although seemingly the minimal 
  *   functionality needed here for the FIFO structure, does not offer traversal
@@ -56,6 +63,56 @@ void BFSVisit(
   }
 }
 
+template<typename BinaryFunction>
+void BFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  BinaryFunction&& function,
+  const unsigned& maxDepth
+) {
+  std::vector<bool> visited (
+    adjacencyList.size(), 
+    false
+  );
+  std::deque<AtomIndexType> toVisit {initial};
+
+  /* keys in an adjacencyList are unique, so we can directly map them to their
+   * depth from the starting point
+   */
+  std::map<AtomIndexType, unsigned> depthMap {
+    {initial, 0}
+  };
+
+  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
+    auto current = toVisit.front();
+    toVisit.pop_front();
+
+    visited[current] = true;
+
+    std::copy_if(
+      adjacencyList[current].begin(),
+      adjacencyList[current].end(),
+      std::back_inserter(toVisit),
+      [&visited, &toVisit, &depthMap, &current, &maxDepth](const AtomIndexType& idx) {
+        bool toCopy = (
+          !visited[idx] 
+          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
+          && depthMap[current] + 1 != maxDepth
+        );
+
+        if(toCopy) {
+          depthMap[idx] = depthMap[current] + 1;
+        }
+
+        return toCopy;
+      }
+    );
+
+    // allow bool false return values to break
+    if(!function(current, depthMap[current])) break;
+  }
+}
+
 // WARNING: Assumes atom indices are monotonous starting from 0!
 template<typename Function>
 void DFSVisit(
@@ -84,6 +141,96 @@ void DFSVisit(
           !visited[idx]
           && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
         );
+      }
+    );
+
+    // allow bool false return values to break
+    if(!function(current)) break;
+  }
+}
+
+template<
+  template<class = std::deque<AtomIndexType>
+  > class Inserter,
+  typename UnaryFunction
+>
+void DequeVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  UnaryFunction&& function
+) {
+  std::vector<bool> visited (
+    adjacencyList.size(), 
+    false
+  );
+  std::deque<AtomIndexType> toVisit {initial};
+
+  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
+    auto current = toVisit.front();
+    toVisit.pop_front();
+
+    visited[current] = true;
+
+    std::copy_if(
+      adjacencyList[current].begin(),
+      adjacencyList[current].end(),
+      Inserter<>(toVisit),
+      [&visited, &toVisit](const AtomIndexType& idx) {
+        return (
+          !visited[idx]
+          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
+        );
+      }
+    );
+
+    // allow bool false return values to break
+    if(!function(current)) break;
+  }
+}
+
+// WARNING: Assumes atom indices are monotonous starting from 0!
+template<typename Function>
+void DFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  Function&& function,
+  const unsigned& maxDepth
+) {
+  std::vector<bool> visited (
+    adjacencyList.size(), 
+    false
+  );
+  std::deque<AtomIndexType> toVisit {initial};
+
+  /* keys in an adjacencyList are unique, so we can directly map them to their
+   * depth from the starting point
+   */
+  std::map<AtomIndexType, unsigned> depthMap {
+    {initial, 0}
+  };
+
+  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
+    auto current = toVisit.front();
+    toVisit.pop_front();
+
+    visited[current] = true;
+
+    std::copy_if(
+      adjacencyList[current].begin(),
+      adjacencyList[current].end(),
+      std::front_inserter(toVisit),
+      [&visited, &toVisit, &depthMap, &current, &maxDepth](const AtomIndexType& idx) {
+        bool toCopy = (
+          !visited[idx] 
+          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
+          && depthMap[current] + 1 != maxDepth
+        );
+
+        if(toCopy) {
+          depthMap[idx] = depthMap[current] + 1;
+        }
+
+        return toCopy;
       }
     );
 

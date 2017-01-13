@@ -505,6 +505,8 @@ std::ostream& operator << (
 
 DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const {
 
+  const GraphDistanceMatrix topologicalDistances(_adjacencies); 
+
   const double oneTwoDelta = 0.01;
 
   DistanceGeometry::DistanceBoundsMatrix distanceBounds(getNumAtoms());
@@ -519,7 +521,7 @@ DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const
       if(i > j) continue;
 
       // enter the constraints for i, j
-      auto distance = Bond::calculateBondDistance(
+      const auto distance = Bond::calculateBondDistance(
         getElementType(i),
         getElementType(j),
         getBondType(i, j)
