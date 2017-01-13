@@ -27,132 +27,12 @@ namespace MoleculeManip {
 
 namespace AdjacencyListAlgorithms {
 
-// WARNING: Assumes atom indices are monotonous starting from 0!
-template<typename Function>
-void BFSVisit(
-  const AdjacencyList& adjacencyList,
-  const AtomIndexType& initial,
-  Function&& function
-) {
-  std::vector<bool> visited (
-    adjacencyList.size(), 
-    false
-  );
-  std::deque<AtomIndexType> toVisit {initial};
-
-  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
-    auto current = toVisit.front();
-    toVisit.pop_front();
-
-    visited[current] = true;
-
-    std::copy_if(
-      adjacencyList[current].begin(),
-      adjacencyList[current].end(),
-      std::back_inserter(toVisit),
-      [&visited, &toVisit](const AtomIndexType& idx) {
-        return (
-          !visited[idx] 
-          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
-        );
-      }
-    );
-
-    // allow bool false return values to break
-    if(!function(current)) break;
-  }
-}
-
-template<typename BinaryFunction>
-void BFSVisit(
-  const AdjacencyList& adjacencyList,
-  const AtomIndexType& initial,
-  BinaryFunction&& function,
-  const unsigned& maxDepth
-) {
-  std::vector<bool> visited (
-    adjacencyList.size(), 
-    false
-  );
-  std::deque<AtomIndexType> toVisit {initial};
-
-  /* keys in an adjacencyList are unique, so we can directly map them to their
-   * depth from the starting point
-   */
-  std::map<AtomIndexType, unsigned> depthMap {
-    {initial, 0}
-  };
-
-  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
-    auto current = toVisit.front();
-    toVisit.pop_front();
-
-    visited[current] = true;
-
-    std::copy_if(
-      adjacencyList[current].begin(),
-      adjacencyList[current].end(),
-      std::back_inserter(toVisit),
-      [&visited, &toVisit, &depthMap, &current, &maxDepth](const AtomIndexType& idx) {
-        bool toCopy = (
-          !visited[idx] 
-          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
-          && depthMap[current] + 1 != maxDepth
-        );
-
-        if(toCopy) {
-          depthMap[idx] = depthMap[current] + 1;
-        }
-
-        return toCopy;
-      }
-    );
-
-    // allow bool false return values to break
-    if(!function(current, depthMap[current])) break;
-  }
-}
 
 // WARNING: Assumes atom indices are monotonous starting from 0!
-template<typename Function>
-void DFSVisit(
-  const AdjacencyList& adjacencyList,
-  const AtomIndexType& initial,
-  Function&& function
-) {
-  std::vector<bool> visited (
-    adjacencyList.size(), 
-    false
-  );
-  std::deque<AtomIndexType> toVisit {initial};
-
-  while(!TemplateMagic::all_of(visited) && toVisit.size() != 0) {
-    auto current = toVisit.front();
-    toVisit.pop_front();
-
-    visited[current] = true;
-
-    std::copy_if(
-      adjacencyList[current].begin(),
-      adjacencyList[current].end(),
-      std::front_inserter(toVisit),
-      [&visited, &toVisit](const AtomIndexType& idx) {
-        return (
-          !visited[idx]
-          && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
-        );
-      }
-    );
-
-    // allow bool false return values to break
-    if(!function(current)) break;
-  }
-}
-
 template<
   template<class = std::deque<AtomIndexType>
   > class Inserter,
-  typename UnaryFunction
+  class UnaryFunction
 >
 void DequeVisit(
   const AdjacencyList& adjacencyList,
@@ -188,12 +68,43 @@ void DequeVisit(
   }
 }
 
-// WARNING: Assumes atom indices are monotonous starting from 0!
 template<typename Function>
 void DFSVisit(
   const AdjacencyList& adjacencyList,
   const AtomIndexType& initial,
-  Function&& function,
+  Function&& function
+) {
+  DequeVisit<std::front_insert_iterator, Function>(
+    adjacencyList,
+    initial,
+    std::forward<Function>(function)
+  );
+}
+
+template<typename Function>
+void BFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  Function&& function
+) {
+  DequeVisit<std::back_insert_iterator, Function>(
+    adjacencyList,
+    initial,
+    std::forward<Function>(function)
+  );
+}
+
+
+// WARNING: Assumes atom indices are monotonous starting from 0!
+template<
+  template<class = std::deque<AtomIndexType> 
+  > class Inserter,
+  class BinaryFunction
+>
+void DequeVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  BinaryFunction&& function,
   const unsigned& maxDepth
 ) {
   std::vector<bool> visited (
@@ -218,8 +129,14 @@ void DFSVisit(
     std::copy_if(
       adjacencyList[current].begin(),
       adjacencyList[current].end(),
-      std::front_inserter(toVisit),
-      [&visited, &toVisit, &depthMap, &current, &maxDepth](const AtomIndexType& idx) {
+      Inserter<>(toVisit),
+      [
+        &visited, 
+        &toVisit,
+        &depthMap,
+        &current,
+        &maxDepth
+      ](const AtomIndexType& idx) {
         bool toCopy = (
           !visited[idx] 
           && !TemplateMagic::makeContainsPredicate(toVisit)(idx)
@@ -235,8 +152,38 @@ void DFSVisit(
     );
 
     // allow bool false return values to break
-    if(!function(current)) break;
+    if(!function(current, depthMap[current])) break;
   }
+}
+
+template<typename BinaryFunction>
+void BFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  BinaryFunction&& function,
+  const unsigned& maxDepth
+) {
+  DequeVisit<std::back_insert_iterator, BinaryFunction>(
+    adjacencyList,
+    initial,
+    std::forward<BinaryFunction>(function),
+    maxDepth
+  );
+}
+
+template<typename BinaryFunction>
+void DFSVisit(
+  const AdjacencyList& adjacencyList,
+  const AtomIndexType& initial,
+  BinaryFunction&& function,
+  const unsigned& maxDepth
+) {
+  DequeVisit<std::front_insert_iterator, BinaryFunction>(
+    adjacencyList,
+    initial,
+    std::forward<BinaryFunction>(function),
+    maxDepth
+  );
 }
 
 /* Tree-related algorithms */

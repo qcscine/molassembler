@@ -57,7 +57,7 @@ void BFSVisit(
 ) {
   DequeVisit<T, std::back_insert_iterator, UnaryFunction>(
     rootPtr,
-    visitor
+    std::forward<UnaryFunction>(visitor)
   );
 }
 
@@ -68,7 +68,7 @@ void DFSVisit(
 ) {
   DequeVisit<T, std::front_insert_iterator, UnaryFunction>(
     rootPtr,
-    visitor
+    std::forward<UnaryFunction>(visitor)
   );
 }
 
