@@ -10,6 +10,8 @@
 #include <type_traits>
 
 /* TODO
+ * - Add variant of makeTree that creates a tree of limited depth from a 
+ *   starting atom
  *
  * NOTES
  * - Yes, it has to be a deque. A queue, although seemingly the minimal 
@@ -52,13 +54,19 @@ std::enable_if_t<
 
 } // eo namespace detail
 
+/*!
+ * Traverses an AdjacencyList in a BFS or DFS like fashion, depending on 
+ * whether Inserter is std::back_insert_iterator or std::front_insert_iterator,
+ * respectively. It then calls the UnaryFunction (not template constrained) 
+ * with the current atom's index.
+ */
 // WARNING: Assumes atom indices are monotonous starting from 0!
 template<
   template<class = std::deque<AtomIndexType>
   > class Inserter,
   class UnaryFunction
 >
-void DequeVisit(
+void TraverseAdjacencyList(
   const AdjacencyList& adjacencyList,
   const AtomIndexType& initial,
   UnaryFunction&& function
@@ -98,7 +106,7 @@ void DFSVisit(
   const AtomIndexType& initial,
   Function&& function
 ) {
-  DequeVisit<std::front_insert_iterator, Function>(
+  TraverseAdjacencyList<std::front_insert_iterator, Function>(
     adjacencyList,
     initial,
     std::forward<Function>(function)
@@ -111,7 +119,7 @@ void BFSVisit(
   const AtomIndexType& initial,
   Function&& function
 ) {
-  DequeVisit<std::back_insert_iterator, Function>(
+  TraverseAdjacencyList<std::back_insert_iterator, Function>(
     adjacencyList,
     initial,
     std::forward<Function>(function)
@@ -120,12 +128,24 @@ void BFSVisit(
 
 
 // WARNING: Assumes atom indices are monotonous starting from 0!
+/*!
+ * Traverses an AdjacencyList in a BFS or DFS like fashion, depending on 
+ * whether Inserter is std::back_insert_iterator or std::front_insert_iterator,
+ * respectively. It then calls the UnaryOrBinaryFunction (which can be any 
+ * callable with the argument types AtomIndexType, unsigned (optionally, for 
+ * a binary callable) with the current node's index and the current depth from
+ * the starting position specified by the parameter initial. Specifying 
+ * maxDepth = 0 gives no limitation on depth (behavior is thus strictly equal
+ * to traversal without depth indicators and if these are unneeded, the other
+ * traversal function above will perform better; if depth indicators are 
+ * desired however without depth limitation, this gives you that option).
+ */
 template<
   template<class = std::deque<AtomIndexType> 
   > class Inserter,
   class UnaryOrBinaryFunction
 >
-void DequeVisit(
+void TraverseAdjacencyList(
   const AdjacencyList& adjacencyList,
   const AtomIndexType& initial,
   UnaryOrBinaryFunction&& function,
@@ -193,7 +213,7 @@ void BFSVisit(
   BinaryFunction&& function,
   const unsigned& maxDepth
 ) {
-  DequeVisit<std::back_insert_iterator, BinaryFunction>(
+  TraverseAdjacencyList<std::back_insert_iterator, BinaryFunction>(
     adjacencyList,
     initial,
     std::forward<BinaryFunction>(function),
@@ -208,7 +228,7 @@ void DFSVisit(
   BinaryFunction&& function,
   const unsigned& maxDepth
 ) {
-  DequeVisit<std::front_insert_iterator, BinaryFunction>(
+  TraverseAdjacencyList<std::front_insert_iterator, BinaryFunction>(
     adjacencyList,
     initial,
     std::forward<BinaryFunction>(function),

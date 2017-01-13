@@ -505,8 +505,6 @@ std::ostream& operator << (
 
 DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const {
 
-  const GraphDistanceMatrix topologicalDistances(_adjacencies); 
-
   const double oneTwoDelta = 0.01;
 
   DistanceGeometry::DistanceBoundsMatrix distanceBounds(getNumAtoms());

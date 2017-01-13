@@ -12,7 +12,6 @@ class BFSConstraintCollector {
 private:
   /* Private Members */
   // input
-  const GraphDistanceMatrix& _topologicalDistances;
   const AdjacencyList& _adjacencies;
 
   // output (via side effect)
@@ -27,34 +26,28 @@ private:
 public:
   /* Ctor */
   BFSConstraintCollector(
-    const GraphDistanceMatrix& topologicalDistances,
     const AdjacencyList& adjacencies,
     DistanceBoundsMatrix& distanceBounds,
     const AtomIndexType& initial
-  ) : _topologicalDistances(topologicalDistances), 
-      _adjacencies(adjacencies),
+  ) : _adjacencies(adjacencies),
       _distanceBounds(distanceBounds),
       _initial(initial)
   {}
 
   /* Function operator for BFSVisit, is impure */
   bool operator() (const AtomIndexType& atomIndex) {
-    if(_topologicalDistances(_initial, atomIndex) >= 5) {
-      return false;
+    // continue here with constraint generation
+    if(atomIndex == _initial) {
+      // create an initial chain
+      _chains.emplace_back(
+        std::vector<AtomIndexType>({atomIndex})
+      );
     } else {
-      // continue here with constraint generation
-      if(atomIndex == _initial) {
-        // create an initial chain
-        _chains.emplace_back(
-          std::vector<AtomIndexType>({atomIndex})
-        );
-      } else {
-        // add atomIndex to all chains that have your adjacencies at the back
-      }
-
-      // continue BFS
-      return true;
+      // add atomIndex to all chains that have your adjacencies at the back
     }
+
+    // continue BFS
+    return true;
   }
 
   /* To reuse a single ConstraintCollector, use this to reset internal state

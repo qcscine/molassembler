@@ -123,6 +123,13 @@ public:
   }
 
   /*!
+   * Resize to N
+   */
+  void resize(const unsigned& N) {
+    _adjacencies.resize(N, std::vector<AtomIndexType>());
+  }
+
+  /*!
    * Returns the size of the AdjacencyList
    * \returns The size of the AdjacencyList
    */

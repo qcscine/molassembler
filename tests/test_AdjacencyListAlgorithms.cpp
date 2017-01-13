@@ -4,11 +4,6 @@
 #include "StdlibTypeAlgorithms.h"
 
 /* TODO
- * - A potential problem: tree generation can change according to the order 
- *   that nodes of the AdjacencyList graph are visited in by BFS. To test, use
- *   a five ring variant of the existing adjacencylist and make random
- *   permutations of the order of adjacencylist addition (without Edges 
- *   intermediate, it orders it's parameters)
  */
 
 
@@ -133,67 +128,171 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
       })
     );
   }
+  auto testExpansionCorrectness = [](
+    AdjacencyList&& adjacencyList, 
+    const std::shared_ptr<NodeType>& comparisonTreePtr
+  ) {
+    auto treePtr = makeTree(adjacencyList);
+    bool test = (*treePtr == *comparisonTreePtr);
+    BOOST_CHECK(test);
+    if(!test) {
+      std::cout << "Expected tree: " << std::endl;
+      std::cout << comparisonTreePtr << std::endl;
+      std::cout << "Got: " << std::endl;
+      std::cout << treePtr << std::endl << std::endl;
+    }
+  };
 
-  { // expansion
-    AdjacencyList test(
+  // triangle
+  testExpansionCorrectness(
+    AdjacencyList(
       Edges({
         {{0, 1}, BondType::Single},
         {{0, 2}, BondType::Single},
         {{1, 2}, BondType::Single}
       })
-    );
-
-    auto treePtr = makeTree(test);
-
-    auto comparisonTreePtr = Tree::nodePtr(0u, {
+    ),
+    Tree::nodePtr(0u, {
       Tree::nodePtr(1u, {2u}),
-      Tree::nodePtr(2u)
-    });
+      Tree::nodePtr(2u, {1u})
+    })
+  );
 
-    BOOST_CHECK(*treePtr == *comparisonTreePtr);
-  }
-  { // Tree expansion testing
-    AdjacencyList test(
+  // square
+  testExpansionCorrectness(
+    AdjacencyList(
       Edges({
         {{0, 1}, BondType::Single},
-        {{1, 2}, BondType::Single},
-        {{1, 4}, BondType::Single},
+        {{0, 2}, BondType::Single},
+        {{1, 3}, BondType::Single},
+        {{2, 3}, BondType::Single}
+      })
+    ),
+    Tree::nodePtr(0u, {
+      Tree::nodePtr(1u, {3u}),
+      Tree::nodePtr(2u, {3u})
+    })
+  );
+
+  // pentangle
+  testExpansionCorrectness(
+    AdjacencyList(
+      Edges({
+        {{0, 1}, BondType::Single},
+        {{0, 2}, BondType::Single},
+        {{1, 3}, BondType::Single},
+        {{2, 4}, BondType::Single},
+        {{3, 4}, BondType::Single}
+      })
+    ),
+    Tree::nodePtr(0u, {
+      Tree::nodePtr(1u, {
+        Tree::nodePtr(3u, {4u})
+      }),
+      Tree::nodePtr(2u, {
+        Tree::nodePtr(4u, {3u})
+      })
+    })
+  );
+
+  // spiro for good measure
+  testExpansionCorrectness(
+    AdjacencyList(
+      Edges({
+        {{0, 1}, BondType::Single},
+        {{0, 2}, BondType::Single},
+        {{1, 3}, BondType::Single},
         {{2, 3}, BondType::Single},
         {{3, 4}, BondType::Single},
-        {{4, 5}, BondType::Single},
-        {{5, 6}, BondType::Single},
-        {{5, 7}, BondType::Single}
+        {{3, 5}, BondType::Single},
+        {{4, 6}, BondType::Single},
+        {{5, 6}, BondType::Single}
       })
-    );
-
-    auto treePtr = makeTree(test, 0);
-
-    auto comparisonTreePtr = Tree::nodePtr(0u, {
+    ),
+    Tree::nodePtr(0u, {
       Tree::nodePtr(1u, {
-        Tree::nodePtr(2u, {3u}),
-        Tree::nodePtr(4u, {
-          Tree::nodePtr(3u),
-          Tree::nodePtr(5u, {6u, 7u})
+        Tree::nodePtr(3u, {
+          Tree::nodePtr(4u, {6u}),
+          Tree::nodePtr(5u, {6u})
+        })
+      }),
+      Tree::nodePtr(2u, {
+        Tree::nodePtr(3u, {
+          Tree::nodePtr(4u, {6u}),
+          Tree::nodePtr(5u, {6u})
         })
       })
-    });
+    })
+  );
 
-    BOOST_CHECK(*treePtr == *comparisonTreePtr);
-  }
+  // fused triangles
+  testExpansionCorrectness(
+    AdjacencyList(
+      Edges({
+        {{0, 1}, BondType::Single},
+        {{0, 2}, BondType::Single},
+        {{1, 2}, BondType::Single},
+        {{1, 3}, BondType::Single},
+        {{2, 3}, BondType::Single}
+      })
+    ),
+    Tree::nodePtr(0u, {
+      Tree::nodePtr(1u, {
+        Tree::nodePtr(3u),
+        Tree::nodePtr(2u, {3u})
+      }),
+      Tree::nodePtr(2u, {
+        Tree::nodePtr(3u),
+        Tree::nodePtr(1u, {3u})
+      }),
+    })
+  );
+
   { // order independence of tree generation on sequence in AdjacencyList
     Edges edges({
       {{0, 1}, BondType::Single},
       {{1, 2}, BondType::Single},
-      {{1, 4}, BondType::Single},
+      {{1, 5}, BondType::Single},
       {{2, 3}, BondType::Single},
       {{3, 4}, BondType::Single},
       {{4, 5}, BondType::Single},
-      {{5, 6}, BondType::Single},
-      {{5, 7}, BondType::Single}
+      {{4, 6}, BondType::Single},
+      {{6, 7}, BondType::Single},
+      {{6, 8}, BondType::Single}
     });
 
-    for(unsigned i = 0; i < 100; i++) {
+    auto prototypeTree = makeTree(AdjacencyList(edges), 0);
 
-    }
+    std::vector<unsigned> sequence (edges.size());
+    std::iota(
+      sequence.begin(),
+      sequence.end(),
+      0
+    );
+
+    bool pass = true;
+    do {
+      // create new AdjacencyList and fill it with edges in the specified manner
+      AdjacencyList adjacencies;
+      adjacencies.resize(edges.size());
+      for(const auto& index : sequence) {
+        auto edgesConstIterator = edges.begin();
+        std::advance(edgesConstIterator, index);
+        adjacencies.addAdjacency(
+          edgesConstIterator -> first.first,
+          edgesConstIterator -> first.second
+        );
+      }
+
+      auto currentTree = makeTree(adjacencies, 0);
+
+      if(*prototypeTree != *currentTree) {
+        pass = false;
+        break;
+      }
+
+    } while(std::next_permutation(sequence.begin(), sequence.end()));
+
+    BOOST_CHECK(pass);
   }
 }

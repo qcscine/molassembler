@@ -48,6 +48,7 @@ set(HEADERS_all
   include/StdlibTypeAlgorithms.h
   include/Stereocenter.h
   include/StereocenterList.h
+  include/Traits.h
   include/Tree.h
   include/TreeAlgorithms.h
   include/Version.h

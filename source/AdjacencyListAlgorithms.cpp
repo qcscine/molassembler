@@ -1,5 +1,7 @@
 #include "AdjacencyListAlgorithms.h"
 
+#include <iostream>
+
 namespace MoleculeManip {
 
 namespace AdjacencyListAlgorithms {
@@ -14,34 +16,67 @@ std::shared_ptr<NodeType> makeTree(
 
   std::map<
     AtomIndexType,
-    std::weak_ptr<NodeType>
+    std::vector<
+      std::weak_ptr<NodeType>
+    >
   > existingNodePtrMap {
-    {startingFrom, rootPtr}
+    {startingFrom, {rootPtr}}
   };
+
+  std::vector<AtomIndexType> onSameDepth;
+  unsigned depthLevel = 0;
   
-  auto indexVisitor = [
-    &rootPtr,
-    &adjacencies,
-    &existingNodePtrMap,
-    &startingFrom
-  ](const auto& atomIndex) -> bool {
+  auto indexVisitor = [&](const auto& atomIndex, const unsigned& depth) -> bool {
     // skip initial visit to root key
     if(atomIndex == startingFrom) return true;
 
+    if(depth != depthLevel) {
+      onSameDepth.clear();
+      depthLevel = depth;
+    }
+    onSameDepth.push_back(atomIndex);
+
+    std::vector<AtomIndexType> addAsChildToAll;
+
     for(const auto& adjacent: adjacencies.getAdjacencies(atomIndex)) {
       if(existingNodePtrMap.count(adjacent) == 1) {
-        auto newNode = std::make_shared<NodeType>(atomIndex);
-        if(auto parentPtr = existingNodePtrMap.at(adjacent).lock()) {
-          parentPtr -> addChild(newNode);
+        for(auto& existingWeakPtr : existingNodePtrMap.at(adjacent)) {
+          auto newNode = std::make_shared<NodeType>(atomIndex);
+
+          if(auto parentPtr = existingWeakPtr.lock()) {
+            parentPtr -> addChild(newNode);
+          }
+
+          // add to existing NodePtrMap
+          if(existingNodePtrMap.count(atomIndex) == 0) {
+            existingNodePtrMap[atomIndex] = std::vector<
+              std::weak_ptr<NodeType>
+            >({newNode});
+          } else {
+            existingNodePtrMap[atomIndex].push_back(newNode);
+          }
         }
 
-        // add to existing NodePtrMap
-        // ISSUE: there can now be multiple nodes for a key
-        // SOLUTION: add it only if it does not exist, this ensures further
-        //  adjacents are only added once, and to the shortest path
-        if(existingNodePtrMap.count(atomIndex) == 0) {
-          existingNodePtrMap[atomIndex] = newNode;
+        if(TemplateMagic::makeContainsPredicate(onSameDepth)(adjacent)) {
+          addAsChildToAll.push_back(adjacent);
         }
+      }
+    }
+
+    for(const auto& index : addAsChildToAll) {
+      // except! nodes that have index as parent key
+      for(auto& weakPtr : existingNodePtrMap.at(atomIndex)) {
+        if(auto nodePtr = weakPtr.lock()) {
+          if(auto parentPtr = nodePtr -> parentWeakPtr.lock()) {
+            if(parentPtr -> key != index) {
+              auto newNode = nodePtr -> addChild(index);
+              existingNodePtrMap.at(index).push_back(newNode);
+            } 
+          } else {
+            auto newNode = nodePtr -> addChild(index);
+            existingNodePtrMap.at(index).push_back(newNode);
+          }
+        } 
       }
     }
     
@@ -51,7 +86,8 @@ std::shared_ptr<NodeType> makeTree(
   BFSVisit(
     adjacencies,
     startingFrom,
-    indexVisitor
+    indexVisitor,
+    0
   );
 
   return rootPtr;

@@ -25,7 +25,7 @@ public:
 private:
   MapType _edges;
 
-  std::pair<AtomIndexType, AtomIndexType> _makePair(
+  std::pair<AtomIndexType, AtomIndexType> _makeOrderedPair(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const {
@@ -55,8 +55,8 @@ public:
     const AtomIndexType& b,
     const BondType& bty
   ) noexcept {
-    if(_edges.count(_makePair(a, b)) == 0) {
-      _edges[_makePair(a, b)] = bty;
+    if(_edges.count(_makeOrderedPair(a, b)) == 0) {
+      _edges[_makeOrderedPair(a, b)] = bty;
     }
   }
 
@@ -68,7 +68,7 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) noexcept {
-    auto it = _edges.find(_makePair(a, b));
+    auto it = _edges.find(_makeOrderedPair(a, b));
     if(it != _edges.end()) {
       _edges.erase(it);
     }
@@ -78,8 +78,8 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const {
-    if(_edges.count(_makePair(a, b)) == 1) {
-      return _edges.at(_makePair(a, b));
+    if(_edges.count(_makeOrderedPair(a, b)) == 1) {
+      return _edges.at(_makeOrderedPair(a, b));
     } else return boost::none;
   }
 
