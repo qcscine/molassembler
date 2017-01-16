@@ -53,6 +53,15 @@ double getRingOneFourDistance(
   const double& insideAngleRadians
 );
 
+double dihedralLength(
+  const double& a,
+  const double& b,
+  const double& c,
+  const double& abAngle,
+  const double& bcAngle,
+  const double& dihedral
+);
+
 } // eo CommonTrig
 
 }

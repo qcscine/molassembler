@@ -47,6 +47,27 @@ double getRingOneFourDistance(
   );
 }
 
+double dihedralLength(
+  const double& a,
+  const double& b,
+  const double& c,
+  const double& abAngle,
+  const double& bcAngle,
+  const double& dihedral
+) {
+  return sqrt(
+    a * a
+    + 4 * b * b
+    + c * c
+    - 4 * a * b * cos(abAngle)
+    + 2 * a * c * (
+      sin(abAngle) * sin(bcAngle) * cos(dihedral) 
+      - cos(abAngle) * cos(bcAngle)
+    )
+    + 4 * b * c * cos(bcAngle)
+  );
+}
+
 } // eo CommonTrig
 
 }

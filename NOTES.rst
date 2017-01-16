@@ -1,7 +1,8 @@
 CONTINUE AT
 -----------
-- Constraint collection and population of DistanceBoundsMatrix -> 3/4 lengths, 
-  caching of calculated i-j distances for lookup
+- How to get angles between atoms in graph? Must include some conception of
+  charge
+- Constraint collection and population of DistanceBoundsMatrix
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)
 - Minimization in generateConfiguration.h
