@@ -240,6 +240,12 @@ void DFSVisit(
 using NodeType = Tree::Node<AtomIndexType>;
 std::shared_ptr<NodeType> makeTree(
   const AdjacencyList& adjacencies,
+  const AtomIndexType& startingFrom,
+  const unsigned& maxDepth
+);
+
+std::shared_ptr<NodeType> makeTree(
+  const AdjacencyList& adjacencies,
   const AtomIndexType& startingFrom
 );
 

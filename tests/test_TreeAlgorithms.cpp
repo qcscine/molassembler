@@ -67,4 +67,52 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       0, 1, 4, 5, 7, 6, 3, 2, 3
     }));
   }
+  { // BFS, DFS with depth limit testing
+    AdjacencyList test(
+      Edges({
+        {{0, 1}, BondType::Single},
+        {{1, 2}, BondType::Single},
+        {{1, 4}, BondType::Single},
+        {{2, 3}, BondType::Single},
+        {{3, 4}, BondType::Single},
+        {{4, 5}, BondType::Single},
+        {{5, 6}, BondType::Single},
+        {{5, 7}, BondType::Single}
+      })
+    );
+
+    auto treePtr = AdjacencyListAlgorithms::makeTree(test);
+
+    std::vector<AtomIndexType> BFSVisitSequence;
+    auto BFSVisitor = [&BFSVisitSequence](const auto& nodePtr) {
+      BFSVisitSequence.push_back(nodePtr -> key);
+      return true;
+    };
+
+    TreeAlgorithms::BFSVisit(
+      treePtr,
+      BFSVisitor,
+      3
+    );
+
+    BOOST_CHECK(BFSVisitSequence == std::vector<AtomIndexType>({
+      0, 1, 2, 4, 3, 3, 5
+    }));
+
+    std::vector<AtomIndexType> DFSVisitSequence;
+    auto DFSVisitor = [&DFSVisitSequence](const auto& nodePtr) {
+      DFSVisitSequence.push_back(nodePtr -> key);
+      return true;
+    };
+
+    TreeAlgorithms::DFSVisit(
+      treePtr,
+      DFSVisitor,
+      3
+    );
+
+    BOOST_CHECK(DFSVisitSequence == std::vector<AtomIndexType>({
+      0, 1, 4, 5, 3, 2, 3
+    }));
+  }
 }

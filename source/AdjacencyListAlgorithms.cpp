@@ -10,7 +10,8 @@ using NodeType = Tree::Node<AtomIndexType>;
 
 std::shared_ptr<NodeType> makeTree(
   const AdjacencyList& adjacencies,
-  const AtomIndexType& startingFrom
+  const AtomIndexType& startingFrom,
+  const unsigned& maxDepth
 ) {
   std::shared_ptr<NodeType> rootPtr = std::make_shared<NodeType>(startingFrom);
 
@@ -87,10 +88,21 @@ std::shared_ptr<NodeType> makeTree(
     adjacencies,
     startingFrom,
     indexVisitor,
-    0
+    maxDepth
   );
 
   return rootPtr;
+}
+
+std::shared_ptr<NodeType> makeTree(
+  const AdjacencyList& adjacencies,
+  const AtomIndexType& startingFrom
+) {
+  return makeTree(
+    adjacencies,
+    startingFrom,
+    0
+  );
 }
 
 std::shared_ptr<NodeType> makeTree(
