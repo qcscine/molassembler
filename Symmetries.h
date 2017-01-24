@@ -5,18 +5,12 @@
 #include <vector>
 #include <functional>
 
+/* TODO
+ */
+
 namespace Symmetry {
 
-enum class Name {
-  Linear,
-  TrigonalPlanar,
-  Tetrahedral,
-  SquarePlanar,
-  SquarePyramidal,
-  TrigonalBiPyramidal,
-  Octahedral
-};
-
+/* Typedefs */
 using RotationsType = std::vector<
   std::vector<unsigned>
 >;
@@ -32,8 +26,31 @@ using TupleType = std::tuple<
   AngleFunctionType
 >;
 
+// Symmetry names list
+enum class Name {
+  Linear, // 2
+  Bent,
+  TrigonalPlanar, // 3
+  TrigonalPyramidal,
+  TShaped,
+  Tetrahedral, // 4
+  SquarePlanar,
+  Seesaw,
+  TrigonalBiPyramidal, // 5
+  SquarePyramidal, 
+  PentagonalPlanar,
+  Octahedral, // 6
+  TrigonalPrismatic,
+  PentagonalPyramidal,
+  PentagonalBiPyramidal, // 7
+  SquareAntiPrismatic // 8
+};
+
+// DATA
+extern const std::vector<Name> allNames;
 extern const std::map<Name, TupleType> symmetryData;
 
+// getter functions
 const std::string& name(const Name& name) {
   return std::get<0>(
     symmetryData.at(name)
