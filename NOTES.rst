@@ -1,3 +1,10 @@
+Find
+----
+
+- Predictive algorithms to state which geometry a central atom is in based on
+  various exactness: Nonmetals with VSEPR, metals and exceptions (e.g. I which
+  can be hypervalent) with CFT / LFT / ?
+
 CONTINUE AT
 -----------
 - How to get angles between atoms in graph? Must include some conception of

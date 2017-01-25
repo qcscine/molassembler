@@ -1,7 +1,7 @@
 #include "Molecule.h"
 #include "CN4Stereocenter.h"
 #include "BondDistance.h"
-#include "steric_uniqueness/SymmetryInformation.h"
+#include "symmetry_information/Symmetries.h"
 #include "CommonTrig.h"
 
 #include "GraphDistanceMatrix.h"
@@ -566,12 +566,12 @@ std::vector<DistanceConstraint> Molecule::_createConstraint(
         if(getElementType(intermediate) == Delib::ElementType::O) {
           angle = 104.5;
         } else {
-          angle = PermSymmetry::Linear::angle(0, 1);
+          angle = Symmetry::angleFunction(Symmetry::Name::Linear)(0, 1);
         }
       } else if(nLigands == 3) {
-        angle = PermSymmetry::TrigonalPlanar::angle(0, 1);
+        angle = Symmetry::angleFunction(Symmetry::Name::TrigonalPlanar)(0, 1);
       } else if(nLigands == 4) {
-        angle = PermSymmetry::Tetrahedral::angle(0, 1);
+        angle = Symmetry::angleFunction(Symmetry::Name::Tetrahedral)(0, 1);
       } 
 
       if((bool) angle) {

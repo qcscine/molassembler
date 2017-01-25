@@ -4,8 +4,10 @@
 #include <Eigen/LU>
 #include "CommonTrig.h"
 #include "StdlibTypeAlgorithms.h"
+#include "Molecule.h"
 
 #include "steric_uniqueness/GenerateUniques.h"
+#include "symmetry_information/Symmetries.h"
 
 namespace MoleculeManip {
 
@@ -144,6 +146,7 @@ CN4Stereocenter::CN4Stereocenter(
 
   _uniqueAssignments = UniqueAssignments::uniqueAssignments(
     AssignmentType(
+      Symmetry::Name::Tetrahedral,
       _reduceNeighborCharMap(
         _neighborCharMap
       )
@@ -261,9 +264,7 @@ std::vector<DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
       );
 
       auto ijAngle = StdlibTypeAlgorithms::minMaxAdaptor( 
-        StdlibTypeAlgorithms::makeFunction(
-          PermSymmetry::Tetrahedral::angle
-        ),
+        Symmetry::angleFunction(Symmetry::Name::Tetrahedral),
         _neighborSymmetryPositionMap.at(neighbors[i]),
         _neighborSymmetryPositionMap.at(neighbors[j])
       );

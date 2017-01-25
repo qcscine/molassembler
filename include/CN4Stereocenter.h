@@ -5,14 +5,15 @@
 #include "ElementTypes.h"
 
 #include <boost/optional.hpp>
+#include <Eigen/Core>
 
 #include "Stereocenter.h"
-#include "Molecule.h"
-
 #include "steric_uniqueness/Assignment.h"
-#include "steric_uniqueness/SymmetryInformation.h"
 
 namespace MoleculeManip {
+
+// forward-declare Molecule to avoid dependency
+class Molecule;
 
 namespace Stereocenters {
 
@@ -21,9 +22,7 @@ namespace Stereocenters {
 class CN4Stereocenter : public Stereocenter {
 private:
 /* Typedefs */
-  using AssignmentType = UniqueAssignments::Assignment<
-    PermSymmetry::Tetrahedral
-  >;
+  using AssignmentType = UniqueAssignments::Assignment;
 
 /* Private data */
   const Molecule* _molPtr;

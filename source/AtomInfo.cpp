@@ -260,7 +260,7 @@ bool isMainGroupElement(const Delib::ElementType& elementType) {
   return elementData.at(elementType).valenceElectrons({'d', 'f'}) == 0;
 }
 
-boost::optional<uint8_t> mainGroupVE(const Delib::ElementType& elementType) {
+boost::optional<unsigned> mainGroupVE(const Delib::ElementType& elementType) {
   if(elementData.at(elementType).valenceElectrons({'d', 'f'}) == 0) {
     return elementData.at(elementType).valenceElectrons({'s', 'p'});
   } else {
@@ -268,7 +268,7 @@ boost::optional<uint8_t> mainGroupVE(const Delib::ElementType& elementType) {
   }
 }
 
-uint8_t dElectronCount(const Delib::ElementType& elementType) {
+unsigned dElectronCount(const Delib::ElementType& elementType) {
   if(isMainGroupElement(elementType)) {
     return 0;
   } else {

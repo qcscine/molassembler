@@ -12,8 +12,8 @@ namespace AtomInfo {
 
 class ElementInfo {
 private:
-  uint8_t _valenceElectrons[4];
-  uint8_t _valenceElectronCount(const char& shell) {
+  unsigned _valenceElectrons[4];
+  unsigned _valenceElectronCount(const char& shell) {
     switch(shell) {
       case 's':
         return _valenceElectrons[0];
@@ -33,10 +33,10 @@ public:
 
   ElementInfo(
     const double& _vdwRadius,
-    const uint8_t& sValenceElectrons = 0,
-    const uint8_t& pValenceElectrons = 0,
-    const uint8_t& dValenceElectrons = 0,
-    const uint8_t& fValenceElectrons = 0
+    const unsigned& sValenceElectrons = 0,
+    const unsigned& pValenceElectrons = 0,
+    const unsigned& dValenceElectrons = 0,
+    const unsigned& fValenceElectrons = 0
   ) : 
     _valenceElectrons {
       sValenceElectrons,
@@ -47,19 +47,19 @@ public:
     vdwRadius (_vdwRadius)
   {};
   //! Returns the valence electrons for a given shell character (s, p, d, f)
-  uint8_t valenceElectrons(const char& shell) {
+  unsigned valenceElectrons(const char& shell) {
     return _valenceElectronCount(shell);
   }
-  uint8_t valenceElectrons(const std::vector<char>& shells) {
-    uint8_t sum = 0;
+  unsigned valenceElectrons(const std::vector<char>& shells) {
+    unsigned sum = 0;
     for(const char& shell : shells) {
       sum += _valenceElectronCount(shell);
     }
     return sum;
   }
   //! Returns the total valence electrons
-  uint8_t valenceElectrons() {
-    uint8_t sum;
+  unsigned valenceElectrons() {
+    unsigned sum;
     for(unsigned i = 0; i < 4; i++) {
       sum += _valenceElectrons[i];
     }
@@ -87,9 +87,9 @@ extern std::map<
 
 bool isMainGroupElement(const Delib::ElementType& elementType); 
 
-boost::optional<uint8_t> mainGroupVE(const Delib::ElementType& elementType);
+boost::optional<unsigned> mainGroupVE(const Delib::ElementType& elementType);
 
-uint8_t dElectronCount(const Delib::ElementType& elementType);
+unsigned dElectronCount(const Delib::ElementType& elementType);
 
 double vdwRadius(const Delib::ElementType& elementType);
 
