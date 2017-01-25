@@ -201,7 +201,7 @@ const std::map<Name, TupleType> symmetryData {
      *    1   2
      *
      */
-    "square planar",
+    "seesaw",
     4,
     {
       {3, 2, 1, 0} // C2
