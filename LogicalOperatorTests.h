@@ -20,7 +20,7 @@ constexpr bool XOR(Bools ... bools) {
 
 // For any two types, check consistency of their logical operators
 template<typename T>
-bool testLogicalOperators(const T& a, const T& b) {
+constexpr bool testLogicalOperators(const T& a, const T& b) {
   return (
     XOR( // only one of the following three cases may be true at any time
       a < b && b > a && a != b,
@@ -34,7 +34,7 @@ bool testLogicalOperators(const T& a, const T& b) {
 }
 
 template<typename T>
-bool testOperatorSmaller(const T& a, const T& b) {
+constexpr bool testOperatorSmaller(const T& a, const T& b) {
   return XOR(
     a < b,
     b < a, 

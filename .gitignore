@@ -1,2 +1,5 @@
 *.swp
 bin_*
+*.o
+*.a
+build/

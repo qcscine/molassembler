@@ -161,8 +161,8 @@ public:
     ).value_or(
       Util::compareSmaller(
         // see if this does the trick
-        Util::removeIndexFromSet(makeConnectedIndicesSet(a), b),
-        Util::removeIndexFromSet(makeConnectedIndicesSet(b), a)
+        Util::removeElementFromSet(makeConnectedIndicesSet(a), b),
+        Util::removeElementFromSet(makeConnectedIndicesSet(b), a)
       ).value_or(
         false
       )

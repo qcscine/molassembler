@@ -20,12 +20,13 @@ boost::optional<bool> compareSmaller(
   else return {};
 }
 
-std::set<unsigned> removeIndexFromSet(
-  std::set<unsigned> indexSet,
-  unsigned toRemove
+template<typename T>
+std::set<T> removeElementFromSet(
+  std::set<T> set,
+  T toRemove
 ) {
-  indexSet.erase(toRemove);
-  return indexSet;
+  set.erase(toRemove);
+  return set;
 }
 
 template<typename Function, typename T1, typename T2>
