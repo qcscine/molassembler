@@ -51,29 +51,10 @@ extern const std::vector<Name> allNames;
 extern const std::map<Name, TupleType> symmetryData;
 
 // getter functions
-const std::string& name(const Name& name) {
-  return std::get<0>(
-    symmetryData.at(name)
-  );
-}
-
-unsigned size(const Name& name) {
-  return std::get<1>(
-    symmetryData.at(name)
-  );
-}
-
-const RotationsType& rotations(const Name& name) {
-  return std::get<2>(
-    symmetryData.at(name)
-  );
-}
-
-const AngleFunctionType& angleFunction(const Name& name) {
-  return std::get<3>(
-    symmetryData.at(name)
-  );
-}
+const std::string& name(const Name& name);
+unsigned size(const Name& name);
+const RotationsType& rotations(const Name& name);
+const AngleFunctionType& angleFunction(const Name& name);
 
 } // eo namespace
 
