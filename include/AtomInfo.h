@@ -28,6 +28,21 @@ private:
     }
   }
 
+  unsigned _maxOccupancy(const char& shell) {
+    switch(shell) {
+      case 's':
+        return 2;
+      case 'p':
+        return 6;
+      case 'd':
+        return 10;
+      case 'f':
+        return 14;
+      default:
+        return 0;
+    }
+  }
+
 public:
   double vdwRadius;
 
@@ -50,6 +65,7 @@ public:
   unsigned valenceElectrons(const char& shell) {
     return _valenceElectronCount(shell);
   }
+
   unsigned valenceElectrons(const std::vector<char>& shells) {
     unsigned sum = 0;
     for(const char& shell : shells) {
@@ -57,6 +73,24 @@ public:
     }
     return sum;
   }
+
+  bool shellFullOrEmpty(const char& shell) {
+    return (
+      _valenceElectronCount(shell) == 0
+      || _valenceElectronCount(shell) == _maxOccupancy(shell)
+    );
+  }
+
+  bool shellsFullOrEmpty(const std::vector<char>& shells) {
+    for(const char& shell : shells) {
+      if(!shellFullOrEmpty(shell)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   //! Returns the total valence electrons
   unsigned valenceElectrons() {
     unsigned sum;

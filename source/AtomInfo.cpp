@@ -257,11 +257,11 @@ std::map<
 };
 
 bool isMainGroupElement(const Delib::ElementType& elementType) {
-  return elementData.at(elementType).valenceElectrons({'d', 'f'}) == 0;
+  return elementData.at(elementType).shellsFullOrEmpty({'d', 'f'});
 }
 
 boost::optional<unsigned> mainGroupVE(const Delib::ElementType& elementType) {
-  if(elementData.at(elementType).valenceElectrons({'d', 'f'}) == 0) {
+  if(isMainGroupElement(elementType)) {
     return elementData.at(elementType).valenceElectrons({'s', 'p'});
   } else {
     return {};
