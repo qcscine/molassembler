@@ -1,13 +1,11 @@
-# How to make this into a library?
-# Dynamic / static? It would be shit if this add-on to Delib would supercede it
-
 # oldest tested version of cmake used (too lazy to figure out newest compatible
 # cmake version)
 cmake_minimum_required(VERSION 3.5.1)
 
 # local paths
 set(libs_INCLUDE_DIR "/home/jan-grimo/PhD/projects/libs")
-set(BOOST_INCLUDE_DIRS "usr/include/boost")
+set(BOOST_INCLUDE_DIRS "/usr/include/boost")
+set(symmetry_LIB "/home/jan-grimo/PhD/projects/libs/symmetry_information/build/libsymmetries.a")
 
 # declaration
 project(StericUniqueness)
@@ -24,13 +22,13 @@ set(HEADERS_all
   Assignment.h
   GenerateUniques.h
   LogicalOperatorTests.h
-  SymmetryInformation.h
   Util.h
 )
 
 # sources definition
 set(SOURCES_all
-  SymmetryInformation.cpp
+  Assignment.cpp
+  GenerateUniques.cpp
 )
 
 # specify targets
@@ -41,6 +39,7 @@ if( UNIX )
   add_definitions(-fPIC)
 endif()
 target_compile_options(Assignment PUBLIC -O2 -g -std=c++14 -Wall -Wpedantic -Wextra)
+target_link_libraries(Assignment ${symmetry_LIB})
 
 # testing target
 add_executable(AssignmentTests tests.cpp)

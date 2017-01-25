@@ -9,8 +9,6 @@
 #include <functional>
 
 #include "GenerateUniques.h"
-#include "SymmetryInformation.h"
-
 #include "LogicalOperatorTests.h"
 
 using namespace UniqueAssignments;
@@ -32,26 +30,32 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
 
 BOOST_AUTO_TEST_CASE( assignment_instantiation ) {
   // can make instances of all symmetries
-  Assignment<PermSymmetry::Tetrahedral> tetr(
+  Assignment tetr(
+    Symmetry::Name::Tetrahedral,
     std::vector<char>(4, 'A')
   );
-  Assignment<PermSymmetry::SquarePlanar> sqpl(
+  Assignment sqpl(
+    Symmetry::Name::SquarePlanar,
     std::vector<char>(4, 'A')
   );
-  Assignment<PermSymmetry::SquarePyramidal> sqpy(
+  Assignment sqpy(
+    Symmetry::Name::SquarePyramidal,
     std::vector<char>(5, 'A')
   );
-  Assignment<PermSymmetry::TrigonalBiPyramidal> trigbipy(
+  Assignment trigbipy(
+    Symmetry::Name::TrigonalBiPyramidal,
     std::vector<char>(5, 'A')
   );
-  Assignment<PermSymmetry::Octahedral> octa(
+  Assignment octa(
+    Symmetry::Name::Octahedral,
     std::vector<char>(6, 'A')
   );
 }
 
 BOOST_AUTO_TEST_CASE( assignment_basics ) {
   // Constructors
-  Assignment<PermSymmetry::Octahedral> instanceWithBondedLigands(
+  Assignment instanceWithBondedLigands(
+    Symmetry::Name::Octahedral,
     {'A', 'B', 'C', 'D', 'E', 'F'},
     {
       std::make_pair(0,1),
@@ -59,7 +63,6 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
       std::make_pair(4,5)
     }
   );
-
   
   { // columnSwap
     auto instanceCopy = instanceWithBondedLigands;
@@ -110,7 +113,8 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
 }
 
 BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
-  Assignment<PermSymmetry::Octahedral> single {
+  Assignment single {
+    Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'A', 'A', 'A'},
     {
       std::make_pair(0,1),
@@ -139,7 +143,8 @@ BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
 }
 
 BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
-  Assignment<PermSymmetry::Octahedral> testCase {
+  Assignment testCase {
+    Symmetry::Name::Octahedral,
     {'A', 'A', 'C', 'D', 'B', 'B'},
     {
       std::make_pair(0, 5),
@@ -155,7 +160,7 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
   };
 
   auto testInstance = [&isAorB](
-    const Assignment<PermSymmetry::Octahedral>& instance
+    const Assignment& instance
   ) {
     return std::accumulate(
       instance.links.begin(),
@@ -188,7 +193,8 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
 }
 
 BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
-  Assignment<PermSymmetry::Octahedral> octahedralInstance(
+  Assignment octahedralInstance(
+    Symmetry::Name::Octahedral,
     {'A', 'B', 'C', 'D', 'E', 'F'}
   );
 
@@ -199,8 +205,8 @@ BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
   
 }
 
-template<class Symmetry>
 void run_tests(
+  const Symmetry::Name& symmetryName,
   const std::vector<
     std::tuple<
       std::vector<char>, // characters
@@ -221,9 +227,9 @@ void run_tests(
     std::tie(characters, pairs, expectedUnique) = tuple;
 
     // instantiate
-    Assignment<Symmetry> assignment = (pairs.size() == 0)
-      ? Assignment<Symmetry>(characters)
-      : Assignment<Symmetry>(characters, pairs);
+    Assignment assignment = (pairs.size() == 0)
+      ? Assignment(symmetryName, characters)
+      : Assignment(symmetryName, characters, pairs);
 
     auto unique = uniqueAssignments(assignment);
     BOOST_CHECK(unique.size() == expectedUnique );
@@ -239,7 +245,8 @@ void run_tests(
 }
 
 BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
-  Assignment<PermSymmetry::Octahedral> a {
+  Assignment a {
+    Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
       std::make_pair(2, 3),
@@ -247,7 +254,8 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
       std::make_pair(0, 5)
     }
   };
-  Assignment<PermSymmetry::Octahedral> b {
+  Assignment b {
+    Symmetry::Name::Octahedral,
     {'A', 'A', 'B', 'A', 'B', 'B'},
     {
       std::make_pair(3, 5),
@@ -265,7 +273,8 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
   /* Contrived example of two that have inconsistent logical operators, just
    * reordered op pairs. Will evaluate == but also < w/ current impl.
    */
-  Assignment<PermSymmetry::Octahedral> c {
+  Assignment c {
+    Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
       std::make_pair(2, 3),
@@ -273,7 +282,8 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
       std::make_pair(0, 5)
     }
   };
-  Assignment<PermSymmetry::Octahedral> d {
+  Assignment d {
+    Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
       std::make_pair(1, 4),
@@ -290,7 +300,9 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
 /* Tetrahedral tests */
 /* These were thought up myself */
 BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
-  run_tests<PermSymmetry::Tetrahedral>({
+  run_tests(
+    Symmetry::Name::Tetrahedral, 
+    {
     // M_A
     std::make_tuple(
       std::vector<char>(4, 'A'),
@@ -337,7 +349,9 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
 /* Square Planar tests */
 /* These were thought up myself */
 BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
-  run_tests<PermSymmetry::SquarePlanar>({
+  run_tests(
+    Symmetry::Name::SquarePlanar,
+    {
     // M_A
     std::make_tuple(
       std::vector<char>(4, 'A'),
@@ -389,7 +403,8 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
  * The reference however is useful: WE Bennett, Inorg. Chem. 1969
  */
 BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
-  run_tests<PermSymmetry::Octahedral>(
+  run_tests(
+    Symmetry::Name::Octahedral,
     {
       // M_A
       std::make_tuple(
@@ -488,7 +503,8 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
 }
 
 BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
-  run_tests<PermSymmetry::Octahedral>(
+  run_tests(
+    Symmetry::Name::Octahedral,
     {
       // M(A-A)_3
       std::make_tuple(
