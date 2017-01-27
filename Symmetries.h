@@ -15,6 +15,10 @@ using RotationsType = std::vector<
   std::vector<unsigned>
 >;
 
+/* All angle functions can be called with arbitrary (valid) parameters
+ * without failing. Valid here means that a != b and less than the size of
+ * the symmetry requested.
+ */
 using AngleFunctionType = std::function<
   double(const unsigned&, const unsigned&)
 >;

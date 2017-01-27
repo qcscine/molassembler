@@ -166,7 +166,8 @@ const std::map<Name, TupleType> symmetryData {
     }
   )}, 
   {Name::SquarePlanar, TupleType(
-    /* 3   2
+    /* 
+     * 3   2
      *  \_/
      *  (_) <- central atom
      *  / \
@@ -184,7 +185,6 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      assert(a < 4 && b < 4 && a != b);
       if((a + b) % 2 == 1) {
         // this expression indicates cis
         return 90;
@@ -216,23 +216,23 @@ const std::map<Name, TupleType> symmetryData {
     }
   )}, 
   {Name::SquarePyramidal, TupleType(
-    /* 4   3
+    /* 
+     * 3   2
      *  \_/
-     *  (5)   
+     *  (4)   
      *  / \
-     * 1   2
+     * 0   1
      *
      * Viewed from the top of the pyramid. The central atom is ( ), 5 is axial.
      *
-     * Alternatively
+     * Alternatively,
      *
-     *    5
-     *    |
-     * 4  |  3
+     *    4
+     * 3  |  2
      *  : | :    <- behind view plane
      *   (_)
      *  /   \    <- in front of view plane
-     * 1     2
+     * 0     1
      *
      */
     "square pyramidal",
@@ -244,51 +244,44 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      assert(a < 5 && b < 5 && a != b && a < b);
-      if(b < 4 && (a + b) % 2 == 0) {
-        /* as long as b is not the pyramidal ligand, 
-         * (a + b) % 2 == 0 is true for trans ligands only
-         */
-        return 180;
-      } else { 
-        // all other cases are
-        return 90;
-      }
+      if(a == 4 || b == 4) return 90; // all bonds to axial ligand are 90°
+      else if(a + b % 2 == 0) return 180; // 0 + 2 or 1 + 3 are trans
+      else return 90; // rest are cis
     }
   )}, 
   {Name::TrigonalBiPyramidal, TupleType(
-    /* Viewed from the top of the pyramid. The central atom is ( ), 4 and 5 
+    /* Viewed from the top of the pyramid. The central atom is ( ), 3 and 4 
      * are axial.
      *
-     *     4
-     *     |  3
-     *     | :    <- behind view plane
-     * 1--(_)
-     *     | \    <- in front of view plane
+     *     3
      *     |  2
-     *     5
+     *     | :    <- behind view plane
+     * 0--(_)
+     *     | \    <- in front of view plane
+     *     |  1
+     *     4
      */
     "trigonal bipyramidal",
     5,
     {
       {2, 0, 1, 3, 4}, // C3
-      {0, 2, 1, 4, 3}, // C2 on 1
-      {2, 1, 0, 4, 3}, // C2 on 2
-      {1, 0, 2, 4, 3} // C2 on 3
+      {0, 2, 1, 4, 3}, // C2 on 0
+      {2, 1, 0, 4, 3}, // C2 on 1
+      {1, 0, 2, 4, 3} // C2 on 2
     },
     [](
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      assert(a < 5 && b < 5 && a != b && a < b);
-      if(b < 3) {
-        // since a < b, this means either 0,1 0,2 1,2 
+      unsigned smaller = std::min(a, b), larger = std::max(a, b);
+      if(larger < 3) {
+        // -> smaller < 2, this means either 0,1 0,2 1,2 axial
         return 120;
-      } else if(b == 3) {
-        // since a < b, this means {1,2,3}, 3 
+      } else if(larger == 3) {
+        // -> smaller < 3, this means {1,2,3}, 3 
         return 90;
-      } else if(a < 3) {
-        // now, b must be 4, and if a is not 3, then
+      } else if(smaller < 3) {
+        // now, larger must be 4 (process of elimination), so if a is not 3:
         return 90;
       } else {
         // only case left: 3,4
@@ -323,15 +316,15 @@ const std::map<Name, TupleType> symmetryData {
     }
   )}, 
   {Name::Octahedral, TupleType(
-    /* The central atom is ( ), 5 and 6 are axial, the rest equatorial.
+    /* The central atom is ( ), 4 and 5 are axial, the rest equatorial.
      *
-     *     5
-     *  4  |  3
+     *     4
+     *  3  |  2
      *   : | :
      *    (_)        
      *   / | \
-     *  1  |  2
-     *     6
+     *  0  |  1
+     *     5
      *
      * Where /, \ denote bonds in front of the view plane, : denotes bonds
      * behind the view plane.
@@ -347,12 +340,11 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      assert(a < 6 && b < 6 && a != b && a < b);
       if(
         (
-          b < 4 // if b < 4, then only equatorial ligands
+          std::max(a, b) < 4 // if the largest is < 4, then equatorial 
           && (a + b) % 2 == 0 // this gives trans eq ligands
-        ) || a == 4 // this indicates 4,5 (axial trans)
+        ) || std::min(a, b) == 4 // this indicates 4,5 (axial trans)
       ) {
         return 180;
       } else {
@@ -388,7 +380,6 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      assert(a != b);
       if(std::min(a - b, b - a) == 3) return 76;
       else {
         if(
@@ -488,6 +479,7 @@ const std::map<Name, TupleType> symmetryData {
      *   1   5   2
      *
      * Angles:
+     *
      *   in-plane cis (4, 5) -> 55°
      *   in-plane trans (4, 6) -> 148°
      *   short between planes (0, 4) -> 51°
