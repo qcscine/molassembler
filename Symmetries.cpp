@@ -122,7 +122,7 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if(a + b % 2 == 1) {
+      if((a + b) % 2 == 1) {
         return 90;
       } else {
         return 180;
@@ -210,8 +210,10 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if(a == 0 && b == 3) return 180;
-      else if(a == 1 && b == 2) return 120;
+      const auto& smaller = std::min(a, b);
+      const auto& larger = std::max(a, b);
+      if(smaller == 0 && larger == 3) return 180;
+      else if(smaller == 1 && larger == 2) return 120;
       else return 90;
     }
   )}, 
@@ -245,7 +247,7 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& b
     ) -> double {
       if(a == 4 || b == 4) return 90; // all bonds to axial ligand are 90°
-      else if(a + b % 2 == 0) return 180; // 0 + 2 or 1 + 3 are trans
+      else if((a + b) % 2 == 0) return 180; // 0 + 2 or 1 + 3 are trans
       else return 90; // rest are cis
     }
   )}, 
@@ -520,7 +522,7 @@ const std::map<Name, TupleType> symmetryData {
         (a < 4 && b < 4)
         || (a >= 4 && b >= 4)
       ) { // in plane
-        if(a + b % 2 == 1) return 55; // cis 
+        if((a + b) % 2 == 1) return 55; // cis 
         else return 148;
       } else { // between planes
         unsigned minDiff = std::min(a - b, b - a);

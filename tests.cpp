@@ -4,6 +4,7 @@
 
 #include "Symmetries.h"
 #include <set>
+#include <iostream>
 
 using namespace Symmetry;
 
@@ -90,5 +91,25 @@ BOOST_AUTO_TEST_CASE( symmetrySanityTests ) {
 
       BOOST_CHECK(pass);
     }
+  }
+
+  // every angle function must be symmetrical on input of valid unsigned indices
+  for(const auto& symmetryName: allNames) {
+    bool passesAll = true;
+
+    for(unsigned i = 0; i < size(symmetryName) && passesAll; i++) {
+      for(unsigned j = i + 1; j < size(symmetryName); j++) {
+        if(angleFunction(symmetryName)(i, j) != angleFunction(symmetryName)(j, i)) {
+          passesAll = false;
+          std::cout << name(symmetryName) 
+            << " is not symmetrical w.r.t. input indices: falsified by (" 
+            << i << ", " << j <<") -> (" << angleFunction(symmetryName)(i, j) 
+            << ", " << angleFunction(symmetryName)(j, i) << ")." << std::endl;
+          break;
+        }
+      }
+    }
+
+    BOOST_CHECK(passesAll);
   }
 }
