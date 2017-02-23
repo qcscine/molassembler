@@ -5,9 +5,6 @@
 # cmake version)
 cmake_minimum_required(VERSION 3.5.1)
 
-# boost inclusion
-set(BOOST_INCLUDE_DIRS "/usr/include/boost")
-
 # declaration
 project(SymmetryInformation)
 enable_testing()
@@ -35,7 +32,7 @@ target_compile_options(symmetries PUBLIC -O2 -g -std=c++14 -Wall -Wpedantic -Wex
 
 add_executable(symmetryTests tests.cpp)
 target_compile_options(symmetryTests PUBLIC -O2 -g -std=c++14 -Wall -Wpedantic -Wextra)
-target_include_directories(symmetryTests PRIVATE ${BOOST_INCLUDE_DIRS})
+target_include_directories(symmetryTests PRIVATE ${BOOST_ROOT})
 target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)
 
 # add test
