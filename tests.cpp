@@ -1,6 +1,5 @@
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
-#include <boost/test/unit_test.hpp>
+#define BOOST_TEST_MODULE SymmetryTests
+#include <boost/test/included/unit_test.hpp>
 
 #include "Symmetries.h"
 #include <set>
