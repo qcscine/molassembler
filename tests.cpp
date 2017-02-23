@@ -5,6 +5,7 @@
 #include "Symmetries.h"
 #include <set>
 #include <iostream>
+#include <algorithm>
 
 using namespace Symmetry;
 
