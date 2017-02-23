@@ -4,7 +4,7 @@ build:
     - centos
   script:
     - module load gcc/6.2.0
-    - module load boost/6.2.0-cmake
+    - module load boost/gcc-6.2.0/1.62.0-cmake
     - mkdir -p build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release ..
