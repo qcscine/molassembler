@@ -1,0 +1,25 @@
+build:
+  stage: build
+  tags:
+    - centos
+  script:
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - make -j8
+  cache:
+    key: "$CI_BUILD_REF_NAME"
+    paths:
+    - build/
+
+test:
+  stage: test
+  tags:
+    - centos
+  script:
+    - cd build
+    - make test
+  cache:
+    key: "$CI_BUILD_REF_NAME"
+    paths:
+    - build/
