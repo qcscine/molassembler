@@ -14,6 +14,8 @@
 /* TODO
  * - test V2000
  * - implement V3000
+ * - Read coordinates are currently discarded. Either process them for
+ *   information or use them to check against the CTAB
  */
 
 namespace MoleculeManip {
@@ -340,7 +342,6 @@ public:
 
     return Molecule(
       _elements,
-      _positions,
       _adjacencies,
       _edges
     );

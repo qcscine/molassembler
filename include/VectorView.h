@@ -1,3 +1,6 @@
+#ifndef INCLUDE_VECTOR_VIEW_H
+#define INCLUDE_VECTOR_VIEW_H
+
 #include <vector>
 #include <functional>
 #include <algorithm>
@@ -135,3 +138,5 @@ public:
   }
 
 };
+
+#endif

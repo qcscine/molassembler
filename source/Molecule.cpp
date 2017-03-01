@@ -31,11 +31,15 @@
  *   maybe also consider the Wiener index, global clustering and algebraic
  *   connectivity
  *
+ *   (in progress)
+ * - alter all functions to respect the internal-external divide with internal 
+ *   indices always being contiguous!
+ *
  */
 
 namespace MoleculeManip {
 
-/* Constructors */
+/* Constructors --------------------------------------------------------------*/
 Molecule::Molecule(
   const Delib::ElementType& a,
   const Delib::ElementType& b,
@@ -68,27 +72,110 @@ Molecule::Molecule(
   _detectStereocenters();
 }
 
-Molecule::Molecule(
-  const Delib::ElementTypeCollection& elements,
-  const Delib::PositionCollection& positions,
-  const AdjacencyList& adjacencies,
-  const Edges& edges
-) : 
-  _elements(elements),
-  _positions(positions),
-  _adjacencies(adjacencies),
-  _edges(edges) {
-  
-  _detectStereocenters();
+/* Private member functions --------------------------------------------------*/
+// TODO deprecate and remove as soon as BFSConstraintCollector is ready
+std::vector<DistanceConstraint> Molecule::_createConstraint(
+  const std::vector<AtomIndexType>& chain
+) const {
+  auto& i = chain.front();
+  auto& j = chain.back();
+
+  switch(chain.size()) {
+    case 2: {
+      auto distance = Bond::calculateBondDistance(
+        getElementType(i),
+        getElementType(j),
+        getBondType(i, j)
+      );
+      return {
+        DistanceConstraint(
+          i,
+          j,
+          0.99 * distance,
+          1.01 * distance
+        )
+      };
+    }
+    case 3: {
+      auto& intermediate = chain[1];
+      // TODO continue here
+      // no considerations of charge at all so far, not even VSEPR
+      boost::optional<double> angle;
+      // determine which symmetry applies at intermediate position, angle
+      auto nLigands = getBondedAtomIndices(intermediate).size();
+      if(nLigands == 2) {
+        if(getElementType(intermediate) == Delib::ElementType::O) {
+          angle = 104.5;
+        } else {
+          angle = Symmetry::angleFunction(Symmetry::Name::Linear)(0, 1);
+        }
+      } else if(nLigands == 3) {
+        angle = Symmetry::angleFunction(Symmetry::Name::TrigonalPlanar)(0, 1);
+      } else if(nLigands == 4) {
+        angle = Symmetry::angleFunction(Symmetry::Name::Tetrahedral)(0, 1);
+      } 
+
+      if((bool) angle) {
+        auto a = Bond::calculateBondDistance(
+          getElementType(i),
+          getElementType(intermediate),
+          getBondType(i, intermediate)
+        );
+        auto b = Bond::calculateBondDistance(
+          getElementType(intermediate),
+          getElementType(j),
+          getBondType(intermediate, j)
+        );
+        auto distance = CommonTrig::lawOfCosines(
+          a,
+          b,
+          angle.value() * M_PI / 180.0
+        );
+
+        return {
+          DistanceConstraint(
+            i,
+            j,
+            0.95 * distance,
+            1.05 * distance
+          )
+        };
+      } else {
+        return {};
+      }
+    }
+    case 4: {
+      // TODO implement
+      return {};
+    }
+    default: {
+      return {
+        DistanceConstraint(
+          i,
+          j,
+          (
+            AtomInfo::vdwRadius(getElementType(i))
+            + AtomInfo::vdwRadius(getElementType(j))
+          ),
+          100
+        )
+      };
+    }
+  }
 }
 
-/* Private member functions */
 void Molecule::_detectStereocenters() {
+  // TODO add all other CN stereocenters, EZ Stereocenter
   for(unsigned i = 0; i < _adjacencies.size(); i++) {
     if(
+      /* TODO this is no longer a valid way of checking how many ligands there are
+       * eta bonds exist!
+       */
       _adjacencies[i].size() == 4 
-      && hydrogenCount(i) < 2 // reduces amount of superfluous constructions
+      // to reduce amount of calculations yielding 1 possible arrangement 
+      && hydrogenCount(i) < 2 
     ) {
+      // Construct a Stereocenter here, currently only CN4Stereocenters
       std::shared_ptr<
         Stereocenters::CN4Stereocenter
       > newStereocenter = std::make_shared<
@@ -105,265 +192,6 @@ void Molecule::_detectStereocenters() {
       }
     }
   }
-}
-
-bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
-  return (
-    a < _adjacencies.size()
-    && _elements[a] != Delib::ElementType::none
-  );
-}
-
-bool Molecule::_validAtomIndices(
-  const AtomIndexType& a,
-  const AtomIndexType& b
-) const {
-  return (
-    _validAtomIndex(a)
-    && _validAtomIndex(b)
-    && a < b
-  );
-}
-
-AtomIndexType Molecule::addAtom(
-  const Delib::ElementType& elementType,
-  const AtomIndexType& bondedToIndex,
-  const BondType& bondType
-) {
-  auto addedIndex = _adjacencies.addSlot();
-
-  assert(bondedToIndex < addedIndex);
-  _adjacencies.addAdjacency(
-    bondedToIndex,
-    addedIndex
-  );
-
-  _edges.add(
-    bondedToIndex,
-    addedIndex,
-    bondType
-  );
-
-  _elements.push_back(elementType);
-
-  return addedIndex;
-}
-
-void Molecule::addBond(
-  const AtomIndexType& a,
-  const AtomIndexType& b,
-  const BondType& bondType
-) {
-  assert(_validAtomIndices(a, b));
-  _adjacencies.addAdjacency(
-    a,
-    b
-  );
-
-  _edges.add(
-    a,
-    b,
-    bondType
-  );
-}
-
-void Molecule::removeAtom(const AtomIndexType& a) {
-  assert(_validAtomIndex(a));
-
-  // must update edges and adjacencies 
-  auto bonded_to = _adjacencies.getAdjacencies(a);
-
-  // erase all edges to and from this atom
-  for(const auto& bondedAtomIndex : bonded_to) {
-    _edges.remove(
-      std::min(a, bondedAtomIndex),
-      std::max(a, bondedAtomIndex)
-    );
-  }
-
-  // remove all other mentions in _adjacencies
-  for(const auto& bondedAtomIndex : bonded_to) {
-    _adjacencies.removeAdjacency(a, bondedAtomIndex);
-  }
-
-  // set _atom_exists to false for this index
-  _elements[a] = Delib::ElementType::none;
-}
-
-void Molecule::removeBond(
-  const AtomIndexType& a,
-  const AtomIndexType& b
-) {
-  assert(_validAtomIndices(a, b));
-  _adjacencies.removeAdjacency(a, b);
-
-  _edges.remove(
-    a,
-    b
-  );
-}
-
-Delib::ElementType Molecule::getElementType(
-  const AtomIndexType& a
-) const {
-  assert(_validAtomIndex(a));
-  return _elements[a];
-}
-
-AtomIndexType Molecule::getNumAtoms() const {
-  return _elements.size();
-}
-
-EdgeIndexType Molecule::getNumBonds() const {
-  return _edges.size();
-}
-
-const Edges& Molecule::getEdges() const {
-  return _edges;
-}
-
-BondType Molecule::getBondType(
-  const AtomIndexType& a,
-  const AtomIndexType& b
-) const {
-  auto edgeOption = _edges.get(a, b);
-  assert(edgeOption);
-  return edgeOption.value();
-}
-
-unsigned Molecule::hydrogenCount(const AtomIndexType& a) const {
-  assert(_validAtomIndex(a));
-  unsigned count = 0;
-  for(const auto& adjacentIndex : _adjacencies[a]) {
-    if(getElementType(adjacentIndex) == Delib::ElementType::H) {
-      count += 1;
-    }
-  }
-  return count;
-}
-
-std::vector<AtomIndexType> Molecule::getBondedAtomIndices(
-  const AtomIndexType& a
-) const {
-  assert(_validAtomIndex(a));
-  return _adjacencies.getAdjacencies(a);
-}
-
-/* TODO
- * - does not treat correctly:
- *   - cycles
- *   - stereocenters (Z over E, R over S (?))
- *   - double and triple bond ghost atom splitting
- * - unsure about sub-lists. is this approach even remotely correct?
- * - FUCK CIP rules -> maybe just use the unsigned values of assignments in
- *   GraphFeatures and rank branches with that.
- * - test
- */
-std::pair<
-  std::vector<AtomIndexType>, // the sorted list of substituent priorities
-  std::set< // a set of pairs of AtomIndexTypes that are EQUAL
-    std::pair<
-      AtomIndexType,
-      AtomIndexType
-    >
-  >
-> Molecule::rankPriority(
-  const AtomIndexType& a,
-  const std::vector<AtomIndexType>& excludeAdjacent 
-) const {
-  auto toRank = _adjacencies.getAdjacencies(a);
-  std::set<
-    std::pair<
-      AtomIndexType,
-      AtomIndexType
-    >
-  > equalPairs;
-
-  // remove excludes from toRank
-  toRank.erase(
-    std::remove_if(
-      toRank.begin(),
-      toRank.end(),
-      [&excludeAdjacent](const AtomIndexType& atomIndex) {
-        return std::find(
-          excludeAdjacent.begin(),
-          excludeAdjacent.end(),
-          atomIndex
-        ) != excludeAdjacent.end();
-      }
-    ),
-    toRank.end()
-  );
-
-  auto getZ = [this](const AtomIndexType& a) -> int {
-    return static_cast<int>(getElementType(a));
-  };
-
-  auto BFSIterate = [this, getZ](
-    std::set<AtomIndexType>& visitedSet,
-    std::vector<AtomIndexType>& seeds,
-    std::multiset<int, std::greater<int> >& Zs
-  ) {
-    std::vector<AtomIndexType> newSeeds;
-    for(const auto& index : seeds) {
-      auto adjacent = getBondedAtomIndices(index);
-      for(const auto& potentialSeed : adjacent) {
-        // if not in visitedSet
-        if(visitedSet.count(potentialSeed) == 0) {
-          // add it to the set and new seeds
-          visitedSet.insert(potentialSeed);
-          newSeeds.push_back(potentialSeed);
-
-          // add it's Z to Zs
-          Zs.insert(getZ(potentialSeed));
-        } // else skip
-      }
-    }
-
-    // overwrite seeds
-    seeds = newSeeds;
-  };
-  
-  // sort toRank according to CIP-like rules
-  std::sort(
-    toRank.begin(),
-    toRank.end(),
-    [&a, this, &getZ, &BFSIterate, &equalPairs](
-      const AtomIndexType& lhs,
-      const AtomIndexType& rhs
-    ) {
-      std::set<AtomIndexType> lhsVisited = {a}, rhsVisited = {a};
-      std::vector<AtomIndexType> lhsSeeds = {lhs}, rhsSeeds = {rhs};
-      std::multiset<
-        int,
-        std::greater<int> // in CIP, list of Z is ordered DESC
-      > lhsZ = { getZ(lhs) }, rhsZ = { getZ(rhs) };
-      while(
-          lhsSeeds.size() > 0
-          || rhsSeeds.size() > 0
-      ) {
-        // compare lists
-        if(lhsZ < rhsZ) return true;
-        else if(lhsZ > rhsZ) return false;
-
-        // iterate along the bonds
-        BFSIterate(lhsVisited, lhsSeeds, lhsZ);
-        BFSIterate(rhsVisited, rhsSeeds, rhsZ);
-      }
-
-      // all equal -> add to equalPairs
-      equalPairs.emplace(
-        std::min(lhs, rhs),
-        std::max(lhs, rhs)
-      );
-      return false;
-    }
-  );
-
-  return {
-    toRank,
-    equalPairs
-  };
 }
 
 void Molecule::_dumpGraphviz(std::ostream& os) const {
@@ -485,22 +313,164 @@ void Molecule::_dumpGraphviz(std::ostream& os) const {
   os << "\n}\n";
 }
 
-std::ostream& operator << (
-  std::ostream& os,
-  const Molecule& mol
-) {
-  os << "Begin graphviz –––––––––––––––\n\n";
-  mol._dumpGraphviz(os);
-  os << "\n––––––––––––––––– End graphviz\n\n";
+bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
+  return (
+    a < _adjacencies.size()
+  );
+}
 
-  if(mol._stereocenters.size() > 0) {
-    os << "Stereocenter information:\n";
-    for(const auto& stereocenterPtr: mol._stereocenters) {
-      os << stereocenterPtr << std::endl;
+/* Public modifiers ----------------------------------------------------------*/
+AtomIndexType Molecule::addAtom(
+  const Delib::ElementType& elementType,
+  const AtomIndexType& bondedToIndex,
+  const BondType& bondType
+) {
+  assert(_validAtomIndex(bondedToIndex));
+
+  auto addedIndex = _adjacencies.addSlot();
+
+  _adjacencies.addAdjacency(
+    bondedToIndex,
+    addedIndex
+  );
+
+  _edges.add(
+    bondedToIndex,
+    addedIndex,
+    bondType
+  );
+
+  _elements.push_back(elementType);
+
+  return addedIndex;
+}
+
+void Molecule::addBond(
+  const AtomIndexType& a,
+  const AtomIndexType& b,
+  const BondType& bondType
+) {
+  assert(_validAtomIndex(a) && _validAtomIndex(b));
+
+  _adjacencies.addAdjacency(a, b);
+
+  _edges.add(a, b, bondType);
+}
+
+void Molecule::removeAtom(const AtomIndexType& a) {
+  assert(_validAtomIndex(a));
+
+  // copy out the adjacency list
+  auto adjacencyListCopy = _adjacencies;
+
+  // must update edges and adjacencies 
+  auto bonded_to = adjacencyListCopy.getAdjacencies(a);
+
+  // remove all mentions in the copied AdjacencyList
+  for(const auto& bondedAtomIndex : bonded_to) {
+    adjacencyListCopy.removeAdjacency(a, bondedAtomIndex);
+  }
+
+  // is this still a connected molecule or have we split it in two
+  if(AdjacencyListAlgorithms::numConnectedComponents(adjacencyListCopy) != 1) {
+    // No modifications have actually been made to this Molecule
+    throw std::logic_error(
+      "The selected atom removal would lead to a molecule split!"
+    );
+  }
+
+  // erase all edges to and from this atom
+  for(const auto& bondedAtomIndex : bonded_to) {
+    _edges.remove(a, bondedAtomIndex);
+  }
+
+  // overwrite internal with modified adjacencyList
+  _adjacencies = adjacencyListCopy;
+
+  // set _atom_exists to false for this index
+  _elements[a] = Delib::ElementType::none;
+
+  /* Minimize all internal state
+   * - _elements (ElementTypeCollection)
+   * - _edges (Edges)
+   * - _adjacencies (AdjacencyList)
+   * - _stereocenters (StereocenterList)
+   */
+
+  // Minimize _elements: Erase position of removed atom
+  _elements.erase(_elements.begin() + a);
+
+  // Minimize the rest: Decrement all internal indices larger than a
+  _edges.indexInvalidationUpdate(a);
+  _adjacencies.indexInvalidationUpdate(a);
+
+  // TODO URGENT StereocenterList index invalidation update
+  // just kinda useless if Stereocenter is going to change a lot
+  // additionally, if an atom is removed, maybe ranking changes? some update 
+  // algorithm is needed
+}
+
+void Molecule::removeBond(
+  const AtomIndexType& a,
+  const AtomIndexType& b
+) {
+  assert(_validAtomIndex(a) && _validAtomIndex(b));
+
+  auto adjacencyListCopy = _adjacencies;
+
+  adjacencyListCopy.removeAdjacency(a, b);
+
+  if(AdjacencyListAlgorithms::numConnectedComponents(adjacencyListCopy) != 1) {
+    throw std::logic_error(
+      "The selected bond removal would lead to a molecule split!"
+    );
+  }
+
+  _adjacencies = adjacencyListCopy;
+
+  _edges.remove(a, b);
+
+  // No minimization necessary here -> The removed bond does not lead to a 
+  // disconnected atom (otherwise we would have thrown a few lines back). But a
+  // bond removal can require a stereocenter update => TODO
+}
+
+/* Public information --------------------------------------------------------*/
+const AdjacencyList& Molecule::getAdjacencyList() const {
+  return _adjacencies;
+}
+
+std::vector<AtomIndexType> Molecule::getBondedAtomIndices(
+  const AtomIndexType& a
+) const {
+  assert(_validAtomIndex(a));
+  return _adjacencies.getAdjacencies(a);
+}
+
+BondType Molecule::getBondType(
+  const AtomIndexType& a,
+  const AtomIndexType& b
+) const {
+  assert(_validAtomIndex(a) && _validAtomIndex(b));
+
+  auto edgeOption = _edges.get(a, b);
+
+  if(!edgeOption) {
+    throw std::logic_error("The atoms requested are not bonded!");
+  }
+
+  return edgeOption.value();
+}
+
+// TODO deprecate and remove (this should not be part of a public interface)
+std::vector<ChiralityConstraint> Molecule::getChiralityConstraints() const {
+  std::vector<ChiralityConstraint> constraints;
+  for(const auto& stereocenterPtr : _stereocenters) {
+    for(const auto& distanceConstraint : stereocenterPtr -> chiralityConstraints() ) {
+      constraints.push_back(distanceConstraint);
     }
   }
-  
-  return os;
+  return constraints;
 }
 
 DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const {
@@ -514,7 +484,7 @@ DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const
    */
 
   for(AtomIndexType i = 0; i < _adjacencies.size(); i++) {
-    for(const auto& j: _adjacencies.getAdjacencies(i)) {
+    for(const auto& j: getBondedAtomIndices(i)) {
       // avoid duplicate work by avoiding i > j cases
       if(i > j) continue;
 
@@ -533,105 +503,172 @@ DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const
   return distanceBounds;
 }
 
-std::vector<DistanceConstraint> Molecule::_createConstraint(
-  const std::vector<AtomIndexType>& chain
-) const {
-  auto& i = chain.front();
-  auto& j = chain.back();
-
-  switch(chain.size()) {
-    case 2: {
-      auto distance = Bond::calculateBondDistance(
-        getElementType(i),
-        getElementType(j),
-        getBondType(i, j)
-      );
-      return {
-        DistanceConstraint(
-          i,
-          j,
-          0.99 * distance,
-          1.01 * distance
-        )
-      };
-    }
-    case 3: {
-      auto& intermediate = chain[1];
-      // TODO continue here
-      // no considerations of charge at all so far, not even VSEPR
-      boost::optional<double> angle;
-      // determine which symmetry applies at intermediate position, angle
-      auto nLigands = getBondedAtomIndices(intermediate).size();
-      if(nLigands == 2) {
-        if(getElementType(intermediate) == Delib::ElementType::O) {
-          angle = 104.5;
-        } else {
-          angle = Symmetry::angleFunction(Symmetry::Name::Linear)(0, 1);
-        }
-      } else if(nLigands == 3) {
-        angle = Symmetry::angleFunction(Symmetry::Name::TrigonalPlanar)(0, 1);
-      } else if(nLigands == 4) {
-        angle = Symmetry::angleFunction(Symmetry::Name::Tetrahedral)(0, 1);
-      } 
-
-      if((bool) angle) {
-        auto a = Bond::calculateBondDistance(
-          getElementType(i),
-          getElementType(intermediate),
-          getBondType(i, intermediate)
-        );
-        auto b = Bond::calculateBondDistance(
-          getElementType(intermediate),
-          getElementType(j),
-          getBondType(intermediate, j)
-        );
-        auto distance = CommonTrig::lawOfCosines(
-          a,
-          b,
-          angle.value() * M_PI / 180.0
-        );
-
-        return {
-          DistanceConstraint(
-            i,
-            j,
-            0.95 * distance,
-            1.05 * distance
-          )
-        };
-      } else {
-        return {};
-      }
-    }
-    case 4: {
-      // TODO implement
-      return {};
-    }
-    default: {
-      return {
-        DistanceConstraint(
-          i,
-          j,
-          (
-            AtomInfo::vdwRadius(getElementType(i))
-            + AtomInfo::vdwRadius(getElementType(j))
-          ),
-          100
-        )
-      };
-    }
-  }
-
+const Edges& Molecule::getEdges() const {
+  return _edges;
 }
 
-std::vector<ChiralityConstraint> Molecule::getChiralityConstraints() const {
-  std::vector<ChiralityConstraint> constraints;
-  for(const auto& stereocenterPtr : _stereocenters) {
-    for(const auto& distanceConstraint : stereocenterPtr -> chiralityConstraints() ) {
-      constraints.push_back(distanceConstraint);
+Delib::ElementType Molecule::getElementType(
+  const AtomIndexType& a
+) const {
+  assert(_validAtomIndex(a));
+  return _elements.at(a);
+}
+
+AtomIndexType Molecule::getNumAtoms() const {
+  return _elements.size();
+}
+
+EdgeIndexType Molecule::getNumBonds() const {
+  return _edges.size();
+}
+
+unsigned Molecule::hydrogenCount(const AtomIndexType& a) const {
+  assert(_validAtomIndex(a));
+  unsigned count = 0;
+
+  for(const auto& adjacentIndex : _adjacencies[a]) {
+    if(getElementType(adjacentIndex) == Delib::ElementType::H) {
+      count += 1;
     }
   }
-  return constraints;
+
+  return count;
+}
+
+/* TODO
+ * - does not treat correctly:
+ *   - cycles
+ *   - stereocenters (Z over E, R over S (?))
+ *   - double and triple bond ghost atom splitting
+ * - unsure about sub-lists. is this approach even remotely correct?
+ * - FUCK CIP rules -> maybe just use the unsigned values of assignments in
+ *   GraphFeatures and rank branches with that.
+ * - test
+ */
+std::pair<
+  std::vector<AtomIndexType>, // the sorted list of substituent priorities
+  std::set< // a set of pairs of AtomIndexTypes that are EQUAL
+    std::pair<
+      AtomIndexType,
+      AtomIndexType
+    >
+  >
+> Molecule::rankPriority(
+  const AtomIndexType& a,
+  const std::vector<AtomIndexType>& excludeAdjacent 
+) const {
+  auto toRank = getBondedAtomIndices(a);
+  std::set<
+    std::pair<
+      AtomIndexType,
+      AtomIndexType
+    >
+  > equalPairs;
+
+  // remove excludes from toRank
+  toRank.erase(
+    std::remove_if(
+      toRank.begin(),
+      toRank.end(),
+      [&excludeAdjacent](const AtomIndexType& atomIndex) {
+        return std::find(
+          excludeAdjacent.begin(),
+          excludeAdjacent.end(),
+          atomIndex
+        ) != excludeAdjacent.end();
+      }
+    ),
+    toRank.end()
+  );
+
+  auto getZ = [this](const AtomIndexType& a) -> int {
+    return static_cast<int>(getElementType(a));
+  };
+
+  auto BFSIterate = [this, getZ](
+    std::set<AtomIndexType>& visitedSet,
+    std::vector<AtomIndexType>& seeds,
+    std::multiset<int, std::greater<int> >& Zs
+  ) {
+    std::vector<AtomIndexType> newSeeds;
+    for(const auto& index : seeds) {
+      auto adjacent = getBondedAtomIndices(index);
+      for(const auto& potentialSeed : adjacent) {
+        // if not in visitedSet
+        if(visitedSet.count(potentialSeed) == 0) {
+          // add it to the set and new seeds
+          visitedSet.insert(potentialSeed);
+          newSeeds.push_back(potentialSeed);
+
+          // add it's Z to Zs
+          Zs.insert(getZ(potentialSeed));
+        } // else skip
+      }
+    }
+
+    // overwrite seeds
+    seeds = newSeeds;
+  };
+  
+  // sort toRank according to CIP-like rules
+  std::sort(
+    toRank.begin(),
+    toRank.end(),
+    [&a, this, &getZ, &BFSIterate, &equalPairs](
+      const AtomIndexType& lhs,
+      const AtomIndexType& rhs
+    ) {
+      std::set<AtomIndexType> lhsVisited = {a}, rhsVisited = {a};
+      std::vector<AtomIndexType> lhsSeeds = {lhs}, rhsSeeds = {rhs};
+      std::multiset<
+        int,
+        std::greater<int> // in CIP, list of Z is ordered DESC
+      > lhsZ = { getZ(lhs) }, rhsZ = { getZ(rhs) };
+      while(
+          lhsSeeds.size() > 0
+          || rhsSeeds.size() > 0
+      ) {
+        // compare lists
+        if(lhsZ < rhsZ) return true;
+        else if(lhsZ > rhsZ) return false;
+
+        // iterate along the bonds
+        BFSIterate(lhsVisited, lhsSeeds, lhsZ);
+        BFSIterate(rhsVisited, rhsSeeds, rhsZ);
+      }
+
+      // all equal -> add to equalPairs
+      equalPairs.emplace(
+        std::min(lhs, rhs),
+        std::max(lhs, rhs)
+      );
+      return false;
+    }
+  );
+
+  return {
+    toRank,
+    equalPairs
+  };
+}
+
+/* Operators -----------------------------------------------------------------*/
+std::ostream& operator << (
+  std::ostream& os,
+  const Molecule& mol
+) {
+  os << "Begin graphviz –––––––––––––––\n\n";
+  mol._dumpGraphviz(os);
+  os << "\n––––––––––––––––– End graphviz\n\n";
+
+  if(mol._stereocenters.size() > 0) {
+    os << "Stereocenter information:\n";
+    for(const auto& stereocenterPtr: mol._stereocenters) {
+      os << stereocenterPtr << std::endl;
+    }
+  }
+  
+  return os;
 }
 
 } // eo namespace

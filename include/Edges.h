@@ -22,6 +22,7 @@ public:
     std::pair<AtomIndexType, AtomIndexType>,
     BondType
   >;
+
 private:
   MapType _edges;
 
@@ -67,10 +68,12 @@ public:
   void remove(
     const AtomIndexType& a,
     const AtomIndexType& b
-  ) noexcept {
+  ) {
     auto it = _edges.find(_makeOrderedPair(a, b));
     if(it != _edges.end()) {
       _edges.erase(it);
+    } else { // fail on error!
+      throw std::logic_error("No such edge in list!");
     }
   }
 
@@ -81,6 +84,37 @@ public:
     if(_edges.count(_makeOrderedPair(a, b)) == 1) {
       return _edges.at(_makeOrderedPair(a, b));
     } else return boost::none;
+  }
+
+  /* Decrements all indices in the map if they are bigger than the specified 
+   * invalidated index. This helps preserve contiguity of internal indices.
+   * 
+   * The implementation is O(N) with bad constants. Creates another map,
+   * transforms the keys according to the decrement and overwrites the internal
+   * map with the new one.  C++17 would be very helpful with extract, allowing
+   * individual modification of nodes that have indices where the indices are
+   * larger than the removed atom. That ought to be faster.
+   */
+  void indexInvalidationUpdate(const AtomIndexType& invalidated) {
+    // Re-create edges one-by-one (by copy)
+    MapType updated;
+
+    auto decrementIfLarger = [&invalidated](const AtomIndexType& i) -> AtomIndexType {
+      if(i > invalidated) return i - 1;
+      else return i;
+    };
+
+    for(const auto& setIterPair : _edges) {
+      updated[
+        _makeOrderedPair(
+          decrementIfLarger(setIterPair.first.first),
+          decrementIfLarger(setIterPair.first.second)
+        )
+      ] = setIterPair.second;
+    }
+
+    // overwrite with updated edge list
+    _edges = std::move(updated);
   }
 
   unsigned size() const noexcept {

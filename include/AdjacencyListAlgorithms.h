@@ -62,7 +62,8 @@ std::enable_if_t<
  */
 // WARNING: Assumes atom indices are monotonous starting from 0!
 template<
-  template<class = std::deque<AtomIndexType>
+  template<
+    class = std::deque<AtomIndexType>
   > class Inserter,
   class UnaryFunction
 >

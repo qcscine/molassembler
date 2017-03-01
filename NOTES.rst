@@ -1,10 +1,3 @@
-Find
-----
-
-- Predictive algorithms to state which geometry a central atom is in based on
-  various exactness: Nonmetals with VSEPR, metals and exceptions (e.g. I which
-  can be hypervalent) with CFT / LFT / ?
-
 CONTINUE AT
 -----------
 - How to get angles between atoms in graph? Must include some conception of
@@ -40,14 +33,13 @@ TODO
 5. Implement basic DG
 6. Demonstrate functionality with a very simple example, e.g. CH(Cl)(Br)(I)
    MOLFile, then permute and generate 3D structures of both stereoisomers.
-7. Refactor Tree and TreeAlgorithms. The API is shit. If you call
-   node.addChild(childPtr), you can't inform the child that it has a parent.
 
-- Experiment whether row-major matrix storage is faster
+- Fixed atoms in DG -> how?
+- Transition to property-based testing with rapidcheck (github) and/or fuzz
+  testing
 - Atom removal safety of code -> getNumAtoms, getNumBonds, etc. Make the full
   set of data be contiguous every time (atom indices range from 0 -> nAtoms - 1
   AdjacencyList may also be prone to errors in this regard
-- Transition to CTest ?
 - Add hooks to git to automatically build a release version on commit and run
   the tests
 - Should PositionCollection really be a member of Molecule? I don't think so
@@ -62,13 +54,11 @@ TODO
   be detected for generated structures to be more reasonable, but also not
   necessarily from the start. But watch out, don't forget to integrate it at
   some point! It's currently in include/repurpose/
-- Integrate DG. It's an essential part of the whole project, so include it.
 - IO.h: will have to be changed eventually to call DG to generate a 3D
   structure if there is none.  Maybe cache 3D structures? Additionally,
   modernize it to use C++17's filesystem TS
 - Use LFT to determine which geometry? MO-level calculations, perhaps
   approximable with low cost
-- Consider fuzz testing
 
 
 Is atomic charge fully determined?
@@ -76,26 +66,6 @@ Is atomic charge fully determined?
 
 The information present is the atom type of the center atom, the atom types of
 all neighbors, and the bond types.
-
-
-Sequence of things to write
----------------------------
-
-1. GraphFeatures
-
-   - AromaticRing detection algorithm
-     - Unfortunately includes some notion of what aromaticity is... :(
-   - Substituent ranking algorithm
-   - EZStereocenter
-   - CoordinationStereocenter generalized GraphFeature and derived classes based
-     on specific symmetries
-
-2. Caching of properties, e.g. GraphFeatures (these must be invalidated when
-   atoms involved in them are removed)
-
-3. DG
-
-#. Import of XYZ files is important, but this contains no CTAB, no BO matrix.
 
 
 Interface

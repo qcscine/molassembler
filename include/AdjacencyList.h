@@ -4,6 +4,8 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <iostream>
+#include <sstream>
 
 #include "Edges.h"
 
@@ -32,12 +34,8 @@ public:
       }
       addAdjacency(edge.first.first, edge.first.second);
     }
-    if(!validate()) {
-      throw std::runtime_error(
-        "Constructing AdjacencyList from Edges yielded invalid state!"
-      );
-    }
   }
+
   /* Modification */
   /*!
    * Adds an empty vector for a new vertex to the underlying data 
@@ -69,6 +67,31 @@ public:
   }
 
   /*!
+   * Update the AdjacencyList when an atom index is invalidated to return to 
+   * contiguous internal indices.
+   */
+  void indexInvalidationUpdate(const AtomIndexType& invalidatedIndex) {
+    // The according row in the AdjacencyList should already be empty, check
+    assert(_adjacencies.at(invalidatedIndex).size() == 0);
+
+    // erase it
+    _adjacencies.erase(_adjacencies.begin() + invalidatedIndex);
+
+    // update all indices in the AdjacencyList
+    for(auto& adjacencyRow : _adjacencies) {
+      std::transform(
+        adjacencyRow.begin(),
+        adjacencyRow.end(),
+        adjacencyRow.begin(), // in-place transform
+        [&invalidatedIndex] (const auto& index) {
+          if(index > invalidatedIndex) return index - 1;
+          else return index;
+        }
+      );
+    }
+  }
+
+  /*!
    * Removes an adjacency.
    * \param a The first index
    * \param b The second index
@@ -84,6 +107,7 @@ public:
         b
       )
     );
+
     _adjacencies.at(b).erase(
       std::remove(
         _adjacencies.at(b).begin(),
@@ -94,6 +118,37 @@ public:
   }
 
   /* Information */
+  //! Dump graphviz source file text representing the AdjacencyList
+  std::string dumpGraphviz() const {
+    std::stringstream ss;
+    ss << "graph G {\n  graph [fontname = \"Arial\", layout = neato];\n"
+      << "  node [fontname = \"Arial\", shape = circle, style = filled, fontsize=10];\n"
+      << "  edge [fontname = \"Arial\"];\n";
+
+    // Node names
+    ss << "node [fillcolor=white, fontcolor=black, width=.3, fixedsize=true]\n";
+    for(unsigned i = 0; i < _adjacencies.size(); i++) {
+      ss << "\"" << i << "\"";
+      if(i != _adjacencies.size() - 1) {
+        ss << " ";
+      };
+    }
+    ss << ";\n\n";
+
+    // All forward edges (i.e. first < second)
+    for(unsigned i = 0; i < _adjacencies.size(); i++) {
+      for(unsigned j = 0; j < _adjacencies[i].size(); j++) {
+        if(i < _adjacencies[i][j]) {
+          ss << "\"" << i << "\" -- \"" << _adjacencies[i][j] << "\"\n";
+        }
+      }
+    }
+
+    ss << "}";
+
+    return ss.str();
+  }
+
   /*!
    * Get a list of adjacencies for a specified index
    * \param a The index to get
@@ -137,28 +192,13 @@ public:
     return _adjacencies.size();
   }
 
-  /*!
-   * Checks if the current state of the list is valid
-   */
-  bool validate() const {
-    // There is an inverse for every forward bond type
-    for(unsigned i = 0; i < _adjacencies.size(); i++) {
-      auto adjacents = getAdjacencies(i);
-      for(const auto& adjacency: adjacents) {
-        if(adjacency >= _adjacencies.size()) return false;
-        if(!isAdjacent(adjacency, i)) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
 /* Operators */
   const std::vector<AtomIndexType>& operator[](const AtomIndexType& a) const {
     return _adjacencies.at(a);
   }
+
+/* Friends */
+  friend struct AdjacencyListValidator;
 };
 
 } // eo namespace MoleculeManip

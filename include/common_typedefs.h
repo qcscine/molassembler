@@ -13,7 +13,8 @@ enum class BondType : unsigned {
     Quadruple,
     Quintuple,
     Sextuple,
-    Aromatic
+    Aromatic,
+    Eta
 };
 
 using unsigned_type = unsigned;

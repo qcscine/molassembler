@@ -230,42 +230,19 @@ public:
       for(const auto& chiralityConstraint: _constraints) {
         if(std::get<0>(chiralityConstraint) == alpha) {
           std::tie(std::ignore, a, b, c, target) = chiralityConstraint;
-
-          localGradient += _C(v, alpha, a, b, c, target) * (
-            _getEigen(v, a) - _getEigen(v, c)
-          ).cross(
-            _getEigen(v, b) - _getEigen(v, c)
-          );
         } else if(std::get<1>(chiralityConstraint) == alpha) {
           std::tie(a, std::ignore, b, c, target) = chiralityConstraint;
-
-          localGradient += _C(v, a, alpha, b, c, target) * (
-            _getEigen(v, a) - _getEigen(v, c)
-          ).transpose() * _J(v, b, c);
         } else if(std::get<2>(chiralityConstraint) == alpha) {
           std::tie(a, b, std::ignore, c, target) = chiralityConstraint;
-
-          localGradient += _C(v, a, b, alpha, c, target) * (
-            _getEigen(v, a) - _getEigen(v, c)
-          ).transpose() * _J(v, b, c);
         } else if(std::get<3>(chiralityConstraint) == alpha) {
           std::tie(a, b, c, std::ignore, target) = chiralityConstraint;
-
-          localGradient += _C(v, a, b, c, alpha, target) * (
-            (
-              _getEigen(v, a) - _getEigen(v, alpha)
-            ).transpose() * (
-              _J(v, c, alpha)
-              - _J(v, b, alpha) 
-            ) - (
-              (
-                _getEigen(v, b) - _getEigen(v, alpha)
-              ).cross(
-                _getEigen(v, c) - _getEigen(v, alpha)
-              ).transpose()
-            )
-          );
         }
+
+        localGradient += _C(v, alpha, a, b, c, target) * (
+          _getEigen(v, a) - _getEigen(v, c)
+        ).cross(
+          _getEigen(v, b) - _getEigen(v, c)
+        );
       }
 
       grad(3 * alpha) = localGradient(0);

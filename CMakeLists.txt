@@ -62,7 +62,9 @@ set(HEADERS_all
   include/Edges.h
   include/GraphDistanceMatrix.h
   include/IO.h
+  include/LocalGeometryModel.h
   include/Molecule.h
+  include/PersistentIndexMoleculeInterface.h
   include/StdlibTypeAlgorithms.h
   include/Stereocenter.h
   include/StereocenterList.h
@@ -70,6 +72,7 @@ set(HEADERS_all
   include/Tree.h
   include/TreeAlgorithms.h
   include/Version.h
+  include/VSEPR.h
   include/common_typedefs.h
   include/numeric.h
 )
@@ -84,8 +87,10 @@ set(SOURCES_all
   source/BondDistance.cpp
   source/CN4Stereocenter.cpp
   source/GraphDistanceMatrix.cpp
+  source/LocalGeometryModel.cpp
   source/Molecule.cpp
   source/Stereocenter.cpp
+  source/VSEPR.cpp
 )
 
 # specify library target

@@ -19,11 +19,7 @@
 namespace MoleculeManip {
 
 /* TODO
- * - A Molecule should NOT have a PositionCollection as a member. This class
- *   should only contain the graph information required to generate one, 
- *   nothing else. As soon as a strategy to extract the current assignment of a
- *   stereocenter from its 3D coordinates exists, add this to the IO class and 
- *   remove the saving of 3D coordinates for Molecule
+ * - Get cracking on all the TODOs
  */
 
 class Molecule {
@@ -41,108 +37,95 @@ private:
 
   // The set of QC data on the atoms
   Delib::ElementTypeCollection _elements;
-  Delib::PositionCollection _positions;
 
   // The information on interconnectedness of the atoms
   AdjacencyList _adjacencies;
   Edges _edges;
   StereocenterList _stereocenters;
-  
+
   /* Private member functions */
   void _detectStereocenters();
-  bool _validAtomIndex(const AtomIndexType& a) const;
-  bool _validAtomIndices(
-    const AtomIndexType& a,
-    const AtomIndexType& b
-  ) const;
   void _dumpGraphviz(std::ostream& os) const;
   std::vector<DistanceConstraint> _createConstraint(
     const std::vector<AtomIndexType>& chain
   ) const;
+  bool _validAtomIndex(const AtomIndexType& a) const;
 
 public:
 /* Constructors */
+  // From two elements and a shared bond (min to be considered a Molecule)
   Molecule(
     const Delib::ElementType& a,
     const Delib::ElementType& b,
     const BondType& bondType
   ); 
 
+  // From the internal components
   Molecule(
     const Delib::ElementTypeCollection& elements,
     const AdjacencyList& adjacencies,
     const Edges& edges
   );
 
-  Molecule(
-    const Delib::ElementTypeCollection& elements,
-    const Delib::PositionCollection& positions,
-    const AdjacencyList& adjacencies,
-    const Edges& edges
-  );
-
+/* Modifiers */
+  // Add an atom bonded to an existing atom
   AtomIndexType addAtom(
     const Delib::ElementType& elementType,
     const AtomIndexType& bondedToIndex,
     const BondType& bondType
   );
 
+  // Add a bond betwen existing atoms in the Molecule
   void addBond(
     const AtomIndexType& a,
     const AtomIndexType& b,
     const BondType& bondType
   ); 
 
+  // Remove an atom. This removes all bonds to and from this atom index.
   void removeAtom(const AtomIndexType& a); 
 
+  // Remove a bond between two atoms.
   void removeBond(
     const AtomIndexType& a,
     const AtomIndexType& b
   );
 
-  /* Information retrieval */
-  Delib::ElementType getElementType(
+/* Information retrieval */
+
+  int formalCharge(const AtomIndexType& a) const; // TODO not implemented
+
+  const AdjacencyList& getAdjacencyList() const; 
+
+  // Returns a vector of persistent external indices that the atom is bonded to.
+  std::vector<AtomIndexType> getBondedAtomIndices(
     const AtomIndexType& a
   ) const;
 
-  DistanceGeometry::DistanceBoundsMatrix getDistanceBoundsMatrix() const;
-  std::vector<ChiralityConstraint> getChiralityConstraints() const;
-
-  int formalCharge(const AtomIndexType& a) const;
-  int oxidationState(const AtomIndexType& a) const;
-      
-  AtomIndexType getNumAtoms() const;
-  EdgeIndexType getNumBonds() const;
-  const Edges& getEdges() const; 
+  // Get the bond type for specified external indices
   BondType getBondType(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const;
-  unsigned hydrogenCount(const AtomIndexType& a) const;
-  /*bool bond_exists(
-    const AtomIndexType& a,
-    const AtomIndexType& b
-  ) const;
-  bool bond_exists(
-    const AtomIndexType& a,
-    const AtomIndexType& b,
-    const BondType& bond_type
-  ) const;
-  std::vector<
-    std::pair<
-      AtomIndexType,
-      BondType
-    >
-  > get_bond_pairs(const AtomIndexType& a) const;
-  */
 
-  const AdjacencyList& getAdjacencyList() const {
-    return _adjacencies;
-  }
+  // Get a vector of Distance Geometry chirality constraints
+  std::vector<ChiralityConstraint> getChiralityConstraints() const;
 
-  std::vector<AtomIndexType> getBondedAtomIndices(
+  // Get a matrix containing Distance Geometry distance bounds
+  DistanceGeometry::DistanceBoundsMatrix getDistanceBoundsMatrix() const;
+
+  const Edges& getEdges() const; 
+
+  Delib::ElementType getElementType(
     const AtomIndexType& a
   ) const;
+
+  AtomIndexType getNumAtoms() const;
+  EdgeIndexType getNumBonds() const;
+
+  unsigned hydrogenCount(const AtomIndexType& a) const;
+
+  int oxidationState(const AtomIndexType& a) const; // TODO not implemented
 
   std::pair<
     std::vector<AtomIndexType>, // the sorted list of substituent priorities
@@ -158,15 +141,15 @@ public:
   ) const;
 
   /* Testing */
-  std::pair<bool, std::string> validate() const noexcept;
+  std::pair<bool, std::string> validate() const noexcept; // TODO not implemented
 
 /* Operators */
   /* An efficient implementation of the following two is imperative.
    * Some ideas for fast differentiation can probably be found from the 
    * wikipedia category "Graph invariants"
    */
-  bool operator == (const Molecule& b) const;
-  bool operator != (const Molecule& b) const;
+  bool operator == (const Molecule& b) const; // TODO not implemented
+  bool operator != (const Molecule& b) const; // TODO not implemented
 
 /* Friends */
   /* Output stream operator for easier debugging. */
