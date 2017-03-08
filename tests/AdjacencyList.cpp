@@ -1,4 +1,6 @@
-#include "BoostTestingHeader.h"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE AdjacencyListTests
+#include <boost/test/unit_test.hpp>
 
 #include "AdjacencyList.h"
 #include "template_magic/templateMagic.h"

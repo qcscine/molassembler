@@ -1,4 +1,6 @@
-#include "BoostTestingHeader.h"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE StdlibTypeAlgorithmTests
+#include <boost/test/unit_test.hpp>
 
 #include "StdlibTypeAlgorithms.h"
 

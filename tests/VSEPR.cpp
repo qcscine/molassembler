@@ -1,5 +1,5 @@
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE ConnectivityManagerTests
+#define BOOST_TEST_MODULE VSEPRTestsModule
 #include <boost/test/unit_test.hpp>
 
 #include "VSEPR.h"
@@ -10,7 +10,7 @@ using TestCaseType = std::tuple<
   std::string, // a Name for the current compound
   Delib::ElementType, // The central atom type
   unsigned, // The number of bonding sites
-  std::vector<Model::LigandType>, // a list of ligand types
+  std::vector<LigandType>, // a list of ligand types
   int // charge centered on the central atom
 >;
 
@@ -23,7 +23,7 @@ void testModel(
   std::string complexName;
   unsigned nSites;
   int charge;
-  std::vector<Model::LigandType> ligands;
+  std::vector<LigandType> ligands;
   Delib::ElementType centerAtomType;
 
   for(const auto& testCase : testCases) {
@@ -63,7 +63,7 @@ auto makeLigand(
   const Delib::ElementType& type,
   const BondType& bty
 ) {
-  return Model::LigandType {
+  return LigandType {
     L,
     X, 
     {
@@ -76,19 +76,19 @@ auto makeLigand(
 }
 
 // Helper function to compose ligand situations
-std::vector<Model::LigandType> repeat(
-  const Model::LigandType& ligand,
+std::vector<LigandType> repeat(
+  const LigandType& ligand,
   const unsigned& N
 ) {
-  return std::vector<Model::LigandType> (N, ligand);
+  return std::vector<LigandType> (N, ligand);
 }
 
 // Helper function to compose ligand situations
-std::vector<Model::LigandType> merge(
-  const std::vector<Model::LigandType>& a,
-  const std::vector<Model::LigandType>& b
+std::vector<LigandType> merge(
+  const std::vector<LigandType>& a,
+  const std::vector<LigandType>& b
 ) {
-  std::vector<Model::LigandType> ret = a;
+  std::vector<LigandType> ret = a;
   std::copy(
     b.begin(),
     b.end(),

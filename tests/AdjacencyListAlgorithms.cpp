@@ -1,4 +1,6 @@
-#include "BoostTestingHeader.h"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE AdjacencyListAlgorithmsTests
+#include <boost/test/unit_test.hpp>
 
 #include "AdjacencyListAlgorithms.h"
 #include "StdlibTypeAlgorithms.h"

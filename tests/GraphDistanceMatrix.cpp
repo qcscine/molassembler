@@ -1,4 +1,7 @@
-#include "BoostTestingHeader.h"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE GraphDistanceMatrixTests
+#include <boost/test/unit_test.hpp>
+
 #include "GraphDistanceMatrix.h"
 
 /*   Member listing

@@ -1,4 +1,7 @@
-#include "BoostTestingHeader.h"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE NumericTests
+#include <boost/test/unit_test.hpp>
+
 #include "numeric.h"
 
 BOOST_AUTO_TEST_CASE ( numericTests ) {

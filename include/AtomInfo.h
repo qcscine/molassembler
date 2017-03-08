@@ -1,10 +1,10 @@
 #ifndef INCLUDE_ATOM_INFO_H
-#define INCLUDE_ATOM_INTO_H
+#define INCLUDE_ATOM_INFO_H
 
 #include <map>
 #include <vector>
 #include <boost/optional.hpp>
-#include "ElementTypes.h"
+#include "ElementTypes.h" 
 
 namespace MoleculeManip {
 

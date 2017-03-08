@@ -1,4 +1,5 @@
 #include "VSEPR.h"
+#include "ElementInfo.h"
 
 /* TODO
  * - Changes needed to ensure correctness in complex environments:
@@ -110,7 +111,8 @@ Symmetry::Name VSEPR::determineGeometry(
     default: {
       std::stringstream ss;
       ss << "Could not find a fitting symmetry for your X + E case: "
-        << "X = " << X << ", E = " << E << ".";
+        << "X = " << X << ", E = " << E << ". Maybe your molecular graph is "
+        << " too weird for VSEPR. Have another look at it.";
       throw std::logic_error(
         ss.str().c_str()
       );

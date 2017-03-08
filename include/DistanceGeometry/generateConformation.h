@@ -155,8 +155,6 @@ Delib::PositionCollection generateConformation(
   return positions;
 }
 
-
-
 } // eo namespace DistanceGeometry
 
 } // eo namespace MoleculeManip

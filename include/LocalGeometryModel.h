@@ -9,26 +9,28 @@
 
 namespace LocalGeometry {
 
+/* Typedefs */
+
 using BondType = MoleculeManip::BondType;
+
+using ElementAndBondPair = std::pair<
+  Delib::ElementType,
+  BondType
+>;
+
+using LigandType = std::tuple<
+  unsigned, // L
+  unsigned, // X
+  std::vector<
+    ElementAndBondPair
+  >
+>;
 
 // Mapping of bond type to a floating-point weight
 extern const std::map<BondType, double> bondWeights;
 
 /* Model class */
 struct Model {
-  using ElementAndBondPair = std::pair<
-    Delib::ElementType,
-    BondType
-  >;
-
-  using LigandType = std::tuple<
-    unsigned, // L
-    unsigned, // X
-    std::vector<
-      ElementAndBondPair
-    >
-  >;
-
   // do not instantiate
   Model() = delete;
 

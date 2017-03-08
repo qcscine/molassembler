@@ -9,6 +9,7 @@
 
 /* TODO
  * - how to get angles at atoms when no stereocenters exist?
+ *   -> If there is a Stereocenter centered on the intermediate atom
  * - tests
  */
 

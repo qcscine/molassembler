@@ -5,7 +5,6 @@
 #include <sstream>
 
 #include "AtomInfo.h"
-#include "ElementInfo.h"
 
 namespace LocalGeometry {
 

@@ -3,18 +3,27 @@
 
 #include <Eigen/Eigenvalues>
 
+/* TODO
+ * - Is numerical accuracy maybe an issue somewhere here?
+ */
+
 // C++17 alter to namespace MoleculeManip::DistanceGeometry {
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
 MetricMatrix::MetricMatrix(Eigen::MatrixXd&& distances) {
+  // Beware, only strict upper triangle of distances contains anything
+
   const AtomIndexType N = distances.rows();
+
+  // resize and null-initialize matrix
   _matrix.resize(N, N);
   _matrix.setZero();
 
+  // Declare D0 vector
   Eigen::VectorXd D0(N);
-  /* D_{i}² =   (1/N) * sum_{j}(distances[i, j]) 
+  /* D_{i}² =   (1/N) * sum_{j}(distances[i, j]²) 
    *          - (1/(N²)) * sum_{j < k}(distances[j, k]²)
    *
    * The second term is independent of i, precalculate!
@@ -47,7 +56,7 @@ MetricMatrix::MetricMatrix(Eigen::MatrixXd&& distances) {
     D0[i] = firstTerm - doubleSumTerm;
   }
 
-  /* Diagonal is just D0! 
+  /* The diagonal of G is just D0! 
    * g[i, j] = ( D0[i]² + D0[j]² - distances[i, j]² ) / 2
    * if i == j:    ^--------^      ^-------------^
    *                 equal               =0
@@ -64,6 +73,7 @@ MetricMatrix::MetricMatrix(Eigen::MatrixXd&& distances) {
   /* Write off-diagonal elements into lower triangle
    * Why the lower triangle? Because that is the only part of the matrix 
    * referenced by Eigen's SelfAdjointEigenSolver, which we will use in a bit
+   * to embed the metric matrix
    */
   for(AtomIndexType i = 0; i < N; i++) {
     for(AtomIndexType j = i + 1; j < N; j++) {
@@ -72,6 +82,10 @@ MetricMatrix::MetricMatrix(Eigen::MatrixXd&& distances) {
       ) / 2.0;
     }
   }
+}
+
+const Eigen::MatrixXd& MetricMatrix::access() const {
+  return _matrix;
 }
 
 Eigen::MatrixXd MetricMatrix::embed(
@@ -84,6 +98,14 @@ Eigen::MatrixXd MetricMatrix::embed(
   // reverse because smallest are listed first by Eigen
   Eigen::VectorXd eigenValues = eigenSolver.eigenvalues().reverse();
   eigenValues.conservativeResize(dimensionality); // dimensionality x 1
+
+  // If any eigenvalues in the vector are negative, set them to 0
+  for(unsigned i = 0; i < dimensionality; i++) {
+    if(eigenValues(i) < 0) eigenValues(i) = 0;
+  }
+
+  // take square root of eigenvalues
+  eigenValues = eigenValues.cwiseSqrt();
 
   Eigen::MatrixXd L;
   L.resize(dimensionality, dimensionality);
@@ -108,11 +130,15 @@ Eigen::MatrixXd MetricMatrix::embed(
   return (V * L).transpose(); 
 }
 
+bool MetricMatrix::operator == (const MetricMatrix& other) const {
+  return _matrix == other._matrix;
+}
+
 std::ostream& operator << (
   std::ostream& os,
-  const MetricMatrix& matrix
+  const MetricMatrix& metricMatrix
 ) {
-  os << matrix._matrix;
+  os << metricMatrix._matrix;
   return os;
 }
 

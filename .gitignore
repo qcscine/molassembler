@@ -6,3 +6,6 @@ Makefile
 *.out
 build/
 .lvimrc
+*.xyz
+*.tar
+*.tar.bz2

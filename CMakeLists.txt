@@ -116,7 +116,7 @@ foreach(filename ${testFiles})
 
   # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})
-  target_compile_options(${targetName} PUBLIC -O2 -g -std=c++14 -Wall -Wpedantic -Wextra)
+  target_compile_options(${targetName} PUBLIC -g -std=c++14 -Wall -Wpedantic -Wextra)
   target_include_directories(${targetName} PRIVATE ${BOOST_INCLUDE_DIRS})
   target_link_libraries(
     ${targetName} 

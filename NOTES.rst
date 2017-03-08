@@ -1,7 +1,7 @@
 CONTINUE AT
 -----------
 - How to get angles between atoms in graph? Must include some conception of
-  charge
+  charge -> BFSConstraintCollector
 - Constraint collection and population of DistanceBoundsMatrix
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)

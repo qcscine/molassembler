@@ -78,10 +78,10 @@ double DistanceBoundsMatrix::lowerBound(
 void DistanceBoundsMatrix::processDistanceConstraints(
   const std::vector<DistanceConstraint>& constraints
 ) {
-  for(const auto& constraint : constraints) {
-    AtomIndexType i, j;
-    double lower, upper;
+  AtomIndexType i, j;
+  double lower, upper;
 
+  for(const auto& constraint : constraints) {
     std::tie(i, j, lower, upper) = constraint;
     /*std::cout << "(" << i << ", " << j << "): [" << lower << ", " << upper << "]"
       << ", currently [" << lowerBound(i, j) << ", " << upperBound(i, j) << "]" 
@@ -311,9 +311,9 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
 
   auto upperTriangle = distances.triangularView<Eigen::StrictlyUpper>();
 
-  /* Learned some important points from papers:
-   * - Going from end to end uniformly negatively affects conformational 
-   *   sampling. It is preferable to traverse the list of atoms at random.
+  /* Learned an important point from a Havel paper:
+   * Going from end to end negatively affects conformational sampling. It is
+   * preferable to traverse the list of atoms at random.
    */
 
   std::vector<AtomIndexType>  indices(_N);

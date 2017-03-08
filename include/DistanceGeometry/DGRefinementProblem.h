@@ -11,29 +11,45 @@
 
 #include <Eigen/Dense>
 
+/* TODO
+ * - Optimize 
+ *   - remove all the bound squaring be pre-squaring the bounds
+ *   - ... ?
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
+/*! Although it's templated, this is only instantiable as a double! T must match
+ * the type of the target value in a ChiralityConstraint -> See the std::tie 
+ * call when chirality constraints are considered
+ */
 template<typename T>
 class DGRefinementProblem : public cppoptlib::Problem<T> {
 public:
+/* Typedefs */
   using typename cppoptlib::Problem<T>::TVector;
   using typename cppoptlib::Problem<T>::THessian;
 
 private:
+/* State */
   const std::vector<ChiralityConstraint>& _constraints;
   const DistanceBoundsMatrix& _bounds;
 
+/* Private member functions */
   //! Make an Eigen Vector3d of an atomic index.
   const Eigen::Vector3d _getEigen(const TVector& v, const AtomIndexType& index) {
     assert(v.size() > 3 * index + 2);
+
+    // TODO Maybe I can just get a reference to a subset instead of allocating new?
+    // -> YES! member function .segment<3>(startingIndex)
     Eigen::Vector3d retv;
     retv << v(3 * index), v(3 * index + 1), v(3 * index + 2);
     return retv;
   }
 
-  T _square(const T& value) { 
+  inline T _square(const T& value) { 
     return value * value;
   }
 
@@ -49,6 +65,7 @@ private:
     const AtomIndexType& l
   ) {
     auto vecL = _getEigen(v, l);
+
     return (
       _getEigen(v, i) - vecL
     ).dot(
@@ -60,6 +77,7 @@ private:
     );
   }
 
+  //!  First term of gradient expansion
   const Eigen::Vector3d _A(
     const TVector& v,
     const AtomIndexType& i, 
@@ -78,6 +96,7 @@ private:
     return retv;
   }
 
+  //! Second term of gradient expansion
   const Eigen::Vector3d _B(
     const TVector& v,
     const AtomIndexType& i,
@@ -101,6 +120,7 @@ private:
     return retv;
   }
 
+  //! Third term of gradient expansion
   T _C(
     const TVector& v,
     const AtomIndexType& i, 
@@ -114,24 +134,6 @@ private:
     );
   }
 
-  const Eigen::Matrix<double, 3, 3> _J(
-    const TVector& v,
-    const AtomIndexType& i,
-    const AtomIndexType& j
-  ) {
-    Eigen::Matrix<double, 3, 3> retm;
-
-    double a = v(3 * i) - v(3 * j),
-           b = v(3 * i + 1) - v(3 * j + 1),
-           c = v(3 * i + 2) - v(3 * j + 2);
-
-    retm <<  0, -c,  b,
-             c,  0, -a,
-            -b,  a,  0;
-
-    return retm;
-  }
-
 public:
 
   DGRefinementProblem(
@@ -139,20 +141,23 @@ public:
     const DistanceBoundsMatrix& bounds
   ) : 
     _constraints(constraints), 
-    _bounds(bounds) {}
+    _bounds(bounds) 
+  {}
 
   T distanceError(const TVector& v) {
     T error = 0, distance;
     const AtomIndexType N = v.size() / 3;
+
     for(unsigned i = 0; i < N; i++) {
       for(unsigned j = i + 1; j < N; j++) {
+
         distance = (
           _getEigen(v, j) - _getEigen(v, i)
         ).squaredNorm();
 
         // first term
         error += _square(
-          distance / (
+          distance / _square(
             _bounds.upperBound(i, j)
           ) - 1
         );
@@ -174,14 +179,15 @@ public:
   }
 
   T chiralError(const TVector& v) {
-    T sum, intermediate;
+    T sum = 0;
     AtomIndexType a, b, c, d;
     T targetVal;
 
     for(const auto& chiralityConstraint: _constraints) {
       std::tie(a, b, c, d, targetVal) = chiralityConstraint;
-      intermediate = targetVal - _getTetrahedronReducedVolume(v, a, b, c, d);
-      sum += intermediate * intermediate;
+      sum += _square( 
+        targetVal - _getTetrahedronReducedVolume(v, a, b, c, d)
+      );
     }
 
     return sum;
@@ -211,22 +217,32 @@ public:
       localGradient.setZero();
 
       // A and B
+      /* Skipping i == alpha is exceptionally important, for the reason that 
+       * if i == alpha, although mathematically it would be assumed that
+       * _A(i, i) == 0 and _B(i, i) == 0, nevertheless both the upper and 
+       * lower bound for this situation are 0, leading to zeroes on 
+       * denominators, leading to NaNs!
+       *
+       * Two versions of the loop avoidance are below, need benchmarking (TODO)
+       */
+      /* Version A 
       for(AtomIndexType i = 0; i < N; i++) {
-        /* Skipping i == alpha is exceptionally important, for the reason that 
-         * if i == alpha, although mathematically it would be assumed that
-         * _A(i, i) == 0 and _B(i, i) == 0, nevertheless both the upper and 
-         * lower bound for this situation are 0, leading to zeroes on 
-         * denominators, leading to NaNs!
-         */
         if(i == alpha) continue; 
+        localGradient += _A(v, i, alpha) + _B(v, alpha, i);
+      } */
+
+      /* Version B */
+      for(AtomIndexType i = 0; i < alpha; i++) {
+        localGradient += _A(v, i, alpha) + _B(v, alpha, i);
+      }
+      for(AtomIndexType i = alpha + 1; i < N; i++) {
         localGradient += _A(v, i, alpha) + _B(v, alpha, i);
       }
 
-      /* Maybe refactor above into two separate loops, one from 0 -> alpha - 1,
-       * then another from alpha + 1 -> N - 1?
+      /* C 
+       * (chirality constraints)
+       * TODO below: why and how?
        */
-
-      // C 
       for(const auto& chiralityConstraint: _constraints) {
         if(std::get<0>(chiralityConstraint) == alpha) {
           std::tie(std::ignore, a, b, c, target) = chiralityConstraint;
@@ -245,6 +261,7 @@ public:
         );
       }
 
+      // Assign to gradient
       grad(3 * alpha) = localGradient(0);
       grad(3 * alpha + 1) = localGradient(1);
       grad(3 * alpha + 2) = localGradient(2);

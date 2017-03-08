@@ -1,4 +1,7 @@
-#include "BoostTestingHeader.h"
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE AdjacencyMatrixTests
+#include <boost/test/unit_test.hpp>
+
 #include "AdjacencyMatrix.h"
 
 /*   Member listing
