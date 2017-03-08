@@ -32,10 +32,11 @@ const std::map<Name, TupleType> symmetryData {
       {1, 0}
     },
     [](
-      const unsigned& a __attribute__ ((unused)),
-      const unsigned& b __attribute__ ((unused))
+      const unsigned& a,
+      const unsigned& b
     ) -> double {
-      return 180;
+      if(a == b) return 0;
+      else return 180;
     }
   )},
   {Name::Bent, TupleType(
@@ -51,14 +52,15 @@ const std::map<Name, TupleType> symmetryData {
       {1, 0}
     },
     [](
-      const unsigned& a __attribute__ ((unused)),
-      const unsigned& b __attribute__ ((unused))
+      const unsigned& a,
+      const unsigned& b
     ) -> double { 
       /* subject to a lot of variation, between 90 and 109 degrees pursuant to 
        * english wikipedia, using experimental data here to improve instances
        * of this geometry on e.g. O center would a big improvement to DG runs
        */
-      return 107; 
+      if(a == b) return 0;
+      else return 107; 
     }
   )},
   {Name::TrigonalPlanar, TupleType(
@@ -80,10 +82,11 @@ const std::map<Name, TupleType> symmetryData {
       {0, 2, 1} // C2
     },
     [](
-      const unsigned& a __attribute__ ((unused)),
-      const unsigned& b __attribute__ ((unused))
+      const unsigned& a,
+      const unsigned& b
     ) -> double {
-      return 120;
+      if(a == b) return 0;
+      else return 120;
     }
   )}, 
   {Name::TrigonalPyramidal, TupleType(
@@ -100,10 +103,11 @@ const std::map<Name, TupleType> symmetryData {
       {2, 0, 1} // C3
     },
     [](
-      const unsigned& a __attribute__ ((unused)),
-      const unsigned& b __attribute__ ((unused))
+      const unsigned& a,
+      const unsigned& b
     ) -> double {
-      return 107;
+      if(a == b) return 0;
+      else return 107.5;
     }
   )}, 
   {Name::TShaped, TupleType(
@@ -122,7 +126,8 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if((a + b) % 2 == 1) {
+      if(a == b) return 0;
+      else if((a + b) % 2 == 1) {
         return 90;
       } else {
         return 180;
@@ -159,10 +164,11 @@ const std::map<Name, TupleType> symmetryData {
       {1, 2, 0, 3}  // C4, 4
     },
     [](
-      const unsigned& a __attribute__ ((unused)),
-      const unsigned& b __attribute__ ((unused))
+      const unsigned& a,
+      const unsigned& b
     ) -> double {
-      return 109.5;
+      if(a == b) return 0;
+      else return 109.5;
     }
   )}, 
   {Name::SquarePlanar, TupleType(
@@ -185,7 +191,8 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if((a + b) % 2 == 1) {
+      if(a == b) return 0;
+      else if((a + b) % 2 == 1) {
         // this expression indicates cis
         return 90;
       } else {
@@ -210,6 +217,7 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
+      if(a == b) return 0;
       const auto& smaller = std::min(a, b);
       const auto& larger = std::max(a, b);
       if(smaller == 0 && larger == 3) return 180;
@@ -246,7 +254,8 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if(a == 4 || b == 4) return 90; // all bonds to axial ligand are 90°
+      if(a == b) return 0;
+      else if(a == 4 || b == 4) return 90; // all bonds to axial ligand are 90°
       else if((a + b) % 2 == 0) return 180; // 0 + 2 or 1 + 3 are trans
       else return 90; // rest are cis
     }
@@ -275,6 +284,7 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
+      if(a == b) return 0;
       unsigned smaller = std::min(a, b), larger = std::max(a, b);
       if(larger < 3) {
         // -> smaller < 2, this means either 0,1 0,2 1,2 axial
@@ -293,6 +303,8 @@ const std::map<Name, TupleType> symmetryData {
   )}, 
   {Name::PentagonalPlanar, TupleType(
     /* 
+     * All in plane:
+     *
      *      0
      *  1.  |  .4
      *    °(_)°
@@ -342,7 +354,8 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if(
+      if(a == b) return 0;
+      else if(
         (
           std::max(a, b) < 4 // if the largest is < 4, then equatorial 
           && (a + b) % 2 == 0 // this gives trans eq ligands
@@ -382,7 +395,8 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if(std::min(a - b, b - a) == 3) return 76;
+      if(a == b) return 0;
+      else if(std::min(a - b, b - a) == 3) return 76;
       else {
         if(
           (a < 3 && b < 3)
@@ -416,7 +430,8 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if(a == 5 || b == 5) {
+      if(a == b) return 0;
+      else if(a == 5 || b == 5) {
         return 90;
       } else { // identical to PentagonalPlanar
         unsigned absDiff = std::min(a - b, b - a);
@@ -429,6 +444,8 @@ const std::map<Name, TupleType> symmetryData {
   )},
   {Name::PentagonalBiPyramidal, TupleType(
     /* 
+     * 3, 5, (_) and 6 in plane, 1 and 2 in front, 0 and 4 in back
+     *
      *      5
      *  0_  | .4
      *   _:(_) – 3
@@ -448,8 +465,9 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if(a + b == 11) return 180; // cis 5,6
-      else if(a + b > 5) return 90; // any angle to axial index
+      if(a == b) return 0;
+      else if(a + b == 11) return 180; // trans 5,6
+      else if((a > 4) ^ (b > 4)) return 90; // any angle to axial index
       else { // equatorial angles, like PentagonalPlanar
         unsigned absDiff = std::min(a - b, b - a);
         return std::min(
@@ -518,18 +536,19 @@ const std::map<Name, TupleType> symmetryData {
       const unsigned& a,
       const unsigned& b
     ) -> double {
-      if(
+      if(a == b) return 0;
+      else if(
         (a < 4 && b < 4)
         || (a >= 4 && b >= 4)
       ) { // in plane
-        if((a + b) % 2 == 1) return 55; // cis 
-        else return 148;
+        if((a + b) % 2 == 1) return 72.9875; // cis
+        else return 114.475; // trans
       } else { // between planes
         unsigned minDiff = std::min(a - b, b - a);
         if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
-          return 51;
-        } else {
-          return 175;
+          return 78.05;
+        } else { // long
+          return 142.275;
         }
       }
     }

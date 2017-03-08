@@ -114,4 +114,21 @@ BOOST_AUTO_TEST_CASE( symmetrySanityTests ) {
 
     BOOST_CHECK(passesAll);
   }
+
+  // every angle function must return 0 for identical indices
+  for(const auto& symmetryName: allNames) {
+    bool passesAll = true;
+
+    for(unsigned i = 0; i < size(symmetryName); i++) {
+      if(angleFunction(symmetryName)(i, i) != 0) {
+        passesAll = false;
+        std::cout << name(symmetryName)
+          << "'s angle function does not return zero for identical indices ("
+          << i << ", " << i << ")." << std::endl;
+        break;
+      }
+    }
+
+    BOOST_CHECK(passesAll);
+  }
 }
