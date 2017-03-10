@@ -6,22 +6,24 @@ namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
-DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) : _N(N) {
-  _matrix.resize(_N, _N);
-  _matrix.setZero();
-  _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
+/* Constructors */
+DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) 
+  : _boundsMatrix(N),
+    _N(N) {
 
+  _boundsMatrix.matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
   _initRandomEngine();
 }
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) : 
-  _matrix(matrix),
+  _boundsMatrix(matrix),
   _N(matrix.rows()) {
   assert(matrix.rows() == matrix.cols());
 
   _initRandomEngine();
 }
 
+/* Private members */
 void DistanceBoundsMatrix::_initRandomEngine() {
 
 #ifdef NDEBUG
@@ -35,44 +37,12 @@ void DistanceBoundsMatrix::_initRandomEngine() {
   _randomEngine.seed(_seedSequence);
 }
 
-decltype(DistanceBoundsMatrix::_matrix(1, 2))& DistanceBoundsMatrix::upperBound(
+/* Modifiers */
+double& DistanceBoundsMatrix::lowerBound(
   const unsigned& i,
   const unsigned& j
 ) {
-  return _matrix(
-    std::min(i, j),
-    std::max(i, j)
-  );
-}
-
-decltype(DistanceBoundsMatrix::_matrix(1, 2))& DistanceBoundsMatrix::lowerBound(
-  const unsigned& i,
-  const unsigned& j
-) {
-  return _matrix(
-    std::max(i, j),
-    std::min(i, j)
-  );
-}
-
-double DistanceBoundsMatrix::upperBound(
-  const unsigned& i,
-  const unsigned& j
-) const {
-  return _matrix(
-    std::min(i, j),
-    std::max(i, j)
-  );
-}
-
-double DistanceBoundsMatrix::lowerBound(
-  const unsigned& i,
-  const unsigned& j
-) const {
-  return _matrix(
-    std::max(i, j),
-    std::min(i, j)
-  );
+  return _boundsMatrix.lowerBound(i, j);
 }
 
 void DistanceBoundsMatrix::processDistanceConstraints(
@@ -106,204 +76,25 @@ void DistanceBoundsMatrix::processDistanceConstraints(
   }
 }
 
-void DistanceBoundsMatrix::triangleInequalitySmooth(
-  const SmoothingAlgorithm& algorithmChoice
+double& DistanceBoundsMatrix::upperBound(
+  const unsigned& i,
+  const unsigned& j
 ) {
-
-  if(algorithmChoice == SmoothingAlgorithm::Naive) {
-    double ijUpper, ijLower, ikjUpper, ikjLower;
-
-    for(AtomIndexType i = 0; i < _N; i++) {
-      for(AtomIndexType j = i + 1; j < _N; j++) {
-        ijUpper = upperBound(i, j);
-        ijLower = lowerBound(i, j);
-
-        for(AtomIndexType k = j + 1; k < _N; k++) {
-          ikjUpper = upperBound(i, k) + upperBound(j, k);
-          ikjLower = lowerBound(i, k) + lowerBound(j, k);
-
-          if(ikjUpper < ijUpper) {
-            upperBound(i, j) = ikjUpper;
-            ijUpper = ikjUpper;
-          }
-
-          if(ikjLower > ijLower) {
-            lowerBound(i, j) = ikjLower;
-            ijLower = ikjLower;
-          }
-        }
-      }
-    }
-  } else if(algorithmChoice == SmoothingAlgorithm::Custom) {
-    /* 1. reformat upper Triangle to i, j, double tuples
-     * 2. re-order list to double DESC
-     * 3. pick top tuple. use smallest tuples i - k - j to lower i-j bound
-     *
-     * The idea being that if we improve the highest values first we will have
-     * some sort of advantage. This problem I see with the naive implementation
-     * is that triangle inequality bounds smoothing since information
-     * propagates (at worst) a bond per full run (I think).  Predicated on the
-     * idea that information is gained at improvements of large gaps, doing
-     * these first gives at least two-bond propagation per run. But this is
-     * largely hyperbole, I have no proof. Hence the implementation for
-     * testing.
-     */
-
-    using BoundTupleType = std::tuple<
-      AtomIndexType,
-      AtomIndexType,
-      double
-    >;
-
-    std::vector<BoundTupleType> bounds;
-
-    for(AtomIndexType i = 0; i < _N; i++) {
-      for(AtomIndexType j = i + 1; j < _N; j++) {
-        bounds.emplace_back(
-          i,
-          j,
-          upperBound(i, j)
-        );
-      }
-    }
-
-    VectorView<BoundTupleType> sortedView(bounds);
-    sortedView.sort([](const BoundTupleType& a, const BoundTupleType& b) {
-      return std::get<2>(a) > std::get<2>(b);
-    });
-
-    VectorView<BoundTupleType> filteredView(bounds);
-
-    AtomIndexType i, j;
-    double bound;
-    for(const BoundTupleType& boundToImprove: sortedView) {
-      std::tie(i, j, bound) = boundToImprove;
-      
-      // filter bounds by keeping only tuples containing i OR j
-      filteredView.filter([&i, &j](const BoundTupleType& a) -> bool {
-        return !(
-          (
-            std::get<0>(a) == i 
-            && std::get<1>(a) != j
-          ) || (
-            std::get<0>(a) == j
-            && std::get<1>(a) != i
-          )
-        );
-      });
-
-      // try all i - k - j  partial sums to see if they're smaller than i - j
-      for(AtomIndexType k = 0; k < _N; k++) {
-        if(k == i || k == j) continue;
-
-        double sumPartial = 0;
-        unsigned found = 0;
-
-        // traverse the tuple list for i-k and j-k
-        for(const auto& potentialPartialTuple : filteredView) {
-          if( (
-              std::get<0>(potentialPartialTuple) == i
-              && std::get<1>(potentialPartialTuple) == k
-            ) || (
-              std::get<0>(potentialPartialTuple) == k
-              && std::get<1>(potentialPartialTuple) == i
-            ) || (
-              std::get<0>(potentialPartialTuple) == j
-              && std::get<1>(potentialPartialTuple) == k
-            ) || (
-              std::get<0>(potentialPartialTuple) == k
-              && std::get<1>(potentialPartialTuple) == j
-            ) 
-          ) {
-            sumPartial += std::get<2>(potentialPartialTuple);
-            found += 1;
-            if(found == 2) break;
-          }
-        }
-
-        // improves upper bound if smaller!
-        if(sumPartial < bound) upperBound(i, j) = sumPartial;
-      }
-
-      filteredView.resetFilters(false);
-    }
-
-    bounds.clear();
-
-    for(AtomIndexType i = 0; i < _N; i++) {
-      for(AtomIndexType j = i + 1; j < _N; j++) {
-        bounds.emplace_back(
-          i,
-          j,
-          lowerBound(i, j)
-        );
-      }
-    }
-
-    sortedView.sort([](const BoundTupleType& a, const BoundTupleType& b) {
-      return std::get<2>(a) < std::get<2>(b);
-    });
-
-    for(const BoundTupleType& boundToImprove: sortedView) {
-      std::tie(i, j, bound) = boundToImprove;
-      
-      // filter bounds by keeping only tuples containing i OR j
-      filteredView.filter([&i, &j](const BoundTupleType& a) -> bool {
-        return !(
-          (
-            std::get<0>(a) == i 
-            && std::get<1>(a) != j
-          ) || (
-            std::get<0>(a) == j
-            && std::get<1>(a) != i
-          )
-        );
-      });
-
-      // try all i - k - j  partial sums to see if they're smaller than i - j
-      for(AtomIndexType k = 0; k < _N; k++) {
-        if(k == i || k == j) continue;
-
-        double sumPartial = 0;
-        unsigned found = 0;
-
-        // traverse the tuple list for i-k and j-k
-        for(const auto& potentialPartialTuple : filteredView) {
-          if( (
-              std::get<0>(potentialPartialTuple) == i
-              && std::get<1>(potentialPartialTuple) == k
-            ) || (
-              std::get<0>(potentialPartialTuple) == k
-              && std::get<1>(potentialPartialTuple) == i
-            ) || (
-              std::get<0>(potentialPartialTuple) == j
-              && std::get<1>(potentialPartialTuple) == k
-            ) || (
-              std::get<0>(potentialPartialTuple) == k
-              && std::get<1>(potentialPartialTuple) == j
-            ) 
-          ) {
-            sumPartial += std::get<2>(potentialPartialTuple);
-            found += 1;
-            if(found == 2) break;
-          }
-        }
-
-        // improves lower bound if greater!
-        if(sumPartial > bound) lowerBound(i, j) = sumPartial;
-      }
-
-      // avoid recalculation of sorting / filters when clearing the filters
-      filteredView.resetFilters(false);
-    }
-
-  }
+  return _boundsMatrix.upperBound(i, j);
 }
 
-// TODO alter behavior due to metrizationOption!
+void DistanceBoundsMatrix::smooth() {
+  _boundsMatrix.smooth();
+}
+
+/* Information */
 Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
   const MetrizationOption& metrization
 ) const {
+  /* Copy out distanceBounds matrix: Metrization alters bounds to ensure 
+   * triangle inequality consistency.
+   */
+  auto boundsCopy = _boundsMatrix;
 
   Eigen::MatrixXd distances;
   distances.resize(_N, _N);
@@ -329,6 +120,7 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
     _randomEngine
   );
 
+  // TODO Using Metrization like this is O(N^5)! 
   for(AtomIndexType idx = 0; idx < _N; idx++) {
     AtomIndexType i = indices.at(idx);
     for(AtomIndexType j = 0; j < _N; j++) {
@@ -341,23 +133,61 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
       ) continue; // skip on-diagonal and already-chosen elements
 
       std::uniform_real_distribution<> uniformDistribution(
-        lowerBound(i, j),
-        upperBound(i, j)
+        boundsCopy.lowerBound(i, j),
+        boundsCopy.upperBound(i, j)
       );
+
+      double chosenDistance = uniformDistribution(_randomEngine);
 
       upperTriangle(
         std::min(i, j),
         std::max(i, j)
-      ) = uniformDistribution(_randomEngine);
+      ) = chosenDistance;
 
-      /* re-smooth bounds matrix with new information if full metrization is
-       * chosen
-       */
+      // Full metrization is somewhat naive
+      if(metrization == MetrizationOption::full) {
+        // Update bounds matrix with chosen value
+        boundsCopy.lowerBound(i, j) = chosenDistance;
+        boundsCopy.upperBound(i, j) = chosenDistance;
+
+        // Re-smooth the bounds matrix
+        boundsCopy.smooth();
+      }
     }
 
   }
 
   return distances;
+}
+
+const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
+  return _boundsMatrix.matrix;
+}
+
+unsigned DistanceBoundsMatrix::boundInconsistencies() const {
+  unsigned count = 0;
+
+  for(unsigned i = 0; i < _N; i++) {
+    for(unsigned j = i + 1; j < _N; j++) {
+      if(lowerBound(i, j) > upperBound(i, j)) count++;
+    }
+  }
+
+  return count;
+}
+
+double DistanceBoundsMatrix::lowerBound(
+  const unsigned& i,
+  const unsigned& j
+) const {
+  return _boundsMatrix.lowerBound(i, j);
+}
+
+double DistanceBoundsMatrix::upperBound(
+  const unsigned& i,
+  const unsigned& j
+) const {
+  return _boundsMatrix.upperBound(i, j);
 }
 
 } // eo namespace DistanceGeometry

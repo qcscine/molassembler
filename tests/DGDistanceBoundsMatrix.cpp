@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include "WriteMatrix.h"
+#include "BoundsFromSymmetry.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 
 BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
@@ -14,10 +16,10 @@ BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
 
   DistanceBoundsMatrix testBounds(N);
   testBounds.upperBound(0, 1) = 1;
-  testBounds.upperBound(0, 2) = 2;
+  testBounds.upperBound(0, 2) = 100;
   testBounds.upperBound(0, 3) = 1;
   testBounds.upperBound(1, 2) = 1;
-  testBounds.upperBound(1, 3) = 2;
+  testBounds.upperBound(1, 3) = 100;
   testBounds.upperBound(2, 3) = 1;
 
   testBounds.lowerBound(0, 1) = 1;
@@ -26,6 +28,10 @@ BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
   testBounds.lowerBound(1, 2) = 1;
   testBounds.lowerBound(1, 3) = 0.5;
   testBounds.lowerBound(2, 3) = 1;
+
+  testBounds.smooth();
+
+  BOOST_CHECK(testBounds.upperBound(0, 2) == 2 && testBounds.upperBound(1, 3) == 2);
 
   auto distancesMatrix = testBounds.generateDistanceMatrix(
     MetrizationOption::off
@@ -39,5 +45,34 @@ BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
       );
     }
   }
-
 }
+
+/*
+BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
+  for(const auto& symmetryName : Symmetry::allNames) {
+    std::string spaceFreeName = Symmetry::name(symmetryName);
+    std::replace(
+      spaceFreeName.begin(),
+      spaceFreeName.end(),
+      ' ',
+      '-'
+    );
+
+    auto boundsMatrix = DGDBM::distanceBoundsFromSymmetry(
+      symmetryName,
+      DGDBM::DistancesOption::Uniform
+    );
+
+    writeMatrix(
+      "pre-"s + spaceFreeName,
+      boundsMatrix.access()
+    );
+
+    boundsMatrix.smooth();
+
+    writeMatrix(
+      "post-"s + spaceFreeName,
+      boundsMatrix.access()
+    );
+  }
+}*/

@@ -148,9 +148,7 @@ BOOST_AUTO_TEST_CASE(distanceBoundsGeneratedArePlausible) {
 
       // Calculate metric matrix from selected distances
       MetricMatrix metricMatrix(
-        distanceBoundsMatrix.generateDistanceMatrix(
-          MetrizationOption::off
-        )
+        distanceBoundsMatrix.generateDistanceMatrix() // with metrization!
       );
 
       // Embed

@@ -24,3 +24,6 @@ coordination numbers do not reach 0 in optimizations (likely due to triangle
 inequality violations), even square pyramidal is now below 0.1 (previously at
 4). The generated structures look much better. Getting the refinement to reach
 the global minimum is now the target. Introducing metrization may allow this.
+
+Metrization changes nothing. No triangle inequalities are introduced by random
+independent choice of distances.
