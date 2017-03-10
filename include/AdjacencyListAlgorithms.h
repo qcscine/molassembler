@@ -12,6 +12,7 @@
 /* TODO
  * - Add variant of makeTree that creates a tree of limited depth from a 
  *   starting atom
+ * - Refactor to BGL
  *
  * NOTES
  * - Yes, it has to be a deque. A queue, although seemingly the minimal 

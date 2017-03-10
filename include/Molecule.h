@@ -5,13 +5,8 @@
 #include <iostream>
 #include <set>
 
-// Delib
-#include "Types/PositionCollection.h"
-#include "Types/ElementTypeCollection.h"
-
 // Custom headers
 #include "AdjacencyList.h"
-#include "Edges.h"
 #include "StereocenterList.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "BondDistance.h"
@@ -39,17 +34,14 @@ private:
    */
 
   // State variables
-  Delib::ElementTypeCollection _elements;
   AdjacencyList _adjacencies;
-  Edges _edges;
   StereocenterList _stereocenters;
 
   /* Private member functions */
-  std::vector<DistanceConstraint> _createConstraint(
+  std::vector<DistanceGeometry::DistanceConstraint> _createConstraint(
     const std::vector<AtomIndexType>& chain
   ) const;
   void _detectStereocenters();
-  void _dumpGraphviz(std::ostream& os) const;
   bool _validAtomIndex(const AtomIndexType& a) const;
 
 public:
@@ -61,12 +53,8 @@ public:
     const BondType& bondType
   ); 
 
-  // From the internal components
-  Molecule(
-    const Delib::ElementTypeCollection& elements,
-    const AdjacencyList& adjacencies,
-    const Edges& edges
-  );
+  // From internal components
+  Molecule(const AdjacencyList& adjacencies);
 
 /* Temporary experimentation */
   std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
@@ -94,7 +82,7 @@ public:
       ligands.push_back(
         LocalGeometry::LigandType {
           0, 0, {{  // L and X are 0 since only VSEPR is considered for now
-            _elements[adjacentIndex],
+            _adjacencies.getElementType(adjacentIndex),
             getBondType(index, adjacentIndex)
           }}
         }
@@ -115,7 +103,7 @@ public:
         int formalCharge = 0;
 
         symmetryMap[i] = LocalGeometry::VSEPR::determineGeometry(
-          _elements[i],
+          _adjacencies.getElementType(i),
           nSites,
           ligandsVector,
           formalCharge
@@ -151,6 +139,7 @@ public:
   );
 
 /* Information retrieval */
+  void dumpGraphviz(const std::string& filename) const;
 
   int formalCharge(const AtomIndexType& a) const; // TODO not implemented
 
@@ -168,19 +157,20 @@ public:
   ) const;
 
   // Get a vector of Distance Geometry chirality constraints
-  std::vector<ChiralityConstraint> getChiralityConstraints() const;
+  std::vector<DistanceGeometry::ChiralityConstraint> getChiralityConstraints() const;
 
   // Get a matrix containing Distance Geometry distance bounds
   DistanceGeometry::DistanceBoundsMatrix getDistanceBoundsMatrix() const;
 
-  const Edges& getEdges() const; 
+  std::vector<AdjacencyList::ExplicitEdge> getEdges() const;
 
   Delib::ElementType getElementType(
     const AtomIndexType& a
   ) const;
 
-  AtomIndexType getNumAtoms() const;
-  EdgeIndexType getNumBonds() const;
+  unsigned getNumAtoms() const;
+  unsigned getNumBonds() const;
+
 
   unsigned hydrogenCount(const AtomIndexType& a) const;
 

@@ -6,6 +6,7 @@
 #include "AdjacencyListAlgorithms.h"
 
 #include "ElementInfo.h" // Delib
+#include "Types/PositionCollection.h"
 
 #include <fstream>
 #include <iomanip>
@@ -54,7 +55,6 @@ private:
 
 
 /* Private members */
-  Delib::ElementTypeCollection _elements;
   Delib::PositionCollection _positions;
   AdjacencyList _adjacencies;
   Edges _edges;
@@ -108,17 +108,14 @@ private:
       atomPosition.z() = std::stod(line.substr(20, 10));
       _positions.push_back(atomPosition);
 
-      // Element name
-      _elements.push_back(
+      // Update adjacencies
+      _adjacencies.addAtom(
         Delib::ElementInfo::elementTypeForSymbol(
           _removeAllSpaces(
             line.substr(31, 3)
           )
         )
       );
-
-      // Update adjacencies
-      _adjacencies.addSlot();
     } 
   }
 
@@ -135,15 +132,8 @@ private:
       bty = std::atoi(line.substr(6, 3).c_str());
 
       // WARNING: this can throw if queries are set! No graceful error handling.
-      // update edges
-      _edges.add(
-        i,
-        j,
-        _bondTypeMap.at(bty)
-      );
-
       // add adjacencies
-      _adjacencies.addAdjacency(i, j);
+      _adjacencies.addBond(i, j, _bondTypeMap.at(bty));
     }
   }
 
@@ -275,7 +265,6 @@ public:
     MOLFileVersion formatVersion = MOLFileVersion::V2000;
     // clear private state
     _positions.clear();
-    _elements.clear();
     _adjacencies.clear();
     _edges.clear();
     
@@ -341,9 +330,7 @@ public:
     }
 
     return Molecule(
-      _elements,
-      _adjacencies,
-      _edges
+      _adjacencies
     );
   }
 

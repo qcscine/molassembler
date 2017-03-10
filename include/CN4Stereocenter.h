@@ -109,7 +109,7 @@ public:
    * Return a list of distance constraints. Generates 1-2 and 1-3 distance
    * constraints for the central atom and its next neighbors. 
    */
-  virtual std::vector<DistanceConstraint> distanceConstraints() const override final;
+  virtual std::vector<DistanceGeometry::DistanceConstraint> distanceConstraints() const override final;
 
   /*!
    * Return a list of chirality constraints.  The target volume of the
@@ -133,7 +133,7 @@ public:
    *          |  ...              0 |
    *
    */
-  virtual std::vector<ChiralityConstraint> chiralityConstraints() const override final;
+  virtual std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const override final;
 
   /*!
    * Return the number of possible assignments at this feature

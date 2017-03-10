@@ -4,6 +4,7 @@
 
 #include "TreeAlgorithms.h"
 #include "AdjacencyListAlgorithms.h"
+#include "RepeatedElementCollection.h"
 
 BOOST_AUTO_TEST_CASE( makeTreeTest ) {
   using namespace MoleculeManip;
@@ -26,6 +27,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
   }
   { // BFS, DFS testing
     AdjacencyList test(
+      makeRepeatedElementCollection(Delib::ElementType::H, 8),
       Edges({
         {{0, 1}, BondType::Single},
         {{1, 2}, BondType::Single},
@@ -72,6 +74,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
   }
   { // BFS, DFS with depth limit testing
     AdjacencyList test(
+      makeRepeatedElementCollection(Delib::ElementType::H, 8),
       Edges({
         {{0, 1}, BondType::Single},
         {{1, 2}, BondType::Single},

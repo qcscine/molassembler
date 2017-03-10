@@ -12,8 +12,8 @@ namespace MoleculeManip {
 
 namespace Bond {
 
-static constexpr std::array<double, 7> bondOrderMap {{
-  1, 2, 3, 4, 5, 6, 1.5
+static constexpr std::array<double, 8> bondOrderMap {{
+  1, 2, 3, 4, 5, 6, 1.5, 0.5
 }};
 
 constexpr double bondOrderCorrectionLambda = 0.1332;

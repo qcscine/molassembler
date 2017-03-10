@@ -4,6 +4,9 @@
 
 #include "GraphDistanceMatrix.h"
 
+// Testing help
+#include "RepeatedElementCollection.h"
+
 /*   Member listing
  * y 1 AdjacencyList constructor
  * y 2 getMatrixRef
@@ -60,6 +63,7 @@ BOOST_AUTO_TEST_CASE( GraphDistanceMatrixTests ) {
   auto testInstance = GraphDistanceMatrix(
     AdjacencyMatrix(
       AdjacencyList(
+        makeRepeatedElementCollection(Delib::ElementType::H, 8),
         edges
       )
     )

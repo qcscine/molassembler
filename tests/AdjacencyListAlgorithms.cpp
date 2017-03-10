@@ -5,6 +5,9 @@
 #include "AdjacencyListAlgorithms.h"
 #include "StdlibTypeAlgorithms.h"
 
+// Helper header
+#include "RepeatedElementCollection.h"
+
 /* TODO
  */
 
@@ -22,6 +25,7 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
   using namespace AdjacencyListAlgorithms;
 
   auto testInstance = AdjacencyList(
+    makeRepeatedElementCollection(Delib::ElementType::H, 8),
     Edges({
       {{0, 1}, BondType::Single},
       {{1, 2}, BondType::Single},
@@ -148,21 +152,23 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
   // triangle
   testExpansionCorrectness(
     AdjacencyList(
+      makeRepeatedElementCollection(Delib::ElementType::H, 3),
       Edges({
         {{0, 1}, BondType::Single},
         {{0, 2}, BondType::Single},
         {{1, 2}, BondType::Single}
       })
     ),
-    Tree::nodePtr(0u, {
-      Tree::nodePtr(1u, {2u}),
-      Tree::nodePtr(2u, {1u})
+    Tree::nodePtr(0ul, {
+      Tree::nodePtr(1ul, {2ul}),
+      Tree::nodePtr(2ul, {1ul})
     })
   );
 
   // square
   testExpansionCorrectness(
     AdjacencyList(
+      makeRepeatedElementCollection(Delib::ElementType::H, 4),
       Edges({
         {{0, 1}, BondType::Single},
         {{0, 2}, BondType::Single},
@@ -170,15 +176,16 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
         {{2, 3}, BondType::Single}
       })
     ),
-    Tree::nodePtr(0u, {
-      Tree::nodePtr(1u, {3u}),
-      Tree::nodePtr(2u, {3u})
+    Tree::nodePtr(0ul, {
+      Tree::nodePtr(1ul, {3ul}),
+      Tree::nodePtr(2ul, {3ul})
     })
   );
 
   // pentangle
   testExpansionCorrectness(
     AdjacencyList(
+      makeRepeatedElementCollection(Delib::ElementType::H, 5),
       Edges({
         {{0, 1}, BondType::Single},
         {{0, 2}, BondType::Single},
@@ -187,12 +194,12 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
         {{3, 4}, BondType::Single}
       })
     ),
-    Tree::nodePtr(0u, {
-      Tree::nodePtr(1u, {
-        Tree::nodePtr(3u, {4u})
+    Tree::nodePtr(0ul, {
+      Tree::nodePtr(1ul, {
+        Tree::nodePtr(3ul, {4ul})
       }),
-      Tree::nodePtr(2u, {
-        Tree::nodePtr(4u, {3u})
+      Tree::nodePtr(2ul, {
+        Tree::nodePtr(4ul, {3ul})
       })
     })
   );
@@ -200,6 +207,7 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
   // spiro for good measure
   testExpansionCorrectness(
     AdjacencyList(
+      makeRepeatedElementCollection(Delib::ElementType::H, 7),
       Edges({
         {{0, 1}, BondType::Single},
         {{0, 2}, BondType::Single},
@@ -211,17 +219,17 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
         {{5, 6}, BondType::Single}
       })
     ),
-    Tree::nodePtr(0u, {
-      Tree::nodePtr(1u, {
-        Tree::nodePtr(3u, {
-          Tree::nodePtr(4u, {6u}),
-          Tree::nodePtr(5u, {6u})
+    Tree::nodePtr(0ul, {
+      Tree::nodePtr(1ul, {
+        Tree::nodePtr(3ul, {
+          Tree::nodePtr(4ul, {6ul}),
+          Tree::nodePtr(5ul, {6ul})
         })
       }),
-      Tree::nodePtr(2u, {
-        Tree::nodePtr(3u, {
-          Tree::nodePtr(4u, {6u}),
-          Tree::nodePtr(5u, {6u})
+      Tree::nodePtr(2ul, {
+        Tree::nodePtr(3ul, {
+          Tree::nodePtr(4ul, {6ul}),
+          Tree::nodePtr(5ul, {6ul})
         })
       })
     })
@@ -230,6 +238,7 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
   // fused triangles
   testExpansionCorrectness(
     AdjacencyList(
+      makeRepeatedElementCollection(Delib::ElementType::H, 4),
       Edges({
         {{0, 1}, BondType::Single},
         {{0, 2}, BondType::Single},
@@ -238,14 +247,14 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
         {{2, 3}, BondType::Single}
       })
     ),
-    Tree::nodePtr(0u, {
-      Tree::nodePtr(1u, {
-        Tree::nodePtr(3u),
-        Tree::nodePtr(2u, {3u})
+    Tree::nodePtr(0ul, {
+      Tree::nodePtr(1ul, {
+        Tree::nodePtr(3ul),
+        Tree::nodePtr(2ul, {3ul})
       }),
-      Tree::nodePtr(2u, {
-        Tree::nodePtr(3u),
-        Tree::nodePtr(1u, {3u})
+      Tree::nodePtr(2ul, {
+        Tree::nodePtr(3ul),
+        Tree::nodePtr(1ul, {3ul})
       }),
     })
   );
@@ -263,7 +272,13 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
       {{6, 8}, BondType::Single}
     });
 
-    auto prototypeTree = makeTree(AdjacencyList(edges), 0);
+    auto prototypeTree = makeTree(
+      AdjacencyList(
+        makeRepeatedElementCollection(Delib::ElementType::H, 9),
+        edges
+      ), 
+      0
+    );
 
     std::vector<unsigned> sequence (edges.size());
     std::iota(
@@ -276,13 +291,18 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
     do {
       // create new AdjacencyList and fill it with edges in the specified manner
       AdjacencyList adjacencies;
-      adjacencies.resize(edges.size());
+
+      for(unsigned i = 0; i < 9; i++) {
+        adjacencies.addAtom(Delib::ElementType::H);
+      }
+
       for(const auto& index : sequence) {
         auto edgesConstIterator = edges.begin();
         std::advance(edgesConstIterator, index);
-        adjacencies.addAdjacency(
+        adjacencies.addBond(
           edgesConstIterator -> first.first,
-          edgesConstIterator -> first.second
+          edgesConstIterator -> first.second,
+          BondType::Single
         );
       }
 

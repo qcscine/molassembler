@@ -4,6 +4,9 @@
 
 #include "AdjacencyMatrix.h"
 
+// Helper header
+#include "RepeatedElementCollection.h"
+
 /*   Member listing
  * y 1 AdjacencyList constructor
  * y 2 getMatrixRef
@@ -28,6 +31,7 @@ BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
   // use uniform initialization syntax to avoid most vexing parse
   AdjacencyMatrix testInstance {
     AdjacencyList {
+      makeRepeatedElementCollection(Delib::ElementType::H, 8),
       edges
     }
   };

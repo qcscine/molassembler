@@ -1,9 +1,28 @@
 #ifndef DISTANCE_GEOMETRY_HPP
 #define DISTANCE_GEOMETRY_HPP
 
+#include <tuple>
+#include "AdjacencyList.h"
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
+
+/* Typedefs */
+using DistanceConstraint = std::tuple<
+  AtomIndexType, // i
+  AtomIndexType, // j
+  double, // lower
+  double // upper
+>;
+
+using ChiralityConstraint = std::tuple<
+  AtomIndexType, // i
+  AtomIndexType, // j
+  AtomIndexType, // k
+  AtomIndexType, // l
+  double // target
+>;
 
 /* Enum types */
 enum class MetrizationOption {

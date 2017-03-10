@@ -215,9 +215,9 @@ void CN4Stereocenter::assign(const unsigned& assignment) {
   }
 }
 
-std::vector<DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
+std::vector<DistanceGeometry::DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
   // create the required vectors
-  std::vector<DistanceConstraint> distanceConstraints;
+  std::vector<DistanceGeometry::DistanceConstraint> distanceConstraints;
 
   const auto neighbors = _molPtr -> getBondedAtomIndices(_centerAtom);
 
@@ -306,7 +306,7 @@ std::vector<DistanceConstraint> CN4Stereocenter::distanceConstraints() const {
   return distanceConstraints;
 }
 
-std::vector<ChiralityConstraint> CN4Stereocenter::chiralityConstraints() const {
+std::vector<DistanceGeometry::ChiralityConstraint> CN4Stereocenter::chiralityConstraints() const {
   // if the option has not been generated yet, run distanceConstraints
   if(!(bool) cayleyMengerOption) {
     distanceConstraints();
@@ -336,7 +336,7 @@ std::vector<ChiralityConstraint> CN4Stereocenter::chiralityConstraints() const {
     if(_assignment.value() % 2 == 0) chiralityTarget *= -1.0;
 
     return {
-      ChiralityConstraint (
+      DistanceGeometry::ChiralityConstraint (
         neighbors[0],
         neighbors[1],
         neighbors[2],

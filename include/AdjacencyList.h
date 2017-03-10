@@ -1,200 +1,327 @@
 #ifndef INCLUDE_ADJACENCY_LIST_H
 #define INCLUDE_ADJACENCY_LIST_H
 
-#include <vector>
-#include <algorithm>
-#include <cassert>
-#include <iostream>
-#include <sstream>
+// STL
+#include <fstream>
 
+// Libraries
+#include "boost/graph/graphviz.hpp"
+
+// Delib
+#include "ElementInfo.h"
+#include "Types/ElementTypeCollection.h"
+
+#include "common_typedefs.h"
 #include "Edges.h"
+#include "RangeForTemporary.h"
 
 namespace MoleculeManip {
 
 class AdjacencyList {
 private:
-  /* Private members */
-  std::vector<
-    std::vector<
-      AtomIndexType
-    >
-  > _adjacencies;
+/* State */
+  GraphType _adjacencies;
+
+/* Members */
+  // Helper class to write the Graph as Graphviz output
+  struct MolGraphWriter {
+    /* Settings to determine appearance */
+    // Color maps
+    const std::map<
+      std::string,
+      std::string
+    > elementBGColorMap {
+      {"H", "white"},
+      {"C", "gray"},
+      {"N", "blue"},
+      {"O", "red"}
+    };
+
+    const std::map<
+      std::string,
+      std::string
+    > elementTextColorMap {
+      {"H", "black"},
+      {"C", "white"},
+      {"N", "white"},
+      {"O", "white"}
+    };
+
+    const std::map<
+      BondType,
+      std::string
+    > bondTypeDisplayString {
+     {BondType::Single, "color = \"black\""},
+      {BondType::Double, "color = \"black:invis:black\""},
+      {BondType::Triple, "color = \"black:invis:black:invis:black\""},
+      {BondType::Quadruple, "label = \"4\""},
+      {BondType::Quintuple, "label = \"5\""},
+      {BondType::Sextuple, "label = \"6\""},
+      {BondType::Aromatic, "style = \"dashed\""},
+      {BondType::Eta, "style = \"dotted\""}
+    };
+
+    /* State */
+    // We promise to be good and not change anything
+    const GraphType* const graphPtr;
+
+    /* Constructor */
+    MolGraphWriter(const GraphType* passGraphPtr) : graphPtr(passGraphPtr) {}
+
+    /* Information */
+    Delib::ElementType getElementType(const AtomIndexType& vertexIndex) const {
+      return (*graphPtr)[vertexIndex].elementType;
+    }
+
+    // Global options
+    void operator() (std::ostream& os) const {
+      os << "graph [fontname = \"Arial\", layout = neato];\n"
+        << "node [fontname = \"Arial\", shape = circle, style = filled];\n"
+        << "edge [fontname = \"Arial\"];\n";
+    }
+
+    // Vertex options
+    void operator() (std::ostream& os, const AtomIndexType& vertexIndex) const {
+      const std::string symbolString = Delib::ElementInfo::symbol(
+        getElementType(vertexIndex)
+      );
+
+      os << "[";
+      
+      // Add element name and index label
+      os << "label = \"" << symbolString << vertexIndex << "\"";
+
+      // Coloring
+      if(elementBGColorMap.count(symbolString)) {
+        os << ", fillcolor=\"" << elementBGColorMap.at(symbolString) << "\"";
+      } else { // default
+        os << ", fillcolor=\"white\"";
+      }
+      if(elementTextColorMap.count(symbolString)) {
+        os << ", fontcolor=\"" << elementTextColorMap.at(symbolString) << "\"";
+      } else { // default
+        os << ", fontcolor=\"orange\"";
+      }
+
+      // Font sizing
+      if(symbolString == "H") os << ", fontsize=10";
+      
+      os << "]";
+    }
+
+    // Edge options
+    void operator() (std::ostream& os, const EdgeIndexType& edgeIndex) const {
+      os << "[";
+
+      // Bond Type display options
+      auto bondType = (*graphPtr)[edgeIndex].bondType;
+      if(bondTypeDisplayString.count(bondType)) {
+        os << bondTypeDisplayString.at(bondType);
+      }
+
+      // If one of the bonded atoms is a hydrogen, shorten the bond
+      if(
+        getElementType(
+          boost::target(edgeIndex, *graphPtr)
+        ) == Delib::ElementType::H
+        || getElementType(
+          boost::source(edgeIndex, *graphPtr)
+        ) == Delib::ElementType::H
+      ) {
+        os << ", len=0.5";
+      }
+
+      os << "]";
+    }
+  };
+
+/* Private members */
+  bool _isValidIndex(const AtomIndexType& index) const {
+    return index < size();
+  }
 
 public:
-/* Public member functions */
-  /* Constructors */
+/* Typedefs */
+  using ExplicitEdge = std::pair<
+    Edges::MapType::key_type,
+    Edges::MapType::mapped_type
+  >;
+
+/* Constructors */
   AdjacencyList() = default;
   AdjacencyList(
+    const Delib::ElementTypeCollection& elements,
     const Edges& edges
   ) {
+    for(const auto& element: elements) {
+      addAtom(element);
+    }
+
     for(const auto& edge: edges) {
-      // resize if indices do not fit
-      if(edge.first.second >= _adjacencies.size()) {
-        _adjacencies.resize(edge.first.second + 1);
-      }
-      addAdjacency(edge.first.first, edge.first.second);
+      addBond(edge.first.first, edge.first.second, edge.second);
     }
   }
 
-  /* Modification */
-  /*!
-   * Adds an empty vector for a new vertex to the underlying data 
-   * structure.
-   */
-  AtomIndexType addSlot() noexcept {
-    _adjacencies.emplace_back();
-    return _adjacencies.size() - 1;
+/* Modification */
+  AtomIndexType addAtom(
+    const Delib::ElementType& elementType
+  ) {
+    auto vertex = boost::add_vertex(_adjacencies);
+    _adjacencies[vertex].elementType = elementType;
+    return vertex;
   }
 
-  /*!
-   * Adds the passed indices to each other's adjacency lists.
-   * \param a The first index
-   * \param b The second index
-   */
-  void addAdjacency(
+  void addBond(
     const AtomIndexType& a,
-    const AtomIndexType& b
-  ) noexcept {
-    _adjacencies.at(a).emplace_back(b);
-    _adjacencies.at(b).emplace_back(a);
+    const AtomIndexType& b,
+    const BondType& bondType
+  ) {
+    assert(_isValidIndex(a) && _isValidIndex(b) && a != b);
+    auto edgeAddPair = boost::add_edge(a, b, _adjacencies);
+    _adjacencies[edgeAddPair.first].bondType = bondType;
   }
 
-  /*!
-   * Clears the entire list.
-   */
-  void clear() noexcept {
+  void clear() {
+    // Delete EVERYTHING
     _adjacencies.clear();
   }
 
-  /*!
-   * Update the AdjacencyList when an atom index is invalidated to return to 
-   * contiguous internal indices.
-   */
-  void indexInvalidationUpdate(const AtomIndexType& invalidatedIndex) {
-    // The according row in the AdjacencyList should already be empty, check
-    assert(_adjacencies.at(invalidatedIndex).size() == 0);
-
-    // erase it
-    _adjacencies.erase(_adjacencies.begin() + invalidatedIndex);
-
-    // update all indices in the AdjacencyList
-    for(auto& adjacencyRow : _adjacencies) {
-      std::transform(
-        adjacencyRow.begin(),
-        adjacencyRow.end(),
-        adjacencyRow.begin(), // in-place transform
-        [&invalidatedIndex] (const auto& index) {
-          if(index > invalidatedIndex) return index - 1;
-          else return index;
-        }
-      );
-    }
-  }
-
-  /*!
-   * Removes an adjacency.
-   * \param a The first index
-   * \param b The second index
-   */
-  void removeAdjacency(
+  void removeBond(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) {
-    _adjacencies.at(a).erase(
-      std::remove(
-        _adjacencies.at(a).begin(),
-        _adjacencies.at(a).end(),
-        b
-      )
-    );
-
-    _adjacencies.at(b).erase(
-      std::remove(
-        _adjacencies.at(b).begin(),
-        _adjacencies.at(b).end(),
-        a
-      )
-    );
-  }
-
-  /* Information */
-  //! Dump graphviz source file text representing the AdjacencyList
-  std::string dumpGraphviz() const {
-    std::stringstream ss;
-    ss << "graph G {\n  graph [fontname = \"Arial\", layout = neato];\n"
-      << "  node [fontname = \"Arial\", shape = circle, style = filled, fontsize=10];\n"
-      << "  edge [fontname = \"Arial\"];\n";
-
-    // Node names
-    ss << "node [fillcolor=white, fontcolor=black, width=.3, fixedsize=true]\n";
-    for(unsigned i = 0; i < _adjacencies.size(); i++) {
-      ss << "\"" << i << "\"";
-      if(i != _adjacencies.size() - 1) {
-        ss << " ";
-      };
+    // Find edges
+    auto edgePair = boost::edge(a, b, _adjacencies);
+    if(edgePair.second) {
+      boost::remove_edge(edgePair.first, _adjacencies);
     }
-    ss << ";\n\n";
-
-    // All forward edges (i.e. first < second)
-    for(unsigned i = 0; i < _adjacencies.size(); i++) {
-      for(unsigned j = 0; j < _adjacencies[i].size(); j++) {
-        if(i < _adjacencies[i][j]) {
-          ss << "\"" << i << "\" -- \"" << _adjacencies[i][j] << "\"\n";
-        }
-      }
-    }
-
-    ss << "}";
-
-    return ss.str();
   }
 
-  /*!
-   * Get a list of adjacencies for a specified index
-   * \param a The index to get
-   * \returns The list of adjacencies for that index.
-   */
-  std::vector<AtomIndexType> getAdjacencies(
-    const AtomIndexType& a
-  ) const {
-    return _adjacencies.at(a);
-  }
-
-  /*!
-   * Checks whether two vertices are adjacent.
-   * \param a The first index
-   * \param b The second index
-   * \returns whether the two vertices are adjacent.
-   */
+/* Information */
   bool isAdjacent(
     const AtomIndexType& a,
     const AtomIndexType& b
-  ) const noexcept {
+  ) const {
+    GraphType::adjacency_iterator begin, end;
+    std::tie(begin, end) = boost::adjacent_vertices(a, _adjacencies);
     return std::find(
-      _adjacencies.at(a).begin(),
-      _adjacencies.at(a).end(),
+      begin,
+      end,
       b
-    ) != _adjacencies.at(a).end();
+    ) != end;
   }
 
-  /*!
-   * Resize to N
-   */
-  void resize(const unsigned& N) {
-    _adjacencies.resize(N, std::vector<AtomIndexType>());
+  unsigned getNumAdjacencies(
+    const AtomIndexType& a
+  ) const {
+    return boost::out_degree(a, _adjacencies);
   }
 
-  /*!
-   * Returns the size of the AdjacencyList
-   * \returns The size of the AdjacencyList
+
+  /*! Returns a range-for temporary object allowing c++11 style for loop 
+   * iteration through an atom's adjacencies
    */
-  AtomIndexType size() const noexcept {
-    return _adjacencies.size();
+  RangeForTemporary<GraphType::adjacency_iterator> iterateAdjacencies(
+    const AtomIndexType& a
+  ) const {
+    return RangeForTemporary<
+      GraphType::adjacency_iterator
+    >(
+      boost::adjacent_vertices(a, _adjacencies)
+    );
+  }
+
+  // Creates a copy of the contained data suitable for the Edges class
+  std::vector<ExplicitEdge> getEdges() const {
+    std::vector<ExplicitEdge> edges;
+
+    for(
+      const auto& edgeIndex : 
+      RangeForTemporary<
+        GraphType::edge_iterator
+      >(boost::edges(_adjacencies))
+    ) {
+      edges.push_back(ExplicitEdge({
+        {boost::source(edgeIndex, _adjacencies), boost::target(edgeIndex, _adjacencies)},
+        _adjacencies[edgeIndex].bondType
+      }));
+    }
+
+    return edges;
+  }
+
+  std::vector<AtomIndexType> getAdjacencies(
+    const AtomIndexType& a
+  ) const {
+    std::vector<AtomIndexType> copy;
+
+    // C++17 auto [begin, end] = ...
+    GraphType::adjacency_iterator begin, end;
+    std::tie(begin, end) = boost::adjacent_vertices(a, _adjacencies);
+    std::copy(
+      begin,
+      end,
+      std::back_inserter(copy)
+    );
+
+    return copy;
+  }
+
+  Delib::ElementType getElementType(const AtomIndexType& index) const {
+    assert(_isValidIndex(index));
+    return _adjacencies[index].elementType;
+  }
+
+  boost::optional<BondType> getBondType(
+    const AtomIndexType& a,
+    const AtomIndexType& b
+  ) const {
+    auto edgePair = boost::edge(a, b, _adjacencies);
+
+    if(edgePair.second) {
+      return _adjacencies[edgePair.first].bondType;
+    } else return boost::none;
+
+  }
+
+  // TODO deprecate and remove
+  unsigned size() const noexcept {
+    return boost::num_vertices(_adjacencies);
+  }
+
+  unsigned nAtoms() const {
+    return boost::num_vertices(_adjacencies);
+  }
+
+  unsigned nBonds() const {
+    return boost::num_edges(_adjacencies);
+  }
+
+  void dumpGraphviz(const std::string& filename) const {
+    MolGraphWriter propertyWriter(&_adjacencies);
+
+    std::ofstream outStream(filename);
+
+    boost::write_graphviz(
+      outStream,
+      _adjacencies,
+      propertyWriter,
+      propertyWriter,
+      propertyWriter
+    );
+
+    outStream.close();
   }
 
 /* Operators */
-  const std::vector<AtomIndexType>& operator[](const AtomIndexType& a) const {
-    return _adjacencies.at(a);
+  RangeForTemporary<GraphType::adjacency_iterator> operator[](
+    const AtomIndexType& a
+  ) const {
+    return RangeForTemporary<
+      GraphType::adjacency_iterator
+    >(
+      boost::adjacent_vertices(a, _adjacencies)
+    );
   }
 
 /* Friends */

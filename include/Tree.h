@@ -8,7 +8,6 @@
 #include <sstream>
 #include <map>
 
-
 namespace Tree {
 
 template<typename T1, typename T2>

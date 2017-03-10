@@ -39,36 +39,23 @@
 
 namespace MoleculeManip {
 
+using namespace DistanceGeometry;
+
 /* Constructors --------------------------------------------------------------*/
 Molecule::Molecule(
   const Delib::ElementType& a,
   const Delib::ElementType& b,
   const BondType& bondType
 ) {
-  // store ElementTypes
-  _elements.push_back(a);
-  _elements.push_back(b);
   // update _adjacencies
-  _adjacencies.addSlot();
-  _adjacencies.addSlot();
-  _adjacencies.addAdjacency(0, 1);
-  // update _edges
-  _edges.add(
-    0,
-    1,
-    bondType
-  );
+  _adjacencies.addAtom(a);
+  _adjacencies.addAtom(b);
+  _adjacencies.addBond(0, 1, bondType);
 }
 
-Molecule::Molecule(
-  const Delib::ElementTypeCollection& elements,
-  const AdjacencyList& adjacencies,
-  const Edges& edges
-) : 
-  _elements(elements),
-  _adjacencies(adjacencies),
-  _edges(edges) { 
-
+Molecule::Molecule(const AdjacencyList& adjacencies) 
+: _adjacencies(adjacencies)
+{ 
   _detectStereocenters();
 }
 
@@ -171,7 +158,7 @@ void Molecule::_detectStereocenters() {
       /* TODO this is no longer a valid way of checking how many ligands there are
        * eta bonds exist!
        */
-      _adjacencies[i].size() == 4 
+      _adjacencies.getNumAdjacencies(i) == 4 
       // to reduce amount of calculations yielding 1 possible arrangement 
       && hydrogenCount(i) < 2 
     ) {
@@ -194,153 +181,19 @@ void Molecule::_detectStereocenters() {
   }
 }
 
-void Molecule::_dumpGraphviz(std::ostream& os) const {
-
-  std::map<
-    std::string,
-    std::string
-  > elementBGColorMap {
-    {"H", "white"},
-    {"C", "gray"},
-    {"N", "blue"},
-    {"O", "red"}
-  };
-
-  std::map<
-    std::string,
-    std::string
-  > elementFGColorMap {
-    {"H", "black"},
-    {"C", "white"},
-    {"N", "white"},
-    {"O", "white"}
-  };
-
-  auto getSymbolString = [&](const AtomIndexType& index) -> std::string {
-    return Delib::ElementInfo::symbol(_elements.at(index));
-  };
-
-  auto nodeLabel = [&](const AtomIndexType& index) {
-    auto symbol = getSymbolString(index);
-    if(elementBGColorMap.count(symbol) > 0) {
-      return std::string("\"")
-        + std::to_string(index)
-        + "\"";
-    } else {
-      return std::string("\"")
-        + std::to_string(index)
-        + symbol
-        + "\"";
-    }
-  };
-
-  auto nodeProperties = [&](const std::string& symbolString) -> std::string {
-    if(symbolString == "H") {
-      return std::string(" [fillcolor=")
-        + elementBGColorMap.at("H")
-        + ", fontcolor="
-        + elementFGColorMap.at("H")
-        + ", fontsize=10, width=.3, fixedsize=true]";
-    } else if(elementBGColorMap.count(symbolString) == 1) {
-      return std::string(" [fillcolor=")
-        + elementBGColorMap.at(symbolString)
-        + ", fontcolor="
-        + elementFGColorMap.at(symbolString)
-        + "]";
-    } else return " [fillcolor=white, fontcolor=black]";
-  };
-
-  auto edgeProperties = [&](
-    const std::string& symbolFrom,
-    const std::string& symbolTo
-  ) {
-    if(
-      symbolFrom == "H" 
-      || symbolTo == "H"
-    ) {
-      return " [len=0.5]";
-    } else {
-      return "";
-    }
-  };
-
-  os << "graph G {\n  graph [fontname = \"Arial\", layout = neato];\n"
-    << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
-    << "  edge [fontname = \"Arial\"];\n";
-
-  std::map<
-    std::string,
-    std::vector<
-      std::string
-    >
-  > elementNameLabelListMap;
-
-  // group elements together
-  for(unsigned i = 0; i < _elements.size(); i++) {
-    if(elementNameLabelListMap.count(getSymbolString(i)) == 0) {
-      elementNameLabelListMap[
-        getSymbolString(i)
-      ] = {
-        nodeLabel(i)
-      };
-    } else {
-      elementNameLabelListMap.at(
-        getSymbolString(i)
-      ).push_back(
-        nodeLabel(i)
-      );
-    }
-  }
-
-  for(const auto& symbolLabelListPair : elementNameLabelListMap) {
-    os << "  node" << nodeProperties(symbolLabelListPair.first) << "\n ";
-    for(const auto& label : symbolLabelListPair.second) {
-      os << " " << label;
-    }
-    os << ";\n";
-  }
-
-  for(const auto& edge: _edges) {
-    os << "\n  " << nodeLabel(edge.first.first) << " -- " 
-      << nodeLabel(edge.first.second)
-      << edgeProperties(
-        getSymbolString(edge.first.first),
-        getSymbolString(edge.first.second)
-      ) 
-      << ";";
-  }
-
-  os << "\n}\n";
-}
-
-bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
-  return (
-    a < _adjacencies.size()
-  );
-}
-
 /* Public modifiers ----------------------------------------------------------*/
 AtomIndexType Molecule::addAtom(
   const Delib::ElementType& elementType,
   const AtomIndexType& bondedToIndex,
   const BondType& bondType
 ) {
-  assert(_validAtomIndex(bondedToIndex));
+  auto addedIndex = _adjacencies.addAtom(elementType);
 
-  auto addedIndex = _adjacencies.addSlot();
-
-  _adjacencies.addAdjacency(
-    bondedToIndex,
-    addedIndex
-  );
-
-  _edges.add(
+  _adjacencies.addBond(
     bondedToIndex,
     addedIndex,
     bondType
   );
-
-  _elements.push_back(elementType);
 
   return addedIndex;
 }
@@ -350,11 +203,7 @@ void Molecule::addBond(
   const AtomIndexType& b,
   const BondType& bondType
 ) {
-  assert(_validAtomIndex(a) && _validAtomIndex(b));
-
-  _adjacencies.addAdjacency(a, b);
-
-  _edges.add(a, b, bondType);
+  _adjacencies.addBond(a, b, bondType);
 }
 
 void Molecule::removeAtom(const AtomIndexType& a) {
@@ -368,7 +217,7 @@ void Molecule::removeAtom(const AtomIndexType& a) {
 
   // remove all mentions in the copied AdjacencyList
   for(const auto& bondedAtomIndex : bonded_to) {
-    adjacencyListCopy.removeAdjacency(a, bondedAtomIndex);
+    adjacencyListCopy.removeBond(a, bondedAtomIndex);
   }
 
   // is this still a connected molecule or have we split it in two
@@ -379,30 +228,8 @@ void Molecule::removeAtom(const AtomIndexType& a) {
     );
   }
 
-  // erase all edges to and from this atom
-  for(const auto& bondedAtomIndex : bonded_to) {
-    _edges.remove(a, bondedAtomIndex);
-  }
-
   // overwrite internal with modified adjacencyList
   _adjacencies = adjacencyListCopy;
-
-  // set _atom_exists to false for this index
-  _elements[a] = Delib::ElementType::none;
-
-  /* Minimize all internal state
-   * - _elements (ElementTypeCollection)
-   * - _edges (Edges)
-   * - _adjacencies (AdjacencyList)
-   * - _stereocenters (StereocenterList)
-   */
-
-  // Minimize _elements: Erase position of removed atom
-  _elements.erase(_elements.begin() + a);
-
-  // Minimize the rest: Decrement all internal indices larger than a
-  _edges.indexInvalidationUpdate(a);
-  _adjacencies.indexInvalidationUpdate(a);
 
   // TODO URGENT StereocenterList index invalidation update
   // just kinda useless if Stereocenter is going to change a lot
@@ -418,7 +245,7 @@ void Molecule::removeBond(
 
   auto adjacencyListCopy = _adjacencies;
 
-  adjacencyListCopy.removeAdjacency(a, b);
+  adjacencyListCopy.removeBond(a, b);
 
   if(AdjacencyListAlgorithms::numConnectedComponents(adjacencyListCopy) != 1) {
     throw std::logic_error(
@@ -428,14 +255,22 @@ void Molecule::removeBond(
 
   _adjacencies = adjacencyListCopy;
 
-  _edges.remove(a, b);
-
   // No minimization necessary here -> The removed bond does not lead to a 
   // disconnected atom (otherwise we would have thrown a few lines back). But a
   // bond removal can require a stereocenter update => TODO
 }
 
 /* Public information --------------------------------------------------------*/
+void Molecule::dumpGraphviz(const std::string& filename) const {
+  _adjacencies.dumpGraphviz(filename);
+}
+
+bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
+  return (
+    a < _adjacencies.size()
+  );
+}
+
 const AdjacencyList& Molecule::getAdjacencyList() const {
   return _adjacencies;
 }
@@ -451,9 +286,7 @@ BondType Molecule::getBondType(
   const AtomIndexType& a,
   const AtomIndexType& b
 ) const {
-  assert(_validAtomIndex(a) && _validAtomIndex(b));
-
-  auto edgeOption = _edges.get(a, b);
+  auto edgeOption = _adjacencies.getBondType(a, b);
 
   if(!edgeOption) {
     throw std::logic_error("The atoms requested are not bonded!");
@@ -503,23 +336,22 @@ DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const
   return distanceBounds;
 }
 
-const Edges& Molecule::getEdges() const {
-  return _edges;
+std::vector<AdjacencyList::ExplicitEdge> Molecule::getEdges() const {
+  return _adjacencies.getEdges();
 }
 
 Delib::ElementType Molecule::getElementType(
   const AtomIndexType& a
 ) const {
-  assert(_validAtomIndex(a));
-  return _elements.at(a);
+  return _adjacencies.getElementType(a);
 }
 
-AtomIndexType Molecule::getNumAtoms() const {
-  return _elements.size();
+unsigned Molecule::getNumAtoms() const {
+  return _adjacencies.nAtoms();
 }
 
-EdgeIndexType Molecule::getNumBonds() const {
-  return _edges.size();
+unsigned Molecule::getNumBonds() const {
+  return _adjacencies.nBonds();
 }
 
 unsigned Molecule::hydrogenCount(const AtomIndexType& a) const {
@@ -657,10 +489,6 @@ std::ostream& operator << (
   std::ostream& os,
   const Molecule& mol
 ) {
-  os << "Begin graphviz –––––––––––––––\n\n";
-  mol._dumpGraphviz(os);
-  os << "\n––––––––––––––––– End graphviz\n\n";
-
   if(mol._stereocenters.size() > 0) {
     os << "Stereocenter information:\n";
     for(const auto& stereocenterPtr: mol._stereocenters) {

@@ -47,27 +47,6 @@ struct AdjacencyListValidator {
     return boost::none;
   }
 
-  // Empty rows can occur due to absolutely zero fault of the AdjacencyList if a
-  // disconnect occurs, it is not inherently an invalid state.
-  static boost::optional<std::string> noEmptyRows(
-    const AdjacencyList& a
-  ) {
-    if(
-      TemplateMagic::any_of(
-        TemplateMagic::map(
-          a._adjacencies,
-          [](const std::vector<AtomIndexType>& localList) -> bool {
-            return localList.size() == 0;
-          }
-        )
-      )
-    ) {
-      return "There are empty rows in the ragged array!"s;
-    } else {
-      return boost::none;
-    }
-  }
-
   static std::vector<
     std::function<
       boost::optional<std::string>(
@@ -81,9 +60,7 @@ struct AdjacencyListValidator {
       auto errorOption = validator(a);
       if(errorOption) {
         std::cout << errorOption.value() << std::endl;
-        std::ofstream failureFile("validationFailure.dot");
-        failureFile << a.dumpGraphviz() << std::endl;
-        failureFile.close();
+        a.dumpGraphviz("validationFailure.dot");
         return false;
       }
     }
@@ -100,7 +77,6 @@ std::vector<
   >
 > AdjacencyListValidator::validators {
   AdjacencyListValidator::everyAdjacencyHasReverse,
-  AdjacencyListValidator::noEmptyRows
 };
 
 } // eo namespace MoleculeManip
@@ -117,8 +93,9 @@ struct ALFixture {
 
     // start with two connected vertices
     AtomIndexType N = 2;
-    adjacencies.resize(N);
-    adjacencies.addAdjacency(0, 1);
+    adjacencies.addAtom(Delib::ElementType::H);
+    adjacencies.addAtom(Delib::ElementType::H);
+    adjacencies.addBond(0, 1, BondType::Single);
 
     // extend at random with upper bound of 6 edges per vertex
     while(N < atomsLimit) {
@@ -132,10 +109,10 @@ struct ALFixture {
       }
 
       // add a new slot
-      auto newIndex = adjacencies.addSlot();
+      auto newIndex = adjacencies.addAtom(Delib::ElementType::H);
       
       // connect to selected random atom
-      adjacencies.addAdjacency(selection, newIndex);
+      adjacencies.addBond(selection, newIndex, BondType::Single);
 
       N += 1;
     }
@@ -162,7 +139,7 @@ struct ALFixture {
         continue;
       }
       
-      adjacencies.addAdjacency(i, j);
+      adjacencies.addBond(i, j, BondType::Single);
       nCycles += 1;
     }
   }
@@ -195,11 +172,8 @@ BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
     // remove all adjacencies involving it
     auto bondedIndices = adjacencies.getAdjacencies(selection);
     for(const auto& bondedIndex : bondedIndices) {
-      adjacencies.removeAdjacency(selection, bondedIndex);
+      adjacencies.removeBond(selection, bondedIndex);
     }
-
-    // minimalize
-    adjacencies.indexInvalidationUpdate(selection);
 
     // test validity
     BOOST_CHECK(AdjacencyListValidator::validate(adjacencies));
