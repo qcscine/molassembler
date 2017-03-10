@@ -47,7 +47,20 @@ BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
   }
 }
 
-/*
+Eigen::MatrixXd boundsToSlack(const Eigen::MatrixXd& bounds) {
+  const unsigned N = bounds.cols();
+  Eigen::MatrixXd slack(N, N);
+  slack.setZero();
+
+  for(unsigned i = 0; i < N; i++) {
+    for(unsigned j = i + 1; j < N; j++) {
+      slack(i, j) = bounds(i, j) - bounds(j, i);
+    }
+  }
+
+  return slack;
+}
+
 BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
   for(const auto& symmetryName : Symmetry::allNames) {
     std::string spaceFreeName = Symmetry::name(symmetryName);
@@ -65,14 +78,18 @@ BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
 
     writeMatrix(
       "pre-"s + spaceFreeName,
-      boundsMatrix.access()
+      boundsToSlack(
+        boundsMatrix.access()
+      )
     );
 
     boundsMatrix.smooth();
 
     writeMatrix(
       "post-"s + spaceFreeName,
-      boundsMatrix.access()
+      boundsToSlack(
+        boundsMatrix.access()
+      )
     );
   }
-}*/
+}

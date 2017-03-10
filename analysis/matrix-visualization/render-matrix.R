@@ -52,7 +52,7 @@ makeImagePlot <- function(matrixData, titleString) {
     xlab="",
     ylab="",
     main=titleString,
-    col=rev(heat.colors(100))
+    col=gray.colors(100, start = 0.3, end = 0.9, gamma = 2.2, alpha = NULL)
   )
 
   box()
