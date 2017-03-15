@@ -14,6 +14,7 @@
 using namespace UniqueAssignments;
 
 /* TODO
+ * - add more tests from different geometries
  */
 
 template<typename T>
@@ -28,28 +29,17 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
   return os;
 }
 
-BOOST_AUTO_TEST_CASE( assignment_instantiation ) {
-  // can make instances of all symmetries
-  Assignment tetr(
-    Symmetry::Name::Tetrahedral,
-    std::vector<char>(4, 'A')
-  );
-  Assignment sqpl(
-    Symmetry::Name::SquarePlanar,
-    std::vector<char>(4, 'A')
-  );
-  Assignment sqpy(
-    Symmetry::Name::SquarePyramidal,
-    std::vector<char>(5, 'A')
-  );
-  Assignment trigbipy(
-    Symmetry::Name::TrigonalBiPyramidal,
-    std::vector<char>(5, 'A')
-  );
-  Assignment octa(
-    Symmetry::Name::Octahedral,
-    std::vector<char>(6, 'A')
-  );
+// create instances of all symmetries with monodentate ligands
+BOOST_AUTO_TEST_CASE( assignmentInstantiation ) {
+  for(const auto& symmetryName: Symmetry::allNames) {
+    Assignment testAssignment(
+      symmetryName,
+      std::vector<char>(
+        Symmetry::size(symmetryName),
+        'A'
+      )
+    );
+  }
 }
 
 BOOST_AUTO_TEST_CASE( assignment_basics ) {
@@ -543,7 +533,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(0, 1),
           std::make_pair(2, 3)
         }),
-        11 // TODO ERROR: get 10
+        11 
       ),
       // M(A-A)(B-C)DE
       std::make_tuple(
@@ -589,7 +579,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(3, 4),
           std::make_pair(4, 5)
         }),
-        11 // TODO ERROR: get 9
+        11
       ),
       // M(A-B-B-A)CD
       std::make_tuple(

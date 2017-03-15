@@ -3,3 +3,4 @@ bin_*
 *.o
 *.a
 build/
+.lvimrc
