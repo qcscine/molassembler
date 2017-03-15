@@ -16,4 +16,16 @@ Delib::ElementTypeCollection makeRepeatedElementCollection(
   return returnCollection;
 }
 
+Delib::ElementTypeCollection makeIncrementedElementCollection(
+  const unsigned& size
+) {
+  Delib::ElementTypeCollection returnCollection;
+
+  for(unsigned i = 0; i < size; i++) {
+    returnCollection.push_back(Delib::ElementType(i + 1));
+  }
+
+  return returnCollection;
+}
+
 #endif

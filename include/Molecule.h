@@ -71,14 +71,14 @@ public:
      */
 
     // call this only on non-terminal atoms
-    assert(_adjacencies.getAdjacencies(index).size() > 1);
+    assert(_adjacencies.getNumAdjacencies(index) > 1);
 
     // first basic stuff for VSEPR, later L and X for transition metals
     // geometry inference does not care if the substituents are somehow 
     // connected (unless in later models the entire structure is considered)
     std::vector<LocalGeometry::LigandType> ligands;
 
-    for(const auto& adjacentIndex: _adjacencies.getAdjacencies(index)) {
+    for(const auto& adjacentIndex: _adjacencies.iterateAdjacencies(index)) {
       ligands.push_back(
         LocalGeometry::LigandType {
           0, 0, {{  // L and X are 0 since only VSEPR is considered for now
@@ -96,10 +96,10 @@ public:
     std::map<AtomIndexType, Symmetry::Name> symmetryMap;
 
     for(AtomIndexType i = 0; i < _adjacencies.size(); i++) {
-      if(_adjacencies.getAdjacencies(i).size() > 1) {
+      if(_adjacencies.getNumAdjacencies(i) > 1) {
         auto ligandsVector = _reduceToLigandTypes(i);
         // TODO this below is invalid for metals!
-        unsigned nSites = _adjacencies.getAdjacencies(i).size();
+        unsigned nSites = _adjacencies.getNumAdjacencies(i);
         int formalCharge = 0;
 
         symmetryMap[i] = LocalGeometry::VSEPR::determineGeometry(

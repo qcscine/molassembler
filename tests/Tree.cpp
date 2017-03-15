@@ -44,6 +44,8 @@ BOOST_AUTO_TEST_CASE( treeTests ) {
   // tree is now 4 -> 5 
   //               -> 9
 
+  BOOST_CHECK(secondChildPtr->depth() == 1);
+
   BOOST_CHECK(!secondChildPtr -> isRoot());
   BOOST_CHECK(secondChildPtr -> isLeaf());
 
@@ -51,6 +53,8 @@ BOOST_AUTO_TEST_CASE( treeTests ) {
   /* tree is now 4 -> 5 
    *               -> 9 -> 11
    */
+
+  BOOST_CHECK(thirdChildPtr->depth() == 2);
 
   BOOST_CHECK(!thirdChildPtr -> isRoot());
   BOOST_CHECK(thirdChildPtr -> isLeaf());
@@ -65,6 +69,8 @@ BOOST_AUTO_TEST_CASE( treeTests ) {
   auto levelOnePtr = identicalTreePtr -> addChild(9);
   levelOnePtr -> addChild(11);
   identicalTreePtr -> addChild(5);
+
+  BOOST_CHECK(levelOnePtr->depth() == 1);
 
   BOOST_CHECK(*firstInstancePtr == *identicalTreePtr);
 

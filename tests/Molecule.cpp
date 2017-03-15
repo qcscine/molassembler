@@ -36,6 +36,12 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
 
       std::cout << std::endl;
 
+      // Make dot files for every file
+      auto slashSplat = StdlibTypeAlgorithms::split(filename, '/');
+      auto dotSplat = StdlibTypeAlgorithms::split(slashSplat.back(), '.');
+
+      mol.dumpGraphviz(dotSplat.front() + ".dot");
+
     } catch(const std::exception& e) {
       std::cout << e.what() << std::endl;
       throw e;

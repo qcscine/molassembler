@@ -44,8 +44,9 @@ std::shared_ptr<NodeType> makeNodeRecursive(
     workStruct.nodes[index] = nodePtr;
 
     // as long as there are adjacencies for this index in the AdjacencyList
-    while(adjacencies.getAdjacencies(index).size() != 0) {
+    while(adjacencies.getNumAdjacencies(index) != 0) {
       // pick the first adjacency
+      // TODO this is 
       auto adjacency = adjacencies.getAdjacencies(index).front();
 
       /* Since adjacencies are bi-directional (A has an entry for B and B has

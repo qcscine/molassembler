@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <sstream>
 
 /* ostream operators for sets, pairs and vectors */
 /* TODO 
@@ -249,6 +250,9 @@ std::function<
     return { t };
 }
 
-} // eo namespace
+void split(const std::string &s, char delim, std::vector<std::string> &elems);
+std::vector<std::string> split(const std::string &s, char delim);
+
+} // eo namespace StdlibTypeAlgorithms
 
 #endif

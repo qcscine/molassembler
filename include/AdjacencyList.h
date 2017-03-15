@@ -104,7 +104,7 @@ private:
       }
 
       // Font sizing
-      if(symbolString == "H") os << ", fontsize=10";
+      if(symbolString == "H") os << ", fontsize=10, width=.3, fixedsize=true";
       
       os << "]";
     }
@@ -186,6 +186,14 @@ public:
     _adjacencies.clear();
   }
 
+  void removeAtom(const AtomIndexType& a) {
+    // Remove all edges to and from this vertex
+    boost::clear_vertex(a, _adjacencies);
+
+    // Remove the vertex itself
+    boost::remove_vertex(a, _adjacencies);
+  }
+
   void removeBond(
     const AtomIndexType& a,
     const AtomIndexType& b
@@ -198,6 +206,10 @@ public:
   }
 
 /* Information */
+  const GraphType& access() const {
+    return _adjacencies;
+  }
+
   bool isAdjacent(
     const AtomIndexType& a,
     const AtomIndexType& b

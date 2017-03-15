@@ -6,6 +6,12 @@
 #include "template_magic/templateMagic.h"
 #include "RNG/RNG.h"
 
+// Temp, testing
+#include <boost/graph/breadth_first_search.hpp>
+#include "RepeatedElementCollection.h"
+#include "Tree.h"
+#include <algorithm>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -87,9 +93,9 @@ struct ALFixture {
 
   ALFixture() {
     // generated adjacency lists parameters
-    const AtomIndexType atomsLimit = 100;
-    const unsigned cyclesLimit = 5;
-    const unsigned edgesLimit = 6; // maximum edges per vertex number
+    const AtomIndexType atomsLimit = 10; // was 100
+    const unsigned cyclesLimit = 1; // was 5
+    const unsigned edgesLimit = 3; // was 6, maximum edges per vertex number
 
     // start with two connected vertices
     AtomIndexType N = 2;

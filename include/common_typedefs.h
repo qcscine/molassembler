@@ -41,6 +41,12 @@ using GraphType = boost::adjacency_list<
   /* VertexListS = Type of Container for vertices
    * Options: vector, list, slist, set, multiset, unordered_set
    * Choice: vecS, removing vertices is rare, keep memory use limited
+   * Consequence: operation remove_vertex() invalidates:
+   *   - Vertex descriptors / iterators
+   *   - Edge descriptors / iterators
+   *   - Adjacency iterators
+   *
+   *   Upshot is that graph traversal is faster
    */
   boost::vecS,
   /* DirectedS = Is the graph directed or not?

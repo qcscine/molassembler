@@ -156,7 +156,7 @@ void Molecule::_detectStereocenters() {
   for(unsigned i = 0; i < _adjacencies.size(); i++) {
     if(
       /* TODO this is no longer a valid way of checking how many ligands there are
-       * eta bonds exist!
+       * -> eta bonds exist!
        */
       _adjacencies.getNumAdjacencies(i) == 4 
       // to reduce amount of calculations yielding 1 possible arrangement 
@@ -212,23 +212,17 @@ void Molecule::removeAtom(const AtomIndexType& a) {
   // copy out the adjacency list
   auto adjacencyListCopy = _adjacencies;
 
-  // must update edges and adjacencies 
-  auto bonded_to = adjacencyListCopy.getAdjacencies(a);
+  // Remove all vertices to and from the atom, plus the atom itself
+  adjacencyListCopy.removeAtom(a);
 
-  // remove all mentions in the copied AdjacencyList
-  for(const auto& bondedAtomIndex : bonded_to) {
-    adjacencyListCopy.removeBond(a, bondedAtomIndex);
-  }
-
-  // is this still a connected molecule or have we split it in two
+  // is this still a connected molecule or have we split it in two?
   if(AdjacencyListAlgorithms::numConnectedComponents(adjacencyListCopy) != 1) {
-    // No modifications have actually been made to this Molecule
     throw std::logic_error(
       "The selected atom removal would lead to a molecule split!"
     );
   }
 
-  // overwrite internal with modified adjacencyList
+  // if nothrow, overwrite internal with modified adjacencyList
   _adjacencies = adjacencyListCopy;
 
   // TODO URGENT StereocenterList index invalidation update

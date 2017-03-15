@@ -8,21 +8,16 @@
 // Helper header
 #include "RepeatedElementCollection.h"
 
+#include <random>
+
 /* TODO
- */
-
-
-/*       AdjacencyListAlgorithms listing
- * t  #  -------------------------------
- * y  1  _connectedComponents
- * y  2  numConnectedComponents
- * y  3  connectedComponentGroups
- *    4  detectCycles
  */
 
 BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
   using namespace MoleculeManip;
   using namespace AdjacencyListAlgorithms;
+
+  using NodeType = BFSVisitors::TreeGenerator::NodeType;
 
   auto testInstance = AdjacencyList(
     makeRepeatedElementCollection(Delib::ElementType::H, 8),
@@ -38,102 +33,10 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
     })
   );
 
-  auto countVector = _connectedComponents(testInstance);
-  std::vector<unsigned> expected {1, 1, 1, 1, 1, 1, 1, 1};
-
-  BOOST_CHECK(
-    std::equal(
-      countVector.begin(),
-      countVector.end(),
-      expected.begin(),
-      expected.end()
-    )
-  );
-
-
   BOOST_CHECK(
     numConnectedComponents(testInstance) == 1
   );
 
-  auto groupsVectors = connectedComponentGroups(testInstance);
-  std::vector<
-    std::vector<AtomIndexType>
-  > expectedGroups {
-    {0, 1, 2, 3, 4, 5, 6, 7}
-  };
-
-  BOOST_CHECK(
-    StdlibTypeAlgorithms::vectorToSet(groupsVectors) 
-    == StdlibTypeAlgorithms::vectorToSet(expectedGroups)
-  );
-  { // test BFS / DFS without depth limitation
-    std::vector<AtomIndexType> BFSVisitSequence;
-    BFSVisit(
-      testInstance,
-      0,
-      [&BFSVisitSequence](const AtomIndexType& index) -> bool {
-        BFSVisitSequence.push_back(index);
-        return true;
-      }
-    );
-    BOOST_CHECK(
-      BFSVisitSequence 
-      == std::vector<AtomIndexType>({
-        0, 1, 2, 4, 3, 5, 6, 7
-      })
-    );
-
-    std::vector<AtomIndexType> DFSVisitSequence;
-    DFSVisit(
-      testInstance,
-      0,
-      [&DFSVisitSequence](const AtomIndexType& index) -> bool {
-        DFSVisitSequence.push_back(index);
-        return true;
-      }
-    );
-    BOOST_CHECK(
-      DFSVisitSequence 
-      == std::vector<AtomIndexType>({
-        0, 1, 4, 5, 7, 6, 3, 2
-      })
-    );
-  }
-  { // test BFS / DFS with depth limitation
-    std::vector<AtomIndexType> BFSVisitSequence;
-    BFSVisit(
-      testInstance,
-      0,
-      [&BFSVisitSequence](const AtomIndexType& index) -> bool {
-        BFSVisitSequence.push_back(index);
-        return true;
-      },
-      4
-    );
-    BOOST_CHECK(
-      BFSVisitSequence 
-      == std::vector<AtomIndexType>({
-        0, 1, 2, 4, 3, 5 
-      })
-    );
-
-    std::vector<AtomIndexType> DFSVisitSequence;
-    DFSVisit(
-      testInstance,
-      0,
-      [&DFSVisitSequence](const AtomIndexType& index) -> bool {
-        DFSVisitSequence.push_back(index);
-        return true;
-      },
-      4
-    );
-    BOOST_CHECK(
-      DFSVisitSequence 
-      == std::vector<AtomIndexType>({
-        0, 1, 4, 5, 3, 2
-      })
-    );
-  }
   auto testExpansionCorrectness = [](
     AdjacencyList&& adjacencyList, 
     const std::shared_ptr<NodeType>& comparisonTreePtr
@@ -287,8 +190,29 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
       0
     );
 
+    std::seed_seq _seedSequence;
+    std::vector<unsigned> _seeds;
+    std::mt19937 _randomEngine;
+
+#ifdef NDEBUG
+    std::random_device randomDevice;
+    for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
+#else 
+    _seeds.emplace_back(2721813754);
+#endif
+
+    _seedSequence = std::seed_seq(_seeds.begin(), _seeds.end());
+    _randomEngine.seed(_seedSequence);
+
+    unsigned nTests = 100;
     bool pass = true;
-    do {
+    for(unsigned n = 0; n < nTests && pass; n++) {
+      std::shuffle(
+        sequence.begin(),
+        sequence.end(),
+        _randomEngine
+      );
+
       // create new AdjacencyList and fill it with edges in the specified manner
       AdjacencyList adjacencies;
 
@@ -312,8 +236,7 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
         pass = false;
         break;
       }
-
-    } while(std::next_permutation(sequence.begin(), sequence.end()));
+    }
 
     BOOST_CHECK(pass);
   }

@@ -65,6 +65,21 @@ struct Node : std::enable_shared_from_this<Node<T>> {
     return children.back();
   }
 
+  unsigned depth() { // get depth
+    unsigned depth = 0;
+
+    std::shared_ptr<Node> iterPtr = this -> shared_from_this();
+
+    while(
+      !iterPtr->isRoot() 
+    ) {
+      iterPtr = (iterPtr->parentWeakPtr).lock();
+      depth += 1;
+    }
+
+    return depth;
+  }
+
   /* Information */
   //! Execute a lambda for every Node in the tree
   void forEach(

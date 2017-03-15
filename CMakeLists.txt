@@ -90,6 +90,7 @@ set(SOURCES_all
   source/LocalGeometryModel.cpp
   source/Molecule.cpp
   source/Stereocenter.cpp
+  source/StdlibTypeAlgorithms.cpp
   source/VSEPR.cpp
 )
 
