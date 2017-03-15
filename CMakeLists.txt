@@ -55,7 +55,7 @@ set(HEADERS_all
   include/AdjacencyMatrix.h
   include/AtomInfo.h
   include/BondDistance.h
-  include/CN4Stereocenter.h
+  include/CNStereocenter.h
   include/Cache.h
   include/CommonTrig.h
   include/EZStereocenter.h
@@ -85,7 +85,7 @@ set(SOURCES_all
   source/AdjacencyMatrix.cpp
   source/AtomInfo.cpp
   source/BondDistance.cpp
-  source/CN4Stereocenter.cpp
+  source/CNStereocenter.cpp
   source/GraphDistanceMatrix.cpp
   source/LocalGeometryModel.cpp
   source/Molecule.cpp

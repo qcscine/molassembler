@@ -156,9 +156,6 @@ public:
     const AtomIndexType& b
   ) const;
 
-  // Get a vector of Distance Geometry chirality constraints
-  std::vector<DistanceGeometry::ChiralityConstraint> getChiralityConstraints() const;
-
   // Get a matrix containing Distance Geometry distance bounds
   DistanceGeometry::DistanceBoundsMatrix getDistanceBoundsMatrix() const;
 
@@ -186,7 +183,7 @@ public:
     >
   > rankPriority(
     const AtomIndexType& a,
-    const std::vector<AtomIndexType>& excludeAdjacent
+    const std::vector<AtomIndexType>& excludeAdjacent = {}
   ) const;
 
   /* Testing */

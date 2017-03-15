@@ -1,5 +1,5 @@
 #include "Molecule.h"
-#include "CN4Stereocenter.h"
+#include "CNStereocenter.h"
 #include "BondDistance.h"
 #include "symmetry_information/Symmetries.h"
 #include "CommonTrig.h"
@@ -162,14 +162,18 @@ void Molecule::_detectStereocenters() {
       // to reduce amount of calculations yielding 1 possible arrangement 
       && hydrogenCount(i) < 2 
     ) {
-      // Construct a Stereocenter here, currently only CN4Stereocenters
+      auto rankResultPair = rankPriority(i);
+
+      // Construct a Stereocenter here
       std::shared_ptr<
-        Stereocenters::CN4Stereocenter
+        Stereocenters::CNStereocenter
       > newStereocenter = std::make_shared<
-        Stereocenters::CN4Stereocenter
+        Stereocenters::CNStereocenter
       >(
-        this,
-        i
+        Symmetry::Name::Tetrahedral,
+        i,
+        rankResultPair.first,
+        rankResultPair.second
       );
 
       if(newStereocenter -> assignments() > 1) {
@@ -287,17 +291,6 @@ BondType Molecule::getBondType(
   }
 
   return edgeOption.value();
-}
-
-// TODO deprecate and remove (this should not be part of a public interface)
-std::vector<ChiralityConstraint> Molecule::getChiralityConstraints() const {
-  std::vector<ChiralityConstraint> constraints;
-  for(const auto& stereocenterPtr : _stereocenters) {
-    for(const auto& distanceConstraint : stereocenterPtr -> chiralityConstraints() ) {
-      constraints.push_back(distanceConstraint);
-    }
-  }
-  return constraints;
 }
 
 DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const {

@@ -94,7 +94,7 @@ Delib::PositionCollection generateConformation(
   const EmbeddingOption& embedding
 ) {
   auto distanceBoundsMatrix = molecule.getDistanceBoundsMatrix();
-  auto chiralityConstraints = molecule.getChiralityConstraints();
+  std::vector<ChiralityConstraint> chiralityConstraints; // TODO not retrieved so far
 
   Eigen::MatrixXd embeddedPositions;
   bool acceptableConformation;

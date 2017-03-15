@@ -9,15 +9,12 @@
 
 #include "common_typedefs.h"
 #include "StdlibTypeAlgorithms.h"
-#include "AdjacencyList.h"
-#include "DistanceGeometry/DistanceGeometry.h"
 
+// Detection algorithm headers
+#include "AdjacencyList.h"
 #include "Types/ElementTypeCollection.h" // Delib
 
 /* TODO
- * change the abstract base class to include self-detection algorithms in 
- * Molecules. In order to directly access the private members of Molecule, all
- * GraphFeature derived classes must be friends of the Molecule class.
  */
 
 namespace MoleculeManip {
@@ -36,6 +33,21 @@ namespace Stereocenters {
 
 class Stereocenter {
 public:
+/* Typedefs */
+  enum class ChiralityConstraintTarget {
+    Positive,
+    Flat,
+    Negative
+  };
+
+  using ChiralityConstraintPrototype = std::tuple<
+    AtomIndexType, // i
+    AtomIndexType, // j
+    AtomIndexType, // k
+    AtomIndexType, // l
+    ChiralityConstraintTarget
+  >;
+
 /* Public member functions */
   /* Modification */
   /*!
@@ -50,30 +62,48 @@ public:
   virtual std::string type() const = 0;
 
   /*!
-   * Return a set of involved atom indices
+   * Return the set of center atoms (atoms that angle information is available 
+   * on if asked as the central atom of an angle).
    */
   virtual std::set<AtomIndexType> involvedAtoms() const = 0;
 
-  //!  Return a list of distance constraints
-  virtual std::vector<
-    DistanceGeometry::DistanceConstraint
-  > distanceConstraints() const = 0;
-
-  //!  Return a list of chirality constraints
-  virtual std::vector<
-    DistanceGeometry::ChiralityConstraint
-  > chiralityConstraints() const = 0;
+  /* This is no longer needed (I believe), the BFSConstraintCollector will see
+   * to the proper collection of distance constraints
+   */
+  //  Return a list of distance constraints
+  //virtual std::vector<DistanceConstraint> distanceConstraints() const = 0;
 
   /*!
-   * Return the list of possible assignments at this feature
+   * Return the angle imposed by the underlying symmetry defined by three
+   * involved atoms. It needs to be three-defined in order for the angle 
+   * requested to be clearly defined in CNStereocenters and EZStereocenters.
+   */
+  virtual double angle(
+    const AtomIndexType& i,
+    const AtomIndexType& j,
+    const AtomIndexType& k
+  ) const = 0;
+
+  //!  Return a list of chirality constraints
+  // -> TODO Maybe need to integrate more information in the Symmetries if
+  // precise 1-3 distances are not enough to fully specify the geometry
+  virtual std::vector<ChiralityConstraintPrototype> chiralityConstraints() const = 0;
+
+  /*!
+   * Return the number of possible assignments 
    */
   virtual unsigned assignments() const = 0;
 
   /*!
-   * Return whether this feature has been assigned or not
+   * Return whether this Stereocenter has been assigned or not
+   * -> This leads to different behavior in DG! If unassigned, an Assignment is 
+   *    chosen at random and adhered to during coordinate generation.
    */
   virtual boost::optional<unsigned> assigned() const = 0;
 
+  /*! 
+   * Ostream operator for debugging
+   */
   friend std::basic_ostream<char>& MoleculeManip::operator << (
     std::basic_ostream<char>& os,
     const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& stereocenterPtr
