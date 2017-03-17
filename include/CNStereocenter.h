@@ -88,6 +88,8 @@ public:
   virtual boost::optional<unsigned> assigned() const override final;
   virtual unsigned assignments() const override final;
   virtual std::vector<ChiralityConstraintPrototype> chiralityConstraints() const override final;
+  virtual std::vector<DihedralLimits> dihedralLimits() const override final;
+
   virtual std::set<AtomIndexType> involvedAtoms() const override final;
   virtual std::string type() const override final;
 

@@ -1,5 +1,6 @@
 #include "VSEPR.h"
 #include "ElementInfo.h"
+#include <numeric>
 
 /* TODO
  * - Changes needed to ensure correctness in complex environments:

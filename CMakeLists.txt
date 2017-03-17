@@ -86,6 +86,7 @@ set(SOURCES_all
   source/AtomInfo.cpp
   source/BondDistance.cpp
   source/CNStereocenter.cpp
+  source/EZStereocenter.cpp
   source/GraphDistanceMatrix.cpp
   source/LocalGeometryModel.cpp
   source/Molecule.cpp

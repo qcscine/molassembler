@@ -11,7 +11,7 @@ CNStereocenter::CNStereocenter(
   const Symmetry::Name& symmetry,
   // The atom this Stereocenter is centered on
   const AtomIndexType& centerAtom,
-  // A partially ordered list of substituents, low to high (TODO check)
+  // A partially ordered list of substituents, low to high 
   const std::vector<AtomIndexType> partiallySortedSubstituents,
   // A set of pairs denoting which substituents are equal priority
   const std::set<
@@ -225,6 +225,10 @@ std::vector<
    */
 
   return prototypes;
+}
+
+std::vector<Stereocenter::DihedralLimits> CNStereocenter::dihedralLimits() const {
+  return {};
 }
 
 std::set<AtomIndexType> CNStereocenter::involvedAtoms() const {

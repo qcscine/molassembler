@@ -229,6 +229,24 @@ public:
     return boost::out_degree(a, _adjacencies);
   }
 
+  unsigned getNumNonEtaAdjacencies(
+    const AtomIndexType& a
+  ) const {
+    unsigned count = 0;
+
+    for(
+      const auto& edgeIndex:
+      RangeForTemporary<GraphType::out_edge_iterator>(
+        boost::out_edges(a, _adjacencies)
+      )
+    ) {
+      if(_adjacencies[edgeIndex].bondType != BondType::Eta) {
+        count += 1;
+      }
+    }
+
+    return count;
+  }
 
   /*! Returns a range-for temporary object allowing c++11 style for loop 
    * iteration through an atom's adjacencies

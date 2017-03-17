@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include <sstream>
+#include <numeric>
 
 /* ostream operators for sets, pairs and vectors */
 /* TODO 

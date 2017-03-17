@@ -25,6 +25,7 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) :
 
 /* Private members */
 void DistanceBoundsMatrix::_initRandomEngine() {
+  std::vector<unsigned> _seeds;
 
 #ifdef NDEBUG
   std::random_device randomDevice;
@@ -33,7 +34,7 @@ void DistanceBoundsMatrix::_initRandomEngine() {
   _seeds.emplace_back(2721813754);
 #endif
 
-  _seedSequence = std::seed_seq(_seeds.begin(), _seeds.end());
+  std::seed_seq _seedSequence(_seeds.begin(), _seeds.end());
   _randomEngine.seed(_seedSequence);
 }
 

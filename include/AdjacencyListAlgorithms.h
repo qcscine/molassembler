@@ -5,11 +5,6 @@
 
 #include "AdjacencyList.h"
 #include "Tree.h"
-#include "Traits.h"
-#include "template_magic/templateMagic.h"
-
-#include <deque> 
-#include <type_traits>
 
 /* TODO
  * - Refactor to BGL

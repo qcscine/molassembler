@@ -1,5 +1,5 @@
-#define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE DGMetricMatrixTests
+#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <iostream>
@@ -125,16 +125,17 @@ std::vector<unsigned> inverseReorderSequence(
 
 std::vector<unsigned> randomReorderingSequence(const unsigned& length) {
   // randomness set up
-  std::seed_seq _seedSequence;
   std::vector<unsigned> _seeds;
   std::mt19937 _randomEngine;
+
 #ifdef NDEBUG
   std::random_device randomDevice;
   for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
 #else 
   _seeds.emplace_back(2721813754);
 #endif
-  _seedSequence = std::seed_seq(_seeds.begin(), _seeds.end());
+
+  std::seed_seq _seedSequence(_seeds.begin(), _seeds.end());
   _randomEngine.seed(_seedSequence);
 
   std::vector<unsigned> reorderSequence (length);

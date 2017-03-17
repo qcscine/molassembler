@@ -1,5 +1,7 @@
 CONTINUE AT
 -----------
+- accumulate has apparently been moved in the STL
+- additionally, seed_seq is deleted? also wrong in other libraries
 - How to get angles between atoms in graph? Must include some conception of
   charge -> BFSConstraintCollector
 - Constraint collection and population of DistanceBoundsMatrix

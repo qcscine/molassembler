@@ -1,5 +1,5 @@
-#define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE AdjacencyListAlgorithmsTests
+#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "AdjacencyListAlgorithms.h"
@@ -190,7 +190,6 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
       0
     );
 
-    std::seed_seq _seedSequence;
     std::vector<unsigned> _seeds;
     std::mt19937 _randomEngine;
 
@@ -201,7 +200,7 @@ BOOST_AUTO_TEST_CASE( adjacencyListAlgorithms ) {
     _seeds.emplace_back(2721813754);
 #endif
 
-    _seedSequence = std::seed_seq(_seeds.begin(), _seeds.end());
+    std::seed_seq _seedSequence(_seeds.begin(), _seeds.end());
     _randomEngine.seed(_seedSequence);
 
     unsigned nTests = 100;

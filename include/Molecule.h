@@ -43,6 +43,11 @@ private:
   ) const;
   void _detectStereocenters();
   bool _validAtomIndex(const AtomIndexType& a) const;
+  std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
+    const AtomIndexType& index
+  ) const; 
+  Symmetry::Name _determineLocalGeometry(const AtomIndexType& index) const;
+  std::map<AtomIndexType, Symmetry::Name> _determineLocalGeometries() const;
 
 public:
 /* Constructors */
@@ -55,64 +60,6 @@ public:
 
   // From internal components
   Molecule(const AdjacencyList& adjacencies);
-
-/* Temporary experimentation */
-  std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
-    const AtomIndexType& index
-  ) {
-    /* TODO 
-     * - No L, X determination. Although, will L, X even be needed for metals?
-     *   Maybe only for OZ and NVE determination...
-     */
-    /* VSEPR formulation is that geometry is a function of 
-     * - localized charge of central atom
-     * - atom type of central atom, neighbors
-     * - bond types to neighbors
-     */
-
-    // call this only on non-terminal atoms
-    assert(_adjacencies.getNumAdjacencies(index) > 1);
-
-    // first basic stuff for VSEPR, later L and X for transition metals
-    // geometry inference does not care if the substituents are somehow 
-    // connected (unless in later models the entire structure is considered)
-    std::vector<LocalGeometry::LigandType> ligands;
-
-    for(const auto& adjacentIndex: _adjacencies.iterateAdjacencies(index)) {
-      ligands.push_back(
-        LocalGeometry::LigandType {
-          0, 0, {{  // L and X are 0 since only VSEPR is considered for now
-            _adjacencies.getElementType(adjacentIndex),
-            getBondType(index, adjacentIndex)
-          }}
-        }
-      );
-    }
-
-    return ligands;
-  }
-
-  std::map<AtomIndexType, Symmetry::Name> _determineLocalGeometries() {
-    std::map<AtomIndexType, Symmetry::Name> symmetryMap;
-
-    for(AtomIndexType i = 0; i < _adjacencies.size(); i++) {
-      if(_adjacencies.getNumAdjacencies(i) > 1) {
-        auto ligandsVector = _reduceToLigandTypes(i);
-        // TODO this below is invalid for metals!
-        unsigned nSites = _adjacencies.getNumAdjacencies(i);
-        int formalCharge = 0;
-
-        symmetryMap[i] = LocalGeometry::VSEPR::determineGeometry(
-          _adjacencies.getElementType(i),
-          nSites,
-          ligandsVector,
-          formalCharge
-        );
-      }
-    }
-
-    return symmetryMap;
-  }
 
 /* Modifiers */
   // Add an atom bonded to an existing atom

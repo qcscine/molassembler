@@ -1,5 +1,6 @@
 #include "Molecule.h"
 #include "CNStereocenter.h"
+#include "EZStereocenter.h"
 #include "BondDistance.h"
 #include "symmetry_information/Symmetries.h"
 #include "CommonTrig.h"
@@ -152,16 +153,18 @@ std::vector<DistanceConstraint> Molecule::_createConstraint(
 }
 
 void Molecule::_detectStereocenters() {
-  // TODO add all other CN stereocenters, EZ Stereocenter
+  // Find CNStereocenters
   for(unsigned i = 0; i < _adjacencies.size(); i++) {
     if(
       /* TODO this is no longer a valid way of checking how many ligands there are
        * -> eta bonds exist!
        */
-      _adjacencies.getNumAdjacencies(i) == 4 
-      // to reduce amount of calculations yielding 1 possible arrangement 
-      && hydrogenCount(i) < 2 
+      _adjacencies.getNumAdjacencies(i) >= 3 
     ) {
+      // TODO geometry determination for transition metal complexes?
+
+      // Determine the local geometry
+      auto localGeometryName = _determineLocalGeometry(i);
       auto rankResultPair = rankPriority(i);
 
       // Construct a Stereocenter here
@@ -170,7 +173,7 @@ void Molecule::_detectStereocenters() {
       > newStereocenter = std::make_shared<
         Stereocenters::CNStereocenter
       >(
-        Symmetry::Name::Tetrahedral,
+        localGeometryName,
         i,
         rankResultPair.first,
         rankResultPair.second
@@ -183,6 +186,123 @@ void Molecule::_detectStereocenters() {
       }
     }
   }
+
+  /* TODO
+   * - Will need refinement to not instantiate EZStereocenters in small cycles
+   *   (up to a preset size, maybe around 8 or so?)
+   */
+  // Find EZStereocenters
+  const auto& graphRef = _adjacencies.access();
+  for(
+    const auto& edgeIndex : 
+    RangeForTemporary<GraphType::edge_iterator>(
+      boost::edges(graphRef)
+    )
+  ) {
+    auto source = boost::source(edgeIndex, graphRef),
+         target = boost::target(edgeIndex, graphRef);
+
+    if(
+      graphRef[edgeIndex].bondType == BondType::Double
+      && _adjacencies.getNumNonEtaAdjacencies(source) == 3
+      && _adjacencies.getNumNonEtaAdjacencies(target) == 3
+    ) {
+      // Calculate Priorities for each's substituents
+      auto sourceSubstituentsRanking = rankPriority(
+        source,
+        {target} // exclude edge sharing neighbor
+      );
+
+      // If the source's substituents are unequal (no equal pair sets)
+      if(sourceSubstituentsRanking.second.size() == 0) {
+        auto targetSubstituentsRanking = rankPriority(
+          target,
+          {source} // exclude edge sharing neighbor
+        );
+
+        // target must also have no equal pairs
+        if(targetSubstituentsRanking.second.size() == 0) {
+          // Instantiate an EZStereocenter there!
+          _stereocenters.add(
+            std::make_shared<
+              Stereocenters::EZStereocenter
+            >(
+              source,
+              sourceSubstituentsRanking.first,
+              target,
+              targetSubstituentsRanking.first
+            )
+          );
+        }
+      }
+    }
+  }
+
+}
+
+std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
+  const AtomIndexType& index
+) const {
+  /* TODO 
+   * - No L, X determination. Although, will L, X even be needed for metals?
+   *   Maybe only for OZ and NVE determination...
+   */
+  /* VSEPR formulation is that geometry is a function of 
+   * - localized charge of central atom
+   * - atom type of central atom, neighbors
+   * - bond types to neighbors
+   */
+
+  // call this only on non-terminal atoms
+  assert(_adjacencies.getNumAdjacencies(index) > 1);
+
+  // first basic stuff for VSEPR, later L and X for transition metals
+  // geometry inference does not care if the substituents are somehow 
+  // connected (unless in later models the entire structure is considered)
+  std::vector<LocalGeometry::LigandType> ligands;
+
+  for(const auto& adjacentIndex: _adjacencies.iterateAdjacencies(index)) {
+    ligands.push_back(
+      LocalGeometry::LigandType {
+        0, 0, {{  // L and X are 0 since only VSEPR is considered for now
+          _adjacencies.getElementType(adjacentIndex),
+          getBondType(index, adjacentIndex)
+        }}
+      }
+    );
+  }
+
+  return ligands;
+}
+
+Symmetry::Name Molecule::_determineLocalGeometry(
+  const AtomIndexType& index
+) const {
+  assert( _adjacencies.getNumAdjacencies(index) > 1); 
+
+  auto ligandsVector = _reduceToLigandTypes(index);
+  // TODO this below is invalid for metals!
+  unsigned nSites = _adjacencies.getNumAdjacencies(index);
+  int formalCharge = 0;
+
+  return LocalGeometry::VSEPR::determineGeometry(
+    _adjacencies.getElementType(index),
+    nSites,
+    ligandsVector,
+    formalCharge
+  );
+}
+
+std::map<AtomIndexType, Symmetry::Name> Molecule::_determineLocalGeometries() const {
+  std::map<AtomIndexType, Symmetry::Name> symmetryMap;
+
+  for(AtomIndexType i = 0; i < _adjacencies.size(); i++) {
+    if(_adjacencies.getNumAdjacencies(i) > 1) {
+      symmetryMap[i] = _determineLocalGeometry(i);
+    }
+  }
+
+  return symmetryMap;
 }
 
 /* Public modifiers ----------------------------------------------------------*/

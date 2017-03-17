@@ -106,8 +106,6 @@ private:
   const unsigned _N;
 
   // Randomness state
-  std::vector<unsigned> _seeds;
-  std::seed_seq _seedSequence;
   mutable std::mt19937 _randomEngine;
 
 /* Private members */

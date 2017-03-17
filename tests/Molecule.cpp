@@ -1,5 +1,5 @@
-#define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE MoleculeTests
+#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <iostream>
@@ -20,21 +20,8 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
   for(const auto& filename : files) {
     try {
       Molecule mol = molHandler.readSingle(filename);
-      // Output graphviz
+      // Invoke ostream operator
       std::cout << mol << std::endl;
-
-      // Get symmetry maps
-      auto symmetryMap = mol._determineLocalGeometries();
-
-      std::cout << "Local geometries:" << std::endl;
-      for(const auto& iterPair : symmetryMap) {
-        std::cout << Delib::ElementInfo::symbol(
-            mol.getElementType(iterPair.first)
-          ) << " " << iterPair.first << " is " 
-          << Symmetry::name(iterPair.second) << std::endl;
-      }
-
-      std::cout << std::endl;
 
       // Make dot files for every file
       auto slashSplat = StdlibTypeAlgorithms::split(filename, '/');
