@@ -5,7 +5,6 @@
 #include "Symmetries.h"
 #include <set>
 #include <iostream>
-// for accumulate, include numeric
 #include <numeric>
 
 using namespace Symmetry;
