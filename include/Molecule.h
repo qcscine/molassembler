@@ -10,7 +10,6 @@
 #include "StereocenterList.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "BondDistance.h"
-#include "VSEPR.h"
 
 namespace MoleculeManip {
 
@@ -33,23 +32,20 @@ private:
    *     edges -> use adjacency list instead of adjacency matrix
    */
 
-  // State variables
+  // Private state variables
   AdjacencyList _adjacencies;
-  StereocenterList _stereocenters;
 
   /* Private member functions */
   std::vector<DistanceGeometry::DistanceConstraint> _createConstraint(
     const std::vector<AtomIndexType>& chain
   ) const;
-  void _detectStereocenters();
   bool _validAtomIndex(const AtomIndexType& a) const;
-  std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
-    const AtomIndexType& index
-  ) const; 
-  Symmetry::Name _determineLocalGeometry(const AtomIndexType& index) const;
-  std::map<AtomIndexType, Symmetry::Name> _determineLocalGeometries() const;
 
 public:
+/* Public members */
+  StereocenterList stereocenters;
+
+
 /* Constructors */
   // From two elements and a shared bond (min to be considered a Molecule)
   Molecule(
@@ -122,7 +118,7 @@ public:
 
   std::pair<
     std::vector<AtomIndexType>, // the sorted list of substituent priorities
-    std::set< // a set of pairs of AtomIndexTypes that are EQUAL
+    std::set< // a set of pairs of AtomIndexTypes that have equal priority
       std::pair<
         AtomIndexType,
         AtomIndexType

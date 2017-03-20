@@ -75,9 +75,11 @@ public:
 
   virtual std::vector<DihedralLimits> dihedralLimits() const override final;
 
+  virtual std::string info() const override final;
+
   virtual std::set<AtomIndexType> involvedAtoms() const override final;
 
-  virtual std::string type() const override final;
+  virtual Type type() const override final;
 
 };
 

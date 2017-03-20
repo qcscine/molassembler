@@ -168,11 +168,7 @@ std::vector<Stereocenter::DihedralLimits> EZStereocenter::dihedralLimits() const
   }
 }
 
-std::set<AtomIndexType> EZStereocenter::involvedAtoms() const {
-  return {_indicesAndRank[0], _indicesAndRank[3]};
-}
-
-std::string EZStereocenter::type() const {
+std::string EZStereocenter::info() const {
   std::string returnString =  "EZStereocenter on ("s 
     + std::to_string(_indicesAndRank[0]) + ", "s 
     + std::to_string(_indicesAndRank[3]) + "), "s;
@@ -183,4 +179,12 @@ std::string EZStereocenter::type() const {
   else returnString += "u";
 
   return returnString;
+}
+
+std::set<AtomIndexType> EZStereocenter::involvedAtoms() const {
+  return {_indicesAndRank[0], _indicesAndRank[3]};
+}
+
+Type EZStereocenter::type() const {
+  return Type::EZStereocenter;
 }

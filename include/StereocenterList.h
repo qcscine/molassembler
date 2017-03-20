@@ -8,13 +8,16 @@
 namespace MoleculeManip {
 
 class StereocenterList {
-private:
-/* Private members */
-  std::vector<
+public:
+  using ListType = std::vector<
     std::shared_ptr<
       Stereocenters::Stereocenter
     >
-  > _features;
+  >;
+
+private:
+/* Private members */
+  ListType _features;
 
 public:
   /* Modification */
@@ -88,24 +91,26 @@ public:
 
     return mapping;
   }
+
   unsigned size() const {
     return _features.size();
   }
 
   /* Iterators */
-  // Begin and end const iterators for easy traversal
-  std::vector<
-    std::shared_ptr<
-      Stereocenters::Stereocenter
-    >
-  >::const_iterator begin() const {
+  // Begin and end iterators for easy traversal
+  ListType::iterator begin() {
+    return _features.begin();
+  }
+
+  ListType::iterator end() {
+    return _features.end();
+  }
+
+  ListType::const_iterator begin() const {
     return _features.cbegin();
   }
-  std::vector<
-    std::shared_ptr<
-      Stereocenters::Stereocenter
-    >
-  >::const_iterator end() const {
+
+  ListType::const_iterator end() const {
     return _features.cend();
   }
 

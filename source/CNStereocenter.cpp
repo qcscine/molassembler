@@ -17,8 +17,8 @@ CNStereocenter::CNStereocenter(
   const std::set<
     std::pair<AtomIndexType, AtomIndexType>
   > equalPairsSet
-) : _symmetry(symmetry),
-    _centerAtom(centerAtom) {
+) : symmetry(symmetry),
+    centerAtom(centerAtom) {
 
   // Reduce the substituents to a character map
   _neighborCharMap = _reduceSubstituents(
@@ -135,58 +135,70 @@ std::vector<char> CNStereocenter::_reduceNeighborCharMap(
 }
 
 /* Modification */
-void CNStereocenter::assign(const unsigned& assignment) {
-  assert(assignment < _uniqueAssignments.size());
-  if(!_assignment) { // unassigned previously
-    // assign as normal
-    _assignment = assignment;
+void CNStereocenter::assign(const unsigned& passAssignment) {
+  assert(passAssignment < _uniqueAssignments.size());
 
-    /* save a mapping of next neighbor indices to symmetry positions after
-     * assigning (AtomIndexType -> unsigned).
-     *
-     * First get the symmetry position mapping (char -> unsigned)
-     * this is e.g. map{'A' -> vector{0,2,3}, 'B' -> vector{1}}
+  // Store current assignment
+  assignment = passAssignment;
+
+  /* save a mapping of next neighbor indices to symmetry positions after
+   * assigning (AtomIndexType -> unsigned).
+   *
+   * First get the symmetry position mapping (char -> unsigned)
+   * this is e.g. map{'A' -> vector{0,2,3}, 'B' -> vector{1}}
+   */
+  auto charSymmetryPositionsMap = _uniqueAssignments[
+    passAssignment
+  ].getCharMap();
+
+  /* assign next neighbor indices using _neighborCharMap, which stores
+   * neighbor's AtomIndexType -> 'A' char mapping,
+   * e.g. map{4 -> 'A', 16 -> 'B', 23 -> 'A', 26 -> 'A'}
+   */
+  for(const auto& indexCharPair: _neighborCharMap) {
+    assert(
+      charSymmetryPositionsMap.at(
+        indexCharPair.second // the current index's character, e.g. 'A'
+      ).size() > 0 // meaning there are symmetry positions left to assign
+    );
+
+    /* reference for better readability: the current character's symmetry
+     * positions list:
      */
-    auto charSymmetryPositionsMap = _uniqueAssignments[
-      assignment
-    ].getCharMap();
+    std::vector<unsigned>& symmetryPositionsList = charSymmetryPositionsMap.at(
+      indexCharPair.second // current character
+    );
 
-    /* assign next neighbor indices using _neighborCharMap, which stores
-     * neighbor's AtomIndexType -> 'A' char mapping,
-     * e.g. map{4 -> 'A', 16 -> 'B', 23 -> 'A', 26 -> 'A'}
-     */
-    for(const auto& indexCharPair: _neighborCharMap) {
-      assert(
-        charSymmetryPositionsMap.at(
-          indexCharPair.second // the current index's character, e.g. 'A'
-        ).size() > 0 // meaning there are symmetry positions left to assign
-      );
+    // assign in the map
+    _neighborSymmetryPositionMap[
+      indexCharPair.first
+    ] = symmetryPositionsList.at( 
+      0 // the first of the available symmetry positions for that char
+    );
 
-      /* reference for better readability: the current character's symmetry
-       * positions list:
-       */
-      std::vector<unsigned>& symmetryPositionsList = charSymmetryPositionsMap.at(
-        indexCharPair.second // current character
-      );
-
-      // assign in the map
-      _neighborSymmetryPositionMap[
-        indexCharPair.first
-      ] = symmetryPositionsList.at( 
-        0 // the first of the available symmetry positions for that char
-      );
-
-      // remove that first symmetry position
-      symmetryPositionsList.erase(
-        symmetryPositionsList.begin()
-      );
-    }
-
-    // DONE, now _neighborSymmetryPositionMap has a mapping
-  } else {
-    // just assign, explicitly do NOT change the mapping to symmetry positions
-    _assignment = assignment;
+    // remove that first symmetry position
+    symmetryPositionsList.erase(
+      symmetryPositionsList.begin()
+    );
   }
+}
+
+void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
+  // Set a new symmetry
+  symmetry = symmetryName;
+
+  // recalculate the number of unique Assignments
+  _uniqueAssignments = UniqueAssignments::uniqueAssignments(
+    AssignmentType(
+      symmetryName,
+      _reduceNeighborCharMap(
+        _neighborCharMap
+      )
+    )
+  );
+
+  // The Stereocenter is now unassigned
+  assignment = boost::none;
 }
 
 /* Information */
@@ -200,16 +212,17 @@ double CNStereocenter::angle(
    * interface because of EZStereocenter, where it is important to specify which
    * atom is the intermediate (there are two possibilities)
    */
-  return Symmetry::angleFunction(_symmetry)(
+  return Symmetry::angleFunction(symmetry)(
     _neighborSymmetryPositionMap.at(i),
     _neighborSymmetryPositionMap.at(k)
   );
 }
 
 boost::optional<unsigned> CNStereocenter::assigned() const {
-  return _assignment;
+  return assignment;
 }
 
+// TODO rename to numAssignments
 unsigned CNStereocenter::assignments() const {
   return _uniqueAssignments.size();
 }
@@ -231,20 +244,24 @@ std::vector<Stereocenter::DihedralLimits> CNStereocenter::dihedralLimits() const
   return {};
 }
 
-std::set<AtomIndexType> CNStereocenter::involvedAtoms() const {
-  return {_centerAtom};
-}
-
-std::string CNStereocenter::type() const {
+std::string CNStereocenter::info() const {
   std::string returnString = "CNStereocenter on "s 
-    + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +"): "s;
+    + std::to_string(centerAtom) + " ("s + Symmetry::name(symmetry) +"): "s;
 
-  if(_assignment) returnString += std::to_string(_assignment.value());
+  if(assignment) returnString += std::to_string(assignment.value());
   else returnString += "u";
 
   returnString += "/"s + std::to_string(assignments());
 
   return returnString;
+}
+
+std::set<AtomIndexType> CNStereocenter::involvedAtoms() const {
+  return {centerAtom};
+}
+
+Type CNStereocenter::type() const {
+  return Type::CNStereocenter;
 }
 
 }

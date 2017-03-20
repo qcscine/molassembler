@@ -9,9 +9,6 @@ using namespace std::string_literals;
 
 namespace MoleculeManip {
 
-// Forward-declare Molecule to avoid dependency
-class Molecule;
-
 namespace Stereocenters {
 
 class CNStereocenter : public Stereocenter {
@@ -19,12 +16,7 @@ private:
 /* Typedefs */
   using AssignmentType = UniqueAssignments::Assignment;
 
-/* State */
-  const Symmetry::Name _symmetry;
-  // Central atom of the Stereocenter, const on assignment
-  const AtomIndexType _centerAtom; 
-  // The current state of assignment (if or not, and if so, which)
-  boost::optional<unsigned> _assignment;
+/* Private State */
   // Mapping between next neighbor atom index and symbolic ligand character
   std::map<AtomIndexType, char> _neighborCharMap;
   // Mapping between next neighbor atom index to permutational symmetry position
@@ -62,6 +54,13 @@ private:
   );
 
 public:
+/* Public state */
+  Symmetry::Name symmetry;
+  // Central atom of the Stereocenter, const on assignment
+  const AtomIndexType centerAtom; 
+  // The current state of assignment (if or not, and if so, which)
+  boost::optional<unsigned> assignment;
+
 /* Constructors */
   CNStereocenter(
     // The symmetry of this Stereocenter
@@ -79,6 +78,8 @@ public:
 /* Modification */
   virtual void assign(const unsigned& assignment) override final;
 
+  void changeSymmetry(const Symmetry::Name& symmetryName);
+
 /* Information */
   virtual double angle(
     const AtomIndexType& i,
@@ -89,9 +90,9 @@ public:
   virtual unsigned assignments() const override final;
   virtual std::vector<ChiralityConstraintPrototype> chiralityConstraints() const override final;
   virtual std::vector<DihedralLimits> dihedralLimits() const override final;
-
+  virtual std::string info() const override final;
   virtual std::set<AtomIndexType> involvedAtoms() const override final;
-  virtual std::string type() const override final;
+  virtual Type type() const override final;
 
 /* Operators */
   friend std::basic_ostream<char>& MoleculeManip::operator << (

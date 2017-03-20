@@ -81,6 +81,7 @@ set(HEADERS_all
 set(SOURCES_all
   source/DistanceGeometry/DistanceBoundsMatrix.cpp
   source/DistanceGeometry/MetricMatrix.cpp
+  source/AdjacencyList.cpp
   source/AdjacencyListAlgorithms.cpp
   source/AdjacencyMatrix.cpp
   source/AtomInfo.cpp

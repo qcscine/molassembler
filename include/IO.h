@@ -4,6 +4,7 @@
 #include "Molecule.h"
 #include "Version.h"
 #include "AdjacencyListAlgorithms.h"
+#include "MoleculeAlgorithms.h"
 
 #include "ElementInfo.h" // Delib
 #include "Types/PositionCollection.h"
@@ -321,6 +322,7 @@ public:
     unsigned nComponents = AdjacencyListAlgorithms::numConnectedComponents(
       _adjacencies
     );
+
     if(nComponents != 1) {
       throw std::runtime_error(
         std::string("File is not a single molecule, but contains ")
@@ -329,9 +331,35 @@ public:
       );
     }
 
-    return Molecule(
-      _adjacencies
-    );
+    // Determine if Positions are dummies
+    unsigned nZeroLengthLowerBound = 0;
+
+    for(const auto& position : _positions) {
+      if(position.asEigenVector().norm() <= 1e-14) {
+        nZeroLengthLowerBound += 1;
+        if(nZeroLengthLowerBound > 1) break;
+      }
+    }
+
+    /* TODO externalize this algorithm! Not strictly part of IO, more like an
+     * algorithm taking a molecule and a positioncollection and fitting the
+     * molecule representation to the positions
+     */
+    if(nZeroLengthLowerBound > 1) { 
+      /* Assume all are dummies, no 3D Information present -> no Stereocenter
+       *  assignments
+       */
+      return Molecule(
+        _adjacencies
+      );
+    } else { // We have 3D information, try to infer stereocenters (if present)
+      return fitToPositions(
+        Molecule(_adjacencies),
+        _positions
+      );
+    }
+
+    // For every Stereocenter contained, try to find out which one it is
   }
 
   virtual bool canWriteFile(const std::string& filename) override {

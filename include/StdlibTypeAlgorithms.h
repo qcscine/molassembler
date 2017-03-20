@@ -8,6 +8,7 @@
 #include <functional>
 #include <sstream>
 #include <numeric>
+#include <map>
 
 /* ostream operators for sets, pairs and vectors */
 /* TODO 
@@ -39,6 +40,20 @@ std::ostream& operator << (std::ostream& os, const std::pair<T1, T2>& rhs) {
 template<typename T>
 std::ostream& operator << (std::ostream& os, const std::vector<T>& rhs) {
   os << "vector{";
+  bool first = true;
+  for(const auto& element: rhs) {
+    if(first) {
+      first = false;
+      os << element;
+    } else os << ", " << element;
+  }
+  os << "}";
+  return os;
+}
+
+template<typename T, typename U>
+std::ostream& operator << (std::ostream& os, const std::map<T, U>& rhs) {
+  os << "map{";
   bool first = true;
   for(const auto& element: rhs) {
     if(first) {

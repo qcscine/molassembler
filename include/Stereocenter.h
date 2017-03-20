@@ -11,7 +11,6 @@
 #include "StdlibTypeAlgorithms.h"
 
 // Detection algorithm headers
-#include "AdjacencyList.h"
 #include "Types/ElementTypeCollection.h" // Delib
 
 /* TODO
@@ -30,6 +29,12 @@ std::basic_ostream<char>& operator << (
 );
 
 namespace Stereocenters {
+
+enum class Type {
+  CNStereocenter,
+  EZStereocenter
+};
+
 
 class Stereocenter {
 public:
@@ -65,8 +70,10 @@ public:
 /* Information */
   /*!
    * Return the angle imposed by the underlying symmetry defined by three
-   * involved atoms. It needs to be three-defined in order for the angle 
-   * requested to be clearly defined in CNStereocenters and EZStereocenters.
+   * involved atoms in degrees. It needs to be a ternary function in order for
+   * the angle requested to be clearly defined in both CNStereocenters and
+   * EZStereocenters, in the latter of which two central atoms (that could be
+   * j) exist.
    */
   virtual double angle(
     const AtomIndexType& i,
@@ -95,14 +102,17 @@ public:
    */
   virtual std::vector<DihedralLimits> dihedralLimits() const = 0;
 
+  //!  Return a string giving information about the stereocenter
+  virtual std::string info() const = 0;
+
   /*!
    * Return the set of center atoms (atoms that angle information is available 
    * on if asked as the central atom of an angle).
    */
   virtual std::set<AtomIndexType> involvedAtoms() const = 0;
 
-  //!  Return a string specifying the type of stereocenter
-  virtual std::string type() const = 0;
+  //! Return the Subtype of the Stereocenter
+  virtual Type type() const = 0;
 
 /* Operators */
   //!  Ostream operator for debugging
