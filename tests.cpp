@@ -1,8 +1,11 @@
-#define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE ConnectivityManagerTests
+#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "templateMagic.h"
+
+// TEMPORARY
+#include <iostream>
 
 #include <vector>
 
@@ -54,4 +57,32 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
       return vectorUnsigned.size();
     }
   );
+
+  std::vector<unsigned> unsignedVector {1, 2, 3};
+
+  BOOST_CHECK(
+    TemplateMagic::sum(
+      TemplateMagic::allPairsMap(
+        unsignedVector,
+        [](const unsigned& a, const unsigned& b) -> unsigned {
+          return a + b;
+        }
+      )
+    ) == 12
+  );
+
+  std::vector<double> doubleVector {1.2, 1.5, 1.9};
+
+  BOOST_CHECK(
+    TemplateMagic::sum(
+      TemplateMagic::allPairsMap(
+        doubleVector,
+        [](const double& a, const double& b) -> double {
+          return a + b;
+        }
+      )
+    ) == 9.2
+  );
+
+
 }

@@ -3,8 +3,12 @@
 
 #include <functional>
 #include <algorithm>
+#include <numeric>
 #include <set>
 #include "boost/optional.hpp"
+
+// TEMP
+#include <iostream>
 
 namespace TemplateMagic {
 
@@ -62,7 +66,7 @@ typename ContainerType::value_type sum(const ContainerType& container) {
   return std::accumulate(
     container.begin(),
     container.end(),
-    0,
+    typename ContainerType::value_type(0),
     std::plus<
       typename ContainerType::value_type
     >()
@@ -75,8 +79,7 @@ typename ContainerType::value_type sum(const ContainerType& container) {
  */
 template<
   typename T,
-  template<typename, typename>
-  class Container,
+  template<typename, typename> class Container,
   class UnaryFunction
 > 
 auto map(
@@ -112,8 +115,7 @@ auto map(
  */
 template<
   typename T,
-  template<typename, typename>
-  class Container,
+  template<typename, typename> class Container,
   class BinaryFunction
 > 
 auto pairwiseMap(
@@ -154,8 +156,7 @@ auto pairwiseMap(
  */
 template<
   typename T,
-  template<typename, typename = std::allocator<T>>
-  class Container,
+  template<typename, typename = std::allocator<T>> class Container,
   class BinaryFunction,
   typename ReturnType
 >
@@ -347,16 +348,17 @@ bool any_of(
 
 /*!
  * HOF returning a predicate testing the container for whether it contains its
- * argument.
+ * argument. I think this version immediately below is worse than the one 
+ * beneath it, it makes more assumptions about the container template 
+ * parameters. The one beneath it makes less of those.
  */
-template<
-  typename T,
-  template<typename, typename = std::allocator<T>>
-  class Container
->
+
+template<class Container>
 auto makeContainsPredicate(
-  const Container<T>& container
+  const Container& container
 ) {
+  using T = decltype(*container.begin());
+
   return [&container](const T& element) -> bool {
     return std::find(
       container.begin(),
@@ -365,6 +367,42 @@ auto makeContainsPredicate(
     ) != container.end();
   };
 }
+
+template<
+  typename T,
+  template<typename, typename> class Container,
+  class BinaryFunction
+> 
+auto allPairsMap(
+  const Container<T, std::allocator<T>>& container,
+  BinaryFunction&& function
+) {
+  using FunctionReturnType = decltype(
+    function(
+      std::declval<T>(),
+      std::declval<T>()
+    )
+  );
+
+  Container<
+    FunctionReturnType,
+    std::allocator<FunctionReturnType>
+  > returnContainer;
+
+  auto outputIterator = std::inserter(returnContainer, returnContainer.end());
+
+  for(auto i = container.begin(); i != container.end(); i++) {
+    for(auto j = i + 1; j != container.end(); j++) {
+      outputIterator = function(
+        *i,
+        *j
+      );
+    }
+  }
+
+  return returnContainer;
+}
+
 
 }
 
