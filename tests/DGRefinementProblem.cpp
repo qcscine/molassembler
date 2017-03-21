@@ -10,6 +10,7 @@
 #include "cppoptlib/meta.h"
 
 #include "BoundsFromSymmetry.h"
+#include "IO.h"
 
 #include <fstream>
 #include <iomanip>
@@ -17,6 +18,23 @@
 using namespace std::string_literals;
 using namespace MoleculeManip;
 using namespace MoleculeManip::DistanceGeometry;
+
+Delib::PositionCollection toPositionCollection(
+  const Eigen::VectorXd& vectorizedPositions
+) {
+  assert(vectorizedPositions.size() % 3 == 0);
+  Delib::PositionCollection positions;
+
+  for(unsigned i = 0; i < vectorizedPositions.size() / 3; i++) {
+    positions.push_back(
+      Delib::Position( // converting constructor
+        vectorizedPositions.segment<3>(3 * i)
+      )
+    );
+  }
+
+  return positions;
+}
 
 void writeFile(
   const bool& optimized,
@@ -48,10 +66,9 @@ void writeFile(
 
   filename += symmetryString + std::to_string(structNum) + ".xyz"s;
 
+  /* From here it's a simplified XYZ Writer */
   std::ofstream outStream(filename.c_str());
-
   outStream << std::setprecision(7) << std::fixed;
-
   outStream << N << std::endl
     << "Energy = " << std::endl;
 
@@ -67,6 +84,50 @@ void writeFile(
   }
 
   outStream.close();
+}
+
+/* TODO there is no underlying molecule data, we need it, maybe from the 
+ * distance bounds matrix generating function?
+ */
+void writeMOLFile(
+  const Molecule& molecule,
+  const bool& optimized,
+  const std::string& symmetryString,
+  const unsigned& structNum,
+  const Eigen::VectorXd& vectorizedPositions
+) {
+  unsigned N = vectorizedPositions.size() / 3;
+  assert(3 * N == vectorizedPositions.size());
+
+  std::vector<std::string> elementNames = {
+    "Ru",
+    "H",
+    "F",
+    "Cl",
+    "Br",
+    "I",
+    "N",
+    "C",
+    "O",
+    "S",
+    "P"
+  };
+
+  std::string filename;
+
+  if(optimized) filename = "opt-"s;
+  else filename = "gen-"s;
+
+  filename += symmetryString + std::to_string(structNum) + ".mol"s;
+
+  IO::MOLFileHandler fileHandler;
+  fileHandler.writeSingle(
+    filename,
+    molecule,
+    toPositionCollection(
+      vectorizedPositions
+    )
+  );
 }
 
 void writeErrorValues(
@@ -131,10 +192,8 @@ BOOST_AUTO_TEST_CASE(distanceBoundsGeneratedArePlausible) {
     );
 
     // Generate distance bounds
-    auto distanceBoundsMatrix = DGDBM::distanceBoundsFromSymmetry(
-      symmetryName,
-      DGDBM::DistancesOption::Uniform
-    );
+    auto simpleMol = DGDBM::symmetricMolecule(symmetryName);
+    auto distanceBoundsMatrix = simpleMol.getDistanceBoundsMatrix();
 
     /*std::cout << "Sample distances matrix for symmetry '" 
       << Symmetry::name(symmetryName) << std::endl
@@ -163,7 +222,8 @@ BOOST_AUTO_TEST_CASE(distanceBoundsGeneratedArePlausible) {
       );
 
       // Write the unoptimized result to a file
-      writeFile(
+      writeMOLFile(
+        simpleMol,
         false,
         spaceFreeName,
         structNum,
@@ -187,7 +247,8 @@ BOOST_AUTO_TEST_CASE(distanceBoundsGeneratedArePlausible) {
       );
 
       // Write the result to a file
-      writeFile(
+      writeMOLFile(
+        simpleMol,
         true,
         spaceFreeName,
         structNum,

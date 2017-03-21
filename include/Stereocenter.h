@@ -55,11 +55,8 @@ public:
     std::pair<double, double>
   >;
 
-  using ChiralityConstraintPrototype = std::tuple<
-    AtomIndexType, // i
-    AtomIndexType, // j
-    AtomIndexType, // k
-    AtomIndexType, // l
+  using ChiralityConstraintPrototype = std::pair<
+    std::array<AtomIndexType, 4>,
     ChiralityConstraintTarget
   >;
 

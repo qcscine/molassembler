@@ -118,9 +118,6 @@ public:
     const std::vector<AtomIndexType>& excludeAdjacent = {}
   ) const;
 
-  // TODO deprecate and remove
-  unsigned size() const noexcept;
-
   unsigned nAtoms() const;
 
   unsigned nBonds() const;

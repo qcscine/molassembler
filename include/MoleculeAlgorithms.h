@@ -50,34 +50,25 @@ Molecule fitToPositions(
   Molecule&& molecule,
   const Delib::PositionCollection& positions
 ) {
-  /* STEPS
-   * - Reduce the local geometry to some combination of 
-   *   internal coordinates, 1-3 distances and signed tetrahedron values
-   *   (chirality constraints) so that it can be compared easily to gathered
-   *   distance geometry constraints
-   * - Cycle through all Symmetries of appropriate size, checking the 
-   *   gathered 3D data against supposed DG constraints of the candidate
-   *   Symmetry and assignment (if present)
-   * - Cycle through the Stereocenter's assignments and calculate total
-   *   deviation for all angles
-   * - Pick the assignment that has lowest deviation
-   *
-   * 
-   *
-   * NOTES
-   * - Have to extract limited information from Stereocenters (as in 
-   *   BFSConstraintCollector)
-   * - Have to be able to change their Symmetry temporarily 
-   *   -> changeSymmetry public method
-   */
 
   const auto& adjacencies = molecule.getAdjacencyList();
-  
 
   for(auto& stereocenterPtr : molecule.stereocenters) {
 
     // How to find out which Assignment best reflects the read positions?
     if(stereocenterPtr -> type() == Stereocenters::Type::CNStereocenter) {
+      /* STEPS
+       * - Reduce the local geometry to some combination of 
+       *   internal coordinates, 1-3 distances and signed tetrahedron values
+       *   (chirality constraints) so that it can be compared easily to gathered
+       *   distance geometry constraints
+       * - Cycle through all Symmetries of appropriate size, checking the 
+       *   gathered 3D data against supposed DG constraints of the candidate
+       *   Symmetry and assignment (if present)
+       * - Cycle through the Stereocenter's assignments and calculate total
+       *   deviation for all angles
+       * - Pick the assignment that has lowest deviation, if it has multiplicity 1
+       */
       // Downcast the Stereocenter to a CNStereocenter
       auto CNStereocenterPtr = std::dynamic_pointer_cast<
         Stereocenters::CNStereocenter
@@ -183,14 +174,21 @@ Molecule fitToPositions(
            * stereocenters
            */
 
-          std::cout << "The " << CNStereocenterPtr -> info() 
-            << " has deviations " 
-            << std::setprecision(4)
-            << std::fixed
-            << angleDeviation << " (angular), " 
-            << oneThreeDeviation << " (1-3 distances), "
-            << chiralityConstraintDeviation << " (chirality) "
-             << " to the given positions. "<< std::endl;
+          // Emit structured data
+          std::cout << CNStereocenterPtr -> centerAtom
+            << ", " << (
+              std::find(
+                Symmetry::allNames.begin(),
+                Symmetry::allNames.end(),
+                CNStereocenterPtr -> symmetry
+              ) - Symmetry::allNames.begin()
+            ) << ", " << assignment
+            << ", " << CNStereocenterPtr -> assignments() << ", "
+            << std::setprecision(4) << std::fixed
+            << angleDeviation << ", "
+            << oneThreeDeviation << ", "
+            << chiralityConstraintDeviation 
+            << std::endl;
 
           // Add to deviations vector
           deviations.emplace_back(
@@ -236,14 +234,14 @@ Molecule fitToPositions(
         }
       }
 
-      for(const auto& iterPair : groups) {
+      /*for(const auto& iterPair : groups) {
         std::cout << "(" << iterPair.first.first << ", " << Symmetry::name(iterPair.first.second) << ") => vec{";
         for(const auto& value: iterPair.second) {
           std::cout << value;
           if(value != iterPair.second.back()) std::cout << ", ";
         }
         std::cout << "}" << std::endl;
-      }
+      }*/
 
       // Find Symmetry with lowest deviation -> initialize to SOMETHING
       auto lowestDeviation = (groups.begin() -> first).first;
@@ -267,7 +265,7 @@ Molecule fitToPositions(
         CNStereocenterPtr -> assign(
           groups.at({lowestDeviation, bestSymmetry}).front()
         );
-      } else { // Debug message
+      } /*else { // Debug message
         unsigned countGroupsInBestSymmetry = 0;
         for(const auto& iterPair : groups) {
           if(iterPair.first.second == bestSymmetry) {
@@ -276,7 +274,7 @@ Molecule fitToPositions(
         }
         std::cout << "Best symmetry has " << countGroupsInBestSymmetry 
           << " deviation group(s)." << std::endl;
-      }
+      }*/
       
     } else if(stereocenterPtr -> type() == Stereocenters::Type::EZStereocenter) {
       /* STEPS

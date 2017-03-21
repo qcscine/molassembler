@@ -121,4 +121,47 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       0, 1, 4, 5, 3, 2, 3
     }));
   }
+  {
+    AdjacencyList test(
+      makeRepeatedElementCollection(Delib::ElementType::H, 8),
+      Edges({
+        {{0, 1}, BondType::Single},
+        {{1, 2}, BondType::Single},
+        {{1, 4}, BondType::Single},
+        {{2, 3}, BondType::Single},
+        {{3, 4}, BondType::Single},
+        {{4, 5}, BondType::Single},
+        {{5, 6}, BondType::Single},
+        {{5, 7}, BondType::Single}
+      })
+    );
+
+    auto treePtr = AdjacencyListAlgorithms::makeTree(test);
+
+    struct BFSVisitor {
+      std::vector<AtomIndexType> visitSequence;
+
+      bool operator() (
+        const std::shared_ptr<NodeType>& nodePtr,
+        const unsigned& depth __attribute__ ((unused))
+      ) {
+        visitSequence.push_back(
+          nodePtr -> key
+        );
+        return true;
+      }
+    };
+
+    BFSVisitor visitor;
+
+    TreeAlgorithms::BFSVisit(
+      treePtr,
+      visitor,
+      3
+    );
+
+    BOOST_CHECK(visitor.visitSequence == std::vector<AtomIndexType>({
+      0, 1, 2, 4, 3, 3, 5
+    }));
+  }
 }

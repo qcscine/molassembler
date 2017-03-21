@@ -176,7 +176,7 @@ StereocenterList AdjacencyList::detectStereocenters() const {
   StereocenterList stereocenterList;
 
   // Find CNStereocenters
-  for(unsigned i = 0; i < size(); i++) {
+  for(unsigned i = 0; i < nAtoms(); i++) {
     if(
       /* TODO this is no longer a valid way of checking how many ligands there are
        * -> eta bonds exist!
@@ -379,7 +379,7 @@ std::pair<
 }
 
 bool AdjacencyList::_isValidIndex(const AtomIndexType& index) const {
-  return index < size();
+  return index < nAtoms();
 }
 
 /* Constructors */
@@ -545,10 +545,6 @@ boost::optional<BondType> AdjacencyList::getBondType(
     return _adjacencies[edgePair.first].bondType;
   } else return boost::none;
 
-}
-
-unsigned AdjacencyList::size() const noexcept {
-  return boost::num_vertices(_adjacencies);
 }
 
 unsigned AdjacencyList::nAtoms() const {

@@ -33,7 +33,11 @@ public:
 class FileWriter {
 public:
   virtual bool canWriteFile(const std::string& filename) = 0;
-  virtual void writeSingle(const std::string& filename, const Molecule& molecule) = 0;
+  virtual void writeSingle(
+    const std::string& filename,
+    const Molecule& molecule,
+    const Delib::PositionCollection& positions
+  ) = 0;
 };
 
 class MOLFileHandler : public FileReader, public FileWriter {
@@ -145,6 +149,7 @@ private:
   void _writeSingle(
     const std::string& filename,
     const Molecule& molecule,
+    const Delib::PositionCollection& positions,
     const MOLFileVersion& version
   ) {
     assert(canWriteFile(filename));
@@ -196,9 +201,9 @@ private:
         };
         for(unsigned i = 0; i < molecule.getNumAtoms(); i++) {
           fout << std::setprecision(4)
-            << std::setw(10) << 0.0
-            << std::setw(10) << 0.0
-            << std::setw(10) << 0.0
+            << std::setw(10) << positions[i].x()
+            << std::setw(10) << positions[i].y()
+            << std::setw(10) << positions[i].z()
             << " " << std::setprecision(0)
             // aaa (atom symbol)
             << std::setw(3) << symbolStringLambda(molecule.getElementType(i)) 
@@ -372,11 +377,13 @@ public:
 
   virtual void writeSingle(
     const std::string& filename,
-    const Molecule& molecule
+    const Molecule& molecule,
+    const Delib::PositionCollection& positions
   ) override {
     _writeSingle(
       filename,
       molecule,
+      positions,
       MOLFileVersion::V2000 
     );
   }

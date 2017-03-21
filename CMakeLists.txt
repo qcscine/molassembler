@@ -87,12 +87,13 @@ set(SOURCES_all
   source/AtomInfo.cpp
   source/BondDistance.cpp
   source/CNStereocenter.cpp
+  source/CommonTrig.cpp
   source/EZStereocenter.cpp
   source/GraphDistanceMatrix.cpp
   source/LocalGeometryModel.cpp
   source/Molecule.cpp
-  source/Stereocenter.cpp
   source/StdlibTypeAlgorithms.cpp
+  source/Stereocenter.cpp
   source/VSEPR.cpp
 )
 

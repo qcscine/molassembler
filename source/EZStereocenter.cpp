@@ -103,24 +103,30 @@ std::vector<Stereocenter::ChiralityConstraintPrototype> EZStereocenter::chiralit
 
   std::vector<Prototype> constraints {
     Prototype(
-      _indicesAndRank[1],
-      _indicesAndRank[2],
-      _indicesAndRank[4],
-      _indicesAndRank[5],
+      {
+        _indicesAndRank[1],
+        _indicesAndRank[2],
+        _indicesAndRank[4],
+        _indicesAndRank[5]
+      },
       Stereocenter::ChiralityConstraintTarget::Flat
     ),
     Prototype(
-      _indicesAndRank[0],
-      _indicesAndRank[1],
-      _indicesAndRank[2],
-      _indicesAndRank[3],
+      {
+        _indicesAndRank[0],
+        _indicesAndRank[1],
+        _indicesAndRank[2],
+        _indicesAndRank[3],
+      },
       Stereocenter::ChiralityConstraintTarget::Flat
     ),
     Prototype(
-      _indicesAndRank[0],
-      _indicesAndRank[3],
-      _indicesAndRank[4],
-      _indicesAndRank[5],
+      {
+        _indicesAndRank[0],
+        _indicesAndRank[3],
+        _indicesAndRank[4],
+        _indicesAndRank[5],
+      },
       Stereocenter::ChiralityConstraintTarget::Flat
     )
   };

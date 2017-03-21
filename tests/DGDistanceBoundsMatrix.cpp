@@ -14,20 +14,14 @@ BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
 
   unsigned N = 4;
 
-  DistanceBoundsMatrix testBounds(N);
-  testBounds.upperBound(0, 1) = 1;
-  testBounds.upperBound(0, 2) = 100;
-  testBounds.upperBound(0, 3) = 1;
-  testBounds.upperBound(1, 2) = 1;
-  testBounds.upperBound(1, 3) = 100;
-  testBounds.upperBound(2, 3) = 1;
 
-  testBounds.lowerBound(0, 1) = 1;
-  testBounds.lowerBound(0, 2) = 0.5;
-  testBounds.lowerBound(0, 3) = 1;
-  testBounds.lowerBound(1, 2) = 1;
-  testBounds.lowerBound(1, 3) = 0.5;
-  testBounds.lowerBound(2, 3) = 1;
+  Eigen::MatrixXd testMatrix(N, N);
+  testMatrix <<   0,   1, 100,   1,
+                  1,   0,   1, 100,
+                0.5,   1,   0,   1,
+                  1, 0.5,   1,   0;
+
+  DistanceBoundsMatrix testBounds(testMatrix);
 
   testBounds.smooth();
 
@@ -71,10 +65,9 @@ BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
       '-'
     );
 
-    auto boundsMatrix = DGDBM::distanceBoundsFromSymmetry(
-      symmetryName,
-      DGDBM::DistancesOption::Uniform
-    );
+    auto boundsMatrix = DGDBM::symmetricMolecule(
+      symmetryName
+    ).getDistanceBoundsMatrix();
 
     writeMatrix(
       "pre-"s + spaceFreeName,

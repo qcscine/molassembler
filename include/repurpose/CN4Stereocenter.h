@@ -126,11 +126,11 @@ public:
    *
    * where the Cayley-Menger determinant |...| is square symmetric:
    *   
-   *          |   0   1   1   1   1 |
-   *          |       0 d12 d13 d14 |
-   *  |...| = |           0 d23 d24 |
-   *          |               0 d34 |
-   *          |  ...              0 |
+   *          |   0    1    1    1    1  |
+   *          |        0  d12² d13² d14² |
+   *  |...| = |             0  d23² d24² |
+   *          |                  0  d34² |
+   *          |  ...                  0  |
    *
    */
   virtual std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const override final;

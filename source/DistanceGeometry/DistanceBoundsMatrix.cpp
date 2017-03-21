@@ -39,13 +39,6 @@ void DistanceBoundsMatrix::_initRandomEngine() {
 }
 
 /* Modifiers */
-double& DistanceBoundsMatrix::lowerBound(
-  const unsigned& i,
-  const unsigned& j
-) {
-  return _boundsMatrix.lowerBound(i, j);
-}
-
 void DistanceBoundsMatrix::processDistanceConstraints(
   const std::vector<DistanceConstraint>& constraints
 ) {
@@ -60,32 +53,46 @@ void DistanceBoundsMatrix::processDistanceConstraints(
 
     assert(i != j);
 
-    // does applying the constraint reduce slack?
-    if(
-      upperBound(i, j) > upper // lower constraint
-      && upper > lowerBound(i, j) // and it's bigger than the lower bound
-    ) {
-      upperBound(i, j) = upper;
-    }
-
-    if(
-      lowerBound(i, j) < lower
-      && lower < upperBound(i, j) 
-    ) {
-      lowerBound(i, j) = lower;
-    }
+    // Apply the bounds, discarding whether it worked or not
+    setUpperBound(i, j, upper);
+    setLowerBound(i, j, lower);
   }
-}
-
-double& DistanceBoundsMatrix::upperBound(
-  const unsigned& i,
-  const unsigned& j
-) {
-  return _boundsMatrix.upperBound(i, j);
 }
 
 void DistanceBoundsMatrix::smooth() {
   _boundsMatrix.smooth();
+}
+
+bool DistanceBoundsMatrix::setLowerBound(
+  const unsigned& i,
+  const unsigned& j,
+  const double& newLowerBound
+) {
+  if(
+    _boundsMatrix.lowerBound(i, j) < newLowerBound
+    && newLowerBound < _boundsMatrix.upperBound(i, j)
+  ) {
+    _boundsMatrix.lowerBound(i, j) = newLowerBound;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool DistanceBoundsMatrix::setUpperBound(
+  const unsigned& i,
+  const unsigned& j,
+  const double& newUpperBound
+) {
+  if(
+    _boundsMatrix.upperBound(i, j) > newUpperBound
+    && newUpperBound > _boundsMatrix.lowerBound(i, j)
+  ) {
+    _boundsMatrix.upperBound(i, j) = newUpperBound;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 /* Information */

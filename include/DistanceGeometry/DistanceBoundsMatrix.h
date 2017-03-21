@@ -120,11 +120,6 @@ public:
   DistanceBoundsMatrix(Eigen::MatrixXd matrix);
 
 /* Modifiers */
-  double& lowerBound(
-    const unsigned& i,
-    const unsigned& j
-  );
-
   //! Process a list of distance constraints with smart checking
   void processDistanceConstraints(
     const std::vector<DistanceConstraint>& constraints
@@ -133,10 +128,16 @@ public:
   //! Smooth until the matrix does not change
   void smooth();
 
-
-  double& upperBound(
+  bool setLowerBound(
     const unsigned& i,
-    const unsigned& j
+    const unsigned& j,
+    const double& newLowerBound
+  );
+
+  bool setUpperBound(
+    const unsigned& i,
+    const unsigned& j,
+    const double& newUpperBound
   );
 
 /* Information */

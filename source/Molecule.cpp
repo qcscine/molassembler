@@ -7,7 +7,8 @@
 #include "AdjacencyListAlgorithms.h"
 #include "AdjacencyMatrix.h"
 
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "DistanceGeometry/BFSConstraintCollector.h"
+#include "TreeAlgorithms.h"
 
 // Delib
 #include "ElementInfo.h"
@@ -223,6 +224,10 @@ void Molecule::removeBond(
   // bond removal can require a stereocenter update => TODO
 }
 
+void Molecule::updateStereocenters() {
+  stereocenters = _adjacencies.detectStereocenters();
+}
+
 /* Public information --------------------------------------------------------*/
 void Molecule::dumpGraphviz(const std::string& filename) const {
   _adjacencies.dumpGraphviz(filename);
@@ -230,7 +235,7 @@ void Molecule::dumpGraphviz(const std::string& filename) const {
 
 bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
   return (
-    a < _adjacencies.size()
+    a < _adjacencies.nAtoms()
   );
 }
 
@@ -260,29 +265,28 @@ BondType Molecule::getBondType(
 
 DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const {
 
-  const double oneTwoDelta = 0.01;
+  DistanceGeometry::DistanceBoundsMatrix distanceBounds(
+    getNumAtoms()
+  );
 
-  DistanceGeometry::DistanceBoundsMatrix distanceBounds(getNumAtoms());
+  DistanceGeometry::BFSConstraintCollector collector(
+    _adjacencies,
+    stereocenters,
+    distanceBounds
+  );
 
-  /* enter all 1-2 distance bounds into the matrix for reference, they will be
-   * required often
-   */
+  for(AtomIndexType i = 0; i < getNumAtoms(); i++) {
+    auto rootPtr = AdjacencyListAlgorithms::makeTree(
+      _adjacencies,
+      i,
+      3 // max Depth of 3 to limit to up to dihedral length chains
+    );
 
-  for(AtomIndexType i = 0; i < _adjacencies.size(); i++) {
-    for(const auto& j: getBondedAtomIndices(i)) {
-      // avoid duplicate work by avoiding i > j cases
-      if(i > j) continue;
-
-      // enter the constraints for i, j
-      const auto distance = Bond::calculateBondDistance(
-        getElementType(i),
-        getElementType(j),
-        getBondType(i, j)
-      );
-
-      distanceBounds.upperBound(i, j) = (1 + oneTwoDelta) * distance;
-      distanceBounds.lowerBound(i, j) = (1 - oneTwoDelta) * distance;
-    }
+    TreeAlgorithms::BFSVisit(
+      rootPtr,
+      collector,
+      3
+    );
   }
 
   return distanceBounds;

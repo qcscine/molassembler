@@ -256,10 +256,9 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
     bool allPassed = true;
 
     for(unsigned nTests = 0; nTests < testsLimit; nTests++) {
-      auto distanceBounds = DGDBM::distanceBoundsFromSymmetry(
-        symmetryName,
-        DGDBM::DistancesOption::Random
-      );
+      auto distanceBounds = DGDBM::symmetricMolecule(
+        symmetryName
+      ).getDistanceBoundsMatrix();
 
       // choose a random reordering
       auto reorderSequence = randomReorderingSequence(

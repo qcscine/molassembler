@@ -81,6 +81,8 @@ public:
     const AtomIndexType& b
   );
 
+  void updateStereocenters();
+
 /* Information retrieval */
   void dumpGraphviz(const std::string& filename) const;
 
