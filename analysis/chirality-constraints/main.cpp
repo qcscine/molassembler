@@ -1,4 +1,3 @@
-#include "MoleculeAlgorithms.h"
 #include "IO.h"
 
 #include <iostream>
@@ -30,7 +29,7 @@ int main() {
 
     for(unsigned i = 0; i < 100; i++) {
       std::string filename = "opt-"s +spaceFreeName + std::to_string(i) 
-        + ".xyz"s;
+        + ".mol"s;
 
       try {
         Molecule mol = molHandler.readSingle(filename);

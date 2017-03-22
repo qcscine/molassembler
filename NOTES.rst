@@ -34,6 +34,7 @@ TODO
 6. Demonstrate functionality with a very simple example, e.g. CH(Cl)(Br)(I)
    MOLFile, then permute and generate 3D structures of both stereoisomers.
  
+- The Readers really need a file exists check
 - Stereocenters are currently determined when a Molecule is initialized, but
   this may not be the correct time. The underlying symmetry of a stereocenter 
   may change with modifications of the molecular graph! Perhaps force either a

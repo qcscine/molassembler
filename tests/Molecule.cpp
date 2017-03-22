@@ -12,13 +12,16 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
     "../tests/mol_files/2,2-dimethybutane.mol",
     "../tests/mol_files/asymCarbon.mol",
     "../tests/mol_files/C8H12_asym.mol",
+    "../tests/mol_files/opt-T-shaped0.mol",
+    "../tests/mol_files/opt-tetrahedral0.mol",
+    "../tests/mol_files/opt-trigonal-pyramidal0.mol",
+    "../tests/mol_files/opt-bent0.mol"
   };
 
   // instantiate reader
   IO::MOLFileHandler molHandler;
 
   for(const auto& filename : files) {
-    try {
       Molecule mol = molHandler.readSingle(filename);
       // Invoke ostream operator
       std::cout << mol << std::endl;
@@ -29,9 +32,5 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
 
       mol.dumpGraphviz(dotSplat.front() + ".dot");
 
-    } catch(const std::exception& e) {
-      std::cout << e.what() << std::endl;
-      throw e;
-    }
   }
 }

@@ -58,6 +58,13 @@ Molecule::Molecule(const AdjacencyList& adjacencies)
   stereocenters(adjacencies.detectStereocenters())
 {}
 
+Molecule::Molecule(
+  const AdjacencyList& adjacencies,
+  const StereocenterList& stereocenters
+) : _adjacencies(adjacencies),
+    stereocenters(stereocenters)
+{}
+
 /* Private member functions --------------------------------------------------*/
 // TODO deprecate and remove as soon as BFSConstraintCollector is ready
 std::vector<DistanceConstraint> Molecule::_createConstraint(
@@ -174,6 +181,13 @@ void Molecule::addBond(
   const BondType& bondType
 ) {
   _adjacencies.addBond(a, b, bondType);
+}
+
+void Molecule::changeElementType(
+  const AtomIndexType& a,
+  const Delib::ElementType& elementType
+) {
+  _adjacencies.changeElementType(a, elementType);
 }
 
 void Molecule::removeAtom(const AtomIndexType& a) {

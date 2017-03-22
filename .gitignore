@@ -10,3 +10,4 @@ build/
 *.tar
 *.tar.bz2
 analysis/*/*.csv
+.R*

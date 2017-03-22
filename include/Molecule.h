@@ -56,6 +56,10 @@ public:
 
   // From internal components
   Molecule(const AdjacencyList& adjacencies);
+  Molecule(
+    const AdjacencyList& adjacencies,
+    const StereocenterList& stereocenters
+  );
 
 /* Modifiers */
   // Add an atom bonded to an existing atom
@@ -71,6 +75,11 @@ public:
     const AtomIndexType& b,
     const BondType& bondType
   ); 
+
+  void changeElementType(
+    const AtomIndexType& a,
+    const Delib::ElementType& elementType
+  );
 
   // Remove an atom. This removes all bonds to and from this atom index.
   void removeAtom(const AtomIndexType& a); 

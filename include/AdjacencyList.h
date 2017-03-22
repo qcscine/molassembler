@@ -10,6 +10,7 @@
 // Delib
 #include "ElementInfo.h"
 #include "Types/ElementTypeCollection.h"
+#include "Types/PositionCollection.h"
 
 #include "common_typedefs.h"
 #include "Edges.h"
@@ -31,10 +32,13 @@ private:
   struct MolGraphWriter;
 
 /* Private members */
+  bool _isValidIndex(const AtomIndexType& index) const;
+  std::vector<AtomIndexType> _getCNStereocenterCandidates() const;
+  std::vector<EdgeIndexType> _getEZStereocenterCandidates() const;
   std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
     const AtomIndexType& index
   ) const;
-  bool _isValidIndex(const AtomIndexType& index) const;
+  
 
 public:
 /* Typedefs */
@@ -57,6 +61,11 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b,
     const BondType& bondType
+  );
+
+  void changeElementType(
+    const AtomIndexType& a,
+    const Delib::ElementType& elementType
   );
 
   void clear();
@@ -96,6 +105,10 @@ public:
   boost::optional<BondType> getBondType(
     const AtomIndexType& a,
     const AtomIndexType& b
+  ) const;
+
+  StereocenterList inferStereocentersFromPositions(
+    const Delib::PositionCollection& positions
   ) const;
 
   /*! Returns a range-for temporary object allowing c++11 style for loop 

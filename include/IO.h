@@ -4,7 +4,6 @@
 #include "Molecule.h"
 #include "Version.h"
 #include "AdjacencyListAlgorithms.h"
-#include "MoleculeAlgorithms.h"
 
 #include "ElementInfo.h" // Delib
 #include "Types/PositionCollection.h"
@@ -169,7 +168,7 @@ private:
         fout << std::setw(2) << "##" // First and last initial of user
           << std::setw(8) << "MLib"+Version::String() // PPPPPPPP (8, Prog name)
           << std::put_time(&localNow, "%m%d%y%H%M") // MMDDYYHHmm
-          << "3D" // dd
+          << "3D" // dd (dimensionality)
           // Missing:
           // SS (integer scaling factor)
           // ss (float scaling factor, 10 digits long: bbbb.aaaaa)
@@ -200,7 +199,7 @@ private:
           return Delib::ElementInfo::symbol(elementType);
         };
         for(unsigned i = 0; i < molecule.getNumAtoms(); i++) {
-          fout << std::setprecision(4)
+          fout << std::setprecision(4) << std::fixed
             << std::setw(10) << positions[i].x()
             << std::setw(10) << positions[i].y()
             << std::setw(10) << positions[i].z()
@@ -228,8 +227,9 @@ private:
         state = State::BondBlock;
       } else if(state == State::BondBlock) {
         for(const auto& edge: molecule.getEdges()) {
-          fout << std::setw(3) << edge.first.first // 111 (index of 1st atom)
-            << std::setw(3) << edge.first.second  // 222 (index of 2nd atom)
+          // MOLFile indices are 1-based, have to add 1 to internal indices!
+          fout << std::setw(3) << (edge.first.first + 1) // 111 (index of 1st atom)
+            << std::setw(3) << (edge.first.second + 1)  // 222 (index of 2nd atom)
             << std::setw(3) << _bondTypeUnsignedMap.at(edge.second) // ttt (bond type)
             << std::setw(3) << 0u // sss (bond stereo, ignored for now)
             << std::setw(3) << 0u // xxx (unused)
@@ -346,10 +346,6 @@ public:
       }
     }
 
-    /* TODO externalize this algorithm! Not strictly part of IO, more like an
-     * algorithm taking a molecule and a positioncollection and fitting the
-     * molecule representation to the positions
-     */
     if(nZeroLengthLowerBound > 1) { 
       /* Assume all are dummies, no 3D Information present -> no Stereocenter
        *  assignments
@@ -358,9 +354,11 @@ public:
         _adjacencies
       );
     } else { // We have 3D information, try to infer stereocenters (if present)
-      return fitToPositions(
-        Molecule(_adjacencies),
-        _positions
+      return Molecule(
+        _adjacencies,
+        _adjacencies.inferStereocentersFromPositions(
+          _positions
+        )
       );
     }
 

@@ -35,6 +35,15 @@ CNStereocenter::CNStereocenter(
       )
     )
   );
+
+  /* auto reducedMap = _reduceNeighborCharMap(_neighborCharMap);
+  std::cout << "Reduced char map: vec{";
+  for(const auto& character : reducedMap) {
+    std::cout << character;
+    if(character != reducedMap.back()) std::cout << ", ";
+  }
+  std::cout << "} in symmetry " << Symmetry::name(symmetry) 
+    << " -> " << _uniqueAssignments.size() << " assignments" << std::endl;*/
 }
 
 /* Private members */
@@ -97,13 +106,21 @@ std::map<
   const char initialChar = 'A';
   for(const auto& index : rankedSubstituentNextAtomIndices) {
     // find position in setsVector
-    unsigned posInSetsVector = 0;
-    while(
-      setsVector[posInSetsVector].count(index) == 0 
-      && posInSetsVector < setsVector.size()
-    ) {
-      posInSetsVector++;
-    }
+
+    auto findIter = std::find_if(
+      setsVector.begin(),
+      setsVector.end(),
+      [&index](const auto& set) -> bool {
+        return set.count(index) > 0;
+      }
+    );
+
+    assert(findIter != setsVector.end()); // would indicate an error above
+
+    unsigned posInSetsVector = findIter - setsVector.begin();
+
+    // Take advantage of implicit type conversions:
+    //               char =        char +        unsigned
     indexSymbolMap[index] = initialChar + posInSetsVector;
   }
 
@@ -122,10 +139,13 @@ std::vector<char> CNStereocenter::_reduceNeighborCharMap(
   >& neighborCharMap
 ) {
   std::vector<char> ligandSymbols;
+
+  // Add every mapped char to a vector
   for(const auto& indexCharPair: neighborCharMap) {
     ligandSymbols.push_back(indexCharPair.second);
   }
 
+  // sort it
   std::sort(
     ligandSymbols.begin(),
     ligandSymbols.end()

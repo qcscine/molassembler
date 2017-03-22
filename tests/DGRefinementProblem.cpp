@@ -96,22 +96,31 @@ void writeMOLFile(
   const unsigned& structNum,
   const Eigen::VectorXd& vectorizedPositions
 ) {
+  auto moleculeCopy = molecule;
+
   unsigned N = vectorizedPositions.size() / 3;
   assert(3 * N == vectorizedPositions.size());
 
-  std::vector<std::string> elementNames = {
-    "Ru",
-    "H",
-    "F",
-    "Cl",
-    "Br",
-    "I",
-    "N",
-    "C",
-    "O",
-    "S",
-    "P"
+  std::vector<Delib::ElementType> elementTypes = {
+    Delib::ElementType::Ru,
+    Delib::ElementType::H,
+    Delib::ElementType::F,
+    Delib::ElementType::Cl,
+    Delib::ElementType::Br,
+    Delib::ElementType::I,
+    Delib::ElementType::N,
+    Delib::ElementType::C,
+    Delib::ElementType::O,
+    Delib::ElementType::S,
+    Delib::ElementType::P
   };
+
+  for(unsigned i = 0; i < molecule.getNumAtoms(); i++) {
+    moleculeCopy.changeElementType(
+      i,
+      elementTypes.at(i)
+    );
+  }
 
   std::string filename;
 
@@ -123,7 +132,7 @@ void writeMOLFile(
   IO::MOLFileHandler fileHandler;
   fileHandler.writeSingle(
     filename,
-    molecule,
+    moleculeCopy,
     toPositionCollection(
       vectorizedPositions
     )
