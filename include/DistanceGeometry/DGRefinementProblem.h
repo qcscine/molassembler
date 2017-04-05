@@ -12,9 +12,16 @@
 #include <Eigen/Dense>
 
 /* TODO
+ * - Try out chirality constraining for tetrahedral, then trigonal pyramidal, 
+ *   then all the higher symmetries with many chiral constraints
  * - Optimize 
  *   - remove all the bound squaring be pre-squaring the bounds
  *   - ... ?
+ * - Make 4D refinement variant
+ *   Tricky! Lots of seemingly simple things become complex. First finish up 
+ *   a proper 3D refinement with stereocenters (and all the involved chirality
+ *   constraints that we must split into for higher symmetries before attempting
+ *   this
  */
 
 namespace MoleculeManip {
@@ -39,17 +46,24 @@ private:
 
 /* Private member functions */
   //! Make an Eigen Vector3d of an atomic index.
-  const Eigen::Vector3d _getEigen(const TVector& v, const AtomIndexType& index) {
+  auto _getEigen(const TVector& v, const AtomIndexType& index) const {
     assert(v.size() > 3 * index + 2);
 
-    // TODO Maybe I can just get a reference to a subset instead of allocating new?
-    // -> YES! member function .segment<3>(startingIndex)
-    Eigen::Vector3d retv;
-    retv << v(3 * index), v(3 * index + 1), v(3 * index + 2);
-    return retv;
+    /* Return a fixed-size const reference to a part of the vector
+     *
+     * Interesting tidbit to the syntax below:
+     * If you write: return v.segment<3>(3 * index);
+     *             member function -^^^- integer 3
+     *                               |
+     *                          operator <
+     * 
+     * so to disambiguate, you write template before the name of the member
+     * function.
+     */
+    return v.template segment<3>(3 * index);
   }
 
-  inline T _square(const T& value) { 
+  inline T _square(const T& value) const { 
     return value * value;
   }
 
@@ -63,7 +77,7 @@ private:
     const AtomIndexType& j,
     const AtomIndexType& k,
     const AtomIndexType& l
-  ) {
+  ) const {
     auto vecL = _getEigen(v, l);
 
     return (
@@ -78,11 +92,11 @@ private:
   }
 
   //!  First term of gradient expansion
-  const Eigen::Vector3d _A(
+  Eigen::Vector3d _A(
     const TVector& v,
     const AtomIndexType& i, 
     const AtomIndexType& j
-  ) {
+  ) const {
     Eigen::Vector3d retv = _getEigen(v, j) - _getEigen(v, i);
 
     retv *= 4 * (
@@ -97,11 +111,11 @@ private:
   }
 
   //! Second term of gradient expansion
-  const Eigen::Vector3d _B(
+  Eigen::Vector3d _B(
     const TVector& v,
     const AtomIndexType& i,
     const AtomIndexType& j
-  ) {
+  ) const {
     Eigen::Vector3d retv = _getEigen(v, j) - _getEigen(v, i);
 
     retv *= 8 * _square(
@@ -128,7 +142,7 @@ private:
     const AtomIndexType& k, 
     const AtomIndexType& l, 
     const double& target
-  ) {
+  ) const {
     return (-2) * (
       target - _getTetrahedronReducedVolume(v, i, j, k, l)
     );
@@ -144,7 +158,7 @@ public:
     _bounds(bounds) 
   {}
 
-  T distanceError(const TVector& v) {
+  T distanceError(const TVector& v) const {
     T error = 0, distance;
     const AtomIndexType N = v.size() / 3;
 
@@ -178,7 +192,7 @@ public:
     return error;
   }
 
-  T chiralError(const TVector& v) {
+  T chiralError(const TVector& v) const {
     T sum = 0;
     AtomIndexType a, b, c, d;
     T targetVal;
@@ -193,19 +207,23 @@ public:
     return sum;
   }
 
+  T _value(const TVector& v) const {
+    return distanceError(v) + chiralError(v);
+  }
+
   /*! 
    * Required for cppoptlib: Calculates value for specified coordinates.
    */
   T value(const TVector& v) {
     assert(v.size() % 3 == 0);
 
-    return distanceError(v) + chiralError(v);
+    return _value(v);
   }
 
   /*!
    * Required for cppoptlib: Calculates gradient for specified coordinates.
    */
-  void gradient(const TVector& v, TVector& grad) {
+  void gradient(const TVector& v, TVector& grad) const {
     // this is where it gets VERY interesting
     const AtomIndexType N = v.size() / 3;
     Eigen::Vector3d localGradient;
@@ -271,12 +289,20 @@ public:
   bool callback(
     const cppoptlib::Criteria<T>& state,
     const TVector& x
-  ) {
-    std::cout << "(" << std::setw(2) << state.iterations << ")"
+  ) const {
+    // CSV format
+    std::cout << state.iterations << "," 
+      << std::fixed << std::setprecision(4) << state.gradNorm << "," 
+      << x.norm() << "," 
+      << _value(x) << ","
+      << std::setprecision(8) << x.transpose() << std::endl; 
+
+    // human-readable format
+    /* std::cout << "(" << std::setw(2) << state.iterations << ")"
               << " ||dx|| = " << std::fixed << std::setw(8) << std::setprecision(4) << state.gradNorm
               << " ||x|| = "  << std::setw(6) << x.norm()
               << " f(x) = "   << std::setw(8) << value(x)
-              << " x = [" << std::setprecision(8) << x.transpose() << "]" << std::endl;
+              << " x = [" << std::setprecision(8) << x.transpose() << "]" << std::endl; */
     return true;
   }
 
