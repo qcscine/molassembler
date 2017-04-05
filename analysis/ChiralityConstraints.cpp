@@ -1,8 +1,17 @@
 #include "IO.h"
-
+#include "Log.h"
 #include <iostream>
 
+/* This analysis requires a full set of DGRefinement analysis data. It will
+ * overwrite DGRefinement's <symmetry>.csv files with the symmetry fit log data
+ * from SymmetryFit's operator << for all generated optimized files
+ */
+
 int main() {
+  // Set the define to log full stereocenter fitting information, and nothing else
+  Log::level = Log::Level::None;
+  Log::particulars = {Log::Particulars::StereocenterFitAnalysisInfo};
+
   using namespace MoleculeManip;
   using namespace std::string_literals;
 
@@ -26,18 +35,11 @@ int main() {
     // Redirect cout to outFile
     std::cout.rdbuf(outFile.rdbuf());
 
-
     for(unsigned i = 0; i < 100; i++) {
       std::string filename = "opt-"s +spaceFreeName + std::to_string(i) 
         + ".mol"s;
 
-      try {
-        Molecule mol = molHandler.readSingle(filename);
-      } catch(const std::exception& e) {
-        std::cout << e.what() << std::endl;
-        throw e;
-      }
-
+      Molecule mol = molHandler.readSingle(filename);
     }
 
     // Restore cout

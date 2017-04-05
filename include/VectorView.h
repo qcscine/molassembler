@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <numeric>
 
 template<typename ValueType>
 class VectorView {

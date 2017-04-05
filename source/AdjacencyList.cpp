@@ -2,7 +2,9 @@
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
 #include "CommonTrig.h"
-#include "DelibAdditions.h"
+
+#include "SymmetryFit.h"
+#include "Log.h"
 
 using namespace MoleculeManip;
 
@@ -120,13 +122,13 @@ struct AdjacencyList::MolGraphWriter {
 };
 
 bool AdjacencyList::_isValidIndex(const AtomIndexType& index) const {
-  return index < nAtoms();
+  return index < numAtoms();
 }
 
 std::vector<AtomIndexType> AdjacencyList::_getCNStereocenterCandidates() const {
   std::vector<AtomIndexType> candidates;
 
-  for(AtomIndexType i = 0; i < nAtoms(); i++) {
+  for(AtomIndexType i = 0; i < numAtoms(); i++) {
     if(
       /* TODO this is no longer a valid way of checking how many ligands there are
        * -> eta bonds exist!
@@ -137,6 +139,7 @@ std::vector<AtomIndexType> AdjacencyList::_getCNStereocenterCandidates() const {
 
   return candidates;
 }
+
 std::vector<EdgeIndexType> AdjacencyList::_getEZStereocenterCandidates() const {
   std::vector<EdgeIndexType> candidates;
 
@@ -621,9 +624,10 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
   StereocenterList stereocenters;
 
   /* Add a CNStereocenter everywhere where the symmetry yielding the best fit is 
-   * not the one that AdjacencyList's determineLocalGeometry gets.
+   * not the one that AdjacencyList's determineLocalGeometry gets and where we
+   * can fully determine a Stereocenter's assignment from the positions
    */
-  for(unsigned candidateIndex = 0; candidateIndex < nAtoms(); candidateIndex++) {
+  for(unsigned candidateIndex = 0; candidateIndex < numAtoms(); candidateIndex++) {
     // Skip terminal atoms
     if(getNumAdjacencies(candidateIndex) <= 1) continue;
 
@@ -643,202 +647,26 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
       rankResultPair.second
     );
 
-    /* STEPS
-     * - Reduce the local geometry to some combination of 
-     *   internal coordinates, 1-3 distances and signed tetrahedron values
-     *   (chirality constraints) so that it can be compared easily to gathered
-     *   distance geometry constraints
-     * - Cycle through all Symmetries of appropriate size, checking the 
-     *   gathered 3D data against supposed DG constraints of the candidate
-     *   Symmetry and assignment (if present)
-     * - Cycle through the Stereocenter's assignments and calculate total
-     *   deviation for all angles
-     * - Pick the assignment that has lowest deviation, if it has multiplicity 1
-     */
     // Downcast the Stereocenter to a CNStereocenter
     auto CNStereocenterPtr = std::dynamic_pointer_cast<
       Stereocenters::CNStereocenter
     >(stereocenterPtr);
 
-    std::map<
-      Symmetry::Name, 
-      std::vector<double> // Deviation for every assignment in symmetry
-    > symmetryDeviations;
-
-    for(const auto& symmetryName : Symmetry::allNames) {
-      if( // Skip any Symmetries of different size
-        Symmetry::size(symmetryName) != Symmetry::size(
-          CNStereocenterPtr -> symmetry
-        )
-      ) continue;
-
-      // Change the symmetry of the CNStereocenter
-      CNStereocenterPtr -> changeSymmetry(symmetryName);
-
-      // Get the adjacent indices to the central atom
-      std::vector<AtomIndexType> adjacentAtoms = getAdjacencies(
+    // Perform the fit
+    SymmetryFit fit {
+      CNStereocenterPtr,
+      getAdjacencies(
         CNStereocenterPtr -> centerAtom
-      );
+      ),
+      positions
+    };
 
-      std::vector<double> deviations;
+#ifndef NDEBUG
+    using ::operator<<; // use global namespace ostream operators
 
-      for(
-        unsigned assignment = 0;
-        assignment < (CNStereocenterPtr -> assignments());
-        assignment++
-      ) {
-        // Assign the stereocenter
-        CNStereocenterPtr -> assign(assignment);
-
-
-        // Calculate the deviation from the positions
-        /* Three contributions to deviations
-         * - i-j-k angles
-         * - 1-3 distances (via 1-2 bond distances from positions and 
-         *   symmetry-ideal angles)
-         * - chirality constraints (if applicable)
-         */
-        // i-j-k angles
-        double angleDeviation = TemplateMagic::sum(
-          TemplateMagic::allPairsMap(
-            adjacentAtoms,
-            [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
-              return std::fabs(
-                DelibAdditions::getAngle( // The angle from the positions
-                  positions,
-                  i,
-                  CNStereocenterPtr -> centerAtom,
-                  k
-                ) - DelibAdditions::toRadians( // The ideal angle from the Stereocenter
-                  CNStereocenterPtr -> angle(
-                    i,
-                    CNStereocenterPtr -> centerAtom,
-                    k
-                  )
-                )
-              );
-            }
-          )
-        );
-        
-        // 1-3 distances
-        double oneThreeDeviation = TemplateMagic::sum(
-          TemplateMagic::allPairsMap(
-            adjacentAtoms,
-            [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
-              return std::fabs(
-                DelibAdditions::getDistance( // i-k 1-3 distance from positions
-                  positions,
-                  i,
-                  k
-                ) - CommonTrig::lawOfCosines( // idealized 1-3 distance from
-                  DelibAdditions::getDistance( // i-j 1-2 distance from positions
-                    positions,
-                    i,
-                    CNStereocenterPtr -> centerAtom
-                  ),
-                  DelibAdditions::getDistance( // j-k 1-2 distance from positions
-                    positions,
-                    CNStereocenterPtr -> centerAtom,
-                    k
-                  ),
-                  DelibAdditions::toRadians(
-                    CNStereocenterPtr -> angle( // idealized Stereocenter angle
-                      i,
-                      CNStereocenterPtr -> centerAtom,
-                      k
-                    )
-                  )
-                )
-              );
-            }
-          )
-        );
-
-        double chiralityConstraintDeviation = 0; 
-        /* TODO as soon as we know how chirality constraints arise from
-         * stereocenters
-         */
-
-        // Emit structured data
-        std::cout << CNStereocenterPtr -> centerAtom
-          << ", " << (
-            std::find(
-              Symmetry::allNames.begin(),
-              Symmetry::allNames.end(),
-              CNStereocenterPtr -> symmetry
-            ) - Symmetry::allNames.begin()
-          ) << ", " << assignment
-          << ", " << CNStereocenterPtr -> assignments() << ", "
-          << std::setprecision(4) << std::fixed
-          << angleDeviation << ", "
-          << oneThreeDeviation << ", "
-          << chiralityConstraintDeviation 
-          << std::endl;
-
-        // Add to deviations vector
-        deviations.emplace_back(
-          angleDeviation 
-          + oneThreeDeviation 
-          + chiralityConstraintDeviation
-        );
-      }
-      
-      // Add it to the deviations
-      symmetryDeviations[symmetryName] = deviations;
-    }
-
-    // Group analyze the assignments, assuming equal deviations do not happen
-    // for different symmetries -> dangerous!
-    std::map<
-      std::pair<
-        double, // deviation
-        Symmetry::Name // Symmetry
-      >, 
-      std::vector<unsigned> // which assignments
-    > groups;
-
-    for(const auto& iterPair : symmetryDeviations) {
-      for(unsigned i = 0; i < iterPair.second.size(); i++) {
-        auto& deviation = iterPair.second[i];
-
-        // If key doesn't exist yet
-        if(groups.count(
-          std::make_pair(deviation, iterPair.first)
-        ) == 0) {
-          groups.insert(
-            std::make_pair(
-              std::make_pair(deviation, iterPair.first),
-              std::vector<unsigned>({i})
-            )
-          );
-        } else {
-          groups.at(
-            std::make_pair(deviation, iterPair.first)
-          ).push_back(i);
-        }
-      }
-    }
-
-    /*for(const auto& iterPair : groups) {
-      std::cout << "(" << iterPair.first.first << ", " << Symmetry::name(iterPair.first.second) << ") => vec{";
-      for(const auto& value: iterPair.second) {
-        std::cout << value;
-        if(value != iterPair.second.back()) std::cout << ", ";
-      }
-      std::cout << "}" << std::endl;
-    }*/
-
-    // Find Symmetry with lowest deviation -> initialize to SOMETHING
-    auto lowestDeviation = (groups.begin() -> first).first;
-    auto bestSymmetry = (groups.begin() -> first).second;
-
-    for(const auto& iterPair : groups) {
-      if(iterPair.first.first < lowestDeviation) {
-        lowestDeviation = iterPair.first.first;
-        bestSymmetry = iterPair.first.second;
-      }
-    }
+    // Log in Debug builds, provided particular is set
+    Log::log(Log::Particulars::StereocenterFitAnalysisInfo) << fit;
+#endif
 
     /* Cases
      * Best symmetry is equal to localGeometry and no assignment can be made
@@ -852,22 +680,23 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
      * Best symmetry is unequal and only one assignment exists
      *  -> add stereocenter, set assignment
      */
+
     // Set it to the best symmetry
     if(
       !( // Only case when stereocenter is not added
-        bestSymmetry == localGeometryName
-        && groups.at({lowestDeviation, bestSymmetry}).size() > 1
+        fit.bestSymmetry == localGeometryName
+        && fit.assignmentsWithLowestDeviation.size() > 1
       )
     ) {
-      CNStereocenterPtr -> changeSymmetry(bestSymmetry);
+      CNStereocenterPtr -> changeSymmetry(fit.bestSymmetry);
 
       /* If that pair with lowest deviation has only a single assignment,
        * assign it, else leave it unassigned (it has only a single assignment 
        * also if only one unique assignment exists)
        */
-      if(groups.at({lowestDeviation, bestSymmetry}).size() == 1) {
+      if(fit.assignmentsWithLowestDeviation.size() == 1) {
         CNStereocenterPtr -> assign(
-          groups.at({lowestDeviation, bestSymmetry}).front()
+          fit.assignmentsWithLowestDeviation.front()
         );
       }
 
@@ -892,11 +721,11 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
   return stereocenters;
 }
 
-unsigned AdjacencyList::nAtoms() const {
+unsigned AdjacencyList::numAtoms() const {
   return boost::num_vertices(_adjacencies);
 }
 
-unsigned AdjacencyList::nBonds() const {
+unsigned AdjacencyList::numBonds() const {
   return boost::num_edges(_adjacencies);
 }
 

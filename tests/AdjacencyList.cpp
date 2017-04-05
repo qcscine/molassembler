@@ -38,10 +38,10 @@ struct AdjacencyListValidator {
   static boost::optional<std::string> everyAdjacencyHasReverse(
     const AdjacencyList& a
   ) {
-    for(unsigned i = 0; i < a.nAtoms(); i++) {
+    for(unsigned i = 0; i < a.numAtoms(); i++) {
       auto adjacents = a.getAdjacencies(i);
       for(const auto& adjacency: adjacents) {
-        if(adjacency >= a.nAtoms()) {
+        if(adjacency >= a.numAtoms()) {
           return "Listed adjacency is out of bounds"s;
         }
         if(!a.isAdjacent(adjacency, i)) {
@@ -161,7 +161,7 @@ BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
   // generate a list of terminal vertices
   std::vector<AtomIndexType> terminalVertices;
   
-  for(AtomIndexType i = 0; i < adjacencies.nAtoms(); i++) {
+  for(AtomIndexType i = 0; i < adjacencies.numAtoms(); i++) {
     if(adjacencies.getAdjacencies(i).size() == 1) {
       terminalVertices.push_back(i);
     }

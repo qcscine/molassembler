@@ -385,6 +385,14 @@ public:
       MOLFileVersion::V2000 
     );
   }
+
+  const Delib::PositionCollection& getPositionCollection() const {
+    return _positions;
+  }
+
+  const AdjacencyList& getAdjacencyList() const {
+    return _adjacencies;
+  }
 };
 
 } // eo namespace IO

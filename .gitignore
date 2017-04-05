@@ -9,5 +9,6 @@ build/
 *.xyz
 *.tar
 *.tar.bz2
+*.tar.xz
 analysis/*/*.csv
 .R*

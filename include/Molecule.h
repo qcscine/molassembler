@@ -36,9 +36,6 @@ private:
   AdjacencyList _adjacencies;
 
   /* Private member functions */
-  std::vector<DistanceGeometry::DistanceConstraint> _createConstraint(
-    const std::vector<AtomIndexType>& chain
-  ) const;
   bool _validAtomIndex(const AtomIndexType& a) const;
 
 public:

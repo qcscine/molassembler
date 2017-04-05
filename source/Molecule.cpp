@@ -66,95 +66,11 @@ Molecule::Molecule(
 {}
 
 /* Private member functions --------------------------------------------------*/
-// TODO deprecate and remove as soon as BFSConstraintCollector is ready
-std::vector<DistanceConstraint> Molecule::_createConstraint(
-  const std::vector<AtomIndexType>& chain
-) const {
-  auto& i = chain.front();
-  auto& j = chain.back();
 
-  switch(chain.size()) {
-    case 2: {
-      auto distance = Bond::calculateBondDistance(
-        getElementType(i),
-        getElementType(j),
-        getBondType(i, j)
-      );
-      return {
-        DistanceConstraint(
-          i,
-          j,
-          0.99 * distance,
-          1.01 * distance
-        )
-      };
-    }
-    case 3: {
-      auto& intermediate = chain[1];
-      // TODO continue here
-      // no considerations of charge at all so far, not even VSEPR
-      boost::optional<double> angle;
-      // determine which symmetry applies at intermediate position, angle
-      auto nLigands = getBondedAtomIndices(intermediate).size();
-      if(nLigands == 2) {
-        if(getElementType(intermediate) == Delib::ElementType::O) {
-          angle = 104.5;
-        } else {
-          angle = Symmetry::angleFunction(Symmetry::Name::Linear)(0, 1);
-        }
-      } else if(nLigands == 3) {
-        angle = Symmetry::angleFunction(Symmetry::Name::TrigonalPlanar)(0, 1);
-      } else if(nLigands == 4) {
-        angle = Symmetry::angleFunction(Symmetry::Name::Tetrahedral)(0, 1);
-      } 
-
-      if((bool) angle) {
-        auto a = Bond::calculateBondDistance(
-          getElementType(i),
-          getElementType(intermediate),
-          getBondType(i, intermediate)
-        );
-        auto b = Bond::calculateBondDistance(
-          getElementType(intermediate),
-          getElementType(j),
-          getBondType(intermediate, j)
-        );
-        auto distance = CommonTrig::lawOfCosines(
-          a,
-          b,
-          angle.value() * M_PI / 180.0
-        );
-
-        return {
-          DistanceConstraint(
-            i,
-            j,
-            0.95 * distance,
-            1.05 * distance
-          )
-        };
-      } else {
-        return {};
-      }
-    }
-    case 4: {
-      // TODO implement
-      return {};
-    }
-    default: {
-      return {
-        DistanceConstraint(
-          i,
-          j,
-          (
-            AtomInfo::vdwRadius(getElementType(i))
-            + AtomInfo::vdwRadius(getElementType(j))
-          ),
-          100
-        )
-      };
-    }
-  }
+bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
+  return (
+    a < _adjacencies.numAtoms()
+  );
 }
 
 /* Public modifiers ----------------------------------------------------------*/
@@ -247,12 +163,6 @@ void Molecule::dumpGraphviz(const std::string& filename) const {
   _adjacencies.dumpGraphviz(filename);
 }
 
-bool Molecule::_validAtomIndex(const AtomIndexType& a) const {
-  return (
-    a < _adjacencies.nAtoms()
-  );
-}
-
 const AdjacencyList& Molecule::getAdjacencyList() const {
   return _adjacencies;
 }
@@ -317,11 +227,11 @@ Delib::ElementType Molecule::getElementType(
 }
 
 unsigned Molecule::getNumAtoms() const {
-  return _adjacencies.nAtoms();
+  return _adjacencies.numAtoms();
 }
 
 unsigned Molecule::getNumBonds() const {
-  return _adjacencies.nBonds();
+  return _adjacencies.numBonds();
 }
 
 unsigned Molecule::hydrogenCount(const AtomIndexType& a) const {

@@ -20,19 +20,130 @@ symmetries <- c(
 
 coordinationNumber <- c(2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 8)
 
-# Columns are
-# V1 -> centerAtom
-# V2 -> index of symmetry in vector of symmetries (0-based)
-# V3 -> assignment
-# V4 -> total number of assignments
-# V5 -> angle deviation
-# V6 -> oneThreeDeviation
+# Columns are now
+# V1 -> index of symmetry in vector of symmetries (0-based)
+# V2 -> assignment
+# V3 -> angle deviation
+# V4 -> oneThreeDeviation
+# V5 -> chiralityDeviation
 
-makeExampleOfAngleDeviationVsOneThreeDeviation <- TRUE
-makeMultiplicityHistograms <- TRUE
-makeMultiplicityBarPlot <- TRUE
+makePerSymmetryPlots <- TRUE
+makeAngleDeviationVsOneThreePlots <- FALSE
+makeMultiplicityHistograms <- FALSE
+makeMultiplicityBarPlot <- FALSE
 
-if(makeExampleOfAngleDeviationVsOneThreeDeviation) {
+if(makePerSymmetryPlots) {
+  colors <- c("steelblue", "tomato", "forestgreen", "darkorchid", "darkorange")
+
+  makePlotOnDiagonal <- FALSE
+
+  for(i in 1:length(symmetries)) {
+
+    pdf(
+      paste(symmetries[i], ".pdf", sep=""),
+      width=10,
+      height=10
+    )
+    par(mfrow=c(1, 1))
+
+    filename <- paste(symmetries[i], ".csv", sep="")
+
+    filesize <- length(readLines(filename))
+
+    if(filesize > 0) {
+      filedata <- read.csv(
+        file=filename,
+        header=FALSE,
+        sep=","
+      )
+
+      angleDeviations <- as.numeric(
+        filedata$V3
+      )
+
+      oneThreeDeviations <- as.numeric(
+        filedata$V4
+      )
+
+      targetSymmetry <- as.numeric(
+        filedata$V1
+      ) + 1
+
+      targetSymmetryUniques <- unique(targetSymmetry)
+
+      if(makePlotOnDiagonal) {
+        minCoords <- c(min(angleDeviations), min(oneThreeDeviations))
+        maxCoords <- c(max(angleDeviations), max(oneThreeDeviations))
+
+        plotLimits <- c(min(minCoords), max(maxCoords))
+
+        plot(
+          angleDeviations,
+          oneThreeDeviations,
+          xlab="Angle deviations in radians (log scale)",
+          ylab="1-3 deviations in Angstrom (log scale)",
+          xlim=plotLimits,
+          ylim=plotLimits,
+          type="n",
+          log="xy"
+        )
+
+      } else {
+
+        plot(
+          angleDeviations,
+          oneThreeDeviations,
+          xlab="Angle deviations in radians (log scale)",
+          ylab="1-3 deviations in Angstrom (log scale)",
+          type="n",
+          log="xy"
+        )
+
+      }
+
+      title(
+        main=paste("Fit onto generated", symmetries[i])
+      )
+
+      abline(0, 1, col="gray50")
+
+      if(length(angleDeviations) > 1000) { # reduce set to sample
+        indicesSubset <- sample(
+          seq(1, length(angleDeviations)),
+          1000
+        )
+
+        angleDeviations <- angleDeviations[indicesSubset]
+        oneThreeDeviations <- oneThreeDeviations[indicesSubset]
+        targetSymmetry <- targetSymmetry[indicesSubset]
+      }
+
+      for(i in 1:length(targetSymmetryUniques)) { # make colored points groups
+        subsetIndices <- which(targetSymmetry == targetSymmetryUniques[i])
+
+        points(
+          angleDeviations[subsetIndices],
+          oneThreeDeviations[subsetIndices],
+          pch=21,
+          col="black",
+          bg=colors[i]
+        )
+      }
+
+      legend(
+        "topleft",
+        legend = symmetries[targetSymmetryUniques],
+        col = colors[seq(1, length(targetSymmetryUniques))],
+        lty = 1,
+        lwd = 3
+      )
+    }
+  }
+
+  dev.off()
+}
+
+if(makeAngleDeviationVsOneThreePlots) {
 
   makePlotOnDiagonal <- FALSE
 
@@ -45,10 +156,10 @@ if(makeExampleOfAngleDeviationVsOneThreeDeviation) {
 
   print(nTotalPlots)
 
-  nRows <- 10
-  nCols <- 3
+  nRows <- 6
+  nCols <- 7
 
-  pdf("xyPlot.pdf", width=nCols*7, height=nRows*7)
+  pdf("xyPlot.pdf", width=nCols*4, height=nRows*4)
   par(mfrow=c(nRows, nCols))
 
   for(i in 1:length(symmetries)) {
@@ -67,20 +178,19 @@ if(makeExampleOfAngleDeviationVsOneThreeDeviation) {
 
       for(j in which(coordinationNumber == coordinationNumber[i])) {
         # print(paste("From ", symmetries[i], " (size ", coordinationNumber[i], ") to", symmetries[j], "(size ", coordinationNumber[j], ")", sep=""))
-        # We're in file symmetries[i].csv -> whose V2 references the 0 based
+        # We're in file symmetries[i].csv -> whose V1 references the 0 based symmetry name
         toJData <- filedata[
-          # rows with $V2 = j - 1 ( -1 because 
-          which(as.numeric(filedata$V2) == j - 1),
+          which(as.numeric(filedata$V1) == j - 1),
         ]
 
-        print(length(toJData$V5))
+        print(length(toJData$V3))
 
         angleDeviations <- as.numeric(
-          toJData$V5
+          toJData$V3
         )
 
         oneThreeDeviations <- as.numeric(
-          toJData$V6
+          toJData$V4
         )
 
 
@@ -169,24 +279,35 @@ if(makeMultiplicityHistograms) {
 
       multiplicityOfLowestDeviation <- c()
 
+      maxLines <- 10000
+
       # collect the data for same-symmetry fits
       assignmentsDeviation <- c()
-      for(lineNum in 1:min(filesize, 10000)) {
-        symmetryNum <- as.numeric(filedata[lineNum,]$V2) + 1
+
+      for(lineNum in 1:min(filesize, maxLines)) {
+        symmetryNum <- as.numeric(filedata[lineNum,]$V1) + 1
 
         if(symmetryNum == i) {
-          assignmentNum <- as.numeric(filedata[lineNum,]$V3) + 1
-          totalAssignments <- as.numeric(filedata[lineNum,]$V4)
-          totalDeviation <- as.numeric(filedata[lineNum,]$V5) +
-            as.numeric(filedata[lineNum,]$V6)
+          assignmentNum <- as.numeric(filedata[lineNum,]$V2)
 
-          assignmentsDeviation <- c(
-            assignmentsDeviation,
-            totalDeviation
-          )
+          totalDeviation <- as.numeric(filedata[lineNum,]$V3) +
+            as.numeric(filedata[lineNum,]$V4) +
+            as.numeric(filedata[lineNum,]$V5)
 
-          if(assignmentNum == totalAssignments) { 
-            # new fit set -> process the existing ones
+          if( 
+            ( # if we have just finished reading a full set
+             assignmentNum == 0 && length(assignmentsDeviation) > 0
+            ) || ( # or this is the last line
+              lineNum == min(filesize, maxLines) 
+            )
+          ) {
+            # add the current one if we're at the last line only
+            if(lineNum == min(filesize, maxLines)) {
+              assignmentsDeviation <- c(
+                assignmentsDeviation,
+                totalDeviation
+              )
+            }
 
             multiplicityOfLowestDeviation <- c(
               multiplicityOfLowestDeviation,
@@ -199,7 +320,13 @@ if(makeMultiplicityHistograms) {
 
             # empty the list
             assignmentsDeviation <- c()
-          }
+          } 
+
+          # add to vector
+          assignmentsDeviation <- c(
+            assignmentsDeviation,
+            totalDeviation
+          )
         }
       }
 
@@ -246,24 +373,30 @@ if(makeMultiplicityBarPlot) {
       # collect the data for same-symmetry fits
       assignmentsDeviation <- c()
 
-      for(lineNum in 1:min(filesize, 10000)) {
-        symmetryNum <- as.numeric(filedata[lineNum,]$V2) + 1
+      for(lineNum in 1:min(filesize, maxLines)) {
+        symmetryNum <- as.numeric(filedata[lineNum,]$V1) + 1
 
         if(symmetryNum == i) {
-          assignmentNum <- as.numeric(filedata[lineNum,]$V3) + 1
-          totalAssignments <- as.numeric(filedata[lineNum,]$V4)
-          totalDeviation <- as.numeric(filedata[lineNum,]$V5) +
-            as.numeric(filedata[lineNum,]$V6)
+          assignmentNum <- as.numeric(filedata[lineNum,]$V2)
 
+          totalDeviation <- as.numeric(filedata[lineNum,]$V3) +
+            as.numeric(filedata[lineNum,]$V4) +
+            as.numeric(filedata[lineNum,]$V5)
 
-          assignmentsDeviation <- c(
-            assignmentsDeviation,
-            totalDeviation
-          )
-
-
-          if(assignmentNum == totalAssignments) { 
-            # new fit set -> process the existing ones
+          if( 
+            ( # if we have just finished reading a full set
+             assignmentNum == 0 && length(assignmentsDeviation) > 0
+            ) || ( # or this is the last line
+              lineNum == min(filesize, maxLines) 
+            )
+          ) {
+            # add the current one if we're at the last line only
+            if(lineNum == min(filesize, maxLines)) {
+              assignmentsDeviation <- c(
+                assignmentsDeviation,
+                totalDeviation
+              )
+            }
 
             multiplicityOfLowestDeviation <- c(
               multiplicityOfLowestDeviation,
@@ -276,7 +409,13 @@ if(makeMultiplicityBarPlot) {
 
             # empty the list
             assignmentsDeviation <- c()
-          }
+          } 
+
+          # add to vector
+          assignmentsDeviation <- c(
+            assignmentsDeviation,
+            totalDeviation
+          )
         }
       }
 

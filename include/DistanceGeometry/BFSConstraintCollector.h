@@ -77,8 +77,8 @@ public:
     }
 
     // Set lower bounds to sum of vdw radii
-    for(unsigned i = 0; i < adjacencies.nAtoms(); i++) {
-      for(unsigned j = i + 1; j < adjacencies.nAtoms(); j++) {
+    for(unsigned i = 0; i < adjacencies.numAtoms(); i++) {
+      for(unsigned j = i + 1; j < adjacencies.numAtoms(); j++) {
         /* setting the bounds will fail for bonded pairs as those have strict
          * bounds already and the fairly high sum of vdw would lead to
          * inconsistencies
@@ -133,7 +133,7 @@ public:
     /* For every missing non-terminal atom, create a CNStereocenter in the
      * determined geometry
      */
-    for(unsigned i = 0; i < adjacencies.nAtoms(); i++) {
+    for(unsigned i = 0; i < adjacencies.numAtoms(); i++) {
       if(
         _stereocenterMap.count(i) == 0  // not already in the map
         && adjacencies.getNumAdjacencies(i) > 1 // non-terminal

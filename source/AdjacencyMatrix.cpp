@@ -3,7 +3,7 @@
 namespace MoleculeManip {
 
 AdjacencyMatrix::AdjacencyMatrix(const AdjacencyList& adjacencyList) 
-: N(adjacencyList.nAtoms()) {
+: N(adjacencyList.numAtoms()) {
   _matrix.resize(N, N);
   _matrix.triangularView<Eigen::StrictlyUpper>().setZero();
 

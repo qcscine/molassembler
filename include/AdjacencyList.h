@@ -38,7 +38,6 @@ private:
   std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
     const AtomIndexType& index
   ) const;
-  
 
 public:
 /* Typedefs */
@@ -131,9 +130,9 @@ public:
     const std::vector<AtomIndexType>& excludeAdjacent = {}
   ) const;
 
-  unsigned nAtoms() const;
+  unsigned numAtoms() const;
 
-  unsigned nBonds() const;
+  unsigned numBonds() const;
 
   void dumpGraphviz(const std::string& filename) const;
 
