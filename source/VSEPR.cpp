@@ -1,5 +1,5 @@
 #include "VSEPR.h"
-#include "ElementInfo.h"
+#include "Delib/ElementInfo.h"
 #include <numeric>
 
 /* TODO

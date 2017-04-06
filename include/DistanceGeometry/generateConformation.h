@@ -2,7 +2,7 @@
 #define INCLUDE_DG_GENERATE_CONFORMATION_H
 
 #include "Molecule.h"
-#include "Types/PositionCollection.h"
+#include "Delib/PositionCollection.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "DistanceGeometry/MetricMatrix.h"

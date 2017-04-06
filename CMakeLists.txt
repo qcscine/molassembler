@@ -1,34 +1,32 @@
-# How to make this into a library?
-# Dynamic / static? It would be shit if this add-on to Delib would supercede it
-
-# oldest tested version of cmake used (too lazy to figure out newest compatible
-# cmake version)
+# oldest tested version of cmake used, feel free to lower this if older versions
+# work too
 cmake_minimum_required(VERSION 3.5.1)
-
-# little variables
-set(WARNING_FLAGS "-Wall -Wpedantic -Wextra")
 
 # base paths
 set(BASE_DIR "/home/jan-grimo/PhD")
 set(LIBS_DIR "${BASE_DIR}/projects/libs")
 
 # local path configuration
-set(Delib_LIBRARY_DIR "${BASE_DIR}/code/delib2-0/build")
-set(Delib_INCLUDE_DIR "${BASE_DIR}/code/delib2-0/src")
 set(AssignmentLib_LIBRARY_DIR "${LIBS_DIR}/steric_uniqueness/build")
 set(Symmetry_LIBRARY_DIR "${LIBS_DIR}/symmetry_information/build")
 set(BOOST_INCLUDE_DIRS "/usr/include/boost")
+set(DELIB_INCLUDE_DIR "/usr/local/include/Delib")
 
-# declaration
+# project declaration
 project(Molecule)
 enable_testing()
 
-# dependencies
-find_package (Eigen3 REQUIRED)
+# dependencies: packages
+find_package(Eigen3 3.1.1 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
-find_library(DELIB_LIBRARY DelibStatic ${Delib_LIBRARY_DIR})
+find_package(Delib REQUIRED)
+message(STATUS "Delib version: ${Delib_VERSION}")
+
+# dependencies: libraries
 find_library(ASSIGNMENT_LIBRARY Assignment ${AssignmentLib_LIBRARY_DIR})
 find_library(SYMMETRY_LIBRARY symmetries ${Symmetry_LIBRARY_DIR})
+
+# dependencies: programs
 find_program(
   CLANG_TIDY_EXE
   NAMES "clang-tidy"
@@ -41,9 +39,10 @@ else()
   set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*")
 endif()
 
+# compiler warning flags 
+set(WARNING_FLAGS "-Wall -Wpedantic -Wextra")
+
 # import assignment and symmetry libraries so we can specify a dependency
-#add_library(foo STATIC IMPORTED)
-#set_property(TARGET foo PROPERTY IMPORTED_LOCATION /path/to/libfoo.a)
 add_library(assignment STATIC IMPORTED)
 set_property(TARGET assignment PROPERTY IMPORTED_LOCATION ${ASSIGNMENT_LIBRARY})
 add_library(symmetry STATIC IMPORTED)
@@ -53,7 +52,7 @@ add_dependencies(assignment symmetry)
 # add include directories
 include_directories(SYSTEM
   ${EIGEN3_INCLUDE_DIRS}
-  ${Delib_INCLUDE_DIR}
+  ${DELIB_INCLUDE_DIR}
   ${LIBS_DIR}
   include
 )
@@ -122,7 +121,8 @@ if( UNIX )
   add_definitions(-fPIC)
 endif()
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Release") 
+# Switch debug and release build types
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release") 
   message(STATUS "Selected release build")
   # no debug information, disable assert
   target_compile_definitions(molecule PRIVATE NDEBUG)
@@ -131,12 +131,15 @@ else() # assume Debug
   target_compile_options(molecule PUBLIC -g)
 endif()
 
+# library properties
 set_target_properties(
   molecule PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
+
+# enable clang-tidy warnings
 if(CLANG_TIDY_EXE)
   set_target_properties(
     molecule PROPERTIES
@@ -145,7 +148,7 @@ if(CLANG_TIDY_EXE)
 endif()
 
 # Linking
-target_link_libraries(molecule ${DELIB_LIBRARY} assignment symmetry)
+target_link_libraries(molecule Delib::DelibStatic assignment symmetry)
 
 # Testing targets
 # get all test cpp files
@@ -177,7 +180,7 @@ foreach(filename ${testFiles})
   target_link_libraries(
     ${targetName} 
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-    ${DELIB_LIBRARY}
+    Delib::DelibStatic
     assignment
     symmetry
     molecule
@@ -214,7 +217,7 @@ foreach(filename ${analysisFiles})
   target_include_directories(${targetName} PRIVATE ${BOOST_INCLUDE_DIRS})
   target_link_libraries(
     ${targetName} 
-    ${DELIB_LIBRARY}
+    Delib::DelibStatic
     assignment
     symmetry
     molecule

@@ -1,7 +1,7 @@
 #ifndef INCLUDE_TESTING_HELPER_MAKE_REPEATED_ELEMENT_COLLECTION
 #define INCLUDE_TESTING_HELPER_MAKE_REPEATED_ELEMENT_COLLECTION
 
-#include "Types/ElementTypeCollection.h"
+#include "Delib/ElementTypeCollection.h"
 
 Delib::ElementTypeCollection makeRepeatedElementCollection(
   const Delib::ElementType& elementType,

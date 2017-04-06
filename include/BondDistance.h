@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include <array>
-#include "ElementTypes.h" // Delib
+#include "Delib/ElementTypes.h" // Delib
 
 #include "AtomInfo.h"
 #include "common_typedefs.h"

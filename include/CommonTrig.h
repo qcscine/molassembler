@@ -2,7 +2,7 @@
 #define INCLUDE_COMMON_TRIG_H
 
 #include <cmath>
-#include "ElementTypes.h" // Delib
+#include "Delib/ElementTypes.h" // Delib
 
 #include "BondDistance.h"
 

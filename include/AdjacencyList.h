@@ -8,9 +8,9 @@
 #include "boost/graph/graphviz.hpp"
 
 // Delib
-#include "ElementInfo.h"
-#include "Types/ElementTypeCollection.h"
-#include "Types/PositionCollection.h"
+#include "Delib/ElementInfo.h"
+#include "Delib/ElementTypeCollection.h"
+#include "Delib/PositionCollection.h"
 
 #include "common_typedefs.h"
 #include "Edges.h"

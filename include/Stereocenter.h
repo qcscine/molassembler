@@ -11,7 +11,7 @@
 #include "StdlibTypeAlgorithms.h"
 
 // Detection algorithm headers
-#include "Types/ElementTypeCollection.h" // Delib
+#include "Delib/ElementTypeCollection.h" // Delib
 
 /* TODO
  */

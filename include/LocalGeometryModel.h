@@ -1,7 +1,7 @@
 #ifndef INCLUDE_GEOMETRY_MODELING_MODEL_H
 #define INCLUDE_GEOMETRY_MODELING_MODEL_H
 
-#include "ElementTypes.h"
+#include "Delib/ElementTypes.h"
 #include "symmetry_information/Symmetries.h"
 
 #include "common_typedefs.h"

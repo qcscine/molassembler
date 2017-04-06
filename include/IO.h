@@ -5,8 +5,8 @@
 #include "Version.h"
 #include "AdjacencyListAlgorithms.h"
 
-#include "ElementInfo.h" // Delib
-#include "Types/PositionCollection.h"
+#include "Delib/ElementInfo.h" // Delib
+#include "Delib/PositionCollection.h"
 
 #include <fstream>
 #include <iomanip>

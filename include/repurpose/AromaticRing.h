@@ -11,7 +11,7 @@
 
 #include <math.h>
 
-#include "ElementTypes.h" // Delib
+#include "Delib/ElementTypes.h" // Delib
 
 #include "GraphFeature.h"
 #include "CommonTrig.h"

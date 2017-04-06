@@ -5,7 +5,7 @@
 #include "boost/graph/adjacency_list.hpp"
 
 // In-house libraries
-#include "ElementTypes.h"
+#include "Delib/ElementTypes.h"
 
 namespace MoleculeManip {
 

@@ -11,7 +11,7 @@
 #include "TreeAlgorithms.h"
 
 // Delib
-#include "ElementInfo.h"
+#include "Delib/ElementInfo.h"
 
 /* TODO
  * - implement remaining functions, importantly the operator ==

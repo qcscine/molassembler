@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 #include <boost/optional.hpp>
-#include "ElementTypes.h" 
+#include "Delib/ElementTypes.h" 
 
 namespace MoleculeManip {
 

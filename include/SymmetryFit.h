@@ -3,7 +3,7 @@
 
 #include <map>
 #include "CNStereocenter.h"
-#include "Types/PositionCollection.h"
+#include "Delib/PositionCollection.h"
 
 // Forward-declarations so global-scope operator can be friended
 namespace MoleculeManip { class SymmetryFit; }
