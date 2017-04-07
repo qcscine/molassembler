@@ -40,9 +40,6 @@ public:
   using typename cppoptlib::Problem<T>::THessian;
 
 private:
-/* State */
-  const std::vector<ChiralityConstraint>& _constraints;
-  const DistanceBoundsMatrix& _bounds;
 
 /* Private member functions */
   //! Make an Eigen Vector3d of an atomic index.
@@ -101,10 +98,10 @@ private:
 
     retv *= 4 * (
       retv.squaredNorm() / _square(
-        _bounds.upperBound(i, j)
+        bounds.upperBound(i, j)
       ) - 1
     ) / _square(
-      _bounds.upperBound(i, j)
+      bounds.upperBound(i, j)
     );
 
     return retv;
@@ -119,14 +116,14 @@ private:
     Eigen::Vector3d retv = _getEigen(v, j) - _getEigen(v, i);
 
     retv *= 8 * _square(
-      _bounds.lowerBound(i, j)
+      bounds.lowerBound(i, j)
     ) * (
       _square(
-        _bounds.lowerBound(i, j)
+        bounds.lowerBound(i, j)
       ) - retv.squaredNorm()
     ) / std::pow(
       _square(
-        _bounds.lowerBound(i, j)
+        bounds.lowerBound(i, j)
       ) + retv.squaredNorm(),
       3
     );
@@ -149,13 +146,16 @@ private:
   }
 
 public:
+/* State */
+  const std::vector<ChiralityConstraint>& constraints;
+  const DistanceBoundsMatrix& bounds;
 
   DGRefinementProblem(
     const std::vector<ChiralityConstraint>& constraints,
     const DistanceBoundsMatrix& bounds
   ) : 
-    _constraints(constraints), 
-    _bounds(bounds) 
+    constraints(constraints), 
+    bounds(bounds) 
   {}
 
   T distanceError(const TVector& v) const {
@@ -172,17 +172,17 @@ public:
         // first term
         error += _square(
           distance / _square(
-            _bounds.upperBound(i, j)
+            bounds.upperBound(i, j)
           ) - 1
         );
 
         // second term
         error += _square(
           2 * _square(
-            _bounds.lowerBound(i, j)
+            bounds.lowerBound(i, j)
           ) / (
             _square(
-              _bounds.lowerBound(i, j)
+              bounds.lowerBound(i, j)
             ) + distance
           ) - 1
         );
@@ -197,7 +197,7 @@ public:
     AtomIndexType a, b, c, d;
     T targetVal;
 
-    for(const auto& chiralityConstraint: _constraints) {
+    for(const auto& chiralityConstraint: constraints) {
       std::tie(a, b, c, d, targetVal) = chiralityConstraint;
       sum += _square( 
         targetVal - _getTetrahedronReducedVolume(v, a, b, c, d)
@@ -261,7 +261,7 @@ public:
        * (chirality constraints)
        * TODO below: why and how?
        */
-      for(const auto& chiralityConstraint: _constraints) {
+      for(const auto& chiralityConstraint: constraints) {
         if(std::get<0>(chiralityConstraint) == alpha) {
           std::tie(std::ignore, a, b, c, target) = chiralityConstraint;
         } else if(std::get<1>(chiralityConstraint) == alpha) {
@@ -290,12 +290,17 @@ public:
     const cppoptlib::Criteria<T>& state,
     const TVector& x
   ) const {
+    TVector gradientVector(x.size());
+    gradient(x, gradientVector);
+
     // CSV format
-    std::cout << state.iterations << "," 
+    std::cout << x.size()/3 << ","
+      << state.iterations << "," 
       << std::fixed << std::setprecision(4) << state.gradNorm << "," 
-      << x.norm() << "," 
       << _value(x) << ","
-      << std::setprecision(8) << x.transpose() << std::endl; 
+      << std::setprecision(4) << x.transpose() << ","
+      << std::setprecision(4) << gradientVector.transpose() 
+      << std::endl; 
 
     // human-readable format
     /* std::cout << "(" << std::setw(2) << state.iterations << ")"
@@ -305,7 +310,6 @@ public:
               << " x = [" << std::setprecision(8) << x.transpose() << "]" << std::endl; */
     return true;
   }
-
 };
 
 } // eo namespace DistanceGeometry

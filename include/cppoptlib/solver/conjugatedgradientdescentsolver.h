@@ -57,11 +57,68 @@ class ConjugatedGradientDescentSolver : public ISolver<ProblemType, 1> {
       this->m_current.iterations += 1;
       if(this->m_stop.xDelta > 0) this->m_current.xDelta = (x0 - x_old).norm();
       this->m_current.fDelta = fabs(value - value_old);
+
+      // TODO Why the l∞ norm? That's the maximum absolute value in the vector
       this->m_current.gradNorm = grad.template lpNorm<Eigen::Infinity>();
 
       this->m_status = checkConvergence(this->m_stop, this->m_current);
     } while (objFunc.callback(this->m_current, x0) && (this->m_status == Status::Continue) );
 
+  }
+
+  struct StepResultType {
+    Scalar value, gradientNorm;
+    // Supplying positions is unnecessary -> x0
+    TVector negativeGradient;
+    Status status;
+  };
+
+  StepResultType step(ProblemType &objFunc, TVector &x0) {
+    StepResultType returnStruct;
+
+    // Store current value, old one
+    TVector x_old(x0.size());
+    x_old = x0;
+    Scalar value_old = objFunc(x0);
+
+    // Make a gradient (and one to modify) 
+    returnStruct.negativeGradient.resize(x0.rows());
+
+    // Get a gradient (not negative yet)
+    objFunc.gradient(x0, returnStruct.negativeGradient);
+
+    // Negate the gradient (this is the search direction we want to follow)
+    returnStruct.negativeGradient *= -1;
+
+    // Calculate rate of position propagation
+    const double rate = Armijo<ProblemType, 1>::linesearch(
+      x0,
+      returnStruct.negativeGradient,
+      objFunc
+    );
+
+    // Propagate positions
+    x0 = x0 + rate * returnStruct.negativeGradient;
+
+    // Calculate the new value of the function
+    returnStruct.value = objFunc(x0);
+
+    // Set iterations
+    this->m_current.iterations = 1;
+
+    // Calculate convergence criteria
+    if(this->m_stop.xDelta > 0) this->m_current.xDelta = (x0 - x_old).norm();
+    this->m_current.fDelta = fabs(returnStruct.value - value_old);
+
+    // TODO Why the l∞ norm? That's the maximum absolute value in the vector
+    this->m_current.gradNorm = returnStruct.negativeGradient.template lpNorm<Eigen::Infinity>();
+    returnStruct.gradientNorm = this -> m_current.gradNorm;
+
+    // Check if converged
+    this->m_status = checkConvergence(this->m_stop, this->m_current);
+    returnStruct.status = this->m_status;
+
+    return returnStruct;
   }
 
 };

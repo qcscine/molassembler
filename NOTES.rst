@@ -2,7 +2,6 @@ CONTINUE AT
 -----------
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)
-- Minimization in generateConfiguration.h
 
 Things that need tests
 ----------------------
@@ -26,6 +25,7 @@ Things that need tests
 
 TODO
 ----
+- Replace DistanceConstraint and ChiralityConstraint tuples by structs
 - The recent refactor of the symmetry fitting and separation into analysis and
   testing binaries broke the chirality-constraints testing due to a change of
   format. The entire application needs a good logger that can selectively output
@@ -48,7 +48,7 @@ TODO
 - Make sure EZStereocenter is stable against the situation where (and the twist
   is a given) -> Also, the involvedAtoms of this case overlap! No singular
   stereocenter per atom in the entire molecule! Unless you create another type
-  that handles this case specifically, involving all three atoms.
+  that handles this case specifically, involving all three atoms.::
     
     1
      \
@@ -73,7 +73,8 @@ TODO
   we try to detect stereocenters (although there we could mess with the
   structures too, forcing 1-3 deviations). But it doesn't allow me to just
   straight up ignore chirality constraints. I have to do both implementations so
-  I have something to compare.
+  I have something to compare. This sacrifices many of the advantages that DG
+  has! Suggest not doing this at all.
 - Maybe some functionality of the EZStereocenter / CNStereocenter items can be
   moved to the symmetry library. It would be a handy place to keep all the
   important algorithms of extracting constraints, fitting to symmetries /

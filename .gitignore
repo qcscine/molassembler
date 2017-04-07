@@ -12,3 +12,6 @@ build/
 *.tar.xz
 analysis/*/*.csv
 .R*
+*.pov
+*.png
+*.gif
