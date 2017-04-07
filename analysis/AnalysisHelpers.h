@@ -175,7 +175,8 @@ void writePOVRayFile(
     filename.str()
   );
 
-  outStream << "#include \"a_geo_tetra1.inc\"\n\n";
+  outStream << "#version 3.7;\n"
+    << "#include \"scene.inc\"\n\n";
 
   assert(positions.size() % 3 == 0);
   const unsigned N = positions.size() / 3;
@@ -192,42 +193,40 @@ void writePOVRayFile(
 
   // Atoms
   for(unsigned i = 0; i < N; i++) {
-    outStream << "object { sphere{" << mapIndexToChar(i) 
-      << ", 0.1} pigment {color myGray }}\n";
+    outStream << "Atom(" << mapIndexToChar(i) << ")\n";
   }
   outStream << "\n";
 
   // Bonds
   for(const auto& edgePair : molecule.getAdjacencyList().getEdges()) {
-    outStream << "object { cylinder{" 
+    outStream << "Bond(" 
       << mapIndexToChar(edgePair.first.first) << ","
       << mapIndexToChar(edgePair.first.second) 
-      << ", 0.05} pigment { color myGray } }\n";
+      << ")\n";
   }
   outStream << "\n";
 
   // Tetrahedra
   if(problem.constraints.size() > 0) {
     for(const auto& chiralityConstraint : problem.constraints) {
-      outStream << "object{ Tetrahedron_by_Corners("
+      outStream << "TetrahedronHighlight("
         << mapIndexToChar(std::get<0>(chiralityConstraint)) << ", "
         << mapIndexToChar(std::get<1>(chiralityConstraint)) << ", "
         << mapIndexToChar(std::get<2>(chiralityConstraint)) << ", "
         << mapIndexToChar(std::get<3>(chiralityConstraint)) 
-        << ", Rl, Rp, 0) pigment{ color steelBlue }}\n";
+        << ")\n";
     }
     outStream << "\n";
   }
 
   // Gradients
   for(unsigned i = 0; i < N; i++) {
-    outStream << "object{ Vector(" << mapIndexToChar(i) <<", " 
-      << mapIndexToChar(i) << " + <"
+    outStream << "GradientVector(" << mapIndexToChar(i) <<", <"
       << std::fixed << std::setprecision(4)
       << stepResult.negativeGradient[3 * i] << ", "
       << stepResult.negativeGradient[3 * i + 1] << ", "
       << stepResult.negativeGradient[3 * i + 2] 
-      << ">, 0.05) pigment{ color tomato}}\n";
+      << ">)\n";
   }
 
   outStream.close();
