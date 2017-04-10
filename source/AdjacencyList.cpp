@@ -322,7 +322,7 @@ StereocenterList AdjacencyList::detectStereocenters() const {
     }
     std::cout << "}" << std::endl;*/
 
-    if(newStereocenter -> assignments() > 1) {
+    if(newStereocenter -> numAssignments() > 1) {
       stereocenterList.add(
         std::move(newStereocenter)
       );

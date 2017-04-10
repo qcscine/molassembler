@@ -69,7 +69,7 @@ public:
 
   virtual boost::optional<unsigned> assigned() const override final;
 
-  virtual unsigned assignments() const override final;
+  virtual unsigned numAssignments() const override final;
 
   virtual std::vector<ChiralityConstraintPrototype> chiralityConstraints() const override final;
 

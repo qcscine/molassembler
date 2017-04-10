@@ -243,7 +243,7 @@ boost::optional<unsigned> CNStereocenter::assigned() const {
 }
 
 // TODO rename to numAssignments
-unsigned CNStereocenter::assignments() const {
+unsigned CNStereocenter::numAssignments() const {
   return _uniqueAssignments.size();
 }
 
@@ -271,7 +271,7 @@ std::string CNStereocenter::info() const {
   if(assignment) returnString += std::to_string(assignment.value());
   else returnString += "u";
 
-  returnString += "/"s + std::to_string(assignments());
+  returnString += "/"s + std::to_string(numAssignments());
 
   return returnString;
 }

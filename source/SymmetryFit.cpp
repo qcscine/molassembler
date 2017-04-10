@@ -188,7 +188,7 @@ SymmetryFit::SymmetryFit(
 
     for(
       unsigned assignment = 0;
-      assignment < (CNStereocenterPtr -> assignments());
+      assignment < (CNStereocenterPtr -> numAssignments());
       assignment++
     ) {
       // Assign the stereocenter

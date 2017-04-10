@@ -147,7 +147,7 @@ public:
           rankResultPair.second
         );
 
-        assert(_stereocenterMap[i] -> assignments() == 1);
+        assert(_stereocenterMap[i] -> numAssignments() == 1);
 
         // Default assign it to zero
         _stereocenterMap[i] -> assign(0);

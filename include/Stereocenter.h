@@ -86,7 +86,7 @@ public:
   virtual boost::optional<unsigned> assigned() const = 0;
 
   //!  Return the number of possible assignments 
-  virtual unsigned assignments() const = 0;
+  virtual unsigned numAssignments() const = 0;
 
   //!  Return a list of chirality constraints
   // -> TODO Maybe need to integrate more information in the Symmetries if

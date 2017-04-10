@@ -92,7 +92,7 @@ boost::optional<unsigned> EZStereocenter::assigned() const {
   } else return {};
 }
 
-unsigned EZStereocenter::assignments() const {
+unsigned EZStereocenter::numAssignments() const {
   return 2;
 }
 
