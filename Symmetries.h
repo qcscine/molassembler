@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include "boost/optional.hpp"
 
 /* TODO
  */
@@ -24,22 +25,41 @@ using AngleFunctionType = std::function<
   double(const unsigned&, const unsigned&)
 >;
 
+/* All symmetries have a guess implementation of what could work as the defined
+ * tetrahedra. Have to use boost::none to signal to replace this position with 
+ * the central atom as it is not part of the indexing scheme used here.
+ *
+ * In case all higher symmetries than trigonal pyramidal are representable 
+ * without boost::none and that proves to work, then perhaps make an exception 
+ * for it and treat all others without the optional. If that cannot be done, 
+ * consider refactoring (changing the numbering scheme in some fashion that 
+ * boost::none does not have to be used.
+ */
+using TetrahedronList = std::vector<
+  std::vector<
+    boost::optional<unsigned>
+  >
+>;
+
 struct SymmetryInformation {
   const std::string stringName;
   const unsigned size;
   const RotationsType rotations;
   const AngleFunctionType angleFunction;
+  const TetrahedronList tetrahedra;
 
   // Direct initialization
   SymmetryInformation(
     std::string&& stringName,
     unsigned&& size,
     RotationsType&& rotations,
-    AngleFunctionType&& angleFunction
+    AngleFunctionType&& angleFunction,
+    TetrahedronList&& tetrahedra
   ) : stringName(stringName),
       size(size),
       rotations(rotations),
-      angleFunction(angleFunction)
+      angleFunction(angleFunction),
+      tetrahedra(tetrahedra)
   {}
 };
 
@@ -68,16 +88,11 @@ extern const std::vector<Name> allNames;
 extern const std::map<Name, SymmetryInformation> symmetryData;
 
 // Shortcut functions
-inline const std::string& name(const Name& name);
-inline unsigned size(const Name& name);
-inline const RotationsType& rotations(const Name& name);
-inline const AngleFunctionType& angleFunction(const Name& name);
-
 inline const std::string& name(const Name& name) {
   return symmetryData.at(name).stringName;
 }
 
-inline unsigned size(const Name& name) {
+inline const unsigned& size(const Name& name) {
   return symmetryData.at(name).size;
 }
 
@@ -97,8 +112,9 @@ inline unsigned nameIndex(const Name& name) {
   ) - allNames.begin();
 }
 
-// helpers
-unsigned nameIndex(const Name& name);
+inline const TetrahedronList& tetrahedra(const Name& name) {
+  return symmetryData.at(name).tetrahedra;
+}
 
 } // eo namespace
 

@@ -39,8 +39,9 @@ const std::map<Name, SymmetryInformation> symmetryData {
       ) -> double {
         if(a == b) return 0;
         else return 180;
-      }
-    }
+      },
+      {}
+    },
   },
   {
     Name::Bent,
@@ -66,7 +67,8 @@ const std::map<Name, SymmetryInformation> symmetryData {
          */
         if(a == b) return 0;
         else return 107; 
-      }
+      },
+      {}
     }
   },
   {
@@ -95,7 +97,8 @@ const std::map<Name, SymmetryInformation> symmetryData {
       ) -> double {
         if(a == b) return 0;
         else return 120;
-      }
+      },
+      {}
     }
   }, 
   {
@@ -119,6 +122,9 @@ const std::map<Name, SymmetryInformation> symmetryData {
       ) -> double {
         if(a == b) return 0;
         else return 107.5;
+      },
+      {
+        {boost::none, 0, 1, 2}
       }
     }
   }, 
@@ -146,7 +152,8 @@ const std::map<Name, SymmetryInformation> symmetryData {
         } else {
           return 180;
         }
-      }
+      },
+      {}
     }
   }, 
   {
@@ -186,6 +193,9 @@ const std::map<Name, SymmetryInformation> symmetryData {
       ) -> double {
         if(a == b) return 0;
         else return 109.5;
+      },
+      {
+        {0, 1, 2, 3}
       }
     }
   }, 
@@ -219,7 +229,8 @@ const std::map<Name, SymmetryInformation> symmetryData {
           // are trans
           return 180;
         }
-      }
+      },
+      {}
     }
   }, 
   {
@@ -246,7 +257,15 @@ const std::map<Name, SymmetryInformation> symmetryData {
         if(smaller == 0 && larger == 3) return 180;
         else if(smaller == 1 && larger == 2) return 120;
         else return 90;
+      },
+      {
+        {0, boost::none, 1, 2},
+        {boost::none, 3, 1, 2},
       }
+      // TODO try alternate
+      /*
+        {0, 1, 2, 3}
+      */
     }
   }, 
   {
@@ -284,7 +303,18 @@ const std::map<Name, SymmetryInformation> symmetryData {
         else if(a == 4 || b == 4) return 90; // all bonds to axial ligand are 90°
         else if((a + b) % 2 == 0) return 180; // 0 + 2 or 1 + 3 are trans
         else return 90; // rest are cis
+      },
+      {
+        {0, 1, boost::none, 4},
+        {1, 2, boost::none, 4},
+        {2, 3, boost::none, 4},
+        {3, 0, boost::none, 4}
       }
+      // TODO try alternate
+      /*
+        {0, 1, 2, 4},
+        {0, 3, 2, 4}
+      */
     }
   }, 
   {
@@ -328,6 +358,10 @@ const std::map<Name, SymmetryInformation> symmetryData {
           // only case left: 3,4
           return 180;
         }
+      },
+      {
+        {0, 1, 2, 3},
+        {0, 1, 2, 4}
       }
     }
   }, 
@@ -359,7 +393,8 @@ const std::map<Name, SymmetryInformation> symmetryData {
           absDiff,
           std::min(absDiff - 5, 5 - absDiff)
         ) * 72;
-      }
+      },
+      {}
     }
   }, 
   {
@@ -400,7 +435,24 @@ const std::map<Name, SymmetryInformation> symmetryData {
         } else {
           return 90;
         }
+      },
+      {
+        {3, 0, 4, boost::none},
+        {0, 1, 4, boost::none},
+        {1, 2, 4, boost::none},
+        {2, 3, 4, boost::none},
+        {3, 0, 5, boost::none},
+        {0, 1, 5, boost::none},
+        {1, 2, 5, boost::none},
+        {2, 3, 5, boost::none}
       }
+      // TODO try out the alternate
+      /*
+        {3, 0, 4, 5},
+        {0, 1, 4, 5},
+        {1, 2, 4, 5},
+        {2, 3, 4, 5}
+       */
     }
   },
   {
@@ -445,6 +497,11 @@ const std::map<Name, SymmetryInformation> symmetryData {
             return 134;
           }
         }
+      },
+      {
+        // TODO dubious if this captures all relevant information, too limited
+        {boost::none, 0, 1, 2},
+        {boost::none, 3, 4, 5}
       }
     }
   },
@@ -481,7 +538,21 @@ const std::map<Name, SymmetryInformation> symmetryData {
             std::min(absDiff - 5, 5 - absDiff)
           ) * 72;
           }
+      },
+      {
+        {0, boost::none, 1, 5},
+        {1, boost::none, 2, 5},
+        {2, boost::none, 3, 5},
+        {3, boost::none, 4, 5},
+        {4, boost::none, 0, 5}
       }
+      // TODO try alternate
+      /*
+        {0, 1, 2, 5},
+        {1, 2, 3, 5},
+        {2, 3, 4, 5},
+        {3, 4, 0, 5}
+       */
     }
   },
   {
@@ -519,7 +590,27 @@ const std::map<Name, SymmetryInformation> symmetryData {
             std::min(absDiff - 5, 5 - absDiff)
           ) * 72;
         }
+      },
+      {
+        {0, 1, boost::none, 5},
+        {1, 2, boost::none, 5},
+        {2, 3, boost::none, 5},
+        {3, 4, boost::none, 5},
+        {4, 0, boost::none, 5},
+        {0, 1, boost::none, 6},
+        {1, 2, boost::none, 6},
+        {2, 3, boost::none, 6},
+        {3, 4, boost::none, 6},
+        {4, 0, boost::none, 6}
       }
+      // TODO try alternate
+      /*
+        {0, 1, 5, 6},
+        {1, 2, 5, 6},
+        {2, 3, 5, 6},
+        {3, 4, 5, 6},
+        {4, 0, 5, 6}
+       */
     }
   },
   {
@@ -598,7 +689,24 @@ const std::map<Name, SymmetryInformation> symmetryData {
             return 142.275;
           }
         }
+      },
+      {
+        {7, 0, 4, boost::none},
+        {0, 4, 1, boost::none},
+        {4, 1, 5, boost::none},
+        {1, 5, 2, boost::none},
+        {5, 2, 6, boost::none},
+        {2, 6, 3, boost::none},
+        {6, 3, 7, boost::none},
+        {3, 7, 0, boost::none}
       }
+      // TODO try alternate
+      /*
+        {0, 1, 4, 6},
+        {1, 2, 5, 7},
+        {2, 3, 6, 3},
+        {3, 0, 7, 5}
+      */
     }
   }
 };
