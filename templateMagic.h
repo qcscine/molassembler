@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <numeric>
 #include <set>
+#include <map>
 #include "boost/optional.hpp"
 
 // TEMP
@@ -73,6 +74,30 @@ typename ContainerType::value_type sum(const ContainerType& container) {
   );
 }
 
+template<
+  typename T,
+  long unsigned size,
+  class UnaryFunction
+>
+auto map(
+  const std::array<T, size>& container,
+  UnaryFunction&& function
+) {
+  using FunctionReturnType = decltype(
+    function(
+      std::declval<T>()
+    )
+  );
+
+  std::array<FunctionReturnType, size> result;
+
+  for(unsigned i = 0; i < size; i++) {
+    result[i] = function(container[i]);
+  }
+
+  return result;
+}
+
 /*!
  * Composable map function. Returns the same container type, containing the
  * type that the unary function returns.
@@ -105,6 +130,17 @@ auto map(
   );
 
   return returnContainer;
+}
+
+template<typename T, typename U>
+std::map<U, T> invertMap(const std::map<T, U>& map) {
+  std::map<U, T> flipped;
+  
+  for(const auto& mapPair : map) {
+    flipped[mapPair.second] = mapPair.first;
+  }
+
+  return flipped;
 }
 
 /*!
