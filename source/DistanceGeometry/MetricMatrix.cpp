@@ -12,7 +12,7 @@ namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
-MetricMatrix::MetricMatrix(Eigen::MatrixXd&& distances) {
+void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
   // Beware, only strict upper triangle of distances contains anything
 
   const AtomIndexType N = distances.rows();
@@ -82,6 +82,15 @@ MetricMatrix::MetricMatrix(Eigen::MatrixXd&& distances) {
       ) / 2.0;
     }
   }
+}
+
+MetricMatrix::MetricMatrix(Eigen::MatrixXd&& matrix) {
+  _constructFromTemporary(std::forward<Eigen::MatrixXd>(matrix));
+}
+
+MetricMatrix::MetricMatrix(const Eigen::MatrixXd& matrix) {
+  auto copy = matrix;
+  _constructFromTemporary(std::move(copy));
 }
 
 const Eigen::MatrixXd& MetricMatrix::access() const {

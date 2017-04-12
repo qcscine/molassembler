@@ -4,6 +4,7 @@
 #include "cppoptlib/problem.h"
 #include "common_typedefs.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "Log.h"
 
 // only as long as callback exists in its current form
 #include <iostream>
@@ -259,24 +260,49 @@ public:
 
       /* C 
        * (chirality constraints)
-       * TODO below: why and how?
        */
       for(const auto& chiralityConstraint: constraints) {
+        bool fallthrough = false;
         if(std::get<0>(chiralityConstraint) == alpha) {
           std::tie(std::ignore, a, b, c, target) = chiralityConstraint;
         } else if(std::get<1>(chiralityConstraint) == alpha) {
           std::tie(a, std::ignore, b, c, target) = chiralityConstraint;
+          // uneven permutation
+          target *= -1;
         } else if(std::get<2>(chiralityConstraint) == alpha) {
           std::tie(a, b, std::ignore, c, target) = chiralityConstraint;
         } else if(std::get<3>(chiralityConstraint) == alpha) {
           std::tie(a, b, c, std::ignore, target) = chiralityConstraint;
+          // uneven permutation
+          target *= -1;
+        } else {
+          fallthrough = true;
         }
 
-        localGradient += _C(v, alpha, a, b, c, target) * (
-          _getEigen(v, a) - _getEigen(v, c)
-        ).cross(
-          _getEigen(v, b) - _getEigen(v, c)
-        );
+        if(!fallthrough) {
+#ifndef NDEBUG
+          auto temp = _C(v, alpha, a, b, c, target) * (
+            _getEigen(v, a) - _getEigen(v, c)
+          ).cross(
+            _getEigen(v, b) - _getEigen(v, c)
+          );
+
+          localGradient += temp;
+
+          if(temp.norm() > 10) {
+            Log::log(Log::Particulars::DGRefinementChiralityNumericalDebugInfo)
+              << "Unusually large chirality gradient contribution on "
+                << alpha << ", a = " << a << ", b = " << b << ", c = " << c << "}: _C = "
+                << _C(v, alpha, a, b, c, target) << std::endl;
+          }
+#else
+          localGradient += _C(v, alpha, a, b, c, target) * (
+            _getEigen(v, a) - _getEigen(v, c)
+          ).cross(
+            _getEigen(v, b) - _getEigen(v, c)
+          );
+#endif
+        }
       }
 
       // Assign to gradient

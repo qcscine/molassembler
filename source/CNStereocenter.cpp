@@ -1,5 +1,6 @@
 #include "CNStereocenter.h"
 #include "steric_uniqueness/GenerateUniques.h"
+#include "template_magic/templateMagic.h"
 
 namespace MoleculeManip {
 
@@ -251,11 +252,38 @@ std::vector<
   Stereocenter::ChiralityConstraintPrototype
 > CNStereocenter::chiralityConstraints() const {
   std::vector<ChiralityConstraintPrototype> prototypes;
-
-  /* TODO Extract which chirality constraints are needed from Symmetry
-   * Unknown which chirality constraints are required for which Symmetry
-   * -> Investigate
+  
+  /* Invert _neighborSymmetryPositionMap, we need a mapping of
+   *  (position in symmetry) -> atom index
    */
+  auto symmetryPositionToAtomIndexMap = TemplateMagic::invertMap(
+    _neighborSymmetryPositionMap
+  );
+
+  // Get list of tetrahedra from symmetry
+  auto tetrahedraList = Symmetry::tetrahedra(symmetry);
+
+  for(const auto& tetrahedron : tetrahedraList) {
+    /* Replace boost::none with centerAtom, indices (represent positions within 
+     * the symmetry) with the atom index at that position from the inverted map
+     */
+    auto replaced = TemplateMagic::map(
+      tetrahedron,
+      [&](const auto& indexOptional) -> AtomIndexType {
+        if(indexOptional) {
+          return symmetryPositionToAtomIndexMap.at(indexOptional.value());
+        } else {
+          return centerAtom;
+        }
+      }
+    );
+
+    // Make a prototype from it
+    prototypes.emplace_back(
+      replaced,
+      ChiralityConstraintTarget::Positive
+    );
+  }
 
   return prototypes;
 }

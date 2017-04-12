@@ -51,47 +51,6 @@ MoleculeManip::Molecule symmetricMolecule(
   return molecule;
 }
 
-MoleculeManip::DistanceGeometry::DistanceBoundsMatrix distanceBoundsFromSymmetry(
-  const Symmetry::Name& symmetry,
-  const DistancesOption& distancesOption __attribute__ ((unused))
-) __attribute__ ((deprecated));
-
-MoleculeManip::DistanceGeometry::DistanceBoundsMatrix distanceBoundsFromSymmetry(
-  const Symmetry::Name& symmetry,
-  const DistancesOption& distancesOption __attribute__ ((unused))
-) {
-  using namespace MoleculeManip;
-
-  Molecule molecule(
-    Delib::ElementType::Ru,
-    Delib::ElementType::H,
-    BondType::Single
-  );
-
-  while(molecule.getNumAtoms() - 1 < Symmetry::size(symmetry)) {
-    molecule.addAtom(
-      Delib::ElementType::H,
-      0,
-      BondType::Single
-    );
-  }
-
-  auto rankResultPair = molecule.getAdjacencyList().rankPriority(0);
-
-  auto stereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
-    symmetry,
-    0,
-    rankResultPair.first,
-    rankResultPair.second
-  );
-
-  stereocenterPtr -> assign(0);
-
-  molecule.stereocenters.add(stereocenterPtr);
-
-  return molecule.getDistanceBoundsMatrix();
-}
-
 }
 
 #endif

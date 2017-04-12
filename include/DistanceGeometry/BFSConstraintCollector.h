@@ -10,8 +10,6 @@
 #include "EZStereocenter.h"
 
 /* TODO
- * - how to get angles at atoms when no stereocenters exist?
- *   -> If there is a Stereocenter centered on the intermediate atom
  * - tests
  */
 
@@ -303,86 +301,6 @@ public:
 
     return prototypes;
   }
-
-// TODO: move this to some other place in the DG process,
-// AFTER a distances matrix has been created, the prototypes can be altered to
-// real constraints
-//  std::vector<ChiralityConstraint> getChiralityConstraints(
-//    const Eigen::MatrixXd& distancesMatrix
-//  ) {
-//  /*
-//   * Return a list of chirality constraints.  The target volume of the
-//   * chirality constraint created by the tetrahedron is calculated using
-//   * internal coordinates (the Cayley-Menger determinant), always leading to V
-//   * > 0, so depending on the current assignment, the sign of the result is
-//   * switched. The formula used later in chirality constraint calculation for
-//   * explicit coordinates is adjusted by V' = 6 V to avoid an unnecessary
-//   * factor, so we do that here too:
-//   *               
-//   *    288 V²  = |...|               | substitute V' = 6 V
-//   * -> 8 (V')² = |...|               
-//   * ->      V' = sqrt(|...| / 8)
-//   *
-//   * where the Cayley-Menger determinant |...| is square symmetric:
-//   *   
-//   *          |   0    1    1    1    1  |
-//   *          |        0  d12² d13² d14² |
-//   *  |...| = |             0  d23² d24² |
-//   *          |                  0  d34² |
-//   *          |  ...                  0  |
-//   *
-//   */
-//    std::vector<ChiralityConstraint> constraints;
-//
-//    for(const auto& iterPair : _stereocenterMap) {
-//      auto chiralityPrototypes = iterPair.second -> chiralityConstraints();
-//
-//      for(const auto& prototype : chiralityPrototypes) {
-//        Eigen::Matrix<double, 5, 5> cayleyMenger;
-//        cayleyMenger.setZero();
-//
-//        for(unsigned i = 0; i < 4; i++) {
-//          for(unsigned j = i + 1; j < 4; j++) {
-//            cayleyMenger(j + 1, i + 1) = pow(
-//              distancesMatrix(
-//                std::max(
-//                  prototype.first[i],
-//                  prototype.first[j]
-//                ),
-//                std::min(
-//                  prototype.first[i],
-//                  prototype.first[j]
-//                )
-//              ),
-//              2
-//            );
-//          }
-//        }
-//
-//        // top row of cayleyMenger matrix
-//        for(unsigned i = 1; i < 5; i++) {
-//          cayleyMenger(0, i) = 1;
-//        }
-//
-//        auto determinant = static_cast<
-//          Eigen::Matrix<double, 5, 5>
-//        >(
-//          cayleyMenger.selfadjointView<Eigen::Upper>()
-//        ).determinant();
-//
-//        auto chiralityTarget = sqrt(
-//          determinant / 8.0
-//        );
-//
-//        if(
-//          prototype.second 
-//          == Stereocenters::Stereocenter::ChiralityConstraintTarget::Negative
-//        ) {
-//          chiralityTarget *= -1;
-//        }
-//      }
-//    }
-//  }
 };
 
 } // eo namespace DistanceGeometry

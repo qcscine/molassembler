@@ -14,10 +14,13 @@ private:
 /* Underlying matrix representation */
   Eigen::MatrixXd _matrix;
 
+  void _constructFromTemporary(Eigen::MatrixXd&& matrix);
+
 public:
 /* Constructors */
   MetricMatrix() = delete;
   MetricMatrix(Eigen::MatrixXd&& matrix); // want to be able to modify temporary
+  MetricMatrix(const Eigen::MatrixXd& matrix); 
 
 /* Information */
   //! Allow const ref access to underlying matrix

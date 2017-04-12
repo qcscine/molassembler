@@ -25,7 +25,10 @@ Things that need tests
 
 TODO
 ----
-- Replace DistanceConstraint and ChiralityConstraint tuples by structs
+- Some tests are still more like analysis scripts
+- There are now four different implementations of the DG process: In
+  generateConformation, and spread across tests/ and analysis/. As soon as the 
+  main one is reliable, refactor the rest to the main one.
 - The recent refactor of the symmetry fitting and separation into analysis and
   testing binaries broke the chirality-constraints testing due to a change of
   format. The entire application needs a good logger that can selectively output

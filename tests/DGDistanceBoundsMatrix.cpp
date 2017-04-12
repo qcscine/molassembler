@@ -7,6 +7,7 @@
 #include "WriteMatrix.h"
 #include "BoundsFromSymmetry.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "DistanceGeometry/generateConformation.h"
 
 BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
   using namespace MoleculeManip;
@@ -65,9 +66,8 @@ BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
       '-'
     );
 
-    auto boundsMatrix = DGDBM::symmetricMolecule(
-      symmetryName
-    ).getDistanceBoundsMatrix();
+    auto molecule = DGDBM::symmetricMolecule(symmetryName);
+    auto boundsMatrix = MoleculeManip::DistanceGeometry::gatherDGInformation(molecule).distanceBounds;
 
     writeMatrix(
       "pre-"s + spaceFreeName,

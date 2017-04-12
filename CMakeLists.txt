@@ -94,6 +94,7 @@ set(HEADERS_all
 # collect sources
 set(SOURCES_all
   source/DistanceGeometry/DistanceBoundsMatrix.cpp
+  source/DistanceGeometry/generateConformation.cpp
   source/DistanceGeometry/MetricMatrix.cpp
   source/AdjacencyList.cpp
   source/AdjacencyListAlgorithms.cpp

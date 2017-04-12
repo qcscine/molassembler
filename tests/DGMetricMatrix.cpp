@@ -7,6 +7,7 @@
 
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/MetricMatrix.h"
+#include "DistanceGeometry/generateConformation.h"
 
 #include "symmetry_information/Symmetries.h"
 #include "StdlibTypeAlgorithms.h"
@@ -256,9 +257,8 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
     bool allPassed = true;
 
     for(unsigned nTests = 0; nTests < testsLimit; nTests++) {
-      auto distanceBounds = DGDBM::symmetricMolecule(
-        symmetryName
-      ).getDistanceBoundsMatrix();
+      auto molecule = DGDBM::symmetricMolecule(symmetryName);
+      auto distanceBounds = DistanceGeometry::gatherDGInformation(molecule).distanceBounds;
 
       // choose a random reordering
       auto reorderSequence = randomReorderingSequence(

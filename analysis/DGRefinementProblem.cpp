@@ -1,5 +1,6 @@
 #include "CommonTrig.h"
 #include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/MetricMatrix.h"
 #include "cppoptlib/solver/conjugatedgradientdescentsolver.h"
 #include "cppoptlib/meta.h"
 
@@ -36,6 +37,12 @@ using namespace MoleculeManip::DistanceGeometry;
  *        
  * - Refinement cannot reach a global minimum in almost all cases. Probably due
  *   to triangle inequality bound violations. Fix by introducing metrization.
+ *
+ * - Chirality constraints are now active. A variation of how they are defined 
+ *   exists in the symmetry_information library (if nothing else helps to fix 
+ *   the appearing bugs). There was a mistake in the Cayley-Menger determinant 
+ *   calculation to determine the target volumes, that's fixed. There's now a
+ *   weird bug where gradients with chirality constraints are quite unstable.
  */
 
 int main() {
@@ -65,7 +72,7 @@ int main() {
 
     // Generate distance bounds
     auto simpleMol = DGDBM::symmetricMolecule(symmetryName);
-    auto distanceBoundsMatrix = simpleMol.getDistanceBoundsMatrix();
+    auto distanceBoundsMatrix = DistanceGeometry::gatherDGInformation(simpleMol).distanceBounds;
 
     /*std::cout << "Sample distances matrix for symmetry '" 
       << Symmetry::name(symmetryName) << std::endl

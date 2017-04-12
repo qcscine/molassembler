@@ -8,7 +8,6 @@
 // Custom headers
 #include "AdjacencyList.h"
 #include "StereocenterList.h"
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "BondDistance.h"
 
 namespace MoleculeManip {
@@ -106,9 +105,6 @@ public:
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const;
-
-  // Get a matrix containing Distance Geometry distance bounds
-  DistanceGeometry::DistanceBoundsMatrix getDistanceBoundsMatrix() const;
 
   std::vector<AdjacencyList::ExplicitEdge> getEdges() const;
 

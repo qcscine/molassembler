@@ -7,7 +7,6 @@
 #include "AdjacencyListAlgorithms.h"
 #include "AdjacencyMatrix.h"
 
-#include "DistanceGeometry/BFSConstraintCollector.h"
 #include "TreeAlgorithms.h"
 
 // Delib
@@ -38,8 +37,6 @@
  */
 
 namespace MoleculeManip {
-
-using namespace DistanceGeometry;
 
 /* Constructors --------------------------------------------------------------*/
 Molecule::Molecule(
@@ -185,35 +182,6 @@ BondType Molecule::getBondType(
   }
 
   return edgeOption.value();
-}
-
-DistanceGeometry::DistanceBoundsMatrix Molecule::getDistanceBoundsMatrix() const {
-
-  DistanceGeometry::DistanceBoundsMatrix distanceBounds(
-    getNumAtoms()
-  );
-
-  DistanceGeometry::BFSConstraintCollector collector(
-    _adjacencies,
-    stereocenters,
-    distanceBounds
-  );
-
-  for(AtomIndexType i = 0; i < getNumAtoms(); i++) {
-    auto rootPtr = AdjacencyListAlgorithms::makeTree(
-      _adjacencies,
-      i,
-      3 // max Depth of 3 to limit to up to dihedral length chains
-    );
-
-    TreeAlgorithms::BFSVisit(
-      rootPtr,
-      collector,
-      3
-    );
-  }
-
-  return distanceBounds;
 }
 
 std::vector<AdjacencyList::ExplicitEdge> Molecule::getEdges() const {

@@ -7,6 +7,9 @@
  *   
  *   - concept of dative bonds is required
  *     -> How to detect if a bond is dative?
+ * 
+ * - Some of these exceptions would classify as "boneheaded" and may be better 
+ *   off as asserts with a final cout message.
  */
 
 namespace LocalGeometry {

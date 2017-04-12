@@ -34,7 +34,13 @@ enum class Particulars {
    * potential Stereocenters when a Molecule is read in, you can have numerical
    * details of the fit logged. Corresponding analysis scripts also exist.
    */
-  StereocenterFitAnalysisInfo 
+  StereocenterFitAnalysisInfo,
+  /* In generateConformation.cpp, when chirality constraint prototypes are
+   * fully determined into chirality constraints, emit some debug information
+   */
+  PrototypePropagatorDebugInfo,
+  // In DGRefinementProblem, chirality constraint numerical debug information
+  DGRefinementChiralityNumericalDebugInfo
 };
 
 

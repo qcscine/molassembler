@@ -5,155 +5,113 @@
 #include "Delib/PositionCollection.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/DistanceGeometry.h"
-#include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/DGRefinementProblem.h"
-
-#include "cppoptlib/meta.h"
-#include "cppoptlib/solver/conjugatedgradientdescentsolver.h"
 
 #include <vector>
 #include <Eigen/Core>
-
-/* TODO
- * - consider a refactor into a class with various member functions instead of
- *   so many "free-roaming" functions. Would alleviate a lot of object passing.
- */
 
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
+namespace detail {
+
 Eigen::Vector3d getPos(
   const Eigen::MatrixXd& positions,
   const AtomIndexType& index
-) {
-  Eigen::Vector3d retv;
-  retv = positions.col(index);
-  return retv;
-}
+);
 
 double evaluateChiralityConstraint(
   const ChiralityConstraint& chiralityConstraint,
   const Eigen::MatrixXd& positions
-) {
-  AtomIndexType i, j, k, l;
-  std::tie(i, j, k, l, std::ignore) = chiralityConstraint;
-
-  // V = (1 - 4) * [ (2 - 4) x (3 - 4) ]
-  return (
-    (
-      getPos(positions, i)
-      - getPos(positions, l)
-    ).dot(
-      (
-       getPos(positions, j)
-       - getPos(positions, l)
-      ).cross(
-        getPos(positions, k)
-        - getPos(positions, l)
-      )
-    )
-  );
-}
+);
 
 bool moreThanHalfChiralityConstraintsIncorrect(
   const Eigen::MatrixXd& positions,
   const std::vector<ChiralityConstraint>& chiralityConstraints
+);
+
+Delib::PositionCollection convertToPositionCollection(
+  const Eigen::VectorXd& vectorizedPositions,
+  const EmbeddingOption& embedding
+);
+
+template<int segmentSize>
+auto getEigen(
+  const Eigen::VectorXd& v,
+  const unsigned& index, 
+  const unsigned& dimensionality
 ) {
-  unsigned totalNonZeroConstraints = 0, incorrectNonZeroConstraints = 0;
-  for(const auto& chiralityConstraint : chiralityConstraints) {
-    auto& target = std::get<4>(chiralityConstraint);
-
-    if(target != 0.0) {
-      totalNonZeroConstraints += 1;
-    }
-
-    auto eval = evaluateChiralityConstraint(
-      chiralityConstraint,
-      positions
-    );
-
-    if( // can this be simplified? -> sign bit XOR?
-      ( eval < 0 && target > 0)
-      || (eval > 0 && target < 0)
-    ) {
-      incorrectNonZeroConstraints += 1;
-    }
-  }
-
-  return (
-    incorrectNonZeroConstraints / totalNonZeroConstraints
-    > 0.5
-  );
-
+  /* Return a fixed-size const reference to a part of the vector
+   *
+   * Interesting tidbit to the syntax below:
+   * If you write: return v.segment<3>(3 * index);
+   *             member function -^^^- integer 3
+   *                               |
+   *                          operator <
+   * 
+   * so to disambiguate, you write template before the name of the member
+   * function.
+   */
+  return v.template segment<segmentSize>(dimensionality * index);
 }
+
+/* Functor to mimic a HOF that takes a distance Matrix as partial application
+ * Using auto makePrototypePropagator(Matrix) {
+ *   return [&matrix]()(Prototype) -> ChiralityConstraint {
+ *     ...
+ *   };
+ * }
+ * made it impossible to separate header and implementation, as the header is 
+ * unusable since auto cannot be deduced.
+ */
+class PrototypePropagator {
+private:
+  const Eigen::MatrixXd& distancesMatrix;
+
+public:
+  PrototypePropagator(const Eigen::MatrixXd& distancesMatrix);
+  ChiralityConstraint operator () (
+    const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+  );
+};
+
+std::list<Delib::PositionCollection> generateEnsemble(
+  const Molecule& molecule,
+  const unsigned& numStructures,
+  const MetrizationOption& metrization,
+  const EmbeddingOption& embedding
+);
+
+} // eo namespace detail
+
+struct MoleculeDGInformation {
+  DistanceBoundsMatrix distanceBounds;
+  std::vector<
+    Stereocenters::Stereocenter::ChiralityConstraintPrototype
+  > chiralityConstraintPrototypes;
+
+  MoleculeDGInformation(const unsigned& N);
+};
+
+MoleculeDGInformation gatherDGInformation(
+  const Molecule& molecule
+);
+
+// TODO move to namespace detail
+
+// Public functions
+std::list<Delib::PositionCollection> generateEnsemble(
+  const Molecule& molecule,
+  const unsigned& numStructures,
+  const MetrizationOption& metrization = MetrizationOption::off,
+  const EmbeddingOption& embedding = EmbeddingOption::threeDimensional
+);
 
 Delib::PositionCollection generateConformation(
   const Molecule& molecule,
-  const MetrizationOption& metrization,
-  const EmbeddingOption& embedding
-) {
-  auto distanceBoundsMatrix = molecule.getDistanceBoundsMatrix();
-  std::vector<ChiralityConstraint> chiralityConstraints; // TODO not retrieved so far
-
-  Eigen::MatrixXd embeddedPositions;
-  bool acceptableConformation;
-
-  // Refinement initialization
-
-  DGRefinementProblem<double> problem(
-    chiralityConstraints,
-    distanceBoundsMatrix
-  );
-
-  cppoptlib::ConjugatedGradientDescentSolver<
-    DGRefinementProblem<double>
-  > DGConjugatedGradientDescentSolver;
-
-  cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
-  stopCriteria.iterations = 1000;
-  stopCriteria.fDelta = 1e-5;
-
-  DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
-
-  // Begin main loop
-
-  do {
-
-    MetricMatrix metric(
-      distanceBoundsMatrix.generateDistanceMatrix(
-        metrization
-      )
-    );
-
-    embeddedPositions = metric.embed(embedding);
-
-    if(moreThanHalfChiralityConstraintsIncorrect(
-      embeddedPositions,
-      chiralityConstraints
-    )) {
-      embeddedPositions.row(2) *= -1;
-    }
-
-    Eigen::VectorXd vectorizedPositions(
-      Eigen::Map<Eigen::VectorXd>(
-        embeddedPositions.data(),
-        embeddedPositions.cols() * embeddedPositions.rows()
-      )
-    );
-
-    DGConjugatedGradientDescentSolver.minimize(problem, vectorizedPositions);
-
-    // TODO TEST acceptable or not -> acceptableConformation
-
-  } while(!acceptableConformation);
-
-  /* somehow convert Eigen matrix into PositionCollection */
-  Delib::PositionCollection positions;
-  // for every column in embedded?
-  //   positions.push_back(Delib::Position([Eigen::Vector3d] column))
-  return positions;
-}
+  const MetrizationOption& metrization = MetrizationOption::off,
+  const EmbeddingOption& embedding = EmbeddingOption::threeDimensional
+);
 
 } // eo namespace DistanceGeometry
 
