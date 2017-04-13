@@ -43,9 +43,10 @@ public:
 private:
 
 /* Private member functions */
-  //! Make an Eigen Vector3d of an atomic index.
+  //! Make an Eigen VectorXd of an atomic index.
+  template<int vectorSize = 4>
   auto _getEigen(const TVector& v, const AtomIndexType& index) const {
-    assert(v.size() > 3 * index + 2);
+    assert(v.size() > 4 * index + 4 - 1);
 
     /* Return a fixed-size const reference to a part of the vector
      *
@@ -58,7 +59,7 @@ private:
      * so to disambiguate, you write template before the name of the member
      * function.
      */
-    return v.template segment<3>(3 * index);
+    return v.template segment<vectorSize>(4 * index);
   }
 
   inline T _square(const T& value) const { 
@@ -73,26 +74,26 @@ private:
     const TVector& v,
     const std::array<AtomIndexType, 4>& indices
   ) const {
-    auto vecL = _getEigen(v, indices[3]);
+    auto vecL = _getEigen<3>(v, indices[3]);
 
     return (
-      _getEigen(v, indices[0]) - vecL
+      _getEigen<3>(v, indices[0]) - vecL
     ).dot(
       (
-        _getEigen(v, indices[1]) - vecL
+        _getEigen<3>(v, indices[1]) - vecL
       ).cross(
-        _getEigen(v, indices[2]) - vecL
+        _getEigen<3>(v, indices[2]) - vecL
       )
     );
   }
 
   //!  First term of gradient expansion
-  Eigen::Vector3d _A(
+  Eigen::VectorXd _A(
     const TVector& v,
     const AtomIndexType& i, 
     const AtomIndexType& j
   ) const {
-    Eigen::Vector3d retv = _getEigen(v, j) - _getEigen(v, i);
+    Eigen::VectorXd retv = _getEigen(v, j) - _getEigen(v, i);
 
     retv *= 4 * (
       retv.squaredNorm() / _square(
@@ -106,12 +107,12 @@ private:
   }
 
   //! Second term of gradient expansion
-  Eigen::Vector3d _B(
+  Eigen::VectorXd _B(
     const TVector& v,
     const AtomIndexType& i,
     const AtomIndexType& j
   ) const {
-    Eigen::Vector3d retv = _getEigen(v, j) - _getEigen(v, i);
+    Eigen::VectorXd retv = _getEigen(v, j) - _getEigen(v, i);
 
     retv *= 8 * _square(
       bounds.lowerBound(i, j)
@@ -144,7 +145,9 @@ public:
 /* State */
   const std::vector<ChiralityConstraint>& constraints;
   const DistanceBoundsMatrix& bounds;
+  bool compress = false;
 
+/* Constructors */
   DGRefinementProblem(
     const std::vector<ChiralityConstraint>& constraints,
     const DistanceBoundsMatrix& bounds
@@ -155,7 +158,7 @@ public:
 
   T distanceError(const TVector& v) const {
     T error = 0, distance;
-    const AtomIndexType N = v.size() / 3;
+    const AtomIndexType N = v.size() / 4;
 
     for(unsigned i = 0; i < N; i++) {
       for(unsigned j = i + 1; j < N; j++) {
@@ -199,15 +202,32 @@ public:
     return sum;
   }
 
+  T extraDimensionError(const TVector& v) const {
+    T sum = 0;
+
+    const AtomIndexType N = v.size() / 4;
+    for(unsigned i = 0; i < N; i++) {
+      sum += _square(
+        v[4 * i + 3]
+      );
+    }
+
+    return sum;
+  }
+
   T _value(const TVector& v) const {
-    return distanceError(v) + chiralError(v);
+    if(compress) {
+      return distanceError(v) + chiralError(v) + extraDimensionError(v);
+    } else {
+      return distanceError(v) + chiralError(v);
+    }
   }
 
   /*! 
    * Required for cppoptlib: Calculates value for specified coordinates.
    */
   T value(const TVector& v) {
-    assert(v.size() % 3 == 0);
+    assert(v.size() % 4 == 0);
 
     return _value(v);
   }
@@ -217,8 +237,8 @@ public:
    */
   void gradient(const TVector& v, TVector& grad) const {
     // this is where it gets VERY interesting
-    const AtomIndexType N = v.size() / 3;
-    Eigen::Vector3d localGradient;
+    const AtomIndexType N = v.size() / 4;
+    Eigen::VectorXd localGradient;
 
     for(AtomIndexType alpha = 0; alpha < N; alpha++) {
       localGradient.setZero();
@@ -318,9 +338,7 @@ public:
       }
 
       // Assign to gradient
-      grad(3 * alpha) = localGradient(0);
-      grad(3 * alpha + 1) = localGradient(1);
-      grad(3 * alpha + 2) = localGradient(2);
+      grad.template segment<4>(4 * alpha) = localGradient;
     }
   }
 
@@ -335,7 +353,7 @@ public:
 
       // CSV format
       Log::log(Log::Particulars::DGRefinementProgress) 
-        << x.size()/3 << ","
+        << x.size()/4 << ","
         << state.iterations << "," 
         << std::fixed << std::setprecision(4) << state.gradNorm << "," 
         << _value(x) << ","
