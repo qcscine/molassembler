@@ -45,7 +45,14 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectness ) {
 
     auto chiralityConstraints = TemplateMagic::map(
       DGInfo.chiralityConstraintPrototypes,
-      detail::PrototypePropagator {distances}
+      detail::makePropagator(
+        [&distances](const AtomIndexType& i, const AtomIndexType& j) {
+          return distances(
+            std::min(i, j),
+            std::max(i, j)
+          );
+        }
+      )
     );
 
     DGRefinementProblem<double> problem(

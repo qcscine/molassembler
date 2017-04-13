@@ -75,7 +75,14 @@ int main() {
         /* Partial application with distances matrix so we have a unary function
          * to perform the mapping with
          */
-        detail::PrototypePropagator {distancesMatrix}
+        detail::makePropagator(
+          [&distancesMatrix](const AtomIndexType& i, const AtomIndexType& j) {
+            return distancesMatrix(
+              std::min(i, j),
+              std::max(i, j)
+            );
+          }
+        )
       );
 
       /* Instantiantiate the refinement problem and its solver, set the stop 

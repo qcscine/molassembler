@@ -5,6 +5,7 @@
 #include "Delib/PositionCollection.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/DistanceGeometry.h"
+#include "Log.h"
 
 #include <vector>
 #include <Eigen/Core>
@@ -64,16 +65,138 @@ auto getEigen(
  * made it impossible to separate header and implementation, as the header is 
  * unusable since auto cannot be deduced.
  */
-class PrototypePropagator {
+template<class DistanceGetter>
+class Propagator {
 private:
-  const Eigen::MatrixXd& distancesMatrix;
+  DistanceGetter distanceGetter;
 
 public:
-  PrototypePropagator(const Eigen::MatrixXd& distancesMatrix);
+  Propagator(DistanceGetter&& distanceGetter) 
+    : distanceGetter(std::forward<DistanceGetter>(distanceGetter)) 
+  {}
+
   ChiralityConstraint operator () (
     const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
-  );
+  ) {
+    using namespace Stereocenters;
+
+    if(prototype.second == Stereocenter::ChiralityConstraintTarget::Flat) {
+      return ChiralityConstraint {
+        prototype.first[0],
+        prototype.first[1],
+        prototype.first[2],
+        prototype.first[3],
+        0.0
+      };
+    } else {
+      /*
+       * Calculate the volume. The target volume of the chirality constraint
+       * created by the tetrahedron is calculated using internal coordinates (the
+       * Cayley-Menger determinant), always leading to V > 0, so depending on the
+       * current assignment, the sign of the result is switched.  The formula
+       * used later in chirality constraint calculation for explicit coordinates
+       * is adjusted by V' = 6 V to avoid an unnecessary factor, so we do that
+       * here too:
+       *               
+       *    288 V²  = |...|               | substitute V' = 6 V
+       * -> 8 (V')² = |...|               
+       * ->      V' = sqrt(|...| / 8)
+       *
+       * where the Cayley-Menger determinant |...| is square symmetric:
+       *   
+       *          |   0    1    1    1    1  |
+       *          |        0  d12² d13² d14² |
+       *  |...| = |             0  d23² d24² |
+       *          |                  0  d34² |
+       *          |  ...                  0  |
+       *
+       */
+
+      Eigen::Matrix<double, 5, 5> cayleyMenger;
+      cayleyMenger.setZero();
+
+      for(unsigned i = 0; i < 4; i++) {
+        for(unsigned j = i + 1; j < 4; j++) {
+
+          cayleyMenger(i + 1, j + 1) = pow(
+            distanceGetter(
+              prototype.first[i],
+              prototype.first[j]
+            ),
+            2
+          );
+        }
+      }
+
+      // top row of cayleyMenger matrix
+      for(unsigned i = 1; i < 5; i++) {
+        cayleyMenger(0, i) = 1;
+      }
+
+#ifndef NDEBUG
+      // Log in Debug builds, provided particular is set
+      Log::log(Log::Particulars::PrototypePropagatorDebugInfo) 
+        << "Cayley-menger matrix: " << std::endl << cayleyMenger << std::endl;
+#endif
+
+      auto determinant = static_cast<
+        Eigen::Matrix<double, 5, 5>
+      >(
+        cayleyMenger.selfadjointView<Eigen::Upper>()
+      ).determinant();
+
+
+      /* If this fails, then we have not done distance selection properly. There
+       * must be triangle inequality violations in the distances matrix.
+       */
+      assert(
+        std::fabs(determinant) < 1e-8 // this is saying equal to zero
+        || determinant > 0
+      );
+
+      if(std::fabs(determinant) < 1e-8) {
+        // determinant is zero -> atoms involved are flat, this is alright
+        return ChiralityConstraint {
+          prototype.first[0],
+          prototype.first[1],
+          prototype.first[2],
+          prototype.first[3],
+          0
+        };
+      } else { // positive, greater than zero determinant
+        auto chiralityTarget = sqrt(
+          determinant / 8.0
+        );
+
+        if(
+          prototype.second 
+          == Stereocenters::Stereocenter::ChiralityConstraintTarget::Negative
+        ) {
+          chiralityTarget *= -1;
+        }
+
+        return ChiralityConstraint {
+          prototype.first[0],
+          prototype.first[1],
+          prototype.first[2],
+          prototype.first[3],
+          chiralityTarget
+        };
+      }
+    }
+
+  }
 };
+
+// Generator to help with functional-style instantiation
+template<class DistanceGetter> 
+auto makePropagator(
+  DistanceGetter&& distanceGetter
+) {
+  return Propagator<DistanceGetter>(
+    std::forward<DistanceGetter>(distanceGetter)
+  );
+}
 
 std::list<Delib::PositionCollection> generateEnsemble(
   const Molecule& molecule,

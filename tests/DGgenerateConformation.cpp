@@ -11,6 +11,7 @@ BOOST_AUTO_TEST_CASE( propagator ) {
   Log::level = Log::Level::None;
   Log::particulars = {Log::Particulars::PrototypePropagatorDebugInfo};
 
+  using namespace MoleculeManip;
   using namespace MoleculeManip::DistanceGeometry;
   using namespace MoleculeManip::Stereocenters;
 
@@ -19,7 +20,15 @@ BOOST_AUTO_TEST_CASE( propagator ) {
 
   auto distances = DGInfo.distanceBounds.generateDistanceMatrix();
 
-  detail::PrototypePropagator propagator {distances};
+  auto propagator = detail::makePropagator(
+    [&distances](const AtomIndexType& i, const AtomIndexType& j) {
+      return distances(
+        std::min(i, j),
+        std::max(i, j)
+      );
+    }
+  );
+    
 
   for(const auto& prototype : DGInfo.chiralityConstraintPrototypes) {
     // May not fail through assert failure

@@ -6,6 +6,8 @@
 #include "VectorView.h"
 #include <iomanip>
 
+#include "DistanceGeometry/generateConformation.h"
+
 namespace MoleculeManip {
 
 /* Helper class Fit implementation */
@@ -75,6 +77,56 @@ double SymmetryFit::Fit::_calculateOneThreeDeviation(
     )
   );
 }
+
+double SymmetryFit::Fit::_calculateChiralityDeviation(
+  const Delib::PositionCollection& positions,
+  std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
+) {
+  const auto prototypes = CNStereocenterPtr -> chiralityConstraints();
+
+  if(prototypes.size() == 0) {
+    return 0;
+  } else {
+    /* Propagate all prototypes defined by the stereocenter into constraints
+     * using distances from the positions
+     */
+    const auto constraints = TemplateMagic::map(
+      prototypes,
+      DistanceGeometry::detail::makePropagator(
+        [&positions](const unsigned& i, const unsigned& j) {
+          return (
+            positions[i] - positions[j]
+          ).norm();
+        }
+      )
+    );
+
+    /* Calculate deviations for each constraint between the chirality constraint
+     * and the volume of the tetrahedron from the positions. Since the target 
+     * volume is calculated using the same distances and the two quantities are
+     * therefore different only in sign, the deviation is either zero or two times
+     * the volume.
+     */
+    const auto deviations = TemplateMagic::map(
+      constraints,
+      [&](const auto& constraint) -> double {
+        return std::fabs(
+          std::get<4>(constraint) - _getVolume(
+            positions,
+            std::get<0>(constraint),
+            std::get<1>(constraint),
+            std::get<2>(constraint),
+            std::get<3>(constraint)
+          )
+        );
+      }
+    );
+
+    // Return the summation of the deviations
+    return TemplateMagic::sum(deviations);
+  }
+}
+
 SymmetryFit::Fit::Fit(
   const Symmetry::Name& symmetryName,
   const unsigned& assignment,
@@ -103,8 +155,10 @@ SymmetryFit::Fit::Fit(
     CNStereocenterPtr
   );
 
-  // Currently unknown, TODO as soon as how chirality arises is defined
-  chiralityDeviation = 0;
+  chiralityDeviation = _calculateChiralityDeviation(
+    positions,
+    CNStereocenterPtr
+  );
 }
 
 double SymmetryFit::Fit::_getAngle(
@@ -132,6 +186,27 @@ double SymmetryFit::Fit::_getDistance(
     positions[i].asEigenVector()
     - positions[j].asEigenVector()
   ).norm();
+}
+
+double SymmetryFit::Fit::_getVolume(
+  const Delib::PositionCollection& positions,
+  const AtomIndexType& i,
+  const AtomIndexType& j,
+  const AtomIndexType& k,
+  const AtomIndexType& l
+) {
+  return (
+    positions[i].asEigenVector()
+    - positions[l].asEigenVector()
+  ).dot(
+    (
+      positions[j].asEigenVector()
+      - positions[l].asEigenVector()
+    ).cross(
+      positions[k].asEigenVector()
+      - positions[l].asEigenVector()
+    )
+  );
 }
 
 double SymmetryFit::Fit::_toRadians(const double& inDegrees) {

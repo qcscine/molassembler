@@ -8,8 +8,6 @@
 #include "cppoptlib/meta.h"
 #include "cppoptlib/solver/conjugatedgradientdescentsolver.h"
 
-#include "Log.h"
-
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
@@ -110,111 +108,6 @@ Delib::PositionCollection convertToPositionCollection(
   return positions;
 }
 
-PrototypePropagator::PrototypePropagator(const Eigen::MatrixXd& distancesMatrix) : distancesMatrix(distancesMatrix) {}
-
-ChiralityConstraint PrototypePropagator::operator () (
-  const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
-) {
-  using namespace Stereocenters;
-
-  if(prototype.second == Stereocenter::ChiralityConstraintTarget::Flat) {
-    return ChiralityConstraint {
-      prototype.first[0],
-      prototype.first[1],
-      prototype.first[2],
-      prototype.first[3],
-      0.0
-    };
-  } else {
-    /*
-     * Calculate the volume. The target volume of the chirality constraint
-     * created by the tetrahedron is calculated using internal coordinates (the
-     * Cayley-Menger determinant), always leading to V > 0, so depending on the
-     * current assignment, the sign of the result is switched.  The formula
-     * used later in chirality constraint calculation for explicit coordinates
-     * is adjusted by V' = 6 V to avoid an unnecessary factor, so we do that
-     * here too:
-     *               
-     *    288 V²  = |...|               | substitute V' = 6 V
-     * -> 8 (V')² = |...|               
-     * ->      V' = sqrt(|...| / 8)
-     *
-     * where the Cayley-Menger determinant |...| is square symmetric:
-     *   
-     *          |   0    1    1    1    1  |
-     *          |        0  d12² d13² d14² |
-     *  |...| = |             0  d23² d24² |
-     *          |                  0  d34² |
-     *          |  ...                  0  |
-     *
-     */
-
-    Eigen::Matrix<double, 5, 5> cayleyMenger;
-    cayleyMenger.setZero();
-
-    for(unsigned i = 0; i < 4; i++) {
-      for(unsigned j = i + 1; j < 4; j++) {
-
-        cayleyMenger(i + 1, j + 1) = pow(
-          distancesMatrix(
-            std::min(
-              prototype.first[i],
-              prototype.first[j]
-            ),
-            std::max(
-              prototype.first[i],
-              prototype.first[j]
-            )
-          ),
-          2
-        );
-      }
-    }
-
-    // top row of cayleyMenger matrix
-    for(unsigned i = 1; i < 5; i++) {
-      cayleyMenger(0, i) = 1;
-    }
-
-#ifndef NDEBUG
-      // Log in Debug builds, provided particular is set
-      Log::log(Log::Particulars::PrototypePropagatorDebugInfo) 
-        << "distances Matrix: " << distancesMatrix << std::endl
-        << "Cayley-menger matrix: " << cayleyMenger << std::endl;
-#endif
-
-    auto determinant = static_cast<
-      Eigen::Matrix<double, 5, 5>
-    >(
-      cayleyMenger.selfadjointView<Eigen::Upper>()
-    ).determinant();
-
-    /* If this fails, then we have not done distance selection properly. There
-     * must be triangle inequality violations in the distances matrix.
-     */
-    assert(determinant >= 0);
-
-    auto chiralityTarget = sqrt(
-      determinant / 8.0
-    );
-
-    if(
-      prototype.second 
-      == Stereocenters::Stereocenter::ChiralityConstraintTarget::Negative
-    ) {
-      chiralityTarget *= -1;
-    }
-
-    return ChiralityConstraint {
-      prototype.first[0],
-      prototype.first[1],
-      prototype.first[2],
-      prototype.first[3],
-      chiralityTarget
-    };
-  }
-}
-
 std::list<Delib::PositionCollection> generateEnsemble(
   const Molecule& molecule,
   const unsigned& numStructures,
@@ -255,14 +148,27 @@ std::list<Delib::PositionCollection> generateEnsemble(
     );
     
     /* Get the chirality constraints by converting the prototypes found by the
-     * collector into full chiralityConstraints using the distances matrix
+     * collector into full chiralityConstraints
      */
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
-      /* Partial application with distances matrix so we have a unary function
-       * to perform the mapping with
+      /* The propagator needs a function that gives the distances between
+       * pairs of atoms, in this case we use the distances matrix we generated
+       * from the bounds (must satisfy triangle inequalities). The Propagator
+       * then has a unary function call operator that takes prototypes and spits
+       * out full chiralityConstraints.
        */
-      detail::PrototypePropagator {distancesMatrix}
+      detail::makePropagator(
+        [&distancesMatrix](
+          const AtomIndexType& i,
+          const AtomIndexType& j
+        ) -> double {
+          return distancesMatrix(
+            std::min(i, j),
+            std::max(i, j)
+          );
+        }
+      )
     );
 
     /* Instantiantiate the refinement problem and its solver, set the stop 

@@ -29,6 +29,16 @@ private:
       std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
     );
 
+    double _calculateChiralityDeviation(
+      const Delib::PositionCollection& positions,
+      std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
+    );
+
+    Eigen::MatrixXd _makeDistancesMatrix(
+      const Delib::PositionCollection& positions
+    );
+    
+
   public:
     Symmetry::Name symmetryName;
     unsigned assignment;
@@ -57,6 +67,14 @@ private:
       const Delib::PositionCollection& positions,
       const AtomIndexType& i,
       const AtomIndexType& j
+    );
+
+    static double _getVolume(
+      const Delib::PositionCollection& positions,
+      const AtomIndexType& i,
+      const AtomIndexType& j,
+      const AtomIndexType& k,
+      const AtomIndexType& l
     );
 
     static inline double _toRadians(const double& inDegrees);

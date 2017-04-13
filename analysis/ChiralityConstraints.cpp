@@ -39,6 +39,8 @@ int main() {
       std::string filename = "opt-"s +spaceFreeName + std::to_string(i) 
         + ".mol"s;
 
+      std::cerr << filename << std::endl;
+
       Molecule mol = molHandler.readSingle(filename);
     }
 
