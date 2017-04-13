@@ -33,8 +33,10 @@ private:
 /* State */
   std::array<AtomIndexType, 6> _indicesAndRank;
   boost::optional<bool> _isEOption;
+  // TODO make static?
   const double _dihedralAngleVariance = 5; // in Degrees
 
+/* Private members */
   std::vector<
     std::array<AtomIndexType, 4>
   > _equalPriorityDihedralSequences() const;
@@ -80,6 +82,9 @@ public:
   virtual std::set<AtomIndexType> involvedAtoms() const override final;
 
   virtual Type type() const override final;
+
+/* Operators */
+  bool operator == (const EZStereocenter& other) const;
 
 };
 

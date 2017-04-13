@@ -4,6 +4,8 @@
 #include <map>
 
 #include "Stereocenter.h"
+#include "CNStereocenter.h"
+#include "EZStereocenter.h"
 
 namespace MoleculeManip {
 
@@ -113,6 +115,52 @@ public:
   ListType::const_iterator end() const {
     return _features.cend();
   }
+
+  bool operator == (const StereocenterList& other) {
+    using namespace Stereocenters;
+
+    auto stereocentersEqual = [](
+      const std::shared_ptr<Stereocenter>& a,
+      const std::shared_ptr<Stereocenter>& b
+    ) -> bool {
+      if(a -> type() == b -> type()) {
+        if(a -> type() == Type::CNStereocenter) {
+          auto aDerived = std::dynamic_pointer_cast<CNStereocenter>(a);
+          auto bDerived = std::dynamic_pointer_cast<CNStereocenter>(b);
+
+          return *aDerived == *bDerived;
+        } else { // EZStereocenter
+          auto aDerived = std::dynamic_pointer_cast<EZStereocenter>(a);
+          auto bDerived = std::dynamic_pointer_cast<EZStereocenter>(b);
+
+          return *aDerived == *bDerived;
+        }
+      } else {
+        return false;
+      }
+    };
+
+    if(_features.size() != other._features.size()) return false;
+
+    bool all_found = true;
+    for(const auto& stereocenter: _features) {
+      if(
+        std::find_if(
+          other._features.begin(),
+          other._features.end(),
+          [&](const std::shared_ptr<Stereocenter>& otherStereocenter) -> bool {
+            return stereocentersEqual(stereocenter, otherStereocenter);
+          }
+        ) == other._features.end()
+      ) {
+        all_found = false;
+        break;
+      }
+    }
+
+    return all_found;
+  }
+
 
 };
 

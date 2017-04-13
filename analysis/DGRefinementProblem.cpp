@@ -72,7 +72,9 @@ int main() {
 
     // Generate distance bounds
     auto simpleMol = DGDBM::symmetricMolecule(symmetryName);
-    auto distanceBoundsMatrix = DistanceGeometry::gatherDGInformation(simpleMol).distanceBounds;
+
+    auto DGInfo = DistanceGeometry::gatherDGInformation(simpleMol);
+    const auto& distanceBoundsMatrix = DGInfo.distanceBounds;
 
     /*std::cout << "Sample distances matrix for symmetry '" 
       << Symmetry::name(symmetryName) << std::endl
@@ -84,10 +86,10 @@ int main() {
 
     for(unsigned structNum = 0; structNum < nStructures; structNum++) {
 
+      auto distancesMatrix = distanceBoundsMatrix.generateDistanceMatrix(); // with metrization!
+
       // Calculate metric matrix from selected distances
-      MetricMatrix metricMatrix(
-        distanceBoundsMatrix.generateDistanceMatrix() // with metrization!
-      );
+      MetricMatrix metricMatrix(distancesMatrix);
 
       // Embed
       auto embeddedPositions = metricMatrix.embed(EmbeddingOption::threeDimensional);
@@ -109,9 +111,25 @@ int main() {
         vectorizedPositions
       );
 
+      // Get constraints
+      auto chiralityConstraints = TemplateMagic::map(
+        DGInfo.chiralityConstraintPrototypes,
+        /* Partial application with distances matrix so we have a unary function
+         * to perform the mapping with
+         */
+        detail::makePropagator(
+          [&distancesMatrix](const AtomIndexType& i, const AtomIndexType& j) {
+            return distancesMatrix(
+              std::min(i, j),
+              std::max(i, j)
+            );
+          }
+        )
+      );
+
       // Create the RefinementProblem
       DGRefinementProblem<double> problem(
-        std::vector<ChiralityConstraint>({}), // no chirality constraints
+        chiralityConstraints,
         distanceBoundsMatrix
       );
 

@@ -312,6 +312,16 @@ Type CNStereocenter::type() const {
   return Type::CNStereocenter;
 }
 
+bool CNStereocenter::operator == (const CNStereocenter& other) const {
+  return (
+    symmetry == other.symmetry
+    && centerAtom == other.centerAtom
+    && _neighborCharMap == other._neighborCharMap
+    && _uniqueAssignments.size() == other._uniqueAssignments.size()
+    && assignment == other.assignment
+  );
+}
+
 }
 
 }

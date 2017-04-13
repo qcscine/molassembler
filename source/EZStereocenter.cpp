@@ -194,3 +194,11 @@ std::set<AtomIndexType> EZStereocenter::involvedAtoms() const {
 Type EZStereocenter::type() const {
   return Type::EZStereocenter;
 }
+
+/* Operators */
+bool EZStereocenter::operator == (const EZStereocenter& other) const {
+  return (
+    _indicesAndRank == other._indicesAndRank
+    && _isEOption == other._isEOption
+  );
+}

@@ -40,7 +40,11 @@ enum class Particulars {
    */
   PrototypePropagatorDebugInfo,
   // In DGRefinementProblem, chirality constraint numerical debug information
-  DGRefinementChiralityNumericalDebugInfo
+  DGRefinementChiralityNumericalDebugInfo,
+  /* In DGRefinementProblem, the callback function can reveal some information
+   * on the current status of the optimization
+   */
+  DGRefinementProgress
 };
 
 

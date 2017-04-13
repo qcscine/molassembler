@@ -316,24 +316,32 @@ public:
     const cppoptlib::Criteria<T>& state,
     const TVector& x
   ) const {
-    TVector gradientVector(x.size());
-    gradient(x, gradientVector);
+#ifndef NDEBUG
+    if(Log::particulars.count(Log::Particulars::DGRefinementProgress) == 1) {
+      TVector gradientVector(x.size());
+      gradient(x, gradientVector);
 
-    // CSV format
-    std::cout << x.size()/3 << ","
-      << state.iterations << "," 
-      << std::fixed << std::setprecision(4) << state.gradNorm << "," 
-      << _value(x) << ","
-      << std::setprecision(4) << x.transpose() << ","
-      << std::setprecision(4) << gradientVector.transpose() 
-      << std::endl; 
+      // CSV format
+      Log::log(Log::Particulars::DGRefinementProgress) 
+        << x.size()/3 << ","
+        << state.iterations << "," 
+        << std::fixed << std::setprecision(4) << state.gradNorm << "," 
+        << _value(x) << ","
+        << std::setprecision(4) << x.transpose() << ","
+        << std::setprecision(4) << gradientVector.transpose() 
+        << std::endl; 
 
-    // human-readable format
-    /* std::cout << "(" << std::setw(2) << state.iterations << ")"
-              << " ||dx|| = " << std::fixed << std::setw(8) << std::setprecision(4) << state.gradNorm
-              << " ||x|| = "  << std::setw(6) << x.norm()
-              << " f(x) = "   << std::setw(8) << value(x)
-              << " x = [" << std::setprecision(8) << x.transpose() << "]" << std::endl; */
+      // human-readable format
+      /* std::cout << "(" << std::setw(2) << state.iterations << ")"
+          << " ||dx|| = " << std::fixed << std::setw(8) 
+          << std::setprecision(4) << state.gradNorm
+          << " ||x|| = "  << std::setw(6) << x.norm()
+          << " f(x) = "   << std::setw(8) << value(x)
+          << " x = [" << std::setprecision(8) << x.transpose() << "]" 
+          << std::endl; */
+    }
+#endif
+
     return true;
   }
 };

@@ -95,6 +95,8 @@ public:
   virtual Type type() const override final;
 
 /* Operators */
+  bool operator == (const CNStereocenter& other) const;
+
   friend std::basic_ostream<char>& MoleculeManip::operator << (
     std::basic_ostream<char>& os,
     const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& stereocenterPtr
