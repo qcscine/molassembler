@@ -120,11 +120,6 @@ public:
   DistanceBoundsMatrix(Eigen::MatrixXd matrix);
 
 /* Modifiers */
-  //! Process a list of distance constraints with smart checking
-  void processDistanceConstraints(
-    const std::vector<DistanceConstraint>& constraints
-  );
-
   //! Smooth until the matrix does not change
   void smooth();
 

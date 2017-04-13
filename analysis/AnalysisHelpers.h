@@ -210,10 +210,10 @@ void writePOVRayFile(
   if(problem.constraints.size() > 0) {
     for(const auto& chiralityConstraint : problem.constraints) {
       outStream << "TetrahedronHighlight("
-        << mapIndexToChar(std::get<0>(chiralityConstraint)) << ", "
-        << mapIndexToChar(std::get<1>(chiralityConstraint)) << ", "
-        << mapIndexToChar(std::get<2>(chiralityConstraint)) << ", "
-        << mapIndexToChar(std::get<3>(chiralityConstraint)) 
+        << mapIndexToChar(chiralityConstraint.indices[0]) << ", "
+        << mapIndexToChar(chiralityConstraint.indices[1]) << ", "
+        << mapIndexToChar(chiralityConstraint.indices[2]) << ", "
+        << mapIndexToChar(chiralityConstraint.indices[3]) 
         << ")\n";
     }
     outStream << "\n";

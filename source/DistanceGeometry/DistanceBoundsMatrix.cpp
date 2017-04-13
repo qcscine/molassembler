@@ -39,26 +39,6 @@ void DistanceBoundsMatrix::_initRandomEngine() {
 }
 
 /* Modifiers */
-void DistanceBoundsMatrix::processDistanceConstraints(
-  const std::vector<DistanceConstraint>& constraints
-) {
-  AtomIndexType i, j;
-  double lower, upper;
-
-  for(const auto& constraint : constraints) {
-    std::tie(i, j, lower, upper) = constraint;
-    /*std::cout << "(" << i << ", " << j << "): [" << lower << ", " << upper << "]"
-      << ", currently [" << lowerBound(i, j) << ", " << upperBound(i, j) << "]" 
-      << std::endl;*/
-
-    assert(i != j);
-
-    // Apply the bounds, discarding whether it worked or not
-    setUpperBound(i, j, upper);
-    setLowerBound(i, j, lower);
-  }
-}
-
 void DistanceBoundsMatrix::smooth() {
   _boundsMatrix.smooth();
 }

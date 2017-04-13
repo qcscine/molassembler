@@ -111,12 +111,12 @@ double SymmetryFit::Fit::_calculateChiralityDeviation(
       constraints,
       [&](const auto& constraint) -> double {
         return std::fabs(
-          std::get<4>(constraint) - _getVolume(
+          constraint.target - _getVolume(
             positions,
-            std::get<0>(constraint),
-            std::get<1>(constraint),
-            std::get<2>(constraint),
-            std::get<3>(constraint)
+            constraint.indices[0],
+            constraint.indices[1],
+            constraint.indices[2],
+            constraint.indices[3]
           )
         );
       }

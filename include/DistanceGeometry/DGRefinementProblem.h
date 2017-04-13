@@ -71,20 +71,17 @@ private:
    */
   T _getTetrahedronReducedVolume(
     const TVector& v,
-    const AtomIndexType& i,
-    const AtomIndexType& j,
-    const AtomIndexType& k,
-    const AtomIndexType& l
+    const std::array<AtomIndexType, 4>& indices
   ) const {
-    auto vecL = _getEigen(v, l);
+    auto vecL = _getEigen(v, indices[3]);
 
     return (
-      _getEigen(v, i) - vecL
+      _getEigen(v, indices[0]) - vecL
     ).dot(
       (
-        _getEigen(v, j) - vecL
+        _getEigen(v, indices[1]) - vecL
       ).cross(
-        _getEigen(v, k) - vecL
+        _getEigen(v, indices[2]) - vecL
       )
     );
   }
@@ -135,14 +132,11 @@ private:
   //! Third term of gradient expansion
   T _C(
     const TVector& v,
-    const AtomIndexType& i, 
-    const AtomIndexType& j, 
-    const AtomIndexType& k, 
-    const AtomIndexType& l, 
+    const std::array<AtomIndexType, 4>& indices,
     const double& target
   ) const {
     return (-2) * (
-      target - _getTetrahedronReducedVolume(v, i, j, k, l)
+      target - _getTetrahedronReducedVolume(v, indices)
     );
   }
 
@@ -195,13 +189,10 @@ public:
 
   T chiralError(const TVector& v) const {
     T sum = 0;
-    AtomIndexType a, b, c, d;
-    T targetVal;
 
     for(const auto& chiralityConstraint: constraints) {
-      std::tie(a, b, c, d, targetVal) = chiralityConstraint;
       sum += _square( 
-        targetVal - _getTetrahedronReducedVolume(v, a, b, c, d)
+        chiralityConstraint.target - _getTetrahedronReducedVolume(v, chiralityConstraint.indices)
       );
     }
 
@@ -229,9 +220,6 @@ public:
     const AtomIndexType N = v.size() / 3;
     Eigen::Vector3d localGradient;
 
-    // loop temp variables
-    AtomIndexType a, b, c;
-    double target;
     for(AtomIndexType alpha = 0; alpha < N; alpha++) {
       localGradient.setZero();
 
@@ -261,18 +249,37 @@ public:
       /* C 
        * (chirality constraints)
        */
-      for(const auto& chiralityConstraint: constraints) {
+      for(const auto& constraint: constraints) {
         bool fallthrough = false;
-        if(std::get<0>(chiralityConstraint) == alpha) {
-          std::tie(std::ignore, a, b, c, target) = chiralityConstraint;
-        } else if(std::get<1>(chiralityConstraint) == alpha) {
-          std::tie(a, std::ignore, b, c, target) = chiralityConstraint;
+        double target = constraint.target;
+        std::array<AtomIndexType, 4> indices;
+        // TODO refactor this, there has to be a good way to write this
+        if(constraint.indices[0] == alpha) {
+          indices = constraint.indices;
+        } else if(constraint.indices[1] == alpha) {
+          indices = {
+            alpha,
+            constraint.indices[0],
+            constraint.indices[2],
+            constraint.indices[3]
+          };
+          
           // uneven permutation
           target *= -1;
-        } else if(std::get<2>(chiralityConstraint) == alpha) {
-          std::tie(a, b, std::ignore, c, target) = chiralityConstraint;
-        } else if(std::get<3>(chiralityConstraint) == alpha) {
-          std::tie(a, b, c, std::ignore, target) = chiralityConstraint;
+        } else if(constraint.indices[2] == alpha) {
+          indices = {
+            alpha,
+            constraint.indices[0],
+            constraint.indices[1],
+            constraint.indices[3]
+          };
+        } else if(constraint.indices[3] == alpha) {
+          indices = {
+            alpha,
+            constraint.indices[0],
+            constraint.indices[1],
+            constraint.indices[2]
+          };
           // uneven permutation
           target *= -1;
         } else {
@@ -281,25 +288,30 @@ public:
 
         if(!fallthrough) {
 #ifndef NDEBUG
-          auto temp = _C(v, alpha, a, b, c, target) * (
-            _getEigen(v, a) - _getEigen(v, c)
+          auto temp = _C(v, indices, target) * (
+            _getEigen(v, indices[1]) - _getEigen(v, indices[3])
           ).cross(
-            _getEigen(v, b) - _getEigen(v, c)
+            _getEigen(v, indices[2]) - _getEigen(v, indices[3])
           );
 
           localGradient += temp;
 
           if(temp.norm() > 10) {
-            Log::log(Log::Particulars::DGRefinementChiralityNumericalDebugInfo)
-              << "Unusually large chirality gradient contribution on "
-                << alpha << ", a = " << a << ", b = " << b << ", c = " << c << "}: _C = "
-                << _C(v, alpha, a, b, c, target) << std::endl;
+            auto& streamRef = Log::log(Log::Particulars::DGRefinementChiralityNumericalDebugInfo);
+            streamRef << "Unusually large chirality gradient contribution on {";
+
+            for(unsigned i = 0; i < 4; i++) {
+              streamRef << indices[i];
+              if(i != 3) streamRef << ", ";
+            }
+
+            streamRef << "}: _C = " << _C(v, indices, target) << std::endl;
           }
 #else
-          localGradient += _C(v, alpha, a, b, c, target) * (
-            _getEigen(v, a) - _getEigen(v, c)
+          localGradient += _C(v, indices, target) * (
+            _getEigen(v, indices[1]) - _getEigen(v, indices[3])
           ).cross(
-            _getEigen(v, b) - _getEigen(v, c)
+            _getEigen(v, indices[2]) - _getEigen(v, indices[3])
           );
 #endif
         }

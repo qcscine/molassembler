@@ -5,7 +5,6 @@
 #include "AdjacencyList.h"
 
 /* TODO
- * - alter DistanceConstraint and ChiralityConstraint to structs
  */
 
 namespace MoleculeManip {
@@ -13,20 +12,24 @@ namespace MoleculeManip {
 namespace DistanceGeometry {
 
 /* Typedefs */
-using DistanceConstraint = std::tuple<
-  AtomIndexType, // i
-  AtomIndexType, // j
-  double, // lower
-  double // upper
->;
+struct ChiralityConstraint {
+  std::array<AtomIndexType, 4> indices;
+  double target;
 
-using ChiralityConstraint = std::tuple<
-  AtomIndexType, // i
-  AtomIndexType, // j
-  AtomIndexType, // k
-  AtomIndexType, // l
-  double // target
->;
+  ChiralityConstraint(
+    std::array<AtomIndexType, 4>&& indices,
+    double&& target
+  ) : indices(indices),
+      target(target)
+  {}
+
+  ChiralityConstraint(
+    const std::array<AtomIndexType, 4>& indices,
+    const double& target
+  ) : indices(indices),
+      target(target)
+  {}
+};
 
 /* Enum types */
 enum class MetrizationOption {

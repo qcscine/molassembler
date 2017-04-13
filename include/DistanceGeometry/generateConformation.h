@@ -82,10 +82,7 @@ public:
 
     if(prototype.second == Stereocenter::ChiralityConstraintTarget::Flat) {
       return ChiralityConstraint {
-        prototype.first[0],
-        prototype.first[1],
-        prototype.first[2],
-        prototype.first[3],
+        prototype.first,
         0.0
       };
     } else {
@@ -157,10 +154,7 @@ public:
       if(std::fabs(determinant) < 1e-8) {
         // determinant is zero -> atoms involved are flat, this is alright
         return ChiralityConstraint {
-          prototype.first[0],
-          prototype.first[1],
-          prototype.first[2],
-          prototype.first[3],
+          prototype.first,
           0
         };
       } else { // positive, greater than zero determinant
@@ -176,10 +170,7 @@ public:
         }
 
         return ChiralityConstraint {
-          prototype.first[0],
-          prototype.first[1],
-          prototype.first[2],
-          prototype.first[3],
+          prototype.first,
           chiralityTarget
         };
       }

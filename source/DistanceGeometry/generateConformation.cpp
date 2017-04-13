@@ -24,24 +24,21 @@ Eigen::Vector3d getPos(
 }
 
 double evaluateChiralityConstraint(
-  const ChiralityConstraint& chiralityConstraint,
+  const ChiralityConstraint& constraint,
   const Eigen::MatrixXd& positions
 ) {
-  AtomIndexType i, j, k, l;
-  std::tie(i, j, k, l, std::ignore) = chiralityConstraint;
-
   // V = (1 - 4) * [ (2 - 4) x (3 - 4) ]
   return (
     (
-      getPos(positions, i)
-      - getPos(positions, l)
+      getPos(positions, constraint.indices[0])
+      - getPos(positions, constraint.indices[3])
     ).dot(
       (
-       getPos(positions, j)
-       - getPos(positions, l)
+       getPos(positions, constraint.indices[1])
+       - getPos(positions, constraint.indices[3])
       ).cross(
-        getPos(positions, k)
-        - getPos(positions, l)
+        getPos(positions, constraint.indices[2])
+        - getPos(positions, constraint.indices[3])
       )
     )
   );
@@ -53,9 +50,7 @@ bool moreThanHalfChiralityConstraintsIncorrect(
 ) {
   unsigned totalNonZeroConstraints = 0, incorrectNonZeroConstraints = 0;
   for(const auto& chiralityConstraint : chiralityConstraints) {
-    auto& target = std::get<4>(chiralityConstraint);
-
-    if(target != 0.0) {
+    if(chiralityConstraint.target != 0.0) {
       totalNonZeroConstraints += 1;
     }
 
@@ -65,8 +60,8 @@ bool moreThanHalfChiralityConstraintsIncorrect(
     );
 
     if( // can this be simplified? -> sign bit XOR?
-      ( eval < 0 && target > 0)
-      || (eval > 0 && target < 0)
+      ( eval < 0 && chiralityConstraint.target > 0)
+      || (eval > 0 && chiralityConstraint.target < 0)
     ) {
       incorrectNonZeroConstraints += 1;
     }
