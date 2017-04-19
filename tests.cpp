@@ -3,6 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "templateMagic.h"
+#include "Enumerate.h"
 
 // TEMPORARY
 #include <iostream>
@@ -83,6 +84,14 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
       )
     ) == 9.2
   );
+}
 
+BOOST_AUTO_TEST_CASE( enumerateTests) {
+  /*std::vector<unsigned> testVec {5, 2, 3, 4};
 
+  std::cout << "Before enumerate:" << std::endl;
+  for(const auto& enumStruct : enumerate(testVec)) {
+    std::cout << "{ index: " << enumStruct.index << ", value: " 
+      << enumStruct.value << "}" << std::endl;
+  }*/
 }

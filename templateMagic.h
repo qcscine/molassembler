@@ -8,9 +8,6 @@
 #include <map>
 #include "boost/optional.hpp"
 
-// TEMP
-#include <iostream>
-
 namespace TemplateMagic {
 
 /*! 
@@ -145,7 +142,7 @@ std::map<U, T> invertMap(const std::map<T, U>& map) {
 
 /*!
  * Composable pairwise map function. Instead of a unary function acting on 
- * every element of the container, this takes two successive elements. 
+ * every element of the container, this takes pairs of successive elements. 
  * The returned type is a container of the same type as the input, containing 
  * elements of the type that the binary function returns.
  */
@@ -185,6 +182,43 @@ auto pairwiseMap(
   }
 
   return returnContainer;
+}
+
+/*!
+ * Zipping mapper for same container primitives
+ */
+template<
+  typename T,
+  typename U,
+  template<typename, typename> class Container,
+  class BinaryFunction
+>
+auto zipMap(
+  const Container<T, std::allocator<T>>& a,
+  const Container<U, std::allocator<T>>& b,
+  BinaryFunction&& function
+) {
+  using FunctionReturnType = decltype(
+    function(
+      std::declval<T>(),
+      std::declval<T>()
+    )
+  );
+
+  Container<FunctionReturnType, std::allocator<FunctionReturnType>> data;
+
+  const unsigned minSize = std::min(a.size(), b.size());
+
+  for(unsigned i = 0; i < minSize; i++) {
+    data.push_back(
+      function(
+        a[i],
+        b[i]
+      )
+    );
+  }
+
+  return data;
 }
 
 /*!
@@ -301,9 +335,7 @@ auto pair_map(
   });
 }
 
-/*!
- * Identical pair which selector
- */
+//! Identical pair which selector
 template<typename T, class UnaryPredicate>
 T& which(
   const std::pair<T, T>& pair,
@@ -342,14 +374,13 @@ namespace detail {
 
 }
 
+//! Template parameter-pack exclusive or of booleans
 template<typename ... Bools>
 constexpr bool XOR(Bools ... bools) {
   return detail::TMPSum(bools ...) == 1;
 }
   
-/*!
- * Composable size
- */
+//!  Composable size function
 template<typename Container>
 unsigned size(
   Container container
@@ -357,9 +388,7 @@ unsigned size(
   return container.size();
 }
 
-/* TODO not sure about the value in the following two, they are very 
- * specifically geared towards vector<bool> and have little other use
- */
+//! Tests if all elements of a container are true
 template<class Container>
 bool all_of(
   const Container& container
@@ -371,6 +400,7 @@ bool all_of(
   );
 }
 
+//! Tests if any elements of a container are true
 template<class Container>
 bool any_of(
   const Container& container
@@ -384,11 +414,8 @@ bool any_of(
 
 /*!
  * HOF returning a predicate testing the container for whether it contains its
- * argument. I think this version immediately below is worse than the one 
- * beneath it, it makes more assumptions about the container template 
- * parameters. The one beneath it makes less of those.
+ * argument.
  */
-
 template<class Container>
 auto makeContainsPredicate(
   const Container& container
@@ -404,6 +431,9 @@ auto makeContainsPredicate(
   };
 }
 
+/*! Takes a container and maps all possible pairs of its contents into a new 
+ * container of the same type.
+ */
 template<
   typename T,
   template<typename, typename> class Container,
@@ -439,6 +469,50 @@ auto allPairsMap(
   return returnContainer;
 }
 
+//! Returns a count of some type in a container
+template<
+  typename T,
+  template<typename, typename> class Container
+> unsigned count(
+  const Container<T, std::allocator<T>>& container,
+  const T& toCount
+) {
+  unsigned count = 0;
+
+  for(const auto& element : container) {
+    if(element == toCount) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+/*! Condenses an iterable container into a comma-separated string of string 
+ * representations of its contents. Requires container iterators to satisfy
+ * BidirectionalIterators and the contained type to be a valid template
+ * argument for std::to_string, which in essence means this works only for (a
+ * few) STL containers and (most) built-in datatypes.
+ */
+template<
+  typename T,
+  template<typename, typename> class Container
+> std::string condenseIterable(
+  const Container<T, std::allocator<T>>& container
+) {
+  using namespace std::string_literals;
+
+  std::string representation;
+
+  for(auto it = container.begin(); it != container.end(); it++) {
+    representation += std::to_string(*it);
+    if(it != container.end() - 1) {
+      representation += ", "s;
+    }
+  }
+
+  return representation;
+}
 
 }
 
