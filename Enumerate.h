@@ -5,13 +5,18 @@
 
 namespace enumerate_detail {
 
-template<
-  typename T,
-  template<typename, typename> class Container
->
+template<class Container>
 class EnumerateTemporary {
 public:
-  using ContainerType = Container<T, std::allocator<T>>;  
+  // Get the bare Container containing type
+  using T = typename std::remove_reference<
+    decltype(
+      *(
+        std::declval<Container>().begin()
+      )
+    )
+  >::type;
+
   struct EnumerationStruct {
     const unsigned index;
     const T& value;
@@ -23,11 +28,11 @@ public:
   };
 
 private:
-  const ContainerType& _containerRef;
+  const Container& _containerRef;
 
 public:
   EnumerateTemporary(
-    const ContainerType& container
+    const Container& container
   ) : _containerRef(container) 
   {}
 
@@ -42,12 +47,12 @@ public:
   template<typename PointerType> 
   class iterator : public BaseIteratorType {
   private:
-    typename ContainerType::const_iterator _it;
+    typename Container::const_iterator _it;
     unsigned _index;
 
   public:
     explicit iterator(
-      typename ContainerType::const_iterator it,
+      typename Container::const_iterator it,
       unsigned index
     ) : _it(it), _index(index) {}
 
@@ -101,14 +106,22 @@ public:
 
 } // eo namespace enumerate_detail
 
-template<
-  typename T,
-  template<typename, typename> class Container
->
-enumerate_detail::EnumerateTemporary<T, Container> enumerate(
-  const Container<T, std::allocator<T>>& container
+/*! Returns an EnerateTemporary for use with range-for expressions that
+ * generates a struct with members index and value for every contained element.
+ * Requires that the container implements begin(), end() and size() members.
+ * Should involve minimal copying, mostly uses references, though no space or 
+ * time complexity guarantees are given.
+ * 
+ * We realize this may seem like overkill, particularly when many STL Containers 
+ * elements can be accessed with operator [], and customary loops are more
+ * adequate. However, perhaps some custom containers do not follow STL
+ * conventions or do not implement operator [], and for these, use this.
+ */
+template<class Container>
+enumerate_detail::EnumerateTemporary<Container> enumerate(
+  const Container& container
 ) {
-  return enumerate_detail::EnumerateTemporary<T, Container> (
+  return enumerate_detail::EnumerateTemporary<Container> (
     container
   );
 }
