@@ -14,70 +14,6 @@ namespace DistanceGeometry {
 
 namespace detail {
 
-Eigen::Vector3d getPos(
-  const Eigen::MatrixXd& positions,
-  const AtomIndexType& index
-) {
-  Eigen::Vector3d retv;
-  retv = positions.col(index);
-  return retv;
-}
-
-double evaluateChiralityConstraint(
-  const ChiralityConstraint& constraint,
-  const Eigen::MatrixXd& positions
-) {
-  // V = (1 - 4) * [ (2 - 4) x (3 - 4) ]
-  return (
-    (
-      getPos(positions, constraint.indices[0])
-      - getPos(positions, constraint.indices[3])
-    ).dot(
-      (
-       getPos(positions, constraint.indices[1])
-       - getPos(positions, constraint.indices[3])
-      ).cross(
-        getPos(positions, constraint.indices[2])
-        - getPos(positions, constraint.indices[3])
-      )
-    )
-  );
-}
-
-bool moreThanHalfChiralityConstraintsIncorrect(
-  const Eigen::MatrixXd& positions,
-  const std::vector<ChiralityConstraint>& chiralityConstraints
-) {
-  unsigned totalNonZeroConstraints = 0, incorrectNonZeroConstraints = 0;
-  for(const auto& chiralityConstraint : chiralityConstraints) {
-    if(chiralityConstraint.target != 0.0) {
-      totalNonZeroConstraints += 1;
-    }
-
-    auto eval = evaluateChiralityConstraint(
-      chiralityConstraint,
-      positions
-    );
-
-    if( // can this be simplified? -> sign bit XOR?
-      ( eval < 0 && chiralityConstraint.target > 0)
-      || (eval > 0 && chiralityConstraint.target < 0)
-    ) {
-      incorrectNonZeroConstraints += 1;
-    }
-  }
-
-  return (
-    // if there are no non-zero constraints, return immediately
-    totalNonZeroConstraints == 0 
-    || ( // otherwise, do a proper check
-      static_cast<double>(incorrectNonZeroConstraints) / totalNonZeroConstraints 
-      > 0.5
-    )
-  );
-
-}
-
 Delib::PositionCollection convertToPositionCollection(
   const Eigen::VectorXd& vectorizedPositions,
   const EmbeddingOption& embedding
@@ -103,13 +39,20 @@ Delib::PositionCollection convertToPositionCollection(
   return positions;
 }
 
-std::list<Delib::PositionCollection> generateEnsemble(
+DGResult runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const MetrizationOption& metrization,
-  const EmbeddingOption& embedding
+  const EmbeddingOption& embedding,
+  const bool& useYInversionTrick,
+  const BFSConstraintCollector::DistanceMethod& distanceMethod
 ) {
-  const auto DGData = gatherDGInformation(molecule);
+  DGResult resultObject;
+
+  const auto DGData = gatherDGInformation(
+    molecule,
+    distanceMethod
+  );
 
   cppoptlib::ConjugatedGradientDescentSolver<
     DGRefinementProblem<double>
@@ -122,20 +65,17 @@ std::list<Delib::PositionCollection> generateEnsemble(
 
   DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
 
-  // Final initializations
-  std::list<Delib::PositionCollection> positions;
   /* If the ratio of failures/total optimizations exceeds this value,
    * the function throws. Remember that if an optimization is considered a 
    * failure is dependent only on the stopping criteria!
    */
   const double failureRatio = 0.1; // must be 0 < x <= 1
-  unsigned optimizationFailures = 0;
 
   // Begin
   for(
     unsigned currentStructureNumber = 0;
     // Failed optimizations do not count towards successful completion
-    currentStructureNumber - optimizationFailures < numStructures;
+    currentStructureNumber - resultObject.statistics.failures < numStructures;
     currentStructureNumber += 1
   ) {
     const auto distancesMatrix = DGData.distanceBounds.generateDistanceMatrix(
@@ -180,21 +120,6 @@ std::list<Delib::PositionCollection> generateEnsemble(
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed(embedding);
 
-    /* If a count of chirality constraints reveals that more than half are
-     * incorrect, we can invert the structure (by multiplying e.g. all y 
-     * coordinates with -1) and then have more than half of chirality 
-     * constraints correct! In the count, chirality constraints with a target
-     * value of zero are not considered (this would skew the count as those
-     * chirality constraints should not have to pass an energetic maximum to 
-     * converge properly as opposed to tetrahedra with volume).
-     */
-    if(detail::moreThanHalfChiralityConstraintsIncorrect(
-      embeddedPositions,
-      chiralityConstraints
-    )) {
-      embeddedPositions.row(2) *= -1;
-    }
-
     // Vectorize the positions for use with cppoptlib
     Eigen::VectorXd vectorizedPositions {
       Eigen::Map<Eigen::VectorXd>(
@@ -203,42 +128,74 @@ std::list<Delib::PositionCollection> generateEnsemble(
       )
     };
 
+    if(useYInversionTrick) {
+      /* If a count of chirality constraints reveals that more than half are
+       * incorrect, we can invert the structure (by multiplying e.g. all y
+       * coordinates with -1) and then have more than half of chirality
+       * constraints correct! In the count, chirality constraints with a target
+       * value of zero are not considered (this would skew the count as those
+       * chirality constraints should not have to pass an energetic maximum to
+       * converge properly as opposed to tetrahedra with volume).
+       */
+      if(!problem.moreThanHalfChiralityConstraintsCorrect(vectorizedPositions)) {
+        problem.invertY(vectorizedPositions);
+      }
+    }
+
     // Run the actual minimization
     DGConjugatedGradientDescentSolver.minimize(problem, vectorizedPositions);
 
     // What to do if the optimization fails
     if(DGConjugatedGradientDescentSolver.status() == cppoptlib::Status::Continue) {
-      optimizationFailures += 1;
+      resultObject.statistics.failures += 1;
 
-      if(
-        static_cast<double>(optimizationFailures) / currentStructureNumber 
-        >= failureRatio
+      if( // fail-if
+        (
+          static_cast<double>(resultObject.statistics.failures)
+          / currentStructureNumber 
+        ) >= failureRatio
       ) {
         throw std::runtime_error("Refinement failures exceeded threshold!");
       }
     } else {
-      // Add the result to positions
-      positions.emplace_back(
-        detail::convertToPositionCollection(
-          vectorizedPositions,
-          embedding
-        )
-      );
+      // Make a count of correct chirality constraints
+      auto count = problem.countCorrectChiralityConstraints(vectorizedPositions);
+
+      if(count.incorrectNonZeroChiralityConstraints > 0) {
+        resultObject.statistics.failures += 1;
+        
+        if( // fail-if
+          (
+            static_cast<double>(resultObject.statistics.failures)
+            / currentStructureNumber 
+          ) >= failureRatio
+        ) {
+          throw std::runtime_error("Refinement failures exceeded threshold!");
+        }
+      } else {
+        // Add the result to positions
+        resultObject.ensemble.emplace_back(
+          detail::convertToPositionCollection(
+            vectorizedPositions,
+            embedding
+          )
+        );
+      }
     }
   }
 
   // for every column in embedded?
   //   positions.push_back(Delib::Position([Eigen::Vector3d] column))
-  return positions;
+  return resultObject;
 }
-
 
 } // eo namespace detail
 
 MoleculeDGInformation::MoleculeDGInformation(const unsigned& N) : distanceBounds(N) {}
 
 MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule
+  const Molecule& molecule,
+  const BFSConstraintCollector::DistanceMethod& distanceMethod
 ) {
   const auto& adjacencies = molecule.getAdjacencyList();
 
@@ -247,7 +204,8 @@ MoleculeDGInformation gatherDGInformation(
   BFSConstraintCollector collector(
     adjacencies,
     molecule.stereocenters,
-    data.distanceBounds
+    data.distanceBounds,
+    distanceMethod
   );
 
   /* For every atom in the molecule, generate a tree of height 3 to traverse
@@ -281,12 +239,12 @@ std::list<Delib::PositionCollection> generateEnsemble(
   const MetrizationOption& metrization,
   const EmbeddingOption& embedding
 ) {
-  return detail::generateEnsemble(
+  return detail::runDistanceGeometry(
     molecule,
     numStructures,
     metrization,
     embedding
-  );
+  ).ensemble;
 }
 
 Delib::PositionCollection generateConformation(
@@ -294,12 +252,12 @@ Delib::PositionCollection generateConformation(
   const MetrizationOption& metrization,
   const EmbeddingOption& embedding
 ) {
-  auto list = detail::generateEnsemble(
+  auto list = detail::runDistanceGeometry(
     molecule,
     1,
     metrization,
     embedding
-  );
+  ).ensemble;
 
   return *list.begin();
 }

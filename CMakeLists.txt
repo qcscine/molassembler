@@ -59,6 +59,7 @@ include_directories(SYSTEM
 
 # collect headers
 set(HEADERS_all
+  include/DistanceGeometry/BFSConstraintCollector.h
   include/DistanceGeometry/DGRefinementProblem.h
   include/DistanceGeometry/DistanceBoundsMatrix.h
   include/DistanceGeometry/DistanceGeometry.h
@@ -76,23 +77,28 @@ set(HEADERS_all
   include/Edges.h
   include/GraphDistanceMatrix.h
   include/IO.h
+  include/IterateStereocenterPermutations.h
   include/LocalGeometryModel.h
   include/Molecule.h
   include/PersistentIndexMoleculeInterface.h
+  include/RangeForTemporary.h
   include/StdlibTypeAlgorithms.h
   include/Stereocenter.h
   include/StereocenterList.h
+  include/SymmetryFit.h
   include/Traits.h
   include/Tree.h
   include/TreeAlgorithms.h
-  include/Version.h
   include/VSEPR.h
+  include/VectorView.h
+  include/Version.h
   include/common_typedefs.h
   include/numeric.h
 )
 
 # collect sources
 set(SOURCES_all
+  source/DistanceGeometry/BFSConstraintCollector.cpp
   source/DistanceGeometry/DistanceBoundsMatrix.cpp
   source/DistanceGeometry/generateConformation.cpp
   source/DistanceGeometry/MetricMatrix.cpp

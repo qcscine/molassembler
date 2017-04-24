@@ -41,6 +41,10 @@ public:
   using typename cppoptlib::Problem<T>::THessian;
 
 private:
+  struct ChiralityConstraintCount {
+    unsigned nonZeroChiralityConstraints = 0,
+             incorrectNonZeroChiralityConstraints = 0;
+  };
 
 /* Private member functions */
   //! Make an Eigen Vector3d of an atomic index.
@@ -185,6 +189,54 @@ public:
     }
 
     return error;
+  }
+
+  void invertY(TVector& v) const {
+    const unsigned N = v.size() / 3;
+
+    for(unsigned i = 0; i < N; i++) {
+      v[3 * i + 1] *= -1;
+    }
+  }
+
+  ChiralityConstraintCount countCorrectChiralityConstraints(const TVector& v) const {
+    ChiralityConstraintCount count;
+
+    for(const auto& chiralityConstraint : constraints) {
+      if(chiralityConstraint.target <= 1e-8) {
+        count.nonZeroChiralityConstraints += 1;
+      }
+
+      auto eval = _getTetrahedronReducedVolume(
+        v,
+        chiralityConstraint.indices
+      );
+
+      if( // can this be simplified? -> sign bit XOR?
+        ( eval < 0 && chiralityConstraint.target > 0)
+        || (eval > 0 && chiralityConstraint.target < 0)
+      ) {
+        count.incorrectNonZeroChiralityConstraints += 1;
+      }
+    }
+
+    return count;
+
+  }
+
+  bool moreThanHalfChiralityConstraintsCorrect(const TVector& v) const {
+    auto count = countCorrectChiralityConstraints(v);
+
+    return (
+      // if there are no non-zero constraints, return immediately
+      count.nonZeroChiralityConstraints == 0 
+      || ( // otherwise, do a proper check
+        (
+          static_cast<double>(count.incorrectNonZeroChiralityConstraints) 
+          / count.nonZeroChiralityConstraints 
+        ) >= 0.5
+      )
+    );
   }
 
   T chiralError(const TVector& v) const {

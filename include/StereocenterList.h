@@ -11,17 +11,33 @@ namespace MoleculeManip {
 
 class StereocenterList {
 public:
-  using ListType = std::vector<
-    std::shared_ptr<
-      Stereocenters::Stereocenter
-    >
-  >;
+  using PtrType = std::shared_ptr<Stereocenters::Stereocenter>;
+  /* Important detail here:
+   * Remember that when using shared_ptr in an ordered container, all comparison
+   * operators simply compare the address where elements are stored. When 
+   * checking equality, this merely amounts to checking if they are the SAME, 
+   * NOT whether they are EQUAL.
+   */
+  using SetType = std::set<PtrType>;
+
+  using ListType = std::vector<PtrType>;
+
+  using const_iterator = SetType::const_iterator;
+  using iterator = SetType::iterator;
 
 private:
 /* Private members */
-  ListType _features;
+  SetType _features;
 
 public:
+/* Constructors */
+  StereocenterList() = default;
+  StereocenterList(std::initializer_list<PtrType> initList) {
+    for(const auto& ptr : initList) {
+      add(ptr);
+    }
+  }
+
   /* Modification */
   /*!
    * Removes all stored Stereocenters
@@ -31,31 +47,39 @@ public:
   }
 
   /*!
-   * Removes Stereocenters centered on a specific index
-   */
-  void selectivelyInvalidate(const AtomIndexType& a) {
-    _features.erase(
-      std::remove_if(
-        _features.begin(),
-        _features.end(),
-        [&a](const std::shared_ptr<Stereocenters::Stereocenter>& featurePtr) {
-          return (
-            featurePtr -> involvedAtoms()
-          ).count(a) == 1;
-        }
-      ),
-      _features.end()
-    );
-  }
-
-  /*!
    * Adds a shared_ptr instance to the list.
    */
   void add(const std::shared_ptr<Stereocenters::Stereocenter>& featurePtr) {
-    _features.push_back(featurePtr);
+    _features.insert(featurePtr);
   }
 
   /* Information */
+  boost::optional<
+    std::shared_ptr<Stereocenters::Stereocenter>
+  > involving(const AtomIndexType& index) {
+    for(const auto& stereocenterPtr : _features) {
+      if(stereocenterPtr -> involvedAtoms().count(index)) {
+        return stereocenterPtr;
+      }
+    }
+
+    return boost::none;
+  }
+  /* As long as the constraint exists that Stereocenters' involvedAtoms do not
+   * overlap, this variant below is unneeded.
+   */
+  /*ListType involving(const AtomIndexType& index) {
+    ListType matches;
+
+    for(const auto& stereocenterPtr : _features) {
+      if(stereocenterPtr -> involvedAtoms().count(index)) {
+        matches.emplace_back(stereocenterPtr);
+      }
+    }
+
+    return matches;
+  }*/
+
   /*!
    * Returns a map of atom indices to vectors of Stereocenters. 
    * The returned map does NOT contain a key for every atom in the Molecule.
@@ -100,46 +124,36 @@ public:
 
   /* Iterators */
   // Begin and end iterators for easy traversal
-  ListType::iterator begin() {
+  SetType::iterator begin() {
     return _features.begin();
   }
 
-  ListType::iterator end() {
+  SetType::iterator end() {
     return _features.end();
   }
 
-  ListType::const_iterator begin() const {
+  SetType::const_iterator begin() const {
     return _features.cbegin();
   }
 
-  ListType::const_iterator end() const {
+  SetType::const_iterator end() const {
     return _features.cend();
   }
 
   bool operator == (const StereocenterList& other) {
     using namespace Stereocenters;
 
-    auto stereocentersEqual = [](
-      const std::shared_ptr<Stereocenter>& a,
-      const std::shared_ptr<Stereocenter>& b
-    ) -> bool {
-      if(a -> type() == b -> type()) {
-        if(a -> type() == Type::CNStereocenter) {
-          auto aDerived = std::dynamic_pointer_cast<CNStereocenter>(a);
-          auto bDerived = std::dynamic_pointer_cast<CNStereocenter>(b);
-
-          return *aDerived == *bDerived;
-        } else { // EZStereocenter
-          auto aDerived = std::dynamic_pointer_cast<EZStereocenter>(a);
-          auto bDerived = std::dynamic_pointer_cast<EZStereocenter>(b);
-
-          return *aDerived == *bDerived;
-        }
-      } else {
-        return false;
-      }
-    };
-
+    /* TODO
+     * - This is inefficient because items that have been matched to from a in
+     *   b are still considered when the next item in a is sought:
+     *
+     *   a  b
+     *   1  1
+     *   2  2
+     *
+     *   1. look for a's 1 in b -> look at 1, found
+     *   2. look for a's 2 in b -> *look at 1*, look at 2, found
+     */
     if(_features.size() != other._features.size()) return false;
 
     bool all_found = true;
@@ -149,7 +163,7 @@ public:
           other._features.begin(),
           other._features.end(),
           [&](const std::shared_ptr<Stereocenter>& otherStereocenter) -> bool {
-            return stereocentersEqual(stereocenter, otherStereocenter);
+            return Stereocenters::strictComparePtr(stereocenter, otherStereocenter);
           }
         ) == other._features.end()
       ) {
@@ -159,9 +173,8 @@ public:
     }
 
     return all_found;
+
   }
-
-
 };
 
 }

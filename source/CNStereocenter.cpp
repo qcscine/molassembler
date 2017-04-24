@@ -1,6 +1,7 @@
 #include "CNStereocenter.h"
 #include "steric_uniqueness/GenerateUniques.h"
 #include "template_magic/templateMagic.h"
+#include "StdlibTypeAlgorithms.h"
 
 namespace MoleculeManip {
 
@@ -313,12 +314,35 @@ Type CNStereocenter::type() const {
 }
 
 bool CNStereocenter::operator == (const CNStereocenter& other) const {
+  /* This is a bit weird, I thought the boost::optional<T>::operator ==
+   * emcompassed all this. Maybe the behavior is different in a more recent
+   * Boost version, or just switching to std::optional with C++17 will allow
+   * straight-up use of operator ==.
+   */
+  bool assignmentsSame = (
+    (assignment && other.assignment && assignment.value() == other.assignment.value())
+    || (!assignment && !other.assignment)
+  );
+
+  /*if(!assignmentsSame) {
+    std::cout << "Different assignment" << std::endl;
+    std::cout << "This:" << assignment.value_or(50) << ", Other:" 
+      << other.assignment.value_or(50) << std::endl;
+    std::cout << std::boolalpha << "This is assigned: " 
+      << static_cast<bool>(assignment) << ", Other is assigned: " 
+      << static_cast<bool>(other.assignment) << std::endl;
+  }
+  if(symmetry != other.symmetry) std::cout << "Symmetry is different." << std::endl;
+  if(centerAtom != other.centerAtom) std::cout << "Central atom is different." << std::endl;
+  if(_neighborCharMap != other._neighborCharMap) std::cout << "Char map is different." << std::endl;
+  if(_uniqueAssignments.size() != other._uniqueAssignments.size()) std::cout << "Different #assignments." << std::endl;*/
+
   return (
     symmetry == other.symmetry
     && centerAtom == other.centerAtom
     && _neighborCharMap == other._neighborCharMap
     && _uniqueAssignments.size() == other._uniqueAssignments.size()
-    && assignment == other.assignment
+    && assignmentsSame
   );
 }
 

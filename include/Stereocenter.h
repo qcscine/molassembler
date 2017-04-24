@@ -8,7 +8,6 @@
 #include <boost/optional.hpp>
 
 #include "common_typedefs.h"
-#include "StdlibTypeAlgorithms.h"
 
 // Detection algorithm headers
 #include "Delib/ElementTypeCollection.h" // Delib
@@ -118,6 +117,11 @@ public:
     const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& stereocenterPtr
   );
 };
+
+bool strictComparePtr(
+  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& a,
+  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
+);
 
 } // eo namespace Stereocenters
 

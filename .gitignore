@@ -15,3 +15,4 @@ analysis/*/*.csv
 *.pov
 *.png
 *.gif
+*.csv
