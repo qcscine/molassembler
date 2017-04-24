@@ -266,6 +266,41 @@ std::function<
     return { t };
 }
 
+template<typename T>
+bool nextCombinationPermutation(
+  std::vector<T>& toPermute,
+  const std::vector<T>& limits
+) {
+  assert(toPermute.size() == limits.size());
+  const unsigned cols = toPermute.size();
+
+  // Check if all columns are full
+  bool allFull = true;
+  for(unsigned i = 0; i < cols; i++) {
+    if(toPermute[i] != limits[i]) {
+      allFull = false;
+      break;
+    }
+  }
+
+  if(allFull) {
+    return false;
+  } else {
+    // Make next permutation
+    for(int i = cols - 1; i >= 0; i--) {
+      if(toPermute[i] == limits[i]) {
+        toPermute[i] = 0;
+      } else {
+        toPermute[i]++;
+        return true;
+      }
+    }
+
+    return true;
+  }
+}
+
+
 void split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
 

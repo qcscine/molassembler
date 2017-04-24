@@ -3,6 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "StdlibTypeAlgorithms.h"
+#include "template_magic/templateMagic.h"
 
 /* Algorithms to test
  *
@@ -93,4 +94,32 @@ BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
       5u
     )
   );
+}
+
+BOOST_AUTO_TEST_CASE( combinationPermutation ) {
+  const std::vector<unsigned> testLimits {4, 1, 3, 6, 9, 2};
+  std::vector<unsigned> combination (testLimits.size(), 0);
+
+  bool alwaysSmallerOrEqual = true;
+  while(StdlibTypeAlgorithms::nextCombinationPermutation(combination, testLimits)) {
+    if(
+      !TemplateMagic::all_of(
+        TemplateMagic::zipMap(
+          combination,
+          testLimits,
+          [](const unsigned& index, const unsigned& limit) -> bool {
+            return index <= limit;
+          }
+        )
+      )
+    ) {
+      alwaysSmallerOrEqual = false;
+      std::cout << "Falsified for combination {"
+        << TemplateMagic::condenseIterable(combination)
+        << "}" << std::endl;
+      break;
+    }
+  }
+
+  BOOST_CHECK(alwaysSmallerOrEqual);
 }

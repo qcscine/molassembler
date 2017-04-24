@@ -99,6 +99,14 @@ int main() {
       // Get a position matrix by embedding the metric matrix
       auto embeddedPositions = metric.embed(EmbeddingOption::threeDimensional);
 
+      // Vectorize the positions for use with cppoptlib
+      Eigen::VectorXd vectorizedPositions {
+        Eigen::Map<Eigen::VectorXd>(
+          embeddedPositions.data(),
+          embeddedPositions.cols() * embeddedPositions.rows()
+        )
+      };
+
       /* If a count of chirality constraints reveals that more than half are
        * incorrect, we can invert the structure (by multiplying e.g. all y 
        * coordinates with -1) and then have more than half of chirality 
@@ -107,20 +115,9 @@ int main() {
        * chirality constraints should not have to pass an energetic maximum to 
        * converge properly as opposed to tetrahedra with volume).
        */
-      if(detail::moreThanHalfChiralityConstraintsIncorrect(
-        embeddedPositions,
-        chiralityConstraints
-      )) {
-        embeddedPositions.row(2) *= -1;
+      if(!problem.moreThanHalfChiralityConstraintsCorrect(vectorizedPositions)) {
+        problem.invertY(vectorizedPositions);
       }
-
-      // Vectorize the positions for use with cppoptlib
-      Eigen::VectorXd vectorizedPositions {
-        Eigen::Map<Eigen::VectorXd>(
-          embeddedPositions.data(),
-          embeddedPositions.cols() * embeddedPositions.rows()
-        )
-      };
 
       // Run the minimization, but step-wise!
       auto stepResult = DGConjugatedGradientDescentSolver.step(problem, vectorizedPositions);

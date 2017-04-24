@@ -7,6 +7,12 @@
 #include <iomanip>
 
 #include "DistanceGeometry/generateConformation.h"
+#include <Eigen/Geometry>
+
+/* TODO
+ * - Some sanity checks ought to be beneficial, i.e. fitting to seesaw on a 
+ *   tetravalent carbon center is abject nonsense and wasted effort
+ */
 
 namespace MoleculeManip {
 

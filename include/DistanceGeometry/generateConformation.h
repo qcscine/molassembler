@@ -5,6 +5,7 @@
 #include "Delib/PositionCollection.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/DistanceGeometry.h"
+#include "DistanceGeometry/BFSConstraintCollector.h"
 #include "Log.h"
 
 #include <vector>
@@ -15,21 +16,6 @@ namespace MoleculeManip {
 namespace DistanceGeometry {
 
 namespace detail {
-
-Eigen::Vector3d getPos(
-  const Eigen::MatrixXd& positions,
-  const AtomIndexType& index
-);
-
-double evaluateChiralityConstraint(
-  const ChiralityConstraint& chiralityConstraint,
-  const Eigen::MatrixXd& positions
-);
-
-bool moreThanHalfChiralityConstraintsIncorrect(
-  const Eigen::MatrixXd& positions,
-  const std::vector<ChiralityConstraint>& chiralityConstraints
-);
 
 Delib::PositionCollection convertToPositionCollection(
   const Eigen::VectorXd& vectorizedPositions,
@@ -179,6 +165,16 @@ public:
   }
 };
 
+struct DGStatistics {
+  unsigned failures = 0;
+  std::vector<double> energies;
+};
+
+struct DGResult {
+  std::list<Delib::PositionCollection> ensemble;
+  DGStatistics statistics;
+};
+
 // Generator to help with functional-style instantiation
 template<class DistanceGetter> 
 auto makePropagator(
@@ -189,11 +185,13 @@ auto makePropagator(
   );
 }
 
-std::list<Delib::PositionCollection> generateEnsemble(
+DGResult runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const MetrizationOption& metrization,
-  const EmbeddingOption& embedding
+  const EmbeddingOption& embedding,
+  const bool& useYInversionTrick = true,
+  const BFSConstraintCollector::DistanceMethod& distanceMethod = BFSConstraintCollector::DistanceMethod::UFFLike
 );
 
 } // eo namespace detail
@@ -208,10 +206,9 @@ struct MoleculeDGInformation {
 };
 
 MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule
+  const Molecule& molecule,
+  const BFSConstraintCollector::DistanceMethod& distanceMethod = BFSConstraintCollector::DistanceMethod::UFFLike
 );
-
-// TODO move to namespace detail
 
 // Public functions
 std::list<Delib::PositionCollection> generateEnsemble(

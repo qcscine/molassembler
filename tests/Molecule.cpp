@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "IO.h"
+#include "StdlibTypeAlgorithms.h"
 
 BOOST_AUTO_TEST_CASE( read_mol ) {
   using namespace MoleculeManip;
