@@ -24,9 +24,17 @@ bool predicateHasTransArrangedPairs(
  *  to cis arrangements. Xantphos (with bridge length 7) is the smallest 
  *  trans-spanning ligand mentioned in Wikipedia.
  */
-std::vector<
-  Assignment
-> uniqueAssignments(
+std::vector<Assignment> uniqueAssignments(
+  const Assignment& initial,
+  const bool& removeTransSpanningGroups = true
+);
+
+struct UniqueAssignmentsReturnType {
+  std::vector<Assignment> assignments;
+  std::vector<unsigned> weights;
+};
+
+UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
   const Assignment& initial,
   const bool& removeTransSpanningGroups = true
 );

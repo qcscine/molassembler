@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cassert>
 #include <functional>
+#include <numeric>
 
 #include "GenerateUniques.h"
 #include "LogicalOperatorTests.h"
@@ -195,7 +196,7 @@ BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
   
 }
 
-void run_tests(
+void run_tests_with_counts(
   const Symmetry::Name& symmetryName,
   const std::vector<
     std::tuple<
@@ -221,16 +222,30 @@ void run_tests(
       ? Assignment(symmetryName, characters)
       : Assignment(symmetryName, characters, pairs);
 
-    auto unique = uniqueAssignments(assignment);
-    BOOST_CHECK(unique.size() == expectedUnique );
-    if(unique.size() != expectedUnique) {
+    auto unique = uniqueAssignmentsWithCounts(assignment);
+
+    BOOST_CHECK(unique.assignments.size() == expectedUnique );
+
+
+    if(unique.assignments.size() != expectedUnique) {
       std::cout << "Mismatch: Expected " << expectedUnique
         << " assignments for: \n" << assignment << ", got " 
-        << unique.size() << " assignments:" << std::endl;
-      for(const auto& uniqueAssignment: unique) {
-        std::cout << uniqueAssignment << std::endl;
-      }
+        << unique.assignments.size() << " assignments:" << std::endl;
     } 
+
+    std::cout << "{";
+    for(unsigned i = 0; i < characters.size(); i++) {
+      std::cout << characters[i];
+      if(i != characters.size() - 1) std::cout << ", ";
+    }
+    std::cout << "}" << std::endl;
+
+    for(unsigned i = 0; i < unique.assignments.size(); i++) {
+      std::cout << "Weight " << unique.weights[i] << ": " 
+        << unique.assignments[i] << std::endl;
+    }
+
+    std::cout << "----------------------------------------" << std::endl;
   }
 }
 
@@ -290,7 +305,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
 /* Tetrahedral tests */
 /* These were thought up myself */
 BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
-  run_tests(
+  run_tests_with_counts(
     Symmetry::Name::Tetrahedral, 
     {
     // M_A
@@ -339,7 +354,7 @@ BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
 /* Square Planar tests */
 /* These were thought up myself */
 BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
-  run_tests(
+  run_tests_with_counts(
     Symmetry::Name::SquarePlanar,
     {
     // M_A
@@ -393,7 +408,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
  * The reference however is useful: WE Bennett, Inorg. Chem. 1969
  */
 BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
-  run_tests(
+  run_tests_with_counts(
     Symmetry::Name::Octahedral,
     {
       // M_A
@@ -493,7 +508,7 @@ BOOST_AUTO_TEST_CASE( octahedral_monodentate ) {
 }
 
 BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
-  run_tests(
+  run_tests_with_counts(
     Symmetry::Name::Octahedral,
     {
       // M(A-A)_3
