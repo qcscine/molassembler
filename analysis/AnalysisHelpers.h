@@ -8,15 +8,19 @@
 #include "DistanceGeometry/DGRefinementProblem.h"
 
 Delib::PositionCollection toPositionCollection(
-  const Eigen::VectorXd& vectorizedPositions
+  const Eigen::VectorXd& vectorizedPositions,
+  const MoleculeManip::DistanceGeometry::EmbeddingOption& embedding
 ) {
-  assert(vectorizedPositions.size() % 3 == 0);
+  auto dimensionality = static_cast<unsigned>(embedding);
+
+  assert(vectorizedPositions.size() % dimensionality == 0);
+
   Delib::PositionCollection positions;
 
-  for(unsigned i = 0; i < vectorizedPositions.size() / 3; i++) {
+  for(unsigned i = 0; i < vectorizedPositions.size() / dimensionality; i++) {
     positions.push_back(
       Delib::Position( // converting constructor
-        vectorizedPositions.segment<3>(3 * i)
+        vectorizedPositions.segment<3>(dimensionality * i)
       )
     );
   }
@@ -28,12 +32,16 @@ void writeFile(
   const bool& optimized,
   const std::string symmetryString,
   const unsigned& structNum,
-  const Eigen::VectorXd& vectorizedPositions
+  const Eigen::VectorXd& vectorizedPositions,
+  const MoleculeManip::DistanceGeometry::EmbeddingOption& embedding
 ) {
   using namespace std::string_literals;
 
-  unsigned N = vectorizedPositions.size() / 3;
-  assert(3 * N == vectorizedPositions.size());
+  auto dimensionality = static_cast<unsigned>(embedding);
+
+  assert(vectorizedPositions.size() % dimensionality == 0);
+
+  unsigned N = vectorizedPositions.size() / dimensionality;
 
   std::vector<std::string> elementNames = {
     "Ru",
@@ -66,9 +74,9 @@ void writeFile(
     if(elementNames[i].size() == 1) outStream << elementNames[i] << " ";
     else outStream << elementNames[i];
 
-    outStream << std::setw(13) << vectorizedPositions[3 * i + 0];
-    outStream << std::setw(13) << vectorizedPositions[3 * i + 1];
-    outStream << std::setw(13) << vectorizedPositions[3 * i + 2];
+    outStream << std::setw(13) << vectorizedPositions[dimensionality * i + 0];
+    outStream << std::setw(13) << vectorizedPositions[dimensionality * i + 1];
+    outStream << std::setw(13) << vectorizedPositions[dimensionality * i + 2];
 
     if(i != N - 1) outStream << std::endl;
   }
@@ -84,14 +92,16 @@ void writeMOLFile(
   const bool& optimized,
   const std::string& symmetryString,
   const unsigned& structNum,
-  const Eigen::VectorXd& vectorizedPositions
+  const Eigen::VectorXd& vectorizedPositions,
+  const MoleculeManip::DistanceGeometry::EmbeddingOption& embedding
 ) {
   using namespace std::string_literals;
 
   auto moleculeCopy = molecule;
 
-  unsigned N = vectorizedPositions.size() / 3;
-  assert(3 * N == vectorizedPositions.size());
+  auto dimensionality = static_cast<unsigned>(embedding);
+
+  assert(vectorizedPositions.size() % dimensionality == 0);
 
   std::vector<Delib::ElementType> elementTypes = {
     Delib::ElementType::Ru,
@@ -126,7 +136,8 @@ void writeMOLFile(
     filename,
     moleculeCopy,
     toPositionCollection(
-      vectorizedPositions
+      vectorizedPositions,
+      embedding
     )
   );
 }

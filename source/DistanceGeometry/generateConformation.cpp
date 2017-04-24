@@ -59,8 +59,6 @@ DGResult runDistanceGeometry(
   > DGConjugatedGradientDescentSolver;
 
   cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
-  // TODO this will need adjustment when some experience exists
-  stopCriteria.iterations = 1000; 
   stopCriteria.fDelta = 1e-5;
 
   DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);

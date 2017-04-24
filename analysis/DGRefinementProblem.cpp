@@ -47,6 +47,8 @@ using namespace MoleculeManip::DistanceGeometry;
 
 int main() {
 
+  auto embeddingOption = EmbeddingOption::fourDimensional;
+
   // Make a problem solver
   cppoptlib::ConjugatedGradientDescentSolver<
     DGRefinementProblem<double>
@@ -92,7 +94,7 @@ int main() {
       MetricMatrix metricMatrix(distancesMatrix);
 
       // Embed
-      auto embeddedPositions = metricMatrix.embed(EmbeddingOption::threeDimensional);
+      auto embeddedPositions = metricMatrix.embed(embeddingOption);
 
       // Vectorize
       Eigen::VectorXd vectorizedPositions(
@@ -108,7 +110,8 @@ int main() {
         false,
         spaceFreeName,
         structNum,
-        vectorizedPositions
+        vectorizedPositions,
+        embeddingOption
       );
 
       // Get constraints
@@ -149,7 +152,8 @@ int main() {
         true,
         spaceFreeName,
         structNum,
-        vectorizedPositions
+        vectorizedPositions,
+        embeddingOption
       );
     }
 

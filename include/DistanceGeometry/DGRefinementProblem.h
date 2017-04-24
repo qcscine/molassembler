@@ -47,7 +47,7 @@ private:
   };
 
 /* Private member functions */
-  //! Make an Eigen VectorXd of an atomic index.
+  //! Make an Eigen Vector4d of an atomic index.
   template<int vectorSize = 4>
   auto _getEigen(const TVector& v, const AtomIndexType& index) const {
     assert(v.size() > 4 * index + 4 - 1);
@@ -92,12 +92,12 @@ private:
   }
 
   //!  First term of gradient expansion
-  Eigen::VectorXd _A(
+  Eigen::Vector4d _A(
     const TVector& v,
     const AtomIndexType& i, 
     const AtomIndexType& j
   ) const {
-    Eigen::VectorXd retv = _getEigen(v, j) - _getEigen(v, i);
+    Eigen::Vector4d retv = _getEigen(v, j) - _getEigen(v, i);
 
     retv *= 4 * (
       retv.squaredNorm() / _square(
@@ -111,12 +111,12 @@ private:
   }
 
   //! Second term of gradient expansion
-  Eigen::VectorXd _B(
+  Eigen::Vector4d _B(
     const TVector& v,
     const AtomIndexType& i,
     const AtomIndexType& j
   ) const {
-    Eigen::VectorXd retv = _getEigen(v, j) - _getEigen(v, i);
+    Eigen::Vector4d retv = _getEigen(v, j) - _getEigen(v, i);
 
     retv *= 8 * _square(
       bounds.lowerBound(i, j)
@@ -149,7 +149,7 @@ public:
 /* State */
   const std::vector<ChiralityConstraint>& constraints;
   const DistanceBoundsMatrix& bounds;
-  bool compress = false;
+  mutable bool compress = false;
 
 /* Constructors */
   DGRefinementProblem(
@@ -195,10 +195,10 @@ public:
   }
 
   void invertY(TVector& v) const {
-    const unsigned N = v.size() / 3;
+    const unsigned N = v.size() / 4;
 
     for(unsigned i = 0; i < N; i++) {
-      v[3 * i + 1] *= -1;
+      v[4 * i + 1] *= -1;
     }
   }
 
@@ -239,6 +239,15 @@ public:
           / count.nonZeroChiralityConstraints 
         ) >= 0.5
       )
+    );
+  }
+
+  bool allChiralityConstraintsCorrect(const TVector& v) const {
+    auto count = countCorrectChiralityConstraints(v);
+
+    return (
+      count.nonZeroChiralityConstraints == 0
+      || count.incorrectNonZeroChiralityConstraints == 0
     );
   }
 
@@ -288,9 +297,15 @@ public:
    * Required for cppoptlib: Calculates gradient for specified coordinates.
    */
   void gradient(const TVector& v, TVector& grad) const {
-    // this is where it gets VERY interesting
+    /* At the beginning of every gradient calculation, we check if all chiral
+     * centers are correct, so we can switch on 4th-dimension compression
+     */
+    if(!compress && allChiralityConstraintsCorrect(v)) {
+      compress = true;
+    }
+
     const AtomIndexType N = v.size() / 4;
-    Eigen::VectorXd localGradient;
+    Eigen::Vector4d localGradient;
 
     for(AtomIndexType alpha = 0; alpha < N; alpha++) {
       localGradient.setZero();
@@ -304,13 +319,13 @@ public:
        *
        * Two versions of the loop avoidance are below, need benchmarking (TODO)
        */
-      /* Version A 
+      /* Version 1 
       for(AtomIndexType i = 0; i < N; i++) {
         if(i == alpha) continue; 
         localGradient += _A(v, i, alpha) + _B(v, alpha, i);
       } */
 
-      /* Version B */
+      /* Version 2 */
       for(AtomIndexType i = 0; i < alpha; i++) {
         localGradient += _A(v, i, alpha) + _B(v, alpha, i);
       }
@@ -361,12 +376,12 @@ public:
         if(!fallthrough) {
 #ifndef NDEBUG
           auto temp = _C(v, indices, target) * (
-            _getEigen(v, indices[1]) - _getEigen(v, indices[3])
+            _getEigen<3>(v, indices[1]) - _getEigen<3>(v, indices[3])
           ).cross(
-            _getEigen(v, indices[2]) - _getEigen(v, indices[3])
+            _getEigen<3>(v, indices[2]) - _getEigen<3>(v, indices[3])
           );
 
-          localGradient += temp;
+          localGradient.template segment<3>(0) += temp;
 
           if(temp.norm() > 10) {
             auto& streamRef = Log::log(Log::Particulars::DGRefinementChiralityNumericalDebugInfo);
@@ -380,13 +395,18 @@ public:
             streamRef << "}: _C = " << _C(v, indices, target) << std::endl;
           }
 #else
-          localGradient += _C(v, indices, target) * (
-            _getEigen(v, indices[1]) - _getEigen(v, indices[3])
+          localGradient.template segment<3>(0) += _C(v, indices, target) * (
+            _getEigen<3>(v, indices[1]) - _getEigen<3>(v, indices[3])
           ).cross(
-            _getEigen(v, indices[2]) - _getEigen(v, indices[3])
+            _getEigen<3>(v, indices[2]) - _getEigen<3>(v, indices[3])
           );
 #endif
         }
+      }
+
+      // Gradient due to fourth coordinate if compress is on
+      if(compress) {
+        localGradient[3] += 2 * _getEigen(v, alpha)[3];
       }
 
       // Assign to gradient

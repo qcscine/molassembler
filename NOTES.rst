@@ -25,6 +25,11 @@ Things that need tests
 
 TODO
 ----
+- More inspection tools are direly needed. Need to be able to see development of
+  gradient and value function in a singular refinement. RaytraceRefinement could
+  have a visual indication of 4D coordinate value through color coding or sphere
+  size. It's pretty clear the current 4D refinement issue arises through
+  chirality constraints, but not how or where the mistake is.
 - 4D DGRefinement: gradient does not yet encompass compress=true, gradient +=
   2*(4th dimension)
 - Sanity test should encompass EVERY possible assignment being generated AND
