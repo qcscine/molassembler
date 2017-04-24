@@ -6,8 +6,16 @@
 #include <functional>
 #include <algorithm>
 #include "boost/optional.hpp"
+#include <Eigen/Core>
 
 /* TODO
+ * - Debug and Release builds
+ * - Square antiprismatic coordinates / angles need improvement, see tests.
+ * - Improve trigonal pyramidal to get 107.5 angle as a parameter. Currently, 
+ *   the rotation angle choice of 111.5 works well, but not ideal.
+ * - Consider making constexpr calculation of angles from coordinates into
+ *   const lookup table (coordinates would need to be std::array<double, 3>),
+ *   and would require a constexpr math library
  */
 
 namespace Symmetry {
@@ -36,10 +44,13 @@ using AngleFunctionType = std::function<
  * boost::none does not have to be used.
  */
 using TetrahedronList = std::vector<
-  std::vector<
-    boost::optional<unsigned>
+  std::array<
+    boost::optional<unsigned>,
+    4
   >
 >;
+
+using CoordinateList = std::vector<Eigen::Vector3d>;
 
 struct SymmetryInformation {
   const std::string stringName;
@@ -47,6 +58,7 @@ struct SymmetryInformation {
   const RotationsType rotations;
   const AngleFunctionType angleFunction;
   const TetrahedronList tetrahedra;
+  const CoordinateList coordinates;
 
   // Direct initialization
   SymmetryInformation(
@@ -54,12 +66,14 @@ struct SymmetryInformation {
     unsigned&& size,
     RotationsType&& rotations,
     AngleFunctionType&& angleFunction,
-    TetrahedronList&& tetrahedra
+    TetrahedronList&& tetrahedra,
+    CoordinateList&& coordinates
   ) : stringName(stringName),
       size(size),
       rotations(rotations),
       angleFunction(angleFunction),
-      tetrahedra(tetrahedra)
+      tetrahedra(tetrahedra),
+      coordinates(coordinates)
   {}
 };
 

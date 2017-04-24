@@ -2,6 +2,9 @@
 
 #include <cassert>
 #include <algorithm>
+#include <Eigen/Geometry>
+
+#define USE_ALTERNATE_TETRAHEDRA
 
 namespace Symmetry {
 
@@ -40,16 +43,20 @@ const std::map<Name, SymmetryInformation> symmetryData {
         if(a == b) return 0;
         else return 180;
       },
-      {}
+      {},
+      {
+        { 1 , 0, 0 },
+        { -1, 0, 0 }
+      }
     },
   },
   {
     Name::Bent,
     SymmetryInformation {
       /*
-       *    (_)  
-       *   /   \
-       *  0     1
+       *  1
+       *   \
+       *    (_) – 0
        *
        */
       "bent",
@@ -68,7 +75,14 @@ const std::map<Name, SymmetryInformation> symmetryData {
         if(a == b) return 0;
         else return 107; 
       },
-      {}
+      {},
+      {
+        {1, 0, 0},
+        Eigen::AngleAxisd(
+          M_PI * 107 / 180,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d({1, 0, 0})
+      }
     }
   },
   {
@@ -98,7 +112,18 @@ const std::map<Name, SymmetryInformation> symmetryData {
         if(a == b) return 0;
         else return 120;
       },
-      {}
+      {},
+      {
+        Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * M_PI / 3,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d({1, 0, 0}),
+        Eigen::AngleAxisd(
+          - 2 * M_PI / 3,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d({1, 0, 0}),
+      }
     }
   }, 
   {
@@ -125,6 +150,26 @@ const std::map<Name, SymmetryInformation> symmetryData {
       },
       {
         {boost::none, 0, 1, 2}
+      },
+      {
+        Eigen::AngleAxisd(
+          M_PI * 111.5 / 180,
+          Eigen::Vector3d::UnitX()
+        ) * Eigen::Vector3d::UnitY(),
+        Eigen::AngleAxisd(
+          2 * M_PI / 3,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::AngleAxisd(
+          M_PI * 111.5 / 180,
+          Eigen::Vector3d::UnitX()
+        ) * Eigen::Vector3d::UnitY(),
+        Eigen::AngleAxisd(
+          - 2 * M_PI / 3,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::AngleAxisd(
+          M_PI * 111.5 / 180,
+          Eigen::Vector3d::UnitX()
+        ) * Eigen::Vector3d::UnitY(),
       }
     }
   }, 
@@ -153,7 +198,12 @@ const std::map<Name, SymmetryInformation> symmetryData {
           return 180;
         }
       },
-      {}
+      {},
+      {
+        - Eigen::Vector3d::UnitX(),
+        Eigen::Vector3d::UnitY(),
+        Eigen::Vector3d::UnitX()
+      }
     }
   }, 
   {
@@ -196,6 +246,27 @@ const std::map<Name, SymmetryInformation> symmetryData {
       },
       {
         {0, 1, 2, 3}
+      },
+      {
+        Eigen::Vector3d::UnitY(),
+        Eigen::AngleAxisd(
+          M_PI * 109.5 / 180,
+          Eigen::Vector3d::UnitX()
+        ) * Eigen::Vector3d::UnitY(),
+        Eigen::AngleAxisd(
+          2 * M_PI / 3,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::AngleAxisd(
+          M_PI * 109.5 / 180,
+          Eigen::Vector3d::UnitX()
+        ) * Eigen::Vector3d::UnitY(),
+        Eigen::AngleAxisd(
+          - 2 * M_PI / 3,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::AngleAxisd(
+          M_PI * 109.5 / 180,
+          Eigen::Vector3d::UnitX()
+        ) * Eigen::Vector3d::UnitY(),
       }
     }
   }, 
@@ -230,7 +301,13 @@ const std::map<Name, SymmetryInformation> symmetryData {
           return 180;
         }
       },
-      {}
+      {},
+      {
+        Eigen::Vector3d::UnitX(),
+        Eigen::Vector3d::UnitY(),
+        - Eigen::Vector3d::UnitX(),
+        - Eigen::Vector3d::UnitY()
+      }
     }
   }, 
   {
@@ -259,13 +336,24 @@ const std::map<Name, SymmetryInformation> symmetryData {
         else return 90;
       },
       {
+#ifdef USE_ALTERNATE_TETRAHEDRA
+        // Alternate
+        {0, 1, 2, 3}
+#else
+        // Regular
         {0, boost::none, 1, 2},
         {boost::none, 3, 1, 2},
+#endif
+      },
+      {
+        Eigen::Vector3d::UnitY(),
+        Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * M_PI / 3,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::Vector3d::UnitX(),
+        - Eigen::Vector3d::UnitY()
       }
-      // TODO try alternate
-      /*
-        {0, 1, 2, 3}
-      */
     }
   }, 
   {
@@ -305,16 +393,25 @@ const std::map<Name, SymmetryInformation> symmetryData {
         else return 90; // rest are cis
       },
       {
-        {0, 1, boost::none, 4},
-        {1, 2, boost::none, 4},
-        {2, 3, boost::none, 4},
-        {3, 0, boost::none, 4}
+#ifdef USE_ALTERNATE_TETRAHEDRA
+        // Alternate
+        {0, 1, 4, 2}, 
+        {0, 3, 2, 4} 
+#else 
+        // Regular
+        {0, 1, 4, boost::none},
+        {1, 2, 4, boost::none},
+        {2, 3, 4, boost::none},
+        {3, 0, 4, boost::none}
+#endif
+      },
+      {
+        Eigen::Vector3d::UnitX(),
+        Eigen::Vector3d::UnitY(),
+        - Eigen::Vector3d::UnitX(),
+        - Eigen::Vector3d::UnitY(),
+        Eigen::Vector3d::UnitZ()
       }
-      // TODO try alternate
-      /*
-        {0, 1, 2, 4},
-        {0, 3, 2, 4}
-      */
     }
   }, 
   {
@@ -360,8 +457,21 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
       },
       {
-        {0, 1, 2, 3},
+        {0, 1, 3, 2},
         {0, 1, 2, 4}
+      },
+      {
+        Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * M_PI / 3,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          - 2 * M_PI / 3,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::Vector3d::UnitZ(),
+        - Eigen::Vector3d::UnitZ()
       }
     }
   }, 
@@ -394,7 +504,26 @@ const std::map<Name, SymmetryInformation> symmetryData {
           std::min(absDiff - 5, 5 - absDiff)
         ) * 72;
       },
-      {}
+      {},
+      {
+        Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          3 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          4 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX()
+      }
     }
   }, 
   {
@@ -437,22 +566,32 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
       },
       {
-        {3, 0, 4, boost::none},
-        {0, 1, 4, boost::none},
-        {1, 2, 4, boost::none},
-        {2, 3, 4, boost::none},
-        {3, 0, 5, boost::none},
-        {0, 1, 5, boost::none},
-        {1, 2, 5, boost::none},
-        {2, 3, 5, boost::none}
-      }
-      // TODO try out the alternate
-      /*
+#ifdef USE_ALTERNATE_TETRAHEDRA
+        // Alternate
         {3, 0, 4, 5},
         {0, 1, 4, 5},
         {1, 2, 4, 5},
         {2, 3, 4, 5}
-       */
+#else
+        // Regular
+        {3, 0, 4, boost::none},
+        {0, 1, 4, boost::none},
+        {1, 2, 4, boost::none},
+        {2, 3, 4, boost::none},
+        {3, 0, boost::none, 5},
+        {0, 1, boost::none, 5},
+        {1, 2, boost::none, 5},
+        {2, 3, boost::none, 5}
+#endif
+      },
+      {
+        Eigen::Vector3d::UnitX(),
+        Eigen::Vector3d::UnitY(),
+        - Eigen::Vector3d::UnitX(),
+        - Eigen::Vector3d::UnitY(),
+        Eigen::Vector3d::UnitZ(),
+        - Eigen::Vector3d::UnitZ()
+      }
     }
   },
   {
@@ -501,7 +640,51 @@ const std::map<Name, SymmetryInformation> symmetryData {
       {
         // TODO dubious if this captures all relevant information, too limited
         {boost::none, 0, 1, 2},
-        {boost::none, 3, 4, 5}
+        {3, boost::none, 4, 5}
+      },
+      {
+        // 0, lower X by 76/2° into -Z
+        Eigen::AngleAxisd(
+          M_PI * 38 / 180,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::Vector3d::UnitX(),
+        // 1, take 0 and rotate 2 * pi / 3 around Z
+        Eigen::AngleAxisd(
+          2 * M_PI / 3,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::AngleAxisd(
+          M_PI * 38 / 180,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::Vector3d::UnitX(),
+        // 2, take 0 and rotate - 2 * pi / 3 around Z
+        Eigen::AngleAxisd(
+          - 2 * M_PI / 3,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::AngleAxisd(
+          M_PI * 38 / 180,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::Vector3d::UnitX(),
+        // 3, raise X by 76/2° into Z
+        Eigen::AngleAxisd(
+          - M_PI * 38 / 180,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::Vector3d::UnitX(),
+        // 4, take 3 and rotate 2 * pi / 3 around Z
+        Eigen::AngleAxisd(
+          2 * M_PI / 3,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::AngleAxisd(
+          - M_PI * 38 / 180,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::Vector3d::UnitX(),
+        // 5, take 3 and rotate - 2 * pi / 3 around Z
+        Eigen::AngleAxisd(
+          - 2 * M_PI / 3,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::AngleAxisd(
+          - M_PI * 38 / 180,
+          Eigen::Vector3d::UnitY()
+        ) * Eigen::Vector3d::UnitX(),
       }
     }
   },
@@ -540,19 +723,41 @@ const std::map<Name, SymmetryInformation> symmetryData {
           }
       },
       {
+#ifdef USE_ALTERNATE_TETRAHEDRA
+        // Alternate
+        {0, 1, 5, 2},
+        {1, 2, 5, 3},
+        {2, 3, 5, 4},
+        {3, 4, 5, 0}
+#else
+        // Regular
         {0, boost::none, 1, 5},
         {1, boost::none, 2, 5},
         {2, boost::none, 3, 5},
         {3, boost::none, 4, 5},
         {4, boost::none, 0, 5}
+#endif
+      },
+      {
+        Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          3 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          4 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::Vector3d::UnitZ()
       }
-      // TODO try alternate
-      /*
-        {0, 1, 2, 5},
-        {1, 2, 3, 5},
-        {2, 3, 4, 5},
-        {3, 4, 0, 5}
-       */
     }
   },
   {
@@ -592,25 +797,48 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
       },
       {
-        {0, 1, boost::none, 5},
-        {1, 2, boost::none, 5},
-        {2, 3, boost::none, 5},
-        {3, 4, boost::none, 5},
-        {4, 0, boost::none, 5},
-        {0, 1, boost::none, 6},
-        {1, 2, boost::none, 6},
-        {2, 3, boost::none, 6},
-        {3, 4, boost::none, 6},
-        {4, 0, boost::none, 6}
-      }
-      // TODO try alternate
-      /*
+#ifdef USE_ALTERNATE_TETRAHEDRA
+        // Alternate
         {0, 1, 5, 6},
         {1, 2, 5, 6},
         {2, 3, 5, 6},
         {3, 4, 5, 6},
         {4, 0, 5, 6}
-       */
+#else
+        // Regular
+        {0, 1, 5, boost::none},
+        {1, 2, 5, boost::none},
+        {2, 3, 5, boost::none},
+        {3, 4, 5, boost::none},
+        {4, 0, 5, boost::none},
+        {0, 1, boost::none, 6},
+        {1, 2, boost::none, 6},
+        {2, 3, boost::none, 6},
+        {3, 4, boost::none, 6},
+        {4, 0, boost::none, 6}
+#endif
+      },
+      {
+        Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          2 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          3 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::AngleAxisd(
+          4 * 2 * M_PI / 5,
+          Eigen::Vector3d::UnitZ()
+        ) * Eigen::Vector3d::UnitX(),
+        Eigen::Vector3d::UnitZ(),
+        - Eigen::Vector3d::UnitZ()
+      }
     }
   },
   {
@@ -691,22 +919,35 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
       },
       {
-        {7, 0, 4, boost::none},
-        {0, 4, 1, boost::none},
-        {4, 1, 5, boost::none},
-        {1, 5, 2, boost::none},
-        {5, 2, 6, boost::none},
-        {2, 6, 3, boost::none},
-        {6, 3, 7, boost::none},
-        {3, 7, 0, boost::none}
-      }
-      // TODO try alternate
-      /*
+#ifdef USE_ALTERNATE_TETRAHEDRA
+        // Alternate
         {0, 1, 4, 6},
         {1, 2, 5, 7},
         {2, 3, 6, 3},
-        {3, 0, 7, 5}
-      */
+        {3, 0, 7, 5},
+#else 
+        // Regular
+        {7, 0, 4, boost::none},
+        {0, 4, boost::none, 1},
+        {4, 1, 5, boost::none},
+        {1, 5, boost::none, 2},
+        {5, 2, 6, boost::none},
+        {2, 6, boost::none, 3},
+        {6, 3, 7, boost::none},
+        {3, 7, boost::none, 0}
+#endif
+      },
+      // TODO not quite ideal, not oriented along any axis...
+      { // generated w/ reference/minimal.py
+        {-0.00928803, 0.61156848, 0.79113698},
+        {0.79562737, 0.60564101, -0.01326839},
+        {0.79562737, -0.60564101, -0.01326839},
+        {-0.00928803, -0.61156848, 0.79113698},
+        {-0.3961716, 0.85216935, -0.34184129},
+        {0.29375817, 0., -0.95587977},
+        {-0.3961716, -0.85216935, -0.34184129},
+        {-0.98308669, 0., 0.18314084}
+      }
     }
   }
 };

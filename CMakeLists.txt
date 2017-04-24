@@ -14,6 +14,7 @@ enable_testing()
 
 # dependencies
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+find_package(Eigen3 3.1.1 REQUIRED)
 find_program(
   CLANG_TIDY_EXE
   NAMES "clang-tidy"
@@ -44,12 +45,27 @@ add_library(symmetries STATIC ${SOURCES_all} ${HEADERS_all})
 if( UNIX )
   add_definitions(-fPIC)
 endif()
-target_compile_options(symmetries PUBLIC -O2 -g)
+
+# Switch debug and release build types
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release") 
+  message(STATUS "Selected release build")
+  # no debug information, disable assert
+  target_compile_definitions(symmetries PRIVATE NDEBUG)
+  target_compile_options(symmetries PUBLIC -O2)
+else() # assume Debug
+  message(STATUS "Assume debug build")
+  target_compile_options(symmetries PUBLIC -g)
+endif()
+
 set_target_properties(
   symmetries PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
+)
+
+include_directories(SYSTEM
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 if(CLANG_TIDY_EXE)
