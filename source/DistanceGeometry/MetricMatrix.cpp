@@ -151,6 +151,6 @@ std::ostream& operator << (
   return os;
 }
 
-} // eo namespace DistanceGeometry
+} // namespace DistanceGeometry
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip

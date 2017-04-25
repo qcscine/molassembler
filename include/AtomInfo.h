@@ -127,8 +127,8 @@ unsigned dElectronCount(const Delib::ElementType& elementType);
 
 double vdwRadius(const Delib::ElementType& elementType);
 
-} // eo namespace AtomInfo
+} // namespace AtomInfo
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip
 
 #endif

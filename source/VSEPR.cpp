@@ -132,4 +132,4 @@ Symmetry::Name VSEPR::determineGeometry(
   return result;
 }
 
-} // eo namespace
+} // namespace LocalGeometry

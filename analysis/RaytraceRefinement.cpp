@@ -21,6 +21,9 @@ int main() {
   Log::level = Log::Level::None;
   Log::particulars = {Log::Particulars::DGRefinementChiralityNumericalDebugInfo};
 
+  auto embeddingOption = EmbeddingOption::fourDimensional;
+
+
   /* Re-implementation of DG procedure so that we can use step() in the 
    * conjugated descent gradient solver
    */
@@ -31,12 +34,12 @@ int main() {
 
   cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
   // TODO this will need adjustment when some experience exists
-  stopCriteria.iterations = 1000; 
+  //stopCriteria.iterations = 1000; 
   stopCriteria.fDelta = 1e-5;
 
   DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
 
-  const unsigned nStructures = 10;
+  const unsigned nStructures = 3;
 
   for(const auto& symmetryName : Symmetry::allNames) {
     // Make a space-free string from the name
@@ -97,7 +100,7 @@ int main() {
       MetricMatrix metric(distancesMatrix);
 
       // Get a position matrix by embedding the metric matrix
-      auto embeddedPositions = metric.embed(EmbeddingOption::threeDimensional);
+      auto embeddedPositions = metric.embed(embeddingOption);
 
       // Vectorize the positions for use with cppoptlib
       Eigen::VectorXd vectorizedPositions {
@@ -130,7 +133,8 @@ int main() {
         problem,
         simpleMol,
         vectorizedPositions,
-        stepResult
+        stepResult,
+        embeddingOption
       );
 
       while(stepResult.status == cppoptlib::Status::Continue) {
@@ -144,7 +148,8 @@ int main() {
           problem,
           simpleMol,
           vectorizedPositions,
-          stepResult
+          stepResult,
+          embeddingOption
         );
       }
 

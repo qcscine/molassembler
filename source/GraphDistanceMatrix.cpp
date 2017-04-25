@@ -170,4 +170,4 @@ unsigned GraphDistanceMatrix::operator () (
 }
 
 
-} // eo namespace
+} // namespace MoleculeManip

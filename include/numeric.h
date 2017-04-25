@@ -77,4 +77,4 @@ std::vector<unsigned> map_population_stddev(
   return mapped;
 }
 
-} // eo namespace
+} // namespace numeric

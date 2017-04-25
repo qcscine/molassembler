@@ -311,7 +311,7 @@ SymmetryFit::SymmetryFit(
   }
 } 
 
-} // eo namespace
+} // namespace MoleculeManip
 
 // Global namespace ostream operator
 std::ostream& operator << (std::ostream& os, const MoleculeManip::SymmetryFit& symmetryFit) {

@@ -285,6 +285,6 @@ std::shared_ptr<Node<T>> nodePtr(
   return returnNode;
 }
 
-} // eo namespace
+} // namespace Tree
 
 #endif

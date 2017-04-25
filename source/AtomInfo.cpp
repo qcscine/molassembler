@@ -280,6 +280,6 @@ double vdwRadius(const Delib::ElementType& elementType) {
   return elementData.at(elementType).vdwRadius;
 }
 
-} // eo namespace AtomInfo
+} // namespace AtomInfo
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip

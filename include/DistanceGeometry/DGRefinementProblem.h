@@ -50,7 +50,7 @@ private:
   //! Make an Eigen Vector4d of an atomic index.
   template<int vectorSize = 4>
   auto _getEigen(const TVector& v, const AtomIndexType& index) const {
-    assert(v.size() > 4 * index + 4 - 1);
+    assert(v.size() > 4 * index + 3);
 
     /* Return a fixed-size const reference to a part of the vector
      *
@@ -392,7 +392,8 @@ public:
               if(i != 3) streamRef << ", ";
             }
 
-            streamRef << "}: _C = " << _C(v, indices, target) << std::endl;
+            streamRef << "}: _C = " << _C(v, indices, target) 
+              << ", target = " << target << std::endl;
           }
 #else
           localGradient.template segment<3>(0) += _C(v, indices, target) * (
@@ -448,8 +449,8 @@ public:
   }
 };
 
-} // eo namespace DistanceGeometry
+} // namespace DistanceGeometry
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip
 
 #endif

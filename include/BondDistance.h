@@ -24,9 +24,9 @@ double calculateBondDistance(
   const BondType& bondType
 );
 
-} // eo namespace Bond
+} // namespace Bond
 
-} // eo namespace
+} // namespace MoleculeManip
 
 #endif
 

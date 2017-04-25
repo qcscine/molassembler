@@ -88,8 +88,8 @@ public:
 
 };
 
-} // eo namespace Stereocenters
+} // namespace Stereocenters
 
-} // eo namespace
+} // namespace MoleculeManip
 
 #endif

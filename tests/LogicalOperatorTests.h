@@ -42,6 +42,6 @@ bool testOperatorSmaller(const T& a, const T& b) {
   );
 }
 
-} // eo namespace OperatorTests
+} // namespace OperatorTests
 
 #endif

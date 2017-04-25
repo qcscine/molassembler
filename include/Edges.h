@@ -131,6 +131,6 @@ public:
 
 };
 
-} // eo namespace
+} // namespace MoleculeManip
 
 #endif

@@ -13,4 +13,4 @@ const std::map<BondType, double> bondWeights {
   {BondType::Eta, 0.0} // TODO is this wise? (duplicate in AtomInfo!)
 };
 
-} // eo namespace
+} // namespace LocalGeometry

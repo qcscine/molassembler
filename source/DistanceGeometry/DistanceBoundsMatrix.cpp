@@ -178,6 +178,6 @@ double DistanceBoundsMatrix::upperBound(
   return _boundsMatrix.upperBound(i, j);
 }
 
-} // eo namespace DistanceGeometry
+} // namespace DistanceGeometry
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip

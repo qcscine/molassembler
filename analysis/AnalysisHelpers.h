@@ -172,7 +172,8 @@ void writePOVRayFile(
   >::TVector& positions,
   const cppoptlib::ConjugatedGradientDescentSolver<
     MoleculeManip::DistanceGeometry::DGRefinementProblem<double>
-  >::StepResultType& stepResult
+  >::StepResultType& stepResult,
+  const MoleculeManip::DistanceGeometry::EmbeddingOption& embedding
 ) {
   using namespace std::string_literals;
 
@@ -189,22 +190,31 @@ void writePOVRayFile(
   outStream << "#version 3.7;\n"
     << "#include \"scene.inc\"\n\n";
 
-  assert(positions.size() % 3 == 0);
-  const unsigned N = positions.size() / 3;
+  auto dimensionality = static_cast<unsigned>(embedding);
+
+  assert(positions.size() % dimensionality == 0);
+  const unsigned N = positions.size() / dimensionality;
 
   // Define atom names with positions
   for(unsigned i = 0; i < N; i++) {
     outStream << "#declare " << mapIndexToChar(i) <<  " = <";
     outStream << std::fixed << std::setprecision(4);
-    outStream << positions[3 * i] << ", ";
-    outStream << positions[3 * i + 1] << ", ";
-    outStream << positions[3 * i + 2] << ">;\n";
+    outStream << positions[dimensionality * i] << ", ";
+    outStream << positions[dimensionality * i + 1] << ", ";
+    outStream << positions[dimensionality * i + 2] << ">;\n";
   }
   outStream << "\n";
 
   // Atoms
-  for(unsigned i = 0; i < N; i++) {
-    outStream << "Atom(" << mapIndexToChar(i) << ")\n";
+  if(dimensionality == 3) {
+    for(unsigned i = 0; i < N; i++) {
+      outStream << "Atom(" << mapIndexToChar(i) << ")\n";
+    }
+  } else { // 4D
+    for(unsigned i = 0; i < N; i++) {
+      outStream << "Atom4D(" << mapIndexToChar(i) << ", " 
+        << positions[dimensionality * i + 3] << ")\n";
+    }
   }
   outStream << "\n";
 

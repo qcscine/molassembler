@@ -80,8 +80,8 @@ public:
   > getChiralityPrototypes() const;
 };
 
-} // eo namespace DistanceGeometry
+} // namespace DistanceGeometry
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip
 
 #endif

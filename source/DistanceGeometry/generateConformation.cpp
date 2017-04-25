@@ -187,7 +187,7 @@ DGResult runDistanceGeometry(
   return resultObject;
 }
 
-} // eo namespace detail
+} // namespace detail
 
 MoleculeDGInformation::MoleculeDGInformation(const unsigned& N) : distanceBounds(N) {}
 

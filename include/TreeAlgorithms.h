@@ -105,7 +105,7 @@ std::enable_if_t<
   return function(nodePtr);
 }
 
-} // eo namespace detail
+} // namespace detail
 
 template<
   typename T,
@@ -187,6 +187,6 @@ void DFSVisit(
   );
 }
 
-}
+} // namespace TreeAlgorithms
 
 #endif

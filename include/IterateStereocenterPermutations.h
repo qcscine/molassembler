@@ -148,6 +148,6 @@ StereocenterPermutationTemporary iterateStereocenterPermutations(
   return StereocenterPermutationTemporary(molecule);
 }
 
-} // eo namespace
+} // namespace MoleculeManip
 
 #endif

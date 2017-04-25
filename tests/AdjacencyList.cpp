@@ -85,7 +85,7 @@ std::vector<
   AdjacencyListValidator::everyAdjacencyHasReverse,
 };
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip
 
 // Create a random connected AdjacencyList
 struct ALFixture {

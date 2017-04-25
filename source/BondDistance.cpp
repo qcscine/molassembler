@@ -23,6 +23,6 @@ double calculateBondDistance(
   );
 }
 
-} // eo namespace Bond
+} // namespace Bond
 
-} // eo namespace
+} // namespace MoleculeManip

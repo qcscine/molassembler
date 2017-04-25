@@ -9,18 +9,33 @@ set(LIBS_DIR "${BASE_DIR}/projects/libs")
 # local path configuration
 set(AssignmentLib_LIBRARY_DIR "${LIBS_DIR}/steric_uniqueness/build")
 set(Symmetry_LIBRARY_DIR "${LIBS_DIR}/symmetry_information/build")
-set(BOOST_INCLUDE_DIRS "/usr/include/boost")
 set(DELIB_INCLUDE_DIR "/usr/local/include/Delib")
 
 # project declaration
 project(Molecule)
 enable_testing()
 
-# dependencies: packages
+# dependencies: Eigen3
 find_package(Eigen3 3.1.1 REQUIRED)
+if(Eigen3_FOUND)
+  message(STATUS "Eigen version: ${Eigen3_VERSION}")
+  message(STATUS "Eigen dir: ${EIGEN3_INCLUDE_DIRS}")
+  include_directories(EIGEN3_INCLUDE_DIRS)
+endif()
+
+# dependencies: Boost
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+if(Boost_FOUND) 
+  include_directories(Boost_INCLUDE_DIRS)
+endif()
+
+#dependencies: Delib
 find_package(Delib REQUIRED)
-message(STATUS "Delib version: ${Delib_VERSION}")
+if(Delib_FOUND)
+  message(STATUS "Delib version: ${Delib_VERSION}")
+  message(STATUS "Delib dir: ${DELIB_INCLUDE_DIRS}")
+  include_directories(DELIB_INCLUDE_DIRS)
+endif()
 
 # dependencies: libraries
 find_library(ASSIGNMENT_LIBRARY Assignment ${AssignmentLib_LIBRARY_DIR})
@@ -51,9 +66,8 @@ add_dependencies(assignment symmetry)
 
 # add include directories
 include_directories(SYSTEM
-  ${EIGEN3_INCLUDE_DIRS}
-  ${DELIB_INCLUDE_DIR}
   ${LIBS_DIR}
+  ${DELIB_INCLUDE_DIR}
   include
 )
 
@@ -150,7 +164,7 @@ set_target_properties(
 if(CLANG_TIDY_EXE)
   set_target_properties(
     molecule PROPERTIES
-    CXX_CLANG_TIDY "{DO_CLANG_TIDY}"
+    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
   )
 endif()
 
@@ -176,14 +190,7 @@ foreach(filename ${testFiles})
     COMPILE_FLAGS ${WARNING_FLAGS}
   )
 
-  if(CLANG_TIDY_EXE)
-    set_target_properties(
-      ${targetName} PROPERTIES
-      CXX_CLANG_TIDY "{DO_CLANG_TIDY}"
-    )
-  endif()
-
-  target_include_directories(${targetName} PRIVATE ${BOOST_INCLUDE_DIRS})
+  target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
   target_link_libraries(
     ${targetName} 
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
@@ -214,14 +221,7 @@ foreach(filename ${analysisFiles})
     COMPILE_FLAGS ${WARNING_FLAGS}
   )
 
-  if(CLANG_TIDY_EXE)
-    set_target_properties(
-      ${targetName} PROPERTIES
-      CXX_CLANG_TIDY "{DO_CLANG_TIDY}"
-    )
-  endif()
-
-  target_include_directories(${targetName} PRIVATE ${BOOST_INCLUDE_DIRS})
+  target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
   target_link_libraries(
     ${targetName} 
     Delib::DelibStatic

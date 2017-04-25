@@ -43,8 +43,8 @@ enum class EmbeddingOption : unsigned {
   fourDimensional = 4
 };
 
-} // eo namespace DistanceGeometry
+} // namespace DistanceGeometry
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip
 
 #endif

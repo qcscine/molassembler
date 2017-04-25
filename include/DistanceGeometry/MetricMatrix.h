@@ -38,8 +38,8 @@ public:
   friend std::ostream& operator << (std::ostream& os, const MetricMatrix& matrix);
 };
 
-} // eo namespace DistanceGeometry
+} // namespace DistanceGeometry
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip
 
 #endif

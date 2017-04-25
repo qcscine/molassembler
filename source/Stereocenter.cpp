@@ -42,4 +42,4 @@ bool strictComparePtr(
 
 }
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip

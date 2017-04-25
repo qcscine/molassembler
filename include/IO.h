@@ -395,8 +395,8 @@ public:
   }
 };
 
-} // eo namespace IO
+} // namespace IO
 
-}
+} // namespace MoleculeManip
 
 #endif

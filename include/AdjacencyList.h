@@ -145,6 +145,6 @@ public:
   friend struct AdjacencyListValidator;
 };
 
-} // eo namespace MoleculeManip
+} // MoleculeManip
 
 #endif

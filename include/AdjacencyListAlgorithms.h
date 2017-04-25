@@ -260,7 +260,7 @@ public:
   }
 };
 
-} // eo namespace BFSVisitors
+} // namespace BFSVisitors
 
 std::shared_ptr<
   BFSVisitors::TreeGenerator::NodeType
@@ -285,7 +285,7 @@ std::shared_ptr<
 
 unsigned numConnectedComponents(const AdjacencyList& adjacencies);
 
-} // eo namespace AdjacencyListAlgorithms
+} // namespace AdjacencyListAlgorithms
 
 }
 

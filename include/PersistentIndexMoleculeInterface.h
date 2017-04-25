@@ -95,7 +95,7 @@ AtomIndexType PersistentIndicesInterface::_toExternalIndex(const AtomIndexType& 
   return returnIndex;
 }
 
-} // eo namespace
+} // namespace MoleculeManip
 
 #endif
 

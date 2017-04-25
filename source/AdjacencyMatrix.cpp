@@ -37,4 +37,4 @@ bool AdjacencyMatrix::operator () (
 }
 
 
-} // eo namespace
+} // namespace MoleculeManip

@@ -272,6 +272,6 @@ std::vector<
   return prototypes;
 }
 
-} // eo namespace DistanceGeometry
+} // namespace DistanceGeometry
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip

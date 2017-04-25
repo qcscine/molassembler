@@ -17,6 +17,6 @@ struct VSEPR : Model {
   );
 };
 
-} // eo namespace
+} // namespace LocalGeometry
 
 #endif

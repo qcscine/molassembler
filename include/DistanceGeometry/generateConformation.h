@@ -11,6 +11,9 @@
 #include <vector>
 #include <Eigen/Core>
 
+/* TODO
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
@@ -194,7 +197,7 @@ DGResult runDistanceGeometry(
   const BFSConstraintCollector::DistanceMethod& distanceMethod = BFSConstraintCollector::DistanceMethod::UFFLike
 );
 
-} // eo namespace detail
+} // namespace detail
 
 struct MoleculeDGInformation {
   DistanceBoundsMatrix distanceBounds;
@@ -224,8 +227,8 @@ Delib::PositionCollection generateConformation(
   const EmbeddingOption& embedding = EmbeddingOption::threeDimensional
 );
 
-} // eo namespace DistanceGeometry
+} // namespace DistanceGeometry
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip
 
 #endif

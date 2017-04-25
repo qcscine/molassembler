@@ -42,6 +42,6 @@ struct Model {
   );
 };
 
-} // eo namespace GeometryModeling
+} // namespace GeometryModeling
 
 #endif

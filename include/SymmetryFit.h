@@ -104,6 +104,6 @@ public:
   friend std::ostream& (::operator << )(std::ostream& os, const SymmetryFit& fit);
 };
 
-} // eo namespace
+} // namespace MoleculeManip
 
 #endif

@@ -123,8 +123,8 @@ bool strictComparePtr(
   const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
 );
 
-} // eo namespace Stereocenters
+} // namespace Stereocenters
 
-} // eo namespace
+} // namespace MoleculeManip
 
 #endif

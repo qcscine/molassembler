@@ -231,4 +231,4 @@ std::ostream& operator << (
   return os;
 }
 
-} // eo namespace
+} // namespace MoleculeManip

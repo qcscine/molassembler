@@ -330,8 +330,8 @@ public:
 
 };
 
-} // eo namespace GraphFeatures
+} // namespace GraphFeatures
 
-} // eo namespace
+} // namespace MoleculeManip
 
 #endif

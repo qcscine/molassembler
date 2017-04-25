@@ -79,6 +79,6 @@ unsigned numConnectedComponents(const AdjacencyList& adjacencies) {
   return boost::connected_components(graph, &component[0]);
 }
 
-} // eo namespace AdjacencyListAlgorithms
+} // namespace AdjacencyListAlgorithms
 
-} // eo namespace MoleculeManip
+} // namespace MoleculeManip
