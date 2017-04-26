@@ -4,10 +4,10 @@
 
 #include <iostream>
 
-#include "WriteMatrix.h"
 #include "BoundsFromSymmetry.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/generateConformation.h"
+#include "template_magic/Enumerate.h"
 
 BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
   using namespace MoleculeManip;
@@ -56,8 +56,25 @@ Eigen::MatrixXd boundsToSlack(const Eigen::MatrixXd& bounds) {
   return slack;
 }
 
+std::string flattenMatrix(const Eigen::MatrixXd& matrix) {
+  std::string retString;
+  
+  for(unsigned i = 0; i < matrix.rows(); i++) {
+    for(unsigned j = 0; j < matrix.cols(); j++) {
+      retString += std::to_string(matrix(i, j));
+      if(j != matrix.cols() - 1) retString += ","s;
+    }
+  }
+
+  return retString;
+}
+
 BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
-  for(const auto& symmetryName : Symmetry::allNames) {
+  std::ofstream outStream("DGDistanceBoundsMatrix-matrix-smoothing.csv");
+
+  for(const auto& enumPair : enumerate(Symmetry::allNames)) {
+    const auto& symmetryName = enumPair.value;
+
     std::string spaceFreeName = Symmetry::name(symmetryName);
     std::replace(
       spaceFreeName.begin(),
@@ -69,20 +86,22 @@ BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
     auto molecule = DGDBM::symmetricMolecule(symmetryName);
     auto boundsMatrix = MoleculeManip::DistanceGeometry::gatherDGInformation(molecule).distanceBounds;
 
-    writeMatrix(
-      "pre-"s + spaceFreeName,
-      boundsToSlack(
-        boundsMatrix.access()
-      )
-    );
+    outStream << enumPair.index << "," << 0 << ","
+      << flattenMatrix(
+        boundsToSlack(
+          boundsMatrix.access()
+        )
+      ) << "\n";
 
     boundsMatrix.smooth();
 
-    writeMatrix(
-      "post-"s + spaceFreeName,
-      boundsToSlack(
-        boundsMatrix.access()
-      )
-    );
+    outStream << enumPair.index << "," << 1 << ","
+      << flattenMatrix(
+        boundsToSlack(
+          boundsMatrix.access()
+        )
+      ) << "\n";
   }
+
+  outStream.close();
 }

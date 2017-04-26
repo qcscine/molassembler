@@ -44,7 +44,11 @@ enum class Particulars {
   /* In DGRefinementProblem, the callback function can reveal some information
    * on the current status of the optimization
    */
-  DGRefinementProgress
+  DGRefinementProgress,
+  // In generateConformation, show the Trees generated from the molecules
+  gatherDGInformationTrees,
+  // In BFSConstraintCollector, show the node index operator() is called on
+  BFSConstraintCollectorVisitCall
 };
 
 
@@ -56,6 +60,6 @@ extern std::set<Particulars> particulars;
 std::ostream& log(const Level& decisionLevel);
 std::ostream& log(const Particulars& particular);
 
-}
+} // namespace Log
 
 #endif

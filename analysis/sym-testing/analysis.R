@@ -1,4 +1,4 @@
-filenames <- c(
+symmetryNames <- c(
   "linear", # 2
   "bent",
   "T-shaped", # 3
@@ -19,29 +19,39 @@ filenames <- c(
 
 coordinationNumber <- c(2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 8)
 
-# read data
-filedata <- list()
-upperlimit <- 0
-for(i in seq(1:length(filenames) - 1)) {
-  # add into list
-  filedata[[i]] <- as.numeric(read.csv(
-    file=paste(filenames[i], ".csv", sep=""),
-    header=FALSE,
-    sep=","
-  )$V1)
+# file format is now:
+# V1 - symmetry index (zero-based)
+# V2 - error value
 
-  # update maximum
-  upperlimit <- max(upperlimit, max(filedata[[i]]))
+# read data
+filedata <- read.csv(
+  file="DGRefinementProblem-symmetric-ensemble-errors.csv",
+  header=FALSE,
+  sep=","
+)
+
+symmetryCol <- as.numeric(filedata$V1)
+errorCol <- as.numeric(filedata$V2)
+
+symmetryErrors <- list()
+filedata <- list()
+for(i in seq(1:length(symmetryNames) - 1)) {
+  # add into list
+  symmetryErrors[[i]] <- errorCol[
+    which(
+      symmetryCol + 1 == i
+    )
+  ]
 }
 
 # 1 Histograms 4x4 plot
 pdf("histograms.pdf", width=14, height=14)
 par(mfrow=c(4,4))
 
-for(i in seq(1:length(filenames) - 1)) {
+for(i in seq(1:length(symmetryNames) - 1)) {
   hist(
-    filedata[[i]],
-    main = filenames[i],
+    symmetryErrors[[i]],
+    main = symmetryNames[i],
     xlab="errf"
     #breaks=20,
   )
@@ -51,8 +61,8 @@ dev.off()
 
 # 2 Coordination Number vs average errf plot
 averages <- c()
-for(i in seq(1:length(filenames) - 1)) {
-  averages <- c(averages, mean(filedata[[i]]))
+for(i in seq(1:length(symmetryNames) - 1)) {
+  averages <- c(averages, mean(symmetryErrors[[i]]))
 }
 
 pdf("CNvsErrf.pdf", width=7, height=7)
@@ -68,19 +78,19 @@ bp <- barplot(
 
 axis(2, at=bp, labels=coordinationNumber)
 
-for(i in 1:length(filenames)) {
-  if(averages[i] < 0.04) { # this boundary must be varied if values change
+for(i in 1:length(symmetryNames)) {
+  if(averages[i] < 0.5 * max(averages)) { # this boundary must be varied if values change
     text(
       averages[i],
       bp[i],
-      labels=filenames[i],
+      labels=symmetryNames[i],
       pos=4
     )
   } else {
     text(
       averages[i],
       bp[i],
-      labels=filenames[i],
+      labels=symmetryNames[i],
       pos=2,
       col="white"
     )

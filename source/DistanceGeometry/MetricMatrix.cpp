@@ -44,7 +44,10 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
     // compute first term
     double firstTerm = 0;
     for(AtomIndexType j = 0; j < N; j++) {
-      if(i == j) continue;
+      if(i == j) {
+        continue;
+      }
+
       firstTerm += distances(
         std::min(i, j),
         std::max(i, j)
@@ -97,20 +100,29 @@ const Eigen::MatrixXd& MetricMatrix::access() const {
   return _matrix;
 }
 
-Eigen::MatrixXd MetricMatrix::embed(
-  const EmbeddingOption& embedding 
-) const {
-  unsigned dimensionality = static_cast<unsigned>(embedding);
+Eigen::MatrixXd MetricMatrix::embed() const {
+  const unsigned dimensionality = 4;
 
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(_matrix);
 
   // reverse because smallest are listed first by Eigen
   Eigen::VectorXd eigenValues = eigenSolver.eigenvalues().reverse();
+  auto numEigenValues = eigenValues.size();
+
   eigenValues.conservativeResize(dimensionality); // dimensionality x 1
+
+  // If we have upscaled, the new elements must be zero!
+  if(numEigenValues < dimensionality) {
+    for(unsigned i = numEigenValues; i < dimensionality; i++) {
+      eigenValues(i) = 0;
+    }
+  }
 
   // If any eigenvalues in the vector are negative, set them to 0
   for(unsigned i = 0; i < dimensionality; i++) {
-    if(eigenValues(i) < 0) eigenValues(i) = 0;
+    if(eigenValues(i) < 0) {
+      eigenValues(i) = 0;
+    }
   }
 
   // take square root of eigenvalues

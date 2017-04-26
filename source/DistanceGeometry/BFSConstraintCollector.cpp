@@ -4,6 +4,8 @@
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
 
+#include "Log.h"
+
 
 namespace MoleculeManip {
 
@@ -55,23 +57,6 @@ BFSConstraintCollector::BFSConstraintCollector(
         explicitEdgePair.first.first,
         explicitEdgePair.first.second,
         1.5 + oneTwoVariance
-      );
-    }
-  }
-
-  // Set lower bounds to sum of vdw radii
-  for(unsigned i = 0; i < adjacencies.numAtoms(); i++) {
-    for(unsigned j = i + 1; j < adjacencies.numAtoms(); j++) {
-      /* setting the bounds will fail for bonded pairs as those have strict
-       * bounds already and the fairly high sum of vdw would lead to
-       * inconsistencies
-       */
-      _distanceBounds.setLowerBound(i, j,
-        AtomInfo::vdwRadius(
-          adjacencies.getElementType(i)
-        ) + AtomInfo::vdwRadius(
-          adjacencies.getElementType(j)
-        ) 
       );
     }
   }
@@ -143,6 +128,13 @@ bool BFSConstraintCollector::operator() (
   const std::shared_ptr<NodeType>& nodePtr,
   const unsigned& depth
 ) {
+
+#ifndef NDEBUG
+  Log::log(Log::Particulars::BFSConstraintCollectorVisitCall) 
+    << "BFSConstraintCollector: operator() call at depth " 
+    << depth << " on node with key " << nodePtr -> key << std::endl;
+#endif
+
   std::vector<AtomIndexType> chain;
 
   auto currentNode = nodePtr;
@@ -191,6 +183,37 @@ bool BFSConstraintCollector::operator() (
         angle
       )
     );
+
+#ifndef NDEBUG
+    Log::log(Log::Particulars::BFSConstraintCollectorVisitCall) 
+      << "BFSConstraintCollector: attempting to improve bounds on chain {" 
+      << chain.front() << ", " << chain.at(1) << ", " << chain.back() << "}, "
+      << "angle: " << angle << ", suggest bounds ["
+      << CommonTrig::lawOfCosines(
+        _distanceBounds.lowerBound(
+          chain.front(),
+          chain.at(1)
+        ),
+        _distanceBounds.lowerBound(
+          chain.at(1),
+          chain.back()
+        ),
+        angle
+      ) << ", " << CommonTrig::lawOfCosines(
+        _distanceBounds.upperBound(
+          chain.front(),
+          chain.at(1)
+        ),
+        _distanceBounds.upperBound(
+          chain.at(1),
+          chain.back()
+        ),
+        angle
+      ) << "], currently [" 
+      << _distanceBounds.lowerBound(chain.front(), chain.back())
+      << ", " << _distanceBounds.upperBound(chain.front(), chain.back())
+      << "]" << std::endl;
+#endif
   } else if(depth == 3) { // dihedral
     double abAngle = _getAngle(
       chain.front(),
@@ -250,6 +273,31 @@ bool BFSConstraintCollector::operator() (
 
   // continue BFS
   return true;
+}
+
+void BFSConstraintCollector::finalizeBoundsMatrix() {
+  // Set lower bounds to sum of vdw radii
+  for(unsigned i = 0; i < _adjacencies.numAtoms(); i++) {
+    for(unsigned j = i + 1; j < _adjacencies.numAtoms(); j++) {
+      /* setting the bounds will fail for bonded pairs as those have strict
+       * bounds already and the fairly high sum of vdw would lead to
+       * inconsistencies
+       */
+      if(_distanceBounds.lowerBound(i, j) == 0) {
+        _distanceBounds.setLowerBound(i, j,
+          AtomInfo::vdwRadius(
+            _adjacencies.getElementType(i)
+          ) + AtomInfo::vdwRadius(
+            _adjacencies.getElementType(j)
+          ) 
+        );
+      }
+    }
+  }
+
+  _distanceBounds.smooth();
+
+  assert(_distanceBounds.boundInconsistencies() == 0);
 }
 
 std::vector<

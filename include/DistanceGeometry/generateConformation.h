@@ -21,29 +21,8 @@ namespace DistanceGeometry {
 namespace detail {
 
 Delib::PositionCollection convertToPositionCollection(
-  const Eigen::VectorXd& vectorizedPositions,
-  const EmbeddingOption& embedding
+  const Eigen::VectorXd& vectorizedPositions
 );
-
-template<int segmentSize>
-auto getEigen(
-  const Eigen::VectorXd& v,
-  const unsigned& index, 
-  const unsigned& dimensionality
-) {
-  /* Return a fixed-size const reference to a part of the vector
-   *
-   * Interesting tidbit to the syntax below:
-   * If you write: return v.segment<3>(3 * index);
-   *             member function -^^^- integer 3
-   *                               |
-   *                          operator <
-   * 
-   * so to disambiguate, you write template before the name of the member
-   * function.
-   */
-  return v.template segment<segmentSize>(dimensionality * index);
-}
 
 /* Functor to mimic a HOF that takes a distance Matrix as partial application
  * Using auto makePrototypePropagator(Matrix) {
@@ -168,14 +147,32 @@ public:
   }
 };
 
-struct DGStatistics {
-  unsigned failures = 0;
-  std::vector<double> energies;
+struct RefinementStepData {
+  Eigen::VectorXd positions;
+  double error;
+  Eigen::VectorXd gradient;
+  bool compress;
+
+  RefinementStepData(
+    const Eigen::VectorXd& positions,
+    const double& error,
+    const Eigen::VectorXd& gradient,
+    const bool& compress
+  ) : positions(positions),
+      error(error),
+      gradient(gradient),
+      compress(compress)
+  {}
 };
 
-struct DGResult {
-  std::list<Delib::PositionCollection> ensemble;
-  DGStatistics statistics;
+struct RefinementData {
+  std::list<RefinementStepData> steps;
+  std::vector<ChiralityConstraint> constraints;
+};
+
+struct DGDebugData {
+  unsigned failures = 0;
+  std::list<RefinementData> refinements;
 };
 
 // Generator to help with functional-style instantiation
@@ -188,11 +185,18 @@ auto makePropagator(
   );
 }
 
-DGResult runDistanceGeometry(
+DGDebugData debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const MetrizationOption& metrization,
-  const EmbeddingOption& embedding,
+  const bool& useYInversionTrick = true,
+  const BFSConstraintCollector::DistanceMethod& distanceMethod = BFSConstraintCollector::DistanceMethod::UFFLike
+);
+
+std::list<Delib::PositionCollection> runDistanceGeometry(
+  const Molecule& molecule,
+  const unsigned& numStructures,
+  const MetrizationOption& metrization,
   const bool& useYInversionTrick = true,
   const BFSConstraintCollector::DistanceMethod& distanceMethod = BFSConstraintCollector::DistanceMethod::UFFLike
 );
@@ -217,14 +221,12 @@ MoleculeDGInformation gatherDGInformation(
 std::list<Delib::PositionCollection> generateEnsemble(
   const Molecule& molecule,
   const unsigned& numStructures,
-  const MetrizationOption& metrization = MetrizationOption::off,
-  const EmbeddingOption& embedding = EmbeddingOption::threeDimensional
+  const MetrizationOption& metrization = MetrizationOption::off
 );
 
 Delib::PositionCollection generateConformation(
   const Molecule& molecule,
-  const MetrizationOption& metrization = MetrizationOption::off,
-  const EmbeddingOption& embedding = EmbeddingOption::threeDimensional
+  const MetrizationOption& metrization = MetrizationOption::off
 );
 
 } // namespace DistanceGeometry

@@ -107,7 +107,6 @@ set(HEADERS_all
   include/VectorView.h
   include/Version.h
   include/common_typedefs.h
-  include/numeric.h
 )
 
 # collect sources

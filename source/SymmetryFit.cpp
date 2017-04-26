@@ -22,7 +22,7 @@ double SymmetryFit::Fit::_calculateAngleDeviation(
   const Delib::PositionCollection& positions,
   std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
 ) {
-  return TemplateMagic::sum(
+  return TemplateMagic::numeric::sum(
     TemplateMagic::allPairsMap(
       adjacentAtoms,
       [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
@@ -50,7 +50,7 @@ double SymmetryFit::Fit::_calculateOneThreeDeviation(
   const Delib::PositionCollection& positions,
   std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
 ) {
-  return TemplateMagic::sum(
+  return TemplateMagic::numeric::sum(
     TemplateMagic::allPairsMap(
       adjacentAtoms,
       [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
@@ -129,7 +129,7 @@ double SymmetryFit::Fit::_calculateChiralityDeviation(
     );
 
     // Return the summation of the deviations
-    return TemplateMagic::sum(deviations);
+    return TemplateMagic::numeric::sum(deviations);
   }
 }
 

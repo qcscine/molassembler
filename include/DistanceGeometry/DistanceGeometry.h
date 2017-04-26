@@ -38,11 +38,6 @@ enum class MetrizationOption {
   full
 };
 
-enum class EmbeddingOption : unsigned {
-  threeDimensional = 3,
-  fourDimensional = 4
-};
-
 } // namespace DistanceGeometry
 
 } // namespace MoleculeManip

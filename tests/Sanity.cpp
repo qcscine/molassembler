@@ -42,13 +42,12 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
       /* Create an ensemble of 3D positions using threeDimensional refinement,
        * no metrization and uniform distance setting
        */
-      auto DGResult = detail::runDistanceGeometry(
+      auto ensemble = detail::runDistanceGeometry(
         molecule,
         100,
         MetrizationOption::off,
-        EmbeddingOption::threeDimensional,
         false
-        //TODO BFSConstraintCollector::DistanceMethod::Uniform
+        // TODO BFSConstraintCollector::DistanceMethod::Uniform
       );
 
       /* Check that for every PositionCollection, inferring the StereocenterList
@@ -56,7 +55,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
        * started out with.
        */
       auto mapped = TemplateMagic::map(
-        DGResult.ensemble,
+        ensemble,
         [&](const auto& positions) -> bool {
           auto inferredStereocenterList = molecule.getAdjacencyList().inferStereocentersFromPositions(
             positions
@@ -83,8 +82,6 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         std::cout << "Test fails!" << std::endl
           << std::setw(8) << " " << " " << Symmetry::name(symmetryName) 
           << std::endl
-          << std::setw(8) << DGResult.statistics.failures 
-          << " failures in ensemble generation" << std::endl
           << std::setw(8) << std::to_string(pass)+ "/100"
           << " comparisons with inferred StereocenterList pass" << std::endl;
 

@@ -1,14 +1,8 @@
-#include "CommonTrig.h"
 #include "DistanceGeometry/generateConformation.h"
-#include "DistanceGeometry/MetricMatrix.h"
-#include "cppoptlib/solver/conjugatedgradientdescentsolver.h"
-#include "cppoptlib/meta.h"
-
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
 #include "Log.h"
-
-#include "AnalysisHelpers.h"
+#include "template_magic/Enumerate.h"
 
 #include <fstream>
 #include <iomanip>
@@ -17,29 +11,13 @@ using namespace std::string_literals;
 using namespace MoleculeManip;
 using namespace MoleculeManip::DistanceGeometry;
 
+inline char mapIndexToChar(const unsigned& index) {
+  return 'A' + index;
+}
+
 int main() {
   Log::level = Log::Level::None;
   Log::particulars = {Log::Particulars::DGRefinementChiralityNumericalDebugInfo};
-
-  auto embeddingOption = EmbeddingOption::fourDimensional;
-
-
-  /* Re-implementation of DG procedure so that we can use step() in the 
-   * conjugated descent gradient solver
-   */
-
-  cppoptlib::ConjugatedGradientDescentSolver<
-    DGRefinementProblem<double>
-  > DGConjugatedGradientDescentSolver;
-
-  cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
-  // TODO this will need adjustment when some experience exists
-  //stopCriteria.iterations = 1000; 
-  stopCriteria.fDelta = 1e-5;
-
-  DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
-
-  const unsigned nStructures = 3;
 
   for(const auto& symmetryName : Symmetry::allNames) {
     // Make a space-free string from the name
@@ -51,124 +29,93 @@ int main() {
       '-'
     );
 
-    // Generate distance bounds
-    auto simpleMol = DGDBM::symmetricMolecule(symmetryName);
+    // Make a molecule and generate an ensemble
+    auto mol = DGDBM::symmetricMolecule(symmetryName);
 
-    // Begin
-    const auto DGData = gatherDGInformation(simpleMol);
-    unsigned optimizationFailures = 0;
-    const double failureRatio = 0.5;
+    auto debugData = detail::debugDistanceGeometry(
+      mol,
+      3,
+      MetrizationOption::off,
+      false
+    );
 
-    for(
-      unsigned currentStructureNumber = 0;
-      // Failed optimizations do not count towards successful completion
-      currentStructureNumber - optimizationFailures < nStructures;
-      currentStructureNumber += 1
-    ) {
+    // Write the POV-Ray files
+    for(const auto& enumPair : enumerate(debugData.refinements)) {
+      const auto& structNum = enumPair.index;
+      const auto& refinementData = enumPair.value;
 
-      const auto distancesMatrix = DGData.distanceBounds.generateDistanceMatrix(
-        MetrizationOption::off
-      );
-      
-      /* Get the chirality constraints by converting the prototypes found by the
-       * collector into full chiralityConstraints using the distances matrix
-       */
-      auto chiralityConstraints = TemplateMagic::map(
-        DGData.chiralityConstraintPrototypes,
-        /* Partial application with distances matrix so we have a unary function
-         * to perform the mapping with
-         */
-        detail::makePropagator(
-          [&distancesMatrix](const AtomIndexType& i, const AtomIndexType& j) {
-            return distancesMatrix(
-              std::min(i, j),
-              std::max(i, j)
-            );
-          }
-        )
-      );
+      for(const auto& refinementEnumPair : enumerate(refinementData.steps)) {
+        const auto& stepData = refinementEnumPair.value;
 
-      /* Instantiantiate the refinement problem and its solver, set the stop 
-       * criteria
-       */
-      DGRefinementProblem<double> problem(
-        chiralityConstraints,
-        DGData.distanceBounds
-      );
+        std::stringstream filename;
+        filename << Symmetry::name(symmetryName) << "-"
+          << structNum << "-"
+          << std::setfill('0') << std::setw(3) << refinementEnumPair.index
+          << ".pov";
 
-      // Make a metric matrix from the distances matrix
-      MetricMatrix metric(distancesMatrix);
-
-      // Get a position matrix by embedding the metric matrix
-      auto embeddedPositions = metric.embed(embeddingOption);
-
-      // Vectorize the positions for use with cppoptlib
-      Eigen::VectorXd vectorizedPositions {
-        Eigen::Map<Eigen::VectorXd>(
-          embeddedPositions.data(),
-          embeddedPositions.cols() * embeddedPositions.rows()
-        )
-      };
-
-      /* If a count of chirality constraints reveals that more than half are
-       * incorrect, we can invert the structure (by multiplying e.g. all y 
-       * coordinates with -1) and then have more than half of chirality 
-       * constraints correct! In the count, chirality constraints with a target
-       * value of zero are not considered (this would skew the count as those
-       * chirality constraints should not have to pass an energetic maximum to 
-       * converge properly as opposed to tetrahedra with volume).
-       */
-      if(!problem.moreThanHalfChiralityConstraintsCorrect(vectorizedPositions)) {
-        problem.invertY(vectorizedPositions);
-      }
-
-      // Run the minimization, but step-wise!
-      auto stepResult = DGConjugatedGradientDescentSolver.step(problem, vectorizedPositions);
-      unsigned iterations = 1;
-
-      writePOVRayFile(
-        spaceFreeName,
-        currentStructureNumber,
-        iterations,
-        problem,
-        simpleMol,
-        vectorizedPositions,
-        stepResult,
-        embeddingOption
-      );
-
-      while(stepResult.status == cppoptlib::Status::Continue) {
-        stepResult = DGConjugatedGradientDescentSolver.step(problem, vectorizedPositions);
-        iterations += 1;
-
-        writePOVRayFile(
-          spaceFreeName,
-          currentStructureNumber,
-          iterations,
-          problem,
-          simpleMol,
-          vectorizedPositions,
-          stepResult,
-          embeddingOption
+        std::ofstream outStream(
+          filename.str()
         );
-      }
 
-      std::cout << spaceFreeName << "-" << currentStructureNumber << ": "
-        << iterations << " iterations, exited with code " << static_cast<int>(stepResult.status) << std::endl;
+        outStream << "#version 3.7;\n"
+          << "#include \"scene.inc\"\n\n";
 
-      // What to do if the optimization fails
-      if(DGConjugatedGradientDescentSolver.status() == cppoptlib::Status::Continue) {
-        optimizationFailures += 1;
+        const unsigned dimensionality = 4;
 
-        if(
-          static_cast<double>(optimizationFailures) / currentStructureNumber 
-          >= failureRatio
-        ) {
-          throw std::runtime_error("Refinement failures exceeded threshold!");
+        assert(stepData.positions.size() % dimensionality == 0);
+        const unsigned N = stepData.positions.size() / dimensionality;
+
+        // Define atom names with positions
+        for(unsigned i = 0; i < N; i++) {
+          outStream << "#declare " << mapIndexToChar(i) <<  " = <";
+          outStream << std::fixed << std::setprecision(4);
+          outStream << stepData.positions[dimensionality * i] << ", ";
+          outStream << stepData.positions[dimensionality * i + 1] << ", ";
+          outStream << stepData.positions[dimensionality * i + 2] << ">;\n";
         }
-      } 
-    }
+        outStream << "\n";
 
-    std::cout << optimizationFailures << " failures." << std::endl;
+        // Atoms
+        for(unsigned i = 0; i < N; i++) {
+          outStream << "Atom4D(" << mapIndexToChar(i) << ", " 
+            << stepData.positions[dimensionality * i + 3] << ")\n";
+        }
+        outStream << "\n";
+
+        // Bonds
+        for(const auto& edgePair : mol.getAdjacencyList().getEdges()) {
+          outStream << "Bond(" 
+            << mapIndexToChar(edgePair.first.first) << ","
+            << mapIndexToChar(edgePair.first.second) 
+            << ")\n";
+        }
+        outStream << "\n";
+
+        // Tetrahedra
+        if(refinementData.constraints.size() > 0) {
+          for(const auto& chiralityConstraint : refinementData.constraints) {
+            outStream << "TetrahedronHighlight("
+              << mapIndexToChar(chiralityConstraint.indices[0]) << ", "
+              << mapIndexToChar(chiralityConstraint.indices[1]) << ", "
+              << mapIndexToChar(chiralityConstraint.indices[2]) << ", "
+              << mapIndexToChar(chiralityConstraint.indices[3]) 
+              << ")\n";
+          }
+          outStream << "\n";
+        }
+
+        // Gradients
+        for(unsigned i = 0; i < N; i++) {
+          outStream << "GradientVector(" << mapIndexToChar(i) <<", <"
+            << std::fixed << std::setprecision(4)
+            << (-stepData.gradient[3 * i]) << ", "
+            << (-stepData.gradient[3 * i + 1]) << ", "
+            << (-stepData.gradient[3 * i + 2]) << ", "
+            << ">)\n";
+        }
+
+        outStream.close();
+      }
+    }
   }
 }

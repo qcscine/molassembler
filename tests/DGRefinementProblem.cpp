@@ -10,6 +10,7 @@
 #include "cppoptlib/solver/conjugatedgradientdescentsolver.h"
 #include "cppoptlib/meta.h"
 #include "DistanceGeometry/DGRefinementProblem.h"
+#include "template_magic/Enumerate.h"
 
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
@@ -21,11 +22,55 @@ using namespace std::string_literals;
 using namespace MoleculeManip;
 using namespace MoleculeManip::DistanceGeometry;
 
-BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectness ) {
+/* NOTES to current state of optimized output structures
+ *
+ * - Initial problem is gone, was an issue with the generation of the test
+ *   matrices
+ * - Found one bug in the refinement problem (a missing square), heavily
+ *   decreases optimization time
+ * - Found another bug that caused generated structures to be considerably
+ *   expanded, although well reflective of the overall symmetries (a missing
+ *   sqrt in the embedding procedure).
+ * - Now high-symmetry geometries are maybe somewhat over-constrained, leading 
+ *   to messy structures. Avenues to try:
+ *
+ *   - Add more variance to 1-3 distance bounds
+ *     -> did nothing
+ *
+ *   - Add more sanity tests to the various symmetries' angle functions
+ *     -> Found mistakes in the angle functions of pent-bipy and sq-antiprism, 
+ *        fixing the issue
+ *        
+ * - Refinement cannot reach a global minimum in almost all cases. Probably due
+ *   to triangle inequality bound violations. Fix by introducing metrization.
+ *
+ * - Chirality constraints are now active. A variation of how they are defined 
+ *   exists in the symmetry_information library (if nothing else helps to fix 
+ *   the appearing bugs). There was a mistake in the Cayley-Menger determinant 
+ *   calculation to determine the target volumes, that's fixed. There's now a
+ *   weird bug where gradients with chirality constraints are quite unstable.
+ */
+
+/* TODO
+ * - Since we get a bug before we can even confirm whether some sample molecules
+ *   give the correct gradients, it might be worth adding more asserts() as 
+ *   checks in the distance matrix generating code in generateConformation as
+ *   well to ensure that e.g. distance matrices adhere to triangle inequalities,
+ *   and more if you can think of any
+ *
+ *   Progress: Bug is basically that the trig prismatic matrix is unsmoothed, 
+ *   has some default 100 distances in there for some reason I cannot fathom. 
+ *   Check it and add more checks.
+ */
+
+BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
+  Log::level = Log::Level::None;
+  Log::particulars = {};
+  
   // Generate a wide array of DGRefinementProblems and check their gradients
 
   for(const auto& symmetryName: Symmetry::allNames) {
-    auto molecule = DGDBM::symmetricMolecule(symmetryName);
+    auto molecule = DGDBM::asymmetricMolecule(symmetryName);
     auto DGInfo = gatherDGInformation(molecule);
 
     auto distances = DGInfo.distanceBounds.generateDistanceMatrix(
@@ -34,7 +79,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectness ) {
 
     MetricMatrix metric(distances);
 
-    auto embedded = metric.embed(EmbeddingOption::threeDimensional);
+    auto embedded = metric.embed();
 
     Eigen::VectorXd vectorizedPositions(
       Eigen::Map<Eigen::VectorXd>(
@@ -63,5 +108,57 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectness ) {
     BOOST_CHECK(
       problem.checkGradient(vectorizedPositions)
     );
+
+    // TODO minimize, then check again?
   }
+}
+
+BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
+  // Open output file for R plots
+  std::string filename = "DGRefinementProblem-symmetric-ensemble-errors.csv";
+  std::ofstream outFile(filename);
+  outFile << std::setprecision(4) << std::fixed;
+
+  for(const auto& enumPair : enumerate(Symmetry::allNames)) {
+    const auto& symmetryName = enumPair.value;
+    const auto& symmetryIndex = enumPair.index;
+
+    auto molecule = DGDBM::symmetricMolecule(symmetryName);
+    
+    auto DGResult = DistanceGeometry::detail::debugDistanceGeometry(
+      molecule,
+      10,
+      MetrizationOption::off
+    );
+
+    // For something this simple, there really shouldn't be any failures
+    BOOST_CHECK(DGResult.failures == 0);
+
+    auto finalErrors = TemplateMagic::map(
+      DGResult.refinements,
+      [](const detail::RefinementData& refinementData) -> double {
+        return refinementData.steps.back().error;
+      }
+    );
+
+    // The average error of the ensemble should be below 0.1 (already achieved)
+    BOOST_CHECK(TemplateMagic::numeric::average(finalErrors) < 0.1);
+
+    // Write averages to individual files
+    // Make a space-free string from the name
+    std::string spaceFreeName = Symmetry::name(symmetryName);
+    std::replace(
+      spaceFreeName.begin(),
+      spaceFreeName.end(),
+      ' ',
+      '-'
+    );
+
+    for(const auto& errorValue : finalErrors) {
+      outFile << symmetryIndex << "," << errorValue << "\n";
+    }
+
+  }
+
+  outFile.close();
 }

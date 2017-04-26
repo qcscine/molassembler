@@ -192,18 +192,30 @@ BOOST_AUTO_TEST_CASE( reorderingWorks ) {
 }
 
 void showEmbedding(const MetricMatrix& metricMatrix) {
-  auto dimensionality = 3u;
+  auto dimensionality = 4u;
 
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(metricMatrix.access());
 
   // reverse because smallest are listed first by Eigen
   Eigen::VectorXd eigenValues = eigenSolver.eigenvalues().reverse();
 
+  auto numEigenValues = eigenValues.size();
+
   std::cout << "Reversed eigenvalues of metric matrix:\n" << eigenValues << std::endl;
 
   eigenValues.conservativeResize(dimensionality); // dimensionality x 1
 
   std::cout << "reversed and resized eigenvalues of metric matrix:\n" << eigenValues << std::endl;
+
+  // If we have upscaled the eigenvalues, any new elements must be set to zero
+  if(numEigenValues < dimensionality) {
+    for(unsigned i = numEigenValues; i < dimensionality; i++) {
+      eigenValues(i) = 0;
+    }
+
+    std::cout << "We had fewer eigenvalues than dimensionality requires, so the new elements must be set zero:\n"
+      << eigenValues << std::endl;
+  }
 
   // If any eigenvalues in the vector are negative, set them to 0
   for(unsigned i = 0; i < dimensionality; i++) {
@@ -319,7 +331,7 @@ BOOST_AUTO_TEST_CASE( explicitFromLecture ) {
                          0, 0,       0,       1,
                          0, 0,       0,       0;
 
-  auto metric = MetricMatrix(std::move(exactDistanceMatrix));
+  auto metric = MetricMatrix(exactDistanceMatrix);
 
   Eigen::MatrixXd expectedMetricMatrix (4, 4);
   expectedMetricMatrix <<  0.5,    0,    0,    0,
@@ -333,4 +345,15 @@ BOOST_AUTO_TEST_CASE( explicitFromLecture ) {
       1e-7
     )
   );
+}
+
+BOOST_AUTO_TEST_CASE( highSymmetryFailures ) {
+  Eigen::MatrixXd sampleLinearDistances(3, 3);
+  sampleLinearDistances <<     0, 1.882, 2.196,
+                           1.782,     0, 4.078,
+                           2.096, 3.878,     0;
+
+  auto metric = MetricMatrix(sampleLinearDistances);
+
+  showEmbedding(metric);
 }

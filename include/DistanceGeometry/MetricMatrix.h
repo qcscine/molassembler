@@ -14,7 +14,7 @@ private:
 /* Underlying matrix representation */
   Eigen::MatrixXd _matrix;
 
-  void _constructFromTemporary(Eigen::MatrixXd&& matrix);
+  void _constructFromTemporary(Eigen::MatrixXd&& distances);
 
 public:
 /* Constructors */
@@ -27,15 +27,14 @@ public:
   const Eigen::MatrixXd& access() const;
 
   /*!
-   * Embeds itself into 3D or 4D space depending on the embedding option,
-   * returning a dynamically sized Matrix where every column vector is the
-   * coordinates of a particle
+   * Embeds itself into 4D space, returning a dynamically sized Matrix where
+   * every column vector is the coordinates of a particle
    */
-  Eigen::MatrixXd embed(const EmbeddingOption& embedding) const;
+  Eigen::MatrixXd embed() const;
 
 /* Operators */
   bool operator == (const MetricMatrix& other) const;
-  friend std::ostream& operator << (std::ostream& os, const MetricMatrix& matrix);
+  friend std::ostream& operator << (std::ostream& os, const MetricMatrix& metricMatrix);
 };
 
 } // namespace DistanceGeometry
