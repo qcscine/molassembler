@@ -24,7 +24,7 @@ if(Eigen3_FOUND)
 endif()
 
 # dependencies: Boost
-find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options)
 if(Boost_FOUND) 
   include_directories(Boost_INCLUDE_DIRS)
 endif()
@@ -223,6 +223,7 @@ foreach(filename ${analysisFiles})
   target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
   target_link_libraries(
     ${targetName} 
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
     Delib::DelibStatic
     assignment
     symmetry

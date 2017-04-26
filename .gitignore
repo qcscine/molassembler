@@ -16,3 +16,4 @@ analysis/*/*.csv
 *.png
 *.gif
 *.csv
+.commit-notes

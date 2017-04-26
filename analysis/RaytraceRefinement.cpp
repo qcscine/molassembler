@@ -1,3 +1,5 @@
+#include "boost/program_options.hpp"
+
 #include "DistanceGeometry/generateConformation.h"
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
@@ -15,11 +17,68 @@ inline char mapIndexToChar(const unsigned& index) {
   return 'A' + index;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+/* Options not altered by command-line arguments */
+  const unsigned dimensionality = 4;
+
+/* Set program options from command-line arguments */
+  // Defaults
+  unsigned nStructures = 1;
+  auto symmetries = Symmetry::allNames;
+
+  // Set up option parsing
+  boost::program_options::options_description options_description("Recognized options");
+  options_description.add_options()
+    ("help", "Produce help message")
+    ("s", boost::program_options::value<unsigned>(), "Specify symmetry index (zero-based)")
+    ("n", boost::program_options::value<unsigned>(), "Set number of structures to generate")
+  ;
+
+  // Parse
+  boost::program_options::variables_map options_variables_map;
+  boost::program_options::store(
+    boost::program_options::parse_command_line(argc, argv, options_description),
+    options_variables_map
+  );
+  boost::program_options::notify(options_variables_map);  
+
+  // Manage the results
+  if(options_variables_map.count("help")) {
+    std::cout << options_description << std::endl;
+    return 0;
+  }
+
+  if(options_variables_map.count("s")) {
+    unsigned argSymmetry = options_variables_map["s"].as<unsigned>();
+    if(argSymmetry >= Symmetry::allNames.size()) {
+      std::cout << "Specified symmetry out of bounds. Valid symmetries are 0-"
+        << (Symmetry::allNames.size() - 1) << ":\n\n";
+      for(unsigned i = 0; i < Symmetry::allNames.size(); i++) {
+        std::cout << "  " << i << " - " << Symmetry::name(Symmetry::allNames.at(i)) << "\n";
+      }
+      std::cout << std::endl;
+      return 0;
+    }
+
+    symmetries = {Symmetry::allNames[argSymmetry]};
+  }
+
+  if(options_variables_map.count("n")) {
+    unsigned argN = options_variables_map["n"].as<unsigned>();
+    if(argN == 0) {
+      std::cout << "Specified to generate zero structures. Exiting."
+        << std::endl;
+      return 0;
+    }
+
+    nStructures = argN;
+  }
+
+/* Generating work */
   Log::level = Log::Level::None;
   Log::particulars = {Log::Particulars::DGRefinementChiralityNumericalDebugInfo};
 
-  for(const auto& symmetryName : Symmetry::allNames) {
+  for(const auto& symmetryName : symmetries) {
     // Make a space-free string from the name
     std::string spaceFreeName = Symmetry::name(symmetryName);
     std::replace(
@@ -34,7 +93,7 @@ int main() {
 
     auto debugData = detail::debugDistanceGeometry(
       mol,
-      3,
+      nStructures,
       MetrizationOption::off,
       false
     );
@@ -44,11 +103,31 @@ int main() {
       const auto& structNum = enumPair.index;
       const auto& refinementData = enumPair.value;
 
+      std::string progressFilename = spaceFreeName + "-"s 
+        + std::to_string(structNum) + "-progress.csv"s;
+      std::ofstream progressFile (progressFilename);
+
+      progressFile << std::scientific;
+
       for(const auto& refinementEnumPair : enumerate(refinementData.steps)) {
+
         const auto& stepData = refinementEnumPair.value;
+        assert(stepData.positions.size() % dimensionality == 0);
+        const unsigned N = stepData.positions.size() / dimensionality;
+
+        // Collect sum of absolute 4D values
+        double totalAbs4D = 0;
+        for(unsigned i = 0; i < N; i++) {
+          totalAbs4D += std::fabs(stepData.positions[4 * i + 3]);
+        }
+
+        progressFile << stepData.error << "," 
+          << stepData.gradient.norm() << "," 
+          << static_cast<unsigned>(stepData.compress) << "," 
+          << totalAbs4D << "\n";
 
         std::stringstream filename;
-        filename << Symmetry::name(symmetryName) << "-"
+        filename << spaceFreeName << "-"
           << structNum << "-"
           << std::setfill('0') << std::setw(3) << refinementEnumPair.index
           << ".pov";
@@ -59,11 +138,6 @@ int main() {
 
         outStream << "#version 3.7;\n"
           << "#include \"scene.inc\"\n\n";
-
-        const unsigned dimensionality = 4;
-
-        assert(stepData.positions.size() % dimensionality == 0);
-        const unsigned N = stepData.positions.size() / dimensionality;
 
         // Define atom names with positions
         for(unsigned i = 0; i < N; i++) {
@@ -78,7 +152,7 @@ int main() {
         // Atoms
         for(unsigned i = 0; i < N; i++) {
           outStream << "Atom4D(" << mapIndexToChar(i) << ", " 
-            << stepData.positions[dimensionality * i + 3] << ")\n";
+            << std::fabs(stepData.positions[dimensionality * i + 3]) << ")\n";
         }
         outStream << "\n";
 
@@ -115,6 +189,7 @@ int main() {
         }
 
         outStream.close();
+
       }
     }
   }
