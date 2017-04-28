@@ -147,7 +147,10 @@ constexpr T sqrt(const T& x) {
   return value;
 }
 
-// Implements an approximation to asin over 0 < x < 1 with accuracy > 2e-10
+/* Implements an approximation to asin over 0 < x < 1 with accuracy > 2e-8
+ * from Abramowitz, M., Stegun, I.: Handbook of Mathematical Functions, p. 64,
+ * 1964, from http://people.math.sfu.ca/~cbm/aands/abramowitz_and_stegun.pdf
+ */
 template<typename T>
 constexpr T asinApprox(const T& x) {
   if(!(0 < x && x < 1)) {
