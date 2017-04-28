@@ -3,7 +3,7 @@
 
 #include "Stereocenter.h"
 #include <boost/optional.hpp>
-#include "template_magic/templateMagic.h"
+#include "template_magic/TemplateMagic.h"
 
 /* TODO 
  */

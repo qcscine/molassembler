@@ -74,7 +74,7 @@ void GraphDistanceMatrix::_transformToDistances() {
         }
       }
 
-      if(rowsToCopy.size() == 0) break;
+      if(rowsToCopy.empty()) break;
 
       // copy them in
       for(const auto& copyIndex : rowsToCopy) {

@@ -29,7 +29,7 @@ void DequeVisit(
     std::weak_ptr<Tree::Node<T>>
   > toVisit {rootPtr};
 
-  while(toVisit.size() > 0) {
+  while(!toVisit.empty()) {
     if(std::shared_ptr<Tree::Node<T>> current = toVisit.front().lock()) {
       toVisit.pop_front(); // remove before copy-in!
 
@@ -126,7 +126,7 @@ void DequeVisit(
     {rootPtr, 0}
   };
 
-  while(toVisit.size() > 0) {
+  while(!toVisit.empty()) {
     auto currentPair = toVisit.front();
     toVisit.pop_front();
     if(std::shared_ptr<Tree::Node<T>> current = currentPair.first.lock()) {

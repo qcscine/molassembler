@@ -3,8 +3,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "AdjacencyList.h"
-#include "template_magic/templateMagic.h"
-#include "RNG/RNG.h"
+#include "template_magic/TemplateMagic.h"
+#include "template_magic/Random.h"
 
 // Temp, testing
 #include <boost/graph/breadth_first_search.hpp>
@@ -106,7 +106,7 @@ struct ALFixture {
     // extend at random with upper bound of 6 edges per vertex
     while(N < atomsLimit) {
       // select a random atom
-      AtomIndexType selection = RNG::rng.getSingle<double>(0u, N - 1);
+      AtomIndexType selection = TemplateMagic::random.getSingle<double>(0u, N - 1);
 
       // ensure less than 6 edges
       if(adjacencies.getAdjacencies(selection).size() >= edgesLimit) {
@@ -127,8 +127,8 @@ struct ALFixture {
     unsigned nCycles = 0;
     while(nCycles < cyclesLimit) {
       // select two random atoms
-      AtomIndexType i = RNG::rng.getSingle<double>(0u, N - 1);
-      AtomIndexType j = RNG::rng.getSingle<double>(0u, N - 1);
+      AtomIndexType i = TemplateMagic::random.getSingle<double>(0u, N - 1);
+      AtomIndexType j = TemplateMagic::random.getSingle<double>(0u, N - 1);
 
       /* cannot connect
        * - equal indices 
@@ -167,11 +167,11 @@ BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
     }
   }
 
-  if(terminalVertices.size() > 0) {
+  if(!terminalVertices.empty()) {
     // select a random terminal vertex
     auto selection = terminalVertices.at(
       static_cast<unsigned>(
-        RNG::rng.getSingle<double>(0, terminalVertices.size() - 1)
+        TemplateMagic::random.getSingle<double>(0, terminalVertices.size() - 1)
       )
     );
 

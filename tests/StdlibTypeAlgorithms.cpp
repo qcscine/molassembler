@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "StdlibTypeAlgorithms.h"
-#include "template_magic/templateMagic.h"
+#include "template_magic/TemplateMagic.h"
 
 /* Algorithms to test
  *

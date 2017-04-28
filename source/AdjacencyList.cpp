@@ -37,14 +37,14 @@ struct AdjacencyList::MolGraphWriter {
     BondType,
     std::string
   > bondTypeDisplayString {
-   {BondType::Single, "color = \"black\""},
-    {BondType::Double, "color = \"black:invis:black\""},
-    {BondType::Triple, "color = \"black:invis:black:invis:black\""},
-    {BondType::Quadruple, "label = \"4\""},
-    {BondType::Quintuple, "label = \"5\""},
-    {BondType::Sextuple, "label = \"6\""},
-    {BondType::Aromatic, "style = \"dashed\""},
-    {BondType::Eta, "style = \"dotted\""}
+    {BondType::Single, R"(color = "black")"},
+    {BondType::Double, R"(color = "black:invis:black")"},
+    {BondType::Triple, R"(color = "black:invis:black:invis:black")"},
+    {BondType::Quadruple, R"(label = "4")"},
+    {BondType::Quintuple, R"(label = "5")"},
+    {BondType::Sextuple, R"(label = "6")"},
+    {BondType::Aromatic, R"(style = "dashed")"},
+    {BondType::Eta, R"(style = "dotted")"}
   };
 
   /* State */
@@ -75,22 +75,24 @@ struct AdjacencyList::MolGraphWriter {
     os << "[";
     
     // Add element name and index label
-    os << "label = \"" << symbolString << vertexIndex << "\"";
+    os << R"(label = ")" << symbolString << vertexIndex << R"(")";
 
     // Coloring
     if(elementBGColorMap.count(symbolString)) {
-      os << ", fillcolor=\"" << elementBGColorMap.at(symbolString) << "\"";
+      os << R"(, fillcolor=")" << elementBGColorMap.at(symbolString) << R"(")";
     } else { // default
-      os << ", fillcolor=\"white\"";
+      os << R"(, fillcolor="white")";
     }
     if(elementTextColorMap.count(symbolString)) {
-      os << ", fontcolor=\"" << elementTextColorMap.at(symbolString) << "\"";
+      os << R"(, fontcolor=")" << elementTextColorMap.at(symbolString) << R"(")";
     } else { // default
-      os << ", fontcolor=\"orange\"";
+      os << R"(, fontcolor="orange")";
     }
 
     // Font sizing
-    if(symbolString == "H") os << ", fontsize=10, width=.3, fixedsize=true";
+    if(symbolString == "H") {
+      os << ", fontsize=10, width=.3, fixedsize=true";
+    }
     
     os << "]";
   }
@@ -348,14 +350,14 @@ StereocenterList AdjacencyList::detectStereocenters() const {
     );
 
     // If the source's substituents are unequal (no equal pair sets)
-    if(sourceSubstituentsRanking.second.size() == 0) {
+    if(sourceSubstituentsRanking.second.empty()) {
       auto targetSubstituentsRanking = rankPriority(
         target,
         {source} // exclude edge sharing neighbor
       );
 
       // target must also have no equal pairs
-      if(targetSubstituentsRanking.second.size() == 0) {
+      if(targetSubstituentsRanking.second.empty()) {
         // Instantiate an EZStereocenter there!
         stereocenterList.add(
           std::make_shared<
@@ -538,12 +540,17 @@ std::pair<
         std::greater<int> // in CIP, list of Z is ordered DESC
       > lhsZ = { getZ(lhs) }, rhsZ = { getZ(rhs) };
       while(
-          lhsSeeds.size() > 0
-          || rhsSeeds.size() > 0
+          !lhsSeeds.empty()
+          || !rhsSeeds.empty()
       ) {
-        // compare lists
-        if(lhsZ < rhsZ) return true;
-        else if(lhsZ > rhsZ) return false;
+        // compare lists -> return possibilities
+        if(lhsZ < rhsZ) {
+          return true;
+        } 
+
+        if(lhsZ > rhsZ) {
+          return false;
+        }
 
         // iterate along the bonds
         BFSIterate(lhsVisited, lhsSeeds, lhsZ);
@@ -614,7 +621,10 @@ boost::optional<BondType> AdjacencyList::getBondType(
 
   if(edgePair.second) {
     return _adjacencies[edgePair.first].bondType;
-  } else return boost::none;
+  } 
+
+  // fallback
+  return boost::none;
 
 }
 
@@ -629,7 +639,9 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
    */
   for(unsigned candidateIndex = 0; candidateIndex < numAtoms(); candidateIndex++) {
     // Skip terminal atoms
-    if(getNumAdjacencies(candidateIndex) <= 1) continue;
+    if(getNumAdjacencies(candidateIndex) <= 1) {
+      continue;
+    }
 
     // Determine the local geometry
     const auto localGeometryName = determineLocalGeometry(candidateIndex);

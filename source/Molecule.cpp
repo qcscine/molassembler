@@ -221,7 +221,7 @@ std::ostream& operator << (
   std::ostream& os,
   const Molecule& mol
 ) {
-  if(mol.stereocenters.size() > 0) {
+  if(!mol.stereocenters.empty()) {
     os << "Stereocenter information:\n";
     for(const auto& stereocenterPtr: mol.stereocenters) {
       os << stereocenterPtr << std::endl;

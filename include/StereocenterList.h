@@ -118,6 +118,10 @@ public:
     return mapping;
   }
 
+  bool empty() const {
+    return _features.empty();
+  }
+
   unsigned size() const {
     return _features.size();
   }

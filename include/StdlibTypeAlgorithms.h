@@ -103,7 +103,7 @@ void mergeOverlappingSetsInplace(
         sets[j].end(),
         std::back_inserter(intersection)
       );
-      if(intersection.size() > 0) {
+      if(!intersection.empty()) {
         sets[i].insert(
           sets[j].begin(),
           sets[j].end()

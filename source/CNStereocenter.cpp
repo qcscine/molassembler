@@ -1,6 +1,6 @@
 #include "CNStereocenter.h"
-#include "steric_uniqueness/GenerateUniques.h"
-#include "template_magic/templateMagic.h"
+#include "geometry_assignment/GenerateUniques.h"
+#include "template_magic/TemplateMagic.h"
 #include "StdlibTypeAlgorithms.h"
 
 namespace MoleculeManip {
@@ -179,9 +179,9 @@ void CNStereocenter::assign(const unsigned& passAssignment) {
    */
   for(const auto& indexCharPair: _neighborCharMap) {
     assert(
-      charSymmetryPositionsMap.at(
+      !charSymmetryPositionsMap.at(
         indexCharPair.second // the current index's character, e.g. 'A'
-      ).size() > 0 // meaning there are symmetry positions left to assign
+      ).empty() // meaning there are symmetry positions left to assign
     );
 
     /* reference for better readability: the current character's symmetry

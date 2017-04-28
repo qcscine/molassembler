@@ -7,7 +7,7 @@
 
 // Forward-declarations so global-scope operator can be friended
 namespace MoleculeManip { class SymmetryFit; }
-std::ostream& operator << (std::ostream& os, const MoleculeManip::SymmetryFit& fit);
+std::ostream& operator << (std::ostream& os, const MoleculeManip::SymmetryFit& symmetryFit);
 
 
 namespace MoleculeManip {
@@ -18,13 +18,13 @@ private:
   class Fit {
   private:
     double _calculateAngleDeviation(
-      const std::vector<AtomIndexType> adjacentAtoms,
+      const std::vector<AtomIndexType>& adjacentAtoms,
       const Delib::PositionCollection& positions,
       std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
     );
 
     double _calculateOneThreeDeviation(
-      const std::vector<AtomIndexType> adjacentAtoms,
+      const std::vector<AtomIndexType>& adjacentAtoms,
       const Delib::PositionCollection& positions,
       std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
     );
@@ -51,7 +51,7 @@ private:
     Fit(
       const Symmetry::Name& symmetryName,
       const unsigned& assignment,
-      const std::vector<AtomIndexType> adjacentAtoms,
+      const std::vector<AtomIndexType>& adjacentAtoms,
       const Delib::PositionCollection& positions,
       std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
     );
@@ -101,7 +101,7 @@ public:
     const Delib::PositionCollection& positions
   ); 
 
-  friend std::ostream& (::operator << )(std::ostream& os, const SymmetryFit& fit);
+  friend std::ostream& (::operator << )(std::ostream& os, const SymmetryFit& symmetryFit);
 };
 
 } // namespace MoleculeManip

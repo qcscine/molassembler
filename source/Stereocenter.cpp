@@ -1,6 +1,6 @@
 #include "Stereocenter.h"
 
-#include "template_magic/templateMagic.h"
+#include "template_magic/TemplateMagic.h"
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
 
@@ -40,6 +40,6 @@ bool strictComparePtr(
   }
 }
 
-}
+} // namespace Stereocenters
 
 } // namespace MoleculeManip

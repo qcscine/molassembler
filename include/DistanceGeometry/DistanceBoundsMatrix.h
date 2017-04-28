@@ -117,7 +117,7 @@ public:
 /* Constructors */
   DistanceBoundsMatrix() = delete;
   DistanceBoundsMatrix(const unsigned& N);
-  DistanceBoundsMatrix(Eigen::MatrixXd matrix);
+  DistanceBoundsMatrix(const Eigen::MatrixXd& matrix);
 
 /* Modifiers */
   //! Smooth until the matrix does not change

@@ -11,6 +11,7 @@
 #include "cppoptlib/meta.h"
 #include "DistanceGeometry/DGRefinementProblem.h"
 #include "template_magic/Enumerate.h"
+#include "AnalysisHelpers.h"
 
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
@@ -114,6 +115,8 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 }
 
 BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
+  const double maximumErrorThreshold = 0.1;
+
   // Open output file for R plots
   std::string filename = "DGRefinementProblem-symmetric-ensemble-errors.csv";
   std::ofstream outFile(filename);
@@ -127,7 +130,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     
     auto DGResult = DistanceGeometry::detail::debugDistanceGeometry(
       molecule,
-      10,
+      100,
       MetrizationOption::off
     );
 
@@ -142,20 +145,25 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     );
 
     // The average error of the ensemble should be below 0.1 (already achieved)
-    BOOST_CHECK(TemplateMagic::numeric::average(finalErrors) < 0.1);
+    BOOST_CHECK(TemplateMagic::numeric::average(finalErrors) < maximumErrorThreshold);
 
-    // Write averages to individual files
-    // Make a space-free string from the name
-    std::string spaceFreeName = Symmetry::name(symmetryName);
-    std::replace(
-      spaceFreeName.begin(),
-      spaceFreeName.end(),
-      ' ',
-      '-'
-    );
+    for(const auto& enumPair : enumerate(DGResult.refinements)) {
+      const auto& refinementData = enumPair.value;
 
-    for(const auto& errorValue : finalErrors) {
-      outFile << symmetryIndex << "," << errorValue << "\n";
+      const auto& finalError = refinementData.steps.back().error;
+
+      // Write the final error to file along with the symmetry index
+      outFile << symmetryIndex << "," << finalError << "\n";
+
+      // Should it exceed the threshold, write the corresponding debug files
+      if(finalError >= maximumErrorThreshold) {
+        AnalysisHelpers::writeDGPOVandProgressFiles(
+          molecule,
+          symmetryName,
+          enumPair.index,
+          refinementData
+        );
+      }
     }
 
   }

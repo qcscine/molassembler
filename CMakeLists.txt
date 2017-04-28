@@ -7,7 +7,7 @@ set(BASE_DIR "/home/jan-grimo/PhD")
 set(LIBS_DIR "${BASE_DIR}/projects/libs")
 
 # local path configuration
-set(AssignmentLib_LIBRARY_DIR "${LIBS_DIR}/steric_uniqueness/build")
+set(AssignmentLib_LIBRARY_DIR "${LIBS_DIR}/geometry_assignment/build")
 set(Symmetry_LIBRARY_DIR "${LIBS_DIR}/symmetry_information/build")
 set(DELIB_INCLUDE_DIR "/usr/local/include/Delib")
 
@@ -82,6 +82,7 @@ set(HEADERS_all
   include/AdjacencyList.h
   include/AdjacencyListAlgorithms.h
   include/AdjacencyMatrix.h
+  include/AnalysisHelpers.h
   include/AtomInfo.h
   include/BondDistance.h
   include/CNStereocenter.h
@@ -104,7 +105,6 @@ set(HEADERS_all
   include/Tree.h
   include/TreeAlgorithms.h
   include/VSEPR.h
-  include/VectorView.h
   include/Version.h
   include/common_typedefs.h
 )

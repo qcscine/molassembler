@@ -1,9 +1,8 @@
 #include "SymmetryFit.h"
 
 // Implementation
-#include "template_magic/templateMagic.h"
+#include "template_magic/TemplateMagic.h"
 #include "CommonTrig.h"
-#include "VectorView.h"
 #include <iomanip>
 
 #include "DistanceGeometry/generateConformation.h"
@@ -18,7 +17,7 @@ namespace MoleculeManip {
 
 /* Helper class Fit implementation */
 double SymmetryFit::Fit::_calculateAngleDeviation(
-  const std::vector<AtomIndexType> adjacentAtoms,
+  const std::vector<AtomIndexType>& adjacentAtoms,
   const Delib::PositionCollection& positions,
   std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
 ) {
@@ -46,7 +45,7 @@ double SymmetryFit::Fit::_calculateAngleDeviation(
 }
 
 double SymmetryFit::Fit::_calculateOneThreeDeviation(
-  const std::vector<AtomIndexType> adjacentAtoms,
+  const std::vector<AtomIndexType>& adjacentAtoms,
   const Delib::PositionCollection& positions,
   std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
 ) {
@@ -90,53 +89,53 @@ double SymmetryFit::Fit::_calculateChiralityDeviation(
 ) {
   const auto prototypes = CNStereocenterPtr -> chiralityConstraints();
 
-  if(prototypes.size() == 0) {
+  if(prototypes.empty()) { // early return
     return 0;
-  } else {
-    /* Propagate all prototypes defined by the stereocenter into constraints
-     * using distances from the positions
-     */
-    const auto constraints = TemplateMagic::map(
-      prototypes,
-      DistanceGeometry::detail::makePropagator(
-        [&positions](const unsigned& i, const unsigned& j) {
-          return (
-            positions[i] - positions[j]
-          ).norm();
-        }
-      )
-    );
+  } 
 
-    /* Calculate deviations for each constraint between the chirality constraint
-     * and the volume of the tetrahedron from the positions. Since the target 
-     * volume is calculated using the same distances and the two quantities are
-     * therefore different only in sign, the deviation is either zero or two times
-     * the volume.
-     */
-    const auto deviations = TemplateMagic::map(
-      constraints,
-      [&](const auto& constraint) -> double {
-        return std::fabs(
-          constraint.target - _getVolume(
-            positions,
-            constraint.indices[0],
-            constraint.indices[1],
-            constraint.indices[2],
-            constraint.indices[3]
-          )
-        );
+  /* Propagate all prototypes defined by the stereocenter into constraints
+   * using distances from the positions
+   */
+  const auto constraints = TemplateMagic::map(
+    prototypes,
+    DistanceGeometry::detail::makePropagator(
+      [&positions](const unsigned& i, const unsigned& j) {
+        return (
+          positions[i] - positions[j]
+        ).norm();
       }
-    );
+    )
+  );
 
-    // Return the summation of the deviations
-    return TemplateMagic::numeric::sum(deviations);
-  }
+  /* Calculate deviations for each constraint between the chirality constraint
+   * and the volume of the tetrahedron from the positions. Since the target 
+   * volume is calculated using the same distances and the two quantities are
+   * therefore different only in sign, the deviation is either zero or two times
+   * the volume.
+   */
+  const auto deviations = TemplateMagic::map(
+    constraints,
+    [&](const auto& constraint) -> double {
+      return std::fabs(
+        constraint.target - _getVolume(
+          positions,
+          constraint.indices[0],
+          constraint.indices[1],
+          constraint.indices[2],
+          constraint.indices[3]
+        )
+      );
+    }
+  );
+
+  // Return the summation of the deviations
+  return TemplateMagic::numeric::sum(deviations);
 }
 
 SymmetryFit::Fit::Fit(
   const Symmetry::Name& symmetryName,
   const unsigned& assignment,
-  const std::vector<AtomIndexType> adjacentAtoms,
+  const std::vector<AtomIndexType>& adjacentAtoms,
   const Delib::PositionCollection& positions,
   std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr
 ) : symmetryName(symmetryName),
@@ -260,7 +259,9 @@ SymmetryFit::SymmetryFit(
       Symmetry::size(symmetryName) != Symmetry::size(
         CNStereocenterPtr -> symmetry
       )
-    ) continue;
+    ) {
+      continue;
+    }
 
     // Change the symmetry of the CNStereocenter
     CNStereocenterPtr -> changeSymmetry(symmetryName);

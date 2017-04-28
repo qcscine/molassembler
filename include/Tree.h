@@ -101,7 +101,7 @@ struct Node : std::enable_shared_from_this<Node<T>> {
       std::back_inserter(nodesToVisit)
     );
 
-    while(nodesToVisit.size() != 0) {
+    while(!nodesToVisit.empty()) {
       auto current = nodesToVisit.front();
       nodesToVisit.pop_front();
 
@@ -128,7 +128,7 @@ struct Node : std::enable_shared_from_this<Node<T>> {
   }
 
   bool isLeaf() const {
-    return children.size() == 0;
+    return children.empty();
   }
 
   /*! Converts this tree into graphviz format

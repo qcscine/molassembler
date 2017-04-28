@@ -1,5 +1,4 @@
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "VectorView.h"
 #include <cassert>
 
 namespace MoleculeManip {
@@ -15,7 +14,7 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N)
   _initRandomEngine();
 }
 
-DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) : 
+DistanceBoundsMatrix::DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) : 
   _boundsMatrix(matrix),
   _N(matrix.rows()) {
   assert(matrix.rows() == matrix.cols());
@@ -54,9 +53,9 @@ bool DistanceBoundsMatrix::setLowerBound(
   ) {
     _boundsMatrix.lowerBound(i, j) = newLowerBound;
     return true;
-  } else {
-    return false;
-  }
+  } 
+
+  return false;
 }
 
 bool DistanceBoundsMatrix::setUpperBound(
@@ -70,9 +69,9 @@ bool DistanceBoundsMatrix::setUpperBound(
   ) {
     _boundsMatrix.upperBound(i, j) = newUpperBound;
     return true;
-  } else {
-    return false;
   }
+
+  return false;
 }
 
 /* Information */
@@ -118,7 +117,9 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
           std::min(i, j),
           std::max(i, j)
         ) > 0
-      ) continue; // skip on-diagonal and already-chosen elements
+      ) { // skip on-diagonal and already-chosen elements
+        continue; 
+      }
 
       std::uniform_real_distribution<> uniformDistribution(
         boundsCopy.lowerBound(i, j),
@@ -157,7 +158,9 @@ unsigned DistanceBoundsMatrix::boundInconsistencies() const {
 
   for(unsigned i = 0; i < _N; i++) {
     for(unsigned j = i + 1; j < _N; j++) {
-      if(lowerBound(i, j) > upperBound(i, j)) count++;
+      if(lowerBound(i, j) > upperBound(i, j)) {
+        count += 1;
+      }
     }
   }
 

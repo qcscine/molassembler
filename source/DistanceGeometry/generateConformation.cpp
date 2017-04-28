@@ -305,26 +305,32 @@ DGDebugData debugDistanceGeometry(
     );
 
     // initial step
-    auto stepResult = DGConjugatedGradientDescentSolver.step(problem, vectorizedPositions);
+    auto stepResult = DGConjugatedGradientDescentSolver.step(
+      problem,
+      vectorizedPositions
+    );
     unsigned iterations = 1;
 
     // add a refinement step
     refinementSteps.emplace_back(
       vectorizedPositions,
-      problem.value(vectorizedPositions),
-      getGradient(vectorizedPositions),
+      stepResult.value,
+      ( -1 * stepResult.negativeGradient),
       problem.compress
     );
 
     while(stepResult.status == cppoptlib::Status::Continue && iterations < 1e5) {
-      stepResult = DGConjugatedGradientDescentSolver.step(problem, vectorizedPositions);
+      stepResult = DGConjugatedGradientDescentSolver.step(
+        problem,
+        vectorizedPositions
+      );
 
       iterations += 1;
 
       refinementSteps.emplace_back(
         vectorizedPositions,
-        problem.value(vectorizedPositions),
-        getGradient(vectorizedPositions),
+        stepResult.value,
+        ( -1 * stepResult.negativeGradient),
         problem.compress
       );
     }

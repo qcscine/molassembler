@@ -2,7 +2,7 @@
 #define INCLUDE_CN_STEREOCENTER_H
 
 #include "Stereocenter.h"
-#include "steric_uniqueness/Assignment.h"
+#include "geometry_assignment/Assignment.h"
 #include "symmetry_information/Symmetries.h"
 
 using namespace std::string_literals;
