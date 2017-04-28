@@ -4,8 +4,6 @@
 /* TODO
  * - remove dependency
  */
-#include "static_math/cmath.h"
-
 #include "Math.h"
 
 #include <array>
@@ -36,7 +34,7 @@ struct Vector {
   }
 
   constexpr double norm() const {
-    return smath::sqrt(
+    return Math::sqrt(
       this -> data[0] * this -> data[0]
       + this -> data[1] * this -> data[1]
       + this -> data[2] * this -> data[2]
@@ -79,6 +77,16 @@ struct Vector {
         this->data[0] / constant,
         this->data[1] / constant,
         this->data[2] / constant
+      }
+    };
+  }
+
+  constexpr Vector operator - () const {
+    return Vector {
+      {
+        - this -> data[0],
+        - this -> data[1],
+        - this -> data[2]
       }
     };
   }

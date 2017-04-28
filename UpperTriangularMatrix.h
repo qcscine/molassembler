@@ -29,8 +29,8 @@ namespace index_conversion {
     UnsignedType i {
       size - 2 
       - static_cast<unsigned>(
-        smath::floor(
-          smath::sqrt(
+        Math::floor(
+          Math::sqrt(
             0.0
             + 4 * size * (size - 1) 
             - 8 * k 
