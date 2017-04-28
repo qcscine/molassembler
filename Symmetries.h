@@ -1,21 +1,40 @@
 #ifndef LIB_INCLUDE_SYMMETRIES_H
 #define LIB_INCLUDE_SYMMETRIES_H
 
+/* If USE_ALTERNATE_TETRAHEDRA is defined, a reduced set of tetrahedra
+ * is used to subdivide higher symmetries. This may provide less information 
+ * about the geometry when used but should improve performance as fewer 
+ * tetrahedron volumes must be calculated.
+ */
+#define USE_ALTERNATE_TETRAHEDRA
+
+/* If USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE is defined, a table of all
+ * angles resulting from a predefined set of positions is generated and that
+ * symmetry's angle function turns into what is essentially a lookup table.
+ */
+#define USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
+
+#include "Eigen/Core"
+#include "boost/optional.hpp"
+
+#ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
+#include "ConstexprAngles.h"
+#endif
+
 #include <map>
 #include <vector>
 #include <functional>
 #include <algorithm>
-#include "boost/optional.hpp"
-#include <Eigen/Core>
 
 /* TODO
  * - Debug and Release builds
- * - Square antiprismatic coordinates / angles need improvement, see tests.
- * - Improve trigonal pyramidal to get 107.5 angle as a parameter. Currently, 
- *   the rotation angle choice of 111.5 works well, but not ideal.
- * - Consider making constexpr calculation of angles from coordinates into
- *   const lookup table (coordinates would need to be std::array<double, 3>),
- *   and would require a constexpr math library
+ * - Improve trigonal pyramidal coordinates definition to get 107.5 angle as a
+ *   parameter.  Currently, the rotation angle choice of 111.5 works well, but
+ *   completely arbitrary!
+ * - Consider making constexpr calculation of all angles from coordinates into
+ *   const lookup table
+ *
+ *   + All angle functions are lookup tables
  */
 
 namespace Symmetry {
@@ -130,6 +149,6 @@ inline const TetrahedronList& tetrahedra(const Name& name) {
   return symmetryData.at(name).tetrahedra;
 }
 
-} // eo namespace
+} // namespace Symmetry
 
 #endif

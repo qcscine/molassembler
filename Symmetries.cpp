@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <Eigen/Geometry>
 
-#define USE_ALTERNATE_TETRAHEDRA
-
 namespace Symmetry {
 
 const std::vector<Name> allNames {
@@ -726,9 +724,8 @@ const std::map<Name, SymmetryInformation> symmetryData {
 #ifdef USE_ALTERNATE_TETRAHEDRA
         // Alternate
         {0, 1, 5, 2},
-        {1, 2, 5, 3},
         {2, 3, 5, 4},
-        {3, 4, 5, 0}
+        {4, 5, boost::none, 0}
 #else
         // Regular
         {0, boost::none, 1, 5},
@@ -898,6 +895,18 @@ const std::map<Name, SymmetryInformation> symmetryData {
          */
         {5, 4, 7, 6, 1, 0, 3, 2}, 
       },
+#ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
+      [](
+        const unsigned& a,
+        const unsigned& b
+      ) -> double {
+        if(a == b) return 0;
+        return squareAntiprismaticAngles.at(
+          std::min(a, b),
+          std::max(a, b)
+        );
+      },
+#else
       [](
         const unsigned& a,
         const unsigned& b
@@ -918,6 +927,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
           }
         }
       },
+#endif
       {
 #ifdef USE_ALTERNATE_TETRAHEDRA
         // Alternate
@@ -952,4 +962,4 @@ const std::map<Name, SymmetryInformation> symmetryData {
   }
 };
 
-} // eo namespace
+} // namespace Symmetry

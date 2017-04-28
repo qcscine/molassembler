@@ -66,12 +66,13 @@ set_target_properties(
 
 include_directories(SYSTEM
   ${EIGEN3_INCLUDE_DIRS}
+  "/home/jan-grimo/PhD/projects/libs/"
 )
 
 if(CLANG_TIDY_EXE)
   set_target_properties(
     symmetries PROPERTIES
-    CXX_CLANG_TIDY "{DO_CLANG_TIDY}"
+    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
   )
 endif()
 
@@ -83,12 +84,6 @@ set_target_properties(
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
-if(CLANG_TIDY_EXE)
-  set_target_properties(
-    symmetryTests PROPERTIES
-    CXX_CLANG_TIDY "{DO_CLANG_TIDY}"
-  )
-endif()
 target_include_directories(symmetryTests PRIVATE ${BOOST_ROOT})
 target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)
 
