@@ -68,7 +68,7 @@ set_target_properties(
 if(CLANG_TIDY_EXE)
   set_target_properties(
     Assignment PROPERTIES
-    CXX_CLANG_TIDY "{DO_CLANG_TIDY}"
+    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
   )
 endif()
 
@@ -84,12 +84,6 @@ set_target_properties(
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
-if(CLANG_TIDY_EXE)
-  set_target_properties(
-    AssignmentTests PROPERTIES
-    CXX_CLANG_TIDY "{DO_CLANG_TIDY}"
-  )
-endif()
 target_include_directories(AssignmentTests PRIVATE ${BOOST_INCLUDE_DIRS})
 target_link_libraries(AssignmentTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} Assignment)
 
