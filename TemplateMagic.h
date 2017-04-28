@@ -5,10 +5,39 @@
 #include <algorithm>
 #include <numeric>
 #include <set>
+#include <vector>
 #include <map>
 #include "boost/optional.hpp"
 
 namespace TemplateMagic {
+/* Logical operator work -----------------------------------------------------*/
+// n-argument boolean XOR with the definition: only one argument may be true
+namespace detail {
+
+  constexpr unsigned TMPSum() {
+    return 0;
+  }
+
+  template<typename T1, typename... T>
+  constexpr unsigned TMPSum(T1 a, T ... pack) {
+    return a + TMPSum(pack ...);
+  }
+
+}
+
+//! Template parameter-pack exclusive or of booleans
+template<typename ... Bools>
+constexpr bool XOR(Bools ... bools) {
+  return detail::TMPSum(bools ...) == 1;
+}
+  
+//!  Composable size function
+template<typename Container>
+unsigned size(
+  Container container
+) {
+  return container.size();
+}
 
 /*! 
  * To help with creating consistent logical operators for multi-component
@@ -55,22 +84,8 @@ boost::optional<bool> componentSmaller(
   else return boost::none;
 }
 
-/*! 
- * Composable sum function. Returns the type the container contains, assuming
- * monadic behavior on plus operator (value_type + value_type = value_type).
- */
-template<class ContainerType>
-typename ContainerType::value_type sum(const ContainerType& container) {
-  return std::accumulate(
-    container.begin(),
-    container.end(),
-    typename ContainerType::value_type(0),
-    std::plus<
-      typename ContainerType::value_type
-    >()
-  );
-}
-
+/* Composition improvements --------------------------------------------------*/
+//! Specialized map function for arrays
 template<
   typename T,
   long unsigned size,
@@ -129,6 +144,10 @@ auto map(
   return returnContainer;
 }
 
+/*! Inverts the map. Returns a map that maps the opposite way. Be warned that 
+ * this will lead to loss of information if the original map has duplicate
+ * values.
+ */
 template<typename T, typename U>
 std::map<U, T> invertMap(const std::map<T, U>& map) {
   std::map<U, T> flipped;
@@ -221,9 +240,60 @@ auto zipMap(
   return data;
 }
 
-/*!
- * Composable accumulate function.
+/*! Alternate implementation of zip mapping where the contained types are 
+ * deduced instead of assuming the STL container form.
  */
+template<
+  class ContainerT,
+  class ContainerU,
+  class BinaryFunction
+>
+auto zipMapAlternate(
+  const ContainerT& containerT,
+  const ContainerU& containerU,
+  BinaryFunction&& function
+) {
+  using T = decltype(
+    *(
+      containerT.begin()
+    )
+  );
+  using U = decltype(
+    *(
+      containerU.begin()
+    )
+  );
+
+  using FunctionReturnType = decltype(
+    function(
+      std::declval<T>(),
+      std::declval<U>()
+    )
+  );
+
+  std::vector<FunctionReturnType> data;
+
+  const unsigned minSize = std::min(containerT.size(), containerU.size());
+
+  auto tIter = containerT.begin();
+  auto uIter = containerU.begin();
+
+  for(unsigned read = 0; read < minSize; read++) {
+    data.emplace_back(
+      function(
+        *tIter,
+        *uIter
+      )
+    );
+
+    tIter++;
+    uIter++;
+  }
+
+  return data;
+}
+
+//!  Composable accumulate function.
 template<
   typename T,
   template<typename, typename = std::allocator<T>> class Container,
@@ -243,9 +313,7 @@ auto accumulate(
   );
 }
 
-/*!
- * Composable set union without comparator
- */
+//!  Composable set union without comparator
 template<typename T>
 std::set<T> set_intersection(
   std::set<T> a,
@@ -281,9 +349,7 @@ std::set<T, Comparator> set_intersection(
   );
   return returnSet;
 }
-/*!
- * Composable set union without comparator
- */
+//!  Composable set union without comparator
 template<typename T>
 std::set<T > set_union(
   std::set<T> a,
@@ -300,9 +366,7 @@ std::set<T > set_union(
   return returnSet;
 }
 
-/*!
- * Composable set union with comparator
- */
+//!  Composable set union with comparator
 template<typename T, typename Comparator>
 std::set<T, Comparator> set_union(
   std::set<T, Comparator> a,
@@ -320,73 +384,6 @@ std::set<T, Comparator> set_union(
   return returnSet;
 }
 
-/*!
- * Identical pair map
- */
-template<typename T, class UnaryFunction>
-auto pair_map(
-  const std::pair<T, T>& pair,
-  UnaryFunction&& function
-) {
-  using FunctionReturnType = decltype(UnaryFunction(std::declval<T>()));
-  return std::pair<FunctionReturnType, FunctionReturnType>({
-    function(pair.first),
-    function(pair.second)
-  });
-}
-
-//! Identical pair which selector
-template<typename T, class UnaryPredicate>
-T& which(
-  const std::pair<T, T>& pair,
-  UnaryPredicate&& function
-) {
-  auto boolPair = pair_map(
-    pair,
-    std::forward<UnaryPredicate>(function)
-  );
-  if(boolPair.first && boolPair.second) {
-    throw(
-      std::logic_error("Both elements of the pair fulfill the predicate!")
-    );
-  } else if(function(pair.first)) {
-    return pair.first;
-  } else if(function(pair.second)) {
-    return pair.second;
-  } else {
-    throw(
-      std::logic_error("Neither element of the pair fulfills the predicate!")
-    );
-  }
-}
-
-// n-argument boolean XOR with the definition: only one argument may be true
-namespace detail {
-
-  constexpr unsigned TMPSum() {
-    return 0;
-  }
-
-  template<typename T1, typename... T>
-  constexpr unsigned TMPSum(T1 a, T ... pack) {
-    return a + TMPSum(pack ...);
-  }
-
-}
-
-//! Template parameter-pack exclusive or of booleans
-template<typename ... Bools>
-constexpr bool XOR(Bools ... bools) {
-  return detail::TMPSum(bools ...) == 1;
-}
-  
-//!  Composable size function
-template<typename Container>
-unsigned size(
-  Container container
-) {
-  return container.size();
-}
 
 //! Tests if all elements of a container are true
 template<class Container>
@@ -488,6 +485,57 @@ template<
   return count;
 }
 
+/* Pair helper functions -----------------------------------------------------*/
+template<typename T, class UnaryFunction>
+auto pair_map(
+  const std::pair<T, T>& pair,
+  UnaryFunction&& function
+) __attribute__ ((deprecated));
+
+//!  Identical pair map
+template<typename T, class UnaryFunction>
+auto pair_map(
+  const std::pair<T, T>& pair,
+  UnaryFunction&& function
+) {
+  using FunctionReturnType = decltype(UnaryFunction(std::declval<T>()));
+  return std::pair<FunctionReturnType, FunctionReturnType>({
+    function(pair.first),
+    function(pair.second)
+  });
+}
+
+template<typename T, class UnaryPredicate>
+T& which(
+  const std::pair<T, T>& pair,
+  UnaryPredicate&& function
+) __attribute__ ((deprecated));
+
+//! Identical pair which selector
+template<typename T, class UnaryPredicate>
+T& which(
+  const std::pair<T, T>& pair,
+  UnaryPredicate&& function
+) {
+  auto boolPair = pair_map(
+    pair,
+    std::forward<UnaryPredicate>(function)
+  );
+  if(boolPair.first && boolPair.second) {
+    throw(
+      std::logic_error("Both elements of the pair fulfill the predicate!")
+    );
+  } else if(function(pair.first)) {
+    return pair.first;
+  } else if(function(pair.second)) {
+    return pair.second;
+  } else {
+    throw(
+      std::logic_error("Neither element of the pair fulfills the predicate!")
+    );
+  }
+}
+
 /*! Condenses an iterable container into a comma-separated string of string 
  * representations of its contents. Requires container iterators to satisfy
  * BidirectionalIterators and the contained type to be a valid template
@@ -514,6 +562,52 @@ template<
   return representation;
 }
 
+/* numeric helper functions --------------------------------------------------*/
+namespace numeric {
+
+/*! 
+ * Composable sum function. Returns the type the container contains, assuming
+ * monadic behavior on operator + (value_type + value_type = value_type).
+ * Container must implement begin and end members.
+ */
+template<class ContainerType>
+typename std::remove_reference<
+  decltype(
+    *(
+      std::declval<ContainerType>()
+    ).begin()
+  )
+>::type
+sum(const ContainerType& container) {
+  using ValueType = typename std::remove_reference<decltype(*container.begin())>::type;
+
+  return std::accumulate(
+    container.begin(),
+    container.end(),
+    ValueType {0},
+    std::plus<ValueType>()
+  );
 }
+
+/*!
+ * Composable average function. Returns the average (always as a double) of any
+ * basic data type. An assert checks whether the function receives an empty
+ * container.
+ *
+ * Container must implement begin, end and size members, the contained type
+ * must have operator+ and be convertible to double.
+ */
+template<class ContainerType>
+double average(const ContainerType& container) {
+  assert(container.begin() != container.end());
+
+  return static_cast<double>(
+    sum(container)
+  ) / container.size();
+}
+
+} // namespace numeric
+
+} // namespace TemplateMagic
 
 #endif
