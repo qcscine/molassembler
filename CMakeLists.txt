@@ -40,7 +40,7 @@ set_target_properties(
 if(CLANG_TIDY_EXE)
   set_target_properties(
     magicTests PROPERTIES
-    CXX_CLANG_TIDY "{DO_CLANG_TIDY}"
+    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
   )
 endif()
 target_include_directories(magicTests PRIVATE ${BOOST_ROOT})

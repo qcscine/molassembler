@@ -1,5 +1,5 @@
-#ifndef INCLUDE_RNG_H
-#define INCLUDE_RNG_H
+#ifndef INCLUDE_TEMPLATE_MAGIC_RANDOM_H
+#define INCLUDE_TEMPLATE_MAGIC_RANDOM_H
 
 #include <random>
 #include <vector>
