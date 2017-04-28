@@ -11,7 +11,7 @@ namespace make_constexpr_array {
     const std::array<ConstexprMagic::Vector, size>& positions,
     const size_t& i
   ) {
-    const auto indexPair = ConstexprMagic::UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<size * (size - 1) /2>(i);
+    const auto indexPair = ConstexprMagic::UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<size>(i);
 
     return ConstexprMagic::toDegrees(
       ConstexprMagic::angle(
@@ -45,17 +45,21 @@ namespace make_constexpr_array {
 // Say we have three positions
 constexpr std::array<
   ConstexprMagic::Vector,
-  3
+  8
 > positions {{
   {{-0.00928803, 0.61156848, 0.79113698}},
   {{0.79562737, 0.60564101, -0.01326839}},
-  {{0.79562737, -0.60564101, -0.01326839}}
+  {{0.79562737, -0.60564101, -0.01326839}},
+  {{-0.00928803, -0.61156848, 0.79113698}},
+  {{-0.3961716, 0.85216935, -0.34184129}},
+  {{0.29375817, 0., -0.95587977}},
+  {{-0.3961716, -0.85216935, -0.34184129}},
+  {{-0.98308669, 0., 0.18314084}}
 }};
 
-constexpr auto matrixData = make_constexpr_array::makeArray<3>(positions);
 
-constexpr auto angleMatrix = ConstexprMagic::makeUpperTriangularMatrix<3>(
-  matrixData
+constexpr auto angleMatrix = ConstexprMagic::makeUpperTriangularMatrix<8>(
+  make_constexpr_array::makeArray<8>(positions)
 );
 
 int main() {

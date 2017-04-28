@@ -15,24 +15,24 @@ namespace ConstexprMagic {
 namespace UpperTriangularMatrixImpl {
 
 namespace index_conversion {
-  template<unsigned long size, typename UnsignedType>
+  template<unsigned long matrixSize, typename UnsignedType>
   constexpr unsigned toSingleIndex(const UnsignedType& i, const UnsignedType& j) {
     return (
-      size * (size - 1) / 2
-      - (size - i) * ((size - i) - 1) / 2 
+      matrixSize * (matrixSize - 1) / 2
+      - (matrixSize - i) * ((matrixSize - i) - 1) / 2 
       + j - i - 1
     );
   }
 
-  template<unsigned long size, typename UnsignedType>
+  template<unsigned long matrixSize, typename UnsignedType>
   constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType& k) {
     UnsignedType i {
-      size - 2 
+      matrixSize - 2 
       - static_cast<unsigned>(
         Math::floor(
           Math::sqrt(
             0.0
-            + 4 * size * (size - 1) 
+            + 4 * matrixSize * (matrixSize - 1) 
             - 8 * k 
             - 7
           ) / 2.0 
@@ -45,8 +45,8 @@ namespace index_conversion {
       i,
       (
         k + i + 1 
-        - size * (size - 1) / 2 
-        + (size - i) * ((size - i) - 1) / 2
+        - matrixSize * (matrixSize - 1) / 2 
+        + (matrixSize - i) * ((matrixSize - i) - 1) / 2
       )
     };
   }
@@ -54,19 +54,19 @@ namespace index_conversion {
 
 } // namespace UpperTriangularMatrixImpl
 
-template<typename ValueType, unsigned long size>
+template<typename ValueType, unsigned long matrixSize>
 class UpperTriangularMatrix {
 private:
 /* State */
-  std::array<ValueType, size * (size - 1) / 2> _data;
+  std::array<ValueType, matrixSize * (matrixSize - 1) / 2> _data;
 
 public:
 /* Public information */
-  const unsigned N = size;
+  const unsigned N = matrixSize;
 
 /* Constructors */
   constexpr UpperTriangularMatrix(
-    const std::array<ValueType, size * (size - 1) / 2>& data
+    const std::array<ValueType, matrixSize * (matrixSize - 1) / 2>& data
   ) : _data(data)
   {}
 
@@ -80,7 +80,7 @@ public:
     }
 
     return _data[
-      UpperTriangularMatrixImpl::index_conversion::toSingleIndex<size>(i, j)
+      UpperTriangularMatrixImpl::index_conversion::toSingleIndex<matrixSize>(i, j)
     ];
   }
 
@@ -94,16 +94,16 @@ public:
     }
 
     return _data[
-      UpperTriangularMatrixImpl::index_conversion::toSingleIndex<size>(i, j)
+      UpperTriangularMatrixImpl::index_conversion::toSingleIndex<matrixSize>(i, j)
     ];
   }
 };
 
-template<unsigned long size, typename ValueType>
-constexpr UpperTriangularMatrix<ValueType, size> makeUpperTriangularMatrix(
-  const std::array<ValueType, size * (size - 1) / 2>& data
+template<unsigned long matrixSize, typename ValueType>
+constexpr UpperTriangularMatrix<ValueType, matrixSize> makeUpperTriangularMatrix(
+  const std::array<ValueType, matrixSize * (matrixSize - 1) / 2>& data
 ) {
-  return UpperTriangularMatrix<ValueType, size>(data);
+  return UpperTriangularMatrix<ValueType, matrixSize>(data);
 }
 
 } // namespace ConstexprMagic
