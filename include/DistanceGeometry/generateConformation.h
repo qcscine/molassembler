@@ -151,16 +151,19 @@ struct RefinementStepData {
   Eigen::VectorXd positions;
   double error;
   Eigen::VectorXd gradient;
+  double proportionCorrectChiralityConstraints;
   bool compress;
 
   RefinementStepData(
     const Eigen::VectorXd& positions,
     const double& error,
     const Eigen::VectorXd& gradient,
+    const double& proportionCorrectChiralityConstraints,
     const bool& compress
   ) : positions(positions),
       error(error),
       gradient(gradient),
+      proportionCorrectChiralityConstraints(proportionCorrectChiralityConstraints),
       compress(compress)
   {}
 };

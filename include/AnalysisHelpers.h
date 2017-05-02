@@ -55,8 +55,10 @@ void writeDGPOVandProgressFiles(
     progressFile << stepData.error << "," 
       << stepData.gradient.norm() << "," 
       << static_cast<unsigned>(stepData.compress) << "," 
-      << totalAbs4D << "\n";
+      << totalAbs4D << ","
+      << stepData.proportionCorrectChiralityConstraints << "\n";
 
+    // Write the POV file for this step
     std::stringstream filename;
     filename << spaceFreeName << "-"
       << structNum << "-"

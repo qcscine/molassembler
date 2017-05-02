@@ -132,7 +132,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
        * chirality constraints should not have to pass an energetic maximum to
        * converge properly as opposed to tetrahedra with volume).
        */
-      if(!problem.moreThanHalfChiralityConstraintsCorrect(vectorizedPositions)) {
+      if(problem.proportionCorrectChiralityConstraints(vectorizedPositions) < 0.5) {
         problem.invertY(vectorizedPositions);
       }
     }
@@ -153,10 +153,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         throw std::runtime_error("Refinement failures exceeded threshold!");
       }
     } else {
-      // Make a count of correct chirality constraints
-      auto count = problem.countCorrectChiralityConstraints(vectorizedPositions);
-
-      if(count.incorrectNonZeroChiralityConstraints > 0) {
+      if(problem.proportionCorrectChiralityConstraints(vectorizedPositions) != 1.0) {
         failures += 1;
         
         if( // fail-if
@@ -280,6 +277,7 @@ DGDebugData debugDistanceGeometry(
         vectorizedPositions,
         problem.value(vectorizedPositions),
         getGradient(vectorizedPositions),
+        problem.proportionCorrectChiralityConstraints(vectorizedPositions),
         false
       );
 
@@ -291,7 +289,7 @@ DGDebugData debugDistanceGeometry(
        * chirality constraints should not have to pass an energetic maximum to
        * converge properly as opposed to tetrahedra with volume).
        */
-      if(!problem.moreThanHalfChiralityConstraintsCorrect(vectorizedPositions)) {
+      if(problem.proportionCorrectChiralityConstraints(vectorizedPositions) < 0.5) {
         problem.invertY(vectorizedPositions);
       }
     }
@@ -301,6 +299,7 @@ DGDebugData debugDistanceGeometry(
       vectorizedPositions,
       problem.value(vectorizedPositions),
       getGradient(vectorizedPositions),
+      problem.proportionCorrectChiralityConstraints(vectorizedPositions),
       false
     );
 
@@ -316,6 +315,7 @@ DGDebugData debugDistanceGeometry(
       vectorizedPositions,
       stepResult.value,
       ( -1 * stepResult.negativeGradient),
+      problem.proportionCorrectChiralityConstraints(vectorizedPositions),
       problem.compress
     );
 
@@ -331,14 +331,15 @@ DGDebugData debugDistanceGeometry(
         vectorizedPositions,
         stepResult.value,
         ( -1 * stepResult.negativeGradient),
+        problem.proportionCorrectChiralityConstraints(vectorizedPositions),
         problem.compress
       );
     }
 
     // What to do if the optimization fails
     // Make a count of correct chirality constraints
-    auto count = problem.countCorrectChiralityConstraints(vectorizedPositions);
-    if(count.incorrectNonZeroChiralityConstraints > 0
+    if(
+      problem.proportionCorrectChiralityConstraints(vectorizedPositions) != 1.0
       || iterations == 1e5
     ) {
       resultObject.failures += 1;

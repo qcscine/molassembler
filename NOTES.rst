@@ -1,5 +1,6 @@
 TODO
 ----
+- tests/DGRefinement should show number of correct stereocenters over time
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)
 - Figure out what's up with Octahedral in the newest iteration of DG
@@ -7,6 +8,7 @@ TODO
   in code / analysis
 - Try out other optimization options besides conjugated gradient, perhaps others
   are faster / better. Maybe even implement the Hessian in DGRefinementProblem?
+- Set up CMake properly
 - Consider penalization of unsuitable geometries (using VSEPR /
   determineLocalGeometry to judge) in SymmetryFit -> see what happens when you
   try to load testosterone, which has some strained tetrahedral centers that are

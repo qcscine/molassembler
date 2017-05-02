@@ -41,11 +41,6 @@ public:
   using typename cppoptlib::Problem<T>::THessian;
 
 private:
-  struct ChiralityConstraintCount {
-    unsigned nonZeroChiralityConstraints = 0,
-             incorrectNonZeroChiralityConstraints = 0;
-  };
-
 /* Private member functions */
   //! Make an Eigen Vector4d of an atomic index.
   template<int vectorSize = 4>
@@ -202,53 +197,36 @@ public:
     }
   }
 
-  ChiralityConstraintCount countCorrectChiralityConstraints(const TVector& v) const {
-    ChiralityConstraintCount count;
+  double proportionCorrectChiralityConstraints(const TVector& v) const {
+    unsigned nonZeroChiralityConstraints = 0;
+    unsigned incorrectNonZeroChiralityConstraints = 0;
 
     for(const auto& chiralityConstraint : constraints) {
-      if(chiralityConstraint.target <= 1e-8) {
-        count.nonZeroChiralityConstraints += 1;
-      }
+      if(std::fabs(chiralityConstraint.target) > 1e-4) {
+        nonZeroChiralityConstraints += 1;
 
-      auto eval = _getTetrahedronReducedVolume(
-        v,
-        chiralityConstraint.indices
-      );
+        auto eval = _getTetrahedronReducedVolume(
+          v,
+          chiralityConstraint.indices
+        );
 
-      if( // can this be simplified? -> sign bit XOR?
-        ( eval < 0 && chiralityConstraint.target > 0)
-        || (eval > 0 && chiralityConstraint.target < 0)
-      ) {
-        count.incorrectNonZeroChiralityConstraints += 1;
+        if( // can this be simplified? -> sign bit XOR?
+          ( eval < 0 && chiralityConstraint.target > 0)
+          || (eval > 0 && chiralityConstraint.target < 0)
+        ) {
+          incorrectNonZeroChiralityConstraints += 1;
+        }
+
       }
     }
 
-    return count;
+    if(nonZeroChiralityConstraints == 0) {
+      return 1;
+    }
 
-  }
-
-  bool moreThanHalfChiralityConstraintsCorrect(const TVector& v) const {
-    auto count = countCorrectChiralityConstraints(v);
-
-    return (
-      // if there are no non-zero constraints, return immediately
-      count.nonZeroChiralityConstraints == 0 
-      || ( // otherwise, do a proper check
-        (
-          static_cast<double>(count.incorrectNonZeroChiralityConstraints) 
-          / count.nonZeroChiralityConstraints 
-        ) >= 0.5
-      )
-    );
-  }
-
-  bool allChiralityConstraintsCorrect(const TVector& v) const {
-    auto count = countCorrectChiralityConstraints(v);
-
-    return (
-      count.nonZeroChiralityConstraints == 0
-      || count.incorrectNonZeroChiralityConstraints == 0
-    );
+    return static_cast<double>(
+      nonZeroChiralityConstraints - incorrectNonZeroChiralityConstraints
+    ) / nonZeroChiralityConstraints;
   }
 
   T chiralError(const TVector& v) const {
@@ -300,7 +278,7 @@ public:
     /* At the beginning of every gradient calculation, we check if all chiral
      * centers are correct, so we can switch on 4th-dimension compression
      */
-    if(!compress && allChiralityConstraintsCorrect(v)) {
+    if(!compress && proportionCorrectChiralityConstraints(v) == 1.0) {
       compress = true;
     }
 

@@ -18,6 +18,7 @@ error <- filedata$V1
 gradientNorm <- filedata$V2
 compress <- filedata$V3
 totalAbs4D <- filedata$V4
+proportionCorrect <- filedata$V5
 
 lastUncompressed <- tail(which(compress == 0), n=1)
 firstCompressed <- head(which(compress == 1), n=1)
@@ -28,10 +29,10 @@ baseName <- strsplit(filename, "\\.")
 pdf(
   paste(baseName[[1]][1], ".pdf", sep=""), 
   width=14,
-  height=7
+  height=8
 )
 par(
-  mfrow=c(3, 1),
+  mfrow=c(4, 1),
   mar=c(0, 4, 0, 1),
   oma=c(4, 0, 1, 0)
 )
@@ -73,13 +74,28 @@ plot(
   xSeq,
   totalAbs4D,
   type="n",
-  xlab="Step number",
-  ylab="Total absolute fourth dimension component"
+  xlab="",
+  ylab="Sum abs. 4th dim. component",
+  xaxt="n"
 )
 
 lines(
   xSeq,
   totalAbs4D
+)
+
+# proportion correct chirality constraints
+plot(
+  xSeq,
+  proportionCorrect,
+  type="n",
+  xlab="Step number",
+  ylab="Fraction correct chir. constr."
+)
+
+lines(
+  xSeq,
+  proportionCorrect
 )
 
 abline(v=mean(lastUncompressed, firstCompressed), col="blue")
