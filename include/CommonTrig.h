@@ -62,8 +62,8 @@ double dihedralLength(
   const double& dihedral
 );
 
-} // eo CommonTrig
+} // namespace CommonTrig
 
-}
+} // namespace MoleculeManip
 
 #endif

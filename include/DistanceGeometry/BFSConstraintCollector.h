@@ -45,9 +45,9 @@ private:
   }
 
   inline double _getAngle(
-    AtomIndexType& i,
-    AtomIndexType& j,
-    AtomIndexType& k
+    const AtomIndexType& i,
+    const AtomIndexType& j,
+    const AtomIndexType& k
   ) {
     return _toRadians(
       _stereocenterMap[j] -> angle(i, j, k)

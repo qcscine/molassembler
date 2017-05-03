@@ -46,16 +46,12 @@ void writeDGPOVandProgressFiles(
     assert(stepData.positions.size() % dimensionality == 0);
     const unsigned N = stepData.positions.size() / dimensionality;
 
-    // Collect sum of absolute 4D values
-    double totalAbs4D = 0;
-    for(unsigned i = 0; i < N; i++) {
-      totalAbs4D += std::fabs(stepData.positions[4 * i + 3]);
-    }
-
-    progressFile << stepData.error << "," 
+    progressFile 
+      << stepData.distanceError << "," 
+      << stepData.chiralError << "," 
+      << stepData.fourthDimError << "," 
       << stepData.gradient.norm() << "," 
       << static_cast<unsigned>(stepData.compress) << "," 
-      << totalAbs4D << ","
       << stepData.proportionCorrectChiralityConstraints << "\n";
 
     // Write the POV file for this step

@@ -19,8 +19,8 @@ private:
 public:
 /* Constructors */
   MetricMatrix() = delete;
-  MetricMatrix(Eigen::MatrixXd&& matrix); // want to be able to modify temporary
-  MetricMatrix(const Eigen::MatrixXd& matrix); 
+  explicit MetricMatrix(Eigen::MatrixXd&& matrix); 
+  explicit MetricMatrix(const Eigen::MatrixXd& matrix); 
 
 /* Information */
   //! Allow const ref access to underlying matrix

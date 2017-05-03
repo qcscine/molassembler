@@ -48,7 +48,9 @@ enum class Particulars {
   // In generateConformation, show the Trees generated from the molecules
   gatherDGInformationTrees,
   // In BFSConstraintCollector, show the node index operator() is called on
-  BFSConstraintCollectorVisitCall
+  BFSConstraintCollectorVisitCall,
+  // in debugDistanceGeometry, progress information
+  DGDebugInfo,
 };
 
 

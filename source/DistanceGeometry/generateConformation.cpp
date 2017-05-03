@@ -272,15 +272,6 @@ DGDebugData debugDistanceGeometry(
     };
 
     if(useYInversionTrick) {
-      // Add the structure before inversion
-      refinementSteps.emplace_back(
-        vectorizedPositions,
-        problem.value(vectorizedPositions),
-        getGradient(vectorizedPositions),
-        problem.proportionCorrectChiralityConstraints(vectorizedPositions),
-        false
-      );
-
       /* If a count of chirality constraints reveals that more than half are
        * incorrect, we can invert the structure (by multiplying e.g. all y
        * coordinates with -1) and then have more than half of chirality
@@ -290,14 +281,37 @@ DGDebugData debugDistanceGeometry(
        * converge properly as opposed to tetrahedra with volume).
        */
       if(problem.proportionCorrectChiralityConstraints(vectorizedPositions) < 0.5) {
+
+        Log::log(Log::Particulars::DGDebugInfo) 
+          << "Using y-inversion trick. Proportion correct prior: " 
+          << problem.proportionCorrectChiralityConstraints(vectorizedPositions);
+
+        // Add the structure before inversion
+        refinementSteps.emplace_back(
+          vectorizedPositions,
+          problem.distanceError(vectorizedPositions),
+          problem.chiralError(vectorizedPositions),
+          problem.extraDimensionError(vectorizedPositions),
+          getGradient(vectorizedPositions),
+          problem.proportionCorrectChiralityConstraints(vectorizedPositions),
+          false
+        );
+
         problem.invertY(vectorizedPositions);
+
+        Log::log(Log::Particulars::DGDebugInfo) 
+          << ", after: " 
+          << problem.proportionCorrectChiralityConstraints(vectorizedPositions)
+          << std::endl;
       }
     }
 
     // add a refinement step
     refinementSteps.emplace_back(
       vectorizedPositions,
-      problem.value(vectorizedPositions),
+      problem.distanceError(vectorizedPositions),
+      problem.chiralError(vectorizedPositions),
+      problem.extraDimensionError(vectorizedPositions),
       getGradient(vectorizedPositions),
       problem.proportionCorrectChiralityConstraints(vectorizedPositions),
       false
@@ -313,7 +327,9 @@ DGDebugData debugDistanceGeometry(
     // add a refinement step
     refinementSteps.emplace_back(
       vectorizedPositions,
-      stepResult.value,
+      problem.distanceError(vectorizedPositions),
+      problem.chiralError(vectorizedPositions),
+      problem.extraDimensionError(vectorizedPositions),
       ( -1 * stepResult.negativeGradient),
       problem.proportionCorrectChiralityConstraints(vectorizedPositions),
       problem.compress
@@ -329,11 +345,24 @@ DGDebugData debugDistanceGeometry(
 
       refinementSteps.emplace_back(
         vectorizedPositions,
-        stepResult.value,
+        problem.distanceError(vectorizedPositions),
+        problem.chiralError(vectorizedPositions),
+        problem.extraDimensionError(vectorizedPositions),
         ( -1 * stepResult.negativeGradient),
         problem.proportionCorrectChiralityConstraints(vectorizedPositions),
         problem.compress
       );
+
+      Log::log(Log::Particulars::DGDebugInfo)
+        << iterations << ": distanceError = " 
+        << refinementSteps.back().distanceError
+        << ", chiralError = " 
+        << refinementSteps.back().chiralError
+        << ", correctChiralityConstraints = " 
+        << refinementSteps.back().proportionCorrectChiralityConstraints
+        << ", compress = "
+        << refinementSteps.back().compress
+        << std::endl;
     }
 
     // What to do if the optimization fails

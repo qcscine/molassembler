@@ -12,7 +12,7 @@ struct RangeForTemporary {
     _end(end)
   {}
 
-  RangeForTemporary(
+  explicit RangeForTemporary(
     std::pair<Iterator, Iterator> iterators
   ) : _begin(iterators.first),
       _end(iterators.second)

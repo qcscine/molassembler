@@ -13,16 +13,10 @@
 #include <Eigen/Dense>
 
 /* TODO
- * - Try out chirality constraining for tetrahedral, then trigonal pyramidal, 
- *   then all the higher symmetries with many chiral constraints
+ * - Correctness tests
  * - Optimize 
  *   - remove all the bound squaring be pre-squaring the bounds
  *   - ... ?
- * - Make 4D refinement variant
- *   Tricky! Lots of seemingly simple things become complex. First finish up 
- *   a proper 3D refinement with stereocenters (and all the involved chirality
- *   constraints that we must split into for higher symmetries before attempting
- *   this
  */
 
 namespace MoleculeManip {
@@ -155,6 +149,7 @@ public:
     bounds(bounds) 
   {}
 
+/* Information */
   T distanceError(const TVector& v) const {
     T error = 0, distance;
     const AtomIndexType N = v.size() / 4;
@@ -234,7 +229,8 @@ public:
 
     for(const auto& chiralityConstraint: constraints) {
       sum += _square( 
-        chiralityConstraint.target - _getTetrahedronReducedVolume(v, chiralityConstraint.indices)
+        chiralityConstraint.target 
+        - _getTetrahedronReducedVolume(v, chiralityConstraint.indices)
       );
     }
 
@@ -242,6 +238,8 @@ public:
   }
 
   T extraDimensionError(const TVector& v) const {
+    if(!compress) return 0;
+
     T sum = 0;
 
     const AtomIndexType N = v.size() / 4;
@@ -254,21 +252,13 @@ public:
     return sum;
   }
 
-  T _value(const TVector& v) const {
-    if(compress) {
-      return distanceError(v) + chiralError(v) + extraDimensionError(v);
-    } else {
-      return distanceError(v) + chiralError(v);
-    }
-  }
-
   /*! 
-   * Required for cppoptlib: Calculates value for specified coordinates.
+   * Calculates value for specified coordinates.
    */
-  T value(const TVector& v) {
+  T value(const TVector& v) override {
     assert(v.size() % 4 == 0);
 
-    return _value(v);
+    return distanceError(v) + chiralError(v) + extraDimensionError(v);
   }
 
   /*!
@@ -294,16 +284,7 @@ public:
        * _A(i, i) == 0 and _B(i, i) == 0, nevertheless both the upper and 
        * lower bound for this situation are 0, leading to zeroes on 
        * denominators, leading to NaNs!
-       *
-       * Two versions of the loop avoidance are below, need benchmarking (TODO)
        */
-      /* Version 1 
-      for(AtomIndexType i = 0; i < N; i++) {
-        if(i == alpha) continue; 
-        localGradient += _A(v, i, alpha) + _B(v, alpha, i);
-      } */
-
-      /* Version 2 */
       for(AtomIndexType i = 0; i < alpha; i++) {
         localGradient += _A(v, i, alpha) + _B(v, alpha, i);
       }
@@ -317,11 +298,10 @@ public:
       for(const auto& constraint: constraints) {
         bool fallthrough = false;
         double target = constraint.target;
-        std::array<AtomIndexType, 4> indices;
+        std::array<AtomIndexType, 4> indices = constraint.indices;
         // TODO refactor this, there has to be a good way to write this
-        if(constraint.indices[0] == alpha) {
-          indices = constraint.indices;
-        } else if(constraint.indices[1] == alpha) {
+        // if(constraint.indices[0] == alpha) -> do nothing!
+        if(constraint.indices[1] == alpha) {
           indices = {
             alpha,
             constraint.indices[0],
@@ -352,7 +332,8 @@ public:
         }
 
         if(!fallthrough) {
-#ifndef NDEBUG
+          // I'm pretty confident here now that this is correct
+/* #ifndef NDEBUG
           auto temp = _C(v, indices, target) * (
             _getEigen<3>(v, indices[1]) - _getEigen<3>(v, indices[3])
           ).cross(
@@ -363,7 +344,15 @@ public:
 
           if(temp.norm() > 10) {
             auto& streamRef = Log::log(Log::Particulars::DGRefinementChiralityNumericalDebugInfo);
-            streamRef << "Unusually large chirality gradient contribution on {";
+            streamRef << "Unusually large chirality gradient contribution on alpha = "
+              << alpha << ", constraint = vec{";
+
+            for(unsigned i = 0; i < 4; i++) {
+              streamRef << constraint.indices[i];
+              if(i != 3) streamRef << ", ";
+            }
+
+            streamRef << "}, reordered indices = vec{";
 
             for(unsigned i = 0; i < 4; i++) {
               streamRef << indices[i];
@@ -371,21 +360,24 @@ public:
             }
 
             streamRef << "}: _C = " << _C(v, indices, target) 
-              << ", target = " << target << std::endl;
+              << ", target = " << target 
+              << ", current volume = " << _getTetrahedronReducedVolume(v, indices) 
+              << std::endl;
           }
 #else
+#endif
+*/
           localGradient.template segment<3>(0) += _C(v, indices, target) * (
             _getEigen<3>(v, indices[1]) - _getEigen<3>(v, indices[3])
           ).cross(
             _getEigen<3>(v, indices[2]) - _getEigen<3>(v, indices[3])
           );
-#endif
         }
       }
 
       // Gradient due to fourth coordinate if compress is on
       if(compress) {
-        localGradient[3] += 2 * _getEigen(v, alpha)[3];
+        localGradient[3] += 2 * v[4 * alpha + 3];
       }
 
       // Assign to gradient
@@ -407,7 +399,9 @@ public:
         << x.size()/4 << ","
         << state.iterations << "," 
         << std::fixed << std::setprecision(4) << state.gradNorm << "," 
-        << _value(x) << ","
+        << distanceError(x) << ","
+        << chiralError(x) << ","
+        << extraDimensionError(x) << ","
         << std::setprecision(4) << x.transpose() << ","
         << std::setprecision(4) << gradientVector.transpose() 
         << std::endl; 

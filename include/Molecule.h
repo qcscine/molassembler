@@ -51,7 +51,7 @@ public:
   ); 
 
   // From internal components
-  Molecule(const AdjacencyList& adjacencies);
+  explicit Molecule(const AdjacencyList& adjacencies);
   Molecule(
     const AdjacencyList& adjacencies,
     const StereocenterList& stereocenters
@@ -149,6 +149,6 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const Molecule& mol);
 };
 
-}
+} // namespace MoleculeManip
 
 #endif

@@ -97,6 +97,6 @@ MoleculeManip::Molecule asymmetricMolecule(
   return molecule;
 }
 
-}
+} // namespace DGDBM
 
 #endif

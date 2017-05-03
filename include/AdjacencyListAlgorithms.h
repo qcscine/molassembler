@@ -51,7 +51,9 @@ public:
     /*std::cout << "Discovered vertex " << Delib::ElementInfo::symbol(
       g[u].elementType
     ) << u << std::endl;*/
-    if(_depthMap.at(u) > _maxDepth) throw EarlyExit();
+    if(_depthMap.at(u) > _maxDepth) {
+      throw EarlyExit();
+    }
   }
 
   template<typename Graph>
@@ -287,6 +289,6 @@ unsigned numConnectedComponents(const AdjacencyList& adjacencies);
 
 } // namespace AdjacencyListAlgorithms
 
-}
+} // namespace MoleculeManip
 
 #endif

@@ -42,6 +42,6 @@ struct Model {
   );
 };
 
-} // namespace GeometryModeling
+} // namespace LocalGeometry
 
 #endif

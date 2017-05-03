@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     auto debugData = detail::debugDistanceGeometry(
       mol,
       nStructures,
-      MetrizationOption::off,
+      MetrizationOption::full,
       false
     );
 

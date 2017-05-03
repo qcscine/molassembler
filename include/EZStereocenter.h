@@ -60,28 +60,28 @@ public:
   ); 
 
 /* Modification */
-  virtual void assign(const unsigned& assignment) override final;
+  void assign(const unsigned& assignment) final;
 
 /* Information */
-  virtual double angle(
+  double angle(
     const AtomIndexType& i,
     const AtomIndexType& j,
     const AtomIndexType& k
-  ) const override final;
+  ) const final;
 
-  virtual boost::optional<unsigned> assigned() const override final;
+  boost::optional<unsigned> assigned() const final;
 
-  virtual unsigned numAssignments() const override final;
+  unsigned numAssignments() const final;
 
-  virtual std::vector<ChiralityConstraintPrototype> chiralityConstraints() const override final;
+  std::vector<ChiralityConstraintPrototype> chiralityConstraints() const final;
 
-  virtual std::vector<DihedralLimits> dihedralLimits() const override final;
+  std::vector<DihedralLimits> dihedralLimits() const final;
 
-  virtual std::string info() const override final;
+  std::string info() const final;
 
-  virtual std::set<AtomIndexType> involvedAtoms() const override final;
+  std::set<AtomIndexType> involvedAtoms() const final;
 
-  virtual Type type() const override final;
+  Type type() const final;
 
 /* Operators */
   bool operator == (const EZStereocenter& other) const;

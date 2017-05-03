@@ -39,7 +39,7 @@ private:
   DistanceGetter distanceGetter;
 
 public:
-  Propagator(DistanceGetter&& distanceGetter) 
+  explicit Propagator(DistanceGetter&& distanceGetter) 
     : distanceGetter(std::forward<DistanceGetter>(distanceGetter)) 
   {}
 
@@ -85,8 +85,8 @@ public:
 
           cayleyMenger(i + 1, j + 1) = pow(
             distanceGetter(
-              prototype.first[i],
-              prototype.first[j]
+              prototype.first.at(i),
+              prototype.first.at(j)
             ),
             2
           );
@@ -149,19 +149,25 @@ public:
 
 struct RefinementStepData {
   Eigen::VectorXd positions;
-  double error;
+  double distanceError;
+  double chiralError;
+  double fourthDimError;
   Eigen::VectorXd gradient;
   double proportionCorrectChiralityConstraints;
   bool compress;
 
   RefinementStepData(
     const Eigen::VectorXd& positions,
-    const double& error,
+    const double& distanceError,
+    const double& chiralError,
+    const double& fourthDimError,
     const Eigen::VectorXd& gradient,
     const double& proportionCorrectChiralityConstraints,
     const bool& compress
   ) : positions(positions),
-      error(error),
+      distanceError(distanceError),
+      chiralError(chiralError),
+      fourthDimError(fourthDimError),
       gradient(gradient),
       proportionCorrectChiralityConstraints(proportionCorrectChiralityConstraints),
       compress(compress)
@@ -212,7 +218,7 @@ struct MoleculeDGInformation {
     Stereocenters::Stereocenter::ChiralityConstraintPrototype
   > chiralityConstraintPrototypes;
 
-  MoleculeDGInformation(const unsigned& N);
+  explicit MoleculeDGInformation(const unsigned& N);
 };
 
 MoleculeDGInformation gatherDGInformation(

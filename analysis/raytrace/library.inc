@@ -22,6 +22,7 @@
 #declare color_gray_sixty = rgb<0.6, 0.6, 0.6>;
 #declare color_steel_blue = rgb<0.274, 0.51, 0.7>;
 #declare color_tomato = rgb<1.0, 0.38, 0.28>;
+#declare color_seagreen = rgb<0.33, 1, 0.62>;
 
 // Macros
 #macro Vector(point_start,point_end, vector_radius)
@@ -88,6 +89,18 @@
   object {
     sphere { point, constant_atom_sphere_radius}
     pigment { color color_gray_sixty }
+  }
+#end
+
+#macro Atom4D(point, magnitude)
+  object {
+    sphere { point, constant_atom_sphere_radius }
+    pigment { color color_gray_sixty }
+  }
+  object {
+    // cylinder { point, point + <0, 0, magnitude>, 0.75 * constant_bond_cylinder_radius }
+    sphere { point, constant_atom_sphere_radius + magnitude}
+    pigment { color color_seagreen transmit 0.7}
   }
 #end
 

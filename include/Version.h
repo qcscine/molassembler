@@ -12,6 +12,6 @@ std::string String() {
   return std::to_string(major)+"."+std::to_string(minor);
 }
 
-}
+} // namespace Version
 
 #endif

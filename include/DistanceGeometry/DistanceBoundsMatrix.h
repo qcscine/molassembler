@@ -16,12 +16,12 @@ struct BoundsMatrix {
   Eigen::MatrixXd matrix;
   
 /* Constructors */
-  BoundsMatrix(const unsigned& N) {
+  explicit BoundsMatrix(const unsigned& N) {
     matrix.resize(N, N);
     matrix.setZero();
   }
 
-  BoundsMatrix(Eigen::MatrixXd passMatrix) : matrix(passMatrix) {}
+  explicit BoundsMatrix(Eigen::MatrixXd passMatrix) : matrix(passMatrix) {}
 
 /* Modification */
   double& lowerBound(const unsigned& i, const unsigned& j) {
@@ -79,7 +79,9 @@ struct BoundsMatrix {
         && triangleInequalitySmooth() // and smoothing changes something
       ); 
       iter++
-    ) continue;
+    ) {
+      continue;
+    }
   }
 
 /* Information */
@@ -116,8 +118,8 @@ public:
 
 /* Constructors */
   DistanceBoundsMatrix() = delete;
-  DistanceBoundsMatrix(const unsigned& N);
-  DistanceBoundsMatrix(const Eigen::MatrixXd& matrix);
+  explicit DistanceBoundsMatrix(const unsigned& N);
+  explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix);
 
 /* Modifiers */
   //! Smooth until the matrix does not change

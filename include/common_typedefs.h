@@ -29,7 +29,7 @@ namespace GraphDetail {
   struct EdgeData {
     BondType bondType;
   };
-}
+} // namespace GraphDetail
 
 //! The type of the molecular graph
 using GraphType = boost::adjacency_list<
@@ -72,6 +72,6 @@ using GraphType = boost::adjacency_list<
 using AtomIndexType = GraphType::vertex_descriptor;
 using EdgeIndexType = GraphType::edge_descriptor;
 
-}
+} // namespace MoleculeManip
 
 #endif

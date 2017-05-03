@@ -115,6 +115,12 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 }
 
 BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
+  Log::level = Log::Level::None;
+  Log::particulars = {
+    Log::Particulars::DGDebugInfo,
+    Log::Particulars::DGRefinementChiralityNumericalDebugInfo
+  };
+
   const double maximumErrorThreshold = 0.1;
 
   // Open output file for R plots
@@ -126,21 +132,31 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     const auto& symmetryName = enumPair.value;
     const auto& symmetryIndex = enumPair.index;
 
+    std::cout << Symmetry::name(symmetryName) << std::endl;
+
     auto molecule = DGDBM::symmetricMolecule(symmetryName);
     
     auto DGResult = DistanceGeometry::detail::debugDistanceGeometry(
       molecule,
-      20,
+      100,
       MetrizationOption::off
     );
 
     // For something this simple, there really shouldn't be any failures
     BOOST_CHECK(DGResult.failures == 0);
 
+    auto sumErrors = [](const detail::RefinementStepData& stepData) -> double {
+      return (
+        stepData.distanceError
+        + stepData.chiralError
+        + stepData.fourthDimError
+      );
+    };
+
     auto finalErrors = TemplateMagic::map(
       DGResult.refinements,
-      [](const detail::RefinementData& refinementData) -> double {
-        return refinementData.steps.back().error;
+      [&](const detail::RefinementData& refinementData) -> double {
+        return sumErrors(refinementData.steps.back());
       }
     );
 
@@ -150,7 +166,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     for(const auto& enumPair : enumerate(DGResult.refinements)) {
       const auto& refinementData = enumPair.value;
 
-      const auto& finalError = refinementData.steps.back().error;
+      const auto& finalError = sumErrors(refinementData.steps.back());
 
       // Write the final error to file along with the symmetry index
       outFile << symmetryIndex << "," << finalError << "\n";

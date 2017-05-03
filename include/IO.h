@@ -250,7 +250,7 @@ private:
 public:
 /* Public member functions */
   /* Reading functions */
-  virtual bool canReadFile(const std::string& filename) override {
+  bool canReadFile(const std::string& filename) final {
     return (
       filename.substr(
         filename.length() - 4
@@ -261,7 +261,7 @@ public:
   /*!
    * Throws in a myriad of cases!
    */
-  virtual Molecule readSingle(const std::string& filename) override {
+  Molecule readSingle(const std::string& filename) final {
     assert(canReadFile(filename));
 
     std::ifstream file(filename);
@@ -342,7 +342,9 @@ public:
     for(const auto& position : _positions) {
       if(position.asEigenVector().norm() <= 1e-14) {
         nZeroLengthLowerBound += 1;
-        if(nZeroLengthLowerBound > 1) break;
+        if(nZeroLengthLowerBound > 1) {
+          break;
+        }
       }
     }
 
@@ -365,7 +367,7 @@ public:
     // For every Stereocenter contained, try to find out which one it is
   }
 
-  virtual bool canWriteFile(const std::string& filename) override {
+  bool canWriteFile(const std::string& filename) final {
     return (
       filename.substr(
         filename.length() - 4
@@ -373,11 +375,11 @@ public:
     );
   }
 
-  virtual void writeSingle(
+  void writeSingle(
     const std::string& filename,
     const Molecule& molecule,
     const Delib::PositionCollection& positions
-  ) override {
+  ) final {
     _writeSingle(
       filename,
       molecule,

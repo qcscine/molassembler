@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 args <- commandArgs(TRUE)
 filename <- toString(args[1])
 
@@ -9,25 +11,36 @@ filedata <- read.csv(
 )
 
 # format is
-# V1 - error
-# V2 - gradient norm
-# V3 - compress
-# V4 - sum abs 4D
+# V1 - distanceError
+# V2 - chiralError
+# V3 - fourthDimError
+# V4 - gradient norm
+# V5 - compress
+# V6 - fraction correct
 
-error <- filedata$V1
-gradientNorm <- filedata$V2
-compress <- filedata$V3
-totalAbs4D <- filedata$V4
-proportionCorrect <- filedata$V5
+distanceError <- filedata$V1
+chiralError <- filedata$V2
+fourthDimError <- filedata$V3
+gradientNorm <- filedata$V4
+compress <- filedata$V5
+proportionCorrect <- filedata$V6
 
-lastUncompressed <- tail(which(compress == 0), n=1)
-firstCompressed <- head(which(compress == 1), n=1)
+error <- distanceError + chiralError + fourthDimError
+
 
 xSeq <- seq(1, length(error))
 
+if(substr(filename, 1, 2) == "./") {
+  substr(filename, 1,2) <- ""
+  filename <- substr(filename, 3, nchar(filename))
+  print(filename)
+}
+
 baseName <- strsplit(filename, "\\.")
+pdfFilename <- paste(baseName[[1]][length(baseName[[1]]) - 1], ".pdf", sep="")
+
 pdf(
-  paste(baseName[[1]][1], ".pdf", sep=""), 
+  pdfFilename,
   width=14,
   height=8
 )
@@ -43,6 +56,18 @@ plot(
   error,
   type="n",
   xlab="",
+  ylim=c(
+    min(
+      distanceError[which(distanceError > 0)],
+      chiralError[which(chiralError > 0)],
+      fourthDimError[which(fourthDimError > 0)]
+    ),
+    max(
+      distanceError[which(distanceError > 0)],
+      chiralError[which(chiralError > 0)],
+      fourthDimError[which(fourthDimError > 0)]
+    )
+  ),
   ylab="Error (log scale)",
   log="y",
   xaxt="n"
@@ -51,6 +76,53 @@ plot(
 lines(
   xSeq,
   error
+)
+
+lines(
+  xSeq,
+  distanceError,
+  col="steelblue"
+)
+
+lines(
+  xSeq,
+  chiralError,
+  col="tomato"
+)
+
+lines(
+  xSeq,
+  fourthDimError,
+  col="olivedrab"
+)
+
+# proportion of error development
+plot(
+  xSeq,
+  rep(1, length(error)),
+  ylim=c(0, 1),
+  type="n",
+  xlab="",
+  ylab="Proportion of error contrib.",
+  xaxt="n"
+)
+
+lines(
+  xSeq,
+  distanceError / error,
+  col="steelblue"
+)
+
+lines(
+  xSeq,
+  chiralError / error,
+  col="tomato"
+)
+
+lines(
+  xSeq,
+  fourthDimError / error,
+  col="olivedrab"
 )
 
 # gradient norm plot
@@ -69,21 +141,6 @@ lines(
   gradientNorm
 )
 
-# sum abs 4D
-plot(
-  xSeq,
-  totalAbs4D,
-  type="n",
-  xlab="",
-  ylab="Sum abs. 4th dim. component",
-  xaxt="n"
-)
-
-lines(
-  xSeq,
-  totalAbs4D
-)
-
 # proportion correct chirality constraints
 plot(
   xSeq,
@@ -97,7 +154,5 @@ lines(
   xSeq,
   proportionCorrect
 )
-
-abline(v=mean(lastUncompressed, firstCompressed), col="blue")
 
 dev.off()

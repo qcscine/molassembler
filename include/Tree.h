@@ -39,7 +39,7 @@ struct Node : std::enable_shared_from_this<Node<T>> {
 
 /* Public member functions */
   /* Constructors */
-  Node(const T& passKey) : key(passKey) {}
+  explicit Node(const T& passKey) : key(passKey) {}
   Node(
     std::shared_ptr<
       Node<T>
@@ -183,7 +183,7 @@ struct Node : std::enable_shared_from_this<Node<T>> {
             parentParentKey = parentParentPtr -> key;
           }
 
-          graphViz << "  " << newID << "[label=\"" << node.key << "\"];\n";
+          graphViz << "  " << newID << R"([label=")" << node.key << R"("];)" << "\n";
 
           connections << "  "
             << nodeIDMap.at(std::make_pair(parentPtr -> key, parentParentKey))
@@ -194,7 +194,7 @@ struct Node : std::enable_shared_from_this<Node<T>> {
             std::make_pair(node.key, boost::none)
           ] = newID;
           
-          graphViz << "  " << newID << "[label=\"" << node.key << "\"];\n";
+          graphViz << "  " << newID << R"([label=")" << node.key << R"("])" << "\n";
           // do not add a connection
         }
       }

@@ -76,23 +76,23 @@ public:
   );
 
 /* Modification */
-  virtual void assign(const unsigned& assignment) override final;
+  void assign(const unsigned& assignment) final;
 
   void changeSymmetry(const Symmetry::Name& symmetryName);
 
 /* Information */
-  virtual double angle(
+  double angle(
     const AtomIndexType& i,
     const AtomIndexType& j,
     const AtomIndexType& k
-  ) const override final;
-  virtual boost::optional<unsigned> assigned() const override final;
-  virtual unsigned numAssignments() const override final;
-  virtual std::vector<ChiralityConstraintPrototype> chiralityConstraints() const override final;
-  virtual std::vector<DihedralLimits> dihedralLimits() const override final;
-  virtual std::string info() const override final;
-  virtual std::set<AtomIndexType> involvedAtoms() const override final;
-  virtual Type type() const override final;
+  ) const final;
+  boost::optional<unsigned> assigned() const final;
+  unsigned numAssignments() const final;
+  std::vector<ChiralityConstraintPrototype> chiralityConstraints() const final;
+  std::vector<DihedralLimits> dihedralLimits() const final;
+  std::string info() const final;
+  std::set<AtomIndexType> involvedAtoms() const final;
+  Type type() const final;
 
 /* Operators */
   bool operator == (const CNStereocenter& other) const;
