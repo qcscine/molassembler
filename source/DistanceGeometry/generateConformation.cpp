@@ -1,12 +1,13 @@
 #include "DistanceGeometry/generateConformation.h"
 
 #include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/DGRefinementProblem.h"
+#include "DistanceGeometry/RefinementProblem.h"
 #include "DistanceGeometry/BFSConstraintCollector.h"
 #include "AdjacencyListAlgorithms.h"
 #include "TreeAlgorithms.h"
 #include "cppoptlib/meta.h"
 #include "cppoptlib/solver/conjugatedgradientdescentsolver.h"
+#include "cppoptlib/solver/bfgssolver.h"
 
 namespace MoleculeManip {
 
@@ -49,9 +50,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
     distanceMethod
   );
 
-  cppoptlib::ConjugatedGradientDescentSolver<
-    DGRefinementProblem<double>
-  > DGConjugatedGradientDescentSolver;
+  cppoptlib::ConjugatedGradientDescentSolver<RefinementProblem> DGConjugatedGradientDescentSolver;
 
   cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
   stopCriteria.fDelta = 1e-5;
@@ -104,7 +103,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
     /* Instantiantiate the refinement problem and its solver, set the stop 
      * criteria
      */
-    DGRefinementProblem<double> problem(
+    RefinementProblem problem(
       chiralityConstraints,
       DGData.distanceBounds
     );
@@ -192,10 +191,12 @@ DGDebugData debugDistanceGeometry(
   );
 
   cppoptlib::ConjugatedGradientDescentSolver<
-    DGRefinementProblem<double>
+    RefinementProblem
   > DGConjugatedGradientDescentSolver;
 
   cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
+  stopCriteria.iterations = 1e5;
+  // for BfgsSolver: stopCriteria.gradNorm = 1e-8;
   stopCriteria.fDelta = 1e-5;
 
   DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
@@ -246,9 +247,30 @@ DGDebugData debugDistanceGeometry(
     /* Instantiantiate the refinement problem and its solver, set the stop 
      * criteria
      */
-    DGRefinementProblem<double> problem(
+    RefinementProblem problem(
       chiralityConstraints,
-      DGData.distanceBounds
+      DGData.distanceBounds,
+      [&refinementSteps](
+        const cppoptlib::Criteria<double>& status __attribute__((unused)),
+        const RefinementProblem::TVector& vectorizedPositions,
+        const RefinementProblem& problem
+      ) -> void {
+        auto getGradient = [&](const Eigen::VectorXd& positions){
+          Eigen::VectorXd gradientVector( positions.size() );
+          problem.gradient(positions, gradientVector);
+          return gradientVector;
+        };
+
+        refinementSteps.emplace_back(
+          vectorizedPositions,
+          problem.distanceError(vectorizedPositions),
+          problem.chiralError(vectorizedPositions),
+          problem.extraDimensionError(vectorizedPositions),
+          getGradient(vectorizedPositions),
+          problem.proportionCorrectChiralityConstraints(vectorizedPositions),
+          problem.compress
+        );
+      }
     );
 
     auto getGradient = [&](const Eigen::VectorXd& positions){
@@ -281,11 +303,6 @@ DGDebugData debugDistanceGeometry(
        * converge properly as opposed to tetrahedra with volume).
        */
       if(problem.proportionCorrectChiralityConstraints(vectorizedPositions) < 0.5) {
-
-        Log::log(Log::Particulars::DGDebugInfo) 
-          << "Using y-inversion trick. Proportion correct prior: " 
-          << problem.proportionCorrectChiralityConstraints(vectorizedPositions);
-
         // Add the structure before inversion
         refinementSteps.emplace_back(
           vectorizedPositions,
@@ -298,15 +315,10 @@ DGDebugData debugDistanceGeometry(
         );
 
         problem.invertY(vectorizedPositions);
-
-        Log::log(Log::Particulars::DGDebugInfo) 
-          << ", after: " 
-          << problem.proportionCorrectChiralityConstraints(vectorizedPositions)
-          << std::endl;
       }
     }
 
-    // add a refinement step
+    // add an initial step
     refinementSteps.emplace_back(
       vectorizedPositions,
       problem.distanceError(vectorizedPositions),
@@ -318,58 +330,13 @@ DGDebugData debugDistanceGeometry(
     );
 
     // initial step
-    auto stepResult = DGConjugatedGradientDescentSolver.step(
-      problem,
-      vectorizedPositions
-    );
-    unsigned iterations = 1;
-
-    // add a refinement step
-    refinementSteps.emplace_back(
-      vectorizedPositions,
-      problem.distanceError(vectorizedPositions),
-      problem.chiralError(vectorizedPositions),
-      problem.extraDimensionError(vectorizedPositions),
-      ( -1 * stepResult.negativeGradient),
-      problem.proportionCorrectChiralityConstraints(vectorizedPositions),
-      problem.compress
-    );
-
-    while(stepResult.status == cppoptlib::Status::Continue && iterations < 1e5) {
-      stepResult = DGConjugatedGradientDescentSolver.step(
-        problem,
-        vectorizedPositions
-      );
-
-      iterations += 1;
-
-      refinementSteps.emplace_back(
-        vectorizedPositions,
-        problem.distanceError(vectorizedPositions),
-        problem.chiralError(vectorizedPositions),
-        problem.extraDimensionError(vectorizedPositions),
-        ( -1 * stepResult.negativeGradient),
-        problem.proportionCorrectChiralityConstraints(vectorizedPositions),
-        problem.compress
-      );
-
-      Log::log(Log::Particulars::DGDebugInfo)
-        << iterations << ": distanceError = " 
-        << refinementSteps.back().distanceError
-        << ", chiralError = " 
-        << refinementSteps.back().chiralError
-        << ", correctChiralityConstraints = " 
-        << refinementSteps.back().proportionCorrectChiralityConstraints
-        << ", compress = "
-        << refinementSteps.back().compress
-        << std::endl;
-    }
+    DGConjugatedGradientDescentSolver.minimize(problem, vectorizedPositions);
 
     // What to do if the optimization fails
     // Make a count of correct chirality constraints
     if(
       problem.proportionCorrectChiralityConstraints(vectorizedPositions) != 1.0
-      || iterations == 1e5
+      || DGConjugatedGradientDescentSolver.status() == cppoptlib::Status::IterationLimit
     ) {
       resultObject.failures += 1;
       

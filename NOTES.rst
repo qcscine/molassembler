@@ -1,18 +1,15 @@
 TODO
 ----
-- tests/DGRefinement should show number of correct stereocenters over time
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)
-- Figure out what's up with Octahedral in the newest iteration of DG
 - Make dependence on alternate set of Symmetry tetraeder subdivisions clearer
   in code / analysis
-- Try out other optimization options besides conjugated gradient, perhaps others
-  are faster / better. Maybe even implement the Hessian in DGRefinementProblem?
 - Set up CMake properly
 - Consider penalization of unsuitable geometries (using VSEPR /
   determineLocalGeometry to judge) in SymmetryFit -> see what happens when you
   try to load testosterone, which has some strained tetrahedral centers that are
   fitted as seesaws!
+- Investigate link-time optimization
 - Make sure EZStereocenter is stable against the situation where (and the twist
   is a given) -> Also, the involvedAtoms of this case overlap! No singular
   stereocenter per atom in the entire molecule! Unless you create another type

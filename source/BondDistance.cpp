@@ -13,12 +13,10 @@ double calculateBondDistance(
     AtomInfo::bondRadii.at(a)
     + AtomInfo::bondRadii.at(b)
     - ( // BO correction
-      bondOrderCorrectionLambda
-      * (
+      bondOrderCorrectionLambda * (
         AtomInfo::bondRadii.at(a)
         + AtomInfo::bondRadii.at(b)
-      )
-      * log( bondOrderMap.at(static_cast<unsigned>(bondType)) )
+      ) * log( bondOrderMap.at(static_cast<unsigned>(bondType)) )
     )
   );
 }

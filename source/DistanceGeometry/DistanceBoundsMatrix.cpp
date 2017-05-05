@@ -174,6 +174,19 @@ double DistanceBoundsMatrix::lowerBound(
   return _boundsMatrix.lowerBound(i, j);
 }
 
+BoundsMatrix DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
+  BoundsMatrix copy = _boundsMatrix;
+
+  for(unsigned i = 0; i < _N; i++) {
+    for(unsigned j = i + 1; j < _N; j++) {
+      copy.upperBound(i, j) *= copy.upperBound(i, j);
+      copy.lowerBound(i, j) *= copy.lowerBound(i, j);
+    }
+  }
+
+  return copy;
+}
+
 double DistanceBoundsMatrix::upperBound(
   const unsigned& i,
   const unsigned& j

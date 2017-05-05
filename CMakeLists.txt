@@ -74,7 +74,7 @@ include_directories(SYSTEM
 # collect headers
 set(HEADERS_all
   include/DistanceGeometry/BFSConstraintCollector.h
-  include/DistanceGeometry/DGRefinementProblem.h
+  include/DistanceGeometry/RefinementProblem.h
   include/DistanceGeometry/DistanceBoundsMatrix.h
   include/DistanceGeometry/DistanceGeometry.h
   include/DistanceGeometry/MetricMatrix.h
@@ -115,6 +115,7 @@ set(SOURCES_all
   source/DistanceGeometry/DistanceBoundsMatrix.cpp
   source/DistanceGeometry/generateConformation.cpp
   source/DistanceGeometry/MetricMatrix.cpp
+  source/DistanceGeometry/RefinementProblem.cpp
   source/AdjacencyList.cpp
   source/AdjacencyListAlgorithms.cpp
   source/AdjacencyMatrix.cpp

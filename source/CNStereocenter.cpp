@@ -87,7 +87,7 @@ std::map<
       }
     )) {
       // add a single-atom set
-      setsVector.push_back(
+      setsVector.emplace_back(
         std::set<AtomIndexType>{index}
       );
     }
@@ -297,8 +297,11 @@ std::string CNStereocenter::info() const {
   std::string returnString = "CNStereocenter on "s 
     + std::to_string(centerAtom) + " ("s + Symmetry::name(symmetry) +"): "s;
 
-  if(assignment) returnString += std::to_string(assignment.value());
-  else returnString += "u";
+  if(assignment) {
+    returnString += std::to_string(assignment.value());
+  } else {
+    returnString += "u";
+  }
 
   returnString += "/"s + std::to_string(numAssignments());
 
@@ -346,6 +349,6 @@ bool CNStereocenter::operator == (const CNStereocenter& other) const {
   );
 }
 
-}
+} // namespace Stereocenters
 
-}
+} // namespace MoleculeManip

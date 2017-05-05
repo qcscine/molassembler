@@ -52,7 +52,7 @@ struct AdjacencyList::MolGraphWriter {
   const GraphType* const graphPtr;
 
   /* Constructor */
-  MolGraphWriter(const GraphType* passGraphPtr) : graphPtr(passGraphPtr) {}
+  explicit MolGraphWriter(const GraphType* passGraphPtr) : graphPtr(passGraphPtr) {}
 
   /* Information */
   Delib::ElementType getElementType(const AtomIndexType& vertexIndex) const {

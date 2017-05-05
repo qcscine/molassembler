@@ -26,7 +26,7 @@ public:
 private:
   /* Private Members */
   // Pre-set constants
-  const double oneTwoVariance = 0.05;
+  const double oneTwoVariance = 0.1;
 
   // Input
   const AdjacencyList& _adjacencies;

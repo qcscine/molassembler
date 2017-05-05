@@ -162,6 +162,9 @@ public:
     const unsigned& j
   ) const;
 
+  //! Returns a bounds matrix with the current bounds squared
+  BoundsMatrix makeSquaredBoundsMatrix() const;
+
   //! Access an upper bound
   double upperBound(
     const unsigned& i,
