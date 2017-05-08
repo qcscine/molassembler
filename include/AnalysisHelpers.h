@@ -18,24 +18,13 @@ inline char mapIndexToChar(const unsigned& index) {
 
 void writeDGPOVandProgressFiles(
   const Molecule& mol,
-  const Symmetry::Name& symmetryName,
-  const unsigned& structNum,
+  const std::string& baseFilename,
   const DistanceGeometry::detail::RefinementData& refinementData
 ) {
   const unsigned dimensionality = 4;
 
-  // Make a space-free string from the name
-  std::string spaceFreeName = Symmetry::name(symmetryName);
-  std::replace(
-    spaceFreeName.begin(),
-    spaceFreeName.end(),
-    ' ',
-    '-'
-  );
-
   // Write the POV-Ray files and progress files
-  std::string progressFilename = spaceFreeName + "-"s 
-    + std::to_string(structNum) + "-progress.csv"s;
+  std::string progressFilename = baseFilename + "-progress.csv"s;
   std::ofstream progressFile (progressFilename);
 
   progressFile << std::scientific;
@@ -56,8 +45,7 @@ void writeDGPOVandProgressFiles(
 
     // Write the POV file for this step
     std::stringstream filename;
-    filename << spaceFreeName << "-"
-      << structNum << "-"
+    filename << baseFilename << "-"
       << std::setfill('0') << std::setw(3) << refinementEnumPair.index
       << ".pov";
 
@@ -121,6 +109,33 @@ void writeDGPOVandProgressFiles(
 
   }
 }
+
+// Shortcut for simple symmetry molecules
+void writeDGPOVandProgressFiles(
+  const Molecule& mol,
+  const Symmetry::Name& symmetryName,
+  const unsigned& structNum,
+  const DistanceGeometry::detail::RefinementData& refinementData
+) {
+  // Make a space-free string from the name
+  std::string baseName = Symmetry::name(symmetryName);
+  std::replace(
+    baseName.begin(),
+    baseName.end(),
+    ' ',
+    '-'
+  );
+
+  baseName += "-"s + std::to_string(structNum);
+
+  writeDGPOVandProgressFiles(
+    mol,
+    baseName,
+    refinementData
+  );
+
+}
+
 
 } // namespace AnalysisHelpers
 

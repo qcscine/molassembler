@@ -7,9 +7,19 @@
 
 #include <Eigen/Dense>
 
+/* NOTES
+ * - RefinementProblem has two full gradient implementations, one which is 
+ *   properly separated into subproblems and is written in a very legible
+ *   style. The other is optimized as best as possible and has hence suffered
+ *   some legibility impairments. In testing, the two are compared to ensure
+ *   that no errors are introduced by any further optimizations. 
+ * - Profiling some DG runs leads to the conclusion that most time is spent in
+ *   value() instead of gradient() so putting some effort into that is probably 
+ *   most valuable.
+ */
+
 /* TODO
  * - Optimize 
- *   - ... ?
  */
 
 namespace MoleculeManip {
@@ -79,8 +89,9 @@ public:
 
 /* State */
   const std::vector<ChiralityConstraint>& constraints;
-  const BoundsMatrix squaredBounds;
+  const Eigen::MatrixXd squaredBounds;
   CallbackFunction callbackClosure;
+  const unsigned N;
   mutable bool compress = false;
 
 /* Constructors */
@@ -105,72 +116,50 @@ public:
 
   double extraDimensionError(const TVector& v) const;
 
-
   double distanceError(const TVector& v) const;
-
-  void alternateGradient(const TVector& v, TVector& gradient) const;
 
   /*!
    * Required for cppoptlib: Calculates gradient for specified coordinates.
+   * Optimized version of gradient implementation.
    */
   void gradient(const TVector& v, TVector& grad) const;
 
-  void gradientA(const TVector& v, TVector& gradient) const;
+  /*! Properly separated and legible reference gradient implementation.
+   * Due to intensive testing, this is presumed correct. If you want to speed
+   * up DG, put your work into the optimized version.
+   */
+  void referenceGradient(const TVector& v, TVector& gradient) const;
 
-  void gradientB(const TVector& v, TVector& gradient) const;
+  void referenceGradientA(const TVector& v, TVector& gradient) const;
+  void referenceGradientB(const TVector& v, TVector& gradient) const;
+  void referenceGradientC(const TVector& v, TVector& gradient) const;
+  void referenceGradientD(const TVector& v, TVector& gradient) const;
 
-  void gradientC(const TVector& v, TVector& gradient) const;
-
-  void gradientD(const TVector& v, TVector& gradient) const;
-
-  //!  First term of gradient expansion, used within gradient()
-  inline Eigen::Vector4d gradientTermA(
-    const TVector& v,
-    const AtomIndexType& i, 
-    const AtomIndexType& j
-  ) const {
-    const Eigen::Vector4d retv = _getPos(v, j) - _getPos(v, i);
-
-    return retv * 4 * (
-      retv.squaredNorm() / squaredBounds.upperBound(i, j)
-      - 1
-    ) / squaredBounds.upperBound(i, j);
-  }
-
-  //! Second term of gradient expansion, used within gradient()
-  inline Eigen::Vector4d gradientTermB(
-    const TVector& v,
-    const AtomIndexType& i,
-    const AtomIndexType& j
-  ) const {
-    const Eigen::Vector4d retv = _getPos(v, j) - _getPos(v, i);
-
-    return retv * 8 * squaredBounds.lowerBound(i, j) * (
-      squaredBounds.lowerBound(i, j) - retv.squaredNorm()
-    ) / std::pow(
-      squaredBounds.lowerBound(i, j) + retv.squaredNorm(),
-      3
+  // Helper functions for reference implementation readability
+  inline const double& upperBound(const AtomIndexType& i, const AtomIndexType& j) const {
+    return squaredBounds(
+      std::min(i, j),
+      std::max(i, j)
     );
   }
 
-  //! Third term of gradient expansion, used within gradient()
-  inline double gradientTermC(
-    const TVector& v,
-    const std::array<AtomIndexType, 4>& indices,
-    const double& target
-  ) const {
-    return (-2) * (
-      target - _getTetrahedronReducedVolume(v, indices)
+  inline const double& lowerBound(const AtomIndexType& i, const AtomIndexType& j) const {
+    return squaredBounds(
+      std::max(i, j),
+      std::min(i, j)
     );
   }
 
+  //! Inverts all y coordinates of the passed positions vector
   void invertY(TVector& v) const;
 
+  /*! Calculates the fraction of correct chirality constraints over the total
+   * amount of non-zero chirality constraints. (Planar chirality constraints are
+   * not regarded as they cannot be the wrong "sign".)
+   */
   double proportionCorrectChiralityConstraints(const TVector& v) const;
 
-  /*! 
-   * Calculates value for specified coordinates.
-   */
+  //! Calculates error function value for specified coordinates.
   double value(const TVector& v) override;
 };
 

@@ -163,7 +163,7 @@ public:
   ) const;
 
   //! Returns a bounds matrix with the current bounds squared
-  BoundsMatrix makeSquaredBoundsMatrix() const;
+  Eigen::MatrixXd makeSquaredBoundsMatrix() const;
 
   //! Access an upper bound
   double upperBound(

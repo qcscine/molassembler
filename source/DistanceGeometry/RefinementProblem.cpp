@@ -15,7 +15,8 @@ RefinementProblem::RefinementProblem(
   const DistanceBoundsMatrix& bounds
 ) : 
   constraints(constraints), 
-  squaredBounds(bounds.makeSquaredBoundsMatrix()) 
+  squaredBounds(bounds.makeSquaredBoundsMatrix()),
+  N(squaredBounds.cols())
 {}
 
 RefinementProblem::RefinementProblem(
@@ -25,7 +26,8 @@ RefinementProblem::RefinementProblem(
 ) : 
   constraints(constraints), 
   squaredBounds(bounds.makeSquaredBoundsMatrix()),
-  callbackClosure(callback)
+  callbackClosure(callback),
+  N(squaredBounds.cols())
 {}
 
 bool RefinementProblem::callback(
@@ -81,7 +83,6 @@ double RefinementProblem::extraDimensionError(const TVector& v) const {
 
   double sum = 0;
 
-  const AtomIndexType N = v.size() / 4;
   for(unsigned i = 0; i < N; i++) {
     sum += _square(
       v[4 * i + 3]
@@ -94,27 +95,28 @@ double RefinementProblem::extraDimensionError(const TVector& v) const {
 
 double RefinementProblem::distanceError(const TVector& v) const {
   double error = 0, distance;
-  const AtomIndexType N = v.size() / 4;
 
-  for(unsigned i = 0; i < N; i++) {
+  for(unsigned i = 0; i < N - 1; i++) {
     for(unsigned j = i + 1; j < N; j++) {
+      // i < j, so upper is squaredBounds(i, j), lower is squaredBounds(j, i)
 
       distance = (
         _getPos(v, j) - _getPos(v, i)
       ).squaredNorm();
 
-      // first term
-      error += _square(
-        distance / squaredBounds.upperBound(i, j)
-        - 1
-      );
-
-      // second term
-      error += _square(
-        2 * squaredBounds.lowerBound(i, j) / (
-          squaredBounds.lowerBound(i, j) + distance
-        ) 
-        - 1
+      error += (
+        // first term
+        _square(
+          distance / squaredBounds(i, j)
+          - 1
+        )
+        // second term
+        + _square(
+          2 * squaredBounds(j, i) / (
+            squaredBounds(j, i) + distance
+          ) 
+          - 1
+        )
       );
     }
   }
@@ -122,20 +124,21 @@ double RefinementProblem::distanceError(const TVector& v) const {
   return error;
 }
 
-void RefinementProblem::alternateGradient(const TVector& v, TVector& gradient) const {
+void RefinementProblem::referenceGradient(const TVector& v, TVector& gradient) const {
   gradient.setZero();
   if(!compress && proportionCorrectChiralityConstraints(v) == 1.0) {
     compress = true;
   }
 
-  gradientA(v, gradient);
-  gradientB(v, gradient);
-  gradientC(v, gradient);
-  gradientD(v, gradient);
+  referenceGradientA(v, gradient);
+  referenceGradientB(v, gradient);
+  referenceGradientC(v, gradient);
+  referenceGradientD(v, gradient);
 }
 
 /*!
  * Required for cppoptlib: Calculates gradient for specified coordinates.
+ * This is the optimized version of the gradient implementation.
  */
 void RefinementProblem::gradient(const TVector& v, TVector& grad) const {
   /* At the beginning of every gradient calculation, we check if all chiral
@@ -147,8 +150,6 @@ void RefinementProblem::gradient(const TVector& v, TVector& grad) const {
 
   grad.setZero();
 
-  const AtomIndexType N = v.size() / 4;
-
   for(AtomIndexType alpha = 0; alpha < N; alpha++) {
     // A and B
     /* Skipping i == alpha is exceptionally important, for the reason that if
@@ -158,10 +159,47 @@ void RefinementProblem::gradient(const TVector& v, TVector& grad) const {
      * zeroes on denominators, leading to NaNs!
      */
     for(AtomIndexType i = 0; i < alpha; i++) {
-      grad.template segment<4>(4 * alpha) += gradientTermA(v, i, alpha) + gradientTermB(v, alpha, i);
+      /* Since i < alpha, upper is squaredBounds(i, alpha), lower is
+       * squaredBounds(alpha, i)
+       */
+      const Eigen::Vector4d diff = _getPos(v, alpha) - _getPos(v, i);
+
+      grad.template segment<4>(4 * alpha) += (
+        // First term
+        diff * 4 * (
+          diff.squaredNorm() / squaredBounds(i, alpha) 
+          - 1
+        ) / squaredBounds(i, alpha)
+        // Second term
+        - diff * 8 * squaredBounds(alpha, i) * (
+          squaredBounds(alpha, i) - diff.squaredNorm()
+        ) / std::pow(
+          squaredBounds(alpha, i) + diff.squaredNorm(),
+          3
+        )
+      );
     }
+
     for(AtomIndexType i = alpha + 1; i < N; i++) {
-      grad.template segment<4>(4 * alpha) += gradientTermA(v, i, alpha) + gradientTermB(v, alpha, i);
+      /* Now, i > alpha, so upper is squaredBounds(alpha, i), lower is
+       * squaredBounds(i, alpha)
+       */
+      const Eigen::Vector4d diff = _getPos(v, alpha) - _getPos(v, i);
+
+      grad.template segment<4>(4 * alpha) += (
+        // First term
+        diff * 4 * (
+          diff.squaredNorm() / squaredBounds(alpha, i) 
+          - 1
+        ) / squaredBounds(alpha, i)
+        // Second term
+        - diff * 8 * squaredBounds(i, alpha) * (
+          squaredBounds(i, alpha) - diff.squaredNorm()
+        ) / std::pow(
+          squaredBounds(i, alpha) + diff.squaredNorm(),
+          3
+        )
+      );
     }
 
     /* C 
@@ -210,7 +248,9 @@ void RefinementProblem::gradient(const TVector& v, TVector& grad) const {
       }
 
       if(!fallthrough) {
-        grad.template segment<3>(4 * alpha) += gradientTermC(v, indices, target) * (
+        grad.template segment<3>(4 * alpha) -= 2 * (
+          target - _getTetrahedronReducedVolume(v, indices)
+        ) * (
           _getPos<3>(v, indices[1]) - _getPos<3>(v, indices[3])
         ).cross(
           _getPos<3>(v, indices[2]) - _getPos<3>(v, indices[3])
@@ -225,18 +265,16 @@ void RefinementProblem::gradient(const TVector& v, TVector& grad) const {
   }
 }
 
-void RefinementProblem::gradientA(const TVector& v, TVector& gradient) const {
-  const unsigned N = v.size() / 4;
-
+void RefinementProblem::referenceGradientA(const TVector& v, TVector& gradient) const {
   for(unsigned alpha = 0; alpha < N; alpha++) {
     // Once up to but not including alpha
     for(unsigned i = 0; i < alpha; i++) {
       const Eigen::Vector4d diff = _getPos(v, alpha) - _getPos(v, i);
 
       gradient.template segment<4>(4 * alpha) += diff * 4 * (
-        diff.squaredNorm() / squaredBounds.upperBound(i, alpha)
+        diff.squaredNorm() / upperBound(i, alpha)
         - 1
-      ) / squaredBounds.upperBound(i, alpha);
+      ) / upperBound(i, alpha);
     }
 
     // And from alpha + 1 the remaining ones
@@ -244,27 +282,25 @@ void RefinementProblem::gradientA(const TVector& v, TVector& gradient) const {
       const Eigen::Vector4d diff = _getPos(v, alpha) - _getPos(v, i);
 
       gradient.template segment<4>(4 * alpha) += diff * 4 * (
-        diff.squaredNorm() / squaredBounds.upperBound(i, alpha)
+        diff.squaredNorm() / upperBound(i, alpha)
         - 1
-      ) / squaredBounds.upperBound(i, alpha);
+      ) / upperBound(i, alpha);
     }
   }
 }
 
-void RefinementProblem::gradientB(const TVector& v, TVector& gradient) const {
-  const unsigned N = v.size() / 4;
-
+void RefinementProblem::referenceGradientB(const TVector& v, TVector& gradient) const {
   for(unsigned alpha = 0; alpha < N; alpha++) {
     // Once up to but not including alpha
     for(unsigned i = 0; i < alpha; i++) {
       const Eigen::Vector4d diff = _getPos(v, i) - _getPos(v, alpha);
 
       gradient.template segment<4>(4 * alpha) += (
-        diff * 8 * squaredBounds.lowerBound(i, alpha) * ( 
-          squaredBounds.lowerBound(i, alpha)
+        diff * 8 * lowerBound(i, alpha) * ( 
+          lowerBound(i, alpha)
           - diff.squaredNorm()
         ) / std::pow(
-          squaredBounds.lowerBound(i, alpha) + diff.squaredNorm(),
+          lowerBound(i, alpha) + diff.squaredNorm(),
           3
         )
       );
@@ -275,11 +311,11 @@ void RefinementProblem::gradientB(const TVector& v, TVector& gradient) const {
       const Eigen::Vector4d diff = _getPos(v, i) - _getPos(v, alpha);
 
       gradient.template segment<4>(4 * alpha) += (
-        diff * 8 * squaredBounds.lowerBound(i, alpha) * ( 
-          squaredBounds.lowerBound(i, alpha)
+        diff * 8 * lowerBound(i, alpha) * ( 
+          lowerBound(i, alpha)
           - diff.squaredNorm()
         ) / std::pow(
-          squaredBounds.lowerBound(i, alpha) + diff.squaredNorm(),
+          lowerBound(i, alpha) + diff.squaredNorm(),
           3
         )
       );
@@ -287,10 +323,8 @@ void RefinementProblem::gradientB(const TVector& v, TVector& gradient) const {
   }
 }
 
-void RefinementProblem::gradientC(const TVector& v, TVector& gradient) const {
+void RefinementProblem::referenceGradientC(const TVector& v, TVector& gradient) const {
   if(!constraints.empty()) {
-    const unsigned N = v.size() / 4;
-
     for(unsigned alpha = 0; alpha < N; alpha++) {
       for(const auto& constraint: constraints) {
         auto findIter = std::find(
@@ -328,10 +362,8 @@ void RefinementProblem::gradientC(const TVector& v, TVector& gradient) const {
   }
 }
 
-void RefinementProblem::gradientD(const TVector& v, TVector& gradient) const {
+void RefinementProblem::referenceGradientD(const TVector& v, TVector& gradient) const {
   if(compress) {
-    const unsigned N = v.size() / 4;
-
     for(unsigned alpha = 0; alpha < N; alpha++) {
       gradient[4 * alpha + 3] += 2 * v[4 * alpha + 3];
     }
@@ -339,8 +371,6 @@ void RefinementProblem::gradientD(const TVector& v, TVector& gradient) const {
 }
 
 void RefinementProblem::invertY(TVector& v) const {
-  const unsigned N = v.size() / 4;
-
   for(unsigned i = 0; i < N; i++) {
     v[4 * i + 1] *= -1;
   }
@@ -354,14 +384,14 @@ double RefinementProblem::proportionCorrectChiralityConstraints(const TVector& v
     if(std::fabs(chiralityConstraint.target) > 1e-4) {
       nonZeroChiralityConstraints += 1;
 
-      auto eval = _getTetrahedronReducedVolume(
+      const auto currentVolume = _getTetrahedronReducedVolume(
         v,
         chiralityConstraint.indices
       );
 
       if( // can this be simplified? -> sign bit XOR?
-        ( eval < 0 && chiralityConstraint.target > 0)
-        || (eval > 0 && chiralityConstraint.target < 0)
+        ( currentVolume < 0 && chiralityConstraint.target > 0)
+        || (currentVolume > 0 && chiralityConstraint.target < 0)
       ) {
         incorrectNonZeroChiralityConstraints += 1;
       }

@@ -278,10 +278,10 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
 
     std::vector<Eigen::VectorXd> referenceGradients {4, emptyGradient};
 
-    problem.gradientA(referencePositions, referenceGradients[0]);
-    problem.gradientB(referencePositions, referenceGradients[1]);
-    problem.gradientC(referencePositions, referenceGradients[2]);
-    problem.gradientD(referencePositions, referenceGradients[3]);
+    problem.referenceGradientA(referencePositions, referenceGradients[0]);
+    problem.referenceGradientB(referencePositions, referenceGradients[1]);
+    problem.referenceGradientC(referencePositions, referenceGradients[2]);
+    problem.referenceGradientD(referencePositions, referenceGradients[3]);
 
     // TODO remove: Is split implemented the same as gradient? 
     auto fullGradient = emptyGradient;
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
         + referenceGradients[3],
         1e-10
       ),
-      "Full gradient implementation is not equal to sum of split gradients to 1e-10!"
+      "Optimized gradient implementation is not equal to sum of reference gradients to 1e-10!"
     );
 
     for(unsigned testNum = 0; testNum < 1; testNum++) {
@@ -331,17 +331,17 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
 
       std::vector<Eigen::VectorXd> rotatedGradients {4, emptyGradient};
 
-      problem.gradientA(rotatedPositions, rotatedGradients[0]);
-      problem.gradientB(rotatedPositions, rotatedGradients[1]);
-      problem.gradientC(rotatedPositions, rotatedGradients[2]);
-      problem.gradientD(rotatedPositions, rotatedGradients[3]);
+      problem.referenceGradientA(rotatedPositions, rotatedGradients[0]);
+      problem.referenceGradientB(rotatedPositions, rotatedGradients[1]);
+      problem.referenceGradientC(rotatedPositions, rotatedGradients[2]);
+      problem.referenceGradientD(rotatedPositions, rotatedGradients[3]);
 
       std::vector<Eigen::VectorXd> translatedGradients {4, emptyGradient};
 
-      problem.gradientA(translatedPositions, translatedGradients[0]);
-      problem.gradientB(translatedPositions, translatedGradients[1]);
-      problem.gradientC(translatedPositions, translatedGradients[2]);
-      problem.gradientD(translatedPositions, translatedGradients[3]);
+      problem.referenceGradientA(translatedPositions, translatedGradients[0]);
+      problem.referenceGradientB(translatedPositions, translatedGradients[1]);
+      problem.referenceGradientC(translatedPositions, translatedGradients[2]);
+      problem.referenceGradientD(translatedPositions, translatedGradients[3]);
 
       // Transform the rotated gradients
       std::vector<Eigen::VectorXd> rotatedReferenceGradients = referenceGradients;

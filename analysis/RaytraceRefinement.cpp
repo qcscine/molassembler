@@ -1,10 +1,12 @@
 #include "boost/program_options.hpp"
+#include "boost/filesystem.hpp"
 
 #include "DistanceGeometry/generateConformation.h"
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
 #include "Log.h"
 #include "AnalysisHelpers.h"
+#include "StdlibTypeAlgorithms.h"
 
 #include <fstream>
 #include <iomanip>
@@ -25,6 +27,7 @@ int main(int argc, char* argv[]) {
     ("help", "Produce help message")
     ("s", boost::program_options::value<unsigned>(), "Specify symmetry index (zero-based)")
     ("n", boost::program_options::value<unsigned>(), "Set number of structures to generate")
+    ("f", boost::program_options::value<std::string>(), "Read molecule to generate from file (MOLFiles only!)")
   ;
 
   // Parse
@@ -68,17 +71,29 @@ int main(int argc, char* argv[]) {
   }
 
 /* Generating work */
-  Log::level = Log::Level::None;
-  Log::particulars = {Log::Particulars::DGRefinementChiralityNumericalDebugInfo};
+  // Generate from file
+  if(options_variables_map.count("f") == 1) { 
+    IO::MOLFileHandler filehandler;
+    auto filename = options_variables_map["f"].as<std::string>();
 
-  for(const auto& symmetryName : symmetries) {
+    if(!boost::filesystem::exists(filename)) {
+      std::cout << "The specified file could not be found!" << std::endl;
+      return 0;
+    }
 
-    // Make a molecule and generate an ensemble
-    auto mol = DGDBM::symmetricMolecule(symmetryName);
+    if(!filehandler.canReadFile(filename)) {
+      std::cout << "The specified file is not a MOLFile!" << std::endl;
+      return 0;
+    }
+
+    auto mol = filehandler.readSingle(filename);
+
+    std::cout << "Read molecule information:"
+      << mol << std::endl;
 
     auto debugData = detail::debugDistanceGeometry(
       mol,
-      nStructures,
+      10,
       MetrizationOption::full,
       false
     );
@@ -87,13 +102,46 @@ int main(int argc, char* argv[]) {
       const auto& structNum = enumPair.index;
       const auto& refinementData = enumPair.value;
 
+      auto splat = StdlibTypeAlgorithms::split(filename, '.');
+      assert(splat.size() >= 2);
+      std::string baseName = splat.at(splat.size() - 2) + "-"s 
+        + std::to_string(structNum);
+
       AnalysisHelpers::writeDGPOVandProgressFiles(
         mol,
-        symmetryName,
-        structNum,
+        baseName,
         refinementData
       );
     }
+    
+  }
 
+  // Not from file, then a basic molecule from symmetry
+  if(options_variables_map.count("f") == 0) {
+    for(const auto& symmetryName : symmetries) {
+
+      // Make a molecule and generate an ensemble
+      auto mol = DGDBM::symmetricMolecule(symmetryName);
+
+      auto debugData = detail::debugDistanceGeometry(
+        mol,
+        nStructures,
+        MetrizationOption::full,
+        false
+      );
+
+      for(const auto& enumPair : enumerate(debugData.refinements)) {
+        const auto& structNum = enumPair.index;
+        const auto& refinementData = enumPair.value;
+
+        AnalysisHelpers::writeDGPOVandProgressFiles(
+          mol,
+          symmetryName,
+          structNum,
+          refinementData
+        );
+      }
+
+    }
   }
 }

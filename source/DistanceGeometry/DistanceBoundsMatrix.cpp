@@ -174,7 +174,7 @@ double DistanceBoundsMatrix::lowerBound(
   return _boundsMatrix.lowerBound(i, j);
 }
 
-BoundsMatrix DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
+Eigen::MatrixXd DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
   BoundsMatrix copy = _boundsMatrix;
 
   for(unsigned i = 0; i < _N; i++) {
@@ -184,7 +184,7 @@ BoundsMatrix DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
     }
   }
 
-  return copy;
+  return copy.matrix;
 }
 
 double DistanceBoundsMatrix::upperBound(
