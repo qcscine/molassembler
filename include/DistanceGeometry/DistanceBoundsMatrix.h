@@ -48,9 +48,13 @@ struct BoundsMatrix {
     bool changedSomething = false;
     const unsigned N = matrix.cols();
 
-    for(unsigned k = 0; k < N; k++) {
-      for(unsigned i = 0; i < N - 1; i++) {
-        for(unsigned j = i + 1; j < N; j++) {
+    for(unsigned i = 0; i < N - 1; i++) {
+      for(unsigned j = i + 1; j < N; j++) {
+        for(unsigned k = 0; k < N; k++) {
+          if(k == i || k == j) {
+            continue;
+          }
+
           if(upperBound(i, j) > upperBound(i, k) + upperBound(k, j)) {
             upperBound(i, j) = upperBound(i, k) + upperBound(k, j);
             changedSomething = true;

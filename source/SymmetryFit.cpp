@@ -11,6 +11,8 @@
 /* TODO
  * - Some sanity checks ought to be beneficial, i.e. fitting to seesaw on a 
  *   tetravalent carbon center is abject nonsense and wasted effort
+ * - Optimize -> No need to carry all fits in memory! Keeping track of the 
+ *   (perhaps several) lowest is enough.
  */
 
 namespace MoleculeManip {
@@ -220,7 +222,7 @@ double SymmetryFit::Fit::_toRadians(const double& inDegrees) {
 
 
 double SymmetryFit::Fit::totalDeviation() const {
-  return angleDeviation + oneThreeDeviation + chiralityDeviation;
+  return angleDeviation + oneThreeDeviation + chiralityDeviation + symmetryPenalty;
 }
 
 bool SymmetryFit::Fit::operator < (const Fit& other) const {
@@ -236,7 +238,8 @@ bool SymmetryFit::Fit::operator < (const Fit& other) const {
 SymmetryFit::SymmetryFit(
   std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr,
   const std::vector<AtomIndexType>& adjacentAtoms,
-  const Delib::PositionCollection& positions
+  const Delib::PositionCollection& positions,
+  const boost::optional<Symmetry::Name>& expectedSymmetry
 ) {
   auto initialAssignment = CNStereocenterPtr -> assigned();
   auto initialSymmetry = CNStereocenterPtr -> symmetry;
@@ -284,6 +287,13 @@ SymmetryFit::SymmetryFit(
         positions,
         CNStereocenterPtr
       };
+
+      if(
+        expectedSymmetry 
+        && expectedSymmetry.value() != symmetryName
+      ) {
+        currentFit.symmetryPenalty = 0.5;
+      }
 
       // Add to fits vector
       _fits.insert(currentFit);

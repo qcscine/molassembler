@@ -88,11 +88,15 @@ public:
   using CallbackFunction = std::function<void(const cppoptlib::Criteria<double>&, const TVector&, const RefinementProblem&)>;
 
 /* State */
+  // More or less constant
   const std::vector<ChiralityConstraint>& constraints;
   const Eigen::MatrixXd squaredBounds;
   CallbackFunction callbackClosure;
   const unsigned N;
+
+  // True mutable state
   mutable bool compress = false;
+  mutable double fourthDimWeight = 0.0;
 
 /* Constructors */
   RefinementProblem(

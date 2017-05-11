@@ -121,13 +121,14 @@ int main(int argc, char* argv[]) {
     for(const auto& symmetryName : symmetries) {
 
       // Make a molecule and generate an ensemble
-      auto mol = DGDBM::symmetricMolecule(symmetryName);
+      auto mol = DGDBM::asymmetricMolecule(symmetryName);
 
       auto debugData = detail::debugDistanceGeometry(
         mol,
         nStructures,
         MetrizationOption::full,
-        false
+        false,
+        BFSConstraintCollector::DistanceMethod::Uniform
       );
 
       for(const auto& enumPair : enumerate(debugData.refinements)) {

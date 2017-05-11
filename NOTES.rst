@@ -2,6 +2,7 @@ TODO
 ----
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)
+- Parallelize DG
 - Make dependence on alternate set of Symmetry tetraeder subdivisions clearer
   in code / analysis
 - Set up CMake properly

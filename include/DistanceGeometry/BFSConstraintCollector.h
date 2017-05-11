@@ -26,7 +26,7 @@ public:
 private:
   /* Private Members */
   // Pre-set constants
-  const double oneTwoVariance = 0.1;
+  const double oneTwoVariance = 0.05;
 
   // Input
   const AdjacencyList& _adjacencies;
@@ -73,6 +73,10 @@ public:
     const std::shared_ptr<NodeType>& nodePtr,
     const unsigned& depth
   );
+
+  void set12Bounds();
+  void set13Bounds(const std::vector<AtomIndexType>& chain);
+  void set14Bounds(const std::vector<AtomIndexType>& chain);
 
   /*! After all trees have been visited, replace all lower bounds that are 0
    * to the sum of the respective atoms' vdw radii and then smooth the matrix.

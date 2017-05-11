@@ -395,6 +395,7 @@ Symmetry::Name AdjacencyList::determineLocalGeometry(
       formalCharge
     );
   } else {
+    // Pick the first Symmetry of fitting size
     auto findIter = std::find_if(
       Symmetry::allNames.begin(),
       Symmetry::allNames.end(),
@@ -436,6 +437,10 @@ unsigned AdjacencyList::getNumNonEtaAdjacencies(
   }
 
   return count;
+}
+
+RangeForTemporary<GraphType::edge_iterator> AdjacencyList::iterateEdges() const {
+  return RangeForTemporary<GraphType::edge_iterator>(boost::edges(_adjacencies));
 }
 
 /*! Returns a range-for temporary object allowing c++11 style for loop 
@@ -671,6 +676,9 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
         CNStereocenterPtr -> centerAtom
       ),
       positions
+      /* TODO activate passing of localGeometryName as soon as distance bounds
+       * work is done
+       */
     };
 
 #ifndef NDEBUG

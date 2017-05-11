@@ -20,46 +20,7 @@ BFSConstraintCollector::BFSConstraintCollector(
     _distanceMethod(distanceMethod),
     _distanceBounds(distanceBounds)
 {
-  if(_distanceMethod == DistanceMethod::UFFLike) {
-    // Pre-fill the Distance bounds with proper 1-2 distances
-    for(const auto& explicitEdgePair : adjacencies.getEdges()) {
-      auto bondDistance = Bond::calculateBondDistance(
-        adjacencies.getElementType(
-          explicitEdgePair.first.first
-        ),
-        adjacencies.getElementType(
-          explicitEdgePair.first.second
-        ),
-        explicitEdgePair.second
-      );
-
-      _distanceBounds.setLowerBound(
-        explicitEdgePair.first.first,
-        explicitEdgePair.first.second,
-        bondDistance - oneTwoVariance
-      );
-
-      _distanceBounds.setUpperBound(
-        explicitEdgePair.first.first,
-        explicitEdgePair.first.second,
-        bondDistance + oneTwoVariance
-      );
-    }
-  } else { // Uniform
-    for(const auto& explicitEdgePair : adjacencies.getEdges()) {
-      _distanceBounds.setLowerBound(
-        explicitEdgePair.first.first,
-        explicitEdgePair.first.second,
-        1.5 - oneTwoVariance
-      );
-
-      _distanceBounds.setUpperBound(
-        explicitEdgePair.first.first,
-        explicitEdgePair.first.second,
-        1.5 + oneTwoVariance
-      );
-    }
-  }
+  set12Bounds();
 
   // Populate the stereocenterMap with copies of the molecule's stereocenters
   // Start with the existing stereocenters with multiple assignments
@@ -146,136 +107,185 @@ bool BFSConstraintCollector::operator() (
   chain.push_back(currentNode -> key);
 
   if(depth == 2) { // angle
-    double angle = _getAngle(
-      chain.front(),
-      chain.at(1),
-      chain.back()
-    );
-
-    _distanceBounds.setLowerBound(
-      chain.front(),
-      chain.back(),
-      CommonTrig::lawOfCosines(
-        _distanceBounds.lowerBound(
-          chain.front(),
-          chain.at(1)
-        ),
-        _distanceBounds.lowerBound(
-          chain.at(1),
-          chain.back()
-        ),
-        angle
-      )
-    );
-
-    _distanceBounds.setUpperBound(
-      chain.front(),
-      chain.back(),
-      CommonTrig::lawOfCosines(
-        _distanceBounds.upperBound(
-          chain.front(),
-          chain.at(1)
-        ),
-        _distanceBounds.upperBound(
-          chain.at(1),
-          chain.back()
-        ),
-        angle
-      )
-    );
-
-#ifndef NDEBUG
-    Log::log(Log::Particulars::BFSConstraintCollectorVisitCall) 
-      << "BFSConstraintCollector: attempting to improve bounds on chain {" 
-      << chain.front() << ", " << chain.at(1) << ", " << chain.back() << "}, "
-      << "angle: " << angle << ", suggest bounds ["
-      << CommonTrig::lawOfCosines(
-        _distanceBounds.lowerBound(
-          chain.front(),
-          chain.at(1)
-        ),
-        _distanceBounds.lowerBound(
-          chain.at(1),
-          chain.back()
-        ),
-        angle
-      ) << ", " << CommonTrig::lawOfCosines(
-        _distanceBounds.upperBound(
-          chain.front(),
-          chain.at(1)
-        ),
-        _distanceBounds.upperBound(
-          chain.at(1),
-          chain.back()
-        ),
-        angle
-      ) << "], currently [" 
-      << _distanceBounds.lowerBound(chain.front(), chain.back())
-      << ", " << _distanceBounds.upperBound(chain.front(), chain.back())
-      << "]" << std::endl;
-#endif
+    set13Bounds(chain);
   } else if(depth == 3) { // dihedral
-    double abAngle = _getAngle(
-      chain.front(),
-      chain.at(1),
-      chain.at(2)
-    );
-    double bcAngle = _getAngle(
-      chain.at(1),
-      chain.at(2),
-      chain.back()
-    ); 
-
-    _distanceBounds.setLowerBound(
-      chain.front(),
-      chain.back(),
-      CommonTrig::dihedralLength(
-        _distanceBounds.lowerBound(
-          chain.front(),
-          chain.at(1)
-        ),
-        _distanceBounds.lowerBound(
-          chain.at(1),
-          chain.at(2)
-        ),
-        _distanceBounds.lowerBound(
-          chain.at(2),
-          chain.back()
-        ),
-        abAngle,
-        bcAngle,
-        0 // cis dihedral
-      )
-    );
-
-    _distanceBounds.setUpperBound(
-      chain.front(),
-      chain.back(),
-      CommonTrig::dihedralLength(
-        _distanceBounds.upperBound(
-          chain.front(),
-          chain.at(1)
-        ),
-        _distanceBounds.upperBound(
-          chain.at(1),
-          chain.at(2)
-        ),
-        _distanceBounds.upperBound(
-          chain.at(2),
-          chain.back()
-        ),
-        abAngle,
-        bcAngle,
-        M_PI // trans dihedral
-      )
-    );
-  } 
+    set14Bounds(chain);
+  }
 
   // continue BFS
   return true;
 }
 
+void BFSConstraintCollector::set12Bounds() {
+  if(_distanceMethod == DistanceMethod::UFFLike) {
+    for(const auto& edge: _adjacencies.iterateEdges()) {
+      unsigned i = boost::source(edge, _adjacencies.access());
+      unsigned j = boost::target(edge, _adjacencies.access());
+      auto bondType = _adjacencies.access()[edge].bondType;
+
+      auto bondDistance = Bond::calculateBondDistance(
+        _adjacencies.getElementType(i),
+        _adjacencies.getElementType(j),
+        bondType
+      );
+
+      _distanceBounds.setLowerBound(
+        i,
+        j,
+        bondDistance - oneTwoVariance
+      );
+
+      _distanceBounds.setUpperBound(
+        i,
+        j,
+        bondDistance + oneTwoVariance
+      );
+    }
+  } else { // Uniform
+    for(const auto& edge: _adjacencies.iterateEdges()) {
+      unsigned i = boost::source(edge, _adjacencies.access());
+      unsigned j = boost::target(edge, _adjacencies.access());
+      _distanceBounds.setLowerBound(i, j, 1.5 - oneTwoVariance);
+      _distanceBounds.setUpperBound(i, j, 1.5 + oneTwoVariance);
+    }
+  }
+}
+
+void BFSConstraintCollector::set13Bounds(
+  const std::vector<AtomIndexType>& chain
+) {
+  double angle = _getAngle(
+    chain.front(),
+    chain.at(1),
+    chain.back()
+  );
+
+  _distanceBounds.setLowerBound(
+    chain.front(),
+    chain.back(),
+    CommonTrig::lawOfCosines(
+      _distanceBounds.lowerBound(
+        chain.front(),
+        chain.at(1)
+      ),
+      _distanceBounds.lowerBound(
+        chain.at(1),
+        chain.back()
+      ),
+      angle
+    )
+  );
+
+  _distanceBounds.setUpperBound(
+    chain.front(),
+    chain.back(),
+    CommonTrig::lawOfCosines(
+      _distanceBounds.upperBound(
+        chain.front(),
+        chain.at(1)
+      ),
+      _distanceBounds.upperBound(
+        chain.at(1),
+        chain.back()
+      ),
+      angle
+    )
+  );
+
+#ifndef NDEBUG
+  Log::log(Log::Particulars::BFSConstraintCollectorVisitCall) 
+    << "BFSConstraintCollector: attempting to improve bounds on chain {" 
+    << chain.front() << ", " << chain.at(1) << ", " << chain.back() << "}, "
+    << "angle: " << angle << ", suggest bounds ["
+    << CommonTrig::lawOfCosines(
+      _distanceBounds.lowerBound(
+        chain.front(),
+        chain.at(1)
+      ),
+      _distanceBounds.lowerBound(
+        chain.at(1),
+        chain.back()
+      ),
+      angle
+    ) << ", " << CommonTrig::lawOfCosines(
+      _distanceBounds.upperBound(
+        chain.front(),
+        chain.at(1)
+      ),
+      _distanceBounds.upperBound(
+        chain.at(1),
+        chain.back()
+      ),
+      angle
+    ) << "], currently [" 
+    << _distanceBounds.lowerBound(chain.front(), chain.back())
+    << ", " << _distanceBounds.upperBound(chain.front(), chain.back())
+    << "]" << std::endl;
+#endif
+}
+
+void BFSConstraintCollector::set14Bounds(
+  const std::vector<AtomIndexType>& chain
+) {
+  double abAngle = _getAngle(
+    chain.front(),
+    chain.at(1),
+    chain.at(2)
+  );
+  double bcAngle = _getAngle(
+    chain.at(1),
+    chain.at(2),
+    chain.back()
+  ); 
+
+  _distanceBounds.setLowerBound(
+    chain.front(),
+    chain.back(),
+    CommonTrig::dihedralLength(
+      _distanceBounds.lowerBound(
+        chain.front(),
+        chain.at(1)
+      ),
+      _distanceBounds.lowerBound(
+        chain.at(1),
+        chain.at(2)
+      ),
+      _distanceBounds.lowerBound(
+        chain.at(2),
+        chain.back()
+      ),
+      abAngle,
+      bcAngle,
+      0 // cis dihedral
+    )
+  );
+
+  _distanceBounds.setUpperBound(
+    chain.front(),
+    chain.back(),
+    CommonTrig::dihedralLength(
+      _distanceBounds.upperBound(
+        chain.front(),
+        chain.at(1)
+      ),
+      _distanceBounds.upperBound(
+        chain.at(1),
+        chain.at(2)
+      ),
+      _distanceBounds.upperBound(
+        chain.at(2),
+        chain.back()
+      ),
+      abAngle,
+      bcAngle,
+      M_PI // trans dihedral
+    )
+  );
+}
+
 void BFSConstraintCollector::finalizeBoundsMatrix() {
+  assert(_distanceBounds.boundInconsistencies() == 0);
+
   // Set lower bounds to sum of vdw radii
   for(unsigned i = 0; i < _adjacencies.numAtoms(); i++) {
     for(unsigned j = i + 1; j < _adjacencies.numAtoms(); j++) {
@@ -294,6 +304,8 @@ void BFSConstraintCollector::finalizeBoundsMatrix() {
       }
     }
   }
+
+  assert(_distanceBounds.boundInconsistencies() == 0);
 
   _distanceBounds.smooth();
 

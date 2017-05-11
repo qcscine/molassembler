@@ -117,6 +117,11 @@ public:
     const AtomIndexType& a
   ) const;
 
+  /*! Returns a range-for temporary object allowing c++11-style for loop 
+   * iteration through edges
+   */
+  RangeForTemporary<GraphType::edge_iterator> iterateEdges() const;
+
   std::pair<
     std::vector<AtomIndexType>, // the sorted list of substituent priorities
     std::set< // a set of pairs of AtomIndexTypes that are EQUAL
@@ -137,6 +142,7 @@ public:
   void dumpGraphviz(const std::string& filename) const;
 
 /* Operators */
+  //! Returns the adjacencies of the specified atom index
   RangeForTemporary<GraphType::adjacency_iterator> operator[](
     const AtomIndexType& a
   ) const;

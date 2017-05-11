@@ -31,6 +31,10 @@ void explainDifference(
 /* Test whether generating coordinates from a simple molecule and then
  * recovering all the stereocenter data from the positions alone yields the
  * same StereocenterList as you started out with
+ *
+ * TODO This test will fail worse now that SymmetryFit takes into account the 
+ * geometry we expect the center to take, simply because the molecules created
+ * by DGDBM::asymmetricMolecule are (chemically speaking) abject nonsense
  */
 BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
   for(const auto& symmetryName: Symmetry::allNames) {
@@ -46,8 +50,8 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         molecule,
         100,
         MetrizationOption::off,
-        false
-        // TODO BFSConstraintCollector::DistanceMethod::Uniform
+        false, // no y-inversion trick
+        BFSConstraintCollector::DistanceMethod::Uniform
       );
 
       /* Check that for every PositionCollection, inferring the StereocenterList

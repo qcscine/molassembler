@@ -37,7 +37,6 @@ private:
     Eigen::MatrixXd _makeDistancesMatrix(
       const Delib::PositionCollection& positions
     );
-    
 
   public:
     Symmetry::Name symmetryName;
@@ -46,6 +45,7 @@ private:
     double angleDeviation;
     double oneThreeDeviation;
     double chiralityDeviation;
+    double symmetryPenalty = 0;
 
     Fit() = delete;
     Fit(
@@ -98,7 +98,8 @@ public:
   SymmetryFit(
     std::shared_ptr<Stereocenters::CNStereocenter>& CNStereocenterPtr,
     const std::vector<AtomIndexType>& adjacentAtoms,
-    const Delib::PositionCollection& positions
+    const Delib::PositionCollection& positions,
+    const boost::optional<Symmetry::Name>& expectedSymmetry = boost::none
   ); 
 
   friend std::ostream& (::operator << )(std::ostream& os, const SymmetryFit& symmetryFit);
