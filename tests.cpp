@@ -268,3 +268,28 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
     BOOST_CHECK(all_pass);
   }
 }
+
+BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
+  for(const auto& symmetryName : allNames) {
+    for(const auto& tetrahedron : tetrahedra(symmetryName)) {
+      bool containsAnEmptyOption = false;
+
+      for(const auto& edgeOption : tetrahedron) {
+        if(!edgeOption) {
+          containsAnEmptyOption = true;
+          break;
+        }
+      }
+
+      std::set<unsigned> indices;
+
+      for(const auto& edgeOption : tetrahedron) {
+        if(edgeOption) {
+          indices.insert(edgeOption.value());
+        }
+      }
+
+      BOOST_CHECK(indices.size() + static_cast<unsigned>(containsAnEmptyOption) == 4);
+    }
+  }
+}

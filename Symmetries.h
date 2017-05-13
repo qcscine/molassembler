@@ -6,7 +6,7 @@
  * about the geometry when used but should improve performance as fewer 
  * tetrahedron volumes must be calculated.
  */
-#define USE_ALTERNATE_TETRAHEDRA
+//#define USE_ALTERNATE_TETRAHEDRA
 
 /* If USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE is defined, a table of all
  * angles resulting from a predefined set of positions is generated and that
@@ -33,6 +33,8 @@
  *   completely arbitrary!
  * - Consider making constexpr calculation of all angles from coordinates into
  *   const lookup table
+ * - Annotate SymmetryInformation components where possible, e.g. prepend 
+ *   TetrahedronList before that part of the SymmetryInformation initializer_list
  *
  *   + All angle functions are lookup tables
  */
@@ -40,7 +42,7 @@
 namespace Symmetry {
 
 /* Typedefs */
-using RotationsType = std::vector<
+using RotationsList = std::vector<
   std::vector<unsigned>
 >;
 
@@ -74,7 +76,7 @@ using CoordinateList = std::vector<Eigen::Vector3d>;
 struct SymmetryInformation {
   const std::string stringName;
   const unsigned size;
-  const RotationsType rotations;
+  const RotationsList rotations;
   const AngleFunctionType angleFunction;
   const TetrahedronList tetrahedra;
   const CoordinateList coordinates;
@@ -83,7 +85,7 @@ struct SymmetryInformation {
   SymmetryInformation(
     std::string&& stringName,
     unsigned&& size,
-    RotationsType&& rotations,
+    RotationsList&& rotations,
     AngleFunctionType&& angleFunction,
     TetrahedronList&& tetrahedra,
     CoordinateList&& coordinates
@@ -129,7 +131,7 @@ inline const unsigned& size(const Name& name) {
   return symmetryData.at(name).size;
 }
 
-inline const RotationsType& rotations(const Name& name) {
+inline const RotationsList& rotations(const Name& name) {
   return symmetryData.at(name).rotations;
 }
 

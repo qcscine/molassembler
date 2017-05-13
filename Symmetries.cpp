@@ -31,18 +31,21 @@ const std::map<Name, SymmetryInformation> symmetryData {
     SymmetryInformation {
       "linear",
       2,
-      {
+      RotationsList {
         {1, 0}
       },
       [](
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else return 180;
+        if(a == b) {
+          return 0;
+        }
+
+        return 180;
       },
-      {},
-      {
+      TetrahedronList {},
+      CoordinateList {
         { 1 , 0, 0 },
         { -1, 0, 0 }
       }
@@ -59,7 +62,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "bent",
       2,
-      {
+      RotationsList {
         {1, 0}
       },
       [](
@@ -70,11 +73,14 @@ const std::map<Name, SymmetryInformation> symmetryData {
          * english wikipedia, using experimental data here to improve instances
          * of this geometry on e.g. O center would a big improvement to DG runs
          */
-        if(a == b) return 0;
-        else return 107; 
+        if(a == b) {
+          return 0;
+        }
+
+        return 107; 
       },
-      {},
-      {
+      TetrahedronList {},
+      CoordinateList {
         {1, 0, 0},
         Eigen::AngleAxisd(
           M_PI * 107 / 180,
@@ -99,7 +105,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "trigonal planar",
       3,
-      {
+      RotationsList {
         {1, 2, 0}, // C3
         {0, 2, 1} // C2
       },
@@ -107,11 +113,14 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else return 120;
+        if(a == b) {
+          return 0;
+        }
+
+        return 120;
       },
-      {},
-      {
+      TetrahedronList {},
+      CoordinateList {
         Eigen::Vector3d::UnitX(),
         Eigen::AngleAxisd(
           2 * M_PI / 3,
@@ -136,20 +145,23 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "trigonal pyramidal",
       3,
-      {
+      RotationsList {
         {2, 0, 1} // C3
       },
       [](
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else return 107.5;
+        if(a == b) {
+          return 0;
+        }
+
+        return 107.5;
       },
-      {
-        {boost::none, 0, 1, 2}
+      TetrahedronList {
+        {{boost::none, 0, 1, 2}}
       },
-      {
+      CoordinateList {
         Eigen::AngleAxisd(
           M_PI * 111.5 / 180,
           Eigen::Vector3d::UnitX()
@@ -182,22 +194,25 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "T-shaped",
       3,
-      {
+      RotationsList {
         {2, 1, 0} // C2
       },
       [](
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else if((a + b) % 2 == 1) {
-          return 90;
-        } else {
-          return 180;
+        if(a == b) {
+          return 0;
         }
+
+        if((a + b) % 2 == 1) {
+          return 90;
+        } 
+
+        return 180;
       },
-      {},
-      {
+      TetrahedronList {},
+      CoordinateList {
         - Eigen::Vector3d::UnitX(),
         Eigen::Vector3d::UnitY(),
         Eigen::Vector3d::UnitX()
@@ -229,7 +244,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "tetrahedral",
       4,
-      {
+      RotationsList {
         {0, 3, 1, 2}, // C4, 1
         {2, 1, 3, 0}, // C4, 2
         {3, 0, 2, 1}, // C4, 3
@@ -239,13 +254,16 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else return 109.5;
+        if(a == b) {
+          return 0;
+        }
+
+        return 109.5;
       },
-      {
-        {0, 1, 2, 3}
+      TetrahedronList {
+        {{0, 1, 2, 3}}
       },
-      {
+      CoordinateList {
         Eigen::Vector3d::UnitY(),
         Eigen::AngleAxisd(
           M_PI * 109.5 / 180,
@@ -281,7 +299,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "square planar",
       4,
-      {
+      RotationsList {
         {3, 0, 1, 2}, // C4
         {1, 0, 3, 2}, // C2
         {3, 2, 1, 0}  // C2'
@@ -290,17 +308,20 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else if((a + b) % 2 == 1) {
+        if(a == b) {
+          return 0;
+        }
+
+        if((a + b) % 2 == 1) {
           // this expression indicates cis
           return 90;
-        } else {
-          // are trans
-          return 180;
-        }
+        } 
+
+        // leftover case is trans
+        return 180;
       },
-      {},
-      {
+      TetrahedronList {},
+      CoordinateList {
         Eigen::Vector3d::UnitX(),
         Eigen::Vector3d::UnitY(),
         - Eigen::Vector3d::UnitX(),
@@ -319,31 +340,40 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "seesaw",
       4,
-      {
+      RotationsList {
         {3, 2, 1, 0} // C2
       },
       [](
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
+        if(a == b) {
+          return 0;
+        }
+
         const auto& smaller = std::min(a, b);
         const auto& larger = std::max(a, b);
-        if(smaller == 0 && larger == 3) return 180;
-        else if(smaller == 1 && larger == 2) return 120;
-        else return 90;
+        if(smaller == 0 && larger == 3) {
+          return 180;
+        }
+
+        if(smaller == 1 && larger == 2) {
+          return 120;
+        }
+
+        return 90;
       },
-      {
+      TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
         // Alternate
-        {0, 1, 2, 3}
+        {{0, 1, 2, 3}}
 #else
         // Regular
-        {0, boost::none, 1, 2},
-        {boost::none, 3, 1, 2},
+        {{0, boost::none, 1, 2}},
+        {{boost::none, 3, 1, 2}},
 #endif
       },
-      {
+      CoordinateList {
         Eigen::Vector3d::UnitY(),
         Eigen::Vector3d::UnitX(),
         Eigen::AngleAxisd(
@@ -378,32 +408,42 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "square pyramidal",
       5,
-      {
+      RotationsList {
         {3, 0, 1, 2, 4} // C4
       },
       [](
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else if(a == 4 || b == 4) return 90; // all bonds to axial ligand are 90°
-        else if((a + b) % 2 == 0) return 180; // 0 + 2 or 1 + 3 are trans
-        else return 90; // rest are cis
+        if(a == b) {
+          return 0;
+        }
+
+        if(a == 4 || b == 4) { // all bonds to axial ligand are 90°
+          return 90; 
+        }
+
+        if((a + b) % 2 == 0) { // 0 + 2 or 1 + 3 are trans
+          return 180;
+        }
+
+        // rest are cis
+        return 90;
       },
-      {
+      TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
         // Alternate
-        {0, 1, 4, 2}, 
-        {0, 3, 2, 4} 
+        {{0, 1, 4, 2}}, 
+        {{0, 3, 2, 4}}
 #else 
         // Regular
-        {0, 1, 4, boost::none},
-        {1, 2, 4, boost::none},
-        {2, 3, 4, boost::none},
-        {3, 0, 4, boost::none}
+        {{0, 1, 4, boost::none}},
+        {{1, 2, 4, boost::none}},
+        {{2, 3, 4, boost::none}},
+        {{3, 0, 4, boost::none}}
 #endif
       },
-      {
+      CoordinateList {
         Eigen::Vector3d::UnitX(),
         Eigen::Vector3d::UnitY(),
         - Eigen::Vector3d::UnitX(),
@@ -428,7 +468,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "trigonal bipyramidal",
       5,
-      {
+      RotationsList {
         {2, 0, 1, 3, 4}, // C3
         {0, 2, 1, 4, 3}, // C2 on 0
         {2, 1, 0, 4, 3}, // C2 on 1
@@ -438,7 +478,10 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
+        if(a == b) {
+          return 0;
+        }
+
         unsigned smaller = std::min(a, b), larger = std::max(a, b);
         if(larger < 3) {
           // -> smaller < 2, this means either 0,1 0,2 1,2 axial
@@ -454,11 +497,11 @@ const std::map<Name, SymmetryInformation> symmetryData {
           return 180;
         }
       },
-      {
-        {0, 1, 3, 2},
-        {0, 1, 2, 4}
+      TetrahedronList {
+        {{0, 1, 3, 2}},
+        {{0, 1, 2, 4}}
       },
-      {
+      CoordinateList {
         Eigen::Vector3d::UnitX(),
         Eigen::AngleAxisd(
           2 * M_PI / 3,
@@ -488,7 +531,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "pentagonal planar",
       5,
-      {
+      RotationsList {
         {4, 0, 1, 2, 3}, // C5
         {0, 4, 3, 2, 1} // C2
       },
@@ -502,8 +545,8 @@ const std::map<Name, SymmetryInformation> symmetryData {
           std::min(absDiff - 5, 5 - absDiff)
         ) * 72;
       },
-      {},
-      {
+      TetrahedronList {},
+      CoordinateList {
         Eigen::Vector3d::UnitX(),
         Eigen::AngleAxisd(
           2 * M_PI / 5,
@@ -542,7 +585,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "octahedral",
       6,
-      {
+      RotationsList {
         {3, 0, 1, 2, 4, 5}, // vertical C4
         {0, 5, 2, 4, 1, 3}, // horizontal C4
         {4, 1, 5, 3, 2, 0} // horizontal C4'
@@ -551,38 +594,41 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else if(
+        if(a == b) {
+          return 0;
+        }
+        
+        if(
           (
             std::max(a, b) < 4 // if the largest is < 4, then equatorial 
             && (a + b) % 2 == 0 // this gives trans eq ligands
           ) || std::min(a, b) == 4 // this indicates 4,5 (axial trans)
         ) {
           return 180;
-        } else {
-          return 90;
-        }
+        } 
+
+        return 90;
       },
-      {
+      TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
         // Alternate
-        {3, 0, 4, 5},
-        {0, 1, 4, 5},
-        {1, 2, 4, 5},
-        {2, 3, 4, 5}
+        {{3, 0, 4, 5}},
+        {{0, 1, 4, 5}},
+        {{1, 2, 4, 5}},
+        {{2, 3, 4, 5}}
 #else
         // Regular
-        {3, 0, 4, boost::none},
-        {0, 1, 4, boost::none},
-        {1, 2, 4, boost::none},
-        {2, 3, 4, boost::none},
-        {3, 0, boost::none, 5},
-        {0, 1, boost::none, 5},
-        {1, 2, boost::none, 5},
-        {2, 3, boost::none, 5}
+        {{3, 0, 4, boost::none}},
+        {{0, 1, 4, boost::none}},
+        {{1, 2, 4, boost::none}},
+        {{2, 3, 4, boost::none}},
+        {{3, 0, boost::none, 5}},
+        {{0, 1, boost::none, 5}},
+        {{1, 2, boost::none, 5}},
+        {{2, 3, boost::none, 5}}
 #endif
       },
-      {
+      CoordinateList {
         Eigen::Vector3d::UnitX(),
         Eigen::Vector3d::UnitY(),
         - Eigen::Vector3d::UnitX(),
@@ -614,7 +660,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "trigonal prismatic",
       6,
-      {
+      RotationsList {
         {2, 0, 1, 5, 3, 4}, // C3 axial
         {5, 4, 3, 2, 1, 0} // C2 betw. 1, 4
       },
@@ -622,9 +668,11 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else if(std::min(a - b, b - a) == 3) return 76;
-        else {
+        if(a == b) {
+          return 0;
+        } else if(std::min(a - b, b - a) == 3) {
+          return 76;
+        } else {
           if(
             (a < 3 && b < 3)
             || (a >= 3 && b >= 3)
@@ -635,12 +683,12 @@ const std::map<Name, SymmetryInformation> symmetryData {
           }
         }
       },
-      {
+      TetrahedronList {
         // TODO dubious if this captures all relevant information, too limited
-        {boost::none, 0, 1, 2},
-        {3, boost::none, 4, 5}
+        {{boost::none, 0, 1, 2}},
+        {{3, boost::none, 4, 5}}
       },
-      {
+      CoordinateList {
         // 0, lower X by 76/2° into -Z
         Eigen::AngleAxisd(
           M_PI * 38 / 180,
@@ -702,40 +750,44 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "pentagonal pyramidal",
       6,
-      {
+      RotationsList {
         {4, 0, 1, 2, 3, 5} // C5 axial
       },
       [](
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else if(a == 5 || b == 5) {
+        if(a == b) {
+          return 0;
+        }
+
+        if(a == 5 || b == 5) {
           return 90;
-        } else { // identical to PentagonalPlanar
-          unsigned absDiff = std::min(a - b, b - a);
-          return std::min(
-            absDiff,
-            std::min(absDiff - 5, 5 - absDiff)
-          ) * 72;
-          }
+        }  
+        
+        // remainder are identical to PentagonalPlanar
+        unsigned absDiff = std::min(a - b, b - a);
+        return std::min(
+          absDiff,
+          std::min(absDiff - 5, 5 - absDiff)
+        ) * 72;
       },
-      {
+      TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
         // Alternate
-        {0, 1, 5, 2},
-        {2, 3, 5, 4},
-        {4, 5, boost::none, 0}
+        {{0, 1, 5, 2}},
+        {{2, 3, 5, 4}},
+        {{4, 5, boost::none, 0}}
 #else
         // Regular
-        {0, boost::none, 1, 5},
-        {1, boost::none, 2, 5},
-        {2, boost::none, 3, 5},
-        {3, boost::none, 4, 5},
-        {4, boost::none, 0, 5}
+        {{0, boost::none, 1, 5}},
+        {{1, boost::none, 2, 5}},
+        {{2, boost::none, 3, 5}},
+        {{3, boost::none, 4, 5}},
+        {{4, boost::none, 0, 5}}
 #endif
       },
-      {
+      CoordinateList {
         Eigen::Vector3d::UnitX(),
         Eigen::AngleAxisd(
           2 * M_PI / 5,
@@ -774,7 +826,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "pentagonal bipyramidal",
       7,
-      {
+      RotationsList {
         {4, 0, 1, 2, 3, 5, 6}, // C5 axial
         {1, 0, 4, 3, 2, 6, 5} // C2 equatorial on 3
       },
@@ -782,40 +834,47 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else if(a + b == 11) return 180; // trans 5,6
-        else if((a > 4) ^ (b > 4)) return 90; // any angle to axial index
-        else { // equatorial angles, like PentagonalPlanar
-          unsigned absDiff = std::min(a - b, b - a);
-          return std::min(
-            absDiff,
-            std::min(absDiff - 5, 5 - absDiff)
-          ) * 72;
+        if(a == b) {
+          return 0;
         }
+
+        if(a + b == 11) {
+          return 180; // trans 5,6
+        }
+        if((a > 4) ^ (b > 4)) {
+          return 90; // any angle to axial index
+        }
+
+        // remainder are equatorial angles, like PentagonalPlanar
+        unsigned absDiff = std::min(a - b, b - a);
+        return std::min(
+          absDiff,
+          std::min(absDiff - 5, 5 - absDiff)
+        ) * 72;
       },
-      {
+      TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
         // Alternate
-        {0, 1, 5, 6},
-        {1, 2, 5, 6},
-        {2, 3, 5, 6},
-        {3, 4, 5, 6},
-        {4, 0, 5, 6}
+        {{0, 1, 5, 6}},
+        {{1, 2, 5, 6}},
+        {{2, 3, 5, 6}},
+        {{3, 4, 5, 6}},
+        {{4, 0, 5, 6}}
 #else
         // Regular
-        {0, 1, 5, boost::none},
-        {1, 2, 5, boost::none},
-        {2, 3, 5, boost::none},
-        {3, 4, 5, boost::none},
-        {4, 0, 5, boost::none},
-        {0, 1, boost::none, 6},
-        {1, 2, boost::none, 6},
-        {2, 3, boost::none, 6},
-        {3, 4, boost::none, 6},
-        {4, 0, boost::none, 6}
+        {{0, 1, 5, boost::none}},
+        {{1, 2, 5, boost::none}},
+        {{2, 3, 5, boost::none}},
+        {{3, 4, 5, boost::none}},
+        {{4, 0, 5, boost::none}},
+        {{0, 1, boost::none, 6}},
+        {{1, 2, boost::none, 6}},
+        {{2, 3, boost::none, 6}},
+        {{3, 4, boost::none, 6}},
+        {{4, 0, boost::none, 6}}
 #endif
       },
-      {
+      CoordinateList {
         Eigen::Vector3d::UnitX(),
         Eigen::AngleAxisd(
           2 * M_PI / 5,
@@ -874,7 +933,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
        */
       "square antiprismatic",
       8,
-      {
+      RotationsList {
         {3, 0, 1, 2, 7, 4, 5, 6}, // C4 axial
         /* 180° on equatorial axis in plane with 4, 6 
          *
@@ -900,7 +959,10 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
+        if(a == b) {
+          return 0;
+        }
+
         return squareAntiprismaticAngles.at(
           std::min(a, b),
           std::max(a, b)
@@ -911,13 +973,17 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const unsigned& a,
         const unsigned& b
       ) -> double {
-        if(a == b) return 0;
-        else if(
+        if(a == b) {
+          return 0;
+        } else if(
           (a < 4 && b < 4)
           || (a >= 4 && b >= 4)
         ) { // in plane
-          if((a + b) % 2 == 1) return 72.9875; // cis
-          else return 114.475; // trans
+          if((a + b) % 2 == 1) { // cis
+            return 72.9875; 
+          } else { // trans
+            return 114.475;
+          }
         } else { // between planes
           unsigned minDiff = std::min(a - b, b - a);
           if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
@@ -928,27 +994,27 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
       },
 #endif
-      {
+      TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
         // Alternate
-        {0, 1, 4, 6},
-        {1, 2, 5, 7},
-        {2, 3, 6, 3},
-        {3, 0, 7, 5},
+        {{0, 1, 4, 6}},
+        {{1, 2, 5, 7}},
+        {{2, 3, 6, 4}},
+        {{3, 0, 7, 5}},
 #else 
         // Regular
-        {7, 0, 4, boost::none},
-        {0, 4, boost::none, 1},
-        {4, 1, 5, boost::none},
-        {1, 5, boost::none, 2},
-        {5, 2, 6, boost::none},
-        {2, 6, boost::none, 3},
-        {6, 3, 7, boost::none},
-        {3, 7, boost::none, 0}
+        {{7, 0, 4, boost::none}},
+        {{0, 4, boost::none, 1}},
+        {{4, 1, 5, boost::none}},
+        {{1, 5, boost::none, 2}},
+        {{5, 2, 6, boost::none}},
+        {{2, 6, boost::none, 3}},
+        {{6, 3, 7, boost::none}},
+        {{3, 7, boost::none, 0}}
 #endif
       },
       // TODO not quite ideal, not oriented along any axis...
-      { // generated w/ reference/minimal.py
+      CoordinateList { // generated w/ reference/minimal.py
         {-0.00928803, 0.61156848, 0.79113698},
         {0.79562737, 0.60564101, -0.01326839},
         {0.79562737, -0.60564101, -0.01326839},
