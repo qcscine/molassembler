@@ -1,0 +1,119 @@
+#ifndef INCLUDE_DG_DLIB_ADAPTORS_H
+#define INCLUDE_DG_DLIB_ADAPTORS_H
+
+#include "RefinementProblem.h"
+#include "DistanceGeometry/RefinementDebugData.h"
+
+namespace MoleculeManip {
+
+namespace DistanceGeometry {
+
+namespace dlibAdaptors {
+
+class iterationOrAllChiralitiesCorrectStrategy {
+private:
+  const std::vector<ChiralityConstraint>& _constraints;
+  
+public:
+/* State */
+  const unsigned maxIterations = 0;
+  unsigned iterations = 0;
+
+/* Constructors */
+  // Without max iteration limit
+  explicit iterationOrAllChiralitiesCorrectStrategy(
+    const std::vector<ChiralityConstraint>& constraints
+  ) : _constraints(constraints)
+  {}
+
+  iterationOrAllChiralitiesCorrectStrategy(
+    const std::vector<ChiralityConstraint>& constraints,
+    const unsigned& maxIter
+  ) : _constraints(constraints),
+      maxIterations(maxIter)
+  {}
+
+
+/* Information */
+  /*! This non-camel-case function name is necessary in order to work correctly
+   * with dlib's optimizations
+   */
+  template<typename T>
+  bool should_continue_search(
+    const T& positions,
+    const double& function_value __attribute__((unused)),
+    const T& gradient __attribute__((unused))
+  ) {
+    iterations += 1;
+
+    if(maxIterations != 0 && iterations > maxIterations) {
+      return false;
+    }
+
+    if(
+      errfDetail::proportionChiralityConstraintsCorrectSign(
+        _constraints,
+        positions
+      ) >= 1 // just in case >
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+};
+
+struct iterationOrGradientNormStopStrategy {
+/* Public access constants */
+  const unsigned maxIterations;
+  const double gradientNormThresholdSquared;
+
+/* State */
+  unsigned iterations = 0;
+
+/* Constructors */
+
+  iterationOrGradientNormStopStrategy(
+    const unsigned& maxIterations,
+    const double& gradientNormThreshold
+  ) : maxIterations(maxIterations),
+      gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold)
+  {}
+
+  template<typename T>
+  bool should_continue_search(
+    const T& positions __attribute__((unused)),
+    const double& function_value __attribute__((unused)),
+    const T& gradient
+  ) {
+    iterations += 1;
+
+    if(maxIterations != 0 && iterations > maxIterations) {
+      return false;
+    }
+
+    /* Optimization:
+     * Instead of comparing
+     *   dlib::length(gradient) < gradientNormThreshold
+     * = std::sqrt(dlib::length_squared(gradient)) < gradientNormThreshold
+     *
+     * we square both sides, and since both quantities are > 0,
+     *  dlib::length_squared(gradient) < gradientNormThreshold²
+     *
+     * This saves a std::sqrt every iteration
+     */
+    if(dlib::length_squared(gradient) < gradientNormThresholdSquared) {
+      return false;
+    }
+
+    return true;
+  }
+};
+
+} // namespace dlibAdaptors
+
+} // namespace DistanceGeometry
+
+} // namespace MoleculeManip
+
+#endif

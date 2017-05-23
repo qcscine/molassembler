@@ -95,43 +95,44 @@ double SymmetryFit::Fit::_calculateChiralityDeviation(
     return 0;
   } 
 
-  /* Propagate all prototypes defined by the stereocenter into constraints
-   * using distances from the positions
-   */
-  const auto constraints = TemplateMagic::map(
-    prototypes,
-    DistanceGeometry::detail::makePropagator(
-      [&positions](const unsigned& i, const unsigned& j) {
-        return (
-          positions[i] - positions[j]
-        ).norm();
+  return TemplateMagic::numeric::sum(
+    TemplateMagic::map(
+      prototypes,
+      [&positions](const auto& constraintPrototype) -> double {
+        using TargetEnumType = Stereocenters::Stereocenter::ChiralityConstraintTarget;
+
+        double volume = _getVolume(
+          positions,
+          constraintPrototype.first[0],
+          constraintPrototype.first[1],
+          constraintPrototype.first[2],
+          constraintPrototype.first[3]
+        );
+
+        // If the target is flat, then the "error" is continuous:
+        if(constraintPrototype.second == TargetEnumType::Flat) {
+          return std::fabs(volume);
+        }
+
+        /* Otherwise, no bounds, error is some arbitrary penalty if the sign is
+         * wrong
+         */
+        if(
+          (
+            constraintPrototype.second == TargetEnumType::Positive
+            && volume < 0
+          ) || (
+            constraintPrototype.second == TargetEnumType::Negative
+            && volume > 0
+          )
+        ) {
+          return 1; // Arbitrary penalty
+        }
+
+        return 0;
       }
     )
   );
-
-  /* Calculate deviations for each constraint between the chirality constraint
-   * and the volume of the tetrahedron from the positions. Since the target 
-   * volume is calculated using the same distances and the two quantities are
-   * therefore different only in sign, the deviation is either zero or two times
-   * the volume.
-   */
-  const auto deviations = TemplateMagic::map(
-    constraints,
-    [&](const auto& constraint) -> double {
-      return std::fabs(
-        constraint.target - _getVolume(
-          positions,
-          constraint.indices[0],
-          constraint.indices[1],
-          constraint.indices[2],
-          constraint.indices[3]
-        )
-      );
-    }
-  );
-
-  // Return the summation of the deviations
-  return TemplateMagic::numeric::sum(deviations);
 }
 
 SymmetryFit::Fit::Fit(

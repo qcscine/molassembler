@@ -17,3 +17,6 @@ analysis/*/*.csv
 *.gif
 *.csv
 .commit-notes
+analysis/testData
+STATUS.rst
+ISSUE.rst

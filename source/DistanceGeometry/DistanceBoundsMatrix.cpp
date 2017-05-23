@@ -8,7 +8,7 @@ namespace DistanceGeometry {
 /* Constructors */
 DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) 
   : _boundsMatrix(N),
-    _N(N) {
+    N(N) {
 
   _boundsMatrix.matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
   _initRandomEngine();
@@ -16,7 +16,7 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N)
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) : 
   _boundsMatrix(matrix),
-  _N(matrix.rows()) {
+  N(matrix.rows()) {
   assert(matrix.rows() == matrix.cols());
 
   _initRandomEngine();
@@ -84,7 +84,7 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
   auto boundsCopy = _boundsMatrix;
 
   Eigen::MatrixXd distances;
-  distances.resize(_N, _N);
+  distances.resize(N, N);
   distances.setZero();
 
   auto upperTriangle = distances.triangularView<Eigen::StrictlyUpper>();
@@ -94,7 +94,7 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
    * preferable to traverse the list of atoms at random.
    */
 
-  std::vector<AtomIndexType>  indices(_N);
+  std::vector<AtomIndexType>  indices(N);
   std::iota(
     indices.begin(),
     indices.end(),
@@ -108,9 +108,9 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
   );
 
   // TODO Using Metrization like this is O(N^5)! 
-  for(AtomIndexType idx = 0; idx < _N; idx++) {
+  for(AtomIndexType idx = 0; idx < N; idx++) {
     AtomIndexType i = indices.at(idx);
-    for(AtomIndexType j = 0; j < _N; j++) {
+    for(AtomIndexType j = 0; j < N; j++) {
       if(
         i == j
         || upperTriangle(
@@ -156,8 +156,8 @@ const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
 unsigned DistanceBoundsMatrix::boundInconsistencies() const {
   unsigned count = 0;
 
-  for(unsigned i = 0; i < _N; i++) {
-    for(unsigned j = i + 1; j < _N; j++) {
+  for(unsigned i = 0; i < N; i++) {
+    for(unsigned j = i + 1; j < N; j++) {
       if(lowerBound(i, j) > upperBound(i, j)) {
         count += 1;
       }
@@ -177,8 +177,8 @@ double DistanceBoundsMatrix::lowerBound(
 Eigen::MatrixXd DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
   BoundsMatrix copy = _boundsMatrix;
 
-  for(unsigned i = 0; i < _N; i++) {
-    for(unsigned j = i + 1; j < _N; j++) {
+  for(unsigned i = 0; i < N; i++) {
+    for(unsigned j = i + 1; j < N; j++) {
       copy.upperBound(i, j) *= copy.upperBound(i, j);
       copy.lowerBound(i, j) *= copy.lowerBound(i, j);
     }

@@ -2,12 +2,14 @@
 
 #include "DistanceGeometry/MetricMatrix.h"
 #include "DistanceGeometry/RefinementProblem.h"
+#include "DistanceGeometry/dlibAdaptors.h"
+#include "DistanceGeometry/dlibDebugAdaptors.h"
 #include "DistanceGeometry/BFSConstraintCollector.h"
 #include "AdjacencyListAlgorithms.h"
 #include "TreeAlgorithms.h"
-#include "cppoptlib/meta.h"
-#include "cppoptlib/solver/conjugatedgradientdescentsolver.h"
-#include "cppoptlib/solver/bfgssolver.h"
+
+#include <dlib/optimization.h>
+#include <Eigen/Dense>
 
 namespace MoleculeManip {
 
@@ -35,6 +37,149 @@ Delib::PositionCollection convertToPositionCollection(
   return positions;
 }
 
+Delib::PositionCollection convertToPositionCollection(
+  const dlib::matrix<double, 0, 1>& vectorizedPositions
+) {
+  const unsigned dimensionality = 4;
+  assert(vectorizedPositions.size() % dimensionality == 0);
+
+  Delib::PositionCollection positions;
+  const unsigned N = vectorizedPositions.size() / dimensionality;
+  for(unsigned i = 0; i < N; i++) {
+    positions.push_back(
+      Delib::Position {
+        vectorizedPositions(dimensionality * i),
+        vectorizedPositions(dimensionality * i + 1),
+        vectorizedPositions(dimensionality * i + 2)
+      }
+    );
+  }
+
+  return positions;
+}
+
+ChiralityConstraint propagate(
+  const DistanceBoundsMatrix& bounds,
+  const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+) {
+  using namespace Stereocenters;
+
+  if(prototype.second == Stereocenter::ChiralityConstraintTarget::Flat) {
+    return ChiralityConstraint {
+      prototype.first,
+      0.0,
+      0.0
+    };
+  }
+
+  /* Calculate the upper and lower bounds on the volume. The target volume of
+   * the chirality constraint created by the tetrahedron is calculated using
+   * internal coordinates (the Cayley-Menger determinant), always leading to V
+   * > 0, so depending on the current assignment, the sign of the result is
+   * switched.  The formula used later in chirality constraint calculation for
+   * explicit coordinates is adjusted by V' = 6 V to avoid an unnecessary
+   * factor, so we do that here too:
+   *               
+   *    288 V²  = |...|               | substitute V' = 6 V
+   * -> 8 (V')² = |...|               
+   * ->      V' = sqrt(|...| / 8)
+   *
+   * where the Cayley-Menger determinant |...| is square symmetric:
+   *   
+   *          |   0    1    1    1    1  |
+   *          |        0  d12² d13² d14² |
+   *  |...| = |             0  d23² d24² |
+   *          |                  0  d34² |
+   *          |  ...                  0  |
+   *
+   */
+
+  Eigen::Matrix<double, 5, 5> lowerMatrix, upperMatrix;
+
+  // Order of operations here is very important!
+  
+  lowerMatrix.row(0).setOnes();
+  upperMatrix.row(0).setOnes();
+
+  lowerMatrix.diagonal().setZero();
+  upperMatrix.diagonal().setZero();
+
+  for(unsigned i = 0; i < 4; i++) {
+    for(unsigned j = i + 1; j < 4; j++) {
+      const double& lowerBound = bounds.lowerBound(
+        prototype.first.at(i),
+        prototype.first.at(j)
+      );
+
+      const double& upperBound = bounds.upperBound(
+        prototype.first.at(i),
+        prototype.first.at(j)
+      );
+
+      upperMatrix(i + 1, j + 1) = upperBound * upperBound;
+      lowerMatrix(i + 1, j + 1) = lowerBound * lowerBound;
+    }
+  }
+
+  const double lowerBound = static_cast<
+    Eigen::Matrix<double, 5, 5>
+  >(
+    lowerMatrix.selfadjointView<Eigen::Upper>()
+  ).determinant();
+
+  const double upperBound = static_cast<
+    Eigen::Matrix<double, 5, 5>
+  >(
+    upperMatrix.selfadjointView<Eigen::Upper>()
+  ).determinant();
+
+#ifndef NDEBUG
+  // Log in Debug builds, provided particular is set
+  Log::log(Log::Particulars::PrototypePropagatorDebugInfo) 
+    << "Lower bound Cayley-menger matrix (determinant=" << lowerBound <<  "): " << std::endl << lowerMatrix << std::endl
+    << "Upper bound Cayley-menger matrix (determinant=" << upperBound <<  "): " << std::endl << upperMatrix << std::endl;
+#endif
+
+  assert(lowerBound > -1e-7 && upperBound > -1e-7);
+  assert(lowerBound < upperBound);
+
+  /* For negative case, be aware inversion around 0 (*= -1) flips the inequality
+   *      lower <  upper | *(-1)
+   * ->  -lower > -upper
+   *
+   * So we construct it with the previous upper bound negated as the lower bound
+   * and similarly for the previous lower bound.
+   */
+  if(prototype.second == Stereocenter::ChiralityConstraintTarget::Negative) {
+    /* Abs is necessary to ensure that negative almost-zeros are interpreted as
+     * positive near-zeros. Additionally, we do the adjustment by factor 8 here
+     * (see above)
+     */
+    return ChiralityConstraint {
+      prototype.first,
+      - sqrt(std::fabs(upperBound) / 8.0),
+      - sqrt(std::fabs(lowerBound) / 8.0)
+    };
+  }
+
+  // Regular case (Positive target)
+  return ChiralityConstraint {
+    prototype.first,
+    sqrt(std::fabs(lowerBound) / 8.0),
+    sqrt(std::fabs(upperBound) / 8.0)
+  };
+}
+
+void checkFailureRatio(
+  const unsigned& failures,
+  const unsigned& numStructures,
+  const unsigned& failureRatio
+) {
+  if(static_cast<double>(failures) / numStructures >= failureRatio) {
+    throw std::runtime_error("Refinement failures exceeded threshold!");
+  }
+}
+
 // Non-debug version of DG
 std::list<Delib::PositionCollection> runDistanceGeometry(
   const Molecule& molecule,
@@ -50,12 +195,9 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
     distanceMethod
   );
 
-  cppoptlib::ConjugatedGradientDescentSolver<RefinementProblem> DGConjugatedGradientDescentSolver;
-
-  cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
-  stopCriteria.fDelta = 1e-5;
-
-  DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
+  // Always:
+//  stopCriteria.iterations = 1e5;
+//  stopCriteria.gradNorm = 1e-5;
 
   unsigned failures = 0;
 
@@ -81,31 +223,14 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
      */
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
-      /* The propagator needs a function that gives the distances between
-       * pairs of atoms, in this case we use the distances matrix we generated
-       * from the bounds (must satisfy triangle inequalities). The Propagator
-       * then has a unary function call operator that takes prototypes and spits
-       * out full chiralityConstraints.
-       */
-      detail::makePropagator(
-        [&distancesMatrix](
-          const AtomIndexType& i,
-          const AtomIndexType& j
-        ) -> double {
-          return distancesMatrix(
-            std::min(i, j),
-            std::max(i, j)
-          );
-        }
-      )
-    );
-
-    /* Instantiantiate the refinement problem and its solver, set the stop 
-     * criteria
-     */
-    RefinementProblem problem(
-      chiralityConstraints,
-      DGData.distanceBounds
+      [&DGData](
+        const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+      ) -> ChiralityConstraint {
+        return propagate(
+          DGData.distanceBounds,
+          prototype
+        );
+      }
     );
 
     // Make a metric matrix from the distances matrix
@@ -114,13 +239,15 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
 
-    // Vectorize the positions for use with cppoptlib
-    Eigen::VectorXd vectorizedPositions {
-      Eigen::Map<Eigen::VectorXd>(
-        embeddedPositions.data(),
-        embeddedPositions.cols() * embeddedPositions.rows()
+    // Vectorize and transfer to dlib
+    errfValue<true>::Vector dlibPositions = dlib::mat(
+      static_cast<Eigen::VectorXd>(
+        Eigen::Map<Eigen::VectorXd>(
+          embeddedPositions.data(),
+          embeddedPositions.cols() * embeddedPositions.rows()
+        )
       )
-    };
+    );
 
     if(useYInversionTrick) {
       /* If a count of chirality constraints reveals that more than half are
@@ -131,44 +258,106 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
        * chirality constraints should not have to pass an energetic maximum to
        * converge properly as opposed to tetrahedra with volume).
        */
-      if(problem.proportionCorrectChiralityConstraints(vectorizedPositions) < 0.5) {
-        problem.invertY(vectorizedPositions);
+      if(
+        errfDetail::proportionChiralityConstraintsCorrectSign(
+          chiralityConstraints,
+          dlibPositions
+        ) < 0.5
+      ) {
+        // Invert y coordinates
+        for(unsigned i = 0; i < DGData.distanceBounds.N; i++) {
+          dlibPositions(4 * i + 1) *= -1;
+        }
       }
     }
 
-    // Run the actual minimization
-    DGConjugatedGradientDescentSolver.minimize(problem, vectorizedPositions);
+    /* Refinement without penalty on fourth dimension only necessary if not all
+     * chiral centers are correct. Of course, for molecules without chiral
+     * centers at all, this stage is unnecessary
+     */
+    if(
+      errfDetail::proportionChiralityConstraintsCorrectSign(
+        chiralityConstraints,
+        dlibPositions
+      ) < 1
+    ) {
+      dlibAdaptors::iterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
+        chiralityConstraints,
+        10000
+      };
 
-    // What to do if the optimization fails
-    if(DGConjugatedGradientDescentSolver.status() == cppoptlib::Status::Continue) {
+      dlib::find_min(
+        dlib::bfgs_search_strategy(),
+        inversionStopStrategy,
+        errfValue<false>(
+          DGData.distanceBounds,
+          chiralityConstraints
+        ),
+        errfGradient<false>(
+          DGData.distanceBounds,
+          chiralityConstraints
+        ),
+        dlibPositions,
+        0
+      );
+
+      if(
+        inversionStopStrategy.iterations > 10000 
+        || errfDetail::proportionChiralityConstraintsCorrectSign(
+          chiralityConstraints,
+          dlibPositions
+        ) < 1.0
+      ) { // Failure to invert
+        failures += 1;
+        checkFailureRatio(failures, numStructures, failureRatio);
+        continue; // this triggers a new structure to be generated
+      }
+    }
+
+    dlibAdaptors::iterationOrGradientNormStopStrategy refinementStopStrategy {
+      10000, // iteration limit
+      1e-5 // gradient limit
+    };
+
+    errfValue<true> refinementValueFunctor {
+      DGData.distanceBounds,
+      chiralityConstraints
+    };
+
+    // Refinement with penalty on fourth dimension is always necessary
+    dlib::find_min(
+      dlib::bfgs_search_strategy(),
+      refinementStopStrategy,
+      refinementValueFunctor,
+      errfGradient<true>(
+        DGData.distanceBounds,
+        chiralityConstraints
+      ),
+      dlibPositions,
+      0
+    );
+
+    bool reachedMaxIterations = refinementStopStrategy.iterations >= 10000;
+    bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
+      chiralityConstraints,
+      dlibPositions
+    ) < 1;
+    bool structureAcceptable = errfDetail::finalStructureAcceptable(
+      DGData.distanceBounds,
+      chiralityConstraints,
+      dlibPositions
+    );
+
+    if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       failures += 1;
 
-      if( // fail-if
-        (
-          static_cast<double>(failures)
-          / numStructures 
-        ) >= failureRatio
-      ) {
+      if(static_cast<double>(failures) / numStructures >= failureRatio) {
         throw std::runtime_error("Refinement failures exceeded threshold!");
       }
     } else {
-      if(problem.proportionCorrectChiralityConstraints(vectorizedPositions) != 1.0) {
-        failures += 1;
-        
-        if( // fail-if
-          (
-            static_cast<double>(failures)
-            / numStructures 
-          ) >= failureRatio
-        ) {
-          throw std::runtime_error("Refinement failures exceeded threshold!");
-        }
-      } else {
-        // Add the result to positions
-        ensemble.emplace_back(
-          detail::convertToPositionCollection(vectorizedPositions)
-        );
-      }
+      ensemble.emplace_back(
+        detail::convertToPositionCollection(dlibPositions)
+      );
     }
   }
 
@@ -190,22 +379,12 @@ DGDebugData debugDistanceGeometry(
     distanceMethod
   );
 
-  cppoptlib::ConjugatedGradientDescentSolver<
-    RefinementProblem
-  > DGConjugatedGradientDescentSolver;
-
-  cppoptlib::Criteria<double> stopCriteria = cppoptlib::Criteria<double>::defaults();
-  stopCriteria.iterations = 1e5;
-  // for BfgsSolver: stopCriteria.gradNorm = 1e-8;
-  stopCriteria.fDelta = 1e-5;
-
-  DGConjugatedGradientDescentSolver.setStopCriteria(stopCriteria);
-
   /* If the ratio of failures/total optimizations exceeds this value,
    * the function throws. Remember that if an optimization is considered a 
    * failure is dependent only on the stopping criteria!
    */
-  const double failureRatio = 3; // must be > 0
+  const double failureRatio = 3; // more lenient than production, must be > 0
+  unsigned failures = 0;
 
   // Begin
   for(
@@ -225,59 +404,15 @@ DGDebugData debugDistanceGeometry(
      */
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
-      /* The propagator needs a function that gives the distances between
-       * pairs of atoms, in this case we use the distances matrix we generated
-       * from the bounds (must satisfy triangle inequalities). The Propagator
-       * then has a unary function call operator that takes prototypes and spits
-       * out full chiralityConstraints.
-       */
-      detail::makePropagator(
-        [&distancesMatrix](
-          const AtomIndexType& i,
-          const AtomIndexType& j
-        ) -> double {
-          return distancesMatrix(
-            std::min(i, j),
-            std::max(i, j)
-          );
-        }
-      )
-    );
-
-    /* Instantiantiate the refinement problem and its solver, set the stop 
-     * criteria
-     */
-    RefinementProblem problem(
-      chiralityConstraints,
-      DGData.distanceBounds,
-      [&refinementSteps](
-        const cppoptlib::Criteria<double>& status __attribute__((unused)),
-        const RefinementProblem::TVector& vectorizedPositions,
-        const RefinementProblem& problem
-      ) -> void {
-        auto getGradient = [&](const Eigen::VectorXd& positions){
-          Eigen::VectorXd gradientVector( positions.size() );
-          problem.gradient(positions, gradientVector);
-          return gradientVector;
-        };
-
-        refinementSteps.emplace_back(
-          vectorizedPositions,
-          problem.distanceError(vectorizedPositions),
-          problem.chiralError(vectorizedPositions),
-          problem.extraDimensionError(vectorizedPositions),
-          getGradient(vectorizedPositions),
-          problem.proportionCorrectChiralityConstraints(vectorizedPositions),
-          problem.compress
+      [&DGData](
+        const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+      ) -> ChiralityConstraint {
+        return propagate(
+          DGData.distanceBounds,
+          prototype
         );
       }
     );
-
-    auto getGradient = [&](const Eigen::VectorXd& positions){
-      Eigen::VectorXd gradientVector( positions.size() );
-      problem.gradient(positions, gradientVector);
-      return gradientVector;
-    };
 
     // Make a metric matrix from the distances matrix
     MetricMatrix metric(distancesMatrix);
@@ -285,13 +420,15 @@ DGDebugData debugDistanceGeometry(
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
 
-    // Vectorize the positions for use with cppoptlib
-    Eigen::VectorXd vectorizedPositions {
-      Eigen::Map<Eigen::VectorXd>(
-        embeddedPositions.data(),
-        embeddedPositions.cols() * embeddedPositions.rows()
+    // Vectorize and transfer to dlib
+    errfValue<true>::Vector dlibPositions = dlib::mat(
+      static_cast<Eigen::VectorXd>(
+        Eigen::Map<Eigen::VectorXd>(
+          embeddedPositions.data(),
+          embeddedPositions.cols() * embeddedPositions.rows()
+        )
       )
-    };
+    );
 
     if(useYInversionTrick) {
       /* If a count of chirality constraints reveals that more than half are
@@ -302,57 +439,111 @@ DGDebugData debugDistanceGeometry(
        * chirality constraints should not have to pass an energetic maximum to
        * converge properly as opposed to tetrahedra with volume).
        */
-      if(problem.proportionCorrectChiralityConstraints(vectorizedPositions) < 0.5) {
-        // Add the structure before inversion
-        refinementSteps.emplace_back(
-          vectorizedPositions,
-          problem.distanceError(vectorizedPositions),
-          problem.chiralError(vectorizedPositions),
-          problem.extraDimensionError(vectorizedPositions),
-          getGradient(vectorizedPositions),
-          problem.proportionCorrectChiralityConstraints(vectorizedPositions),
-          false
-        );
-
-        problem.invertY(vectorizedPositions);
+      if(
+        errfDetail::proportionChiralityConstraintsCorrectSign(
+          chiralityConstraints,
+          dlibPositions
+        ) < 0.5
+      ) {
+        // Invert y coordinates
+        for(unsigned i = 0; i < DGData.distanceBounds.N; i++) {
+          dlibPositions(4 * i + 1) *= -1;
+        }
       }
     }
 
-    // add an initial step
-    refinementSteps.emplace_back(
-      vectorizedPositions,
-      problem.distanceError(vectorizedPositions),
-      problem.chiralError(vectorizedPositions),
-      problem.extraDimensionError(vectorizedPositions),
-      getGradient(vectorizedPositions),
-      problem.proportionCorrectChiralityConstraints(vectorizedPositions),
-      false
+    /* Refinement without penalty on fourth dimension only necessary if not all
+     * chiral centers are correct. Of course, for molecules without chiral
+     * centers at all, this stage is unnecessary
+     */
+    if(
+      errfDetail::proportionChiralityConstraintsCorrectSign(
+        chiralityConstraints,
+        dlibPositions
+      ) < 1
+    ) {
+
+      errfValue<false> valueFunctor {
+        DGData.distanceBounds,
+        chiralityConstraints
+      };
+
+      dlibAdaptors::debugIterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
+        10000,
+        refinementSteps,
+        valueFunctor
+      };
+
+      dlib::find_min(
+        dlib::bfgs_search_strategy(),
+        inversionStopStrategy,
+        valueFunctor,
+        errfGradient<false>(
+          DGData.distanceBounds,
+          chiralityConstraints
+        ),
+        dlibPositions,
+        0
+      );
+
+      if(
+        inversionStopStrategy.iterations > 10000 
+        || errfDetail::proportionChiralityConstraintsCorrectSign(
+          chiralityConstraints,
+          dlibPositions
+        ) < 1.0
+      ) { // Failure to invert
+        failures += 1;
+        // TODO Debug Log!
+        checkFailureRatio(failures, numStructures, failureRatio);
+        continue; // this triggers a new structure to be generated
+      }
+    }
+
+    errfValue<true> refinementValueFunctor {
+      DGData.distanceBounds,
+      chiralityConstraints
+    };
+
+    dlibAdaptors::debugIterationOrGradientNormStopStrategy refinementStopStrategy {
+      10000, // iteration limit
+      1e-5, // gradient limit
+      refinementSteps,
+      refinementValueFunctor
+    };
+
+    // Refinement with penalty on fourth dimension is always necessary
+    dlib::find_min(
+      dlib::bfgs_search_strategy(),
+      refinementStopStrategy,
+      refinementValueFunctor,
+      errfGradient<true>(
+        DGData.distanceBounds,
+        chiralityConstraints
+      ),
+      dlibPositions,
+      0
     );
 
-    // initial step
-    DGConjugatedGradientDescentSolver.minimize(problem, vectorizedPositions);
+    bool reachedMaxIterations = refinementStopStrategy.iterations >= 10000;
+    bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
+      chiralityConstraints,
+      dlibPositions
+    ) < 1;
+    bool structureAcceptable = errfDetail::finalStructureAcceptable(
+      DGData.distanceBounds,
+      chiralityConstraints,
+      dlibPositions
+    );
 
-    // What to do if the optimization fails
-    // Make a count of correct chirality constraints
-    if(
-      problem.proportionCorrectChiralityConstraints(vectorizedPositions) != 1.0
-      || DGConjugatedGradientDescentSolver.status() == cppoptlib::Status::IterationLimit
-    ) {
-      resultObject.failures += 1;
-      
-      if( // fail-if
-        (
-          static_cast<double>(resultObject.failures)
-          / numStructures 
-        ) >= failureRatio
-      ) {
-        throw std::runtime_error("Refinement failures exceeded threshold!");
-      }
+    if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
+      failures += 1;
+      checkFailureRatio(failures, numStructures, failureRatio);
     } else {
       // Add the result to the debug data
       RefinementData refinementData;
       refinementData.steps = std::move(refinementSteps);
-      refinementData.constraints = problem.constraints;
+      refinementData.constraints = chiralityConstraints;
 
       resultObject.refinements.emplace_back(
         std::move(refinementData)

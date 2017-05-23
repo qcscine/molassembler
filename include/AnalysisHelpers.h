@@ -39,7 +39,7 @@ void writeDGPOVandProgressFiles(
       << stepData.distanceError << "," 
       << stepData.chiralError << "," 
       << stepData.fourthDimError << "," 
-      << stepData.gradient.norm() << "," 
+      << dlib::length(stepData.gradient) << "," 
       << static_cast<unsigned>(stepData.compress) << "," 
       << stepData.proportionCorrectChiralityConstraints << "\n";
 
@@ -60,16 +60,21 @@ void writeDGPOVandProgressFiles(
     for(unsigned i = 0; i < N; i++) {
       outStream << "#declare " << detail::mapIndexToChar(i) <<  " = <";
       outStream << std::fixed << std::setprecision(4);
-      outStream << stepData.positions[dimensionality * i] << ", ";
-      outStream << stepData.positions[dimensionality * i + 1] << ", ";
-      outStream << stepData.positions[dimensionality * i + 2] << ">;\n";
+      outStream << stepData.positions(dimensionality * i) << ", ";
+      outStream << stepData.positions(dimensionality * i + 1) << ", ";
+      outStream << stepData.positions(dimensionality * i + 2) << ">;\n";
     }
     outStream << "\n";
 
     // Atoms
     for(unsigned i = 0; i < N; i++) {
-      outStream << "Atom4D(" << detail::mapIndexToChar(i) << ", " 
-        << std::fabs(stepData.positions[dimensionality * i + 3]) << ")\n";
+      double fourthDimAbs = std::fabs(stepData.positions(dimensionality * i + 3));
+      if(fourthDimAbs < 1e-4) {
+        outStream << "Atom(" << detail::mapIndexToChar(i) << ")\n";
+      } else {
+        outStream << "Atom4D(" << detail::mapIndexToChar(i) << ", " 
+          << fourthDimAbs << ")\n";
+      }
     }
     outStream << "\n";
 
@@ -97,12 +102,21 @@ void writeDGPOVandProgressFiles(
 
     // Gradients
     for(unsigned i = 0; i < N; i++) {
-      outStream << "GradientVector(" << detail::mapIndexToChar(i) <<", <"
-        << std::fixed << std::setprecision(4)
-        << (-stepData.gradient[3 * i]) << ", "
-        << (-stepData.gradient[3 * i + 1]) << ", "
-        << (-stepData.gradient[3 * i + 2]) << ", "
-        << ">)\n";
+      if(
+        dlib::length(
+          dlib::rowm(
+            stepData.gradient,
+            dlib::range(dimensionality * i, dimensionality * i + 2)
+          )
+        ) > 1e-5
+      ) {
+        outStream << "GradientVector(" << detail::mapIndexToChar(i) <<", <"
+          << std::fixed << std::setprecision(4)
+          << (-stepData.gradient(dimensionality * i)) << ", "
+          << (-stepData.gradient(dimensionality * i + 1)) << ", "
+          << (-stepData.gradient(dimensionality * i + 2)) << ", "
+          << ">)\n";
+      }
     }
 
     outStream.close();

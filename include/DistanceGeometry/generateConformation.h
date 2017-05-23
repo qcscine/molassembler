@@ -6,6 +6,7 @@
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "DistanceGeometry/BFSConstraintCollector.h"
+#include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
 
 #include <vector>
@@ -24,175 +25,14 @@ Delib::PositionCollection convertToPositionCollection(
   const Eigen::VectorXd& vectorizedPositions
 );
 
-/* Functor to mimic a HOF that takes a distance Matrix as partial application
- * Using auto makePrototypePropagator(Matrix) {
- *   return [&matrix]()(Prototype) -> ChiralityConstraint {
- *     ...
- *   };
- * }
- * made it impossible to separate header and implementation, as the header is 
- * unusable since auto cannot be deduced.
- */
-template<class DistanceGetter>
-class Propagator {
-private:
-  DistanceGetter distanceGetter;
+Delib::PositionCollection convertToPositionCollection(
+  const dlib::matrix<double, 0, 1>& vectorizedPositions
+);
 
-public:
-  explicit Propagator(DistanceGetter&& distanceGetter) 
-    : distanceGetter(std::forward<DistanceGetter>(distanceGetter)) 
-  {}
-
-  ChiralityConstraint operator () (
-    const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
-  ) {
-    using namespace Stereocenters;
-
-    if(prototype.second == Stereocenter::ChiralityConstraintTarget::Flat) {
-      return ChiralityConstraint {
-        prototype.first,
-        0.0
-      };
-    } else {
-      /*
-       * Calculate the volume. The target volume of the chirality constraint
-       * created by the tetrahedron is calculated using internal coordinates (the
-       * Cayley-Menger determinant), always leading to V > 0, so depending on the
-       * current assignment, the sign of the result is switched.  The formula
-       * used later in chirality constraint calculation for explicit coordinates
-       * is adjusted by V' = 6 V to avoid an unnecessary factor, so we do that
-       * here too:
-       *               
-       *    288 V²  = |...|               | substitute V' = 6 V
-       * -> 8 (V')² = |...|               
-       * ->      V' = sqrt(|...| / 8)
-       *
-       * where the Cayley-Menger determinant |...| is square symmetric:
-       *   
-       *          |   0    1    1    1    1  |
-       *          |        0  d12² d13² d14² |
-       *  |...| = |             0  d23² d24² |
-       *          |                  0  d34² |
-       *          |  ...                  0  |
-       *
-       */
-
-      Eigen::Matrix<double, 5, 5> cayleyMenger;
-      cayleyMenger.setZero();
-
-      for(unsigned i = 0; i < 4; i++) {
-        for(unsigned j = i + 1; j < 4; j++) {
-
-          cayleyMenger(i + 1, j + 1) = pow(
-            distanceGetter(
-              prototype.first.at(i),
-              prototype.first.at(j)
-            ),
-            2
-          );
-        }
-      }
-
-      // top row of cayleyMenger matrix
-      for(unsigned i = 1; i < 5; i++) {
-        cayleyMenger(0, i) = 1;
-      }
-
-#ifndef NDEBUG
-      // Log in Debug builds, provided particular is set
-      Log::log(Log::Particulars::PrototypePropagatorDebugInfo) 
-        << "Cayley-menger matrix: " << std::endl << cayleyMenger << std::endl;
-#endif
-
-      auto determinant = static_cast<
-        Eigen::Matrix<double, 5, 5>
-      >(
-        cayleyMenger.selfadjointView<Eigen::Upper>()
-      ).determinant();
-
-
-      /* If this fails, then we have not done distance selection properly. There
-       * must be triangle inequality violations in the distances matrix.
-       */
-      assert(
-        std::fabs(determinant) < 1e-8 // this is saying equal to zero
-        || determinant > 0
-      );
-
-      if(std::fabs(determinant) < 1e-8) {
-        // determinant is zero -> atoms involved are flat, this is alright
-        return ChiralityConstraint {
-          prototype.first,
-          0
-        };
-      } else { // positive, greater than zero determinant
-        auto chiralityTarget = sqrt(
-          determinant / 8.0
-        );
-
-        if(
-          prototype.second 
-          == Stereocenters::Stereocenter::ChiralityConstraintTarget::Negative
-        ) {
-          chiralityTarget *= -1;
-        }
-
-        return ChiralityConstraint {
-          prototype.first,
-          chiralityTarget
-        };
-      }
-    }
-
-  }
-};
-
-struct RefinementStepData {
-  Eigen::VectorXd positions;
-  double distanceError;
-  double chiralError;
-  double fourthDimError;
-  Eigen::VectorXd gradient;
-  double proportionCorrectChiralityConstraints;
-  bool compress;
-
-  RefinementStepData(
-    const Eigen::VectorXd& positions,
-    const double& distanceError,
-    const double& chiralError,
-    const double& fourthDimError,
-    const Eigen::VectorXd& gradient,
-    const double& proportionCorrectChiralityConstraints,
-    const bool& compress
-  ) : positions(positions),
-      distanceError(distanceError),
-      chiralError(chiralError),
-      fourthDimError(fourthDimError),
-      gradient(gradient),
-      proportionCorrectChiralityConstraints(proportionCorrectChiralityConstraints),
-      compress(compress)
-  {}
-};
-
-struct RefinementData {
-  std::list<RefinementStepData> steps;
-  std::vector<ChiralityConstraint> constraints;
-};
-
-struct DGDebugData {
-  unsigned failures = 0;
-  std::list<RefinementData> refinements;
-};
-
-// Generator to help with functional-style instantiation
-template<class DistanceGetter> 
-auto makePropagator(
-  DistanceGetter&& distanceGetter
-) {
-  return Propagator<DistanceGetter>(
-    std::forward<DistanceGetter>(distanceGetter)
-  );
-}
+ChiralityConstraint propagate(
+  const DistanceBoundsMatrix& bounds,
+  const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+);
 
 DGDebugData debugDistanceGeometry(
   const Molecule& molecule,

@@ -68,6 +68,6 @@ double dihedralLength(
   );
 }
 
-} // eo CommonTrig
+} // namespace CommonTrig
 
-}
+} // namespace MoleculeManip

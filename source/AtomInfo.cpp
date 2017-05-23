@@ -263,17 +263,17 @@ bool isMainGroupElement(const Delib::ElementType& elementType) {
 boost::optional<unsigned> mainGroupVE(const Delib::ElementType& elementType) {
   if(isMainGroupElement(elementType)) {
     return elementData.at(elementType).valenceElectrons({'s', 'p'});
-  } else {
-    return {};
-  }
+  } 
+
+  return {};
 }
 
 unsigned dElectronCount(const Delib::ElementType& elementType) {
   if(isMainGroupElement(elementType)) {
     return 0;
-  } else {
-    return elementData.at(elementType).valenceElectrons('d');
   }
+
+  return elementData.at(elementType).valenceElectrons('d');
 }
 
 double vdwRadius(const Delib::ElementType& elementType) {

@@ -67,6 +67,8 @@ struct BoundsMatrix {
             lowerBound(i, j) = lowerBound(j, k) - upperBound(k, i);
             changedSomething = true;
           }
+
+          assert(lowerBound(i, j) <= upperBound(i, j));
         }
       }
     }
@@ -109,7 +111,6 @@ private:
 /* Data members */
   // Matrix data
   BoundsMatrix _boundsMatrix;
-  const unsigned _N;
 
   // Randomness state
   mutable std::mt19937 _randomEngine;
@@ -119,6 +120,7 @@ private:
   void _initRandomEngine();
 
 public:
+  const unsigned N;
 
 /* Constructors */
   DistanceBoundsMatrix() = delete;

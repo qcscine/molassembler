@@ -14,21 +14,18 @@ namespace DistanceGeometry {
 /* Typedefs */
 struct ChiralityConstraint {
   std::array<AtomIndexType, 4> indices;
-  double target;
-
-  ChiralityConstraint(
-    std::array<AtomIndexType, 4>&& indices,
-    double&& target
-  ) : indices(indices),
-      target(target)
-  {}
+  double lower, upper;
 
   ChiralityConstraint(
     const std::array<AtomIndexType, 4>& indices,
-    const double& target
+    const double& lower,
+    const double& upper
   ) : indices(indices),
-      target(target)
-  {}
+      lower(lower),
+      upper(upper)
+  {
+    assert(lower < upper);
+  }
 };
 
 /* Enum types */

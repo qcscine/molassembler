@@ -45,10 +45,10 @@ pdf(
   height=8
 )
 par(
-  mfrow=c(4, 1),
   mar=c(0, 4, 0, 1),
   oma=c(4, 0, 1, 0)
 )
+layout(matrix(c(1,1,2,2,3,3,4), nrow=7, ncol=1))
 
 # error plot
 plot(
@@ -75,25 +75,29 @@ plot(
 
 lines(
   xSeq,
-  error
+  error,
+  lwd=2
 )
 
 lines(
   xSeq,
   distanceError,
-  col="steelblue"
+  col="steelblue",
+  lwd=2
 )
 
 lines(
   xSeq,
   chiralError,
-  col="tomato"
+  col="tomato",
+  lwd=2
 )
 
 lines(
   xSeq,
   fourthDimError,
-  col="olivedrab"
+  col="olivedrab",
+  lwd=2
 )
 
 # proportion of error development
@@ -110,19 +114,22 @@ plot(
 lines(
   xSeq,
   distanceError / error,
-  col="steelblue"
+  col="steelblue",
+  lwd=2
 )
 
 lines(
   xSeq,
   chiralError / error,
-  col="tomato"
+  col="tomato",
+  lwd=2
 )
 
 lines(
   xSeq,
   fourthDimError / error,
-  col="olivedrab"
+  col="olivedrab",
+  lwd=2
 )
 
 # gradient norm plot
@@ -138,7 +145,8 @@ plot(
 
 lines(
   xSeq,
-  gradientNorm
+  gradientNorm,
+  lwd=2
 )
 
 # proportion correct chirality constraints
@@ -147,12 +155,13 @@ plot(
   proportionCorrect,
   type="n",
   xlab="Step number",
-  ylab="Fraction correct chir. constr."
+  ylab="Frac. correct chir."
 )
 
 lines(
   xSeq,
-  proportionCorrect
+  proportionCorrect,
+  lwd=2
 )
 
 dev.off()

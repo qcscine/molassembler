@@ -78,12 +78,12 @@ struct AdjacencyList::MolGraphWriter {
     os << R"(label = ")" << symbolString << vertexIndex << R"(")";
 
     // Coloring
-    if(elementBGColorMap.count(symbolString)) {
+    if(elementBGColorMap.count(symbolString) != 0u) {
       os << R"(, fillcolor=")" << elementBGColorMap.at(symbolString) << R"(")";
     } else { // default
       os << R"(, fillcolor="white")";
     }
-    if(elementTextColorMap.count(symbolString)) {
+    if(elementTextColorMap.count(symbolString) != 0u) {
       os << R"(, fontcolor=")" << elementTextColorMap.at(symbolString) << R"(")";
     } else { // default
       os << R"(, fontcolor="orange")";
@@ -103,7 +103,7 @@ struct AdjacencyList::MolGraphWriter {
 
     // Bond Type display options
     auto bondType = (*graphPtr)[edgeIndex].bondType;
-    if(bondTypeDisplayString.count(bondType)) {
+    if(bondTypeDisplayString.count(bondType) != 0u) {
       os << bondTypeDisplayString.at(bondType);
     }
 
@@ -136,7 +136,9 @@ std::vector<AtomIndexType> AdjacencyList::_getCNStereocenterCandidates() const {
        * -> eta bonds exist!
        */
       getNumAdjacencies(i) >= 3 
-    ) candidates.push_back(i);
+    ) {
+      candidates.push_back(i);
+    }
   }
 
   return candidates;
@@ -394,24 +396,24 @@ Symmetry::Name AdjacencyList::determineLocalGeometry(
       ligandsVector,
       formalCharge
     );
-  } else {
-    // Pick the first Symmetry of fitting size
-    auto findIter = std::find_if(
-      Symmetry::allNames.begin(),
-      Symmetry::allNames.end(),
-      [&nSites](const auto& symmetryName) -> bool {
-        return Symmetry::size(symmetryName) == nSites;
-      }
-    );
+  } 
 
-    if(findIter == Symmetry::allNames.end()) {
-      throw std::logic_error(
-        "Could not find a suitable local geometry!"
-      );
+  // Pick the first Symmetry of fitting size
+  auto findIter = std::find_if(
+    Symmetry::allNames.begin(),
+    Symmetry::allNames.end(),
+    [&nSites](const auto& symmetryName) -> bool {
+      return Symmetry::size(symmetryName) == nSites;
     }
+  );
 
-    return *findIter;
+  if(findIter == Symmetry::allNames.end()) {
+    throw std::logic_error(
+      "Could not find a suitable local geometry!"
+    );
   }
+
+  return *findIter;
 }
 
 unsigned AdjacencyList::getNumAdjacencies(

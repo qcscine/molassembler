@@ -9,11 +9,13 @@ set(LIBS_DIR "${BASE_DIR}/projects/libs")
 # local path configuration
 set(AssignmentLib_LIBRARY_DIR "${LIBS_DIR}/geometry_assignment/build")
 set(Symmetry_LIBRARY_DIR "${LIBS_DIR}/symmetry_information/build")
-set(DELIB_INCLUDE_DIR "/usr/local/include/Delib")
 
 # project declaration
 project(Molecule)
 enable_testing()
+
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
 
 # dependencies: Eigen3
 find_package(Eigen3 3.1.1 REQUIRED)
@@ -22,6 +24,17 @@ if(Eigen3_FOUND)
   message(STATUS "Eigen dir: ${EIGEN3_INCLUDE_DIRS}")
   include_directories(EIGEN3_INCLUDE_DIRS)
 endif()
+
+# dependencies: dlib
+find_package(dlib 19.4 REQUIRED)
+if(dlib_FOUND)
+  message(STATUS "dlib version: ${dlib_VERSION}")
+  message(STATUS "dlib dir: ${dlib_INCLUDE_DIRS}")
+  include_directories(dlib_INCLUDE_DIRS)
+endif()
+
+# dependencies: blas (required for dlib)
+find_package(BLAS REQUIRED)
 
 # dependencies: Boost
 find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options)
@@ -33,8 +46,7 @@ endif()
 find_package(Delib REQUIRED)
 if(Delib_FOUND)
   message(STATUS "Delib version: ${Delib_VERSION}")
-  message(STATUS "Delib dir: ${DELIB_INCLUDE_DIRS}")
-  include_directories(DELIB_INCLUDE_DIRS)
+  # unnecessary to add Delib_INCLUDE_DIRS, this is imported through the interface
 endif()
 
 # dependencies: libraries
@@ -67,7 +79,6 @@ add_dependencies(assignment symmetry)
 # add include directories
 include_directories(SYSTEM
   ${LIBS_DIR}
-  ${DELIB_INCLUDE_DIR}
   include
 )
 
@@ -169,7 +180,7 @@ if(CLANG_TIDY_EXE)
 endif()
 
 # Linking
-target_link_libraries(molecule Delib::DelibStatic assignment symmetry)
+target_link_libraries(molecule Delib::DelibStatic assignment symmetry blas)
 
 # Testing targets
 # get all test cpp files
@@ -198,6 +209,7 @@ foreach(filename ${testFiles})
     assignment
     symmetry
     molecule
+    blas
   )
 
   # add target to tests
@@ -229,5 +241,6 @@ foreach(filename ${analysisFiles})
     assignment
     symmetry
     molecule
+    blas
   )
 endforeach()
