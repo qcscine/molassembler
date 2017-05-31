@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <Eigen/Geometry>
 
+#include "constexpr_magic/Math.h"
+#include "template_magic/TemplateMagic.h"
+
 namespace Symmetry {
 
 const std::vector<Name> allNames {
@@ -42,7 +45,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
           return 0;
         }
 
-        return 180;
+        return M_PI;
       },
       TetrahedronList {},
       CoordinateList {
@@ -77,7 +80,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
           return 0;
         }
 
-        return 107; 
+        return ConstexprMagic::Math::toRadians(107); 
       },
       TetrahedronList {},
       CoordinateList {
@@ -117,7 +120,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
           return 0;
         }
 
-        return 120;
+        return ConstexprMagic::Math::toRadians(120);
       },
       TetrahedronList {},
       CoordinateList {
@@ -156,7 +159,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
           return 0;
         }
 
-        return 107.5;
+        return ConstexprMagic::Math::toRadians(107.5);
       },
       TetrahedronList {
         {{boost::none, 0, 1, 2}}
@@ -206,10 +209,10 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
 
         if((a + b) % 2 == 1) {
-          return 90;
+          return M_PI / 2;
         } 
 
-        return 180;
+        return M_PI;
       },
       TetrahedronList {},
       CoordinateList {
@@ -258,7 +261,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
           return 0;
         }
 
-        return 109.5;
+        return ConstexprMagic::Math::toRadians(109.5);
       },
       TetrahedronList {
         {{0, 1, 2, 3}}
@@ -314,11 +317,11 @@ const std::map<Name, SymmetryInformation> symmetryData {
 
         if((a + b) % 2 == 1) {
           // this expression indicates cis
-          return 90;
+          return M_PI / 2;
         } 
 
         // leftover case is trans
-        return 180;
+        return M_PI;
       },
       TetrahedronList {},
       CoordinateList {
@@ -354,14 +357,14 @@ const std::map<Name, SymmetryInformation> symmetryData {
         const auto& smaller = std::min(a, b);
         const auto& larger = std::max(a, b);
         if(smaller == 0 && larger == 3) {
-          return 180;
+          return M_PI;
         }
 
         if(smaller == 1 && larger == 2) {
-          return 120;
+          return ConstexprMagic::Math::toRadians(120);
         }
 
-        return 90;
+        return M_PI / 2;
       },
       TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -420,15 +423,15 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
 
         if(a == 4 || b == 4) { // all bonds to axial ligand are 90°
-          return 90; 
+          return M_PI / 2; 
         }
 
         if((a + b) % 2 == 0) { // 0 + 2 or 1 + 3 are trans
-          return 180;
+          return M_PI;
         }
 
         // rest are cis
-        return 90;
+        return M_PI / 2;
       },
       TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -485,16 +488,16 @@ const std::map<Name, SymmetryInformation> symmetryData {
         unsigned smaller = std::min(a, b), larger = std::max(a, b);
         if(larger < 3) {
           // -> smaller < 2, this means either 0,1 0,2 1,2 axial
-          return 120;
+          return ConstexprMagic::Math::toRadians(120);
         } else if(larger == 3) {
           // -> smaller < 3, this means {1,2,3}, 3 
-          return 90;
+          return M_PI / 2;
         } else if(smaller < 3) {
           // now, larger must be 4 (process of elimination), so if a is not 3:
-          return 90;
+          return M_PI / 2;
         } else {
           // only case left: 3,4
-          return 180;
+          return M_PI;
         }
       },
       TetrahedronList {
@@ -543,7 +546,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
         return std::min(
           absDiff,
           std::min(absDiff - 5, 5 - absDiff)
-        ) * 72;
+        ) * ConstexprMagic::Math::toRadians(72);
       },
       TetrahedronList {},
       CoordinateList {
@@ -604,10 +607,10 @@ const std::map<Name, SymmetryInformation> symmetryData {
             && (a + b) % 2 == 0 // this gives trans eq ligands
           ) || std::min(a, b) == 4 // this indicates 4,5 (axial trans)
         ) {
-          return 180;
+          return M_PI;
         } 
 
-        return 90;
+        return M_PI / 2;
       },
       TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -670,18 +673,23 @@ const std::map<Name, SymmetryInformation> symmetryData {
       ) -> double {
         if(a == b) {
           return 0;
-        } else if(std::min(a - b, b - a) == 3) {
-          return 76;
-        } else {
-          if(
-            (a < 3 && b < 3)
-            || (a >= 3 && b >= 3)
-          ) {
-            return 86;
-          } else {
-            return 134;
-          }
-        }
+        } 
+        
+        // Between plane symmetric
+        if(std::min(a - b, b - a) == 3) {
+          return ConstexprMagic::Math::toRadians(76);
+        } 
+
+        // In plane triangle
+        if(
+          (a < 3 && b < 3)
+          || (a >= 3 && b >= 3)
+        ) {
+          return ConstexprMagic::Math::toRadians(86);
+        } 
+
+        // Between plane asymmetric
+        return ConstexprMagic::Math::toRadians(134);
       },
       TetrahedronList {
         // TODO dubious if this captures all relevant information, too limited
@@ -762,7 +770,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
 
         if(a == 5 || b == 5) {
-          return 90;
+          return M_PI / 2;
         }  
         
         // remainder are identical to PentagonalPlanar
@@ -770,7 +778,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
         return std::min(
           absDiff,
           std::min(absDiff - 5, 5 - absDiff)
-        ) * 72;
+        ) * ConstexprMagic::Math::toRadians(72);
       },
       TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -839,10 +847,11 @@ const std::map<Name, SymmetryInformation> symmetryData {
         }
 
         if(a + b == 11) {
-          return 180; // trans 5,6
+          return M_PI; // trans 5,6
         }
-        if((a > 4) ^ (b > 4)) {
-          return 90; // any angle to axial index
+
+        if(TemplateMagic::XOR(a > 4, b > 4)) {
+          return M_PI / 2; // any angle to axial index
         }
 
         // remainder are equatorial angles, like PentagonalPlanar
@@ -850,7 +859,7 @@ const std::map<Name, SymmetryInformation> symmetryData {
         return std::min(
           absDiff,
           std::min(absDiff - 5, 5 - absDiff)
-        ) * 72;
+        ) * ConstexprMagic::Math::toRadians(72);
       },
       TetrahedronList {
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -975,23 +984,28 @@ const std::map<Name, SymmetryInformation> symmetryData {
       ) -> double {
         if(a == b) {
           return 0;
-        } else if(
+        } 
+        
+        if(
           (a < 4 && b < 4)
           || (a >= 4 && b >= 4)
         ) { // in plane
           if((a + b) % 2 == 1) { // cis
-            return 72.9875; 
-          } else { // trans
-            return 114.475;
-          }
-        } else { // between planes
-          unsigned minDiff = std::min(a - b, b - a);
-          if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
-            return 78.05;
-          } else { // long
-            return 142.275;
-          }
+            return ConstexprMagic::Math::toRadians(72.9875); 
+          } 
+          
+          // otherwise trans
+          return ConstexprMagic::Math::toRadians(114.475);
         }
+        
+        // remaining cases are between planes
+        unsigned minDiff = std::min(a - b, b - a);
+        if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
+          return ConstexprMagic::Math::toRadians(78.05);
+        } 
+
+        // lsat case is long between planes
+        return ConstexprMagic::Math::toRadians(142.275);
       },
 #endif
       TetrahedronList {

@@ -33,10 +33,6 @@
  *   completely arbitrary!
  * - Consider making constexpr calculation of all angles from coordinates into
  *   const lookup table
- * - Annotate SymmetryInformation components where possible, e.g. prepend 
- *   TetrahedronList before that part of the SymmetryInformation initializer_list
- *
- *   + All angle functions are lookup tables
  */
 
 namespace Symmetry {
@@ -49,6 +45,8 @@ using RotationsList = std::vector<
 /* All angle functions can be called with arbitrary (valid) parameters
  * without failing. Valid here means that a != b and less than the size of
  * the symmetry requested.
+ *
+ * They return angles in radians.
  */
 using AngleFunctionType = std::function<
   double(const unsigned&, const unsigned&)

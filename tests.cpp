@@ -149,7 +149,33 @@ BOOST_AUTO_TEST_CASE( angleFunctionZeroForIdenticalInput) {
 
     BOOST_CHECK(passesAll);
   }
+}
 
+BOOST_AUTO_TEST_CASE(anglesWithinRadiansBounds) {
+  for(const auto& symmetryName : allNames) {
+    bool passesAll = true;
+
+    for(unsigned i = 0; i < size(symmetryName); i++) {
+      for(unsigned j = 0; j < size(symmetryName); j++) {
+        if(
+          !(
+            0 <= angleFunction(symmetryName)(i, j) 
+          ) || !(
+            angleFunction(symmetryName)(i, j) <= M_PI
+          )
+        ) {
+          passesAll = false;
+          std::cout << name(symmetryName)
+            << "'s angle function is not within radians bounds for indices ("
+            << i << ", " << j << ") -> " << angleFunction(symmetryName)(i, j)
+            << std::endl;
+          break;
+        }
+      }
+    }
+
+    BOOST_CHECK(passesAll);
+  }
 }
 
 BOOST_AUTO_TEST_CASE( rightAmountOfCoordinates) {
@@ -192,13 +218,13 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
 
     for(unsigned i = 0; i < size(symmetryName); i++) {
       for(unsigned j = i + 1; j < size(symmetryName); j++) {
-        auto angleInCoordinates = 180 * std::acos(
+        auto angleInCoordinates = std::acos(
           getCoordinates(i).dot(
             getCoordinates(j)
           ) / (
             getCoordinates(i).norm() * getCoordinates(j).norm()
           )
-        ) / M_PI;
+        );
 
         auto angleDifference = angleInCoordinates - angleFunction(symmetryName)(i, j);
 

@@ -14,11 +14,9 @@ namespace make_constexpr_array {
   ) {
     const auto indexPair = ConstexprMagic::UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<size>(i);
 
-    return ConstexprMagic::toDegrees(
-      ConstexprMagic::angle(
-        positions[indexPair.first],
-        positions[indexPair.second]
-      )
+    return ConstexprMagic::angle(
+      positions[indexPair.first],
+      positions[indexPair.second]
     );
   }
 
@@ -30,6 +28,7 @@ namespace make_constexpr_array {
     return { makeElement(positions, Inds)... };
   }
 
+  // Entry point for array creation
   template<unsigned long size>
   constexpr std::array<double, size * (size - 1) / 2> makeArray(
     const std::array<ConstexprMagic::Vector, size>& positions
@@ -42,6 +41,7 @@ namespace make_constexpr_array {
 
 } // namespace make_constexpr_array
 
+// Positions of square antiprismatic reference structure
 constexpr std::array<
   ConstexprMagic::Vector,
   8
@@ -56,6 +56,9 @@ constexpr std::array<
   {{-0.98308669, 0., 0.18314084}}
 }};
 
+/* Generate an upper triangular matrix containing angles between particules i,j
+ * in degrees using the square antiprismatic reference structure
+ */
 constexpr auto squareAntiprismaticAngles = ConstexprMagic::makeUpperTriangularMatrix<8>(
   make_constexpr_array::makeArray<8>(squareAntiprismaticPositions)
 );
