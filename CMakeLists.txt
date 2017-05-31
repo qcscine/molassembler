@@ -14,6 +14,9 @@ set(symmetry_LIB_DIR "/home/jan-grimo/PhD/projects/libs/symmetry_information/bui
 project(StericUniqueness)
 enable_testing()
 
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
+
 # dependencies
 find_package(Boost REQUIRED COMPONENTS unit_test_framework REQUIRED)
 find_package(Eigen3 3.1.1 REQUIRED)

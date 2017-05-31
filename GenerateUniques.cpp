@@ -16,7 +16,7 @@ bool predicateHasTransArrangedPairs(
       Symmetry::angleFunction(assignment.symmetryName)(
         indexPair.first,
         indexPair.second
-      ) == 180.0
+      ) == M_PI
     ) return true;
   }
   return false;
