@@ -10,7 +10,8 @@
 #include "common_typedefs.h"
 
 // Detection algorithm headers
-#include "Delib/ElementTypeCollection.h" // Delib
+#include "Delib/ElementTypeCollection.h"
+#include "Delib/PositionCollection.h"
 
 /* TODO
  */
@@ -29,6 +30,39 @@ std::basic_ostream<char>& operator << (
 
 namespace Stereocenters {
 
+enum class ChiralityConstraintTarget {
+  Positive,
+  Flat,
+  Negative
+};
+
+struct DihedralLimits {
+  const std::array<AtomIndexType, 4> indices;
+  const double lower, upper;
+
+  DihedralLimits(
+    const std::array<AtomIndexType, 4>& indices,
+    const std::pair<double, double>& limits
+  ) : indices(indices), 
+      lower(limits.first),
+      upper(limits.second) 
+  {
+    assert(lower < upper);
+  }
+};
+
+struct ChiralityConstraintPrototype {
+  const std::array<AtomIndexType, 4> indices;
+  const ChiralityConstraintTarget target; 
+
+  ChiralityConstraintPrototype(
+    const std::array<AtomIndexType, 4>& indices,
+    const ChiralityConstraintTarget& target
+  ) : indices(indices),
+      target(target)
+  {}
+};
+
 enum class Type {
   CNStereocenter,
   EZStereocenter
@@ -37,31 +71,15 @@ enum class Type {
 
 class Stereocenter {
 public:
-/* Typedefs */
-  enum class ChiralityConstraintTarget {
-    Positive,
-    Flat,
-    Negative
-  };
-
-  using DihedralLimits = std::tuple<
-    // Dihedral sequence i-j-k-l
-    std::array<AtomIndexType, 4>,
-    /* Lower and upper limit, where
-     * 0 <= lower <= 180
-     * lower <= upper <= 180
-     */
-    std::pair<double, double>
-  >;
-
-  using ChiralityConstraintPrototype = std::pair<
-    std::array<AtomIndexType, 4>,
-    ChiralityConstraintTarget
-  >;
-
 /* Modification */
   //!  Assign this feature
   virtual void assign(const unsigned& assignment) = 0;
+
+  /*!
+   * Fit the stereocenter against coordinates, changing internal state to most
+   * closely model the coordinates
+   */
+  virtual void fit(const Delib::PositionCollection& positions) = 0;
 
 /* Information */
   /*!

@@ -2,6 +2,11 @@
 #include "geometry_assignment/GenerateUniques.h"
 #include "template_magic/TemplateMagic.h"
 #include "StdlibTypeAlgorithms.h"
+#include "DelibHelpers.h"
+#include "CommonTrig.h"
+#include "Log.h"
+
+#include <iomanip>
 
 namespace MoleculeManip {
 
@@ -223,16 +228,196 @@ void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
   assignment = boost::none;
 }
 
+void CNStereocenter::fit(const Delib::PositionCollection& positions) {
+  // Extract a list of adjacent indices from stored state
+  std::vector<AtomIndexType> adjacentAtoms;
+  for(const auto& mapIterPair : _neighborCharMap) {
+    adjacentAtoms.push_back(mapIterPair.first);
+  }
+
+  Symmetry::Name bestSymmetry = Symmetry::Name::Linear;
+  unsigned bestAssignment = 0;
+  double bestPenalty = 100;
+  unsigned bestAssignmentMultiplicity = 1;
+
+  // Cycle through all symmetries
+  for(const auto& symmetryName : Symmetry::allNames) {
+    // Skip any Symmetries of different size
+    if(Symmetry::size(symmetryName) != Symmetry::size(symmetry)) {
+      continue;
+    }
+
+    // Change the symmetry of the CNStereocenter
+    changeSymmetry(symmetryName);
+
+    for(
+      unsigned assignment = 0;
+      assignment < numAssignments();
+      assignment++
+    ) {
+      // Assign the stereocenter
+      assign(assignment);
+
+      const auto prototypes = chiralityConstraints();
+
+      const double angleDeviations = TemplateMagic::numeric::sum(
+        TemplateMagic::allPairsMap(
+          adjacentAtoms,
+          [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
+            return std::fabs(
+              DelibHelpers::getAngle( // The angle from the positions
+                positions,
+                i,
+                centerAtom,
+                k
+              ) - angle(
+                i,
+                centerAtom,
+                k
+              )
+            );
+          }
+        )
+      );
+
+      const double oneThreeDistanceDeviations = TemplateMagic::numeric::sum(
+        TemplateMagic::allPairsMap(
+          adjacentAtoms,
+          [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
+            return std::fabs(
+              DelibHelpers::getDistance( // i-k 1-3 distance from positions
+                positions,
+                i,
+                k
+              ) - CommonTrig::lawOfCosines( // idealized 1-3 distance from
+                DelibHelpers::getDistance( // i-j 1-2 distance from positions
+                  positions,
+                  i,
+                  centerAtom
+                ),
+                DelibHelpers::getDistance( // j-k 1-2 distance from positions
+                  positions,
+                  centerAtom,
+                  k
+                ),
+                angle( // idealized Stereocenter angle
+                  i,
+                  centerAtom,
+                  k
+                )
+              )
+            );
+          }
+        )
+      );
+
+      const double chiralityDeviations = (prototypes.empty()
+        ? 0
+        : TemplateMagic::numeric::sum(
+          TemplateMagic::map(
+            prototypes,
+            [&positions](const auto& constraintPrototype) -> double {
+              using TargetEnumType = Stereocenters::ChiralityConstraintTarget;
+
+              double volume = DelibHelpers::getSignedVolume(
+                positions,
+                constraintPrototype.indices
+              );
+
+              // If the target is flat, then the "error" is continuous:
+              if(constraintPrototype.target == TargetEnumType::Flat) {
+                return std::fabs(volume);
+              }
+
+              /* Otherwise, no bounds, error is some arbitrary penalty if the sign is
+               * wrong
+               */
+              if(
+                (
+                  constraintPrototype.target == TargetEnumType::Positive
+                  && volume < 0
+                ) || (
+                  constraintPrototype.target == TargetEnumType::Negative
+                  && volume > 0
+                )
+              ) {
+                return 1; // Arbitrary penalty
+              }
+
+              return 0;
+            }
+          )
+        )
+      );
+
+      double fitPenalty = angleDeviations 
+        + oneThreeDistanceDeviations 
+        + chiralityDeviations;
+
+
+#ifndef NDEBUG
+      Log::log(Log::Particulars::CNStereocenterFit)
+        << Symmetry::nameIndex(symmetryName)
+        << ", " << assignment
+        << ", " << std::setprecision(4) << std::fixed
+        << angleDeviations << ", "
+        << oneThreeDistanceDeviations << ", "
+        << chiralityDeviations
+        << std::endl;
+#endif
+
+
+      /* If ever you want to attempt to additionally penalize symmetries that
+       * the internal determineSymmetry functionality disfavors, then that
+       * information must come from a different prepending function call, it is
+       * not a valid part of the Stereocenter interface... EZStereocenter
+       * cannot expect to be penalized in the same way
+       */
+      /* if(
+        expectedSymmetry 
+        && expectedSymmetry.value() != symmetryName
+      ) {
+        currentFit.symmetryPenalty = 0.5;
+      } */
+
+      if(fitPenalty < bestPenalty) {
+        bestSymmetry = symmetryName;
+        bestAssignment = assignment;
+        bestPenalty = fitPenalty;
+        bestAssignmentMultiplicity = 1;
+      } else if(fitPenalty == bestPenalty) {
+        // Assume that IF we have multiplicity, it's from the same symmetry
+        assert(bestSymmetry == symmetryName);
+        bestAssignmentMultiplicity += 1;
+      }
+    }
+  }
+
+  // Set to best fit
+  changeSymmetry(bestSymmetry);
+
+  /* How to handle multiplicity? 
+   * Current policy: If there is multiplicity, warn and do not assign
+   */
+  if(bestAssignmentMultiplicity > 1) {
+    assignment = boost::none;
+  } else {
+    assignment = bestAssignment;
+  }
+}
+
 /* Information */
 double CNStereocenter::angle(
   const AtomIndexType& i,
-  const AtomIndexType& j __attribute__((unused)), 
+  const AtomIndexType& j, 
   const AtomIndexType& k
 ) const {
-  /* j is unused here because in the Symmetry angleFunctions, the middle atom is
-   * implicit, it has no symmetryPosition number. j is however needed in the
-   * interface because of EZStereocenter, where it is important to specify which
-   * atom is the intermediate (there are two possibilities)
+  assert(j == centerAtom);
+
+  /* j is pracitcally unused here because in the Symmetry angleFunctions, the
+   * middle atom is implicit, it has no symmetryPosition number. j is however
+   * needed in the interface because of EZStereocenter, where it is important
+   * to specify which atom is the intermediate (there are two possibilities)
    */
   return Symmetry::angleFunction(symmetry)(
     _neighborSymmetryPositionMap.at(i),
@@ -244,13 +429,12 @@ boost::optional<unsigned> CNStereocenter::assigned() const {
   return assignment;
 }
 
-// TODO rename to numAssignments
 unsigned CNStereocenter::numAssignments() const {
   return _uniqueAssignments.size();
 }
 
 std::vector<
-  Stereocenter::ChiralityConstraintPrototype
+  ChiralityConstraintPrototype
 > CNStereocenter::chiralityConstraints() const {
   std::vector<ChiralityConstraintPrototype> prototypes;
   
@@ -289,7 +473,7 @@ std::vector<
   return prototypes;
 }
 
-std::vector<Stereocenter::DihedralLimits> CNStereocenter::dihedralLimits() const {
+std::vector<DihedralLimits> CNStereocenter::dihedralLimits() const {
   return {};
 }
 

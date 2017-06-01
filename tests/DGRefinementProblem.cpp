@@ -24,9 +24,6 @@ using namespace std::string_literals;
 using namespace MoleculeManip;
 using namespace MoleculeManip::DistanceGeometry;
 
-/* TODO
- */
-
 bool isApprox(
   const dlib::matrix<double, 0, 1>& a,
   const dlib::matrix<double, 0, 1>& b,
@@ -78,7 +75,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     auto chiralityConstraints = TemplateMagic::map(
       DGInfo.chiralityConstraintPrototypes,
       [&DGInfo](
-        const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+        const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return detail::propagate(
           DGInfo.distanceBounds,
@@ -173,7 +170,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
       [&DGData](
-        const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+        const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return detail::propagate(
           DGData.distanceBounds,
@@ -288,7 +285,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
       [&DGData](
-        const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+        const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return detail::propagate(
           DGData.distanceBounds,

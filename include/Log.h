@@ -30,11 +30,11 @@ enum class Level {
 
 // Particular cases of special things that may or may not be desired
 enum class Particulars {
-  /* In AdjacencyList.cpp, where a StereocenterFit is performed for all 
-   * potential Stereocenters when a Molecule is read in, you can have numerical
-   * details of the fit logged. Corresponding analysis scripts also exist.
+  /* In AdjacencyList.cpp, where a fit of CNStereocenters against positions is
+   * performed when a Molecule is read in, you can have numerical details of
+   * the fit logged. Corresponding analysis scripts also exist.
    */
-  StereocenterFitAnalysisInfo,
+  CNStereocenterFit,
   /* In generateConformation.cpp, when chirality constraint prototypes are
    * fully determined into chirality constraints, emit some debug information
    */

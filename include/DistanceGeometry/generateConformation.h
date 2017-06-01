@@ -12,9 +12,6 @@
 #include <vector>
 #include <Eigen/Core>
 
-/* TODO
- */
-
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
@@ -31,7 +28,7 @@ Delib::PositionCollection convertToPositionCollection(
 
 ChiralityConstraint propagate(
   const DistanceBoundsMatrix& bounds,
-  const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+  const Stereocenters::ChiralityConstraintPrototype& prototype
 );
 
 DGDebugData debugDistanceGeometry(
@@ -55,7 +52,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 struct MoleculeDGInformation {
   DistanceBoundsMatrix distanceBounds;
   std::vector<
-    Stereocenters::Stereocenter::ChiralityConstraintPrototype
+    Stereocenters::ChiralityConstraintPrototype
   > chiralityConstraintPrototypes;
 
   explicit MoleculeDGInformation(const unsigned& N);
@@ -70,12 +67,12 @@ MoleculeDGInformation gatherDGInformation(
 std::list<Delib::PositionCollection> generateEnsemble(
   const Molecule& molecule,
   const unsigned& numStructures,
-  const MetrizationOption& metrization = MetrizationOption::off
+  const MetrizationOption& metrization = MetrizationOption::full
 );
 
 Delib::PositionCollection generateConformation(
   const Molecule& molecule,
-  const MetrizationOption& metrization = MetrizationOption::off
+  const MetrizationOption& metrization = MetrizationOption::full
 );
 
 } // namespace DistanceGeometry

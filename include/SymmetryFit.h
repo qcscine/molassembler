@@ -77,8 +77,6 @@ private:
       const AtomIndexType& l
     );
 
-    static inline double _toRadians(const double& inDegrees);
-
     double totalDeviation() const;
 
     bool operator < (const Fit& other) const;

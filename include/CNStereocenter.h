@@ -67,7 +67,7 @@ public:
     const Symmetry::Name& symmetry,
     // The atom this Stereocenter is centered on
     const AtomIndexType& centerAtom,
-    // A partially ordered list of substituents, low to high (TODO check)
+    // A partially ordered list of substituents, low to high
     const std::vector<AtomIndexType> partiallySortedSubstituents,
     // A set of pairs denoting which substituents are equal priority
     const std::set<
@@ -80,18 +80,27 @@ public:
 
   void changeSymmetry(const Symmetry::Name& symmetryName);
 
+  void fit(const Delib::PositionCollection& positions) final;
+
 /* Information */
   double angle(
     const AtomIndexType& i,
     const AtomIndexType& j,
     const AtomIndexType& k
   ) const final;
+
   boost::optional<unsigned> assigned() const final;
+
   unsigned numAssignments() const final;
+
   std::vector<ChiralityConstraintPrototype> chiralityConstraints() const final;
+
   std::vector<DihedralLimits> dihedralLimits() const final;
+
   std::string info() const final;
+
   std::set<AtomIndexType> involvedAtoms() const final;
+
   Type type() const final;
 
 /* Operators */

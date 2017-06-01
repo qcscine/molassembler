@@ -6,7 +6,6 @@
 
 #include "Log.h"
 
-
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
@@ -51,10 +50,119 @@ BFSConstraintCollector::BFSConstraintCollector(
          * case angle() will fail! Need to assign unassigned ones
          * at random consistent with the unique assignments' relative
          * occurrences (TODO)
+         *
+         * Make sure changes are only effected on stereocenters in our local
+         * map of stereocenters, we are forbidden from changing the molecular
+         * graph by altering assignments
          */
         if(!_stereocenterMap[involvedAtom] -> assigned()) {
           _stereocenterMap[involvedAtom] -> assign(0);
         }
+      }
+    }
+  }
+
+  // For every non-implicated double bond, create an EZStereocenter 
+  for(const auto& edgeIndex: adjacencies.iterateEdges()) {
+    if(adjacencies.access()[edgeIndex].bondType == BondType::Double) {
+      auto source = boost::source(edgeIndex, adjacencies.access()),
+           target = boost::target(edgeIndex, adjacencies.access());
+
+      if(_stereocenterMap.count(source) == 0 && _stereocenterMap.count(target) == 0) {
+
+        // Calculate Priorities for each's substituents
+        auto sourceSubstituentsRanking = adjacencies.rankPriority(
+          source,
+          {target} // exclude edge sharing neighbor
+        );
+
+        auto targetSubstituentsRanking = adjacencies.rankPriority(
+          target,
+          {source} // exclude edge sharing neighbor
+        );
+
+        // Instantiate without regard for number of assignments
+        auto newStereocenterPtr = std::make_shared<Stereocenters::EZStereocenter>(
+          source,
+          sourceSubstituentsRanking.first,
+          sourceSubstituentsRanking.second,
+          target,
+          targetSubstituentsRanking.first,
+          targetSubstituentsRanking.second
+        );
+
+        // Map source *and* target to the same stereocenterPtr
+        _stereocenterMap[source] = newStereocenterPtr;
+        _stereocenterMap[target] = newStereocenterPtr;
+      }
+    }
+  }
+
+  // For every EZStereocenter, get the dihedral information and set it
+  for(const auto& mapIterPair : _stereocenterMap) {
+    const auto& mappingIndex = mapIterPair.first;
+    const auto& stereocenterPtr = mapIterPair.second;
+    if(
+      // Filter out CNStereocenters
+      stereocenterPtr -> type() == Stereocenters::Type::EZStereocenter
+      /* Since EZStereocenters are in the map twice (for each of their
+       * involvedAtoms()), and we only want to process their dihedral
+       * information once, check the mapping index against the first index in
+       * the involvedAtoms set
+       */
+      && mappingIndex == *(
+        stereocenterPtr -> involvedAtoms().begin()
+      )
+    ) {
+      for(const auto& dihedralLimit : stereocenterPtr -> dihedralLimits()) {
+        _distanceBounds.setLowerBound(
+          dihedralLimit.indices.front(),
+          dihedralLimit.indices.back(),
+          CommonTrig::dihedralLength(
+            _distanceBounds.lowerBound(
+              dihedralLimit.indices.front(),
+              dihedralLimit.indices.at(1)
+            ),
+            _distanceBounds.lowerBound(
+              dihedralLimit.indices.at(1),
+              dihedralLimit.indices.at(2)
+            ),
+            _distanceBounds.lowerBound(
+              dihedralLimit.indices.at(2),
+              dihedralLimit.indices.back()
+            ),
+            ConstexprMagic::Math::toRadians(120),
+            ConstexprMagic::Math::toRadians(120),
+            dihedralLimit.lower
+          )
+        );
+
+        _distanceBounds.setUpperBound(
+          dihedralLimit.indices.front(),
+          dihedralLimit.indices.back(),
+          CommonTrig::dihedralLength(
+            _distanceBounds.upperBound(
+              dihedralLimit.indices.front(),
+              dihedralLimit.indices.at(1)
+            ),
+            _distanceBounds.upperBound(
+              dihedralLimit.indices.at(1),
+              dihedralLimit.indices.at(2)
+            ),
+            _distanceBounds.upperBound(
+              dihedralLimit.indices.at(2),
+              dihedralLimit.indices.back()
+            ),
+            ConstexprMagic::Math::toRadians(120),
+            ConstexprMagic::Math::toRadians(120),
+            dihedralLimit.upper
+          )
+        );
+
+        /* Add the sequence considered to the dihedral sequences to prevent set
+         * limits to be overwritten or altered further during tree traversals
+         */
+        _dihedralSequences.insert(dihedralLimit.indices);
       }
     }
   }
@@ -76,6 +184,7 @@ BFSConstraintCollector::BFSConstraintCollector(
         rankResultPair.second
       );
 
+      // At this point, new stereocenters should have only one assignment
       assert(_stereocenterMap[i] -> numAssignments() == 1);
 
       // Default assign it to zero
@@ -107,9 +216,18 @@ bool BFSConstraintCollector::operator() (
   chain.push_back(currentNode -> key);
 
   if(depth == 2) { // angle
-    set13Bounds(chain);
+    if(!_angleSequences.contains(chain)) {
+      set13Bounds(chain);
+      _angleSequences.insert(chain);
+    }
   } else if(depth == 3) { // dihedral
-    set14Bounds(chain);
+    if(!_dihedralSequences.contains(chain)) {
+      /* No need to check whether 2-3 is the same EZStereocenter, those sequences
+       * are already in _dihedralSequences (see constructor)
+       */
+      set14Bounds(chain);
+      _dihedralSequences.insert(chain);
+    }
   }
 
   // continue BFS
@@ -294,7 +412,9 @@ void BFSConstraintCollector::finalizeBoundsMatrix() {
        * inconsistencies
        */
       if(_distanceBounds.lowerBound(i, j) == 0) {
-        _distanceBounds.setLowerBound(i, j,
+        _distanceBounds.setLowerBound(
+          i,
+          j,
           AtomInfo::vdwRadius(
             _adjacencies.getElementType(i)
           ) + AtomInfo::vdwRadius(
@@ -313,10 +433,10 @@ void BFSConstraintCollector::finalizeBoundsMatrix() {
 }
 
 std::vector<
-  Stereocenters::Stereocenter::ChiralityConstraintPrototype
+  Stereocenters::ChiralityConstraintPrototype
 > BFSConstraintCollector::getChiralityPrototypes() const {
   std::vector<
-    Stereocenters::Stereocenter::ChiralityConstraintPrototype
+    Stereocenters::ChiralityConstraintPrototype
   > prototypes;
 
   for(const auto& iterPair : _stereocenterMap) {

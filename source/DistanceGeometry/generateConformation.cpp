@@ -60,13 +60,13 @@ Delib::PositionCollection convertToPositionCollection(
 
 ChiralityConstraint propagate(
   const DistanceBoundsMatrix& bounds,
-  const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+  const Stereocenters::ChiralityConstraintPrototype& prototype
 ) {
   using namespace Stereocenters;
 
-  if(prototype.second == Stereocenter::ChiralityConstraintTarget::Flat) {
+  if(prototype.target == ChiralityConstraintTarget::Flat) {
     return ChiralityConstraint {
-      prototype.first,
+      prototype.indices,
       0.0,
       0.0
     };
@@ -107,13 +107,13 @@ ChiralityConstraint propagate(
   for(unsigned i = 0; i < 4; i++) {
     for(unsigned j = i + 1; j < 4; j++) {
       const double& lowerBound = bounds.lowerBound(
-        prototype.first.at(i),
-        prototype.first.at(j)
+        prototype.indices.at(i),
+        prototype.indices.at(j)
       );
 
       const double& upperBound = bounds.upperBound(
-        prototype.first.at(i),
-        prototype.first.at(j)
+        prototype.indices.at(i),
+        prototype.indices.at(j)
       );
 
       upperMatrix(i + 1, j + 1) = upperBound * upperBound;
@@ -150,13 +150,13 @@ ChiralityConstraint propagate(
    * So we construct it with the previous upper bound negated as the lower bound
    * and similarly for the previous lower bound.
    */
-  if(prototype.second == Stereocenter::ChiralityConstraintTarget::Negative) {
+  if(prototype.target == ChiralityConstraintTarget::Negative) {
     /* Abs is necessary to ensure that negative almost-zeros are interpreted as
      * positive near-zeros. Additionally, we do the adjustment by factor 8 here
      * (see above)
      */
     return ChiralityConstraint {
-      prototype.first,
+      prototype.indices,
       - sqrt(std::fabs(upperBound) / 8.0),
       - sqrt(std::fabs(lowerBound) / 8.0)
     };
@@ -164,7 +164,7 @@ ChiralityConstraint propagate(
 
   // Regular case (Positive target)
   return ChiralityConstraint {
-    prototype.first,
+    prototype.indices,
     sqrt(std::fabs(lowerBound) / 8.0),
     sqrt(std::fabs(upperBound) / 8.0)
   };
@@ -224,7 +224,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
       [&DGData](
-        const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+        const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return propagate(
           DGData.distanceBounds,
@@ -405,7 +405,7 @@ DGDebugData debugDistanceGeometry(
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
       [&DGData](
-        const Stereocenters::Stereocenter::ChiralityConstraintPrototype& prototype
+        const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return propagate(
           DGData.distanceBounds,
@@ -575,7 +575,10 @@ MoleculeDGInformation gatherDGInformation(
 
   /* For every atom in the molecule, generate a tree of height 3 to traverse
    * with our collector. This leads to some repeated work that could be 
-   * optimized out at some point (TODO).
+   * optimized out at some point. Currently, this is done by remembering treated
+   * sequences of atoms, but this is fairly costly. It would be better if the 
+   * tree generation algorithm could cut down on the number of duplicate
+   * sequences treated (TODO).
    */
   for(AtomIndexType i = 0; i < molecule.getNumAtoms(); i++) {
     // Make the tree

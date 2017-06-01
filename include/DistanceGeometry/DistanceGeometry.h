@@ -24,7 +24,8 @@ struct ChiralityConstraint {
       lower(lower),
       upper(upper)
   {
-    assert(lower < upper);
+    // Must be <= because flat targets have lower = upper = 0
+    assert(lower <= upper);
   }
 };
 

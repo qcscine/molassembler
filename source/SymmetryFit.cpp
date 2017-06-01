@@ -33,12 +33,10 @@ double SymmetryFit::Fit::_calculateAngleDeviation(
             i,
             CNStereocenterPtr -> centerAtom,
             k
-          ) - _toRadians( // The ideal angle from the Stereocenter
-            CNStereocenterPtr -> angle(
-              i,
-              CNStereocenterPtr -> centerAtom,
-              k
-            )
+          ) - CNStereocenterPtr -> angle(
+            i,
+            CNStereocenterPtr -> centerAtom,
+            k
           )
         );
       }
@@ -71,12 +69,10 @@ double SymmetryFit::Fit::_calculateOneThreeDeviation(
               CNStereocenterPtr -> centerAtom,
               k
             ),
-            _toRadians(
-              CNStereocenterPtr -> angle( // idealized Stereocenter angle
-                i,
-                CNStereocenterPtr -> centerAtom,
-                k
-              )
+            CNStereocenterPtr -> angle( // idealized Stereocenter angle
+              i,
+              CNStereocenterPtr -> centerAtom,
+              k
             )
           )
         );
@@ -99,18 +95,18 @@ double SymmetryFit::Fit::_calculateChiralityDeviation(
     TemplateMagic::map(
       prototypes,
       [&positions](const auto& constraintPrototype) -> double {
-        using TargetEnumType = Stereocenters::Stereocenter::ChiralityConstraintTarget;
+        using TargetEnumType = Stereocenters::ChiralityConstraintTarget;
 
         double volume = _getVolume(
           positions,
-          constraintPrototype.first[0],
-          constraintPrototype.first[1],
-          constraintPrototype.first[2],
-          constraintPrototype.first[3]
+          constraintPrototype.indices[0],
+          constraintPrototype.indices[1],
+          constraintPrototype.indices[2],
+          constraintPrototype.indices[3]
         );
 
         // If the target is flat, then the "error" is continuous:
-        if(constraintPrototype.second == TargetEnumType::Flat) {
+        if(constraintPrototype.target == TargetEnumType::Flat) {
           return std::fabs(volume);
         }
 
@@ -119,10 +115,10 @@ double SymmetryFit::Fit::_calculateChiralityDeviation(
          */
         if(
           (
-            constraintPrototype.second == TargetEnumType::Positive
+            constraintPrototype.target == TargetEnumType::Positive
             && volume < 0
           ) || (
-            constraintPrototype.second == TargetEnumType::Negative
+            constraintPrototype.target == TargetEnumType::Negative
             && volume > 0
           )
         ) {
@@ -216,11 +212,6 @@ double SymmetryFit::Fit::_getVolume(
     )
   );
 }
-
-double SymmetryFit::Fit::_toRadians(const double& inDegrees) {
-  return M_PI * inDegrees / 180;
-}
-
 
 double SymmetryFit::Fit::totalDeviation() const {
   return angleDeviation + oneThreeDeviation + chiralityDeviation + symmetryPenalty;

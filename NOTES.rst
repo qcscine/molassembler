@@ -1,5 +1,21 @@
 TODO
 ----
+- CNStereocenter and EZStereocenter will clash! Grubbs cat::
+
+              R R     R
+               \|    /
+    sq. py. ->  W = C
+               /|    \
+              R R     H
+
+  CNStereocenter on wolfram, an EZStereocenter on W and C. How to handle this?
+
+  Is it acceptable to just instantiate the CNStereocenter on W in this case?
+  There is missing dihedral information, but as long as C is recognized as
+  trigonal planar the overall structure will probably be correct! The twist
+  around the W=C bond is probably restricted, but is it clear which conformation
+  is best?
+
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)
 - Parallelize DG
@@ -39,22 +55,4 @@ TODO
 - Use LFT to determine which geometry? MO-level calculations, perhaps
   approximable with low cost
 - Give some thought to how to treat charge / total electron counts
-
-Things that need tests
-----------------------
-
-- AdjacencyListAlgorithms
-- BondDistance
-- CN4Stereocenter
-- Cache
-- CommonTrig
-- IO
-- Molecule (when finished)
-- StdlibTypeAlgorithms
-- StereocenterList
-- TreeAlgorithms
-- DistanceGeometry
-  
-  - DistanceBoundsMatrix
-  - MetricMatrix
-  - generateConformation
+- Make everything nothrow as best as possible

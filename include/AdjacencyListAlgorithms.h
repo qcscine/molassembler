@@ -252,7 +252,7 @@ public:
   template<typename Graph>
   void gray_target(const EdgeIndexType& e, const Graph& g) {
     std::cout << boost::source(e, g) << " -> " << boost::target(e, g) 
-      << " (black)" << std::endl;
+      << " (gray)" << std::endl;
   }
 
   template<typename Graph>

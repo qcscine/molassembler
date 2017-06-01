@@ -32,9 +32,9 @@ void explainDifference(
  * recovering all the stereocenter data from the positions alone yields the
  * same StereocenterList as you started out with
  *
- * TODO This test will fail worse now that SymmetryFit takes into account the 
+ * TODO This test will fail worse as soon as SymmetryFit takes into account the 
  * geometry we expect the center to take, simply because the molecules created
- * by DGDBM::asymmetricMolecule are (chemically speaking) abject nonsense
+ * by DGDBM::asymmetricMolecule are (in VSEPR's eyes) abject nonsense
  */
 BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
   for(const auto& symmetryName: Symmetry::allNames) {

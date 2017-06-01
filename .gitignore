@@ -20,3 +20,5 @@ analysis/*/*.csv
 analysis/testData
 STATUS.rst
 ISSUE.rst
+*.log
+*.aux

@@ -4,6 +4,7 @@
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "AdjacencyList.h"
 #include "Tree.h"
+#include "SequenceSet.h"
 
 /* TODO
  * - tests
@@ -28,30 +29,28 @@ private:
   // Pre-set constants
   const double oneTwoVariance = 0.1;
 
-  // Input
+  // Closures
   const AdjacencyList& _adjacencies;
   const DistanceMethod& _distanceMethod;
 
   // Output (via function operator side effect)
   DistanceBoundsMatrix& _distanceBounds;
+
+  // State
   std::map<
     AtomIndexType,
     std::shared_ptr<Stereocenters::Stereocenter>
   > _stereocenterMap;
 
-  // Inline functions for more readability
-  inline double _toRadians(const double& inDegrees) {
-    return M_PI * inDegrees / 180;
-  }
+  SequenceSet<3> _angleSequences;
+  SequenceSet<4> _dihedralSequences;
 
   inline double _getAngle(
     const AtomIndexType& i,
     const AtomIndexType& j,
     const AtomIndexType& k
   ) {
-    return _toRadians(
-      _stereocenterMap[j] -> angle(i, j, k)
-    );
+    return _stereocenterMap[j] -> angle(i, j, k);
   }
 
 public:
@@ -88,7 +87,7 @@ public:
 /* Information */
   // Collect chirality prototypes from gathered information
   std::vector<
-    Stereocenters::Stereocenter::ChiralityConstraintPrototype
+    Stereocenters::ChiralityConstraintPrototype
   > getChiralityPrototypes() const;
 };
 

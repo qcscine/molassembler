@@ -1,4 +1,6 @@
 #include "boost/program_options.hpp"
+
+#define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
 #include "DistanceGeometry/generateConformation.h"
@@ -93,7 +95,7 @@ int main(int argc, char* argv[]) {
 
     auto debugData = detail::debugDistanceGeometry(
       mol,
-      10,
+      1,
       MetrizationOption::full,
       false
     );

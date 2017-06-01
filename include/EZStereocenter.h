@@ -12,29 +12,54 @@ namespace MoleculeManip {
 
 namespace Stereocenters {
 
-/* Has 2 Assignments: 0 = E, 1 = Z
+/* Has either one or two assignments:
+ *
+ * - When on either side both substituents have equal rank, there is only one
+ *   assignment.
+ * - Otherwise, there are two assignments.
+ * - In case there is only one substituent on one side, it is considered
+ *   "unequal to nothingness". This is so that e.g. diazene::
+ *
+ *     H
+ *       \
+ *        N = N
+ *              \
+ *                H
+ *
+ *   can be properly considered as having E and Z conformers
+ *
+ * Implementation-wise, _isEOption works as true -> E, false -> Z
+ *
+ * EZStereocenter is explicitly also instantiable on bonds that are not 
+ * stereogenic so that in DG, chirality constraints and dihedral limits that
+ * result from the double bond are still collectible.
  */
 class EZStereocenter : public Stereocenter {
 public:
+  using IndexPairsSet = std::set<
+    std::pair<AtomIndexType, AtomIndexType>
+  >;
 
-  /* An EZStereocenter consists of six numbers with the sequence:
-   * [CenterAtom, Adjacent of higher rank, Adjacent of lower rank] x 2
-   * So e.g. [1, 4, 5, 2, 6, 7], _isEOption=false (Z) is
+  /* An EZStereocenter consists of four to six atom indices:
    *
-   *    4       6
-   *     \     /
-   *      1 = 2
-   *     /     \
-   *    5       7
+   * leftCenter,
+   * leftHighPriority,
+   * leftLowPriority (optional),
+   * rightCenter,
+   * rightHighPriority,
+   * rightLowPriority (optional),
    *
    */
 
 private:
 /* State */
-  std::array<AtomIndexType, 6> _indicesAndRank;
+  AtomIndexType _leftCenter, _leftHighPriority,
+                _rightCenter, _rightHighPriority;
+  boost::optional<AtomIndexType> _leftLowPriority, _rightLowPriority;
   boost::optional<bool> _isEOption;
-  // TODO make static?
-  const double _dihedralAngleVariance = 5; // in Degrees
+  unsigned _numAssignments;
+
+  static const double _dihedralAngleVariance; // in Degrees
 
 /* Private members */
   std::vector<
@@ -45,9 +70,8 @@ private:
     std::array<AtomIndexType, 4>
   > _differentPriorityDihedralSequences() const;
 
-  std::pair<double, double> _cisLimits() const;
-
-  std::pair<double, double> _transLimits() const;
+  std::vector<DihedralLimits> _cisDihedralLimits() const;
+  std::vector<DihedralLimits> _transDihedralLimits() const;
 
 public:
 /* Constructors */
@@ -55,12 +79,16 @@ public:
   EZStereocenter(
     const AtomIndexType& firstCenter,
     const std::vector<AtomIndexType>& firstCenterRanking,
+    const IndexPairsSet& firstCenterEqualPairs,
     const AtomIndexType& secondCenter,
-    const std::vector<AtomIndexType>& secondCenterRanking
+    const std::vector<AtomIndexType>& secondCenterRanking,
+    const IndexPairsSet& secondCenterEqualPairs
   ); 
 
 /* Modification */
   void assign(const unsigned& assignment) final;
+
+  void fit(const Delib::PositionCollection& positions) final;
 
 /* Information */
   double angle(

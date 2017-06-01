@@ -3,7 +3,6 @@
 #include "EZStereocenter.h"
 #include "CommonTrig.h"
 
-#include "SymmetryFit.h"
 #include "Log.h"
 
 using namespace MoleculeManip;
@@ -156,10 +155,15 @@ std::vector<EdgeIndexType> AdjacencyList::_getEZStereocenterCandidates() const {
     auto source = boost::source(edgeIndex, _adjacencies),
          target = boost::target(edgeIndex, _adjacencies);
 
+    auto sourceAdjacencies = getNumNonEtaAdjacencies(source),
+         targetAdjacencies = getNumNonEtaAdjacencies(target);
+
     if(
       _adjacencies[edgeIndex].bondType == BondType::Double
-      && getNumNonEtaAdjacencies(source) == 3
-      && getNumNonEtaAdjacencies(target) == 3
+      && 2 <= sourceAdjacencies
+      && sourceAdjacencies <= 3
+      && 2 <= targetAdjacencies 
+      && targetAdjacencies <= 3
     ) {
       candidates.push_back(edgeIndex);
     }
@@ -351,27 +355,29 @@ StereocenterList AdjacencyList::detectStereocenters() const {
       {target} // exclude edge sharing neighbor
     );
 
-    // If the source's substituents are unequal (no equal pair sets)
-    if(sourceSubstituentsRanking.second.empty()) {
-      auto targetSubstituentsRanking = rankPriority(
-        target,
-        {source} // exclude edge sharing neighbor
-      );
+    auto targetSubstituentsRanking = rankPriority(
+      target,
+      {source} // exclude edge sharing neighbor
+    );
 
-      // target must also have no equal pairs
-      if(targetSubstituentsRanking.second.empty()) {
-        // Instantiate an EZStereocenter there!
-        stereocenterList.add(
-          std::make_shared<
-            Stereocenters::EZStereocenter
-          >(
-            source,
-            sourceSubstituentsRanking.first,
-            target,
-            targetSubstituentsRanking.first
-          )
-        );
-      }
+    // Construct a Stereocenter here
+    std::shared_ptr<
+      Stereocenters::EZStereocenter
+    > newStereocenter = std::make_shared<
+      Stereocenters::EZStereocenter
+    >(
+      source,
+      sourceSubstituentsRanking.first,
+      sourceSubstituentsRanking.second,
+      target,
+      targetSubstituentsRanking.first,
+      targetSubstituentsRanking.second
+    );
+
+    if(newStereocenter -> numAssignments() == 2) {
+      stereocenterList.add(
+        std::move(newStereocenter)
+      );
     }
   }
 
@@ -640,13 +646,57 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
 ) const {
   StereocenterList stereocenters;
 
+  for(
+    const auto& edgeIndex : 
+    _getEZStereocenterCandidates()
+  ) {
+    auto source = boost::source(edgeIndex, _adjacencies),
+         target = boost::target(edgeIndex, _adjacencies);
+
+    // Calculate Priorities for each's substituents
+    auto sourceSubstituentsRanking = rankPriority(
+      source,
+      {target} // exclude edge sharing neighbor
+    );
+
+    auto targetSubstituentsRanking = rankPriority(
+      target,
+      {source} // exclude edge sharing neighbor
+    );
+
+    // Construct a Stereocenter here
+    std::shared_ptr<
+      Stereocenters::EZStereocenter
+    > newStereocenter = std::make_shared<
+      Stereocenters::EZStereocenter
+    >(
+      source,
+      sourceSubstituentsRanking.first,
+      sourceSubstituentsRanking.second,
+      target,
+      targetSubstituentsRanking.first,
+      targetSubstituentsRanking.second
+    );
+
+    newStereocenter -> fit(positions);
+
+    if(newStereocenter -> numAssignments() == 2) {
+      stereocenters.add(
+        std::move(newStereocenter)
+      );
+    }
+  }
+
   /* Add a CNStereocenter everywhere where the symmetry yielding the best fit is 
    * not the one that AdjacencyList's determineLocalGeometry gets and where we
    * can fully determine a Stereocenter's assignment from the positions
    */
   for(unsigned candidateIndex = 0; candidateIndex < numAtoms(); candidateIndex++) {
-    // Skip terminal atoms
-    if(getNumAdjacencies(candidateIndex) <= 1) {
+    // Skip terminal atoms and ones that already have a stereocenter
+    if(
+      getNumAdjacencies(candidateIndex) <= 1
+      || stereocenters.involving(candidateIndex)
+    ) {
       continue;
     }
 
@@ -666,66 +716,14 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
       rankResultPair.second
     );
 
-    // Downcast the Stereocenter to a CNStereocenter
-    auto CNStereocenterPtr = std::dynamic_pointer_cast<
-      Stereocenters::CNStereocenter
-    >(stereocenterPtr);
+    stereocenterPtr -> fit(positions);
 
-    // Perform the fit
-    SymmetryFit fit {
-      CNStereocenterPtr,
-      getAdjacencies(
-        CNStereocenterPtr -> centerAtom
-      ),
-      positions
-      /* TODO activate passing of localGeometryName as soon as distance bounds
-       * work is done
-       */
-    };
-
-#ifndef NDEBUG
-    using ::operator<<; // use global namespace ostream operators
-
-    // Log in Debug builds, provided particular is set
-    Log::log(Log::Particulars::StereocenterFitAnalysisInfo) << fit;
-#endif
-
-    /* Cases
-     * Best symmetry is equal to localGeometry and no assignment can be made
-     *  -> no stereocenter
-     * Best symmetry is equal to localGeometry and an assignment can be made
-     *  -> add stereocenter, set assignment
-     * Best symmetry is unequal to localGeometry and no assignment can be made
-     *  -> add stereocenter
-     * Best symmetry is unequal to localGeometry and an assignment can be made
-     *  -> add stereocenter, set assignment
-     * Best symmetry is unequal and only one assignment exists
-     *  -> add stereocenter, set assignment
+    /* TODO In case the CNStereocenter has one assignment only and the symmetry
+     * is the same as by determined, do not add it to the list of stereocenters
      */
-
-    // Set it to the best symmetry
-    if(
-      !( // Only case when stereocenter is not added
-        fit.bestSymmetry == localGeometryName
-        && fit.assignmentsWithLowestDeviation.size() > 1
-      )
-    ) {
-      CNStereocenterPtr -> changeSymmetry(fit.bestSymmetry);
-
-      /* If that pair with lowest deviation has only a single assignment,
-       * assign it, else leave it unassigned (it has only a single assignment 
-       * also if only one unique assignment exists)
-       */
-      if(fit.assignmentsWithLowestDeviation.size() == 1) {
-        CNStereocenterPtr -> assign(
-          fit.assignmentsWithLowestDeviation.front()
-        );
-      }
-
-      // add it to the list
-      stereocenters.add(stereocenterPtr);
-    }
-
+    stereocenters.add(
+      std::move(stereocenterPtr)
+    );
   }
 
   // TODO EZStereocenters
@@ -733,6 +731,7 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
    * - CNStereocenter detection may have generated trigonal planar
    *   stereocenters on the endpoints of the double bond edge -> remove if an
    *   EZStereocenter is instantiated there instead
+   * - Issues: double bond and CNStereocenter can clash -> Grubbs
    *
    * STEPS
    * - Calculate dihedral angle of high-priority pair from 3D

@@ -99,6 +99,7 @@ set(HEADERS_all
   include/CNStereocenter.h
   include/Cache.h
   include/CommonTrig.h
+  include/DelibHelpers.h
   include/EZStereocenter.h
   include/Edges.h
   include/GraphDistanceMatrix.h
@@ -134,6 +135,7 @@ set(SOURCES_all
   source/BondDistance.cpp
   source/CNStereocenter.cpp
   source/CommonTrig.cpp
+  source/DelibHelpers.cpp
   source/EZStereocenter.cpp
   source/GraphDistanceMatrix.cpp
   source/LocalGeometryModel.cpp
