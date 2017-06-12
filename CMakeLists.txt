@@ -9,6 +9,8 @@ set(LIBS_DIR "${BASE_DIR}/projects/libs")
 # local path configuration
 set(AssignmentLib_LIBRARY_DIR "${LIBS_DIR}/geometry_assignment/build")
 set(Symmetry_LIBRARY_DIR "${LIBS_DIR}/symmetry_information/build")
+set(RDL_LIBRARY_DIR "${BASE_DIR}/lib/cpp/RingDecomposerLib/build/src/RingDecomposerLib")
+set(RDL_INCLUDE_DIR "${BASE_DIR}/lib/cpp/RingDecomposerLib/src")
 
 # project declaration
 project(Molecule)
@@ -52,6 +54,7 @@ endif()
 # dependencies: libraries
 find_library(ASSIGNMENT_LIBRARY Assignment ${AssignmentLib_LIBRARY_DIR})
 find_library(SYMMETRY_LIBRARY symmetries ${Symmetry_LIBRARY_DIR})
+find_library(RDL_LIBRARY RingDecomposerLibStatic ${RDL_LIBRARY_DIR})
 
 # dependencies: programs
 find_program(
@@ -74,11 +77,14 @@ add_library(assignment STATIC IMPORTED)
 set_property(TARGET assignment PROPERTY IMPORTED_LOCATION ${ASSIGNMENT_LIBRARY})
 add_library(symmetry STATIC IMPORTED)
 set_property(TARGET symmetry PROPERTY IMPORTED_LOCATION ${SYMMETRY_LIBRARY})
+add_library(rdl STATIC IMPORTED)
+set_property(TARGET rdl PROPERTY IMPORTED_LOCATION ${RDL_LIBRARY})
 add_dependencies(assignment symmetry)
 
 # add include directories
 include_directories(SYSTEM
   ${LIBS_DIR}
+  ${RDL_INCLUDE_DIR}
   include
 )
 
@@ -135,6 +141,7 @@ set(SOURCES_all
   source/BondDistance.cpp
   source/CNStereocenter.cpp
   source/CommonTrig.cpp
+  source/CycleData.cpp
   source/DelibHelpers.cpp
   source/EZStereocenter.cpp
   source/GraphDistanceMatrix.cpp
@@ -182,7 +189,7 @@ if(CLANG_TIDY_EXE)
 endif()
 
 # Linking
-target_link_libraries(molecule Delib::DelibStatic assignment symmetry blas)
+target_link_libraries(molecule Delib::DelibStatic assignment symmetry blas rdl)
 
 # Testing targets
 # get all test cpp files
@@ -212,6 +219,7 @@ foreach(filename ${testFiles})
     symmetry
     molecule
     blas
+    rdl
   )
 
   # add target to tests
@@ -244,5 +252,6 @@ foreach(filename ${analysisFiles})
     symmetry
     molecule
     blas
+    rdl
   )
 endforeach()

@@ -8,21 +8,21 @@ struct RangeForTemporary {
   Iterator _begin, _end;
 
   RangeForTemporary(Iterator begin, Iterator end) 
-  : _begin(begin),
-    _end(end)
+  : _begin(std::move(begin)),
+    _end(std::move(end))
   {}
 
   explicit RangeForTemporary(
     std::pair<Iterator, Iterator> iterators
-  ) : _begin(iterators.first),
-      _end(iterators.second)
+  ) : _begin(std::move(iterators.first)),
+      _end(std::move(iterators.second))
   {}
 
-  Iterator begin() {
+  Iterator& begin() {
     return _begin;
   }
 
-  Iterator end() {
+  Iterator& end() {
     return _end;
   }
 };

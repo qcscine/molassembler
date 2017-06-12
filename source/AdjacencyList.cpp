@@ -5,7 +5,7 @@
 
 #include "Log.h"
 
-using namespace MoleculeManip;
+namespace MoleculeManip {
 
 /* Private members */
 // Helper class to write the Graph as Graphviz output
@@ -447,6 +447,10 @@ unsigned AdjacencyList::getNumNonEtaAdjacencies(
   return count;
 }
 
+CycleData AdjacencyList::getCycleData() const {
+  return CycleData(_adjacencies);
+}
+
 RangeForTemporary<GraphType::edge_iterator> AdjacencyList::iterateEdges() const {
   return RangeForTemporary<GraphType::edge_iterator>(boost::edges(_adjacencies));
 }
@@ -776,3 +780,5 @@ RangeForTemporary<GraphType::adjacency_iterator> AdjacencyList::operator[](
     boost::adjacent_vertices(a, _adjacencies)
   );
 }
+
+} // namespace MoleculeManip

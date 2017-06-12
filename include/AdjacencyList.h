@@ -16,6 +16,7 @@
 #include "Edges.h"
 #include "RangeForTemporary.h"
 #include "StereocenterList.h"
+#include "CycleData.h"
 
 #include "symmetry_information/Symmetries.h"
 #include "VSEPR.h"
@@ -42,8 +43,8 @@ private:
 public:
 /* Typedefs */
   using ExplicitEdge = std::pair<
-    Edges::MapType::key_type,
-    Edges::MapType::mapped_type
+    Edges::MapType::key_type, // pair<AtomIndexType, AtomIndexType>
+    Edges::MapType::mapped_type // BondType
   >;
 
 /* Constructors */
@@ -90,21 +91,23 @@ public:
     const AtomIndexType& index
   ) const;
 
-  unsigned getNumAdjacencies(const AtomIndexType& a) const;
-
-  unsigned getNumNonEtaAdjacencies(const AtomIndexType& a) const;
-
-  // Creates a copy of the contained data suitable for the Edges class
-  std::vector<ExplicitEdge> getEdges() const;
-
   std::vector<AtomIndexType> getAdjacencies(const AtomIndexType& a) const;
-
-  Delib::ElementType getElementType(const AtomIndexType& index) const;
 
   boost::optional<BondType> getBondType(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const;
+
+  // Creates a copy of the contained data suitable for the Edges class
+  std::vector<ExplicitEdge> getEdges() const;
+
+  Delib::ElementType getElementType(const AtomIndexType& index) const;
+
+  unsigned getNumAdjacencies(const AtomIndexType& a) const;
+
+  unsigned getNumNonEtaAdjacencies(const AtomIndexType& a) const;
+
+  CycleData getCycleData() const;
 
   StereocenterList inferStereocentersFromPositions(
     const Delib::PositionCollection& positions

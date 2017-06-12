@@ -25,8 +25,8 @@ public:
   std::vector<
     std::vector<AtomIndexType>
   > extractChains(
-    const AtomIndexType& i,
-    const AtomIndexType& j
+    const AtomIndexType& a,
+    const AtomIndexType& b
   );
 
   unsigned& operator () (

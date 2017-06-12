@@ -52,6 +52,7 @@ public:
 
   // From internal components
   explicit Molecule(const AdjacencyList& adjacencies);
+
   Molecule(
     const AdjacencyList& adjacencies,
     const StereocenterList& stereocenters
@@ -114,7 +115,6 @@ public:
 
   unsigned getNumAtoms() const;
   unsigned getNumBonds() const;
-
 
   unsigned hydrogenCount(const AtomIndexType& a) const;
 

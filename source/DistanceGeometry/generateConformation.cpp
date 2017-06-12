@@ -40,7 +40,7 @@ Delib::PositionCollection convertToPositionCollection(
 Delib::PositionCollection convertToPositionCollection(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 ) {
-  const unsigned dimensionality = 4;
+  const long dimensionality = 4;
   assert(vectorizedPositions.size() % dimensionality == 0);
 
   Delib::PositionCollection positions;
@@ -104,8 +104,8 @@ ChiralityConstraint propagate(
   lowerMatrix.diagonal().setZero();
   upperMatrix.diagonal().setZero();
 
-  for(unsigned i = 0; i < 4; i++) {
-    for(unsigned j = i + 1; j < 4; j++) {
+  for(long i = 0; i < 4; i++) {
+    for(long j = i + 1; j < 4; j++) {
       const double& lowerBound = bounds.lowerBound(
         prototype.indices.at(i),
         prototype.indices.at(j)
@@ -265,7 +265,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         ) < 0.5
       ) {
         // Invert y coordinates
-        for(unsigned i = 0; i < DGData.distanceBounds.N; i++) {
+        for(long i = 0; i < DGData.distanceBounds.N; i++) {
           dlibPositions(4 * i + 1) *= -1;
         }
       }
