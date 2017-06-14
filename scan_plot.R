@@ -13,16 +13,35 @@ par(
 )
 
 edge_lengths <- as.numeric(meta[1,])
-searchBounds <- as.numeric(meta[2,])[1:4]
+strategies <- as.numeric(meta[2,])[1:2]
+rhoDistribution <- as.numeric(meta[3,])[1:2]
+rhoRoot <- as.numeric(meta[4,])[1]
 
 x_seq <- values$V1
 y_vals <- values$V2
+
+#if(rhoRoot != 0 && rhoRoot < 0.1 * max(x_seq)) {
+#  which_indices <- which(x_seq <= 2 * rhoRoot)
+#  x_seq <- x_seq[which_indices]
+#  y_vals <- y_vals[which_indices]
+#}
+
+y_lims <- c(
+  max(
+    min(y_vals),
+    -0.01
+  ),
+  min(
+    max(y_vals),
+    0.01
+  )
+)
 
 plot(
   x_seq,
   y_vals,
   xlim=c(min(x_seq), max(x_seq)),
-  ylim=c(-300, 300),
+  ylim=y_lims,
   type="n",
   xlab=expression(rho),
   ylab=expression(A[5]^2 - B[5]^2*Delta[5])
@@ -30,12 +49,19 @@ plot(
 
 title(paste(round(edge_lengths, 2), collapse=" - "))
 
-lines(x_seq, y_vals)
-
 abline(h=0)
 
-abline(v=searchBounds[2])
-abline(v=searchBounds[4], lty=3)
-abline(v=c(searchBounds[1], searchBounds[3]), lty=2)
+lines(x_seq, y_vals)
+
+if(strategies[1] == 1) {
+  abline(v = rhoDistribution[0], col="blue", lty=2)
+  if(strategies[2] == 0) { # found with strategy 1
+    abline(v = rhoRoot, col="blue")
+  }
+}
+
+if(strategies[2] == 1) {
+  abline(v = rhoRoot, col="red")
+}
 
 dev.off()

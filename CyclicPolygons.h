@@ -3,6 +3,7 @@
 
 #include <boost/math/special_functions/binomial.hpp>
 #include <boost/math/tools/roots.hpp>
+#include <boost/optional.hpp>
 
 #include <vector>
 #include <array>
@@ -299,7 +300,7 @@ struct SearchRange {
   }
 };
 
-double maximumPentagonCircumradius(const std::vector<double>& edgeLengths) {
+boost::optional<double> maximumPentagonCircumradius(const std::vector<double>& edgeLengths) {
   assert(edgeLengths.size() == 5);
 
   assert(
@@ -327,33 +328,96 @@ double maximumPentagonCircumradius(const std::vector<double>& edgeLengths) {
     return svrtan::pentagon(rho, epsilon);
   };
 
-  const double rhoGuess = 1 / math::square(
-    0.5 * TemplateMagic::numeric::average(edgeLengths) / std::sin(M_PI / 5)
-  );
-  const double trialFactor = 1.5;
+  const double average = TemplateMagic::numeric::average(edgeLengths);
+  const double stddev = TemplateMagic::numeric::stddev(edgeLengths, average);
 
-  const double lowerValue = unaryPolynomial(rhoGuess / trialFactor);
-  const double upperValue = unaryPolynomial(rhoGuess * trialFactor);
-  bool increasing = lowerValue < upperValue;
+  if(stddev < average * 0.1) {
+    /* In the special case where the standard deviation is small compared to the
+     * average, we can approximate the circumradius with a regular polygon and
+     * then search in the local vicinity.
+     *
+     * We use the formula for regular polygons with side length a and number of
+     * vertices n:
+     * 
+     *   r = 0.5 * a * csc(π / n)
+     *
+     * We approximate a ≈ ā (average of all a_n) and propagate the standard
+     * deviation of the edge length average through to the calculation of rho,
+     * which is rho = 1 / r²
+     */
+    const double rhoGuess = 1 / math::square(
+      0.5 * average / std::sin(M_PI / 5)
+    );
+    const double trialFactor = 1.2;
 
-  const unsigned maxIter = 1000;
-  boost::uintmax_t iterCount = maxIter; // maxIter
-  auto returnBounds = boost::math::tools::bracket_and_solve_root(
-    unaryPolynomial,
-    rhoGuess,
-    trialFactor,
-    increasing,
-    boost::math::tools::eps_tolerance<double>(32),
-    iterCount
-  );
+    const double lowerValue = unaryPolynomial(rhoGuess / trialFactor);
+    const double upperValue = unaryPolynomial(rhoGuess * trialFactor);
+    bool increasing = lowerValue < upperValue;
 
-  if(iterCount == static_cast<boost::uintmax_t>(maxIter)) {
-    throw std::logic_error("Failed to find minimum in limited iteration number");
+    const unsigned maxIter = 1000;
+    boost::uintmax_t iterCount = maxIter; // maxIter
+    auto returnBounds = boost::math::tools::bracket_and_solve_root(
+      unaryPolynomial,
+      rhoGuess,
+      trialFactor,
+      increasing,
+      boost::math::tools::eps_tolerance<double>(32),
+      iterCount
+    );
+
+    if(iterCount < static_cast<boost::uintmax_t>(maxIter)) {
+      // Success! We can return the circumradius
+      const double rhoRoot = (returnBounds.first + returnBounds.second) / 2;
+      return std::sqrt(1 / rhoRoot);
+    }
   }
 
-  const double rhoRoot = (returnBounds.first + returnBounds.second) / 2;
+  // Fallback strategy -> Scan the function until the first crossing
+  /* Upper bound to stop at if no crossings are found is twice the approximation
+   * taken above for small standard deviations between edge lengths
+   */
+  const double stopRho = 2 / math::square(
+    0.5 * average / std::sin(M_PI / 5)
+  );
+  const unsigned Nsteps = 10000;
+  
+  const double stepLength = stopRho / Nsteps;
+  const bool initialSignBit = std::signbit(unaryPolynomial(stepLength));
+  for(unsigned i = 2; i < Nsteps; i++) {
+    if(std::signbit(unaryPolynomial(i * stepLength)) != initialSignBit) {
+      const double lowerBound = (i - 1) * stepLength;
+      const double upperBound = lowerBound + stepLength;
 
-  return std::sqrt(1 / rhoRoot);
+      const double lowerValue = unaryPolynomial(lowerBound);
+      const double upperValue = unaryPolynomial(upperBound);
+      
+      const unsigned maxIter = 1000;
+      boost::uintmax_t iterCount = maxIter;
+
+      auto returnBounds = boost::math::tools::toms748_solve(
+        unaryPolynomial,
+        lowerBound,
+        upperBound,
+        lowerValue,
+        upperValue,
+        boost::math::tools::eps_tolerance<double>(32),
+        iterCount
+      );
+
+      if(iterCount < static_cast<boost::uintmax_t>(maxIter)) {
+        // Success! We can return the circumradius
+        const double rhoRoot = (returnBounds.first + returnBounds.second) / 2;
+        return std::sqrt(1 / rhoRoot);
+      }
+
+      /* Make sure to exit the loop after the first crossing! Otherwise later 
+       * roots may be returned
+       */
+      break;
+    }
+  }
+
+  return boost::none;
 }
 
 double maximumQuadrilateralCircumradius(const std::vector<double> edgeLengths) {
@@ -476,8 +540,15 @@ std::vector<double> internalAnglesQuadrilateral(const std::vector<double>& edgeL
  * triangle angles.
  */
 std::vector<double> internalAnglesPentagon(const std::vector<double>& edgeLengths) {
+  const auto circumradiusOption = maximumPentagonCircumradius(edgeLengths);
+  if(!circumradiusOption) {
+    throw std::logic_error(
+      "Could not compute the maximum pentagon circumradius for given edge lengths!"
+    );
+  }
+
   // Immediately multiply with 2 to avoid doing so in every calculation
-  const double doubleR = 2 * maximumPentagonCircumradius(edgeLengths);
+  const double doubleR = 2 * circumradiusOption.value();
 
   /* Add the first edge length onto the list so we can use pairwiseMap to get
    * all subsequent pairs

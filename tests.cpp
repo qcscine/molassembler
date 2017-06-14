@@ -134,34 +134,100 @@ BOOST_AUTO_TEST_CASE(scanRandomEdgeCombinations) {
       }
     );
 
+    const auto unaryPolynomial = [&](const double& rho) -> double {
+      return CyclicPolygons::svrtan::pentagon(rho, epsilon);
+    };
+
     std::string scanFilename = "scan-random-"s + std::to_string(nTest) + ".csv"s;
     std::string metaFilename = "scan-random-"s + std::to_string(nTest) + "-meta.csv"s;
 
     std::ofstream outFile(scanFilename);
     outFile << std::scientific << std::setprecision(8);
 
-    const unsigned nSteps = 1000;
+    const double trialFactor = 1.2;
+
+    const double average = TemplateMagic::numeric::average(edgeLengths);
+    const double stddev = TemplateMagic::numeric::stddev(edgeLengths, average);
 
     const double rhoGuess = 1 / CyclicPolygons::math::square(
-      0.5 * TemplateMagic::numeric::average(edgeLengths) / std::sin(M_PI / 5)
+      0.5 * average / std::sin(M_PI / 5)
     );
+    const double rhoStddev = 2 * stddev / (
+      std::pow(rhoGuess, 3) * std::sin(M_PI / edgeLengths.size())
+    );
+    const bool triedFirstStrategy = (stddev < average * 0.1);
 
-    const double rhoGeometricGuess = 1 / CyclicPolygons::math::square(
-      0.5 * TemplateMagic::numeric::geometricMean(edgeLengths) / std::sin(M_PI / 5)
-    );
+    boost::optional<double> rhoRoot;
+
+    if(triedFirstStrategy) {
+      const double lowerValue = unaryPolynomial(rhoGuess / trialFactor);
+      const double upperValue = unaryPolynomial(rhoGuess * trialFactor);
+      bool increasing = lowerValue < upperValue;
+
+      const unsigned maxIter = 1000;
+      boost::uintmax_t iterCount = maxIter; // maxIter
+      auto returnBounds = boost::math::tools::bracket_and_solve_root(
+        unaryPolynomial,
+        rhoGuess,
+        trialFactor,
+        increasing,
+        boost::math::tools::eps_tolerance<double>(32),
+        iterCount
+      );
+
+      if(iterCount < static_cast<boost::uintmax_t>(maxIter)) {
+        // Success! We can return the circumradius
+        rhoRoot = (returnBounds.first + returnBounds.second) / 2;
+      }
+    }
+
+    const bool usedFallbackStrategy = (!rhoRoot);
 
     const double scanLower = 0;
     const double scanUpper = 2 * rhoGuess;
-    const double trialFactor = 1.2;
 
-    const double stepSize = (scanUpper - scanLower) / nSteps;
+    const unsigned nSteps = 10000;
+    const double stepLength = (scanUpper - scanLower) / nSteps;
 
-    for(unsigned i = 0; i <= nSteps; i++) {
-      const double rho = scanLower + i * stepSize;
-      outFile << rho << "," << CyclicPolygons::svrtan::pentagon(
-        rho,
-        epsilon
-      ) << std::endl;
+    outFile << "0, 0" << std::endl;
+    const double initialValue = unaryPolynomial(stepLength);
+    outFile << stepLength << ", " << initialValue << std::endl;
+
+    const bool initialSignBit = std::signbit(initialValue);
+    for(unsigned i = 2; i < nSteps; i++) {
+      const double rho = i * stepLength;
+      const double value = unaryPolynomial(rho);
+
+      outFile << rho << ", " << value << std::endl;
+
+      if(
+        std::signbit(unaryPolynomial(i * stepLength)) != initialSignBit
+        && !rhoRoot
+      ) {
+        const double lowerBound = (i - 1) * stepLength;
+        const double upperBound = rho;
+
+        const double lowerValue = unaryPolynomial(lowerBound);
+        const double upperValue = unaryPolynomial(upperBound);
+        
+        const unsigned maxIter = 1000;
+        boost::uintmax_t iterCount = maxIter;
+
+        auto returnBounds = boost::math::tools::toms748_solve(
+          unaryPolynomial,
+          lowerBound,
+          upperBound,
+          lowerValue,
+          upperValue,
+          boost::math::tools::eps_tolerance<double>(32),
+          iterCount
+        );
+
+        if(iterCount < static_cast<boost::uintmax_t>(maxIter)) {
+          // Success! We can return the circumradius
+          rhoRoot = (returnBounds.first + returnBounds.second) / 2;
+        }
+      }
     }
 
     outFile.close();
@@ -174,8 +240,9 @@ BOOST_AUTO_TEST_CASE(scanRandomEdgeCombinations) {
       }
     }
     metaFile << std::endl;
-    metaFile << (rhoGuess / trialFactor) << ", " << rhoGuess << ", " 
-      << (rhoGuess * trialFactor) << ", " << rhoGeometricGuess << std::endl;
+    metaFile << triedFirstStrategy << ", " << usedFallbackStrategy << std::endl;
+    metaFile << rhoGuess << ", " << rhoStddev << std::endl;
+    metaFile << rhoRoot.value_or(0) << std::endl;
 
     metaFile.close();
   }
@@ -295,16 +362,9 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
 
 BOOST_AUTO_TEST_CASE(automaticFindingWorks) {
   std::vector<double> edgeLengths {29, 30, 31, 32, 33};
-  double returnValue;
 
-  auto callAndAssign = [&]() -> void {
-    returnValue = CyclicPolygons::maximumPentagonCircumradius(
-      edgeLengths
-    );
-  };
-
-  BOOST_CHECK_NO_THROW(
-    callAndAssign()
+  BOOST_CHECK(
+    CyclicPolygons::maximumPentagonCircumradius(edgeLengths)
   );
 }
 
