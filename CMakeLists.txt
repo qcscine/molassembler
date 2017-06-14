@@ -87,5 +87,16 @@ set_target_properties(
 target_include_directories(cyclicPolygonTests PRIVATE ${BOOST_ROOT})
 target_link_libraries(cyclicPolygonTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cyclic_polygons)
 
+add_executable(analysis analysis.cpp)
+target_compile_options(analysis PUBLIC -O2 -g)
+set_target_properties(
+  analysis PROPERTIES
+  CXX_STANDARD 14
+  CXX_STANDARD_REQUIRED ON
+  COMPILE_FLAGS ${WARNING_FLAGS}
+)
+target_include_directories(analysis PRIVATE ${BOOST_ROOT})
+target_link_libraries(analysis ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cyclic_polygons)
+
 # add test
-add_test(NAME testAll COMMAND cyclicPolygonTests)
+add_test(NAME testAll COMMAND analysis)
