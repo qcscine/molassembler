@@ -76,16 +76,16 @@ if(CLANG_TIDY_EXE)
   )
 endif()
 
-add_executable(symmetryTests tests.cpp)
-target_compile_options(symmetryTests PUBLIC -O2 -g)
+add_executable(cyclicPolygonTests tests.cpp)
+target_compile_options(cyclicPolygonTests PUBLIC -O2 -g)
 set_target_properties(
-  symmetryTests PROPERTIES
+  cyclicPolygonTests PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
-target_include_directories(symmetryTests PRIVATE ${BOOST_ROOT})
-target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cyclic_polygons)
+target_include_directories(cyclicPolygonTests PRIVATE ${BOOST_ROOT})
+target_link_libraries(cyclicPolygonTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cyclic_polygons)
 
 # add test
-add_test(NAME testAll COMMAND symmetryTests)
+add_test(NAME testAll COMMAND cyclicPolygonTests)

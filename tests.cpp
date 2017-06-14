@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include "template_magic/VectorView.h"
+#include "template_magic/Random.h"
 
 BOOST_AUTO_TEST_CASE(symmetricPolynomialsCorrect) {
   std::vector<double> values {1, 2, 3, 4, 5};
@@ -88,6 +89,96 @@ BOOST_AUTO_TEST_CASE(pentagonCircumradiusTests) {
   }
 
   outFile.close();
+}
+
+BOOST_AUTO_TEST_CASE(scanRandomEdgeCombinations) {
+  using namespace std::string_literals;
+
+  /* Limited case, where shortest and longest possible bond lengths in molecules
+   * are used
+   */
+  const double upperLimit = 5.6; // Fr-Fr single
+  const double lowerLimit = 0.7; // H-H single
+
+  for(unsigned nTest = 0; nTest < 10; ++nTest) {
+    std::vector<double> edgeLengths {
+      TemplateMagic::random.getSingle<double>(
+        lowerLimit,
+        upperLimit
+      )
+    };
+
+    while(edgeLengths.size() < 5) {
+      const double geometricLimit = TemplateMagic::numeric::sum(edgeLengths);
+
+      edgeLengths.emplace_back(
+        TemplateMagic::random.getSingle<double>(
+          lowerLimit,
+          std::min(upperLimit, geometricLimit)
+        )
+      );
+    }
+
+    const auto squaredEdgeLengths = TemplateMagic::map(
+      edgeLengths,
+      CyclicPolygons::math::square<double>
+    );
+
+    const auto epsilon = TemplateMagic::map(
+      CyclicPolygons::math::intSeq(0, 5),
+      [&](const unsigned& k) -> double {
+        return CyclicPolygons::math::elementarySymmetricPolynomial(
+          k,
+          squaredEdgeLengths
+        );
+      }
+    );
+
+    std::string scanFilename = "scan-random-"s + std::to_string(nTest) + ".csv"s;
+    std::string metaFilename = "scan-random-"s + std::to_string(nTest) + "-meta.csv"s;
+
+    std::ofstream outFile(scanFilename);
+    outFile << std::scientific << std::setprecision(8);
+
+    const unsigned nSteps = 1000;
+
+    const double rhoGuess = 1 / CyclicPolygons::math::square(
+      0.5 * TemplateMagic::numeric::average(edgeLengths) / std::sin(M_PI / 5)
+    );
+
+    const double rhoGeometricGuess = 1 / CyclicPolygons::math::square(
+      0.5 * TemplateMagic::numeric::geometricMean(edgeLengths) / std::sin(M_PI / 5)
+    );
+
+    const double scanLower = 0;
+    const double scanUpper = 2 * rhoGuess;
+    const double trialFactor = 1.2;
+
+    const double stepSize = (scanUpper - scanLower) / nSteps;
+
+    for(unsigned i = 0; i <= nSteps; i++) {
+      const double rho = scanLower + i * stepSize;
+      outFile << rho << "," << CyclicPolygons::svrtan::pentagon(
+        rho,
+        epsilon
+      ) << std::endl;
+    }
+
+    outFile.close();
+
+    std::ofstream metaFile(metaFilename);
+    for(unsigned i = 0; i < edgeLengths.size(); i++) {
+      metaFile << edgeLengths[i];
+      if(i != edgeLengths.size() - 1) {
+        metaFile << ", ";
+      }
+    }
+    metaFile << std::endl;
+    metaFile << (rhoGuess / trialFactor) << ", " << rhoGuess << ", " 
+      << (rhoGuess * trialFactor) << ", " << rhoGeometricGuess << std::endl;
+
+    metaFile.close();
+  }
 }
 
 BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
@@ -197,4 +288,40 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
       rDelta5
     )
   );
+
+  const auto& searchRange = CyclicPolygons::SearchRange(edgeLengths);
+  BOOST_CHECK(std::fabs(searchRange.guess - 1 / (26.385 * 26.385)) < 1e-2);
+}
+
+BOOST_AUTO_TEST_CASE(automaticFindingWorks) {
+  std::vector<double> edgeLengths {29, 30, 31, 32, 33};
+  double returnValue;
+
+  auto callAndAssign = [&]() -> void {
+    returnValue = CyclicPolygons::maximumPentagonCircumradius(
+      edgeLengths
+    );
+  };
+
+  BOOST_CHECK_NO_THROW(
+    callAndAssign()
+  );
+}
+
+BOOST_AUTO_TEST_CASE(internalAnglesSumCorrectly) {
+  std::vector<double> edgeLengths {29, 30, 31, 32, 33};
+  for(unsigned n = 3; n <= 5; n++) {
+    auto edges = TemplateMagic::cast<double>(
+      CyclicPolygons::math::intSeq(29, 28 + n)
+    );
+
+    auto internalAngles = CyclicPolygons::internalAngles(edges);
+
+    BOOST_CHECK(
+      std::fabs(
+        TemplateMagic::numeric::sum(internalAngles)
+        - M_PI * (n - 2)
+      ) < 1e-6
+    );
+  }
 }

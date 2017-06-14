@@ -2,6 +2,7 @@
 #define INCLUDE_CYCLIC_POLYGONS_LIB_H
 
 #include <boost/math/special_functions/binomial.hpp>
+#include <boost/math/tools/roots.hpp>
 
 #include <vector>
 #include <array>
@@ -156,7 +157,7 @@ double lambda(
   );
 }
 
-double A5(const std::vector<double>& lambdas) {
+inline double A5(const std::vector<double>& lambdas) {
   return TemplateMagic::numeric::kahanSum(
     std::vector<double>{
       std::pow(lambdas[4], 4),
@@ -188,7 +189,7 @@ double A5(const std::vector<double>& lambdas) {
   );
 }
 
-double B5(const std::vector<double>& lambdas) {
+inline double B5(const std::vector<double>& lambdas) {
    return TemplateMagic::numeric::kahanSum(
     std::vector<double>{
       - std::pow(lambdas[4], 3),
@@ -204,7 +205,7 @@ double B5(const std::vector<double>& lambdas) {
   );
 }
 
-double Delta5(const std::vector<double>& lambdas) {
+inline double Delta5(const std::vector<double>& lambdas) {
   return (
     lambdas[0]
     + 2 * TemplateMagic::numeric::kahanSum(
@@ -246,8 +247,66 @@ double pentagon(
 
 } // namespace svrtan
 
+bool cyclicPolygonConstructible(const std::vector<double>& edgeLengths) {
+  /* If a1, a2, ..., aN satisfy: Each edge length smaller than sum of others
+   * -> There exists a convex cyclic polygon (Iosif Pinelis, 2005)
+   */
+
+  for(unsigned i = 0; i < edgeLengths.size(); i++) {
+    double otherLengthsSum = 0;
+
+    for(unsigned j = 0; j < i; j++) {
+      otherLengthsSum += edgeLengths[j];
+    }
+    for(unsigned j = i + 1; j < edgeLengths.size(); j++) {
+      otherLengthsSum += edgeLengths[j];
+    }
+
+    if(edgeLengths[i] >= otherLengthsSum) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+struct SearchRange {
+  double lower, upper, guess;
+
+  explicit SearchRange(const std::vector<double>& edgeLengths) {
+    /* Guessing range for circumradius
+     * We use the formula for regular polygons with side length a and number of
+     * vertices n:
+     * 
+     *   r = 0.5 * a * csc(π / n)
+     *
+     * We approximate a ≈ ā (average of all a_n) and propagate the standard
+     * deviation of the edge length average through to the calculation of rho,
+     * which is rho = 1 / r²
+     */
+    const double edgeLengthsAverage = TemplateMagic::numeric::average(edgeLengths);
+    const double edgeLengthsStddev = TemplateMagic::numeric::stddev(edgeLengths, edgeLengthsAverage);
+    const double regularCircumradius = 0.5 * edgeLengthsAverage / std::sin(M_PI / edgeLengths.size());
+    
+    guess = 1 / (regularCircumradius * regularCircumradius);
+
+    const double rhoStddev = 2 * edgeLengthsStddev / (
+      std::pow(regularCircumradius, 3) * std::sin(M_PI / edgeLengths.size())
+    );
+
+    lower = guess - rhoStddev;
+    upper = guess + rhoStddev;
+  }
+};
+
 double maximumPentagonCircumradius(const std::vector<double>& edgeLengths) {
   assert(edgeLengths.size() == 5);
+
+  assert(
+    cyclicPolygonConstructible(edgeLengths) 
+    && "No pentagon constructible with given edge lengths! You should've "
+      "checked for this edge case before calling maximumPentagonCircumradius!"
+  );
 
   const auto squaredEdgeLengths = TemplateMagic::map(
     edgeLengths,
@@ -263,6 +322,200 @@ double maximumPentagonCircumradius(const std::vector<double>& edgeLengths) {
       );
     }
   );
+
+  auto unaryPolynomial = [&](const double& rho) -> double {
+    return svrtan::pentagon(rho, epsilon);
+  };
+
+  const double rhoGuess = 1 / math::square(
+    0.5 * TemplateMagic::numeric::average(edgeLengths) / std::sin(M_PI / 5)
+  );
+  const double trialFactor = 1.5;
+
+  const double lowerValue = unaryPolynomial(rhoGuess / trialFactor);
+  const double upperValue = unaryPolynomial(rhoGuess * trialFactor);
+  bool increasing = lowerValue < upperValue;
+
+  const unsigned maxIter = 1000;
+  boost::uintmax_t iterCount = maxIter; // maxIter
+  auto returnBounds = boost::math::tools::bracket_and_solve_root(
+    unaryPolynomial,
+    rhoGuess,
+    trialFactor,
+    increasing,
+    boost::math::tools::eps_tolerance<double>(32),
+    iterCount
+  );
+
+  if(iterCount == static_cast<boost::uintmax_t>(maxIter)) {
+    throw std::logic_error("Failed to find minimum in limited iteration number");
+  }
+
+  const double rhoRoot = (returnBounds.first + returnBounds.second) / 2;
+
+  return std::sqrt(1 / rhoRoot);
+}
+
+double maximumQuadrilateralCircumradius(const std::vector<double> edgeLengths) {
+  assert(edgeLengths.size() == 5);
+
+  assert(
+    cyclicPolygonConstructible(edgeLengths) 
+    && "No quadrilateral constructible with given edge lengths! You should've "
+      "checked for this edge case before calling maximumQuadrilateralCircumradius!"
+  );
+
+  double s = TemplateMagic::numeric::sum(edgeLengths) / 2;
+  /* (
+   *   (a * c + b * d)
+   *   * (a * d + b * c)
+   *   * (a * b + c * d)
+   * ) / (
+   *   (s - a)
+   *   * (s - b)
+   *   * (s - c)
+   *   * (s - d)
+   * )
+   */
+  return std::sqrt(
+    (
+      (edgeLengths[0] * edgeLengths[2] + edgeLengths[1] * edgeLengths[3])
+      * (edgeLengths[0] * edgeLengths[3] + edgeLengths[1] * edgeLengths[2])
+      * (edgeLengths[0] * edgeLengths[1] + edgeLengths[2] * edgeLengths[3])
+    ) / TemplateMagic::reduce(
+      TemplateMagic::map(
+        edgeLengths,
+        [&](const double& edgeLength) -> double {
+          return s - edgeLength;
+        }
+      ),
+      1.0,
+      std::multiplies<double>()
+    )
+  );
+}
+
+double inverseLawOfCosines(
+  const double& opposingSideLength,
+  const double& adjacentSideLengthA,
+  const double& adjacentSideLengthB
+) {
+  return std::acos(
+    (
+      adjacentSideLengthA * adjacentSideLengthA
+      + adjacentSideLengthB * adjacentSideLengthB
+      - opposingSideLength * opposingSideLength
+    ) / (
+      2 * adjacentSideLengthA * adjacentSideLengthB
+    )
+  );
+}
+
+std::vector<double> internalAnglesTriangle(const std::vector<double>& edgeLengths) {
+  return {
+    inverseLawOfCosines(edgeLengths[2], edgeLengths[0], edgeLengths[1]),
+    inverseLawOfCosines(edgeLengths[0], edgeLengths[1], edgeLengths[2]),
+    inverseLawOfCosines(edgeLengths[1], edgeLengths[0], edgeLengths[2])
+  };
+}
+
+/* For a cyclic quadrilateral, the internal angle between adjacent edges a and b
+ * is given as
+ *
+ *               a² + b² - c² - d²
+ *    cos(phi) = -----------------
+ *                 2 (ab + cd)
+ *
+ * This general structure from adjacent and non-adjacent edge lengths is
+ * calculated below.
+ */
+double quadrilateralInternalAngle(
+  const std::pair<double, double>& adjacentEdgeLengths,
+  const std::pair<double, double>& nonAdjacentEdgeLengths
+) {
+  return std::acos(
+    (
+      math::square(adjacentEdgeLengths.first)
+      + math::square(adjacentEdgeLengths.second)
+      - math::square(nonAdjacentEdgeLengths.first)
+      - math::square(nonAdjacentEdgeLengths.second)
+    ) / (
+      2 * (
+        adjacentEdgeLengths.first * adjacentEdgeLengths.second 
+        + nonAdjacentEdgeLengths.first * nonAdjacentEdgeLengths.second 
+      )
+    )
+  );
+}
+
+std::vector<double> internalAnglesQuadrilateral(const std::vector<double>& edgeLengths) {
+  return {
+    quadrilateralInternalAngle(
+      {edgeLengths[0], edgeLengths[1]},
+      {edgeLengths[2], edgeLengths[3]}
+    ),
+    quadrilateralInternalAngle(
+      {edgeLengths[1], edgeLengths[2]},
+      {edgeLengths[3], edgeLengths[0]}
+    ),
+    quadrilateralInternalAngle(
+      {edgeLengths[2], edgeLengths[3]},
+      {edgeLengths[0], edgeLengths[1]}
+    ),
+    quadrilateralInternalAngle(
+      {edgeLengths[3], edgeLengths[0]},
+      {edgeLengths[1], edgeLengths[2]}
+    )
+  };
+}
+
+/* In a cyclic pentagon, if the circumradius is known, then isosceles triangles
+ * can be spanned from every edge to the center of the circle and the base
+ * angles calculated via inverting the law of cosines. The angle between two
+ * edges of the pentagon is then merely the sum of the neighboring internal
+ * triangle angles.
+ */
+std::vector<double> internalAnglesPentagon(const std::vector<double>& edgeLengths) {
+  // Immediately multiply with 2 to avoid doing so in every calculation
+  const double doubleR = 2 * maximumPentagonCircumradius(edgeLengths);
+
+  /* Add the first edge length onto the list so we can use pairwiseMap to get
+   * all subsequent pairs
+   */
+  auto lengthsCopy = edgeLengths;
+  lengthsCopy.emplace_back(lengthsCopy.front());
+
+  return TemplateMagic::pairwiseMap(
+    lengthsCopy,
+    [&doubleR](const double& a, const double& b) -> double {
+      return (
+        std::acos(
+          a / doubleR
+        ) + std::acos(
+          b / doubleR
+        )
+      );
+    }
+  );
+}
+
+/*! Returns internal angles in the following sequence
+ * edge lengths: a1, a2, ..., aN
+ * angles: a1 ∡ a2, a2 ∡ a3, ..., a(N-1) ∡ aN, aN ∡ a1
+ */
+std::vector<double> internalAngles(const std::vector<double> edgeLengths) {
+  assert(cyclicPolygonConstructible(edgeLengths));
+  assert(3 <= edgeLengths.size() && edgeLengths.size() <= 5);
+
+  if(edgeLengths.size() == 3) {
+    return internalAnglesTriangle(edgeLengths);
+  } 
+  
+  if(edgeLengths.size() == 4) {
+    return internalAnglesQuadrilateral(edgeLengths);
+  } 
+
+  return internalAnglesPentagon(edgeLengths);
 }
 
 } // namespace CyclicPolygons

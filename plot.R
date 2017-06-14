@@ -25,4 +25,6 @@ lines(x_seq, y_vals)
 abline(v=rho_roots, lty=2)
 abline(h=0)
 
+abline(v=c(0.00117, 0.00170), lty=3, col="blue")
+
 dev.off()
