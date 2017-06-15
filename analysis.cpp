@@ -61,16 +61,16 @@ int main() {
   std::ofstream varianceFile("edge-lengths-variance-success.csv");
 
   const double mean = (upperLimit - lowerLimit) / 2;
-  const double lowerVariance = 0.01 * mean;
-  const double upperVariance = 4 * mean;
-  const unsigned nVarianceSteps = 80;
+  const double lowerStddev = 0.01 * mean;
+  const double upperStddev = 4 * mean;
+  const unsigned nStddevSteps = 80;
   const unsigned nSamples = 1000;
 
-  const double stepLength = (upperVariance - lowerVariance) / nVarianceSteps;
-  for(unsigned stepNumber = 0; stepNumber <= nVarianceSteps; stepNumber++) {
-    double currentVariance = lowerVariance + stepNumber * stepLength;
+  const double stepLength = (upperStddev - lowerStddev) / nStddevSteps;
+  for(unsigned stepNumber = 0; stepNumber <= nStddevSteps; stepNumber++) {
+    double currentStddev = lowerStddev + stepNumber * stepLength;
 
-    std::normal_distribution<double> normalDistribution(mean, currentVariance);
+    std::normal_distribution<double> normalDistribution(mean, currentStddev);
 
     auto sampleTruncatedNormal = [&]() -> double {
       double sample;
@@ -103,25 +103,13 @@ int main() {
       if(circumradiusOption) {
         successes += 1;
       }
-
-      if(!circumradiusOption) {
-        auto reversedCircumradiusOption = CyclicPolygons::Pentagon::maximumCircumradius(
-          TemplateMagic::reverse(
-            edgeLengths
-          )
-        );
-
-        if(reversedCircumradiusOption) {
-          std::cout << "Case for which the reverse edge length sequence yields a result: "
-            << TemplateMagic::condenseIterable(edgeLengths) << std::endl;
-        }
-      }
     }
 
+    const double stddevFraction = currentStddev / mean;
     const double percentageCorrect = 100 * static_cast<double>(successes) / nSamples;
 
     // Write to file
-    varianceFile << currentVariance << ", " << percentageCorrect << std::endl;
+    varianceFile << stddevFraction << ", " << percentageCorrect << std::endl;
   }
 
   varianceFile.close();

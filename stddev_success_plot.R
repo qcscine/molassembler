@@ -6,13 +6,15 @@ success <- as.numeric(values[,2])
 pdf("variance-success.pdf", width=7, height=7)
 par(mar=c(4, 4.5, 1, 1))
 
+xLabelString <- "of sampled trunc. norm. distr."
+
 plot(
   variance,
   success,
   type="n",
   ylim=c(0, 100),
-  xlab="Variance of sampled trunc. norm. distr.",
-  ylab="Root search success in %"
+  xlab=bquote(sigma / mu ~ .(xLabelString)),
+  ylab="Root search success rate in %"
 )
 
 lines(
