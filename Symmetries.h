@@ -33,6 +33,8 @@
  *   completely arbitrary!
  * - Consider making constexpr calculation of all angles from coordinates into
  *   const lookup table
+ * - C++17 improvements:
+ *   - Make angle calculation constexpr so that smallestAngle is also constexpr
  */
 
 namespace Symmetry {
@@ -119,6 +121,9 @@ enum class Name {
 // DATA
 extern const std::vector<Name> allNames;
 extern const std::map<Name, SymmetryInformation> symmetryData;
+
+// derived data
+extern const double smallestAngle;
 
 // Shortcut functions
 inline const std::string& name(const Name& name) {

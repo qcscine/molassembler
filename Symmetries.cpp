@@ -1042,4 +1042,24 @@ const std::map<Name, SymmetryInformation> symmetryData {
   }
 };
 
+const double smallestAngle = TemplateMagic::numeric::min(
+  TemplateMagic::map(
+    allNames,
+    [](const Name& symmetryName) -> double {
+      double smallestAngle = angleFunction(symmetryName)(0, 1);
+
+      for(unsigned i = 0; i < size(symmetryName); i++) {
+        for(unsigned j = i + 1; j < size(symmetryName); j++) {
+          double angle = angleFunction(symmetryName)(i, j);
+          if(angle < smallestAngle) {
+            smallestAngle = angle;
+          }
+        }
+      }
+
+      return smallestAngle;
+    }
+  )
+);
+
 } // namespace Symmetry

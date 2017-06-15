@@ -319,3 +319,7 @@ BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(smallestAngleValue) {
+  BOOST_CHECK(0 < smallestAngle && smallestAngle < M_PI);
+}
