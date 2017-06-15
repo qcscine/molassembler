@@ -12,6 +12,9 @@ set(WARNING_FLAGS "-Wall -Wpedantic -Wextra")
 project(ConstexprMagic)
 enable_testing()
 
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
+
 # dependencies
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 find_package(Eigen3 3.1.1 REQUIRED)

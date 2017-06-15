@@ -2,8 +2,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "RNG/RNG.h"
-#include "template_magic/templateMagic.h"
+#include "template_magic/TemplateMagic.h"
+#include "template_magic/Random.h"
 
 #include "Math.h"
 
@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   );
 
   // sqrt
-  const auto randomPositiveNumbers = RNG::rng.getN<double>(0, 1e6, numTests);
+  const auto randomPositiveNumbers = TemplateMagic::random.getN<double>(0, 1e6, numTests);
   auto sqrt_passes = TemplateMagic::map(
     randomPositiveNumbers,
     [](const double& randomPositiveNumber) -> bool {
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   }
 
   // asin
-  const auto randomInverseTrigNumbers = RNG::rng.getN<double>(
+  const auto randomInverseTrigNumbers = TemplateMagic::random.getN<double>(
     -1 + std::numeric_limits<double>::epsilon(),
     1 - std::numeric_limits<double>::epsilon(),
     numTests
@@ -98,8 +98,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   }
 
   // pow
-  const auto randomNumbers = RNG::rng.getN<double>(-1e5, 1e5, numTests);
-  const auto randomExponents = RNG::rng.getN<int>(-40, 40, numTests);
+  const auto randomNumbers = TemplateMagic::random.getN<double>(-1e5, 1e5, numTests);
+  const auto randomExponents = TemplateMagic::random.getN<int>(-40, 40, numTests);
 
   std::vector<bool> pow_passes;
   for(unsigned i = 0; i < numTests; i++) {

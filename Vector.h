@@ -100,10 +100,6 @@ constexpr double angle(const Vector& a, const Vector& b) {
   );
 }
 
-constexpr double toDegrees(const double& radians) {
-  return 180 * radians / M_PI;
-}
-
 } // namespace ConstexprMagic
 
 #endif

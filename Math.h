@@ -19,21 +19,22 @@ namespace ConstexprMagic {
 
 namespace Math {
 
-// Not a whole lot you can do wrong here
+/* Some very basic math functions */
 template<typename T>
-inline constexpr T abs(const T& x) {
+inline constexpr T abs(const T& x) noexcept {
   return (x >= 0) ? x : -x;
 }
+
 
 namespace detail {
 
 template<typename T>
-constexpr bool max(const T& a, const T& b) {
+constexpr bool max(const T& a, const T& b) noexcept {
   return (a > b) ? a : b;
 }
 
 template<typename T>
-constexpr bool min(const T& a, const T& b) {
+constexpr bool min(const T& a, const T& b) noexcept {
   return (a < b) ? a : b;
 }
 
@@ -49,7 +50,7 @@ constexpr
 std::enable_if_t<
   std::is_floating_point<T>::value && std::is_floating_point<U>::value,
   bool
-> isClose(T a, U b) {
+> isClose(T a, U b) noexcept {
   return (
     abs(abs(a) - abs(b)) <= (
       std::numeric_limits<lesserOfType<T, U>>::epsilon() 
@@ -63,7 +64,7 @@ constexpr
 std::enable_if_t<
   !std::is_floating_point<T>::value || !std::is_floating_point<U>::value,
   bool
-> isClose(T a, U b) {
+> isClose(T a, U b) noexcept {
   return a == b;
 }
 
@@ -72,7 +73,7 @@ constexpr
 std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
-> isApprox(const T& a, const T& b, const T& epsilon) {
+> isApprox(const T& a, const T& b, const T& epsilon) noexcept {
   if(a == b) return true;
 
   auto absDiff = ConstexprMagic::Math::abs(
@@ -92,8 +93,17 @@ std::enable_if_t<
 
 } // namespace detail
 
+
+constexpr double toRadians(const double& inDegrees) noexcept {
+  return M_PI * inDegrees / 180;
+}
+
+constexpr double toDegrees(const double& inRadians) noexcept {
+  return 180 * inRadians / M_PI;
+}
+
 // Really weak first implementation
-constexpr double pow(const double& base, const unsigned& exponent) {
+constexpr double pow(const double& base, const unsigned& exponent) noexcept {
   double value = base;
 
   for(unsigned n = 1; n < exponent; n++) {
@@ -106,17 +116,21 @@ constexpr double pow(const double& base, const unsigned& exponent) {
 /* Integer version just calls the unsigned power function
  * TODO lots can go wrong here!
  */
-constexpr double pow(const double& base, const int& exponent) {
+constexpr double pow(const double& base, const int& exponent) noexcept {
   if(exponent < 0) {
     return 1 / pow(base, static_cast<unsigned>(ConstexprMagic::Math::abs(exponent)));
-  }
+  } 
 
-  else return pow(base, static_cast<unsigned>(exponent));
+  if(exponent == 0) {
+    return 1;
+  }
+  
+  return pow(base, static_cast<unsigned>(exponent));
 }
 
 
 template<typename T>
-inline constexpr auto floor(const T& x) -> decltype(std::floor(x)) {
+inline constexpr auto floor(const T& x) noexcept -> decltype(std::floor(x)) {
   return (
     (int(x) == x) ? int(x) : (
       (x >= 0.0) ? int(x) : int(x) - 1
@@ -127,7 +141,7 @@ inline constexpr auto floor(const T& x) -> decltype(std::floor(x)) {
 /* Implements Newton's iteration to compute the square root of a positive number
  */
 template<typename T>
-constexpr T sqrt(const T& x) {
+constexpr T sqrt(const T& x) noexcept {
   if(x < 0) {
     throw "Square-root domain error: Only real if x >= 0!";
   }
@@ -152,7 +166,7 @@ constexpr T sqrt(const T& x) {
  * 1964, from http://people.math.sfu.ca/~cbm/aands/abramowitz_and_stegun.pdf
  */
 template<typename T>
-constexpr T asinApprox(const T& x) {
+constexpr T asinApprox(const T& x) noexcept {
   if(!(0 < x && x < 1)) {
     throw "Asin approximation domain error: only applicable for 0 < x < 1!";
   }
@@ -181,7 +195,7 @@ constexpr T asinApprox(const T& x) {
  * form there?
  */
 template<typename T>
-constexpr T asin(const T& x) {
+constexpr T asin(const T& x) noexcept {
   if(!(-1 < x && x < 1)) {
     throw "Inverse sine domain error: only real if -1 < x < 1!";
   }
@@ -217,7 +231,7 @@ constexpr T asin(const T& x) {
 
 
 template<typename T>
-constexpr T acos(const T& x) {
+constexpr T acos(const T& x) noexcept {
   if(!(-1 < x && x < 1)) {
     throw "Inverse cosine domain error: only real if -1 < x < 1!";
   }
