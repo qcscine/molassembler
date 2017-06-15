@@ -7,6 +7,8 @@
 #include <set>
 #include <vector>
 #include <map>
+#include <cmath>
+
 #include "boost/optional.hpp"
 
 namespace TemplateMagic {
@@ -22,6 +24,20 @@ namespace detail {
   constexpr unsigned TMPSum(T1 a, T ... pack) {
     return a + TMPSum(pack ...);
   }
+
+  template<class ContainerType> 
+  struct getValueTypeImpl {
+    using type = typename std::remove_reference<
+      decltype(
+        *(
+          std::declval<ContainerType>()
+        ).begin()
+      )
+    >::type;
+  };
+
+  template<class ContainerType>
+  using getValueType = typename getValueTypeImpl<ContainerType>::type;
 
 }
 
@@ -144,6 +160,31 @@ auto map(
   return returnContainer;
 }
 
+/*!
+ * Composable reduce function. Requires that container implements begin and end
+ * iterators pointing to Ts. BinaryFunction must take two Ts and return a T.
+ *
+ * TODO C++17: add more requirements -> function invokable with two Ts, returns T
+ */
+template<typename Container, typename T, class BinaryFunction>
+std::enable_if_t<
+  std::is_same<
+    detail::getValueType<Container>,
+    T
+  >::value,
+  T
+> reduce(
+  const Container& container,
+  T init,
+  BinaryFunction&& binaryFunction
+) {
+  for(const auto& value: container) {
+    init = binaryFunction(init, value);
+  }
+
+  return init;
+}
+
 /*! Inverts the map. Returns a map that maps the opposite way. Be warned that 
  * this will lead to loss of information if the original map has duplicate
  * values.
@@ -239,6 +280,7 @@ auto zipMap(
 
   return data;
 }
+
 
 /*! Alternate implementation of zip mapping where the contained types are 
  * deduced instead of assuming the STL container form.
@@ -485,55 +527,41 @@ template<
   return count;
 }
 
-/* Pair helper functions -----------------------------------------------------*/
-template<typename T, class UnaryFunction>
-auto pair_map(
-  const std::pair<T, T>& pair,
-  UnaryFunction&& function
-) __attribute__ ((deprecated));
-
-//!  Identical pair map
-template<typename T, class UnaryFunction>
-auto pair_map(
-  const std::pair<T, T>& pair,
-  UnaryFunction&& function
+//!  Cast the entire data of a container 
+template<
+  typename U,
+  typename T,
+  template<typename, typename> class Container
+>
+Container<U, std::allocator<U>> cast(
+  const Container<T, std::allocator<T>>& container
 ) {
-  using FunctionReturnType = decltype(UnaryFunction(std::declval<T>()));
-  return std::pair<FunctionReturnType, FunctionReturnType>({
-    function(pair.first),
-    function(pair.second)
-  });
-}
+  Container<U, std::allocator<U>> casted;
 
-template<typename T, class UnaryPredicate>
-T& which(
-  const std::pair<T, T>& pair,
-  UnaryPredicate&& function
-) __attribute__ ((deprecated));
-
-//! Identical pair which selector
-template<typename T, class UnaryPredicate>
-T& which(
-  const std::pair<T, T>& pair,
-  UnaryPredicate&& function
-) {
-  auto boolPair = pair_map(
-    pair,
-    std::forward<UnaryPredicate>(function)
-  );
-  if(boolPair.first && boolPair.second) {
-    throw(
-      std::logic_error("Both elements of the pair fulfill the predicate!")
-    );
-  } else if(function(pair.first)) {
-    return pair.first;
-  } else if(function(pair.second)) {
-    return pair.second;
-  } else {
-    throw(
-      std::logic_error("Neither element of the pair fulfills the predicate!")
+  for(const T& value : container) {
+    casted.emplace_back(
+      static_cast<U>(value)
     );
   }
+
+  return casted;
+}
+
+/*! 
+ * Reverses a container. Requires only that the container implements begin and
+ * end forward iterators and a copy constructor. More efficient variants are of
+ * course possible, but would require reverse iterators.
+ */
+template<typename Container>
+Container reverse(const Container& container) {
+  Container copy = container;
+
+  std::reverse(
+    copy.begin(),
+    copy.end()
+  );
+
+  return copy;
 }
 
 /*! Condenses an iterable container into a comma-separated string of string 
@@ -571,13 +599,7 @@ namespace numeric {
  * Container must implement begin and end members.
  */
 template<class ContainerType>
-typename std::remove_reference<
-  decltype(
-    *(
-      std::declval<ContainerType>()
-    ).begin()
-  )
->::type
+detail::getValueType<ContainerType>
 sum(const ContainerType& container) {
   using ValueType = typename std::remove_reference<decltype(*container.begin())>::type;
 
@@ -587,6 +609,34 @@ sum(const ContainerType& container) {
     ValueType {0},
     std::plus<ValueType>()
   );
+}
+
+/*! 
+ * Composable Kahan summation function. Returns the type the container
+ * contains, assuming monadic behavior on operator + (value_type + value_type =
+ * value_type).  Container must implement begin and end members.
+ */
+template<class ContainerType>
+std::enable_if_t<
+  std::is_floating_point<
+    detail::getValueType<ContainerType>
+  >::value,
+  detail::getValueType<ContainerType>
+> kahanSum(const ContainerType& container) {
+  using ValueType = detail::getValueType<ContainerType>;
+
+  ValueType counter {0};
+  ValueType error {0};
+
+  for(const auto& value: container) {
+    ValueType y = value - error;
+    ValueType kt = counter + y;
+
+    error = (kt - counter) - y;
+    counter = kt;
+  }
+
+  return counter;
 }
 
 /*!
@@ -599,11 +649,110 @@ sum(const ContainerType& container) {
  */
 template<class ContainerType>
 double average(const ContainerType& container) {
-  assert(container.begin() != container.end());
+  assert(&(*container.begin()) != &(*container.end()));
 
   return static_cast<double>(
     sum(container)
   ) / container.size();
+}
+
+template<class ContainerType>
+double geometricMean(const ContainerType& container) {
+  assert(&(*container.begin()) != &(*container.end()));
+
+  using ValueType = detail::getValueType<ContainerType>;
+
+  return std::pow(
+    reduce(
+      container,
+      ValueType {1.0},
+      std::multiplies<ValueType>()
+    ),
+    1.0 / container.size()
+  );
+}
+
+/*!
+ * Container must implement begin, end and size members, the contained type
+ * must have operator+ and be convertible to double.
+ */
+template<class ContainerType>
+double stddev(const ContainerType& container) {
+  using ValueType = detail::getValueType<ContainerType>;
+  assert(&(*container.begin()) != &(*container.end()));
+
+  const auto averageValue = average(container);
+
+  return std::sqrt(
+    sum(
+      map(
+        container,
+        [&averageValue](const ValueType& value) -> ValueType {
+          double diff = averageValue - value;
+          return diff * diff;
+        }
+      )
+    ) / container.size()
+  );
+}
+
+//! Variant with known average value
+template<class ContainerType>
+double stddev(
+  const ContainerType& container,
+  const double& averageValue
+) {
+  using ValueType = detail::getValueType<ContainerType>;
+  assert(&(*container.begin()) != &(*container.end()));
+
+  return std::sqrt(
+    sum(
+      map(
+        container,
+        [&averageValue](const ValueType& value) -> ValueType {
+          double diff = averageValue - value;
+          return diff * diff;
+        }
+      )
+    ) / container.size()
+  );
+}
+
+/*!
+ * Composable min function. Returns the smallest member of any container.
+ *
+ * Container must implement begin, end members. The contained type must
+ * implement operator <.
+ */
+template<class ContainerType>
+auto min(const ContainerType& container) {
+  auto smallestIter = container.begin();
+  for(auto it = container.begin(); it != container.end(); ++it) {
+    if(*it < *smallestIter) {
+      smallestIter = it;
+    }
+  }
+
+  return *smallestIter;
+}
+
+/*!
+ * Composable max function. Returns the smallest member of any container.
+ *
+ * Container must implement begin, end members. The contained type must
+ * implement operator <.
+ */
+template<class ContainerType>
+auto max(const ContainerType& container) {
+  auto largestIter = container.begin();
+
+  for(auto it = container.begin(); it != container.end(); ++it) {
+    if(*largestIter < *it) {
+      largestIter = it;
+    }
+  }
+
+  return *largestIter;
 }
 
 } // namespace numeric

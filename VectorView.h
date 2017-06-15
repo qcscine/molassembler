@@ -6,13 +6,15 @@
 #include <algorithm>
 #include <numeric>
 
+#include "TemplateMagic.h"
+
 namespace TemplateMagic {
 
 template<typename ValueType>
 class VectorView {
 
 private:
-  std::vector<ValueType>& _baseVectorRef;
+  const std::vector<ValueType>& _baseVectorRef;
   std::function<bool(const ValueType&, const ValueType&)> _sortingLambda;
   std::vector<
     std::function<bool(const ValueType&)>
@@ -71,14 +73,14 @@ public:
 
   private:
     unsigned _idx;
-    std::vector<ValueType>& _vector;
-    std::vector<unsigned>& _sorting;
+    const std::vector<ValueType>& _vector;
+    const std::vector<unsigned>& _sorting;
 
   public:
     explicit iterator(
       unsigned idx,
-      std::vector<ValueType>& vector,
-      std::vector<unsigned>& sorting
+      const std::vector<ValueType>& vector,
+      const std::vector<unsigned>& sorting
     ) : 
       _idx(idx),
       _vector(vector),
@@ -91,13 +93,13 @@ public:
     bool operator != (iterator other) const { return _idx != other._idx; }
 
     typename BaseIteratorType::reference operator * () const { 
-      return _vector[_sorting[_idx]]; 
+      return _vector.at(_sorting.at(_idx)); 
     }
   };
 
-  VectorView(std::vector<ValueType>& data) : _baseVectorRef(data) {}
+  VectorView(const std::vector<ValueType>& data) : _baseVectorRef(data) {}
 
-  VectorView sort(
+  VectorView& sort(
     std::function<bool(const ValueType&, const ValueType&)> sortLambda
   ) {
     _sortingLambda = sortLambda;
@@ -105,9 +107,17 @@ public:
     return *this;
   }
 
-  VectorView filter(std::function<bool(const ValueType&)> filterLambda) {
+  VectorView& filter(std::function<bool(const ValueType&)> filterLambda) {
     _filters.push_back(filterLambda);
     _recalculateSequence();
+    return *this;
+  }
+
+  VectorView& subset(const std::vector<unsigned>& indices) {
+    // Ensure the passed vector contains no out-of-bounds indices
+    assert(TemplateMagic::numeric::max(indices) < _baseVectorRef.size());
+
+    _indexSequence = indices;
     return *this;
   }
 
@@ -132,46 +142,55 @@ public:
     return _indexSequence.size();
   }
 
-  iterator<const ValueType*> begin() { 
+  iterator<const ValueType*> begin() const { 
     return iterator<const ValueType*>(0, _baseVectorRef, _indexSequence); 
   }
 
-  iterator<const ValueType*> end() { 
+  iterator<const ValueType*> end() const { 
     return iterator<const ValueType*>(size(), _baseVectorRef, _indexSequence); 
   }
 
 };
 
-template<typename Container>
-using getValueType = typename std::remove_reference<
-  decltype(
-    *(
-      std::declval<Container>()
-    ).begin()
-  )
->::type;
-
 template<typename Container, class FilterFunction>
 VectorView<
-  getValueType<Container>
+  detail::getValueType<Container>
 > filter(
   const Container& container,
   const FilterFunction&& filterFunction
 ) {
-  auto view = VectorView<getValueType<Container>> {container};
+  auto view = VectorView<
+    detail::getValueType<Container>
+  > {container};
   view.filter(filterFunction);
   return view;
 }
 
 template<typename Container, class SortFunction>
 VectorView<
-  getValueType<Container>
+  detail::getValueType<Container>
 > sort(
   const Container& container,
   const SortFunction&& filterFunction
 ) {
-  auto view = VectorView<getValueType<Container>> {container};
+  auto view = VectorView<
+    detail::getValueType<Container>
+  > {container};
   view.sort(filterFunction);
+  return view;
+}
+
+template<typename Container, typename IndexContainer>
+VectorView<
+  detail::getValueType<Container>
+> subset(
+  const Container& container,
+  const IndexContainer& indices
+) {
+  auto view = VectorView<
+    detail::getValueType<Container>
+  > {container};
+  view.subset(indices);
   return view;
 }
 

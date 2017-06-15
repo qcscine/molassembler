@@ -4,11 +4,13 @@
 
 #include "TemplateMagic.h"
 #include "Enumerate.h"
+#include "Random.h"
 
 // TEMPORARY
 #include <iostream>
 
 #include <vector>
+#include <cmath>
 
 double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
@@ -83,6 +85,81 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
         }
       )
     ) == 9.2
+  );
+}
+
+BOOST_AUTO_TEST_CASE( reduceTests) {
+  std::vector<unsigned> values {1, 2, 3, 4, 5};
+  BOOST_CHECK(
+    TemplateMagic::reduce(
+      values,
+      0u,
+      std::plus<unsigned>()
+    ) == 15u
+  );
+  BOOST_CHECK(
+    TemplateMagic::reduce(
+      values,
+      1u,
+      std::multiplies<unsigned>()
+    ) == 120u
+  );
+}
+
+BOOST_AUTO_TEST_CASE( minMaxTests ) {
+  const std::vector<unsigned> values {1, 4, 6, 8};
+  BOOST_CHECK(TemplateMagic::numeric::max(values) == 8u);
+  BOOST_CHECK(TemplateMagic::numeric::min(values) == 1u);
+}
+
+BOOST_AUTO_TEST_CASE(kahanSummation) {
+  for(unsigned nTest = 0; nTest < 100; nTest++) {
+    const unsigned N = 100;
+    const unsigned magnitudeSpread = 20;
+    const auto randomNumbers = TemplateMagic::random.getN<double>(
+      std::pow(10, - static_cast<double>(magnitudeSpread) / 2),
+      std::pow(10, static_cast<double>(magnitudeSpread) / 2),
+      N
+    );
+
+    const double reduceSum = TemplateMagic::reduce(
+      randomNumbers,
+      0.0,
+      std::plus<double>()
+    );
+
+    const double kahanSum = TemplateMagic::numeric::kahanSum(randomNumbers);
+
+    /* Reference sum with long doubles, I know an alternative implementation of
+     * standard reduce summation with long intermediates would have done the
+     * trick too but I'm lazy and this is just a test
+     */
+    const auto addedPrecision = TemplateMagic::cast<long double>(randomNumbers);
+    const double longSum = TemplateMagic::reduce(
+      addedPrecision,
+      0.0l,
+      std::plus<long double>()
+    );
+
+    // Kahan summation should be equally or more accurate than the standard reduction
+    BOOST_CHECK_MESSAGE(
+      std::fabs(longSum - reduceSum) >= std::fabs(longSum - kahanSum),
+      "Kahan summation is less accurate than standard reduce sum! "
+      << "long: " << longSum << ", kahan: " << kahanSum 
+      << ", reduce: " << reduceSum << ". Absolute deviation from long sum: "
+      << "kahan:" << std::fabs(longSum - kahanSum) << ", "
+      << "reduce: " << std::fabs(longSum - reduceSum)
+    );
+  }
+}
+
+BOOST_AUTO_TEST_CASE(numericAverageStdDev) {
+  const std::vector<double> values {29, 30, 31, 32, 33};
+
+  BOOST_CHECK(TemplateMagic::numeric::average(values) == 31); 
+  BOOST_CHECK(
+    std::fabs(TemplateMagic::numeric::stddev(values) - std::sqrt(2)) 
+    < 1e-10
   );
 }
 

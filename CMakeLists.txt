@@ -8,6 +8,9 @@ cmake_minimum_required(VERSION 3.5.1)
 # little variables
 set(WARNING_FLAGS "-Wall -Wpedantic -Wextra")
 
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
+
 # declaration
 project(TemplateMagic)
 enable_testing()
