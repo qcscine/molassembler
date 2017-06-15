@@ -8,6 +8,11 @@
 
 #include <vector>
 
+/* TODO
+ * - Optimize by making Pentagon::pentagon into a functor that precomputes as
+ *   much as possible and is only a function of rho after construction.
+ */
+
 namespace CyclicPolygons {
 
 namespace detail {
@@ -29,14 +34,16 @@ double recursiveLoopSummation(
 
 } // namespace detail
 
+
 namespace analysis {
 
 void writeAnalysisFiles(
-  const std::vector<double> edgeLengths,
+  const std::vector<double>& edgeLengths,
   const std::string& baseName
 );
 
 } // namespace analysis
+
 
 namespace math {
 
@@ -67,9 +74,16 @@ inline T square(const T& value) {
   return value * value;
 }
 
+double inverseLawOfCosines(
+  const double& opposingSideLength,
+  const double& adjacentSideLengthA,
+  const double& adjacentSideLengthB
+);
+
 } // namespace math
 
-namespace svrtan {
+
+namespace Pentagon {
 
 double lambda(
   const unsigned& k,
@@ -140,43 +154,12 @@ inline double Delta5(const std::vector<double>& lambdas) {
   );
 }
 
-double pentagon(
+double svrtanPolynomial(
   const double& rho,
   const std::vector<double>& epsilon
 );
 
-} // namespace svrtan
-
-bool cyclicPolygonConstructible(const std::vector<double>& edgeLengths);
-
-boost::optional<double> maximumPentagonCircumradius(const std::vector<double>& edgeLengths);
-
-double maximumQuadrilateralCircumradius(const std::vector<double> edgeLengths);
-
-double inverseLawOfCosines(
-  const double& opposingSideLength,
-  const double& adjacentSideLengthA,
-  const double& adjacentSideLengthB
-);
-
-std::vector<double> internalAnglesTriangle(const std::vector<double>& edgeLengths);
-
-/* For a cyclic quadrilateral, the internal angle between adjacent edges a and b
- * is given as
- *
- *               a² + b² - c² - d²
- *    cos(phi) = -----------------
- *                 2 (ab + cd)
- *
- * This general structure from adjacent and non-adjacent edge lengths is
- * calculated below.
- */
-double quadrilateralInternalAngle(
-  const std::pair<double, double>& adjacentEdgeLengths,
-  const std::pair<double, double>& nonAdjacentEdgeLengths
-);
-
-std::vector<double> internalAnglesQuadrilateral(const std::vector<double>& edgeLengths);
+boost::optional<double> maximumCircumradius(const std::vector<double>& edgeLengths);
 
 /* In a cyclic pentagon, if the circumradius is known, then isosceles triangles
  * can be spanned from every edge to the center of the circle and the base
@@ -184,7 +167,7 @@ std::vector<double> internalAnglesQuadrilateral(const std::vector<double>& edgeL
  * edges of the pentagon is then merely the sum of the neighboring internal
  * triangle angles.
  */
-std::vector<double> internalAnglesPentagon(
+std::vector<double> internalAngles(
   const std::vector<double>& edgeLengths,
   const double& circumradius
 );
@@ -198,12 +181,49 @@ bool validateRhoGuess(
   const double& rhoGuess
 );
 
+} // namespace Pentagon
+
+
+namespace Quadrilateral {
+
+double maximumCircumradius(const std::vector<double> edgeLengths);
+
+/* For a cyclic quadrilateral, the internal angle between adjacent edges a and b
+ * is given as
+ *
+ *               a² + b² - c² - d²
+ *    cos(phi) = -----------------
+ *                 2 (ab + cd)
+ *
+ * This general structure from adjacent and non-adjacent edge lengths is
+ * calculated below.
+ */
+double calculateInternalAngle(
+  const std::pair<double, double>& adjacentEdgeLengths,
+  const std::pair<double, double>& nonAdjacentEdgeLengths
+);
+
+std::vector<double> internalAngles(const std::vector<double>& edgeLengths);
+
+} // namespace Quadrilateral
+
+
+namespace Triangle {
+
+std::vector<double> internalAngles(const std::vector<double>& edgeLengths);
+
+} // namespace Triangle
+
+
+bool cyclicPolygonConstructible(const std::vector<double>& edgeLengths);
+
 /*! Returns internal angles in the following sequence
  * edge lengths: a1, a2, ..., aN
  * angles: a1 ∡ a2, a2 ∡ a3, ..., a(N-1) ∡ aN, aN ∡ a1
  */
-std::vector<double> internalAngles(const std::vector<double> edgeLengths);
+std::vector<double> internalAngles(const std::vector<double>& edgeLengths);
 
 } // namespace CyclicPolygons
+
 
 #endif

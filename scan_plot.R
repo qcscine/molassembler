@@ -9,11 +9,6 @@ transformY <- TRUE
 values <- read.csv(file=filename, header=FALSE)
 meta <- read.csv(file=paste(baseName, "-meta.csv", sep=""), header=FALSE)
 
-pdf(pdfFilename, width=14, height=7)
-par(
-  mar=c(4, 4.5, 4, 1),
-  mfrow=c(1, 2)
-)
 
 edge_lengths <- as.numeric(meta[1,])
 strategies <- as.numeric(meta[2,])[1:2]
@@ -24,6 +19,13 @@ validRoot <- as.numeric(meta[4,])[2]
 x_seq <- values$V1
 y_vals <- values$V2
 
+pdf(pdfFilename, width=14, height=7)
+par(mar=c(4, 4.5, 4, 1))
+
+if(validRoot) {
+  par(mfrow=c(1, 2))
+}
+
 #if(rhoRoot != 0 && rhoRoot < 0.1 * max(x_seq)) {
 #  which_indices <- which(x_seq <= 2 * rhoRoot)
 #  x_seq <- x_seq[which_indices]
@@ -32,7 +34,13 @@ y_vals <- values$V2
 
 if(transformY) { # transform to logarithmic values
   y_vals <- log(1 + abs(y_vals))
-  y_lims <- c(min(y_vals), max(y_vals))
+  y_lims <- c(
+    min(y_vals),
+    min(
+      max(y_vals),
+      7
+    )
+  )
 
   y_label <- expression(paste("log(1 + |", A[5]^2 - B[5]^2*Delta[5], "|)"))
 } else {
@@ -65,13 +73,16 @@ if(validRoot) {
   titleCol <- "olivedrab"
 }
 
+edgesString <- paste(
+  "{",
+  paste(round(edge_lengths, 2), collapse=", "), 
+  "}",
+  sep=""
+)
+
+roundedRhoRoot <- round(rhoRoot, 2)
 title(
-  paste(
-    paste(round(edge_lengths, 2), collapse=" - "), 
-    " -> ", 
-    rhoRoot, 
-    sep=""
-  ),
+  bquote(.(edgesString) %->% rho == .(roundedRhoRoot)),
   col.main=titleCol
 )
 
@@ -101,6 +112,12 @@ if(rhoRoot != 0) {
     ylab="",
     xlim=c(-circumradius, circumradius), 
     ylim=c(-circumradius, circumradius)
+  )
+
+  roundedCircumradius <- round(circumradius, 2)
+  title(
+    bquote(r == .(roundedCircumradius)),
+    col.main=titleCol
   )
 
   circlePoints <- 1000

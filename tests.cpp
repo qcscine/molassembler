@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
   const auto lambdas = TemplateMagic::map(
     CyclicPolygons::math::intSeq(0, 4),
     [&](const unsigned& k) -> double {
-      return CyclicPolygons::svrtan::lambda(
+      return CyclicPolygons::Pentagon::lambda(
         k,
         rho,
         epsilon
@@ -135,19 +135,19 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
 
   BOOST_CHECK(
     relativeEquals(1e-6)(
-      CyclicPolygons::svrtan::A5(lambdas),
+      CyclicPolygons::Pentagon::A5(lambdas),
       rA5
     )
   );
   BOOST_CHECK(
     relativeEquals(1e-6)(
-      CyclicPolygons::svrtan::B5(lambdas),
+      CyclicPolygons::Pentagon::B5(lambdas),
       rB5
     )
   );
   BOOST_CHECK(
     relativeEquals(1e-6)(
-      CyclicPolygons::svrtan::Delta5(lambdas),
+      CyclicPolygons::Pentagon::Delta5(lambdas),
       rDelta5
     )
   );
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
    * are used
    */
   const double upperLimit = 5.6; // Fr-Fr single
-  const double lowerLimit = 0.7; // H-H single
+  const double lowerLimit = 1.6; // H-H single
 
   const unsigned nTests = 100;
 
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
       );
     }
 
-    auto radiusOption = CyclicPolygons::maximumPentagonCircumradius(edgeLengths);
+    auto radiusOption = CyclicPolygons::Pentagon::maximumCircumradius(edgeLengths);
 
     // Finds a radius
     if(!radiusOption) {
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
     if(radiusOption) {
       // radius is correct
       const double rho = 1 / std::pow(radiusOption.value(), 2);
-      if(!CyclicPolygons::validateRhoGuess(edgeLengths, rho)) {
+      if(!CyclicPolygons::Pentagon::validateRhoGuess(edgeLengths, rho)) {
         nFailures += 1;
         CyclicPolygons::analysis::writeAnalysisFiles(
           edgeLengths,

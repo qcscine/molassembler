@@ -73,7 +73,7 @@ double recursiveLoopSummation(
 namespace analysis {
 
 void writeAnalysisFiles(
-  const std::vector<double> edgeLengths,
+  const std::vector<double>& edgeLengths,
   const std::string& baseName
 ) {
   using namespace std::string_literals;
@@ -94,7 +94,7 @@ void writeAnalysisFiles(
   );
 
   const auto unaryPolynomial = [&](const double& rho) -> double {
-    return CyclicPolygons::svrtan::pentagon(rho, epsilon);
+    return CyclicPolygons::Pentagon::svrtanPolynomial(rho, epsilon);
   };
 
   std::string scanFilename = baseName + ".csv"s;
@@ -136,7 +136,7 @@ void writeAnalysisFiles(
 
     if(iterCount < static_cast<boost::uintmax_t>(maxIter)) {
       const double rhoGuess = (returnBounds.first + returnBounds.second) / 2;
-      if(CyclicPolygons::validateRhoGuess(edgeLengths, rhoGuess)) {
+      if(CyclicPolygons::Pentagon::validateRhoGuess(edgeLengths, rhoGuess)) {
         // Success! 
         rhoRoot = rhoGuess;
       }
@@ -193,7 +193,7 @@ void writeAnalysisFiles(
 
       if(iterCount < static_cast<boost::uintmax_t>(maxIter)) {
         const double rhoGuess = (returnBounds.first + returnBounds.second) / 2;
-        if(CyclicPolygons::validateRhoGuess(edgeLengths, rhoGuess)) {
+        if(CyclicPolygons::Pentagon::validateRhoGuess(edgeLengths, rhoGuess)) {
           // Success! 
           rhoRoot = rhoGuess;
         }
@@ -300,9 +300,25 @@ std::vector<unsigned> intSeq(
   return sequence;
 }
 
+double inverseLawOfCosines(
+  const double& opposingSideLength,
+  const double& adjacentSideLengthA,
+  const double& adjacentSideLengthB
+) {
+  return std::acos(
+    (
+      adjacentSideLengthA * adjacentSideLengthA
+      + adjacentSideLengthB * adjacentSideLengthB
+      - opposingSideLength * opposingSideLength
+    ) / (
+      2 * adjacentSideLengthA * adjacentSideLengthB
+    )
+  );
+}
+
 } // namespace math
 
-namespace svrtan {
+namespace Pentagon {
 
 double lambda(
   const unsigned& k,
@@ -329,7 +345,7 @@ double lambda(
   );
 }
 
-double pentagon(
+double svrtanPolynomial(
   const double& rho,
   const std::vector<double>& epsilon
 ) {
@@ -354,38 +370,14 @@ double pentagon(
   );
 }
 
-} // namespace svrtan
 
-bool cyclicPolygonConstructible(const std::vector<double>& edgeLengths) {
-  /* If a1, a2, ..., aN satisfy: Each edge length smaller than sum of others
-   * -> There exists a convex cyclic polygon (Iosif Pinelis, 2005)
-   */
-
-  for(unsigned i = 0; i < edgeLengths.size(); i++) {
-    double otherLengthsSum = 0;
-
-    for(unsigned j = 0; j < i; j++) {
-      otherLengthsSum += edgeLengths[j];
-    }
-    for(unsigned j = i + 1; j < edgeLengths.size(); j++) {
-      otherLengthsSum += edgeLengths[j];
-    }
-
-    if(edgeLengths[i] >= otherLengthsSum) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-boost::optional<double> maximumPentagonCircumradius(const std::vector<double>& edgeLengths) {
+boost::optional<double> maximumCircumradius(const std::vector<double>& edgeLengths) {
   assert(edgeLengths.size() == 5);
 
   assert(
     cyclicPolygonConstructible(edgeLengths) 
     && "No pentagon constructible with given edge lengths! You should've "
-      "checked for this edge case before calling maximumPentagonCircumradius!"
+      "checked for this edge case before calling maximumCircumradius!"
   );
 
   const auto squaredEdgeLengths = TemplateMagic::map(
@@ -404,7 +396,7 @@ boost::optional<double> maximumPentagonCircumradius(const std::vector<double>& e
   );
 
   auto unaryPolynomial = [&](const double& rho) -> double {
-    return svrtan::pentagon(rho, epsilon);
+    return Pentagon::svrtanPolynomial(rho, epsilon);
   };
 
   const double average = TemplateMagic::numeric::average(edgeLengths);
@@ -514,7 +506,57 @@ boost::optional<double> maximumPentagonCircumradius(const std::vector<double>& e
   return boost::none;
 }
 
-double maximumQuadrilateralCircumradius(const std::vector<double> edgeLengths) {
+/* In a cyclic pentagon, if the circumradius is known, then isosceles triangles
+ * can be spanned from every edge to the center of the circle and the base
+ * angles calculated via inverting the law of cosines. The angle between two
+ * edges of the pentagon is then merely the sum of the neighboring internal
+ * triangle angles.
+ */
+std::vector<double> internalAngles(
+  const std::vector<double>& edgeLengths,
+  const double& circumradius
+) {
+  // Immediately multiply with 2 to avoid doing so in every calculation
+  const double doubleR = 2 * circumradius;
+
+  /* Add the first edge length onto the list so we can use pairwiseMap to get
+   * all subsequent pairs
+   */
+  auto lengthsCopy = edgeLengths;
+  lengthsCopy.emplace_back(lengthsCopy.front());
+
+  return TemplateMagic::pairwiseMap(
+    lengthsCopy,
+    [&doubleR](const double& a, const double& b) -> double {
+      return (
+        std::acos(
+          a / doubleR
+        ) + std::acos(
+          b / doubleR
+        )
+      );
+    }
+  );
+}
+
+bool validateRhoGuess(
+  const std::vector<double>& edgeLengths,
+  const double& rhoGuess
+) {
+  const double circumradius = std::sqrt(1 / rhoGuess);
+  auto internalAngles = Pentagon::internalAngles(edgeLengths, circumradius);
+  return (
+    TemplateMagic::numeric::sum(internalAngles) - 3 * M_PI
+    < 1e-6
+  );
+}
+
+
+} // namespace Pentagon
+
+namespace Quadrilateral {
+
+double maximumCircumradius(const std::vector<double>& edgeLengths) {
   assert(edgeLengths.size() == 5);
 
   assert(
@@ -553,30 +595,6 @@ double maximumQuadrilateralCircumradius(const std::vector<double> edgeLengths) {
   );
 }
 
-double inverseLawOfCosines(
-  const double& opposingSideLength,
-  const double& adjacentSideLengthA,
-  const double& adjacentSideLengthB
-) {
-  return std::acos(
-    (
-      adjacentSideLengthA * adjacentSideLengthA
-      + adjacentSideLengthB * adjacentSideLengthB
-      - opposingSideLength * opposingSideLength
-    ) / (
-      2 * adjacentSideLengthA * adjacentSideLengthB
-    )
-  );
-}
-
-std::vector<double> internalAnglesTriangle(const std::vector<double>& edgeLengths) {
-  return {
-    inverseLawOfCosines(edgeLengths[2], edgeLengths[0], edgeLengths[1]),
-    inverseLawOfCosines(edgeLengths[0], edgeLengths[1], edgeLengths[2]),
-    inverseLawOfCosines(edgeLengths[1], edgeLengths[0], edgeLengths[2])
-  };
-}
-
 /* For a cyclic quadrilateral, the internal angle between adjacent edges a and b
  * is given as
  *
@@ -606,7 +624,7 @@ double quadrilateralInternalAngle(
   );
 }
 
-std::vector<double> internalAnglesQuadrilateral(const std::vector<double>& edgeLengths) {
+std::vector<double> internalAngles(const std::vector<double>& edgeLengths) {
   return {
     quadrilateralInternalAngle(
       {edgeLengths[0], edgeLengths[1]},
@@ -627,48 +645,33 @@ std::vector<double> internalAnglesQuadrilateral(const std::vector<double>& edgeL
   };
 }
 
-/* In a cyclic pentagon, if the circumradius is known, then isosceles triangles
- * can be spanned from every edge to the center of the circle and the base
- * angles calculated via inverting the law of cosines. The angle between two
- * edges of the pentagon is then merely the sum of the neighboring internal
- * triangle angles.
- */
-std::vector<double> internalAnglesPentagon(
-  const std::vector<double>& edgeLengths,
-  const double& circumradius
-) {
-  // Immediately multiply with 2 to avoid doing so in every calculation
-  const double doubleR = 2 * circumradius;
+} // namespace Quadrilateral
 
-  /* Add the first edge length onto the list so we can use pairwiseMap to get
-   * all subsequent pairs
-   */
-  auto lengthsCopy = edgeLengths;
-  lengthsCopy.emplace_back(lengthsCopy.front());
+namespace Triangle {
 
-  return TemplateMagic::pairwiseMap(
-    lengthsCopy,
-    [&doubleR](const double& a, const double& b) -> double {
-      return (
-        std::acos(
-          a / doubleR
-        ) + std::acos(
-          b / doubleR
-        )
-      );
-    }
-  );
+std::vector<double> internalAngles(const std::vector<double>& edgeLengths) {
+  return {
+    math::inverseLawOfCosines(edgeLengths[2], edgeLengths[0], edgeLengths[1]),
+    math::inverseLawOfCosines(edgeLengths[0], edgeLengths[1], edgeLengths[2]),
+    math::inverseLawOfCosines(edgeLengths[1], edgeLengths[0], edgeLengths[2])
+  };
 }
 
-bool validateRhoGuess(
-  const std::vector<double>& edgeLengths,
-  const double& rhoGuess
-) {
-  const double circumradius = std::sqrt(1 / rhoGuess);
-  auto internalAngles = internalAnglesPentagon(edgeLengths, circumradius);
+} // namespace Triangle
+
+bool cyclicPolygonConstructible(const std::vector<double>& edgeLengths) {
+  /* If a1, a2, ..., aN satisfy: Each edge length smaller than sum of others
+   * -> There exists a convex cyclic polygon (Iosif Pinelis, 2005)
+   *
+   * Equivalent to saying largest value in set of edge lengths smaller than 
+   * remainder, no need to check all of them.
+   */
+
+  const double maxValue = TemplateMagic::numeric::max(edgeLengths);
+
   return (
-    TemplateMagic::numeric::sum(internalAngles) - 3 * M_PI
-    < 1e-6
+    maxValue <
+    TemplateMagic::numeric::sum(edgeLengths) - maxValue 
   );
 }
 
@@ -676,7 +679,7 @@ bool validateRhoGuess(
  * edge lengths: a1, a2, ..., aN
  * angles: a1 ∡ a2, a2 ∡ a3, ..., a(N-1) ∡ aN, aN ∡ a1
  */
-std::vector<double> internalAngles(const std::vector<double> edgeLengths) {
+std::vector<double> internalAngles(const std::vector<double>& edgeLengths) {
   assert(
     cyclicPolygonConstructible(edgeLengths)
     && "The passed sequence of lengths cannot be used to construct a polygon. "
@@ -701,22 +704,22 @@ std::vector<double> internalAngles(const std::vector<double> edgeLengths) {
   );
 
   if(edgeLengths.size() == 3) {
-    return internalAnglesTriangle(edgeLengths);
+    return Triangle::internalAngles(edgeLengths);
   } 
   
   if(edgeLengths.size() == 4) {
-    return internalAnglesQuadrilateral(edgeLengths);
+    return Quadrilateral::internalAngles(edgeLengths);
   } 
 
   // Remaining case is the pentagon
-  const auto circumradiusOption = maximumPentagonCircumradius(edgeLengths);
+  const auto circumradiusOption = Pentagon::maximumCircumradius(edgeLengths);
   if(!circumradiusOption) {
     throw std::logic_error(
       "Could not compute the maximum pentagon circumradius for given edge lengths!"
     );
   }
 
-  return internalAnglesPentagon(edgeLengths, circumradiusOption.value());
+  return Pentagon::internalAngles(edgeLengths, circumradiusOption.value());
 }
 
 } // namespace CyclicPolygons
