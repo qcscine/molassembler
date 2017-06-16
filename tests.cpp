@@ -213,8 +213,72 @@ BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
 
   BOOST_CHECK_MESSAGE(
     nFailures == 0,
-    "Out of " << nTests << " root-finding tests, " << nFailures << " failed."
+    "Out of " << nTests << " heuristic root-finding tests, " << nFailures << " failed."
   );
+}
+
+BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
+  const double upperLimit = 5.6; // Fr-Fr single
+  const double lowerLimit = 0.7; // H-H single
+
+  const double mean = (upperLimit - lowerLimit) / 2;
+  const double lowerStddev = 0.01 * mean;
+  const double upperStddev = 4 * mean;
+  const unsigned nStddevSteps = 40;
+  const unsigned nSamples = 1000;
+
+  const double stepLength = (upperStddev - lowerStddev) / nStddevSteps;
+  for(unsigned stepNumber = 0; stepNumber <= nStddevSteps; stepNumber++) {
+    double currentStddev = lowerStddev + stepNumber * stepLength;
+
+    std::normal_distribution<double> normalDistribution(mean, currentStddev);
+
+    auto sampleTruncatedNormal = [&]() -> double {
+      double sample;
+      while(true) {
+        sample = normalDistribution(
+          TemplateMagic::random.randomEngine
+        );
+        if(lowerLimit <= sample && sample <= upperLimit) {
+          return sample;
+        }
+      }
+    };
+
+    double successes = 0;
+    for(unsigned sampleNumber = 0; sampleNumber < nSamples; sampleNumber++) {
+      std::vector<double> edgeLengths;
+      while(edgeLengths.size() < 5) {
+        edgeLengths.emplace_back(sampleTruncatedNormal());
+      }
+
+      while(!CyclicPolygons::cyclicPolygonConstructible(edgeLengths)) {
+        edgeLengths.clear();
+        while(edgeLengths.size() < 5) {
+          edgeLengths.emplace_back(sampleTruncatedNormal());
+        }
+      }
+
+      double circumradius;
+      auto assignCircumradius = [&]() -> void {
+        circumradius = CyclicPolygons::Pentagon::circumradius(
+          edgeLengths
+        );
+      };
+
+      BOOST_CHECK_NO_THROW(assignCircumradius());
+    }
+
+    const double stddevFraction = currentStddev / mean;
+    const double percentageCorrect = 100 * static_cast<double>(successes) / nSamples;
+
+    BOOST_CHECK_MESSAGE(
+      successes == nSamples,
+      "At a μ/σ fraction of " << stddevFraction 
+        << ", central angle circumradius determination success rate was only "
+        << percentageCorrect
+    );
+  }
 }
 
 BOOST_AUTO_TEST_CASE(internalAnglesSumCorrectly) {

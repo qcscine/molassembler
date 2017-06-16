@@ -9,8 +9,9 @@
 #include <vector>
 
 /* TODO
- * - Optimize by making Pentagon::pentagon into a functor that precomputes as
- *   much as possible and is only a function of rho after construction.
+ * - Optimize by making Pentagon::svrtanPolynomial into a functor that
+ *   precomputes as much as possible and is only a function of rho after
+ *   construction.
  */
 
 namespace CyclicPolygons {
@@ -159,7 +160,35 @@ double svrtanPolynomial(
   const std::vector<double>& epsilon
 );
 
-boost::optional<double> maximumCircumradius(const std::vector<double>& edgeLengths);
+std::vector<double> centralAngles(
+  const double& circumradius,
+  const std::vector<double>& edgeLengths
+);
+
+double centralAnglesDeviation(
+  const double& circumradius,
+  const std::vector<double>& edgeLengths
+);
+
+double centralAnglesDeviationDerivative(
+  const double& circumradius,
+  const std::vector<double>& edgeLengths
+);
+
+double centralAnglesDeviationSecondDerivative(
+  const double& circumradius,
+  const std::vector<double>& edgeLengths
+);
+
+constexpr double regularCircumradius(const double& a) {
+  return 2 * a / (
+    ConstexprMagic::Math::sqrt(10 - 2 * ConstexprMagic::Math::sqrt(5))
+  );
+}
+
+double convexCircumradius(const std::vector<double>& edgeLengths);
+
+boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edgeLengths);
 
 /* In a cyclic pentagon, if the circumradius is known, then isosceles triangles
  * can be spanned from every edge to the center of the circle and the base
@@ -186,7 +215,7 @@ bool validateRhoGuess(
 
 namespace Quadrilateral {
 
-double maximumCircumradius(const std::vector<double> edgeLengths);
+double convexCircumradius(const std::vector<double> edgeLengths);
 
 /* For a cyclic quadrilateral, the internal angle between adjacent edges a and b
  * is given as

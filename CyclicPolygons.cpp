@@ -370,14 +370,13 @@ double svrtanPolynomial(
   );
 }
 
-
-boost::optional<double> maximumCircumradius(const std::vector<double>& edgeLengths) {
+boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edgeLengths) {
   assert(edgeLengths.size() == 5);
 
   assert(
     cyclicPolygonConstructible(edgeLengths) 
     && "No pentagon constructible with given edge lengths! You should've "
-      "checked for this edge case before calling maximumCircumradius!"
+      "checked for this edge case before calling convexCircumradiusSvrtan!"
   );
 
   const auto squaredEdgeLengths = TemplateMagic::map(
@@ -506,6 +505,54 @@ boost::optional<double> maximumCircumradius(const std::vector<double>& edgeLengt
   return boost::none;
 }
 
+double circumradius(const std::vector<double>& edgeLengths) {
+  const double minR = TemplateMagic::numeric::max(edgeLengths) / 2 + 1e-10;
+  const double lowerBound = std::max(
+    regularCircumradius(
+      TemplateMagic::numeric::min(edgeLengths)
+    ),
+    minR
+  );
+  const double upperBound = std::max(
+    regularCircumradius(
+      TemplateMagic::numeric::max(edgeLengths)
+    ), 
+    minR
+  );
+  const double rootGuess = regularCircumradius(
+    std::max(
+      TemplateMagic::numeric::average(edgeLengths),
+      minR
+    )
+  );
+
+  auto rootSearchLambda = [&](const double& circumradius) -> std::tuple<double, double, double> {
+    return std::make_tuple<double, double, double>(
+      centralAnglesDeviation(circumradius, edgeLengths),
+      centralAnglesDeviationDerivative(circumradius, edgeLengths),
+      centralAnglesDeviationSecondDerivative(circumradius, edgeLengths)
+    );
+  };
+
+  const unsigned maxIter = 1000;
+  boost::uintmax_t iterCount = maxIter;
+
+  auto root = boost::math::tools::schroder_iterate(
+    rootSearchLambda,
+    rootGuess,
+    lowerBound,
+    upperBound,
+    32, // bits precision
+    iterCount
+  );
+
+  if(iterCount == static_cast<boost::uintmax_t>(maxIter)) {
+    throw std::logic_error("Could not find pentagon circumradius!");
+  }
+
+  return root;
+}
+
 /* In a cyclic pentagon, if the circumradius is known, then isosceles triangles
  * can be spanned from every edge to the center of the circle and the base
  * angles calculated via inverting the law of cosines. The angle between two
@@ -539,6 +586,74 @@ std::vector<double> internalAngles(
   );
 }
 
+std::vector<double> centralAngles(
+  const double& circumradius,
+  const std::vector<double>& edgeLengths
+) {
+  return TemplateMagic::map(
+    edgeLengths,
+    [&](const double& edgeLength) -> double {
+      return std::acos(
+        1 - (edgeLength * edgeLength) / (
+          2 * circumradius * circumradius
+        )
+      );
+    }
+  );
+}
+
+double centralAnglesDeviation(
+  const double& circumradius,
+  const std::vector<double>& edgeLengths
+) {
+  assert(edgeLengths.size() == 5);
+  assert(circumradius > TemplateMagic::numeric::max(edgeLengths) / 2);
+
+  return TemplateMagic::numeric::sum(
+    centralAngles(circumradius, edgeLengths)
+  ) - 2 * M_PI;
+}
+
+double centralAnglesDeviationDerivative(
+  const double& circumradius,
+  const std::vector<double>& edgeLengths
+) {
+  return TemplateMagic::numeric::sum(
+    TemplateMagic::map(
+      edgeLengths,
+      [&](const double& a) -> double {
+        return -2 * a / (
+          circumradius * std::sqrt(
+            4 * circumradius * circumradius - a * a
+          )
+        );
+      }
+    )
+  );
+}
+
+double centralAnglesDeviationSecondDerivative(
+  const double& circumradius,
+  const std::vector<double>& edgeLengths
+) {
+  const double squareCircumradius = circumradius * circumradius;
+
+  return TemplateMagic::numeric::sum(
+    TemplateMagic::map(
+      edgeLengths,
+      [&](const double& a) -> double {
+        const auto temp = 4 * squareCircumradius - a * a;
+        return -2 * a * (
+          - 4 * std::pow(temp, -1.5)
+          - std::pow(temp, -0.5) / (
+            squareCircumradius
+          )
+        );
+      }
+    )
+  );
+}
+
 bool validateRhoGuess(
   const std::vector<double>& edgeLengths,
   const double& rhoGuess
@@ -556,7 +671,7 @@ bool validateRhoGuess(
 
 namespace Quadrilateral {
 
-double maximumCircumradius(const std::vector<double>& edgeLengths) {
+double convexCircumradius(const std::vector<double>& edgeLengths) {
   assert(edgeLengths.size() == 5);
 
   assert(
@@ -711,15 +826,10 @@ std::vector<double> internalAngles(const std::vector<double>& edgeLengths) {
     return Quadrilateral::internalAngles(edgeLengths);
   } 
 
-  // Remaining case is the pentagon
-  const auto circumradiusOption = Pentagon::maximumCircumradius(edgeLengths);
-  if(!circumradiusOption) {
-    throw std::logic_error(
-      "Could not compute the maximum pentagon circumradius for given edge lengths!"
-    );
-  }
-
-  return Pentagon::internalAngles(edgeLengths, circumradiusOption.value());
+  return Pentagon::internalAngles(
+    edgeLengths, 
+    Pentagon::convexCircumradius(edgeLengths)
+  );
 }
 
 } // namespace CyclicPolygons

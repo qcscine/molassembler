@@ -96,7 +96,7 @@ int main() {
         }
       }
 
-      auto circumradiusOption = CyclicPolygons::Pentagon::maximumCircumradius(
+      auto circumradiusOption = CyclicPolygons::Pentagon::convexCircumradiusSvrtan(
         edgeLengths
       );
 
