@@ -72,7 +72,7 @@ double recursiveLoopSummation(
 
 namespace analysis {
 
-void writeAnalysisFiles(
+void writeSvrtanAnalysisFiles(
   const std::vector<double>& edgeLengths,
   const std::string& baseName
 ) {
@@ -244,6 +244,78 @@ void writeAnalysisFiles(
   metaFile << rhoGuess << ", " << rhoStddev << std::endl;
   metaFile << rhoRoot.value_or(0) << ", " << validRoot.value_or(0) << std::endl;
 
+  metaFile.close();
+}
+
+void writeAngleAnalysisFiles(
+  const std::vector<double>& edgeLengths,
+  const std::string& baseName
+) {
+  using namespace std::string_literals;
+
+  const double minR = TemplateMagic::numeric::max(edgeLengths) / 2 + 1e-10;
+  const double lowerBound = std::max(
+    Pentagon::regularCircumradius(
+      TemplateMagic::numeric::min(edgeLengths)
+    ),
+    minR
+  );
+  const double upperBound = std::max(
+    Pentagon::regularCircumradius(
+      TemplateMagic::numeric::max(edgeLengths)
+    ), 
+    minR
+  );
+  const double rootGuess = Pentagon::regularCircumradius(
+    std::max(
+      TemplateMagic::numeric::average(edgeLengths),
+      minR
+    )
+  );
+
+  auto rootSearchLambda = [&](const double& circumradius) -> std::tuple<double, double, double> {
+    return std::make_tuple<double, double, double>(
+      Pentagon::centralAnglesDeviation(circumradius, edgeLengths),
+      Pentagon::centralAnglesDeviationDerivative(circumradius, edgeLengths),
+      Pentagon::centralAnglesDeviationSecondDerivative(circumradius, edgeLengths)
+    );
+  };
+
+  const unsigned maxIter = 1000;
+  boost::uintmax_t iterCount = maxIter;
+
+  auto root = boost::math::tools::schroder_iterate(
+    rootSearchLambda,
+    rootGuess,
+    lowerBound,
+    upperBound,
+    32, // bits precision
+    iterCount
+  );
+
+  std::ofstream scanFile(baseName + ".csv"s);
+  scanFile << std::fixed << std::setprecision(8);
+
+  const unsigned nScanSteps = 1000;
+  const double stepSize = (upperBound - lowerBound) / nScanSteps;
+  for(unsigned i = 0; i <= nScanSteps; i++) {
+    const double currentR = lowerBound + i * stepSize;
+    scanFile << currentR << ", " << Pentagon::centralAnglesDeviation(currentR, edgeLengths) << std::endl;
+
+  }
+
+  scanFile.close();
+
+  std::ofstream metaFile(baseName + "-meta.csv"s);
+  metaFile << std::fixed << std::setprecision(8);
+  for(unsigned i = 0; i < edgeLengths.size(); i++) {
+    metaFile << edgeLengths[i];
+    if(i != edgeLengths.size() - 1) {
+      metaFile << ", ";
+    }
+  }
+  metaFile << std::endl;
+  metaFile << rootGuess << ", " << root << std::endl;
   metaFile.close();
 }
 
@@ -505,7 +577,7 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
   return boost::none;
 }
 
-double circumradius(const std::vector<double>& edgeLengths) {
+double convexCircumradius(const std::vector<double>& edgeLengths) {
   const double minR = TemplateMagic::numeric::max(edgeLengths) / 2 + 1e-10;
   const double lowerBound = std::max(
     regularCircumradius(

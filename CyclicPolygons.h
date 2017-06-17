@@ -38,7 +38,12 @@ double recursiveLoopSummation(
 
 namespace analysis {
 
-void writeAnalysisFiles(
+void writeSvrtanAnalysisFiles(
+  const std::vector<double>& edgeLengths,
+  const std::string& baseName
+);
+
+void writeAngleAnalysisFiles(
   const std::vector<double>& edgeLengths,
   const std::string& baseName
 );

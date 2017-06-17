@@ -184,14 +184,14 @@ BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
       );
     }
 
-    auto radiusOption = CyclicPolygons::Pentagon::maximumCircumradius(edgeLengths);
+    auto radiusOption = CyclicPolygons::Pentagon::convexCircumradiusSvrtan(edgeLengths);
 
     // Finds a radius
     if(!radiusOption) {
       nFailures += 1;
-      CyclicPolygons::analysis::writeAnalysisFiles(
+      CyclicPolygons::analysis::writeSvrtanAnalysisFiles(
         edgeLengths,
-        "test-failure-"s + std::to_string(nTest)
+        "svrtan-test-failure-"s + std::to_string(nTest)
       );
       std::cout << "For this set of edgeLengths, no valid root was found" << std::endl;
     }
@@ -201,9 +201,9 @@ BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
       const double rho = 1 / std::pow(radiusOption.value(), 2);
       if(!CyclicPolygons::Pentagon::validateRhoGuess(edgeLengths, rho)) {
         nFailures += 1;
-        CyclicPolygons::analysis::writeAnalysisFiles(
+        CyclicPolygons::analysis::writeSvrtanAnalysisFiles(
           edgeLengths,
-          "test-failure-"s + std::to_string(nTest)
+          "svrtan-test-failure-"s + std::to_string(nTest)
         );
         std::cout << "maximumPentagonCircumradius returned non-validated "
           << "circumradius!" << std::endl;
@@ -245,7 +245,6 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       }
     };
 
-    double successes = 0;
     for(unsigned sampleNumber = 0; sampleNumber < nSamples; sampleNumber++) {
       std::vector<double> edgeLengths;
       while(edgeLengths.size() < 5) {
@@ -261,23 +260,13 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 
       double circumradius;
       auto assignCircumradius = [&]() -> void {
-        circumradius = CyclicPolygons::Pentagon::circumradius(
+        circumradius = CyclicPolygons::Pentagon::convexCircumradius(
           edgeLengths
         );
       };
 
       BOOST_CHECK_NO_THROW(assignCircumradius());
     }
-
-    const double stddevFraction = currentStddev / mean;
-    const double percentageCorrect = 100 * static_cast<double>(successes) / nSamples;
-
-    BOOST_CHECK_MESSAGE(
-      successes == nSamples,
-      "At a μ/σ fraction of " << stddevFraction 
-        << ", central angle circumradius determination success rate was only "
-        << percentageCorrect
-    );
   }
 }
 

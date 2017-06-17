@@ -33,32 +33,22 @@ int main() {
       );
     }
   
-    std::string baseString = "scan-random-"s + std::to_string(nTest);
-
-    CyclicPolygons::analysis::writeAnalysisFiles(edgeLengths, baseString);
+    CyclicPolygons::analysis::writeSvrtanAnalysisFiles(
+      edgeLengths,
+      "scan-svrtan-"s + std::to_string(nTest)
+    );
+    CyclicPolygons::analysis::writeAngleAnalysisFiles(
+      edgeLengths,
+      "scan-angles-"s + std::to_string(nTest)
+    );
   }
 
 
   /* Determine failure ratio of pentagon circumradius as a function of the
    * variance of a truncated normal distribution.
    */
-  
-  // Randomness set-up
-  std::vector<unsigned> seeds;
-  std::mt19937 randomEngine;
 
-  { // quick local scope to avoid namespace pollution
-#ifdef NDEBUG
-    std::random_device randomDevice;
-    for(unsigned n = 0; n < 5; n++) seeds.emplace_back(randomDevice());
-#else 
-    seeds.emplace_back(2721813754);
-#endif
-    std::seed_seq seedSequence(seeds.begin(), seeds.end());
-    randomEngine.seed(seedSequence);
-  }
-
-  std::ofstream varianceFile("edge-lengths-variance-success.csv");
+  std::ofstream svrtanVarianceFile("edge-lengths-variance-success.csv");
 
   const double mean = (upperLimit - lowerLimit) / 2;
   const double lowerStddev = 0.01 * mean;
@@ -75,7 +65,7 @@ int main() {
     auto sampleTruncatedNormal = [&]() -> double {
       double sample;
       while(true) {
-        sample = normalDistribution(randomEngine);
+        sample = normalDistribution(TemplateMagic::random.randomEngine);
         if(lowerLimit <= sample && sample <= upperLimit) {
           return sample;
         }
@@ -109,8 +99,8 @@ int main() {
     const double percentageCorrect = 100 * static_cast<double>(successes) / nSamples;
 
     // Write to file
-    varianceFile << stddevFraction << ", " << percentageCorrect << std::endl;
+    svrtanVarianceFile << stddevFraction << ", " << percentageCorrect << std::endl;
   }
 
-  varianceFile.close();
+  svrtanVarianceFile.close();
 }
