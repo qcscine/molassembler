@@ -8,6 +8,8 @@
 #include <numeric>
 #include <Eigen/Geometry>
 
+#include "template_magic/TemplateMagic.h"
+
 using namespace Symmetry;
 
 auto makeCoordinateGetter(const Name& name) {
@@ -320,6 +322,32 @@ BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(smallestAngleValue) {
+BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
+  const double comparisonSmallestAngle = TemplateMagic::numeric::min(
+    TemplateMagic::map(
+      allNames,
+      [](const Name& symmetryName) -> double {
+        double smallestAngle = angleFunction(symmetryName)(0, 1);
+
+        for(unsigned i = 0; i < size(symmetryName); i++) {
+          for(unsigned j = i + 1; j < size(symmetryName); j++) {
+            double angle = angleFunction(symmetryName)(i, j);
+            if(angle < smallestAngle) {
+              smallestAngle = angle;
+            }
+          }
+        }
+
+        return smallestAngle;
+      }
+    )
+  );
+
   BOOST_CHECK(0 < smallestAngle && smallestAngle < M_PI);
+  BOOST_CHECK_MESSAGE(
+    std::fabs(smallestAngle - comparisonSmallestAngle) < 1e-4,
+    "The constant smallest angle set by the library is NOT the smallest "
+    << "returned angle within the library. Current value of smallestAngle: "
+    << smallestAngle << ", true smallest angle:" << comparisonSmallestAngle
+  );
 }

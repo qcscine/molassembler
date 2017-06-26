@@ -122,8 +122,8 @@ enum class Name {
 extern const std::vector<Name> allNames;
 extern const std::map<Name, SymmetryInformation> symmetryData;
 
-// derived data
-extern const double smallestAngle;
+// Derived data, see tests
+constexpr double smallestAngle = 1.21055;
 
 // Shortcut functions
 inline const std::string& name(const Name& name) {
