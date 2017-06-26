@@ -9,25 +9,6 @@
 
 namespace Symmetry {
 
-const std::vector<Name> allNames {
-  Name::Linear, // 2
-  Name::Bent,
-  Name::TrigonalPlanar, // 3
-  Name::TrigonalPyramidal,
-  Name::TShaped,
-  Name::Tetrahedral, // 4
-  Name::SquarePlanar,
-  Name::Seesaw,
-  Name::SquarePyramidal, // 5
-  Name::TrigonalBiPyramidal,
-  Name::PentagonalPlanar,
-  Name::Octahedral, // 6
-  Name::TrigonalPrismatic,
-  Name::PentagonalPyramidal,
-  Name::PentagonalBiPyramidal, // 7
-  Name::SquareAntiPrismatic // 8
-};
-
 const std::map<Name, SymmetryInformation> symmetryData {
   {
     Name::Linear, 
@@ -1041,25 +1022,5 @@ const std::map<Name, SymmetryInformation> symmetryData {
     }
   }
 };
-
-const double smallestAngle = TemplateMagic::numeric::min(
-  TemplateMagic::map(
-    allNames,
-    [](const Name& symmetryName) -> double {
-      double smallestAngle = angleFunction(symmetryName)(0, 1);
-
-      for(unsigned i = 0; i < size(symmetryName); i++) {
-        for(unsigned j = i + 1; j < size(symmetryName); j++) {
-          double angle = angleFunction(symmetryName)(i, j);
-          if(angle < smallestAngle) {
-            smallestAngle = angle;
-          }
-        }
-      }
-
-      return smallestAngle;
-    }
-  )
-);
 
 } // namespace Symmetry

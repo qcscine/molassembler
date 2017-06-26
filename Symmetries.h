@@ -21,6 +21,8 @@
 #include "ConstexprAngles.h"
 #endif
 
+#include "template_magic/TemplateMagic.h"
+
 #include <map>
 #include <vector>
 #include <functional>
@@ -33,8 +35,6 @@
  *   completely arbitrary!
  * - Consider making constexpr calculation of all angles from coordinates into
  *   const lookup table
- * - C++17 improvements:
- *   - Make angle calculation constexpr so that smallestAngle is also constexpr
  */
 
 namespace Symmetry {
@@ -119,11 +119,346 @@ enum class Name {
 };
 
 // DATA
-extern const std::vector<Name> allNames;
+constexpr unsigned nSymmetries = 16;
+
+constexpr std::array<Name, nSymmetries> allNames {
+  Name::Linear, // 2
+  Name::Bent,
+  Name::TrigonalPlanar, // 3
+  Name::TrigonalPyramidal,
+  Name::TShaped,
+  Name::Tetrahedral, // 4
+  Name::SquarePlanar,
+  Name::Seesaw,
+  Name::SquarePyramidal, // 5
+  Name::TrigonalBiPyramidal,
+  Name::PentagonalPlanar,
+  Name::Octahedral, // 6
+  Name::TrigonalPrismatic,
+  Name::PentagonalPyramidal,
+  Name::PentagonalBiPyramidal, // 7
+  Name::SquareAntiPrismatic // 8
+};
+
 extern const std::map<Name, SymmetryInformation> symmetryData;
 
-// derived data
-extern const double smallestAngle;
+namespace AngleFunctions {
+
+using AngleFunctionPtr = double(*)(const unsigned&, const unsigned&);
+
+struct SymmetrySizeAndAngles {
+  constexpr SymmetrySizeAndAngles(
+    const unsigned& size,
+    double(*angleFunction)(const unsigned&, const unsigned&)
+  ) : size(size),
+      angleFunction(angleFunction) 
+  {}
+
+  const unsigned size;
+  const AngleFunctionPtr angleFunction;
+};
+
+constexpr double linear(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  return M_PI;
+}
+
+constexpr double bent(const unsigned& a, const unsigned& b) {
+  /* subject to a lot of variation, between 90 and 109 degrees pursuant to 
+   * english wikipedia, using experimental data here to improve instances
+   * of this geometry on e.g. O center would a big improvement to DG runs
+   */
+  if(a == b) {
+    return 0;
+  }
+
+  return ConstexprMagic::Math::toRadians(107); 
+}
+
+constexpr double trigonalPlanar(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  return ConstexprMagic::Math::toRadians(120);
+}
+
+constexpr double trigonalPyramidal(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  return ConstexprMagic::Math::toRadians(107.5);
+}
+
+constexpr double tShaped(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  if((a + b) % 2 == 1) {
+    return M_PI / 2;
+  } 
+
+  return M_PI;
+}
+
+constexpr double tetrahedral(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  return ConstexprMagic::Math::toRadians(109.5);
+}
+
+constexpr double squarePlanar(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  if((a + b) % 2 == 1) {
+    // this expression indicates cis
+    return M_PI / 2;
+  } 
+
+  // leftover case is trans
+  return M_PI;
+}
+
+constexpr double seesaw(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  const auto& smaller = std::min(a, b);
+  const auto& larger = std::max(a, b);
+  if(smaller == 0 && larger == 3) {
+    return M_PI;
+  }
+
+  if(smaller == 1 && larger == 2) {
+    return ConstexprMagic::Math::toRadians(120);
+  }
+
+  return M_PI / 2;
+}
+
+constexpr double squarePyramidal(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  if(a == 4 || b == 4) { // all bonds to axial ligand are 90°
+    return M_PI / 2; 
+  }
+
+  if((a + b) % 2 == 0) { // 0 + 2 or 1 + 3 are trans
+    return M_PI;
+  }
+
+  // rest are cis
+  return M_PI / 2;
+}
+
+constexpr double trigonalBiPyramidal(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  unsigned smaller = std::min(a, b), larger = std::max(a, b);
+  if(larger < 3) {
+    // -> smaller < 2, this means either 0,1 0,2 1,2 axial
+    return ConstexprMagic::Math::toRadians(120);
+  } else if(larger == 3) {
+    // -> smaller < 3, this means {1,2,3}, 3 
+    return M_PI / 2;
+  } else if(smaller < 3) {
+    // now, larger must be 4 (process of elimination), so if a is not 3:
+    return M_PI / 2;
+  } else {
+    // only case left: 3,4
+    return M_PI;
+  }
+}
+
+constexpr double pentagonalPlanar(const unsigned& a, const unsigned& b) {
+  unsigned absDiff = std::min(a - b, b - a);
+  return std::min(
+    absDiff,
+    std::min(absDiff - 5, 5 - absDiff)
+  ) * ConstexprMagic::Math::toRadians(72);
+}
+
+constexpr double octahedral(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+  
+  if(
+    (
+      std::max(a, b) < 4 // if the largest is < 4, then equatorial 
+      && (a + b) % 2 == 0 // this gives trans eq ligands
+    ) || std::min(a, b) == 4 // this indicates 4,5 (axial trans)
+  ) {
+    return M_PI;
+  } 
+
+  return M_PI / 2;
+}
+
+constexpr double trigonalPrismatic(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  } 
+  
+  // Between plane symmetric
+  if(std::min(a - b, b - a) == 3) {
+    return ConstexprMagic::Math::toRadians(76);
+  } 
+
+  // In plane triangle
+  if(
+    (a < 3 && b < 3)
+    || (a >= 3 && b >= 3)
+  ) {
+    return ConstexprMagic::Math::toRadians(86);
+  } 
+
+  // Between plane asymmetric
+  return ConstexprMagic::Math::toRadians(134);
+}
+
+constexpr double pentagonalPyramidal(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  if(a == 5 || b == 5) {
+    return M_PI / 2;
+  }  
+  
+  // remainder are identical to PentagonalPlanar
+  unsigned absDiff = std::min(a - b, b - a);
+  return std::min(
+    absDiff,
+    std::min(absDiff - 5, 5 - absDiff)
+  ) * ConstexprMagic::Math::toRadians(72);
+}
+
+constexpr double pentagonalBiPyramidal(const unsigned& a, const unsigned& b) {
+  if(a == b) {
+    return 0;
+  }
+
+  if(a + b == 11) {
+    return M_PI; // trans 5,6
+  }
+
+  if(TemplateMagic::XOR(a > 4, b > 4)) {
+    return M_PI / 2; // any angle to axial index
+  }
+
+  // remainder are equatorial angles, like PentagonalPlanar
+  unsigned absDiff = std::min(a - b, b - a);
+  return std::min(
+    absDiff,
+    std::min(absDiff - 5, 5 - absDiff)
+  ) * ConstexprMagic::Math::toRadians(72);
+}
+
+constexpr double squareAntiprismatic(const unsigned& a, const unsigned& b) {
+#ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
+  if(a == b) {
+    return 0;
+  }
+
+  return squareAntiprismaticAngles.at(
+    std::min(a, b),
+    std::max(a, b)
+  );
+#else
+  if(a == b) {
+    return 0;
+  } 
+  
+  if(
+    (a < 4 && b < 4)
+    || (a >= 4 && b >= 4)
+  ) { // in plane
+    if((a + b) % 2 == 1) { // cis
+      return ConstexprMagic::Math::toRadians(72.9875); 
+    } 
+    
+    // otherwise trans
+    return ConstexprMagic::Math::toRadians(114.475);
+  }
+  
+  // remaining cases are between planes
+  unsigned minDiff = std::min(a - b, b - a);
+  if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
+    return ConstexprMagic::Math::toRadians(78.05);
+  } 
+
+  // last case is long between planes
+  return ConstexprMagic::Math::toRadians(142.275);
+#endif
+}
+
+constexpr std::array<SymmetrySizeAndAngles, nSymmetries> sizeAndAngles {
+SymmetrySizeAndAngles {2, &AngleFunctions::linear},
+  SymmetrySizeAndAngles {2, &AngleFunctions::bent},
+  SymmetrySizeAndAngles {3, &AngleFunctions::trigonalPlanar},
+  SymmetrySizeAndAngles {3, &AngleFunctions::trigonalPyramidal},
+  SymmetrySizeAndAngles {3, &AngleFunctions::tShaped},
+  SymmetrySizeAndAngles {4, &AngleFunctions::tetrahedral},
+  SymmetrySizeAndAngles {4, &AngleFunctions::squarePlanar},
+  SymmetrySizeAndAngles {4, &AngleFunctions::seesaw},
+  SymmetrySizeAndAngles {5, &AngleFunctions::squarePyramidal},
+  SymmetrySizeAndAngles {5, &AngleFunctions::trigonalBiPyramidal},
+  SymmetrySizeAndAngles {5, &AngleFunctions::pentagonalPlanar},
+  SymmetrySizeAndAngles {6, &AngleFunctions::octahedral},
+  SymmetrySizeAndAngles {6, &AngleFunctions::trigonalPrismatic},
+  SymmetrySizeAndAngles {6, &AngleFunctions::pentagonalPyramidal},
+  SymmetrySizeAndAngles {7, &AngleFunctions::pentagonalBiPyramidal},
+  SymmetrySizeAndAngles {8, &AngleFunctions::squareAntiprismatic}
+};
+
+constexpr unsigned getIndexOfName(const Name& name) {
+  unsigned i = 0;
+
+  while(allNames.at(i) != name) {
+    ++i;
+  }
+
+  return i;
+}
+
+constexpr double minAngle() {
+  double smallestAngle = M_PI;
+
+  for(unsigned i = 0; i < nSymmetries; i++) {
+    auto& name = allNames.at(i);
+    unsigned symmetryIndex = getIndexOfName(name);
+    unsigned maxIndex = sizeAndAngles.at(symmetryIndex).size;
+
+    for(unsigned i = 0; i < maxIndex; ++i) {
+      for(unsigned j = i + 1; j < maxIndex; ++j) {
+        double returnedAngle = sizeAndAngles.at(symmetryIndex).angleFunction(i, j);
+
+        if(returnedAngle < smallestAngle) {
+          smallestAngle = returnedAngle;
+        }
+      }
+    }
+  }
+
+  return smallestAngle;
+}
+
+} // namespace AngleFunctions
 
 // Shortcut functions
 inline const std::string& name(const Name& name) {
@@ -153,6 +488,9 @@ inline unsigned nameIndex(const Name& name) {
 inline const TetrahedronList& tetrahedra(const Name& name) {
   return symmetryData.at(name).tetrahedra;
 }
+
+// Derived data
+constexpr double smallestAngle = AngleFunctions::minAngle();
 
 } // namespace Symmetry
 
