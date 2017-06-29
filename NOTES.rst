@@ -1,5 +1,7 @@
 TODO
 ----
+- Ranking algorithm does not correctly recognize cycles or stereocenters, does
+  not return substituent linking information
 - CNStereocenter and EZStereocenter will clash! Grubbs cat::
 
               R R     R
@@ -16,9 +18,12 @@ TODO
   around the W=C bond is probably restricted, but is it clear which conformation
   is best?
 
+  This is the approach taken now, but no tests to ensure this is handled
+  correctly.
+
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)
-- Parallelize DG
+- Parallelize DG (?)
 - Make dependence on alternate set of Symmetry tetraeder subdivisions clearer
   in code / analysis
 - Set up CMake properly

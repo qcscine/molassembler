@@ -429,11 +429,6 @@ boost::optional<unsigned> CNStereocenter::assigned() const {
   return assignmentOption;
 }
 
-std::string CNStereocenter::charRepresentation() const {
-  // TODO returns a char representation of its substituent rankings
-  // e.g. (A-B)CD
-}
-
 std::vector<
   ChiralityConstraintPrototype
 > CNStereocenter::chiralityConstraints() const {
@@ -484,8 +479,21 @@ std::vector<DihedralLimits> CNStereocenter::dihedralLimits() const {
 }
 
 std::string CNStereocenter::info() const {
-  std::string returnString = "CNStereocenter on "s 
-    + std::to_string(centerAtom) + " ("s + Symmetry::name(symmetry) +"): "s;
+  // TODO revisit as soon as linking information is introduced
+  std::string returnString = "CN "s 
+    + std::to_string(centerAtom) + " ("s + Symmetry::name(symmetry) +", "s;
+
+  std::string charRep;
+  for(const auto& iterPair : _neighborCharMap) {
+    charRep += iterPair.second;
+  }
+
+  std::sort(
+    charRep.begin(),
+    charRep.end()
+  );
+
+  returnString += charRep + "): "s;
 
   if(assignmentOption) {
     returnString += std::to_string(assignmentOption.value());

@@ -91,8 +91,6 @@ public:
 
   boost::optional<unsigned> assigned() const final;
 
-  std::string charRepresentation() const;
-
   std::vector<ChiralityConstraintPrototype> chiralityConstraints() const final;
 
   std::vector<DihedralLimits> dihedralLimits() const final;

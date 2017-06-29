@@ -17,7 +17,16 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   // Read the file
   IO::MOLFileHandler molHandler;
   auto mol = molHandler.readSingle(filePath.string());
-  mol.dumpGraphviz(filePath.stem().string() + ".dot"s);
+
+  DistanceGeometry::MoleculeSpatialModel spatialModel {
+    mol.getAdjacencyList(),
+    mol.stereocenters,
+    DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
+  };
+
+  spatialModel.writeGraphviz(filePath.stem().string() + ".dot"s);
+
+  // mol.dumpGraphviz(filePath.stem().string() + ".dot"s);
 
   try {
     // Generate a conformation

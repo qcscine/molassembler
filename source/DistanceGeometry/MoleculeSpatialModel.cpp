@@ -802,24 +802,43 @@ struct MoleculeSpatialModel::ModelGraphWriter {
 
       if( 
         stereocenterPtr->type() == Stereocenters::Type::EZStereocenter
-      ) { // Avoid writing EZStereocenters twice
+      ) { 
+        // Avoid writing EZStereocenters twice
         if(*stereocenterPtr->involvedAtoms().rbegin() == mappingIndex) {
           continue;
         }
 
-        const auto ezPtr = std::dynamic_pointer_cast<Stereocenters::EZStereocenter>(
+        char ezState = 'u';
+        if(stereocenterPtr -> assigned()) {
+          if(stereocenterPtr -> assigned().value() == 1) {
+            ezState = 'E';
+          } else {
+            ezState = 'Z';
+          }
+        }
+
+        os << "EZ" << TemplateMagic::condenseIterable(
+            stereocenterPtr -> involvedAtoms(),
+            ""
+          ) << R"( [label=")" << ezState 
+          << R"(", fillcolor="tomato", shape="square", fontcolor="white", )" 
+          << R"("tooltip=")" 
+          << stereocenterPtr -> info()
+          << R"("];)" << "\n";
+      } else {
+        const auto cnPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
           stereocenterPtr
         );
 
-        os << "EZ" << TemplateMagic::condenseIterable(
-            ezPtr -> involvedAtoms(),
-            ""
-          ) << R"([label=")" << ezPtr ->
-          ) << R"("])"
-
+        os << "CN" << TemplateMagic::condenseIterable(
+          stereocenterPtr -> involvedAtoms(),
+          ""
+        ) << R"( [label=")" << Symmetry::name(cnPtr -> symmetry) 
+          << R"(", fillcolor="steelblue", shape="square", fontcolor="white", )"
+          << R"(tooltip=")" << cnPtr -> info()
+          << R"("];)" << "\n";
       }
     }
-
   }
 
   // Vertex options
@@ -876,10 +895,26 @@ struct MoleculeSpatialModel::ModelGraphWriter {
     if(angleStrings.empty()) {
       os << R"(, tooltip="no angles here")";
     } else {
-      os << R"(, tooltip="angles: )" << TemplateMagic::condenseIterable(angleStrings) << R"(")";
+      os << R"(, tooltip="angles: )" << TemplateMagic::condenseIterable(
+        angleStrings,
+        "&#10;"s
+      ) << R"(")";
     }
     
-    os << "]";
+    os << "]\n";
+
+    // Are there any additional vertices we ought to connect to?
+    if(spatialModel._stereocenterMap.count(vertexIndex) == 1) {
+      const auto& stereocenterPtr = spatialModel._stereocenterMap.at(vertexIndex);
+      if(stereocenterPtr -> type() == Stereocenters::Type::CNStereocenter) {
+        os << ";CN";
+      } else {
+        os << ";EZ";
+      }
+
+      os << TemplateMagic::condenseIterable(stereocenterPtr -> involvedAtoms())
+        << " -- " << vertexIndex << R"([color="gray", dir="forward", len="2"])";
+    }
   }
 
   // Edge options
@@ -896,17 +931,19 @@ struct MoleculeSpatialModel::ModelGraphWriter {
     }
 
     // If one of the bonded atoms is a hydrogen, shorten the bond
-    if(
+    /*if(
       getElementType(target) == Delib::ElementType::H
       || getElementType(source) == Delib::ElementType::H
     ) {
       os << ", len=0.5";
-    }
+    }*/
+
+    os << ", penwidth=3";
 
     const auto indexSequence = orderedIndexSequence<2>({source, target});
     if(spatialModel._bondBounds.count(indexSequence) == 1) {
       const auto& bondBounds = spatialModel._bondBounds.at(indexSequence);
-      os << R"(, tooltip="[)" << bondBounds.lower << ", " << bondBounds.upper <<  R"(]")";
+      os << R"(, edgetooltip="[)" << bondBounds.lower << ", " << bondBounds.upper <<  R"(]")";
     }
 
     os << "]";

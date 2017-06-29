@@ -310,10 +310,26 @@ std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
 std::string EZStereocenter::info() const {
   using namespace std::string_literals;
 
-  std::string returnString =  "EZStereocenter on ("s 
-    + std::to_string(_leftCenter) + ", "s 
-    + std::to_string(_rightCenter) + "), "s;
+  std::string returnString =  "EZ indices "s;
 
+  if(_leftLowPriority) {
+    returnString += "[H:"s + std::to_string(_leftHighPriority);
+    ", L:"s + std::to_string(_leftLowPriority.value()) + "], "s;
+  } else {
+    returnString += std::to_string(_leftHighPriority) +", "s;
+  }
+
+  returnString +=  std::to_string(_leftCenter) + ", "s 
+    + std::to_string(_rightCenter) + ", "s;
+
+  if(_rightLowPriority) {
+    returnString += "[H:"s + std::to_string(_rightHighPriority);
+    ", L:"s + std::to_string(_rightLowPriority.value()) + "]"s;
+  } else {
+    returnString += std::to_string(_rightHighPriority);
+  }
+
+  returnString += ". Is "s;
   if(_isEOption) {
     returnString += (_isEOption.value())
       ? "E"s
