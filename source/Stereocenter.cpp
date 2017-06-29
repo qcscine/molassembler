@@ -1,8 +1,9 @@
 #include "Stereocenter.h"
 
-#include "template_magic/TemplateMagic.h"
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
+
+#include "template_magic/TemplateMagic.h"
 
 namespace MoleculeManip {
 
@@ -21,23 +22,23 @@ bool strictComparePtr(
   const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& a,
   const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
 ) {
-  using namespace MoleculeManip::Stereocenters;
-
   if(a -> type() == b -> type()) {
     if(a -> type() == Type::CNStereocenter) {
       auto aDerived = std::dynamic_pointer_cast<CNStereocenter>(a);
       auto bDerived = std::dynamic_pointer_cast<CNStereocenter>(b);
 
       return *aDerived == *bDerived;
-    } else { // EZStereocenter
-      auto aDerived = std::dynamic_pointer_cast<EZStereocenter>(a);
-      auto bDerived = std::dynamic_pointer_cast<EZStereocenter>(b);
+    } 
+    
+    // Remaining case is EZStereocenter
+    auto aDerived = std::dynamic_pointer_cast<EZStereocenter>(a);
+    auto bDerived = std::dynamic_pointer_cast<EZStereocenter>(b);
 
-      return *aDerived == *bDerived;
-    }
-  } else {
-    return false;
-  }
+    return *aDerived == *bDerived;
+  } 
+
+  // Differing types are unequal
+  return false;
 }
 
 } // namespace Stereocenters

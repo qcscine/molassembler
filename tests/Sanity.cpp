@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         100,
         MetrizationOption::off,
         false, // no y-inversion trick
-        BFSConstraintCollector::DistanceMethod::Uniform
+        MoleculeSpatialModel::DistanceMethod::Uniform
       );
 
       /* Check that for every PositionCollection, inferring the StereocenterList
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         }
       );
 
-      /* The test passes only if this is true for all positioncollections
+      /* The test passes only if this is true for all PositionCollections
        * yielded by DG
        */
       bool testPass = TemplateMagic::all_of(mapped);

@@ -3,22 +3,48 @@
 #include "CommonTrig.h"
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
-
+#include "StdlibTypeAlgorithms.h"
 #include "Log.h"
+
+#include "cyclic_polygons/Minimal.h"
 
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
+/* Static public constexpr members declaration required for address access 
+ * during runtime. Would exist compile-time only without
+ */
+constexpr double BFSConstraintCollector::bondRelativeVariance;
+constexpr double BFSConstraintCollector::angleAbsoluteVariance;
+
 BFSConstraintCollector::BFSConstraintCollector(
   const AdjacencyList& adjacencies,
   const StereocenterList& stereocenterList,
-  DistanceBoundsMatrix& distanceBounds,
+  MoleculeSpatialModel& spatialModel,
   const DistanceMethod& distanceMethod
 ) : _adjacencies(adjacencies),
     _distanceMethod(distanceMethod),
-    _distanceBounds(distanceBounds)
+    _spatialModel(spatialModel),
+    _cycleData(adjacencies.access()), // Construct cycleData from the graph
+    _smallestCycleMap(_makeSmallestCycleMap()) // Construct the cycle size map
 {
+  // Check constraints on static constants
+  static_assert(
+    0 < bondRelativeVariance && bondRelativeVariance < 1,
+    "BFSConstraintCollector static constant bond relative variance must fulfill"
+    "0 < x << 1"
+  );
+  /* Unfortunately, this cannot be static_assert (although it is compile-time
+   * constant due to C++14 limitations, see symmetry_information library for
+   * possible C++17 improvements.
+   */
+  assert(
+    0 < angleAbsoluteVariance && angleAbsoluteVariance < Symmetry::smallestAngle
+    && "BFSConstraintCollector static constant angle absolute variance must fulfill"
+    "0 < x << (smallest angle any local symmetry returns)"
+  );
+
   set12Bounds();
 
   // Populate the stereocenterMap with copies of the molecule's stereocenters
@@ -98,6 +124,7 @@ BFSConstraintCollector::BFSConstraintCollector(
     }
   }
 
+  // TODO these need tolerance adaptation in dependence of cycles too!
   // For every EZStereocenter, get the dihedral information and set it
   for(const auto& mapIterPair : _stereocenterMap) {
     const auto& mappingIndex = mapIterPair.first;
@@ -115,48 +142,10 @@ BFSConstraintCollector::BFSConstraintCollector(
       )
     ) {
       for(const auto& dihedralLimit : stereocenterPtr -> dihedralLimits()) {
-        _distanceBounds.setLowerBound(
-          dihedralLimit.indices.front(),
-          dihedralLimit.indices.back(),
-          CommonTrig::dihedralLength(
-            _distanceBounds.lowerBound(
-              dihedralLimit.indices.front(),
-              dihedralLimit.indices.at(1)
-            ),
-            _distanceBounds.lowerBound(
-              dihedralLimit.indices.at(1),
-              dihedralLimit.indices.at(2)
-            ),
-            _distanceBounds.lowerBound(
-              dihedralLimit.indices.at(2),
-              dihedralLimit.indices.back()
-            ),
-            ConstexprMagic::Math::toRadians(120),
-            ConstexprMagic::Math::toRadians(120),
-            dihedralLimit.lower
-          )
-        );
-
-        _distanceBounds.setUpperBound(
-          dihedralLimit.indices.front(),
-          dihedralLimit.indices.back(),
-          CommonTrig::dihedralLength(
-            _distanceBounds.upperBound(
-              dihedralLimit.indices.front(),
-              dihedralLimit.indices.at(1)
-            ),
-            _distanceBounds.upperBound(
-              dihedralLimit.indices.at(1),
-              dihedralLimit.indices.at(2)
-            ),
-            _distanceBounds.upperBound(
-              dihedralLimit.indices.at(2),
-              dihedralLimit.indices.back()
-            ),
-            ConstexprMagic::Math::toRadians(120),
-            ConstexprMagic::Math::toRadians(120),
-            dihedralLimit.upper
-          )
+        _spatialModel.setDihedralBoundsIfEmpty(
+          dihedralLimit.indices,
+          dihedralLimit.lower,
+          dihedralLimit.upper
         );
 
         /* Add the sequence considered to the dihedral sequences to prevent set
@@ -191,6 +180,173 @@ BFSConstraintCollector::BFSConstraintCollector(
       _stereocenterMap[i] -> assign(0);
     }
   }
+
+  /* For all cycles, set internal angles
+   */
+  for(
+    auto cycleIter = _cycleData.getCyclesIteratorSizeLE(5);
+    !cycleIter.atEnd();
+    cycleIter.advance()
+  ) {
+    unsigned cycleSize = cycleIter.cycleSize();
+    /* Gather sequence of atoms in cycle by progressively converting edge
+     * descriptors into vertex indices
+     */
+    auto edgeDescriptors = cycleIter.getCurrentCycle();
+    auto indexSequence = _makeRingIndexSequence(edgeDescriptors);
+
+    /* There are a variety of cases here which all need to be treated
+     * differently:
+     * - Cycle of size 3: Always flat, set angles from cyclic polygons library
+     * - Cycle of size 4: If flat (maybe already with a single double bond), use
+     *   library to get precise internal angles and set them. Otherwise not all
+     *   vertices are coplanar and all angles and dihedrals get a general
+     *   tolerance increase
+     * - Cycle of size 5: If aromatic, flat and we get precise internal angles
+     *   from library. Otherwise, slightly increased angle and dihedral
+     *   tolerances
+     *
+     * Assumptions
+     * - Need to find out whether all vertices in cycles of size four are
+     *   coplanar if one double bond is present. That seems to be the case for
+     *   the few strained molecules collected in tests/strained_... Some more
+     *   of these size four cycles are coplanar, especially when heteroatoms
+     *   are present, but I don't immediately see the distinguishing criterion.
+     */
+    if( // flat cases
+      cycleSize == 3
+      || (
+        cycleSize == 4
+        && _countPlanarityEnforcingBonds(edgeDescriptors) >= 1
+      )
+      /* TODO missing cases: 
+       * - Need aromaticity checking routine for cycle size 5
+       */
+    ) {
+      /* First, we fetch the angles that maximize the cycle area using the
+       * cyclic polygon library.
+       */
+      auto cycleInternalAngles = CyclicPolygons::internalAngles(
+        // Map sequential index pairs to their purported bond length
+        TemplateMagic::pairwiseMap( 
+          indexSequence,
+          [&](const AtomIndexType& i, const AtomIndexType& j) -> double {
+            auto bondTypeOption = adjacencies.getBondType(i, j);
+
+            // These vertices really ought to be bonded
+            assert(bondTypeOption);
+
+            return Bond::calculateBondDistance(
+              adjacencies.getElementType(i),
+              adjacencies.getElementType(j),
+              bondTypeOption.value()
+            );
+          }
+        )
+      );
+
+      /* The first angle returned is the angle between edges one and two, which
+       * are indices [0, 1] and [1, 2] respectively. The last angle is between
+       * edges [n - 1, 0], [0, 1].
+       *
+       * So, e.g. C4, C7, N9, O3::
+       *
+       *   index sequence 4, 7, 9, 3, 4
+       *   distances  C-C, C-N, N-O, O-C
+       *   angles  C-C-N, C-N-O, N-O-C, O-C-C
+       *                                ^- Last overlaps past index sequence
+       *
+       * Now we set all internal angles with low tolerance
+       */
+      for(
+        unsigned angleCentralIndex = 1;
+        angleCentralIndex < indexSequence.size() - 1;
+        ++angleCentralIndex
+      ) {
+        _spatialModel.setAngleBoundsIfEmpty(
+          {
+            indexSequence.at(angleCentralIndex - 1),
+            indexSequence.at(angleCentralIndex),
+            indexSequence.at(angleCentralIndex + 1),
+          },
+          cycleInternalAngles.at(angleCentralIndex - 1),
+          BFSConstraintCollector::angleAbsoluteVariance
+        );
+        
+        _angleSequences.insert(std::vector<AtomIndexType>{
+          indexSequence.at(angleCentralIndex - 1),
+          indexSequence.at(angleCentralIndex),
+          indexSequence.at(angleCentralIndex + 1)
+        });
+      }
+    } else { // Non-flat cases, tolerance increases on angles (and dihedrals)
+    }
+  }
+  
+}
+
+std::vector<AtomIndexType> BFSConstraintCollector::_makeRingIndexSequence(
+  const std::set<GraphType::edge_descriptor>& edgeSet
+) const {
+  // copy the edges so we can modify
+  auto edgeDescriptors = edgeSet;
+
+  auto firstEdgeIter = edgeDescriptors.begin();
+  // Initialize with last edge descriptor's indices
+  std::vector<AtomIndexType> indexSequence {
+    boost::source(*firstEdgeIter, _adjacencies.access()),
+    boost::target(*firstEdgeIter, _adjacencies.access())
+  };
+  edgeDescriptors.erase(firstEdgeIter);
+  // firstEdgeIter is now invalid!
+
+  while(!edgeDescriptors.empty()) {
+    for(
+      auto edgeIter = edgeDescriptors.begin();
+      edgeIter != edgeDescriptors.end();
+      ++edgeIter
+    ) {
+      auto& edge = *edgeIter;
+      if(boost::source(edge, _adjacencies.access()) == indexSequence.back()) {
+        indexSequence.emplace_back(
+          boost::target(edge, _adjacencies.access())
+        );
+        edgeDescriptors.erase(edgeIter);
+        break;
+      }
+      
+      if(boost::target(edge, _adjacencies.access()) == indexSequence.back()) {
+        indexSequence.emplace_back(
+          boost::source(edge, _adjacencies.access())
+        );
+        edgeDescriptors.erase(edgeIter);
+        break;
+      }
+    }
+  }
+  /* Now indexSequence should contain the entire sequence, but the first
+   * vertex index occurs twice, once at the front and once at the back. 
+   */
+
+  return indexSequence;
+}
+
+unsigned BFSConstraintCollector::_countPlanarityEnforcingBonds(
+  const std::set<GraphType::edge_descriptor>& edgeSet
+) const {
+  unsigned count = 0;
+
+  for(const auto& edge: edgeSet) {
+    const auto& edgeType = _adjacencies.access()[edge].bondType;
+    if(
+      edgeType == BondType::Double
+      || edgeType == BondType::Aromatic
+    ) {
+      count += 1;
+    }
+  }
+
+  return count;
 }
 
 /* impure Function operator for Tree BFSVisit */
@@ -247,189 +403,60 @@ void BFSConstraintCollector::set12Bounds() {
         bondType
       );
 
-      _distanceBounds.setLowerBound(
-        i,
-        j,
-        bondDistance - oneTwoVariance
-      );
-
-      _distanceBounds.setUpperBound(
-        i,
-        j,
-        bondDistance + oneTwoVariance
+      _spatialModel.setBondBounds(
+        {i, j},
+        bondDistance,
+        BFSConstraintCollector::bondRelativeVariance
       );
     }
   } else { // Uniform
+    constexpr double lower = (1 - BFSConstraintCollector::bondRelativeVariance) * 1.5;
+    constexpr double upper = (1 + BFSConstraintCollector::bondRelativeVariance) * 1.5;
+
     for(const auto& edge: _adjacencies.iterateEdges()) {
       unsigned i = boost::source(edge, _adjacencies.access());
       unsigned j = boost::target(edge, _adjacencies.access());
-      _distanceBounds.setLowerBound(i, j, 1.5 - oneTwoVariance);
-      _distanceBounds.setUpperBound(i, j, 1.5 + oneTwoVariance);
+
+      _spatialModel.setBondBounds(
+        {i, j},
+        lower,
+        upper
+      );
     }
   }
 }
 
-void BFSConstraintCollector::set13Bounds(
-  const std::vector<AtomIndexType>& chain
-) {
-  double angle = _getAngle(
-    chain.front(),
-    chain.at(1),
-    chain.back()
-  );
+void BFSConstraintCollector::set13Bounds(const std::vector<AtomIndexType>& chain) {
+  assert(chain.size() == 3);
 
-  _distanceBounds.setLowerBound(
-    chain.front(),
-    chain.back(),
-    CommonTrig::lawOfCosines(
-      _distanceBounds.lowerBound(
-        chain.front(),
-        chain.at(1)
-      ),
-      _distanceBounds.lowerBound(
-        chain.at(1),
-        chain.back()
-      ),
-      angle
-    )
-  );
-
-  _distanceBounds.setUpperBound(
-    chain.front(),
-    chain.back(),
-    CommonTrig::lawOfCosines(
-      _distanceBounds.upperBound(
-        chain.front(),
-        chain.at(1)
-      ),
-      _distanceBounds.upperBound(
-        chain.at(1),
-        chain.back()
-      ),
-      angle
-    )
-  );
-
-#ifndef NDEBUG
-  Log::log(Log::Particulars::BFSConstraintCollectorVisitCall) 
-    << "BFSConstraintCollector: attempting to improve bounds on chain {" 
-    << chain.front() << ", " << chain.at(1) << ", " << chain.back() << "}, "
-    << "angle: " << angle << ", suggest bounds ["
-    << CommonTrig::lawOfCosines(
-      _distanceBounds.lowerBound(
-        chain.front(),
-        chain.at(1)
-      ),
-      _distanceBounds.lowerBound(
-        chain.at(1),
-        chain.back()
-      ),
-      angle
-    ) << ", " << CommonTrig::lawOfCosines(
-      _distanceBounds.upperBound(
-        chain.front(),
-        chain.at(1)
-      ),
-      _distanceBounds.upperBound(
-        chain.at(1),
-        chain.back()
-      ),
-      angle
-    ) << "], currently [" 
-    << _distanceBounds.lowerBound(chain.front(), chain.back())
-    << ", " << _distanceBounds.upperBound(chain.front(), chain.back())
-    << "]" << std::endl;
-#endif
-}
-
-void BFSConstraintCollector::set14Bounds(
-  const std::vector<AtomIndexType>& chain
-) {
-  double abAngle = _getAngle(
-    chain.front(),
-    chain.at(1),
-    chain.at(2)
-  );
-  double bcAngle = _getAngle(
-    chain.at(1),
-    chain.at(2),
-    chain.back()
-  ); 
-
-  _distanceBounds.setLowerBound(
-    chain.front(),
-    chain.back(),
-    CommonTrig::dihedralLength(
-      _distanceBounds.lowerBound(
-        chain.front(),
-        chain.at(1)
-      ),
-      _distanceBounds.lowerBound(
-        chain.at(1),
-        chain.at(2)
-      ),
-      _distanceBounds.lowerBound(
-        chain.at(2),
-        chain.back()
-      ),
-      abAngle,
-      bcAngle,
-      0 // cis dihedral
-    )
-  );
-
-  _distanceBounds.setUpperBound(
-    chain.front(),
-    chain.back(),
-    CommonTrig::dihedralLength(
-      _distanceBounds.upperBound(
-        chain.front(),
-        chain.at(1)
-      ),
-      _distanceBounds.upperBound(
-        chain.at(1),
-        chain.at(2)
-      ),
-      _distanceBounds.upperBound(
-        chain.at(2),
-        chain.back()
-      ),
-      abAngle,
-      bcAngle,
-      M_PI // trans dihedral
-    )
+  _spatialModel.setAngleBoundsIfEmpty(
+    {chain.front(), chain.at(1), chain.back()},
+    _getAngle(
+      chain.front(),
+      chain.at(1),
+      chain.back()
+    ),
+    BFSConstraintCollector::angleAbsoluteVariance
   );
 }
 
-void BFSConstraintCollector::finalizeBoundsMatrix() {
-  assert(_distanceBounds.boundInconsistencies() == 0);
-
-  // Set lower bounds to sum of vdw radii
-  for(unsigned i = 0; i < _adjacencies.numAtoms(); i++) {
-    for(unsigned j = i + 1; j < _adjacencies.numAtoms(); j++) {
-      /* setting the bounds will fail for bonded pairs as those have strict
-       * bounds already and the fairly high sum of vdw would lead to
-       * inconsistencies
-       */
-      if(_distanceBounds.lowerBound(i, j) == 0) {
-        _distanceBounds.setLowerBound(
-          i,
-          j,
-          AtomInfo::vdwRadius(
-            _adjacencies.getElementType(i)
-          ) + AtomInfo::vdwRadius(
-            _adjacencies.getElementType(j)
-          ) 
-        );
-      }
-    }
-  }
-
-  assert(_distanceBounds.boundInconsistencies() == 0);
-
-  _distanceBounds.smooth();
-
-  assert(_distanceBounds.boundInconsistencies() == 0);
+void BFSConstraintCollector::set14Bounds(const std::vector<AtomIndexType>& chain) {
+  /* TODO This is largely nonsense
+   * - Now, it would be better to just linearly extract all angle information
+   *   from the Stereocenters and dihedral information from EZStereocenters. 
+   *   Apart from that, all other possible dihedrals are obviously restricted
+   *   to [0, π], but there's no reason to BFSVisit everything for that
+   */
+  _spatialModel.setDihedralBoundsIfEmpty(
+    {
+      chain.front(),
+      chain.at(1),
+      chain.at(2),
+      chain.back()
+    },
+    0,
+    M_PI
+  );
 }
 
 std::vector<
@@ -450,6 +477,39 @@ std::vector<
   }
 
   return prototypes;
+}
+
+BFSConstraintCollector::SmallestCycleMapType BFSConstraintCollector::_makeSmallestCycleMap() const {
+  SmallestCycleMapType smallestCycle;
+
+  for(
+    auto cycleIter = _cycleData.getCyclesIterator();
+    !cycleIter.atEnd();
+    cycleIter.advance()
+  ) {
+    const auto cycleEdges = cycleIter.getCurrentCycle();
+    const unsigned cycleSize = cycleEdges.size();
+
+    for(const auto& edge : cycleEdges) {
+      std::array<AtomIndexType, 2> indices {
+        boost::source(edge, _adjacencies.access()),
+        boost::target(edge, _adjacencies.access())
+      };
+
+      for(const auto& index: indices) {
+        StdlibTypeAlgorithms::addOrUpdateMapIf(
+          smallestCycle,
+          index, // key_type to check
+          cycleSize, // mapped_value to place if key does not exist or if ...
+          [&cycleSize](const unsigned& currentMinCycleSize) -> bool {
+            return cycleSize < currentMinCycleSize;
+          }
+        );
+      }
+    }
+  }
+
+  return smallestCycle;
 }
 
 } // namespace DistanceGeometry

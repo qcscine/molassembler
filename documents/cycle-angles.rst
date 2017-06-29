@@ -30,9 +30,31 @@ polygons.
 - Maybe it is still better to just ignore this (admittedly minor) optimization
   and just increase tolerance to the strained cycles to account for distortion.
   However, I'm pretty sure the deviation from the ideal geometry in strained
-  cycle is does not have the same angle averages, so it would be more accurate
+  cycles does not have the same angle averages, so it would be more accurate
   to properly model the cycles using geometric considerations.
 - Maybe it is best to investigate the internal angle distributions for 3, 4 and
   5-cycles to ensure the best path going forwards, perhaps using converged
   calculations of molecules from the CCCDB... But no way to ensure these
   considerations hold for any heavily substituted cycles!
+
+
+Small cycles (<=5) require tolerance on angles and dihedral angles to account
+for strain distortion. Two immediate approaches:
+
+
+proper geometric modeling
+=========================
+
+- Add detail to distance bounds by specifying all internal angles precisely
+  for triangles and aromatic pentagons
+- Consider investigating internal angle distributions for small cycles and
+  including them in the model (significant additional effort)
+- Angles involving external atoms are given additional tolerance - no approach
+  immediately clear for resolving angles including external angles for all
+  symmetries
+
+
+simple cop-out
+==============
+
+- Add variance to small cycle angles and dihedrals to account for distortion

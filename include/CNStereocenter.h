@@ -59,7 +59,7 @@ public:
   // Central atom of the Stereocenter, const on assignment
   const AtomIndexType centerAtom; 
   // The current state of assignment (if or not, and if so, which)
-  boost::optional<unsigned> assignment;
+  boost::optional<unsigned> assignmentOption;
 
 /* Constructors */
   CNStereocenter(
@@ -68,11 +68,11 @@ public:
     // The atom this Stereocenter is centered on
     const AtomIndexType& centerAtom,
     // A partially ordered list of substituents, low to high
-    const std::vector<AtomIndexType> partiallySortedSubstituents,
+    const std::vector<AtomIndexType>& partiallySortedSubstituents,
     // A set of pairs denoting which substituents are equal priority
     const std::set<
       std::pair<AtomIndexType, AtomIndexType>
-    > equalPairsSet
+    >& equalPairsSet
   );
 
 /* Modification */
@@ -91,7 +91,7 @@ public:
 
   boost::optional<unsigned> assigned() const final;
 
-  unsigned numAssignments() const final;
+  std::string charRepresentation() const;
 
   std::vector<ChiralityConstraintPrototype> chiralityConstraints() const final;
 
@@ -100,6 +100,8 @@ public:
   std::string info() const final;
 
   std::set<AtomIndexType> involvedAtoms() const final;
+
+  unsigned numAssignments() const final;
 
   Type type() const final;
 

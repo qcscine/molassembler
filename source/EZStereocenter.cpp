@@ -3,9 +3,9 @@
 #include "constexpr_magic/Math.h"
 #include "DelibHelpers.h"
 
-using namespace MoleculeManip;
-using namespace MoleculeManip::Stereocenters;
-using namespace std::string_literals;
+namespace MoleculeManip {
+
+namespace Stereocenters {
 
 /* Constructors */
 EZStereocenter::EZStereocenter(
@@ -17,10 +17,12 @@ EZStereocenter::EZStereocenter(
   const IndexPairsSet& secondCenterEqualPairs
 ) {
   assert(
-    1 <= firstCenterRanking.size()
-    && firstCenterRanking.size() <= 2
-    && 1 <= secondCenterRanking.size() 
-    && secondCenterRanking.size() <= 2
+    firstCenterRanking.size() == 1
+    || firstCenterRanking.size() == 2
+  );
+  assert(
+    secondCenterRanking.size() == 1
+    || secondCenterRanking.size() == 2
   );
 
   _leftCenter = firstCenter;
@@ -202,6 +204,30 @@ std::vector<ChiralityConstraintPrototype> EZStereocenter::chiralityConstraints()
     }
   };
 
+  if(_leftLowPriority) {
+    constraints.emplace_back(
+      std::array<AtomIndexType, 4> {
+        _leftHighPriority,
+        _leftCenter,
+        _rightCenter,
+        _leftLowPriority.value()
+      },
+      ChiralityConstraintTarget::Flat
+    );
+  }
+
+  if(_rightLowPriority) {
+    constraints.emplace_back(
+      std::array<AtomIndexType, 4> {
+        _rightHighPriority,
+        _rightCenter,
+        _leftCenter,
+        _rightLowPriority.value()
+      },
+      ChiralityConstraintTarget::Flat
+    );
+  }
+
   return constraints;
 }
 
@@ -255,7 +281,7 @@ std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
    * consider the first in all cases. As long as the ranking algorithm works
    * as it should, there should be no issues.
    *
-   * So we just make this dependent on the current _isEOption settings:
+   * So we just make this dependent on the current _isEOption settings.
    */
 
   // EZStereocenters can impose dihedral limits 
@@ -267,10 +293,23 @@ std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
     return _cisDihedralLimits();
   }
 
+  /* It could occur to you that the limits are defined only on the positive
+   * interval [0, π], and so a corresponding trans dihedral lies on an interval
+   * with some tolerance t: [t, π]. What about the negative dihedral interval?
+   *
+   * The way this data is used in distance geometry is merely a distance 
+   * consideration depending on all bond lengths and angles involved, which is 
+   * symmetric to the negative interval. By only considering the positive
+   * interval, the correct distances are determined for the negative interval
+   * as well.
+   */
+
   return {};
 }
 
 std::string EZStereocenter::info() const {
+  using namespace std::string_literals;
+
   std::string returnString =  "EZStereocenter on ("s 
     + std::to_string(_leftCenter) + ", "s 
     + std::to_string(_rightCenter) + "), "s;
@@ -309,3 +348,7 @@ bool EZStereocenter::operator == (const EZStereocenter& other) const {
 
 // Static data
 const double EZStereocenter::_dihedralAngleVariance = ConstexprMagic::Math::toRadians(5);
+
+} // namespace Stereocenters
+
+} // namespace MoleculeManip

@@ -72,6 +72,8 @@ using GraphType = boost::adjacency_list<
 using AtomIndexType = GraphType::vertex_descriptor;
 using EdgeIndexType = GraphType::edge_descriptor;
 
+using dlibIndexType = long;
+
 } // namespace MoleculeManip
 
 #endif

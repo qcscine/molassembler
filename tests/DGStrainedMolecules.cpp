@@ -17,16 +17,22 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   // Read the file
   IO::MOLFileHandler molHandler;
   auto mol = molHandler.readSingle(filePath.string());
+  mol.dumpGraphviz(filePath.stem().string() + ".dot"s);
 
-  // Generate a conformation
-  auto positions = DistanceGeometry::generateConformation(mol);
+  try {
+    // Generate a conformation
+    auto positions = DistanceGeometry::generateConformation(mol);
 
-  // Write the generated conformation to file
-  molHandler.writeSingle(
-    filePath.stem().string() + "-generated.mol"s,
-    mol,
-    positions
-  );
+    // Write the generated conformation to file
+    molHandler.writeSingle(
+      filePath.stem().string() + "-generated.mol"s,
+      mol,
+      positions
+    );
+  } catch(std::exception e) {
+    std::cout << "Failed! Writing dotfile.";
+    throw;
+  }
 }
 
 BOOST_AUTO_TEST_CASE(strainedOrganicMolecules) {

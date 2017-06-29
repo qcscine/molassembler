@@ -109,8 +109,8 @@ public:
     }
 
     typename BaseIteratorType::reference operator * () const { 
-      for(unsigned i = 0; i < _currentCombination.size(); i++) {
-        if( // only reassign if the unset or at different assignment
+      for(unsigned i = 0; i < _currentCombination.size(); ++i) {
+        if( // only reassign if unset or at different assignment
           !_stereocenterList.at(i) -> assigned()
           || (
             _stereocenterList.at(i) -> assigned().value() 

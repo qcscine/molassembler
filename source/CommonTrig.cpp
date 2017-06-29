@@ -57,14 +57,16 @@ double dihedralLength(
 ) {
   return sqrt(
     a * a
-    + 4 * b * b
+    + b * b
     + c * c
-    - 4 * a * b * cos(abAngle)
-    + 2 * a * c * (
-      sin(abAngle) * sin(bcAngle) * cos(dihedral) 
-      - cos(abAngle) * cos(bcAngle)
+    + 2 * (
+      - a * b * cos(abAngle)
+      + a * c * (
+        cos(abAngle) * cos(bcAngle)
+        - sin(abAngle) * sin(bcAngle) * cos(dihedral)
+      )
+      - b * c * cos(bcAngle)
     )
-    + 4 * b * c * cos(bcAngle)
   );
 }
 

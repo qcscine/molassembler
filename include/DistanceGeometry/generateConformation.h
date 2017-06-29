@@ -1,13 +1,13 @@
 #ifndef INCLUDE_DG_GENERATE_CONFORMATION_H
 #define INCLUDE_DG_GENERATE_CONFORMATION_H
 
-#include "Molecule.h"
 #include "Delib/PositionCollection.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/DistanceGeometry.h"
-#include "DistanceGeometry/BFSConstraintCollector.h"
+#include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
+#include "Molecule.h"
 
 #include <vector>
 #include <Eigen/Core>
@@ -36,7 +36,7 @@ DGDebugData debugDistanceGeometry(
   const unsigned& numStructures,
   const MetrizationOption& metrization,
   const bool& useYInversionTrick = true,
-  const BFSConstraintCollector::DistanceMethod& distanceMethod = BFSConstraintCollector::DistanceMethod::UFFLike
+  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );
 
 std::list<Delib::PositionCollection> runDistanceGeometry(
@@ -44,7 +44,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
   const unsigned& numStructures,
   const MetrizationOption& metrization,
   const bool& useYInversionTrick = true,
-  const BFSConstraintCollector::DistanceMethod& distanceMethod = BFSConstraintCollector::DistanceMethod::UFFLike
+  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );
 
 } // namespace detail
@@ -60,7 +60,7 @@ struct MoleculeDGInformation {
 
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const BFSConstraintCollector::DistanceMethod& distanceMethod = BFSConstraintCollector::DistanceMethod::UFFLike
+  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );
 
 // Public functions

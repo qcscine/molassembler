@@ -66,7 +66,9 @@ if(NOT CLANG_TIDY_EXE)
   message(STATUS "No clang-tidy found!")
 else()
   message(STATUS "Clang-tidy found: ${CLANG_TIDY_EXE}")
-  set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*")
+  # Enable all clang-tidy checks, deactivating alpha checks and a specific one
+  # that trips up over casserts
+  set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*,-cppcoreguidelines-pro-bounds-array-to-pointer-decay")
 endif()
 
 # compiler warning flags 
@@ -90,11 +92,11 @@ include_directories(SYSTEM
 
 # collect headers
 set(HEADERS_all
-  include/DistanceGeometry/BFSConstraintCollector.h
   include/DistanceGeometry/RefinementProblem.h
   include/DistanceGeometry/DistanceBoundsMatrix.h
   include/DistanceGeometry/DistanceGeometry.h
   include/DistanceGeometry/MetricMatrix.h
+  include/DistanceGeometry/MoleculeSpatialModel.h
   include/DistanceGeometry/generateConformation.h
   include/AdjacencyList.h
   include/AdjacencyListAlgorithms.h
@@ -105,6 +107,7 @@ set(HEADERS_all
   include/CNStereocenter.h
   include/Cache.h
   include/CommonTrig.h
+  include/CycleData.h
   include/DelibHelpers.h
   include/EZStereocenter.h
   include/Edges.h
@@ -129,10 +132,10 @@ set(HEADERS_all
 
 # collect sources
 set(SOURCES_all
-  source/DistanceGeometry/BFSConstraintCollector.cpp
   source/DistanceGeometry/DistanceBoundsMatrix.cpp
   source/DistanceGeometry/generateConformation.cpp
   source/DistanceGeometry/MetricMatrix.cpp
+  source/DistanceGeometry/MoleculeSpatialModel.cpp
   source/DistanceGeometry/RefinementProblem.cpp
   source/AdjacencyList.cpp
   source/AdjacencyListAlgorithms.cpp

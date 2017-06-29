@@ -103,9 +103,11 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
         gradient,
         finiteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
-          return std::fabs(
-            std::fabs(a) - std::fabs(b)
-          ) < 1e-5;
+          return ConstexprMagic::Math::isCloseRelative(
+            a,
+            b,
+            1e-5
+          );
         }
       )
     );
@@ -140,9 +142,11 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
         compressedGradient,
         compressedFiniteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
-          return std::fabs(
-            std::fabs(a) - std::fabs(b)
-          ) < 1e-5;
+          return ConstexprMagic::Math::isCloseRelative(
+            a,
+            b,
+            1e-5
+          );
         }
       )
     );
@@ -474,7 +478,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
       100,
       MetrizationOption::full,
       false,
-      BFSConstraintCollector::DistanceMethod::Uniform
+      MoleculeSpatialModel::DistanceMethod::Uniform
     );
 
     // For something this simple, there really shouldn't be any failures

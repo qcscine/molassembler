@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
         nStructures,
         MetrizationOption::full,
         false,
-        BFSConstraintCollector::DistanceMethod::Uniform
+        MoleculeSpatialModel::DistanceMethod::Uniform
       );
 
       for(const auto& enumPair : enumerate(debugData.refinements)) {

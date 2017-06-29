@@ -6,7 +6,7 @@ Overall general points
 - Newer concepts such as URF or Vismara's algorithm seem (judging using criteria
   from math paper) better for a new implementation
 - URF exists as well-tested library and authors claim implementation is
-  difficult. Haven't read URF paper properly yet though
+  difficult. 
 - Generally, BFS to figure out size of smallest cycle selected atom is in should
   be easy and quick to implement, no need of advanced ring perception algorithms
 - Nevertheless, having a reliable and reasonably future-proof method implemented
@@ -14,6 +14,8 @@ Overall general points
   for enforcing coplanarity)
 - Overall, not too hot on imitating RDKit. Much prefer to use URF
 - URF needs Vismara's algorithm
+- Settled on packaging URF using the RingDecomposerLib. Details in relevant
+  commit.
 
 
 RDKIT Figueras' algorithm

@@ -2,6 +2,7 @@
 #define INCLUDE_DG_BFS_CONSTRAINT_COLLECTOR_H
 
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "AdjacencyList.h"
 #include "Tree.h"
 #include "SequenceSet.h"
@@ -18,6 +19,7 @@ class BFSConstraintCollector {
 public:
 /* Typedefs */
   using NodeType = Tree::Node<AtomIndexType>;
+  using SmallestCycleMapType = std::map<AtomIndexType, unsigned>;
 
   enum class DistanceMethod {
     Uniform,
@@ -25,16 +27,17 @@ public:
   };
 
 private:
-  /* Private Members */
-  // Pre-set constants
-  const double oneTwoVariance = 0.1;
-
+/* Private Members */
   // Closures
   const AdjacencyList& _adjacencies;
   const DistanceMethod& _distanceMethod;
 
   // Output (via function operator side effect)
-  DistanceBoundsMatrix& _distanceBounds;
+  MoleculeSpatialModel& _spatialModel;
+
+  // Constant members
+  const CycleData _cycleData;
+  const SmallestCycleMapType _smallestCycleMap;
 
   // State
   std::map<
@@ -49,11 +52,29 @@ private:
     const AtomIndexType& i,
     const AtomIndexType& j,
     const AtomIndexType& k
-  ) {
-    return _stereocenterMap[j] -> angle(i, j, k);
+  ) const {
+    return _stereocenterMap.at(j) -> angle(i, j, k);
   }
 
+  std::map<AtomIndexType, unsigned> _makeSmallestCycleMap() const;
+
+  std::vector<AtomIndexType> _makeRingIndexSequence(
+    const std::set<GraphType::edge_descriptor>& edgeSet
+  ) const;
+
+  unsigned _countPlanarityEnforcingBonds(
+    const std::set<GraphType::edge_descriptor>& edgeSet
+  ) const;
+
 public:
+  // Static constants
+  /*! Relative bond distance variance, 0.0x meaning x% variance. Must fulfill
+   * 0 < x << 1
+   */
+  static constexpr double bondRelativeVariance = 0.03; 
+  //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
+  static constexpr double angleAbsoluteVariance = M_PI / 36;
+
   /* Ctor */
   /*! 
    * Assumes the Distance Bounds is entirely uninitialized (lower diagonal is 0,
@@ -62,7 +83,7 @@ public:
   BFSConstraintCollector(
     const AdjacencyList& adjacencies,
     const StereocenterList& stereocenterList,
-    DistanceBoundsMatrix& distanceBounds,
+    MoleculeSpatialModel& spatialModel,
     const DistanceMethod& distanceMethod = DistanceMethod::UFFLike
   );
 
@@ -76,13 +97,6 @@ public:
   void set12Bounds();
   void set13Bounds(const std::vector<AtomIndexType>& chain);
   void set14Bounds(const std::vector<AtomIndexType>& chain);
-
-  /*! After all trees have been visited, replace all lower bounds that are 0
-   * to the sum of the respective atoms' vdw radii and then smooth the matrix.
-   * Also checks that no bounds inconsistencies exists afterwards in debug
-   * builds.
-   */
-  void finalizeBoundsMatrix();
 
 /* Information */
   // Collect chirality prototypes from gathered information

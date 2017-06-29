@@ -38,7 +38,15 @@ public:
 
 /* Information */
   //! Returns an iterator proxy object
-  CycleIterator getIterator(const unsigned& maxCycleSize = 0) const;
+  CycleIterator getCyclesIterator() const;
+
+  CycleIterator getCyclesIteratorSizeLE(
+    const unsigned& maxCycleSize
+  ) const;
+
+  CycleIterator getCyclesIteratorContaining(
+    const AtomIndexType& containingIndex
+  ) const;
 
   //! Returns the number of unique ring families (URFs)
   unsigned numCycleFamilies() const;
@@ -53,25 +61,62 @@ public:
 
 private:
   const CycleData& _cycleDataRef;
-  const unsigned _maxCycleSize;
+  const boost::optional<unsigned> _maxCycleSizeOption;
+  const boost::optional<AtomIndexType>& _containingIndexOption;
   RDL_cycleIterator* _cycleIteratorPtr;
 
   //! Private constructor so that only CycleData can call it
   CycleIterator(
     const CycleData& cycleData,
-    const unsigned& maxCycleSize = 0
+    const boost::optional<unsigned>& maxCycleSizeOption = boost::none,
+    const boost::optional<AtomIndexType>& containingIndexOption = boost::none
   );
+
+  bool _currentCyclePermissible() const;
 
 public:
   ~CycleIterator();
 
 /* Information */
   bool atEnd() const;
-  std::vector<GraphType::edge_descriptor> getCurrentCycle() const;
+  unsigned cycleSize() const;
+  std::set<GraphType::edge_descriptor> getCurrentCycle() const;
 
 /* Modification */
   void advance();
 };
+
+// Forward-declare AdjacencyList
+// TODO check if this kills the program
+class AdjacencyList;
+
+/*!
+ * Creates a mapping from atom index to the size of the smallest cycle
+ * containing that index. The map does not contain entries for indices not
+ * enclosed by a cycle.
+ */
+std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
+  const CycleData& cycleData,
+  const AdjacencyList& adjacencies
+);
+
+/*!
+ * From a set of graph edge descriptors, this function creates one of the two
+ * possible vertex index sequences describing the cycle
+ */
+std::vector<AtomIndexType> makeRingIndexSequence(
+  const std::set<GraphType::edge_descriptor>& edgeSet,
+  const AdjacencyList& adjacencies
+);
+
+/*!
+ * Counts the number of planarity enforcing bonds in a set of edge descriptors.
+ * Double and aromatic bonds are considered planarity enforcing.
+ */
+unsigned countPlanarityEnforcingBonds(
+  const std::set<GraphType::edge_descriptor>& edgeSet,
+  const AdjacencyList& adjacencies
+);
 
 } // namespace MoleculeManip
 

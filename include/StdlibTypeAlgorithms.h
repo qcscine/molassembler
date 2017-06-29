@@ -300,6 +300,47 @@ bool nextCombinationPermutation(
   }
 }
 
+/*! Updates a map, placing the updateValue if the map does not yet have an entry
+ * for the passed index. If there is an existing value for the passed index, a
+ * predicate function is called to determine whether to update the value or not
+ */
+template<typename T, typename U, class UpdatePredicate>
+std::enable_if_t<
+  std::is_same<
+    decltype( // get type of expression
+      std::declval<UpdatePredicate>()( // invoke predicate
+        std::declval<U>()
+      )
+    ),
+    bool
+  >::value,
+  void
+> addOrUpdateMapIf(
+  std::map<T, U>& map,
+  const T& index,
+  const U& updateValue,
+  UpdatePredicate&& updatePredicate
+) {
+  if(map.count(index) == 0) {
+    map[index] = updateValue;
+  } else {
+    if(updatePredicate(map.at(index))) {
+      map.at(index) = updateValue;
+    }
+  }
+}
+
+// From cppreference, possible C++17 clamp implementation
+template<class T, class Compare>
+constexpr const T& clamp( const T& v, const T& lo, const T& hi, Compare comp ) {
+    return assert( !comp(hi, lo) ),
+        comp(v, lo) ? lo : comp(hi, v) ? hi : v;
+}
+
+template<class T>
+constexpr const T& clamp( const T& v, const T& lo, const T& hi ) {
+    return clamp( v, lo, hi, std::less<T>() );
+}
 
 void split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);

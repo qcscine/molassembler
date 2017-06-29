@@ -6,20 +6,51 @@ namespace MoleculeManip {
 namespace DistanceGeometry {
 
 /* Constructors */
-DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) 
+DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) noexcept
   : _boundsMatrix(N),
-    N(N) {
+    N(N) 
+{
 
   _boundsMatrix.matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
   _initRandomEngine();
 }
 
-DistanceBoundsMatrix::DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) : 
-  _boundsMatrix(matrix),
-  N(matrix.rows()) {
+DistanceBoundsMatrix::DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) noexcept
+  : _boundsMatrix(matrix),
+    N(matrix.rows()) 
+{
   assert(matrix.rows() == matrix.cols());
 
   _initRandomEngine();
+}
+
+DistanceBoundsMatrix::DistanceBoundsMatrix(const DistanceBoundsMatrix& other) noexcept
+  : _boundsMatrix(other._boundsMatrix),
+    N(other.N)
+{ 
+  _initRandomEngine();
+}
+
+DistanceBoundsMatrix::DistanceBoundsMatrix(DistanceBoundsMatrix&& other) noexcept
+  : _boundsMatrix(other.N),
+    N(other.N) 
+{
+  std::swap(_boundsMatrix, other._boundsMatrix);
+  _initRandomEngine();
+}
+
+DistanceBoundsMatrix& DistanceBoundsMatrix::operator = (const DistanceBoundsMatrix& other) noexcept {
+  assert(N == other.N);
+  _boundsMatrix = other._boundsMatrix;
+
+  return *this;
+}
+
+DistanceBoundsMatrix& DistanceBoundsMatrix::operator = (DistanceBoundsMatrix&& other) noexcept {
+  assert(N == other.N);
+  std::swap(_boundsMatrix, other._boundsMatrix);
+
+  return *this;
 }
 
 /* Private members */

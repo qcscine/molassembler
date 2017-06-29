@@ -20,10 +20,12 @@ Symmetry::Name VSEPR::determineGeometry(
   const std::vector<LigandType>& ligands,
   const int& formalCharge
 ) {
-  if(nSites <= 1) throw std::logic_error(
-    "Don't use a model on terminal atoms! Single bonds don't "
-    "have stereochemistry!"
-  );
+  if(nSites <= 1) {
+    throw std::logic_error(
+      "Don't use a model on terminal atoms! Single bonds don't "
+      "have stereochemistry!"
+    );
+  }
 
   if(
     std::any_of(
@@ -33,10 +35,12 @@ Symmetry::Name VSEPR::determineGeometry(
         return std::get<2>(ligand).size() > 1;
       }
     )
-  ) throw std::logic_error(
-    "The ligand set includes ligands with multiple atoms on a site!"
-    " This is just VSEPR, there should be no eta bond situations!"
-  );
+  ) {
+    throw std::logic_error(
+      "The ligand set includes ligands with multiple atoms on a site!"
+      " This is just VSEPR, there should be no eta bond situations!"
+    );
+  }
   
   // get uncharged VE count
   auto VEOption = MoleculeManip::AtomInfo::mainGroupVE(centerAtomType);
@@ -76,60 +80,95 @@ Symmetry::Name VSEPR::determineGeometry(
     ) / 2.0
   );
 
-  if(E < 0) throw std::logic_error(
-    "For some reason, E is < 0 in VSEPR. That shouldn't happen."
-  );
+  if(E < 0) {
+    throw std::logic_error(
+      "For some reason, E is < 0 in VSEPR. That shouldn't happen."
+    );
+  }
 
   using Symmetry::Name;
 
-  Name result;
+  const auto XESum = X + E;
 
-  switch(X + E) {
+  if(XESum == 2) {
+    return Name::Linear;
+  }
+  
+  if(XESum == 3) {
+    if(X == 3) {
+      return Name::TrigonalPlanar;
+    }
 
-    case 2: {
-      result = Name::Linear;
-    }; break;
-    case 3: {
-      if(X == 3) result = Name::TrigonalPlanar;
-      else result = Name::Bent;
-    }; break;
-    case 4: {
-      if(X == 4) result = Name::Tetrahedral;
-      else if(X == 3) result = Name::TrigonalPyramidal;
-      else result = Name::Bent;
-    }; break;
-    case 5: {
-      if(X == 5) result = Name::TrigonalBiPyramidal;
-      else if(X == 4) result = Name::Seesaw;
-      else if(X == 3) result = Name::TShaped;
-      else result = Name::Linear;
-    }; break;
-    case 6: {
-      if(X == 6) result = Name::Octahedral;
-      else if(X == 5) result = Name::SquarePyramidal;
-      else result = Name::SquarePlanar;
-    }; break;
-    case 7: {
-      if(X == 7) result = Name::PentagonalBiPyramidal;
-      else if(X == 6) result = Name::PentagonalPyramidal;
-      else result = Name::PentagonalPlanar;
-    }; break;
-    case 8: {
-      result = Name::SquareAntiPrismatic;
-    }; break;
-    default: {
-      std::stringstream ss;
-      ss << "Could not find a fitting symmetry for your X + E case: "
-        << "X = " << X << ", E = " << E << ". Maybe your molecular graph is "
-        << " too weird for VSEPR. Have another look at it.";
-
-      throw std::logic_error(
-        ss.str().c_str()
-      );
-    }; break;
+    return Name::Bent;
   }
 
-  return result;
+  if(XESum == 4) {
+    if(X == 4) {
+      return Name::Tetrahedral;
+    }
+
+    if(X == 3) {
+      return Name::TrigonalPyramidal;
+    }
+
+    return Name::Bent;
+  }
+
+  if(XESum == 5) {
+    if(X == 5) {
+      return Name::TrigonalBiPyramidal;
+    }
+
+    if(X == 4) {
+      return Name::Seesaw;
+    }
+
+    if(X == 3) {
+      return Name::TShaped;
+    }
+
+    return Name::Linear;
+  }
+
+  if(XESum == 6) {
+    if(X == 6) {
+      return Name::Octahedral;
+    }
+
+    if(X == 5) {
+      return Name::SquarePyramidal;
+    }
+
+    return Name::SquarePlanar;
+  }
+
+  if(XESum == 7) {
+    if(X == 7) {
+      return Name::PentagonalBiPyramidal;
+    }
+
+    if(X == 6) {
+      return Name::PentagonalPyramidal;
+    }
+
+    return Name::PentagonalPlanar;
+  }
+
+  if(XESum == 8) {
+    return Name::SquareAntiPrismatic;
+  }
+
+  std::stringstream ss;
+  ss << "Could not find a fitting symmetry for your X + E case: "
+    << "X = " << X << ", E = " << E << ". Maybe your molecular graph is "
+    << " too weird for VSEPR. Have another look at it.";
+
+  throw std::logic_error(
+    ss.str().c_str()
+  );
+
+  // Never runs, for static analysis
+  return {};
 }
 
 } // namespace LocalGeometry

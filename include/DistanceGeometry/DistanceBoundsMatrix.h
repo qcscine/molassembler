@@ -124,8 +124,13 @@ public:
 
 /* Constructors */
   DistanceBoundsMatrix() = delete;
-  explicit DistanceBoundsMatrix(const unsigned& N);
-  explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix);
+  explicit DistanceBoundsMatrix(const unsigned& N) noexcept;
+  explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) noexcept;
+
+  DistanceBoundsMatrix(const DistanceBoundsMatrix& other) noexcept;
+  DistanceBoundsMatrix(DistanceBoundsMatrix&& other) noexcept;
+  DistanceBoundsMatrix& operator = (const DistanceBoundsMatrix& other) noexcept;
+  DistanceBoundsMatrix& operator = (DistanceBoundsMatrix&& other) noexcept;
 
 /* Modifiers */
   //! Smooth until the matrix does not change

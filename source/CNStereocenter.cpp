@@ -19,11 +19,11 @@ CNStereocenter::CNStereocenter(
   // The atom this Stereocenter is centered on
   const AtomIndexType& centerAtom,
   // A partially ordered list of substituents, low to high 
-  const std::vector<AtomIndexType> partiallySortedSubstituents,
+  const std::vector<AtomIndexType>& partiallySortedSubstituents,
   // A set of pairs denoting which substituents are equal priority
   const std::set<
     std::pair<AtomIndexType, AtomIndexType>
-  > equalPairsSet
+  >& equalPairsSet
 ) : symmetry(symmetry),
     centerAtom(centerAtom) {
 
@@ -162,11 +162,11 @@ std::vector<char> CNStereocenter::_reduceNeighborCharMap(
 }
 
 /* Modification */
-void CNStereocenter::assign(const unsigned& passAssignment) {
-  assert(passAssignment < _uniqueAssignments.size());
+void CNStereocenter::assign(const unsigned& assignment) {
+  assert(assignment < _uniqueAssignments.size());
 
   // Store current assignment
-  assignment = passAssignment;
+  assignmentOption = assignment;
 
   /* save a mapping of next neighbor indices to symmetry positions after
    * assigning (AtomIndexType -> unsigned).
@@ -175,7 +175,7 @@ void CNStereocenter::assign(const unsigned& passAssignment) {
    * this is e.g. map{'A' -> vector{0,2,3}, 'B' -> vector{1}}
    */
   auto charSymmetryPositionsMap = _uniqueAssignments[
-    passAssignment
+    assignment
   ].getCharMap();
 
   /* assign next neighbor indices using _neighborCharMap, which stores
@@ -225,7 +225,7 @@ void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
   );
 
   // The Stereocenter is now unassigned
-  assignment = boost::none;
+  assignmentOption = boost::none;
 }
 
 void CNStereocenter::fit(const Delib::PositionCollection& positions) {
@@ -400,9 +400,9 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
    * Current policy: If there is multiplicity, warn and do not assign
    */
   if(bestAssignmentMultiplicity > 1) {
-    assignment = boost::none;
+    assignmentOption = boost::none;
   } else {
-    assignment = bestAssignment;
+    assignmentOption = bestAssignment;
   }
 }
 
@@ -426,48 +426,54 @@ double CNStereocenter::angle(
 }
 
 boost::optional<unsigned> CNStereocenter::assigned() const {
-  return assignment;
+  return assignmentOption;
 }
 
-unsigned CNStereocenter::numAssignments() const {
-  return _uniqueAssignments.size();
+std::string CNStereocenter::charRepresentation() const {
+  // TODO returns a char representation of its substituent rankings
+  // e.g. (A-B)CD
 }
 
 std::vector<
   ChiralityConstraintPrototype
 > CNStereocenter::chiralityConstraints() const {
   std::vector<ChiralityConstraintPrototype> prototypes;
+
+  // Only collect constraints if there is more than one assignment for this
+  if(numAssignments() > 1) {
   
-  /* Invert _neighborSymmetryPositionMap, we need a mapping of
-   *  (position in symmetry) -> atom index
-   */
-  auto symmetryPositionToAtomIndexMap = TemplateMagic::invertMap(
-    _neighborSymmetryPositionMap
-  );
-
-  // Get list of tetrahedra from symmetry
-  auto tetrahedraList = Symmetry::tetrahedra(symmetry);
-
-  for(const auto& tetrahedron : tetrahedraList) {
-    /* Replace boost::none with centerAtom, indices (represent positions within 
-     * the symmetry) with the atom index at that position from the inverted map
+    /* Invert _neighborSymmetryPositionMap, we need a mapping of
+     *  (position in symmetry) -> atom index
      */
-    auto replaced = TemplateMagic::map(
-      tetrahedron,
-      [&](const auto& indexOptional) -> AtomIndexType {
-        if(indexOptional) {
-          return symmetryPositionToAtomIndexMap.at(indexOptional.value());
-        } else {
+    auto symmetryPositionToAtomIndexMap = TemplateMagic::invertMap(
+      _neighborSymmetryPositionMap
+    );
+
+    // Get list of tetrahedra from symmetry
+    auto tetrahedraList = Symmetry::tetrahedra(symmetry);
+
+    for(const auto& tetrahedron : tetrahedraList) {
+      /* Replace boost::none with centerAtom, indices (represent positions within 
+       * the symmetry) with the atom index at that position from the inverted map
+       */
+      auto replaced = TemplateMagic::map(
+        tetrahedron,
+        [&](const auto& indexOptional) -> AtomIndexType {
+          if(indexOptional) {
+            return symmetryPositionToAtomIndexMap.at(indexOptional.value());
+          } 
+
           return centerAtom;
         }
-      }
-    );
+      );
 
-    // Make a prototype from it
-    prototypes.emplace_back(
-      replaced,
-      ChiralityConstraintTarget::Positive
-    );
+      // Make a prototype from it
+      prototypes.emplace_back(
+        replaced,
+        ChiralityConstraintTarget::Positive
+      );
+    }
+
   }
 
   return prototypes;
@@ -481,8 +487,8 @@ std::string CNStereocenter::info() const {
   std::string returnString = "CNStereocenter on "s 
     + std::to_string(centerAtom) + " ("s + Symmetry::name(symmetry) +"): "s;
 
-  if(assignment) {
-    returnString += std::to_string(assignment.value());
+  if(assignmentOption) {
+    returnString += std::to_string(assignmentOption.value());
   } else {
     returnString += "u";
   }
@@ -496,6 +502,10 @@ std::set<AtomIndexType> CNStereocenter::involvedAtoms() const {
   return {centerAtom};
 }
 
+unsigned CNStereocenter::numAssignments() const {
+  return _uniqueAssignments.size();
+}
+
 Type CNStereocenter::type() const {
   return Type::CNStereocenter;
 }
@@ -507,8 +517,11 @@ bool CNStereocenter::operator == (const CNStereocenter& other) const {
    * straight-up use of operator ==.
    */
   bool assignmentsSame = (
-    (assignment && other.assignment && assignment.value() == other.assignment.value())
-    || (!assignment && !other.assignment)
+    (
+      assignmentOption 
+      && other.assignmentOption 
+      && assignmentOption.value() == other.assignmentOption.value()
+    ) || (!assignmentOption && !other.assignmentOption)
   );
 
   /*if(!assignmentsSame) {

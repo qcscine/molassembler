@@ -56,3 +56,5 @@ TODO
   approximable with low cost
 - Give some thought to how to treat charge / total electron counts
 - Make everything nothrow as best as possible
+- Reconsider float <-> double necessity, especially in DG: Might get some
+  significant gains by using floats

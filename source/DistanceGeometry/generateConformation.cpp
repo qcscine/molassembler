@@ -4,7 +4,7 @@
 #include "DistanceGeometry/RefinementProblem.h"
 #include "DistanceGeometry/dlibAdaptors.h"
 #include "DistanceGeometry/dlibDebugAdaptors.h"
-#include "DistanceGeometry/BFSConstraintCollector.h"
+#include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "AdjacencyListAlgorithms.h"
 #include "TreeAlgorithms.h"
 
@@ -29,7 +29,9 @@ Delib::PositionCollection convertToPositionCollection(
   for(unsigned i = 0; i < N; i++) {
     positions.push_back(
       Delib::Position {
-        vectorizedPositions.template segment<3>(dimensionality * i)
+        vectorizedPositions.template segment<3>(
+          static_cast<Eigen::Index>(dimensionality) * i
+        )
       }
     );
   }
@@ -40,7 +42,7 @@ Delib::PositionCollection convertToPositionCollection(
 Delib::PositionCollection convertToPositionCollection(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 ) {
-  const long dimensionality = 4;
+  const Eigen::Index dimensionality = 4;
   assert(vectorizedPositions.size() % dimensionality == 0);
 
   Delib::PositionCollection positions;
@@ -62,9 +64,8 @@ ChiralityConstraint propagate(
   const DistanceBoundsMatrix& bounds,
   const Stereocenters::ChiralityConstraintPrototype& prototype
 ) {
-  using namespace Stereocenters;
-
-  if(prototype.target == ChiralityConstraintTarget::Flat) {
+  if(prototype.target == Stereocenters::ChiralityConstraintTarget::Flat) {
+    // TODO introduce flatness tolerance
     return ChiralityConstraint {
       prototype.indices,
       0.0,
@@ -104,8 +105,8 @@ ChiralityConstraint propagate(
   lowerMatrix.diagonal().setZero();
   upperMatrix.diagonal().setZero();
 
-  for(long i = 0; i < 4; i++) {
-    for(long j = i + 1; j < 4; j++) {
+  for(unsigned i = 0; i < 4; i++) {
+    for(unsigned j = i + 1; j < 4; j++) {
       const double& lowerBound = bounds.lowerBound(
         prototype.indices.at(i),
         prototype.indices.at(j)
@@ -116,18 +117,25 @@ ChiralityConstraint propagate(
         prototype.indices.at(j)
       );
 
-      upperMatrix(i + 1, j + 1) = upperBound * upperBound;
-      lowerMatrix(i + 1, j + 1) = lowerBound * lowerBound;
+      lowerMatrix(
+        static_cast<Eigen::Index>(i) + 1,
+        static_cast<Eigen::Index>(j) + 1
+      ) = lowerBound * lowerBound;
+
+      upperMatrix(
+        static_cast<Eigen::Index>(i) + 1,
+        static_cast<Eigen::Index>(j) + 1
+      ) = upperBound * upperBound;
     }
   }
 
-  const double lowerBound = static_cast<
+  const double boundFromLower = static_cast<
     Eigen::Matrix<double, 5, 5>
   >(
     lowerMatrix.selfadjointView<Eigen::Upper>()
   ).determinant();
 
-  const double upperBound = static_cast<
+  const double boundFromUpper = static_cast<
     Eigen::Matrix<double, 5, 5>
   >(
     upperMatrix.selfadjointView<Eigen::Upper>()
@@ -136,37 +144,59 @@ ChiralityConstraint propagate(
 #ifndef NDEBUG
   // Log in Debug builds, provided particular is set
   Log::log(Log::Particulars::PrototypePropagatorDebugInfo) 
-    << "Lower bound Cayley-menger matrix (determinant=" << lowerBound <<  "): " << std::endl << lowerMatrix << std::endl
-    << "Upper bound Cayley-menger matrix (determinant=" << upperBound <<  "): " << std::endl << upperMatrix << std::endl;
+    << "Lower bound Cayley-menger matrix (determinant=" << boundFromLower <<  "): " << std::endl << lowerMatrix << std::endl
+    << "Upper bound Cayley-menger matrix (determinant=" << boundFromUpper <<  "): " << std::endl << upperMatrix << std::endl;
 #endif
 
-  assert(lowerBound > -1e-7 && upperBound > -1e-7);
-  assert(lowerBound < upperBound);
-
-  /* For negative case, be aware inversion around 0 (*= -1) flips the inequality
-   *      lower <  upper | *(-1)
-   * ->  -lower > -upper
-   *
-   * So we construct it with the previous upper bound negated as the lower bound
-   * and similarly for the previous lower bound.
+  /* Check to ensure a volume is constructible from the passed bounds.
+   * If the Cayley-Menger determinant is < 0, then it is impossible. The rather
+   * lax criterion below follows from determinant calculation errors. Rather
+   * be tolerant of approximately zero-volume chirality constraints (which MAY
+   * happen) than have this fail.
    */
-  if(prototype.target == ChiralityConstraintTarget::Negative) {
-    /* Abs is necessary to ensure that negative almost-zeros are interpreted as
-     * positive near-zeros. Additionally, we do the adjustment by factor 8 here
-     * (see above)
+  assert(boundFromLower > -1e-7 && boundFromUpper > -1e-7);
+
+  /* Although it is tempting to assume that the Cayley-Menger determinant using
+   * the lower bounds is smaller than the one using upper bounds, this is NOT
+   * true. We cannot a priori know which of both yields the lower or upper bounds
+   * on the 3D volume, and hence must ensure only that the ordering is preserved
+   * in the generation of the ChiralityConstraint, which checks that the lower
+   * bound on the volume is certainly smaller than the upper one.
+   *
+   * You can check this assertion with a CAS. The relationship between both
+   * determinants (where u_ij = l_ij + Δ) is wholly indeterminant, i.e. no
+   * logical operator (<, >, <=, >=, ==) between both is true. It completely
+   * depends on the individual values. Maybe in very specific cases one can
+   * deduce some relationship, but not generally.
+   */
+
+  /* Abs is necessary to ensure that negative almost-zeros are interpreted as
+   * positive near-zeros. Additionally, we do the adjustment by factor 8 here
+   * (see above)
+   */
+  const double volumeFromLower = std::sqrt(std::fabs(boundFromLower) / 8);
+  const double volumeFromUpper = std::sqrt(std::fabs(boundFromUpper) / 8);
+
+  if(prototype.target == Stereocenters::ChiralityConstraintTarget::Negative) {
+    /* For negative case, be aware inversion around 0 (*= -1) flips the inequality
+     *      lower <  upper | *(-1)
+     * ->  -lower > -upper
+     *
+     * So we construct it with the previous upper bound negated as the lower bound
+     * and similarly for the previous lower bound.
      */
     return ChiralityConstraint {
       prototype.indices,
-      - sqrt(std::fabs(upperBound) / 8.0),
-      - sqrt(std::fabs(lowerBound) / 8.0)
+      - std::max(volumeFromLower, volumeFromUpper),
+      - std::min(volumeFromLower, volumeFromUpper),
     };
   }
 
   // Regular case (Positive target)
   return ChiralityConstraint {
     prototype.indices,
-    sqrt(std::fabs(lowerBound) / 8.0),
-    sqrt(std::fabs(upperBound) / 8.0)
+    std::min(volumeFromLower, volumeFromUpper),
+    std::max(volumeFromLower, volumeFromUpper),
   };
 }
 
@@ -186,7 +216,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
   const unsigned& numStructures,
   const MetrizationOption& metrization,
   const bool& useYInversionTrick,
-  const BFSConstraintCollector::DistanceMethod& distanceMethod
+  const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
   std::list<Delib::PositionCollection> ensemble;
 
@@ -265,8 +295,10 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         ) < 0.5
       ) {
         // Invert y coordinates
-        for(long i = 0; i < DGData.distanceBounds.N; i++) {
-          dlibPositions(4 * i + 1) *= -1;
+        for(unsigned i = 0; i < DGData.distanceBounds.N; i++) {
+          dlibPositions(
+            static_cast<dlibIndexType>(i) * 4  + 1
+          ) *= -1;
         }
       }
     }
@@ -370,7 +402,7 @@ DGDebugData debugDistanceGeometry(
   const unsigned& numStructures,
   const MetrizationOption& metrization,
   const bool& useYInversionTrick,
-  const BFSConstraintCollector::DistanceMethod& distanceMethod
+  const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
   DGDebugData resultObject;
 
@@ -447,7 +479,9 @@ DGDebugData debugDistanceGeometry(
       ) {
         // Invert y coordinates
         for(unsigned i = 0; i < DGData.distanceBounds.N; i++) {
-          dlibPositions(4 * i + 1) *= -1;
+          dlibPositions(
+            static_cast<dlibIndexType>(i) * 4 + 1
+          ) *= -1;
         }
       }
     }
@@ -560,52 +594,26 @@ MoleculeDGInformation::MoleculeDGInformation(const unsigned& N) : distanceBounds
 
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const BFSConstraintCollector::DistanceMethod& distanceMethod
+  const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
   const auto& adjacencies = molecule.getAdjacencyList();
 
+  // Initialize the return object
   MoleculeDGInformation data {adjacencies.numAtoms()};
 
-  BFSConstraintCollector collector {
+  // Generate a spatial model from the molecular graph and stereocenters
+  MoleculeSpatialModel spatialModel {
     adjacencies,
     molecule.stereocenters,
-    data.distanceBounds,
     distanceMethod
   };
 
-  /* For every atom in the molecule, generate a tree of height 3 to traverse
-   * with our collector. This leads to some repeated work that could be 
-   * optimized out at some point. Currently, this is done by remembering treated
-   * sequences of atoms, but this is fairly costly. It would be better if the 
-   * tree generation algorithm could cut down on the number of duplicate
-   * sequences treated (TODO).
-   */
-  for(AtomIndexType i = 0; i < molecule.getNumAtoms(); i++) {
-    // Make the tree
-    auto rootPtr = AdjacencyListAlgorithms::makeTree(
-      adjacencies,
-      i,
-      3 // max Depth of 3 to limit to up to dihedral length chains
-    );
-
-#ifndef NDEBUG
-    Log::log(Log::Particulars::gatherDGInformationTrees) << "On atom " << i
-      << rootPtr << std::endl;
-#endif
-
-    // Gather the distance constraints via visitor side effect
-    TreeAlgorithms::BFSVisit(
-      rootPtr,
-      collector,
-      3
-    );
-  }
-
-  // Fix 0-length lower bounds and smooth the bounds once
-  collector.finalizeBoundsMatrix();
+  // Generate the distance bounds from the spatial model
+  spatialModel.addDefaultDihedrals();
+  data.distanceBounds = spatialModel.makeDistanceBounds();
 
   // Extract the chirality constraint prototypes
-  data.chiralityConstraintPrototypes = collector.getChiralityPrototypes();
+  data.chiralityConstraintPrototypes = spatialModel.getChiralityPrototypes();
 
   return data;
 }
