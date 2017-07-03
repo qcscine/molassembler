@@ -7,8 +7,7 @@
 
 #include "IO.h"
 
-void decomposeMol(const MoleculeManip::Molecule& mol) {
-  auto cycleData = mol.getAdjacencyList().getCycleData();
+void testCycles(const MoleculeManip::CycleData& cycleData) {
 
   // Check that maxCycleSize works properly
   std::vector<unsigned> cycleSizes;
@@ -35,6 +34,8 @@ void decomposeMol(const MoleculeManip::Molecule& mol) {
     cyclesSmallerThanSix.emplace_back(cycleEdges.size());
   }
 
+  BOOST_CHECK(!cycleSizes.empty());
+
   BOOST_CHECK(cycleSizes.size() >= cyclesSmallerThanSix.size());
 
   BOOST_CHECK(
@@ -47,6 +48,8 @@ void decomposeMol(const MoleculeManip::Molecule& mol) {
       )
     )
   );
+
+  std::cout << TemplateMagic::condenseIterable(cycleSizes) << std::endl;
 
   // Check that checking for cycles that contain a particular atom works
   /*for(
@@ -68,7 +71,13 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   IO::MOLFileHandler molHandler;
   auto mol = molHandler.readSingle(filePath.string());
 
-  decomposeMol(mol);
+  CycleData cycleData {mol.getAdjacencyList().access()};
+
+  testCycles(cycleData);
+
+  auto indexMap = makeSmallestCycleMap(cycleData, mol.getAdjacencyList());
+
+  testCycles(cycleData);
 }
 
 BOOST_AUTO_TEST_CASE(ringDecomposition) {

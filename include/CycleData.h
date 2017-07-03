@@ -62,7 +62,7 @@ public:
 private:
   const CycleData& _cycleDataRef;
   const boost::optional<unsigned> _maxCycleSizeOption;
-  const boost::optional<AtomIndexType>& _containingIndexOption;
+  const boost::optional<AtomIndexType> _containingIndexOption;
   RDL_cycleIterator* _cycleIteratorPtr;
 
   //! Private constructor so that only CycleData can call it

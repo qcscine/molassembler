@@ -205,6 +205,8 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     }
   }
 
+  // TODO something is weird here in the iteration through cycles, need some
+  // explicit information
   /* For all flat cycles for which the internal angles can be determined
    * exactly, add that information
    */
@@ -213,7 +215,11 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     !cycleIter.atEnd();
     cycleIter.advance()
   ) {
-    unsigned cycleSize = cycleIter.cycleSize();
+    const auto edgeDescriptors = cycleIter.getCurrentCycle();
+    const unsigned cycleSize = edgeDescriptors.size();
+
+    std::cout << "Candidate cycle of size " << cycleSize << std::endl;
+
     /* There are a variety of cases here which all need to be treated
      * differently:
      * - Cycle of size 3: Always flat, set angles from cyclic polygons library
@@ -237,7 +243,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       || (
         cycleSize == 4
         && countPlanarityEnforcingBonds(
-          cycleIter.getCurrentCycle(),
+          edgeDescriptors,
           adjacencies
         ) >= 1
       )
@@ -248,13 +254,12 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       /* Gather sequence of atoms in cycle by progressively converting edge
        * descriptors into vertex indices
        */
-      auto edgeDescriptors = cycleIter.getCurrentCycle();
-      auto indexSequence = makeRingIndexSequence(edgeDescriptors, adjacencies);
+      const auto indexSequence = makeRingIndexSequence(edgeDescriptors, adjacencies);
 
       /* First, we fetch the angles that maximize the cycle area using the
        * cyclic polygon library.
        */
-      auto cycleInternalAngles = CyclicPolygons::internalAngles(
+      const auto cycleInternalAngles = CyclicPolygons::internalAngles(
         // Map sequential index pairs to their purported bond length
         TemplateMagic::pairwiseMap( 
           indexSequence,
@@ -273,6 +278,9 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         )
       );
 
+      std::cout << "Processing cycle with index sequence "
+        << TemplateMagic::condenseIterable(indexSequence) << std::endl;
+
       /* The first angle returned is the angle between edges one and two, which
        * are indices [0, 1] and [1, 2] respectively. The last angle is between
        * edges [n - 1, 0], [0, 1].
@@ -286,21 +294,36 @@ MoleculeSpatialModel::MoleculeSpatialModel(
        *
        * Now we set all internal angles with low tolerance
        */
+      // Make sure all assumptions we make about sequence lengths are true
+      assert(indexSequence.size() == cycleInternalAngles.size() + 1);
+      assert(indexSequence.size() == cycleSize + 1);
+      // All non-overlapping triples
       for(
         unsigned angleCentralIndex = 1;
-        angleCentralIndex < indexSequence.size() - 1;
+        angleCentralIndex < indexSequence.size() - 2;
         ++angleCentralIndex
       ) {
         setAngleBoundsIfEmpty(
           {
             indexSequence.at(angleCentralIndex - 1),
             indexSequence.at(angleCentralIndex),
-            indexSequence.at(angleCentralIndex + 1),
+            indexSequence.at(angleCentralIndex + 1)
           },
           cycleInternalAngles.at(angleCentralIndex - 1),
           angleAbsoluteVariance
         );
       }
+
+      // There's a missing triple with the previous approach, which is always
+      setAngleBoundsIfEmpty(
+        {
+          indexSequence.at(indexSequence.size() - 2),
+          indexSequence.at(0),
+          indexSequence.at(1)
+        },
+        cycleInternalAngles.back(),
+        angleAbsoluteVariance
+      );
 
       /* Internal-external and external-external angles where the central
        * atom is part of a cycle are taken care of in the general angles 

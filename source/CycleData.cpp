@@ -46,6 +46,46 @@ unsigned CycleData::numRelevantCycles() const {
   return RDL_getNofRC(_dataPtr);
 }
 
+CycleIterator::CycleIterator(
+  const CycleData& cycleData,
+  const boost::optional<unsigned>& maxCycleSizeOption,
+  const boost::optional<AtomIndexType>& containingIndexOption
+) : _cycleDataRef(cycleData),
+    _maxCycleSizeOption(maxCycleSizeOption),
+    _containingIndexOption(containingIndexOption)
+{
+  // Initialize the cycle iterator
+  _cycleIteratorPtr = RDL_getRCyclesIterator(cycleData._dataPtr);
+
+  // Skip to first permissible ring per cycle size restrictions
+  /* NOTE: While-do construction here because if the current cycle is
+   * permisisble, we do not want to advance the cycle iterator
+   */
+  while(
+    !atEnd()
+    && !_currentCyclePermissible() 
+  ) {
+    RDL_cycleIteratorNext(_cycleIteratorPtr);
+  }
+}
+
+bool CycleIterator::atEnd() const {
+  return RDL_cycleIteratorAtEnd(_cycleIteratorPtr) != 0;
+}
+
+void CycleIterator::advance() {
+  assert(!atEnd());
+  /* Do-while construction to ensure that the iterator gets advance and only
+   * after advancing it is checked whether the new cycle is permissible. 
+   */
+  do {
+    RDL_cycleIteratorNext(_cycleIteratorPtr);
+  } while(
+    !atEnd()
+    && !_currentCyclePermissible() 
+  );
+}
+
 bool CycleIterator::_currentCyclePermissible() const {
   // Are there even constraints?
   if(_maxCycleSizeOption == boost::none && _containingIndexOption == boost::none) {
@@ -88,43 +128,10 @@ bool CycleIterator::_currentCyclePermissible() const {
   return true;
 }
 
-CycleIterator::CycleIterator(
-  const CycleData& cycleData,
-  const boost::optional<unsigned>& maxCycleSizeOption,
-  const boost::optional<AtomIndexType>& containingIndexOption
-) : _cycleDataRef(cycleData),
-    _maxCycleSizeOption(maxCycleSizeOption),
-    _containingIndexOption(containingIndexOption)
-{
-  // Initialize the cycle iterator
-  _cycleIteratorPtr = RDL_getRCyclesIterator(cycleData._dataPtr);
-
-  // Skip to first permissible ring per cycle size restrictions
-  while(
-    !atEnd()
-    && !_currentCyclePermissible() 
-  ) {
-    RDL_cycleIteratorNext(_cycleIteratorPtr);
-  }
-}
-
-bool CycleIterator::atEnd() const {
-  return RDL_cycleIteratorAtEnd(_cycleIteratorPtr) != 0;
-}
-
-void CycleIterator::advance() {
-  assert(!atEnd());
-  // Advance to next permissible cycle or end
-  do {
-    RDL_cycleIteratorNext(_cycleIteratorPtr);
-  } while(
-    !atEnd()
-    && !_currentCyclePermissible() 
-  );
-}
-
 std::set<GraphType::edge_descriptor> CycleIterator::getCurrentCycle() const {
   std::set<GraphType::edge_descriptor> cycleEdges;
+
+  assert(!atEnd());
 
   if(!atEnd()) {
     RDL_cycle* cyclePtr = RDL_cycleIteratorGetCycle(_cycleIteratorPtr);
@@ -170,7 +177,7 @@ CycleIterator CycleData::getCyclesIterator() const {
 CycleIterator CycleData::getCyclesIteratorSizeLE(
   const unsigned& maxCycleSize
 ) const {
-  return CycleIterator(*this, maxCycleSize);
+  return CycleIterator(*this, maxCycleSize, boost::none);
 }
 
 CycleIterator CycleData::getCyclesIteratorContaining(
