@@ -218,8 +218,6 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     const auto edgeDescriptors = cycleIter.getCurrentCycle();
     const unsigned cycleSize = edgeDescriptors.size();
 
-    std::cout << "Candidate cycle of size " << cycleSize << std::endl;
-
     /* There are a variety of cases here which all need to be treated
      * differently:
      * - Cycle of size 3: Always flat, set angles from cyclic polygons library
@@ -278,9 +276,6 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         )
       );
 
-      std::cout << "Processing cycle with index sequence "
-        << TemplateMagic::condenseIterable(indexSequence) << std::endl;
-
       /* The first angle returned is the angle between edges one and two, which
        * are indices [0, 1] and [1, 2] respectively. The last angle is between
        * edges [n - 1, 0], [0, 1].
@@ -300,7 +295,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       // All non-overlapping triples
       for(
         unsigned angleCentralIndex = 1;
-        angleCentralIndex < indexSequence.size() - 2;
+        angleCentralIndex < indexSequence.size() - 1;
         ++angleCentralIndex
       ) {
         setAngleBoundsIfEmpty(
@@ -845,7 +840,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
             ""
           ) << R"( [label=")" << ezState 
           << R"(", fillcolor="tomato", shape="square", fontcolor="white", )" 
-          << R"("tooltip=")" 
+          << R"(tooltip=")" 
           << stereocenterPtr -> info()
           << R"("];)" << "\n";
       } else {
@@ -935,7 +930,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
         os << ";EZ";
       }
 
-      os << TemplateMagic::condenseIterable(stereocenterPtr -> involvedAtoms())
+      os << TemplateMagic::condenseIterable(stereocenterPtr -> involvedAtoms(), "")
         << " -- " << vertexIndex << R"([color="gray", dir="forward", len="2"])";
     }
   }

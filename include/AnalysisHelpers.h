@@ -131,16 +131,8 @@ void writeDGPOVandProgressFiles(
   const unsigned& structNum,
   const DistanceGeometry::detail::RefinementData& refinementData
 ) {
-  // Make a space-free string from the name
-  std::string baseName = Symmetry::name(symmetryName);
-  std::replace(
-    baseName.begin(),
-    baseName.end(),
-    ' ',
-    '-'
-  );
-
-  baseName += "-"s + std::to_string(structNum);
+  std::string baseName = Symmetry::spaceFreeName(symmetryName)
+    + "-"s + std::to_string(structNum);
 
   writeDGPOVandProgressFiles(
     mol,

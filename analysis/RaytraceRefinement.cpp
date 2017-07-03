@@ -100,12 +100,13 @@ int main(int argc, char* argv[]) {
       false
     );
 
+    auto splat = StdlibTypeAlgorithms::split(filename, '.');
+    assert(splat.size() >= 2);
+
     for(const auto& enumPair : enumerate(debugData.refinements)) {
       const auto& structNum = enumPair.index;
       const auto& refinementData = enumPair.value;
 
-      auto splat = StdlibTypeAlgorithms::split(filename, '.');
-      assert(splat.size() >= 2);
       std::string baseName = splat.at(splat.size() - 2) + "-"s 
         + std::to_string(structNum);
 
@@ -114,12 +115,21 @@ int main(int argc, char* argv[]) {
         baseName,
         refinementData
       );
+
+      filehandler.writeSingle(
+        splat.at(splat.size() - 2) + "-"s + std::to_string(structNum) + "-last.mol"s,
+        mol,
+        DistanceGeometry::detail::convertToPositionCollection(
+          refinementData.steps.back().positions
+        )
+      );
     }
-    
   }
 
   // Not from file, then a basic molecule from symmetry
   if(options_variables_map.count("f") == 0) {
+    IO::MOLFileHandler filehandler;
+
     for(const auto& symmetryName : symmetries) {
 
       // Make a molecule and generate an ensemble
@@ -142,6 +152,15 @@ int main(int argc, char* argv[]) {
           symmetryName,
           structNum,
           refinementData
+        );
+
+        filehandler.writeSingle(
+          Symmetry::spaceFreeName(symmetryName) + "-"s 
+            + std::to_string(structNum) + "-last.mol"s,
+          mol,
+          DistanceGeometry::detail::convertToPositionCollection(
+            refinementData.steps.back().positions
+          )
         );
       }
     }

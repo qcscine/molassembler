@@ -313,8 +313,8 @@ std::string EZStereocenter::info() const {
   std::string returnString =  "EZ indices "s;
 
   if(_leftLowPriority) {
-    returnString += "[H:"s + std::to_string(_leftHighPriority);
-    ", L:"s + std::to_string(_leftLowPriority.value()) + "], "s;
+    returnString += "[H:"s + std::to_string(_leftHighPriority)
+      + ", L:"s + std::to_string(_leftLowPriority.value()) + "], "s;
   } else {
     returnString += std::to_string(_leftHighPriority) +", "s;
   }
@@ -323,8 +323,8 @@ std::string EZStereocenter::info() const {
     + std::to_string(_rightCenter) + ", "s;
 
   if(_rightLowPriority) {
-    returnString += "[H:"s + std::to_string(_rightHighPriority);
-    ", L:"s + std::to_string(_rightLowPriority.value()) + "]"s;
+    returnString += "[H:"s + std::to_string(_rightHighPriority)
+      + ", L:"s + std::to_string(_rightLowPriority.value()) + "]"s;
   } else {
     returnString += std::to_string(_rightHighPriority);
   }

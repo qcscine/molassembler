@@ -1,7 +1,27 @@
+Remaining DG deficiencies
+-------------------------
+- Ranking algorithm requires a rewrite, enhancement to consider cycles and
+  stereocenters, plus returning linking information
+- Current metrization algorithm is O(N⁵), this is unacceptable, implement better
+  algorithm
+- Strain imposed on EZStereocenter substituents that are in small cycles is not
+  accounted for::
+            
+          . C
+    O = C   |
+          ° C
+
+  EZStereocenter's angle(C, C, C) returns 120°, and the resulting bounds are not
+  modified if the involved atoms are cycle members
+- Bounds are perhaps a little too loose now, spiro centers look awful
+- Double bonds in DG maybe shouldn't enforce absolute flatness, but have
+  tolerance. Either that or reduce the error function contribution of
+  Flat-target chirality constraints by a factor to leave 1-2 distance bounds
+  unviolated in strained molecules (see strained-db-aromatic-multicycle
+  examples)
+           
 TODO
 ----
-- Ranking algorithm does not correctly recognize cycles or stereocenters, does
-  not return substituent linking information
 - CNStereocenter and EZStereocenter will clash! Grubbs cat::
 
               R R     R
@@ -23,15 +43,12 @@ TODO
 
 - Metrization during distance matrix generation in DistanceBoundsMatrix
   (At step 7 of DG steps from p.15)
-- Parallelize DG (?)
 - Make dependence on alternate set of Symmetry tetraeder subdivisions clearer
   in code / analysis
-- Set up CMake properly
 - Consider penalization of unsuitable geometries (using VSEPR /
   determineLocalGeometry to judge) in SymmetryFit -> see what happens when you
   try to load testosterone, which has some strained tetrahedral centers that are
   fitted as seesaws!
-- Investigate link-time optimization
 - Make sure EZStereocenter is stable against the situation where (and the twist
   is a given) -> Also, the involvedAtoms of this case overlap! No singular
   stereocenter per atom in the entire molecule! Unless you create another type
@@ -43,13 +60,10 @@ TODO
      /
     2
 
-- Rewrite the ranking algorithm as a BFSVisitor
 - The Readers really need a file exists check
 - Fixed atoms in DG -> how? Probably by just specifying the geometry without
   variance in the distance bounds and then setting the fixed atoms' gradients to
   zero in the refinement stage
-- Transition to property-based testing with rapidcheck (github) and/or fuzz
-  testing
 - Atom removal safety of code -> getNumAtoms, getNumBonds, etc. Make the full
   set of data be contiguous every time (atom indices range from 0 -> nAtoms - 1
   AdjacencyList may also be prone to errors in this regard
@@ -60,6 +74,14 @@ TODO
 - Use LFT to determine which geometry? MO-level calculations, perhaps
   approximable with low cost
 - Give some thought to how to treat charge / total electron counts
+
+Improvement considerations
+--------------------------
+- Set up CMake properly
+- Investigate link-time optimization
+- Parallelize DG (?)
+- Transition to property-based testing with rapidcheck (github) and/or fuzz
+  testing
 - Make everything nothrow as best as possible
 - Reconsider float <-> double necessity, especially in DG: Might get some
   significant gains by using floats
