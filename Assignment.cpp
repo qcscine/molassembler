@@ -27,6 +27,18 @@ Assignment::Assignment(
 {
   // make sure the number of characters matches the current symmetry
   assert(characters.size() == Symmetry::size(passSymmetryName));
+
+  /* make sure all links are properly self-referential, i.e. only contain valid
+   * indices to the characters
+   */
+#ifndef NDEBUG
+  for(const auto& linkPair : passLinks) {
+    assert(
+      linkPair.first < passCharacters.size()
+      && linkPair.second < passCharacters.size()
+    );
+  }
+#endif
 }
 
 /* Public members */

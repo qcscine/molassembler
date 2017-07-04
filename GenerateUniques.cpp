@@ -17,8 +17,11 @@ bool predicateHasTransArrangedPairs(
         indexPair.first,
         indexPair.second
       ) == M_PI
-    ) return true;
+    ) {
+      return true;
+    }
   }
+
   return false;
 }
 
@@ -54,7 +57,14 @@ std::vector<Assignment> uniqueAssignments(
    */
   if(removeTransSpanningGroups) {
     while(predicateHasTransArrangedPairs(assignment)) {
-      assignment.nextPermutation();
+      bool hasAnotherPermutation = assignment.nextPermutation();
+      if(!hasAnotherPermutation) {
+        /* This can happen, e.g. in square-planar AAAB with 
+         * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
+         * trans-arranged pairs. Then we return an empty vector.
+         */
+        return {};
+      }
     }
   }
 
@@ -139,7 +149,14 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
    */
   if(removeTransSpanningGroups) {
     while(predicateHasTransArrangedPairs(assignment)) {
-      assignment.nextPermutation();
+      bool hasAnotherPermutation = assignment.nextPermutation();
+      if(!hasAnotherPermutation) {
+        /* This can happen, e.g. in square-planar AAAB with 
+         * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
+         * trans-arranged pairs. Then we return an empty vector.
+         */
+        return {};
+      }
     }
   }
 
