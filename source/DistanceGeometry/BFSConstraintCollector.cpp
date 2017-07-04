@@ -95,26 +95,12 @@ BFSConstraintCollector::BFSConstraintCollector(
            target = boost::target(edgeIndex, adjacencies.access());
 
       if(_stereocenterMap.count(source) == 0 && _stereocenterMap.count(target) == 0) {
-
-        // Calculate Priorities for each's substituents
-        auto sourceSubstituentsRanking = adjacencies.rankPriority(
-          source,
-          {target} // exclude edge sharing neighbor
-        );
-
-        auto targetSubstituentsRanking = adjacencies.rankPriority(
-          target,
-          {source} // exclude edge sharing neighbor
-        );
-
         // Instantiate without regard for number of assignments
         auto newStereocenterPtr = std::make_shared<Stereocenters::EZStereocenter>(
           source,
-          sourceSubstituentsRanking.sortedPriorities,
-          sourceSubstituentsRanking.equalPriorityPairsSet,
+          adjacencies.rankPriority(target, {source}), // exclude shared edge
           target,
-          targetSubstituentsRanking.sortedPriorities,
-          targetSubstituentsRanking.equalPriorityPairsSet
+          adjacencies.rankPriority(source, {target})
         );
 
         // Map source *and* target to the same stereocenterPtr

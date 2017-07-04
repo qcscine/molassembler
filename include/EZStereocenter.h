@@ -4,6 +4,7 @@
 #include "Stereocenter.h"
 #include <boost/optional.hpp>
 #include "template_magic/TemplateMagic.h"
+#include "RankingInformation.h"
 
 namespace MoleculeManip {
 
@@ -75,11 +76,9 @@ public:
   EZStereocenter() = delete;
   EZStereocenter(
     const AtomIndexType& firstCenter,
-    const std::vector<AtomIndexType>& firstCenterRanking,
-    const IndexPairsSet& firstCenterEqualPairs,
+    const RankingInformation& firstCenterRanking,
     const AtomIndexType& secondCenter,
-    const std::vector<AtomIndexType>& secondCenterRanking,
-    const IndexPairsSet& secondCenterEqualPairs
+    const RankingInformation& secondCenterRanking
   ); 
 
 /* Modification */

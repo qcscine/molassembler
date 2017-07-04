@@ -10,38 +10,39 @@ namespace Stereocenters {
 /* Constructors */
 EZStereocenter::EZStereocenter(
   const AtomIndexType& firstCenter,
-  const std::vector<AtomIndexType>& firstCenterRanking,
-  const IndexPairsSet& firstCenterEqualPairs,
+  const RankingInformation& firstCenterRanking,
   const AtomIndexType& secondCenter,
-  const std::vector<AtomIndexType>& secondCenterRanking,
-  const IndexPairsSet& secondCenterEqualPairs
+  const RankingInformation& secondCenterRanking
 ) {
   assert(
-    firstCenterRanking.size() == 1
-    || firstCenterRanking.size() == 2
+    firstCenterRanking.sortedPriorities.size() == 1
+    || firstCenterRanking.sortedPriorities.size() == 2
   );
   assert(
-    secondCenterRanking.size() == 1
-    || secondCenterRanking.size() == 2
+    secondCenterRanking.sortedPriorities.size() == 1
+    || secondCenterRanking.sortedPriorities.size() == 2
   );
 
   /* NOTE: high priority is assigned from the back of the ranking since the list
    * is ordered ascending
    */
   _leftCenter = firstCenter;
-  _leftHighPriority = firstCenterRanking.back();
+  _leftHighPriority = firstCenterRanking.sortedPriorities.back();
   _rightCenter = secondCenter;
-  _rightHighPriority = secondCenterRanking.back();
+  _rightHighPriority = secondCenterRanking.sortedPriorities.back();
 
-  if(firstCenterRanking.size() == 2) {
-    _leftLowPriority = firstCenterRanking.front();
+  if(firstCenterRanking.sortedPriorities.size() == 2) {
+    _leftLowPriority = firstCenterRanking.sortedPriorities.front();
   }
-  if(secondCenterRanking.size() == 2) {
-    _rightLowPriority = secondCenterRanking.front();
+  if(secondCenterRanking.sortedPriorities.size() == 2) {
+    _rightLowPriority = secondCenterRanking.sortedPriorities.front();
   }
 
   // Determine whether there can be two assignments or not
-  if(firstCenterEqualPairs.empty() && secondCenterEqualPairs.empty()) {
+  if(
+    firstCenterRanking.equalPriorityPairsSet.empty() 
+    && secondCenterRanking.equalPriorityPairsSet.empty()
+  ) {
     _numAssignments = 2;
   } else {
     _numAssignments = 1;

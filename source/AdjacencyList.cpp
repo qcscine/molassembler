@@ -301,9 +301,7 @@ StereocenterList AdjacencyList::detectStereocenters() const {
   // Find CNStereocenters
   for(const auto& candidateIndex : _getCNStereocenterCandidates()) {
     // Construct a Stereocenter here
-    std::shared_ptr<
-      Stereocenters::CNStereocenter
-    > newStereocenter = std::make_shared<
+    auto newStereocenter = std::make_shared<
       Stereocenters::CNStereocenter
     >(
       determineLocalGeometry(candidateIndex),
@@ -344,29 +342,14 @@ StereocenterList AdjacencyList::detectStereocenters() const {
     auto source = boost::source(edgeIndex, _adjacencies),
          target = boost::target(edgeIndex, _adjacencies);
 
-    // Calculate Priorities for each's substituents
-    auto sourceSubstituentsRanking = rankPriority(
-      source,
-      {target} // exclude edge sharing neighbor
-    );
-
-    auto targetSubstituentsRanking = rankPriority(
-      target,
-      {source} // exclude edge sharing neighbor
-    );
-
     // Construct a Stereocenter here
-    std::shared_ptr<
-      Stereocenters::EZStereocenter
-    > newStereocenter = std::make_shared<
+    auto newStereocenter = std::make_shared<
       Stereocenters::EZStereocenter
     >(
       source,
-      sourceSubstituentsRanking.sortedPriorities,
-      sourceSubstituentsRanking.equalPriorityPairsSet,
+      rankPriority(source, {target}),
       target,
-      targetSubstituentsRanking.sortedPriorities,
-      targetSubstituentsRanking.equalPriorityPairsSet
+      rankPriority(target, {source})
     );
 
     if(newStereocenter -> numAssignments() == 2) {
@@ -660,29 +643,14 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
     auto source = boost::source(edgeIndex, _adjacencies),
          target = boost::target(edgeIndex, _adjacencies);
 
-    // Calculate Priorities for each's substituents
-    auto sourceSubstituentsRanking = rankPriority(
-      source,
-      {target} // exclude edge sharing neighbor
-    );
-
-    auto targetSubstituentsRanking = rankPriority(
-      target,
-      {source} // exclude edge sharing neighbor
-    );
-
     // Construct a Stereocenter here
-    std::shared_ptr<
-      Stereocenters::EZStereocenter
-    > newStereocenter = std::make_shared<
+    auto newStereocenter = std::make_shared<
       Stereocenters::EZStereocenter
     >(
       source,
-      sourceSubstituentsRanking.sortedPriorities,
-      sourceSubstituentsRanking.equalPriorityPairsSet,
+      rankPriority(source, {target}),
       target,
-      targetSubstituentsRanking.sortedPriorities,
-      targetSubstituentsRanking.equalPriorityPairsSet
+      rankPriority(target, {source})
     );
 
     newStereocenter -> fit(positions);
