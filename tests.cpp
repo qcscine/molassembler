@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   auto sqrt_passes = TemplateMagic::map(
     randomPositiveNumbers,
     [](const double& randomPositiveNumber) -> bool {
-      return ConstexprMagic::Math::detail::isApprox(
+      return ConstexprMagic::Math::isCloseRelative(
         ConstexprMagic::Math::sqrt(randomPositiveNumber),
         std::sqrt(randomPositiveNumber),
         accuracy
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   auto asin_passes = TemplateMagic::map(
     randomInverseTrigNumbers,
     [](const double& randomInverseTrigNumber) -> bool {
-      return ConstexprMagic::Math::detail::isApprox(
+      return ConstexprMagic::Math::isCloseRelative(
         ConstexprMagic::Math::asin(randomInverseTrigNumber),
         std::asin(randomInverseTrigNumber),
         accuracy
@@ -97,39 +97,105 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     std::cout << std::endl;
   }
 
-  // pow
-  const auto randomNumbers = TemplateMagic::random.getN<double>(-1e5, 1e5, numTests);
-  const auto randomExponents = TemplateMagic::random.getN<int>(-40, 40, numTests);
+  auto testPow = [](const double& number, const int& exponent) -> bool {
+    const double test = ConstexprMagic::Math::pow(number, exponent);
+    const double reference = std::pow(number, exponent);
 
-  std::vector<bool> pow_passes;
-  for(unsigned i = 0; i < numTests; i++) {
-    pow_passes.emplace_back(
-      ConstexprMagic::Math::detail::isApprox(
-        ConstexprMagic::Math::pow(randomNumbers[i], randomExponents[i]),
-        std::pow(randomNumbers[i], randomExponents[i]),
-        accuracy
-      )
+    bool passes = ConstexprMagic::Math::isCloseRelative(
+      test,
+      reference,
+      accuracy
     );
-  }
 
-  bool all_pow_pass = TemplateMagic::all_of(pow_passes);
-
-  if(!all_pow_pass) {
-    std::cout << "Power implementation is lacking! Failures: " << std::endl;
-
-    for(unsigned i = 0; i < pow_passes.size(); i++) {
-      if(!pow_passes[i]) {
-        std::cout << "  x = " << std::setw(12) << randomNumbers[i]
-          << ", exp = " << std::setw(4) << randomExponents[i]
-          << ", pow = " << std::setw(12) << ConstexprMagic::Math::pow(randomNumbers[i], randomExponents[i])
-          << ", std::pow = " << std::setw(12) << std::pow(randomNumbers[i], randomExponents[i])
-          << ", |Δ| = " << std::setw(12) << std::fabs(
-            ConstexprMagic::Math::pow(randomNumbers[i], randomExponents[i])
-            - std::pow(randomNumbers[i], randomExponents[i])
-          ) << std::endl;
-      }
+    if(!passes) {
+      std::cout << "  x = " << std::setw(12) << number
+        << ", exp = " << std::setw(4) << exponent
+        << ", pow = " << std::setw(12) << test
+        << ", std::pow = " << std::setw(12) << reference
+        << ", |Δ| = " << std::setw(12) << std::fabs(test - reference) << ", max permissible diff: "
+        << (
+          accuracy * std::max(
+            std::fabs(test),
+            std::fabs(reference)
+          )
+        ) << std::endl;
     }
 
-    std::cout << std::endl;
-  }
+    return passes;
+  };
+
+  BOOST_CHECK(
+    TemplateMagic::all_of(
+      TemplateMagic::zipMapAlternate(
+        TemplateMagic::random.getN<double>(-1e5, 1e5, numTests),
+        TemplateMagic::random.getN<int>(-40, 40, numTests),
+        testPow
+      )
+    )
+  );
+
+  // ln
+  const auto randomZ = TemplateMagic::random.getN<double>(1e-10, 1e10, numTests);
+  bool all_ln_pass = TemplateMagic::all_of(
+    TemplateMagic::map(
+      randomZ,
+      [](const auto& z) -> bool {
+        bool pass = ConstexprMagic::Math::isCloseRelative(
+          ConstexprMagic::Math::ln(z),
+          std::log(z),
+          accuracy
+        );
+
+        if(!pass) {
+          std::cout << "ln deviates for z = " << std::setw(12) << z 
+            << ", ln(z) = " << std::setw(12) << ConstexprMagic::Math::ln(z) 
+            << ", std::log(z) = " << std::setw(12) << std::log(z)
+            << ", |Δ| = " << std::setw(12) << std::fabs(
+              ConstexprMagic::Math::ln(z) - std::log(z)
+            ) << std::endl;
+        }
+
+        return pass;
+      }
+    )
+  );
+
+  BOOST_CHECK(all_ln_pass);
+
+  BOOST_CHECK(
+    TemplateMagic::all_of(
+      TemplateMagic::map(
+        TemplateMagic::random.getN<double>(-100, 100, numTests),
+        [](const double& x) -> bool {
+          return(ConstexprMagic::Math::floor(x) <= x);
+        }
+      )
+    )
+  );
+
+  BOOST_CHECK(
+    TemplateMagic::all_of(
+      TemplateMagic::map(
+        TemplateMagic::random.getN<double>(-100, 100, numTests),
+        [](const double& x) -> bool {
+          return(ConstexprMagic::Math::ceil(x) >= x);
+        }
+      )
+    )
+  );
+
+  BOOST_CHECK(
+    TemplateMagic::all_of(
+      TemplateMagic::map(
+        TemplateMagic::random.getN<double>(-100, 100, numTests),
+        [](const double& x) -> bool {
+          const double rounded = ConstexprMagic::Math::round(x);
+          return(
+            rounded == ConstexprMagic::Math::floor(x)
+            || rounded == ConstexprMagic::Math::ceil(x)
+          );
+        }
+      )
+    )
+  );
 }

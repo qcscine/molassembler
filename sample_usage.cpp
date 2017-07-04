@@ -13,7 +13,7 @@ namespace make_constexpr_array {
   ) {
     const auto indexPair = ConstexprMagic::UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<size>(i);
 
-    return ConstexprMagic::toDegrees(
+    return ConstexprMagic::Math::toDegrees(
       ConstexprMagic::angle(
         positions[indexPair.first],
         positions[indexPair.second]
