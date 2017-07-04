@@ -130,6 +130,19 @@ inline const std::string& name(const Name& name) {
   return symmetryData.at(name).stringName;
 }
 
+inline std::string spaceFreeName(const Name& symmetryName) {
+  std::string baseName = name(symmetryName);
+
+  std::replace(
+    baseName.begin(),
+    baseName.end(),
+    ' ',
+    '-'
+  );
+
+  return baseName;
+}
+
 inline const unsigned& size(const Name& name) {
   return symmetryData.at(name).size;
 }
