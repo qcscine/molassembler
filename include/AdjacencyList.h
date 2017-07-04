@@ -17,6 +17,7 @@
 #include "RangeForTemporary.h"
 #include "StereocenterList.h"
 #include "CycleData.h"
+#include "RankingInformation.h"
 
 #include "symmetry_information/Symmetries.h"
 #include "VSEPR.h"
@@ -125,15 +126,7 @@ public:
    */
   RangeForTemporary<GraphType::edge_iterator> iterateEdges() const;
 
-  std::pair<
-    std::vector<AtomIndexType>, // the sorted list of substituent priorities
-    std::set< // a set of pairs of AtomIndexTypes that are EQUAL
-      std::pair<
-        AtomIndexType,
-        AtomIndexType
-      >
-    >
-  > rankPriority(
+  RankingInformation rankPriority(
     const AtomIndexType& a,
     const std::vector<AtomIndexType>& excludeAdjacent = {}
   ) const;

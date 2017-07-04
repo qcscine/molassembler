@@ -99,7 +99,6 @@ set(HEADERS_all
   include/DistanceGeometry/MoleculeSpatialModel.h
   include/DistanceGeometry/generateConformation.h
   include/AdjacencyList.h
-  include/AdjacencyListAlgorithms.h
   include/AdjacencyMatrix.h
   include/AnalysisHelpers.h
   include/AtomInfo.h
@@ -111,6 +110,7 @@ set(HEADERS_all
   include/DelibHelpers.h
   include/EZStereocenter.h
   include/Edges.h
+  include/GraphAlgorithms.h
   include/GraphDistanceMatrix.h
   include/IO.h
   include/IterateStereocenterPermutations.h
@@ -121,7 +121,6 @@ set(HEADERS_all
   include/StdlibTypeAlgorithms.h
   include/Stereocenter.h
   include/StereocenterList.h
-  include/SymmetryFit.h
   include/Traits.h
   include/Tree.h
   include/TreeAlgorithms.h
@@ -138,7 +137,6 @@ set(SOURCES_all
   source/DistanceGeometry/MoleculeSpatialModel.cpp
   source/DistanceGeometry/RefinementProblem.cpp
   source/AdjacencyList.cpp
-  source/AdjacencyListAlgorithms.cpp
   source/AdjacencyMatrix.cpp
   source/AtomInfo.cpp
   source/BondDistance.cpp
@@ -148,12 +146,12 @@ set(SOURCES_all
   source/DelibHelpers.cpp
   source/EZStereocenter.cpp
   source/GraphDistanceMatrix.cpp
+  source/GraphAlgorithms.cpp
   source/LocalGeometryModel.cpp
   source/Log.cpp
   source/Molecule.cpp
   source/StdlibTypeAlgorithms.cpp
   source/Stereocenter.cpp
-  source/SymmetryFit.cpp
   source/VSEPR.cpp
 )
 

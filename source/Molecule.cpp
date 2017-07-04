@@ -4,7 +4,7 @@
 #include "CommonTrig.h"
 
 #include "GraphDistanceMatrix.h"
-#include "AdjacencyListAlgorithms.h"
+#include "GraphAlgorithms.h"
 #include "AdjacencyMatrix.h"
 
 #include "TreeAlgorithms.h"
@@ -113,7 +113,7 @@ void Molecule::removeAtom(const AtomIndexType& a) {
   adjacencyListCopy.removeAtom(a);
 
   // is this still a connected molecule or have we split it in two?
-  if(AdjacencyListAlgorithms::numConnectedComponents(adjacencyListCopy) != 1) {
+  if(GraphAlgorithms::numConnectedComponents(adjacencyListCopy.access()) != 1) {
     throw std::logic_error(
       "The selected atom removal would lead to a molecule split!"
     );
@@ -138,7 +138,7 @@ void Molecule::removeBond(
 
   adjacencyListCopy.removeBond(a, b);
 
-  if(AdjacencyListAlgorithms::numConnectedComponents(adjacencyListCopy) != 1) {
+  if(GraphAlgorithms::numConnectedComponents(adjacencyListCopy.access()) != 1) {
     throw std::logic_error(
       "The selected bond removal would lead to a molecule split!"
     );

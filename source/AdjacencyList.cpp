@@ -2,7 +2,7 @@
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
 #include "CommonTrig.h"
-
+#include "GraphAlgorithms.h"
 #include "Log.h"
 
 namespace MoleculeManip {
@@ -300,20 +300,15 @@ StereocenterList AdjacencyList::detectStereocenters() const {
 
   // Find CNStereocenters
   for(const auto& candidateIndex : _getCNStereocenterCandidates()) {
-    // Determine the local geometry
-    auto localGeometryName = determineLocalGeometry(candidateIndex);
-    auto rankResultPair = rankPriority(candidateIndex);
-
     // Construct a Stereocenter here
     std::shared_ptr<
       Stereocenters::CNStereocenter
     > newStereocenter = std::make_shared<
       Stereocenters::CNStereocenter
     >(
-      localGeometryName,
+      determineLocalGeometry(candidateIndex),
       candidateIndex,
-      rankResultPair.first,
-      rankResultPair.second
+      rankPriority(candidateIndex)
     );
 
     /*std::cout << "Trial stereocenter: " << newStereocenter -> info() << std::endl;
@@ -367,11 +362,11 @@ StereocenterList AdjacencyList::detectStereocenters() const {
       Stereocenters::EZStereocenter
     >(
       source,
-      sourceSubstituentsRanking.first,
-      sourceSubstituentsRanking.second,
+      sourceSubstituentsRanking.sortedPriorities,
+      sourceSubstituentsRanking.equalPriorityPairsSet,
       target,
-      targetSubstituentsRanking.first,
-      targetSubstituentsRanking.second
+      targetSubstituentsRanking.sortedPriorities,
+      targetSubstituentsRanking.equalPriorityPairsSet
     );
 
     if(newStereocenter -> numAssignments() == 2) {
@@ -477,16 +472,17 @@ RangeForTemporary<GraphType::adjacency_iterator> AdjacencyList::iterateAdjacenci
  * - FUCK CIP rules -> maybe just use the unsigned values of assignments in
  *   GraphFeatures and rank branches with that.
  * - test
+ *
+ *
+ * NOTES
+ * - Disadvantages: operator < is likely called repeatedly on already-evaluated
+ *   arguments, and is fairly costly each time. Perhaps being able to remember
+ *   comparisons that were already carried out could be useful...
+ * - making a full tree out of the molecule starting at the atom whose
+ *   substituents you want sorted could be a good data structure to iterate over
  */
-std::pair<
-  std::vector<AtomIndexType>, // the sorted list of substituent priorities
-  std::set< // a set of pairs of AtomIndexTypes that are EQUAL
-    std::pair<
-      AtomIndexType,
-      AtomIndexType
-    >
-  >
-> AdjacencyList::rankPriority(
+
+RankingInformation AdjacencyList::rankPriority(
   const AtomIndexType& a,
   const std::vector<AtomIndexType>& excludeAdjacent 
 ) const {
@@ -498,30 +494,35 @@ std::pair<
     >
   > equalPairs;
 
-  // remove excludes from toRank
-  toRank.erase(
-    std::remove_if(
-      toRank.begin(),
-      toRank.end(),
-      [&excludeAdjacent](const AtomIndexType& atomIndex) {
-        return std::find(
-          excludeAdjacent.begin(),
-          excludeAdjacent.end(),
-          atomIndex
-        ) != excludeAdjacent.end();
-      }
-    ),
-    toRank.end()
+  // Remove excludes from indices to sort
+  TemplateMagic::eraseRemoveIf(
+    toRank,
+    TemplateMagic::makeContainsPredicate(excludeAdjacent)
   );
 
-  auto getZ = [this](const AtomIndexType& a) -> int {
-    return static_cast<int>(getElementType(a));
+  // Determine which substituents are linked to each other
+  auto linkedPairsSet = GraphAlgorithms::findSubstituentLinks(
+    _adjacencies,
+    a,
+    std::set<AtomIndexType> {
+      toRank.begin(),
+      toRank.end()
+    }
+  );
+
+  auto getElementRankCoef = [this](const AtomIndexType& a) -> int {
+    auto Z = static_cast<int>(getElementType(a));
+
+    // Cannot get StereocenterList, it's not a part of AdjacencyList, but a part
+    // of Molecule...
+
+    return Z;
   };
 
-  auto BFSIterate = [this, getZ](
+  auto BFSIterate = [this, getElementRankCoef](
     std::set<AtomIndexType>& visitedSet,
     std::vector<AtomIndexType>& seeds,
-    std::multiset<int, std::greater<int> >& Zs
+    std::multiset<int, std::greater<int> >& rankingSet
   ) {
     std::vector<AtomIndexType> newSeeds;
     for(const auto& index : seeds) {
@@ -532,8 +533,8 @@ std::pair<
           visitedSet.insert(potentialSeed);
           newSeeds.push_back(potentialSeed);
 
-          // add it's Z to Zs
-          Zs.insert(getZ(potentialSeed));
+          // add it's Z to rankingSet
+          rankingSet.insert(getElementRankCoef(potentialSeed));
         } // else skip
       }
     }
@@ -542,11 +543,11 @@ std::pair<
     seeds = newSeeds;
   };
   
-  // sort toRank according to CIP-like rules
+  // sort toRank ASC according to CIP-like rules
   std::sort(
     toRank.begin(),
     toRank.end(),
-    [&a, this, &getZ, &BFSIterate, &equalPairs](
+    [&a, this, &getElementRankCoef, &BFSIterate, &equalPairs](
       const AtomIndexType& lhs,
       const AtomIndexType& rhs
     ) {
@@ -555,23 +556,23 @@ std::pair<
       std::multiset<
         int,
         std::greater<int> // in CIP, list of Z is ordered DESC
-      > lhsZ = { getZ(lhs) }, rhsZ = { getZ(rhs) };
+      > lhsRanks = { getElementRankCoef(lhs) }, rhsRanks = { getElementRankCoef(rhs) };
       while(
           !lhsSeeds.empty()
           || !rhsSeeds.empty()
       ) {
         // compare lists -> return possibilities
-        if(lhsZ < rhsZ) {
+        if(lhsRanks < rhsRanks) {
           return true;
         } 
 
-        if(lhsZ > rhsZ) {
+        if(lhsRanks > rhsRanks) {
           return false;
         }
 
         // iterate along the bonds
-        BFSIterate(lhsVisited, lhsSeeds, lhsZ);
-        BFSIterate(rhsVisited, rhsSeeds, rhsZ);
+        BFSIterate(lhsVisited, lhsSeeds, lhsRanks);
+        BFSIterate(rhsVisited, rhsSeeds, rhsRanks);
       }
 
       // all equal -> add to equalPairs
@@ -583,10 +584,12 @@ std::pair<
     }
   );
 
-  return {
-    toRank,
-    equalPairs
-  };
+  RankingInformation rankingInfo;
+  rankingInfo.sortedPriorities = std::move(toRank);
+  rankingInfo.equalPriorityPairsSet = std::move(equalPairs);
+  rankingInfo.linkedPairsSet = std::move(linkedPairsSet);
+
+  return rankingInfo;
 }
 
 // Creates a copy of the contained data suitable for the Edges class
@@ -675,11 +678,11 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
       Stereocenters::EZStereocenter
     >(
       source,
-      sourceSubstituentsRanking.first,
-      sourceSubstituentsRanking.second,
+      sourceSubstituentsRanking.sortedPriorities,
+      sourceSubstituentsRanking.equalPriorityPairsSet,
       target,
-      targetSubstituentsRanking.first,
-      targetSubstituentsRanking.second
+      targetSubstituentsRanking.sortedPriorities,
+      targetSubstituentsRanking.equalPriorityPairsSet
     );
 
     newStereocenter -> fit(positions);
@@ -704,20 +707,15 @@ StereocenterList AdjacencyList::inferStereocentersFromPositions(
       continue;
     }
 
-    // Determine the local geometry
-    const auto localGeometryName = determineLocalGeometry(candidateIndex);
-    auto rankResultPair = rankPriority(candidateIndex);
-
     // Construct it
     std::shared_ptr<
       Stereocenters::CNStereocenter
     > stereocenterPtr = std::make_shared<
       Stereocenters::CNStereocenter
     >(
-      localGeometryName,
+      determineLocalGeometry(candidateIndex),
       candidateIndex,
-      rankResultPair.first,
-      rankResultPair.second
+      rankPriority(candidateIndex)
     );
 
     stereocenterPtr -> fit(positions);

@@ -18,20 +18,22 @@ CNStereocenter::CNStereocenter(
   const Symmetry::Name& symmetry,
   // The atom this Stereocenter is centered on
   const AtomIndexType& centerAtom,
-  // A partially ordered list of substituents, low to high 
-  const std::vector<AtomIndexType>& partiallySortedSubstituents,
-  // A set of pairs denoting which substituents are equal priority
-  const std::set<
-    std::pair<AtomIndexType, AtomIndexType>
-  >& equalPairsSet
-) : symmetry(symmetry),
+  // Ranking information of substituents
+  const RankingInformation& ranking
+) : _neighborCharMap( 
+      _reduceSubstituents( // Reduce ranking to a character map
+        ranking.sortedPriorities,
+        ranking.equalPriorityPairsSet
+      )
+    ),
+    _links(
+      _makeLinks( // Reduce ranking links to self-referential set of pairs
+        ranking.sortedPriorities,
+        ranking.linkedPairsSet
+      )
+    ),
+    symmetry(symmetry),
     centerAtom(centerAtom) {
-
-  // Reduce the substituents to a character map
-  _neighborCharMap = _reduceSubstituents(
-    partiallySortedSubstituents,
-    equalPairsSet
-  );
 
   // Generate the set of unique assignments possible here
   _uniqueAssignments = UniqueAssignments::uniqueAssignments(
@@ -39,8 +41,10 @@ CNStereocenter::CNStereocenter(
       symmetry,
       _reduceNeighborCharMap(
         _neighborCharMap
-      )
-    )
+      ),
+      _links
+    ),
+    false // Do NOT remove trans-spanning linked groups
   );
 
   /* auto reducedMap = _reduceNeighborCharMap(_neighborCharMap);
@@ -144,7 +148,7 @@ std::vector<char> CNStereocenter::_reduceNeighborCharMap(
     AtomIndexType,
     char
   >& neighborCharMap
-) {
+) const {
   std::vector<char> ligandSymbols;
 
   // Add every mapped char to a vector
@@ -159,6 +163,45 @@ std::vector<char> CNStereocenter::_reduceNeighborCharMap(
   );
 
   return ligandSymbols;
+}
+
+UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeLinks(
+  const std::vector<AtomIndexType>& sortedIndices,
+  const std::set<
+    std::pair<AtomIndexType, AtomIndexType>
+  >& linkedPairsSet
+) const {
+  /* Have a sequence of indices ranked by priority low to high
+   * and a set of pairs with the same indices, but we want a set that is
+   * self-referential, i.e. refers to the indices in sortedIndices, e.g.:
+   *
+   * sortedIndices: vec {7, 8, 3, 1}
+   * linkedPairsSet: set { pair {7, 8}, pair {7, 3} }
+   *
+   * -> links: set { pair{0, 1}, pair{0, 2} }
+   */
+  UniqueAssignments::Assignment::LinksSetType links;
+
+  auto findIndexInSorted = [&](const AtomIndexType& index) -> unsigned {
+    auto findIter = std::find(
+      sortedIndices.begin(),
+      sortedIndices.end(),
+      index
+    );
+
+    assert(findIter != sortedIndices.end());
+
+    return findIter - sortedIndices.begin();
+  };
+
+  for(const auto& linkPair : linkedPairsSet) {
+    links.emplace(
+      findIndexInSorted(linkPair.first),
+      findIndexInSorted(linkPair.second)
+    );
+  }
+
+  return links;
 }
 
 /* Modification */
@@ -220,8 +263,10 @@ void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
       symmetryName,
       _reduceNeighborCharMap(
         _neighborCharMap
-      )
-    )
+      ),
+      _links
+    ),
+    false // do NOT remove trans-spanning ligand groups
   );
 
   // The Stereocenter is now unassigned
@@ -235,9 +280,16 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
     adjacentAtoms.push_back(mapIterPair.first);
   }
 
-  Symmetry::Name bestSymmetry = Symmetry::Name::Linear;
-  unsigned bestAssignment = 0;
-  double bestPenalty = 100;
+  const Symmetry::Name priorSymmetry {this->symmetry};
+  const boost::optional<unsigned> priorAssignment {this->assignmentOption};
+
+  const Symmetry::Name initialSymmetry {Symmetry::Name::Linear};
+  const unsigned initialAssignment = 0;
+  const unsigned initialPenalty = 100;
+
+  Symmetry::Name bestSymmetry = initialSymmetry;
+  unsigned bestAssignment = initialAssignment;
+  double bestPenalty = initialPenalty;
   unsigned bestAssignmentMultiplicity = 1;
 
   // Cycle through all symmetries
@@ -392,17 +444,37 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
       }
     }
   }
-
-  // Set to best fit
-  changeSymmetry(bestSymmetry);
-
-  /* How to handle multiplicity? 
-   * Current policy: If there is multiplicity, warn and do not assign
+  
+  /* In case NO assignments could be tested, return to the prior state.
+   * This guards against situations in which predicates in uniqueAssignments
+   * could lead no assignments to be returned, such as in e.g. square-planar
+   * AAAB with {0, 3}, {1, 3}, {2, 3} with removal of trans-spanning groups.
+   * In that situation, all possible assignments are trans-spanning and 
+   * uniqueAssignments is an empty vector.
+   *
+   * At the moment, this predicate is disabled, so no such issues should arise.
+   * Just being safe.
    */
-  if(bestAssignmentMultiplicity > 1) {
-    assignmentOption = boost::none;
+  if( 
+    bestSymmetry == initialSymmetry
+    && bestAssignment == initialAssignment
+    && bestPenalty == initialPenalty
+  ) {
+    // Return to prior
+    changeSymmetry(priorSymmetry);
+    this->assignmentOption = priorAssignment;
   } else {
-    assignmentOption = bestAssignment;
+    // Set to best fit
+    changeSymmetry(bestSymmetry);
+
+    /* How to handle multiplicity? 
+     * Current policy: If there is multiplicity, warn and do not assign
+     */
+    if(bestAssignmentMultiplicity > 1) {
+      assignmentOption = boost::none;
+    } else {
+      assignmentOption = bestAssignment;
+    }
   }
 }
 

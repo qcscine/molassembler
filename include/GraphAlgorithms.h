@@ -1,10 +1,12 @@
-#ifndef INCLUDE_ADJACENCYLIST_ALGORITHMS_H
-#define INCLUDE_ADJACENCYLIST_ALGORITHMS_H
+#ifndef INCLUDE_GRAPH_ALGORITHMS_H
+#define INCLUDE_GRAPH_ALGORITHMS_H
 
+#include "common_typedefs.h"
+#include "Tree.h"
 #include <boost/graph/breadth_first_search.hpp>
 
-#include "AdjacencyList.h"
-#include "Tree.h"
+#include <iostream>
+#include "Delib/ElementInfo.h"
 
 /* TODO
  * - Refactor to BGL
@@ -18,7 +20,7 @@
 
 namespace MoleculeManip {
 
-namespace AdjacencyListAlgorithms {
+namespace GraphAlgorithms {
 
 //! BGL BFS Visitors
 namespace BFSVisitors {
@@ -211,6 +213,89 @@ public:
   }
 };
 
+class SubstituentLinkSearcher : public boost::default_bfs_visitor {
+private:
+  // Const members
+  const std::set<AtomIndexType> _soughtIndices;
+  const AtomIndexType _source;
+
+  // State
+  std::map<AtomIndexType, unsigned> _depthMap;
+  std::map<AtomIndexType, AtomIndexType> _parentMap;
+
+  // Side-effect output
+  std::set<
+    std::pair<AtomIndexType, AtomIndexType>
+  >& _connectedPairs;
+
+public:
+  SubstituentLinkSearcher(
+    const AtomIndexType& source,
+    const std::set<AtomIndexType>& soughtIndices,
+    std::set<
+      std::pair<AtomIndexType, AtomIndexType>
+    >& connectedPairsOutput
+  ) : _soughtIndices(soughtIndices),
+      _source(source),
+      _depthMap({
+        {source, 0}
+      }),
+      _connectedPairs(connectedPairsOutput)
+  {
+    for(const auto& index : soughtIndices) {
+      _parentMap[index] = index;
+    }
+  }
+
+  template<typename Graph>
+  void tree_edge(const EdgeIndexType& e, const Graph& g) {
+    const auto source = boost::source(e, g);
+    const auto target = boost::target(e, g);
+
+    _depthMap[target] = _depthMap[source] + 1;
+
+    if(source == _source) {
+      return;
+    }
+
+    bool sourceInMap = (_parentMap.count(source) == 1);
+    bool targetInMap = (_parentMap.count(target) == 1);
+
+    if(sourceInMap && !targetInMap) {
+      _parentMap[target] = _parentMap[source];
+    } else if(targetInMap && !sourceInMap) {
+      _parentMap[source] = _parentMap[target];
+    } 
+  }
+
+  template<typename Graph>
+  void non_tree_edge(const EdgeIndexType& e, const Graph& g) {
+    const auto source = boost::source(e, g);
+    const auto target = boost::target(e, g);
+
+    bool sourceInMap = _parentMap.count(source) == 1;
+    bool targetInMap = _parentMap.count(target) == 1;
+
+    if(
+      sourceInMap 
+      && targetInMap 
+      && _depthMap[target] == _depthMap[source] + 1
+      && _parentMap[source] != _parentMap[target]
+    ) {
+      _connectedPairs.emplace(
+        std::min(
+          _parentMap[source],
+          _parentMap[target]
+        ),
+        std::max(
+          _parentMap[source],
+          _parentMap[target]
+        )
+      );
+    }
+  }
+};
+
 class ShowAllEventsBFSVisitor : public boost::default_bfs_visitor {
 public:
   template<typename Graph>
@@ -267,27 +352,35 @@ public:
 std::shared_ptr<
   BFSVisitors::TreeGenerator::NodeType
 > makeTree(
-  const AdjacencyList& adjacencies,
-  const AtomIndexType& startingFrom,
+  const GraphType& graph,
+  const AtomIndexType& source,
   const unsigned& maxDepth
 );
 
 std::shared_ptr<
   BFSVisitors::TreeGenerator::NodeType
 > makeTree(
-  const AdjacencyList& adjacencies,
-  const AtomIndexType& startingFrom
+  const GraphType& graph,
+  const AtomIndexType& source
 );
 
 std::shared_ptr<
   BFSVisitors::TreeGenerator::NodeType
 > makeTree(
-  const AdjacencyList& adjacencies
+  const GraphType& graph
 );
 
-unsigned numConnectedComponents(const AdjacencyList& adjacencies);
+std::set<
+  std::pair<AtomIndexType, AtomIndexType>
+> findSubstituentLinks(
+  const GraphType& graph,
+  const AtomIndexType& source,
+  const std::set<AtomIndexType>& activeSubstituents
+);
 
-} // namespace AdjacencyListAlgorithms
+unsigned numConnectedComponents(const GraphType& graph);
+
+} // namespace GraphAlgorithms
 
 } // namespace MoleculeManip
 

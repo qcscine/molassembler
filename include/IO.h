@@ -3,7 +3,7 @@
 
 #include "Molecule.h"
 #include "Version.h"
-#include "AdjacencyListAlgorithms.h"
+#include "GraphAlgorithms.h"
 
 #include "Delib/ElementInfo.h" // Delib
 #include "Delib/PositionCollection.h"
@@ -324,8 +324,8 @@ public:
     }
 
     // Ensure that the Molecule is connected, no fragments are contained
-    unsigned nComponents = AdjacencyListAlgorithms::numConnectedComponents(
-      _adjacencies
+    unsigned nComponents = GraphAlgorithms::numConnectedComponents(
+      _adjacencies.access()
     );
 
     if(nComponents != 1) {

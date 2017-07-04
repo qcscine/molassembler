@@ -110,11 +110,11 @@ BFSConstraintCollector::BFSConstraintCollector(
         // Instantiate without regard for number of assignments
         auto newStereocenterPtr = std::make_shared<Stereocenters::EZStereocenter>(
           source,
-          sourceSubstituentsRanking.first,
-          sourceSubstituentsRanking.second,
+          sourceSubstituentsRanking.sortedPriorities,
+          sourceSubstituentsRanking.equalPriorityPairsSet,
           target,
-          targetSubstituentsRanking.first,
-          targetSubstituentsRanking.second
+          targetSubstituentsRanking.sortedPriorities,
+          targetSubstituentsRanking.equalPriorityPairsSet
         );
 
         // Map source *and* target to the same stereocenterPtr
@@ -164,13 +164,10 @@ BFSConstraintCollector::BFSConstraintCollector(
       _stereocenterMap.count(i) == 0  // not already in the map
       && adjacencies.getNumAdjacencies(i) > 1 // non-terminal
     ) {
-      auto rankResultPair = adjacencies.rankPriority(i);
-
       _stereocenterMap[i] = std::make_shared<Stereocenters::CNStereocenter>(
         adjacencies.determineLocalGeometry(i),
         i,
-        rankResultPair.first,
-        rankResultPair.second
+        adjacencies.rankPriority(i)
       );
 
       // At this point, new stereocenters should have only one assignment

@@ -120,19 +120,6 @@ public:
 
   int oxidationState(const AtomIndexType& a) const; // TODO not implemented
 
-  std::pair<
-    std::vector<AtomIndexType>, // the sorted list of substituent priorities
-    std::set< // a set of pairs of AtomIndexTypes that have equal priority
-      std::pair<
-        AtomIndexType,
-        AtomIndexType
-      >
-    >
-  > rankPriority(
-    const AtomIndexType& a,
-    const std::vector<AtomIndexType>& excludeAdjacent = {}
-  ) const;
-
   /* Testing */
   std::pair<bool, std::string> validate() const noexcept; // TODO not implemented
 

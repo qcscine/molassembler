@@ -25,16 +25,19 @@ EZStereocenter::EZStereocenter(
     || secondCenterRanking.size() == 2
   );
 
+  /* NOTE: high priority is assigned from the back of the ranking since the list
+   * is ordered ascending
+   */
   _leftCenter = firstCenter;
-  _leftHighPriority = firstCenterRanking.front();
+  _leftHighPriority = firstCenterRanking.back();
   _rightCenter = secondCenter;
-  _rightHighPriority = secondCenterRanking.front();
+  _rightHighPriority = secondCenterRanking.back();
 
   if(firstCenterRanking.size() == 2) {
-    _leftLowPriority = firstCenterRanking.back();
+    _leftLowPriority = firstCenterRanking.front();
   }
   if(secondCenterRanking.size() == 2) {
-    _rightLowPriority = secondCenterRanking.back();
+    _rightLowPriority = secondCenterRanking.front();
   }
 
   // Determine whether there can be two assignments or not

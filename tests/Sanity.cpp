@@ -32,7 +32,7 @@ void explainDifference(
  * recovering all the stereocenter data from the positions alone yields the
  * same StereocenterList as you started out with
  *
- * TODO This test will fail worse as soon as SymmetryFit takes into account the 
+ * TODO This test will fail worse as soon as the fit takes into account the 
  * geometry we expect the center to take, simply because the molecules created
  * by DGDBM::asymmetricMolecule are (in VSEPR's eyes) abject nonsense
  */

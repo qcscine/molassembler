@@ -13,6 +13,8 @@ Remaining DG deficiencies
 
   EZStereocenter's angle(C, C, C) returns 120°, and the resulting bounds are not
   modified if the involved atoms are cycle members
+- Cycles of size 8 can have considerable strain due to triple bonds in the
+  cycle, this is not considered
 - Bounds are perhaps a little too loose now, spiro centers look awful
 - Double bonds in DG maybe shouldn't enforce absolute flatness, but have
   tolerance. Either that or reduce the error function contribution of

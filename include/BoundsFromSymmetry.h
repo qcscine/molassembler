@@ -31,13 +31,10 @@ MoleculeManip::Molecule symmetricMolecule(
     );
   }
 
-  auto rankResultPair = molecule.getAdjacencyList().rankPriority(0);
-
   auto stereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
     symmetry,
     0,
-    rankResultPair.first,
-    rankResultPair.second
+    molecule.getAdjacencyList().rankPriority(0)
   );
 
   stereocenterPtr -> assign(0);
@@ -86,8 +83,7 @@ MoleculeManip::Molecule asymmetricMolecule(
   auto stereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
     symmetry,
     0,
-    rankResultPair.first,
-    rankResultPair.second
+    molecule.getAdjacencyList().rankPriority(0)
   );
 
   stereocenterPtr -> assign(0);

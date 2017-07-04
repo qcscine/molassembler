@@ -1,9 +1,11 @@
 #ifndef INCLUDE_CN_STEREOCENTER_H
 #define INCLUDE_CN_STEREOCENTER_H
 
-#include "Stereocenter.h"
 #include "geometry_assignment/Assignment.h"
 #include "symmetry_information/Symmetries.h"
+
+#include "Stereocenter.h"
+#include "RankingInformation.h"
 
 using namespace std::string_literals;
 
@@ -18,7 +20,10 @@ private:
 
 /* Private State */
   // Mapping between next neighbor atom index and symbolic ligand character
-  std::map<AtomIndexType, char> _neighborCharMap;
+  const std::map<AtomIndexType, char> _neighborCharMap;
+  // Links between sorted indices
+  const UniqueAssignments::Assignment::LinksSetType _links;
+
   // Mapping between next neighbor atom index to permutational symmetry position
   std::map<AtomIndexType, unsigned> _neighborSymmetryPositionMap;
   // Vector of rotationally unique Assignments
@@ -51,7 +56,14 @@ private:
       AtomIndexType,
       char
     >& neighborCharMap
-  );
+  ) const;
+
+  UniqueAssignments::Assignment::LinksSetType _makeLinks(
+    const std::vector<AtomIndexType>& sortedIndices,
+    const std::set<
+      std::pair<AtomIndexType, AtomIndexType>
+    >& linkedPairsSet
+  ) const;
 
 public:
 /* Public state */
@@ -67,12 +79,8 @@ public:
     const Symmetry::Name& symmetry,
     // The atom this Stereocenter is centered on
     const AtomIndexType& centerAtom,
-    // A partially ordered list of substituents, low to high
-    const std::vector<AtomIndexType>& partiallySortedSubstituents,
-    // A set of pairs denoting which substituents are equal priority
-    const std::set<
-      std::pair<AtomIndexType, AtomIndexType>
-    >& equalPairsSet
+    // Ranking information of substituents
+    const RankingInformation& ranking
   );
 
 /* Modification */

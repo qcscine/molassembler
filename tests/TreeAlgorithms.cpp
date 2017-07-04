@@ -3,7 +3,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "TreeAlgorithms.h"
-#include "AdjacencyListAlgorithms.h"
+#include "AdjacencyList.h"
+#include "GraphAlgorithms.h"
 #include "RepeatedElementCollection.h"
 
 BOOST_AUTO_TEST_CASE( makeTreeTest ) {
@@ -40,7 +41,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       })
     );
 
-    auto treePtr = AdjacencyListAlgorithms::makeTree(test);
+    auto treePtr = GraphAlgorithms::makeTree(test.access());
 
     std::vector<AtomIndexType> BFSVisitSequence;
     auto BFSVisitor = [&BFSVisitSequence](const auto& nodePtr) {
@@ -87,7 +88,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       })
     );
 
-    auto treePtr = AdjacencyListAlgorithms::makeTree(test);
+    auto treePtr = GraphAlgorithms::makeTree(test.access());
 
     std::vector<AtomIndexType> BFSVisitSequence;
     auto BFSVisitor = [&BFSVisitSequence](const auto& nodePtr) {
@@ -136,7 +137,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       })
     );
 
-    auto treePtr = AdjacencyListAlgorithms::makeTree(test);
+    auto treePtr = GraphAlgorithms::makeTree(test.access());
 
     struct BFSVisitor {
       std::vector<AtomIndexType> visitSequence;

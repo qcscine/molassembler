@@ -5,9 +5,6 @@
 #include <boost/optional.hpp>
 #include "template_magic/TemplateMagic.h"
 
-/* TODO 
- */
-
 namespace MoleculeManip {
 
 namespace Stereocenters {

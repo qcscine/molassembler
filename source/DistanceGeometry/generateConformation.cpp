@@ -5,7 +5,7 @@
 #include "DistanceGeometry/dlibAdaptors.h"
 #include "DistanceGeometry/dlibDebugAdaptors.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
-#include "AdjacencyListAlgorithms.h"
+#include "GraphAlgorithms.h"
 #include "TreeAlgorithms.h"
 
 #include <dlib/optimization.h>

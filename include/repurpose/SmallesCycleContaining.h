@@ -1,4 +1,4 @@
-/* From AdjacencyListAlgorithms
+/* From GraphAlgorithms
  * - Not really useful since it will return only a single cycle the selected
  *   starting atom is in. Just the size information isn't really helpful during
  *   bounds collection, it would be much better if you could get all cycle 
