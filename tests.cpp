@@ -2,9 +2,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "TemplateMagic.h"
 #include "Enumerate.h"
 #include "Random.h"
+#include "Containers.h"
+#include "Numeric.h"
 
 // TEMPORARY
 #include <iostream>
@@ -18,7 +19,7 @@ double divByThree (unsigned a) {
 
 BOOST_AUTO_TEST_CASE( sumTest ) {
   std::vector<unsigned> instance {0, 1, 2, 3};
-  auto f = TemplateMagic::numeric::sum(instance);
+  auto f = TemplateMagic::sum(instance);
 
   BOOST_CHECK(f == 6);
 
@@ -29,7 +30,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
 
   BOOST_CHECK(mapped == std::vector<double>({0, 1.0/3.0, 2.0/3.0, 1}));
 
-  auto pairwiseSum = TemplateMagic::pairwiseMap(
+  auto pairwiseSum = TemplateMagic::mapSequentialPairs(
     instance,
     std::plus<unsigned>()
   );
@@ -37,7 +38,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   BOOST_CHECK(pairwiseSum == std::vector<unsigned>({1,3,5}));
 
   auto pairwiseSmaller = TemplateMagic::accumulate(
-    TemplateMagic::pairwiseMap(
+    TemplateMagic::mapSequentialPairs(
       instance,
       std::less<unsigned>()
     ),
@@ -64,8 +65,8 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   std::vector<unsigned> unsignedVector {1, 2, 3};
 
   BOOST_CHECK(
-    TemplateMagic::numeric::sum(
-      TemplateMagic::allPairsMap(
+    TemplateMagic::sum(
+      TemplateMagic::mapAllPairs(
         unsignedVector,
         [](const unsigned& a, const unsigned& b) -> unsigned {
           return a + b;
@@ -77,8 +78,8 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   std::vector<double> doubleVector {1.2, 1.5, 1.9};
 
   BOOST_CHECK(
-    TemplateMagic::numeric::sum(
-      TemplateMagic::allPairsMap(
+    TemplateMagic::sum(
+      TemplateMagic::mapAllPairs(
         doubleVector,
         [](const double& a, const double& b) -> double {
           return a + b;
@@ -108,8 +109,8 @@ BOOST_AUTO_TEST_CASE( reduceTests) {
 
 BOOST_AUTO_TEST_CASE( minMaxTests ) {
   const std::vector<unsigned> values {1, 4, 6, 8};
-  BOOST_CHECK(TemplateMagic::numeric::max(values) == 8u);
-  BOOST_CHECK(TemplateMagic::numeric::min(values) == 1u);
+  BOOST_CHECK(TemplateMagic::max(values) == 8u);
+  BOOST_CHECK(TemplateMagic::min(values) == 1u);
 }
 
 BOOST_AUTO_TEST_CASE(kahanSummation) {
@@ -128,7 +129,7 @@ BOOST_AUTO_TEST_CASE(kahanSummation) {
       std::plus<double>()
     );
 
-    const double kahanSum = TemplateMagic::numeric::kahanSum(randomNumbers);
+    const double kahanSum = TemplateMagic::kahanSum(randomNumbers);
 
     /* Reference sum with long doubles, I know an alternative implementation of
      * standard reduce summation with long intermediates would have done the
@@ -156,10 +157,39 @@ BOOST_AUTO_TEST_CASE(kahanSummation) {
 BOOST_AUTO_TEST_CASE(numericAverageStdDev) {
   const std::vector<double> values {29, 30, 31, 32, 33};
 
-  BOOST_CHECK(TemplateMagic::numeric::average(values) == 31); 
+  BOOST_CHECK(TemplateMagic::average(values) == 31); 
   BOOST_CHECK(
-    std::fabs(TemplateMagic::numeric::stddev(values) - std::sqrt(2)) 
+    std::fabs(TemplateMagic::stddev(values) - std::sqrt(2)) 
     < 1e-10
+  );
+}
+
+BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
+  std::set<int> f {5, -1, 9};
+
+  auto fMapped = TemplateMagic::map(
+    f,
+    [](const int& x) -> double {
+      return x + 1.3;
+    }
+  );
+
+  static_assert(
+    std::is_same<decltype(fMapped), std::set<double>>::value, 
+    "Map to same container does not work as expected"
+  );
+
+  std::vector<float> x {0, 3.4, 9};
+  auto xMapped = TemplateMagic::map(
+    x,
+    [](const float& x) -> unsigned long {
+      return static_cast<unsigned long>(x);
+    }
+  );
+
+  static_assert(
+    std::is_same<decltype(xMapped), std::vector<unsigned long>>::value, 
+    "Map to same container does not work as expected"
   );
 }
 

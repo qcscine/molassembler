@@ -12,7 +12,6 @@ namespace TemplateMagic {
 class Generator {
 private:
   std::vector<unsigned> _seeds;
-  mutable std::mt19937 _randomEngine;
 
   void _initGenerator() {
 
@@ -24,10 +23,12 @@ private:
 #endif
 
     std::seed_seq _seedSequence(_seeds.begin(), _seeds.end());
-    _randomEngine.seed(_seedSequence);
+    randomEngine.seed(_seedSequence);
   }
 
 public:
+  mutable std::mt19937 randomEngine;
+
   Generator() {
     _initGenerator();
   }
@@ -45,7 +46,7 @@ public:
     std::uniform_real_distribution<T> uniformDistribution(lower, upper);
 
     for(unsigned i = 0; i < N; i++) {
-      returnNumbers.emplace_back(uniformDistribution(_randomEngine));
+      returnNumbers.emplace_back(uniformDistribution(randomEngine));
     }
 
     return returnNumbers;
@@ -64,7 +65,7 @@ public:
     std::uniform_int_distribution<T> uniformDistribution(lower, upper);
 
     for(unsigned i = 0; i < N; i++) {
-      returnNumbers.emplace_back(uniformDistribution(_randomEngine));
+      returnNumbers.emplace_back(uniformDistribution(randomEngine));
     }
 
     return returnNumbers;
@@ -79,7 +80,7 @@ public:
     const T& upper
   ) const {
     std::uniform_real_distribution<T> uniformDistribution(lower, upper);
-    return uniformDistribution(_randomEngine);
+    return uniformDistribution(randomEngine);
   }
 
   template<typename T>
@@ -91,9 +92,8 @@ public:
     const T& upper
   ) const {
     std::uniform_int_distribution<T> uniformDistribution(lower, upper);
-    return uniformDistribution(_randomEngine);
+    return uniformDistribution(randomEngine);
   }
-
 };
 
 static Generator random;
