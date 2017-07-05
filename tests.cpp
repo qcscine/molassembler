@@ -8,7 +8,8 @@
 #include <numeric>
 #include <Eigen/Geometry>
 
-#include "template_magic/TemplateMagic.h"
+#include "template_magic/Containers.h"
+#include "template_magic/Numeric.h"
 
 using namespace Symmetry;
 
@@ -323,7 +324,7 @@ BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
 }
 
 BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
-  const double comparisonSmallestAngle = TemplateMagic::numeric::min(
+  const double comparisonSmallestAngle = TemplateMagic::min(
     TemplateMagic::map(
       allNames,
       [](const Name& symmetryName) -> double {
