@@ -3,7 +3,6 @@
 
 #include "Stereocenter.h"
 #include <boost/optional.hpp>
-#include "template_magic/TemplateMagic.h"
 #include "RankingInformation.h"
 
 namespace MoleculeManip {

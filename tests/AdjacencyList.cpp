@@ -3,7 +3,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include "AdjacencyList.h"
-#include "template_magic/TemplateMagic.h"
 #include "template_magic/Random.h"
 
 // Temp, testing

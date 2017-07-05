@@ -4,6 +4,8 @@
 #include "Molecule.h"
 #include "StdlibTypeAlgorithms.h"
 
+#include "template_magic/Containers.h"
+
 /* TODO
  * - Maybe make a set of logical requirements that the iterators must fulfill to
  *   test against, similar for the comparison operators? e.g. self-consistency

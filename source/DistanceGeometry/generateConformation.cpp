@@ -5,11 +5,14 @@
 #include "DistanceGeometry/dlibAdaptors.h"
 #include "DistanceGeometry/dlibDebugAdaptors.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "template_magic/Containers.h"
+
 #include "GraphAlgorithms.h"
 #include "TreeAlgorithms.h"
 
 #include <dlib/optimization.h>
 #include <Eigen/Dense>
+
 
 namespace MoleculeManip {
 

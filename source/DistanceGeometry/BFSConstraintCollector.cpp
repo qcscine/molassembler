@@ -211,7 +211,7 @@ BFSConstraintCollector::BFSConstraintCollector(
        */
       auto cycleInternalAngles = CyclicPolygons::internalAngles(
         // Map sequential index pairs to their purported bond length
-        TemplateMagic::pairwiseMap( 
+        TemplateMagic::mapSequentialPairs( 
           indexSequence,
           [&](const AtomIndexType& i, const AtomIndexType& j) -> double {
             auto bondTypeOption = adjacencies.getBondType(i, j);

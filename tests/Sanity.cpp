@@ -8,6 +8,8 @@
 #include "BoundsFromSymmetry.h"
 #include "IterateStereocenterPermutations.h"
 
+#include "template_magic/Containers.h"
+
 using namespace std::string_literals;
 using namespace MoleculeManip;
 using namespace MoleculeManip::DistanceGeometry;

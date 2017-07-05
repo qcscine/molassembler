@@ -1,10 +1,12 @@
 #include "CNStereocenter.h"
 #include "geometry_assignment/GenerateUniques.h"
-#include "template_magic/TemplateMagic.h"
 #include "StdlibTypeAlgorithms.h"
 #include "DelibHelpers.h"
 #include "CommonTrig.h"
 #include "Log.h"
+
+#include "template_magic/Numeric.h"
+#include "template_magic/Containers.h"
 
 #include <iomanip>
 
@@ -312,8 +314,8 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
 
       const auto prototypes = chiralityConstraints();
 
-      const double angleDeviations = TemplateMagic::numeric::sum(
-        TemplateMagic::allPairsMap(
+      const double angleDeviations = TemplateMagic::sum(
+        TemplateMagic::mapAllPairs(
           adjacentAtoms,
           [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
             return std::fabs(
@@ -332,8 +334,8 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
         )
       );
 
-      const double oneThreeDistanceDeviations = TemplateMagic::numeric::sum(
-        TemplateMagic::allPairsMap(
+      const double oneThreeDistanceDeviations = TemplateMagic::sum(
+        TemplateMagic::mapAllPairs(
           adjacentAtoms,
           [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
             return std::fabs(
@@ -365,7 +367,7 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
 
       const double chiralityDeviations = (prototypes.empty()
         ? 0
-        : TemplateMagic::numeric::sum(
+        : TemplateMagic::sum(
           TemplateMagic::map(
             prototypes,
             [&positions](const auto& constraintPrototype) -> double {

@@ -3,6 +3,9 @@
 #include "constexpr_magic/Math.h"
 #include "DelibHelpers.h"
 
+#include "template_magic/Numeric.h"
+#include "template_magic/Containers.h"
+
 namespace MoleculeManip {
 
 namespace Stereocenters {
@@ -127,7 +130,7 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
    * case we have four substituents, so consider that too if it exists.
    */
 
-  double zPenalty = TemplateMagic::numeric::sum(
+  double zPenalty = TemplateMagic::sum(
     TemplateMagic::map(
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
@@ -141,7 +144,7 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
     )
   );
 
-  double ePenalty = TemplateMagic::numeric::sum(
+  double ePenalty = TemplateMagic::sum(
     TemplateMagic::map(
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
@@ -176,7 +179,7 @@ double EZStereocenter::angle(
    * is always 120°
    */
 
-  return ConstexprMagic::Math::toRadians(120);
+  return ConstexprMagic::Math::toRadians<double>(120);
 }
 
 boost::optional<unsigned> EZStereocenter::assigned() const {
@@ -367,7 +370,7 @@ bool EZStereocenter::operator == (const EZStereocenter& other) const {
 }
 
 // Static data
-const double EZStereocenter::_dihedralAngleVariance = ConstexprMagic::Math::toRadians(5);
+const double EZStereocenter::_dihedralAngleVariance = ConstexprMagic::Math::toRadians<double>(5);
 
 } // namespace Stereocenters
 

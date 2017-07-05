@@ -10,6 +10,8 @@
 #include "DistanceGeometry/RefinementProblem.h"
 #include "template_magic/Enumerate.h"
 #include "template_magic/Random.h"
+#include "template_magic/Containers.h"
+#include "template_magic/Numeric.h"
 #include "AnalysisHelpers.h"
 
 #include <Eigen/Geometry>
@@ -30,7 +32,7 @@ bool isApprox(
   const double& epsilon
 ) {
   return TemplateMagic::all_of(
-    TemplateMagic::zipMapAlternate(
+    TemplateMagic::zipMap(
       a,
       b,
       [&](const auto& i, const auto& j) -> bool {
@@ -99,7 +101,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     Vector gradient = gradientFunctor(dlibPositions);
 
     bool passes = TemplateMagic::all_of(
-      TemplateMagic::zipMapAlternate(
+      TemplateMagic::zipMap(
         gradient,
         finiteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
@@ -138,7 +140,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     Vector compressedGradient = compressingGradientFunctor(dlibPositions);
 
     bool compressedPasses = TemplateMagic::all_of(
-      TemplateMagic::zipMapAlternate(
+      TemplateMagic::zipMap(
         compressedGradient,
         compressedFiniteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
@@ -500,7 +502,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     );
 
     // The average error of the ensemble should be below 1e-5 (already achieved)
-    BOOST_CHECK(TemplateMagic::numeric::average(finalErrors) < maximumErrorThreshold);
+    BOOST_CHECK(TemplateMagic::average(finalErrors) < maximumErrorThreshold);
 
     for(const auto& enumPair : enumerate(DGResult.refinements)) {
       const auto& refinementData = enumPair.value;

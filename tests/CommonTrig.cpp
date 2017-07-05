@@ -4,7 +4,7 @@
 
 #include "CommonTrig.h"
 #include "template_magic/Random.h"
-#include "template_magic/TemplateMagic.h"
+#include "template_magic/Containers.h"
 
 template<typename T>
 bool isApproxAbs(

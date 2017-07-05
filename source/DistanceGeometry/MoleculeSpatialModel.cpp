@@ -1,4 +1,3 @@
-#include "template_magic/TemplateMagic.h"
 #include "cyclic_polygons/Minimal.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "StdlibTypeAlgorithms.h"
@@ -240,7 +239,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
        */
       const auto cycleInternalAngles = CyclicPolygons::internalAngles(
         // Map sequential index pairs to their purported bond length
-        TemplateMagic::pairwiseMap( 
+        TemplateMagic::mapSequentialPairs( 
           indexSequence,
           [&](const AtomIndexType& i, const AtomIndexType& j) -> double {
             auto bondTypeOption = adjacencies.getBondType(i, j);
@@ -339,7 +338,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       // All combinations between adjacencies of this index
       auto adjacentIndices = adjacencies.getAdjacencies(centralIndex);
 
-      TemplateMagic::allPairsCall(
+      TemplateMagic::forAllPairs(
         adjacentIndices,
         [&](const AtomIndexType& i, const AtomIndexType& j) -> void {
           // TODO consider multiplier for centralIndex too?
@@ -492,8 +491,8 @@ void MoleculeSpatialModel::addDefaultDihedrals() {
     auto sourceAdjacencies = _adjacencies.getAdjacencies(sourceIndex);
     auto targetAdjacencies = _adjacencies.getAdjacencies(targetIndex);
 
-    TemplateMagic::removeInplace(sourceAdjacencies, targetIndex);
-    TemplateMagic::removeInplace(targetAdjacencies, sourceIndex);
+    TemplateMagic::inplaceRemove(sourceAdjacencies, targetIndex);
+    TemplateMagic::inplaceRemove(targetAdjacencies, sourceIndex);
 
     // Now, every combination
     for(const auto& sourceAdjacentIndex : sourceAdjacencies) {

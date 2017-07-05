@@ -2,6 +2,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include "template_magic/Containers.h"
+
 #include "AdjacencyList.h"
 #include "GraphAlgorithms.h"
 #include "StdlibTypeAlgorithms.h"
@@ -10,6 +12,7 @@
 #include "RepeatedElementCollection.h"
 
 #include <random>
+
 
 /* TODO
  */

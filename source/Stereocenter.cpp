@@ -3,8 +3,6 @@
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
 
-#include "template_magic/TemplateMagic.h"
-
 namespace MoleculeManip {
 
 std::basic_ostream<char>& operator << (

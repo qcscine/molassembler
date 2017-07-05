@@ -5,6 +5,8 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "template_magic/Containers.h"
+
 #include "IO.h"
 
 void testCycles(const MoleculeManip::CycleData& cycleData) {

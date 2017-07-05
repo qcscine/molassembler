@@ -5,6 +5,8 @@
 #include "GraphAlgorithms.h"
 #include "Log.h"
 
+#include "template_magic/Containers.h"
+
 namespace MoleculeManip {
 
 /* Private members */
@@ -478,7 +480,7 @@ RankingInformation AdjacencyList::rankPriority(
   > equalPairs;
 
   // Remove excludes from indices to sort
-  TemplateMagic::eraseRemoveIf(
+  TemplateMagic::inplaceRemoveIf(
     toRank,
     TemplateMagic::makeContainsPredicate(excludeAdjacent)
   );
