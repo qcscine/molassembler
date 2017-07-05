@@ -23,7 +23,7 @@ int main() {
     };
 
     while(edgeLengths.size() < 5) {
-      const double geometricLimit = TemplateMagic::numeric::sum(edgeLengths);
+      const double geometricLimit = TemplateMagic::sum(edgeLengths);
 
       edgeLengths.emplace_back(
         TemplateMagic::random.getSingle<double>(
@@ -79,7 +79,7 @@ int main() {
         edgeLengths.emplace_back(sampleTruncatedNormal());
       }
 
-      while(!CyclicPolygons::cyclicPolygonConstructible(edgeLengths)) {
+      while(!CyclicPolygons::exists(edgeLengths)) {
         edgeLengths.clear();
         while(edgeLengths.size() < 5) {
           edgeLengths.emplace_back(sampleTruncatedNormal());

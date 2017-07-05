@@ -6,6 +6,7 @@
 #include <iostream>
 #include "template_magic/VectorView.h"
 #include "template_magic/Random.h"
+#include "template_magic/Containers.h"
 
 BOOST_AUTO_TEST_CASE(symmetricPolynomialsCorrect) {
   std::vector<double> values {1, 2, 3, 4, 5};
@@ -14,7 +15,7 @@ BOOST_AUTO_TEST_CASE(symmetricPolynomialsCorrect) {
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::zipMapAlternate(
+      TemplateMagic::zipMap(
         ks,
         expectedResults,
         [&values](const double& k, const double& expectedValue) -> bool {
@@ -35,7 +36,7 @@ BOOST_AUTO_TEST_CASE(intSeqTests) {
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::zipMapAlternate(
+      TemplateMagic::zipMap(
         sequence,
         CyclicPolygons::math::intSeq(sequence.front(), sequence.back()),
         std::equal_to<unsigned>()
@@ -90,7 +91,7 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::zipMapAlternate(
+      TemplateMagic::zipMap(
         epsilon,
         rEpsilons,
         relativeEquals(1e-6)
@@ -121,7 +122,7 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::zipMapAlternate(
+      TemplateMagic::zipMap(
         lambdas,
         rLambdas,
         relativeEquals(1e-6)
@@ -174,7 +175,7 @@ BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
     };
 
     while(edgeLengths.size() < 5) {
-      const double geometricLimit = TemplateMagic::numeric::sum(edgeLengths);
+      const double geometricLimit = TemplateMagic::sum(edgeLengths);
 
       edgeLengths.emplace_back(
         TemplateMagic::random.getSingle<double>(
@@ -251,7 +252,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
         edgeLengths.emplace_back(sampleTruncatedNormal());
       }
 
-      while(!CyclicPolygons::cyclicPolygonConstructible(edgeLengths)) {
+      while(!CyclicPolygons::exists(edgeLengths)) {
         edgeLengths.clear();
         while(edgeLengths.size() < 5) {
           edgeLengths.emplace_back(sampleTruncatedNormal());
@@ -281,7 +282,7 @@ BOOST_AUTO_TEST_CASE(internalAnglesSumCorrectly) {
 
     BOOST_CHECK(
       std::fabs(
-        TemplateMagic::numeric::sum(internalAngles)
+        TemplateMagic::sum(internalAngles)
         - M_PI * (n - 2)
       ) < 1e-6
     );

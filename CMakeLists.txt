@@ -25,7 +25,7 @@ if(NOT CLANG_TIDY_EXE)
   message(STATUS "No clang-tidy found!")
 else()
   message(STATUS "Clang-tidy found: ${CLANG_TIDY_EXE}")
-  set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*")
+  set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*,-cppcoreguidelines-pro-bounds-array-to-pointer-decay")
 endif()
 
 # set headers
@@ -86,6 +86,17 @@ set_target_properties(
 )
 target_include_directories(cyclicPolygonTests PRIVATE ${BOOST_ROOT})
 target_link_libraries(cyclicPolygonTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cyclic_polygons)
+
+add_executable(minimalTests minimalTests.cpp)
+target_compile_options(minimalTests PUBLIC -g)
+set_target_properties(
+  minimalTests PROPERTIES
+  CXX_STANDARD 14
+  CXX_STANDARD_REQUIRED ON
+  COMPILE_FLAGS ${WARNING_FLAGS}
+)
+target_include_directories(minimalTests PRIVATE ${BOOST_ROOT})
+target_link_libraries(minimalTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
 add_executable(analysis analysis.cpp)
 target_compile_options(analysis PUBLIC -O2 -g)

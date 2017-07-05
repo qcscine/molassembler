@@ -8,6 +8,8 @@
 #include <fstream>
 #include <cassert>
 
+#include "template_magic/Containers.h"
+
 namespace CyclicPolygons {
 
 namespace detail {
@@ -105,8 +107,8 @@ void writeSvrtanAnalysisFiles(
 
   const double trialFactor = 1.2;
 
-  const double average = TemplateMagic::numeric::average(edgeLengths);
-  const double stddev = TemplateMagic::numeric::stddev(edgeLengths, average);
+  const double average = TemplateMagic::average(edgeLengths);
+  const double stddev = TemplateMagic::stddev(edgeLengths, average);
 
   const double rhoGuess = 1 / CyclicPolygons::math::square(
     0.5 * average / std::sin(M_PI / 5)
@@ -147,12 +149,12 @@ void writeSvrtanAnalysisFiles(
 
   const double scanLower = (
     CyclicPolygons::math::radiusRhoConversionConstant / CyclicPolygons::math::square(
-      TemplateMagic::numeric::max(edgeLengths)
+      TemplateMagic::max(edgeLengths)
     )
   );
   const double scanUpper = (
     CyclicPolygons::math::radiusRhoConversionConstant / CyclicPolygons::math::square(
-      TemplateMagic::numeric::min(edgeLengths)
+      TemplateMagic::min(edgeLengths)
     )
   );
   const unsigned nSteps = 1000;
@@ -214,7 +216,7 @@ void writeSvrtanAnalysisFiles(
     auto lengthsCopy = edgeLengths;
     lengthsCopy.emplace_back(lengthsCopy.front());
 
-    auto internalAngles = TemplateMagic::pairwiseMap(
+    auto internalAngles = TemplateMagic::mapSequentialPairs(
       lengthsCopy,
       [&doubleR](const double& a, const double& b) -> double {
         return (
@@ -227,7 +229,7 @@ void writeSvrtanAnalysisFiles(
       }
     );
 
-    const double angleSum = TemplateMagic::numeric::sum(internalAngles);
+    const double angleSum = TemplateMagic::sum(internalAngles);
     validRoot = (std::fabs(angleSum - 3 * M_PI) < 1e-6);
   }
 
@@ -253,22 +255,22 @@ void writeAngleAnalysisFiles(
 ) {
   using namespace std::string_literals;
 
-  const double minR = TemplateMagic::numeric::max(edgeLengths) / 2 + 1e-10;
+  const double minR = TemplateMagic::max(edgeLengths) / 2 + 1e-10;
   const double lowerBound = std::max(
     Pentagon::regularCircumradius(
-      TemplateMagic::numeric::min(edgeLengths)
+      TemplateMagic::min(edgeLengths)
     ),
     minR
   );
   const double upperBound = std::max(
     Pentagon::regularCircumradius(
-      TemplateMagic::numeric::max(edgeLengths)
+      TemplateMagic::max(edgeLengths)
     ), 
     minR
   );
   const double rootGuess = Pentagon::regularCircumradius(
     std::max(
-      TemplateMagic::numeric::average(edgeLengths),
+      TemplateMagic::average(edgeLengths),
       minR
     )
   );
@@ -446,7 +448,7 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
   assert(edgeLengths.size() == 5);
 
   assert(
-    cyclicPolygonConstructible(edgeLengths) 
+    exists(edgeLengths) 
     && "No pentagon constructible with given edge lengths! You should've "
       "checked for this edge case before calling convexCircumradiusSvrtan!"
   );
@@ -470,8 +472,8 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
     return Pentagon::svrtanPolynomial(rho, epsilon);
   };
 
-  const double average = TemplateMagic::numeric::average(edgeLengths);
-  const double stddev = TemplateMagic::numeric::stddev(edgeLengths, average);
+  const double average = TemplateMagic::average(edgeLengths);
+  const double stddev = TemplateMagic::stddev(edgeLengths, average);
 
   if(stddev < average * 0.1) {
     /* In the special case where the standard deviation is small compared to the
@@ -524,12 +526,12 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
   // Fallback strategy -> Scan the function until the first crossing
   const double scanLower = (
     math::radiusRhoConversionConstant / CyclicPolygons::math::square(
-      TemplateMagic::numeric::max(edgeLengths)
+      TemplateMagic::max(edgeLengths)
     )
   );
   const double scanUpper = (
     math::radiusRhoConversionConstant / CyclicPolygons::math::square(
-      TemplateMagic::numeric::min(edgeLengths)
+      TemplateMagic::min(edgeLengths)
     )
   );
   const unsigned Nsteps = 1000;
@@ -578,22 +580,22 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
 }
 
 double convexCircumradius(const std::vector<double>& edgeLengths) {
-  const double minR = TemplateMagic::numeric::max(edgeLengths) / 2 + 1e-10;
+  const double minR = TemplateMagic::max(edgeLengths) / 2 + 1e-10;
   const double lowerBound = std::max(
     regularCircumradius(
-      TemplateMagic::numeric::min(edgeLengths)
+      TemplateMagic::min(edgeLengths)
     ),
     minR
   );
   const double upperBound = std::max(
     regularCircumradius(
-      TemplateMagic::numeric::max(edgeLengths)
+      TemplateMagic::max(edgeLengths)
     ), 
     minR
   );
   const double rootGuess = regularCircumradius(
     std::max(
-      TemplateMagic::numeric::average(edgeLengths),
+      TemplateMagic::average(edgeLengths),
       minR
     )
   );
@@ -644,7 +646,7 @@ std::vector<double> internalAngles(
   auto lengthsCopy = edgeLengths;
   lengthsCopy.emplace_back(lengthsCopy.front());
 
-  return TemplateMagic::pairwiseMap(
+  return TemplateMagic::mapSequentialPairs(
     lengthsCopy,
     [&doubleR](const double& a, const double& b) -> double {
       return (
@@ -679,9 +681,9 @@ double centralAnglesDeviation(
   const std::vector<double>& edgeLengths
 ) {
   assert(edgeLengths.size() == 5);
-  assert(circumradius > TemplateMagic::numeric::max(edgeLengths) / 2);
+  assert(circumradius > TemplateMagic::max(edgeLengths) / 2);
 
-  return TemplateMagic::numeric::sum(
+  return TemplateMagic::sum(
     centralAngles(circumradius, edgeLengths)
   ) - 2 * M_PI;
 }
@@ -690,7 +692,7 @@ double centralAnglesDeviationDerivative(
   const double& circumradius,
   const std::vector<double>& edgeLengths
 ) {
-  return TemplateMagic::numeric::sum(
+  return TemplateMagic::sum(
     TemplateMagic::map(
       edgeLengths,
       [&](const double& a) -> double {
@@ -710,7 +712,7 @@ double centralAnglesDeviationSecondDerivative(
 ) {
   const double squareCircumradius = circumradius * circumradius;
 
-  return TemplateMagic::numeric::sum(
+  return TemplateMagic::sum(
     TemplateMagic::map(
       edgeLengths,
       [&](const double& a) -> double {
@@ -733,7 +735,7 @@ bool validateRhoGuess(
   const double circumradius = std::sqrt(1 / rhoGuess);
   auto internalAngles = Pentagon::internalAngles(edgeLengths, circumradius);
   return (
-    TemplateMagic::numeric::sum(internalAngles) - 3 * M_PI
+    TemplateMagic::sum(internalAngles) - 3 * M_PI
     < 1e-6
   );
 }
@@ -747,12 +749,12 @@ double convexCircumradius(const std::vector<double>& edgeLengths) {
   assert(edgeLengths.size() == 5);
 
   assert(
-    cyclicPolygonConstructible(edgeLengths) 
+    exists(edgeLengths) 
     && "No quadrilateral constructible with given edge lengths! You should've "
       "checked for this edge case before calling maximumQuadrilateralCircumradius!"
   );
 
-  double s = TemplateMagic::numeric::sum(edgeLengths) / 2;
+  double s = TemplateMagic::sum(edgeLengths) / 2;
   /* (
    *   (a * c + b * d)
    *   * (a * d + b * c)
@@ -846,7 +848,7 @@ std::vector<double> internalAngles(const std::vector<double>& edgeLengths) {
 
 } // namespace Triangle
 
-bool cyclicPolygonConstructible(const std::vector<double>& edgeLengths) {
+bool exists(const std::vector<double>& edgeLengths) {
   /* If a1, a2, ..., aN satisfy: Each edge length smaller than sum of others
    * -> There exists a convex cyclic polygon (Iosif Pinelis, 2005)
    *
@@ -854,11 +856,11 @@ bool cyclicPolygonConstructible(const std::vector<double>& edgeLengths) {
    * remainder, no need to check all of them.
    */
 
-  const double maxValue = TemplateMagic::numeric::max(edgeLengths);
+  const double maxValue = TemplateMagic::max(edgeLengths);
 
   return (
     maxValue <
-    TemplateMagic::numeric::sum(edgeLengths) - maxValue 
+    TemplateMagic::sum(edgeLengths) - maxValue 
   );
 }
 
@@ -868,7 +870,7 @@ bool cyclicPolygonConstructible(const std::vector<double>& edgeLengths) {
  */
 std::vector<double> internalAngles(const std::vector<double>& edgeLengths) {
   assert(
-    cyclicPolygonConstructible(edgeLengths)
+    exists(edgeLengths)
     && "The passed sequence of lengths cannot be used to construct a polygon. "
       "An edge length surpassed the sum of the lengths of all others. This is "
       "the necessary condition for the existence of a cyclic polygon."

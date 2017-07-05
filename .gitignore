@@ -1,3 +1,4 @@
 *.pdf
 .lvimrc
 build/
+.commit-notes
