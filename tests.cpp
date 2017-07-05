@@ -2,7 +2,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "template_magic/TemplateMagic.h"
+#include "template_magic/Containers.h"
 #include "template_magic/Random.h"
 
 #include "Math.h"
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::zipMapAlternate(
+      TemplateMagic::zipMap(
         TemplateMagic::random.getN<double>(-1e5, 1e5, numTests),
         TemplateMagic::random.getN<int>(-40, 40, numTests),
         testPow

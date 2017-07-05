@@ -3,3 +3,4 @@ static_math/
 build/
 *.csv
 *.pdf
+.commit-notes

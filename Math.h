@@ -21,60 +21,115 @@ namespace ConstexprMagic {
 
 namespace Math {
 
-/* Some very basic math functions */
-template<typename T>
-inline constexpr T abs(const T& x) noexcept {
-  return (x >= 0) ? x : -x;
-}
-
-namespace detail {
-
-template<typename T>
-constexpr T max(const T& a, const T& b) noexcept {
-  return (a > b) ? a : b;
-}
-
-template<typename T>
-constexpr T min(const T& a, const T& b) noexcept {
-  return (a < b) ? a : b;
-}
+namespace traits {
 
 template<typename T, typename U>
-using lesserOfType = std::conditional_t<
-  sizeof(T) <= sizeof(U),
-  T,
+using enableIfFloatingWithReturn = std::enable_if_t<
+  std::is_floating_point<T>::value,
   U
 >;
 
-template<typename T, typename U>
-constexpr 
-std::enable_if_t<
-  std::is_floating_point<T>::value && std::is_floating_point<U>::value,
-  bool
-> isClose(T a, U b) noexcept {
-  return (
-    abs(abs(a) - abs(b)) <= (
-      std::numeric_limits<lesserOfType<T, U>>::epsilon() 
-      * max(abs(a), abs(b))
-    )
-  );
+} // namespace traits
+
+/* Logic */
+//! Template parameter-pack exclusive or of booleans
+template<typename ... Bools>
+constexpr bool XOR(Bools ... bools);
+
+/* Some very basic math functions for all types */
+template<typename T>
+inline constexpr T abs(const T& x) noexcept;
+
+template<typename T>
+constexpr T max(const T& a, const T& b) noexcept;
+
+template<typename T>
+constexpr T min(const T& a, const T& b) noexcept;
+
+/* Floating-point math functions */
+
+// Angle conversions
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T& inDegrees) noexcept;
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T& inRadians) noexcept;
+
+// Comparison helpers
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelative(
+  const T& a,
+  const T& b,
+  const T& relativeTolerance
+);
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseAbsolute(
+  const T& a,
+  const T& b,
+  const T& absoluteTolerance
+);
+
+// Rounding
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T& value);
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T& value);
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, int> round(const T& value);
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, T> round(
+  const T& value,
+  const unsigned& nDigits
+);
+
+// Powers
+template<typename T>
+constexpr T pow(const T& base, const unsigned& exponent) noexcept;
+
+template<typename T>
+constexpr T pow(const T& base, const int& exponent) noexcept;
+
+// Sqrt
+template<typename T>
+constexpr T sqrt(const T& x) noexcept;
+
+// Logarithms
+template<typename T>
+constexpr T ln(const T& x);
+
+template<typename T>
+constexpr T log10(const T& x);
+
+// Inverse trigonometry
+template<typename T>
+constexpr T asin(const T& x) noexcept;
+
+template<typename T>
+constexpr T acos(const T& x) noexcept;
+
+
+
+/* Implementations begin here */
+
+namespace detail { // Implementation helpers
+
+// Specialization of TPPSum for empty parameter pack
+constexpr unsigned TPPSum() {
+  return 0;
 }
 
-template<typename T, typename U>
-constexpr 
-std::enable_if_t<
-  !std::is_floating_point<T>::value || !std::is_floating_point<U>::value,
-  bool
-> isClose(T a, U b) noexcept {
-  return a == b;
+// Template parameter pack sum (needed for XOR function)
+template<typename T1, typename... T>
+constexpr unsigned TPPSum(T1 a, T ... pack) {
+  return a + TPPSum(pack ...);
 }
 
 template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  bool
-> isCloseRelativeOrAbsolute(
+constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelativeOrAbsolute(
   const T& a,
   const T& b,
   const T& relativeTolerance,
@@ -105,211 +160,12 @@ std::enable_if_t<
 }
 
 template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  bool
-> isApprox(const T& a, const T& b, const T& epsilon) noexcept {
-  if(a == b) return true;
-
-  auto absDiff = ConstexprMagic::Math::abs(
-    ConstexprMagic::Math::abs(a) 
-    - ConstexprMagic::Math::abs(b)
-  );
-  
-  if(a == 0 || b == 0 || absDiff < std::numeric_limits<T>::epsilon()) {
-    return absDiff < epsilon * std::numeric_limits<T>::epsilon();
-  }
-  
-  return absDiff / min(
-    ConstexprMagic::Math::abs(a) + ConstexprMagic::Math::abs(b), 
-    std::numeric_limits<T>::epsilon()
-  ) < epsilon;
-}
-
-template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  int
-> roundImpl(const T& value) {
+constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T& value) {
   if(value * 10 - floor(value) * 10 >= 5) {
     return ceil(value);
   }
 
   return floor(value);
-}
-
-} // namespace detail
-
-template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  bool
-> isCloseRelative(
-  const T& a,
-  const T& b,
-  const T& relativeTolerance
-) {
-  return detail::isCloseRelativeOrAbsolute(
-    a,
-    b,
-    relativeTolerance,
-    T {0}
-  );
-}
-
-template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  bool
-> isCloseAbsolute(
-  const T& a,
-  const T& b,
-  const T& absoluteTolerance
-) {
-  return detail::isCloseRelativeOrAbsolute(
-    a,
-    b,
-    T {0},
-    absoluteTolerance
-  );
-}
-
-template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  int
-> ceil(const T& value) {
-  // Truncate to an int
-  const int truncated = static_cast<int>(value);
-
-  if(truncated < value) {
-    return truncated + 1;
-  }
-
-  return truncated;
-}
-
-template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  int
-> floor(const T& value) {
-  // Truncate to an int
-  const int truncated = static_cast<int>(value);
-
-  if(truncated > value) {
-    return truncated - 1;
-  }
-
-  return truncated;
-}
-
-template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  int
-> round(const T& value) {
-  if(value < 0) {
-    return -detail::roundImpl(-value);
-  }
-
-  return detail::roundImpl(value);
-}
-
-template<typename T>
-constexpr
-std::enable_if_t<
-  std::is_floating_point<T>::value,
-  T
-> round(
-  const T& value,
-  const unsigned& nDigits
-) {
-  if(value == 0) {
-    return 0;
-  }
-
-  const T d = ceil(log10(abs(value)));
-  const int power = nDigits - static_cast<int>(d);
-  const T magnitude = pow(10, power);
-
-  // This isn't an integer division since magnitude is a floating-point type
-  return round(value * magnitude) / magnitude;
-}
-
-constexpr double toRadians(const double& inDegrees) noexcept {
-  return M_PI * inDegrees / 180;
-}
-
-constexpr double toDegrees(const double& inRadians) noexcept {
-  return 180 * inRadians / M_PI;
-}
-
-// Really weak first implementation
-constexpr double pow(const double& base, const unsigned& exponent) noexcept {
-  double value = base;
-
-  for(unsigned n = 1; n < exponent; n++) {
-    value *= base;
-  }
-
-  return value;
-}
-
-/* Integer version just calls the unsigned power function
- * TODO lots can go wrong here!
- */
-constexpr double pow(const double& base, const int& exponent) noexcept {
-  if(exponent < 0) {
-    return 1 / pow(base, static_cast<unsigned>(ConstexprMagic::Math::abs(exponent)));
-  } 
-
-  if(exponent == 0) {
-    return 1;
-  }
-  
-  return pow(base, static_cast<unsigned>(exponent));
-}
-
-
-/*template<typename T>
-inline constexpr auto floor(const T& x) noexcept -> decltype(std::floor(x)) {
-  return (
-    (int(x) == x) ? int(x) : (
-      (x >= 0.0) ? int(x) : int(x) - 1
-    )
-  );
-}*/
-
-/* Implements Newton's iteration to compute the square root of a positive number
- */
-template<typename T>
-constexpr T sqrt(const T& x) noexcept {
-  assert(
-    x >= 0 
-    && "Square-root domain error: Only real if x >= 0!"
-  );
-
-  const T epsilon = std::numeric_limits<T>::epsilon();
-  T value = 1;
-  T previous = 2;
-
-  while(ConstexprMagic::Math::abs(previous - value) > epsilon) {
-    // store the previous value
-    previous = value;
-
-    // compute next iteration
-    value = 0.5 * (value + x / value);
-  }
-
-  return value;
 }
 
 /* Based on series expansion of ln x:
@@ -355,35 +211,6 @@ constexpr T lnSeries(const T& x) {
   return value;
 }
 
-template<typename T>
-constexpr T ln(const T& x) {
-  unsigned decimalReduction = 0;
-  T calcX = x;
-
-  while(abs(calcX) > 10) {
-    calcX /= 10;
-    decimalReduction += 1;
-  }
-
-  // Ensure last division leads to value closer to 1
-  if(std::fabs(calcX / 10 - 1) < std::fabs(calcX - 1)) {
-    calcX /= 10;
-    decimalReduction += 1;
-  }
-
-  return lnSeries(calcX) + decimalReduction * M_LN10;
-}
-
-template<typename T>
-constexpr T log10(const T& x) {
-  assert(x > 0);
-
-  /* ln(z) = ln(10) * log10(z)
-   * -> log10(z) = ln(z) / ln(10)
-   */
-  return ln(x) / M_LN10;
-}
-
 /* Implements an approximation to asin over 0 < x < 1 with accuracy > 2e-8
  * from Abramowitz, M., Stegun, I.: Handbook of Mathematical Functions, p. 64,
  * 1964, from http://people.math.sfu.ca/~cbm/aands/abramowitz_and_stegun.pdf
@@ -413,6 +240,200 @@ constexpr T asinApprox(const T& x) noexcept {
   );
 }
 
+} // namespace detail
+
+
+
+
+template<typename ... Bools>
+constexpr bool XOR(Bools ... bools) {
+  return detail::TPPSum(bools ...) == 1;
+}
+
+template<typename T>
+inline constexpr T abs(const T& x) noexcept {
+  return (x >= 0) ? x : -x;
+}
+
+template<typename T>
+constexpr T max(const T& a, const T& b) noexcept {
+  return (a > b) ? a : b;
+}
+
+template<typename T>
+constexpr T min(const T& a, const T& b) noexcept {
+  return (a < b) ? a : b;
+}
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T& inDegrees) noexcept {
+  return M_PI * inDegrees / 180;
+}
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T& inRadians) noexcept {
+  return 180 * inRadians / M_PI;
+}
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelative(
+  const T& a,
+  const T& b,
+  const T& relativeTolerance
+) {
+  return detail::isCloseRelativeOrAbsolute(
+    a,
+    b,
+    relativeTolerance,
+    T {0}
+  );
+}
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseAbsolute(
+  const T& a,
+  const T& b,
+  const T& absoluteTolerance
+) {
+  return detail::isCloseRelativeOrAbsolute(
+    a,
+    b,
+    T {0},
+    absoluteTolerance
+  );
+}
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T& value) {
+  // Truncate to an int
+  const int truncated = static_cast<int>(value);
+
+  if(truncated < value) {
+    return truncated + 1;
+  }
+
+  return truncated;
+}
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T& value) {
+  // Truncate to an int
+  const int truncated = static_cast<int>(value);
+
+  if(truncated > value) {
+    return truncated - 1;
+  }
+
+  return truncated;
+}
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, int> round(const T& value) {
+  if(value < 0) {
+    return -detail::roundImpl(-value);
+  }
+
+  return detail::roundImpl(value);
+}
+
+template<typename T>
+constexpr traits::enableIfFloatingWithReturn<T, T> round(
+  const T& value,
+  const unsigned& nDigits
+) {
+  if(value == 0) {
+    return 0;
+  }
+
+  const T d = ceil(log10(abs(value)));
+  const int power = nDigits - static_cast<int>(d);
+  const T magnitude = pow(10, power);
+
+  // This isn't an integer division since magnitude is a floating-point type
+  return round(value * magnitude) / magnitude;
+}
+
+// Really weak first implementation
+template<typename T>
+constexpr T pow(const T& base, const unsigned& exponent) noexcept {
+  double value = base;
+
+  for(unsigned n = 1; n < exponent; n++) {
+    value *= base;
+  }
+
+  return value;
+}
+
+/* Integer version just calls the unsigned power function
+ * TODO lots can go wrong here!
+ */
+template<typename T>
+constexpr T pow(const T& base, const int& exponent) noexcept {
+  if(exponent < 0) {
+    return 1 / pow(base, static_cast<unsigned>(ConstexprMagic::Math::abs(exponent)));
+  } 
+
+  if(exponent == 0) {
+    return 1;
+  }
+  
+  return pow(base, static_cast<unsigned>(exponent));
+}
+
+/* Implements Newton's iteration to compute the square root of a positive number
+ */
+template<typename T>
+constexpr T sqrt(const T& x) noexcept {
+  assert(
+    x >= 0 
+    && "Square-root domain error: Only real if x >= 0!"
+  );
+
+  const T epsilon = std::numeric_limits<T>::epsilon();
+  T value = 1;
+  T previous = 2;
+
+  while(ConstexprMagic::Math::abs(previous - value) > epsilon) {
+    // store the previous value
+    previous = value;
+
+    // compute next iteration
+    value = 0.5 * (value + x / value);
+  }
+
+  return value;
+}
+
+template<typename T>
+constexpr T ln(const T& x) {
+  unsigned decimalReduction = 0;
+  T calcX = x;
+
+  while(abs(calcX) > 10) {
+    calcX /= 10;
+    decimalReduction += 1;
+  }
+
+  // Ensure last division leads to value closer to 1
+  if(std::fabs(calcX / 10 - 1) < std::fabs(calcX - 1)) {
+    calcX /= 10;
+    decimalReduction += 1;
+  }
+
+  return detail::lnSeries(calcX) + decimalReduction * M_LN10;
+}
+
+template<typename T>
+constexpr T log10(const T& x) {
+  assert(x > 0);
+
+  /* ln(z) = ln(10) * log10(z)
+   * -> log10(z) = ln(z) / ln(10)
+   */
+  return ln(x) / M_LN10;
+}
+
 /* Implements the infinite series where the derivative is expanded as a binomial
  * series and every term is integrated. Deviates most strongly from std::asin at
  * values very close to the borders. Perhaps it is best to use the approximate
@@ -426,7 +447,7 @@ constexpr T asin(const T& x) noexcept {
   );
 
   if(ConstexprMagic::Math::abs(x) > 0.92) {
-    return (x > 0) ? asinApprox(x) : -asinApprox(-x);
+    return (x > 0) ? detail::asinApprox(x) : -detail::asinApprox(-x);
   }
 
   const T epsilon = std::numeric_limits<T>::epsilon();
