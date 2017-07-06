@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <numeric>
 
-#include "TemplateMagic.h"
+#include "Numeric.h"
 
 namespace TemplateMagic {
 
@@ -115,7 +115,7 @@ public:
 
   VectorView& subset(const std::vector<unsigned>& indices) {
     // Ensure the passed vector contains no out-of-bounds indices
-    assert(TemplateMagic::numeric::max(indices) < _baseVectorRef.size());
+    assert(TemplateMagic::max(indices) < _baseVectorRef.size());
 
     _indexSequence = indices;
     return *this;
@@ -154,13 +154,13 @@ public:
 
 template<typename Container, class FilterFunction>
 VectorView<
-  detail::getValueType<Container>
+  traits::getValueType<Container>
 > filter(
   const Container& container,
   const FilterFunction&& filterFunction
 ) {
   auto view = VectorView<
-    detail::getValueType<Container>
+    traits::getValueType<Container>
   > {container};
   view.filter(filterFunction);
   return view;
@@ -168,13 +168,13 @@ VectorView<
 
 template<typename Container, class SortFunction>
 VectorView<
-  detail::getValueType<Container>
+  traits::getValueType<Container>
 > sort(
   const Container& container,
   const SortFunction&& filterFunction
 ) {
   auto view = VectorView<
-    detail::getValueType<Container>
+    traits::getValueType<Container>
   > {container};
   view.sort(filterFunction);
   return view;
@@ -182,13 +182,13 @@ VectorView<
 
 template<typename Container, typename IndexContainer>
 VectorView<
-  detail::getValueType<Container>
+  traits::getValueType<Container>
 > subset(
   const Container& container,
   const IndexContainer& indices
 ) {
   auto view = VectorView<
-    detail::getValueType<Container>
+    traits::getValueType<Container>
   > {container};
   view.subset(indices);
   return view;
