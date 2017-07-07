@@ -1,14 +1,19 @@
 #ifndef INCLUDE_CYCLIC_POLYGONS_LIB_H
 #define INCLUDE_CYCLIC_POLYGONS_LIB_H
 
-#include <vector>
-#include <cassert>
 #include <boost/math/tools/roots.hpp>
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
 
-/* This is a drop-in replacement for core functionality of the full
- * CyclicPolygons library 
+#include <vector>
+#include <cassert>
+
+/*! @file 
+ *
+ * This is a header-only collection of the best-functioning subset of
+ * functionality from CyclicPolygons.h. Provides shortcut calculations of 
+ * the internal angles for triangles and quadrilaterals, which are easier to
+ * treat. Internal angle calculation is generalized for any number of edges.
  */
 
 namespace CyclicPolygons {
@@ -249,6 +254,11 @@ std::vector<FloatType> generalizedInternalAngles(
 
 } // namespace detail
 
+
+/*! 
+ * Returns whether a cyclic polygon exists for the specified sequence of edge
+ * lengths.
+ */
 template<typename FloatType>
 bool exists(const std::vector<FloatType>& edgeLengths) {
   /* If a1, a2, ..., aN satisfy: Each edge length smaller than sum of others
@@ -266,6 +276,17 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
   );
 }
 
+/*! 
+ * Returns internal angles of the convex cyclic polygon specified by the passed
+ * edge lengths. Angles are returned in the following sequence:
+ *
+ *   edge lengths: a1, a2, ..., aN
+ *   angles: a1 ∡ a2, a2 ∡ a3, ..., a(N-1) ∡ aN, aN ∡ a1
+ *
+ * Requires that the passed vector of edge lengths contains at minimum 3 edges.
+ * The cyclic polygon must exist (use exists to check beforehand)
+ * and no edge length may be zero (assumes logical error in calling code).
+ */
 template<typename FloatType>
 std::enable_if_t<
   std::is_floating_point<FloatType>::value,
@@ -278,8 +299,8 @@ std::enable_if_t<
       "the necessary condition for the existence of a cyclic polygon."
   );
   assert(
-    3 <= edgeLengths.size() && edgeLengths.size() <= 5
-    && "This function can only handle triangles, quadrilaterals and pentagons."
+    edgeLengths.size() >= 3
+    && "It is unreasonable to call this for less than three edges."
   );
   assert( 
     TemplateMagic::all_of(

@@ -8,6 +8,56 @@
 
 #include <vector>
 
+/*! @file
+ * 
+ * Implements methods for finding the internal angles of small cyclic polygons
+ * N = 3, 4, 5. For the pentagon, two methods are implemented: One is a 
+ * comparatively complex method from a recent paper that describes an equation
+ * that allows one to find the circumradius of all possible cyclic polygons for
+ * a set of edge lengths (convex and concave, i.e. with and without edge
+ * crossings). The other is a rather simple central angle summation deviation
+ * approach, which gives a much smoother functions with a singular root and is
+ * generalizeable for any number of edges.
+ *
+ * For instance, for the edge lengths {29, 30, 31, 32, 33}, Svrtan's equation
+ * yields 
+ * \image html rho_pentagon.png 
+ * , where each dashed line represents a
+ * root of the equation. Rho, on the x axis, is ρ = 1 / r², where r is the
+ * circumradius. Smaller ρ roots represent larger circumradii, so the leftmost
+ * root leads to the convex pentagon.
+ *
+ * Using the equation with some custom root-finding code that includes some
+ * geometric bounds on the minimum and maximum possible circumradii for the
+ * convex cyclic polygon can find roots in Svrtan's equation: 
+ *
+ * \image html scan-svrtan-0.png
+ *
+ * But, it can also fail, for currently unknown reasons:
+ *
+ * \image html svrtan-test-failure-20.png
+ *
+ * In this case, the root from the low spike does not lead to a closed polygon,
+ * and it is not a root crossing of the original function. Remember, for better
+ * viewability, the plot applies log(1 + |y(ρ)|).
+ *
+ * A more reliable method comes from summing up the central angles for a given
+ * circumradius and edge lengths and subtracting 2π (for a closed polygon). This
+ * function is comparatively simple analytically and can be differentiated with
+ * little effort, so that gradient and hessian information can be used in the
+ * root search. Finding cyclic polygons using these equations is generalizeable 
+ * to any number of edges. The method no longer yields roots for non-convex
+ * polygons (having edge crossings), but since these do not interest us, the
+ * simpler approach is particularly appealing due to better reliability. One
+ * example:
+ *
+ * \image html scan-angles-1.png
+ *
+ * Where the red line denotes the initial guess for the circumradius, and the
+ * blue line represents the found circumradius root.
+ *
+ */
+
 /* TODO
  * - Generalize central angle sum circumradius determination method since the
  *   circumradius of any size of polygon is calculable with this method.
@@ -211,7 +261,7 @@ inline double Delta5(const std::vector<double>& lambdas) {
   );
 }
 
-/*!
+/*!  
  * Calculates the Svrtan polynomial for a specified rho and a set of epsilons
  * (as specified in the paper). Since the epsilons are merely the elementary
  * symmetric polynomials of the squared edge lengths and not a function of rho,

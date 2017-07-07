@@ -19,12 +19,15 @@ validRoot <- as.numeric(meta[4,])[2]
 x_seq <- values$V1
 y_vals <- values$V2
 
-pdf(pdfFilename, width=14, height=7)
-par(mar=c(4, 4.5, 4, 1))
 
 if(validRoot) {
+  pdf(pdfFilename, width=14, height=7)
   par(mfrow=c(1, 2))
+} else {
+  pdf(pdfFilename, width=7, height=7)
 }
+
+par(mar=c(4, 4.5, 4, 1))
 
 #if(rhoRoot != 0 && rhoRoot < 0.1 * max(x_seq)) {
 #  which_indices <- which(x_seq <= 2 * rhoRoot)
