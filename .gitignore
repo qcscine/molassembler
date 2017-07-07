@@ -4,3 +4,4 @@ build/
 *.csv
 *.pdf
 .commit-notes
+documentation/

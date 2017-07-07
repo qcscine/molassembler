@@ -6,6 +6,12 @@
 #include <type_traits>
 #include <cassert>
 
+/*! @file
+ *
+ * Provides \c constexpr basic mathematical function implementations, some 
+ * logical functions and floating-point comparison helpers.
+ */
+
 /* TODO 
  * - Add periodicities of the trigonometric functions
  * - Investigate ill-conditioned quality of inverse trig functions at specific
@@ -113,7 +119,7 @@ constexpr T acos(const T& x) noexcept;
 
 
 
-/* Implementations begin here */
+/* Implementations begin here ------------------------------------------------*/
 
 namespace detail { // Implementation helpers
 

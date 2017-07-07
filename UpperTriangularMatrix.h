@@ -1,13 +1,19 @@
 #ifndef INCLUDE_CONSTEXPR_MAGIC_UPPER_TRIANGULAR_MATRIX_H
 #define INCLUDE_CONSTEXPR_MAGIC_UPPER_TRIANGULAR_MATRIX_H
 
+#include "Vector.h"
+
+/*! @file
+ * 
+ * Provides a \c constexpr class that stores the data of an upper-triangular 
+ * matrix via a std::array and provides two-index access.
+ */
+
 /* TODO
  * - current constructors of UpperTriangular force you to specify the size of
  *   the resulting matrix, but it could be inferred from the size of the 
  *   array used for construction (and checked for correctness!)
  */
-
-#include "Vector.h"
 
 namespace ConstexprMagic {
 

@@ -1,12 +1,16 @@
 #ifndef INCLUDE_CONSTEXPR_MAGIC_VECTOR_H
 #define INCLUDE_CONSTEXPR_MAGIC_VECTOR_H
 
-/* TODO
- * - remove dependency
- */
 #include "Math.h"
 
 #include <array>
+
+/*! @file
+ *
+ * Provides a very basic \c constexpr three-dimensional vector class with some
+ * limited geometric functionality such as dot- and cross-product. Directly 
+ * includes the calculation of angles between two vectors.
+ */
 
 namespace ConstexprMagic {
 
