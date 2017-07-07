@@ -80,10 +80,10 @@ template<
 *   the iterators
 */
 template<
-class Container,
-class UnaryFunction
+  class Container,
+  class UnaryFunction
 > std::enable_if_t<
-  traits::hasSize<Container>::value,
+  !traits::hasSize<Container>::value,
   std::vector<
     traits::functionReturnType<
       UnaryFunction,
@@ -105,8 +105,8 @@ class UnaryFunction
 *   the iterators
 */
 template<
-class Container,
-class UnaryFunction
+  class Container,
+  class UnaryFunction
 > std::enable_if_t<
   traits::hasSize<Container>::value,
   std::vector<
@@ -391,8 +391,8 @@ std::enable_if_t<
 }
 
 template<
-class Container,
-class UnaryFunction
+  class Container,
+  class UnaryFunction
 > std::enable_if_t<
   !traits::hasSize<Container>::value,
   std::vector<
@@ -419,8 +419,8 @@ class UnaryFunction
 }
 
 template<
-class Container,
-class UnaryFunction
+  class Container,
+  class UnaryFunction
 > std::enable_if_t<
   traits::hasSize<Container>::value,
   std::vector<
