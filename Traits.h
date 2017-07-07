@@ -3,6 +3,11 @@
 
 #include <vector>
 
+/*! @file
+ *
+ * Provides a few basic function and container traits.
+ */
+
 namespace TemplateMagic {
 
 namespace traits {

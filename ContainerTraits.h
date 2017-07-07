@@ -5,6 +5,12 @@
 
 #include <utility>
 
+/*! @file
+ *
+ * Helper file that allows the use of container traits such as whether specific
+ * member functions exist in SFINAE enable_ifs.
+ */
+
 namespace TemplateMagic {
 
 // We need four custom traits that check for each of the members we want.

@@ -8,6 +8,13 @@
 
 #include "Numeric.h"
 
+/*! @file
+ *
+ * Without changing the underlying vector, this class permits filtering and/or
+ * sorting the data according to custom lambdas and then iterating through the
+ * resulting data set in a range-for compatible fashion.
+ */
+
 namespace TemplateMagic {
 
 template<typename ValueType>

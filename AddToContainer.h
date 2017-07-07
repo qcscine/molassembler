@@ -3,9 +3,9 @@
 
 #include "ContainerTraits.h"
 
-#include <utility>
-
-/* This file provides the functionality to add an element to a container by 
+/*! @file
+ *
+ * This file provides the functionality to add an element to a container by 
  * calling any of the following members, as appropriate:
  *
  * - insert

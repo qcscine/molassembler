@@ -7,6 +7,11 @@
 #include <functional>
 #include <cmath>
 
+/*! @file
+ * 
+ * Exposes a small set of functions for working with numbers in containers.
+ */
+
 namespace TemplateMagic {
 
 /*! 

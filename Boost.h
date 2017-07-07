@@ -3,6 +3,8 @@
 
 #include <boost/optional.hpp>
 
+//! @file 
+
 namespace TemplateMagic {
 
 /*! 

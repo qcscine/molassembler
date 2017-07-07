@@ -1,20 +1,28 @@
 #ifndef INCLUDE_TEMPLATE_MAGIC_CONTAINERS_H
 #define INCLUDE_TEMPLATE_MAGIC_CONTAINERS_H
 
-#include "Traits.h"
 #include "AddToContainer.h"
 
 #include <algorithm>
 #include <numeric>
 #include <set>
-#include <vector>
 #include <map>
+
+/*! @file
+ *
+ * Provides a slew of pseudo-functional-style composable functions to ease 
+ * manipulation of containers with lambdas. Functions are typically geared 
+ * towards the minimum set of requirements expected of the containers in order
+ * to function well. Most functions will work well with many STL containers,
+ * and custom containers that fulfill the function's explicit requirements.
+ */
 
 namespace TemplateMagic {
 
 /* Header */
+//! Composability improvement - returns the call to the size member
 template<typename Container>
-unsigned size(
+auto size(
   const Container& container
 );
 
@@ -158,8 +166,6 @@ template<
 /*!
  * Composable reduce function. Requires that container implements begin and end
  * iterators pointing to Ts. BinaryFunction must take two Ts and return a T.
- *
- * TODO C++17: add more requirements -> function invokable with two Ts, returns T
  */
 template<typename Container, typename T, class BinaryFunction>
 std::enable_if_t<
@@ -322,27 +328,6 @@ auto size(
   return container.size();
 }
 
-/*!
- * Maps the values in a container using a unary function.
- *
- * Requires:
- * - Container must have template parameters of the form:
- *   Container<ValueType, A<ValueType>, B<ValueType>, ...>,
- *   where zero dependent template parameters (A, B, ...) are also acceptable
- * - Container implements begin and end forward iterators.
- * - Container implements either insert, emplace, push_back or emplace_back
- *
- * Besides custom containers that fulfill the required criteria, this function
- * should be valid for the following STL containers:
- *
- * - vector
- * - deque
- * - list, forward_list
- * - set, multiset, unordered_set, unordered_multiset
- *
- * Notably absent: map, multimap, unordered_multimap
- *
- */
 template<
   class UnaryFunction,
   typename T,
@@ -405,15 +390,6 @@ std::enable_if_t<
   return init;
 }
 
-/*!
-* Maps the contents of a Container to a vector using a unary function. This
-* is the variant for if the container does not implement a size member.
-*
-* Requires:
-* - Container must implement begin and end forward-iterators
-* - UnaryFunction must be unary and callable with the type pointed to by 
-*   the iterators
-*/
 template<
 class Container,
 class UnaryFunction
@@ -442,15 +418,6 @@ class UnaryFunction
   return returnVector;
 }
 
-/*!
-* Maps the contents of a Container to a vector using a unary function. This
-* is the variant for if the container implements the size member.
-*
-* Requires:
-* - Container must implement begin and end forward-iterators
-* - UnaryFunction must be unary and callable with the type pointed to by 
-*   the iterators
-*/
 template<
 class Container,
 class UnaryFunction

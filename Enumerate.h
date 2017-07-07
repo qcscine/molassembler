@@ -3,6 +3,14 @@
 
 #include <memory>
 
+/*! @file
+ *
+ * Provides a range-for compatible struct exposing begin and end forward
+ * iterators that have a pair as their value_type, the first of which is the 
+ * current index, the second of which is the current object in the container.
+ *
+ */
+
 namespace enumerate_detail {
 
 template<class Container>
