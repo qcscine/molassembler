@@ -4,3 +4,4 @@ bin_*
 *.a
 build/
 .lvimrc
+documentation/

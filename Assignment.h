@@ -7,16 +7,10 @@
 
 #include "symmetry_information/Symmetries.h"
 
-/* TODO
- * - update documentation
- */
-
-/* NOTES
- * - One path to implementation success of implementing permutations may be to
- *   implement iterators on Assignment that will then allow 
- *   std::next_permutation to run on Assignment! Positions, length, and when 
- *   characters are "different" must be clearly defined so as to mimic a 
- *   container 
+/*! @file
+ *
+ * Contains the base class employed for describing the particular manner in
+ * which substituents are arranged in various symmetries.
  */
 
 namespace UniqueAssignments {
@@ -26,10 +20,7 @@ namespace UniqueAssignments {
  * of a set of ligands to a stereocenter. It exists to uniquely identify the 
  * steric configuration at this stereocenter, and provides methods to assist
  * a systematic generation of all possible configurations. It is generalized 
- * over a number of symmetries which are encoded elsewhere and that serve as 
- * template parameter to this class.
- * \tparam Symmetry The template class specifying which symmetry is to be 
- *  enforced.
+ * over a number of symmetries which are encoded in a separate library.
  */
 struct Assignment {
 private:
@@ -69,8 +60,9 @@ public:
   Assignment() = delete;
   /*!
    * Constructs an Assignment from a list of ligand characters.
-   * \tparam Symmetry A SymmetryInformation derived class template.
-   * \param characters A vector of chars signifying abstract ligands.
+   *
+   * \param passSymmetryName The name of the employed symmetry.
+   * \param passCharacters A vector of chars signifying abstract ligands.
    */
   Assignment(
     const Symmetry::Name& passSymmetryName,
@@ -79,9 +71,10 @@ public:
   /*!
    * Construct an Assignment from a list of ligand characters and a list of 
    * bonded indices referencing the ligand characters.
-   * \tparam Symmetry A SymmetryInformation derived class template.
-   * \param characters A vector of chars signifying abstract ligands.
-   * \param pairedIndices A vector of pairs. Describes which ligand characters 
+   *
+   * \param passSymmetryName The name of the employed symmetry.
+   * \param passCharacters A vector of chars signifying abstract ligands.
+   * \param passLinks A vector of pairs. Describes which ligand characters 
    *  are bonded to one another.
    */
   Assignment(

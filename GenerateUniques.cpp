@@ -36,14 +36,9 @@ std::vector<Assignment> uniqueAssignments(
    * all existing unique ones. However, one would be doing a lot of repeated 
    * work, since the pair-wise comparison (see isRotationallySuperimposable) 
    * just generates rotations of one and compares those with the other. It is 
-   * here chosen to prefer speed over memory requirements. After all, the 
+   * chosen here to prefer speed over memory requirements. After all, the 
    * number of Assignment objects that will be generated and stored is unlikely
    * to pass 1000.
-   */
-
-  /* TODO: 
-   * - If the rotationsSet size reaches 720, isn't it impossible for there to 
-   *   be more uniques? Can we skip the remaining permutations?
    */
 
   // make a copy of initial so we can modify it by permutation
@@ -132,11 +127,6 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
         occurrencesCount(1)
     {}
   };
-
-  /* TODO: 
-   * - If the rotationsSet size reaches 720, isn't it impossible for there to 
-   *   be more uniques? Can we skip the remaining permutations?
-   */
 
   // make a copy of initial so we can modify it by permutation
   Assignment assignment = initial;

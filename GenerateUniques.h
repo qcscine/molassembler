@@ -5,7 +5,11 @@
 
 #include "Assignment.h"
 
-/* TODO
+/*! @file
+ *
+ * Main entry point into the library. From here, a set of rotationally unique
+ * assignments for a specific assignment can be generated, with or without
+ * counting the relative weights of unique assignments.
  */
 
 namespace UniqueAssignments {
@@ -14,7 +18,12 @@ bool predicateHasTransArrangedPairs(
   const Assignment& assignment
 );
 
-/* NOTE: Gives NO guarantees as to satisfiability (if assignments can be
+/*! 
+ * Generate the set of rotationally unique assignments for a given assignment.
+ * By default removes trans-spanning groups (where a linked group's
+ * directly bonded atoms span an angle of 180°).
+ *
+ * NOTE: Gives NO guarantees as to satisfiability (if assignments can be
  *  fulfilled with real ligands) 
  * E.g. M (A-A)_3 generates a trans-trans-trans assignment, which is extremely 
  *  hard to find actual ligands for that work.
@@ -29,11 +38,16 @@ std::vector<Assignment> uniqueAssignments(
   const bool& removeTransSpanningGroups = true
 );
 
+//! Data class for uniqueAssignments including weights
 struct UniqueAssignmentsReturnType {
   std::vector<Assignment> assignments;
   std::vector<unsigned> weights;
 };
 
+/*! 
+ * Returns the set of rotationally unique assignments including absolute
+ * occurrence counts.
+ */
 UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
   const Assignment& initial,
   const bool& removeTransSpanningGroups = true
