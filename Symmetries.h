@@ -26,7 +26,13 @@
 #include <functional>
 #include <algorithm>
 
+/*! @file
+ *
+ * Provides structured information about a set of coordination symmetries.
+ */
+
 /* TODO
+ * - More docstrings
  * - Debug and Release builds
  * - Improve trigonal pyramidal coordinates definition to get 107.5 angle as a
  *   parameter.  Currently, the rotation angle choice of 111.5 works well, but
@@ -40,11 +46,12 @@
 namespace Symmetry {
 
 /* Typedefs */
+//! The type to store symmetry rotations
 using RotationsList = std::vector<
   std::vector<unsigned>
 >;
 
-/* All angle functions can be called with arbitrary (valid) parameters
+/*! All angle functions can be called with arbitrary (valid) parameters
  * without failing. Valid here means that a != b and less than the size of
  * the symmetry requested.
  *
@@ -54,7 +61,7 @@ using AngleFunctionType = std::function<
   double(const unsigned&, const unsigned&)
 >;
 
-/* All symmetries have a guess implementation of what could work as the defined
+/*! All symmetries have a guess implementation of what could work as the defined
  * tetrahedra. Have to use boost::none to signal to replace this position with 
  * the central atom as it is not part of the indexing scheme used here.
  *
@@ -73,6 +80,7 @@ using TetrahedronList = std::vector<
 
 using CoordinateList = std::vector<Eigen::Vector3d>;
 
+//! Data class to represent all available information about a symmetry
 struct SymmetryInformation {
   const std::string stringName;
   const unsigned size;

@@ -4,6 +4,15 @@
 #include "constexpr_magic/UpperTriangularMatrix.h"
 #include "constexpr_magic/UpperTriangularMatrix.h"
 
+/*! @file 
+ *
+ * Provides functionality for converting a set of 3D atom positions into an
+ * array of all possible angles between the positions in a \c constexpr fashion.
+ *
+ * Explicitly creates this array for a set of atoms arranged in a square
+ * antiprismatic geometry.
+ */
+
 namespace Symmetry {
 
 namespace make_constexpr_array {
