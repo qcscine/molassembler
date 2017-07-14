@@ -473,8 +473,9 @@ inline const RotationsList& rotations(const Name& name) {
   return symmetryData.at(name).rotations;
 }
 
-inline const AngleFunctionType& angleFunction(const Name& name) {
-  return symmetryData.at(name).angleFunction;
+inline AngleFunctions::AngleFunctionPtr angleFunction(const Name& name) {
+  unsigned symmetryIndex = AngleFunctions::getIndexOfName(name);
+  return AngleFunctions::sizeAndAngles.at(symmetryIndex).angleFunction;
 }
 
 inline unsigned nameIndex(const Name& name) {
