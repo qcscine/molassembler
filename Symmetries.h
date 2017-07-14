@@ -21,7 +21,7 @@
 #include "ConstexprAngles.h"
 #endif
 
-#include "template_magic/TemplateMagic.h"
+#include "constexpr_magic/Math.h"
 
 #include <map>
 #include <vector>
@@ -175,7 +175,7 @@ constexpr double bent(const unsigned& a, const unsigned& b) {
     return 0;
   }
 
-  return ConstexprMagic::Math::toRadians(107); 
+  return ConstexprMagic::Math::toRadians<double>(107); 
 }
 
 constexpr double trigonalPlanar(const unsigned& a, const unsigned& b) {
@@ -183,7 +183,7 @@ constexpr double trigonalPlanar(const unsigned& a, const unsigned& b) {
     return 0;
   }
 
-  return ConstexprMagic::Math::toRadians(120);
+  return ConstexprMagic::Math::toRadians<double>(120);
 }
 
 constexpr double trigonalPyramidal(const unsigned& a, const unsigned& b) {
@@ -191,7 +191,7 @@ constexpr double trigonalPyramidal(const unsigned& a, const unsigned& b) {
     return 0;
   }
 
-  return ConstexprMagic::Math::toRadians(107.5);
+  return ConstexprMagic::Math::toRadians<double>(107.5);
 }
 
 constexpr double tShaped(const unsigned& a, const unsigned& b) {
@@ -211,7 +211,7 @@ constexpr double tetrahedral(const unsigned& a, const unsigned& b) {
     return 0;
   }
 
-  return ConstexprMagic::Math::toRadians(109.5);
+  return ConstexprMagic::Math::toRadians<double>(109.5);
 }
 
 constexpr double squarePlanar(const unsigned& a, const unsigned& b) {
@@ -240,7 +240,7 @@ constexpr double seesaw(const unsigned& a, const unsigned& b) {
   }
 
   if(smaller == 1 && larger == 2) {
-    return ConstexprMagic::Math::toRadians(120);
+    return ConstexprMagic::Math::toRadians<double>(120);
   }
 
   return M_PI / 2;
@@ -271,7 +271,7 @@ constexpr double trigonalBiPyramidal(const unsigned& a, const unsigned& b) {
   unsigned smaller = std::min(a, b), larger = std::max(a, b);
   if(larger < 3) {
     // -> smaller < 2, this means either 0,1 0,2 1,2 axial
-    return ConstexprMagic::Math::toRadians(120);
+    return ConstexprMagic::Math::toRadians<double>(120);
   } else if(larger == 3) {
     // -> smaller < 3, this means {1,2,3}, 3 
     return M_PI / 2;
@@ -289,7 +289,7 @@ constexpr double pentagonalPlanar(const unsigned& a, const unsigned& b) {
   return std::min(
     absDiff,
     std::min(absDiff - 5, 5 - absDiff)
-  ) * ConstexprMagic::Math::toRadians(72);
+  ) * ConstexprMagic::Math::toRadians<double>(72);
 }
 
 constexpr double octahedral(const unsigned& a, const unsigned& b) {
@@ -316,7 +316,7 @@ constexpr double trigonalPrismatic(const unsigned& a, const unsigned& b) {
   
   // Between plane symmetric
   if(std::min(a - b, b - a) == 3) {
-    return ConstexprMagic::Math::toRadians(76);
+    return ConstexprMagic::Math::toRadians<double>(76);
   } 
 
   // In plane triangle
@@ -324,11 +324,11 @@ constexpr double trigonalPrismatic(const unsigned& a, const unsigned& b) {
     (a < 3 && b < 3)
     || (a >= 3 && b >= 3)
   ) {
-    return ConstexprMagic::Math::toRadians(86);
+    return ConstexprMagic::Math::toRadians<double>(86);
   } 
 
   // Between plane asymmetric
-  return ConstexprMagic::Math::toRadians(134);
+  return ConstexprMagic::Math::toRadians<double>(134);
 }
 
 constexpr double pentagonalPyramidal(const unsigned& a, const unsigned& b) {
@@ -345,7 +345,7 @@ constexpr double pentagonalPyramidal(const unsigned& a, const unsigned& b) {
   return std::min(
     absDiff,
     std::min(absDiff - 5, 5 - absDiff)
-  ) * ConstexprMagic::Math::toRadians(72);
+  ) * ConstexprMagic::Math::toRadians<double>(72);
 }
 
 constexpr double pentagonalBiPyramidal(const unsigned& a, const unsigned& b) {
@@ -357,7 +357,7 @@ constexpr double pentagonalBiPyramidal(const unsigned& a, const unsigned& b) {
     return M_PI; // trans 5,6
   }
 
-  if(TemplateMagic::XOR(a > 4, b > 4)) {
+  if(ConstexprMagic::Math::XOR(a > 4, b > 4)) {
     return M_PI / 2; // any angle to axial index
   }
 
@@ -366,7 +366,7 @@ constexpr double pentagonalBiPyramidal(const unsigned& a, const unsigned& b) {
   return std::min(
     absDiff,
     std::min(absDiff - 5, 5 - absDiff)
-  ) * ConstexprMagic::Math::toRadians(72);
+  ) * ConstexprMagic::Math::toRadians<double>(72);
 }
 
 constexpr double squareAntiprismatic(const unsigned& a, const unsigned& b) {
@@ -389,21 +389,21 @@ constexpr double squareAntiprismatic(const unsigned& a, const unsigned& b) {
     || (a >= 4 && b >= 4)
   ) { // in plane
     if((a + b) % 2 == 1) { // cis
-      return ConstexprMagic::Math::toRadians(72.9875); 
+      return ConstexprMagic::Math::toRadians<double>(72.9875); 
     } 
     
     // otherwise trans
-    return ConstexprMagic::Math::toRadians(114.475);
+    return ConstexprMagic::Math::toRadians<double>(114.475);
   }
   
   // remaining cases are between planes
   unsigned minDiff = std::min(a - b, b - a);
   if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
-    return ConstexprMagic::Math::toRadians(78.05);
+    return ConstexprMagic::Math::toRadians<double>(78.05);
   } 
 
   // last case is long between planes
-  return ConstexprMagic::Math::toRadians(142.275);
+  return ConstexprMagic::Math::toRadians<double>(142.275);
 #endif
 }
 
