@@ -77,7 +77,6 @@ struct SymmetryInformation {
   const std::string stringName;
   const unsigned size;
   const RotationsList rotations;
-  const AngleFunctionType angleFunction;
   const TetrahedronList tetrahedra;
   const CoordinateList coordinates;
 
@@ -86,20 +85,18 @@ struct SymmetryInformation {
     std::string&& stringName,
     unsigned&& size,
     RotationsList&& rotations,
-    AngleFunctionType&& angleFunction,
     TetrahedronList&& tetrahedra,
     CoordinateList&& coordinates
   ) : stringName(stringName),
       size(size),
       rotations(rotations),
-      angleFunction(angleFunction),
       tetrahedra(tetrahedra),
       coordinates(coordinates)
   {}
 };
 
 // Symmetry names list
-enum class Name {
+enum class Name : unsigned {
   Linear, // 2
   Bent,
   TrigonalPlanar, // 3

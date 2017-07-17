@@ -323,3 +323,17 @@ BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
 BOOST_AUTO_TEST_CASE(smallestAngleValue) {
   BOOST_CHECK(0 < smallestAngle && smallestAngle < M_PI);
 }
+
+BOOST_AUTO_TEST_CASE(writeAllCoordinates) {
+  for(const auto& symmetryName : allNames) {
+    std::cout << Symmetry::name(symmetryName) << "\n";
+    std::cout << "ConstexprSymmetryInfo::CoordinatesType {{\n";
+    for(const auto& coordinate : symmetryData.at(symmetryName).coordinates) {
+      std::cout << "  {" << coordinate[0]
+        << ", " << coordinate[1]
+        << ", " << coordinate[2]
+        << "}\n";
+    }
+    std::cout << "}}\n\n";
+  }
+}
