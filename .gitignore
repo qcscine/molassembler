@@ -1,3 +1,4 @@
 build/
 .lvimrc
 *.svg
+.commit-notes

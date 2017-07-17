@@ -1,7 +1,0 @@
-templated functions cannot be passed as template parameters to other functions
-or objects, but turning them into functors that contain a commonly typed named
-function allows you to circumvent this
-
-expanding the tuple types into a template parameter pack is accomplished using
-a combination of tuple_size, make_index_sequence and a single intermediate that
-you pass the generated index sequence as an actual function parameter
