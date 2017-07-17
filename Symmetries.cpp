@@ -743,6 +743,7 @@ namespace data {
 struct Linear {
   static constexpr Symmetry::Name name = Symmetry::Name::Linear;
   static constexpr unsigned size = 2;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -775,6 +776,7 @@ struct Bent {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Bent;
   static constexpr unsigned size = 2;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     /* subject to a lot of variation, between 90 and 109 degrees pursuant to 
      * english wikipedia, using experimental data here to improve instances
@@ -816,6 +818,7 @@ struct TrigonalPlanar {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPlanar;
   static constexpr unsigned size = 3;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -855,6 +858,7 @@ struct TrigonalPyramidal {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPyramidal;
   static constexpr unsigned size = 3;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -890,6 +894,7 @@ struct TShaped {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TShaped;
   static constexpr unsigned size = 3;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -941,6 +946,7 @@ struct Tetrahedral {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Tetrahedral;
   static constexpr unsigned size = 4;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -982,6 +988,7 @@ struct SquarePlanar {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePlanar;
   static constexpr unsigned size = 4;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1024,6 +1031,7 @@ struct Seesaw {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Seesaw;
   static constexpr unsigned size = 4;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1094,6 +1102,7 @@ struct SquarePyramidal {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePyramidal;
   static constexpr unsigned size = 5;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1158,6 +1167,7 @@ struct TrigonalBiPyramidal {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalBiPyramidal;
   static constexpr unsigned size = 5;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1216,6 +1226,7 @@ struct PentagonalPlanar {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPlanar;
   static constexpr unsigned size = 5;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     unsigned absDiff = std::min(a - b, b - a);
     return std::min(
@@ -1259,6 +1270,7 @@ struct Octahedral {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Octahedral;
   static constexpr unsigned size = 6;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1339,6 +1351,7 @@ struct TrigonalPrismatic {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPrismatic;
   static constexpr unsigned size = 6;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1400,6 +1413,7 @@ struct PentagonalPyramidal {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPyramidal;
   static constexpr unsigned size = 6;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1469,6 +1483,7 @@ struct PentagonalBiPyramidal {
      */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPyramidal;
   static constexpr unsigned size = 7;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1570,6 +1585,7 @@ struct SquareAntiPrismatic {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::SquareAntiPrismatic;
   static constexpr unsigned size = 8;
+  static const std::string stringName;
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
     if(a == b) {
@@ -1668,6 +1684,23 @@ struct SquareAntiPrismatic {
   }};
 #endif
 };
+
+const std::string Linear::stringName {"linear"};
+const std::string Bent::stringName {"bent"};
+const std::string TrigonalPlanar::stringName {"trigonal planar"};
+const std::string TrigonalPyramidal::stringName {"trigonal pyramidal"};
+const std::string TShaped::stringName {"T-shaped"};
+const std::string Tetrahedral::stringName {"tetrahedral"};
+const std::string SquarePlanar::stringName {"square planar"};
+const std::string Seesaw::stringName {"seesaw"};
+const std::string TrigonalBiPyramidal::stringName {"trigonal bipyramidal"};
+const std::string SquarePyramidal::stringName {"square pyramidal"};
+const std::string PentagonalPlanar::stringName {"pentagonal planar"};
+const std::string Octahedral::stringName {"octahedral"};
+const std::string TrigonalPrismatic::stringName {"trigonal prismatic"};
+const std::string PentagonalPyramidal::stringName {"pentagonal pyramidal"};
+const std::string PentagonalBiPyramidal::stringName {"pentagonal bipyramidal"};
+const std::string SquareAntiPrismatic::stringName {"square antiprismatic"};
 
 } // namespace data
 

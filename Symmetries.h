@@ -35,6 +35,8 @@
  *   completely arbitrary!
  * - Consider making constexpr calculation of all angles from coordinates into
  *   const lookup table
+ * - Could replicate angle parametrization of coordinates with a constexpr
+ *   matrix class and matrix * vector multiplication
  */
 
 namespace Symmetry {
