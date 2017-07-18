@@ -37,12 +37,12 @@ set(HEADERS_all
 )
 
 # sources definition
-set(SOURCES_all
-  Symmetries.cpp
-)
+#set(SOURCES_all
+#  Symmetries.cpp
+#)
 
 # specify targets
-add_library(symmetries STATIC ${SOURCES_all} ${HEADERS_all})
+#add_library(symmetries STATIC ${SOURCES_all} ${HEADERS_all})
 
 # Compilation options
 if( UNIX )
@@ -53,34 +53,34 @@ endif()
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release") 
   message(STATUS "Selected release build")
   # no debug information, disable assert
-  target_compile_definitions(symmetries PRIVATE NDEBUG)
-  target_compile_options(symmetries PUBLIC -O2)
+  #  target_compile_definitions(symmetries PRIVATE NDEBUG)
+  #target_compile_options(symmetries PUBLIC -O2)
 else() # assume Debug
   message(STATUS "Assume debug build")
-  target_compile_options(symmetries PUBLIC -g)
+  #target_compile_options(symmetries PUBLIC -g)
 endif()
 
-set_target_properties(
-  symmetries PROPERTIES
-  CXX_STANDARD 14
-  CXX_STANDARD_REQUIRED ON
-  COMPILE_FLAGS ${WARNING_FLAGS}
-)
+#set_target_properties(
+#  symmetries PROPERTIES
+#  CXX_STANDARD 14
+#  CXX_STANDARD_REQUIRED ON
+#  COMPILE_FLAGS ${WARNING_FLAGS}
+#)
 
 include_directories(SYSTEM
   ${EIGEN3_INCLUDE_DIRS}
   "/home/jan-grimo/PhD/projects/libs/"
 )
 
-if(CLANG_TIDY_EXE)
-  set_target_properties(
-    symmetries PROPERTIES
-    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
-  )
-endif()
+#if(CLANG_TIDY_EXE)
+#  set_target_properties(
+#    symmetries PROPERTIES
+#    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
+#  )
+#endif()
 
 add_executable(symmetryTests tests.cpp)
-target_compile_options(symmetryTests PUBLIC -O2 -g)
+target_compile_options(symmetryTests PUBLIC -g)
 set_target_properties(
   symmetryTests PROPERTIES
   CXX_STANDARD 14
@@ -88,7 +88,7 @@ set_target_properties(
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
 target_include_directories(symmetryTests PRIVATE ${BOOST_ROOT})
-target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)
+target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ) # link symmetries
 
 # add test
 add_test(NAME testAll COMMAND symmetryTests)

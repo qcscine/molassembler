@@ -31,6 +31,40 @@ std::vector<unsigned> rotate(
   return rotated;
 }
 
+BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
+  BOOST_TEST_REQUIRE(Symmetry::symmetryData.size() == Symmetry::nSymmetries);
+}
+
+BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
+  BOOST_CHECK(
+    TemplateMagic::all_of(
+      TemplateMagic::zipMap(
+        Symmetry::data::angleFunctions,
+        std::vector<Symmetry::data::AngleFunctionPtr> {{
+          &Symmetry::data::Linear::angleFunction,
+          &Symmetry::data::Bent::angleFunction,
+          &Symmetry::data::TrigonalPlanar::angleFunction, // 3
+          &Symmetry::data::TrigonalPyramidal::angleFunction,
+          &Symmetry::data::TShaped::angleFunction,
+          &Symmetry::data::Tetrahedral::angleFunction, // 4
+          &Symmetry::data::SquarePlanar::angleFunction,
+          &Symmetry::data::Seesaw::angleFunction,
+          &Symmetry::data::SquarePyramidal::angleFunction, // 5
+          &Symmetry::data::TrigonalBiPyramidal::angleFunction,
+          &Symmetry::data::PentagonalPlanar::angleFunction,
+          &Symmetry::data::Octahedral::angleFunction, // 6
+          &Symmetry::data::TrigonalPrismatic::angleFunction,
+          &Symmetry::data::PentagonalPyramidal::angleFunction,
+          &Symmetry::data::PentagonalBiPyramidal::angleFunction, // 7
+          &Symmetry::data::SquareAntiPrismatic::angleFunction // 8
+        }},
+        [](const auto& aPtr, const auto& bPtr) -> bool {
+          return aPtr == bPtr;
+        }
+      )
+    )
+  );
+}
 
 BOOST_AUTO_TEST_CASE( correctRotationVectorSize ) {
   // every rotation vector size must equal size of symmetry
@@ -324,7 +358,7 @@ BOOST_AUTO_TEST_CASE(smallestAngleValue) {
   BOOST_CHECK(0 < smallestAngle && smallestAngle < M_PI);
 }
 
-BOOST_AUTO_TEST_CASE(writeAllCoordinates) {
+/*BOOST_AUTO_TEST_CASE(writeAllCoordinates) {
   for(const auto& symmetryName : allNames) {
     std::cout << Symmetry::name(symmetryName) << "\n";
     std::cout << "ConstexprSymmetryInfo::CoordinatesType {{\n";
@@ -336,4 +370,4 @@ BOOST_AUTO_TEST_CASE(writeAllCoordinates) {
     }
     std::cout << "}}\n\n";
   }
-}
+}*/
