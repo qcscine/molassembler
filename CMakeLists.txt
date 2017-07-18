@@ -92,3 +92,13 @@ target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ) # lin
 
 # add test
 add_test(NAME testAll COMMAND symmetryTests)
+
+add_executable(Properties properties.cpp)
+target_compile_options(Properties PUBLIC -g)
+set_target_properties(
+  Properties PROPERTIES
+  CXX_STANDARD 14
+  CXX_STANDARD_REQUIRED ON
+  COMPILE_FLAGS ${WARNING_FLAGS}
+)
+target_include_directories(Properties PRIVATE ${BOOST_ROOT})

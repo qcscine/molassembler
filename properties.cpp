@@ -8,6 +8,8 @@
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
 
+#include "constexprProperties.h"
+
 #include <Eigen/Geometry>
 
 /* TODO
