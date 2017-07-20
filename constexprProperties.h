@@ -3,25 +3,46 @@
 #include "boost/hana.hpp"
 #include "constexpr_magic/Containers.h"
 #include "constexpr_magic/Set.h"
+#include "constexpr_magic/Math.h"
 
 namespace Symmetry {
 
+// When C++17 rolls around, replace this with std::array!
+template<typename T, size_t size> 
+using ArrayType = ConstexprMagic::Array<T, size>;
+
+template<size_t size, size_t... Indices>
+constexpr ArrayType<unsigned, size> iotaImpl(
+  std::index_sequence<Indices...>
+) {
+  return {
+    Indices...
+  };
+}
+
+template<size_t size>
+constexpr ArrayType<unsigned, size> iota() {
+  return iotaImpl<size>(
+    std::make_index_sequence<size>{}
+  );
+}
+
 template<typename SymmetryClass, size_t... Indices>
-constexpr std::array<unsigned, SymmetryClass::size> applyRotationImpl(
-  const std::array<unsigned, SymmetryClass::size>& indices, 
+constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
+  const ArrayType<unsigned, SymmetryClass::size>& indices, 
   const unsigned& rotationFunctionIndex,
   std::index_sequence<Indices...>
 ) {
-  return {{
+  return {
     indices.at(
       SymmetryClass::rotations.at(rotationFunctionIndex).at(Indices)
     )...
-  }};
+  };
 }
 
 template<typename SymmetryClass>
-constexpr std::array<unsigned, SymmetryClass::size> applyRotation(
-  const std::array<unsigned, SymmetryClass::size>& indices, 
+constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
+  const ArrayType<unsigned, SymmetryClass::size>& indices, 
   const unsigned& rotationFunctionIndex
 ) {
   return applyRotationImpl<SymmetryClass>(
@@ -30,6 +51,105 @@ constexpr std::array<unsigned, SymmetryClass::size> applyRotation(
     std::make_index_sequence<SymmetryClass::size>{}
   );
 }
+
+template<typename SymmetryClass>
+constexpr unsigned rotationMultiplicityImpl(
+  const unsigned& rotationFunctionIndex,
+  const ArrayType<unsigned, SymmetryClass::size>& runningIndices,
+  const unsigned& count
+) {
+  if(
+    ConstexprMagic::arraysEqual(
+      runningIndices,
+      iota<SymmetryClass::size>()
+    )
+  ) {
+    return count;
+  } else {
+    return rotationMultiplicityImpl<SymmetryClass>(
+      rotationFunctionIndex,
+      applyRotation<SymmetryClass>(
+        runningIndices,
+        rotationFunctionIndex
+      ),
+      count + 1
+    );
+  }
+}
+
+template<typename SymmetryClass>
+constexpr unsigned rotationMultiplicity(
+  const unsigned& rotationFunctionIndex
+) {
+  return rotationMultiplicityImpl<SymmetryClass>(
+    rotationFunctionIndex,
+    applyRotation<SymmetryClass>(
+      iota<SymmetryClass::size>(),
+      rotationFunctionIndex
+    ),
+    1
+  );
+}
+
+template<typename SymmetryClass, unsigned rotationFunctionIndex>
+constexpr unsigned rotationMultiplicityImpl(
+  const ArrayType<unsigned, SymmetryClass::size>& runningIndices,
+  const unsigned& count
+) {
+  if(
+    ConstexprMagic::arraysEqual(
+      runningIndices,
+      iota<SymmetryClass::size>()
+    )
+  ) {
+    return count;
+  } else {
+    return rotationMultiplicityImpl<SymmetryClass, rotationFunctionIndex>(
+      applyRotation<SymmetryClass>(
+        runningIndices,
+        rotationFunctionIndex
+      ),
+      count + 1
+    );
+  }
+}
+
+template<typename SymmetryClass, unsigned rotationFunctionIndex>
+constexpr unsigned rotationMultiplicity() {
+  return rotationMultiplicityImpl<SymmetryClass, rotationFunctionIndex>(
+    applyRotation<SymmetryClass>(
+      iota<SymmetryClass::size>(),
+      rotationFunctionIndex
+    ),
+    1
+  );
+}
+
+template<typename SymmetryClass, size_t ...Inds>
+constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> 
+rotationMultiplicitiesImpl(std::index_sequence<Inds...>) {
+  return {
+    rotationMultiplicity<SymmetryClass, Inds>()...
+  };
+}
+
+template<typename SymmetryClass>
+constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationMultiplicities() {
+  return rotationMultiplicitiesImpl<SymmetryClass>(
+    std::make_index_sequence<SymmetryClass::rotations.size()>{}
+  );
+}
+
+template<typename SymmetryClass>
+struct allRotationMultiplicities {
+  static constexpr ArrayType<
+    unsigned,
+    SymmetryClass::rotations
+  > value = rotationMultiplicitiesImpl<SymmetryClass>(
+    std::make_index_sequence<SymmetryClass::rotations.size()>{}
+  );
+};
+
 
 template<typename SymmetryClass>
 constexpr ConstexprMagic::Vector getCoordinates(const unsigned& indexInSymmetry) {
@@ -53,7 +173,7 @@ constexpr double getTetrahedronVolume(
 
 template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateAngleDistortion(
-  const std::array<
+  const ArrayType<
     unsigned,
     ConstexprMagic::Math::max(
       SymmetryClassFrom::size,
@@ -81,7 +201,7 @@ constexpr double calculateAngleDistortion(
 template<size_t size>
 unsigned propagateSymmetryPosition(
   const unsigned& symmetryPosition,
-  const std::array<unsigned, size>& indexMapping
+  const ArrayType<unsigned, size>& indexMapping
 ) {
   if(symmetryPosition != replaceMe) {
     return indexMapping.at(symmetryPosition);
@@ -92,7 +212,7 @@ unsigned propagateSymmetryPosition(
 
 template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateChiralDistortion(
-  const std::array<
+  const ArrayType<
     unsigned,
     ConstexprMagic::Math::max(
       SymmetryClassFrom::size,
@@ -122,10 +242,10 @@ constexpr double calculateChiralDistortion(
 }
 
 template<size_t size>
-constexpr std::array<unsigned, size> symPosMapping(
-  const std::array<unsigned, size>& mapping
+constexpr ArrayType<unsigned, size> symPosMapping(
+  const ArrayType<unsigned, size>& mapping
 ) {
-  std::array<unsigned, size> symmetryPositions;
+  ArrayType<unsigned, size> symmetryPositions;
 
   for(unsigned i = 0; i < size; ++i) {
     symmetryPositions.at(
@@ -138,12 +258,12 @@ constexpr std::array<unsigned, size> symPosMapping(
 
 template<size_t size>
 struct DistortionInfo {
-  std::array<unsigned, size> indexMapping;
+  ArrayType<unsigned, size> indexMapping;
   double totalDistortion;
   double chiralDistortion;
 
   constexpr DistortionInfo(
-    const std::array<unsigned, size>& passIndexMapping,
+    const ArrayType<unsigned, size>& passIndexMapping,
     const double& passTotalDistortion,
     const double& passChiralDistortion
   ) : indexMapping(passIndexMapping),
@@ -152,34 +272,48 @@ struct DistortionInfo {
   {}
 };
 
+template<class SymmetryClassFrom, class SymmetryClassTo>
+constexpr auto ligandGainMappings() {
+  static_assert(
+    SymmetryClassTo::size == SymmetryClassFrom::size + 1,
+    "Ligand gain pathway calculation must involve symmetry size increase"
+  );
+
+  auto indexMapping  = iota<SymmetryClassTo::size>();
+
+  ArrayType<
+    ArrayType<unsigned, SymmetryClassTo::size>,
+    0
+  > bestMappings;
+  double lowestAngleDistortion = 100;
+
+  // No way to do nextPermutation? need swap
+
+}
+
 template<typename SymmetryClass>
-using IndicesList = std::array<unsigned, SymmetryClass::size>;
-
-enum class enabler_t {};
-
-template<typename T>
-using EnableIf = typename std::enable_if<T::value, enabler_t>::type;
+using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 
 template<typename SymmetryClass, size_t size>
 constexpr std::enable_if_t<
   size == 0,
   std::pair<
-    std::array<IndicesList<SymmetryClass>, 1>,
-    std::array<unsigned, 1>
+    ArrayType<IndicesList<SymmetryClass>, 1>,
+    ArrayType<unsigned, 1>
   >
 > collapseChain(
-  const std::array<IndicesList<SymmetryClass>, size>& chainStructures,
-  const std::array<unsigned, size>& chain
+  const ArrayType<IndicesList<SymmetryClass>, size>& chainStructures __attribute__((unused)),
+  const ArrayType<unsigned, size>& chain __attribute__((unused))
 ) {
   return {};
 }
 
 template<typename SymmetryClass, size_t size>
 constexpr auto collapseChain(
-  const std::array<IndicesList<SymmetryClass>, size>& chainStructures,
-  const std::array<unsigned, size>& chain
+  const ArrayType<IndicesList<SymmetryClass>, size>& chainStructures,
+  const ArrayType<unsigned, size>& chain
 ) {
-  if(size == 1 || chain.back() == SymmetryClass::rotations.size()) {
+  if(size == 1 || chain.back() < SymmetryClass::rotations.size() - 1) {
     // Increment last item in chain via pop and push
     const auto lastItem = chain.back();
     const auto intermediateChain = ConstexprMagic::arrayPop(chain);
@@ -190,7 +324,7 @@ constexpr auto collapseChain(
     );
   }
 
-  return collapseChain(
+  return collapseChain<SymmetryClass>(
     ConstexprMagic::arrayPop(chainStructures),
     ConstexprMagic::arrayPop(chain)
   );
@@ -202,8 +336,8 @@ template<
   size_t chainLength
 > constexpr auto generateAllRotationsImpl(
   const RotationsSetType& rotations,
-  const std::array<IndicesList<SymmetryClass>, chainLength>& chainStructures,
-  const std::array<unsigned, chainLength>& chain
+  const ArrayType<IndicesList<SymmetryClass>, chainLength>& chainStructures,
+  const ArrayType<unsigned, chainLength>& chain
 ) {
   if(chain.front() >= SymmetryClass::rotations.size()) {
     return rotations;
@@ -246,34 +380,86 @@ template<
   );
 }
 
-template<typename T, size_t size>
-struct arrayComparator {
-  static constexpr bool op(
-    const std::array<T, size>& a,
-    const std::array<T, size>& b
-  ) {
-    return ConstexprMagic::arraysEqual(a, b);
-  }
-};
+constexpr unsigned subtractOne(const unsigned& x) {
+  return x - 1;
+}
 
 template<typename SymmetryClass>
+constexpr auto generateAllChains() {
+  constexpr auto symmetryRotationMultiplicites = rotationMultiplicities<SymmetryClass>();
+
+  constexpr auto multiplicitiesMinusOne = ConstexprMagic::map(
+    symmetryRotationMultiplicites, 
+    subtractOne
+  );
+
+  constexpr auto chainLength = ConstexprMagic::sum(multiplicitiesMinusOne);
+
+  constexpr auto nCombinations = ConstexprMagic::Math::factorial(chainLength) / ConstexprMagic::sum(
+    ConstexprMagic::map(
+      multiplicitiesMinusOne,
+      ConstexprMagic::Math::factorial<unsigned>
+    )
+  );
+
+  ArrayType<
+    ArrayType<unsigned, chainLength>,
+    nCombinations
+  > returnArray {};
+
+  auto runningPermutation = ArrayType<unsigned, chainLength> {};
+  unsigned counter = 0;
+  for(unsigned i = 0; i < SymmetryClass::rotations.size(); ++i) {
+    for(unsigned j = 0; j < multiplicitiesMinusOne.at(i); ++j) {
+      runningPermutation.at(counter + j) = i;
+    }
+    counter += multiplicitiesMinusOne.at(i);
+  }
+
+  unsigned permutationIndex = 0;
+  do {
+    returnArray.at(permutationIndex) = runningPermutation;
+    permutationIndex += 1;
+  } while(ConstexprMagic::inPlaceNextPermutation(runningPermutation));
+
+  return returnArray;
+}
+
+constexpr auto linearChains = generateAllChains<data::Linear>();
+
+static_assert(linearChains.size() == 1, "Unexpected result");
+static_assert(linearChains.at(0).size() == 1, "Unexpected result");
+
+constexpr auto tetrahedralChains = generateAllChains<data::Tetrahedral>();
+
+template<typename SymmetryClass>
+constexpr auto generateAllRotations() {
+  constexpr auto chains = generateAllChains<SymmetryClass>();
+}
+
+/*! It works in principle, but template instantiation depth is a serious issue!
+ * Finding all 5040 rotations of SquareAntiprismatic is pretty daunting as at
+ * least that many different instantiations of generateAllRotationsImpl have to
+ * be made, compiled and evaluated at compile-time. Perhaps it is better to
+ * avoid set generation and checking here.
+ */
+template<typename SymmetryClass>
 constexpr auto generateAllRotations(
-  const std::array<unsigned, SymmetryClass::size>& indices
+  const ArrayType<unsigned, SymmetryClass::size>& indices
 ) {
   ConstexprMagic::Set<
-    IndicesList<SymmetryClass>,
-    arrayComparator<unsigned, SymmetryClass::size>
+    IndicesList<SymmetryClass>
   > setInstance;
 
   return generateAllRotationsImpl<SymmetryClass>(
     setInstance,
-    std::array<IndicesList<SymmetryClass>, 1> {{indices}},
-    std::array<unsigned, 1> {{0}}
+    ArrayType<IndicesList<SymmetryClass>, 1> {{indices}},
+    ArrayType<unsigned, 1> {0}
   );
 }
 
-constexpr auto maxAsymTetrRots = generateAllRotations<data::Tetrahedral>(
-  std::array<unsigned, 4> {{0, 1, 2, 3}}
-);
+/*constexpr auto maxAsymTetrRots = generateAllRotations<data::Linear>(
+  ArrayType<unsigned, 2> {{0, 1}}
+);*/
 
 } // namespace Symmetry
