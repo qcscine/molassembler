@@ -47,7 +47,7 @@ auto size(
  * - list, forward_list
  * - set, multiset, unordered_set, unordered_multiset
  *
- * Notably absent: map, multimap, unordered_multimap
+ * Notably absent: array, map, multimap, unordered_multimap
  *
  */
 template<
@@ -67,6 +67,20 @@ template<
   class UnaryFunction
 > auto map(
   const std::array<T, size>& container,
+  UnaryFunction&& function
+);
+
+//! Map specialization for std::map that maps the keys, returns a vector
+template<typename T, typename U, class UnaryFunction>
+auto mapKeys(
+  const std::map<T, U>& map,
+  UnaryFunction&& function
+);
+
+//! Map specialization for std::map, which maps the values, returns a vector
+template<typename T, typename U, class UnaryFunction>
+auto mapValues(
+  const std::map<T, U>& map,
   UnaryFunction&& function
 );
 
@@ -257,6 +271,98 @@ template<class Container> std::enable_if_t<
   const std::string& joiningChar = ", "
 );
 
+template<class Container, class UnaryFunction>
+std::vector<
+  std::vector<
+    traits::getValueType<Container>
+  >
+> groupByMapping(
+  const Container& container,
+  UnaryFunction&& function
+) {
+  using T = traits::getValueType<Container>;
+  using R = traits::functionReturnType<UnaryFunction, T>;
+
+  std::vector<
+    std::vector<T>
+  > groups;
+
+  std::map<R, unsigned> indexMap;
+
+  for(auto iter = container.begin(); iter != container.end(); ++iter) {
+    auto ret = function(*iter);
+    if(indexMap.count(ret) == 0) {
+      indexMap[ret] = groups.size();
+
+      groups.emplace_back(
+        std::vector<T> {*iter}
+      );
+    } else {
+      groups.at(
+        indexMap.at(ret)
+      ).push_back(*iter);
+    }
+  }
+
+  return groups;
+}
+
+template<class Container, class BinaryFunction>
+std::vector<
+  std::vector<
+    traits::getValueType<Container>
+  >
+> groupByEquality(
+  const Container& container,
+  BinaryFunction&& compareEqual
+) {
+  using T = traits::getValueType<Container>;
+
+  std::vector<
+    std::vector<T>
+  > groups;
+
+  for(auto iter = container.begin(); iter != container.end(); ++iter) {
+    bool foundEqual = false;
+    for(auto& group : groups) {
+
+      if(compareEqual(*iter, *group.begin())) {
+        group.push_back(*iter);
+        foundEqual = true;
+        break;
+      }
+    }
+
+    if(!foundEqual) {
+      groups.emplace_back(
+        std::vector<T> {*iter}
+      );
+    }
+  }
+
+  return groups;
+}
+
+template<class Container, class UnaryFunction>
+std::vector<
+  traits::getValueType<Container>
+> copyIf(
+  const Container& container,
+  UnaryFunction&& predicate
+) {
+  std::vector<
+    traits::getValueType<Container>
+  > ret;
+
+  for(const auto& elem : container) {
+    if(predicate(elem)) {
+      ret.push_back(elem);
+    }
+  }
+
+  return ret;
+}
+
 /* Reduction shorthands */
 //! Tests if all elements of a container are true
 template<class Container>
@@ -366,6 +472,42 @@ template<
 
   for(unsigned i = 0; i < size; i++) {
     result[i] = function(container[i]);
+  }
+
+  return result;
+}
+
+template<typename T, typename U, class UnaryFunction>
+auto mapKeys(
+  const std::map<T, U>& map,
+  UnaryFunction&& function
+) {
+  using R = traits::functionReturnType<UnaryFunction, T>;
+
+  std::vector<R> result;
+
+  for(const auto& iterPair : map) {
+    result.emplace_back(
+      function(iterPair.first)
+    );
+  }
+
+  return result;
+}
+
+template<typename T, typename U, class UnaryFunction>
+auto mapValues(
+  const std::map<T, U>& map,
+  UnaryFunction&& function
+) {
+  using R = traits::functionReturnType<UnaryFunction, U>;
+
+  std::vector<R> result;
+
+  for(const auto& iterPair : map) {
+    result.emplace_back(
+      function(iterPair.second)
+    );
   }
 
   return result;
@@ -572,7 +714,7 @@ template<
     container.begin(),
     container.end(),
     init,
-    function
+    std::forward<BinaryFunction>(function)
   );
 }
 

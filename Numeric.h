@@ -99,6 +99,8 @@ double geometricMean(const ContainerType& container) {
  */
 template<class ContainerType>
 double stddev(const ContainerType& container) {
+  assert(container.begin() != container.end());
+
   using ValueType = traits::getValueType<ContainerType>;
   assert(&(*container.begin()) != &(*container.end()));
 
@@ -123,6 +125,8 @@ double stddev(
   const ContainerType& container,
   const double& averageValue
 ) {
+  assert(container.begin() != container.end());
+
   using ValueType = traits::getValueType<ContainerType>;
   assert(&(*container.begin()) != &(*container.end()));
 
@@ -147,6 +151,8 @@ double stddev(
  */
 template<class ContainerType>
 auto min(const ContainerType& container) {
+  assert(container.begin() != container.end());
+
   auto smallestIter = container.begin();
   for(auto it = container.begin(); it != container.end(); ++it) {
     if(*it < *smallestIter) {
@@ -165,6 +171,8 @@ auto min(const ContainerType& container) {
  */
 template<class ContainerType>
 auto max(const ContainerType& container) {
+  assert(container.begin() != container.end());
+
   auto largestIter = container.begin();
 
   for(auto it = container.begin(); it != container.end(); ++it) {
