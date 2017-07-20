@@ -17,7 +17,9 @@ namespace ConstexprMagic {
 struct Vector {
   std::array<double, 3> data;
 
+  constexpr Vector() : data({0, 0, 0}) {}
   constexpr Vector(std::array<double, 3> positions) : data(positions) {}
+  constexpr Vector(double x, double y, double z) : data({x, y, z}) {}
 
   constexpr double dot(const Vector& other) const {
     return (

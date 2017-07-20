@@ -35,6 +35,12 @@ using enableIfFloatingWithReturn = std::enable_if_t<
   U
 >;
 
+template<typename T, typename U>
+using enableIfIntegralWithReturn = std::enable_if_t<
+  std::is_integral<T>::value,
+  U
+>;
+
 } // namespace traits
 
 /* Logic */
@@ -103,6 +109,10 @@ constexpr T pow(const T& base, const int& exponent) noexcept;
 template<typename T>
 constexpr T sqrt(const T& x) noexcept;
 
+// Factorial
+template<typename T>
+constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x) noexcept;
+
 // Logarithms
 template<typename T>
 constexpr T ln(const T& x);
@@ -115,8 +125,7 @@ template<typename T>
 constexpr T asin(const T& x) noexcept;
 
 template<typename T>
-constexpr T acos(const T& x) noexcept;
-
+constexpr T acos(const T& x);
 
 
 /* Implementations begin here ------------------------------------------------*/
@@ -412,6 +421,17 @@ constexpr T sqrt(const T& x) noexcept {
 }
 
 template<typename T>
+constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x) noexcept {
+  assert(x > 0);
+
+  if(x == 1) {
+    return 1;
+  } else {
+    return x * factorial(x - 1);
+  }
+}
+
+template<typename T>
 constexpr T ln(const T& x) {
   unsigned decimalReduction = 0;
   T calcX = x;
@@ -481,9 +501,8 @@ constexpr T asin(const T& x) noexcept {
   return value;
 }
 
-
 template<typename T>
-constexpr T acos(const T& x) noexcept {
+constexpr T acos(const T& x) {
   if(!(-1 < x && x < 1)) {
     throw "Inverse cosine domain error: only real if -1 < x < 1!";
   }

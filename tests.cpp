@@ -6,11 +6,90 @@
 #include "template_magic/Random.h"
 
 #include "Math.h"
+#include "Containers.h"
+#include "Array.h"
+#include "Set.h"
 
 #include <iostream>
 #include <iomanip>
 
 using namespace std::string_literals;
+
+namespace ArrayTests {
+
+constexpr auto testArr = ConstexprMagic::Array<unsigned, 3> {4, 3, 5};
+
+template<typename T, size_t size>
+constexpr ConstexprMagic::Array<T, size> modifyArray(
+  const ConstexprMagic::Array<T, size>& array
+) {
+  auto arrayCopy = array;
+  inPlaceSwap(arrayCopy, 0, 1);
+  return arrayCopy;
+}
+  
+constexpr auto modf = modifyArray(testArr);
+
+static_assert(
+  modf == ConstexprMagic::Array<unsigned, 3> {3, 4, 5},
+  "Swap doesn't work as expected"
+);
+
+static_assert(
+  ConstexprMagic::arrayPop(testArr) == ConstexprMagic::Array<unsigned, 2> {4, 3},
+  "Pop doesn't work"
+);
+
+static_assert(
+  ConstexprMagic::arrayPush(testArr, 9u) == ConstexprMagic::Array<unsigned, 4> {4, 3, 5, 9},
+  "Push doesn't work"
+);
+
+static_assert(
+  ConstexprMagic::arrayPush(testArr, 9u) == ConstexprMagic::Array<unsigned, 4> {4, 3, 5, 9},
+  "arrayPush doesn't work on ConstexprMagic::Array"
+);
+
+constexpr auto stdTestArr = std::array<unsigned, 3> {4, 3, 5};
+
+static_assert(
+  ConstexprMagic::arraysEqual(ConstexprMagic::arrayPush(stdTestArr, 9u), std::array<unsigned, 4> {4, 3, 5, 9}),
+  "arrayPush doesn't work on std::array"
+);
+
+template<size_t size>
+constexpr void testIteration(const ConstexprMagic::Array<unsigned, size>& array) {
+  for(const auto& element : array) {
+    std::cout << element << std::endl;
+  }
+}
+
+constexpr auto sortedArr = ConstexprMagic::Array<unsigned, 4> {4, 6, 9, 11};
+constexpr auto oneMore = ConstexprMagic::insertIntoSorted(sortedArr, 5u);
+
+static_assert(
+  oneMore == ConstexprMagic::Array<unsigned, 5> {4, 5, 6, 9, 11},
+  "InsertIntoSorted does not work as expected."
+);
+
+static_assert(ConstexprMagic::Math::factorial(5) == 120, "Factorial is incorrect");
+
+// C++17 with std::array
+/*
+constexpr auto stdSortedArr = std::array<unsigned, 4> {{4, 6, 9, 11}};
+constexpr auto stdOneMore = ConstexprMagic::insertIntoSorted(stdSortedArr, 5u);
+
+static_assert(
+  ConstexprMagic::arraysEqual(stdOneMore, std::array<unsigned, 5> {4, 5, 6, 9, 11}),
+  "InsertIntoSorted does not work as expected with std::array"
+);
+// std::array::operator == (const std::array& other) isn't constexpr in C++17
+*/
+
+constexpr auto testSet = ConstexprMagic::makeSetFromSortedArray(oneMore);
+constexpr auto withElement = testSet.insert(5);
+
+} // namespace ArrayTests
 
 BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   const unsigned numTests = 100;
@@ -197,5 +276,27 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
         }
       )
     )
+  );
+}
+
+BOOST_AUTO_TEST_CASE(arrayPermutation) {
+  std::array<unsigned, 4> base {0, 1, 2, 3};
+  std::array<unsigned, 4> STLComparison {0, 1, 2, 3};
+
+  do {
+    BOOST_CHECK(base == STLComparison);
+  } while(
+    ConstexprMagic::inPlaceNextPermutation(base)
+    && std::next_permutation(STLComparison.begin(), STLComparison.end())
+  );
+
+  base = {3, 2, 1, 0};
+  STLComparison = {3, 2, 1, 0};
+
+  do {
+    BOOST_CHECK(base == STLComparison);
+  } while(
+    ConstexprMagic::inPlacePreviousPermutation(base)
+    && std::prev_permutation(STLComparison.begin(), STLComparison.end())
   );
 }
