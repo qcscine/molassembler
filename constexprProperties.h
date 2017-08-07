@@ -2,8 +2,9 @@
 
 #include "boost/hana.hpp"
 #include "constexpr_magic/Containers.h"
-#include "constexpr_magic/Set.h"
+#include "constexpr_magic/DynamicSet.h"
 #include "constexpr_magic/Math.h"
+#include "constexpr_magic/Array.h"
 
 namespace Symmetry {
 
@@ -184,7 +185,7 @@ constexpr double calculateAngleDistortion(
   double angleDistortion = 0;
 
   for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
-    for(unsigned j = i + 1; j < SymmetryClassTo::size; ++j) {
+    for(unsigned j = i + 1; j < SymmetryClassFrom::size; ++j) {
       angleDistortion += ConstexprMagic::Math::abs(
         SymmetryClassFrom::angleFunction(i, j)
         - SymmetryClassTo::angleFunction(
@@ -199,7 +200,7 @@ constexpr double calculateAngleDistortion(
 }
 
 template<size_t size>
-unsigned propagateSymmetryPosition(
+constexpr unsigned propagateSymmetryPosition(
   const unsigned& symmetryPosition,
   const ArrayType<unsigned, size>& indexMapping
 ) {
@@ -221,8 +222,12 @@ constexpr double calculateChiralDistortion(
   >& indexMapping
 ) {
   double chiralDistortion = 0;
-  
-  for(const auto& tetrahedron : SymmetryClassFrom::tetrahedra) {
+
+  // C++17:
+  // for(const auto& tetrahedron : SymmetryClassFrom::tetrahedra) {
+  for(unsigned i = 0; i < SymmetryClassFrom::tetrahedra.size(); ++i) {
+    const auto& tetrahedron = SymmetryClassFrom::tetrahedra.at(i);
+
     chiralDistortion += ConstexprMagic::Math::abs(
       getTetrahedronVolume(
         getCoordinates<SymmetryClassFrom>(tetrahedron.at(0)),
@@ -270,6 +275,123 @@ struct DistortionInfo {
       totalDistortion(passTotalDistortion),
       chiralDistortion(passChiralDistortion)
   {}
+
+  constexpr DistortionInfo()
+    : indexMapping(iota<size>()),
+      totalDistortion(100),
+      chiralDistortion(100)
+  {}
+};
+
+template<typename SymmetryClass>
+using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
+
+template<typename SymmetryClass>
+constexpr unsigned maxRotations() {
+  /* For each rotation in the symmetry class, figure out the multiplicity, i.e.
+   * how often a rotation has to be applied to return to identity
+   */
+  constexpr auto symmetryRotationMultiplicities = rotationMultiplicities<SymmetryClass>();
+
+  return ConstexprMagic::reduce(
+    symmetryRotationMultiplicities,
+    1u,
+    std::multiplies<unsigned>()
+  );
+}
+
+template<typename SymmetryClass>
+using RotationsSetType = ConstexprMagic::DynamicSet<
+  IndicesList<SymmetryClass>, 
+  maxRotations<SymmetryClass>()
+>;
+
+template<typename SymmetryClass>
+using ChainStructuresArrayType = ConstexprMagic::DynamicArray<
+  IndicesList<SymmetryClass>,
+  SymmetryClass::rotations.size() * 3
+>;
+
+template<typename SymmetryClass>
+using ChainArrayType = ConstexprMagic::DynamicArray<
+  unsigned,
+  SymmetryClass::rotations.size() * 3
+>;
+
+template<typename SymmetryClass>
+constexpr void generateAllRotationsImpl(
+  RotationsSetType<SymmetryClass>& rotations,
+  ChainStructuresArrayType<SymmetryClass>& chainStructures,
+  ChainArrayType<SymmetryClass>& chain
+) {
+  while(
+    chain.front() < SymmetryClass::rotations.size() 
+    && rotations.size() < maxRotations<SymmetryClass>()
+  ) {
+
+    auto generated = applyRotation<SymmetryClass>(
+      chainStructures.back(),
+      chain.back()
+    );
+
+    if(!rotations.contains(generated)) {
+      rotations.insert(generated);
+      chainStructures.push_back(generated);
+      chain.push_back(0);
+    } else {
+      // collapse the chain until we are at an incrementable position (if need be)
+      while(
+        chain.size() > 0 
+        && chain.back() == SymmetryClass::rotations.size() - 1
+      ) {
+        chain.pop_back();
+        chainStructures.pop_back();
+      }
+
+      // increment
+      ++chain.back();
+    }
+  }
+
+}
+
+template<typename SymmetryClass>
+constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
+  RotationsSetType<SymmetryClass> rotations;
+  rotations.insert(indices);
+
+  ChainStructuresArrayType<SymmetryClass> chainStructures;
+  chainStructures.push_back(indices);
+
+  ChainArrayType<SymmetryClass> chain {0u};
+
+  generateAllRotationsImpl<SymmetryClass>(
+    rotations,
+    chainStructures,
+    chain
+  );
+
+  return rotations;
+}
+
+template<typename SymmetryClass>
+struct MappingsReturnType {
+  using MappingsList = ConstexprMagic::DynamicArray<
+    ArrayType<unsigned, SymmetryClass::size>,
+    20
+  >;
+
+  MappingsList mappings;
+  double angleDistortion, chiralDistortion;
+
+  constexpr MappingsReturnType(
+    MappingsList&& mappings,
+    double&& angleDistortion,
+    double&& chiralDistortion
+  ) : mappings(mappings),
+      angleDistortion(angleDistortion),
+      chiralDistortion(chiralDistortion)
+  {}
 };
 
 template<class SymmetryClassFrom, class SymmetryClassTo>
@@ -279,187 +401,83 @@ constexpr auto ligandGainMappings() {
     "Ligand gain pathway calculation must involve symmetry size increase"
   );
 
-  auto indexMapping  = iota<SymmetryClassTo::size>();
+  using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
 
-  ArrayType<
-    ArrayType<unsigned, SymmetryClassTo::size>,
-    0
-  > bestMappings;
+  ConstexprMagic::DynamicArray<IndexMappingType, 20> bestMappings;
   double lowestAngleDistortion = 100;
+  double lowestChiralDistortion = 100;
 
-  // No way to do nextPermutation? need swap
+  auto indexMapping = iota<SymmetryClassTo::size>();
 
-}
+  ConstexprMagic::DynamicSet<
+    IndexMappingType,
+    ConstexprMagic::Math::factorial(SymmetryClassTo::size)
+  > encounteredMappings;
 
-template<typename SymmetryClass>
-using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
-
-template<typename SymmetryClass, size_t size>
-constexpr std::enable_if_t<
-  size == 0,
-  std::pair<
-    ArrayType<IndicesList<SymmetryClass>, 1>,
-    ArrayType<unsigned, 1>
-  >
-> collapseChain(
-  const ArrayType<IndicesList<SymmetryClass>, size>& chainStructures __attribute__((unused)),
-  const ArrayType<unsigned, size>& chain __attribute__((unused))
-) {
-  return {};
-}
-
-template<typename SymmetryClass, size_t size>
-constexpr auto collapseChain(
-  const ArrayType<IndicesList<SymmetryClass>, size>& chainStructures,
-  const ArrayType<unsigned, size>& chain
-) {
-  if(size == 1 || chain.back() < SymmetryClass::rotations.size() - 1) {
-    // Increment last item in chain via pop and push
-    const auto lastItem = chain.back();
-    const auto intermediateChain = ConstexprMagic::arrayPop(chain);
-
-    return std::make_pair(
-      chainStructures,
-      ConstexprMagic::arrayPush(intermediateChain, lastItem + 1)
-    );
-  }
-
-  return collapseChain<SymmetryClass>(
-    ConstexprMagic::arrayPop(chainStructures),
-    ConstexprMagic::arrayPop(chain)
-  );
-}
-
-template<
-  typename SymmetryClass,
-  class RotationsSetType,
-  size_t chainLength
-> constexpr auto generateAllRotationsImpl(
-  const RotationsSetType& rotations,
-  const ArrayType<IndicesList<SymmetryClass>, chainLength>& chainStructures,
-  const ArrayType<unsigned, chainLength>& chain
-) {
-  if(chain.front() >= SymmetryClass::rotations.size()) {
-    return rotations;
-  }
-
-  const auto newRotation = applyRotation<SymmetryClass>(
-    chainStructures.back(),
-    chain.back()
-  );
-
-  if(!rotations.contains(newRotation)) {
-    return generateAllRotationsImpl<SymmetryClass>(
-      rotations.insert(newRotation),
-      ConstexprMagic::arrayPush(chainStructures, newRotation),
-      ConstexprMagic::arrayPush(chain, 0u)
-    );
-  }
-
-  if(chain.back() < SymmetryClass::rotations.size() - 1) {
-    // increment last item via pop and push
-    const auto lastItem = chain.back();
-    auto intermediateChain = ConstexprMagic::arrayPop(chain);
-    
-    return generateAllRotationsImpl(
-      rotations,
-      chainStructures,
-      ConstexprMagic::arrayPush(intermediateChain, lastItem + 1)
-    );
-  }
-
-  const auto chainStructuresAndChainPair = collapseChain(
-    chainStructures,
-    chain
-  );
-
-  return generateAllRotationsImpl(
-    rotations,
-    chainStructuresAndChainPair.first,
-    chainStructuresAndChainPair.second
-  );
-}
-
-constexpr unsigned subtractOne(const unsigned& x) {
-  return x - 1;
-}
-
-template<typename SymmetryClass>
-constexpr auto generateAllChains() {
-  constexpr auto symmetryRotationMultiplicites = rotationMultiplicities<SymmetryClass>();
-
-  constexpr auto multiplicitiesMinusOne = ConstexprMagic::map(
-    symmetryRotationMultiplicites, 
-    subtractOne
-  );
-
-  constexpr auto chainLength = ConstexprMagic::sum(multiplicitiesMinusOne);
-
-  constexpr auto nCombinations = ConstexprMagic::Math::factorial(chainLength) / ConstexprMagic::sum(
-    ConstexprMagic::map(
-      multiplicitiesMinusOne,
-      ConstexprMagic::Math::factorial<unsigned>
-    )
-  );
-
-  ArrayType<
-    ArrayType<unsigned, chainLength>,
-    nCombinations
-  > returnArray {};
-
-  auto runningPermutation = ArrayType<unsigned, chainLength> {};
-  unsigned counter = 0;
-  for(unsigned i = 0; i < SymmetryClass::rotations.size(); ++i) {
-    for(unsigned j = 0; j < multiplicitiesMinusOne.at(i); ++j) {
-      runningPermutation.at(counter + j) = i;
-    }
-    counter += multiplicitiesMinusOne.at(i);
-  }
-
-  unsigned permutationIndex = 0;
   do {
-    returnArray.at(permutationIndex) = runningPermutation;
-    permutationIndex += 1;
-  } while(ConstexprMagic::inPlaceNextPermutation(runningPermutation));
+    if(!encounteredMappings.contains(symPosMapping(indexMapping))) {
+      auto angleDistortion = calculateAngleDistortion<
+        SymmetryClassFrom,
+        SymmetryClassTo
+      >(indexMapping);
 
-  return returnArray;
-}
+      auto chiralDistortion = calculateChiralDistortion<
+        SymmetryClassFrom,
+        SymmetryClassTo
+      >(indexMapping);
 
-constexpr auto linearChains = generateAllChains<data::Linear>();
+      /* Summary of cases:
+       * - If any improvement is made on angular distortion, clear all and add
+       * - If angular distortion is equal but chiral distortion is improved, 
+       *   clear all and add
+       * - If angular distortion and chiral distortion are equal, just add
+       *
+       * The boolean cases below are, AFAICT, the least amount of comparisons.
+       * Feel free to see if you can find some way with fewer.
+       */
 
-static_assert(linearChains.size() == 1, "Unexpected result");
-static_assert(linearChains.at(0).size() == 1, "Unexpected result");
+      bool addMapping = (
+        angleDistortion < lowestAngleDistortion
+        || (
+          angleDistortion == lowestAngleDistortion
+          && chiralDistortion <= lowestChiralDistortion
+        )
+      );
 
-constexpr auto tetrahedralChains = generateAllChains<data::Tetrahedral>();
+      bool clearExisting = (
+        addMapping
+        && !(
+          angleDistortion == lowestAngleDistortion
+          && chiralDistortion == lowestChiralDistortion
+        )
+      );
+        
+      if(clearExisting) {
+        bestMappings.clear();
+        lowestAngleDistortion = angleDistortion;
+        lowestChiralDistortion = chiralDistortion;
+      }
 
-template<typename SymmetryClass>
-constexpr auto generateAllRotations() {
-  constexpr auto chains = generateAllChains<SymmetryClass>();
-}
+      if(addMapping) {
+        bestMappings.push_back(indexMapping);
+      }
 
-/*! It works in principle, but template instantiation depth is a serious issue!
- * Finding all 5040 rotations of SquareAntiprismatic is pretty daunting as at
- * least that many different instantiations of generateAllRotationsImpl have to
- * be made, compiled and evaluated at compile-time. Perhaps it is better to
- * avoid set generation and checking here.
- */
-template<typename SymmetryClass>
-constexpr auto generateAllRotations(
-  const ArrayType<unsigned, SymmetryClass::size>& indices
-) {
-  ConstexprMagic::Set<
-    IndicesList<SymmetryClass>
-  > setInstance;
+      // Add all rotations to the encountered mappings
+      auto allRotations = generateAllRotations<SymmetryClassTo>(
+        symPosMapping(indexMapping)
+      );
 
-  return generateAllRotationsImpl<SymmetryClass>(
-    setInstance,
-    ArrayType<IndicesList<SymmetryClass>, 1> {{indices}},
-    ArrayType<unsigned, 1> {0}
+      for(const auto& rotation : allRotations) {
+        encounteredMappings.insert(rotation);
+      }
+    }
+  } while(ConstexprMagic::inPlaceNextPermutation(indexMapping));
+
+  return MappingsReturnType<SymmetryClassTo>(
+    std::move(bestMappings),
+    std::move(lowestAngleDistortion),
+    std::move(lowestChiralDistortion)
   );
 }
-
-/*constexpr auto maxAsymTetrRots = generateAllRotations<data::Linear>(
-  ArrayType<unsigned, 2> {{0, 1}}
-);*/
 
 } // namespace Symmetry

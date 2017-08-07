@@ -7,6 +7,7 @@
 #include <iostream>
 #include <numeric>
 #include <Eigen/Geometry>
+#include "constexprProperties.h"
 
 using namespace Symmetry;
 
@@ -371,3 +372,15 @@ BOOST_AUTO_TEST_CASE(smallestAngleValue) {
     std::cout << "}}\n\n";
   }
 }*/
+
+BOOST_AUTO_TEST_CASE(constexprProperties) {
+  constexpr auto mappings = ligandGainMappings<data::Linear, data::TShaped>();
+  std::cout << "Linear to TShaped mappings: angular = " 
+    << mappings.angleDistortion
+    << ", chiral = " << mappings.chiralDistortion
+    << ", multiplicity = " << mappings.mappings.size()
+    << std::endl;
+  for(const auto& indexMapping : mappings.mappings) {
+    std::cout << TemplateMagic::condenseIterable(indexMapping) << std::endl;
+  }
+}

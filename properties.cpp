@@ -18,6 +18,18 @@
  *   not for seesaw to trig bipy).
  */
 
+std::vector<unsigned> iota(unsigned nValues) {
+  std::vector<unsigned> values (nValues);
+
+  std::iota(
+    values.begin(),
+    values.end(),
+    0
+  );
+
+  return values;
+}
+
 class RGBGradient {
 public:
   using RGBType = std::array<double, 3>;
@@ -246,12 +258,12 @@ std::set<
       // add it to the set
       allRotations.insert(generated);
 
-      // add it to chainStructures
+      // add it to the chain
       chainStructures.push_back(generated);
+      chain.emplace_back(0);
 
       // increase depth, add a link
       depth++;
-      chain.emplace_back(0);
     } else {
       // if we are not at the maximum instruction
       if(chain.at(depth) < linkLimit - 1) {
