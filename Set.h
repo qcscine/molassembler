@@ -48,7 +48,8 @@ public:
     return !(item < _items.at(bound));
   }
 
-  //! Insertion can involve up to 2N T moves.
+  //! Insertion can involve up to 3N T moves.
+  // TODO does not use Comparator, could be better -> see DynamicSet
   constexpr auto insert(const T& item) const {
     return Set<T, Comparator, nItems + 1>(
       insertIntoSorted(_items, item, _comparator)

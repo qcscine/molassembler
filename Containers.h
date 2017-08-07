@@ -48,6 +48,23 @@ template<
 template<
   template<typename, size_t> class ArrayType,
   typename T,
+  size_t size,
+  class BinaryFunction
+> constexpr T reduce(
+  const ArrayType<T, size>& array,
+  T init,
+  BinaryFunction&& reduction
+) {
+  for(const auto& element : array) {
+    init = reduction(init, element);
+  }
+
+  return init;
+}
+
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
   size_t size
 > constexpr T sum(const ArrayType<T, size>& array) {
   T sum = 0;
@@ -284,9 +301,7 @@ template<
   const T& item,
   Comparator comparator
 ) {
-  size_t it = 0, count = size, step = 0;
-
-  size_t bound = 0;
+  size_t it = 0, count = array.size(), step = 0, bound = 0;
 
   while(count > 0) {
     it = bound;
@@ -507,7 +522,7 @@ template<
 ) {
   size_t a = indexFrom, b = indexTo;
   while(a != b && a != --b) {
-    inPlaceSwap(data, a, b);
+    inPlaceSwap(data, a++, b);
   }
 }
 

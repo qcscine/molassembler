@@ -9,6 +9,8 @@
 #include "Containers.h"
 #include "Array.h"
 #include "Set.h"
+#include "DynamicArray.h"
+#include "DynamicSet.h"
 
 #include <iostream>
 #include <iomanip>
@@ -283,20 +285,104 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   std::array<unsigned, 4> base {0, 1, 2, 3};
   std::array<unsigned, 4> STLComparison {0, 1, 2, 3};
 
+  bool customHasNext = true;
+  bool STLHasNext = true;
+
   do {
-    BOOST_CHECK(base == STLComparison);
-  } while(
-    ConstexprMagic::inPlaceNextPermutation(base)
-    && std::next_permutation(STLComparison.begin(), STLComparison.end())
+    customHasNext = ConstexprMagic::inPlaceNextPermutation(base);
+    STLHasNext = std::next_permutation(STLComparison.begin(), STLComparison.end());
+
+    BOOST_CHECK_MESSAGE(
+      base == STLComparison,
+      "In forward permutation, base is {" << TemplateMagic::condenseIterable(base)
+      << "} and and STL is {" << TemplateMagic::condenseIterable(STLComparison)
+      << "}"
+    );
+  } while(customHasNext && STLHasNext);
+
+  BOOST_CHECK_MESSAGE(
+   !customHasNext && !STLHasNext,
+   "The two permutation algorithms don't terminate at the same time"
   );
 
   base = {3, 2, 1, 0};
   STLComparison = {3, 2, 1, 0};
+  customHasNext = true;
+  STLHasNext = true;
 
   do {
-    BOOST_CHECK(base == STLComparison);
-  } while(
-    ConstexprMagic::inPlacePreviousPermutation(base)
-    && std::prev_permutation(STLComparison.begin(), STLComparison.end())
+    customHasNext = ConstexprMagic::inPlacePreviousPermutation(base);
+    STLHasNext = std::prev_permutation(STLComparison.begin(), STLComparison.end());
+
+    BOOST_CHECK_MESSAGE(
+      base == STLComparison,
+      "In backward permutation, base is {" << TemplateMagic::condenseIterable(base)
+      << "} and and STL is {" << TemplateMagic::condenseIterable(STLComparison)
+      << "}"
+    );
+  } while(customHasNext && STLHasNext);
+
+  BOOST_CHECK_MESSAGE(
+   !customHasNext && !STLHasNext,
+   "The two permutation algorithms don't terminate at the same time"
   );
+}
+
+constexpr bool compileTimeDynTest() {
+  ConstexprMagic::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6};
+  nonConstArr.push_back(9);
+
+  return nonConstArr.size() == 4;
+}
+
+BOOST_AUTO_TEST_CASE(dynamicArray) {
+  constexpr ConstexprMagic::DynamicArray<unsigned, 10> arr {4, 3, 5};
+
+  static_assert(
+    arr.size() == 3,
+    "Array size isn't initialized correctly from parameter pack ctor"
+  );
+  static_assert(
+    compileTimeDynTest(),
+    "non-const dynamic array functionality works as expected"
+  );
+}
+
+template<typename T, size_t size, class Comparator>
+constexpr bool isSorted(const ConstexprMagic::DynamicSet<T, size, Comparator>& set) {
+  Comparator comparator;
+
+  auto left = set.begin();
+  auto right = set.begin(); ++right;
+
+  while(right != set.end()) {
+    if(comparator(*right, *left)) {
+      return false;
+    }
+
+    ++right;
+    ++left;
+  }
+
+  return true;
+}
+
+BOOST_AUTO_TEST_CASE(dynamicSet) {
+  ConstexprMagic::DynamicSet<unsigned, 10> set;
+
+  for(const auto& item : {9u, 3u, 5u}) {
+    set.insert(item);
+  }
+
+  BOOST_CHECK(set.size() == 3);
+  BOOST_CHECK(set.contains(3) && set.contains(5) && set.contains(9));
+  for(const auto& item : {2u, 4u, 8u, 10u}) {
+    BOOST_CHECK_MESSAGE(
+      !set.contains(item),
+      "Set says it contains " << item << " when it shouldn't (set is {"
+        << TemplateMagic::condenseIterable(set)
+        << "}."
+    );
+  }
+  BOOST_CHECK(isSorted(set));
 }

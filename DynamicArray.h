@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONSTEXPR_MAGIC_ARRAY_H
-#define INCLUDE_CONSTEXPR_MAGIC_ARRAY_H
+#ifndef INCLUDE_CONSTEXPR_MAGIC_DYNAMIC_ARRAY_H
+#define INCLUDE_CONSTEXPR_MAGIC_DYNAMIC_ARRAY_H
 
 #include <cstddef>
 #include <initializer_list>
@@ -8,23 +8,34 @@
 
 #include "Containers.h"
 
+/* TODO
+ * - refactor this using Array.h as base? Loads of forwarding functions, no
+ *   need for iterator and constIterator classes
+ */
+
 namespace ConstexprMagic {
 
 template<typename T, size_t nItems>
-class Array {
+class DynamicArray {
 private:
   T _items[nItems];
+  size_t _count;
 
   template<size_t ... Inds>
-  std::array<T, nItems> _makeArray(std::index_sequence<Inds...>) {
+  std::array<T, nItems> makeArray(std::index_sequence<Inds...>) {
     return {{
       _items[Inds]...
     }};
   }
 
+  // NOTE: Exists solely to circumvent GCC Bug 71504
+  constexpr T _defaultConstruct(size_t index __attribute__((unused))) {
+    return {};
+  }
+
   template<size_t ... Inds>
   std::initializer_list<T> _makeInitializer(
-    const Array& other,
+    const DynamicArray& other,
     std::index_sequence<Inds...>
   ) {
     return {
@@ -33,38 +44,77 @@ private:
   }
 
 public:
-  /*! Delegate constructor using another Array and an index_sequence to directly
+  /*! Delegate constructor using another DynamicArray and an index_sequence to directly
    * form the array mem-initializer with a parameter pack expansion
    */
   template<size_t ... Inds>
-  constexpr Array(const Array& other, std::index_sequence<Inds...>) 
-    :_items {other[Inds]...} 
+  constexpr DynamicArray(const DynamicArray& other, std::index_sequence<Inds...>) 
+    :_items {other[Inds]...},
+     _count(other._count)
   {}
 
-  /* Constructing from another array is tricky since we're technically not
-   * allowed to edit _items in-class, so we delegate to the previous constructor
-   * and directly form the mem-initializer
+  /* Constructing from another dynamic array is tricky since we're technically
+   * not allowed to edit _items in-class, so we delegate to the previous
+   * constructor and directly form the mem-initializer
    */
-  constexpr Array(const Array& other) 
-    : Array(other, std::make_index_sequence<nItems>{})
+  constexpr DynamicArray(const DynamicArray& other) 
+    : DynamicArray(other, std::make_index_sequence<nItems>{})
   {}
 
   //! Delegate std::array ctor, using same trick as copy ctor
   template<size_t ... Inds>
-  constexpr Array(const std::array<T, nItems>& other, std::index_sequence<Inds...>) 
-    :_items {other[Inds]...} 
+  constexpr DynamicArray(
+    const std::array<T, nItems>& other,
+    std::index_sequence<Inds...>
+  ) : _items {other[Inds]...},
+      _count(other.size())
   {}
 
   //! Construct from std::array using same trick as copy ctor
-  constexpr Array(const std::array<T, nItems>& other)
-    : Array(other, std::make_index_sequence<nItems>{})
+  constexpr DynamicArray(const std::array<T, nItems>& other)
+    : DynamicArray(other, std::make_index_sequence<nItems>{})
   {}
+
+  // NOTE: Exists solely to circumvent GCC Bug 71504
+  template<size_t ... Inds>
+  constexpr DynamicArray(std::index_sequence<Inds...>)
+    : _items { _defaultConstruct(Inds) ...},
+      _count {0}
+  {}
+
+  // NOTE: Exists solely to circumvent GCC Bug 71504
+  constexpr DynamicArray() : DynamicArray(std::make_index_sequence<nItems>{}) {}
 
   //! Parameter pack constructor, will work as long as the arguments are castable
   template<typename ...Args>
-  constexpr Array(Args... args) 
-  : _items {static_cast<T>(args)...} 
+  constexpr DynamicArray(Args... args) 
+    : _items {static_cast<T>(args)...},
+      _count(sizeof...(args))
   {}
+
+  constexpr void push_back(const T& item) {
+    if(_count < nItems) {
+      _items[_count] = item;
+      _count += 1;
+    }
+  }
+
+  constexpr void push_back(T&& item) {
+    if(_count < nItems) {
+      _items[_count] = std::move(item);
+      _count += 1;
+    }
+  }
+
+  constexpr void pop_back() {
+    if(_count > 0) {
+      _count -= 1;
+    }
+  }
+
+  constexpr bool validIndex(const unsigned& index) {
+    return(index < _count);
+  }
 
   constexpr T& operator[] (const unsigned& index) {
     return _items[index];
@@ -82,20 +132,44 @@ public:
     return _items[index];
   }
 
+  constexpr T& front() {
+    return _items[0];
+  }
+
   constexpr const T& front() const {
     return _items[0];
   }
 
+  constexpr T& back() {
+    if(_count == 0) {
+      return front();
+    }
+
+    return _items[_count - 1];
+  }
+
   constexpr const T& back() const {
-    return _items[nItems - 1];
+    if(_count == 0) {
+      return front();
+    }
+
+    return _items[_count - 1];
   }
 
   constexpr size_t size() const {
-    return nItems;
+    return _count;
   }
 
-  constexpr bool operator == (const Array& other) const {
-    for(unsigned i = 0; i < nItems; ++i) {
+  constexpr void clear() {
+    _count = 0;
+  }
+
+  constexpr bool operator == (const DynamicArray& other) const {
+    if(_count != other._count) {
+      return false;
+    }
+
+    for(unsigned i = 0; i < _count; ++i) {
       if(_items[i] != other[i]) {
         return false;
       }
@@ -104,12 +178,16 @@ public:
     return true;
   }
 
-  constexpr bool operator != (const Array& other) const {
+  constexpr bool operator != (const DynamicArray& other) const {
     return !(*this == other);
   }
 
-  constexpr bool operator < (const Array& other) const {
-    for(unsigned i = 0; i < nItems; ++i) {
+  constexpr bool operator < (const DynamicArray& other) const {
+    if(_count < other._count) {
+      return true;
+    }
+
+    for(unsigned i = 0; i < _count; ++i) {
       if(_items[i] < other[i]) {
         return true;
       }
@@ -118,7 +196,7 @@ public:
     return false;
   }
 
-  constexpr bool operator > (const Array& other) const {
+  constexpr bool operator > (const DynamicArray& other) const {
     return other < *this;
   }
 
@@ -133,12 +211,12 @@ public:
 
   class iterator : public BaseIteratorType {
   private:
-    Array& _baseRef;
+    DynamicArray& _baseRef;
     unsigned _position;
 
   public:
     constexpr explicit iterator(
-      Array& instance,
+      DynamicArray& instance,
       unsigned&& initPosition
     ) : _baseRef(instance),
         _position(initPosition) 
@@ -201,7 +279,7 @@ public:
   }
 
   constexpr iterator end() {
-    return iterator(*this, nItems);
+    return iterator(*this, _count);
   }
 
   using ConstBaseIteratorType = std::iterator<
@@ -214,12 +292,12 @@ public:
   
   class constIterator : public ConstBaseIteratorType {
   private:
-    const Array& _baseRef;
+    const DynamicArray& _baseRef;
     unsigned _position;
 
   public:
     constexpr explicit constIterator(
-      const Array& instance,
+      const DynamicArray& instance,
       unsigned&& initPosition
     ) : _baseRef(instance),
         _position(initPosition) 
@@ -282,15 +360,15 @@ public:
   }
 
   constexpr constIterator end() const {
-    return constIterator(*this, nItems);
+    return constIterator(*this, _count);
   }
 
   constexpr operator std::array<T, nItems> () const {
-    return _makeArray(std::make_index_sequence<nItems>{});
+    return makeArray(std::make_index_sequence<nItems>{});
   }
 
-  constexpr std::array<T, nItems> getArray() const {
-    return _makeArray(std::make_index_sequence<nItems>{});
+  constexpr std::array<T, nItems> getDynamicArray() const {
+    return makeArray(std::make_index_sequence<nItems>{});
   }
 };
 
