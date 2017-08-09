@@ -18,6 +18,12 @@ message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
 # dependencies
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 find_package(Eigen3 3.1.1 REQUIRED)
+if(Eigen3_FOUND)
+  message(STATUS "Eigen version: ${Eigen3_VERSION}")
+  message(STATUS "Eigen dir: ${EIGEN3_INCLUDE_DIRS}")
+  include_directories(EIGEN3_INCLUDE_DIRS)
+endif()
+
 find_program(
   CLANG_TIDY_EXE
   NAMES "clang-tidy"
@@ -34,15 +40,17 @@ endif()
 # set headers
 set(HEADERS_all
   Symmetries.h
+  Properties.h
 )
 
 # sources definition
-#set(SOURCES_all
-#  Symmetries.cpp
-#)
+set(SOURCES_all
+  Symmetries.cpp
+  Properties.cpp
+)
 
 # specify targets
-#add_library(symmetries STATIC ${SOURCES_all} ${HEADERS_all})
+add_library(symmetries STATIC ${SOURCES_all} ${HEADERS_all})
 
 # Compilation options
 if( UNIX )
@@ -60,24 +68,24 @@ else() # assume Debug
   #target_compile_options(symmetries PUBLIC -g)
 endif()
 
-#set_target_properties(
-#  symmetries PROPERTIES
-#  CXX_STANDARD 14
-#  CXX_STANDARD_REQUIRED ON
-#  COMPILE_FLAGS ${WARNING_FLAGS}
-#)
+set_target_properties(
+  symmetries PROPERTIES
+  CXX_STANDARD 14
+  CXX_STANDARD_REQUIRED ON
+  COMPILE_FLAGS ${WARNING_FLAGS}
+)
 
 include_directories(SYSTEM
   ${EIGEN3_INCLUDE_DIRS}
   "/home/jan-grimo/PhD/projects/libs/"
 )
 
-#if(CLANG_TIDY_EXE)
-#  set_target_properties(
-#    symmetries PROPERTIES
-#    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
-#  )
-#endif()
+if(CLANG_TIDY_EXE)
+  set_target_properties(
+    symmetries PROPERTIES
+    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
+  )
+endif()
 
 add_executable(symmetryTests tests.cpp)
 target_compile_options(symmetryTests PUBLIC -g)
@@ -88,7 +96,7 @@ set_target_properties(
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
 target_include_directories(symmetryTests PRIVATE ${BOOST_ROOT})
-target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ) # link symmetries
+target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)
 
 # add test
 add_test(NAME testAll COMMAND symmetryTests)
@@ -101,4 +109,5 @@ set_target_properties(
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
-target_include_directories(Properties PRIVATE ${BOOST_ROOT})
+target_include_directories(Properties PRIVATE ${BOOST_ROOT} symmetries)
+target_link_libraries(Properties ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)

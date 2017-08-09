@@ -283,8 +283,6 @@ struct DistortionInfo {
   {}
 };
 
-template<typename SymmetryClass>
-using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 
 template<typename SymmetryClass>
 constexpr unsigned maxRotations() {
@@ -299,6 +297,10 @@ constexpr unsigned maxRotations() {
     std::multiplies<unsigned>()
   );
 }
+
+
+template<typename SymmetryClass>
+using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 
 template<typename SymmetryClass>
 using RotationsSetType = ConstexprMagic::DynamicSet<
@@ -317,6 +319,7 @@ using ChainArrayType = ConstexprMagic::DynamicArray<
   unsigned,
   SymmetryClass::rotations.size() * 3
 >;
+
 
 template<typename SymmetryClass>
 constexpr void generateAllRotationsImpl(

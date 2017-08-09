@@ -22,6 +22,7 @@
 #endif
 
 #include "constexpr_magic/Math.h"
+#include "constexpr_magic/TupleType.h"
 #include "template_magic/Containers.h"
 
 #include <map>
@@ -143,6 +144,7 @@ constexpr std::array<Name, nSymmetries> allNames {
 
 constexpr unsigned replaceMe = std::numeric_limits<unsigned>::max();
 
+
 namespace data {
 
 struct Linear {
@@ -171,13 +173,6 @@ struct Linear {
     0
   > tetrahedra {{}};
 };
-
-constexpr decltype(Linear::name) Linear::name;
-constexpr decltype(Linear::size) Linear::size;
-constexpr decltype(Linear::coordinates) Linear::coordinates;
-constexpr decltype(Linear::rotations) Linear::rotations;
-constexpr decltype(Linear::tetrahedra) Linear::tetrahedra;
-
 
 struct Bent {
   /*
@@ -215,13 +210,6 @@ struct Bent {
     0
   > tetrahedra {{}};
 };
-
-constexpr decltype(Bent::name) Bent::name;
-constexpr decltype(Bent::size) Bent::size;
-constexpr decltype(Bent::coordinates) Bent::coordinates;
-constexpr decltype(Bent::rotations) Bent::rotations;
-constexpr decltype(Bent::tetrahedra) Bent::tetrahedra;
-
 
 struct TrigonalPlanar {
   /*
@@ -262,13 +250,6 @@ struct TrigonalPlanar {
     0
   > tetrahedra {{}};
 };
-
-constexpr decltype(TrigonalPlanar::name) TrigonalPlanar::name;
-constexpr decltype(TrigonalPlanar::size) TrigonalPlanar::size;
-constexpr decltype(TrigonalPlanar::coordinates) TrigonalPlanar::coordinates;
-constexpr decltype(TrigonalPlanar::rotations) TrigonalPlanar::rotations;
-constexpr decltype(TrigonalPlanar::tetrahedra) TrigonalPlanar::tetrahedra;
-
 
 struct TrigonalPyramidal {
   /*
@@ -311,13 +292,6 @@ struct TrigonalPyramidal {
   }};
 };
 
-constexpr decltype(TrigonalPyramidal::name) TrigonalPyramidal::name;
-constexpr decltype(TrigonalPyramidal::size) TrigonalPyramidal::size;
-constexpr decltype(TrigonalPyramidal::coordinates) TrigonalPyramidal::coordinates;
-constexpr decltype(TrigonalPyramidal::rotations) TrigonalPyramidal::rotations;
-constexpr decltype(TrigonalPyramidal::tetrahedra) TrigonalPyramidal::tetrahedra;
-
-
 struct TShaped {
   /*
    * 0 – (_) – 2
@@ -355,13 +329,6 @@ struct TShaped {
     0
   > tetrahedra {{}};
 };
-
-constexpr decltype(TShaped::name) TShaped::name;
-constexpr decltype(TShaped::size) TShaped::size;
-constexpr decltype(TShaped::coordinates) TShaped::coordinates;
-constexpr decltype(TShaped::rotations) TShaped::rotations;
-constexpr decltype(TShaped::tetrahedra) TShaped::tetrahedra;
-
 
 struct Tetrahedral {
   /* 
@@ -417,13 +384,6 @@ struct Tetrahedral {
   }};
 };
 
-constexpr decltype(Tetrahedral::name) Tetrahedral::name;
-constexpr decltype(Tetrahedral::size) Tetrahedral::size;
-constexpr decltype(Tetrahedral::coordinates) Tetrahedral::coordinates;
-constexpr decltype(Tetrahedral::rotations) Tetrahedral::rotations;
-constexpr decltype(Tetrahedral::tetrahedra) Tetrahedral::tetrahedra;
-
-
 struct SquarePlanar {
   /* 
    * 3   2
@@ -468,13 +428,6 @@ struct SquarePlanar {
     0
   > tetrahedra {{}};
 };
-
-constexpr decltype(SquarePlanar::name) SquarePlanar::name;
-constexpr decltype(SquarePlanar::size) SquarePlanar::size;
-constexpr decltype(SquarePlanar::coordinates) SquarePlanar::coordinates;
-constexpr decltype(SquarePlanar::rotations) SquarePlanar::rotations;
-constexpr decltype(SquarePlanar::tetrahedra) SquarePlanar::tetrahedra;
-
 
 struct Seesaw {
   /*
@@ -533,13 +486,6 @@ struct Seesaw {
   }};
 #endif
 };
-
-constexpr decltype(Seesaw::name) Seesaw::name;
-constexpr decltype(Seesaw::size) Seesaw::size;
-constexpr decltype(Seesaw::coordinates) Seesaw::coordinates;
-constexpr decltype(Seesaw::rotations) Seesaw::rotations;
-constexpr decltype(Seesaw::tetrahedra) Seesaw::tetrahedra;
-
 
 struct SquarePyramidal {
   /* 
@@ -615,13 +561,6 @@ struct SquarePyramidal {
 #endif
 };
 
-constexpr decltype(SquarePyramidal::name) SquarePyramidal::name;
-constexpr decltype(SquarePyramidal::size) SquarePyramidal::size;
-constexpr decltype(SquarePyramidal::coordinates) SquarePyramidal::coordinates;
-constexpr decltype(SquarePyramidal::rotations) SquarePyramidal::rotations;
-constexpr decltype(SquarePyramidal::tetrahedra) SquarePyramidal::tetrahedra;
-
-
 struct TrigonalBiPyramidal {
   /* Viewed from the top of the pyramid. The central atom is ( ), 3 and 4 
    * are axial.
@@ -682,13 +621,6 @@ struct TrigonalBiPyramidal {
   }};
 };
 
-constexpr decltype(TrigonalBiPyramidal::name) TrigonalBiPyramidal::name;
-constexpr decltype(TrigonalBiPyramidal::size) TrigonalBiPyramidal::size;
-constexpr decltype(TrigonalBiPyramidal::coordinates) TrigonalBiPyramidal::coordinates;
-constexpr decltype(TrigonalBiPyramidal::rotations) TrigonalBiPyramidal::rotations;
-constexpr decltype(TrigonalBiPyramidal::tetrahedra) TrigonalBiPyramidal::tetrahedra;
-
-
 struct PentagonalPlanar {
   /* 
    * All in plane:
@@ -729,13 +661,6 @@ struct PentagonalPlanar {
     0
   > tetrahedra {{}};
 };
-
-constexpr decltype(PentagonalPlanar::name) PentagonalPlanar::name;
-constexpr decltype(PentagonalPlanar::size) PentagonalPlanar::size;
-constexpr decltype(PentagonalPlanar::coordinates) PentagonalPlanar::coordinates;
-constexpr decltype(PentagonalPlanar::rotations) PentagonalPlanar::rotations;
-constexpr decltype(PentagonalPlanar::tetrahedra) PentagonalPlanar::tetrahedra;
-
 
 struct Octahedral {
   /* The central atom is ( ), 4 and 5 are axial, the rest equatorial.
@@ -814,13 +739,6 @@ struct Octahedral {
 #endif
 };
 
-constexpr decltype(Octahedral::name) Octahedral::name;
-constexpr decltype(Octahedral::size) Octahedral::size;
-constexpr decltype(Octahedral::coordinates) Octahedral::coordinates;
-constexpr decltype(Octahedral::rotations) Octahedral::rotations;
-constexpr decltype(Octahedral::tetrahedra) Octahedral::tetrahedra;
-
-
 struct TrigonalPrismatic {
   /* 
    *  3  4  5
@@ -888,13 +806,6 @@ struct TrigonalPrismatic {
     {{3, replaceMe, 4, 5}}
   }};
 };
-
-constexpr decltype(TrigonalPrismatic::name) TrigonalPrismatic::name;
-constexpr decltype(TrigonalPrismatic::size) TrigonalPrismatic::size;
-constexpr decltype(TrigonalPrismatic::coordinates) TrigonalPrismatic::coordinates;
-constexpr decltype(TrigonalPrismatic::rotations) TrigonalPrismatic::rotations;
-constexpr decltype(TrigonalPrismatic::tetrahedra) TrigonalPrismatic::tetrahedra;
-
 
 struct PentagonalPyramidal {
   /* 
@@ -964,13 +875,6 @@ struct PentagonalPyramidal {
   }};
 #endif
 };
-
-constexpr decltype(PentagonalPyramidal::name) PentagonalPyramidal::name;
-constexpr decltype(PentagonalPyramidal::size) PentagonalPyramidal::size;
-constexpr decltype(PentagonalPyramidal::coordinates) PentagonalPyramidal::coordinates;
-constexpr decltype(PentagonalPyramidal::rotations) PentagonalPyramidal::rotations;
-constexpr decltype(PentagonalPyramidal::tetrahedra) PentagonalPyramidal::tetrahedra;
-
 
 struct PentagonalBiPyramidal {
     /* 
@@ -1054,13 +958,6 @@ struct PentagonalBiPyramidal {
   }};
 #endif
 };
-
-constexpr decltype(PentagonalBiPyramidal::name) PentagonalBiPyramidal::name;
-constexpr decltype(PentagonalBiPyramidal::size) PentagonalBiPyramidal::size;
-constexpr decltype(PentagonalBiPyramidal::coordinates) PentagonalBiPyramidal::coordinates;
-constexpr decltype(PentagonalBiPyramidal::rotations) PentagonalBiPyramidal::rotations;
-constexpr decltype(PentagonalBiPyramidal::tetrahedra) PentagonalBiPyramidal::tetrahedra;
-
 
 struct SquareAntiPrismatic {
   /*  Two representations, one oblique, the other more helpful.
@@ -1196,29 +1093,6 @@ struct SquareAntiPrismatic {
 #endif
 };
 
-constexpr decltype(SquareAntiPrismatic::name) SquareAntiPrismatic::name;
-constexpr decltype(SquareAntiPrismatic::size) SquareAntiPrismatic::size;
-constexpr decltype(SquareAntiPrismatic::coordinates) SquareAntiPrismatic::coordinates;
-constexpr decltype(SquareAntiPrismatic::rotations) SquareAntiPrismatic::rotations;
-constexpr decltype(SquareAntiPrismatic::tetrahedra) SquareAntiPrismatic::tetrahedra;
-
-
-const std::string Linear::stringName {"linear"};
-const std::string Bent::stringName {"bent"};
-const std::string TrigonalPlanar::stringName {"trigonal planar"};
-const std::string TrigonalPyramidal::stringName {"trigonal pyramidal"};
-const std::string TShaped::stringName {"T-shaped"};
-const std::string Tetrahedral::stringName {"tetrahedral"};
-const std::string SquarePlanar::stringName {"square planar"};
-const std::string Seesaw::stringName {"seesaw"};
-const std::string TrigonalBiPyramidal::stringName {"trigonal bipyramidal"};
-const std::string SquarePyramidal::stringName {"square pyramidal"};
-const std::string PentagonalPlanar::stringName {"pentagonal planar"};
-const std::string Octahedral::stringName {"octahedral"};
-const std::string TrigonalPrismatic::stringName {"trigonal prismatic"};
-const std::string PentagonalPyramidal::stringName {"pentagonal pyramidal"};
-const std::string PentagonalBiPyramidal::stringName {"pentagonal bipyramidal"};
-const std::string SquareAntiPrismatic::stringName {"square antiprismatic"};
 
 //! Type collecting all types of the Symmetry classes.
 using allSymmetryDataTypes = std::tuple<
@@ -1240,39 +1114,6 @@ using allSymmetryDataTypes = std::tuple<
   SquareAntiPrismatic // 8
 >;
 
-/*! Template function implementation that helps to unpack a tuple of types and
- * forward them as template parameters to a template class implementing an "op()"
- * member. It groups the index sequence passed to it into a function parameter
- * pack and uses that pack in an expansion to extract all types contained in
- * the tuple, forwarding it to the pseudo functor.
- */
-template<
-  typename Tuple,
-  template<typename ...> class PseudoFunctor,
-  std::size_t... I
-> constexpr auto unpackHelper(std::index_sequence<I...>) {
-  return PseudoFunctor<
-    std::tuple_element_t<
-      I,
-      Tuple
-    >...
-  >::op();
-}
-
-/*! Template function that unpacks a tuple of types and forwards them as
- * template parameters to a template class implementing an "op()" member.
- */
-template<
-  typename Tuple,
-  template<typename ...> class PseudoFunctor
-> constexpr auto unpackTupleToTemplateFunctor() {
-  return unpackHelper<Tuple, PseudoFunctor>(
-    std::make_index_sequence<
-      std::tuple_size<Tuple>::value
-    >()
-  );
-}
-
 using AngleFunctionPtr = double(*)(const unsigned&, const unsigned&);
 
 /*! Constructs an array of function pointers to all static angle functions
@@ -1280,13 +1121,15 @@ using AngleFunctionPtr = double(*)(const unsigned&, const unsigned&);
  */
 template<typename ...SymmetryClasses>
 struct angleFunctionFunctor {
-  static constexpr std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> op() {
+  static constexpr std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> initialize() {
     std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> sizes = {{
       &SymmetryClasses::angleFunction...
     }};
 
     return sizes;
   }
+
+  static constexpr std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> value = initialize();
 };
 
 //! Stub to find out the minimum angle returned in a specific symmetry class type
@@ -1311,7 +1154,7 @@ constexpr double smallestAngle() {
  */
 template<typename ...SymmetryClasses>
 struct minAngleFunctor {
-  static constexpr double op() {
+  static constexpr double initialize() {
     const std::array<double, sizeof...(SymmetryClasses)> smallestAngles {{
       smallestAngle<SymmetryClasses>()...
     }};
@@ -1327,6 +1170,8 @@ struct minAngleFunctor {
 
     return minElement;
   }
+
+  static constexpr double value = initialize();
 };
 
 /*! Conversion function to make the dynamic rotations list type from the
@@ -1382,13 +1227,7 @@ TetrahedronList makeTetrahedra(
 }
 
 //! Conversion helper to Eigen type from constexpr vector type
-Eigen::Vector3d toEigen(const ConstexprMagic::Vector& cVector) {
-  return {
-    cVector.data[0],
-    cVector.data[1],
-    cVector.data[2]
-  };
-}
+Eigen::Vector3d toEigen(const ConstexprMagic::Vector& cVector);
 
 /*! Conversion function to make the dynamic coordinates list type from the
  * constexpr data types given in a specifc symmetry class type
@@ -1433,24 +1272,31 @@ std::pair<Name, SymmetryInformation> makeMapInitPair() {
  */
 template<typename ...SymmetryClasses>
 struct symmetryInformationFunctor {
-  static const std::map<Name, SymmetryInformation> op() {
+  static const std::map<Name, SymmetryInformation> initialize() {
     return {{
       makeMapInitPair<SymmetryClasses>()...
     }};
   };
+
+  static const std::map<Name, SymmetryInformation> value;
 };
 
-constexpr auto angleFunctions = unpackTupleToTemplateFunctor<
+template<typename ...SymmetryClasses>
+const std::map<Name, SymmetryInformation> 
+symmetryInformationFunctor<SymmetryClasses...>::value = symmetryInformationFunctor<SymmetryClasses...>::initialize();
+
+constexpr auto angleFunctions = ConstexprMagic::TupleType::unpackToFunction<
   allSymmetryDataTypes,
   angleFunctionFunctor
 >();
 
 } // namespace data
 
-const std::map<Name, SymmetryInformation> symmetryData = data::unpackTupleToTemplateFunctor<
-  data::allSymmetryDataTypes,
-  data::symmetryInformationFunctor
->();
+/* Core symmetry data, this has dynamic types and is hence initialized in the
+ * .cpp file from the tuple containing all symmetry data types and the 
+ * symmetryInformationFunctor
+ */
+extern const std::map<Name, SymmetryInformation> symmetryData;
 
 // Shortcut functions
 inline const std::string& name(const Name& name) {
@@ -1483,7 +1329,7 @@ inline const TetrahedronList& tetrahedra(const Name& name) {
 }
 
 // Derived data
-constexpr double smallestAngle = data::unpackTupleToTemplateFunctor<
+constexpr double smallestAngle = ConstexprMagic::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
   data::minAngleFunctor
 >();

@@ -9,6 +9,8 @@
 #include <Eigen/Geometry>
 #include "constexprProperties.h"
 
+#include "Properties.h"
+
 using namespace Symmetry;
 
 auto makeCoordinateGetter(const Name& name) {
@@ -373,13 +375,122 @@ BOOST_AUTO_TEST_CASE(smallestAngleValue) {
   }
 }*/
 
+template<class SymmetryClassFrom, class SymmetryClassTo>
+struct LigandGainTest {
+  static constexpr bool initialize() {
+    constexpr auto constexprReturn = ligandGainMappings<
+      SymmetryClassFrom,
+      SymmetryClassTo
+    >();
+
+
+
+    return true;
+  }
+
+  static constexpr bool value = initialize();
+};
+
+template<class SymmetryClass>
+struct RotationGenerationTest {
+  static bool initialize() {
+
+    // This is a DynamicSet of SymmetryClass-sized Arrays
+    auto constexprRotations = generateAllRotations<SymmetryClass>(
+      iota<SymmetryClass::size>()
+    );
+
+    // This is a std::set of SymmetryClass-sized std::vectors
+    auto dynamicRotations = properties::generateAllRotations(
+      SymmetryClass::name,
+      detail::iota<unsigned>(SymmetryClass::size)
+    );
+
+    // Size mismatch
+    if(constexprRotations.size() != dynamicRotations.size()) {
+      return false;
+    }
+
+    auto convertedRotations = constexprRotations.mapToSTL(
+      [&](const auto& indexList) -> std::vector<unsigned> {
+        return {
+          indexList.begin(),
+          indexList.end()
+        };
+      }
+    );
+
+    return (
+      TemplateMagic::setIntersection(
+        convertedRotations,
+        dynamicRotations
+      ).size() == 0
+    );
+
+    // Detailed checking
+    /*TemplateMagic::all_of(
+      TemplateMagic::map(
+        constexprRotations,
+        [&](const auto& indexList) -> bool {
+          // Is indexList in dynamicRotations?
+
+          std::vector<unsigned> converted {
+            indexList.begin(),
+            indexList.end()
+          };
+
+          return (dynamicRotations.count(converted) == 1);
+        }
+      )
+    );
+
+    // Other way
+    TemplateMagic::all_of(
+      TemplateMagic::map(
+        dynamicRotations,
+        [&](const auto& indexList) -> bool {
+          ArrayType<unsigned, SymmetryClass::size> converted;
+
+          for(unsigned i = 0; i < SymmetryClass::size; ++i) {
+            converted.at(i) = indexList.at(i);
+          }
+
+          return (constexprRotations.contains(converted));
+        }
+      )
+    );
+
+    return true;*/
+  }
+
+  using type = bool;
+  static bool value;
+};
+
+template<class SymmetryClass> 
+bool RotationGenerationTest<SymmetryClass>::value 
+  = RotationGenerationTest<SymmetryClass>::initialize();
+
+
 BOOST_AUTO_TEST_CASE(constexprProperties) {
-  constexpr auto mappings = ligandGainMappings<data::Linear, data::TShaped>();
+  // First the smaller cases
+  BOOST_CHECK_MESSAGE(
+    TemplateMagic::all_of(
+      ConstexprMagic::TupleType::map<
+        Symmetry::data::allSymmetryDataTypes,
+        RotationGenerationTest
+      >()
+    ),
+    "There is a discrepancy between constexpr and dynamic rotation generation"
+  );
+
+  constexpr auto mappings = ligandGainMappings<data::SquarePlanar, data::SquarePyramidal>();
   std::cout << "Linear to TShaped mappings: angular = " 
     << mappings.angleDistortion
     << ", chiral = " << mappings.chiralDistortion
     << ", multiplicity = " << mappings.mappings.size()
     << std::endl;
+
   for(const auto& indexMapping : mappings.mappings) {
     std::cout << TemplateMagic::condenseIterable(indexMapping) << std::endl;
   }
