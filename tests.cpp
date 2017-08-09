@@ -193,6 +193,12 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   );
 }
 
+BOOST_AUTO_TEST_CASE( boolArrayAllOf) {
+  std::array<bool, 3> testArray {true, false, true};
+
+  BOOST_CHECK(!TemplateMagic::all_of(testArray));
+}
+
 /*BOOST_AUTO_TEST_CASE( enumerateTests) {
   std::vector<unsigned> testVec {5, 2, 3, 4};
 

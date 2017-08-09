@@ -218,6 +218,19 @@ template<
   BinaryFunction&& function
 );
 
+//! Special fix for std::array accumulate composability
+template<
+  class BinaryFunction,
+  typename ReturnType,
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t size
+> ReturnType accumulate(
+  const ArrayType<T, size>& array,
+  ReturnType&& init,
+  BinaryFunction&& function
+);
+
 //! Returns a count of some type in a container
 template<typename T, class Container> unsigned count(
   const Container& container,
@@ -718,6 +731,25 @@ template<
   );
 }
 
+template<
+  class BinaryFunction,
+  typename ReturnType,
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t size
+> ReturnType accumulate(
+  const ArrayType<T, size>& array,
+  ReturnType&& init,
+  BinaryFunction&& function
+) {
+  return std::accumulate(
+    array.begin(),
+    array.end(),
+    init,
+    std::forward<BinaryFunction>(function)
+  );
+}
+
 template<class Container>
 auto makeContainsPredicate(const Container& container) {
   using T = traits::getValueType<Container>;
@@ -758,6 +790,7 @@ std::set<T, Comparator<T>, Allocator<T>> setIntersection(
     a.end(),
     b.begin(),
     b.end(),
+    std::inserter(returnSet, returnSet.end()),
     Comparator<T>()
   );
 
@@ -780,6 +813,7 @@ std::set<T, Comparator<T>, Allocator<T>> setUnion(
     a.end(),
     b.begin(),
     b.end(),
+    std::inserter(returnSet, returnSet.end()),
     Comparator<T>()
   );
 
