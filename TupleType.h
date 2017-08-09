@@ -25,6 +25,24 @@ template<
 
 template<
   typename TupleType,
+  template<typename> class TemplateFunction,
+  std::size_t... Inds
+> constexpr auto mapHelper(std::index_sequence<Inds...>) {
+  using ReturnType = decltype(
+    TemplateFunction<
+      std::tuple_element_t<0, TupleType>
+    >::value
+  );
+
+  return std::array<ReturnType, sizeof...(Inds)> {{
+    TemplateFunction<
+      std::tuple_element_t<Inds, TupleType>
+    >::value...
+  }};
+}
+
+template<
+  typename TupleType,
   template<typename ...> class TemplateFunction,
   size_t ... Inds
 > constexpr auto mapAllPairsHelper(
@@ -64,6 +82,17 @@ template<
   return detail::unpackHelper<Tuple, TemplateFunction>(
     std::make_index_sequence<
       std::tuple_size<Tuple>::value
+    >()
+  );
+}
+
+template<
+  typename TupleType,
+  template<typename> class TemplateFunction
+> constexpr auto map() {
+  return detail::mapHelper<TupleType, TemplateFunction>(
+    std::make_index_sequence<
+      std::tuple_size<TupleType>::value
     >()
   );
 }

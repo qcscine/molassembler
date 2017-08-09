@@ -2,6 +2,7 @@
 #define INCLUDE_CONSTEXPR_MAGIC_DYNAMIC_SET_H
 
 #include <array>
+#include <set>
 
 #include "Containers.h"
 #include "DynamicArray.h"
@@ -98,6 +99,35 @@ public:
 
   constexpr bool operator > (const DynamicSet& other) const {
     return other._items < _items;
+  }
+
+  std::set<T> toSTL() const {
+    std::set<T> returnSet;
+
+    for(const auto& element : *this) {
+      returnSet.insert(element);
+    }
+
+    return returnSet;
+  }
+
+  template<typename MapFunction> 
+  std::set<
+    traits::functionReturnType<MapFunction, T>
+  > mapToSTL(
+    MapFunction&& function
+  ) const {
+    std::set<
+      traits::functionReturnType<MapFunction, T>
+    > returnSet;
+
+    for(const auto& element : *this) {
+      returnSet.insert(
+        function(element)
+      );
+    }
+
+    return returnSet;
   }
 };
 
