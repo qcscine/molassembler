@@ -7,8 +7,12 @@
 
 namespace ConstexprMagic {
 
+namespace traits {
+
 template<class Function, typename ...Args>
 using functionReturnType = std::result_of_t<Function(Args...)>;
+
+} // namespace traits
 
 template<
   template<typename, size_t> class ArrayType,
@@ -22,7 +26,7 @@ template<
   std::index_sequence<Inds...>
 ) {
   return ArrayType<
-    functionReturnType<UnaryFunction, T>, 
+    traits::functionReturnType<UnaryFunction, T>, 
     size
   > {
     function(array.at(Inds))...
@@ -67,7 +71,7 @@ template<
   typename T,
   size_t size
 > constexpr T sum(const ArrayType<T, size>& array) {
-  T sum = 0;
+  T sum {0};
 
   for(unsigned i = 0; i < size; ++i) {
     sum += array.at(i);
@@ -320,46 +324,6 @@ template<
   return bound;
 }
 
-/*template<typename T, size_t size, size_t... BeforeIndices, size_t... AfterIndices>
-constexpr std::array<T, (size + 1)> arrayPopImpl(
-  const std::array<T, size>& array,
-  std::index_sequence<BeforeIndices...>,
-  std::index_sequence<AfterIndices...>
-) {
-  return {
-    array.at(BeforeIndices)...,
-    array.at(AfterIndices)...,
-  };
-}
-
-template<size_t shift, size_t... IndexSequence>
-constexpr auto shiftIndexSequence() {
-  return std::integer_sequence<
-    size_t,
-    (IndexSequence + shift)...
-  >();
-}
-
-
-template<size_t at, typename T, size_t size>
-constexpr std::array<T, (size - 1)> arrayPop(
-  const std::array<T, size>& array
-) {
-  static_assert(size != 0, "arrayPop target array is already empty");
-  static_assert(at < size, "arrayPop removal index not smaller than size of array");
-
-  return arrayPopImpl(
-    array,
-    std::make_index_sequence<at>{},
-    shiftIndexSequence<at>(
-      std::make_index_sequence<size - at>{}
-    )
-  );
-}
-
-constexpr auto testArr = std::array<unsigned, 3> {4, 5, 6};
-constexpr auto popped = arrayPop<1>(testArr);*/
-
 template<
   typename T,
   template<typename, size_t> class ArrayType,
@@ -461,41 +425,6 @@ template<
 
   return newArray;
 }
-
-template<
-  template<typename, size_t> class ArrayType,
-  typename T,
-  size_t size
-> constexpr auto unique(const ArrayType<T, size>& array) {
-  // TODO ??
-}
-
-class IndexOptional {
-  size_t _index = std::numeric_limits<size_t>::max();
-
-  constexpr explicit IndexOptional() = default;
-  constexpr explicit IndexOptional(size_t index) : _index(index) {}
-
-  constexpr bool has_value() const {
-    return _index != std::numeric_limits<size_t>::max();
-  }
-
-  constexpr operator bool () const {
-    return has_value();
-  }
-
-  constexpr size_t value_or(size_t alternative) const {
-    if(has_value()) {
-      return _index;
-    }
-
-    return alternative;
-  }
-
-  constexpr size_t value() const {
-    return _index;
-  }
-};
 
 template<
   template<typename, size_t> class ArrayType,
