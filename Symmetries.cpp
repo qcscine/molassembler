@@ -2,14 +2,19 @@
 
 namespace Symmetry {
 
-/* Since we need all data of the various Symmetry classes to be available not
- * just at compile time, as is default for static constexpr members, but also
- * at runtime, we need to add declarations for every symmetry class we added
- */
 namespace data {
 
 /* This looks quite heavily as if it violates DRY, but no idea how to refactor,
  * not even with preprocessor
+ *
+ * NOTE: Although clang-tidy marks everything in this namespace as redundant
+ * declarations, they are definitely NOT redundant. 
+ * - Removing the grouped declarations for each Symmetry below, which are all
+ *   constexpr, makes it impossible to use these values outside of a constexpr
+ *   context.  However, since symmetryData is generated from these classes at
+ *   run-time, they need to be available then.
+ * - For the stringName declarations, static const non-literal members require
+ *   out-of-class initializers, so they are non-redundant
  */
 
 constexpr decltype(Linear::name) Linear::name;
@@ -137,10 +142,24 @@ Eigen::Vector3d toEigen(const ConstexprMagic::Vector& cVector) {
 
 } // namespace data
 
-// Main data source of symmetries, derived from the various Symmetry data classes
-const std::map<Name, SymmetryInformation> symmetryData = ConstexprMagic::TupleType::unpackToFunction<
-  data::allSymmetryDataTypes,
-  data::symmetryInformationFunctor
->();
+/*! Main data source of symmetries, derived from the various Symmetry data
+ * classes. Use construct-on-first-use idiom to avoid static initialization
+ * disasters accessing this variable
+ *
+ * Subtleties:
+ * - By using an instance instead of a pointer-to-new, this is destructed
+ *   properly before exit and does not "leak"
+ * - This however introduces another possible issue if other static object
+ *   destructors use this variable, because once again, the order of static 
+ *   deinitialization is random.
+ */
+const std::map<Name, SymmetryInformation>& symmetryData() {
+  static const auto dataMap = ConstexprMagic::TupleType::unpackToFunction<
+    data::allSymmetryDataTypes,
+    data::symmetryInformationFunctor
+  >();
+
+  return dataMap;
+}
 
 } // namespace Symmetry

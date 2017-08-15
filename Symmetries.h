@@ -1296,19 +1296,19 @@ constexpr auto angleFunctions = ConstexprMagic::TupleType::unpackToFunction<
  * .cpp file from the tuple containing all symmetry data types and the 
  * symmetryInformationFunctor
  */
-extern const std::map<Name, SymmetryInformation> symmetryData;
+const std::map<Name, SymmetryInformation>& symmetryData();
 
 // Shortcut functions
 inline const std::string& name(const Name& name) {
-  return symmetryData.at(name).stringName;
+  return symmetryData().at(name).stringName;
 }
 
 inline const unsigned& size(const Name& name) {
-  return symmetryData.at(name).size;
+  return symmetryData().at(name).size;
 }
 
 inline const RotationsList& rotations(const Name& name) {
-  return symmetryData.at(name).rotations;
+  return symmetryData().at(name).rotations;
 }
 
 inline data::AngleFunctionPtr angleFunction(const Name& name) {
@@ -1325,7 +1325,7 @@ inline unsigned nameIndex(const Name& name) {
 }
 
 inline const TetrahedronList& tetrahedra(const Name& name) {
-  return symmetryData.at(name).tetrahedra;
+  return symmetryData().at(name).tetrahedra;
 }
 
 // Derived data

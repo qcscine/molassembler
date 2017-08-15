@@ -15,7 +15,7 @@ using namespace Symmetry;
 
 auto makeCoordinateGetter(const Name& name) {
   return [&](const unsigned& index) -> Eigen::Vector3d {
-    return symmetryData.at(name).coordinates.at(index);
+    return symmetryData().at(name).coordinates.at(index);
   };
 }
 
@@ -35,7 +35,18 @@ std::vector<unsigned> rotate(
 }
 
 BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
-  BOOST_TEST_REQUIRE(Symmetry::symmetryData.size() == Symmetry::nSymmetries);
+  BOOST_TEST_REQUIRE(Symmetry::symmetryData().size() == Symmetry::nSymmetries);
+
+  BOOST_REQUIRE(
+    TemplateMagic::all_of(
+      TemplateMagic::map(
+        Symmetry::allNames,
+        [&](const auto& symmetryName) -> bool {
+          return Symmetry::symmetryData().count(symmetryName) == 1;
+        }
+      )
+    )
+  );
 }
 
 BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
@@ -219,8 +230,8 @@ BOOST_AUTO_TEST_CASE( rightAmountOfCoordinates) {
   // every information must have the right amount of coordinates
   for(const auto& symmetryName: allNames) {
     BOOST_CHECK(
-      symmetryData.at(symmetryName).coordinates.size() == 
-      symmetryData.at(symmetryName).size
+      symmetryData().at(symmetryName).coordinates.size() == 
+      symmetryData().at(symmetryName).size
     );
   }
 }
@@ -229,7 +240,7 @@ BOOST_AUTO_TEST_CASE( allCoordinateVectorsLengthOne) {
   for(const auto& symmetryName: allNames) {
     bool all_pass = true;
 
-    for(const auto& coordinate: symmetryData.at(symmetryName).coordinates) {
+    for(const auto& coordinate: symmetryData().at(symmetryName).coordinates) {
       if(coordinate.norm() - 1 > 1e10) {
         all_pass = false;
         break;
@@ -248,7 +259,7 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
 
   for(const auto& symmetryName: allNames) {
     auto getCoordinates =  [&](const unsigned& index) -> Eigen::Vector3d {
-      return symmetryData.at(symmetryName).coordinates.at(index);
+      return symmetryData().at(symmetryName).coordinates.at(index);
     };
 
     bool all_pass = true;
@@ -292,7 +303,7 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
   for(const auto& symmetryName: allNames) {
     auto getCoordinates = [&](const boost::optional<unsigned>& indexOption) -> Eigen::Vector3d {
       if(indexOption) {
-        return symmetryData.at(symmetryName).coordinates.at(indexOption.value());
+        return symmetryData().at(symmetryName).coordinates.at(indexOption.value());
       } else {
         return {0, 0, 0};
       }
@@ -365,7 +376,7 @@ BOOST_AUTO_TEST_CASE(smallestAngleValue) {
   for(const auto& symmetryName : allNames) {
     std::cout << Symmetry::name(symmetryName) << "\n";
     std::cout << "ConstexprSymmetryInfo::CoordinatesType {{\n";
-    for(const auto& coordinate : symmetryData.at(symmetryName).coordinates) {
+    for(const auto& coordinate : symmetryData().at(symmetryName).coordinates) {
       std::cout << "  {" << coordinate[0]
         << ", " << coordinate[1]
         << ", " << coordinate[2]
@@ -393,7 +404,7 @@ struct LigandGainTest {
 
 template<class SymmetryClass>
 struct RotationGenerationTest {
-  static bool initialize() {
+  static bool value() {
 
     // This is a DynamicSet of SymmetryClass-sized Arrays
     auto constexprRotations = generateAllRotations<SymmetryClass>(
@@ -406,11 +417,6 @@ struct RotationGenerationTest {
       detail::iota<unsigned>(SymmetryClass::size)
     );
 
-    // Size mismatch
-    if(constexprRotations.size() != dynamicRotations.size()) {
-      return false;
-    }
-
     auto convertedRotations = constexprRotations.mapToSTL(
       [&](const auto& indexList) -> std::vector<unsigned> {
         return {
@@ -420,57 +426,72 @@ struct RotationGenerationTest {
       }
     );
 
-    return (
-      TemplateMagic::setIntersection(
-        convertedRotations,
-        dynamicRotations
-      ).size() == 0
-    );
+    if(convertedRotations.size() != constexprRotations.size()) {
+      std::cout << "In symmetry " << SymmetryClass::stringName << ", "
+        << "constexpr rotations set reports " << constexprRotations.size()
+        << " elements but the STL mapped variant has only " 
+        << convertedRotations.size() << " elements!" << std::endl;
+    }
 
-    // Detailed checking
-    /*TemplateMagic::all_of(
-      TemplateMagic::map(
-        constexprRotations,
-        [&](const auto& indexList) -> bool {
-          // Is indexList in dynamicRotations?
+    bool pass = true;
 
-          std::vector<unsigned> converted {
-            indexList.begin(),
-            indexList.end()
-          };
+    // Size mismatch
+    if(convertedRotations.size() != dynamicRotations.size()) {
+      pass = false;
+    } else {
+      pass = (
+        TemplateMagic::setDifference(
+          convertedRotations,
+          dynamicRotations
+        ).size() == 0
+      );
+    }
 
-          return (dynamicRotations.count(converted) == 1);
-        }
-      )
-    );
+    if(!pass) {
+      std::cout << "Rotation generation differs for "
+        << SymmetryClass::stringName 
+        << " symmetry: Sizes of generated sets are different. "
+        << "constexpr - " << convertedRotations.size() << " != "
+        << dynamicRotations.size() << " - dynamic" << std::endl;
+      std::cout << " Maximum #rotations: " << maxRotations<SymmetryClass>() 
+        << std::endl;
 
-    // Other way
-    TemplateMagic::all_of(
-      TemplateMagic::map(
-        dynamicRotations,
-        [&](const auto& indexList) -> bool {
-          ArrayType<unsigned, SymmetryClass::size> converted;
+      std::cout << " Converted constexpr:" << std::endl;
+      for(const auto& element : convertedRotations) {
+        std::cout << " {" << TemplateMagic::condenseIterable(element) 
+          << "}\n";
+      }
 
-          for(unsigned i = 0; i < SymmetryClass::size; ++i) {
-            converted.at(i) = indexList.at(i);
-          }
+      std::cout << " Dynamic:" << std::endl;
+      for(const auto& element : dynamicRotations) {
+        std::cout << " {" << TemplateMagic::condenseIterable(element) 
+          << "}\n";
+      }
+    } 
 
-          return (constexprRotations.contains(converted));
-        }
-      )
-    );
-
-    return true;*/
+    return pass;
   }
-
-  using type = bool;
-  static bool value;
+/* Previously, when the interface with which this is used (unpackToFunction) was
+ * unable to cope with both value data members and value function members 
+ * equally, this was of the form::
+ *
+ *   static bool initialize() {
+ *     ...
+ *     return value;
+ *   }
+ *   static bool value = initialize();
+ *
+ * Although this seems equivalent, it really isn't, since initialize() is called
+ * at static initialization time instead of at first use as when value is 
+ * a function. Since, in this case, the value function depends on another static
+ * value (generateAllRotations -> symmetryData), the value-initialize variant
+ * leads to a static initialization fiasco, where it is unclear whether the
+ * value data member or symmetryData is initialized first.
+ *
+ * Only in the case of static constexpr is the value-initialize variant 
+ * semantically equivalent to the data member variant.
+ */
 };
-
-template<class SymmetryClass> 
-bool RotationGenerationTest<SymmetryClass>::value 
-  = RotationGenerationTest<SymmetryClass>::initialize();
-
 
 BOOST_AUTO_TEST_CASE(constexprProperties) {
   // First the smaller cases

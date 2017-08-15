@@ -37,7 +37,7 @@ Eigen::Vector3d getCoordinates(
   );
 
   if(indexInSymmetryOption) {
-    return Symmetry::symmetryData.at(symmetryName).coordinates.at(
+    return Symmetry::symmetryData().at(symmetryName).coordinates.at(
       indexInSymmetryOption.value()
     );
   }
@@ -61,7 +61,7 @@ double getTetrahedronVolume(
 double calculateAngleDistortion(
   const Symmetry::Name& from,
   const Symmetry::Name& to,
-  const std::vector<unsigned> indexMapping
+  const std::vector<unsigned>& indexMapping
 ) {
   assert(indexMapping.size() == Symmetry::size(to));
 
@@ -97,7 +97,7 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
 double calculateChiralDistortion(
   const Symmetry::Name& from,
   const Symmetry::Name& to,
-  const std::vector<unsigned> indexMapping
+  const std::vector<unsigned>& indexMapping
 ) {
   assert(indexMapping.size() == Symmetry::size(to));
 
@@ -149,7 +149,6 @@ std::set<
 
   std::vector<unsigned> chain = {0};
   std::vector<IndicesList> chainStructures = {indices};
-  unsigned depth = 0;
 
   // begin loop
   while(chain.front() < linkLimit) {
@@ -169,26 +168,17 @@ std::set<
       // add it to the chain
       chainStructures.push_back(generated);
       chain.emplace_back(0);
-
-      // increase depth, add a link
-      depth++;
     } else {
-      // if we are not at the maximum instruction
-      if(chain.at(depth) < linkLimit - 1) {
-        chain.at(depth)++;
-      } else {
-        // collapse the chain until we are at an incrementable position
-        while(
-          depth > 0
-          && chain.at(depth) == linkLimit - 1
-        ) {
-          chain.pop_back();
-          chainStructures.pop_back();
-          depth--;
-        }
-
-        chain.at(depth)++;
+      // collapse the chain until we are at an incrementable position (if need be)
+      while(
+        chain.size() > 1
+        && chain.back() == linkLimit - 1
+      ) {
+        chain.pop_back();
+        chainStructures.pop_back();
       }
+
+      ++chain.back();
     }
   }
 

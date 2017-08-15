@@ -311,22 +311,26 @@ using RotationsSetType = ConstexprMagic::DynamicSet<
 template<typename SymmetryClass>
 using ChainStructuresArrayType = ConstexprMagic::DynamicArray<
   IndicesList<SymmetryClass>,
-  SymmetryClass::rotations.size() * 3
+  maxRotations<SymmetryClass>() * 2
 >;
 
 template<typename SymmetryClass>
 using ChainArrayType = ConstexprMagic::DynamicArray<
   unsigned,
-  SymmetryClass::rotations.size() * 3
+  maxRotations<SymmetryClass>() * 2
 >;
 
-
 template<typename SymmetryClass>
-constexpr void generateAllRotationsImpl(
-  RotationsSetType<SymmetryClass>& rotations,
-  ChainStructuresArrayType<SymmetryClass>& chainStructures,
-  ChainArrayType<SymmetryClass>& chain
-) {
+constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
+  RotationsSetType<SymmetryClass> rotations;
+  rotations.insert(indices);
+
+  ChainStructuresArrayType<SymmetryClass> chainStructures;
+  chainStructures.push_back(indices);
+
+  ChainArrayType<SymmetryClass> chain {0u};
+
+  // The very last rotation isn't found for PentagonalPyramidal for some reason
   while(
     chain.front() < SymmetryClass::rotations.size() 
     && rotations.size() < maxRotations<SymmetryClass>()
@@ -344,7 +348,7 @@ constexpr void generateAllRotationsImpl(
     } else {
       // collapse the chain until we are at an incrementable position (if need be)
       while(
-        chain.size() > 0 
+        chain.size() > 1 
         && chain.back() == SymmetryClass::rotations.size() - 1
       ) {
         chain.pop_back();
@@ -355,24 +359,6 @@ constexpr void generateAllRotationsImpl(
       ++chain.back();
     }
   }
-
-}
-
-template<typename SymmetryClass>
-constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
-  RotationsSetType<SymmetryClass> rotations;
-  rotations.insert(indices);
-
-  ChainStructuresArrayType<SymmetryClass> chainStructures;
-  chainStructures.push_back(indices);
-
-  ChainArrayType<SymmetryClass> chain {0u};
-
-  generateAllRotationsImpl<SymmetryClass>(
-    rotations,
-    chainStructures,
-    chain
-  );
 
   return rotations;
 }

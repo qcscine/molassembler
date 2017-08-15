@@ -31,7 +31,7 @@ double getTetrahedronVolume(
 double calculateAngleDistortion(
   const Symmetry::Name& from,
   const Symmetry::Name& to,
-  const std::vector<unsigned> indexMapping
+  const std::vector<unsigned>& indexMapping
 );
 
 boost::optional<unsigned> propagateIndexOptionalThroughMapping(
@@ -43,7 +43,7 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
 double calculateChiralDistortion(
   const Symmetry::Name& from,
   const Symmetry::Name& to,
-  const std::vector<unsigned> indexMapping
+  const std::vector<unsigned>& indexMapping
 );
 
 
