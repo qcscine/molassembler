@@ -96,7 +96,7 @@ public:
 
   constexpr bool operator == (const Array& other) const {
     for(unsigned i = 0; i < nItems; ++i) {
-      if(_items[i] != other[i]) {
+      if(_items[i] != other._items[i]) {
         return false;
       }
     }
@@ -110,8 +110,10 @@ public:
 
   constexpr bool operator < (const Array& other) const {
     for(unsigned i = 0; i < nItems; ++i) {
-      if(_items[i] < other[i]) {
+      if(_items[i] < other._items[i]) {
         return true;
+      } else if(_items[i] > other._items[i]) {
+        return false;
       }
     }
 
@@ -119,7 +121,7 @@ public:
   }
 
   constexpr bool operator > (const Array& other) const {
-    return other < *this;
+    return (other < *this);
   }
 
   // Begin and end iterators

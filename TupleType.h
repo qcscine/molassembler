@@ -9,6 +9,21 @@ namespace TupleType {
 
 namespace detail {
 
+enum class enabler_t {};
+
+template<bool value>
+using EnableIf = typename std::enable_if<value, enabler_t>::type;
+
+template<typename T, EnableIf<std::is_function<decltype(T::value)>::value>...>
+constexpr auto handleValueVariants() {
+  return T::value();
+}
+
+template<typename T, EnableIf<!std::is_function<decltype(T::value)>::value>...>
+constexpr auto handleValueVariants() {
+  return T::value;
+}
+
 template<
   typename Tuple,
   template<typename ...> class TemplateFunction,
@@ -18,9 +33,11 @@ template<
    * types of the tuple, and return the evaluated template function instantiated
    * with all those types
    */
-  return TemplateFunction<
-    std::tuple_element_t<I, Tuple>...
-  >::value;
+  return handleValueVariants<
+    TemplateFunction<
+      std::tuple_element_t<I, Tuple>...
+    >
+  >();
 }
 
 template<
@@ -28,16 +45,21 @@ template<
   template<typename> class TemplateFunction,
   std::size_t... Inds
 > constexpr auto mapHelper(std::index_sequence<Inds...>) {
+
   using ReturnType = decltype(
-    TemplateFunction<
-      std::tuple_element_t<0, TupleType>
-    >::value
+    handleValueVariants<
+      TemplateFunction<
+        std::tuple_element_t<0, TupleType>
+      >
+    >()
   );
 
   return std::array<ReturnType, sizeof...(Inds)> {{
-    TemplateFunction<
-      std::tuple_element_t<Inds, TupleType>
-    >::value...
+    handleValueVariants<
+      TemplateFunction<
+        std::tuple_element_t<Inds, TupleType>
+      >
+    >()...
   }};
 }
 
@@ -58,11 +80,22 @@ template<
     UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<N>(Inds)...
   }};
 
-  constexpr auto results = std::array<unsigned, C> {{
-    TemplateFunction<
-      std::tuple_element_t<indexPairs.at(Inds).first, TupleType>,
-      std::tuple_element_t<indexPairs.at(Inds).second, TupleType>
-    >::value...
+  using ReturnType = decltype(
+    handleValueVariants<
+      TemplateFunction<
+        std::tuple_element_t<0, TupleType>,
+        std::tuple_element_t<1, TupleType>
+      >
+    >()
+  );
+
+  constexpr auto results = std::array<ReturnType, C> {{
+    handleValueVariants<
+      TemplateFunction<
+        std::tuple_element_t<indexPairs.at(Inds).first, TupleType>,
+        std::tuple_element_t<indexPairs.at(Inds).second, TupleType>
+      >
+    >()...
   }};
 
   return results;

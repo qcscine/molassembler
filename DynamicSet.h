@@ -25,6 +25,8 @@ private:
 
 public:
   constexpr DynamicSet() {}
+
+  //! Warning: These constructors expect ordered arrays!
   constexpr DynamicSet(const ArrayType& items) : _items(items) {}
   constexpr DynamicSet(ArrayType&& items) : _items(items) {}
 
@@ -64,6 +66,7 @@ public:
         T intermediate = std::move(*newItemIt);
         *newItemIt = std::move(*prevIter);
         *prevIter = std::move(intermediate);
+
         --newItemIt;
       } else {
         break;
@@ -122,9 +125,11 @@ public:
     > returnSet;
 
     for(const auto& element : *this) {
-      returnSet.insert(
+      auto insertResultPair = returnSet.insert(
         function(element)
       );
+
+      //assert(insertResultPair.second);
     }
 
     return returnSet;

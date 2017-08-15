@@ -11,6 +11,8 @@
 #include "Set.h"
 #include "DynamicArray.h"
 #include "DynamicSet.h"
+#include "TupleType.h"
+#include "LogicalOperatorTests.h"
 
 #include <iostream>
 #include <iomanip>
@@ -370,11 +372,25 @@ constexpr bool isSorted(const ConstexprMagic::DynamicSet<T, size, Comparator>& s
 BOOST_AUTO_TEST_CASE(dynamicSet) {
   ConstexprMagic::DynamicSet<unsigned, 10> set;
 
+  BOOST_CHECK(set.size() == 0);
+  BOOST_CHECK(
+    std::distance(
+      set.begin(),
+      set.end()
+    ) == 0u
+  );
+
   for(const auto& item : {9u, 3u, 5u}) {
     set.insert(item);
   }
 
   BOOST_CHECK(set.size() == 3);
+  BOOST_CHECK(
+    std::distance(
+      set.begin(),
+      set.end()
+    ) == 3u
+  );
   BOOST_CHECK(set.contains(3) && set.contains(5) && set.contains(9));
   for(const auto& item : {2u, 4u, 8u, 10u}) {
     BOOST_CHECK_MESSAGE(
@@ -385,4 +401,296 @@ BOOST_AUTO_TEST_CASE(dynamicSet) {
     );
   }
   BOOST_CHECK(isSorted(set));
+
+  ConstexprMagic::DynamicSet<unsigned, 10> setInitList {
+    ConstexprMagic::DynamicArray<unsigned, 10> {
+      4u, 9u, 13u
+    }
+  };
+
+  BOOST_CHECK(setInitList.size() == 3);
+  BOOST_CHECK(
+    std::distance(
+      setInitList.begin(),
+      setInitList.end()
+    ) == 3u
+  );
+
+  setInitList.insert(0u);
+
+  BOOST_CHECK(setInitList.size() == 4);
+
+  BOOST_CHECK_MESSAGE(
+    setInitList.contains(4)
+    && setInitList.contains(9)
+    && setInitList.contains(13)
+    && setInitList.contains(0)
+    && !setInitList.contains(1)
+    && !setInitList.contains(25),
+    "setInitList {"
+      << TemplateMagic::condenseIterable(setInitList)
+      << "} does not conform to expectations concerning contains:\n"
+      << std::boolalpha
+      << "contains 4, expect true:" << setInitList.contains(4)
+      << "\ncontains 9, expect true:" << setInitList.contains(9)
+      << "\ncontains 13, expect true:" << setInitList.contains(13)
+      << "\ncontains 0, expect true:" << setInitList.contains(0)
+      << "\ncontains 1, expect false:" << setInitList.contains(1)
+      << "\ncontains 25, expect false:" << setInitList.contains(25)
+  );
+  // Set of arrays
+  ConstexprMagic::Array<
+    ConstexprMagic::Array<unsigned, 4>,
+    5
+  > sampleArrays {
+    ConstexprMagic::Array<unsigned, 4> {1u, 2u, 3u, 4u},
+    ConstexprMagic::Array<unsigned, 4> {1u, 2u, 4u, 3u},
+    ConstexprMagic::Array<unsigned, 4> {1u, 4u, 3u, 2u},
+    ConstexprMagic::Array<unsigned, 4> {1u, 4u, 2u, 3u},
+    ConstexprMagic::Array<unsigned, 4> {2u, 1u, 3u, 4u}
+  };
+
+  ConstexprMagic::DynamicSet<
+    ConstexprMagic::Array<unsigned, 4>,
+    10
+  > arraysSet;
+
+  arraysSet.insert(sampleArrays.at(0));
+  arraysSet.insert(sampleArrays.at(2));
+  arraysSet.insert(sampleArrays.at(3));
+
+  BOOST_CHECK(arraysSet.contains(sampleArrays.at(0)));
+  BOOST_CHECK(arraysSet.contains(sampleArrays.at(2)));
+  BOOST_CHECK(arraysSet.contains(sampleArrays.at(3)));
+  BOOST_CHECK(!arraysSet.contains(sampleArrays.at(1)));
+  BOOST_CHECK(!arraysSet.contains(sampleArrays.at(4)));
+
+  BOOST_CHECK(arraysSet.size() == 3);
+  BOOST_CHECK(
+    std::distance(
+      arraysSet.begin(), 
+      arraysSet.end()
+    ) == 3
+  );
 }
+
+template<typename T, size_t size>
+bool validate(const ConstexprMagic::DynamicSet<T, size>& set) {
+  // Is the set ordered?
+  auto leftIter = set.begin();
+  auto rightIter = leftIter; ++rightIter; 
+  auto bound = set.end(); --bound;
+
+  if(leftIter == set.end() || rightIter == set.end()) {
+    return true;
+  }
+
+  while(rightIter != bound) {
+    if(*leftIter >= *rightIter) {
+      std::cout << "*left >= *right -> " << *leftIter << " >= " << *rightIter << std::endl;
+      return false;
+    }
+
+    ++leftIter;
+    ++rightIter;
+  }
+
+  // Is the reported size equal to a begin-end through-iteration?
+  return (
+    set.size() == std::distance(
+      set.begin(),
+      set.end()
+    )
+  );
+}
+
+BOOST_AUTO_TEST_CASE(arrayOperators) {
+  ConstexprMagic::Array<unsigned, 4> a {4, 2, 3, 1};
+  ConstexprMagic::Array<unsigned, 4> b {4, 3, 2, 1};
+  
+  BOOST_CHECK(ConstexprMagic::testLogicalOperators(a, b));
+  BOOST_CHECK(ConstexprMagic::testLogicalOperators(a, a));
+
+  ConstexprMagic::dynamic::explainLogicalOperatorFailures(a, b);
+}
+
+BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
+  for(unsigned N = 0; N < 100; ++N) {
+    ConstexprMagic::DynamicSet<unsigned, 100> subject;
+
+    std::vector<unsigned> numbers;
+    numbers.resize(50);
+    std::iota(
+      numbers.begin(),
+      numbers.end(),
+      0
+    );
+    std::shuffle(
+      numbers.begin(),
+      numbers.end(),
+      TemplateMagic::random.randomEngine
+    );
+
+    for(const auto& number : numbers) {
+      subject.insert(number);
+
+      bool isValid = validate(subject);
+      if(!isValid) {
+        std::cout << "After inserting " << number 
+          << ", set is left in invalid state. Set: {"
+          << TemplateMagic::condenseIterable(subject) << "}\ninsert sequence {"
+          << TemplateMagic::condenseIterable(numbers) << "}."
+          << std::endl;
+      }
+
+      BOOST_REQUIRE(isValid);
+
+      BOOST_CHECK(subject.contains(number));
+    }
+  }
+}
+
+// TODO
+// Maybe check logical operator consistency of DynamicArray?
+// Or run the fuzz on a set of fixed-size arrays? Does fixed-size array have them?
+
+namespace TupleTypeTests {
+
+struct Apple {
+  static constexpr unsigned number = 4;
+};
+
+struct Banana {
+  static constexpr unsigned number = 3;
+};
+
+struct Cherry {
+  static constexpr unsigned number = 50;
+};
+
+using Fruit = std::tuple<Apple, Banana, Cherry>;
+
+template<typename ... FruitClasses>
+struct sumNumbersValue {
+  static constexpr unsigned initializer() {
+    const std::array<unsigned, sizeof...(FruitClasses)> sizes = {{
+      FruitClasses::number...
+    }};
+
+    unsigned sum = 0;
+
+    for(unsigned i = 0; i < sizes.size(); ++i) {
+      sum += sizes[i];
+    }
+
+    return sum;
+  };
+
+  static constexpr unsigned value = initializer();
+};
+
+template<typename ... FruitClasses>
+struct sumNumbersFunctor {
+  static constexpr unsigned value() {
+    const std::array<unsigned, sizeof...(FruitClasses)> sizes = {{
+      FruitClasses::number...
+    }};
+
+    unsigned sum = 0;
+
+    for(unsigned i = 0; i < sizes.size(); ++i) {
+      sum += sizes[i];
+    }
+
+    return sum;
+  };
+};
+
+template<typename FruitClass>
+struct getNumberFunctor {
+  static constexpr unsigned value() {
+    return FruitClass::number;
+  }
+};
+
+template<typename FruitClass>
+struct getNumberValue {
+  static constexpr unsigned initialize() {
+    return FruitClass::number;
+  }
+
+  static constexpr unsigned value = initialize();
+};
+
+template<typename FruitClass>
+constexpr unsigned getNumberFunction() {
+  return FruitClass::number;
+}
+
+template<typename A, typename B>
+struct pairSumFunctor {
+  static constexpr unsigned value() {
+    return A::number + B::number;
+  }
+};
+
+template<typename A, typename B>
+struct pairSumValue {
+  static constexpr unsigned initialize() {
+    return A::number + B::number;
+  }
+
+  static constexpr unsigned value = initialize();
+};
+
+static_assert(
+  ConstexprMagic::TupleType::unpackToFunction<Fruit, sumNumbersValue>() == 57,
+  "Unpacking fruit tuple to valueValue does not yield expected result"
+);
+
+static_assert(
+  ConstexprMagic::TupleType::unpackToFunction<Fruit, sumNumbersFunctor>() == 57,
+  "Unpacking fruit tuple to valueFunctor does not yield expected result"
+);
+
+static_assert(
+  ConstexprMagic::arraysEqual(
+    ConstexprMagic::TupleType::map<Fruit, getNumberValue>(),
+    std::array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number }}
+  ),
+  "Mapping with getNumberValue does not yield expected result!"
+);
+
+static_assert(
+  ConstexprMagic::arraysEqual(
+    ConstexprMagic::TupleType::map<Fruit, getNumberFunctor>(),
+    std::array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number }}
+  ),
+  "Mapping with getNumberFunctor does not yield expected result!"
+);
+
+static_assert(
+  ConstexprMagic::arraysEqual(
+    ConstexprMagic::TupleType::mapAllPairs<Fruit, pairSumValue>(),
+    std::array<unsigned, 3> {{
+      Apple::number + Banana::number,
+      Apple::number + Cherry::number,
+      Banana::number + Cherry::number
+    }}
+  ),
+  "Mapping pairs with pairSumValue does not yield expected result!"
+);
+
+static_assert(
+  ConstexprMagic::arraysEqual(
+    ConstexprMagic::TupleType::mapAllPairs<Fruit, pairSumFunctor>(),
+    std::array<unsigned, 3> {{
+      Apple::number + Banana::number,
+      Apple::number + Cherry::number,
+      Banana::number + Cherry::number
+    }}
+  ),
+  "Mapping pairs with pairSumFunctor does not yield expected result!"
+);
+
+} // namespace TupleTypeTests

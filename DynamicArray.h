@@ -188,8 +188,10 @@ public:
     }
 
     for(unsigned i = 0; i < _count; ++i) {
-      if(_items[i] < other[i]) {
+      if(_items[i] < other._items[i]) {
         return true;
+      } else if(_items[i] > other._items[i]) {
+        return false;
       }
     }
 
