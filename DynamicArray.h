@@ -96,6 +96,8 @@ public:
     if(_count < nItems) {
       _items[_count] = item;
       _count += 1;
+    } else {
+      throw "Dynamic array is already full!";
     }
   }
 

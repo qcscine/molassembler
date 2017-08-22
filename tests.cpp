@@ -550,9 +550,20 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
   }
 }
 
-// TODO
-// Maybe check logical operator consistency of DynamicArray?
-// Or run the fuzz on a set of fixed-size arrays? Does fixed-size array have them?
+BOOST_AUTO_TEST_CASE(specificTest) {
+  ConstexprMagic::DynamicSet<
+    ConstexprMagic::Array<unsigned, 6>,
+    5
+  > set {
+    ConstexprMagic::Array<unsigned, 6> {0, 1, 2, 3, 4, 5}
+  };
+
+  BOOST_CHECK(
+    !set.contains(
+      ConstexprMagic::Array<unsigned, 6> {1, 2, 3, 4, 0, 5}
+    )
+  );
+}
 
 namespace TupleTypeTests {
 

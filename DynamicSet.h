@@ -129,7 +129,7 @@ public:
         function(element)
       );
 
-      //assert(insertResultPair.second);
+      assert(insertResultPair.second);
     }
 
     return returnSet;

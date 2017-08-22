@@ -89,7 +89,7 @@ template<
     >()
   );
 
-  constexpr auto results = std::array<ReturnType, C> {{
+  auto results = std::array<ReturnType, C> {{
     handleValueVariants<
       TemplateFunction<
         std::tuple_element_t<indexPairs.at(Inds).first, TupleType>,
