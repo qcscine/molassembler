@@ -421,7 +421,7 @@ constexpr auto ligandGainMappings() {
        *   clear all and add
        * - If angular distortion and chiral distortion are equal, just add
        *
-       * The boolean cases below are, AFAICT, the least amount of comparisons.
+       * The boolean cases below are, AFAICT, the fewest comparisons.
        * Feel free to see if you can find some way with fewer.
        */
 

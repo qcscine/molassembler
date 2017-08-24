@@ -387,19 +387,48 @@ BOOST_AUTO_TEST_CASE(smallestAngleValue) {
 }*/
 
 template<class SymmetryClassFrom, class SymmetryClassTo>
-struct LigandGainTest {
-  static constexpr bool initialize() {
-    constexpr auto constexprReturn = ligandGainMappings<
-      SymmetryClassFrom,
-      SymmetryClassTo
-    >();
+std::enable_if_t<
+  SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
+  bool
+> doLigandGainTestIfAdjacent() {
+  /* Struct:
+   * .mappings - dynamic array of fixed-size index mappings
+   * .angleDistortion, .chiralDistortion - doubles
+   */
+  auto constexprMappings = ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
 
+  /* Vector of structs:
+   * .indexMapping - vector containing the index mapping
+   * .totalDistortion, .chiralDistortion - doubles
+   */
+  auto dynamicMappings = properties::ligandGainDistortions(
+    SymmetryClassFrom::name,
+    SymmetryClassTo::name
+  );
 
-
-    return true;
+  if(
+    dynamicMappings.angleDistortion != constexprMappings.angleDistortion
+    || dynamicMappings.chiralDistortion != constexprMappings.chiralDistortion
+  ) {
+    return false;
   }
 
-  static constexpr bool value = initialize();
+  return true;
+}
+
+template<class SymmetryClassFrom, class SymmetryClassTo>
+std::enable_if_t<
+  SymmetryClassFrom::size + 1 != SymmetryClassTo::size,
+  bool
+> doLigandGainTestIfAdjacent() {
+  return true;
+}
+
+template<class SymmetryClassFrom, class SymmetryClassTo>
+struct LigandGainTest {
+  static bool value() {
+    return doLigandGainTestIfAdjacent<SymmetryClassFrom, SymmetryClassTo>();
+  }
 };
 
 template<class SymmetryClass>
@@ -493,8 +522,119 @@ struct RotationGenerationTest {
  */
 };
 
+template<typename SymmetryClassFrom, typename SymmetryClassTo>
+struct LigandGainCorrectness {
+  static bool value() {
+    /* Struct:
+     * .mappings - dynamic array of fixed-size index mappings
+     * .angleDistortion, .chiralDistortion - doubles
+     */
+    auto constexprMappings = ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
+
+    /* Vector of structs:
+     * .indexMapping - vector containing the index mapping
+     * .totalDistortion, .chiralDistortion - doubles
+     */
+    auto dynamicMappings = ligandGainDistortions(
+      SymmetryClassFrom::name,
+      SymmetryClassTo::name
+    );
+
+    // Shortcut return
+    if(
+      constexprMappings.angleDistortion != dynamicMappings.angleDistortion
+      || constexprMappings.chiralDistortion != dynamicMappings.chiralDistortion
+    ) {
+      return false;
+    }
+
+    // Check the indexMapping sets
+    auto convertedMappings = constexprMappings.indexMappings.mapToSTL(
+      [&](const auto& indexList) -> std::vector<unsigned> {
+        return {
+          indexList.begin(),
+          indexList.end()
+        };
+      }
+    );
+
+    return TemplateMagic::setDifference(
+      convertedMappings,
+      dynamicMappings.indexMappings
+    ).size() == 0;
+  }
+};
+
+std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
+  auto stringName = Symmetry::name(symmetryName);
+
+  stringName.erase(
+    std::remove_if(
+      stringName.begin(),
+      stringName.end(),
+      [](const char& singleChar) -> bool {
+        return (
+          singleChar == ' ' 
+          || singleChar == '-'
+        );
+      }
+    ),
+    stringName.end()
+  );
+  return stringName;
+}
+
+template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+std::enable_if_t<
+  SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
+  void
+> doWriteIfAdjacent() {
+  auto constexprMapping = ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
+
+  unsigned multiplicity = constexprMapping.mappings.size();
+
+  std::cout << "  " << getGraphvizNodeName(SymmetryClassFrom::name)
+    << " -> " << getGraphvizNodeName(SymmetryClassTo::name)
+    << " [";
+
+  if(multiplicity <= 3) {
+    std::vector<std::string> repeatColor (
+      multiplicity,
+      "black"
+    );
+
+    std::cout << "color=\"" << TemplateMagic::condenseIterable(repeatColor, ":invis:") << "\"";
+  } else {
+    std::cout << "color=\"" << "black" << "\"";
+    std::cout << ", style=\"dashed\"";
+  }
+
+  std::cout << ", label=\"" 
+    << ConstexprMagic::Math::round(constexprMapping.angleDistortion, 2);
+
+  if(multiplicity > 3) {
+    std::cout << " (" << multiplicity << ")";
+  }
+
+  std::cout << "\"];\n";
+}
+
+template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+std::enable_if_t<
+  SymmetryClassFrom::size + 1 != SymmetryClassTo::size,
+  void
+> doWriteIfAdjacent() {}
+
+template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+struct WriteLigandMapping {
+  static bool value() {
+    doWriteIfAdjacent<SymmetryClassFrom, SymmetryClassTo>();
+    return true;
+  }
+};
+
 BOOST_AUTO_TEST_CASE(constexprProperties) {
-  // First the smaller cases
+  // Full test of rotation algorithm equivalency for all symmetries
   BOOST_CHECK_MESSAGE(
     TemplateMagic::all_of(
       ConstexprMagic::TupleType::map<
@@ -505,7 +645,41 @@ BOOST_AUTO_TEST_CASE(constexprProperties) {
     "There is a discrepancy between constexpr and dynamic rotation generation"
   );
 
-  constexpr auto mappings = ligandGainMappings<data::SquarePlanar, data::SquarePyramidal>();
+  /* The line below leads to absurdly high memory use in g++, up to 16 GB. I
+   * cannot compile the underlying calculation of ideal index mappings in
+   * transitions between symmetries for any larger symmetries: This is 5->6, 
+   * any size 6->7 transition compilations crash after exhausting 16GB RAM and
+   * 16GB swap.
+   *
+   * Affected versions:
+   * - gcc 6.3.0
+   * - gcc 7.1.0
+   *
+   *
+   * Clang 4.0.0 compiles all transitions just fine with < 500 MB RAM use.
+   */
+  // WriteLigandMapping<data::SquarePyramidal, data::Octahedral>::value();
+
+  // Write out all mappings
+  ConstexprMagic::TupleType::mapAllPairs<
+    Symmetry::data::allSymmetryDataTypes,
+    WriteLigandMapping
+  >();
+
+  // Test transitions generation/evaluation algorithm equivalency for all
+  BOOST_CHECK_MESSAGE(
+    TemplateMagic::all_of(
+      ConstexprMagic::TupleType::mapAllPairs<
+        Symmetry::data::allSymmetryDataTypes,
+        LigandGainTest
+      >()
+    ),
+    "There is a discrepancy between constexpr and dynamic ligand gain mapping"
+    << " generation!"
+  );
+
+
+  /*constexpr auto mappings = ligandGainMappings<data::SquarePlanar, data::SquarePyramidal>();
   std::cout << "Linear to TShaped mappings: angular = " 
     << mappings.angleDistortion
     << ", chiral = " << mappings.chiralDistortion
@@ -514,5 +688,5 @@ BOOST_AUTO_TEST_CASE(constexprProperties) {
 
   for(const auto& indexMapping : mappings.mappings) {
     std::cout << TemplateMagic::condenseIterable(indexMapping) << std::endl;
-  }
+  }*/
 }

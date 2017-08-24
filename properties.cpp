@@ -163,7 +163,7 @@ void writeLigandGainPathwaysDotfile(
 
     std::map<
       Symmetry::Name,
-      std::vector<DistortionInfo>
+      Symmetry::properties::LigandGainReturnType
     > distortionsMap;
 
     for(const auto& oneLargerSymmetry : Symmetry::allNames) {
@@ -176,19 +176,11 @@ void writeLigandGainPathwaysDotfile(
     }
 
     if(distortionsMap.size() > 0) {
-
       double maxDistortion = TemplateMagic::max(
         TemplateMagic::mapValues(
           distortionsMap,
-          [](const auto& distortionsList) -> double {
-            return TemplateMagic::min(
-              TemplateMagic::map( // get distortion member of each DistortionInfo
-                distortionsList,
-                [](const auto& distortion) -> double {
-                  return distortion.totalDistortion;
-                }
-              )
-            );
+          [](const auto& ligandGainReturnStruct) -> double {
+            return ligandGainReturnStruct.angleDistortion;
           }
         )
       );
@@ -202,67 +194,21 @@ void writeLigandGainPathwaysDotfile(
 
       for(const auto& symmetryDistortionsPair : distortionsMap) {
         const auto& targetSymmetry = symmetryDistortionsPair.first;
-        const auto& distortionsList = symmetryDistortionsPair.second;
+        const auto& mappingData = symmetryDistortionsPair.second;
 
-        // Find distortions of lowest total distortion
-        double lowestDistortion = 100;
-
-        for(const auto& distortion : distortionsList) {
-          if(distortion.totalDistortion < lowestDistortion) {
-            lowestDistortion = distortion.totalDistortion;
-          } 
-        }
-
-        std::vector<DistortionInfo> lowestDistortions = TemplateMagic::copyIf(
-          distortionsList,
-          [&](const auto& distortionObject) -> bool {
-            return distortionObject.totalDistortion == lowestDistortion;
-          }
-        );
-
-        // Throw out all but those with the lowest chiral distortion
-        double lowestChiralDistortion = 100;
-        for(const auto& distortion : lowestDistortions) {
-          if(distortion.chiralDistortion < lowestChiralDistortion) {
-            lowestChiralDistortion = distortion.chiralDistortion;
-          }
-        }
-
-        assert(!lowestDistortions.empty());
-
-        assert( // Make sure we're not deleting everything
-          !TemplateMagic::all_of(
-            TemplateMagic::map(
-              lowestDistortions,
-              [&](const auto& distortion) -> bool {
-                return(
-                  distortion.chiralDistortion > lowestChiralDistortion
-                );
-              }
-            )
-          )
-        );
-
-        TemplateMagic::inplaceRemoveIf(
-          lowestDistortions,
-          [&](const auto& distortion) -> bool {
-            return distortion.chiralDistortion > lowestChiralDistortion;
-          }
-        );
-        
-        assert(!lowestDistortions.empty());
-
-        const unsigned multiplicity = lowestDistortions.size();
+        const unsigned multiplicity = mappingData.indexMappings.size();
 
         // In case you want transitions explained
         if(explainTransitions) {
-          std::cout << "Transitions of distortion " << lowestDistortion << " from "
+          std::cout << "Transitions of distortion " 
+            << mappingData.angleDistortion << " from "
             << Symmetry::name(symmetryName)
             << " to " << Symmetry::name(targetSymmetry) << ":\n";
 
-          for(const auto& distortion : lowestDistortions) {
-            std::cout << "mapping vector {" << TemplateMagic::condenseIterable(distortion.indexMapping) 
-              << "}, chiral : " << distortion.chiralDistortion << std::endl;
+          for(const auto& mapping : mappingData.indexMappings) {
+            std::cout << "mapping {" 
+              << TemplateMagic::condenseIterable(mapping) 
+              << "}" << std::endl;
           }
         }
 
@@ -281,16 +227,18 @@ void writeLigandGainPathwaysDotfile(
           if(multiplicity <= 3) {
             std::vector<std::string> repeatColor (
               multiplicity,
-              gradient.getHexString(lowestDistortion)
+              gradient.getHexString(mappingData.angleDistortion)
             );
 
             dotFile << "color=\"" << TemplateMagic::condenseIterable(repeatColor, ":invis:") << "\"";
           } else {
-            dotFile << "color=\"" << gradient.getHexString(lowestDistortion) << "\"";
+            dotFile << "color=\"" 
+              << gradient.getHexString(mappingData.angleDistortion) << "\"";
             dotFile << ", style=\"dashed\"";
           }
 
-          dotFile << ", label=\"" << ConstexprMagic::Math::round(lowestDistortion, 2);
+          dotFile << ", label=\"" 
+            << ConstexprMagic::Math::round(mappingData.angleDistortion, 2);
 
 
           if(multiplicity > 3) {

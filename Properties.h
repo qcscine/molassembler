@@ -68,7 +68,37 @@ struct DistortionInfo {
   );
 };
 
-std::vector<DistortionInfo> ligandGainDistortions(
+struct LigandGainReturnType {
+  std::vector<
+    std::vector<unsigned>
+  > indexMappings;
+  double angleDistortion, chiralDistortion;
+
+  LigandGainReturnType(
+    const std::vector<
+      std::vector<unsigned>
+    >& passIndexMappings,
+    const double& passAngleDistortion,
+    const double& passChiralDistortion
+  );
+
+  LigandGainReturnType() {}
+  LigandGainReturnType(LigandGainReturnType&& other) 
+    : indexMappings(std::move(other.indexMappings)),
+      angleDistortion(other.angleDistortion),
+      chiralDistortion(other.chiralDistortion)
+  {}
+
+  LigandGainReturnType& operator = (const LigandGainReturnType& other) {
+    indexMappings = other.indexMappings;
+    angleDistortion = other.angleDistortion;
+    chiralDistortion = other.chiralDistortion;
+
+    return *this;
+  }
+};
+
+LigandGainReturnType ligandGainDistortions(
   const Symmetry::Name& symmetryFrom,
   const Symmetry::Name& symmetryTo
 );

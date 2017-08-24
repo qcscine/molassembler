@@ -2,6 +2,10 @@
 
 #include <Eigen/Dense>
 
+#include "template_magic/Numeric.h"
+#include "template_magic/VectorView.h"
+#include "template_magic/MemberFetcher.h"
+
 namespace Symmetry {
 
 namespace properties {
@@ -208,7 +212,18 @@ DistortionInfo::DistortionInfo(
     chiralDistortion(passChiralDistortion)
 {}
 
-std::vector<DistortionInfo> ligandGainDistortions(
+LigandGainReturnType::LigandGainReturnType(
+  const std::vector<
+    std::vector<unsigned>
+  >& passIndexMappings,
+  const double& passAngleDistortion,
+  const double& passChiralDistortion
+) : indexMappings(passIndexMappings),
+    angleDistortion(passAngleDistortion),
+    chiralDistortion(passChiralDistortion) 
+{}
+
+LigandGainReturnType ligandGainDistortions(
   const Symmetry::Name& symmetryFrom,
   const Symmetry::Name& symmetryTo
 ) {
@@ -248,7 +263,48 @@ std::vector<DistortionInfo> ligandGainDistortions(
     }
   } while (std::next_permutation(indexMapping.begin(), indexMapping.end()));
 
-  return distortions;
+  double lowestAngularDistortion = TemplateMagic::min(
+    TemplateMagic::getMember(
+      distortions,
+      [](const auto& distortion) -> double {
+        return distortion.totalDistortion;
+      }
+    )
+  );
+
+  auto distortionsView = TemplateMagic::filter(
+    distortions,
+    [&lowestAngularDistortion](const auto& distortion) -> bool {
+      return distortion.totalDistortion > lowestAngularDistortion;
+    }
+  );
+
+  double lowestChiralDistortion = TemplateMagic::min(
+    TemplateMagic::getMember(
+      distortionsView,
+      [](const auto& distortion) -> double {
+        return distortion.chiralDistortion;
+      }
+    )
+  );
+
+  // continue filtering on lowest distortions
+  distortionsView.filter(
+    [&lowestChiralDistortion](const auto& distortion) -> bool {
+      return distortion.chiralDistortion > lowestChiralDistortion;
+    }
+  );
+
+  return LigandGainReturnType(
+    TemplateMagic::mapToVector( // copy out index mappings
+      distortionsView,
+      [](const auto& distortionInfo) -> std::vector<unsigned> {
+        return distortionInfo.indexMapping;
+      }
+    ),
+    lowestAngularDistortion,
+    lowestChiralDistortion
+  );
 }
 
 } // namespace properties
