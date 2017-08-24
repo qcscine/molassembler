@@ -6,12 +6,38 @@
 #include "Random.h"
 #include "Containers.h"
 #include "Numeric.h"
+#include "MemberFetcher.h"
+#include "VectorView.h"
 
 // TEMPORARY
 #include <iostream>
 
 #include <vector>
 #include <cmath>
+
+#include <chrono>
+
+template<typename NullaryCallable>
+double timeNullaryCallable(
+  NullaryCallable&& function
+) {
+  using namespace std::chrono;
+
+  time_point<system_clock> start, end;
+  std::array<unsigned, 1000> timings;
+  for(unsigned N = 0; N < 1000; ++N) {
+    start = system_clock::now();
+
+    function();
+    
+    end = system_clock::now();
+    duration<double> elapsed = end - start;
+
+    timings.at(N) = elapsed.count() * 1e9;
+  }
+
+  return TemplateMagic::average(timings);
+}
 
 double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
@@ -208,3 +234,108 @@ BOOST_AUTO_TEST_CASE( boolArrayAllOf) {
       << enumStruct.value << "}" << std::endl;
   }
 }*/
+
+BOOST_AUTO_TEST_CASE(memberFetcherTests) {
+  std::vector<
+    std::vector<unsigned>
+  > testClass {
+    {4, 3, 9, 10},
+    {1, 2, 3, 4, 5},
+    {11},
+    {44, 93}
+  };
+
+  auto memberFetcherClass = TemplateMagic::getMember(
+    testClass,
+    [](const auto& container) -> unsigned {
+      return container.size();
+    }
+  );
+
+  BOOST_CHECK_MESSAGE(
+    TemplateMagic::sum(memberFetcherClass) == 12u,
+    "Member fetcher does not work as expected, begin()-end() contains {"
+      << TemplateMagic::condenseIterable(memberFetcherClass)
+      << "} instead of expected {4, 5, 1, 2}"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    TemplateMagic::min(memberFetcherClass) == 1
+    && TemplateMagic::max(memberFetcherClass) == 5,
+    "Usage of min/max does not return expected result"
+  );
+
+  // Is this approach more efficient than copying member information?
+  double copyingTime = timeNullaryCallable(
+    [&]() {
+      auto mappedData = TemplateMagic::map(
+        testClass,
+        [](const auto& subVector) -> unsigned {
+          return subVector.size();
+        }
+      );
+
+      for(const auto& size : mappedData) {
+        static_cast<void>(size);
+      }
+    }
+  );
+
+  double memberFetcherTime = timeNullaryCallable(
+    [&]() {
+      auto fetcher = TemplateMagic::getMember(
+        testClass,
+        [](const auto& subVector) -> unsigned {
+          return subVector.size();
+        }
+      );
+
+      for(const auto& size : fetcher) {
+        static_cast<void>(size);
+      }
+    }
+  );
+
+  BOOST_CHECK_MESSAGE(
+    memberFetcherTime < copyingTime,
+    "Copying is faster than fetching members: copy = " << copyingTime << " vs. " 
+    << memberFetcherTime << " member fetch " 
+  );
+
+  // Interoperability with VectorView
+
+  auto filteredView = TemplateMagic::filter(
+    testClass,
+    [](const auto& subVector) -> bool {
+      return subVector.size() < 3;
+    }
+  );
+
+  auto minSize = TemplateMagic::min(
+    TemplateMagic::getMember(
+      filteredView,
+      [](const auto& subVector) -> unsigned {
+        return subVector.size();
+      }
+    )
+  );
+
+  BOOST_CHECK_MESSAGE(
+    minSize == 4,
+    "Min size of filteredView returns " << minSize << ", not 4"
+  );
+
+  auto maxSize = TemplateMagic::max(
+    TemplateMagic::getMember(
+      filteredView,
+      [](const auto& subVector) -> unsigned {
+        return subVector.size();
+      }
+    )
+  );
+
+  BOOST_CHECK_MESSAGE(
+    maxSize == 5,
+    "Max size of filteredView returns " << maxSize << ", not 5"
+  );
+}

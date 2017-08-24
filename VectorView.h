@@ -1,5 +1,5 @@
-#ifndef INCLUDE_VECTOR_VIEW_H
-#define INCLUDE_VECTOR_VIEW_H
+#ifndef INCLUDE_TEMPLATE_MAGIC_VECTOR_VIEW_H
+#define INCLUDE_TEMPLATE_MAGIC_VECTOR_VIEW_H
 
 #include <vector>
 #include <functional>
@@ -94,6 +94,18 @@ public:
       _sorting(sorting)
     {}
 
+    iterator& operator = (const iterator& other) {
+      // ensure iterators refer to same instance
+      assert(
+        std::addressof(_vector) == std::addressof(other._vector)
+        && std::addressof(_sorting) == std::addressof(other._sorting)
+      );
+
+      _idx = other._idx;
+
+      return *this;
+    }
+
     iterator& operator ++ () { _idx += 1; return *this; }
     iterator operator++ (int) { iterator retval = *this; ++(*this); return retval; }
     bool operator == (iterator other) const { return _idx == other._idx; }
@@ -157,6 +169,12 @@ public:
     return iterator<const ValueType*>(size(), _baseVectorRef, _indexSequence); 
   }
 
+  std::vector<ValueType> getCopy() const {
+    return {
+      this->begin(),
+      this->end()
+    };
+  }
 };
 
 template<typename Container, class FilterFunction>

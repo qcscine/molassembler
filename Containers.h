@@ -438,6 +438,17 @@ std::set<T, Comparator<T>, Allocator<T>> setUnion(
   const std::set<T, Comparator<T>, Allocator<T>>& b
 );
 
+//! Composable set difference
+template<
+  typename T,
+  template<typename> class Comparator,
+  template<typename >class Allocator
+> 
+std::set<T, Comparator<T>, Allocator<T>> setDifference(
+  const std::set<T, Comparator<T>, Allocator<T>>& a,
+  const std::set<T, Comparator<T>, Allocator<T>>& b
+);
+
 
 /* Implementation ------------------------------------------------------------*/
 template<typename Container>
@@ -809,6 +820,29 @@ std::set<T, Comparator<T>, Allocator<T>> setUnion(
   std::set<T, Comparator<T>, Allocator<T>> returnSet;
 
   std::set_intersection(
+    a.begin(),
+    a.end(),
+    b.begin(),
+    b.end(),
+    std::inserter(returnSet, returnSet.end()),
+    Comparator<T>()
+  );
+
+  return returnSet;
+}
+
+template<
+  typename T,
+  template<typename> class Comparator,
+  template<typename >class Allocator
+> 
+std::set<T, Comparator<T>, Allocator<T>> setDifference(
+  const std::set<T, Comparator<T>, Allocator<T>>& a,
+  const std::set<T, Comparator<T>, Allocator<T>>& b
+) {
+  std::set<T, Comparator<T>, Allocator<T>> returnSet;
+
+  std::set_symmetric_difference(
     a.begin(),
     a.end(),
     b.begin(),
