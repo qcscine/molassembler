@@ -420,7 +420,7 @@ std::enable_if_t<
    * So far, an incomplete test, merely compares angular and chiral distortion
    */
 
-  /*auto convertedMappings = constexprMappings.mappings.mapToSTL(
+  auto convertedMappings = constexprMappings.mappings.mapToSTL(
     [&](const auto& indexList) -> std::vector<unsigned> {
       return {
         indexList.begin(),
@@ -432,9 +432,7 @@ std::enable_if_t<
   return TemplateMagic::setDifference(
     convertedMappings,
     dynamicMappings.indexMappings
-  ).size() == 0;*/
-
-  return true;
+  ).size() == 0;
 }
 
 template<class SymmetryClassFrom, class SymmetryClassTo>

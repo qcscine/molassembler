@@ -247,7 +247,7 @@ DistortionInfo::DistortionInfo(
 {}
 
 SymmetryTransitionGroup::SymmetryTransitionGroup(
-  const std::vector<
+  const std::set<
     std::vector<unsigned>
   >& passIndexMappings,
   const double& passAngleDistortion,
@@ -383,13 +383,16 @@ SymmetryTransitionGroup symmetryTransitionMappings(
     }
   );
 
+  std::set<
+    std::vector<unsigned>
+  > mappings;
+
+  for(const auto& distortionInfo : distortionsView) {
+    mappings.insert(distortionInfo.indexMapping);
+  }
+
   return SymmetryTransitionGroup(
-    TemplateMagic::mapToVector( // copy out index mappings
-      distortionsView,
-      [](const auto& distortionInfo) -> std::vector<unsigned> {
-        return distortionInfo.indexMapping;
-      }
-    ),
+    mappings,
     lowestAngularDistortion,
     lowestChiralDistortion
   );
@@ -414,101 +417,6 @@ SymmetryTransitionGroup ligandLossTransitionMappings(
   std::set<
     std::vector<unsigned>
   > encounteredSymmetryMappings;
-}
-
-// NOTE - is deprecated, symmetryTransitionMappings aims to be the general case
-SymmetryTransitionGroup ligandGainDistortions(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo
-) {
-  assert(Symmetry::size(symmetryTo) == Symmetry::size(symmetryFrom) + 1);
-
-  std::vector<DistortionInfo> distortions;
-
-  // Create a vector of indices for the new symmetry to use as mapping
-  std::vector<unsigned> indexMapping (Symmetry::size(symmetryTo));
-  std::iota(
-    indexMapping.begin(),
-    indexMapping.end(),
-    0
-  );
-
-  std::set<
-    std::vector<unsigned>
-  > encounteredSymmetryMappings;
-
-  do {
-    if(
-      encounteredSymmetryMappings.count(
-        applyIndexMapping(
-          symmetryTo,
-          indexMapping
-        )
-      ) == 0
-    ) {
-      distortions.emplace_back(
-        indexMapping,
-        calculateAngleDistortion(symmetryFrom, symmetryTo, indexMapping),
-        calculateChiralDistortion(symmetryFrom, symmetryTo, indexMapping)
-      );
-
-      auto allRotations = generateAllRotations(
-        symmetryTo,
-        applyIndexMapping(
-          symmetryTo,
-          indexMapping
-        )
-      );
-
-      encounteredSymmetryMappings.insert(
-        allRotations.begin(),
-        allRotations.end()
-      );
-    }
-  } while (std::next_permutation(indexMapping.begin(), indexMapping.end()));
-
-  double lowestAngularDistortion = TemplateMagic::min(
-    TemplateMagic::getMember(
-      distortions,
-      [](const auto& distortion) -> double {
-        return distortion.totalDistortion;
-      }
-    )
-  );
-
-  auto distortionsView = TemplateMagic::filter(
-    distortions,
-    [&lowestAngularDistortion](const auto& distortion) -> bool {
-      return distortion.totalDistortion > lowestAngularDistortion;
-    }
-  );
-
-  double lowestChiralDistortion = TemplateMagic::min(
-    TemplateMagic::getMember(
-      distortionsView,
-      [](const auto& distortion) -> double {
-        return distortion.chiralDistortion;
-      }
-    )
-  );
-
-  // continue filtering on lowest distortions
-  distortionsView.filter(
-    [&lowestChiralDistortion](const auto& distortion) -> bool {
-      return distortion.chiralDistortion > lowestChiralDistortion;
-    }
-  );
-
-  return SymmetryTransitionGroup(
-    TemplateMagic::mapToVector( // copy out index mappings
-      distortionsView,
-      [](const auto& distortionInfo) -> std::vector<unsigned> {
-        return distortionInfo.indexMapping;
-      }
-    ),
-    lowestAngularDistortion,
-    lowestChiralDistortion
-  );
 }
 
 } // namespace properties

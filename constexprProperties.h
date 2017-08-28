@@ -365,7 +365,7 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
 
 template<typename SymmetryClass>
 struct MappingsReturnType {
-  using MappingsList = ConstexprMagic::DynamicArray<
+  using MappingsList = ConstexprMagic::DynamicSet<
     ArrayType<unsigned, SymmetryClass::size>,
     20
   >;
@@ -392,8 +392,7 @@ constexpr auto ligandGainMappings() {
 
   using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
 
-  // Why not use a DynamicSet?
-  ConstexprMagic::DynamicArray<IndexMappingType, 20> bestMappings;
+  ConstexprMagic::DynamicSet<IndexMappingType, 20> bestMappings;
   double lowestAngleDistortion = 100;
   double lowestChiralDistortion = 100;
 
@@ -449,7 +448,7 @@ constexpr auto ligandGainMappings() {
       }
 
       if(addMapping) {
-        bestMappings.push_back(indexMapping);
+        bestMappings.insert(indexMapping);
       }
 
       // Add all rotations to the encountered mappings

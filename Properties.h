@@ -101,13 +101,13 @@ struct DistortionInfo {
 };
 
 struct SymmetryTransitionGroup {
-  std::vector<
+  std::set<
     std::vector<unsigned>
   > indexMappings;
   double angularDistortion, chiralDistortion;
 
   SymmetryTransitionGroup(
-    const std::vector<
+    const std::set<
       std::vector<unsigned>
     >& passIndexMappings,
     const double& passAngleDistortion,
@@ -149,14 +149,6 @@ SymmetryTransitionGroup ligandLossTransitionMappings(
   const Symmetry::Name& symmetryFrom,
   const Symmetry::Name& symmetryTo,
   const unsigned& positionInSourceSymmetry
-);
-
-/*!
- * Reference implementation of transitions of size differences +1. Deprecated
- */
-SymmetryTransitionGroup ligandGainDistortions(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo
 );
 
 } // namespace properties
