@@ -393,7 +393,7 @@ std::enable_if_t<
 > doLigandGainTestIfAdjacent() {
   /* Struct:
    * .mappings - dynamic array of fixed-size index mappings
-   * .angleDistortion, .chiralDistortion - doubles
+   * .angularDistortion, .chiralDistortion - doubles
    */
   auto constexprMappings = ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
 
@@ -401,17 +401,38 @@ std::enable_if_t<
    * .indexMapping - vector containing the index mapping
    * .totalDistortion, .chiralDistortion - doubles
    */
-  auto dynamicMappings = properties::ligandGainDistortions(
+  auto dynamicMappings = properties::symmetryTransitionMappings(
     SymmetryClassFrom::name,
     SymmetryClassTo::name
   );
 
   if(
-    dynamicMappings.angleDistortion != constexprMappings.angleDistortion
+    dynamicMappings.angularDistortion != constexprMappings.angularDistortion
     || dynamicMappings.chiralDistortion != constexprMappings.chiralDistortion
   ) {
     return false;
   }
+
+  /* TODO Need to reformulate constexpr algorithm to use a DynamicSet instead
+   * of a DynamicArray for the indexMappings and the dynamic algorithm to use
+   * a set of index mappings -> easier set difference for comparison
+   *
+   * So far, an incomplete test, merely compares angular and chiral distortion
+   */
+
+  /*auto convertedMappings = constexprMappings.mappings.mapToSTL(
+    [&](const auto& indexList) -> std::vector<unsigned> {
+      return {
+        indexList.begin(),
+        indexList.end()
+      };
+    }
+  );
+
+  return TemplateMagic::setDifference(
+    convertedMappings,
+    dynamicMappings.indexMappings
+  ).size() == 0;*/
 
   return true;
 }
@@ -522,49 +543,6 @@ struct RotationGenerationTest {
  */
 };
 
-template<typename SymmetryClassFrom, typename SymmetryClassTo>
-struct LigandGainCorrectness {
-  static bool value() {
-    /* Struct:
-     * .mappings - dynamic array of fixed-size index mappings
-     * .angleDistortion, .chiralDistortion - doubles
-     */
-    auto constexprMappings = ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
-
-    /* Vector of structs:
-     * .indexMapping - vector containing the index mapping
-     * .totalDistortion, .chiralDistortion - doubles
-     */
-    auto dynamicMappings = ligandGainDistortions(
-      SymmetryClassFrom::name,
-      SymmetryClassTo::name
-    );
-
-    // Shortcut return
-    if(
-      constexprMappings.angleDistortion != dynamicMappings.angleDistortion
-      || constexprMappings.chiralDistortion != dynamicMappings.chiralDistortion
-    ) {
-      return false;
-    }
-
-    // Check the indexMapping sets
-    auto convertedMappings = constexprMappings.indexMappings.mapToSTL(
-      [&](const auto& indexList) -> std::vector<unsigned> {
-        return {
-          indexList.begin(),
-          indexList.end()
-        };
-      }
-    );
-
-    return TemplateMagic::setDifference(
-      convertedMappings,
-      dynamicMappings.indexMappings
-    ).size() == 0;
-  }
-};
-
 std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
   auto stringName = Symmetry::name(symmetryName);
 
@@ -610,7 +588,7 @@ std::enable_if_t<
   }
 
   std::cout << ", label=\"" 
-    << ConstexprMagic::Math::round(constexprMapping.angleDistortion, 2);
+    << ConstexprMagic::Math::round(constexprMapping.angularDistortion, 2);
 
   if(multiplicity > 3) {
     std::cout << " (" << multiplicity << ")";
@@ -681,7 +659,7 @@ BOOST_AUTO_TEST_CASE(constexprProperties) {
 
   /*constexpr auto mappings = ligandGainMappings<data::SquarePlanar, data::SquarePyramidal>();
   std::cout << "Linear to TShaped mappings: angular = " 
-    << mappings.angleDistortion
+    << mappings.angularDistortion
     << ", chiral = " << mappings.chiralDistortion
     << ", multiplicity = " << mappings.mappings.size()
     << std::endl;

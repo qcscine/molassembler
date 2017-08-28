@@ -12,11 +12,6 @@
 #include <Eigen/Geometry>
 
 /* TODO
- * - Something still isn't right: Seesaw to TrigonalBipyramidal should be a 0!
- *   The way the source symmetry is indexed affects the total angle distortion.
- *   It's because I only fit onto the first N indices of the next symmetry,
- *   assuming the last index is the new one (this is true for sq py to oct, but
- *   not for seesaw to trig bipy).
  */
 
 class RGBGradient {
@@ -46,26 +41,10 @@ public:
       throw std::logic_error("Value given to gradient is not in min-max interval");
     }
 
-    /* say I have 4-12 as min-max. value is 9
-     * fractional advancement in index is (9 - 4) / (12 - 4)
-     * so (value - min) / (max - min)
-     *
-     * red range is 0 to 255
-     *
-     * target is (255 - 0) * advancement + 0
-     * so (to - from) * advancement + from
-     *
-     */
-
-
     double advancement = 0;
     if(std::fabs(_max - _min) >= 1e-10) {
       advancement = (value - _min) / (_max - _min);
     }
-
-    /*std::cout << "advancement " << advancement << " along R [" 
-      << _from.at(0) << ", " << _to.at(0) << "] is " 
-      << (_from[0] + advancement * (static_cast<double>(_to[0]) - _from[0])) << std::endl;*/
 
     return RGBType {
       _from[0] + advancement * (static_cast<double>(_to[0]) - _from[0]),
@@ -80,7 +59,8 @@ public:
     std::stringstream stream;
     stream << "#";
     for(const auto& value : rgb) {
-      stream << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(value);
+      stream << std::setfill('0') << std::setw(2) << std::hex 
+        << static_cast<int>(value);
     }
 
     return stream.str();
@@ -108,8 +88,10 @@ std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
 
 constexpr char br = '\n';
 
-void writeLigandGainPathwaysDotfile(
+template<class SelectionPredicateFunction>
+void writeSymmetryTransitionDotFile(
   const std::string& filename,
+  SelectionPredicateFunction&& predicate,
   const bool& showEdgesWithHighMultiplicity = true,
   const bool& explainTransitions = false
 ) {
@@ -158,19 +140,17 @@ void writeLigandGainPathwaysDotfile(
   // Final cluster closing bracket
   dotFile << "  }" << br << br;
 
-  for(const auto& symmetryName : Symmetry::allNames) {
-    auto size = Symmetry::size(symmetryName);
-
+  for(const auto& sourceSymmetry : Symmetry::allNames) {
     std::map<
       Symmetry::Name,
-      Symmetry::properties::LigandGainReturnType
+      Symmetry::properties::SymmetryTransitionGroup
     > distortionsMap;
 
-    for(const auto& oneLargerSymmetry : Symmetry::allNames) {
-      if(Symmetry::size(oneLargerSymmetry) == size + 1) { // Ligand gain
-        distortionsMap[oneLargerSymmetry] = ligandGainDistortions(
-          symmetryName,
-          oneLargerSymmetry
+    for(const auto& targetSymmetry : Symmetry::allNames) {
+      if(predicate(sourceSymmetry, targetSymmetry)) { // Ligand gain
+        distortionsMap[targetSymmetry] = symmetryTransitionMappings(
+          sourceSymmetry,
+          targetSymmetry
         );
       }
     }
@@ -180,7 +160,7 @@ void writeLigandGainPathwaysDotfile(
         TemplateMagic::mapValues(
           distortionsMap,
           [](const auto& ligandGainReturnStruct) -> double {
-            return ligandGainReturnStruct.angleDistortion;
+            return ligandGainReturnStruct.angularDistortion;
           }
         )
       );
@@ -201,8 +181,8 @@ void writeLigandGainPathwaysDotfile(
         // In case you want transitions explained
         if(explainTransitions) {
           std::cout << "Transitions of distortion " 
-            << mappingData.angleDistortion << " from "
-            << Symmetry::name(symmetryName)
+            << mappingData.angularDistortion << " from "
+            << Symmetry::name(sourceSymmetry)
             << " to " << Symmetry::name(targetSymmetry) << ":\n";
 
           for(const auto& mapping : mappingData.indexMappings) {
@@ -219,7 +199,7 @@ void writeLigandGainPathwaysDotfile(
             && multiplicity <= 3
           ) || showEdgesWithHighMultiplicity
         ) {
-          dotFile << "  " << getGraphvizNodeName(symmetryName)
+          dotFile << "  " << getGraphvizNodeName(sourceSymmetry)
             << " -> " << getGraphvizNodeName(targetSymmetry)
             << " [";
 
@@ -227,18 +207,20 @@ void writeLigandGainPathwaysDotfile(
           if(multiplicity <= 3) {
             std::vector<std::string> repeatColor (
               multiplicity,
-              gradient.getHexString(mappingData.angleDistortion)
+              gradient.getHexString(mappingData.angularDistortion)
             );
 
-            dotFile << "color=\"" << TemplateMagic::condenseIterable(repeatColor, ":invis:") << "\"";
+            dotFile << "color=\"" 
+              << TemplateMagic::condenseIterable(repeatColor, ":invis:") 
+              << "\"";
           } else {
             dotFile << "color=\"" 
-              << gradient.getHexString(mappingData.angleDistortion) << "\"";
+              << gradient.getHexString(mappingData.angularDistortion) << "\"";
             dotFile << ", style=\"dashed\"";
           }
 
           dotFile << ", label=\"" 
-            << ConstexprMagic::Math::round(mappingData.angleDistortion, 2);
+            << ConstexprMagic::Math::round(mappingData.angularDistortion, 2);
 
 
           if(multiplicity > 3) {
@@ -261,7 +243,31 @@ void writeLigandGainPathwaysDotfile(
 }
 
 int main() {
-  writeLigandGainPathwaysDotfile("ligand_gain_pathways.dot");
+  writeSymmetryTransitionDotFile(
+    "ligand_gain_pathways.dot",
+    [](const auto& sourceSymmetry, const auto& targetSymmetry) -> bool {
+      return (
+        Symmetry::size(sourceSymmetry) + 1 == Symmetry::size(targetSymmetry)
+      );
+    }
+  );
+  writeSymmetryTransitionDotFile(
+    "ligand_rearrangement_pathways.dot",
+    [](const auto& sourceSymmetry, const auto& targetSymmetry) -> bool {
+      return (
+        Symmetry::size(sourceSymmetry) == Symmetry::size(targetSymmetry)
+        && sourceSymmetry != targetSymmetry
+      );
+    }
+  );
+  /*writeSymmetryTransitionDotFile(
+    "ligand_loss_pathways.dot",
+    [](const auto& sourceSymmetry, const auto& targetSymmetry) -> bool {
+      return (
+        Symmetry::size(sourceSymmetry) == Symmetry::size(targetSymmetry) + 1
+      );
+    }
+  );*/
 
   return 0;
 }

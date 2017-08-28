@@ -182,11 +182,11 @@ constexpr double calculateAngleDistortion(
     )
   >& indexMapping
 ) {
-  double angleDistortion = 0;
+  double angularDistortion = 0;
 
   for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
     for(unsigned j = i + 1; j < SymmetryClassFrom::size; ++j) {
-      angleDistortion += ConstexprMagic::Math::abs(
+      angularDistortion += ConstexprMagic::Math::abs(
         SymmetryClassFrom::angleFunction(i, j)
         - SymmetryClassTo::angleFunction(
           indexMapping.at(i),
@@ -196,7 +196,7 @@ constexpr double calculateAngleDistortion(
     }
   }
 
-  return angleDistortion;
+  return angularDistortion;
 }
 
 template<size_t size>
@@ -371,14 +371,14 @@ struct MappingsReturnType {
   >;
 
   MappingsList mappings;
-  double angleDistortion, chiralDistortion;
+  double angularDistortion, chiralDistortion;
 
   constexpr MappingsReturnType(
     MappingsList&& mappings,
-    double&& angleDistortion,
+    double&& angularDistortion,
     double&& chiralDistortion
   ) : mappings(mappings),
-      angleDistortion(angleDistortion),
+      angularDistortion(angularDistortion),
       chiralDistortion(chiralDistortion)
   {}
 };
@@ -392,6 +392,7 @@ constexpr auto ligandGainMappings() {
 
   using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
 
+  // Why not use a DynamicSet?
   ConstexprMagic::DynamicArray<IndexMappingType, 20> bestMappings;
   double lowestAngleDistortion = 100;
   double lowestChiralDistortion = 100;
@@ -405,7 +406,7 @@ constexpr auto ligandGainMappings() {
 
   do {
     if(!encounteredMappings.contains(symPosMapping(indexMapping))) {
-      auto angleDistortion = calculateAngleDistortion<
+      auto angularDistortion = calculateAngleDistortion<
         SymmetryClassFrom,
         SymmetryClassTo
       >(indexMapping);
@@ -426,9 +427,9 @@ constexpr auto ligandGainMappings() {
        */
 
       bool addMapping = (
-        angleDistortion < lowestAngleDistortion
+        angularDistortion < lowestAngleDistortion
         || (
-          angleDistortion == lowestAngleDistortion
+          angularDistortion == lowestAngleDistortion
           && chiralDistortion <= lowestChiralDistortion
         )
       );
@@ -436,14 +437,14 @@ constexpr auto ligandGainMappings() {
       bool clearExisting = (
         addMapping
         && !(
-          angleDistortion == lowestAngleDistortion
+          angularDistortion == lowestAngleDistortion
           && chiralDistortion == lowestChiralDistortion
         )
       );
         
       if(clearExisting) {
         bestMappings.clear();
-        lowestAngleDistortion = angleDistortion;
+        lowestAngleDistortion = angularDistortion;
         lowestChiralDistortion = chiralDistortion;
       }
 

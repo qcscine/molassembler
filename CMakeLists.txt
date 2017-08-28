@@ -65,7 +65,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   #target_compile_options(symmetries PUBLIC -O2)
 else() # assume Debug
   message(STATUS "Assume debug build")
-  #target_compile_options(symmetries PUBLIC -g)
+  target_compile_options(symmetries PUBLIC -g)
 endif()
 
 set_target_properties(
