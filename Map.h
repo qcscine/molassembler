@@ -3,6 +3,13 @@
 
 #include <array>
 
+/*! @file
+ *
+ * TODO Incomplete implementation, untested
+ *
+ * Compile-time associative container.
+ */
+
 namespace ConstexprMagic { 
 
 // This has NONE of the desired properties of a map. Lookup is linear!

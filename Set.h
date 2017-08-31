@@ -6,6 +6,12 @@
 #include "Containers.h"
 #include "Array.h"
 
+/*! @file
+ *
+ * Minimal compile-time fixed-size set. Inserting elements returns a different
+ * type signature.
+ */
+
 namespace ConstexprMagic {
 
 namespace detail {

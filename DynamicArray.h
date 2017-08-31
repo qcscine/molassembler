@@ -7,10 +7,18 @@
 #include <utility>
 
 #include "Containers.h"
+#include "Array.h"
+
+/*! @file
+ *
+ * A constexpr fixed-maximum size managed array so that insertions and deletions
+ * do not change the type signature. Principally similar to std::vector except
+ * that the maximum size must be known at compile time and cannot change.
+ */
 
 /* TODO
- * - refactor this using Array.h as base? Loads of forwarding functions, no
- *   need for iterator and constIterator classes
+ * - refactor this using Array.h as base data member? Loads of forwarding
+ *   functions, no need for iterator and constIterator classes
  */
 
 namespace ConstexprMagic {
@@ -44,8 +52,9 @@ private:
   }
 
 public:
-  /*! Delegate constructor using another DynamicArray and an index_sequence to directly
-   * form the array mem-initializer with a parameter pack expansion
+  /*!
+   * Delegate constructor using another DynamicArray and an index_sequence to
+   * directly form the array mem-initializer with a parameter pack expansion
    */
   template<size_t ... Inds>
   constexpr DynamicArray(const DynamicArray& other, std::index_sequence<Inds...>) 

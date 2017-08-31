@@ -8,6 +8,13 @@
 
 #include "Containers.h"
 
+/*! @file
+ *
+ * Constexpr fixed-size array to replace std::array in C++14. This class is 
+ * largely unneeded in C++17 since many std::array members are then marked 
+ * constexpr.
+ */
+
 namespace ConstexprMagic {
 
 template<typename T, size_t nItems>
@@ -139,7 +146,7 @@ public:
     unsigned _position;
 
   public:
-    constexpr explicit iterator(
+    constexpr iterator(
       Array& instance,
       unsigned&& initPosition
     ) : _baseRef(instance),
@@ -287,10 +294,12 @@ public:
     return constIterator(*this, nItems);
   }
 
+  //! Implicit conversion operator to a std::array
   constexpr operator std::array<T, nItems> () const {
     return _makeArray(std::make_index_sequence<nItems>{});
   }
 
+  // Explicit conversion to a std::array
   constexpr std::array<T, nItems> getArray() const {
     return _makeArray(std::make_index_sequence<nItems>{});
   }

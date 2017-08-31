@@ -3,27 +3,44 @@
 
 #include "UpperTriangularMatrix.h"
 
+/*! @file
+ *
+ * Provides type-level computations for types enumerated in a tuple.
+ */
+
 namespace ConstexprMagic {
 
 namespace TupleType {
 
 namespace detail {
 
+// Helper type needed for deduced return type template enable-if signatures
 enum class enabler_t {};
 
+/* This type can be added as a parameter pack with the desired condition in a
+ * type signature. If there is no type in the enable_if, this results in an
+ * expression error that leads to the signature being ignored in substitution.
+ */
 template<bool value>
 using EnableIf = typename std::enable_if<value, enabler_t>::type;
 
+//! Value variant handler for functions, returns the function call result.
 template<typename T, EnableIf<std::is_function<decltype(T::value)>::value>...>
 constexpr auto handleValueVariants() {
   return T::value();
 }
 
+//! Value variant handler for data members, returns the member itself.
 template<typename T, EnableIf<!std::is_function<decltype(T::value)>::value>...>
 constexpr auto handleValueVariants() {
   return T::value;
 }
 
+/*!
+ * Implementation of the unpacker that forwards all types in a tuple to a
+ * template function that takes all types as parameters. Returns the result
+ * of the template function, accepting both value functions and members.
+ */
 template<
   typename Tuple,
   template<typename ...> class TemplateFunction,
@@ -40,6 +57,11 @@ template<
   >();
 }
 
+/*!
+ * Implementation of the mapper, which evaluates a template function
+ * individually for all types contained in the supplied tuple and returns the
+ * results collected in a std::array.
+ */
 template<
   typename TupleType,
   template<typename> class TemplateFunction,
@@ -63,6 +85,11 @@ template<
   }};
 }
 
+/*!
+ * Implementation of a special case of mapping in which all possible pairs of
+ * types contained in the supplied tuple are passed to a template function and
+ * evaluated.
+ */
 template<
   typename TupleType,
   template<typename ...> class TemplateFunction,
@@ -99,6 +126,35 @@ template<
   }};
 
   return results;
+}
+
+/*!
+ * Implementation of the counter, which returns how often a type occurs in a 
+ * supplied tuple type.
+ */
+template<
+  typename TupleType,
+  typename T,
+  size_t ... Inds
+> constexpr unsigned countTypeHelper(
+  std::index_sequence<Inds...>
+) {
+  constexpr std::array<unsigned, sizeof...(Inds)> trues {{
+    static_cast<unsigned>(
+      std::is_same<
+        std::tuple_element_t<Inds, TupleType>,
+        T
+      >::value
+    )...
+  }};
+
+  unsigned sum = 0;
+
+  for(unsigned i = 0; i < sizeof...(Inds); ++i) {
+    sum += trues.at(i);
+  }
+
+  return sum;
 }
 
 } // namespace detail
@@ -148,6 +204,18 @@ template<
 
   return detail::mapAllPairsHelper<TupleType, TemplateFunction>(
     std::make_index_sequence<(N * N - N) / 2>()
+  );
+}
+
+//!  Counts how often a type is contained in a tuple type.
+template<
+  typename TupleType,
+  typename T
+> constexpr unsigned countType() {
+  return detail::countTypeHelper<TupleType, T>(
+    std::make_index_sequence<
+      std::tuple_size<TupleType>::value
+    >()
   );
 }
 

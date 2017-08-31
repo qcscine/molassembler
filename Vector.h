@@ -14,6 +14,7 @@
 
 namespace ConstexprMagic {
 
+//! Constexpr three-dimensional vector math class.
 struct Vector {
   std::array<double, 3> data;
 
@@ -21,6 +22,7 @@ struct Vector {
   constexpr Vector(std::array<double, 3> positions) : data(positions) {}
   constexpr Vector(double x, double y, double z) : data({x, y, z}) {}
 
+  //! Computes the dot product with another vector
   constexpr double dot(const Vector& other) const {
     return (
       this->data[0] * other.data[0]
@@ -29,6 +31,7 @@ struct Vector {
     );
   }
 
+  //! Computes the cross product with another vector
   constexpr Vector cross(const Vector& other) const {
     return Vector {
       {
@@ -39,6 +42,7 @@ struct Vector {
     };
   }
 
+  //! Calculates the L2 norm of the vector (cartesian length)
   constexpr double norm() const {
     return Math::sqrt(
       this -> data[0] * this -> data[0]
@@ -77,7 +81,12 @@ struct Vector {
     };
   }
 
+  //! Division by double operator, throws on division by zero
   constexpr Vector operator / (const double& constant) const {
+    if(constant == 0) {
+      throw "Constexpr::Vector divided by zero!";
+    }
+
     return Vector {
       {
         this->data[0] / constant,
@@ -87,6 +96,7 @@ struct Vector {
     };
   }
 
+  //! Unitary inversion operator
   constexpr Vector operator - () const {
     return Vector {
       {
@@ -98,6 +108,7 @@ struct Vector {
   }
 };
 
+//! Free-standing binary angle in radians calculation
 constexpr double angle(const Vector& a, const Vector& b) {
   return Math::acos(
     a.dot(b) / (

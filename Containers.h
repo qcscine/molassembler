@@ -5,6 +5,11 @@
 #include <cassert>
 #include <limits>
 
+/*! @file
+ * 
+ * Provides constexpr functional-style modification of container elements
+ */
+
 namespace ConstexprMagic {
 
 namespace traits {
@@ -14,6 +19,9 @@ using functionReturnType = std::result_of_t<Function(Args...)>;
 
 } // namespace traits
 
+namespace detail {
+
+//!  Implementation of mapping with a unary function for any array type.
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -33,6 +41,9 @@ template<
   };
 }
 
+} // namespace detail
+
+//! Maps all elements of any array-like container with a unary function
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -42,13 +53,19 @@ template<
   const ArrayType<T, size>& array,
   UnaryFunction&& function
 ) {
-  return mapImpl(
+  return detail::mapImpl(
     array,
     std::forward<UnaryFunction>(function),
     std::make_index_sequence<size>{}
   );
 }
 
+/*!
+ * Reduction of any array-like container with a binary function. This function
+ * is somewhat restricted, in that the type of the reduction must be identical 
+ * to the value type of the array-like container. The binary function must
+ * have the signature T(const T& reduction, const T& element).
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -66,6 +83,10 @@ template<
   return init;
 }
 
+/*!
+ * Summation of all elements of an array-like class. Requires operator + and
+ * zero-initialization of the contained type
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -80,6 +101,9 @@ template<
   return sum;
 }
 
+namespace detail {
+
+//! Implementation helper of array-like type concatenation. 
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -88,7 +112,7 @@ template<
   size_t N2,
   size_t... BIndices
 >
-constexpr ArrayType<T, N1+N2> arrayContatenateImpl(
+constexpr ArrayType<T, N1+N2> arrayConcatenateImpl(
   const ArrayType<T, N1>& a,
   const ArrayType<T, N2>& b,
   std::index_sequence<AIndices...>,
@@ -100,6 +124,8 @@ constexpr ArrayType<T, N1+N2> arrayContatenateImpl(
   };
 }
 
+} // namespace detail
+
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -110,13 +136,15 @@ constexpr ArrayType<T, N1+N2> arrayConcatenate(
   const ArrayType<T, N1>& a,
   const ArrayType<T, N2>& b
 ) {
-  return arrayConcatenateImpl(
+  return detail::arrayConcatenateImpl(
     a,
     b,
     std::make_index_sequence<N1>{},
     std::make_index_sequence<N2>{}
   );
 }
+
+namespace detail {
 
 template<
   template<typename, size_t> class ArrayType,
@@ -134,6 +162,8 @@ template<
   };
 }
 
+} // namespace detail
+
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -142,7 +172,7 @@ template<
   const ArrayType<T, size>& array,
   const T& element
 ) {
-  return arrayPushImpl(
+  return detail::arrayPushImpl(
     array,
     element,
     std::make_index_sequence<size>{}
@@ -168,6 +198,8 @@ template<
   return newArray;
 }*/
 
+namespace detail {
+
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -182,6 +214,12 @@ template<
   };
 }
 
+} // namespace detail
+
+/*!
+ * Removes the last element from an array. Only compiles if size of array-like
+ * container is greater than zero
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -192,13 +230,13 @@ template<
 > arrayPop(const ArrayType<T, size>& array) {
   static_assert(size != 0, "arrayPop target array is already empty");
 
-  return arrayPopImpl(
+  return detail::arrayPopImpl(
     array,
     std::make_index_sequence<size - 1>{}
   );
 }
 
-
+//! Array-like container equality comparaotr
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -216,6 +254,10 @@ template<
   return true;
 }
 
+/*!
+ * Array-like container ordering comparator specialization for containers of
+ * equal size
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -237,6 +279,10 @@ template<
   return true;
 }
 
+/*!
+ * Array-like container ordering comparator specialization for containers of
+ * unequal size, case a < b
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -252,6 +298,10 @@ template<
   return true;
 }
 
+/*!
+ * Array-like container ordering comparator specialization for containers of
+ * unequal size, case a > b
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -295,6 +345,11 @@ template<
   }
 }*/
 
+/*! 
+ * Returns an index within the passed array-like container whose element at that
+ * index is not less than the passed vaue. Proceeds via binary search. 1:1
+ * constexpr variant of std::lower_bound.
+ */
 template<
   typename T,
   class Comparator,
@@ -324,6 +379,7 @@ template<
   return bound;
 }
 
+//! Sorted array-like container insertion specialization for an empty array
 template<
   typename T,
   template<typename, size_t> class ArrayType,
@@ -338,6 +394,10 @@ template<
   return {item};
 }
 
+/*!
+ * Sorted array-like container insertion specialization for an array containing
+ * elements. Requires move compatibility of the contained type.
+ */
 template<
   typename T,
   template<typename, size_t> class ArrayType,
@@ -373,6 +433,10 @@ template<
   return newArray;
 }
 
+/*!
+ * Sorted array-like container insertion specialization for an empty array
+ * including a custom element comparator
+ */
 template<
   typename T,
   class Comparator,
@@ -389,6 +453,10 @@ template<
   return {item};
 }
 
+/*!
+ * Sorted array-like container insertion specialization for an array containing
+ * elements with a custom comparator.
+ */
 template<
   typename T,
   class Comparator,
@@ -426,6 +494,7 @@ template<
   return newArray;
 }
 
+//! Index-based in-place swapping of elements in an array-like container
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -440,6 +509,7 @@ template<
   data.at(a) = std::move(intermediate);
 }
 
+//! Index-based in-place reversal of elements in an array-like container
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -455,7 +525,11 @@ template<
   }
 }
 
-// works with std::array only in C++17
+/*!
+ * In-place next permutation of elements in an array-like type. 1:1 index-based
+ * variant of std::next_permutation
+ * NOTE: works with std::array only in C++17
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -493,6 +567,11 @@ template<
   }
 }
 
+/*!
+ * In-place previous permutation of elements in an array-like type. 1:1 
+ * index-based variant of std::prev_permutation
+ * NOTE: works with std::array only in C++17
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,

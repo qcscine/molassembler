@@ -20,6 +20,7 @@ namespace ConstexprMagic {
 namespace UpperTriangularMatrixImpl {
 
 namespace index_conversion {
+  //!  Converts from (i, j) matrix indices to the linear k index for the array
   template<unsigned long matrixSize, typename UnsignedType>
   constexpr unsigned toSingleIndex(const UnsignedType& i, const UnsignedType& j) {
     return (
@@ -29,6 +30,7 @@ namespace index_conversion {
     );
   }
 
+  //! Converts from the linear array to (i, j) matrix indices
   template<unsigned long matrixSize, typename UnsignedType>
   constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType& k) {
     UnsignedType i {
@@ -59,6 +61,10 @@ namespace index_conversion {
 
 } // namespace UpperTriangularMatrixImpl
 
+/*!
+ * Stores the data of an upper-triangular matrix in a linear array in an 
+ * all-constexpr fashion.
+ */
 template<typename ValueType, unsigned long matrixSize>
 class UpperTriangularMatrix {
 private:
@@ -70,7 +76,7 @@ public:
   const unsigned N = matrixSize;
 
 /* Constructors */
-  constexpr UpperTriangularMatrix(
+  constexpr explicit UpperTriangularMatrix(
     const std::array<ValueType, matrixSize * (matrixSize - 1) / 2>& data
   ) : _data(data)
   {}
@@ -104,6 +110,7 @@ public:
   }
 };
 
+//! Helper constructing function that deduces the required type signature
 template<unsigned long matrixSize, typename ValueType>
 constexpr UpperTriangularMatrix<ValueType, matrixSize> makeUpperTriangularMatrix(
   const std::array<ValueType, matrixSize * (matrixSize - 1) / 2>& data

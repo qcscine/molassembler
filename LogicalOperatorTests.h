@@ -4,9 +4,16 @@
 #include "Math.h"
 #include <iostream>
 
+/*!  @file
+ *
+ * Contains a suite of constexpr logical operator consistency checks. These can
+ * aid in the diagnosis of custom operator weak ordering inconsistencies and
+ * serve as useful library tests.
+ */
+
 namespace ConstexprMagic {
 
-// For any two types, check consistency of their logical operators
+//! For any two types, check consistency of their logical operators
 template<typename T>
 constexpr bool testLogicalOperators(const T& a, const T& b) {
   return (
@@ -21,6 +28,7 @@ constexpr bool testLogicalOperators(const T& a, const T& b) {
   );
 }
 
+//! Limited variant of testLogicalOperators
 template<typename T>
 constexpr bool testOperatorSmaller(const T& a, const T& b) {
   return Math::XOR(
@@ -32,6 +40,7 @@ constexpr bool testOperatorSmaller(const T& a, const T& b) {
 
 namespace dynamic {
 
+//! Dynamic explainer of inconsistencies
 template<typename T>
 void explainLogicalOperatorFailures(const T& a, const T& b) {
   if(

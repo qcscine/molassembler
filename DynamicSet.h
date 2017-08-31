@@ -7,6 +7,14 @@
 #include "Containers.h"
 #include "DynamicArray.h"
 
+/*! @file
+ *
+ * A constexpr fixed-maximum-size managed set so that the type signature does
+ * not change upon element insertion and deletion. STL parallel is std::set, 
+ * with the difference that here the maximum number of elements must be known at
+ * compile time.
+ */
+
 namespace ConstexprMagic {
 
 template<
@@ -74,6 +82,11 @@ public:
     }
   }
 
+  constexpr void clear() {
+    _items.clear();
+  }
+
+
   constexpr typename ArrayType::constIterator begin() const {
     return _items.begin();
   }
@@ -104,6 +117,10 @@ public:
     return other._items < _items;
   }
 
+  /*! 
+   * Directly maps the container to a STL set without modifying the contained
+   * elements
+   */
   std::set<T> toSTL() const {
     std::set<T> returnSet;
 
@@ -114,6 +131,11 @@ public:
     return returnSet;
   }
 
+  /*! 
+   * Maps the contained elements to an STL set with a (possibly modifying) 
+   * mapping function. This allows, e.g. a DynamicSet of DynamicArrays to be
+   * directly mapped to an STL set of vectors.
+   */
   template<typename MapFunction> 
   std::set<
     traits::functionReturnType<MapFunction, T>
@@ -136,9 +158,10 @@ public:
   }
 };
 
+//! Helper function to create a DynamicSet specifying only the maximum size
 template<
-  typename T,
   size_t nItems,
+  typename T,
   template<typename, size_t> class ArrayType,
   class Comparator = std::less<T>
 > constexpr DynamicSet<T, nItems, Comparator> makeDynamicSet(

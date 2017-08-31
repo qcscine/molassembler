@@ -704,4 +704,11 @@ static_assert(
   "Mapping pairs with pairSumFunctor does not yield expected result!"
 );
 
+using countTestType = std::tuple<unsigned, float, double, unsigned, size_t>;
+
+static_assert(
+  ConstexprMagic::TupleType::countType<countTestType, unsigned>() == 2,
+  "Counting unsigned in countTestType does not return two!"
+);
+
 } // namespace TupleTypeTests
