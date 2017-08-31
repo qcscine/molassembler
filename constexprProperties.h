@@ -1,17 +1,34 @@
 #include "Symmetries.h"
 
-#include "boost/hana.hpp"
 #include "constexpr_magic/Containers.h"
 #include "constexpr_magic/DynamicSet.h"
-#include "constexpr_magic/Math.h"
 #include "constexpr_magic/Array.h"
+
+/*! @file
+ *
+ * Constexpr parallel to Properties.h. Contains a slew of computations on the
+ * base symmetry data to compute derived properties. You can e.g. apply
+ * rotations, extract rotation multiplicities, calculate angular and chiral
+ * distortions between pairs of symmetries, etc.
+ */
+
+/* TODO
+ * - What is the exact difference between propagateIndexMapping and
+ *   symPosMapping?
+ */
 
 namespace Symmetry {
 
-// When C++17 rolls around, replace this with std::array!
+/* Typedef to use ConstexprMagic's Array instead of std::array as the underlying
+ * base array type since C++14's std::array has too few members marked constexpr
+ * as to be useful. When C++17 rolls around, replace this with std::array!
+ */
 template<typename T, size_t size> 
 using ArrayType = ConstexprMagic::Array<T, size>;
 
+namespace detail {
+
+// Iota helper, required to expand the index sequence generated in base
 template<size_t size, size_t... Indices>
 constexpr ArrayType<unsigned, size> iotaImpl(
   std::index_sequence<Indices...>
@@ -21,13 +38,16 @@ constexpr ArrayType<unsigned, size> iotaImpl(
   };
 }
 
+} // namespace detail
+
 template<size_t size>
 constexpr ArrayType<unsigned, size> iota() {
-  return iotaImpl<size>(
+  return detail::iotaImpl<size>(
     std::make_index_sequence<size>{}
   );
 }
 
+// applyRotation helper function
 template<typename SymmetryClass, size_t... Indices>
 constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
   const ArrayType<unsigned, SymmetryClass::size>& indices, 
@@ -41,6 +61,7 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
   };
 }
 
+//! Applies a symmetry group rotation to an array of indices
 template<typename SymmetryClass>
 constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
   const ArrayType<unsigned, SymmetryClass::size>& indices, 
@@ -50,45 +71,6 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
     indices,
     rotationFunctionIndex,
     std::make_index_sequence<SymmetryClass::size>{}
-  );
-}
-
-template<typename SymmetryClass>
-constexpr unsigned rotationMultiplicityImpl(
-  const unsigned& rotationFunctionIndex,
-  const ArrayType<unsigned, SymmetryClass::size>& runningIndices,
-  const unsigned& count
-) {
-  if(
-    ConstexprMagic::arraysEqual(
-      runningIndices,
-      iota<SymmetryClass::size>()
-    )
-  ) {
-    return count;
-  } else {
-    return rotationMultiplicityImpl<SymmetryClass>(
-      rotationFunctionIndex,
-      applyRotation<SymmetryClass>(
-        runningIndices,
-        rotationFunctionIndex
-      ),
-      count + 1
-    );
-  }
-}
-
-template<typename SymmetryClass>
-constexpr unsigned rotationMultiplicity(
-  const unsigned& rotationFunctionIndex
-) {
-  return rotationMultiplicityImpl<SymmetryClass>(
-    rotationFunctionIndex,
-    applyRotation<SymmetryClass>(
-      iota<SymmetryClass::size>(),
-      rotationFunctionIndex
-    ),
-    1
   );
 }
 
@@ -104,17 +86,21 @@ constexpr unsigned rotationMultiplicityImpl(
     )
   ) {
     return count;
-  } else {
-    return rotationMultiplicityImpl<SymmetryClass, rotationFunctionIndex>(
-      applyRotation<SymmetryClass>(
-        runningIndices,
-        rotationFunctionIndex
-      ),
-      count + 1
-    );
-  }
+  } 
+
+  return rotationMultiplicityImpl<SymmetryClass, rotationFunctionIndex>(
+    applyRotation<SymmetryClass>(
+      runningIndices,
+      rotationFunctionIndex
+    ),
+    count + 1
+  );
 }
 
+/*!
+ * Calculates the multiplicity of a symmetry group's rotation specified via an
+ * index in that symmetry's list of rotations
+ */
 template<typename SymmetryClass, unsigned rotationFunctionIndex>
 constexpr unsigned rotationMultiplicity() {
   return rotationMultiplicityImpl<SymmetryClass, rotationFunctionIndex>(
@@ -134,6 +120,7 @@ rotationMultiplicitiesImpl(std::index_sequence<Inds...>) {
   };
 }
 
+//! Calculates all multiplicities of a symmetry group's rotations.
 template<typename SymmetryClass>
 constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationMultiplicities() {
   return rotationMultiplicitiesImpl<SymmetryClass>(
@@ -141,6 +128,10 @@ constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationMultiplic
   );
 }
 
+/*!
+ * Template function generating all rotation multiplicities for a specified
+ * symmetry group type
+ */
 template<typename SymmetryClass>
 struct allRotationMultiplicities {
   static constexpr ArrayType<
@@ -151,16 +142,23 @@ struct allRotationMultiplicities {
   );
 };
 
-
+/*!
+ * Fetches the coordinates of an index in a Symmetry, properly handling the
+ * boost::none -> origin mapping.
+ */
 template<typename SymmetryClass>
 constexpr ConstexprMagic::Vector getCoordinates(const unsigned& indexInSymmetry) {
-  if(indexInSymmetry != replaceMe) {
+  if(indexInSymmetry != ORIGIN_PLACEHOLDER) {
     return SymmetryClass::coordinates.at(indexInSymmetry);
   }
 
   return {0, 0, 0};
 }
 
+/*!
+ * Calculates the volume of a tetrahedron spanned by four positions in
+ * three-dimensional space.
+ */
 constexpr double getTetrahedronVolume(
   const ConstexprMagic::Vector& i,
   const ConstexprMagic::Vector& j,
@@ -172,6 +170,11 @@ constexpr double getTetrahedronVolume(
   );
 }
 
+/*!
+ * Calculates the angular distortion between a pair of symmetries and a given
+ * index mapping between them that specifies how symmetry positions are mapped
+ * between the two.
+ */
 template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateAngleDistortion(
   const ArrayType<
@@ -199,18 +202,26 @@ constexpr double calculateAngleDistortion(
   return angularDistortion;
 }
 
+/*!
+ * Propagates a source symmetry position through an index mapping, properly
+ * handling the origin placeholder special unsigned value.
+ */
 template<size_t size>
 constexpr unsigned propagateSymmetryPosition(
   const unsigned& symmetryPosition,
   const ArrayType<unsigned, size>& indexMapping
 ) {
-  if(symmetryPosition != replaceMe) {
+  if(symmetryPosition != ORIGIN_PLACEHOLDER) {
     return indexMapping.at(symmetryPosition);
   }
 
-  return replaceMe;
+  return ORIGIN_PLACEHOLDER;
 }
 
+/*!
+ * Calculate the chiral distortion between the source symmetry and the target
+ * symmetry specified by an index mapping.
+ */
 template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateChiralDistortion(
   const ArrayType<
@@ -261,29 +272,10 @@ constexpr ArrayType<unsigned, size> symPosMapping(
   return symmetryPositions;
 }
 
-template<size_t size>
-struct DistortionInfo {
-  ArrayType<unsigned, size> indexMapping;
-  double totalDistortion;
-  double chiralDistortion;
-
-  constexpr DistortionInfo(
-    const ArrayType<unsigned, size>& passIndexMapping,
-    const double& passTotalDistortion,
-    const double& passChiralDistortion
-  ) : indexMapping(passIndexMapping),
-      totalDistortion(passTotalDistortion),
-      chiralDistortion(passChiralDistortion)
-  {}
-
-  constexpr DistortionInfo()
-    : indexMapping(iota<size>()),
-      totalDistortion(100),
-      chiralDistortion(100)
-  {}
-};
-
-
+/*!
+ * Calculate the maximum number of non-superimposable rotations a symmetry
+ * class can produce for entirely unequal indices
+ */
 template<typename SymmetryClass>
 constexpr unsigned maxRotations() {
   /* For each rotation in the symmetry class, figure out the multiplicity, i.e.
@@ -298,7 +290,7 @@ constexpr unsigned maxRotations() {
   );
 }
 
-
+// Some helper types
 template<typename SymmetryClass>
 using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 
@@ -311,15 +303,16 @@ using RotationsSetType = ConstexprMagic::DynamicSet<
 template<typename SymmetryClass>
 using ChainStructuresArrayType = ConstexprMagic::DynamicArray<
   IndicesList<SymmetryClass>,
-  maxRotations<SymmetryClass>() * 2
+  maxRotations<SymmetryClass>() * 2 // TODO factor is entirely arbitrary
 >;
 
 template<typename SymmetryClass>
 using ChainArrayType = ConstexprMagic::DynamicArray<
   unsigned,
-  maxRotations<SymmetryClass>() * 2
+  maxRotations<SymmetryClass>() * 2 // TODO factor is entirely arbitrary
 >;
 
+//! Generates all rotations of a sequence of indices within a symmetry group
 template<typename SymmetryClass>
 constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
   RotationsSetType<SymmetryClass> rotations;
@@ -363,6 +356,10 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
   return rotations;
 }
 
+/*! 
+ * Data struct to collect the results of calculating the ideal index mappings
+ * between pairs of indices
+ */
 template<typename SymmetryClass>
 struct MappingsReturnType {
   using MappingsList = ConstexprMagic::DynamicSet<
@@ -383,6 +380,13 @@ struct MappingsReturnType {
   {}
 };
 
+/*!
+ * Calculates the ideal index mappings when adding a ligand to a particular
+ * symmetry.
+ *
+ * TODO generalize to more equal size target symmetry and perhaps also ligand
+ * loss as soon as dynamic variant works
+ */
 template<class SymmetryClassFrom, class SymmetryClassTo>
 constexpr auto ligandGainMappings() {
   static_assert(

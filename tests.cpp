@@ -386,6 +386,9 @@ BOOST_AUTO_TEST_CASE(smallestAngleValue) {
   }
 }*/
 
+/* NOTE: can refactor out doLigandGainTestIfAdjacent with a simple if-constexpr
+ * in C++17
+ */
 template<class SymmetryClassFrom, class SymmetryClassTo>
 std::enable_if_t<
   SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
@@ -666,3 +669,9 @@ BOOST_AUTO_TEST_CASE(constexprProperties) {
     std::cout << TemplateMagic::condenseIterable(indexMapping) << std::endl;
   }*/
 }
+
+static_assert(
+  nSymmetries == std::tuple_size<data::allSymmetryDataTypes>::value,
+  "nSymmetries does not equal number of symmetry data class types in "
+  "allSymmetryDataTypes"
+);

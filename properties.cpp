@@ -11,9 +11,6 @@
 
 #include <Eigen/Geometry>
 
-/* TODO
- */
-
 class RGBGradient {
 public:
   using RGBType = std::array<double, 3>;

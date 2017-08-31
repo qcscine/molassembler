@@ -30,6 +30,14 @@
 #include <functional>
 #include <algorithm>
 
+/*! @file
+ *
+ * Central inclusion point of the library. Defines the main symmetry data and
+ * all accessors. Symmetries are defined in a constexpr fashion and homogenized
+ * into a single container at compile-time to allow for compile-time computation
+ * without losing universal accessibility at run-time.
+ */
+
 /* TODO
  * - Debug and Release builds
  * - Improve trigonal pyramidal coordinates definition to get 107.5 angle as a
@@ -48,7 +56,8 @@ using RotationsList = std::vector<
   std::vector<unsigned>
 >;
 
-/* All angle functions can be called with arbitrary (valid) parameters
+/*!
+ * All angle functions can be called with arbitrary (valid) parameters
  * without failing. Valid here means that a != b and less than the size of
  * the symmetry requested.
  *
@@ -58,7 +67,8 @@ using AngleFunctionType = std::function<
   double(const unsigned&, const unsigned&)
 >;
 
-/* All symmetries have a guess implementation of what could work as the defined
+/*! 
+ * All symmetries have a guess implementation of what could work as the defined
  * tetrahedra. Have to use boost::none to signal to replace this position with 
  * the central atom as it is not part of the indexing scheme used here.
  *
@@ -77,7 +87,7 @@ using TetrahedronList = std::vector<
 
 using CoordinateList = std::vector<Eigen::Vector3d>;
 
-// Dynamic symmetry information class
+//! Dynamic symmetry information data struct
 struct SymmetryInformation {
   const std::string stringName;
   const unsigned size;
@@ -100,7 +110,7 @@ struct SymmetryInformation {
   {}
 };
 
-// Symmetry names list
+//! Enumeration of all contained symmetry names
 enum class Name : unsigned {
   Linear, // 2
   Bent,
@@ -120,34 +130,50 @@ enum class Name : unsigned {
   SquareAntiPrismatic // 8
 };
 
-// DATA
+//! Total number of contained symmetries
 constexpr unsigned nSymmetries = 16;
 
-constexpr std::array<Name, nSymmetries> allNames {
-  Name::Linear, // 2
-  Name::Bent,
-  Name::TrigonalPlanar, // 3
-  Name::TrigonalPyramidal,
-  Name::TShaped,
-  Name::Tetrahedral, // 4
-  Name::SquarePlanar,
-  Name::Seesaw,
-  Name::SquarePyramidal, // 5
-  Name::TrigonalBiPyramidal,
-  Name::PentagonalPlanar,
-  Name::Octahedral, // 6
-  Name::TrigonalPrismatic,
-  Name::PentagonalPyramidal,
-  Name::PentagonalBiPyramidal, // 7
-  Name::SquareAntiPrismatic // 8
-};
+// Helper function to create all names vector
+template<size_t ... Inds>
+constexpr std::array<Name, nSymmetries> makeAllNames(
+  std::index_sequence<Inds...>
+) {
+  return {{
+    static_cast<Name>(Inds)...
+  }};
+}
 
-constexpr unsigned replaceMe = std::numeric_limits<unsigned>::max();
+//! A list of all the enum class values
+constexpr std::array<Name, nSymmetries> allNames = makeAllNames(
+  std::make_index_sequence<nSymmetries>()
+);
+
+//! A placeholder value for constexpr tetrahedra specification of origin
+constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
 
 
+/*! 
+ * Namespace containing all symmetry data classes and some minor helper functions
+ *
+ * Each symmetry data class must have the following members, all of which must
+ * be static constexpr (or static const in the exception of stringName):
+ * - name (Symmetry::Name)
+ * - size (unsigned)
+ * - stringName (string)
+ * - angleFunction ( double(const unsigned&, const unsigned&) )
+ * - coordinates ( array<ConstexprMagic::Vector, N> ): N is size of symmetry,
+ *   see above
+ * - rotations ( array< array<unsigned, size>, R> ): R is however many
+ *   rotations are needed to produce all superimposable rotations
+ * - tetrahedra ( array< array<unsigned, 4>, T> ): T is however many tetrahedra
+ *   are required to completely define the chirality
+ */
 namespace data {
 
 struct Linear {
+  /*
+   *  0 – (_) – 1
+   */
   static constexpr Symmetry::Name name = Symmetry::Name::Linear;
   static constexpr unsigned size = 2;
   static const std::string stringName;
@@ -166,7 +192,7 @@ struct Linear {
     std::array<unsigned, 2>,
     1
   > rotations {{
-    {1, 0}
+    {{1, 0}}
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
@@ -203,7 +229,7 @@ struct Bent {
     std::array<unsigned, 2>,
     1
   > rotations {{
-    {1, 0}
+    {{1, 0}}
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
@@ -242,8 +268,8 @@ struct TrigonalPlanar {
     std::array<unsigned, 3>,
     2
   > rotations {{
-    {1, 2, 0}, // C3
-    {0, 2, 1} // C2
+    {{1, 2, 0}}, // C3
+    {{0, 2, 1}} // C2
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
@@ -282,13 +308,13 @@ struct TrigonalPyramidal {
     std::array<unsigned, 3>,
     1
   > rotations {{
-    {2, 0, 1} // C3
+    {{2, 0, 1}} // C3
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
     1
   > tetrahedra {{
-    {{replaceMe, 0, 1, 2}}
+    {{ORIGIN_PLACEHOLDER, 0, 1, 2}}
   }};
 };
 
@@ -322,7 +348,7 @@ struct TShaped {
     std::array<unsigned, 3>,
     1
   > rotations {{
-    {2, 1, 0} // C2
+    {{2, 1, 0}} // C2
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
@@ -371,10 +397,10 @@ struct Tetrahedral {
     std::array<unsigned, 4>,
     4
   > rotations {{
-    {0, 3, 1, 2}, // C4, 1
-    {2, 1, 3, 0}, // C4, 2
-    {3, 0, 2, 1}, // C4, 3
-    {1, 2, 0, 3}  // C4, 4
+    {{0, 3, 1, 2}}, // C4, 1
+    {{2, 1, 3, 0}}, // C4, 2
+    {{3, 0, 2, 1}}, // C4, 3
+    {{1, 2, 0, 3}}  // C4, 4
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
@@ -419,9 +445,9 @@ struct SquarePlanar {
     std::array<unsigned, 4>,
     3
   > rotations {{
-    {3, 0, 1, 2}, // C4
-    {1, 0, 3, 2}, // C2
-    {3, 2, 1, 0}  // C2'
+    {{3, 0, 1, 2}}, // C4
+    {{1, 0, 3, 2}}, // C2
+    {{3, 2, 1, 0}}  // C2'
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
@@ -466,7 +492,7 @@ struct Seesaw {
     std::array<unsigned, 4>,
     1
   > rotations {{
-    {3, 2, 1, 0} // C2
+    {{3, 2, 1, 0}} // C2
   }};
 
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -481,8 +507,8 @@ struct Seesaw {
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
-    {{0, replaceMe, 1, 2}},
-    {{replaceMe, 3, 1, 2}},
+    {{0, ORIGIN_PLACEHOLDER, 1, 2}},
+    {{ORIGIN_PLACEHOLDER, 3, 1, 2}},
   }};
 #endif
 };
@@ -537,7 +563,7 @@ struct SquarePyramidal {
     std::array<unsigned, 5>,
     1
   > rotations {{
-    {3, 0, 1, 2, 4} // C4
+    {{3, 0, 1, 2, 4}} // C4
   }};
 
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -553,10 +579,10 @@ struct SquarePyramidal {
     std::array<unsigned, 4>,
     4
   > tetrahedra {{
-    {{0, 1, 4, replaceMe}},
-    {{1, 2, 4, replaceMe}},
-    {{2, 3, 4, replaceMe}},
-    {{3, 0, 4, replaceMe}}
+    {{0, 1, 4, ORIGIN_PLACEHOLDER}},
+    {{1, 2, 4, ORIGIN_PLACEHOLDER}},
+    {{2, 3, 4, ORIGIN_PLACEHOLDER}},
+    {{3, 0, 4, ORIGIN_PLACEHOLDER}}
   }};
 #endif
 };
@@ -607,10 +633,10 @@ struct TrigonalBiPyramidal {
     std::array<unsigned, 5>,
     4
   > rotations {{
-    {2, 0, 1, 3, 4}, // C3
-    {0, 2, 1, 4, 3}, // C2 on 0
-    {2, 1, 0, 4, 3}, // C2 on 1
-    {1, 0, 2, 4, 3} // C2 on 2
+    {{2, 0, 1, 3, 4}}, // C3
+    {{0, 2, 1, 4, 3}}, // C2 on 0
+    {{2, 1, 0, 4, 3}}, // C2 on 1
+    {{1, 0, 2, 4, 3}} // C2 on 2
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
@@ -653,8 +679,8 @@ struct PentagonalPlanar {
     std::array<unsigned, 5>,
     2
   > rotations {{
-    {4, 0, 1, 2, 3}, // C5
-    {0, 4, 3, 2, 1} // C2
+    {{4, 0, 1, 2, 3}}, // C5
+    {{0, 4, 3, 2, 1}} // C2
   }};
   static constexpr std::array<
     std::array<unsigned, 4>,
@@ -707,9 +733,9 @@ struct Octahedral {
     std::array<unsigned, 6>,
     3
   > rotations {{
-    {3, 0, 1, 2, 4, 5}, // vertical C4
-    {0, 5, 2, 4, 1, 3}, // horizontal C4
-    {4, 1, 5, 3, 2, 0} // horizontal C4'
+    {{3, 0, 1, 2, 4, 5}}, // vertical C4
+    {{0, 5, 2, 4, 1, 3}}, // horizontal C4
+    {{4, 1, 5, 3, 2, 0}} // horizontal C4'
   }};
 
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -727,14 +753,14 @@ struct Octahedral {
     std::array<unsigned, 4>,
     8
   > tetrahedra {{
-    {{3, 0, 4, replaceMe}},
-    {{0, 1, 4, replaceMe}},
-    {{1, 2, 4, replaceMe}},
-    {{2, 3, 4, replaceMe}},
-    {{3, 0, replaceMe, 5}},
-    {{0, 1, replaceMe, 5}},
-    {{1, 2, replaceMe, 5}},
-    {{2, 3, replaceMe, 5}}
+    {{3, 0, 4, ORIGIN_PLACEHOLDER}},
+    {{0, 1, 4, ORIGIN_PLACEHOLDER}},
+    {{1, 2, 4, ORIGIN_PLACEHOLDER}},
+    {{2, 3, 4, ORIGIN_PLACEHOLDER}},
+    {{3, 0, ORIGIN_PLACEHOLDER, 5}},
+    {{0, 1, ORIGIN_PLACEHOLDER, 5}},
+    {{1, 2, ORIGIN_PLACEHOLDER, 5}},
+    {{2, 3, ORIGIN_PLACEHOLDER, 5}}
   }};
 #endif
 };
@@ -793,8 +819,8 @@ struct TrigonalPrismatic {
     std::array<unsigned, 6>,
     2
   > rotations {{
-    {2, 0, 1, 5, 3, 4}, // C3 axial
-    {5, 4, 3, 2, 1, 0} // C2 betw. 1, 4
+    {{2, 0, 1, 5, 3, 4}}, // C3 axial
+    {{5, 4, 3, 2, 1, 0}} // C2 betw. 1, 4
   }};
 
   static constexpr std::array<
@@ -802,8 +828,8 @@ struct TrigonalPrismatic {
     2
   > tetrahedra {{
     // TODO dubious if this captures all relevant information, too limited
-    {{replaceMe, 0, 1, 2}},
-    {{3, replaceMe, 4, 5}}
+    {{ORIGIN_PLACEHOLDER, 0, 1, 2}},
+    {{3, ORIGIN_PLACEHOLDER, 4, 5}}
   }};
 };
 
@@ -850,7 +876,7 @@ struct PentagonalPyramidal {
     std::array<unsigned, 6>,
     1
   > rotations {{
-    {4, 0, 1, 2, 3, 5} // C5 axial
+    {{4, 0, 1, 2, 3, 5}} // C5 axial
   }};
 
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -860,18 +886,18 @@ struct PentagonalPyramidal {
   > tetrahedra {{
     {{0, 1, 5, 2}},
     {{2, 3, 5, 4}},
-    {{4, 5, replaceMe, 0}}
+    {{4, 5, ORIGIN_PLACEHOLDER, 0}}
   }};
 #else // Regular
   static constexpr std::array<
     std::array<unsigned, 4>,
     5
   > tetrahedra {{
-    {{0, replaceMe, 1, 5}},
-    {{1, replaceMe, 2, 5}},
-    {{2, replaceMe, 3, 5}},
-    {{3, replaceMe, 4, 5}},
-    {{4, replaceMe, 0, 5}}
+    {{0, ORIGIN_PLACEHOLDER, 1, 5}},
+    {{1, ORIGIN_PLACEHOLDER, 2, 5}},
+    {{2, ORIGIN_PLACEHOLDER, 3, 5}},
+    {{3, ORIGIN_PLACEHOLDER, 4, 5}},
+    {{4, ORIGIN_PLACEHOLDER, 0, 5}}
   }};
 #endif
 };
@@ -925,8 +951,8 @@ struct PentagonalBiPyramidal {
     std::array<unsigned, 7>,
     2
   > rotations {{
-    {4, 0, 1, 2, 3, 5, 6}, // C5 axial
-    {1, 0, 4, 3, 2, 6, 5} // C2 equatorial on 3
+    {{4, 0, 1, 2, 3, 5, 6}}, // C5 axial
+    {{1, 0, 4, 3, 2, 6, 5}} // C2 equatorial on 3
   }};
 
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -945,16 +971,16 @@ struct PentagonalBiPyramidal {
     std::array<unsigned, 4>,
     10
   > tetrahedra {{
-    {{0, 1, 5, replaceMe}},
-    {{1, 2, 5, replaceMe}},
-    {{2, 3, 5, replaceMe}},
-    {{3, 4, 5, replaceMe}},
-    {{4, 0, 5, replaceMe}},
-    {{0, 1, replaceMe, 6}},
-    {{1, 2, replaceMe, 6}},
-    {{2, 3, replaceMe, 6}},
-    {{3, 4, replaceMe, 6}},
-    {{4, 0, replaceMe, 6}}
+    {{0, 1, 5, ORIGIN_PLACEHOLDER}},
+    {{1, 2, 5, ORIGIN_PLACEHOLDER}},
+    {{2, 3, 5, ORIGIN_PLACEHOLDER}},
+    {{3, 4, 5, ORIGIN_PLACEHOLDER}},
+    {{4, 0, 5, ORIGIN_PLACEHOLDER}},
+    {{0, 1, ORIGIN_PLACEHOLDER, 6}},
+    {{1, 2, ORIGIN_PLACEHOLDER, 6}},
+    {{2, 3, ORIGIN_PLACEHOLDER, 6}},
+    {{3, 4, ORIGIN_PLACEHOLDER, 6}},
+    {{4, 0, ORIGIN_PLACEHOLDER, 6}}
   }};
 #endif
 };
@@ -1045,7 +1071,7 @@ struct SquareAntiPrismatic {
     std::array<unsigned, 8>,
     2
   > rotations {{
-    {3, 0, 1, 2, 7, 4, 5, 6}, // C4 axial
+    {{3, 0, 1, 2, 7, 4, 5, 6}}, // C4 axial
     /* 180° on equatorial axis in plane with 4, 6 
      *
      *   1   5   2
@@ -1063,7 +1089,7 @@ struct SquareAntiPrismatic {
      *   4   0   7
      *
      */
-    {5, 4, 7, 6, 1, 0, 3, 2}, 
+    {{5, 4, 7, 6, 1, 0, 3, 2}}, 
   }};
 
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -1081,14 +1107,14 @@ struct SquareAntiPrismatic {
     std::array<unsigned, 4>,
     8
   > tetrahedra {{
-    {{7, 0, 4, replaceMe}},
-    {{0, 4, replaceMe, 1}},
-    {{4, 1, 5, replaceMe}},
-    {{1, 5, replaceMe, 2}},
-    {{5, 2, 6, replaceMe}},
-    {{2, 6, replaceMe, 3}},
-    {{6, 3, 7, replaceMe}},
-    {{3, 7, replaceMe, 0}}
+    {{7, 0, 4, ORIGIN_PLACEHOLDER}},
+    {{0, 4, ORIGIN_PLACEHOLDER, 1}},
+    {{4, 1, 5, ORIGIN_PLACEHOLDER}},
+    {{1, 5, ORIGIN_PLACEHOLDER, 2}},
+    {{5, 2, 6, ORIGIN_PLACEHOLDER}},
+    {{2, 6, ORIGIN_PLACEHOLDER, 3}},
+    {{6, 3, 7, ORIGIN_PLACEHOLDER}},
+    {{3, 7, ORIGIN_PLACEHOLDER, 0}}
   }};
 #endif
 };
@@ -1114,9 +1140,11 @@ using allSymmetryDataTypes = std::tuple<
   SquareAntiPrismatic // 8
 >;
 
+// Typedef to avoid reusing C-Style function ptr type
 using AngleFunctionPtr = double(*)(const unsigned&, const unsigned&);
 
-/*! Constructs an array of function pointers to all static angle functions
+/*!
+ * Constructs an array of function pointers to all static angle functions
  * for runtime lookup
  */
 template<typename ...SymmetryClasses>
@@ -1213,7 +1241,7 @@ TetrahedronList makeTetrahedra(
       TemplateMagic::map(
         tetrahedron,
         [](const unsigned& index) -> boost::optional<unsigned> {
-          if(index == replaceMe) {
+          if(index == ORIGIN_PLACEHOLDER) {
             return boost::none;
           }
 
@@ -1298,24 +1326,29 @@ constexpr auto angleFunctions = ConstexprMagic::TupleType::unpackToFunction<
  */
 const std::map<Name, SymmetryInformation>& symmetryData();
 
-// Shortcut functions
+/* Shortcut functions */
+//! Fetch the string name of a symmetry
 inline const std::string& name(const Name& name) {
   return symmetryData().at(name).stringName;
 }
 
+//! Fetch the number of symmetry positions of a symmetry
 inline const unsigned& size(const Name& name) {
   return symmetryData().at(name).size;
 }
 
+//! Fetches a symmetry's list of rotations
 inline const RotationsList& rotations(const Name& name) {
   return symmetryData().at(name).rotations;
 }
 
+//! Gets a symmetry's angle function
 inline data::AngleFunctionPtr angleFunction(const Name& name) {
   unsigned symmetryIndex = static_cast<unsigned>(name);
   return data::angleFunctions.at(symmetryIndex);
 }
 
+//! Returns the index of a symmetry name within allNames
 inline unsigned nameIndex(const Name& name) {
   return std::find(
     allNames.begin(),
@@ -1324,11 +1357,13 @@ inline unsigned nameIndex(const Name& name) {
   ) - allNames.begin();
 }
 
+//! Fetches the list of tetrahedra defined in a symmetry
 inline const TetrahedronList& tetrahedra(const Name& name) {
   return symmetryData().at(name).tetrahedra;
 }
 
-// Derived data
+/* Derived data */
+//! The smallest angle between any symmetry positions in 3D coordinates
 constexpr double smallestAngle = ConstexprMagic::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
   data::minAngleFunctor

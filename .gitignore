@@ -1,4 +1,5 @@
 build/
+documentation/
 .lvimrc
 *.svg
 .commit-notes

@@ -1,10 +1,14 @@
 #ifndef INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 #define INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 
-#include <vector>
 #include <numeric>
 
 #include "Symmetries.h"
+
+/*! @file
+ *
+ * Contains a suite of property calculations on the dynamic symmetry data.
+ */
 
 namespace Symmetry {
 
