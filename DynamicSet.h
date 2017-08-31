@@ -1,7 +1,6 @@
 #ifndef INCLUDE_CONSTEXPR_MAGIC_DYNAMIC_SET_H
 #define INCLUDE_CONSTEXPR_MAGIC_DYNAMIC_SET_H
 
-#include <array>
 #include <set>
 
 #include "Containers.h"

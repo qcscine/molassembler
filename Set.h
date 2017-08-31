@@ -1,9 +1,6 @@
 #ifndef INCLUDE_CONSTEXPR_MAGIC_SET_H
 #define INCLUDE_CONSTEXPR_MAGIC_SET_H
 
-#include <array>
-
-#include "Containers.h"
 #include "Array.h"
 
 /*! @file

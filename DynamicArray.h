@@ -7,7 +7,6 @@
 #include <utility>
 
 #include "Containers.h"
-#include "Array.h"
 
 /*! @file
  *
