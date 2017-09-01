@@ -103,6 +103,35 @@ template<
 
 namespace detail {
 
+
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t size,
+  size_t ... Inds
+> constexpr ArrayType<T, size> iotaHelper(
+  std::index_sequence<Inds...>
+) {
+  return ArrayType<T, size> {
+    Inds...
+  };
+}
+
+} // namespace detail
+
+//!  Iota for any array type
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t size
+> constexpr ArrayType<T, size> iota() {
+  return detail::iotaHelper<ArrayType, T, size>(
+    std::make_index_sequence<size>()
+  );
+}
+
+namespace detail {
+
 //! Implementation helper of array-like type concatenation. 
 template<
   template<typename, size_t> class ArrayType,
