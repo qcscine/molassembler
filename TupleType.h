@@ -207,7 +207,7 @@ template<
   );
 }
 
-//!  Counts how often a type is contained in a tuple type.
+//! Counts how often a type is contained in a tuple type.
 template<
   typename TupleType,
   typename T
@@ -217,6 +217,25 @@ template<
       std::tuple_size<TupleType>::value
     >()
   );
+}
+
+/*! 
+ * Tests whether all types in the tuple return true when evaluated against a
+ * predicate
+ */
+template<
+  typename TupleType,
+  template<typename> class UnaryPredicate
+> constexpr bool allOf() {
+  constexpr size_t N = std::tuple_size<TupleType>::value;
+  constexpr auto mapped = map<TupleType, UnaryPredicate>();
+  for(unsigned i = 0; i < N; ++i) {
+    if(!mapped.at(i)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 } // namespace TupleType
