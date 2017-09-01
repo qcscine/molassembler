@@ -398,7 +398,7 @@ std::enable_if_t<
    * .mappings - dynamic array of fixed-size index mappings
    * .angularDistortion, .chiralDistortion - doubles
    */
-  auto constexprMappings = ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
+  auto constexprMappings = properties::ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
 
   /* Vector of structs:
    * .indexMapping - vector containing the index mapping
@@ -458,8 +458,8 @@ struct RotationGenerationTest {
   static bool value() {
 
     // This is a DynamicSet of SymmetryClass-sized Arrays
-    auto constexprRotations = generateAllRotations<SymmetryClass>(
-      iota<SymmetryClass::size>()
+    auto constexprRotations = properties::generateAllRotations<SymmetryClass>(
+      properties::startingIndexSequence<SymmetryClass>()
     );
 
     // This is a std::set of SymmetryClass-sized std::vectors
@@ -504,7 +504,7 @@ struct RotationGenerationTest {
         << " symmetry: Sizes of generated sets are different. "
         << "constexpr - " << convertedRotations.size() << " != "
         << dynamicRotations.size() << " - dynamic" << std::endl;
-      std::cout << " Maximum #rotations: " << maxRotations<SymmetryClass>() 
+      std::cout << " Maximum #rotations: " << properties::maxRotations<SymmetryClass>() 
         << std::endl;
 
       std::cout << " Converted constexpr:" << std::endl;
@@ -568,7 +568,7 @@ std::enable_if_t<
   SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
   void
 > doWriteIfAdjacent() {
-  auto constexprMapping = ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
+  auto constexprMapping = properties::ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
 
   unsigned multiplicity = constexprMapping.mappings.size();
 

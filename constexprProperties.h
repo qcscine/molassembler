@@ -19,6 +19,8 @@
 
 namespace Symmetry {
 
+namespace properties {
+
 /* Typedef to use ConstexprMagic's Array instead of std::array as the underlying
  * base array type since C++14's std::array has too few members marked constexpr
  * as to be useful. When C++17 rolls around, replace this with std::array!
@@ -26,25 +28,13 @@ namespace Symmetry {
 template<typename T, size_t size> 
 using ArrayType = ConstexprMagic::Array<T, size>;
 
-namespace detail {
-
-// Iota helper, required to expand the index sequence generated in base
-template<size_t size, size_t... Indices>
-constexpr ArrayType<unsigned, size> iotaImpl(
-  std::index_sequence<Indices...>
-) {
-  return {
-    Indices...
-  };
-}
-
-} // namespace detail
-
-template<size_t size>
-constexpr ArrayType<unsigned, size> iota() {
-  return detail::iotaImpl<size>(
-    std::make_index_sequence<size>{}
-  );
+template<typename SymmetryClass>
+constexpr auto startingIndexSequence() {
+  return ConstexprMagic::iota<
+    ArrayType,
+    unsigned,
+    SymmetryClass::size
+  >();
 }
 
 // applyRotation helper function
@@ -75,20 +65,20 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
 }
 
 template<typename SymmetryClass, unsigned rotationFunctionIndex>
-constexpr unsigned rotationMultiplicityImpl(
+constexpr unsigned rotationPeriodicityImpl(
   const ArrayType<unsigned, SymmetryClass::size>& runningIndices,
   const unsigned& count
 ) {
   if(
     ConstexprMagic::arraysEqual(
       runningIndices,
-      iota<SymmetryClass::size>()
+      startingIndexSequence<SymmetryClass>()
     )
   ) {
     return count;
   } 
 
-  return rotationMultiplicityImpl<SymmetryClass, rotationFunctionIndex>(
+  return rotationPeriodicityImpl<SymmetryClass, rotationFunctionIndex>(
     applyRotation<SymmetryClass>(
       runningIndices,
       rotationFunctionIndex
@@ -102,10 +92,10 @@ constexpr unsigned rotationMultiplicityImpl(
  * index in that symmetry's list of rotations
  */
 template<typename SymmetryClass, unsigned rotationFunctionIndex>
-constexpr unsigned rotationMultiplicity() {
-  return rotationMultiplicityImpl<SymmetryClass, rotationFunctionIndex>(
+constexpr unsigned rotationPeriodicity() {
+  return rotationPeriodicityImpl<SymmetryClass, rotationFunctionIndex>(
     applyRotation<SymmetryClass>(
-      iota<SymmetryClass::size>(),
+      startingIndexSequence<SymmetryClass>(),
       rotationFunctionIndex
     ),
     1
@@ -114,16 +104,16 @@ constexpr unsigned rotationMultiplicity() {
 
 template<typename SymmetryClass, size_t ...Inds>
 constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> 
-rotationMultiplicitiesImpl(std::index_sequence<Inds...>) {
+rotationPeriodicitiesImpl(std::index_sequence<Inds...>) {
   return {
-    rotationMultiplicity<SymmetryClass, Inds>()...
+    rotationPeriodicity<SymmetryClass, Inds>()...
   };
 }
 
 //! Calculates all multiplicities of a symmetry group's rotations.
 template<typename SymmetryClass>
-constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationMultiplicities() {
-  return rotationMultiplicitiesImpl<SymmetryClass>(
+constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationPeriodicities() {
+  return rotationPeriodicitiesImpl<SymmetryClass>(
     std::make_index_sequence<SymmetryClass::rotations.size()>{}
   );
 }
@@ -133,11 +123,11 @@ constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationMultiplic
  * symmetry group type
  */
 template<typename SymmetryClass>
-struct allRotationMultiplicities {
+struct allRotationPeriodicities {
   static constexpr ArrayType<
     unsigned,
     SymmetryClass::rotations
-  > value = rotationMultiplicitiesImpl<SymmetryClass>(
+  > value = rotationPeriodicitiesImpl<SymmetryClass>(
     std::make_index_sequence<SymmetryClass::rotations.size()>{}
   );
 };
@@ -281,10 +271,10 @@ constexpr unsigned maxRotations() {
   /* For each rotation in the symmetry class, figure out the multiplicity, i.e.
    * how often a rotation has to be applied to return to identity
    */
-  constexpr auto symmetryRotationMultiplicities = rotationMultiplicities<SymmetryClass>();
+  constexpr auto symmetryRotationPeriodicities = rotationPeriodicities<SymmetryClass>();
 
   return ConstexprMagic::reduce(
-    symmetryRotationMultiplicities,
+    symmetryRotationPeriodicities,
     1u,
     std::multiplies<unsigned>()
   );
@@ -400,7 +390,7 @@ constexpr auto ligandGainMappings() {
   double lowestAngleDistortion = 100;
   double lowestChiralDistortion = 100;
 
-  auto indexMapping = iota<SymmetryClassTo::size>();
+  auto indexMapping = startingIndexSequence<SymmetryClassTo>();
 
   ConstexprMagic::DynamicSet<
     IndexMappingType,
@@ -472,5 +462,7 @@ constexpr auto ligandGainMappings() {
     std::move(lowestChiralDistortion)
   );
 }
+
+} // namespace properties
 
 } // namespace Symmetry
