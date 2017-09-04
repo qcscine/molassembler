@@ -1,18 +1,20 @@
-# Symmetry information library
+# Symmetry definitions and properties library
 ## Overview
 
-Provides structured information about a set of symmetries. For every symmetry, 
-the following information is exposed:
+Contains a number of idealized symmetry definitions for the classification of
+molecular geometries. Computations can either be performed on constexpr objects
+at compile-time or a collected dynamic container at runtime.
 
-- A string name
-- The number of substituents / coordination number
-- A minimal set of rotations that allows the construction of any rotational
-  equivalent
-- A function that provides the geometric angle between any two unequal
-  substituents
-- A list of tetrahedron indices that can encapsulate all steric information 
-  contained in the symmetry
-- A set of sample coordinates that fulfill the set geometric criteria
+## Data provided per symmetry
+
+- Number of binding sites
+- String representation
+- Angle function returning idealized angles between symmetry positions
+- Idealized coordinates
+- A minimal set of rotations to allow the generation of all superimposable
+  sequences of binding site mapping indices
+- A set of tetrahedra whose signed volumes permit the distinction of chiral
+  elements within the symmetry
 
 ## Contained symmetries
 
@@ -32,6 +34,21 @@ the following information is exposed:
 - Pentagonal pyramidal (6)
 - Pentagonal bipyramidal (7)
 - Square antiprismatic (8)
+
+
+## Properties / Algorithms
+
+Properties are implemented in both a dynamic and a constexpr fashion to ensure
+correctness / consistency.
+
+- Apply rotation to a sequence of indices
+- Calculate a signed tetrahedron volume in 3D cartesian space
+- Find periodicity of rotations
+- Generate all superimposable index sequences for a particular starting index
+  sequence within a specific symmetry
+- Find ideal (meaning least angular and chiral distortion) mappings between
+  symmetry positions when adding or removing a ligand as well as when a
+  transition between symmetries of same size are sought.
 
 ## Integrating
 

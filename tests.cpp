@@ -7,6 +7,9 @@
 #include <iostream>
 #include <numeric>
 #include <Eigen/Geometry>
+#include "constexprProperties.h"
+
+#include "Properties.h"
 
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
@@ -15,7 +18,7 @@ using namespace Symmetry;
 
 auto makeCoordinateGetter(const Name& name) {
   return [&](const unsigned& index) -> Eigen::Vector3d {
-    return symmetryData.at(name).coordinates.at(index);
+    return symmetryData().at(name).coordinates.at(index);
   };
 }
 
@@ -34,6 +37,51 @@ std::vector<unsigned> rotate(
   return rotated;
 }
 
+BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
+  BOOST_TEST_REQUIRE(Symmetry::symmetryData().size() == Symmetry::nSymmetries);
+
+  BOOST_REQUIRE(
+    TemplateMagic::all_of(
+      TemplateMagic::map(
+        Symmetry::allNames,
+        [&](const auto& symmetryName) -> bool {
+          return Symmetry::symmetryData().count(symmetryName) == 1;
+        }
+      )
+    )
+  );
+}
+
+BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
+  BOOST_CHECK(
+    TemplateMagic::all_of(
+      TemplateMagic::zipMap(
+        Symmetry::data::angleFunctions,
+        std::vector<Symmetry::data::AngleFunctionPtr> {{
+          &Symmetry::data::Linear::angleFunction,
+          &Symmetry::data::Bent::angleFunction,
+          &Symmetry::data::TrigonalPlanar::angleFunction, // 3
+          &Symmetry::data::TrigonalPyramidal::angleFunction,
+          &Symmetry::data::TShaped::angleFunction,
+          &Symmetry::data::Tetrahedral::angleFunction, // 4
+          &Symmetry::data::SquarePlanar::angleFunction,
+          &Symmetry::data::Seesaw::angleFunction,
+          &Symmetry::data::SquarePyramidal::angleFunction, // 5
+          &Symmetry::data::TrigonalBiPyramidal::angleFunction,
+          &Symmetry::data::PentagonalPlanar::angleFunction,
+          &Symmetry::data::Octahedral::angleFunction, // 6
+          &Symmetry::data::TrigonalPrismatic::angleFunction,
+          &Symmetry::data::PentagonalPyramidal::angleFunction,
+          &Symmetry::data::PentagonalBiPyramidal::angleFunction, // 7
+          &Symmetry::data::SquareAntiPrismatic::angleFunction // 8
+        }},
+        [](const auto& aPtr, const auto& bPtr) -> bool {
+          return aPtr == bPtr;
+        }
+      )
+    )
+  );
+}
 
 BOOST_AUTO_TEST_CASE( correctRotationVectorSize ) {
   // every rotation vector size must equal size of symmetry
@@ -185,8 +233,8 @@ BOOST_AUTO_TEST_CASE( rightAmountOfCoordinates) {
   // every information must have the right amount of coordinates
   for(const auto& symmetryName: allNames) {
     BOOST_CHECK(
-      symmetryData.at(symmetryName).coordinates.size() == 
-      symmetryData.at(symmetryName).size
+      symmetryData().at(symmetryName).coordinates.size() == 
+      symmetryData().at(symmetryName).size
     );
   }
 }
@@ -195,7 +243,7 @@ BOOST_AUTO_TEST_CASE( allCoordinateVectorsLengthOne) {
   for(const auto& symmetryName: allNames) {
     bool all_pass = true;
 
-    for(const auto& coordinate: symmetryData.at(symmetryName).coordinates) {
+    for(const auto& coordinate: symmetryData().at(symmetryName).coordinates) {
       if(coordinate.norm() - 1 > 1e10) {
         all_pass = false;
         break;
@@ -214,7 +262,7 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
 
   for(const auto& symmetryName: allNames) {
     auto getCoordinates =  [&](const unsigned& index) -> Eigen::Vector3d {
-      return symmetryData.at(symmetryName).coordinates.at(index);
+      return symmetryData().at(symmetryName).coordinates.at(index);
     };
 
     bool all_pass = true;
@@ -258,7 +306,7 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
   for(const auto& symmetryName: allNames) {
     auto getCoordinates = [&](const boost::optional<unsigned>& indexOption) -> Eigen::Vector3d {
       if(indexOption) {
-        return symmetryData.at(symmetryName).coordinates.at(indexOption.value());
+        return symmetryData().at(symmetryName).coordinates.at(indexOption.value());
       } else {
         return {0, 0, 0};
       }
@@ -352,3 +400,307 @@ BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
     << smallestAngle << ", true smallest angle:" << comparisonSmallestAngle
   );
 }
+
+/*BOOST_AUTO_TEST_CASE(writeAllCoordinates) {
+  for(const auto& symmetryName : allNames) {
+    std::cout << Symmetry::name(symmetryName) << "\n";
+    std::cout << "ConstexprSymmetryInfo::CoordinatesType {{\n";
+    for(const auto& coordinate : symmetryData().at(symmetryName).coordinates) {
+      std::cout << "  {" << coordinate[0]
+        << ", " << coordinate[1]
+        << ", " << coordinate[2]
+        << "}\n";
+    }
+    std::cout << "}}\n\n";
+  }
+}*/
+
+/* NOTE: can refactor out doLigandGainTestIfAdjacent with a simple if-constexpr
+ * in C++17
+ */
+template<class SymmetryClassFrom, class SymmetryClassTo>
+std::enable_if_t<
+  SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
+  bool
+> doLigandGainTestIfAdjacent() {
+  /* Struct:
+   * .mappings - dynamic array of fixed-size index mappings
+   * .angularDistortion, .chiralDistortion - doubles
+   */
+  auto constexprMappings = properties::ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
+
+  /* Vector of structs:
+   * .indexMapping - vector containing the index mapping
+   * .totalDistortion, .chiralDistortion - doubles
+   */
+  auto dynamicMappings = properties::symmetryTransitionMappings(
+    SymmetryClassFrom::name,
+    SymmetryClassTo::name
+  );
+
+  if(
+    dynamicMappings.angularDistortion != constexprMappings.angularDistortion
+    || dynamicMappings.chiralDistortion != constexprMappings.chiralDistortion
+  ) {
+    return false;
+  }
+
+  /* TODO Need to reformulate constexpr algorithm to use a DynamicSet instead
+   * of a DynamicArray for the indexMappings and the dynamic algorithm to use
+   * a set of index mappings -> easier set difference for comparison
+   *
+   * So far, an incomplete test, merely compares angular and chiral distortion
+   */
+
+  auto convertedMappings = constexprMappings.mappings.mapToSTL(
+    [&](const auto& indexList) -> std::vector<unsigned> {
+      return {
+        indexList.begin(),
+        indexList.end()
+      };
+    }
+  );
+
+  return TemplateMagic::setDifference(
+    convertedMappings,
+    dynamicMappings.indexMappings
+  ).size() == 0;
+}
+
+template<class SymmetryClassFrom, class SymmetryClassTo>
+std::enable_if_t<
+  SymmetryClassFrom::size + 1 != SymmetryClassTo::size,
+  bool
+> doLigandGainTestIfAdjacent() {
+  return true;
+}
+
+template<class SymmetryClassFrom, class SymmetryClassTo>
+struct LigandGainTest {
+  static bool value() {
+    return doLigandGainTestIfAdjacent<SymmetryClassFrom, SymmetryClassTo>();
+  }
+};
+
+template<class SymmetryClass>
+struct RotationGenerationTest {
+  static bool value() {
+
+    // This is a DynamicSet of SymmetryClass-sized Arrays
+    auto constexprRotations = properties::generateAllRotations<SymmetryClass>(
+      properties::startingIndexSequence<SymmetryClass>()
+    );
+
+    // This is a std::set of SymmetryClass-sized std::vectors
+    auto dynamicRotations = properties::generateAllRotations(
+      SymmetryClass::name,
+      detail::iota<unsigned>(SymmetryClass::size)
+    );
+
+    auto convertedRotations = constexprRotations.mapToSTL(
+      [&](const auto& indexList) -> std::vector<unsigned> {
+        return {
+          indexList.begin(),
+          indexList.end()
+        };
+      }
+    );
+
+    if(convertedRotations.size() != constexprRotations.size()) {
+      std::cout << "In symmetry " << SymmetryClass::stringName << ", "
+        << "constexpr rotations set reports " << constexprRotations.size()
+        << " elements but the STL mapped variant has only " 
+        << convertedRotations.size() << " elements!" << std::endl;
+    }
+
+    bool pass = true;
+
+    // Size mismatch
+    if(convertedRotations.size() != dynamicRotations.size()) {
+      pass = false;
+    } else {
+      pass = (
+        TemplateMagic::setDifference(
+          convertedRotations,
+          dynamicRotations
+        ).size() == 0
+      );
+    }
+
+    if(!pass) {
+      std::cout << "Rotation generation differs for "
+        << SymmetryClass::stringName 
+        << " symmetry: Sizes of generated sets are different. "
+        << "constexpr - " << convertedRotations.size() << " != "
+        << dynamicRotations.size() << " - dynamic" << std::endl;
+      std::cout << " Maximum #rotations: " << properties::maxRotations<SymmetryClass>() 
+        << std::endl;
+
+      std::cout << " Converted constexpr:" << std::endl;
+      for(const auto& element : convertedRotations) {
+        std::cout << " {" << TemplateMagic::condenseIterable(element) 
+          << "}\n";
+      }
+
+      std::cout << " Dynamic:" << std::endl;
+      for(const auto& element : dynamicRotations) {
+        std::cout << " {" << TemplateMagic::condenseIterable(element) 
+          << "}\n";
+      }
+    } 
+
+    return pass;
+  }
+/* Previously, when the interface with which this is used (unpackToFunction) was
+ * unable to cope with both value data members and value function members 
+ * equally, this was of the form::
+ *
+ *   static bool initialize() {
+ *     ...
+ *     return value;
+ *   }
+ *   static bool value = initialize();
+ *
+ * Although this seems equivalent, it really isn't, since initialize() is called
+ * at static initialization time instead of at first use as when value is 
+ * a function. Since, in this case, the value function depends on another static
+ * value (generateAllRotations -> symmetryData), the value-initialize variant
+ * leads to a static initialization fiasco, where it is unclear whether the
+ * value data member or symmetryData is initialized first.
+ *
+ * Only in the case of static constexpr is the value-initialize variant 
+ * semantically equivalent to the data member variant.
+ */
+};
+
+std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
+  auto stringName = Symmetry::name(symmetryName);
+
+  stringName.erase(
+    std::remove_if(
+      stringName.begin(),
+      stringName.end(),
+      [](const char& singleChar) -> bool {
+        return (
+          singleChar == ' ' 
+          || singleChar == '-'
+        );
+      }
+    ),
+    stringName.end()
+  );
+  return stringName;
+}
+
+template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+std::enable_if_t<
+  SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
+  void
+> doWriteIfAdjacent() {
+  auto constexprMapping = properties::ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
+
+  unsigned multiplicity = constexprMapping.mappings.size();
+
+  std::cout << "  " << getGraphvizNodeName(SymmetryClassFrom::name)
+    << " -> " << getGraphvizNodeName(SymmetryClassTo::name)
+    << " [";
+
+  if(multiplicity <= 3) {
+    std::vector<std::string> repeatColor (
+      multiplicity,
+      "black"
+    );
+
+    std::cout << "color=\"" << TemplateMagic::condenseIterable(repeatColor, ":invis:") << "\"";
+  } else {
+    std::cout << "color=\"" << "black" << "\"";
+    std::cout << ", style=\"dashed\"";
+  }
+
+  std::cout << ", label=\"" 
+    << ConstexprMagic::Math::round(constexprMapping.angularDistortion, 2);
+
+  if(multiplicity > 3) {
+    std::cout << " (" << multiplicity << ")";
+  }
+
+  std::cout << "\"];\n";
+}
+
+template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+std::enable_if_t<
+  SymmetryClassFrom::size + 1 != SymmetryClassTo::size,
+  void
+> doWriteIfAdjacent() {}
+
+template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+struct WriteLigandMapping {
+  static bool value() {
+    doWriteIfAdjacent<SymmetryClassFrom, SymmetryClassTo>();
+    return true;
+  }
+};
+
+BOOST_AUTO_TEST_CASE(constexprProperties) {
+  // Full test of rotation algorithm equivalency for all symmetries
+  BOOST_CHECK_MESSAGE(
+    TemplateMagic::all_of(
+      ConstexprMagic::TupleType::map<
+        Symmetry::data::allSymmetryDataTypes,
+        RotationGenerationTest
+      >()
+    ),
+    "There is a discrepancy between constexpr and dynamic rotation generation"
+  );
+
+  /* The line below leads to absurdly high memory use in g++, up to 16 GB. I
+   * cannot compile the underlying calculation of ideal index mappings in
+   * transitions between symmetries for any larger symmetries: This is 5->6, 
+   * any size 6->7 transition compilations crash after exhausting 16GB RAM and
+   * 16GB swap.
+   *
+   * Affected versions:
+   * - gcc 6.3.0
+   * - gcc 7.1.0
+   *
+   *
+   * Clang 4.0.0 compiles all transitions just fine with < 500 MB RAM use.
+   */
+  // WriteLigandMapping<data::SquarePyramidal, data::Octahedral>::value();
+
+  // Write out all mappings
+  ConstexprMagic::TupleType::mapAllPairs<
+    Symmetry::data::allSymmetryDataTypes,
+    WriteLigandMapping
+  >();
+
+  // Test transitions generation/evaluation algorithm equivalency for all
+  BOOST_CHECK_MESSAGE(
+    TemplateMagic::all_of(
+      ConstexprMagic::TupleType::mapAllPairs<
+        Symmetry::data::allSymmetryDataTypes,
+        LigandGainTest
+      >()
+    ),
+    "There is a discrepancy between constexpr and dynamic ligand gain mapping"
+    << " generation!"
+  );
+
+
+  /*constexpr auto mappings = ligandGainMappings<data::SquarePlanar, data::SquarePyramidal>();
+  std::cout << "Linear to TShaped mappings: angular = " 
+    << mappings.angularDistortion
+    << ", chiral = " << mappings.chiralDistortion
+    << ", multiplicity = " << mappings.mappings.size()
+    << std::endl;
+
+  for(const auto& indexMapping : mappings.mappings) {
+    std::cout << TemplateMagic::condenseIterable(indexMapping) << std::endl;
+  }*/
+}
+
+static_assert(
+  nSymmetries == std::tuple_size<data::allSymmetryDataTypes>::value,
+  "nSymmetries does not equal number of symmetry data class types in "
+  "allSymmetryDataTypes"
+);

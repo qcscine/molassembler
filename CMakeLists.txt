@@ -18,6 +18,12 @@ message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
 # dependencies
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 find_package(Eigen3 3.1.1 REQUIRED)
+if(Eigen3_FOUND)
+  message(STATUS "Eigen version: ${Eigen3_VERSION}")
+  message(STATUS "Eigen dir: ${EIGEN3_INCLUDE_DIRS}")
+  include_directories(EIGEN3_INCLUDE_DIRS)
+endif()
+
 find_program(
   CLANG_TIDY_EXE
   NAMES "clang-tidy"
@@ -34,11 +40,13 @@ endif()
 # set headers
 set(HEADERS_all
   Symmetries.h
+  Properties.h
 )
 
 # sources definition
 set(SOURCES_all
   Symmetries.cpp
+  Properties.cpp
 )
 
 # specify targets
@@ -53,8 +61,8 @@ endif()
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release") 
   message(STATUS "Selected release build")
   # no debug information, disable assert
-  target_compile_definitions(symmetries PRIVATE NDEBUG)
-  target_compile_options(symmetries PUBLIC -O2)
+  #  target_compile_definitions(symmetries PRIVATE NDEBUG)
+  #target_compile_options(symmetries PUBLIC -O2)
 else() # assume Debug
   message(STATUS "Assume debug build")
   target_compile_options(symmetries PUBLIC -g)
@@ -80,7 +88,7 @@ if(CLANG_TIDY_EXE)
 endif()
 
 add_executable(symmetryTests tests.cpp)
-target_compile_options(symmetryTests PUBLIC -O2 -g)
+target_compile_options(symmetryTests PUBLIC -g)
 set_target_properties(
   symmetryTests PROPERTIES
   CXX_STANDARD 14
@@ -92,3 +100,14 @@ target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetr
 
 # add test
 add_test(NAME testAll COMMAND symmetryTests)
+
+add_executable(Properties properties.cpp)
+target_compile_options(Properties PUBLIC -g)
+set_target_properties(
+  Properties PROPERTIES
+  CXX_STANDARD 14
+  CXX_STANDARD_REQUIRED ON
+  COMPILE_FLAGS ${WARNING_FLAGS}
+)
+target_include_directories(Properties PRIVATE ${BOOST_ROOT} symmetries)
+target_link_libraries(Properties ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)
