@@ -1332,6 +1332,20 @@ inline const std::string& name(const Name& name) {
   return symmetryData().at(name).stringName;
 }
 
+//! Fetch a space-free name for file naming
+inline std::string spaceFreeName(const Name& name) {
+  std::string toModify = symmetryData().at(name).stringName;
+
+  std::replace(
+    toModify.begin(),
+    toModify.end(),
+    ' ',
+    '-'
+  );
+
+  return toModify;
+}
+
 //! Fetch the number of symmetry positions of a symmetry
 inline const unsigned& size(const Name& name) {
   return symmetryData().at(name).size;
