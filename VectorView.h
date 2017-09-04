@@ -21,14 +21,29 @@ template<typename ValueType>
 class VectorView {
 
 private:
+  //! A reference to the underlying data
   const std::vector<ValueType>& _baseVectorRef;
+
+  //! Only one lambda can be used to sort the data
   std::function<bool(const ValueType&, const ValueType&)> _sortingLambda;
+
+  //! A list of filter lambdas that remove data if the predicate returns true
   std::vector<
     std::function<bool(const ValueType&)>
   > _filters;
 
+  /*! 
+   * The current resulting index sequence of elements in the underlying data
+   * based on sorting AND filtering that is passed to iterators that progress
+   * through this list. This is maintained at any change of sorting or filtering
+   * lambdas
+   */
   std::vector<unsigned> _indexSequence;
 
+  /*! 
+   * Recalculates the index sequence if a change has occurred in any of the 
+   * stored lambdas
+   */
   void _recalculateSequence() {
     _indexSequence.resize(_baseVectorRef.size());
     std::iota(
@@ -76,22 +91,24 @@ public:
     const ValueType*,          // pointer
     ValueType                  // reference
   >;
-  template<typename PointerType> class iterator : public BaseIteratorType {
 
+  template<typename PointerType> class iterator : public BaseIteratorType {
   private:
+    // Maintain the current position in the sorting sequence
     unsigned _idx;
-    const std::vector<ValueType>& _vector;
+    // Reference to base data
+    const std::vector<ValueType>& _vector; 
+    // Reference to sorting sequence
     const std::vector<unsigned>& _sorting;
 
   public:
-    explicit iterator(
+    iterator(
       unsigned idx,
       const std::vector<ValueType>& vector,
       const std::vector<unsigned>& sorting
-    ) : 
-      _idx(idx),
-      _vector(vector),
-      _sorting(sorting)
+    ) : _idx(idx),
+        _vector(vector),
+        _sorting(sorting)
     {}
 
     iterator& operator = (const iterator& other) {
@@ -118,6 +135,7 @@ public:
 
   VectorView(const std::vector<ValueType>& data) : _baseVectorRef(data) {}
 
+  //! Sorts the current data by a passed binary comparator
   VectorView& sort(
     std::function<bool(const ValueType&, const ValueType&)> sortLambda
   ) {
@@ -126,12 +144,20 @@ public:
     return *this;
   }
 
+  /*! 
+   * Filters out data from the underlying vector if the unary predicate
+   * returns true
+   */
   VectorView& filter(std::function<bool(const ValueType&)> filterLambda) {
     _filters.push_back(filterLambda);
     _recalculateSequence();
     return *this;
   }
 
+  /*!
+   * Allows index-based subsetting of the underlying data if previous evaluation
+   * has been performed elsewhere
+   */
   VectorView& subset(const std::vector<unsigned>& indices) {
     // Ensure the passed vector contains no out-of-bounds indices
     assert(TemplateMagic::max(indices) < _baseVectorRef.size());
@@ -140,6 +166,7 @@ public:
     return *this;
   }
 
+  //! Removes all filters on the data
   void resetFilters(const bool update = true) {
     _filters.clear();
     if(update) _recalculateSequence();
@@ -177,6 +204,10 @@ public:
   }
 };
 
+/*! 
+ * Provides a VectorView proxy object on a container that filters out some
+ * elements if the passed unary predicate returns true
+ */
 template<typename Container, class FilterFunction>
 VectorView<
   traits::getValueType<Container>
@@ -191,20 +222,28 @@ VectorView<
   return view;
 }
 
+/*! 
+ * Provides a VectorView proxy object on a container that sorts the underlying
+ * data using a provided binary comparator function.
+ */
 template<typename Container, class SortFunction>
 VectorView<
   traits::getValueType<Container>
 > sort(
   const Container& container,
-  const SortFunction&& filterFunction
+  const SortFunction&& sortingFunction
 ) {
   auto view = VectorView<
     traits::getValueType<Container>
   > {container};
-  view.sort(filterFunction);
+  view.sort(sortingFunction);
   return view;
 }
 
+/*!
+ * Provides a VectorView proxy object on a container that subsets the underlying
+ * data based on a provided index list.
+ */
 template<typename Container, typename IndexContainer>
 VectorView<
   traits::getValueType<Container>

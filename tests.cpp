@@ -339,3 +339,23 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
     "Max size of filteredView returns " << maxSize << ", not 5"
   );
 }
+
+BOOST_AUTO_TEST_CASE(concatenateTests) {
+  std::vector<unsigned> f {{4, 9, 1}};
+  std::set<unsigned> x {{3, 6, 10}};
+
+  std::vector<unsigned> comp {{4, 9, 1, 3, 6, 10}};
+
+  static_assert(
+    std::is_same<
+      decltype(TemplateMagic::concatenate(f, x)),
+      std::vector<unsigned>
+    >::value,
+    "Concatenate must return a vector of the underlying shared type"
+  );
+
+  BOOST_CHECK(
+    TemplateMagic::concatenate(f, x)
+    == comp
+  );
+}

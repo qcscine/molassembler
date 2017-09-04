@@ -1,6 +1,5 @@
 TODO
 ----
-- Document requirements better, add doxygen
 
 NOTES
 -----

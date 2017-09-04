@@ -5,6 +5,14 @@
 
 #include <functional>
 
+/*! @file
+ *
+ * Without changing the underlying container elements, this proxy container
+ * permits referential access to class members via a lambda function. This is
+ * an attractive alternative to using Container.h's map() function to get 
+ * container class element members since this variant avoids copies.
+ */
+
 namespace TemplateMagic {
 
 template<class Container, class FetcherFunction>
@@ -57,6 +65,12 @@ public:
     {}
 
     iterator& operator = (const iterator& other) {
+      // TODO ensure iterators refer to same base data (unsure if below works)
+      /* assert(
+        std::addressof(_fetcher.template target<>())
+        == std::addressof(other._fetcher.template target<>())
+      );*/
+
       // TODO ensure fetcher functions are identical, maybe via std::function
       // .target member?
       _iter = other._iter;

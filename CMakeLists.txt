@@ -23,6 +23,10 @@ find_program(
   DOC "Path to clang-tidy executable"
 )
 
+include_directories(SYSTEM
+  "/home/jan-grimo/PhD/projects/libs/"
+)
+
 if(NOT CLANG_TIDY_EXE)
   message(STATUS "No clang-tidy found!")
 else()

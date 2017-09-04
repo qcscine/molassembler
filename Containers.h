@@ -2,6 +2,7 @@
 #define INCLUDE_TEMPLATE_MAGIC_CONTAINERS_H
 
 #include "AddToContainer.h"
+#include "constexpr_magic/TupleType.h"
 
 #include <algorithm>
 #include <numeric>
@@ -236,6 +237,51 @@ template<typename T, class Container> unsigned count(
   const Container& container,
   const T& toCount
 );
+
+namespace detail {
+
+template<typename Vector> Vector concatenateHelper(Vector& vector) {
+  return vector;
+}
+
+template<typename Vector, typename Container, typename ... Containers> Vector concatenateHelper(
+  Vector& vector,
+  const Container& container,
+  Containers... containers
+) {
+  vector.insert(
+    vector.end(),
+    container.begin(),
+    container.end()
+  );
+
+  return concatenateHelper(vector, containers...);
+}
+
+} // namespace detail
+
+//! Concatenate various types of containers together with the same ValueType
+template<typename... Containers> auto concatenate(
+  const Containers& ... containers
+) {
+  using ValueTypes = std::tuple<
+    traits::getValueType<Containers>...
+  >;
+
+  using T = std::tuple_element_t<0, ValueTypes>;
+
+  static_assert(
+    ConstexprMagic::TupleType::countType<
+      ValueTypes,
+      T
+    >() == std::tuple_size<ValueTypes>::value,
+    "Value types of all containers involved in concatenation must be identical!"
+  );
+
+  std::vector<T> concatenated;
+  
+  return detail::concatenateHelper(concatenated, containers...);
+}
 
 //!  Cast the entire data of a container 
 template<

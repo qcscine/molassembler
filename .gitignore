@@ -2,3 +2,4 @@ bin_test.out
 build/
 documentation/
 .commit-notes
+.lvimrc
