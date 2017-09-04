@@ -127,6 +127,9 @@ constexpr T asin(const T& x) noexcept;
 template<typename T>
 constexpr T acos(const T& x);
 
+template<typename T>
+constexpr T atan(const T& x);
+
 
 /* Implementations begin here ------------------------------------------------*/
 
@@ -508,6 +511,17 @@ constexpr T acos(const T& x) {
   }
 
   return M_PI / 2 - asin(x);
+}
+
+template<typename T>
+constexpr T atan(const T& x) {
+  if(!(-M_PI / 2 < x && x < M_PI / 2)) {
+    throw "Inverse cosine domain error: only real if -1 < x < 1!";
+  }
+
+  return asin(
+    x / sqrt(x * x + 1)
+  );
 }
 
 } // namespace Math

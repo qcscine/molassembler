@@ -281,6 +281,21 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
       )
     )
   );
+
+  BOOST_CHECK(
+    TemplateMagic::all_of(
+      TemplateMagic::map(
+        TemplateMagic::random.getN<double>(-M_PI / 2, M_PI / 2, numTests),
+        [](const double& x) -> bool {
+          return ConstexprMagic::Math::isCloseRelative(
+            ConstexprMagic::Math::atan(x),
+            std::atan(x),
+            accuracy
+          );
+        }
+      )
+    )
+  );
 }
 
 BOOST_AUTO_TEST_CASE(arrayPermutation) {
