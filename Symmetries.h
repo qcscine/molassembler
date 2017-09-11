@@ -1022,13 +1022,34 @@ struct SquareAntiPrismatic {
   static constexpr Symmetry::Name name = Symmetry::Name::SquareAntiPrismatic;
   static constexpr unsigned size = 8;
   static const std::string stringName;
+  static constexpr std::array<ConstexprMagic::Vector, 8> coordinates {{
+    {-0.00928803, 0.611568, 0.791137},
+    {0.795627, 0.605641, -0.0132684},
+    {0.795627, -0.605641, -0.0132684},
+    {-0.00928803, -0.611568, 0.791137},
+    {-0.396172, 0.852169, -0.341841},
+    {0.293758, 0, -0.95588},
+    {-0.396172, -0.852169, -0.341841},
+    {-0.983087, 0, 0.183141}
+  }};
+
+#ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
+/*!
+ * An upper triangular matrix containing angles between particules i,j in
+ * degrees using the square antiprismatic reference coordinates
+ */
+  static constexpr auto angleLookupTable = ConstexprMagic::makeUpperTriangularMatrix<size>(
+    detail::makeArray<size>(coordinates)
+  );
+#endif
+
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
     if(a == b) {
       return 0;
     }
 
-    return squareAntiprismaticAngles.at(
+    return angleLookupTable.at(
       std::min(a, b),
       std::max(a, b)
     );
@@ -1059,16 +1080,6 @@ struct SquareAntiPrismatic {
     return ConstexprMagic::Math::toRadians<double>(142.275);
 #endif
   }
-  static constexpr std::array<ConstexprMagic::Vector, 8> coordinates {{
-    {-0.00928803, 0.611568, 0.791137},
-    {0.795627, 0.605641, -0.0132684},
-    {0.795627, -0.605641, -0.0132684},
-    {-0.00928803, -0.611568, 0.791137},
-    {-0.396172, 0.852169, -0.341841},
-    {0.293758, 0, -0.95588},
-    {-0.396172, -0.852169, -0.341841},
-    {-0.983087, 0, 0.183141}
-  }};
   static constexpr std::array<
     std::array<unsigned, 8>,
     2
@@ -1379,8 +1390,12 @@ inline const TetrahedronList& tetrahedra(const Name& name) {
 }
 
 /* Derived data */
-//! The smallest angle between any symmetry positions in 3D coordinates
-constexpr double smallestAngle = ConstexprMagic::TupleType::unpackToFunction<
+/*!
+ * The smallest angle between any symmetry positions in 3D coordinates.
+ *
+ * Marked unused to avoid warning though pursposefully exported
+ */
+constexpr double smallestAngle __attribute__ ((unused)) = ConstexprMagic::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
   data::minAngleFunctor
 >();

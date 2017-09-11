@@ -113,6 +113,10 @@ constexpr decltype(SquareAntiPrismatic::coordinates) SquareAntiPrismatic::coordi
 constexpr decltype(SquareAntiPrismatic::rotations) SquareAntiPrismatic::rotations;
 constexpr decltype(SquareAntiPrismatic::tetrahedra) SquareAntiPrismatic::tetrahedra;
 
+#ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
+constexpr decltype(SquareAntiPrismatic::angleLookupTable) SquareAntiPrismatic::angleLookupTable;
+#endif
+
 
 const std::string Linear::stringName {"linear"};
 const std::string Bent::stringName {"bent"};
