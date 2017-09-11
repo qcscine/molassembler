@@ -224,6 +224,49 @@ std::vector<unsigned> applyIndexMapping(
   const Symmetry::Name& to,
   const std::vector<unsigned>& mapping
 ) {
+  /* Creates the list of indices in the target symmetry. Why is this necessary?
+   *
+   * E.g. An index mapping from linear to T-shaped. The individual
+   * symmetry-internal numbering schemes are shown for the symmetry positions.
+   *
+   *  1  –▶  0
+   *  |      |
+   * (_)    (_) – 1 (new)
+   *  |      |                Linear pos. 0 to
+   *  0  –▶  2                pos. 2 in Tshaped
+   *                                 |  ┌– Linear pos. 1 to pos. 0 in Tshaped
+   *                                 |  |  ┌– This position is new
+   * This mapping is represented as {2, 0, 1}.
+   *
+   * This function writes the indices of original mapping into the target
+   * symmetry's indexing scheme.
+   *
+   * For this example, this returns {1, 2, 0}:
+   *
+   *  1 (at pos 0 in internal indexing scheme)
+   *  |
+   * (_) – 2 (etc.)
+   *  |
+   *  0
+   *
+   * For this example, this returns {1, 2, 0}.
+   *
+   * The closely related mapping {0, 2, 1} yields target indices {0, 2, 1}.
+   *
+   * Which of these properties are related by target symmetry rotations?
+   *
+   *
+   *     mapping       target indices
+   * -----------------------------------
+   *    {2, 0, 1}   =>   {1, 2, 0}
+   *        ▲                ▲
+   *        |                |
+   *        X                | C2 rotation in T-shape symmetry
+   *        |                |
+   *        ▼                ▼
+   *    {0, 2, 1}   =>   {0, 2, 1}
+   *
+   */
   std::vector<unsigned> symmetryPositions (Symmetry::size(to));
 
   // TODO erroneous here for case of ligand loss, rethink!
@@ -296,9 +339,10 @@ SymmetryTransitionGroup symmetryTransitionMappings(
     Symmetry::size(symmetryTo)
   );
 
-  std::vector<DistortionInfo> distortions;
-
   auto indexMapping = detail::iota<unsigned>(largerSize);
+
+  // Store all distortions calculated
+  std::vector<DistortionInfo> distortions;
 
   // Need to keep track of rotations of mappings to avoid repetition
   std::set<
@@ -367,6 +411,7 @@ SymmetryTransitionGroup symmetryTransitionMappings(
     }
   );
 
+  // And now sub-set further on the lowest chiral distortion
   double lowestChiralDistortion = TemplateMagic::min(
     TemplateMagic::getMember(
       distortionsView,
@@ -376,7 +421,6 @@ SymmetryTransitionGroup symmetryTransitionMappings(
     )
   );
 
-  // continue filtering on lowest distortions
   distortionsView.filter(
     [&lowestChiralDistortion](const auto& distortion) -> bool {
       return distortion.chiralDistortion > lowestChiralDistortion;
@@ -403,20 +447,123 @@ SymmetryTransitionGroup ligandLossTransitionMappings(
   const Symmetry::Name& symmetryTo,
   const unsigned& positionInSourceSymmetry
 ) {
+  const double equivalenceTolerance = 1e-4;
+
   // Ensure we are dealing with ligand loss
   assert(Symmetry::size(symmetryTo) + 1 == Symmetry::size(symmetryFrom));
   assert(positionInSourceSymmetry < Symmetry::size(symmetryFrom));
 
+  /* Generate the index mapping specific to this position loss in the target
+   * symmetry.
+   *
+   * The possible distortions are determined from the equivalent case of adding
+   * the ligand (which was to be deleted) to the smaller symmetry.
+   *
+   * The deleted index is added to the end. The lowest permutation of the mapping
+   * from the smaller to the larger symmetry is then:
+   *
+   * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
+   */
   std::vector<unsigned> indexMapping = TemplateMagic::concatenate(
     detail::iota<unsigned>(positionInSourceSymmetry),
     detail::range(positionInSourceSymmetry + 1, Symmetry::size(symmetryFrom))
   );
-
   indexMapping.push_back(positionInSourceSymmetry);
+
+  /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
+   * save that symmetryTo and symmetryFrom are swapped in all occasions
+   * and that std::next_permutation is only called on the subset excluding the
+   * last position (the one that is added / deleted).
+   */
+
+  std::vector<DistortionInfo> distortions;
 
   std::set<
     std::vector<unsigned>
   > encounteredSymmetryMappings;
+
+  do {
+    if(
+      encounteredSymmetryMappings.count(
+        applyIndexMapping(
+          symmetryFrom,
+          indexMapping
+        )
+      ) == 0
+    ) {
+      distortions.emplace_back(
+        indexMapping,
+        calculateAngleDistortion(symmetryTo, symmetryFrom, indexMapping),
+        calculateChiralDistortion(symmetryTo, symmetryFrom, indexMapping)
+      );
+
+      auto allRotations = generateAllRotations(
+        symmetryFrom,
+        applyIndexMapping(
+          symmetryFrom,
+          indexMapping
+        )
+      );
+
+      encounteredSymmetryMappings.insert(
+        allRotations.begin(),
+        allRotations.end()
+      );
+    }
+  } while (std::next_permutation(indexMapping.begin(), indexMapping.end() - 1));
+
+  double lowestAngularDistortion = TemplateMagic::min(
+    TemplateMagic::getMember(
+      distortions,
+      [](const auto& distortion) -> double {
+        return distortion.totalDistortion;
+      }
+    )
+  );
+
+  auto distortionsView = TemplateMagic::filter(
+    distortions,
+    [&](const auto& distortion) -> bool {
+      return (
+        distortion.totalDistortion > (
+          lowestAngularDistortion + equivalenceTolerance
+        )
+      );
+    }
+  );
+
+  double lowestChiralDistortion = TemplateMagic::min(
+    TemplateMagic::getMember(
+      distortionsView,
+      [](const auto& distortion) -> double {
+        return distortion.chiralDistortion;
+      }
+    )
+  );
+
+  distortionsView.filter(
+    [&](const auto& distortion) -> bool {
+      return (
+        distortion.chiralDistortion > (
+          lowestChiralDistortion + equivalenceTolerance
+        )
+      );
+    }
+  );
+
+  std::set<
+    std::vector<unsigned>
+  > mappings;
+
+  for(const auto& distortionInfo : distortionsView) {
+    mappings.insert(distortionInfo.indexMapping);
+  }
+
+  return SymmetryTransitionGroup(
+    mappings,
+    lowestAngularDistortion,
+    lowestChiralDistortion
+  );
 }
 
 } // namespace properties

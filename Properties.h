@@ -86,7 +86,10 @@ std::set<
   const std::vector<unsigned>& indices
 );
 
-//!  Applies an index mapping to a target symmetry
+/*!
+ * Writes the indices of the original symmetry in the mapping into the target
+ * symmetry's indexing scheme.
+ */
 std::vector<unsigned> applyIndexMapping(
   const Symmetry::Name& to,
   const std::vector<unsigned>& mapping
@@ -121,6 +124,12 @@ struct SymmetryTransitionGroup {
   SymmetryTransitionGroup() {}
   SymmetryTransitionGroup(SymmetryTransitionGroup&& other) 
     : indexMappings(std::move(other.indexMappings)),
+      angularDistortion(other.angularDistortion),
+      chiralDistortion(other.chiralDistortion)
+  {}
+
+  SymmetryTransitionGroup(const SymmetryTransitionGroup& other) 
+    : indexMappings(other.indexMappings),
       angularDistortion(other.angularDistortion),
       chiralDistortion(other.chiralDistortion)
   {}

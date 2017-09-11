@@ -236,10 +236,18 @@ constexpr double calculateChiralDistortion(
         getCoordinates<SymmetryClassFrom>(tetrahedron.at(2)),
         getCoordinates<SymmetryClassFrom>(tetrahedron.at(3))
       ) - getTetrahedronVolume(
-        getCoordinates<SymmetryClassTo>(propagateSymmetryPosition(tetrahedron.at(0), indexMapping)),
-        getCoordinates<SymmetryClassTo>(propagateSymmetryPosition(tetrahedron.at(1), indexMapping)),
-        getCoordinates<SymmetryClassTo>(propagateSymmetryPosition(tetrahedron.at(2), indexMapping)),
-        getCoordinates<SymmetryClassTo>(propagateSymmetryPosition(tetrahedron.at(3), indexMapping))
+        getCoordinates<SymmetryClassTo>(
+          propagateSymmetryPosition(tetrahedron.at(0), indexMapping)
+        ),
+        getCoordinates<SymmetryClassTo>(
+          propagateSymmetryPosition(tetrahedron.at(1), indexMapping)
+        ),
+        getCoordinates<SymmetryClassTo>(
+          propagateSymmetryPosition(tetrahedron.at(2), indexMapping)
+        ),
+        getCoordinates<SymmetryClassTo>(
+          propagateSymmetryPosition(tetrahedron.at(3), indexMapping)
+        )
       )
     );
   }
@@ -247,10 +255,55 @@ constexpr double calculateChiralDistortion(
   return chiralDistortion;
 }
 
+/*!
+ * Writes the indices of the original symmetry in the mapping into the target
+ * symmetry's indexing scheme.
+ */
 template<size_t size>
 constexpr ArrayType<unsigned, size> symPosMapping(
   const ArrayType<unsigned, size>& mapping
 ) {
+  /* Creates the list of indices in the target symmetry. Why is this necessary?
+   *
+   * E.g. An index mapping from linear to T-shaped. The individual
+   * symmetry-internal numbering schemes are shown for the symmetry positions.
+   *
+   *  1  –▶  0
+   *  |      |
+   * (_)    (_) – 1 (new)
+   *  |      |                Linear pos. 0 to
+   *  0  –▶  2                pos. 2 in Tshaped
+   *                                 |  ┌– Linear pos. 1 to pos. 0 in Tshaped
+   *                                 |  |  ┌– This position is new
+   * This mapping is represented as {2, 0, 1}.
+   *
+   * This function writes the indices of original mapping into the target
+   * symmetry's indexing scheme.
+   *
+   * For this example, this returns {1, 2, 0}:
+   *
+   *  1 (at pos 0 in internal indexing scheme)
+   *  |
+   * (_) – 2 (etc.)
+   *  |
+   *  0
+   *
+   * The closely related mapping {0, 2, 1} yields target indices {0, 2, 1}.
+   *
+   * Which of these properties are related by target symmetry rotations?
+   *
+   *
+   *     mapping       target indices
+   * -----------------------------------
+   *    {2, 0, 1}   =>   {1, 2, 0}
+   *        ▲                ▲
+   *        |                |
+   *        X                | (C2 rotation)
+   *        |                |
+   *        ▼                ▼
+   *    {0, 2, 1}   =>   {0, 2, 1}
+   *
+   */
   ArrayType<unsigned, size> symmetryPositions;
 
   for(unsigned i = 0; i < size; ++i) {

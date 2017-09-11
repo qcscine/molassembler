@@ -1008,29 +1008,45 @@ struct SquareAntiPrismatic {
    *     · | ·
    *   1   5   2
    *
-   * Angles:
+   * Two sets of reference coordinates are stored here:
+   * - [ReF8]2-, (Koz'min, P.A., Zhurnal Strukturnoi Khimii 1964), retrieved
+   *   from the ICSD, Re translated to origin and positions normalized (origin
+   *   to symmetry position is length 1)
+   * - [W(CN)8]2-, (Alcock, M. W.; Samotus, A.; Szklarzewicz, J. J. Chem. Soc.,
+   *   Dalton Trans. 1993, 885. DOI: 10.1039/dt9930000885, CSD: PECMOZ), took
+   *   idealized geometry from http://symmetry.otterbein.edu/gallery/ instead
+   *   of distorted crystallographic coordinates, normalized lengths
+   *
+   * Angles (from [ReF8]2-):
    *
    *   in-plane cis (4, 5) -> 55°
    *   in-plane trans (4, 6) -> 148°
    *   short between planes (0, 4) -> 51°
    *   long between planes (0, 5) -> 175°
    *
-   * from [ReF8]2-, Koz'min, P.A., Zhurnal Strukturnoi Khimii 1964 
-   * HINT: use the ICSD for angle calculations and preview
-   *
    */
   static constexpr Symmetry::Name name = Symmetry::Name::SquareAntiPrismatic;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "square antiprismatic";
   static constexpr std::array<ConstexprMagic::Vector, 8> coordinates {{
-    {-0.00928803, 0.611568, 0.791137},
+    // [ReF8]2-, distorted crystal structure
+    /*{-0.00928803, 0.611568, 0.791137},
     {0.795627, 0.605641, -0.0132684},
     {0.795627, -0.605641, -0.0132684},
     {-0.00928803, -0.611568, 0.791137},
     {-0.396172, 0.852169, -0.341841},
     {0.293758, 0, -0.95588},
     {-0.396172, -0.852169, -0.341841},
-    {-0.983087, 0, 0.183141}
+    {-0.983087, 0, 0.183141}*/
+    // [W(CN)8]2-, idealized to square antiprism
+    {-0.23838567,  0.50141283,  0.83171957},
+    {-0.7568846,   0.61167543, -0.2301714 },
+    { 0.3080136,   0.58106771, -0.75331795},
+    { 0.82651172,  0.47080587,  0.30857773},
+    {-0.79018301, -0.51909014,  0.32581627},
+    {-0.39653401, -0.46341671, -0.79246813},
+    { 0.72055552, -0.56338997, -0.40421711},
+    { 0.32690564, -0.61906403,  0.71406753},
   }};
 
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE

@@ -43,11 +43,11 @@ public:
       advancement = (value - _min) / (_max - _min);
     }
 
-    return RGBType {
+    return RGBType {{
       _from[0] + advancement * (static_cast<double>(_to[0]) - _from[0]),
       _from[1] + advancement * (static_cast<double>(_to[1]) - _from[1]),
       _from[2] + advancement * (static_cast<double>(_to[2]) - _from[2])
-    };
+    }};
   }
 
   std::string getHexString (const double& value) const {
@@ -163,8 +163,8 @@ void writeSymmetryTransitionDotFile(
       );
 
       RGBGradient gradient {
-        {0u, 100u, 0u}, // HTML dark green
-        {255u, 99u, 71u}, // HTML color tomato
+        {{0u, 100u, 0u}}, // HTML dark green
+        {{255u, 99u, 71u}}, // HTML color tomato
         0.0, // smallest ist green
         maxDistortion // largest is red
       };
@@ -212,8 +212,8 @@ void writeSymmetryTransitionDotFile(
               << "\"";
           } else {
             dotFile << "color=\"" 
-              << gradient.getHexString(mappingData.angularDistortion) << "\"";
-            dotFile << ", style=\"dashed\"";
+              << gradient.getHexString(mappingData.angularDistortion) 
+              << "\", style=\"dashed\"";
           }
 
           dotFile << ", label=\"" 
@@ -223,6 +223,7 @@ void writeSymmetryTransitionDotFile(
           if(multiplicity > 3) {
             dotFile << " (" << multiplicity << ")";
           }
+
           // close label
           dotFile << "\"";
           
@@ -233,6 +234,178 @@ void writeSymmetryTransitionDotFile(
 
     }
 
+  }
+
+  // Final graph closing bracket
+  dotFile << "}" << br;
+}
+
+void writeLigandLossDotFile(
+  const std::string& filename,
+  const bool& showEdgesWithHighMultiplicity = true,
+  const bool& explainTransitions = false
+) {
+  const double equalityTolerance = 1e-4;
+
+  using namespace Symmetry::properties;
+
+  std::ofstream dotFile(filename.c_str());
+
+  // Write the entire graphviz file
+
+  dotFile << "digraph g {\n";
+
+  // Global stuff
+  dotFile << R"(  graph [fontname = "Arial", nodesep="1.5", ranksep="1.2"];)" << br
+    << R"(  node [fontname = "Arial", style = "filled", fillcolor="white"];)" << br 
+    << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br;
+
+  std::set<Symmetry::Name> redNodes {
+    Symmetry::Name::Linear,
+    Symmetry::Name::Bent,
+    Symmetry::Name::TrigonalPlanar
+  };
+
+  // Write clusters for every symmetry name node
+  unsigned currentSize = 1;
+  for(const auto& symmetryName : Symmetry::allNames) {
+    if(Symmetry::size(symmetryName) > currentSize) {
+      if(currentSize > 1) {
+        dotFile << "  }" << br;
+      }
+      currentSize = Symmetry::size(symmetryName);
+      dotFile << "  subgraph cluster_size" << currentSize << " {" << br;
+      dotFile << R"(    color="white";)" << br;
+    }
+
+    dotFile << "    " << getGraphvizNodeName(symmetryName) << R"( [label=")"
+      << Symmetry::name(symmetryName) << R"(")";
+    
+
+    if(redNodes.count(symmetryName) == 1) {
+      dotFile << R"(, fillcolor="tomato", fontcolor="white")";
+    } 
+
+    dotFile << "];" << br;
+  }
+
+  // Final cluster closing bracket
+  dotFile << "  }" << br << br;
+
+  for(const auto& sourceSymmetry : Symmetry::allNames) {
+    for(const auto& targetSymmetry : Symmetry::allNames) {
+
+      if(Symmetry::size(sourceSymmetry) == Symmetry::size(targetSymmetry) + 1) {
+
+        std::vector<
+          std::pair<
+            unsigned,
+            Symmetry::properties::SymmetryTransitionGroup
+          >
+        > allMappings;
+
+        for(unsigned i = 0; i < Symmetry::size(sourceSymmetry); ++i) {
+          allMappings.emplace_back(
+            i,
+            ligandLossTransitionMappings(
+              sourceSymmetry,
+              targetSymmetry,
+              i
+            )
+          );
+        }
+
+        // Analyze all mappings - which indices have "identical" target mappings?
+        auto groups = TemplateMagic::groupByEquality(
+          allMappings,
+          [&](const auto& firstMappingPair, const auto& secondMappingPair) -> bool {
+            return (
+              ConstexprMagic::Math::isCloseRelative(
+                firstMappingPair.second.angularDistortion,
+                secondMappingPair.second.angularDistortion,
+                equalityTolerance
+              ) && ConstexprMagic::Math::isCloseRelative(
+                firstMappingPair.second.chiralDistortion,
+                secondMappingPair.second.chiralDistortion,
+                equalityTolerance
+              )
+            );
+          }
+        );
+
+        for(const auto& mappingGroup : groups) {
+          const auto equivalentPositions = TemplateMagic::map(
+            mappingGroup,
+            [](const auto& mappingPair) -> unsigned {
+              return mappingPair.first;
+            }
+          );
+
+          const auto& mappingData = mappingGroup.front().second;
+
+          const unsigned multiplicity = mappingData.indexMappings.size();
+
+          // In case you want transitions explained
+          if(explainTransitions) {
+            std::cout << "Transitions of distortion " 
+              << mappingData.angularDistortion << " from "
+              << Symmetry::name(sourceSymmetry)
+              << " to " << Symmetry::name(targetSymmetry) << ":\n";
+
+            for(const auto& mapping : mappingData.indexMappings) {
+              std::cout << "mapping {" 
+                << TemplateMagic::condenseIterable(mapping) 
+                << "}" << std::endl;
+            }
+          }
+
+          // Write edge
+          if(
+            (
+              !showEdgesWithHighMultiplicity
+              && multiplicity <= 3
+            ) || showEdgesWithHighMultiplicity
+          ) {
+            dotFile << "  " << getGraphvizNodeName(sourceSymmetry)
+              << " -> " << getGraphvizNodeName(targetSymmetry)
+              << " [";
+
+            // Begin edge modifiers
+            if(multiplicity <= 3) {
+              std::vector<std::string> repeatColor (
+                multiplicity,
+                "black"
+              );
+
+              dotFile << "color=\"" 
+                << TemplateMagic::condenseIterable(repeatColor, ":invis:") 
+                << "\"";
+            } else {
+              dotFile << "color=\"black\", style=\"dashed\"";
+            }
+
+            dotFile << ", label=\"" 
+              << ConstexprMagic::Math::round(mappingData.angularDistortion, 2);
+
+
+            if(multiplicity > 3) {
+              dotFile << " (" << multiplicity << ")";
+            }
+
+            // Add equivalent positions to label
+            dotFile << " {" 
+              << TemplateMagic::condenseIterable(equivalentPositions)
+              << "}";
+
+            // close label
+            dotFile << "\"";
+            
+            // End edge modifiers
+            dotFile << "];\n";
+          }
+        }
+      }
+    }
   }
 
   // Final graph closing bracket
@@ -257,14 +430,7 @@ int main() {
       );
     }
   );
-  /*writeSymmetryTransitionDotFile(
-    "ligand_loss_pathways.dot",
-    [](const auto& sourceSymmetry, const auto& targetSymmetry) -> bool {
-      return (
-        Symmetry::size(sourceSymmetry) == Symmetry::size(targetSymmetry) + 1
-      );
-    }
-  );*/
+  writeLigandLossDotFile("ligand_loss_pathways.dot");
 
   return 0;
 }
