@@ -3,7 +3,9 @@
 
 Contains a number of idealized symmetry definitions for the classification of
 molecular geometries. Computations can either be performed on constexpr objects
-at compile-time or a collected dynamic container at runtime.
+at compile-time or a collected dynamic container at runtime. Due to the
+constexpr nature of the algorithms, C++14 is required.
+
 
 ## Data provided per symmetry
 
@@ -15,6 +17,7 @@ at compile-time or a collected dynamic container at runtime.
   sequences of binding site mapping indices
 - A set of tetrahedra whose signed volumes permit the distinction of chiral
   elements within the symmetry
+
 
 ## Contained symmetries
 
@@ -50,8 +53,17 @@ correctness / consistency.
   symmetry positions when adding or removing a ligand as well as when a
   transition between symmetries of same size are sought.
 
+
 ## Integrating
 
-Is minimally dependent on boost and Eigen. If you choose to use \c constexpr
+Is minimally dependent on boost and Eigen. If you choose to use constexpr
 precalculated angles for the square antiprismatic symmetry for better angle
 function correctness, the library is also dependent on ConstexprMagic.
+
+
+## Compilation
+
+Note that gcc versions 6.3.3. and 7.1.0 are unable to compile the tests. Memory
+use becomes excessive and leads to compiler crash. This is likely to do with
+some constexpr algorithm memory allocation issue. Clang compiles the tests just
+fine with minimal memory use and time usage.
