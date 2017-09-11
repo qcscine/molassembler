@@ -23,9 +23,7 @@ namespace TemplateMagic {
 /* Header */
 //! Composability improvement - returns the call to the size member
 template<typename Container>
-auto size(
-  const Container& container
-);
+auto size(const Container& container);
 
 /*!
  * Maps the values in a container using a unary function.
@@ -48,14 +46,15 @@ auto size(
  * - list, forward_list
  * - set, multiset, unordered_set, unordered_multiset
  *
- * Notably absent: array, map, multimap, unordered_multimap
+ * Notably absent: array, map, multimap, unordered_multimap (some are covered by
+ * specializations below!)
  *
  */
 template<
   class UnaryFunction,
   typename T,
   template<typename, typename...> class Container,
-  template<typename> class ...Dependents
+  template<typename> class ... Dependents
 > auto map(
   const Container<T, Dependents<T>...>& container,
   UnaryFunction&& function
@@ -145,7 +144,7 @@ template<
   class BinaryFunction,
   typename T,
   template<typename, typename...> class Container,
-  template<typename> class ...Dependents
+  template<typename> class ... Dependents
 > auto mapSequentialPairs(
   const Container<T, Dependents<T>...>& container,
   BinaryFunction&& function
@@ -159,13 +158,14 @@ template<
   class BinaryFunction,
   typename T,
   template<typename, typename...> class Container,
-  template<typename> class ...Dependents
+  template<typename> class ... Dependents
 > auto mapAllPairs(
   const Container<T, Dependents<T>...>& container,
   BinaryFunction&& function
 );
 
-/*! Zip mapping. Always returns a vector containing the type returned by
+/*!
+ * Zip mapping. Always returns a vector containing the type returned by
  * the binary function.
  */
 template<
@@ -195,9 +195,7 @@ std::enable_if_t<
   BinaryFunction&& binaryFunction
 );
 
-/*!
- * Takes a container and calls a function on all possible pairs of its contents
- */
+//! Takes a container and calls a function on all possible pairs of its contents
 template<
   class Container,
   class BinaryFunction
@@ -212,7 +210,7 @@ template<
   typename ReturnType,
   typename T,
   template<typename, typename...> class Container,
-  class ...Dependents
+  class ... Dependents
 > ReturnType accumulate(
   const Container<T, Dependents...>& container,
   ReturnType&& init,
@@ -288,7 +286,7 @@ template<
   typename U,
   typename T,
   template<typename, typename...> class Container,
-  template<typename> class ...Dependents
+  template<typename> class ... Dependents
 > Container<U, Dependents<U>...> cast(
   const Container<T, Dependents<T>...>& container
 );
@@ -330,6 +328,11 @@ template<class Container> std::enable_if_t<
   const std::string& joiningChar = ", "
 );
 
+/*!
+ * Split a container's values by a mapping function whose return value elements
+ * are compared with. Matching mapped values are grouped and returned in a 
+ * ragged 2D vector.
+ */
 template<class Container, class UnaryFunction>
 std::vector<
   std::vector<
@@ -338,34 +341,12 @@ std::vector<
 > groupByMapping(
   const Container& container,
   UnaryFunction&& function
-) {
-  using T = traits::getValueType<Container>;
-  using R = traits::functionReturnType<UnaryFunction, T>;
+);
 
-  std::vector<
-    std::vector<T>
-  > groups;
-
-  std::map<R, unsigned> indexMap;
-
-  for(auto iter = container.begin(); iter != container.end(); ++iter) {
-    auto ret = function(*iter);
-    if(indexMap.count(ret) == 0) {
-      indexMap[ret] = groups.size();
-
-      groups.emplace_back(
-        std::vector<T> {*iter}
-      );
-    } else {
-      groups.at(
-        indexMap.at(ret)
-      ).push_back(*iter);
-    }
-  }
-
-  return groups;
-}
-
+/*!
+ * Split a container's values by a binary comparison function. Returns a ragged
+ * 2D vector.
+ */
 template<class Container, class BinaryFunction>
 std::vector<
   std::vector<
@@ -374,53 +355,16 @@ std::vector<
 > groupByEquality(
   const Container& container,
   BinaryFunction&& compareEqual
-) {
-  using T = traits::getValueType<Container>;
+);
 
-  std::vector<
-    std::vector<T>
-  > groups;
-
-  for(auto iter = container.begin(); iter != container.end(); ++iter) {
-    bool foundEqual = false;
-    for(auto& group : groups) {
-
-      if(compareEqual(*iter, *group.begin())) {
-        group.push_back(*iter);
-        foundEqual = true;
-        break;
-      }
-    }
-
-    if(!foundEqual) {
-      groups.emplace_back(
-        std::vector<T> {*iter}
-      );
-    }
-  }
-
-  return groups;
-}
-
+//! Creates a copy of the container with elements passing the predicate test
 template<class Container, class UnaryFunction>
 std::vector<
   traits::getValueType<Container>
 > copyIf(
   const Container& container,
   UnaryFunction&& predicate
-) {
-  std::vector<
-    traits::getValueType<Container>
-  > ret;
-
-  for(const auto& elem : container) {
-    if(predicate(elem)) {
-      ret.push_back(elem);
-    }
-  }
-
-  return ret;
-}
+);
 
 /* Reduction shorthands */
 //! Tests if all elements of a container are true
@@ -455,7 +399,8 @@ template<class Container>
 auto makeContainsPredicate(const Container& container);
 
 /* Algorithms for special STL types */
-/*! Inverts the map. Returns a map that maps the opposite way. Be warned that 
+/*!
+ * Inverts the map. Returns a map that maps the opposite way. Be warned that 
  * this will lead to loss of information if the original map has duplicate
  * mapped values.
  */
@@ -508,7 +453,7 @@ template<
   class UnaryFunction,
   typename T,
   template<typename, typename...> class Container,
-  template<typename> class ...Dependents
+  template<typename> class ... Dependents
 > auto map(
   const Container<T, Dependents<T>...>& container,
   UnaryFunction&& function
@@ -663,7 +608,7 @@ template<
   class BinaryFunction,
   typename T,
   template<typename, typename...> class Container,
-  template<typename> class ...Dependents
+  template<typename> class ... Dependents
 > auto mapSequentialPairs(
   const Container<T, Dependents<T>...>& container,
   BinaryFunction&& function
@@ -698,7 +643,7 @@ template<
   class BinaryFunction,
   typename T,
   template<typename, typename...> class Container,
-  template<typename> class ...Dependents
+  template<typename> class ... Dependents
 > auto mapAllPairs(
   const Container<T, Dependents<T>...>& container,
   BinaryFunction&& function
@@ -774,7 +719,7 @@ template<
   typename ReturnType,
   typename T,
   template<typename, typename...> class Container,
-  class ...Dependents
+  class ... Dependents
 > ReturnType accumulate(
   const Container<T, Dependents...>& container,
   ReturnType&& init,
@@ -919,7 +864,7 @@ template<
   typename U,
   typename T,
   template<typename, typename...> class Container,
-  template<typename> class ...Dependents
+  template<typename> class ... Dependents
 > Container<U, Dependents<U>...> cast(
   const Container<T, Dependents<T>...>& container
 ) {
@@ -993,6 +938,98 @@ template<class Container> std::enable_if_t<
   }
 
   return representation;
+}
+
+template<class Container, class UnaryFunction>
+std::vector<
+  std::vector<
+    traits::getValueType<Container>
+  >
+> groupByMapping(
+  const Container& container,
+  UnaryFunction&& function
+) {
+  using T = traits::getValueType<Container>;
+  using R = traits::functionReturnType<UnaryFunction, T>;
+
+  std::vector<
+    std::vector<T>
+  > groups;
+
+  std::map<R, unsigned> indexMap;
+
+  for(auto iter = container.begin(); iter != container.end(); ++iter) {
+    auto ret = function(*iter);
+    if(indexMap.count(ret) == 0) {
+      indexMap[ret] = groups.size();
+
+      groups.emplace_back(
+        std::vector<T> {*iter}
+      );
+    } else {
+      groups.at(
+        indexMap.at(ret)
+      ).push_back(*iter);
+    }
+  }
+
+  return groups;
+}
+
+template<class Container, class BinaryFunction>
+std::vector<
+  std::vector<
+    traits::getValueType<Container>
+  >
+> groupByEquality(
+  const Container& container,
+  BinaryFunction&& compareEqual
+) {
+  using T = traits::getValueType<Container>;
+
+  std::vector<
+    std::vector<T>
+  > groups;
+
+  for(auto iter = container.begin(); iter != container.end(); ++iter) {
+    bool foundEqual = false;
+    for(auto& group : groups) {
+
+      if(compareEqual(*iter, *group.begin())) {
+        group.push_back(*iter);
+        foundEqual = true;
+        break;
+      }
+    }
+
+    if(!foundEqual) {
+      groups.emplace_back(
+        std::vector<T> {*iter}
+      );
+    }
+  }
+
+  return groups;
+}
+
+template<class Container, class UnaryFunction>
+std::vector<
+  traits::getValueType<Container>
+> copyIf(
+  const Container& container,
+  UnaryFunction&& predicate
+) {
+  std::vector<
+    traits::getValueType<Container>
+  > ret;
+
+  for(const auto& elem : container) {
+    if(predicate(elem)) {
+      addToContainer(ret, elem);
+    }
+  }
+
+  return ret;
 }
 
 template<class Container>

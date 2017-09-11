@@ -10,6 +10,13 @@
 /*! @file
  * 
  * Exposes a small set of functions for working with numbers in containers.
+ *
+ * - Basic summation
+ * - Kahan summation
+ * - Average
+ * - Geometric mean
+ * - Standard deviation
+ * - Minimum and maximum element
  */
 
 namespace TemplateMagic {
