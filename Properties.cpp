@@ -2,9 +2,9 @@
 
 #include <Eigen/Dense>
 
+#include "template_magic/MemberFetcher.h"
 #include "template_magic/Numeric.h"
 #include "template_magic/VectorView.h"
-#include "template_magic/MemberFetcher.h"
 
 namespace Symmetry {
 

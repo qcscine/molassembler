@@ -178,7 +178,7 @@ struct Linear {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Linear;
   static constexpr unsigned size = 2;
-  static const std::string stringName;
+  static constexpr char stringName[] = "linear";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -211,7 +211,7 @@ struct Bent {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Bent;
   static constexpr unsigned size = 2;
-  static const std::string stringName;
+  static constexpr char stringName[] = "bent";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     /* subject to a lot of variation, between 90 and 109 degrees pursuant to 
      * english wikipedia, using experimental data here to improve instances
@@ -253,7 +253,7 @@ struct TrigonalPlanar {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPlanar;
   static constexpr unsigned size = 3;
-  static const std::string stringName;
+  static constexpr char stringName[] = "trigonal planar";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -293,7 +293,7 @@ struct TrigonalPyramidal {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPyramidal;
   static constexpr unsigned size = 3;
-  static const std::string stringName;
+  static constexpr char stringName[] = "trigonal pyramidal";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -329,7 +329,7 @@ struct TShaped {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TShaped;
   static constexpr unsigned size = 3;
-  static const std::string stringName;
+  static constexpr char stringName[] = "T-shaped";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -381,7 +381,7 @@ struct Tetrahedral {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Tetrahedral;
   static constexpr unsigned size = 4;
-  static const std::string stringName;
+  static constexpr char stringName[] = "tetrahedral";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -423,7 +423,7 @@ struct SquarePlanar {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePlanar;
   static constexpr unsigned size = 4;
-  static const std::string stringName;
+  static constexpr char stringName[] = "square planar";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -466,7 +466,7 @@ struct Seesaw {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Seesaw;
   static constexpr unsigned size = 4;
-  static const std::string stringName;
+  static constexpr char stringName[] = "seesaw";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -537,7 +537,7 @@ struct SquarePyramidal {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePyramidal;
   static constexpr unsigned size = 5;
-  static const std::string stringName;
+  static constexpr char stringName[] = "square pyramidal";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -603,7 +603,7 @@ struct TrigonalBiPyramidal {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalBiPyramidal;
   static constexpr unsigned size = 5;
-  static const std::string stringName;
+  static constexpr char stringName[] = "trigonal bipyramidal";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -662,7 +662,7 @@ struct PentagonalPlanar {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPlanar;
   static constexpr unsigned size = 5;
-  static const std::string stringName;
+  static constexpr char stringName[] = "pentagonal planar";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     unsigned absDiff = std::min(a - b, b - a);
     return std::min(
@@ -706,7 +706,7 @@ struct Octahedral {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::Octahedral;
   static constexpr unsigned size = 6;
-  static const std::string stringName;
+  static constexpr char stringName[] = "octahedral";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -787,7 +787,7 @@ struct TrigonalPrismatic {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPrismatic;
   static constexpr unsigned size = 6;
-  static const std::string stringName;
+  static constexpr char stringName[] = "trigonal prismatic";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -849,7 +849,7 @@ struct PentagonalPyramidal {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPyramidal;
   static constexpr unsigned size = 6;
-  static const std::string stringName;
+  static constexpr char stringName[] = "pentagonal pyramidal";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -919,7 +919,7 @@ struct PentagonalBiPyramidal {
      */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalBiPyramidal;
   static constexpr unsigned size = 7;
-  static const std::string stringName;
+  static constexpr char stringName[] = "pentagonal bipyramidal";
   static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
     if(a == b) {
       return 0;
@@ -1021,7 +1021,7 @@ struct SquareAntiPrismatic {
    */
   static constexpr Symmetry::Name name = Symmetry::Name::SquareAntiPrismatic;
   static constexpr unsigned size = 8;
-  static const std::string stringName;
+  static constexpr char stringName[] = "square antiprismatic";
   static constexpr std::array<ConstexprMagic::Vector, 8> coordinates {{
     {-0.00928803, 0.611568, 0.791137},
     {0.795627, 0.605641, -0.0132684},
