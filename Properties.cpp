@@ -55,9 +55,7 @@ double getTetrahedronVolume(
   const Eigen::Vector3d& k,
   const Eigen::Vector3d& l
 ) {
-  return (
-    i - l
-  ).dot(
+  return (i - l).dot(
     (j - l).cross(k - l)
   );
 }
@@ -407,7 +405,11 @@ SymmetryTransitionGroup symmetryTransitionMappings(
   auto distortionsView = TemplateMagic::filter(
     distortions,
     [&lowestAngularDistortion](const auto& distortion) -> bool {
-      return distortion.totalDistortion > lowestAngularDistortion;
+      return (
+        distortion.totalDistortion > (
+          lowestAngularDistortion + floatingPointEqualityThreshold
+        )
+      );
     }
   );
 
@@ -423,7 +425,11 @@ SymmetryTransitionGroup symmetryTransitionMappings(
 
   distortionsView.filter(
     [&lowestChiralDistortion](const auto& distortion) -> bool {
-      return distortion.chiralDistortion > lowestChiralDistortion;
+      return (
+        distortion.chiralDistortion > (
+          lowestChiralDistortion + floatingPointEqualityThreshold
+        )
+      );
     }
   );
 
@@ -447,8 +453,6 @@ SymmetryTransitionGroup ligandLossTransitionMappings(
   const Symmetry::Name& symmetryTo,
   const unsigned& positionInSourceSymmetry
 ) {
-  const double equivalenceTolerance = 1e-4;
-
   // Ensure we are dealing with ligand loss
   assert(Symmetry::size(symmetryTo) + 1 == Symmetry::size(symmetryFrom));
   assert(positionInSourceSymmetry < Symmetry::size(symmetryFrom));
@@ -526,7 +530,7 @@ SymmetryTransitionGroup ligandLossTransitionMappings(
     [&](const auto& distortion) -> bool {
       return (
         distortion.totalDistortion > (
-          lowestAngularDistortion + equivalenceTolerance
+          lowestAngularDistortion + floatingPointEqualityThreshold
         )
       );
     }
@@ -545,7 +549,7 @@ SymmetryTransitionGroup ligandLossTransitionMappings(
     [&](const auto& distortion) -> bool {
       return (
         distortion.chiralDistortion > (
-          lowestChiralDistortion + equivalenceTolerance
+          lowestChiralDistortion + floatingPointEqualityThreshold
         )
       );
     }

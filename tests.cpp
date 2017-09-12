@@ -438,19 +438,23 @@ std::enable_if_t<
     SymmetryClassTo::name
   );
 
+  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
+    properties::floatingPointEqualityThreshold
+  };
+
   if(
-    dynamicMappings.angularDistortion != constexprMappings.angularDistortion
-    || dynamicMappings.chiralDistortion != constexprMappings.chiralDistortion
+    comparator.isUnequal(
+      dynamicMappings.angularDistortion,
+      constexprMappings.angularDistortion
+    ) || comparator.isUnequal(
+      dynamicMappings.chiralDistortion,
+      constexprMappings.chiralDistortion
+    )
   ) {
     return false;
   }
 
-  /* TODO Need to reformulate constexpr algorithm to use a DynamicSet instead
-   * of a DynamicArray for the indexMappings and the dynamic algorithm to use
-   * a set of index mappings -> easier set difference for comparison
-   *
-   * So far, an incomplete test, merely compares angular and chiral distortion
-   */
+  // Do a full set comparison
 
   auto convertedMappings = constexprMappings.mappings.mapToSTL(
     [&](const auto& indexList) -> std::vector<unsigned> {

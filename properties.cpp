@@ -5,7 +5,7 @@
 #include <numeric>
 #include <fstream>
 
-#include "constexpr_magic/Math.h"
+#include "constexpr_magic/FloatingPointComparison.h"
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
 
@@ -245,8 +245,6 @@ void writeLigandLossDotFile(
   const bool& showEdgesWithHighMultiplicity = true,
   const bool& explainTransitions = false
 ) {
-  const double equalityTolerance = 1e-4;
-
   using namespace Symmetry::properties;
 
   std::ofstream dotFile(filename.c_str());
@@ -320,14 +318,14 @@ void writeLigandLossDotFile(
           allMappings,
           [&](const auto& firstMappingPair, const auto& secondMappingPair) -> bool {
             return (
-              ConstexprMagic::Math::isCloseRelative(
+              ConstexprMagic::floating::isCloseRelative(
                 firstMappingPair.second.angularDistortion,
                 secondMappingPair.second.angularDistortion,
-                equalityTolerance
-              ) && ConstexprMagic::Math::isCloseRelative(
+                Symmetry::properties::floatingPointEqualityThreshold
+              ) && ConstexprMagic::floating::isCloseRelative(
                 firstMappingPair.second.chiralDistortion,
                 secondMappingPair.second.chiralDistortion,
-                equalityTolerance
+                Symmetry::properties::floatingPointEqualityThreshold
               )
             );
           }

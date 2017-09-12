@@ -14,6 +14,8 @@ namespace Symmetry {
 
 namespace properties {
 
+constexpr double floatingPointEqualityThreshold __attribute__ ((unused)) = 1e-4;
+
 //! Rotates a passed list of indices of a specific symmetry
 std::vector<unsigned> applyRotation(
   const std::vector<unsigned>& indices,

@@ -1,8 +1,9 @@
 #include "Symmetries.h"
 
+#include "constexpr_magic/Array.h"
 #include "constexpr_magic/Containers.h"
 #include "constexpr_magic/DynamicSet.h"
-#include "constexpr_magic/Array.h"
+#include "constexpr_magic/FloatingPointComparison.h"
 
 /*! @file
  *
@@ -20,6 +21,8 @@
 namespace Symmetry {
 
 namespace properties {
+
+constexpr double floatingPointEqualityTolerance = 1e-4;
 
 /* Typedef to use ConstexprMagic's Array instead of std::array as the underlying
  * base array type since C++14's std::array has too few members marked constexpr
@@ -450,6 +453,10 @@ constexpr auto ligandGainMappings() {
     ConstexprMagic::Math::factorial(SymmetryClassTo::size)
   > encounteredMappings;
 
+  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
+    floatingPointEqualityTolerance
+  };
+
   do {
     if(!encounteredMappings.contains(symPosMapping(indexMapping))) {
       auto angularDistortion = calculateAngleDistortion<
@@ -473,18 +480,18 @@ constexpr auto ligandGainMappings() {
        */
 
       bool addMapping = (
-        angularDistortion < lowestAngleDistortion
+        comparator.isLessThan(angularDistortion, lowestAngleDistortion)
         || (
-          angularDistortion == lowestAngleDistortion
-          && chiralDistortion <= lowestChiralDistortion
+          comparator.isEqual(angularDistortion, lowestAngleDistortion)
+          && comparator.isLessOrEqual(chiralDistortion, lowestChiralDistortion)
         )
       );
 
       bool clearExisting = (
         addMapping
         && !(
-          angularDistortion == lowestAngleDistortion
-          && chiralDistortion == lowestChiralDistortion
+          comparator.isEqual(angularDistortion, lowestAngleDistortion)
+          && comparator.isEqual(chiralDistortion, lowestChiralDistortion)
         )
       );
         
