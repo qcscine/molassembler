@@ -178,6 +178,52 @@ namespace detail {
 template<
   template<typename, size_t> class ArrayType,
   typename T,
+  size_t concatenatedSize
+> constexpr ArrayType<T, concatenatedSize> concatenateHelper(
+  const ArrayType<T, concatenatedSize>& concatenated
+) {
+  return concatenated;
+}
+
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t concatenatedSize,
+  size_t curSize,
+  size_t ... Ns
+> constexpr auto concatenateHelper(
+  const ArrayType<T, concatenatedSize>& concatenated,
+  const ArrayType<T, curSize>& array,
+  const ArrayType<T, Ns>& ... arrays
+) {
+  return concatenateHelper(
+    arrayConcatenate(
+      concatenated,
+      array
+    ),
+    arrays...
+  );
+}
+
+} // namespace detail
+
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t N,
+  size_t ... Ns
+> constexpr auto arrayConcatenate(
+  const ArrayType<T, N>& startingArray,
+  const ArrayType<T, Ns>& ... remainingArrays
+) {
+  return detail::concatenateHelper(startingArray, remainingArrays...);
+}
+
+namespace detail {
+
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
   size_t size,
   size_t... Indices
 > constexpr ArrayType<T, (size + 1)> arrayPushImpl(
@@ -563,8 +609,21 @@ template<
   template<typename, size_t> class ArrayType,
   typename T,
   size_t size
-> constexpr bool inPlaceNextPermutation(ArrayType<T, size>& data) {
-  size_t i = size - 1, j = 0, k = 0;
+> constexpr std::enable_if_t<
+  (size > 1),
+  bool
+> inPlaceNextPermutation(
+  ArrayType<T, size>& data,
+  const size_t& first,
+  const size_t& last
+) {
+  assert(
+    first < last
+    && first < size
+    && last <= size
+  );
+
+  size_t i = last - 1, j = 0, k = 0;
 
   while(true) {
     j = i;
@@ -573,7 +632,7 @@ template<
       i != 0
       && data.at(--i) < data.at(j)
     ) {
-      k = size;
+      k = last;
 
       while(
         k != 0
@@ -585,15 +644,27 @@ template<
       }
 
       inPlaceSwap(data, i, k);
-      inPlaceReverse(data, j, size);
+      inPlaceReverse(data, j, last);
       return true;
     }
 
-    if(i == 0) {
-      inPlaceReverse(data, 0, size);
+    if(i == first) {
+      inPlaceReverse(data, first, last);
       return false;
     }
   }
+}
+
+//! Shorthand for next permutation over entire array
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t size
+> constexpr std::enable_if_t<
+  (size > 1),
+  bool
+> inPlaceNextPermutation(ArrayType<T, size>& data) {
+  return inPlaceNextPermutation(data, 0, size);
 }
 
 /*!
@@ -605,8 +676,21 @@ template<
   template<typename, size_t> class ArrayType,
   typename T,
   size_t size
-> constexpr bool inPlacePreviousPermutation(ArrayType<T, size>& data) {
-  size_t i = size - 1, j = 0, k = 0;
+> constexpr std::enable_if_t<
+  (size > 1),
+  bool
+> inPlacePreviousPermutation(
+  ArrayType<T, size>& data,
+  const size_t& first,
+  const size_t& last
+) {
+  assert(
+    first < last
+    && first < size
+    && last <= size
+  );
+  
+  size_t i = last - 1, j = 0, k = 0;
 
   while(true) {
     j = i;
@@ -615,7 +699,7 @@ template<
       i != 0
       && data.at(j) < data.at(--i)
     ) {
-      k = size;
+      k = last;
 
       while(
         k != 0
@@ -627,15 +711,27 @@ template<
       }
 
       inPlaceSwap(data, i, k);
-      inPlaceReverse(data, j, size);
+      inPlaceReverse(data, j, last);
       return true;
     }
 
-    if(i == 0) {
-      inPlaceReverse(data, 0, size);
+    if(i == first) {
+      inPlaceReverse(data, first, last);
       return false;
     }
   }
+}
+
+//! Shorthand for previous permutation over entire array
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t size
+> constexpr std::enable_if_t<
+  (size > 1),
+  bool
+> inPlacePreviousPermutation(ArrayType<T, size>& data) {
+  return inPlacePreviousPermutation(data, 0, size);
 }
 
 } // namespace ConstexprMagic

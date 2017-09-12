@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   auto sqrt_passes = TemplateMagic::map(
     randomPositiveNumbers,
     [](const double& randomPositiveNumber) -> bool {
-      return ConstexprMagic::Math::isCloseRelative(
+      return ConstexprMagic::floating::isCloseRelative(
         ConstexprMagic::Math::sqrt(randomPositiveNumber),
         std::sqrt(randomPositiveNumber),
         accuracy
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   auto asin_passes = TemplateMagic::map(
     randomInverseTrigNumbers,
     [](const double& randomInverseTrigNumber) -> bool {
-      return ConstexprMagic::Math::isCloseRelative(
+      return ConstexprMagic::floating::isCloseRelative(
         ConstexprMagic::Math::asin(randomInverseTrigNumber),
         std::asin(randomInverseTrigNumber),
         accuracy
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     const double test = ConstexprMagic::Math::pow(number, exponent);
     const double reference = std::pow(number, exponent);
 
-    bool passes = ConstexprMagic::Math::isCloseRelative(
+    bool passes = ConstexprMagic::floating::isCloseRelative(
       test,
       reference,
       accuracy
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     TemplateMagic::map(
       randomZ,
       [](const auto& z) -> bool {
-        bool pass = ConstexprMagic::Math::isCloseRelative(
+        bool pass = ConstexprMagic::floating::isCloseRelative(
           ConstexprMagic::Math::ln(z),
           std::log(z),
           accuracy
@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
       TemplateMagic::map(
         TemplateMagic::random.getN<double>(-M_PI / 2, M_PI / 2, numTests),
         [](const double& x) -> bool {
-          return ConstexprMagic::Math::isCloseRelative(
+          return ConstexprMagic::floating::isCloseRelative(
             ConstexprMagic::Math::atan(x),
             std::atan(x),
             accuracy
@@ -343,6 +343,54 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   BOOST_CHECK_MESSAGE(
    !customHasNext && !STLHasNext,
    "The two permutation algorithms don't terminate at the same time"
+  );
+
+  // Variants of limited sections of the array
+
+  base = {0, 1, 2, 3};
+  STLComparison = {0, 1, 2, 3};
+  customHasNext = true;
+  STLHasNext = true;
+
+  do {
+    customHasNext = ConstexprMagic::inPlaceNextPermutation(base, 1, 3);
+    STLHasNext = std::next_permutation(STLComparison.begin() + 1, STLComparison.end() - 1);
+
+    BOOST_CHECK_MESSAGE(
+      base == STLComparison,
+      "In limited forward permutation, base is {" << TemplateMagic::condenseIterable(base)
+      << "} and and STL is {" << TemplateMagic::condenseIterable(STLComparison)
+      << "}"
+    );
+  } while(customHasNext && STLHasNext);
+
+  BOOST_CHECK_MESSAGE(
+   !customHasNext && !STLHasNext,
+   "The two permutation algorithms don't terminate at the same time in limited "
+   "forward permutation"
+  );
+
+  base = {3, 2, 1, 0};
+  STLComparison = {3, 2, 1, 0};
+  customHasNext = true;
+  STLHasNext = true;
+
+  do {
+    customHasNext = ConstexprMagic::inPlacePreviousPermutation(base, 1, 3);
+    STLHasNext = std::prev_permutation(STLComparison.begin() + 1, STLComparison.end() - 1);
+
+    BOOST_CHECK_MESSAGE(
+      base == STLComparison,
+      "In limited backward permutation, base is {" << TemplateMagic::condenseIterable(base)
+      << "} and and STL is {" << TemplateMagic::condenseIterable(STLComparison)
+      << "}"
+    );
+  } while(customHasNext && STLHasNext);
+
+  BOOST_CHECK_MESSAGE(
+   !customHasNext && !STLHasNext,
+   "The two permutation algorithms don't terminate at the same time in limited "
+   "backward permutation"
   );
 }
 
@@ -806,3 +854,36 @@ static_assert(
 );
 
 } // namespace FloatingPointComparisonTests
+
+namespace ConcatenationTests {
+
+constexpr ConstexprMagic::Array<unsigned, 4> f {4, 2, 9, 3};
+constexpr ConstexprMagic::Array<unsigned, 4> g {11, 22, 33, 44};
+constexpr ConstexprMagic::Array<unsigned, 4> h {234, 292, 912, 304};
+constexpr ConstexprMagic::Array<unsigned, 8> fg {
+  4, 2, 9, 3,
+  11, 22, 33, 44
+};
+constexpr ConstexprMagic::Array<unsigned, 12> fgh {
+  4, 2, 9, 3,
+  11, 22, 33, 44,
+  234, 292, 912, 304
+};
+
+static_assert(
+  ConstexprMagic::arraysEqual(
+    ConstexprMagic::arrayConcatenate(f, g),
+    fg
+  ),
+  "Pairwise concatenation does not preserve sequence!"
+);
+
+static_assert(
+  ConstexprMagic::arraysEqual(
+    ConstexprMagic::arrayConcatenate(f, g, h),
+    fgh
+  ),
+  "Variadic concatenation does not work as expected"
+);
+
+} // namespace ConcatenationTests
