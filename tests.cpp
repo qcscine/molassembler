@@ -13,6 +13,7 @@
 #include "DynamicSet.h"
 #include "TupleType.h"
 #include "LogicalOperatorTests.h"
+#include "FloatingPointComparison.h"
 
 #include <iostream>
 #include <iomanip>
@@ -727,3 +728,81 @@ static_assert(
 );
 
 } // namespace TupleTypeTests
+
+namespace FloatingPointComparisonTests {
+
+template<typename T>
+constexpr bool testAbsoluteComparison(const T& a, const T& b, const T& tolerance) {
+  ConstexprMagic::floating::ExpandedAbsoluteEqualityComparator<T> comparator {
+    tolerance
+  };
+
+  return (
+    ConstexprMagic::Math::XOR(
+      (
+        comparator.isLessThan(a, b)
+        && comparator.isMoreThan(b, a)
+        && comparator.isUnequal(a, b)
+      ),
+      (
+        comparator.isLessThan(b, a)
+        && comparator.isMoreThan(a, b)
+        && comparator.isUnequal(a, b)
+      ),
+      (
+        !comparator.isLessThan(a, b)
+        && !comparator.isMoreThan(a, b)
+        && comparator.isEqual(a, b)
+      )
+    ) && ConstexprMagic::Math::XOR(
+      comparator.isEqual(a, b),
+      comparator.isUnequal(a, b)
+    )
+  );
+}
+
+template<typename T>
+constexpr bool testRelativeComparison(const T& a, const T& b, const T& tolerance) {
+  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<T> comparator {
+    tolerance
+  };
+
+  return (
+    ConstexprMagic::Math::XOR(
+      (
+        comparator.isLessThan(a, b)
+        && comparator.isMoreThan(b, a)
+        && comparator.isUnequal(a, b)
+      ),
+      (
+        comparator.isLessThan(b, a)
+        && comparator.isMoreThan(a, b)
+        && comparator.isUnequal(a, b)
+      ),
+      (
+        !comparator.isLessThan(a, b)
+        && !comparator.isMoreThan(a, b)
+        && comparator.isEqual(a, b)
+      )
+    ) && ConstexprMagic::Math::XOR(
+      comparator.isEqual(a, b),
+      comparator.isUnequal(a, b)
+    )
+  );
+}
+
+static_assert(
+  testAbsoluteComparison(4.3, 3.9, 1e-4)
+  && testAbsoluteComparison(4.3, 3.9, 1.0)
+  && testAbsoluteComparison(4.4, 4.4, 1e-10),
+  "absolute comparison has inconsistent operators!"
+);
+
+static_assert(
+  testRelativeComparison(4.3, 3.9, 1e-4)
+  && testRelativeComparison(4.3, 3.9, 1.0)
+  && testRelativeComparison(4.4, 4.4, 1e-10),
+  "relative comparison has inconsistent operators!"
+);
+
+} // namespace FloatingPointComparisonTests

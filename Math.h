@@ -67,20 +67,22 @@ constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T& inDegrees)
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T& inRadians) noexcept;
 
-// Comparison helpers
+/* Comparison helpers, deprecated in favor of identical implementations in
+ * FloatingPointComparison.h
+ */
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelative(
   const T& a,
   const T& b,
   const T& relativeTolerance
-);
+) __attribute__ ((deprecated));
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseAbsolute(
   const T& a,
   const T& b,
   const T& absoluteTolerance
-);
+) __attribute__ ((deprecated));
 
 // Rounding
 template<typename T>
@@ -486,7 +488,7 @@ constexpr T asin(const T& x) noexcept {
   T lower_factorial = 1;
   T term = 1;
 
-  for(unsigned n = 1; ConstexprMagic::Math::abs(term) > epsilon; n++) {
+  for(unsigned n = 1; ConstexprMagic::Math::abs(term) > epsilon; ++n) {
     upper_factorial *= 2 * (n - 1) + 1;
     lower_factorial *= 2 * n;
 

@@ -18,9 +18,9 @@ namespace ConstexprMagic {
 struct Vector {
   std::array<double, 3> data;
 
-  constexpr Vector() : data({0, 0, 0}) {}
+  constexpr Vector() : data({{0, 0, 0}}) {}
   constexpr Vector(std::array<double, 3> positions) : data(positions) {}
-  constexpr Vector(double x, double y, double z) : data({x, y, z}) {}
+  constexpr Vector(double x, double y, double z) : data({{x, y, z}}) {}
 
   //! Computes the dot product with another vector
   constexpr double dot(const Vector& other) const {
@@ -34,11 +34,11 @@ struct Vector {
   //! Computes the cross product with another vector
   constexpr Vector cross(const Vector& other) const {
     return Vector {
-      {
+      {{
         this -> data[1] * other.data[2] - this -> data[2] * other.data[1],
         this -> data[2] * other.data[0] - this -> data[0] * other.data[2],
         this -> data[0] * other.data[1] - this -> data[1] * other.data[0]
-      }
+       }}
     };
   }
 
@@ -53,31 +53,31 @@ struct Vector {
 
   constexpr Vector operator + (const Vector& other) const {
     return Vector {
-      {
+      {{
         this->data[0] + other.data[0],
         this->data[1] + other.data[1],
         this->data[2] + other.data[2]
-      }
+      }}
     };
   }
 
   constexpr Vector operator - (const Vector& other) const {
     return Vector {
-      {
+      {{
         this->data[0] - other.data[0],
         this->data[1] - other.data[1],
         this->data[2] - other.data[2]
-      }
+      }}
     };
   }
 
   constexpr Vector operator * (const double& constant) const {
     return Vector {
-      {
+      {{
         constant * this->data[0],
         constant * this->data[1],
         constant * this->data[2]
-      }
+      }}
     };
   }
 
@@ -88,22 +88,22 @@ struct Vector {
     }
 
     return Vector {
-      {
+      {{
         this->data[0] / constant,
         this->data[1] / constant,
         this->data[2] / constant
-      }
+      }}
     };
   }
 
   //! Unitary inversion operator
   constexpr Vector operator - () const {
     return Vector {
-      {
+      {{
         - this -> data[0],
         - this -> data[1],
         - this -> data[2]
-      }
+      }}
     };
   }
 };
