@@ -20,7 +20,7 @@
 
 namespace Symmetry {
 
-namespace properties {
+namespace constexprProperties {
 
 constexpr double floatingPointEqualityTolerance = 1e-4;
 
@@ -408,9 +408,11 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
  */
 template<typename SymmetryClass>
 struct MappingsReturnType {
+  static constexpr size_t maxMappingsSize = 50;
+
   using MappingsList = ConstexprMagic::DynamicSet<
     ArrayType<unsigned, SymmetryClass::size>,
-    20
+    maxMappingsSize
   >;
 
   MappingsList mappings;
@@ -428,21 +430,22 @@ struct MappingsReturnType {
 
 /*!
  * Calculates the ideal index mappings when adding a ligand to a particular
- * symmetry.
- *
- * TODO generalize to more equal size target symmetry and perhaps also ligand
- * loss as soon as dynamic variant works
+ * symmetry or between symmetries of equal size.
  */
 template<class SymmetryClassFrom, class SymmetryClassTo>
-constexpr auto ligandGainMappings() {
+constexpr auto symmetryTransitionMappings() {
   static_assert(
-    SymmetryClassTo::size == SymmetryClassFrom::size + 1,
-    "Ligand gain pathway calculation must involve symmetry size increase"
+    (
+      SymmetryClassTo::size == SymmetryClassFrom::size + 1
+      || SymmetryClassTo::size == SymmetryClassFrom::size
+    ),
+    "This function can handle only cases of equal or increasing symmetry size"
   );
 
   using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
 
-  ConstexprMagic::DynamicSet<IndexMappingType, 20> bestMappings;
+  typename MappingsReturnType<SymmetryClassTo>::MappingsList bestMappings;
+
   double lowestAngleDistortion = 100;
   double lowestChiralDistortion = 100;
 
@@ -523,6 +526,110 @@ constexpr auto ligandGainMappings() {
   );
 }
 
-} // namespace properties
+template<class SymmetryClassFrom, class SymmetryClassTo > 
+constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
+
+  static_assert(
+    SymmetryClassFrom::size == SymmetryClassTo::size + 1,
+    "Ligand loss pathway calculation must involve symmetry size decrease"
+  );
+
+  assert(deletedSymmetryPosition < SymmetryClassFrom::size);
+
+
+  using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
+
+  ConstexprMagic::DynamicSet<IndexMappingType, 20> bestMappings;
+  double lowestAngleDistortion = 100;
+  double lowestChiralDistortion = 100;
+
+  // Construct the initial index mapping
+  ArrayType<unsigned, SymmetryClassFrom::size> indexMapping;
+  for(unsigned i = 0; i < deletedSymmetryPosition; ++i) {
+    indexMapping.at(i) = i;
+  }
+  for(unsigned i = deletedSymmetryPosition; i < SymmetryClassFrom::size - 1; ++i) {
+    indexMapping.at(i) = i + 1;
+  }
+  indexMapping.at(SymmetryClassFrom::size - 1) = deletedSymmetryPosition;
+
+  /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
+   * save that symmetryTo and symmetryFrom are swapped in all occasions
+   * and that inPlaceNextPermutation is only called on the subset excluding the
+   * last position (the one that is added / deleted).
+   */
+
+  ConstexprMagic::DynamicSet<
+    IndexMappingType,
+    ConstexprMagic::Math::factorial(SymmetryClassFrom::size)
+  > encounteredMappings;
+
+  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
+    floatingPointEqualityTolerance
+  };
+
+  do {
+    if(!encounteredMappings.contains(symPosMapping(indexMapping))) {
+      auto angularDistortion = calculateAngleDistortion<
+        SymmetryClassTo,
+        SymmetryClassFrom
+      >(indexMapping);
+
+      auto chiralDistortion = calculateChiralDistortion<
+        SymmetryClassTo,
+        SymmetryClassFrom
+      >(indexMapping);
+
+      bool addMapping = (
+        comparator.isLessThan(angularDistortion, lowestAngleDistortion)
+        || (
+          comparator.isEqual(angularDistortion, lowestAngleDistortion)
+          && comparator.isLessOrEqual(chiralDistortion, lowestChiralDistortion)
+        )
+      );
+
+      bool clearExisting = (
+        addMapping
+        && !(
+          comparator.isEqual(angularDistortion, lowestAngleDistortion)
+          && comparator.isEqual(chiralDistortion, lowestChiralDistortion)
+        )
+      );
+        
+      if(clearExisting) {
+        bestMappings.clear();
+        lowestAngleDistortion = angularDistortion;
+        lowestChiralDistortion = chiralDistortion;
+      }
+
+      if(addMapping) {
+        bestMappings.insert(indexMapping);
+      }
+
+      // Add all rotations to the encountered mappings
+      auto allRotations = generateAllRotations<SymmetryClassFrom>(
+        symPosMapping(indexMapping)
+      );
+
+      for(const auto& rotation : allRotations) {
+        encounteredMappings.insert(rotation);
+      }
+    }
+  } while(
+    ConstexprMagic::inPlaceNextPermutation(
+      indexMapping,
+      0,
+      SymmetryClassFrom::size - 1
+    )
+  );
+
+  return MappingsReturnType<SymmetryClassFrom>(
+    std::move(bestMappings),
+    std::move(lowestAngleDistortion),
+    std::move(lowestChiralDistortion)
+  );
+}
+
+} // namespace constexprProperties
 
 } // namespace Symmetry

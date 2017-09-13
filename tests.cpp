@@ -420,14 +420,17 @@ BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
  */
 template<class SymmetryClassFrom, class SymmetryClassTo>
 std::enable_if_t<
-  SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
+  (
+    SymmetryClassFrom::size + 1 == SymmetryClassTo::size
+    || SymmetryClassFrom::size == SymmetryClassTo::size
+  ),
   bool
 > doLigandGainTestIfAdjacent() {
   /* Struct:
    * .mappings - dynamic array of fixed-size index mappings
    * .angularDistortion, .chiralDistortion - doubles
    */
-  auto constexprMappings = properties::ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
+  auto constexprMappings = constexprProperties::symmetryTransitionMappings<SymmetryClassFrom, SymmetryClassTo>();
 
   /* Vector of structs:
    * .indexMapping - vector containing the index mapping
@@ -471,9 +474,128 @@ std::enable_if_t<
   ).size() == 0;
 }
 
+template<class SymmetryClass>
+using IndexAndMappingsPairType = std::pair<
+  unsigned,
+  Symmetry::constexprProperties::MappingsReturnType<SymmetryClass>
+>;
+
+template<class SymmetryClass>
+constexpr bool pairEqualityComparator(
+  const IndexAndMappingsPairType<SymmetryClass>& a,
+  const IndexAndMappingsPairType<SymmetryClass>& b
+) {
+  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
+    Symmetry::properties::floatingPointEqualityThreshold
+  };
+
+  return (
+    comparator.isEqual(a.second.angularDistortion, b.second.angularDistortion)
+    && comparator.isEqual(a.second.chiralDistortion, b.second.chiralDistortion)
+  );
+}
+
 template<class SymmetryClassFrom, class SymmetryClassTo>
 std::enable_if_t<
-  SymmetryClassFrom::size + 1 != SymmetryClassTo::size,
+  SymmetryClassFrom::size == SymmetryClassTo::size + 1,
+  bool
+> doLigandGainTestIfAdjacent() {
+  // Ligand loss situation
+  
+  /* Constexpr part */
+  ConstexprMagic::Array<
+    std::pair<
+      unsigned,
+      Symmetry::constexprProperties::MappingsReturnType<SymmetryClassFrom>
+    >,
+    SymmetryClassFrom::size
+  > constexprMappings;
+
+  for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
+    constexprMappings.at(i) = std::make_pair(
+      i,
+      Symmetry::constexprProperties::ligandLossMappings<
+        SymmetryClassFrom,
+        SymmetryClassTo
+      >(i)
+    );
+  }
+
+  // Group the results
+  auto constexprGroups = ConstexprMagic::groupByEquality(
+    constexprMappings,
+    pairEqualityComparator<SymmetryClassFrom> // C++17 constexpr lambda
+  );
+
+  /* Dynamic part */
+  std::vector<
+    std::pair<
+      unsigned,
+      Symmetry::properties::SymmetryTransitionGroup
+    >
+  > dynamicMappings;
+
+  for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
+    dynamicMappings.emplace_back(
+      i,
+      ligandLossTransitionMappings(
+        SymmetryClassFrom::name,
+        SymmetryClassTo::name,
+        i
+      )
+    );
+  }
+
+  // Analyze all mappings - which indices have "identical" target mappings?
+  auto dynamicGroups = TemplateMagic::groupByEquality(
+    dynamicMappings,
+    [&](const auto& firstMappingPair, const auto& secondMappingPair) -> bool {
+      return (
+        ConstexprMagic::floating::isCloseRelative(
+          firstMappingPair.second.angularDistortion,
+          secondMappingPair.second.angularDistortion,
+          Symmetry::properties::floatingPointEqualityThreshold
+        ) && ConstexprMagic::floating::isCloseRelative(
+          firstMappingPair.second.chiralDistortion,
+          secondMappingPair.second.chiralDistortion,
+          Symmetry::properties::floatingPointEqualityThreshold
+        )
+      );
+    }
+  );
+
+  /* Comparison */
+  // Quick check
+  if(dynamicGroups.size() != constexprGroups.size()) {
+    return false;
+  }
+
+  // Compare an unsigned set of sub-group sizes from each
+  std::set<unsigned> dynamicGroupSizes, constexprGroupSizes;
+
+  for(const auto& dynamicGroup : dynamicGroups) {
+    dynamicGroupSizes.insert(dynamicGroup.size());
+  }
+
+  for(const auto& constexprGroup : constexprGroups) {
+    constexprGroupSizes.insert(constexprGroup.size());
+  }
+
+  if(dynamicGroupSizes != constexprGroupSizes) {
+    return false;
+  }
+
+  return true;
+}
+
+// Base case in which source and target symmetries are non-adjacent
+template<class SymmetryClassFrom, class SymmetryClassTo>
+std::enable_if_t<
+  (
+    SymmetryClassFrom::size != SymmetryClassTo::size + 1
+    && SymmetryClassFrom::size + 1 != SymmetryClassTo::size
+    && SymmetryClassFrom::size != SymmetryClassTo::size
+  ),
   bool
 > doLigandGainTestIfAdjacent() {
   return true;
@@ -491,8 +613,8 @@ struct RotationGenerationTest {
   static bool value() {
 
     // This is a DynamicSet of SymmetryClass-sized Arrays
-    auto constexprRotations = properties::generateAllRotations<SymmetryClass>(
-      properties::startingIndexSequence<SymmetryClass>()
+    auto constexprRotations = constexprProperties::generateAllRotations<SymmetryClass>(
+      constexprProperties::startingIndexSequence<SymmetryClass>()
     );
 
     // This is a std::set of SymmetryClass-sized std::vectors
@@ -537,7 +659,7 @@ struct RotationGenerationTest {
         << " symmetry: Sizes of generated sets are different. "
         << "constexpr - " << convertedRotations.size() << " != "
         << dynamicRotations.size() << " - dynamic" << std::endl;
-      std::cout << " Maximum #rotations: " << properties::maxRotations<SymmetryClass>() 
+      std::cout << " Maximum #rotations: " << constexprProperties::maxRotations<SymmetryClass>() 
         << std::endl;
 
       std::cout << " Converted constexpr:" << std::endl;
@@ -601,7 +723,7 @@ std::enable_if_t<
   SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
   void
 > doWriteIfAdjacent() {
-  auto constexprMapping = properties::ligandGainMappings<SymmetryClassFrom, SymmetryClassTo>();
+  auto constexprMapping = constexprProperties::symmetryTransitionMappings<SymmetryClassFrom, SymmetryClassTo>();
 
   unsigned multiplicity = constexprMapping.mappings.size();
 
@@ -645,7 +767,7 @@ struct WriteLigandMapping {
   }
 };
 
-BOOST_AUTO_TEST_CASE(constexprProperties) {
+BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   // Full test of rotation algorithm equivalency for all symmetries
   BOOST_CHECK_MESSAGE(
     TemplateMagic::all_of(
@@ -691,7 +813,7 @@ BOOST_AUTO_TEST_CASE(constexprProperties) {
   );
 
 
-  /*constexpr auto mappings = ligandGainMappings<data::SquarePlanar, data::SquarePyramidal>();
+  /*constexpr auto mappings = symmetryTransitionMappings<data::SquarePlanar, data::SquarePyramidal>();
   std::cout << "Linear to TShaped mappings: angular = " 
     << mappings.angularDistortion
     << ", chiral = " << mappings.chiralDistortion
