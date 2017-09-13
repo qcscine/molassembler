@@ -119,7 +119,7 @@ template<
 
 } // namespace detail
 
-//!  Iota for any array type
+//! Iota for any array type
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -127,6 +127,36 @@ template<
 > constexpr ArrayType<T, size> iota() {
   return detail::iotaHelper<ArrayType, T, size>(
     std::make_index_sequence<size>()
+  );
+}
+
+namespace detail {
+
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t begin,
+  size_t end,
+  size_t ... Inds
+> constexpr ArrayType<T, (end - begin)> rangeHelper(
+  std::index_sequence<Inds...>
+) {
+  return ArrayType<T, (end - begin)> {
+    (begin + Inds)...
+  };
+}
+
+} // namespace detail
+
+//! Range for any array type
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t begin, // inclusive
+  size_t end // exclusive
+> constexpr ArrayType<T, (end - begin)> range() {
+  return detail::rangeHelper<ArrayType, T, begin, end>(
+    std::make_index_sequence<(end - begin)>()
   );
 }
 

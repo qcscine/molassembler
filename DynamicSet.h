@@ -3,7 +3,6 @@
 
 #include <set>
 
-#include "Containers.h"
 #include "DynamicArray.h"
 
 /*! @file

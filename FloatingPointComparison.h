@@ -3,10 +3,6 @@
 
 #include "Math.h"
 
-#include <cmath>
-#include <limits>
-#include <type_traits>
-#include <cassert>
 #include <tuple>
 
 /*! @file
@@ -158,6 +154,11 @@ public:
   constexpr bool isUnequal(const T& a, const T& b) const noexcept {
     return !isEqual(a, b);
   }
+
+  //! Function call operator compares equality
+  constexpr bool operator () (const T& a, const T& b) const noexcept {
+    return isEqual(a, b);
+  }
 };
 
 template<typename T>
@@ -232,6 +233,11 @@ public:
       _relativeTolerance,
       T {0}
     );
+  }
+
+  //! Function call operator compares equality
+  constexpr bool operator () (const T& a, const T& b) const noexcept {
+    return isEqual(a, b);
   }
 };
 

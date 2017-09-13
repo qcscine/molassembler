@@ -175,6 +175,11 @@ template<
   );
 }
 
+/*!
+ * Takes a tuple type and a template function that accepts a single type
+ * at a time and returns an array of the return values of the template function
+ * called with the tuple types.
+ */
 template<
   typename TupleType,
   template<typename> class TemplateFunction

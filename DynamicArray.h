@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "Containers.h"
 
@@ -379,10 +380,59 @@ public:
     return makeArray(std::make_index_sequence<nItems>{});
   }
 
-  constexpr std::array<T, nItems> getDynamicArray() const {
-    return makeArray(std::make_index_sequence<nItems>{});
+  std::vector<T> toSTL() const {
+    std::vector<T> data;
+    data.reserve(_count);
+
+    for(unsigned i = 0; i < _count; ++i) {
+      data.push_back(_items[i]);
+    }
+
+    return data;
   }
 };
+
+/*!
+ * Groups data by equality.
+ */
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t N,
+  class BinaryFunction
+> constexpr DynamicArray<
+  DynamicArray<T, N>,
+  N
+> groupByEquality(
+  const ArrayType<T, N>& data,
+  BinaryFunction&& equalityComparator
+) {
+  // Maximal dimensions if all equal is 1xN, if all unequal Nx1
+  DynamicArray<
+    DynamicArray<T, N>,
+    N
+  > groups;
+
+  for(auto iter = data.begin(); iter != data.end(); ++iter) {
+    bool foundEqual = false;
+
+    for(auto& group : groups) {
+      if(equalityComparator(*iter, *group.begin())) {
+        group.push_back(*iter);
+        foundEqual = true;
+        break;
+      }
+    }
+
+    if(!foundEqual) {
+      groups.push_back(
+        DynamicArray<T, N> {*iter}
+      );
+    }
+  }
+
+  return groups;
+}
 
 } // namespace ConstexprMagic
 

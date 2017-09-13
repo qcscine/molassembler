@@ -412,6 +412,22 @@ BOOST_AUTO_TEST_CASE(dynamicArray) {
     compileTimeDynTest(),
     "non-const dynamic array functionality works as expected"
   );
+
+  constexpr ConstexprMagic::Array<unsigned, 10> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
+
+  constexpr auto grouped = groupByEquality(
+    values,
+    std::equal_to<unsigned>()
+  );
+
+  static_assert(
+    grouped.size() == 4
+    && grouped.at(0).size() == 1
+    && grouped.at(1).size() == 2
+    && grouped.at(2).size() == 3
+    && grouped.at(3).size() == 4,
+    "Grouping does not work as expected"
+  );
 }
 
 template<typename T, size_t size, class Comparator>
