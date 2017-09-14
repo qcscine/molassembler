@@ -1178,15 +1178,11 @@ using AngleFunctionPtr = double(*)(const unsigned&, const unsigned&);
  */
 template<typename ...SymmetryClasses>
 struct angleFunctionFunctor {
-  static constexpr std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> initialize() {
-    std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> sizes = {{
+  static constexpr std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> value() {
+    return {{
       &SymmetryClasses::angleFunction...
     }};
-
-    return sizes;
   }
-
-  static constexpr std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> value = initialize();
 };
 
 //! Stub to find out the minimum angle returned in a specific symmetry class type
@@ -1211,7 +1207,7 @@ constexpr double smallestAngle() {
  */
 template<typename ...SymmetryClasses>
 struct minAngleFunctor {
-  static constexpr double initialize() {
+  static constexpr double value() {
     const std::array<double, sizeof...(SymmetryClasses)> smallestAngles {{
       smallestAngle<SymmetryClasses>()...
     }};
@@ -1227,8 +1223,6 @@ struct minAngleFunctor {
 
     return minElement;
   }
-
-  static constexpr double value = initialize();
 };
 
 /*! Conversion function to make the dynamic rotations list type from the
@@ -1329,18 +1323,12 @@ std::pair<Name, SymmetryInformation> makeMapInitPair() {
  */
 template<typename ...SymmetryClasses>
 struct symmetryInformationFunctor {
-  static const std::map<Name, SymmetryInformation> initialize() {
+  static const std::map<Name, SymmetryInformation> value() {
     return {{
       makeMapInitPair<SymmetryClasses>()...
     }};
-  };
-
-  static const std::map<Name, SymmetryInformation> value;
+  }
 };
-
-template<typename ...SymmetryClasses>
-const std::map<Name, SymmetryInformation> 
-symmetryInformationFunctor<SymmetryClasses...>::value = symmetryInformationFunctor<SymmetryClasses...>::initialize();
 
 constexpr auto angleFunctions = ConstexprMagic::TupleType::unpackToFunction<
   allSymmetryDataTypes,
