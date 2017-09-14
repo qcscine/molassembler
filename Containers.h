@@ -457,28 +457,67 @@ template<
  */
 template<
   typename T,
-  class Comparator,
-  template<typename, size_t> class ArrayType,
-  size_t size
-> constexpr size_t lowerBound(
-  const ArrayType<T, size>& array,
+  class LessThanPredicate,
+  class Iter
+> constexpr Iter lowerBound(
+  Iter bound,
+  Iter last,
   const T& item,
-  Comparator comparator
+  LessThanPredicate predicate
 ) {
-  size_t it = 0, count = array.size(), step = 0, bound = 0;
+  using DiffType = typename std::iterator_traits<Iter>::difference_type;
+
+  Iter it = bound;
+  DiffType count = last - bound, step = 0;
 
   while(count > 0) {
     it = bound;
     step = count / 2;
-    it += step;
-    
-    if(comparator(array.at(it), item)) {
-      it += 1;
+    it += step; // C++17 std::advance (differentiates between RandomAccess / linear)
+
+    if(predicate(*it, item)) {
+      ++it;
       bound = it;
       count -= step + 1;
     } else {
       count = step;
     }
+  }
+
+  return bound;
+}
+
+/*!
+ * Binary searches within an ordered container. Returns an iterator to the
+ * sought element if found, otherwise returns the end iterator.
+ */
+template<
+  typename Container,
+  typename T,
+  class LessThanPredicate
+> constexpr typename Container::const_iterator binarySearch(
+  const Container& container,
+  const T& item,
+  LessThanPredicate predicate = std::less<T>()
+) {
+  auto bound = lowerBound<T, LessThanPredicate>(
+    container.begin(),
+    container.end(),
+    item,
+    predicate
+  );
+
+  /* Lower bound merely finds the first item not smaller than the sought one,
+   * this does NOT mean that they're equal.
+   *
+   * a == b  <-->  !(a < b) && !(b < a)
+   *
+   * Lower bound guarantees the first condition of the right side, but we need
+   * to check the second one to ensure that we have found what we seek, not just
+   * merely something bigger than a.
+   */
+  if(predicate(item, *bound)) {
+    return container.end();
   }
 
   return bound;

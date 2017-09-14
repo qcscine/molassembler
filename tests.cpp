@@ -11,6 +11,7 @@
 #include "Set.h"
 #include "DynamicArray.h"
 #include "DynamicSet.h"
+#include "DynamicMap.h"
 #include "TupleType.h"
 #include "LogicalOperatorTests.h"
 #include "FloatingPointComparison.h"
@@ -55,10 +56,13 @@ static_assert(
   "arrayPush doesn't work on ConstexprMagic::Array"
 );
 
-constexpr auto stdTestArr = std::array<unsigned, 3> {4, 3, 5};
+constexpr auto stdTestArr = std::array<unsigned, 3> {{4, 3, 5}};
 
 static_assert(
-  ConstexprMagic::arraysEqual(ConstexprMagic::arrayPush(stdTestArr, 9u), std::array<unsigned, 4> {4, 3, 5, 9}),
+  ConstexprMagic::arraysEqual(
+    ConstexprMagic::arrayPush(stdTestArr, 9u),
+    std::array<unsigned, 4> {{4, 3, 5, 9}}
+  ),
   "arrayPush doesn't work on std::array"
 );
 
@@ -92,7 +96,6 @@ static_assert(
 */
 
 constexpr auto testSet = ConstexprMagic::makeSetFromSortedArray(oneMore);
-constexpr auto withElement = testSet.insert(5);
 
 } // namespace ArrayTests
 
@@ -110,7 +113,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   const auto randomPositiveNumbers = TemplateMagic::random.getN<double>(0, 1e6, numTests);
   auto sqrt_passes = TemplateMagic::map(
     randomPositiveNumbers,
-    [](const double& randomPositiveNumber) -> bool {
+    [&](const double& randomPositiveNumber) -> bool {
       return ConstexprMagic::floating::isCloseRelative(
         ConstexprMagic::Math::sqrt(randomPositiveNumber),
         std::sqrt(randomPositiveNumber),
@@ -150,7 +153,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   auto asin_passes = TemplateMagic::map(
     randomInverseTrigNumbers,
-    [](const double& randomInverseTrigNumber) -> bool {
+    [&](const double& randomInverseTrigNumber) -> bool {
       return ConstexprMagic::floating::isCloseRelative(
         ConstexprMagic::Math::asin(randomInverseTrigNumber),
         std::asin(randomInverseTrigNumber),
@@ -181,7 +184,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     std::cout << std::endl;
   }
 
-  auto testPow = [](const double& number, const int& exponent) -> bool {
+  auto testPow = [&](const double& number, const int& exponent) -> bool {
     const double test = ConstexprMagic::Math::pow(number, exponent);
     const double reference = std::pow(number, exponent);
 
@@ -223,7 +226,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   bool all_ln_pass = TemplateMagic::all_of(
     TemplateMagic::map(
       randomZ,
-      [](const auto& z) -> bool {
+      [&](const auto& z) -> bool {
         bool pass = ConstexprMagic::floating::isCloseRelative(
           ConstexprMagic::Math::ln(z),
           std::log(z),
@@ -287,7 +290,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     TemplateMagic::all_of(
       TemplateMagic::map(
         TemplateMagic::random.getN<double>(-M_PI / 2, M_PI / 2, numTests),
-        [](const double& x) -> bool {
+        [&](const double& x) -> bool {
           return ConstexprMagic::floating::isCloseRelative(
             ConstexprMagic::Math::atan(x),
             std::atan(x),
@@ -300,8 +303,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 }
 
 BOOST_AUTO_TEST_CASE(arrayPermutation) {
-  std::array<unsigned, 4> base {0, 1, 2, 3};
-  std::array<unsigned, 4> STLComparison {0, 1, 2, 3};
+  std::array<unsigned, 4> base {{0, 1, 2, 3}};
+  std::array<unsigned, 4> STLComparison {{0, 1, 2, 3}};
 
   bool customHasNext = true;
   bool STLHasNext = true;
@@ -323,8 +326,8 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
    "The two permutation algorithms don't terminate at the same time"
   );
 
-  base = {3, 2, 1, 0};
-  STLComparison = {3, 2, 1, 0};
+  base = {{3, 2, 1, 0}};
+  STLComparison = {{3, 2, 1, 0}};
   customHasNext = true;
   STLHasNext = true;
 
@@ -347,8 +350,8 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 
   // Variants of limited sections of the array
 
-  base = {0, 1, 2, 3};
-  STLComparison = {0, 1, 2, 3};
+  base = {{0, 1, 2, 3}};
+  STLComparison = {{0, 1, 2, 3}};
   customHasNext = true;
   STLHasNext = true;
 
@@ -370,8 +373,8 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
    "forward permutation"
   );
 
-  base = {3, 2, 1, 0};
-  STLComparison = {3, 2, 1, 0};
+  base = {{3, 2, 1, 0}};
+  STLComparison = {{3, 2, 1, 0}};
   customHasNext = true;
   STLHasNext = true;
 
@@ -401,7 +404,7 @@ constexpr bool compileTimeDynTest() {
   return nonConstArr.size() == 4;
 }
 
-BOOST_AUTO_TEST_CASE(dynamicArray) {
+BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
   constexpr ConstexprMagic::DynamicArray<unsigned, 10> arr {4, 3, 5};
 
   static_assert(
@@ -411,6 +414,15 @@ BOOST_AUTO_TEST_CASE(dynamicArray) {
   static_assert(
     compileTimeDynTest(),
     "non-const dynamic array functionality works as expected"
+  );
+  static_assert(
+    arr.end() - arr.begin() == 3,
+    "Subtracting begin/end iterators does not yield dynamic length"
+  );
+
+  static_assert(
+    arr.begin() - arr.end() == -3,
+    "Subtracting begin/end iterators does not yield dynamic length"
   );
 
   constexpr ConstexprMagic::Array<unsigned, 10> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
@@ -449,7 +461,7 @@ constexpr bool isSorted(const ConstexprMagic::DynamicSet<T, size, Comparator>& s
   return true;
 }
 
-BOOST_AUTO_TEST_CASE(dynamicSet) {
+BOOST_AUTO_TEST_CASE(dynamicSetTests) {
   ConstexprMagic::DynamicSet<unsigned, 10> set;
 
   BOOST_CHECK(set.size() == 0);
@@ -577,9 +589,11 @@ bool validate(const ConstexprMagic::DynamicSet<T, size>& set) {
 
   // Is the reported size equal to a begin-end through-iteration?
   return (
-    set.size() == std::distance(
-      set.begin(),
-      set.end()
+    set.size() == static_cast<unsigned>(
+      std::distance(
+        set.begin(),
+        set.end()
+      )
     )
   );
 }
@@ -903,3 +917,23 @@ static_assert(
 );
 
 } // namespace ConcatenationTests
+
+namespace DynamicMapTests {
+
+constexpr ConstexprMagic::DynamicMap<unsigned, int, 20> generateMap() {
+  ConstexprMagic::DynamicMap<unsigned, int, 20> map;
+
+  map.insert(4, -2);
+  map.insert(1, 4);
+  map.insert(3, 9);
+
+  return map;
+}
+
+constexpr ConstexprMagic::DynamicMap<unsigned, int, 20> a = generateMap();
+
+static_assert(a.at(4u) == -2, "Map does not find element with key 4");
+static_assert(a.at(1u) == 4, "Map does not find element with key 1");
+static_assert(a.at(3u) == 9, "Map does not find element with key 3");
+
+} // namespace DynamicMapTests

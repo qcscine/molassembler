@@ -148,7 +148,7 @@ public:
   }
 
   constexpr bool isEqual(const T& a, const T& b) const noexcept {
-    return abs(abs(a) - abs(b)) <= _absoluteTolerance;
+    return Math::abs(Math::abs(a) - Math::abs(b)) <= _absoluteTolerance;
   }
 
   constexpr bool isUnequal(const T& a, const T& b) const noexcept {

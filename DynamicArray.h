@@ -215,9 +215,9 @@ public:
 
   // Begin and end iterators
   using BaseIteratorType = std::iterator<
-    std::bidirectional_iterator_tag, // iterator category
+    std::random_access_iterator_tag, // iterator category
     T,                               // value_type
-    unsigned,                        // difference_type
+    int,                             // difference_type
     const T*,                        // pointer
     T&                               // reference
   >;
@@ -269,6 +269,35 @@ public:
       return retval;
     }
 
+    constexpr iterator operator + (const int& increment) {
+      iterator retval = *this;
+      retval += increment;
+      return retval;
+    }
+
+    constexpr iterator operator - (const int& increment) {
+      iterator retval = *this;
+      retval -= increment;
+      return retval;
+    }
+
+    constexpr iterator& operator += (const int& increment) {
+      _position += increment;
+      return *this;
+    }
+
+    constexpr iterator& operator -= (const int& increment) {
+      _position -= increment;
+      return *this;
+    }
+
+    constexpr int operator - (const iterator& other) const {
+      return (
+        static_cast<int>(_position)
+        - static_cast<int>(other._position)
+      );
+    }
+
     constexpr bool operator == (const iterator& other) const {
       return (
         &_baseRef == &other._baseRef
@@ -296,9 +325,9 @@ public:
   }
 
   using ConstBaseIteratorType = std::iterator<
-    std::bidirectional_iterator_tag, // iterator category
+    std::random_access_iterator_tag, // iterator category
     T,                               // value_type
-    unsigned,                        // difference_type
+    int,                             // difference_type
     const T*,                        // pointer
     const T&                         // reference
   >;
@@ -322,7 +351,10 @@ public:
     {}
 
     constexpr constIterator& operator = (const constIterator& other) { 
-      _baseRef = other._baseRef;
+      if(_baseRef != other._baseRef) {
+        throw "Trying to assign constIterator to other base DynamicArray!";
+      }
+
       _position = other._position;
 
       return *this;
@@ -334,7 +366,7 @@ public:
     }
 
     constexpr constIterator operator ++ (int) {
-      iterator retval = *this;
+      constIterator retval = *this;
       ++(*this);
       return retval;
     }
@@ -345,9 +377,38 @@ public:
     }
 
     constexpr constIterator operator -- (int) {
-      iterator retval = *this;
+      constIterator retval = *this;
       --(*this);
       return retval;
+    }
+
+    constexpr constIterator operator + (const int& increment) {
+      constIterator retval = *this;
+      retval += increment;
+      return retval;
+    }
+
+    constexpr constIterator operator - (const int& increment) {
+      constIterator retval = *this;
+      retval -= increment;
+      return retval;
+    }
+
+    constexpr constIterator& operator += (const int& increment) {
+      _position += increment;
+      return *this;
+    }
+
+    constexpr constIterator& operator -= (const int& increment) {
+      _position -= increment;
+      return *this;
+    }
+
+    constexpr int operator - (const constIterator& other) const {
+      return (
+        static_cast<int>(_position)
+        - static_cast<int>(other._position)
+      );
     }
 
     constexpr bool operator == (const constIterator& other) const {
@@ -367,6 +428,9 @@ public:
       return _baseRef[_position];
     }
   };
+
+  //! Type alias for compatibility with STL algorithms
+  using const_iterator = constIterator;
 
   constexpr constIterator begin() const {
     return constIterator(*this, 0);

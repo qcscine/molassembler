@@ -18,7 +18,7 @@ namespace ConstexprMagic {
 template<
   typename T,
   size_t nItems,
-  class Comparator = std::less<T>
+  class LessThanPredicate = std::less<T>
 > class DynamicSet {
 private:
   /* C++17 -> switch to std::array, reference operator[] and reference at()
@@ -27,7 +27,7 @@ private:
   using ArrayType = ConstexprMagic::DynamicArray<T, nItems>;
 
   ArrayType _items;
-  Comparator _comparator;
+  LessThanPredicate _predicate;
 
 public:
   constexpr DynamicSet() {}
@@ -37,16 +37,15 @@ public:
   constexpr DynamicSet(ArrayType&& items) : _items(items) {}
 
   constexpr bool contains(const T& item) const {
-    // C++17 turn into if constexpr-else
-    if(nItems == 0) {
+    if(_items.size() == 0) {
       return false;
     }
 
-    auto bound = lowerBound<T, Comparator>(_items, item, _comparator);
-    return (
-      bound != _items.size()
-      && !(_comparator(item, _items.at(bound)))
-    );
+    return binarySearch(_items, item, _predicate) != _items.end();
+  }
+
+  constexpr auto find(const T& item) const {
+    return binarySearch(_items, item, _predicate);
   }
 
   //! Insertion can involve up to 3N moves of type T.
@@ -67,7 +66,7 @@ public:
       prevIter = newItemIt;
       --prevIter;
 
-      if(_comparator(item, *prevIter)) {
+      if(_predicate(item, *prevIter)) {
         // Perform a swap in-place
         T intermediate = std::move(*newItemIt);
         *newItemIt = std::move(*prevIter);
@@ -161,11 +160,11 @@ template<
   size_t nItems,
   typename T,
   template<typename, size_t> class ArrayType,
-  class Comparator = std::less<T>
-> constexpr DynamicSet<T, nItems, Comparator> makeDynamicSet(
+  class LessThanPredicate = std::less<T>
+> constexpr DynamicSet<T, nItems, LessThanPredicate> makeDynamicSet(
   const ArrayType<T, nItems>& array
 ) {
-  return DynamicSet<T, nItems, Comparator>(array);
+  return DynamicSet<T, nItems, LessThanPredicate>(array);
 }
 
 } // namespace ConstexprMagic
