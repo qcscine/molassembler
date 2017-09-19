@@ -4,9 +4,17 @@
 #include "DynamicSet.h"
 #include "Pair.h"
 
+/*! @file
+ *
+ * Implements a constexpr container much like std::map, except with fixed
+ * maximal size.
+ */
+
 namespace ConstexprMagic {
 
 /*!
+ * A constexpr associative container with reasonably fast key-based lookup.
+ *
  * Requires that MappedType is default-constructible
  */
 template<typename KeyType, typename MappedType, size_t N>

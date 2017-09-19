@@ -29,6 +29,26 @@ private:
   ArrayType _items;
   LessThanPredicate _predicate;
 
+  constexpr void _moveElementsRightUntil(
+    typename ArrayType::iterator position
+  ) {
+    // Add the last element in the array onto the end
+    _items.push_back(
+      _items.back()
+    );
+
+    // Move everything up to and including the lower bound back
+    auto rightIter = _items.end() - 2;
+    auto leftIter = rightIter - 1;
+
+    while(rightIter != position) {
+      *rightIter = std::move(*leftIter);
+
+      --leftIter;
+      --rightIter;
+    }
+  }
+
 public:
   constexpr DynamicSet() {}
 
@@ -36,6 +56,7 @@ public:
   constexpr DynamicSet(const ArrayType& items) : _items(items) {}
   constexpr DynamicSet(ArrayType&& items) : _items(items) {}
 
+  //! Checks if an element exists. O(log N)
   constexpr bool contains(const T& item) const {
     if(_items.size() == 0) {
       return false;
@@ -44,45 +65,115 @@ public:
     return binarySearch(_items, item, _predicate) != _items.end();
   }
 
+  /*!
+   * Returns an iterator to the sought element, or the end iterator if the
+   * element is not found. O(log N)
+   */
   constexpr auto find(const T& item) const {
     return binarySearch(_items, item, _predicate);
   }
 
-  //! Insertion can involve up to 3N moves of type T.
-  /* TODO could be better, use lowerBound to find insert position, then move 
-   * linearly towards end instead of triangularly for each swap
+  /*!
+   * Returns an iterator to the first element that is not smaller than the passed
+   * value. O(log N)
    */
-  constexpr void insert(const T& item) {
-    // add onto end
-    _items.push_back(item);
+  constexpr typename DynamicArray<T, nItems>::iterator getLowerBound(const T& item) {
+    return lowerBound<T, LessThanPredicate>(
+      _items.begin(),
+      _items.end(),
+      item,
+      _predicate
+    );
+  }
 
-    // re-sort _items
-    auto newItemIt = _items.end();
-    --newItemIt;
+  /*!
+   * Returns an iterator to the first element that is not smaller than the passed
+   * value.
+   *
+   * O(log N)
+   */
+  constexpr typename DynamicArray<T, nItems>::const_iterator getLowerBound(const T& item) const {
+    return lowerBound<T, LessThanPredicate>(
+      _items.begin(),
+      _items.end(),
+      item,
+      _predicate
+    );
+  }
 
-    auto prevIter = newItemIt;
+  //! Inserts an element at a specified position. O(N)
+  constexpr void insertAt(
+    typename ArrayType::iterator insertPositionIter,
+    const T& item
+  ) {
+    // In case there is no object larger than the one being inserted, add to end
+    if(insertPositionIter == _items.end()) {
+      _items.push_back(item);
+    } else {
+      _moveElementsRightUntil(insertPositionIter);
 
-    while(newItemIt != _items.begin()) {
-      prevIter = newItemIt;
-      --prevIter;
-
-      if(_predicate(item, *prevIter)) {
-        // Perform a swap in-place
-        T intermediate = std::move(*newItemIt);
-        *newItemIt = std::move(*prevIter);
-        *prevIter = std::move(intermediate);
-
-        --newItemIt;
-      } else {
-        break;
-      }
+      // Copy in the item
+      *insertPositionIter = item;
     }
+  }
+
+  //! Inserts an element at a specified position O(N)
+  constexpr void insertAt(
+    typename ArrayType::iterator insertPositionIter,
+    T&& item
+  ) {
+    // In case there is no object larger than the one being inserted, add to end
+    if(insertPositionIter == _items.end()) {
+      _items.push_back(item);
+    } else {
+      _moveElementsRightUntil(insertPositionIter);
+
+      // Move in the item
+      *insertPositionIter = std::move(item);
+    }
+  }
+
+  //! Insertion an element into the set. O(N)
+  constexpr void insert(const T& item) {
+    insertAt(
+      getLowerBound(item),
+      item
+    );
+  }
+
+  //! Inserts an element into the set. O(N)
+  constexpr void insert(T&& item) {
+    insertAt(
+      getLowerBound(item),
+      std::forward<T>(item)
+    );
+  }
+
+  constexpr bool lowerBoundMeansContains(
+    const typename DynamicArray<T, nItems>::iterator& lowerBound,
+    const T& item
+  ) {
+    if(_predicate(item, *lowerBound) || lowerBound == _items.end()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  constexpr bool lowerBoundMeansContains(
+    const typename DynamicArray<T, nItems>::const_iterator& lowerBound,
+    const T& item
+  ) const {
+    if(_predicate(item, *lowerBound) || lowerBound == _items.end()) {
+      return false;
+    }
+
+    return true;
   }
 
   constexpr void clear() {
     _items.clear();
   }
-
 
   constexpr typename ArrayType::constIterator begin() const {
     return _items.begin();

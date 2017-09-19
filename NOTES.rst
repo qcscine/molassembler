@@ -10,7 +10,7 @@ Issues
 Incomplete
 ----------
 
-- Finish Map
+- Rename Containers.h to Algorithms.h?
 - Various TODOs littered throughout the code
 
 

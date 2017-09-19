@@ -440,6 +440,10 @@ BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
     && grouped.at(3).size() == 4,
     "Grouping does not work as expected"
   );
+
+  constexpr ConstexprMagic::DynamicArray<unsigned, 14> fromFixed {values};
+
+  static_assert(fromFixed.size() == 10, "Construction from fixed doesn't work");
 }
 
 template<typename T, size_t size, class Comparator>

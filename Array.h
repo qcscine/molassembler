@@ -70,7 +70,7 @@ public:
   //! Parameter pack constructor, will work as long as the arguments are castable
   template<typename ...Args>
   constexpr Array(Args... args) 
-  : _items {static_cast<T>(args)...} 
+    : _items {static_cast<T>(args)...} 
   {}
 
   constexpr T& operator[] (const unsigned& index) {

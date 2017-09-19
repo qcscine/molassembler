@@ -70,18 +70,26 @@ public:
     : DynamicArray(other, std::make_index_sequence<nItems>{})
   {}
 
-  //! Delegate std::array ctor, using same trick as copy ctor
-  template<size_t ... Inds>
-  constexpr DynamicArray(
-    const std::array<T, nItems>& other,
+  //! Construct from any-size array-like container using same trick as copy ctor
+  template<
+    template<typename, size_t> class ArrayType,
+    size_t N,
+    size_t ... Inds
+  > constexpr DynamicArray(
+    const ArrayType<T, N>& other,
     std::index_sequence<Inds...>
-  ) : _items {other[Inds]...},
-      _count(other.size())
+  ) : _items {other.at(Inds)...},
+      _count(N)
   {}
 
-  //! Construct from std::array using same trick as copy ctor
-  constexpr DynamicArray(const std::array<T, nItems>& other)
-    : DynamicArray(other, std::make_index_sequence<nItems>{})
+  //! Construct from any size of other array-like classes
+  template<
+    template<typename, size_t> class ArrayType,
+    size_t N
+  > constexpr DynamicArray(
+    const ArrayType<T, N>& other,
+    std::enable_if_t<(N <= nItems)>* = 0 // Only possible for some sizes
+  ) : DynamicArray(other, std::make_index_sequence<N>{}) 
   {}
 
   // NOTE: Exists solely to circumvent GCC Bug 71504
@@ -181,7 +189,7 @@ public:
     }
 
     for(unsigned i = 0; i < _count; ++i) {
-      if(_items[i] != other[i]) {
+      if(_items[i] != other._items[i]) {
         return false;
       }
     }

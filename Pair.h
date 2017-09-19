@@ -3,6 +3,11 @@
 
 #include <utility>
 
+/*! @file
+ *
+ * Implements a constexpr container much like std::pair.
+ */
+
 namespace ConstexprMagic {
 
 /*! 

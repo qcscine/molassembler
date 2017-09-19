@@ -803,6 +803,51 @@ template<
   return inPlacePreviousPermutation(data, 0, size);
 }
 
+/*!
+ * Composable min function. Returns the smallest member of any container.
+ *
+ * Container must implement begin, end iterators. The iterators must be
+ * copy-assignable. The contained type must implement operator <.
+ */
+template<class ContainerType>
+constexpr auto min(const ContainerType& container) {
+  if(container.begin() == container.end()) {
+    throw "Min called on empty container!";
+  }
+
+  auto smallestIter = container.begin();
+  for(auto it = container.begin(); it != container.end(); ++it) {
+    if(*it < *smallestIter) {
+      smallestIter = it;
+    }
+  }
+
+  return *smallestIter;
+}
+
+/*!
+ * Composable max function. Returns the smallest member of any container.
+ *
+ * Container must implement begin, end iterators. The iterators must be
+ * copy-assignable. The contained type must implement operator <.
+ */
+template<class ContainerType>
+constexpr auto max(const ContainerType& container) {
+  if(container.begin() == container.end()) {
+    throw "Max called on empty container!";
+  }
+
+  auto largestIter = container.begin();
+
+  for(auto it = container.begin(); it != container.end(); ++it) {
+    if(*largestIter < *it) {
+      largestIter = it;
+    }
+  }
+
+  return *largestIter;
+}
+
 } // namespace ConstexprMagic
 
 #endif
