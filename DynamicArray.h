@@ -36,11 +36,6 @@ private:
     }};
   }
 
-  // NOTE: Exists solely to circumvent GCC Bug 71504
-  constexpr T _defaultConstruct(size_t index __attribute__((unused))) {
-    return {};
-  }
-
   template<size_t ... Inds>
   std::initializer_list<T> _makeInitializer(
     const DynamicArray& other,
@@ -92,15 +87,7 @@ public:
   ) : DynamicArray(other, std::make_index_sequence<N>{}) 
   {}
 
-  // NOTE: Exists solely to circumvent GCC Bug 71504
-  template<size_t ... Inds>
-  constexpr DynamicArray(std::index_sequence<Inds...>)
-    : _items { _defaultConstruct(Inds) ...},
-      _count {0}
-  {}
-
-  // NOTE: Exists solely to circumvent GCC Bug 71504
-  constexpr DynamicArray() : DynamicArray(std::make_index_sequence<nItems>{}) {}
+  constexpr DynamicArray() : _items {}, _count(0) {}
 
   //! Parameter pack constructor, will work as long as the arguments are castable
   template<typename ...Args>
