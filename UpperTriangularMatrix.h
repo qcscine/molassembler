@@ -2,6 +2,8 @@
 #define INCLUDE_CONSTEXPR_MAGIC_UPPER_TRIANGULAR_MATRIX_H
 
 #include "Vector.h"
+#include "Array.h"
+#include "FloatingPointComparison.h"
 
 /*! @file
  * 
@@ -9,37 +11,35 @@
  * matrix via a std::array and provides two-index access.
  */
 
-/* TODO
- * - current constructors of UpperTriangular force you to specify the size of
- *   the resulting matrix, but it could be inferred from the size of the 
- *   array used for construction (and checked for correctness!)
- */
-
 namespace ConstexprMagic {
 
 namespace UpperTriangularMatrixImpl {
 
+// Can be changed to std::array and dependency on Array removed with C++17 
+template<typename T, size_t size>
+using ArrayType = Array<T, size>;
+
 namespace index_conversion {
   //!  Converts from (i, j) matrix indices to the linear k index for the array
-  template<unsigned long matrixSize, typename UnsignedType>
+  template<size_t N, typename UnsignedType>
   constexpr unsigned toSingleIndex(const UnsignedType& i, const UnsignedType& j) {
     return (
-      matrixSize * (matrixSize - 1) / 2
-      - (matrixSize - i) * ((matrixSize - i) - 1) / 2 
+      N * (N - 1) / 2
+      - (N - i) * ((N - i) - 1) / 2 
       + j - i - 1
     );
   }
 
   //! Converts from the linear array to (i, j) matrix indices
-  template<unsigned long matrixSize, typename UnsignedType>
+  template<size_t N, typename UnsignedType>
   constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType& k) {
     UnsignedType i {
-      matrixSize - 2 
+      N - 2 
       - static_cast<unsigned>(
         Math::floor(
           Math::sqrt(
             0.0
-            + 4 * matrixSize * (matrixSize - 1) 
+            + 4 * N * (N - 1) 
             - 8 * k 
             - 7
           ) / 2.0 
@@ -52,12 +52,30 @@ namespace index_conversion {
       i,
       (
         k + i + 1 
-        - matrixSize * (matrixSize - 1) / 2 
-        + (matrixSize - i) * ((matrixSize - i) - 1) / 2
+        - N * (N - 1) / 2 
+        + (N - i) * ((N - i) - 1) / 2
       )
     };
   }
 } // namespace index_conversion
+
+constexpr bool isValidMatrixSize(const size_t& dataSize) {
+  auto root = Math::sqrt(1.0 + 8 * dataSize);
+
+  return(
+    floating::isCloseRelative(
+      root,
+      static_cast<double>(Math::floor(root)),
+      1e-6
+    )
+  );
+}
+
+constexpr size_t getMatrixSize(const size_t& dataSize) {
+  return (
+    1 + Math::sqrt(1.0 + 8 * dataSize)
+  ) / 2;
+}
 
 } // namespace UpperTriangularMatrixImpl
 
@@ -65,24 +83,34 @@ namespace index_conversion {
  * Stores the data of an upper-triangular matrix in a linear array in an 
  * all-constexpr fashion.
  */
-template<typename ValueType, unsigned long matrixSize>
+template<typename ValueType, size_t dataSize>
 class UpperTriangularMatrix {
 private:
 /* State */
-  std::array<ValueType, matrixSize * (matrixSize - 1) / 2> _data;
+  UpperTriangularMatrixImpl::ArrayType<
+    ValueType,
+    dataSize
+  > _data;
 
 public:
 /* Public information */
-  const unsigned N = matrixSize;
+  static constexpr unsigned N = UpperTriangularMatrixImpl::getMatrixSize(dataSize);
 
 /* Constructors */
-  constexpr explicit UpperTriangularMatrix(
-    const std::array<ValueType, matrixSize * (matrixSize - 1) / 2>& data
+  template<
+    template<typename, size_t> class ArrayType
+  > constexpr explicit UpperTriangularMatrix(
+    const ArrayType<ValueType, dataSize>& data
   ) : _data(data)
-  {}
+  {
+    static_assert(
+      UpperTriangularMatrixImpl::isValidMatrixSize(dataSize) && dataSize > 0,
+      "Passed data size is not consistent with an upper triangular matrix!"
+    );
+  }
 
 /* Modification */
-  double& at(
+  constexpr double& at(
     const unsigned& i,
     const unsigned& j
   ) {
@@ -90,9 +118,9 @@ public:
       throw "Index out of bounds!";
     }
 
-    return _data[
-      UpperTriangularMatrixImpl::index_conversion::toSingleIndex<matrixSize>(i, j)
-    ];
+    return _data.at(
+      UpperTriangularMatrixImpl::index_conversion::toSingleIndex<N>(i, j)
+    );
   }
 
 /* Information */
@@ -104,18 +132,21 @@ public:
       throw "Index out of bounds!";
     }
 
-    return _data[
-      UpperTriangularMatrixImpl::index_conversion::toSingleIndex<matrixSize>(i, j)
-    ];
+    return _data.at(
+      UpperTriangularMatrixImpl::index_conversion::toSingleIndex<N>(i, j)
+    );
   }
 };
 
 //! Helper constructing function that deduces the required type signature
-template<unsigned long matrixSize, typename ValueType>
-constexpr UpperTriangularMatrix<ValueType, matrixSize> makeUpperTriangularMatrix(
-  const std::array<ValueType, matrixSize * (matrixSize - 1) / 2>& data
+template<
+  template<typename, size_t> class ArrayType,
+  typename ValueType,
+  size_t size
+> constexpr UpperTriangularMatrix<ValueType, size> makeUpperTriangularMatrix(
+  const ArrayType<ValueType, size>& data
 ) {
-  return UpperTriangularMatrix<ValueType, matrixSize>(data);
+  return UpperTriangularMatrix<ValueType, size>(data);
 }
 
 } // namespace ConstexprMagic

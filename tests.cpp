@@ -979,3 +979,19 @@ static_assert(a.at(1u) == 4, "Map does not find element with key 1");
 static_assert(a.at(3u) == 9, "Map does not find element with key 3");
 
 } // namespace DynamicMapTests
+
+namespace UpperTriangularMatrixTests {
+
+constexpr auto matr = ConstexprMagic::makeUpperTriangularMatrix(
+  std::array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
+);
+
+/*constexpr auto failing = ConstexprMagic::makeUpperTriangularMatrix(
+  std::array<unsigned, 5> {{1, 2, 3, 4, 5}}
+);*/
+
+constexpr auto fromArray = ConstexprMagic::makeUpperTriangularMatrix(
+  ConstexprMagic::Array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
+);
+
+} // namespace UpperTriangularMatrixTests
