@@ -220,6 +220,44 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
       )
     )
   );
+  
+  auto testRecPow = [&](const double& number, const unsigned& exponent) -> bool {
+    const double test = ConstexprMagic::Math::recPow(number, exponent);
+    const double reference = std::pow(number, exponent);
+
+    bool passes = ConstexprMagic::floating::isCloseRelative(
+      test,
+      reference,
+      accuracy
+    );
+
+    if(!passes) {
+      std::cout << "  x = " << std::setw(12) << number
+        << ", exp = " << std::setw(4) << exponent
+        << ", recPow = " << std::setw(12) << test
+        << ", std::pow = " << std::setw(12) << reference
+        << ", |Δ| = " << std::setw(12) << std::fabs(test - reference) << ", max permissible diff: "
+        << (
+          accuracy * std::max(
+            std::fabs(test),
+            std::fabs(reference)
+          )
+        ) << std::endl;
+    }
+
+    return passes;
+  };
+
+  BOOST_CHECK(
+    TemplateMagic::all_of(
+      TemplateMagic::zipMap(
+        TemplateMagic::random.getN<double>(-1e5, 1e5, numTests),
+        TemplateMagic::random.getN<unsigned>(0, 40, numTests),
+        testRecPow
+      )
+    )
+  );
+
 
   // ln
   const auto randomZ = TemplateMagic::random.getN<double>(1e-10, 1e10, numTests);

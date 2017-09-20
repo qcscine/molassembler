@@ -38,7 +38,8 @@ private:
     );
 
     // Move everything up to and including the lower bound back
-    auto rightIter = _items.end() - 2;
+    auto rightIter = _items.end();
+    rightIter -= 2;
     auto leftIter = rightIter - 1;
 
     while(rightIter != position) {

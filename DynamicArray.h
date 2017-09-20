@@ -16,11 +16,6 @@
  * that the maximum size must be known at compile time and cannot change.
  */
 
-/* TODO
- * - refactor this using Array.h as base data member? Loads of forwarding
- *   functions, no need for iterator and constIterator classes
- */
-
 namespace ConstexprMagic {
 
 template<typename T, size_t nItems>
@@ -185,7 +180,15 @@ public:
   }
 
   constexpr bool operator != (const DynamicArray& other) const {
-    return !(*this == other);
+    if(_count == other._count) {
+      for(unsigned i = 0; i < _count; ++i) {
+        if(_items[i] != other._items[i]) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   constexpr bool operator < (const DynamicArray& other) const {

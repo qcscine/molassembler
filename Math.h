@@ -122,6 +122,9 @@ constexpr T ln(const T& x);
 template<typename T>
 constexpr T log10(const T& x);
 
+template<typename T>
+constexpr T log(const T& x, const T& base);
+
 // Inverse trigonometry
 template<typename T>
 constexpr T asin(const T& x) noexcept;
@@ -385,6 +388,20 @@ constexpr T pow(const T& base, const unsigned& exponent) noexcept {
   return value;
 }
 
+template<typename T>
+constexpr T recPow(const T& base, const unsigned& exponent) noexcept {
+  if(exponent == 1) {
+    return base;
+  }
+
+  if(exponent % 2 == 0) {
+    auto halfProblem = recPow(base, exponent / 2);
+    return halfProblem * halfProblem;
+  }
+
+  return base * recPow(base, exponent - 1);
+}
+
 /* Integer version just calls the unsigned power function
  * TODO lots can go wrong here!
  */
@@ -463,6 +480,16 @@ constexpr T log10(const T& x) {
    * -> log10(z) = ln(z) / ln(10)
    */
   return ln(x) / M_LN10;
+}
+
+template<typename T>
+constexpr T log(const T& x, const T& base) {
+  assert(x > 0);
+
+  /* ln(z) = ln(b) * log_b(z)
+   * -> log_b(z) = ln(z) / ln(b)
+   */
+  return ln(x) / ln(base);
 }
 
 /* Implements the infinite series where the derivative is expanded as a binomial
