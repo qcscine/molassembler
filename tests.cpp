@@ -97,6 +97,14 @@ static_assert(
 
 constexpr auto testSet = ConstexprMagic::makeSetFromSortedArray(oneMore);
 
+static_assert(
+  std::is_same<
+    decltype(ConstexprMagic::makeArray(4, 3, 9)),
+    ConstexprMagic::Array<int, 3>
+  >::value,
+  "makeArray does not work as expected"
+);
+
 } // namespace ArrayTests
 
 BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
@@ -803,7 +811,9 @@ static_assert(
 static_assert(
   ConstexprMagic::arraysEqual(
     ConstexprMagic::TupleType::map<Fruit, getNumberValue>(),
-    std::array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number }}
+    ConstexprMagic::Array<unsigned, 3> {{
+      Apple::number, Banana::number, Cherry::number 
+    }}
   ),
   "Mapping with getNumberValue does not yield expected result!"
 );
@@ -811,7 +821,9 @@ static_assert(
 static_assert(
   ConstexprMagic::arraysEqual(
     ConstexprMagic::TupleType::map<Fruit, getNumberFunctor>(),
-    std::array<unsigned, 3> {{Apple::number, Banana::number, Cherry::number }}
+    ConstexprMagic::Array<unsigned, 3> {{
+      Apple::number, Banana::number, Cherry::number 
+    }}
   ),
   "Mapping with getNumberFunctor does not yield expected result!"
 );
@@ -819,7 +831,7 @@ static_assert(
 static_assert(
   ConstexprMagic::arraysEqual(
     ConstexprMagic::TupleType::mapAllPairs<Fruit, pairSumValue>(),
-    std::array<unsigned, 3> {{
+    ConstexprMagic::Array<unsigned, 3> {{
       Apple::number + Banana::number,
       Apple::number + Cherry::number,
       Banana::number + Cherry::number
@@ -831,7 +843,7 @@ static_assert(
 static_assert(
   ConstexprMagic::arraysEqual(
     ConstexprMagic::TupleType::mapAllPairs<Fruit, pairSumFunctor>(),
-    std::array<unsigned, 3> {{
+    ConstexprMagic::Array<unsigned, 3> {{
       Apple::number + Banana::number,
       Apple::number + Cherry::number,
       Banana::number + Cherry::number

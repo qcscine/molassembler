@@ -112,7 +112,13 @@ public:
   }
 
   constexpr bool operator != (const Array& other) const {
-    return !(*this == other);
+    for(unsigned i = 0; i < nItems; ++i) {
+      if(_items[i] != other._items[i]) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   constexpr bool operator < (const Array& other) const {
@@ -368,6 +374,11 @@ public:
     return _makeArray(std::make_index_sequence<nItems>{});
   }
 };
+
+template<class T, class... Tail>
+constexpr auto makeArray(T head, Tail... tail) -> Array<T, 1 + sizeof...(Tail)> {
+  return { head, tail ... };
+}
 
 } // namespace ConstexprMagic
 

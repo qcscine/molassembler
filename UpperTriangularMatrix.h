@@ -110,7 +110,7 @@ public:
   }
 
 /* Modification */
-  constexpr double& at(
+  constexpr ValueType& at(
     const unsigned& i,
     const unsigned& j
   ) {
@@ -124,7 +124,7 @@ public:
   }
 
 /* Information */
-  constexpr double at(
+  constexpr const ValueType& at(
     const unsigned& i,
     const unsigned& j
   ) const {
@@ -135,6 +135,10 @@ public:
     return _data.at(
       UpperTriangularMatrixImpl::index_conversion::toSingleIndex<N>(i, j)
     );
+  }
+
+  constexpr const decltype(_data)& getData() const {
+    return _data;
   }
 };
 

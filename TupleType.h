@@ -67,22 +67,13 @@ template<
   template<typename> class TemplateFunction,
   std::size_t... Inds
 > constexpr auto mapHelper(std::index_sequence<Inds...>) {
-
-  using ReturnType = decltype(
-    handleValueVariants<
-      TemplateFunction<
-        std::tuple_element_t<0, TupleType>
-      >
-    >()
-  );
-
-  return std::array<ReturnType, sizeof...(Inds)> {{
+  return makeArray(
     handleValueVariants<
       TemplateFunction<
         std::tuple_element_t<Inds, TupleType>
       >
     >()...
-  }};
+  );
 }
 
 /*!
@@ -98,34 +89,19 @@ template<
   std::index_sequence<Inds...>
 ) {
   constexpr size_t N = std::tuple_size<TupleType>::value;
-  constexpr size_t C = sizeof...(Inds);
 
-  constexpr auto indexPairs = std::array<
-    std::pair<size_t, size_t>,
-    C
-  > {{
+  constexpr auto indexPairs = makeArray(
     UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<N>(Inds)...
-  }};
-
-  using ReturnType = decltype(
-    handleValueVariants<
-      TemplateFunction<
-        std::tuple_element_t<0, TupleType>,
-        std::tuple_element_t<1, TupleType>
-      >
-    >()
   );
 
-  auto results = std::array<ReturnType, C> {{
+  return makeArray(
     handleValueVariants<
       TemplateFunction<
         std::tuple_element_t<indexPairs.at(Inds).first, TupleType>,
         std::tuple_element_t<indexPairs.at(Inds).second, TupleType>
       >
     >()...
-  }};
-
-  return results;
+  );
 }
 
 /*!
