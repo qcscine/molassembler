@@ -18,7 +18,7 @@
 #include "boost/optional.hpp"
 
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
-#include "ConstexprAngles.h"
+#include "AngleLookup.h"
 #endif
 
 #include "constexpr_magic/Math.h"
@@ -1054,7 +1054,7 @@ struct SquareAntiPrismatic {
  * An upper triangular matrix containing angles between particules i,j in
  * degrees using the square antiprismatic reference coordinates
  */
-  static constexpr auto angleLookupTable = ConstexprMagic::makeUpperTriangularMatrix<size>(
+  static constexpr auto angleLookupTable = ConstexprMagic::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
 #endif
@@ -1169,6 +1169,11 @@ using allSymmetryDataTypes = std::tuple<
   SquareAntiPrismatic // 8
 >;
 
+using limitedSymmetryDataTypes = std::tuple<
+  Linear, // 2
+  TrigonalPlanar // 3
+>;
+
 // Typedef to avoid reusing C-Style function ptr type
 using AngleFunctionPtr = double(*)(const unsigned&, const unsigned&);
 
@@ -1178,50 +1183,13 @@ using AngleFunctionPtr = double(*)(const unsigned&, const unsigned&);
  */
 template<typename ...SymmetryClasses>
 struct angleFunctionFunctor {
-  static constexpr std::array<AngleFunctionPtr, sizeof...(SymmetryClasses)> value() {
+  static constexpr std::array<
+    data::AngleFunctionPtr,
+    sizeof...(SymmetryClasses)
+  > value() {
     return {{
       &SymmetryClasses::angleFunction...
     }};
-  }
-};
-
-//! Stub to find out the minimum angle returned in a specific symmetry class type
-template<typename SymmetryClass> 
-constexpr double smallestAngle() {
-  double smallestAngle = M_PI;
-
-  for(unsigned i = 0; i < SymmetryClass::size; ++i) {
-    for(unsigned j = i + 1; j < SymmetryClass::size; ++j) {
-      double returnedAngle = SymmetryClass::angleFunction(i, j);
-      if(returnedAngle < smallestAngle) {
-        smallestAngle = returnedAngle;
-      }
-    }
-  }
-
-  return smallestAngle;
-}
-
-/*! Functor to find out the minimum angle among all the symmetry class types
- * passed as template arguments
- */
-template<typename ...SymmetryClasses>
-struct minAngleFunctor {
-  static constexpr double value() {
-    const std::array<double, sizeof...(SymmetryClasses)> smallestAngles {{
-      smallestAngle<SymmetryClasses>()...
-    }};
-
-    // C++17 min_element (isn't constexpr before)
-    double minElement = smallestAngles.at(0);
-
-    for(unsigned i = 1; i < sizeof...(SymmetryClasses); ++i) {
-      if(smallestAngles.at(i) < minElement) {
-        minElement = smallestAngles.at(i);
-      }
-    }
-
-    return minElement;
   }
 };
 
@@ -1392,17 +1360,6 @@ inline unsigned nameIndex(const Name& name) {
 inline const TetrahedronList& tetrahedra(const Name& name) {
   return symmetryData().at(name).tetrahedra;
 }
-
-/* Derived data */
-/*!
- * The smallest angle between any symmetry positions in 3D coordinates.
- *
- * Marked unused to avoid warning though pursposefully exported
- */
-constexpr double smallestAngle __attribute__ ((unused)) = ConstexprMagic::TupleType::unpackToFunction<
-  data::allSymmetryDataTypes,
-  data::minAngleFunctor
->();
 
 } // namespace Symmetry
 

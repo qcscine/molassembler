@@ -41,12 +41,14 @@ endif()
 set(HEADERS_all
   Symmetries.h
   Properties.h
+  ConstexprProperties.h
 )
 
 # sources definition
 set(SOURCES_all
   Symmetries.cpp
   Properties.cpp
+  ConstexprProperties.cpp
 )
 
 # specify targets
@@ -101,13 +103,13 @@ target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetr
 # add test
 add_test(NAME testAll COMMAND symmetryTests)
 
-add_executable(Properties properties.cpp)
-target_compile_options(Properties PUBLIC -g)
+add_executable(writeTransitionDotFiles writeTransitionDotFiles.cpp)
+target_compile_options(writeTransitionDotFiles PUBLIC -g)
 set_target_properties(
-  Properties PROPERTIES
+  writeTransitionDotFiles PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
-target_include_directories(Properties PRIVATE ${BOOST_ROOT} symmetries)
-target_link_libraries(Properties ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)
+target_include_directories(writeTransitionDotFiles PRIVATE ${BOOST_ROOT} symmetries)
+target_link_libraries(writeTransitionDotFiles ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)

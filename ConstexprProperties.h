@@ -1,9 +1,9 @@
 #include "Symmetries.h"
 
 #include "constexpr_magic/Array.h"
+#include "constexpr_magic/Boost.h"
 #include "constexpr_magic/Containers.h"
 #include "constexpr_magic/DynamicSet.h"
-#include "constexpr_magic/FloatingPointComparison.h"
 
 /*! @file
  *
@@ -13,16 +13,51 @@
  * distortions between pairs of symmetries, etc.
  */
 
-/* TODO
- * - What is the exact difference between propagateIndexMapping and
- *   symPosMapping?
- */
-
 namespace Symmetry {
 
 namespace constexprProperties {
 
 constexpr double floatingPointEqualityTolerance = 1e-4;
+
+//! Stub to find out the minimum angle returned in a specific symmetry class type
+template<typename SymmetryClass> 
+constexpr double calculateSmallestAngle() {
+  double smallestAngle = M_PI;
+
+  for(unsigned i = 0; i < SymmetryClass::size; ++i) {
+    for(unsigned j = i + 1; j < SymmetryClass::size; ++j) {
+      double returnedAngle = SymmetryClass::angleFunction(i, j);
+      if(returnedAngle < smallestAngle) {
+        smallestAngle = returnedAngle;
+      }
+    }
+  }
+
+  return smallestAngle;
+}
+
+/*! Functor to find out the minimum angle among all the symmetry class types
+ * passed as template arguments
+ */
+template<typename ...SymmetryClasses>
+struct minAngleFunctor {
+  static constexpr double value() {
+    const std::array<double, sizeof...(SymmetryClasses)> smallestAngles {{
+      calculateSmallestAngle<SymmetryClasses>()...
+    }};
+
+    // C++17 min_element (isn't constexpr before)
+    double minElement = smallestAngles.at(0);
+
+    for(unsigned i = 1; i < sizeof...(SymmetryClasses); ++i) {
+      if(smallestAngles.at(i) < minElement) {
+        minElement = smallestAngles.at(i);
+      }
+    }
+
+    return minElement;
+  }
+};
 
 /* Typedef to use ConstexprMagic's Array instead of std::array as the underlying
  * base array type since C++14's std::array has too few members marked constexpr
@@ -134,6 +169,22 @@ struct allRotationPeriodicities {
     std::make_index_sequence<SymmetryClass::rotations.size()>{}
   );
 };
+
+template<typename ... SymmetryClasses>
+struct maxSymmetrySizeFunctor {
+  static constexpr unsigned value() {
+    ArrayType<unsigned, sizeof...(SymmetryClasses)> sizes {
+      SymmetryClasses::size...
+    };
+
+    return ConstexprMagic::max(sizes);
+  }
+};
+
+constexpr unsigned maxSymmetrySize = ConstexprMagic::TupleType::unpackToFunction<
+  Symmetry::data::allSymmetryDataTypes,
+  maxSymmetrySizeFunctor
+>();
 
 /*!
  * Fetches the coordinates of an index in a Symmetry, properly handling the
@@ -369,7 +420,6 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
 
   ChainArrayType<SymmetryClass> chain {0u};
 
-  // The very last rotation isn't found for PentagonalPyramidal for some reason
   while(
     chain.front() < SymmetryClass::rotations.size() 
     && rotations.size() < maxRotations<SymmetryClass>()
@@ -380,8 +430,9 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
       chain.back()
     );
 
-    if(!rotations.contains(generated)) {
-      rotations.insert(generated);
+    auto rotationsLB = rotations.getLowerBound(generated);
+    if(!rotations.lowerBoundMeansContains(rotationsLB, generated)) {
+      rotations.insertAt(rotationsLB, generated);
       chainStructures.push_back(generated);
       chain.push_back(0);
     } else {
@@ -406,17 +457,22 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
  * Data struct to collect the results of calculating the ideal index mappings
  * between pairs of indices
  */
-template<typename SymmetryClass>
 struct MappingsReturnType {
   static constexpr size_t maxMappingsSize = 50;
 
   using MappingsList = ConstexprMagic::DynamicSet<
-    ArrayType<unsigned, SymmetryClass::size>,
+    ConstexprMagic::DynamicArray<unsigned, maxSymmetrySize>,
     maxMappingsSize
   >;
 
   MappingsList mappings;
   double angularDistortion, chiralDistortion;
+
+  constexpr MappingsReturnType()
+    : mappings(),
+      angularDistortion(std::numeric_limits<double>::max()),
+      chiralDistortion(std::numeric_limits<double>::max())
+  {}
 
   constexpr MappingsReturnType(
     MappingsList&& mappings,
@@ -426,6 +482,24 @@ struct MappingsReturnType {
       angularDistortion(angularDistortion),
       chiralDistortion(chiralDistortion)
   {}
+
+  constexpr bool operator == (const MappingsReturnType& other) const {
+    return (
+      mappings == other.mappings
+      && angularDistortion == other.angularDistortion
+      && chiralDistortion == other.chiralDistortion
+    );
+  }
+
+  constexpr bool operator < (const MappingsReturnType& other) const {
+    return ConstexprMagic::componentSmaller(mappings, other.mappings).valueOr(
+      ConstexprMagic::componentSmaller(angularDistortion, other.angularDistortion).valueOr(
+        ConstexprMagic::componentSmaller(chiralDistortion, other.chiralDistortion).valueOr(
+          false
+        )
+      )
+    );
+  }
 };
 
 /*!
@@ -444,7 +518,7 @@ constexpr auto symmetryTransitionMappings() {
 
   using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
 
-  typename MappingsReturnType<SymmetryClassTo>::MappingsList bestMappings;
+  typename MappingsReturnType::MappingsList bestMappings;
 
   double lowestAngleDistortion = 100;
   double lowestChiralDistortion = 100;
@@ -461,7 +535,9 @@ constexpr auto symmetryTransitionMappings() {
   };
 
   do {
-    if(!encounteredMappings.contains(symPosMapping(indexMapping))) {
+    auto mapped = symPosMapping(indexMapping);
+
+    if(!encounteredMappings.contains(mapped)) {
       auto angularDistortion = calculateAngleDistortion<
         SymmetryClassFrom,
         SymmetryClassTo
@@ -509,17 +585,18 @@ constexpr auto symmetryTransitionMappings() {
       }
 
       // Add all rotations to the encountered mappings
-      auto allRotations = generateAllRotations<SymmetryClassTo>(
-        symPosMapping(indexMapping)
-      );
+      auto allRotations = generateAllRotations<SymmetryClassTo>(mapped);
 
       for(const auto& rotation : allRotations) {
-        encounteredMappings.insert(rotation);
+        auto lowerBound = encounteredMappings.getLowerBound(rotation);
+        if(!encounteredMappings.lowerBoundMeansContains(lowerBound, rotation)) {
+          encounteredMappings.insertAt(lowerBound, rotation);
+        }
       }
     }
   } while(ConstexprMagic::inPlaceNextPermutation(indexMapping));
 
-  return MappingsReturnType<SymmetryClassTo>(
+  return MappingsReturnType(
     std::move(bestMappings),
     std::move(lowestAngleDistortion),
     std::move(lowestChiralDistortion)
@@ -539,7 +616,8 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
 
   using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
 
-  ConstexprMagic::DynamicSet<IndexMappingType, 20> bestMappings;
+  typename MappingsReturnType::MappingsList bestMappings;
+
   double lowestAngleDistortion = 100;
   double lowestChiralDistortion = 100;
 
@@ -569,7 +647,9 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
   };
 
   do {
-    if(!encounteredMappings.contains(symPosMapping(indexMapping))) {
+    auto mapped = symPosMapping(indexMapping);
+
+    if(!encounteredMappings.contains(mapped)) {
       auto angularDistortion = calculateAngleDistortion<
         SymmetryClassTo,
         SymmetryClassFrom
@@ -607,12 +687,13 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
       }
 
       // Add all rotations to the encountered mappings
-      auto allRotations = generateAllRotations<SymmetryClassFrom>(
-        symPosMapping(indexMapping)
-      );
+      auto allRotations = generateAllRotations<SymmetryClassFrom>(mapped);
 
       for(const auto& rotation : allRotations) {
-        encounteredMappings.insert(rotation);
+        auto lowerBound = encounteredMappings.getLowerBound(rotation);
+        if(!encounteredMappings.lowerBoundMeansContains(lowerBound, rotation)) {
+          encounteredMappings.insertAt(lowerBound, rotation);
+        }
       }
     }
   } while(
@@ -623,12 +704,79 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
     )
   );
 
-  return MappingsReturnType<SymmetryClassFrom>(
+  return MappingsReturnType(
     std::move(bestMappings),
     std::move(lowestAngleDistortion),
     std::move(lowestChiralDistortion)
   );
 }
+
+/* Pre-compute all ligand gain situations */
+template<typename SymmetrySource, typename SymmetryTarget>
+constexpr 
+std::enable_if_t<
+  (
+    SymmetrySource::size == SymmetryTarget::size 
+    || SymmetrySource::size + 1 == SymmetryTarget::size
+  ),
+  ConstexprMagic::Optional<MappingsReturnType>
+> calculateMapping() {
+  return {
+    symmetryTransitionMappings<SymmetrySource, SymmetryTarget>()
+  };
+}
+
+template<typename SymmetrySource, typename SymmetryTarget>
+constexpr
+std::enable_if_t<
+  !(
+    SymmetrySource::size == SymmetryTarget::size 
+    || SymmetrySource::size + 1 == SymmetryTarget::size
+  ),
+  ConstexprMagic::Optional<MappingsReturnType>
+> calculateMapping() {
+  return {};
+}
+
+template<typename SymmetrySource, typename SymmetryTarget>
+struct mappingCalculationFunctor {
+  static constexpr ConstexprMagic::Optional<MappingsReturnType> value() {
+    return calculateMapping<SymmetrySource, SymmetryTarget>();
+  }
+};
+
+
+/* Derived stored constexpr data */
+
+/* Clang
+ *
+ * post-dynArrayOp and generateRotations refactor, O2
+ * 2-3 -> 10s
+ * 2-4 -> 11s
+ * 2-5 -> 36s
+ */
+constexpr auto allMappings __attribute__ ((unused)) 
+= ConstexprMagic::makeUpperTriangularMatrix(
+  ConstexprMagic::TupleType::mapAllPairs<
+    data::limitedSymmetryDataTypes,
+    mappingCalculationFunctor
+  >()
+);
+
+constexpr double smallestAngle __attribute__ ((unused)) 
+= ConstexprMagic::TupleType::unpackToFunction<
+  data::allSymmetryDataTypes,
+  minAngleFunctor
+>();
+
+
+/* Dynamic access to constexpr data */
+
+//! Dynamic access to constexpr mappings
+const ConstexprMagic::Optional<MappingsReturnType>& getMapping(
+  const Symmetry::Name& a,
+  const Symmetry::Name& b
+);
 
 } // namespace constexprProperties
 

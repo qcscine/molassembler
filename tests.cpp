@@ -7,7 +7,7 @@
 #include <iostream>
 #include <numeric>
 #include <Eigen/Geometry>
-#include "constexprProperties.h"
+#include "ConstexprProperties.h"
 
 #include "Properties.h"
 
@@ -392,12 +392,18 @@ BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
     )
   );
 
-  BOOST_CHECK(0 < smallestAngle && smallestAngle < M_PI);
+  BOOST_CHECK(
+    0 < constexprProperties::smallestAngle 
+    && constexprProperties::smallestAngle < M_PI
+  );
   BOOST_CHECK_MESSAGE(
-    std::fabs(smallestAngle - comparisonSmallestAngle) < 1e-4,
+    std::fabs(
+      constexprProperties::smallestAngle - comparisonSmallestAngle
+    ) < 1e-4,
     "The constant smallest angle set by the library is NOT the smallest "
     << "returned angle within the library. Current value of smallestAngle: "
-    << smallestAngle << ", true smallest angle:" << comparisonSmallestAngle
+    << constexprProperties::smallestAngle 
+    << ", true smallest angle:" << comparisonSmallestAngle
   );
 }
 
@@ -474,16 +480,14 @@ std::enable_if_t<
   ).size() == 0;
 }
 
-template<class SymmetryClass>
 using IndexAndMappingsPairType = std::pair<
   unsigned,
-  Symmetry::constexprProperties::MappingsReturnType<SymmetryClass>
+  Symmetry::constexprProperties::MappingsReturnType
 >;
 
-template<class SymmetryClass>
 constexpr bool pairEqualityComparator(
-  const IndexAndMappingsPairType<SymmetryClass>& a,
-  const IndexAndMappingsPairType<SymmetryClass>& b
+  const IndexAndMappingsPairType& a,
+  const IndexAndMappingsPairType& b
 ) {
   ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
     Symmetry::properties::floatingPointEqualityThreshold
@@ -506,7 +510,7 @@ std::enable_if_t<
   ConstexprMagic::Array<
     std::pair<
       unsigned,
-      Symmetry::constexprProperties::MappingsReturnType<SymmetryClassFrom>
+      Symmetry::constexprProperties::MappingsReturnType
     >,
     SymmetryClassFrom::size
   > constexprMappings;
@@ -524,7 +528,7 @@ std::enable_if_t<
   // Group the results
   auto constexprGroups = ConstexprMagic::groupByEquality(
     constexprMappings,
-    pairEqualityComparator<SymmetryClassFrom> // C++17 constexpr lambda
+    pairEqualityComparator // C++17 constexpr lambda
   );
 
   /* Dynamic part */
@@ -792,7 +796,6 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
    *
    * Clang 4.0.0 compiles all transitions just fine with < 500 MB RAM use.
    */
-  // WriteLigandMapping<data::SquarePyramidal, data::Octahedral>::value();
 
   // Write out all mappings
   ConstexprMagic::TupleType::mapAllPairs<
@@ -811,18 +814,6 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
     "There is a discrepancy between constexpr and dynamic ligand gain mapping"
     << " generation!"
   );
-
-
-  /*constexpr auto mappings = symmetryTransitionMappings<data::SquarePlanar, data::SquarePyramidal>();
-  std::cout << "Linear to TShaped mappings: angular = " 
-    << mappings.angularDistortion
-    << ", chiral = " << mappings.chiralDistortion
-    << ", multiplicity = " << mappings.mappings.size()
-    << std::endl;
-
-  for(const auto& indexMapping : mappings.mappings) {
-    std::cout << TemplateMagic::condenseIterable(indexMapping) << std::endl;
-  }*/
 }
 
 static_assert(

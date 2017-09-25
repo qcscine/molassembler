@@ -1,5 +1,6 @@
 #include "Symmetries.h"
 #include "Properties.h"
+
 #include <iostream>
 #include <iomanip>
 #include <numeric>
