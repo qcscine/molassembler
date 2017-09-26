@@ -103,7 +103,7 @@ struct DistortionInfo {
   double chiralDistortion;
 
   DistortionInfo(
-    const std::vector<unsigned>& passIndexMapping,
+    std::vector<unsigned> passIndexMapping,
     const double& passTotalDistortion,
     const double& passChiralDistortion
   );
@@ -116,9 +116,9 @@ struct SymmetryTransitionGroup {
   double angularDistortion, chiralDistortion;
 
   SymmetryTransitionGroup(
-    const std::set<
+    std::set<
       std::vector<unsigned>
-    >& passIndexMappings,
+    > passIndexMappings,
     const double& passAngleDistortion,
     const double& passChiralDistortion
   );

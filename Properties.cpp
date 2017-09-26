@@ -121,9 +121,6 @@ double calculateChiralDistortion(
 
   double chiralDistortion = 0;
 
-  // TODO probably erroneous here since tetrahedra in the source may involve
-  // deleted indices in ligand loss situations!
-
   for(const auto& tetrahedron : Symmetry::tetrahedra(from)) {
     chiralDistortion += std::fabs(
       getTetrahedronVolume(
@@ -267,8 +264,6 @@ std::vector<unsigned> applyIndexMapping(
    */
   std::vector<unsigned> symmetryPositions (Symmetry::size(to));
 
-  // TODO erroneous here for case of ligand loss, rethink!
-
   for(unsigned i = 0; i < Symmetry::size(to); ++i) {
     symmetryPositions.at(
       mapping.at(i)
@@ -279,21 +274,21 @@ std::vector<unsigned> applyIndexMapping(
 }
 
 DistortionInfo::DistortionInfo(
-  const std::vector<unsigned>& passIndexMapping,
+  std::vector<unsigned> passIndexMapping,
   const double& passTotalDistortion,
   const double& passChiralDistortion
-) : indexMapping(passIndexMapping),
+) : indexMapping(std::move(passIndexMapping)),
     totalDistortion(passTotalDistortion),
     chiralDistortion(passChiralDistortion)
 {}
 
 SymmetryTransitionGroup::SymmetryTransitionGroup(
-  const std::set<
+  std::set<
     std::vector<unsigned>
-  >& passIndexMappings,
+  > passIndexMappings,
   const double& passAngleDistortion,
   const double& passChiralDistortion
-) : indexMappings(passIndexMappings),
+) : indexMappings(std::move(passIndexMappings)),
     angularDistortion(passAngleDistortion),
     chiralDistortion(passChiralDistortion) 
 {}

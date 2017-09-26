@@ -407,20 +407,6 @@ BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
   );
 }
 
-/*BOOST_AUTO_TEST_CASE(writeAllCoordinates) {
-  for(const auto& symmetryName : allNames) {
-    std::cout << Symmetry::name(symmetryName) << "\n";
-    std::cout << "ConstexprSymmetryInfo::CoordinatesType {{\n";
-    for(const auto& coordinate : symmetryData().at(symmetryName).coordinates) {
-      std::cout << "  {" << coordinate[0]
-        << ", " << coordinate[1]
-        << ", " << coordinate[2]
-        << "}\n";
-    }
-    std::cout << "}}\n\n";
-  }
-}*/
-
 /* NOTE: can refactor out doLigandGainTestIfAdjacent with a simple if-constexpr
  * in C++17
  */

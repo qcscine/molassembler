@@ -5,12 +5,22 @@
 #include "constexpr_magic/Containers.h"
 #include "constexpr_magic/DynamicSet.h"
 
+#include "template_magic/Cache.h"
+
 /*! @file
  *
  * Constexpr parallel to Properties.h. Contains a slew of computations on the
  * base symmetry data to compute derived properties. You can e.g. apply
  * rotations, extract rotation multiplicities, calculate angular and chiral
  * distortions between pairs of symmetries, etc.
+ */
+
+/* TODO
+ * - A number of functions depend merely on members of symmetry classes that
+ *   always have the same type, e.g. size or angle functions. These functions
+ *   need not have the symmetry class as template parameter! But be aware that
+ *   this can introduce quite a performance difference since when loops
+ *   sizes are non-constexpr, no loop unrolling can be done
  */
 
 namespace Symmetry {
@@ -244,6 +254,30 @@ constexpr double calculateAngleDistortion(
   }
 
   return angularDistortion;
+}
+
+template<size_t size>
+constexpr double calculateAngularDistortion(
+  const ArrayType<unsigned, size>& indexMapping,
+  const size_t& sourceSymmetrySize,
+  const data::AngleFunctionPtr& sourceAngleFunction,
+  const data::AngleFunctionPtr& targetAngleFunction
+) {
+  double distortionSum = 0;
+
+  for(unsigned i = 0; i < sourceSymmetrySize; ++i) {
+    for(unsigned j = i + 1; j < sourceSymmetrySize; ++j) {
+      distortionSum += ConstexprMagic::Math::abs(
+        sourceAngleFunction(i, j)
+        - targetAngleFunction(
+          indexMapping.at(i),
+          indexMapping.at(j)
+        )
+      );
+    }
+  }
+
+  return distortionSum;
 }
 
 /*!
@@ -538,10 +572,12 @@ constexpr auto symmetryTransitionMappings() {
     auto mapped = symPosMapping(indexMapping);
 
     if(!encounteredMappings.contains(mapped)) {
-      auto angularDistortion = calculateAngleDistortion<
-        SymmetryClassFrom,
-        SymmetryClassTo
-      >(indexMapping);
+      auto angularDistortion = calculateAngularDistortion(
+        indexMapping,
+        SymmetryClassFrom::size,
+        SymmetryClassFrom::angleFunction,
+        SymmetryClassTo::angleFunction
+      );
 
       auto chiralDistortion = calculateChiralDistortion<
         SymmetryClassFrom,
@@ -738,39 +774,70 @@ std::enable_if_t<
   return {};
 }
 
+/* Since the pointer-to-function of the instantiated function template is
+ * identical for all symmetry data types (when using the optional-extended
+ * version to avoid instantiating symmetryTransitionMappings with non-adjacent
+ * symmetries), we can generate an upper triangular matrix of function pointers!
+ *
+ * Is proven by the following static_assert (commented out for performance)
+ */
+/*static_assert(
+  std::is_same<
+    decltype(calculateMapping<data::Linear, data::Bent>),
+    decltype(calculateMapping<data::Linear, data::TrigonalPlanar>)
+  >::value,
+  "pointer-to-function types are not identical"
+);*/
+
 template<typename SymmetrySource, typename SymmetryTarget>
-struct mappingCalculationFunctor {
-  static constexpr ConstexprMagic::Optional<MappingsReturnType> value() {
-    return calculateMapping<SymmetrySource, SymmetryTarget>();
+struct mappingCalculationFunctionPointerFunctor {
+  static constexpr auto value() {
+    // Return merely the function, not the evaluated result
+    return calculateMapping<SymmetrySource, SymmetryTarget>;
   }
 };
 
-
-/* Derived stored constexpr data */
-
-/* Clang
- *
- * post-dynArrayOp and generateRotations refactor, O2
- * 2-3 -> 10s
- * 2-4 -> 11s
- * 2-5 -> 36s
- */
-constexpr auto allMappings __attribute__ ((unused)) 
+constexpr auto allMappingFunctions
 = ConstexprMagic::makeUpperTriangularMatrix(
   ConstexprMagic::TupleType::mapAllPairs<
     data::limitedSymmetryDataTypes,
-    mappingCalculationFunctor
+    mappingCalculationFunctionPointerFunctor
   >()
 );
 
+template<typename SymmetrySource, typename SymmetryTarget>
+struct mappingCalculationFunctor {
+  static constexpr ConstexprMagic::Optional<MappingsReturnType> value() {
+    // Return the evaluated result
+    return allMappingFunctions.at(
+      static_cast<unsigned>(SymmetrySource::name),
+      static_cast<unsigned>(SymmetryTarget::name)
+    )();
+  }
+};
+
+/* Derived stored constexpr data */
 constexpr double smallestAngle __attribute__ ((unused)) 
 = ConstexprMagic::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
   minAngleFunctor
 >();
 
+#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
+constexpr auto allMappings = ConstexprMagic::makeUpperTriangularMatrix(
+  ConstexprMagic::TupleType::mapAllPairs<
+    data::limitedSymmetryDataTypes,
+    mappingCalculationFunctor
+  >()
+);
+#endif
 
 /* Dynamic access to constexpr data */
+//! Cache for on-the-fly generated mappings
+extern TemplateMagic::MinimalCache<
+  std::pair<Symmetry::Name, Symmetry::Name>,
+  ConstexprMagic::Optional<MappingsReturnType>
+> mappingsCache;
 
 //! Dynamic access to constexpr mappings
 const ConstexprMagic::Optional<MappingsReturnType>& getMapping(
