@@ -1,216 +1,86 @@
-#ifndef INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
-#define INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
+#ifndef INCLUDE_SYMMETRY_INFORMATION_PROPERTIES_H
+#define INCLUDE_SYMMETRY_INFORMATION_PROPERTIES_H
 
-#include <numeric>
-
-#include "Symmetries.h"
+#include "ConstexprProperties.h"
+#include "DynamicProperties.h"
 
 /*! @file
  *
- * Contains a suite of property calculations on the dynamic symmetry data.
+ * Contains the interface for property generation and access.
  */
 
 namespace Symmetry {
 
-namespace properties {
-
-constexpr double floatingPointEqualityThreshold __attribute__ ((unused)) = 1e-4;
-
-//! Rotates a passed list of indices of a specific symmetry
-std::vector<unsigned> applyRotation(
-  const std::vector<unsigned>& indices,
-  const Symmetry::Name& symmetryName,
-  unsigned rotationFunctionIndex
-);
-
-/*! 
- * Gets the coordinates of an indexOptional for a specific symmetry. 
- * As was defined previously, boost::none is a placeholder for the central atom,
- * which is not explicitly held in memory as it is always placed at {0, 0, 0}.
+/* Since the pointer-to-function of the instantiated function template is
+ * identical for all symmetry data types (when using the optional-extended
+ * version to avoid instantiating symmetryTransitionMappings with non-adjacent
+ * symmetries), we can generate an upper triangular matrix of function pointers!
+ *
+ * Is proven by the following static_assert (commented out for performance)
  */
-Eigen::Vector3d getCoordinates(
-  const Symmetry::Name& symmetryName,
-  const boost::optional<unsigned>& indexInSymmetryOption
-);
+/*static_assert(
+  std::is_same<
+    decltype(calculateMapping<data::Linear, data::Bent>),
+    decltype(calculateMapping<data::Linear, data::TrigonalPlanar>)
+  >::value,
+  "pointer-to-function types are not identical"
+);*/
 
-/*! 
- * Returns the Eigen calculation of a signed tetrahedron volume from four
- * tetrahedron edge point vectos
- */
-double getTetrahedronVolume(
-  const Eigen::Vector3d& i,
-  const Eigen::Vector3d& j,
-  const Eigen::Vector3d& k,
-  const Eigen::Vector3d& l
-);
-
-/*!
- * Calculates the angular distortion for a transition between two symmetries and
- * a specific index mapping that connects indices from the source symmetry to 
- * the target symmetry
- */
-double calculateAngleDistortion(
-  const Symmetry::Name& from,
-  const Symmetry::Name& to,
-  const std::vector<unsigned>& indexMapping
-);
-
-/*!
- * Index optionals as used in tetrahedron definitions in symmetries need to be
- * propagated through index mappings generated in the process of finding the 
- * optimal symmetry transitions. Shorthand function that performs a propagation
- * if a the passed indexOptional is not boost::none, returns that otherwise.
- */
-boost::optional<unsigned> propagateIndexOptionalThroughMapping(
-  const boost::optional<unsigned>& indexOptional,
-  const std::vector<unsigned>& indexMapping
-);
-
-/*!
- * Calculates the chiral distortion for a transition between two symmetries and
- * a specific index mapping that connects indices from the source symmetry to 
- * the target symmetry 
- */
-double calculateChiralDistortion(
-  const Symmetry::Name& from,
-  const Symmetry::Name& to,
-  const std::vector<unsigned>& indexMapping
-);
-
-/*!
- * Generates a set of all possible rotations of an index sequence within a 
- * desired symmetry
- */
-std::set<
-  std::vector<unsigned>
-> generateAllRotations(
-  const Symmetry::Name& symmetryName,
-  const std::vector<unsigned>& indices
-);
-
-/*!
- * Writes the indices of the original symmetry in the mapping into the target
- * symmetry's indexing scheme.
- */
-std::vector<unsigned> applyIndexMapping(
-  const Symmetry::Name& to,
-  const std::vector<unsigned>& mapping
-);
-
-struct DistortionInfo {
-  std::vector<unsigned> indexMapping;
-  double totalDistortion;
-  double chiralDistortion;
-
-  DistortionInfo(
-    std::vector<unsigned> passIndexMapping,
-    const double& passTotalDistortion,
-    const double& passChiralDistortion
-  );
-};
-
-struct SymmetryTransitionGroup {
-  std::set<
-    std::vector<unsigned>
-  > indexMappings;
-  double angularDistortion, chiralDistortion;
-
-  SymmetryTransitionGroup(
-    std::set<
-      std::vector<unsigned>
-    > passIndexMappings,
-    const double& passAngleDistortion,
-    const double& passChiralDistortion
-  );
-
-  SymmetryTransitionGroup() {}
-  SymmetryTransitionGroup(SymmetryTransitionGroup&& other) 
-    : indexMappings(std::move(other.indexMappings)),
-      angularDistortion(other.angularDistortion),
-      chiralDistortion(other.chiralDistortion)
-  {}
-
-  SymmetryTransitionGroup(const SymmetryTransitionGroup& other) 
-    : indexMappings(other.indexMappings),
-      angularDistortion(other.angularDistortion),
-      chiralDistortion(other.chiralDistortion)
-  {}
-
-  SymmetryTransitionGroup& operator = (const SymmetryTransitionGroup& other) {
-    indexMappings = other.indexMappings;
-    angularDistortion = other.angularDistortion;
-    chiralDistortion = other.chiralDistortion;
-
-    return *this;
+template<typename SymmetrySource, typename SymmetryTarget>
+struct mappingCalculationFunctionPointerFunctor {
+  static constexpr auto value() {
+    // Return merely the function, not the evaluated result
+    return constexprProperties::calculateMapping<SymmetrySource, SymmetryTarget>;
   }
 };
 
-/*!
- * Generates symmetry transition index mappings with the lowest angular
- * distortion and then subsets that group to those with the lowest chiral
- * distortion. Transitions are limited to symmetries with size differences of 0
- * and ±1.
- */
-SymmetryTransitionGroup symmetryTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo
+constexpr auto allMappingFunctions
+= ConstexprMagic::makeUpperTriangularMatrix(
+  ConstexprMagic::TupleType::mapAllPairs<
+    data::limitedSymmetryDataTypes,
+    mappingCalculationFunctionPointerFunctor
+  >()
 );
 
-/*!
- * Generates symmetry transition index mappings for the special case of ligand
- * loss, in which a ligand is removed from a particular position in the symmetry
- */
-SymmetryTransitionGroup ligandLossTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo,
-  const unsigned& positionInSourceSymmetry
+template<typename SymmetrySource, typename SymmetryTarget>
+struct mappingCalculationFunctor {
+  static constexpr ConstexprMagic::Optional<constexprProperties::MappingsReturnType> value() {
+    // Return the evaluated result
+    return allMappingFunctions.at(
+      static_cast<unsigned>(SymmetrySource::name),
+      static_cast<unsigned>(SymmetryTarget::name)
+    )();
+  }
+};
+
+/* Derived stored constexpr data */
+constexpr double smallestAngle __attribute__ ((unused)) 
+= ConstexprMagic::TupleType::unpackToFunction<
+  data::allSymmetryDataTypes,
+  constexprProperties::minAngleFunctor
+>();
+
+#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
+constexpr auto allMappings = ConstexprMagic::makeUpperTriangularMatrix(
+  ConstexprMagic::TupleType::mapAllPairs<
+    data::limitedSymmetryDataTypes,
+    mappingCalculationFunctor
+  >()
 );
+#endif
 
-} // namespace properties
+/* Dynamic access to constexpr data */
+//! Cache for on-the-fly generated mappings
+extern TemplateMagic::MinimalCache<
+  std::pair<Symmetry::Name, Symmetry::Name>,
+  ConstexprMagic::Optional<constexprProperties::MappingsReturnType>
+> mappingsCache;
 
-namespace detail {
-
-/*! 
- * Generates a vector containing strictly monotonically increasing natural 
- * numbers starting from 0.
- */
-template<typename NumericType>
-std::vector<NumericType> iota(NumericType nValues) {
-  std::vector<NumericType> values (nValues);
-
-  std::iota(
-    values.begin(),
-    values.end(),
-    NumericType {0}
-  );
-
-  return values;
-}
-
-/*!
- * Generates a vector containing strictly monotonically increasing natural 
- * numbers representing the range [start, end). If start == end, an empty
- * range is returned.
- */
-template<typename NumericType>
-std::vector<NumericType> range(
-  const NumericType& start,
-  const NumericType& end
-) {
-  if(start == end) {
-    return {};
-  } 
-
-  std::vector<NumericType> values (end - start);
-  std::iota(
-    values.begin(),
-    values.end(),
-    start
-  );
-  return values;
-}
-
-} // namespace detail
+//! Dynamic access to constexpr mappings
+const ConstexprMagic::Optional<constexprProperties::MappingsReturnType>& getMapping(
+  const Symmetry::Name& a,
+  const Symmetry::Name& b
+);
 
 } // namespace Symmetry
 

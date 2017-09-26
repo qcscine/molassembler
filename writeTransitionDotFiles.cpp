@@ -1,5 +1,5 @@
 #include "Symmetries.h"
-#include "Properties.h"
+#include "DynamicProperties.h"
 
 #include <iostream>
 #include <iomanip>

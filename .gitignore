@@ -1,4 +1,5 @@
 build/
+build*
 documentation/
 .lvimrc
 *.svg

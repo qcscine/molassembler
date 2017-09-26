@@ -40,16 +40,20 @@ endif()
 
 # set headers
 set(HEADERS_all
-  Symmetries.h
-  Properties.h
+  CompileTimeOptions.h
   ConstexprProperties.h
+  DynamicProperties.h
+  Primitives.h
+  Properties.h
+  Symmetries.h
 )
 
 # sources definition
 set(SOURCES_all
-  Symmetries.cpp
+  DynamicProperties.cpp
+  Primitives.cpp
   Properties.cpp
-  ConstexprProperties.cpp
+  Symmetries.cpp
 )
 
 # specify targets

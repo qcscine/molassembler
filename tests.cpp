@@ -7,7 +7,6 @@
 #include <iostream>
 #include <numeric>
 #include <Eigen/Geometry>
-#include "ConstexprProperties.h"
 
 #include "Properties.h"
 
@@ -392,17 +391,14 @@ BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
     )
   );
 
-  BOOST_CHECK(
-    0 < constexprProperties::smallestAngle 
-    && constexprProperties::smallestAngle < M_PI
-  );
+  BOOST_CHECK(0 < smallestAngle && smallestAngle < M_PI);
   BOOST_CHECK_MESSAGE(
     std::fabs(
-      constexprProperties::smallestAngle - comparisonSmallestAngle
+      smallestAngle - comparisonSmallestAngle
     ) < 1e-4,
     "The constant smallest angle set by the library is NOT the smallest "
     << "returned angle within the library. Current value of smallestAngle: "
-    << constexprProperties::smallestAngle 
+    << smallestAngle 
     << ", true smallest angle:" << comparisonSmallestAngle
   );
 }
