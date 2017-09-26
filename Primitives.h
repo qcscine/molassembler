@@ -1072,7 +1072,10 @@ using limitedSymmetryDataTypes = std::tuple<
   Seesaw,
   SquarePyramidal, // 5
   TrigonalBiPyramidal,
-  PentagonalPlanar
+  PentagonalPlanar,
+  Octahedral, // 6
+  TrigonalPrismatic,
+  PentagonalPyramidal
 >;
 
 } // namespace data

@@ -7,6 +7,7 @@
 #include "constexpr_magic/Boost.h"
 #include "constexpr_magic/Containers.h"
 #include "constexpr_magic/DynamicSet.h"
+#include "constexpr_magic/DynamicUIntArray.h"
 
 #include "template_magic/Cache.h"
 
@@ -428,9 +429,11 @@ constexpr unsigned maxRotations() {
 template<typename SymmetryClass>
 using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 
+using IndexListStorageType = ConstexprMagic::DynamicUIntArray<unsigned>;
+
 template<typename SymmetryClass>
 using RotationsSetType = ConstexprMagic::DynamicSet<
-  IndicesList<SymmetryClass>, 
+  IndexListStorageType,
   maxRotations<SymmetryClass>()
 >;
 
@@ -450,7 +453,8 @@ using ChainArrayType = ConstexprMagic::DynamicArray<
 template<typename SymmetryClass>
 constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
   RotationsSetType<SymmetryClass> rotations;
-  rotations.insert(indices);
+
+  rotations.insert(IndexListStorageType {indices});
 
   ChainStructuresArrayType<SymmetryClass> chainStructures;
   chainStructures.push_back(indices);
@@ -467,9 +471,11 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
       chain.back()
     );
 
-    auto rotationsLB = rotations.getLowerBound(generated);
-    if(!rotations.lowerBoundMeansContains(rotationsLB, generated)) {
-      rotations.insertAt(rotationsLB, generated);
+    auto storageType = IndexListStorageType {generated};
+
+    auto rotationsLB = rotations.getLowerBound(storageType);
+    if(!rotations.lowerBoundMeansContains(rotationsLB, storageType)) {
+      rotations.insertAt(rotationsLB, storageType);
       chainStructures.push_back(generated);
       chain.push_back(0);
     } else {
@@ -553,8 +559,6 @@ constexpr auto symmetryTransitionMappings() {
     "This function can handle only cases of equal or increasing symmetry size"
   );
 
-  using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
-
   typename MappingsReturnType::MappingsList bestMappings;
 
   double lowestAngleDistortion = 100;
@@ -563,7 +567,7 @@ constexpr auto symmetryTransitionMappings() {
   auto indexMapping = startingIndexSequence<SymmetryClassTo>();
 
   ConstexprMagic::DynamicSet<
-    IndexMappingType,
+    IndexListStorageType,
     ConstexprMagic::Math::factorial(SymmetryClassTo::size)
   > encounteredMappings;
 
@@ -573,8 +577,9 @@ constexpr auto symmetryTransitionMappings() {
 
   do {
     auto mapped = symPosMapping(indexMapping);
+    auto storageVersion = IndexListStorageType {mapped};
 
-    if(!encounteredMappings.contains(mapped)) {
+    if(!encounteredMappings.contains(storageVersion)) {
       auto angularDistortion = calculateAngularDistortion(
         indexMapping,
         SymmetryClassFrom::size,
@@ -653,8 +658,6 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
   assert(deletedSymmetryPosition < SymmetryClassFrom::size);
 
 
-  using IndexMappingType = ArrayType<unsigned, SymmetryClassTo::size>;
-
   typename MappingsReturnType::MappingsList bestMappings;
 
   double lowestAngleDistortion = 100;
@@ -677,7 +680,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
    */
 
   ConstexprMagic::DynamicSet<
-    IndexMappingType,
+    IndexListStorageType,
     ConstexprMagic::Math::factorial(SymmetryClassFrom::size)
   > encounteredMappings;
 
@@ -688,7 +691,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
   do {
     auto mapped = symPosMapping(indexMapping);
 
-    if(!encounteredMappings.contains(mapped)) {
+    if(!encounteredMappings.contains(IndexListStorageType {mapped})) {
       auto angularDistortion = calculateAngleDistortion<
         SymmetryClassTo,
         SymmetryClassFrom

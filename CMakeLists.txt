@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.5.1)
 
 # little variables
 set(WARNING_FLAGS "-Wall -Wpedantic -Wextra")
-set(CLANG_CONSTEXPR_OPTIONS "-fconstexpr-steps=200000000 -fconstexpr-backtrace-limit=0")
+set(CLANG_CONSTEXPR_OPTIONS "-fconstexpr-steps=999999999 -fconstexpr-backtrace-limit=0")
 
 # declaration
 project(SymmetryInformation)

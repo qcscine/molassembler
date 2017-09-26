@@ -44,3 +44,9 @@ Consequences:
   contexts: Fast at run-time, slow at compile-time.
 - It may be caused by a compiler bug, in which case finding out where the issue
   lies is largely impossible
+
+New observations:
+- It must be a mixture of both effects. Execution at compile-time is slower, but
+  algorithmic improvements at low levels has marked impact on compile time too!
+  Focussing on often-repeated code learned from run-time profiling allows me to
+  compile in the results for symmetries of size 6 in 15 mins.
