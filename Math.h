@@ -379,6 +379,10 @@ constexpr traits::enableIfFloatingWithReturn<T, T> round(
 // Really weak first implementation
 template<typename T>
 constexpr T pow(const T& base, const unsigned& exponent) noexcept {
+  if(exponent == 0) {
+    return 1;
+  }
+
   double value = base;
 
   for(unsigned n = 1; n < exponent; n++) {
@@ -464,7 +468,7 @@ constexpr T ln(const T& x) {
   }
 
   // Ensure last division leads to value closer to 1
-  if(std::fabs(calcX / 10 - 1) < std::fabs(calcX - 1)) {
+  if(Math::abs(calcX / 10 - 1) < Math::abs(calcX - 1)) {
     calcX /= 10;
     decimalReduction += 1;
   }

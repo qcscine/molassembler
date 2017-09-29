@@ -36,7 +36,7 @@ else()
 endif()
 
 add_executable(constexprMagicTests tests.cpp)
-target_compile_options(constexprMagicTests PUBLIC -O2 -g)
+target_compile_options(constexprMagicTests PUBLIC -g)
 set_target_properties(
   constexprMagicTests PROPERTIES
   CXX_STANDARD 14

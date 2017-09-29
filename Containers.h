@@ -848,6 +848,117 @@ constexpr auto max(const ContainerType& container) {
   return *largestIter;
 }
 
+namespace detail {
+  template<class ContainerType> 
+  struct getValueTypeImpl {
+    using type = typename std::remove_const<
+      typename std::remove_reference<
+        decltype(
+          *(
+            std::declval<ContainerType>()
+          ).begin()
+        )
+      >::type
+    >::type;
+  };
+} // namespace detail
+
+template<class ContainerType>
+using getValueType = typename detail::getValueTypeImpl<ContainerType>::type;
+
+/*!
+ * Checks if a container holds strictly non-decreasing sequential values, i.e. 
+ * its values are partially ordered.
+ *
+ * Partially ordered: 1, 1, 2, 3
+ * Totally ordered: 1, 2, 3 (no duplicates)
+ * Neither: 2, 1, 3
+ */
+template<
+  class ContainerType,
+  class LessThanComparator = std::less<
+    getValueType<ContainerType>
+  >
+> constexpr bool isPartiallyOrdered(
+  const ContainerType& container,
+  LessThanComparator comparator = LessThanComparator {}
+) {
+  auto leftIter = container.begin();
+  if(leftIter == container.end()) {
+    return true;
+  }
+
+  auto rightIter = leftIter + 1;
+
+  while(rightIter != container.end()) {
+    // equivalent to *rightIter < *leftIter
+    if(comparator(*rightIter, *leftIter)) {
+      return false;
+    }
+
+    ++leftIter;
+    ++rightIter;
+  }
+
+  return true;
+}
+
+/*!
+ * Checks if a container holds strictly increasing values, i.e. its values are
+ * totally ordered.
+ *
+ * Partially ordered: 1, 1, 2, 3
+ * Totally ordered: 1, 2, 3 (no duplicates)
+ * Neither: 2, 1, 3
+ */
+template<
+  class ContainerType,
+  class LessThanComparator = std::less<
+    getValueType<ContainerType>
+  >
+> constexpr bool isTotallyOrdered(
+  const ContainerType& container,
+  LessThanComparator comparator = LessThanComparator {}
+) {
+  auto leftIter = container.begin();
+  if(leftIter == container.end()) {
+    return true;
+  }
+
+  auto rightIter = leftIter + 1;
+
+
+  while(rightIter != container.end()) {
+    // Equivalent to !(*leftIter < *rightIter
+    if(!comparator(*leftIter, *rightIter)) {
+      return false;
+    }
+
+    ++leftIter;
+    ++rightIter;
+  }
+
+  return true;
+}
+
+template<class ContainerType>
+constexpr typename ContainerType::const_iterator find(
+  const ContainerType& container,
+  const getValueType<ContainerType>& value
+) {
+  auto it = container.begin();
+
+  while(it != container.end()) {
+    if(*it == value) {
+      return it;
+    }
+
+    ++it;
+  }
+
+  return it;
+}
+
 } // namespace ConstexprMagic
 
 #endif

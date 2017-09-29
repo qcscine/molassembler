@@ -113,6 +113,24 @@ public:
     }
   }
 
+  constexpr void pop_back(const unsigned& numberToPop) {
+    if(_count > numberToPop) {
+      _count -= numberToPop;
+    }
+  }
+
+  constexpr DynamicArray<T, nItems> splice(const unsigned& fromIndex) {
+    DynamicArray<T, nItems> spliced;
+
+    for(unsigned i = fromIndex; i < _count; ++i) {
+      spliced.push_back(std::move(_items[i]));
+    }
+
+    pop_back(_count - fromIndex);
+
+    return spliced;
+  }
+
   constexpr bool validIndex(const unsigned& index) {
     return(index < _count);
   }
@@ -322,6 +340,79 @@ public:
     return iterator(*this, _count);
   }
 
+private:
+  constexpr void _moveElementsRightUntil(
+    const iterator& position
+  ) {
+    // Add the last element in the array onto the end
+    push_back(
+      back()
+    );
+
+    // Move everything up to and including the lower bound back
+    auto rightIter = end();
+    rightIter -= 2;
+    auto leftIter = rightIter - 1;
+
+    while(rightIter != position) {
+      *rightIter = std::move(*leftIter);
+
+      --leftIter;
+      --rightIter;
+    }
+  }
+
+public:
+  constexpr void insertAt(
+    iterator insertPositionIter,
+    const T& item
+  ) {
+    // In case there is no object larger than the one being inserted, add to end
+    if(insertPositionIter == end()) {
+      push_back(item);
+    } else {
+      _moveElementsRightUntil(insertPositionIter);
+
+      // Copy in the item
+      *insertPositionIter = item;
+    }
+  }
+
+  //! Inserts an element at a specified position O(N)
+  constexpr void insertAt(
+    iterator insertPositionIter,
+    T&& item
+  ) {
+    // In case there is no object larger than the one being inserted, add to end
+    if(insertPositionIter == end()) {
+      push_back(item);
+    } else {
+      _moveElementsRightUntil(insertPositionIter);
+
+      // Move in the item
+      *insertPositionIter = std::move(item);
+    }
+  }
+
+  constexpr void removeAt(iterator insertPositionIter) {
+    if(insertPositionIter == end()) {
+      throw "Cannot remove item at end iterator!";
+    }
+
+    // Rename for clarity
+    auto& leftIter = insertPositionIter;
+    auto rightIter = insertPositionIter + 1;
+
+    while(rightIter != end()) {
+      *leftIter = std::move(*rightIter);
+
+      ++leftIter;
+      ++rightIter;
+    }
+
+    pop_back();
+  }
+
   using ConstBaseIteratorType = std::iterator<
     std::random_access_iterator_tag, // iterator category
     T,                               // value_type
@@ -442,6 +533,16 @@ public:
     return makeArray(std::make_index_sequence<nItems>{});
   }
 
+  constexpr void copyIn(const DynamicArray<T, nItems>& other) {
+    if(other.size() + size() > nItems) {
+      throw "DynamicArray to be copied in has too many elements to fit!";
+    }
+
+    for(auto it = other.begin(); it != other.end(); ++it) {
+      push_back(*it);
+    }
+  }
+
   std::vector<T> toSTL() const {
     std::vector<T> data;
     data.reserve(_count);
@@ -494,6 +595,20 @@ template<
   }
 
   return groups;
+}
+
+template<typename T, size_t N>
+DynamicArray<T, N> merge(
+  const DynamicArray<T, N>& a,
+  const DynamicArray<T, N>& b
+) {
+  if(a.size() + b.size() > N) {
+    throw "DynamicArrays to be merged have too many elements!";
+  }
+
+  DynamicArray<T, N> merged {a};
+  merged.copyIn(b);
+  return merged;
 }
 
 } // namespace ConstexprMagic

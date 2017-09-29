@@ -90,6 +90,11 @@ template<
 ) {
   constexpr size_t N = std::tuple_size<TupleType>::value;
 
+  /* Although you might think this is awful, not immediately consuming the
+   * generated index pairs, there is basically no elegant way to generate and
+   * consume in two places without incurring another function that needs to be
+   * instantiated for every pair of indices separately, which would be worse.
+   */
   constexpr auto indexPairs = makeArray(
     UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<N>(Inds)...
   );

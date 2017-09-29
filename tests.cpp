@@ -15,9 +15,21 @@
 #include "TupleType.h"
 #include "LogicalOperatorTests.h"
 #include "FloatingPointComparison.h"
+#include "UIntArray.h"
+#include "DynamicUIntArray.h"
+#include "BTree.h"
 
 #include <iostream>
 #include <iomanip>
+
+#include <boost/test/results_collector.hpp>
+
+inline bool lastTestPassed() {
+  using namespace boost::unit_test;
+  test_case::id_t id = framework::current_test_case().p_id;
+  test_results rez = results_collector.results(id);
+  return rez.passed();
+}
 
 using namespace std::string_literals;
 
@@ -446,8 +458,17 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 constexpr bool compileTimeDynTest() {
   ConstexprMagic::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6};
   nonConstArr.push_back(9);
-
   return nonConstArr.size() == 4;
+}
+
+constexpr bool dynArrSpliceTest() {
+  ConstexprMagic::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6, 5, 1, 9};
+  auto spliced = nonConstArr.splice(2);
+  
+  return (
+    spliced == ConstexprMagic::DynamicArray<unsigned, 10> {6, 5, 1, 9}
+    && nonConstArr == ConstexprMagic::DynamicArray<unsigned, 10> {4, 3}
+  );
 }
 
 BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
@@ -459,7 +480,11 @@ BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
   );
   static_assert(
     compileTimeDynTest(),
-    "non-const dynamic array functionality works as expected"
+    "non-const dynamic array push_back does not work as expected"
+  );
+  static_assert(
+    dynArrSpliceTest(),
+    "non-const dynamic array splice does not work as expected"
   );
   static_assert(
     arr.end() - arr.begin() == 3,
@@ -1007,3 +1032,325 @@ constexpr auto fromArray = ConstexprMagic::makeUpperTriangularMatrix(
 );
 
 } // namespace UpperTriangularMatrixTests
+
+namespace UIntArrayTests {
+
+using Small = ConstexprMagic::UIntArray<unsigned>;
+using Medium = ConstexprMagic::UIntArray<unsigned long>;
+using Large = ConstexprMagic::UIntArray<unsigned long long>;
+
+static_assert(Small::N == 9, "Small variant can store 9 integers");
+static_assert(Medium::N == 19, "Medium variant can store 19 integers");
+static_assert(Large::N == 19, "Large variant can store 19 integers");
+
+//constexpr auto sampleArr = Small {1234567};
+// constexpr auto sampleArr = Small {Array<unsigned, 7> {7, 6, 5, 4, 3, 2, 1}};
+constexpr auto sampleArr = Small {7, 6, 5, 4, 3, 2, 1};
+
+static_assert(sampleArr.at(0) == 7, "At doesn't work");
+static_assert(sampleArr.at(1) == 6, "At doesn't work");
+static_assert(sampleArr.at(2) == 5, "At doesn't work");
+static_assert(sampleArr.at(3) == 4, "At doesn't work");
+static_assert(sampleArr.at(4) == 3, "At doesn't work");
+static_assert(sampleArr.at(5) == 2, "At doesn't work");
+static_assert(sampleArr.at(6) == 1, "At doesn't work");
+
+constexpr bool tryModifyArray() {
+  Small arr {1, 2, 3, 4, 5, 6, 7};
+
+  arr.at(0) = 4u;
+
+  return arr.at(0) == 4;
+}
+
+static_assert(tryModifyArray(), "Modifying the array works");
+
+} // namespace UIntArrayTests
+
+BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
+  constexpr ConstexprMagic::DynamicUIntArray<unsigned> arr {4, 3, 5};
+
+  static_assert(
+    arr.size() == 3,
+    "Array size isn't initialized correctly from parameter pack ctor"
+  );
+  static_assert(
+    arr.end() - arr.begin() == 3,
+    "Subtracting begin/end iterators does not yield dynamic length"
+  );
+
+  static_assert(
+    arr.begin() - arr.end() == -3,
+    "Subtracting begin/end iterators does not yield dynamic length"
+  );
+
+  static_assert(
+    *arr.begin() == 4,
+    "Pointer to begin isn't correct"
+  );
+
+  static_assert(arr.front() == 4, "Front isn't right");
+  static_assert(arr.back() == 5, "Back isn't right");
+
+  ConstexprMagic::DynamicUIntArray<unsigned> changeable {4, 9, 1, 3, 5};
+
+  BOOST_CHECK_MESSAGE(
+    *changeable.begin() == 4
+    && *(--changeable.end()) == 5
+    && changeable.front() == 4
+    && changeable.back() == 5,
+    "non-const iterators don't work right"
+  );
+
+  constexpr ConstexprMagic::DynamicUIntArray<unsigned long> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
+
+  constexpr auto grouped = groupByEquality(
+    values,
+    std::equal_to<unsigned>()
+  );
+
+  constexpr ConstexprMagic::Array<unsigned, 4> f {4, 1, 9};
+  constexpr auto initFromFixed = ConstexprMagic::DynamicUIntArray<unsigned> {f};
+
+  BOOST_CHECK_MESSAGE(
+    grouped.size() == 4
+    && grouped.at(0).size() == 1
+    && grouped.at(1).size() == 2
+    && grouped.at(2).size() == 3
+    && grouped.at(3).size() == 4,
+    "Grouped doesn't work as expected, result is a size " << grouped.size()
+    << " split"
+  );
+}
+
+namespace BTreeStaticTests {
+
+static_assert(
+  /* BTree of minimum order 3 has max 5 keys per node and max 6 children per node
+   *
+   * height  nodes       keys
+   * 0       1           5
+   * 1       1 + 6       5 + 6*5
+   * 2       1 + 6 + 36  5 + 6*5 + 36*5
+   *
+   * #nodes(h) = sum_{i = 0}^{h} (2t)^i
+   *
+   *     (2t)^{h + 1} - 1
+   *  N = ----------------
+   *         2t - 1
+   *
+   * -> N * (2t - 1) + 1 = (2t)^{h + 1}
+   *
+   * -> log_2t [N * (2t - 1) + 1] = h + 1
+   *
+   * -> h = log_2t [N * (2t - 1) + 1] - 1
+   *
+   */
+  ConstexprMagic::BTreeProperties::minHeight(5, 3) == 0
+  && ConstexprMagic::BTreeProperties::minHeight(35, 3) == 1
+  && ConstexprMagic::BTreeProperties::minHeight(215, 3) == 2,
+  "minHeight function is wrong"
+);
+
+static_assert(
+  ConstexprMagic::BTreeProperties::maxNodesInTree(0, 3) == 1
+  && ConstexprMagic::BTreeProperties::maxNodesInTree(1, 3) == 7
+  && ConstexprMagic::BTreeProperties::maxNodesInTree(2, 3) == 43
+  && ConstexprMagic::BTreeProperties::maxNodesInTree(3, 3) == 259,
+  "maxNodesInTree is wrong"
+);
+
+} // namespace BTreeStaticTests
+
+unsigned popRandom(std::set<unsigned>& values) {
+  auto it = values.begin();
+
+  std::advance(
+    it,
+    TemplateMagic::random.getSingle<unsigned>(0, values.size() - 1)
+  );
+
+  auto value = *it;
+
+  values.erase(it);
+
+  return value;
+}
+
+BOOST_AUTO_TEST_CASE(BTreeTests) {
+  constexpr unsigned nKeys = 100;
+
+  using namespace std::string_literals;
+
+  std::vector<unsigned> values (nKeys);
+
+  std::iota(
+    values.begin(),
+    values.end(),
+    0
+  );
+
+  std::set<unsigned> notInTree {values.begin(), values.end()};
+  std::set<unsigned> inTree;
+
+  ConstexprMagic::BTree<unsigned, 3, nKeys> tree;
+
+  std::string lastTreeGraph;
+
+  std::vector<std::string> decisions;
+
+  auto addElement = [&](const std::string& lastTreeGraph) {
+    // Add an element
+    auto toAdd = popRandom(notInTree);
+    decisions.emplace_back("i"s + std::to_string(toAdd));
+
+    BOOST_CHECK_NO_THROW(tree.insert(toAdd));
+    BOOST_REQUIRE_MESSAGE(
+      lastTestPassed(),
+      "Element insertion failed. Operation sequence: "
+        << TemplateMagic::condenseIterable(decisions)
+        << ". Prior to last operation: \n"
+        << lastTreeGraph << "\n\n After last operation: \n"
+        << tree.dumpGraphviz()
+    );
+
+    inTree.insert(toAdd);
+  };
+
+  auto removeElement = [&](const std::string& lastTreeGraph) {
+    // Remove an element
+    auto toRemove = popRandom(inTree);
+    decisions.emplace_back("r"s + std::to_string(toRemove));
+
+    BOOST_CHECK_NO_THROW(tree.remove(toRemove));
+    BOOST_REQUIRE_MESSAGE(
+      lastTestPassed(),
+      "Tree element removal failed. Operation sequence: "
+        << TemplateMagic::condenseIterable(decisions)
+        << ". Prior to last operation: \n"
+        << lastTreeGraph << "\n\n After last operation: \n"
+        << tree.dumpGraphviz()
+    );
+
+    notInTree.insert(toRemove);
+  };
+
+  auto fullValidation = [&](const std::string& lastTreeGraph) {
+    // Validate the tree
+    BOOST_CHECK_NO_THROW(tree.validate());
+    BOOST_REQUIRE_MESSAGE(
+      lastTestPassed(),
+      "Tree validation failed. Operation sequence: " 
+        << TemplateMagic::condenseIterable(decisions)
+        << ". Prior to last operation: \n"
+        << lastTreeGraph << "\n\n After last operation: \n"
+        << tree.dumpGraphviz()
+    );
+
+    auto notInsertedNotContained = TemplateMagic::mapToVector(
+      notInTree,
+      [&](const auto& notInTreeValue) -> bool {
+        return !tree.contains(notInTreeValue);
+      }
+    );
+
+    // Check that all elements are truly contained or not
+    BOOST_REQUIRE_MESSAGE(
+      TemplateMagic::all_of(notInsertedNotContained),
+      "Not all elements recorded as not in the tree are recognized as such!\n" 
+        << "Found in the tree, but should not be present: "
+        << TemplateMagic::condenseIterable(
+          TemplateMagic::copyIf(
+            TemplateMagic::zipMap(
+              notInsertedNotContained,
+              notInTree,
+              [](const bool& passed, const unsigned& value) -> std::string {
+                if(!passed) {
+                  return std::to_string(value);
+                }
+
+                return "";
+              }
+            ),
+            [](const std::string& str) -> bool {
+              return str != "";
+            }
+          )
+        ) << "\nSequence of operations: " 
+        << TemplateMagic::condenseIterable(decisions)
+        << ". Prior to last operation: \n"
+        << lastTreeGraph << "\n\n After last operation: \n"
+        << tree.dumpGraphviz()
+    );
+
+    auto insertedContained = TemplateMagic::mapToVector(
+      inTree,
+      [&](const auto& inTreeValue) -> bool {
+        return tree.contains(inTreeValue);
+      }
+    );
+
+    BOOST_REQUIRE_MESSAGE(
+      TemplateMagic::all_of(insertedContained),
+      "Not all elements recorded as contained in the tree are recognized as such!\n" 
+        << "Not found in the tree: "
+        << TemplateMagic::condenseIterable(
+          TemplateMagic::copyIf(
+            TemplateMagic::zipMap(
+              insertedContained,
+              inTree,
+              [](const bool& passed, const unsigned& value) -> std::string {
+                if(!passed) {
+                  return std::to_string(value);
+                }
+
+                return "";
+              }
+            ),
+            [](const std::string& str) -> bool {
+              return str != "";
+            }
+          )
+        ) << "\nSequence of operations: " 
+        << TemplateMagic::condenseIterable(decisions)
+        << ". Prior to last operation: \n"
+        << lastTreeGraph << "\n\n After last operation: \n"
+        << tree.dumpGraphviz()
+    );
+  };
+
+  for(unsigned i = 0; i < 10; ++i) {
+    decisions.clear();
+
+    // Heavy insert-delete workload
+    for(unsigned nSteps = 0; nSteps < 1000; ++nSteps) {
+      lastTreeGraph = tree.dumpGraphviz();
+
+      // Decide whether to insert or remove a random item
+      auto decisionFloat = TemplateMagic::random.getSingle<double>(0.0, 1.0);
+      if(decisionFloat >= static_cast<double>(inTree.size()) / nKeys) {
+        addElement(lastTreeGraph);
+      } else {
+        removeElement(lastTreeGraph);
+      }
+
+      fullValidation(lastTreeGraph);
+    }
+
+    // Fill'er up all the way
+    while(inTree.size() != nKeys) {
+      std::string lastTreeGraph = tree.dumpGraphviz();
+
+      addElement(lastTreeGraph);
+      fullValidation(lastTreeGraph);
+    }
+
+    // Empty the tree
+    while(inTree.size() > 0) {
+      std::string lastTreeGraph = tree.dumpGraphviz();
+
+      removeElement(lastTreeGraph);
+      fullValidation(lastTreeGraph);
+    }
+  }
+}

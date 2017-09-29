@@ -375,7 +375,7 @@ public:
   }
 };
 
-template<class T, class... Tail>
+template<typename T, typename... Tail>
 constexpr auto makeArray(T head, Tail... tail) -> Array<T, 1 + sizeof...(Tail)> {
   return { head, tail ... };
 }
