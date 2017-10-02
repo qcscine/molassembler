@@ -61,14 +61,15 @@ public:
     return *this;
   }
 
-  constexpr const MappedType& at(const KeyType& key) const {
-    auto searchIter = _items.find(PairType {key, MappedType {}});
-
-    if(searchIter == _items.end()) {
+  constexpr MappedType at(const KeyType& key) const {
+    PairType pair {key, MappedType {}};
+    auto keyOptional = _items.getOption(pair);
+    
+    if(!keyOptional.hasValue()) {
       throw "No such key in this DynamicMap!";
     }
 
-    else return (*searchIter).second;
+    return keyOptional.value().second;
   }
       
   constexpr void insert(

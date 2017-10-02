@@ -14,6 +14,13 @@
  * Implements a BTree which doesn't store key-value pairs, only keys.
  */
 
+
+/* TODO
+ * - It's not constexpr compliant! No pointers allowed! We can circumvent this
+ *   with indices though
+ * - node constIterators?
+ */
+
 namespace ConstexprMagic {
 
 namespace BTreeProperties {
@@ -51,21 +58,24 @@ constexpr size_t minHeight(const size_t& numKeys, const size_t& minDegree) {
  * (This can be turned into an associative container with a simple modification,
  * though: Set KeyType to std::pair<KeyType, ValueType> and supply custom
  * LessThanComparator and EqualityComparators that merely compare using the
- * KeyType. Then return the ValueType from a lookup which has a default
+ * KeyType. Then return the ValueType from a lookup with a default-constructed
  * ValueType.)
  *
- * @tparam KeyType - The desired stored type
- * @tparam minDegree - The minimum degree t of the B-Tree. Must be >= 2, since
+ * @tparam KeyType The desired stored type
+ * @tparam minDegree The minimum degree t of the B-Tree. Must be >= 2, since
  *   Nodes store a minimum of t-1 keys. A Node of degree t can store up to 2t-1 
- *   keys has up to 2t children.
- * @tparam numElements - The intended maximimum amount of stored elements. The 
+ *   keys and has up to 2t children.
+ * @tparam numElements The intended maximimum amount of stored elements. The 
  *   class must allocate all nodes that may possibly be stored at any time, so
  *   a tree height that allows the storage of at least numElements is chosen and
  *   then space is allocated for the case that this height is filled with nodes.
- * @tparam LessThanComparator - A binary functor that takes two keys and returns
+ *   This has the consequence that the instantiated tree can typically store 
+ *   quite a bit more elements than originally intended (see the static member
+ *   maxKeys). Play with the minimum order a bit if you need space-efficiency.
+ * @tparam LessThanComparator A binary functor that takes two keys and returns
  *   whether a is smaller than b. Must implement strict weak ordering. Defaults
  *   to std::less<KeyType>.
- * @tparam EqualityComparator - A binary functor that takes two keys and returns
+ * @tparam EqualityComparator A binary functor that takes two keys and returns
  *   whether they are equal. Defaults to std::equal_to<KeyType>.
  */
 template<
@@ -541,12 +551,13 @@ private:
   }
 
 public:
-  constexpr BTree() {
+  constexpr BTree() : _rootPtr {nullptr} {
     _rootPtr = _newNode();
   }
 
-  /*!
-   * Inserts a new key into the tree. This key may *not* already be in the tree.
+  /*! Add a key to the tree.
+   *
+   * Inserts a new key into the tree. This key must not already be in the tree.
    * Complexity is O(t log_t N), where t is the minimum degree of the tree and
    * N the number of contained elements.
    */
@@ -572,7 +583,8 @@ public:
     ++_count;
   }
 
-  /*!
+  /*! Check whether a key is stored in the tree.
+   *
    * Check whether a key is stored in the tree. The complexity of this operation
    * is O(t log_t N), where t is the minimum degree of the tree and N the
    * number of contained elements.
@@ -580,6 +592,23 @@ public:
   constexpr bool contains(const KeyType& key) const {
     Node* foundPtr = _search(_rootPtr, key);
     return foundPtr != nullptr;
+  }
+
+  constexpr Optional<KeyType> getOption(const KeyType& key) const {
+    Node* foundPtr = _search(_rootPtr, key);
+
+    if(foundPtr == nullptr) {
+      return {};
+    }
+
+    auto keyLB = lowerBound<KeyType, LessThanComparator>(
+      foundPtr->keys.begin(),
+      foundPtr->keys.end(),
+      key,
+      _lt
+    );
+
+    return *keyLB;
   }
 
   /*!
@@ -680,6 +709,7 @@ public:
     }
   }
 
+  //! Returns the number of elements in the tree
   constexpr unsigned size() const {
     return _count;
   }
@@ -829,32 +859,25 @@ public:
       return retval;
     }
 
-    constexpr constIterator& operator --() {
-      if(_indexStack.front() == 0) { // We are already the begin constIterator
+    constexpr constIterator& operator -- () {
+      if(_nodeStack.back() == _leftMostNode && _indexStack.back() == 0) {
+        // We are the begin constIterator
         return *this;
       }
 
       // In case we are a leaf, decrement and re-check
       if(_nodeStack.back()->isLeaf()) {
-        --_indexStack.back();
-
-        /* If we hit zero and we're not the leftmost node, we have to go up the
-         * tree and to the left
-         */
-        if(
-          _indexStack.back() == 0
-          && _nodeStack.back() == _leftMostNode
-        ) {
-          // Unwind the stack until we are at a decrementable position
+        // If we are at zero, we have to find a decrementable position
+        if(_indexStack.back() == 0) {
+          // Unwind the stack until we can decrement
           do {
             _indexStack.pop_back();
             _nodeStack.pop_back();
           } while(_indexStack.back() == 0);
-
-          // Decrement here, then we are placed on a key at an internal node
-          --_indexStack.back();
         }
-
+        
+        // Decrement and return
+        --_indexStack.back();
         return *this;
       } 
 
@@ -868,7 +891,7 @@ public:
 
       while(!_nodeStack.back()->isLeaf()) {
         _indexStack.push_back(
-          2 * _nodeStack.back()->keys.size() + 1
+          2 * _nodeStack.back()->keys.size()
         );
         _nodeStack.push_back(
           _nodeStack.back()->children.back()
@@ -916,8 +939,24 @@ public:
     }
   };
 
+  //! Clears the tree. This operation is O(N)
+  constexpr void clear() {
+    // Refresh all nodes
+    for(auto& node: _nodes) {
+      node = Node {};
+    }
+
+    // Clear the garbage
+    _garbage.clear();
+
+    // Assign a new root
+    _rootPtr = _newNode();
+  }
+
+  //! Alias for STL algorithm compatibility
   using const_iterator = constIterator;
 
+  //! Returns a const iterator to the first key in the tree
   constexpr constIterator begin() const {
     return constIterator(
       *this, 
@@ -925,6 +964,7 @@ public:
     );
   }
 
+  //! Returns a past-the-end const iterator
   constexpr constIterator end() const {
     return constIterator(
       *this, 
@@ -932,9 +972,65 @@ public:
     );
   }
 
-  /* TODO
-   * - node constIterators?
-   */
+  constexpr bool operator < (const BTree& other) const {
+    if(this->size() < other.size()) {
+      return true;
+    } 
+
+    if(this->size() > other.size()) {
+      return false;
+    }
+
+    auto thisIter = this->begin();
+    auto thisEnd = this->end();
+
+    auto otherIter = other.begin();
+
+    while(thisIter != thisEnd) {
+      if(*thisIter < *otherIter) {
+        return true;
+      }
+
+      if(*thisIter > *otherIter) {
+        return false;
+      }
+
+      ++thisIter;
+      ++otherIter;
+    }
+
+    return false;
+  }
+
+  constexpr bool operator > (const BTree& other) const {
+    return (other < *this);
+  }
+
+  constexpr bool operator == (const BTree& other) const {
+    if(this->size() != other->size()) {
+      return false;
+    }
+
+    auto thisIter = this->begin();
+    auto thisEnd = this->end();
+
+    auto otherIter = other.begin();
+
+    while(thisIter != thisEnd) {
+      if(*thisIter != *otherIter) {
+        return false;
+      }
+
+      ++thisIter;
+      ++otherIter;
+    }
+
+    return true;
+  }
+
+  constexpr bool operator != (const BTree& other) const {
+    return !(*this == other);
+  }
 };
 
 } // namespace ConstexprMagic

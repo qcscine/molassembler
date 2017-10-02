@@ -719,21 +719,6 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(specificTest) {
-  ConstexprMagic::DynamicSet<
-    ConstexprMagic::Array<unsigned, 6>,
-    5
-  > set {
-    ConstexprMagic::Array<unsigned, 6> {0, 1, 2, 3, 4, 5}
-  };
-
-  BOOST_CHECK(
-    !set.contains(
-      ConstexprMagic::Array<unsigned, 6> {1, 2, 3, 4, 0, 5}
-    )
-  );
-}
-
 namespace TupleTypeTests {
 
 struct Apple {
@@ -999,21 +984,21 @@ static_assert(
 
 namespace DynamicMapTests {
 
-constexpr ConstexprMagic::DynamicMap<unsigned, int, 20> generateMap() {
-  ConstexprMagic::DynamicMap<unsigned, int, 20> map;
+/*constexpr ConstexprMagic::DynamicMap<unsigned, int, 20> generateMap() {
+  ConstexprMagic::DynamicMap<unsigned, int, 20> myMap;
 
-  map.insert(4, -2);
-  map.insert(1, 4);
-  map.insert(3, 9);
+  myMap.insert(4, -2);
+  myMap.insert(1, 4);
+  myMap.insert(3, 9);
 
-  return map;
+  return myMap;
 }
 
-constexpr ConstexprMagic::DynamicMap<unsigned, int, 20> a = generateMap();
+constexpr auto a = generateMap();*/
 
-static_assert(a.at(4u) == -2, "Map does not find element with key 4");
+/*static_assert(a.at(4u) == -2, "Map does not find element with key 4");
 static_assert(a.at(1u) == 4, "Map does not find element with key 1");
-static_assert(a.at(3u) == 9, "Map does not find element with key 3");
+static_assert(a.at(3u) == 9, "Map does not find element with key 3");*/
 
 } // namespace DynamicMapTests
 
@@ -1124,6 +1109,19 @@ BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
 }
 
 namespace BTreeStaticTests {
+
+/*constexpr ConstexprMagic::BTree<unsigned, 3, 20> generateTree() {
+  ConstexprMagic::BTree<unsigned, 3, 20> tree;
+
+  tree.insert(9);
+  tree.insert(3);
+  tree.insert(5);
+  tree.insert(20);
+
+  return tree;
+}
+
+constexpr auto testTree = generateTree();*/
 
 static_assert(
   /* BTree of minimum order 3 has max 5 keys per node and max 6 children per node
