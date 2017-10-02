@@ -1371,3 +1371,57 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     }
   }
 }
+
+/* Test that if a BTree is instantiated with a specific size, that size
+ * definitely fits in the tree
+ */
+
+template<size_t minOrder, size_t nElements> 
+constexpr bool BTreeAllocatedSizeSufficient() {
+  ConstexprMagic::BTree<unsigned, minOrder, nElements> tree;
+
+  for(unsigned i = 0; i < nElements; ++i) {
+    tree.insert(i);
+  }
+
+  return true;
+}
+
+template<size_t minOrder, size_t ... nElements>
+constexpr bool testAllBTrees(std::index_sequence<nElements...>) {
+  ConstexprMagic::Array<bool, sizeof...(nElements)> results {{
+    BTreeAllocatedSizeSufficient<minOrder, 5 + nElements>()...
+  }};
+
+  for(unsigned i = 0; i < sizeof...(nElements); ++i) {
+    if(!results.at(i)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+template<size_t ... minOrders>
+constexpr bool testAllBTrees(std::index_sequence<minOrders...>) {
+  ConstexprMagic::Array<bool, sizeof...(minOrders)> results {{
+    testAllBTrees<2 + minOrders>(std::make_index_sequence<45>{})... // Test sizes 5->50
+  }};
+
+  for(unsigned i = 0; i < sizeof...(minOrders); ++i) {
+    if(!results.at(i)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+constexpr bool testAllBTrees() {
+  return testAllBTrees(std::make_index_sequence<3>{}); // Test min orders 2->5
+}
+
+static_assert(
+  testAllBTrees(),
+  "For some B-Trees, you cannot fit as many elements in as requested at instantiation"
+);

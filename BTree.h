@@ -16,8 +16,6 @@
 
 
 /* TODO
- * - It's not constexpr compliant! No pointers allowed! We can circumvent this
- *   with indices though
  * - node constIterators?
  */
 
@@ -47,6 +45,20 @@ constexpr size_t minHeight(const size_t& numKeys, const size_t& minDegree) {
       static_cast<double>(numKeys + 1),
       static_cast<double>(2 * minDegree)
     ) - 1
+  );
+}
+
+/*!
+ * Calculates the maximal height bound needed for a B-Tree of a specific
+ * minDegree to be able to hold a certain number of keys. The actual maximal
+ * height may be lower.
+ */
+constexpr size_t maxHeightBound(const size_t& numKeys, const size_t& minDegree) {
+  return Math::floor(
+    Math::log(
+      static_cast<double>(numKeys + 1) / 2,
+      static_cast<double>(minDegree)
+    )
   );
 }
 
@@ -107,7 +119,7 @@ private:
 
 public:
   //! The height needed to be able to hold at least numElements keys
-  static constexpr size_t maxHeight = BTreeProperties::minHeight(
+  static constexpr size_t maxHeight = BTreeProperties::maxHeightBound(
     numElements,
     minDegree
   );
@@ -593,10 +605,6 @@ public:
     unsigned r = _rootPtr;
 
     if(_getNode(r).isFull()) { // Root is full, must be split
-      if(_nodes.size() == maxNodes) {
-        throw "Inserting into full BTree!";
-      }
-
       unsigned s = _newNode();
 
       _rootPtr = s;
@@ -1037,7 +1045,7 @@ public:
   }
 
   constexpr bool operator == (const BTree& other) const {
-    if(this->size() != other->size()) {
+    if(this->size() != other.size()) {
       return false;
     }
 
