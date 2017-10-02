@@ -10,6 +10,7 @@ Issues
 Incomplete
 ----------
 
+- Remove <cassert> from all code, throw everywhere
 - Rename Containers.h to Algorithms.h?
 - Various TODOs littered throughout the code
 
@@ -17,9 +18,6 @@ Incomplete
 Future
 ------
 
-- current constructors of UpperTriangular force you to specify the size of the
-  resulting matrix, but it could be inferred from the size of the array used for
-  construction (and checked for correctness!)
 - More vector operations?
 - Add more trig, inverse trig
 - UpperTriangularMatrix could be way more useful -> add functionality

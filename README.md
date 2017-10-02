@@ -13,11 +13,18 @@ programming.
 - Set: fixed-size minimal set, insertion or deletion changes type signature
 - DynamicSet: fixed-maximum-size managed set, insertion or deletion does not
   change type signature
-- Map: unfinished
+- DynamicMap: fixed-maximum-size associative container
+- BTree: A B-tree that stores merely values, not key-value pairs
+- UIntArray, DynamicUIntArray: Array-imitating containers that store short
+  sequences of the digits 0-9 as a singular number for the benefit of fast 
+  comparison operators
 - Vector: 3D cartesian coordinate system constexpr class with basic
   computations
 - UpperTriangularMatrix: stores data of an upper triangular matrix in linear
   array
+- Optional: To represent operations that may frequently return no result
+- Pair: Minimal replacement for std::pair, where some member functions are not 
+  yet marked constexpr
 
 
 ## Algorithms
@@ -34,7 +41,7 @@ programming.
 - TupleType: type-level computations on types in a tuple
 
   - forward types to template function
-  - map types to unary template function (also mapAllPairs)
+  - map types to unary template function (also mapAllPairs to binary template
+    function)
   - allOf
   - count types in tuple types
-

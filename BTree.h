@@ -127,6 +127,9 @@ private:
   //! Equality comparator instance
   EqualityComparator _eq;
 
+  //! Number of contained elements
+  unsigned _count = 0;
+
   //! 'Allocates' a new node and returns a pointer to it
   constexpr Node* _newNode() {
     if(_garbage.size() > 0) {
@@ -565,6 +568,8 @@ public:
     } else {
       _insertNonFull(r, key);
     }
+
+    ++_count;
   }
 
   /*!
@@ -593,6 +598,8 @@ public:
 
       _markNodeDeleted(emptyRoot);
     }
+    
+    --_count;
   }
 
   //! Dumps a graphViz representation of the B-Tree.
@@ -673,9 +680,260 @@ public:
     }
   }
 
+  constexpr unsigned size() const {
+    return _count;
+  }
+
+  using ValueIteratorBase = std::iterator<
+    std::bidirectional_iterator_tag, // iterator category
+    KeyType,                         // value_type
+    int,                             // difference_type
+    const KeyType* const,            // pointer
+    const KeyType&                   // reference
+  >;
+
+  class constIterator : public ValueIteratorBase {
+  public:
+    enum class InitializeAs : unsigned {
+      Begin = 0,
+      End = 1
+    };
+
+  private:
+    const Node* const _leftMostNode;
+    const Node* const _rightMostNode;
+    DynamicArray<const Node*, maxHeight + 1> _nodeStack;
+    DynamicArray<unsigned, maxHeight + 1> _indexStack;
+
+    constexpr unsigned _currentNodeIndexLimit() const {
+      // For leaves, the past-the-end position is the size of keys
+      if(_nodeStack.back()->isLeaf()) {
+        return _nodeStack.back()->keys.size();
+      }
+
+      /* For internal nodes, the past-the-end position is the size of keys
+       * plus the size of children + 1
+       */
+      return 2 *_nodeStack.back()->keys.size() + 1;
+    }
+
+  public:
+    constexpr constIterator(
+      const BTree& tree,
+      const InitializeAs& initDecision
+    ) : _leftMostNode(tree._smallestLeafNode(tree._rootPtr)),
+        _rightMostNode(tree._largestLeafNode(tree._rootPtr)),
+        _nodeStack {tree._rootPtr} 
+    {
+      if(!static_cast<bool>(static_cast<unsigned>(initDecision))) {
+        // 0 is Begin, so not-false is begin
+        
+        while(!_nodeStack.back()->isLeaf()) {
+          _indexStack.push_back(0);
+
+          _nodeStack.push_back(
+            _nodeStack.back()->children.front()
+          );
+        }
+
+        // At pos 0 of the leaf indices
+        _indexStack.push_back(0);
+      } else {
+        // End constIterator initialization
+
+        while(!_nodeStack.back()->isLeaf()) {
+          _indexStack.push_back(
+            2 * _nodeStack.back()->keys.size()
+          );
+
+          _nodeStack.push_back(
+            _nodeStack.back()->children.back()
+          );
+        }
+
+        // past-the-end of indices
+        _indexStack.push_back(_nodeStack.back()->keys.size());
+      }
+    }
+
+    constexpr constIterator(const constIterator& other)
+      : _leftMostNode(other._leftMostNode),
+        _rightMostNode(other._rightMostNode),
+        _nodeStack(other._nodeStack),
+        _indexStack(other._indexStack)
+    {}
+
+    constexpr constIterator& operator = (const constIterator& other) {
+      _leftMostNode = other._leftMostNode;
+      _rightMostNode = other._rightMostNode;
+      _nodeStack = other._nodeStack;
+      _indexStack = other._indexStack;
+    }
+
+    constexpr constIterator& operator ++ () {
+      auto indexLimit = _currentNodeIndexLimit();
+
+      if(_indexStack.back() == indexLimit) { // We are already the end constIterator
+        // Do nothing and return immediately
+        return *this;
+      }
+
+      // In case we are a leaf, increment and re-check
+      if(_nodeStack.back()->isLeaf()) {
+        ++_indexStack.back();
+
+        /* If we hit the index limit for the node and we're not the rightmost
+         * node, we have to go up the tree and to the right
+         */
+        if(
+          _indexStack.back() == indexLimit 
+          && _nodeStack.back() != _rightMostNode
+        ) { 
+          // Unwind the stack until we are at an incrementable position
+          do {
+            _indexStack.pop_back();
+            _nodeStack.pop_back();
+          } while(_indexStack.back() >= _currentNodeIndexLimit() - 1);
+
+          // Increment here, now we are placed on a key at an internal node
+          ++_indexStack.back();
+        }
+
+        return *this;
+      } 
+      
+      // We are on an internal node, incrementing puts us on a child
+      ++_indexStack.back();
+      _nodeStack.push_back(
+        _nodeStack.back()->children.at(
+          _indexStack.back() / 2 // children are at even indices
+        )
+      );
+
+      while(!_nodeStack.back()->isLeaf()) {
+        _indexStack.push_back(0);
+        _nodeStack.push_back(
+          _nodeStack.back()->children.front()
+        );
+      }
+
+      // Now we are a leaf, and placed on the first key
+      _indexStack.push_back(0);
+
+      return *this;
+    }
+
+    constexpr constIterator operator ++ (int) {
+      constIterator retval = *this;
+      ++(*this);
+      return retval;
+    }
+
+    constexpr constIterator& operator --() {
+      if(_indexStack.front() == 0) { // We are already the begin constIterator
+        return *this;
+      }
+
+      // In case we are a leaf, decrement and re-check
+      if(_nodeStack.back()->isLeaf()) {
+        --_indexStack.back();
+
+        /* If we hit zero and we're not the leftmost node, we have to go up the
+         * tree and to the left
+         */
+        if(
+          _indexStack.back() == 0
+          && _nodeStack.back() == _leftMostNode
+        ) {
+          // Unwind the stack until we are at a decrementable position
+          do {
+            _indexStack.pop_back();
+            _nodeStack.pop_back();
+          } while(_indexStack.back() == 0);
+
+          // Decrement here, then we are placed on a key at an internal node
+          --_indexStack.back();
+        }
+
+        return *this;
+      } 
+
+      // We are an internal node, decrementing puts us on a child
+      --_indexStack.back();
+      _nodeStack.push_back(
+        _nodeStack.back()->children.at(
+          _indexStack.back() / 2
+        )
+      );
+
+      while(!_nodeStack.back()->isLeaf()) {
+        _indexStack.push_back(
+          2 * _nodeStack.back()->keys.size() + 1
+        );
+        _nodeStack.push_back(
+          _nodeStack.back()->children.back()
+        );
+      }
+
+      _indexStack.push_back(
+         _nodeStack.back()->keys.size() - 1
+      );
+
+      return *this;
+    }
+
+    constexpr constIterator operator -- (int) {
+      constIterator retval = *this;
+      --(*this);
+      return retval;
+    }
+
+    constexpr bool operator == (const constIterator& other) const {
+      return (
+        _nodeStack == other._nodeStack
+        && _indexStack == other._indexStack
+        && _leftMostNode == other._leftMostNode
+        && _rightMostNode == other._rightMostNode
+      );
+    }
+
+    constexpr bool operator != (const constIterator& other) const {
+      return !(
+        *this == other
+      );
+    }
+
+    constexpr typename ValueIteratorBase::reference operator *() const {
+      if(_nodeStack.back()->isLeaf()) {
+        return _nodeStack.back()->keys.at(
+          _indexStack.back()
+        );
+      }
+
+      return _nodeStack.back()->keys.at(
+        _indexStack.back() / 2
+      );
+    }
+  };
+
+  using const_iterator = constIterator;
+
+  constexpr constIterator begin() const {
+    return constIterator(
+      *this, 
+      constIterator::InitializeAs::Begin
+    );
+  }
+
+  constexpr constIterator end() const {
+    return constIterator(
+      *this, 
+      constIterator::InitializeAs::End
+    );
+  }
+
   /* TODO
-   * - key iterators (in order traversal)
-   * - node iterators?
+   * - node constIterators?
    */
 };
 

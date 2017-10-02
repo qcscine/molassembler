@@ -1337,6 +1337,25 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       fullValidation(lastTreeGraph);
     }
 
+    auto matchingThroughIteration = TemplateMagic::zipMap(
+      tree,
+      inTree,
+      [&](const unsigned& treeValue, const unsigned& testValue) -> bool {
+        if(treeValue != testValue) {
+          std::cout << "Expected " << testValue << ", got " << treeValue << std::endl;
+          return false;
+        }
+
+        return true;
+      }
+    );
+
+    BOOST_REQUIRE_MESSAGE(
+      TemplateMagic::all_of(matchingThroughIteration),
+      "BTree through-iteration does not yield the same elements as expected!\n"
+        << tree.dumpGraphviz()
+    );
+
     // Fill'er up all the way
     while(inTree.size() != nKeys) {
       std::string lastTreeGraph = tree.dumpGraphviz();
