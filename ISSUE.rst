@@ -50,3 +50,12 @@ New observations:
   algorithmic improvements at low levels has marked impact on compile time too!
   Focussing on often-repeated code learned from run-time profiling allows me to
   compile in the results for symmetries of size 6 in 15 mins.
+
+Other possible optimizations
+- Add a Bloom filter to large sets for O(1) membership checking (requires a hash
+  function implementation)
+- Add a Bloom filter, contains O(log N) -> O(1)
+- Base DynamicSet not on a sorted list, but on a tree, insert O(N) -> O(log N)
+
+With a proper Set implementation:
+- Compiles all symmetry problems in 10 mins

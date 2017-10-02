@@ -425,15 +425,45 @@ constexpr unsigned maxRotations() {
   );
 }
 
+template<typename UnsignedType, size_t size>
+constexpr auto hashIndexList(const ConstexprMagic::Array<unsigned, size>& indexList) {
+  constexpr unsigned maxDigitsStoreable = ConstexprMagic::Math::floor(
+    ConstexprMagic::Math::log10(
+      static_cast<double>(
+        std::numeric_limits<UnsignedType>::max()
+      )
+    )
+  );
+
+  static_assert(
+    size <= maxDigitsStoreable,
+    "The unsigned type with which hashIndexList was instantiated cannot hold as"
+    " many digits as the array to hash holds:"
+  );
+
+  UnsignedType hash = 0;
+  unsigned tenPowers = 1;
+
+  for(unsigned i = 0; i < size; ++i) {
+    if(indexList.at(i) > 9) {
+      throw "hashIndexList: Index list contains numbers greater than 9!";
+    }
+    hash += tenPowers * indexList.at(i);
+    tenPowers *= 10;
+  }
+
+  return hash;
+}
+
 // Some helper types
 template<typename SymmetryClass>
 using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 
-using IndexListStorageType = ConstexprMagic::DynamicUIntArray<unsigned>;
+using IndexListStorageType = unsigned;
 
 template<typename SymmetryClass>
 using RotationsSetType = ConstexprMagic::DynamicSet<
-  IndexListStorageType,
+  IndicesList<SymmetryClass>,
   maxRotations<SymmetryClass>()
 >;
 
@@ -454,7 +484,7 @@ template<typename SymmetryClass>
 constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
   RotationsSetType<SymmetryClass> rotations;
 
-  rotations.insert(IndexListStorageType {indices});
+  rotations.insert(indices);
 
   ChainStructuresArrayType<SymmetryClass> chainStructures;
   chainStructures.push_back(indices);
@@ -471,11 +501,8 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
       chain.back()
     );
 
-    auto storageType = IndexListStorageType {generated};
-
-    auto rotationsLB = rotations.getLowerBound(storageType);
-    if(!rotations.lowerBoundMeansContains(rotationsLB, storageType)) {
-      rotations.insertAt(rotationsLB, storageType);
+    if(!rotations.contains(generated)) {
+      rotations.insert(generated);
       chainStructures.push_back(generated);
       chain.push_back(0);
     } else {
@@ -577,7 +604,7 @@ constexpr auto symmetryTransitionMappings() {
 
   do {
     auto mapped = symPosMapping(indexMapping);
-    auto storageVersion = IndexListStorageType {mapped};
+    auto storageVersion = hashIndexList<IndexListStorageType>(mapped);
 
     if(!encounteredMappings.contains(storageVersion)) {
       auto angularDistortion = calculateAngularDistortion(
@@ -632,9 +659,10 @@ constexpr auto symmetryTransitionMappings() {
       auto allRotations = generateAllRotations<SymmetryClassTo>(mapped);
 
       for(const auto& rotation : allRotations) {
-        auto lowerBound = encounteredMappings.getLowerBound(rotation);
-        if(!encounteredMappings.lowerBoundMeansContains(lowerBound, rotation)) {
-          encounteredMappings.insertAt(lowerBound, rotation);
+        auto hashed = hashIndexList<IndexListStorageType>(rotation);
+
+        if(!encounteredMappings.contains(hashed)) {
+          encounteredMappings.insert(hashed);
         }
       }
     }
@@ -691,7 +719,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
   do {
     auto mapped = symPosMapping(indexMapping);
 
-    if(!encounteredMappings.contains(IndexListStorageType {mapped})) {
+    if(!encounteredMappings.contains(hashIndexList<IndexListStorageType>(mapped))) {
       auto angularDistortion = calculateAngleDistortion<
         SymmetryClassTo,
         SymmetryClassFrom
@@ -732,9 +760,10 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
       auto allRotations = generateAllRotations<SymmetryClassFrom>(mapped);
 
       for(const auto& rotation : allRotations) {
-        auto lowerBound = encounteredMappings.getLowerBound(rotation);
-        if(!encounteredMappings.lowerBoundMeansContains(lowerBound, rotation)) {
-          encounteredMappings.insertAt(lowerBound, rotation);
+        auto hashed = hashIndexList<IndexListStorageType>(rotation);
+
+        if(!encounteredMappings.contains(hashed)) {
+          encounteredMappings.insert(hashed);
         }
       }
     }

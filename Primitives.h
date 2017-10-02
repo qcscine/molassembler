@@ -1061,23 +1061,6 @@ using allSymmetryDataTypes = std::tuple<
   SquareAntiPrismatic // 8
 >;
 
-using limitedSymmetryDataTypes = std::tuple<
-  Linear, // 2
-  Bent,
-  TrigonalPlanar, // 3
-  TrigonalPyramidal,
-  TShaped,
-  Tetrahedral, // 4
-  SquarePlanar,
-  Seesaw,
-  SquarePyramidal, // 5
-  TrigonalBiPyramidal,
-  PentagonalPlanar,
-  Octahedral, // 6
-  TrigonalPrismatic,
-  PentagonalPyramidal
->;
-
 } // namespace data
 
 } // namespace Symmetry

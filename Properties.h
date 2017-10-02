@@ -15,16 +15,7 @@ namespace Symmetry {
  * identical for all symmetry data types (when using the optional-extended
  * version to avoid instantiating symmetryTransitionMappings with non-adjacent
  * symmetries), we can generate an upper triangular matrix of function pointers!
- *
- * Is proven by the following static_assert (commented out for performance)
  */
-/*static_assert(
-  std::is_same<
-    decltype(calculateMapping<data::Linear, data::Bent>),
-    decltype(calculateMapping<data::Linear, data::TrigonalPlanar>)
-  >::value,
-  "pointer-to-function types are not identical"
-);*/
 
 template<typename SymmetrySource, typename SymmetryTarget>
 struct mappingCalculationFunctionPointerFunctor {
@@ -37,7 +28,7 @@ struct mappingCalculationFunctionPointerFunctor {
 constexpr auto allMappingFunctions
 = ConstexprMagic::makeUpperTriangularMatrix(
   ConstexprMagic::TupleType::mapAllPairs<
-    data::limitedSymmetryDataTypes,
+    data::allSymmetryDataTypes,
     mappingCalculationFunctionPointerFunctor
   >()
 );
@@ -63,7 +54,7 @@ constexpr double smallestAngle __attribute__ ((unused))
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
 constexpr auto allMappings = ConstexprMagic::makeUpperTriangularMatrix(
   ConstexprMagic::TupleType::mapAllPairs<
-    data::limitedSymmetryDataTypes,
+    data::allSymmetryDataTypes,
     mappingCalculationFunctor
   >()
 );
