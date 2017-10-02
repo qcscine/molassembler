@@ -38,7 +38,20 @@ private:
     }
   };
 
-  DynamicSet<PairType, N, OnlyFirstComparator> _items;
+  struct OnlyFirstEquality {
+    constexpr static auto _keyComparator = std::equal_to<KeyType>();
+
+    constexpr OnlyFirstEquality() {};
+
+    constexpr bool operator() (
+      const PairType& a,
+      const PairType& b
+    ) const {
+      return _keyComparator(a.first, b.first);
+    }
+  };
+
+  DynamicSet<PairType, N, OnlyFirstComparator, OnlyFirstEquality> _items;
 
 public:
   constexpr DynamicMap() {}

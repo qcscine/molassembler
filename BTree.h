@@ -92,7 +92,7 @@ private:
     static constexpr unsigned maxKeys = 2 * minDegree - 1;
 
     DynamicArray<KeyType, maxKeys> keys;
-    DynamicArray<Node*, maxKeys + 1> children;
+    DynamicArray<unsigned, maxKeys + 1> children;
 
     constexpr Node() {}
 
@@ -123,13 +123,13 @@ public:
 
 private:
   //! Pointer to root node
-  Node* _rootPtr; 
+  unsigned _rootPtr; 
 
   //! Array holding all tree nodes
   DynamicArray<Node, maxNodes> _nodes;
 
   //! Array holding pointers to any 'deleted' tree nodes
-  DynamicArray<Node*, maxNodes> _garbage;
+  DynamicArray<unsigned, maxNodes> _garbage;
 
   //! Less-than comparator instance
   LessThanComparator _lt;
@@ -141,15 +141,15 @@ private:
   unsigned _count = 0;
 
   //! 'Allocates' a new node and returns a pointer to it
-  constexpr Node* _newNode() {
+  constexpr unsigned _newNode() {
     if(_garbage.size() > 0) {
-      Node* nodePtr = _garbage.back();
+      unsigned newNodeIndex = _garbage.back();
       _garbage.pop_back();
 
       // Refresh the node
-      *nodePtr = Node {};
+      _nodes.at(newNodeIndex) = Node {};
 
-      return nodePtr;
+      return newNodeIndex;
     }
 
     if(_nodes.size() == maxNodes) {
@@ -158,31 +158,41 @@ private:
     }
 
     _nodes.push_back(Node {});
-    return &_nodes.back();
+    return _nodes.size() - 1;
   }
 
   //! Marks a node as 'deleted' for recycling in _newNode
-  constexpr void _markNodeDeleted(Node* nodePtr) {
-    _garbage.push_back(nodePtr);
+  constexpr void _markNodeDeleted(unsigned nodeIndex) {
+    _garbage.push_back(nodeIndex);
+  }
+
+  constexpr Node& _getNode(unsigned nodeIndex) {
+    return _nodes.at(nodeIndex);
+  }
+
+  constexpr const Node& _getNode(unsigned nodeIndex) const {
+    return _nodes.at(nodeIndex);
   }
 
   //! Recursive search for an element in a subtree rooted at node
-  constexpr Node* _search(Node* node, const KeyType& key) const {
+  constexpr Optional<unsigned> _search(unsigned nodeIndex, const KeyType& key) const {
+    auto node = _getNode(nodeIndex);
+
     auto keyLB = lowerBound<KeyType, LessThanComparator>(
-      node->keys.begin(),
-      node->keys.end(),
+      node.keys.begin(),
+      node.keys.end(),
       key,
       _lt
     );
 
     // In case the lower bound is actually our sought key, return this node
-    if(keyLB != node->keys.end() && _eq(*keyLB, key)) {
-      return node;
+    if(keyLB != node.keys.end() && _eq(*keyLB, key)) {
+      return nodeIndex;
     }
 
     // If we haven't found the key and this node is a leaf, search fails
-    if(node->isLeaf()) {
-      return nullptr;
+    if(node.isLeaf()) {
+      return {};
     }
 
     /* Otherwise descend to the child at the same index as the lower bound in
@@ -190,187 +200,198 @@ private:
      * == keys.size() + 1) and look there
      */
     return _search(
-      node->children.at(
-        keyLB - node->keys.begin()
+      node.children.at(
+        keyLB - node.keys.begin()
       ),
       key
     );
   }
 
-  constexpr void _splitChild(Node* node, const unsigned& i) {
+  constexpr void _splitChild(unsigned nodeIndex, const unsigned& i) {
     // i is the child index in node's keys being split since that node is full
+    auto& parent = _getNode(nodeIndex);
 
     // The node being split is afterwards considered the "left" node
-    Node* left = node->children.at(i);
+    auto& left = _getNode(
+      _getNode(nodeIndex).children.at(i)
+    );
 
     // Allocate a new "right" node
     if(_nodes.size() == maxNodes) {
       throw "Inserting into full BTree";
     }
 
-    auto right = _newNode();
+    auto rightIndex = _newNode();
+    auto& right = _getNode(rightIndex);
 
     // Move keys
-    right->keys = left->keys.splice(minDegree);
+    right.keys = left.keys.splice(minDegree);
 
     // In case left is not a leaf, move the children too
-    if(!left->isLeaf()) {
-      right->children = left->children.splice(minDegree);
+    if(!left.isLeaf()) {
+      right.children = left.children.splice(minDegree);
     }
 
     // Insert the original median key into the non-full node
-    node->keys.insertAt(
-      node->keys.begin() + i,
-      left->keys.back()
+    parent.keys.insertAt(
+      parent.keys.begin() + i,
+      left.keys.back()
     );
 
     // Have to remove it from left, too
-    left->keys.pop_back();
+    left.keys.pop_back();
 
     // And assign right as the child to the right of the inserted median key
-    node->children.insertAt(
-      node->children.begin() + i + 1,
-      right
+    parent.children.insertAt(
+      parent.children.begin() + i + 1,
+      rightIndex
     );
   }
 
-  constexpr void _insertNonFull(Node* node, const KeyType& key) {
-    if(node->isLeaf()) {
+  constexpr void _insertNonFull(unsigned nodeIndex, const KeyType& key) {
+    auto& node = _getNode(nodeIndex);
+
+    if(node.isLeaf()) {
       auto keyLB = lowerBound<KeyType, LessThanComparator>(
-        node->keys.begin(),
-        node->keys.end(),
+        node.keys.begin(),
+        node.keys.end(),
         key,
         _lt
       );
 
-      if(keyLB != node->keys.end() && _eq(*keyLB, key)) {
+      if(keyLB != node.keys.end() && _eq(*keyLB, key)) {
         throw "Inserting an already-existent key!";
       }
 
-      node->keys.insertAt(keyLB, key);
+      node.keys.insertAt(keyLB, key);
     } else {
       // Where to go?
       auto keyLB = lowerBound<KeyType, LessThanComparator>(
-        node->keys.begin(),
-        node->keys.end(),
+        node.keys.begin(),
+        node.keys.end(),
         key,
         _lt
       );
 
-      auto childPos = keyLB - node->keys.begin();
+      auto childPos = keyLB - node.keys.begin();
 
       // In case the purported child is full, split it!
-      if(node->children.at(childPos)->isFull()) {
-        _splitChild(node, childPos);
+      if(_getNode(node.children.at(childPos)).isFull()) {
+        _splitChild(nodeIndex, childPos);
 
         /* Keys has an additional key from the split, check if index has to be
          * incremented
          */
-        if(_lt(node->keys.at(childPos), key)) {
+        if(_lt(node.keys.at(childPos), key)) {
           ++childPos;
         }
       }
 
       // The target child cannot be full anymore, so we can call
-      _insertNonFull(node->children.at(childPos), key);
+      _insertNonFull(node.children.at(childPos), key);
     }
   }
 
-  constexpr bool _isRootNode(const Node* const node) const {
-    return node == _rootPtr;
+  constexpr bool _isRootNode(unsigned nodeIndex) const {
+    return nodeIndex == _rootPtr;
   }
 
   //! Returns the smallest leaf node in the sub-tree rooted at nodePtr
-  constexpr Node* _smallestLeafNode(Node* nodePtr) const {
-    while(!nodePtr->isLeaf()) {
-      nodePtr = nodePtr->children.front();
+  constexpr unsigned _smallestLeafNode(unsigned nodeIndex) const {
+    while(!_getNode(nodeIndex).isLeaf()) {
+      nodeIndex = _getNode(nodeIndex).children.front();
     }
 
-    return nodePtr;
+    return nodeIndex;
   }
 
   //! Returns the largest leaf node in the sub-tree rooted at nodePtr
-  constexpr Node* _largestLeafNode(Node* nodePtr) const {
-    while(!nodePtr->isLeaf()) {
-      nodePtr = nodePtr->children.back();
+  constexpr unsigned _largestLeafNode(unsigned nodeIndex) const {
+    while(!_getNode(nodeIndex).isLeaf()) {
+      nodeIndex = _getNode(nodeIndex).children.back();
     }
 
-    return nodePtr;
+    return nodeIndex;
   }
 
   //! Recursively deletes a key from a sub-tree rooted at node
-  constexpr void _delete(Node* node, const KeyType& key) {
+  constexpr void _delete(unsigned nodeIndex, const KeyType& key) {
+    auto& node = _getNode(nodeIndex);
+
     auto keyLB = lowerBound<KeyType, LessThanComparator>(
-      node->keys.begin(),
-      node->keys.end(),
+      node.keys.begin(),
+      node.keys.end(),
       key,
       _lt
     );
     
-    unsigned indexOfLB = keyLB - node->keys.begin();
+    unsigned indexOfLB = keyLB - node.keys.begin();
 
-    if(keyLB != node->keys.end() && _eq(*keyLB, key)) { 
+    if(keyLB != node.keys.end() && _eq(*keyLB, key)) { 
       // Key to remove is in this node's keys
-      if(node->isLeaf()) {
+      if(node.isLeaf()) {
         // Case 1
-        node->keys.removeAt(keyLB);
+        node.keys.removeAt(keyLB);
       } else {
         // Case 2
-        if(node->children.at(indexOfLB)->keys.size() >= minDegree) {
+        if(_getNode(node.children.at(indexOfLB)).keys.size() >= minDegree) {
           // Case 2a: Predecessor of key is maximum in subtree to the left
           
           // Predecessor key is largest key of largest leaf node in left subtree
-          KeyType predecessor = _largestLeafNode(
-            node->children.at(indexOfLB)
-          )->keys.back();
+          KeyType predecessor = _getNode(_largestLeafNode(
+            node.children.at(indexOfLB)
+          )).keys.back();
 
           // Replace the key to be deleted by its predecessor
           *keyLB = predecessor;
 
           // Recursively delete the predecessor
-          _delete(node->children.at(indexOfLB), predecessor);
-        } else if(node->children.at(indexOfLB + 1)->keys.size() >= minDegree) {
+          _delete(node.children.at(indexOfLB), predecessor);
+        } else if(_getNode(node.children.at(indexOfLB + 1)).keys.size() >= minDegree) {
           // Case 2b: Successor of key is minimum in subtree to the right
 
           // The successor key is the leftmost / smallest one
-          KeyType successor = _smallestLeafNode(
-            node->children.at(indexOfLB + 1)
-          )->keys.front();
+          KeyType successor = _getNode(_smallestLeafNode(
+            node.children.at(indexOfLB + 1)
+          )).keys.front();
 
           // Replace the key to be deleted by its successor
           *keyLB = successor;
 
           // Recursively delete the successor
-          _delete(node->children.at(indexOfLB + 1), successor);
+          _delete(node.children.at(indexOfLB + 1), successor);
         } else {
           /* Case 2c: Merge the key to delete, all of the right child into the
            * left child. The current node loses both k and the pointer to the
            * right child
            */
 
-          Node* leftChild = node->children.at(indexOfLB);
-          Node* rightChild = node->children.at(indexOfLB + 1);
+          unsigned leftChildIndex = node.children.at(indexOfLB);
+          auto& leftChild = _getNode(leftChildIndex);
+
+          unsigned rightChildIndex = node.children.at(indexOfLB + 1);
+          auto& rightChild = _getNode(rightChildIndex);
 
           // Add the key to the left child
-          leftChild->keys.push_back(key);
+          leftChild.keys.push_back(key);
 
           // Merge the right child into the left child
-          leftChild->keys.copyIn(rightChild->keys);
-          if(!leftChild->isLeaf()) {
-            leftChild->children.copyIn(rightChild->children);
+          leftChild.keys.copyIn(rightChild.keys);
+          if(!leftChild.isLeaf()) {
+            leftChild.children.copyIn(rightChild.children);
           }
 
           // Remove the key and child pointer to rightChild from left
-          node->keys.removeAt(keyLB);
-          node->children.removeAt(
-            node->children.begin() + indexOfLB + 1
+          node.keys.removeAt(keyLB);
+          node.children.removeAt(
+            node.children.begin() + indexOfLB + 1
           );
 
           // Delete the right child
-          _markNodeDeleted(rightChild);
+          _markNodeDeleted(rightChildIndex);
 
           // Delete the key recursively from the left child
-          _delete(leftChild, key);
+          _delete(leftChildIndex, key);
         }
       }
     } else { 
@@ -378,125 +399,130 @@ private:
        * descend in the tree. Need to ensure that any node we descend to has
        * at least minDegree keys!
        */
-      Node* targetChild = node->children.at(indexOfLB);
+      unsigned targetChildIndex = node.children.at(indexOfLB);
+      auto& targetChild = _getNode(targetChildIndex);
 
-      if(targetChild->keys.size() == minDegree - 1) {
+      if(targetChild.keys.size() == minDegree - 1) {
         // Case 3a Move some keys around from left or right siblings 
 
         if(
           indexOfLB != 0 
-          && node->children.at(indexOfLB - 1)->keys.size() >= minDegree
+          && _getNode(node.children.at(indexOfLB - 1)).keys.size() >= minDegree
         ) {
-          Node* leftSibling = node->children.at(indexOfLB - 1);
+          unsigned leftSiblingIndex = node.children.at(indexOfLB - 1);
+          auto& leftSibling = _getNode(leftSiblingIndex);
 
           // Move key at LB into targetChild
-          targetChild->keys.insertAt(
-            targetChild->keys.begin(),
-            node->keys.at(indexOfLB - 1)
+          targetChild.keys.insertAt(
+            targetChild.keys.begin(),
+            node.keys.at(indexOfLB - 1)
           );
 
           // Last key of left sibling replaces key at LB
-          node->keys.at(indexOfLB - 1) = leftSibling->keys.back();
-          leftSibling->keys.pop_back();
+          node.keys.at(indexOfLB - 1) = leftSibling.keys.back();
+          leftSibling.keys.pop_back();
 
           // In case it is not a leaf, we move the child pointer too
-          if(!targetChild->isLeaf()) {
-            targetChild->children.insertAt(
-              targetChild->children.begin(),
-              leftSibling->children.back()
+          if(!targetChild.isLeaf()) {
+            targetChild.children.insertAt(
+              targetChild.children.begin(),
+              leftSibling.children.back()
             );
 
-            leftSibling->children.pop_back();
+            leftSibling.children.pop_back();
           }
         } else if(
-          indexOfLB < node->keys.size()
-          && node->children.at(indexOfLB + 1)->keys.size() >= minDegree
+          indexOfLB < node.keys.size()
+          && _getNode(node.children.at(indexOfLB + 1)).keys.size() >= minDegree
         ) {
-          Node* rightSibling = node->children.at(indexOfLB + 1);
+          unsigned rightSiblingIndex = node.children.at(indexOfLB + 1);
+          auto& rightSibling = _getNode(rightSiblingIndex);
 
           // Move key at LB into targetChild
-          targetChild->keys.push_back(
-            node->keys.at(indexOfLB)
+          targetChild.keys.push_back(
+            node.keys.at(indexOfLB)
           );
 
           // First key of right sibling replaces key at LB
-          *keyLB = rightSibling->keys.front();
-          rightSibling->keys.removeAt(
-            rightSibling->keys.begin()
+          *keyLB = rightSibling.keys.front();
+          rightSibling.keys.removeAt(
+            rightSibling.keys.begin()
           );
 
           // In case the target is not a leaf, we move the child pointer too
-          if(!targetChild->isLeaf()) {
-            targetChild->children.push_back(
-              rightSibling->children.front()
+          if(!targetChild.isLeaf()) {
+            targetChild.children.push_back(
+              rightSibling.children.front()
             );
 
-            rightSibling->children.removeAt(
-              rightSibling->children.begin()
+            rightSibling.children.removeAt(
+              rightSibling.children.begin()
             );
           }
         } else {
           // Case 3b
 
           if(indexOfLB != 0) { // Merge with left sibling
-            Node* leftSibling = node->children.at(indexOfLB - 1);
+            unsigned leftSiblingIndex = node.children.at(indexOfLB - 1);
+            auto& leftSibling = _getNode(leftSiblingIndex);
 
             // Move key down to left sibling
-            leftSibling->keys.push_back(
-              node->keys.at(indexOfLB - 1)
+            leftSibling.keys.push_back(
+              node.keys.at(indexOfLB - 1)
             );
-            node->keys.removeAt(
-              node->keys.begin() + indexOfLB - 1
+            node.keys.removeAt(
+              node.keys.begin() + indexOfLB - 1
             );
 
             // Merge keys and children of targetChild into leftSibling
-            leftSibling->keys.copyIn(targetChild->keys);
-            if(!targetChild->isLeaf()) {
-              leftSibling->children.copyIn(targetChild->children);
+            leftSibling.keys.copyIn(targetChild.keys);
+            if(!targetChild.isLeaf()) {
+              leftSibling.children.copyIn(targetChild.children);
             }
 
-            node->children.removeAt(
-              node->children.begin() + indexOfLB
+            node.children.removeAt(
+              node.children.begin() + indexOfLB
             );
 
-            _markNodeDeleted(targetChild);
+            _markNodeDeleted(targetChildIndex);
 
             --indexOfLB;
           } else { // Merge with right sibling
-            Node* rightSibling = node->children.at(indexOfLB + 1);
+            unsigned rightSiblingIndex = node.children.at(indexOfLB + 1);
+            auto& rightSibling = _getNode(rightSiblingIndex);
 
-            targetChild->keys.push_back(
-              node->keys.at(indexOfLB)
+            targetChild.keys.push_back(
+              node.keys.at(indexOfLB)
             );
-            node->keys.removeAt(
-              node->keys.begin() + indexOfLB
+            node.keys.removeAt(
+              node.keys.begin() + indexOfLB
             );
 
-            targetChild->keys.copyIn(rightSibling->keys);
-            if(!targetChild->isLeaf()) {
-              targetChild->children.copyIn(rightSibling->children);
+            targetChild.keys.copyIn(rightSibling.keys);
+            if(!targetChild.isLeaf()) {
+              targetChild.children.copyIn(rightSibling.children);
             }
 
-            node->children.removeAt(
-              node->children.begin() + indexOfLB + 1
+            node.children.removeAt(
+              node.children.begin() + indexOfLB + 1
             );
 
-            _markNodeDeleted(rightSibling);
+            _markNodeDeleted(rightSiblingIndex);
           }
         }
       }
 
-      _delete(node->children.at(indexOfLB), key);
+      _delete(node.children.at(indexOfLB), key);
     }
   }
 
   //! Checks whether the node is a valid B-Tree node, and throws if anything is off
-  constexpr void _validate(const Node& node) const {
+  constexpr void _validate(unsigned nodeIndex) const {
     // The node should not be in the garbage
     auto foundIter = _garbage.begin();
 
     while(foundIter != _garbage.end()) {
-      if(*foundIter == &node) {
+      if(*foundIter == nodeIndex) {
         break;
       }
 
@@ -508,9 +534,11 @@ private:
       throw "An active node is marked as garbage!";
     }
 
+    auto& node = _getNode(nodeIndex);
+
     // A non-root node has min. t-1 keys
     if(
-      !_isRootNode(&node) 
+      !_isRootNode(nodeIndex) 
       && node.keys.size() < minDegree - 1
     ) {
       throw "Not every internal node has min. t-1 keys!";
@@ -518,7 +546,7 @@ private:
 
     // Every internal node with n keys has n+1 children
     if(
-      !_isRootNode(&node) 
+      !_isRootNode(nodeIndex) 
       && !node.isLeaf() 
       && node.keys.size() != node.children.size() - 1
     ) {
@@ -537,11 +565,11 @@ private:
       for(unsigned i = 1; i < node.children.size(); ++i) {
         if(
           !_lt(
-            node.children.at(i - 1)->keys.back(),
+            _getNode(node.children.at(i - 1)).keys.back(),
             node.keys.at(i - 1)
           ) || !_lt(
             node.keys.at(i - 1),
-            node.children.at(i)->keys.front()
+            _getNode(node.children.at(i)).keys.front()
           )
         ) {
           throw "Not all children's keys are bounded by the parent!";
@@ -551,7 +579,7 @@ private:
   }
 
 public:
-  constexpr BTree() : _rootPtr {nullptr} {
+  constexpr BTree() : _rootPtr {0} {
     _rootPtr = _newNode();
   }
 
@@ -562,18 +590,18 @@ public:
    * N the number of contained elements.
    */
   constexpr void insert(const KeyType& key) {
-    Node* r = _rootPtr;
+    unsigned r = _rootPtr;
 
-    if(r->isFull()) { // Root is full, must be split
+    if(_getNode(r).isFull()) { // Root is full, must be split
       if(_nodes.size() == maxNodes) {
         throw "Inserting into full BTree!";
       }
 
-      auto s = _newNode();
+      unsigned s = _newNode();
 
       _rootPtr = s;
 
-      s->children.push_back(r);
+      _getNode(s).children.push_back(r);
       _splitChild(s, 0);
       _insertNonFull(s, key);
     } else {
@@ -590,20 +618,21 @@ public:
    * number of contained elements.
    */
   constexpr bool contains(const KeyType& key) const {
-    Node* foundPtr = _search(_rootPtr, key);
-    return foundPtr != nullptr;
+    auto nodeIndexOptional = _search(_rootPtr, key);
+
+    return nodeIndexOptional.hasValue();
   }
 
   constexpr Optional<KeyType> getOption(const KeyType& key) const {
-    Node* foundPtr = _search(_rootPtr, key);
+    auto nodeIndexOptional = _search(_rootPtr, key);
 
-    if(foundPtr == nullptr) {
+    if(!nodeIndexOptional.hasValue()) {
       return {};
     }
 
     auto keyLB = lowerBound<KeyType, LessThanComparator>(
-      foundPtr->keys.begin(),
-      foundPtr->keys.end(),
+      _getNode(nodeIndexOptional.value()).keys.begin(),
+      _getNode(nodeIndexOptional.value()).keys.end(),
       key,
       _lt
     );
@@ -620,10 +649,10 @@ public:
     _delete(_rootPtr, key);
 
     // In case the root node is keyless but has a child, shrink the tree
-    if(_rootPtr->keys.size() == 0 && !_rootPtr->isLeaf()) {
-      Node* emptyRoot = _rootPtr;
+    if(_getNode(_rootPtr).keys.size() == 0 && !_getNode(_rootPtr).isLeaf()) {
+      unsigned emptyRoot = _rootPtr;
 
-      _rootPtr = _rootPtr->children.front();
+      _rootPtr = _getNode(_rootPtr).children.front();
 
       _markNodeDeleted(emptyRoot);
     }
@@ -639,25 +668,14 @@ public:
     graph << "digraph g {\n"
       << "  node [shape=record, height=.1]\n\n";
 
-    std::set<const Node*> garbagePtrs {_garbage.begin(), _garbage.end()};
-    std::map<const Node*, std::string> nodeNames;
-    unsigned nodeCounter = 0;
-
-    auto getName = [&](const Node* const nodePtr) -> std::string {
-      if(nodeNames.count(nodePtr) == 0) {
-        nodeNames[nodePtr] = "node"s + std::to_string(nodeCounter);
-        ++nodeCounter;
-      }
-      
-      return nodeNames.at(nodePtr);
-    };
+    std::set<unsigned> garbagePtrs {_garbage.begin(), _garbage.end()};
 
     for(auto it = _nodes.begin(); it != _nodes.end(); ++it) {
       const auto& node = *it;
 
       // Ensure the current node is not in the garbage
-      if(garbagePtrs.count(&node) == 0) {
-        graph << "  " << getName(&node) << "[label=\"";
+      if(garbagePtrs.count(it - _nodes.begin()) == 0) {
+        graph << "  node" << (it - _nodes.begin()) << "[label=\"";
 
         if(node.isLeaf()) {
           for(unsigned i = 0; i < node.keys.size(); ++i) {
@@ -681,8 +699,8 @@ public:
         // Write all connections
         if(!node.isLeaf()) {
           for(unsigned i = 0; i < node.children.size(); ++i) {
-            graph << "  \"" << getName(&node) << "\":f" << i 
-              << " -> \"" << getName(node.children.at(i)) << "\";\n";
+            graph << "  \"" << (it - _nodes.begin()) << "\":f" << i 
+              << " -> \"node" << node.children.at(i) << "\";\n";
           }
         }
       }
@@ -695,17 +713,18 @@ public:
 
   //! Validates the state of the tree by DFS traversal. Throws if anything is off.
   constexpr void validate() const {
-    DynamicArray<const Node*, maxNodes> stack {_rootPtr};
+    DynamicArray<unsigned, maxNodes> stack {_rootPtr};
 
     while(stack.size() > 0) {
-      const Node* nodePtr = stack.back();
+      unsigned nodeIndex = stack.back();
+      auto& node = _getNode(nodeIndex);
       stack.pop_back();
 
-      for(auto& childPtr : nodePtr->children) {
-        stack.push_back(childPtr);
+      for(auto& childIndex : node.children) {
+        stack.push_back(childIndex);
       }
 
-      _validate(*nodePtr);
+      _validate(nodeIndex);
     }
   }
 
@@ -730,39 +749,45 @@ public:
     };
 
   private:
-    const Node* const _leftMostNode;
-    const Node* const _rightMostNode;
-    DynamicArray<const Node*, maxHeight + 1> _nodeStack;
+    const BTree& _baseRef;
+    const unsigned _leftMostNode;
+    const unsigned _rightMostNode;
+    DynamicArray<unsigned, maxHeight + 1> _nodeStack;
     DynamicArray<unsigned, maxHeight + 1> _indexStack;
+
+    constexpr const Node& _getCurrentNode() const {
+      return _baseRef._getNode(_nodeStack.back());
+    }
 
     constexpr unsigned _currentNodeIndexLimit() const {
       // For leaves, the past-the-end position is the size of keys
-      if(_nodeStack.back()->isLeaf()) {
-        return _nodeStack.back()->keys.size();
+      if(_getCurrentNode().isLeaf()) {
+        return _getCurrentNode().keys.size();
       }
 
       /* For internal nodes, the past-the-end position is the size of keys
        * plus the size of children + 1
        */
-      return 2 *_nodeStack.back()->keys.size() + 1;
+      return 2 * _getCurrentNode().keys.size() + 1;
     }
 
   public:
     constexpr constIterator(
       const BTree& tree,
       const InitializeAs& initDecision
-    ) : _leftMostNode(tree._smallestLeafNode(tree._rootPtr)),
+    ) : _baseRef(tree),
+        _leftMostNode(tree._smallestLeafNode(tree._rootPtr)),
         _rightMostNode(tree._largestLeafNode(tree._rootPtr)),
         _nodeStack {tree._rootPtr} 
     {
       if(!static_cast<bool>(static_cast<unsigned>(initDecision))) {
         // 0 is Begin, so not-false is begin
         
-        while(!_nodeStack.back()->isLeaf()) {
+        while(!_getCurrentNode().isLeaf()) {
           _indexStack.push_back(0);
 
           _nodeStack.push_back(
-            _nodeStack.back()->children.front()
+            _getCurrentNode().children.front()
           );
         }
 
@@ -771,29 +796,34 @@ public:
       } else {
         // End constIterator initialization
 
-        while(!_nodeStack.back()->isLeaf()) {
+        while(!_getCurrentNode().isLeaf()) {
           _indexStack.push_back(
-            2 * _nodeStack.back()->keys.size()
+            2 * _getCurrentNode().keys.size()
           );
 
           _nodeStack.push_back(
-            _nodeStack.back()->children.back()
+            _getCurrentNode().children.back()
           );
         }
 
         // past-the-end of indices
-        _indexStack.push_back(_nodeStack.back()->keys.size());
+        _indexStack.push_back(_getCurrentNode().keys.size());
       }
     }
 
     constexpr constIterator(const constIterator& other)
-      : _leftMostNode(other._leftMostNode),
+      : _baseRef(other._baseRef),
+        _leftMostNode(other._leftMostNode),
         _rightMostNode(other._rightMostNode),
         _nodeStack(other._nodeStack),
         _indexStack(other._indexStack)
     {}
 
     constexpr constIterator& operator = (const constIterator& other) {
+      if(this->_baseRef != other._baseRef) {
+        throw "Assigning BTree constIterator to another base instance!";
+      }
+
       _leftMostNode = other._leftMostNode;
       _rightMostNode = other._rightMostNode;
       _nodeStack = other._nodeStack;
@@ -809,7 +839,7 @@ public:
       }
 
       // In case we are a leaf, increment and re-check
-      if(_nodeStack.back()->isLeaf()) {
+      if(_getCurrentNode().isLeaf()) {
         ++_indexStack.back();
 
         /* If we hit the index limit for the node and we're not the rightmost
@@ -835,15 +865,15 @@ public:
       // We are on an internal node, incrementing puts us on a child
       ++_indexStack.back();
       _nodeStack.push_back(
-        _nodeStack.back()->children.at(
+        _getCurrentNode().children.at(
           _indexStack.back() / 2 // children are at even indices
         )
       );
 
-      while(!_nodeStack.back()->isLeaf()) {
+      while(!_getCurrentNode().isLeaf()) {
         _indexStack.push_back(0);
         _nodeStack.push_back(
-          _nodeStack.back()->children.front()
+          _getCurrentNode().children.front()
         );
       }
 
@@ -866,7 +896,7 @@ public:
       }
 
       // In case we are a leaf, decrement and re-check
-      if(_nodeStack.back()->isLeaf()) {
+      if(_getCurrentNode().isLeaf()) {
         // If we are at zero, we have to find a decrementable position
         if(_indexStack.back() == 0) {
           // Unwind the stack until we can decrement
@@ -884,22 +914,22 @@ public:
       // We are an internal node, decrementing puts us on a child
       --_indexStack.back();
       _nodeStack.push_back(
-        _nodeStack.back()->children.at(
+        _getCurrentNode().children.at(
           _indexStack.back() / 2
         )
       );
 
-      while(!_nodeStack.back()->isLeaf()) {
+      while(!_getCurrentNode().isLeaf()) {
         _indexStack.push_back(
-          2 * _nodeStack.back()->keys.size()
+          2 * _getCurrentNode().keys.size()
         );
         _nodeStack.push_back(
-          _nodeStack.back()->children.back()
+          _getCurrentNode().children.back()
         );
       }
 
       _indexStack.push_back(
-         _nodeStack.back()->keys.size() - 1
+         _getCurrentNode().keys.size() - 1
       );
 
       return *this;
@@ -927,13 +957,13 @@ public:
     }
 
     constexpr typename ValueIteratorBase::reference operator *() const {
-      if(_nodeStack.back()->isLeaf()) {
-        return _nodeStack.back()->keys.at(
+      if(_getCurrentNode().isLeaf()) {
+        return _getCurrentNode().keys.at(
           _indexStack.back()
         );
       }
 
-      return _nodeStack.back()->keys.at(
+      return _getCurrentNode().keys.at(
         _indexStack.back() / 2
       );
     }

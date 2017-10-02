@@ -984,7 +984,7 @@ static_assert(
 
 namespace DynamicMapTests {
 
-/*constexpr ConstexprMagic::DynamicMap<unsigned, int, 20> generateMap() {
+constexpr ConstexprMagic::DynamicMap<unsigned, int, 20> generateMap() {
   ConstexprMagic::DynamicMap<unsigned, int, 20> myMap;
 
   myMap.insert(4, -2);
@@ -994,11 +994,11 @@ namespace DynamicMapTests {
   return myMap;
 }
 
-constexpr auto a = generateMap();*/
+constexpr auto a = generateMap();
 
-/*static_assert(a.at(4u) == -2, "Map does not find element with key 4");
+static_assert(a.at(4u) == -2, "Map does not find element with key 4");
 static_assert(a.at(1u) == 4, "Map does not find element with key 1");
-static_assert(a.at(3u) == 9, "Map does not find element with key 3");*/
+static_assert(a.at(3u) == 9, "Map does not find element with key 3");
 
 } // namespace DynamicMapTests
 
@@ -1110,7 +1110,7 @@ BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
 
 namespace BTreeStaticTests {
 
-/*constexpr ConstexprMagic::BTree<unsigned, 3, 20> generateTree() {
+constexpr ConstexprMagic::BTree<unsigned, 3, 20> generateTree() {
   ConstexprMagic::BTree<unsigned, 3, 20> tree;
 
   tree.insert(9);
@@ -1121,7 +1121,7 @@ namespace BTreeStaticTests {
   return tree;
 }
 
-constexpr auto testTree = generateTree();*/
+constexpr auto testTree = generateTree();
 
 static_assert(
   /* BTree of minimum order 3 has max 5 keys per node and max 6 children per node
