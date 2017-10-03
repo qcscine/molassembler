@@ -1,10 +1,9 @@
 #ifndef INCLUDE_CYCLIC_POLYGONS_LIB_H
 #define INCLUDE_CYCLIC_POLYGONS_LIB_H
 
+#include "boost/optional.hpp"
 #include "constexpr_magic/Math.h"
 #include "template_magic/Numeric.h"
-
-#include <boost/optional.hpp>
 
 #include <vector>
 

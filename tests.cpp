@@ -1,12 +1,14 @@
 #define BOOST_TEST_MODULE CyclicPolygonsTests
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
+
+#include "boost/test/unit_test.hpp"
+#include "template_magic/Containers.h"
+#include "template_magic/Random.h"
+#include "template_magic/VectorView.h"
 
 #include "CyclicPolygons.h"
+
 #include <iostream>
-#include "template_magic/VectorView.h"
-#include "template_magic/Random.h"
-#include "template_magic/Containers.h"
 
 BOOST_AUTO_TEST_CASE(symmetricPolynomialsCorrect) {
   std::vector<double> values {1, 2, 3, 4, 5};

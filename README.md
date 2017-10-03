@@ -24,6 +24,18 @@ With the circumradius of the cyclic polygons, internal angles are directly
 calculable.
 
 
+## Important notes on reliability
+
+For some reason that I cannot discern, using Svrtan's equation and some custom
+root-finding algorithm is not 100% reliable if the set of edge lengths have some
+significant deviation. A plot of this problem is contained in the files. The
+central angle deviation method is reliable for any valid composition of edge
+lengths and significantly cheaper as an added bonus.
+
+A description at length of the two methods and the reliability issue is
+presented in the documentation of CyclicPolygons.h.
+
+
 ## Incorporation into your project
 
 The library is available in two forms:
@@ -33,11 +45,28 @@ The library is available in two forms:
 - Header-only, minimal: Treats any cyclic polygon size. Implements only the
   central angle summation method.
 
+Full library dependencies:
+- boost: optional, test
+- TemplateMagic: Composability shorthands and numeric data handling
+- ConstexprMagic: Compile-time square-root
 
-## Reliability
+Minimal dependencies:
+- boost: for stable numerical root-finding
+- TemplateMagic: Composability shorthands and numeric data handling
 
-For some reason that I cannot discern, using Svrtan's equation and some custom
-root-finding algorithm is not 100% reliable if the set of edge lengths have some
-significant deviation. A plot of this problem is contained in the files. Using 
-the central angle deviation method is reliable for any valid composition of edge
-lengths.
+The code requires the C++14 standard to compile.
+
+
+## Compiling and running the tests
+
+```bash
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ make test
+```
+
+## Documentation
+
+You can build the documentation by running `doxygen` in the main directory.

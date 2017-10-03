@@ -1,12 +1,12 @@
-#ifndef INCLUDE_CYCLIC_POLYGONS_LIB_H
-#define INCLUDE_CYCLIC_POLYGONS_LIB_H
+#ifndef INCLUDE_CYCLIC_POLYGONS_LIB_MINIMAL_H
+#define INCLUDE_CYCLIC_POLYGONS_LIB_MINIMAL_H
 
-#include <boost/math/tools/roots.hpp>
+#include "boost/math/tools/roots.hpp"
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
 
-#include <vector>
 #include <cassert>
+#include <vector>
 
 /*! @file 
  *
