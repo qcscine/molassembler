@@ -10,6 +10,7 @@ Issues
 Incomplete
 ----------
 
+- TypeTests is incomplete, how to compile-time switch on type of the iterators?
 - Rename Containers.h to Algorithms.h?
 - Various TODOs littered throughout the code
 
@@ -17,7 +18,6 @@ Incomplete
 Future
 ------
 
-- Remove Set.h?
 - More vector operations?
 - Add more trig, inverse trig
 - UpperTriangularMatrix could be way more useful -> add functionality

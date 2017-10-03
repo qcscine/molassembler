@@ -8,7 +8,6 @@
 #include "Math.h"
 #include "Containers.h"
 #include "Array.h"
-#include "Set.h"
 #include "DynamicArray.h"
 #include "DynamicSet.h"
 #include "DynamicMap.h"
@@ -106,8 +105,6 @@ static_assert(
 );
 // std::array::operator == (const std::array& other) isn't constexpr in C++17
 */
-
-constexpr auto testSet = ConstexprMagic::makeSetFromSortedArray(oneMore);
 
 static_assert(
   std::is_same<

@@ -45,3 +45,29 @@ programming.
     function)
   - allOf
   - count types in tuple types
+
+
+## Integrating
+
+All code is header-only due to its heavily templated and constexpr nature. It
+requires the C++14 standard to compile. It has only the STL as dependency. 
+
+
+## Compiling and running tests
+
+The tests require the following libraries:
+- boost::test
+- TemplateMagic
+
+```bash
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ make test
+```
+
+
+## Documentation
+
+You can build the documentation by running `doxygen` in the main directory.
