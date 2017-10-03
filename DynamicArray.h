@@ -2,10 +2,8 @@
 #define INCLUDE_CONSTEXPR_MAGIC_DYNAMIC_ARRAY_H
 
 #include <cstddef>
-#include <initializer_list>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
 #include "Containers.h"
 
@@ -29,16 +27,6 @@ private:
     return {{
       _items[Inds]...
     }};
-  }
-
-  template<size_t ... Inds>
-  std::initializer_list<T> _makeInitializer(
-    const DynamicArray& other,
-    std::index_sequence<Inds...>
-  ) {
-    return {
-      other[Inds]...
-    };
   }
 
 public:
@@ -541,17 +529,6 @@ public:
     for(auto it = other.begin(); it != other.end(); ++it) {
       push_back(*it);
     }
-  }
-
-  std::vector<T> toSTL() const {
-    std::vector<T> data;
-    data.reserve(_count);
-
-    for(unsigned i = 0; i < _count; ++i) {
-      data.push_back(_items[i]);
-    }
-
-    return data;
   }
 };
 

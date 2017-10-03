@@ -2,7 +2,6 @@
 #define INCLUDE_CONSTEXPR_MAGIC_CONTAINERS_H
 
 #include <array>
-#include <cassert>
 #include <limits>
 
 /*! @file
@@ -686,11 +685,13 @@ template<
   const size_t& first,
   const size_t& last
 ) {
-  assert(
+  if(!(
     first < last
     && first < size
     && last <= size
-  );
+  )) {
+    throw "Call parameters to inPlaceNextPermutation make no sense!";
+  }
 
   size_t i = last - 1, j = 0, k = 0;
 
@@ -753,11 +754,13 @@ template<
   const size_t& first,
   const size_t& last
 ) {
-  assert(
+  if(!(
     first < last
     && first < size
     && last <= size
-  );
+  )) {
+    throw "Call parameters to inPlaceNextPermutation make no sense!";
+  }
   
   size_t i = last - 1, j = 0, k = 0;
 

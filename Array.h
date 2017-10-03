@@ -2,7 +2,6 @@
 #define INCLUDE_CONSTEXPR_MAGIC_ARRAY_H
 
 #include <cstddef>
-#include <initializer_list>
 #include <type_traits>
 #include <utility>
 
@@ -27,16 +26,6 @@ private:
     return {{
       _items[Inds]...
     }};
-  }
-
-  template<size_t ... Inds>
-  std::initializer_list<T> _makeInitializer(
-    const Array& other,
-    std::index_sequence<Inds...>
-  ) {
-    return {
-      other[Inds]...
-    };
   }
 
 public:

@@ -6,8 +6,6 @@
 #include "Optional.h"
 
 #include <sstream>
-#include <map>
-#include <set>
 
 /*! @file
  *
@@ -676,40 +674,44 @@ public:
     graph << "digraph g {\n"
       << "  node [shape=record, height=.1]\n\n";
 
-    std::set<unsigned> garbagePtrs {_garbage.begin(), _garbage.end()};
+    DynamicArray<unsigned, maxNodes> stack {_rootPtr};
 
-    for(auto it = _nodes.begin(); it != _nodes.end(); ++it) {
-      const auto& node = *it;
+    while(stack.size() > 0) {
+      unsigned nodeIndex = stack.back();
+      stack.pop_back();
 
-      // Ensure the current node is not in the garbage
-      if(garbagePtrs.count(it - _nodes.begin()) == 0) {
-        graph << "  node" << (it - _nodes.begin()) << "[label=\"";
+      for(auto& childIndex : _getNode(nodeIndex).children) {
+        stack.push_back(childIndex);
+      }
 
-        if(node.isLeaf()) {
-          for(unsigned i = 0; i < node.keys.size(); ++i) {
-            graph << node.keys.at(i);
-            if(i != node.keys.size() - 1) {
-              graph << "|";
-            }
-          }
-        } else {
-          graph << "<f0>|";
-          for(unsigned i = 1; i < node.children.size(); ++i) {
-            graph << node.keys.at(i-1) << "|<f" << i << ">";
-            if(i != node.children.size() - 1) {
-              graph << "|";
-            }
+      const auto& node = _getNode(nodeIndex);
+
+      graph << "  node" << nodeIndex << "[label=\"";
+
+      if(node.isLeaf()) {
+        for(unsigned i = 0; i < node.keys.size(); ++i) {
+          graph << node.keys.at(i);
+          if(i != node.keys.size() - 1) {
+            graph << "|";
           }
         }
-
-        graph << "\"];\n";
-
-        // Write all connections
-        if(!node.isLeaf()) {
-          for(unsigned i = 0; i < node.children.size(); ++i) {
-            graph << "  \"" << (it - _nodes.begin()) << "\":f" << i 
-              << " -> \"node" << node.children.at(i) << "\";\n";
+      } else {
+        graph << "<f0>|";
+        for(unsigned i = 1; i < node.children.size(); ++i) {
+          graph << node.keys.at(i-1) << "|<f" << i << ">";
+          if(i != node.children.size() - 1) {
+            graph << "|";
           }
+        }
+      }
+
+      graph << "\"];\n";
+
+      // Write all connections
+      if(!node.isLeaf()) {
+        for(unsigned i = 0; i < node.children.size(); ++i) {
+          graph << "  \"node" << nodeIndex << "\":f" << i 
+            << " -> \"node" << node.children.at(i) << "\";\n";
         }
       }
     }

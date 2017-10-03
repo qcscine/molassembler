@@ -10,7 +10,6 @@ Issues
 Incomplete
 ----------
 
-- Remove <cassert> from all code, throw everywhere
 - Rename Containers.h to Algorithms.h?
 - Various TODOs littered throughout the code
 
@@ -18,6 +17,7 @@ Incomplete
 Future
 ------
 
+- Remove Set.h?
 - More vector operations?
 - Add more trig, inverse trig
 - UpperTriangularMatrix could be way more useful -> add functionality

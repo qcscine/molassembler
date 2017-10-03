@@ -11,17 +11,6 @@
 
 namespace ConstexprMagic {
 
-namespace detail {
-
-template<typename T>
-struct defaultComparator {
-  constexpr bool operator() (const T& a, const T& b) {
-    return a < b;
-  }
-};
-
-} // namespace detail
-
 template<
   typename T,
   class Comparator = std::less<T>,

@@ -52,7 +52,7 @@ constexpr std::enable_if_t<
   const T& relativeTolerance,
   const T& absoluteTolerance
 ) {
-  assert(
+  if(!(
     a != std::numeric_limits<T>::infinity()
     && a != - std::numeric_limits<T>::infinity()
     && b != std::numeric_limits<T>::infinity()
@@ -61,8 +61,13 @@ constexpr std::enable_if_t<
     && b != std::numeric_limits<T>::quiet_NaN()
     && a != std::numeric_limits<T>::signaling_NaN()
     && b != std::numeric_limits<T>::signaling_NaN()
-  );
-  assert(relativeTolerance >= 0 && absoluteTolerance >= 0);
+  )) {
+    throw "isCloseRelativeOrAsbolute cannot handle infinities or NaNs!";
+  }
+  if(!(relativeTolerance >= 0 && absoluteTolerance >= 0)) {
+    throw "isCloseRelativeOrAbsolute: One of either tolerances "
+      "needs to be above zero!";
+  }
 
   return(
     Math::abs(Math::abs(a) - Math::abs(b))

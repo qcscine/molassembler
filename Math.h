@@ -4,7 +4,6 @@
 #include <cmath>
 #include <limits>
 #include <type_traits>
-#include <cassert>
 
 /*! @file
  *
@@ -158,7 +157,7 @@ constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelativeOrAbsolute(
   const T& relativeTolerance,
   const T& absoluteTolerance
 ) {
-  assert(
+  if(!(
     a != std::numeric_limits<T>::infinity()
     && a != - std::numeric_limits<T>::infinity()
     && b != std::numeric_limits<T>::infinity()
@@ -167,8 +166,13 @@ constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelativeOrAbsolute(
     && b != std::numeric_limits<T>::quiet_NaN()
     && a != std::numeric_limits<T>::signaling_NaN()
     && b != std::numeric_limits<T>::signaling_NaN()
-  );
-  assert(relativeTolerance >= 0 && absoluteTolerance >= 0);
+  )) {
+    throw "isCloseRelativeOrAsbolute cannot handle infinities or NaNs!";
+  }
+  if(!(relativeTolerance >= 0 && absoluteTolerance >= 0)) {
+    throw "isCloseRelativeOrAbsolute: One of either tolerances "
+      "needs to be above zero!";
+  }
 
   return(
     abs(abs(a) - abs(b))
@@ -200,7 +204,9 @@ constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T& value) {
  */
 template<typename T>
 constexpr T lnSeries(const T& x) {
-  assert(x > 0);
+  if(x <= 0) {
+    throw "Ln domain error: x <= 0";
+  }
 
   const T epsilon = std::numeric_limits<T>::epsilon();
 
@@ -240,10 +246,9 @@ constexpr T lnSeries(const T& x) {
  */
 template<typename T>
 constexpr T asinApprox(const T& x) noexcept {
-  assert(
-    0 < x && x < 1 
-    && "Asin approximation domain error: only applicable for 0 < x < 1!"
-  );
+  if(!(0 < x && x < 1)) {
+    throw "Asin approximation domain error: only applicable for 0 < x < 1!";
+  }
 
   const T x2 = x * x;
   const T x4 = x2 * x2;
@@ -426,10 +431,9 @@ constexpr T pow(const T& base, const int& exponent) noexcept {
  */
 template<typename T>
 constexpr T sqrt(const T& x) noexcept {
-  assert(
-    x >= 0 
-    && "Square-root domain error: Only real if x >= 0!"
-  );
+  if(x < 0) {
+    throw "Square-root domain error: Only real if x >= 0!";
+  }
 
   const T epsilon = std::numeric_limits<T>::epsilon();
   T value = 1;
@@ -448,7 +452,9 @@ constexpr T sqrt(const T& x) noexcept {
 
 template<typename T>
 constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x) noexcept {
-  assert(x > 0);
+  if(x <= 0) {
+    throw "Factorial domain error!";
+  }
 
   if(x == 1) {
     return 1;
@@ -478,7 +484,9 @@ constexpr T ln(const T& x) {
 
 template<typename T>
 constexpr T log10(const T& x) {
-  assert(x > 0);
+  if(x <= 0) {
+    throw "Log10 domain error!";
+  }
 
   /* ln(z) = ln(10) * log10(z)
    * -> log10(z) = ln(z) / ln(10)
@@ -488,7 +496,9 @@ constexpr T log10(const T& x) {
 
 template<typename T>
 constexpr T log(const T& x, const T& base) {
-  assert(x > 0);
+  if(x <= 0) {
+    throw "Log domain error!";
+  }
 
   /* ln(z) = ln(b) * log_b(z)
    * -> log_b(z) = ln(z) / ln(b)
@@ -503,10 +513,9 @@ constexpr T log(const T& x, const T& base) {
  */
 template<typename T>
 constexpr T asin(const T& x) noexcept {
-  assert(
-    -1 < x && x < 1
-    && "Inverse sine domain error: only real if -1 < x < 1!"
-  );
+  if(!(-1 < x && x < 1)) {
+    throw "Inverse sine domain error: only real if -1 < x < 1!";
+  }
 
   if(ConstexprMagic::Math::abs(x) > 0.92) {
     return (x > 0) ? detail::asinApprox(x) : -detail::asinApprox(-x);

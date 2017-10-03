@@ -1,9 +1,6 @@
 #ifndef INCLUDE_CONSTEXPR_MAGIC_DYNAMIC_SET_H
 #define INCLUDE_CONSTEXPR_MAGIC_DYNAMIC_SET_H
 
-#include <set>
-
-#include "DynamicArray.h"
 #include "BTree.h"
 
 /*! @file
@@ -58,11 +55,14 @@ public:
     _tree.clear();
   }
 
-  constexpr typename TreeType::constIterator begin() const {
+  using constIterator = typename TreeType::constIterator;
+  using const_iterator = constIterator;
+
+  constexpr constIterator begin() const {
     return _tree.begin();
   }
 
-  constexpr typename TreeType::constIterator end() const {
+  constexpr constIterator end() const {
     return _tree.end();
   }
 
@@ -86,46 +86,6 @@ public:
 
   constexpr bool operator > (const DynamicSet& other) const {
     return other._tree < _tree;
-  }
-
-  /*! 
-   * Directly maps the container to a STL set without modifying the contained
-   * elements
-   */
-  std::set<T> toSTL() const {
-    std::set<T> returnSet;
-
-    for(const auto& element : *this) {
-      returnSet.insert(element);
-    }
-
-    return returnSet;
-  }
-
-  /*! 
-   * Maps the contained elements to an STL set with a (possibly modifying) 
-   * mapping function. This allows, e.g. a DynamicSet of DynamicArrays to be
-   * directly mapped to an STL set of vectors.
-   */
-  template<typename MapFunction> 
-  std::set<
-    traits::functionReturnType<MapFunction, T>
-  > mapToSTL(
-    MapFunction&& function
-  ) const {
-    std::set<
-      traits::functionReturnType<MapFunction, T>
-    > returnSet;
-
-    for(const auto& element : *this) {
-      auto insertResultPair = returnSet.insert(
-        function(element)
-      );
-
-      assert(insertResultPair.second);
-    }
-
-    return returnSet;
   }
 };
 

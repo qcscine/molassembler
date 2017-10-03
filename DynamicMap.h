@@ -51,7 +51,9 @@ private:
     }
   };
 
-  DynamicSet<PairType, N, OnlyFirstComparator, OnlyFirstEquality> _items;
+  using SetType = DynamicSet<PairType, N, OnlyFirstComparator, OnlyFirstEquality>;
+
+  SetType _items;
 
 public:
   constexpr DynamicMap() {}
@@ -125,6 +127,35 @@ public:
 
   constexpr unsigned size() const {
     return _items.size();
+  }
+
+  using constIterator = typename SetType::constIterator;
+  using const_iterator = constIterator;
+
+  constexpr constIterator begin() const {
+    return _items.begin();
+  }
+
+  constexpr constIterator end() const {
+    return _items.end();
+  }
+
+  constexpr bool operator == (const DynamicMap& other) const {
+    return _items == other._items;
+  }
+
+  constexpr bool operator != (const DynamicMap& other) const {
+    return !(
+      *this == other
+    );
+  }
+
+  constexpr bool operator < (const DynamicMap& other) const {
+    return _items < other._items;
+  }
+
+  constexpr bool operator > (const DynamicMap& other) const {
+    return other._items < _items;
   }
 };
 
