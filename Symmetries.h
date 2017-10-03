@@ -1,16 +1,13 @@
 #ifndef LIB_INCLUDE_SYMMETRIES_H
 #define LIB_INCLUDE_SYMMETRIES_H
 
-#include "Eigen/Core"
 #include "boost/optional.hpp"
-
 #include "constexpr_magic/TupleType.h"
+#include "Eigen/Core"
 #include "template_magic/Containers.h"
 
 #include "Primitives.h"
 
-#include <map>
-#include <vector>
 #include <functional>
 #include <algorithm>
 

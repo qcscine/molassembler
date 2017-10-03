@@ -9,7 +9,7 @@
  * angles resulting from a predefined set of positions is generated and that
  * symmetry's angle function turns into what is essentially a lookup table.
  */
-#define USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
+//#define USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
 
 /* If USE_CONSTEXPR_TRANSITION_MAPPINGS is defined, a data structure containing
  * the best index mappings between symmetries is generated at compile-time.
@@ -52,4 +52,4 @@
  * compiling the functions, but there is no such cost. The cost comes from
  * executing the constexpr functions *at compile time* instead of at runtime.
  */
-#define USE_CONSTEXPR_TRANSITION_MAPPINGS
+//#define USE_CONSTEXPR_TRANSITION_MAPPINGS

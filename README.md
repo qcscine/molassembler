@@ -54,16 +54,53 @@ correctness / consistency.
   transition between symmetries of same size are sought.
 
 
+## Compile-time options
+
+The behavior of the library can be changed in slight ways using compile-time
+options defined in CompileTimeOptions.h. You can toggle:
+
+- The angle function of the square antiprismatic symmetry can be pre-calculated
+  as a look-up table from reference coordinates instead of from an idealized 
+  representation (Default on)
+- The pre-calculation of least-distortion mappings between symmetries when 
+  ligands are added or removed. This can cost several (5-10) minutes at
+  compile-time, but then the results are available at O(1) at run-time.
+  (Default on)
+- An experimental reduced set of tetrahedra for each symmetry (Default off)
+
+
 ## Integrating
 
-Is minimally dependent on boost and Eigen. If you choose to use constexpr
-precalculated angles for the square antiprismatic symmetry for better angle
-function correctness, the library is also dependent on ConstexprMagic.
+This library requires the C++14 standard.
+
+Library dependencies:
+
+- STL
+- boost: optional type, testing
+- Eigen: vector arithmetic
+- ConstexprMagic: constexpr algorithms and data structures
+- TemplateMagic: Cache & composability improvement shorthands
 
 
 ## Compilation
 
-Note that gcc versions 6.3.3. and 7.1.0 are unable to compile the tests. Memory
-use becomes excessive and leads to compiler crash. This is likely to do with
-some constexpr algorithm memory allocation issue. Clang compiles the tests just
-fine with minimal memory use and time usage.
+Note that gcc versions 6.3.3. and 7.2.0 are unable to compile the library and
+tests due to constexpr compiler bugs and excessive memory use (probably due to
+unlimited memoization). Clang 4.0.0 compiles the library just fine with minimal
+memory use and roughly 10 minutes of CPU time.
+
+To build, run these commands starting at the main directory.
+
+```bash
+$ mkdir build
+$ cd build
+$ export CC = path/to/clang
+$ export CXX = path/to/clang++
+$ cmake .. -DCMAKE_BUILD_TYPE=Release
+$ make
+$ make test
+```
+
+## Documentation
+
+You can build the documentation by running `doxygen` in the main directory.

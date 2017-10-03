@@ -1,17 +1,18 @@
 #define BOOST_TEST_MODULE SymmetryTests
 #define BOOST_TEST_DYN_LINK
+
 #include <boost/test/unit_test.hpp>
+#include "constexpr_magic/ToSTL.h"
+#include <Eigen/Geometry>
+#include "template_magic/Containers.h"
+#include "template_magic/Numeric.h"
 
 #include "Symmetries.h"
+#include "Properties.h"
+
 #include <set>
 #include <iostream>
 #include <numeric>
-#include <Eigen/Geometry>
-
-#include "Properties.h"
-
-#include "template_magic/Containers.h"
-#include "template_magic/Numeric.h"
 
 using namespace Symmetry;
 
@@ -446,8 +447,8 @@ std::enable_if_t<
   }
 
   // Do a full set comparison
-
-  auto convertedMappings = constexprMappings.mappings.mapToSTL(
+  auto convertedMappings = TemplateMagic::map(
+    ConstexprMagic::toSTL(constexprMappings.mappings),
     [&](const auto& indexList) -> std::vector<unsigned> {
       return {
         indexList.begin(),
@@ -609,7 +610,8 @@ struct RotationGenerationTest {
       detail::iota<unsigned>(SymmetryClass::size)
     );
 
-    auto convertedRotations = constexprRotations.mapToSTL(
+    auto convertedRotations = TemplateMagic::map(
+      ConstexprMagic::toSTL(constexprRotations),
       [&](const auto& indexList) -> std::vector<unsigned> {
         return {
           indexList.begin(),

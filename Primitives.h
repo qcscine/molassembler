@@ -1,7 +1,6 @@
 #ifndef INCLUDE_SYMMETRY_INFORMATION_PRIMITIVES_H
 #define INCLUDE_SYMMETRY_INFORMATION_PRIMITIVES_H
 
-#include "constexpr_magic/Math.h"
 #include "constexpr_magic/Vector.h"
 
 #include "CompileTimeOptions.h"
@@ -9,9 +8,6 @@
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
 #include "AngleLookup.h"
 #endif
-
-#include <array>
-#include <limits>
 
 /*! @file
  *

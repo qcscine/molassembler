@@ -1,5 +1,4 @@
 # How to make this into a library?
-# Dynamic / static? It would be shit if this add-on to Delib would supercede it
 
 # oldest tested version of cmake used (too lazy to figure out newest compatible
 # cmake version)
