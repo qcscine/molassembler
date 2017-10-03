@@ -6,6 +6,7 @@
 #include <numeric>
 #include <functional>
 #include <cmath>
+#include <cassert>
 
 /*! @file
  * 

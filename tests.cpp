@@ -1,23 +1,21 @@
 #define BOOST_TEST_MODULE ConnectivityManagerTests
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
+
 #include <boost/test/results_collector.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "BTree.h"
-#include "Enumerate.h"
-#include "Random.h"
 #include "Containers.h"
-#include "Numeric.h"
+#include "Enumerate.h"
 #include "MemberFetcher.h"
+#include "Numeric.h"
+#include "Random.h"
 #include "VectorView.h"
 
-// TEMPORARY
-#include <iostream>
-
-#include <vector>
-#include <cmath>
-
 #include <chrono>
+#include <cmath>
+#include <iostream>
+#include <vector>
 
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
@@ -625,7 +623,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     }
 
     // Empty the tree
-    while(inTree.size() > 0) {
+    while(!inTree.empty()) {
       std::string lastTreeGraph = tree.dumpGraphviz();
 
       removeElement(lastTreeGraph);

@@ -1,10 +1,7 @@
 #ifndef INCLUDE_TEMPLATE_MAGIC_VECTOR_VIEW_H
 #define INCLUDE_TEMPLATE_MAGIC_VECTOR_VIEW_H
 
-#include <vector>
-#include <functional>
 #include <algorithm>
-#include <numeric>
 
 #include "Numeric.h"
 
