@@ -1,20 +1,26 @@
 #include "Properties.h"
+#include "constexpr_magic/ToSTL.h"
 
 namespace Symmetry {
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-// A functor for actually evaluating the function pointers
+/* Since the pointer-to-function of the instantiated function template is
+ * identical for all symmetry data types (when using the optional-extended
+ * version to avoid instantiating symmetryTransitionMappings with non-adjacent
+ * symmetries), we can generate an upper triangular matrix of function pointers!
+ */
+
 template<typename SymmetrySource, typename SymmetryTarget>
 struct mappingCalculationFunctor {
-  static constexpr ConstexprMagic::Optional<constexprProperties::MappingsReturnType> value() {
-    // Return the evaluated result
-    return allMappingFunctions.at(
-      static_cast<unsigned>(SymmetrySource::name),
-      static_cast<unsigned>(SymmetryTarget::name)
-    )();
+  static constexpr auto value() {
+    // Return merely the function, not the evaluated result
+    return constexprProperties::calculateMapping<SymmetrySource, SymmetryTarget>();
   }
 };
 
+/* Make function pointers to symmetryMapping for all possible combinations of
+ * symmetry types
+ */
 constexpr auto precalculatedMappings = ConstexprMagic::makeUpperTriangularMatrix(
   ConstexprMagic::TupleType::mapAllPairs<
     data::allSymmetryDataTypes,
@@ -30,14 +36,20 @@ const ConstexprMagic::UpperTriangularMatrix<
 
 TemplateMagic::MinimalCache<
   std::pair<Symmetry::Name, Symmetry::Name>,
-  ConstexprMagic::Optional<constexprProperties::MappingsReturnType>
+  properties::SymmetryTransitionGroup
 > mappingsCache;
 
-const ConstexprMagic::Optional<constexprProperties::MappingsReturnType>& getMapping(
+const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   const Symmetry::Name& a,
   const Symmetry::Name& b
 ) {
   assert(a != b);
+
+  auto indexPair = std::make_pair(a, b);
+
+  if(mappingsCache.has(indexPair)) {
+    return mappingsCache.get(indexPair);
+  }
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
   /* Is the desired mapping in the generated list of mappings?
@@ -53,32 +65,48 @@ const ConstexprMagic::Optional<constexprProperties::MappingsReturnType>& getMapp
       static_cast<unsigned>(b)
     )
   ) {
-    return allMappings.at(
+    auto& constexprOption = allMappings.at(
       static_cast<unsigned>(a),
       static_cast<unsigned>(b)
     );
+
+    if(constexprOption.hasValue()) {
+      const auto& constexprMappings = constexprOption.value();
+
+      properties::SymmetryTransitionGroup STLResult;
+      STLResult.indexMappings = TemplateMagic::map(
+        ConstexprMagic::toSTL(constexprMappings.mappings),
+        [&](const auto& indexList) -> std::vector<unsigned> {
+          return {
+            indexList.begin(),
+            indexList.end()
+          };
+        }
+      );
+
+      STLResult.angularDistortion = constexprMappings.angularDistortion;
+      STLResult.chiralDistortion = constexprMappings.chiralDistortion;
+
+      mappingsCache.add(
+        indexPair,
+        STLResult
+      );
+    }
+  }
+#else
+  if(!mappingsCache.has(indexPair)
+    && (std::set<int> {0, 1}).count(
+      static_cast<int>(Symmetry::size(a))
+      - static_cast<int>(Symmetry::size(b))
+    ) == 1
+  ) {
+    mappingsCache.add(
+      indexPair,
+      properties::symmetryTransitionMappings(a, b)
+    );
   }
 #endif
-
-  /* Okay, so the mapping is definitely not in the set generated at
-   * compile-time, so we have to fetch it from the cache or generate it
-   */
-  auto indexPair = std::make_pair(a, b);
-
-  if(mappingsCache.has(indexPair)) {
-    return mappingsCache.get(indexPair);
-  }
-
-  // NOTE: Compiling this expression below leads to the severe cost
-  mappingsCache.add(
-    indexPair,
-    allMappingFunctions.at(
-      static_cast<unsigned>(a),
-      static_cast<unsigned>(b)
-    )()
-  );
-
-  return mappingsCache.get(indexPair);
+  return mappingsCache.getOption(indexPair);
 }
 
 } // namespace Symmetry

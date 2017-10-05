@@ -11,31 +11,6 @@
 
 namespace Symmetry {
 
-/* Since the pointer-to-function of the instantiated function template is
- * identical for all symmetry data types (when using the optional-extended
- * version to avoid instantiating symmetryTransitionMappings with non-adjacent
- * symmetries), we can generate an upper triangular matrix of function pointers!
- */
-
-template<typename SymmetrySource, typename SymmetryTarget>
-struct mappingCalculationFunctionPointerFunctor {
-  static constexpr auto value() {
-    // Return merely the function, not the evaluated result
-    return constexprProperties::calculateMapping<SymmetrySource, SymmetryTarget>;
-  }
-};
-
-/* Make function pointers to symmetryMapping for all possible combinations of
- * symmetry types
- */
-constexpr auto allMappingFunctions __attribute__ ((unused)) 
-= ConstexprMagic::makeUpperTriangularMatrix(
-  ConstexprMagic::TupleType::mapAllPairs<
-    data::allSymmetryDataTypes,
-    mappingCalculationFunctionPointerFunctor
-  >()
-);
-
 /* Derived stored constexpr data */
 //! The smallest angle between ligands in any symmetry
 constexpr double smallestAngle __attribute__ ((unused)) 
@@ -45,6 +20,7 @@ constexpr double smallestAngle __attribute__ ((unused))
 >();
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
+//! All 0, +1 symmetry transition mappings, if calculated at compile-time
 extern const ConstexprMagic::UpperTriangularMatrix<
   ConstexprMagic::Optional<constexprProperties::MappingsReturnType>,
   nSymmetries * (nSymmetries - 1) / 2
@@ -55,11 +31,11 @@ extern const ConstexprMagic::UpperTriangularMatrix<
 //! Cache for on-the-fly generated mappings
 extern TemplateMagic::MinimalCache<
   std::pair<Symmetry::Name, Symmetry::Name>,
-  ConstexprMagic::Optional<constexprProperties::MappingsReturnType>
+  properties::SymmetryTransitionGroup
 > mappingsCache;
 
 //! Dynamic access to constexpr mappings
-const ConstexprMagic::Optional<constexprProperties::MappingsReturnType>& getMapping(
+const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   const Symmetry::Name& a,
   const Symmetry::Name& b
 );
