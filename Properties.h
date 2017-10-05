@@ -25,7 +25,10 @@ struct mappingCalculationFunctionPointerFunctor {
   }
 };
 
-constexpr auto allMappingFunctions
+/* Make function pointers to symmetryMapping for all possible combinations of
+ * symmetry types
+ */
+constexpr auto allMappingFunctions __attribute__ ((unused)) 
 = ConstexprMagic::makeUpperTriangularMatrix(
   ConstexprMagic::TupleType::mapAllPairs<
     data::allSymmetryDataTypes,
@@ -33,18 +36,8 @@ constexpr auto allMappingFunctions
   >()
 );
 
-template<typename SymmetrySource, typename SymmetryTarget>
-struct mappingCalculationFunctor {
-  static constexpr ConstexprMagic::Optional<constexprProperties::MappingsReturnType> value() {
-    // Return the evaluated result
-    return allMappingFunctions.at(
-      static_cast<unsigned>(SymmetrySource::name),
-      static_cast<unsigned>(SymmetryTarget::name)
-    )();
-  }
-};
-
 /* Derived stored constexpr data */
+//! The smallest angle between ligands in any symmetry
 constexpr double smallestAngle __attribute__ ((unused)) 
 = ConstexprMagic::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
@@ -52,12 +45,10 @@ constexpr double smallestAngle __attribute__ ((unused))
 >();
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-constexpr auto allMappings = ConstexprMagic::makeUpperTriangularMatrix(
-  ConstexprMagic::TupleType::mapAllPairs<
-    data::allSymmetryDataTypes,
-    mappingCalculationFunctor
-  >()
-);
+extern const ConstexprMagic::UpperTriangularMatrix<
+  ConstexprMagic::Optional<constexprProperties::MappingsReturnType>,
+  nSymmetries * (nSymmetries - 1) / 2
+> allMappings;
 #endif
 
 /* Dynamic access to constexpr data */

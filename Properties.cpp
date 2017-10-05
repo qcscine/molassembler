@@ -2,6 +2,32 @@
 
 namespace Symmetry {
 
+#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
+// A functor for actually evaluating the function pointers
+template<typename SymmetrySource, typename SymmetryTarget>
+struct mappingCalculationFunctor {
+  static constexpr ConstexprMagic::Optional<constexprProperties::MappingsReturnType> value() {
+    // Return the evaluated result
+    return allMappingFunctions.at(
+      static_cast<unsigned>(SymmetrySource::name),
+      static_cast<unsigned>(SymmetryTarget::name)
+    )();
+  }
+};
+
+constexpr auto precalculatedMappings = ConstexprMagic::makeUpperTriangularMatrix(
+  ConstexprMagic::TupleType::mapAllPairs<
+    data::allSymmetryDataTypes,
+    mappingCalculationFunctor
+  >()
+);
+
+const ConstexprMagic::UpperTriangularMatrix<
+  ConstexprMagic::Optional<constexprProperties::MappingsReturnType>,
+  nSymmetries * (nSymmetries - 1) / 2
+> allMappings = precalculatedMappings;
+#endif
+
 TemplateMagic::MinimalCache<
   std::pair<Symmetry::Name, Symmetry::Name>,
   ConstexprMagic::Optional<constexprProperties::MappingsReturnType>
