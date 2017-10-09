@@ -622,18 +622,20 @@ template<
 
   Container<U, Dependents<U>...> returnContainer;
 
-  auto inputIterator = container.begin();
+  auto leftIterator = container.begin();
+  auto rightIterator = leftIterator; ++rightIterator;
 
-  while(inputIterator + 1 != container.end()) {
+  while(rightIterator != container.end()) {
     addToContainer(
       returnContainer, 
       function(
-        *inputIterator,
-        *(inputIterator + 1)
+        *leftIterator,
+        *rightIterator
       )
     );
 
-    ++inputIterator;
+    ++leftIterator;
+    ++rightIterator;
   }
 
   return returnContainer;
@@ -657,8 +659,9 @@ template<
 
   Container<U, Dependents<U>...> returnContainer;
 
-  for(auto i = container.begin(); i != container.end(); i++) {
-    for(auto j = i + 1; j != container.end(); j++) {
+  for(auto i = container.begin(); i != container.end(); ++i) {
+    auto j = i; ++j;
+    for(/* init before */; j != container.end(); ++j) {
       addToContainer(
         returnContainer, 
         function(
@@ -1089,8 +1092,9 @@ template<
   const Container& container,
   BinaryFunction&& function
 ) {
-  for(auto i = container.begin(); i != container.end(); i++) {
-    for(auto j = i + 1; j != container.end(); j++) {
+  for(auto i = container.begin(); i != container.end(); ++i) {
+    auto j = i; ++j;
+    for(/* init before */; j != container.end(); ++j) {
       function(
         *i,
         *j

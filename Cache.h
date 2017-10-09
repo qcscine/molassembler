@@ -54,9 +54,9 @@ public:
 
   /* Information */
   //! Fetches a cache entry via an optional
-  boost::optional<ValueType&> getOption(const KeyType& key) const {
+  boost::optional<const ValueType&> getOption(const KeyType& key) const {
     if(_cache.count(key) == 1) {
-      return boost::optional<ValueType>(
+      return boost::optional<const ValueType&>(
         _cache.at(key)
       );
     } else return {};
