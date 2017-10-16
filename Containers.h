@@ -359,10 +359,18 @@ std::vector<
 
 //! Creates a copy of the container with elements passing the predicate test
 template<class Container, class UnaryFunction>
-std::vector<
-  traits::getValueType<Container>
-> copyIf(
+Container copyIf(
   const Container& container,
+  UnaryFunction&& predicate
+);
+
+/*!
+ * Moves all values passing a predicate test of a container into a new one of
+ * the same type 
+ */
+template<class Container, class UnaryFunction>
+Container moveIf(
+  Container&& container,
   UnaryFunction&& predicate
 );
 
@@ -429,7 +437,7 @@ std::set<T, Comparator<T>, Allocator<T>> setUnion(
   const std::set<T, Comparator<T>, Allocator<T>>& b
 );
 
-//! Composable set difference
+//! Composable (symmetric) set difference
 template<
   typename T,
   template<typename> class Comparator,
@@ -813,7 +821,7 @@ std::set<T, Comparator<T>, Allocator<T>> setUnion(
 ) {
   std::set<T, Comparator<T>, Allocator<T>> returnSet;
 
-  std::set_intersection(
+  std::set_union(
     a.begin(),
     a.end(),
     b.begin(),
@@ -1022,17 +1030,31 @@ std::vector<
   const Container& container,
   UnaryFunction&& predicate
 ) {
-  std::vector<
-    traits::getValueType<Container>
-  > ret;
+  Container returnContainer;
 
   for(const auto& elem : container) {
     if(predicate(elem)) {
-      addToContainer(ret, elem);
+      addToContainer(returnContainer, elem);
     }
   }
 
-  return ret;
+  return returnContainer;
+}
+
+template<class Container, class UnaryFunction>
+Container moveIf(
+  Container&& container,
+  UnaryFunction&& predicate
+) {
+  Container returnContainer;
+
+  for(auto& elem : container) {
+    if(predicate(elem)) {
+      addToContainer(returnContainer, std::move(elem));
+    }
+  }
+
+  return returnContainer;
 }
 
 template<class Container>

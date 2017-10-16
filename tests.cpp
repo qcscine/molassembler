@@ -518,7 +518,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       "Not all elements recorded as not in the tree are recognized as such!\n" 
         << "Found in the tree, but should not be present: "
         << TemplateMagic::condenseIterable(
-          TemplateMagic::copyIf(
+          TemplateMagic::moveIf(
             TemplateMagic::zipMap(
               notInsertedNotContained,
               notInTree,
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       "Not all elements recorded as contained in the tree are recognized as such!\n" 
         << "Not found in the tree: "
         << TemplateMagic::condenseIterable(
-          TemplateMagic::copyIf(
+          TemplateMagic::moveIf(
             TemplateMagic::zipMap(
               insertedContained,
               inTree,
@@ -630,4 +630,17 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       fullValidation(lastTreeGraph);
     }
   }
+}
+
+BOOST_AUTO_TEST_CASE(setRemovalDefect) {
+  /* Sets and maps cannot use std::remove_if! Not a defect. */
+
+  auto testSet = TemplateMagic::moveIf(
+    std::set<unsigned> {5, 2, 9, 1, 3, 4, 8},
+    [](const auto& value) -> bool {
+      return value % 2 != 0;
+    }
+  );
+
+  BOOST_CHECK((testSet == std::set<unsigned> {1, 3, 5, 9}));
 }
