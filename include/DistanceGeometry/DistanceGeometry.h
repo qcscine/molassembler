@@ -2,9 +2,15 @@
 #define DISTANCE_GEOMETRY_HPP
 
 #include <tuple>
-#include "AdjacencyList.h"
+#include "common_typedefs.h"
 
 /* TODO
+ */
+
+/*! @file
+ *
+ * Contains some central data class declarations and type definitions for the
+ * entire Distance Geometry scheme.
  */
 
 namespace MoleculeManip {
@@ -30,6 +36,11 @@ struct ChiralityConstraint {
 };
 
 /* Enum types */
+/*! 
+ * During distance geometry, when individual distance bounds are selected, 
+ * other bounds must be adapted to the imposed restriction in metric space. The
+ * set of algorithms to apply this adaptation are called metrization algorithms.
+ */
 enum class MetrizationOption {
   off,
 //  partial, // -> unimplemented

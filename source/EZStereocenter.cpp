@@ -1,10 +1,11 @@
-#include "EZStereocenter.h"
-#include "template_magic/Random.h"
 #include "constexpr_magic/Math.h"
-#include "DelibHelpers.h"
-
-#include "template_magic/Numeric.h"
+#include "template_magic/Boost.h"
 #include "template_magic/Containers.h"
+#include "template_magic/Numeric.h"
+#include "template_magic/Random.h"
+
+#include "DelibHelpers.h"
+#include "EZStereocenter.h"
 
 namespace MoleculeManip {
 
@@ -17,34 +18,49 @@ EZStereocenter::EZStereocenter(
   const AtomIndexType& secondCenter,
   const RankingInformation& secondCenterRanking
 ) {
-  assert(
-    firstCenterRanking.sortedPriorities.size() == 1
-    || firstCenterRanking.sortedPriorities.size() == 2
-  );
-  assert(
-    secondCenterRanking.sortedPriorities.size() == 1
-    || secondCenterRanking.sortedPriorities.size() == 2
-  );
+  /* Valid ranking inputs
+   * - One set of one index (single substituent on double bond side)
+   * - One set of two indices each (equal substituents on side)
+   * - Two sets of one index each (different substituents on side)
+   */
+  auto numIndices = [](const RankingInformation& ranking) -> unsigned {
+    unsigned countElements = 0;
+
+    for(const auto& set : ranking.sortedSubstituents) {
+      countElements += set.size();
+    }
+
+    return countElements;
+  };
+
+  auto numFirst = numIndices(firstCenterRanking);
+  auto numSecond = numIndices(secondCenterRanking);
+
+  assert(1 <= numFirst && numFirst <= 2);
+  assert(1 <= numSecond && numSecond <= 2);
 
   /* NOTE: high priority is assigned from the back of the ranking since the list
    * is ordered ascending
+   *
+   * NOTE: back-back always works out to the right selection for all valid
+   * inputs.
    */
   _leftCenter = firstCenter;
-  _leftHighPriority = firstCenterRanking.sortedPriorities.back();
+  _leftHighPriority = firstCenterRanking.sortedSubstituents.back().back();
   _rightCenter = secondCenter;
-  _rightHighPriority = secondCenterRanking.sortedPriorities.back();
+  _rightHighPriority = secondCenterRanking.sortedSubstituents.back().back();
 
-  if(firstCenterRanking.sortedPriorities.size() == 2) {
-    _leftLowPriority = firstCenterRanking.sortedPriorities.front();
+  if(numFirst == 2) {
+    _leftLowPriority = firstCenterRanking.sortedSubstituents.front().front();
   }
-  if(secondCenterRanking.sortedPriorities.size() == 2) {
-    _rightLowPriority = secondCenterRanking.sortedPriorities.front();
+  if(numSecond == 2) {
+    _rightLowPriority = secondCenterRanking.sortedSubstituents.front().front();
   }
 
   // Determine whether there can be two assignments or not
   if(
-    firstCenterRanking.equalPriorityPairsSet.empty() 
-    && secondCenterRanking.equalPriorityPairsSet.empty()
+    firstCenterRanking.sortedSubstituents.size() == 2
+    && secondCenterRanking.sortedSubstituents.size() == 2
   ) {
     _numAssignments = 2;
   } else {
@@ -118,6 +134,10 @@ std::vector<
 
 /* Public members */
 /* Modification */
+void EZStereocenter::adaptToRankingChange(const RankingInformation& newRanking) {
+  // TODO implement!
+}
+
 void EZStereocenter::assign(const unsigned& assignment) {
   assert(assignment < _numAssignments); 
 
@@ -336,16 +356,34 @@ std::string EZStereocenter::info() const {
     returnString += std::to_string(_rightHighPriority);
   }
 
-  returnString += ". Is "s;
-  if(_isEOption) {
-    returnString += (_isEOption.value())
-      ? "E"s
-      : "Z"s;
-  } else {
-    returnString += "u";
+  if(numAssignments() == 1) {
+    returnString += ". Is non-stereogenic.";
+  } else if(numAssignments() == 2) {
+    returnString += ". Is "s;
+    if(_isEOption) {
+      returnString += (_isEOption.value())
+        ? "E"s
+        : "Z"s;
+    } else {
+      returnString += "u";
+    }
   }
 
   return returnString;
+}
+
+std::string EZStereocenter::rankInfo() const {
+  // TODO revisit as soon as pseudo-asymmetry is introduced
+  using namespace std::string_literals;
+
+  return (
+    "EZ-"s + std::to_string(numAssignments())
+    + "-"s + (
+      assigned() 
+      ? std::to_string(assigned().value()) 
+      : "u"s
+    )
+  );
 }
 
 std::set<AtomIndexType> EZStereocenter::involvedAtoms() const {
@@ -364,8 +402,45 @@ bool EZStereocenter::operator == (const EZStereocenter& other) const {
     && _rightCenter == other._rightCenter
     && _rightHighPriority == other._rightHighPriority
     && _leftLowPriority == other._leftLowPriority
+    && _rightLowPriority == other._rightLowPriority
     && _numAssignments == other._numAssignments
     && _isEOption == other._isEOption
+  );
+}
+
+bool EZStereocenter::operator < (const EZStereocenter& other) const {
+  using TemplateMagic::componentSmaller;
+
+  return componentSmaller(
+    _leftCenter,
+    other._leftCenter
+  ).value_or(
+    componentSmaller(
+    _rightCenter,
+    other._rightCenter
+    ).value_or(
+      componentSmaller(
+        _leftHighPriority,
+        other._leftHighPriority
+      ).value_or(
+        componentSmaller(
+          _rightHighPriority,
+          other._rightHighPriority
+        ).value_or(
+          componentSmaller(
+            _leftLowPriority,
+            other._leftLowPriority
+          ).value_or(
+            componentSmaller(
+              _rightLowPriority,
+              other._rightLowPriority
+            ).value_or(
+              _isEOption < other._isEOption
+            )
+          )
+        )
+      )
+    )
   );
 }
 

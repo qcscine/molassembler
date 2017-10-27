@@ -1,11 +1,22 @@
 #ifndef INCLUDE_ADJACENCY_MATRIX_H
 #define INCLUDE_ADJACENCY_MATRIX_H
 
-#include "AdjacencyList.h"
+#include "Molecule.h"
 #include <Eigen/Core>
+
+/*! @file
+ *
+ * Contains a matrix class that represents molecular bonding in a boolean
+ * manner. 
+ */
 
 namespace MoleculeManip {
 
+/*!
+ * A class constructed from a Molecule that captures bonding in a boolean
+ * manner. No bond type information is present, merely if atoms are bonded or
+ * not.
+ */
 class AdjacencyMatrix {
 private:
   Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> _matrix;
@@ -14,7 +25,7 @@ public:
   const unsigned N;
 
   AdjacencyMatrix() = delete;
-  AdjacencyMatrix(const AdjacencyList& adjacencyList);
+  explicit AdjacencyMatrix(const Molecule& molecule);
 
   Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>& getMatrixRef() {
     return _matrix;
@@ -24,6 +35,7 @@ public:
     const AtomIndexType& i,
     const AtomIndexType& j
   );
+
   bool operator () (
     const AtomIndexType& i,
     const AtomIndexType& j

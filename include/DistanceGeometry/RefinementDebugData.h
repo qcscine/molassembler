@@ -7,6 +7,12 @@
 
 #include "dlib/matrix.h"
 
+/*! @file
+ *
+ * Contains the declarations of a number of debug data structures for the 
+ * debugging of DG refinement.
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {

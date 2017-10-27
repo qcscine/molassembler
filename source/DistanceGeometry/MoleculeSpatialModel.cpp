@@ -1,9 +1,18 @@
+#include "boost/graph/graphviz.hpp"
 #include "cyclic_polygons/Minimal.h"
-#include "DistanceGeometry/MoleculeSpatialModel.h"
-#include "StdlibTypeAlgorithms.h"
-#include "CommonTrig.h"
+#include "Delib/ElementInfo.h"
+#include "symmetry_information/Properties.h"
 
+#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "CommonTrig.h"
 #include "Log.h"
+#include "StdlibTypeAlgorithms.h"
+
+#include <fstream>
+
+/* TODO
+ * - Use the static const MolGraphWriter coloring maps
+ */
 
 namespace MoleculeManip {
 
@@ -14,10 +23,10 @@ constexpr double MoleculeSpatialModel::bondRelativeVariance;
 constexpr double MoleculeSpatialModel::angleAbsoluteVariance;
 
 MoleculeSpatialModel::MoleculeSpatialModel(
-  const AdjacencyList& adjacencies,
+  const Molecule& molecule,
   const StereocenterList& stereocenterList,
   const DistanceMethod& distanceMethod
-) : _adjacencies(adjacencies) {
+) : _molecule(molecule) {
   /* This is overall a pretty complicated constructor since it encompasses the
    * entire conversion from a molecular graph into some model of the relations
    * between atoms, determining which conformations are accessible.
@@ -46,10 +55,10 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    */
 
   // Helper variables
-  CycleData cycleData {adjacencies.access()};
+  CycleData cycleData {molecule.getGraph()};
   auto smallestCycleMap = makeSmallestCycleMap(
     cycleData,
-    adjacencies
+    molecule
   );
 
   // Check constraints on static constants
@@ -66,14 +75,14 @@ MoleculeSpatialModel::MoleculeSpatialModel(
 
   // Set 1-2 bounds 
   if(distanceMethod == DistanceMethod::UFFLike) {
-    for(const auto& edge: adjacencies.iterateEdges()) {
-      unsigned i = boost::source(edge, adjacencies.access());
-      unsigned j = boost::target(edge, adjacencies.access());
-      auto bondType = adjacencies.access()[edge].bondType;
+    for(const auto& edge: molecule.iterateEdges()) {
+      unsigned i = boost::source(edge, molecule.getGraph());
+      unsigned j = boost::target(edge, molecule.getGraph());
+      auto bondType = molecule.getGraph()[edge].bondType;
 
       auto bondDistance = Bond::calculateBondDistance(
-        adjacencies.getElementType(i),
-        adjacencies.getElementType(j),
+        molecule.getElementType(i),
+        molecule.getElementType(j),
         bondType
       );
 
@@ -84,9 +93,9 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       );
     }
   } else { // Uniform
-    for(const auto& edge: adjacencies.iterateEdges()) {
-      unsigned i = boost::source(edge, adjacencies.access());
-      unsigned j = boost::target(edge, adjacencies.access());
+    for(const auto& edge: molecule.iterateEdges()) {
+      unsigned i = boost::source(edge, molecule.getGraph());
+      unsigned j = boost::target(edge, molecule.getGraph());
 
       setBondBounds(
         {i, j},
@@ -144,18 +153,18 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    * TODO awkwardness here: double / aromatic bond type schism, aromatic bond
    * type not considered
    */
-  for(const auto& edgeIndex: adjacencies.iterateEdges()) {
-    if(adjacencies.access()[edgeIndex].bondType == BondType::Double) {
-      auto source = boost::source(edgeIndex, adjacencies.access()),
-           target = boost::target(edgeIndex, adjacencies.access());
+  for(const auto& edgeIndex: molecule.iterateEdges()) {
+    if(molecule.getGraph()[edgeIndex].bondType == BondType::Double) {
+      auto source = boost::source(edgeIndex, molecule.getGraph()),
+           target = boost::target(edgeIndex, molecule.getGraph());
 
       if(_stereocenterMap.count(source) == 0 && _stereocenterMap.count(target) == 0) {
         // Instantiate without regard for number of assignments
         auto newStereocenterPtr = std::make_shared<Stereocenters::EZStereocenter>(
           source,
-          adjacencies.rankPriority(source, {target}), // exclude shared edge
+          molecule.rankPriority(source, {target}), // exclude shared edge
           target,
-          adjacencies.rankPriority(target, {source})
+          molecule.rankPriority(target, {source})
         );
 
         // Map source *and* target to the same stereocenterPtr
@@ -168,15 +177,15 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   /* For every missing non-terminal atom, create a CNStereocenter in the
    * determined geometry
    */
-  for(unsigned i = 0; i < adjacencies.numAtoms(); i++) {
+  for(unsigned i = 0; i < molecule.numAtoms(); i++) {
     if(
       _stereocenterMap.count(i) == 0  // not already in the map
-      && adjacencies.getNumAdjacencies(i) > 1 // non-terminal
+      && molecule.getNumAdjacencies(i) > 1 // non-terminal
     ) {
       _stereocenterMap[i] = std::make_shared<Stereocenters::CNStereocenter>(
-        adjacencies.determineLocalGeometry(i),
+        molecule.determineLocalGeometry(i),
         i,
-        adjacencies.rankPriority(i)
+        molecule.rankPriority(i)
       );
 
       // At this point, new stereocenters should have only one assignment
@@ -222,7 +231,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         cycleSize == 4
         && countPlanarityEnforcingBonds(
           edgeDescriptors,
-          adjacencies
+          molecule
         ) >= 1
       )
       /* TODO missing cases: 
@@ -232,7 +241,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       /* Gather sequence of atoms in cycle by progressively converting edge
        * descriptors into vertex indices
        */
-      const auto indexSequence = makeRingIndexSequence(edgeDescriptors, adjacencies);
+      const auto indexSequence = makeRingIndexSequence(edgeDescriptors, molecule);
 
       /* First, we fetch the angles that maximize the cycle area using the
        * cyclic polygon library.
@@ -242,14 +251,14 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         TemplateMagic::mapSequentialPairs( 
           indexSequence,
           [&](const AtomIndexType& i, const AtomIndexType& j) -> double {
-            auto bondTypeOption = adjacencies.getBondType(i, j);
+            auto bondTypeOption = molecule.getBondType(i, j);
 
             // These vertices really ought to be bonded
             assert(bondTypeOption);
 
             return Bond::calculateBondDistance(
-              adjacencies.getElementType(i),
-              adjacencies.getElementType(j),
+              molecule.getElementType(i),
+              molecule.getElementType(j),
               bondTypeOption.value()
             );
           }
@@ -335,8 +344,8 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     const auto& stereocenterPtr = mapIterPair.second;
 
     for(const auto& centralIndex : stereocenterPtr -> involvedAtoms()) {
-      // All combinations between adjacencies of this index
-      auto adjacentIndices = adjacencies.getAdjacencies(centralIndex);
+      // All combinations between molecule of this index
+      auto adjacentIndices = molecule.getAdjacencies(centralIndex);
 
       TemplateMagic::forAllPairs(
         adjacentIndices,
@@ -484,12 +493,12 @@ void MoleculeSpatialModel::setDihedralBoundsIfEmpty(
 }
 
 void MoleculeSpatialModel::addDefaultDihedrals() {
-  for(const auto& edgeDescriptor : _adjacencies.iterateEdges()) {
-    const auto& sourceIndex = boost::source(edgeDescriptor, _adjacencies.access());
-    const auto& targetIndex = boost::target(edgeDescriptor, _adjacencies.access());
+  for(const auto& edgeDescriptor : _molecule.iterateEdges()) {
+    const auto& sourceIndex = boost::source(edgeDescriptor, _molecule.getGraph());
+    const auto& targetIndex = boost::target(edgeDescriptor, _molecule.getGraph());
 
-    auto sourceAdjacencies = _adjacencies.getAdjacencies(sourceIndex);
-    auto targetAdjacencies = _adjacencies.getAdjacencies(targetIndex);
+    auto sourceAdjacencies = _molecule.getAdjacencies(sourceIndex);
+    auto targetAdjacencies = _molecule.getAdjacencies(targetIndex);
 
     TemplateMagic::inplaceRemove(sourceAdjacencies, targetIndex);
     TemplateMagic::inplaceRemove(targetAdjacencies, sourceIndex);
@@ -518,12 +527,12 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeDistanceBounds() const {
    *   constrained internal variables. Much more dihedral information could
    *   be placed into the distance bounds matrix if all angle bounds are
    *   present.
-   * - Could use the AdjacencyList to ensure all information is gathered
+   * - Could use the Molecule to ensure all information is gathered
    *   or alternatively reduce parameter requirements to number of atoms only
    * - Dihedral setting angle lookup may fail, no checks!
    * - Smooth at the end and check for inconsistencies
    */
-  DistanceBoundsMatrix distanceBounds(_adjacencies.numAtoms());
+  DistanceBoundsMatrix distanceBounds(_molecule.numAtoms());
 
   // Start with bonds
   for(const auto& bondPair : _bondBounds) {
@@ -654,8 +663,8 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeDistanceBounds() const {
   assert(distanceBounds.boundInconsistencies() == 0);
 
   // Finally, raise non-bonded items with no lower bound to sum of vdw radii
-  for(unsigned i = 0; i < _adjacencies.numAtoms(); i++) {
-    for(unsigned j = i + 1; j < _adjacencies.numAtoms(); j++) {
+  for(unsigned i = 0; i < _molecule.numAtoms(); i++) {
+    for(unsigned j = i + 1; j < _molecule.numAtoms(); j++) {
       /* setting the bounds will fail for bonded pairs as those have strict
        * bounds already and the fairly high sum of vdw would lead to
        * inconsistencies
@@ -665,9 +674,9 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeDistanceBounds() const {
           i,
           j,
           AtomInfo::vdwRadius(
-            _adjacencies.getElementType(i)
+            _molecule.getElementType(i)
           ) + AtomInfo::vdwRadius(
-            _adjacencies.getElementType(j)
+            _molecule.getElementType(j)
           ) 
         );
       }
@@ -950,7 +959,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
 
 void MoleculeSpatialModel::writeGraphviz(const std::string& filename) const {
   ModelGraphWriter graphWriter(
-    &_adjacencies.access(),
+    &_molecule.getGraph(),
     *this
   );
 
@@ -958,7 +967,7 @@ void MoleculeSpatialModel::writeGraphviz(const std::string& filename) const {
 
   boost::write_graphviz(
     outStream,
-    _adjacencies.access(),
+    _molecule.getGraph(),
     graphWriter,
     graphWriter,
     graphWriter

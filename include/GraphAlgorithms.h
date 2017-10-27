@@ -8,14 +8,10 @@
 #include <iostream>
 #include "Delib/ElementInfo.h"
 
-/* TODO
- * - Refactor to BGL
+/*! @file
  *
- * NOTES
- * - Yes, it has to be a deque. A queue, although seemingly the minimal 
- *   functionality needed here for the FIFO structure, does not offer traversal
- *   without removal, which we need here.
- *
+ * Contains a number of graph-level algorithms where connectivity alone is
+ * relevant.
  */
 
 namespace MoleculeManip {
@@ -25,10 +21,13 @@ namespace GraphAlgorithms {
 //! BGL BFS Visitors
 namespace BFSVisitors {
 
-/* Basis on which algorithms with limited depth BFS iteration can be built. Is 
+/*!
+ * Basis on which algorithms with limited depth BFS iteration can be built. Is 
  * inexpensive for small depths in sparse graphs, but probably very space 
  * inefficient for large depths in dense graphs, where pre-filtering nodes is
- * (maybe) preferable.
+ * (maybe) preferable -> benchmark!
+ *
+ * In its current form entirely unused, but kept as reference.
  */
 class LimitedDepthBFSVisitor : public boost::default_bfs_visitor {
 private:
@@ -64,6 +63,15 @@ public:
   }
 };
 
+/*!
+ * Generates an acyclic graph (top-down-tree) from the molecular graph where
+ * bridge atom indices are duplicated in both positions. In such a graph,
+ * all possible dihedral angles are top-down sequences of length four, but
+ * only starting from the root!
+ *
+ * Now unused after deciding to use a different method for enumerating all
+ * dihedral angles. Slated for removal.
+ */
 class TreeGenerator : public boost::default_bfs_visitor {
 public:
   using NodeType = Tree::Node<AtomIndexType>;  
@@ -296,6 +304,10 @@ public:
   }
 };
 
+/*!
+ * BFS Visitor for better understanding the sequence of events in BGL BFS
+ * traversal. Merely prints out a message to std::cout for each event.
+ */
 class ShowAllEventsBFSVisitor : public boost::default_bfs_visitor {
 public:
   template<typename Graph>
@@ -349,27 +361,21 @@ public:
 
 } // namespace BFSVisitors
 
+/*! Shorthand function for using the TreeGenerator. Takes care of all
+ * intermediate objects, such as the coloring of vertices during traversal, and
+ * returns a shared pointer to the root node of the resulting Tree.
+ */
 std::shared_ptr<
   BFSVisitors::TreeGenerator::NodeType
 > makeTree(
   const GraphType& graph,
-  const AtomIndexType& source,
-  const unsigned& maxDepth
+  const AtomIndexType& source = 0,
+  const unsigned& maxDepth = 0
 );
 
-std::shared_ptr<
-  BFSVisitors::TreeGenerator::NodeType
-> makeTree(
-  const GraphType& graph,
-  const AtomIndexType& source
-);
-
-std::shared_ptr<
-  BFSVisitors::TreeGenerator::NodeType
-> makeTree(
-  const GraphType& graph
-);
-
+/*! Shorthand function for using the SubstituentLinkSearcher. Determines whether
+ * substituents at a central atom are linked or not at the grpah level.
+ */
 std::set<
   std::pair<AtomIndexType, AtomIndexType>
 > findSubstituentLinks(
@@ -378,7 +384,27 @@ std::set<
   const std::set<AtomIndexType>& activeSubstituents
 );
 
+/*! 
+ * Returns the number of connected components of the graph. This is a central
+ * property as the library enforces this number to be always one for any given
+ * Molecule. The data representation of a Molecule should not contain two 
+ * disconnected graphs!
+ */
 unsigned numConnectedComponents(const GraphType& graph);
+
+//! Data class to return removal safety information on the graph
+struct RemovalSafetyData {
+  std::set<EdgeIndexType> bridges;
+  std::set<AtomIndexType> articulationVertices;
+};
+
+/*! 
+ * Determines which vertices of the graph are articulation points and which
+ * edges are bridges. Removing an articulation vertex would incur the removal of
+ * a bridge, whose removal always disconnects a graph. Therefore, neither can
+ * be removed without prior graph changes.
+ */
+RemovalSafetyData getRemovalSafetyData(const GraphType& graph);
 
 } // namespace GraphAlgorithms
 

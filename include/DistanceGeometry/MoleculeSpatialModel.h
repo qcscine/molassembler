@@ -1,10 +1,20 @@
 #ifndef INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
 #define INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
 
-#include "AdjacencyList.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 
+#include "Molecule.h"
+
 #include <algorithm>
+
+/*! @file
+ *
+ * The molecular graph with all its conformational specifications via
+ * stereocenter assignments must be transformed into a spatial model that
+ * describes its internal degrees of freedom in a manner translatable to
+ * pairwise distance bounds for the distance geometry algorithm. This file
+ * contains the class declaration for that spatial model.
+ */
 
 namespace MoleculeManip {
 
@@ -36,6 +46,10 @@ std::array<AtomIndexType, size> orderedIndexSequence(
   );
 }
 
+/*!
+ * Keeps a record of the internal dimension bounds that a molecular graph is
+ * interpreted as and permits the generation of a distance bounds matrix.
+ */
 class MoleculeSpatialModel {
 public:
 /* Typedefs */
@@ -84,7 +98,7 @@ public:
 
 private:
   // Closures
-  const AdjacencyList& _adjacencies;
+  const Molecule& _molecule;
 
   // Mutable state
   std::map<
@@ -116,7 +130,7 @@ public:
 
 /* Constructor */
   MoleculeSpatialModel(
-    const AdjacencyList& adjacencies,
+    const Molecule& molecule,
     const StereocenterList& stereocenterList,
     const DistanceMethod& distanceMethod = DistanceMethod::UFFLike
   );

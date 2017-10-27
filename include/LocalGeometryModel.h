@@ -1,11 +1,17 @@
 #ifndef INCLUDE_GEOMETRY_MODELING_MODEL_H
 #define INCLUDE_GEOMETRY_MODELING_MODEL_H
 
-#include "Delib/ElementTypes.h"
 #include "symmetry_information/Symmetries.h"
 
 #include "common_typedefs.h"
 #include "boost/variant.hpp"
+
+/*! @file
+ *
+ * Declarations for the general interface with which a number of classes can
+ * determine the local geometry that a specific arrangement of atoms should
+ * have.
+ */
 
 namespace LocalGeometry {
 

@@ -1,19 +1,24 @@
 #ifndef INCLUDE_STEREOCENTERS_H
 #define INCLUDE_STEREOCENTERS_H
 
-#include <vector>
-#include <set>
 #include <algorithm>
 #include <memory>
 #include <boost/optional.hpp>
 
-#include "common_typedefs.h"
+#include "RankingInformation.h"
 
 // Detection algorithm headers
 #include "Delib/ElementTypeCollection.h"
 #include "Delib/PositionCollection.h"
 
+/*! @file
+ *
+ * Contains the abstract base class / interface for all classes that model
+ * conformational isomery on the graph level.
+ */
+
 /* TODO
+ * - documentation
  */
 
 namespace MoleculeManip {
@@ -72,6 +77,13 @@ enum class Type {
 class Stereocenter {
 public:
 /* Modification */
+  /*!
+   * If a change in the molecule has happened that possibly modifies this
+   * stereocenter's ranking, update the stereocenter while retaining as much
+   * information as possible about the assignment it was in previously.
+   */
+  virtual void adaptToRankingChange(const RankingInformation& newRanking) = 0;
+
   //!  Assign this feature
   virtual void assign(const unsigned& assignment) = 0;
 
@@ -106,8 +118,6 @@ public:
   virtual unsigned numAssignments() const = 0;
 
   //!  Return a list of chirality constraints
-  // -> TODO Maybe need to integrate more information in the Symmetries if
-  // precise 1-3 distances are not enough to fully specify the geometry
   virtual std::vector<ChiralityConstraintPrototype> chiralityConstraints() const = 0;
 
   /*!
@@ -136,7 +146,12 @@ public:
   );
 };
 
-bool strictComparePtr(
+bool compareStereocenterEqual(
+  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& a,
+  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
+);
+
+bool compareStereocenterLessThan(
   const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& a,
   const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
 );

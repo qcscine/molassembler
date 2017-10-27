@@ -26,7 +26,7 @@ not deleting the vertex itself, because this can lead to bookkeeping issues)
 
 overall pseudocode::
 
-  fullSet = AdjacencyList<AtomIndexType>(mol)
+  fullSet = Molecule(mol)
   SSSR = set< set<AtomIndexType> > {}
   do
     // iteratively remove all atoms with degree 1 (typically exposes more in

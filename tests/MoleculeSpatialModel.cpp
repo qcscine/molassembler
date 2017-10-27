@@ -12,8 +12,8 @@ BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
     MoleculeSpatialModel spatialModel {
-      molecule.getAdjacencyList(),
-      molecule.stereocenters,
+      molecule.getGraph(),
+      molecule.getStereocenterList(),
       MoleculeSpatialModel::DistanceMethod::UFFLike
     };
 

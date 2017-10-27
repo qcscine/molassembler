@@ -6,6 +6,11 @@
 
 #include <dlib/optimization.h>
 
+/*! @file
+ *
+ * Specifies the refinement minimization problem for the dlib library.
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {

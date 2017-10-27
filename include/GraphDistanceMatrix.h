@@ -2,10 +2,19 @@
 #define INCLUDE_GRAPH_DISTANCE_MATRIX_H
 
 #include "AdjacencyMatrix.h"
-#include <Eigen/Core>
+
+/*! @file
+ *
+ * Contains the class definition of GraphDistanceMatrix, which captures
+ * topographic distances between vertices in the graph.
+ */
 
 namespace MoleculeManip {
 
+/*!
+ * Captures the topographic distances between vertices in the graph, i.e. by how
+ * many edges (bonds) vertices (atoms) are separated.
+ */
 class GraphDistanceMatrix {
 private:
   Eigen::Matrix<unsigned, Eigen::Dynamic, Eigen::Dynamic> _matrix;

@@ -3,11 +3,123 @@
 
 #include <map>
 
-#include "Stereocenter.h"
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
 
+/*! @file
+ *
+ * Contains the declaration for a class that stores a list of all stereocenters
+ * in a molecule.
+ */
+
 namespace MoleculeManip {
+
+class StereocenterMap {
+public:
+  using PtrType = std::shared_ptr<Stereocenters::Stereocenter>;
+  using MapType = std::map<
+    AtomIndexType,
+    PtrType
+  >;
+
+private:
+  MapType _stereocenters;
+
+public:
+/* Modifiers */
+  StereocenterMap() = default;
+  StereocenterMap(std::initializer_list<PtrType> initList) {
+    for(const auto& ptr : initList) {
+      add(ptr);
+    }
+  }
+
+  //! Add a stereocenter
+  void add(const PtrType& stereocenterPtr) {
+    // Ensure the involved atoms aren't mapped yet
+    for(const auto& atomIndex : stereocenterPtr -> involvedAtoms()) {
+      if(_stereocenters.count(atomIndex) == 1) {
+        throw std::logic_error(
+          "Trying to add a stereocenter to an atom that is already mapped!"
+        );
+      }
+    }
+
+    for(const auto& atomIndex : stereocenterPtr -> involvedAtoms()) {
+      _stereocenters[atomIndex] = stereocenterPtr;
+    }
+  }
+
+  //! Removes all stereocenters
+  void clear() noexcept {
+    _stereocenters.clear();
+  }
+
+  /*! 
+   * Removes a pointer if it is the SAME as the one passed (using address),
+   * does not consider equality of the types involved
+   */
+  void remove(const PtrType& stereocenterPtr) {
+    for(const auto& index : stereocenterPtr -> involvedAtoms()) {
+      assert(
+        _stereocenters.count(index) == 1
+        && _stereocenters.at(index) == stereocenterPtr
+      );
+
+      _stereocenters.erase(index);
+    }
+  }
+
+/* Information */
+  bool empty() const noexcept {
+    return _stereocenters.empty();
+  }
+
+  //! Returns an optional with the stereocenter pointer involving the atom index
+  boost::optional<PtrType> get(const AtomIndexType& index) const {
+    if(_stereocenters.count(index) == 1) {
+      return _stereocenters.at(index);
+    }
+
+    return boost::none;
+  }
+
+  unsigned size() const noexcept {
+    return _stereocenters.size();
+  }
+
+  MapType::iterator begin() {
+    return _stereocenters.begin();
+  }
+
+  MapType::iterator end() {
+    return _stereocenters.end();
+  }
+
+  MapType::const_iterator cbegin() const {
+    return _stereocenters.cbegin();
+  }
+
+  MapType::const_iterator cend() const {
+    return _stereocenters.cend();
+  }
+
+  bool operator == (const StereocenterMap& other) const {
+    return std::equal(
+      _stereocenters,
+      other._stereocenters,
+      [&](const auto& iterPairA, const auto& iterPairB) -> bool {
+        return (
+          iterPairA.first == iterPairB.first
+          && Stereocenters::compareStereocenterEqual(
+            iterPairA.second,
+            iterPairB.second
+          )
+        );
+      }
+    );
+  }
+};
 
 class StereocenterList {
 public:
@@ -144,7 +256,7 @@ public:
     return _features.cend();
   }
 
-  bool operator == (const StereocenterList& other) {
+  bool operator == (const StereocenterList& other) const {
     using namespace Stereocenters;
 
     /* TODO
@@ -167,7 +279,7 @@ public:
           other._features.begin(),
           other._features.end(),
           [&](const std::shared_ptr<Stereocenter>& otherStereocenter) -> bool {
-            return Stereocenters::strictComparePtr(stereocenter, otherStereocenter);
+            return Stereocenters::compareStereocenterEqual(stereocenter, otherStereocenter);
           }
         ) == other._features.end()
       ) {
@@ -177,7 +289,6 @@ public:
     }
 
     return all_found;
-
   }
 };
 

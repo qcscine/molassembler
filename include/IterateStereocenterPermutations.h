@@ -6,15 +6,34 @@
 
 #include "template_magic/Containers.h"
 
+/*! @file
+ *
+ * Contains functionality in order to systematically vary stereocenter
+ * assignments in order to exhaustively enumerate all possible conformers.
+ */
+
 /* TODO
  * - Maybe make a set of logical requirements that the iterators must fulfill to
  *   test against, similar for the comparison operators? e.g. self-consistency
  *   a == a, some of the concept requirements specified in the STL, etc.
+ * - As soon as reranking is implemented, this code can generate extraneous
+ *   combinations of stereocenter assignment. Since a stereocenter's assignment
+ *   can effect ranking, the number of assignments of ANY stereocenter could
+ *   change. This can fail spectacularly by trying to set an assignment on some
+ *   stereocenter that no longer exists. See meso forms.
+ *   Rewriting this so that it tracks which combinations it has examined by
+ *   keeping a full mapping indices of to assignments might be possible, or
+ *   maybe a full tree exploration starting from each stereocenter once.
+ * - Move this to be a part of StereocenterList
  */
 
 namespace MoleculeManip {
 
-class StereocenterPermutationTemporary {
+/*!
+ * Range-for temporary object to allow iterator-like behavior in permutation of
+ * stereocenters
+ */
+/*class StereocenterPermutationTemporary {
 private:
   const Molecule _molecule;
 
@@ -51,7 +70,7 @@ public:
         _done(endPosition)
     {
       if(!endPosition) {
-        for(const auto& stereocenterPtr : _molecule.stereocenters) {
+        for(const auto& stereocenterPtr : _molecule.getStereocenterList()) {
 
           if(stereocenterPtr -> numAssignments() > 1) {
             _stereocenterList.push_back(stereocenterPtr);
@@ -148,7 +167,7 @@ StereocenterPermutationTemporary iterateStereocenterPermutations(
   const Molecule& molecule
 ) {
   return StereocenterPermutationTemporary(molecule);
-}
+}*/
 
 } // namespace MoleculeManip
 

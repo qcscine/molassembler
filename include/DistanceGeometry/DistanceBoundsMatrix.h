@@ -7,6 +7,15 @@
 #include <Eigen/Core>
 #include <random>
 
+/*! @file
+ *
+ * Contains the implementation of a class that stores distance bounds.
+ */
+
+/* TODO
+ * - documentation (why are BoundsMatrix and DistanceBoundsMatrix separated?)
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
@@ -84,7 +93,7 @@ struct BoundsMatrix {
         iter < maxIter // we do not exceed 100 iterations
         && triangleInequalitySmooth() // and smoothing changes something
       ); 
-      iter++
+      ++iter
     ) {
       continue;
     }
@@ -106,6 +115,9 @@ struct BoundsMatrix {
   }
 };
 
+/*!
+ * 
+ */
 class DistanceBoundsMatrix {
 private:
 /* Data members */

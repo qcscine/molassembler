@@ -1,26 +1,25 @@
 #define BOOST_TEST_MODULE RefinementProblemTests
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
 
-#include <iostream>
-
-#include "CommonTrig.h"
-#include "DistanceGeometry/generateConformation.h"
-#include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/RefinementProblem.h"
+#include "boost/test/unit_test.hpp"
+#include "constexpr_magic/FloatingPointComparison.h"
+#include "Eigen/Geometry"
 #include "template_magic/Enumerate.h"
 #include "template_magic/Random.h"
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
+
 #include "AnalysisHelpers.h"
-
-#include <Eigen/Geometry>
-
 #include "BoundsFromSymmetry.h"
+#include "CommonTrig.h"
+#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/MetricMatrix.h"
+#include "DistanceGeometry/RefinementProblem.h"
 #include "IO.h"
 
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 
 using namespace std::string_literals;
 using namespace MoleculeManip;
@@ -36,9 +35,14 @@ bool isApprox(
       a,
       b,
       [&](const auto& i, const auto& j) -> bool {
-        return std::fabs(
+        return ConstexprMagic::floating::isCloseAbsolute(
+          i,
+          j,
+          epsilon
+        );
+        /*return std::fabs(
           std::fabs(i) - std::fabs(j)
-        ) < epsilon;
+        ) < epsilon;*/
       }
     )
   );
@@ -105,7 +109,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
         gradient,
         finiteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
-          return ConstexprMagic::Math::isCloseRelative(
+          return ConstexprMagic::floating::isCloseRelative(
             a,
             b,
             1e-5
@@ -144,7 +148,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
         compressedGradient,
         compressedFiniteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
-          return ConstexprMagic::Math::isCloseRelative(
+          return ConstexprMagic::floating::isCloseRelative(
             a,
             b,
             1e-5

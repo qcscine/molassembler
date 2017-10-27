@@ -1,5 +1,5 @@
 #include "CycleData.h"
-#include "AdjacencyList.h"
+#include "Molecule.h"
 #include "StdlibTypeAlgorithms.h"
 
 #include <iostream>
@@ -188,7 +188,7 @@ CycleIterator CycleData::getCyclesIteratorContaining(
 
 std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
   const CycleData& cycleData,
-  const AdjacencyList& adjacencies
+  const Molecule& molecule
 ) {
   std::map<AtomIndexType, unsigned> smallestCycle;
 
@@ -202,8 +202,8 @@ std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
 
     for(const auto& edge : cycleEdges) {
       std::array<AtomIndexType, 2> indices {
-        boost::source(edge, adjacencies.access()),
-        boost::target(edge, adjacencies.access())
+        boost::source(edge, molecule.getGraph()),
+        boost::target(edge, molecule.getGraph())
       };
 
       for(const auto& index: indices) {
@@ -224,7 +224,7 @@ std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
 
 std::vector<AtomIndexType> makeRingIndexSequence(
   const std::set<GraphType::edge_descriptor>& edgeSet,
-  const AdjacencyList& adjacencies
+  const Molecule& molecule
 ) {
   // copy the edges so we can modify
   auto edgeDescriptors = edgeSet;
@@ -232,8 +232,8 @@ std::vector<AtomIndexType> makeRingIndexSequence(
   auto firstEdgeIter = edgeDescriptors.begin();
   // Initialize with last edge descriptor's indices
   std::vector<AtomIndexType> indexSequence {
-    boost::source(*firstEdgeIter, adjacencies.access()),
-    boost::target(*firstEdgeIter, adjacencies.access())
+    boost::source(*firstEdgeIter, molecule.getGraph()),
+    boost::target(*firstEdgeIter, molecule.getGraph())
   };
 
   edgeDescriptors.erase(firstEdgeIter);
@@ -246,17 +246,17 @@ std::vector<AtomIndexType> makeRingIndexSequence(
       ++edgeIter
     ) {
       auto& edge = *edgeIter;
-      if(boost::source(edge, adjacencies.access()) == indexSequence.back()) {
+      if(boost::source(edge, molecule.getGraph()) == indexSequence.back()) {
         indexSequence.emplace_back(
-          boost::target(edge, adjacencies.access())
+          boost::target(edge, molecule.getGraph())
         );
         edgeDescriptors.erase(edgeIter);
         break;
       }
       
-      if(boost::target(edge, adjacencies.access()) == indexSequence.back()) {
+      if(boost::target(edge, molecule.getGraph()) == indexSequence.back()) {
         indexSequence.emplace_back(
-          boost::source(edge, adjacencies.access())
+          boost::source(edge, molecule.getGraph())
         );
         edgeDescriptors.erase(edgeIter);
         break;
@@ -272,12 +272,12 @@ std::vector<AtomIndexType> makeRingIndexSequence(
 
 unsigned countPlanarityEnforcingBonds(
   const std::set<GraphType::edge_descriptor>& edgeSet,
-  const AdjacencyList& adjacencies
+  const Molecule& molecule
 ) {
   unsigned count = 0;
 
   for(const auto& edge: edgeSet) {
-    const auto& edgeType = adjacencies.access()[edge].bondType;
+    const auto& edgeType = molecule.getGraph()[edge].bondType;
     if(
       edgeType == BondType::Double
       || edgeType == BondType::Aromatic

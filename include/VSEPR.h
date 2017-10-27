@@ -6,6 +6,11 @@
 
 #include "AtomInfo.h"
 
+/*! @file
+ *
+ * Contains the definition of the VSEPR local geometry modelling scheme.
+ */
+
 namespace LocalGeometry {
 
 struct VSEPR : Model {

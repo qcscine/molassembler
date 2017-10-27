@@ -2,13 +2,13 @@
 
 namespace MoleculeManip {
 
-AdjacencyMatrix::AdjacencyMatrix(const AdjacencyList& adjacencyList) 
-: N(adjacencyList.numAtoms()) {
+AdjacencyMatrix::AdjacencyMatrix(const Molecule& molecule) 
+: N(molecule.numAtoms()) {
   _matrix.resize(N, N);
   _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(false);
 
   for(AtomIndexType i = 0; i < N; i++) {
-    for(const auto& adjacentIndex: adjacencyList[i]) {
+    for(const auto& adjacentIndex: molecule[i]) {
       if(i < adjacentIndex) {
         this->operator()(i, adjacentIndex) = true;
       }

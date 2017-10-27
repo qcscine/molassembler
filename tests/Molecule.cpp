@@ -31,6 +31,8 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
       auto slashSplat = StdlibTypeAlgorithms::split(filename, '/');
       auto dotSplat = StdlibTypeAlgorithms::split(slashSplat.back(), '.');
 
-      // mol.dumpGraphviz(dotSplat.front() + ".dot");
+      std::ofstream dotFile (dotSplat.front() + ".dot");
+      dotFile << mol.dumpGraphviz();
+      dotFile.close();
   }
 }

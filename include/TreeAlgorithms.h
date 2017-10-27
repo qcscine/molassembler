@@ -2,7 +2,13 @@
 #define INCLUDE_TREE_ALGORITHMS_H
 
 #include "Tree.h"
-#include "Traits.h"
+
+#include "template_magic/Traits.h"
+
+/*! @file
+ *
+ * Defines a number of algorithms for tree traversal and information gathering.
+ */
 
 /* TODO
  * - Add variants that offer traversal up to depth limit
@@ -82,7 +88,15 @@ namespace detail {
 // Call visitor if Function is Binary
 template<typename T, typename Function>
 std::enable_if_t<
-  Traits::is_callable<Function(std::shared_ptr<Tree::Node<T>>, unsigned)>::value,
+  // Traits::is_callable<Function(std::shared_ptr<Tree::Node<T>>, unsigned)>::value,
+  TemplateMagic::traits::isCallableValue<
+    Function(
+      std::shared_ptr<
+        Tree::Node<T>
+      >,
+      unsigned
+    )
+  >,
   bool
 > callVisitor(
   Function&& function,
@@ -95,7 +109,14 @@ std::enable_if_t<
 // Call visitor if Function is Unary
 template<typename T, typename Function>
 std::enable_if_t<
-  Traits::is_callable<Function(std::shared_ptr<Tree::Node<T>>)>::value,
+  //Traits::is_callable<Function(std::shared_ptr<Tree::Node<T>>)>::value,
+  TemplateMagic::traits::isCallableValue<
+    Function(
+      std::shared_ptr<
+        Tree::Node<T>
+      >
+    )
+  >,
   bool
 > callVisitor(
   Function&& function,

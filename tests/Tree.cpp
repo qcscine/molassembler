@@ -6,7 +6,7 @@
 #include "Tree.h"
 
 
-/*       AdjacencyList member listing
+/*       Tree member listing
  * t  #  ------------------------------
  * y  1  key constructor
  * y  2  addChild(Ptr)

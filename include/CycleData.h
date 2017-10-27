@@ -7,7 +7,14 @@
 // RDL
 #include "RingDecomposerLib/RingDecomposerLib.h"
 
+/*! @file
+ *
+ * Contains a wrapper class for the C-style RingDecomposerLib functions so that
+ * cycle data can be used in idiomatic C++.
+ */
+
 /* ISSUE
+ * - TODO is this still relevant / unfixed?
  * - Memory management issues -> use-after-free, destructor of one iterator is 
  *   called twice...
  * - Now that RangeForTemporary uses move, the trivial move constructor does a
@@ -17,15 +24,25 @@
 
 namespace MoleculeManip {
 
+// Pre-declare CycleIterator so that it can be friended
 class CycleIterator;
 
+/*!
+ * RingDecomposerLIb wrapper class so that working with cycle data is not
+ * polluted by a slew of un-copyable and odd ANSI C types and functions.
+ */
 class CycleData {
 public:
   friend class CycleIterator;
 
 private:
+  //! Refrential access to base molecular graph
   const GraphType& _baseGraphReference;
+
+  //! Raw pointers to RDL_graph object
   RDL_graph* _graphPtr;
+
+  //! Raw pointer to calculated graph cycle data
   RDL_data* _dataPtr;
 
 public:
@@ -40,10 +57,15 @@ public:
   //! Returns an iterator proxy object
   CycleIterator getCyclesIterator() const;
 
+  /*!
+   * Returns an iterator proxy object for cycles that are smaller or equal to
+   * the passed cycle size
+   */
   CycleIterator getCyclesIteratorSizeLE(
     const unsigned& maxCycleSize
   ) const;
 
+  //!  Returns an iterator proxy object for cycles that contain a specific index.
   CycleIterator getCyclesIteratorContaining(
     const AtomIndexType& containingIndex
   ) const;
@@ -55,6 +77,10 @@ public:
   unsigned numRelevantCycles() const;
 };
 
+/*!
+ * Iterator-like class for going through cycles in the generated data from the
+ * original graph.
+ */
 class CycleIterator {
 public:
   friend class CycleData;
@@ -86,9 +112,8 @@ public:
   void advance();
 };
 
-// Forward-declare AdjacencyList
-// TODO check if this kills the program
-class AdjacencyList;
+// Forward-declare Molecule
+class Molecule;
 
 /*!
  * Creates a mapping from atom index to the size of the smallest cycle
@@ -97,7 +122,7 @@ class AdjacencyList;
  */
 std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
   const CycleData& cycleData,
-  const AdjacencyList& adjacencies
+  const Molecule& molecule
 );
 
 /*!
@@ -106,7 +131,7 @@ std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
  */
 std::vector<AtomIndexType> makeRingIndexSequence(
   const std::set<GraphType::edge_descriptor>& edgeSet,
-  const AdjacencyList& adjacencies
+  const Molecule& molecule
 );
 
 /*!
@@ -115,7 +140,7 @@ std::vector<AtomIndexType> makeRingIndexSequence(
  */
 unsigned countPlanarityEnforcingBonds(
   const std::set<GraphType::edge_descriptor>& edgeSet,
-  const AdjacencyList& adjacencies
+  const Molecule& molecule
 );
 
 } // namespace MoleculeManip

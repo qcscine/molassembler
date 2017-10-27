@@ -5,6 +5,13 @@
 
 #include "DistanceGeometry/DistanceGeometry.h"
 
+/*! @file
+ *
+ * In the Distance Geometry algorithm, a metric matrix is generated from the
+ * distance bounds. This file hold the declaration of the implementation of that
+ * matrix.
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {

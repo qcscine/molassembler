@@ -1,12 +1,13 @@
-#include "CNStereocenter.h"
-#include "geometry_assignment/GenerateUniques.h"
-#include "StdlibTypeAlgorithms.h"
-#include "DelibHelpers.h"
-#include "CommonTrig.h"
-#include "Log.h"
-
-#include "template_magic/Numeric.h"
+#include "template_magic/Boost.h"
 #include "template_magic/Containers.h"
+#include "template_magic/Numeric.h"
+#include "geometry_assignment/GenerateUniques.h"
+
+#include "CNStereocenter.h"
+#include "CommonTrig.h"
+#include "DelibHelpers.h"
+#include "Log.h"
+#include "StdlibTypeAlgorithms.h"
 
 #include <iomanip>
 
@@ -22,127 +23,93 @@ CNStereocenter::CNStereocenter(
   const AtomIndexType& centerAtom,
   // Ranking information of substituents
   const RankingInformation& ranking
-) : _neighborCharMap( 
-      _reduceSubstituents( // Reduce ranking to a character map
-        ranking.sortedPriorities,
-        ranking.equalPriorityPairsSet
-      )
-    ),
-    _links(
-      _makeLinks( // Reduce ranking links to self-referential set of pairs
-        ranking.sortedPriorities,
-        ranking.linkedPairsSet
-      )
-    ),
-    symmetry(symmetry),
-    centerAtom(centerAtom) {
-
+) : _neighborCharMap {
+      _reduceSubstituents(ranking)
+    },
+    _links {
+      _makeLinks(ranking)
+    },
+    symmetry {symmetry},
+    centerAtom {centerAtom} 
+{
   // Generate the set of unique assignments possible here
   _uniqueAssignments = UniqueAssignments::uniqueAssignments(
     AssignmentType(
       symmetry,
-      _reduceNeighborCharMap(
-        _neighborCharMap
-      ),
+      _reduceNeighborCharMap(_neighborCharMap),
       _links
     ),
     false // Do NOT remove trans-spanning linked groups
   );
-
-  /* auto reducedMap = _reduceNeighborCharMap(_neighborCharMap);
-  std::cout << "Reduced char map: vec{";
-  for(const auto& character : reducedMap) {
-    std::cout << character;
-    if(character != reducedMap.back()) std::cout << ", ";
-  }
-  std::cout << "} in symmetry " << Symmetry::name(symmetry) 
-    << " -> " << _uniqueAssignments.size() << " assignments" << std::endl;*/
 }
 
 /* Private members */
-std::map<
-  AtomIndexType,
-  char
-> CNStereocenter::_reduceSubstituents(
-  const std::vector<AtomIndexType>& rankedSubstituentNextAtomIndices,
-  const std::set<
-    std::pair<
-      AtomIndexType,
-      AtomIndexType
-    >
-  >& equalSubstituentPairsSet
-) const {
-  /* the algorithm returns pairs of ligands that are equal (due to some 
-   * custom sorting function shenanigans, which is binary). We want to 
-   * condense that information into sets of equal ligands, so we restructure
-   * the set of pairs to a vector of non-overlapping sets:
-   * e.g. set{pair{1, 3}, pair{1, 4}, pair{2, 5}} 
-   *  -> vector{set{1, 3, 4}, set{2, 5}}
+
+std::map<AtomIndexType, unsigned> CNStereocenter::_makeNeighborSymmetryPositionMap(
+  const UniqueAssignments::Assignment& assignment,
+  const std::map<AtomIndexType, char> neighborCharMap
+) {
+  std::map<AtomIndexType, unsigned> neighborSymmetryPositionMap;
+
+  /* First get the symmetry position mapping (char -> unsigned)
+   * this is e.g. map{'A' -> vector{0,2,3}, 'B' -> vector{1}}
    */
-  auto setsVector = StdlibTypeAlgorithms::makeIndividualSets(
-    equalSubstituentPairsSet
-  );
+  auto charSymmetryPositionsMap = assignment.getCharMap();
 
-  // Add lone substituents to setsVector
-  for(const auto& index: rankedSubstituentNextAtomIndices) {
-    // if the current substituent index is not in any of the sets
-    if(!std::accumulate(
-      setsVector.begin(),
-      setsVector.end(),
-      false,
-      [&index](const bool& carry, const std::set<AtomIndexType>& set) {
-        return (
-          carry
-          || set.count(index) == 1
-        );
-      }
-    )) {
-      // add a single-atom set
-      setsVector.emplace_back(
-        std::set<AtomIndexType>{index}
-      );
-    }
-  }
-
-  /* so now we have e.g.
-   * setsVector = vector{set{1, 4}, set{2}, set{3}};
-   * rankedSubstituentNextAtomIndices = vector{ 2, 1, 4, 3};
-   * -> reduce to {A, B, B, C}
+  /* assign next neighbor indices using _neighborCharMap, which stores
+   * neighbor's AtomIndexType -> 'A' char mapping,
+   * e.g. map{4 -> 'A', 16 -> 'B', 23 -> 'A', 26 -> 'A'}
    */
-
-  // create a mapping between indices and ligand symbols
-  std::map<
-    AtomIndexType,
-    char
-  > indexSymbolMap;
-
-  const char initialChar = 'A';
-  for(const auto& index : rankedSubstituentNextAtomIndices) {
-    // find position in setsVector
-
-    auto findIter = std::find_if(
-      setsVector.begin(),
-      setsVector.end(),
-      [&index](const auto& set) -> bool {
-        return set.count(index) > 0;
-      }
+  for(const auto& indexCharPair: neighborCharMap) {
+    assert(
+      !charSymmetryPositionsMap.at(
+        indexCharPair.second // the current index's character, e.g. 'A'
+      ).empty() // meaning there are symmetry positions left to assign
     );
 
-    assert(findIter != setsVector.end()); // would indicate an error above
+    /* reference for better readability: the current character's symmetry
+     * positions list:
+     */
+    std::vector<unsigned>& symmetryPositionsList = charSymmetryPositionsMap.at(
+      indexCharPair.second // current character
+    );
 
-    unsigned posInSetsVector = findIter - setsVector.begin();
+    // assign in the map
+    neighborSymmetryPositionMap[
+      indexCharPair.first
+    ] = symmetryPositionsList.at( 
+      0 // the first of the available symmetry positions for that char
+    );
 
-    // Take advantage of implicit type conversions:
-    //               char =        char +        unsigned
-    indexSymbolMap[index] = initialChar + posInSetsVector;
+    // remove that first symmetry position
+    symmetryPositionsList.erase(
+      symmetryPositionsList.begin()
+    );
   }
 
+  return neighborSymmetryPositionMap;
+}
+
+std::map<AtomIndexType, char> CNStereocenter::_reduceSubstituents(
+  const RankingInformation& ranking
+) {
+  /* ranking.sortedSubstituents = vector{vector{1, 4}, vector{2}, vector{3}};
+   * -> reduce to {A, A, B, C}
+   */
+
+  std::map<AtomIndexType, char> indexSymbolMap;
+
+  char letter = 'A';
+
+  for(const auto& equalSet : ranking.sortedSubstituents) {
+    for(const auto& index : equalSet) {
+      indexSymbolMap[index] = letter;
+    }
+
+    ++letter;
+  }
 
   return indexSymbolMap;
-
-  /* TODO no use of connectivity information as of yet to determine whether 
-   * ligands are bridged!
-   */
 }
 
 std::vector<char> CNStereocenter::_reduceNeighborCharMap(
@@ -168,11 +135,20 @@ std::vector<char> CNStereocenter::_reduceNeighborCharMap(
 }
 
 UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeLinks(
-  const std::vector<AtomIndexType>& sortedIndices,
+  const RankingInformation& ranking
+  /*const std::vector<AtomIndexType>& sortedIndices,
   const std::set<
     std::pair<AtomIndexType, AtomIndexType>
-  >& linkedPairsSet
+  >& linkedPairsSet*/
 ) const {
+  // Flatten the sorted list of indices
+  std::vector<unsigned> sortedIndices;
+  for(const auto& equalPrioritySet : ranking.sortedSubstituents) {
+    for(const auto& index : equalPrioritySet) {
+      sortedIndices.push_back(index);
+    }
+  }
+
   /* Have a sequence of indices ranked by priority low to high
    * and a set of pairs with the same indices, but we want a set that is
    * self-referential, i.e. refers to the indices in sortedIndices, e.g.:
@@ -182,6 +158,7 @@ UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeLinks(
    *
    * -> links: set { pair{0, 1}, pair{0, 2} }
    */
+
   UniqueAssignments::Assignment::LinksSetType links;
 
   auto findIndexInSorted = [&](const AtomIndexType& index) -> unsigned {
@@ -196,7 +173,7 @@ UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeLinks(
     return findIter - sortedIndices.begin();
   };
 
-  for(const auto& linkPair : linkedPairsSet) {
+  for(const auto& linkPair : ranking.linkedPairs) {
     links.emplace(
       findIndexInSorted(linkPair.first),
       findIndexInSorted(linkPair.second)
@@ -215,43 +192,77 @@ void CNStereocenter::assign(const unsigned& assignment) {
 
   /* save a mapping of next neighbor indices to symmetry positions after
    * assigning (AtomIndexType -> unsigned).
+   */
+  _neighborSymmetryPositionMap = _makeNeighborSymmetryPositionMap(
+    _uniqueAssignments[assignment],
+    _neighborCharMap
+  );
+}
+
+void CNStereocenter::adaptToRankingChange(const RankingInformation& newRanking) {
+  /* TODO previous symmetry is NOT taken into account -> no mapping to new
+   * symmetry possible
    *
-   * First get the symmetry position mapping (char -> unsigned)
-   * this is e.g. map{'A' -> vector{0,2,3}, 'B' -> vector{1}}
+   * This is a mess, and there is no clear logic to it
+   *
+   * This is for when something is EDITED in an existing molecule, this has no
+   * priority
    */
-  auto charSymmetryPositionsMap = _uniqueAssignments[
-    assignment
-  ].getCharMap();
 
-  /* assign next neighbor indices using _neighborCharMap, which stores
-   * neighbor's AtomIndexType -> 'A' char mapping,
-   * e.g. map{4 -> 'A', 16 -> 'B', 23 -> 'A', 26 -> 'A'}
-   */
-  for(const auto& indexCharPair: _neighborCharMap) {
-    assert(
-      !charSymmetryPositionsMap.at(
-        indexCharPair.second // the current index's character, e.g. 'A'
-      ).empty() // meaning there are symmetry positions left to assign
-    );
+  // If this stereocenter is unassigned, do nothing
+  if(assignmentOption) { 
+    // Compare to the current _neighborCharMap and _links
+    auto newNeighborCharMap = _reduceSubstituents(newRanking);
 
-    /* reference for better readability: the current character's symmetry
-     * positions list:
-     */
-    std::vector<unsigned>& symmetryPositionsList = charSymmetryPositionsMap.at(
-      indexCharPair.second // current character
-    );
+    auto newLinks = _makeLinks(newRanking);
 
-    // assign in the map
-    _neighborSymmetryPositionMap[
-      indexCharPair.first
-    ] = symmetryPositionsList.at( 
-      0 // the first of the available symmetry positions for that char
-    );
+    if(
+      _neighborCharMap != newNeighborCharMap
+      || _links != newLinks
+    ) {
+      auto newUniqueAssignments = UniqueAssignments::uniqueAssignments(
+        AssignmentType(
+          symmetry,
+          _reduceNeighborCharMap(newNeighborCharMap),
+          newLinks
+        ),
+        false // do NOT remove trans-spanning linked groups
+      );
 
-    // remove that first symmetry position
-    symmetryPositionsList.erase(
-      symmetryPositionsList.begin()
-    );
+      // Look for a perfect match of the neighbor symmetry position map
+      auto foundIter = std::find_if(
+        newUniqueAssignments.begin(),
+        newUniqueAssignments.end(),
+        [&](const auto& assignment) -> bool {
+          return (
+            _neighborSymmetryPositionMap 
+            == _makeNeighborSymmetryPositionMap(
+              assignment,
+              newNeighborCharMap
+            )
+          );
+        }
+      );
+
+      if(foundIter != newUniqueAssignments.end()) {
+        /* Overwrite everything and set the index of this assignment as the new
+         * assignment
+         */
+        _neighborCharMap = newNeighborCharMap;
+        _links = newLinks;
+        _uniqueAssignments = newUniqueAssignments;
+        // _neighborSymmetryPositionMap is the same, see test in find_if
+
+        assignmentOption = foundIter - newUniqueAssignments.begin();
+      } else {
+        // Overwrite but mark unassigned
+        _neighborCharMap = newNeighborCharMap;
+        _links = newLinks;
+        _uniqueAssignments = newUniqueAssignments;
+
+        assignmentOption = boost::none;
+      }
+    }
   }
 }
 
@@ -580,6 +591,20 @@ std::string CNStereocenter::info() const {
   return returnString;
 }
 
+std::string CNStereocenter::rankInfo() const {
+  // TODO revisit as soon as pseudo-asymmetry is added
+
+  return (
+    "CN-"s + std::to_string(static_cast<unsigned>(symmetry)) 
+    + "-"s + std::to_string(numAssignments())
+    + "-"s + (
+      assigned() 
+      ? std::to_string(assigned().value()) 
+      : "u"s
+    )
+  );
+}
+
 std::set<AtomIndexType> CNStereocenter::involvedAtoms() const {
   return {centerAtom};
 }
@@ -593,38 +618,42 @@ Type CNStereocenter::type() const {
 }
 
 bool CNStereocenter::operator == (const CNStereocenter& other) const {
-  /* This is a bit weird, I thought the boost::optional<T>::operator ==
-   * emcompassed all this. Maybe the behavior is different in a more recent
-   * Boost version, or just switching to std::optional with C++17 will allow
-   * straight-up use of operator ==.
-   */
-  bool assignmentsSame = (
-    (
-      assignmentOption 
-      && other.assignmentOption 
-      && assignmentOption.value() == other.assignmentOption.value()
-    ) || (!assignmentOption && !other.assignmentOption)
-  );
-
-  /*if(!assignmentsSame) {
-    std::cout << "Different assignment" << std::endl;
-    std::cout << "This:" << assignment.value_or(50) << ", Other:" 
-      << other.assignment.value_or(50) << std::endl;
-    std::cout << std::boolalpha << "This is assigned: " 
-      << static_cast<bool>(assignment) << ", Other is assigned: " 
-      << static_cast<bool>(other.assignment) << std::endl;
-  }
-  if(symmetry != other.symmetry) std::cout << "Symmetry is different." << std::endl;
-  if(centerAtom != other.centerAtom) std::cout << "Central atom is different." << std::endl;
-  if(_neighborCharMap != other._neighborCharMap) std::cout << "Char map is different." << std::endl;
-  if(_uniqueAssignments.size() != other._uniqueAssignments.size()) std::cout << "Different #assignments." << std::endl;*/
-
   return (
     symmetry == other.symmetry
     && centerAtom == other.centerAtom
     && _neighborCharMap == other._neighborCharMap
     && _uniqueAssignments.size() == other._uniqueAssignments.size()
-    && assignmentsSame
+    && assignmentOption == other.assignmentOption
+  );
+}
+
+bool CNStereocenter::operator < (const CNStereocenter& other) const {
+  using TemplateMagic::componentSmaller;
+  
+  /* Sequentially compare individual components, comparing assignments last
+   * if everything else matches
+   */
+  return componentSmaller(
+    centerAtom,
+    other.centerAtom
+  ).value_or(
+    componentSmaller(
+      _neighborCharMap,
+      other._neighborCharMap
+    ).value_or(
+      componentSmaller(
+        _uniqueAssignments.size(),
+        other._uniqueAssignments.size()
+      ).value_or(
+        componentSmaller(
+          symmetry,
+          other.symmetry
+        ).value_or(
+          assignmentOption < other.assignmentOption
+          // NOTE: boost::none is smaller than 0 in this ordering
+        )
+      )
+    )
   );
 }
 

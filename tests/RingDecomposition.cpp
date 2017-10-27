@@ -73,11 +73,11 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   IO::MOLFileHandler molHandler;
   auto mol = molHandler.readSingle(filePath.string());
 
-  CycleData cycleData {mol.getAdjacencyList().access()};
+  CycleData cycleData {mol.getGraph()};
 
   testCycles(cycleData);
 
-  auto indexMap = makeSmallestCycleMap(cycleData, mol.getAdjacencyList());
+  auto indexMap = makeSmallestCycleMap(cycleData, mol.getGraph());
 
   testCycles(cycleData);
 }

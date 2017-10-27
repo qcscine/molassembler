@@ -1,18 +1,16 @@
-#include "DistanceGeometry/generateConformation.h"
+#include <dlib/optimization.h>
+#include <Eigen/Dense>
+#include "template_magic/Containers.h"
 
-#include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/RefinementProblem.h"
 #include "DistanceGeometry/dlibAdaptors.h"
 #include "DistanceGeometry/dlibDebugAdaptors.h"
+#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/MetricMatrix.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
-#include "template_magic/Containers.h"
+#include "DistanceGeometry/RefinementProblem.h"
 
 #include "GraphAlgorithms.h"
 #include "TreeAlgorithms.h"
-
-#include <dlib/optimization.h>
-#include <Eigen/Dense>
-
 
 namespace MoleculeManip {
 
@@ -409,10 +407,30 @@ DGDebugData debugDistanceGeometry(
 ) {
   DGDebugData resultObject;
 
-  const auto DGData = gatherDGInformation(
+  /* In case the molecule has unassigned stereocenters that are not trivially
+   * assignable (u/1 -> 0/1), random assignments have to be made prior to calling
+   * gatherDGInformation (which creates the DistanceBoundsMatrix via the
+   * MoleculeSpatialModel, which expects all stereocenters to be assigned).
+   * Accordingly, gatherDGInformation has to be repeated in those cases, while
+   * it is necessary only once in the other
+   */
+
+  auto moleculeHasUnassignedStereocenters = [&](const Molecule& mol) -> bool {
+    for(const auto& stereocenterPtr : mol.getStereocenterList()) {
+      if(!stereocenterPtr->assigned()) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  auto DGData = gatherDGInformation(
     molecule,
     distanceMethod
   );
+
+  bool regenerateEachStep = moleculeHasUnassignedStereocenters(molecule);
 
   /* If the ratio of failures/total optimizations exceeds this value,
    * the function throws. Remember that if an optimization is considered a 
@@ -428,6 +446,11 @@ DGDebugData debugDistanceGeometry(
     currentStructureNumber - resultObject.failures < numStructures;
     currentStructureNumber += 1
   ) {
+    if(regenerateEachStep) {
+      auto moleculeCopy = molecule;
+      // TODO continue here, assign unassigned and re-assign DGData with a new collected data
+    }
+
     std::list<RefinementStepData> refinementSteps;
 
     const auto distancesMatrix = DGData.distanceBounds.generateDistanceMatrix(
@@ -599,15 +622,13 @@ MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
-  const auto& adjacencies = molecule.getAdjacencyList();
-
   // Initialize the return object
-  MoleculeDGInformation data {adjacencies.numAtoms()};
+  MoleculeDGInformation data {molecule.numAtoms()};
 
   // Generate a spatial model from the molecular graph and stereocenters
   MoleculeSpatialModel spatialModel {
-    adjacencies,
-    molecule.stereocenters,
+    molecule,
+    molecule.getStereocenterList(),
     distanceMethod
   };
 

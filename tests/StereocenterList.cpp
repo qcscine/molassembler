@@ -11,5 +11,5 @@ BOOST_AUTO_TEST_CASE( basicTests ) {
   auto mol = DGDBM::symmetricMolecule(Symmetry::Name::Octahedral);
 
   // self-consistency
-  BOOST_CHECK(mol.stereocenters == mol.stereocenters);
+  BOOST_CHECK(mol.getStereocenterList() == mol.getStereocenterList());
 }

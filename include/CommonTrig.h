@@ -1,10 +1,15 @@
 #ifndef INCLUDE_COMMON_TRIG_H
 #define INCLUDE_COMMON_TRIG_H
 
-#include <cmath>
-#include "Delib/ElementTypes.h" // Delib
-
 #include "BondDistance.h"
+
+/*! @file
+ *
+ * Contains some common trigonometric functionality. Does not contain custom
+ * implementations of the basic trigonometric functions, but rather common
+ * combinations of them in specific contexts.
+ *
+ */
 
 namespace MoleculeManip {
 
@@ -43,16 +48,11 @@ T lawOfSinesAngle(
   );
 }
 
-/* TODO maybe this belongs into a StereocentersHelpers.h
- *  along with many other such cases...
+/*!
+ * Calculates the 1-4 length in a dihedral, which is defined by the three
+ * distances a, b, c, the two angles at ab and at bc and the dihedral around the
+ * intermediate bond b.
  */
-double getRingOneFourDistance(
-  const double& a,
-  const double& b,
-  const double& c,
-  const double& insideAngleRadians
-);
-
 double dihedralLength(
   const double& a,
   const double& b,

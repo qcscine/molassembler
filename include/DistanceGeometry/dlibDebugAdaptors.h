@@ -4,6 +4,21 @@
 #include "RefinementProblem.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 
+/*! @file
+ *
+ * The numerical minimization of the error function is done with the dlib 
+ * library. This file contains some adapters for strategy, potentials used and
+ * end criteria for the minimization.
+ *
+ * The minimization proceeds in two stages. In the first stage, the
+ * conformation is permitted to expand into a fourth spatial dimension to aid
+ * in stereocenter inversion. Afterwards, the absolute value of the fourth
+ * spatial dimension is penalized and compressed out.
+ *
+ * This set of minimization strategies is intended for debugging. They create,
+ * as a side effect, lits of refinement step data.
+ */
+
 /* NOTES
  * - Identical implementations as dlibAdaptors, except that they are initialized
  *   differently with references to the refinement value functor and the list of
@@ -16,6 +31,12 @@ namespace DistanceGeometry {
 
 namespace dlibAdaptors {
 
+/*! 
+ * Dlib minimization strategy that proceeds without compression of the fourth
+ * dimension until all chiral centers have inverted to the correct orientation.
+ *
+ * Creates a list of refinement step data via side-effect.
+ */
 struct debugIterationOrAllChiralitiesCorrectStrategy {
 /* State */
   const unsigned maxIterations = 0;
@@ -79,6 +100,13 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
   }
 };
 
+/*! 
+ * Dlib minimization strategy that proceeds with compression of the fourth
+ * dimension until all the overall gradient length is below a particular
+ * threshold.
+ *
+ * Creates a list of refinement step data as side effect.
+ */
 struct debugIterationOrGradientNormStopStrategy {
 /* Public access constants */
   const unsigned maxIterations;

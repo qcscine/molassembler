@@ -8,6 +8,12 @@
 #include <sstream>
 #include <map>
 
+/*! @file
+ *
+ * Contains the definitions for a templated Tree data structure, in which
+ * a node contains a key and can have any number of descendant nodes.
+ */
+
 namespace Tree {
 
 template<typename T1, typename T2>

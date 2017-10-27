@@ -3,9 +3,24 @@
 
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
-#include "AdjacencyList.h"
+#include "Molecule.h"
 #include "Tree.h"
 #include "SequenceSet.h"
+
+/*! @file
+ *
+ * The distance geometry (DG) algorithm requires the interpretation of the
+ * molecular graph in terms of atom index pairwise distance bounds, i.e. that
+ * in the three-dimensional ensemble of conformations that is sampled, the
+ * distance between two specific atoms must be within a certain bound. In order
+ * to fully map the conformation that the Molecule class models via
+ * stereocenters, a spatial model of the molecule in internal coordinates is
+ * constructed which is then finally translated into just pairwise distance
+ * bounds. 
+ *
+ * This file contains the implementation of a class that generates a spatial
+ * model from a molecule.
+ */
 
 /* TODO
  * - tests
@@ -15,6 +30,9 @@ namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
+/*!
+ * Handles the generatation of a MoleculeSpatialModel.
+ */
 class BFSConstraintCollector {
 public:
 /* Typedefs */
@@ -29,7 +47,7 @@ public:
 private:
 /* Private Members */
   // Closures
-  const AdjacencyList& _adjacencies;
+  const Molecule& _molecule;
   const DistanceMethod& _distanceMethod;
 
   // Output (via function operator side effect)
@@ -81,7 +99,7 @@ public:
    * upper diagonal is 100).
    */
   BFSConstraintCollector(
-    const AdjacencyList& adjacencies,
+    const Molecule& molecule,
     const StereocenterList& stereocenterList,
     MoleculeSpatialModel& spatialModel,
     const DistanceMethod& distanceMethod = DistanceMethod::UFFLike

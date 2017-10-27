@@ -1,11 +1,19 @@
 #ifndef INCLUDE_PERSISTENT_INDEX_MOLECULE_INTERFACE_H
 #define INCLUDE_PERSISTENT_INDEX_MOLECULE_INTERFACE_H
 
-#include "Molecule.h"
 #include "IO.h"
+
+/*! @file
+ *
+ * Defines a proxy class that aids in atom index book-keeping. 
+ */
 
 namespace MoleculeManip {
 
+/*!
+ * Book-keeping helper class that keeps track of deleted atom indices so that
+ * all indices are persistent.
+ */
 class PersistentIndicesInterface {
 private:
   std::unique_ptr<Molecule> _molecule;

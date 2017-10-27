@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "TreeAlgorithms.h"
-#include "AdjacencyList.h"
+#include "Molecule.h"
 #include "GraphAlgorithms.h"
 #include "RepeatedElementCollection.h"
 
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
     child2Ptr -> addChild(6);
   }
   { // BFS, DFS testing
-    AdjacencyList test(
+    Molecule test(
       makeRepeatedElementCollection(Delib::ElementType::H, 8),
       Edges({
         {{0, 1}, BondType::Single},
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       })
     );
 
-    auto treePtr = GraphAlgorithms::makeTree(test.access());
+    auto treePtr = GraphAlgorithms::makeTree(test.getGraph());
 
     std::vector<AtomIndexType> BFSVisitSequence;
     auto BFSVisitor = [&BFSVisitSequence](const auto& nodePtr) {
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
     }));
   }
   { // BFS, DFS with depth limit testing
-    AdjacencyList test(
+    Molecule test(
       makeRepeatedElementCollection(Delib::ElementType::H, 8),
       Edges({
         {{0, 1}, BondType::Single},
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       })
     );
 
-    auto treePtr = GraphAlgorithms::makeTree(test.access());
+    auto treePtr = GraphAlgorithms::makeTree(test.getGraph());
 
     std::vector<AtomIndexType> BFSVisitSequence;
     auto BFSVisitor = [&BFSVisitSequence](const auto& nodePtr) {
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
     }));
   }
   {
-    AdjacencyList test(
+    Molecule test(
       makeRepeatedElementCollection(Delib::ElementType::H, 8),
       Edges({
         {{0, 1}, BondType::Single},
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( makeTreeTest ) {
       })
     );
 
-    auto treePtr = GraphAlgorithms::makeTree(test.access());
+    auto treePtr = GraphAlgorithms::makeTree(test.getGraph());
 
     struct BFSVisitor {
       std::vector<AtomIndexType> visitSequence;

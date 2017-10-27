@@ -98,7 +98,6 @@ set(HEADERS_all
   include/DistanceGeometry/MetricMatrix.h
   include/DistanceGeometry/MoleculeSpatialModel.h
   include/DistanceGeometry/generateConformation.h
-  include/AdjacencyList.h
   include/AdjacencyMatrix.h
   include/AnalysisHelpers.h
   include/AtomInfo.h
@@ -116,12 +115,12 @@ set(HEADERS_all
   include/IterateStereocenterPermutations.h
   include/LocalGeometryModel.h
   include/Molecule.h
+  include/MolGraphWriter.h
   include/PersistentIndexMoleculeInterface.h
   include/RangeForTemporary.h
   include/StdlibTypeAlgorithms.h
   include/Stereocenter.h
   include/StereocenterList.h
-  include/Traits.h
   include/Tree.h
   include/TreeAlgorithms.h
   include/VSEPR.h
@@ -136,7 +135,6 @@ set(SOURCES_all
   source/DistanceGeometry/MetricMatrix.cpp
   source/DistanceGeometry/MoleculeSpatialModel.cpp
   source/DistanceGeometry/RefinementProblem.cpp
-  source/AdjacencyList.cpp
   source/AdjacencyMatrix.cpp
   source/AtomInfo.cpp
   source/BondDistance.cpp
@@ -150,6 +148,8 @@ set(SOURCES_all
   source/LocalGeometryModel.cpp
   source/Log.cpp
   source/Molecule.cpp
+  source/MolGraphWriter.cpp
+  source/RankingTree.cpp
   source/StdlibTypeAlgorithms.cpp
   source/Stereocenter.cpp
   source/VSEPR.cpp

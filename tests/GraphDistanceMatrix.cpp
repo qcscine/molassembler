@@ -8,7 +8,7 @@
 #include "RepeatedElementCollection.h"
 
 /*   Member listing
- * y 1 AdjacencyList constructor
+ * y 1 Molecule constructor
  * y 2 getMatrixRef
  * y 3 altering operator ()
  * y 4 non-altering operator ()
@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE( GraphDistanceMatrixTests ) {
     {{5, 7}, BondType::Single}
   };
 
-  /* AdjacencyMatrix(AdjacencyList(Edge))
+  /* AdjacencyMatrix(Molecule(Edge))
    *
    *    0 1 2 3 4 5 6 7
    *  0 · 1 0 0 0 0 0 0
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( GraphDistanceMatrixTests ) {
    */
   auto testInstance = GraphDistanceMatrix(
     AdjacencyMatrix(
-      AdjacencyList(
+      Molecule(
         makeRepeatedElementCollection(Delib::ElementType::H, 8),
         edges
       )

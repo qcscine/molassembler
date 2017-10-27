@@ -12,6 +12,12 @@
 #include <vector>
 #include <Eigen/Core>
 
+/*! @file
+ *
+ * Declares the central conformation (and -ensemble) generating functions that
+ * start the DG procedure.
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
@@ -63,7 +69,7 @@ MoleculeDGInformation gatherDGInformation(
   const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );
 
-// Public functions
+// "Public" functions
 std::list<Delib::PositionCollection> generateEnsemble(
   const Molecule& molecule,
   const unsigned& numStructures,

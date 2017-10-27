@@ -2,14 +2,25 @@
 #define INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
 
 #include "Stereocenter.h"
-#include <boost/optional.hpp>
-#include "RankingInformation.h"
+
+/*! @file
+ *
+ * Contains the EZStereocenter class declaration, which models E/Z double bond
+ * stereocenters in molecules.
+ */
+
+/* TODO
+ * - Could make dihedralAngleVariance constexpr, but unsure about effects on 
+ *   static initialization and if extra declaration required
+ */
 
 namespace MoleculeManip {
 
 namespace Stereocenters {
 
-/* Has either one or two assignments:
+/*! Models stereogenic E/Z conformers in molecular graphs.
+ *
+ * Has either one or two assignments:
  *
  * - When on either side both substituents have equal rank, there is only one
  *   assignment.
@@ -23,7 +34,7 @@ namespace Stereocenters {
  *              \
  *                H
  *
- *   can be properly considered as having E and Z conformers
+ *   is properly considered as having E and Z conformers
  *
  * Implementation-wise, _isEOption works as true -> E, false -> Z
  *
@@ -50,24 +61,40 @@ public:
 
 private:
 /* State */
+  //! Stores the indices of the minimal indices required to have a stereocenter
   AtomIndexType _leftCenter, _leftHighPriority,
                 _rightCenter, _rightHighPriority;
+
+  /*! 
+   * If there are additional unequal substituents on both sides, their indices
+   * graph indices are stored here
+   */
   boost::optional<AtomIndexType> _leftLowPriority, _rightLowPriority;
+
+  //! Stores the current assignment state of the stereocenter
   boost::optional<bool> _isEOption;
+
+  //! Stores the number of possible assignments
   unsigned _numAssignments;
 
+  //! Static tolerance in dihedral angle for DG
   static const double _dihedralAngleVariance; // in Degrees
 
 /* Private members */
+  //! Generates the dihedral sequences of equal priority (i.e. high with high)
   std::vector<
     std::array<AtomIndexType, 4>
   > _equalPriorityDihedralSequences() const;
 
+  //! Generates the dihedral sequences of unequal priortiy (i.e. high with low)
   std::vector<
     std::array<AtomIndexType, 4>
   > _differentPriorityDihedralSequences() const;
 
+  //! Generates cis dihedral limits
   std::vector<DihedralLimits> _cisDihedralLimits() const;
+
+  //! Generates trans dihedral limits
   std::vector<DihedralLimits> _transDihedralLimits() const;
 
 public:
@@ -81,6 +108,8 @@ public:
   ); 
 
 /* Modification */
+  void adaptToRankingChange(const RankingInformation& newRanking) final;
+
   void assign(const unsigned& assignment) final;
 
   void fit(const Delib::PositionCollection& positions) final;
@@ -102,12 +131,15 @@ public:
 
   std::string info() const final;
 
+  std::string rankInfo() const;
+
   std::set<AtomIndexType> involvedAtoms() const final;
 
   Type type() const final;
 
 /* Operators */
   bool operator == (const EZStereocenter& other) const;
+  bool operator < (const EZStereocenter& other) const;
 
 };
 

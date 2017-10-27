@@ -8,6 +8,10 @@
 
 #include "cyclic_polygons/Minimal.h"
 
+/* TODO
+ * - Code duplication between ctor and MoleculeSpatialModel:100... why?
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
@@ -19,14 +23,14 @@ constexpr double BFSConstraintCollector::bondRelativeVariance;
 constexpr double BFSConstraintCollector::angleAbsoluteVariance;
 
 BFSConstraintCollector::BFSConstraintCollector(
-  const AdjacencyList& adjacencies,
+  const Molecule& molecule,
   const StereocenterList& stereocenterList,
   MoleculeSpatialModel& spatialModel,
   const DistanceMethod& distanceMethod
-) : _adjacencies(adjacencies),
+) : _molecule(molecule),
     _distanceMethod(distanceMethod),
     _spatialModel(spatialModel),
-    _cycleData(adjacencies.access()), // Construct cycleData from the graph
+    _cycleData(molecule.getGraph()), // Construct cycleData from the graph
     _smallestCycleMap(_makeSmallestCycleMap()) // Construct the cycle size map
 {
   // Check constraints on static constants
@@ -89,18 +93,18 @@ BFSConstraintCollector::BFSConstraintCollector(
   }
 
   // For every non-implicated double bond, create an EZStereocenter 
-  for(const auto& edgeIndex: adjacencies.iterateEdges()) {
-    if(adjacencies.access()[edgeIndex].bondType == BondType::Double) {
-      auto source = boost::source(edgeIndex, adjacencies.access()),
-           target = boost::target(edgeIndex, adjacencies.access());
+  for(const auto& edgeIndex: molecule.iterateEdges()) {
+    if(molecule.getGraph()[edgeIndex].bondType == BondType::Double) {
+      auto source = boost::source(edgeIndex, molecule.getGraph()),
+           target = boost::target(edgeIndex, molecule.getGraph());
 
       if(_stereocenterMap.count(source) == 0 && _stereocenterMap.count(target) == 0) {
         // Instantiate without regard for number of assignments
         auto newStereocenterPtr = std::make_shared<Stereocenters::EZStereocenter>(
           source,
-          adjacencies.rankPriority(target, {source}), // exclude shared edge
+          molecule.rankPriority(target, {source}), // exclude shared edge
           target,
-          adjacencies.rankPriority(source, {target})
+          molecule.rankPriority(source, {target})
         );
 
         // Map source *and* target to the same stereocenterPtr
@@ -145,15 +149,15 @@ BFSConstraintCollector::BFSConstraintCollector(
   /* For every missing non-terminal atom, create a CNStereocenter in the
    * determined geometry
    */
-  for(unsigned i = 0; i < adjacencies.numAtoms(); i++) {
+  for(unsigned i = 0; i < molecule.numAtoms(); i++) {
     if(
       _stereocenterMap.count(i) == 0  // not already in the map
-      && adjacencies.getNumAdjacencies(i) > 1 // non-terminal
+      && molecule.getNumAdjacencies(i) > 1 // non-terminal
     ) {
       _stereocenterMap[i] = std::make_shared<Stereocenters::CNStereocenter>(
-        adjacencies.determineLocalGeometry(i),
+        molecule.determineLocalGeometry(i),
         i,
-        adjacencies.rankPriority(i)
+        molecule.rankPriority(i)
       );
 
       // At this point, new stereocenters should have only one assignment
@@ -214,14 +218,14 @@ BFSConstraintCollector::BFSConstraintCollector(
         TemplateMagic::mapSequentialPairs( 
           indexSequence,
           [&](const AtomIndexType& i, const AtomIndexType& j) -> double {
-            auto bondTypeOption = adjacencies.getBondType(i, j);
+            auto bondTypeOption = molecule.getBondType(i, j);
 
             // These vertices really ought to be bonded
             assert(bondTypeOption);
 
             return Bond::calculateBondDistance(
-              adjacencies.getElementType(i),
-              adjacencies.getElementType(j),
+              molecule.getElementType(i),
+              molecule.getElementType(j),
               bondTypeOption.value()
             );
           }
@@ -277,8 +281,8 @@ std::vector<AtomIndexType> BFSConstraintCollector::_makeRingIndexSequence(
   auto firstEdgeIter = edgeDescriptors.begin();
   // Initialize with last edge descriptor's indices
   std::vector<AtomIndexType> indexSequence {
-    boost::source(*firstEdgeIter, _adjacencies.access()),
-    boost::target(*firstEdgeIter, _adjacencies.access())
+    boost::source(*firstEdgeIter, _molecule.getGraph()),
+    boost::target(*firstEdgeIter, _molecule.getGraph())
   };
   edgeDescriptors.erase(firstEdgeIter);
   // firstEdgeIter is now invalid!
@@ -290,17 +294,17 @@ std::vector<AtomIndexType> BFSConstraintCollector::_makeRingIndexSequence(
       ++edgeIter
     ) {
       auto& edge = *edgeIter;
-      if(boost::source(edge, _adjacencies.access()) == indexSequence.back()) {
+      if(boost::source(edge, _molecule.getGraph()) == indexSequence.back()) {
         indexSequence.emplace_back(
-          boost::target(edge, _adjacencies.access())
+          boost::target(edge, _molecule.getGraph())
         );
         edgeDescriptors.erase(edgeIter);
         break;
       }
       
-      if(boost::target(edge, _adjacencies.access()) == indexSequence.back()) {
+      if(boost::target(edge, _molecule.getGraph()) == indexSequence.back()) {
         indexSequence.emplace_back(
-          boost::source(edge, _adjacencies.access())
+          boost::source(edge, _molecule.getGraph())
         );
         edgeDescriptors.erase(edgeIter);
         break;
@@ -320,7 +324,7 @@ unsigned BFSConstraintCollector::_countPlanarityEnforcingBonds(
   unsigned count = 0;
 
   for(const auto& edge: edgeSet) {
-    const auto& edgeType = _adjacencies.access()[edge].bondType;
+    const auto& edgeType = _molecule.getGraph()[edge].bondType;
     if(
       edgeType == BondType::Double
       || edgeType == BondType::Aromatic
@@ -375,14 +379,14 @@ bool BFSConstraintCollector::operator() (
 
 void BFSConstraintCollector::set12Bounds() {
   if(_distanceMethod == DistanceMethod::UFFLike) {
-    for(const auto& edge: _adjacencies.iterateEdges()) {
-      unsigned i = boost::source(edge, _adjacencies.access());
-      unsigned j = boost::target(edge, _adjacencies.access());
-      auto bondType = _adjacencies.access()[edge].bondType;
+    for(const auto& edge: _molecule.iterateEdges()) {
+      unsigned i = boost::source(edge, _molecule.getGraph());
+      unsigned j = boost::target(edge, _molecule.getGraph());
+      auto bondType = _molecule.getGraph()[edge].bondType;
 
       auto bondDistance = Bond::calculateBondDistance(
-        _adjacencies.getElementType(i),
-        _adjacencies.getElementType(j),
+        _molecule.getElementType(i),
+        _molecule.getElementType(j),
         bondType
       );
 
@@ -396,9 +400,9 @@ void BFSConstraintCollector::set12Bounds() {
     constexpr double lower = (1 - BFSConstraintCollector::bondRelativeVariance) * 1.5;
     constexpr double upper = (1 + BFSConstraintCollector::bondRelativeVariance) * 1.5;
 
-    for(const auto& edge: _adjacencies.iterateEdges()) {
-      unsigned i = boost::source(edge, _adjacencies.access());
-      unsigned j = boost::target(edge, _adjacencies.access());
+    for(const auto& edge: _molecule.iterateEdges()) {
+      unsigned i = boost::source(edge, _molecule.getGraph());
+      unsigned j = boost::target(edge, _molecule.getGraph());
 
       _spatialModel.setBondBounds(
         {i, j},
@@ -475,8 +479,8 @@ BFSConstraintCollector::SmallestCycleMapType BFSConstraintCollector::_makeSmalle
 
     for(const auto& edge : cycleEdges) {
       std::array<AtomIndexType, 2> indices {
-        boost::source(edge, _adjacencies.access()),
-        boost::target(edge, _adjacencies.access())
+        boost::source(edge, _molecule.getGraph()),
+        boost::target(edge, _molecule.getGraph())
       };
 
       for(const auto& index: indices) {

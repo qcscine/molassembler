@@ -6,14 +6,26 @@
 #include <boost/optional.hpp>
 #include "Delib/ElementTypes.h" 
 
+/*! @file
+ * 
+ * A set of electron-counting helper functions. We keep a dataset of s-p-d-f
+ * valence electron counts for all elements. These are required in e.g. VSEPR
+ * geometry determinations.
+ */
+
 namespace MoleculeManip {
 
 namespace AtomInfo {
 
+/*! @file
+ * 
+ * Stores information about an element.
+ */
 class ElementInfo {
 private:
   unsigned _valenceElectrons[4];
-  unsigned _valenceElectronCount(const char& shell) {
+
+  unsigned _valenceElectronCount(const char& shell) const {
     switch(shell) {
       case 's':
         return _valenceElectrons[0];
@@ -28,7 +40,7 @@ private:
     }
   }
 
-  unsigned _maxOccupancy(const char& shell) {
+  unsigned _maxOccupancy(const char& shell) const {
     switch(shell) {
       case 's':
         return 2;
@@ -62,11 +74,11 @@ public:
     vdwRadius (_vdwRadius)
   {};
   //! Returns the valence electrons for a given shell character (s, p, d, f)
-  unsigned valenceElectrons(const char& shell) {
+  unsigned valenceElectrons(const char& shell) const {
     return _valenceElectronCount(shell);
   }
 
-  unsigned valenceElectrons(const std::vector<char>& shells) {
+  unsigned valenceElectrons(const std::vector<char>& shells) const {
     unsigned sum = 0;
     for(const char& shell : shells) {
       sum += _valenceElectronCount(shell);
@@ -74,14 +86,14 @@ public:
     return sum;
   }
 
-  bool shellFullOrEmpty(const char& shell) {
+  bool shellFullOrEmpty(const char& shell) const {
     return (
       _valenceElectronCount(shell) == 0
       || _valenceElectronCount(shell) == _maxOccupancy(shell)
     );
   }
 
-  bool shellsFullOrEmpty(const std::vector<char>& shells) {
+  bool shellsFullOrEmpty(const std::vector<char>& shells) const {
     for(const char& shell : shells) {
       if(!shellFullOrEmpty(shell)) {
         return false;
@@ -92,8 +104,8 @@ public:
   }
 
   //! Returns the total valence electrons
-  unsigned valenceElectrons() {
-    unsigned sum;
+  unsigned valenceElectrons() const {
+    unsigned sum = 0;
     for(unsigned i = 0; i < 4; i++) {
       sum += _valenceElectrons[i];
     }
@@ -101,12 +113,18 @@ public:
   }
 };
 
-/* From the original UFF paper
+/*!
+ * Bond radii for each element from the original UFF paper:
+ *
+ * FIX CITATION
  * Rappé, Goddard et al. UFF, a full periodic table force field for ...
  */
 extern const std::map<Delib::ElementType, double> bondRadii;
 
-/* ElementData is populated with the following data:
+/*! 
+ * ElementData instances for each element type. This is populated with the
+ * following data:
+ *
  * - VdW radius, from online CRC Handbook of Chemistry and Physics, Nov. 16,
  *   97. ed.
  * - Electron occupation of orbital types s, p, d, f above largest noble core, 
@@ -121,10 +139,15 @@ extern std::map<
 
 bool isMainGroupElement(const Delib::ElementType& elementType); 
 
+/*! 
+ * Returns a count of valence electrons if the specified element type is a main
+ * group element. Otherwise, returns boost::none.
+ */
 boost::optional<unsigned> mainGroupVE(const Delib::ElementType& elementType);
 
 unsigned dElectronCount(const Delib::ElementType& elementType);
 
+//! Accessor function to fetch the vdw radius directly from elementData
 double vdwRadius(const Delib::ElementType& elementType);
 
 } // namespace AtomInfo

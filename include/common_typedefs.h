@@ -7,31 +7,49 @@
 // In-house libraries
 #include "Delib/ElementTypes.h"
 
+/*! @file
+ *
+ * Central types required across the entire project are defined here.
+ */
+
 namespace MoleculeManip {
 
 /* Global typedefs */
+/*!
+ * Bond type enumeration. Besides the classic organic single, double and triple
+ * bonds, bond orders up to sextuple are explicitly included.
+ *
+ * Although currently unused, Aromatic and Eta bonds are included in
+ * anticipation of their necessity.
+ */
 enum class BondType : unsigned {
-    Single,
-    Double,
-    Triple,
-    Quadruple,
-    Quintuple,
-    Sextuple,
-    Aromatic,
-    Eta
+  Single,
+  Double,
+  Triple,
+  Quadruple,
+  Quintuple,
+  Sextuple,
+  Aromatic,
+  Eta
 };
 
 namespace GraphDetail {
-  struct VertexData {
-    Delib::ElementType elementType;
-  };
 
-  struct EdgeData {
-    BondType bondType;
-  };
+struct VertexData {
+  Delib::ElementType elementType;
+};
+
+struct EdgeData {
+  BondType bondType;
+};
+
 } // namespace GraphDetail
 
-//! The type of the molecular graph
+/*!
+ * The type of the molecular graph. An adjacency list is used due to sparsity
+ * of the molecular graph. Further explanation of graph representation choices
+ * are found in the code.
+ */
 using GraphType = boost::adjacency_list<
   /* OutEdgeListS = Type of Container for edges of a vertex
    * Options: vector, list, slist, set, multiset, unordered_set
@@ -69,9 +87,13 @@ using GraphType = boost::adjacency_list<
    */
 >;
 
+//! Shorthand to boost graph vertex descriptor
 using AtomIndexType = GraphType::vertex_descriptor;
+
+//! Shorthand to boost graph edge descriptor
 using EdgeIndexType = GraphType::edge_descriptor;
 
+//! Descriptive name for dlib indices
 using dlibIndexType = long;
 
 } // namespace MoleculeManip

@@ -4,14 +4,31 @@
 #include "DistanceGeometry/generateConformation.h"
 #include "template_magic/Enumerate.h"
 
+/*! @file
+ *
+ * Contains some helper functions to write DG step raytrace and analysis files.
+ */
+
 namespace MoleculeManip {
 
 namespace AnalysisHelpers {
 
 namespace detail {
 
-inline char mapIndexToChar(const unsigned& index) {
-  return 'A' + index;
+inline std::string mapIndexToChar(const unsigned& index) {
+  std::string result {
+    static_cast<char>(
+      'A' + (
+        (index / 25) % 25
+      )
+    )
+  };
+
+  result += static_cast<char>(
+    'A' + (index % 25)
+  );
+
+  return result;
 }
 
 } // namespace detail
@@ -79,7 +96,7 @@ void writeDGPOVandProgressFiles(
     outStream << "\n";
 
     // Bonds
-    for(const auto& edgePair : mol.getAdjacencyList().getEdges()) {
+    for(const auto& edgePair : mol.getEdges()) {
       outStream << "Bond(" 
         << detail::mapIndexToChar(edgePair.first.first) << ","
         << detail::mapIndexToChar(edgePair.first.second) 

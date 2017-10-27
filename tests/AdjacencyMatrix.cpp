@@ -8,7 +8,7 @@
 #include "RepeatedElementCollection.h"
 
 /*   Member listing
- * y 1 AdjacencyList constructor
+ * y 1 Molecule constructor
  * y 2 getMatrixRef
  * y 3 altering operator ()
  * y 4 non-altering operator ()
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE( AdjacencyMatrix_all ) {
   /* 1 */
   // use uniform initialization syntax to avoid most vexing parse
   AdjacencyMatrix testInstance {
-    AdjacencyList {
+    Molecule {
       makeRepeatedElementCollection(Delib::ElementType::H, 8),
       edges
     }

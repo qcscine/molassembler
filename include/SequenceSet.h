@@ -6,6 +6,12 @@
 #include <set>
 #include <array>
 
+/*! @file
+ *
+ * Contains a class declaration that standardizes sequences for use in a set so
+ * that a sequence reverse is considered part of the set.
+ */
+
 /* NOTES
  * - As soon as larger molecules need to be treated, add a bloom filter for set
  *   contains checking speed improvement. Set membership via count is O(log N),
@@ -22,6 +28,7 @@ namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
+//! Standardization function for an index sequence.
 template<int size>
 void standardize(std::array<AtomIndexType, size>& sequence) {
   if(sequence.front() > sequence.back()) {
@@ -34,6 +41,10 @@ void standardize(std::array<AtomIndexType, size>& sequence) {
   return sequence;
 }
 
+/*!
+ * Stores index sequences in a fashion that recongizes reverses as part of the
+ * set.
+ */
 template<int sequenceLength>
 class SequenceSet {
 public:
@@ -46,7 +57,9 @@ private:
   SequenceSetType _sequences;
 
 /* Static private members */
-  static void _standardizeInplace(std::array<AtomIndexType, sequenceLength>& sequence) {
+  static void _standardizeInplace(
+    std::array<AtomIndexType, sequenceLength>& sequence
+  ) {
     if(sequence.front() > sequence.back()) {
       std::reverse(
         sequence.begin(),
@@ -57,7 +70,9 @@ private:
     return sequence;
   }
 
-  static std::array<AtomIndexType, sequenceLength> _standardize(const std::array<AtomIndexType, sequenceLength>& sequence) {
+  static std::array<AtomIndexType, sequenceLength> _standardize(
+    const std::array<AtomIndexType, sequenceLength>& sequence
+  ) {
     if(sequence.front() < sequence.back()) {
       return sequence;
     }
@@ -71,7 +86,9 @@ private:
     return reversed;
   }
 
-  static std::array<AtomIndexType, sequenceLength> _standardize(const std::vector<AtomIndexType>& sequence) {
+  static std::array<AtomIndexType, sequenceLength> _standardize(
+    const std::vector<AtomIndexType>& sequence
+  ) {
     assert(sequence.size() == sequenceLength);
 
     if(sequence.front() < sequence.back()) {

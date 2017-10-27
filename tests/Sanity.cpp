@@ -63,14 +63,17 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
       auto mapped = TemplateMagic::map(
         ensemble,
         [&](const auto& positions) -> bool {
-          auto inferredStereocenterList = molecule.getAdjacencyList().inferStereocentersFromPositions(
+          auto inferredStereocenterList = molecule.inferStereocentersFromPositions(
             positions
           );
 
-          bool pass = molecule.stereocenters == inferredStereocenterList;
+          bool pass = molecule.getStereocenterList() == inferredStereocenterList;
 
           if(!pass) {
-            explainDifference(molecule.stereocenters, inferredStereocenterList);
+            explainDifference(
+              molecule.getStereocenterList(),
+              inferredStereocenterList
+            );
           }
 
           return pass;
@@ -92,7 +95,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
           << " comparisons with inferred StereocenterList pass" << std::endl;
 
         std::cout << "StereocenterList has entries:" << std::endl;
-        for(const auto& stereocenter: stereocenterPermutation.stereocenters) {
+        for(const auto& stereocenter: stereocenterPermutation.getStereocenterList()) {
           std::cout << stereocenter << std::endl;
         }
       }

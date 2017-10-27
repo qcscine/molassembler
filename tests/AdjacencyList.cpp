@@ -1,8 +1,8 @@
-#define BOOST_TEST_MODULE AdjacencyListTests
+#define BOOST_TEST_MODULE MoleculeGraphTests
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "AdjacencyList.h"
+#include "Molecule.h"
 #include "template_magic/Random.h"
 
 // Temp, testing
@@ -33,9 +33,9 @@ using namespace std::string_literals;
 
 namespace MoleculeManip {
 
-struct AdjacencyListValidator {
+struct MoleculeValidator {
   static boost::optional<std::string> everyAdjacencyHasReverse(
-    const AdjacencyList& a
+    const Molecule& a
   ) {
     for(unsigned i = 0; i < a.numAtoms(); i++) {
       auto adjacents = a.getAdjacencies(i);
@@ -55,17 +55,19 @@ struct AdjacencyListValidator {
   static std::vector<
     std::function<
       boost::optional<std::string>(
-        const AdjacencyList&
+        const Molecule&
       )
     >
   > validators; 
 
-  static bool validate(const AdjacencyList& a) {
+  static bool validate(const Molecule& a) {
     for(const auto& validator : validators) {
       auto errorOption = validator(a);
       if(errorOption) {
         std::cout << errorOption.value() << std::endl;
-        a.dumpGraphviz("validationFailure.dot");
+        std::ofstream outFile ("validationFailure.dot");
+        outFile << a.dumpGraphviz();
+        outFile.close();
         return false;
       }
     }
@@ -77,18 +79,22 @@ struct AdjacencyListValidator {
 std::vector<
   std::function<
     boost::optional<std::string>(
-      const AdjacencyList&
+      const Molecule&
     )
   >
-> AdjacencyListValidator::validators {
-  AdjacencyListValidator::everyAdjacencyHasReverse,
+> MoleculeValidator::validators {
+  MoleculeValidator::everyAdjacencyHasReverse,
 };
 
 } // namespace MoleculeManip
 
-// Create a random connected AdjacencyList
+// Create a random connected Molecule
 struct ALFixture {
-  AdjacencyList adjacencies;
+  Molecule molecule {
+    Delib::ElementType::H,
+    Delib::ElementType::H,
+    BondType::Single
+  };
 
   ALFixture() {
     // generated adjacency lists parameters
@@ -98,9 +104,6 @@ struct ALFixture {
 
     // start with two connected vertices
     AtomIndexType N = 2;
-    adjacencies.addAtom(Delib::ElementType::H);
-    adjacencies.addAtom(Delib::ElementType::H);
-    adjacencies.addBond(0, 1, BondType::Single);
 
     // extend at random with upper bound of 6 edges per vertex
     while(N < atomsLimit) {
@@ -108,16 +111,17 @@ struct ALFixture {
       AtomIndexType selection = TemplateMagic::random.getSingle<double>(0u, N - 1);
 
       // ensure less than 6 edges
-      if(adjacencies.getAdjacencies(selection).size() >= edgesLimit) {
+      if(molecule.getAdjacencies(selection).size() >= edgesLimit) {
         // do not extend here
         continue;
       }
 
-      // add a new slot
-      auto newIndex = adjacencies.addAtom(Delib::ElementType::H);
-      
-      // connect to selected random atom
-      adjacencies.addBond(selection, newIndex, BondType::Single);
+      // add a new atom connected to the random atom
+      molecule.addAtom(
+        Delib::ElementType::H,
+        selection,
+        BondType::Single
+      );
 
       N += 1;
     }
@@ -136,15 +140,15 @@ struct ALFixture {
        */
       if(
         i == j
-        || adjacencies.isAdjacent(i, j)
-        || adjacencies.getAdjacencies(i).size() >= edgesLimit
-        || adjacencies.getAdjacencies(j).size() >= edgesLimit
+        || molecule.isAdjacent(i, j)
+        || molecule.getAdjacencies(i).size() >= edgesLimit
+        || molecule.getAdjacencies(j).size() >= edgesLimit
       ) {
         // skip a pair where any applies
         continue;
       }
       
-      adjacencies.addBond(i, j, BondType::Single);
+      molecule.addBond(i, j, BondType::Single);
       nCycles += 1;
     }
   }
@@ -152,7 +156,7 @@ struct ALFixture {
 };
 
 BOOST_FIXTURE_TEST_CASE(validFixture, ALFixture) {
-  BOOST_CHECK(AdjacencyListValidator::validate(adjacencies));
+  BOOST_CHECK(MoleculeValidator::validate(molecule));
 }
 
 // Non-trivial tests
@@ -160,8 +164,8 @@ BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
   // generate a list of terminal vertices
   std::vector<AtomIndexType> terminalVertices;
   
-  for(AtomIndexType i = 0; i < adjacencies.numAtoms(); i++) {
-    if(adjacencies.getAdjacencies(i).size() == 1) {
+  for(AtomIndexType i = 0; i < molecule.numAtoms(); i++) {
+    if(molecule.getAdjacencies(i).size() == 1) {
       terminalVertices.push_back(i);
     }
   }
@@ -169,18 +173,13 @@ BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
   if(!terminalVertices.empty()) {
     // select a random terminal vertex
     auto selection = terminalVertices.at(
-      static_cast<unsigned>(
-        TemplateMagic::random.getSingle<double>(0, terminalVertices.size() - 1)
-      )
+      TemplateMagic::random.getSingle<unsigned>(0, terminalVertices.size() - 1)
     );
 
-    // remove all adjacencies involving it
-    auto bondedIndices = adjacencies.getAdjacencies(selection);
-    for(const auto& bondedIndex : bondedIndices) {
-      adjacencies.removeBond(selection, bondedIndex);
-    }
+    // remove all bonds involving it
+    molecule.removeAtom(selection);
 
     // test validity
-    BOOST_CHECK(AdjacencyListValidator::validate(adjacencies));
+    BOOST_CHECK(MoleculeValidator::validate(molecule));
   } 
 }

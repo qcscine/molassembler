@@ -1,8 +1,12 @@
 #ifndef INCLUDE_TESTING_DISTANCE_BOUNDS_FROM_SYMMETRY_H
 #define INCLUDE_TESTING_DISTANCE_BOUNDS_FROM_SYMMETRY_H
 
-#include "symmetry_information/Symmetries.h"
 #include "Molecule.h"
+
+/*! @file
+ *
+ * Some testing helper functions to generate prototypical molecules
+ */
 
 namespace DGDBM { // Distance Geometry Distance Bounds Matrix
 
@@ -12,6 +16,10 @@ enum class DistancesOption {
   Random // randomly chosen between 1 and 2
 };
 
+/*!
+ * Constructs a prototypical symmetric (i.e. all ligands identical) molecule
+ * with a Ruthenium center and Hydrogen substituents otherwise.
+ */
 MoleculeManip::Molecule symmetricMolecule(
   const Symmetry::Name& symmetry
 ) {
@@ -23,7 +31,7 @@ MoleculeManip::Molecule symmetricMolecule(
     BondType::Single
   );
 
-  while(molecule.getNumAtoms() - 1 < Symmetry::size(symmetry)) {
+  while(molecule.numAtoms() - 1 < Symmetry::size(symmetry)) {
     molecule.addAtom(
       Delib::ElementType::H,
       0,
@@ -31,19 +39,15 @@ MoleculeManip::Molecule symmetricMolecule(
     );
   }
 
-  auto stereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
-    symmetry,
-    0,
-    molecule.getAdjacencyList().rankPriority(0)
-  );
-
-  stereocenterPtr -> assign(0);
-
-  molecule.stereocenters.add(stereocenterPtr);
-
   return molecule;
 }
 
+/*!
+ * Constructs a prototypical asymmetric (i.e. all ligands different) molecule 
+ * of a specific size which is not VSEPR compliant past size 5.
+ *
+ * Does not set the central stereocenter symmetry.
+ */
 MoleculeManip::Molecule asymmetricMolecule(
   const Symmetry::Name& symmetry
 ) {
@@ -68,7 +72,7 @@ MoleculeManip::Molecule asymmetricMolecule(
 
   for(
     unsigned elementIndex = 0;
-    molecule.getNumAtoms() - 1 < Symmetry::size(symmetry);
+    molecule.numAtoms() - 1 < Symmetry::size(symmetry);
     elementIndex++
   ) {
     molecule.addAtom(
@@ -77,18 +81,6 @@ MoleculeManip::Molecule asymmetricMolecule(
       BondType::Single
     );
   }
-
-  auto rankResultPair = molecule.getAdjacencyList().rankPriority(0);
-
-  auto stereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
-    symmetry,
-    0,
-    molecule.getAdjacencyList().rankPriority(0)
-  );
-
-  stereocenterPtr -> assign(0);
-
-  molecule.stereocenters.add(stereocenterPtr);
 
   return molecule;
 }

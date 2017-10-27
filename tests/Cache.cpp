@@ -10,24 +10,6 @@
 
 #include "Cache.h"
 
-// Some help functions for testing
-template<typename Function>
-unsigned timeWrapNullaryCallable(
-    const Function& nullaryCallable
-) {
-    using namespace std::chrono;
-
-    time_point<system_clock> start, end;
-    start = system_clock::now();
-
-    nullaryCallable();
-    
-    end = system_clock::now();
-    duration<double> elapsed = end - start;
-
-    return elapsed.count() * 1e3;
-}
-
 unsigned int ackermann(unsigned int m, unsigned int n) {
   if (m == 0) {
     return n + 1;

@@ -3,8 +3,16 @@
 
 #include <tuple>
 
+/*! @file
+ *
+ * Very minor helper class that creates a .begin/.end class for a pair of
+ * iterators so that they can be used in a range-for expression.
+ */
+
 template<typename Iterator>
 struct RangeForTemporary {
+  using IteratorPairType = std::pair<Iterator, Iterator>;
+
   Iterator _begin, _end;
 
   RangeForTemporary(Iterator begin, Iterator end) 
@@ -26,5 +34,16 @@ struct RangeForTemporary {
     return _end;
   }
 };
+
+/*template<typename Iterator>
+RangeForTemporary<Iterator> makeRangeForTemporary(
+  std::pair<Iterator, Iterator>&& iterators
+) {
+  return RangeForTemporary<Iterator>(
+    std::forward<
+      RangeForTemporary<Iterator>::IteratorPairType
+    >(iterators)
+  );
+}*/
 
 #endif

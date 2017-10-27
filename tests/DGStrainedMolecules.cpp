@@ -19,8 +19,8 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   auto mol = molHandler.readSingle(filePath.string());
 
   DistanceGeometry::MoleculeSpatialModel spatialModel {
-    mol.getAdjacencyList(),
-    mol.stereocenters,
+    mol.getGraph(),
+    mol.getStereocenterList(),
     DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
   };
 

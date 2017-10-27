@@ -4,6 +4,11 @@
 #include <set>
 #include <iostream>
 
+/*! @file
+ *
+ * Basic Logging functionality for debugging
+ */
+
 namespace Log {
 
 namespace detail {
@@ -17,7 +22,7 @@ namespace detail {
   extern std::ostream nullStream;
 }
 
-// Level of logging
+//! Level of logging
 enum class Level {
   Trace,
   Debug,
@@ -28,9 +33,9 @@ enum class Level {
   None
 };
 
-// Particular cases of special things that may or may not be desired
+//! Particular cases of special logging items that may or may not be desired
 enum class Particulars {
-  /* In AdjacencyList.cpp, where a fit of CNStereocenters against positions is
+  /* In Molecule.cpp, where a fit of CNStereocenters against positions is
    * performed when a Molecule is read in, you can have numerical details of
    * the fit logged. Corresponding analysis scripts also exist.
    */
@@ -51,6 +56,9 @@ enum class Particulars {
   BFSConstraintCollectorVisitCall,
   // in debugDistanceGeometry, progress information
   DGDebugInfo,
+  /* Ranking debug information
+   */
+  RankingTreeDebugInfo
 };
 
 

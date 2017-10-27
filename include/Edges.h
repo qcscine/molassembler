@@ -8,6 +8,12 @@
 
 #include "common_typedefs.h"
 
+/*! @file
+ *
+ * Contains an intermediate graph representation class to help dealing with
+ * small graphs for simple testing.
+ */
+
 /* Enhancements:
  * - Could provide custom iterator with .i, .j, .bondType members for easier
  *   for loop iteration. Otherwise, it's .first.first, .first.second, .second,
@@ -16,6 +22,11 @@
 
 namespace MoleculeManip {
 
+/*!
+ * A small-time graph representation class whose underlying data is essentially
+ * a map between a pair of indices and a bond type. Largely unused except for
+ * the construction of small graphs during testing.
+ */
 class Edges {
 public:
   using MapType = std::map<

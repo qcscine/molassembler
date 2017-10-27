@@ -6,11 +6,16 @@
 #include "GraphAlgorithms.h"
 
 #include "Delib/ElementInfo.h" // Delib
-#include "Delib/PositionCollection.h"
 
 #include <fstream>
 #include <iomanip>
 #include <ctime>
+
+/*! @file
+ *
+ * Contains main IO definitions of the library. Currently only supports
+ * MOLFile V2000 specification.
+ */
 
 /* TODO
  * - test V2000
@@ -23,12 +28,14 @@ namespace MoleculeManip {
 
 namespace IO {
 
+//! Abstract base class / interface for file reading classes
 class FileReader {
 public:
   virtual bool canReadFile(const std::string& filename) = 0;
   virtual Molecule readSingle(const std::string& filename) = 0;
 };
 
+//! Abstract base class / interface for file writing classes
 class FileWriter {
 public:
   virtual bool canWriteFile(const std::string& filename) = 0;
@@ -39,6 +46,9 @@ public:
   ) = 0;
 };
 
+/*!
+ * Handles IO of MOLFiles
+ */
 class MOLFileHandler : public FileReader, public FileWriter {
 private:
 /* Typedefs */
@@ -60,8 +70,7 @@ private:
 
 /* Private members */
   Delib::PositionCollection _positions;
-  AdjacencyList _adjacencies;
-  Edges _edges;
+  GraphType _graph;
 
   const std::map<std::string, MOLFileVersion> _versionMap {
     {"V2000", MOLFileVersion::V2000}
@@ -113,11 +122,10 @@ private:
       _positions.push_back(atomPosition);
 
       // Update adjacencies
-      _adjacencies.addAtom(
-        Delib::ElementInfo::elementTypeForSymbol(
-          _removeAllSpaces(
-            line.substr(31, 3)
-          )
+      auto vertex = boost::add_vertex(_graph);
+      _graph[vertex].elementType = Delib::ElementInfo::elementTypeForSymbol(
+        _removeAllSpaces(
+          line.substr(31, 3)
         )
       );
     } 
@@ -135,15 +143,15 @@ private:
       j = std::atoi(line.substr(3, 3).c_str()) - 1;
       bty = std::atoi(line.substr(6, 3).c_str());
 
-      // WARNING: this can throw if queries are set! No graceful error handling.
-      // add adjacencies
-      _adjacencies.addBond(i, j, _bondTypeMap.at(bty));
+      // Add bond to graph
+      auto edgeAddPair = boost::add_edge(i, j, _graph);
+      _graph[edgeAddPair.first].bondType = _bondTypeMap.at(bty);
     }
   }
 
   /* NOTE: Important cases, perhaps to be altered
-   * If BondTypes of 4-6 are to be stored in a MOLFile, the program will crash,
-   * no elegant failure exists.
+   * TODO If BondTypes of 4-6 are to be stored in a MOLFile, the program will
+   * crash, no elegant failure exists.
    */
   void _writeSingle(
     const std::string& filename,
@@ -166,7 +174,7 @@ private:
         auto localNow = *localtime(&now);
 
         fout << std::setw(2) << "##" // First and last initial of user
-          << std::setw(8) << "MLib"+Version::String() // PPPPPPPP (8, Prog name)
+          << std::setw(8) << "MLib"+Version::majorMinor() // PPPPPPPP (8, Prog name)
           << std::put_time(&localNow, "%m%d%y%H%M") // MMDDYYHHmm
           << "3D" // dd (dimensionality)
           // Missing:
@@ -180,8 +188,8 @@ private:
         fout << std::endl;
         state = State::CountsLine;
       } else if(state == State::CountsLine) {
-        fout << std::setw(3) << molecule.getNumAtoms() // aaa
-          << std::setw(3) << molecule.getNumBonds() // bbb
+        fout << std::setw(3) << molecule.numAtoms() // aaa
+          << std::setw(3) << molecule.numBonds() // bbb
           << std::setw(3) << 0u // lll (number of atom lists)
           << std::setw(3) << 0u // fff (obsolete)
           << std::setw(3) << 0u // ccc (chiral or not?) unhandled -> distant TODO
@@ -198,7 +206,7 @@ private:
         auto symbolStringLambda = [](const Delib::ElementType& elementType) {
           return Delib::ElementInfo::symbol(elementType);
         };
-        for(unsigned i = 0; i < molecule.getNumAtoms(); i++) {
+        for(unsigned i = 0; i < molecule.numAtoms(); i++) {
           fout << std::setprecision(4) << std::fixed
             << std::setw(10) << positions[i].x()
             << std::setw(10) << positions[i].y()
@@ -212,7 +220,7 @@ private:
             << std::setw(3) << 0u // hhh (hydrogen count, for query, ignored)
             << std::setw(3) << 0u // bbb (stereo care box??, ignored)
             // vvv (valence)
-            << std::setw(3) << molecule.getBondedAtomIndices(i).size() 
+            << std::setw(3) << molecule.getNumAdjacencies(i)
             << std::setw(3) << 0u // HHH (H0 designator, ISIS/Desktop, ignored)
             << std::setw(3) << 0u // rrr (unused)
             << std::setw(3) << 0u // iii (unused)
@@ -271,8 +279,7 @@ public:
     MOLFileVersion formatVersion = MOLFileVersion::V2000;
     // clear private state
     _positions.clear();
-    _adjacencies.clear();
-    _edges.clear();
+    _graph.clear();
     
     unsigned atomBlockSize = 0, bondBlockSize = 0;
     std::string line;
@@ -324,9 +331,7 @@ public:
     }
 
     // Ensure that the Molecule is connected, no fragments are contained
-    unsigned nComponents = GraphAlgorithms::numConnectedComponents(
-      _adjacencies.access()
-    );
+    unsigned nComponents = GraphAlgorithms::numConnectedComponents(_graph);
 
     if(nComponents != 1) {
       throw std::runtime_error(
@@ -352,16 +357,9 @@ public:
       /* Assume all are dummies, no 3D Information present -> no Stereocenter
        *  assignments
        */
-      return Molecule(
-        _adjacencies
-      );
+      return Molecule(_graph);
     } else { // We have 3D information, try to infer stereocenters (if present)
-      return Molecule(
-        _adjacencies,
-        _adjacencies.inferStereocentersFromPositions(
-          _positions
-        )
-      );
+      return Molecule(_graph, _positions);
     }
 
     // For every Stereocenter contained, try to find out which one it is
@@ -392,8 +390,8 @@ public:
     return _positions;
   }
 
-  const AdjacencyList& getAdjacencyList() const {
-    return _adjacencies;
+  const GraphType& getGraph() const {
+    return _graph;
   }
 };
 

@@ -4,12 +4,28 @@
 #include "RefinementProblem.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 
+/*! @file
+ *
+ * The numerical minimization of the error function is done with the dlib 
+ * library. This file contains some adapters for strategy, potentials used and
+ * end criteria for the minimization.
+ *
+ * The minimization proceeds in two stages. In the first stage, the
+ * conformation is permitted to expand into a fourth spatial dimension to aid
+ * in stereocenter inversion. Afterwards, the absolute value of the fourth
+ * spatial dimension is penalized and compressed out.
+ */
+
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
 namespace dlibAdaptors {
 
+/*! 
+ * Dlib minimization strategy that proceeds without compression of the fourth
+ * dimension until all chiral centers have inverted to the correct orientation
+ */
 class iterationOrAllChiralitiesCorrectStrategy {
 private:
   const std::vector<ChiralityConstraint>& _constraints;
@@ -63,6 +79,11 @@ public:
   }
 };
 
+/*! 
+ * Dlib minimization strategy that proceeds with compression of the fourth
+ * dimension until all the overall gradient length is below a particular
+ * threshold
+ */
 struct iterationOrGradientNormStopStrategy {
 /* Public access constants */
   const unsigned maxIterations;

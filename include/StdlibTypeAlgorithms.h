@@ -10,6 +10,11 @@
 #include <numeric>
 #include <map>
 
+/*! @file
+ *
+ * Contains a few useful functions for dealing with STL containers / types.
+ */
+
 /* ostream operators for sets, pairs and vectors */
 /* TODO 
  * - ostream operators for non-selfmade datasructures violates DO NOT OPEN

@@ -1,141 +1,292 @@
-#ifndef INCLUDE_MOLECULE_H
-#define INCLUDE_MOLECULE_H
+#ifndef INCLUDE_MOLECULE_MANIP_MOLECULE_H
+#define INCLUDE_MOLECULE_MANIP_MOLECULE_H
 
-// STL
-#include <iostream>
-#include <set>
-
-// Custom headers
-#include "AdjacencyList.h"
+#include "Edges.h"
 #include "StereocenterList.h"
-#include "BondDistance.h"
+#include "CycleData.h"
+#include "VSEPR.h"
+// #include "MemFnCache.h"
+
+/*! @file
+ *
+ * Contains the Molecule class declaration, which is the central class of the
+ * library.
+ */
+
+/* TODO
+ * - Modifiers must update StereocenterList, invalidate Cache
+ * - the results of detectStereocenters and inferStereocenters are both
+ *   dependent on the sequence of candidates!  If e.g.::
+ *   
+ *          E   F
+ *           % :
+ *       B    2    B
+ *         \ / \ /
+ *      A ▶ 1   3 ◀ A
+ *          △   △
+ *          C   C
+ *
+ *    And if the sequence is 1-2-3, we get ABCD, ABCD, ABCD, which is correct.
+ *    Each of 1-3 is a stereocenter.  If the sequence is 2-1-3, we get ABCC,
+ *    ABCD, ABCD, which is incorrect. Needs to consider that rankings can
+ *    differ since stereocenters may be as yet unassigned. One way would be to
+ *    make a graph of dependencies and then resolve that in a fashion that they
+ *    can be sequentially assigned. That may not be possible however!
+ *
+ *    What happens if::
+ *
+ *         A   B
+ *          % /
+ *           1
+ *      A.  / \  .A
+ *        :2 - 3:
+ *      B°       °B
+ *
+ *   Dependencies are circular, yet there are clearly two ways of arranging the
+ *   substituents relative to one another: all on one side or one on one side,
+ *   two on the other. Can this even be achieved with permuting stereocenters?
+ *
+ * - How should changing a stereocenter's assignment work now? Via the public 
+ *   member is no longer an option now that we have the cache, since there is no
+ *   way to guarantee that the cache is invalidated and the list of stereocenters
+ *   updated
+ *
+ * - Cannot leave it to the user to notify Molecule of changes in a 
+ *   stereocenter, it ought to update all other stereocenters itself if that
+ *   happens. Need a proxy object that notifies the StereocenterList that
+ *   something was changed and updates all other stereocenters. for-range
+ *   iteration through the map then has to be discouraged unleass I can modify
+ *   Stereocenters in-place to accomodate ranking changes and am not forced to
+ *   remove and re-insert, which will invalidate iterators to the affected
+ *   stereocenter
+ */
+
 
 namespace MoleculeManip {
 
-/* TODO
- * - Figure out how to handle charge, where we need to pay attention and what 
- *   the minimal way is
- * - Get cracking on all the TODOs spread around
+/*! 
+ * Central class of the library, modeling a molecular graph with all state.
  */
-
 class Molecule {
+public:
+  /*enum class CacheKeys {
+    RemovalSafetyData
+  };*/
+
 private:
-/* private members */
+/* State */
+  GraphType _adjacencies;
+  StereocenterList _stereocenters;
 
-  /* A Molecule conceptually contains a graph:
-   * - Atoms are vertices (and thus have values)
-   * - Bonds are edges (and thus weighted)
-   * - The ensuing graph is
-   *   - connected: a path from any node to any other exists
-   *   - sparse: few edges present compared to the number of possible 
-   *     edges -> use adjacency list instead of adjacency matrix
+  // Properties cache
+  /*using CacheType = MemFnCache<CacheKeys, Molecule>;
+  mutable CacheType _cache;*/
+
+/* Members */
+/* Private members */
+  /*! 
+   * Adds an vertex to the graph and sets it's element type property, returning
+   * the new index.
    */
+  AtomIndexType _addAtom(const Delib::ElementType& elementType);
 
-  // Private state variables
-  AdjacencyList _adjacencies;
+  //! Returns the list of cache generators needed to initialize the cache
+  /*std::initializer_list<
+    std::pair<CacheKeys, CacheType::LambdaType>
+  > _cacheGenerators() const;*/
 
-  /* Private member functions */
-  bool _validAtomIndex(const AtomIndexType& a) const;
+  //! Returns whether the specified index is valid or not
+  bool _isValidIndex(const AtomIndexType& index) const;
+
+  //! Returns a list of atom indices that have at least 3 bonded neighbors
+  std::vector<AtomIndexType> _getCNStereocenterCandidates() const;
+
+  /*! 
+   * Returns a list of edge indices where each endpoint has 1 or two additional
+   * substituent besides the edge neighbor
+   */
+  std::vector<EdgeIndexType> _getEZStereocenterCandidates() const;
+
+  //!  Reduces an atom's neighbors to ligand types
+  std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
+    const AtomIndexType& index
+  ) const;
+
+  //!  Updates the molecule's StereocenterList after a graph modification
+  void _updateStereocenterList();
 
 public:
-/* Public members */
-  StereocenterList stereocenters;
-
+/* Typedefs */
+  using ExplicitEdge = std::pair<
+    Edges::MapType::key_type, // pair<AtomIndexType, AtomIndexType>
+    Edges::MapType::mapped_type // BondType
+  >;
 
 /* Constructors */
-  // From two elements and a shared bond (min to be considered a Molecule)
+  /*! 
+   * Default-constructor is deleted since the minimal molecule we represent is
+   * two bonded atoms.
+   */
+  Molecule() = delete;
+
+  //! Construct a minimal molecule from two element types and a shared bond type
   Molecule(
     const Delib::ElementType& a,
     const Delib::ElementType& b,
     const BondType& bondType
-  ); 
-
-  // From internal components
-  explicit Molecule(const AdjacencyList& adjacencies);
-
-  Molecule(
-    const AdjacencyList& adjacencies,
-    const StereocenterList& stereocenters
   );
 
-/* Modifiers */
-  // Add an atom bonded to an existing atom
+  /*! 
+   * Shorthand construction of a molecule using a list of element types and
+   * a set of explicit edges
+   */
+  Molecule(
+    const Delib::ElementTypeCollection& elements,
+    const Edges& edges
+  );
+
+  //! Constructs a molecule from connectivity alone, inferring the stereocenters
+  Molecule(const GraphType& graph);
+
+  //! Construct a molecule from connectivity and 3D information
+  Molecule(
+    const GraphType& graph,
+    const Delib::PositionCollection& positions
+  );
+
+/* Modification */
+  //! Adds an atom by attaching it to an existing atom.
   AtomIndexType addAtom(
     const Delib::ElementType& elementType,
-    const AtomIndexType& bondedToIndex,
+    const AtomIndexType& adjacentTo,
     const BondType& bondType
   );
 
-  // Add a bond betwen existing atoms in the Molecule
+  //! Adds a bond between existing atoms.
   void addBond(
     const AtomIndexType& a,
     const AtomIndexType& b,
     const BondType& bondType
-  ); 
+  );
 
+  //! Changes an existing atom's element type
   void changeElementType(
     const AtomIndexType& a,
     const Delib::ElementType& elementType
   );
 
-  // Remove an atom. This removes all bonds to and from this atom index.
-  void removeAtom(const AtomIndexType& a); 
+  /*! 
+   * Removes an atom after checking if removing that atom is safe, i.e. does
+   * not disconnect the graph.
+   *
+   * Throws if isSafeToRemoveAtom returns false.
+   */
+  void removeAtom(const AtomIndexType& a);
 
-  // Remove a bond between two atoms.
+  /*!
+   * Removes an atom after checking if removing that bond is safe, i.e. does not
+   * disconnect the graph. An example of bonds that can always be removed are
+   * ring-closing bonds, since they never disconnect the molecular graph.
+   *
+   * Throws if isSafeToRemoveBond returns false. Note that it is not safe to
+   * remove a bond just because one of the involved atoms is terminal, since
+   * that atom would then be disconnected from the rest of the molecule. It is
+   * however considered safe to remove the terminal vertex, which involves
+   * removing the bond to it.
+   */
   void removeBond(
     const AtomIndexType& a,
     const AtomIndexType& b
   );
 
-  void updateStereocenters();
+/* Information */
+  StereocenterList detectStereocenters() const;
 
-/* Information retrieval */
-  void dumpGraphviz(const std::string& filename) const;
-
-  int formalCharge(const AtomIndexType& a) const; // TODO not implemented
-
-  const AdjacencyList& getAdjacencyList() const; 
-
-  // Returns a vector of persistent external indices that the atom is bonded to.
-  std::vector<AtomIndexType> getBondedAtomIndices(
-    const AtomIndexType& a
+  Symmetry::Name determineLocalGeometry(
+    const AtomIndexType& index
   ) const;
 
-  // Get the bond type for specified external indices
-  BondType getBondType(
+  std::string dumpGraphviz() const;
+
+  std::vector<AtomIndexType> getAdjacencies(const AtomIndexType& a) const;
+
+  boost::optional<BondType> getBondType(
     const AtomIndexType& a,
     const AtomIndexType& b
   ) const;
 
-  std::vector<AdjacencyList::ExplicitEdge> getEdges() const;
+  CycleData getCycleData() const;
 
-  Delib::ElementType getElementType(
+  // Creates a copy of the contained data suitable for the Edges class
+  std::vector<ExplicitEdge> getEdges() const;
+
+  Delib::ElementType getElementType(const AtomIndexType& index) const;
+
+  const GraphType& getGraph() const;
+
+  const StereocenterList& getStereocenterList() const;
+
+  unsigned getNumAdjacencies(const AtomIndexType& a) const;
+
+  StereocenterList inferStereocentersFromPositions(
+    const Delib::PositionCollection& positions
+  ) const;
+
+  bool isAdjacent(
+    const AtomIndexType& a,
+    const AtomIndexType& b
+  ) const;
+
+  bool isSafeToRemoveAtom(const AtomIndexType& a) const;
+
+  bool isSafeToRemoveBond(
+    const AtomIndexType& a,
+    const AtomIndexType& b
+  ) const;
+
+  /*! Returns a range-for temporary object allowing c++11 style for loop 
+   * iteration through an atom's adjacencies
+   */
+  RangeForTemporary<GraphType::adjacency_iterator> iterateAdjacencies(
     const AtomIndexType& a
   ) const;
 
-  unsigned getNumAtoms() const;
-  unsigned getNumBonds() const;
+  /*! Returns a range-for temporary object allowing c++11-style for loop 
+   * iteration through edges
+   */
+  RangeForTemporary<GraphType::edge_iterator> iterateEdges() const;
 
-  unsigned hydrogenCount(const AtomIndexType& a) const;
+  /*! Returns a range-for temporary object allowing c++11-style for loop 
+   * iteration through edges around a specific atom
+   */
+  RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(
+    const AtomIndexType& a
+  ) const;
 
-  int oxidationState(const AtomIndexType& a) const; // TODO not implemented
+  RankingInformation rankPriority(
+    const AtomIndexType& a,
+    const std::set<AtomIndexType>& excludeAdjacent = {}
+  ) const;
 
-  /* Testing */
-  std::pair<bool, std::string> validate() const noexcept; // TODO not implemented
+  unsigned numAtoms() const;
+
+  unsigned numBonds() const;
 
 /* Operators */
-  /* An efficient implementation of the following two is imperative.
-   * Some ideas for fast differentiation can probably be found from the 
-   * wikipedia category "Graph invariants"
-   */
-  bool operator == (const Molecule& b) const; // TODO not implemented
-  bool operator != (const Molecule& b) const; // TODO not implemented
+  //! Returns the adjacencies of the specified atom index
+  RangeForTemporary<GraphType::adjacency_iterator> operator [] (
+    const AtomIndexType& a
+  ) const;
 
 /* Friends */
-  /* Output stream operator for easier debugging. */
-  friend std::ostream& operator<<(std::ostream& os, const Molecule& mol);
+  friend struct MoleculeValidator;
 };
 
 } // namespace MoleculeManip
+
+std::ostream& operator << (
+  std::ostream& os,
+  const MoleculeManip::Molecule& molecule
+);
 
 #endif

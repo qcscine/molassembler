@@ -1,18 +1,15 @@
 #define BOOST_TEST_MODULE GraphAlgorithmsTests
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
 
+#include "boost/test/unit_test.hpp"
 #include "template_magic/Containers.h"
 
-#include "AdjacencyList.h"
 #include "GraphAlgorithms.h"
+#include "Molecule.h"
+#include "RepeatedElementCollection.h"
 #include "StdlibTypeAlgorithms.h"
 
-// Helper header
-#include "RepeatedElementCollection.h"
-
 #include <random>
-
 
 /* TODO
  */
@@ -24,7 +21,7 @@ using NodeType = BFSVisitors::TreeGenerator::NodeType;
 
 BOOST_AUTO_TEST_CASE( graphAlgorithmTrivialTests ) {
 
-  auto testInstance = AdjacencyList(
+  auto testInstance = Molecule(
     makeRepeatedElementCollection(Delib::ElementType::H, 8),
     Edges({
       {{0, 1}, BondType::Single},
@@ -39,14 +36,14 @@ BOOST_AUTO_TEST_CASE( graphAlgorithmTrivialTests ) {
   );
 
   BOOST_CHECK(
-    numConnectedComponents(testInstance.access()) == 1
+    numConnectedComponents(testInstance.getGraph()) == 1
   );
 
   auto testExpansionCorrectness = [](
-    AdjacencyList&& adjacencyList, 
+    Molecule&& molecule, 
     const std::shared_ptr<NodeType>& comparisonTreePtr
   ) {
-    auto treePtr = makeTree(adjacencyList.access());
+    auto treePtr = makeTree(molecule.getGraph());
     bool test = (*treePtr == *comparisonTreePtr);
     BOOST_CHECK(test);
     if(!test) {
@@ -59,7 +56,7 @@ BOOST_AUTO_TEST_CASE( graphAlgorithmTrivialTests ) {
 
   // triangle
   testExpansionCorrectness(
-    AdjacencyList(
+    Molecule(
       makeRepeatedElementCollection(Delib::ElementType::H, 3),
       Edges({
         {{0, 1}, BondType::Single},
@@ -75,7 +72,7 @@ BOOST_AUTO_TEST_CASE( graphAlgorithmTrivialTests ) {
 
   // square
   testExpansionCorrectness(
-    AdjacencyList(
+    Molecule(
       makeRepeatedElementCollection(Delib::ElementType::H, 4),
       Edges({
         {{0, 1}, BondType::Single},
@@ -92,7 +89,7 @@ BOOST_AUTO_TEST_CASE( graphAlgorithmTrivialTests ) {
 
   // pentangle
   testExpansionCorrectness(
-    AdjacencyList(
+    Molecule(
       makeRepeatedElementCollection(Delib::ElementType::H, 5),
       Edges({
         {{0, 1}, BondType::Single},
@@ -114,7 +111,7 @@ BOOST_AUTO_TEST_CASE( graphAlgorithmTrivialTests ) {
 
   // spiro for good measure
   testExpansionCorrectness(
-    AdjacencyList(
+    Molecule(
       makeRepeatedElementCollection(Delib::ElementType::H, 7),
       Edges({
         {{0, 1}, BondType::Single},
@@ -145,7 +142,7 @@ BOOST_AUTO_TEST_CASE( graphAlgorithmTrivialTests ) {
 
   // fused triangles
   testExpansionCorrectness(
-    AdjacencyList(
+    Molecule(
       makeRepeatedElementCollection(Delib::ElementType::H, 4),
       Edges({
         {{0, 1}, BondType::Single},
@@ -169,7 +166,7 @@ BOOST_AUTO_TEST_CASE( graphAlgorithmTrivialTests ) {
 
 }
 
-// test order independence of tree generation on sequence in AdjacencyList
+// test order independence of tree generation on sequence in Molecule
 BOOST_AUTO_TEST_CASE(treeGenerationOrderIndependence) {
   
   Edges edges({
@@ -185,10 +182,10 @@ BOOST_AUTO_TEST_CASE(treeGenerationOrderIndependence) {
   });
 
   auto prototypeTree = makeTree(
-    AdjacencyList(
+    Molecule(
       makeRepeatedElementCollection(Delib::ElementType::H, 9),
       edges
-    ).access(), 
+    ).getGraph(), 
     0
   );
 
@@ -204,7 +201,7 @@ BOOST_AUTO_TEST_CASE(treeGenerationOrderIndependence) {
 
 #ifdef NDEBUG
   std::random_device randomDevice;
-  for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
+  for(unsigned n = 0; n < 5; ++n) _seeds.emplace_back(randomDevice());
 #else 
   _seeds.emplace_back(2721813754);
 #endif
@@ -221,24 +218,32 @@ BOOST_AUTO_TEST_CASE(treeGenerationOrderIndependence) {
       _randomEngine
     );
 
-    // create new AdjacencyList and fill it with edges in the specified manner
-    AdjacencyList adjacencies;
+    // create new Molecule and fill it with edges in the specified manner
+    Molecule molecule {
+      Delib::ElementType::H,
+      Delib::ElementType::H,
+      BondType::Single
+    };
 
-    for(unsigned i = 0; i < 9; i++) {
-      adjacencies.addAtom(Delib::ElementType::H);
+    for(unsigned i = 2; i < 9; ++i) {
+      molecule.addAtom(
+        Delib::ElementType::H,
+        0,
+        BondType::Single
+      );
     }
 
     for(const auto& index : sequence) {
       auto edgesConstIterator = edges.begin();
       std::advance(edgesConstIterator, index);
-      adjacencies.addBond(
+      molecule.addBond(
         edgesConstIterator -> first.first,
         edgesConstIterator -> first.second,
         BondType::Single
       );
     }
 
-    auto currentTree = makeTree(adjacencies.access(), 0);
+    auto currentTree = makeTree(molecule.getGraph(), 0);
 
     if(*prototypeTree != *currentTree) {
       pass = false;
@@ -254,7 +259,7 @@ using LinkReturnType = std::set<
 >;
 
 bool testSubstituentConnectivity(
-  const AdjacencyList& adjacencyList,
+  const Molecule& molecule,
   const AtomIndexType& centralAtom,
   const LinkReturnType& expectedResult
 ) {
@@ -271,14 +276,14 @@ bool testSubstituentConnectivity(
     return TemplateMagic::condenseIterable(pairStrings);
   };
 
-  auto adjacencies = adjacencyList.getAdjacencies(centralAtom);
+  auto adjacencies = molecule.getAdjacencies(centralAtom);
   std::set<AtomIndexType> adjacenciesSet {
     adjacencies.begin(),
     adjacencies.end()
   };
 
   auto result = findSubstituentLinks(
-    adjacencyList.access(),
+    molecule.getGraph(),
     centralAtom,
     adjacenciesSet
   );
@@ -299,7 +304,7 @@ bool testSubstituentConnectivity(
 
 BOOST_AUTO_TEST_CASE(substituentConnectivity) {
 
-  const auto spiroGraph = AdjacencyList(
+  const auto spiroGraph = Molecule(
     makeRepeatedElementCollection(Delib::ElementType::C, 7),
     Edges({
       {{0, 1}, BondType::Single},
@@ -338,7 +343,7 @@ BOOST_AUTO_TEST_CASE(substituentConnectivity) {
     })
   );
 
-  auto triConnectedLigand  = AdjacencyList(
+  auto triConnectedLigand  = Molecule(
     makeRepeatedElementCollection(Delib::ElementType::C, 7),
     Edges({
       {{0, 1}, BondType::Single},
