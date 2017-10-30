@@ -25,14 +25,25 @@ struct BoundsMatrix {
   Eigen::MatrixXd matrix;
   
 /* Constructors */
+  explicit BoundsMatrix() = default;
+
   explicit BoundsMatrix(const unsigned& N) {
-    matrix.resize(N, N);
-    matrix.setZero();
+    resize(N);
   }
 
   explicit BoundsMatrix(Eigen::MatrixXd passMatrix) : matrix(passMatrix) {}
 
+/* Information */
+  unsigned N() const {
+    return matrix.rows();
+  }
+
 /* Modification */
+  void resize(const unsigned& N) {
+    matrix.resize(N, N);
+    matrix.setZero();
+  }
+
   double& lowerBound(const unsigned& i, const unsigned& j) {
     return matrix(
       std::max(i, j),
@@ -132,10 +143,8 @@ private:
   void _initRandomEngine();
 
 public:
-  const unsigned N;
-
 /* Constructors */
-  DistanceBoundsMatrix() = delete;
+  DistanceBoundsMatrix() noexcept;
   explicit DistanceBoundsMatrix(const unsigned& N) noexcept;
   explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) noexcept;
 
@@ -187,6 +196,8 @@ public:
 
   //! Returns a bounds matrix with the current bounds squared
   Eigen::MatrixXd makeSquaredBoundsMatrix() const;
+
+  unsigned N() const;
 
   //! Access an upper bound
   double upperBound(

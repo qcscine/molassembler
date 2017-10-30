@@ -74,7 +74,7 @@ struct errfValue {
   explicit errfValue(
     const DistanceBoundsMatrix& distanceBounds,
     const std::vector<ChiralityConstraint>& chiralityConstraints
-  ) : N(distanceBounds.N),
+  ) : N(distanceBounds.N()),
       squaredBounds(
         dlib::mat( // Converts Eigen::MatrixXd to dlib::matrix
           distanceBounds.makeSquaredBoundsMatrix()
@@ -215,7 +215,7 @@ public:
   explicit errfGradient(
     const DistanceBoundsMatrix& distanceBounds,
     const std::vector<ChiralityConstraint>& chiralityConstraints
-  ) : N(distanceBounds.N),
+  ) : N(distanceBounds.N()),
       squaredBounds(
         dlib::mat( // Converts Eigen::MatrixXd to dlib::matrix
           distanceBounds.makeSquaredBoundsMatrix()

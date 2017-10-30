@@ -102,7 +102,7 @@ public:
 
 /* Modification */
   //! Changes the assignment of the stereocenter
-  void assign(const unsigned& assignment) final;
+  void assign(const boost::optional<unsigned>& assignment) final;
 
   /*!
    * In case a graph modification changes the ranking of this stereocenter's 

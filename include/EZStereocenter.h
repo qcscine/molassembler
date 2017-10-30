@@ -110,7 +110,7 @@ public:
 /* Modification */
   void adaptToRankingChange(const RankingInformation& newRanking) final;
 
-  void assign(const unsigned& assignment) final;
+  void assign(const boost::optional<unsigned>& assignment) final;
 
   void fit(const Delib::PositionCollection& positions) final;
 

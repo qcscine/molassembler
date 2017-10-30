@@ -135,8 +135,6 @@ int main(int argc, char* argv[]) {
       // Make a molecule and generate an ensemble
       auto mol = DGDBM::asymmetricMolecule(symmetryName);
 
-      // TODO Assign any unassigned stereocenters
-
       auto debugData = detail::debugDistanceGeometry(
         mol,
         nStructures,

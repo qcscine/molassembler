@@ -184,8 +184,10 @@ UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeLinks(
 }
 
 /* Modification */
-void CNStereocenter::assign(const unsigned& assignment) {
-  assert(assignment < _uniqueAssignments.size());
+void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
+  if(assignment) {
+    assert(assignment.value() < _uniqueAssignments.size());
+  }
 
   // Store current assignment
   assignmentOption = assignment;
@@ -193,10 +195,14 @@ void CNStereocenter::assign(const unsigned& assignment) {
   /* save a mapping of next neighbor indices to symmetry positions after
    * assigning (AtomIndexType -> unsigned).
    */
-  _neighborSymmetryPositionMap = _makeNeighborSymmetryPositionMap(
-    _uniqueAssignments[assignment],
-    _neighborCharMap
-  );
+  if(assignment) {
+    _neighborSymmetryPositionMap = _makeNeighborSymmetryPositionMap(
+      _uniqueAssignments[assignment.value()],
+      _neighborCharMap
+    );
+  } else { // Wipe the map
+    _neighborSymmetryPositionMap = {};
+  }
 }
 
 void CNStereocenter::adaptToRankingChange(const RankingInformation& newRanking) {

@@ -6,9 +6,12 @@ namespace MoleculeManip {
 namespace DistanceGeometry {
 
 /* Constructors */
+DistanceBoundsMatrix::DistanceBoundsMatrix() noexcept
+  : _boundsMatrix()
+  {}
+
 DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) noexcept
-  : _boundsMatrix(N),
-    N(N) 
+  : _boundsMatrix(N)
 {
 
   _boundsMatrix.matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
@@ -16,8 +19,7 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) noexcept
 }
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) noexcept
-  : _boundsMatrix(matrix),
-    N(matrix.rows()) 
+  : _boundsMatrix(matrix)
 {
   assert(matrix.rows() == matrix.cols());
 
@@ -25,29 +27,23 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) noexce
 }
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(const DistanceBoundsMatrix& other) noexcept
-  : _boundsMatrix(other._boundsMatrix),
-    N(other.N)
+  : _boundsMatrix(other._boundsMatrix)
 { 
   _initRandomEngine();
 }
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(DistanceBoundsMatrix&& other) noexcept
-  : _boundsMatrix(other.N),
-    N(other.N) 
+  : _boundsMatrix(other._boundsMatrix)
 {
-  std::swap(_boundsMatrix, other._boundsMatrix);
   _initRandomEngine();
 }
 
 DistanceBoundsMatrix& DistanceBoundsMatrix::operator = (const DistanceBoundsMatrix& other) noexcept {
-  assert(N == other.N);
   _boundsMatrix = other._boundsMatrix;
-
   return *this;
 }
 
 DistanceBoundsMatrix& DistanceBoundsMatrix::operator = (DistanceBoundsMatrix&& other) noexcept {
-  assert(N == other.N);
   std::swap(_boundsMatrix, other._boundsMatrix);
 
   return *this;
@@ -113,6 +109,8 @@ Eigen::MatrixXd DistanceBoundsMatrix::generateDistanceMatrix(
    * triangle inequality consistency.
    */
   auto boundsCopy = _boundsMatrix;
+
+  const unsigned N = _boundsMatrix.N();
 
   Eigen::MatrixXd distances;
   distances.resize(N, N);
@@ -186,6 +184,7 @@ const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
 
 unsigned DistanceBoundsMatrix::boundInconsistencies() const {
   unsigned count = 0;
+  const unsigned N = _boundsMatrix.N();
 
   for(unsigned i = 0; i < N; i++) {
     for(unsigned j = i + 1; j < N; j++) {
@@ -208,6 +207,8 @@ double DistanceBoundsMatrix::lowerBound(
 Eigen::MatrixXd DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
   BoundsMatrix copy = _boundsMatrix;
 
+  const unsigned N = copy.N();
+
   for(unsigned i = 0; i < N; i++) {
     for(unsigned j = i + 1; j < N; j++) {
       copy.upperBound(i, j) *= copy.upperBound(i, j);
@@ -216,6 +217,10 @@ Eigen::MatrixXd DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
   }
 
   return copy.matrix;
+}
+
+unsigned DistanceBoundsMatrix::N() const {
+  return _boundsMatrix.N();
 }
 
 double DistanceBoundsMatrix::upperBound(

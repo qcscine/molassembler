@@ -60,8 +60,6 @@ struct MoleculeDGInformation {
   std::vector<
     Stereocenters::ChiralityConstraintPrototype
   > chiralityConstraintPrototypes;
-
-  explicit MoleculeDGInformation(const unsigned& N);
 };
 
 MoleculeDGInformation gatherDGInformation(

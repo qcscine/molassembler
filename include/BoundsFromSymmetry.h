@@ -82,6 +82,8 @@ MoleculeManip::Molecule asymmetricMolecule(
     );
   }
 
+  molecule.refreshStereocenters();
+
   return molecule;
 }
 

@@ -24,18 +24,70 @@ AtomIndexType Molecule::_addAtom(const Delib::ElementType& elementType) {
   return vertex;
 }
 
-/* std::initializer_list<
-  std::pair<Molecule::CacheKeys, Molecule::CacheType::LambdaType>
-> Molecule::_cacheGenerators() const {
-  return {
-    {
-      CacheKeys::RemovalSafetyData,
-      [](const Molecule& mol) -> GraphAlgorithms::RemovalSafetyData {
-        return GraphAlgorithms::getRemovalSafetyData(mol.getGraph());
-      }
+StereocenterList Molecule::_detectStereocenters() const {
+  StereocenterList stereocenterList;
+
+  // Find CNStereocenters
+  for(const auto& candidateIndex : _getCNStereocenterCandidates()) {
+    // Construct a Stereocenter here
+    auto newStereocenter = std::make_shared<
+      Stereocenters::CNStereocenter
+    >(
+      determineLocalGeometry(candidateIndex),
+      candidateIndex,
+      rankPriority(candidateIndex)
+    );
+
+    /*std::cout << "Trial stereocenter: " << newStereocenter -> info() << std::endl;
+    std::cout << "Ranked adjacent indices (low to high): vec{";
+    for(const auto& adjacency: rankResultPair.first) {
+      std::cout << adjacency;
+      if(adjacency != rankResultPair.first.back()) std::cout << ", ";
     }
-  };
-}*/
+    std::cout << "}" << std::endl;
+
+    std::cout << "Equal pairs: vec{";
+    for(const auto& indexPair : rankResultPair.second) {
+      std::cout << "(" << indexPair.first << ", " << indexPair.second << ")";
+    }
+    std::cout << "}" << std::endl;*/
+
+    if(newStereocenter -> numAssignments() > 1) {
+      stereocenterList.add(
+        std::move(newStereocenter)
+      );
+    }
+  }
+
+  /* TODO
+   * - Will need refinement to not instantiate EZStereocenters in small cycles
+   *   (up to a preset size, maybe around 8 or so?)
+   */
+  // Find EZStereocenters
+  for(const auto& edgeIndex : _getEZStereocenterCandidates()) {
+    auto source = boost::source(edgeIndex, _adjacencies),
+         target = boost::target(edgeIndex, _adjacencies);
+
+    // Construct a Stereocenter here
+    auto newStereocenter = std::make_shared<
+      Stereocenters::EZStereocenter
+    >(
+      source,
+      rankPriority(source, {target}),
+      target,
+      rankPriority(target, {source})
+    );
+
+    if(newStereocenter -> numAssignments() == 2) {
+      stereocenterList.add(
+        std::move(newStereocenter)
+      );
+    }
+  }
+
+  return stereocenterList;
+}
+
 
 bool Molecule::_isValidIndex(const AtomIndexType& index) const {
   return index < numAtoms();
@@ -146,7 +198,7 @@ void Molecule::_updateStereocenterList() {
    * new set of assignments and assign the stereocenter to that.
    */
   if(_stereocenters.empty()) {
-    _stereocenters = detectStereocenters();
+    _stereocenters = _detectStereocenters();
   } else {
     // TODO this is difficult!
   }
@@ -181,7 +233,7 @@ Molecule::Molecule(
 
 Molecule::Molecule(const GraphType& graph) 
 : _adjacencies(graph), 
-  _stereocenters(detectStereocenters())
+  _stereocenters(_detectStereocenters())
 {}
 
 Molecule::Molecule(
@@ -212,6 +264,26 @@ void Molecule::addBond(
   _adjacencies[edgeAddPair.first].bondType = bondType;
 }
 
+void Molecule::assignStereocenterAtAtom(
+  const AtomIndexType& a,
+  const boost::optional<unsigned>& assignment
+) {
+  assert(_isValidIndex(a));
+  if(_stereocenters.involving(a)) {
+    auto stereocenterPtr = _stereocenters.at(a);
+
+    if(assignment < stereocenterPtr -> numAssignments()) {
+      stereocenterPtr -> assign(assignment);
+
+      // TODO keep valid state trigger, changing an assignment can alter ranking
+    } else {
+      throw std::logic_error("assignStereocenterAtAtom: Invalid assignment index!");
+    }
+  } else {
+    throw std::logic_error("assignStereocenterAtAtom: No stereocenter at this index!");
+  }
+}
+
 void Molecule::changeElementType(
   const AtomIndexType& a,
   const Delib::ElementType& elementType
@@ -221,6 +293,10 @@ void Molecule::changeElementType(
   }
 
   _adjacencies[a].elementType = elementType;
+}
+
+void Molecule::refreshStereocenters() {
+  _stereocenters = _detectStereocenters();
 }
 
 void Molecule::removeAtom(const AtomIndexType& a) {
@@ -253,70 +329,6 @@ void Molecule::removeBond(
 }
 
 /* Information */
-StereocenterList Molecule::detectStereocenters() const {
-  StereocenterList stereocenterList;
-
-  // Find CNStereocenters
-  for(const auto& candidateIndex : _getCNStereocenterCandidates()) {
-    // Construct a Stereocenter here
-    auto newStereocenter = std::make_shared<
-      Stereocenters::CNStereocenter
-    >(
-      determineLocalGeometry(candidateIndex),
-      candidateIndex,
-      rankPriority(candidateIndex)
-    );
-
-    /*std::cout << "Trial stereocenter: " << newStereocenter -> info() << std::endl;
-    std::cout << "Ranked adjacent indices (low to high): vec{";
-    for(const auto& adjacency: rankResultPair.first) {
-      std::cout << adjacency;
-      if(adjacency != rankResultPair.first.back()) std::cout << ", ";
-    }
-    std::cout << "}" << std::endl;
-
-    std::cout << "Equal pairs: vec{";
-    for(const auto& indexPair : rankResultPair.second) {
-      std::cout << "(" << indexPair.first << ", " << indexPair.second << ")";
-    }
-    std::cout << "}" << std::endl;*/
-
-    if(newStereocenter -> numAssignments() > 1) {
-      stereocenterList.add(
-        std::move(newStereocenter)
-      );
-    }
-  }
-
-  /* TODO
-   * - Will need refinement to not instantiate EZStereocenters in small cycles
-   *   (up to a preset size, maybe around 8 or so?)
-   */
-  // Find EZStereocenters
-  for(const auto& edgeIndex : _getEZStereocenterCandidates()) {
-    auto source = boost::source(edgeIndex, _adjacencies),
-         target = boost::target(edgeIndex, _adjacencies);
-
-    // Construct a Stereocenter here
-    auto newStereocenter = std::make_shared<
-      Stereocenters::EZStereocenter
-    >(
-      source,
-      rankPriority(source, {target}),
-      target,
-      rankPriority(target, {source})
-    );
-
-    if(newStereocenter -> numAssignments() == 2) {
-      stereocenterList.add(
-        std::move(newStereocenter)
-      );
-    }
-  }
-
-  return stereocenterList;
-}
-
 Symmetry::Name Molecule::determineLocalGeometry(
   const AtomIndexType& index
 ) const {
@@ -538,10 +550,6 @@ bool Molecule::isAdjacent(
 }
 
 bool Molecule::isSafeToRemoveAtom(const AtomIndexType& a) const {
-  /*const auto& removalSafetyData = _cache.getGeneratable<
-    GraphAlgorithms::RemovalSafetyData
-  >(CacheKeys::RemovalSafetyData, *this);*/
-
   auto removalSafetyData = GraphAlgorithms::getRemovalSafetyData(
     getGraph()
   );
@@ -598,27 +606,13 @@ RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(
   );
 }
 
+unsigned Molecule::numAtoms() const {
+  return boost::num_vertices(_adjacencies);
+}
 
-/* TODO
- * - MUST ensure that stereocenter assignments are evaluated LAST, if there are
- *   any
- * - does not treat correctly:
- *   - cycles
- *   - stereocenters (Z over E, R over S (?))
- *   - double and triple bond ghost atom splitting
- * - unsure about sub-lists. is this approach even remotely correct?
- * - FUCK CIP rules -> maybe just use the unsigned values of assignments in
- *   GraphFeatures and rank branches with that.
- * - test!
- *
- *
- * NOTES
- * - Disadvantages: operator < is likely called repeatedly on already-evaluated
- *   arguments, and is fairly costly each time. Perhaps being able to remember
- *   comparisons that were already carried out could be useful...
- * - making a full tree out of the molecule starting at the atom whose
- *   substituents you want sorted could be a good data structure to iterate over
- */
+unsigned Molecule::numBonds() const {
+  return boost::num_edges(_adjacencies);
+}
 
 RankingInformation Molecule::rankPriority(
   const AtomIndexType& a,
@@ -647,14 +641,6 @@ RankingInformation Molecule::rankPriority(
   );
 
   return rankingResult;
-}
-
-unsigned Molecule::numAtoms() const {
-  return boost::num_vertices(_adjacencies);
-}
-
-unsigned Molecule::numBonds() const {
-  return boost::num_edges(_adjacencies);
 }
 
 /* Operators */

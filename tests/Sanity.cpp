@@ -43,8 +43,12 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
     // Get an asymmetric molecule (all ligands different) for the current molecule
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
-    // For each possible arrangement of these ligands
-    for(const auto& stereocenterPermutation : iterateStereocenterPermutations(molecule)) {
+    auto centralStereocenter = molecule.getStereocenterList().at(0);
+
+    for(unsigned i = 0; i < centralStereocenter->numAssignments(); ++i) {
+      molecule.assignStereocenterAtAtom(0, i);
+
+      // For each possible arrangement of these ligands
       /* Create an ensemble of 3D positions using threeDimensional refinement,
        * no metrization and uniform distance setting
        */
@@ -95,7 +99,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
           << " comparisons with inferred StereocenterList pass" << std::endl;
 
         std::cout << "StereocenterList has entries:" << std::endl;
-        for(const auto& stereocenter: stereocenterPermutation.getStereocenterList()) {
+        for(const auto& stereocenter: molecule.getStereocenterList()) {
           std::cout << stereocenter << std::endl;
         }
       }

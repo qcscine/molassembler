@@ -85,7 +85,7 @@ public:
   virtual void adaptToRankingChange(const RankingInformation& newRanking) = 0;
 
   //!  Assign this feature
-  virtual void assign(const unsigned& assignment) = 0;
+  virtual void assign(const boost::optional<unsigned>& assignment) = 0;
 
   /*!
    * Fit the stereocenter against coordinates, changing internal state to most

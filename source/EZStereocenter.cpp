@@ -138,10 +138,12 @@ void EZStereocenter::adaptToRankingChange(const RankingInformation& newRanking) 
   // TODO implement!
 }
 
-void EZStereocenter::assign(const unsigned& assignment) {
-  assert(assignment < _numAssignments); 
+void EZStereocenter::assign(const boost::optional<unsigned>& assignment) {
+  if(assignment) {
+    assert(assignment.value() < _numAssignments); 
+  }
 
-  _isEOption = static_cast<bool>(assignment);
+  _isEOption = static_cast<bool>(assignment.value());
 }
 
 void EZStereocenter::fit(const Delib::PositionCollection& positions) {

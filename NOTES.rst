@@ -1,5 +1,7 @@
 TODO
 ----
+- Recheck geometry_assignments relative weights for correctness
+- Fix all the failing tests
 - Finish interface change for RankingInformation / CNStereocenter / EZStereocenter and RETEST!
 - Finish changeRanking functions for CNStereocenter and EZStereocenter
 - Find a suitable way to ensure that when a stereocenter is changed, any other

@@ -5,7 +5,6 @@
 #include "StereocenterList.h"
 #include "CycleData.h"
 #include "VSEPR.h"
-// #include "MemFnCache.h"
 
 /*! @file
  *
@@ -14,53 +13,7 @@
  */
 
 /* TODO
- * - Modifiers must update StereocenterList, invalidate Cache
- * - the results of detectStereocenters and inferStereocenters are both
- *   dependent on the sequence of candidates!  If e.g.::
- *   
- *          E   F
- *           % :
- *       B    2    B
- *         \ / \ /
- *      A ▶ 1   3 ◀ A
- *          △   △
- *          C   C
- *
- *    And if the sequence is 1-2-3, we get ABCD, ABCD, ABCD, which is correct.
- *    Each of 1-3 is a stereocenter.  If the sequence is 2-1-3, we get ABCC,
- *    ABCD, ABCD, which is incorrect. Needs to consider that rankings can
- *    differ since stereocenters may be as yet unassigned. One way would be to
- *    make a graph of dependencies and then resolve that in a fashion that they
- *    can be sequentially assigned. That may not be possible however!
- *
- *    What happens if::
- *
- *         A   B
- *          % /
- *           1
- *      A.  / \  .A
- *        :2 - 3:
- *      B°       °B
- *
- *   Dependencies are circular, yet there are clearly two ways of arranging the
- *   substituents relative to one another: all on one side or one on one side,
- *   two on the other. Can this even be achieved with permuting stereocenters?
- *
- * - How should changing a stereocenter's assignment work now? Via the public 
- *   member is no longer an option now that we have the cache, since there is no
- *   way to guarantee that the cache is invalidated and the list of stereocenters
- *   updated
- *
- * - Cannot leave it to the user to notify Molecule of changes in a 
- *   stereocenter, it ought to update all other stereocenters itself if that
- *   happens. Need a proxy object that notifies the StereocenterList that
- *   something was changed and updates all other stereocenters. for-range
- *   iteration through the map then has to be discouraged unleass I can modify
- *   Stereocenters in-place to accomodate ranking changes and am not forced to
- *   remove and re-insert, which will invalidate iterators to the affected
- *   stereocenter
  */
-
 
 namespace MoleculeManip {
 
@@ -68,19 +21,10 @@ namespace MoleculeManip {
  * Central class of the library, modeling a molecular graph with all state.
  */
 class Molecule {
-public:
-  /*enum class CacheKeys {
-    RemovalSafetyData
-  };*/
-
 private:
 /* State */
   GraphType _adjacencies;
   StereocenterList _stereocenters;
-
-  // Properties cache
-  /*using CacheType = MemFnCache<CacheKeys, Molecule>;
-  mutable CacheType _cache;*/
 
 /* Members */
 /* Private members */
@@ -90,10 +34,7 @@ private:
    */
   AtomIndexType _addAtom(const Delib::ElementType& elementType);
 
-  //! Returns the list of cache generators needed to initialize the cache
-  /*std::initializer_list<
-    std::pair<CacheKeys, CacheType::LambdaType>
-  > _cacheGenerators() const;*/
+  StereocenterList _detectStereocenters() const;
 
   //! Returns whether the specified index is valid or not
   bool _isValidIndex(const AtomIndexType& index) const;
@@ -169,11 +110,32 @@ public:
     const BondType& bondType
   );
 
+  /*! Sets the stereocenter assignment at a particular atom
+   *
+   * This sets the stereocenter assignment at a specific atom index. For this,
+   * a stereocenter must be instantiated and contained in the StereocenterList
+   * returned by getStereocenterList(). The supplied assignment must be either
+   * boost::none or smaller than stereocenterPtr->numAssignments().
+   *
+   * NOTE: Although molecules in which this occurs are infrequent, consider the
+   * StereocenterList you have accessed prior to calling this function and 
+   * particularly any iterators thereto invalidated. This is because an
+   * assignment change can trigger a ranking change, which can in turn lead
+   * to the introduction of new stereocenters or the removal of old ones.
+   */
+  void assignStereocenterAtAtom(
+    const AtomIndexType& a,
+    const boost::optional<unsigned>& assignment
+  );
+
   //! Changes an existing atom's element type
   void changeElementType(
     const AtomIndexType& a,
     const Delib::ElementType& elementType
   );
+
+  //! TODO Temporary function prior to proper editing state correctness
+  void refreshStereocenters();
 
   /*! 
    * Removes an atom after checking if removing that atom is safe, i.e. does
@@ -199,8 +161,25 @@ public:
     const AtomIndexType& b
   );
 
+  // TODO implement, with trigger to keep valid state (can change ranking)
+  /*! Sets the local geometry at an atom index
+   *
+   * This sets the local geometry at a specific atom index. There are a number
+   * of cases that this function treats differently: In case the symmetry does
+   * not fit the number of substituents at that atom, this function throws. If
+   * there is already a CNStereocenter instantiated at this atom index, its
+   * underlying symmetry is altered. If there is an EZStereocenter
+   * instantiated on this atom, this function will throw. If there is no
+   * CNStereocenter at this index, one is instantiated. In all cases, new or
+   * modified stereocenters are default-assigned if there is only one possible
+   * assignment.
+   */
+  void setGeometryAtAtom(
+    const AtomIndexType& a,
+    const Symmetry::Name& symmetryName
+  );
+
 /* Information */
-  StereocenterList detectStereocenters() const;
 
   Symmetry::Name determineLocalGeometry(
     const AtomIndexType& index
@@ -263,14 +242,14 @@ public:
     const AtomIndexType& a
   ) const;
 
+  unsigned numAtoms() const;
+
+  unsigned numBonds() const;
+
   RankingInformation rankPriority(
     const AtomIndexType& a,
     const std::set<AtomIndexType>& excludeAdjacent = {}
   ) const;
-
-  unsigned numAtoms() const;
-
-  unsigned numBonds() const;
 
 /* Operators */
   //! Returns the adjacencies of the specified atom index

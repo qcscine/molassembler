@@ -1,6 +1,7 @@
 #include <dlib/optimization.h>
 #include <Eigen/Dense>
 #include "template_magic/Containers.h"
+#include "template_magic/Random.h"
 
 #include "DistanceGeometry/dlibAdaptors.h"
 #include "DistanceGeometry/dlibDebugAdaptors.h"
@@ -11,6 +12,12 @@
 
 #include "GraphAlgorithms.h"
 #include "TreeAlgorithms.h"
+
+/* TODO
+ * - Random assignment of unassigned stereocenters isn't ideal yet
+ *   - Sequence randomization
+ *   - Use relative weights in assignment decision
+ */
 
 namespace MoleculeManip {
 
@@ -211,6 +218,17 @@ void checkFailureRatio(
   }
 }
 
+bool moleculeHasUnassignedStereocenters(const Molecule& mol) {
+  for(const auto& stereocenterPtr : mol.getStereocenterList()) {
+    if(!stereocenterPtr->assigned()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 // Non-debug version of DG
 std::list<Delib::PositionCollection> runDistanceGeometry(
   const Molecule& molecule,
@@ -219,16 +237,24 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
+  /* In case the molecule has unassigned stereocenters, we need to randomly
+   * assign them in every step prior to generating the distance bounds matrix
+   *
+   * TODO it would be better if traversal through the stereocenter list were
+   * random instead of in sequence for true random assignment
+   */
+  bool regenerateEachStep = moleculeHasUnassignedStereocenters(molecule);
+
   std::list<Delib::PositionCollection> ensemble;
 
-  const auto DGData = gatherDGInformation(
-    molecule,
-    distanceMethod
-  );
+  MoleculeDGInformation DGData;
 
-  // Always:
-//  stopCriteria.iterations = 1e5;
-//  stopCriteria.gradNorm = 1e-5;
+  if(!regenerateEachStep) {
+    DGData = gatherDGInformation(
+      molecule,
+      distanceMethod
+    );
+  }
 
   unsigned failures = 0;
 
@@ -238,13 +264,42 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
    */
   const double failureRatio = 0.1; // allow only 10% failures in release
 
-  // Begin
   for(
     unsigned currentStructureNumber = 0;
     // Failed optimizations do not count towards successful completion
     currentStructureNumber - failures < numStructures;
     currentStructureNumber += 1
   ) {
+    if(regenerateEachStep) {
+      auto moleculeCopy = molecule;
+
+      do {
+        for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
+          if(!stereocenterPtr->assigned()) {
+            moleculeCopy.assignStereocenterAtAtom(
+              *stereocenterPtr->involvedAtoms().begin(),
+              TemplateMagic::random.getSingle<unsigned>(
+                0,
+                stereocenterPtr->numAssignments()
+              )
+            );
+
+            /* Jump out of for-loop and re-check if there are still unassigned
+             * stereocenters since assigning a stereocenter can invalidate
+             * the list iterators
+             */
+            continue;
+          }
+        }
+      } while(moleculeHasUnassignedStereocenters(moleculeCopy));
+
+      // Fetch the DG data from the molecule with no unassigned stereocenters
+      DGData = gatherDGInformation(
+        moleculeCopy,
+        distanceMethod
+      );
+    }
+
     const auto distancesMatrix = DGData.distanceBounds.generateDistanceMatrix(
       metrization
     );
@@ -296,7 +351,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         ) < 0.5
       ) {
         // Invert y coordinates
-        for(unsigned i = 0; i < DGData.distanceBounds.N; i++) {
+        for(unsigned i = 0; i < DGData.distanceBounds.N(); i++) {
           dlibPositions(
             static_cast<dlibIndexType>(i) * 4  + 1
           ) *= -1;
@@ -415,22 +470,20 @@ DGDebugData debugDistanceGeometry(
    * it is necessary only once in the other
    */
 
-  auto moleculeHasUnassignedStereocenters = [&](const Molecule& mol) -> bool {
-    for(const auto& stereocenterPtr : mol.getStereocenterList()) {
-      if(!stereocenterPtr->assigned()) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  auto DGData = gatherDGInformation(
-    molecule,
-    distanceMethod
-  );
+  /* There is also some degree of doubt about the relative frequencies of 
+   * assignments in UniqueAssignments. I should get on that too.
+   */
 
   bool regenerateEachStep = moleculeHasUnassignedStereocenters(molecule);
+
+  MoleculeDGInformation DGData;
+
+  if(!regenerateEachStep) { // Collect once, keep all the time
+    DGData = gatherDGInformation(
+      molecule,
+      distanceMethod
+    );
+  }
 
   /* If the ratio of failures/total optimizations exceeds this value,
    * the function throws. Remember that if an optimization is considered a 
@@ -439,7 +492,6 @@ DGDebugData debugDistanceGeometry(
   const double failureRatio = 3; // more lenient than production, must be > 0
   unsigned failures = 0;
 
-  // Begin
   for(
     unsigned currentStructureNumber = 0;
     // Failed optimizations do not count towards successful completion
@@ -448,7 +500,32 @@ DGDebugData debugDistanceGeometry(
   ) {
     if(regenerateEachStep) {
       auto moleculeCopy = molecule;
-      // TODO continue here, assign unassigned and re-assign DGData with a new collected data
+
+      do {
+        for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
+          if(!stereocenterPtr->assigned()) {
+            moleculeCopy.assignStereocenterAtAtom(
+              *stereocenterPtr->involvedAtoms().begin(),
+              TemplateMagic::random.getSingle<unsigned>(
+                0,
+                stereocenterPtr->numAssignments() - 1
+              )
+            );
+
+            /* Jump out of for-loop and re-check if there are still unassigned
+             * stereocenters since assigning a stereocenter can invalidate
+             * the list iterators
+             */
+            continue;
+          }
+        }
+      } while(moleculeHasUnassignedStereocenters(moleculeCopy));
+
+      // Fetch the DG data from the molecule with no unassigned stereocenters
+      DGData = gatherDGInformation(
+        moleculeCopy,
+        distanceMethod
+      );
     }
 
     std::list<RefinementStepData> refinementSteps;
@@ -504,7 +581,7 @@ DGDebugData debugDistanceGeometry(
         ) < 0.5
       ) {
         // Invert y coordinates
-        for(unsigned i = 0; i < DGData.distanceBounds.N; i++) {
+        for(unsigned i = 0; i < DGData.distanceBounds.N(); i++) {
           dlibPositions(
             static_cast<dlibIndexType>(i) * 4 + 1
           ) *= -1;
@@ -616,14 +693,12 @@ DGDebugData debugDistanceGeometry(
 
 } // namespace detail
 
-MoleculeDGInformation::MoleculeDGInformation(const unsigned& N) : distanceBounds(N) {}
-
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
   // Initialize the return object
-  MoleculeDGInformation data {molecule.numAtoms()};
+  MoleculeDGInformation data;
 
   // Generate a spatial model from the molecular graph and stereocenters
   MoleculeSpatialModel spatialModel {

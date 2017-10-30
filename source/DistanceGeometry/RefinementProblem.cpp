@@ -48,8 +48,8 @@ namespace errfDetail {
     const double deviationThreshold = 0.5;
 
     // Check distance bound deviations
-    for(unsigned i = 0; i < bounds.N; i++) {
-      for(unsigned j = i + 1; j < bounds.N; j++) {
+    for(unsigned i = 0; i < bounds.N(); i++) {
+      for(unsigned j = i + 1; j < bounds.N(); j++) {
         double ijDistance = dlib::length(
           errfDetail::getPos(positions, j) - errfDetail::getPos(positions, i)
         );
