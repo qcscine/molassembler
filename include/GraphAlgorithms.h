@@ -2,7 +2,6 @@
 #define INCLUDE_GRAPH_ALGORITHMS_H
 
 #include "common_typedefs.h"
-#include "Tree.h"
 #include <boost/graph/breadth_first_search.hpp>
 
 #include <iostream>

@@ -121,8 +121,6 @@ set(HEADERS_all
   include/StdlibTypeAlgorithms.h
   include/Stereocenter.h
   include/StereocenterList.h
-  include/Tree.h
-  include/TreeAlgorithms.h
   include/VSEPR.h
   include/Version.h
   include/common_typedefs.h

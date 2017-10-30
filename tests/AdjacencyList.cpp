@@ -8,7 +8,6 @@
 // Temp, testing
 #include <boost/graph/breadth_first_search.hpp>
 #include "RepeatedElementCollection.h"
-#include "Tree.h"
 #include <algorithm>
 
 #include <iostream>

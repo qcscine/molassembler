@@ -11,7 +11,6 @@
 #include "DistanceGeometry/RefinementProblem.h"
 
 #include "GraphAlgorithms.h"
-#include "TreeAlgorithms.h"
 
 /* TODO
  * - Random assignment of unassigned stereocenters isn't ideal yet
