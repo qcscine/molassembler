@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 
     auto mol = filehandler.readSingle(filename);
 
-    std::cout << "Read molecule information:"
+    std::cout << "Read molecule information:\n"
       << mol << std::endl;
 
     auto debugData = detail::debugDistanceGeometry(
@@ -100,15 +100,14 @@ int main(int argc, char* argv[]) {
       false
     );
 
-    auto splat = StdlibTypeAlgorithms::split(filename, '.');
-    assert(splat.size() >= 2);
+    boost::filesystem::path filepath {filename};
+    std::string filestem = filepath.stem().string();
 
     for(const auto& enumPair : enumerate(debugData.refinements)) {
       const auto& structNum = enumPair.index;
       const auto& refinementData = enumPair.value;
 
-      std::string baseName = splat.at(splat.size() - 2) + "-"s 
-        + std::to_string(structNum);
+      std::string baseName = filestem + "-"s + std::to_string(structNum);
 
       AnalysisHelpers::writeDGPOVandProgressFiles(
         mol,
@@ -117,7 +116,7 @@ int main(int argc, char* argv[]) {
       );
 
       filehandler.writeSingle(
-        splat.at(splat.size() - 2) + "-"s + std::to_string(structNum) + "-last.mol"s,
+        filestem + "-"s + std::to_string(structNum) + "-last.mol"s,
         mol,
         DistanceGeometry::detail::convertToPositionCollection(
           refinementData.steps.back().positions
