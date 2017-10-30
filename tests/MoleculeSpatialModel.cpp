@@ -11,8 +11,18 @@ BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
   for(const auto& symmetryName: Symmetry::allNames) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
+    // Default-assign any unassigned stereocenters
+    for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
+      if(!stereocenterPtr -> assigned()) {
+        molecule.assignStereocenterAtAtom(
+          *stereocenterPtr->involvedAtoms().begin(),
+          0
+        );
+      }
+    }
+
     MoleculeSpatialModel spatialModel {
-      molecule.getGraph(),
+      molecule,
       molecule.getStereocenterList(),
       MoleculeSpatialModel::DistanceMethod::UFFLike
     };

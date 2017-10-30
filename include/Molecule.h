@@ -87,7 +87,7 @@ public:
   );
 
   //! Constructs a molecule from connectivity alone, inferring the stereocenters
-  Molecule(const GraphType& graph);
+  explicit Molecule(const GraphType& graph);
 
   //! Construct a molecule from connectivity and 3D information
   Molecule(

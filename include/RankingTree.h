@@ -126,6 +126,15 @@ private:
   //! Returns a set of all adjacent edges (in- and out-edges)
   std::set<TreeEdgeIndex> _adjacentEdges(const TreeVertexIndex& index) const;
 
+  bool _isBondSplitDuplicateVertex(const TreeVertexIndex& index) const;
+
+  bool _isCycleClosureDuplicateVertex(const TreeVertexIndex& index) const;
+
+  std::set<TreeVertexIndex> _auxiliaryAdjacentsToRank(
+    const TreeVertexIndex& sourceIndex,
+    const std::set<TreeVertexIndex>& excludedIndices
+  ) const;
+
   /*! 
    * Returns the node degree, excluding edges to or from nodes marked as
    * duplicate
@@ -451,7 +460,7 @@ private:
     std::vector<TreeVertexIndex>
   > _omniDirectionalRank(
     const TreeVertexIndex& sourceIndex,
-    const std::set<TreeVertexIndex>& excludeIndices
+    const std::set<TreeVertexIndex>& adjacentsToRank
   ) const;
 
 public:

@@ -532,7 +532,7 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeDistanceBounds() const {
    * - Dihedral setting angle lookup may fail, no checks!
    * - Smooth at the end and check for inconsistencies
    */
-  DistanceBoundsMatrix distanceBounds(_molecule.numAtoms());
+  DistanceBoundsMatrix distanceBounds {_molecule.numAtoms()};
 
   // Start with bonds
   for(const auto& bondPair : _bondBounds) {
@@ -663,8 +663,8 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeDistanceBounds() const {
   assert(distanceBounds.boundInconsistencies() == 0);
 
   // Finally, raise non-bonded items with no lower bound to sum of vdw radii
-  for(unsigned i = 0; i < _molecule.numAtoms(); i++) {
-    for(unsigned j = i + 1; j < _molecule.numAtoms(); j++) {
+  for(unsigned i = 0; i < _molecule.numAtoms() - 1; ++i) {
+    for(unsigned j = i + 1; j < _molecule.numAtoms(); ++j) {
       /* setting the bounds will fail for bonded pairs as those have strict
        * bounds already and the fairly high sum of vdw would lead to
        * inconsistencies

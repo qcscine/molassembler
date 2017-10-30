@@ -1090,43 +1090,63 @@ std::vector<
 
       if(_doubleBondEdges.count(edge)) {
         // Instantiate an EZStereocenter here!
+        
+        /* TODO ensure that there is at least one non-duplicate substituent
+         * on each end of the edge
+         */
         auto targetIndex = boost::target(edge, _tree);
 
-        RankingInformation sourceRanking, targetRanking;
-
-        // Get ranking for the edge substituents
-        sourceRanking.sortedSubstituents = _omniDirectionalRank(
-          sourceIndex,
+        auto sourceIndicesToRank = _auxiliaryAdjacentsToRank(
+          sourceIndex, 
           {targetIndex}
         );
-        targetRanking.sortedSubstituents = _omniDirectionalRank(
+
+        auto targetIndicesToRank = _auxiliaryAdjacentsToRank(
           targetIndex,
           {sourceIndex}
         );
 
-        /* NOTE: There is no need to collect linking information since we
-         * are in an acyclic digraph, and any cycles in the original molecule
-         * are no longer present.
-         */
+        if(
+          1 <= sourceIndicesToRank.size() && sourceIndicesToRank.size() <= 2
+          && 1 <= targetIndicesToRank.size() && targetIndicesToRank.size() <= 2
+        ) {
+          RankingInformation sourceRanking, targetRanking;
 
-        _tree[edge].stereocenterOption = Stereocenters::EZStereocenter {
-          sourceIndex,
-          sourceRanking,
-          targetIndex,
-          targetRanking
-        };
+          // Get ranking for the edge substituents
+          sourceRanking.sortedSubstituents = _omniDirectionalRank(
+            sourceIndex,
+            sourceIndicesToRank
+          );
 
-        // Mark that we instantiated something
-        foundStereocenters = true;
+          targetRanking.sortedSubstituents = _omniDirectionalRank(
+            targetIndex,
+            targetIndicesToRank
+          );
+
+          /* NOTE: There is no need to collect linking information since we
+           * are in an acyclic digraph, and any cycles in the original molecule
+           * are no longer present.
+           */
+
+          _tree[edge].stereocenterOption = Stereocenters::EZStereocenter {
+            sourceIndex,
+            sourceRanking,
+            targetIndex,
+            targetRanking
+          };
+
+          // Mark that we instantiated something
+          foundStereocenters = true;
 
 #ifndef NDEBUG
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-          _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-            dumpGraphviz("Sequence rule 3 preparation", {0}, {}, collectHandledEdges(it))
-          });
-        }
+          if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+            _writeGraphvizFiles({
+              _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+              dumpGraphviz("Sequence rule 3 preparation", {0}, {}, collectHandledEdges(it))
+            });
+          }
 #endif
+        }
       }
 
       if(
@@ -1145,9 +1165,10 @@ std::vector<
          */
         // Instantiate a CNStereocenter here!
         RankingInformation centerRanking;
+
         centerRanking.sortedSubstituents = _omniDirectionalRank(
           sourceIndex,
-          {}
+          _auxiliaryAdjacentsToRank(sourceIndex, {})
         );
 
         _tree[sourceIndex].stereocenterOption = Stereocenters::CNStereocenter {
@@ -1548,13 +1569,7 @@ std::vector<
             if(junctionInfo.junction != 0) {
               auto relativeRank = _omniDirectionalRank(
                 junctionInfo.junction,
-                TemplateMagic::setDifference(
-                  _children(junctionInfo.junction),
-                  std::set<TreeVertexIndex> {
-                    aJunctionChild,
-                    bJunctionChild
-                  }
-                )
+                {aJunctionChild, bJunctionChild}
               );
 
               /* relativeRank can only have sizes 1 or 2, where size 1 means
@@ -1880,65 +1895,10 @@ std::vector<
   std::vector<RankingTree::TreeVertexIndex>
 > RankingTree::_omniDirectionalRank(
   const RankingTree::TreeVertexIndex& sourceIndex,
-  const std::set<RankingTree::TreeVertexIndex>& excludeIndices
+  const std::set<RankingTree::TreeVertexIndex>& adjacentsToRank
 ) const {
   /* Sequence rule 1 */
-  auto sourceAdjacents = TemplateMagic::moveIf(
-    _adjacents(sourceIndex),
-    [&](const auto& nodeIndex) -> bool {
-      // In case we explicitly exclude them, immediately discard
-      if(excludeIndices.count(nodeIndex) > 0) {
-        return false;
-      }
-
-      // If they are duplicate, we have some work to do
-      if(_tree[nodeIndex].isDuplicate) {
-        /* We need to distinguish between duplicate atoms that are the result
-         * of multiple bond splits and cycle closures. Cycle closures need
-         * to be kept, while multiple bond splits need to be removed. Detecting
-         * the difference can be done by checking for a non-duplicate node
-         * with the same molIndex adjacent to sourceIndex
-         */
-        auto inEdgesIterPair = boost::in_edges(sourceIndex, _tree);
-        while(inEdgesIterPair.first != inEdgesIterPair.second) {
-          auto adjacentIndex = boost::source(*inEdgesIterPair.first, _tree);
-          if(
-            _tree[adjacentIndex].molIndex == _tree[nodeIndex].molIndex
-            && !_tree[adjacentIndex].isDuplicate
-          ) {
-            return false;
-          }
-
-          ++inEdgesIterPair.first;
-        }
-
-        auto outEdgesIterPair = boost::out_edges(sourceIndex, _tree);
-        while(outEdgesIterPair.first != outEdgesIterPair.second) {
-          auto adjacentIndex = boost::target(*outEdgesIterPair.first, _tree);
-
-          if(
-            _tree[adjacentIndex].molIndex == _tree[nodeIndex].molIndex
-            && !_tree[adjacentIndex].isDuplicate
-          ) {
-            return false;
-          }
-
-          ++outEdgesIterPair.first;
-        }
-
-        /* If no non-duplicate vertex for this duplicate molIndex is immediately
-         * adjacent, it is not the result of a multiple-bond split, but a cycle
-         * closure, and we have to keep it
-         */
-        return true;
-      }
-
-      // Keep the vertex in all other cases
-      return true;
-    }
-  );
-
-  OrderDiscoveryHelper<TreeVertexIndex> orderingHelper {sourceAdjacents};
+  OrderDiscoveryHelper<TreeVertexIndex> orderingHelper {adjacentsToRank};
 
 #ifndef NEDEBUG
 Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -1966,7 +1926,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       std::multiset<TreeVertexIndex, SequenceRuleOneVertexComparator>
     > comparisonSets;
 
-    for(const auto& adjacent : sourceAdjacents) {
+    for(const auto& adjacent : adjacentsToRank) {
       comparisonSets.emplace(
         adjacent,
         *this
@@ -1982,7 +1942,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       std::set<TreeVertexIndex>
     > seeds;
 
-    for(const auto& adjacentIndex : sourceAdjacents) {
+    for(const auto& adjacentIndex : adjacentsToRank) {
       auto nextShell = _adjacents(adjacentIndex);
 
       // Valid seeds need to not have been encountered yet
@@ -2003,7 +1963,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
     // Perform the first comparison
     TemplateMagic::forAllPairs(
-      sourceAdjacents,
+      adjacentsToRank,
       [&](const TreeVertexIndex& a, const TreeVertexIndex& b) {
         if(_multisetCompare(comparisonSets.at(a), comparisonSets.at(b))) {
           orderingHelper.addLessThanRelationship(a, b);
@@ -2552,13 +2512,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
             if(junctionInfo.junction != 0) {
               auto relativeRank = _omniDirectionalRank(
                 junctionInfo.junction,
-                TemplateMagic::setDifference(
-                  _children(junctionInfo.junction),
-                  std::set<TreeVertexIndex> {
-                    aJunctionChild,
-                    bJunctionChild
-                  }
-                )
+                {aJunctionChild, bJunctionChild}
               );
 
               /* relativeRank can only have sizes 1 or 2, 1 meaning that no
@@ -3057,6 +3011,121 @@ std::set<RankingTree::TreeEdgeIndex> RankingTree::_adjacentEdges(const RankingTr
   return edges;
 }
 
+bool RankingTree::_isBondSplitDuplicateVertex(const TreeVertexIndex& index) const {
+  // If the vertex isn't duplicate, it can't be a closure
+  if(!_tree[index].isDuplicate) {
+    return false;
+  }
+
+  /* Duplicate atoms have two sources - they can be either from multiple bond
+   * breakage or from cycle closure. If we can find the typical pattern from a
+   * multiple bond breakage, then it can't be a cycle closure
+   */
+  auto parentIndex = _parent(index);
+
+  auto inEdgesIterPair = boost::in_edges(parentIndex, _tree);
+  while(inEdgesIterPair.first != inEdgesIterPair.second) {
+    auto adjacentIndex = boost::source(*inEdgesIterPair.first, _tree);
+    if(
+      _tree[adjacentIndex].molIndex == _tree[index].molIndex
+      && !_tree[adjacentIndex].isDuplicate
+    ) {
+      return true;
+    }
+
+    ++inEdgesIterPair.first;
+  }
+
+  auto outEdgesIterPair = boost::out_edges(parentIndex, _tree);
+  while(outEdgesIterPair.first != outEdgesIterPair.second) {
+    auto adjacentIndex = boost::target(*outEdgesIterPair.first, _tree);
+
+    if(
+      _tree[adjacentIndex].molIndex == _tree[index].molIndex
+      && !_tree[adjacentIndex].isDuplicate
+    ) {
+      return true;
+    }
+
+    ++outEdgesIterPair.first;
+  }
+
+  // Remaining case is a cycle closure
+  return false;
+}
+
+bool RankingTree::_isCycleClosureDuplicateVertex(const TreeVertexIndex& index) const {
+  // If the vertex isn't duplicate, it can't be a closure
+  if(!_tree[index].isDuplicate) {
+    return false;
+  }
+
+  /* Duplicate atoms have two sources - they can be either from multiple bond
+   * breakage or from cycle closure. If we can find the typical pattern from a
+   * multiple bond breakage, then it isn't a cycle closure.
+   */
+  auto parentIndex = _parent(index);
+
+  auto inEdgesIterPair = boost::in_edges(parentIndex, _tree);
+  while(inEdgesIterPair.first != inEdgesIterPair.second) {
+    auto adjacentIndex = boost::source(*inEdgesIterPair.first, _tree);
+    if(
+      _tree[adjacentIndex].molIndex == _tree[index].molIndex
+      && !_tree[adjacentIndex].isDuplicate
+    ) {
+      return false;
+    }
+
+    ++inEdgesIterPair.first;
+  }
+
+  auto outEdgesIterPair = boost::out_edges(parentIndex, _tree);
+  while(outEdgesIterPair.first != outEdgesIterPair.second) {
+    auto adjacentIndex = boost::target(*outEdgesIterPair.first, _tree);
+
+    if(
+      _tree[adjacentIndex].molIndex == _tree[index].molIndex
+      && !_tree[adjacentIndex].isDuplicate
+    ) {
+      return false;
+    }
+
+    ++outEdgesIterPair.first;
+  }
+
+  /* When you have eliminated the impossible, whatever remains, however
+   * improbable, must be the truth.
+   */
+  return true;
+}
+
+std::set<RankingTree::TreeVertexIndex> RankingTree::_auxiliaryAdjacentsToRank(
+  const TreeVertexIndex& sourceIndex,
+  const std::set<TreeVertexIndex>& excludeIndices
+) const {
+  return TemplateMagic::moveIf(
+    _adjacents(sourceIndex),
+    [&](const auto& nodeIndex) -> bool {
+      // In case we explicitly exclude them, immediately discard
+      if(excludeIndices.count(nodeIndex) > 0) {
+        return false;
+      }
+
+      // If they are duplicate, we have some work to do
+      if(_tree[nodeIndex].isDuplicate) {
+        /* We need to distinguish between duplicate atoms that are the result
+         * of multiple bond splits and cycle closures. Cycle closures need
+         * to be kept, while multiple bond splits need to be removed.
+         */
+        return _isCycleClosureDuplicateVertex(nodeIndex);
+      }
+
+      // Keep the vertex in all other cases
+      return true;
+    }
+  );
+}
+
 unsigned RankingTree::_nonDuplicateDegree(const RankingTree::TreeVertexIndex& index) const {
   auto adjacents = _adjacents(index);
 
@@ -3272,7 +3341,7 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
 
   for(
     TreeVertexIndex aCurrent = a;
-    a != data.junction;
+    aCurrent != data.junction;
     aCurrent = _parent(aCurrent)
   ) {
     data.firstPath.push_back(aCurrent);
@@ -3280,7 +3349,7 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
 
   for(
     TreeVertexIndex bCurrent = b;
-    b != data.junction;
+    bCurrent != data.junction;
     bCurrent = _parent(bCurrent)
   ) {
     data.secondPath.push_back(bCurrent);
