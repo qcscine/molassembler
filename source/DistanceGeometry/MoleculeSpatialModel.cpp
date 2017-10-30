@@ -64,12 +64,12 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   // Check constraints on static constants
   static_assert(
     0 < bondRelativeVariance && bondRelativeVariance < 1,
-    "BFSConstraintCollector static constant bond relative variance must fulfill"
+    "MoleculeSpatialModel static constant bond relative variance must fulfill"
     "0 < x << 1"
   );
   static_assert(
     0 < angleAbsoluteVariance && angleAbsoluteVariance < Symmetry::smallestAngle,
-    "BFSConstraintCollector static constant angle absolute variance must fulfill"
+    "MoleculeSpatialModel static constant angle absolute variance must fulfill"
     "0 < x << (smallest angle any local symmetry returns)"
   );
 

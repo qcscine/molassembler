@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
         gradient,
         finiteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
-          return ConstexprMagic::floating::isCloseRelative(
+          return ConstexprMagic::floating::isCloseAbsolute(
             a,
             b,
             1e-5
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
         compressedGradient,
         compressedFiniteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
-          return ConstexprMagic::floating::isCloseRelative(
+          return ConstexprMagic::floating::isCloseAbsolute(
             a,
             b,
             1e-5
