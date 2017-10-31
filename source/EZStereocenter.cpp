@@ -57,15 +57,23 @@ EZStereocenter::EZStereocenter(
     _rightLowPriority = secondCenterRanking.sortedSubstituents.front().front();
   }
 
-  // Determine whether there can be two assignments or not
+  /* Determine whether there can be two assignments or not. There is only one
+   * assignment in the case that on either side, there are two equal
+   * substituents
+   */
   if(
-    firstCenterRanking.sortedSubstituents.size() == 2
-    && secondCenterRanking.sortedSubstituents.size() == 2
+    (
+      numFirst == 2 
+      && firstCenterRanking.sortedSubstituents.size() == 1
+    ) || (
+      numSecond == 2
+      && secondCenterRanking.sortedSubstituents.size() == 1
+    )
   ) {
-    _numAssignments = 2;
-  } else {
     _numAssignments = 1;
     _isEOption = false;
+  } else {
+    _numAssignments = 2;
   }
 }
 

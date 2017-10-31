@@ -27,6 +27,32 @@ AtomIndexType Molecule::_addAtom(const Delib::ElementType& elementType) {
 StereocenterList Molecule::_detectStereocenters() const {
   StereocenterList stereocenterList;
 
+  /* TODO
+   * - Will need refinement to not instantiate EZStereocenters in small cycles
+   *   (up to a preset size, maybe around 8 or so?)
+   */
+  // Find EZStereocenters
+  for(const auto& edgeIndex : _getEZStereocenterCandidates()) {
+    auto source = boost::source(edgeIndex, _adjacencies),
+         target = boost::target(edgeIndex, _adjacencies);
+
+    // Construct a Stereocenter here
+    auto newStereocenter = std::make_shared<
+      Stereocenters::EZStereocenter
+    >(
+      source,
+      rankPriority(source, {target}),
+      target,
+      rankPriority(target, {source})
+    );
+
+    if(newStereocenter -> numAssignments() == 2) {
+      stereocenterList.add(
+        std::move(newStereocenter)
+      );
+    }
+  }
+
   // Find CNStereocenters
   for(const auto& candidateIndex : _getCNStereocenterCandidates()) {
     // Construct a Stereocenter here
@@ -53,32 +79,6 @@ StereocenterList Molecule::_detectStereocenters() const {
     std::cout << "}" << std::endl;*/
 
     if(newStereocenter -> numAssignments() > 1) {
-      stereocenterList.add(
-        std::move(newStereocenter)
-      );
-    }
-  }
-
-  /* TODO
-   * - Will need refinement to not instantiate EZStereocenters in small cycles
-   *   (up to a preset size, maybe around 8 or so?)
-   */
-  // Find EZStereocenters
-  for(const auto& edgeIndex : _getEZStereocenterCandidates()) {
-    auto source = boost::source(edgeIndex, _adjacencies),
-         target = boost::target(edgeIndex, _adjacencies);
-
-    // Construct a Stereocenter here
-    auto newStereocenter = std::make_shared<
-      Stereocenters::EZStereocenter
-    >(
-      source,
-      rankPriority(source, {target}),
-      target,
-      rankPriority(target, {source})
-    );
-
-    if(newStereocenter -> numAssignments() == 2) {
       stereocenterList.add(
         std::move(newStereocenter)
       );
