@@ -12,223 +12,41 @@
 
 namespace MoleculeManip {
 
-/* Graph splitting class */
-class RankingTree::AcyclizingBFSVisitor : public boost::default_bfs_visitor {
-public:
-  using KeyToNodeListMap = std::map<
-    AtomIndexType,
-    std::vector<TreeVertexIndex>
-  >;
-
-private:
-/* Internal state */
-  //! Base reference to tree being generated
-  RankingTree& _treeBaseRef;
-  //! Map to keep track of depth from starting vertex
-  std::map<AtomIndexType, unsigned> _depthMap;
-  //! Pointer to Tree root on heap (where we generate it)
-  TreeVertexIndex _rootIndex;
-  //! Mapping of atomic index to nodes in the Tree currently being generated
-  KeyToNodeListMap _existingNodePtrMap;
-  //! List of edges to add in current depth
-  std::vector<
-    std::pair<AtomIndexType, AtomIndexType>
-  > _edgesToAddBeforeDescent;
-
-
-public:
-  struct EarlyExit {};
-
-  AcyclizingBFSVisitor(
-    RankingTree& baseTree,
-    const AtomIndexType& startingFrom,
-    const TreeVertexIndex& rootIndex
-  ) : _treeBaseRef(baseTree),
-      _depthMap({
-        {startingFrom, 0}
-      }),
-      _rootIndex(rootIndex),
-      _existingNodePtrMap({
-        {startingFrom, {_rootIndex}}
-      })
-  {}
-
-  template<typename Graph>
-  void discover_vertex(const AtomIndexType& u, const Graph&) {
-    assert(_depthMap.count(u));
-  }
-
-  /*!
-   * This is called after all edges pertaining to this vertex are called, and
-   * always before descending to a new search depth. This method places all
-   * backwards edges that were remembered in non-tree-edge calls on all
-   * available nodes of the same parent.
-   */
-  template<typename Graph>
-  void finish_vertex(const AtomIndexType&, const Graph&) {
-    auto& tree = _treeBaseRef._tree;
-
-    TemplateMagic::inplaceRemoveIf(
-      _edgesToAddBeforeDescent,
-      [&](const auto& edgePair) {
-        bool canBeAdded = (
-          _existingNodePtrMap.count(edgePair.first) > 0
-          && _existingNodePtrMap.count(edgePair.second) > 0
-        );
-
-        // For every node with the target index
-        if(canBeAdded) {
-          for(const auto& parentNodeIndex : _existingNodePtrMap.at(edgePair.second)) {
-            /* if the depth of the target node in the generated tree is
-             * less or equal to the depth of the source vertex in the graph,
-             * then add this new node as child
-             */
-            if(
-              _treeBaseRef._depthOfNode(parentNodeIndex) <= _depthMap[edgePair.first]
-              && !tree[parentNodeIndex].isDuplicate
-            ) {
-              // Create a new child node and add it to the parent
-              auto newNodeIndex = boost::add_vertex(tree);
-              tree[newNodeIndex].molIndex = edgePair.first;
-
-              boost::add_edge(parentNodeIndex, newNodeIndex, tree);
-
-              tree[newNodeIndex].isDuplicate = _treeBaseRef._molIndexExistsInBranch(
-                edgePair.first, 
-                parentNodeIndex
-              );
-
-              _treeBaseRef._addBondOrderDuplicates(parentNodeIndex, newNodeIndex);
-
-              // Add it to existingNodePtrMap
-              if(_existingNodePtrMap.count(edgePair.first) == 0) {
-                _existingNodePtrMap[edgePair.first] = {newNodeIndex};
-              } else {
-                _existingNodePtrMap[edgePair.first].push_back(newNodeIndex);
-              }
-            }
-          }
-        }
-
-        return canBeAdded;
-      }
-    );
-  }
-
-  /*!
-   * We're not paricularly interested in tree edges aside from ensuring that
-   * our depth map stays correct.  Why do we do (basically) nothing on tree
-   * edges? Because we want to add edges ONLY after we have completely
-   * discovered the sphere that contains the source edges here
-   */
-  template<typename Graph>
-  void tree_edge(const EdgeIndexType& e, const Graph& g) {
-    /* 
-     */
-    // Assign the depth map
-    _depthMap[boost::target(e, g)] = _depthMap[boost::source(e, g)] + 1;
-  }
-
-  /*! 
-   * This is called on all cycle closing edges and backwards-pointing edges,
-   * i.e. to the previous search depth. 
-   * 
-   * We act on non-tree edges because precisely then are the
-   * backward-pointing edges shown, up into the previous shell of the BFS
-   * iteration, which is now fully expanded and stored in the depth map.
-   */
-  template<typename Graph>
-  void non_tree_edge(const EdgeIndexType& e, const Graph& g) {
-    auto& tree = _treeBaseRef._tree;
-
-    auto source = boost::source(e, g), // where we are now
-         target = boost::target(e, g); // maybe points to lower depth vertex
-
-    /* Add the source as child of target, provided target is in the tree and
-     * is at a lower depth than the source 
-     */
-    if( 
-      /* Is this truly a backward-pointing edge, i.e. it points from the
-       * current exploration shell of BFS further inwards?
-       */
-      _existingNodePtrMap.count(target)
-      && _depthMap[target] < _depthMap[source]
-    ) {
-      // For every node with the target index
-      for(const auto& parentNodeIndex : _existingNodePtrMap.at(target)) {
-        if(!tree[parentNodeIndex].isDuplicate) {
-          auto newNodeIndex = boost::add_vertex(tree);
-          tree[newNodeIndex].molIndex = source;
-          boost::add_edge(parentNodeIndex, newNodeIndex, tree);
-
-          tree[newNodeIndex].isDuplicate = _treeBaseRef._molIndexExistsInBranch(
-            source, 
-            parentNodeIndex
-          );
-
-          _treeBaseRef._addBondOrderDuplicates(parentNodeIndex, newNodeIndex);
-
-          // Add it to existingNodePtrMap
-          if(_existingNodePtrMap.count(source) == 0) {
-            _existingNodePtrMap[source] = {newNodeIndex};
-          } else {
-            _existingNodePtrMap[source].push_back(newNodeIndex);
-          }
-        }
-      }
-    } else if(_depthMap[target] == _depthMap[source]) {
-      /* If the edge is on the same shell, then it must cycle-closing, so we
-       * have to wait until all vertices in this depth are discovered and only
-       * prior to descent add them.
-       */
-      _edgesToAddBeforeDescent.emplace_back(source, target);
-    }
-  }
-};
-
 RankingTree::RankingTree(
   const Molecule& molecule,
   const AtomIndexType& atomToRank,
   const std::set<AtomIndexType>& excludeIndices
 ) : _moleculeRef(molecule) {
-  /* TODO run _branchOrderingHelper.setUnorderedValues after the full set of
-   * neighbors being ranked have been discovered in BFS.
-   */
-  
   // Set the root vertex
   auto rootIndex = boost::add_vertex(_tree);
   _tree[rootIndex].molIndex = atomToRank;
   _tree[rootIndex].isDuplicate = false;
 
-  /* Make a complete acyclic graph */
-  _acyclizeMolecule();
-  _DFSFinishTree();
+  /* Add the direct descendants of the root atom, if they are not explicitly
+   * excluded by parameters
+   */
+  std::set<TreeVertexIndex> branchIndices;
+  for(
+    const auto& rootAdjacentIndex : 
+    _moleculeRef.iterateAdjacencies(atomToRank)
+  ) {
+    if(excludeIndices.count(rootAdjacentIndex) == 0) {
+      auto branchIndex = boost::add_vertex(_tree);
+      _tree[branchIndex].molIndex = rootAdjacentIndex;
+      _tree[branchIndex].isDuplicate = false;
 
-  // Get all direct non-duplicate children of the root node. These will be ranked.
-  std::set<TreeVertexIndex> rootChildren;
-  {
-    TreeGraphType::out_edge_iterator iter, end;
-    std::tie(iter, end) = boost::out_edges(0, _tree);
+      boost::add_edge(rootIndex, branchIndex, _tree);
 
-    while(iter != end) {
-      auto childIndex = boost::target(*iter, _tree);
+      _addBondOrderDuplicates(rootIndex, branchIndex);
 
-      /* Limit the ranking of root's children to non-duplicate and
-       * non-excluded nodes
-       */
-      if(
-        !_tree[childIndex].isDuplicate 
-        && excludeIndices.count(_tree[childIndex].molIndex) == 0
-      ) {
-        rootChildren.insert(childIndex);
-      }
-
-      ++iter;
+      branchIndices.insert(branchIndex);
     }
   }
 
+  _DFSFinishTree();
+
   // Set the ordering helper's list of unordered values
-  _branchOrderingHelper.setUnorderedValues(rootChildren);
+  _branchOrderingHelper.setUnorderedValues(branchIndices);
 
   // Perform ranking
   _applySequenceRules();
@@ -1534,35 +1352,6 @@ void RankingTree::_applySequenceRules() {
 #endif
 
   // Exhausted sequence rules, anything undecided is now equal
-}
-
-void RankingTree::_acyclizeMolecule() {
-  using ColorMapBase = std::map<AtomIndexType, boost::default_color_type>;
-
-  ColorMapBase colorMap;
-  boost::associative_property_map<ColorMapBase> propColorMap {colorMap};
-  boost::queue<GraphType::vertex_descriptor> Q;
-
-  AcyclizingBFSVisitor visitor {
-    *this,
-    _tree[0].molIndex,
-    0
-  };
-
-  try {
-    boost::breadth_first_visit(
-      // The graph to operate on
-      _moleculeRef.getGraph(),
-      // The vertex to start with
-      _tree[0].molIndex,
-      // A queue object to store vertex_descriptors
-      Q,
-      // The visitor to use
-      visitor,
-      // A map to store color (state)
-      propColorMap
-    );
-  } catch(AcyclizingBFSVisitor::EarlyExit& e) {}
 }
 
 void RankingTree::_DFSFinishTree() {

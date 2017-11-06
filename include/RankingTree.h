@@ -19,6 +19,8 @@
  * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
  *   from being instantiated on the edge vertices in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
+ * - Optimization: ComparisonSets can be cleared between iterations, which
+ *   avoids re-evaluating equivalent-comparing elements from prior iterations
  */
 
 /*! @file
@@ -861,8 +863,6 @@ private:
   );
 
 
-  void _acyclizeMolecule();
-
   void _DFSFinishTree();
 
   void _applySequenceRules();
@@ -894,15 +894,6 @@ private:
 
 
 public:
-/* BFS Visitor for initial cycle splitting */
-  /*!
-   * An adaptation of GraphAlgorithms' TreeGenerator, which created a pointer-
-   * based Tree (see Tree.h). This generates a tree within a BGL Bidirectional
-   * graph, but the operating principle is identical.
-   */
-  class AcyclizingBFSVisitor;
-
-
 /* Sequence rule comparator classes for use in std::multiset */
 
   /*! 
