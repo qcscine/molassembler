@@ -411,7 +411,7 @@ private:
      */
     std::map<
       TreeVertexIndex,
-      std::set<TreeVertexIndex>
+      std::vector<TreeVertexIndex>
     > seeds;
 
     /* In case the BFS in not down-only, we have to track which indices we
@@ -527,7 +527,7 @@ private:
       // BFS Step
       for(const auto& undecidedSet: undecidedSets) {
         for(const auto& undecidedBranch: undecidedSet) {
-          std::set<TreeVertexIndex> newSeeds;
+          std::vector<TreeVertexIndex> newSeeds;
 
           for(const auto& seed : seeds.at(undecidedBranch)) {
 
@@ -565,7 +565,7 @@ private:
                     comparisonSets.at(undecidedBranch).emplace(inEdge);
                   }*/
 
-                  newSeeds.insert(edgeSource);
+                  newSeeds.push_back(edgeSource);
                 }
               }
             }
@@ -605,7 +605,7 @@ private:
 
               // Add out edge target to seeds only if non-terminal
               if(!_tree[edgeTarget].isDuplicate) {
-                newSeeds.insert(edgeTarget);
+                newSeeds.push_back(edgeTarget);
               }
             }
           }
@@ -653,7 +653,7 @@ private:
   static std::set<TreeVertexIndex> _collectSeeds(
     const std::map<
       TreeVertexIndex,
-      std::set<TreeVertexIndex>
+      std::vector<TreeVertexIndex>
     >& seeds,
     const std::vector<
       std::vector<TreeVertexIndex>
@@ -826,7 +826,7 @@ private:
   static bool _relevantSeeds(
     const std::map<
       TreeVertexIndex, 
-      std::set<TreeVertexIndex>
+      std::vector<TreeVertexIndex>
     >& seeds,
     const std::vector<
       std::vector<TreeVertexIndex>
@@ -866,7 +866,7 @@ public:
    * based Tree (see Tree.h). This generates a tree within a BGL Bidirectional
    * graph, but the operating principle is identical.
    */
-  class RankingTreeGenerator;
+  class AcyclizingBFSVisitor;
 
 
 /* Sequence rule comparator classes for use in std::multiset */

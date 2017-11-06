@@ -13,7 +13,7 @@
 namespace MoleculeManip {
 
 /* Graph splitting class */
-class RankingTree::RankingTreeGenerator : public boost::default_bfs_visitor {
+class RankingTree::AcyclizingBFSVisitor : public boost::default_bfs_visitor {
 public:
   using KeyToNodeListMap = std::map<
     AtomIndexType,
@@ -39,7 +39,7 @@ private:
 public:
   struct EarlyExit {};
 
-  RankingTreeGenerator(
+  AcyclizingBFSVisitor(
     RankingTree& baseTree,
     const AtomIndexType& startingFrom,
     const TreeVertexIndex& rootIndex
@@ -202,7 +202,7 @@ RankingTree::RankingTree(
   boost::associative_property_map<ColorMapBase> propColorMap(colorMap);
   boost::queue<GraphType::vertex_descriptor> Q;
 
-  RankingTreeGenerator visitor(
+  AcyclizingBFSVisitor visitor(
     *this,
     atomToRank,
     rootIndex
@@ -221,7 +221,7 @@ RankingTree::RankingTree(
       // A map to store color (state)
       propColorMap
     );
-  } catch(RankingTreeGenerator::EarlyExit& e) {}
+  } catch(AcyclizingBFSVisitor::EarlyExit& e) {}
 
   // Now that the graph is acyclic, finish the tree by DFS at every leaf
   TreeGraphType::vertex_iterator iter, end;
@@ -803,30 +803,6 @@ std::vector<
       }
     );
   };
-#ifndef NDEBUG 
-  auto visitedVertices = [](
-    const std::map<
-      TreeVertexIndex,
-      std::set<TreeVertexIndex>
-    >& seeds,
-    const std::vector<
-      std::vector<TreeVertexIndex>
-    >& undecidedSets
-  ) -> std::set<TreeVertexIndex> {
-    std::set<TreeVertexIndex> visited;
-
-    for(const auto& undecidedSet : undecidedSets) {
-      for(const auto& undecidedBranch : undecidedSet) {
-        for(const auto& seed : seeds.at(undecidedBranch)) {
-          visited.insert(seed);
-        }
-      }
-    }
-
-    return visited;
-  };
-#endif
-
 
   /* A much-needed variable which was often re-declared within the local
    * scopes of every sequence rule. This allows reuse.
@@ -1183,7 +1159,7 @@ std::vector<
 
     std::map<
       TreeVertexIndex,
-      std::set<TreeVertexIndex>
+      std::vector<TreeVertexIndex>
     > seeds;
 
     undecidedSets = orderingHelper.getUndecidedSets();
@@ -1217,7 +1193,7 @@ std::vector<
     if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
       _writeGraphvizFiles({
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 4A", {0}, visitedVertices(seeds, undecidedSets)),
+        dumpGraphviz("Sequence rule 4A", {0}, _collectSeeds(seeds, undecidedSets)),
         _makeGraph("Sequence rule 4A multisets", 0, comparisonSets, undecidedSets),
         orderingHelper.dumpGraphviz()
       });
@@ -1230,7 +1206,7 @@ std::vector<
         for(const auto& undecidedTreeIndex : undecidedSet) {
           auto& branchSeeds = seeds[undecidedTreeIndex];
 
-          std::set<TreeVertexIndex> newSeeds;
+          std::vector<TreeVertexIndex> newSeeds;
 
           for(const auto& seed: branchSeeds) {
             for( // Out-edges
@@ -1249,7 +1225,7 @@ std::vector<
                 comparisonSets.at(undecidedTreeIndex).emplace(edgeTarget);
                 comparisonSets.at(undecidedTreeIndex).emplace(outEdge);
 
-                newSeeds.insert(edgeTarget);
+                newSeeds.push_back(edgeTarget);
               }
             }
           }
@@ -1269,7 +1245,7 @@ std::vector<
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 4A", {0}, visitedVertices(seeds, undecidedSets)),
+          dumpGraphviz("Sequence rule 4A", {0}, _collectSeeds(seeds, undecidedSets)),
           _makeGraph("Sequence rule 4A multisets", 0, comparisonSets, undecidedSets),
           orderingHelper.dumpGraphviz()
         });
@@ -1770,7 +1746,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
     std::map<
       TreeVertexIndex,
-      std::set<TreeVertexIndex>
+      std::vector<TreeVertexIndex>
     > seeds;
 
     undecidedSets = orderingHelper.getUndecidedSets();
@@ -1821,7 +1797,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
         for(const auto& undecidedTreeIndex : undecidedSet) {
           auto& branchSeeds = seeds[undecidedTreeIndex];
 
-          std::set<TreeVertexIndex> newSeeds;
+          std::vector<TreeVertexIndex> newSeeds;
 
           for(const auto& seed: branchSeeds) {
 
@@ -1839,7 +1815,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
                 comparisonSets.at(undecidedTreeIndex).emplace(edgeSource);
                 comparisonSets.at(undecidedTreeIndex).emplace(inEdge);
 
-                newSeeds.insert(edgeSource);
+                newSeeds.push_back(edgeSource);
                 visitedVertices.insert(edgeSource);
               }
             }
@@ -1861,7 +1837,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
                 comparisonSets.at(undecidedTreeIndex).emplace(edgeTarget);
                 comparisonSets.at(undecidedTreeIndex).emplace(outEdge);
 
-                newSeeds.insert(edgeTarget);
+                newSeeds.push_back(edgeTarget);
                 visitedVertices.insert(edgeTarget);
               }
             }
@@ -2505,7 +2481,7 @@ unsigned RankingTree::_nonDuplicateDegree(const RankingTree::TreeVertexIndex& in
 bool RankingTree::_relevantSeeds(
   const std::map<
     RankingTree::TreeVertexIndex, 
-    std::set<RankingTree::TreeVertexIndex>
+    std::vector<RankingTree::TreeVertexIndex>
   >& seeds,
   const std::vector<
     std::vector<RankingTree::TreeVertexIndex>
@@ -2751,7 +2727,7 @@ bool RankingTree::_molIndexExistsInBranch(
 std::set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
   const std::map<
     TreeVertexIndex,
-    std::set<TreeVertexIndex>
+    std::vector<TreeVertexIndex>
   >& seeds,
   const std::vector<
     std::vector<TreeVertexIndex>
