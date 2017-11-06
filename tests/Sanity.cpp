@@ -43,68 +43,70 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
     // Get an asymmetric molecule (all ligands different) for the current molecule
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
-    auto centralStereocenter = molecule.getStereocenterList().at(0);
+    if(molecule.getStereocenterList().size() > 0) {
+      auto centralStereocenter = molecule.getStereocenterList().at(0);
 
-    for(unsigned i = 0; i < centralStereocenter->numAssignments(); ++i) {
-      molecule.assignStereocenterAtAtom(0, i);
+      for(unsigned i = 0; i < centralStereocenter->numAssignments(); ++i) {
+        molecule.assignStereocenterAtAtom(0, i);
 
-      // For each possible arrangement of these ligands
-      /* Create an ensemble of 3D positions using threeDimensional refinement,
-       * no metrization and uniform distance setting
-       */
-      auto ensemble = detail::runDistanceGeometry(
-        molecule,
-        100,
-        MetrizationOption::off,
-        false, // no y-inversion trick
-        MoleculeSpatialModel::DistanceMethod::Uniform
-      );
+        // For each possible arrangement of these ligands
+        /* Create an ensemble of 3D positions using threeDimensional refinement,
+         * no metrization and uniform distance setting
+         */
+        auto ensemble = detail::runDistanceGeometry(
+          molecule,
+          100,
+          MetrizationOption::off,
+          false, // no y-inversion trick
+          MoleculeSpatialModel::DistanceMethod::Uniform
+        );
 
-      /* Check that for every PositionCollection, inferring the StereocenterList
-       * from the generated coordinates yields the same StereocenterList you 
-       * started out with.
-       */
-      auto mapped = TemplateMagic::map(
-        ensemble,
-        [&](const auto& positions) -> bool {
-          auto inferredStereocenterList = molecule.inferStereocentersFromPositions(
-            positions
-          );
-
-          bool pass = molecule.getStereocenterList() == inferredStereocenterList;
-
-          if(!pass) {
-            explainDifference(
-              molecule.getStereocenterList(),
-              inferredStereocenterList
+        /* Check that for every PositionCollection, inferring the StereocenterList
+         * from the generated coordinates yields the same StereocenterList you 
+         * started out with.
+         */
+        auto mapped = TemplateMagic::map(
+          ensemble,
+          [&](const auto& positions) -> bool {
+            auto inferredStereocenterList = molecule.inferStereocentersFromPositions(
+              positions
             );
+
+            bool pass = molecule.getStereocenterList() == inferredStereocenterList;
+
+            if(!pass) {
+              explainDifference(
+                molecule.getStereocenterList(),
+                inferredStereocenterList
+              );
+            }
+
+            return pass;
           }
+        );
 
-          return pass;
+        /* The test passes only if this is true for all PositionCollections
+         * yielded by DG
+         */
+        bool testPass = TemplateMagic::all_of(mapped);
+
+        if(!testPass) {
+          auto pass = TemplateMagic::count(mapped, true);
+
+          std::cout << "Test fails!" << std::endl
+            << std::setw(8) << " " << " " << Symmetry::name(symmetryName) 
+            << std::endl
+            << std::setw(8) << std::to_string(pass)+ "/100"
+            << " comparisons with inferred StereocenterList pass" << std::endl;
+
+          std::cout << "StereocenterList has entries:" << std::endl;
+          for(const auto& stereocenter: molecule.getStereocenterList()) {
+            std::cout << stereocenter << std::endl;
+          }
         }
-      );
 
-      /* The test passes only if this is true for all PositionCollections
-       * yielded by DG
-       */
-      bool testPass = TemplateMagic::all_of(mapped);
-
-      if(!testPass) {
-        auto pass = TemplateMagic::count(mapped, true);
-
-        std::cout << "Test fails!" << std::endl
-          << std::setw(8) << " " << " " << Symmetry::name(symmetryName) 
-          << std::endl
-          << std::setw(8) << std::to_string(pass)+ "/100"
-          << " comparisons with inferred StereocenterList pass" << std::endl;
-
-        std::cout << "StereocenterList has entries:" << std::endl;
-        for(const auto& stereocenter: molecule.getStereocenterList()) {
-          std::cout << stereocenter << std::endl;
-        }
+        BOOST_CHECK(testPass);
       }
-
-      BOOST_CHECK(testPass);
     }
   }
 }

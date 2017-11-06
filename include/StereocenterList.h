@@ -52,17 +52,13 @@ public:
   }
 
   /* Modification */
-  /*!
-   * Removes all stored Stereocenters
-   */
+  //! Removes all stored Stereocenters
   void clear() {
     _features.clear();
     _indexMap.clear();
   }
 
-  /*!
-   * Adds a shared_ptr instance to the list.
-   */
+  //! Adds a shared_ptr instance to the list.
   void add(const std::shared_ptr<Stereocenters::Stereocenter>& featurePtr) {
     _features.insert(featurePtr);
 

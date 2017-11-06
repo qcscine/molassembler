@@ -5,8 +5,6 @@
 #include "template_magic/Boost.h"
 
 #include "Delib/ElementInfo.h"
-
-#include "Log.h"
 #include "MolGraphWriter.h"
 
 #include <fstream>
@@ -829,6 +827,7 @@ std::vector<
   };
 #endif
 
+
   /* A much-needed variable which was often re-declared within the local
    * scopes of every sequence rule. This allows reuse.
    */
@@ -840,119 +839,17 @@ std::vector<
    *   root or is closer to the root preceds a duplicate node whose
    *   corresponding atom node is further from the root
    */
-  { // New scope to avoid namespace pollution
-    /* For each branch to compare, keep a multiset of all the encountered
-     * indices in the branch. The multiset keeps a descending order of the
-     * indices according to sequence rule 1 and can be lexicographically
-     * compared against one another using the SequenceRuleOneVertexComparator
-     *
-     * NOTE: Do not use operator [] to access members in comparisonSets. This
-     * old form of access and assignable proxy object forces a
-     * default-instantiation of the Comparator, which
-     * SequenceRuleOneVertexComparator cannot do. Always use .at().
-     */
-    std::map<
-      TreeVertexIndex,
-      std::multiset<TreeVertexIndex, SequenceRuleOneVertexComparator>
-    > comparisonSets;
-
-    for(const auto& childIndex : rootChildren) {
-      comparisonSets.emplace(
-        childIndex, // KeyType=TreeVertexIndex ctor
-        *this // MappedType=multiset ctor requires a reference to *this
-      );
-
-      comparisonSets.at(childIndex).insert(childIndex);
-    }
-
-    /* For each branch to compare, keep a set of seed indices to follow in an
-     * iteration. These are expanded in each iteration as long as the branch
-     * they contain remains relevant (i.e. it's relation to the other branches
-     * is still unclear): They themselves are placed in the comparisonSet, 
-     * while their respective children are the new seeds for the next
-     * iteration.
-     */
-    std::map<
-      TreeVertexIndex,
-      std::set<TreeVertexIndex>
-    > seeds;
-
-    for(const auto& childIndex : rootChildren) {
-      seeds.emplace(
-        childIndex,
-        _children(childIndex)
-      );
-    }
-
-    // Perform the first comparison, across ALL root children
-    TemplateMagic::forAllPairs(
-      rootChildren,
-      [&](const TreeVertexIndex& a, const TreeVertexIndex& b) {
-        if(_multisetCompare(comparisonSets.at(a), comparisonSets.at(b))) {
-          orderingHelper.addLessThanRelationship(a, b);
-        } else if(_multisetCompare(comparisonSets.at(b), comparisonSets.at(a))) {
-          orderingHelper.addLessThanRelationship(b, a);
-        }
-      }
-    );
-
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 1", {0}, visitedVertices(seeds, undecidedSets)),
-        _makeGraph("Sequence rule 1 multisets", 0, comparisonSets, undecidedSets),
-        orderingHelper.dumpGraphviz()
-      });
-    }
-#endif
-
-    /* Checks if there are seeds whose expansion could be relevant for
-     * undecided indices
-     */
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
-      // Perform a full BFS Step on all undecided set seeds
-      for(const auto& undecidedSet : undecidedSets) {
-        for(const auto& undecidedTreeIndex : undecidedSet) {
-          auto& branchSeeds = seeds[undecidedTreeIndex];
-
-          std::set<TreeVertexIndex> newSeeds;
-
-          for(const auto& seed: branchSeeds) {
-            // Add the seed to the indices used for comparison
-            comparisonSets.at(undecidedTreeIndex).insert(seed);
-
-            // Add its children to the new seeds
-            for(const auto& childIndex : _children(seed)) {
-              newSeeds.insert(childIndex);
-            }
-          }
-
-          // Overwrite the seeds
-          branchSeeds = std::move(newSeeds);
-        }
-      }
-
-      // Make comparisons in all undecided sets
-      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-      // Recalculate the undecided sets
-      undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 1", {0}, visitedVertices(seeds, undecidedSets)),
-          _makeGraph("Sequence rule 1 multisets", 0, comparisonSets, undecidedSets),
-          orderingHelper.dumpGraphviz()
-        });
-      }
-#endif
-    }
-  }
+  _runBFS<
+    1, // Sequence rule 1
+    true, // BFS downwards only
+    false, // Insert edges
+    true, // Insert vertices
+    TreeVertexIndex, // Multiset value type
+    SequenceRuleOneVertexComparator // Multiset comparator type
+  >(
+    0, // Source index is root
+    orderingHelper
+  );
 
 #ifndef NDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -966,6 +863,7 @@ std::vector<
       )
     ) << "}\n";
 #endif
+
 
   // Was sequence rule 1 enough?
   if(orderingHelper.isTotallyOrdered()) {
@@ -1009,6 +907,8 @@ std::vector<
   std::vector<
     std::set<TreeEdgeIndex>
   > byDepth;
+
+  undecidedSets = orderingHelper.getUndecidedSets();
 
   { // Populate byDepth from active branches only
     std::set<TreeEdgeIndex> rootEdges;
@@ -1200,108 +1100,18 @@ std::vector<
     return fetchResult();
   }
 
-  // Now, we can apply sequence rule 3
-  { // Sequence rule 3 local scope
-    // Edge BFS outwards from each
-    std::map<
-      TreeVertexIndex,
-      std::multiset<TreeEdgeIndex, SequenceRuleThreeEdgeComparator>
-    > comparisonSets;
-
-    std::map<
-      TreeVertexIndex,
-      std::set<TreeVertexIndex>
-    > seeds;
-
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-    for(const auto& undecidedSet : undecidedSets) {
-      for(const auto& undecidedBranch : undecidedSet) {
-        comparisonSets.emplace(
-          undecidedBranch,
-          *this
-        );
-
-        auto startingEdge = boost::edge(0, undecidedBranch, _tree);
-        assert(startingEdge.second);
-
-        comparisonSets.at(undecidedBranch).insert(
-          startingEdge.first
-        );
-
-        seeds[undecidedBranch] = {undecidedBranch};
-      }
-    }
-
-    /* Perform first comparison (undecided sets up-to-date from previous
-     * sequence rule)
-     */
-    _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-    // Re-calculate the undecided sets
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 3", {0}, visitedVertices(seeds, undecidedSets)),
-        _makeGraph("Sequence rule 3 multisets", 0, comparisonSets, undecidedSets),
-        orderingHelper.dumpGraphviz()
-      });
-    }
-#endif
-
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
-      // Perform a BFS step on all seeds
-      for(const auto& undecidedSet : undecidedSets) {
-        for(const auto& undecidedTreeIndex : undecidedSet) {
-          auto& branchSeeds = seeds[undecidedTreeIndex];
-
-          std::set<TreeVertexIndex> newSeeds;
-
-          for(const auto& seed: branchSeeds) {
-            // Add all adjacent out-edges on seed to the comparison multiset
-            for(
-              auto outIterPair = boost::out_edges(seed, _tree);
-              outIterPair.first != outIterPair.second;
-              ++outIterPair.first
-            ) {
-              const auto& outEdgeIndex = *outIterPair.first;
-
-              comparisonSets.at(undecidedTreeIndex).insert(outEdgeIndex);
-              
-              // Add the target node as a seed only if it's non-terminal
-              auto targetIndex = boost::target(outEdgeIndex, _tree);
-              if(boost::out_degree(targetIndex, _tree) > 0) {
-                newSeeds.insert(targetIndex);
-              }
-            }
-          }
-
-          // Overwrite the seeds
-          branchSeeds = std::move(newSeeds);
-        }
-      }
-
-      // Make comparisons in all undecided sets
-      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-      // Recalculate the undecided sets
-      undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 3", {0}, visitedVertices(seeds, undecidedSets)),
-          _makeGraph("Sequence rule 3 multisets", 0, comparisonSets, undecidedSets),
-          orderingHelper.dumpGraphviz()
-        });
-      }
-#endif
-    }
-  } // End sequence rule 3 local scope
+  // Apply sequence rule 3
+  _runBFS<
+    3, // Sequence rule 3
+    true, // BFS downwards only
+    true, // Insert edges
+    false, // Insert vertices
+    TreeEdgeIndex, // Multiset value type
+    SequenceRuleThreeEdgeComparator // Multiset comparator type
+  >(
+    0, // Source index is root
+    orderingHelper
+  );
 
 #ifndef NDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -1376,8 +1186,10 @@ std::vector<
       std::set<TreeVertexIndex>
     > seeds;
 
+    undecidedSets = orderingHelper.getUndecidedSets();
+
     // Initialize the BFS state
-    for(const auto& undecidedSet : orderingHelper.getUndecidedSets()) {
+    for(const auto& undecidedSet : undecidedSets) {
       for(const auto& undecidedBranch : undecidedSet) {
         comparisonSets.emplace(
           undecidedBranch,
@@ -1769,110 +1581,17 @@ std::vector<
   /* Sequence rule 5: 
    * - Atom or group with {R, M, Z} precedes {S, P, E}
    */
-  { // Sequence rule 5 local scope
-    // Mixed BFS with specific multiset comparator, like 4A
-    using VariantType = boost::variant<TreeVertexIndex, TreeEdgeIndex>;
-
-    std::map<
-      TreeVertexIndex,
-      std::multiset<VariantType, SequenceRuleFiveVariantComparator>
-    > comparisonSets;
-
-    std::map<
-      TreeVertexIndex,
-      std::set<TreeVertexIndex>
-    > seeds;
-
-    // Initialize the BFS state
-    for(const auto& undecidedSet : orderingHelper.getUndecidedSets()) {
-      for(const auto& undecidedBranch : undecidedSet) {
-        comparisonSets.emplace(
-          undecidedBranch,
-          *this
-        );
-
-        comparisonSets.at(undecidedBranch).emplace(undecidedBranch);
-        comparisonSets.at(undecidedBranch).emplace(
-          boost::edge(0, undecidedBranch, _tree).first
-        );
-
-        seeds[undecidedBranch] = {undecidedBranch};
-      }
-    }
-
-    // Undecided sets not up-to-date from previous sequence rule
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-    // First comparison
-    _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-    // Recalculate undecided sets
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 5", {0}, visitedVertices(seeds, undecidedSets)),
-        _makeGraph("Sequence rule 5 multisets", 0, comparisonSets, undecidedSets),
-        orderingHelper.dumpGraphviz()
-      });
-    }
-#endif
-
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
-      // Perform a full BFS Step on all undecided set seeds
-      for(const auto& undecidedSet : undecidedSets) {
-        for(const auto& undecidedTreeIndex : undecidedSet) {
-          auto& branchSeeds = seeds[undecidedTreeIndex];
-
-          std::set<TreeVertexIndex> newSeeds;
-
-          for(const auto& seed: branchSeeds) {
-            for( // Out-edges
-              auto outIterPair = boost::out_edges(seed, _tree);
-              outIterPair.first != outIterPair.second;
-              ++outIterPair.first
-            ) {
-              const auto& outEdge = *outIterPair.first;
-
-              auto edgeTarget = boost::target(outEdge, _tree);
-
-              if(
-                comparisonSets.at(undecidedTreeIndex).count(edgeTarget) == 0
-                && !_tree[edgeTarget].isDuplicate
-              ) {
-                comparisonSets.at(undecidedTreeIndex).emplace(edgeTarget);
-                comparisonSets.at(undecidedTreeIndex).emplace(outEdge);
-
-                newSeeds.insert(edgeTarget);
-              }
-            }
-          }
-
-          // Overwrite the seeds
-          branchSeeds = std::move(newSeeds);
-        }
-      }
-
-      // Make comparisons in all undecided sets
-      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-      // Recalculate the undecided sets
-      undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 5", {0}, visitedVertices(seeds, undecidedSets)),
-          _makeGraph("Sequence rule 5 multisets", 0, comparisonSets, undecidedSets),
-          orderingHelper.dumpGraphviz()
-        });
-      }
-#endif
-    }
-  } // End sequence rule 5 local scope
+  _runBFS<
+    5, // Sequence rule 5
+    true, // BFS downwards only
+    true, // Insert edges
+    true, // Insert vertices
+    boost::variant<TreeVertexIndex, TreeEdgeIndex>, // MultisetValueType
+    SequenceRuleFiveVariantComparator // Multiset comparator type
+  >(
+    0, // Source index is root
+    orderingHelper
+  );
 
 #ifndef NDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -1918,122 +1637,17 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
   auto undecidedSets = orderingHelper.getUndecidedSets();
 
-  { // local scope to avoid namespace pollution
-    std::set<TreeVertexIndex> visitedVertices {sourceIndex};
-
-    std::map<
-      TreeVertexIndex,
-      std::multiset<TreeVertexIndex, SequenceRuleOneVertexComparator>
-    > comparisonSets;
-
-    for(const auto& adjacent : adjacentsToRank) {
-      comparisonSets.emplace(
-        adjacent,
-        *this
-      );
-
-      comparisonSets.at(adjacent).insert(adjacent);
-
-      visitedVertices.insert(adjacent);
-    }
-
-    std::map<
-      TreeVertexIndex,
-      std::set<TreeVertexIndex>
-    > seeds;
-
-    for(const auto& adjacentIndex : adjacentsToRank) {
-      auto nextShell = _adjacents(adjacentIndex);
-
-      // Valid seeds need to not have been encountered yet
-      std::set<TreeVertexIndex> seedIndices;
-
-      for(const auto& newSeed : nextShell) {
-        if(visitedVertices.count(newSeed) == 0) {
-          seedIndices.insert(newSeed);
-          visitedVertices.insert(newSeed);
-        }
-      }
-
-      seeds.emplace(
-        adjacentIndex,
-        std::move(seedIndices)
-      );
-    }
-
-    // Perform the first comparison
-    TemplateMagic::forAllPairs(
-      adjacentsToRank,
-      [&](const TreeVertexIndex& a, const TreeVertexIndex& b) {
-        if(_multisetCompare(comparisonSets.at(a), comparisonSets.at(b))) {
-          orderingHelper.addLessThanRelationship(a, b);
-        } else if(_multisetCompare(comparisonSets.at(b), comparisonSets.at(a))) {
-          orderingHelper.addLessThanRelationship(b, a);
-        }
-      }
-    );
-
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 3 prep", {0}),
-        dumpGraphviz("_omni Sequence rule 1", {sourceIndex}, visitedVertices),
-        _makeGraph("_omni Sequence rule 1 multisets", sourceIndex, comparisonSets, undecidedSets),
-        orderingHelper.dumpGraphviz()
-      });
-    }
-#endif
-
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
-      // Perform a BFS step on all seeds
-      for(const auto& undecidedSet : undecidedSets) {
-        for(const auto& undecidedTreeIndex : undecidedSet) {
-          auto& branchSeeds = seeds[undecidedTreeIndex];
-
-          std::set<TreeVertexIndex> newSeeds;
-
-          for(const auto& seed: branchSeeds) {
-            // Add the seed to the indices used for comparison
-            comparisonSets.at(undecidedTreeIndex).insert(seed);
-
-            // Add its un-encountered adjacents to the new seeds
-            auto nextAdjacents = _adjacents(seed);
-
-            for(const auto& newSeed : nextAdjacents) {
-              if(visitedVertices.count(newSeed) == 0) {
-                newSeeds.insert(newSeed);
-                visitedVertices.insert(newSeed);
-              }
-            }
-          }
-
-          // Overwrite the seeds
-          branchSeeds = std::move(newSeeds);
-        }
-      }
-
-      // Make comparisons in all undecided sets
-      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-      // Recalculate the undecided sets
-      undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 3 prep", {0}),
-          dumpGraphviz("_omni Sequence rule 1", {sourceIndex}, visitedVertices),
-          _makeGraph("_omni Sequence rule 1 multisets", sourceIndex, comparisonSets, undecidedSets),
-          orderingHelper.dumpGraphviz()
-        });
-      }
-#endif
-    }
-  } // End sequence rule 1 scope
+  _runBFS<
+    1, // Sequence rule 1
+    false, // BFS downwards only
+    false, // Insert edges
+    true, // Insert vertices
+    TreeVertexIndex, // Multiset value type
+    SequenceRuleOneVertexComparator // Multiset comparator type
+  >(
+    sourceIndex,
+    orderingHelper
+  );
 
 #ifndef NDEBUG
 Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -2072,148 +1686,17 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
    * - Z > E > unassigned > non-stereogenic 
    *   (seqCis > seqTrans > non-stereogenic)
    */
-  { // Sequence rule 3 local scope
-    std::set<TreeVertexIndex> visitedVertices {sourceIndex};
-
-    // Edge BFS outwards from each
-    std::map<
-      TreeVertexIndex,
-      std::multiset<TreeEdgeIndex, SequenceRuleThreeEdgeComparator>
-    > comparisonSets;
-
-    std::map<
-      TreeVertexIndex,
-      std::set<TreeVertexIndex>
-    > seeds;
-
-    for(const auto& undecidedSet : undecidedSets) {
-      for(const auto& undecidedVertex : undecidedSet) {
-        comparisonSets.emplace(
-          undecidedVertex,
-          *this
-        );
-
-        auto forwardEdge = boost::edge(sourceIndex, undecidedVertex, _tree);
-        auto backwardEdge = boost::edge(undecidedVertex, sourceIndex, _tree);
-
-        comparisonSets.at(undecidedVertex).insert(
-          forwardEdge.second
-          ? forwardEdge.first
-          : backwardEdge.first
-        );
-
-        visitedVertices.insert(undecidedVertex);
-
-        seeds[undecidedVertex] = {undecidedVertex};
-      }
-    }
-
-    // Perform first comparison
-    for(const auto& undecidedSet : undecidedSets) {
-      TemplateMagic::forAllPairs(
-        undecidedSet,
-        [&](const TreeVertexIndex& a, const TreeVertexIndex& b) {
-          if(_multisetCompare(comparisonSets.at(a), comparisonSets.at(b))) {
-            orderingHelper.addLessThanRelationship(a, b);
-          } else if(_multisetCompare(comparisonSets.at(b), comparisonSets.at(a))) {
-            orderingHelper.addLessThanRelationship(b, a);
-          }
-        }
-      );
-    }
-
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 3 prep", {0}),
-        dumpGraphviz("_omni Sequence rule 3", {sourceIndex}, visitedVertices),
-        _makeGraph("_omni Sequence rule 3 multisets", sourceIndex, comparisonSets, undecidedSets),
-        orderingHelper.dumpGraphviz()
-      });
-    }
-#endif
-
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
-      // Perform a BFS step on all seeds
-      for(const auto& undecidedSet : undecidedSets) {
-        for(const auto& undecidedTreeIndex : undecidedSet) {
-          auto& branchSeeds = seeds[undecidedTreeIndex];
-
-          std::set<TreeVertexIndex> newSeeds;
-
-          for(const auto& seed: branchSeeds) {
-            /* Add all unencountered adjacent edges on the seed to the
-             * comparison multiset
-             */
-
-            for(
-              auto inIterPair = boost::in_edges(seed, _tree);
-              inIterPair.first != inIterPair.second;
-              ++inIterPair.first
-            ) {
-              const auto& inEdgeIndex = *inIterPair.first;
-
-              auto edgeSourceIndex = boost::source(inEdgeIndex, _tree);
-
-              // Ensure it's not been visited before
-              if(visitedVertices.count(edgeSourceIndex) == 0) {
-                comparisonSets.at(undecidedTreeIndex).insert(inEdgeIndex);
-
-                // Source nodes of an in-edge cannot be terminal, so insert
-                newSeeds.insert(edgeSourceIndex);
-                visitedVertices.insert(edgeSourceIndex);
-              }
-            }
-
-            for(
-              auto outIterPair = boost::out_edges(seed, _tree);
-              outIterPair.first != outIterPair.second;
-              ++outIterPair.first
-            ) {
-              const auto& outEdgeIndex = *outIterPair.first;
-
-              comparisonSets.at(undecidedTreeIndex).insert(outEdgeIndex);
-              
-              auto targetIndex = boost::target(outEdgeIndex, _tree);
-
-              // Ensure it's not been visited before
-              if(visitedVertices.count(targetIndex) == 0) {
-                // Add the target node as a seed only if it's non-terminal
-                if(boost::out_degree(targetIndex, _tree) > 0) {
-                  newSeeds.insert(targetIndex);
-                  visitedVertices.insert(targetIndex);
-                }
-              }
-            }
-          }
-
-          // Overwrite the seeds
-          branchSeeds = std::move(newSeeds);
-        }
-      }
-
-      // Make comparisons in all undecided sets
-      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-      // Recalculate the undecided sets
-      undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 3 prep", {0}),
-          dumpGraphviz("_omni Sequence rule 3", {sourceIndex}, visitedVertices),
-          _makeGraph("_omni Sequence rule 3 multisets", sourceIndex, comparisonSets, undecidedSets),
-          orderingHelper.dumpGraphviz()
-        });
-      }
-#endif
-    }
-  } // End sequence rule 3 local scope
+  _runBFS<
+    3, // Sequence rule 3
+    false, // BFS downwards only
+    true, // Insert edges
+    false, // Insert vertices
+    TreeEdgeIndex, // Multiset value type
+    SequenceRuleThreeEdgeComparator // Multiset comparator type
+  >(
+    sourceIndex,
+    orderingHelper
+  );
 
 #ifndef NDEBUG
 Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -2290,8 +1773,10 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       std::set<TreeVertexIndex>
     > seeds;
 
+    undecidedSets = orderingHelper.getUndecidedSets();
+
     // Initialize the BFS state
-    for(const auto& undecidedSet : orderingHelper.getUndecidedSets()) {
+    for(const auto& undecidedSet : undecidedSets) {
       for(const auto& undecidedBranch : undecidedSet) {
         comparisonSets.emplace(
           undecidedBranch,
@@ -2313,8 +1798,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
         visitedVertices.insert(undecidedBranch);
       }
     }
-
-    // First comparison (undecidedSets is up-to-date from previous BFS)
+    
     _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
 
     undecidedSets = orderingHelper.getUndecidedSets();
@@ -2707,141 +2191,17 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
   /* Sequence rule 5: 
    * - Atom or group with {R, M, Z} precedes {S, P, E}
    */
-  { // Sequence rule 5 local scope
-    // Mixed BFS with specific multiset comparator, like 4A
-    using VariantType = boost::variant<TreeVertexIndex, TreeEdgeIndex>;
-
-    std::set<TreeVertexIndex> visitedVertices {sourceIndex};
-
-    std::map<
-      TreeVertexIndex,
-      std::multiset<VariantType, SequenceRuleFiveVariantComparator>
-    > comparisonSets;
-
-    std::map<
-      TreeVertexIndex,
-      std::set<TreeVertexIndex>
-    > seeds;
-
-    // Initialize the BFS state
-    for(const auto& undecidedSet : orderingHelper.getUndecidedSets()) {
-      for(const auto& undecidedBranch : undecidedSet) {
-        comparisonSets.emplace(
-          undecidedBranch,
-          *this
-        );
-
-        auto forwardEdge = boost::edge(sourceIndex, undecidedBranch, _tree);
-        auto backwardEdge = boost::edge(undecidedBranch, sourceIndex, _tree);
-        auto edgeIndex = forwardEdge.second
-          ? forwardEdge.first
-          : backwardEdge.first;
-
-        comparisonSets.at(undecidedBranch).emplace(undecidedBranch);
-        comparisonSets.at(undecidedBranch).emplace(edgeIndex);
-
-        seeds[undecidedBranch] = {undecidedBranch};
-
-        visitedVertices.insert(undecidedBranch);
-      }
-    }
-
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-    // First comparison
-    _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-    // Recalculate undecided sets
-    undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 3 prep", {0}),
-        dumpGraphviz("_omni Sequence rule 5", {sourceIndex}, visitedVertices),
-        _makeGraph("_omni Sequence rule 5 multisets", sourceIndex, comparisonSets, undecidedSets),
-        orderingHelper.dumpGraphviz()
-      });
-    }
-#endif
-
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
-      // Perform a full BFS Step on all undecided set seeds
-      for(const auto& undecidedSet : undecidedSets) {
-        for(const auto& undecidedTreeIndex : undecidedSet) {
-          auto& branchSeeds = seeds[undecidedTreeIndex];
-
-          std::set<TreeVertexIndex> newSeeds;
-
-          for(const auto& seed: branchSeeds) {
-
-            for( // In-edges
-              auto inIterPair = boost::in_edges(seed, _tree);
-              inIterPair.first != inIterPair.second;
-              ++inIterPair.first
-            ) {
-              const auto& inEdge = *inIterPair.first;
-
-              auto edgeSource = boost::source(inEdge, _tree);
-
-              if(visitedVertices.count(edgeSource) == 0) {
-
-                comparisonSets.at(undecidedTreeIndex).emplace(edgeSource);
-                comparisonSets.at(undecidedTreeIndex).emplace(inEdge);
-
-                newSeeds.insert(edgeSource);
-                visitedVertices.insert(edgeSource);
-              }
-            }
-
-            for( // Out-edges
-              auto outIterPair = boost::out_edges(seed, _tree);
-              outIterPair.first != outIterPair.second;
-              ++outIterPair.first
-            ) {
-              const auto& outEdge = *outIterPair.first;
-
-              auto edgeTarget = boost::target(outEdge, _tree);
-
-              if(
-                visitedVertices.count(edgeTarget) == 0
-                && !_tree[edgeTarget].isDuplicate
-              ) {
-                comparisonSets.at(undecidedTreeIndex).emplace(edgeTarget);
-                comparisonSets.at(undecidedTreeIndex).emplace(outEdge);
-
-                newSeeds.insert(edgeTarget);
-                visitedVertices.insert(edgeTarget);
-              }
-            }
-          }
-
-          // Overwrite the seeds
-          branchSeeds = std::move(newSeeds);
-        }
-      }
-
-      // Make comparisons in all undecided sets
-      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
-
-      // Recalculate the undecided sets
-      undecidedSets = orderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 3 prep", {0}),
-          dumpGraphviz("_omni Sequence rule 5", {sourceIndex}, visitedVertices),
-          _makeGraph("_omni Sequence rule 5 multisets", sourceIndex, comparisonSets, undecidedSets),
-          orderingHelper.dumpGraphviz()
-        });
-      }
-#endif
-
-    }
-  } // End sequence rule 5 local scope
+  _runBFS<
+    5, // Sequence rule 5
+    false, // BFS downwards only
+    true, // Insert edges
+    true, // Insert vertices
+    boost::variant<TreeVertexIndex, TreeEdgeIndex>, // MultisetValueType
+    SequenceRuleFiveVariantComparator // Multiset comparator type
+  >(
+    sourceIndex,
+    orderingHelper
+  );
 
 #ifndef NDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -3385,6 +2745,29 @@ bool RankingTree::_molIndexExistsInBranch(
   }
 
   return false;
+}
+
+
+std::set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
+  const std::map<
+    TreeVertexIndex,
+    std::set<TreeVertexIndex>
+  >& seeds,
+  const std::vector<
+    std::vector<TreeVertexIndex>
+  >& undecidedSets
+) {
+  std::set<TreeVertexIndex> visited;
+
+  for(const auto& undecidedSet : undecidedSets) {
+    for(const auto& undecidedBranch : undecidedSet) {
+      for(const auto& seed : seeds.at(undecidedBranch)) {
+        visited.insert(seed);
+      }
+    }
+  }
+
+  return visited;
 }
 
 std::string RankingTree::dumpGraphviz(

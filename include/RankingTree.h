@@ -2,13 +2,12 @@
 #define INCLUDE_MOLECULE_MANIP_RANKING_HIERARCHICAL_TREE_H
 
 #include "BondDistance.h"
+#include "Log.h"
 #include "Molecule.h"
 #include "OrderDiscoveryHelper.h"
 
 /* TODO
- * - Stereocenter interface change needed to consume ascending list of equal
- *   sets, plus modify this everywhere in the codebase, plus test correctness
- * - Stereocenter interface change to support pseudo-asymmetry tag
+ * - Stereocenter interface change to support pseudo-asymmetry tag (?)
  * - Ranking function interface change to propagate pseudo-asymmetry result
  * - Seeds shouldn't be sets, but vectors (no need for set properties)
  * - Visualize sequence rule 4B
@@ -18,6 +17,9 @@
  *   not be necessary to even build the entire tree from the molecule. This will
  *   be *absolutely necessary* for large molecules such as proteins or molecules
  *   with many fused cycles.
+ * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
+ *   from being instantiated on the edge vertices in sequence rule 3 prep
+ *   (see 2Z... file ranking), probably innocuous, but unnecessary
  */
 
 /*! @file
@@ -263,6 +265,400 @@ private:
   std::string toString(const ValueType& value) const {
     return ""s;
   }
+
+  /* Some helper structs to get _runBFS to compile smoothly. Although the
+   * boolean template parameters to _runBFS are logically constexpr, and any 
+   * false branches of if (boolean template parameter) are removed during
+   * optimization, they must compile! This requirement is removed in C++17
+   * if-constexpr structures. 
+   *
+   * So EdgeInserter and VertexInserter's primary template (with boolean
+   * parameter specifying whether they should perform a task or not) does
+   * nothing, and there is a partial template specialization for the case
+   * that the boolean template parameter is true, in which case the task is
+   * performed.
+   *
+   * When modernizing the code to C++17, remove those classes and employ much
+   * more legible if-constexpr in all ifs in _runBFS using only constexpr
+   * template parameters.
+   */
+
+  //! Helper struct to insert edges into the comparison set
+  template<
+    bool insertEdges,
+    typename MultisetValueType,
+    typename MultisetComparatorType
+  > struct EdgeInserter {
+    static void execute(
+      std::map<
+        TreeVertexIndex,
+        std::multiset<MultisetValueType, MultisetComparatorType>
+      >& comparisonSets,
+      const TreeVertexIndex& branchIndex,
+      const TreeEdgeIndex& edgeIndex
+    ) { /* do nothing */ }
+  };
+
+  //! Partial specialization that actually does the insertion
+  template<
+    typename MultisetValueType,
+    typename MultisetComparatorType
+  > struct EdgeInserter<true, MultisetValueType, MultisetComparatorType> {
+    static void execute(
+      std::map<
+        TreeVertexIndex,
+        std::multiset<MultisetValueType, MultisetComparatorType>
+      >& comparisonSets,
+      const TreeVertexIndex& branchIndex,
+      const TreeEdgeIndex& edgeIndex
+    ) {
+      comparisonSets.at(branchIndex).insert(edgeIndex);
+    }
+  };
+
+  //! Helper struct to insert vertices into the comparion set
+  template<
+    bool insertVertices,
+    typename MultisetValueType,
+    typename MultisetComparatorType
+  > struct VertexInserter {
+    static void execute(
+      std::map<
+        TreeVertexIndex,
+        std::multiset<MultisetValueType, MultisetComparatorType>
+      >& comparisonSets,
+      const TreeVertexIndex& branchIndex,
+      const TreeVertexIndex& vertexIndex
+    ) { /* do nothing */ }
+  };
+
+  //! Partial specialization that actually does the insertion
+  template<
+    typename MultisetValueType,
+    typename MultisetComparatorType
+  > struct VertexInserter<true, MultisetValueType, MultisetComparatorType> {
+    static void execute(
+      std::map<
+        TreeVertexIndex,
+        std::multiset<MultisetValueType, MultisetComparatorType>
+      >& comparisonSets,
+      const TreeVertexIndex& branchIndex,
+      const TreeVertexIndex& vertexIndex
+    ) {
+      comparisonSets.at(branchIndex).insert(vertexIndex);
+    }
+  };
+
+  /* When modernizing to C++17, see the comments regarding EdgeInserter and
+   * VertexInserter above
+   */
+  /*!
+   *
+   */
+  template<
+    unsigned ruleNumber,
+    bool BFSDownOnly,
+    bool insertEdges,
+    bool insertVertices,
+    typename MultisetValueType,
+    typename MultisetComparatorType
+  > void _runBFS(
+    TreeVertexIndex sourceIndex,
+    OrderDiscoveryHelper<TreeVertexIndex>& orderingHelper
+  ) const {
+    /* Static safety checks */
+    static_assert(
+      insertEdges || insertVertices,
+      "During BFS, you must insert either edges, vertices, or both into the "
+      " comparison sets, but definitely not neither"
+    );
+
+    static_assert(
+      (
+        insertEdges 
+        && !std::is_same<MultisetValueType, TreeVertexIndex>::value
+      ) || (
+        insertVertices
+        && !std::is_same<MultisetValueType, TreeEdgeIndex>::value
+      ),
+      "Multiset value type and insert booleans are mismatched"
+    );
+
+
+    /* Declarations */
+
+    /* For each branch to compare, keep a multiset of all the encountered
+     * indices in the branch. The multiset keeps a descending order of the
+     * indices according to sequence rule 1 and can be lexicographically
+     * compared against one another using the SequenceRuleOneVertexComparator
+     *
+     * NOTE: Do not use operator [] to access members in comparisonSets. This
+     * old form of accessible and assignable proxy object forces a
+     * default-instantiation of the Comparator, which the
+     * MultisetComparatorTypes cannot do. Always use .at().
+     */
+    std::map<
+      TreeVertexIndex,
+      std::multiset<MultisetValueType, MultisetComparatorType>
+    > comparisonSets;
+
+    /* For each branch to compare, keep a set of seed indices to follow in an
+     * iteration. These are expanded in each iteration as long as the branch
+     * they contain remains relevant (i.e. it's relation to the other branches
+     * is still unclear): They themselves are placed in the comparisonSet, 
+     * while their respective children are the new seeds for the next
+     * iteration.
+     */
+    std::map<
+      TreeVertexIndex,
+      std::set<TreeVertexIndex>
+    > seeds;
+
+    /* In case the BFS in not down-only, we have to track which indices we
+     * have visited to ensure BFS terminates and nothing is used twice
+     */
+    std::set<TreeVertexIndex> visitedVertices;
+
+
+    /* Initialization */
+    EdgeInserter<insertEdges, MultisetValueType, MultisetComparatorType> edgeInserter;
+    VertexInserter<insertVertices, MultisetValueType, MultisetComparatorType> vertexInserter;
+
+    if(!BFSDownOnly) { // Initialization is only necessary in this case
+      visitedVertices.insert(sourceIndex);
+    }
+
+    auto undecidedSets = orderingHelper.getUndecidedSets();
+
+    for(const auto& undecidedSet : undecidedSets) {
+      for(const auto& undecidedBranch : undecidedSet) {
+        comparisonSets.emplace(
+          undecidedBranch,
+          *this
+        );
+
+        vertexInserter.execute(
+          comparisonSets,
+          undecidedBranch,
+          undecidedBranch
+        );
+        /*if(insertVertices) {
+          comparisonSets.at(undecidedBranch).insert(undecidedBranch);
+        }*/
+
+        if(insertEdges) {
+          if(BFSDownOnly) {
+            edgeInserter.execute(
+              comparisonSets,
+              undecidedBranch,
+              boost::edge(sourceIndex, undecidedBranch, _tree).first
+            );
+
+            /*comparisonSets.at(undecidedBranch).insert(
+              boost::edge(sourceIndex, undecidedBranch, _tree).first
+            );*/
+          } else {
+            // Need to be direction-agnostic
+            auto forwardEdge = boost::edge(sourceIndex, undecidedBranch, _tree);
+            auto backwardEdge = boost::edge(undecidedBranch, sourceIndex, _tree);
+
+            edgeInserter.execute(
+              comparisonSets,
+              undecidedBranch,
+              (
+                forwardEdge.second
+                ? forwardEdge.first
+                : backwardEdge.first
+              )
+            );
+
+            /*comparisonSets.at(undecidedBranch).insert(
+              forwardEdge.second
+              ? forwardEdge.first
+              : backwardEdge.first
+            );*/
+          }
+        }
+
+        seeds[undecidedBranch] = {undecidedBranch};
+      }
+    }
+
+    // Compare undecided multisets, and add any discoveries to the ordering helper
+    _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
+
+    // Update the undecided sets
+    undecidedSets = orderingHelper.getUndecidedSets();
+
+#ifndef NDEBUG
+    // Write debug graph files if the corresponding log particular is set
+    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+      std::string header;
+      if(!BFSDownOnly) {
+        header += "_omni "s;
+      }
+      header += "Sequence rule "s + std::to_string(ruleNumber);
+
+      _writeGraphvizFiles({
+        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+        dumpGraphviz(
+          header,
+          {sourceIndex},
+          _collectSeeds(seeds, undecidedSets)
+        ),
+        _makeGraph(
+          header + " multisets"s,
+          sourceIndex,
+          comparisonSets,
+          undecidedSets
+        ),
+        orderingHelper.dumpGraphviz()
+      });
+    }
+#endif
+
+
+    /* Loop BFS */
+
+    /* As long as there are undecided sets and seeds whose expansion could be
+     * relevant for those undecided sets, continue BFS
+     */
+    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
+      // BFS Step
+      for(const auto& undecidedSet: undecidedSets) {
+        for(const auto& undecidedBranch: undecidedSet) {
+          std::set<TreeVertexIndex> newSeeds;
+
+          for(const auto& seed : seeds.at(undecidedBranch)) {
+
+            if(!BFSDownOnly) {
+              // Mark as visited
+              visitedVertices.insert(seed);
+
+              // In-edges are only relevant for omnidirectional BFS
+              for( 
+                auto inIterPair = boost::in_edges(seed, _tree);
+                inIterPair.first != inIterPair.second;
+                ++inIterPair.first
+              ) {
+                const auto& inEdge = *inIterPair.first;
+
+                auto edgeSource = boost::source(inEdge, _tree);
+
+                // Check if already placed
+                if(visitedVertices.count(edgeSource) == 0) {
+                  vertexInserter.execute(
+                    comparisonSets,
+                    undecidedBranch,
+                    edgeSource
+                  );
+                  /*if(insertVertices) {
+                    comparisonSets.at(undecidedBranch).emplace(edgeSource);
+                  }*/
+
+                  edgeInserter.execute(
+                    comparisonSets,
+                    undecidedBranch,
+                    inEdge
+                  );
+                  /*if(insertEdges) {
+                    comparisonSets.at(undecidedBranch).emplace(inEdge);
+                  }*/
+
+                  newSeeds.insert(edgeSource);
+                }
+              }
+            }
+
+            // Out edges are considered in all cases
+            for( // Out-edges
+              auto outIterPair = boost::out_edges(seed, _tree);
+              outIterPair.first != outIterPair.second;
+              ++outIterPair.first
+            ) {
+              const auto& outEdge = *outIterPair.first;
+
+              auto edgeTarget = boost::target(outEdge, _tree);
+
+              // Skip this vertex if in omnidirectional BFS and already-seen node
+              if(!BFSDownOnly && visitedVertices.count(edgeTarget) > 0) {
+                continue;
+              }
+
+              vertexInserter.execute(
+                comparisonSets,
+                undecidedBranch,
+                edgeTarget
+              );
+              /*if(insertVertices) {
+                comparisonSets.at(undecidedBranch).emplace(edgeTarget);
+              }*/
+
+              edgeInserter.execute(
+                comparisonSets,
+                undecidedBranch,
+                outEdge
+              );
+              /*if(insertEdges) {
+                comparisonSets.at(undecidedBranch).emplace(outEdge);
+              }*/
+
+              // Add out edge target to seeds only if non-terminal
+              if(!_tree[edgeTarget].isDuplicate) {
+                newSeeds.insert(edgeTarget);
+              }
+            }
+          }
+
+          // Overwrite seeds
+          seeds.at(undecidedBranch) = std::move(newSeeds);
+        }
+      }
+
+      // Make comparisons in all undecided sets
+      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
+
+      // Recalculate the undecided sets
+      undecidedSets = orderingHelper.getUndecidedSets();
+
+#ifndef NDEBUG
+      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        std::string header;
+        if(!BFSDownOnly) {
+          header += "_omni "s;
+        }
+        header += "Sequence rule "s + std::to_string(ruleNumber);
+
+        _writeGraphvizFiles({
+          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          dumpGraphviz(
+            header,
+            {sourceIndex},
+            _collectSeeds(seeds, undecidedSets)
+          ),
+          _makeGraph(
+            header + " multisets"s,
+            sourceIndex,
+            comparisonSets,
+            undecidedSets
+          ),
+          orderingHelper.dumpGraphviz()
+        });
+      }
+#endif
+    }
+  }
+
+  // Flatten the undecided branches' seeds into a single set
+  static std::set<TreeVertexIndex> _collectSeeds(
+    const std::map<
+      TreeVertexIndex,
+      std::set<TreeVertexIndex>
+    >& seeds,
+    const std::vector<
+      std::vector<TreeVertexIndex>
+    >& undecidedSets
+  );
 
   template<typename ValueType, typename ComparatorType>
   std::string _makeGraph(
