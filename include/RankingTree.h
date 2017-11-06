@@ -12,10 +12,6 @@
  * - Visualize sequence rule 4B
  * - Interface change to support using coordinates or prior instantiated
  *   stereocenters to assign auxiliary stereocenters
- * - Since most rankings are done after a few sequence rule 1 iterations, it may
- *   not be necessary to even build the entire tree from the molecule. This will
- *   be *absolutely necessary* for large molecules such as proteins or molecules
- *   with many fused cycles.
  * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
  *   from being instantiated on the edge vertices in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
@@ -55,6 +51,11 @@ private:
 #endif
 
 public:
+  enum ExpansionOption {
+    Optimized,
+    Full
+  };
+
   //! Data class that sets which supplementary data is stored for a tree vertex
   struct VertexData {
     AtomIndexType molIndex;
@@ -146,8 +147,14 @@ private:
    */
   unsigned _nonDuplicateDegree(const TreeVertexIndex& index) const;
 
-  //! Adds the required duplicate atoms for bonds of high bond orders
-  void _addBondOrderDuplicates(
+  /*! Adds the required duplicate atoms for bonds of high bond orders
+   *
+   * This adds the appropriate amount of duplicate atoms to the source and
+   * target vertices according to the bond order (if integral). Returns
+   * the new duplicate tree vertex indices of duplicate nodes added to the
+   * source vertex only, not those added to the target vertex.
+   */
+  std::vector<RankingTree::TreeVertexIndex> _addBondOrderDuplicates(
     const TreeVertexIndex& treeSource,
     const TreeVertexIndex& treeTarget
   );
@@ -184,10 +191,15 @@ private:
 
 
 /* Major helper functions */
-  /*! Expand a node onto its missing adjacencies by depth-first recursive
-   * progression
+  /*! Adds missing adjacents to vertex, returning new and existing tree children
+   *
+   * Expands a tree node by checking the existing node children plus its parent
+   * and comparing this against the adjacent indices from the molecule. Returns
+   * all new and existing child tree vertex indices of the newly expanded node.
+   * Pre-expansion existing children may come about due to the addition of
+   * multiple bond order duplicate atoms.
    */
-  void _DFSExpand(
+  std::vector<RankingTree::TreeVertexIndex> _expand(
     const TreeVertexIndex& index,
     const std::set<AtomIndexType>& molIndicesInBranch
   );
@@ -862,9 +874,15 @@ private:
     >& undecidedSets
   );
 
-
-  void _DFSFinishTree();
-
+  /*! Ranks the direct substituents of the root atom, applying sequence rules 2-5
+   *
+   * This function ranks the direct substituents of the atom this RankingTree
+   * was instantiated upon by the sequential application of the 2013 IUPAC Blue
+   * Book sequence rules 2-5 (the ctor applies #1). They are somewhat adapted
+   * since the priority of asymmetric centers of higher (and also lower)
+   * symmetry must also be considered because transition metal chemistry is
+   * also included in this library.
+   */
   void _applySequenceRules();
 
   /*!
@@ -969,21 +987,15 @@ public:
   RankingTree(
     const Molecule& molecule,
     const AtomIndexType& atomToRank,
-    const std::set<AtomIndexType>& excludeIndices = {}
+    const std::set<AtomIndexType>& excludeIndices = {},
+    const ExpansionOption& expansionMethod = ExpansionOption::Optimized
   );
 
-  /*! Ranks the direct substituents of the root atom
+  /*! Fetches the ranked result
    *
-   * This function ranks the direct substituents of the atom this RankingTree
-   * was instantiated upon by the sequential application of the 2013 IUPAC Blue
-   * Book sequence rules. They are somewhat adapted since the priority of
-   * asymmetric centers of higher (and also lower) symmetry must also be
-   * considered because transition metal chemistry is also included in this
-   * library.
-   *
-   * It returns a sorted vector of vectors, in which every sub-vector
-   * represents a set of equal-priority substituents. The sorting is ascending,
-   * meaning from lowest priority to highest priority.
+   * Returns the ranked result as a sorted vector of vectors, in which every
+   * sub-vector represents a set of equal-priority substituents. The sorting is
+   * ascending, meaning from lowest priority to highest priority.
    */
   std::vector<
     std::vector<AtomIndexType>

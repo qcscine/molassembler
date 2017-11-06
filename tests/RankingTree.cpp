@@ -32,7 +32,12 @@ bool checkIsomorphicExpansion(
     + fileName
   );
 
-  auto expandedTree = RankingTree(molecule, expandOnIndex);
+  auto expandedTree = RankingTree(
+    molecule,
+    expandOnIndex,
+    {},
+    RankingTree::ExpansionOption::Full
+  );
 
   return boost::graph::isomorphism(
     expandedTree.getGraph(),
@@ -50,7 +55,12 @@ void writeExpandedTree(
     + fileName
   );
 
-  auto expandedTree = RankingTree(molecule, expandOnIndex);
+  auto expandedTree = RankingTree(
+    molecule,
+    expandOnIndex,
+    {},
+    RankingTree::ExpansionOption::Full
+  );
 
   std::ofstream dotFile(fileName + ".dot");
   dotFile << expandedTree.dumpGraphviz();
@@ -115,14 +125,6 @@ RankingTree::TreeGraphType makeTree(
   return tree;
 }
 
-BOOST_AUTO_TEST_CASE(trivialExamples) {
-  using namespace std::string_literals;
-
-  IO::MOLFileHandler molHandler;
-  // TODO Continue here
-
-}
-
 BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
   using namespace std::string_literals;
 
@@ -137,7 +139,7 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
     + "2R-2-chloropropan-1-ol.mol"s
   );
 
-  auto exampleOneExpanded = RankingTree(exampleOne, 2);
+  auto exampleOneExpanded = RankingTree(exampleOne, 2, {}, RankingTree::ExpansionOption::Full);
 
   BOOST_CHECK(
     boost::graph::isomorphism(
@@ -164,7 +166,7 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
     + "2S-23-dichloropropan-1-ol.mol"
   );
 
-  auto exampleTwoExpanded = RankingTree(exampleTwo, 3);
+  auto exampleTwoExpanded = RankingTree(exampleTwo, 3, {}, RankingTree::ExpansionOption::Full);
 
   BOOST_CHECK(
     boost::graph::isomorphism(
@@ -195,7 +197,7 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
     + "1S5R-bicyclo-3-1-0-hex-2-ene.mol"
   );
 
-  auto exampleThreeExpanded = RankingTree(exampleThree, 0);
+  auto exampleThreeExpanded = RankingTree(exampleThree, 0, {}, RankingTree::ExpansionOption::Full);
 
   BOOST_CHECK(
     boost::graph::isomorphism(
@@ -271,7 +273,7 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
     )
   );
 
-  auto exampleThreeExpandedAgain = RankingTree(exampleThree, 1);
+  auto exampleThreeExpandedAgain = RankingTree(exampleThree, 1, {}, RankingTree::ExpansionOption::Full);
 
   BOOST_CHECK((
     exampleThreeExpandedAgain.getRanked() == std::vector<

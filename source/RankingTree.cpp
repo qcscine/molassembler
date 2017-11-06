@@ -12,46 +12,6 @@
 
 namespace MoleculeManip {
 
-RankingTree::RankingTree(
-  const Molecule& molecule,
-  const AtomIndexType& atomToRank,
-  const std::set<AtomIndexType>& excludeIndices
-) : _moleculeRef(molecule) {
-  // Set the root vertex
-  auto rootIndex = boost::add_vertex(_tree);
-  _tree[rootIndex].molIndex = atomToRank;
-  _tree[rootIndex].isDuplicate = false;
-
-  /* Add the direct descendants of the root atom, if they are not explicitly
-   * excluded by parameters
-   */
-  std::set<TreeVertexIndex> branchIndices;
-  for(
-    const auto& rootAdjacentIndex : 
-    _moleculeRef.iterateAdjacencies(atomToRank)
-  ) {
-    if(excludeIndices.count(rootAdjacentIndex) == 0) {
-      auto branchIndex = boost::add_vertex(_tree);
-      _tree[branchIndex].molIndex = rootAdjacentIndex;
-      _tree[branchIndex].isDuplicate = false;
-
-      boost::add_edge(rootIndex, branchIndex, _tree);
-
-      _addBondOrderDuplicates(rootIndex, branchIndex);
-
-      branchIndices.insert(branchIndex);
-    }
-  }
-
-  _DFSFinishTree();
-
-  // Set the ordering helper's list of unordered values
-  _branchOrderingHelper.setUnorderedValues(branchIndices);
-
-  // Perform ranking
-  _applySequenceRules();
-}
-
 class RankingTree::GraphvizWriter {
 private:
   // Closures
@@ -528,23 +488,6 @@ public:
   }
 };
 
-std::vector<
-  std::vector<AtomIndexType>
-> RankingTree::getRanked() const {
-  // We must transform the ranked tree vertex indices back to molecule indices.
-  return TemplateMagic::map(
-    _branchOrderingHelper.getSets(),
-    [&](const auto& set) -> std::vector<AtomIndexType> {
-      return TemplateMagic::map(
-        set,
-        [&](const auto& treeVertex) -> AtomIndexType {
-          return _tree[treeVertex].molIndex;
-        }
-      );
-    }
-  );
-}
-
 /*!
  * This function ranks the direct substituents of the atom it is instantiated
  * upon by the sequential application of the 2013 IUPAC Blue Book sequence
@@ -557,64 +500,6 @@ std::vector<
  * meaning from lowest priority to highest priority.
  */
 void RankingTree::_applySequenceRules() {
-
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "Ranking substituents of atom index " 
-    << _tree[0].molIndex
-    << ": {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        _branchOrderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
-
-  /* A much-needed variable which was often re-declared within the local
-   * scopes of every sequence rule. This allows reuse.
-   */
-  auto undecidedSets = _branchOrderingHelper.getUndecidedSets();
-
-  /* Evaluate by sequence rule 1
-   * - Higher atomic number precedes lower atomic number
-   * - A duplicate atom node whose corresponding non-duplicate atom node is
-   *   root or is closer to the root preceds a duplicate node whose
-   *   corresponding atom node is further from the root
-   */
-  _runBFS<
-    1, // Sequence rule 1
-    true, // BFS downwards only
-    false, // Insert edges
-    true, // Insert vertices
-    TreeVertexIndex, // Multiset value type
-    SequenceRuleOneVertexComparator // Multiset comparator type
-  >(
-    0, // Source index is root
-    _branchOrderingHelper
-  );
-
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "Sets post sequence rule 1: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        _branchOrderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
-
-
-  // Was sequence rule 1 enough?
-  if(_branchOrderingHelper.isTotallyOrdered()) {
-    return;
-  }
-
   /* Sequence rule 2
    * - A node with higher atomic mass precedes ones with lower atomic mass
    *
@@ -653,7 +538,10 @@ void RankingTree::_applySequenceRules() {
     std::set<TreeEdgeIndex>
   > byDepth;
 
-  undecidedSets = _branchOrderingHelper.getUndecidedSets();
+  /* A much-needed variable which was often re-declared within the local
+   * scopes of every sequence rule. This allows reuse.
+   */
+  auto undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
   { // Populate byDepth from active branches only
     std::set<TreeEdgeIndex> rootEdges;
@@ -1354,27 +1242,6 @@ void RankingTree::_applySequenceRules() {
   // Exhausted sequence rules, anything undecided is now equal
 }
 
-void RankingTree::_DFSFinishTree() {
-  // Now that the graph is acyclic, finish the tree by DFS at every leaf
-  TreeGraphType::vertex_iterator iter, end;
-  std::tie(iter, end) = boost::vertices(_tree);
-
-  // Skip the root vertex, that one does not need DFS-ing
-  ++iter;
-
-  while(iter != end) {
-    if(!_tree[*iter].isDuplicate) {
-      /* We can insert vertices and edges while iterating through, since
-       * these do not invalidate vertex iterators
-       * (boost.org/doc/libs/1_65_1/libs/graph/doc/adjacency_list.html)
-       */
-      _DFSExpand(*iter, _molIndicesInBranch(*iter));
-    }
-
-    ++iter;
-  }
-}
-
 std::vector<
   std::vector<RankingTree::TreeVertexIndex>
 > RankingTree::_auxiliaryApplySequenceRules(
@@ -1985,19 +1852,23 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
   return orderingHelper.getSets();
 }
 
-void RankingTree::_DFSExpand(
+std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   const RankingTree::TreeVertexIndex& index,
   const std::set<AtomIndexType>& molIndicesInBranch
 ) {
+  std::vector<TreeVertexIndex> newIndices;
+
   std::set<AtomIndexType> treeOutAdjacencies;
   TreeGraphType::out_edge_iterator iter, end;
   std::tie(iter, end) = boost::out_edges(index, _tree);
   while(iter != end) {
+    auto targetVertex = boost::target(*iter, _tree);
+
     treeOutAdjacencies.insert(
-      _tree[
-        boost::target(*iter, _tree)
-      ].molIndex
+      _tree[targetVertex].molIndex
     );
+
+    newIndices.push_back(targetVertex);
 
     ++iter;
   }
@@ -2015,26 +1886,34 @@ void RankingTree::_DFSExpand(
       _tree[newIndex].molIndex = molAdjacentIndex;
       _tree[newIndex].isDuplicate = false;
 
+      newIndices.push_back(newIndex);
+
       boost::add_edge(index, newIndex, _tree);
       
       // Need to add duplicates!
-      _addBondOrderDuplicates(index, newIndex);
+      auto duplicateVertices = _addBondOrderDuplicates(index, newIndex);
+      std::copy(
+        duplicateVertices.begin(),
+        duplicateVertices.end(),
+        std::back_inserter(newIndices)
+      );
 
       // Copy the indices and insert the newest addition
       auto molIndicesInBranchCopy = molIndicesInBranch;
       molIndicesInBranchCopy.insert(molAdjacentIndex);
-
-      _DFSExpand(newIndex, molIndicesInBranchCopy);
     } else if(molAdjacentIndex != _tree[_parent(index)].molIndex)  {
       auto newIndex = boost::add_vertex(_tree);
       _tree[newIndex].molIndex = molAdjacentIndex;
       _tree[newIndex].isDuplicate = true;
 
-      boost::add_edge(index, newIndex, _tree);
+      newIndices.push_back(newIndex);
 
-      // Terminate DFS
+      boost::add_edge(index, newIndex, _tree);
     }
   }
+
+  // Does not contain any new duplicate indices
+  return newIndices;
 }
 
 template<>
@@ -2287,10 +2166,12 @@ bool RankingTree::_relevantSeeds(
   return false;
 }
 
-void RankingTree::_addBondOrderDuplicates(
+std::vector<RankingTree::TreeVertexIndex> RankingTree::_addBondOrderDuplicates(
   const TreeVertexIndex& treeSource,
   const TreeVertexIndex& treeTarget
 ) {
+  std::vector<TreeVertexIndex> newIndices;
+
   const auto& molGraph = _moleculeRef.getGraph();
 
   auto molGraphEdge = boost::edge(
@@ -2335,9 +2216,13 @@ void RankingTree::_addBondOrderDuplicates(
       _tree[b].molIndex = _tree[treeTarget].molIndex;
       _tree[b].isDuplicate = true;
 
+      newIndices.push_back(b);
+
       boost::add_edge(treeSource, b, _tree);
     }
   }
+
+  return newIndices;
 }
 
 std::set<AtomIndexType> RankingTree::_molIndicesInBranch(TreeVertexIndex index) const {
@@ -2535,6 +2420,262 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
   return visited;
 }
 
+RankingTree::RankingTree(
+  const Molecule& molecule,
+  const AtomIndexType& atomToRank,
+  const std::set<AtomIndexType>& excludeIndices,
+  const ExpansionOption& expansionMethod
+) : _moleculeRef(molecule) {
+  // Set the root vertex
+  auto rootIndex = boost::add_vertex(_tree);
+  _tree[rootIndex].molIndex = atomToRank;
+  _tree[rootIndex].isDuplicate = false;
+
+  /* Add the direct descendants of the root atom, if they are not explicitly
+   * excluded by parameters
+   */
+  std::set<TreeVertexIndex> branchIndices;
+  for(
+    const auto& rootAdjacentIndex : 
+    _moleculeRef.iterateAdjacencies(atomToRank)
+  ) {
+    if(excludeIndices.count(rootAdjacentIndex) == 0) {
+      auto branchIndex = boost::add_vertex(_tree);
+      _tree[branchIndex].molIndex = rootAdjacentIndex;
+      _tree[branchIndex].isDuplicate = false;
+
+      boost::add_edge(rootIndex, branchIndex, _tree);
+
+      _addBondOrderDuplicates(rootIndex, branchIndex);
+
+      branchIndices.insert(branchIndex);
+    }
+  }
+
+  // Set the ordering helper's list of unordered values
+  _branchOrderingHelper.setUnorderedValues(branchIndices);
+
+#ifndef NDEBUG
+  Log::log(Log::Particulars::RankingTreeDebugInfo)
+    << "Ranking substituents of atom index " 
+    << _tree[0].molIndex
+    << ": {" 
+    << TemplateMagic::condenseIterable(
+      TemplateMagic::map(
+        _branchOrderingHelper.getSets(),
+        [](const auto& indexSet) -> std::string {
+          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+        }
+      )
+    ) << "}\n";
+#endif
+
+// The class should work regardless of which tree expansion method is chosen
+if(expansionMethod == ExpansionOption::Optimized) {
+  /* Expand only those branches which are yet undecided, immediately compare
+   * using sequence rule 1.
+   */
+
+  std::map<
+    TreeVertexIndex,
+    std::multiset<TreeVertexIndex, SequenceRuleOneVertexComparator>
+  > comparisonSets;
+
+  std::map<
+    TreeVertexIndex,
+    std::vector<TreeVertexIndex>
+  > seeds;
+
+  for(const auto& branchIndex : branchIndices) {
+    comparisonSets.emplace(
+      branchIndex,
+      *this
+    );
+
+    comparisonSets.at(branchIndex).insert(branchIndex);
+
+    seeds[branchIndex] = {branchIndex};
+  }
+
+  auto undecidedSets = _branchOrderingHelper.getUndecidedSets();
+
+  // Make the first comparison
+  _compareBFSSets(comparisonSets, undecidedSets, _branchOrderingHelper);
+
+  // Update the undecided sets
+  undecidedSets = _branchOrderingHelper.getUndecidedSets();
+
+#ifndef NDEBUG
+  // Write debug graph files if the corresponding log particular is set
+  if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+    std::string header = "Sequence rule 1";
+
+    _writeGraphvizFiles({
+      _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+      dumpGraphviz(
+        header,
+        {0},
+        _collectSeeds(seeds, undecidedSets)
+      ),
+      _makeGraph(
+        header + " multisets"s,
+        0,
+        comparisonSets,
+        undecidedSets
+      ),
+      _branchOrderingHelper.dumpGraphviz()
+    });
+  }
+#endif
+
+  // TODO try to avoid repeated computation with _molIndicesInBranch somehow
+  // Main BFS loop
+  while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
+
+    // Perform a step
+    for(const auto& undecidedSet : undecidedSets) {
+      for(const auto& undecidedBranch : undecidedSet) {
+        auto& branchSeeds = seeds.at(undecidedBranch);
+        auto& branchComparisonSet = comparisonSets.at(undecidedBranch);
+        
+        branchComparisonSet.clear();
+
+        std::vector<TreeVertexIndex> newSeeds;
+        
+        for(const auto& seedVertex : branchSeeds) {
+          auto newVertices = _expand(
+            seedVertex,
+            _molIndicesInBranch(seedVertex)
+          );
+
+          // Add ALL new vertices to the comparison set
+          std::copy(
+            newVertices.begin(),
+            newVertices.end(),
+            std::inserter(branchComparisonSet, branchComparisonSet.begin())
+          );
+
+          // Add non-duplicate vertices to the new seeds
+          std::copy_if(
+            newVertices.begin(),
+            newVertices.end(),
+            std::back_inserter(newSeeds),
+            [&](const auto& newVertex) -> bool {
+              return !_tree[newVertex].isDuplicate;
+            }
+          );
+        }
+
+        branchSeeds = std::move(newSeeds);
+      }
+    }
+
+    // Compare and update the undecided sets
+    _compareBFSSets(comparisonSets, undecidedSets, _branchOrderingHelper);
+    undecidedSets = _branchOrderingHelper.getUndecidedSets();
+
+#ifndef NDEBUG
+    // Write debug graph files if the corresponding log particular is set
+    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+      std::string header = "Sequence rule 1";
+
+      _writeGraphvizFiles({
+        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+        dumpGraphviz(
+          header,
+          {0},
+          _collectSeeds(seeds, undecidedSets)
+        ),
+        _makeGraph(
+          header + " multisets"s,
+          0,
+          comparisonSets,
+          undecidedSets
+        ),
+        _branchOrderingHelper.dumpGraphviz()
+      });
+    }
+#endif
+  }
+
+} else { // Full tree expansion requested
+
+  std::vector<TreeVertexIndex> seeds;
+  std::copy(
+    branchIndices.begin(),
+    branchIndices.end(),
+    std::back_inserter(seeds)
+  );
+  
+  // TODO try to avoid repeated computation with _molIndicesInBranch somehow
+  do {
+    std::vector<TreeVertexIndex> newSeeds;
+    
+    for(const auto& seedVertex : seeds) {
+      auto newVertices = _expand(
+        seedVertex,
+        _molIndicesInBranch(seedVertex)
+      );
+
+      // Add non-duplicate vertices to the new seeds
+      std::copy_if(
+        newVertices.begin(),
+        newVertices.end(),
+        std::back_inserter(newSeeds),
+        [&](const auto& newVertex) -> bool {
+          return !_tree[newVertex].isDuplicate;
+        }
+      );
+    }
+
+    seeds = std::move(newSeeds);
+  } while(seeds.size() > 0);
+
+  /* Apply sequence rule 1 here, not in _applySequenceRules, since the
+   * optimized version IS the application of sequence rule 1
+   */
+  /* Sequence rule 1
+   * - Higher atomic number precedes lower atomic number
+   * - A duplicate atom node whose corresponding non-duplicate atom node is
+   *   root or is closer to the root preceds a duplicate node whose
+   *   corresponding atom node is further from the root
+   */
+  _runBFS<
+    1, // Sequence rule 1
+    true, // BFS downwards only
+    false, // Insert edges
+    true, // Insert vertices
+    TreeVertexIndex, // Multiset value type
+    SequenceRuleOneVertexComparator // Multiset comparator type
+  >(
+    0, // Source index is root
+    _branchOrderingHelper
+  );
+}
+
+#ifndef NDEBUG
+  Log::log(Log::Particulars::RankingTreeDebugInfo)
+    << "Sets post sequence rule 1: {" 
+    << TemplateMagic::condenseIterable(
+      TemplateMagic::map(
+        _branchOrderingHelper.getSets(),
+        [](const auto& indexSet) -> std::string {
+          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+        }
+      )
+    ) << "}\n";
+#endif
+
+  // Was sequence rule 1 enough?
+  if(_branchOrderingHelper.isTotallyOrdered()) {
+    return;
+  }
+
+  // Perform ranking
+  _applySequenceRules();
+}
+
+
 std::string RankingTree::dumpGraphviz(
   const std::string& title,
   const std::set<TreeVertexIndex>& squareVertices,
@@ -2565,6 +2706,24 @@ std::string RankingTree::dumpGraphviz(
 const typename RankingTree::TreeGraphType& RankingTree::getGraph() const {
   return _tree;
 }
+
+std::vector<
+  std::vector<AtomIndexType>
+> RankingTree::getRanked() const {
+  // We must transform the ranked tree vertex indices back to molecule indices.
+  return TemplateMagic::map(
+    _branchOrderingHelper.getSets(),
+    [&](const auto& set) -> std::vector<AtomIndexType> {
+      return TemplateMagic::map(
+        set,
+        [&](const auto& treeVertex) -> AtomIndexType {
+          return _tree[treeVertex].molIndex;
+        }
+      );
+    }
+  );
+}
+
 
 #ifndef NDEBUG
 // Initialize the debug counter
