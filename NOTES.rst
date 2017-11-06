@@ -10,18 +10,6 @@ TODO
   only, and perhaps only ones that do not permit modification of the underlying
   object. Otherwise hide the abstraction some other way, either through obtuse
   API or whatever
-- Continue altering rankPriority to include stereocenter and bond considerations 
-  (add assignment + 1 if a value exists) to the atom referenced by the
-  stereocenterList)
-- Perhaps add cache for comparison results or figure out a more optimal way to
-  reduce the number of comparisons (like inserting one-by-one into a set).
-- Why was StereocenterMap added?
-  I think it was because I thought a list is unsuitable in the long run. For
-  instance, changes in molecule state may alter the order of stereocenters in
-  the list (which stores them as a set, where operator < is based on memory
-  position comparison). It's because access to a stereocenterPtr goes via
-  list-iteration, but no direct accessors exist via atom index
-  -> Replace it
 - All RankingTree TODOs
 
 Remaining DG deficiencies

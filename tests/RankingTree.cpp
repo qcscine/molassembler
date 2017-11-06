@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
     )
   );
 
-  auto exampleThreeRanked = exampleThreeExpanded.rank();
+  auto exampleThreeRanked = exampleThreeExpanded.getRanked();
 
   BOOST_CHECK_MESSAGE(
     (exampleThreeRanked == std::vector<
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
   auto exampleThreeExpandedAgain = RankingTree(exampleThree, 1);
 
   BOOST_CHECK((
-    exampleThreeExpandedAgain.rank() == std::vector<
+    exampleThreeExpandedAgain.getRanked() == std::vector<
       std::vector<unsigned long>
     > { {7}, {4}, {2}, {0} }
   ));

@@ -188,59 +188,50 @@ public:
 
 RankingTree::RankingTree(
   const Molecule& molecule,
-  const AtomIndexType& atomToRank
+  const AtomIndexType& atomToRank,
+  const std::set<AtomIndexType>& excludeIndices
 ) : _moleculeRef(molecule) {
-  /* Part 1: Make a complete acyclic graph */
-
+  /* TODO run _branchOrderingHelper.setUnorderedValues after the full set of
+   * neighbors being ranked have been discovered in BFS.
+   */
+  
+  // Set the root vertex
   auto rootIndex = boost::add_vertex(_tree);
   _tree[rootIndex].molIndex = atomToRank;
   _tree[rootIndex].isDuplicate = false;
 
-  using ColorMapBase = std::map<AtomIndexType, boost::default_color_type>;
+  /* Make a complete acyclic graph */
+  _acyclizeMolecule();
+  _DFSFinishTree();
 
-  ColorMapBase colorMap;
-  boost::associative_property_map<ColorMapBase> propColorMap(colorMap);
-  boost::queue<GraphType::vertex_descriptor> Q;
+  // Get all direct non-duplicate children of the root node. These will be ranked.
+  std::set<TreeVertexIndex> rootChildren;
+  {
+    TreeGraphType::out_edge_iterator iter, end;
+    std::tie(iter, end) = boost::out_edges(0, _tree);
 
-  AcyclizingBFSVisitor visitor(
-    *this,
-    atomToRank,
-    rootIndex
-  );
+    while(iter != end) {
+      auto childIndex = boost::target(*iter, _tree);
 
-  try {
-    boost::breadth_first_visit(
-      // The graph to operate on
-      molecule.getGraph(),
-      // The vertex to start with
-      atomToRank,
-      // A queue object to store vertex_descriptors
-      Q,
-      // The visitor to use
-      visitor,
-      // A map to store color (state)
-      propColorMap
-    );
-  } catch(AcyclizingBFSVisitor::EarlyExit& e) {}
-
-  // Now that the graph is acyclic, finish the tree by DFS at every leaf
-  TreeGraphType::vertex_iterator iter, end;
-  std::tie(iter, end) = boost::vertices(_tree);
-
-  // Skip the root vertex, that one does not need DFS-ing
-  ++iter;
-
-  while(iter != end) {
-    if(!_tree[*iter].isDuplicate) {
-      /* We can insert vertices and edges while iterating through, since
-       * these do not invalidate vertex iterators
-       * (boost.org/doc/libs/1_65_1/libs/graph/doc/adjacency_list.html)
+      /* Limit the ranking of root's children to non-duplicate and
+       * non-excluded nodes
        */
-      _DFSExpand(*iter, _molIndicesInBranch(*iter));
-    }
+      if(
+        !_tree[childIndex].isDuplicate 
+        && excludeIndices.count(_tree[childIndex].molIndex) == 0
+      ) {
+        rootChildren.insert(childIndex);
+      }
 
-    ++iter;
+      ++iter;
+    }
   }
+
+  // Set the ordering helper's list of unordered values
+  _branchOrderingHelper.setUnorderedValues(rootChildren);
+
+  // Perform ranking
+  _applySequenceRules();
 }
 
 class RankingTree::GraphvizWriter {
@@ -719,6 +710,22 @@ public:
   }
 };
 
+std::vector<
+  std::vector<AtomIndexType>
+> RankingTree::getRanked() const {
+  // We must transform the ranked tree vertex indices back to molecule indices.
+  return TemplateMagic::map(
+    _branchOrderingHelper.getSets(),
+    [&](const auto& set) -> std::vector<AtomIndexType> {
+      return TemplateMagic::map(
+        set,
+        [&](const auto& treeVertex) -> AtomIndexType {
+          return _tree[treeVertex].molIndex;
+        }
+      );
+    }
+  );
+}
 
 /*!
  * This function ranks the direct substituents of the atom it is instantiated
@@ -731,43 +738,7 @@ public:
  * represents a set of equal-priority substituents. The sorting is ascending,
  * meaning from lowest priority to highest priority.
  */
-std::vector<
-  std::vector<AtomIndexType>
-> RankingTree::rank(const std::set<AtomIndexType>& excludeIndices) {
-
-  /* Find out how direct children of the root node are ordered */
-
-  /* Represent overall relationship of root's direct children vertex indices
-   * to be ranked against one another
-   */
-  // Get all direct children of the root node, which are specifically non-duplicate
-  std::set<TreeVertexIndex> rootChildren;
-  {
-    TreeGraphType::out_edge_iterator iter, end;
-    std::tie(iter, end) = boost::out_edges(0, _tree);
-
-    while(iter != end) {
-      auto childIndex = boost::target(*iter, _tree);
-
-      /* Limit the ranking of root's children to non-duplicate and
-       * non-excluded nodes
-       */
-      if(
-        !_tree[childIndex].isDuplicate 
-        && excludeIndices.count(_tree[childIndex].molIndex) == 0
-      ) {
-        rootChildren.insert(childIndex);
-      }
-
-      ++iter;
-    }
-  }
-
-  /* Create a helper object with which we can gradually discover the ordering
-   * relationships
-   */
-  auto orderingHelper = OrderDiscoveryHelper<TreeVertexIndex>(rootChildren);
-
+void RankingTree::_applySequenceRules() {
 
 #ifndef NDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -776,7 +747,7 @@ std::vector<
     << ": {" 
     << TemplateMagic::condenseIterable(
       TemplateMagic::map(
-        orderingHelper.getSets(),
+        _branchOrderingHelper.getSets(),
         [](const auto& indexSet) -> std::string {
           return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
         }
@@ -784,30 +755,10 @@ std::vector<
     ) << "}\n";
 #endif
 
-  /* Prior to returning, we must transform the ranked tree vertex indices
-   * back to molecule indices. This pattern is needed after the full
-   * application of every sequence rule, so it is declared here as a lambda.
-   */
-  auto fetchResult = [&]() -> std::vector<
-    std::vector<AtomIndexType>
-  > {
-    return TemplateMagic::map(
-      orderingHelper.getSets(),
-      [&](const auto& set) -> std::vector<AtomIndexType> {
-        return TemplateMagic::map(
-          set,
-          [&](const auto& treeVertex) -> AtomIndexType {
-            return _tree[treeVertex].molIndex;
-          }
-        );
-      }
-    );
-  };
-
   /* A much-needed variable which was often re-declared within the local
    * scopes of every sequence rule. This allows reuse.
    */
-  auto undecidedSets = orderingHelper.getUndecidedSets();
+  auto undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
   /* Evaluate by sequence rule 1
    * - Higher atomic number precedes lower atomic number
@@ -824,7 +775,7 @@ std::vector<
     SequenceRuleOneVertexComparator // Multiset comparator type
   >(
     0, // Source index is root
-    orderingHelper
+    _branchOrderingHelper
   );
 
 #ifndef NDEBUG
@@ -832,7 +783,7 @@ std::vector<
     << "Sets post sequence rule 1: {" 
     << TemplateMagic::condenseIterable(
       TemplateMagic::map(
-        orderingHelper.getSets(),
+        _branchOrderingHelper.getSets(),
         [](const auto& indexSet) -> std::string {
           return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
         }
@@ -842,8 +793,8 @@ std::vector<
 
 
   // Was sequence rule 1 enough?
-  if(orderingHelper.isTotallyOrdered()) {
-    return fetchResult();
+  if(_branchOrderingHelper.isTotallyOrdered()) {
+    return;
   }
 
   /* Sequence rule 2
@@ -884,7 +835,7 @@ std::vector<
     std::set<TreeEdgeIndex>
   > byDepth;
 
-  undecidedSets = orderingHelper.getUndecidedSets();
+  undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
   { // Populate byDepth from active branches only
     std::set<TreeEdgeIndex> rootEdges;
@@ -989,12 +940,12 @@ std::vector<
           RankingInformation sourceRanking, targetRanking;
 
           // Get ranking for the edge substituents
-          sourceRanking.sortedSubstituents = _omniDirectionalRank(
+          sourceRanking.sortedSubstituents = _auxiliaryApplySequenceRules(
             sourceIndex,
             sourceIndicesToRank
           );
 
-          targetRanking.sortedSubstituents = _omniDirectionalRank(
+          targetRanking.sortedSubstituents = _auxiliaryApplySequenceRules(
             targetIndex,
             targetIndicesToRank
           );
@@ -1042,7 +993,7 @@ std::vector<
         // Instantiate a CNStereocenter here!
         RankingInformation centerRanking;
 
-        centerRanking.sortedSubstituents = _omniDirectionalRank(
+        centerRanking.sortedSubstituents = _auxiliaryApplySequenceRules(
           sourceIndex,
           _auxiliaryAdjacentsToRank(sourceIndex, {})
         );
@@ -1073,7 +1024,7 @@ std::vector<
 
   // Was anything instantiated? If not, we can skip rules 3 through 5.
   if(!foundStereocenters) {
-    return fetchResult();
+    return;
   }
 
   // Apply sequence rule 3
@@ -1086,7 +1037,7 @@ std::vector<
     SequenceRuleThreeEdgeComparator // Multiset comparator type
   >(
     0, // Source index is root
-    orderingHelper
+    _branchOrderingHelper
   );
 
 #ifndef NDEBUG
@@ -1094,7 +1045,7 @@ std::vector<
     << "Sets post sequence rule 3: {" 
     << TemplateMagic::condenseIterable(
       TemplateMagic::map(
-        orderingHelper.getSets(),
+        _branchOrderingHelper.getSets(),
         [](const auto& indexSet) -> std::string {
           return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
         }
@@ -1103,8 +1054,8 @@ std::vector<
 #endif
 
   // Was sequence rule 3 enough?
-  if(orderingHelper.isTotallyOrdered()) {
-    return fetchResult();
+  if(_branchOrderingHelper.isTotallyOrdered()) {
+    return;
   }
 
   /* Sequence rule 4: Other configurations (RS, MP, EZ)
@@ -1117,7 +1068,7 @@ std::vector<
    *   - Create a set of all stereogenic groups within the branches to rank
    *   - Establish relative rank by application of sequence rules. 
    *
-   *     Can probably use _omniDirectionalRank recursively at the first
+   *     Can probably use _auxiliaryApplySequenceRules recursively at the first
    *     junction between competing stereocenters on the respective branch
    *     indices to find out which precedes which, provided both are at the
    *     same depth from root.
@@ -1162,7 +1113,7 @@ std::vector<
       std::vector<TreeVertexIndex>
     > seeds;
 
-    undecidedSets = orderingHelper.getUndecidedSets();
+    undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
     // Initialize the BFS state
     for(const auto& undecidedSet : undecidedSets) {
@@ -1184,10 +1135,10 @@ std::vector<
     /* First comparison (undecided sets are up-to-date from previous sequence
      * rule)
      */
-    _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
+    _compareBFSSets(comparisonSets, undecidedSets, _branchOrderingHelper);
 
     // Recalculate undecided sets
-    undecidedSets = orderingHelper.getUndecidedSets();
+    undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
 #ifndef NDEBUG
     if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
@@ -1195,7 +1146,7 @@ std::vector<
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
         dumpGraphviz("Sequence rule 4A", {0}, _collectSeeds(seeds, undecidedSets)),
         _makeGraph("Sequence rule 4A multisets", 0, comparisonSets, undecidedSets),
-        orderingHelper.dumpGraphviz()
+        _branchOrderingHelper.dumpGraphviz()
       });
     }
 #endif
@@ -1236,10 +1187,10 @@ std::vector<
       }
 
       // Make comparisons in all undecided sets
-      _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
+      _compareBFSSets(comparisonSets, undecidedSets, _branchOrderingHelper);
 
       // Recalculate the undecided sets
-      undecidedSets = orderingHelper.getUndecidedSets();
+      undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
 #ifndef NDEBUG
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
@@ -1247,7 +1198,7 @@ std::vector<
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
           dumpGraphviz("Sequence rule 4A", {0}, _collectSeeds(seeds, undecidedSets)),
           _makeGraph("Sequence rule 4A multisets", 0, comparisonSets, undecidedSets),
-          orderingHelper.dumpGraphviz()
+          _branchOrderingHelper.dumpGraphviz()
         });
       }
 #endif
@@ -1258,7 +1209,7 @@ std::vector<
     << "Sets post sequence rule 4A: {" 
     << TemplateMagic::condenseIterable(
       TemplateMagic::map(
-        orderingHelper.getSets(),
+        _branchOrderingHelper.getSets(),
         [](const auto& indexSet) -> std::string {
           return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
         }
@@ -1267,8 +1218,8 @@ std::vector<
 #endif
 
     // Is Sequence Rule 4, part A enough?
-    if(orderingHelper.isTotallyOrdered()) {
-      return fetchResult();
+    if(_branchOrderingHelper.isTotallyOrdered()) {
+      return;
     }
 
     /* Second part: Choosing representational stereodescriptors for all
@@ -1282,7 +1233,7 @@ std::vector<
     VariantHasInstantiatedStereocenter isInstantiatedChecker {*this};
 
     // Copy all those variants from part A that are actually instantiated
-    for(const auto& undecidedSet : orderingHelper.getUndecidedSets()) {
+    for(const auto& undecidedSet : _branchOrderingHelper.getUndecidedSets()) {
       for(const auto& undecidedBranch : undecidedSet) {
         stereocenterMap[undecidedBranch] = {};
 
@@ -1351,11 +1302,11 @@ std::vector<
             auto aJunctionChild = junctionInfo.firstPath.back();
             auto bJunctionChild = junctionInfo.secondPath.back();
 
-            /* Do not use _omniDirectionalRank for root-level ranking, it should
-             * only establish differences within branches
+            /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
+             * it should only establish differences within branches
              */
             if(junctionInfo.junction != 0) {
-              auto relativeRank = _omniDirectionalRank(
+              auto relativeRank = _auxiliaryApplySequenceRules(
                 junctionInfo.junction,
                 {aJunctionChild, bJunctionChild}
               );
@@ -1422,7 +1373,7 @@ std::vector<
       }
     }
 
-    auto undecidedBranchSets = orderingHelper.getUndecidedSets();
+    auto undecidedBranchSets = _branchOrderingHelper.getUndecidedSets();
 
     VariantLikePair variantLikeComparator {*this};
 
@@ -1435,12 +1386,12 @@ std::vector<
             representativeStereodescriptors.at(branchA).size() 
             < representativeStereodescriptors.at(branchB).size() 
           ) {
-            orderingHelper.addLessThanRelationship(branchA, branchB);
+            _branchOrderingHelper.addLessThanRelationship(branchA, branchB);
           } else if(
             representativeStereodescriptors.at(branchB).size() 
             < representativeStereodescriptors.at(branchA).size() 
           ) {
-            orderingHelper.addLessThanRelationship(branchB, branchA);
+            _branchOrderingHelper.addLessThanRelationship(branchB, branchA);
           } else {
             // Compare by sequential pairing
             /* What is considered a like pair?
@@ -1512,10 +1463,10 @@ std::vector<
               );
 
               if(ABranchLikePairs < BBranchLikePairs) {
-                orderingHelper.addLessThanRelationship(branchA, branchB);
+                _branchOrderingHelper.addLessThanRelationship(branchA, branchB);
                 break;
               } else if(BBranchLikePairs < ABranchLikePairs) {
-                orderingHelper.addLessThanRelationship(branchB, branchA);
+                _branchOrderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
               }
 
@@ -1532,7 +1483,7 @@ std::vector<
       << "Sets post sequence rule 4B: {" 
       << TemplateMagic::condenseIterable(
         TemplateMagic::map(
-          orderingHelper.getSets(),
+          _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
             return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
           }
@@ -1541,8 +1492,8 @@ std::vector<
 #endif
 
     // Is Sequence Rule 4, part B enough?
-    if(orderingHelper.isTotallyOrdered()) {
-      return fetchResult();
+    if(_branchOrderingHelper.isTotallyOrdered()) {
+      return;
     }
 
     // TODO 4C Pseudo-asymmetries, possibly via already-gathered information?
@@ -1550,8 +1501,8 @@ std::vector<
   } // End sequence rule 4 local scope
 
   // Was sequence rule 4 enough?
-  if(orderingHelper.isTotallyOrdered()) {
-    return fetchResult();
+  if(_branchOrderingHelper.isTotallyOrdered()) {
+    return;
   }
 
   /* Sequence rule 5: 
@@ -1566,7 +1517,7 @@ std::vector<
     SequenceRuleFiveVariantComparator // Multiset comparator type
   >(
     0, // Source index is root
-    orderingHelper
+    _branchOrderingHelper
   );
 
 #ifndef NDEBUG
@@ -1574,7 +1525,7 @@ std::vector<
     << "Sets post sequence rule 5: {" 
     << TemplateMagic::condenseIterable(
       TemplateMagic::map(
-        orderingHelper.getSets(),
+        _branchOrderingHelper.getSets(),
         [](const auto& indexSet) -> std::string {
           return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
         }
@@ -1583,12 +1534,61 @@ std::vector<
 #endif
 
   // Exhausted sequence rules, anything undecided is now equal
-  return fetchResult();
+}
+
+void RankingTree::_acyclizeMolecule() {
+  using ColorMapBase = std::map<AtomIndexType, boost::default_color_type>;
+
+  ColorMapBase colorMap;
+  boost::associative_property_map<ColorMapBase> propColorMap {colorMap};
+  boost::queue<GraphType::vertex_descriptor> Q;
+
+  AcyclizingBFSVisitor visitor {
+    *this,
+    _tree[0].molIndex,
+    0
+  };
+
+  try {
+    boost::breadth_first_visit(
+      // The graph to operate on
+      _moleculeRef.getGraph(),
+      // The vertex to start with
+      _tree[0].molIndex,
+      // A queue object to store vertex_descriptors
+      Q,
+      // The visitor to use
+      visitor,
+      // A map to store color (state)
+      propColorMap
+    );
+  } catch(AcyclizingBFSVisitor::EarlyExit& e) {}
+}
+
+void RankingTree::_DFSFinishTree() {
+  // Now that the graph is acyclic, finish the tree by DFS at every leaf
+  TreeGraphType::vertex_iterator iter, end;
+  std::tie(iter, end) = boost::vertices(_tree);
+
+  // Skip the root vertex, that one does not need DFS-ing
+  ++iter;
+
+  while(iter != end) {
+    if(!_tree[*iter].isDuplicate) {
+      /* We can insert vertices and edges while iterating through, since
+       * these do not invalidate vertex iterators
+       * (boost.org/doc/libs/1_65_1/libs/graph/doc/adjacency_list.html)
+       */
+      _DFSExpand(*iter, _molIndicesInBranch(*iter));
+    }
+
+    ++iter;
+  }
 }
 
 std::vector<
   std::vector<RankingTree::TreeVertexIndex>
-> RankingTree::_omniDirectionalRank(
+> RankingTree::_auxiliaryApplySequenceRules(
   const RankingTree::TreeVertexIndex& sourceIndex,
   const std::set<RankingTree::TreeVertexIndex>& adjacentsToRank
 ) const {
@@ -1640,7 +1640,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
   // Is Sequence Rule 1 enough?
   if(orderingHelper.isTotallyOrdered()) {
-    // No conversion of indices in _omniDirectionalRank()!
+    // No conversion of indices in _auxiliaryApplySequenceRules()!
     return orderingHelper.getSets();
   }
 
@@ -1689,7 +1689,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
   // Is sequence rule 3 enough?
   if(orderingHelper.isTotallyOrdered()) {
-    // No conversion of indices in _omniDirectionalRank()!
+    // No conversion of indices in _auxiliaryApplySequenceRules()!
     return orderingHelper.getSets();
   }
 
@@ -1703,7 +1703,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
    *   - Create a set of all stereogenic groups within the branches to rank
    *   - Establish relative rank by application of sequence rules. 
    *
-   *     Can probably use _omniDirectionalRank recursively at the first
+   *     Can probably use _auxiliaryApplySequenceRules recursively at the first
    *     junction between competing stereocenters on the respective branch
    *     indices to find out which precedes which, provided both are at the
    *     same depth from root.
@@ -1784,8 +1784,8 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       _writeGraphvizFiles({
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
         dumpGraphviz("Sequence rule 3 prep", {0}),
-        dumpGraphviz("_omni Sequence rule 4A", {sourceIndex}, visitedVertices),
-        _makeGraph("_omni Sequence rule 4A multisets", sourceIndex, comparisonSets, undecidedSets),
+        dumpGraphviz("_aux Sequence rule 4A", {sourceIndex}, visitedVertices),
+        _makeGraph("_aux Sequence rule 4A multisets", sourceIndex, comparisonSets, undecidedSets),
         orderingHelper.dumpGraphviz()
       });
     }
@@ -1859,8 +1859,8 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
           dumpGraphviz("Sequence rule 3 prep", {0}),
-          dumpGraphviz("_omni Sequence rule 4A", {sourceIndex}, visitedVertices),
-          _makeGraph("_omni Sequence rule 4A multisets", sourceIndex, comparisonSets, undecidedSets),
+          dumpGraphviz("_aux Sequence rule 4A", {sourceIndex}, visitedVertices),
+          _makeGraph("_aux Sequence rule 4A multisets", sourceIndex, comparisonSets, undecidedSets),
           orderingHelper.dumpGraphviz()
         });
       }
@@ -1882,7 +1882,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
     // Is Sequence Rule 4, part A enough?
     if(orderingHelper.isTotallyOrdered()) {
-      // No conversion of indices in _omniDirectionalRank()!
+      // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
     }
 
@@ -1966,11 +1966,11 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
             auto aJunctionChild = junctionInfo.firstPath.back();
             auto bJunctionChild = junctionInfo.secondPath.back();
 
-            /* Do not use _omniDirectionalRank for root-level ranking, it should
-             * only establish differences within branches here
+            /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
+             * it should only establish differences within branches here
              */
             if(junctionInfo.junction != 0) {
-              auto relativeRank = _omniDirectionalRank(
+              auto relativeRank = _auxiliaryApplySequenceRules(
                 junctionInfo.junction,
                 {aJunctionChild, bJunctionChild}
               );
@@ -2156,7 +2156,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
     // Is Sequence Rule 4, part B enough?
     if(orderingHelper.isTotallyOrdered()) {
-      // No conversion of indices in _omniDirectionalRank()!
+      // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
     }
 

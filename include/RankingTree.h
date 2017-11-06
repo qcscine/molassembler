@@ -9,7 +9,6 @@
 /* TODO
  * - Stereocenter interface change to support pseudo-asymmetry tag (?)
  * - Ranking function interface change to propagate pseudo-asymmetry result
- * - Seeds shouldn't be sets, but vectors (no need for set properties)
  * - Visualize sequence rule 4B
  * - Interface change to support using coordinates or prior instantiated
  *   stereocenters to assign auxiliary stereocenters
@@ -108,6 +107,8 @@ private:
    * a molecular bond of order two.
    */
   std::set<TreeEdgeIndex> _doubleBondEdges;
+  //! The helper instance for discovering the ordering of the to-rank branches
+  OrderDiscoveryHelper<TreeVertexIndex> _branchOrderingHelper;
 
   // Closures
   const Molecule& _moleculeRef;
@@ -192,7 +193,7 @@ private:
   /*!
    * Since multiset's operator < does not actually USE the custom comparator
    * when comparing the contained values, we have to call
-   * lexicographical_compare ourselves, supplying the comparator!
+   * lexicographical_compare, supplying the comparator!
    */
   template<typename SetValueType, typename ComparatorType>
   bool _multisetCompare(
@@ -278,6 +279,8 @@ private:
    * that the boolean template parameter is true, in which case the task is
    * performed.
    *
+   * Classes are necessary since partial function specialization is impossible.
+   *
    * When modernizing the code to C++17, remove those classes and employ much
    * more legible if-constexpr in all ifs in _runBFS using only constexpr
    * template parameters.
@@ -352,8 +355,32 @@ private:
   /* When modernizing to C++17, see the comments regarding EdgeInserter and
    * VertexInserter above
    */
-  /*!
+  /*! Performs a BFS traversal through the tree
    *
+   * Performs a BFS traversal through the tree, adding encountered edges and/or
+   * vertices into a multiset with a custom comparator, and comparing those
+   * multisets at every iteration to discover ordering relations between the
+   * corresponding original branches.
+   *
+   * @tparam ruleNumber For logging purposes, indicate which sequence rule is
+   *   being tested with this BFS traversal
+   * @tparam BFSDownOnly If set true, only out-edges of any BFS seeds are
+   *   considered for the multisets and seed continuations. This has the effect
+   *   that the traversal is unidirectional, going "down" from the root of the
+   *   tree, which is drawn at the top of the graphical representation
+   *   (see dumpGraphviz). If set false, in- and out-edges are considered for
+   *   BFS continuations, so that BFS proceeds in all directions simultaneously
+   *   from every seed starting at the source index.
+   * @tparam insertEdges If set true, edge indices are inserted into the
+   *   multiset.
+   * @tparam insertVertices If set true, vertex indices are inserted into the
+   *   multiset.
+   * @tparam MultisetValueType The value type of the multiset used for
+   *   comparison.
+   * @tparam MultisetComparatorType The Comparator supplied as constructing
+   *   argument for the multiset and any lexicographical comparisons involving
+   *   multiple multisets. Here, the edge or vertex properties being compared
+   *   in the current sequence rule must be encoded.
    */
   template<
     unsigned ruleNumber,
@@ -404,9 +431,9 @@ private:
 
     /* For each branch to compare, keep a set of seed indices to follow in an
      * iteration. These are expanded in each iteration as long as the branch
-     * they contain remains relevant (i.e. it's relation to the other branches
+     * they contain remains relevant (i.e. its relation to the other branches
      * is still unclear): They themselves are placed in the comparisonSet, 
-     * while their respective children are the new seeds for the next
+     * while their respective adjacents are the new seeds for the next
      * iteration.
      */
     std::map<
@@ -415,7 +442,7 @@ private:
     > seeds;
 
     /* In case the BFS in not down-only, we have to track which indices we
-     * have visited to ensure BFS terminates and nothing is used twice
+     * have visited to ensure BFS doesn't backtrack or reuse vertices.
      */
     std::set<TreeVertexIndex> visitedVertices;
 
@@ -834,6 +861,12 @@ private:
   );
 
 
+  void _acyclizeMolecule();
+
+  void _DFSFinishTree();
+
+  void _applySequenceRules();
+
   /*!
    * This function ranks the direct substituents of a selected central tree
    * vertex by the sequential application of the 2013 IUPAC Blue Book sequence
@@ -854,10 +887,11 @@ private:
    */
   std::vector<
     std::vector<TreeVertexIndex>
-  > _omniDirectionalRank(
+  > _auxiliaryApplySequenceRules(
     const TreeVertexIndex& sourceIndex,
     const std::set<TreeVertexIndex>& adjacentsToRank
   ) const;
+
 
 public:
 /* BFS Visitor for initial cycle splitting */
@@ -943,7 +977,8 @@ public:
    */
   RankingTree(
     const Molecule& molecule,
-    const AtomIndexType& atomToRank
+    const AtomIndexType& atomToRank,
+    const std::set<AtomIndexType>& excludeIndices = {}
   );
 
   /*! Ranks the direct substituents of the root atom
@@ -961,7 +996,7 @@ public:
    */
   std::vector<
     std::vector<AtomIndexType>
-  > rank(const std::set<AtomIndexType>& excludeIndices = {});
+  > getRanked() const;
 
   /*! Returns an annotated graphviz graph of the tree
    *

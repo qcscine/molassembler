@@ -621,8 +621,8 @@ RankingInformation Molecule::rankPriority(
   RankingInformation rankingResult;
 
   // Rank the substituents
-  auto expandedTree = RankingTree(*this, a);
-  rankingResult.sortedSubstituents = expandedTree.rank(excludeAdjacent);
+  auto expandedTree = RankingTree(*this, a, excludeAdjacent);
+  rankingResult.sortedSubstituents = expandedTree.getRanked();
 
   auto adjacentIndices = getAdjacencies(a);
   std::set<AtomIndexType> activeIndices;

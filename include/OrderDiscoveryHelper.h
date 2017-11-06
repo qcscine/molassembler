@@ -112,9 +112,19 @@ private:
   };
 
 public:
-  OrderDiscoveryHelper(
-    const std::set<T>& unorderedValues
-  ) {
+  OrderDiscoveryHelper() = default;
+
+  explicit OrderDiscoveryHelper(const std::set<T>& unorderedValues) {
+    setUnorderedValues(unorderedValues);
+  }
+
+  void setUnorderedValues(const std::set<T>& unorderedValues) {
+    if(boost::num_vertices(_graph) > 0) {
+      _graph.clear();
+    }
+
+    _sourceMap.clear();
+
     for(const auto& value: unorderedValues) {
       auto newIndex = boost::add_vertex(_graph);
       _graph[newIndex].data = value;
