@@ -23,118 +23,79 @@ CNStereocenter::CNStereocenter(
   const AtomIndexType& centerAtom,
   // Ranking information of substituents
   const RankingInformation& ranking
-) : _neighborCharMap {
-      _reduceSubstituents(ranking)
-    },
-    _links {
-      _makeLinks(ranking)
-    },
-    symmetry {symmetry},
-    centerAtom {centerAtom} 
+) : _ranking {ranking},
+    _centerAtom {centerAtom},
+    _symmetry {symmetry},
+    _assignmentOption {boost::none}
 {
   // Generate the set of unique assignments possible here
-  _uniqueAssignments = UniqueAssignments::uniqueAssignments(
+  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
     AssignmentType(
       symmetry,
-      _reduceNeighborCharMap(_neighborCharMap),
-      _links
+      _makeAssignmentCharacters(_ranking),
+      _makeAssignmentLinks(_ranking)
     ),
     false // Do NOT remove trans-spanning linked groups
   );
 }
 
 /* Private members */
-
-std::map<AtomIndexType, unsigned> CNStereocenter::_makeNeighborSymmetryPositionMap(
-  const UniqueAssignments::Assignment& assignment,
-  const std::map<AtomIndexType, char> neighborCharMap
-) {
-  std::map<AtomIndexType, unsigned> neighborSymmetryPositionMap;
-
-  /* First get the symmetry position mapping (char -> unsigned)
-   * this is e.g. map{'A' -> vector{0,2,3}, 'B' -> vector{1}}
-   */
-  auto charSymmetryPositionsMap = assignment.getCharMap();
-
-  /* assign next neighbor indices using _neighborCharMap, which stores
-   * neighbor's AtomIndexType -> 'A' char mapping,
-   * e.g. map{4 -> 'A', 16 -> 'B', 23 -> 'A', 26 -> 'A'}
-   */
-  for(const auto& indexCharPair: neighborCharMap) {
-    assert(
-      !charSymmetryPositionsMap.at(
-        indexCharPair.second // the current index's character, e.g. 'A'
-      ).empty() // meaning there are symmetry positions left to assign
-    );
-
-    /* reference for better readability: the current character's symmetry
-     * positions list:
-     */
-    std::vector<unsigned>& symmetryPositionsList = charSymmetryPositionsMap.at(
-      indexCharPair.second // current character
-    );
-
-    // assign in the map
-    neighborSymmetryPositionMap[
-      indexCharPair.first
-    ] = symmetryPositionsList.at( 
-      0 // the first of the available symmetry positions for that char
-    );
-
-    // remove that first symmetry position
-    symmetryPositionsList.erase(
-      symmetryPositionsList.begin()
-    );
-  }
-
-  return neighborSymmetryPositionMap;
-}
-
-std::map<AtomIndexType, char> CNStereocenter::_reduceSubstituents(
+std::vector<char> CNStereocenter::_makeAssignmentCharacters(
   const RankingInformation& ranking
 ) {
-  /* ranking.sortedSubstituents = vector{vector{1, 4}, vector{2}, vector{3}};
-   * -> reduce to {A, A, B, C}
-   */
+  std::vector<char> characters;
 
-  std::map<AtomIndexType, char> indexSymbolMap;
-
-  char letter = 'A';
-
-  for(const auto& equalSet : ranking.sortedSubstituents) {
-    for(const auto& index : equalSet) {
-      indexSymbolMap[index] = letter;
+  char currentChar = 'A';
+  for(const auto& equalPrioritySet : ranking.sortedSubstituents) {
+    for(unsigned i = 0; i < equalPrioritySet.size(); ++i) {
+      characters.push_back(currentChar);
     }
 
-    ++letter;
+    ++currentChar;
   }
 
-  return indexSymbolMap;
+  return characters;
 }
 
-std::vector<char> CNStereocenter::_reduceNeighborCharMap(
-  const std::map<
-    AtomIndexType,
-    char
-  >& neighborCharMap
+std::map<AtomIndexType, unsigned> CNStereocenter::_makeSymmetryPositionMap(
+  const UniqueAssignments::Assignment& assignment,
+  const RankingInformation& ranking
 ) {
-  std::vector<char> ligandSymbols;
+  std::map<AtomIndexType, unsigned> positionMap;
 
-  // Add every mapped char to a vector
-  for(const auto& indexCharPair: neighborCharMap) {
-    ligandSymbols.push_back(indexCharPair.second);
-  }
-
-  // sort it
-  std::sort(
-    ligandSymbols.begin(),
-    ligandSymbols.end()
+  const auto endIterators = TemplateMagic::map(
+    ranking.sortedSubstituents,
+    [](const auto& equalPrioritySet) -> auto {
+      return equalPrioritySet.end();
+    }
   );
 
-  return ligandSymbols;
+  auto iterators = TemplateMagic::map(
+    ranking.sortedSubstituents,
+    [](const auto& equalPrioritySet) -> auto {
+      return equalPrioritySet.begin();
+    }
+  );
+
+  unsigned symmetryPosition = 0;
+  for(const auto& priorityChar : assignment.characters) {
+    auto& rankingIterator = iterators.at(priorityChar - 'A');
+    const auto& endIterator = endIterators.at(priorityChar - 'A');
+    assert(rankingIterator != endIterator);
+
+    positionMap.emplace(
+      *rankingIterator,
+      symmetryPosition
+    );
+
+    ++symmetryPosition;
+    ++rankingIterator;
+  }
+
+  return positionMap;
 }
 
-UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeLinks(
+UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeAssignmentLinks(
   const RankingInformation& ranking
 ) {
   // Flatten the sorted list of indices
@@ -182,22 +143,22 @@ UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeLinks(
 /* Modification */
 void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
   if(assignment) {
-    assert(assignment.value() < _uniqueAssignments.size());
+    assert(assignment.value() < _uniqueAssignmentsCache.size());
   }
 
   // Store current assignment
-  assignmentOption = assignment;
+  _assignmentOption = assignment;
 
   /* save a mapping of next neighbor indices to symmetry positions after
    * assigning (AtomIndexType -> unsigned).
    */
   if(assignment) {
-    _neighborSymmetryPositionMap = _makeNeighborSymmetryPositionMap(
-      _uniqueAssignments.at(assignment.value()),
-      _neighborCharMap
+    _symmetryPositionMapCache = _makeSymmetryPositionMap(
+      _uniqueAssignmentsCache.at(assignment.value()),
+      _ranking
     );
   } else { // Wipe the map
-    _neighborSymmetryPositionMap = {};
+    _symmetryPositionMapCache.clear();
   }
 }
 
@@ -211,94 +172,44 @@ void CNStereocenter::adaptToRankingChange(const RankingInformation& newRanking) 
    * priority
    */
 
-  // If this stereocenter is unassigned, do nothing
-  if(assignmentOption) { 
-    // Compare to the current _neighborCharMap and _links
-    auto newNeighborCharMap = _reduceSubstituents(newRanking);
+}
 
-    auto newLinks = _makeLinks(newRanking);
-
-    if(
-      _neighborCharMap != newNeighborCharMap
-      || _links != newLinks
-    ) {
-      auto newUniqueAssignments = UniqueAssignments::uniqueAssignments(
-        AssignmentType(
-          symmetry,
-          _reduceNeighborCharMap(newNeighborCharMap),
-          newLinks
-        ),
-        false // do NOT remove trans-spanning linked groups
-      );
-
-      // Look for a perfect match of the neighbor symmetry position map
-      auto foundIter = std::find_if(
-        newUniqueAssignments.begin(),
-        newUniqueAssignments.end(),
-        [&](const auto& assignment) -> bool {
-          return (
-            _neighborSymmetryPositionMap 
-            == _makeNeighborSymmetryPositionMap(
-              assignment,
-              newNeighborCharMap
-            )
-          );
-        }
-      );
-
-      if(foundIter != newUniqueAssignments.end()) {
-        /* Overwrite everything and set the index of this assignment as the new
-         * assignment
-         */
-        _neighborCharMap = newNeighborCharMap;
-        _links = newLinks;
-        _uniqueAssignments = newUniqueAssignments;
-        // _neighborSymmetryPositionMap is the same, see test in find_if
-
-        assignmentOption = foundIter - newUniqueAssignments.begin();
-      } else {
-        // Overwrite but mark unassigned
-        _neighborCharMap = newNeighborCharMap;
-        _links = newLinks;
-        _uniqueAssignments = newUniqueAssignments;
-
-        assignmentOption = boost::none;
-      }
-    }
-  }
+Symmetry::Name CNStereocenter::getSymmetry() const {
+  return _symmetry;
 }
 
 void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
   // Set new symmetry
-  symmetry = symmetryName;
+  _symmetry = symmetryName;
 
   // recalculate the number of unique Assignments
-  _uniqueAssignments = UniqueAssignments::uniqueAssignments(
+  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
     AssignmentType(
       symmetryName,
-      _reduceNeighborCharMap(
-        _neighborCharMap
-      ),
-      _links
+      _makeAssignmentCharacters(_ranking),
+      _makeAssignmentLinks(_ranking)
     ),
     false // do NOT remove trans-spanning ligand groups
   );
 
-  _neighborSymmetryPositionMap.clear();
+  _symmetryPositionMapCache.clear();
 
   // The Stereocenter is now unassigned
-  assignmentOption = boost::none;
+  _assignmentOption = boost::none;
 }
 
 void CNStereocenter::fit(const Delib::PositionCollection& positions) {
   // Extract a list of adjacent indices from stored state
   std::vector<AtomIndexType> adjacentAtoms;
-  for(const auto& mapIterPair : _neighborCharMap) {
-    adjacentAtoms.push_back(mapIterPair.first);
+
+  for(const auto& equalPrioritySet : _ranking.sortedSubstituents) {
+    for(const auto& substituentIndex : equalPrioritySet) {
+      adjacentAtoms.push_back(substituentIndex);
+    }
   }
 
-  const Symmetry::Name priorSymmetry {this->symmetry};
-  const boost::optional<unsigned> priorAssignment {this->assignmentOption};
+  const Symmetry::Name priorSymmetry {this->_symmetry};
+  const boost::optional<unsigned> priorAssignment {this->_assignmentOption};
 
   const Symmetry::Name initialSymmetry {Symmetry::Name::Linear};
   const unsigned initialAssignment = 0;
@@ -312,7 +223,7 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
   // Cycle through all symmetries
   for(const auto& symmetryName : Symmetry::allNames) {
     // Skip any Symmetries of different size
-    if(Symmetry::size(symmetryName) != Symmetry::size(symmetry)) {
+    if(Symmetry::size(symmetryName) != Symmetry::size(_symmetry)) {
       continue;
     }
 
@@ -337,11 +248,11 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
               DelibHelpers::getAngle( // The angle from the positions
                 positions,
                 i,
-                centerAtom,
+                _centerAtom,
                 k
               ) - angle(
                 i,
-                centerAtom,
+                _centerAtom,
                 k
               )
             );
@@ -362,16 +273,16 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
                 DelibHelpers::getDistance( // i-j 1-2 distance from positions
                   positions,
                   i,
-                  centerAtom
+                  _centerAtom
                 ),
                 DelibHelpers::getDistance( // j-k 1-2 distance from positions
                   positions,
-                  centerAtom,
+                  _centerAtom,
                   k
                 ),
                 angle( // idealized Stereocenter angle
                   i,
-                  centerAtom,
+                  _centerAtom,
                   k
                 )
               )
@@ -479,7 +390,8 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
   ) {
     // Return to prior
     changeSymmetry(priorSymmetry);
-    this->assignmentOption = priorAssignment;
+    assign(priorAssignment);
+
   } else {
     // Set to best fit
     changeSymmetry(bestSymmetry);
@@ -488,9 +400,9 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
      * Current policy: If there is multiplicity, warn and do not assign
      */
     if(bestAssignmentMultiplicity > 1) {
-      assignmentOption = boost::none;
+      assign(boost::none);
     } else {
-      assignmentOption = bestAssignment;
+      assign(bestAssignment);
     }
   }
 }
@@ -501,21 +413,21 @@ double CNStereocenter::angle(
   const AtomIndexType& j, 
   const AtomIndexType& k
 ) const {
-  assert(j == centerAtom);
+  assert(j == _centerAtom);
 
   /* j is pracitcally unused here because in the Symmetry angleFunctions, the
    * middle atom is implicit, it has no symmetryPosition number. j is however
    * needed in the interface because of EZStereocenter, where it is important
    * to specify which atom is the intermediate (there are two possibilities)
    */
-  return Symmetry::angleFunction(symmetry)(
-    _neighborSymmetryPositionMap.at(i),
-    _neighborSymmetryPositionMap.at(k)
+  return Symmetry::angleFunction(_symmetry)(
+    _symmetryPositionMapCache.at(i),
+    _symmetryPositionMapCache.at(k)
   );
 }
 
 boost::optional<unsigned> CNStereocenter::assigned() const {
-  return assignmentOption;
+  return _assignmentOption;
 }
 
 std::vector<
@@ -530,11 +442,11 @@ std::vector<
      *  (position in symmetry) -> atom index
      */
     auto symmetryPositionToAtomIndexMap = TemplateMagic::invertMap(
-      _neighborSymmetryPositionMap
+      _symmetryPositionMapCache
     );
 
     // Get list of tetrahedra from symmetry
-    auto tetrahedraList = Symmetry::tetrahedra(symmetry);
+    auto tetrahedraList = Symmetry::tetrahedra(_symmetry);
 
     for(const auto& tetrahedron : tetrahedraList) {
       /* Replace boost::none with centerAtom, indices (represent positions within 
@@ -547,7 +459,7 @@ std::vector<
             return symmetryPositionToAtomIndexMap.at(indexOptional.value());
           } 
 
-          return centerAtom;
+          return _centerAtom;
         }
       );
 
@@ -570,22 +482,19 @@ std::vector<DihedralLimits> CNStereocenter::dihedralLimits() const {
 std::string CNStereocenter::info() const {
   // TODO revisit as soon as linking information is introduced
   std::string returnString = "CN "s 
-    + std::to_string(centerAtom) + " ("s + Symmetry::name(symmetry) +", "s;
+    + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +", "s;
 
-  std::string charRep;
-  for(const auto& iterPair : _neighborCharMap) {
-    charRep += iterPair.second;
-  }
-
-  std::sort(
-    charRep.begin(),
-    charRep.end()
+  auto characters = _makeAssignmentCharacters(_ranking);
+  std::copy(
+    characters.begin(),
+    characters.end(),
+    std::back_inserter(returnString)
   );
 
-  returnString += charRep + "): "s;
+  returnString += "): "s;
 
-  if(assignmentOption) {
-    returnString += std::to_string(assignmentOption.value());
+  if(_assignmentOption) {
+    returnString += std::to_string(_assignmentOption.value());
   } else {
     returnString += "u";
   }
@@ -599,7 +508,7 @@ std::string CNStereocenter::rankInfo() const {
   // TODO revisit as soon as pseudo-asymmetry is added
 
   return (
-    "CN-"s + std::to_string(static_cast<unsigned>(symmetry)) 
+    "CN-"s + std::to_string(static_cast<unsigned>(_symmetry)) 
     + "-"s + std::to_string(numAssignments())
     + "-"s + (
       assigned() 
@@ -610,11 +519,11 @@ std::string CNStereocenter::rankInfo() const {
 }
 
 std::set<AtomIndexType> CNStereocenter::involvedAtoms() const {
-  return {centerAtom};
+  return {_centerAtom};
 }
 
 unsigned CNStereocenter::numAssignments() const {
-  return _uniqueAssignments.size();
+  return _uniqueAssignmentsCache.size();
 }
 
 Type CNStereocenter::type() const {
@@ -623,11 +532,10 @@ Type CNStereocenter::type() const {
 
 bool CNStereocenter::operator == (const CNStereocenter& other) const {
   return (
-    symmetry == other.symmetry
-    && centerAtom == other.centerAtom
-    && _neighborCharMap == other._neighborCharMap
-    && _uniqueAssignments.size() == other._uniqueAssignments.size()
-    && assignmentOption == other.assignmentOption
+    _symmetry == other._symmetry
+    && _centerAtom == other._centerAtom
+    && _uniqueAssignmentsCache.size() == other._uniqueAssignmentsCache.size()
+    && _assignmentOption == other._assignmentOption
   );
 }
 
@@ -638,24 +546,19 @@ bool CNStereocenter::operator < (const CNStereocenter& other) const {
    * if everything else matches
    */
   return componentSmaller(
-    centerAtom,
-    other.centerAtom
+    _centerAtom,
+    other._centerAtom
   ).value_or(
     componentSmaller(
-      _neighborCharMap,
-      other._neighborCharMap
+      _uniqueAssignmentsCache.size(),
+      other._uniqueAssignmentsCache.size()
     ).value_or(
       componentSmaller(
-        _uniqueAssignments.size(),
-        other._uniqueAssignments.size()
+        _symmetry,
+        other._symmetry
       ).value_or(
-        componentSmaller(
-          symmetry,
-          other.symmetry
-        ).value_or(
-          assignmentOption < other.assignmentOption
-          // NOTE: boost::none is smaller than 0 in this ordering
-        )
+        // NOTE: boost::none is smaller than 0 in this mixed ordering
+        _assignmentOption < other._assignmentOption
       )
     )
   );

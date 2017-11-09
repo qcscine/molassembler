@@ -24,10 +24,6 @@ namespace MoleculeManip {
 namespace Stereocenters {
 
 /* TODO
- * - Consider altering _neighborSymmetryPositionMap and _neighborCharMap into
- *   plain vectors of length Symmetry::size. Which way do lookups go and how
- *   would speed be affected?
- * - Some of the private members could be static
  */
 
 class CNStereocenter : public Stereocenter {
@@ -36,60 +32,41 @@ private:
   using AssignmentType = UniqueAssignments::Assignment;
 
 /* Private State */
-  //! Mapping between next neighbor atom index and symbolic ligand character
-  std::map<AtomIndexType, char> _neighborCharMap;
-  //! Links between sorted indices
-  UniqueAssignments::Assignment::LinksSetType _links;
+  //! Ranking information of substituents
+  RankingInformation _ranking;
+
+  //! Central atom of the Stereocenter
+  AtomIndexType _centerAtom; 
+
+  //! The symmetry the stereocenter represents
+  Symmetry::Name _symmetry;
+
+  //! The current state of assignment (if or not, and if so, which)
+  boost::optional<unsigned> _assignmentOption;
+
+  /* Derivative state (cache) */
+  //! Vector of rotationally unique Assignments
+  std::vector<AssignmentType> _uniqueAssignmentsCache;
 
   //! Mapping between next neighbor atom index to permutational symmetry position
-  std::map<AtomIndexType, unsigned> _neighborSymmetryPositionMap;
-  //! Vector of rotationally unique Assignments
-  std::vector<AssignmentType> _uniqueAssignments;
+  std::map<AtomIndexType, unsigned> _symmetryPositionMapCache;
   
 /* Private members */
-  /*!
-   * Generates the mapping of next neighbor atom graph indices to symmetry
-   * positions for a particular assignment
-   */
-  static std::map<AtomIndexType, unsigned> _makeNeighborSymmetryPositionMap(
+  static std::map<AtomIndexType, unsigned> _makeSymmetryPositionMap(
     const UniqueAssignments::Assignment& assignment,
-    const std::map<AtomIndexType, char> neighborCharMap
-  );
-
-  /*!
-   * Reduce substituent atoms at central atom to a mapping of their indices to
-   * a symbolic ligand character. e.g.
-   * map{4 -> 'C', 6 -> 'A', 9 -> 'A', 14 -> 'B'}
-   */
-  static std::map<AtomIndexType, char> _reduceSubstituents(
     const RankingInformation& ranking
   );
 
-  /*!
-   * Reduce a mapping of atom indices to symbolic ligand characters to a 
-   * character vector
-   */
-  static std::vector<char> _reduceNeighborCharMap(
-    const std::map<AtomIndexType, char>& neighborCharMap
+  static std::vector<char> _makeAssignmentCharacters(
+    const RankingInformation& ranking
   );
 
-  static UniqueAssignments::Assignment::LinksSetType _makeLinks(
+  static UniqueAssignments::Assignment::LinksSetType _makeAssignmentLinks(
     const RankingInformation& ranking
-    /*const std::vector<AtomIndexType>& sortedIndices,
-    const std::set<
-      std::pair<AtomIndexType, AtomIndexType>
-    >& linkedPairsSet*/
   );
 
 public:
 /* Public state */
-  //! The symmetry of the overall stereocenter
-  Symmetry::Name symmetry;
-  //! Central atom of the Stereocenter
-  AtomIndexType centerAtom; 
-  //! The current state of assignment (if or not, and if so, which)
-  boost::optional<unsigned> assignmentOption;
-
 /* Constructors */
   CNStereocenter(
     // The symmetry of this Stereocenter
@@ -148,6 +125,9 @@ public:
 
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
+
+  //! Returns the underlying symmetry
+  Symmetry::Name getSymmetry() const;
 
   //! Returns a single-element set containing the central atom
   std::set<AtomIndexType> involvedAtoms() const final;

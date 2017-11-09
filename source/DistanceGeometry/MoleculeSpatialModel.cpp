@@ -840,7 +840,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
         os << "CN" << TemplateMagic::condenseIterable(
           stereocenterPtr -> involvedAtoms(),
           ""
-        ) << R"( [label=")" << Symmetry::name(cnPtr -> symmetry) 
+        ) << R"( [label=")" << Symmetry::name(cnPtr -> getSymmetry()) 
           << R"(", fillcolor="steelblue", shape="square", fontcolor="white", )"
           << R"(tooltip=")" << cnPtr -> info()
           << R"("];)" << "\n";
