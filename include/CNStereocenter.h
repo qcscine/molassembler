@@ -69,17 +69,17 @@ private:
    * Reduce a mapping of atom indices to symbolic ligand characters to a 
    * character vector
    */
-  std::vector<char> _reduceNeighborCharMap(
+  static std::vector<char> _reduceNeighborCharMap(
     const std::map<AtomIndexType, char>& neighborCharMap
-  ) const;
+  );
 
-  UniqueAssignments::Assignment::LinksSetType _makeLinks(
+  static UniqueAssignments::Assignment::LinksSetType _makeLinks(
     const RankingInformation& ranking
     /*const std::vector<AtomIndexType>& sortedIndices,
     const std::set<
       std::pair<AtomIndexType, AtomIndexType>
     >& linkedPairsSet*/
-  ) const;
+  );
 
 public:
 /* Public state */

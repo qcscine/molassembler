@@ -117,7 +117,7 @@ std::vector<char> CNStereocenter::_reduceNeighborCharMap(
     AtomIndexType,
     char
   >& neighborCharMap
-) const {
+) {
   std::vector<char> ligandSymbols;
 
   // Add every mapped char to a vector
@@ -136,11 +136,7 @@ std::vector<char> CNStereocenter::_reduceNeighborCharMap(
 
 UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeLinks(
   const RankingInformation& ranking
-  /*const std::vector<AtomIndexType>& sortedIndices,
-  const std::set<
-    std::pair<AtomIndexType, AtomIndexType>
-  >& linkedPairsSet*/
-) const {
+) {
   // Flatten the sorted list of indices
   std::vector<unsigned> sortedIndices;
   for(const auto& equalPrioritySet : ranking.sortedSubstituents) {
@@ -197,7 +193,7 @@ void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
    */
   if(assignment) {
     _neighborSymmetryPositionMap = _makeNeighborSymmetryPositionMap(
-      _uniqueAssignments[assignment.value()],
+      _uniqueAssignments.at(assignment.value()),
       _neighborCharMap
     );
   } else { // Wipe the map
@@ -273,7 +269,7 @@ void CNStereocenter::adaptToRankingChange(const RankingInformation& newRanking) 
 }
 
 void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
-  // Set a new symmetry
+  // Set new symmetry
   symmetry = symmetryName;
 
   // recalculate the number of unique Assignments
@@ -287,6 +283,8 @@ void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
     ),
     false // do NOT remove trans-spanning ligand groups
   );
+
+  _neighborSymmetryPositionMap.clear();
 
   // The Stereocenter is now unassigned
   assignmentOption = boost::none;
