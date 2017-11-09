@@ -471,9 +471,9 @@ StereocenterList Molecule::inferStereocentersFromPositions(
       Stereocenters::EZStereocenter
     >(
       source,
-      rankPriority(source, {target}),
+      rankPriority(source, {target}, positions),
       target,
-      rankPriority(target, {source})
+      rankPriority(target, {source}, positions)
     );
 
     newStereocenter -> fit(positions);
@@ -506,7 +506,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
     >(
       determineLocalGeometry(candidateIndex),
       candidateIndex,
-      rankPriority(candidateIndex)
+      rankPriority(candidateIndex, {}, positions)
     );
 
     stereocenterPtr -> fit(positions);
@@ -616,12 +616,20 @@ unsigned Molecule::numBonds() const {
 
 RankingInformation Molecule::rankPriority(
   const AtomIndexType& a,
-  const std::set<AtomIndexType>& excludeAdjacent 
+  const std::set<AtomIndexType>& excludeAdjacent,
+  const boost::optional<Delib::PositionCollection>& positionsOption
 ) const {
   RankingInformation rankingResult;
 
   // Rank the substituents
-  auto expandedTree = RankingTree(*this, a, excludeAdjacent);
+  auto expandedTree = RankingTree(
+    *this,
+    a,
+    excludeAdjacent,
+    RankingTree::ExpansionOption::Optimized,
+    positionsOption
+  );
+
   rankingResult.sortedSubstituents = expandedTree.getRanked();
 
   auto adjacentIndices = getAdjacencies(a);

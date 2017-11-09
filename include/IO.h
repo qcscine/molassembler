@@ -344,6 +344,7 @@ public:
     // Determine if Positions are dummies
     unsigned nZeroLengthLowerBound = 0;
 
+    // One atom may be positioned on 0, 0, 0 (or close), but not two
     for(const auto& position : _positions) {
       if(position.asEigenVector().norm() <= 1e-14) {
         nZeroLengthLowerBound += 1;
@@ -361,8 +362,6 @@ public:
     } else { // We have 3D information, try to infer stereocenters (if present)
       return Molecule(_graph, _positions);
     }
-
-    // For every Stereocenter contained, try to find out which one it is
   }
 
   bool canWriteFile(const std::string& filename) final {

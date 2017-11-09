@@ -149,9 +149,10 @@ void EZStereocenter::adaptToRankingChange(const RankingInformation& newRanking) 
 void EZStereocenter::assign(const boost::optional<unsigned>& assignment) {
   if(assignment) {
     assert(assignment.value() < _numAssignments); 
+    _isEOption = static_cast<bool>(assignment.value());
+  } else {
+    _isEOption = boost::none;
   }
-
-  _isEOption = static_cast<bool>(assignment.value());
 }
 
 void EZStereocenter::fit(const Delib::PositionCollection& positions) {
@@ -160,7 +161,7 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
    * case we have four substituents, so consider that too if it exists.
    */
 
-  double zPenalty = TemplateMagic::sum(
+  const double zPenalty = TemplateMagic::sum(
     TemplateMagic::map(
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
@@ -174,12 +175,12 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
     )
   );
 
-  double ePenalty = TemplateMagic::sum(
+  const double ePenalty = TemplateMagic::sum(
     TemplateMagic::map(
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
-        return std::fabs(
-          M_PI - DelibHelpers::getDihedral(
+        return M_PI - std::fabs(
+          DelibHelpers::getDihedral(
             positions,
             indices
           )

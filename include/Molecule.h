@@ -248,7 +248,8 @@ public:
 
   RankingInformation rankPriority(
     const AtomIndexType& a,
-    const std::set<AtomIndexType>& excludeAdjacent = {}
+    const std::set<AtomIndexType>& excludeAdjacent = {},
+    const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
   ) const;
 
 /* Operators */

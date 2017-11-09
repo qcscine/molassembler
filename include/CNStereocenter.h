@@ -85,7 +85,7 @@ public:
 /* Public state */
   //! The symmetry of the overall stereocenter
   Symmetry::Name symmetry;
-  //! Central atom of the Stereocenter, const on assignment
+  //! Central atom of the Stereocenter
   AtomIndexType centerAtom; 
   //! The current state of assignment (if or not, and if so, which)
   boost::optional<unsigned> assignmentOption;

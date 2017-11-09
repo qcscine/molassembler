@@ -55,23 +55,6 @@ double getDihedral(
     && l < positions.size()
   );
 
-  /*Eigen::Vector3d a = (
-    positions[k].asEigenVector() - positions[j].asEigenVector()
-  ).cross(
-    positions[i].asEigenVector() - positions[j].asEigenVector()
-  );
-
-  Eigen::Vector3d b = (
-    positions[l].asEigenVector() - positions[k].asEigenVector()
-  ).cross(
-    positions[j].asEigenVector() - positions[k].asEigenVector()
-  );
-
-  return std::acos(
-    a.dot(b) / (
-      a.norm() * b.norm()
-    )
-  );*/
   Eigen::Vector3d a = positions[j].asEigenVector() - positions[i].asEigenVector();
   Eigen::Vector3d b = positions[k].asEigenVector() - positions[j].asEigenVector();
   Eigen::Vector3d c = positions[l].asEigenVector() - positions[k].asEigenVector();

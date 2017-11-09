@@ -499,7 +499,9 @@ public:
  * represents a set of equal-priority substituents. The sorting is ascending,
  * meaning from lowest priority to highest priority.
  */
-void RankingTree::_applySequenceRules() {
+void RankingTree::_applySequenceRules(
+  const boost::optional<Delib::PositionCollection>& positionsOption
+) {
   /* Sequence rule 2
    * - A node with higher atomic mass precedes ones with lower atomic mass
    *
@@ -646,14 +648,18 @@ void RankingTree::_applySequenceRules() {
           RankingInformation sourceRanking, targetRanking;
 
           // Get ranking for the edge substituents
-          sourceRanking.sortedSubstituents = _auxiliaryApplySequenceRules(
-            sourceIndex,
-            sourceIndicesToRank
+          sourceRanking.sortedSubstituents = _mapToAtomIndices(
+            _auxiliaryApplySequenceRules(
+              sourceIndex,
+              sourceIndicesToRank
+            )
           );
 
-          targetRanking.sortedSubstituents = _auxiliaryApplySequenceRules(
-            targetIndex,
-            targetIndicesToRank
+          targetRanking.sortedSubstituents = _mapToAtomIndices(
+            _auxiliaryApplySequenceRules(
+              targetIndex,
+              targetIndicesToRank
+            )
           );
 
           /* NOTE: There is no need to collect linking information since we
@@ -661,12 +667,30 @@ void RankingTree::_applySequenceRules() {
            * are no longer present.
            */
 
-          _tree[edge].stereocenterOption = Stereocenters::EZStereocenter {
-            sourceIndex,
+          auto newStereocenter = Stereocenters::EZStereocenter {
+            _tree[sourceIndex].molIndex,
             sourceRanking,
-            targetIndex,
+            _tree[targetIndex].molIndex,
             targetRanking
           };
+
+          // Try to assign the new stereocenter
+          if(newStereocenter.numAssignments() > 1) {
+            if(positionsOption) {
+              // Fit from positions
+              newStereocenter.fit(
+                positionsOption.value()
+              );
+            } else { 
+              /* Need to get chiral information from the molecule (if present).
+               * Have to be careful, any stereocenters on the same atom may have
+               * different symmetries and different ranking for the same
+               * substituents
+               */
+            }
+          }
+
+          _tree[edge].stereocenterOption = newStereocenter;
 
           // Mark that we instantiated something
           foundStereocenters = true;
@@ -699,18 +723,31 @@ void RankingTree::_applySequenceRules() {
         // Instantiate a CNStereocenter here!
         RankingInformation centerRanking;
 
-        centerRanking.sortedSubstituents = _auxiliaryApplySequenceRules(
-          sourceIndex,
-          _auxiliaryAdjacentsToRank(sourceIndex, {})
+        centerRanking.sortedSubstituents = _mapToAtomIndices(
+          _auxiliaryApplySequenceRules(
+            sourceIndex,
+            _auxiliaryAdjacentsToRank(sourceIndex, {})
+          )
         );
 
-        _tree[sourceIndex].stereocenterOption = Stereocenters::CNStereocenter {
+        auto newStereocenter = Stereocenters::CNStereocenter {
           _moleculeRef.determineLocalGeometry(
             _tree[sourceIndex].molIndex
           ),
-          sourceIndex,
+          _tree[sourceIndex].molIndex,
           centerRanking
         };
+
+        if(newStereocenter.numAssignments() > 1) {
+          if(positionsOption) {
+            newStereocenter.fit(
+              positionsOption.value()
+            );
+          } else { // Try to get an assignment from the molecule
+          }
+        }
+
+        _tree[sourceIndex].stereocenterOption = newStereocenter;
 
         // Mark that we instantiated something
         foundStereocenters = true;
@@ -1874,8 +1911,8 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   }
 
   for(
-    const auto& molAdjacentIndex 
-    : _moleculeRef.iterateAdjacencies(_tree[index].molIndex)
+    const auto& molAdjacentIndex : 
+    _moleculeRef.iterateAdjacencies(_tree[index].molIndex)
   ) {
     if(treeOutAdjacencies.count(molAdjacentIndex) != 0) {
       continue;
@@ -2424,7 +2461,8 @@ RankingTree::RankingTree(
   const Molecule& molecule,
   const AtomIndexType& atomToRank,
   const std::set<AtomIndexType>& excludeIndices,
-  const ExpansionOption& expansionMethod
+  const ExpansionOption& expansionMethod,
+  const boost::optional<Delib::PositionCollection>& positionsOption
 ) : _moleculeRef(molecule) {
   // Set the root vertex
   auto rootIndex = boost::add_vertex(_tree);
@@ -2672,7 +2710,7 @@ if(expansionMethod == ExpansionOption::Optimized) {
   }
 
   // Perform ranking
-  _applySequenceRules();
+  _applySequenceRules(positionsOption);
 }
 
 
@@ -2709,10 +2747,13 @@ const typename RankingTree::TreeGraphType& RankingTree::getGraph() const {
 
 std::vector<
   std::vector<AtomIndexType>
-> RankingTree::getRanked() const {
-  // We must transform the ranked tree vertex indices back to molecule indices.
+> RankingTree::_mapToAtomIndices(
+  const std::vector<
+    std::vector<RankingTree::TreeVertexIndex>
+  >& treeRankingSets
+) const {
   return TemplateMagic::map(
-    _branchOrderingHelper.getSets(),
+    treeRankingSets,
     [&](const auto& set) -> std::vector<AtomIndexType> {
       return TemplateMagic::map(
         set,
@@ -2721,6 +2762,15 @@ std::vector<
         }
       );
     }
+  );
+}
+
+std::vector<
+  std::vector<AtomIndexType>
+> RankingTree::getRanked() const {
+  // We must transform the ranked tree vertex indices back to molecule indices.
+  return _mapToAtomIndices(
+    _branchOrderingHelper.getSets()
   );
 }
 

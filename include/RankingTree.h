@@ -154,7 +154,7 @@ private:
    * the new duplicate tree vertex indices of duplicate nodes added to the
    * source vertex only, not those added to the target vertex.
    */
-  std::vector<RankingTree::TreeVertexIndex> _addBondOrderDuplicates(
+  std::vector<TreeVertexIndex> _addBondOrderDuplicates(
     const TreeVertexIndex& treeSource,
     const TreeVertexIndex& treeTarget
   );
@@ -199,7 +199,7 @@ private:
    * Pre-expansion existing children may come about due to the addition of
    * multiple bond order duplicate atoms.
    */
-  std::vector<RankingTree::TreeVertexIndex> _expand(
+  std::vector<TreeVertexIndex> _expand(
     const TreeVertexIndex& index,
     const std::set<AtomIndexType>& molIndicesInBranch
   );
@@ -846,6 +846,14 @@ private:
     return ss.str();
   }
 
+  std::vector<
+    std::vector<AtomIndexType>
+  > _mapToAtomIndices(
+    const std::vector<
+      std::vector<TreeVertexIndex>
+    >& treeRankingSets
+  ) const;
+
   /*!
    * In all BFS-like iterations, we need to check that there are suitable 
    * seeds to continue the BFS expansion for all branches that are yet 
@@ -883,7 +891,9 @@ private:
    * symmetry must also be considered because transition metal chemistry is
    * also included in this library.
    */
-  void _applySequenceRules();
+  void _applySequenceRules(
+    const boost::optional<Delib::PositionCollection>& positionsOption
+  );
 
   /*!
    * This function ranks the direct substituents of a selected central tree
@@ -988,7 +998,8 @@ public:
     const Molecule& molecule,
     const AtomIndexType& atomToRank,
     const std::set<AtomIndexType>& excludeIndices = {},
-    const ExpansionOption& expansionMethod = ExpansionOption::Optimized
+    const ExpansionOption& expansionMethod = ExpansionOption::Optimized,
+    const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
   );
 
   /*! Fetches the ranked result
