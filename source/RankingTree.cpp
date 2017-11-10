@@ -223,7 +223,9 @@ public:
       EZStereocenterB.numAssignments(),
       EZStereocenterA.numAssignments()
     ).value_or(
-      // Mixed optional comparison (includes comparison of assignment value if assigned)
+      /* Mixed optional comparison (includes comparison of assignment value if
+       * assigned)
+       */
       EZStereocenterB.assigned() < EZStereocenterA.assigned()
     );
   }
@@ -667,10 +669,13 @@ void RankingTree::_applySequenceRules(
            * are no longer present.
            */
 
+          const AtomIndexType molSourceIndex = _tree[sourceIndex].molIndex;
+          const AtomIndexType molTargetIndex = _tree[targetIndex].molIndex;
+
           auto newStereocenter = Stereocenters::EZStereocenter {
-            _tree[sourceIndex].molIndex,
+            molSourceIndex,
             sourceRanking,
-            _tree[targetIndex].molIndex,
+            molTargetIndex,
             targetRanking
           };
 
@@ -681,12 +686,30 @@ void RankingTree::_applySequenceRules(
               newStereocenter.fit(
                 positionsOption.value()
               );
-            } else { 
+            } else {
               /* Need to get chiral information from the molecule (if present).
                * Have to be careful, any stereocenters on the same atom may have
                * different symmetries and different ranking for the same
                * substituents
                */
+              if(_moleculeRef.getStereocenterList().involving(molSourceIndex)) {
+                const auto& stereocenterPtr = _moleculeRef.getStereocenterList().at(
+                  molSourceIndex
+                );
+
+                if(
+                  stereocenterPtr->type() == Stereocenters::Type::EZStereocenter
+                  && stereocenterPtr->involvedAtoms() == std::set<AtomIndexType> {
+                    molSourceIndex,
+                    molTargetIndex
+                  } && stereocenterPtr->numAssignments() == 2
+                ) {
+                  // Take the assignment from that stereocenter
+                  newStereocenter.assign(
+                    stereocenterPtr->assigned()
+                  );
+                }
+              }
             }
           }
 
@@ -730,11 +753,11 @@ void RankingTree::_applySequenceRules(
           )
         );
 
+        const AtomIndexType molSourceIndex = _tree[sourceIndex].molIndex;
+
         auto newStereocenter = Stereocenters::CNStereocenter {
-          _moleculeRef.determineLocalGeometry(
-            _tree[sourceIndex].molIndex
-          ),
-          _tree[sourceIndex].molIndex,
+          _moleculeRef.determineLocalGeometry(molSourceIndex),
+          molSourceIndex,
           centerRanking
         };
 
@@ -744,6 +767,29 @@ void RankingTree::_applySequenceRules(
               positionsOption.value()
             );
           } else { // Try to get an assignment from the molecule
+            if(_moleculeRef.getStereocenterList().involving(molSourceIndex)) {
+              const auto& stereocenterPtr = _moleculeRef.getStereocenterList().at(
+                molSourceIndex
+              );
+
+              /* TODO
+               * consider what to do in cases in which molecule number of
+               * assignments is fewer finding the equivalent case by means of
+               * rotations should be possible
+               *
+               * widening cases are not assignable
+               */
+              if(
+                stereocenterPtr->type() == Stereocenters::Type::CNStereocenter
+                && stereocenterPtr->involvedAtoms() == std::set<AtomIndexType> {
+                  molSourceIndex
+                } && stereocenterPtr->numAssignments() == newStereocenter.numAssignments()
+              ) {
+                newStereocenter.assign(
+                  stereocenterPtr->assigned()
+                );
+              }
+            }
           }
         }
 

@@ -71,7 +71,7 @@ EZStereocenter::EZStereocenter(
     )
   ) {
     _numAssignments = 1;
-    _isEOption = false;
+    _isZOption = false; // default-assign to zeroth "assignment"
   } else {
     _numAssignments = 2;
   }
@@ -149,9 +149,9 @@ void EZStereocenter::adaptToRankingChange(const RankingInformation& newRanking) 
 void EZStereocenter::assign(const boost::optional<unsigned>& assignment) {
   if(assignment) {
     assert(assignment.value() < _numAssignments); 
-    _isEOption = static_cast<bool>(assignment.value());
+    _isZOption = static_cast<bool>(assignment.value());
   } else {
-    _isEOption = boost::none;
+    _isZOption = boost::none;
   }
 }
 
@@ -193,9 +193,9 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
     /* This means our substituents are at right angles to one another for some
      * reason or another
      */
-    _isEOption = boost::none;
+    _isZOption = boost::none;
   } else {
-    _isEOption = zPenalty > ePenalty;
+    _isZOption = zPenalty < ePenalty;
   }
 }
 
@@ -214,9 +214,9 @@ double EZStereocenter::angle(
 }
 
 boost::optional<unsigned> EZStereocenter::assigned() const {
-  if(_isEOption) {
+  if(_isZOption) {
     return static_cast<unsigned>(
-      _isEOption.value()
+      _isZOption.value()
     );
   }
 
@@ -313,22 +313,22 @@ std::vector<DihedralLimits> EZStereocenter::_transDihedralLimits() const {
 
 std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
   /* Whether we have _numAssignments == 1 or 2 can be completely ignored because
-   * when _numAssignments == 1, it is irrelevant which state _isEOption is in,
+   * when _numAssignments == 1, it is irrelevant which state _isZOption is in,
    * so long as it is set (which it is, already in the constructor). Since both
    * possibilities of considering high-low on one side are equivalent, we just
    * consider the first in all cases. As long as the ranking algorithm works
    * as it should, there should be no issues.
    *
-   * So we just make this dependent on the current _isEOption settings.
+   * So we just make this dependent on the current _isZOption settings.
    */
 
   // EZStereocenters can impose dihedral limits 
-  if(_isEOption && _isEOption.value()) {
-    return _transDihedralLimits();
+  if(_isZOption && _isZOption.value()) {
+    return _cisDihedralLimits();
   }
 
-  if(_isEOption && !_isEOption.value()) {
-    return _cisDihedralLimits();
+  if(_isZOption && !_isZOption.value()) {
+    return _transDihedralLimits();
   }
 
   /* It could occur to you that the limits are defined only on the positive
@@ -371,10 +371,10 @@ std::string EZStereocenter::info() const {
     returnString += ". Is non-stereogenic.";
   } else if(numAssignments() == 2) {
     returnString += ". Is "s;
-    if(_isEOption) {
-      returnString += (_isEOption.value())
-        ? "E"s
-        : "Z"s;
+    if(_isZOption) {
+      returnString += (_isZOption.value())
+        ? "Z"s
+        : "E"s;
     } else {
       returnString += "u";
     }
@@ -415,7 +415,7 @@ bool EZStereocenter::operator == (const EZStereocenter& other) const {
     && _leftLowPriority == other._leftLowPriority
     && _rightLowPriority == other._rightLowPriority
     && _numAssignments == other._numAssignments
-    && _isEOption == other._isEOption
+    && _isZOption == other._isZOption
   );
 }
 
@@ -446,7 +446,7 @@ bool EZStereocenter::operator < (const EZStereocenter& other) const {
               _rightLowPriority,
               other._rightLowPriority
             ).value_or(
-              _isEOption < other._isEOption
+              _isZOption < other._isZOption
             )
           )
         )

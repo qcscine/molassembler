@@ -125,18 +125,18 @@ RankingTree::TreeGraphType makeTree(
   return tree;
 }
 
-BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
+const std::string directoryPrefix = "../tests/mol_files/ranking_tree_molecules/"s;
+
+BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
   using namespace std::string_literals;
 
   IO::MOLFileHandler molHandler;
-  std::string directoryPrefix = "../tests/mol_files/ranking_tree_molecules/"s;
 
   // Basic tests
 
   /* P-92.2.1.1.2 Spheres I and II */
   auto exampleOne = molHandler.readSingle(
-    directoryPrefix
-    + "2R-2-chloropropan-1-ol.mol"s
+    directoryPrefix + "2R-2-chloropropan-1-ol.mol"s
   );
 
   auto exampleOneExpanded = RankingTree(exampleOne, 2, {}, RankingTree::ExpansionOption::Full);
@@ -162,8 +162,7 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
       
 
   auto exampleTwo = molHandler.readSingle(
-    directoryPrefix
-    + "2S-23-dichloropropan-1-ol.mol"
+    directoryPrefix + "2S-23-dichloropropan-1-ol.mol"
   );
 
   auto exampleTwoExpanded = RankingTree(exampleTwo, 3, {}, RankingTree::ExpansionOption::Full);
@@ -193,8 +192,7 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
   // P. 92.2.2 Sequence subrule 1b: Priority due to duplicate atoms
   // Cycle and multiple-bond splitting
   auto exampleThree = molHandler.readSingle(
-    directoryPrefix
-    + "1S5R-bicyclo-3-1-0-hex-2-ene.mol"
+    directoryPrefix + "1S5R-bicyclo-3-1-0-hex-2-ene.mol"
   );
 
   auto exampleThreeExpanded = RankingTree(exampleThree, 0, {}, RankingTree::ExpansionOption::Full);
@@ -280,14 +278,71 @@ BOOST_AUTO_TEST_CASE(IUPAC2013Examples) {
       std::vector<unsigned long>
     > { {7}, {4}, {2}, {0} }
   ));
+}
 
-  // Write out the ranked result
-  /*std::cout << TemplateMagic::condenseIterable(
+template<typename T>
+std::string condenseSets (const std::vector<std::vector<T>>& sets) {
+  return TemplateMagic::condenseIterable(
     TemplateMagic::map(
-      reRanked,
+      sets,
       [](const auto& set) -> std::string {
         return "{"s + TemplateMagic::condenseIterable(set) + "}"s;
       }
     )
-  ) << std::endl;*/
+  );
+}
+
+BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
+  IO::MOLFileHandler molHandler;
+
+  auto ZEDifference = molHandler.readSingle(
+    directoryPrefix + "2Z5S7E-nona-2,7-dien-5-ol.mol"s
+  );
+
+  const auto& stereocenters = ZEDifference.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    stereocenters.involving(0)
+    && stereocenters.at(0)->numAssignments() == 2,
+    "Stereocenter at C0 in 2Z5S7E-nona-2,7-dien-5-ol is not found "
+    "or is not determined as having two assignments."
+  );
+
+  BOOST_CHECK_MESSAGE(
+    stereocenters.at(0)->assigned() == 0u,
+    "Stereocenter at C0 in 2Z5S7E-nona-2,7-dien-5-ol is not S"
+  );
+
+  /* Re-expand (assignment of auxiliary EZStereocenters has to occur from
+   * molecule information
+   */
+  auto reExpanded = RankingTree(ZEDifference, 0);
+
+  BOOST_CHECK_MESSAGE(
+    reExpanded.getRanked().size() == 4,
+    "Re-expanding 2Z5S7E-nona-2,7-dien-5-ol at 0 does not yield a difference "
+    " between the Z and E branches. Perhaps the auxiliary stereocenters aren't "
+    " properly instantiated from molecular graph information in sequence rule 3 "
+    " prep? The ranked sets are " << condenseSets(reExpanded.getRanked())
+  );
+
+  auto EECyclobutane = molHandler.readSingle(
+    directoryPrefix + "1E3E-1,3-difluoromethylidenecyclobutane.mol"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    EECyclobutane.getStereocenterList().involving(0)
+    && EECyclobutane.getStereocenterList().at(0)->numAssignments() == 2
+    && EECyclobutane.getStereocenterList().involving(5)
+    && EECyclobutane.getStereocenterList().at(5)->numAssignments() == 2,
+    "1E3E-1,3-difluoromethylidenecyclobutane differences between branches "
+    " when breaking the cyclobutane at the EZStereocenters don't register!"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    EECyclobutane.getStereocenterList().at(0)->assigned() == 0u
+    && EECyclobutane.getStereocenterList().at(5)->assigned() == 0u,
+    "1E3E-1,3-difluoromethylidenecyclobutane double bonds aren't E"
+  );
+
 }

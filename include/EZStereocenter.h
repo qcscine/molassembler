@@ -36,7 +36,7 @@ namespace Stereocenters {
  *
  *   is properly considered as having E and Z conformers
  *
- * Implementation-wise, _isEOption works as true -> E, false -> Z
+ * Implementation-wise, _isZOption works as true -> Z, false -> E
  *
  * EZStereocenter is explicitly also instantiable on bonds that are not 
  * stereogenic so that in DG, chirality constraints and dihedral limits that
@@ -72,7 +72,7 @@ private:
   boost::optional<AtomIndexType> _leftLowPriority, _rightLowPriority;
 
   //! Stores the current assignment state of the stereocenter
-  boost::optional<bool> _isEOption;
+  boost::optional<bool> _isZOption;
 
   //! Stores the number of possible assignments
   unsigned _numAssignments;

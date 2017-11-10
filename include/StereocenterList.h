@@ -80,7 +80,7 @@ public:
   }
 
   /* Information */
-  bool involving(const AtomIndexType& index) {
+  bool involving(const AtomIndexType& index) const {
     if(_indexMap.count(index) > 0) {
       return true;
     }
