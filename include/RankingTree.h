@@ -101,6 +101,8 @@ private:
   using TreeVertexIndex = TreeGraphType::vertex_descriptor;
   //! Type of tree edge accessor
   using TreeEdgeIndex = TreeGraphType::edge_descriptor;
+  //! Variant type of both
+  using VariantType = boost::variant<TreeVertexIndex, TreeEdgeIndex>;
 
 /* State */
   //! The BGL Graph representing the acyclic tree
@@ -534,11 +536,13 @@ private:
 #ifndef NDEBUG
     // Write debug graph files if the corresponding log particular is set
     if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      std::string header;
-      if(!BFSDownOnly) {
-        header += "_omni "s;
-      }
-      header += "Sequence rule "s + std::to_string(ruleNumber);
+      std::string header = (
+        (
+          BFSDownOnly
+          ? ""s
+          : "aux "s
+        ) + "R"s + std::to_string(ruleNumber)
+      );
 
       _writeGraphvizFiles({
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
@@ -548,7 +552,7 @@ private:
           _collectSeeds(seeds, undecidedSets)
         ),
         _makeGraph(
-          header + " multisets"s,
+          header,
           sourceIndex,
           comparisonSets,
           undecidedSets
@@ -666,9 +670,9 @@ private:
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         std::string header;
         if(!BFSDownOnly) {
-          header += "_omni "s;
+          header += "aux "s;
         }
-        header += "Sequence rule "s + std::to_string(ruleNumber);
+        header += "R"s + std::to_string(ruleNumber);
 
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
@@ -678,7 +682,7 @@ private:
             _collectSeeds(seeds, undecidedSets)
           ),
           _makeGraph(
-            header + " multisets"s,
+            header,
             sourceIndex,
             comparisonSets,
             undecidedSets
@@ -811,7 +815,11 @@ private:
         std::ostream& os,
         const typename DisplayGraph::vertex_descriptor& vertexIndex
       ) const {
-        os << R"([label=")" << _graphBase[vertexIndex].representation << R"(")";
+        if(vertexIndex == 0) {
+          os << R"([label=")" << _title << "\\n-\\n" << _graphBase[0].representation << R"(")";
+        } else {
+          os << R"([label=")" << _graphBase[vertexIndex].representation << R"(")";
+        }
 
         if(_colorVertices.count(vertexIndex) > 0) {
           os << R"(, fillcolor="tomato", fontcolor="white")";
@@ -845,6 +853,28 @@ private:
 
     return ss.str();
   }
+
+  std::string _make4BGraph(
+    const TreeVertexIndex& sourceIndex,
+    const std::map<
+      TreeVertexIndex,
+      std::set<VariantType>
+    >& representativeStereodescriptors,
+    const TreeVertexIndex& branchA,
+    const TreeVertexIndex& branchB,
+    const std::vector<
+      std::vector<VariantType>
+    >& branchAOrders,
+    const std::vector<
+      std::vector<VariantType>
+    >& branchBOrders,
+    const std::vector<
+      std::vector<VariantType>
+    >::reverse_iterator& branchAIter,
+    const std::vector<
+      std::vector<VariantType>
+    >::reverse_iterator& branchBIter
+  ) const;
 
   std::vector<
     std::vector<AtomIndexType>

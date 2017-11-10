@@ -139,7 +139,12 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
     directoryPrefix + "2R-2-chloropropan-1-ol.mol"s
   );
 
-  auto exampleOneExpanded = RankingTree(exampleOne, 2, {}, RankingTree::ExpansionOption::Full);
+  auto exampleOneExpanded = RankingTree(
+    exampleOne,
+    2,
+    {},
+    RankingTree::ExpansionOption::Full
+  );
 
   BOOST_CHECK(
     boost::graph::isomorphism(
@@ -165,7 +170,12 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
     directoryPrefix + "2S-23-dichloropropan-1-ol.mol"
   );
 
-  auto exampleTwoExpanded = RankingTree(exampleTwo, 3, {}, RankingTree::ExpansionOption::Full);
+  auto exampleTwoExpanded = RankingTree(
+    exampleTwo,
+    3,
+    {},
+    RankingTree::ExpansionOption::Full
+  );
 
   BOOST_CHECK(
     boost::graph::isomorphism(
@@ -195,7 +205,12 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
     directoryPrefix + "1S5R-bicyclo-3-1-0-hex-2-ene.mol"
   );
 
-  auto exampleThreeExpanded = RankingTree(exampleThree, 0, {}, RankingTree::ExpansionOption::Full);
+  auto exampleThreeExpanded = RankingTree(
+    exampleThree,
+    0,
+    {},
+    RankingTree::ExpansionOption::Full
+  );
 
   BOOST_CHECK(
     boost::graph::isomorphism(
@@ -271,7 +286,12 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
     )
   );
 
-  auto exampleThreeExpandedAgain = RankingTree(exampleThree, 1, {}, RankingTree::ExpansionOption::Full);
+  auto exampleThreeExpandedAgain = RankingTree(
+    exampleThree,
+    1,
+    {},
+    RankingTree::ExpansionOption::Full
+  );
 
   BOOST_CHECK((
     exampleThreeExpandedAgain.getRanked() == std::vector<
@@ -295,6 +315,7 @@ std::string condenseSets (const std::vector<std::vector<T>>& sets) {
 BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   IO::MOLFileHandler molHandler;
 
+  // P-92.4.2.1 Example 1 (Z before E)
   auto ZEDifference = molHandler.readSingle(
     directoryPrefix + "2Z5S7E-nona-2,7-dien-5-ol.mol"s
   );
@@ -326,6 +347,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
     " prep? The ranked sets are " << condenseSets(reExpanded.getRanked())
   );
 
+  // P-92.4.2.2 Example 1 (Z before E in aux. stereocenters, splitting)
   auto EECyclobutane = molHandler.readSingle(
     directoryPrefix + "1E3E-1,3-difluoromethylidenecyclobutane.mol"
   );
@@ -344,5 +366,67 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
     && EECyclobutane.getStereocenterList().at(5)->assigned() == 0u,
     "1E3E-1,3-difluoromethylidenecyclobutane double bonds aren't E"
   );
+
+  // P-92.4.2.2 Example 2 (stereogenic before non-stereogenic)
+  auto inTreeNstgDB = molHandler.readSingle(
+    directoryPrefix 
+    + "(2Z5Z7R8Z11Z)-9-(2Z-but-2-en-1-yl)-5-(2E-but-2-en-1-yl)trideca-2,5,8,11-tetraen-7-ol.mol"s
+  );
+
+  BOOST_CHECK_MESSAGE(
+    inTreeNstgDB.getStereocenterList().involving(0)
+    && inTreeNstgDB.getStereocenterList().at(0)->numAssignments() == 2
+    && inTreeNstgDB.getStereocenterList().at(0)->assigned() == 1u,
+    "(2Z5Z7R8Z11Z)-9-(2Z-but-2-en-1-yl)-5-(2E-but-2-en-1-yl)trideca-2,5,8,11-tetraen-7-ol "
+    "difference between non-stereogenic auxiliary stereocenter and assigned "
+    "stereocenter isn't recognized!"
+  );
+}
+
+BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
+  IO::MOLFileHandler molHandler;
+
+  /* TODO
+   * is it necessary to add a test to ensure full partial ordering?
+   * stereogenic > pseudostereogenic > non-stereogenic
+   *
+   * currently no differentiation between stereogenic and pseudostereogenic
+   */
+
+  // (4A) P-92.5.1 Example (stereogenic before non-stereogenic)
+  auto pseudoOverNonstg = molHandler.readSingle(
+    directoryPrefix 
+    + "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol"s
+  );
+
+  const auto& pseudoOverNonstgStereocenters = pseudoOverNonstg.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    pseudoOverNonstgStereocenters.involving(10)
+    && pseudoOverNonstgStereocenters.at(10)->numAssignments() == 1,
+    "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
+    "branch with R-R aux. stereocenters not non-stereogenic"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    pseudoOverNonstgStereocenters.involving(1)
+    && pseudoOverNonstgStereocenters.at(1)->numAssignments() == 2,
+    "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
+    "branch with R-S aux. stereocenters not stereogenic"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    pseudoOverNonstgStereocenters.involving(0)
+    && pseudoOverNonstgStereocenters.at(0)->numAssignments() == 2,
+    "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
+    "sequence rule 4A does not recognize stereogenic over non-stereogenic"
+  );
+
+  // (4B) P-92.5.2.2 Example 1 (single chain pairing, ordering and reference selection)
+  auto simpleLikeUnlike = molHandler.readSingle(
+    directoryPrefix + "(2R,3R,4R,5S,6R)-2,3,4,5,6-pentachloroheptanedioic-acid.mol"s
+  );
+
+  const auto& simpleLikeUnlikeStereocenters = simpleLikeUnlike.getStereocenterList();
 
 }
