@@ -2948,125 +2948,91 @@ std::string RankingTree::_make4BGraph(
   graphviz += R"(, shape="square")";
   graphviz += R"(];)" + nl;
 
-  graphviz += R"(  branchA [)";
-  graphviz += R"(shape="none", label=)" + tableBegin + rowBegin;
-  for(const auto& aRepresentative : representativeStereodescriptors.at(branchA)) {
-    graphviz += cellBegin(
-      representativeStereodescriptors.at(branchA).size(),
-      branchColor
-    );
-    graphviz += toString(aRepresentative) + br;
-    graphviz += boost::apply_visitor(stringFetcher, aRepresentative) + cellEnd;
-  }
-  graphviz += rowEnd + tableEnd + R"(];)" + nl;
+  auto makeBranchNode = [&](
+    const auto& nodeName,
+    const auto& branchIndex
+  ) {
+    std::string nodeGraphviz = "  "s + nodeName + "["s;
+    nodeGraphviz += R"(shape="none", label=)" + tableBegin + rowBegin;
+    for(const auto& representativeVariant : representativeStereodescriptors.at(branchIndex)) {
+      nodeGraphviz += cellBegin(
+        representativeStereodescriptors.at(branchIndex).size(),
+        branchColor
+      );
+      nodeGraphviz += toString(representativeVariant) + br;
+      nodeGraphviz += boost::apply_visitor(stringFetcher, representativeVariant) + cellEnd;
+    }
+    nodeGraphviz += rowEnd + tableEnd + R"(];)" + nl;
 
-  graphviz += R"(  branchB [)";
-  graphviz += R"(shape="none", label=)" + tableBegin + rowBegin;
-  for(const auto& aRepresentative : representativeStereodescriptors.at(branchB)) {
-    graphviz += cellBegin(
-      representativeStereodescriptors.at(branchB).size(),
-      branchColor
-    );
-    graphviz += toString(aRepresentative) + br;
-    graphviz += boost::apply_visitor(stringFetcher, aRepresentative) + cellEnd;
-  }
-  graphviz += rowEnd + tableEnd + R"(];)" + nl;
+    return nodeGraphviz;
+  };
+
+  graphviz += makeBranchNode("branchA", branchA);
+  graphviz += makeBranchNode("branchB", branchB);
 
   graphviz += R"(  root -> branchA;)" + nl;
   graphviz += R"(  root -> branchB;)" + nl;
 
   // Branch nodes
-  std::string lastNode = "branchA";
-  unsigned i = 0;
-  for(auto iter = branchAOrders.rbegin(); iter != branchAOrders.rend(); ++iter) {
-    const auto& variantList = *iter;
-    
-    // Node
-    graphviz += "  a"s + std::to_string(i) + " [";
-    graphviz += R"(shape="none", label=)" + tableBegin;
+  auto makeBranch = [&](
+    auto lastNode,
+    const auto& nodePrefix,
+    const auto& branchIndex,
+    const auto& branchOrders,
+    const auto& branchIter
+  ) {
+    std::string branchGraphviz;
+    unsigned i = 0;
 
-    std::string stereocenterRow = rowBegin;
-    std::string likeRow = rowBegin;
+    for(auto iter = branchOrders.rbegin(); iter != branchOrders.rend(); ++iter) {
+      const auto& variantList = *iter;
+      
+      // Node
+      branchGraphviz += "  "s + nodePrefix + std::to_string(i) + " [";
+      branchGraphviz += R"(shape="none", label=)" + tableBegin;
 
-    for(const auto& stereocenterVariant : variantList) {
-      stereocenterRow += cellBegin(
-        representativeStereodescriptors.at(branchA).size()
-      );
-      stereocenterRow += toString(stereocenterVariant) + br;
-      stereocenterRow += boost::apply_visitor(stringFetcher, stereocenterVariant);
-      stereocenterRow += cellEnd;
+      std::string stereocenterRow = rowBegin;
+      std::string likeRow = rowBegin;
 
-      if(branchAIter == iter) {
-        for(const auto& representativeVariant : representativeStereodescriptors.at(branchA)) {
-          if(boost::apply_visitor(likeComparator, stereocenterVariant, representativeVariant)) {
-            likeRow += cellBegin(1, greenColor) + cellEnd;
-          } else {
-            likeRow += cellBegin(1, redColor) + cellEnd;
+      for(const auto& stereocenterVariant : variantList) {
+        stereocenterRow += cellBegin(
+          representativeStereodescriptors.at(branchIndex).size()
+        );
+        stereocenterRow += toString(stereocenterVariant) + br;
+        stereocenterRow += boost::apply_visitor(stringFetcher, stereocenterVariant);
+        stereocenterRow += cellEnd;
+
+        if(branchIter == iter) {
+          for(const auto& representativeVariant : representativeStereodescriptors.at(branchIndex)) {
+            if(boost::apply_visitor(likeComparator, stereocenterVariant, representativeVariant)) {
+              likeRow += cellBegin(1, greenColor) + cellEnd;
+            } else {
+              likeRow += cellBegin(1, redColor) + cellEnd;
+            }
           }
         }
       }
-    }
 
-    graphviz += stereocenterRow + rowEnd;
+      branchGraphviz += stereocenterRow + rowEnd;
 
-    if(branchAIter == iter) {
-      graphviz += likeRow + rowEnd;
-    }
-
-    graphviz += tableEnd + R"(];)" + nl;
-
-    // Edge
-    graphviz += "  "s + lastNode + " -> " + "a"s + std::to_string(i) + ";"s + nl;
-
-    lastNode = "a"s + std::to_string(i);
-    ++i;
-  }
-
-  lastNode = "branchB";
-  i = 0;
-  for(auto iter = branchBOrders.rbegin(); iter != branchBOrders.rend(); ++iter) {
-    const auto& variantList = *iter;
-    
-    // Node
-    graphviz += "  b"s + std::to_string(i) + " [";
-    graphviz += R"(shape="none", label=)" + tableBegin;
-
-    std::string stereocenterRow = rowBegin;
-    std::string likeRow = rowBegin;
-
-    for(const auto& stereocenterVariant : variantList) {
-      stereocenterRow += cellBegin(
-        representativeStereodescriptors.at(branchB).size()
-      );
-      stereocenterRow += toString(stereocenterVariant) + br;
-      stereocenterRow += boost::apply_visitor(stringFetcher, stereocenterVariant);
-      stereocenterRow += cellEnd;
-
-      if(branchBIter == iter) {
-        for(const auto& representativeVariant : representativeStereodescriptors.at(branchB)) {
-          if(boost::apply_visitor(likeComparator, stereocenterVariant, representativeVariant)) {
-            likeRow += cellBegin(1, greenColor) + cellEnd;
-          } else {
-            likeRow += cellBegin(1, redColor) + cellEnd;
-          }
-        }
+      if(branchIter == iter) {
+        branchGraphviz += likeRow + rowEnd;
       }
+
+      branchGraphviz += tableEnd + R"(];)" + nl;
+
+      // Edge
+      branchGraphviz += "  "s + lastNode + " -> " + nodePrefix + std::to_string(i) + ";"s + nl;
+
+      lastNode = nodePrefix + std::to_string(i);
+      ++i;
     }
-    
-    graphviz += stereocenterRow + rowEnd;
 
-    if(branchBIter == iter) {
-      graphviz += likeRow + rowEnd;
-    }
+    return branchGraphviz;
+  };
 
-    graphviz += tableEnd + R"(];)" + nl;
-
-    // Edge
-    graphviz += "  "s + lastNode + " -> " + "b"s + std::to_string(i) + ";"s + nl;
-
-    lastNode = "b"s + std::to_string(i);
-    ++i;
-  }
+  graphviz += makeBranch("branchA"s, "a"s, branchA, branchAOrders, branchAIter);
+  graphviz += makeBranch("branchB"s, "b"s, branchB, branchBOrders, branchBIter);
 
   graphviz += "}";
 
