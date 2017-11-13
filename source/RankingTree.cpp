@@ -12,6 +12,9 @@
 
 namespace MoleculeManip {
 
+// Must declare constexpr static member without definition!
+constexpr decltype(RankingTree::rootIndex) RankingTree::rootIndex;
+
 class RankingTree::GraphvizWriter {
 private:
   // Closures
@@ -549,7 +552,7 @@ void RankingTree::_applySequenceRules(
     for(const auto& undecidedSet : undecidedSets) {
       for(const auto& undecidedBranch : undecidedSet) {
         rootEdges.insert(
-          boost::edge(0, undecidedBranch, _tree).first
+          boost::edge(rootIndex, undecidedBranch, _tree).first
         );
       }
     }
@@ -612,7 +615,8 @@ void RankingTree::_applySequenceRules(
 #endif
 
   // Remember if you found something to instantiate or not
-  bool foundStereocenters = false;
+  bool foundEZStereocenters = false;
+  bool foundCNStereocenters = false;
 
   // Process the tree, from the bottom up
   for(auto it = byDepth.rbegin(); it != byDepth.rend(); ++it) {
@@ -624,9 +628,6 @@ void RankingTree::_applySequenceRules(
       if(_doubleBondEdges.count(edge)) {
         // Instantiate an EZStereocenter here!
         
-        /* TODO ensure that there is at least one non-duplicate substituent
-         * on each end of the edge
-         */
         auto targetIndex = boost::target(edge, _tree);
 
         auto sourceIndicesToRank = _auxiliaryAdjacentsToRank(
@@ -707,18 +708,18 @@ void RankingTree::_applySequenceRules(
                 }
               }
             }
+
+            _tree[edge].stereocenterOption = newStereocenter;
+
+            // Mark that we instantiated something
+            foundEZStereocenters = true;
           }
-
-          _tree[edge].stereocenterOption = newStereocenter;
-
-          // Mark that we instantiated something
-          foundStereocenters = true;
 
 #ifndef NDEBUG
           if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
             _writeGraphvizFiles({
               _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-              dumpGraphviz("Sequence rule 3 preparation", {0}, {}, collectHandledEdges(it))
+              dumpGraphviz("Sequence rule 3 preparation", {rootIndex}, {}, collectHandledEdges(it))
             });
           }
 #endif
@@ -729,7 +730,8 @@ void RankingTree::_applySequenceRules(
         !_tree[edge].stereocenterOption // No EZStereocenter on this edge
         && !_tree[sourceIndex].stereocenterOption // No CNStereocenter
         && _nonDuplicateDegree(sourceIndex) >= 3 // Min. degree for chirality
-        && sourceIndex != 0 // not root, no CNStereocenters needed there!
+        && sourceIndex != rootIndex // not root, no CNStereocenters needed there!
+        && _moleculeRef._isCNStereocenterCandidate(_tree[sourceIndex].molIndex)
       ) {
         /* TODO reduce the effort here by counting the number of adjacent
          * (terminal!) hydrogens and comparing with a table of symmetries vs
@@ -787,18 +789,18 @@ void RankingTree::_applySequenceRules(
               }
             }
           }
+
+          _tree[sourceIndex].stereocenterOption = newStereocenter;
+
+          // Mark that we instantiated something
+          foundCNStereocenters = true;
         }
-
-        _tree[sourceIndex].stereocenterOption = newStereocenter;
-
-        // Mark that we instantiated something
-        foundStereocenters = true;
         
 #ifndef NDEBUG
         if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
           _writeGraphvizFiles({
             _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-            dumpGraphviz("Sequence rule 3 preparation", {0}, {}, collectHandledEdges(it))
+            dumpGraphviz("Sequence rule 3 preparation", {rootIndex}, {}, collectHandledEdges(it))
           });
         }
 #endif
@@ -807,39 +809,43 @@ void RankingTree::_applySequenceRules(
     }
   }
 
-  // Was anything instantiated? If not, we can skip rules 3 through 5.
-  if(!foundStereocenters) {
-    return;
-  }
+  // Was any EZStereocenter instantiated? If not, we can skip rule 3.
+  if(foundEZStereocenters) {
 
-  // Apply sequence rule 3
-  _runBFS<
-    3, // Sequence rule 3
-    true, // BFS downwards only
-    true, // Insert edges
-    false, // Insert vertices
-    TreeEdgeIndex, // Multiset value type
-    SequenceRuleThreeEdgeComparator // Multiset comparator type
-  >(
-    0, // Source index is root
-    _branchOrderingHelper
-  );
+    // Apply sequence rule 3
+    _runBFS<
+      3, // Sequence rule 3
+      true, // BFS downwards only
+      true, // Insert edges
+      false, // Insert vertices
+      TreeEdgeIndex, // Multiset value type
+      SequenceRuleThreeEdgeComparator // Multiset comparator type
+    >(
+      rootIndex, // Source index is root
+      _branchOrderingHelper
+    );
 
 #ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "Sets post sequence rule 3: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        _branchOrderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "Sets post sequence rule 3: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          _branchOrderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
 #endif
 
-  // Was sequence rule 3 enough?
-  if(_branchOrderingHelper.isTotallyOrdered()) {
+    // Was sequence rule 3 enough?
+    if(_branchOrderingHelper.isTotallyOrdered()) {
+      return;
+    }
+  }
+
+  // In case neither EZ or CNStereocenters were found, we can skip 4-5
+  if(!foundEZStereocenters && !foundCNStereocenters) {
     return;
   }
 
@@ -908,7 +914,7 @@ void RankingTree::_applySequenceRules(
 
         comparisonSets.at(undecidedBranch).emplace(undecidedBranch);
         comparisonSets.at(undecidedBranch).emplace(
-          boost::edge(0, undecidedBranch, _tree).first
+          boost::edge(rootIndex, undecidedBranch, _tree).first
         );
 
         seeds[undecidedBranch] = {undecidedBranch};
@@ -927,8 +933,8 @@ void RankingTree::_applySequenceRules(
     if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
       _writeGraphvizFiles({
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 4A", {0}, _collectSeeds(seeds, undecidedSets)),
-        _makeGraph("4A", 0, comparisonSets, undecidedSets),
+        dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
+        _makeGraph("4A", rootIndex, comparisonSets, undecidedSets),
         _branchOrderingHelper.dumpGraphviz()
       });
     }
@@ -976,8 +982,8 @@ void RankingTree::_applySequenceRules(
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 4A", {0}, _collectSeeds(seeds, undecidedSets)),
-          _makeGraph("4A", 0, comparisonSets, undecidedSets),
+          dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
+          _makeGraph("4A", rootIndex, comparisonSets, undecidedSets),
           _branchOrderingHelper.dumpGraphviz()
         });
       }
@@ -1066,6 +1072,44 @@ void RankingTree::_applySequenceRules(
             relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
           } else if(bDepth < aDepth) {
             relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
+          } else { 
+            // Try to resolve via ranking downwards from the junction
+            auto junctionInfo = _junction(
+              boost::apply_visitor(sourceNodeFetcher, a),
+              boost::apply_visitor(sourceNodeFetcher, b)
+            );
+
+            auto aJunctionChild = junctionInfo.firstPath.back();
+            auto bJunctionChild = junctionInfo.secondPath.back();
+
+            /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
+             * it should only establish differences within branches
+             */
+            if(junctionInfo.junction != rootIndex) {
+              auto relativeRank = _auxiliaryApplySequenceRules(
+                junctionInfo.junction,
+                {aJunctionChild, bJunctionChild}
+              );
+
+              /* relativeRank can only have sizes 1 or 2, where size 1 means
+               * that no difference was found
+               */
+              if(relativeRank.size() == 2) {
+                if(relativeRank.front().front() == aJunctionChild) {
+                  relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
+                } else {
+                  relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
+                }
+              }
+            } else {
+#ifndef NDEBUG
+              Log::log(Log::Particulars::RankingTreeDebugInfo) 
+                << "Junction of ("
+                << boost::apply_visitor(sourceNodeFetcher, a) << ", "
+                << boost::apply_visitor(sourceNodeFetcher, b) << ") "
+                << " is root!" << std::endl;
+#endif
+            }
           }
         }
       );
@@ -1074,67 +1118,11 @@ void RankingTree::_applySequenceRules(
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 4B prep", {0}),
+          dumpGraphviz("Sequence rule 4B prep", {rootIndex}),
           relativeOrders.at(branchIndex).dumpGraphviz()
         });
       }
 #endif
-
-      if(!relativeOrders.at(branchIndex).isTotallyOrdered()) {
-        /* Try to resolve undecided sets via ranking downwards at junction of
-         * pairs
-         */
-        for(
-          const auto& undecidedSet : 
-          relativeOrders.at(branchIndex).getUndecidedSets()
-        ) {
-          TemplateMagic::forAllPairs(
-            undecidedSet,
-            [&](const auto& a, const auto& b) {
-              auto junctionInfo = _junction(
-                boost::apply_visitor(sourceNodeFetcher, a),
-                boost::apply_visitor(sourceNodeFetcher, b)
-              );
-
-              auto aJunctionChild = junctionInfo.firstPath.back();
-              auto bJunctionChild = junctionInfo.secondPath.back();
-
-              /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
-               * it should only establish differences within branches
-               */
-              if(junctionInfo.junction != 0) {
-                auto relativeRank = _auxiliaryApplySequenceRules(
-                  junctionInfo.junction,
-                  {aJunctionChild, bJunctionChild}
-                );
-
-                /* relativeRank can only have sizes 1 or 2, where size 1 means
-                 * that no difference was found
-                 *
-                 * TODO this may be an accidental inversion of priority
-                 */
-                if(relativeRank.size() == 2) {
-                  if(relativeRank.front().front() == aJunctionChild) {
-                    relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
-                  } else {
-                    relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
-                  }
-                }
-              }
-            }
-          );
-        }
-
-#ifndef NDEBUG
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-          _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-            dumpGraphviz("Sequence rule 4B prep", {0}),
-            relativeOrders.at(branchIndex).dumpGraphviz()
-          });
-        }
-#endif
-      }
 
       // Pick the representative stereodescriptor for each branch!
       auto stereocenterSets = relativeOrders.at(branchIndex).getSets();
@@ -1200,7 +1188,7 @@ void RankingTree::_applySequenceRules(
 
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 4B prep", {0}, representativeVertices, representativeEdges)
+          dumpGraphviz("Sequence rule 4B prep", {rootIndex}, representativeVertices, representativeEdges)
         });
       }
 #endif
@@ -1213,6 +1201,14 @@ void RankingTree::_applySequenceRules(
       TemplateMagic::forAllPairs(
         undecidedSet,
         [&](const auto& branchA, const auto& branchB) {
+          // Do nothing if neither have representative stereodescriptors
+          if(
+            representativeStereodescriptors.at(branchA).size() == 0
+            && representativeStereodescriptors.at(branchB).size() == 0
+          ) {
+            return;
+          }
+
           // Precedence via amount of representative stereodescriptors
           if(
             representativeStereodescriptors.at(branchA).size() 
@@ -1294,10 +1290,10 @@ void RankingTree::_applySequenceRules(
               );
 
               if(ABranchLikePairs < BBranchLikePairs) {
-                _branchOrderingHelper.addLessThanRelationship(branchA, branchB);
+                _branchOrderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
               } else if(BBranchLikePairs < ABranchLikePairs) {
-                _branchOrderingHelper.addLessThanRelationship(branchB, branchA);
+                _branchOrderingHelper.addLessThanRelationship(branchA, branchB);
                 break;
               }
 
@@ -1310,7 +1306,7 @@ void RankingTree::_applySequenceRules(
                 _adaptMolGraph(_moleculeRef.dumpGraphviz()),
                 dumpGraphviz("4B"s),
                 _make4BGraph(
-                  0,
+                  rootIndex,
                   representativeStereodescriptors,
                   branchA,
                   branchB,
@@ -1318,7 +1314,8 @@ void RankingTree::_applySequenceRules(
                   branchBOrders,
                   branchAStereocenterGroupIter,
                   branchBStereocenterGroupIter
-                )
+                ),
+                _branchOrderingHelper.dumpGraphviz()
               });
             }
 #endif
@@ -1365,7 +1362,7 @@ void RankingTree::_applySequenceRules(
     VariantType, // MultisetValueType
     SequenceRuleFiveVariantComparator // Multiset comparator type
   >(
-    0, // Source index is root
+    rootIndex, // Source index is root
     _branchOrderingHelper
   );
 
@@ -1396,9 +1393,9 @@ std::vector<
 
 #ifndef NEDEBUG
 Log::log(Log::Particulars::RankingTreeDebugInfo)
-  << "  Preparing sequence rule 3, ranking substituents of tree index " 
+  << "  Auxiliary ranking substituents of tree index " 
   << sourceIndex 
-  <<  " {" 
+  <<  ": " 
   << TemplateMagic::condenseIterable(
     TemplateMagic::map(
       orderingHelper.getSets(),
@@ -1406,7 +1403,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
         return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
       }
     )
-  ) << "}\n";
+  ) << "\n";
 #endif
 
 
@@ -1474,16 +1471,16 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
   );
 
 #ifndef NDEBUG
-Log::log(Log::Particulars::RankingTreeDebugInfo)
-  << "  Sets post sequence rule 3: {" 
-  << TemplateMagic::condenseIterable(
-    TemplateMagic::map(
-      orderingHelper.getSets(),
-      [](const auto& indexSet) -> std::string {
-        return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-      }
-    )
-  ) << "}\n";
+  Log::log(Log::Particulars::RankingTreeDebugInfo)
+    << "  Sets post sequence rule 3: {" 
+    << TemplateMagic::condenseIterable(
+      TemplateMagic::map(
+        orderingHelper.getSets(),
+        [](const auto& indexSet) -> std::string {
+          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+        }
+      )
+    ) << "}\n";
 #endif
 
   // Is sequence rule 3 enough?
@@ -1580,7 +1577,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
     if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
       _writeGraphvizFiles({
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 3 prep", {0}),
+        dumpGraphviz("Sequence rule 3 prep", {rootIndex}),
         dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
         _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
         orderingHelper.dumpGraphviz()
@@ -1655,7 +1652,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 3 prep", {0}),
+          dumpGraphviz("Sequence rule 3 prep", {rootIndex}),
           dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
           _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
           orderingHelper.dumpGraphviz()
@@ -1747,6 +1744,35 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
             relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
           } else if(bDepth < aDepth) {
             relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
+          } else {
+            auto junctionInfo = _junction(
+              boost::apply_visitor(sourceNodeFetcher, a),
+              boost::apply_visitor(sourceNodeFetcher, b)
+            );
+
+            auto aJunctionChild = junctionInfo.firstPath.back();
+            auto bJunctionChild = junctionInfo.secondPath.back();
+
+            /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
+             * it should only establish differences within branches here
+             */
+            if(junctionInfo.junction != rootIndex) {
+              auto relativeRank = _auxiliaryApplySequenceRules(
+                junctionInfo.junction,
+                {aJunctionChild, bJunctionChild}
+              );
+
+              /* relativeRank can only have sizes 1 or 2, 1 meaning that no
+               * difference was found
+               */
+              if(relativeRank.size() == 2) {
+                if(relativeRank.front().front() == aJunctionChild) {
+                  relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
+                } else {
+                  relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
+                }
+              }
+            }
           }
         }
       );
@@ -1755,67 +1781,11 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Aux 4B prep", {0}),
+          dumpGraphviz("Aux 4B prep", {rootIndex}),
           relativeOrders.at(branchIndex).dumpGraphviz()
         });
       }
 #endif
-
-      if(!relativeOrders.at(branchIndex).isTotallyOrdered()) {
-        /* Try to resolve undecided sets via ranking downwards at junction of
-         * pairs
-         */
-        for(
-          const auto& undecidedSet : 
-          relativeOrders.at(branchIndex).getUndecidedSets()
-        ) {
-          TemplateMagic::forAllPairs(
-            undecidedSet,
-            [&](const auto& a, const auto& b) {
-              auto junctionInfo = _junction(
-                boost::apply_visitor(sourceNodeFetcher, a),
-                boost::apply_visitor(sourceNodeFetcher, b)
-              );
-
-              auto aJunctionChild = junctionInfo.firstPath.back();
-              auto bJunctionChild = junctionInfo.secondPath.back();
-
-              /* Do not use _auxiliaryApplySequenceRules for root-level ranking,
-               * it should only establish differences within branches here
-               */
-              if(junctionInfo.junction != 0) {
-                auto relativeRank = _auxiliaryApplySequenceRules(
-                  junctionInfo.junction,
-                  {aJunctionChild, bJunctionChild}
-                );
-
-                /* relativeRank can only have sizes 1 or 2, 1 meaning that no
-                 * difference was found
-                 *
-                 * TODO this may be an accidental inversion of priority
-                 */
-                if(relativeRank.size() == 2) {
-                  if(relativeRank.front().front() == aJunctionChild) {
-                    relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
-                  } else {
-                    relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
-                  }
-                }
-              }
-            }
-          );
-        }
-
-#ifndef NDEBUG
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-          _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-            dumpGraphviz("Aux 4B prep", {0}),
-            relativeOrders.at(branchIndex).dumpGraphviz()
-          });
-        }
-#endif
-      }
 
       // Pick the representative stereodescriptor for each branch!
       auto stereocenterSets = relativeOrders.at(branchIndex).getSets();
@@ -1868,6 +1838,14 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       TemplateMagic::forAllPairs(
         undecidedSet,
         [&](const auto& branchA, const auto& branchB) {
+          // Do nothing if neither have representative stereodescriptors
+          if(
+            representativeStereodescriptors.at(branchA).size() == 0
+            && representativeStereodescriptors.at(branchB).size() == 0
+          ) {
+            return;
+          }
+
           // Precedence via amount of representative stereodescriptors
           if(
             representativeStereodescriptors.at(branchA).size() 
@@ -1949,10 +1927,10 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
               );
 
               if(ABranchLikePairs < BBranchLikePairs) {
-                orderingHelper.addLessThanRelationship(branchA, branchB);
+                orderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
               } else if(BBranchLikePairs < ABranchLikePairs) {
-                orderingHelper.addLessThanRelationship(branchB, branchA);
+                orderingHelper.addLessThanRelationship(branchA, branchB);
                 break;
               }
 
@@ -1974,7 +1952,8 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
                   branchBOrders,
                   branchAStereocenterGroupIter,
                   branchBStereocenterGroupIter
-                )
+                ),
+                _branchOrderingHelper.dumpGraphviz()
               });
             }
 #endif
@@ -2129,7 +2108,7 @@ std::string RankingTree::toString(const VariantType& variant) const {
 
 //! Returns the parent of a node. Fails if called on the root!
 RankingTree::TreeVertexIndex RankingTree::_parent(const RankingTree::TreeVertexIndex& index) const {
-  assert(index != 0);
+  assert(index != rootIndex);
 
   // All nodes in the graph must have in_degree of 1
   assert(boost::in_degree(index, _tree) == 1);
@@ -2411,10 +2390,10 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_addBondOrderDuplicates(
   return newIndices;
 }
 
-std::set<AtomIndexType> RankingTree::_molIndicesInBranch(TreeVertexIndex index) const {
-  std::set<AtomIndexType> indices {_tree[index].molIndex};
+std::set<RankingTree::TreeVertexIndex> RankingTree::_treeIndicesInBranch(TreeVertexIndex index) const {
+  std::set<AtomIndexType> indices {index};
 
-  while(index != 0) {
+  while(index != rootIndex) {
     // All nodes in the graph must have in_degree of 1
     assert(boost::in_degree(index, _tree) == 1);
 
@@ -2422,10 +2401,19 @@ std::set<AtomIndexType> RankingTree::_molIndicesInBranch(TreeVertexIndex index) 
     auto iterPair = boost::in_edges(index, _tree);
     index = boost::source(*iterPair.first, _tree);
 
-    indices.insert(_tree[index].molIndex);
+    indices.insert(index);
   }
 
   return indices;
+}
+
+std::set<AtomIndexType> RankingTree::_molIndicesInBranch(const TreeVertexIndex& index) const {
+  return TemplateMagic::map(
+    _treeIndicesInBranch(index),
+    [&](const auto& treeIndex) -> AtomIndexType {
+      return _tree[treeIndex].molIndex;
+    }
+  );
 }
 
 unsigned RankingTree::_duplicateDepth(TreeVertexIndex index) const {
@@ -2441,7 +2429,7 @@ unsigned RankingTree::_duplicateDepth(TreeVertexIndex index) const {
 
   unsigned depth = 0;
 
-  while(index != 0) {
+  while(index != rootIndex) {
     // All nodes in the graph must have in_degree of 1
     assert(boost::in_degree(index, _tree) == 1);
 
@@ -2469,7 +2457,7 @@ unsigned RankingTree::_depthOfNode(TreeVertexIndex index) const {
    */
   unsigned depth = 0;
 
-  while(index != 0) {
+  while(index != rootIndex) {
     // All nodes in the graph must have in_degree of 1
     assert(boost::in_degree(index, _tree) == 1);
 
@@ -2511,12 +2499,11 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
 ) const {
   JunctionInfo data;
 
-
   /* Determine the junction vertex */
-  std::set<TreeVertexIndex> aBranchIndices = _molIndicesInBranch(a);
+  std::set<TreeVertexIndex> aBranchIndices = _treeIndicesInBranch(a);
 
   // By default, the junction is root
-  data.junction = 0;
+  data.junction = rootIndex;
 
   // In case b is included in the path, that is the junction
   if(aBranchIndices.count(b)) {
@@ -2524,11 +2511,12 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
   } else {
     // Backtrack with b, checking at each iteration
     auto bCurrent = b;
-    while(bCurrent != 0) {
+    while(bCurrent != rootIndex) {
       bCurrent = _parent(bCurrent);
 
       if(aBranchIndices.count(bCurrent)) {
         data.junction = bCurrent;
+        break;
       }
     }
   }
@@ -2564,7 +2552,7 @@ bool RankingTree::_molIndexExistsInBranch(
     return true;
   }
 
-  while(treeIndex != 0) {
+  while(treeIndex != rootIndex) {
     // All nodes in the graph must have in_degree of 1
     assert(boost::in_degree(treeIndex, _tree) == 1);
 
@@ -2645,8 +2633,8 @@ RankingTree::RankingTree(
 #ifndef NDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
     << "Ranking substituents of atom index " 
-    << _tree[0].molIndex
-    << ": {" 
+    << _tree[rootIndex].molIndex
+    << ": " 
     << TemplateMagic::condenseIterable(
       TemplateMagic::map(
         _branchOrderingHelper.getSets(),
@@ -2654,111 +2642,42 @@ RankingTree::RankingTree(
           return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
         }
       )
-    ) << "}\n";
+    ) << "\n";
 #endif
 
-// The class should work regardless of which tree expansion method is chosen
-if(expansionMethod == ExpansionOption::Optimized) {
-  /* Expand only those branches which are yet undecided, immediately compare
-   * using sequence rule 1.
-   */
+  // The class should work regardless of which tree expansion method is chosen
+  if(expansionMethod == ExpansionOption::Optimized) {
+    /* Expand only those branches which are yet undecided, immediately compare
+     * using sequence rule 1.
+     */
 
-  std::map<
-    TreeVertexIndex,
-    std::multiset<TreeVertexIndex, SequenceRuleOneVertexComparator>
-  > comparisonSets;
+    std::map<
+      TreeVertexIndex,
+      std::multiset<TreeVertexIndex, SequenceRuleOneVertexComparator>
+    > comparisonSets;
 
-  std::map<
-    TreeVertexIndex,
-    std::vector<TreeVertexIndex>
-  > seeds;
+    std::map<
+      TreeVertexIndex,
+      std::vector<TreeVertexIndex>
+    > seeds;
 
-  for(const auto& branchIndex : branchIndices) {
-    comparisonSets.emplace(
-      branchIndex,
-      *this
-    );
+    for(const auto& branchIndex : branchIndices) {
+      comparisonSets.emplace(
+        branchIndex,
+        *this
+      );
 
-    comparisonSets.at(branchIndex).insert(branchIndex);
+      comparisonSets.at(branchIndex).insert(branchIndex);
 
-    seeds[branchIndex] = {branchIndex};
-  }
-
-  auto undecidedSets = _branchOrderingHelper.getUndecidedSets();
-
-  // Make the first comparison
-  _compareBFSSets(comparisonSets, undecidedSets, _branchOrderingHelper);
-
-  // Update the undecided sets
-  undecidedSets = _branchOrderingHelper.getUndecidedSets();
-
-#ifndef NDEBUG
-  // Write debug graph files if the corresponding log particular is set
-  if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-    std::string header = "Sequence rule 1";
-
-    _writeGraphvizFiles({
-      _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-      dumpGraphviz(
-        header,
-        {0},
-        _collectSeeds(seeds, undecidedSets)
-      ),
-      _makeGraph(
-        "R1"s,
-        0,
-        comparisonSets,
-        undecidedSets
-      ),
-      _branchOrderingHelper.dumpGraphviz()
-    });
-  }
-#endif
-
-  // TODO try to avoid repeated computation with _molIndicesInBranch somehow
-  // Main BFS loop
-  while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
-
-    // Perform a step
-    for(const auto& undecidedSet : undecidedSets) {
-      for(const auto& undecidedBranch : undecidedSet) {
-        auto& branchSeeds = seeds.at(undecidedBranch);
-        auto& branchComparisonSet = comparisonSets.at(undecidedBranch);
-        
-        branchComparisonSet.clear();
-
-        std::vector<TreeVertexIndex> newSeeds;
-        
-        for(const auto& seedVertex : branchSeeds) {
-          auto newVertices = _expand(
-            seedVertex,
-            _molIndicesInBranch(seedVertex)
-          );
-
-          // Add ALL new vertices to the comparison set
-          std::copy(
-            newVertices.begin(),
-            newVertices.end(),
-            std::inserter(branchComparisonSet, branchComparisonSet.begin())
-          );
-
-          // Add non-duplicate vertices to the new seeds
-          std::copy_if(
-            newVertices.begin(),
-            newVertices.end(),
-            std::back_inserter(newSeeds),
-            [&](const auto& newVertex) -> bool {
-              return !_tree[newVertex].isDuplicate;
-            }
-          );
-        }
-
-        branchSeeds = std::move(newSeeds);
-      }
+      seeds[branchIndex] = {branchIndex};
     }
 
-    // Compare and update the undecided sets
+    auto undecidedSets = _branchOrderingHelper.getUndecidedSets();
+
+    // Make the first comparison
     _compareBFSSets(comparisonSets, undecidedSets, _branchOrderingHelper);
+
+    // Update the undecided sets
     undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
 #ifndef NDEBUG
@@ -2770,12 +2689,12 @@ if(expansionMethod == ExpansionOption::Optimized) {
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
         dumpGraphviz(
           header,
-          {0},
+          {rootIndex},
           _collectSeeds(seeds, undecidedSets)
         ),
         _makeGraph(
           "R1"s,
-          0,
+          rootIndex,
           comparisonSets,
           undecidedSets
         ),
@@ -2783,62 +2702,130 @@ if(expansionMethod == ExpansionOption::Optimized) {
       });
     }
 #endif
-  }
 
-} else { // Full tree expansion requested
+    // TODO try to avoid repeated computation with _molIndicesInBranch somehow
+    // Main BFS loop
+    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
 
-  std::vector<TreeVertexIndex> seeds;
-  std::copy(
-    branchIndices.begin(),
-    branchIndices.end(),
-    std::back_inserter(seeds)
-  );
-  
-  // TODO try to avoid repeated computation with _molIndicesInBranch somehow
-  do {
-    std::vector<TreeVertexIndex> newSeeds;
-    
-    for(const auto& seedVertex : seeds) {
-      auto newVertices = _expand(
-        seedVertex,
-        _molIndicesInBranch(seedVertex)
-      );
+      // Perform a step
+      for(const auto& undecidedSet : undecidedSets) {
+        for(const auto& undecidedBranch : undecidedSet) {
+          auto& branchSeeds = seeds.at(undecidedBranch);
+          auto& branchComparisonSet = comparisonSets.at(undecidedBranch);
+          
+          branchComparisonSet.clear();
 
-      // Add non-duplicate vertices to the new seeds
-      std::copy_if(
-        newVertices.begin(),
-        newVertices.end(),
-        std::back_inserter(newSeeds),
-        [&](const auto& newVertex) -> bool {
-          return !_tree[newVertex].isDuplicate;
+          std::vector<TreeVertexIndex> newSeeds;
+          
+          for(const auto& seedVertex : branchSeeds) {
+            auto newVertices = _expand(
+              seedVertex,
+              _molIndicesInBranch(seedVertex)
+            );
+
+            // Add ALL new vertices to the comparison set
+            std::copy(
+              newVertices.begin(),
+              newVertices.end(),
+              std::inserter(branchComparisonSet, branchComparisonSet.begin())
+            );
+
+            // Add non-duplicate vertices to the new seeds
+            std::copy_if(
+              newVertices.begin(),
+              newVertices.end(),
+              std::back_inserter(newSeeds),
+              [&](const auto& newVertex) -> bool {
+                return !_tree[newVertex].isDuplicate;
+              }
+            );
+          }
+
+          branchSeeds = std::move(newSeeds);
         }
-      );
+      }
+
+      // Compare and update the undecided sets
+      _compareBFSSets(comparisonSets, undecidedSets, _branchOrderingHelper);
+      undecidedSets = _branchOrderingHelper.getUndecidedSets();
+
+#ifndef NDEBUG
+      // Write debug graph files if the corresponding log particular is set
+      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        std::string header = "Sequence rule 1";
+
+        _writeGraphvizFiles({
+          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          dumpGraphviz(
+            header,
+            {rootIndex},
+            _collectSeeds(seeds, undecidedSets)
+          ),
+          _makeGraph(
+            "R1"s,
+            rootIndex,
+            comparisonSets,
+            undecidedSets
+          ),
+          _branchOrderingHelper.dumpGraphviz()
+        });
+      }
+#endif
     }
 
-    seeds = std::move(newSeeds);
-  } while(seeds.size() > 0);
+  } else { // Full tree expansion requested
 
-  /* Apply sequence rule 1 here, not in _applySequenceRules, since the
-   * optimized version IS the application of sequence rule 1
-   */
-  /* Sequence rule 1
-   * - Higher atomic number precedes lower atomic number
-   * - A duplicate atom node whose corresponding non-duplicate atom node is
-   *   root or is closer to the root preceds a duplicate node whose
-   *   corresponding atom node is further from the root
-   */
-  _runBFS<
-    1, // Sequence rule 1
-    true, // BFS downwards only
-    false, // Insert edges
-    true, // Insert vertices
-    TreeVertexIndex, // Multiset value type
-    SequenceRuleOneVertexComparator // Multiset comparator type
-  >(
-    0, // Source index is root
-    _branchOrderingHelper
-  );
-}
+    std::vector<TreeVertexIndex> seeds;
+    std::copy(
+      branchIndices.begin(),
+      branchIndices.end(),
+      std::back_inserter(seeds)
+    );
+    
+    do {
+      std::vector<TreeVertexIndex> newSeeds;
+      
+      for(const auto& seedVertex : seeds) {
+        auto newVertices = _expand(
+          seedVertex,
+          _molIndicesInBranch(seedVertex)
+        );
+
+        // Add non-duplicate vertices to the new seeds
+        std::copy_if(
+          newVertices.begin(),
+          newVertices.end(),
+          std::back_inserter(newSeeds),
+          [&](const auto& newVertex) -> bool {
+            return !_tree[newVertex].isDuplicate;
+          }
+        );
+      }
+
+      seeds = std::move(newSeeds);
+    } while(seeds.size() > 0);
+
+    /* Apply sequence rule 1 here, not in _applySequenceRules, since the
+     * optimized version IS the application of sequence rule 1
+     */
+    /* Sequence rule 1
+     * - Higher atomic number precedes lower atomic number
+     * - A duplicate atom node whose corresponding non-duplicate atom node is
+     *   root or is closer to the root preceds a duplicate node whose
+     *   corresponding atom node is further from the root
+     */
+    _runBFS<
+      1, // Sequence rule 1
+      true, // BFS downwards only
+      false, // Insert edges
+      true, // Insert vertices
+      TreeVertexIndex, // Multiset value type
+      SequenceRuleOneVertexComparator // Multiset comparator type
+    >(
+      rootIndex, // Source index is root
+      _branchOrderingHelper
+    );
+  }
 
 #ifndef NDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
@@ -2998,24 +2985,32 @@ std::string RankingTree::_make4BGraph(
     graphviz += "  a"s + std::to_string(i) + " [";
     graphviz += R"(shape="none", label=)" + tableBegin;
 
+    std::string stereocenterRow = rowBegin;
+    std::string likeRow = rowBegin;
+
     for(const auto& stereocenterVariant : variantList) {
-      graphviz += rowBegin + cellBegin(
+      stereocenterRow += cellBegin(
         representativeStereodescriptors.at(branchA).size()
       );
-      graphviz += toString(stereocenterVariant) + br;
-      graphviz += boost::apply_visitor(stringFetcher, stereocenterVariant);
-      graphviz += cellEnd + rowEnd;
+      stereocenterRow += toString(stereocenterVariant) + br;
+      stereocenterRow += boost::apply_visitor(stringFetcher, stereocenterVariant);
+      stereocenterRow += cellEnd;
+
       if(branchAIter == iter) {
-        graphviz += rowBegin;
         for(const auto& representativeVariant : representativeStereodescriptors.at(branchA)) {
           if(boost::apply_visitor(likeComparator, stereocenterVariant, representativeVariant)) {
-            graphviz += cellBegin(1, greenColor) + cellEnd;
+            likeRow += cellBegin(1, greenColor) + cellEnd;
           } else {
-            graphviz += cellBegin(1, redColor) + cellEnd;
+            likeRow += cellBegin(1, redColor) + cellEnd;
           }
         }
-        graphviz += rowEnd;
       }
+    }
+
+    graphviz += stereocenterRow + rowEnd;
+
+    if(branchAIter == iter) {
+      graphviz += likeRow + rowEnd;
     }
 
     graphviz += tableEnd + R"(];)" + nl;
@@ -3036,24 +3031,32 @@ std::string RankingTree::_make4BGraph(
     graphviz += "  b"s + std::to_string(i) + " [";
     graphviz += R"(shape="none", label=)" + tableBegin;
 
+    std::string stereocenterRow = rowBegin;
+    std::string likeRow = rowBegin;
+
     for(const auto& stereocenterVariant : variantList) {
-      graphviz += rowBegin + cellBegin(
+      stereocenterRow += cellBegin(
         representativeStereodescriptors.at(branchB).size()
       );
-      graphviz += toString(stereocenterVariant) + br;
-      graphviz += boost::apply_visitor(stringFetcher, stereocenterVariant);
-      graphviz += cellEnd + rowEnd;
+      stereocenterRow += toString(stereocenterVariant) + br;
+      stereocenterRow += boost::apply_visitor(stringFetcher, stereocenterVariant);
+      stereocenterRow += cellEnd;
+
       if(branchBIter == iter) {
-        graphviz += rowBegin;
         for(const auto& representativeVariant : representativeStereodescriptors.at(branchB)) {
           if(boost::apply_visitor(likeComparator, stereocenterVariant, representativeVariant)) {
-            graphviz += cellBegin(1, greenColor) + cellEnd;
+            likeRow += cellBegin(1, greenColor) + cellEnd;
           } else {
-            graphviz += cellBegin(1, redColor) + cellEnd;
+            likeRow += cellBegin(1, redColor) + cellEnd;
           }
         }
-        graphviz += rowEnd;
       }
+    }
+    
+    graphviz += stereocenterRow + rowEnd;
+
+    if(branchBIter == iter) {
+      graphviz += likeRow + rowEnd;
     }
 
     graphviz += tableEnd + R"(];)" + nl;

@@ -7,16 +7,33 @@
 #include "OrderDiscoveryHelper.h"
 
 /* TODO
- * - Stereocenter interface change to support pseudo-asymmetry tag (?)
- * - Ranking function interface change to propagate pseudo-asymmetry result
- * - Visualize sequence rule 4B
- * - Interface change to support using coordinates or prior instantiated
- *   stereocenters to assign auxiliary stereocenters
+ * - Pseudo-asymmetry considerations
+ *   - Is the propagation of pseudoasymmetry REALLY necessary? It makes sense
+ *     to permute a stereocenter designated as pseudo-asymmetric. Dunno if
+ *     creating the exact diastereomer of a molecule will ever be needed as an
+ *     operation (if so, then yes, pseudoasymmetry pop is needed). Creating
+ *     ALL stereomers of a molecule can be done without pseudoasymmetry.
+ *     All other points below are only relevant in case pseudo-asymmetry needs
+ *     to be included.
+ *   - Stereocenter interface change to support pseudo-asymmetry tag (?)
+ *   - Ranking function interface change to propagate pseudo-asymmetry result
+ * - Optimizations / Refactors
+ *   - 4A could be refactored into _runBFS, if 4B could collect the variants it
+ *     needs to rank itself. Don't know if an improvement to avoid BFS-ing again
+ *     to find stereocenters over potential gains from clearing comparisonSets
+ *     every BFS step
+ *   - Lookup table of max #assignments = f(symmetry, #term hydrogens) to 
+ *     avoid _auxiliaryRank calls that yield non-stereogenic CNStereocenter
+ *     rankings
  * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
  *   from being instantiated on the edge vertices in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
- * - Optimization: ComparisonSets can be cleared between iterations, which
- *   avoids re-evaluating equivalent-comparing elements from prior iterations
+ * - OrderDiscoveryHelper function naming may be inconsistent. Does
+ *   addLessThanRelationship really semantically do what it says?
+ *   Loads of inverted comparisons here where it doesn't make sense to me
+ *   anymore, in particular at 4B in counting like pairs at every position
+ * - Refactor _make4BGraph
+ * - TODOs strewn about
  */
 
 /*! @file
@@ -104,6 +121,8 @@ private:
   //! Variant type of both
   using VariantType = boost::variant<TreeVertexIndex, TreeEdgeIndex>;
 
+  static constexpr TreeVertexIndex rootIndex = 0;
+
 /* State */
   //! The BGL Graph representing the acyclic tree
   TreeGraphType _tree;
@@ -161,8 +180,11 @@ private:
     const TreeVertexIndex& treeTarget
   );
 
-  //! Returns all indices in the branch from the specified index up to root
-  std::set<AtomIndexType> _molIndicesInBranch(TreeVertexIndex index) const;
+  //! Returns all tree indices in the branch from the specified index up to root
+  std::set<TreeVertexIndex> _treeIndicesInBranch(TreeVertexIndex index) const;
+
+  //! Returns all mol indices in the branch from the specified index up to root
+  std::set<AtomIndexType> _molIndicesInBranch(const TreeVertexIndex& index) const;
 
   //! Returns a depth measure of a duplicate vertex for sequence rule 1
   unsigned _duplicateDepth(TreeVertexIndex index) const;
@@ -572,6 +594,16 @@ private:
       // BFS Step
       for(const auto& undecidedSet: undecidedSets) {
         for(const auto& undecidedBranch: undecidedSet) {
+          /* Clear the comparison set at undecided branches prior to inserting
+           * anything. This doesn't change anything semantically, since
+           * everything from the prior iteration (or initialization) must have
+           * compared equal within this undecidedSet.
+           *
+           * Makes for cleaner visualization and reduces the number of
+           * Comparator calls during insert and lexicographical_compare.
+           */
+          comparisonSets.at(undecidedBranch).clear();
+
           std::vector<TreeVertexIndex> newSeeds;
 
           for(const auto& seed : seeds.at(undecidedBranch)) {
@@ -815,8 +847,8 @@ private:
         std::ostream& os,
         const typename DisplayGraph::vertex_descriptor& vertexIndex
       ) const {
-        if(vertexIndex == 0) {
-          os << R"([label=")" << _title << "\\n-\\n" << _graphBase[0].representation << R"(")";
+        if(vertexIndex == rootIndex) {
+          os << R"([label=")" << _title << "\\n-\\n" << _graphBase[rootIndex].representation << R"(")";
         } else {
           os << R"([label=")" << _graphBase[vertexIndex].representation << R"(")";
         }

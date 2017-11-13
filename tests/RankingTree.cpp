@@ -429,4 +429,34 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
 
   const auto& simpleLikeUnlikeStereocenters = simpleLikeUnlike.getStereocenterList();
 
+  BOOST_CHECK_MESSAGE(
+    simpleLikeUnlikeStereocenters.involving(10)
+    && simpleLikeUnlikeStereocenters.at(10)->numAssignments() == 2
+    && simpleLikeUnlikeStereocenters.at(10)->assigned() == 1u,
+    "(2R,3R,4R,5S,6R)-2,3,4,5,6-pentachloroheptanedioic-acid central carbon does "
+    " not register as a stereocenter and/or isn't assigned as R"
+  );
+
+  auto lAlphaLindane = molHandler.readSingle(
+    directoryPrefix + "l-alpha-lindane.mol"s
+  );
+
+  const auto lAlphaLindaneStereocenters = lAlphaLindane.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    (
+      TemplateMagic::all_of(
+        TemplateMagic::map(
+          std::vector<AtomIndexType> {6, 7, 8, 9, 10, 11},
+          [&](const auto& carbonIndex) -> bool {
+            return (
+              lAlphaLindaneStereocenters.involving(carbonIndex)
+              && lAlphaLindaneStereocenters.at(carbonIndex)->numAssignments() == 2
+            );
+          }
+        )
+      )
+    ),
+    "Not all L-alpha-lindane carbon atoms not recognized as stereocenters!"
+  );
 }

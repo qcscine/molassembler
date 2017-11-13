@@ -54,34 +54,40 @@ StereocenterList Molecule::_detectStereocenters() const {
   }
 
   // Find CNStereocenters
-  for(const auto& candidateIndex : _getCNStereocenterCandidates()) {
-    // Construct a Stereocenter here
-    auto newStereocenter = std::make_shared<
-      Stereocenters::CNStereocenter
-    >(
-      determineLocalGeometry(candidateIndex),
-      candidateIndex,
-      rankPriority(candidateIndex)
-    );
-
-    /*std::cout << "Trial stereocenter: " << newStereocenter -> info() << std::endl;
-    std::cout << "Ranked adjacent indices (low to high): vec{";
-    for(const auto& adjacency: rankResultPair.first) {
-      std::cout << adjacency;
-      if(adjacency != rankResultPair.first.back()) std::cout << ", ";
-    }
-    std::cout << "}" << std::endl;
-
-    std::cout << "Equal pairs: vec{";
-    for(const auto& indexPair : rankResultPair.second) {
-      std::cout << "(" << indexPair.first << ", " << indexPair.second << ")";
-    }
-    std::cout << "}" << std::endl;*/
-
-    if(newStereocenter -> numAssignments() > 1) {
-      stereocenterList.add(
-        std::move(newStereocenter)
+  for(
+    AtomIndexType candidateIndex = 0;
+    candidateIndex < numAtoms();
+    ++candidateIndex
+  ) {
+    if(_isCNStereocenterCandidate(candidateIndex)) {
+      // Construct a Stereocenter here
+      auto newStereocenter = std::make_shared<
+        Stereocenters::CNStereocenter
+      >(
+        determineLocalGeometry(candidateIndex),
+        candidateIndex,
+        rankPriority(candidateIndex)
       );
+
+      /*std::cout << "Trial stereocenter: " << newStereocenter -> info() << std::endl;
+      std::cout << "Ranked adjacent indices (low to high): vec{";
+      for(const auto& adjacency: rankResultPair.first) {
+        std::cout << adjacency;
+        if(adjacency != rankResultPair.first.back()) std::cout << ", ";
+      }
+      std::cout << "}" << std::endl;
+
+      std::cout << "Equal pairs: vec{";
+      for(const auto& indexPair : rankResultPair.second) {
+        std::cout << "(" << indexPair.first << ", " << indexPair.second << ")";
+      }
+      std::cout << "}" << std::endl;*/
+
+      if(newStereocenter -> numAssignments() > 1) {
+        stereocenterList.add(
+          std::move(newStereocenter)
+        );
+      }
     }
   }
 
@@ -93,21 +99,42 @@ bool Molecule::_isValidIndex(const AtomIndexType& index) const {
   return index < numAtoms();
 }
 
-std::vector<AtomIndexType> Molecule::_getCNStereocenterCandidates() const {
-  std::vector<AtomIndexType> candidates;
+bool Molecule::_isCNStereocenterCandidate(
+  const AtomIndexType& atomIndex,
+  const TemperatureRegimeOption& temperatureRegime
+) const {
+  auto numAdjacencies = getNumAdjacencies(atomIndex);
 
-  for(AtomIndexType i = 0; i < numAtoms(); i++) {
+  if(numAdjacencies < 3) {
+    return false;
+  }
+
+  if(temperatureRegime == TemperatureRegimeOption::HighTemperature) {
+    /* Skip any instances of nitrogen with exactly three adjacencies,
+     * unless the central atom is part of a cycle of size 4 or smaller
+     */
     if(
-      /* TODO this is no longer a valid way of checking how many ligands there are
-       * -> eta bonds exist!
-       */
-      getNumAdjacencies(i) >= 3 
+      getElementType(atomIndex) == Delib::ElementType::N 
+      && numAdjacencies == 3
     ) {
-      candidates.push_back(i);
+      auto cycleData = getCycleData();
+
+      // Find out if the nitrogen is in a cycle of size 4 or smaller
+      bool isInCycleOfSize4OrSmaller = false;
+
+      auto cycleIter = cycleData.getCyclesIteratorContaining(atomIndex);
+      while(!cycleIter.atEnd()) {
+        if(cycleIter.cycleSize() <= 4) {
+          isInCycleOfSize4OrSmaller = true;
+          break;
+        }
+      }
+
+      return isInCycleOfSize4OrSmaller;
     }
   }
 
-  return candidates;
+  return true;
 }
 
 std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {

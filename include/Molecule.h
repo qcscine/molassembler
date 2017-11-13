@@ -21,6 +21,12 @@ namespace MoleculeManip {
  * Central class of the library, modeling a molecular graph with all state.
  */
 class Molecule {
+public:
+  enum class TemperatureRegimeOption {
+    LowTemperature,
+    HighTemperature
+  };
+
 private:
 /* State */
   GraphType _adjacencies;
@@ -36,11 +42,21 @@ private:
 
   StereocenterList _detectStereocenters() const;
 
+  /*! Returns if an atom can be a CNStereocenter with multiple assignments
+   *
+   * Criteria applied are:
+   * - Minimum of three adjacent indices
+   * - If the high-temperature approximation is invoked, trivalent nitrogen
+   *   inverts too rapidly to carry stereoinformation (unless part of a cycle
+   *   of size 4 or smaller, where strain hinders inversion)
+   */
+  bool _isCNStereocenterCandidate(
+    const AtomIndexType& atomIndex,
+    const TemperatureRegimeOption& temperatureRegime = TemperatureRegimeOption::HighTemperature
+  ) const;
+
   //! Returns whether the specified index is valid or not
   bool _isValidIndex(const AtomIndexType& index) const;
-
-  //! Returns a list of atom indices that have at least 3 bonded neighbors
-  std::vector<AtomIndexType> _getCNStereocenterCandidates() const;
 
   /*! 
    * Returns a list of edge indices where each endpoint has 1 or two additional
@@ -260,6 +276,7 @@ public:
 
 /* Friends */
   friend struct MoleculeValidator;
+  friend class RankingTree;
 };
 
 } // namespace MoleculeManip
