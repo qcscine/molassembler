@@ -1043,17 +1043,17 @@ void RankingTree::_applySequenceRules(
       const auto& branchIndex = mapIterPair.first;
       const auto& variantSet = mapIterPair.second;
 
-      // If there are no stereocenters to rank, bounce
-      if(stereocenterMap.at(branchIndex).size() == 0) {
-        representativeStereodescriptors[branchIndex] = {};
-        continue;
-      }
-
       // Instantiate the order discovery helpers
       relativeOrders.emplace(
         branchIndex,
         variantSet
       );
+
+      // If there are no stereocenters to rank, bounce
+      if(stereocenterMap.at(branchIndex).size() == 0) {
+        representativeStereodescriptors[branchIndex] = {};
+        continue;
+      }
 
       // Compare variants in a branch based on mixed depth
       TemplateMagic::forAllPairs(
@@ -1724,17 +1724,17 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       const auto& branchIndex = mapIterPair.first;
       const auto& variantSet = mapIterPair.second;
 
-      // If there are no stereocenters to rank, bounce
-      if(stereocenterMap.at(branchIndex).size() == 0) {
-        representativeStereodescriptors[branchIndex] = {};
-        continue;
-      }
-
       // Instantiate the order discovery helpers
       relativeOrders.emplace(
         branchIndex,
         variantSet
       );
+
+      // If there are no stereocenters to rank, bounce
+      if(stereocenterMap.at(branchIndex).size() == 0) {
+        representativeStereodescriptors[branchIndex] = {};
+        continue;
+      }
 
       // Compare based on depth
       TemplateMagic::forAllPairs(
@@ -1766,8 +1766,8 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
          * pairs
          */
         for(
-          const auto& undecidedSet 
-          : relativeOrders.at(branchIndex).getUndecidedSets()
+          const auto& undecidedSet : 
+          relativeOrders.at(branchIndex).getUndecidedSets()
         ) {
           TemplateMagic::forAllPairs(
             undecidedSet,
