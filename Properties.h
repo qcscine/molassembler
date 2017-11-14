@@ -40,6 +40,23 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   const Symmetry::Name& b
 );
 
+#ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+extern const ConstexprMagic::Array<
+  ConstexprMagic::DynamicArray<unsigned, constexprProperties::maxSymmetrySize>,
+  nSymmetries
+> allNumUnlinkedAssignments;
+#endif
+
+extern TemplateMagic::MinimalCache<
+  Symmetry::Name,
+  std::vector<unsigned>
+> numUnlinkedCache;
+
+unsigned getNumUnlinked(
+  const Symmetry::Name& symmetryName,
+  const unsigned& nIdenticalLigands
+);
+
 } // namespace Symmetry
 
 #endif

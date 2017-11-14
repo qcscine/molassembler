@@ -565,6 +565,39 @@ SymmetryTransitionGroup ligandLossTransitionMappings(
   );
 }
 
+unsigned numUnlinkedAssignments(
+  const Symmetry::Name& symmetry,
+  const unsigned& nIdenticalLigands
+) {
+  unsigned count = 1;
+  auto indices = detail::range(0u, Symmetry::size(symmetry));
+
+  for(unsigned i = 0; i < nIdenticalLigands; ++i) {
+    indices.at(i) = 0;
+  }
+
+  std::set<decltype(indices)> rotations;
+
+  auto initialRotations = generateAllRotations(symmetry, indices);
+
+  for(const auto& rotation : initialRotations) {
+    rotations.insert(rotation);
+  }
+
+  while(std::next_permutation(indices.begin(), indices.end())) {
+    if(rotations.count(indices) == 0) {
+      auto allRotations = generateAllRotations(symmetry, indices);
+      for(const auto& rotation : allRotations) {
+        rotations.insert(rotation);
+      }
+
+      ++count;
+    }
+  }
+
+  return count;
+}
+
 } // namespace properties
 
 } // namespace Symmetry

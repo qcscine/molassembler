@@ -166,6 +166,11 @@ SymmetryTransitionGroup ligandLossTransitionMappings(
   const unsigned& positionInSourceSymmetry
 );
 
+unsigned numUnlinkedAssignments(
+  const Symmetry::Name& symmetry,
+  const unsigned& nIdenticalLigands
+);
+
 } // namespace properties
 
 namespace detail {

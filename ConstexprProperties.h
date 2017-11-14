@@ -807,6 +807,43 @@ std::enable_if_t<
   return {};
 }
 
+template<typename Symmetry>
+constexpr unsigned numUnlinkedAssignments(
+  const unsigned& nIdenticalLigands
+) {
+  unsigned count = 1;
+
+  auto indices = startingIndexSequence<Symmetry>();
+
+  for(unsigned i = 0; i < nIdenticalLigands; ++i) {
+    indices.at(i) = 0;
+  }
+
+  ConstexprMagic::DynamicSet<
+    unsigned,
+    ConstexprMagic::Math::factorial(Symmetry::size)
+  > rotations;
+
+  auto initialRotations = generateAllRotations<Symmetry>(indices);
+
+  for(const auto& rotation : initialRotations) {
+    rotations.insert(hashIndexList<unsigned>(rotation));
+  }
+
+  while(ConstexprMagic::inPlaceNextPermutation(indices)) {
+    if(!rotations.contains(hashIndexList<unsigned>(indices))) {
+      auto allRotations = generateAllRotations<Symmetry>(indices);
+      for(const auto& rotation : allRotations) {
+        rotations.insert(hashIndexList<unsigned>(rotation));
+      }
+
+      ++count;
+    }
+  }
+
+  return count;
+}
+
 } // namespace constexprProperties
 
 } // namespace Symmetry

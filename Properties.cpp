@@ -21,17 +21,12 @@ struct mappingCalculationFunctor {
 /* Make function pointers to symmetryMapping for all possible combinations of
  * symmetry types
  */
-constexpr auto precalculatedMappings = ConstexprMagic::makeUpperTriangularMatrix(
+constexpr auto allMappings = ConstexprMagic::makeUpperTriangularMatrix(
   ConstexprMagic::TupleType::mapAllPairs<
     data::allSymmetryDataTypes,
     mappingCalculationFunctor
   >()
 );
-
-const ConstexprMagic::UpperTriangularMatrix<
-  ConstexprMagic::Optional<constexprProperties::MappingsReturnType>,
-  nSymmetries * (nSymmetries - 1) / 2
-> allMappings = precalculatedMappings;
 #endif
 
 TemplateMagic::MinimalCache<
@@ -107,6 +102,73 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   }
 #endif
   return mappingsCache.getOption(indexPair);
+}
+
+#ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+template<typename Symmetry>
+struct makeAllNumUnlinkedAssignmentsFunctor {
+  static constexpr auto value() {
+    ConstexprMagic::DynamicArray<unsigned, constexprProperties::maxSymmetrySize> nums;
+
+    for(unsigned i = 0; i < Symmetry::size; ++i) {
+      nums.push_back(
+        constexprProperties::numUnlinkedAssignments<Symmetry>(i)
+      );
+    }
+
+    return nums;
+  }
+};
+
+constexpr auto allNumUnlinkedAssignments = ConstexprMagic::TupleType::map<
+  data::allSymmetryDataTypes,
+  makeAllNumUnlinkedAssignmentsFunctor
+>();
+#endif
+
+TemplateMagic::MinimalCache<
+  Symmetry::Name,
+  std::vector<unsigned>
+> numUnlinkedCache;
+
+unsigned getNumUnlinked(
+  const Symmetry::Name& symmetryName,
+  const unsigned& nIdenticalLigands
+) {
+  if(numUnlinkedCache.has(symmetryName)) {
+    return numUnlinkedCache.get(symmetryName).at(nIdenticalLigands);
+  }
+
+#ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+  // Generate the cache element from constexpr non-STL data
+  const auto& dynArrRef = allNumUnlinkedAssignments.at(
+    static_cast<unsigned>(symmetryName)
+  );
+
+  auto stlMapped = ConstexprMagic::toSTL(dynArrRef);
+
+  numUnlinkedCache.add(
+    symmetryName,
+    stlMapped
+  );
+
+  return stlMapped.at(nIdenticalLigands);
+#else
+  // Generate the cache element using dynamic properties
+  std::vector<unsigned> unlinkedAssignments;
+  for(unsigned i = 0; i < Symmetry::size(symmetryName); ++i) {
+    unlinkedAssignments.push_back(
+      dynamicProperties::numUnlinkedAssignments(i)
+    );
+  }
+
+  numUnlinkedCache.add(
+    symmetryName,
+    unlinkedAssignments
+  );
+
+  return unlinkedAssignments.at(nIdenticalLigands);
+#endif
 }
 
 } // namespace Symmetry

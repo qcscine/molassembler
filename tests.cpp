@@ -755,6 +755,7 @@ struct WriteLigandMapping {
   }
 };
 
+
 BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   // Full test of rotation algorithm equivalency for all symmetries
   BOOST_CHECK_MESSAGE(
@@ -766,20 +767,6 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
     ),
     "There is a discrepancy between constexpr and dynamic rotation generation"
   );
-
-  /* The line below leads to absurdly high memory use in g++, up to 16 GB. I
-   * cannot compile the underlying calculation of ideal index mappings in
-   * transitions between symmetries for any larger symmetries: This is 5->6, 
-   * any size 6->7 transition compilations crash after exhausting 16GB RAM and
-   * 16GB swap.
-   *
-   * Affected versions:
-   * - gcc 6.3.0
-   * - gcc 7.1.0
-   *
-   *
-   * Clang 4.0.0 compiles all transitions just fine with < 500 MB RAM use.
-   */
 
   // Write out all mappings
   ConstexprMagic::TupleType::mapAllPairs<
@@ -799,6 +786,55 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
     << " generation!"
   );
 }
+
+#ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+
+template<typename SymmetryClass>
+struct NumUnlinkedTestFunctor {
+  static bool value() {
+    auto constexprResults = ConstexprMagic::toSTL(
+      Symmetry::allNumUnlinkedAssignments.at(
+        static_cast<unsigned>(SymmetryClass::name)
+      )
+    );
+
+    for(unsigned i = 0; i < constexprResults.size(); ++i) {
+      if(
+        constexprResults.at(i) 
+        != Symmetry::properties::numUnlinkedAssignments(SymmetryClass::name, i)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+};
+
+BOOST_AUTO_TEST_CASE(numUnlinkedTests) {
+  BOOST_CHECK_MESSAGE(
+    TemplateMagic::all_of(
+      ConstexprMagic::TupleType::map<
+        Symmetry::data::allSymmetryDataTypes,
+        NumUnlinkedTestFunctor
+      >()
+    ),
+    "There is a discrepancy between constexpr and dynamic num unlinked "
+    "assignments generation!"
+  );
+
+  for(const auto& symmetryName : Symmetry::allNames) {
+    std::cout << Symmetry::name(symmetryName) << ": {";
+    for(unsigned i = 0; i < Symmetry::size(symmetryName); ++i) {
+      std::cout << Symmetry::properties::numUnlinkedAssignments(symmetryName, i);
+      if(i != Symmetry::size(symmetryName) - 1) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << "}\n";
+  }
+}
+#endif
 
 static_assert(
   nSymmetries == std::tuple_size<data::allSymmetryDataTypes>::value,
