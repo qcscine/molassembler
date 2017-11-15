@@ -130,6 +130,9 @@ private:
   //! The helper instance for discovering the ordering of the to-rank branches
   OrderDiscoveryHelper<TreeVertexIndex> _branchOrderingHelper;
 
+  //! Overall order discoveries from _auxiliary calls
+  OrderDiscoveryHelper<TreeVertexIndex> _allOrdering;
+
   // Closures
   const Molecule& _moleculeRef;
 

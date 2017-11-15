@@ -97,3 +97,47 @@ BOOST_AUTO_TEST_CASE(sampleTest) {
     "State: " << showDiscoveryState(helper)
   );
 }
+
+BOOST_AUTO_TEST_CASE(stateTransferTests) {
+  OrderDiscoveryHelper<unsigned> knowledge {
+    {4u, 9u, 13u, 20u}
+  };
+
+  knowledge.addLessThanRelationship(4, 9);
+  knowledge.addLessThanRelationship(4, 13);
+  knowledge.addLessThanRelationship(4, 20);
+  knowledge.addLessThanRelationship(9, 13);
+  knowledge.addLessThanRelationship(9, 20);
+  knowledge.addLessThanRelationship(13, 20);
+
+  OrderDiscoveryHelper<unsigned> partialMatch {
+    {4u, 13u, 20u}
+  };
+
+  partialMatch.addRelationshipsFromOther(knowledge);
+
+  BOOST_CHECK_MESSAGE(
+    partialMatch.isSmaller(4, 13)
+    && partialMatch.isSmaller(4, 20)
+    && partialMatch.isSmaller(13, 20),
+    "Information not transferred by addRelationshipsFromOther"
+  );
+
+  OrderDiscoveryHelper<unsigned> toMerge {
+    {10u, 13u}
+  };
+
+
+  toMerge.addLessThanRelationship(10, 13);
+  toMerge.addAllFromOther(knowledge);
+
+  BOOST_CHECK_MESSAGE(
+    toMerge.isSmaller(13, 20),
+    "Information not transferred by addAllFromOther"
+  );
+
+  BOOST_CHECK_MESSAGE(
+    toMerge.isSmaller(10, 20),
+    "Transferability edge from 10 -> 20 not found!"
+  );
+}

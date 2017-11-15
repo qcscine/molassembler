@@ -6,6 +6,16 @@
 
 #include "common_typedefs.h"
 
+/* TODO
+ * - may be preferable to have OrderDiscoveryHelper emit pairs of Ts whose
+ *   ordering relation is not yet known instead of iterating through the
+ *   getUnorderedSets()
+ *   particularly now since addAllFromOther and addRelationshipsFromOther
+ *   exist, which can hypothetically create completely disjoint sets which can
+ *   then get conflated in getSets and getUnorderedSets
+ * - addTransferabilityEdges needs a better algorithm
+ */
+
 /*! @file
  *
  * Implements a class that aids in the gradual discovery of ordering relations
@@ -48,7 +58,7 @@ private:
   std::map<T, VertexIndexType> _sourceMap;
   DependencyGraphType _graph;
 
-  //! Get a list of sets by degree
+  //! Get a list of sets by degree.
   std::vector<
     std::vector<T>
   > _getSetsByDegree() const {
@@ -89,6 +99,19 @@ private:
     );
   }
 
+  VertexIndexType _addItem(const T& item) {
+    auto newIndex = boost::add_vertex(_graph);
+
+    _graph[newIndex].data = item;
+    _sourceMap.emplace(
+      item,
+      newIndex
+    );
+
+    return newIndex;
+  }
+
+
   class GraphvizWriter {
   private:
     const OrderDiscoveryHelper& _baseRef;
@@ -118,6 +141,190 @@ public:
     setUnorderedValues(unorderedValues);
   }
 
+  /*!
+   * Adds any relationships from another OrderDiscoveryHelper that are not
+   * yet present in this one. No new vertices are added. Missing transferability
+   * edges are added (if a < b && b < c, then a < c) If any contradictory
+   * information is present, this function throws.
+   */
+  void addRelationshipsFromOther(const OrderDiscoveryHelper& other) {
+    // Build a mapping of vertices
+    std::map<VertexIndexType, VertexIndexType> vertexMapping;
+
+    for(VertexIndexType i = 0; i < boost::num_vertices(other._graph); ++i) {
+      // Does this vertex exist in this graph already?
+      const auto& vertexData = other._graph[i].data;
+      if(_sourceMap.count(vertexData) > 0) {
+        vertexMapping.emplace(
+          i,
+          _sourceMap.at(vertexData)
+        );
+      } 
+    }
+
+    // Add non-contradicting edges from the other graph
+    for(
+      auto edgeIterPair = boost::edges(other._graph);
+      edgeIterPair.first != edgeIterPair.second;
+      ++edgeIterPair.first
+    ) {
+      auto otherEdgeSource = boost::source(*edgeIterPair.first, other._graph);
+      auto otherEdgeTarget = boost::target(*edgeIterPair.first, other._graph);
+
+      if( // Both endpoints must have a counterpart in this graph
+        vertexMapping.count(otherEdgeSource) > 0
+        && vertexMapping.count(otherEdgeTarget) > 0
+      ) {
+        auto thisEdgeSource = vertexMapping.at(otherEdgeSource);
+        auto thisEdgeTarget = vertexMapping.at(otherEdgeTarget);
+
+        // Check if that edge already exists (or its inverse)
+        auto thisGraphEdge = boost::edge(
+          thisEdgeSource,
+          thisEdgeTarget,
+          _graph
+        );
+
+        // In case the graph edge is found, go to the next edge
+        if(thisGraphEdge.second) {
+          continue;
+        }
+
+        // If not, check if the inverse is present in the graph
+        auto inverseGraphEdge = boost::edge(
+          thisEdgeTarget,
+          thisEdgeSource,
+          _graph
+        );
+
+        if(inverseGraphEdge.second) {
+          throw "Contradicting information in other OrderDiscoveryHelper graph!";
+        }
+
+        // Add the edge to this graph
+        boost::add_edge(thisEdgeSource, thisEdgeTarget, _graph);
+
+      }
+    }
+
+    addTransferabilityEdges();
+  }
+
+  /*!
+   * Adds all information present in another OrderDiscoveryHelper that are not
+   * yet present in this one. Any vertices not present in this graph are added,
+   * plus any missing relationship edges. If any contradictory information is
+   * present, this function throws. Missing transferability edges are added too
+   * (if a < b && b < c, then a < c).
+   */
+  void addAllFromOther(const OrderDiscoveryHelper& other) {
+    // Left is the other graph, right is this graph
+    std::map<VertexIndexType, VertexIndexType> vertexMapping;
+
+    // Add all new vertices from the other graph
+    for(VertexIndexType i = 0; i < boost::num_vertices(other._graph); ++i) {
+      // Does this vertex exist in this graph already?
+      const auto& vertexData = other._graph[i].data;
+      if(_sourceMap.count(vertexData) == 0) {
+        auto newIndex = _addItem(other._graph[i].data);
+        vertexMapping.emplace(
+          i,
+          newIndex
+        );
+      } else {
+        vertexMapping.emplace(
+          i,
+          _sourceMap.at(vertexData)
+        );
+      }
+    }
+
+    // Add non-contradicting edges from the other graph
+    for(
+      auto edgeIterPair = boost::edges(other._graph);
+      edgeIterPair.first != edgeIterPair.second;
+      ++edgeIterPair.first
+    ) {
+      auto otherEdgeSource = boost::source(*edgeIterPair.first, other._graph);
+      auto otherEdgeTarget = boost::target(*edgeIterPair.first, other._graph);
+
+      auto thisEdgeSource = vertexMapping.at(otherEdgeSource);
+      auto thisEdgeTarget = vertexMapping.at(otherEdgeTarget);
+
+      // Check if that edge already exists (or its inverse)
+      auto thisGraphEdge = boost::edge(
+        thisEdgeSource,
+        thisEdgeTarget,
+        _graph
+      );
+
+      // In case the graph edge is found, go to the next edge
+      if(thisGraphEdge.second) {
+        continue;
+      }
+
+      // If not, check if the inverse is present in the graph
+      auto inverseGraphEdge = boost::edge(
+        thisEdgeTarget,
+        thisEdgeSource,
+        _graph
+      );
+
+      if(inverseGraphEdge.second) {
+        throw "Contradicting information in other OrderDiscoveryHelper graph!";
+      }
+
+      // Add the edge to this graph
+      boost::add_edge(thisEdgeSource, thisEdgeTarget, _graph);
+    }
+
+    addTransferabilityEdges();
+  }
+
+  /*!
+   * Adds any missing transferability edges (if a < b && b < c, then a < c).
+   * This function is awful in terms of complexity, it's worst case of O(N²).
+   * There must be better ways of doing this.
+   */
+  void addTransferabilityEdges() {
+    for(VertexIndexType i = 0; i < boost::num_vertices(_graph); ++i) {
+      std::vector<VertexIndexType> seeds;
+
+      for(
+        auto edgeIterPair = boost::out_edges(i, _graph);
+        edgeIterPair.first != edgeIterPair.second;
+        ++edgeIterPair.first
+      ) {
+        seeds.emplace_back(
+          boost::target(*edgeIterPair.first, _graph)
+        );
+      }
+
+      do {
+        std::vector<VertexIndexType> newSeeds;
+
+        for(const auto& seed: seeds) {
+          if(!boost::edge(i, seed, _graph).second) {
+            boost::add_edge(i, seed, _graph);
+          }
+          
+          for(
+            auto edgeIterPair = boost::out_edges(seed, _graph);
+            edgeIterPair.first != edgeIterPair.second;
+            ++edgeIterPair.first
+          ) {
+            newSeeds.emplace_back(
+              boost::target(*edgeIterPair.first, _graph)
+            );
+          }
+        }
+
+        seeds = std::move(newSeeds);
+      } while(!seeds.empty());
+    }
+  }
+
+  //! Sets which as-yet unordered values are to be investigated
   void setUnorderedValues(const std::set<T>& unorderedValues) {
     if(boost::num_vertices(_graph) > 0) {
       _graph.clear();
@@ -126,16 +333,11 @@ public:
     _sourceMap.clear();
 
     for(const auto& value: unorderedValues) {
-      auto newIndex = boost::add_vertex(_graph);
-      _graph[newIndex].data = value;
-      _sourceMap.emplace(
-        value,
-        newIndex
-      );
+      _addItem(value);
     }
   }
 
-  //! Get a list of sets (in ascending order) as currently discovered
+  //! Get a list of sets (in descending order) as currently discovered
   std::vector<
     std::vector<T>
   > getSets() const {
@@ -179,6 +381,10 @@ public:
     );
   }
 
+  /*!
+   * Dumps a graphviz string that allows the visualization of the internal
+   * graph structure.
+   */
   std::string dumpGraphviz() const {
     GraphvizWriter propertyWriter(*this);
 
@@ -193,6 +399,24 @@ public:
     );
 
     return ss.str();
+  }
+
+  /*!
+   * This returns true if and only if both values are part of the graph and
+   * if the less-than relationship is present in the order given, i.e. a < b.
+   *
+   * In all other cases (either of the values isn't in the graph, there is no
+   * ordering relationship or the ordering relationship is the other way
+   * around), this function returns false.
+   */
+  bool isSmaller(const T& a, const T& b) const {
+    if(_sourceMap.count(a) == 0 || _sourceMap.count(b) == 0) {
+      return false;
+    }
+
+    // is a < b?
+    auto smallerEdge = boost::edge(_sourceMap.at(a), _sourceMap.at(b), _graph);
+    return smallerEdge.second;
   }
 };
 
