@@ -67,6 +67,9 @@ options defined in CompileTimeOptions.h. You can toggle:
   compile-time, but then the results are available at O(1) at run-time.
   (Default on)
 - An experimental reduced set of tetrahedra for each symmetry (Default off)
+- The maximum number of rotationally non-superimposable assignments for any
+  symmetry as a function of how many ligands are identical, where all ligands
+  are unlinked
 
 
 ## Integrating

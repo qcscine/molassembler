@@ -419,8 +419,10 @@ std::enable_if_t<
    * .mappings - dynamic array of fixed-size index mappings
    * .angularDistortion, .chiralDistortion - doubles
    */
-  auto constexprMappings = constexprProperties::symmetryTransitionMappings<SymmetryClassFrom, SymmetryClassTo>();
-
+  auto constexprMappings = allMappings.at(
+    static_cast<unsigned>(SymmetryClassFrom::name),
+    static_cast<unsigned>(SymmetryClassTo::name)
+  ).value();
   /* Vector of structs:
    * .indexMapping - vector containing the index mapping
    * .totalDistortion, .chiralDistortion - doubles
@@ -711,7 +713,10 @@ std::enable_if_t<
   SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
   void
 > doWriteIfAdjacent() {
-  auto constexprMapping = constexprProperties::symmetryTransitionMappings<SymmetryClassFrom, SymmetryClassTo>();
+  auto constexprMapping = allMappings.at(
+    static_cast<unsigned>(SymmetryClassFrom::name),
+    static_cast<unsigned>(SymmetryClassTo::name)
+  ).value();
 
   unsigned multiplicity = constexprMapping.mappings.size();
 
@@ -768,6 +773,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
     "There is a discrepancy between constexpr and dynamic rotation generation"
   );
 
+#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
   // Write out all mappings
   ConstexprMagic::TupleType::mapAllPairs<
     Symmetry::data::allSymmetryDataTypes,
@@ -785,6 +791,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
     "There is a discrepancy between constexpr and dynamic ligand gain mapping"
     << " generation!"
   );
+#endif
 }
 
 #ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
@@ -798,10 +805,12 @@ struct NumUnlinkedTestFunctor {
       )
     );
 
-    for(unsigned i = 0; i < constexprResults.size(); ++i) {
+    /* Value for 0 is equal to value for 1, so calculate one less.
+     */
+    for(unsigned i = 0; i < constexprResults.size() - 1; ++i) {
       if(
         constexprResults.at(i) 
-        != Symmetry::properties::numUnlinkedAssignments(SymmetryClass::name, i)
+        != Symmetry::properties::numUnlinkedAssignments(SymmetryClass::name, i + 1)
       ) {
         return false;
       }

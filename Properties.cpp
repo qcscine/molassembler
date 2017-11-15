@@ -110,9 +110,12 @@ struct makeAllNumUnlinkedAssignmentsFunctor {
   static constexpr auto value() {
     ConstexprMagic::DynamicArray<unsigned, constexprProperties::maxSymmetrySize> nums;
 
-    for(unsigned i = 0; i < Symmetry::size; ++i) {
+    /* Value for 0 is equal to value for 1, so calculate one less. When all
+     * are equal, there is obviously only one assignment, no need to calculate
+     */
+    for(unsigned i = 0; i < Symmetry::size - 1; ++i) {
       nums.push_back(
-        constexprProperties::numUnlinkedAssignments<Symmetry>(i)
+        constexprProperties::numUnlinkedAssignments<Symmetry>(i + 1)
       );
     }
 
@@ -133,10 +136,18 @@ TemplateMagic::MinimalCache<
 
 unsigned getNumUnlinked(
   const Symmetry::Name& symmetryName,
-  const unsigned& nIdenticalLigands
+  unsigned nIdenticalLigands
 ) {
+  if(nIdenticalLigands == Symmetry::size(symmetryName)) {
+    return 1u;
+  }
+
+  if(nIdenticalLigands == 0) {
+    ++nIdenticalLigands;
+  }
+
   if(numUnlinkedCache.has(symmetryName)) {
-    return numUnlinkedCache.get(symmetryName).at(nIdenticalLigands);
+    return numUnlinkedCache.get(symmetryName).at(nIdenticalLigands - 1);
   }
 
 #ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
@@ -152,13 +163,13 @@ unsigned getNumUnlinked(
     stlMapped
   );
 
-  return stlMapped.at(nIdenticalLigands);
+  return stlMapped.at(nIdenticalLigands - 1);
 #else
   // Generate the cache element using dynamic properties
   std::vector<unsigned> unlinkedAssignments;
-  for(unsigned i = 0; i < Symmetry::size(symmetryName); ++i) {
+  for(unsigned i = 0; i < Symmetry::size(symmetryName) - 1; ++i) {
     unlinkedAssignments.push_back(
-      dynamicProperties::numUnlinkedAssignments(i)
+      dynamicProperties::numUnlinkedAssignments(i + 1)
     );
   }
 
@@ -167,7 +178,7 @@ unsigned getNumUnlinked(
     unlinkedAssignments
   );
 
-  return unlinkedAssignments.at(nIdenticalLigands);
+  return unlinkedAssignments.at(nIdenticalLigands - 1);
 #endif
 }
 
