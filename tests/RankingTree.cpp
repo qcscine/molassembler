@@ -474,4 +474,11 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
     && oxyNitroDiffBranchesStereocenters.at(0)->assigned() == 1u,
     "(2R,3S,6R,9R,10S)-6-chloro-5-(1R,2S)-1,2-dihydroxypropoxy-7-(1S,2S)-1,2-dihydroxypropoxy-4,8-dioxa-5,7-diazaundecande-2,3,9,10-tetrol central carbon not recognized as R"
   );
+
+  // (4B) P-92.5.2.2 Example 5 (multiple-chain stereocenter ranking)
+  auto groupingDifferences = molHandler.readSingle(
+    directoryPrefix + "(2R,3R,5R,7R,8R)-4.4-bis(2S,3R-3-chlorobutan-2-yl)-6,6-bis(2S,4S-3-chlorobutan-2-yl)-2,8-dichloro-3,7-dimethylnonan-5-ol.mol"s
+  );
+
+  const auto& groupingDifferencesStereocenters = groupingDifferences.getStereocenterList();
 }

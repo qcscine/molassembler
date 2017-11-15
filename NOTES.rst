@@ -120,6 +120,7 @@ TODO
 
 Improvement considerations
 --------------------------
+- Replace boost::optional<bool> with boost::tribool
 - Set up CMake properly
 - Investigate link-time optimization
 - Parallelize DG (?)

@@ -5,6 +5,7 @@ Makefile
 *.pdf
 *.out
 build/
+build*
 .lvimrc
 *.xyz
 *.tar

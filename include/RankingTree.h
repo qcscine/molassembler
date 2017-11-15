@@ -1,6 +1,16 @@
 #ifndef INCLUDE_MOLECULE_MANIP_RANKING_HIERARCHICAL_TREE_H
 #define INCLUDE_MOLECULE_MANIP_RANKING_HIERARCHICAL_TREE_H
 
+/* Compile-time optimization options */
+/* If RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS is defined, RankingTree
+ * gains another OrderDiscoveryHelper that stores all results from
+ * _auxiliaryApplySequenceRules. That state is then used to initialize any
+ * new calls to _auxiliaryApplySequenceRules, potentially avoiding some
+ * re-rankings. Unfortunately, it currently cannot store equality results, only
+ * less-than relationships. This may have to be emulated some other way.
+ */
+#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+
 #include "BondDistance.h"
 #include "Log.h"
 #include "Molecule.h"
@@ -130,8 +140,10 @@ private:
   //! The helper instance for discovering the ordering of the to-rank branches
   OrderDiscoveryHelper<TreeVertexIndex> _branchOrderingHelper;
 
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
   //! Overall order discoveries from _auxiliary calls
-  OrderDiscoveryHelper<TreeVertexIndex> _allOrdering;
+  mutable OrderDiscoveryHelper<TreeVertexIndex> _allOrdering;
+#endif
 
   // Closures
   const Molecule& _moleculeRef;

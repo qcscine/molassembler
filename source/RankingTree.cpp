@@ -1393,19 +1393,27 @@ std::vector<
   /* Sequence rule 1 */
   OrderDiscoveryHelper<TreeVertexIndex> orderingHelper {adjacentsToRank};
 
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+  orderingHelper.addRelationshipsFromOther(_allOrdering);
+  // Is the information from _allOrdering sufficient?
+  if(orderingHelper.isTotallyOrdered()) {
+    return orderingHelper.getSets();
+  }
+#endif
+
 #ifndef NEDEBUG
-Log::log(Log::Particulars::RankingTreeDebugInfo)
-  << "  Auxiliary ranking substituents of tree index " 
-  << sourceIndex 
-  <<  ": " 
-  << TemplateMagic::condenseIterable(
-    TemplateMagic::map(
-      orderingHelper.getSets(),
-      [](const auto& indexSet) -> std::string {
-        return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-      }
-    )
-  ) << "\n";
+  Log::log(Log::Particulars::RankingTreeDebugInfo)
+    << "  Auxiliary ranking substituents of tree index " 
+    << sourceIndex 
+    <<  ": " 
+    << TemplateMagic::condenseIterable(
+      TemplateMagic::map(
+        orderingHelper.getSets(),
+        [](const auto& indexSet) -> std::string {
+          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+        }
+      )
+    ) << "\n";
 #endif
 
 
@@ -1424,20 +1432,23 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
   );
 
 #ifndef NDEBUG
-Log::log(Log::Particulars::RankingTreeDebugInfo)
-  << "  Sets post sequence rule 1: {" 
-  << TemplateMagic::condenseIterable(
-    TemplateMagic::map(
-      orderingHelper.getSets(),
-      [](const auto& indexSet) -> std::string {
-        return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-      }
-    )
-  ) << "}\n";
+  Log::log(Log::Particulars::RankingTreeDebugInfo)
+    << "  Sets post sequence rule 1: {" 
+    << TemplateMagic::condenseIterable(
+      TemplateMagic::map(
+        orderingHelper.getSets(),
+        [](const auto& indexSet) -> std::string {
+          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+        }
+      )
+    ) << "}\n";
 #endif
 
   // Is Sequence Rule 1 enough?
   if(orderingHelper.isTotallyOrdered()) {
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+    _allOrdering.addAllFromOther(orderingHelper);
+#endif
     // No conversion of indices in _auxiliaryApplySequenceRules()!
     return orderingHelper.getSets();
   }
@@ -1487,6 +1498,9 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
   // Is sequence rule 3 enough?
   if(orderingHelper.isTotallyOrdered()) {
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+    _allOrdering.addAllFromOther(orderingHelper);
+#endif
     // No conversion of indices in _auxiliaryApplySequenceRules()!
     return orderingHelper.getSets();
   }
@@ -1579,7 +1593,6 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
     if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
       _writeGraphvizFiles({
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 3 prep", {rootIndex}),
         dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
         _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
         orderingHelper.dumpGraphviz()
@@ -1654,7 +1667,6 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 3 prep", {rootIndex}),
           dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
           _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
           orderingHelper.dumpGraphviz()
@@ -1678,6 +1690,9 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
     // Is Sequence Rule 4, part A enough?
     if(orderingHelper.isTotallyOrdered()) {
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+      _allOrdering.addAllFromOther(orderingHelper);
+#endif
       // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
     }
@@ -1979,6 +1994,9 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
 
     // Is Sequence Rule 4, part B enough?
     if(orderingHelper.isTotallyOrdered()) {
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+      _allOrdering.addAllFromOther(orderingHelper);
+#endif
       // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
     }
@@ -2015,6 +2033,9 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
     ) << "}\n";
 #endif
 
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+  _allOrdering.addAllFromOther(orderingHelper);
+#endif
   // Exhausted sequence rules, return the sets
   return orderingHelper.getSets();
 }
@@ -2869,6 +2890,20 @@ RankingTree::RankingTree(
 
   // Perform ranking
   _applySequenceRules(positionsOption);
+
+#ifndef NDEBUG
+  if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+    _writeGraphvizFiles({
+      _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+      dumpGraphviz(
+        "Final"s,
+        {rootIndex}
+      ),
+      _branchOrderingHelper.dumpGraphviz(),
+      _allOrdering.dumpGraphviz()
+    });
+  }
+#endif
 }
 
 
