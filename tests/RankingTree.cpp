@@ -437,11 +437,12 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
     " not register as a stereocenter and/or isn't assigned as R"
   );
 
+  // (4B) P-92.5.2.2 Example 3 (single-chain pairing, cycle splitting)
   auto lAlphaLindane = molHandler.readSingle(
     directoryPrefix + "l-alpha-lindane.mol"s
   );
 
-  const auto lAlphaLindaneStereocenters = lAlphaLindane.getStereocenterList();
+  const auto& lAlphaLindaneStereocenters = lAlphaLindane.getStereocenterList();
 
   BOOST_CHECK_MESSAGE(
     (
@@ -458,5 +459,19 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
       )
     ),
     "Not all L-alpha-lindane carbon atoms not recognized as stereocenters!"
+  );
+
+  // (4B) P-92.5.2.2 Example 4 (multiple-chain stereocenter ranking)
+  auto oxyNitroDiffBranches = molHandler.readSingle(
+    directoryPrefix + "(2R,3S,6R,9R,10S)-6-chloro-5-(1R,2S)-1,2-dihydroxypropoxy-7-(1S,2S)-1,2-dihydroxypropoxy-4,8-dioxa-5,7-diazaundecande-2,3,9,10-tetrol.mol"s
+  );
+
+  const auto& oxyNitroDiffBranchesStereocenters = oxyNitroDiffBranches.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    oxyNitroDiffBranchesStereocenters.involving(0)
+    && oxyNitroDiffBranchesStereocenters.at(0)->numAssignments() == 2
+    && oxyNitroDiffBranchesStereocenters.at(0)->assigned() == 1u,
+    "(2R,3S,6R,9R,10S)-6-chloro-5-(1R,2S)-1,2-dihydroxypropoxy-7-(1S,2S)-1,2-dihydroxypropoxy-4,8-dioxa-5,7-diazaundecande-2,3,9,10-tetrol central carbon not recognized as R"
   );
 }

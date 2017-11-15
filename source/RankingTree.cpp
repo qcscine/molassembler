@@ -2,6 +2,7 @@
 
 #include "boost/algorithm/string/replace.hpp"
 #include "boost/graph/breadth_first_search.hpp"
+#include "symmetry_information/Properties.h"
 #include "template_magic/Boost.h"
 
 #include "Delib/ElementInfo.h"
@@ -563,24 +564,9 @@ void RankingTree::_applySequenceRules(
   }
 
   std::set<TreeEdgeIndex> nextChildren;
+  bool moreEdges;
 
-  for(const auto& edge : byDepth.back()) {
-    auto outIterPair = boost::out_edges(
-      boost::target(edge, _tree), _tree
-    );
-
-    while(outIterPair.first != outIterPair.second) {
-      nextChildren.insert(*outIterPair.first);
-
-      ++outIterPair.first;
-    }
-  }
-
-  while(nextChildren.size() != 0) {
-    byDepth.emplace_back(
-      std::move(nextChildren)
-    );
-
+  do {
     nextChildren.clear();
 
     for(const auto& edge : byDepth.back()) {
@@ -589,12 +575,29 @@ void RankingTree::_applySequenceRules(
       );
 
       while(outIterPair.first != outIterPair.second) {
-        nextChildren.insert(*outIterPair.first);
+        if( // Only add edges that have non-terminal targets
+          boost::out_degree(
+            boost::target(
+              *outIterPair.first,
+              _tree
+            ),
+            _tree
+          ) > 0
+        ) {
+          nextChildren.insert(*outIterPair.first);
+        }
 
         ++outIterPair.first;
       }
     }
-  }
+
+    moreEdges = !nextChildren.empty();
+    if(moreEdges) {
+      byDepth.emplace_back(
+        std::move(nextChildren)
+      );
+    }
+  } while(moreEdges);
 
 #ifndef NDEBUG
   auto collectHandledEdges = [&](
@@ -624,11 +627,10 @@ void RankingTree::_applySequenceRules(
 
     for(const auto& edge: currentEdges) {
       auto sourceIndex = boost::source(edge, _tree);
+      auto targetIndex = boost::target(edge, _tree);
 
       if(_doubleBondEdges.count(edge)) {
         // Instantiate an EZStereocenter here!
-        
-        auto targetIndex = boost::target(edge, _tree);
 
         auto sourceIndicesToRank = _auxiliaryAdjacentsToRank(
           sourceIndex, 
@@ -728,82 +730,82 @@ void RankingTree::_applySequenceRules(
 
       if(
         !_tree[edge].stereocenterOption // No EZStereocenter on this edge
-        && !_tree[sourceIndex].stereocenterOption // No CNStereocenter
-        && _nonDuplicateDegree(sourceIndex) >= 3 // Min. degree for chirality
-        && sourceIndex != rootIndex // not root, no CNStereocenters needed there!
-        && _moleculeRef._isCNStereocenterCandidate(_tree[sourceIndex].molIndex)
+        && !_tree[targetIndex].stereocenterOption // No CNStereocenter
+        && _nonDuplicateDegree(targetIndex) >= 3 // Min. degree for chirality
+        && _moleculeRef._isCNStereocenterCandidate(_tree[targetIndex].molIndex)
       ) {
-        /* TODO reduce the effort here by counting the number of adjacent
-         * (terminal!) hydrogens and comparing with a table of symmetries vs
-         * #hydrogens 
-         * -> max # assignments
-         *
-         * In case only one assignment is possible, there is no reason to rank
-         * the substituents
+        const AtomIndexType molSourceIndex = _tree[targetIndex].molIndex;
+
+        const auto localSymmetry = _moleculeRef.determineLocalGeometry(molSourceIndex);
+        const unsigned nHydrogens = _adjacentTerminalHydrogens(targetIndex);
+
+        /* In case only one assignment is possible, there is no reason to rank
+         * the substituents at all
          */
-        // Instantiate a CNStereocenter here!
-        RankingInformation centerRanking;
+        if(Symmetry::getNumUnlinked(localSymmetry, nHydrogens) > 1) {
+          // Instantiate a CNStereocenter here!
+          RankingInformation centerRanking;
 
-        centerRanking.sortedSubstituents = _mapToAtomIndices(
-          _auxiliaryApplySequenceRules(
-            sourceIndex,
-            _auxiliaryAdjacentsToRank(sourceIndex, {})
-          )
-        );
+          centerRanking.sortedSubstituents = _mapToAtomIndices(
+            _auxiliaryApplySequenceRules(
+              targetIndex,
+              _auxiliaryAdjacentsToRank(targetIndex, {})
+            )
+          );
 
-        const AtomIndexType molSourceIndex = _tree[sourceIndex].molIndex;
 
-        auto newStereocenter = Stereocenters::CNStereocenter {
-          _moleculeRef.determineLocalGeometry(molSourceIndex),
-          molSourceIndex,
-          centerRanking
-        };
+          auto newStereocenter = Stereocenters::CNStereocenter {
+            localSymmetry,
+            molSourceIndex,
+            centerRanking
+          };
 
-        if(newStereocenter.numAssignments() > 1) {
-          if(positionsOption) {
-            newStereocenter.fit(
-              positionsOption.value()
-            );
-          } else { // Try to get an assignment from the molecule
-            if(_moleculeRef.getStereocenterList().involving(molSourceIndex)) {
-              const auto& stereocenterPtr = _moleculeRef.getStereocenterList().at(
-                molSourceIndex
+          if(newStereocenter.numAssignments() > 1) {
+            if(positionsOption) {
+              newStereocenter.fit(
+                positionsOption.value()
               );
-
-              /* TODO
-               * consider what to do in cases in which molecule number of
-               * assignments is fewer finding the equivalent case by means of
-               * rotations should be possible
-               *
-               * widening cases are not assignable
-               */
-              if(
-                stereocenterPtr->type() == Stereocenters::Type::CNStereocenter
-                && stereocenterPtr->involvedAtoms() == std::set<AtomIndexType> {
+            } else { // Try to get an assignment from the molecule
+              if(_moleculeRef.getStereocenterList().involving(molSourceIndex)) {
+                const auto& stereocenterPtr = _moleculeRef.getStereocenterList().at(
                   molSourceIndex
-                } && stereocenterPtr->numAssignments() == newStereocenter.numAssignments()
-              ) {
-                newStereocenter.assign(
-                  stereocenterPtr->assigned()
                 );
+
+                /* TODO
+                 * consider what to do in cases in which molecule number of
+                 * assignments is fewer finding the equivalent case by means of
+                 * rotations should be possible
+                 *
+                 * widening cases are not assignable
+                 */
+                if(
+                  stereocenterPtr->type() == Stereocenters::Type::CNStereocenter
+                  && stereocenterPtr->involvedAtoms() == std::set<AtomIndexType> {
+                    molSourceIndex
+                  } && stereocenterPtr->numAssignments() == newStereocenter.numAssignments()
+                ) {
+                  newStereocenter.assign(
+                    stereocenterPtr->assigned()
+                  );
+                }
               }
             }
+
+            _tree[targetIndex].stereocenterOption = newStereocenter;
+
+            // Mark that we instantiated something
+            foundCNStereocenters = true;
           }
-
-          _tree[sourceIndex].stereocenterOption = newStereocenter;
-
-          // Mark that we instantiated something
-          foundCNStereocenters = true;
-        }
-        
+          
 #ifndef NDEBUG
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-          _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-            dumpGraphviz("Sequence rule 3 preparation", {rootIndex}, {}, collectHandledEdges(it))
-          });
-        }
+          if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+            _writeGraphvizFiles({
+              _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+              dumpGraphviz("Sequence rule 3 preparation", {rootIndex}, {}, collectHandledEdges(it))
+            });
+          }
 #endif
+        }
       }
 
     }
@@ -1953,7 +1955,7 @@ Log::log(Log::Particulars::RankingTreeDebugInfo)
                   branchAStereocenterGroupIter,
                   branchBStereocenterGroupIter
                 ),
-                _branchOrderingHelper.dumpGraphviz()
+                orderingHelper.dumpGraphviz()
               });
             }
 #endif
@@ -2178,6 +2180,26 @@ std::set<RankingTree::TreeEdgeIndex> RankingTree::_adjacentEdges(const RankingTr
   }
 
   return edges;
+}
+
+unsigned RankingTree::_adjacentTerminalHydrogens(const TreeVertexIndex& index) const {
+  unsigned count = 0;
+
+  auto outIterPair = boost::out_edges(index, _tree);
+  while(outIterPair.first != outIterPair.second) {
+    auto edgeTarget = boost::target(*outIterPair.first, _tree);
+
+    if(
+      _moleculeRef.getElementType(_tree[edgeTarget].molIndex) == Delib::ElementType::H
+      && boost::out_degree(edgeTarget, _tree) == 0
+    ) {
+      ++count;
+    }
+
+    ++outIterPair.first;
+  }
+
+  return count;
 }
 
 bool RankingTree::_isBondSplitDuplicateVertex(const TreeVertexIndex& index) const {

@@ -22,17 +22,13 @@
  *     needs to rank itself. Don't know if an improvement to avoid BFS-ing again
  *     to find stereocenters over potential gains from clearing comparisonSets
  *     every BFS step
- *   - Lookup table of max #assignments = f(symmetry, #term hydrogens) to 
- *     avoid _auxiliaryRank calls that yield non-stereogenic CNStereocenter
- *     rankings
  * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
- *   from being instantiated on the edge vertices in sequence rule 3 prep
+ *   from being instantiated above the edge in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
  * - OrderDiscoveryHelper function naming may be inconsistent. Does
  *   addLessThanRelationship really semantically do what it says?
  *   Loads of inverted comparisons here where it doesn't make sense to me
  *   anymore, in particular at 4B in counting like pairs at every position
- * - Refactor _make4BGraph
  * - TODOs strewn about
  */
 
@@ -152,6 +148,8 @@ private:
 
   //! Returns a set of all adjacent edges (in- and out-edges)
   std::set<TreeEdgeIndex> _adjacentEdges(const TreeVertexIndex& index) const;
+
+  unsigned _adjacentTerminalHydrogens(const TreeVertexIndex& index) const;
 
   bool _isBondSplitDuplicateVertex(const TreeVertexIndex& index) const;
 
