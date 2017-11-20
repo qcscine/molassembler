@@ -120,6 +120,11 @@ TODO
 
 Improvement considerations
 --------------------------
+- NL.16 Use a conventional class member declaration order
+  types -> constructors, assignments, destructor -> functions -> data
+  (public - protected - private)
+- Consider replacing std::set with set::unordered_set where no in-order
+  traversal or lexicographical comparison needed
 - Replace boost::optional<bool> with boost::tribool
 - Set up CMake properly
 - Investigate link-time optimization

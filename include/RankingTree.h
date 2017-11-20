@@ -8,8 +8,16 @@
  * new calls to _auxiliaryApplySequenceRules, potentially avoiding some
  * re-rankings. Unfortunately, it currently cannot store equality results, only
  * less-than relationships. This may have to be emulated some other way.
+ *
+ * In the current test set (see RankingTree tests), this optimization of
+ * storing the results of previous auxiliary ranking actually slightly
+ * pessimizes the overall program. This is because auxiliary rankings rarely
+ * need to be reused in the first place. A more specific optimization of storing
+ * rankings at junctions might be better.
+ *
+ * For this reason, it is currently disabled.
  */
-#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+//#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
 #include "BondDistance.h"
 #include "Log.h"
@@ -32,6 +40,7 @@
  *     needs to rank itself. Don't know if an improvement to avoid BFS-ing again
  *     to find stereocenters over potential gains from clearing comparisonSets
  *     every BFS step
+ *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
  * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
  *   from being instantiated above the edge in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
@@ -45,8 +54,8 @@
 /*! @file
  *
  * Centerpoint of library ranking algorithm. Implements the RankingTree class,
- * which can be instantiated on any atomic index in a Molecule, which then
- * splits the Molecule into an acyclic tree, which can then be used to rank
+ * which can be instantiated on any atomic index in a Molecule, which 
+ * splits the Molecule into an acyclic tree. That tree can then be used to rank
  * that atom's direct substituents according to IUPAC-like sequence rules.
  */
 

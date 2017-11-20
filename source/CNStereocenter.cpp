@@ -174,6 +174,10 @@ void CNStereocenter::adaptToRankingChange(const RankingInformation& newRanking) 
 
 }
 
+const AtomIndexType& CNStereocenter::getCentralAtomIndex() const {
+  return _centerAtom;
+}
+
 Symmetry::Name CNStereocenter::getSymmetry() const {
   return _symmetry;
 }
@@ -198,7 +202,10 @@ void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
   _assignmentOption = boost::none;
 }
 
-void CNStereocenter::fit(const Delib::PositionCollection& positions) {
+void CNStereocenter::fit(
+  const Delib::PositionCollection& positions,
+  std::vector<Symmetry::Name> excludeSymmetries
+) {
   // Extract a list of adjacent indices from stored state
   std::vector<AtomIndexType> adjacentAtoms;
 
@@ -220,10 +227,15 @@ void CNStereocenter::fit(const Delib::PositionCollection& positions) {
   double bestPenalty = initialPenalty;
   unsigned bestAssignmentMultiplicity = 1;
 
+  auto excludesContains = TemplateMagic::makeContainsPredicate(excludeSymmetries);
+
   // Cycle through all symmetries
   for(const auto& symmetryName : Symmetry::allNames) {
     // Skip any Symmetries of different size
-    if(Symmetry::size(symmetryName) != Symmetry::size(_symmetry)) {
+    if(
+      Symmetry::size(symmetryName) != Symmetry::size(_symmetry)
+      || excludesContains(symmetryName)
+    ) {
       continue;
     }
 

@@ -112,7 +112,7 @@ public:
 
   void assign(const boost::optional<unsigned>& assignment) final;
 
-  void fit(const Delib::PositionCollection& positions) final;
+  void fit(const Delib::PositionCollection& positions);
 
 /* Information */
   double angle(

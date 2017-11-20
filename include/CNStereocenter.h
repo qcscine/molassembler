@@ -95,7 +95,10 @@ public:
    * The assignment is determined based on three-dimensional positions using
    * angle and chiral distortions from the idealized symmetry.
    */
-  void fit(const Delib::PositionCollection& positions) final;
+  void fit(
+    const Delib::PositionCollection& positions,
+    std::vector<Symmetry::Name> excludeSymmetries = {}
+  );
 
 /* Information */
   //! Returns the angle between substituent atoms in the idealized symmetry
@@ -125,6 +128,8 @@ public:
 
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
+
+  const AtomIndexType& getCentralAtomIndex() const;
 
   //! Returns the underlying symmetry
   Symmetry::Name getSymmetry() const;

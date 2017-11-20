@@ -64,6 +64,12 @@ private:
    */
   std::vector<EdgeIndexType> _getEZStereocenterCandidates() const;
 
+  void _pickyFitStereocenter(
+    Stereocenters::CNStereocenter& stereocenter,
+    const Symmetry::Name& expectedSymmetry,
+    const Delib::PositionCollection& positions
+  ) const;
+
   //!  Reduces an atom's neighbors to ligand types
   std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
     const AtomIndexType& index

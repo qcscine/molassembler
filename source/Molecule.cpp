@@ -178,6 +178,38 @@ std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {
   return candidates;
 }
 
+void Molecule::_pickyFitStereocenter(
+  Stereocenters::CNStereocenter& stereocenter,
+  const Symmetry::Name& expectedSymmetry,
+  const Delib::PositionCollection& positions
+) const {
+  auto& centralAtom = stereocenter.getCentralAtomIndex();
+
+  /* Seesaw and tetrahedral are surprisingly close in terms of angles, and
+   * sometimes just slightly distorted tetrahedral centers can be recognized
+   * as seesaws, even though it makes absolutely zero sense. So in case
+   * the atom is a carbon, the expected geometry is tetrahedral and it has
+   * four adjacencies, just exclude Seesaw from the list of symmetries being
+   * fitted against.
+   *
+   * Calling
+   * determineLocalGeometry is somewhat overkill here, but possibly more
+   * future-proof.
+   */
+  if(
+    getElementType(centralAtom) == Delib::ElementType::C
+    && getNumAdjacencies(centralAtom) == 4
+    && expectedSymmetry == Symmetry::Name::Tetrahedral
+  ) {
+    stereocenter.fit(
+      positions,
+      {Symmetry::Name::Seesaw}
+    );
+  } else {
+    stereocenter.fit(positions);
+  }
+}
+
 std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
   const AtomIndexType& index
 ) const {
@@ -494,9 +526,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
          target = boost::target(edgeIndex, _adjacencies);
 
     // Construct a Stereocenter here
-    auto newStereocenter = std::make_shared<
-      Stereocenters::EZStereocenter
-    >(
+    auto newStereocenter = std::make_shared<Stereocenters::EZStereocenter>(
       source,
       rankPriority(source, {target}, positions),
       target,
@@ -525,25 +555,34 @@ StereocenterList Molecule::inferStereocentersFromPositions(
       continue;
     }
 
+    const Symmetry::Name expectedGeometry = determineLocalGeometry(candidateIndex);
+
     // Construct it
-    std::shared_ptr<
-      Stereocenters::CNStereocenter
-    > stereocenterPtr = std::make_shared<
-      Stereocenters::CNStereocenter
-    >(
-      determineLocalGeometry(candidateIndex),
+    auto stereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
+      expectedGeometry,
       candidateIndex,
       rankPriority(candidateIndex, {}, positions)
     );
 
-    stereocenterPtr -> fit(positions);
-
-    /* TODO In case the CNStereocenter has one assignment only and the symmetry
-     * is the same as by determined, do not add it to the list of stereocenters
-     */
-    stereocenters.add(
-      std::move(stereocenterPtr)
+    _pickyFitStereocenter(
+      *stereocenterPtr,
+      expectedGeometry,
+      positions
     );
+
+    /* Add the CNStereocenter to the list, unless if it has one assignment only
+     * and the symmetry is the same as expected
+     */
+    if(
+      !(
+        stereocenterPtr -> numAssignments() == 1
+        && expectedGeometry == stereocenterPtr -> getSymmetry()
+      )
+    ) {
+      stereocenters.add(
+        std::move(stereocenterPtr)
+      );
+    }
   }
 
   // TODO EZStereocenters

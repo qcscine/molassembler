@@ -87,12 +87,6 @@ public:
   //!  Assign this feature
   virtual void assign(const boost::optional<unsigned>& assignment) = 0;
 
-  /*!
-   * Fit the stereocenter against coordinates, changing internal state to most
-   * closely model the coordinates
-   */
-  virtual void fit(const Delib::PositionCollection& positions) = 0;
-
 /* Information */
   /*!
    * Return the angle imposed by the underlying symmetry defined by three

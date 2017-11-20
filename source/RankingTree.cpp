@@ -762,7 +762,9 @@ void RankingTree::_applySequenceRules(
 
           if(newStereocenter.numAssignments() > 1) {
             if(positionsOption) {
-              newStereocenter.fit(
+              _moleculeRef._pickyFitStereocenter(
+                newStereocenter,
+                localSymmetry,
                 positionsOption.value()
               );
             } else { // Try to get an assignment from the molecule
@@ -2891,6 +2893,7 @@ RankingTree::RankingTree(
   // Perform ranking
   _applySequenceRules(positionsOption);
 
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS 
 #ifndef NDEBUG
   if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
     _writeGraphvizFiles({
@@ -2903,6 +2906,7 @@ RankingTree::RankingTree(
       _allOrdering.dumpGraphviz()
     });
   }
+#endif
 #endif
 }
 

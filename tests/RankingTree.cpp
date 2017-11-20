@@ -481,4 +481,19 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   const auto& groupingDifferencesStereocenters = groupingDifferences.getStereocenterList();
+
+  /* TODO
+   * - R/S assignment of C0 is incorrect! When choosing representative
+   *   stereocenters, R is chosen for both branches since sequence rules 4/5 are
+   *   applied for both downwards from their respective junctions when comparing
+   *   stereocenter groups. Would need to limit auxiliaryRank application depth
+   *   in those situations to the depth prior to encountering the junction call
+   *   subjects...
+   */
+  BOOST_CHECK_MESSAGE(
+    groupingDifferencesStereocenters.involving(0)
+    && groupingDifferencesStereocenters.at(0) -> numAssignments() == 2
+    && groupingDifferencesStereocenters.at(0) -> assigned() == 1u,
+    "The central carbon in (2R,3R,5R,7R,8R)-4.4-bis(2S,3R-3-chlorobutan-2-yl)-6,6-bis(2S,4S-3-chlorobutan-2-yl)-2,8-dichloro-3,7-dimethylnonan-5-ol is not recognized as R"
+  );
 }
