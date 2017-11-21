@@ -61,27 +61,11 @@ StereocenterList Molecule::_detectStereocenters() const {
   ) {
     if(_isCNStereocenterCandidate(candidateIndex)) {
       // Construct a Stereocenter here
-      auto newStereocenter = std::make_shared<
-        Stereocenters::CNStereocenter
-      >(
+      auto newStereocenter = std::make_shared<Stereocenters::CNStereocenter>(
         determineLocalGeometry(candidateIndex),
         candidateIndex,
         rankPriority(candidateIndex)
       );
-
-      /*std::cout << "Trial stereocenter: " << newStereocenter -> info() << std::endl;
-      std::cout << "Ranked adjacent indices (low to high): vec{";
-      for(const auto& adjacency: rankResultPair.first) {
-        std::cout << adjacency;
-        if(adjacency != rankResultPair.first.back()) std::cout << ", ";
-      }
-      std::cout << "}" << std::endl;
-
-      std::cout << "Equal pairs: vec{";
-      for(const auto& indexPair : rankResultPair.second) {
-        std::cout << "(" << indexPair.first << ", " << indexPair.second << ")";
-      }
-      std::cout << "}" << std::endl;*/
 
       if(newStereocenter -> numAssignments() > 1) {
         stereocenterList.add(
@@ -128,6 +112,8 @@ bool Molecule::_isCNStereocenterCandidate(
           isInCycleOfSize4OrSmaller = true;
           break;
         }
+
+        cycleIter.advance();
       }
 
       return isInCycleOfSize4OrSmaller;
@@ -547,9 +533,9 @@ StereocenterList Molecule::inferStereocentersFromPositions(
    * can fully determine a Stereocenter's assignment from the positions
    */
   for(unsigned candidateIndex = 0; candidateIndex < numAtoms(); candidateIndex++) {
-    // Skip terminal atoms and ones that already have a stereocenter
+    // Skip unsuitable atoms and ones that already have a stereocenter
     if(
-      getNumAdjacencies(candidateIndex) <= 1
+      !_isCNStereocenterCandidate(candidateIndex)
       || stereocenters.involving(candidateIndex)
     ) {
       continue;

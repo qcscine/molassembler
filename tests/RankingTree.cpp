@@ -502,3 +502,80 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
     "The central carbon in 2R-2-bis(1R)-1-hydroxyethylamino-2-(1R)-1-hydroxyethyl(1S)-1-hydroxyethylaminoacetic-acid is not recognized as R"
   );
 }
+
+BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
+  IO::MOLFileHandler molHandler;
+
+  // (4C) P-92.5.3 Example r/s leads to R difference
+  auto rsDifference = molHandler.readSingle(
+    directoryPrefix + "(2R,3r,4R,5s,6R)-2,6-dichloro-3,5-bis(1S-1-chloroethyl)heptan-4-ol.mol"
+  );
+
+  const auto& rsDifferenceStereocenters = rsDifference.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    rsDifferenceStereocenters.involving(0)
+    && rsDifferenceStereocenters.at(0) -> numAssignments() == 2
+    && rsDifferenceStereocenters.at(0) -> assigned() == 1u,
+    "The central carbon in (2R,3r,4R,5s,6R)-2,6-dichloro-3,5-bis(1S-1-chloroethyl)heptan-4-ol is not recognized as R"
+  );
+
+  // (5) P-92.6 Example 1 simple R/S difference leads to r
+  auto pseudo = molHandler.readSingle(
+    directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
+  );
+
+  const auto& pseudoStereocenters = pseudo.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    pseudoStereocenters.involving(0)
+    && pseudoStereocenters.at(0) -> numAssignments() == 2
+    && pseudoStereocenters.at(0) -> assigned() == 1u,
+    "The central carbon in (2R,3r,4S)-pentane-2,3,4-trithiol is not recognized as R"
+  );
+
+  // (5) P-92.6 Example 2 cyclobutane splitting
+  auto cyclobutane = molHandler.readSingle(
+    directoryPrefix + "(1r,3r)-cyclobutane-1,3-diol.mol"
+  );
+
+  const auto& cyclobutaneStereocenters = cyclobutane.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    cyclobutaneStereocenters.involving(2)
+    && cyclobutaneStereocenters.at(2) -> numAssignments() == 2
+    && cyclobutaneStereocenters.at(2) -> assigned() == 1u
+    && cyclobutaneStereocenters.involving(3)
+    && cyclobutaneStereocenters.at(3) -> numAssignments() == 2
+    && cyclobutaneStereocenters.at(3) -> assigned() == 1u,
+    "The chiral carbons in (1r,3r)-cyclobutane-1,3-diol aren't properly recognized"
+  );
+
+  // (5) P-92.6 Example 5 double bond ranking
+  auto pseudoDB = molHandler.readSingle(
+    directoryPrefix + "(2E,4R)-4-chloro-3-(1S-1-chloroethyl)pent-2-ene.mol"
+  );
+
+  const auto& pseudoDBStereocenters = pseudoDB.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    pseudoDBStereocenters.involving(0)
+    && pseudoDBStereocenters.at(0) -> numAssignments() == 2
+    && pseudoDBStereocenters.at(0) -> assigned() == 0u,
+    "Double bond in (2E,4R)-4-chloro-3-(1S-1-chloroethyl)pent-2-ene isn't E"
+  );
+
+  // (5) P-92.6 Example 6
+  auto fourDoesNothing = molHandler.readSingle(
+    directoryPrefix + "1s-1-(1R,2R-1,2-dichloropropyl-1S,2R-1,2-dichloropropylamino)1-(1R,2S-1,2-dichloropropyl-1S,2S-1,2-dichloropropylamino)methan-1-ol.mol"
+  );
+
+  const auto& fourDoesNothingStereocenters = fourDoesNothing.getStereocenterList();
+
+  BOOST_CHECK_MESSAGE(
+    fourDoesNothingStereocenters.involving(0)
+    && fourDoesNothingStereocenters.at(0) -> numAssignments() == 2
+    && fourDoesNothingStereocenters.at(0) -> assigned() == 0u,
+    "The central stereocenter in 1s-1-(1R,2R-1,2-dichloropropyl-1S,2R-1,2-dichloropropylamino)1-(1R,2S-1,2-dichloropropyl-1S,2S-1,2-dichloropropylamino)methan-1-ol isn't recognized as S"
+  );
+}
