@@ -1137,8 +1137,7 @@ void RankingTree::_applySequenceRules(
         for(const auto& stringGroup : groupedByStringRep) {
           if(stringGroup.size() == maxSize) {
             representativeStereodescriptors.at(branchIndex).insert(
-              stringGroup.begin(),
-              stringGroup.end()
+              *stringGroup.begin()
             );
           }
         }
@@ -1841,8 +1840,7 @@ std::vector<
         for(const auto& stringGroup : groupedByStringRep) {
           if(stringGroup.size() == maxSize) {
             representativeStereodescriptors.at(branchIndex).insert(
-              stringGroup.begin(),
-              stringGroup.end()
+              *stringGroup.begin()
             );
           }
         }
