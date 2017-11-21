@@ -20,6 +20,7 @@
 //#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
 #include "BondDistance.h"
+#include "BuildTypeSwitch.h"
 #include "Log.h"
 #include "Molecule.h"
 #include "OrderDiscoveryHelper.h"
@@ -41,6 +42,7 @@
  *     to find stereocenters over potential gains from clearing comparisonSets
  *     every BFS step
  *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
+ * - Representative stereocenter choice correctness isn't complete
  * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
  *   from being instantiated above the edge in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
@@ -451,7 +453,8 @@ private:
     typename MultisetComparatorType
   > void _runBFS(
     TreeVertexIndex sourceIndex,
-    OrderDiscoveryHelper<TreeVertexIndex>& orderingHelper
+    OrderDiscoveryHelper<TreeVertexIndex>& orderingHelper,
+    boost::optional<unsigned> depthLimitOptional = boost::none
   ) const {
     /* Static safety checks */
     static_assert(
@@ -471,6 +474,10 @@ private:
       "Multiset value type and insert booleans are mismatched"
     );
 
+    // Check if depthLimit prohibits first comparison too
+    if(depthLimitOptional.value_or(std::numeric_limits<unsigned>::max()) == 0) {
+      return;
+    }
 
     /* Declarations */
 
@@ -577,42 +584,49 @@ private:
     // Update the undecided sets
     undecidedSets = orderingHelper.getUndecidedSets();
 
-#ifndef NDEBUG
-    // Write debug graph files if the corresponding log particular is set
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      std::string header = (
-        (
-          BFSDownOnly
-          ? ""s
-          : "aux "s
-        ) + "R"s + std::to_string(ruleNumber)
-      );
+    if /* C++17 constexpr */ (buildTypeIsDebug) {
+      // Write debug graph files if the corresponding log particular is set
+      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        std::string header = (
+          (
+            BFSDownOnly
+            ? ""s
+            : "aux "s
+          ) + "R"s + std::to_string(ruleNumber)
+        );
 
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz(
-          header,
-          {sourceIndex},
-          _collectSeeds(seeds, undecidedSets)
-        ),
-        _makeGraph(
-          header,
-          sourceIndex,
-          comparisonSets,
-          undecidedSets
-        ),
-        orderingHelper.dumpGraphviz()
-      });
+        _writeGraphvizFiles({
+          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          dumpGraphviz(
+            header,
+            {sourceIndex},
+            _collectSeeds(seeds, undecidedSets)
+          ),
+          _makeGraph(
+            header,
+            sourceIndex,
+            comparisonSets,
+            undecidedSets
+          ),
+          orderingHelper.dumpGraphviz()
+        });
+        }
     }
-#endif
 
+    unsigned depth = 1;
 
     /* Loop BFS */
 
     /* As long as there are undecided sets and seeds whose expansion could be
      * relevant for those undecided sets, continue BFS
      */
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
+    while(
+      // Undecided indices remain
+      undecidedSets.size() > 0
+      // Seeds exist that are relevant to the undecided sets
+      && _relevantSeeds(seeds, undecidedSets)
+      && depth < depthLimitOptional.value_or(std::numeric_limits<unsigned>::max())
+    ) {
       // BFS Step
       for(const auto& undecidedSet: undecidedSets) {
         for(const auto& undecidedBranch: undecidedSet) {
@@ -720,31 +734,34 @@ private:
       // Recalculate the undecided sets
       undecidedSets = orderingHelper.getUndecidedSets();
 
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        std::string header;
-        if(!BFSDownOnly) {
-          header += "aux "s;
-        }
-        header += "R"s + std::to_string(ruleNumber);
+      // Increment depth
+      ++depth;
 
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz(
-            header,
-            {sourceIndex},
-            _collectSeeds(seeds, undecidedSets)
-          ),
-          _makeGraph(
-            header,
-            sourceIndex,
-            comparisonSets,
-            undecidedSets
-          ),
-          orderingHelper.dumpGraphviz()
-        });
+      if /* C++17 constexpr */ (buildTypeIsDebug) {
+        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+          std::string header;
+          if(!BFSDownOnly) {
+            header += "aux "s;
+          }
+          header += "R"s + std::to_string(ruleNumber);
+
+          _writeGraphvizFiles({
+            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            dumpGraphviz(
+              header,
+              {sourceIndex},
+              _collectSeeds(seeds, undecidedSets)
+            ),
+            _makeGraph(
+              header,
+              sourceIndex,
+              comparisonSets,
+              undecidedSets
+            ),
+            orderingHelper.dumpGraphviz()
+          });
+        }
       }
-#endif
     }
   }
 
@@ -1001,7 +1018,8 @@ private:
     std::vector<TreeVertexIndex>
   > _auxiliaryApplySequenceRules(
     const TreeVertexIndex& sourceIndex,
-    const std::set<TreeVertexIndex>& adjacentsToRank
+    const std::set<TreeVertexIndex>& adjacentsToRank,
+    const boost::optional<unsigned>& depthLimitOptional = boost::none
   ) const;
 
 

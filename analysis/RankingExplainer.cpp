@@ -155,6 +155,8 @@ int main(int argc, char* argv[]) {
      * 1. Concatenate streams of separately layouted graphviz graphs, in order
      * 2. Pipe that into gvpack, which combines the graphs into an ordered
      *    array (by which is read in first), into columns with only one row
+     *    (redirect stderr to /dev/null, since the warning of node names being
+     *    adapted is unneeded)
      * 3. Create the final layout of the combined graph using neato, preserving
      *    position attributes from gvpack (-n2) into an SVG file
      * 4. Write to a iteration-compatibly delimited (i.e. step 0 is 000)
@@ -172,7 +174,7 @@ int main(int argc, char* argv[]) {
         bashFile << "<(dot ranking-tree-" << step << "-" << i << ".dot) ";
       }
 
-      bashFile << "| gvpack -array_uc1 "
+      bashFile << "| gvpack -array_uc1 2>/dev/null "
         << "| neato -n2 -Tsvg "
         << "> ranking-tree-"
         << std::setw(3) << std::setfill('0') << step

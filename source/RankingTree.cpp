@@ -599,24 +599,6 @@ void RankingTree::_applySequenceRules(
     }
   } while(moreEdges);
 
-#ifndef NDEBUG
-  auto collectHandledEdges = [&](
-    const typename decltype(byDepth)::reverse_iterator& rIter
-  ) -> std::set<TreeEdgeIndex> {
-    std::set<TreeEdgeIndex> edgeIndices;
-
-    for(auto it = byDepth.rbegin(); it != rIter; ++it) {
-      const auto& currentEdges = *it;
-
-      for(const auto& edge : currentEdges) {
-        edgeIndices.insert(edge);
-      }
-    }
-
-    return edgeIndices;
-  };
-#endif
-
   // Remember if you found something to instantiate or not
   bool foundEZStereocenters = false;
   bool foundCNStereocenters = false;
@@ -717,14 +699,14 @@ void RankingTree::_applySequenceRules(
             foundEZStereocenters = true;
           }
 
-#ifndef NDEBUG
-          if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-            _writeGraphvizFiles({
-              _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-              dumpGraphviz("Sequence rule 3 preparation", {rootIndex}, {}, collectHandledEdges(it))
-            });
+          if /* C++17 constexpr */ (buildTypeIsDebug) {
+            if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+              _writeGraphvizFiles({
+                _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+                dumpGraphviz("Sequence rule 3 preparation", {rootIndex})
+              });
+            }
           }
-#endif
         }
       }
 
@@ -799,14 +781,14 @@ void RankingTree::_applySequenceRules(
             foundCNStereocenters = true;
           }
           
-#ifndef NDEBUG
-          if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-            _writeGraphvizFiles({
-              _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-              dumpGraphviz("Sequence rule 3 preparation", {rootIndex}, {}, collectHandledEdges(it))
-            });
+          if /*C++17 constexpr */ (buildTypeIsDebug) {
+            if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+              _writeGraphvizFiles({
+                _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+                dumpGraphviz("Sequence rule 3 preparation", {rootIndex})
+              });
+            }
           }
-#endif
         }
       }
 
@@ -829,18 +811,18 @@ void RankingTree::_applySequenceRules(
       _branchOrderingHelper
     );
 
-#ifndef NDEBUG
-    Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "Sets post sequence rule 3: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
-          _branchOrderingHelper.getSets(),
-          [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-          }
-        )
-      ) << "}\n";
-#endif
+    if /* C++17 constexpr */(buildTypeIsDebug) {
+      Log::log(Log::Particulars::RankingTreeDebugInfo)
+        << "Sets post sequence rule 3: {" 
+        << TemplateMagic::condenseIterable(
+          TemplateMagic::map(
+            _branchOrderingHelper.getSets(),
+            [](const auto& indexSet) -> std::string {
+              return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            }
+          )
+        ) << "}\n";
+    }
 
     // Was sequence rule 3 enough?
     if(_branchOrderingHelper.isTotallyOrdered()) {
@@ -933,16 +915,16 @@ void RankingTree::_applySequenceRules(
     // Recalculate undecided sets
     undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
-#ifndef NDEBUG
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
-        _makeGraph("4A", rootIndex, comparisonSets, undecidedSets),
-        _branchOrderingHelper.dumpGraphviz()
-      });
+    if /* C++17 constexpr */ (buildTypeIsDebug) {
+      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        _writeGraphvizFiles({
+          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
+          _makeGraph("4A", rootIndex, comparisonSets, undecidedSets),
+          _branchOrderingHelper.dumpGraphviz()
+        });
+      }
     }
-#endif
 
     while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
       // Perform a full BFS Step on all undecided set seeds
@@ -982,30 +964,30 @@ void RankingTree::_applySequenceRules(
       // Recalculate the undecided sets
       undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
-          _makeGraph("4A", rootIndex, comparisonSets, undecidedSets),
-          _branchOrderingHelper.dumpGraphviz()
-        });
+      if /* C++17 constexpr */ (buildTypeIsDebug) {
+        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+          _writeGraphvizFiles({
+            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
+            _makeGraph("4A", rootIndex, comparisonSets, undecidedSets),
+            _branchOrderingHelper.dumpGraphviz()
+          });
+        }
       }
-#endif
     }
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "Sets post sequence rule 4A: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        _branchOrderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "Sets post sequence rule 4A: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          _branchOrderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+    }
 
     // Is Sequence Rule 4, part A enough?
     if(_branchOrderingHelper.isTotallyOrdered()) {
@@ -1092,7 +1074,8 @@ void RankingTree::_applySequenceRules(
             if(junctionInfo.junction != rootIndex) {
               auto relativeRank = _auxiliaryApplySequenceRules(
                 junctionInfo.junction,
-                {aJunctionChild, bJunctionChild}
+                {aJunctionChild, bJunctionChild},
+                junctionInfo.firstPath.size() - 1
               );
 
               /* relativeRank can only have sizes 1 or 2, where size 1 means
@@ -1105,28 +1088,20 @@ void RankingTree::_applySequenceRules(
                   relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
                 }
               }
-            } else {
-#ifndef NDEBUG
-              Log::log(Log::Particulars::RankingTreeDebugInfo) 
-                << "Junction of ("
-                << boost::apply_visitor(sourceNodeFetcher, a) << ", "
-                << boost::apply_visitor(sourceNodeFetcher, b) << ") "
-                << " is root!" << std::endl;
-#endif
-            }
+            } 
           }
         }
       );
 
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Sequence rule 4B prep", {rootIndex}),
-          relativeOrders.at(branchIndex).dumpGraphviz()
-        });
+      if /* C++17 constexpr */ (buildTypeIsDebug) {
+        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+          _writeGraphvizFiles({
+            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            dumpGraphviz("Sequence rule 4B prep", {rootIndex}),
+            relativeOrders.at(branchIndex).dumpGraphviz()
+          });
+        }
       }
-#endif
 
       // Pick the representative stereodescriptor for each branch!
       auto stereocenterSets = relativeOrders.at(branchIndex).getSets();
@@ -1138,7 +1113,7 @@ void RankingTree::_applySequenceRules(
       } else {
         // 2 - The stereodescriptor(s) occurring more often than all others
         auto groupedByStringRep = TemplateMagic::groupByMapping(
-          stereocenterMap.at(branchIndex),
+          stereocenterSets.back(),
           [&](const auto& variantType) -> std::string {
             return boost::apply_visitor(stringRepFetcher, variantType);
           }
@@ -1170,7 +1145,7 @@ void RankingTree::_applySequenceRules(
       }
     }
 
-#ifndef NDEBUG
+    if /* C++17 constexpr */ (buildTypeIsDebug) {
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         std::set<TreeVertexIndex> representativeVertices;
         std::set<TreeEdgeIndex> representativeEdges;
@@ -1195,7 +1170,7 @@ void RankingTree::_applySequenceRules(
           dumpGraphviz("Sequence rule 4B prep", {rootIndex}, representativeVertices, representativeEdges)
         });
       }
-#endif
+    }
 
     auto undecidedBranchSets = _branchOrderingHelper.getUndecidedSets();
 
@@ -1304,42 +1279,43 @@ void RankingTree::_applySequenceRules(
               ++branchAStereocenterGroupIter;
               ++branchBStereocenterGroupIter;
             }
-#ifndef NDEBUG
-            if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-              _writeGraphvizFiles({
-                _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-                dumpGraphviz("4B"s),
-                _make4BGraph(
-                  rootIndex,
-                  representativeStereodescriptors,
-                  branchA,
-                  branchB,
-                  branchAOrders,
-                  branchBOrders,
-                  branchAStereocenterGroupIter,
-                  branchBStereocenterGroupIter
-                ),
-                _branchOrderingHelper.dumpGraphviz()
-              });
+
+            if /* C++17 constexpr */ (buildTypeIsDebug) {
+              if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+                _writeGraphvizFiles({
+                  _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+                  dumpGraphviz("4B"s),
+                  _make4BGraph(
+                    rootIndex,
+                    representativeStereodescriptors,
+                    branchA,
+                    branchB,
+                    branchAOrders,
+                    branchBOrders,
+                    branchAStereocenterGroupIter,
+                    branchBStereocenterGroupIter
+                  ),
+                  _branchOrderingHelper.dumpGraphviz()
+                });
+              }
             }
-#endif
           }
         }
       );
     }
 
-#ifndef NDEBUG
-    Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "Sets post sequence rule 4B: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
-          _branchOrderingHelper.getSets(),
-          [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-          }
-        )
-      ) << "}\n";
-#endif
+    if /* C++17 constexpr */ (buildTypeIsDebug) {
+      Log::log(Log::Particulars::RankingTreeDebugInfo)
+        << "Sets post sequence rule 4B: {" 
+        << TemplateMagic::condenseIterable(
+          TemplateMagic::map(
+            _branchOrderingHelper.getSets(),
+            [](const auto& indexSet) -> std::string {
+              return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            }
+          )
+        ) << "}\n";
+    }
 
     // Is Sequence Rule 4, part B enough?
     if(_branchOrderingHelper.isTotallyOrdered()) {
@@ -1370,18 +1346,18 @@ void RankingTree::_applySequenceRules(
     _branchOrderingHelper
   );
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "Sets post sequence rule 5: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        _branchOrderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "Sets post sequence rule 5: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          _branchOrderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
 
   // Exhausted sequence rules, anything undecided is now equal
 }
@@ -1390,10 +1366,16 @@ std::vector<
   std::vector<RankingTree::TreeVertexIndex>
 > RankingTree::_auxiliaryApplySequenceRules(
   const RankingTree::TreeVertexIndex& sourceIndex,
-  const std::set<RankingTree::TreeVertexIndex>& adjacentsToRank
+  const std::set<RankingTree::TreeVertexIndex>& adjacentsToRank,
+  const boost::optional<unsigned>& depthLimitOptional
 ) const {
   /* Sequence rule 1 */
   OrderDiscoveryHelper<TreeVertexIndex> orderingHelper {adjacentsToRank};
+
+  // Return immediately if depthLimit is zero
+  if(depthLimitOptional && depthLimitOptional.value() == 0u) {
+    return orderingHelper.getSets();
+  }
 
 #ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
   orderingHelper.addRelationshipsFromOther(_allOrdering);
@@ -1430,26 +1412,29 @@ std::vector<
     SequenceRuleOneVertexComparator // Multiset comparator type
   >(
     sourceIndex,
-    orderingHelper
+    orderingHelper,
+    depthLimitOptional
   );
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "  Sets post sequence rule 1: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        orderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "  Sets post sequence rule 1: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          orderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
 
   // Is Sequence Rule 1 enough?
   if(orderingHelper.isTotallyOrdered()) {
 #ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-    _allOrdering.addAllFromOther(orderingHelper);
+    if(!depthLimitOptional) {
+      _allOrdering.addAllFromOther(orderingHelper);
+    }
 #endif
     // No conversion of indices in _auxiliaryApplySequenceRules()!
     return orderingHelper.getSets();
@@ -1482,26 +1467,29 @@ std::vector<
     SequenceRuleThreeEdgeComparator // Multiset comparator type
   >(
     sourceIndex,
-    orderingHelper
+    orderingHelper,
+    depthLimitOptional
   );
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "  Sets post sequence rule 3: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        orderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "  Sets post sequence rule 3: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          orderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
 
   // Is sequence rule 3 enough?
   if(orderingHelper.isTotallyOrdered()) {
 #ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-    _allOrdering.addAllFromOther(orderingHelper);
+    if(!depthLimitOptional) {
+      _allOrdering.addAllFromOther(orderingHelper);
+    }
 #endif
     // No conversion of indices in _auxiliaryApplySequenceRules()!
     return orderingHelper.getSets();
@@ -1591,18 +1579,24 @@ std::vector<
 
     undecidedSets = orderingHelper.getUndecidedSets();
 
-#ifndef NDEBUG
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
-        _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
-        orderingHelper.dumpGraphviz()
-      });
-    }
-#endif
+    unsigned depth = 1;
 
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
+    if /* C++17 constexpr */ (buildTypeIsDebug) {
+      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        _writeGraphvizFiles({
+          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
+          _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
+          orderingHelper.dumpGraphviz()
+        });
+      }
+    }
+
+    while(
+      undecidedSets.size() > 0 
+      && _relevantSeeds(seeds, undecidedSets)
+      && depth < depthLimitOptional.value_or(std::numeric_limits<unsigned>::max())
+    ) {
       // Perform a full BFS Step on all undecided set seeds
       for(const auto& undecidedSet : undecidedSets) {
         for(const auto& undecidedTreeIndex : undecidedSet) {
@@ -1665,35 +1659,40 @@ std::vector<
       // Recalculate the undecided sets
       undecidedSets = orderingHelper.getUndecidedSets();
 
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
-          _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
-          orderingHelper.dumpGraphviz()
-        });
+      // Increment depth
+      ++depth;
+
+      if /* C++17 constexpr */ (buildTypeIsDebug) {
+        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+          _writeGraphvizFiles({
+            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
+            _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
+            orderingHelper.dumpGraphviz()
+          });
+        }
       }
-#endif
     }
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "  Sets post sequence rule 4A: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        orderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "  Sets post sequence rule 4A: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          orderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
 
     // Is Sequence Rule 4, part A enough?
     if(orderingHelper.isTotallyOrdered()) {
 #ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-      _allOrdering.addAllFromOther(orderingHelper);
+      if(!depthLimitOptional) {
+        _allOrdering.addAllFromOther(orderingHelper);
+      }
 #endif
       // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
@@ -1778,7 +1777,8 @@ std::vector<
             if(junctionInfo.junction != rootIndex) {
               auto relativeRank = _auxiliaryApplySequenceRules(
                 junctionInfo.junction,
-                {aJunctionChild, bJunctionChild}
+                {aJunctionChild, bJunctionChild},
+                junctionInfo.firstPath.size() - 1
               );
 
               /* relativeRank can only have sizes 1 or 2, 1 meaning that no
@@ -1796,15 +1796,15 @@ std::vector<
         }
       );
 
-#ifndef NDEBUG
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz("Aux 4B prep", {rootIndex}),
-          relativeOrders.at(branchIndex).dumpGraphviz()
-        });
+      if /* C++17 constexpr */ (buildTypeIsDebug) {
+        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+          _writeGraphvizFiles({
+            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            dumpGraphviz("Aux 4B prep", {rootIndex}),
+            relativeOrders.at(branchIndex).dumpGraphviz()
+          });
+        }
       }
-#endif
 
       // Pick the representative stereodescriptor for each branch!
       auto stereocenterSets = relativeOrders.at(branchIndex).getSets();
@@ -1817,7 +1817,7 @@ std::vector<
       } else {
         // 2 - The stereodescriptor occurring more often than all others
         auto groupedByStringRep = TemplateMagic::groupByMapping(
-          stereocenterMap.at(branchIndex),
+          stereocenterSets.back(),
           [&](const auto& variantType) -> std::string {
             return boost::apply_visitor(stringRepFetcher, variantType);
           }
@@ -1957,47 +1957,49 @@ std::vector<
               ++branchBStereocenterGroupIter;
             }
 
-#ifndef NDEBUG
-            if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-              _writeGraphvizFiles({
-                _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-                dumpGraphviz("aux 4B"s),
-                _make4BGraph(
-                  sourceIndex,
-                  representativeStereodescriptors,
-                  branchA,
-                  branchB,
-                  branchAOrders,
-                  branchBOrders,
-                  branchAStereocenterGroupIter,
-                  branchBStereocenterGroupIter
-                ),
-                orderingHelper.dumpGraphviz()
-              });
+            if /* C++17 constexpr */ (buildTypeIsDebug) {
+              if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+                _writeGraphvizFiles({
+                  _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+                  dumpGraphviz("aux 4B"s),
+                  _make4BGraph(
+                    sourceIndex,
+                    representativeStereodescriptors,
+                    branchA,
+                    branchB,
+                    branchAOrders,
+                    branchBOrders,
+                    branchAStereocenterGroupIter,
+                    branchBStereocenterGroupIter
+                  ),
+                  orderingHelper.dumpGraphviz()
+                });
+              }
             }
-#endif
           }
         }
       );
     }
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "  Sets post sequence rule 4B: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        orderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "  Sets post sequence rule 4B: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          orderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
 
     // Is Sequence Rule 4, part B enough?
     if(orderingHelper.isTotallyOrdered()) {
 #ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-      _allOrdering.addAllFromOther(orderingHelper);
+      if(!depthLimitOptional) {
+        _allOrdering.addAllFromOther(orderingHelper);
+      }
 #endif
       // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
@@ -2019,24 +2021,27 @@ std::vector<
     SequenceRuleFiveVariantComparator // Multiset comparator type
   >(
     sourceIndex,
-    orderingHelper
+    orderingHelper,
+    depthLimitOptional
   );
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "  Sets post sequence rule 5: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        orderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "  Sets post sequence rule 5: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          orderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
 
 #ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-  _allOrdering.addAllFromOther(orderingHelper);
+  if(!depthLimitOptional) {
+    _allOrdering.addAllFromOther(orderingHelper);
+  }
 #endif
   // Exhausted sequence rules, return the sets
   return orderingHelper.getSets();
@@ -2675,20 +2680,20 @@ RankingTree::RankingTree(
   // Set the ordering helper's list of unordered values
   _branchOrderingHelper.setUnorderedValues(branchIndices);
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "Ranking substituents of atom index " 
-    << _tree[rootIndex].molIndex
-    << ": " 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        _branchOrderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "Ranking substituents of atom index " 
+      << _tree[rootIndex].molIndex
+      << ": " 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          _branchOrderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "\n";
+  }
 
   // The class should work regardless of which tree expansion method is chosen
   if(expansionMethod == ExpansionOption::Optimized) {
@@ -2725,28 +2730,28 @@ RankingTree::RankingTree(
     // Update the undecided sets
     undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
-#ifndef NDEBUG
-    // Write debug graph files if the corresponding log particular is set
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      std::string header = "Sequence rule 1";
+    if /* C++17 constexpr */ (buildTypeIsDebug) {
+      // Write debug graph files if the corresponding log particular is set
+      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        std::string header = "Sequence rule 1";
 
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz(
-          header,
-          {rootIndex},
-          _collectSeeds(seeds, undecidedSets)
-        ),
-        _makeGraph(
-          "R1"s,
-          rootIndex,
-          comparisonSets,
-          undecidedSets
-        ),
-        _branchOrderingHelper.dumpGraphviz()
-      });
+        _writeGraphvizFiles({
+          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          dumpGraphviz(
+            header,
+            {rootIndex},
+            _collectSeeds(seeds, undecidedSets)
+          ),
+          _makeGraph(
+            "R1"s,
+            rootIndex,
+            comparisonSets,
+            undecidedSets
+          ),
+          _branchOrderingHelper.dumpGraphviz()
+        });
+      }
     }
-#endif
 
     // TODO try to avoid repeated computation with _molIndicesInBranch somehow
     // Main BFS loop
@@ -2794,28 +2799,28 @@ RankingTree::RankingTree(
       _compareBFSSets(comparisonSets, undecidedSets, _branchOrderingHelper);
       undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
-#ifndef NDEBUG
-      // Write debug graph files if the corresponding log particular is set
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        std::string header = "Sequence rule 1";
+      if /* C++17 constexpr */ (buildTypeIsDebug) {
+        // Write debug graph files if the corresponding log particular is set
+        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+          std::string header = "Sequence rule 1";
 
-        _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-          dumpGraphviz(
-            header,
-            {rootIndex},
-            _collectSeeds(seeds, undecidedSets)
-          ),
-          _makeGraph(
-            "R1"s,
-            rootIndex,
-            comparisonSets,
-            undecidedSets
-          ),
-          _branchOrderingHelper.dumpGraphviz()
-        });
+          _writeGraphvizFiles({
+            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            dumpGraphviz(
+              header,
+              {rootIndex},
+              _collectSeeds(seeds, undecidedSets)
+            ),
+            _makeGraph(
+              "R1"s,
+              rootIndex,
+              comparisonSets,
+              undecidedSets
+            ),
+            _branchOrderingHelper.dumpGraphviz()
+          });
+        }
       }
-#endif
     }
 
   } else { // Full tree expansion requested
@@ -2872,18 +2877,18 @@ RankingTree::RankingTree(
     );
   }
 
-#ifndef NDEBUG
-  Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "Sets post sequence rule 1: {" 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
-        _branchOrderingHelper.getSets(),
-        [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
-        }
-      )
-    ) << "}\n";
-#endif
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    Log::log(Log::Particulars::RankingTreeDebugInfo)
+      << "Sets post sequence rule 1: {" 
+      << TemplateMagic::condenseIterable(
+        TemplateMagic::map(
+          _branchOrderingHelper.getSets(),
+          [](const auto& indexSet) -> std::string {
+            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          }
+        )
+      ) << "}\n";
+  }
 
   // Was sequence rule 1 enough?
   if(_branchOrderingHelper.isTotallyOrdered()) {
@@ -2894,19 +2899,19 @@ RankingTree::RankingTree(
   _applySequenceRules(positionsOption);
 
 #ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS 
-#ifndef NDEBUG
-  if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-    _writeGraphvizFiles({
-      _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-      dumpGraphviz(
-        "Final"s,
-        {rootIndex}
-      ),
-      _branchOrderingHelper.dumpGraphviz(),
-      _allOrdering.dumpGraphviz()
-    });
+  if /* C++17 constexpr */ (buildTypeIsDebug) {
+    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+      _writeGraphvizFiles({
+        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+        dumpGraphviz(
+          "Final"s,
+          {rootIndex}
+        ),
+        _branchOrderingHelper.dumpGraphviz(),
+        _allOrdering.dumpGraphviz()
+      });
+    }
   }
-#endif
 #endif
 }
 
@@ -2984,7 +2989,7 @@ std::string RankingTree::_make4BGraph(
     std::string html = R"(<td border="1")";
 
     if(span != 1) {
-      html += R"( cellspan=")" + std::to_string(span) + R"(")";
+      html += R"( colspan=")" + std::to_string(span) + R"(")";
     }
 
     if(colorOption) {
@@ -3130,7 +3135,6 @@ std::vector<
 }
 
 
-#ifndef NDEBUG
 // Initialize the debug counter
 unsigned RankingTree::_debugMessageCounter = 0;
 
@@ -3177,7 +3181,6 @@ std::string RankingTree::_adaptMolGraph(std::string molGraph) {
 
   return molGraph;
 }
-#endif
 
 
 } // namespace MoleculeManip

@@ -402,8 +402,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   const auto& pseudoOverNonstgStereocenters = pseudoOverNonstg.getStereocenterList();
 
   BOOST_CHECK_MESSAGE(
-    pseudoOverNonstgStereocenters.involving(10)
-    && pseudoOverNonstgStereocenters.at(10)->numAssignments() == 1,
+    !pseudoOverNonstgStereocenters.involving(10),
     "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
     "branch with R-R aux. stereocenters not non-stereogenic"
   );
