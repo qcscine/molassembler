@@ -920,7 +920,7 @@ void RankingTree::_applySequenceRules(
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
           dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
-          _makeGraph("4A", rootIndex, comparisonSets, undecidedSets),
+          _makeBFSStateGraph("4A", rootIndex, comparisonSets, undecidedSets),
           _branchOrderingHelper.dumpGraphviz()
         });
       }
@@ -969,7 +969,7 @@ void RankingTree::_applySequenceRules(
           _writeGraphvizFiles({
             _adaptMolGraph(_moleculeRef.dumpGraphviz()),
             dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
-            _makeGraph("4A", rootIndex, comparisonSets, undecidedSets),
+            _makeBFSStateGraph("4A", rootIndex, comparisonSets, undecidedSets),
             _branchOrderingHelper.dumpGraphviz()
           });
         }
@@ -1321,7 +1321,9 @@ void RankingTree::_applySequenceRules(
       return;
     }
 
-    // TODO 4C Pseudo-asymmetries, possibly via already-gathered information?
+    /* 4C Pseudo-asymmetries
+     * This is skipped, since rule 5 covers this without issue
+     */
 
   } // End sequence rule 4 local scope
 
@@ -1585,7 +1587,7 @@ std::vector<
         _writeGraphvizFiles({
           _adaptMolGraph(_moleculeRef.dumpGraphviz()),
           dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
-          _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
+          _makeBFSStateGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
           orderingHelper.dumpGraphviz()
         });
       }
@@ -1666,7 +1668,7 @@ std::vector<
           _writeGraphvizFiles({
             _adaptMolGraph(_moleculeRef.dumpGraphviz()),
             dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
-            _makeGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
+            _makeBFSStateGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
             orderingHelper.dumpGraphviz()
           });
         }
@@ -2003,7 +2005,9 @@ std::vector<
       return orderingHelper.getSets();
     }
 
-    // TODO 4C Pseudo-asymmetries, possibly via already-gathered information?
+    /* 4C Pseudo-asymmetries
+     * This is skipped, since rule 5 covers this without issue
+     */
 
   } // End sequence rule 4 local scope
 
@@ -2740,7 +2744,7 @@ RankingTree::RankingTree(
             {rootIndex},
             _collectSeeds(seeds, undecidedSets)
           ),
-          _makeGraph(
+          _makeBFSStateGraph(
             "R1"s,
             rootIndex,
             comparisonSets,
@@ -2809,7 +2813,7 @@ RankingTree::RankingTree(
               {rootIndex},
               _collectSeeds(seeds, undecidedSets)
             ),
-            _makeGraph(
+            _makeBFSStateGraph(
               "R1"s,
               rootIndex,
               comparisonSets,

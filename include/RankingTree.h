@@ -42,7 +42,6 @@
  *     to find stereocenters over potential gains from clearing comparisonSets
  *     every BFS step
  *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
- * - Representative stereocenter choice correctness isn't complete
  * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
  *   from being instantiated above the edge in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
@@ -75,16 +74,28 @@ namespace MoleculeManip {
 class RankingTree {
 #ifndef NEDBUG
 private:
+  /*! For propertly naming all the log files emitted in case the appropriate log
+   * particular is set.
+   */
   static unsigned _debugMessageCounter;
 
+  /*! Modifies the graphviz molgraph into a digraph so that it can be combined
+   * with all the other digraphs using gvpack
+   */
   static std::string _adaptMolGraph(std::string molGraph);
 
+  //! Writes graphviz log files from graph strings
   static void _writeGraphvizFiles(
     const std::vector<std::string>& graphvizStrings
   );
 #endif
 
 public:
+  /*! The optimized expansion only expands positions that are needed for ranking
+   * while applying sequence rule 1 immediately. Full expansion expands the
+   * entire tree indiscriminately of whether the information will ever be needed
+   * prior to applying any sequence rules.
+   */
   enum ExpansionOption {
     Optimized,
     Full
@@ -138,6 +149,7 @@ private:
   //! Variant type of both
   using VariantType = boost::variant<TreeVertexIndex, TreeEdgeIndex>;
 
+  //! A readbility-improving constexpr replacement for the root index 0 in code
   static constexpr TreeVertexIndex rootIndex = 0;
 
 /* State */
@@ -175,12 +187,20 @@ private:
   //! Returns a set of all adjacent edges (in- and out-edges)
   std::set<TreeEdgeIndex> _adjacentEdges(const TreeVertexIndex& index) const;
 
+  //! Counts the number of terminal hydrogens on out-edges of the specified index
   unsigned _adjacentTerminalHydrogens(const TreeVertexIndex& index) const;
 
+  //! Checks whether a tree index is the result of a bond split
   bool _isBondSplitDuplicateVertex(const TreeVertexIndex& index) const;
 
+  //! Checks whether a tree index is the result of a cycle closure
   bool _isCycleClosureDuplicateVertex(const TreeVertexIndex& index) const;
 
+  /*! Determins which tree indices are to be ranked
+   *
+   * Determines which tree indices are to be ranked based on the central index
+   * and a list of index excludes
+   */
   std::set<TreeVertexIndex> _auxiliaryAdjacentsToRank(
     const TreeVertexIndex& sourceIndex,
     const std::set<TreeVertexIndex>& excludedIndices
@@ -324,8 +344,12 @@ private:
     }
   }
 
+  //! Returns a string representation of vertex indices or edge indices
   template<typename ValueType>
   std::string toString(const ValueType& value) const {
+    /* This is the default - does nothing. Specializations for edges,
+     * vertices and the variant are in the .cpp file
+     */
     return ""s;
   }
 
@@ -536,9 +560,6 @@ private:
           undecidedBranch,
           undecidedBranch
         );
-        /*if(insertVertices) {
-          comparisonSets.at(undecidedBranch).insert(undecidedBranch);
-        }*/
 
         if(insertEdges) {
           if(BFSDownOnly) {
@@ -547,10 +568,6 @@ private:
               undecidedBranch,
               boost::edge(sourceIndex, undecidedBranch, _tree).first
             );
-
-            /*comparisonSets.at(undecidedBranch).insert(
-              boost::edge(sourceIndex, undecidedBranch, _tree).first
-            );*/
           } else {
             // Need to be direction-agnostic
             auto forwardEdge = boost::edge(sourceIndex, undecidedBranch, _tree);
@@ -565,12 +582,6 @@ private:
                 : backwardEdge.first
               )
             );
-
-            /*comparisonSets.at(undecidedBranch).insert(
-              forwardEdge.second
-              ? forwardEdge.first
-              : backwardEdge.first
-            );*/
           }
         }
 
@@ -602,7 +613,7 @@ private:
             {sourceIndex},
             _collectSeeds(seeds, undecidedSets)
           ),
-          _makeGraph(
+          _makeBFSStateGraph(
             header,
             sourceIndex,
             comparisonSets,
@@ -665,18 +676,12 @@ private:
                     undecidedBranch,
                     edgeSource
                   );
-                  /*if(insertVertices) {
-                    comparisonSets.at(undecidedBranch).emplace(edgeSource);
-                  }*/
 
                   edgeInserter.execute(
                     comparisonSets,
                     undecidedBranch,
                     inEdge
                   );
-                  /*if(insertEdges) {
-                    comparisonSets.at(undecidedBranch).emplace(inEdge);
-                  }*/
 
                   newSeeds.push_back(edgeSource);
                 }
@@ -703,18 +708,12 @@ private:
                 undecidedBranch,
                 edgeTarget
               );
-              /*if(insertVertices) {
-                comparisonSets.at(undecidedBranch).emplace(edgeTarget);
-              }*/
 
               edgeInserter.execute(
                 comparisonSets,
                 undecidedBranch,
                 outEdge
               );
-              /*if(insertEdges) {
-                comparisonSets.at(undecidedBranch).emplace(outEdge);
-              }*/
 
               // Add out edge target to seeds only if non-terminal
               if(!_tree[edgeTarget].isDuplicate) {
@@ -752,7 +751,7 @@ private:
               {sourceIndex},
               _collectSeeds(seeds, undecidedSets)
             ),
-            _makeGraph(
+            _makeBFSStateGraph(
               header,
               sourceIndex,
               comparisonSets,
@@ -776,8 +775,9 @@ private:
     >& undecidedSets
   );
 
+  //! Creates a graphviz representation of the BFS state
   template<typename ValueType, typename ComparatorType>
-  std::string _makeGraph(
+  std::string _makeBFSStateGraph(
     const std::string& title,
     const TreeVertexIndex& base,
     const std::map<
@@ -925,6 +925,10 @@ private:
     return ss.str();
   }
 
+  /*!
+   * Creates a graphviz representation of like/unlike pairing in sequence rule
+   * 4B
+   */
   std::string _make4BGraph(
     const TreeVertexIndex& sourceIndex,
     const std::map<
@@ -947,6 +951,7 @@ private:
     >::reverse_iterator& branchBIter
   ) const;
 
+  //! Maps sets returned by an OrderDiscoveryHelper from tree indices to atom indices
   std::vector<
     std::vector<AtomIndexType>
   > _mapToAtomIndices(
