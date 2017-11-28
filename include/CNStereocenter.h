@@ -88,9 +88,6 @@ public:
    */
   void adaptToRankingChange(const RankingInformation& newRanking) final;
 
-  //! If the central symmetry group is changed, we must adapt
-  void changeSymmetry(const Symmetry::Name& symmetryName);
-
   /*!
    * The assignment is determined based on three-dimensional positions using
    * angle and chiral distortions from the idealized symmetry.
@@ -135,7 +132,7 @@ public:
   Symmetry::Name getSymmetry() const;
 
   //! Returns a single-element set containing the central atom
-  std::set<AtomIndexType> involvedAtoms() const final;
+  std::vector<AtomIndexType> involvedAtoms() const final;
 
   /*!
    * Fetches the number of different assignments possible with the current 
@@ -144,6 +141,9 @@ public:
    * arrangement of substituents.
    */
   unsigned numAssignments() const final;
+
+  //! If the central symmetry group is changed, we must adapt
+  void setSymmetry(const Symmetry::Name& symmetryName);
 
   /*!
    * Returns Stereocenters::Type::CNStereocenter for resolution of sub-types

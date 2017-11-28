@@ -397,8 +397,12 @@ std::string EZStereocenter::rankInfo() const {
   );
 }
 
-std::set<AtomIndexType> EZStereocenter::involvedAtoms() const {
-  return {_leftCenter, _rightCenter};
+std::vector<AtomIndexType> EZStereocenter::involvedAtoms() const {
+  // Return a standard form of smaller first
+  return {
+    std::min(_leftCenter, _rightCenter),
+    std::max(_leftCenter, _rightCenter)
+  };
 }
 
 Type EZStereocenter::type() const {

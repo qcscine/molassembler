@@ -86,18 +86,15 @@ public:
   >;
 
 /* Constructors */
-  /*! 
-   * Default-constructor is deleted since the minimal molecule we represent is
-   * two bonded atoms.
-   */
-  Molecule() = delete;
+  //!  Default-constructor creates a hydrogen molecule.
+  Molecule() noexcept;
 
   //! Construct a minimal molecule from two element types and a shared bond type
   Molecule(
     const Delib::ElementType& a,
     const Delib::ElementType& b,
     const BondType& bondType
-  );
+  ) noexcept;
 
   /*! 
    * Shorthand construction of a molecule using a list of element types and
@@ -150,20 +147,15 @@ public:
     const boost::optional<unsigned>& assignment
   );
 
-  //! Changes an existing atom's element type
-  void changeElementType(
-    const AtomIndexType& a,
-    const Delib::ElementType& elementType
-  );
-
   //! TODO Temporary function prior to proper editing state correctness
   void refreshStereocenters();
 
-  /*! 
-   * Removes an atom after checking if removing that atom is safe, i.e. does
-   * not disconnect the graph.
+  /*! Removes an atom from the graph, including bonds to it.
    *
-   * Throws if isSafeToRemoveAtom returns false.
+   * Removes an atom from the molecular graph, including bonds to the atom,
+   * after checking that removing it is safe, i.e. the removal does not
+   * disconnect the graph.
+   * @throws if the supplied index is invalid or isSafeToRemoveAtom returns false.
    */
   void removeAtom(const AtomIndexType& a);
 
@@ -172,29 +164,45 @@ public:
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
    *
-   * Throws if isSafeToRemoveBond returns false. Note that it is not safe to
-   * remove a bond just because one of the involved atoms is terminal, since
-   * that atom would then be disconnected from the rest of the molecule. It is
-   * however considered safe to remove the terminal vertex, which involves
-   * removing the bond to it.
+   * @throws if isSafeToRemoveBond returns false. 
+   * @note It is not safe to remove a bond just because one of the involved
+   * atoms is terminal, since that atom would then be disconnected from the
+   * rest of the molecule. This function merely removes a bond from the graph. 
+   * It is, however, considered safe to remove the terminal vertex, which
+   * involves removing the bond to it.
    */
   void removeBond(
     const AtomIndexType& a,
     const AtomIndexType& b
   );
 
-  // TODO implement, with trigger to keep valid state (can change ranking)
+  //! Changes an existing bond's type
+  bool setBondType(
+    const AtomIndexType& a,
+    const AtomIndexType& b,
+    const BondType& bondType
+  );
+
+  //! Changes an existing atom's element type
+  void setElementType(
+    const AtomIndexType& a,
+    const Delib::ElementType& elementType
+  );
+
   /*! Sets the local geometry at an atom index
    *
    * This sets the local geometry at a specific atom index. There are a number
-   * of cases that this function treats differently: In case the symmetry does
-   * not fit the number of substituents at that atom, this function throws. If
-   * there is already a CNStereocenter instantiated at this atom index, its
-   * underlying symmetry is altered. If there is an EZStereocenter
-   * instantiated on this atom, this function will throw. If there is no
-   * CNStereocenter at this index, one is instantiated. In all cases, new or
-   * modified stereocenters are default-assigned if there is only one possible
+   * of cases that this function treats differently, besides faulty arguments:
+   * If there is already a CNStereocenter instantiated at this atom index, its
+   * underlying symmetry is altered. If there is no CNStereocenter at
+   * this index, one is instantiated. In all cases, new or modified
+   * stereocenters are default-assigned if there is only one possible
    * assignment.
+   * @throws if 
+   *   - the supplied atomic index is invalid
+   *   - there is an EZStereocenter at that index
+   *   - or the provided symmetry is a different size than that of an existing
+   *     CNStereocenter or the expected symmetry
    */
   void setGeometryAtAtom(
     const AtomIndexType& a,
@@ -203,14 +211,26 @@ public:
 
 /* Information */
 
+  /*! Determines what the local geometry at a non-terminal atom ought to be
+   *
+   * Returns the expected symmetry name at a non-terminal atom.
+   * @throws if the supplied atomic index is invalid
+   */
   Symmetry::Name determineLocalGeometry(
     const AtomIndexType& index
   ) const;
 
+  //! Returns a graphivz string representation of the molecule
   std::string dumpGraphviz() const;
 
+  /*! Fetches the atomic indices of vertices adjacent to a particular index
+   *
+   * Fetches the atomic indices of vertices adjacent to a particular index.
+   * @throws if the supplied atomic index is invalid
+   */
   std::vector<AtomIndexType> getAdjacencies(const AtomIndexType& a) const;
 
+  //! Fetches the optional bond type between two atom indices
   boost::optional<BondType> getBondType(
     const AtomIndexType& a,
     const AtomIndexType& b
@@ -218,15 +238,23 @@ public:
 
   CycleData getCycleData() const;
 
-  // Creates a copy of the contained data suitable for the Edges class
+  //! Creates a copy of the contained data suitable for the Edges class
   std::vector<ExplicitEdge> getEdges() const;
 
+  /*! Returns the element type of an atomic index
+   *
+   * Returns the element type of an atomic index
+   * @throws if the atomic index is invalid
+   */
   Delib::ElementType getElementType(const AtomIndexType& index) const;
 
+  //! Returns the underlying boost graph library adjacency list
   const GraphType& getGraph() const;
 
+  //! Returns the underlying StereocenterList instance by const-reference
   const StereocenterList& getStereocenterList() const;
 
+  //! Returns the number of adjacencies of an atomic position
   unsigned getNumAdjacencies(const AtomIndexType& a) const;
 
   StereocenterList inferStereocentersFromPositions(
@@ -279,6 +307,10 @@ public:
   RangeForTemporary<GraphType::adjacency_iterator> operator [] (
     const AtomIndexType& a
   ) const;
+
+  //! Equality operator
+  bool operator == (const Molecule& other) const;
+  bool operator != (const Molecule& other) const;
 
 /* Friends */
   friend struct MoleculeValidator;

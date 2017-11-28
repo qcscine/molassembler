@@ -276,7 +276,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
           if(!stereocenterPtr->assigned()) {
             moleculeCopy.assignStereocenterAtAtom(
-              *stereocenterPtr->involvedAtoms().begin(),
+              stereocenterPtr->involvedAtoms().front(),
               TemplateMagic::random.getSingle<unsigned>(
                 0,
                 stereocenterPtr->numAssignments()
@@ -504,7 +504,7 @@ DGDebugData debugDistanceGeometry(
         for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
           if(!stereocenterPtr->assigned()) {
             moleculeCopy.assignStereocenterAtAtom(
-              *stereocenterPtr->involvedAtoms().begin(),
+              stereocenterPtr->involvedAtoms().front(),
               TemplateMagic::random.getSingle<unsigned>(
                 0,
                 stereocenterPtr->numAssignments() - 1

@@ -10,12 +10,11 @@ TODO
   only, and perhaps only ones that do not permit modification of the underlying
   object. Otherwise hide the abstraction some other way, either through obtuse
   API or whatever
-- All RankingTree TODOs
+- Stereocenters that merely mark non-standard geometries and do not provide any
+  assignments are probably not included in ranking at all, but they should be!
 
 Remaining DG deficiencies
 -------------------------
-- Ranking algorithm requires a rewrite, enhancement to consider cycles and
-  stereocenters, plus returning linking information
 - Current metrization algorithm is O(N⁵), this is unacceptable, implement better
   algorithm
 - Strain imposed on EZStereocenter substituents that are in small cycles is not
@@ -38,9 +37,6 @@ Remaining DG deficiencies
            
 TODO
 ----
-- Remove GraphAlgorithm's TreeGenerator
-- Raytrace POV writer needs some better atom naming, cycling through chars just
-  leads to commas and stuff that pov-ray can't read
 - Documentation:
   - README.md file
 
@@ -69,14 +65,8 @@ TODO
   This is the approach taken now, but no tests to ensure this is handled
   correctly.
 
-- Metrization during distance matrix generation in DistanceBoundsMatrix
-  (At step 7 of DG steps from p.15)
 - Make dependence on alternate set of Symmetry tetraeder subdivisions clearer
   in code / analysis
-- Consider penalization of unsuitable geometries (using VSEPR /
-  determineLocalGeometry to judge) in SymmetryFit -> see what happens when you
-  try to load testosterone, which has some strained tetrahedral centers that are
-  fitted as seesaws!
 - Make sure EZStereocenter is stable against the situation where (and the twist
   is a given) -> Also, the involvedAtoms of this case overlap! No singular
   stereocenter per atom in the entire molecule! Unless you create another type
@@ -92,9 +82,6 @@ TODO
 - Fixed atoms in DG -> how? Probably by just specifying the geometry without
   variance in the distance bounds and then setting the fixed atoms' gradients to
   zero in the refinement stage
-- Atom removal safety of code -> getNumAtoms, getNumBonds, etc. Make the full
-  set of data be contiguous every time (atom indices range from 0 -> nAtoms - 1
-  Molecule may also be prone to errors in this regard
 - Aromatic cycles have to be detected for DG! This property has to be detected
   for generated structures to be more reasonable, but also not necessarily from
   the start. But watch out, don't forget to integrate it at some point! A

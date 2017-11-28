@@ -1,5 +1,7 @@
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/graphviz.hpp"
+#include "boost/graph/isomorphism.hpp"
+#include "boost/graph/graph_utility.hpp"
 
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
@@ -209,7 +211,7 @@ std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
    * - bond types to neighbors
    */
 
-  // call this only on non-terminal atoms
+  // Ensure this is only called on non-terminal atoms
   assert(getNumAdjacencies(index) > 1);
 
   // first basic stuff for VSEPR, later L and X for transition metals
@@ -249,17 +251,20 @@ void Molecule::_updateStereocenterList() {
   }
 }
 
-
 /* Public members */
 /* Constructors */
+Molecule::Molecule() noexcept
+  : Molecule(Delib::ElementType::H, Delib::ElementType::H, BondType::Single) {}
+
 Molecule::Molecule(
   const Delib::ElementType& a,
   const Delib::ElementType& b,
   const BondType& bondType
-) {
+) noexcept {
   // update _adjacencies
   _addAtom(a);
   _addAtom(b);
+  // Although addBond is potentially-throwing, it never will
   addBond(0, 1, bondType);
 }
 
@@ -294,6 +299,10 @@ AtomIndexType Molecule::addAtom(
   const AtomIndexType& adjacentTo,
   const BondType& bondType
 ) {
+  if(!_isValidIndex(adjacentTo)) {
+    throw std::out_of_range("Molecule::addAtom: Supplied atom index is invalid!");
+  }
+
   const auto index = _addAtom(elementType);
   addBond(index, adjacentTo, bondType);
   return index;
@@ -304,7 +313,14 @@ void Molecule::addBond(
   const AtomIndexType& b,
   const BondType& bondType
 ) {
-  assert(_isValidIndex(a) && _isValidIndex(b) && a != b);
+  if(!_isValidIndex(a) || !_isValidIndex(b)) {
+    throw std::out_of_range("Molecule::addBond: A supplied index is invalid!");
+  }
+
+  if(a == b) {
+    throw std::logic_error("Molecule::addBond: Cannot add a bond between identical indices!");
+  }
+
   auto edgeAddPair = boost::add_edge(a, b, _adjacencies);
   _adjacencies[edgeAddPair.first].bondType = bondType;
 }
@@ -313,7 +329,10 @@ void Molecule::assignStereocenterAtAtom(
   const AtomIndexType& a,
   const boost::optional<unsigned>& assignment
 ) {
-  assert(_isValidIndex(a));
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::assignStereocenterAtAtom: Supplied index is invalid!");
+  }
+
   if(_stereocenters.involving(a)) {
     auto stereocenterPtr = _stereocenters.at(a);
 
@@ -329,22 +348,15 @@ void Molecule::assignStereocenterAtAtom(
   }
 }
 
-void Molecule::changeElementType(
-  const AtomIndexType& a,
-  const Delib::ElementType& elementType
-) {
-  if(!_isValidIndex(a)) {
-    throw std::logic_error("This index is invalid!");
-  }
-
-  _adjacencies[a].elementType = elementType;
-}
-
 void Molecule::refreshStereocenters() {
   _stereocenters = _detectStereocenters();
 }
 
 void Molecule::removeAtom(const AtomIndexType& a) {
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::removeAtom: Supplied index is invalid!");
+  }
+
   if(!isSafeToRemoveAtom(a)) {
     throw std::logic_error("Removing this atom disconnects the graph!");
   }
@@ -360,6 +372,10 @@ void Molecule::removeBond(
   const AtomIndexType& a,
   const AtomIndexType& b
 ) {
+  if(!_isValidIndex(a) || !_isValidIndex(b)) {
+    throw std::out_of_range("Molecule::removeBond: Supplied index is invalid!");
+  }
+
   if(!isSafeToRemoveBond(a, b)) {
     throw std::logic_error("Removing this bond disconnects the graph!");
   }
@@ -373,11 +389,115 @@ void Molecule::removeBond(
   }
 }
 
+bool Molecule::setBondType(
+  const AtomIndexType& a,
+  const AtomIndexType& b,
+  const BondType& bondType
+) {
+  if(!_isValidIndex(a) || !_isValidIndex(b)) {
+    throw std::out_of_range("Molecule::setBondType: A supplied index is invalid!");
+  }
+
+  auto edgePair = boost::edge(a, b, _adjacencies);
+  if(edgePair.second) {
+    _adjacencies[edgePair.first].bondType = bondType;
+  } else {
+    addBond(a, b, bondType);
+  }
+
+  return edgePair.second;
+}
+
+void Molecule::setElementType(
+  const AtomIndexType& a,
+  const Delib::ElementType& elementType
+) {
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::setElementType: This index is invalid!");
+  }
+
+  _adjacencies[a].elementType = elementType;
+}
+
+void Molecule::setGeometryAtAtom(
+  const AtomIndexType& a,
+  const Symmetry::Name& symmetryName
+) {
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::setGeometryAtAtom: Supplied atom index is invalid");
+  }
+
+  if(_stereocenters.involving(a)) {
+    if(_stereocenters.at(a)->type() == Stereocenters::Type::CNStereocenter) {
+      auto CNSPointer = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+        _stereocenters.at(a)
+      );
+
+      if(
+        Symmetry::size(CNSPointer->getSymmetry()) 
+        == Symmetry::size(symmetryName)
+      ) {
+        CNSPointer->setSymmetry(symmetryName);
+      } else {
+        throw std::logic_error(
+          "Molecule::setGeometryAtAtom: The size of the supplied symmetry is "
+          "not the same as that of the existing stereocenter's current symmetry!"
+        );
+      }
+    } else {
+      throw std::logic_error(
+        "Molecule::setGeometryAtAtom: There is an E/Z stereocenter at the "
+        "supplied position, its local symmetry cannot be changed"
+      );
+    }
+  } else {
+    const Symmetry::Name expectedSymmetry = determineLocalGeometry(a);
+
+    if(Symmetry::size(expectedSymmetry) != Symmetry::size(symmetryName)) {
+      throw std::logic_error(
+        "Molecule::setGeometryAtAtom: The size of the supplied symmetry is not "
+        " the same as that of the expected symmetry!"
+      );
+    }
+
+    /* In case the expected symmetry is the same as the supplied symmetry, this
+     * is a no-op, since it adds no information to the Molecule (this
+     * stereocenter would otherwise be created during DG initialization)
+     */
+    if(expectedSymmetry != symmetryName) {
+      // Add the stereocenter irrespective of how many assignments it has
+      auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
+        symmetryName,
+        a,
+        rankPriority(a)
+      );
+
+      // Default-assign stereocenters with only one assignment
+      if(newStereocenterPtr->numAssignments() == 1) {
+        newStereocenterPtr->assign(0u);
+      }
+
+      _stereocenters.add(
+        std::move(newStereocenterPtr)
+      );
+    }
+  }
+}
+
 /* Information */
 Symmetry::Name Molecule::determineLocalGeometry(
   const AtomIndexType& index
 ) const {
-  assert(getNumAdjacencies(index) > 1); 
+  if(!_isValidIndex(index)) {
+    throw std::out_of_range("Molecule::determineLocalGeometry: Supplied index is invalid!");
+  }
+
+  if(getNumAdjacencies(index) <= 1) {
+    throw std::logic_error(
+      "Molecule::determineLocalGeometry: No geometries exist for terminal or "
+      " disconnected atoms"
+    );
+  }
 
   auto ligandsVector = _reduceToLigandTypes(index);
 
@@ -471,17 +591,22 @@ std::vector<Molecule::ExplicitEdge> Molecule::getEdges() const {
     const auto& edgeIndex : 
     RangeForTemporary<GraphType::edge_iterator>(boost::edges(_adjacencies))
   ) {
-    edges.push_back(ExplicitEdge({
-      {boost::source(edgeIndex, _adjacencies), boost::target(edgeIndex, _adjacencies)},
-      _adjacencies[edgeIndex].bondType
-    }));
+    edges.push_back(
+      ExplicitEdge({
+        {boost::source(edgeIndex, _adjacencies), boost::target(edgeIndex, _adjacencies)},
+        _adjacencies[edgeIndex].bondType
+      })
+    );
   }
 
   return edges;
 }
 
 Delib::ElementType Molecule::getElementType(const AtomIndexType& index) const {
-  assert(_isValidIndex(index));
+  if(!_isValidIndex(index)) {
+    throw std::out_of_range("Molecule::getElementType: Supplied index is invalid");
+  }
+
   return _adjacencies[index].elementType;
 }
 
@@ -504,10 +629,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
 ) const {
   StereocenterList stereocenters;
 
-  for(
-    const auto& edgeIndex : 
-    _getEZStereocenterCandidates()
-  ) {
+  for(const auto& edgeIndex : _getEZStereocenterCandidates()) {
     auto source = boost::source(edgeIndex, _adjacencies),
          target = boost::target(edgeIndex, _adjacencies);
 
@@ -602,6 +724,11 @@ bool Molecule::isAdjacent(
 }
 
 bool Molecule::isSafeToRemoveAtom(const AtomIndexType& a) const {
+  // A molecule is by definition at least two atoms!
+  if(numAtoms() == 2) {
+    return false;
+  }
+
   auto removalSafetyData = GraphAlgorithms::getRemovalSafetyData(
     getGraph()
   );
@@ -637,7 +764,9 @@ bool Molecule::isSafeToRemoveBond(
 RangeForTemporary<GraphType::adjacency_iterator> Molecule::iterateAdjacencies(
   const AtomIndexType& a
 ) const {
-  assert(_isValidIndex(a));
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::iterateAdjacencies: Supplied index is invalid!");
+  }
 
   return RangeForTemporary<GraphType::adjacency_iterator>(
     boost::adjacent_vertices(a, _adjacencies)
@@ -651,7 +780,9 @@ RangeForTemporary<GraphType::edge_iterator> Molecule::iterateEdges() const {
 RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(
   const AtomIndexType& a
 ) const {
-  assert(_isValidIndex(a));
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::iterateEdges: Supplied index is invalid!");
+  }
 
   return RangeForTemporary<GraphType::out_edge_iterator>(
     boost::out_edges(a, _adjacencies)
@@ -707,11 +838,159 @@ RankingInformation Molecule::rankPriority(
 RangeForTemporary<GraphType::adjacency_iterator> Molecule::operator [] (
   const AtomIndexType& a
 ) const {
-  assert(_isValidIndex(a));
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::operator[]: Supplied index is invalid!");
+  }
   
   return RangeForTemporary<GraphType::adjacency_iterator>(
     boost::adjacent_vertices(a, _adjacencies)
   );
+}
+
+bool Molecule::operator == (const Molecule& other) const {
+  const unsigned thisNumAtoms = numAtoms();
+
+  if(thisNumAtoms != other.numAtoms()) {
+    return false;
+  }
+
+  // Where the corresponding index from the other graph is stored
+  std::vector<AtomIndexType> indexMap(numAtoms());
+
+  bool isomorphic = boost::isomorphism(
+    _adjacencies,
+    other._adjacencies,
+    boost::isomorphism_map(
+      boost::make_safe_iterator_property_map(
+        indexMap.begin(),
+        thisNumAtoms,
+        boost::get(boost::vertex_index, _adjacencies)
+      )
+    )
+  );
+
+  if(!isomorphic) {
+    return false;
+  }
+
+  // Check that all element types of the isomorphism mapping match
+  for(AtomIndexType thisIndex = 0; thisIndex < thisNumAtoms; ++thisIndex) {
+    if(
+      _adjacencies[thisIndex].elementType 
+        != other._adjacencies[indexMap.at(thisIndex)].elementType
+    ) {
+      return false;
+    }
+  }
+
+  // Check that all bond types are identical
+  for(const auto& edgeIndex : iterateEdges()) {
+    // Fetch the corresponding edge from the other graph
+    auto otherEdgePair = boost::edge(
+      indexMap.at(boost::source(edgeIndex, _adjacencies)),
+      indexMap.at(boost::target(edgeIndex, _adjacencies)),
+      other._adjacencies
+    );
+
+    // This edge MUST be found, the isomorphism holds
+    assert(otherEdgePair.second);
+
+    if(
+      _adjacencies[edgeIndex].bondType
+      != other._adjacencies[otherEdgePair.first].bondType
+    ) {
+      return false;
+    }
+  }
+
+  // Before doing a full equivalence check, peek at the sizes
+  if(_stereocenters.size() != other._stereocenters.size()) {
+    return false;
+  }
+
+  // Check equivalence of the StereocenterLists
+  for(const auto& stereocenterPtr : _stereocenters) {
+    if(stereocenterPtr->type() == Stereocenters::Type::CNStereocenter) {
+      const auto otherCentralAtom = indexMap.at(
+        stereocenterPtr->involvedAtoms().front()
+      );
+
+      // Does other not have a stereocenter there?
+      if(!other._stereocenters.involving(otherCentralAtom)) {
+        return false;
+      }
+
+      // Ensure the type at other is a CNStereocenter too
+      if(
+        other._stereocenters.at(otherCentralAtom)->type() 
+          != Stereocenters::Type::CNStereocenter
+      ) {
+        return false;
+      }
+
+      auto thisCNSPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(stereocenterPtr);
+      auto otherCNSPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+        other._stereocenters.at(otherCentralAtom)
+      );
+
+      // Are they equal in an abstract sense, not object-representation-wise?
+      if(
+        thisCNSPtr->getSymmetry() != otherCNSPtr->getSymmetry()
+        || thisCNSPtr->numAssignments() != otherCNSPtr->numAssignments()
+        || thisCNSPtr->assigned() != otherCNSPtr->assigned()
+      ) {
+        return false;
+      }
+    } else {
+      const auto otherCentralAtoms = TemplateMagic::map(
+        stereocenterPtr->involvedAtoms(),
+        [&indexMap](const auto& thisIndex) -> AtomIndexType {
+          return indexMap.at(thisIndex);
+        }
+      );
+
+      // Ensure there is a stereocenter on both
+      if(
+        !other._stereocenters.involving(otherCentralAtoms.front())
+        || !other._stereocenters.involving(otherCentralAtoms.back())
+      ) {
+        return false;
+      }
+
+      // Address-compare that the stereocenters on other are identical for both
+      if(
+        other._stereocenters.at(otherCentralAtoms.front()) 
+          != other._stereocenters.at(otherCentralAtoms.back())
+      ) {
+        return false;
+      }
+
+      // Ensure that it's also an EZStereocenter
+      if(
+        other._stereocenters.at(otherCentralAtoms.front())->type() 
+          != Stereocenters::Type::EZStereocenter
+      ) {
+        return false;
+      }
+
+      // Shortcut name
+      const auto& otherPtr = other._stereocenters.at(otherCentralAtoms.front());
+
+      // Abstract-compare both
+      if(
+        stereocenterPtr->numAssignments() != otherPtr->numAssignments()
+        || stereocenterPtr->assigned() != otherPtr->assigned()
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool Molecule::operator != (const Molecule& other) const {
+  return !(*this == other);
 }
 
 } // namespace MoleculeManip

@@ -15,7 +15,7 @@ BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
     for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
       if(!stereocenterPtr -> assigned()) {
         molecule.assignStereocenterAtAtom(
-          *stereocenterPtr->involvedAtoms().begin(),
+          stereocenterPtr->involvedAtoms().front(),
           0
         );
       }

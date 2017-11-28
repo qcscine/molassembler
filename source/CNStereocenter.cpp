@@ -182,26 +182,6 @@ Symmetry::Name CNStereocenter::getSymmetry() const {
   return _symmetry;
 }
 
-void CNStereocenter::changeSymmetry(const Symmetry::Name& symmetryName) {
-  // Set new symmetry
-  _symmetry = symmetryName;
-
-  // recalculate the number of unique Assignments
-  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
-    AssignmentType(
-      symmetryName,
-      _makeAssignmentCharacters(_ranking),
-      _makeAssignmentLinks(_ranking)
-    ),
-    false // do NOT remove trans-spanning ligand groups
-  );
-
-  _symmetryPositionMapCache.clear();
-
-  // The Stereocenter is now unassigned
-  _assignmentOption = boost::none;
-}
-
 void CNStereocenter::fit(
   const Delib::PositionCollection& positions,
   std::vector<Symmetry::Name> excludeSymmetries
@@ -240,7 +220,7 @@ void CNStereocenter::fit(
     }
 
     // Change the symmetry of the CNStereocenter
-    changeSymmetry(symmetryName);
+    setSymmetry(symmetryName);
 
     for(
       unsigned assignment = 0;
@@ -401,12 +381,12 @@ void CNStereocenter::fit(
     && bestPenalty == initialPenalty
   ) {
     // Return to prior
-    changeSymmetry(priorSymmetry);
+    setSymmetry(priorSymmetry);
     assign(priorAssignment);
 
   } else {
     // Set to best fit
-    changeSymmetry(bestSymmetry);
+    setSymmetry(bestSymmetry);
 
     /* How to handle multiplicity? 
      * Current policy: If there is multiplicity, warn and do not assign
@@ -530,12 +510,32 @@ std::string CNStereocenter::rankInfo() const {
   );
 }
 
-std::set<AtomIndexType> CNStereocenter::involvedAtoms() const {
+std::vector<AtomIndexType> CNStereocenter::involvedAtoms() const {
   return {_centerAtom};
 }
 
 unsigned CNStereocenter::numAssignments() const {
   return _uniqueAssignmentsCache.size();
+}
+
+void CNStereocenter::setSymmetry(const Symmetry::Name& symmetryName) {
+  // Set new symmetry
+  _symmetry = symmetryName;
+
+  // recalculate the number of unique Assignments
+  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
+    AssignmentType(
+      symmetryName,
+      _makeAssignmentCharacters(_ranking),
+      _makeAssignmentLinks(_ranking)
+    ),
+    false // do NOT remove trans-spanning ligand groups
+  );
+
+  _symmetryPositionMapCache.clear();
+
+  // The Stereocenter is now unassigned
+  _assignmentOption = boost::none;
 }
 
 Type CNStereocenter::type() const {

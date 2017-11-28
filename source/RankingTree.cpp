@@ -680,9 +680,9 @@ void RankingTree::_applySequenceRules(
 
                 if(
                   stereocenterPtr->type() == Stereocenters::Type::EZStereocenter
-                  && stereocenterPtr->involvedAtoms() == std::set<AtomIndexType> {
-                    molSourceIndex,
-                    molTargetIndex
+                  && stereocenterPtr->involvedAtoms() == std::vector<AtomIndexType> {
+                    std::min(molSourceIndex, molTargetIndex),
+                    std::max(molSourceIndex, molTargetIndex)
                   } && stereocenterPtr->numAssignments() == 2
                 ) {
                   // Take the assignment from that stereocenter
@@ -764,7 +764,7 @@ void RankingTree::_applySequenceRules(
                  */
                 if(
                   stereocenterPtr->type() == Stereocenters::Type::CNStereocenter
-                  && stereocenterPtr->involvedAtoms() == std::set<AtomIndexType> {
+                  && stereocenterPtr->involvedAtoms() == std::vector<AtomIndexType> {
                     molSourceIndex
                   } && stereocenterPtr->numAssignments() == newStereocenter.numAssignments()
                 ) {

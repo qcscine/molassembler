@@ -127,7 +127,7 @@ public:
    * Return the set of center atoms (atoms that angle information is available 
    * on if asked as the central atom of an angle).
    */
-  virtual std::set<AtomIndexType> involvedAtoms() const = 0;
+  virtual std::vector<AtomIndexType> involvedAtoms() const = 0;
 
   //! Return the Subtype of the Stereocenter
   virtual Type type() const = 0;

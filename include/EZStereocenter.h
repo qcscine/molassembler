@@ -133,7 +133,7 @@ public:
 
   std::string rankInfo() const;
 
-  std::set<AtomIndexType> involvedAtoms() const final;
+  std::vector<AtomIndexType> involvedAtoms() const final;
 
   Type type() const final;
 
