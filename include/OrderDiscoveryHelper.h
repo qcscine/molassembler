@@ -206,6 +206,8 @@ public:
 
       }
     }
+
+    addTransferabilityEdges();
   }
 
   /*!
@@ -275,6 +277,8 @@ public:
       // Add the edge to this graph
       boost::add_edge(thisEdgeSource, thisEdgeTarget, _graph);
     }
+
+    addTransferabilityEdges();
   }
 
   /*!

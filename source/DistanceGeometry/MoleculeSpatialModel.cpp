@@ -158,7 +158,12 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       auto source = boost::source(edgeIndex, molecule.getGraph()),
            target = boost::target(edgeIndex, molecule.getGraph());
 
-      if(_stereocenterMap.count(source) == 0 && _stereocenterMap.count(target) == 0) {
+      if(
+        _stereocenterMap.count(source) == 0 
+        && _stereocenterMap.count(target) == 0
+        && molecule.getNumAdjacencies(source) == 3
+        && molecule.getNumAdjacencies(target) == 3
+      ) {
         // Instantiate without regard for number of assignments
         auto newStereocenterPtr = std::make_shared<Stereocenters::EZStereocenter>(
           source,
