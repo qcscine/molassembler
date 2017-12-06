@@ -54,7 +54,7 @@ extern TemplateMagic::MinimalCache<
 
 unsigned getNumUnlinked(
   const Symmetry::Name& symmetryName,
-  const unsigned& nIdenticalLigands
+  unsigned nIdenticalLigands
 );
 
 } // namespace Symmetry

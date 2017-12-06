@@ -850,3 +850,33 @@ static_assert(
   "nSymmetries does not equal number of symmetry data class types in "
   "allSymmetryDataTypes"
 );
+
+#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
+BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
+  /* In every case where allMappings has a value, getMapping must also return
+   * a some optional
+   */
+  bool pass = true;
+  for(const auto& fromSymmetry : Symmetry::allNames) {
+    unsigned i = static_cast<unsigned>(fromSymmetry);
+    for(const auto& toSymmetry : Symmetry::allNames) {
+      unsigned j = static_cast<unsigned>(toSymmetry);
+      if(
+        i < j
+        && allMappings.at(i, j).hasValue() 
+          != static_cast<bool>(
+            Symmetry::getMapping(fromSymmetry, toSymmetry)
+          )
+      ) {
+        pass = false;
+        break;
+      }
+    }
+  }
+
+  BOOST_CHECK_MESSAGE(
+    pass,
+    "Not all constexpr mappings from allMappings are available from getMapping!"
+  );
+}
+#endif

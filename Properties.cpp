@@ -4,23 +4,14 @@
 namespace Symmetry {
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-/* Since the pointer-to-function of the instantiated function template is
- * identical for all symmetry data types (when using the optional-extended
- * version to avoid instantiating symmetryTransitionMappings with non-adjacent
- * symmetries), we can generate an upper triangular matrix of function pointers!
- */
-
 template<typename SymmetrySource, typename SymmetryTarget>
 struct mappingCalculationFunctor {
   static constexpr auto value() {
-    // Return merely the function, not the evaluated result
     return constexprProperties::calculateMapping<SymmetrySource, SymmetryTarget>();
   }
 };
 
-/* Make function pointers to symmetryMapping for all possible combinations of
- * symmetry types
- */
+// Calculate the symmetryMapping for all possible combinations of symmetries
 constexpr auto allMappings = ConstexprMagic::makeUpperTriangularMatrix(
   ConstexprMagic::TupleType::mapAllPairs<
     data::allSymmetryDataTypes,
@@ -43,7 +34,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   auto indexPair = std::make_pair(a, b);
 
   if(mappingsCache.has(indexPair)) {
-    return mappingsCache.get(indexPair);
+    return mappingsCache.getOption(indexPair);
   }
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -55,10 +46,11 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
    * used at compile-time to generate allMappings
    */
   if(
-    allMappings.N <= std::max(
+    std::max(
       static_cast<unsigned>(a),
       static_cast<unsigned>(b)
-    )
+    ) < Symmetry::nSymmetries
+    && static_cast<unsigned>(a) < static_cast<unsigned>(b)
   ) {
     auto& constexprOption = allMappings.at(
       static_cast<unsigned>(a),
