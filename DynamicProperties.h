@@ -99,16 +99,38 @@ std::vector<unsigned> applyIndexMapping(
 
 struct DistortionInfo {
   std::vector<unsigned> indexMapping;
-  double totalDistortion;
+  double angularDistortion;
   double chiralDistortion;
 
   DistortionInfo(
     std::vector<unsigned> passIndexMapping,
-    const double& passTotalDistortion,
+    const double& passAngularDistortion,
     const double& passChiralDistortion
   );
 };
 
+/*!
+ * Generates symmetry transition index mappings with the lowest angular
+ * distortion and then subsets that group to those with the lowest chiral
+ * distortion. Transitions are limited to symmetries with size differences of 0
+ * and ±1.
+ */
+std::vector<DistortionInfo> symmetryTransitionMappings(
+  const Symmetry::Name& symmetryFrom,
+  const Symmetry::Name& symmetryTo
+);
+
+/*!
+ * Generates symmetry transition index mappings for the special case of ligand
+ * loss, in which a ligand is removed from a particular position in the symmetry
+ */
+std::vector<DistortionInfo> ligandLossTransitionMappings(
+  const Symmetry::Name& symmetryFrom,
+  const Symmetry::Name& symmetryTo,
+  const unsigned& positionInSourceSymmetry
+);
+
+//! A grouping of index mappings of equal angular and chiral distortion
 struct SymmetryTransitionGroup {
   std::set<
     std::vector<unsigned>
@@ -145,27 +167,19 @@ struct SymmetryTransitionGroup {
   }
 };
 
-/*!
- * Generates symmetry transition index mappings with the lowest angular
- * distortion and then subsets that group to those with the lowest chiral
- * distortion. Transitions are limited to symmetries with size differences of 0
- * and ±1.
+/*! 
+ * Selects index mappings from a DistortionInfo list, choosing those with lowest
+ * angular distortion first, and lowest chiral distortion afterwards. Groups
+ * them into a SymmetryTransitionGroup.
  */
-SymmetryTransitionGroup symmetryTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo
+SymmetryTransitionGroup selectBestTransitionMappings(
+  const std::vector<DistortionInfo>& distortions
 );
 
 /*!
- * Generates symmetry transition index mappings for the special case of ligand
- * loss, in which a ligand is removed from a particular position in the symmetry
+ * Calculates the number of assignments in a specific symmetry and a number of
+ * identical ligands.
  */
-SymmetryTransitionGroup ligandLossTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo,
-  const unsigned& positionInSourceSymmetry
-);
-
 unsigned numUnlinkedAssignments(
   const Symmetry::Name& symmetry,
   const unsigned& nIdenticalLigands

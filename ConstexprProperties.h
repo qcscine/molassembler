@@ -423,6 +423,15 @@ constexpr unsigned maxRotations() {
   );
 }
 
+/*!
+ * This is a perfect hash for small arrays containing numbers from 0-9. It
+ * essentially interprets the array as a positive integer, e.g.:
+ *
+ *   {4, 8, 9, 0, 4} -> 48904
+ *
+ * Why? Because numeric comparisons in sets are probably faster than
+ * lexicographical comparisons between vectors.
+ */
 template<typename UnsignedType, size_t size>
 constexpr auto hashIndexList(const ConstexprMagic::Array<unsigned, size>& indexList) {
   constexpr unsigned maxDigitsStoreable = ConstexprMagic::Math::floor(
@@ -690,14 +699,13 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
   double lowestChiralDistortion = 100;
 
   // Construct the initial index mapping
-  ArrayType<unsigned, SymmetryClassFrom::size> indexMapping;
+  ArrayType<unsigned, SymmetryClassTo::size> indexMapping;
   for(unsigned i = 0; i < deletedSymmetryPosition; ++i) {
     indexMapping.at(i) = i;
   }
   for(unsigned i = deletedSymmetryPosition; i < SymmetryClassFrom::size - 1; ++i) {
     indexMapping.at(i) = i + 1;
   }
-  indexMapping.at(SymmetryClassFrom::size - 1) = deletedSymmetryPosition;
 
   /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
    * save that symmetryTo and symmetryFrom are swapped in all occasions
@@ -715,9 +723,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
   };
 
   do {
-    auto mapped = symPosMapping(indexMapping);
-
-    if(!encounteredMappings.contains(hashIndexList<IndexListStorageType>(mapped))) {
+    if(!encounteredMappings.contains(hashIndexList<IndexListStorageType>(indexMapping))) {
       auto angularDistortion = calculateAngleDistortion<
         SymmetryClassTo,
         SymmetryClassFrom
@@ -755,7 +761,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
       }
 
       // Add all rotations to the encountered mappings
-      auto allRotations = generateAllRotations<SymmetryClassFrom>(mapped);
+      auto allRotations = generateAllRotations<SymmetryClassTo>(indexMapping);
 
       for(const auto& rotation : allRotations) {
         auto hashed = hashIndexList<IndexListStorageType>(rotation);
@@ -766,11 +772,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
       }
     }
   } while(
-    ConstexprMagic::inPlaceNextPermutation(
-      indexMapping,
-      0,
-      SymmetryClassFrom::size - 1
-    )
+    ConstexprMagic::inPlaceNextPermutation(indexMapping)
   );
 
   return MappingsReturnType(

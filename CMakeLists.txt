@@ -15,8 +15,12 @@ enable_testing()
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
 
-# dependencies
-find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+# dependencies: Boost
+find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options)
+if(Boost_FOUND) 
+  include_directories(Boost_INCLUDE_DIRS)
+endif()
+# dependencies: Eigen
 find_package(Eigen3 3.1.1 REQUIRED)
 if(Eigen3_FOUND)
   message(STATUS "Eigen version: ${Eigen3_VERSION}")
@@ -106,7 +110,7 @@ set_target_properties(
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS "${WARNING_FLAGS} ${CONSTEXPR_OPTIONS}"
 )
-target_include_directories(symmetryTests PRIVATE ${BOOST_ROOT})
+target_include_directories(symmetryTests PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(symmetryTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)
 
 # add test
@@ -120,5 +124,22 @@ set_target_properties(
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS "${WARNING_FLAGS} ${CONSTEXPR_OPTIONS}"
 )
-target_include_directories(writeTransitionDotFiles PRIVATE ${BOOST_ROOT} symmetries)
-target_link_libraries(writeTransitionDotFiles ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} symmetries)
+target_include_directories(writeTransitionDotFiles PRIVATE ${Boost_INCLUDE_DIRS} symmetries)
+target_link_libraries(writeTransitionDotFiles symmetries)
+
+
+message(STATUS "Program options library: ${Boost_PROGRAM_OPTIONS_LIBRARY}")
+add_executable(writeMappings writeMappings.cpp)
+target_compile_options(writeMappings PUBLIC -g -O2)
+set_target_properties(
+  writeMappings PROPERTIES
+  CXX_STANDARD 14
+  CXX_STANDARD_REQUIRED ON
+  COMPILE_FLAGS "${WARNING_FLAGS} ${CONSTEXPR_OPTIONS}"
+)
+target_include_directories(writeMappings PRIVATE ${Boost_INCLUDE_DIRS} symmetries)
+target_link_libraries(
+  writeMappings 
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  symmetries
+)

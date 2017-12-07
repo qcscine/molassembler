@@ -89,7 +89,9 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   ) {
     mappingsCache.add(
       indexPair,
-      properties::symmetryTransitionMappings(a, b)
+      properties::selectBestTransitionMappings(
+        properties::symmetryTransitionMappings(a, b)
+      )
     );
   }
 #endif

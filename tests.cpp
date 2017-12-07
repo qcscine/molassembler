@@ -427,9 +427,11 @@ std::enable_if_t<
    * .indexMapping - vector containing the index mapping
    * .totalDistortion, .chiralDistortion - doubles
    */
-  auto dynamicMappings = properties::symmetryTransitionMappings(
-    SymmetryClassFrom::name,
-    SymmetryClassTo::name
+  auto dynamicMappings = properties::selectBestTransitionMappings(
+    properties::symmetryTransitionMappings(
+      SymmetryClassFrom::name,
+      SymmetryClassTo::name
+    )
   );
 
   ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
@@ -527,10 +529,12 @@ std::enable_if_t<
   for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
     dynamicMappings.emplace_back(
       i,
-      ligandLossTransitionMappings(
-        SymmetryClassFrom::name,
-        SymmetryClassTo::name,
-        i
+      selectBestTransitionMappings(
+        ligandLossTransitionMappings(
+          SymmetryClassFrom::name,
+          SymmetryClassTo::name,
+          i
+        )
       )
     );
   }
@@ -560,7 +564,7 @@ std::enable_if_t<
   }
 
   // Compare an unsigned set of sub-group sizes from each
-  std::set<unsigned> dynamicGroupSizes, constexprGroupSizes;
+  std::multiset<unsigned> dynamicGroupSizes, constexprGroupSizes;
 
   for(const auto& dynamicGroup : dynamicGroups) {
     dynamicGroupSizes.insert(dynamicGroup.size());

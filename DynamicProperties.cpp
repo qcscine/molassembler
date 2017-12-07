@@ -6,6 +6,11 @@
 #include "template_magic/Numeric.h"
 #include "template_magic/VectorView.h"
 
+/* TODO
+ * - Consider unordered_set for rotation contains, using the hash function from 
+ *   constexpr work
+ */
+
 namespace Symmetry {
 
 namespace properties {
@@ -92,6 +97,33 @@ double calculateAngleDistortion(
   }
 
   return angularDistortion;
+}
+
+unsigned long hashIndexList(const std::vector<unsigned>& indexList) {
+  constexpr unsigned maxDigitsStoreable = ConstexprMagic::Math::floor(
+    ConstexprMagic::Math::log10(
+      static_cast<double>(
+        std::numeric_limits<unsigned long>::max()
+      )
+    )
+  );
+
+  if(indexList.size() > maxDigitsStoreable) {
+    throw std::logic_error("hashIndexList cannot hash such a long index list");
+  }
+
+  long unsigned hash = 0;
+  unsigned tenPowers = 1;
+
+  for(unsigned i = 0; i < indexList.size(); ++i) {
+    if(indexList.at(i) > 9) {
+      throw std::logic_error("hashIndexList: Index list contains numbers greater than 9!");
+    }
+    hash += tenPowers * indexList.at(i);
+    tenPowers *= 10;
+  }
+
+  return hash;
 }
 
 boost::optional<unsigned> propagateIndexOptionalThroughMapping(
@@ -275,25 +307,14 @@ std::vector<unsigned> applyIndexMapping(
 
 DistortionInfo::DistortionInfo(
   std::vector<unsigned> passIndexMapping,
-  const double& passTotalDistortion,
+  const double& passAngularDistortion,
   const double& passChiralDistortion
 ) : indexMapping(std::move(passIndexMapping)),
-    totalDistortion(passTotalDistortion),
+    angularDistortion(passAngularDistortion),
     chiralDistortion(passChiralDistortion)
 {}
 
-SymmetryTransitionGroup::SymmetryTransitionGroup(
-  std::set<
-    std::vector<unsigned>
-  > passIndexMappings,
-  const double& passAngleDistortion,
-  const double& passChiralDistortion
-) : indexMappings(std::move(passIndexMappings)),
-    angularDistortion(passAngleDistortion),
-    chiralDistortion(passChiralDistortion) 
-{}
-
-SymmetryTransitionGroup symmetryTransitionMappings(
+std::vector<DistortionInfo> symmetryTransitionMappings(
   const Symmetry::Name& symmetryFrom,
   const Symmetry::Name& symmetryTo
 ) {
@@ -383,6 +404,100 @@ SymmetryTransitionGroup symmetryTransitionMappings(
     }
   } while (std::next_permutation(indexMapping.begin(), indexMapping.end()));
 
+  return distortions;
+}
+
+std::vector<DistortionInfo> ligandLossTransitionMappings(
+  const Symmetry::Name& symmetryFrom,
+  const Symmetry::Name& symmetryTo,
+  const unsigned& positionInSourceSymmetry
+) {
+  /* TODO this algorithm and it's constexpr counterpart may give the same
+   * results, but they are both incorrect. Rotational equivalence of the
+   * mapping must be considered in the target symmetry, not in the source
+   * symmetry. Merely limiting the permutations considered in the
+   * corresponding ligand gain case is insufficient.
+   *
+   * E.g. square-pyramidal to square-planar. This is considered as
+   * square-planar to square-pyramidal ligand gain, where the new ligand is
+   * either an equatorial one (0-3 in the sq-py indexing) or apical (4).
+   * In the apical case, although there is clearly only one rotationally unique
+   * mapping from square-pyramidal to square-planar when the apical ligand is
+   * removed (since 1-2-3-4 and 4-3-2-1 are C2' superposable), the inverse case
+   * is considered, and there are two possible mappings, in which the
+   * positioning of the new apical ligand can be either at the top or bottom of
+   * an existing index sequence for square-planar.
+   */
+
+  // Ensure we are dealing with ligand loss
+  assert(Symmetry::size(symmetryTo) + 1 == Symmetry::size(symmetryFrom));
+  assert(positionInSourceSymmetry < Symmetry::size(symmetryFrom));
+
+  /* Generate the index mapping specific to this position loss in the target
+   * symmetry.
+   *
+   * The possible distortions are determined from the equivalent case of adding
+   * the ligand (which was to be deleted) to the smaller symmetry.
+   *
+   * The deleted index is added to the end. The lowest permutation of the mapping
+   * from the smaller to the larger symmetry is then:
+   *
+   * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
+   */
+  std::vector<unsigned> indexMapping = TemplateMagic::concatenate(
+    detail::iota<unsigned>(positionInSourceSymmetry),
+    detail::range(positionInSourceSymmetry + 1, Symmetry::size(symmetryFrom))
+  );
+
+  /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
+   * save that symmetryTo and symmetryFrom are swapped in all occasions
+   * and that std::next_permutation is only called on the subset excluding the
+   * last position (the one that is added / deleted).
+   */
+
+  std::vector<DistortionInfo> distortions;
+
+  std::set<
+    std::vector<unsigned>
+  > encounteredSymmetryMappings;
+
+  do {
+    if(encounteredSymmetryMappings.count(indexMapping) == 0) {
+      distortions.emplace_back(
+        indexMapping,
+        calculateAngleDistortion(symmetryTo, symmetryFrom, indexMapping),
+        calculateChiralDistortion(symmetryTo, symmetryFrom, indexMapping)
+      );
+
+      auto allRotations = generateAllRotations(
+        symmetryTo,
+        indexMapping
+      );
+
+      encounteredSymmetryMappings.insert(
+        allRotations.begin(),
+        allRotations.end()
+      );
+    }
+  } while (std::next_permutation(indexMapping.begin(), indexMapping.end()));
+
+  return distortions;
+}
+
+SymmetryTransitionGroup::SymmetryTransitionGroup(
+  std::set<
+    std::vector<unsigned>
+  > passIndexMappings,
+  const double& passAngleDistortion,
+  const double& passChiralDistortion
+) : indexMappings(std::move(passIndexMappings)),
+    angularDistortion(passAngleDistortion),
+    chiralDistortion(passChiralDistortion) 
+{}
+
+SymmetryTransitionGroup selectBestTransitionMappings(
+  const std::vector<DistortionInfo>& distortions
+) {
   /* We are interested only in the those transitions that have the very lowest
    * angular distortion, and within that set only the lowest chiral distortion,
    * so we sub-select within the generated set
@@ -392,7 +507,7 @@ SymmetryTransitionGroup symmetryTransitionMappings(
     TemplateMagic::getMember(
       distortions,
       [](const auto& distortion) -> double {
-        return distortion.totalDistortion;
+        return distortion.angularDistortion;
       }
     )
   );
@@ -401,7 +516,7 @@ SymmetryTransitionGroup symmetryTransitionMappings(
     distortions,
     [&lowestAngularDistortion](const auto& distortion) -> bool {
       return (
-        distortion.totalDistortion > (
+        distortion.angularDistortion > (
           lowestAngularDistortion + floatingPointEqualityThreshold
         )
       );
@@ -443,127 +558,6 @@ SymmetryTransitionGroup symmetryTransitionMappings(
   );
 }
 
-SymmetryTransitionGroup ligandLossTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo,
-  const unsigned& positionInSourceSymmetry
-) {
-  // Ensure we are dealing with ligand loss
-  assert(Symmetry::size(symmetryTo) + 1 == Symmetry::size(symmetryFrom));
-  assert(positionInSourceSymmetry < Symmetry::size(symmetryFrom));
-
-  /* Generate the index mapping specific to this position loss in the target
-   * symmetry.
-   *
-   * The possible distortions are determined from the equivalent case of adding
-   * the ligand (which was to be deleted) to the smaller symmetry.
-   *
-   * The deleted index is added to the end. The lowest permutation of the mapping
-   * from the smaller to the larger symmetry is then:
-   *
-   * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
-   */
-  std::vector<unsigned> indexMapping = TemplateMagic::concatenate(
-    detail::iota<unsigned>(positionInSourceSymmetry),
-    detail::range(positionInSourceSymmetry + 1, Symmetry::size(symmetryFrom))
-  );
-  indexMapping.push_back(positionInSourceSymmetry);
-
-  /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
-   * save that symmetryTo and symmetryFrom are swapped in all occasions
-   * and that std::next_permutation is only called on the subset excluding the
-   * last position (the one that is added / deleted).
-   */
-
-  std::vector<DistortionInfo> distortions;
-
-  std::set<
-    std::vector<unsigned>
-  > encounteredSymmetryMappings;
-
-  do {
-    if(
-      encounteredSymmetryMappings.count(
-        applyIndexMapping(
-          symmetryFrom,
-          indexMapping
-        )
-      ) == 0
-    ) {
-      distortions.emplace_back(
-        indexMapping,
-        calculateAngleDistortion(symmetryTo, symmetryFrom, indexMapping),
-        calculateChiralDistortion(symmetryTo, symmetryFrom, indexMapping)
-      );
-
-      auto allRotations = generateAllRotations(
-        symmetryFrom,
-        applyIndexMapping(
-          symmetryFrom,
-          indexMapping
-        )
-      );
-
-      encounteredSymmetryMappings.insert(
-        allRotations.begin(),
-        allRotations.end()
-      );
-    }
-  } while (std::next_permutation(indexMapping.begin(), indexMapping.end() - 1));
-
-  double lowestAngularDistortion = TemplateMagic::min(
-    TemplateMagic::getMember(
-      distortions,
-      [](const auto& distortion) -> double {
-        return distortion.totalDistortion;
-      }
-    )
-  );
-
-  auto distortionsView = TemplateMagic::filter(
-    distortions,
-    [&](const auto& distortion) -> bool {
-      return (
-        distortion.totalDistortion > (
-          lowestAngularDistortion + floatingPointEqualityThreshold
-        )
-      );
-    }
-  );
-
-  double lowestChiralDistortion = TemplateMagic::min(
-    TemplateMagic::getMember(
-      distortionsView,
-      [](const auto& distortion) -> double {
-        return distortion.chiralDistortion;
-      }
-    )
-  );
-
-  distortionsView.filter(
-    [&](const auto& distortion) -> bool {
-      return (
-        distortion.chiralDistortion > (
-          lowestChiralDistortion + floatingPointEqualityThreshold
-        )
-      );
-    }
-  );
-
-  std::set<
-    std::vector<unsigned>
-  > mappings;
-
-  for(const auto& distortionInfo : distortionsView) {
-    mappings.insert(distortionInfo.indexMapping);
-  }
-
-  return SymmetryTransitionGroup(
-    mappings,
-    lowestAngularDistortion,
-    lowestChiralDistortion
-  );
-}
 
 unsigned numUnlinkedAssignments(
   const Symmetry::Name& symmetry,

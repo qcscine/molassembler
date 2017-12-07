@@ -146,9 +146,11 @@ void writeSymmetryTransitionDotFile(
 
     for(const auto& targetSymmetry : Symmetry::allNames) {
       if(predicate(sourceSymmetry, targetSymmetry)) { // Ligand gain
-        distortionsMap[targetSymmetry] = symmetryTransitionMappings(
-          sourceSymmetry,
-          targetSymmetry
+        distortionsMap[targetSymmetry] = selectBestTransitionMappings(
+          symmetryTransitionMappings(
+            sourceSymmetry,
+            targetSymmetry
+          )
         );
       }
     }
@@ -306,10 +308,12 @@ void writeLigandLossDotFile(
         for(unsigned i = 0; i < Symmetry::size(sourceSymmetry); ++i) {
           allMappings.emplace_back(
             i,
-            ligandLossTransitionMappings(
-              sourceSymmetry,
-              targetSymmetry,
-              i
+            selectBestTransitionMappings(
+              ligandLossTransitionMappings(
+                sourceSymmetry,
+                targetSymmetry,
+                i
+              )
             )
           );
         }
