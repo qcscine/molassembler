@@ -133,8 +133,7 @@ std::map<AtomIndexType, unsigned> makeSymmetryPositionMap(
   unsigned symmetryPosition = 0;
   for(const auto& priorityChar : assignment.characters) {
     auto& rankingIterator = iterators.at(priorityChar - 'A');
-    const auto& endIterator = endIterators.at(priorityChar - 'A');
-    assert(rankingIterator != endIterator);
+    assert(rankingIterator != endIterators.at(priorityChar - 'A'));
 
     positionMap.emplace(
       *rankingIterator,
@@ -171,8 +170,7 @@ std::vector<AtomIndexType> mapToSymmetryPositions(
 
   for(const auto& priorityChar : assignment.characters) {
     auto& rankingIterator = iterators.at(priorityChar - 'A');
-    const auto& endIterator = endIterators.at(priorityChar - 'A');
-    assert(rankingIterator != endIterator);
+    assert(rankingIterator != endIterators.at(priorityChar - 'A'));
 
     atomsAtSymmetryPositions.push_back(
       *rankingIterator
@@ -853,7 +851,7 @@ void CNStereocenter::fit(
 /* Information */
 double CNStereocenter::angle(
   const AtomIndexType& i,
-  const AtomIndexType& j, 
+  const AtomIndexType& j __attribute__((unused)), 
   const AtomIndexType& k
 ) const {
   assert(j == _centerAtom);

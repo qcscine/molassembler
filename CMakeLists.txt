@@ -166,9 +166,10 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   message(STATUS "Selected release build")
   # no debug information, disable assert
   target_compile_definitions(molecule PRIVATE NDEBUG)
+  target_compile_options(molecule PUBLIC -O3 -march=native)
 else() # assume Debug
   message(STATUS "Assume debug build")
-  target_compile_options(molecule PUBLIC -g)
+  target_compile_options(molecule PUBLIC -Og -g)
 endif()
 
 # library properties
@@ -201,7 +202,11 @@ foreach(filename ${testFiles})
 
   # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})
-  target_compile_options(${targetName} PUBLIC -g)
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    target_compile_options(${targetName} PUBLIC -O3 -march=native)
+  else()
+    target_compile_options(${targetName} PUBLIC -Og -g)
+  endif()
   set_target_properties(
     ${targetName} PROPERTIES
     CXX_STANDARD 14
@@ -234,7 +239,11 @@ foreach(filename ${analysisFiles})
 
   # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})
-  target_compile_options(${targetName} PUBLIC -g)
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    target_compile_options(${targetName} PUBLIC -O3 -march=native)
+  else()
+    target_compile_options(${targetName} PUBLIC -Og -g)
+  endif()
   set_target_properties(
     ${targetName} PROPERTIES
     CXX_STANDARD 14

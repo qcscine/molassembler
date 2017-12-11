@@ -27,11 +27,13 @@ EZStereocenter::EZStereocenter(
    * - One set of two indices each (equal substituents on side)
    * - Two sets of one index each (different substituents on side)
    */
+#ifndef NDEBUG
   unsigned numFirst = _numIndices(firstCenterRanking);
   unsigned numSecond = _numIndices(secondCenterRanking);
 
   assert(1 <= numFirst && numFirst <= 2);
   assert(1 <= numSecond && numSecond <= 2);
+#endif
 }
 
 unsigned EZStereocenter::_numIndices(const RankingInformation& ranking) {
@@ -219,11 +221,13 @@ void EZStereocenter::propagateGraphChange(
   // Assume parts of the state of EZStereocenter
   assert(numAssignments() == 2);
 
+#ifndef NDEBUG
   unsigned numFirst = _numIndices(firstCenterRanking);
   unsigned numSecond = _numIndices(secondCenterRanking);
 
   assert(1 <= numFirst && numFirst <= 2);
   assert(1 <= numSecond && numSecond <= 2);
+#endif
 
   /* As long as the class state isn't overwritten yet, decide which assignment
    * the final stereocenter will have. If the index for the high-priority index
@@ -337,7 +341,7 @@ void EZStereocenter::removeSubstituent(
 /* Information */
 double EZStereocenter::angle(
   const AtomIndexType& i __attribute__ ((unused)),
-  const AtomIndexType& j,
+  const AtomIndexType& j __attribute__ ((unused)),
   const AtomIndexType& k __attribute__ ((unused))
 ) const {
   assert(j == _leftCenter || j == _rightCenter);
