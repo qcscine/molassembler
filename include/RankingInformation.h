@@ -21,18 +21,22 @@ namespace MoleculeManip {
  * particular central vertex
  */
 struct RankingInformation {
-  //! Sorted substituents grouped by priority ascending
-  std::vector<
+  using RankedType = std::vector<
     std::vector<AtomIndexType>
-  > sortedSubstituents;
+  >;
+
+  using LinksType = std::set<
+    std::pair<AtomIndexType, AtomIndexType>
+  >;
+
+  //! Sorted substituents grouped by priority ascending
+  RankedType sortedSubstituents;
 
   /*!
    * The set containing pairs of substituents that are linked and therefore form
    * multidentate ligands.
    */
-  std::set<
-    std::pair<AtomIndexType, AtomIndexType>
-  > linkedPairs;
+  LinksType linkedPairs;
 };
 
 } // namespace MoleculeManip

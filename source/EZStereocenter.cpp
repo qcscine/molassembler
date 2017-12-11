@@ -17,64 +17,31 @@ EZStereocenter::EZStereocenter(
   const RankingInformation& firstCenterRanking,
   const AtomIndexType& secondCenter,
   const RankingInformation& secondCenterRanking
-) {
+) : _leftCenter {firstCenter},
+    _rightCenter {secondCenter},
+    _leftRanking {firstCenterRanking},
+    _rightRanking {secondCenterRanking}
+{
   /* Valid ranking inputs
    * - One set of one index (single substituent on double bond side)
    * - One set of two indices each (equal substituents on side)
    * - Two sets of one index each (different substituents on side)
    */
-  auto numIndices = [](const RankingInformation& ranking) -> unsigned {
-    unsigned countElements = 0;
-
-    for(const auto& set : ranking.sortedSubstituents) {
-      countElements += set.size();
-    }
-
-    return countElements;
-  };
-
-  auto numFirst = numIndices(firstCenterRanking);
-  auto numSecond = numIndices(secondCenterRanking);
+  unsigned numFirst = _numIndices(firstCenterRanking);
+  unsigned numSecond = _numIndices(secondCenterRanking);
 
   assert(1 <= numFirst && numFirst <= 2);
   assert(1 <= numSecond && numSecond <= 2);
+}
 
-  /* NOTE: high priority is assigned from the back of the ranking since the list
-   * is ordered ascending
-   *
-   * NOTE: back-back always works out to the right selection for all valid
-   * inputs.
-   */
-  _leftCenter = firstCenter;
-  _leftHighPriority = firstCenterRanking.sortedSubstituents.back().back();
-  _rightCenter = secondCenter;
-  _rightHighPriority = secondCenterRanking.sortedSubstituents.back().back();
+unsigned EZStereocenter::_numIndices(const RankingInformation& ranking) {
+  unsigned countElements = 0;
 
-  if(numFirst == 2) {
-    _leftLowPriority = firstCenterRanking.sortedSubstituents.front().front();
-  }
-  if(numSecond == 2) {
-    _rightLowPriority = secondCenterRanking.sortedSubstituents.front().front();
+  for(const auto& set : ranking.sortedSubstituents) {
+    countElements += set.size();
   }
 
-  /* Determine whether there can be two assignments or not. There is only one
-   * assignment in the case that on either side, there are two equal
-   * substituents
-   */
-  if(
-    (
-      numFirst == 2 
-      && firstCenterRanking.sortedSubstituents.size() == 1
-    ) || (
-      numSecond == 2
-      && secondCenterRanking.sortedSubstituents.size() == 1
-    )
-  ) {
-    _numAssignments = 1;
-    _isZOption = false; // default-assign to zeroth "assignment"
-  } else {
-    _numAssignments = 2;
-  }
+  return countElements;
 }
 
 /* Private members */
@@ -85,21 +52,21 @@ std::vector<
     std::array<AtomIndexType, 4>
   > sequences {
     { // High to High always exists
-      _leftHighPriority,
+      _leftHighPriority(),
       _leftCenter,
       _rightCenter,
-      _rightHighPriority
+      _rightHighPriority()
     }
   };
 
   // Low to low exists only if both exist
-  if(_leftLowPriority && _rightLowPriority) {
+  if(_numIndices(_leftRanking) == 2 && _numIndices(_rightRanking) == 2) {
     sequences.emplace_back(
       std::array<AtomIndexType, 4> {
-        _leftLowPriority.value(),
+        _leftLowPriority(),
         _leftCenter,
         _rightCenter,
-        _rightLowPriority.value()
+        _rightLowPriority()
       }
     );
   }
@@ -115,24 +82,24 @@ std::vector<
     std::array<AtomIndexType, 4>
   > sequences;
 
-  if(_leftLowPriority) {
+  if(_numIndices(_leftRanking) == 2) {
     sequences.emplace_back(
       std::array<AtomIndexType, 4> {
-        _leftLowPriority.value(),
+        _leftLowPriority(),
         _leftCenter,
         _rightCenter,
-        _rightHighPriority
+        _rightHighPriority()
       }
     );
   }
 
-  if(_rightLowPriority) {
+  if(_numIndices(_rightRanking) == 2) {
     sequences.emplace_back(
       std::array<AtomIndexType, 4> {
-        _leftHighPriority,
+        _leftHighPriority(),
         _leftCenter,
         _rightCenter,
-        _rightLowPriority.value()
+        _rightLowPriority()
       }
     );
   }
@@ -142,13 +109,59 @@ std::vector<
 
 /* Public members */
 /* Modification */
-void EZStereocenter::adaptToRankingChange(const RankingInformation& newRanking) {
-  // TODO implement!
+void EZStereocenter::addSubstituent(
+  const AtomIndexType& center,
+  const RankingInformation& centerRanking
+) {
+  /* The center must be either left or right. Any call that doesn't match
+   * either is malformed
+   */
+  assert(center == _leftCenter || center == _rightCenter);
+
+  if(center == _leftCenter) {
+    assert(
+      _numIndices(_leftRanking) == 1
+      && _numIndices(centerRanking) == 2
+    );
+
+    /* In case the high priority isn't the old one anymore, we have to flip the
+     * current assignment (provided there is one)
+     */
+    if(
+      numAssignments() == 2
+      && _isZOption
+      && _leftHighPriority() != centerRanking.sortedSubstituents.back().back()
+    ) {
+      _isZOption = !_isZOption.value();
+    }
+
+    // Overwrite the remaining state
+    _leftRanking = centerRanking;
+  } else if(center == _rightCenter) {
+    assert(
+      _numIndices(_rightRanking) == 1
+      && _numIndices(centerRanking) == 2
+    );
+
+    /* In case the high priority isn't the old one anymore, we have to flip the
+     * current assignment (provided there is one)
+     */
+    if(
+      numAssignments() == 2
+      && _isZOption
+      && _rightHighPriority() != centerRanking.sortedSubstituents.back().back()
+    ) {
+      _isZOption = !_isZOption.value();
+    }
+
+    // Overwrite the remaining state
+    _rightRanking = centerRanking;
+  } 
 }
 
 void EZStereocenter::assign(const boost::optional<unsigned>& assignment) {
   if(assignment) {
-    assert(assignment.value() < _numAssignments); 
+    assert(assignment.value() < numAssignments()); 
     _isZOption = static_cast<bool>(assignment.value());
   } else {
     _isZOption = boost::none;
@@ -199,6 +212,128 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
   }
 }
 
+void EZStereocenter::propagateGraphChange(
+  const RankingInformation& firstCenterRanking,
+  const RankingInformation& secondCenterRanking
+) {
+  // Assume parts of the state of EZStereocenter
+  assert(numAssignments() == 2);
+
+  unsigned numFirst = _numIndices(firstCenterRanking);
+  unsigned numSecond = _numIndices(secondCenterRanking);
+
+  assert(1 <= numFirst && numFirst <= 2);
+  assert(1 <= numSecond && numSecond <= 2);
+
+  /* As long as the class state isn't overwritten yet, decide which assignment
+   * the final stereocenter will have. If the index for the high-priority index
+   * doesn't match the stored one, we have to flip the state once. If this 
+   * occurs at both ends, then we don't have to do anything.
+   */
+  bool flipAssignment = false;
+  if(firstCenterRanking.sortedSubstituents.back().back() != _leftHighPriority()) {
+    // Negate flipAssignment
+    flipAssignment = !flipAssignment;
+  }
+
+  if(secondCenterRanking.sortedSubstituents.back().back() != _rightHighPriority()) {
+    // Negate flipAssignment
+    flipAssignment = !flipAssignment;
+  }
+
+  // Now we can overwrite class state
+  _leftRanking = firstCenterRanking;
+  _rightRanking = secondCenterRanking;
+
+  // Change the assignment if assigned and we determined that we need to negate
+  if(
+    numAssignments() == 2
+    && _isZOption
+    && flipAssignment
+  ) {
+    _isZOption = !_isZOption.value();
+  }
+}
+
+void EZStereocenter::propagateVertexRemoval(const AtomIndexType& removedIndex) {
+  auto updateIndex = [&removedIndex](AtomIndexType& index) -> void {
+    if(index > removedIndex) {
+      --index;
+    } else if(index == removedIndex) {
+      index = std::numeric_limits<AtomIndexType>::max();
+    }
+  };
+
+  auto newIndex = [&removedIndex](const AtomIndexType& index) -> AtomIndexType {
+    assert(index != removedIndex);
+
+    if(index > removedIndex) {
+      return index - 1;
+    }
+
+    if(index == removedIndex) {
+      return std::numeric_limits<AtomIndexType>::max();
+    }
+
+    return index;
+  };
+
+  assert(_leftCenter != removedIndex);
+  assert(_rightCenter != removedIndex);
+
+  updateIndex(_leftCenter);
+  updateIndex(_rightCenter);
+
+  auto updateRanking = [&](RankingInformation& ranking) {
+    for(auto& equalPrioritySet : ranking.sortedSubstituents) {
+      for(auto& index : equalPrioritySet) {
+        updateIndex(index);
+      }
+    }
+
+    RankingInformation::LinksType newLinks;
+    for(const auto& linkPair : ranking.linkedPairs) {
+      newLinks.emplace(
+        newIndex(linkPair.first),
+        newIndex(linkPair.second)
+      );
+    }
+    ranking.linkedPairs = newLinks;
+  };
+
+  updateRanking(_leftRanking);
+  updateRanking(_rightRanking);
+}
+
+void EZStereocenter::removeSubstituent(
+  const AtomIndexType& center,
+  const AtomIndexType& which
+) {
+  assert(center == _leftCenter || center == _rightCenter);
+
+  auto dropWhich = [&which](RankingInformation& ranking) {
+    for(auto& equalPrioritySet : ranking.sortedSubstituents) {
+      TemplateMagic::inplaceRemoveIf(
+        equalPrioritySet,
+        [&which](const auto& index) -> bool {
+          return index == which;
+        }
+      );
+    }
+
+    // There cannot be any linked pairs for a single substituent
+    ranking.linkedPairs = {};
+  };
+
+  if(center == _leftCenter) {
+    // Drop which from that ranking
+    dropWhich(_leftRanking);
+  } else if(center == _rightCenter) {
+    dropWhich(_rightRanking);
+  }
+}
+
+
 /* Information */
 double EZStereocenter::angle(
   const AtomIndexType& i __attribute__ ((unused)),
@@ -224,7 +359,23 @@ boost::optional<unsigned> EZStereocenter::assigned() const {
 }
 
 unsigned EZStereocenter::numAssignments() const {
-  return _numAssignments;
+  /* Determine whether there can be two assignments or not. There is only one
+   * assignment in the case that on either side, there are two equal
+   * substituents
+   */
+  if(
+    (
+      _numIndices(_leftRanking) == 2
+      && _leftRanking.sortedSubstituents.size() == 1
+    ) || (
+      _numIndices(_rightRanking) == 2
+      && _rightRanking.sortedSubstituents.size() == 1
+    )
+  ) {
+    return 1;
+  }
+
+  return 2;
 }
 
 std::vector<ChiralityConstraintPrototype> EZStereocenter::chiralityConstraints() const {
@@ -233,34 +384,34 @@ std::vector<ChiralityConstraintPrototype> EZStereocenter::chiralityConstraints()
   std::vector<ChiralityConstraintPrototype> constraints {
     {
       std::array<AtomIndexType, 4> {
-        _leftHighPriority,
+        _leftHighPriority(),
         _leftCenter,
         _rightCenter,
-        _rightHighPriority
+        _rightHighPriority(),
       },
       ChiralityConstraintTarget::Flat
     }
   };
 
-  if(_leftLowPriority) {
+  if(_numIndices(_leftRanking) == 2) {
     constraints.emplace_back(
       std::array<AtomIndexType, 4> {
-        _leftHighPriority,
+        _leftHighPriority(),
         _leftCenter,
         _rightCenter,
-        _leftLowPriority.value()
+        _leftLowPriority()
       },
       ChiralityConstraintTarget::Flat
     );
   }
 
-  if(_rightLowPriority) {
+  if(_numIndices(_rightRanking) == 2) {
     constraints.emplace_back(
       std::array<AtomIndexType, 4> {
-        _rightHighPriority,
+        _rightHighPriority(),
         _rightCenter,
         _leftCenter,
-        _rightLowPriority.value()
+        _rightLowPriority()
       },
       ChiralityConstraintTarget::Flat
     );
@@ -350,21 +501,21 @@ std::string EZStereocenter::info() const {
 
   std::string returnString =  "EZ indices "s;
 
-  if(_leftLowPriority) {
-    returnString += "[H:"s + std::to_string(_leftHighPriority)
-      + ", L:"s + std::to_string(_leftLowPriority.value()) + "], "s;
+  if(_numIndices(_leftRanking) == 2) {
+    returnString += "[H:"s + std::to_string(_leftHighPriority())
+      + ", L:"s + std::to_string(_leftLowPriority()) + "], "s;
   } else {
-    returnString += std::to_string(_leftHighPriority) +", "s;
+    returnString += std::to_string(_leftHighPriority()) +", "s;
   }
 
   returnString +=  std::to_string(_leftCenter) + ", "s 
     + std::to_string(_rightCenter) + ", "s;
 
-  if(_rightLowPriority) {
-    returnString += "[H:"s + std::to_string(_rightHighPriority)
-      + ", L:"s + std::to_string(_rightLowPriority.value()) + "]"s;
+  if(_numIndices(_rightRanking) == 2) {
+    returnString += "[H:"s + std::to_string(_rightHighPriority())
+      + ", L:"s + std::to_string(_rightLowPriority()) + "]"s;
   } else {
-    returnString += std::to_string(_rightHighPriority);
+    returnString += std::to_string(_rightHighPriority());
   }
 
   if(numAssignments() == 1) {
@@ -413,12 +564,10 @@ Type EZStereocenter::type() const {
 bool EZStereocenter::operator == (const EZStereocenter& other) const {
   return (
     _leftCenter == other._leftCenter
-    && _leftHighPriority == other._leftHighPriority
-    && _rightCenter == other._rightCenter
-    && _rightHighPriority == other._rightHighPriority
-    && _leftLowPriority == other._leftLowPriority
-    && _rightLowPriority == other._rightLowPriority
-    && _numAssignments == other._numAssignments
+    && _leftRanking.sortedSubstituents == other._leftRanking.sortedSubstituents
+    && _rightRanking.sortedSubstituents == other._rightRanking.sortedSubstituents
+    && _leftRanking.linkedPairs == other._leftRanking.linkedPairs
+    && _rightRanking.linkedPairs == other._rightRanking.linkedPairs
     && _isZOption == other._isZOption
   );
 }
@@ -435,24 +584,14 @@ bool EZStereocenter::operator < (const EZStereocenter& other) const {
     other._rightCenter
     ).value_or(
       componentSmaller(
-        _leftHighPriority,
-        other._leftHighPriority
+        _leftRanking.sortedSubstituents,
+        other._leftRanking.sortedSubstituents
       ).value_or(
         componentSmaller(
-          _rightHighPriority,
-          other._rightHighPriority
+          _rightRanking.sortedSubstituents,
+          other._rightRanking.sortedSubstituents
         ).value_or(
-          componentSmaller(
-            _leftLowPriority,
-            other._leftLowPriority
-          ).value_or(
-            componentSmaller(
-              _rightLowPriority,
-              other._rightLowPriority
-            ).value_or(
-              _isZOption < other._isZOption
-            )
-          )
+          _isZOption < other._isZOption
         )
       )
     )

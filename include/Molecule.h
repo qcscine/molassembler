@@ -12,9 +12,6 @@
  * library.
  */
 
-/* TODO
- */
-
 namespace MoleculeManip {
 
 /*! 
@@ -22,10 +19,9 @@ namespace MoleculeManip {
  */
 class Molecule {
 public:
-  enum class TemperatureRegimeOption {
-    LowTemperature,
-    HighTemperature
-  };
+/* "Global" options */
+  static TemperatureRegime temperatureRegime;
+  static ChiralStatePreservation chiralStatePreservation;
 
 private:
 /* State */
@@ -42,7 +38,7 @@ private:
 
   StereocenterList _detectStereocenters() const;
 
-  /*! Returns if an atom can be a CNStereocenter with multiple assignments
+  /*! Returns if an atom could be a CNStereocenter with multiple assignments
    *
    * Criteria applied are:
    * - Minimum of three adjacent indices
@@ -50,10 +46,15 @@ private:
    *   inverts too rapidly to carry stereoinformation (unless part of a cycle
    *   of size 4 or smaller, where strain hinders inversion)
    */
-  bool _isCNStereocenterCandidate(
-    const AtomIndexType& atomIndex,
-    const TemperatureRegimeOption& temperatureRegime = TemperatureRegimeOption::HighTemperature
-  ) const;
+  bool _isCNStereocenterCandidate(const AtomIndexType& atomIndex) const;
+
+  /*! Returns if an edge could be an EZStereocenter with multiple assignments
+   *
+   * Criteria applied are:
+   * - Bond type must be double
+   * - 2-3 non-eta bonds for each edge vertex
+   */
+  bool _isEZStereocenterCandidate(const GraphType::edge_descriptor& edgeIndex) const;
 
   //! Returns whether the specified index is valid or not
   bool _isValidIndex(const AtomIndexType& index) const;
@@ -76,7 +77,7 @@ private:
   ) const;
 
   //!  Updates the molecule's StereocenterList after a graph modification
-  void _updateStereocenterList();
+  void _propagateGraphChange();
 
 public:
 /* Typedefs */

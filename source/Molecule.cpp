@@ -18,6 +18,11 @@
 namespace MoleculeManip {
 
 /* Molecule implementation ---------------------------------------------------*/
+/* "Global" options */
+TemperatureRegime Molecule::temperatureRegime = TemperatureRegime::High;
+ChiralStatePreservation Molecule::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
+
+
 /* Private members */
 
 AtomIndexType Molecule::_addAtom(const Delib::ElementType& elementType) {
@@ -39,9 +44,7 @@ StereocenterList Molecule::_detectStereocenters() const {
          target = boost::target(edgeIndex, _adjacencies);
 
     // Construct a Stereocenter here
-    auto newStereocenter = std::make_shared<
-      Stereocenters::EZStereocenter
-    >(
+    auto newStereocenter = std::make_shared<Stereocenters::EZStereocenter>(
       source,
       rankPriority(source, {target}),
       target,
@@ -85,17 +88,14 @@ bool Molecule::_isValidIndex(const AtomIndexType& index) const {
   return index < numAtoms();
 }
 
-bool Molecule::_isCNStereocenterCandidate(
-  const AtomIndexType& atomIndex,
-  const TemperatureRegimeOption& temperatureRegime
-) const {
+bool Molecule::_isCNStereocenterCandidate(const AtomIndexType& atomIndex) const {
   auto numAdjacencies = getNumAdjacencies(atomIndex);
 
   if(numAdjacencies < 3) {
     return false;
   }
 
-  if(temperatureRegime == TemperatureRegimeOption::HighTemperature) {
+  if(temperatureRegime == TemperatureRegime::High) {
     /* Skip any instances of nitrogen with exactly three adjacencies,
      * unless the central atom is part of a cycle of size 4 or smaller
      */
@@ -125,7 +125,7 @@ bool Molecule::_isCNStereocenterCandidate(
   return true;
 }
 
-std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {
+bool Molecule::_isEZStereocenterCandidate(const GraphType::edge_descriptor& edgeIndex) const {
   auto numNonEtaAdjacencies = [&](const AtomIndexType& a) -> unsigned {
     unsigned nonEta = 0;
 
@@ -138,6 +138,22 @@ std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {
     return nonEta;
   };
 
+  auto source = boost::source(edgeIndex, _adjacencies),
+       target = boost::target(edgeIndex, _adjacencies);
+
+  auto sourceAdjacencies = numNonEtaAdjacencies(source),
+       targetAdjacencies = numNonEtaAdjacencies(target);
+
+  return (
+    _adjacencies[edgeIndex].bondType == BondType::Double
+    && 2 <= sourceAdjacencies
+    && sourceAdjacencies <= 3
+    && 2 <= targetAdjacencies 
+    && targetAdjacencies <= 3
+  );
+}
+
+std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {
   std::vector<EdgeIndexType> candidates;
 
   for(
@@ -146,19 +162,7 @@ std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {
       boost::edges(_adjacencies)
     )
   ) {
-    auto source = boost::source(edgeIndex, _adjacencies),
-         target = boost::target(edgeIndex, _adjacencies);
-
-    auto sourceAdjacencies = numNonEtaAdjacencies(source),
-         targetAdjacencies = numNonEtaAdjacencies(target);
-
-    if(
-      _adjacencies[edgeIndex].bondType == BondType::Double
-      && 2 <= sourceAdjacencies
-      && sourceAdjacencies <= 3
-      && 2 <= targetAdjacencies 
-      && targetAdjacencies <= 3
-    ) {
+    if(_isEZStereocenterCandidate(edgeIndex)) {
       candidates.push_back(edgeIndex);
     }
   }
@@ -235,19 +239,128 @@ std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
   return ligands;
 }
 
-void Molecule::_updateStereocenterList() {
+void Molecule::_propagateGraphChange() {
   /* Two cases: If the StereocenterList is empty, we can just use detect to
    * find stereocenters in the Molecule, if there are any new ones.
    *
-   * In the other case, we have to recheck every existing stereocenter. If
-   * ranking was affected and the stereocenter has a set assignment, we need to
-   * find the assignment that the previous ranking represented spatially in the
-   * new set of assignments and assign the stereocenter to that.
+   * In the other case, we have to recheck everywhere. If ranking was affected
+   * and the stereocenter has a set assignment, we need to find the assignment
+   * that the previous ranking represented spatially in the new set of
+   * assignments and assign the stereocenter to that.
    */
   if(_stereocenters.empty()) {
     _stereocenters = _detectStereocenters();
   } else {
-    // TODO this is difficult!
+    // EZStereocenters first
+    for(const auto& edgeIndex : iterateEdges()) {
+      auto source = boost::source(edgeIndex, _adjacencies),
+           target = boost::target(edgeIndex, _adjacencies);
+
+      // Is there already a stereocenter on both edge vertices?
+      if(_stereocenters.involving(source) && _stereocenters.involving(target)) {
+        // Is it the same, and an EZStereocenter?
+        if(
+          _stereocenters.at(source) == _stereocenters.at(target)
+          && _stereocenters.at(source)->type() == Stereocenters::Type::EZStereocenter
+        ) {
+          // Is it even possible for it to be a candidate anymore?
+          if(_isEZStereocenterCandidate(edgeIndex)) {
+            // Re-rank, and adapt it to a new ranking
+            std::dynamic_pointer_cast<Stereocenters::EZStereocenter>(
+              _stereocenters.at(source)
+            ) -> propagateGraphChange(
+              rankPriority(source, {target}),
+              rankPriority(target, {source})
+            );
+
+            // If this EZStereocenter has only one assignment now, remove it
+            if(_stereocenters.at(source) -> numAssignments() == 1) {
+              _stereocenters.remove(source);
+            }
+          } else {
+            // It cannot be an EZStereocenter anymore, so drop it from the list
+            _stereocenters.remove(source);
+          }
+        }
+        /* If the stereocenters are NOT the same, in which case both would
+         * have to be CNStereocenters, then this edge cannot be an
+         * EZStereocenter. Do nothing.
+         */
+      } else if(
+        !_stereocenters.involving(source) 
+        && !_stereocenters.involving(target)
+        && _isEZStereocenterCandidate(edgeIndex)
+      ) {
+        auto newStereocenterPtr = std::make_shared<Stereocenters::EZStereocenter>(
+          source,
+          rankPriority(source, {target}),
+          target,
+          rankPriority(target, {source})
+        );
+
+        if(newStereocenterPtr -> numAssignments() == 2) {
+          _stereocenters.add(
+            std::move(newStereocenterPtr)
+          );
+        }
+      }
+      /* If there is a stereocenter on one vertex, but not the other, then it
+       * should be a CNStereocenter, in which case we best do nothing.
+       */
+    }
+
+    // Now CNStereocenters
+    for(
+      AtomIndexType candidateIndex = 0;
+      candidateIndex < numAtoms();
+      ++candidateIndex
+    ) {
+      if(_stereocenters.involving(candidateIndex)) {
+        if(_stereocenters.at(candidateIndex)->type() == Stereocenters::Type::CNStereocenter) {
+          // Is it possible for this atom to continue to be a CNStereocenter?
+          if(_isCNStereocenterCandidate(candidateIndex)) {
+            auto CNStereocenterPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+              _stereocenters.at(candidateIndex)
+            );
+
+            // Propagate the state of the stereocenter to the new ranking
+            CNStereocenterPtr -> propagateGraphChange(
+              rankPriority(candidateIndex)
+            );
+
+            /* If the modified stereocenter has only one assignment and the
+             * determined symmetry adds nothing, remove it
+             */
+            if(CNStereocenterPtr -> numAssignments() == 1) {
+              if(CNStereocenterPtr -> getSymmetry() == determineLocalGeometry(candidateIndex)) {
+                _stereocenters.remove(candidateIndex);
+              }
+            }
+          } else {
+            // Since this index cannot be a CNStereocenter anymore, drop it
+            _stereocenters.remove(candidateIndex);
+          }
+        }
+        /* If the stereocenter at that candidate index is an EZStereocenter, do
+         * nothing 
+         */
+      } else { 
+        // No stereocenter yet
+        if(_isCNStereocenterCandidate(candidateIndex)) {
+          auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
+            determineLocalGeometry(candidateIndex),
+            candidateIndex,
+            rankPriority(candidateIndex)
+          );
+
+          if(newStereocenterPtr -> numAssignments() > 1) {
+            _stereocenters.add(
+              std::move(newStereocenterPtr)
+            );
+          }
+        }
+      }
+    }
   }
 }
 
@@ -305,6 +418,10 @@ AtomIndexType Molecule::addAtom(
 
   const auto index = _addAtom(elementType);
   addBond(index, adjacentTo, bondType);
+  // addBond handles the stereocenter update on adjacentTo
+
+  _propagateGraphChange();
+
   return index;
 }
 
@@ -322,7 +439,56 @@ void Molecule::addBond(
   }
 
   auto edgeAddPair = boost::add_edge(a, b, _adjacencies);
+
+  if(!edgeAddPair.second) {
+    throw std::logic_error("Molecule::addbond: Cannot add a bond where one already is present!");
+  }
+
   _adjacencies[edgeAddPair.first].bondType = bondType;
+
+  auto notifySubstituentAddition = [this](
+    const AtomIndexType& toIndex,
+    const AtomIndexType& addedIndex
+  ) {
+    if(_stereocenters.involving(toIndex)) {
+      if(_stereocenters.at(toIndex)->type() == Stereocenters::Type::CNStereocenter) {
+        std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+          _stereocenters.at(toIndex)
+        ) -> addSubstituent(
+          addedIndex,
+          rankPriority(toIndex),
+          determineLocalGeometry(toIndex),
+          chiralStatePreservation
+        );
+      } else {
+        // Adding this new adjacency invalidates the EZStereocenter there
+        if(getNumAdjacencies(toIndex) > 2) {
+          _stereocenters.remove(toIndex);
+        } else {
+          auto EZPtr = std::dynamic_pointer_cast<Stereocenters::EZStereocenter>(
+            _stereocenters.at(toIndex)
+          ); 
+
+          // What is the other central index?
+          AtomIndexType otherCenter = (
+            EZPtr -> involvedAtoms().at(0) == toIndex
+            ? EZPtr -> involvedAtoms().at(1)
+            : EZPtr -> involvedAtoms().at(0)
+          );
+
+          EZPtr -> addSubstituent(
+            toIndex,
+            rankPriority(toIndex, {otherCenter})
+          );
+        }
+      }
+    }
+  };
+
+  notifySubstituentAddition(a, b);
+  notifySubstituentAddition(b, a);
+
+  _propagateGraphChange();
 }
 
 void Molecule::assignStereocenterAtAtom(
@@ -339,7 +505,8 @@ void Molecule::assignStereocenterAtAtom(
     if(assignment < stereocenterPtr -> numAssignments()) {
       stereocenterPtr -> assign(assignment);
 
-      // TODO keep valid state trigger, changing an assignment can alter ranking
+      // A reassignment can change ranking! See the RankingTree tests
+      _propagateGraphChange();
     } else {
       throw std::logic_error("assignStereocenterAtAtom: Invalid assignment index!");
     }
@@ -361,11 +528,53 @@ void Molecule::removeAtom(const AtomIndexType& a) {
     throw std::logic_error("Removing this atom disconnects the graph!");
   }
 
+  auto previouslyAdjacentVertices = getAdjacencies(a);
+
   // Remove all edges to and from this vertex
   boost::clear_vertex(a, _adjacencies);
 
+  // Any stereocenter on this index must be dropped
+  if(_stereocenters.involving(a)) {
+    _stereocenters.remove(a);
+  }
+
   // Remove the vertex itself
   boost::remove_vertex(a, _adjacencies);
+
+  /* Removing the vertex invalidates some vertex descriptors, which are used
+   * liberally in the stereocenter classes. We have to correct of all of those
+   * to ensure that _propagateGraphChange works properly.
+   */
+  _stereocenters.propagateVertexRemoval(a);
+
+  /* call removeSubstituent on all adjacent stereocenters, with
+   * std::numeric_limits<AtomIndexType>::max() as the 'which' parameter,
+   * which is what propagateVertexRemoval replaces the removed index with in the
+   * stereocenters' internal state
+   */
+  for(const auto& indexToUpdate : previouslyAdjacentVertices) {
+    if(_stereocenters.involving(indexToUpdate)) {
+      if(_stereocenters.at(indexToUpdate) -> type() == Stereocenters::Type::CNStereocenter) {
+        std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+          _stereocenters.at(indexToUpdate)
+        ) -> removeSubstituent(
+          std::numeric_limits<AtomIndexType>::max(),
+          rankPriority(indexToUpdate),
+          determineLocalGeometry(indexToUpdate),
+          chiralStatePreservation
+        );
+      } else {
+        std::dynamic_pointer_cast<Stereocenters::EZStereocenter>(
+          _stereocenters.at(indexToUpdate)
+        ) -> removeSubstituent(
+          indexToUpdate,
+          std::numeric_limits<AtomIndexType>::max()
+        );
+      }
+    }
+  }
+
+  _propagateGraphChange();
 }
 
 void Molecule::removeBond(
@@ -377,13 +586,59 @@ void Molecule::removeBond(
   }
 
   if(!isSafeToRemoveBond(a, b)) {
-    throw std::logic_error("Removing this bond disconnects the graph!");
+    throw std::logic_error("Removing this bond separates the molecule into two pieces!");
   }
 
   // Find edge
   auto edgePair = boost::edge(a, b, _adjacencies);
   if(edgePair.second) {
     boost::remove_edge(edgePair.first, _adjacencies);
+
+    /* If there is an EZStereocenter on this edge, we have to drop it explicitly,
+     * since _propagateGraphChange cannot iterate over a now-removed edge.
+     */
+    if(
+      _stereocenters.involving(a) 
+      && _stereocenters.involving(b)
+      && _stereocenters.at(a) == _stereocenters.at(b)
+    ) {
+      _stereocenters.remove(a);
+    }
+
+    // Notify all immediately adjacent stereocenters of the removal
+    auto notifyRemoval = [this](
+      const auto& indexToUpdate,
+      const auto& removedIndex
+    ) {
+      if(_stereocenters.involving(indexToUpdate)) {
+        if(_stereocenters.at(indexToUpdate) -> type() == Stereocenters::Type::CNStereocenter) {
+          std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+            _stereocenters.at(indexToUpdate)
+          ) -> removeSubstituent(
+            removedIndex,
+            rankPriority(indexToUpdate),
+            determineLocalGeometry(indexToUpdate),
+            chiralStatePreservation
+          );
+        } else {
+          std::dynamic_pointer_cast<Stereocenters::EZStereocenter>(
+            _stereocenters.at(indexToUpdate)
+          ) -> removeSubstituent(
+            indexToUpdate,
+            removedIndex
+          );
+        }
+      }
+    };
+
+    notifyRemoval(a, b);
+    notifyRemoval(b, a);
+
+    /* All other cases, where there may be EZStereocenters or CNStereocenters
+     * on a or b, should be handled correctly by _propagateGraphChange.
+     */
+
+    _propagateGraphChange();
   } else {
     throw std::logic_error("That bond does not exist!");
   }
@@ -405,6 +660,8 @@ bool Molecule::setBondType(
     addBond(a, b, bondType);
   }
 
+  _propagateGraphChange();
+
   return edgePair.second;
 }
 
@@ -417,6 +674,7 @@ void Molecule::setElementType(
   }
 
   _adjacencies[a].elementType = elementType;
+  _propagateGraphChange();
 }
 
 void Molecule::setGeometryAtAtom(
@@ -438,6 +696,7 @@ void Molecule::setGeometryAtAtom(
         == Symmetry::size(symmetryName)
       ) {
         CNSPointer->setSymmetry(symmetryName);
+        _propagateGraphChange();
       } else {
         throw std::logic_error(
           "Molecule::setGeometryAtAtom: The size of the supplied symmetry is "
@@ -480,6 +739,8 @@ void Molecule::setGeometryAtAtom(
       _stereocenters.add(
         std::move(newStereocenterPtr)
       );
+
+      _propagateGraphChange();
     }
   }
 }

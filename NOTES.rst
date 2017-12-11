@@ -121,7 +121,19 @@ Improvement considerations
 - Make everything nothrow as best as possible
 - Reconsider float <-> double necessity, especially in DG: Might get some
   significant gains by using floats
+- Consider a class that provides the same interface as Molecule, but, instead
+  of losing chiral information on e.g. a ligand addition when the chiral
+  information preservation mode is on EffortlessAndUnique and we're going from
+  square planar to square pyramidal, it just internally splits into the two
+  possible assignment cases for that molecule. Modifications are only valid if
+  applying them on both Molecules doesn't throw. That would be a cool way to
+  keep complete chiral state during modifications. This may be implementable
+  with an additional CNStereocenter function that returns the possible
+  assignments in the target symmetry without altering internal state.
+  Then you can alter with a lower preservation mode, copy and assign as desired.
+  This would allow free-standing functions with signatures like::
 
+    std::vector<Molecule> addBond(const Molecule& mol);
 
 General notes
 -------------

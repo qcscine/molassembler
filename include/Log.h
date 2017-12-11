@@ -40,6 +40,9 @@ enum class Particulars {
    * the fit logged. Corresponding analysis scripts also exist.
    */
   CNStereocenterFit,
+  /* CNStereocenter's addSubstituent, removeSubstituent and propagate* functions
+   */
+  CNStereocenterStatePropagation,
   /* In generateConformation.cpp, when chirality constraint prototypes are
    * fully determined into chirality constraints, emit some debug information
    */

@@ -621,7 +621,7 @@ private:
           ),
           orderingHelper.dumpGraphviz()
         });
-        }
+      }
     }
 
     unsigned depth = 1;

@@ -51,7 +51,7 @@ public:
     }
   }
 
-  /* Modification */
+/* Modification */
   //! Removes all stored Stereocenters
   void clear() {
     _features.clear();
@@ -75,11 +75,49 @@ public:
     return _indexMap.at(index);
   }
 
+  /* Removing a vertex invalidates some vertex descriptors, which are used
+   * liberally in the stereocenter classes. This function ensures that
+   * vertex descriptors are valid throughout.
+   */
+  void propagateVertexRemoval(const AtomIndexType& removedIndex) {
+    // Drop any stereocenters involving this atom from the list
+    if(involving(removedIndex)) {
+      remove(removedIndex);
+    }
+
+    /* Go through all state in the StereocenterList and decrement any indices
+     * larger than the one being removed
+     */
+    for(const auto& stereocenterPtr : _features) {
+      stereocenterPtr -> propagateVertexRemoval(removedIndex);
+    }
+
+    // Rebuild the index map
+    _indexMap.clear();
+    for(const auto& stereocenterPtr : _features) {
+      for(const auto& involvedAtom : stereocenterPtr -> involvedAtoms()) {
+        _indexMap.emplace(
+          involvedAtom,
+          stereocenterPtr
+        );
+      }
+    }
+  }
+
+  void remove(const AtomIndexType& index) {
+    if(_indexMap.count(index) == 0) {
+      throw std::logic_error("StereocenterList::remove: No mapping for that index!");
+    }
+
+    _features.erase(_indexMap.at(index));
+    _indexMap.erase(index);
+  }
+
+/* Information */
   const PtrType at(const AtomIndexType& index) const {
     return _indexMap.at(index);
   }
 
-  /* Information */
   bool involving(const AtomIndexType& index) const {
     if(_indexMap.count(index) > 0) {
       return true;

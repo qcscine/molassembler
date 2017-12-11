@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(specialFunctionTests) {
+BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
   // Molecule should be trivially usable on the stack
   using namespace MoleculeManip;
 
@@ -67,4 +67,37 @@ BOOST_AUTO_TEST_CASE(specialFunctionTests) {
     ),
     "Basic construction does not generate equal molecules"
   );
+}
+
+const std::string directoryPrefix = "../tests/mol_files/ranking_tree_molecules/"s;
+
+BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
+  using namespace MoleculeManip;
+  IO::MOLFileHandler molReader;
+
+  auto pseudocenter = molReader.readSingle(
+    directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
+  );
+
+  AtomIndexType central = 0;
+  std::array<AtomIndexType, 2> outer {1, 6};
+
+  /* If the outer stereocenters have the same assignment, the central
+   * stereocenter shouldn't exist. If the outer stereocenters have a different
+   * assignment, the central stereocenter has to exist.
+   *
+   * Initially, we have
+   * 0 -> 1 r
+   * 1 -> 1 R
+   * 6 -> 0 S
+   */
+  // Make 1 from R to S -> stereocenter should disappear
+  pseudocenter.assignStereocenterAtAtom(outer.front(), 0);
+
+  BOOST_CHECK(!pseudocenter.getStereocenterList().involving(central));
+
+  // Make 6 from S to R -> stereocenter should reappear
+  pseudocenter.assignStereocenterAtAtom(outer.back(), 1);
+
+  BOOST_CHECK(pseudocenter.getStereocenterList().involving(central));
 }

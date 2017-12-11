@@ -48,39 +48,43 @@ public:
     std::pair<AtomIndexType, AtomIndexType>
   >;
 
-  /* An EZStereocenter consists of four to six atom indices:
-   *
-   * leftCenter,
-   * leftHighPriority,
-   * leftLowPriority (optional),
-   * rightCenter,
-   * rightHighPriority,
-   * rightLowPriority (optional),
-   *
-   */
-
 private:
 /* State */
   //! Stores the indices of the minimal indices required to have a stereocenter
-  AtomIndexType _leftCenter, _leftHighPriority,
-                _rightCenter, _rightHighPriority;
+  AtomIndexType _leftCenter, _rightCenter; 
 
-  /*! 
-   * If there are additional unequal substituents on both sides, their indices
-   * graph indices are stored here
-   */
-  boost::optional<AtomIndexType> _leftLowPriority, _rightLowPriority;
+  //! Store the ranking of indices
+  RankingInformation _leftRanking, _rightRanking;
 
   //! Stores the current assignment state of the stereocenter
   boost::optional<bool> _isZOption;
-
-  //! Stores the number of possible assignments
-  unsigned _numAssignments;
 
   //! Static tolerance in dihedral angle for DG
   static const double _dihedralAngleVariance; // in Degrees
 
 /* Private members */
+  inline AtomIndexType _leftHighPriority() const {
+    /* NOTE: high priority is assigned from the back of the ranking since the list
+     * is ordered ascending
+     *
+     * NOTE: back-back always works out to the right selection for all valid
+     * inputs.
+     */
+    return _leftRanking.sortedSubstituents.back().back();
+  }
+
+  inline AtomIndexType _leftLowPriority() const {
+    return _leftRanking.sortedSubstituents.front().front();
+  }
+
+  inline AtomIndexType _rightHighPriority() const {
+    return _rightRanking.sortedSubstituents.back().back();
+  }
+
+  inline AtomIndexType _rightLowPriority() const {
+    return _rightRanking.sortedSubstituents.front().front();
+  }
+
   //! Generates the dihedral sequences of equal priority (i.e. high with high)
   std::vector<
     std::array<AtomIndexType, 4>
@@ -97,6 +101,8 @@ private:
   //! Generates trans dihedral limits
   std::vector<DihedralLimits> _transDihedralLimits() const;
 
+  static unsigned _numIndices(const RankingInformation& ranking);
+
 public:
 /* Constructors */
   EZStereocenter() = delete;
@@ -108,11 +114,26 @@ public:
   ); 
 
 /* Modification */
-  void adaptToRankingChange(const RankingInformation& newRanking) final;
+  void addSubstituent(
+    const AtomIndexType& center,
+    const RankingInformation& centerRanking
+  );
 
   void assign(const boost::optional<unsigned>& assignment) final;
 
   void fit(const Delib::PositionCollection& positions);
+
+  void propagateGraphChange(
+    const RankingInformation& firstCenterRanking,
+    const RankingInformation& secondCenterRanking
+  );
+
+  void propagateVertexRemoval(const AtomIndexType& removedIndex) final;
+
+  void removeSubstituent(
+    const AtomIndexType& center,
+    const AtomIndexType& which
+  );
 
 /* Information */
   double angle(

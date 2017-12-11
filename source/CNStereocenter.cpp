@@ -1,8 +1,11 @@
 #include "template_magic/Boost.h"
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
+#include "template_magic/Random.h"
 #include "geometry_assignment/GenerateUniques.h"
+#include "symmetry_information/Properties.h"
 
+#include "BuildTypeSwitch.h"
 #include "CNStereocenter.h"
 #include "CommonTrig.h"
 #include "DelibHelpers.h"
@@ -11,42 +14,44 @@
 
 #include <iomanip>
 
+/* TODO
+ * - An option to enable non-minimal-work mappings if unique
+ * - Lots of parallels between addSubstituent, propagateGraphChange and
+ *   removeSubstituent. Refactor? Very difficult, at least a ten-parameter
+ *   function with optionals to smooth over differences...
+ */
+
 namespace MoleculeManip {
 
 namespace Stereocenters {
 
-/* Constructors */
-CNStereocenter::CNStereocenter(
-  // The symmetry of this Stereocenter
-  const Symmetry::Name& symmetry,
-  // The atom this Stereocenter is centered on
-  const AtomIndexType& centerAtom,
-  // Ranking information of substituents
-  const RankingInformation& ranking
-) : _ranking {ranking},
-    _centerAtom {centerAtom},
-    _symmetry {symmetry},
-    _assignmentOption {boost::none}
-{
-  // Generate the set of unique assignments possible here
-  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
-    AssignmentType(
-      symmetry,
-      _makeAssignmentCharacters(_ranking),
-      _makeAssignmentLinks(_ranking)
-    ),
-    false // Do NOT remove trans-spanning linked groups
+namespace glue {
+
+RankingInformation::RankedType canonicalize(
+  RankingInformation::RankedType sortedSubstituents
+) {
+  /* Stable sort so that ranking information is preserved while moving around
+   * sets of different sizes
+   */
+  std::stable_sort(
+    sortedSubstituents.begin(),
+    sortedSubstituents.end(),
+    [](const auto& setA, const auto& setB) -> bool {
+      // Inverted comparison so that larger sets come first
+      return setA.size() > setB.size();
+    }
   );
+
+  return sortedSubstituents;
 }
 
-/* Private members */
-std::vector<char> CNStereocenter::_makeAssignmentCharacters(
-  const RankingInformation& ranking
+std::vector<char> makeCanonicalCharacters(
+  const RankingInformation::RankedType canonicalizedSubstituents
 ) {
   std::vector<char> characters;
 
   char currentChar = 'A';
-  for(const auto& equalPrioritySet : ranking.sortedSubstituents) {
+  for(const auto& equalPrioritySet : canonicalizedSubstituents) {
     for(unsigned i = 0; i < equalPrioritySet.size(); ++i) {
       characters.push_back(currentChar);
     }
@@ -57,50 +62,15 @@ std::vector<char> CNStereocenter::_makeAssignmentCharacters(
   return characters;
 }
 
-std::map<AtomIndexType, unsigned> CNStereocenter::_makeSymmetryPositionMap(
-  const UniqueAssignments::Assignment& assignment,
-  const RankingInformation& ranking
+UniqueAssignments::Assignment::LinksSetType makeLinksSelfReferential(
+  const RankingInformation::RankedType& canonicalizedSubstituents,
+  const RankingInformation::LinksType& rankingLinks
 ) {
-  std::map<AtomIndexType, unsigned> positionMap;
+  // TODO there's definitely a better way to do this
 
-  const auto endIterators = TemplateMagic::map(
-    ranking.sortedSubstituents,
-    [](const auto& equalPrioritySet) -> auto {
-      return equalPrioritySet.end();
-    }
-  );
-
-  auto iterators = TemplateMagic::map(
-    ranking.sortedSubstituents,
-    [](const auto& equalPrioritySet) -> auto {
-      return equalPrioritySet.begin();
-    }
-  );
-
-  unsigned symmetryPosition = 0;
-  for(const auto& priorityChar : assignment.characters) {
-    auto& rankingIterator = iterators.at(priorityChar - 'A');
-    const auto& endIterator = endIterators.at(priorityChar - 'A');
-    assert(rankingIterator != endIterator);
-
-    positionMap.emplace(
-      *rankingIterator,
-      symmetryPosition
-    );
-
-    ++symmetryPosition;
-    ++rankingIterator;
-  }
-
-  return positionMap;
-}
-
-UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeAssignmentLinks(
-  const RankingInformation& ranking
-) {
   // Flatten the sorted list of indices
   std::vector<unsigned> sortedIndices;
-  for(const auto& equalPrioritySet : ranking.sortedSubstituents) {
+  for(const auto& equalPrioritySet : canonicalizedSubstituents) {
     for(const auto& index : equalPrioritySet) {
       sortedIndices.push_back(index);
     }
@@ -130,7 +100,7 @@ UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeAssignmentLinks
     return findIter - sortedIndices.begin();
   };
 
-  for(const auto& linkPair : ranking.linkedPairs) {
+  for(const auto& linkPair : rankingLinks) {
     links.emplace(
       findIndexInSorted(linkPair.first),
       findIndexInSorted(linkPair.second)
@@ -140,7 +110,281 @@ UniqueAssignments::Assignment::LinksSetType CNStereocenter::_makeAssignmentLinks
   return links;
 }
 
+std::map<AtomIndexType, unsigned> makeSymmetryPositionMap(
+  const UniqueAssignments::Assignment& assignment,
+  const RankingInformation::RankedType& canonicalizedSubstituents
+) {
+  std::map<AtomIndexType, unsigned> positionMap;
+
+  const auto endIterators = TemplateMagic::map(
+    canonicalizedSubstituents,
+    [](const auto& equalPrioritySet) -> auto {
+      return equalPrioritySet.end();
+    }
+  );
+
+  auto iterators = TemplateMagic::map(
+    canonicalizedSubstituents,
+    [](const auto& equalPrioritySet) -> auto {
+      return equalPrioritySet.begin();
+    }
+  );
+
+  unsigned symmetryPosition = 0;
+  for(const auto& priorityChar : assignment.characters) {
+    auto& rankingIterator = iterators.at(priorityChar - 'A');
+    const auto& endIterator = endIterators.at(priorityChar - 'A');
+    assert(rankingIterator != endIterator);
+
+    positionMap.emplace(
+      *rankingIterator,
+      symmetryPosition
+    );
+
+    ++symmetryPosition;
+    ++rankingIterator;
+  }
+
+  return positionMap;
+}
+
+
+std::vector<AtomIndexType> mapToSymmetryPositions(
+  const UniqueAssignments::Assignment& assignment,
+  const RankingInformation::RankedType& canonicalizedSubstituents
+) {
+  std::vector<AtomIndexType> atomsAtSymmetryPositions;
+
+  const auto endIterators = TemplateMagic::map(
+    canonicalizedSubstituents,
+    [](const auto& equalPrioritySet) {
+      return equalPrioritySet.end();
+    }
+  );
+
+  auto iterators = TemplateMagic::map(
+    canonicalizedSubstituents,
+    [](const auto& equalPrioritySet) -> auto {
+      return equalPrioritySet.begin();
+    }
+  );
+
+  for(const auto& priorityChar : assignment.characters) {
+    auto& rankingIterator = iterators.at(priorityChar - 'A');
+    const auto& endIterator = endIterators.at(priorityChar - 'A');
+    assert(rankingIterator != endIterator);
+
+    atomsAtSymmetryPositions.push_back(
+      *rankingIterator
+    );
+
+    ++rankingIterator;
+  }
+
+  return atomsAtSymmetryPositions;
+}
+
+std::vector<char> makeAssignmentCharacters(
+  const RankingInformation::RankedType& canonicalizedSubstituents,
+  const std::vector<char>& canonicalizedAssignmentCharacters,
+  const std::vector<AtomIndexType>& atomsAtSymmetryPositions
+) {
+  // Replace the atom indices by their new ranking characters
+  std::vector<unsigned> flattenedIndices;
+  for(const auto& equalPrioritySet : canonicalizedSubstituents) {
+    for(const auto& index : equalPrioritySet) {
+      flattenedIndices.push_back(index);
+    }
+  }
+
+  std::vector<char> newAssignmentCharacters;
+
+  for(const auto& index : atomsAtSymmetryPositions) {
+    const auto findIter = std::find(
+      flattenedIndices.begin(),
+      flattenedIndices.end(),
+      index
+    );
+
+    newAssignmentCharacters.push_back(
+      canonicalizedAssignmentCharacters.at(
+        findIter - flattenedIndices.begin()
+      )
+    );
+  }
+
+  return newAssignmentCharacters;
+}
+
+boost::optional<const std::vector<unsigned>&> getIndexMapping(
+  const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
+  const ChiralStatePreservation& preservationOption
+) {
+  if(mappingsGroup.indexMappings.size() == 0) {
+    return boost::none;
+  }
+
+  if(preservationOption == ChiralStatePreservation::EffortlessAndUnique) {
+    if(
+      mappingsGroup.indexMappings.size() == 1 
+      && mappingsGroup.angularDistortion <= 0.2
+    ) {
+      return mappingsGroup.indexMappings.front();
+    }
+
+    return boost::none;
+  }
+
+  if(preservationOption == ChiralStatePreservation::Unique) {
+    if(mappingsGroup.indexMappings.size() == 1) {
+      return mappingsGroup.indexMappings.front();
+    }
+
+    return boost::none;
+  }
+
+  if(preservationOption == ChiralStatePreservation::RandomFromMultipleBest) {
+    return mappingsGroup.indexMappings.at(
+      TemplateMagic::random.getSingle<unsigned>(
+        0,
+        mappingsGroup.indexMappings.size() - 1
+      )
+    );
+  }
+
+  return boost::none;
+}
+
+} // namespace glue
+
+/* Constructors */
+CNStereocenter::CNStereocenter(
+  // The symmetry of this Stereocenter
+  const Symmetry::Name& symmetry,
+  // The atom this Stereocenter is centered on
+  const AtomIndexType& centerAtom,
+  // Ranking information of substituents
+  const RankingInformation& ranking
+) : _ranking {ranking},
+    _centerAtom {centerAtom},
+    _symmetry {symmetry},
+    _assignmentOption {boost::none}
+{
+  // Canonicalize the ranking's substituents
+  _ranking.sortedSubstituents = glue::canonicalize(_ranking.sortedSubstituents);
+
+  // Generate the set of unique assignments possible here
+  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
+    AssignmentType(
+      symmetry,
+      glue::makeCanonicalCharacters(_ranking.sortedSubstituents),
+      glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.linkedPairs)
+    ),
+    false // Do NOT remove trans-spanning linked groups
+  );
+}
+
 /* Modification */
+void CNStereocenter::addSubstituent(
+  const AtomIndexType& newSubstituentIndex,
+  const RankingInformation& newRanking,
+  const Symmetry::Name& newSymmetry,
+  const ChiralStatePreservation& preservationOption
+) {
+  auto canonicalizedSubstituents = glue::canonicalize(newRanking.sortedSubstituents);
+  auto canonicalizedCharacters = glue::makeCanonicalCharacters(canonicalizedSubstituents);
+  auto newLinks = glue::makeLinksSelfReferential(canonicalizedSubstituents, newRanking.linkedPairs);
+  auto newAssignments = UniqueAssignments::uniqueAssignments(
+    AssignmentType {
+      newSymmetry,
+      canonicalizedCharacters,
+      newLinks
+    }
+  );
+  boost::optional<unsigned> newAssignment = boost::none;
+
+  // Does the current stereocenter carry chiral information?
+  if(_assignmentOption) {
+    auto symmetryMappingOptional = Symmetry::getMapping(
+      _symmetry,
+      newSymmetry
+    );
+    // Are there mappings to the target symmetry?
+    if(symmetryMappingOptional) {
+      auto suitableMappingOptional = glue::getIndexMapping(
+        symmetryMappingOptional.value(),
+        preservationOption
+      );
+      // Is there a suitable mapping?
+      if(suitableMappingOptional) {
+        /* So now we must transfer the current assignment into the new symmetry
+         * and search for it in the set of uniques.
+         */
+        const auto& symmetryMapping = suitableMappingOptional.value();
+
+        // Transform current assignment from characters to indices
+        const auto& currentAssignment = _uniqueAssignmentsCache.at(
+          _assignmentOption.value()
+        );
+
+        std::vector<AtomIndexType> atomsAtSmallerSymmetryPositions = glue::mapToSymmetryPositions(
+          currentAssignment,
+          _ranking.sortedSubstituents
+        );
+
+        atomsAtSmallerSymmetryPositions.push_back(newSubstituentIndex);
+
+        // Transfer indices from smaller symmetry to larger
+        std::vector<AtomIndexType> atomsAtLargerSymmetryPositions (Symmetry::size(newSymmetry));
+        for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
+          atomsAtLargerSymmetryPositions.at(
+            symmetryMapping.at(i)
+          ) = atomsAtSmallerSymmetryPositions.at(i);
+        }
+
+        // Get character representation in new symmetry
+        std::vector<char> charactersInLargerSymmetry = glue::makeAssignmentCharacters(
+          canonicalizedSubstituents,
+          canonicalizedCharacters,
+          atomsAtLargerSymmetryPositions
+        );
+
+        // Construct an assignment from it
+        auto trialAssignment = UniqueAssignments::Assignment(
+          newSymmetry,
+          charactersInLargerSymmetry,
+          newLinks
+        );
+
+        // Generate the rotational equivalents
+        auto allTrialRotations = trialAssignment.generateAllRotations();
+
+        // Search for a match from the vector of uniques
+        for(unsigned i = 0; i < newAssignments.size(); ++i) {
+          if(allTrialRotations.count(newAssignments.at(i)) > 0) {
+            newAssignment = i;
+            break;
+          }
+        }
+      }
+    };
+  } 
+
+  /* Since either there is no steric information present or no unique
+   * minimal-effort mapping exists to the new symmetry, it is impossible to
+   * unambiguously choose a new assignment. In those cases, newAssignment
+   * remains boost::none, and this stereocenter loses any chiral information it
+   * may have had.
+   */
+
+  // Overwrite class state
+  _ranking = newRanking;
+  _ranking.sortedSubstituents = canonicalizedSubstituents;
+  _symmetry = newSymmetry;
+  _uniqueAssignmentsCache = newAssignments;
+  assign(newAssignment);
+}
+
 void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
   if(assignment) {
     assert(assignment.value() < _uniqueAssignmentsCache.size());
@@ -153,25 +397,236 @@ void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
    * assigning (AtomIndexType -> unsigned).
    */
   if(assignment) {
-    _symmetryPositionMapCache = _makeSymmetryPositionMap(
+    _symmetryPositionMapCache = glue::makeSymmetryPositionMap(
       _uniqueAssignmentsCache.at(assignment.value()),
-      _ranking
+      _ranking.sortedSubstituents
     );
   } else { // Wipe the map
     _symmetryPositionMapCache.clear();
   }
 }
 
-void CNStereocenter::adaptToRankingChange(const RankingInformation& newRanking) {
-  /* TODO previous symmetry is NOT taken into account -> no mapping to new
-   * symmetry possible
-   *
-   * This is a mess, and there is no clear logic to it
-   *
-   * This is for when something is EDITED in an existing molecule, this has no
-   * priority
-   */
+void CNStereocenter::propagateGraphChange(const RankingInformation& newRanking) {
+  auto newCanonicalizedSubstituents = glue::canonicalize(newRanking.sortedSubstituents);
 
+  // Has anything about the new ranking changed relative to the old?
+  if(
+    newCanonicalizedSubstituents != _ranking.sortedSubstituents
+    || newRanking.linkedPairs != _ranking.linkedPairs
+  ) {
+    auto newCharacters = glue::makeCanonicalCharacters(newCanonicalizedSubstituents);
+    auto newLinks = glue::makeLinksSelfReferential(
+      newCanonicalizedSubstituents,
+      newRanking.linkedPairs
+    );
+    auto newAssignments = UniqueAssignments::uniqueAssignments(
+      AssignmentType(_symmetry, newCharacters, newLinks),
+      false // do NOT remove trans-spanning ligand groups
+    );
+    boost::optional<unsigned> newAssignment = boost::none;
+
+    /* Before we overwrite class state, we need to figure out which assignment 
+     * in the new set of assignments corresponds to the one we have now.
+     * This is only necessary in the case that the stereocenter is currently
+     * assigned and only possible if the new number of assignments is smaller or
+     * equal to the amount we have currently.
+     */
+    if(
+      _assignmentOption
+      && newAssignments.size() <= _uniqueAssignmentsCache.size()
+    ) {
+      const auto& currentAssignment = _uniqueAssignmentsCache.at(
+        _assignmentOption.value()
+      );
+
+      // Replace the characters by their corresponding indices from the old ranking
+      std::vector<AtomIndexType> atomsAtSymmetryPositions = glue::mapToSymmetryPositions(
+        currentAssignment,
+        _ranking.sortedSubstituents
+      );
+
+      // Replace the atom indices by their new ranking characters
+      std::vector<char> newAssignmentCharacters = glue::makeAssignmentCharacters(
+        newCanonicalizedSubstituents,
+        newCharacters,
+        atomsAtSymmetryPositions
+      );
+
+      // Create a new assignment with those characters
+      auto trialAssignment = UniqueAssignments::Assignment(
+        _symmetry,
+        newAssignmentCharacters,
+        newLinks
+      );
+
+      // Generate all rotations of this trial assignment
+      auto allTrialRotations = trialAssignment.generateAllRotations();
+
+      // Find out which of the new assignments has a rotational equivalent
+      for(unsigned i = 0; i < newAssignments.size(); ++i) {
+        if(allTrialRotations.count(newAssignments.at(i)) > 0) {
+          newAssignment = i;
+          break;
+        }
+      }
+    }
+
+    // Overwrite the class state
+    _ranking = newRanking;
+    _ranking.sortedSubstituents = newCanonicalizedSubstituents;
+    _uniqueAssignmentsCache = newAssignments;
+    assign(newAssignment);
+  }
+}
+
+void CNStereocenter::propagateVertexRemoval(const AtomIndexType& removedIndex) {
+  auto updateIndexInplace = [&removedIndex](AtomIndexType& index) -> void {
+    if(index > removedIndex) {
+      --index;
+    } else if(index == removedIndex) {
+      index = std::numeric_limits<AtomIndexType>::max();
+    } 
+  };
+
+  auto updateIndex = [&removedIndex](const AtomIndexType& index) -> AtomIndexType {
+    if(index > removedIndex) {
+      return index - 1;
+    }
+    
+    if(index == removedIndex) {
+      return std::numeric_limits<AtomIndexType>::max();
+    }
+
+    return index;
+  };
+
+
+  for(auto& equalPrioritySet : _ranking.sortedSubstituents) {
+    for(auto& index : equalPrioritySet) {
+      updateIndexInplace(index);
+    }
+  }
+
+  RankingInformation::LinksType newLinks;
+  for(auto& linkedPair : _ranking.linkedPairs) {
+    newLinks.emplace(
+      updateIndex(linkedPair.first),
+      updateIndex(linkedPair.second)
+    );
+  }
+  _ranking.linkedPairs = std::move(newLinks);
+
+  updateIndexInplace(_centerAtom);
+
+  if(_assignmentOption) {
+    std::map<AtomIndexType, unsigned> newSymmetryPositionMap;
+
+    for(const auto& iterPair : _symmetryPositionMapCache) {
+      const auto& atomIndex = iterPair.first;
+      const auto& symmetryPosition = iterPair.second;
+
+      newSymmetryPositionMap.emplace(
+        updateIndex(atomIndex),
+        symmetryPosition
+      );
+    }
+
+    _symmetryPositionMapCache = std::move(newSymmetryPositionMap);
+  }
+}
+
+void CNStereocenter::removeSubstituent(
+  const AtomIndexType& which,
+  const RankingInformation& newRanking,
+  const Symmetry::Name& newSymmetry,
+  const ChiralStatePreservation& preservationOption
+) {
+  auto canonicalizedSubstituents = glue::canonicalize(newRanking.sortedSubstituents);
+  auto canonicalizedCharacters = glue::makeCanonicalCharacters(canonicalizedSubstituents);
+  auto newLinks = glue::makeLinksSelfReferential(canonicalizedSubstituents, newRanking.linkedPairs);
+  auto newAssignments = UniqueAssignments::uniqueAssignments(
+    AssignmentType {
+      newSymmetry,
+      canonicalizedCharacters,
+      newLinks
+    }
+  );
+  boost::optional<unsigned> newAssignment;
+
+
+  // Does the stereocenter currently carry chiral information?
+  if(_assignmentOption) {
+    // Which symmetry position is the deleted index currently at?
+    unsigned deletedSymmetryPosition = _symmetryPositionMapCache.at(which);
+
+    // Fetch the mapping group optional
+    auto symmetryMappingOptional = Symmetry::getMapping(
+      _symmetry,
+      newSymmetry,
+      deletedSymmetryPosition
+    );
+
+    if(symmetryMappingOptional) {
+      auto suitableMappingOptional = glue::getIndexMapping(
+        symmetryMappingOptional.value(),
+        preservationOption
+      );
+
+      if(suitableMappingOptional) {
+        const auto& symmetryMapping = suitableMappingOptional.value();
+
+        // Transform current assignment from characters to atom indices
+        const auto& currentAssignment = _uniqueAssignmentsCache.at(
+          _assignmentOption.value()
+        );
+
+        std::vector<AtomIndexType> atomsAtCurrentSymmetryPositions = glue::mapToSymmetryPositions(
+          currentAssignment,
+          _ranking.sortedSubstituents
+        );
+
+        // Transfer indices from current symmetry to new symmetry
+        std::vector<AtomIndexType> atomsAtNewSymmetryPositions (Symmetry::size(newSymmetry));
+        for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
+          atomsAtNewSymmetryPositions.at(
+            symmetryMapping.at(i)
+          ) = atomsAtCurrentSymmetryPositions.at(i);
+        }
+
+        // Get character representation in new symmetry
+        std::vector<char> charactersInNewSymmetry = glue::makeAssignmentCharacters(
+          canonicalizedSubstituents,
+          canonicalizedCharacters,
+          atomsAtNewSymmetryPositions
+        );
+
+        // Construct an assignment
+        auto trialAssignment = UniqueAssignments::Assignment(
+          newSymmetry,
+          charactersInNewSymmetry,
+          newLinks
+        );
+
+        // Generate the rotational equivalents
+        auto allTrialRotations = trialAssignment.generateAllRotations();
+
+        // Search for a match from the vector of uniques
+        for(unsigned i = 0; i < newAssignments.size(); ++i) {
+          if(allTrialRotations.count(newAssignments.at(i)) > 0) {
+            newAssignment = i;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // Overwrite class state
+  _ranking = newRanking;
+  _ranking.sortedSubstituents = canonicalizedSubstituents;
+  _symmetry = newSymmetry;
+  _uniqueAssignmentsCache = newAssignments;
+  assign(newAssignment);
 }
 
 const AtomIndexType& CNStereocenter::getCentralAtomIndex() const {
@@ -476,7 +931,7 @@ std::string CNStereocenter::info() const {
   std::string returnString = "CN "s 
     + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +", "s;
 
-  auto characters = _makeAssignmentCharacters(_ranking);
+  auto characters = glue::makeCanonicalCharacters(_ranking.sortedSubstituents);
   std::copy(
     characters.begin(),
     characters.end(),
@@ -526,8 +981,8 @@ void CNStereocenter::setSymmetry(const Symmetry::Name& symmetryName) {
   _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
     AssignmentType(
       symmetryName,
-      _makeAssignmentCharacters(_ranking),
-      _makeAssignmentLinks(_ranking)
+      glue::makeCanonicalCharacters(_ranking.sortedSubstituents),
+      glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.linkedPairs)
     ),
     false // do NOT remove trans-spanning ligand groups
   );

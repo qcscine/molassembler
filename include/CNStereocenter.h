@@ -3,6 +3,7 @@
 
 #include "geometry_assignment/Assignment.h"
 #include "symmetry_information/Symmetries.h"
+#include "symmetry_information/DynamicProperties.h"
 
 #include "Stereocenter.h"
 
@@ -23,8 +24,43 @@ namespace MoleculeManip {
 
 namespace Stereocenters {
 
-/* TODO
- */
+namespace glue {
+
+RankingInformation::RankedType canonicalize(
+  RankingInformation::RankedType sortedSubstituents
+);
+
+std::vector<char> makeCanonicalCharacters(
+  const RankingInformation::RankedType canonicalizedSubstituents
+);
+
+UniqueAssignments::Assignment::LinksSetType makeLinksSelfReferential(
+  const RankingInformation::RankedType& canonicalizedSubstituents,
+  const RankingInformation::LinksType& rankingLinks
+);
+
+std::map<AtomIndexType, unsigned> makeSymmetryPositionMap(
+  const UniqueAssignments::Assignment& assignment,
+  const RankingInformation::RankedType& canonicalizedSubstituents
+);
+
+std::vector<AtomIndexType> mapToSymmetryPositions(
+  const UniqueAssignments::Assignment& assignment,
+  const RankingInformation::RankedType& canonicalizedSubstituents
+);
+
+std::vector<char> makeAssignmentCharacters(
+  const RankingInformation::RankedType& canonicalizedSubstituents,
+  const std::vector<char>& canonicalizedAssignmentCharacters,
+  const std::vector<AtomIndexType>& atomsAtSymmetryPositions
+);
+
+boost::optional<const std::vector<unsigned>&> getIndexMapping(
+  const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
+  const ChiralStatePreservation& preservationOption
+);
+
+} // namespace glue
 
 class CNStereocenter : public Stereocenter {
 private:
@@ -45,25 +81,18 @@ private:
   boost::optional<unsigned> _assignmentOption;
 
   /* Derivative state (cache) */
-  //! Vector of rotationally unique Assignments
+  /*! Vector of rotationally unique Assignments
+   *
+   * Essentially a cached value, valid only for the current ranking.
+   */
   std::vector<AssignmentType> _uniqueAssignmentsCache;
 
-  //! Mapping between next neighbor atom index to permutational symmetry position
+  /*! Mapping between next neighbor atom index to permutational symmetry position
+   *
+   * Essentially a cached value, valid only for the current assignment
+   * (excluding boost::none).
+   */
   std::map<AtomIndexType, unsigned> _symmetryPositionMapCache;
-  
-/* Private members */
-  static std::map<AtomIndexType, unsigned> _makeSymmetryPositionMap(
-    const UniqueAssignments::Assignment& assignment,
-    const RankingInformation& ranking
-  );
-
-  static std::vector<char> _makeAssignmentCharacters(
-    const RankingInformation& ranking
-  );
-
-  static UniqueAssignments::Assignment::LinksSetType _makeAssignmentLinks(
-    const RankingInformation& ranking
-  );
 
 public:
 /* Public state */
@@ -78,15 +107,15 @@ public:
   );
 
 /* Modification */
+  void addSubstituent(
+    const AtomIndexType& newSubstituentIndex,
+    const RankingInformation& newRanking,
+    const Symmetry::Name& newSymmetry,
+    const ChiralStatePreservation& preservationOption
+  );
+
   //! Changes the assignment of the stereocenter
   void assign(const boost::optional<unsigned>& assignment) final;
-
-  /*!
-   * In case a graph modification changes the ranking of this stereocenter's 
-   * substituents, it must be redetermined whether the new configuration is a
-   * stereocenter and if so, which one.
-   */
-  void adaptToRankingChange(const RankingInformation& newRanking) final;
 
   /*!
    * The assignment is determined based on three-dimensional positions using
@@ -95,6 +124,22 @@ public:
   void fit(
     const Delib::PositionCollection& positions,
     std::vector<Symmetry::Name> excludeSymmetries = {}
+  );
+
+  /*!
+   * In case a graph modification changes the ranking of this stereocenter's 
+   * substituents, it must be redetermined whether the new configuration is a
+   * stereocenter and if so, which one.
+   */
+  void propagateGraphChange(const RankingInformation& newRanking);
+
+  void propagateVertexRemoval(const AtomIndexType& removedIndex) final;
+
+  void removeSubstituent(
+    const AtomIndexType& which,
+    const RankingInformation& newRanking,
+    const Symmetry::Name& newSymmetry,
+    const ChiralStatePreservation& preservationOption
   );
 
 /* Information */

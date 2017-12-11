@@ -77,15 +77,11 @@ enum class Type {
 class Stereocenter {
 public:
 /* Modification */
-  /*!
-   * If a change in the molecule has happened that possibly modifies this
-   * stereocenter's ranking, update the stereocenter while retaining as much
-   * information as possible about the assignment it was in previously.
-   */
-  virtual void adaptToRankingChange(const RankingInformation& newRanking) = 0;
-
   //!  Assign this feature
   virtual void assign(const boost::optional<unsigned>& assignment) = 0;
+
+  //! Update vertex descriptors on vertex removal
+  virtual void propagateVertexRemoval(const AtomIndexType& removedIndex) = 0;
 
 /* Information */
   /*!
