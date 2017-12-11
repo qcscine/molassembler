@@ -707,6 +707,11 @@ void CNStereocenter::fit(
         )
       );
 
+      // We can stop immediately if this is worse
+      if(angleDeviations > bestPenalty) {
+        continue;
+      }
+
       const double oneThreeDistanceDeviations = TemplateMagic::sum(
         TemplateMagic::mapAllPairs(
           adjacentAtoms,
@@ -737,6 +742,11 @@ void CNStereocenter::fit(
           }
         )
       );
+
+      // Another early continue
+      if(angleDeviations + oneThreeDistanceDeviations > bestPenalty) {
+        continue;
+      }
 
       const double chiralityDeviations = (prototypes.empty()
         ? 0
@@ -792,20 +802,6 @@ void CNStereocenter::fit(
         << chiralityDeviations
         << std::endl;
 #endif
-
-
-      /* If ever you want to attempt to additionally penalize symmetries that
-       * the internal determineSymmetry functionality disfavors, then that
-       * information must come from a different prepending function call, it is
-       * not a valid part of the Stereocenter interface... EZStereocenter
-       * cannot expect to be penalized in the same way
-       */
-      /* if(
-        expectedSymmetry 
-        && expectedSymmetry.value() != symmetryName
-      ) {
-        currentFit.symmetryPenalty = 0.5;
-      } */
 
       if(fitPenalty < bestPenalty) {
         bestSymmetry = symmetryName;

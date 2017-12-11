@@ -1,18 +1,3 @@
-TODO
-----
-- Recheck geometry_assignments relative weights for correctness
-- Fix all the failing tests
-- Finish interface change for RankingInformation / CNStereocenter / EZStereocenter and RETEST!
-- Finish changeRanking functions for CNStereocenter and EZStereocenter
-- Find a suitable way to ensure that when a stereocenter is changed, any other
-  stereocenters whose ranking may be affected is updated -> StereocenterList
-  proxy objects, etc. Perhaps pass out weak pointers to stereocenter instances
-  only, and perhaps only ones that do not permit modification of the underlying
-  object. Otherwise hide the abstraction some other way, either through obtuse
-  API or whatever
-- Stereocenters that merely mark non-standard geometries and do not provide any
-  assignments are probably not included in ranking at all, but they should be!
-
 Remaining DG deficiencies
 -------------------------
 - Current metrization algorithm is O(N⁵), this is unacceptable, implement better
@@ -37,10 +22,12 @@ Remaining DG deficiencies
            
 TODO
 ----
+- Recheck geometry_assignments relative weights for correctness
+- Fix all the failing tests
+- Stereocenters that merely mark non-standard geometries and do not provide any
+  assignments are probably not included in ranking at all, but they should be!
 - Documentation:
   - README.md file
-
-- Maintaining state is difficult in the face of changes
 - EZStereocenters in small cycles aren't truly stereocenters. There's no reason
   to be permuting 3 EZStereocenters in a benzene, any E arrangements are
   infulfillable anyway. But in oct-1-ene, E/Z differences are realizable. How

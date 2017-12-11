@@ -9,6 +9,7 @@
 #include "IterateStereocenterPermutations.h"
 
 #include "template_magic/Containers.h"
+#include "template_magic/Random.h"
 
 using namespace std::string_literals;
 using namespace MoleculeManip;
@@ -33,10 +34,6 @@ void explainDifference(
 /* Test whether generating coordinates from a simple molecule and then
  * recovering all the stereocenter data from the positions alone yields the
  * same StereocenterList as you started out with
- *
- * TODO This test will fail worse as soon as the fit takes into account the 
- * geometry we expect the center to take, simply because the molecules created
- * by DGDBM::asymmetricMolecule are (in VSEPR's eyes) abject nonsense
  */
 BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
   for(const auto& symmetryName: Symmetry::allNames) {
@@ -46,8 +43,42 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
     if(molecule.getStereocenterList().size() > 0) {
       auto centralStereocenter = molecule.getStereocenterList().at(0);
 
-      for(unsigned i = 0; i < centralStereocenter->numAssignments(); ++i) {
-        molecule.assignStereocenterAtAtom(0, i);
+      // Create a full list of the possible assignments
+      std::vector<unsigned> assignments;
+      assignments.resize(centralStereocenter -> numAssignments());
+      std::iota(
+        assignments.begin(),
+        assignments.end(),
+        0
+      );
+
+      // Randomize
+      std::shuffle(
+        assignments.begin(),
+        assignments.end(),
+        TemplateMagic::random.randomEngine
+      );
+
+      /* Limit the number of assignments we're testing per symmetry to 10.
+       * Otherwise, with maximally asymmetric square antiprismatic (5040),
+       * we're never going to get done.
+       *
+       * Also because fitting stereocenters to positions becomes ridiculously
+       * expensive since it brute forces all assignments...
+       *
+       * Let's break it down to the number of Symmetry angle function calls
+       * 10 assignments
+       * 1000 Molecules
+       * 1000 fit calls
+       * 1000 * 5040 assignments tested
+       * 1000 * 5040 * 8 * 7 ~= 3e8 angle function calls
+       */
+      if(centralStereocenter -> numAssignments() > 100) {
+        assignments.resize(10);
+      } 
+
+      for(const auto& assignment : assignments) {
+        molecule.assignStereocenterAtAtom(0, assignment);
 
         // For each possible arrangement of these ligands
         /* Create an ensemble of 3D positions using threeDimensional refinement,
