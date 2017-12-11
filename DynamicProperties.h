@@ -132,13 +132,13 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
 
 //! A grouping of index mappings of equal angular and chiral distortion
 struct SymmetryTransitionGroup {
-  std::set<
+  std::vector<
     std::vector<unsigned>
   > indexMappings;
   double angularDistortion, chiralDistortion;
 
   SymmetryTransitionGroup(
-    std::set<
+    std::vector<
       std::vector<unsigned>
     > passIndexMappings,
     const double& passAngleDistortion,

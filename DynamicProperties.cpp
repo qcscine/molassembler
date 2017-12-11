@@ -485,7 +485,7 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
 }
 
 SymmetryTransitionGroup::SymmetryTransitionGroup(
-  std::set<
+  std::vector<
     std::vector<unsigned>
   > passIndexMappings,
   const double& passAngleDistortion,
@@ -543,12 +543,12 @@ SymmetryTransitionGroup selectBestTransitionMappings(
     }
   );
 
-  std::set<
+  std::vector<
     std::vector<unsigned>
   > mappings;
 
   for(const auto& distortionInfo : distortionsView) {
-    mappings.insert(distortionInfo.indexMapping);
+    mappings.push_back(distortionInfo.indexMapping);
   }
 
   return SymmetryTransitionGroup(

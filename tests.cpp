@@ -461,9 +461,14 @@ std::enable_if_t<
     }
   );
 
+  decltype(convertedMappings) dynamicResultSet {
+    dynamicMappings.indexMappings.begin(),
+    dynamicMappings.indexMappings.end()
+  };
+
   return TemplateMagic::setDifference(
     convertedMappings,
-    dynamicMappings.indexMappings
+    dynamicResultSet
   ).size() == 0;
 }
 

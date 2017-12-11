@@ -66,7 +66,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
       const auto& constexprMappings = constexprOption.value();
 
       properties::SymmetryTransitionGroup STLResult;
-      STLResult.indexMappings = TemplateMagic::map(
+      STLResult.indexMappings = TemplateMagic::mapToVector(
         ConstexprMagic::toSTL(constexprMappings.mappings),
         [&](const auto& indexList) -> std::vector<unsigned> {
           return {
