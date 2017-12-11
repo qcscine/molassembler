@@ -160,7 +160,10 @@ void writeSymmetryTransitionDotFile(
         TemplateMagic::mapValues(
           distortionsMap,
           [](const auto& ligandGainReturnStruct) -> double {
-            return ligandGainReturnStruct.angularDistortion;
+            return (
+              ligandGainReturnStruct.angularDistortion
+              + ligandGainReturnStruct.chiralDistortion
+            );
           }
         )
       );
@@ -181,7 +184,10 @@ void writeSymmetryTransitionDotFile(
         // In case you want transitions explained
         if(explainTransitions) {
           std::cout << "Transitions of distortion " 
-            << mappingData.angularDistortion << " from "
+            << (
+              mappingData.angularDistortion 
+              + mappingData.chiralDistortion
+            ) << " from "
             << Symmetry::name(sourceSymmetry)
             << " to " << Symmetry::name(targetSymmetry) << ":\n";
 
@@ -207,7 +213,7 @@ void writeSymmetryTransitionDotFile(
           if(multiplicity <= 3) {
             std::vector<std::string> repeatColor (
               multiplicity,
-              gradient.getHexString(mappingData.angularDistortion)
+              gradient.getHexString(mappingData.angularDistortion + mappingData.chiralDistortion)
             );
 
             dotFile << "color=\"" 
@@ -215,12 +221,15 @@ void writeSymmetryTransitionDotFile(
               << "\"";
           } else {
             dotFile << "color=\"" 
-              << gradient.getHexString(mappingData.angularDistortion) 
+              << gradient.getHexString(mappingData.angularDistortion + mappingData.chiralDistortion) 
               << "\", style=\"dashed\"";
           }
 
           dotFile << ", label=\"" 
-            << ConstexprMagic::Math::round(mappingData.angularDistortion, 2);
+            << ConstexprMagic::Math::round(
+              mappingData.angularDistortion + mappingData.chiralDistortion,
+              2
+            );
 
 
           if(multiplicity > 3) {
@@ -259,7 +268,8 @@ void writeLigandLossDotFile(
   // Global stuff
   dotFile << R"(  graph [fontname = "Arial", nodesep="1.5", ranksep="1.2"];)" << br
     << R"(  node [fontname = "Arial", style = "filled", fillcolor="white"];)" << br 
-    << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br;
+    << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br
+    << R"(  rankdir="LR";)" << br;
 
   std::set<Symmetry::Name> redNodes {
     Symmetry::Name::Linear,
@@ -351,7 +361,10 @@ void writeLigandLossDotFile(
           // In case you want transitions explained
           if(explainTransitions) {
             std::cout << "Transitions of distortion " 
-              << mappingData.angularDistortion << " from "
+              << (
+                mappingData.angularDistortion 
+                + mappingData.chiralDistortion
+              ) << " from "
               << Symmetry::name(sourceSymmetry)
               << " to " << Symmetry::name(targetSymmetry) << ":\n";
 
@@ -388,7 +401,10 @@ void writeLigandLossDotFile(
             }
 
             dotFile << ", label=\"" 
-              << ConstexprMagic::Math::round(mappingData.angularDistortion, 2);
+              << ConstexprMagic::Math::round(
+                mappingData.angularDistortion + mappingData.chiralDistortion,
+                2
+              );
 
 
             if(multiplicity > 3) {

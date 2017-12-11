@@ -21,40 +21,45 @@ constexpr auto allMappings = ConstexprMagic::makeUpperTriangularMatrix(
 #endif
 
 TemplateMagic::MinimalCache<
-  std::pair<Symmetry::Name, Symmetry::Name>,
+  std::tuple<Symmetry::Name, Symmetry::Name, boost::optional<unsigned>>,
   properties::SymmetryTransitionGroup
 > mappingsCache;
 
 const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   const Symmetry::Name& a,
-  const Symmetry::Name& b
+  const Symmetry::Name& b,
+  const boost::optional<unsigned>& removedIndexOption
 ) {
-  assert(a != b);
-
-  auto indexPair = std::make_pair(a, b);
-
-  if(mappingsCache.has(indexPair)) {
-    return mappingsCache.getOption(indexPair);
+  if(a == b) {
+    return boost::none;
   }
 
+  auto cacheKey = std::make_tuple(a, b, removedIndexOption);
+
+  if(mappingsCache.has(cacheKey)) {
+    return mappingsCache.getOption(cacheKey);
+  }
+
+  int sizeDiff = static_cast<int>(Symmetry::size(b)) - static_cast<int>(Symmetry::size(a));
+
+  if(sizeDiff == 1 || sizeDiff == 0) {
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-  /* Is the desired mapping in the generated list of mappings?
-   * It can be that allMappings contains only a limited set of mappings!
-   *
-   * WARNING: this assumes that the enum containing the names of symmetries has
-   * the same order as the tuple specifying all (or some) symmetry data types
-   * used at compile-time to generate allMappings
-   */
-  if(
-    std::max(
-      static_cast<unsigned>(a),
-      static_cast<unsigned>(b)
-    ) < Symmetry::nSymmetries
-    && static_cast<unsigned>(a) < static_cast<unsigned>(b)
-  ) {
+    /* Is the desired mapping in the generated list of mappings?
+     * It can be that allMappings contains only a limited set of mappings!
+     *
+     * WARNING: this assumes that the enum containing the names of symmetries has
+     * the same order as the tuple specifying all (or some) symmetry data types
+     * used at compile-time to generate allMappings
+     */
     auto& constexprOption = allMappings.at(
-      static_cast<unsigned>(a),
-      static_cast<unsigned>(b)
+      std::min(
+        static_cast<unsigned>(a),
+        static_cast<unsigned>(b)
+      ),
+      std::max(
+        static_cast<unsigned>(a),
+        static_cast<unsigned>(b)
+      )
     );
 
     if(constexprOption.hasValue()) {
@@ -75,27 +80,29 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
       STLResult.chiralDistortion = constexprMappings.chiralDistortion;
 
       mappingsCache.add(
-        indexPair,
+        cacheKey,
         STLResult
       );
     }
-  }
 #else
-  if(!mappingsCache.has(indexPair)
-    && (std::set<int> {0, 1}).count(
-      static_cast<int>(Symmetry::size(a))
-      - static_cast<int>(Symmetry::size(b))
-    ) == 1
-  ) {
     mappingsCache.add(
-      indexPair,
+      cacheKey,
       properties::selectBestTransitionMappings(
         properties::symmetryTransitionMappings(a, b)
       )
     );
-  }
 #endif
-  return mappingsCache.getOption(indexPair);
+  } else if(sizeDiff == -1 && removedIndexOption) {
+    // Deletion case (always dynamic)
+    mappingsCache.add(
+      cacheKey,
+      properties::selectBestTransitionMappings(
+        properties::ligandLossTransitionMappings(a, b, removedIndexOption.value())
+      )
+    );
+  } 
+
+  return mappingsCache.getOption(cacheKey);
 }
 
 #ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS

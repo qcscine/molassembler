@@ -20,7 +20,7 @@ constexpr double smallestAngle __attribute__ ((unused))
 >();
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-//! All 0, +1 symmetry transition mappings, if calculated at compile-time
+//! All 0, +1 symmetry transition mappings
 extern const ConstexprMagic::UpperTriangularMatrix<
   ConstexprMagic::Optional<constexprProperties::MappingsReturnType>,
   nSymmetries * (nSymmetries - 1) / 2
@@ -30,14 +30,15 @@ extern const ConstexprMagic::UpperTriangularMatrix<
 /* Dynamic access to constexpr data */
 //! Cache for on-the-fly generated mappings
 extern TemplateMagic::MinimalCache<
-  std::pair<Symmetry::Name, Symmetry::Name>,
+  std::tuple<Symmetry::Name, Symmetry::Name, boost::optional<unsigned>>,
   properties::SymmetryTransitionGroup
 > mappingsCache;
 
-//! Dynamic access to constexpr mappings
+//! Cached access to mappings. Populates the cache from constexpr if generated.
 const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   const Symmetry::Name& a,
-  const Symmetry::Name& b
+  const Symmetry::Name& b,
+  const boost::optional<unsigned>& removedIndexOption = boost::none
 );
 
 #ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
