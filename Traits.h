@@ -70,6 +70,14 @@ using getValueType = typename detail::getValueTypeImpl<ContainerType>::type;
 template<class Function, typename ...Args>
 using functionReturnType = std::result_of_t<Function(Args...)>;
 
+template<class F>
+struct FunctionPointerReturnType;
+
+template<class ReturnType, typename ...Args>
+struct FunctionPointerReturnType<ReturnType (*)(Args...)> {
+  using type = ReturnType;
+};
+
 } // namespace traits
 
 } // namespace TemplateMagic

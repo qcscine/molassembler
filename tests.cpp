@@ -11,6 +11,7 @@
 #include "Numeric.h"
 #include "Random.h"
 #include "VectorView.h"
+#include "Optionals.h"
 
 #include <chrono>
 #include <cmath>
@@ -643,4 +644,153 @@ BOOST_AUTO_TEST_CASE(setRemovalDefect) {
   );
 
   BOOST_CHECK((testSet == std::set<unsigned> {1, 3, 5, 9}));
+}
+
+BOOST_AUTO_TEST_CASE(selectTestCases) {
+  auto ragged2D = std::vector<
+    std::vector<unsigned>
+  > {
+    {4, 9, 3},
+    {2, 11, 6},
+    {30, 4},
+    {9, 44, 33, 12}
+  };
+
+  auto smallestVector = TemplateMagic::select(
+    ragged2D,
+    std::less<unsigned>(),
+    [](const auto& group) -> unsigned {
+      return group.size();
+    }
+  );
+
+  BOOST_CHECK((*smallestVector == std::vector<unsigned> {30, 4}));
+
+  auto largestVector = TemplateMagic::select(
+    ragged2D,
+    std::greater<unsigned>(),
+    [](const auto& group) -> unsigned {
+      return group.size();
+    }
+  );
+
+  BOOST_CHECK((*largestVector == std::vector<unsigned> {9, 44, 33, 12}));
+
+}
+
+BOOST_AUTO_TEST_CASE(randomTests) {
+  BOOST_CHECK(TemplateMagic::random.getSingle<unsigned>(0, 0) == 0);
+}
+
+boost::optional<double> safe_root(double x) {
+  if(x >= 0) {
+    return {std::sqrt(x)};
+  }
+
+  return {};
+}
+
+boost::optional<double> safe_reciprocal(double x) {
+  if(x != 0) {
+    return 1.0 / x;
+  }
+
+  return {};
+}
+
+boost::optional<double> safe_binary(double x, double y) {
+  double diff = y - x;
+  if(diff != 0.0) {
+    return 1 / diff;
+  }
+
+  return boost::none;
+}
+
+boost::optional<double> identity(double x) {
+  return {x};
+}
+
+boost::optional<double> negate(double x) {
+  return -x;
+}
+
+struct Noisy {
+  int f = -3;
+
+  static unsigned nConstructed;
+
+  Noisy() { ++nConstructed; }
+  Noisy(const Noisy&) { ++nConstructed; }
+  Noisy(Noisy&&) { ++nConstructed; }
+};
+
+unsigned Noisy::nConstructed = 0;
+
+boost::optional<double> dWithCRefNoisy(double previous, const Noisy& x) {
+  return previous + x.f;
+}
+
+boost::optional<int> withCRefNoisy(int previous, const Noisy& x) {
+  return previous + x.f;
+}
+
+boost::optional<int> divFourBy(int previous) {
+  if(previous != 0) {
+    return static_cast<int>(
+      4.0 / previous
+    );
+  }
+
+  return boost::none;
+}
+
+boost::optional<int> safe_int_binary(const int& x, const int& y) {
+  int diff = y - x;
+  if(diff != 0) {
+    return 1.0 / diff;
+  }
+
+  return boost::none;
+}
+
+BOOST_AUTO_TEST_CASE(optionalEnhancementTests) {
+  using namespace TemplateMagic;
+
+  const Noisy foo;
+
+  auto first = safe_root(-4.3)
+    | callIfNone(safe_binary, 2.3, 2.3)
+    | callIfNone(identity, 4.9)
+    | callIfNone(dWithCRefNoisy, -4, foo);
+
+  auto second = safe_root(16.0)
+    | callIfSome(negate, ANS)
+    | callIfSome(safe_binary, 1, ANS);
+
+  const int x = -4;
+
+  auto third = boost::optional<int> {4}
+    | callIfSome(withCRefNoisy, ANS, foo)
+    | callIfSome(divFourBy, ANS)
+    | callIfSome(safe_int_binary, ANS, x);
+
+  auto typesTest = callIfSome(withCRefNoisy, 4, foo);
+  using typesTestTuple = typename decltype(typesTest)::TupleType;
+  static_assert(
+    std::is_same<
+      std::tuple_element_t<0, typesTestTuple>,
+      int
+    >::value,
+    "No"
+  );
+  static_assert(
+    std::is_same<
+      std::tuple_element_t<1, typesTestTuple>,
+      const Noisy&
+    >::value,
+    "No"
+  );
+
+  BOOST_CHECK(Noisy::nConstructed == 1);
 }

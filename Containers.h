@@ -204,6 +204,26 @@ template<
   BinaryFunction&& function
 );
 
+/*!
+ * Takes two containers and calls a function on all possible cross-container
+ * pairs
+ */
+template<
+  class ContainerT,
+  class ContainerU,
+  class BinaryFunction
+> void forAllPairs(
+  const ContainerT& containerT,
+  const ContainerU& containerU,
+  BinaryFunction&& function
+) {
+  for(auto i = containerT.begin(); i != containerT.end(); ++i) {
+    for(auto j = containerU.begin(); j != containerU.end(); ++j) {
+      function(*i, *j);
+    }
+  }
+}
+
 //! Makes std::accumulate composable for most STL containers
 template<
   class BinaryFunction,
@@ -448,6 +468,34 @@ std::set<T, Comparator<T>, Allocator<T>> setDifference(
   const std::set<T, Comparator<T>, Allocator<T>>& b
 );
 
+template<
+  typename Container,
+  typename ComparisonFunction,
+  typename MappingFunction
+> typename Container::const_iterator select(
+  const Container& container,
+  ComparisonFunction&& comparator,
+  MappingFunction&& mapFunction
+) {
+  auto selection = container.begin();
+  auto selectionValue = mapFunction(*selection);
+
+  auto iter = container.begin();
+
+  while(iter != container.end()) {
+    auto currentValue = mapFunction(*iter);
+
+    // Replace if 'better' according to the comparator
+    if(comparator(currentValue, selectionValue)) {
+      selection = iter;
+      selectionValue = currentValue;
+    }
+
+    ++iter;
+  }
+
+  return selection;
+}
 
 /* Implementation ------------------------------------------------------------*/
 template<typename Container>
@@ -1024,9 +1072,7 @@ std::vector<
 }
 
 template<class Container, class UnaryFunction>
-std::vector<
-  traits::getValueType<Container>
-> copyIf(
+Container copyIf(
   const Container& container,
   UnaryFunction&& predicate
 ) {

@@ -41,7 +41,14 @@ namespace TemplateMagic {
  *     }
  *   };
  *
+ * Deprecate in favor of consecutiveCompareSmaller
  */
+template<typename T>
+boost::optional<bool> componentSmaller(
+  const T& a,
+  const T& b
+) __attribute__((deprecated));
+
 template<typename T>
 boost::optional<bool> componentSmaller(
   const T& a,

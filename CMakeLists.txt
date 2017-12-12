@@ -1,5 +1,4 @@
 # How to make this into a library?
-# Dynamic / static? It would be shit if this add-on to Delib would supercede it
 
 # oldest tested version of cmake used (too lazy to figure out newest compatible
 # cmake version)
@@ -37,7 +36,7 @@ endif()
 
 # testing binary
 add_executable(magicTests tests.cpp)
-target_compile_options(magicTests PUBLIC -O2 -g)
+target_compile_options(magicTests PUBLIC -Og -g)
 set_target_properties(
   magicTests PROPERTIES
   CXX_STANDARD 14

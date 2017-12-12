@@ -64,9 +64,7 @@ public:
 
   //! Tests whether the cache contains an entry for a key
   bool has(const KeyType& key) const {
-    return (_cache.count(key) > 0)
-      ? true
-      : false;
+    return _cache.count(key) > 0;
   }
 
   const ValueType& get(const KeyType& key) const {
