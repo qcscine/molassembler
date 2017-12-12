@@ -137,29 +137,44 @@ CallIfNone<PartialFunction, Parameters...> callIfNone (
 
 } // namespace TemplateMagic
 
-// Global scope operator injection
+/* Global scope operators */
 template<typename T, typename PartialFunction, typename ... Parameters>
-TemplateMagic::detail::Optional<T> operator | (
+auto operator | (
   const TemplateMagic::detail::Optional<T>& valueOptional,
   const TemplateMagic::CallIfSome<PartialFunction, Parameters...>& other
 ) {
+  using ReturnType = decltype(other.value(valueOptional.value()));
+
   if(valueOptional) {
-    return other.value(valueOptional.value());
+    return ReturnType {other.value(valueOptional.value())};
   }
 
-  return boost::none;
+  return ReturnType {boost::none};
 }
 
 template<typename T, typename PartialFunction, typename ... Parameters>
-TemplateMagic::detail::Optional<T> operator | (
+auto operator | (
   const TemplateMagic::detail::Optional<T>& valueOptional,
   const TemplateMagic::CallIfNone<PartialFunction, Parameters...>& other
 ) {
+  using ReturnType = decltype(other.value());
+  using OptionalValueType = typename ReturnType::value_type;
+  static_assert(
+    std::is_same<
+      std::decay_t<T>,
+      std::decay_t<OptionalValueType>
+    >::value,
+    "Your use of callIfNone cannot keep a preceding optional Some value since "
+    "the return type of the right function does not match the left optional. "
+    "The idea of callIfNone is to try to supply a value if the left is a None, "
+    "but to pass on a Some without evaluating the function."
+  );
+
   if(valueOptional) {
-    return valueOptional;
+    return ReturnType {valueOptional.value()};
   }
 
-  return other.value();
+  return ReturnType {other.value()};
 }
 
 #endif

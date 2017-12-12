@@ -18,6 +18,17 @@
 #include <iostream>
 #include <vector>
 
+template<typename T>
+std::ostream& operator << (std::ostream& os, const boost::optional<T>& valueOptional) {
+  if(valueOptional) {
+    os << "Some " << valueOptional.value();
+  } else {
+    os << "None";
+  }
+
+  return os;
+}
+
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
 
@@ -38,7 +49,7 @@ double timeNullaryCallable(
     start = system_clock::now();
 
     function();
-    
+
     end = system_clock::now();
     duration<double> elapsed = end - start;
 
@@ -764,9 +775,13 @@ BOOST_AUTO_TEST_CASE(optionalEnhancementTests) {
     | callIfNone(identity, 4.9)
     | callIfNone(dWithCRefNoisy, -4, foo);
 
+  std::cout << first << std::endl;
+
   auto second = safe_root(16.0)
     | callIfSome(negate, ANS)
     | callIfSome(safe_binary, 1, ANS);
+
+  std::cout << second << std::endl;
 
   const int x = -4;
 
@@ -774,6 +789,8 @@ BOOST_AUTO_TEST_CASE(optionalEnhancementTests) {
     | callIfSome(withCRefNoisy, ANS, foo)
     | callIfSome(divFourBy, ANS)
     | callIfSome(safe_int_binary, ANS, x);
+
+  std::cout << third << std::endl;
 
   auto typesTest = callIfSome(withCRefNoisy, 4, foo);
   using typesTestTuple = typename decltype(typesTest)::TupleType;
@@ -793,4 +810,19 @@ BOOST_AUTO_TEST_CASE(optionalEnhancementTests) {
   );
 
   BOOST_CHECK(Noisy::nConstructed == 1);
+
+  // Can there be different types?
+  auto fourth = boost::optional<int> {0}
+    | callIfSome(divFourBy, ANS)
+    | callIfSome(safe_root, -4.3);
+
+  std::cout << fourth << std::endl;
+
+  static_assert(
+    std::is_same<
+      decltype(fourth),
+      detail::Optional<double>
+    >::value,
+    "No"
+  );
 }
