@@ -13,11 +13,11 @@
  * have.
  */
 
+namespace MoleculeManip {
+
 namespace LocalGeometry {
 
 /* Typedefs */
-
-using BondType = MoleculeManip::BondType;
 
 using ElementAndBondPair = std::pair<
   Delib::ElementType,
@@ -35,19 +35,18 @@ using LigandType = std::tuple<
 // Mapping of bond type to a floating-point weight
 extern const std::map<BondType, double> bondWeights;
 
-/* Model class */
-struct Model {
-  // do not instantiate
-  Model() = delete;
+/* Models */
+boost::optional<Symmetry::Name> vsepr(
+  const Delib::ElementType& centerAtomType,
+  const unsigned& nSites,
+  const std::vector<LigandType>& ligands,
+  const int& formalCharge
+);
 
-  static Symmetry::Name determineGeometry(
-    const Delib::ElementType& centerAtomType,
-    const unsigned& nSites,
-    const std::vector<LigandType>& ligands,
-    const int& charge
-  );
-};
+Symmetry::Name firstOfSize(const unsigned& size);
 
 } // namespace LocalGeometry
+
+} // namespace MoleculeManip
 
 #endif

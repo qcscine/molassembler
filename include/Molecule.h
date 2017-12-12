@@ -4,7 +4,7 @@
 #include "Edges.h"
 #include "StereocenterList.h"
 #include "CycleData.h"
-#include "VSEPR.h"
+#include "LocalGeometryModel.h"
 
 /*! @file
  *

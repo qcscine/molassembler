@@ -1,9 +1,9 @@
 #include "RankingTree.h"
 
+#include "constexpr_magic/ConsecutiveCompare.h"
 #include "boost/algorithm/string/replace.hpp"
 #include "boost/graph/breadth_first_search.hpp"
 #include "symmetry_information/Properties.h"
-#include "template_magic/Boost.h"
 
 #include "Delib/ElementInfo.h"
 #include "MolGraphWriter.h"
@@ -223,14 +223,14 @@ public:
     const auto& EZStereocenterB = EZOptionalB.value();
 
     // Reverse everything below for descending sorting
-    return TemplateMagic::componentSmaller(
+    return ConstexprMagic::consecutiveCompareSmaller(
       EZStereocenterB.numAssignments(),
-      EZStereocenterA.numAssignments()
-    ).value_or(
+      EZStereocenterA.numAssignments(),
       /* Mixed optional comparison (includes comparison of assignment value if
        * assigned)
        */
-      EZStereocenterB.assigned() < EZStereocenterA.assigned()
+      EZStereocenterB.assigned(),
+      EZStereocenterA.assigned()
     );
   }
 };

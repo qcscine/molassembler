@@ -1,4 +1,4 @@
-#include "template_magic/Boost.h"
+#include "constexpr_magic/ConsecutiveCompare.h"
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
 #include "template_magic/Random.h"
@@ -1001,27 +1001,18 @@ bool CNStereocenter::operator == (const CNStereocenter& other) const {
 }
 
 bool CNStereocenter::operator < (const CNStereocenter& other) const {
-  using TemplateMagic::componentSmaller;
-  
   /* Sequentially compare individual components, comparing assignments last
    * if everything else matches
    */
-  return componentSmaller(
+  return ConstexprMagic::consecutiveCompareSmaller(
     _centerAtom,
-    other._centerAtom
-  ).value_or(
-    componentSmaller(
-      _uniqueAssignmentsCache.size(),
-      other._uniqueAssignmentsCache.size()
-    ).value_or(
-      componentSmaller(
-        _symmetry,
-        other._symmetry
-      ).value_or(
-        // NOTE: boost::none is smaller than 0 in this mixed ordering
-        _assignmentOption < other._assignmentOption
-      )
-    )
+    other._centerAtom,
+    _uniqueAssignmentsCache.size(),
+    other._uniqueAssignmentsCache.size(),
+    _symmetry,
+    other._symmetry,
+    _assignmentOption,
+    other._assignmentOption
   );
 }
 

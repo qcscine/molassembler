@@ -1,5 +1,5 @@
+#include "constexpr_magic/ConsecutiveCompare.h"
 #include "constexpr_magic/Math.h"
-#include "template_magic/Boost.h"
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
 #include "template_magic/Random.h"
@@ -577,28 +577,17 @@ bool EZStereocenter::operator == (const EZStereocenter& other) const {
 }
 
 bool EZStereocenter::operator < (const EZStereocenter& other) const {
-  using TemplateMagic::componentSmaller;
-
-  return componentSmaller(
+  return ConstexprMagic::consecutiveCompareSmaller(
     _leftCenter,
-    other._leftCenter
-  ).value_or(
-    componentSmaller(
+    other._leftCenter,
     _rightCenter,
-    other._rightCenter
-    ).value_or(
-      componentSmaller(
-        _leftRanking.sortedSubstituents,
-        other._leftRanking.sortedSubstituents
-      ).value_or(
-        componentSmaller(
-          _rightRanking.sortedSubstituents,
-          other._rightRanking.sortedSubstituents
-        ).value_or(
-          _isZOption < other._isZOption
-        )
-      )
-    )
+    other._rightCenter,
+    _leftRanking.sortedSubstituents,
+    other._leftRanking.sortedSubstituents,
+    _rightRanking.sortedSubstituents,
+    other._rightRanking.sortedSubstituents,
+    _isZOption,
+    other._isZOption
   );
 }
 

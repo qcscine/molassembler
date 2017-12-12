@@ -4,9 +4,10 @@
 
 #include <iostream>
 
-#include "VSEPR.h"
+#include "LocalGeometryModel.h"
 
-using namespace LocalGeometry;
+using namespace MoleculeManip;
+using namespace MoleculeManip::LocalGeometry;
 
 using TestCaseType = std::tuple<
   std::string, // a Name for the current compound
@@ -17,8 +18,7 @@ using TestCaseType = std::tuple<
 >;
 
 // Runs a specific test case type
-template<typename ModelClass>
-void testModel(
+void testVSEPR(
   const Symmetry::Name& expectedSymmetryName,
   const std::vector<TestCaseType>& testCases
 ) {
@@ -32,10 +32,10 @@ void testModel(
 
     std::tie(complexName, centerAtomType, nSites, ligands, charge) = testCase;
 
-    Symmetry::Name symmetryName;
+    boost::optional<Symmetry::Name> symmetryName;
 
     try {
-      symmetryName = ModelClass::determineGeometry(
+      symmetryName = vsepr(
         centerAtomType,
         nSites,
         ligands,
@@ -48,13 +48,19 @@ void testModel(
     }
 
     BOOST_CHECK_MESSAGE(
-      symmetryName == expectedSymmetryName,
-      complexName.c_str() << " has been determined as " 
-        << Symmetry::name(symmetryName).c_str()
-        << ", expected: "
-        << Symmetry::name(expectedSymmetryName).c_str()
+      symmetryName,
+      "VSEPR could not find a symmetry for this case"
     );
 
+    if(symmetryName) {
+      BOOST_CHECK_MESSAGE(
+        symmetryName.value() == expectedSymmetryName,
+        complexName << " has been determined as " 
+          << Symmetry::name(symmetryName.value())
+          << ", expected: "
+          << Symmetry::name(expectedSymmetryName)
+      );
+    }
   }
 }
 
@@ -101,7 +107,7 @@ std::vector<LigandType> merge(
 }
 
 BOOST_AUTO_TEST_CASE( VSEPRTests ) {
-  testModel<VSEPR>( // AX2E0
+  testVSEPR( // AX2E0
     Symmetry::Name::Linear,
     {
       TestCaseType {
@@ -137,7 +143,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>( // AX3E0
+  testVSEPR( // AX3E0
     Symmetry::Name::TrigonalPlanar,
     {
       TestCaseType {
@@ -174,7 +180,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>( // AX2E1 (V-shape / Bent)
+  testVSEPR( // AX2E1 (V-shape / Bent)
     Symmetry::Name::Bent,
     {
       TestCaseType {
@@ -225,7 +231,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>( // AX4E0
+  testVSEPR( // AX4E0
     Symmetry::Name::Tetrahedral,
     {
       TestCaseType {
@@ -275,7 +281,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>( // AX3E1
+  testVSEPR( // AX3E1
     Symmetry::Name::TrigonalPyramidal,
     {
       TestCaseType {
@@ -301,7 +307,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>( // AX2E2
+  testVSEPR( // AX2E2
     Symmetry::Name::Bent,
     {
       TestCaseType {
@@ -317,7 +323,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::TrigonalBiPyramidal,
     {
       TestCaseType {
@@ -333,7 +339,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::Seesaw,
     {
       TestCaseType {
@@ -349,7 +355,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::TShaped,
     {
       TestCaseType {
@@ -365,7 +371,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>( // AX2E3
+  testVSEPR( // AX2E3
     Symmetry::Name::Linear,
     {
       TestCaseType {
@@ -391,7 +397,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::Octahedral,
     {
       TestCaseType {
@@ -407,7 +413,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::SquarePyramidal,
     {
       TestCaseType {
@@ -423,7 +429,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::SquarePlanar,
     {
       TestCaseType {
@@ -439,7 +445,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::PentagonalBiPyramidal,
     {
       TestCaseType {
@@ -455,7 +461,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::PentagonalPyramidal,
     {
       TestCaseType {
@@ -477,7 +483,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::PentagonalPlanar,
     {
       TestCaseType {
@@ -493,7 +499,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     }
   );
 
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::SquareAntiPrismatic,
     {
       TestCaseType {
@@ -519,7 +525,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
   ); 
 
   // dative bonding
-  testModel<VSEPR>(
+  testVSEPR(
     Symmetry::Name::Tetrahedral,
     {
       TestCaseType {

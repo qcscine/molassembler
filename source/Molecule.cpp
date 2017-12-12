@@ -755,8 +755,7 @@ Symmetry::Name Molecule::determineLocalGeometry(
 
   if(getNumAdjacencies(index) <= 1) {
     throw std::logic_error(
-      "Molecule::determineLocalGeometry: No geometries exist for terminal or "
-      " disconnected atoms"
+      "Molecule::determineLocalGeometry: No geometries exist for terminal atoms"
     );
   }
 
@@ -767,30 +766,18 @@ Symmetry::Name Molecule::determineLocalGeometry(
   int formalCharge = 0;
 
   if(AtomInfo::isMainGroupElement(getElementType(index))) {
-    return LocalGeometry::VSEPR::determineGeometry(
+    // Try VSEPR
+    return LocalGeometry::vsepr(
       getElementType(index),
       nSites,
       ligandsVector,
       formalCharge
+    ).value_or(
+      LocalGeometry::firstOfSize(nSites)
     );
   } 
 
-  // Pick the first Symmetry of fitting size
-  auto findIter = std::find_if(
-    Symmetry::allNames.begin(),
-    Symmetry::allNames.end(),
-    [&nSites](const auto& symmetryName) -> bool {
-      return Symmetry::size(symmetryName) == nSites;
-    }
-  );
-
-  if(findIter == Symmetry::allNames.end()) {
-    throw std::logic_error(
-      "Could not find a suitable local geometry!"
-    );
-  }
-
-  return *findIter;
+  return LocalGeometry::firstOfSize(nSites);
 }
 
 std::string Molecule::dumpGraphviz() const {

@@ -336,9 +336,16 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     referenceGradients.emplace_back(gradientFunctor.referenceD(referencePositions));
     referenceGradients.emplace_back(gradientFunctor.referenceE(referencePositions));
 
-    for(const auto& referenceGradient: referenceGradients) {
-      assert(referenceGradient.size() == 4 * N);
-    }
+    assert(
+      TemplateMagic::all_of(
+        TemplateMagic::map(
+          referenceGradients,
+          [&N](const auto& referenceGradient) -> bool {
+            return referenceGradient.size() == 4 * N;
+          }
+        )
+      )
+    );
 
     /* Check that sum of reference implementations is equal to optimized
      * implementation 

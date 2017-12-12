@@ -121,7 +121,6 @@ set(HEADERS_all
   include/StdlibTypeAlgorithms.h
   include/Stereocenter.h
   include/StereocenterList.h
-  include/VSEPR.h
   include/Version.h
   include/common_typedefs.h
 )
@@ -150,7 +149,6 @@ set(SOURCES_all
   source/RankingTree.cpp
   source/StdlibTypeAlgorithms.cpp
   source/Stereocenter.cpp
-  source/VSEPR.cpp
 )
 
 # specify library target
