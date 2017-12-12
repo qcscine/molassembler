@@ -143,7 +143,8 @@ CallIfSome<PartialFunction, Parameters...> callIfSome (
 template<typename PartialFunction, typename ... Parameters>
 struct CallIfNone {
   using TupleType = std::tuple<Parameters...>;
-  using ReturnType = traits::functionReturnType<PartialFunction, Parameters...>;
+  using FPtrReturnType = typename traits::FunctionPointerReturnType<PartialFunction>::type;
+  using ReturnType = typename FPtrReturnType::value_type;
 
   PartialFunction partialFunction;
   TupleType parameters;
@@ -155,7 +156,7 @@ struct CallIfNone {
       parameters(passParameters...) {}
 
 
-  ReturnType value() const {
+  detail::Optional<ReturnType> value() const {
     return callHelper(
       std::make_index_sequence<
         std::tuple_size<TupleType>::value
@@ -163,7 +164,7 @@ struct CallIfNone {
     );
   }
 
-  template<size_t ... Inds> detail::Optional<double> callHelper(
+  template<size_t ... Inds> detail::Optional<ReturnType> callHelper(
     std::index_sequence<Inds...>
   ) const {
     return partialFunction(
