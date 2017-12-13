@@ -279,7 +279,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
               stereocenterPtr->involvedAtoms().front(),
               TemplateMagic::random.getSingle<unsigned>(
                 0,
-                stereocenterPtr->numAssignments()
+                stereocenterPtr->numAssignments() - 1
               )
             );
 

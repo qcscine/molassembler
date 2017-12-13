@@ -43,7 +43,7 @@ boost::optional<Symmetry::Name> vsepr(
   const int& formalCharge
 );
 
-Symmetry::Name firstOfSize(const unsigned& size);
+boost::optional<Symmetry::Name> firstOfSize(const unsigned& size);
 
 } // namespace LocalGeometry
 

@@ -167,7 +167,8 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   target_compile_options(molecule PUBLIC -O3 -march=native)
 else() # assume Debug
   message(STATUS "Assume debug build")
-  target_compile_options(molecule PUBLIC -Og -g)
+  target_compile_options(molecule PUBLIC -g -fsanitize=address -fsanitize=undefined)
+  set_target_properties(molecule PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
 endif()
 
 # library properties
@@ -203,7 +204,8 @@ foreach(filename ${testFiles})
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     target_compile_options(${targetName} PUBLIC -O3 -march=native)
   else()
-    target_compile_options(${targetName} PUBLIC -Og -g)
+    target_compile_options(${targetName} PUBLIC -g -fsanitize=address -fsanitize=undefined)
+    set_target_properties(${targetName} PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
   endif()
   set_target_properties(
     ${targetName} PROPERTIES
@@ -228,36 +230,34 @@ foreach(filename ${testFiles})
   add_test(NAME ${targetName} COMMAND ${targetName})
 endforeach()
 
-# Analysis targets
-file(GLOB analysisFiles "analysis/*.cpp")
-foreach(filename ${analysisFiles})
-  set(targetName "")
-  get_filename_component(targetName ${filename} NAME_WE)
-  set(targetName "analysis_${targetName}")
+# Analysis targets. Build only if Debug
+if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release") 
+  file(GLOB analysisFiles "analysis/*.cpp")
+  foreach(filename ${analysisFiles})
+    set(targetName "")
+    get_filename_component(targetName ${filename} NAME_WE)
+    set(targetName "analysis_${targetName}")
 
-  # add the executable and specify compilation and linking options
-  add_executable(${targetName} ${filename})
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    target_compile_options(${targetName} PUBLIC -O3 -march=native)
-  else()
-    target_compile_options(${targetName} PUBLIC -Og -g)
-  endif()
-  set_target_properties(
-    ${targetName} PROPERTIES
-    CXX_STANDARD 14
-    CXX_STANDARD_REQUIRED ON
-    COMPILE_FLAGS ${WARNING_FLAGS}
-  )
+    # add the executable and specify compilation and linking options
+    add_executable(${targetName} ${filename})
+    set_target_properties(
+      ${targetName} PROPERTIES
+      CXX_STANDARD 14
+      CXX_STANDARD_REQUIRED ON
+      COMPILE_FLAGS ${WARNING_FLAGS}
+      LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
+    )
 
-  target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
-  target_link_libraries(
-    ${targetName} 
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    Delib::DelibStatic
-    assignment
-    symmetry
-    molecule
-    blas
-    rdl
-  )
-endforeach()
+    target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
+    target_link_libraries(
+      ${targetName} 
+      ${Boost_PROGRAM_OPTIONS_LIBRARY}
+      Delib::DelibStatic
+      assignment
+      symmetry
+      molecule
+      blas
+      rdl
+    )
+  endforeach()
+endif()

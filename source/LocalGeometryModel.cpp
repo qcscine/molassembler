@@ -30,6 +30,10 @@ boost::optional<Symmetry::Name> vsepr(
     );
   }
 
+  if(!AtomInfo::isMainGroupElement(centerAtomType)) {
+    return boost::none;
+  }
+
   if(
     std::any_of(
       ligands.begin(),
@@ -39,10 +43,9 @@ boost::optional<Symmetry::Name> vsepr(
       }
     )
   ) {
-    throw std::logic_error(
-      "The ligand set includes ligands with multiple atoms on a site!"
-      " This is just VSEPR, there should be no eta bond situations!"
-    );
+    return boost::none;
+    /*"The ligand set includes ligands with multiple atoms on a site!"
+    " This is just VSEPR, there should be no eta bond situations!"*/
   }
   
   // get uncharged VE count
@@ -162,7 +165,7 @@ boost::optional<Symmetry::Name> vsepr(
   return boost::none;
 }
 
-Symmetry::Name firstOfSize(const unsigned& size) {
+boost::optional<Symmetry::Name> firstOfSize(const unsigned& size) {
   // Pick the first Symmetry of fitting size
   auto findIter = std::find_if(
     Symmetry::allNames.begin(),
@@ -173,9 +176,7 @@ Symmetry::Name firstOfSize(const unsigned& size) {
   );
 
   if(findIter == Symmetry::allNames.end()) {
-    throw std::logic_error(
-      "Could not find a suitable local geometry!"
-    );
+    return boost::none;
   }
 
   return *findIter;

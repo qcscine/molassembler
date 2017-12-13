@@ -55,7 +55,12 @@ std::vector<char> makeAssignmentCharacters(
   const std::vector<AtomIndexType>& atomsAtSymmetryPositions
 );
 
-boost::optional<const std::vector<unsigned>&> getIndexMapping(
+/* WARNING: This has to be a copy-initialized optional. Don't change it, unless
+ * you want to sift through -fsanitize=address output to find the bug in the
+ * optional propagation. It's not safe to return a reference to within a
+ * temporary object where this is used.
+ */
+boost::optional<std::vector<unsigned>> getIndexMapping(
   const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
   const ChiralStatePreservation& preservationOption
 );

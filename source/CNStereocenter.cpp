@@ -1,6 +1,7 @@
 #include "constexpr_magic/ConsecutiveCompare.h"
 #include "template_magic/Containers.h"
 #include "template_magic/Numeric.h"
+#include "template_magic/Optionals.h"
 #include "template_magic/Random.h"
 #include "geometry_assignment/GenerateUniques.h"
 #include "symmetry_information/Properties.h"
@@ -214,7 +215,12 @@ std::vector<char> makeAssignmentCharacters(
   return newAssignmentCharacters;
 }
 
-boost::optional<const std::vector<unsigned>&> getIndexMapping(
+/* WARNING: This has to be a copy-initialized optional. Don't change it, unless
+ * you want to sift through -fsanitize=address output to find the bug in the
+ * optional propagation. It's not safe to return a reference to within a
+ * temporary object where this is used.
+ */
+boost::optional<std::vector<unsigned>> getIndexMapping(
   const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
   const ChiralStatePreservation& preservationOption
 ) {
@@ -301,72 +307,72 @@ void CNStereocenter::addSubstituent(
   );
   boost::optional<unsigned> newAssignment = boost::none;
 
-  // Does the current stereocenter carry chiral information?
-  if(_assignmentOption) {
-    auto symmetryMappingOptional = Symmetry::getMapping(
-      _symmetry,
-      newSymmetry
-    );
-    // Are there mappings to the target symmetry?
-    if(symmetryMappingOptional) {
-      auto suitableMappingOptional = glue::getIndexMapping(
-        symmetryMappingOptional.value(),
+  /* Does the current stereocenter carry chiral information?
+   * If so, try to get a mapping to the new symmetry
+   * If that returns a Some, try to get a mapping by preservationOption policy
+   *
+   * If any of these steps returns boost::none, the whole expression is
+   * boost::none.
+   */
+  auto suitableMappingOption = _assignmentOption
+    | TemplateMagic::callIfSome(Symmetry::getMapping, _symmetry, newSymmetry, boost::none)
+    | TemplateMagic::callIfSome(
+        glue::getIndexMapping,
+        TemplateMagic::ANS, // Inserts getMapping's optional value here
         preservationOption
       );
-      // Is there a suitable mapping?
-      if(suitableMappingOptional) {
-        /* So now we must transfer the current assignment into the new symmetry
-         * and search for it in the set of uniques.
-         */
-        const auto& symmetryMapping = suitableMappingOptional.value();
 
-        // Transform current assignment from characters to indices
-        const auto& currentAssignment = _uniqueAssignmentsCache.at(
-          _assignmentOption.value()
-        );
+  if(suitableMappingOption) {
+    /* So now we must transfer the current assignment into the new symmetry
+     * and search for it in the set of uniques.
+     */
+    const auto& symmetryMapping = suitableMappingOption.value();
 
-        std::vector<AtomIndexType> atomsAtSmallerSymmetryPositions = glue::mapToSymmetryPositions(
-          currentAssignment,
-          _ranking.sortedSubstituents
-        );
+    // Transform current assignment from characters to indices
+    const auto& currentAssignment = _uniqueAssignmentsCache.at(
+      _assignmentOption.value()
+    );
 
-        atomsAtSmallerSymmetryPositions.push_back(newSubstituentIndex);
+    std::vector<AtomIndexType> atomsAtSmallerSymmetryPositions = glue::mapToSymmetryPositions(
+      currentAssignment,
+      _ranking.sortedSubstituents
+    );
 
-        // Transfer indices from smaller symmetry to larger
-        std::vector<AtomIndexType> atomsAtLargerSymmetryPositions (Symmetry::size(newSymmetry));
-        for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
-          atomsAtLargerSymmetryPositions.at(
-            symmetryMapping.at(i)
-          ) = atomsAtSmallerSymmetryPositions.at(i);
-        }
+    atomsAtSmallerSymmetryPositions.push_back(newSubstituentIndex);
 
-        // Get character representation in new symmetry
-        std::vector<char> charactersInLargerSymmetry = glue::makeAssignmentCharacters(
-          canonicalizedSubstituents,
-          canonicalizedCharacters,
-          atomsAtLargerSymmetryPositions
-        );
+    // Transfer indices from smaller symmetry to larger
+    std::vector<AtomIndexType> atomsAtLargerSymmetryPositions (Symmetry::size(newSymmetry));
+    for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
+      atomsAtLargerSymmetryPositions.at(
+        symmetryMapping.at(i)
+      ) = atomsAtSmallerSymmetryPositions.at(i);
+    }
 
-        // Construct an assignment from it
-        auto trialAssignment = UniqueAssignments::Assignment(
-          newSymmetry,
-          charactersInLargerSymmetry,
-          newLinks
-        );
+    // Get character representation in new symmetry
+    std::vector<char> charactersInLargerSymmetry = glue::makeAssignmentCharacters(
+      canonicalizedSubstituents,
+      canonicalizedCharacters,
+      atomsAtLargerSymmetryPositions
+    );
 
-        // Generate the rotational equivalents
-        auto allTrialRotations = trialAssignment.generateAllRotations();
+    // Construct an assignment from it
+    auto trialAssignment = UniqueAssignments::Assignment(
+      newSymmetry,
+      charactersInLargerSymmetry,
+      newLinks
+    );
 
-        // Search for a match from the vector of uniques
-        for(unsigned i = 0; i < newAssignments.size(); ++i) {
-          if(allTrialRotations.count(newAssignments.at(i)) > 0) {
-            newAssignment = i;
-            break;
-          }
-        }
+    // Generate the rotational equivalents
+    auto allTrialRotations = trialAssignment.generateAllRotations();
+
+    // Search for a match from the vector of uniques
+    for(unsigned i = 0; i < newAssignments.size(); ++i) {
+      if(allTrialRotations.count(newAssignments.at(i)) > 0) {
+        newAssignment = i;
+        break;
       }
-    };
-  } 
+    }
+  }
 
   /* Since either there is no steric information present or no unique
    * minimal-effort mapping exists to the new symmetry, it is impossible to
@@ -551,70 +557,70 @@ void CNStereocenter::removeSubstituent(
   );
   boost::optional<unsigned> newAssignment;
 
-
-  // Does the stereocenter currently carry chiral information?
-  if(_assignmentOption) {
-    // Which symmetry position is the deleted index currently at?
-    unsigned deletedSymmetryPosition = _symmetryPositionMapCache.at(which);
-
-    // Fetch the mapping group optional
-    auto symmetryMappingOptional = Symmetry::getMapping(
-      _symmetry,
-      newSymmetry,
-      deletedSymmetryPosition
-    );
-
-    if(symmetryMappingOptional) {
-      auto suitableMappingOptional = glue::getIndexMapping(
-        symmetryMappingOptional.value(),
+  /* Does the stereocenter carry chiral information?
+   * If so, try to get a symmetry mapping to the new symmetry position
+   * If there are mappings, try to select one according to preservationOption policy
+   *
+   * If any of those steps returns boost::none, the whole expression is
+   * boost::none.
+   */
+  auto suitableMappingOptional = _assignmentOption
+    | TemplateMagic::callIfSome(
+        Symmetry::getMapping,
+        _symmetry,
+        newSymmetry, 
+        // Last parameter is the deleted symmetry position, get this from cache
+        _symmetryPositionMapCache.at(which)
+      )
+    | TemplateMagic::callIfSome(
+        glue::getIndexMapping,
+        TemplateMagic::ANS,
         preservationOption
       );
 
-      if(suitableMappingOptional) {
-        const auto& symmetryMapping = suitableMappingOptional.value();
+  if(suitableMappingOptional) {
+    const auto& symmetryMapping = suitableMappingOptional.value();
 
-        // Transform current assignment from characters to atom indices
-        const auto& currentAssignment = _uniqueAssignmentsCache.at(
-          _assignmentOption.value()
-        );
+    // Transform current assignment from characters to atom indices
+    const auto& currentAssignment = _uniqueAssignmentsCache.at(
+      _assignmentOption.value()
+    );
 
-        std::vector<AtomIndexType> atomsAtCurrentSymmetryPositions = glue::mapToSymmetryPositions(
-          currentAssignment,
-          _ranking.sortedSubstituents
-        );
+    std::vector<AtomIndexType> atomsAtCurrentSymmetryPositions = glue::mapToSymmetryPositions(
+      currentAssignment,
+      _ranking.sortedSubstituents
+    );
 
-        // Transfer indices from current symmetry to new symmetry
-        std::vector<AtomIndexType> atomsAtNewSymmetryPositions (Symmetry::size(newSymmetry));
-        for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
-          atomsAtNewSymmetryPositions.at(
-            symmetryMapping.at(i)
-          ) = atomsAtCurrentSymmetryPositions.at(i);
-        }
+    // Transfer indices from current symmetry to new symmetry
+    std::vector<AtomIndexType> atomsAtNewSymmetryPositions (Symmetry::size(newSymmetry));
+    for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
+      atomsAtNewSymmetryPositions.at(
+        symmetryMapping.at(i)
+      ) = atomsAtCurrentSymmetryPositions.at(i);
+    }
 
-        // Get character representation in new symmetry
-        std::vector<char> charactersInNewSymmetry = glue::makeAssignmentCharacters(
-          canonicalizedSubstituents,
-          canonicalizedCharacters,
-          atomsAtNewSymmetryPositions
-        );
+    // Get character representation in new symmetry
+    std::vector<char> charactersInNewSymmetry = glue::makeAssignmentCharacters(
+      canonicalizedSubstituents,
+      canonicalizedCharacters,
+      atomsAtNewSymmetryPositions
+    );
 
-        // Construct an assignment
-        auto trialAssignment = UniqueAssignments::Assignment(
-          newSymmetry,
-          charactersInNewSymmetry,
-          newLinks
-        );
+    // Construct an assignment
+    auto trialAssignment = UniqueAssignments::Assignment(
+      newSymmetry,
+      charactersInNewSymmetry,
+      newLinks
+    );
 
-        // Generate the rotational equivalents
-        auto allTrialRotations = trialAssignment.generateAllRotations();
+    // Generate the rotational equivalents
+    auto allTrialRotations = trialAssignment.generateAllRotations();
 
-        // Search for a match from the vector of uniques
-        for(unsigned i = 0; i < newAssignments.size(); ++i) {
-          if(allTrialRotations.count(newAssignments.at(i)) > 0) {
-            newAssignment = i;
-            break;
-          }
-        }
+    // Search for a match from the vector of uniques
+    for(unsigned i = 0; i < newAssignments.size(); ++i) {
+      if(allTrialRotations.count(newAssignments.at(i)) > 0) {
+        newAssignment = i;
+        break;
       }
     }
   }

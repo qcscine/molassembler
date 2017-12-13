@@ -1,3 +1,5 @@
+#include "template_magic/Optionals.h"
+
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
@@ -765,19 +767,21 @@ Symmetry::Name Molecule::determineLocalGeometry(
   unsigned nSites = getNumAdjacencies(index);
   int formalCharge = 0;
 
-  if(AtomInfo::isMainGroupElement(getElementType(index))) {
-    // Try VSEPR
-    return LocalGeometry::vsepr(
-      getElementType(index),
-      nSites,
-      ligandsVector,
-      formalCharge
-    ).value_or(
-      LocalGeometry::firstOfSize(nSites)
-    );
-  } 
+  auto symmetryOptional = LocalGeometry::vsepr(
+    getElementType(index),
+    nSites,
+    ligandsVector,
+    formalCharge
+  ) | TemplateMagic::callIfNone(LocalGeometry::firstOfSize, nSites);
 
-  return LocalGeometry::firstOfSize(nSites);
+  if(!symmetryOptional) {
+    throw std::logic_error(
+      "Could not determine a geometry! Perhaps you have more substituents "
+      "than the largest symmety can handle?"
+    );
+  }
+
+  return symmetryOptional.value();
 }
 
 std::string Molecule::dumpGraphviz() const {
