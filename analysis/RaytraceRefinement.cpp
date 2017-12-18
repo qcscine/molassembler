@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
     ("s", boost::program_options::value<unsigned>(), "Specify symmetry index (zero-based)")
     ("n", boost::program_options::value<unsigned>(), "Set number of structures to generate")
     ("f", boost::program_options::value<std::string>(), "Read molecule to generate from file (MOLFiles only!)")
+    ("i", boost::program_options::value<bool>(), "Specify whether inversion trick is to be used")
   ;
 
   // Parse
@@ -75,6 +76,13 @@ int main(int argc, char* argv[]) {
 /* Generating work */
   // Generate from file
   if(options_variables_map.count("f") == 1) { 
+    Log::particulars.insert(Log::Particulars::DGSpatialModel);
+    bool useYInversionTrick = false;
+
+    if(options_variables_map.count("i")) {
+      useYInversionTrick = options_variables_map["i"].as<bool>();
+    }
+
     IO::MOLFileHandler filehandler;
     auto filename = options_variables_map["f"].as<std::string>();
 
@@ -90,14 +98,13 @@ int main(int argc, char* argv[]) {
 
     auto mol = filehandler.readSingle(filename);
 
-    std::cout << "Read molecule information:\n"
-      << mol << std::endl;
+    std::cout << mol << std::endl;
 
     auto debugData = detail::debugDistanceGeometry(
       mol,
       1,
       MetrizationOption::full,
-      false
+      useYInversionTrick
     );
 
     boost::filesystem::path filepath {filename};
@@ -122,6 +129,10 @@ int main(int argc, char* argv[]) {
           refinementData.steps.back().positions
         )
       );
+    }
+
+    if(debugData.failures > 0) {
+      std::cout << "WARNING: " << debugData.failures << " refinements failed." << std::endl;
     }
   }
 

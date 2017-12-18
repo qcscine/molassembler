@@ -287,7 +287,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
              * stereocenters since assigning a stereocenter can invalidate
              * the list iterators
              */
-            continue;
+            break;
           }
         }
       } while(moleculeHasUnassignedStereocenters(moleculeCopy));
@@ -513,9 +513,10 @@ DGDebugData debugDistanceGeometry(
 
             /* Jump out of for-loop and re-check if there are still unassigned
              * stereocenters since assigning a stereocenter can invalidate
-             * the list iterators
+             * the list iterators (because stereocenters may appear or disappear
+             * on assignment)
              */
-            continue;
+            break;
           }
         }
       } while(moleculeHasUnassignedStereocenters(moleculeCopy));
@@ -674,6 +675,7 @@ DGDebugData debugDistanceGeometry(
 
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       failures += 1;
+      resultObject.failures += 1;
       checkFailureRatio(failures, numStructures, failureRatio);
     } else {
       // Add the result to the debug data
