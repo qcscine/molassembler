@@ -72,11 +72,6 @@ public:
       assert(lower <= upper);
     }
 
-    ValueBounds(ValueBounds&& other) {
-      std::swap(lower, other.lower);
-      std::swap(upper, other.upper);
-    }
-
     ValueBounds(const ValueBounds& other) : ValueBounds(other.lower, other.upper) {}
 
     ValueBounds& operator = (const ValueBounds& other) {
@@ -127,6 +122,8 @@ public:
   static constexpr double bondRelativeVariance = 0.01; 
   //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
   static constexpr double angleAbsoluteVariance = M_PI / 36; // ~ 5°
+
+  static double spiroCrossAngle(const double& alpha, const double& beta);
 
 /* Constructor */
   MoleculeSpatialModel(

@@ -162,6 +162,10 @@ int main(int argc, char* argv[]) {
           )
         );
       }
+
+      if(debugData.failures > 0) {
+        std::cout << "WARNING: " << debugData.failures << " refinements failed." << std::endl;
+      }
     }
   }
 }

@@ -41,9 +41,21 @@ unsigned CycleData::numCycleFamilies() const {
   return RDL_getNofURF(_dataPtr);
 }
 
+unsigned CycleData::numCycleFamilies(const AtomIndexType& index) const {
+  return RDL_getNofURFContainingNode(_dataPtr, index);
+}
+
 //! Returns the number of relevant cycles (RCs)
 unsigned CycleData::numRelevantCycles() const {
   return RDL_getNofRC(_dataPtr);
+}
+
+unsigned CycleData::numRelevantCycles(const AtomIndexType& index) const {
+  return RDL_getNofRCFContainingNode(_dataPtr, index);
+}
+
+RDL_data* CycleData::getDataPtr() {
+  return _dataPtr;
 }
 
 CycleIterator::CycleIterator(

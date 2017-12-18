@@ -73,8 +73,16 @@ public:
   //! Returns the number of unique ring families (URFs)
   unsigned numCycleFamilies() const;
 
+  //! Returns the number of unique ring families (URFs) an index is involved in
+  unsigned numCycleFamilies(const AtomIndexType& index) const;
+
   //! Returns the number of relevant cycles (RCs)
   unsigned numRelevantCycles() const;
+
+  //! Returns the number of relevant cycles (RCs)
+  unsigned numRelevantCycles(const AtomIndexType& index) const;
+
+  RDL_data* getDataPtr();
 };
 
 /*!

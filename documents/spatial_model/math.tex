@@ -1,0 +1,89 @@
+\documentclass[a4paper]{article}
+\usepackage[a4paper,margin=2cm]{geometry}
+\usepackage{mathtools}
+\usepackage{breqn}
+\usepackage[utf8]{inputenc}
+
+\usepackage{tikz} % only for circled numbers
+\newcommand*\circled[1]{
+  \tikz[baseline=(char.base)]{
+    \node[shape=circle,draw,inner sep=2pt] (char) {#1};
+  }
+}
+
+\renewcommand{\baselinestretch}{1.5}
+\setlength{\parindent}{0pt}
+
+
+\begin{document}
+\small
+
+\newcommand{\posVecDiff}[2]{
+  \left( \vec{r}_{#1} - \vec{r}_{#2} \right)
+}
+
+\newcommand{\vecDiff}[2]{
+  \left( \vec{#1} - \vec{#2}\,\right)
+}
+
+\newcommand{\vecCross}[2]{
+  \left( \vec{#1} \times \vec{#2}\,\right)
+}
+
+\newcommand{\posDependence}{
+  \left( \left\{\vec{r}_i \right\} \right)
+}
+
+\newcommand{\distanceErrorFirstTermPart}{
+  \frac{
+    \posVecDiff{j}{i}^{2}
+  }{
+    U_{ij}^{2}
+  } - 1
+}
+
+\section{Spiro-atom angle modeling}
+
+The cross-angle in a spiro-atom is expliticly modeled if the disjoint cycles are
+both small, i.e. of size <= 5. Only then is the additional variance when
+calculating cross-angle bounds particularly harmful for the overall 3D
+structure.
+
+We define:
+
+\begin{align}
+  \vec{a} &= R_z\left(\frac{\alpha}{2}\right)\begin{pmatrix}
+    1\\
+    0\\
+    0
+  \end{pmatrix} = \begin{pmatrix}
+    \cos \frac{\alpha}{2}\\
+    \sin \frac{\alpha}{2}\\
+    0
+  \end{pmatrix}\\
+  \vec{b} &= R_y\left(\frac{\beta}{2}\right)\begin{pmatrix}
+    -1\\
+    0\\
+    0
+  \end{pmatrix} = \begin{pmatrix}
+    - \cos \frac{\beta}{2}\\
+    0\\
+    \sin \frac{\beta}{2}
+  \end{pmatrix}
+\end{align}
+
+Where $R_y$ and $R_z$ are the standard three-dimensional rotation matrices,
+$\alpha$ is the cycle internal angle for the first cycle at the spiro-atom, and
+$\beta$ is the cycle internal angle for the second cycle at the spiro-atom.\\
+
+The angle between these vectors $\phi$ is then:
+
+\begin{align}
+  \vec{a}\vec{b} &= ||\vec{a}||||\vec{b}|| \cos \phi\\
+  \phi &= \arccos \left\{ 
+    \left(\cos \frac{\alpha}{2} \right)
+    \left(- \cos \frac{\beta}{2} \right)
+  \right\}
+\end{align}
+
+\end{document}

@@ -326,23 +326,197 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   }
 
   /* Returns a multiplier intended for the absolute angle variance for an atom
-   * index. If that index is in a cycle, the multiplier is > 1. This returns:
-   *
-   *   cycle size  3  4  5  (6  7 ...)
-   *   multiplier  4  3  2  (1  1 ...)
+   * index. If that index is in a cycle of size < 6, the multiplier is > 1.
    */
   auto cycleMultiplierForIndex = [&](const AtomIndexType& i) -> double {
-    if(
-      smallestCycleMap.count(i) == 1
-      && smallestCycleMap.at(i) < 6
-    ) {
-      return (
-        7 - smallestCycleMap.at(i)
-      );
+    if(smallestCycleMap.count(i) == 1) {
+      if(smallestCycleMap.at(i) == 3) {
+        return 2.5;
+      } else if(smallestCycleMap.at(i) == 4) {
+        return 1.7;
+      } else if(smallestCycleMap.at(i) == 5) {
+        return 1.3;
+      }
     }
 
-    return 1;
+    return 1.0;
   };
+
+  /* Model spiro centers */
+  /* For an atom to be a spiro center, it needs to be contained in exactly two
+   * URFs and have four substituents in a tetrahedral symmetry.
+   *
+   * We also only have to worry about modeling them if the two URFs are
+   * particularly small, i.e. are sizes 3-5
+   */
+  for(AtomIndexType i = 0; i < _molecule.numAtoms(); ++i) {
+    if(
+      _molecule.getNumAdjacencies(i) == 4
+      && _stereocenterMap.count(i) == 1
+      && _stereocenterMap.at(i) -> type() == Stereocenters::Type::CNStereocenter
+    ) {
+      if(
+        std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+          _stereocenterMap.at(i)
+        ) -> getSymmetry() == Symmetry::Name::Tetrahedral
+        && cycleData.numCycleFamilies(i) == 2
+      ) {
+        unsigned* URFIDs;
+        auto nIDs = RDL_getURFsContainingNode(cycleData.getDataPtr(), i, &URFIDs);
+        assert(nIDs == 2);
+
+        bool allURFsSingularRC = true;
+        for(unsigned idIdx = 0; idIdx < nIDs; ++idIdx) {
+          if(RDL_getNofRCForURF(cycleData.getDataPtr(), URFIDs[idIdx]) > 1) {
+            allURFsSingularRC = false;
+            break;
+          }
+        }
+
+        if(allURFsSingularRC) {
+          // The two RCs still have to be disjoint save for i
+          RDL_cycleIterator* cycleIteratorOne = RDL_getRCyclesForURFIterator(cycleData.getDataPtr(), URFIDs[0]);
+          RDL_cycle* cycleOne = RDL_cycleIteratorGetCycle(cycleIteratorOne);
+          RDL_cycleIterator* cycleIteratorTwo = RDL_getRCyclesForURFIterator(cycleData.getDataPtr(), URFIDs[1]);
+          RDL_cycle* cycleTwo = RDL_cycleIteratorGetCycle(cycleIteratorTwo);
+
+          // We model them only if both are small.
+          if(cycleOne -> weight <= 5 && cycleTwo -> weight <= 5) {
+            auto makeVerticesSet = [](const auto& cyclePtr) -> std::set<AtomIndexType> {
+              std::set<AtomIndexType> vertices;
+
+              for(unsigned i = 0; i < cyclePtr -> weight; ++i) {
+                vertices.insert(cyclePtr->edges[i][0]);
+                vertices.insert(cyclePtr->edges[i][1]);
+              }
+
+              return vertices;
+            };
+
+            auto cycleOneVertices = makeVerticesSet(cycleOne);
+            auto cycleTwoVertices = makeVerticesSet(cycleTwo);
+
+            auto intersection = TemplateMagic::setIntersection(
+              cycleOneVertices,
+              cycleTwoVertices
+            );
+
+            if(intersection.size() == 1 && *intersection.begin() == i) {
+              auto iAdjacents = molecule.getAdjacencies(i);
+
+              std::vector<AtomIndexType> firstAdjacents, secondAdjacents;
+              for(const auto& iAdjacent : iAdjacents) {
+                if(cycleOneVertices.count(iAdjacent)) {
+                  firstAdjacents.push_back(iAdjacent);
+                }
+
+                if(cycleTwoVertices.count(iAdjacent)) {
+                  secondAdjacents.push_back(iAdjacent);
+                }
+              }
+
+              assert(firstAdjacents.size() == 2 && secondAdjacents.size() == 2);
+
+              auto firstSequence = orderedIndexSequence<3>({
+                firstAdjacents.front(),
+                i,
+                firstAdjacents.back()
+              });
+
+              auto secondSequence = orderedIndexSequence<3>({
+                secondAdjacents.front(),
+                i,
+                secondAdjacents.back()
+              });
+
+              auto populateBounds = [&](const auto& sequence) {
+                ValueBounds bounds;
+
+                /* The cycle internal angle may have been generated already
+                 * if that cycle is planar, so check the angle bounds 
+                 */
+                if(_angleBounds.count(sequence)) {
+                  bounds = _angleBounds.at(sequence);
+                } else {
+                  // We have to generate some bounds on the cycle internal angle
+                  double centralAngle = _stereocenterMap.at(i) -> angle(
+                    sequence.front(),
+                    i,
+                    sequence.back()
+                  );
+
+                  double multiplier = cycleMultiplierForIndex(sequence.front())
+                    * cycleMultiplierForIndex(sequence.back());
+
+                  bounds.lower = StdlibTypeAlgorithms::clamp(
+                    centralAngle - multiplier * angleAbsoluteVariance,
+                    0.0,
+                    M_PI
+                  );
+
+                  bounds.upper = StdlibTypeAlgorithms::clamp(
+                    centralAngle + multiplier * angleAbsoluteVariance,
+                    0.0,
+                    M_PI
+                  );
+                }
+
+                return bounds;
+              };
+
+              ValueBounds firstAngleBounds = populateBounds(firstSequence);
+              ValueBounds secondAngleBounds = populateBounds(secondSequence);
+
+              // Increases in cycle angles yield decrease in the cross angle
+              double crossAngleLower = StdlibTypeAlgorithms::clamp(
+                spiroCrossAngle(
+                  firstAngleBounds.upper,
+                  secondAngleBounds.upper
+                ),
+                0.0,
+                M_PI
+              );
+
+              double crossAngleUpper = StdlibTypeAlgorithms::clamp(
+                spiroCrossAngle(
+                  firstAngleBounds.lower,
+                  secondAngleBounds.lower
+                ),
+                0.0,
+                M_PI
+              );
+
+              TemplateMagic::forAllPairs(
+                firstAdjacents,
+                secondAdjacents,
+                [&](const auto& firstAdjacent, const auto& secondAdjacent) {
+                  _angleBounds.emplace(
+                    std::make_pair(
+                      orderedIndexSequence<3>({firstAdjacent, i, secondAdjacent}),
+                      ValueBounds {
+                        crossAngleLower,
+                        crossAngleUpper
+                      }
+                    )
+                  );
+                }
+              );
+            }
+          }
+
+          // Must manually free the cycles and iterators
+          RDL_deleteCycle(cycleOne);
+          RDL_deleteCycle(cycleTwo);
+
+          RDL_deleteCycleIterator(cycleIteratorOne);
+          RDL_deleteCycleIterator(cycleIteratorTwo);
+        }
+
+        // Must manually free the id array
+        free(URFIDs);
+      }
+    }
+  }
 
   // Set 1-3 bounds using all angles we can exploit from stereocenters
   for(const auto& mapIterPair : _stereocenterMap) {
@@ -355,7 +529,6 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       TemplateMagic::forAllPairs(
         adjacentIndices,
         [&](const AtomIndexType& i, const AtomIndexType& j) -> void {
-          // TODO consider multiplier for centralIndex too?
           double multiplier = cycleMultiplierForIndex(i) * cycleMultiplierForIndex(j);
 
           setAngleBoundsIfEmpty(
@@ -979,6 +1152,13 @@ void MoleculeSpatialModel::writeGraphviz(const std::string& filename) const {
   );
 
   outStream.close();
+}
+
+double MoleculeSpatialModel::spiroCrossAngle(const double& alpha, const double& beta) {
+  // The source of this equation is explained in documents/
+  return std::acos(
+    -1 * std::cos(alpha / 2) * std::cos(beta / 2)
+  );
 }
 
 } // namespace DistanceGeometry
