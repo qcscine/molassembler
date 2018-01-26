@@ -1,7 +1,5 @@
 Remaining DG deficiencies
 -------------------------
-- Current metrization algorithm is O(N⁵), this is unacceptable, implement better
-  algorithm
 - Strain imposed on EZStereocenter substituents that are in small cycles is not
   accounted for::
             

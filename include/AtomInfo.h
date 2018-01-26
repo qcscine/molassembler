@@ -119,7 +119,9 @@ public:
  * FIX CITATION
  * Rappé, Goddard et al. UFF, a full periodic table force field for ...
  */
-extern const std::map<Delib::ElementType, double> bondRadii;
+extern const std::array<double, 110> bondRadii;
+
+double bondRadius(const Delib::ElementType& elementType);
 
 /*! 
  * ElementData instances for each element type. This is populated with the
@@ -132,10 +134,7 @@ extern const std::map<Delib::ElementType, double> bondRadii;
  *   Configuration Irregularities, Chem Phys Lett 362, 5-6, August 2002
  *   http://dx.doi.org/10.1016/S0009-2614(02)00919-3
  */
-extern std::map<
-  Delib::ElementType,
-  ElementInfo
-> elementData;
+extern std::array<ElementInfo, 110> elementData;
 
 bool isMainGroupElement(const Delib::ElementType& elementType); 
 

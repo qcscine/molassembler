@@ -28,9 +28,7 @@ BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
 
   BOOST_CHECK(testBounds.upperBound(0, 2) == 2 && testBounds.upperBound(1, 3) == 2);
 
-  auto distancesMatrix = testBounds.generateDistanceMatrix(
-    MetrizationOption::off
-  );
+  auto distancesMatrix = testBounds.makeDistanceMatrix();
 
   for(unsigned i = 0; i < N; i++) {
     for(unsigned j = i + 1; j < N; j++) {

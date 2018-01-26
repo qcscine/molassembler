@@ -1,16 +1,10 @@
 #ifndef INCLUDE_DG_GENERATE_CONFORMATION_H
 #define INCLUDE_DG_GENERATE_CONFORMATION_H
 
-#include "Delib/PositionCollection.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "DistanceGeometry/DistanceGeometry.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
-#include "Molecule.h"
-
-#include <vector>
-#include <Eigen/Core>
 
 /*! @file
  *

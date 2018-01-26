@@ -60,9 +60,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
     auto DGInfo = gatherDGInformation(molecule);
 
-    auto distances = DGInfo.distanceBounds.generateDistanceMatrix(
-      MetrizationOption::full
-    );
+    auto distances = DGInfo.distanceBounds.makeDistanceMatrix();
 
     MetricMatrix metric(distances);
 
@@ -176,7 +174,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
     const auto DGData = gatherDGInformation(molecule);
-    const auto distancesMatrix = DGData.distanceBounds.generateDistanceMatrix();
+    const auto distancesMatrix = DGData.distanceBounds.makeDistanceMatrix();
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
       [&DGData](
@@ -291,7 +289,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
     const auto DGData = gatherDGInformation(molecule);
-    const auto distancesMatrix = DGData.distanceBounds.generateDistanceMatrix();
+    const auto distancesMatrix = DGData.distanceBounds.makeDistanceMatrix();
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
       [&DGData](

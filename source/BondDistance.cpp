@@ -10,12 +10,12 @@ double calculateBondDistance(
   const BondType& bondType
 ) {
   return (
-    AtomInfo::bondRadii.at(a)
-    + AtomInfo::bondRadii.at(b)
+    AtomInfo::bondRadius(a)
+    + AtomInfo::bondRadius(b)
     - ( // bond-order correction
       bondOrderCorrectionLambda * (
-        AtomInfo::bondRadii.at(a)
-        + AtomInfo::bondRadii.at(b)
+        AtomInfo::bondRadius(a)
+        + AtomInfo::bondRadius(b)
       ) * log(
         bondOrderMap.at(
           static_cast<unsigned>(bondType)

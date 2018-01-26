@@ -3,6 +3,7 @@
 
 #include <tuple>
 #include "common_typedefs.h"
+#include "DistanceGeometry/ValueBounds.h"
 
 /* TODO
  */
@@ -17,7 +18,6 @@ namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
-/* Typedefs */
 struct ChiralityConstraint {
   std::array<AtomIndexType, 4> indices;
   double lower, upper;
@@ -26,13 +26,7 @@ struct ChiralityConstraint {
     const std::array<AtomIndexType, 4>& indices,
     const double& lower,
     const double& upper
-  ) : indices(indices),
-      lower(lower),
-      upper(upper)
-  {
-    // Must be <= because flat targets have lower = upper = 0
-    assert(lower <= upper);
-  }
+  );
 };
 
 /* Enum types */

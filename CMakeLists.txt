@@ -92,12 +92,18 @@ include_directories(SYSTEM
 
 # collect headers
 set(HEADERS_all
-  include/DistanceGeometry/RefinementProblem.h
+  include/DistanceGeometry/generateConformation.h
   include/DistanceGeometry/DistanceBoundsMatrix.h
   include/DistanceGeometry/DistanceGeometry.h
+  include/DistanceGeometry/ExplicitGraph.h
   include/DistanceGeometry/MetricMatrix.h
   include/DistanceGeometry/MoleculeSpatialModel.h
-  include/DistanceGeometry/generateConformation.h
+  include/DistanceGeometry/RefinementProblem.h
+  include/DistanceGeometry/ImplicitGraph.h
+  include/DistanceGeometry/ImplicitGraphBoost.h
+  include/DistanceGeometry/ImplicitGraphHelpers.h
+  include/DistanceGeometry/ValueBounds.h
+  include/Graph/Gor1.h
   include/AdjacencyMatrix.h
   include/AnalysisHelpers.h
   include/AtomInfo.h
@@ -127,11 +133,15 @@ set(HEADERS_all
 
 # collect sources
 set(SOURCES_all
-  source/DistanceGeometry/DistanceBoundsMatrix.cpp
   source/DistanceGeometry/generateConformation.cpp
+  source/DistanceGeometry/DistanceBoundsMatrix.cpp
+  source/DistanceGeometry/DistanceGeometry.cpp
+  source/DistanceGeometry/ExplicitGraph.cpp
   source/DistanceGeometry/MetricMatrix.cpp
   source/DistanceGeometry/MoleculeSpatialModel.cpp
   source/DistanceGeometry/RefinementProblem.cpp
+  source/DistanceGeometry/ImplicitGraph.cpp
+  source/DistanceGeometry/ValueBounds.cpp
   source/AdjacencyMatrix.cpp
   source/AtomInfo.cpp
   source/BondDistance.cpp
@@ -167,8 +177,9 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   target_compile_options(molecule PUBLIC -O3 -march=native)
 else() # assume Debug
   message(STATUS "Assume debug build")
-  target_compile_options(molecule PUBLIC -g -fsanitize=address -fsanitize=undefined)
-  set_target_properties(molecule PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
+  target_compile_options(molecule PUBLIC -g)
+  # target_compile_options(molecule PUBLIC -g -fsanitize=address -fsanitize=undefined)
+  # set_target_properties(molecule PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
 endif()
 
 # library properties
@@ -204,8 +215,9 @@ foreach(filename ${testFiles})
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     target_compile_options(${targetName} PUBLIC -O3 -march=native)
   else()
-    target_compile_options(${targetName} PUBLIC -g -fsanitize=address -fsanitize=undefined)
-    set_target_properties(${targetName} PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
+    target_compile_options(${targetName} PUBLIC -g)
+    # target_compile_options(${targetName} PUBLIC -g -fsanitize=address -fsanitize=undefined)
+    # set_target_properties(${targetName} PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
   endif()
   set_target_properties(
     ${targetName} PROPERTIES
@@ -245,7 +257,7 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
       CXX_STANDARD 14
       CXX_STANDARD_REQUIRED ON
       COMPILE_FLAGS ${WARNING_FLAGS}
-      LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
+      # LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
     )
 
     target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
@@ -260,4 +272,24 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
       rdl
     )
   endforeach()
+else()
+  # Build the benchmark anyway
+  add_executable(analysis_BenchmarkGraphAlgorithms analysis/BenchmarkGraphAlgorithms.cpp)
+  set_target_properties(
+    analysis_BenchmarkGraphAlgorithms PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+    COMPILE_FLAGS ${WARNING_FLAGS}
+  )
+  target_compile_options(analysis_BenchmarkGraphAlgorithms PUBLIC -O3 -g -march=native)
+  target_link_libraries(
+    analysis_BenchmarkGraphAlgorithms
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    Delib::DelibStatic
+    assignment
+    symmetry
+    molecule
+    blas
+    rdl
+  )
 endif()

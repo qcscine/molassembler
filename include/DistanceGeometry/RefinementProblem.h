@@ -2,7 +2,6 @@
 #define INCLUDE_DG_DLIB_REFINEMENT_PROBLEM_H
 
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "common_typedefs.h"
 
 #include <dlib/optimization.h>
 

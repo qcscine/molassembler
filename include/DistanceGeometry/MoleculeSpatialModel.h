@@ -1,11 +1,8 @@
 #ifndef INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
 #define INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
 
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
-
 #include "Molecule.h"
-
-#include <algorithm>
+#include "DistanceGeometry/ValueBounds.h"
 
 /*! @file
  *
@@ -55,37 +52,6 @@ public:
 /* Typedefs */
   struct ModelGraphWriter;
 
-  struct ValueBounds {
-    double lower, upper;
-
-    ValueBounds() : ValueBounds(
-      std::numeric_limits<double>::lowest(),
-      std::numeric_limits<double>::max()
-    ) {}
-
-    ValueBounds(
-      const double& lower,
-      const double& upper
-    ) : lower(lower),
-        upper(upper)
-    {
-      assert(lower <= upper);
-    }
-
-    ValueBounds(const ValueBounds& other) : ValueBounds(other.lower, other.upper) {}
-
-    ValueBounds& operator = (const ValueBounds& other) {
-      lower = other.lower;
-      upper = other.upper;
-      return *this;
-    }
-    ValueBounds& operator = (ValueBounds&& other) {
-      std::swap(lower, other.lower);
-      std::swap(upper, other.upper);
-      return *this;
-    }
-  };
-
   enum class DistanceMethod {
     Uniform,
     UFFLike
@@ -128,7 +94,6 @@ public:
 /* Constructor */
   MoleculeSpatialModel(
     const Molecule& molecule,
-    const StereocenterList& stereocenterList,
     const DistanceMethod& distanceMethod = DistanceMethod::UFFLike
   );
 
@@ -172,7 +137,11 @@ public:
    */
   void addDefaultDihedrals();
 
-  DistanceBoundsMatrix makeDistanceBounds() const;
+  using BoundList = std::vector<
+    std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
+  >;
+
+  BoundList makeBoundList() const;
 
   std::vector<
     Stereocenters::ChiralityConstraintPrototype

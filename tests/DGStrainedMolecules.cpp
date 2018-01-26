@@ -20,7 +20,6 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
 
   DistanceGeometry::MoleculeSpatialModel spatialModel {
     mol,
-    mol.getStereocenterList(),
     DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
   };
 

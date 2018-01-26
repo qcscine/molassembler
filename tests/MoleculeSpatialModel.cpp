@@ -3,6 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "BoundsFromSymmetry.h"
 
 BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
@@ -23,7 +24,6 @@ BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
 
     MoleculeSpatialModel spatialModel {
       molecule,
-      molecule.getStereocenterList(),
       MoleculeSpatialModel::DistanceMethod::UFFLike
     };
 
@@ -31,6 +31,10 @@ BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
     spatialModel.dumpDebugInfo();
 
     std::cout << "Resulting bounds matrix:" << std::endl;
-    std::cout << spatialModel.makeDistanceBounds().access() << std::endl;
+    DistanceBoundsMatrix bounds {molecule, spatialModel.makeBoundList()};
+
+    bounds.smooth();
+
+    std::cout << bounds.access() << std::endl;
   }
 }

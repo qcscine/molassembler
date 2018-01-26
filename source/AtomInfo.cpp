@@ -4,122 +4,130 @@ namespace MoleculeManip {
 
 namespace AtomInfo {
 
+/* TODO unify bondRadii into ElementData
+ */
+
 /* From the original UFF paper
  * Rappé, Goddard et al. UFF, a full periodic table force field for ...
  */
-const std::map<Delib::ElementType, double> bondRadii {
-  // in Angstrom
-  {Delib::ElementType::none, 0},
-  {Delib::ElementType::H, 0.354}, // H_
-  {Delib::ElementType::He, 0.849},
-  {Delib::ElementType::Li,  1.336},
-  {Delib::ElementType::Be, 1.074},
-  {Delib::ElementType::B, 0.833}, // average(B_2, B_3)
-  {Delib::ElementType::C, 0.828}, // C_3
-  {Delib::ElementType::N, 0.7}, // N_3
-  {Delib::ElementType::O, 0.658}, // O_3
-  {Delib::ElementType::F, 0.668},
-  {Delib::ElementType::Ne, 0.92},
-  {Delib::ElementType::Na, 1.539},
-  {Delib::ElementType::Mg, 1.421},
-  {Delib::ElementType::Al, 1.244},
-  {Delib::ElementType::Si, 1.117},
-  {Delib::ElementType::P, 1.101}, // P_3+3
-  {Delib::ElementType::S, 1.064}, // S_3+2
-  {Delib::ElementType::Cl, 1.044},
-  {Delib::ElementType::Ar, 1.032},
-  {Delib::ElementType::K, 1.953},
-  {Delib::ElementType::Ca, 1.761},
-  {Delib::ElementType::Sc, 1.513},
-  {Delib::ElementType::Ti, 1.412},
-  {Delib::ElementType::V, 1.402},
-  {Delib::ElementType::Cr, 1.345},
-  {Delib::ElementType::Mn, 1.382},
-  {Delib::ElementType::Fe, 1.270},
-  {Delib::ElementType::Co, 1.241},
-  {Delib::ElementType::Ni, 1.164},
-  {Delib::ElementType::Cu, 1.302},
-  {Delib::ElementType::Zn, 1.193},
-  {Delib::ElementType::Ga, 1.26},
-  {Delib::ElementType::Ge, 1.197},
-  {Delib::ElementType::As, 1.211},
-  {Delib::ElementType::Se, 1.19},
-  {Delib::ElementType::Br, 1.192},
-  {Delib::ElementType::Kr, 1.147},
-  {Delib::ElementType::Rb, 2.260},
-  {Delib::ElementType::Sr, 2.052},
-  {Delib::ElementType::Y, 1.698},
-  {Delib::ElementType::Zr, 1.564},
-  {Delib::ElementType::Nb, 1.473},
-  {Delib::ElementType::Mo, 1.467}, // Mo6+6
-  {Delib::ElementType::Tc, 1.322},
-  {Delib::ElementType::Ru, 1.478},
-  {Delib::ElementType::Rh, 1.332},
-  {Delib::ElementType::Pd, 1.338},
-  {Delib::ElementType::Ag, 1.386},
-  {Delib::ElementType::Cd, 1.403},
-  {Delib::ElementType::In, 1.459},
-  {Delib::ElementType::Sn, 1.398},
-  {Delib::ElementType::Sb, 1.407},
-  {Delib::ElementType::Te, 1.386},
-  {Delib::ElementType::I, 1.382},
-  {Delib::ElementType::Xe, 1.267},
-  {Delib::ElementType::Cs, 2.570},
-  {Delib::ElementType::Ba, 2.277},
-  {Delib::ElementType::La, 1.943},
-  {Delib::ElementType::Ce, 1.841},
-  {Delib::ElementType::Pr, 1.823},
-  {Delib::ElementType::Nd, 1.816},
-  {Delib::ElementType::Pm, 1.801},
-  {Delib::ElementType::Sm, 1.780},
-  {Delib::ElementType::Eu, 1.771},
-  {Delib::ElementType::Gd, 1.735},
-  {Delib::ElementType::Tb, 1.732},
-  {Delib::ElementType::Dy, 1.710},
-  {Delib::ElementType::Ho, 1.696},
-  {Delib::ElementType::Er, 1.673},
-  {Delib::ElementType::Tm, 1.660},
-  {Delib::ElementType::Yb, 1.637},
-  {Delib::ElementType::Lu, 1.671},
-  {Delib::ElementType::Hf, 1.611},
-  {Delib::ElementType::Ta, 1.511},
-  {Delib::ElementType::W, 1.392}, // W_6+6
-  {Delib::ElementType::Re, 1.372}, // Re_6+5
-  {Delib::ElementType::Os, 1.372},
-  {Delib::ElementType::Ir, 1.371},
-  {Delib::ElementType::Pt, 1.364},
-  {Delib::ElementType::Au, 1.262},
-  {Delib::ElementType::Hg, 1.340},
-  {Delib::ElementType::Tl, 1.518},
-  {Delib::ElementType::Pb, 1.459},
-  {Delib::ElementType::Bi, 1.512},
-  {Delib::ElementType::Po, 1.5},
-  {Delib::ElementType::At, 1.545},
-  {Delib::ElementType::Rn, 1.420},
-  {Delib::ElementType::Fr, 2.880},
-  {Delib::ElementType::Ra, 2.512},
-  {Delib::ElementType::Ac, 1.983},
-  {Delib::ElementType::Th, 1.721},
-  {Delib::ElementType::Pa, 1.711},
-  {Delib::ElementType::U, 1.684},
-  {Delib::ElementType::Np, 1.666},
-  {Delib::ElementType::Pu, 1.657},
-  {Delib::ElementType::Am, 1.660},
-  {Delib::ElementType::Cm, 1.801},
-  {Delib::ElementType::Bk, 1.761},
-  {Delib::ElementType::Cf, 1.750},
-  {Delib::ElementType::Es, 1.724},
-  {Delib::ElementType::Fm, 1.712},
-  {Delib::ElementType::Md, 1.689},
-  {Delib::ElementType::No, 1.679},
-  {Delib::ElementType::Lr, 1.698},
-  {Delib::ElementType::Rf, 1.6}, // NO PARAMETERS from here to Mt
-  {Delib::ElementType::Db, 1.6},
-  {Delib::ElementType::Sg, 1.6},
-  {Delib::ElementType::Bh, 1.6},
-  {Delib::ElementType::Hs, 1.6},
-  {Delib::ElementType::Mt, 1.6}
+const std::array<double, 110> bondRadii {
+  0,  // none 
+  0.354,  // H
+  0.849,  // He 
+  1.336,  // Li 
+  1.074,  // Be 
+  0.833,  // average(B_2 B_3)
+  0.828,  // C_3
+  0.7,  // N_3
+  0.658,  // O_3
+  0.668,  // F 
+  0.92,  // Ne 
+  1.539,  // Na 
+  1.421,  // Mg 
+  1.244,  // Al 
+  1.117,  // Si 
+  1.101,  // P_3+3
+  1.064,  // S_3+2
+  1.044,  // Cl 
+  1.032,  // Ar 
+  1.953,  // K 
+  1.761,  // Ca 
+  1.513,  // Sc 
+  1.412,  // Ti 
+  1.402,  // V 
+  1.345,  // Cr 
+  1.382,  // Mn 
+  1.270,  // Fe 
+  1.241,  // Co 
+  1.164,  // Ni 
+  1.302,  // Cu 
+  1.193,  // Zn 
+  1.26,  // Ga 
+  1.197,  // Ge 
+  1.211,  // As 
+  1.19,  // Se 
+  1.192,  // Br 
+  1.147,  // Kr 
+  2.260,  // Rb 
+  2.052,  // Sr 
+  1.698,  // Y 
+  1.564,  // Zr 
+  1.473,  // Nb 
+  1.467,  // Mo6+6
+  1.322,  // Tc 
+  1.478,  // Ru 
+  1.332,  // Rh 
+  1.338,  // Pd 
+  1.386,  // Ag 
+  1.403,  // Cd 
+  1.459,  // In 
+  1.398,  // Sn 
+  1.407,  // Sb 
+  1.386,  // Te 
+  1.382,  // I 
+  1.267,  // Xe 
+  2.570,  // Cs 
+  2.277,  // Ba 
+  1.943,  // La 
+  1.841,  // Ce 
+  1.823,  // Pr 
+  1.816,  // Nd 
+  1.801,  // Pm 
+  1.780,  // Sm 
+  1.771,  // Eu 
+  1.735,  // Gd 
+  1.732,  // Tb 
+  1.710,  // Dy 
+  1.696,  // Ho 
+  1.673,  // Er 
+  1.660,  // Tm 
+  1.637,  // Yb 
+  1.671,  // Lu 
+  1.611,  // Hf 
+  1.511,  // Ta 
+  1.392,  // W_6+6
+  1.372,  // Re_6+5
+  1.372,  // Os 
+  1.371,  // Ir 
+  1.364,  // Pt 
+  1.262,  // Au 
+  1.340,  // Hg 
+  1.518,  // Tl 
+  1.459,  // Pb 
+  1.512,  // Bi 
+  1.5,  // Po 
+  1.545,  // At 
+  1.420,  // Rn 
+  2.880,  // Fr 
+  2.512,  // Ra 
+  1.983,  // Ac 
+  1.721,  // Th 
+  1.711,  // Pa 
+  1.684,  // U 
+  1.666,  // Np 
+  1.657,  // Pu 
+  1.660,  // Am 
+  1.801,  // Cm 
+  1.761,  // Bk 
+  1.750,  // Cf 
+  1.724,  // Es 
+  1.712,  // Fm 
+  1.689,  // Md 
+  1.679,  // No 
+  1.698,  // Lr 
+  1.6,  // Rf, NO PARAMETERS from here to Mt
+  1.6,  // Db 
+  1.6,  // Sg 
+  1.6,  // Bh 
+  1.6,  // Hs 
+  1.6  // Mt 
 };
+
+double bondRadius(const Delib::ElementType& elementType) {
+  return bondRadii.at(
+    static_cast<unsigned>(elementType)
+  );
+}
 
 /* ElementData is populated with the following data:
  * - VdW radius, from online CRC Handbook of Chemistry and Physics, Nov. 16,
@@ -129,140 +137,144 @@ const std::map<Delib::ElementType, double> bondRadii {
  *   Configuration Irregularities, Chem Phys Lett 362, 5-6, August 2002
  *   http://dx.doi.org/10.1016/S0009-2614(02)00919-3
  */
-std::map<
-  Delib::ElementType,
-  ElementInfo
-> elementData { // 
+
+
+std::array<ElementInfo, 110> elementData {{
   // in Angstrom
-  {Delib::ElementType::H,  {1.09, 1, 0, 0, 0}},
-  {Delib::ElementType::He, {1.40, 2, 0, 0, 0}},
-  {Delib::ElementType::Li, {1.82, 1, 0, 0, 0}},
-  {Delib::ElementType::Be, {1.53, 2, 0, 0, 0}},
-  {Delib::ElementType::B,  {1.92, 2, 1, 0, 0}},
-  {Delib::ElementType::C,  {1.70, 2, 2, 0, 0}},
-  {Delib::ElementType::N,  {1.55, 2, 3, 0, 0}},
-  {Delib::ElementType::O,  {1.52, 2, 4, 0, 0}},
-  {Delib::ElementType::F,  {1.47, 2, 5, 0, 0}},
-  {Delib::ElementType::Ne, {1.54, 2, 6, 0, 0}},
-  {Delib::ElementType::Na, {2.27, 1, 0, 0, 0}},
-  {Delib::ElementType::Mg, {1.73, 2, 0, 0, 0}},
-  {Delib::ElementType::Al, {1.84, 2, 1, 0, 0}},
-  {Delib::ElementType::Si, {2.10, 2, 2, 0, 0}},
-  {Delib::ElementType::P,  {1.80, 2, 3, 0, 0}},
-  {Delib::ElementType::S,  {1.80, 2, 4, 0, 0}},
-  {Delib::ElementType::Cl, {1.75, 2, 5, 0, 0}},
-  {Delib::ElementType::Ar, {1.88, 2, 6, 0, 0}},
-  {Delib::ElementType::K,  {2.75, 1, 0, 0, 0}},
-  {Delib::ElementType::Ca, {2.31, 2, 0, 0, 0}},
-  {Delib::ElementType::Sc, {2.15, 2, 0, 1, 0}},
-  {Delib::ElementType::Ti, {2.11, 2, 0, 2, 0}},
-  {Delib::ElementType::V,  {2.07, 2, 0, 3, 0}},
-  {Delib::ElementType::Cr, {2.06, 1, 0, 5, 0}}, // Madelung: 2, 0, 4, 0
-  {Delib::ElementType::Mn, {2.05, 2, 0, 5, 0}},
-  {Delib::ElementType::Fe, {2.04, 2, 0, 6, 0}},
-  {Delib::ElementType::Co, {2.00, 2, 0, 7, 0}},
-  {Delib::ElementType::Ni, {1.97, 2, 0, 8, 0}},
-  {Delib::ElementType::Cu, {1.96, 1, 0, 10, 0}}, // Madelung: 2, 0, 9, 0
-  {Delib::ElementType::Zn, {2.01, 2, 0, 10, 0}},
-  {Delib::ElementType::Ga, {1.87, 2, 1, 10, 0}},
-  {Delib::ElementType::Ge, {2.11, 2, 2, 10, 0}},
-  {Delib::ElementType::As, {1.85, 2, 3, 10, 0}},
-  {Delib::ElementType::Se, {1.90, 2, 4, 10, 0}},
-  {Delib::ElementType::Br, {1.85, 2, 5, 10, 0}},
-  {Delib::ElementType::Kr, {2.02, 2, 6, 10, 0}},
-  {Delib::ElementType::Rb, {3.03, 1, 0, 0, 0}},
-  {Delib::ElementType::Sr, {2.49, 2, 0, 0, 0}},
-  {Delib::ElementType::Y,  {2.32, 2, 0, 1, 0}},
-  {Delib::ElementType::Zr, {2.23, 2, 0, 2, 0}},
-  {Delib::ElementType::Nb, {2.18, 1, 0, 4, 0}}, // Madelung: 2, 0, 3, 0
-  {Delib::ElementType::Mo, {2.17, 1, 0, 5, 0}}, // Madelung: 2, 0, 4, 0
-  {Delib::ElementType::Tc, {2.16, 2, 0, 5, 0}},
-  {Delib::ElementType::Ru, {2.13, 1, 0, 7, 0}}, // Madelung: 2, 0, 6, 0
-  {Delib::ElementType::Rh, {2.10, 1, 0, 8, 0}}, // Madelung: 2, 0, 7, 0
-  {Delib::ElementType::Pd, {2.10, 0, 0, 10, 0}}, // Madelung: 2, 0, 8, 0
-  {Delib::ElementType::Ag, {2.11, 1, 0, 10, 0}}, // Madelung: 2, 0, 9, 0
-  {Delib::ElementType::Cd, {2.18, 2, 0, 10, 0}},
-  {Delib::ElementType::In, {1.93, 2, 1, 10, 0}},
-  {Delib::ElementType::Sn, {2.17, 2, 2, 10, 0}},
-  {Delib::ElementType::Sb, {2.06, 2, 3, 10, 0}},
-  {Delib::ElementType::Te, {2.06, 2, 4, 10, 0}},
-  {Delib::ElementType::I,  {1.98, 2, 5, 10, 0}},
-  {Delib::ElementType::Xe, {2.16, 2, 6, 10, 0}},
-  {Delib::ElementType::Cs, {3.43, 1, 0, 0, 0}},
-  {Delib::ElementType::Ba, {2.68, 2, 0, 0, 0}},
-  // La: Madelung: [Xe] 6s² 4f¹ -> 2, 0, 0, 1, found [Xe] 6s² 5d¹
-  {Delib::ElementType::La, {2.43, 2, 0, 1, 0}},
-  // Ce: Madelung: [Xe] 6s² 4f² -> 2, 0, 0, 2, found [Xe] 6s² 4f¹ 5d¹
-  {Delib::ElementType::Ce, {2.42, 2, 0, 1, 1}},
-  {Delib::ElementType::Pr, {2.40, 2, 0, 0, 3}},
-  {Delib::ElementType::Nd, {2.39, 2, 0, 0, 4}},
-  {Delib::ElementType::Pm, {2.38, 2, 0, 0, 5}},
-  {Delib::ElementType::Sm, {2.36, 2, 0, 0, 6}},
-  {Delib::ElementType::Eu, {2.35, 2, 0, 0, 7}},
-  // Gd: Madelung: [Xe] 6s² 4f⁸ -> 2, 0, 0, 8, found [Xe] 6s² 4f⁷ 5d¹
-  {Delib::ElementType::Gd, {2.34, 2, 0, 1, 7}},
-  {Delib::ElementType::Tb, {2.33, 2, 0, 0, 9}},
-  {Delib::ElementType::Dy, {2.31, 2, 0, 0, 10}},
-  {Delib::ElementType::Ho, {2.30, 2, 0, 0, 11}},
-  {Delib::ElementType::Er, {2.29, 2, 0, 0, 12}},
-  {Delib::ElementType::Tm, {2.27, 2, 0, 0, 13}},
-  {Delib::ElementType::Yb, {2.26, 2, 0, 0, 14}},
-  {Delib::ElementType::Lu, {2.24, 2, 0, 1, 14}},
-  {Delib::ElementType::Hf, {2.23, 2, 0, 2, 14}},
-  {Delib::ElementType::Ta, {2.22, 2, 0, 3, 14}},
-  {Delib::ElementType::W,  {2.18, 2, 0, 4, 14}},
-  {Delib::ElementType::Re, {2.16, 2, 0, 5, 14}},
-  {Delib::ElementType::Os, {2.16, 2, 0, 6, 14}},
-  {Delib::ElementType::Ir, {2.13, 2, 0, 7, 14}},
-  // Pt: Madelung: [Xe] 6s² (4f¹⁴) 5d⁸ -> 2, 0, 8, 14, found [Xe] 6s¹ (4f¹⁴) 5d⁹
-  {Delib::ElementType::Pt, {2.13, 1, 0, 9, 14}},
-  // Au: Madelung: [Xe] 6s² (4f¹⁴) 5d⁹ -> 2, 0, 9, 14, found [Xe] 6s¹ (4f¹⁴) 5d¹⁰
-  {Delib::ElementType::Au, {2.14, 1, 0, 10, 14}},
-  {Delib::ElementType::Hg, {2.23, 2, 0, 10, 14}},
-  {Delib::ElementType::Tl, {1.96, 2, 1, 10, 14}},
-  {Delib::ElementType::Pb, {2.02, 2, 2, 10, 14}},
-  {Delib::ElementType::Bi, {2.07, 2, 3, 10, 14}},
-  {Delib::ElementType::Po, {1.97, 2, 4, 10, 14}},
-  {Delib::ElementType::At, {2.02, 2, 5, 10, 14}},
-  {Delib::ElementType::Rn, {2.20, 2, 6, 10, 14}},
-  {Delib::ElementType::Fr, {3.48, 1, 0, 0, 0}},
-  {Delib::ElementType::Ra, {2.83, 2, 0, 0, 0}},
-  // Ac: Madelung: [Rn] 7s² 5f¹ -> 2, 0, 0, 1, found [Rn] 7s² 6d¹
-  {Delib::ElementType::Ac, {2.47, 2, 0, 1, 0}},
-  // Th: Madelung: [Rn] 7s² 5f² -> 2, 0, 0, 2, found [Rn] 7s² 6d²
-  {Delib::ElementType::Th, {2.45, 2, 0, 2, 0}},
-  // Pa: Madelung: [Rn] 7s² 5f³ -> 2, 0, 0, 3, found [Rn] 7s² 5f² 6d¹
-  {Delib::ElementType::Pa, {2.43, 2, 0, 1, 2}},
-  //  U: Madelung: [Rn] 7s² 5f⁴ -> 2, 0, 0, 4, found [Rn] 7s² 5f³ 6d¹
-  {Delib::ElementType::U,  {2.41, 2, 0, 3, 1}},
-  // Np: Madelung: [Rn] 7s² 5f⁵ -> 2, 0, 0, 5, found [Rn] 7s² 5f⁴ 6d¹
-  {Delib::ElementType::Np, {2.39, 2, 0, 4, 1}},
-  {Delib::ElementType::Pu, {2.43, 2, 0, 0, 6}},
-  {Delib::ElementType::Am, {2.44, 2, 0, 0, 7}},
-  // Cm: Madelung: [Rn] 7s² 5f⁸ -> 2, 0, 0, 8, found [Rn] 7s² 5f⁷ 6d¹
-  {Delib::ElementType::Cm, {2.45, 2, 0, 7, 1}},
-  {Delib::ElementType::Bk, {2.44, 2, 0, 0, 9}},
-  {Delib::ElementType::Cf, {2.45, 2, 0, 0, 10}},
-  {Delib::ElementType::Es, {2.45, 2, 0, 0, 11}},
-  {Delib::ElementType::Fm, {2.45, 2, 0, 0, 12}},
-  {Delib::ElementType::Md, {2.46, 2, 0, 0, 13}},
-  {Delib::ElementType::No, {2.46, 2, 0, 0, 14}},
-  {Delib::ElementType::Lr, {2.46, 2, 0, 1, 14}},
-  {Delib::ElementType::Rf, {0.0, 2, 0, 2, 14}},
-  {Delib::ElementType::Db, {0.0, 2, 0, 3, 14}},
-  {Delib::ElementType::Sg, {0.0, 2, 0, 4, 14}},
-  {Delib::ElementType::Bh, {0.0, 2, 0, 5, 14}},
-  {Delib::ElementType::Hs, {0.0, 2, 0, 6, 14}},
-  {Delib::ElementType::Mt, {0.0, 2, 0, 7, 14}}
-};
+  {0.00, 0u, 0u, 0u, 0u}, // none
+  {1.09, 1u, 0u, 0u, 0u}, // H
+  {1.40, 2u, 0u, 0u, 0u}, // He
+  {1.82, 1u, 0u, 0u, 0u}, // Li
+  {1.53, 2u, 0u, 0u, 0u}, // Be
+  {1.92, 2u, 1u, 0u, 0u}, // B
+  {1.70, 2u, 2u, 0u, 0u}, // C
+  {1.55, 2u, 3u, 0u, 0u}, // N
+  {1.52, 2u, 4u, 0u, 0u}, // O
+  {1.47, 2u, 5u, 0u, 0u}, // F
+  {1.54, 2u, 6u, 0u, 0u}, // Ne
+  {2.27, 1u, 0u, 0u, 0u}, // Na
+  {1.73, 2u, 0u, 0u, 0u}, // Mg
+  {1.84, 2u, 1u, 0u, 0u}, // Al
+  {2.10, 2u, 2u, 0u, 0u}, // Si
+  {1.80, 2u, 3u, 0u, 0u}, // P
+  {1.80, 2u, 4u, 0u, 0u}, // S
+  {1.75, 2u, 5u, 0u, 0u}, // Cl
+  {1.88, 2u, 6u, 0u, 0u}, // Ar
+  {2.75, 1u, 0u, 0u, 0u}, // K
+  {2.31, 2u, 0u, 0u, 0u}, // Ca
+  {2.15, 2u, 0u, 1u, 0u}, // Sc
+  {2.11, 2u, 0u, 2u, 0u}, // Ti
+  {2.07, 2u, 0u, 3u, 0u}, // V
+  {2.06, 1u, 0u, 5u, 0u}, // Cr, Madelung: 2, 0, 4, 0
+  {2.05, 2u, 0u, 5u, 0u}, // Mn
+  {2.04, 2u, 0u, 6u, 0u}, // Fe
+  {2.00, 2u, 0u, 7u, 0u}, // Co
+  {1.97, 2u, 0u, 8u, 0u}, // Ni
+  {1.96, 1u, 0u, 10u, 0u}, // Cu, Madelung: 2, 0, 9, 0
+  {2.01, 2u, 0u, 10u, 0u}, // Zn
+  {1.87, 2u, 1u, 10u, 0u}, // Ga
+  {2.11, 2u, 2u, 10u, 0u}, // Ge
+  {1.85, 2u, 3u, 10u, 0u}, // As
+  {1.90, 2u, 4u, 10u, 0u}, // Se
+  {1.85, 2u, 5u, 10u, 0u}, // Br
+  {2.02, 2u, 6u, 10u, 0u}, // Kr
+  {3.03, 1u, 0u, 0u, 0u}, // Rb
+  {2.49, 2u, 0u, 0u, 0u}, // Sr
+  {2.32, 2u, 0u, 1u, 0u}, // Y
+  {2.23, 2u, 0u, 2u, 0u}, // Zr
+  {2.18, 1u, 0u, 4u, 0u}, // Nb, Madelung: 2, 0, 3, 0
+  {2.17, 1u, 0u, 5u, 0u}, // Mo, Madelung: 2, 0, 4, 0
+  {2.16, 2u, 0u, 5u, 0u}, // Tc
+  {2.13, 1u, 0u, 7u, 0u}, // Ru, Madelung: 2, 0, 6, 0
+  {2.10, 1u, 0u, 8u, 0u}, // Rh, Madelung: 2, 0, 7, 0
+  {2.10, 0u, 0u, 10u, 0u}, // Pd, Madelung: 2, 0, 8, 0
+  {2.11, 1u, 0u, 10u, 0u}, // Ag, Madelung: 2, 0, 9, 0
+  {2.18, 2u, 0u, 10u, 0u}, // Cd
+  {1.93, 2u, 1u, 10u, 0u}, // In
+  {2.17, 2u, 2u, 10u, 0u}, // Sn
+  {2.06, 2u, 3u, 10u, 0u}, // Sb
+  {2.06, 2u, 4u, 10u, 0u}, // Te
+  {1.98, 2u, 5u, 10u, 0u}, // I
+  {2.16, 2u, 6u, 10u, 0u}, // Xe
+  {3.43, 1u, 0u, 0u, 0u}, // Cs
+  {2.68, 2u, 0u, 0u, 0u}, // Ba
+  //  La: Madelung: [Xe] 6s² 4f¹ -> 2, 0, 0, 1, found [Xe] 6s² 5d¹
+  {2.43, 2u, 0u, 1u, 0u}, // La
+  //  Ce: Madelung: [Xe] 6s² 4f² -> 2, 0, 0, 2, found [Xe] 6s² 4f¹ 5d¹
+  {2.42, 2u, 0u, 1u, 1u}, // Ce
+  {2.40, 2u, 0u, 0u, 3u}, // Pr
+  {2.39, 2u, 0u, 0u, 4u}, // Nd
+  {2.38, 2u, 0u, 0u, 5u}, // Pm
+  {2.36, 2u, 0u, 0u, 6u}, // Sm
+  {2.35, 2u, 0u, 0u, 7u}, // Eu
+  //  Gd: Madelung: [Xe] 6s² 4f⁸ -> 2, 0, 0, 8, found [Xe] 6s² 4f⁷ 5d¹
+  {2.34, 2u, 0u, 1u, 7u}, // Gd
+  {2.33, 2u, 0u, 0u, 9u}, // Tb
+  {2.31, 2u, 0u, 0u, 10u}, // Dy
+  {2.30, 2u, 0u, 0u, 11u}, // Ho
+  {2.29, 2u, 0u, 0u, 12u}, // Er
+  {2.27, 2u, 0u, 0u, 13u}, // Tm
+  {2.26, 2u, 0u, 0u, 14u}, // Yb
+  {2.24, 2u, 0u, 1u, 14u}, // Lu
+  {2.23, 2u, 0u, 2u, 14u}, // Hf
+  {2.22, 2u, 0u, 3u, 14u}, // Ta
+  {2.18, 2u, 0u, 4u, 14u}, // W
+  {2.16, 2u, 0u, 5u, 14u}, // Re
+  {2.16, 2u, 0u, 6u, 14u}, // Os
+  {2.13, 2u, 0u, 7u, 14u}, // Ir
+  //  Pt: Madelung: [Xe] 6s² (4f¹⁴) 5d⁸ -> 2, 0, 8, 14, found [Xe] 6s¹ (4f¹⁴) 5d⁹
+  {2.13, 1u, 0u, 9u, 14u}, // Pt
+  //  Au: Madelung: [Xe] 6s² (4f¹⁴) 5d⁹ -> 2, 0, 9, 14, found [Xe] 6s¹ (4f¹⁴) 5d¹⁰
+  {2.14, 1u, 0u, 10u, 14u}, // Au
+  {2.23, 2u, 0u, 10u, 14u}, // Hg
+  {1.96, 2u, 1u, 10u, 14u}, // Tl
+  {2.02, 2u, 2u, 10u, 14u}, // Pb
+  {2.07, 2u, 3u, 10u, 14u}, // Bi
+  {1.97, 2u, 4u, 10u, 14u}, // Po
+  {2.02, 2u, 5u, 10u, 14u}, // At
+  {2.20, 2u, 6u, 10u, 14u}, // Rn
+  {3.48, 1u, 0u, 0u, 0u}, // Fr
+  {2.83, 2u, 0u, 0u, 0u}, // Ra
+  //  Ac: Madelung: [Rn] 7s² 5f¹ -> 2, 0, 0, 1, found [Rn] 7s² 6d¹
+  {2.47, 2u, 0u, 1u, 0u}, // Ac
+  //  Th: Madelung: [Rn] 7s² 5f² -> 2, 0, 0, 2, found [Rn] 7s² 6d²
+  {2.45, 2u, 0u, 2u, 0u}, // Th
+  //  Pa: Madelung: [Rn] 7s² 5f³ -> 2, 0, 0, 3, found [Rn] 7s² 5f² 6d¹
+  {2.43, 2u, 0u, 1u, 2u}, // Pa
+  //   U: Madelung: [Rn] 7s² 5f⁴ -> 2, 0, 0, 4, found [Rn] 7s² 5f³ 6d¹
+  {2.41, 2u, 0u, 3u, 1u}, // U,
+  //  Np: Madelung: [Rn] 7s² 5f⁵ -> 2, 0, 0, 5, found [Rn] 7s² 5f⁴ 6d¹
+  {2.39, 2u, 0u, 4u, 1u}, // Np
+  {2.43, 2u, 0u, 0u, 6u}, // Pu
+  {2.44, 2u, 0u, 0u, 7u}, // Am
+  //  Cm: Madelung: [Rn] 7s² 5f⁸ -> 2, 0, 0, 8, found [Rn] 7s² 5f⁷ 6d¹
+  {2.45, 2u, 0u, 7u, 1u}, // Cm
+  {2.44, 2u, 0u, 0u, 9u}, // Bk
+  {2.45, 2u, 0u, 0u, 10u}, // Cf
+  {2.45, 2u, 0u, 0u, 11u}, // Es
+  {2.45, 2u, 0u, 0u, 12u}, // Fm
+  {2.46, 2u, 0u, 0u, 13u}, // Md
+  {2.46, 2u, 0u, 0u, 14u}, // No
+  {2.46, 2u, 0u, 1u, 14u}, // Lr
+  {0.0, 2u, 0u, 2u, 14u}, // Rf
+  {0.0, 2u, 0u, 3u, 14u}, // Db
+  {0.0, 2u, 0u, 4u, 14u}, // Sg
+  {0.0, 2u, 0u, 5u, 14u}, // Bh
+  {0.0, 2u, 0u, 6u, 14u}, // Hs
+  {0.0, 2u, 0u, 7u, 14u} // Mt
+}};
 
 bool isMainGroupElement(const Delib::ElementType& elementType) {
-  return elementData.at(elementType).shellsFullOrEmpty({'d', 'f'});
+  return elementData.at(
+    static_cast<unsigned>(elementType)
+  ).shellsFullOrEmpty({'d', 'f'});
 }
 
 boost::optional<unsigned> mainGroupVE(const Delib::ElementType& elementType) {
   if(isMainGroupElement(elementType)) {
-    return elementData.at(elementType).valenceElectrons({'s', 'p'});
+    return elementData.at(
+      static_cast<unsigned>(elementType)
+    ).valenceElectrons({'s', 'p'});
   } 
 
   return {};
@@ -273,11 +285,15 @@ unsigned dElectronCount(const Delib::ElementType& elementType) {
     return 0;
   }
 
-  return elementData.at(elementType).valenceElectrons('d');
+  return elementData.at(
+    static_cast<unsigned>(elementType)
+  ).valenceElectrons('d');
 }
 
 double vdwRadius(const Delib::ElementType& elementType) {
-  return elementData.at(elementType).vdwRadius;
+  return elementData.at(
+    static_cast<unsigned>(elementType)
+  ).vdwRadius;
 }
 
 } // namespace AtomInfo

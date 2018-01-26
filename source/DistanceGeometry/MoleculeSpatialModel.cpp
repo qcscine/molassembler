@@ -24,7 +24,6 @@ constexpr double MoleculeSpatialModel::angleAbsoluteVariance;
 
 MoleculeSpatialModel::MoleculeSpatialModel(
   const Molecule& molecule,
-  const StereocenterList& stereocenterList,
   const DistanceMethod& distanceMethod
 ) : _molecule(molecule) {
   /* This is overall a pretty complicated constructor since it encompasses the
@@ -107,7 +106,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
 
   // Populate the stereocenterMap with copies of the molecule's stereocenters
   // Start with the existing stereocenters with multiple assignments
-  for(const auto& stereocenterPtr : stereocenterList) {
+  for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
     for(const auto& involvedAtom : stereocenterPtr -> involvedAtoms()) {
       if(_stereocenterMap.count(involvedAtom) == 0) {
         if(stereocenterPtr -> type() == Stereocenters::Type::CNStereocenter) {
@@ -699,80 +698,81 @@ void MoleculeSpatialModel::addDefaultDihedrals() {
   }
 }
 
-DistanceBoundsMatrix MoleculeSpatialModel::makeDistanceBounds() const {
-  /* TODO
-   * - This merely adds information that exists explicitly in form of 
-   *   constrained internal variables. Much more dihedral information could
-   *   be placed into the distance bounds matrix if all angle bounds are
-   *   present.
-   * - Could use the Molecule to ensure all information is gathered
-   *   or alternatively reduce parameter requirements to number of atoms only
-   * - Dihedral setting angle lookup may fail, no checks!
-   * - Smooth at the end and check for inconsistencies
-   */
-  DistanceBoundsMatrix distanceBounds {_molecule.numAtoms()};
+MoleculeSpatialModel::BoundList MoleculeSpatialModel::makeBoundList() const {
+  BoundList boundList;
 
-  // Start with bonds
+  std::vector<
+    std::vector<
+      std::pair<AtomIndexType, ValueBounds>
+    >
+  > adjacencyList;
+  adjacencyList.resize(_molecule.numAtoms());
+
   for(const auto& bondPair : _bondBounds) {
     const auto& indexSequence = bondPair.first;
     const auto& bondBounds = bondPair.second;
 
-    distanceBounds.setLowerBound(
+    boundList.emplace_back(
       indexSequence.front(),
       indexSequence.back(),
-      bondBounds.lower
+      bondBounds
     );
 
-    distanceBounds.setUpperBound(
-      indexSequence.front(),
-      indexSequence.back(),
-      bondBounds.upper
+    adjacencyList.at(
+      std::min(indexSequence.front(), indexSequence.back())
+    ).emplace_back(
+      std::max(indexSequence.front(), indexSequence.back()),
+      bondBounds
     );
   }
 
-  assert(distanceBounds.boundInconsistencies() == 0);
+  auto bondBound = [&adjacencyList](const AtomIndexType& i, const AtomIndexType& j) -> ValueBounds {
+    AtomIndexType smallerIndex = std::min(i, j);
+    AtomIndexType biggerIndex = std::max(i, j);
 
-  // Next are angles
+    return std::find_if(
+      adjacencyList.at(smallerIndex).begin(),
+      adjacencyList.at(smallerIndex).end(),
+      [&biggerIndex](const auto& entryPair) -> bool {
+        return entryPair.first == biggerIndex;
+      }
+    )->second;
+  };
+
   for(const auto& anglePair : _angleBounds) {
     const auto& indexSequence = anglePair.first;
     const auto& angleBounds = anglePair.second;
 
-    distanceBounds.setLowerBound(
+    boundList.emplace_back(
       indexSequence.front(),
       indexSequence.back(),
-      CommonTrig::lawOfCosines(
-        distanceBounds.lowerBound(
-          indexSequence.front(),
-          indexSequence.at(1)
+      ValueBounds {
+        CommonTrig::lawOfCosines(
+          bondBound(
+            indexSequence.front(),
+            indexSequence.at(1)
+          ).lower,
+          bondBound(
+            indexSequence.at(1),
+            indexSequence.back()
+          ).lower,
+          angleBounds.lower
         ),
-        distanceBounds.lowerBound(
-          indexSequence.at(1),
-          indexSequence.back()
-        ),
-        angleBounds.lower
-      )
-    );
-
-    distanceBounds.setUpperBound(
-      indexSequence.front(),
-      indexSequence.back(),
-      CommonTrig::lawOfCosines(
-        distanceBounds.upperBound(
-          indexSequence.front(),
-          indexSequence.at(1)
-        ),
-        distanceBounds.upperBound(
-          indexSequence.at(1),
-          indexSequence.back()
-        ),
-        angleBounds.upper
-      )
+        CommonTrig::lawOfCosines(
+          bondBound(
+            indexSequence.front(),
+            indexSequence.at(1)
+          ).upper,
+          bondBound(
+            indexSequence.at(1),
+            indexSequence.back()
+          ).upper,
+          angleBounds.upper
+        )
+      }
     );
   }
 
-  assert(distanceBounds.boundInconsistencies() == 0);
-
-  // Then dihedrals
   for(const auto& dihedralPair : _dihedralBounds) {
     const auto& indexSequence = dihedralPair.first;
     const auto& dihedralBounds = dihedralPair.second;
@@ -793,81 +793,49 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeDistanceBounds() const {
       })
     );
 
-    distanceBounds.setLowerBound(
+    boundList.emplace_back(
       indexSequence.front(),
       indexSequence.back(),
-      CommonTrig::dihedralLength(
-        distanceBounds.lowerBound(
-          indexSequence.front(),
-          indexSequence.at(1)
+      ValueBounds {
+        CommonTrig::dihedralLength(
+          bondBound(
+            indexSequence.front(),
+            indexSequence.at(1)
+          ).lower,
+          bondBound(
+            indexSequence.at(1),
+            indexSequence.at(2)
+          ).lower,
+          bondBound(
+            indexSequence.at(2),
+            indexSequence.back()
+          ).lower,
+          abAngleBounds.lower,
+          bcAngleBounds.lower,
+          dihedralBounds.lower // cis dihedral
         ),
-        distanceBounds.lowerBound(
-          indexSequence.at(1),
-          indexSequence.at(2)
-        ),
-        distanceBounds.lowerBound(
-          indexSequence.at(2),
-          indexSequence.back()
-        ),
-        abAngleBounds.lower,
-        bcAngleBounds.lower,
-        dihedralBounds.lower // cis dihedral
-      )
-    );
-
-    distanceBounds.setUpperBound(
-      indexSequence.front(),
-      indexSequence.back(),
-      CommonTrig::dihedralLength(
-        distanceBounds.upperBound(
-          indexSequence.front(),
-          indexSequence.at(1)
-        ),
-        distanceBounds.upperBound(
-          indexSequence.at(1),
-          indexSequence.at(2)
-        ),
-        distanceBounds.upperBound(
-          indexSequence.at(2),
-          indexSequence.back()
-        ),
-        abAngleBounds.upper,
-        bcAngleBounds.upper,
-        dihedralBounds.upper // trans dihedral
-      )
-    );
-  }
-
-  assert(distanceBounds.boundInconsistencies() == 0);
-
-  // Finally, raise non-bonded items with no lower bound to sum of vdw radii
-  for(unsigned i = 0; i < _molecule.numAtoms() - 1; ++i) {
-    for(unsigned j = i + 1; j < _molecule.numAtoms(); ++j) {
-      /* setting the bounds will fail for bonded pairs as those have strict
-       * bounds already and the fairly high sum of vdw would lead to
-       * inconsistencies
-       */
-      if(distanceBounds.lowerBound(i, j) == 0) {
-        distanceBounds.setLowerBound(
-          i,
-          j,
-          AtomInfo::vdwRadius(
-            _molecule.getElementType(i)
-          ) + AtomInfo::vdwRadius(
-            _molecule.getElementType(j)
-          ) 
-        );
+        CommonTrig::dihedralLength(
+          bondBound(
+            indexSequence.front(),
+            indexSequence.at(1)
+          ).upper,
+          bondBound(
+            indexSequence.at(1),
+            indexSequence.at(2)
+          ).upper,
+          bondBound(
+            indexSequence.at(2),
+            indexSequence.back()
+          ).upper,
+          abAngleBounds.upper,
+          bcAngleBounds.upper,
+          dihedralBounds.upper // trans dihedral
+        )
       }
-    }
+    );
   }
 
-  assert(distanceBounds.boundInconsistencies() == 0);
-
-  distanceBounds.smooth();
-
-  assert(distanceBounds.boundInconsistencies() == 0);
-
-  return distanceBounds;
+  return boundList;
 }
 
 std::vector<

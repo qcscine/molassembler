@@ -2,208 +2,142 @@
 #define INCLUDE_DG_DISTANCE_BOUNDS_MATRIX_HPP
 
 #include "DistanceGeometry/DistanceGeometry.h"
-#include "common_typedefs.h"
+#include "AtomInfo.h"
 
 #include <Eigen/Core>
 #include <random>
+#include "template_magic/Random.h"
 
 /*! @file
  *
  * Contains the implementation of a class that stores distance bounds.
  */
 
-/* TODO
- * - documentation (why are BoundsMatrix and DistanceBoundsMatrix separated?)
- */
-
 namespace MoleculeManip {
 
 namespace DistanceGeometry {
 
-struct BoundsMatrix {
-/* State */
-  Eigen::MatrixXd matrix;
-  
-/* Constructors */
-  explicit BoundsMatrix() = default;
+class DistanceBoundsMatrix {
+private:
+  Eigen::MatrixXd _matrix;
 
-  explicit BoundsMatrix(const unsigned& N) {
-    resize(N);
+  inline double& _lowerBound(const AtomIndexType& i, const AtomIndexType& j) {
+    return _matrix(
+      std::max(i, j),
+      std::min(i, j)
+    );
   }
 
-  explicit BoundsMatrix(Eigen::MatrixXd passMatrix) : matrix(passMatrix) {}
-
-/* Information */
-  unsigned N() const {
-    return matrix.rows();
+  inline double& _upperBound(const AtomIndexType& i, const AtomIndexType& j) {
+    return _matrix(
+      std::min(i, j),
+      std::max(i, j)
+    );
   }
 
-/* Modification */
-  void resize(const unsigned& N) {
-    matrix.resize(N, N);
-    matrix.setZero();
-  }
-
-  double& lowerBound(const unsigned& i, const unsigned& j) {
+  static inline double& lowerBound(Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
     return matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  double& upperBound(const unsigned& i, const unsigned& j) {
+  static inline double& upperBound(Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
     return matrix(
       std::min(i, j),
       std::max(i, j)
     );
   }
 
-/* Smoothing algorithms */
-  //! Smooth the bounds once with the triangle inequality
-  bool triangleInequalitySmooth() {
-    /* Floyd's algorithm
-     * Could be refactored slightly that when something is changed, these loops
-     * exit and identical loops without the bool setter are run (minimal speed gains)
-     */
-    bool changedSomething = false;
-    const unsigned N = matrix.cols();
+public:
+  using BoundList = std::vector<
+    std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
+  >;
 
-    for(unsigned i = 0; i < N - 1; i++) {
-      for(unsigned j = i + 1; j < N; j++) {
-        for(unsigned k = 0; k < N; k++) {
-          if(k == i || k == j) {
-            continue;
-          }
+  DistanceBoundsMatrix();
 
-          if(upperBound(i, j) > upperBound(i, k) + upperBound(k, j)) {
-            upperBound(i, j) = upperBound(i, k) + upperBound(k, j);
-            changedSomething = true;
-          }
+  explicit DistanceBoundsMatrix(const unsigned& N);
 
-          if(lowerBound(i, j) < lowerBound(i, k) - upperBound(k, j)) {
-            lowerBound(i, j) = lowerBound(i, k) - upperBound(k, j);
-            changedSomething = true;
-          } else if(lowerBound(i, j) < lowerBound(j, k) - upperBound(k, i)) {
-            lowerBound(i, j) = lowerBound(j, k) - upperBound(k, i);
-            changedSomething = true;
-          }
+  explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix);
 
-          assert(lowerBound(i, j) <= upperBound(i, j));
+  template<typename Molecule>
+  DistanceBoundsMatrix(const Molecule& molecule, const BoundList& bounds) {
+    unsigned N = molecule.numAtoms();
+    _matrix.resize(N, N);
+    _matrix.triangularView<Eigen::Lower>().setZero();
+    _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
+
+    // Populate the matrix with explicit bounds
+    AtomIndexType a, b;
+    ValueBounds bound;
+    for(const auto& boundTuple : bounds) {
+      std::tie(a, b, bound) = boundTuple;
+
+      setUpperBound(a, b, bound.upper);
+      setLowerBound(a, b, bound.lower);
+    }
+
+    // Populate the lower bounds if no explicit information is present
+    for(AtomIndexType i = 0; i < N - 1; ++i) {
+      for(AtomIndexType j = i + 1; j < N; ++j) {
+        /* setting the bounds will fail for bonded pairs as those have strict
+         * bounds already and the fairly high sum of vdw would lead to
+         * inconsistencies
+         */
+        if(lowerBound(i, j) == 0) {
+          setLowerBound(
+            i,
+            j,
+            AtomInfo::vdwRadius(
+              molecule.getElementType(i)
+            ) + AtomInfo::vdwRadius(
+              molecule.getElementType(j)
+            )
+          );
         }
       }
     }
 
-    return changedSomething;
+    assert(boundInconsistencies() == 0);
   }
 
-  void smooth() {
-    const unsigned maxIter = 100;
-    for(
-      unsigned iter = 0;
-      ( // run as long as
-        iter < maxIter // we do not exceed 100 iterations
-        && triangleInequalitySmooth() // and smoothing changes something
-      ); 
-      ++iter
-    ) {
-      continue;
-    }
+  bool setUpperBound(const AtomIndexType& i, const AtomIndexType& j, double newUpperBound);
+
+  bool setLowerBound(const AtomIndexType& i, const AtomIndexType& j, const double& newLowerBound);
+
+  static void smooth(Eigen::MatrixXd& matrix);
+
+  void smooth();
+
+  inline double upperBound(const AtomIndexType& i, const AtomIndexType& j) const {
+    return _matrix(
+      std::min(i, j),
+      std::max(i, j)
+    );
   }
 
-/* Information */
-  double lowerBound(const unsigned& i, const unsigned& j) const {
-    return matrix(
+  inline double lowerBound(const AtomIndexType& i, const AtomIndexType& j) const {
+    return _matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  double upperBound(const unsigned& i, const unsigned& j) const {
-    return matrix(
-      std::min(i, j),
-      std::max(i, j)
-    );
-  }
-};
-
-/*!
- * 
- */
-class DistanceBoundsMatrix {
-private:
-/* Data members */
-  // Matrix data
-  BoundsMatrix _boundsMatrix;
-
-  // Randomness state
-  mutable std::mt19937 _randomEngine;
-
-/* Private members */
-  //! Constructor helper, initializes randomness state
-  void _initRandomEngine();
-
-public:
-/* Constructors */
-  DistanceBoundsMatrix() noexcept;
-  explicit DistanceBoundsMatrix(const unsigned& N) noexcept;
-  explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) noexcept;
-
-  DistanceBoundsMatrix(const DistanceBoundsMatrix& other) noexcept;
-  DistanceBoundsMatrix(DistanceBoundsMatrix&& other) noexcept;
-  DistanceBoundsMatrix& operator = (const DistanceBoundsMatrix& other) noexcept;
-  DistanceBoundsMatrix& operator = (DistanceBoundsMatrix&& other) noexcept;
-
-/* Modifiers */
-  //! Smooth until the matrix does not change
-  void smooth();
-
-  bool setLowerBound(
-    const unsigned& i,
-    const unsigned& j,
-    const double& newLowerBound
-  );
-
-  bool setUpperBound(
-    const unsigned& i,
-    const unsigned& j,
-    const double& newUpperBound
-  );
-
-/* Information */
-  //! Access the underlying matrix
-  const Eigen::MatrixXd& access() const;
-
-  /*! 
-   * Returns a count of instances where lower and upper bounds are logically 
-   * wrong, i.e. when the lower bound for a pair of atoms is larger than the 
-   * upper bound.
-   */
   unsigned boundInconsistencies() const;
 
-  /*!
-   * Returns a distance matrix with randomly chosen distances between the
-   * bounds
+  const Eigen::MatrixXd& access() const;
+
+  /* Generates a distance matrix from the contained bounds without destroying
+   * the inherent state.
+   *
+   * Allocates another N*N double matrix. When resource constrained, this is
+   * not a good idea.
    */
-  Eigen::MatrixXd generateDistanceMatrix(
-    const MetrizationOption& metrization = MetrizationOption::full
-  ) const;
+  Eigen::MatrixXd makeDistanceMatrix() const;
 
-  //! Access a lower bound
-  double lowerBound(
-    const unsigned& i,
-    const unsigned& j
-  ) const;
-
-  //! Returns a bounds matrix with the current bounds squared
   Eigen::MatrixXd makeSquaredBoundsMatrix() const;
 
   unsigned N() const;
-
-  //! Access an upper bound
-  double upperBound(
-    const unsigned& i,
-    const unsigned& j
-  ) const;
 };
 
 } // namespace DistanceGeometry

@@ -299,9 +299,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
       );
     }
 
-    const auto distancesMatrix = DGData.distanceBounds.generateDistanceMatrix(
-      metrization
-    );
+    const auto distancesMatrix = DGData.distanceBounds.makeDistanceMatrix();
     
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
@@ -530,9 +528,7 @@ DGDebugData debugDistanceGeometry(
 
     std::list<RefinementStepData> refinementSteps;
 
-    const auto distancesMatrix = DGData.distanceBounds.generateDistanceMatrix(
-      metrization
-    );
+    const auto distancesMatrix = DGData.distanceBounds.makeDistanceMatrix();
     
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
@@ -704,13 +700,21 @@ MoleculeDGInformation gatherDGInformation(
   // Generate a spatial model from the molecular graph and stereocenters
   MoleculeSpatialModel spatialModel {
     molecule,
-    molecule.getStereocenterList(),
     distanceMethod
   };
 
   // Generate the distance bounds from the spatial model
   spatialModel.addDefaultDihedrals();
-  data.distanceBounds = spatialModel.makeDistanceBounds();
+
+  data.distanceBounds = {
+    molecule,
+    spatialModel.makeBoundList()
+  };
+
+  // Smooth the distance bounds once.
+  data.distanceBounds.smooth();
+
+  assert(data.distanceBounds.boundInconsistencies() == 0);
 
   // Extract the chirality constraint prototypes
   data.chiralityConstraintPrototypes = spatialModel.getChiralityPrototypes();
