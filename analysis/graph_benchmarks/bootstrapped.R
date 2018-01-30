@@ -188,8 +188,8 @@ make_regression_plot <- function(which, col) {
 }
 
 dbm <- make_regression_plot("Floyd-Warshall & DBM", color_list[1])
-lg <- make_regression_plot("Gor & LG", color_list[2])
-spg <- make_regression_plot("Gor & SPG", color_list[3])
+lg <- make_regression_plot("Gor & ExplicitGraph", color_list[2])
+spg <- make_regression_plot("Gor & ImplicitGraph", color_list[3])
 
 timeLines <- c(1, 1e3, 1e6, 1e9, 3.6e12, 8.64e13)
 timeLabels <- c("1 ns", expression(paste("1 ", mu, "s", sep="")), "1 ms", "1 s", "1h", "1d")
@@ -226,8 +226,8 @@ legend(
   "topleft",
   legend = c(
     "Floyd-Warshall & DBM",
-    "Gor & LG",
-    "Gor & SPG"
+    "Gor & ExplicitGraph",
+    "Gor & ImplicitGraph"
   ),
   lty = c(1, 1, 1),
   col = color_list[1:3],

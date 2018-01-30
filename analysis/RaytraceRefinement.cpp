@@ -103,7 +103,6 @@ int main(int argc, char* argv[]) {
     auto debugData = detail::debugDistanceGeometry(
       mol,
       1,
-      MetrizationOption::full,
       useYInversionTrick
     );
 
@@ -148,7 +147,6 @@ int main(int argc, char* argv[]) {
       auto debugData = detail::debugDistanceGeometry(
         mol,
         nStructures,
-        MetrizationOption::full,
         false,
         MoleculeSpatialModel::DistanceMethod::Uniform
       );

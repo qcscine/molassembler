@@ -278,9 +278,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
       );
 
       // get a distances matrix from the bounds
-      auto distancesMatrix = distanceBounds.generateDistanceMatrix(
-        MetrizationOption::off
-      );
+      auto distancesMatrix = distanceBounds.makeDistanceMatrix();
 
       // reorder the distance Bounds matrix
       auto reorderedDM = reorder(distancesMatrix, reorderSequence);

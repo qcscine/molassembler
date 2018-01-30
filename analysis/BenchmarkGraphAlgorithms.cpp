@@ -17,10 +17,6 @@
 
 #include <chrono>
 
-/* TODO
- * Full algorithm execution needs to be compared, including graph setup!
- */
-
 using namespace MoleculeManip;
 
 constexpr size_t nExperiments = 10;
@@ -92,8 +88,8 @@ void writeHeaders(
     "N",
     "E",
     "Floyd-Warshall & DBM",
-    "Gor & LG",
-    "Gor & SPG"
+    "Gor & ExplicitGraph",
+    "Gor & ImplicitGraph"
   };
 
   for(unsigned i = 0; i < 2; ++i) {

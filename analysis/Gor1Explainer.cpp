@@ -385,7 +385,10 @@ int main(int argc, char* argv[]) {
       DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
     };
 
-    auto shortestPathsGraph = spatialModel.makeGraph<DistanceGeometry::ImplicitGraph>();
+    DistanceGeometry::ImplicitGraph shortestPathsGraph {
+      mol,
+      spatialModel.makeBoundList()
+    };
 
     /* Prep */
     using Vertex = typename boost::graph_traits<DistanceGeometry::ImplicitGraph>::vertex_descriptor;

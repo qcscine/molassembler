@@ -34,7 +34,6 @@ ChiralityConstraint propagate(
 DGDebugData debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
-  const MetrizationOption& metrization,
   const bool& useYInversionTrick = true,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );
@@ -42,18 +41,16 @@ DGDebugData debugDistanceGeometry(
 std::list<Delib::PositionCollection> runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
-  const MetrizationOption& metrization,
   const bool& useYInversionTrick = true,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );
 
 } // namespace detail
 
+
 struct MoleculeDGInformation {
   DistanceBoundsMatrix distanceBounds;
-  std::vector<
-    Stereocenters::ChiralityConstraintPrototype
-  > chiralityConstraintPrototypes;
+  std::vector<Stereocenters::ChiralityConstraintPrototype> chiralityConstraintPrototypes;
 };
 
 MoleculeDGInformation gatherDGInformation(
@@ -64,14 +61,10 @@ MoleculeDGInformation gatherDGInformation(
 // "Public" functions
 std::list<Delib::PositionCollection> generateEnsemble(
   const Molecule& molecule,
-  const unsigned& numStructures,
-  const MetrizationOption& metrization = MetrizationOption::full
+  const unsigned& numStructures
 );
 
-Delib::PositionCollection generateConformation(
-  const Molecule& molecule,
-  const MetrizationOption& metrization = MetrizationOption::full
-);
+Delib::PositionCollection generateConformation(const Molecule& molecule);
 
 } // namespace DistanceGeometry
 

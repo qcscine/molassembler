@@ -2,7 +2,7 @@
 #define INCLUDE_DG_LIMITS_GRAPH_H
 
 #include "Molecule.h"
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "DistanceGeometry/ValueBounds.h"
 
 /*! @file
  *
@@ -102,7 +102,7 @@ public:
 
   const ExplicitGraphType& getGraph() const;
 
-  DistanceBoundsMatrix makeDistanceBounds() const;
+  Eigen::MatrixXd makeDistanceBounds() const;
 
   /*!
    * Generates a distances matrix conforming to the triangle inequality bounds

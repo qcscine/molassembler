@@ -5,7 +5,6 @@
 #include "AtomInfo.h"
 
 #include <Eigen/Core>
-#include <random>
 #include "template_magic/Random.h"
 
 /*! @file
@@ -35,6 +34,7 @@ private:
     );
   }
 
+public:
   static inline double& lowerBound(Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
     return matrix(
       std::max(i, j),
@@ -49,7 +49,20 @@ private:
     );
   }
 
-public:
+  static inline double lowerBound(const Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
+    return matrix(
+      std::max(i, j),
+      std::min(i, j)
+    );
+  }
+
+  static inline double upperBound(const Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
+    return matrix(
+      std::min(i, j),
+      std::max(i, j)
+    );
+  }
+
   using BoundList = std::vector<
     std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
   >;

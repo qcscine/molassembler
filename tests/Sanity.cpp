@@ -81,13 +81,12 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         molecule.assignStereocenterAtAtom(0, assignment);
 
         // For each possible arrangement of these ligands
-        /* Create an ensemble of 3D positions using threeDimensional refinement,
-         * no metrization and uniform distance setting
+        /* Create an ensemble of 3D positions using DG
+         * and uniform distance setting
          */
         auto ensemble = detail::runDistanceGeometry(
           molecule,
           100,
-          MetrizationOption::off,
           false, // no y-inversion trick
           MoleculeSpatialModel::DistanceMethod::Uniform
         );

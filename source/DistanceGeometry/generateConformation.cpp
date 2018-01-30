@@ -232,22 +232,14 @@ bool moleculeHasUnassignedStereocenters(const Molecule& mol) {
 std::list<Delib::PositionCollection> runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
-  const MetrizationOption& metrization,
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
+  MoleculeDGInformation DGData;
   /* In case the molecule has unassigned stereocenters, we need to randomly
    * assign them in every step prior to generating the distance bounds matrix
-   *
-   * TODO it would be better if traversal through the stereocenter list were
-   * random instead of in sequence for true random assignment
    */
   bool regenerateEachStep = moleculeHasUnassignedStereocenters(molecule);
-
-  std::list<Delib::PositionCollection> ensemble;
-
-  MoleculeDGInformation DGData;
-
   if(!regenerateEachStep) {
     DGData = gatherDGInformation(
       molecule,
@@ -255,13 +247,13 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
     );
   }
 
-  unsigned failures = 0;
-
   /* If the ratio of failures/total optimizations exceeds this value,
    * the function throws. Remember that if an optimization is considered a 
    * failure is dependent only on the stopping criteria!
    */
   const double failureRatio = 0.1; // allow only 10% failures in release
+  unsigned failures = 0;
+  std::list<Delib::PositionCollection> ensemble;
 
   for(
     unsigned currentStructureNumber = 0;
@@ -453,7 +445,6 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 DGDebugData debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
-  const MetrizationOption& metrization,
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
@@ -711,7 +702,7 @@ MoleculeDGInformation gatherDGInformation(
     spatialModel.makeBoundList()
   };
 
-  // Smooth the distance bounds once.
+  // Make the distance bounds conform to the triangle inequality limits
   data.distanceBounds.smooth();
 
   assert(data.distanceBounds.boundInconsistencies() == 0);
@@ -724,25 +715,13 @@ MoleculeDGInformation gatherDGInformation(
 
 std::list<Delib::PositionCollection> generateEnsemble(
   const Molecule& molecule,
-  const unsigned& numStructures,
-  const MetrizationOption& metrization
+  const unsigned& numStructures
 ) {
-  return detail::runDistanceGeometry(
-    molecule,
-    numStructures,
-    metrization
-  );
+  return detail::runDistanceGeometry(molecule, numStructures);
 }
 
-Delib::PositionCollection generateConformation(
-  const Molecule& molecule,
-  const MetrizationOption& metrization
-) {
-  auto list = detail::runDistanceGeometry(
-    molecule,
-    1,
-    metrization
-  );
+Delib::PositionCollection generateConformation(const Molecule& molecule) {
+  auto list = detail::runDistanceGeometry(molecule, 1);
   
   assert(list.size() == 1);
 

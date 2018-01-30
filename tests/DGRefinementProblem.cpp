@@ -487,7 +487,6 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     auto DGResult = DistanceGeometry::detail::debugDistanceGeometry(
       molecule,
       100,
-      MetrizationOption::full,
       false,
       MoleculeSpatialModel::DistanceMethod::Uniform
     );

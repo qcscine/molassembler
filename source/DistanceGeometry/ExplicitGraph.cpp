@@ -122,7 +122,8 @@ double ExplicitGraph::lowerBound(
 
   assert(edgeSearchPair.second);
 
-  return boost::get(boost::edge_weight, _graph, edgeSearchPair.first);
+  // The graph contains the lower bound negated
+  return -boost::get(boost::edge_weight, _graph, edgeSearchPair.first);
 }
 
 double ExplicitGraph::upperBound(
@@ -145,10 +146,12 @@ const ExplicitGraph::ExplicitGraphType& ExplicitGraph::getGraph() const {
 }
 
 // This is O(N²)
-DistanceBoundsMatrix ExplicitGraph::makeDistanceBounds() const {
+Eigen::MatrixXd ExplicitGraph::makeDistanceBounds() const {
   unsigned N = _molecule.numAtoms();
 
-  DistanceBoundsMatrix bounds {N};
+  Eigen::MatrixXd bounds;
+  bounds.resize(N, N);
+  bounds.setZero();
 
   for(AtomIndexType i = 0; i < N - 1; ++i) {
     unsigned M = boost::num_vertices(_graph);
@@ -183,8 +186,8 @@ DistanceBoundsMatrix ExplicitGraph::makeDistanceBounds() const {
       assert(lowerBound > 0);
       assert(lowerBound < distance.at(left(j)));
 
-      bounds.setLowerBound(i, j, lowerBound);
-      bounds.setUpperBound(i, j, distance.at(left(j)));
+      bounds(j, i) = lowerBound;
+      bounds(i, j) = distance.at(left(j));
     }
   }
 

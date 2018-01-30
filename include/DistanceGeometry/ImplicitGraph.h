@@ -212,6 +212,15 @@ public:
     return i % 2 == 0;
   }
 
+  /*! Generates a bare distance bounds matrix by repeated shortest-paths calculations
+   *
+   * This function generates a matrix representing distance bounds, NOT a
+   * DistanceBoundsMatrix.
+   *
+   * Complexity: O(N * O(shortest paths algorithm))
+   */
+  Eigen::MatrixXd makeDistanceBoundsMatrix() const;
+
   /*! Generates a distance matrix by randomly fixing distances within triangle inequality bounds
    *
    * This function generates a distance matrix. For every pair of atomic indices

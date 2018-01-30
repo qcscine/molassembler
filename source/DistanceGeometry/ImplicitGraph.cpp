@@ -141,6 +141,68 @@ bool ImplicitGraph::hasExplicit(const EdgeDescriptor& edge) const {
   return _distances(internal(edge.first), internal(edge.second)) != 0;
 }
 
+Eigen::MatrixXd ImplicitGraph::makeDistanceBoundsMatrix() const {
+  Eigen::MatrixXd bounds;
+
+  unsigned N = _distances.outerSize();
+  bounds.resize(N, N);
+  bounds.setZero();
+
+  unsigned M = num_vertices();
+  std::vector<double> distances (M);
+  std::vector<VertexDescriptor> predecessors (M);
+  using ColorMapType = boost::two_bit_color_map<>;
+  ColorMapType color_map {M};
+
+  for(VertexDescriptor a = 0; a < N; ++a) {
+    // Perform a single shortest paths calculation for a
+
+    auto predecessor_map = boost::make_iterator_property_map(
+      predecessors.begin(),
+      VertexIndexMap()
+    );
+
+    auto distance_map = boost::make_iterator_property_map(
+      distances.begin(),
+      VertexIndexMap()
+    );
+
+    // re-fill color map with white
+    std::fill(
+      color_map.data.get(),
+      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+        / color_map.elements_per_char,
+      0
+    );
+
+#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+    boost::gor1_spg_shortest_paths(
+      *this,
+      VertexDescriptor {left(a)},
+      predecessor_map,
+      color_map,
+      distance_map
+    );
+#else
+    boost::gor1_simplified_shortest_paths(
+      *this,
+      VertexDescriptor {left(a)},
+      predecessor_map,
+      color_map,
+      distance_map
+    );
+#endif
+
+    for(VertexDescriptor b = a + 1; b < N; ++b) {
+      // a is always smaller than b, hence (a, b) is the lower bound
+      bounds(a, b) = -distances.at(right(b));
+      bounds(b, a) = distances.at(left(b));
+    }
+  }
+
+  return bounds;
+}
+
 Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
   unsigned N = _moleculePtr->numAtoms();
 
@@ -264,29 +326,29 @@ ImplicitGraph::VertexDescriptor ImplicitGraph::out_degree(VertexDescriptor i) co
 
 double& ImplicitGraph::lowerBound(const VertexDescriptor& a, const VertexDescriptor& b) {
   return _distances(
-    std::min(a, b),
-    std::max(a, b)
+    std::max(a, b),
+    std::min(a, b)
   );
 }
 
 double& ImplicitGraph::upperBound(const VertexDescriptor& a, const VertexDescriptor& b) {
   return _distances(
-    std::max(a, b),
-    std::min(a, b)
-  );
-}
-
-double ImplicitGraph::lowerBound(const VertexDescriptor& a, const VertexDescriptor& b) const {
-  return _distances(
     std::min(a, b),
     std::max(a, b)
   );
 }
 
-double ImplicitGraph::upperBound(const VertexDescriptor& a, const VertexDescriptor& b) const {
+double ImplicitGraph::lowerBound(const VertexDescriptor& a, const VertexDescriptor& b) const {
   return _distances(
     std::max(a, b),
     std::min(a, b)
+  );
+}
+
+double ImplicitGraph::upperBound(const VertexDescriptor& a, const VertexDescriptor& b) const {
+  return _distances(
+    std::min(a, b),
+    std::max(a, b)
   );
 }
 
@@ -502,6 +564,7 @@ ImplicitGraph::EdgeDescriptor ImplicitGraph::edge_iterator::operator * () const 
     target()
   };
 }
+
 void ImplicitGraph::edge_iterator::_increment() {
   unsigned N = _basePtr->_distances.outerSize();
   auto a = internal(_i);
