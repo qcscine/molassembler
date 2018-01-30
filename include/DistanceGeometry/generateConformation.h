@@ -49,7 +49,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 
 
 struct MoleculeDGInformation {
-  DistanceBoundsMatrix distanceBounds;
+  MoleculeSpatialModel::BoundList boundList;
   std::vector<Stereocenters::ChiralityConstraintPrototype> chiralityConstraintPrototypes;
 };
 

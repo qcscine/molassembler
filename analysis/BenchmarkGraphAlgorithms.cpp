@@ -8,6 +8,7 @@
 #include "DistanceGeometry/ImplicitGraphBoost.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/ExplicitGraph.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "template_magic/Numeric.h"
 #include "IO.h"
 

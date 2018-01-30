@@ -82,7 +82,9 @@ BOOST_AUTO_TEST_CASE(someBasics) {
     BondType::Single
   );
 
-  auto graph = DistanceGeometry::ImplicitGraph {pseudoMolecule};
+  DistanceGeometry::MoleculeSpatialModel spatialModel {psuedoMolecule};
+
+  auto graph = DistanceGeometry::ImplicitGraph {pseudoMolecule, spatialModel.makeBoundsList()};
 
   graph.addBound(0, 1, {1.8, 2.2});
   graph.addBound(1, 2, {1.8, 2.2});

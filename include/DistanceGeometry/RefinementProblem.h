@@ -66,19 +66,15 @@ struct errfValue {
 
   // State
   const unsigned N;
-  const dlib::matrix<double, 0, 0> squaredBounds;
+  const dlib::matrix<double, 0, 0>& squaredBounds;
   const std::vector<ChiralityConstraint>& chiralityConstraints;
 
   // Constructor
   explicit errfValue(
-    const DistanceBoundsMatrix& distanceBounds,
+    const dlib::matrix<double, 0, 0>& passSquaredBounds,
     const std::vector<ChiralityConstraint>& chiralityConstraints
-  ) : N(distanceBounds.N()),
-      squaredBounds(
-        dlib::mat( // Converts Eigen::MatrixXd to dlib::matrix
-          distanceBounds.makeSquaredBoundsMatrix()
-        )
-      ),
+  ) : N(passSquaredBounds.nc()),
+      squaredBounds(passSquaredBounds),
       chiralityConstraints(chiralityConstraints)
   {}
 
@@ -207,19 +203,15 @@ public:
 
   // State
   const unsigned N;
-  const dlib::matrix<double, 0, 0> squaredBounds;
+  const dlib::matrix<double, 0, 0>& squaredBounds;
   const std::vector<ChiralityConstraint>& chiralityConstraints;
 
   // Constructor
   explicit errfGradient(
-    const DistanceBoundsMatrix& distanceBounds,
+    const dlib::matrix<double, 0, 0>& passSquaredBounds,
     const std::vector<ChiralityConstraint>& chiralityConstraints
-  ) : N(distanceBounds.N()),
-      squaredBounds(
-        dlib::mat( // Converts Eigen::MatrixXd to dlib::matrix
-          distanceBounds.makeSquaredBoundsMatrix()
-        )
-      ),
+  ) : N(passSquaredBounds.nc()),
+      squaredBounds(passSquaredBounds),
       chiralityConstraints(chiralityConstraints)
   {}
 

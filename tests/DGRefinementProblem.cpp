@@ -14,6 +14,7 @@
 #include "CommonTrig.h"
 #include "DistanceGeometry/generateConformation.h"
 #include "DistanceGeometry/MetricMatrix.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/RefinementProblem.h"
 #include "IO.h"
 
@@ -60,7 +61,12 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
     auto DGInfo = gatherDGInformation(molecule);
 
-    auto distances = DGInfo.distanceBounds.makeDistanceMatrix();
+    DistanceBoundsMatrix distanceBounds {
+      molecule,
+      DGInfo.boundList
+    };
+
+    auto distances = distanceBounds.makeDistanceMatrix();
 
     MetricMatrix metric(distances);
 
@@ -78,23 +84,29 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 
     auto chiralityConstraints = TemplateMagic::map(
       DGInfo.chiralityConstraintPrototypes,
-      [&DGInfo](
+      [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return detail::propagate(
-          DGInfo.distanceBounds,
+          distanceBounds,
           prototype
         );
       }
     );
 
+    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+      static_cast<Eigen::MatrixXd>(
+        distanceBounds.access().cwiseProduct(distanceBounds.access())
+      )
+    );
+
     errfValue<false> valueFunctor {
-      DGInfo.distanceBounds,
+      squaredBounds,
       chiralityConstraints
     };
 
     errfGradient<false> gradientFunctor {
-      DGInfo.distanceBounds,
+      squaredBounds,
       chiralityConstraints
     };
 
@@ -129,12 +141,12 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     );
 
     errfValue<true> compressingValueFunctor {
-      DGInfo.distanceBounds,
+      squaredBounds,
       chiralityConstraints
     };
 
     errfGradient<true> compressingGradientFunctor {
-      DGInfo.distanceBounds,
+      squaredBounds,
       chiralityConstraints
     };
 
@@ -174,14 +186,21 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
     const auto DGData = gatherDGInformation(molecule);
-    const auto distancesMatrix = DGData.distanceBounds.makeDistanceMatrix();
+    
+    DistanceBoundsMatrix distanceBounds {
+      molecule,
+      DGData.boundList
+    };
+
+    const auto distancesMatrix = distanceBounds.makeDistanceMatrix();
+
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
-      [&DGData](
+      [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return detail::propagate(
-          DGData.distanceBounds,
+          distanceBounds,
           prototype
         );
       }
@@ -203,8 +222,14 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       )
     );
 
+    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+      static_cast<Eigen::MatrixXd>(
+        distanceBounds.access().cwiseProduct(distanceBounds.access())
+      )
+    );
+
     errfValue<true> valueFunctor {
-      DGData.distanceBounds,
+      squaredBounds,
       chiralityConstraints
     };
 
@@ -289,14 +314,19 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
     const auto DGData = gatherDGInformation(molecule);
-    const auto distancesMatrix = DGData.distanceBounds.makeDistanceMatrix();
+    DistanceBoundsMatrix distanceBounds {
+      molecule,
+      DGData.boundList
+    };
+
+    const auto distancesMatrix = distanceBounds.makeDistanceMatrix();
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
-      [&DGData](
+      [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return detail::propagate(
-          DGData.distanceBounds,
+          distanceBounds,
           prototype
         );
       }
@@ -318,8 +348,14 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       )
     );
 
+    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+      static_cast<Eigen::MatrixXd>(
+        distanceBounds.access().cwiseProduct(distanceBounds.access())
+      )
+    );
+
     errfGradient<true> gradientFunctor {
-      DGData.distanceBounds,
+      squaredBounds,
       chiralityConstraints
     };
 

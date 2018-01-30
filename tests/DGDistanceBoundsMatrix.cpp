@@ -82,7 +82,12 @@ BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
     );
 
     auto molecule = DGDBM::symmetricMolecule(symmetryName);
-    auto boundsMatrix = MoleculeManip::DistanceGeometry::gatherDGInformation(molecule).distanceBounds;
+    auto info = MoleculeManip::DistanceGeometry::gatherDGInformation(molecule);
+
+    MoleculeManip::DistanceGeometry::DistanceBoundsMatrix boundsMatrix {
+      molecule,
+      info.boundList
+    };
 
     outStream << enumPair.index << "," << 0 << ","
       << flattenMatrix(

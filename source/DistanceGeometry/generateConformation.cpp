@@ -291,18 +291,27 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
       );
     }
 
-    const auto distancesMatrix = DGData.distanceBounds.makeDistanceMatrix();
+    DistanceBoundsMatrix distanceBounds {
+      molecule,
+      DGData.boundList
+    };
+
+    distanceBounds.smooth();
+
+    assert(distanceBounds.boundInconsistencies() == 0);
+
+    const auto distancesMatrix = distanceBounds.makeDistanceMatrix();
     
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
      */
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
-      [&DGData](
+      [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return propagate(
-          DGData.distanceBounds,
+          distanceBounds,
           prototype
         );
       }
@@ -340,13 +349,20 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         ) < 0.5
       ) {
         // Invert y coordinates
-        for(unsigned i = 0; i < DGData.distanceBounds.N(); i++) {
+        for(unsigned i = 0; i < distanceBounds.N(); i++) {
           dlibPositions(
             static_cast<dlibIndexType>(i) * 4  + 1
           ) *= -1;
         }
       }
     }
+
+    // Create the squared bounds matrix for use in refinement
+    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+      static_cast<Eigen::MatrixXd>(
+        distanceBounds.access().cwiseProduct(distanceBounds.access())
+      )
+    );
 
     /* Refinement without penalty on fourth dimension only necessary if not all
      * chiral centers are correct. Of course, for molecules without chiral
@@ -367,11 +383,11 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         dlib::bfgs_search_strategy(),
         inversionStopStrategy,
         errfValue<false>(
-          DGData.distanceBounds,
+          squaredBounds,
           chiralityConstraints
         ),
         errfGradient<false>(
-          DGData.distanceBounds,
+          squaredBounds,
           chiralityConstraints
         ),
         dlibPositions,
@@ -396,18 +412,16 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
       1e-5 // gradient limit
     };
 
-    errfValue<true> refinementValueFunctor {
-      DGData.distanceBounds,
-      chiralityConstraints
-    };
-
     // Refinement with penalty on fourth dimension is always necessary
     dlib::find_min(
       dlib::bfgs_search_strategy(),
       refinementStopStrategy,
-      refinementValueFunctor,
+      errfValue<true>(
+        squaredBounds,
+        chiralityConstraints
+      ),
       errfGradient<true>(
-        DGData.distanceBounds,
+        squaredBounds,
         chiralityConstraints
       ),
       dlibPositions,
@@ -420,7 +434,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
       dlibPositions
     ) < 1;
     bool structureAcceptable = errfDetail::finalStructureAcceptable(
-      DGData.distanceBounds,
+      distanceBounds,
       chiralityConstraints,
       dlibPositions
     );
@@ -519,18 +533,27 @@ DGDebugData debugDistanceGeometry(
 
     std::list<RefinementStepData> refinementSteps;
 
-    const auto distancesMatrix = DGData.distanceBounds.makeDistanceMatrix();
+    DistanceBoundsMatrix distanceBounds {
+      molecule,
+      DGData.boundList
+    };
+
+    distanceBounds.smooth();
+
+    assert(distanceBounds.boundInconsistencies() == 0);
+
+    const auto distancesMatrix = distanceBounds.makeDistanceMatrix();
     
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
      */
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
-      [&DGData](
+      [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
         return propagate(
-          DGData.distanceBounds,
+          distanceBounds,
           prototype
         );
       }
@@ -568,13 +591,19 @@ DGDebugData debugDistanceGeometry(
         ) < 0.5
       ) {
         // Invert y coordinates
-        for(unsigned i = 0; i < DGData.distanceBounds.N(); i++) {
+        for(unsigned i = 0; i < distanceBounds.N(); i++) {
           dlibPositions(
             static_cast<dlibIndexType>(i) * 4 + 1
           ) *= -1;
         }
       }
     }
+
+    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+      static_cast<Eigen::MatrixXd>(
+        distanceBounds.access().cwiseProduct(distanceBounds.access())
+      )
+    );
 
     /* Refinement without penalty on fourth dimension only necessary if not all
      * chiral centers are correct. Of course, for molecules without chiral
@@ -588,7 +617,7 @@ DGDebugData debugDistanceGeometry(
     ) {
 
       errfValue<false> valueFunctor {
-        DGData.distanceBounds,
+        squaredBounds,
         chiralityConstraints
       };
 
@@ -603,7 +632,7 @@ DGDebugData debugDistanceGeometry(
         inversionStopStrategy,
         valueFunctor,
         errfGradient<false>(
-          DGData.distanceBounds,
+          squaredBounds,
           chiralityConstraints
         ),
         dlibPositions,
@@ -625,7 +654,7 @@ DGDebugData debugDistanceGeometry(
     }
 
     errfValue<true> refinementValueFunctor {
-      DGData.distanceBounds,
+      squaredBounds,
       chiralityConstraints
     };
 
@@ -642,7 +671,7 @@ DGDebugData debugDistanceGeometry(
       refinementStopStrategy,
       refinementValueFunctor,
       errfGradient<true>(
-        DGData.distanceBounds,
+        squaredBounds,
         chiralityConstraints
       ),
       dlibPositions,
@@ -655,7 +684,7 @@ DGDebugData debugDistanceGeometry(
       dlibPositions
     ) < 1;
     bool structureAcceptable = errfDetail::finalStructureAcceptable(
-      DGData.distanceBounds,
+      distanceBounds,
       chiralityConstraints,
       dlibPositions
     );
@@ -697,15 +726,7 @@ MoleculeDGInformation gatherDGInformation(
   // Generate the distance bounds from the spatial model
   spatialModel.addDefaultDihedrals();
 
-  data.distanceBounds = {
-    molecule,
-    spatialModel.makeBoundList()
-  };
-
-  // Make the distance bounds conform to the triangle inequality limits
-  data.distanceBounds.smooth();
-
-  assert(data.distanceBounds.boundInconsistencies() == 0);
+  data.boundList = spatialModel.makeBoundList();
 
   // Extract the chirality constraint prototypes
   data.chiralityConstraintPrototypes = spatialModel.getChiralityPrototypes();
