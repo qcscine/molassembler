@@ -1,5 +1,8 @@
 Remaining DG deficiencies
 -------------------------
+- I *think* that something about embedding is completely wrong. Super wrong.
+  In every case, despite all the information added by MoleculeSpatialModel, the
+  first coordinates look like absolute garbage.
 - Strain imposed on EZStereocenter substituents that are in small cycles is not
   accounted for::
             

@@ -119,7 +119,7 @@ std::vector<double> Gor1SPG (const MoleculeManip::DistanceGeometry::ImplicitGrap
 
   /* Execution */
 
-  boost::gor1_spg_shortest_paths(
+  boost::gor1_ig_shortest_paths(
     graph,
     Vertex {sourceVertex},
     predecessor_map,

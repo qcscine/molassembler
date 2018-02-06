@@ -1,8 +1,16 @@
 #include "DistanceGeometry/ExplicitGraph.h"
 
+#include "Molecule.h"
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
+
+#define USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#include "DistanceGeometry/Gor1.h"
+#else
 #include "Graph/Gor1.h"
+#endif
+
 #include "template_magic/Random.h"
 
 #include "AtomInfo.h"
@@ -27,7 +35,7 @@ ExplicitGraph::ExplicitGraph(
     _molecule {molecule}
 {
   // Populate the graph with bounds from list
-  ExplicitGraphType::vertex_descriptor a, b;
+  VertexDescriptor a, b;
   ValueBounds bound;
   for(const auto& boundTuple : bounds) {
     std::tie(a, b, bound) = boundTuple;
@@ -36,11 +44,31 @@ ExplicitGraph::ExplicitGraph(
   }
 
   addImplicitEdges();
+
+  // Determine the two heaviest element types in the molecule, O(N)
+  _heaviestAtoms = {Delib::ElementType::H, Delib::ElementType::H};
+  unsigned N = molecule.numAtoms();
+  for(AtomIndexType i = 0; i < N; ++i) {
+    auto elementType = molecule.getElementType(i);
+    if(
+      static_cast<unsigned>(elementType) 
+      > static_cast<unsigned>(_heaviestAtoms.back())
+    ) {
+      _heaviestAtoms.back() = elementType;
+
+      if(
+        static_cast<unsigned>(_heaviestAtoms.back()) 
+        > static_cast<unsigned>(_heaviestAtoms.front())
+      ) {
+        std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
+      }
+    }
+  }
 }
 
 void ExplicitGraph::_updateOrAddEdge(
-  const ExplicitGraphType::vertex_descriptor& a,
-  const ExplicitGraphType::vertex_descriptor& b,
+  const VertexDescriptor& a,
+  const VertexDescriptor& b,
   const double& edgeWeight
 ) {
   auto edgeSearchPair = boost::edge(a, b, _graph);
@@ -141,7 +169,23 @@ double ExplicitGraph::upperBound(
   return boost::get(boost::edge_weight, _graph, edgeSearchPair.first);
 }
 
-const ExplicitGraph::ExplicitGraphType& ExplicitGraph::getGraph() const {
+double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor& i) const {
+  assert(isLeft(i));
+  auto a = i % 2;
+  auto elementType = _molecule.getElementType(a);
+
+  if(elementType == _heaviestAtoms.front()) {
+    return AtomInfo::vdwRadius(
+      _heaviestAtoms.back()
+    ) + AtomInfo::vdwRadius(elementType);
+  }
+
+  return AtomInfo::vdwRadius(
+    _heaviestAtoms.front()
+  ) + AtomInfo::vdwRadius(elementType);
+}
+
+const ExplicitGraph::GraphType& ExplicitGraph::getGraph() const {
   return _graph;
 }
 
@@ -226,7 +270,7 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
   unsigned M = boost::num_vertices(_graph);
   std::vector<double> distance (M);
   boost::two_bit_color_map<> color_map {M};
-  std::vector<ExplicitGraphType::vertex_descriptor> predecessors (M);
+  std::vector<VertexDescriptor> predecessors (M);
 
   // Once through N indices: N
   for(const auto& a : indices) {
@@ -280,6 +324,15 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
         0
       );
 
+#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+      boost::gor1_eg_shortest_paths(
+        *this,
+        left(a),
+        predecessor_map,
+        color_map,
+        distance_map
+      );
+#else
       boost::gor1_simplified_shortest_paths(
         _graph,
         left(a),
@@ -287,22 +340,15 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
         color_map,
         distance_map
       );
+#endif
 
-      /* Since the edge weights from left to right are negative, the lower
-       * bounds are negative too. Include the minimum lower bounds in case
-       * the shortest path is greater (i.e. no explicit shortest path is
-       * considered) than zero.
-       */
-      double lowerBound = -distance.at(right(b));
-
-      assert(lowerBound > 0);
-      assert(lowerBound < distance.at(left(b)));
+      assert(-distance.at(right(b)) < distance.at(left(b)));
 
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
       double tightenedBound = TemplateMagic::random.getSingle<double>(
-        lowerBound,
+        -distance.at(right(b)),
         distance.at(left(b))
       );
 

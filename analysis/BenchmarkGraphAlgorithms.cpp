@@ -109,9 +109,17 @@ void writeHeaders(
 }
 
 
-void addAll(
+enum class Algorithm {
+  All,
+  ImplicitGor,
+  ExplicitGor,
+  MatrixFW
+};
+
+void benchmark(
   const boost::filesystem::path& filePath, 
   std::ofstream& benchmarkFile,
+  Algorithm algorithmChoice,
   IO::MOLFileHandler& molHandler
 ) {
   using namespace MoleculeManip;
@@ -126,9 +134,6 @@ void addAll(
   };
 
   const auto boundsList = spatialModel.makeBoundList();
-
-  DistanceGeometry::ExplicitGraph limits {sampleMol, boundsList};
-  DistanceGeometry::DistanceBoundsMatrix boundsMatrix {sampleMol, boundsList};
 
   /*
    * Can calculate shortest paths with either: 
@@ -153,112 +158,93 @@ void addAll(
    */
 
   /* Timings */
-  auto DBM_FW_timings = timeFunctor<
-    DBM_FW_Functor,
-    nExperiments
-  >(sampleMol, boundsList);
-
-  auto LG_Gor_timings = timeFunctor<
-    Gor1Functor<DistanceGeometry::ExplicitGraph>,
-    nExperiments
-  >(sampleMol, boundsList);
-
-  auto SPG_Gor_timings = timeFunctor<
-    Gor1Functor<DistanceGeometry::ImplicitGraph>,
-    nExperiments
-  >(sampleMol, boundsList);
-
-  auto smallest = std::min({
-    DBM_FW_timings.first,
-    LG_Gor_timings.first,
-    SPG_Gor_timings.first
-  });
-
   std::cout << std::fixed << std::setprecision(0);
-  std::cout << std::setw(10) << "N" << std::setw(10) << sampleMol.numAtoms() << nl
-    << std::setw(10) << "DBM FW" << std::setw(10) << DBM_FW_timings.first / smallest << nl
-    << std::setw(10) << "LG Gor" << std::setw(10) << LG_Gor_timings.first / smallest << nl
-    << std::setw(10) << "SPG Gor" << std::setw(10) << SPG_Gor_timings.first / smallest << nl << nl;
+  std::cout << std::setw(14) << "N" << std::setw(8) << sampleMol.numAtoms() << nl;
 
-  /* Write results */
-  benchmarkFile 
-    << std::fixed << std::setprecision(0)
-    << sampleMol.numAtoms() << ", " << sampleMol.numBonds() << ", "
-    << std::scientific << std::setprecision(6)
-    << DBM_FW_timings.first << ", "  << DBM_FW_timings.second << ", "
-    << LG_Gor_timings.first << ", "  << LG_Gor_timings.second << ", "
-    << SPG_Gor_timings.first << ", "  << SPG_Gor_timings.second << nl;
-}
+  std::vector<std::string> names;
+  std::vector<double> times;
+  std::vector<double> deviations;
 
-void DBM_FW(
-  const boost::filesystem::path& filePath, 
-  std::ofstream& benchmarkFile,
-  IO::MOLFileHandler& molHandler
-) {
-  using namespace MoleculeManip;
+  bool dontBreak = algorithmChoice == Algorithm::All;
+  switch(algorithmChoice) {
+    case Algorithm::All:
+    case Algorithm::MatrixFW: {
+      auto timings = timeFunctor<
+        DBM_FW_Functor,
+        nExperiments
+      >(sampleMol, boundsList);
 
-  Molecule sampleMol = molHandler.readSingle(
-    filePath.string()
-  );
+      names.push_back("DBM FW");
+      times.push_back(timings.first);
+      deviations.push_back(timings.second);
 
-  DistanceGeometry::MoleculeSpatialModel spatialModel {
-    sampleMol,
-    DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-  };
+      if(!dontBreak) {
+        break;
+      } else {
+        [[fallthrough]];
+      }
+    };
 
-  auto DBM_FW_timings = timeFunctor<
-    DBM_FW_Functor,
-    nExperiments
-  >(sampleMol, spatialModel.makeBoundList());
+    case Algorithm::ImplicitGor: {
+      auto timings = timeFunctor<
+        Gor1Functor<DistanceGeometry::ImplicitGraph>,
+        nExperiments
+      >(sampleMol, boundsList);
 
-  benchmarkFile 
-    << std::fixed << std::setprecision(0)
-    << sampleMol.numAtoms() << ", " << sampleMol.numBonds() << ", "
-    << std::scientific << std::setprecision(6)
-    << DBM_FW_timings.first << ", "  << DBM_FW_timings.second << nl;
-}
+      names.push_back("Implicit Gor");
+      times.push_back(timings.first);
+      deviations.push_back(timings.second);
 
-void SPG_Gor(
-  const boost::filesystem::path& filePath, 
-  std::ofstream& benchmarkFile,
-  IO::MOLFileHandler& molHandler
-) {
-  using namespace MoleculeManip;
+      if(!dontBreak) {
+        break;
+      } else {
+        [[fallthrough]];
+      }
+    };
 
-  Molecule sampleMol = molHandler.readSingle(
-    filePath.string()
-  );
+    case Algorithm::ExplicitGor: {
+      auto timings = timeFunctor<
+        Gor1Functor<DistanceGeometry::ExplicitGraph>,
+        nExperiments
+      >(sampleMol, boundsList);
 
-  DistanceGeometry::MoleculeSpatialModel spatialModel {
-    sampleMol,
-    DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-  };
+      names.push_back("Explicit Gor");
+      times.push_back(timings.first);
+      deviations.push_back(timings.second);
+    };
+  }
 
-  Gor1Functor<DistanceGeometry::ImplicitGraph> functor;
-
-  auto bounds = functor(sampleMol, spatialModel.makeBoundList());
-
-  /*auto SPG_Gor_timings = timeFunctor<
-    Gor1Functor<MakeSPGFunctor>,
-    nExperiments
-  >(spatialModel);
+  auto smallest = *std::min_element(times.begin(), times.end());
 
   benchmarkFile 
     << std::fixed << std::setprecision(0)
     << sampleMol.numAtoms() << ", " << sampleMol.numBonds() << ", "
-    << std::scientific << std::setprecision(6)
-    << SPG_Gor_timings.first << ", "  << SPG_Gor_timings.second << nl;*/
+    << std::scientific << std::setprecision(6);
 
-  std::cout << bounds << nl;
+  for(unsigned i = 0; i < names.size(); ++i) {
+    std::cout
+      << std::setw(14) << names[i]
+      << std::setw(8) << (times[i] / smallest)
+      << std::setw(14) << times[i]
+      << std::setw(14) << deviations[i]
+      << nl;
+
+    benchmarkFile << times[i] << ", " << deviations[i];
+
+    if(i != names.size() - 1) {
+      benchmarkFile << ", ";
+    } else {
+      benchmarkFile << nl;
+      std::cout << nl;
+    }
+  }
 }
 
 using namespace std::string_literals;
 const std::string algorithmChoices = 
-  "  0 - Floyd-Warshall with DistanceBoundsMatrix\n"s
-  "  1 - Bellman-Ford with ExplicitGraph\n"s
-  "  2 - Gor1 with ExplicitGraph\n"s
-  "  3 - Bellman-Ford with ImplicitGraph\n"s
-  "  4 - Gor1 with ImplicitGraph\n"s;
+  "  0 - Matrix Floyd-Warshall\n"s
+  "  1 - Gor1 with ImplicitGraph\n"s
+  "  2 - Gor1 with ExplicitGraph\n"s;
 
 int main(int argc, char* argv[]) {
   using namespace MoleculeManip;
@@ -285,44 +271,31 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
+  Algorithm choice = Algorithm::All;
   if(options_variables_map.count("c")) {
     unsigned combination = options_variables_map["c"].as<unsigned>();
-    if(combination > 4) {
+
+    if(combination > 2) {
       std::cout << "Specified algorithm / graph combination is out of bounds. Valid choices are:" << nl
         << algorithmChoices;
       return 0;
     }
 
-    IO::MOLFileHandler molHandler;
-    std::ofstream benchmarkFile ("graph_timings.csv");
-    writeHeaders(benchmarkFile);
+    choice = static_cast<Algorithm>(combination);
+  }
 
-    boost::filesystem::path filesPath("../tests/mol_files/ranking_tree_molecules");
-    boost::filesystem::recursive_directory_iterator end;
+  // Benchmark everything
+  IO::MOLFileHandler molHandler;
+  std::ofstream benchmarkFile ("graph_timings.csv");
+  writeHeaders(benchmarkFile);
 
-    for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-      const boost::filesystem::path currentFilePath = *i;
+  boost::filesystem::path filesPath("../tests/mol_files/ranking_tree_molecules");
+  boost::filesystem::recursive_directory_iterator end;
 
-      if(combination == 0) {
-        DBM_FW(currentFilePath, benchmarkFile, molHandler);
-      }  else if(combination == 4) {
-        SPG_Gor(currentFilePath, benchmarkFile, molHandler);
-      }
-    }
-  } else {
-    // Benchmark everything
-    IO::MOLFileHandler molHandler;
-    std::ofstream benchmarkFile ("graph_timings.csv");
-    writeHeaders(benchmarkFile);
+  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
+    const boost::filesystem::path currentFilePath = *i;
 
-    boost::filesystem::path filesPath("../tests/mol_files/ranking_tree_molecules");
-    boost::filesystem::recursive_directory_iterator end;
-
-    for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-      const boost::filesystem::path currentFilePath = *i;
-
-      addAll(currentFilePath, benchmarkFile, molHandler);
-    }
+    benchmark(currentFilePath, benchmarkFile, choice, molHandler);
   }
 
   return 0;

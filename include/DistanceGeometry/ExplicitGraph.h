@@ -1,8 +1,10 @@
 #ifndef INCLUDE_DG_LIMITS_GRAPH_H
 #define INCLUDE_DG_LIMITS_GRAPH_H
 
-#include "Molecule.h"
 #include "DistanceGeometry/ValueBounds.h"
+#include "boost/graph/adjacency_list.hpp"
+#include "Eigen/Core"
+#include "Delib/ElementInfo.h"
 
 /*! @file
  *
@@ -12,6 +14,9 @@
  */
 
 namespace MoleculeManip {
+
+// Forward-declare Molecule
+class Molecule;
 
 namespace DistanceGeometry {
 
@@ -34,49 +39,57 @@ namespace DistanceGeometry {
 class ExplicitGraph {
 public:
   using EdgeWeightProperty = boost::property<boost::edge_weight_t, double>;
-  using ExplicitGraphType = boost::adjacency_list<
+  using GraphType = boost::adjacency_list<
     boost::vecS,
     boost::vecS,
     boost::directedS,
     boost::no_property,
     EdgeWeightProperty
   >;
+  using VertexDescriptor = GraphType::vertex_descriptor;
+  using EdgeDescriptor = GraphType::edge_descriptor;
 
 private:
-  ExplicitGraphType _graph;
+  GraphType _graph;
   bool _generatedDistances;
   const Molecule& _molecule;
+  //! Stores the two heaviest element types
+  std::array<Delib::ElementType, 2> _heaviestAtoms;
 
   void _updateOrAddEdge(
-    const ExplicitGraphType::vertex_descriptor& a,
-    const ExplicitGraphType::vertex_descriptor& b,
+    const VertexDescriptor& a,
+    const VertexDescriptor& b,
     const double& edgeWeight
   );
 
   void _updateGraphWithFixedDistance(
-    const AtomIndexType& a,
-    const AtomIndexType& b,
+    const VertexDescriptor& a,
+    const VertexDescriptor& b,
     const double& fixedDistance
   );
 
-  static inline ExplicitGraphType::vertex_descriptor left(const AtomIndexType& a) {
+  static inline VertexDescriptor left(const VertexDescriptor& a) {
     return 2 * a;
   }
 
-  static inline ExplicitGraphType::vertex_descriptor right(const AtomIndexType& a) {
+  static inline VertexDescriptor right(const VertexDescriptor& a) {
     return 2 * a + 1;
   }
 
 public:
   using BoundList = std::vector<
-    std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
+    std::tuple<VertexDescriptor, VertexDescriptor, ValueBounds>
   >;
   ExplicitGraph(const Molecule& molecule, const BoundList& bounds);
 
+  static inline bool isLeft(const VertexDescriptor& i) {
+    return i % 2 == 0;
+  }
+
   //! Adds edges to the underlying graph to represent the bound between the atoms
   void addBound(
-    const AtomIndexType& a,
-    const AtomIndexType& b,
+    const VertexDescriptor& a,
+    const VertexDescriptor& b,
     const ValueBounds& bound
   );
 
@@ -84,23 +97,25 @@ public:
   void addImplicitEdges();
 
   void setDistance(
-    const ExplicitGraphType::vertex_descriptor& a,
-    const ExplicitGraphType::vertex_descriptor& b,
+    const VertexDescriptor& a,
+    const VertexDescriptor& b,
     double distance
   );
 
   double lowerBound(
-    const AtomIndexType& i,
-    const AtomIndexType& j
+    const VertexDescriptor& i,
+    const VertexDescriptor& j
   ) const;
 
   double upperBound(
-    const AtomIndexType& i,
-    const AtomIndexType& j
+    const VertexDescriptor& i,
+    const VertexDescriptor& j
   ) const;
 
+  //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
+  double maximalImplicitLowerBound(const VertexDescriptor& i) const;
 
-  const ExplicitGraphType& getGraph() const;
+  const GraphType& getGraph() const;
 
   Eigen::MatrixXd makeDistanceBounds() const;
 

@@ -10,6 +10,19 @@
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementProblem.h"
 
+#define DG_DISTANCES_ALGORITHM_MATRIX 0u
+#define DG_DISTANCES_ALGORITHM_IMPLICIT 1u
+#define DG_DISTANCES_ALGORITHM_EXPLICIT 2u
+
+#define DG_DISTANCES_ALGORITHM DG_DISTANCES_ALGORITHM_EXPLICIT
+
+
+#if DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_IMPLICIT
+#include "DistanceGeometry/ImplicitGraph.h"
+#elif DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_EXPLICIT
+#include "DistanceGeometry/ExplicitGraph.h"
+#endif
+
 #include "GraphAlgorithms.h"
 
 /* TODO
@@ -291,6 +304,43 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
       );
     }
 
+#if DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_IMPLICIT
+    ImplicitGraph implicitGraph {
+      molecule,
+      DGData.boundList
+    };
+
+    DistanceBoundsMatrix distanceBounds {implicitGraph.makeDistanceBounds()};
+
+    /* No need to smooth the distance bounds, implicitGraph creates it
+     * so that the triangle inequalities are fulfilled
+     */
+
+    assert(distanceBounds.boundInconsistencies() == 0);
+
+    // Make a metric matrix from a generated distances matrix
+    MetricMatrix metric(
+      implicitGraph.makeDistanceMatrix()
+    );
+#elif DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_EXPLICIT
+    ExplicitGraph explicitGraph {
+      molecule,
+      DGData.boundList
+    };
+
+    DistanceBoundsMatrix distanceBounds {explicitGraph.makeDistanceBounds()};
+
+    /* No need to smooth the distance bounds, implicitGraph creates it
+     * so that the triangle inequalities are fulfilled
+     */
+
+    assert(distanceBounds.boundInconsistencies() == 0);
+
+    // Make a metric matrix from a generated distances matrix
+    MetricMatrix metric(
+      explicitGraph.makeDistanceMatrix()
+    );
+#else
     DistanceBoundsMatrix distanceBounds {
       molecule,
       DGData.boundList
@@ -300,7 +350,11 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 
     assert(distanceBounds.boundInconsistencies() == 0);
 
-    const auto distancesMatrix = distanceBounds.makeDistanceMatrix();
+    // Make a metric matrix from a generated distances matrix
+    MetricMatrix metric(
+      distanceBounds.makeDistanceMatrix()
+    );
+#endif
     
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
@@ -316,9 +370,6 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         );
       }
     );
-
-    // Make a metric matrix from the distances matrix
-    MetricMatrix metric(distancesMatrix);
 
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
@@ -533,6 +584,43 @@ DGDebugData debugDistanceGeometry(
 
     std::list<RefinementStepData> refinementSteps;
 
+#if DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_IMPLICIT
+    ImplicitGraph implicitGraph {
+      molecule,
+      DGData.boundList
+    };
+
+    DistanceBoundsMatrix distanceBounds {implicitGraph.makeDistanceBounds()};
+
+    /* No need to smooth the distance bounds, implicitGraph creates it
+     * so that the triangle inequalities are fulfilled
+     */
+
+    assert(distanceBounds.boundInconsistencies() == 0);
+
+    // Make a metric matrix from a generated distances matrix
+    MetricMatrix metric(
+      implicitGraph.makeDistanceMatrix()
+    );
+#elif DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_EXPLICIT
+    ExplicitGraph explicitGraph {
+      molecule,
+      DGData.boundList
+    };
+
+    DistanceBoundsMatrix distanceBounds {explicitGraph.makeDistanceBounds()};
+
+    /* No need to smooth the distance bounds, implicitGraph creates it
+     * so that the triangle inequalities are fulfilled
+     */
+
+    assert(distanceBounds.boundInconsistencies() == 0);
+
+    // Make a metric matrix from a generated distances matrix
+    MetricMatrix metric(
+      explicitGraph.makeDistanceMatrix()
+    );
+#else
     DistanceBoundsMatrix distanceBounds {
       molecule,
       DGData.boundList
@@ -542,7 +630,11 @@ DGDebugData debugDistanceGeometry(
 
     assert(distanceBounds.boundInconsistencies() == 0);
 
-    const auto distancesMatrix = distanceBounds.makeDistanceMatrix();
+    // Make a metric matrix from a generated distances matrix
+    MetricMatrix metric(
+      distanceBounds.makeDistanceMatrix()
+    );
+#endif
     
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
@@ -558,9 +650,6 @@ DGDebugData debugDistanceGeometry(
         );
       }
     );
-
-    // Make a metric matrix from the distances matrix
-    MetricMatrix metric(distancesMatrix);
 
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();

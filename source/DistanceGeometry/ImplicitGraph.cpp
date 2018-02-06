@@ -141,7 +141,7 @@ bool ImplicitGraph::hasExplicit(const EdgeDescriptor& edge) const {
   return _distances(internal(edge.first), internal(edge.second)) != 0;
 }
 
-Eigen::MatrixXd ImplicitGraph::makeDistanceBoundsMatrix() const {
+Eigen::MatrixXd ImplicitGraph::makeDistanceBounds() const {
   Eigen::MatrixXd bounds;
 
   unsigned N = _distances.outerSize();
@@ -176,7 +176,7 @@ Eigen::MatrixXd ImplicitGraph::makeDistanceBoundsMatrix() const {
     );
 
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
-    boost::gor1_spg_shortest_paths(
+    boost::gor1_ig_shortest_paths(
       *this,
       VertexDescriptor {left(a)},
       predecessor_map,
@@ -194,9 +194,11 @@ Eigen::MatrixXd ImplicitGraph::makeDistanceBoundsMatrix() const {
 #endif
 
     for(VertexDescriptor b = a + 1; b < N; ++b) {
-      // a is always smaller than b, hence (a, b) is the lower bound
-      bounds(a, b) = -distances.at(right(b));
-      bounds(b, a) = distances.at(left(b));
+      // a is always smaller than b, hence (a, b) is the upper bound
+      bounds(a, b) = distances.at(left(b));
+      bounds(b, a) = -distances.at(right(b));
+
+      assert(bounds(a, b) > bounds(b, a));
     }
   }
 
@@ -250,7 +252,10 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
     for(const AtomIndexType& b : otherIndices) {
       if(
         a == b
-        || _distances(a, b) == _distances(b, a)
+        || (
+          _distances(a, b) == _distances(b, a)
+          && _distances(a, b) != 0
+        )
       ) {
         // Skip on-diagonal and already-chosen entries
         continue;
@@ -275,7 +280,7 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
       );
 
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
-      boost::gor1_spg_shortest_paths(
+      boost::gor1_ig_shortest_paths(
         *this,
         VertexDescriptor {left(a)},
         predecessor_map,
@@ -291,6 +296,8 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
         distance_map
       );
 #endif
+
+      assert(-distances.at(right(b)) < distances.at(left(b)));
 
       // Pick fixed distance
       double fixedDistance = TemplateMagic::random.getSingle<double>(

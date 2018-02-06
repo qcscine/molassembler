@@ -15,12 +15,6 @@
 
 #include <Eigen/Eigenvalues>
 
-/* TODO
- * - This needs property-based checking, not just visual inspection
- *   - Invariance on row or column permutation and reversion (does it even have
- *     that property?)
- */
-
 using namespace MoleculeManip;
 using namespace MoleculeManip::DistanceGeometry;
 
@@ -315,6 +309,10 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
           << std::endl << revert << std::endl;
         break;
       }
+
+      /*if(symmetryName == Symmetry::Name::SquareAntiPrismatic) {
+        showEmbedding(originalMetric);
+      }*/
 
       /*if(nTests == 0) { // once per symmetry
         showEmbedding(originalMetric);

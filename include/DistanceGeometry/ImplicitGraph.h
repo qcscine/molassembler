@@ -1,5 +1,5 @@
-#ifndef INCLUDE_DISTANCE_GEOMETRY_SHORTEST_PATHS_GRAPH_H
-#define INCLUDE_DISTANCE_GEOMETRY_SHORTEST_PATHS_GRAPH_H
+#ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
+#define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
 
 #include "boost/functional/hash.hpp"
 #include "boost/variant.hpp"
@@ -219,7 +219,7 @@ public:
    *
    * Complexity: O(N * O(shortest paths algorithm))
    */
-  Eigen::MatrixXd makeDistanceBoundsMatrix() const;
+  Eigen::MatrixXd makeDistanceBounds() const;
 
   /*! Generates a distance matrix by randomly fixing distances within triangle inequality bounds
    *
