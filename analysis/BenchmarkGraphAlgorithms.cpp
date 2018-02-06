@@ -30,7 +30,8 @@ std::ostream& nl(std::ostream& os) {
 template<typename TimingCallable, size_t N>
 std::pair<double, double> timeFunctor(
   const Molecule& molecule,
-  const DistanceGeometry::MoleculeSpatialModel::BoundList& boundList
+  const DistanceGeometry::MoleculeSpatialModel::BoundList& boundList,
+  DistanceGeometry::Partiality partiality
 ) {
   using namespace std::chrono;
 
@@ -40,7 +41,7 @@ std::pair<double, double> timeFunctor(
   std::array<double, N> timings;
   for(unsigned n = 0; n < N; ++n) {
     start = steady_clock::now();
-    functor(molecule, boundList);
+    functor(molecule, boundList, partiality);
     end = steady_clock::now();
 
     timings.at(n) = duration_cast<nanoseconds>(end - start).count();
@@ -58,24 +59,26 @@ template<class Graph>
 struct Gor1Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    const DistanceGeometry::ImplicitGraph::BoundList& boundsList
+    const DistanceGeometry::ImplicitGraph::BoundList& boundsList,
+    DistanceGeometry::Partiality partiality
   ) {
 
     Graph graph {molecule, boundsList};
-    return graph.makeDistanceMatrix();
+    return graph.makeDistanceMatrix(partiality);
   }
 };
 
 struct DBM_FW_Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    const DistanceGeometry::ImplicitGraph::BoundList& boundsList
+    const DistanceGeometry::ImplicitGraph::BoundList& boundsList,
+    DistanceGeometry::Partiality partiality
   ) {
     DistanceGeometry::DistanceBoundsMatrix bounds {molecule, boundsList};
 
     bounds.smooth();
 
-    bounds.makeDistanceMatrix();
+    bounds.makeDistanceMatrix(partiality);
 
     return bounds.access();
   }
@@ -120,6 +123,7 @@ void benchmark(
   const boost::filesystem::path& filePath, 
   std::ofstream& benchmarkFile,
   Algorithm algorithmChoice,
+  DistanceGeometry::Partiality partiality,
   IO::MOLFileHandler& molHandler
 ) {
   using namespace MoleculeManip;
@@ -172,26 +176,9 @@ void benchmark(
       auto timings = timeFunctor<
         DBM_FW_Functor,
         nExperiments
-      >(sampleMol, boundsList);
+      >(sampleMol, boundsList, partiality);
 
       names.push_back("DBM FW");
-      times.push_back(timings.first);
-      deviations.push_back(timings.second);
-
-      if(!dontBreak) {
-        break;
-      } else {
-        [[fallthrough]];
-      }
-    };
-
-    case Algorithm::ImplicitGor: {
-      auto timings = timeFunctor<
-        Gor1Functor<DistanceGeometry::ImplicitGraph>,
-        nExperiments
-      >(sampleMol, boundsList);
-
-      names.push_back("Implicit Gor");
       times.push_back(timings.first);
       deviations.push_back(timings.second);
 
@@ -206,9 +193,26 @@ void benchmark(
       auto timings = timeFunctor<
         Gor1Functor<DistanceGeometry::ExplicitGraph>,
         nExperiments
-      >(sampleMol, boundsList);
+      >(sampleMol, boundsList, partiality);
 
       names.push_back("Explicit Gor");
+      times.push_back(timings.first);
+      deviations.push_back(timings.second);
+
+      if(!dontBreak) {
+        break;
+      } else {
+        [[fallthrough]];
+      }
+    };
+
+    case Algorithm::ImplicitGor: {
+      auto timings = timeFunctor<
+        Gor1Functor<DistanceGeometry::ImplicitGraph>,
+        nExperiments
+      >(sampleMol, boundsList, partiality);
+
+      names.push_back("Implicit Gor");
       times.push_back(timings.first);
       deviations.push_back(timings.second);
     };
@@ -242,9 +246,14 @@ void benchmark(
 
 using namespace std::string_literals;
 const std::string algorithmChoices = 
-  "  0 - Matrix Floyd-Warshall\n"s
-  "  1 - Gor1 with ImplicitGraph\n"s
-  "  2 - Gor1 with ExplicitGraph\n"s;
+  "  0 - Matrix Floyd-Warshall\n"
+  "  1 - Gor1 with ImplicitGraph\n"
+  "  2 - Gor1 with ExplicitGraph\n";
+
+const std::string partialityChoices = 
+  "  0 - Four-Atom Metrization\n"
+  "  1 - 10% Metrization\n"
+  "  2 - All (default)\n";
 
 int main(int argc, char* argv[]) {
   using namespace MoleculeManip;
@@ -254,6 +263,7 @@ int main(int argc, char* argv[]) {
   options_description.add_options()
     ("help", "Produce help message")
     ("c", boost::program_options::value<unsigned>(), "Specify algorithm / graph combination to benchmark")
+    ("p", boost::program_options::value<unsigned>(), "Specify partiality")
   ;
 
   // Parse
@@ -284,6 +294,19 @@ int main(int argc, char* argv[]) {
     choice = static_cast<Algorithm>(combination);
   }
 
+  DistanceGeometry::Partiality partiality = DistanceGeometry::Partiality::All;
+  if(options_variables_map.count("p")) {
+    unsigned index =  options_variables_map["p"].as<unsigned>();
+
+    if(index > 2) {
+      std::cout << "Specified metrization option is out of bounds. Valid choices are:" << nl
+        << partialityChoices;
+      return 0;
+    }
+
+    partiality = static_cast<DistanceGeometry::Partiality>(index);
+  }
+
   // Benchmark everything
   IO::MOLFileHandler molHandler;
   std::ofstream benchmarkFile ("graph_timings.csv");
@@ -295,7 +318,7 @@ int main(int argc, char* argv[]) {
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
 
-    benchmark(currentFilePath, benchmarkFile, choice, molHandler);
+    benchmark(currentFilePath, benchmarkFile, choice, partiality, molHandler);
   }
 
   return 0;

@@ -26,6 +26,12 @@ struct ChiralityConstraint {
   );
 };
 
+enum class Partiality {
+  FourAtom,
+  TenPercent,
+  All
+};
+
 } // namespace DistanceGeometry
 
 } // namespace MoleculeManip

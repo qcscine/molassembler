@@ -146,7 +146,7 @@ public:
    * Allocates another N*N double matrix. When resource constrained, this is
    * not a good idea.
    */
-  Eigen::MatrixXd makeDistanceMatrix() const;
+  Eigen::MatrixXd makeDistanceMatrix(Partiality partiality = Partiality::All) const;
 
   Eigen::MatrixXd makeSquaredBoundsMatrix() const;
 

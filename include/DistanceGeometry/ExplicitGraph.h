@@ -20,6 +20,9 @@ class Molecule;
 
 namespace DistanceGeometry {
 
+// Forward-declare Partiality
+enum class Partiality;
+
 /*!
  * A class that helps with lower complexity determination of distance bounds
  * compatible with the triangle inequality limits via reinterpretation as a
@@ -124,6 +127,8 @@ public:
    * while modifying state information. Can only be called once!
    */
   Eigen::MatrixXd makeDistanceMatrix();
+
+  Eigen::MatrixXd makeDistanceMatrix(Partiality partiality);
 };
 
 } // namespace DistanceGeometry

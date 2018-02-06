@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
     };
 
     using LG = DistanceGeometry::ExplicitGraph;
-    using Vertex = LG::ExplicitGraphType::vertex_descriptor;
+    using Vertex = LG::GraphType::vertex_descriptor;
 
     LG lg {
       molecule,
@@ -315,9 +315,9 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
     bool pass = true;
     for(unsigned a = 0; a < sampleMol.numAtoms(); ++a) {
-      auto BF_LG_distances = BFFunctor<DistanceGeometry::ExplicitGraph::ExplicitGraphType> {limits.getGraph()} (2 * a);
+      auto BF_LG_distances = BFFunctor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
 
-      auto Gor_LG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::ExplicitGraphType> {limits.getGraph()} (2 * a);
+      auto Gor_LG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
 
       if(
         !TemplateMagic::all_of(

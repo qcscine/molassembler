@@ -34,6 +34,7 @@ ChiralityConstraint propagate(
 DGDebugData debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
+  const Partiality& metrizationOption = Partiality::FourAtom,
   const bool& useYInversionTrick = true,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );
@@ -41,6 +42,7 @@ DGDebugData debugDistanceGeometry(
 std::list<Delib::PositionCollection> runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
+  const Partiality& metrizationOption = Partiality::FourAtom,
   const bool& useYInversionTrick = true,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );

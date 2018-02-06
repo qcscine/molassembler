@@ -87,6 +87,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         auto ensemble = detail::runDistanceGeometry(
           molecule,
           100,
+          Partiality::All,
           false, // no y-inversion trick
           MoleculeSpatialModel::DistanceMethod::Uniform
         );

@@ -17,6 +17,11 @@ using namespace std::string_literals;
 using namespace MoleculeManip;
 using namespace MoleculeManip::DistanceGeometry;
 
+const std::string partialityChoices = 
+  "  0 - Four-Atom Metrization\n"
+  "  1 - 10% Metrization\n"
+  "  2 - All (default)\n";
+
 int main(int argc, char* argv[]) {
 /* Set program options from command-line arguments */
   // Defaults
@@ -30,7 +35,8 @@ int main(int argc, char* argv[]) {
     ("s", boost::program_options::value<unsigned>(), "Specify symmetry index (zero-based)")
     ("n", boost::program_options::value<unsigned>(), "Set number of structures to generate")
     ("f", boost::program_options::value<std::string>(), "Read molecule to generate from file (MOLFiles only!)")
-    ("i", boost::program_options::value<bool>(), "Specify whether inversion trick is to be used")
+    ("i", boost::program_options::value<bool>(), "Specify whether inversion trick is to be used (Default: false)")
+    ("p", boost::program_options::value<unsigned>(), "Set metrization partiality option (Default: full)")
   ;
 
   // Parse
@@ -73,6 +79,19 @@ int main(int argc, char* argv[]) {
     nStructures = argN;
   }
 
+  Partiality metrizationOption = Partiality::All;
+  if(options_variables_map.count("p")) {
+    unsigned index =  options_variables_map["p"].as<unsigned>();
+
+    if(index > 2) {
+      std::cout << "Specified metrization option is out of bounds. Valid choices are:\n" 
+        << partialityChoices;
+      return 0;
+    }
+
+    metrizationOption = static_cast<DistanceGeometry::Partiality>(index);
+  }
+
 /* Generating work */
   // Generate from file
   if(options_variables_map.count("f") == 1) { 
@@ -103,6 +122,7 @@ int main(int argc, char* argv[]) {
     auto debugData = detail::debugDistanceGeometry(
       mol,
       1,
+      metrizationOption,
       useYInversionTrick
     );
 
@@ -147,6 +167,7 @@ int main(int argc, char* argv[]) {
       auto debugData = detail::debugDistanceGeometry(
         mol,
         nStructures,
+        metrizationOption,
         false,
         MoleculeSpatialModel::DistanceMethod::Uniform
       );

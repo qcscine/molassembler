@@ -13,9 +13,7 @@
 #define DG_DISTANCES_ALGORITHM_MATRIX 0u
 #define DG_DISTANCES_ALGORITHM_IMPLICIT 1u
 #define DG_DISTANCES_ALGORITHM_EXPLICIT 2u
-
 #define DG_DISTANCES_ALGORITHM DG_DISTANCES_ALGORITHM_EXPLICIT
-
 
 #if DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_IMPLICIT
 #include "DistanceGeometry/ImplicitGraph.h"
@@ -245,6 +243,7 @@ bool moleculeHasUnassignedStereocenters(const Molecule& mol) {
 std::list<Delib::PositionCollection> runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
+  const Partiality& metrizationOption,
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
@@ -320,7 +319,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 
     // Make a metric matrix from a generated distances matrix
     MetricMatrix metric(
-      implicitGraph.makeDistanceMatrix()
+      implicitGraph.makeDistanceMatrix(metrizationOption)
     );
 #elif DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_EXPLICIT
     ExplicitGraph explicitGraph {
@@ -338,7 +337,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 
     // Make a metric matrix from a generated distances matrix
     MetricMatrix metric(
-      explicitGraph.makeDistanceMatrix()
+      explicitGraph.makeDistanceMatrix(metrizationOption)
     );
 #else
     DistanceBoundsMatrix distanceBounds {
@@ -510,6 +509,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 DGDebugData debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
+  const Partiality& metrizationOption,
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
@@ -600,7 +600,7 @@ DGDebugData debugDistanceGeometry(
 
     // Make a metric matrix from a generated distances matrix
     MetricMatrix metric(
-      implicitGraph.makeDistanceMatrix()
+      implicitGraph.makeDistanceMatrix(metrizationOption)
     );
 #elif DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_EXPLICIT
     ExplicitGraph explicitGraph {
@@ -618,7 +618,7 @@ DGDebugData debugDistanceGeometry(
 
     // Make a metric matrix from a generated distances matrix
     MetricMatrix metric(
-      explicitGraph.makeDistanceMatrix()
+      explicitGraph.makeDistanceMatrix(metrizationOption)
     );
 #else
     DistanceBoundsMatrix distanceBounds {
@@ -632,7 +632,7 @@ DGDebugData debugDistanceGeometry(
 
     // Make a metric matrix from a generated distances matrix
     MetricMatrix metric(
-      distanceBounds.makeDistanceMatrix()
+      distanceBounds.makeDistanceMatrix(metrizationOption)
     );
 #endif
     

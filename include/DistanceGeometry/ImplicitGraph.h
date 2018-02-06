@@ -26,6 +26,9 @@ class Molecule;
 
 namespace DistanceGeometry {
 
+// Forward-declare Partiality enum
+enum class Partiality;
+
 /*! Simulates a graph from which triangle inequality bounds can be calculated by shortest-paths
  *
  * Based off of pairwise bounds collected from MoleculeSpatialModel, this class
@@ -235,6 +238,7 @@ public:
    * run analysis_BenchmarkGraphAlgorithms.
    */
   Eigen::MatrixXd& makeDistanceMatrix();
+  Eigen::MatrixXd& makeDistanceMatrix(Partiality partiality);
 
   //! Returns the source vertex from an edge descriptor
   inline VertexDescriptor source(const EdgeDescriptor& e) const {

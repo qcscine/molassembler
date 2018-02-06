@@ -34,7 +34,7 @@ bool DistanceBoundsMatrix::setLowerBound(const AtomIndexType& i, const AtomIndex
   ) {
     _lowerBound(i, j) = newLowerBound;
     return true;
-  } 
+  }
 
   return false;
 }
@@ -88,7 +88,7 @@ const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
   return _matrix;
 }
 
-Eigen::MatrixXd DistanceBoundsMatrix::makeDistanceMatrix() const {
+Eigen::MatrixXd DistanceBoundsMatrix::makeDistanceMatrix(Partiality partiality) const {
   auto matrixCopy = _matrix;
 
   const unsigned N = _matrix.cols();
@@ -106,13 +106,24 @@ Eigen::MatrixXd DistanceBoundsMatrix::makeDistanceMatrix() const {
     TemplateMagic::random.randomEngine
   );
 
-  for(const auto& i : indices) {
+  std::vector<AtomIndexType>::const_iterator separator;
+
+  if(partiality == Partiality::FourAtom) {
+    separator = indices.cbegin() + std::min(N, 4u);
+  } else if(partiality == Partiality::TenPercent) {
+    separator = indices.cbegin() + std::min(N, static_cast<unsigned>(0.1 * N));
+  } else { // All
+    separator = indices.cend();
+  }
+
+  for(auto iter = indices.cbegin(); iter != separator; ++iter) {
+    const AtomIndexType i = *iter;
     for(AtomIndexType j = 0; j < N; j++) {
       if(
         i == j
         || matrixCopy(i, j) == matrixCopy(j, i)
       ) { // skip on-diagonal and already-chosen elements
-        continue; 
+        continue;
       }
 
       std::uniform_real_distribution<> uniformDistribution(
@@ -126,6 +137,28 @@ Eigen::MatrixXd DistanceBoundsMatrix::makeDistanceMatrix() const {
       upperBound(matrixCopy, i, j) = chosenDistance;
 
       smooth(matrixCopy);
+    }
+  }
+
+  for(auto iter = separator; iter != indices.cend(); ++iter) {
+    const AtomIndexType i = *iter;
+    for(AtomIndexType j = 0; j < N; j++) {
+      if(
+        i == j
+        || matrixCopy(i, j) == matrixCopy(j, i)
+      ) { // skip on-diagonal and already-chosen elements
+        continue;
+      }
+
+      std::uniform_real_distribution<> uniformDistribution(
+        lowerBound(matrixCopy, i, j),
+        upperBound(matrixCopy, i, j)
+      );
+
+      double chosenDistance = uniformDistribution(TemplateMagic::random.randomEngine);
+
+      lowerBound(matrixCopy, i, j) = chosenDistance;
+      upperBound(matrixCopy, i, j) = chosenDistance;
     }
   }
 

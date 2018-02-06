@@ -3,6 +3,7 @@
 #include "Molecule.h"
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
+#include "DistanceGeometry/DistanceGeometry.h"
 
 #define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
@@ -239,6 +240,10 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceBounds() const {
 }
 
 Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
+  return makeDistanceMatrix(Partiality::All);
+}
+
+Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix(Partiality partiality) {
   if(_generatedDistances) {
     throw std::logic_error("ExplicitGraph: Already generated distances destructively!");
   }
@@ -272,20 +277,34 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
   boost::two_bit_color_map<> color_map {M};
   std::vector<VertexDescriptor> predecessors (M);
 
-  // Once through N indices: N
-  for(const auto& a : indices) {
-    std::vector<AtomIndexType> otherIndices (N - 1);
-    std::iota(
-      otherIndices.begin(),
-      otherIndices.begin() + a,
-      0
-    );
+  std::vector<AtomIndexType>::const_iterator separator;
 
-    std::iota(
-      otherIndices.begin() + a,
-      otherIndices.end(),
-      a
-    );
+  if(partiality == Partiality::FourAtom) {
+    separator = indices.cbegin() + std::min(N, 4u);
+  } else if(partiality == Partiality::TenPercent) {
+    separator = indices.cbegin() + std::min(N, static_cast<unsigned>(0.1 * N));
+  } else { // All
+    separator = indices.cend();
+  }
+
+  for(auto iter = indices.cbegin(); iter != separator; ++iter) {
+    const AtomIndexType a = *iter;
+
+    std::vector<AtomIndexType> otherIndices;
+    otherIndices.reserve(N - 1);
+
+    // Avoid already-chosen elements
+    for(AtomIndexType b = 0; b < a; ++b) {
+      if(upperTriangle(b, a) == 0) {
+        otherIndices.push_back(b);
+      }
+    }
+
+    for(AtomIndexType b = a + 1; b < N; ++b) {
+      if(upperTriangle(a, b) == 0) {
+        otherIndices.push_back(b);
+      }
+    }
 
     std::shuffle(
       otherIndices.begin(),
@@ -295,16 +314,6 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
 
     // Again through N - 1 indices: N²
     for(const auto& b : otherIndices) {
-      if(
-        a == b
-        || upperTriangle(
-          std::min(a, b),
-          std::max(a, b)
-        ) > 0
-      ) {
-        // Skip on-diagonal and already-chosen entries
-        continue;
-      }
 
       auto predecessor_map = boost::make_iterator_property_map(
         predecessors.begin(),
@@ -319,7 +328,7 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
       // re-fill color map with white
       std::fill(
         color_map.data.get(),
-        color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+        color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
           / color_map.elements_per_char,
         0
       );
@@ -350,6 +359,75 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
       double tightenedBound = TemplateMagic::random.getSingle<double>(
         -distance.at(right(b)),
         distance.at(left(b))
+      );
+
+      upperTriangle(
+        std::min(a, b),
+        std::max(a, b)
+      ) = tightenedBound;
+
+      // Modify the graph accordingly
+      _updateGraphWithFixedDistance(
+        a,
+        b,
+        tightenedBound
+      );
+    }
+  }
+
+  for(auto iter = separator; iter != indices.cend(); ++iter) {
+    const AtomIndexType a = *iter;
+
+    auto predecessor_map = boost::make_iterator_property_map(
+      predecessors.begin(),
+      boost::get(boost::vertex_index, _graph)
+    );
+
+    auto distance_map = boost::make_iterator_property_map(
+      distance.begin(),
+      boost::get(boost::vertex_index, _graph)
+    );
+
+    // re-fill color map with white
+    std::fill(
+      color_map.data.get(),
+      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+        / color_map.elements_per_char,
+      0
+    );
+
+#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+    boost::gor1_eg_shortest_paths(
+      *this,
+      left(a),
+      predecessor_map,
+      color_map,
+      distance_map
+    );
+#else
+    boost::gor1_simplified_shortest_paths(
+      _graph,
+      left(a),
+      predecessor_map,
+      color_map,
+      distance_map
+    );
+#endif
+
+    for(AtomIndexType b = 0; b < N; ++b) {
+      if(a == b || upperTriangle(std::min(a, b), std::max(a, b)) > 0) {
+        continue;
+      }
+
+      double presumedLower = -distance.at(right(b));
+      double presumedUpper = distance.at(left(b));
+
+      /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
+       * Shortest distance from left a vertex to left b vertex is upper bound
+       */
+      double tightenedBound = TemplateMagic::random.getSingle<double>(
+        std::min(presumedLower, presumedUpper),
+        std::max(presumedLower, presumedUpper)
       );
 
       upperTriangle(

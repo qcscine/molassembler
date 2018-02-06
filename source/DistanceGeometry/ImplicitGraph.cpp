@@ -206,6 +206,10 @@ Eigen::MatrixXd ImplicitGraph::makeDistanceBounds() const {
 }
 
 Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
+  return makeDistanceMatrix(Partiality::All);
+}
+
+Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix(Partiality partiality) {
   unsigned N = _moleculePtr->numAtoms();
 
   std::vector<AtomIndexType> indices(N);
@@ -229,19 +233,31 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
   // Determine triangle inequality limits for pair
   ColorMapType color_map {M};
 
-  for(const AtomIndexType& a : indices) {
-    std::vector<AtomIndexType> otherIndices (N - 1);
-    std::iota(
-      otherIndices.begin(),
-      otherIndices.begin() + a,
-      0
-    );
+  std::vector<AtomIndexType>::const_iterator separator;
 
-    std::iota(
-      otherIndices.begin() + a,
-      otherIndices.end(),
-      a
-    );
+  if(partiality == Partiality::FourAtom) {
+    separator = indices.cbegin() + std::min(N, 4u);
+  } else if(partiality == Partiality::TenPercent) {
+    separator = indices.cbegin() + std::min(N, static_cast<unsigned>(0.1 * N));
+  } else { // All
+    separator = indices.cend();
+  }
+
+  for(auto iter = indices.cbegin(); iter != separator; ++iter) {
+    const AtomIndexType a = *iter;
+    std::vector<AtomIndexType> otherIndices;
+    otherIndices.reserve(N - 1);
+
+    for(AtomIndexType b = 0; b < a; ++b) {
+      if(!(_distances(a, b) == _distances(b, a) && _distances(a, b) != 0)) {
+        otherIndices.push_back(b);
+      }
+    }
+    for(AtomIndexType b = a + 1; b < N; ++b) {
+      if(!(_distances(a, b) == _distances(b, a) && _distances(a, b) != 0)) {
+        otherIndices.push_back(b);
+      }
+    }
 
     std::shuffle(
       otherIndices.begin(),
@@ -250,17 +266,6 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
     );
 
     for(const AtomIndexType& b : otherIndices) {
-      if(
-        a == b
-        || (
-          _distances(a, b) == _distances(b, a)
-          && _distances(a, b) != 0
-        )
-      ) {
-        // Skip on-diagonal and already-chosen entries
-        continue;
-      }
-
       auto predecessor_map = boost::make_iterator_property_map(
         predecessors.begin(),
         VertexIndexMap()
@@ -274,7 +279,7 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
       // re-fill color map with white
       std::fill(
         color_map.data.get(),
-        color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+        color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
           / color_map.elements_per_char,
         0
       );
@@ -303,6 +308,72 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
       double fixedDistance = TemplateMagic::random.getSingle<double>(
         -distances.at(right(b)),
         distances.at(left(b))
+      );
+
+      // Record in distances matrix
+      _distances(a, b) = fixedDistance;
+      _distances(b, a) = fixedDistance;
+    }
+  }
+
+  for(auto iter = separator; iter != indices.cend(); ++iter) {
+    const AtomIndexType a = *iter;
+
+    auto predecessor_map = boost::make_iterator_property_map(
+      predecessors.begin(),
+      VertexIndexMap()
+    );
+
+    auto distance_map = boost::make_iterator_property_map(
+      distances.begin(),
+      VertexIndexMap()
+    );
+
+    // re-fill color map with white
+    std::fill(
+      color_map.data.get(),
+      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+        / color_map.elements_per_char,
+      0
+    );
+
+#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+    boost::gor1_ig_shortest_paths(
+      *this,
+      VertexDescriptor {left(a)},
+      predecessor_map,
+      color_map,
+      distance_map
+    );
+#else
+    boost::gor1_simplified_shortest_paths(
+      *this,
+      VertexDescriptor {left(a)},
+      predecessor_map,
+      color_map,
+      distance_map
+    );
+#endif
+
+    for(AtomIndexType b = 0; b < N; ++b) {
+      if(
+        a == b
+        || (
+          _distances(a, b) == _distances(b, a)
+          && _distances(a, b) != 0
+        )
+      ) {
+        // Skip on-diagonal and already-chosen entries
+        continue;
+      }
+
+      double presumedLower = -distances.at(right(b));
+      double presumedUpper = distances.at(left(b));
+
+      // Pick fixed distance
+      double fixedDistance = TemplateMagic::random.getSingle<double>(
+        std::min(presumedLower, presumedUpper),
+        std::max(presumedLower, presumedUpper)
       );
 
       // Record in distances matrix

@@ -14,7 +14,6 @@ Remaining DG deficiencies
   modified if the involved atoms are cycle members
 - Cycles of size 8 can have considerable strain due to triple bonds in the
   cycle, this is not considered
-- Bounds are perhaps a little too loose now, spiro centers look awful
 - Double bonds in DG maybe shouldn't enforce absolute flatness, but have
   tolerance. Either that or reduce the error function contribution of
   Flat-target chirality constraints by a factor to leave 1-2 distance bounds
