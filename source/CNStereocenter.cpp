@@ -3,7 +3,6 @@
 #include "template_magic/Numeric.h"
 #include "template_magic/Optionals.h"
 #include "template_magic/Random.h"
-#include "geometry_assignment/GenerateUniques.h"
 #include "symmetry_information/Properties.h"
 
 #include "BuildTypeSwitch.h"
@@ -14,13 +13,6 @@
 #include "StdlibTypeAlgorithms.h"
 
 #include <iomanip>
-
-/* TODO
- * - An option to enable non-minimal-work mappings if unique
- * - Lots of parallels between addSubstituent, propagateGraphChange and
- *   removeSubstituent. Refactor? Very difficult, at least a ten-parameter
- *   function with optionals to smooth over differences...
- */
 
 namespace MoleculeManip {
 
@@ -278,12 +270,13 @@ CNStereocenter::CNStereocenter(
   _ranking.sortedSubstituents = glue::canonicalize(_ranking.sortedSubstituents);
 
   // Generate the set of unique assignments possible here
-  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
+  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignmentsWithWeights(
     AssignmentType(
       symmetry,
       glue::makeCanonicalCharacters(_ranking.sortedSubstituents),
       glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.linkedPairs)
     ),
+    symmetry,
     false // Do NOT remove trans-spanning linked groups
   );
 }
@@ -298,12 +291,13 @@ void CNStereocenter::addSubstituent(
   auto canonicalizedSubstituents = glue::canonicalize(newRanking.sortedSubstituents);
   auto canonicalizedCharacters = glue::makeCanonicalCharacters(canonicalizedSubstituents);
   auto newLinks = glue::makeLinksSelfReferential(canonicalizedSubstituents, newRanking.linkedPairs);
-  auto newAssignments = UniqueAssignments::uniqueAssignments(
+  auto newAssignments = UniqueAssignments::uniqueAssignmentsWithWeights(
     AssignmentType {
       newSymmetry,
       canonicalizedCharacters,
       newLinks
-    }
+    },
+    newSymmetry
   );
   boost::optional<unsigned> newAssignment = boost::none;
 
@@ -329,7 +323,7 @@ void CNStereocenter::addSubstituent(
     const auto& symmetryMapping = suitableMappingOption.value();
 
     // Transform current assignment from characters to indices
-    const auto& currentAssignment = _uniqueAssignmentsCache.at(
+    const auto& currentAssignment = _uniqueAssignmentsCache.assignments.at(
       _assignmentOption.value()
     );
 
@@ -363,11 +357,11 @@ void CNStereocenter::addSubstituent(
     );
 
     // Generate the rotational equivalents
-    auto allTrialRotations = trialAssignment.generateAllRotations();
+    auto allTrialRotations = trialAssignment.generateAllRotations(newSymmetry);
 
     // Search for a match from the vector of uniques
-    for(unsigned i = 0; i < newAssignments.size(); ++i) {
-      if(allTrialRotations.count(newAssignments.at(i)) > 0) {
+    for(unsigned i = 0; i < newAssignments.assignments.size(); ++i) {
+      if(allTrialRotations.count(newAssignments.assignments.at(i)) > 0) {
         newAssignment = i;
         break;
       }
@@ -391,7 +385,7 @@ void CNStereocenter::addSubstituent(
 
 void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
   if(assignment) {
-    assert(assignment.value() < _uniqueAssignmentsCache.size());
+    assert(assignment.value() < _uniqueAssignmentsCache.assignments.size());
   }
 
   // Store current assignment
@@ -402,12 +396,23 @@ void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
    */
   if(assignment) {
     _symmetryPositionMapCache = glue::makeSymmetryPositionMap(
-      _uniqueAssignmentsCache.at(assignment.value()),
+      _uniqueAssignmentsCache.assignments.at(assignment.value()),
       _ranking.sortedSubstituents
     );
   } else { // Wipe the map
     _symmetryPositionMapCache.clear();
   }
+}
+
+void CNStereocenter::assignRandom() {
+  std::discrete_distribution<unsigned> decider {
+    _uniqueAssignmentsCache.weights.begin(),
+    _uniqueAssignmentsCache.weights.end()
+  };
+
+  assign(
+    decider(TemplateMagic::random.randomEngine)
+  );
 }
 
 void CNStereocenter::propagateGraphChange(const RankingInformation& newRanking) {
@@ -423,8 +428,9 @@ void CNStereocenter::propagateGraphChange(const RankingInformation& newRanking) 
       newCanonicalizedSubstituents,
       newRanking.linkedPairs
     );
-    auto newAssignments = UniqueAssignments::uniqueAssignments(
+    auto newAssignments = UniqueAssignments::uniqueAssignmentsWithWeights(
       AssignmentType(_symmetry, newCharacters, newLinks),
+      _symmetry,
       false // do NOT remove trans-spanning ligand groups
     );
     boost::optional<unsigned> newAssignment = boost::none;
@@ -437,9 +443,9 @@ void CNStereocenter::propagateGraphChange(const RankingInformation& newRanking) 
      */
     if(
       _assignmentOption
-      && newAssignments.size() <= _uniqueAssignmentsCache.size()
+      && newAssignments.assignments.size() <= _uniqueAssignmentsCache.assignments.size()
     ) {
-      const auto& currentAssignment = _uniqueAssignmentsCache.at(
+      const auto& currentAssignment = _uniqueAssignmentsCache.assignments.at(
         _assignmentOption.value()
       );
 
@@ -464,11 +470,11 @@ void CNStereocenter::propagateGraphChange(const RankingInformation& newRanking) 
       );
 
       // Generate all rotations of this trial assignment
-      auto allTrialRotations = trialAssignment.generateAllRotations();
+      auto allTrialRotations = trialAssignment.generateAllRotations(_symmetry);
 
       // Find out which of the new assignments has a rotational equivalent
-      for(unsigned i = 0; i < newAssignments.size(); ++i) {
-        if(allTrialRotations.count(newAssignments.at(i)) > 0) {
+      for(unsigned i = 0; i < newAssignments.assignments.size(); ++i) {
+        if(allTrialRotations.count(newAssignments.assignments.at(i)) > 0) {
           newAssignment = i;
           break;
         }
@@ -548,12 +554,13 @@ void CNStereocenter::removeSubstituent(
   auto canonicalizedSubstituents = glue::canonicalize(newRanking.sortedSubstituents);
   auto canonicalizedCharacters = glue::makeCanonicalCharacters(canonicalizedSubstituents);
   auto newLinks = glue::makeLinksSelfReferential(canonicalizedSubstituents, newRanking.linkedPairs);
-  auto newAssignments = UniqueAssignments::uniqueAssignments(
+  auto newAssignments = UniqueAssignments::uniqueAssignmentsWithWeights(
     AssignmentType {
       newSymmetry,
       canonicalizedCharacters,
       newLinks
-    }
+    },
+    newSymmetry
   );
   boost::optional<unsigned> newAssignment;
 
@@ -582,7 +589,7 @@ void CNStereocenter::removeSubstituent(
     const auto& symmetryMapping = suitableMappingOptional.value();
 
     // Transform current assignment from characters to atom indices
-    const auto& currentAssignment = _uniqueAssignmentsCache.at(
+    const auto& currentAssignment = _uniqueAssignmentsCache.assignments.at(
       _assignmentOption.value()
     );
 
@@ -614,11 +621,11 @@ void CNStereocenter::removeSubstituent(
     );
 
     // Generate the rotational equivalents
-    auto allTrialRotations = trialAssignment.generateAllRotations();
+    auto allTrialRotations = trialAssignment.generateAllRotations(newSymmetry);
 
     // Search for a match from the vector of uniques
-    for(unsigned i = 0; i < newAssignments.size(); ++i) {
-      if(allTrialRotations.count(newAssignments.at(i)) > 0) {
+    for(unsigned i = 0; i < newAssignments.assignments.size(); ++i) {
+      if(allTrialRotations.count(newAssignments.assignments.at(i)) > 0) {
         newAssignment = i;
         break;
       }
@@ -970,7 +977,7 @@ std::vector<AtomIndexType> CNStereocenter::involvedAtoms() const {
 }
 
 unsigned CNStereocenter::numAssignments() const {
-  return _uniqueAssignmentsCache.size();
+  return _uniqueAssignmentsCache.assignments.size();
 }
 
 void CNStereocenter::setSymmetry(const Symmetry::Name& symmetryName) {
@@ -978,12 +985,13 @@ void CNStereocenter::setSymmetry(const Symmetry::Name& symmetryName) {
   _symmetry = symmetryName;
 
   // recalculate the number of unique Assignments
-  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignments(
+  _uniqueAssignmentsCache = UniqueAssignments::uniqueAssignmentsWithWeights(
     AssignmentType(
       symmetryName,
       glue::makeCanonicalCharacters(_ranking.sortedSubstituents),
       glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.linkedPairs)
     ),
+    symmetryName,
     false // do NOT remove trans-spanning ligand groups
   );
 
@@ -1001,7 +1009,7 @@ bool CNStereocenter::operator == (const CNStereocenter& other) const {
   return (
     _symmetry == other._symmetry
     && _centerAtom == other._centerAtom
-    && _uniqueAssignmentsCache.size() == other._uniqueAssignmentsCache.size()
+    && _uniqueAssignmentsCache.assignments.size() == other._uniqueAssignmentsCache.assignments.size()
     && _assignmentOption == other._assignmentOption
   );
 }
@@ -1013,8 +1021,8 @@ bool CNStereocenter::operator < (const CNStereocenter& other) const {
   return ConstexprMagic::consecutiveCompareSmaller(
     _centerAtom,
     other._centerAtom,
-    _uniqueAssignmentsCache.size(),
-    other._uniqueAssignmentsCache.size(),
+    _uniqueAssignmentsCache.assignments.size(),
+    other._uniqueAssignmentsCache.assignments.size(),
     _symmetry,
     other._symmetry,
     _assignmentOption,

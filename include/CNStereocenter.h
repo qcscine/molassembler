@@ -1,7 +1,7 @@
 #ifndef INCLUDE_CN_STEREOCENTER_H
 #define INCLUDE_CN_STEREOCENTER_H
 
-#include "geometry_assignment/Assignment.h"
+#include "geometry_assignment/GenerateUniques.h"
 #include "symmetry_information/Symmetries.h"
 #include "symmetry_information/DynamicProperties.h"
 
@@ -90,7 +90,7 @@ private:
    *
    * Essentially a cached value, valid only for the current ranking.
    */
-  std::vector<AssignmentType> _uniqueAssignmentsCache;
+  UniqueAssignments::AssignmentsWithWeights _uniqueAssignmentsCache;
 
   /*! Mapping between next neighbor atom index to permutational symmetry position
    *
@@ -121,6 +121,9 @@ public:
 
   //! Changes the assignment of the stereocenter
   void assign(const boost::optional<unsigned>& assignment) final;
+
+  //! Assigns the Stereocenter randomly using relative assignment weights
+  void assignRandom();
 
   /*!
    * The assignment is determined based on three-dimensional positions using

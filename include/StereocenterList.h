@@ -1,7 +1,7 @@
 #ifndef INCLUDE_GRAPH_FEATURE_LIST_H
 #define INCLUDE_GRAPH_FEATURE_LIST_H
 
-#include <map>
+#include <unordered_map>
 
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
@@ -32,7 +32,7 @@ public:
 
   using SetType = std::set<PtrType, PtrCompare>;
   using ListType = std::vector<PtrType>;
-  using MapType = std::map<AtomIndexType, const PtrType>;
+  using MapType = std::unordered_map<AtomIndexType, const PtrType>;
 
   using const_iterator = SetType::const_iterator;
   using iterator = SetType::iterator;

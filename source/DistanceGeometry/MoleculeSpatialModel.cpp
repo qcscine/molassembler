@@ -7,6 +7,7 @@
 #include "CommonTrig.h"
 #include "Log.h"
 #include "StdlibTypeAlgorithms.h"
+#include "template_magic/Random.h"
 
 #include <fstream>
 
@@ -119,6 +120,17 @@ MoleculeSpatialModel::MoleculeSpatialModel(
           _stereocenterMap[involvedAtom] = std::make_shared<
             Stereocenters::CNStereocenter
           >(*CNSPtr);
+
+          /* Now we have a stereocenter, but it might be unassigned, in which
+           * case angle() will fail! Need to assign unassigned ones
+           * at random consistent with the unique assignments' relative
+           * occurrences
+           */
+          if(!_stereocenterMap[involvedAtom] -> assigned()) {
+            std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+              _stereocenterMap[involvedAtom]
+            ) -> assignRandom();
+          }
         } else {
           auto EZSPtr = std::dynamic_pointer_cast<
             Stereocenters::EZStereocenter
@@ -127,19 +139,16 @@ MoleculeSpatialModel::MoleculeSpatialModel(
           _stereocenterMap[involvedAtom] = std::make_shared<
             Stereocenters::EZStereocenter
           >(*EZSPtr);
-        }
 
-        /* Now we have a stereocenter, but it might be unassigned, in which
-         * case angle() will fail! Need to assign unassigned ones
-         * at random consistent with the unique assignments' relative
-         * occurrences (TODO)
-         *
-         * Make sure changes are only effected on stereocenters in our local
-         * map of stereocenters, we are forbidden from changing the molecular
-         * graph by altering assignments
-         */
-        if(!_stereocenterMap[involvedAtom] -> assigned()) {
-          _stereocenterMap[involvedAtom] -> assign(0);
+          if(!_stereocenterMap[involvedAtom] -> assigned()) {
+            // Assign the EZStereocenter at random
+            _stereocenterMap[involvedAtom] -> assign(
+              TemplateMagic::random.getSingle<unsigned>(
+                0,
+                _stereocenterMap[involvedAtom] -> numAssignments() - 1
+              )
+            );
+          }
         }
       }
     }
@@ -192,11 +201,15 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         molecule.rankPriority(i)
       );
 
-      // At this point, new stereocenters should have only one assignment
-      assert(_stereocenterMap[i] -> numAssignments() == 1);
-
-      // Default assign it to zero
-      _stereocenterMap[i] -> assign(0);
+      /* New stereocenters encountered at this point can have multiple
+       * assignemnts, since some types of stereocenters are flatly ignored by
+       * the candidate functions from Molecule, such as trigonal pyramidal
+       * nitrogens. These are found here, though, and MUST be chosen randomly
+       * according to the relative weights
+       */
+      std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+        _stereocenterMap[i]
+      ) -> assignRandom();
     }
   }
 
