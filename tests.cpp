@@ -12,6 +12,9 @@
 #include "GenerateUniques.h"
 #include "LogicalOperatorTests.h"
 
+#include "template_magic/Random.h"
+#include "template_magic/Containers.h"
+
 using namespace UniqueAssignments;
 
 /* TODO
@@ -177,7 +180,7 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
     );
   };
 
-  auto allRotations = testCase.generateAllRotations();
+  auto allRotations = testCase.generateAllRotations(Symmetry::Name::Octahedral);
   for(const auto& copy : allRotations) {
     BOOST_CHECK(testInstance(copy));
   }
@@ -190,7 +193,7 @@ BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
   );
 
   BOOST_CHECK(
-    octahedralInstance.generateAllRotations().size()
+    octahedralInstance.generateAllRotations(Symmetry::Name::Octahedral).size()
     == 24 // 4 C4 cases on each of 6 A position selections
   );
   
@@ -222,10 +225,9 @@ void run_tests_with_counts(
       ? Assignment(symmetryName, characters)
       : Assignment(symmetryName, characters, pairs);
 
-    auto unique = uniqueAssignmentsWithCounts(assignment);
+    auto unique = uniqueAssignmentsWithCounts(assignment, symmetryName);
 
     BOOST_CHECK(unique.assignments.size() == expectedUnique );
-
 
     if(unique.assignments.size() != expectedUnique) {
       std::cout << "Mismatch: Expected " << expectedUnique
@@ -272,8 +274,8 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
   // one and only one of the following can be true for any Assignments a and b
   BOOST_CHECK(OperatorTests::testLogicalOperators(a, b));
 
-  BOOST_CHECK(a.isRotationallySuperimposable(b));
-  BOOST_CHECK(b.isRotationallySuperimposable(a));
+  BOOST_CHECK(a.isRotationallySuperimposable(b, Symmetry::Name::Octahedral));
+  BOOST_CHECK(b.isRotationallySuperimposable(a, Symmetry::Name::Octahedral));
 
   /* Contrived example of two that have inconsistent logical operators, just
    * reordered op pairs. Will evaluate == but also < w/ current impl.
@@ -298,8 +300,8 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
   };
 
   BOOST_CHECK(OperatorTests::testLogicalOperators(c, d));
-  BOOST_CHECK(c.isRotationallySuperimposable(d));
-  BOOST_CHECK(d.isRotationallySuperimposable(c));
+  BOOST_CHECK(c.isRotationallySuperimposable(d, Symmetry::Name::Octahedral));
+  BOOST_CHECK(d.isRotationallySuperimposable(c, Symmetry::Name::Octahedral));
 }
 
 /* Tetrahedral tests */

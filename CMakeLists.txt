@@ -23,7 +23,7 @@ find_package(Eigen3 3.1.1 REQUIRED)
 find_library(symmetry_LIB symmetries ${symmetry_LIB_DIR})
 find_program(
   CLANG_TIDY_EXE
-  NAMES "clang-tidy"
+  NAMES "clang-tidy-5.0"
   DOC "Path to clang-tidy executable"
 )
 

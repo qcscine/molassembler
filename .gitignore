@@ -5,3 +5,4 @@ bin_*
 build/
 .lvimrc
 documentation/
+.commit-notes

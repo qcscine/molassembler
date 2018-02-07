@@ -41,6 +41,19 @@ decltype(auto) minMaxAdapt(
   );
 }
 
+template<typename Function, typename T>
+decltype(auto) sortBinaryArgs(
+  Function&& function,
+  T&& a,
+  T&& b
+) {
+  if(a < b) {
+    return function(std::forward<T>(a), std::forward<T>(b));
+  } else {
+    return function(std::forward<T>(b), std::forward<T>(a));
+  }
+}
+
 template<typename T>
 std::string toString(const T& container) {
   std::stringstream sstream;

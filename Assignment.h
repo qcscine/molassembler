@@ -1,11 +1,11 @@
 #ifndef LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_H
 #define LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_H
 
+#include "symmetry_information/Symmetries.h"
+
 #include <vector>
 #include <map>
 #include <set>
-
-#include "symmetry_information/Symmetries.h"
 
 /*! @file
  *
@@ -35,13 +35,11 @@ private:
    * returned. If the generation is allowed to finish, the full set and the 
    * boolean false are returned.
    */
-  std::pair<
-    std::set<Assignment>,
-    bool
-  > _generateAllRotations(
-    std::function<
+  std::pair<std::set<Assignment>, bool> _generateAllRotations(
+    const std::function<
       bool(const Assignment&, const Assignment&)
-    > interruptCallbackOnNewAssignment
+    >& interruptCallbackOnNewAssignment,
+    const Symmetry::Name& symmetryName
   ) const;
 
 public:
@@ -51,7 +49,6 @@ public:
   >;
 
 /* Public members */
-  const Symmetry::Name symmetryName;
   std::vector<char> characters;
   LinksSetType links;
 
@@ -66,7 +63,7 @@ public:
    */
   Assignment(
     const Symmetry::Name& passSymmetryName,
-    const std::vector<char>& passCharacters
+    std::vector<char> passCharacters
   );
   /*!
    * Construct an Assignment from a list of ligand characters and a list of 
@@ -102,19 +99,19 @@ public:
   //! Rotate charactes according to template symmetry
   std::vector<char> rotateCharacters(
     const std::vector<char>& characters,
-    const unsigned& rotationFunctionIndex
-  );
+    const std::vector<unsigned>& rotationIndices
+  ) const;
 
   //! Rotate links according to template symmetry
   LinksSetType rotateLinks(
     const LinksSetType& links,
-    const unsigned& rotationFunctionIndex
-  );
+    const std::vector<unsigned>& rotationIndices
+  ) const;
 
   /*!
    * Applies a Symmetry rotation.
    */
-  void applyRotation(const unsigned& index);
+  void applyRotation(const std::vector<unsigned>& rotationIndices);
 
   /* Information –––––––––––––––––––––––– */
   /*!
@@ -126,16 +123,15 @@ public:
    */
   bool columnSmaller(const unsigned& a, const unsigned& b) const;
 
-
   /*!
    * Generates a set of all rotational equivalents of this Assignment as 
    * defined by its symmetry template parameter.
    */
-  std::set<Assignment> generateAllRotations() const;
+  std::set<Assignment> generateAllRotations(const Symmetry::Name& symmetryName) const;
 
   /*!
-   * Gets a map of ligand symbol character to position in the permutational 
-   * symmetry. 
+   * Gets a map of ligand symbol character to position(s) in the permutational
+   * symmetry.
    */
   std::map<
     char,
@@ -149,7 +145,10 @@ public:
    * Checks whether this Assignment is rotationally superimposable with
    * another.
    */
-  bool isRotationallySuperimposable(const Assignment& other) const;
+  bool isRotationallySuperimposable(
+    const Assignment& other,
+    const Symmetry::Name& symmetryName
+  ) const;
 
   /*!
    * Makes a set of a "column"'s connected indices.
@@ -176,6 +175,6 @@ std::ostream& operator << (
   const Assignment& a
 );
 
-} // eo namespace
+} // namespace UniqueAssignments
 
 #endif

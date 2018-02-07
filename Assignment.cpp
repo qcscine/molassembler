@@ -1,8 +1,8 @@
 #include "Assignment.h"
 #include "Util.h"
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 
 namespace UniqueAssignments {
 
@@ -10,9 +10,8 @@ namespace UniqueAssignments {
 /*  Constructors */
 Assignment::Assignment(
   const Symmetry::Name& passSymmetryName,
-  const std::vector<char>& passCharacters
-) : symmetryName(passSymmetryName),
-    characters(passCharacters)
+  std::vector<char> passCharacters
+) : characters(std::move(passCharacters))
 {
   assert(characters.size() == Symmetry::size(passSymmetryName));
 }
@@ -21,8 +20,7 @@ Assignment::Assignment(
   const Symmetry::Name& passSymmetryName,
   const std::vector<char>& passCharacters,
   const LinksSetType& passLinks
-) : symmetryName(passSymmetryName),
-    characters(passCharacters),
+) : characters(passCharacters),
     links(passLinks) 
 {
   // make sure the number of characters matches the current symmetry
@@ -47,13 +45,21 @@ void Assignment::columnSwap(
   const unsigned& a,
   const unsigned& b
 ) {
+  assert(a < characters.size() && b < characters.size());
+
   // exchange characters, adjust all LinksSetType accordingly
   std::swap(characters[a], characters[b]);
 
   auto determineNewIndex = [&a, &b](const unsigned& index) -> unsigned {
-    if(index == a) return b;
-    else if(index == b) return a;
-    else return index;
+    if(index == a) {
+      return b;
+    }
+
+    if(index == b) {
+      return a;
+    }
+
+    return index;
   };
 
   LinksSetType newLinks;
@@ -95,15 +101,17 @@ bool Assignment::nextPermutation() {
       while(
         k != 0 
         && !columnSmaller(i, --k)
-      ) continue;
+      ) { }
 
       columnSwap(i, k);
       reverseColumns(j, characters.size());
+
       return true;
     }
 
     if(i == 0) {
       reverseColumns(0, characters.size());
+
       return false;
     }
   }
@@ -125,10 +133,11 @@ bool Assignment::previousPermutation() {
       while(
         k != 0 
         && !columnSmaller(--k, i)
-      ) continue;
+      ) { }
 
       columnSwap(i, k);
       reverseColumns(j, characters.size());
+
       return true;
     }
 
@@ -142,56 +151,50 @@ bool Assignment::previousPermutation() {
 
 typename Assignment::LinksSetType Assignment::rotateLinks(
   const LinksSetType& links,
-  const unsigned& rotationFunctionIndex
-) {
-
-  auto rotateIndex = [&rotationFunctionIndex, this](
+  const std::vector<unsigned>& rotationIndices
+) const {
+  auto rotateIndex = [&rotationIndices, this](
     const unsigned& from
   ) -> unsigned {
-    const auto& symVec = Symmetry::rotations(symmetryName).at(
-      rotationFunctionIndex
-    );
-
     return std::find(
-      symVec.begin(),
-      symVec.end(),
+      rotationIndices.begin(),
+      rotationIndices.end(),
       from
-    ) - symVec.begin();
+    ) - rotationIndices.begin();
   };
 
-  LinksSetType retSet;
+  LinksSetType rotatedSet;
 
   for(const auto& pair : links) {
-    retSet.emplace(
-      Util::minMaxAdapt(
-        std::function<
-          std::pair<unsigned, unsigned>(
-            unsigned,
-            unsigned
-          )
-        >(std::make_pair<unsigned, unsigned>),
+    rotatedSet.emplace(
+      Util::sortBinaryArgs(
+        std::make_pair<unsigned, unsigned>,
         rotateIndex(pair.first),
         rotateIndex(pair.second)
       )
     );
   }
 
-  return retSet;
+  return rotatedSet;
 }
 
-std::set<Assignment> Assignment::generateAllRotations() const {
+std::set<Assignment> Assignment::generateAllRotations(
+  const Symmetry::Name& symmetryName
+) const {
   return _generateAllRotations(
     [](
       const Assignment& a __attribute__ ((unused)),
       const Assignment& b __attribute__ ((unused))
     ) -> bool {
       return false;
-    }
+    },
+    symmetryName
   ).first;
 }
 
 bool Assignment::isRotationallySuperimposable(
-  const Assignment& other
+  const Assignment& other,
+  const Symmetry::Name& symmetryName
 ) const {
   return (
     *this == other
@@ -201,7 +204,8 @@ bool Assignment::isRotationallySuperimposable(
         const Assignment& b
       ) -> bool {
         return b == other;
-      }
+      },
+      symmetryName
     ).second
   );
 }
@@ -223,7 +227,9 @@ std::string Assignment::toString() const {
   unsigned pairs = links.size();
   for(const auto& pair: links) {
     out << "[" << pair.first << ", " << pair.second << "]";
-    if(--pairs != 0) out << ", ";
+    if(--pairs != 0) {
+      out << ", ";
+    }
   }
 
   out << "}";
@@ -269,9 +275,10 @@ std::pair<
   std::set<Assignment>,
   bool
 > Assignment::_generateAllRotations(
-  std::function<
+  const std::function<
     bool(const Assignment&, const Assignment&)
-  > interruptCallbackOnNewAssignment
+  >& interruptCallbackOnNewAssignment,
+  const Symmetry::Name& symmetryName
 ) const {
 
   // add the initial structure to a set of Assignments
@@ -315,7 +322,9 @@ std::pair<
 
     // apply the rotation referenced by the last link in chain
     generated.applyRotation(
-      chain.back()
+      Symmetry::rotations(symmetryName).at(
+        chain.back()
+      )
     );
 
     // is it something new?
@@ -365,7 +374,7 @@ void Assignment::lowestPermutation() {
    * permutation.
    */
   if(!isSortedAsc()) {
-    while(nextPermutation()) continue;
+    while(nextPermutation()) { }
   }
 }
 
@@ -374,19 +383,18 @@ void Assignment::reverseColumns(
   const unsigned& to
 ) {
   unsigned a = from, b = to;
-  while(a != b && a != --b) columnSwap(a++, b);
+  while(a != b && a != --b) {
+    columnSwap(a++, b);
+  }
 }
 
 std::vector<char> Assignment::rotateCharacters(
   const std::vector<char>& characters,
-  const unsigned& rotationFunctionIndex
-) {
+  const std::vector<unsigned>& rotationIndices
+) const {
   std::vector<char> retv;
 
-  for(
-    const auto& index : 
-    Symmetry::rotations(symmetryName).at(rotationFunctionIndex)
-  ) {
+  for(const auto& index : rotationIndices) {
     retv.push_back(
       characters.at(index)
     );
@@ -395,23 +403,24 @@ std::vector<char> Assignment::rotateCharacters(
   return retv;
 }
 
-void Assignment::applyRotation(const unsigned& index) {
-  characters = rotateCharacters(characters, index);
-  links = rotateLinks(links, index);
+void Assignment::applyRotation(const std::vector<unsigned>& rotationIndices) {
+  characters = rotateCharacters(characters, rotationIndices);
+  links = rotateLinks(links, rotationIndices);
 }
 
 bool Assignment::columnSmaller(
   const unsigned& a,
   const unsigned& b
 ) const {
-  if(links.size() == 0) return characters[a] < characters[b];
+  if(links.empty()) {
+    return characters[a] < characters[b];
+  }
 
   return Util::compareSmaller(
     characters[a],
     characters[b]
   ).value_or(
     Util::compareSmaller(
-      // see if this does the trick
       Util::removeElementFromSet(makeConnectedIndicesSet(a), b),
       Util::removeElementFromSet(makeConnectedIndicesSet(b), a)
     ).value_or(
@@ -426,12 +435,10 @@ std::map<
 > Assignment::getCharMap() const {
   std::map<
     char,
-    std::vector<
-      unsigned
-    >
+    std::vector<unsigned>
   > returnMap;
 
-  for(unsigned i = 0; i < Symmetry::size(symmetryName); i++) {
+  for(unsigned i = 0; i < characters.size(); i++) {
     const char& columnChar = characters[i];
     if(returnMap.count(columnChar) == 0) {
       returnMap[columnChar] = {i};
@@ -490,4 +497,4 @@ std::ostream& operator << (
   return os;
 }
 
-} // eo namespace
+} // namespace UniqueAssignments

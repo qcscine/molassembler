@@ -45,7 +45,8 @@ int main() {
     );
 
     auto uniques = UniqueAssignments::uniqueAssignments(
-      lowestSymmetryAssignment
+      lowestSymmetryAssignment,
+      symmetryName
     );
 
     std::cout << Symmetry::name(symmetryName) << ": " << uniques.size() << std::endl;
@@ -62,7 +63,28 @@ int main() {
     );
 
     auto uniques = UniqueAssignments::uniqueAssignments(
-      lowestSymmetryAssignment
+      lowestSymmetryAssignment,
+      symmetryName
+    );
+
+    std::cout << Symmetry::name(symmetryName) << ": " << uniques.size() << std::endl;
+  }
+
+  std::cout << std::endl << "Two linked chars identical, all others different. Number of unique assignments:" << std::endl;
+  for(const auto& symmetryName : Symmetry::allNames) {
+    Assignment lowestSymmetryAssignment(
+      symmetryName,
+      twoIdenticalCharSequence(
+        Symmetry::size(symmetryName)
+      ),
+      {
+        {0, 1}
+      }
+    );
+
+    auto uniques = UniqueAssignments::uniqueAssignments(
+      lowestSymmetryAssignment,
+      symmetryName
     );
 
     std::cout << Symmetry::name(symmetryName) << ": " << uniques.size() << std::endl;

@@ -1,9 +1,9 @@
 #ifndef LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
 #define LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
 
-#include <vector>
-
 #include "Assignment.h"
+
+#include <vector>
 
 /*! @file
  *
@@ -15,7 +15,8 @@
 namespace UniqueAssignments {
 
 bool predicateHasTransArrangedPairs(
-  const Assignment& assignment
+  const Assignment& assignment,
+  const Symmetry::Name& symmetryName
 );
 
 /*! 
@@ -35,6 +36,7 @@ bool predicateHasTransArrangedPairs(
  */
 std::vector<Assignment> uniqueAssignments(
   const Assignment& initial,
+  const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups = true
 );
 
@@ -50,9 +52,10 @@ struct UniqueAssignmentsReturnType {
  */
 UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
   const Assignment& initial,
+  const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups = true
 );
 
-} // eo namespace
+} // namespace UniqueAssignments
 
 #endif

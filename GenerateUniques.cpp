@@ -1,19 +1,20 @@
 #include "GenerateUniques.h"
 
 #include <algorithm>
-#include <functional>
 #include <cassert>
+#include <functional>
 #include <sstream>
 
 namespace UniqueAssignments {
 
 bool predicateHasTransArrangedPairs(
-  const Assignment& assignment
+  const Assignment& assignment,
+  const Symmetry::Name& symmetryName
 ) {
   // for every pair in links
   for(const auto& indexPair : assignment.links) {
     if(
-      Symmetry::angleFunction(assignment.symmetryName)(
+      Symmetry::angleFunction(symmetryName)(
         indexPair.first,
         indexPair.second
       ) == M_PI
@@ -28,6 +29,7 @@ bool predicateHasTransArrangedPairs(
 
 std::vector<Assignment> uniqueAssignments(
   const Assignment& initial,
+  const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
@@ -51,7 +53,7 @@ std::vector<Assignment> uniqueAssignments(
    * have any trans spanning pairs
    */
   if(removeTransSpanningGroups) {
-    while(predicateHasTransArrangedPairs(assignment)) {
+    while(predicateHasTransArrangedPairs(assignment, symmetryName)) {
       bool hasAnotherPermutation = assignment.nextPermutation();
       if(!hasAnotherPermutation) {
         /* This can happen, e.g. in square-planar AAAB with 
@@ -63,32 +65,32 @@ std::vector<Assignment> uniqueAssignments(
     }
   }
 
-  // The provided assignment is the first unique assignment
-  std::vector<Assignment> uniqueAssignments {assignment};
+  // Generate all rotations of the initial assignment
+  auto rotationsSet = assignment.generateAllRotations(symmetryName);
 
-  // generate the initial assignment's set of rotations
-  auto rotationsSet = assignment.generateAllRotations();
+  // The lowest rotation of the passed assignment is the first unique assignment
+  std::vector<Assignment> uniqueAssignments {*rotationsSet.begin()};
 
   // go through all possible permutations of columns
   while(assignment.nextPermutation()) {
-    if(
+    if( // skip permutations with trans pairs if desired
       removeTransSpanningGroups 
-      && predicateHasTransArrangedPairs(assignment)
-    ) continue; // skip permutations with trans pairs if desired
+      && predicateHasTransArrangedPairs(assignment, symmetryName)
+    ) {
+      continue;
+    }
 
     // is the current assignment not contained within the set of rotations?
     if(
       rotationsSet.count(assignment) == 0
     ) {
-      // if so, it is a unique assignment, so add it to the list
-      uniqueAssignments.push_back(assignment);
+      // if so, it is a unique assignment, generate all rotations
+      auto assignmentRotations = assignment.generateAllRotations(symmetryName);
+
+      // add the smallest assignment from the generated set to the list of uniques
+      uniqueAssignments.push_back(*assignmentRotations.begin());
 
       // and add its rotations to the set
-      /* C++17
-      rotationsSet.merge(
-        assignment.generateAllRotations()
-      ); */
-      auto assignmentRotations = assignment.generateAllRotations();
       rotationsSet.insert(
         assignmentRotations.begin(),
         assignmentRotations.end()
@@ -102,6 +104,7 @@ std::vector<Assignment> uniqueAssignments(
 
 UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
   const Assignment& initial,
+  const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
@@ -117,14 +120,11 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
 
   struct RotationsAndOccurrencesCount {
     std::set<Assignment> rotations;
-    unsigned occurrencesCount;
+    unsigned occurrencesCount = 1;
 
     // Help constructor
     RotationsAndOccurrencesCount() = default;
-    RotationsAndOccurrencesCount(
-      std::set<Assignment>&& rotations
-    ) : rotations(rotations),
-        occurrencesCount(1)
+    explicit RotationsAndOccurrencesCount(std::set<Assignment>&& rotations) : rotations(rotations)
     {}
   };
 
@@ -138,7 +138,7 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
    * have any trans spanning pairs
    */
   if(removeTransSpanningGroups) {
-    while(predicateHasTransArrangedPairs(assignment)) {
+    while(predicateHasTransArrangedPairs(assignment, symmetryName)) {
       bool hasAnotherPermutation = assignment.nextPermutation();
       if(!hasAnotherPermutation) {
         /* This can happen, e.g. in square-planar AAAB with 
@@ -150,19 +150,27 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
     }
   }
 
+  auto initialRotations = assignment.generateAllRotations(symmetryName);
+  Assignment lowestRotation = *initialRotations.begin();
+
   std::map<
     Assignment,
     RotationsAndOccurrencesCount
   > trackingData {
-    {assignment, assignment.generateAllRotations()}
+    {
+      lowestRotation,
+      RotationsAndOccurrencesCount {std::move(initialRotations)}
+    }
   };
 
   // go through all possible permutations of columns
   while(assignment.nextPermutation()) {
-    if(
+    if( // skip permutations with trans pairs if desired
       removeTransSpanningGroups 
-      && predicateHasTransArrangedPairs(assignment)
-    ) continue; // skip permutations with trans pairs if desired
+      && predicateHasTransArrangedPairs(assignment, symmetryName)
+    ) {
+      continue;
+    }
 
     // is the current assignment not contained within the set of rotations?
     bool isContained = false;
@@ -174,7 +182,11 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
     }
 
     if(!isContained) {
-      trackingData[assignment] = {assignment.generateAllRotations()};
+      auto rotations = assignment.generateAllRotations(symmetryName);
+      auto lowestRotation = *rotations.begin();
+      trackingData[lowestRotation] = RotationsAndOccurrencesCount {
+        std::move(rotations)
+      };
     }
 
   }
@@ -184,8 +196,8 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
 
   // Get the data
   for(auto& iterPair: trackingData) {
-    returnData.assignments.emplace_back(
-      std::move(iterPair.first)
+    returnData.assignments.push_back(
+      iterPair.first
     );
     returnData.weights.push_back(
       iterPair.second.occurrencesCount
@@ -195,4 +207,4 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
   return returnData;
 }
 
-} // eo namespace
+} // namespace UniqueAssignments
