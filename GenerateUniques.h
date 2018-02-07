@@ -14,7 +14,7 @@
 
 namespace UniqueAssignments {
 
-bool predicateHasTransArrangedPairs(
+bool hasTransArrangedPairs(
   const Assignment& assignment,
   const Symmetry::Name& symmetryName
 );
@@ -41,7 +41,7 @@ std::vector<Assignment> uniqueAssignments(
 );
 
 //! Data class for uniqueAssignments including weights
-struct UniqueAssignmentsReturnType {
+struct AssignmentsWithWeights {
   std::vector<Assignment> assignments;
   std::vector<unsigned> weights;
 };
@@ -50,7 +50,7 @@ struct UniqueAssignmentsReturnType {
  * Returns the set of rotationally unique assignments including absolute
  * occurrence counts.
  */
-UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
+AssignmentsWithWeights uniqueAssignmentsWithWeights(
   const Assignment& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups = true

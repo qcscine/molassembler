@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include "boost/functional/hash.hpp"
 
 namespace UniqueAssignments {
 
@@ -21,7 +22,7 @@ Assignment::Assignment(
   const std::vector<char>& passCharacters,
   const LinksSetType& passLinks
 ) : characters(passCharacters),
-    links(passLinks) 
+    links(passLinks)
 {
   // make sure the number of characters matches the current symmetry
   assert(characters.size() == Symmetry::size(passSymmetryName));
@@ -399,7 +400,7 @@ std::vector<char> Assignment::rotateCharacters(
       characters.at(index)
     );
   }
-  
+
   return retv;
 }
 
@@ -464,7 +465,7 @@ bool Assignment::isSortedAsc() const {
       break;
     }
   }
-  
+
   return isSorted;
 }
 
@@ -483,6 +484,22 @@ std::set<unsigned> Assignment::makeConnectedIndicesSet(
     }
 
     return connectedIndices;
+}
+
+std::size_t hash_value(const Assignment& assignment) {
+  std::size_t seed = 0;
+
+  boost::hash_combine(
+    seed,
+    boost::hash_range(assignment.characters.begin(), assignment.characters.end())
+  );
+
+  boost::hash_combine(
+    seed,
+    boost::hash_range(assignment.links.begin(), assignment.links.end())
+  );
+
+  return seed;
 }
 
 /*!

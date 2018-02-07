@@ -225,7 +225,7 @@ void run_tests_with_counts(
       ? Assignment(symmetryName, characters)
       : Assignment(symmetryName, characters, pairs);
 
-    auto unique = uniqueAssignmentsWithCounts(assignment, symmetryName);
+    auto unique = uniqueAssignmentsWithWeights(assignment, symmetryName);
 
     BOOST_CHECK(unique.assignments.size() == expectedUnique );
 
@@ -240,7 +240,7 @@ void run_tests_with_counts(
       std::cout << characters[i];
       if(i != characters.size() - 1) std::cout << ", ";
     }
-    std::cout << "}" << std::endl;
+    std::cout << "} " << Symmetry::name(symmetryName) << std::endl;
 
     for(unsigned i = 0; i < unique.assignments.size(); i++) {
       std::cout << "Weight " << unique.weights[i] << ": " 

@@ -167,6 +167,8 @@ public:
   bool operator != (const Assignment& other) const;
 };
 
+std::size_t hash_value(const Assignment& assignment);
+
 /*!
  * ostream operator for easier debugging
  */

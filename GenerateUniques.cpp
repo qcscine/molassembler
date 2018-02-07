@@ -1,13 +1,16 @@
 #include "GenerateUniques.h"
 
+#include "boost/functional/hash.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <functional>
 #include <sstream>
+#include <unordered_map>
 
 namespace UniqueAssignments {
 
-bool predicateHasTransArrangedPairs(
+bool hasTransArrangedPairs(
   const Assignment& assignment,
   const Symmetry::Name& symmetryName
 ) {
@@ -53,7 +56,7 @@ std::vector<Assignment> uniqueAssignments(
    * have any trans spanning pairs
    */
   if(removeTransSpanningGroups) {
-    while(predicateHasTransArrangedPairs(assignment, symmetryName)) {
+    while(hasTransArrangedPairs(assignment, symmetryName)) {
       bool hasAnotherPermutation = assignment.nextPermutation();
       if(!hasAnotherPermutation) {
         /* This can happen, e.g. in square-planar AAAB with 
@@ -75,7 +78,7 @@ std::vector<Assignment> uniqueAssignments(
   while(assignment.nextPermutation()) {
     if( // skip permutations with trans pairs if desired
       removeTransSpanningGroups 
-      && predicateHasTransArrangedPairs(assignment, symmetryName)
+      && hasTransArrangedPairs(assignment, symmetryName)
     ) {
       continue;
     }
@@ -102,7 +105,7 @@ std::vector<Assignment> uniqueAssignments(
   return uniqueAssignments;
 }
 
-UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
+AssignmentsWithWeights uniqueAssignmentsWithWeights(
   const Assignment& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups
@@ -124,8 +127,7 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
 
     // Help constructor
     RotationsAndOccurrencesCount() = default;
-    explicit RotationsAndOccurrencesCount(std::set<Assignment>&& rotations) : rotations(rotations)
-    {}
+    explicit RotationsAndOccurrencesCount(std::set<Assignment>&& rotations) : rotations(rotations) {}
   };
 
   // make a copy of initial so we can modify it by permutation
@@ -138,7 +140,7 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
    * have any trans spanning pairs
    */
   if(removeTransSpanningGroups) {
-    while(predicateHasTransArrangedPairs(assignment, symmetryName)) {
+    while(hasTransArrangedPairs(assignment, symmetryName)) {
       bool hasAnotherPermutation = assignment.nextPermutation();
       if(!hasAnotherPermutation) {
         /* This can happen, e.g. in square-planar AAAB with 
@@ -151,60 +153,54 @@ UniqueAssignmentsReturnType uniqueAssignmentsWithCounts(
   }
 
   auto initialRotations = assignment.generateAllRotations(symmetryName);
-  Assignment lowestRotation = *initialRotations.begin();
+  const Assignment& lowestRotation = *initialRotations.begin();
 
-  std::map<
-    Assignment,
-    RotationsAndOccurrencesCount
-  > trackingData {
-    {
-      lowestRotation,
-      RotationsAndOccurrencesCount {std::move(initialRotations)}
-    }
-  };
+  AssignmentsWithWeights data;
 
-  // go through all possible permutations of columns
+  data.weights.reserve(40);
+  data.assignments.reserve(40);
+
+  data.assignments.push_back(lowestRotation);
+  data.weights.push_back(1);
+
+  std::unordered_map<Assignment, unsigned, boost::hash<Assignment>> rotationCounterMap;
+
+  for(const auto& rotation: initialRotations) {
+    rotationCounterMap.emplace(
+      rotation,
+      0
+    );
+  }
+
   while(assignment.nextPermutation()) {
     if( // skip permutations with trans pairs if desired
       removeTransSpanningGroups 
-      && predicateHasTransArrangedPairs(assignment, symmetryName)
+      && hasTransArrangedPairs(assignment, symmetryName)
     ) {
       continue;
     }
 
-    // is the current assignment not contained within the set of rotations?
-    bool isContained = false;
-    for(auto& iterPair : trackingData) {
-      if(iterPair.second.rotations.count(assignment) != 0) {
-        isContained = true;
-        iterPair.second.occurrencesCount += 1;
-      }
-    }
-
-    if(!isContained) {
+    auto findIter = rotationCounterMap.find(assignment);
+    if(findIter == rotationCounterMap.end()) {
       auto rotations = assignment.generateAllRotations(symmetryName);
-      auto lowestRotation = *rotations.begin();
-      trackingData[lowestRotation] = RotationsAndOccurrencesCount {
-        std::move(rotations)
-      };
+      data.assignments.push_back(*rotations.begin());
+      data.weights.push_back(1);
+
+      for(const auto& rotation : rotations) {
+        rotationCounterMap.emplace(
+          rotation,
+          data.weights.size() - 1
+        );
+      }
+    } else {
+      ++data.weights.at(findIter->second);
     }
-
   }
 
-  // Condense the data down to vectors
-  UniqueAssignmentsReturnType returnData;
+  data.weights.shrink_to_fit();
+  data.assignments.shrink_to_fit();
 
-  // Get the data
-  for(auto& iterPair: trackingData) {
-    returnData.assignments.push_back(
-      iterPair.first
-    );
-    returnData.weights.push_back(
-      iterPair.second.occurrencesCount
-    );
-  }
-
-  return returnData;
+  return data;
 }
 
 } // namespace UniqueAssignments
