@@ -55,8 +55,6 @@ enum class Particulars {
   DGRefinementProgress,
   // In generateConformation, show the Trees generated from the molecules
   gatherDGInformationTrees,
-  // In MoleculeSpatialModel, processing information
-  DGSpatialModel,
   // in debugDistanceGeometry, progress information
   DGDebugInfo,
   /* Ranking debug information

@@ -15,6 +15,7 @@
 
 namespace MoleculeManip {
 
+//! Information on particular element types
 namespace AtomInfo {
 
 /*! @file

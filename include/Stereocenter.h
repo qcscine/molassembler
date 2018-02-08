@@ -33,6 +33,7 @@ std::basic_ostream<char>& operator << (
   const std::shared_ptr<Stereocenters::Stereocenter>& stereocenterPtr
 );
 
+//! Classes that store and manipulate steric information not intrinsic to the graph
 namespace Stereocenters {
 
 enum class ChiralityConstraintTarget {

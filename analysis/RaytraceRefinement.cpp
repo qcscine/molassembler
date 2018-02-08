@@ -6,7 +6,6 @@
 #include "DistanceGeometry/generateConformation.h"
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
-#include "Log.h"
 #include "AnalysisHelpers.h"
 #include "StdlibTypeAlgorithms.h"
 
@@ -95,7 +94,6 @@ int main(int argc, char* argv[]) {
 /* Generating work */
   // Generate from file
   if(options_variables_map.count("f") == 1) { 
-    Log::particulars.insert(Log::Particulars::DGSpatialModel);
     bool useYInversionTrick = false;
 
     if(options_variables_map.count("i")) {

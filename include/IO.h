@@ -26,6 +26,7 @@
 
 namespace MoleculeManip {
 
+//! Input and output
 namespace IO {
 
 //! Abstract base class / interface for file reading classes

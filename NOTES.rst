@@ -22,7 +22,6 @@ Remaining DG deficiencies
            
 TODO
 ----
-- Recheck geometry_assignments relative weights for correctness
 - Fix all the failing tests
 - Stereocenters that merely mark non-standard geometries and do not provide any
   assignments are probably not included in ranking at all, but they should be!

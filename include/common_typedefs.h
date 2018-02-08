@@ -151,6 +151,7 @@ enum class ChiralStatePreservation {
 };
 
 
+//! Boost graph vertex and edge property types
 namespace GraphDetail {
 
 struct VertexData {

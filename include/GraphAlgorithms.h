@@ -15,6 +15,7 @@
 
 namespace MoleculeManip {
 
+//! Core graph-level algorithms (not requiring stereocenter information)
 namespace GraphAlgorithms {
 
 //! BGL BFS Visitors

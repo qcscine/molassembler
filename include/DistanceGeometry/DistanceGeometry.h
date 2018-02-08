@@ -13,6 +13,7 @@
 
 namespace MoleculeManip {
 
+//! Distance geometry-related classes and functions
 namespace DistanceGeometry {
 
 struct ChiralityConstraint {
