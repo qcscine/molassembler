@@ -292,6 +292,14 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix(Partiality partiality) {
         color_map,
         distance_map
       );
+
+      double presumedLower = -distances.at(right(b));
+      double presumedUpper = distances.at(left(b));
+
+      double fixedDistance = TemplateMagic::random.getSingle<double>(
+        std::min(presumedLower, presumedUpper),
+        std::max(presumedLower, presumedUpper)
+      );
 #else
       boost::gor1_simplified_shortest_paths(
         *this,
@@ -300,7 +308,6 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix(Partiality partiality) {
         color_map,
         distance_map
       );
-#endif
 
       assert(-distances.at(right(b)) < distances.at(left(b)));
 
@@ -309,6 +316,8 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix(Partiality partiality) {
         -distances.at(right(b)),
         distances.at(left(b))
       );
+
+#endif
 
       // Record in distances matrix
       _distances(a, b) = fixedDistance;

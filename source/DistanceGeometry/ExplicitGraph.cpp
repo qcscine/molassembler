@@ -20,7 +20,7 @@
  * alright since there are, by construction, no negative edge weight sum cycles,
  * which would be the death of the algorithm.
  *
- * But BGL does not allow this, so we have to use Bellman-Ford, which is 
+ * But BGL does not allow this, so we would have to use Bellman-Ford, which is 
  * O(VE), not O(V + E).
  */
 
@@ -341,6 +341,14 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix(Partiality partiality) {
         color_map,
         distance_map
       );
+
+      double presumedLower = -distance.at(right(b));
+      double presumedUpper = distance.at(left(b));
+
+      double tightenedBound = TemplateMagic::random.getSingle<double>(
+        std::min(presumedLower, presumedUpper),
+        std::max(presumedLower, presumedUpper)
+      );
 #else
       boost::gor1_simplified_shortest_paths(
         _graph,
@@ -349,8 +357,6 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix(Partiality partiality) {
         color_map,
         distance_map
       );
-#endif
-
       assert(-distance.at(right(b)) < distance.at(left(b)));
 
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
@@ -360,6 +366,7 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix(Partiality partiality) {
         -distance.at(right(b)),
         distance.at(left(b))
       );
+#endif
 
       upperTriangle(
         std::min(a, b),
