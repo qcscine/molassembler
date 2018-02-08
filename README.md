@@ -27,18 +27,24 @@ local geometries onto every non-terminal atom in the graph.
     - Effortless and unique mappings (default)
     - Unique mappings
     - Random from multiple best
+
 - Ranking algorithms are nearly fully IUPAC compliant.
 - Cycle detection using Unique Ring Families
 - Distance Geometry algorithm to generate three-dimensional representation
+
   - Unassigned stereocenters are randomly assigned from relative statistical
     occurrence weights.
   - Full metrization during distance matrix generation scales with approximately
     N^3.5. Achieved via shortest paths calculation in graph using GOR algorithm.
   - Can optionally choose four-atom or 10% partial metrization.
   - Embedding and refinement is performed in four spatial dimensions.
+
 - Geometry determination algorithms
+
   - Currently only VSEPR, fallback is random symmetry of correct size
+
 - Extensive tests
+
   - Ranking algorithm is tested against nearly all examples from the IUPAC Blue
     Book, the corresponding MOLFiles can be found in
     tests/mol_files/ranking_tree_molecules/.
@@ -48,7 +54,9 @@ local geometries onto every non-terminal atom in the graph.
   - Sanity tests for every stereocenter symmetry and assignment to ensure
     stereocenters are generated as desired
   - Various other tests.
+
 - Analysis binaries
+
   - RaytraceRefinement creates POV-Ray files and .csv files with which the
     refinement stage of DistanceGeometry can be examined in detail.
     Complementary files for graphing the output and generating the ray-traced 
@@ -74,20 +82,14 @@ Library dependencies:
 - boost: graph, functional, optional, test
 - Eigen: vector arithmetic
 - dlib: BFGS solver
-- RingDecomposerLib: Unique Ring Family cycle detection
-
-  - Kolodzik, A.; Urbaczek, S.; Rarey, M. Unique Ring Families: A Chemically
-    Meaningful Description of Molecular Ring Topologies. J. Chem. Inf. Model.,
-    2012, 52 (8), pp 2013–2021
-  - Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An Open-Source
-    implementation of Unique Ring Families and Other Cycle Bases. J. Chem. Inf.
-    Model., 2017, 57 (2), pp 122–126
-
+- RingDecomposerLib[1][RDL reference][2][URF reference]: Unique Ring Family cycle detection
 - Delib: Common chemical exchange types
 - ConstexprMagic: constexpr algorithms and data structures
 - TemplateMagic: randomness, cache, composability improvement shorthands
 - Symmetry information library: constexpr properties of symmetries
 - Unique Assignment library: Stereopermutation of ligands in arbitrary symmetries
+- Cyclic polygons library: Determination of planar cyclic polygon internal
+  angles for any edge lengths
 
 
 ## Compilation
@@ -118,3 +120,14 @@ $ make test
 ## Documentation
 
 You can build the documentation by running `doxygen` in the main directory.
+
+## References
+
+[RDL reference]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An Open-Source
+implementation of Unique Ring Families and Other Cycle Bases. J. Chem. Inf.
+Model., 2017, 57 (2), pp 122–126
+
+[URF reference]: Kolodzik, A.; Urbaczek, S.; Rarey, M. Unique Ring Families: A Chemically
+Meaningful Description of Molecular Ring Topologies. J. Chem. Inf. Model.,
+2012, 52 (8), pp 2013–2021
+
