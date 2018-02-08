@@ -82,7 +82,7 @@ Library dependencies:
 - boost: graph, functional, optional, test
 - Eigen: vector arithmetic
 - dlib: BFGS solver
-- RingDecomposerLib[1][RDL reference][2][URF reference]: Unique Ring Family cycle detection
+- RingDecomposerLib[^1][^2]: Unique Ring Family cycle detection
 - Delib: Common chemical exchange types
 - ConstexprMagic: constexpr algorithms and data structures
 - TemplateMagic: randomness, cache, composability improvement shorthands
@@ -123,11 +123,11 @@ You can build the documentation by running `doxygen` in the main directory.
 
 ## References
 
-[RDL reference]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An Open-Source
+[^1]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An Open-Source
 implementation of Unique Ring Families and Other Cycle Bases. J. Chem. Inf.
 Model., 2017, 57 (2), pp 122–126
 
-[URF reference]: Kolodzik, A.; Urbaczek, S.; Rarey, M. Unique Ring Families: A Chemically
+[^2]: Kolodzik, A.; Urbaczek, S.; Rarey, M. Unique Ring Families: A Chemically
 Meaningful Description of Molecular Ring Topologies. J. Chem. Inf. Model.,
 2012, 52 (8), pp 2013–2021
 
