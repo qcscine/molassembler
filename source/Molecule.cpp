@@ -870,9 +870,7 @@ const StereocenterList& Molecule::getStereocenterList() const {
   return _stereocenters;
 }
 
-unsigned Molecule::getNumAdjacencies(
-  const AtomIndexType& a
-) const {
+unsigned Molecule::getNumAdjacencies(const AtomIndexType& a) const {
   return boost::out_degree(a, _adjacencies);
 }
 
@@ -1067,14 +1065,14 @@ RankingInformation Molecule::rankPriority(
 
   rankingResult.sortedSubstituents = expandedTree.getRanked();
 
-  auto adjacentIndices = getAdjacencies(a);
-  std::set<AtomIndexType> activeIndices;
-  for(const auto& adjacentIndex : adjacentIndices) {
-    if(excludeAdjacent.count(adjacentIndex) == 0) {
-      activeIndices.insert(adjacentIndex);
-    }
-  }
+  auto activeIndices = getAdjacencies(a);
 
+  TemplateMagic::inplaceRemoveIf(
+    activeIndices,
+    [&excludeAdjacent](const auto& adjacentIndex) -> bool {
+      return excludeAdjacent.count(adjacentIndex) == 1;
+    }
+  );
 
   // Find links between them
   rankingResult.linkedPairs = GraphAlgorithms::findSubstituentLinks(

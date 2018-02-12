@@ -14,6 +14,10 @@
 
 #include <iomanip>
 
+/* TODO
+ * - Looks like handling of linkedPairs on graph changes is incomplete / incorrect
+ */
+
 namespace MoleculeManip {
 
 namespace Stereocenters {
@@ -93,10 +97,15 @@ UniqueAssignments::Assignment::LinksSetType makeLinksSelfReferential(
     return findIter - sortedIndices.begin();
   };
 
+  // TODO no sorting of indices to ensure pairs are standardized?
+
   for(const auto& linkPair : rankingLinks) {
+    auto a = findIndexInSorted(linkPair.first);
+    auto b = findIndexInSorted(linkPair.second);
+
     links.emplace(
-      findIndexInSorted(linkPair.first),
-      findIndexInSorted(linkPair.second)
+      std::min(a, b),
+      std::max(a, b)
     );
   }
 
@@ -944,6 +953,10 @@ std::string CNStereocenter::info() const {
     characters.end(),
     std::back_inserter(returnString)
   );
+
+  for(const auto& link : glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.linkedPairs)) {
+    returnString += ", "s + characters.at(link.first) + "-"s + characters.at(link.second);
+  }
 
   returnString += "): "s;
 

@@ -66,12 +66,11 @@ public:
 class SubstituentLinkSearcher : public boost::default_bfs_visitor {
 private:
   // Const members
-  const std::set<AtomIndexType> _soughtIndices;
   const AtomIndexType _source;
 
   // State
-  std::map<AtomIndexType, unsigned> _depthMap;
-  std::map<AtomIndexType, AtomIndexType> _parentMap;
+  std::unordered_map<AtomIndexType, unsigned> _depthMap;
+  std::unordered_map<AtomIndexType, AtomIndexType> _parentMap;
 
   // Side-effect output
   std::set<
@@ -81,12 +80,11 @@ private:
 public:
   SubstituentLinkSearcher(
     const AtomIndexType& source,
-    const std::set<AtomIndexType>& soughtIndices,
+    const std::vector<AtomIndexType>& soughtIndices,
     std::set<
       std::pair<AtomIndexType, AtomIndexType>
     >& connectedPairsOutput
-  ) : _soughtIndices(soughtIndices),
-      _source(source),
+  ) : _source(source),
       _depthMap({
         {source, 0}
       }),
@@ -129,7 +127,6 @@ public:
     if(
       sourceInMap 
       && targetInMap 
-      && _depthMap[target] == _depthMap[source] + 1
       && _parentMap[source] != _parentMap[target]
     ) {
       _connectedPairs.emplace(
@@ -203,7 +200,8 @@ public:
 
 } // namespace BFSVisitors
 
-/*! Shorthand function for using the SubstituentLinkSearcher. Determines whether
+/*!
+ * Shorthand function for using the SubstituentLinkSearcher. Determines whether
  * substituents at a central atom are linked or not at the grpah level.
  */
 std::set<
@@ -211,7 +209,7 @@ std::set<
 > findSubstituentLinks(
   const GraphType& graph,
   const AtomIndexType& source,
-  const std::set<AtomIndexType>& activeSubstituents
+  const std::vector<AtomIndexType>& activeSubstituents
 );
 
 /*! 

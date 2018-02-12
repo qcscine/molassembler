@@ -22,7 +22,7 @@ std::set<
 > findSubstituentLinks(
   const GraphType& graph,
   const AtomIndexType& source,
-  const std::set<AtomIndexType>& activeSubstituents
+  const std::vector<AtomIndexType>& activeSubstituents
 ) {
   std::set<
     std::pair<AtomIndexType, AtomIndexType>
@@ -37,22 +37,17 @@ std::set<
   boost::associative_property_map<ColorMapBase> propColorMap(colorMap);
   boost::queue<GraphType::vertex_descriptor> Q;
 
-  BFSVisitors::SubstituentLinkSearcher visitor(
+  BFSVisitors::SubstituentLinkSearcher visitor {
     source,
     activeSubstituents,
     connectedPairs // output
-  );
+  };
 
   boost::breadth_first_visit(
-    // The graph to operate on
     graph,
-    // The vertex to start with
     source,
-    // A queue object to store vertex_descriptors
     Q,
-    // The visitor to use
     visitor,
-    // A map to store color (state)
     propColorMap
   );
 
