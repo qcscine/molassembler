@@ -97,8 +97,6 @@ UniqueAssignments::Assignment::LinksSetType makeLinksSelfReferential(
     return findIter - sortedIndices.begin();
   };
 
-  // TODO no sorting of indices to ensure pairs are standardized?
-
   for(const auto& linkPair : rankingLinks) {
     auto a = findIndexInSorted(linkPair.first);
     auto b = findIndexInSorted(linkPair.second);

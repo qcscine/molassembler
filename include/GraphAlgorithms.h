@@ -6,6 +6,8 @@
 
 #include <iostream>
 #include "Delib/ElementInfo.h"
+#include "template_magic/Containers.h"
+#include "template_magic/UnorderedSets.h"
 
 /*! @file
  *
@@ -70,7 +72,10 @@ private:
 
   // State
   std::unordered_map<AtomIndexType, unsigned> _depthMap;
-  std::unordered_map<AtomIndexType, AtomIndexType> _parentMap;
+  std::unordered_map<
+    AtomIndexType,
+    std::unordered_set<AtomIndexType>
+  > _parentMap;
 
   // Side-effect output
   std::set<
@@ -91,7 +96,7 @@ public:
       _connectedPairs(connectedPairsOutput)
   {
     for(const auto& index : soughtIndices) {
-      _parentMap[index] = index;
+      _parentMap[index].insert(index);
     }
   }
 
@@ -110,9 +115,15 @@ public:
     bool targetInMap = (_parentMap.count(target) == 1);
 
     if(sourceInMap && !targetInMap) {
-      _parentMap[target] = _parentMap[source];
+      _parentMap[target].insert(
+        _parentMap[source].begin(),
+        _parentMap[source].end()
+      );
     } else if(targetInMap && !sourceInMap) {
-      _parentMap[source] = _parentMap[target];
+      _parentMap[source].insert(
+        _parentMap[target].begin(),
+        _parentMap[target].end()
+      );
     } 
   }
 
@@ -121,24 +132,45 @@ public:
     const auto source = boost::source(e, g);
     const auto target = boost::target(e, g);
 
+    // Skip simple back edges
+    if(_depthMap[target] == _depthMap[source] - 1) {
+      return;
+    }
+
     bool sourceInMap = _parentMap.count(source) == 1;
     bool targetInMap = _parentMap.count(target) == 1;
 
-    if(
-      sourceInMap 
-      && targetInMap 
-      && _parentMap[source] != _parentMap[target]
-    ) {
-      _connectedPairs.emplace(
-        std::min(
-          _parentMap[source],
-          _parentMap[target]
-        ),
-        std::max(
-          _parentMap[source],
-          _parentMap[target]
-        )
+    if(sourceInMap && targetInMap) {
+      auto setDifference = TemplateMagic::unorderedSetSymmetricDifference(
+        _parentMap[source],
+        _parentMap[target]
       );
+
+      if(setDifference.size() > 0) {
+        TemplateMagic::forAllPairs(
+          TemplateMagic::unorderedSetDifference(
+            _parentMap[source],
+            _parentMap[target]
+          ),
+          TemplateMagic::unorderedSetDifference(
+            _parentMap[target],
+            _parentMap[source]
+          ),
+          [this](const auto& a, const auto& b) {
+            _connectedPairs.emplace(
+              std::min(a, b),
+              std::max(a, b)
+            );
+          }
+        );
+
+        if(_depthMap[target] == _depthMap[source] + 1) {
+          _parentMap[target] = TemplateMagic::unorderedSetUnion(
+            _parentMap[source],
+            _parentMap[target]
+          );
+        }
+      }
     }
   }
 };
