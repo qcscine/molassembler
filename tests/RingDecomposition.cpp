@@ -42,12 +42,10 @@ void testCycles(const MoleculeManip::CycleData& cycleData) {
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::map(
-        cyclesSmallerThanSix,
-        [](const unsigned& cycleSize) -> bool {
-          return cycleSize <= 6;
-        }
-      )
+      cyclesSmallerThanSix,
+      [](const unsigned& cycleSize) -> bool {
+        return cycleSize <= 6;
+      }
     )
   );
 

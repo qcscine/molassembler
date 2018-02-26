@@ -1,6 +1,7 @@
 #ifndef INCLUDE_DG_DISTANCE_BOUNDS_MATRIX_HPP
 #define INCLUDE_DG_DISTANCE_BOUNDS_MATRIX_HPP
 
+#include "boost/outcome.hpp"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "AtomInfo.h"
 
@@ -13,6 +14,8 @@
  */
 
 namespace MoleculeManip {
+
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 namespace DistanceGeometry {
 
@@ -146,7 +149,7 @@ public:
    * Allocates another N*N double matrix. When resource constrained, this is
    * not a good idea.
    */
-  Eigen::MatrixXd makeDistanceMatrix(Partiality partiality = Partiality::All) const;
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality = Partiality::All) const noexcept;
 
   Eigen::MatrixXd makeSquaredBoundsMatrix() const;
 

@@ -3,6 +3,7 @@
 
 #include "DistanceGeometry/ValueBounds.h"
 #include "boost/graph/adjacency_list.hpp"
+#include "boost/outcome.hpp"
 #include "Eigen/Core"
 #include "Delib/ElementInfo.h"
 
@@ -14,6 +15,8 @@
  */
 
 namespace MoleculeManip {
+
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 // Forward-declare Molecule
 class Molecule;
@@ -54,7 +57,6 @@ public:
 
 private:
   GraphType _graph;
-  bool _generatedDistances;
   const Molecule& _molecule;
   //! Stores the two heaviest element types
   std::array<Delib::ElementType, 2> _heaviestAtoms;
@@ -120,15 +122,15 @@ public:
 
   const GraphType& getGraph() const;
 
-  Eigen::MatrixXd makeDistanceBounds() const;
+  outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
 
   /*!
    * Generates a distances matrix conforming to the triangle inequality bounds
    * while modifying state information. Can only be called once!
    */
-  Eigen::MatrixXd makeDistanceMatrix();
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix() noexcept;
 
-  Eigen::MatrixXd makeDistanceMatrix(Partiality partiality);
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality) noexcept;
 };
 
 } // namespace DistanceGeometry

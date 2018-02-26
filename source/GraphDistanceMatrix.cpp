@@ -52,13 +52,7 @@ void GraphDistanceMatrix::_transformToDistances() {
 
     for(
       unsigned counter = 1;
-      !std::all_of( // as long as not all addedIn's are true
-        addedIn.begin(),
-        addedIn.end(),
-        [](const auto& boolean) {
-          return boolean;
-        }
-      );
+      !TemplateMagic::all_of(addedIn);
       counter++
     ) {
 

@@ -14,7 +14,7 @@
 #include "AtomInfo.h"
 #include "template_magic/Random.h"
 
-#include "boost/graph/bellman_ford_shortest_paths.hpp"
+#include "DistanceGeometry/Error.h"
 
 namespace MoleculeManip {
 
@@ -141,7 +141,7 @@ bool ImplicitGraph::hasExplicit(const EdgeDescriptor& edge) const {
   return _distances(internal(edge.first), internal(edge.second)) != 0;
 }
 
-Eigen::MatrixXd ImplicitGraph::makeDistanceBounds() const {
+outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexcept {
   Eigen::MatrixXd bounds;
 
   unsigned N = _distances.outerSize();
@@ -198,18 +198,20 @@ Eigen::MatrixXd ImplicitGraph::makeDistanceBounds() const {
       bounds(a, b) = distances.at(left(b));
       bounds(b, a) = -distances.at(right(b));
 
-      assert(bounds(a, b) > bounds(b, a));
+      if(bounds(a, b) < bounds(b, a)) {
+        return DGError::GraphImpossible;
+      }
     }
   }
 
   return bounds;
 }
 
-Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix() {
+outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix() noexcept {
   return makeDistanceMatrix(Partiality::All);
 }
 
-Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix(Partiality partiality) {
+outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality partiality) noexcept {
   unsigned N = _moleculePtr->numAtoms();
 
   std::vector<AtomIndexType> indices(N);
@@ -309,7 +311,9 @@ Eigen::MatrixXd& ImplicitGraph::makeDistanceMatrix(Partiality partiality) {
         distance_map
       );
 
-      assert(-distances.at(right(b)) < distances.at(left(b)));
+      if(distances.at(left(b)) < -distances.at(right(b))) {
+        return DGError::GraphImpossible;
+      }
 
       // Pick fixed distance
       double fixedDistance = TemplateMagic::random.getSingle<double>(

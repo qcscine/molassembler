@@ -5,6 +5,7 @@
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
+#include "boost/outcome.hpp"
 
 /*! @file
  *
@@ -13,6 +14,8 @@
  */
 
 namespace MoleculeManip {
+
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 namespace DistanceGeometry {
 
@@ -26,12 +29,12 @@ Delib::PositionCollection convertToPositionCollection(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
 
-ChiralityConstraint propagate(
+outcome::result<ChiralityConstraint> propagate(
   const DistanceBoundsMatrix& bounds,
   const Stereocenters::ChiralityConstraintPrototype& prototype
 );
 
-DGDebugData debugDistanceGeometry(
+std::list<RefinementData> debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption = Partiality::FourAtom,
@@ -39,7 +42,9 @@ DGDebugData debugDistanceGeometry(
   const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
 );
 
-std::list<Delib::PositionCollection> runDistanceGeometry(
+outcome::result<
+  std::list<Delib::PositionCollection>
+> runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption = Partiality::FourAtom,
@@ -61,12 +66,14 @@ MoleculeDGInformation gatherDGInformation(
 );
 
 // "Public" functions
-std::list<Delib::PositionCollection> generateEnsemble(
+outcome::result<
+  std::list<Delib::PositionCollection>
+> generateEnsemble(
   const Molecule& molecule,
   const unsigned& numStructures
 );
 
-Delib::PositionCollection generateConformation(const Molecule& molecule);
+outcome::result<Delib::PositionCollection> generateConformation(const Molecule& molecule);
 
 } // namespace DistanceGeometry
 

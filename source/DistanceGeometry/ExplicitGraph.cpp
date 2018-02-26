@@ -4,8 +4,9 @@
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
 #include "DistanceGeometry/DistanceGeometry.h"
+#include "DistanceGeometry/Error.h"
 
-#define USE_SPECIALIZED_GOR1_ALGORITHM
+//#define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
 #include "DistanceGeometry/Gor1.h"
 #else
@@ -32,7 +33,6 @@ ExplicitGraph::ExplicitGraph(
   const Molecule& molecule,
   const BoundList& bounds
 ) : _graph {2 * molecule.numAtoms()},
-    _generatedDistances {false},
     _molecule {molecule}
 {
   // Populate the graph with bounds from list
@@ -191,65 +191,78 @@ const ExplicitGraph::GraphType& ExplicitGraph::getGraph() const {
 }
 
 // This is O(N²)
-Eigen::MatrixXd ExplicitGraph::makeDistanceBounds() const {
+outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexcept {
   unsigned N = _molecule.numAtoms();
 
   Eigen::MatrixXd bounds;
   bounds.resize(N, N);
   bounds.setZero();
 
-  for(AtomIndexType i = 0; i < N - 1; ++i) {
-    unsigned M = boost::num_vertices(_graph);
+  unsigned M = boost::num_vertices(_graph);
+  std::vector<double> distances (M);
+  std::vector<VertexDescriptor> predecessors (M);
+  using ColorMapType = boost::two_bit_color_map<>;
+  ColorMapType color_map {M};
 
-    std::vector<double> distance (M);
-
-    boost::bellman_ford_shortest_paths(
-      _graph,
-      M,
-      boost::root_vertex(left(i)).
-      distance_map(&distance[0])
+  for(AtomIndexType a = 0; a < N - 1; ++a) {
+    auto predecessor_map = boost::make_iterator_property_map(
+      predecessors.begin(),
+      boost::get(boost::vertex_index, _graph)
     );
 
-    for(AtomIndexType j = i + 1; j < N; ++j) {
-      /* Since the edge weights from left to right are negative, the lower
-       * bounds are negative too. Include the minimum lower bounds in case
-       * the shortest path is greater (i.e. no explicit shortest path is
-       * considered) than zero.
-       */
-      double lowerBound;
+    auto distance_map = boost::make_iterator_property_map(
+      distances.begin(),
+      boost::get(boost::vertex_index, _graph)
+    );
 
-      if(distance.at(right(j)) >= 0) {
-        lowerBound = AtomInfo::vdwRadius(
-          _molecule.getElementType(i)
-        ) + AtomInfo::vdwRadius(
-          _molecule.getElementType(j)
-        );
-      } else {
-        lowerBound = -distance.at(right(j));
+    // re-fill color map with white
+    std::fill(
+      color_map.data.get(),
+      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+        / color_map.elements_per_char,
+      0
+    );
+
+#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+    boost::gor1_ig_shortest_paths(
+      *this,
+      VertexDescriptor {left(a)},
+      predecessor_map,
+      color_map,
+      distance_map
+    );
+#else
+    boost::gor1_simplified_shortest_paths(
+      _graph,
+      VertexDescriptor {left(a)},
+      predecessor_map,
+      color_map,
+      distance_map
+    );
+#endif
+
+    for(AtomIndexType b = a + 1; b < N; ++b) {
+      bounds(a, b) = distances.at(left(b));
+      bounds(b, a) = -distances.at(right(b));
+
+      if(
+        bounds(a, b) < bounds(b, a)
+        || bounds(a, b) <= 0
+        || bounds(b, a) <= 0
+      ) {
+        return DGError::GraphImpossible;
       }
-
-      assert(lowerBound > 0);
-      assert(lowerBound < distance.at(left(j)));
-
-      bounds(j, i) = lowerBound;
-      bounds(i, j) = distance.at(left(j));
     }
   }
 
   return bounds;
 }
 
-Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix() {
+outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix() noexcept {
   return makeDistanceMatrix(Partiality::All);
 }
 
-Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix(Partiality partiality) {
-  if(_generatedDistances) {
-    throw std::logic_error("ExplicitGraph: Already generated distances destructively!");
-  }
-
-  _generatedDistances = true;
-
+outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality partiality) noexcept {
   unsigned N = _molecule.numAtoms();
 
   Eigen::MatrixXd distancesMatrix;
@@ -357,7 +370,10 @@ Eigen::MatrixXd ExplicitGraph::makeDistanceMatrix(Partiality partiality) {
         color_map,
         distance_map
       );
-      assert(-distance.at(right(b)) < distance.at(left(b)));
+
+      if(distance.at(left(b)) < -distance.at(right(b))) {
+        return DGError::GraphImpossible;
+      }
 
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound

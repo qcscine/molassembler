@@ -9,6 +9,7 @@
 #include "DistanceGeometry/MetricMatrix.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementProblem.h"
+#include "DistanceGeometry/Error.h"
 
 #define DG_DISTANCES_ALGORITHM_MATRIX 0u
 #define DG_DISTANCES_ALGORITHM_IMPLICIT 1u
@@ -26,7 +27,6 @@
 /* TODO
  * - Random assignment of unassigned stereocenters isn't ideal yet
  *   - Sequence randomization
- *   - Use relative weights in assignment decision
  */
 
 namespace MoleculeManip {
@@ -78,7 +78,7 @@ Delib::PositionCollection convertToPositionCollection(
   return positions;
 }
 
-ChiralityConstraint propagate(
+outcome::result<ChiralityConstraint> propagate(
   const DistanceBoundsMatrix& bounds,
   const Stereocenters::ChiralityConstraintPrototype& prototype
 ) {
@@ -98,13 +98,13 @@ ChiralityConstraint propagate(
    * switched.  The formula used later in chirality constraint calculation for
    * explicit coordinates is adjusted by V' = 6 V to avoid an unnecessary
    * factor, so we do that here too:
-   *               
+   *
    *    288 V²  = |...|               | substitute V' = 6 V
-   * -> 8 (V')² = |...|               
+   * -> 8 (V')² = |...|
    * ->      V' = sqrt(|...| / 8)
    *
    * where the Cayley-Menger determinant |...| is square symmetric:
-   *   
+   *
    *          |   0    1    1    1    1  |
    *          |        0  d12² d13² d14² |
    *  |...| = |             0  d23² d24² |
@@ -116,7 +116,7 @@ ChiralityConstraint propagate(
   Eigen::Matrix<double, 5, 5> lowerMatrix, upperMatrix;
 
   // Order of operations here is very important!
-  
+
   lowerMatrix.row(0).setOnes();
   upperMatrix.row(0).setOnes();
 
@@ -172,7 +172,9 @@ ChiralityConstraint propagate(
    * be tolerant of approximately zero-volume chirality constraints (which MAY
    * happen) than have this fail.
    */
-  assert(boundFromLower > -1e-7 && boundFromUpper > -1e-7);
+  if(boundFromLower < -1e-7 || boundFromUpper < -1e-7) {
+    return DGError::GraphImpossible;
+  }
 
   /* Although it is tempting to assume that the Cayley-Menger determinant using
    * the lower bounds is smaller than the one using upper bounds, this is NOT
@@ -218,14 +220,12 @@ ChiralityConstraint propagate(
   };
 }
 
-void checkFailureRatio(
+bool exceededFailureRatio(
   const unsigned& failures,
   const unsigned& numStructures,
   const unsigned& failureRatio
-) {
-  if(static_cast<double>(failures) / numStructures >= failureRatio) {
-    throw std::runtime_error("Refinement failures exceeded threshold!");
-  }
+) noexcept {
+  return static_cast<double>(failures) / numStructures >= failureRatio;
 }
 
 bool moleculeHasUnassignedStereocenters(const Molecule& mol) {
@@ -240,7 +240,9 @@ bool moleculeHasUnassignedStereocenters(const Molecule& mol) {
 
 
 // Non-debug version of DG
-std::list<Delib::PositionCollection> runDistanceGeometry(
+outcome::result<
+  std::list<Delib::PositionCollection>
+> runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption,
@@ -260,8 +262,8 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
   }
 
   /* If the ratio of failures/total optimizations exceeds this value,
-   * the function throws. Remember that if an optimization is considered a 
-   * failure is dependent only on the stopping criteria!
+   * the function returns an error code. Remember that if an optimization is
+   * considered a failure is dependent only on the stopping criteria!
    */
   const double failureRatio = 0.1; // allow only 10% failures in release
   unsigned failures = 0;
@@ -327,7 +329,12 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
       DGData.boundList
     };
 
-    DistanceBoundsMatrix distanceBounds {explicitGraph.makeDistanceBounds()};
+    auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
+    if(!distanceBoundsResult) {
+      return distanceBoundsResult.as_failure();
+    }
+
+    DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
 
     /* No need to smooth the distance bounds, implicitGraph creates it
      * so that the triangle inequalities are fulfilled
@@ -335,9 +342,14 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 
     assert(distanceBounds.boundInconsistencies() == 0);
 
+    auto distanceMatrixResult = explicitGraph.makeDistanceMatrix(metrizationOption);
+    if(!distanceMatrixResult) {
+      return distanceMatrixResult.as_failure();
+    }
+
     // Make a metric matrix from a generated distances matrix
     MetricMatrix metric(
-      explicitGraph.makeDistanceMatrix(metrizationOption)
+      std::move(distanceMatrixResult.value())
     );
 #else
     DistanceBoundsMatrix distanceBounds {
@@ -354,21 +366,21 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
       distanceBounds.makeDistanceMatrix()
     );
 #endif
-    
+
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
      */
-    auto chiralityConstraints = TemplateMagic::map(
-      DGData.chiralityConstraintPrototypes,
-      [&distanceBounds](
-        const Stereocenters::ChiralityConstraintPrototype& prototype
-      ) -> ChiralityConstraint {
-        return propagate(
-          distanceBounds,
-          prototype
+    std::vector<ChiralityConstraint> chiralityConstraints;
+
+    for(const auto& prototype : DGData.chiralityConstraintPrototypes) {
+      if(auto propagateResult = propagate(distanceBounds, prototype)) {
+        chiralityConstraints.push_back(
+          std::move(propagateResult.value())
         );
+      } else {
+        return propagateResult.as_failure();
       }
-    );
+    }
 
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
@@ -452,7 +464,9 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
         ) < 1.0
       ) { // Failure to invert
         failures += 1;
-        checkFailureRatio(failures, numStructures, failureRatio);
+        if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+          return DGError::TooManyFailures;
+        }
         continue; // this triggers a new structure to be generated
       }
     }
@@ -493,7 +507,7 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
       failures += 1;
 
       if(static_cast<double>(failures) / numStructures >= failureRatio) {
-        throw std::runtime_error("Refinement failures exceeded threshold!");
+        return DGError::TooManyFailures;
       }
     } else {
       ensemble.emplace_back(
@@ -506,14 +520,14 @@ std::list<Delib::PositionCollection> runDistanceGeometry(
 }
 
 // Debug version
-DGDebugData debugDistanceGeometry(
+std::list<RefinementData> debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption,
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
-  DGDebugData resultObject;
+  std::list<RefinementData> refinementList;
 
   /* In case the molecule has unassigned stereocenters that are not trivially
    * assignable (u/1 -> 0/1), random assignments have to be made prior to calling
@@ -548,7 +562,7 @@ DGDebugData debugDistanceGeometry(
   for(
     unsigned currentStructureNumber = 0;
     // Failed optimizations do not count towards successful completion
-    currentStructureNumber - resultObject.failures < numStructures;
+    currentStructureNumber < numStructures;
     currentStructureNumber += 1
   ) {
     if(regenerateEachStep) {
@@ -608,17 +622,41 @@ DGDebugData debugDistanceGeometry(
       DGData.boundList
     };
 
-    DistanceBoundsMatrix distanceBounds {explicitGraph.makeDistanceBounds()};
+    auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
+    if(!distanceBoundsResult) {
+      Log::log(Log::Level::Warning) << "Failure in distance bounds matrix construction.\n";
+      failures += 1;
+      if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+        return refinementList;
+      }
 
-    /* No need to smooth the distance bounds, implicitGraph creates it
+      continue;
+    }
+
+    DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
+
+    /* No need to smooth the distance bounds, ExplicitGraph creates it
      * so that the triangle inequalities are fulfilled
      */
 
     assert(distanceBounds.boundInconsistencies() == 0);
 
+    auto distanceMatrixResult = explicitGraph.makeDistanceMatrix(metrizationOption);
+    if(!distanceMatrixResult) {
+      Log::log(Log::Level::Warning) << "Failure in distance matrix construction.\n";
+      failures += 1;
+      if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+        return refinementList;
+      }
+
+      continue;
+    }
+
     // Make a metric matrix from a generated distances matrix
     MetricMatrix metric(
-      explicitGraph.makeDistanceMatrix(metrizationOption)
+      std::move(distanceMatrixResult.value())
     );
 #else
     DistanceBoundsMatrix distanceBounds {
@@ -635,21 +673,22 @@ DGDebugData debugDistanceGeometry(
       distanceBounds.makeDistanceMatrix(metrizationOption)
     );
 #endif
-    
+
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
      */
-    auto chiralityConstraints = TemplateMagic::map(
-      DGData.chiralityConstraintPrototypes,
-      [&distanceBounds](
-        const Stereocenters::ChiralityConstraintPrototype& prototype
-      ) -> ChiralityConstraint {
-        return propagate(
-          distanceBounds,
-          prototype
+    std::vector<ChiralityConstraint> chiralityConstraints;
+
+    for(const auto& prototype : DGData.chiralityConstraintPrototypes) {
+      if(auto propagateResult = propagate(distanceBounds, prototype)) {
+        chiralityConstraints.push_back(
+          std::move(propagateResult.value())
         );
+      } else {
+        Log::log(Log::Level::Warning) << "Propagation of chirality constraint failed!\n";
+        return refinementList;
       }
-    );
+    }
 
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
@@ -735,9 +774,12 @@ DGDebugData debugDistanceGeometry(
           dlibPositions
         ) < 1.0
       ) { // Failure to invert
+        Log::log(Log::Level::Warning) << "First stage of refinement fails.\n";
         failures += 1;
-        // TODO Debug Log!
-        checkFailureRatio(failures, numStructures, failureRatio);
+        if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+          Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+          return refinementList;
+        }
         continue; // this triggers a new structure to be generated
       }
     }
@@ -778,23 +820,26 @@ DGDebugData debugDistanceGeometry(
       dlibPositions
     );
 
-    if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
-      failures += 1;
-      resultObject.failures += 1;
-      checkFailureRatio(failures, numStructures, failureRatio);
-    } else {
-      // Add the result to the debug data
-      RefinementData refinementData;
-      refinementData.steps = std::move(refinementSteps);
-      refinementData.constraints = chiralityConstraints;
+    RefinementData refinementData;
+    refinementData.steps = std::move(refinementSteps);
+    refinementData.constraints = chiralityConstraints;
+    refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
 
-      resultObject.refinements.emplace_back(
-        std::move(refinementData)
-      );
+    refinementList.push_back(
+      std::move(refinementData)
+    );
+
+    if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
+      Log::log(Log::Level::Warning) << "Second stage of refinement fails.\n";
+      failures += 1;
+      if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+        return refinementList;
+      }
     }
   }
 
-  return resultObject;
+  return refinementList;
 }
 
 } // namespace detail
@@ -823,19 +868,23 @@ MoleculeDGInformation gatherDGInformation(
   return data;
 }
 
-std::list<Delib::PositionCollection> generateEnsemble(
+outcome::result<
+  std::list<Delib::PositionCollection>
+> generateEnsemble(
   const Molecule& molecule,
   const unsigned& numStructures
 ) {
   return detail::runDistanceGeometry(molecule, numStructures);
 }
 
-Delib::PositionCollection generateConformation(const Molecule& molecule) {
-  auto list = detail::runDistanceGeometry(molecule, 1);
-  
-  assert(list.size() == 1);
-
-  return *list.begin();
+outcome::result<Delib::PositionCollection> generateConformation(const Molecule& molecule) {
+  if(auto result = detail::runDistanceGeometry(molecule, 1)) {
+    const auto& conformationList = result.value();
+    assert(conformationList.size() == 1);
+    return conformationList.front();
+  } else {
+    return result.as_failure();
+  }
 }
 
 } // namespace DistanceGeometry

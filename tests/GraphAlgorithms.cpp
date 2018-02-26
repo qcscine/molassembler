@@ -124,23 +124,19 @@ const std::map<
       }
     }
   },
-  /* TODO NOTE: NOPE NOPE NOPE there's too much work being done for it, need to
-   * look back into RankingTree procedures, perhaps enable that one optimization
-   */
-  /*{
+  {
     "13",
     {
       0,
       {
         {2, 3},
         {2, 4},
-        {3, 4},
         {7, 8},
         {7, 9},
         {8, 9}
       }
     }
-  },*/
+  },
   {
     "15",
     {

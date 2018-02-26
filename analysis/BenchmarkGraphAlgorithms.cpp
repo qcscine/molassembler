@@ -64,7 +64,12 @@ struct Gor1Functor {
   ) {
 
     Graph graph {molecule, boundsList};
-    return graph.makeDistanceMatrix(partiality);
+    if(auto distanceMatrixResult = graph.makeDistanceMatrix(partiality)) {
+      return distanceMatrixResult.value();
+    } else {
+      std::cout << "Gor1 Functor distance matrix generation failed!";
+      return {};
+    }
   }
 };
 
@@ -78,7 +83,10 @@ struct DBM_FW_Functor {
 
     bounds.smooth();
 
-    bounds.makeDistanceMatrix(partiality);
+    auto distancesMatrixResult = bounds.makeDistanceMatrix(partiality);
+    if(!distancesMatrixResult) {
+      std::cout << "DBM-FW distance matrix generation failed!";
+    }
 
     return bounds.access();
   }

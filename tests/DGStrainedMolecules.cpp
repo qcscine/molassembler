@@ -9,6 +9,23 @@
 #include "IO.h"
 #include "DistanceGeometry/generateConformation.h"
 
+BOOST_AUTO_TEST_CASE(transSpanningImpossibilities) {
+  using namespace MoleculeManip;
+
+  IO::MOLFileHandler molHandler;
+  auto mol = molHandler.readSingle("../tests/mol_files/inorganics/multidentate/Co(ox)3.mol");
+
+  const auto& stereocenterPtr = mol.getStereocenterList().at(0);
+  unsigned N = stereocenterPtr -> numAssignments();
+
+  for(unsigned i = 0; i < N; ++i) {
+    mol.assignStereocenterAtAtom(0, i);
+
+    auto ensembleResult = DistanceGeometry::generateEnsemble(mol, 10);
+    BOOST_REQUIRE_MESSAGE(ensembleResult, ensembleResult.error().message());
+  }
+}
+
 void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath) {
   using namespace MoleculeManip;
 
@@ -27,16 +44,19 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
 
   try {
     // Generate a conformation
-    auto positions = DistanceGeometry::generateConformation(mol);
-
-    // Write the generated conformation to file
-    molHandler.writeSingle(
-      filePath.stem().string() + "-generated.mol"s,
-      mol,
-      positions
-    );
+    if(auto positionsResult = DistanceGeometry::generateConformation(mol)) {
+      // Write the generated conformation to file
+      molHandler.writeSingle(
+        filePath.stem().string() + "-generated.mol"s,
+        mol,
+        positionsResult.value()
+      );
+    } else {
+      BOOST_FAIL(positionsResult.error().message());
+    }
   } catch(std::exception e) {
-    std::cout << "Failed! Writing dotfile.";
+    std::cout << "Unhandled exception: " << e.what() << std::endl;
+    BOOST_FAIL("Unhandled exception encountered in conformation generation");
     throw;
   }
 }

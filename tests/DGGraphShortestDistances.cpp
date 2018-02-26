@@ -209,22 +209,20 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
 
             BOOST_CHECK_MESSAGE(
               TemplateMagic::all_of(
-                TemplateMagic::map(
-                  std::vector<decltype(lalb)> {
-                    boost::edge(left(b), left(a), lgGraph),
-                    boost::edge(right(b), right(a), lgGraph),
-                    boost::edge(right(a), right(b), lgGraph)
-                  },
-                  [&](const auto& edgeFoundPair) -> bool {
-                    if(!edgeFoundPair.second) {
-                      // Edge must be found
-                      return false;
-                    }
-
-                    auto weight = boost::get(boost::edge_weight, lgGraph, edgeFoundPair.first);
-                    return weight == lalbWeight;
+                std::vector<decltype(lalb)> {
+                  boost::edge(left(b), left(a), lgGraph),
+                  boost::edge(right(b), right(a), lgGraph),
+                  boost::edge(right(a), right(b), lgGraph)
+                },
+                [&](const auto& edgeFoundPair) -> bool {
+                  if(!edgeFoundPair.second) {
+                    // Edge must be found
+                    return false;
                   }
-                )
+
+                  auto weight = boost::get(boost::edge_weight, lgGraph, edgeFoundPair.first);
+                  return weight == lalbWeight;
+                }
               ),
               "Not all matching in-group edges were found or have identical weights for "
                 << "a = " << a << ", b = " << b
@@ -232,21 +230,19 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
 
             BOOST_CHECK_MESSAGE(
               TemplateMagic::all_of(
-                TemplateMagic::map(
-                  std::vector<decltype(lalb)> {
-                    boost::edge(left(a), right(b), lgGraph),
-                    boost::edge(left(b), right(a), lgGraph),
-                  },
-                  [&](const auto& edgeFoundPair) -> bool {
-                    if(!edgeFoundPair.second) {
-                      // Edge must be found
-                      return false;
-                    }
-
-                    auto weight = boost::get(boost::edge_weight, lgGraph, edgeFoundPair.first);
-                    return std::fabs(weight) < lalbWeight;
+                std::vector<decltype(lalb)> {
+                  boost::edge(left(a), right(b), lgGraph),
+                  boost::edge(left(b), right(a), lgGraph),
+                },
+                [&](const auto& edgeFoundPair) -> bool {
+                  if(!edgeFoundPair.second) {
+                    // Edge must be found
+                    return false;
                   }
-                )
+
+                  auto weight = boost::get(boost::edge_weight, lgGraph, edgeFoundPair.first);
+                  return std::fabs(weight) < lalbWeight;
+                }
               ),
               "Not all matching cross-group edges were found or have lower absolute weights for "
                 << "a = " << a << ", b = " << b
@@ -349,33 +345,31 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !TemplateMagic::all_of(
-          TemplateMagic::mapToVector(
-            enumerate(BF_LG_distances),
-            [&boundsMatrix, &a](const auto& enumPair) -> bool {
-              const auto& index = enumPair.index;
-              const auto& distance = enumPair.value;
+          enumerate(BF_LG_distances),
+          [&boundsMatrix, &a](const auto& enumPair) -> bool {
+            const auto& index = enumPair.index;
+            const auto& distance = enumPair.value;
 
-              if(index / 2 == a) {
-                return true;
-              }
+            if(index / 2 == a) {
+              return true;
+            }
 
-              if(index % 2 == 0) {
-                // To left index -> upper bound
-                return ConstexprMagic::floating::isCloseRelative(
-                  boundsMatrix.upperBound(a, index / 2),
-                  distance,
-                  1e-4
-                );
-              }
-
-              // To right index -> lower bound
+            if(index % 2 == 0) {
+              // To left index -> upper bound
               return ConstexprMagic::floating::isCloseRelative(
-                boundsMatrix.lowerBound(a, index / 2),
-                -distance,
+                boundsMatrix.upperBound(a, index / 2),
+                distance,
                 1e-4
               );
             }
-          )
+
+            // To right index -> lower bound
+            return ConstexprMagic::floating::isCloseRelative(
+              boundsMatrix.lowerBound(a, index / 2),
+              -distance,
+              1e-4
+            );
+          }
         )
       ) {
         pass = false;
@@ -494,41 +488,39 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !TemplateMagic::all_of(
-          TemplateMagic::mapToVector(
-            enumerate(BF_SPG_distances),
-            [&boundsMatrix, &a](const auto& enumPair) -> bool {
-              const auto& index = enumPair.index;
-              const auto& distance = enumPair.value;
+          enumerate(BF_SPG_distances),
+          [&boundsMatrix, &a](const auto& enumPair) -> bool {
+            const auto& index = enumPair.index;
+            const auto& distance = enumPair.value;
 
-              if(index / 2 == a) {
-                return true;
-              }
+            if(index / 2 == a) {
+              return true;
+            }
 
-              if(index % 2 == 0) {
-                // To left index -> upper bound
-                return (
-                  ConstexprMagic::floating::isCloseRelative(
-                    boundsMatrix.upperBound(a, index / 2),
-                    distance,
-                    1e-4
-                  ) || (
-                    // Lower upper bounds are better
-                    boundsMatrix.upperBound(a, index / 2) > distance
-                  )
-                );
-              }
-
-              // To right index -> lower bound
-              return ConstexprMagic::floating::isCloseRelative(
-                boundsMatrix.lowerBound(a, index / 2),
-                -distance,
-                1e-4
-              ) || (
-                // Larger lower bounds are better
-                boundsMatrix.lowerBound(a, index / 2) < -distance
+            if(index % 2 == 0) {
+              // To left index -> upper bound
+              return (
+                ConstexprMagic::floating::isCloseRelative(
+                  boundsMatrix.upperBound(a, index / 2),
+                  distance,
+                  1e-4
+                ) || (
+                  // Lower upper bounds are better
+                  boundsMatrix.upperBound(a, index / 2) > distance
+                )
               );
             }
-          )
+
+            // To right index -> lower bound
+            return ConstexprMagic::floating::isCloseRelative(
+              boundsMatrix.lowerBound(a, index / 2),
+              -distance,
+              1e-4
+            ) || (
+              // Larger lower bounds are better
+              boundsMatrix.lowerBound(a, index / 2) < -distance
+            );
+          }
         )
       ) {
         pass = false;

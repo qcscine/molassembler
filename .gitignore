@@ -24,3 +24,4 @@ ISSUE.rst
 *.log
 *.aux
 documentation/
+include/boost/

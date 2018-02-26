@@ -287,7 +287,9 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
     }
 
     // Generated distances matrix must satisfy triangle inequalities
-    auto distancesMatrix = spg.makeDistanceMatrix();
+    auto distancesMatrixResult = spg.makeDistanceMatrix();
+    BOOST_REQUIRE_MESSAGE(distancesMatrixResult, distancesMatrixResult.error().message());
+    auto distancesMatrix = distancesMatrixResult.value();
 
     auto d = [&distancesMatrix](const AtomIndexType& i, const AtomIndexType& j) -> double {
       return distancesMatrix(
