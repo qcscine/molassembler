@@ -15,9 +15,10 @@
  * need to be reused in the first place. A more specific optimization of storing
  * rankings at junctions might be better.
  *
- * For this reason, it is currently disabled.
+ * For particularly complex trees, it is, however, absolutely essential so that
+ * ranking completes in a reasonable timeframe.
  */
-//#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
 #include "BondDistance.h"
 #include "BuildTypeSwitch.h"

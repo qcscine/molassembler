@@ -446,15 +446,13 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   BOOST_CHECK_MESSAGE(
     (
       TemplateMagic::all_of(
-        TemplateMagic::map(
-          std::vector<AtomIndexType> {6, 7, 8, 9, 10, 11},
-          [&](const auto& carbonIndex) -> bool {
-            return (
-              lAlphaLindaneStereocenters.involving(carbonIndex)
-              && lAlphaLindaneStereocenters.at(carbonIndex)->numAssignments() == 2
-            );
-          }
-        )
+        std::vector<AtomIndexType> {6, 7, 8, 9, 10, 11},
+        [&](const auto& carbonIndex) -> bool {
+          return (
+            lAlphaLindaneStereocenters.involving(carbonIndex)
+            && lAlphaLindaneStereocenters.at(carbonIndex)->numAssignments() == 2
+          );
+        }
       )
     ),
     "Not all L-alpha-lindane carbon atoms not recognized as stereocenters!"

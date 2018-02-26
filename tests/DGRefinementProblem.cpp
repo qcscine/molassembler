@@ -66,7 +66,9 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
       DGInfo.boundList
     };
 
-    auto distances = distanceBounds.makeDistanceMatrix();
+    auto distancesResult = distanceBounds.makeDistanceMatrix();
+    BOOST_REQUIRE_MESSAGE(distancesResult, distancesResult.error().message());
+    auto distances = distancesResult.value();
 
     MetricMatrix metric(distances);
 
@@ -87,10 +89,14 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
       [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
-        return detail::propagate(
+        auto propagateResult = detail::propagate(
           distanceBounds,
           prototype
         );
+
+        BOOST_REQUIRE_MESSAGE(propagateResult, propagateResult.error().message());
+
+        return propagateResult.value();
       }
     );
 
@@ -192,17 +198,23 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       DGData.boundList
     };
 
-    const auto distancesMatrix = distanceBounds.makeDistanceMatrix();
+    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();
+    BOOST_REQUIRE_MESSAGE(distancesMatrixResult, distancesMatrixResult.error().message());
+    auto distancesMatrix = distancesMatrixResult.value();
 
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
       [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
-        return detail::propagate(
+        auto propagateResult = detail::propagate(
           distanceBounds,
           prototype
         );
+
+        BOOST_REQUIRE_MESSAGE(propagateResult, propagateResult.error().message());
+
+        return propagateResult.value();
       }
     );
 
@@ -319,16 +331,23 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       DGData.boundList
     };
 
-    const auto distancesMatrix = distanceBounds.makeDistanceMatrix();
+    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();
+    BOOST_REQUIRE_MESSAGE(distancesMatrixResult, distancesMatrixResult.error().message());
+    auto distancesMatrix = distancesMatrixResult.value();
+
     auto chiralityConstraints = TemplateMagic::map(
       DGData.chiralityConstraintPrototypes,
       [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
       ) -> ChiralityConstraint {
-        return detail::propagate(
+        auto propagateResult = detail::propagate(
           distanceBounds,
           prototype
         );
+
+        BOOST_REQUIRE_MESSAGE(propagateResult, propagateResult.error().message());
+
+        return propagateResult.value();
       }
     );
 
@@ -519,7 +538,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     std::cout << Symmetry::name(symmetryName) << std::endl;
 
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
-    
+
     auto DGResult = DistanceGeometry::detail::debugDistanceGeometry(
       molecule,
       100,
@@ -529,7 +548,6 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     );
 
     // For something this simple, there really shouldn't be any failures
-    BOOST_CHECK(DGResult.failures == 0);
 
     auto sumErrors = [](const detail::RefinementStepData& stepData) -> double {
       return (
@@ -540,7 +558,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     };
 
     auto finalErrors = TemplateMagic::map(
-      DGResult.refinements,
+      DGResult,
       [&](const detail::RefinementData& refinementData) -> double {
         return sumErrors(refinementData.steps.back());
       }
@@ -549,7 +567,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     // The average error of the ensemble should be below 1e-5 (already achieved)
     BOOST_CHECK(TemplateMagic::average(finalErrors) < maximumErrorThreshold);
 
-    for(const auto& enumPair : enumerate(DGResult.refinements)) {
+    for(const auto& enumPair : enumerate(DGResult)) {
       const auto& refinementData = enumPair.value;
 
       const auto& finalError = sumErrors(refinementData.steps.back());

@@ -1,4 +1,5 @@
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "DistanceGeometry/Error.h"
 #include <cassert>
 
 namespace MoleculeManip {
@@ -88,7 +89,7 @@ const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
   return _matrix;
 }
 
-Eigen::MatrixXd DistanceBoundsMatrix::makeDistanceMatrix(Partiality partiality) const {
+outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partiality partiality) const noexcept {
   auto matrixCopy = _matrix;
 
   const unsigned N = _matrix.cols();
@@ -126,12 +127,14 @@ Eigen::MatrixXd DistanceBoundsMatrix::makeDistanceMatrix(Partiality partiality) 
         continue;
       }
 
-      std::uniform_real_distribution<> uniformDistribution(
+      if(upperBound(matrixCopy, i, j) < lowerBound(matrixCopy, i, j)) {
+        return DGError::GraphImpossible;
+      }
+
+      double chosenDistance = TemplateMagic::random.getSingle<double>(
         lowerBound(matrixCopy, i, j),
         upperBound(matrixCopy, i, j)
       );
-
-      double chosenDistance = uniformDistribution(TemplateMagic::random.randomEngine);
 
       lowerBound(matrixCopy, i, j) = chosenDistance;
       upperBound(matrixCopy, i, j) = chosenDistance;
@@ -150,12 +153,21 @@ Eigen::MatrixXd DistanceBoundsMatrix::makeDistanceMatrix(Partiality partiality) 
         continue;
       }
 
-      std::uniform_real_distribution<> uniformDistribution(
-        lowerBound(matrixCopy, i, j),
-        upperBound(matrixCopy, i, j)
+      /* Interval reversal is no longer a failure criterion, we have already
+       * thrown caution to the wind by no longer smoothing the matrix.
+       * Nevertheless, to avoid UB, it is still necessary to properly order
+       * the parameters
+       */
+      double chosenDistance = TemplateMagic::random.getSingle<double>(
+        std::min(
+          lowerBound(matrixCopy, i, j),
+          upperBound(matrixCopy, i, j)
+        ),
+        std::max(
+          lowerBound(matrixCopy, i, j),
+          upperBound(matrixCopy, i, j)
+        )
       );
-
-      double chosenDistance = uniformDistribution(TemplateMagic::random.randomEngine);
 
       lowerBound(matrixCopy, i, j) = chosenDistance;
       upperBound(matrixCopy, i, j) = chosenDistance;

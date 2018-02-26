@@ -8,6 +8,7 @@
 #include "Delib/ElementInfo.h"
 #include "template_magic/Containers.h"
 #include "template_magic/UnorderedSets.h"
+#include "template_magic/TinySet.h"
 
 /*! @file
  *
@@ -74,7 +75,7 @@ private:
   std::unordered_map<AtomIndexType, unsigned> _depthMap;
   std::unordered_map<
     AtomIndexType,
-    std::unordered_set<AtomIndexType>
+    TemplateMagic::TinyUnorderedSet<AtomIndexType>
   > _parentMap;
 
   // Side-effect output
@@ -147,6 +148,7 @@ public:
       );
 
       if(setDifference.size() > 0) {
+        // Pairs must be formed between sets (a - b), (b - a)
         TemplateMagic::forAllPairs(
           TemplateMagic::unorderedSetDifference(
             _parentMap[source],

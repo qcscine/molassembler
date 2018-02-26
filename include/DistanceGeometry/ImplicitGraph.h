@@ -4,6 +4,7 @@
 #include "boost/functional/hash.hpp"
 #include "boost/variant.hpp"
 #include "boost/optional.hpp"
+#include "boost/outcome.hpp"
 #include <unordered_map>
 #include <tuple>
 #include "Eigen/Core"
@@ -20,6 +21,8 @@
  */
 
 namespace MoleculeManip {
+
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 // Forward-declare Molecule
 class Molecule;
@@ -222,7 +225,7 @@ public:
    *
    * Complexity: O(N * O(shortest paths algorithm))
    */
-  Eigen::MatrixXd makeDistanceBounds() const;
+  outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
 
   /*! Generates a distance matrix by randomly fixing distances within triangle inequality bounds
    *
@@ -237,8 +240,8 @@ public:
    * Complexity: O(N² * O(shortest paths algorithm)). For experimental data,
    * run analysis_BenchmarkGraphAlgorithms.
    */
-  Eigen::MatrixXd& makeDistanceMatrix();
-  Eigen::MatrixXd& makeDistanceMatrix(Partiality partiality);
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix() noexcept;
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality) noexcept;
 
   //! Returns the source vertex from an edge descriptor
   inline VertexDescriptor source(const EdgeDescriptor& e) const {

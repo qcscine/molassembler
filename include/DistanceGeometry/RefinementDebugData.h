@@ -49,11 +49,7 @@ struct RefinementStepData {
 struct RefinementData {
   std::list<RefinementStepData> steps;
   std::vector<ChiralityConstraint> constraints;
-};
-
-struct DGDebugData {
-  unsigned failures = 0;
-  std::list<RefinementData> refinements;
+  bool isFailure;
 };
 
 } // namespace detail

@@ -21,7 +21,9 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   std::cout << mol << std::endl;
 
   // Generate a conformation
-  auto positions = DistanceGeometry::generateConformation(mol);
+  auto positionsResult = DistanceGeometry::generateConformation(mol);
+  BOOST_REQUIRE_MESSAGE(positionsResult, positionsResult.error().message());
+  auto positions = positionsResult.value();
 
   // Write the generated conformation to file
   molHandler.writeSingle(

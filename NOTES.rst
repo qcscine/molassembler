@@ -1,6 +1,21 @@
+Inorganics
+----------
+- Conjugation detection is now sorely needed
+- Ranking algorithm shows deficiencies due to missing conjugation detection.
+  Perhaps other deficiencies too?
+- What happens to DG when an assignment is trans-spanning and the bridge is too
+  short? Should I / can I add heuristics?
+- I think substituent linking needs to be considered in stereocenter fitting
+- Hapticity support is the main challenge. Impact is large throughout code
+  - Bond type
+  - Adjacents vs. ligands
+  - How to approach assignment generation?
+  - How to calculate angles, dihedrals in DG?
+
+
 Remaining DG deficiencies
 -------------------------
-- I *think* that something about embedding is completely wrong. Super wrong.
+- I *think* that something about embedding is wrong. Super wrong.
   In every case, despite all the information added by MoleculeSpatialModel, the
   first coordinates look like absolute garbage.
 - Strain imposed on EZStereocenter substituents that are in small cycles is not

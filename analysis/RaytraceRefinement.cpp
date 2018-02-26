@@ -9,6 +9,8 @@
 #include "AnalysisHelpers.h"
 #include "StdlibTypeAlgorithms.h"
 
+#include "template_magic/Numeric.h"
+
 #include <fstream>
 #include <iomanip>
 
@@ -127,7 +129,7 @@ int main(int argc, char* argv[]) {
     boost::filesystem::path filepath {filename};
     std::string filestem = filepath.stem().string();
 
-    for(const auto& enumPair : enumerate(debugData.refinements)) {
+    for(const auto& enumPair : enumerate(debugData)) {
       const auto& structNum = enumPair.index;
       const auto& refinementData = enumPair.value;
 
@@ -148,8 +150,17 @@ int main(int argc, char* argv[]) {
       );
     }
 
-    if(debugData.failures > 0) {
-      std::cout << "WARNING: " << debugData.failures << " refinements failed." << std::endl;
+    auto failures = TemplateMagic::sum(
+      TemplateMagic::map(
+        debugData,
+        [](const auto& refinementData) -> unsigned {
+          return static_cast<unsigned>(refinementData.isFailure);
+        }
+      )
+    );
+
+    if(failures > 0) {
+      std::cout << "WARNING: " << failures << " refinements failed." << std::endl;
     }
   }
 
@@ -170,7 +181,7 @@ int main(int argc, char* argv[]) {
         MoleculeSpatialModel::DistanceMethod::Uniform
       );
 
-      for(const auto& enumPair : enumerate(debugData.refinements)) {
+      for(const auto& enumPair : enumerate(debugData)) {
         const auto& structNum = enumPair.index;
         const auto& refinementData = enumPair.value;
 
@@ -191,8 +202,17 @@ int main(int argc, char* argv[]) {
         );
       }
 
-      if(debugData.failures > 0) {
-        std::cout << "WARNING: " << debugData.failures << " refinements failed." << std::endl;
+      auto failures = TemplateMagic::sum(
+        TemplateMagic::map(
+          debugData,
+          [](const auto& refinementData) -> unsigned {
+            return static_cast<unsigned>(refinementData.isFailure);
+          }
+        )
+      );
+
+      if(failures > 0) {
+        std::cout << "WARNING: " << failures << " refinements failed." << std::endl;
       }
     }
   }

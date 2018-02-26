@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         /* Create an ensemble of 3D positions using DG
          * and uniform distance setting
          */
-        auto ensemble = detail::runDistanceGeometry(
+        auto ensembleResult = detail::runDistanceGeometry(
           molecule,
           100,
           Partiality::All,
@@ -92,12 +92,14 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
           MoleculeSpatialModel::DistanceMethod::Uniform
         );
 
+        BOOST_REQUIRE_MESSAGE(ensembleResult, ensembleResult.error().message());
+
         /* Check that for every PositionCollection, inferring the StereocenterList
          * from the generated coordinates yields the same StereocenterList you 
          * started out with.
          */
         auto mapped = TemplateMagic::map(
-          ensemble,
+          ensembleResult.value(),
           [&](const auto& positions) -> bool {
             auto inferredStereocenterList = molecule.inferStereocentersFromPositions(
               positions
