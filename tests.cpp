@@ -12,8 +12,8 @@
 #include "GenerateUniques.h"
 #include "LogicalOperatorTests.h"
 
-#include "template_magic/Random.h"
-#include "template_magic/Containers.h"
+#include "temple/Random.h"
+#include "temple/Containers.h"
 
 using namespace UniqueAssignments;
 
