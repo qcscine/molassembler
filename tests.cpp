@@ -2,10 +2,10 @@
 #define BOOST_TEST_DYN_LINK
 
 #include <boost/test/unit_test.hpp>
-#include "constexpr_magic/ToSTL.h"
+#include "constable/ToSTL.h"
 #include <Eigen/Geometry>
-#include "template_magic/Containers.h"
-#include "template_magic/Numeric.h"
+#include "temple/Containers.h"
+#include "temple/Numeric.h"
 
 #include "Symmetries.h"
 #include "Properties.h"
@@ -41,21 +41,19 @@ BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
   BOOST_TEST_REQUIRE(Symmetry::symmetryData().size() == Symmetry::nSymmetries);
 
   BOOST_REQUIRE(
-    TemplateMagic::all_of(
-      TemplateMagic::map(
-        Symmetry::allNames,
-        [&](const auto& symmetryName) -> bool {
-          return Symmetry::symmetryData().count(symmetryName) == 1;
-        }
-      )
+    temple::all_of(
+      Symmetry::allNames,
+      [&](const auto& symmetryName) -> bool {
+        return Symmetry::symmetryData().count(symmetryName) == 1;
+      }
     )
   );
 }
 
 BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
   BOOST_CHECK(
-    TemplateMagic::all_of(
-      TemplateMagic::zipMap(
+    temple::all_of(
+      temple::zipMap(
         Symmetry::data::angleFunctions,
         std::vector<Symmetry::data::AngleFunctionPtr> {{
           &Symmetry::data::Linear::angleFunction,
@@ -372,8 +370,8 @@ BOOST_AUTO_TEST_CASE( tetrahedraDefinitionIndicesUnique ) {
 }
 
 BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
-  const double comparisonSmallestAngle = TemplateMagic::min(
-    TemplateMagic::map(
+  const double comparisonSmallestAngle = temple::min(
+    temple::map(
       allNames,
       [](const Name& symmetryName) -> double {
         double smallestAngle = angleFunction(symmetryName)(0, 1);
@@ -434,7 +432,7 @@ std::enable_if_t<
     )
   );
 
-  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  constable::floating::ExpandedRelativeEqualityComparator<double> comparator {
     properties::floatingPointEqualityThreshold
   };
 
@@ -451,8 +449,8 @@ std::enable_if_t<
   }
 
   // Do a full set comparison
-  auto convertedMappings = TemplateMagic::map(
-    ConstexprMagic::toSTL(constexprMappings.mappings),
+  auto convertedMappings = temple::map(
+    constable::toSTL(constexprMappings.mappings),
     [&](const auto& indexList) -> std::vector<unsigned> {
       return {
         indexList.begin(),
@@ -466,7 +464,7 @@ std::enable_if_t<
     dynamicMappings.indexMappings.end()
   };
 
-  return TemplateMagic::setDifference(
+  return temple::setDifference(
     convertedMappings,
     dynamicResultSet
   ).size() == 0;
@@ -481,7 +479,7 @@ constexpr bool pairEqualityComparator(
   const IndexAndMappingsPairType& a,
   const IndexAndMappingsPairType& b
 ) {
-  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  constable::floating::ExpandedRelativeEqualityComparator<double> comparator {
     Symmetry::properties::floatingPointEqualityThreshold
   };
 
@@ -499,7 +497,7 @@ std::enable_if_t<
   // Ligand loss situation
   
   /* Constexpr part */
-  ConstexprMagic::Array<
+  constable::Array<
     std::pair<
       unsigned,
       Symmetry::constexprProperties::MappingsReturnType
@@ -518,7 +516,7 @@ std::enable_if_t<
   }
 
   // Group the results
-  auto constexprGroups = ConstexprMagic::groupByEquality(
+  auto constexprGroups = constable::groupByEquality(
     constexprMappings,
     pairEqualityComparator // C++17 constexpr lambda
   );
@@ -545,15 +543,15 @@ std::enable_if_t<
   }
 
   // Analyze all mappings - which indices have "identical" target mappings?
-  auto dynamicGroups = TemplateMagic::groupByEquality(
+  auto dynamicGroups = temple::groupByEquality(
     dynamicMappings,
     [&](const auto& firstMappingPair, const auto& secondMappingPair) -> bool {
       return (
-        ConstexprMagic::floating::isCloseRelative(
+        constable::floating::isCloseRelative(
           firstMappingPair.second.angularDistortion,
           secondMappingPair.second.angularDistortion,
           Symmetry::properties::floatingPointEqualityThreshold
-        ) && ConstexprMagic::floating::isCloseRelative(
+        ) && constable::floating::isCloseRelative(
           firstMappingPair.second.chiralDistortion,
           secondMappingPair.second.chiralDistortion,
           Symmetry::properties::floatingPointEqualityThreshold
@@ -621,8 +619,8 @@ struct RotationGenerationTest {
       detail::iota<unsigned>(SymmetryClass::size)
     );
 
-    auto convertedRotations = TemplateMagic::map(
-      ConstexprMagic::toSTL(constexprRotations),
+    auto convertedRotations = temple::map(
+      constable::toSTL(constexprRotations),
       [&](const auto& indexList) -> std::vector<unsigned> {
         return {
           indexList.begin(),
@@ -645,7 +643,7 @@ struct RotationGenerationTest {
       pass = false;
     } else {
       pass = (
-        TemplateMagic::setDifference(
+        temple::setDifference(
           convertedRotations,
           dynamicRotations
         ).size() == 0
@@ -663,13 +661,13 @@ struct RotationGenerationTest {
 
       std::cout << " Converted constexpr:" << std::endl;
       for(const auto& element : convertedRotations) {
-        std::cout << " {" << TemplateMagic::condenseIterable(element) 
+        std::cout << " {" << temple::condenseIterable(element) 
           << "}\n";
       }
 
       std::cout << " Dynamic:" << std::endl;
       for(const auto& element : dynamicRotations) {
-        std::cout << " {" << TemplateMagic::condenseIterable(element) 
+        std::cout << " {" << temple::condenseIterable(element) 
           << "}\n";
       }
     } 
@@ -739,14 +737,14 @@ std::enable_if_t<
       "black"
     );
 
-    std::cout << "color=\"" << TemplateMagic::condenseIterable(repeatColor, ":invis:") << "\"";
+    std::cout << "color=\"" << temple::condenseIterable(repeatColor, ":invis:") << "\"";
   } else {
     std::cout << "color=\"" << "black" << "\"";
     std::cout << ", style=\"dashed\"";
   }
 
   std::cout << ", label=\"" 
-    << ConstexprMagic::Math::round(constexprMapping.angularDistortion, 2);
+    << constable::Math::round(constexprMapping.angularDistortion, 2);
 
   if(multiplicity > 3) {
     std::cout << " (" << multiplicity << ")";
@@ -773,8 +771,8 @@ struct WriteLigandMapping {
 BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   // Full test of rotation algorithm equivalency for all symmetries
   BOOST_CHECK_MESSAGE(
-    TemplateMagic::all_of(
-      ConstexprMagic::TupleType::map<
+    temple::all_of(
+      constable::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         RotationGenerationTest
       >()
@@ -784,15 +782,15 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
   // Write out all mappings
-  ConstexprMagic::TupleType::mapAllPairs<
+  constable::TupleType::mapAllPairs<
     Symmetry::data::allSymmetryDataTypes,
     WriteLigandMapping
   >();
 
   // Test transitions generation/evaluation algorithm equivalency for all
   BOOST_CHECK_MESSAGE(
-    TemplateMagic::all_of(
-      ConstexprMagic::TupleType::mapAllPairs<
+    temple::all_of(
+      constable::TupleType::mapAllPairs<
         Symmetry::data::allSymmetryDataTypes,
         LigandGainTest
       >()
@@ -808,7 +806,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
 template<typename SymmetryClass>
 struct NumUnlinkedTestFunctor {
   static bool value() {
-    auto constexprResults = ConstexprMagic::toSTL(
+    auto constexprResults = constable::toSTL(
       Symmetry::allNumUnlinkedAssignments.at(
         static_cast<unsigned>(SymmetryClass::name)
       )
@@ -831,8 +829,8 @@ struct NumUnlinkedTestFunctor {
 
 BOOST_AUTO_TEST_CASE(numUnlinkedTests) {
   BOOST_CHECK_MESSAGE(
-    TemplateMagic::all_of(
-      ConstexprMagic::TupleType::map<
+    temple::all_of(
+      constable::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         NumUnlinkedTestFunctor
       >()

@@ -1,7 +1,7 @@
 #ifndef INCLUDE_SYMMETRIES_CONSTEXPR_ANGLES_H
 #define INCLUDE_SYMMETRIES_CONSTEXPR_ANGLES_H
 
-#include "constexpr_magic/UpperTriangularMatrix.h"
+#include "constable/UpperTriangularMatrix.h"
 
 /*! @file
  *
@@ -25,14 +25,14 @@ namespace detail {
 
 template<unsigned long size>
 constexpr double makeElement(
-  const std::array<ConstexprMagic::Vector, size>& positions,
+  const std::array<constable::Vector, size>& positions,
   const size_t& i
 ) {
   // Get i-j matrix indices from the linear index
-  const auto indexPair = ConstexprMagic::UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<size>(i);
+  const auto indexPair = constable::UpperTriangularMatrixImpl::index_conversion::toDoubleIndex<size>(i);
 
   // Calculate the angle
-  return ConstexprMagic::angle(
+  return constable::angle(
     positions[indexPair.first],
     positions[indexPair.second]
   );
@@ -40,7 +40,7 @@ constexpr double makeElement(
 
 template<unsigned long size, size_t... Inds>
 constexpr std::array<double, size * (size - 1) / 2> makeArrayImpl(
-  const std::array<ConstexprMagic::Vector, size>& positions,
+  const std::array<constable::Vector, size>& positions,
   std::integer_sequence<size_t, Inds...>
 ) {
   // Expand the parameter pack for each individual linear index
@@ -52,7 +52,7 @@ constexpr std::array<double, size * (size - 1) / 2> makeArrayImpl(
  */
 template<unsigned long size>
 constexpr std::array<double, size * (size - 1) / 2> makeArray(
-  const std::array<ConstexprMagic::Vector, size>& positions
+  const std::array<constable::Vector, size>& positions
 ) {
   return makeArrayImpl(
     positions,

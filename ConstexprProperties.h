@@ -3,11 +3,11 @@
 
 #include "Symmetries.h"
 
-#include "constexpr_magic/Array.h"
-#include "constexpr_magic/Boost.h"
-#include "constexpr_magic/DynamicSet.h"
+#include "constable/Array.h"
+#include "constable/Boost.h"
+#include "constable/DynamicSet.h"
 
-#include "template_magic/Cache.h"
+#include "temple/Cache.h"
 
 /*! @file
  *
@@ -71,16 +71,16 @@ struct minAngleFunctor {
   }
 };
 
-/* Typedef to use ConstexprMagic's Array instead of std::array as the underlying
+/* Typedef to use constable's Array instead of std::array as the underlying
  * base array type since C++14's std::array has too few members marked constexpr
  * as to be useful. When C++17 rolls around, replace this with std::array!
  */
 template<typename T, size_t size> 
-using ArrayType = ConstexprMagic::Array<T, size>;
+using ArrayType = constable::Array<T, size>;
 
 template<typename SymmetryClass>
 constexpr auto startingIndexSequence() {
-  return ConstexprMagic::iota<
+  return constable::iota<
     ArrayType,
     unsigned,
     SymmetryClass::size
@@ -120,7 +120,7 @@ constexpr unsigned rotationPeriodicityImpl(
   const unsigned& count
 ) {
   if(
-    ConstexprMagic::arraysEqual(
+    constable::arraysEqual(
       runningIndices,
       startingIndexSequence<SymmetryClass>()
     )
@@ -189,11 +189,11 @@ struct maxSymmetrySizeFunctor {
       SymmetryClasses::size...
     };
 
-    return ConstexprMagic::max(sizes);
+    return constable::max(sizes);
   }
 };
 
-constexpr unsigned maxSymmetrySize = ConstexprMagic::TupleType::unpackToFunction<
+constexpr unsigned maxSymmetrySize = constable::TupleType::unpackToFunction<
   Symmetry::data::allSymmetryDataTypes,
   maxSymmetrySizeFunctor
 >();
@@ -203,7 +203,7 @@ constexpr unsigned maxSymmetrySize = ConstexprMagic::TupleType::unpackToFunction
  * boost::none -> origin mapping.
  */
 template<typename SymmetryClass>
-constexpr ConstexprMagic::Vector getCoordinates(const unsigned& indexInSymmetry) {
+constexpr constable::Vector getCoordinates(const unsigned& indexInSymmetry) {
   if(indexInSymmetry != ORIGIN_PLACEHOLDER) {
     return SymmetryClass::coordinates.at(indexInSymmetry);
   }
@@ -216,10 +216,10 @@ constexpr ConstexprMagic::Vector getCoordinates(const unsigned& indexInSymmetry)
  * three-dimensional space.
  */
 constexpr double getTetrahedronVolume(
-  const ConstexprMagic::Vector& i,
-  const ConstexprMagic::Vector& j,
-  const ConstexprMagic::Vector& k,
-  const ConstexprMagic::Vector& l
+  const constable::Vector& i,
+  const constable::Vector& j,
+  const constable::Vector& k,
+  const constable::Vector& l
 ) {
   return (i - l).dot(
     (j - l).cross(k - l)
@@ -235,7 +235,7 @@ template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateAngleDistortion(
   const ArrayType<
     unsigned,
-    ConstexprMagic::Math::max(
+    constable::Math::max(
       SymmetryClassFrom::size,
       SymmetryClassTo::size
     )
@@ -245,7 +245,7 @@ constexpr double calculateAngleDistortion(
 
   for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
     for(unsigned j = i + 1; j < SymmetryClassFrom::size; ++j) {
-      angularDistortion += ConstexprMagic::Math::abs(
+      angularDistortion += constable::Math::abs(
         SymmetryClassFrom::angleFunction(i, j)
         - SymmetryClassTo::angleFunction(
           indexMapping.at(i),
@@ -269,7 +269,7 @@ constexpr double calculateAngularDistortion(
 
   for(unsigned i = 0; i < sourceSymmetrySize; ++i) {
     for(unsigned j = i + 1; j < sourceSymmetrySize; ++j) {
-      distortionSum += ConstexprMagic::Math::abs(
+      distortionSum += constable::Math::abs(
         sourceAngleFunction(i, j)
         - targetAngleFunction(
           indexMapping.at(i),
@@ -306,7 +306,7 @@ template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateChiralDistortion(
   const ArrayType<
     unsigned,
-    ConstexprMagic::Math::max(
+    constable::Math::max(
       SymmetryClassFrom::size,
       SymmetryClassTo::size
     )
@@ -319,7 +319,7 @@ constexpr double calculateChiralDistortion(
   for(unsigned i = 0; i < SymmetryClassFrom::tetrahedra.size(); ++i) {
     const auto& tetrahedron = SymmetryClassFrom::tetrahedra.at(i);
 
-    chiralDistortion += ConstexprMagic::Math::abs(
+    chiralDistortion += constable::Math::abs(
       getTetrahedronVolume(
         getCoordinates<SymmetryClassFrom>(tetrahedron.at(0)),
         getCoordinates<SymmetryClassFrom>(tetrahedron.at(1)),
@@ -416,7 +416,7 @@ constexpr unsigned maxRotations() {
    */
   constexpr auto symmetryRotationPeriodicities = rotationPeriodicities<SymmetryClass>();
 
-  return ConstexprMagic::reduce(
+  return constable::reduce(
     symmetryRotationPeriodicities,
     1u,
     std::multiplies<unsigned>()
@@ -433,9 +433,9 @@ constexpr unsigned maxRotations() {
  * lexicographical comparisons between vectors.
  */
 template<typename UnsignedType, size_t size>
-constexpr auto hashIndexList(const ConstexprMagic::Array<unsigned, size>& indexList) {
-  constexpr unsigned maxDigitsStoreable = ConstexprMagic::Math::floor(
-    ConstexprMagic::Math::log10(
+constexpr auto hashIndexList(const constable::Array<unsigned, size>& indexList) {
+  constexpr unsigned maxDigitsStoreable = constable::Math::floor(
+    constable::Math::log10(
       static_cast<double>(
         std::numeric_limits<UnsignedType>::max()
       )
@@ -469,19 +469,19 @@ using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 using IndexListStorageType = unsigned;
 
 template<typename SymmetryClass>
-using RotationsSetType = ConstexprMagic::DynamicSet<
+using RotationsSetType = constable::DynamicSet<
   IndicesList<SymmetryClass>,
   maxRotations<SymmetryClass>()
 >;
 
 template<typename SymmetryClass>
-using ChainStructuresArrayType = ConstexprMagic::DynamicArray<
+using ChainStructuresArrayType = constable::DynamicArray<
   IndicesList<SymmetryClass>,
   maxRotations<SymmetryClass>() * 2 // TODO factor is entirely arbitrary
 >;
 
 template<typename SymmetryClass>
-using ChainArrayType = ConstexprMagic::DynamicArray<
+using ChainArrayType = constable::DynamicArray<
   unsigned,
   maxRotations<SymmetryClass>() * 2 // TODO factor is entirely arbitrary
 >;
@@ -537,8 +537,8 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
 struct MappingsReturnType {
   static constexpr size_t maxMappingsSize = 50;
 
-  using MappingsList = ConstexprMagic::DynamicSet<
-    ConstexprMagic::DynamicArray<unsigned, maxSymmetrySize>,
+  using MappingsList = constable::DynamicSet<
+    constable::DynamicArray<unsigned, maxSymmetrySize>,
     maxMappingsSize
   >;
 
@@ -569,9 +569,9 @@ struct MappingsReturnType {
   }
 
   constexpr bool operator < (const MappingsReturnType& other) const {
-    return ConstexprMagic::componentSmaller(mappings, other.mappings).valueOr(
-      ConstexprMagic::componentSmaller(angularDistortion, other.angularDistortion).valueOr(
-        ConstexprMagic::componentSmaller(chiralDistortion, other.chiralDistortion).valueOr(
+    return constable::componentSmaller(mappings, other.mappings).valueOr(
+      constable::componentSmaller(angularDistortion, other.angularDistortion).valueOr(
+        constable::componentSmaller(chiralDistortion, other.chiralDistortion).valueOr(
           false
         )
       )
@@ -600,12 +600,12 @@ constexpr auto symmetryTransitionMappings() {
 
   auto indexMapping = startingIndexSequence<SymmetryClassTo>();
 
-  ConstexprMagic::DynamicSet<
+  constable::DynamicSet<
     IndexListStorageType,
-    ConstexprMagic::Math::factorial(SymmetryClassTo::size)
+    constable::Math::factorial(SymmetryClassTo::size)
   > encounteredMappings;
 
-  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  constable::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
   };
 
@@ -673,7 +673,7 @@ constexpr auto symmetryTransitionMappings() {
         }
       }
     }
-  } while(ConstexprMagic::inPlaceNextPermutation(indexMapping));
+  } while(constable::inPlaceNextPermutation(indexMapping));
 
   return MappingsReturnType(
     std::move(bestMappings),
@@ -713,12 +713,12 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
    * last position (the one that is added / deleted).
    */
 
-  ConstexprMagic::DynamicSet<
+  constable::DynamicSet<
     IndexListStorageType,
-    ConstexprMagic::Math::factorial(SymmetryClassFrom::size)
+    constable::Math::factorial(SymmetryClassFrom::size)
   > encounteredMappings;
 
-  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  constable::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
   };
 
@@ -772,7 +772,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
       }
     }
   } while(
-    ConstexprMagic::inPlaceNextPermutation(indexMapping)
+    constable::inPlaceNextPermutation(indexMapping)
   );
 
   return MappingsReturnType(
@@ -790,7 +790,7 @@ std::enable_if_t<
     SymmetrySource::size == SymmetryTarget::size 
     || SymmetrySource::size + 1 == SymmetryTarget::size
   ),
-  ConstexprMagic::Optional<MappingsReturnType>
+  constable::Optional<MappingsReturnType>
 > calculateMapping() {
   return {
     symmetryTransitionMappings<SymmetrySource, SymmetryTarget>()
@@ -804,7 +804,7 @@ std::enable_if_t<
     SymmetrySource::size == SymmetryTarget::size 
     || SymmetrySource::size + 1 == SymmetryTarget::size
   ),
-  ConstexprMagic::Optional<MappingsReturnType>
+  constable::Optional<MappingsReturnType>
 > calculateMapping() {
   return {};
 }
@@ -821,9 +821,9 @@ constexpr unsigned numUnlinkedAssignments(
     indices.at(i) = 0;
   }
 
-  ConstexprMagic::DynamicSet<
+  constable::DynamicSet<
     unsigned,
-    ConstexprMagic::Math::factorial(Symmetry::size)
+    constable::Math::factorial(Symmetry::size)
   > rotations;
 
   auto initialRotations = generateAllRotations<Symmetry>(indices);
@@ -832,7 +832,7 @@ constexpr unsigned numUnlinkedAssignments(
     rotations.insert(hashIndexList<unsigned>(rotation));
   }
 
-  while(ConstexprMagic::inPlaceNextPermutation(indices)) {
+  while(constable::inPlaceNextPermutation(indices)) {
     if(!rotations.contains(hashIndexList<unsigned>(indices))) {
       auto allRotations = generateAllRotations<Symmetry>(indices);
       for(const auto& rotation : allRotations) {

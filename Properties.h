@@ -14,22 +14,22 @@ namespace Symmetry {
 /* Derived stored constexpr data */
 //! The smallest angle between ligands in any symmetry
 constexpr double smallestAngle __attribute__ ((unused)) 
-= ConstexprMagic::TupleType::unpackToFunction<
+= constable::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
   constexprProperties::minAngleFunctor
 >();
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
 //! All 0, +1 symmetry transition mappings
-extern const ConstexprMagic::UpperTriangularMatrix<
-  ConstexprMagic::Optional<constexprProperties::MappingsReturnType>,
+extern const constable::UpperTriangularMatrix<
+  constable::Optional<constexprProperties::MappingsReturnType>,
   nSymmetries * (nSymmetries - 1) / 2
 > allMappings;
 #endif
 
 /* Dynamic access to constexpr data */
 //! Cache for on-the-fly generated mappings
-extern TemplateMagic::MinimalCache<
+extern temple::MinimalCache<
   std::tuple<Symmetry::Name, Symmetry::Name, boost::optional<unsigned>>,
   properties::SymmetryTransitionGroup
 > mappingsCache;
@@ -42,13 +42,13 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
 );
 
 #ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
-extern const ConstexprMagic::Array<
-  ConstexprMagic::DynamicArray<unsigned, constexprProperties::maxSymmetrySize>,
+extern const constable::Array<
+  constable::DynamicArray<unsigned, constexprProperties::maxSymmetrySize>,
   nSymmetries
 > allNumUnlinkedAssignments;
 #endif
 
-extern TemplateMagic::MinimalCache<
+extern temple::MinimalCache<
   Symmetry::Name,
   std::vector<unsigned>
 > numUnlinkedCache;

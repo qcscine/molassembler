@@ -6,9 +6,9 @@
 #include <numeric>
 #include <fstream>
 
-#include "constexpr_magic/FloatingPointComparison.h"
-#include "template_magic/Containers.h"
-#include "template_magic/Numeric.h"
+#include "constable/FloatingPointComparison.h"
+#include "temple/Containers.h"
+#include "temple/Numeric.h"
 
 #include <Eigen/Geometry>
 
@@ -156,8 +156,8 @@ void writeSymmetryTransitionDotFile(
     }
 
     if(distortionsMap.size() > 0) {
-      double maxDistortion = TemplateMagic::max(
-        TemplateMagic::mapValues(
+      double maxDistortion = temple::max(
+        temple::mapValues(
           distortionsMap,
           [](const auto& ligandGainReturnStruct) -> double {
             return (
@@ -193,7 +193,7 @@ void writeSymmetryTransitionDotFile(
 
           for(const auto& mapping : mappingData.indexMappings) {
             std::cout << "mapping {" 
-              << TemplateMagic::condenseIterable(mapping) 
+              << temple::condenseIterable(mapping) 
               << "}" << std::endl;
           }
         }
@@ -217,7 +217,7 @@ void writeSymmetryTransitionDotFile(
             );
 
             dotFile << "color=\"" 
-              << TemplateMagic::condenseIterable(repeatColor, ":invis:") 
+              << temple::condenseIterable(repeatColor, ":invis:") 
               << "\"";
           } else {
             dotFile << "color=\"" 
@@ -226,7 +226,7 @@ void writeSymmetryTransitionDotFile(
           }
 
           dotFile << ", label=\"" 
-            << ConstexprMagic::Math::round(
+            << constable::Math::round(
               mappingData.angularDistortion + mappingData.chiralDistortion,
               2
             );
@@ -329,15 +329,15 @@ void writeLigandLossDotFile(
         }
 
         // Analyze all mappings - which indices have "identical" target mappings?
-        auto groups = TemplateMagic::groupByEquality(
+        auto groups = temple::groupByEquality(
           allMappings,
           [&](const auto& firstMappingPair, const auto& secondMappingPair) -> bool {
             return (
-              ConstexprMagic::floating::isCloseRelative(
+              constable::floating::isCloseRelative(
                 firstMappingPair.second.angularDistortion,
                 secondMappingPair.second.angularDistortion,
                 Symmetry::properties::floatingPointEqualityThreshold
-              ) && ConstexprMagic::floating::isCloseRelative(
+              ) && constable::floating::isCloseRelative(
                 firstMappingPair.second.chiralDistortion,
                 secondMappingPair.second.chiralDistortion,
                 Symmetry::properties::floatingPointEqualityThreshold
@@ -347,7 +347,7 @@ void writeLigandLossDotFile(
         );
 
         for(const auto& mappingGroup : groups) {
-          const auto equivalentPositions = TemplateMagic::map(
+          const auto equivalentPositions = temple::map(
             mappingGroup,
             [](const auto& mappingPair) -> unsigned {
               return mappingPair.first;
@@ -370,7 +370,7 @@ void writeLigandLossDotFile(
 
             for(const auto& mapping : mappingData.indexMappings) {
               std::cout << "mapping {" 
-                << TemplateMagic::condenseIterable(mapping) 
+                << temple::condenseIterable(mapping) 
                 << "}" << std::endl;
             }
           }
@@ -394,14 +394,14 @@ void writeLigandLossDotFile(
               );
 
               dotFile << "color=\"" 
-                << TemplateMagic::condenseIterable(repeatColor, ":invis:") 
+                << temple::condenseIterable(repeatColor, ":invis:") 
                 << "\"";
             } else {
               dotFile << "color=\"black\", style=\"dashed\"";
             }
 
             dotFile << ", label=\"" 
-              << ConstexprMagic::Math::round(
+              << constable::Math::round(
                 mappingData.angularDistortion + mappingData.chiralDistortion,
                 2
               );
@@ -413,7 +413,7 @@ void writeLigandLossDotFile(
 
             // Add equivalent positions to label
             dotFile << " {" 
-              << TemplateMagic::condenseIterable(equivalentPositions)
+              << temple::condenseIterable(equivalentPositions)
               << "}";
 
             // close label

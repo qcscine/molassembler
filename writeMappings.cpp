@@ -4,8 +4,8 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "template_magic/VectorView.h"
-#include "constexpr_magic/ConsecutiveCompare.h"
+#include "temple/VectorView.h"
+#include "constable/ConsecutiveCompare.h"
 
 #include "DynamicProperties.h"
 
@@ -24,7 +24,7 @@ std::ostream& nl(std::ostream& out) {
 
 std::string condense(const std::vector<unsigned>& indexVector) {
   using namespace std::string_literals;
-  return "{"s + TemplateMagic::condenseIterable(indexVector) + "}"s;
+  return "{"s + temple::condenseIterable(indexVector) + "}"s;
 }
 
 std::ostream& operator << (
@@ -67,10 +67,10 @@ void writeDistortions(
 ) {
   std::cout << std::fixed << std::setprecision(2);
 
-  auto sortedView = TemplateMagic::sort(
+  auto sortedView = temple::sort(
     distortions,
     [](const auto& a, const auto& b) -> bool {
-      return ConstexprMagic::consecutiveCompareSmaller(
+      return constable::consecutiveCompareSmaller(
         b.angularDistortion,
         a.angularDistortion,
         b.chiralDistortion,
@@ -91,7 +91,7 @@ double calculateAmbiguity(
    * lowest mapping is.
    */
 
-  auto sortByTotalView = TemplateMagic::sort(
+  auto sortByTotalView = temple::sort(
     distortions,
     [](const auto& a, const auto& b) -> bool {
       return (
@@ -270,7 +270,7 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    auto sortedView = TemplateMagic::sort(
+    auto sortedView = temple::sort(
       ambiguities,
       [](const auto& a, const auto& b) -> bool {
         return a.ambiguity < b.ambiguity;

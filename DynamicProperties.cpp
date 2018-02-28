@@ -2,9 +2,9 @@
 
 #include <Eigen/Dense>
 
-#include "template_magic/MemberFetcher.h"
-#include "template_magic/Numeric.h"
-#include "template_magic/VectorView.h"
+#include "temple/MemberFetcher.h"
+#include "temple/Numeric.h"
+#include "temple/VectorView.h"
 
 /* TODO
  * - Consider unordered_set for rotation contains, using the hash function from 
@@ -100,8 +100,8 @@ double calculateAngleDistortion(
 }
 
 unsigned long hashIndexList(const std::vector<unsigned>& indexList) {
-  constexpr unsigned maxDigitsStoreable = ConstexprMagic::Math::floor(
-    ConstexprMagic::Math::log10(
+  constexpr unsigned maxDigitsStoreable = constable::Math::floor(
+    constable::Math::log10(
       static_cast<double>(
         std::numeric_limits<unsigned long>::max()
       )
@@ -444,7 +444,7 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
    *
    * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
    */
-  std::vector<unsigned> indexMapping = TemplateMagic::concatenate(
+  std::vector<unsigned> indexMapping = temple::concatenate(
     detail::iota<unsigned>(positionInSourceSymmetry),
     detail::range(positionInSourceSymmetry + 1, Symmetry::size(symmetryFrom))
   );
@@ -503,8 +503,8 @@ SymmetryTransitionGroup selectBestTransitionMappings(
    * so we sub-select within the generated set
    */
 
-  double lowestAngularDistortion = TemplateMagic::min(
-    TemplateMagic::getMember(
+  double lowestAngularDistortion = temple::min(
+    temple::getMember(
       distortions,
       [](const auto& distortion) -> double {
         return distortion.angularDistortion;
@@ -512,7 +512,7 @@ SymmetryTransitionGroup selectBestTransitionMappings(
     )
   );
 
-  auto distortionsView = TemplateMagic::filter(
+  auto distortionsView = temple::filter(
     distortions,
     [&lowestAngularDistortion](const auto& distortion) -> bool {
       return (
@@ -524,8 +524,8 @@ SymmetryTransitionGroup selectBestTransitionMappings(
   );
 
   // And now sub-set further on the lowest chiral distortion
-  double lowestChiralDistortion = TemplateMagic::min(
-    TemplateMagic::getMember(
+  double lowestChiralDistortion = temple::min(
+    temple::getMember(
       distortionsView,
       [](const auto& distortion) -> double {
         return distortion.chiralDistortion;

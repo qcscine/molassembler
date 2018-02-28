@@ -2,9 +2,9 @@
 #define LIB_INCLUDE_SYMMETRIES_H
 
 #include "boost/optional.hpp"
-#include "constexpr_magic/TupleType.h"
+#include "constable/TupleType.h"
 #include "Eigen/Core"
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 
 #include "Primitives.h"
 
@@ -165,7 +165,7 @@ TetrahedronList makeTetrahedra(
 
   for(const auto& tetrahedron : constexprTetrahedra) {
     tetrahedra.push_back(
-      TemplateMagic::map(
+      temple::map(
         tetrahedron,
         [](const unsigned& index) -> boost::optional<unsigned> {
           if(index == ORIGIN_PLACEHOLDER) {
@@ -182,16 +182,16 @@ TetrahedronList makeTetrahedra(
 }
 
 //! Conversion helper to Eigen type from constexpr vector type
-Eigen::Vector3d toEigen(const ConstexprMagic::Vector& cVector);
+Eigen::Vector3d toEigen(const constable::Vector& cVector);
 
 /*! Conversion function to make the dynamic coordinates list type from the
  * constexpr data types given in a specifc symmetry class type
  */
 template<size_t symmetrySize>
 CoordinateList makeCoordinates(
-  const std::array<ConstexprMagic::Vector, symmetrySize>& constexprCoordinates
+  const std::array<constable::Vector, symmetrySize>& constexprCoordinates
 ) {
-  return TemplateMagic::mapToVector(
+  return temple::mapToVector(
     constexprCoordinates,
     toEigen
   );
@@ -235,7 +235,7 @@ struct symmetryInformationFunctor {
 };
 
 //! An array containing pointers to all symmetry data types' angle function
-constexpr auto angleFunctions = ConstexprMagic::TupleType::unpackToFunction<
+constexpr auto angleFunctions = constable::TupleType::unpackToFunction<
   allSymmetryDataTypes,
   angleFunctionFunctor
 >();

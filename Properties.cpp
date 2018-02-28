@@ -1,5 +1,5 @@
 #include "Properties.h"
-#include "constexpr_magic/ToSTL.h"
+#include "constable/ToSTL.h"
 
 namespace Symmetry {
 
@@ -12,15 +12,15 @@ struct mappingCalculationFunctor {
 };
 
 // Calculate the symmetryMapping for all possible combinations of symmetries
-constexpr auto allMappings = ConstexprMagic::makeUpperTriangularMatrix(
-  ConstexprMagic::TupleType::mapAllPairs<
+constexpr auto allMappings = constable::makeUpperTriangularMatrix(
+  constable::TupleType::mapAllPairs<
     data::allSymmetryDataTypes,
     mappingCalculationFunctor
   >()
 );
 #endif
 
-TemplateMagic::MinimalCache<
+temple::MinimalCache<
   std::tuple<Symmetry::Name, Symmetry::Name, boost::optional<unsigned>>,
   properties::SymmetryTransitionGroup
 > mappingsCache;
@@ -66,8 +66,8 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
       const auto& constexprMappings = constexprOption.value();
 
       properties::SymmetryTransitionGroup STLResult;
-      STLResult.indexMappings = TemplateMagic::mapToVector(
-        ConstexprMagic::toSTL(constexprMappings.mappings),
+      STLResult.indexMappings = temple::mapToVector(
+        constable::toSTL(constexprMappings.mappings),
         [&](const auto& indexList) -> std::vector<unsigned> {
           return {
             indexList.begin(),
@@ -109,7 +109,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
 template<typename Symmetry>
 struct makeAllNumUnlinkedAssignmentsFunctor {
   static constexpr auto value() {
-    ConstexprMagic::DynamicArray<unsigned, constexprProperties::maxSymmetrySize> nums;
+    constable::DynamicArray<unsigned, constexprProperties::maxSymmetrySize> nums;
 
     /* Value for 0 is equal to value for 1, so calculate one less. When all
      * are equal, there is obviously only one assignment, no need to calculate
@@ -124,13 +124,13 @@ struct makeAllNumUnlinkedAssignmentsFunctor {
   }
 };
 
-constexpr auto allNumUnlinkedAssignments = ConstexprMagic::TupleType::map<
+constexpr auto allNumUnlinkedAssignments = constable::TupleType::map<
   data::allSymmetryDataTypes,
   makeAllNumUnlinkedAssignmentsFunctor
 >();
 #endif
 
-TemplateMagic::MinimalCache<
+temple::MinimalCache<
   Symmetry::Name,
   std::vector<unsigned>
 > numUnlinkedCache;
@@ -157,7 +157,7 @@ unsigned getNumUnlinked(
     static_cast<unsigned>(symmetryName)
   );
 
-  auto stlMapped = ConstexprMagic::toSTL(dynArrRef);
+  auto stlMapped = constable::toSTL(dynArrRef);
 
   numUnlinkedCache.add(
     symmetryName,
