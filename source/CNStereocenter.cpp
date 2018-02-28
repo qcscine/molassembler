@@ -1,8 +1,8 @@
-#include "constexpr_magic/ConsecutiveCompare.h"
-#include "template_magic/Containers.h"
-#include "template_magic/Numeric.h"
-#include "template_magic/Optionals.h"
-#include "template_magic/Random.h"
+#include "constable/ConsecutiveCompare.h"
+#include "temple/Containers.h"
+#include "temple/Numeric.h"
+#include "temple/Optionals.h"
+#include "temple/Random.h"
 #include "symmetry_information/Properties.h"
 
 #include "BuildTypeSwitch.h"
@@ -24,11 +24,11 @@ RankingInformation::RankedType ligandRanking(
   const RankingInformation::RankedType& sortedSubstituents,
   const RankingInformation::RankedType& ligands
 ) {
-  auto ligandCoefficients = TemplateMagic::map(
+  auto ligandCoefficients = temple::map(
     ligands,
     [&sortedSubstituents](const auto& ligandSet) -> unsigned {
-      return TemplateMagic::sum(
-        TemplateMagic::map(
+      return temple::sum(
+        temple::map(
           ligandSet,
           [&sortedSubstituents](const auto& ligandIndex) -> unsigned {
             return std::find_if(
@@ -248,14 +248,14 @@ std::map<AtomIndexType, unsigned> makeSymmetryPositionMap(
 ) {
   std::map<AtomIndexType, unsigned> positionMap;
 
-  const auto endIterators = TemplateMagic::map(
+  const auto endIterators = temple::map(
     canonicalizedSubstituents,
     [](const auto& equalPrioritySet) -> auto {
       return equalPrioritySet.end();
     }
   );
 
-  auto iterators = TemplateMagic::map(
+  auto iterators = temple::map(
     canonicalizedSubstituents,
     [](const auto& equalPrioritySet) -> auto {
       return equalPrioritySet.begin();
@@ -286,14 +286,14 @@ std::vector<AtomIndexType> mapToSymmetryPositions(
 ) {
   std::vector<AtomIndexType> atomsAtSymmetryPositions;
 
-  const auto endIterators = TemplateMagic::map(
+  const auto endIterators = temple::map(
     canonicalizedSubstituents,
     [](const auto& equalPrioritySet) {
       return equalPrioritySet.end();
     }
   );
 
-  auto iterators = TemplateMagic::map(
+  auto iterators = temple::map(
     canonicalizedSubstituents,
     [](const auto& equalPrioritySet) -> auto {
       return equalPrioritySet.begin();
@@ -380,7 +380,7 @@ boost::optional<std::vector<unsigned>> getIndexMapping(
 
   if(preservationOption == ChiralStatePreservation::RandomFromMultipleBest) {
     return mappingsGroup.indexMappings.at(
-      TemplateMagic::random.getSingle<unsigned>(
+      temple::random.getSingle<unsigned>(
         0,
         mappingsGroup.indexMappings.size() - 1
       )
@@ -448,10 +448,10 @@ void CNStereocenter::addSubstituent(
    * boost::none.
    */
   auto suitableMappingOption = _assignmentOption
-    | TemplateMagic::callIfSome(Symmetry::getMapping, _symmetry, newSymmetry, boost::none)
-    | TemplateMagic::callIfSome(
+    | temple::callIfSome(Symmetry::getMapping, _symmetry, newSymmetry, boost::none)
+    | temple::callIfSome(
         glue::getIndexMapping,
-        TemplateMagic::ANS, // Inserts getMapping's optional value here
+        temple::ANS, // Inserts getMapping's optional value here
         preservationOption
       );
 
@@ -550,7 +550,7 @@ void CNStereocenter::assignRandom() {
   };
 
   assign(
-    decider(TemplateMagic::random.randomEngine)
+    decider(temple::random.randomEngine)
   );
 }
 
@@ -711,16 +711,16 @@ void CNStereocenter::removeSubstituent(
    * boost::none.
    */
   auto suitableMappingOptional = _assignmentOption
-    | TemplateMagic::callIfSome(
+    | temple::callIfSome(
         Symmetry::getMapping,
         _symmetry,
         newSymmetry, 
         // Last parameter is the deleted symmetry position, get this from cache
         _symmetryPositionMapCache.at(which)
       )
-    | TemplateMagic::callIfSome(
+    | temple::callIfSome(
         glue::getIndexMapping,
-        TemplateMagic::ANS,
+        temple::ANS,
         preservationOption
       );
 
@@ -808,7 +808,7 @@ void CNStereocenter::fit(
   double bestPenalty = initialPenalty;
   unsigned bestAssignmentMultiplicity = 1;
 
-  auto excludesContains = TemplateMagic::makeContainsPredicate(excludeSymmetries);
+  auto excludesContains = temple::makeContainsPredicate(excludeSymmetries);
 
   // Cycle through all symmetries
   for(const auto& symmetryName : Symmetry::allNames) {
@@ -833,8 +833,8 @@ void CNStereocenter::fit(
 
       const auto prototypes = chiralityConstraints();
 
-      const double angleDeviations = TemplateMagic::sum(
-        TemplateMagic::mapAllPairs(
+      const double angleDeviations = temple::sum(
+        temple::mapAllPairs(
           adjacentAtoms,
           [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
             return std::fabs(
@@ -858,8 +858,8 @@ void CNStereocenter::fit(
         continue;
       }
 
-      const double oneThreeDistanceDeviations = TemplateMagic::sum(
-        TemplateMagic::mapAllPairs(
+      const double oneThreeDistanceDeviations = temple::sum(
+        temple::mapAllPairs(
           adjacentAtoms,
           [&](const AtomIndexType& i, const AtomIndexType& k) -> double {
             return std::fabs(
@@ -896,8 +896,8 @@ void CNStereocenter::fit(
 
       const double chiralityDeviations = (prototypes.empty()
         ? 0
-        : TemplateMagic::sum(
-          TemplateMagic::map(
+        : temple::sum(
+          temple::map(
             prototypes,
             [&positions](const auto& constraintPrototype) -> double {
               using TargetEnumType = Stereocenters::ChiralityConstraintTarget;
@@ -1054,7 +1054,7 @@ std::vector<
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index
      */
-    auto symmetryPositionToAtomIndexMap = TemplateMagic::invertMap(
+    auto symmetryPositionToAtomIndexMap = temple::invertMap(
       _symmetryPositionMapCache
     );
 
@@ -1065,7 +1065,7 @@ std::vector<
       /* Replace boost::none with centerAtom, indices (represent positions within
        * the symmetry) with the atom index at that position from the inverted map
        */
-      auto replaced = TemplateMagic::map(
+      auto replaced = temple::map(
         tetrahedron,
         [&](const auto& indexOptional) -> AtomIndexType {
           if(indexOptional) {
@@ -1179,7 +1179,7 @@ bool CNStereocenter::operator < (const CNStereocenter& other) const {
   /* Sequentially compare individual components, comparing assignments last
    * if everything else matches
    */
-  return ConstexprMagic::consecutiveCompareSmaller(
+  return constable::consecutiveCompareSmaller(
     _centerAtom,
     other._centerAtom,
     _uniqueAssignmentsCache.assignments.size(),

@@ -7,7 +7,7 @@
 #include "BoundsFromSymmetry.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/generateConformation.h"
-#include "template_magic/Enumerate.h"
+#include "temple/Enumerate.h"
 
 BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
   using namespace MoleculeManip;

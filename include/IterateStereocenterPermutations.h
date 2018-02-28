@@ -4,7 +4,7 @@
 #include "Molecule.h"
 #include "StdlibTypeAlgorithms.h"
 
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 
 /*! @file
  *
@@ -122,9 +122,9 @@ public:
     std::string toString() const {
       return (
         "combination: vec{"s
-        + TemplateMagic::condenseIterable(_currentCombination)
+        + temple::condenseIterable(_currentCombination)
         + "}, limits: vec{"s
-        + TemplateMagic::condenseIterable(_limits)
+        + temple::condenseIterable(_limits)
         + "}, done: "s + std::to_string(_done)
       );
     }

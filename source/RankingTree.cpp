@@ -1,6 +1,6 @@
 #include "RankingTree.h"
 
-#include "constexpr_magic/ConsecutiveCompare.h"
+#include "constable/ConsecutiveCompare.h"
 #include "boost/algorithm/string/replace.hpp"
 #include "boost/graph/breadth_first_search.hpp"
 #include "symmetry_information/Properties.h"
@@ -223,7 +223,7 @@ public:
     const auto& EZStereocenterB = EZOptionalB.value();
 
     // Reverse everything below for descending sorting
-    return ConstexprMagic::consecutiveCompareSmaller(
+    return constable::consecutiveCompareSmaller(
       EZStereocenterB.numAssignments(),
       EZStereocenterA.numAssignments(),
       /* Mixed optional comparison (includes comparison of assignment value if
@@ -814,11 +814,11 @@ void RankingTree::_applySequenceRules(
     if /* C++17 constexpr */(buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
         << "Sets post sequence rule 3: {" 
-        << TemplateMagic::condenseIterable(
-          TemplateMagic::map(
+        << temple::condenseIterable(
+          temple::map(
             _branchOrderingHelper.getSets(),
             [](const auto& indexSet) -> std::string {
-              return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+              return "{"s + temple::condenseIterable(indexSet) + "}"s;
             }
           )
         ) << "}\n";
@@ -979,11 +979,11 @@ void RankingTree::_applySequenceRules(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 4A: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1048,7 +1048,7 @@ void RankingTree::_applySequenceRules(
       }
 
       // Compare variants in a branch based on mixed depth
-      TemplateMagic::forAllPairs(
+      temple::forAllPairs(
         variantSet,
         [&](const auto& a, const auto& b) {
           auto aDepth = boost::apply_visitor(depthFetcher, a);
@@ -1112,14 +1112,14 @@ void RankingTree::_applySequenceRules(
         };
       } else {
         // 2 - The stereodescriptor(s) occurring more often than all others
-        auto groupedByStringRep = TemplateMagic::groupByMapping(
+        auto groupedByStringRep = temple::groupByMapping(
           stereocenterSets.back(),
           [&](const auto& variantType) -> std::string {
             return boost::apply_visitor(stringRepFetcher, variantType);
           }
         );
 
-        auto maxSize = TemplateMagic::accumulate(
+        auto maxSize = temple::accumulate(
           groupedByStringRep,
           0u,
           [](const unsigned& maxSize, const auto& stringGroup) -> unsigned {
@@ -1176,7 +1176,7 @@ void RankingTree::_applySequenceRules(
     VariantLikePair variantLikeComparator {*this};
 
     for(const auto& undecidedSet : undecidedBranchSets) {
-      TemplateMagic::forAllPairs(
+      temple::forAllPairs(
         undecidedSet,
         [&](const auto& branchA, const auto& branchB) {
           // Do nothing if neither have representative stereodescriptors
@@ -1234,7 +1234,7 @@ void RankingTree::_applySequenceRules(
               unsigned ABranchLikePairs = 0, BBranchLikePairs = 0;
 
               // Count A-branch like pairs
-              TemplateMagic::forAllPairs(
+              temple::forAllPairs(
                 *branchAStereocenterGroupIter,
                 representativeStereodescriptors.at(branchA),
                 [&](const auto& variantA, const auto& variantB) {
@@ -1251,7 +1251,7 @@ void RankingTree::_applySequenceRules(
               );
 
               // Count B-branch like pairs
-              TemplateMagic::forAllPairs(
+              temple::forAllPairs(
                 *branchBStereocenterGroupIter,
                 representativeStereodescriptors.at(branchB),
                 [&](const auto& variantA, const auto& variantB) {
@@ -1306,11 +1306,11 @@ void RankingTree::_applySequenceRules(
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
         << "Sets post sequence rule 4B: {" 
-        << TemplateMagic::condenseIterable(
-          TemplateMagic::map(
+        << temple::condenseIterable(
+          temple::map(
             _branchOrderingHelper.getSets(),
             [](const auto& indexSet) -> std::string {
-              return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+              return "{"s + temple::condenseIterable(indexSet) + "}"s;
             }
           )
         ) << "}\n";
@@ -1350,11 +1350,11 @@ void RankingTree::_applySequenceRules(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 5: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1391,11 +1391,11 @@ std::vector<
     << "  Auxiliary ranking substituents of tree index " 
     << sourceIndex 
     <<  ": " 
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
+    << temple::condenseIterable(
+      temple::map(
         orderingHelper.getSets(),
         [](const auto& indexSet) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+          return "{"s + temple::condenseIterable(indexSet) + "}"s;
         }
       )
     ) << "\n";
@@ -1420,11 +1420,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 1: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1475,11 +1475,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 3: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1678,11 +1678,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 4A: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1753,7 +1753,7 @@ std::vector<
       }
 
       // Compare based on depth
-      TemplateMagic::forAllPairs(
+      temple::forAllPairs(
         variantSet,
         [&](const auto& a, const auto& b) {
           auto aDepth = boost::apply_visitor(depthFetcher, a);
@@ -1817,14 +1817,14 @@ std::vector<
         };
       } else {
         // 2 - The stereodescriptor occurring more often than all others
-        auto groupedByStringRep = TemplateMagic::groupByMapping(
+        auto groupedByStringRep = temple::groupByMapping(
           stereocenterSets.back(),
           [&](const auto& variantType) -> std::string {
             return boost::apply_visitor(stringRepFetcher, variantType);
           }
         );
 
-        auto maxSize = TemplateMagic::accumulate(
+        auto maxSize = temple::accumulate(
           groupedByStringRep,
           0u,
           [](const unsigned& maxSize, const auto& stringGroup) -> unsigned {
@@ -1854,7 +1854,7 @@ std::vector<
     VariantLikePair variantLikeComparator {*this};
 
     for(const auto& undecidedSet : undecidedBranchSets) {
-      TemplateMagic::forAllPairs(
+      temple::forAllPairs(
         undecidedSet,
         [&](const auto& branchA, const auto& branchB) {
           // Do nothing if neither have representative stereodescriptors
@@ -1912,7 +1912,7 @@ std::vector<
               unsigned ABranchLikePairs = 0, BBranchLikePairs = 0;
 
               // Count A-branch like pairs
-              TemplateMagic::forAllPairs(
+              temple::forAllPairs(
                 *branchAStereocenterGroupIter,
                 representativeStereodescriptors.at(branchA),
                 [&](const auto& variantA, const auto& variantB) {
@@ -1929,7 +1929,7 @@ std::vector<
               );
 
               // Count B-branch like pairs
-              TemplateMagic::forAllPairs(
+              temple::forAllPairs(
                 *branchBStereocenterGroupIter,
                 representativeStereodescriptors.at(branchB),
                 [&](const auto& variantA, const auto& variantB) {
@@ -1984,11 +1984,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 4B: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -2030,11 +2030,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 5: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -2324,7 +2324,7 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_auxiliaryAdjacentsToRank(
   const TreeVertexIndex& sourceIndex,
   const std::set<TreeVertexIndex>& excludeIndices
 ) const {
-  return TemplateMagic::moveIf(
+  return temple::moveIf(
     _adjacents(sourceIndex),
     [&](const auto& nodeIndex) -> bool {
       // In case we explicitly exclude them, immediately discard
@@ -2350,7 +2350,7 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_auxiliaryAdjacentsToRank(
 unsigned RankingTree::_nonDuplicateDegree(const RankingTree::TreeVertexIndex& index) const {
   auto adjacents = _adjacents(index);
 
-  auto numDuplicate = TemplateMagic::accumulate(
+  auto numDuplicate = temple::accumulate(
     adjacents,
     0u,
     [&](const unsigned& count, const auto& treeIndex) -> unsigned {
@@ -2460,7 +2460,7 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_treeIndicesInBranch(TreeVer
 }
 
 std::set<AtomIndexType> RankingTree::_molIndicesInBranch(const TreeVertexIndex& index) const {
-  return TemplateMagic::map(
+  return temple::map(
     _treeIndicesInBranch(index),
     [&](const auto& treeIndex) -> AtomIndexType {
       return _tree[treeIndex].molIndex;
@@ -2687,11 +2687,11 @@ RankingTree::RankingTree(
       << "Ranking substituents of atom index " 
       << _tree[rootIndex].molIndex
       << ": " 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "\n";
@@ -2882,11 +2882,11 @@ RankingTree::RankingTree(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 1: {" 
-      << TemplateMagic::condenseIterable(
-        TemplateMagic::map(
+      << temple::condenseIterable(
+        temple::map(
           _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + TemplateMagic::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condenseIterable(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -3114,10 +3114,10 @@ std::vector<
     std::vector<RankingTree::TreeVertexIndex>
   >& treeRankingSets
 ) const {
-  return TemplateMagic::map(
+  return temple::map(
     treeRankingSets,
     [&](const auto& set) -> std::vector<AtomIndexType> {
-      return TemplateMagic::map(
+      return temple::map(
         set,
         [&](const auto& treeVertex) -> AtomIndexType {
           return _tree[treeVertex].molIndex;

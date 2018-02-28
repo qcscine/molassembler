@@ -7,7 +7,7 @@
 #include "CommonTrig.h"
 #include "Log.h"
 #include "StdlibTypeAlgorithms.h"
-#include "template_magic/Random.h"
+#include "temple/Random.h"
 
 #include <fstream>
 
@@ -143,7 +143,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
           if(!_stereocenterMap[involvedAtom] -> assigned()) {
             // Assign the EZStereocenter at random
             _stereocenterMap[involvedAtom] -> assign(
-              TemplateMagic::random.getSingle<unsigned>(
+              temple::random.getSingle<unsigned>(
                 0,
                 _stereocenterMap[involvedAtom] -> numAssignments() - 1
               )
@@ -265,7 +265,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
        */
       const auto cycleInternalAngles = CyclicPolygons::internalAngles(
         // Map sequential index pairs to their purported bond length
-        TemplateMagic::mapSequentialPairs( 
+        temple::mapSequentialPairs( 
           indexSequence,
           [&](const AtomIndexType& i, const AtomIndexType& j) -> double {
             auto bondTypeOption = molecule.getBondType(i, j);
@@ -408,7 +408,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
             auto cycleOneVertices = makeVerticesSet(cycleOne);
             auto cycleTwoVertices = makeVerticesSet(cycleTwo);
 
-            auto intersection = TemplateMagic::setIntersection(
+            auto intersection = temple::setIntersection(
               cycleOneVertices,
               cycleTwoVertices
             );
@@ -498,7 +498,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
                 M_PI
               );
 
-              TemplateMagic::forAllPairs(
+              temple::forAllPairs(
                 firstAdjacents,
                 secondAdjacents,
                 [&](const auto& firstAdjacent, const auto& secondAdjacent) {
@@ -538,7 +538,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       // All combinations between molecule of this index
       auto adjacentIndices = molecule.getAdjacencies(centralIndex);
 
-      TemplateMagic::forAllPairs(
+      temple::forAllPairs(
         adjacentIndices,
         [&](const AtomIndexType& i, const AtomIndexType& j) -> void {
           double multiplier = cycleMultiplierForIndex(i) * cycleMultiplierForIndex(j);
@@ -690,8 +690,8 @@ void MoleculeSpatialModel::addDefaultDihedrals() {
     auto sourceAdjacencies = _molecule.getAdjacencies(sourceIndex);
     auto targetAdjacencies = _molecule.getAdjacencies(targetIndex);
 
-    TemplateMagic::inplaceRemove(sourceAdjacencies, targetIndex);
-    TemplateMagic::inplaceRemove(targetAdjacencies, sourceIndex);
+    temple::inplaceRemove(sourceAdjacencies, targetIndex);
+    temple::inplaceRemove(targetAdjacencies, sourceIndex);
 
     // Now, every combination
     for(const auto& sourceAdjacentIndex : sourceAdjacencies) {
@@ -878,7 +878,7 @@ void MoleculeSpatialModel::dumpDebugInfo() const {
   for(const auto& bondIterPair : _bondBounds) {
     const auto& indexArray = bondIterPair.first;
     const auto& bounds = bondIterPair.second;
-    logRef << "Bond " << TemplateMagic::condenseIterable(indexArray)
+    logRef << "Bond " << temple::condenseIterable(indexArray)
       << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
   }
 
@@ -886,7 +886,7 @@ void MoleculeSpatialModel::dumpDebugInfo() const {
   for(const auto& angleIterPair : _angleBounds) {
     const auto& indexArray = angleIterPair.first;
     const auto& bounds = angleIterPair.second;
-    logRef << "Angle " << TemplateMagic::condenseIterable(indexArray)
+    logRef << "Angle " << temple::condenseIterable(indexArray)
       << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
   }
 
@@ -894,7 +894,7 @@ void MoleculeSpatialModel::dumpDebugInfo() const {
   for(const auto& dihedralIterPair : _dihedralBounds) {
     const auto& indexArray = dihedralIterPair.first;
     const auto& bounds = dihedralIterPair.second;
-    logRef << "Dihedral " << TemplateMagic::condenseIterable(indexArray)
+    logRef << "Dihedral " << temple::condenseIterable(indexArray)
       << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
   }
 }
@@ -983,7 +983,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
           }
         }
 
-        os << "EZ" << TemplateMagic::condenseIterable(
+        os << "EZ" << temple::condenseIterable(
             stereocenterPtr -> involvedAtoms(),
             ""
           ) << R"( [label=")" << ezState 
@@ -996,7 +996,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
           stereocenterPtr
         );
 
-        os << "CN" << TemplateMagic::condenseIterable(
+        os << "CN" << temple::condenseIterable(
           stereocenterPtr -> involvedAtoms(),
           ""
         ) << R"( [label=")" << Symmetry::name(cnPtr -> getSymmetry()) 
@@ -1046,12 +1046,12 @@ struct MoleculeSpatialModel::ModelGraphWriter {
           "["s + std::to_string(indexSequence.at(0)) + ","s 
           + std::to_string(indexSequence.at(2)) +"] -> ["s 
           + std::to_string(
-            ConstexprMagic::Math::round(
-              ConstexprMagic::Math::toDegrees(angleBounds.lower)
+            constable::Math::round(
+              constable::Math::toDegrees(angleBounds.lower)
             )
           ) + ", "s + std::to_string(
-            ConstexprMagic::Math::round(
-              ConstexprMagic::Math::toDegrees(angleBounds.upper)
+            constable::Math::round(
+              constable::Math::toDegrees(angleBounds.upper)
             )
           ) + "]"s
         );
@@ -1061,7 +1061,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
     if(angleStrings.empty()) {
       os << R"(, tooltip="no angles here")";
     } else {
-      os << R"(, tooltip="angles: )" << TemplateMagic::condenseIterable(
+      os << R"(, tooltip="angles: )" << temple::condenseIterable(
         angleStrings,
         "&#10;"s
       ) << R"(")";
@@ -1078,7 +1078,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
         os << ";EZ";
       }
 
-      os << TemplateMagic::condenseIterable(stereocenterPtr -> involvedAtoms(), "")
+      os << temple::condenseIterable(stereocenterPtr -> involvedAtoms(), "")
         << " -- " << vertexIndex << R"([color="gray", dir="forward", len="2"])";
     }
   }

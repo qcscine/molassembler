@@ -2,7 +2,7 @@
 #define INCLUDE_ANALYSIS_HELPERS_H
 
 #include "DistanceGeometry/generateConformation.h"
-#include "template_magic/Enumerate.h"
+#include "temple/Enumerate.h"
 
 /*! @file
  *

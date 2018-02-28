@@ -12,7 +12,7 @@
 #include "Molecule.h"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "AtomInfo.h"
-#include "template_magic/Random.h"
+#include "temple/Random.h"
 
 #include "DistanceGeometry/Error.h"
 
@@ -224,7 +224,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
   std::shuffle(
     indices.begin(),
     indices.end(),
-    TemplateMagic::random.randomEngine
+    temple::random.randomEngine
   );
 
   unsigned M = num_vertices();
@@ -264,7 +264,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
     std::shuffle(
       otherIndices.begin(),
       otherIndices.end(),
-      TemplateMagic::random.randomEngine
+      temple::random.randomEngine
     );
 
     for(const AtomIndexType& b : otherIndices) {
@@ -298,7 +298,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double presumedLower = -distances.at(right(b));
       double presumedUpper = distances.at(left(b));
 
-      double fixedDistance = TemplateMagic::random.getSingle<double>(
+      double fixedDistance = temple::random.getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper)
       );
@@ -316,7 +316,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       }
 
       // Pick fixed distance
-      double fixedDistance = TemplateMagic::random.getSingle<double>(
+      double fixedDistance = temple::random.getSingle<double>(
         -distances.at(right(b)),
         distances.at(left(b))
       );
@@ -384,7 +384,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double presumedUpper = distances.at(left(b));
 
       // Pick fixed distance
-      double fixedDistance = TemplateMagic::random.getSingle<double>(
+      double fixedDistance = temple::random.getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper)
       );

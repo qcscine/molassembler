@@ -1,7 +1,7 @@
 #include <dlib/optimization.h>
 #include <Eigen/Dense>
-#include "template_magic/Containers.h"
-#include "template_magic/Random.h"
+#include "temple/Containers.h"
+#include "temple/Random.h"
 
 #include "DistanceGeometry/dlibAdaptors.h"
 #include "DistanceGeometry/dlibDebugAdaptors.h"
@@ -283,7 +283,7 @@ outcome::result<
           if(!stereocenterPtr->assigned()) {
             moleculeCopy.assignStereocenterAtAtom(
               stereocenterPtr->involvedAtoms().front(),
-              TemplateMagic::random.getSingle<unsigned>(
+              temple::random.getSingle<unsigned>(
                 0,
                 stereocenterPtr->numAssignments() - 1
               )
@@ -573,7 +573,7 @@ std::list<RefinementData> debugDistanceGeometry(
           if(!stereocenterPtr->assigned()) {
             moleculeCopy.assignStereocenterAtAtom(
               stereocenterPtr->involvedAtoms().front(),
-              TemplateMagic::random.getSingle<unsigned>(
+              temple::random.getSingle<unsigned>(
                 0,
                 stereocenterPtr->numAssignments() - 1
               )

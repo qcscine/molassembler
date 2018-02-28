@@ -3,7 +3,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "boost/graph/isomorphism.hpp"
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 
 #include "GraphAlgorithms.h"
 #include "IO.h"
@@ -276,11 +276,11 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
       std::vector<unsigned long>
     > { {6}, {3}, {2}, {1} }),
     "Example three expanded is not {{6}, {3}, {2}, {1}}, but: "
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
+    << temple::condenseIterable(
+      temple::map(
         exampleThreeRanked,
         [](const auto& set) -> std::string {
-          return TemplateMagic::condenseIterable(set);
+          return temple::condenseIterable(set);
         }
       )
     )
@@ -302,11 +302,11 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
 
 template<typename T>
 std::string condenseSets (const std::vector<std::vector<T>>& sets) {
-  return TemplateMagic::condenseIterable(
-    TemplateMagic::map(
+  return temple::condenseIterable(
+    temple::map(
       sets,
       [](const auto& set) -> std::string {
-        return "{"s + TemplateMagic::condenseIterable(set) + "}"s;
+        return "{"s + temple::condenseIterable(set) + "}"s;
       }
     )
   );
@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
 
   BOOST_CHECK_MESSAGE(
     (
-      TemplateMagic::all_of(
+      temple::all_of(
         std::vector<AtomIndexType> {6, 7, 8, 9, 10, 11},
         [&](const auto& carbonIndex) -> bool {
           return (

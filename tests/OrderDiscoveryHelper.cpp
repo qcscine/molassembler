@@ -14,20 +14,20 @@ std::string showDiscoveryState(
 ) {
   return (
     "Sets: "s 
-    + TemplateMagic::condenseIterable(
-      TemplateMagic::map(
+    + temple::condenseIterable(
+      temple::map(
         orderingHelper.getSets(),
         [](const auto& set) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(set) + "}"s;
+          return "{"s + temple::condenseIterable(set) + "}"s;
         }
       )
     ) 
     + ", Undecided"s
-    + TemplateMagic::condenseIterable(
-      TemplateMagic::map(
+    + temple::condenseIterable(
+      temple::map(
         orderingHelper.getUndecidedSets(),
         [](const auto& set) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(set) + "}"s;
+          return "{"s + temple::condenseIterable(set) + "}"s;
         }
       )
     ) 

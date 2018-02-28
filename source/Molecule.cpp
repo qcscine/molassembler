@@ -1,12 +1,12 @@
-#include "template_magic/Optionals.h"
+#include "temple/Optionals.h"
 
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
 
-#include "template_magic/Containers.h"
-#include "template_magic/Numeric.h"
+#include "temple/Containers.h"
+#include "temple/Numeric.h"
 
 #include "CNStereocenter.h"
 #include "CommonTrig.h"
@@ -772,7 +772,7 @@ Symmetry::Name Molecule::determineLocalGeometry(
     nSites,
     ligandsVector,
     formalCharge
-  ) | TemplateMagic::callIfNone(LocalGeometry::firstOfSize, nSites);
+  ) | temple::callIfNone(LocalGeometry::firstOfSize, nSites);
 
   if(!symmetryOptional) {
     throw std::logic_error(
@@ -1067,7 +1067,7 @@ RankingInformation Molecule::rankPriority(
 
   auto activeIndices = getAdjacencies(a);
 
-  TemplateMagic::inplaceRemoveIf(
+  temple::inplaceRemoveIf(
     activeIndices,
     [&excludeAdjacent](const auto& adjacentIndex) -> bool {
       return excludeAdjacent.count(adjacentIndex) == 1;
@@ -1192,7 +1192,7 @@ bool Molecule::operator == (const Molecule& other) const {
         return false;
       }
     } else {
-      const auto otherCentralAtoms = TemplateMagic::map(
+      const auto otherCentralAtoms = temple::map(
         stereocenterPtr->involvedAtoms(),
         [&indexMap](const auto& thisIndex) -> AtomIndexType {
           return indexMap.at(thisIndex);

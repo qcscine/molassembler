@@ -7,7 +7,7 @@
 
 #include "GraphAlgorithms.h"
 #include "IO.h"
-#include "template_magic/Stringify.h"
+#include "temple/Stringify.h"
 
 using namespace MoleculeManip;
 
@@ -366,8 +366,8 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
   if(rankedData.linkedPairs != relevantData.expectedLinks) {
     std::cout << "Links test fails for " << filePath.stem().string() << "." << nl
       << "Expected: "
-      << TemplateMagic::stringify(relevantData.expectedLinks) << ", got "
-      << TemplateMagic::stringify(rankedData.linkedPairs)
+      << temple::stringify(relevantData.expectedLinks) << ", got "
+      << temple::stringify(rankedData.linkedPairs)
       << ".";
 
     return false;

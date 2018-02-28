@@ -9,9 +9,9 @@
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/ExplicitGraph.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "template_magic/Numeric.h"
-#include "template_magic/Enumerate.h"
-#include "constexpr_magic/FloatingPointComparison.h"
+#include "temple/Numeric.h"
+#include "temple/Enumerate.h"
+#include "constable/FloatingPointComparison.h"
 #include "IO.h"
 
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
             auto lalbWeight = boost::get(boost::edge_weight, lgGraph, lalb.first);
 
             BOOST_CHECK_MESSAGE(
-              TemplateMagic::all_of(
+              temple::all_of(
                 std::vector<decltype(lalb)> {
                   boost::edge(left(b), left(a), lgGraph),
                   boost::edge(right(b), right(a), lgGraph),
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
             );
 
             BOOST_CHECK_MESSAGE(
-              TemplateMagic::all_of(
+              temple::all_of(
                 std::vector<decltype(lalb)> {
                   boost::edge(left(a), right(b), lgGraph),
                   boost::edge(left(b), right(a), lgGraph),
@@ -316,12 +316,12 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       auto Gor_LG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
 
       if(
-        !TemplateMagic::all_of(
-          TemplateMagic::zipMap(
+        !temple::all_of(
+          temple::zipMap(
             BF_LG_distances,
             Gor_LG_distances,
             [](const double& a, const double& b) -> bool {
-              return ConstexprMagic::floating::isCloseRelative(a, b, 1e-8);
+              return constable::floating::isCloseRelative(a, b, 1e-8);
             }
           )
         )
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       }
 
       if(
-        !TemplateMagic::all_of(
+        !temple::all_of(
           enumerate(BF_LG_distances),
           [&boundsMatrix, &a](const auto& enumPair) -> bool {
             const auto& index = enumPair.index;
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
             if(index % 2 == 0) {
               // To left index -> upper bound
-              return ConstexprMagic::floating::isCloseRelative(
+              return constable::floating::isCloseRelative(
                 boundsMatrix.upperBound(a, index / 2),
                 distance,
                 1e-4
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
             }
 
             // To right index -> lower bound
-            return ConstexprMagic::floating::isCloseRelative(
+            return constable::floating::isCloseRelative(
               boundsMatrix.lowerBound(a, index / 2),
               -distance,
               1e-4
@@ -375,7 +375,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
         pass = false;
         std::cout << "Bellman-Ford ExplicitGraph shortest paths do not represent triangle inequality bounds!" << nl;
         std::cout << "Failed on a = " << a << nl;
-        std::cout << "Distances:" << nl << TemplateMagic::condenseIterable(BF_LG_distances) << nl << boundsMatrix.access() << nl;
+        std::cout << "Distances:" << nl << temple::condenseIterable(BF_LG_distances) << nl << boundsMatrix.access() << nl;
         break;
       }
     }
@@ -439,12 +439,12 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       auto Gor_SPG_distances = Gor1Functor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * a);
 
       if(
-        !TemplateMagic::all_of(
-          TemplateMagic::zipMap(
+        !temple::all_of(
+          temple::zipMap(
             BF_SPG_distances,
             Gor_SPG_distances,
             [](const double& a, const double& b) -> bool {
-              return ConstexprMagic::floating::isCloseRelative(a, b, 1e-8);
+              return constable::floating::isCloseRelative(a, b, 1e-8);
             }
           )
         )
@@ -457,20 +457,20 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       auto spec_Gor_SPG_distances = Gor1SPG(shortestPathsGraph, 2 * a);
 
       if(
-        !TemplateMagic::all_of(
-          TemplateMagic::zipMap(
+        !temple::all_of(
+          temple::zipMap(
             Gor_SPG_distances,
             spec_Gor_SPG_distances,
             [](const double& a, const double& b) -> bool {
-              return ConstexprMagic::floating::isCloseRelative(a, b, 1e-8);
+              return constable::floating::isCloseRelative(a, b, 1e-8);
             }
           )
         )
       ) {
         pass = false;
         std::cout << "Not all pairs of specialized and unspecialized Gor1 shortest-paths-distances on the ImplicitGraph are within 1e-8 relative tolerance!" << nl;
-        std::cout << TemplateMagic::condenseIterable(spec_Gor_SPG_distances) << nl << nl
-          << TemplateMagic::condenseIterable(Gor_SPG_distances) << nl << nl;
+        std::cout << temple::condenseIterable(spec_Gor_SPG_distances) << nl << nl
+          << temple::condenseIterable(Gor_SPG_distances) << nl << nl;
         break;
       }
 
@@ -487,7 +487,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       }
 
       if(
-        !TemplateMagic::all_of(
+        !temple::all_of(
           enumerate(BF_SPG_distances),
           [&boundsMatrix, &a](const auto& enumPair) -> bool {
             const auto& index = enumPair.index;
@@ -500,7 +500,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
             if(index % 2 == 0) {
               // To left index -> upper bound
               return (
-                ConstexprMagic::floating::isCloseRelative(
+                constable::floating::isCloseRelative(
                   boundsMatrix.upperBound(a, index / 2),
                   distance,
                   1e-4
@@ -512,7 +512,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
             }
 
             // To right index -> lower bound
-            return ConstexprMagic::floating::isCloseRelative(
+            return constable::floating::isCloseRelative(
               boundsMatrix.lowerBound(a, index / 2),
               -distance,
               1e-4
@@ -530,7 +530,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
           if(j / 2 != a) {
             if(j % 2 == 0) {
               if(
-                !ConstexprMagic::floating::isCloseRelative(
+                !constable::floating::isCloseRelative(
                   boundsMatrix.upperBound(a, j / 2),
                   BF_SPG_distances.at(j),
                   1e-4
@@ -540,7 +540,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
               }
             } else {
               if(
-                !ConstexprMagic::floating::isCloseRelative(
+                !constable::floating::isCloseRelative(
                   boundsMatrix.lowerBound(a, j / 2),
                   -BF_SPG_distances.at(j),
                   1e-4
@@ -552,7 +552,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
           }
         }
         std::cout << "}" << nl;
-        std::cout << "Distances:" << nl << TemplateMagic::condenseIterable(BF_SPG_distances) << nl << boundsMatrix.access() << nl;
+        std::cout << "Distances:" << nl << temple::condenseIterable(BF_SPG_distances) << nl << boundsMatrix.access() << nl;
         break;
       }
     }

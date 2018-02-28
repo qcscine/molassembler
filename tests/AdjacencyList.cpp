@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Molecule.h"
-#include "template_magic/Random.h"
+#include "temple/Random.h"
 
 // Temp, testing
 #include <boost/graph/breadth_first_search.hpp>
@@ -107,7 +107,7 @@ struct ALFixture {
     // extend at random with upper bound of 6 edges per vertex
     while(N < atomsLimit) {
       // select a random atom
-      AtomIndexType selection = TemplateMagic::random.getSingle<double>(0u, N - 1);
+      AtomIndexType selection = temple::random.getSingle<double>(0u, N - 1);
 
       // ensure less than 6 edges
       if(molecule.getAdjacencies(selection).size() >= edgesLimit) {
@@ -129,8 +129,8 @@ struct ALFixture {
     unsigned nCycles = 0;
     while(nCycles < cyclesLimit) {
       // select two random atoms
-      AtomIndexType i = TemplateMagic::random.getSingle<double>(0u, N - 1);
-      AtomIndexType j = TemplateMagic::random.getSingle<double>(0u, N - 1);
+      AtomIndexType i = temple::random.getSingle<double>(0u, N - 1);
+      AtomIndexType j = temple::random.getSingle<double>(0u, N - 1);
 
       /* cannot connect
        * - equal indices 
@@ -172,7 +172,7 @@ BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
   if(!terminalVertices.empty()) {
     // select a random terminal vertex
     auto selection = terminalVertices.at(
-      TemplateMagic::random.getSingle<unsigned>(0, terminalVertices.size() - 1)
+      temple::random.getSingle<unsigned>(0, terminalVertices.size() - 1)
     );
 
     // remove all bonds involving it

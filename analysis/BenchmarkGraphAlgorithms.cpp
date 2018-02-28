@@ -4,12 +4,12 @@
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 #include "DistanceGeometry/ImplicitGraphBoost.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/ExplicitGraph.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "template_magic/Numeric.h"
+#include "temple/Numeric.h"
 #include "IO.h"
 
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
@@ -47,11 +47,11 @@ std::pair<double, double> timeFunctor(
     timings.at(n) = duration_cast<nanoseconds>(end - start).count();
   }
 
-  auto average = TemplateMagic::average(timings);
+  auto average = temple::average(timings);
 
   return {
     average,
-    TemplateMagic::stddev(timings, average)
+    temple::stddev(timings, average)
   };
 }
 

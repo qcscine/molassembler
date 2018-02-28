@@ -6,9 +6,9 @@
 
 #include <iostream>
 #include "Delib/ElementInfo.h"
-#include "template_magic/Containers.h"
-#include "template_magic/UnorderedSets.h"
-#include "template_magic/TinySet.h"
+#include "temple/Containers.h"
+#include "temple/UnorderedSets.h"
+#include "temple/TinySet.h"
 
 /*! @file
  *
@@ -75,7 +75,7 @@ private:
   std::unordered_map<AtomIndexType, unsigned> _depthMap;
   std::unordered_map<
     AtomIndexType,
-    TemplateMagic::TinyUnorderedSet<AtomIndexType>
+    temple::TinyUnorderedSet<AtomIndexType>
   > _parentMap;
 
   // Side-effect output
@@ -142,19 +142,19 @@ public:
     bool targetInMap = _parentMap.count(target) == 1;
 
     if(sourceInMap && targetInMap) {
-      auto setDifference = TemplateMagic::unorderedSetSymmetricDifference(
+      auto setDifference = temple::unorderedSetSymmetricDifference(
         _parentMap[source],
         _parentMap[target]
       );
 
       if(setDifference.size() > 0) {
         // Pairs must be formed between sets (a - b), (b - a)
-        TemplateMagic::forAllPairs(
-          TemplateMagic::unorderedSetDifference(
+        temple::forAllPairs(
+          temple::unorderedSetDifference(
             _parentMap[source],
             _parentMap[target]
           ),
-          TemplateMagic::unorderedSetDifference(
+          temple::unorderedSetDifference(
             _parentMap[target],
             _parentMap[source]
           ),
@@ -167,7 +167,7 @@ public:
         );
 
         if(_depthMap[target] == _depthMap[source] + 1) {
-          _parentMap[target] = TemplateMagic::unorderedSetUnion(
+          _parentMap[target] = temple::unorderedSetUnion(
             _parentMap[source],
             _parentMap[target]
           );

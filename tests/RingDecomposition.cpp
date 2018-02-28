@@ -5,7 +5,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 
 #include "IO.h"
 
@@ -41,7 +41,7 @@ void testCycles(const MoleculeManip::CycleData& cycleData) {
   BOOST_CHECK(cycleSizes.size() >= cyclesSmallerThanSix.size());
 
   BOOST_CHECK(
-    TemplateMagic::all_of(
+    temple::all_of(
       cyclesSmallerThanSix,
       [](const unsigned& cycleSize) -> bool {
         return cycleSize <= 6;
@@ -49,7 +49,7 @@ void testCycles(const MoleculeManip::CycleData& cycleData) {
     )
   );
 
-  std::cout << TemplateMagic::condenseIterable(cycleSizes) << std::endl;
+  std::cout << temple::condenseIterable(cycleSizes) << std::endl;
 
   // Check that checking for cycles that contain a particular atom works
   /*for(

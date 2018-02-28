@@ -3,8 +3,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "CommonTrig.h"
-#include "template_magic/Random.h"
-#include "template_magic/Containers.h"
+#include "temple/Random.h"
+#include "temple/Containers.h"
 
 template<typename T>
 bool isApproxAbs(
@@ -80,8 +80,8 @@ BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
   using namespace MoleculeManip::CommonTrig;
 
   for(unsigned testNum = 0; testNum < 100; ++testNum) {
-    const auto sideLengths = TemplateMagic::random.getN<double>(1.4, 5.6, 3);
-    const auto angles = TemplateMagic::random.getN<double>(0.0, M_PI, 2);
+    const auto sideLengths = temple::random.getN<double>(1.4, 5.6, 3);
+    const auto angles = temple::random.getN<double>(0.0, M_PI, 2);
 
     BOOST_CHECK_MESSAGE(
       dihedralLength(
@@ -100,9 +100,9 @@ BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
         M_PI
       ),
       "Disproved by side lengths {" 
-        << TemplateMagic::condenseIterable(sideLengths)
+        << temple::condenseIterable(sideLengths)
         << "} and angles {" 
-        << TemplateMagic::condenseIterable(angles)
+        << temple::condenseIterable(angles)
         << "}: 0 -> " 
         << dihedralLength(
           sideLengths.at(0),

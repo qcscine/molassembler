@@ -2,12 +2,12 @@
 #define BOOST_TEST_DYN_LINK
 
 #include "boost/test/unit_test.hpp"
-#include "constexpr_magic/FloatingPointComparison.h"
+#include "constable/FloatingPointComparison.h"
 #include "Eigen/Geometry"
-#include "template_magic/Enumerate.h"
-#include "template_magic/Random.h"
-#include "template_magic/Containers.h"
-#include "template_magic/Numeric.h"
+#include "temple/Enumerate.h"
+#include "temple/Random.h"
+#include "temple/Containers.h"
+#include "temple/Numeric.h"
 
 #include "AnalysisHelpers.h"
 #include "BoundsFromSymmetry.h"
@@ -31,12 +31,12 @@ bool isApprox(
   const dlib::matrix<double, 0, 1>& b,
   const double& epsilon
 ) {
-  return TemplateMagic::all_of(
-    TemplateMagic::zipMap(
+  return temple::all_of(
+    temple::zipMap(
       a,
       b,
       [&](const auto& i, const auto& j) -> bool {
-        return ConstexprMagic::floating::isCloseAbsolute(
+        return constable::floating::isCloseAbsolute(
           i,
           j,
           epsilon
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
       )
     );
 
-    auto chiralityConstraints = TemplateMagic::map(
+    auto chiralityConstraints = temple::map(
       DGInfo.chiralityConstraintPrototypes,
       [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
@@ -120,12 +120,12 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     Vector finiteDifferenceGradient = dlib::derivative(valueFunctor)(dlibPositions);
     Vector gradient = gradientFunctor(dlibPositions);
 
-    bool passes = TemplateMagic::all_of(
-      TemplateMagic::zipMap(
+    bool passes = temple::all_of(
+      temple::zipMap(
         gradient,
         finiteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
-          return ConstexprMagic::floating::isCloseAbsolute(
+          return constable::floating::isCloseAbsolute(
             a,
             b,
             1e-5
@@ -159,12 +159,12 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     Vector compressedFiniteDifferenceGradient = dlib::derivative(compressingValueFunctor)(dlibPositions);
     Vector compressedGradient = compressingGradientFunctor(dlibPositions);
 
-    bool compressedPasses = TemplateMagic::all_of(
-      TemplateMagic::zipMap(
+    bool compressedPasses = temple::all_of(
+      temple::zipMap(
         compressedGradient,
         compressedFiniteDifferenceGradient,
         [](const auto& a, const auto& b) -> bool {
-          return ConstexprMagic::floating::isCloseAbsolute(
+          return constable::floating::isCloseAbsolute(
             a,
             b,
             1e-5
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
     BOOST_REQUIRE_MESSAGE(distancesMatrixResult, distancesMatrixResult.error().message());
     auto distancesMatrix = distancesMatrixResult.value();
 
-    auto chiralityConstraints = TemplateMagic::map(
+    auto chiralityConstraints = temple::map(
       DGData.chiralityConstraintPrototypes,
       [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     BOOST_REQUIRE_MESSAGE(distancesMatrixResult, distancesMatrixResult.error().message());
     auto distancesMatrix = distancesMatrixResult.value();
 
-    auto chiralityConstraints = TemplateMagic::map(
+    auto chiralityConstraints = temple::map(
       DGData.chiralityConstraintPrototypes,
       [&distanceBounds](
         const Stereocenters::ChiralityConstraintPrototype& prototype
@@ -390,8 +390,8 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     referenceGradients.emplace_back(gradientFunctor.referenceE(referencePositions));
 
     assert(
-      TemplateMagic::all_of(
-        TemplateMagic::map(
+      temple::all_of(
+        temple::map(
           referenceGradients,
           [&N](const auto& referenceGradient) -> bool {
             return referenceGradient.size() == 4 * N;
@@ -557,7 +557,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
       );
     };
 
-    auto finalErrors = TemplateMagic::map(
+    auto finalErrors = temple::map(
       DGResult,
       [&](const detail::RefinementData& refinementData) -> double {
         return sumErrors(refinementData.steps.back());
@@ -565,7 +565,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     );
 
     // The average error of the ensemble should be below 1e-5 (already achieved)
-    BOOST_CHECK(TemplateMagic::average(finalErrors) < maximumErrorThreshold);
+    BOOST_CHECK(temple::average(finalErrors) < maximumErrorThreshold);
 
     for(const auto& enumPair : enumerate(DGResult)) {
       const auto& refinementData = enumPair.value;

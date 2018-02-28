@@ -9,7 +9,7 @@
 #include "AnalysisHelpers.h"
 #include "StdlibTypeAlgorithms.h"
 
-#include "template_magic/Numeric.h"
+#include "temple/Numeric.h"
 
 #include <fstream>
 #include <iomanip>
@@ -150,8 +150,8 @@ int main(int argc, char* argv[]) {
       );
     }
 
-    auto failures = TemplateMagic::sum(
-      TemplateMagic::map(
+    auto failures = temple::sum(
+      temple::map(
         debugData,
         [](const auto& refinementData) -> unsigned {
           return static_cast<unsigned>(refinementData.isFailure);
@@ -202,8 +202,8 @@ int main(int argc, char* argv[]) {
         );
       }
 
-      auto failures = TemplateMagic::sum(
-        TemplateMagic::map(
+      auto failures = temple::sum(
+        temple::map(
           debugData,
           [](const auto& refinementData) -> unsigned {
             return static_cast<unsigned>(refinementData.isFailure);

@@ -8,8 +8,8 @@
 #include "BoundsFromSymmetry.h"
 #include "IterateStereocenterPermutations.h"
 
-#include "template_magic/Containers.h"
-#include "template_magic/Random.h"
+#include "temple/Containers.h"
+#include "temple/Random.h"
 
 using namespace std::string_literals;
 using namespace MoleculeManip;
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
       std::shuffle(
         assignments.begin(),
         assignments.end(),
-        TemplateMagic::random.randomEngine
+        temple::random.randomEngine
       );
 
       /* Limit the number of assignments we're testing per symmetry to 10.
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
          * from the generated coordinates yields the same StereocenterList you 
          * started out with.
          */
-        auto mapped = TemplateMagic::map(
+        auto mapped = temple::map(
           ensembleResult.value(),
           [&](const auto& positions) -> bool {
             auto inferredStereocenterList = molecule.inferStereocentersFromPositions(
@@ -121,10 +121,10 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         /* The test passes only if this is true for all PositionCollections
          * yielded by DG
          */
-        bool testPass = TemplateMagic::all_of(mapped);
+        bool testPass = temple::all_of(mapped);
 
         if(!testPass) {
-          auto pass = TemplateMagic::count(mapped, true);
+          auto pass = temple::count(mapped, true);
 
           std::cout << "Test fails!" << std::endl
             << std::setw(8) << " " << " " << Symmetry::name(symmetryName) 

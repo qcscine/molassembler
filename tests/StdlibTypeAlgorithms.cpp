@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "StdlibTypeAlgorithms.h"
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 
 /* Algorithms to test
  *
@@ -103,8 +103,8 @@ BOOST_AUTO_TEST_CASE( combinationPermutation ) {
   bool alwaysSmallerOrEqual = true;
   while(StdlibTypeAlgorithms::nextCombinationPermutation(combination, testLimits)) {
     if(
-      !TemplateMagic::all_of(
-        TemplateMagic::zipMap(
+      !temple::all_of(
+        temple::zipMap(
           combination,
           testLimits,
           [](const unsigned& index, const unsigned& limit) -> bool {
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE( combinationPermutation ) {
     ) {
       alwaysSmallerOrEqual = false;
       std::cout << "Falsified for combination {"
-        << TemplateMagic::condenseIterable(combination)
+        << temple::condenseIterable(combination)
         << "}" << std::endl;
       break;
     }

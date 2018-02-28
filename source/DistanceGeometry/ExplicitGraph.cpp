@@ -13,7 +13,7 @@
 #include "Graph/Gor1.h"
 #endif
 
-#include "template_magic/Random.h"
+#include "temple/Random.h"
 
 #include "AtomInfo.h"
 
@@ -282,7 +282,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
   std::shuffle(
     indices.begin(),
     indices.end(),
-    TemplateMagic::random.randomEngine
+    temple::random.randomEngine
   );
 
   unsigned M = boost::num_vertices(_graph);
@@ -322,7 +322,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     std::shuffle(
       otherIndices.begin(),
       otherIndices.end(),
-      TemplateMagic::random.randomEngine
+      temple::random.randomEngine
     );
 
     // Again through N - 1 indices: N²
@@ -358,7 +358,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       double presumedLower = -distance.at(right(b));
       double presumedUpper = distance.at(left(b));
 
-      double tightenedBound = TemplateMagic::random.getSingle<double>(
+      double tightenedBound = temple::random.getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper)
       );
@@ -378,7 +378,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = TemplateMagic::random.getSingle<double>(
+      double tightenedBound = temple::random.getSingle<double>(
         -distance.at(right(b)),
         distance.at(left(b))
       );
@@ -448,7 +448,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = TemplateMagic::random.getSingle<double>(
+      double tightenedBound = temple::random.getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper)
       );

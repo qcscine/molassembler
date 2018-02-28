@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
   std::vector<Molecule> allJustHydrogen {f, g, h, i};
 
   BOOST_CHECK_MESSAGE(
-    TemplateMagic::all_of(
-      TemplateMagic::mapAllPairs(
+    temple::all_of(
+      temple::mapAllPairs(
         allJustHydrogen,
         std::equal_to<Molecule>()
       )

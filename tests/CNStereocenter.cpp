@@ -6,7 +6,7 @@
 
 #include "CNStereocenter.h"
 #include "Log.h"
-#include "template_magic/Stringify.h"
+#include "temple/Stringify.h"
 
 std::string makeString(
   const std::vector<char>& charVec
@@ -67,11 +67,11 @@ BOOST_AUTO_TEST_CASE(glueTests) {
     pass,
     "Combination of canonicalization and character generation is irregular. "
     "Got an unexpected character sequence for the permutation "
-    << TemplateMagic::condenseIterable(
-      TemplateMagic::map(
+    << temple::condenseIterable(
+      temple::map(
         a,
         [](const auto& equalPriorityIndices) -> std::string {
-          return "{"s + TemplateMagic::condenseIterable(equalPriorityIndices) + "}"s;
+          return "{"s + temple::condenseIterable(equalPriorityIndices) + "}"s;
         }
       )
     ) << " -> " << makeString(glue::makeCanonicalCharacters(glue::canonicalize(a)))
@@ -120,8 +120,8 @@ BOOST_AUTO_TEST_CASE(glueTests) {
   BOOST_CHECK_MESSAGE(
     symmetryMapResult == atomsAtPositions,
     "mapToSymmetryPositions returns an unexpected result! Expected {"
-    << TemplateMagic::condenseIterable(atomsAtPositions) << "}, got {"
-    << TemplateMagic::condenseIterable(symmetryMapResult)
+    << temple::condenseIterable(atomsAtPositions) << "}, got {"
+    << temple::condenseIterable(symmetryMapResult)
   );
 }
 

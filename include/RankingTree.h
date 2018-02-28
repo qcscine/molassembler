@@ -332,7 +332,7 @@ private:
     OrderDiscoveryHelper<TreeVertexIndex>& orderingHelper
   ) const {
     for(const auto& undecidedSet : undecidedSets) {
-      TemplateMagic::forAllPairs(
+      temple::forAllPairs(
         undecidedSet,
         [&](const TreeVertexIndex& a, const TreeVertexIndex& b) {
           if(_multisetCompare(comparisonSets.at(a), comparisonSets.at(b))) {

@@ -6,7 +6,7 @@
 #include "AtomInfo.h"
 
 #include <Eigen/Core>
-#include "template_magic/Random.h"
+#include "temple/Random.h"
 
 /*! @file
  *

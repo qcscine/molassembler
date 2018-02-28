@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "DelibHelpers.h"
-#include "template_magic/Random.h"
+#include "temple/Random.h"
 
 #include <Eigen/Geometry>
 
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
     Delib::Position {lastPosition}
   );
 
-  for(const double& randomAngle : TemplateMagic::random.getN<double>(-M_PI + 0.01, M_PI - 0.01, 100)) {
+  for(const double& randomAngle : temple::random.getN<double>(-M_PI + 0.01, M_PI - 0.01, 100)) {
 
     positions[3] = Delib::Position {
       Eigen::AngleAxisd(

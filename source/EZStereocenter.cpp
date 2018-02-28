@@ -1,8 +1,8 @@
-#include "constexpr_magic/ConsecutiveCompare.h"
-#include "constexpr_magic/Math.h"
-#include "template_magic/Containers.h"
-#include "template_magic/Numeric.h"
-#include "template_magic/Random.h"
+#include "constable/ConsecutiveCompare.h"
+#include "constable/Math.h"
+#include "temple/Containers.h"
+#include "temple/Numeric.h"
+#include "temple/Random.h"
 
 #include "DelibHelpers.h"
 #include "EZStereocenter.h"
@@ -176,8 +176,8 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
    * case we have four substituents, so consider that too if it exists.
    */
 
-  const double zPenalty = TemplateMagic::sum(
-    TemplateMagic::map(
+  const double zPenalty = temple::sum(
+    temple::map(
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
         return std::fabs(
@@ -190,8 +190,8 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
     )
   );
 
-  const double ePenalty = TemplateMagic::sum(
-    TemplateMagic::map(
+  const double ePenalty = temple::sum(
+    temple::map(
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
         return M_PI - std::fabs(
@@ -317,7 +317,7 @@ void EZStereocenter::removeSubstituent(
 
   auto dropWhich = [&which](RankingInformation& ranking) {
     for(auto& equalPrioritySet : ranking.sortedSubstituents) {
-      TemplateMagic::inplaceRemoveIf(
+      temple::inplaceRemoveIf(
         equalPrioritySet,
         [&which](const auto& index) -> bool {
           return index == which;
@@ -349,7 +349,7 @@ double EZStereocenter::angle(
    * is always 120°
    */
 
-  return ConstexprMagic::Math::toRadians<double>(120);
+  return constable::Math::toRadians<double>(120);
 }
 
 boost::optional<unsigned> EZStereocenter::assigned() const {
@@ -577,7 +577,7 @@ bool EZStereocenter::operator == (const EZStereocenter& other) const {
 }
 
 bool EZStereocenter::operator < (const EZStereocenter& other) const {
-  return ConstexprMagic::consecutiveCompareSmaller(
+  return constable::consecutiveCompareSmaller(
     _leftCenter,
     other._leftCenter,
     _rightCenter,
@@ -592,7 +592,7 @@ bool EZStereocenter::operator < (const EZStereocenter& other) const {
 }
 
 // Static data
-const double EZStereocenter::_dihedralAngleVariance = ConstexprMagic::Math::toRadians<double>(5);
+const double EZStereocenter::_dihedralAngleVariance = constable::Math::toRadians<double>(5);
 
 } // namespace Stereocenters
 

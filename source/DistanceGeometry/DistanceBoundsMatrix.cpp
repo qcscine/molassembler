@@ -104,7 +104,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
   std::shuffle(
     indices.begin(),
     indices.end(),
-    TemplateMagic::random.randomEngine
+    temple::random.randomEngine
   );
 
   std::vector<AtomIndexType>::const_iterator separator;
@@ -131,7 +131,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
         return DGError::GraphImpossible;
       }
 
-      double chosenDistance = TemplateMagic::random.getSingle<double>(
+      double chosenDistance = temple::random.getSingle<double>(
         lowerBound(matrixCopy, i, j),
         upperBound(matrixCopy, i, j)
       );
@@ -158,7 +158,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
        * Nevertheless, to avoid UB, it is still necessary to properly order
        * the parameters
        */
-      double chosenDistance = TemplateMagic::random.getSingle<double>(
+      double chosenDistance = temple::random.getSingle<double>(
         std::min(
           lowerBound(matrixCopy, i, j),
           upperBound(matrixCopy, i, j)

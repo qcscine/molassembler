@@ -2,7 +2,7 @@
 #define INCLUDE_MOLECULE_MANIP_ORDER_DISCORVERY_HELPER
 
 #include "boost/graph/graphviz.hpp"
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 
 #include "common_typedefs.h"
 
@@ -86,10 +86,10 @@ private:
     /* The map should be ordered by key, meaning by outDegree, so the result of
      * mapValues should be ordered, too
      */
-    return TemplateMagic::mapValues(
+    return temple::mapValues(
       degreeToSetMap,
       [&](const auto& indexSet) -> std::vector<T> {
-        return TemplateMagic::map(
+        return temple::map(
           indexSet,
           [&](const auto& index) -> T {
             return _graph[index].data;
@@ -352,7 +352,7 @@ public:
     std::vector<T>
   > getUndecidedSets() const {
     // Keep only sets with more than one member
-    return TemplateMagic::moveIf(
+    return temple::moveIf(
       _getSetsByDegree(),
       [](const auto& set) -> bool {
         return set.size() > 1;

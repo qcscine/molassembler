@@ -5,7 +5,7 @@
 
 #include "boost/regex.hpp"
 
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 
 #include "DistanceGeometry/ImplicitGraphBoost.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"

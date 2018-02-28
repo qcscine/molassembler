@@ -52,7 +52,7 @@ void GraphDistanceMatrix::_transformToDistances() {
 
     for(
       unsigned counter = 1;
-      !TemplateMagic::all_of(addedIn);
+      !temple::all_of(addedIn);
       counter++
     ) {
 
