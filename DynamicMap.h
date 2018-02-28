@@ -10,7 +10,7 @@
  * maximal size.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 /*!
  * A constexpr associative container with reasonably fast key-based lookup.
@@ -160,6 +160,6 @@ public:
 };
 
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

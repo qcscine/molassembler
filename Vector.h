@@ -12,7 +12,7 @@
  * includes the calculation of angles between two vectors.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 //! Constexpr three-dimensional vector math class.
 struct Vector {
@@ -117,6 +117,6 @@ constexpr double angle(const Vector& a, const Vector& b) {
   );
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

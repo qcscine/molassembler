@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE ConstexprMagicTests
+#define BOOST_TEST_MODULE constableTests
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -17,6 +17,7 @@
 #include "UIntArray.h"
 #include "DynamicUIntArray.h"
 #include "BTree.h"
+#include "ConsecutiveCompare.h"
 
 #include <iostream>
 #include <iomanip>
@@ -34,11 +35,11 @@ using namespace std::string_literals;
 
 namespace ArrayTests {
 
-constexpr auto testArr = ConstexprMagic::Array<unsigned, 3> {4, 3, 5};
+constexpr auto testArr = constable::Array<unsigned, 3> {4, 3, 5};
 
 template<typename T, size_t size>
-constexpr ConstexprMagic::Array<T, size> modifyArray(
-  const ConstexprMagic::Array<T, size>& array
+constexpr constable::Array<T, size> modifyArray(
+  const constable::Array<T, size>& array
 ) {
   auto arrayCopy = array;
   inPlaceSwap(arrayCopy, 0, 1);
@@ -48,59 +49,60 @@ constexpr ConstexprMagic::Array<T, size> modifyArray(
 constexpr auto modf = modifyArray(testArr);
 
 static_assert(
-  modf == ConstexprMagic::Array<unsigned, 3> {3, 4, 5},
+  modf == constable::Array<unsigned, 3> {3, 4, 5},
   "Swap doesn't work as expected"
 );
 
 static_assert(
-  ConstexprMagic::arrayPop(testArr) == ConstexprMagic::Array<unsigned, 2> {4, 3},
+  constable::arrayPop(testArr) == constable::Array<unsigned, 2> {4, 3},
   "Pop doesn't work"
 );
 
 static_assert(
-  ConstexprMagic::arrayPush(testArr, 9u) == ConstexprMagic::Array<unsigned, 4> {4, 3, 5, 9},
+  constable::arrayPush(testArr, 9u) == constable::Array<unsigned, 4> {4, 3, 5, 9},
   "Push doesn't work"
 );
 
 static_assert(
-  ConstexprMagic::arrayPush(testArr, 9u) == ConstexprMagic::Array<unsigned, 4> {4, 3, 5, 9},
-  "arrayPush doesn't work on ConstexprMagic::Array"
+  constable::arrayPush(testArr, 9u) == constable::Array<unsigned, 4> {4, 3, 5, 9},
+  "arrayPush doesn't work on constable::Array"
 );
 
 constexpr auto stdTestArr = std::array<unsigned, 3> {{4, 3, 5}};
 
 static_assert(
-  ConstexprMagic::arraysEqual(
-    ConstexprMagic::arrayPush(stdTestArr, 9u),
+  constable::arraysEqual(
+    constable::arrayPush(stdTestArr, 9u),
     std::array<unsigned, 4> {{4, 3, 5, 9}}
   ),
   "arrayPush doesn't work on std::array"
 );
 
 template<size_t size>
-constexpr void testIteration(const ConstexprMagic::Array<unsigned, size>& array) {
+constexpr void testIteration(const constable::Array<unsigned, size>& array) {
   for(const auto& element : array) {
     std::cout << element << std::endl;
   }
 }
 
-constexpr auto sortedArr = ConstexprMagic::Array<unsigned, 4> {4, 6, 9, 11};
-constexpr auto oneMore = ConstexprMagic::insertIntoSorted(sortedArr, 5u);
+constexpr auto sortedArr = constable::Array<unsigned, 4> {4, 6, 9, 11};
+constexpr auto oneMore = constable::insertIntoSorted(sortedArr, 5u);
 
 static_assert(
-  oneMore == ConstexprMagic::Array<unsigned, 5> {4, 5, 6, 9, 11},
+  oneMore == constable::Array<unsigned, 5> {4, 5, 6, 9, 11},
   "InsertIntoSorted does not work as expected."
 );
 
-static_assert(ConstexprMagic::Math::factorial(5) == 120, "Factorial is incorrect");
+static_assert(constable::Math::factorial(5) == 120, "Factorial is incorrect");
+static_assert(constable::Math::factorial(0) == 1, "Factorial is incorrect");
 
 // C++17 with std::array
 /*
 constexpr auto stdSortedArr = std::array<unsigned, 4> {{4, 6, 9, 11}};
-constexpr auto stdOneMore = ConstexprMagic::insertIntoSorted(stdSortedArr, 5u);
+constexpr auto stdOneMore = constable::insertIntoSorted(stdSortedArr, 5u);
 
 static_assert(
-  ConstexprMagic::arraysEqual(stdOneMore, std::array<unsigned, 5> {4, 5, 6, 9, 11}),
+  constable::arraysEqual(stdOneMore, std::array<unsigned, 5> {4, 5, 6, 9, 11}),
   "InsertIntoSorted does not work as expected with std::array"
 );
 // std::array::operator == (const std::array& other) isn't constexpr in C++17
@@ -108,8 +110,8 @@ static_assert(
 
 static_assert(
   std::is_same<
-    decltype(ConstexprMagic::makeArray(4, 3, 9)),
-    ConstexprMagic::Array<int, 3>
+    decltype(constable::makeArray(4, 3, 9)),
+    constable::Array<int, 3>
   >::value,
   "makeArray does not work as expected"
 );
@@ -131,8 +133,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   auto sqrt_passes = TemplateMagic::map(
     randomPositiveNumbers,
     [&](const double& randomPositiveNumber) -> bool {
-      return ConstexprMagic::floating::isCloseRelative(
-        ConstexprMagic::Math::sqrt(randomPositiveNumber),
+      return constable::floating::isCloseRelative(
+        constable::Math::sqrt(randomPositiveNumber),
         std::sqrt(randomPositiveNumber),
         accuracy
       );
@@ -149,10 +151,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     for(unsigned i = 0; i < sqrt_passes.size(); i++) {
       if(!sqrt_passes[i]) {
         std::cout << "  x = " << std::setw(12) << randomPositiveNumbers[i]
-          << ", sqrt = " << std::setw(12) << ConstexprMagic::Math::sqrt(randomPositiveNumbers[i])
+          << ", sqrt = " << std::setw(12) << constable::Math::sqrt(randomPositiveNumbers[i])
           << ", std::sqrt = " << std::setw(12) << std::sqrt(randomPositiveNumbers[i])
           << ", |Δ| = " << std::setw(12) << std::fabs(
-            ConstexprMagic::Math::sqrt(randomPositiveNumbers[i])
+            constable::Math::sqrt(randomPositiveNumbers[i])
             - std::sqrt(randomPositiveNumbers[i])
           ) << std::endl;
       }
@@ -171,10 +173,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   auto asin_passes = TemplateMagic::map(
     randomInverseTrigNumbers,
     [&](const double& randomInverseTrigNumber) -> bool {
-      return ConstexprMagic::floating::isCloseRelative(
-        ConstexprMagic::Math::asin(randomInverseTrigNumber),
+      return constable::floating::isCloseRelative(
+        constable::Math::asin(randomInverseTrigNumber),
         std::asin(randomInverseTrigNumber),
-        accuracy
+        1e-8
       );
     }
   );
@@ -189,10 +191,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     for(unsigned i = 0; i < asin_passes.size(); i++) {
       if(!asin_passes[i]) {
         std::cout << "  x = " << std::setw(12) << randomInverseTrigNumbers[i]
-          << ", asin = " << std::setw(12) << ConstexprMagic::Math::asin(randomInverseTrigNumbers[i])
+          << ", asin = " << std::setw(12) << constable::Math::asin(randomInverseTrigNumbers[i])
           << ", std::asin = " << std::setw(12) << std::asin(randomInverseTrigNumbers[i])
           << ", |Δ| = " << std::setw(12) << std::fabs(
-            ConstexprMagic::Math::asin(randomInverseTrigNumbers[i])
+            constable::Math::asin(randomInverseTrigNumbers[i])
             - std::asin(randomInverseTrigNumbers[i])
           ) << std::endl;
       }
@@ -202,10 +204,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   }
 
   auto testPow = [&](const double& number, const int& exponent) -> bool {
-    const double test = ConstexprMagic::Math::pow(number, exponent);
+    const double test = constable::Math::pow(number, exponent);
     const double reference = std::pow(number, exponent);
 
-    bool passes = ConstexprMagic::floating::isCloseRelative(
+    bool passes = constable::floating::isCloseRelative(
       test,
       reference,
       accuracy
@@ -239,10 +241,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   );
   
   auto testRecPow = [&](const double& number, const unsigned& exponent) -> bool {
-    const double test = ConstexprMagic::Math::recPow(number, exponent);
+    const double test = constable::Math::recPow(number, exponent);
     const double reference = std::pow(number, exponent);
 
-    bool passes = ConstexprMagic::floating::isCloseRelative(
+    bool passes = constable::floating::isCloseRelative(
       test,
       reference,
       accuracy
@@ -279,80 +281,70 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   // ln
   const auto randomZ = TemplateMagic::random.getN<double>(1e-10, 1e10, numTests);
   bool all_ln_pass = TemplateMagic::all_of(
-    TemplateMagic::map(
-      randomZ,
-      [&](const auto& z) -> bool {
-        bool pass = ConstexprMagic::floating::isCloseRelative(
-          ConstexprMagic::Math::ln(z),
-          std::log(z),
-          accuracy
-        );
+    randomZ,
+    [&](const auto& z) -> bool {
+      bool pass = constable::floating::isCloseRelative(
+        constable::Math::ln(z),
+        std::log(z),
+        accuracy
+      );
 
-        if(!pass) {
-          std::cout << "ln deviates for z = " << std::setw(12) << z 
-            << ", ln(z) = " << std::setw(12) << ConstexprMagic::Math::ln(z) 
-            << ", std::log(z) = " << std::setw(12) << std::log(z)
-            << ", |Δ| = " << std::setw(12) << std::fabs(
-              ConstexprMagic::Math::ln(z) - std::log(z)
-            ) << std::endl;
-        }
-
-        return pass;
+      if(!pass) {
+        std::cout << "ln deviates for z = " << std::setw(12) << z 
+          << ", ln(z) = " << std::setw(12) << constable::Math::ln(z) 
+          << ", std::log(z) = " << std::setw(12) << std::log(z)
+          << ", |Δ| = " << std::setw(12) << std::fabs(
+            constable::Math::ln(z) - std::log(z)
+          ) << std::endl;
       }
-    )
+
+      return pass;
+    }
   );
 
   BOOST_CHECK(all_ln_pass);
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::map(
-        TemplateMagic::random.getN<double>(-100, 100, numTests),
-        [](const double& x) -> bool {
-          return(ConstexprMagic::Math::floor(x) <= x);
-        }
-      )
+      TemplateMagic::random.getN<double>(-100, 100, numTests),
+      [](const double& x) -> bool {
+        return(constable::Math::floor(x) <= x);
+      }
     )
   );
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::map(
-        TemplateMagic::random.getN<double>(-100, 100, numTests),
-        [](const double& x) -> bool {
-          return(ConstexprMagic::Math::ceil(x) >= x);
-        }
-      )
+      TemplateMagic::random.getN<double>(-100, 100, numTests),
+      [](const double& x) -> bool {
+        return(constable::Math::ceil(x) >= x);
+      }
     )
   );
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::map(
-        TemplateMagic::random.getN<double>(-100, 100, numTests),
-        [](const double& x) -> bool {
-          const double rounded = ConstexprMagic::Math::round(x);
-          return(
-            rounded == ConstexprMagic::Math::floor(x)
-            || rounded == ConstexprMagic::Math::ceil(x)
-          );
-        }
-      )
+      TemplateMagic::random.getN<double>(-100, 100, numTests),
+      [](const double& x) -> bool {
+        const double rounded = constable::Math::round(x);
+        return(
+          rounded == constable::Math::floor(x)
+          || rounded == constable::Math::ceil(x)
+        );
+      }
     )
   );
 
   BOOST_CHECK(
     TemplateMagic::all_of(
-      TemplateMagic::map(
-        TemplateMagic::random.getN<double>(-M_PI / 2, M_PI / 2, numTests),
-        [&](const double& x) -> bool {
-          return ConstexprMagic::floating::isCloseRelative(
-            ConstexprMagic::Math::atan(x),
-            std::atan(x),
-            accuracy
-          );
-        }
-      )
+      TemplateMagic::random.getN<double>(-M_PI / 2, M_PI / 2, numTests),
+      [&](const double& x) -> bool {
+        return constable::floating::isCloseRelative(
+          constable::Math::atan(x),
+          std::atan(x),
+          accuracy
+        );
+      }
     )
   );
 }
@@ -365,7 +357,7 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   bool STLHasNext = true;
 
   do {
-    customHasNext = ConstexprMagic::inPlaceNextPermutation(base);
+    customHasNext = constable::inPlaceNextPermutation(base);
     STLHasNext = std::next_permutation(STLComparison.begin(), STLComparison.end());
 
     BOOST_CHECK_MESSAGE(
@@ -387,7 +379,7 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   STLHasNext = true;
 
   do {
-    customHasNext = ConstexprMagic::inPlacePreviousPermutation(base);
+    customHasNext = constable::inPlacePreviousPermutation(base);
     STLHasNext = std::prev_permutation(STLComparison.begin(), STLComparison.end());
 
     BOOST_CHECK_MESSAGE(
@@ -411,7 +403,7 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   STLHasNext = true;
 
   do {
-    customHasNext = ConstexprMagic::inPlaceNextPermutation(base, 1, 3);
+    customHasNext = constable::inPlaceNextPermutation(base, 1, 3);
     STLHasNext = std::next_permutation(STLComparison.begin() + 1, STLComparison.end() - 1);
 
     BOOST_CHECK_MESSAGE(
@@ -434,7 +426,7 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   STLHasNext = true;
 
   do {
-    customHasNext = ConstexprMagic::inPlacePreviousPermutation(base, 1, 3);
+    customHasNext = constable::inPlacePreviousPermutation(base, 1, 3);
     STLHasNext = std::prev_permutation(STLComparison.begin() + 1, STLComparison.end() - 1);
 
     BOOST_CHECK_MESSAGE(
@@ -453,23 +445,23 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 }
 
 constexpr bool compileTimeDynTest() {
-  ConstexprMagic::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6};
+  constable::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6};
   nonConstArr.push_back(9);
   return nonConstArr.size() == 4;
 }
 
 constexpr bool dynArrSpliceTest() {
-  ConstexprMagic::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6, 5, 1, 9};
+  constable::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6, 5, 1, 9};
   auto spliced = nonConstArr.splice(2);
   
   return (
-    spliced == ConstexprMagic::DynamicArray<unsigned, 10> {6, 5, 1, 9}
-    && nonConstArr == ConstexprMagic::DynamicArray<unsigned, 10> {4, 3}
+    spliced == constable::DynamicArray<unsigned, 10> {6, 5, 1, 9}
+    && nonConstArr == constable::DynamicArray<unsigned, 10> {4, 3}
   );
 }
 
 BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
-  constexpr ConstexprMagic::DynamicArray<unsigned, 10> arr {4, 3, 5};
+  constexpr constable::DynamicArray<unsigned, 10> arr {4, 3, 5};
 
   static_assert(
     arr.size() == 3,
@@ -493,7 +485,7 @@ BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
     "Subtracting begin/end iterators does not yield dynamic length"
   );
 
-  constexpr ConstexprMagic::Array<unsigned, 10> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
+  constexpr constable::Array<unsigned, 10> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
 
   constexpr auto grouped = groupByEquality(
     values,
@@ -509,13 +501,13 @@ BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
     "Grouping does not work as expected"
   );
 
-  constexpr ConstexprMagic::DynamicArray<unsigned, 14> fromFixed {values};
+  constexpr constable::DynamicArray<unsigned, 14> fromFixed {values};
 
   static_assert(fromFixed.size() == 10, "Construction from fixed doesn't work");
 }
 
 template<typename T, size_t size, class Comparator>
-constexpr bool isSorted(const ConstexprMagic::DynamicSet<T, size, Comparator>& set) {
+constexpr bool isSorted(const constable::DynamicSet<T, size, Comparator>& set) {
   Comparator comparator;
 
   auto left = set.begin();
@@ -534,7 +526,7 @@ constexpr bool isSorted(const ConstexprMagic::DynamicSet<T, size, Comparator>& s
 }
 
 BOOST_AUTO_TEST_CASE(dynamicSetTests) {
-  ConstexprMagic::DynamicSet<unsigned, 10> set;
+  constable::DynamicSet<unsigned, 10> set;
 
   BOOST_CHECK(set.size() == 0);
   BOOST_CHECK(
@@ -566,8 +558,8 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
   }
   BOOST_CHECK(isSorted(set));
 
-  ConstexprMagic::DynamicSet<unsigned, 10> setInitList {
-    ConstexprMagic::DynamicArray<unsigned, 10> {
+  constable::DynamicSet<unsigned, 10> setInitList {
+    constable::DynamicArray<unsigned, 10> {
       4u, 9u, 13u
     }
   };
@@ -603,19 +595,19 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
       << "\ncontains 25, expect false:" << setInitList.contains(25)
   );
   // Set of arrays
-  ConstexprMagic::Array<
-    ConstexprMagic::Array<unsigned, 4>,
+  constable::Array<
+    constable::Array<unsigned, 4>,
     5
   > sampleArrays {
-    ConstexprMagic::Array<unsigned, 4> {1u, 2u, 3u, 4u},
-    ConstexprMagic::Array<unsigned, 4> {1u, 2u, 4u, 3u},
-    ConstexprMagic::Array<unsigned, 4> {1u, 4u, 3u, 2u},
-    ConstexprMagic::Array<unsigned, 4> {1u, 4u, 2u, 3u},
-    ConstexprMagic::Array<unsigned, 4> {2u, 1u, 3u, 4u}
+    constable::Array<unsigned, 4> {1u, 2u, 3u, 4u},
+    constable::Array<unsigned, 4> {1u, 2u, 4u, 3u},
+    constable::Array<unsigned, 4> {1u, 4u, 3u, 2u},
+    constable::Array<unsigned, 4> {1u, 4u, 2u, 3u},
+    constable::Array<unsigned, 4> {2u, 1u, 3u, 4u}
   };
 
-  ConstexprMagic::DynamicSet<
-    ConstexprMagic::Array<unsigned, 4>,
+  constable::DynamicSet<
+    constable::Array<unsigned, 4>,
     10
   > arraysSet;
 
@@ -639,7 +631,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
 }
 
 template<typename T, size_t size>
-bool validate(const ConstexprMagic::DynamicSet<T, size>& set) {
+bool validate(const constable::DynamicSet<T, size>& set) {
   // Is the set ordered?
   auto leftIter = set.begin();
   auto rightIter = leftIter; ++rightIter; 
@@ -671,18 +663,18 @@ bool validate(const ConstexprMagic::DynamicSet<T, size>& set) {
 }
 
 BOOST_AUTO_TEST_CASE(arrayOperators) {
-  ConstexprMagic::Array<unsigned, 4> a {4, 2, 3, 1};
-  ConstexprMagic::Array<unsigned, 4> b {4, 3, 2, 1};
+  constable::Array<unsigned, 4> a {4, 2, 3, 1};
+  constable::Array<unsigned, 4> b {4, 3, 2, 1};
   
-  BOOST_CHECK(ConstexprMagic::testLogicalOperators(a, b));
-  BOOST_CHECK(ConstexprMagic::testLogicalOperators(a, a));
+  BOOST_CHECK(constable::testLogicalOperators(a, b));
+  BOOST_CHECK(constable::testLogicalOperators(a, a));
 
-  ConstexprMagic::dynamic::explainLogicalOperatorFailures(a, b);
+  constable::dynamic::explainLogicalOperatorFailures(a, b);
 }
 
 BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
   for(unsigned N = 0; N < 100; ++N) {
-    ConstexprMagic::DynamicSet<unsigned, 100> subject;
+    constable::DynamicSet<unsigned, 100> subject;
 
     std::vector<unsigned> numbers;
     numbers.resize(50);
@@ -806,19 +798,19 @@ struct pairSumValue {
 };
 
 static_assert(
-  ConstexprMagic::TupleType::unpackToFunction<Fruit, sumNumbersValue>() == 57,
+  constable::TupleType::unpackToFunction<Fruit, sumNumbersValue>() == 57,
   "Unpacking fruit tuple to valueValue does not yield expected result"
 );
 
 static_assert(
-  ConstexprMagic::TupleType::unpackToFunction<Fruit, sumNumbersFunctor>() == 57,
+  constable::TupleType::unpackToFunction<Fruit, sumNumbersFunctor>() == 57,
   "Unpacking fruit tuple to valueFunctor does not yield expected result"
 );
 
 static_assert(
-  ConstexprMagic::arraysEqual(
-    ConstexprMagic::TupleType::map<Fruit, getNumberValue>(),
-    ConstexprMagic::Array<unsigned, 3> {{
+  constable::arraysEqual(
+    constable::TupleType::map<Fruit, getNumberValue>(),
+    constable::Array<unsigned, 3> {{
       Apple::number, Banana::number, Cherry::number 
     }}
   ),
@@ -826,9 +818,9 @@ static_assert(
 );
 
 static_assert(
-  ConstexprMagic::arraysEqual(
-    ConstexprMagic::TupleType::map<Fruit, getNumberFunctor>(),
-    ConstexprMagic::Array<unsigned, 3> {{
+  constable::arraysEqual(
+    constable::TupleType::map<Fruit, getNumberFunctor>(),
+    constable::Array<unsigned, 3> {{
       Apple::number, Banana::number, Cherry::number 
     }}
   ),
@@ -836,9 +828,9 @@ static_assert(
 );
 
 static_assert(
-  ConstexprMagic::arraysEqual(
-    ConstexprMagic::TupleType::mapAllPairs<Fruit, pairSumValue>(),
-    ConstexprMagic::Array<unsigned, 3> {{
+  constable::arraysEqual(
+    constable::TupleType::mapAllPairs<Fruit, pairSumValue>(),
+    constable::Array<unsigned, 3> {{
       Apple::number + Banana::number,
       Apple::number + Cherry::number,
       Banana::number + Cherry::number
@@ -848,9 +840,9 @@ static_assert(
 );
 
 static_assert(
-  ConstexprMagic::arraysEqual(
-    ConstexprMagic::TupleType::mapAllPairs<Fruit, pairSumFunctor>(),
-    ConstexprMagic::Array<unsigned, 3> {{
+  constable::arraysEqual(
+    constable::TupleType::mapAllPairs<Fruit, pairSumFunctor>(),
+    constable::Array<unsigned, 3> {{
       Apple::number + Banana::number,
       Apple::number + Cherry::number,
       Banana::number + Cherry::number
@@ -862,7 +854,7 @@ static_assert(
 using countTestType = std::tuple<unsigned, float, double, unsigned, size_t>;
 
 static_assert(
-  ConstexprMagic::TupleType::countType<countTestType, unsigned>() == 2,
+  constable::TupleType::countType<countTestType, unsigned>() == 2,
   "Counting unsigned in countTestType does not return two!"
 );
 
@@ -872,12 +864,12 @@ namespace FloatingPointComparisonTests {
 
 template<typename T>
 constexpr bool testAbsoluteComparison(const T& a, const T& b, const T& tolerance) {
-  ConstexprMagic::floating::ExpandedAbsoluteEqualityComparator<T> comparator {
+  constable::floating::ExpandedAbsoluteEqualityComparator<T> comparator {
     tolerance
   };
 
   return (
-    ConstexprMagic::Math::XOR(
+    constable::Math::XOR(
       (
         comparator.isLessThan(a, b)
         && comparator.isMoreThan(b, a)
@@ -893,7 +885,7 @@ constexpr bool testAbsoluteComparison(const T& a, const T& b, const T& tolerance
         && !comparator.isMoreThan(a, b)
         && comparator.isEqual(a, b)
       )
-    ) && ConstexprMagic::Math::XOR(
+    ) && constable::Math::XOR(
       comparator.isEqual(a, b),
       comparator.isUnequal(a, b)
     )
@@ -902,12 +894,12 @@ constexpr bool testAbsoluteComparison(const T& a, const T& b, const T& tolerance
 
 template<typename T>
 constexpr bool testRelativeComparison(const T& a, const T& b, const T& tolerance) {
-  ConstexprMagic::floating::ExpandedRelativeEqualityComparator<T> comparator {
+  constable::floating::ExpandedRelativeEqualityComparator<T> comparator {
     tolerance
   };
 
   return (
-    ConstexprMagic::Math::XOR(
+    constable::Math::XOR(
       (
         comparator.isLessThan(a, b)
         && comparator.isMoreThan(b, a)
@@ -923,7 +915,7 @@ constexpr bool testRelativeComparison(const T& a, const T& b, const T& tolerance
         && !comparator.isMoreThan(a, b)
         && comparator.isEqual(a, b)
       )
-    ) && ConstexprMagic::Math::XOR(
+    ) && constable::Math::XOR(
       comparator.isEqual(a, b),
       comparator.isUnequal(a, b)
     )
@@ -948,30 +940,30 @@ static_assert(
 
 namespace ConcatenationTests {
 
-constexpr ConstexprMagic::Array<unsigned, 4> f {4, 2, 9, 3};
-constexpr ConstexprMagic::Array<unsigned, 4> g {11, 22, 33, 44};
-constexpr ConstexprMagic::Array<unsigned, 4> h {234, 292, 912, 304};
-constexpr ConstexprMagic::Array<unsigned, 8> fg {
+constexpr constable::Array<unsigned, 4> f {4, 2, 9, 3};
+constexpr constable::Array<unsigned, 4> g {11, 22, 33, 44};
+constexpr constable::Array<unsigned, 4> h {234, 292, 912, 304};
+constexpr constable::Array<unsigned, 8> fg {
   4, 2, 9, 3,
   11, 22, 33, 44
 };
-constexpr ConstexprMagic::Array<unsigned, 12> fgh {
+constexpr constable::Array<unsigned, 12> fgh {
   4, 2, 9, 3,
   11, 22, 33, 44,
   234, 292, 912, 304
 };
 
 static_assert(
-  ConstexprMagic::arraysEqual(
-    ConstexprMagic::arrayConcatenate(f, g),
+  constable::arraysEqual(
+    constable::arrayConcatenate(f, g),
     fg
   ),
   "Pairwise concatenation does not preserve sequence!"
 );
 
 static_assert(
-  ConstexprMagic::arraysEqual(
-    ConstexprMagic::arrayConcatenate(f, g, h),
+  constable::arraysEqual(
+    constable::arrayConcatenate(f, g, h),
     fgh
   ),
   "Variadic concatenation does not work as expected"
@@ -981,8 +973,8 @@ static_assert(
 
 namespace DynamicMapTests {
 
-constexpr ConstexprMagic::DynamicMap<unsigned, int, 20> generateMap() {
-  ConstexprMagic::DynamicMap<unsigned, int, 20> myMap;
+constexpr constable::DynamicMap<unsigned, int, 20> generateMap() {
+  constable::DynamicMap<unsigned, int, 20> myMap;
 
   myMap.insert(4, -2);
   myMap.insert(1, 4);
@@ -1001,25 +993,28 @@ static_assert(a.at(3u) == 9, "Map does not find element with key 3");
 
 namespace UpperTriangularMatrixTests {
 
-constexpr auto matr = ConstexprMagic::makeUpperTriangularMatrix(
+// Can default-construct
+constexpr auto defaultMatr = constable::UpperTriangularMatrix<bool, 15> {};
+
+constexpr auto matr = constable::makeUpperTriangularMatrix(
   std::array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
 );
 
-/*constexpr auto failing = ConstexprMagic::makeUpperTriangularMatrix(
+/*constexpr auto failing = constable::makeUpperTriangularMatrix(
   std::array<unsigned, 5> {{1, 2, 3, 4, 5}}
 );*/
 
-constexpr auto fromArray = ConstexprMagic::makeUpperTriangularMatrix(
-  ConstexprMagic::Array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
+constexpr auto fromArray = constable::makeUpperTriangularMatrix(
+  constable::Array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
 );
 
 } // namespace UpperTriangularMatrixTests
 
 namespace UIntArrayTests {
 
-using Small = ConstexprMagic::UIntArray<unsigned>;
-using Medium = ConstexprMagic::UIntArray<unsigned long>;
-using Large = ConstexprMagic::UIntArray<unsigned long long>;
+using Small = constable::UIntArray<unsigned>;
+using Medium = constable::UIntArray<unsigned long>;
+using Large = constable::UIntArray<unsigned long long>;
 
 static_assert(Small::N == 9, "Small variant can store 9 integers");
 static_assert(Medium::N == 19, "Medium variant can store 19 integers");
@@ -1050,7 +1045,7 @@ static_assert(tryModifyArray(), "Modifying the array works");
 } // namespace UIntArrayTests
 
 BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
-  constexpr ConstexprMagic::DynamicUIntArray<unsigned> arr {4, 3, 5};
+  constexpr constable::DynamicUIntArray<unsigned> arr {4, 3, 5};
 
   static_assert(
     arr.size() == 3,
@@ -1074,7 +1069,7 @@ BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
   static_assert(arr.front() == 4, "Front isn't right");
   static_assert(arr.back() == 5, "Back isn't right");
 
-  ConstexprMagic::DynamicUIntArray<unsigned> changeable {4, 9, 1, 3, 5};
+  constable::DynamicUIntArray<unsigned> changeable {4, 9, 1, 3, 5};
 
   BOOST_CHECK_MESSAGE(
     *changeable.begin() == 4
@@ -1084,15 +1079,15 @@ BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
     "non-const iterators don't work right"
   );
 
-  constexpr ConstexprMagic::DynamicUIntArray<unsigned long> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
+  constexpr constable::DynamicUIntArray<unsigned long> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
 
   constexpr auto grouped = groupByEquality(
     values,
     std::equal_to<unsigned>()
   );
 
-  constexpr ConstexprMagic::Array<unsigned, 4> f {4, 1, 9};
-  constexpr auto initFromFixed = ConstexprMagic::DynamicUIntArray<unsigned> {f};
+  constexpr constable::Array<unsigned, 4> f {4, 1, 9};
+  constexpr auto initFromFixed = constable::DynamicUIntArray<unsigned> {f};
 
   BOOST_CHECK_MESSAGE(
     grouped.size() == 4
@@ -1107,8 +1102,8 @@ BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
 
 namespace BTreeStaticTests {
 
-constexpr ConstexprMagic::BTree<unsigned, 3, 20> generateTree() {
-  ConstexprMagic::BTree<unsigned, 3, 20> tree;
+constexpr constable::BTree<unsigned, 3, 20> generateTree() {
+  constable::BTree<unsigned, 3, 20> tree;
 
   tree.insert(9);
   tree.insert(3);
@@ -1141,17 +1136,17 @@ static_assert(
    * -> h = log_2t [N * (2t - 1) + 1] - 1
    *
    */
-  ConstexprMagic::BTreeProperties::minHeight(5, 3) == 0
-  && ConstexprMagic::BTreeProperties::minHeight(35, 3) == 1
-  && ConstexprMagic::BTreeProperties::minHeight(215, 3) == 2,
+  constable::BTreeProperties::minHeight(5, 3) == 0
+  && constable::BTreeProperties::minHeight(35, 3) == 1
+  && constable::BTreeProperties::minHeight(215, 3) == 2,
   "minHeight function is wrong"
 );
 
 static_assert(
-  ConstexprMagic::BTreeProperties::maxNodesInTree(0, 3) == 1
-  && ConstexprMagic::BTreeProperties::maxNodesInTree(1, 3) == 7
-  && ConstexprMagic::BTreeProperties::maxNodesInTree(2, 3) == 43
-  && ConstexprMagic::BTreeProperties::maxNodesInTree(3, 3) == 259,
+  constable::BTreeProperties::maxNodesInTree(0, 3) == 1
+  && constable::BTreeProperties::maxNodesInTree(1, 3) == 7
+  && constable::BTreeProperties::maxNodesInTree(2, 3) == 43
+  && constable::BTreeProperties::maxNodesInTree(3, 3) == 259,
   "maxNodesInTree is wrong"
 );
 
@@ -1188,7 +1183,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
   std::set<unsigned> notInTree {values.begin(), values.end()};
   std::set<unsigned> inTree;
 
-  ConstexprMagic::BTree<unsigned, 3, nKeys> tree;
+  constable::BTree<unsigned, 3, nKeys> tree;
 
   std::string lastTreeGraph;
 
@@ -1255,7 +1250,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       "Not all elements recorded as not in the tree are recognized as such!\n" 
         << "Found in the tree, but should not be present: "
         << TemplateMagic::condenseIterable(
-          TemplateMagic::copyIf(
+          TemplateMagic::moveIf(
             TemplateMagic::zipMap(
               notInsertedNotContained,
               notInTree,
@@ -1290,7 +1285,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       "Not all elements recorded as contained in the tree are recognized as such!\n" 
         << "Not found in the tree: "
         << TemplateMagic::condenseIterable(
-          TemplateMagic::copyIf(
+          TemplateMagic::moveIf(
             TemplateMagic::zipMap(
               insertedContained,
               inTree,
@@ -1375,7 +1370,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
 
 template<size_t minOrder, size_t nElements> 
 constexpr bool BTreeAllocatedSizeSufficient() {
-  ConstexprMagic::BTree<unsigned, minOrder, nElements> tree;
+  constable::BTree<unsigned, minOrder, nElements> tree;
 
   for(unsigned i = 0; i < nElements; ++i) {
     tree.insert(i);
@@ -1386,7 +1381,7 @@ constexpr bool BTreeAllocatedSizeSufficient() {
 
 template<size_t minOrder, size_t ... nElements>
 constexpr bool testAllBTrees(std::index_sequence<nElements...>) {
-  ConstexprMagic::Array<bool, sizeof...(nElements)> results {{
+  constable::Array<bool, sizeof...(nElements)> results {{
     BTreeAllocatedSizeSufficient<minOrder, 5 + nElements>()...
   }};
 
@@ -1401,7 +1396,7 @@ constexpr bool testAllBTrees(std::index_sequence<nElements...>) {
 
 template<size_t ... minOrders>
 constexpr bool testAllBTrees(std::index_sequence<minOrders...>) {
-  ConstexprMagic::Array<bool, sizeof...(minOrders)> results {{
+  constable::Array<bool, sizeof...(minOrders)> results {{
     testAllBTrees<2 + minOrders>(std::make_index_sequence<45>{})... // Test sizes 5->50
   }};
 
@@ -1422,3 +1417,33 @@ static_assert(
   testAllBTrees(),
   "For some B-Trees, you cannot fit as many elements in as requested at instantiation"
 );
+
+
+namespace ConsecutiveCompareConstexprTests {
+  static_assert(
+    constable::consecutiveCompare(
+      std::less<int>(),
+      -4,
+      -4,
+      std::greater<unsigned>(),
+      11,
+      10
+    ),
+    "consecutive compare does not yield true"
+  );
+
+  constexpr int x = 4, y = 4;
+  constexpr unsigned f = 5, g = 4;
+
+  static_assert(
+    constable::consecutiveCompare(
+      std::less<int>(),
+      x,
+      y,
+      std::greater<unsigned>(),
+      f,
+      g
+    ),
+    "Consecutive compare with references does not yield true"
+  );
+} // namespace ConsecutiveCompareConstexprTests

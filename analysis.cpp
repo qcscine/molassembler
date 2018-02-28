@@ -15,8 +15,8 @@ std::vector<double> log10Spaced(
   const double& maximum,
   const unsigned& nSteps
 ) {
-  auto logMin = ConstexprMagic::Math::log10(minimum);
-  auto logMax = ConstexprMagic::Math::log10(maximum);
+  auto logMin = constable::Math::log10(minimum);
+  auto logMax = constable::Math::log10(maximum);
 
   auto logStepLength = (logMax - logMin) / nSteps;
 
@@ -42,7 +42,7 @@ void writeAsinFile() {
 
   for(double value = lowerTrigLimit; value <= upperTrigLimit; value += stepSize) {
     asinFile << value << "," 
-      << ConstexprMagic::Math::asin(value) << ","
+      << constable::Math::asin(value) << ","
       << std::asin(value) << "\n";
   }
 
@@ -67,15 +67,15 @@ void writeBTreeFile() {
         500
       ),
       [](const double& numElements) -> size_t {
-        return ConstexprMagic::Math::floor(numElements);
+        return constable::Math::floor(numElements);
       }
     );
 
     auto percentageUsed = TemplateMagic::map(
       numElements,
       [&](const size_t& requestedSize) -> double {
-        auto spaceAllocated = ConstexprMagic::BTreeProperties::maxNodesInTree(
-          ConstexprMagic::BTreeProperties::maxHeightBound(
+        auto spaceAllocated = constable::BTreeProperties::maxNodesInTree(
+          constable::BTreeProperties::maxHeightBound(
             requestedSize,
             minDegree
           ),

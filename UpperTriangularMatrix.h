@@ -11,7 +11,7 @@
  * matrix via a std::array and provides two-index access.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 namespace UpperTriangularMatrixImpl {
 
@@ -97,6 +97,8 @@ public:
   static constexpr unsigned N = UpperTriangularMatrixImpl::getMatrixSize(dataSize);
 
 /* Constructors */
+  constexpr UpperTriangularMatrix() : _data {} {}
+
   template<
     template<typename, size_t> class ArrayType
   > constexpr explicit UpperTriangularMatrix(
@@ -153,6 +155,6 @@ template<
   return UpperTriangularMatrix<ValueType, size>(data);
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

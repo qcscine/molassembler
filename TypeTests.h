@@ -11,7 +11,7 @@
  * serve as useful library tests.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 namespace TypeTests {
 
@@ -114,6 +114,6 @@ void explainLogicalOperatorFailures(const T& a, const T& b) {
 
 } // namespace TypeTests
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

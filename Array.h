@@ -14,7 +14,7 @@
  * constexpr.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 template<typename T, size_t nItems>
 class Array {
@@ -369,6 +369,6 @@ constexpr auto makeArray(T head, Tail... tail) -> Array<T, 1 + sizeof...(Tail)> 
   return { head, tail ... };
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

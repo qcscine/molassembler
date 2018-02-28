@@ -11,7 +11,7 @@
  * compile time.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 template<
   typename T,
@@ -102,6 +102,6 @@ template<
   return DynamicSet<T, nItems, LessThanPredicate, EqualityPredicate>(array);
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

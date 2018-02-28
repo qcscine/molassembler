@@ -9,7 +9,7 @@
  * Provides constexpr functional-style modification of container elements
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 namespace traits {
 
@@ -962,6 +962,6 @@ constexpr typename ContainerType::const_iterator find(
   return it;
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

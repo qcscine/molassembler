@@ -8,7 +8,7 @@
  * Provides type-level computations for types enumerated in a tuple.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 namespace TupleType {
 
@@ -229,6 +229,6 @@ template<
 
 } // namespace TupleType
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

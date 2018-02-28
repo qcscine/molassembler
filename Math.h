@@ -20,9 +20,8 @@
  *     the entire domain
  *
  * - Improve power function, it's probably hella awful
- * - Several functions are marked noexcept but throw!
  */
-namespace ConstexprMagic {
+namespace constable {
 
 namespace Math {
 
@@ -108,11 +107,11 @@ constexpr T pow(const T& base, const int& exponent) noexcept;
 
 // Sqrt
 template<typename T>
-constexpr T sqrt(const T& x) noexcept;
+constexpr T sqrt(const T& x);
 
 // Factorial
 template<typename T>
-constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x) noexcept;
+constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x);
 
 // Logarithms
 template<typename T>
@@ -125,8 +124,12 @@ template<typename T>
 constexpr T log(const T& x, const T& base);
 
 // Inverse trigonometry
+/*! Computes the inverse sine function.
+ *
+ * NOTE: Accurate to only ~1e-9 absolute deviation close to domain boundaries
+ */
 template<typename T>
-constexpr T asin(const T& x) noexcept;
+constexpr T asin(const T& x);
 
 template<typename T>
 constexpr T acos(const T& x);
@@ -226,7 +229,7 @@ constexpr T lnSeries(const T& x) {
   // Term n = 0
   T previous {0};
 
-  for(unsigned n = 3; ConstexprMagic::Math::abs(previous - value) > epsilon; n += 2) {
+  for(unsigned n = 3; constable::Math::abs(previous - value) > epsilon; n += 2) {
     // previous iteration
     previous = value;
 
@@ -245,7 +248,7 @@ constexpr T lnSeries(const T& x) {
  * 1964, from http://people.math.sfu.ca/~cbm/aands/abramowitz_and_stegun.pdf
  */
 template<typename T>
-constexpr T asinApprox(const T& x) noexcept {
+constexpr T asinApprox(const T& x) {
   if(!(0 < x && x < 1)) {
     throw "Asin approximation domain error: only applicable for 0 < x < 1!";
   }
@@ -417,7 +420,7 @@ constexpr T recPow(const T& base, const unsigned& exponent) noexcept {
 template<typename T>
 constexpr T pow(const T& base, const int& exponent) noexcept {
   if(exponent < 0) {
-    return 1 / pow(base, static_cast<unsigned>(ConstexprMagic::Math::abs(exponent)));
+    return 1 / pow(base, static_cast<unsigned>(constable::Math::abs(exponent)));
   } 
 
   if(exponent == 0) {
@@ -430,7 +433,7 @@ constexpr T pow(const T& base, const int& exponent) noexcept {
 /* Implements Newton's iteration to compute the square root of a positive number
  */
 template<typename T>
-constexpr T sqrt(const T& x) noexcept {
+constexpr T sqrt(const T& x) {
   if(x < 0) {
     throw "Square-root domain error: Only real if x >= 0!";
   }
@@ -439,7 +442,7 @@ constexpr T sqrt(const T& x) noexcept {
   T value = 1;
   T previous = 2;
 
-  while(ConstexprMagic::Math::abs(previous - value) > epsilon) {
+  while(constable::Math::abs(previous - value) > epsilon) {
     // store the previous value
     previous = value;
 
@@ -451,16 +454,16 @@ constexpr T sqrt(const T& x) noexcept {
 }
 
 template<typename T>
-constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x) noexcept {
-  if(x <= 0) {
+constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x) {
+  if(x < 0) {
     throw "Factorial domain error!";
   }
 
-  if(x == 1) {
+  if(x == 0) {
     return 1;
-  } else {
-    return x * factorial(x - 1);
   }
+
+  return x * factorial(x - 1);
 }
 
 template<typename T>
@@ -512,12 +515,12 @@ constexpr T log(const T& x, const T& base) {
  * form there?
  */
 template<typename T>
-constexpr T asin(const T& x) noexcept {
+constexpr T asin(const T& x) {
   if(!(-1 < x && x < 1)) {
     throw "Inverse sine domain error: only real if -1 < x < 1!";
   }
 
-  if(ConstexprMagic::Math::abs(x) > 0.92) {
+  if(constable::Math::abs(x) > 0.92) {
     return (x > 0) ? detail::asinApprox(x) : -detail::asinApprox(-x);
   }
 
@@ -528,7 +531,7 @@ constexpr T asin(const T& x) noexcept {
   T lower_factorial = 1;
   T term = 1;
 
-  for(unsigned n = 1; ConstexprMagic::Math::abs(term) > epsilon; ++n) {
+  for(unsigned n = 1; constable::Math::abs(term) > epsilon; ++n) {
     upper_factorial *= 2 * (n - 1) + 1;
     lower_factorial *= 2 * n;
 
@@ -568,6 +571,6 @@ constexpr T atan(const T& x) {
 
 } // namespace Math
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

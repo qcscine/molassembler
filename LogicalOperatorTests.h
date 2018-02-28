@@ -11,7 +11,7 @@
  * serve as useful library tests.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 //! For any two types, check consistency of their logical operators
 template<typename T>
@@ -76,6 +76,6 @@ void explainLogicalOperatorFailures(const T& a, const T& b) {
 
 } // namespace dynamic
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

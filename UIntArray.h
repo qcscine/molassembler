@@ -10,7 +10,7 @@
  * numbers 0-9 that has particularly fast comparison operators.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 /*!
  * A fixed array-like class for small amounts of the numbers 0-9.
@@ -379,6 +379,6 @@ public:
   }
 };
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

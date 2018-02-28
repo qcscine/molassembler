@@ -7,7 +7,7 @@
  * cost in any particular place.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 /*!
  * The Ackermann-Peter function, whose values increase very rapidly, and where
@@ -28,6 +28,6 @@ constexpr unsigned ackermann(const unsigned& m, const unsigned& n) {
   );
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

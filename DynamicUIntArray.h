@@ -11,7 +11,7 @@
  * numbers 0-9 that has particularly fast comparison operators.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 /*!
  * A dynamic vector-like class for small amounts of the numbers 0-9.
@@ -461,6 +461,6 @@ template<
   return groups;
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

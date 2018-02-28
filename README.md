@@ -1,4 +1,4 @@
-# Constexpr Utilities library
+# Constable: Constexpr Utilities library
 ## Overview
 
 Contains a number of useful constexpr containers and algorithms for compile-time

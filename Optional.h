@@ -8,7 +8,7 @@
  * Includes an optional type implementation.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 /*!
  * A constexpr option type much like std::optional with the limitation that T 
@@ -92,6 +92,6 @@ public:
   }
 };
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

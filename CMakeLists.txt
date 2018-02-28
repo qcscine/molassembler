@@ -1,5 +1,4 @@
 # How to make this into a library?
-# Dynamic / static? It would be shit if this add-on to Delib would supercede it
 
 # oldest tested version of cmake used (too lazy to figure out newest compatible
 # cmake version)
@@ -9,7 +8,7 @@ cmake_minimum_required(VERSION 3.5.1)
 set(WARNING_FLAGS "-Wall -Wpedantic -Wextra")
 
 # declaration
-project(ConstexprMagic)
+project(constable)
 enable_testing()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")

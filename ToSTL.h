@@ -14,7 +14,7 @@
  * defined in this library.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 //! Converts an Array into a std::array
 template<typename T, size_t size>
@@ -54,6 +54,6 @@ std::map<T, U> toSTL(const DynamicMap<T, U, size>& dynamicMap) {
   for(
 }*/
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

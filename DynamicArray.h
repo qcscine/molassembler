@@ -14,7 +14,7 @@
  * that the maximum size must be known at compile time and cannot change.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 template<typename T, size_t nItems>
 class DynamicArray {
@@ -588,6 +588,6 @@ DynamicArray<T, N> merge(
   return merged;
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

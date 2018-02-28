@@ -8,7 +8,7 @@
  * Implements a constexpr container much like std::pair.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 /*! 
  * Heterogeneous pair type.
@@ -84,6 +84,6 @@ struct Pair {
   }
 };
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

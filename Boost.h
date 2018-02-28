@@ -3,7 +3,7 @@
 
 #include "Optional.h"
 
-namespace ConstexprMagic {
+namespace constable {
 
 /*! 
  * To help with creating consistent logical operators for multi-component
@@ -50,6 +50,6 @@ constexpr Optional<bool> componentSmaller(
   else return {};
 }
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

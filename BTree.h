@@ -17,7 +17,7 @@
  * - node constIterators?
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 namespace BTreeProperties {
 
@@ -1073,6 +1073,6 @@ public:
   }
 };
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif

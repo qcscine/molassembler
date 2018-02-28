@@ -13,7 +13,7 @@
  * contexts.
  */
 
-namespace ConstexprMagic {
+namespace constable {
 
 namespace floating {
 
@@ -62,8 +62,9 @@ constexpr std::enable_if_t<
     && a != std::numeric_limits<T>::signaling_NaN()
     && b != std::numeric_limits<T>::signaling_NaN()
   )) {
-    throw "isCloseRelativeOrAsbolute cannot handle infinities or NaNs!";
+    throw "isCloseRelativeOrAbsolute cannot handle infinities or NaNs!";
   }
+
   if(!(relativeTolerance >= 0 && absoluteTolerance >= 0)) {
     throw "isCloseRelativeOrAbsolute: One of either tolerances "
       "needs to be above zero!";
@@ -248,6 +249,6 @@ public:
 
 } // namespace floating
 
-} // namespace ConstexprMagic
+} // namespace constable
 
 #endif
