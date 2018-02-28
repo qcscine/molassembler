@@ -112,7 +112,7 @@ public:
   }
 };
 
-} // eo namespace enumerate_detail
+} // namespace enumerate_detail
 
 /*! Returns an EnerateTemporary for use with range-for expressions that
  * generates a struct with members index and value for every contained element.

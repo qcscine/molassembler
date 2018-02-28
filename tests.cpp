@@ -4,6 +4,13 @@
 #include <boost/test/results_collector.hpp>
 #include <boost/test/unit_test.hpp>
 
+// boost algorithm replacements
+#include <boost/algorithm/cxx11/all_of.hpp>
+#include <boost/range/adaptors.hpp>
+#include <boost/range/combine.hpp>
+#include <boost/range/numeric.hpp>
+#include <boost/range/algorithm/transform.hpp>
+
 #include "BTree.h"
 #include "Containers.h"
 #include "Enumerate.h"
@@ -12,6 +19,11 @@
 #include "Random.h"
 #include "VectorView.h"
 #include "Optionals.h"
+#include "Stringify.h"
+#include "Adaptors.h"
+
+#define INCLUDE_INVOKE_WITH_BOOST_TUPLE
+#include "Invoke.h"
 
 #include <chrono>
 #include <cmath>
@@ -56,41 +68,71 @@ double timeNullaryCallable(
     timings.at(N) = elapsed.count() * 1e9;
   }
 
-  return TemplateMagic::average(timings);
+  return temple::average(timings);
 }
 
 double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
 }
 
+
 BOOST_AUTO_TEST_CASE( sumTest ) {
   std::vector<unsigned> instance {0, 1, 2, 3};
-  auto f = TemplateMagic::sum(instance);
+  auto f = temple::sum(instance);
 
   BOOST_CHECK(f == 6);
 
-  auto mapped = TemplateMagic::map(
+  BOOST_CHECK(
+    boost::accumulate(instance, 0) == 6
+  );
+
+  auto mapped = temple::map(
     instance,
     divByThree
   );
 
   BOOST_CHECK(mapped == std::vector<double>({0, 1.0/3.0, 2.0/3.0, 1}));
 
-  auto pairwiseSum = TemplateMagic::mapSequentialPairs(
+  std::vector<double> bmapped;
+  boost::transform(instance, std::back_inserter(bmapped), divByThree);
+  BOOST_CHECK(mapped == bmapped);
+
+  auto pairwiseSum = temple::mapSequentialPairs(
     instance,
     std::plus<unsigned>()
   );
 
   BOOST_CHECK(pairwiseSum == std::vector<unsigned>({1,3,5}));
 
-  auto pairwiseSmaller = TemplateMagic::accumulate(
-    TemplateMagic::mapSequentialPairs(
+  std::vector<unsigned> bpairwiseSum;
+  boost::transform(
+    instance,
+    boost::adaptors::slice(instance, 1, instance.size() - 1),
+    std::back_inserter(bpairwiseSum),
+    std::plus<unsigned>()
+  );
+
+  auto pairwiseSmaller = temple::accumulate(
+    temple::mapSequentialPairs(
       instance,
       std::less<unsigned>()
     ),
     true,
     std::logical_and<bool>()
   );
+
+  auto bpairwiseSmaller = boost::algorithm::all_of(
+    boost::combine(
+      boost::adaptors::slice(instance, 0, instance.size() - 2),
+      boost::adaptors::slice(instance, 1, instance.size() - 1)
+    ),
+    [&](const auto& twoTuple) -> bool {
+      return temple::invoke(std::less<>(), twoTuple);
+    }
+  );
+
+  static_assert(std::is_same<decltype(bpairwiseSmaller), bool>::value, "Not a bool??");
+  BOOST_CHECK(bpairwiseSmaller);
 
   BOOST_CHECK(pairwiseSmaller);
 
@@ -101,18 +143,29 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
     {4, 5}
   };
 
-  auto mapToSizes = TemplateMagic::map(
+  auto mapToSizes = temple::map(
     vectorOfVectors,
     [](const std::vector<unsigned>& vectorUnsigned) -> unsigned {
       return vectorUnsigned.size();
     }
   );
 
+  std::vector<unsigned> bsizes;
+  boost::transform(
+    vectorOfVectors,
+    std::back_inserter(bsizes),
+    [](const std::vector<unsigned>& vectorUnsigned) -> unsigned {
+      return vectorUnsigned.size();
+    }
+  );
+  BOOST_CHECK(bsizes == mapToSizes);
+
   std::vector<unsigned> unsignedVector {1, 2, 3};
 
+  // TODO this one is really difficult to do in boost I think
   BOOST_CHECK(
-    TemplateMagic::sum(
-      TemplateMagic::mapAllPairs(
+    temple::sum(
+      temple::mapAllPairs(
         unsignedVector,
         [](const unsigned& a, const unsigned& b) -> unsigned {
           return a + b;
@@ -124,8 +177,8 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
   std::vector<double> doubleVector {1.2, 1.5, 1.9};
 
   BOOST_CHECK(
-    TemplateMagic::sum(
-      TemplateMagic::mapAllPairs(
+    temple::sum(
+      temple::mapAllPairs(
         doubleVector,
         [](const double& a, const double& b) -> double {
           return a + b;
@@ -138,14 +191,14 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
 BOOST_AUTO_TEST_CASE( reduceTests) {
   std::vector<unsigned> values {1, 2, 3, 4, 5};
   BOOST_CHECK(
-    TemplateMagic::reduce(
+    temple::reduce(
       values,
       0u,
       std::plus<unsigned>()
     ) == 15u
   );
   BOOST_CHECK(
-    TemplateMagic::reduce(
+    temple::reduce(
       values,
       1u,
       std::multiplies<unsigned>()
@@ -155,34 +208,34 @@ BOOST_AUTO_TEST_CASE( reduceTests) {
 
 BOOST_AUTO_TEST_CASE( minMaxTests ) {
   const std::vector<unsigned> values {1, 4, 6, 8};
-  BOOST_CHECK(TemplateMagic::max(values) == 8u);
-  BOOST_CHECK(TemplateMagic::min(values) == 1u);
+  BOOST_CHECK(temple::max(values) == 8u);
+  BOOST_CHECK(temple::min(values) == 1u);
 }
 
 BOOST_AUTO_TEST_CASE(kahanSummation) {
   for(unsigned nTest = 0; nTest < 100; nTest++) {
     const unsigned N = 100;
     const unsigned magnitudeSpread = 20;
-    const auto randomNumbers = TemplateMagic::random.getN<double>(
+    const auto randomNumbers = temple::random.getN<double>(
       std::pow(10, - static_cast<double>(magnitudeSpread) / 2),
       std::pow(10, static_cast<double>(magnitudeSpread) / 2),
       N
     );
 
-    const double reduceSum = TemplateMagic::reduce(
+    const double reduceSum = temple::reduce(
       randomNumbers,
       0.0,
       std::plus<double>()
     );
 
-    const double kahanSum = TemplateMagic::kahanSum(randomNumbers);
+    const double kahanSum = temple::kahanSum(randomNumbers);
 
     /* Reference sum with long doubles, I know an alternative implementation of
      * standard reduce summation with long intermediates would have done the
      * trick too but I'm lazy and this is just a test
      */
-    const auto addedPrecision = TemplateMagic::cast<long double>(randomNumbers);
-    const double longSum = TemplateMagic::reduce(
+    const auto addedPrecision = temple::cast<long double>(randomNumbers);
+    const double longSum = temple::reduce(
       addedPrecision,
       0.0l,
       std::plus<long double>()
@@ -203,9 +256,9 @@ BOOST_AUTO_TEST_CASE(kahanSummation) {
 BOOST_AUTO_TEST_CASE(numericAverageStdDev) {
   const std::vector<double> values {29, 30, 31, 32, 33};
 
-  BOOST_CHECK(TemplateMagic::average(values) == 31); 
+  BOOST_CHECK(temple::average(values) == 31); 
   BOOST_CHECK(
-    std::fabs(TemplateMagic::stddev(values) - std::sqrt(2)) 
+    std::fabs(temple::stddev(values) - std::sqrt(2)) 
     < 1e-10
   );
 }
@@ -213,7 +266,7 @@ BOOST_AUTO_TEST_CASE(numericAverageStdDev) {
 BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   std::set<int> f {5, -1, 9};
 
-  auto fMapped = TemplateMagic::map(
+  auto fMapped = temple::map(
     f,
     [](const int& x) -> double {
       return x + 1.3;
@@ -226,7 +279,7 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   );
 
   std::vector<float> x {0, 3.4, 9};
-  auto xMapped = TemplateMagic::map(
+  auto xMapped = temple::map(
     x,
     [](const float& x) -> unsigned long {
       return static_cast<unsigned long>(x);
@@ -242,18 +295,33 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
 BOOST_AUTO_TEST_CASE( boolArrayAllOf) {
   std::array<bool, 3> testArray {true, false, true};
 
-  BOOST_CHECK(!TemplateMagic::all_of(testArray));
+  BOOST_CHECK(!temple::all_of(testArray));
 }
 
-/*BOOST_AUTO_TEST_CASE( enumerateTests) {
+BOOST_AUTO_TEST_CASE( enumerateTests) {
   std::vector<unsigned> testVec {5, 2, 3, 4};
 
-  std::cout << "Before enumerate:" << std::endl;
-  for(const auto& enumStruct : enumerate(testVec)) {
-    std::cout << "{ index: " << enumStruct.index << ", value: " 
-      << enumStruct.value << "}" << std::endl;
+  bool pass = true;
+  for(const auto& enumPair : enumerate(testVec)) {
+    if(testVec.at(enumPair.index) != enumPair.value) {
+      pass = false;
+      break;
+    }
   }
-}*/
+
+  BOOST_CHECK(pass);
+
+  auto weirdSum = temple::sum(
+    temple::mapToVector(
+      enumerate(testVec),
+      [](const auto& enumPair) -> unsigned {
+        return enumPair.index + enumPair.value;
+      }
+    )
+  );
+
+  BOOST_CHECK(weirdSum == 5 + 3 + 5 + 7);
+}
 
 BOOST_AUTO_TEST_CASE(memberFetcherTests) {
   std::vector<
@@ -265,7 +333,7 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
     {44, 93}
   };
 
-  auto memberFetcherClass = TemplateMagic::getMember(
+  auto memberFetcherClass = temple::getMember(
     testClass,
     [](const auto& container) -> unsigned {
       return container.size();
@@ -273,22 +341,22 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    TemplateMagic::sum(memberFetcherClass) == 12u,
+    temple::sum(memberFetcherClass) == 12u,
     "Member fetcher does not work as expected, begin()-end() contains {"
-      << TemplateMagic::condenseIterable(memberFetcherClass)
+      << temple::condenseIterable(memberFetcherClass)
       << "} instead of expected {4, 5, 1, 2}"
   );
 
   BOOST_CHECK_MESSAGE(
-    TemplateMagic::min(memberFetcherClass) == 1
-    && TemplateMagic::max(memberFetcherClass) == 5,
+    temple::min(memberFetcherClass) == 1
+    && temple::max(memberFetcherClass) == 5,
     "Usage of min/max does not return expected result"
   );
 
   // Is this approach more efficient than copying member information?
   double copyingTime = timeNullaryCallable(
     [&]() {
-      auto mappedData = TemplateMagic::map(
+      auto mappedData = temple::map(
         testClass,
         [](const auto& subVector) -> unsigned {
           return subVector.size();
@@ -303,7 +371,7 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
 
   double memberFetcherTime = timeNullaryCallable(
     [&]() {
-      auto fetcher = TemplateMagic::getMember(
+      auto fetcher = temple::getMember(
         testClass,
         [](const auto& subVector) -> unsigned {
           return subVector.size();
@@ -324,15 +392,15 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
 
   // Interoperability with VectorView
 
-  auto filteredView = TemplateMagic::filter(
+  auto filteredView = temple::filter(
     testClass,
     [](const auto& subVector) -> bool {
       return subVector.size() < 3;
     }
   );
 
-  auto minSize = TemplateMagic::min(
-    TemplateMagic::getMember(
+  auto minSize = temple::min(
+    temple::getMember(
       filteredView,
       [](const auto& subVector) -> unsigned {
         return subVector.size();
@@ -345,8 +413,8 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
     "Min size of filteredView returns " << minSize << ", not 4"
   );
 
-  auto maxSize = TemplateMagic::max(
-    TemplateMagic::getMember(
+  auto maxSize = temple::max(
+    temple::getMember(
       filteredView,
       [](const auto& subVector) -> unsigned {
         return subVector.size();
@@ -368,22 +436,22 @@ BOOST_AUTO_TEST_CASE(concatenateTests) {
 
   static_assert(
     std::is_same<
-      decltype(TemplateMagic::concatenate(f, x)),
+      decltype(temple::concatenate(f, x)),
       std::vector<unsigned>
     >::value,
     "Concatenate must return a vector of the underlying shared type"
   );
 
   BOOST_CHECK(
-    TemplateMagic::concatenate(f, x)
+    temple::concatenate(f, x)
     == comp
   );
 }
 
 namespace BTreeStaticTests {
 
-TemplateMagic::BTree<unsigned, 3> generateTree() {
-  TemplateMagic::BTree<unsigned, 3> tree;
+temple::BTree<unsigned, 3> generateTree() {
+  temple::BTree<unsigned, 3> tree;
 
   tree.insert(9);
   tree.insert(3);
@@ -416,17 +484,17 @@ static_assert(
    * -> h = log_2t [N * (2t - 1) + 1] - 1
    *
    */
-  TemplateMagic::BTreeProperties::minHeight(5, 3) == 0
-  && TemplateMagic::BTreeProperties::minHeight(35, 3) == 1
-  && TemplateMagic::BTreeProperties::minHeight(215, 3) == 2,
+  temple::BTreeProperties::minHeight(5, 3) == 0
+  && temple::BTreeProperties::minHeight(35, 3) == 1
+  && temple::BTreeProperties::minHeight(215, 3) == 2,
   "minHeight function is wrong"
 );
 
 static_assert(
-  TemplateMagic::BTreeProperties::maxNodesInTree(0, 3) == 1
-  && TemplateMagic::BTreeProperties::maxNodesInTree(1, 3) == 7
-  && TemplateMagic::BTreeProperties::maxNodesInTree(2, 3) == 43
-  && TemplateMagic::BTreeProperties::maxNodesInTree(3, 3) == 259,
+  temple::BTreeProperties::maxNodesInTree(0, 3) == 1
+  && temple::BTreeProperties::maxNodesInTree(1, 3) == 7
+  && temple::BTreeProperties::maxNodesInTree(2, 3) == 43
+  && temple::BTreeProperties::maxNodesInTree(3, 3) == 259,
   "maxNodesInTree is wrong"
 );
 
@@ -437,7 +505,7 @@ unsigned popRandom(std::set<unsigned>& values) {
 
   std::advance(
     it,
-    TemplateMagic::random.getSingle<unsigned>(0, values.size() - 1)
+    temple::random.getSingle<unsigned>(0, values.size() - 1)
   );
 
   auto value = *it;
@@ -463,7 +531,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
   std::set<unsigned> notInTree {values.begin(), values.end()};
   std::set<unsigned> inTree;
 
-  TemplateMagic::BTree<unsigned, 3> tree;
+  temple::BTree<unsigned, 3> tree;
 
   std::string lastTreeGraph;
 
@@ -478,7 +546,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     BOOST_REQUIRE_MESSAGE(
       lastTestPassed(),
       "Element insertion failed. Operation sequence: "
-        << TemplateMagic::condenseIterable(decisions)
+        << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
@@ -496,7 +564,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     BOOST_REQUIRE_MESSAGE(
       lastTestPassed(),
       "Tree element removal failed. Operation sequence: "
-        << TemplateMagic::condenseIterable(decisions)
+        << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
@@ -511,13 +579,13 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     BOOST_REQUIRE_MESSAGE(
       lastTestPassed(),
       "Tree validation failed. Operation sequence: " 
-        << TemplateMagic::condenseIterable(decisions)
+        << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
 
-    auto notInsertedNotContained = TemplateMagic::mapToVector(
+    auto notInsertedNotContained = temple::mapToVector(
       notInTree,
       [&](const auto& notInTreeValue) -> bool {
         return !tree.contains(notInTreeValue);
@@ -526,12 +594,12 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
 
     // Check that all elements are truly contained or not
     BOOST_REQUIRE_MESSAGE(
-      TemplateMagic::all_of(notInsertedNotContained),
+      temple::all_of(notInsertedNotContained),
       "Not all elements recorded as not in the tree are recognized as such!\n" 
         << "Found in the tree, but should not be present: "
-        << TemplateMagic::condenseIterable(
-          TemplateMagic::moveIf(
-            TemplateMagic::zipMap(
+        << temple::condenseIterable(
+          temple::moveIf(
+            temple::zipMap(
               notInsertedNotContained,
               notInTree,
               [](const bool& passed, const unsigned& value) -> std::string {
@@ -547,13 +615,13 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
             }
           )
         ) << "\nSequence of operations: " 
-        << TemplateMagic::condenseIterable(decisions)
+        << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
 
-    auto insertedContained = TemplateMagic::mapToVector(
+    auto insertedContained = temple::mapToVector(
       inTree,
       [&](const auto& inTreeValue) -> bool {
         return tree.contains(inTreeValue);
@@ -561,12 +629,12 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     );
 
     BOOST_REQUIRE_MESSAGE(
-      TemplateMagic::all_of(insertedContained),
+      temple::all_of(insertedContained),
       "Not all elements recorded as contained in the tree are recognized as such!\n" 
         << "Not found in the tree: "
-        << TemplateMagic::condenseIterable(
-          TemplateMagic::moveIf(
-            TemplateMagic::zipMap(
+        << temple::condenseIterable(
+          temple::moveIf(
+            temple::zipMap(
               insertedContained,
               inTree,
               [](const bool& passed, const unsigned& value) -> std::string {
@@ -582,7 +650,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
             }
           )
         ) << "\nSequence of operations: " 
-        << TemplateMagic::condenseIterable(decisions)
+        << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
@@ -597,7 +665,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       lastTreeGraph = tree.dumpGraphviz();
 
       // Decide whether to insert or remove a random item
-      auto decisionFloat = TemplateMagic::random.getSingle<double>(0.0, 1.0);
+      auto decisionFloat = temple::random.getSingle<double>(0.0, 1.0);
       if(decisionFloat >= static_cast<double>(inTree.size()) / nKeys) {
         addElement(lastTreeGraph);
       } else {
@@ -607,7 +675,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       fullValidation(lastTreeGraph);
     }
 
-    auto matchingThroughIteration = TemplateMagic::zipMap(
+    auto matchingThroughIteration = temple::zipMap(
       tree,
       inTree,
       [&](const unsigned& treeValue, const unsigned& testValue) -> bool {
@@ -621,7 +689,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     );
 
     BOOST_REQUIRE_MESSAGE(
-      TemplateMagic::all_of(matchingThroughIteration),
+      temple::all_of(matchingThroughIteration),
       "BTree through-iteration does not yield the same elements as expected!\n"
         << tree.dumpGraphviz()
     );
@@ -647,7 +715,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
 BOOST_AUTO_TEST_CASE(setRemovalDefect) {
   /* Sets and maps cannot use std::remove_if! Not a defect. */
 
-  auto testSet = TemplateMagic::moveIf(
+  auto testSet = temple::moveIf(
     std::set<unsigned> {5, 2, 9, 1, 3, 4, 8},
     [](const auto& value) -> bool {
       return value % 2 != 0;
@@ -667,7 +735,7 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
     {9, 44, 33, 12}
   };
 
-  auto smallestVector = TemplateMagic::select(
+  auto smallestVector = temple::select(
     ragged2D,
     std::less<unsigned>(),
     [](const auto& group) -> unsigned {
@@ -677,7 +745,7 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
 
   BOOST_CHECK((*smallestVector == std::vector<unsigned> {30, 4}));
 
-  auto largestVector = TemplateMagic::select(
+  auto largestVector = temple::select(
     ragged2D,
     std::greater<unsigned>(),
     [](const auto& group) -> unsigned {
@@ -690,7 +758,7 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
 }
 
 BOOST_AUTO_TEST_CASE(randomTests) {
-  BOOST_CHECK(TemplateMagic::random.getSingle<unsigned>(0, 0) == 0);
+  BOOST_CHECK(temple::random.getSingle<unsigned>(0, 0) == 0);
 }
 
 boost::optional<double> safe_root(double x) {
@@ -766,7 +834,7 @@ boost::optional<int> safe_int_binary(const int& x, const int& y) {
 }
 
 BOOST_AUTO_TEST_CASE(optionalEnhancementTests) {
-  using namespace TemplateMagic;
+  using namespace temple;
 
   const Noisy foo;
 
@@ -818,11 +886,139 @@ BOOST_AUTO_TEST_CASE(optionalEnhancementTests) {
 
   std::cout << fourth << std::endl;
 
-  static_assert(
+  /*static_assert(
     std::is_same<
       decltype(fourth),
       detail::Optional<double>
     >::value,
     "No"
+  );*/
+}
+
+BOOST_AUTO_TEST_CASE(stringifyTests) {
+  std::vector<
+    std::map<
+      unsigned,
+      std::pair<
+        int,
+        double
+      >
+    >
+  > complicatedStructure {
+    {
+      {
+        4,
+        {-2, 4.5}
+      },
+      {
+        9,
+        {-10, 0.1}
+      }
+    },
+    {
+      {
+        100,
+        {5, 1.2}
+      }
+    }
+  };
+
+  std::cout << temple::stringify(complicatedStructure) << std::endl;
+}
+
+template<class Container, class UnaryPredicate>
+bool trial_all_of(const Container& container, UnaryPredicate&& predicate) {
+  for(const auto& element : container) {
+    if(!temple::invoke(predicate, element)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+unsigned weirdIntDiv(unsigned a, unsigned b) {
+  return a / (b + 1);
+}
+
+unsigned plusFive(unsigned a) {
+  return a + 5;
+}
+
+BOOST_AUTO_TEST_CASE(adaptors) {
+  using namespace temple;
+
+  std::vector<unsigned> a {4, 1, 3, 5};
+  std::vector<unsigned> b {5, 6, 7, 8};
+
+  auto loudCompare = [](unsigned a, unsigned b) -> bool {
+    std::cout << a << " < " << b << ": " << (a < b) << "\n";
+    return (a < b);
+  };
+
+  bool pairwiseSmaller = all_of(
+    zip(a, b),
+    make_tuple_callable(loudCompare)
+  );
+
+  bool bSortedAsc = all_of(
+    sequentialPairs(b),
+    make_tuple_callable(std::less<>())
+  );
+
+  BOOST_CHECK(pairwiseSmaller && bSortedAsc);
+
+  BOOST_CHECK(
+    trial_all_of(
+      zip(a, b),
+      std::less<>()
+    )
+  );
+
+  BOOST_CHECK(
+    sum(
+      transform(
+        allPairs(a),
+        std::plus<>()
+      )
+    ) == 5u + 7u + 9u + 4u + 6u + 8u
+  );
+
+  BOOST_CHECK(
+    sum(
+      transform(
+        allPairs(a),
+        weirdIntDiv
+      )
+    ) == 3u
+  );
+
+  BOOST_CHECK(
+    sum(
+      transform(a, plusFive)
+    ) == 33u
+  );
+
+  BOOST_CHECK(
+    trial_all_of(
+      sequentialPairs(b),
+      std::less<>()
+    )
+  );
+
+  BOOST_CHECK(
+    trial_all_of(
+      a,
+      [](unsigned a) {
+        return a < 6;
+      }
+    )
+  );
+
+  BOOST_CHECK(
+    trial_all_of(
+      a,
+      std::bind(std::less<unsigned>(), std::placeholders::_1, 6u)
+    )
   );
 }

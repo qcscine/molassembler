@@ -14,7 +14,7 @@
  * - emplace_back
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 /*!
  * Adds an element to a container by calling the container's insert or push_back
@@ -116,6 +116,6 @@ void addToContainer(
   );
 }
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

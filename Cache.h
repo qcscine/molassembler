@@ -15,7 +15,7 @@
  * Contains the Cache class implementation.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 /*! A minimal cache-like class.
  */
@@ -223,6 +223,6 @@ public:
   }
 };
 
-} //  namespace TemplateMagic
+} //  namespace temple
 
 #endif

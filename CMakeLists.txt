@@ -11,7 +11,7 @@ message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
 
 # declaration
-project(TemplateMagic)
+project(temple)
 enable_testing()
 
 # dependencies
@@ -36,12 +36,13 @@ endif()
 
 # testing binary
 add_executable(magicTests tests.cpp)
-target_compile_options(magicTests PUBLIC -Og -g)
+target_compile_options(magicTests PUBLIC -Og -g -fsanitize=address)
 set_target_properties(
   magicTests PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
+  LINK_FLAGS "-fsanitize=address"
 )
 if(CLANG_TIDY_EXE)
   set_target_properties(

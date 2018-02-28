@@ -20,7 +20,7 @@
  * - Minimum and maximum element
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 /*! 
  * Composable sum function. Returns the type the container contains, assuming
@@ -192,6 +192,6 @@ auto max(const ContainerType& container) {
   return *largestIter;
 }
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

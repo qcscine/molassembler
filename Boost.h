@@ -5,7 +5,7 @@
 
 //! @file 
 
-namespace TemplateMagic {
+namespace temple {
 
 /*! 
  * To help with creating consistent logical operators for multi-component
@@ -59,6 +59,6 @@ boost::optional<bool> componentSmaller(
   else return boost::none;
 }
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

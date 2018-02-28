@@ -8,7 +8,7 @@
  * Provides a few basic function and container traits.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 namespace traits {
 
@@ -41,8 +41,7 @@ namespace detail {
 template<typename Expr>
 constexpr bool isCallableValue = detail::is_callable<Expr>::value;
 
-/* Get the base type a container holds via the begin iterator
- */
+// Get the base type a container holds via the begin iterator
 namespace detail {
   template<class ContainerType> 
   struct getValueTypeImpl {
@@ -80,6 +79,6 @@ struct FunctionPointerReturnType<ReturnType (*)(Args...)> {
 
 } // namespace traits
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

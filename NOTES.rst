@@ -1,5 +1,8 @@
 TODO
 ----
+- Finish Functional.h reimplementation of Containers.h, pursuant to tests.cpp
+- Find improved asin numerical calculation to bump accuracy
+- Add more adaptors, move Enumerate
 
 NOTES
 -----

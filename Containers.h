@@ -2,7 +2,7 @@
 #define INCLUDE_TEMPLATE_MAGIC_CONTAINERS_H
 
 #include "AddToContainer.h"
-#include "constexpr_magic/TupleType.h"
+#include "constable/TupleType.h"
 
 #include <algorithm>
 #include <numeric>
@@ -18,7 +18,7 @@
  * and custom containers that fulfill the function's explicit requirements.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 /* Header */
 //! Composability improvement - returns the call to the size member
@@ -289,7 +289,7 @@ template<typename... Containers> auto concatenate(
   using T = std::tuple_element_t<0, ValueTypes>;
 
   static_assert(
-    ConstexprMagic::TupleType::countType<
+    constable::TupleType::countType<
       ValueTypes,
       T
     >() == std::tuple_size<ValueTypes>::value,
@@ -318,7 +318,8 @@ template<
 template<typename Container>
 Container reverse(const Container& container);
 
-/*! Condenses an iterable container into a comma-separated string of string 
+/*!
+ * Condenses an iterable container into a comma-separated string of string 
  * representations of its contents. Requires container iterators to satisfy
  * ForwardIterators and the contained type to be a valid template
  * argument for std::to_string, which in essence means this works only for (a
@@ -395,9 +396,17 @@ Container moveIf(
 );
 
 /* Reduction shorthands */
+//! Tests if all elements of a container evaluate true against a predicate
+template<class Container, class UnaryPredicate>
+bool all_of(const Container& container, UnaryPredicate&& predicate);
+
 //! Tests if all elements of a container are true
 template<class Container>
 bool all_of(const Container& container);
+
+//! Tests if any elements of a container evaluate true against a predicate
+template<class Container, class UnaryPredicate>
+bool any_of(const Container& container, UnaryPredicate&& predicate);
 
 //! Tests if any elements of a container are true
 template<class Container>
@@ -519,7 +528,7 @@ template<
   Container<U, Dependents<U>...> returnContainer;
 
   for(const auto& element : container) {
-    TemplateMagic::addToContainer(returnContainer, function(element));
+    temple::addToContainer(returnContainer, function(element));
   }
 
   return returnContainer;
@@ -1103,6 +1112,17 @@ Container moveIf(
   return returnContainer;
 }
 
+template<class Container, class UnaryPredicate>
+bool all_of(const Container& container, UnaryPredicate&& predicate) {
+  for(const auto& element : container) {
+    if(!predicate(element)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 template<class Container>
 bool all_of(const Container& container) {
   return accumulate(
@@ -1110,6 +1130,17 @@ bool all_of(const Container& container) {
     true,
     std::logical_and<bool>()
   );
+}
+
+template<class Container, class UnaryPredicate>
+bool any_of(const Container& container, UnaryPredicate&& predicate) {
+  for(const auto& element : container) {
+    if(predicate(element)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 template<class Container>
@@ -1171,6 +1202,6 @@ template<
   }
 }
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

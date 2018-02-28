@@ -1,9 +1,9 @@
 #ifndef INCLUDE_TEMPLATE_MAGIC_BTREE_H
 #define INCLUDE_TEMPLATE_MAGIC_BTREE_H
 
-#include "constexpr_magic/DynamicArray.h"
-#include "constexpr_magic/Math.h"
-#include "constexpr_magic/Optional.h"
+#include "constable/DynamicArray.h"
+#include "constable/Math.h"
+#include "constable/Optional.h"
 
 #include <sstream>
 #include <map>
@@ -16,7 +16,7 @@
  * Implements a BTree which doesn't store key-value pairs, only keys.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 namespace BTreeProperties {
 
@@ -26,7 +26,7 @@ namespace BTreeProperties {
  */
 constexpr size_t maxNodesInTree(const size_t& height, const size_t& minDegree) {
   return static_cast<double>(
-    ConstexprMagic::Math::pow(2 * minDegree, static_cast<unsigned>(height + 1)) - 1
+    constable::Math::pow(2 * minDegree, static_cast<unsigned>(height + 1)) - 1
   ) / (
     2 * minDegree - 1
   );
@@ -37,8 +37,8 @@ constexpr size_t maxNodesInTree(const size_t& height, const size_t& minDegree) {
  * be able to hold a certain number of keys
  */
 constexpr size_t minHeight(const size_t& numKeys, const size_t& minDegree) {
-  return ConstexprMagic::Math::ceil(
-    ConstexprMagic::Math::log(
+  return constable::Math::ceil(
+    constable::Math::log(
       static_cast<double>(numKeys + 1),
       static_cast<double>(2 * minDegree)
     ) - 1
@@ -51,8 +51,8 @@ constexpr size_t minHeight(const size_t& numKeys, const size_t& minDegree) {
  * height may be lower.
  */
 constexpr size_t maxHeightBound(const size_t& numKeys, const size_t& minDegree) {
-  return ConstexprMagic::Math::floor(
-    ConstexprMagic::Math::log(
+  return constable::Math::floor(
+    constable::Math::log(
       static_cast<double>(numKeys + 1) / 2,
       static_cast<double>(minDegree)
     )
@@ -92,8 +92,8 @@ private:
     static constexpr unsigned minKeys = minDegree - 1;
     static constexpr unsigned maxKeys = 2 * minDegree - 1;
 
-    ConstexprMagic::DynamicArray<KeyType, maxKeys> keys;
-    ConstexprMagic::DynamicArray<Node*, maxKeys + 1> children;
+    constable::DynamicArray<KeyType, maxKeys> keys;
+    constable::DynamicArray<Node*, maxKeys + 1> children;
 
     Node() {}
 
@@ -130,7 +130,7 @@ private:
 
   //! Recursive search for an element in a subtree rooted at node
   Node* _search(Node* node, const KeyType& key) const {
-    auto keyLB = ConstexprMagic::lowerBound<KeyType, LessThanComparator>(
+    auto keyLB = constable::lowerBound<KeyType, LessThanComparator>(
       node->keys.begin(),
       node->keys.end(),
       key,
@@ -193,7 +193,7 @@ private:
 
   void _insertNonFull(Node* node, const KeyType& key) {
     if(node->isLeaf()) {
-      auto keyLB = ConstexprMagic::lowerBound<KeyType, LessThanComparator>(
+      auto keyLB = constable::lowerBound<KeyType, LessThanComparator>(
         node->keys.begin(),
         node->keys.end(),
         key,
@@ -207,7 +207,7 @@ private:
       node->keys.insertAt(keyLB, key);
     } else {
       // Where to go?
-      auto keyLB = ConstexprMagic::lowerBound<KeyType, LessThanComparator>(
+      auto keyLB = constable::lowerBound<KeyType, LessThanComparator>(
         node->keys.begin(),
         node->keys.end(),
         key,
@@ -257,7 +257,7 @@ private:
 
   //! Recursively deletes a key from a sub-tree rooted at node
   void _delete(Node* node, const KeyType& key) {
-    auto keyLB = ConstexprMagic::lowerBound<KeyType, LessThanComparator>(
+    auto keyLB = constable::lowerBound<KeyType, LessThanComparator>(
       node->keys.begin(),
       node->keys.end(),
       key,
@@ -533,14 +533,14 @@ public:
     return foundPtr != nullptr;
   }
 
-  ConstexprMagic::Optional<KeyType> getOption(const KeyType& key) const {
+  constable::Optional<KeyType> getOption(const KeyType& key) const {
     Node* foundPtr = _search(_rootPtr, key);
 
     if(foundPtr == nullptr) {
       return {};
     }
 
-    auto keyLB = ConstexprMagic::lowerBound<KeyType, LessThanComparator>(
+    auto keyLB = constable::lowerBound<KeyType, LessThanComparator>(
       foundPtr->keys.begin(),
       foundPtr->keys.end(),
       key,
@@ -992,6 +992,6 @@ public:
   }
 };
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

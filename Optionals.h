@@ -10,7 +10,7 @@
  * repetitive patterns when dealing with lots of optionals.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 namespace detail {
 
@@ -184,13 +184,13 @@ CallIfNone<PartialFunction, Parameters...> callIfNone (
   };
 }
 
-} // namespace TemplateMagic
+} // namespace temple
 
 /* Global scope operators */
 template<typename T, typename PartialFunction, typename ... Parameters>
 auto operator | (
-  const TemplateMagic::detail::Optional<T>& valueOptional,
-  const TemplateMagic::CallIfSome<PartialFunction, Parameters...>& other
+  const temple::detail::Optional<T>& valueOptional,
+  const temple::CallIfSome<PartialFunction, Parameters...>& other
 ) {
   using ReturnType = decltype(other.value(valueOptional.value()));
 
@@ -203,8 +203,8 @@ auto operator | (
 
 template<typename T, typename PartialFunction, typename ... Parameters>
 auto operator | (
-  const TemplateMagic::detail::Optional<T>& valueOptional,
-  const TemplateMagic::CallIfNone<PartialFunction, Parameters...>& other
+  const temple::detail::Optional<T>& valueOptional,
+  const temple::CallIfNone<PartialFunction, Parameters...>& other
 ) {
   using ReturnType = decltype(other.value());
   using OptionalValueType = typename ReturnType::value_type;

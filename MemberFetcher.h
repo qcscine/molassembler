@@ -13,7 +13,7 @@
  * container class element members since this variant avoids copies.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 template<class Container, class FetcherFunction>
 class MemberFetcher {
@@ -123,6 +123,6 @@ MemberFetcher<Container, FetcherFunction> getMember(
   );
 }
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

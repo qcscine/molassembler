@@ -11,7 +11,7 @@
  * member functions exist in SFINAE enable_ifs.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 // We need four custom traits that check for each of the members we want.
 namespace traits {
@@ -124,6 +124,6 @@ struct hasSize : decltype(detail::testHasSize<Container>(0)){};
 
 } // namespace traits
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

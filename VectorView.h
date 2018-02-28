@@ -12,7 +12,7 @@
  * resulting data set in a range-for compatible fashion.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 template<typename ValueType>
 class VectorView {
@@ -157,7 +157,7 @@ public:
    */
   VectorView& subset(const std::vector<unsigned>& indices) {
     // Ensure the passed vector contains no out-of-bounds indices
-    assert(TemplateMagic::max(indices) < _baseVectorRef.size());
+    assert(temple::max(indices) < _baseVectorRef.size());
 
     _indexSequence = indices;
     return *this;
@@ -255,6 +255,6 @@ VectorView<
   return view;
 }
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

@@ -10,7 +10,7 @@
  * integers or floating-point numbers.
  */
 
-namespace TemplateMagic {
+namespace temple {
 
 class Generator {
 private:
@@ -45,6 +45,7 @@ public:
     const T& upper,
     const unsigned N
   ) const {
+    assert(lower <= upper);
     std::vector<T> returnNumbers;
     std::uniform_real_distribution<T> uniformDistribution(lower, upper);
 
@@ -64,6 +65,7 @@ public:
     const T& upper,
     const unsigned N
   ) const {
+    assert(lower <= upper);
     std::vector<T> returnNumbers;
     std::uniform_int_distribution<T> uniformDistribution(lower, upper);
 
@@ -82,6 +84,7 @@ public:
     const T& lower,
     const T& upper
   ) const {
+    assert(lower <= upper);
     std::uniform_real_distribution<T> uniformDistribution(lower, upper);
     return uniformDistribution(randomEngine);
   }
@@ -94,6 +97,7 @@ public:
     const T& lower,
     const T& upper
   ) const {
+    assert(lower <= upper);
     std::uniform_int_distribution<T> uniformDistribution(lower, upper);
     return uniformDistribution(randomEngine);
   }
@@ -101,6 +105,6 @@ public:
 
 static Generator random;
 
-} // namespace TemplateMagic
+} // namespace temple
 
 #endif

@@ -59,7 +59,7 @@ All code is header-only due to the heavily templated nature and requires C++14.
 Dependencies:
 
 - boost: optional, any, test
-- ConstexprMagic: BTree properties, Container traits
+- constable: BTree properties, Container traits
 
 
 ## Compiling and running tests
