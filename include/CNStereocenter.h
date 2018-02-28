@@ -4,6 +4,7 @@
 #include "geometry_assignment/GenerateUniques.h"
 #include "symmetry_information/Symmetries.h"
 #include "symmetry_information/DynamicProperties.h"
+#include "DistanceGeometry/ValueBounds.h"
 
 #include "Stereocenter.h"
 
@@ -24,12 +25,37 @@ namespace MoleculeManip {
 
 namespace Stereocenters {
 
+namespace adhesive {
+
+RankingInformation::RankedType ligandRanking(
+  const RankingInformation::RankedType& sortedSubstituents,
+  const RankingInformation::RankedType& ligands
+);
+
+std::vector<char> canonicalCharacters(
+  const RankingInformation::RankedType& rankedLigands
+);
+
+UniqueAssignments::Assignment::LinksSetType canonicalLinks(
+  const RankingInformation::RankedType& ligands,
+  const RankingInformation::RankedType& rankedLigands,
+  const RankingInformation::LinksType& rankingLinks
+);
+
+} // namespace adhesive
+
 namespace glue {
 
+/*! Stably re-sort ranked substituents in decreasing set size
+ *
+ * Necessary to avoid treating e.g. AAB and ABB separately, although the
+ * resulting assignments are identical.
+ */
 RankingInformation::RankedType canonicalize(
   RankingInformation::RankedType sortedSubstituents
 );
 
+//! Transforms canonicalized substituents to character space
 std::vector<char> makeCanonicalCharacters(
   const RankingInformation::RankedType canonicalizedSubstituents
 );
@@ -77,7 +103,7 @@ private:
   RankingInformation _ranking;
 
   //! Central atom of the Stereocenter
-  AtomIndexType _centerAtom; 
+  AtomIndexType _centerAtom;
 
   //! The symmetry the stereocenter represents
   Symmetry::Name _symmetry;
@@ -112,6 +138,12 @@ public:
   );
 
 /* Modification */
+  /*!
+   * Handles the addition of a new substituent to the stereocenter. If the
+   * stereocenter contains chiral state, it is attempted to transfer the state
+   * into the new assignment space according to the supplied chiral state
+   * preservation options
+   */
   void addSubstituent(
     const AtomIndexType& newSubstituentIndex,
     const RankingInformation& newRanking,
@@ -135,20 +167,32 @@ public:
   );
 
   /*!
-   * In case a graph modification changes the ranking of this stereocenter's 
+   * In case a graph modification changes the ranking of this stereocenter's
    * substituents, it must be redetermined whether the new configuration is a
-   * stereocenter and if so, which one.
+   * stereocenter and if so, which assignment corresponds to the previous one.
    */
   void propagateGraphChange(const RankingInformation& newRanking);
 
+  /*!
+   * Prepares for the removal of an atom on the graph level, which involves
+   * the generation of new atom indices.
+   */
   void propagateVertexRemoval(const AtomIndexType& removedIndex) final;
 
+  /*!
+   * Handles the removal of a substituent from the stereocenter. If the
+   * stereocenter carries chiral information, a new assignment can be chosen
+   * according to the supplide chiral state preservation option.
+   */
   void removeSubstituent(
     const AtomIndexType& which,
     const RankingInformation& newRanking,
     const Symmetry::Name& newSymmetry,
     const ChiralStatePreservation& preservationOption
   );
+
+  //! If the central symmetry group is changed, we must adapt
+  void setSymmetry(const Symmetry::Name& symmetryName);
 
 /* Information */
   //! Returns the angle between substituent atoms in the idealized symmetry
@@ -157,6 +201,14 @@ public:
     const AtomIndexType& j,
     const AtomIndexType& k
   ) const final;
+
+#if false
+  DistanceGeometry::ValueBounds angles(
+    const AtomIndexType& i,
+    const AtomIndexType& j,
+    const AtomIndexType& k
+  ) const;
+#endif
 
   /*!
    * Returns the (public) information of whether the stereocenter is assigned
@@ -179,12 +231,10 @@ public:
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
 
-  const AtomIndexType& getCentralAtomIndex() const;
-
   //! Returns the underlying symmetry
   Symmetry::Name getSymmetry() const;
 
-  //! Returns a single-element set containing the central atom
+  //! Returns a single-element vector containing the central atom
   std::vector<AtomIndexType> involvedAtoms() const final;
 
   /*!
@@ -194,9 +244,6 @@ public:
    * arrangement of substituents.
    */
   unsigned numAssignments() const final;
-
-  //! If the central symmetry group is changed, we must adapt
-  void setSymmetry(const Symmetry::Name& symmetryName);
 
   /*!
    * Returns Stereocenters::Type::CNStereocenter for resolution of sub-types

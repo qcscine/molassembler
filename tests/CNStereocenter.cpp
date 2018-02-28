@@ -6,6 +6,7 @@
 
 #include "CNStereocenter.h"
 #include "Log.h"
+#include "template_magic/Stringify.h"
 
 std::string makeString(
   const std::vector<char>& charVec
@@ -186,4 +187,92 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
     trialStereocenter.assigned() == 0u,
     "Addition and removal consistency check fails: Initial assignment is not recovered!"
   );
+}
+
+BOOST_AUTO_TEST_CASE(adhesiveTests) {
+  using namespace MoleculeManip::Stereocenters::adhesive;
+  using namespace MoleculeManip;
+  using NestedVector = std::vector<
+    std::vector<AtomIndexType>
+  >;
+  using PairsType = std::set<
+    std::pair<AtomIndexType, AtomIndexType>
+  >;
+  using AssignmentPairsType = std::set<
+    std::pair<unsigned, unsigned>
+  >;
+
+  auto symmetricHapticPincerRanking = NestedVector {
+    {1, 6},
+    {2, 5},
+    {3, 4}
+  };
+
+  auto symmetricHapticPincerLigands = NestedVector {
+    {1, 2},
+    {3, 4},
+    {5, 6}
+  };
+
+  auto symmetricHapticPincerLinks = PairsType {
+    {2, 3},
+    {4, 5}
+  };
+
+  auto symmetricHapticPincerRankedLigands = ligandRanking(
+    symmetricHapticPincerRanking,
+    symmetricHapticPincerLigands
+  );
+
+  BOOST_CHECK((symmetricHapticPincerRankedLigands == NestedVector {{0, 2}, {1}}));
+  BOOST_CHECK((
+    canonicalCharacters(symmetricHapticPincerRankedLigands) 
+    == std::vector<char> {'A', 'A', 'B'}
+    ));
+  BOOST_CHECK((
+    canonicalLinks(
+      symmetricHapticPincerLigands,
+      symmetricHapticPincerRankedLigands,
+      symmetricHapticPincerLinks
+    ) == AssignmentPairsType {
+      {0, 2},
+      {1, 2}
+    }
+  ));
+
+  auto asymmetricHapticPincerRanking = NestedVector {
+    {1}, {6}, {2}, {5}, {3}, {4}
+  };
+
+  auto asymmetricHapticPincerLigands = NestedVector {
+    {1, 2},
+    {3, 4},
+    {5, 6}
+  };
+
+  auto asymmetricHapticPincerLinks = PairsType {
+    {2, 3},
+    {4, 5}
+  };
+
+  auto asymmetricHapticPincerRankedLigands = ligandRanking(
+    asymmetricHapticPincerRanking,
+    asymmetricHapticPincerLigands
+  );
+
+  BOOST_CHECK((asymmetricHapticPincerRankedLigands == NestedVector {{0}, {2}, {1}}));
+  BOOST_CHECK((
+    canonicalCharacters(asymmetricHapticPincerRankedLigands) 
+    == std::vector<char> {'A', 'B', 'C'}
+    ));
+  BOOST_CHECK((
+    canonicalLinks(
+      asymmetricHapticPincerLigands,
+      asymmetricHapticPincerRankedLigands,
+      asymmetricHapticPincerLinks
+    ) == AssignmentPairsType {
+      {0, 2},
+      {1, 2}
+    }
+  ));
 }

@@ -17,10 +17,6 @@
  * conformational isomery on the graph level.
  */
 
-/* TODO
- * - documentation
- */
-
 namespace MoleculeManip {
 
 // Predeclaration

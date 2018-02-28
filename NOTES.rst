@@ -37,6 +37,13 @@ Remaining DG deficiencies
            
 TODO
 ----
+- Idea to remove obviously unfeasible trans-spanning ligand assignments:
+  Replace A - X - B plus the intrinsic stereocenter angle with the direct edge
+  between A and B. Since A and B are bridged through another sequence of atoms,
+  check if a cyclic polygon is constructible with the direct edge and the
+  remaining bond distances. If not, remove that assignment.
+- Longterm impossible to do a full BFS per nonterminal atom to determine links.
+  Need to pre-provide data from cycle decomposition instead
 - Fix all the failing tests
 - Stereocenters that merely mark non-standard geometries and do not provide any
   assignments are probably not included in ranking at all, but they should be!

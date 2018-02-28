@@ -177,7 +177,7 @@ void Molecule::_pickyFitStereocenter(
   const Symmetry::Name& expectedSymmetry,
   const Delib::PositionCollection& positions
 ) const {
-  auto& centralAtom = stereocenter.getCentralAtomIndex();
+  AtomIndexType centralAtom = stereocenter.involvedAtoms().front();
 
   /* Seesaw and tetrahedral are surprisingly close in terms of angles, and
    * sometimes just slightly distorted tetrahedral centers can be recognized

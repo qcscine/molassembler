@@ -14,13 +14,145 @@
 
 #include <iomanip>
 
-/* TODO
- * - Looks like handling of linkedPairs on graph changes is incomplete / incorrect
- */
-
 namespace MoleculeManip {
 
 namespace Stereocenters {
+
+namespace adhesive {
+
+RankingInformation::RankedType ligandRanking(
+  const RankingInformation::RankedType& sortedSubstituents,
+  const RankingInformation::RankedType& ligands
+) {
+  auto ligandCoefficients = TemplateMagic::map(
+    ligands,
+    [&sortedSubstituents](const auto& ligandSet) -> unsigned {
+      return TemplateMagic::sum(
+        TemplateMagic::map(
+          ligandSet,
+          [&sortedSubstituents](const auto& ligandIndex) -> unsigned {
+            return std::find_if(
+              sortedSubstituents.begin(),
+              sortedSubstituents.end(),
+              [&ligandIndex](const auto& equalPrioritySet) -> bool {
+                return std::find(
+                  equalPrioritySet.begin(),
+                  equalPrioritySet.end(),
+                  ligandIndex
+                ) != equalPrioritySet.end();
+              }
+            ) - sortedSubstituents.begin();
+          }
+        )
+      );
+    }
+  );
+
+  std::vector<unsigned> sortPermutation (ligands.size());
+  std::iota(sortPermutation.begin(), sortPermutation.end(), 0);
+  std::sort(
+    sortPermutation.begin(),
+    sortPermutation.end(),
+    [&ligandCoefficients](const auto& a, const auto& b) -> bool {
+      return ligandCoefficients.at(a) < ligandCoefficients.at(b);
+    }
+  );
+
+  /* Since the sort does not group ligands of equal coefficients, we have to do
+   * that in a separate step:
+   */
+
+  RankingInformation::RankedType rankedLigands;
+  for(const auto& ligandPosition : sortPermutation) {
+    if(rankedLigands.size() == 0) {
+      rankedLigands.emplace_back();
+      rankedLigands.back().push_back(ligandPosition);
+    } else {
+      if(
+        ligandCoefficients.at(ligandPosition)
+        == ligandCoefficients.at(rankedLigands.back().back())
+      ) {
+        rankedLigands.back().push_back(ligandPosition);
+      } else {
+        rankedLigands.emplace_back();
+        rankedLigands.back().push_back(ligandPosition);
+      }
+    }
+  }
+
+  return rankedLigands;
+}
+
+/* Can use output of ligandRanking directly to get canonical characters.
+ * NOTE: this is the same as in glue
+ */
+std::vector<char> canonicalCharacters(
+  const RankingInformation::RankedType& rankedLigands
+) {
+  std::vector<char> characters;
+
+  char currentChar = 'A';
+  for(const auto& equalPrioritySet : rankedLigands) {
+    for(unsigned i = 0; i < equalPrioritySet.size(); ++i) {
+      characters.push_back(currentChar);
+    }
+
+    ++currentChar;
+  }
+
+  return characters;
+}
+
+UniqueAssignments::Assignment::LinksSetType canonicalLinks(
+  const RankingInformation::RankedType& ligands,
+  const RankingInformation::RankedType& rankedLigands,
+  const RankingInformation::LinksType& rankingLinks
+) {
+  UniqueAssignments::Assignment::LinksSetType links;
+
+  for(const auto& link : rankingLinks) {
+    auto getLigandIndex = [&ligands](const AtomIndexType& soughtIndex) -> AtomIndexType {
+      return std::find_if(
+        ligands.begin(),
+        ligands.end(),
+        [&soughtIndex](const auto& ligandMembers) -> bool {
+          return std::find(
+            ligandMembers.begin(),
+            ligandMembers.end(),
+            soughtIndex
+          ) != ligandMembers.end();
+        }
+      ) - ligands.begin();
+    };
+
+    auto getRankedPosition = [&rankedLigands](const AtomIndexType& ligandIndex) -> unsigned {
+      unsigned position = 0;
+      for(const auto& equalLigandsSet : rankedLigands) {
+        for(const auto& rankedLigandIndex : equalLigandsSet) {
+          if(rankedLigandIndex == ligandIndex) {
+            return position;
+          }
+
+          ++position;
+        }
+      }
+
+      throw std::logic_error("Ligand index not found in ranked ligands");
+    };
+
+    auto a = getRankedPosition(getLigandIndex(link.first)),
+         b = getRankedPosition(getLigandIndex(link.second));
+
+    links.emplace(
+      std::min(a, b),
+      std::max(a, b)
+    );
+  }
+
+  return links;
+}
+
+} // namespace adhesive
 
 namespace glue {
 
@@ -647,10 +779,6 @@ void CNStereocenter::removeSubstituent(
   assign(newAssignment);
 }
 
-const AtomIndexType& CNStereocenter::getCentralAtomIndex() const {
-  return _centerAtom;
-}
-
 Symmetry::Name CNStereocenter::getSymmetry() const {
   return _symmetry;
 }
@@ -698,7 +826,7 @@ void CNStereocenter::fit(
     for(
       unsigned assignment = 0;
       assignment < numAssignments();
-      assignment++
+      ++assignment
     ) {
       // Assign the stereocenter
       assign(assignment);
@@ -871,12 +999,12 @@ void CNStereocenter::fit(
 /* Information */
 double CNStereocenter::angle(
   const AtomIndexType& i,
-  const AtomIndexType& j __attribute__((unused)), 
+  const AtomIndexType& j __attribute__((unused)),
   const AtomIndexType& k
 ) const {
   assert(j == _centerAtom);
 
-  /* j is pracitcally unused here because in the Symmetry angleFunctions, the
+  /* j is practically unused here because in the Symmetry angleFunctions, the
    * middle atom is implicit, it has no symmetryPosition number. j is however
    * needed in the interface because of EZStereocenter, where it is important
    * to specify which atom is the intermediate (there are two possibilities)
@@ -886,6 +1014,30 @@ double CNStereocenter::angle(
     _symmetryPositionMapCache.at(k)
   );
 }
+
+#if false
+DistanceGeometry::ValueBounds CNStereocenter::angles(
+  const AtomIndexType& i,
+  const AtomIndexType& j __attribute__((unused)),
+  const AtomIndexType& k
+) const {
+  assert(j == _centerAtom);
+
+  // Require:
+  // Mapping from atom index to ligand index
+  std::map<AtomIndexType, unsigned> _ligandMap;
+
+  /* j is practically unused here because in the Symmetry angleFunctions, the
+   * middle atom is implicit, it has no symmetryPosition number. j is however
+   * needed in the interface because of EZStereocenter, where it is important
+   * to specify which atom is the intermediate (there are two possibilities)
+   */
+  assert(_ligandMap.at(i) != _ligandMap.at(k));
+
+
+}
+#endif
+
 
 boost::optional<unsigned> CNStereocenter::assigned() const {
   return _assignmentOption;
@@ -898,7 +1050,7 @@ std::vector<
 
   // Only collect constraints if there is more than one assignment for this
   if(numAssignments() > 1) {
-  
+
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index
      */
@@ -910,7 +1062,7 @@ std::vector<
     auto tetrahedraList = Symmetry::tetrahedra(_symmetry);
 
     for(const auto& tetrahedron : tetrahedraList) {
-      /* Replace boost::none with centerAtom, indices (represent positions within 
+      /* Replace boost::none with centerAtom, indices (represent positions within
        * the symmetry) with the atom index at that position from the inverted map
        */
       auto replaced = TemplateMagic::map(
@@ -970,14 +1122,12 @@ std::string CNStereocenter::info() const {
 }
 
 std::string CNStereocenter::rankInfo() const {
-  // TODO revisit as soon as pseudo-asymmetry is added
-
   return (
-    "CN-"s + std::to_string(static_cast<unsigned>(_symmetry)) 
+    "CN-"s + std::to_string(static_cast<unsigned>(_symmetry))
     + "-"s + std::to_string(numAssignments())
     + "-"s + (
-      assigned() 
-      ? std::to_string(assigned().value()) 
+      assigned()
+      ? std::to_string(assigned().value())
       : "u"s
     )
   );
