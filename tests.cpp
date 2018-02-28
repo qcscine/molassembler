@@ -2,9 +2,9 @@
 #define BOOST_TEST_DYN_LINK
 
 #include "boost/test/unit_test.hpp"
-#include "template_magic/Containers.h"
-#include "template_magic/Random.h"
-#include "template_magic/VectorView.h"
+#include "temple/Containers.h"
+#include "temple/Random.h"
+#include "temple/VectorView.h"
 
 #include "CyclicPolygons.h"
 
@@ -16,8 +16,8 @@ BOOST_AUTO_TEST_CASE(symmetricPolynomialsCorrect) {
   std::vector<double> expectedResults {1, 15, 85, 225, 274, 120};
 
   BOOST_CHECK(
-    TemplateMagic::all_of(
-      TemplateMagic::zipMap(
+    temple::all_of(
+      temple::zipMap(
         ks,
         expectedResults,
         [&values](const double& k, const double& expectedValue) -> bool {
@@ -37,8 +37,8 @@ BOOST_AUTO_TEST_CASE(intSeqTests) {
   std::vector<unsigned> sequence {1, 2, 3, 4, 5};
 
   BOOST_CHECK(
-    TemplateMagic::all_of(
-      TemplateMagic::zipMap(
+    temple::all_of(
+      temple::zipMap(
         sequence,
         CyclicPolygons::math::intSeq(sequence.front(), sequence.back()),
         std::equal_to<unsigned>()
@@ -50,12 +50,12 @@ BOOST_AUTO_TEST_CASE(intSeqTests) {
 BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
   std::vector<double> edgeLengths {29, 30, 31, 32, 33};
 
-  const auto squaredEdgeLengths = TemplateMagic::map(
+  const auto squaredEdgeLengths = temple::map(
     edgeLengths,
     CyclicPolygons::math::square<double>
   );
 
-  const auto epsilon = TemplateMagic::map(
+  const auto epsilon = temple::map(
     CyclicPolygons::math::intSeq(0, 5),
     [&](const unsigned& k) -> double {
       return CyclicPolygons::math::elementarySymmetricPolynomial(
@@ -92,8 +92,8 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
   };
 
   BOOST_CHECK(
-    TemplateMagic::all_of(
-      TemplateMagic::zipMap(
+    temple::all_of(
+      temple::zipMap(
         epsilon,
         rEpsilons,
         relativeEquals(1e-6)
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
 
   // Lambda for a given rho
   const double rho = 0.01;
-  const auto lambdas = TemplateMagic::map(
+  const auto lambdas = temple::map(
     CyclicPolygons::math::intSeq(0, 4),
     [&](const unsigned& k) -> double {
       return CyclicPolygons::Pentagon::lambda(
@@ -123,8 +123,8 @@ BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
   };
 
   BOOST_CHECK(
-    TemplateMagic::all_of(
-      TemplateMagic::zipMap(
+    temple::all_of(
+      temple::zipMap(
         lambdas,
         rLambdas,
         relativeEquals(1e-6)
@@ -170,17 +170,17 @@ BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
   unsigned nFailures = 0;
   for(unsigned nTest = 0; nTest < nTests; ++nTest) {
     std::vector<double> edgeLengths {
-      TemplateMagic::random.getSingle<double>(
+      temple::random.getSingle<double>(
         lowerLimit,
         upperLimit
       )
     };
 
     while(edgeLengths.size() < 5) {
-      const double geometricLimit = TemplateMagic::sum(edgeLengths);
+      const double geometricLimit = temple::sum(edgeLengths);
 
       edgeLengths.emplace_back(
-        TemplateMagic::random.getSingle<double>(
+        temple::random.getSingle<double>(
           lowerLimit,
           std::min(upperLimit, geometricLimit)
         )
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       double sample;
       while(true) {
         sample = normalDistribution(
-          TemplateMagic::random.randomEngine
+          temple::random.randomEngine
         );
         if(lowerLimit <= sample && sample <= upperLimit) {
           return sample;
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 BOOST_AUTO_TEST_CASE(internalAnglesSumCorrectly) {
   std::vector<double> edgeLengths {29, 30, 31, 32, 33};
   for(unsigned n = 3; n <= 5; n++) {
-    auto edges = TemplateMagic::cast<double>(
+    auto edges = temple::cast<double>(
       CyclicPolygons::math::intSeq(29, 28 + n)
     );
 
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE(internalAnglesSumCorrectly) {
 
     BOOST_CHECK(
       std::fabs(
-        TemplateMagic::sum(internalAngles)
+        temple::sum(internalAngles)
         - M_PI * (n - 2)
       ) < 1e-6
     );

@@ -2,7 +2,7 @@
 
 #include <fstream>
 #include <iostream>
-#include "template_magic/Random.h"
+#include "temple/Random.h"
 
 int main() {
 
@@ -16,17 +16,17 @@ int main() {
 
   for(unsigned nTest = 0; nTest < 10; ++nTest) {
     std::vector<double> edgeLengths {
-      TemplateMagic::random.getSingle<double>(
+      temple::random.getSingle<double>(
         lowerLimit,
         upperLimit
       )
     };
 
     while(edgeLengths.size() < 5) {
-      const double geometricLimit = TemplateMagic::sum(edgeLengths);
+      const double geometricLimit = temple::sum(edgeLengths);
 
       edgeLengths.emplace_back(
-        TemplateMagic::random.getSingle<double>(
+        temple::random.getSingle<double>(
           lowerLimit,
           std::min(upperLimit, geometricLimit)
         )
@@ -65,7 +65,7 @@ int main() {
     auto sampleTruncatedNormal = [&]() -> double {
       double sample;
       while(true) {
-        sample = normalDistribution(TemplateMagic::random.randomEngine);
+        sample = normalDistribution(temple::random.randomEngine);
         if(lowerLimit <= sample && sample <= upperLimit) {
           return sample;
         }

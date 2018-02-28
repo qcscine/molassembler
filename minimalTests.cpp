@@ -4,8 +4,8 @@
 
 #include "Minimal.h"
 #include <iostream>
-#include "template_magic/VectorView.h"
-#include "template_magic/Random.h"
+#include "temple/VectorView.h"
+#include "temple/Random.h"
 
 BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
   const double upperLimit = 5.6; // Fr-Fr single
@@ -15,9 +15,9 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 
   for(unsigned nSides = 5; nSides < 10; nSides++) {
     for(unsigned testNumber = 0; testNumber < nTests; testNumber++) {
-      std::vector<double> edgeLengths = TemplateMagic::random.getN<double>(lowerLimit, upperLimit, nSides);
+      std::vector<double> edgeLengths = temple::random.getN<double>(lowerLimit, upperLimit, nSides);
       while(!CyclicPolygons::exists(edgeLengths)) {
-        edgeLengths = TemplateMagic::random.getN<double>(lowerLimit, upperLimit, nSides);
+        edgeLengths = temple::random.getN<double>(lowerLimit, upperLimit, nSides);
       }
 
       double circumradius;
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       );
       BOOST_CHECK(
         std::fabs(
-          TemplateMagic::sum(
+          temple::sum(
             CyclicPolygons::detail::generalizedInternalAngles(edgeLengths, circumradius)
           ) - 3 * M_PI
         ) < 1e-6

@@ -2,8 +2,8 @@
 #define INCLUDE_CYCLIC_POLYGONS_LIB_H
 
 #include "boost/optional.hpp"
-#include "constexpr_magic/Math.h"
-#include "template_magic/Numeric.h"
+#include "constable/Math.h"
+#include "temple/Numeric.h"
 
 #include <vector>
 
@@ -142,7 +142,7 @@ namespace math {
  * svrtanPolynomial rho
  */
 static constexpr double radiusRhoConversionConstant = (
-  10 - 2 * ConstexprMagic::Math::sqrt(5.0)
+  10 - 2 * constable::Math::sqrt(5.0)
 ) / 4.0;
 
 /*!
@@ -196,7 +196,7 @@ double lambda(
 
 //! Svrtan polynomial pentagon A5 coefficient calculation function
 inline double A5(const std::vector<double>& lambdas) {
-  return TemplateMagic::kahanSum(
+  return temple::kahanSum(
     std::vector<double>{
       std::pow(lambdas[4], 4),
       (
@@ -229,7 +229,7 @@ inline double A5(const std::vector<double>& lambdas) {
 
 //! Svrtan polynomial pentagon B5 coefficient calculation function
 inline double B5(const std::vector<double>& lambdas) {
-   return TemplateMagic::kahanSum(
+   return temple::kahanSum(
     std::vector<double>{
       - std::pow(lambdas[4], 3),
       2 * math::square(lambdas[4]),
@@ -248,7 +248,7 @@ inline double B5(const std::vector<double>& lambdas) {
 inline double Delta5(const std::vector<double>& lambdas) {
   return (
     lambdas[0]
-    + 2 * TemplateMagic::kahanSum(
+    + 2 * temple::kahanSum(
       std::vector<double>{
         lambdas[1],
         lambdas[2],
@@ -311,7 +311,7 @@ double centralAnglesDeviationSecondDerivative(
  */
 constexpr double regularCircumradius(const double& a) {
   return 2 * a / (
-    ConstexprMagic::Math::sqrt(10 - 2 * ConstexprMagic::Math::sqrt(5))
+    constable::Math::sqrt(10 - 2 * constable::Math::sqrt(5))
   );
 }
 

@@ -2,9 +2,8 @@
 #define INCLUDE_CYCLIC_POLYGONS_LIB_MINIMAL_H
 
 #include "boost/math/tools/roots.hpp"
-#include "template_magic/Containers.h"
-#include "template_magic/Numeric.h"
-
+#include "temple/Containers.h"
+#include "temple/Numeric.h"
 #include <cassert>
 #include <vector>
 
@@ -97,7 +96,7 @@ std::vector<FloatType> centralAngles(
   const FloatType& circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  return TemplateMagic::map(
+  return temple::map(
     edgeLengths,
     [&](const FloatType& edgeLength) -> FloatType {
       return std::acos(
@@ -115,9 +114,9 @@ FloatType centralAnglesDeviation(
   const std::vector<FloatType>& edgeLengths
 ) {
   assert(edgeLengths.size() == 5);
-  assert(circumradius > TemplateMagic::max(edgeLengths) / 2);
+  assert(circumradius > temple::max(edgeLengths) / 2);
 
-  return TemplateMagic::sum(
+  return temple::sum(
     centralAngles(circumradius, edgeLengths)
   ) - 2 * M_PI;
 }
@@ -127,8 +126,8 @@ FloatType centralAnglesDeviationDerivative(
   const FloatType& circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  return TemplateMagic::sum(
-    TemplateMagic::map(
+  return temple::sum(
+    temple::map(
       edgeLengths,
       [&](const FloatType& a) -> FloatType {
         return -2 * a / (
@@ -148,8 +147,8 @@ FloatType centralAnglesDeviationSecondDerivative(
 ) {
   const FloatType squareCircumradius = circumradius * circumradius;
 
-  return TemplateMagic::sum(
-    TemplateMagic::map(
+  return temple::sum(
+    temple::map(
       edgeLengths,
       [&](const FloatType& a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
@@ -174,25 +173,25 @@ FloatType regularCircumradius(
 
 template<typename FloatType>
 FloatType convexCircumradius(const std::vector<FloatType>& edgeLengths) {
-  const FloatType minR = TemplateMagic::max(edgeLengths) / 2 + 1e-10;
+  const FloatType minR = temple::max(edgeLengths) / 2 + 1e-10;
   const FloatType lowerBound = std::max(
     regularCircumradius(
       edgeLengths.size(),
-      TemplateMagic::min(edgeLengths)
+      temple::min(edgeLengths)
     ),
     minR
   );
   const FloatType upperBound = std::max(
     regularCircumradius(
       edgeLengths.size(),
-      TemplateMagic::max(edgeLengths)
+      temple::max(edgeLengths)
     ), 
     minR
   );
   const FloatType rootGuess = regularCircumradius(
     edgeLengths.size(),
     std::max(
-      TemplateMagic::average(edgeLengths),
+      temple::average(edgeLengths),
       minR
     )
   );
@@ -218,7 +217,7 @@ FloatType convexCircumradius(const std::vector<FloatType>& edgeLengths) {
   );
 
   if(iterCount == static_cast<boost::uintmax_t>(maxIter)) {
-    throw std::logic_error("Could not find pentagon circumradius!");
+    throw std::logic_error("Could not find polygon circumradius!");
   }
 
   return root;
@@ -238,7 +237,7 @@ std::vector<FloatType> generalizedInternalAngles(
   auto lengthsCopy = edgeLengths;
   lengthsCopy.emplace_back(lengthsCopy.front());
 
-  return TemplateMagic::mapSequentialPairs(
+  return temple::mapSequentialPairs(
     lengthsCopy,
     [&doubleR](const FloatType& a, const FloatType& b) -> FloatType {
       return (
@@ -268,11 +267,11 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
    * remainder, no need to check all of them.
    */
 
-  const FloatType maxValue = TemplateMagic::max(edgeLengths);
+  const FloatType maxValue = temple::max(edgeLengths);
 
   return (
     maxValue <
-    TemplateMagic::sum(edgeLengths) - maxValue 
+    temple::sum(edgeLengths) - maxValue 
   );
 }
 
@@ -303,13 +302,11 @@ std::enable_if_t<
     && "It is unreasonable to call this for less than three edges."
   );
   assert( 
-    TemplateMagic::all_of(
-      TemplateMagic::map(
-        edgeLengths,
-        [&](const FloatType& length) -> bool {
-          return length != 0;
-        }
-      )
+    temple::all_of(
+      edgeLengths,
+      [&](const FloatType& length) -> bool {
+        return length != 0;
+      }
     ) && "At least one edge length in the sequence is zero "
       "Perhaps consider removing it from the set and approximating it as the "
       "next smaller polygon."
@@ -328,6 +325,59 @@ std::enable_if_t<
     edgeLengths, 
     detail::convexCircumradius(edgeLengths)
   );
+}
+
+template<typename FloatType>
+std::vector<
+  std::array<FloatType, 2>
+> construct(
+  const std::vector<FloatType>& edgeLengths,
+  const double& circumradius
+) {
+  const unsigned N = edgeLengths.size();
+
+  std::vector<
+    std::array<FloatType, 2>
+  > coordinates {
+    {0, circumradius}
+  };
+
+  coordinates.reserve(N);
+  double angle = 0;
+
+  auto centralAngles = detail::centralAngles(circumradius, edgeLengths);
+
+  for(const auto& centralAngle : centralAngles) {
+    coordinates.emplace(
+      std::cos(angle + centralAngle) * circumradius,
+      std::sin(angle + centralAngle) * circumradius
+    );
+
+    angle += centralAngle;
+  }
+  
+  return coordinates;
+}
+
+template<typename FloatType>
+std::array<FloatType, 2> average(
+  const std::vector<
+    std::array<FloatType, 2>
+  >& coordinates
+) {
+  FloatType xSum = 0, ySum = 0;
+
+  for(const auto& coordinate : coordinates) {
+    xSum += coordinate.at(0);
+    ySum += coordinate.at(1);
+  }
+
+  unsigned N = coordinates.size();
+
+  return {
+    xSum / N,
+    ySum / N
+  };
 }
 
 } // namespace CyclicPolygons

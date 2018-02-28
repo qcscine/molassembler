@@ -47,8 +47,8 @@ The library is available in two forms:
 
 Full library dependencies:
 - boost: optional, test
-- TemplateMagic: Composability shorthands and numeric data handling
-- ConstexprMagic: Compile-time square-root
+- Temple: Composability shorthands and numeric data handling
+- Constable: Compile-time square-root
 
 Minimal dependencies:
 - boost: for stable numerical root-finding

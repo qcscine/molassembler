@@ -1,6 +1,6 @@
 #include "CyclicPolygons.h"
 
-#include "template_magic/VectorView.h"
+#include "temple/VectorView.h"
 
 #include <boost/math/special_functions/binomial.hpp>
 #include <boost/math/tools/roots.hpp>
@@ -8,7 +8,7 @@
 #include <fstream>
 #include <cassert>
 
-#include "template_magic/Containers.h"
+#include "temple/Containers.h"
 
 namespace CyclicPolygons {
 
@@ -80,12 +80,12 @@ void writeSvrtanAnalysisFiles(
 ) {
   using namespace std::string_literals;
 
-  const auto squaredEdgeLengths = TemplateMagic::map(
+  const auto squaredEdgeLengths = temple::map(
     edgeLengths,
     CyclicPolygons::math::square<double>
   );
 
-  const auto epsilon = TemplateMagic::map(
+  const auto epsilon = temple::map(
     CyclicPolygons::math::intSeq(0, 5),
     [&](const unsigned& k) -> double {
       return CyclicPolygons::math::elementarySymmetricPolynomial(
@@ -107,8 +107,8 @@ void writeSvrtanAnalysisFiles(
 
   const double trialFactor = 1.2;
 
-  const double average = TemplateMagic::average(edgeLengths);
-  const double stddev = TemplateMagic::stddev(edgeLengths, average);
+  const double average = temple::average(edgeLengths);
+  const double stddev = temple::stddev(edgeLengths, average);
 
   const double rhoGuess = 1 / CyclicPolygons::math::square(
     0.5 * average / std::sin(M_PI / 5)
@@ -149,12 +149,12 @@ void writeSvrtanAnalysisFiles(
 
   const double scanLower = (
     CyclicPolygons::math::radiusRhoConversionConstant / CyclicPolygons::math::square(
-      TemplateMagic::max(edgeLengths)
+      temple::max(edgeLengths)
     )
   );
   const double scanUpper = (
     CyclicPolygons::math::radiusRhoConversionConstant / CyclicPolygons::math::square(
-      TemplateMagic::min(edgeLengths)
+      temple::min(edgeLengths)
     )
   );
   const unsigned nSteps = 1000;
@@ -216,7 +216,7 @@ void writeSvrtanAnalysisFiles(
     auto lengthsCopy = edgeLengths;
     lengthsCopy.emplace_back(lengthsCopy.front());
 
-    auto internalAngles = TemplateMagic::mapSequentialPairs(
+    auto internalAngles = temple::mapSequentialPairs(
       lengthsCopy,
       [&doubleR](const double& a, const double& b) -> double {
         return (
@@ -229,7 +229,7 @@ void writeSvrtanAnalysisFiles(
       }
     );
 
-    const double angleSum = TemplateMagic::sum(internalAngles);
+    const double angleSum = temple::sum(internalAngles);
     validRoot = (std::fabs(angleSum - 3 * M_PI) < 1e-6);
   }
 
@@ -255,22 +255,22 @@ void writeAngleAnalysisFiles(
 ) {
   using namespace std::string_literals;
 
-  const double minR = TemplateMagic::max(edgeLengths) / 2 + 1e-10;
+  const double minR = temple::max(edgeLengths) / 2 + 1e-10;
   const double lowerBound = std::max(
     Pentagon::regularCircumradius(
-      TemplateMagic::min(edgeLengths)
+      temple::min(edgeLengths)
     ),
     minR
   );
   const double upperBound = std::max(
     Pentagon::regularCircumradius(
-      TemplateMagic::max(edgeLengths)
+      temple::max(edgeLengths)
     ), 
     minR
   );
   const double rootGuess = Pentagon::regularCircumradius(
     std::max(
-      TemplateMagic::average(edgeLengths),
+      temple::average(edgeLengths),
       minR
     )
   );
@@ -335,8 +335,8 @@ double elementarySymmetricPolynomial(
 
   return detail::recursiveLoopSummation(
     [&values](const std::vector<unsigned>& indices) -> double {
-      return TemplateMagic::reduce(
-        TemplateMagic::subset(
+      return temple::reduce(
+        temple::subset(
           values,
           indices
         ),
@@ -402,8 +402,8 @@ double lambda(
   assert(epsilon.size() == 6);
   assert(k <= 4);
 
-  return TemplateMagic::reduce(
-    TemplateMagic::map(
+  return temple::reduce(
+    temple::map(
       math::intSeq(k, 5),
       [&](const auto& i) -> double {
         return (
@@ -423,7 +423,7 @@ double svrtanPolynomial(
   const double& rho,
   const std::vector<double>& epsilon
 ) {
-  const auto lambdas = TemplateMagic::map(
+  const auto lambdas = temple::map(
     math::intSeq(0, 4),
     [&](const unsigned& k) -> double {
       return lambda(
@@ -453,12 +453,12 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
       "checked for this edge case before calling convexCircumradiusSvrtan!"
   );
 
-  const auto squaredEdgeLengths = TemplateMagic::map(
+  const auto squaredEdgeLengths = temple::map(
     edgeLengths,
     math::square<double>
   );
 
-  const auto epsilon = TemplateMagic::map(
+  const auto epsilon = temple::map(
     math::intSeq(0, 5),
     [&](const unsigned& k) -> double {
       return math::elementarySymmetricPolynomial(
@@ -472,8 +472,8 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
     return Pentagon::svrtanPolynomial(rho, epsilon);
   };
 
-  const double average = TemplateMagic::average(edgeLengths);
-  const double stddev = TemplateMagic::stddev(edgeLengths, average);
+  const double average = temple::average(edgeLengths);
+  const double stddev = temple::stddev(edgeLengths, average);
 
   if(stddev < average * 0.1) {
     /* In the special case where the standard deviation is small compared to the
@@ -526,12 +526,12 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
   // Fallback strategy -> Scan the function until the first crossing
   const double scanLower = (
     math::radiusRhoConversionConstant / CyclicPolygons::math::square(
-      TemplateMagic::max(edgeLengths)
+      temple::max(edgeLengths)
     )
   );
   const double scanUpper = (
     math::radiusRhoConversionConstant / CyclicPolygons::math::square(
-      TemplateMagic::min(edgeLengths)
+      temple::min(edgeLengths)
     )
   );
   const unsigned Nsteps = 1000;
@@ -580,22 +580,22 @@ boost::optional<double> convexCircumradiusSvrtan(const std::vector<double>& edge
 }
 
 double convexCircumradius(const std::vector<double>& edgeLengths) {
-  const double minR = TemplateMagic::max(edgeLengths) / 2 + 1e-10;
+  const double minR = temple::max(edgeLengths) / 2 + 1e-10;
   const double lowerBound = std::max(
     regularCircumradius(
-      TemplateMagic::min(edgeLengths)
+      temple::min(edgeLengths)
     ),
     minR
   );
   const double upperBound = std::max(
     regularCircumradius(
-      TemplateMagic::max(edgeLengths)
+      temple::max(edgeLengths)
     ), 
     minR
   );
   const double rootGuess = regularCircumradius(
     std::max(
-      TemplateMagic::average(edgeLengths),
+      temple::average(edgeLengths),
       minR
     )
   );
@@ -646,7 +646,7 @@ std::vector<double> internalAngles(
   auto lengthsCopy = edgeLengths;
   lengthsCopy.emplace_back(lengthsCopy.front());
 
-  return TemplateMagic::mapSequentialPairs(
+  return temple::mapSequentialPairs(
     lengthsCopy,
     [&doubleR](const double& a, const double& b) -> double {
       return (
@@ -664,7 +664,7 @@ std::vector<double> centralAngles(
   const double& circumradius,
   const std::vector<double>& edgeLengths
 ) {
-  return TemplateMagic::map(
+  return temple::map(
     edgeLengths,
     [&](const double& edgeLength) -> double {
       return std::acos(
@@ -681,9 +681,9 @@ double centralAnglesDeviation(
   const std::vector<double>& edgeLengths
 ) {
   assert(edgeLengths.size() == 5);
-  assert(circumradius > TemplateMagic::max(edgeLengths) / 2);
+  assert(circumradius > temple::max(edgeLengths) / 2);
 
-  return TemplateMagic::sum(
+  return temple::sum(
     centralAngles(circumradius, edgeLengths)
   ) - 2 * M_PI;
 }
@@ -692,8 +692,8 @@ double centralAnglesDeviationDerivative(
   const double& circumradius,
   const std::vector<double>& edgeLengths
 ) {
-  return TemplateMagic::sum(
-    TemplateMagic::map(
+  return temple::sum(
+    temple::map(
       edgeLengths,
       [&](const double& a) -> double {
         return -2 * a / (
@@ -712,8 +712,8 @@ double centralAnglesDeviationSecondDerivative(
 ) {
   const double squareCircumradius = circumradius * circumradius;
 
-  return TemplateMagic::sum(
-    TemplateMagic::map(
+  return temple::sum(
+    temple::map(
       edgeLengths,
       [&](const double& a) -> double {
         const auto temp = 4 * squareCircumradius - a * a;
@@ -735,7 +735,7 @@ bool validateRhoGuess(
   const double circumradius = std::sqrt(1 / rhoGuess);
   auto internalAngles = Pentagon::internalAngles(edgeLengths, circumradius);
   return (
-    TemplateMagic::sum(internalAngles) - 3 * M_PI
+    temple::sum(internalAngles) - 3 * M_PI
     < 1e-6
   );
 }
@@ -754,7 +754,7 @@ double convexCircumradius(const std::vector<double>& edgeLengths) {
       "checked for this edge case before calling maximumQuadrilateralCircumradius!"
   );
 
-  double s = TemplateMagic::sum(edgeLengths) / 2;
+  double s = temple::sum(edgeLengths) / 2;
   /* (
    *   (a * c + b * d)
    *   * (a * d + b * c)
@@ -771,8 +771,8 @@ double convexCircumradius(const std::vector<double>& edgeLengths) {
       (edgeLengths[0] * edgeLengths[2] + edgeLengths[1] * edgeLengths[3])
       * (edgeLengths[0] * edgeLengths[3] + edgeLengths[1] * edgeLengths[2])
       * (edgeLengths[0] * edgeLengths[1] + edgeLengths[2] * edgeLengths[3])
-    ) / TemplateMagic::reduce(
-      TemplateMagic::map(
+    ) / temple::reduce(
+      temple::map(
         edgeLengths,
         [&](const double& edgeLength) -> double {
           return s - edgeLength;
@@ -856,11 +856,11 @@ bool exists(const std::vector<double>& edgeLengths) {
    * remainder, no need to check all of them.
    */
 
-  const double maxValue = TemplateMagic::max(edgeLengths);
+  const double maxValue = temple::max(edgeLengths);
 
   return (
     maxValue <
-    TemplateMagic::sum(edgeLengths) - maxValue 
+    temple::sum(edgeLengths) - maxValue 
   );
 }
 
@@ -880,13 +880,11 @@ std::vector<double> internalAngles(const std::vector<double>& edgeLengths) {
     && "This function can only handle triangles, quadrilaterals and pentagons."
   );
   assert( 
-    TemplateMagic::all_of(
-      TemplateMagic::map(
-        edgeLengths,
-        [&](const double& length) -> bool {
-          return length != 0;
-        }
-      )
+    temple::all_of(
+      edgeLengths,
+      [&](const double& length) -> bool {
+        return length != 0;
+      }
     ) && "At least one edge length in the sequence is zero "
       "Perhaps consider removing it from the set and approximating it as the "
       "next smaller polygon."
