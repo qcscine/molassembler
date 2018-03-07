@@ -81,7 +81,7 @@ lines(circleX, circleY)
 currentAngle <- 0
 currentX <- circumradius
 currentY <- 0
-for(i in 1:5) {
+for(i in 1:length(edge_lengths)) {
   centerpointAngle <- acos(1 - edge_lengths[i]^2 / (2 * circumradius^2))
 
   # compute next x,y coordinates

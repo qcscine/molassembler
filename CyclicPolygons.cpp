@@ -256,24 +256,33 @@ void writeAngleAnalysisFiles(
   using namespace std::string_literals;
 
   const double minR = temple::max(edgeLengths) / 2 + 1e-10;
+
   const double lowerBound = std::max(
     Pentagon::regularCircumradius(
       temple::min(edgeLengths)
     ),
     minR
   );
+
   const double upperBound = std::max(
     Pentagon::regularCircumradius(
       temple::max(edgeLengths)
     ), 
     minR
   );
-  const double rootGuess = Pentagon::regularCircumradius(
+
+  double rootGuess = Pentagon::regularCircumradius(
     std::max(
       temple::average(edgeLengths),
       minR
     )
   );
+
+  if(rootGuess < lowerBound) {
+    rootGuess = lowerBound;
+  } else if(rootGuess > upperBound) {
+    rootGuess = upperBound;
+  }
 
   auto rootSearchLambda = [&](const double& circumradius) -> std::tuple<double, double, double> {
     return std::make_tuple<double, double, double>(

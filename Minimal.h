@@ -113,7 +113,6 @@ FloatType centralAnglesDeviation(
   const FloatType& circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
-  assert(edgeLengths.size() == 5);
   assert(circumradius > temple::max(edgeLengths) / 2);
 
   return temple::sum(
@@ -174,13 +173,17 @@ FloatType regularCircumradius(
 template<typename FloatType>
 FloatType convexCircumradius(const std::vector<FloatType>& edgeLengths) {
   const FloatType minR = temple::max(edgeLengths) / 2 + 1e-10;
-  const FloatType lowerBound = std::max(
+
+  /*const FloatType lowerBound = std::max(
     regularCircumradius(
       edgeLengths.size(),
       temple::min(edgeLengths)
     ),
     minR
-  );
+  );*/
+
+  const FloatType lowerBound = minR;
+
   const FloatType upperBound = std::max(
     regularCircumradius(
       edgeLengths.size(),
@@ -188,13 +191,22 @@ FloatType convexCircumradius(const std::vector<FloatType>& edgeLengths) {
     ), 
     minR
   );
-  const FloatType rootGuess = regularCircumradius(
+
+  FloatType rootGuess = regularCircumradius(
     edgeLengths.size(),
     std::max(
       temple::average(edgeLengths),
       minR
     )
   );
+
+  if(rootGuess < lowerBound) {
+    rootGuess = lowerBound;
+  } else if(rootGuess > upperBound) {
+    rootGuess = upperBound;
+  }
+
+  assert(lowerBound <= rootGuess && rootGuess <= upperBound);
 
   auto rootSearchLambda = [&](const FloatType& circumradius) -> std::tuple<FloatType, FloatType, FloatType> {
     return std::make_tuple<FloatType, FloatType, FloatType>(
@@ -264,7 +276,7 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
    * -> There exists a convex cyclic polygon (Iosif Pinelis, 2005)
    *
    * Equivalent to saying largest value in set of edge lengths smaller than 
-   * remainder, no need to check all of them.
+   * sum of remainder, no need to check all of them.
    */
 
   const FloatType maxValue = temple::max(edgeLengths);

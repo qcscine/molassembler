@@ -269,6 +269,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       };
 
       BOOST_CHECK_NO_THROW(assignCircumradius());
+      BOOST_CHECK(!std::isnan(circumradius));
     }
   }
 }
