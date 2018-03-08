@@ -21,93 +21,18 @@ find_program(
   DOC "Path to clang-tidy executable"
 )
 
-#if(NOT CLANG_TIDY_EXE)
-#  message(STATUS "No clang-tidy found!")
-#else()
-#  message(STATUS "Clang-tidy found: ${CLANG_TIDY_EXE}")
-#  set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*,-clang-analyzer-alpha.*,-cppcoreguidelines-pro-bounds-array-to-pointer-decay")
-#endif()
-
-# set headers
-set(HEADERS_all
-  CyclicPolygons.h
-)
-
-# sources definition
-set(SOURCES_all
-  CyclicPolygons.cpp
-)
-
-# specify targets
-add_library(cyclic_polygons STATIC ${SOURCES_all} ${HEADERS_all})
-
-# Compilation options
-if( UNIX )
-  add_definitions(-fPIC)
-endif()
-
-# Switch debug and release build types
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release") 
-  message(STATUS "Selected release build")
-  # no debug information, disable assert
-  target_compile_definitions(cyclic_polygons PRIVATE NDEBUG)
-  target_compile_options(cyclic_polygons PUBLIC -O2)
-else() # assume Debug
-  message(STATUS "Assume debug build")
-  target_compile_options(cyclic_polygons PUBLIC -g)
-endif()
-
-set_target_properties(
-  cyclic_polygons PROPERTIES
-  CXX_STANDARD 14
-  CXX_STANDARD_REQUIRED ON
-  COMPILE_FLAGS ${WARNING_FLAGS}
-)
-
 include_directories(SYSTEM
   ${EIGEN3_INCLUDE_DIRS}
   "/home/jan-grimo/PhD/projects/libs/"
 )
 
-if(CLANG_TIDY_EXE)
-  set_target_properties(
-    cyclic_polygons PROPERTIES
-    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
-  )
-endif()
-
-add_executable(cyclicPolygonTests tests.cpp)
-target_compile_options(cyclicPolygonTests PUBLIC -O2 -g)
+add_executable(Tests tests.cpp)
+target_compile_options(Tests PUBLIC -g)
 set_target_properties(
-  cyclicPolygonTests PROPERTIES
+  Tests PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
 )
-target_include_directories(cyclicPolygonTests PRIVATE ${BOOST_ROOT})
-target_link_libraries(cyclicPolygonTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cyclic_polygons)
-
-add_executable(minimalTests minimalTests.cpp)
-target_compile_options(minimalTests PUBLIC -g)
-set_target_properties(
-  minimalTests PROPERTIES
-  CXX_STANDARD 14
-  CXX_STANDARD_REQUIRED ON
-  COMPILE_FLAGS ${WARNING_FLAGS}
-)
-target_include_directories(minimalTests PRIVATE ${BOOST_ROOT})
-target_link_libraries(minimalTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
-
-add_executable(analysis analysis.cpp)
-target_compile_options(analysis PUBLIC -O2 -g)
-set_target_properties(
-  analysis PROPERTIES
-  CXX_STANDARD 14
-  CXX_STANDARD_REQUIRED ON
-  COMPILE_FLAGS ${WARNING_FLAGS}
-)
-target_include_directories(analysis PRIVATE ${BOOST_ROOT})
-target_link_libraries(analysis ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} cyclic_polygons)
-
-# add test
-add_test(NAME testAll COMMAND analysis)
+target_include_directories(Tests PRIVATE ${BOOST_ROOT})
+target_link_libraries(Tests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})

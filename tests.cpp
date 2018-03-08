@@ -1,293 +1,154 @@
 #define BOOST_TEST_MODULE CyclicPolygonsTests
 #define BOOST_TEST_DYN_LINK
-
-#include "boost/test/unit_test.hpp"
-#include "temple/Containers.h"
-#include "temple/Random.h"
-#include "temple/VectorView.h"
+#include <boost/test/unit_test.hpp>
 
 #include "CyclicPolygons.h"
-
 #include <iostream>
+#include <fstream>
+#include "temple/VectorView.h"
+#include "temple/Random.h"
+#include "temple/Stringify.h"
 
-BOOST_AUTO_TEST_CASE(symmetricPolynomialsCorrect) {
-  std::vector<double> values {1, 2, 3, 4, 5};
-  std::vector<double> ks {0, 1, 2, 3, 4, 5};
-  std::vector<double> expectedResults {1, 15, 85, 225, 274, 120};
+using namespace std::string_literals;
 
-  BOOST_CHECK(
-    temple::all_of(
-      temple::zipMap(
-        ks,
-        expectedResults,
-        [&values](const double& k, const double& expectedValue) -> bool {
-          return (
-            CyclicPolygons::math::elementarySymmetricPolynomial(
-              k,
-              values
-            ) == expectedValue
-          );
-        }
-      )
-    )
-  );
-}
+void writeAngleAnalysisFiles(
+  const std::vector<double>& edgeLengths,
+  const std::string& baseName
+) {
+  using namespace CyclicPolygons;
 
-BOOST_AUTO_TEST_CASE(intSeqTests) {
-  std::vector<unsigned> sequence {1, 2, 3, 4, 5};
+  const double longestEdge = temple::max(edgeLengths);
 
-  BOOST_CHECK(
-    temple::all_of(
-      temple::zipMap(
-        sequence,
-        CyclicPolygons::math::intSeq(sequence.front(), sequence.back()),
-        std::equal_to<unsigned>()
-      )
-    )
-  );
-}
+  const double minR = longestEdge / 2 + 1e-10;
 
-BOOST_AUTO_TEST_CASE(comparisonAgainstRImplementation) {
-  std::vector<double> edgeLengths {29, 30, 31, 32, 33};
+  const double lowerBound = minR;
 
-  const auto squaredEdgeLengths = temple::map(
-    edgeLengths,
-    CyclicPolygons::math::square<double>
+  const double upperBound = std::max(
+    detail::regularCircumradius(
+      edgeLengths.size(),
+      longestEdge
+    ), 
+    minR
   );
 
-  const auto epsilon = temple::map(
-    CyclicPolygons::math::intSeq(0, 5),
-    [&](const unsigned& k) -> double {
-      return CyclicPolygons::math::elementarySymmetricPolynomial(
-        k,
-        squaredEdgeLengths
-      );
-    }
-  );
-  
-  // Compare epsilons
-  const std::vector<double> rEpsilons {
-    1.000000e+00,
-    4.815000e+03,
-    9.254463e+06,
-    8.875070e+09,
-    4.246737e+12,
-    8.111286e+14
-  };
-
-  auto relativeEquals = [](const double& relativeTolerance) {
-    return [&](const double& calc, const double& ref) -> bool {
-      if(std::fabs(calc - ref) > relativeTolerance * std::fabs(std::max(calc, ref))) {
-        std::cout << "Values do not match to within " << relativeTolerance
-          << ": " << calc << ", reference: " << ref << std::endl;
-        /*std::cout << "fabs diff:" << std::fabs(calc - ref) << " > " 
-          << relativeTolerance << " * " << std::fabs(std::max(calc, ref)) 
-          << " (fabs-max)" << std::endl;*/
-
-        return false;
-      }
-
-      return true;
-    };
-  };
-
-  BOOST_CHECK(
-    temple::all_of(
-      temple::zipMap(
-        epsilon,
-        rEpsilons,
-        relativeEquals(1e-6)
-      )
+  double rootGuess = detail::regularCircumradius(
+    edgeLengths.size(),
+    std::max(
+      temple::average(edgeLengths),
+      minR
     )
   );
 
-  // Lambda for a given rho
-  const double rho = 0.01;
-  const auto lambdas = temple::map(
-    CyclicPolygons::math::intSeq(0, 4),
-    [&](const unsigned& k) -> double {
-      return CyclicPolygons::Pentagon::lambda(
-        k,
-        rho,
-        epsilon
-      );
-    }
-  );
-
-  const std::vector<double> rLambdas {
-    -34038.1109,
-    18362.3869, 
-    -4550.5927,
-    585.2463,
-    -38.1500  
-  };
-
-  BOOST_CHECK(
-    temple::all_of(
-      temple::zipMap(
-        lambdas,
-        rLambdas,
-        relativeEquals(1e-6)
-      )
-    )
-  );
-
-  const double rA5 = 1044227;
-  const double rB5 = -90233.8;
-  const double rDelta5 = -5318.33;
-
-  BOOST_CHECK(
-    relativeEquals(1e-6)(
-      CyclicPolygons::Pentagon::A5(lambdas),
-      rA5
-    )
-  );
-  BOOST_CHECK(
-    relativeEquals(1e-6)(
-      CyclicPolygons::Pentagon::B5(lambdas),
-      rB5
-    )
-  );
-  BOOST_CHECK(
-    relativeEquals(1e-6)(
-      CyclicPolygons::Pentagon::Delta5(lambdas),
-      rDelta5
-    )
-  );
-}
-
-BOOST_AUTO_TEST_CASE(findsCorrectRoot) {
-  using namespace std::string_literals;
-
-  /* Limited case, where shortest and longest possible bond lengths in molecules
-   * are used
-   */
-  const double upperLimit = 5.6; // Fr-Fr single
-  const double lowerLimit = 1.6; // H-H single
-
-  const unsigned nTests = 100;
-
-  unsigned nFailures = 0;
-  for(unsigned nTest = 0; nTest < nTests; ++nTest) {
-    std::vector<double> edgeLengths {
-      temple::random.getSingle<double>(
-        lowerLimit,
-        upperLimit
-      )
-    };
-
-    while(edgeLengths.size() < 5) {
-      const double geometricLimit = temple::sum(edgeLengths);
-
-      edgeLengths.emplace_back(
-        temple::random.getSingle<double>(
-          lowerLimit,
-          std::min(upperLimit, geometricLimit)
-        )
-      );
-    }
-
-    auto radiusOption = CyclicPolygons::Pentagon::convexCircumradiusSvrtan(edgeLengths);
-
-    // Finds a radius
-    if(!radiusOption) {
-      nFailures += 1;
-      CyclicPolygons::analysis::writeSvrtanAnalysisFiles(
-        edgeLengths,
-        "svrtan-test-failure-"s + std::to_string(nTest)
-      );
-      std::cout << "For this set of edgeLengths, no valid root was found" << std::endl;
-    }
-
-    if(radiusOption) {
-      // radius is correct
-      const double rho = 1 / std::pow(radiusOption.value(), 2);
-      if(!CyclicPolygons::Pentagon::validateRhoGuess(edgeLengths, rho)) {
-        nFailures += 1;
-        CyclicPolygons::analysis::writeSvrtanAnalysisFiles(
-          edgeLengths,
-          "svrtan-test-failure-"s + std::to_string(nTest)
-        );
-        std::cout << "maximumPentagonCircumradius returned non-validated "
-          << "circumradius!" << std::endl;
-      }
-    }
+  if(rootGuess < lowerBound) {
+    rootGuess = lowerBound;
+  } else if(rootGuess > upperBound) {
+    rootGuess = upperBound;
   }
 
-  BOOST_CHECK_MESSAGE(
-    nFailures == 0,
-    "Out of " << nTests << " heuristic root-finding tests, " << nFailures << " failed."
-  );
+  double circumradius;
+  bool circumcenterInside;
+
+  std::tie(circumradius, circumcenterInside) = CyclicPolygons::detail::convexCircumradius(edgeLengths);
+
+  std::ofstream scanFile(baseName + ".csv"s);
+  scanFile << std::fixed << std::setprecision(8);
+
+  const unsigned nScanSteps = 1000;
+  const double stepSize = (upperBound - lowerBound) / nScanSteps;
+  for(unsigned i = 0; i <= nScanSteps; i++) {
+    const double currentR = lowerBound + i * stepSize;
+    scanFile << currentR << ", "
+      << detail::circumcenterInside::centralAnglesDeviation(currentR, edgeLengths, longestEdge)
+      << ", "
+      << detail::circumcenterOutside::centralAnglesDeviation(currentR, edgeLengths, longestEdge)
+      << std::endl;
+  }
+
+  scanFile.close();
+
+  std::ofstream metaFile(baseName + "-meta.csv"s);
+  metaFile << std::fixed << std::setprecision(8);
+  for(unsigned i = 0; i < edgeLengths.size(); i++) {
+    metaFile << edgeLengths[i];
+    if(i != edgeLengths.size() - 1) {
+      metaFile << ", ";
+    }
+  }
+  metaFile << std::endl;
+  metaFile << rootGuess << ", " << circumradius << std::endl;
+  metaFile.close();
 }
 
 BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
+  unsigned failureIndex = 0;
+
   const double upperLimit = 5.6; // Fr-Fr single
   const double lowerLimit = 0.7; // H-H single
 
-  const double mean = (upperLimit - lowerLimit) / 2;
-  const double lowerStddev = 0.01 * mean;
-  const double upperStddev = 4 * mean;
-  const unsigned nStddevSteps = 40;
-  const unsigned nSamples = 1000;
+  const unsigned nTests = 1000;
 
-  const double stepLength = (upperStddev - lowerStddev) / nStddevSteps;
-  for(unsigned stepNumber = 0; stepNumber <= nStddevSteps; stepNumber++) {
-    double currentStddev = lowerStddev + stepNumber * stepLength;
-
-    std::normal_distribution<double> normalDistribution(mean, currentStddev);
-
-    auto sampleTruncatedNormal = [&]() -> double {
-      double sample;
-      while(true) {
-        sample = normalDistribution(
-          temple::random.randomEngine
-        );
-        if(lowerLimit <= sample && sample <= upperLimit) {
-          return sample;
-        }
-      }
-    };
-
-    for(unsigned sampleNumber = 0; sampleNumber < nSamples; sampleNumber++) {
-      std::vector<double> edgeLengths;
-      while(edgeLengths.size() < 5) {
-        edgeLengths.emplace_back(sampleTruncatedNormal());
-      }
-
+  for(unsigned nSides = 3; nSides < 10; ++nSides) {
+    for(unsigned testNumber = 0; testNumber < nTests; testNumber++) {
+      std::vector<double> edgeLengths = temple::random.getN<double>(lowerLimit, upperLimit, nSides);
       while(!CyclicPolygons::exists(edgeLengths)) {
-        edgeLengths.clear();
-        while(edgeLengths.size() < 5) {
-          edgeLengths.emplace_back(sampleTruncatedNormal());
-        }
+        edgeLengths = temple::random.getN<double>(lowerLimit, upperLimit, nSides);
       }
 
       double circumradius;
+      bool circumcenterInside;
+
       auto assignCircumradius = [&]() -> void {
-        circumradius = CyclicPolygons::Pentagon::convexCircumradius(
+        std::tie(circumradius, circumcenterInside) = CyclicPolygons::detail::convexCircumradius(
           edgeLengths
         );
       };
 
       BOOST_CHECK_NO_THROW(assignCircumradius());
       BOOST_CHECK(!std::isnan(circumradius));
+
+      double deviation = (
+        circumcenterInside
+        ? CyclicPolygons::detail::circumcenterInside::centralAnglesDeviation(
+          circumradius,
+          edgeLengths,
+          temple::max(edgeLengths)
+        ) : CyclicPolygons::detail::circumcenterOutside::centralAnglesDeviation(
+          circumradius,
+          edgeLengths,
+          temple::max(edgeLengths)
+        )
+      );
+
+      bool pass = std::fabs(deviation) < 1e-6;
+
+      BOOST_CHECK_MESSAGE(
+        pass,
+        "Central angle deviation norm is not smaller than 1e-6 for " << temple::stringify(edgeLengths)
+          << ", circumcenter is inside: " << circumcenterInside << ", deviation: " << deviation
+      );
+
+      auto internalAngleSumDeviation = temple::sum(
+        CyclicPolygons::detail::generalizedInternalAngles(edgeLengths, circumradius, circumcenterInside)
+      ) - (nSides - 2) * M_PI;
+
+      pass = pass && std::fabs(internalAngleSumDeviation < 1e-6);
+
+      BOOST_CHECK_MESSAGE(
+        std::fabs(internalAngleSumDeviation) < 1e-6,
+        "Internal angle sum deviation from " << (nSides - 2) 
+          <<  "π for edge lengths " << temple::stringify(edgeLengths)
+          << " is " << internalAngleSumDeviation 
+          << ", whose norm is not less than 1e-6"
+      );
+
+      if(!pass) {
+        writeAngleAnalysisFiles(
+          edgeLengths,
+          "angle-failure-"s + std::to_string(failureIndex)
+        );
+
+        ++failureIndex;
+      }
     }
-  }
-}
-
-BOOST_AUTO_TEST_CASE(internalAnglesSumCorrectly) {
-  std::vector<double> edgeLengths {29, 30, 31, 32, 33};
-  for(unsigned n = 3; n <= 5; n++) {
-    auto edges = temple::cast<double>(
-      CyclicPolygons::math::intSeq(29, 28 + n)
-    );
-
-    auto internalAngles = CyclicPolygons::internalAngles(edges);
-
-    BOOST_CHECK(
-      std::fabs(
-        temple::sum(internalAngles)
-        - M_PI * (n - 2)
-      ) < 1e-6
-    );
   }
 }
