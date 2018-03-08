@@ -5,6 +5,7 @@
 #include "Minimal.h"
 #include <iostream>
 #include <fstream>
+#include "constable/Math.h"
 #include "temple/VectorView.h"
 #include "temple/Random.h"
 #include "temple/Stringify.h"
@@ -17,21 +18,16 @@ void writeAngleAnalysisFiles(
 ) {
   using namespace CyclicPolygons;
 
-  const double minR = temple::max(edgeLengths) / 2 + 1e-10;
+  const double longestEdge = temple::max(edgeLengths);
 
-  /*const double lowerBound = std::max(
-    detail::regularCircumradius(
-      edgeLengths.size(),
-      temple::min(edgeLengths)
-    ),
-    minR
-  );*/
+  const double minR = longestEdge / 2 + 1e-10;
+
   const double lowerBound = minR;
 
   const double upperBound = std::max(
     detail::regularCircumradius(
       edgeLengths.size(),
-      temple::max(edgeLengths)
+      longestEdge
     ), 
     minR
   );
@@ -50,29 +46,10 @@ void writeAngleAnalysisFiles(
     rootGuess = upperBound;
   }
 
-  auto rootSearchLambda = [&](const double& circumradius) -> std::tuple<double, double, double> {
-    return std::make_tuple<double, double, double>(
-      detail::centralAnglesDeviation(circumradius, edgeLengths),
-      detail::centralAnglesDeviationDerivative(circumradius, edgeLengths),
-      detail::centralAnglesDeviationSecondDerivative(circumradius, edgeLengths)
-    );
-  };
+  double circumradius;
+  bool circumcenterInside;
 
-  const unsigned maxIter = 1000;
-  boost::uintmax_t iterCount = maxIter;
-
-  auto root = boost::math::tools::schroder_iterate(
-    rootSearchLambda,
-    rootGuess,
-    lowerBound,
-    upperBound,
-    32, // bits precision
-    iterCount
-  );
-
-  if(iterCount == static_cast<boost::uintmax_t>(maxIter)) {
-    throw std::logic_error("Could not find polygon circumradius!");
-  }
+  std::tie(circumradius, circumcenterInside) = CyclicPolygons::detail::convexCircumradius(edgeLengths);
 
   std::ofstream scanFile(baseName + ".csv"s);
   scanFile << std::fixed << std::setprecision(8);
@@ -81,8 +58,11 @@ void writeAngleAnalysisFiles(
   const double stepSize = (upperBound - lowerBound) / nScanSteps;
   for(unsigned i = 0; i <= nScanSteps; i++) {
     const double currentR = lowerBound + i * stepSize;
-    scanFile << currentR << ", " << detail::centralAnglesDeviation(currentR, edgeLengths) << std::endl;
-
+    scanFile << currentR << ", "
+      << detail::circumcenterInside::centralAnglesDeviation(currentR, edgeLengths, longestEdge)
+      << ", "
+      << detail::circumcenterOutside::centralAnglesDeviation(currentR, edgeLengths, longestEdge)
+      << std::endl;
   }
 
   scanFile.close();
@@ -96,7 +76,7 @@ void writeAngleAnalysisFiles(
     }
   }
   metaFile << std::endl;
-  metaFile << rootGuess << ", " << root << std::endl;
+  metaFile << rootGuess << ", " << circumradius << std::endl;
   metaFile.close();
 }
 
@@ -106,7 +86,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
   const double upperLimit = 5.6; // Fr-Fr single
   const double lowerLimit = 0.7; // H-H single
 
-  const unsigned nTests = 100;
+  const unsigned nTests = 1000;
 
   for(unsigned nSides = 5; nSides < 10; ++nSides) {
     for(unsigned testNumber = 0; testNumber < nTests; testNumber++) {
@@ -116,8 +96,10 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       }
 
       double circumradius;
+      bool circumcenterInside;
+
       auto assignCircumradius = [&]() -> void {
-        circumradius = CyclicPolygons::detail::convexCircumradius(
+        std::tie(circumradius, circumcenterInside) = CyclicPolygons::detail::convexCircumradius(
           edgeLengths
         );
       };
@@ -125,18 +107,29 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       BOOST_CHECK_NO_THROW(assignCircumradius());
       BOOST_CHECK(!std::isnan(circumradius));
 
-      auto centralAnglesDeviation = CyclicPolygons::detail::centralAnglesDeviation(circumradius, edgeLengths);
+      double deviation = (
+        circumcenterInside
+        ? CyclicPolygons::detail::circumcenterInside::centralAnglesDeviation(
+          circumradius,
+          edgeLengths,
+          temple::max(edgeLengths)
+        ) : CyclicPolygons::detail::circumcenterOutside::centralAnglesDeviation(
+          circumradius,
+          edgeLengths,
+          temple::max(edgeLengths)
+        )
+      );
 
-      bool pass = std::fabs(centralAnglesDeviation) < 1e-6;
+      bool pass = std::fabs(deviation) < 1e-6;
 
       BOOST_CHECK_MESSAGE(
         pass,
-        "Central angles deviation for edge lengths " << temple::stringify(edgeLengths)
-          << " is " << centralAnglesDeviation << ", whose norm is not less than 1e-6."
+        "Central angle deviation norm is not smaller than 1e-6 for " << temple::stringify(edgeLengths)
+          << ", circumcenter is inside: " << circumcenterInside << ", deviation: " << deviation
       );
 
       auto internalAngleSumDeviation = temple::sum(
-        CyclicPolygons::detail::generalizedInternalAngles(edgeLengths, circumradius)
+        CyclicPolygons::detail::generalizedInternalAngles(edgeLengths, circumradius, circumcenterInside)
       ) - (nSides - 2) * M_PI;
 
       pass = pass && std::fabs(internalAngleSumDeviation < 1e-6);
@@ -159,20 +152,4 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       }
     }
   }
-}
-
-BOOST_AUTO_TEST_CASE(specificCases) {
-  using namespace CyclicPolygons;
-
-  std::vector<double> edgeLengths = {3.627, 1.4, 1.533, 1.533, 1.4};
-
-  BOOST_CHECK(exists(edgeLengths));
-
-  auto circumradius = CyclicPolygons::detail::convexCircumradius(edgeLengths);
-
-  std::cout << "r: " << circumradius << std::endl;
-
-  auto internalAngles = CyclicPolygons::detail::generalizedInternalAngles(edgeLengths, circumradius);
-
-  std::cout << temple::stringify(internalAngles) << std::endl;
 }

@@ -13,6 +13,7 @@ determinedC <- as.numeric(meta[2,])[2]
 
 x_seq <- values$V1
 y_vals <- values$V2
+outside_vals <- values$V3
 
 pdf(pdfFilename, width=14, height=7)
 par(
@@ -23,8 +24,9 @@ par(
 plot(
   x_seq,
   y_vals,
+  ylim=c(min(y_vals, outside_vals), max(y_vals, outside_vals)),
   type="n",
-  xlab="c",
+  xlab="circumradius",
   ylab=expression(
     paste(
       "central angle sum deviation from ",
@@ -46,6 +48,7 @@ title(edgesString)
 abline(h=0)
 
 lines(x_seq, y_vals)
+lines(x_seq, outside_vals, lty=2)
 
 abline(v=guessC, col="red")
 abline(v=determinedC, col="blue")
