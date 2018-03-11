@@ -18,7 +18,7 @@ message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Compiler version: ${CMAKE_CXX_COMPILER_VERSION}")
 
 # dependencies
-find_package(Boost REQUIRED COMPONENTS unit_test_framework REQUIRED)
+find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options REQUIRED)
 find_package(Eigen3 3.1.1 REQUIRED)
 find_library(symmetry_LIB symmetries ${symmetry_LIB_DIR})
 find_program(
@@ -96,4 +96,8 @@ add_test(NAME test1 COMMAND AssignmentTests)
 # properties target
 add_executable(Properties properties.cpp)
 target_compile_options(Properties PUBLIC -O2 -std=c++14 -Wall -Wpedantic -Wextra)
-target_link_libraries(Properties Assignment)
+target_link_libraries(
+  Properties 
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  Assignment
+)
