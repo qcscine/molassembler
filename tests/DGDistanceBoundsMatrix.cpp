@@ -10,8 +10,8 @@
 #include "temple/Enumerate.h"
 
 BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
-  using namespace MoleculeManip;
-  using namespace MoleculeManip::DistanceGeometry;
+  using namespace molassembler;
+  using namespace molassembler::DistanceGeometry;
 
   unsigned N = 4;
 
@@ -84,9 +84,9 @@ BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
     );
 
     auto molecule = DGDBM::symmetricMolecule(symmetryName);
-    auto info = MoleculeManip::DistanceGeometry::gatherDGInformation(molecule);
+    auto info = molassembler::DistanceGeometry::gatherDGInformation(molecule);
 
-    MoleculeManip::DistanceGeometry::DistanceBoundsMatrix boundsMatrix {
+    molassembler::DistanceGeometry::DistanceBoundsMatrix boundsMatrix {
       molecule,
       info.boundList
     };

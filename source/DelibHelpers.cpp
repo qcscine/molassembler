@@ -2,7 +2,7 @@
 
 #include <Eigen/Geometry>
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DelibHelpers {
 
@@ -132,4 +132,4 @@ double getSignedVolume(
 
 } // namespace DelibHelpers
 
-} // namespace MoleculeManip
+} // namespace molassembler

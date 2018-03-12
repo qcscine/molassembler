@@ -23,7 +23,7 @@
  *   are pointing to is deleted
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 // Pre-declare CycleIterator so that it can be friended
 class CycleIterator;
@@ -159,6 +159,6 @@ unsigned countPlanarityEnforcingBonds(
   const GraphType& graph
 );
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

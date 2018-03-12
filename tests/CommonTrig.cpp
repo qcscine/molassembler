@@ -16,7 +16,7 @@ bool isApproxAbs(
 
 
 BOOST_AUTO_TEST_CASE(randomExamples) {
-  using namespace MoleculeManip::CommonTrig;
+  using namespace molassembler::CommonTrig;
 
   BOOST_CHECK(
     isApproxAbs(
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(randomExamples) {
 }
 
 BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
-  using namespace MoleculeManip::CommonTrig;
+  using namespace molassembler::CommonTrig;
 
   for(unsigned testNum = 0; testNum < 100; ++testNum) {
     const auto sideLengths = temple::random.getN<double>(1.4, 5.6, 3);

@@ -10,7 +10,7 @@
  * manner. 
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /*!
  * A class constructed from a Molecule that captures bonding in a boolean

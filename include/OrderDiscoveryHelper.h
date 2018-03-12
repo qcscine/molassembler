@@ -22,7 +22,7 @@
  * for a set of values.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 template<typename T>
 class OrderDiscoveryHelper {
@@ -420,6 +420,6 @@ public:
   }
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

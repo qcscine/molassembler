@@ -5,7 +5,7 @@
 #include "boost/graph/graph_concepts.hpp"
 
 // Forward-declare ImplicitGraph
-namespace MoleculeManip {
+namespace molassembler {
 namespace DistanceGeometry {
 class ImplicitGraph;
 }

@@ -17,7 +17,7 @@
 #include "MolGraphWriter.h"
 #include "RankingTree.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /* Molecule implementation ---------------------------------------------------*/
 /* "Global" options */
@@ -1253,11 +1253,11 @@ bool Molecule::operator != (const Molecule& other) const {
   return !(*this == other);
 }
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 std::ostream& operator << (
   std::ostream& os,
-  const MoleculeManip::Molecule& molecule
+  const molassembler::Molecule& molecule
 ) {
   if(!molecule.getStereocenterList().empty()) {
     os << "Stereocenter information:\n";

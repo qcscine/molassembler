@@ -11,7 +11,7 @@
 #include <fstream>
 #include <iostream>
 
-namespace MoleculeManip {
+namespace molassembler {
 
 // Must declare constexpr static member without definition!
 constexpr decltype(RankingTree::rootIndex) RankingTree::rootIndex;
@@ -3186,4 +3186,4 @@ std::string RankingTree::_adaptMolGraph(std::string molGraph) {
 }
 
 
-} // namespace MoleculeManip
+} // namespace molassembler

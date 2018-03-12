@@ -27,10 +27,10 @@
  *   expressed as pre- and postconditions for function calls?
  */
 
-using namespace MoleculeManip;
+using namespace molassembler;
 using namespace std::string_literals;
 
-namespace MoleculeManip {
+namespace molassembler {
 
 struct MoleculeValidator {
   static boost::optional<std::string> everyAdjacencyHasReverse(
@@ -85,7 +85,7 @@ std::vector<
   MoleculeValidator::everyAdjacencyHasReverse,
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 // Create a random connected Molecule
 struct ALFixture {

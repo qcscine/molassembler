@@ -7,7 +7,7 @@
 #include "StdlibTypeAlgorithms.h"
 
 BOOST_AUTO_TEST_CASE( read_mol ) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   std::vector<std::string> files {
     "../tests/mol_files/2,2-dimethybutane.mol",
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
 
 BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
   // Molecule should be trivially usable on the stack
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   // Default constructor
   Molecule f, g;
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
 const std::string directoryPrefix = "../tests/mol_files/ranking_tree_molecules/"s;
 
 BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
   IO::MOLFileHandler molReader;
 
   auto pseudocenter = molReader.readSingle(

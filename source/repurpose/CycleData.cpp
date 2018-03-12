@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /* Constructors */
 CycleData::CycleData(const GraphType& sourceGraph) 
@@ -276,4 +276,4 @@ CycleData::iterator CycleData::end() const {
   };
 }
 
-} // namespace MoleculeManip
+} // namespace molassembler

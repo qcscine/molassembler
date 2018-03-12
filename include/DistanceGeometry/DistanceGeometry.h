@@ -11,7 +11,7 @@
  * entire Distance Geometry scheme.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 //! Distance geometry-related classes and functions
 namespace DistanceGeometry {
@@ -35,6 +35,6 @@ enum class Partiality {
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

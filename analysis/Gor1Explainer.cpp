@@ -18,7 +18,7 @@
 
 #include <random>
 
-using namespace MoleculeManip;
+using namespace molassembler;
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';
@@ -29,7 +29,7 @@ std::ostream& nl(std::ostream& os) {
  * - Alter to specialized SPG Gor1 variant
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -324,7 +324,7 @@ public:
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 int main(int argc, char* argv[]) {
   using namespace std::string_literals;

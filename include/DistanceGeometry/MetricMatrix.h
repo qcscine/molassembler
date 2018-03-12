@@ -12,7 +12,7 @@
  * matrix.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -46,6 +46,6 @@ public:
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

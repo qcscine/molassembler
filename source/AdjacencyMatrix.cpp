@@ -1,6 +1,6 @@
 #include "AdjacencyMatrix.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 AdjacencyMatrix::AdjacencyMatrix(const Molecule& molecule) 
 : N(molecule.numAtoms()) {
@@ -37,4 +37,4 @@ bool AdjacencyMatrix::operator () (
 }
 
 
-} // namespace MoleculeManip
+} // namespace molassembler

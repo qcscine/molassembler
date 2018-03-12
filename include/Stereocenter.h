@@ -17,7 +17,7 @@
  * conformational isomery on the graph level.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 // Predeclaration
 namespace Stereocenters {
@@ -127,24 +127,24 @@ public:
 
 /* Operators */
   //!  Ostream operator for debugging
-  friend std::basic_ostream<char>& MoleculeManip::operator << (
+  friend std::basic_ostream<char>& molassembler::operator << (
     std::basic_ostream<char>& os,
-    const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& stereocenterPtr
+    const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& stereocenterPtr
   );
 };
 
 bool compareStereocenterEqual(
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& a,
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& a,
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& b
 );
 
 bool compareStereocenterLessThan(
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& a,
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& a,
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& b
 );
 
 } // namespace Stereocenters
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

@@ -21,7 +21,7 @@ using namespace std::string_literals;
  * 'assignments'.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 // Forward-declare Molecule
 class Molecule;
@@ -299,14 +299,14 @@ public:
   bool operator == (const CNStereocenter& other) const;
   bool operator < (const CNStereocenter& other) const;
 
-  friend std::basic_ostream<char>& MoleculeManip::operator << (
+  friend std::basic_ostream<char>& molassembler::operator << (
     std::basic_ostream<char>& os,
-    const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& stereocenterPtr
+    const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& stereocenterPtr
   );
 };
 
 } // namespace Stereocenters
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

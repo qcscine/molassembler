@@ -2,7 +2,7 @@
 #include "DistanceGeometry/Error.h"
 #include <cassert>
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -187,4 +187,4 @@ unsigned DistanceBoundsMatrix::N() const {
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler

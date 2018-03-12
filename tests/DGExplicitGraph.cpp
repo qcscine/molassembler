@@ -29,7 +29,7 @@ UnsignedType right(UnsignedType a) {
 }
 
 BOOST_AUTO_TEST_CASE(nonVisualTests) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   boost::filesystem::path filesPath("../tests/mol_files/stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;

@@ -1,9 +1,11 @@
-# Molecular Graph library
+# Molassembler library
 ## Overview
 
-Provides the necessary functionality to represent a chemical molecule as a
-graph, modify it in graph space, and generate coordinates from graphs. Idealizes
-local geometries onto every non-terminal atom in the graph.
+Molassembler is a C++ library that aims to facilitate crossings between
+Cartesian and graph representations of chemical molecules. It provides the
+necessary functionality to represent a chemical molecule as a graph, modify it
+in graph space, and generate coordinates from graphs. Local geometries are
+modelled onto every non-terminal atom in the graph.
 
 
 ## Features
@@ -30,7 +32,7 @@ local geometries onto every non-terminal atom in the graph.
 
 - Ranking algorithms are nearly fully IUPAC compliant.
 - Cycle detection using Unique Ring Families
-- Distance Geometry algorithm to generate three-dimensional representation
+- Distance Geometry algorithm to generate Cartesian coordinates
 
   - Unassigned stereocenters are randomly assigned from relative statistical
     occurrence weights.
@@ -84,8 +86,8 @@ Library dependencies:
 - dlib: BFGS solver
 - RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
 - Delib: Common chemical exchange types
-- ConstexprMagic: constexpr algorithms and data structures
-- TemplateMagic: randomness, cache, composability improvement shorthands
+- constable: constexpr algorithms and data structures
+- temple: randomness, cache, composability improvement shorthands
 - Symmetry information library: constexpr properties of symmetries
 - Unique Assignment library: Stereopermutation of ligands in arbitrary symmetries
 - Cyclic polygons library: Determination of planar cyclic polygon internal
@@ -130,4 +132,3 @@ You can build the documentation by running `doxygen` in the main directory.
 [^2]: Kolodzik, A.; Urbaczek, S.; Rarey, M. Unique Ring Families: A Chemically
   Meaningful Description of Molecular Ring Topologies. J. Chem. Inf. Model.,
   2012, 52 (8), pp 2013–2021
-

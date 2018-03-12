@@ -95,9 +95,9 @@ struct Gor1Functor {
 };
 
 // TODO Remove this, make a specialization of the Gor1Functor
-std::vector<double> Gor1SPG (const MoleculeManip::DistanceGeometry::ImplicitGraph& graph, unsigned sourceVertex) {
+std::vector<double> Gor1SPG (const molassembler::DistanceGeometry::ImplicitGraph& graph, unsigned sourceVertex) {
   /* Prep */
-  using Graph = MoleculeManip::DistanceGeometry::ImplicitGraph;
+  using Graph = molassembler::DistanceGeometry::ImplicitGraph;
   using Vertex = typename boost::graph_traits<Graph>::vertex_descriptor;
 
   unsigned N = boost::num_vertices(graph);
@@ -131,11 +131,11 @@ std::vector<double> Gor1SPG (const MoleculeManip::DistanceGeometry::ImplicitGrap
 }
 
 struct DBM_FW_Functor {
-  const MoleculeManip::DistanceGeometry::DistanceBoundsMatrix& boundsRef;
+  const molassembler::DistanceGeometry::DistanceBoundsMatrix& boundsRef;
 
-  DBM_FW_Functor(const MoleculeManip::DistanceGeometry::DistanceBoundsMatrix& bounds) : boundsRef(bounds) {}
+  DBM_FW_Functor(const molassembler::DistanceGeometry::DistanceBoundsMatrix& bounds) : boundsRef(bounds) {}
 
-  MoleculeManip::DistanceGeometry::DistanceBoundsMatrix operator() () {
+  molassembler::DistanceGeometry::DistanceBoundsMatrix operator() () {
     auto boundsCopy = boundsRef;
 
     boundsCopy.smooth();
@@ -156,7 +156,7 @@ UnsignedType right(UnsignedType a) {
 
 BOOST_AUTO_TEST_CASE(conceptTests) {
 
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   boost::filesystem::path filesPath("../tests/mol_files/stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
   using namespace std::chrono;
 
   // DBM + FW
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   IO::MOLFileHandler molHandler;
   boost::filesystem::path filesPath("../tests/mol_files/stereocenter_detection_molecules");

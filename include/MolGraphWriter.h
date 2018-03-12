@@ -9,7 +9,7 @@
 
 #include "common_typedefs.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 // Helper class to write the Graph as Graphviz output
 struct MolGraphWriter {
@@ -36,6 +36,6 @@ struct MolGraphWriter {
   void operator() (std::ostream& os, const EdgeIndexType& edgeIndex) const;
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

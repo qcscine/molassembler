@@ -24,7 +24,7 @@
  *   information or use them to check against the CTAB
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 //! Input and output
 namespace IO {
@@ -397,6 +397,6 @@ public:
 
 } // namespace IO
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

@@ -15,8 +15,8 @@
 #include <iomanip>
 
 using namespace std::string_literals;
-using namespace MoleculeManip;
-using namespace MoleculeManip::DistanceGeometry;
+using namespace molassembler;
+using namespace molassembler::DistanceGeometry;
 
 const std::string partialityChoices = 
   "  0 - Four-Atom Metrization\n"

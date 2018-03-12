@@ -10,7 +10,7 @@
  * Specifies the refinement minimization problem for the dlib library.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -629,6 +629,6 @@ public:
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

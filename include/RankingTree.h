@@ -61,7 +61,7 @@
  * that atom's direct substituents according to IUPAC-like sequence rules.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /*!
  * Central class for unified IUPAC-like ranking of organic and inorganic
@@ -1135,6 +1135,6 @@ public:
   const TreeGraphType& getGraph() const;
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

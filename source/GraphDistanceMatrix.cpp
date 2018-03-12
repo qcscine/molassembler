@@ -1,7 +1,7 @@
 #include "GraphDistanceMatrix.h"
 #include "StdlibTypeAlgorithms.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 GraphDistanceMatrix::GraphDistanceMatrix(const AdjacencyMatrix& adjacencyMatrix)
 : N(adjacencyMatrix.N) {
@@ -166,4 +166,4 @@ unsigned GraphDistanceMatrix::operator () (
 }
 
 
-} // namespace MoleculeManip
+} // namespace molassembler

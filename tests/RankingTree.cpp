@@ -19,7 +19,7 @@
  *   ranking is correct!
  */
 
-using namespace MoleculeManip;
+using namespace molassembler;
 
 bool checkIsomorphicExpansion(
   const std::string& fileName,

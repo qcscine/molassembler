@@ -12,7 +12,7 @@
  * library.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /*! 
  * Central class of the library, modeling a molecular graph with all state.
@@ -318,11 +318,11 @@ public:
   friend class RankingTree;
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 std::ostream& operator << (
   std::ostream& os,
-  const MoleculeManip::Molecule& molecule
+  const molassembler::Molecule& molecule
 );
 
 #endif

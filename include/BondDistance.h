@@ -12,7 +12,7 @@
  * Bond distance modelling functions.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace Bond {
 
@@ -38,7 +38,7 @@ double calculateBondDistance(
 
 } // namespace Bond
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif
 

@@ -24,7 +24,7 @@
  *   type-conversion copying! Custom comparison operators could get rid of that
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -153,7 +153,7 @@ public:
   }
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 } // namespace DistanceGeometry
 

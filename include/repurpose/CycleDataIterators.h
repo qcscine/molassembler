@@ -15,7 +15,7 @@
  *   are pointing to is deleted
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 class CycleData {
 private:
@@ -106,6 +106,6 @@ public:
   unsigned numRelevantCycles() const;
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

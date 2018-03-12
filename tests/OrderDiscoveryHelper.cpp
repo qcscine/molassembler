@@ -5,7 +5,7 @@
 
 #include "OrderDiscoveryHelper.h"
 
-using namespace MoleculeManip;
+using namespace molassembler;
 using namespace std::string_literals;
 
 template<typename T>

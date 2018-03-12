@@ -17,7 +17,7 @@
 #include "CommonTrig.h"
 #include "Molecule.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace GraphFeatures {
 
@@ -332,6 +332,6 @@ public:
 
 } // namespace GraphFeatures
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

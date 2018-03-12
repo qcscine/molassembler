@@ -10,7 +10,7 @@
 #include "DistanceGeometry/generateConformation.h"
 
 BOOST_AUTO_TEST_CASE(transSpanningImpossibilities) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   IO::MOLFileHandler molHandler;
   auto mol = molHandler.readSingle("../tests/mol_files/inorganics/multidentate/Co(ox)3.mol");
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilities) {
 }
 
 void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   std::cout << "Processing " << filePath.stem().string() << std::endl;
 

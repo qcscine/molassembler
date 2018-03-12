@@ -13,7 +13,7 @@
  * start the DG procedure.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
@@ -77,6 +77,6 @@ outcome::result<Delib::PositionCollection> generateConformation(const Molecule& 
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

@@ -15,7 +15,7 @@
  * - Use the static const MolGraphWriter coloring maps
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -1148,4 +1148,4 @@ double MoleculeSpatialModel::spiroCrossAngle(const double& alpha, const double& 
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler

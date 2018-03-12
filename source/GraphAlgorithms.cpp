@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace GraphAlgorithms {
 
@@ -170,4 +170,4 @@ RemovalSafetyData getRemovalSafetyData(const GraphType& graph) {
 
 } // namespace GraphAlgorithms
 
-} // namespace MoleculeManip
+} // namespace molassembler

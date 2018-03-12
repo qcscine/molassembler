@@ -13,7 +13,7 @@
  * geometry determinations.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 //! Information on particular element types
 namespace AtomInfo {
@@ -152,6 +152,6 @@ double vdwRadius(const Delib::ElementType& elementType);
 
 } // namespace AtomInfo
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /* Constructors */
 CycleData::CycleData(const GraphType& sourceGraph) 
@@ -332,4 +332,4 @@ unsigned countPlanarityEnforcingBonds(
   return count;
 }
 
-} // namespace MoleculeManip
+} // namespace molassembler

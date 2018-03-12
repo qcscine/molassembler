@@ -12,7 +12,7 @@
  * Central types required across the entire project are defined here.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /* Global typedefs */
 /*!
@@ -215,6 +215,6 @@ using EdgeIndexType = GraphType::edge_descriptor;
 //! Descriptive name for dlib indices
 using dlibIndexType = long;
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

@@ -5,7 +5,7 @@
  * Defines a compile-time constant boolean indicating the build type.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 #ifdef NDEBUG
 constexpr bool buildTypeIsDebug = false;
@@ -13,6 +13,6 @@ constexpr bool buildTypeIsDebug = false;
 constexpr bool buildTypeIsDebug = true;
 #endif
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

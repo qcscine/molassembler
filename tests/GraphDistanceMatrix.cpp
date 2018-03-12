@@ -15,7 +15,7 @@
  */
 
 BOOST_AUTO_TEST_CASE( GraphDistanceMatrixTests ) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   Edges edges {
     {{0, 1}, BondType::Single},

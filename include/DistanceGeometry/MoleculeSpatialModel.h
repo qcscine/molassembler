@@ -13,7 +13,7 @@
  * contains the class declaration for that spatial model.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -153,6 +153,6 @@ public:
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

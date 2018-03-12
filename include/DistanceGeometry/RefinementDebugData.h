@@ -13,7 +13,7 @@
  * debugging of DG refinement.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -56,6 +56,6 @@ struct RefinementData {
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

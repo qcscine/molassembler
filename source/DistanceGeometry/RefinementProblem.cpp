@@ -1,6 +1,6 @@
 #include "DistanceGeometry/RefinementProblem.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -82,5 +82,5 @@ namespace errfDetail {
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 

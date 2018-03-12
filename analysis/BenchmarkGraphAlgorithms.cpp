@@ -18,7 +18,7 @@
 
 #include <chrono>
 
-using namespace MoleculeManip;
+using namespace molassembler;
 
 constexpr size_t nExperiments = 10;
 
@@ -134,7 +134,7 @@ void benchmark(
   DistanceGeometry::Partiality partiality,
   IO::MOLFileHandler& molHandler
 ) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   Molecule sampleMol = molHandler.readSingle(
     filePath.string()
@@ -264,7 +264,7 @@ const std::string partialityChoices =
   "  2 - All (default)\n";
 
 int main(int argc, char* argv[]) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");

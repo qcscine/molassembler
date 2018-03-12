@@ -26,9 +26,9 @@ struct vertex_and_edge_list_plus_incidence_graph_tag
     virtual incidence_graph_tag {};
 
 template<>
-struct graph_traits<const MoleculeManip::DistanceGeometry::ImplicitGraph> {
+struct graph_traits<const molassembler::DistanceGeometry::ImplicitGraph> {
   // Shortcut typedef
-  using T = MoleculeManip::DistanceGeometry::ImplicitGraph;
+  using T = molassembler::DistanceGeometry::ImplicitGraph;
 
   using vertex_descriptor = T::VertexDescriptor;
   using edge_descriptor = T::EdgeDescriptor;
@@ -51,9 +51,9 @@ struct graph_traits<const MoleculeManip::DistanceGeometry::ImplicitGraph> {
 };
 
 template<>
-struct graph_traits<MoleculeManip::DistanceGeometry::ImplicitGraph> {
+struct graph_traits<molassembler::DistanceGeometry::ImplicitGraph> {
   // Shortcut typedef
-  using T = MoleculeManip::DistanceGeometry::ImplicitGraph;
+  using T = molassembler::DistanceGeometry::ImplicitGraph;
 
   using vertex_descriptor = T::VertexDescriptor;
   using edge_descriptor = T::EdgeDescriptor;
@@ -78,16 +78,16 @@ struct graph_traits<MoleculeManip::DistanceGeometry::ImplicitGraph> {
 /* edge_weight_t property_map */
 
 template<>
-struct property_map<MoleculeManip::DistanceGeometry::ImplicitGraph, edge_weight_t> {
-  using T = MoleculeManip::DistanceGeometry::ImplicitGraph;
+struct property_map<molassembler::DistanceGeometry::ImplicitGraph, edge_weight_t> {
+  using T = molassembler::DistanceGeometry::ImplicitGraph;
 
   using type = T::EdgeWeightMap;
   using const_type = const T::EdgeWeightMap;
 };
 
 template<>
-struct property_traits<MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeWeightMap> {
-  using T = MoleculeManip::DistanceGeometry::ImplicitGraph;
+struct property_traits<molassembler::DistanceGeometry::ImplicitGraph::EdgeWeightMap> {
+  using T = molassembler::DistanceGeometry::ImplicitGraph;
 
   using value_type = double;
   using reference = double;
@@ -96,8 +96,8 @@ struct property_traits<MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeWeigh
 };
 
 template<>
-struct property_traits<const MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeWeightMap> {
-  using T = MoleculeManip::DistanceGeometry::ImplicitGraph;
+struct property_traits<const molassembler::DistanceGeometry::ImplicitGraph::EdgeWeightMap> {
+  using T = molassembler::DistanceGeometry::ImplicitGraph;
 
   using value_type = double;
   using reference = double;
@@ -108,16 +108,16 @@ struct property_traits<const MoleculeManip::DistanceGeometry::ImplicitGraph::Edg
 /* vertex_index_t property map */
 
 template<>
-struct property_map<MoleculeManip::DistanceGeometry::ImplicitGraph, vertex_index_t> {
-  using T = MoleculeManip::DistanceGeometry::ImplicitGraph;
+struct property_map<molassembler::DistanceGeometry::ImplicitGraph, vertex_index_t> {
+  using T = molassembler::DistanceGeometry::ImplicitGraph;
 
   using type = T::VertexIndexMap;
   using const_type = const T::VertexIndexMap;
 };
 
 template<>
-struct property_traits<MoleculeManip::DistanceGeometry::ImplicitGraph::VertexIndexMap> {
-  using T = MoleculeManip::DistanceGeometry::ImplicitGraph;
+struct property_traits<molassembler::DistanceGeometry::ImplicitGraph::VertexIndexMap> {
+  using T = molassembler::DistanceGeometry::ImplicitGraph;
 
   using value_type = graph_traits<T>::vertex_descriptor;
   using reference = graph_traits<T>::vertex_descriptor;
@@ -126,8 +126,8 @@ struct property_traits<MoleculeManip::DistanceGeometry::ImplicitGraph::VertexInd
 };
 
 template<>
-struct property_traits<const MoleculeManip::DistanceGeometry::ImplicitGraph::VertexIndexMap> {
-  using T = MoleculeManip::DistanceGeometry::ImplicitGraph;
+struct property_traits<const molassembler::DistanceGeometry::ImplicitGraph::VertexIndexMap> {
+  using T = molassembler::DistanceGeometry::ImplicitGraph;
 
   using value_type = graph_traits<T>::vertex_descriptor;
   using reference = graph_traits<T>::vertex_descriptor;

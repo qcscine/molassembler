@@ -1,7 +1,7 @@
 #include "MolGraphWriter.h"
 #include "Delib/ElementInfo.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /* Constructor */
 MolGraphWriter::MolGraphWriter(const GraphType* passGraphPtr) : graphPtr(passGraphPtr) {}
@@ -109,4 +109,4 @@ const std::map<BondType, std::string> MolGraphWriter::bondTypeDisplayString {
   {BondType::Eta, R"(style = "dotted")"}
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler

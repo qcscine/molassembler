@@ -8,7 +8,7 @@
 #include <Eigen/Geometry>
 
 BOOST_AUTO_TEST_CASE(dihedralTests) {
-  using namespace MoleculeManip::DelibHelpers;
+  using namespace molassembler::DelibHelpers;
 
   Delib::PositionCollection positions;
   positions.push_back(

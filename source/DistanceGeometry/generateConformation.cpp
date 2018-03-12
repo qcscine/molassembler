@@ -29,7 +29,7 @@
  *   - Sequence randomization
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -889,4 +889,4 @@ outcome::result<Delib::PositionCollection> generateConformation(const Molecule& 
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler

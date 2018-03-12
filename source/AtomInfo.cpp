@@ -1,6 +1,6 @@
 #include "AtomInfo.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace AtomInfo {
 
@@ -298,4 +298,4 @@ double vdwRadius(const Delib::ElementType& elementType) {
 
 } // namespace AtomInfo
 
-} // namespace MoleculeManip
+} // namespace molassembler

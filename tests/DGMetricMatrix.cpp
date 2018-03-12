@@ -15,8 +15,8 @@
 
 #include <Eigen/Eigenvalues>
 
-using namespace MoleculeManip;
-using namespace MoleculeManip::DistanceGeometry;
+using namespace molassembler;
+using namespace molassembler::DistanceGeometry;
 
 Eigen::MatrixXd reorder(
   const Eigen::MatrixXd& sourceMatrix,

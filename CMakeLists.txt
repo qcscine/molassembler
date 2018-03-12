@@ -13,7 +13,7 @@ set(RDL_LIBRARY_DIR "${BASE_DIR}/lib/cpp/RingDecomposerLib/build/src/RingDecompo
 set(RDL_INCLUDE_DIR "${BASE_DIR}/lib/cpp/RingDecomposerLib/src")
 
 # project declaration
-project(Molecule)
+project(molassembler)
 enable_testing()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
@@ -162,7 +162,7 @@ set(SOURCES_all
 )
 
 # specify library target
-add_library(molecule STATIC ${SOURCES_all} ${HEADERS_all})
+add_library(molassembler STATIC ${SOURCES_all} ${HEADERS_all})
 
 # Compilation options
 if( UNIX )
@@ -173,18 +173,18 @@ endif()
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release") 
   message(STATUS "Selected release build")
   # no debug information, disable assert
-  target_compile_definitions(molecule PRIVATE NDEBUG)
-  target_compile_options(molecule PUBLIC -O3 -march=native)
+  target_compile_definitions(molassembler PRIVATE NDEBUG)
+  target_compile_options(molassembler PUBLIC -O3 -march=native)
 else() # assume Debug
   message(STATUS "Assume debug build")
-  target_compile_options(molecule PUBLIC -g)
-  # target_compile_options(molecule PUBLIC -g -fsanitize=address -fsanitize=undefined)
-  # set_target_properties(molecule PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
+  target_compile_options(molassembler PUBLIC -g)
+  # target_compile_options(molassembler PUBLIC -g -fsanitize=address -fsanitize=undefined)
+  # set_target_properties(molassembler PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
 endif()
 
 # library properties
 set_target_properties(
-  molecule PROPERTIES
+  molassembler PROPERTIES
   CXX_STANDARD 14
   CXX_STANDARD_REQUIRED ON
   COMPILE_FLAGS ${WARNING_FLAGS}
@@ -193,13 +193,13 @@ set_target_properties(
 # enable clang-tidy warnings
 if(CLANG_TIDY_EXE)
   set_target_properties(
-    molecule PROPERTIES
+    molassembler PROPERTIES
     CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
   )
 endif()
 
 # Linking
-target_link_libraries(molecule Delib::DelibStatic assignment symmetry blas rdl)
+target_link_libraries(molassembler Delib::DelibStatic assignment symmetry blas rdl)
 
 # Testing targets
 # get all test cpp files
@@ -233,7 +233,7 @@ foreach(filename ${testFiles})
     Delib::DelibStatic
     assignment
     symmetry
-    molecule
+    molassembler
     blas
     rdl
   )
@@ -267,7 +267,7 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
       Delib::DelibStatic
       assignment
       symmetry
-      molecule
+      molassembler
       blas
       rdl
     )
@@ -288,7 +288,7 @@ else()
     Delib::DelibStatic
     assignment
     symmetry
-    molecule
+    molassembler
     blas
     rdl
   )

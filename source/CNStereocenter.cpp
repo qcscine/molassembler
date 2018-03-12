@@ -20,7 +20,7 @@
 
 #include <iomanip>
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace Stereocenters {
 
@@ -1434,4 +1434,4 @@ bool CNStereocenter::operator < (const CNStereocenter& other) const {
 
 } // namespace Stereocenters
 
-} // namespace MoleculeManip
+} // namespace molassembler

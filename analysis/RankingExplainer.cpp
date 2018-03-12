@@ -15,7 +15,7 @@
 
 #include <random>
 
-using namespace MoleculeManip;
+using namespace molassembler;
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';

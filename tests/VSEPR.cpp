@@ -6,8 +6,8 @@
 
 #include "LocalGeometryModel.h"
 
-using namespace MoleculeManip;
-using namespace MoleculeManip::LocalGeometry;
+using namespace molassembler;
+using namespace molassembler::LocalGeometry;
 
 using TestCaseType = std::tuple<
   std::string, // a Name for the current compound

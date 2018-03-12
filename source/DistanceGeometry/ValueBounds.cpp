@@ -4,7 +4,7 @@
 #include <cassert>
 #include <utility>
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -36,6 +36,6 @@ ValueBounds& ValueBounds::operator = (ValueBounds&& other) {
   return *this;
 }
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 } // namespace DistanceGeometry

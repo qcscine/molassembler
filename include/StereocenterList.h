@@ -12,7 +12,7 @@
  * in a molecule.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 class StereocenterList {
 public:

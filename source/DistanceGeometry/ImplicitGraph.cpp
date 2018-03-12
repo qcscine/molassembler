@@ -16,7 +16,7 @@
 
 #include "DistanceGeometry/Error.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -808,4 +808,4 @@ ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler

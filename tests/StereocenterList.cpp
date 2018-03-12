@@ -5,7 +5,7 @@
 #include "StereocenterList.h"
 #include "BoundsFromSymmetry.h"
 
-using namespace MoleculeManip;
+using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE( basicTests ) {
   auto mol = DGDBM::symmetricMolecule(Symmetry::Name::Octahedral);

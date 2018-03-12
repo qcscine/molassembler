@@ -9,7 +9,7 @@
 
 #include "IO.h"
 
-void testCycles(const MoleculeManip::CycleData& cycleData) {
+void testCycles(const molassembler::CycleData& cycleData) {
 
   // Check that maxCycleSize works properly
   std::vector<unsigned> cycleSizes;
@@ -63,7 +63,7 @@ void testCycles(const MoleculeManip::CycleData& cycleData) {
 }
 
 void readAndDecompose(const boost::filesystem::path& filePath) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   std::cout << "Processing " << filePath.stem().string() << std::endl;
 

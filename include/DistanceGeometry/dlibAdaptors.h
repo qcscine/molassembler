@@ -16,7 +16,7 @@
  * spatial dimension is penalized and compressed out.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -135,6 +135,6 @@ struct iterationOrGradientNormStopStrategy {
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

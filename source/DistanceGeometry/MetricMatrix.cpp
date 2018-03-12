@@ -7,8 +7,8 @@
  * - Is numerical accuracy maybe an issue somewhere here?
  */
 
-// C++17 alter to namespace MoleculeManip::DistanceGeometry {
-namespace MoleculeManip {
+// C++17 alter to namespace molassembler::DistanceGeometry {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -165,4 +165,4 @@ std::ostream& operator << (
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler

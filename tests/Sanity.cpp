@@ -12,8 +12,8 @@
 #include "temple/Random.h"
 
 using namespace std::string_literals;
-using namespace MoleculeManip;
-using namespace MoleculeManip::DistanceGeometry;
+using namespace molassembler;
+using namespace molassembler::DistanceGeometry;
 
 void explainDifference(
   const StereocenterList& a,

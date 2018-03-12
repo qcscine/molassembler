@@ -13,7 +13,7 @@
  * Contains the implementation of a class that stores distance bounds.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
@@ -158,6 +158,6 @@ public:
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

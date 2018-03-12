@@ -15,7 +15,7 @@
  * - document -> where is this used and how?
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /*!
  * Data struct to store the ranking information of substituents around a
@@ -38,6 +38,6 @@ struct RankingInformation {
   LinksType links;
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

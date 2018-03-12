@@ -7,7 +7,7 @@
 #include "DelibHelpers.h"
 #include "EZStereocenter.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace Stereocenters {
 
@@ -599,4 +599,4 @@ const double EZStereocenter::_dihedralAngleVariance = constable::Math::toRadians
 
 } // namespace Stereocenters
 
-} // namespace MoleculeManip
+} // namespace molassembler

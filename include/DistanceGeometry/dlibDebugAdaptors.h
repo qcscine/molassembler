@@ -25,7 +25,7 @@
  *   steps that they should write debug data to
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -179,6 +179,6 @@ struct debugIterationOrGradientNormStopStrategy {
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

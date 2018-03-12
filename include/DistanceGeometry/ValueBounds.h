@@ -6,7 +6,7 @@
  * Defines a data struct for storing a numeric interval.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -26,6 +26,6 @@ struct ValueBounds {
 
 } // namespace DistanceGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

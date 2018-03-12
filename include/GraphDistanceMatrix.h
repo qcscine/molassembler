@@ -9,7 +9,7 @@
  * topographic distances between vertices in the graph.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /*!
  * Captures the topographic distances between vertices in the graph, i.e. by how

@@ -7,7 +7,7 @@
 #include "BoundsFromSymmetry.h"
 
 BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
-  using namespace MoleculeManip::DistanceGeometry;
+  using namespace molassembler::DistanceGeometry;
 
   for(const auto& symmetryName: Symmetry::allNames) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);

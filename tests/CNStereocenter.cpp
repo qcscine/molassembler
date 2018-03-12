@@ -45,8 +45,8 @@ std::string condenseMap(const std::map<T, U>& map) {
 }
 
 BOOST_AUTO_TEST_CASE(glueTests) {
-  using namespace MoleculeManip;
-  using namespace MoleculeManip::Stereocenters;
+  using namespace molassembler;
+  using namespace molassembler::Stereocenters;
   using namespace std::string_literals;
 
   // Canonicalization and canon-char generation
@@ -155,8 +155,8 @@ BOOST_AUTO_TEST_CASE(glueTests) {
 }
 
 BOOST_AUTO_TEST_CASE(stateCorrectness) {
-  using namespace MoleculeManip;
-  using namespace MoleculeManip::Stereocenters;
+  using namespace molassembler;
+  using namespace molassembler::Stereocenters;
 
   Log::particulars.insert(Log::Particulars::CNStereocenterStatePropagation);
 
@@ -226,8 +226,8 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
 }
 
 BOOST_AUTO_TEST_CASE(adhesiveTests) {
-  using namespace MoleculeManip::Stereocenters::adhesive;
-  using namespace MoleculeManip;
+  using namespace molassembler::Stereocenters::adhesive;
+  using namespace molassembler;
   using NestedVector = std::vector<
     std::vector<AtomIndexType>
   >;

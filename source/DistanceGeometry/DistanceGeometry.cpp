@@ -1,6 +1,6 @@
 #include "DistanceGeometry/DistanceGeometry.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DistanceGeometry {
 
@@ -45,7 +45,7 @@ ChiralityConstraint::ChiralityConstraint(
   assert(lower <= upper);
 }
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 } // namespace DistanceGeometry
 

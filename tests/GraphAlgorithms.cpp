@@ -9,7 +9,7 @@
 #include "IO.h"
 #include "temple/Stringify.h"
 
-using namespace MoleculeManip;
+using namespace molassembler;
 
 inline std::ostream& nl(std::ostream& os) {
   os << '\n';

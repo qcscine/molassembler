@@ -5,8 +5,8 @@
 #include "EZStereocenter.h"
 
 BOOST_AUTO_TEST_CASE(stateConsistency) {
-  using namespace MoleculeManip;
-  using namespace MoleculeManip::Stereocenters;
+  using namespace molassembler;
+  using namespace molassembler::Stereocenters;
   
   RankingInformation left, right;
   left.sortedSubstituents = {{0}, {1}};

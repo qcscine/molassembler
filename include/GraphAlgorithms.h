@@ -16,7 +16,7 @@
  * relevant.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 // Forward-declare CycleData
 class CycleData;
@@ -179,6 +179,6 @@ RemovalSafetyData getRemovalSafetyData(const GraphType& graph);
 
 } // namespace GraphAlgorithms
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

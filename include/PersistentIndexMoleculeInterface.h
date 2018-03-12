@@ -8,7 +8,7 @@
  * Defines a proxy class that aids in atom index book-keeping. 
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /*!
  * Book-keeping helper class that keeps track of deleted atom indices so that
@@ -103,7 +103,7 @@ AtomIndexType PersistentIndicesInterface::_toExternalIndex(const AtomIndexType& 
   return returnIndex;
 }
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif
 

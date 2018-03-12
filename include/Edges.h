@@ -20,7 +20,7 @@
  *   which is not-so-nice.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /*!
  * A small-time graph representation class whose underlying data is essentially
@@ -142,6 +142,6 @@ public:
 
 };
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

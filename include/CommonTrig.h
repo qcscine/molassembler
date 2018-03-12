@@ -11,7 +11,7 @@
  *
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace CommonTrig {
 
@@ -85,6 +85,6 @@ double dihedralLength(
 
 } // namespace CommonTrig
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

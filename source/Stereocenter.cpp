@@ -3,11 +3,11 @@
 #include "CNStereocenter.h"
 #include "EZStereocenter.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 std::basic_ostream<char>& operator << (
   std::basic_ostream<char>& os,
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& stereocenterPtr
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& stereocenterPtr
 ) {
   os << stereocenterPtr -> info();
   return os;
@@ -16,8 +16,8 @@ std::basic_ostream<char>& operator << (
 namespace Stereocenters {
 
 bool compareStereocenterEqual(
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& a,
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& a,
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& b
 ) {
   if(a -> type() == b -> type()) {
     if(a -> type() == Type::CNStereocenter) {
@@ -39,8 +39,8 @@ bool compareStereocenterEqual(
 }
 
 bool compareStereocenterLessThan(
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& a,
-  const std::shared_ptr<MoleculeManip::Stereocenters::Stereocenter>& b
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& a,
+  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& b
 ) {
   if(a -> type() < b -> type()) {
     return true;
@@ -68,4 +68,4 @@ bool compareStereocenterLessThan(
 
 } // namespace Stereocenters
 
-} // namespace MoleculeManip
+} // namespace molassembler

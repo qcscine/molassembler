@@ -23,8 +23,8 @@
 #include <iostream>
 
 using namespace std::string_literals;
-using namespace MoleculeManip;
-using namespace MoleculeManip::DistanceGeometry;
+using namespace molassembler;
+using namespace molassembler::DistanceGeometry;
 
 bool isApprox(
   const dlib::matrix<double, 0, 1>& a,

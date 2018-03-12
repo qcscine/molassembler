@@ -19,9 +19,9 @@ inline std::ostream& nl(std::ostream& os) {
 }
 
 BOOST_AUTO_TEST_CASE(graphConcepts) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
-  using GraphType = MoleculeManip::DistanceGeometry::ImplicitGraph;
+  using GraphType = molassembler::DistanceGeometry::ImplicitGraph;
 
   BOOST_CONCEPT_ASSERT(( boost::VertexListGraphConcept<GraphType> ));
   BOOST_CONCEPT_ASSERT(( boost::EdgeListGraphConcept<GraphType> ));
@@ -70,7 +70,7 @@ UnsignedType right(UnsignedType a) {
 }
 
 BOOST_AUTO_TEST_CASE(nonVisualTests) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   boost::filesystem::path filesPath("../tests/mol_files/stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;

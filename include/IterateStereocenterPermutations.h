@@ -27,7 +27,7 @@
  * - Move this to be a part of StereocenterList
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 /*!
  * Range-for temporary object to allow iterator-like behavior in permutation of
@@ -169,6 +169,6 @@ StereocenterPermutationTemporary iterateStereocenterPermutations(
   return StereocenterPermutationTemporary(molecule);
 }*/
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

@@ -9,7 +9,7 @@
  * A series of helpers to interface with the Delib library
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace DelibHelpers {
 

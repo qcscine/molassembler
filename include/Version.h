@@ -8,7 +8,7 @@
  * Contains the library versioning scheme information
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace Version {
 
@@ -30,6 +30,6 @@ std::string fullVersion() {
 
 } // namespace Version
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

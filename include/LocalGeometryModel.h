@@ -13,7 +13,7 @@
  * have.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace LocalGeometry {
 
@@ -47,6 +47,6 @@ boost::optional<Symmetry::Name> firstOfSize(const unsigned& size);
 
 } // namespace LocalGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

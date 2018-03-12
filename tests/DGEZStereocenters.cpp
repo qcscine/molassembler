@@ -10,7 +10,7 @@
 #include "DistanceGeometry/generateConformation.h"
 
 void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath) {
-  using namespace MoleculeManip;
+  using namespace molassembler;
 
   std::cout << "Processing " << filePath.stem().string() << std::endl;
 

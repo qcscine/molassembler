@@ -12,9 +12,10 @@
 /* TODO
  * - Could make dihedralAngleVariance constexpr, but unsure about effects on 
  *   static initialization and if extra declaration required
+ *   Also, consider if it violates single responsibility principle
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace Stereocenters {
 
@@ -166,6 +167,6 @@ public:
 
 } // namespace Stereocenters
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif

@@ -2,7 +2,7 @@
 #include "Delib/ElementInfo.h"
 #include "AtomInfo.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace LocalGeometry {
 
@@ -49,7 +49,7 @@ boost::optional<Symmetry::Name> vsepr(
   }
   
   // get uncharged VE count
-  auto VEOption = MoleculeManip::AtomInfo::mainGroupVE(centerAtomType);
+  auto VEOption = molassembler::AtomInfo::mainGroupVE(centerAtomType);
 
   // return 
   if(!VEOption) {
@@ -184,4 +184,4 @@ boost::optional<Symmetry::Name> firstOfSize(const unsigned& size) {
 
 } // namespace LocalGeometry
 
-} // namespace MoleculeManip
+} // namespace molassembler

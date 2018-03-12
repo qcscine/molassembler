@@ -14,10 +14,10 @@ namespace boost {
 
 /* VertexListGraph concept */
 inline std::pair<
-  MoleculeManip::DistanceGeometry::ImplicitGraph::vertex_iterator,
-  MoleculeManip::DistanceGeometry::ImplicitGraph::vertex_iterator
+  molassembler::DistanceGeometry::ImplicitGraph::vertex_iterator,
+  molassembler::DistanceGeometry::ImplicitGraph::vertex_iterator
 > vertices(
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return {
     g.vbegin(),
@@ -25,109 +25,109 @@ inline std::pair<
   };
 }
 
-inline MoleculeManip::DistanceGeometry::ImplicitGraph::VertexDescriptor num_vertices(
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+inline molassembler::DistanceGeometry::ImplicitGraph::VertexDescriptor num_vertices(
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return g.num_vertices();
 }
 
 /* EdgeListGraph concept */
 inline std::pair<
-  MoleculeManip::DistanceGeometry::ImplicitGraph::edge_iterator,
-  MoleculeManip::DistanceGeometry::ImplicitGraph::edge_iterator
-> edges(const MoleculeManip::DistanceGeometry::ImplicitGraph& g) {
+  molassembler::DistanceGeometry::ImplicitGraph::edge_iterator,
+  molassembler::DistanceGeometry::ImplicitGraph::edge_iterator
+> edges(const molassembler::DistanceGeometry::ImplicitGraph& g) {
   return {
     g.ebegin(),
     g.eend()
   };
 }
 
-inline MoleculeManip::DistanceGeometry::ImplicitGraph::VertexDescriptor num_edges(
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+inline molassembler::DistanceGeometry::ImplicitGraph::VertexDescriptor num_edges(
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return g.num_edges();
 }
 
-inline MoleculeManip::DistanceGeometry::ImplicitGraph::VertexDescriptor source(
-  const MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeDescriptor& e,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+inline molassembler::DistanceGeometry::ImplicitGraph::VertexDescriptor source(
+  const molassembler::DistanceGeometry::ImplicitGraph::EdgeDescriptor& e,
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return g.source(e);
 }
 
-inline MoleculeManip::DistanceGeometry::ImplicitGraph::VertexDescriptor target(
-  const MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeDescriptor& e,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+inline molassembler::DistanceGeometry::ImplicitGraph::VertexDescriptor target(
+  const molassembler::DistanceGeometry::ImplicitGraph::EdgeDescriptor& e,
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return g.target(e);
 }
 
 /* AdjacencyMatrix concept */
 inline std::pair<
-  MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeDescriptor,
+  molassembler::DistanceGeometry::ImplicitGraph::EdgeDescriptor,
   bool
 > edge(
-  const MoleculeManip::DistanceGeometry::ImplicitGraph::VertexDescriptor& u,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph::VertexDescriptor& v,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+  const molassembler::DistanceGeometry::ImplicitGraph::VertexDescriptor& u,
+  const molassembler::DistanceGeometry::ImplicitGraph::VertexDescriptor& v,
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return g.edge(u, v);
 }
 
 /* PropertyGraph concept */
-inline const MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeWeightMap get(
+inline const molassembler::DistanceGeometry::ImplicitGraph::EdgeWeightMap get(
   const boost::edge_weight_t&,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return g.getEdgeWeightPropertyMap();
 }
 
-inline MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeWeightMap get(
+inline molassembler::DistanceGeometry::ImplicitGraph::EdgeWeightMap get(
   const boost::edge_weight_t&,
-  MoleculeManip::DistanceGeometry::ImplicitGraph& g
+  molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return g.getEdgeWeightPropertyMap();
 }
 
 inline double get(
   const boost::edge_weight_t& p,
-  MoleculeManip::DistanceGeometry::ImplicitGraph& g,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeDescriptor& x
+  molassembler::DistanceGeometry::ImplicitGraph& g,
+  const molassembler::DistanceGeometry::ImplicitGraph::EdgeDescriptor& x
 ) {
   return get(p, g)[x];
 } 
 
 inline double get(
   const boost::edge_weight_t& p,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeDescriptor& x
+  const molassembler::DistanceGeometry::ImplicitGraph& g,
+  const molassembler::DistanceGeometry::ImplicitGraph::EdgeDescriptor& x
 ) {
   return get(p, g)[x];
 }
 
 inline void put(
   const boost::edge_weight_t&,
-  MoleculeManip::DistanceGeometry::ImplicitGraph&,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph::EdgeDescriptor&,
+  molassembler::DistanceGeometry::ImplicitGraph&,
+  const molassembler::DistanceGeometry::ImplicitGraph::EdgeDescriptor&,
   double
 ) {
   /* do nothing */
 }
 
-inline MoleculeManip::DistanceGeometry::ImplicitGraph::VertexIndexMap get(
+inline molassembler::DistanceGeometry::ImplicitGraph::VertexIndexMap get(
   const boost::vertex_index_t&,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph&
+  const molassembler::DistanceGeometry::ImplicitGraph&
 ) {
-  return MoleculeManip::DistanceGeometry::ImplicitGraph::VertexIndexMap {};
+  return molassembler::DistanceGeometry::ImplicitGraph::VertexIndexMap {};
 }
 
 /* IncidenceGraph concept */
 inline std::pair<
-  MoleculeManip::DistanceGeometry::ImplicitGraph::edge_iterator,
-  MoleculeManip::DistanceGeometry::ImplicitGraph::edge_iterator
+  molassembler::DistanceGeometry::ImplicitGraph::edge_iterator,
+  molassembler::DistanceGeometry::ImplicitGraph::edge_iterator
 > out_edges(
-  const MoleculeManip::DistanceGeometry::ImplicitGraph::VertexDescriptor& u,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+  const molassembler::DistanceGeometry::ImplicitGraph::VertexDescriptor& u,
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return {
     g.obegin(u),
@@ -137,7 +137,7 @@ inline std::pair<
 
 inline unsigned long out_degree(
   const unsigned long& u,
-  const MoleculeManip::DistanceGeometry::ImplicitGraph& g
+  const molassembler::DistanceGeometry::ImplicitGraph& g
 ) {
   return g.out_degree(u);
 }

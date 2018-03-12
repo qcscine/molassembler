@@ -1,6 +1,6 @@
 #include "BondDistance.h"
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace Bond {
 
@@ -27,4 +27,4 @@ double calculateBondDistance(
 
 } // namespace Bond
 
-} // namespace MoleculeManip
+} // namespace molassembler

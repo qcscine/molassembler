@@ -9,7 +9,7 @@
  * Contains some helper functions to write DG step raytrace and analysis files.
  */
 
-namespace MoleculeManip {
+namespace molassembler {
 
 namespace AnalysisHelpers {
 
@@ -162,6 +162,6 @@ void writeDGPOVandProgressFiles(
 
 } // namespace AnalysisHelpers
 
-} // namespace MoleculeManip
+} // namespace molassembler
 
 #endif
