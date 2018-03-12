@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CYCLIC_POLYGONS_LIB_MINIMAL_H
-#define INCLUDE_CYCLIC_POLYGONS_LIB_MINIMAL_H
+#ifndef INCLUDE_CYCLIC_POLYGONS_LIB_H
+#define INCLUDE_CYCLIC_POLYGONS_LIB_H
 
 #include "boost/math/tools/roots.hpp"
 #include "temple/Containers.h"
@@ -479,63 +479,6 @@ std::enable_if_t<
     circumradiusResult.first,
     circumradiusResult.second
   );
-}
-
-/* TODO this is faulty, information on whether the circumcenter is inside or
- * outside must be kept
- */
-template<typename FloatType>
-std::vector<
-  std::array<FloatType, 2>
-> construct(
-  const std::vector<FloatType>& edgeLengths,
-  const double& circumradius
-) {
-  assert(false && "Construct is faulty!");
-  const unsigned N = edgeLengths.size();
-
-  std::vector<
-    std::array<FloatType, 2>
-  > coordinates {
-    {0, circumradius}
-  };
-
-  coordinates.reserve(N);
-  double angle = 0;
-
-  auto centralAngles = detail::circumcenterInside::centralAngles(circumradius, edgeLengths);
-
-  for(const auto& centralAngle : centralAngles) {
-    coordinates.emplace(
-      std::cos(angle + centralAngle) * circumradius,
-      std::sin(angle + centralAngle) * circumradius
-    );
-
-    angle += centralAngle;
-  }
-
-  return coordinates;
-}
-
-template<typename FloatType>
-std::array<FloatType, 2> average(
-  const std::vector<
-    std::array<FloatType, 2>
-  >& coordinates
-) {
-  FloatType xSum = 0, ySum = 0;
-
-  for(const auto& coordinate : coordinates) {
-    xSum += coordinate.at(0);
-    ySum += coordinate.at(1);
-  }
-
-  unsigned N = coordinates.size();
-
-  return {
-    xSum / N,
-    ySum / N
-  };
 }
 
 } // namespace CyclicPolygons
