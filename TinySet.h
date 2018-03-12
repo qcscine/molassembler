@@ -39,6 +39,10 @@ struct TinyUnorderedSet {
     return data.size();
   }
 
+  bool empty() const {
+    return size() == 0;
+  }
+
   typename type::iterator begin() {
     return data.begin();
   }
@@ -61,6 +65,18 @@ struct TinyUnorderedSet {
 
   typename type::const_iterator cend() const {
     return data.cend();
+  }
+
+  template<typename It>
+  void erase(It a) {
+    auto backIterator = --end();
+
+    if(a == backIterator) {
+      data.erase(a);
+    } else {
+      std::swap(*a, *backIterator);
+      data.erase(backIterator);
+    }
   }
 };
 
@@ -104,6 +120,10 @@ struct TinySet {
     );
   }
 
+  bool empty() const {
+    return size() == 0;
+  }
+
   typename type::iterator begin() {
     return data.begin();
   }
@@ -126,6 +146,11 @@ struct TinySet {
 
   typename type::const_iterator cend() const {
     return data.cend();
+  }
+
+  template<typename It>
+  void erase(It a) {
+    data.erase(a);
   }
 };
 
