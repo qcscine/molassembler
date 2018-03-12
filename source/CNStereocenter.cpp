@@ -3,8 +3,14 @@
 #include "temple/Numeric.h"
 #include "temple/Optionals.h"
 #include "temple/Random.h"
-#include "symmetry_information/Properties.h"
 
+#include "symmetry_information/Properties.h"
+#include "cyclic_polygons/CyclicPolygons.h"
+
+#include "boost/range/combine.hpp"
+#include "boost/range/algorithm/remove_if.hpp"
+
+#include "Molecule.h"
 #include "BuildTypeSwitch.h"
 #include "CNStereocenter.h"
 #include "CommonTrig.h"
@@ -140,8 +146,8 @@ UniqueAssignments::Assignment::LinksSetType canonicalLinks(
       throw std::logic_error("Ligand index not found in ranked ligands");
     };
 
-    auto a = getRankedPosition(getLigandIndex(link.first)),
-         b = getRankedPosition(getLigandIndex(link.second));
+    auto a = getRankedPosition(getLigandIndex(link.indexPair.first)),
+         b = getRankedPosition(getLigandIndex(link.indexPair.second));
 
     links.emplace(
       std::min(a, b),
@@ -175,7 +181,7 @@ RankingInformation::RankedType canonicalize(
 }
 
 std::vector<char> makeCanonicalCharacters(
-  const RankingInformation::RankedType canonicalizedSubstituents
+  const RankingInformation::RankedType& canonicalizedSubstituents
 ) {
   std::vector<char> characters;
 
@@ -230,8 +236,8 @@ UniqueAssignments::Assignment::LinksSetType makeLinksSelfReferential(
   };
 
   for(const auto& linkPair : rankingLinks) {
-    auto a = findIndexInSorted(linkPair.first);
-    auto b = findIndexInSorted(linkPair.second);
+    auto a = findIndexInSorted(linkPair.indexPair.first);
+    auto b = findIndexInSorted(linkPair.indexPair.second);
 
     links.emplace(
       std::min(a, b),
@@ -246,72 +252,132 @@ std::map<AtomIndexType, unsigned> makeSymmetryPositionMap(
   const UniqueAssignments::Assignment& assignment,
   const RankingInformation::RankedType& canonicalizedSubstituents
 ) {
+  /* TODO NO Assignment link information is used here!
+   *
+   * Need to ensure that
+   * AAAAAA {0, 1}, {2, 3}, {4, 5}
+   * and AAAAAA {0, 1}, {2, 4}, {3, 5}
+   * are different!
+   *
+   * AABCAD {0,1}, {0, 4}, {1, 4} has to work too
+   * - cannot use index of symmetry position to fetch atom index within equal priority groups
+   * - must be two-stage algorithm that fixes linked symmetry positions first, then distributes
+   *   the remaining
+   */
+
   std::map<AtomIndexType, unsigned> positionMap;
 
-  const auto endIterators = temple::map(
+  /* First, process the links.
+   *
+   * For every atom index within the group of indices of equal priority, we
+   * have to keep information on which have been used and which haven't.
+   */
+  auto usedLists = temple::map(
     canonicalizedSubstituents,
-    [](const auto& equalPrioritySet) -> auto {
-      return equalPrioritySet.end();
+    [](const auto& equalPrioritySet) -> std::vector<bool> {
+      return std::vector<bool>(equalPrioritySet.size(), false);
     }
   );
 
-  auto iterators = temple::map(
-    canonicalizedSubstituents,
-    [](const auto& equalPrioritySet) -> auto {
-      return equalPrioritySet.begin();
+  std::vector<
+    std::vector<unsigned>
+  > availableSymmetryPositions;
+
+  for(char i = 'A'; i <= temple::max(assignment.characters); ++i) {
+    std::vector<unsigned> positions;
+
+    for(unsigned s = 0; s < assignment.characters.size(); ++s) {
+      if(assignment.characters.at(s) == i) {
+        positions.push_back(s);
+      }
     }
-  );
 
-  unsigned symmetryPosition = 0;
-  for(const auto& priorityChar : assignment.characters) {
-    auto& rankingIterator = iterators.at(priorityChar - 'A');
-    assert(rankingIterator != endIterators.at(priorityChar - 'A'));
+    availableSymmetryPositions.emplace_back(
+      std::move(positions)
+    );
+  }
 
-    positionMap.emplace(
-      *rankingIterator,
-      symmetryPosition
+  auto placeAndMark = [&](const unsigned& symmetryPositionIndex) {
+    char priority = assignment.characters.at(symmetryPositionIndex);
+
+    unsigned countUpToPosition = std::count(
+      assignment.characters.begin(),
+      assignment.characters.begin() + symmetryPositionIndex,
+      priority
     );
 
-    ++symmetryPosition;
-    ++rankingIterator;
+    AtomIndexType correspondingAtom = canonicalizedSubstituents.at(priority - 'A').at(countUpToPosition);
+
+    if(positionMap.count(correspondingAtom) == 0) {
+      unsigned newSymmetryPosition = availableSymmetryPositions.at(priority - 'A').front();
+
+      positionMap.emplace(
+        correspondingAtom,
+        newSymmetryPosition
+      );
+
+      availableSymmetryPositions.at(priority - 'A').erase(
+        availableSymmetryPositions.at(priority - 'A').begin()
+      );
+
+      usedLists.at(priority - 'A').at(countUpToPosition) = true;
+    }
+  };
+
+  for(const auto& link: assignment.links) {
+    placeAndMark(link.first);
+    placeAndMark(link.second);
+  }
+
+  // Next, process the characters
+  for(const auto& priorityChar : assignment.characters) {
+    // Get an unused atom index for that priority
+    auto unusedIndexIter = std::find(
+      usedLists.at(priorityChar - 'A').begin(),
+      usedLists.at(priorityChar - 'A').end(),
+      false
+    );
+
+    if(unusedIndexIter != usedLists.at(priorityChar - 'A').end()) {
+      AtomIndexType correspondingAtom = canonicalizedSubstituents.at(priorityChar - 'A').at(
+        unusedIndexIter - usedLists.at(priorityChar - 'A').begin()
+      );
+
+      assert(positionMap.count(correspondingAtom) == 0);
+
+      unsigned symmetryPosition = availableSymmetryPositions.at(priorityChar - 'A').front();
+
+      availableSymmetryPositions.at(priorityChar - 'A').erase(
+        availableSymmetryPositions.at(priorityChar - 'A').begin()
+      );
+
+      positionMap.emplace(
+        correspondingAtom,
+        symmetryPosition
+      );
+
+      *unusedIndexIter = true;
+    }
   }
 
   return positionMap;
 }
 
-
+// Just returns a flat, inverted map from makeSymmetryPositionMap
+// TODO remove?
 std::vector<AtomIndexType> mapToSymmetryPositions(
   const UniqueAssignments::Assignment& assignment,
   const RankingInformation::RankedType& canonicalizedSubstituents
 ) {
-  std::vector<AtomIndexType> atomsAtSymmetryPositions;
+  auto base = makeSymmetryPositionMap(assignment, canonicalizedSubstituents);
+  std::vector<AtomIndexType> flatMap;
+  flatMap.resize(base.size());
 
-  const auto endIterators = temple::map(
-    canonicalizedSubstituents,
-    [](const auto& equalPrioritySet) {
-      return equalPrioritySet.end();
-    }
-  );
-
-  auto iterators = temple::map(
-    canonicalizedSubstituents,
-    [](const auto& equalPrioritySet) -> auto {
-      return equalPrioritySet.begin();
-    }
-  );
-
-  for(const auto& priorityChar : assignment.characters) {
-    auto& rankingIterator = iterators.at(priorityChar - 'A');
-    assert(rankingIterator != endIterators.at(priorityChar - 'A'));
-
-    atomsAtSymmetryPositions.push_back(
-      *rankingIterator
-    );
-
-    ++rankingIterator;
+  for(const auto& iterPair : base) {
+    flatMap.at(iterPair.second) = iterPair.first;
   }
 
-  return atomsAtSymmetryPositions;
+  return flatMap;
 }
 
 std::vector<char> makeAssignmentCharacters(
@@ -392,8 +458,158 @@ boost::optional<std::vector<unsigned>> getIndexMapping(
 
 } // namespace glue
 
+void CNStereocenter::_removeImpossibleAssignments(
+  UniqueAssignments::AssignmentsWithWeights& data,
+  const Molecule& molecule
+) {
+  auto toRemove = temple::map(
+    data.assignments,
+    [&](const auto& assignment) -> bool {
+      return !isFeasibleAssignment(assignment, molecule, _symmetry, _ranking);
+    }
+  );
+
+  data.assignments.erase(
+    std::remove_if(
+      data.assignments.begin(),
+      data.assignments.end(),
+      [&](const auto& assignment) -> bool {
+        // For this wonderful pointer arithmetic, see https://stackoverflow.com/a/23123481
+        return toRemove.at(&assignment - &*data.assignments.begin());
+      }
+    ),
+    data.assignments.end()
+  );
+
+  data.weights.erase(
+    std::remove_if(
+      data.weights.begin(),
+      data.weights.end(),
+      [&](const auto& weight) -> bool {
+        return toRemove.at(&weight - &*data.weights.begin());
+      }
+    ),
+    data.weights.end()
+  );
+}
+
+
+/* Static functions */
+bool CNStereocenter::isFeasibleAssignment(
+  const AssignmentType& assignment,
+  const Molecule& molecule,
+  const Symmetry::Name& symmetry,
+  const RankingInformation& ranking
+) {
+  if(ranking.links.size() == 0) {
+    return true;
+  }
+
+  /* Idea: An assignment is unfeasible if any link's cycle cannot be realized
+   * as a flat cyclic polygon, in which the edges from the central atom are
+   * merged using the joint angle calculable from the assignment and symmetry.
+   *
+   * The algorithm below is explained in detail in
+   * documents/denticity_feasibility/.
+   */
+  auto symmetryPositionMap = glue::makeSymmetryPositionMap(
+    assignment,
+    glue::canonicalize(ranking.sortedSubstituents)
+  );
+
+  for(const auto& link : ranking.links) {
+    double sigma = Symmetry::angleFunction(symmetry)(
+      symmetryPositionMap.at(link.indexPair.first),
+      symmetryPositionMap.at(link.indexPair.second)
+    );
+
+    auto edgeLengths = temple::mapSequentialPairs(
+      link.cycleSequence,
+      [&](const auto& i, const auto& j) -> double {
+        return Bond::calculateBondDistance(
+          molecule.getElementType(i),
+          molecule.getElementType(j),
+          molecule.getBondType(i, j).value()
+        );
+      }
+    );
+
+    double a = edgeLengths.front();
+    double b = edgeLengths.back();
+    double c = CommonTrig::lawOfCosines(a, b, sigma);
+
+    edgeLengths.front() = c;
+    edgeLengths.erase(edgeLengths.end() - 1);
+
+    // Quick escape: If the cyclic polygon isn't even constructible, fail
+    if(!CyclicPolygons::exists(edgeLengths)) {
+      return false;
+    }
+
+    /* Test that no atom in cyclic polygon except binding sites in binding
+     * distance to central atom.
+     */
+
+    auto phis = CyclicPolygons::internalAngles(edgeLengths);
+
+    double alpha = CommonTrig::lawOfCosinesAngle(a, c, b);
+
+    double d1 = CommonTrig::lawOfCosines(
+      a,
+      edgeLengths.at(1), // i
+      phis.at(0) + alpha
+    );
+
+    if(
+      d1 < Bond::calculateBondDistance(
+        molecule.getElementType(link.cycleSequence.at(0)),
+        // 0 is the central index, 1 is the first ligand
+        molecule.getElementType(link.cycleSequence.at(2)),
+        BondType::Single
+      )
+    ) {
+      return false;
+    }
+
+    std::vector<double> distances {a, d1};
+    std::vector<double> deltas {};
+
+    for(unsigned i = 1; i < phis.size() - 2; ++i) {
+      deltas.push_back(
+        CommonTrig::lawOfCosinesAngle(
+          edgeLengths.at(i),
+          *(distances.end() - 1),
+          *(distances.end() - 2)
+        )
+      );
+
+      distances.push_back(
+        CommonTrig::lawOfCosines(
+          distances.back(),
+          edgeLengths.at(i + 1),
+          phis.at(i) - deltas.back()
+        )
+      );
+
+      if(
+        distances.back() < Bond::calculateBondDistance(
+          molecule.getElementType(link.cycleSequence.at(0)),
+          // 0 is the central index, 1 is the first ligand
+          molecule.getElementType(link.cycleSequence.at(i + 2)),
+          BondType::Single
+        )
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 /* Constructors */
 CNStereocenter::CNStereocenter(
+  const Molecule& molecule,
   // The symmetry of this Stereocenter
   const Symmetry::Name& symmetry,
   // The atom this Stereocenter is centered on
@@ -413,15 +629,18 @@ CNStereocenter::CNStereocenter(
     AssignmentType(
       symmetry,
       glue::makeCanonicalCharacters(_ranking.sortedSubstituents),
-      glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.linkedPairs)
+      glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.links)
     ),
     symmetry,
     false // Do NOT remove trans-spanning linked groups
   );
+
+  _removeImpossibleAssignments(_uniqueAssignmentsCache, molecule);
 }
 
 /* Modification */
 void CNStereocenter::addSubstituent(
+  const Molecule& molecule,
   const AtomIndexType& newSubstituentIndex,
   const RankingInformation& newRanking,
   const Symmetry::Name& newSymmetry,
@@ -429,7 +648,7 @@ void CNStereocenter::addSubstituent(
 ) {
   auto canonicalizedSubstituents = glue::canonicalize(newRanking.sortedSubstituents);
   auto canonicalizedCharacters = glue::makeCanonicalCharacters(canonicalizedSubstituents);
-  auto newLinks = glue::makeLinksSelfReferential(canonicalizedSubstituents, newRanking.linkedPairs);
+  auto newLinks = glue::makeLinksSelfReferential(canonicalizedSubstituents, newRanking.links);
   auto newAssignments = UniqueAssignments::uniqueAssignmentsWithWeights(
     AssignmentType {
       newSymmetry,
@@ -438,6 +657,9 @@ void CNStereocenter::addSubstituent(
     },
     newSymmetry
   );
+
+  _removeImpossibleAssignments(newAssignments, molecule);
+
   boost::optional<unsigned> newAssignment = boost::none;
 
   /* Does the current stereocenter carry chiral information?
@@ -554,24 +776,30 @@ void CNStereocenter::assignRandom() {
   );
 }
 
-void CNStereocenter::propagateGraphChange(const RankingInformation& newRanking) {
+void CNStereocenter::propagateGraphChange(
+  const Molecule& molecule,
+  const RankingInformation& newRanking
+) {
   auto newCanonicalizedSubstituents = glue::canonicalize(newRanking.sortedSubstituents);
 
   // Has anything about the new ranking changed relative to the old?
   if(
     newCanonicalizedSubstituents != _ranking.sortedSubstituents
-    || newRanking.linkedPairs != _ranking.linkedPairs
+    || newRanking.links != _ranking.links
   ) {
     auto newCharacters = glue::makeCanonicalCharacters(newCanonicalizedSubstituents);
     auto newLinks = glue::makeLinksSelfReferential(
       newCanonicalizedSubstituents,
-      newRanking.linkedPairs
+      newRanking.links
     );
     auto newAssignments = UniqueAssignments::uniqueAssignmentsWithWeights(
       AssignmentType(_symmetry, newCharacters, newLinks),
       _symmetry,
       false // do NOT remove trans-spanning ligand groups
     );
+
+    _removeImpossibleAssignments(newAssignments, molecule);
+
     boost::optional<unsigned> newAssignment = boost::none;
 
     /* Before we overwrite class state, we need to figure out which assignment 
@@ -656,14 +884,17 @@ void CNStereocenter::propagateVertexRemoval(const AtomIndexType& removedIndex) {
     }
   }
 
-  RankingInformation::LinksType newLinks;
-  for(auto& linkedPair : _ranking.linkedPairs) {
-    newLinks.emplace(
-      updateIndex(linkedPair.first),
-      updateIndex(linkedPair.second)
+  for(auto& link : _ranking.links) {
+    link.indexPair = {
+      std::min(updateIndex(link.indexPair.first), updateIndex(link.indexPair.second)),
+      std::max(updateIndex(link.indexPair.first), updateIndex(link.indexPair.second))
+    };
+
+    link.cycleSequence = temple::map(
+      link.cycleSequence,
+      updateIndex
     );
   }
-  _ranking.linkedPairs = std::move(newLinks);
 
   updateIndexInplace(_centerAtom);
 
@@ -685,6 +916,7 @@ void CNStereocenter::propagateVertexRemoval(const AtomIndexType& removedIndex) {
 }
 
 void CNStereocenter::removeSubstituent(
+  const Molecule& molecule,
   const AtomIndexType& which,
   const RankingInformation& newRanking,
   const Symmetry::Name& newSymmetry,
@@ -692,7 +924,7 @@ void CNStereocenter::removeSubstituent(
 ) {
   auto canonicalizedSubstituents = glue::canonicalize(newRanking.sortedSubstituents);
   auto canonicalizedCharacters = glue::makeCanonicalCharacters(canonicalizedSubstituents);
-  auto newLinks = glue::makeLinksSelfReferential(canonicalizedSubstituents, newRanking.linkedPairs);
+  auto newLinks = glue::makeLinksSelfReferential(canonicalizedSubstituents, newRanking.links);
   auto newAssignments = UniqueAssignments::uniqueAssignmentsWithWeights(
     AssignmentType {
       newSymmetry,
@@ -701,6 +933,9 @@ void CNStereocenter::removeSubstituent(
     },
     newSymmetry
   );
+
+  _removeImpossibleAssignments(newAssignments, molecule);
+
   boost::optional<unsigned> newAssignment;
 
   /* Does the stereocenter carry chiral information?
@@ -784,6 +1019,7 @@ Symmetry::Name CNStereocenter::getSymmetry() const {
 }
 
 void CNStereocenter::fit(
+  const Molecule& molecule,
   const Delib::PositionCollection& positions,
   std::vector<Symmetry::Name> excludeSymmetries
 ) {
@@ -821,7 +1057,7 @@ void CNStereocenter::fit(
     }
 
     // Change the symmetry of the CNStereocenter
-    setSymmetry(symmetryName);
+    setSymmetry(molecule, symmetryName);
 
     for(
       unsigned assignment = 0;
@@ -978,12 +1214,12 @@ void CNStereocenter::fit(
     && bestPenalty == initialPenalty
   ) {
     // Return to prior
-    setSymmetry(priorSymmetry);
+    setSymmetry(molecule, priorSymmetry);
     assign(priorAssignment);
 
   } else {
     // Set to best fit
-    setSymmetry(bestSymmetry);
+    setSymmetry(molecule, bestSymmetry);
 
     /* How to handle multiplicity? 
      * Current policy: If there is multiplicity, warn and do not assign
@@ -1104,7 +1340,7 @@ std::string CNStereocenter::info() const {
     std::back_inserter(returnString)
   );
 
-  for(const auto& link : glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.linkedPairs)) {
+  for(const auto& link : glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.links)) {
     returnString += ", "s + characters.at(link.first) + "-"s + characters.at(link.second);
   }
 
@@ -1141,7 +1377,10 @@ unsigned CNStereocenter::numAssignments() const {
   return _uniqueAssignmentsCache.assignments.size();
 }
 
-void CNStereocenter::setSymmetry(const Symmetry::Name& symmetryName) {
+void CNStereocenter::setSymmetry(
+  const Molecule& molecule,
+  const Symmetry::Name& symmetryName
+) {
   // Set new symmetry
   _symmetry = symmetryName;
 
@@ -1150,11 +1389,13 @@ void CNStereocenter::setSymmetry(const Symmetry::Name& symmetryName) {
     AssignmentType(
       symmetryName,
       glue::makeCanonicalCharacters(_ranking.sortedSubstituents),
-      glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.linkedPairs)
+      glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.links)
     ),
     symmetryName,
     false // do NOT remove trans-spanning ligand groups
   );
+
+  _removeImpossibleAssignments(_uniqueAssignmentsCache, molecule);
 
   _symmetryPositionMapCache.clear();
 

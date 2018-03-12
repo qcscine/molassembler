@@ -77,7 +77,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
 
   auto indexMap = makeSmallestCycleMap(
     cycleData,
-    mol
+    mol.getGraph()
   );
 
   testCycles(cycleData);

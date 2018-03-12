@@ -737,6 +737,7 @@ void RankingTree::_applySequenceRules(
 
 
           auto newStereocenter = Stereocenters::CNStereocenter {
+            _moleculeRef,
             localSymmetry,
             molSourceIndex,
             centerRanking

@@ -1,11 +1,27 @@
-Inorganics
-----------
+# Name
+Serious names
+- mol
+  - architect
+  - plug
+  - assembler
+- molgraph
+- stereomol
+- molgen
+
+puns / jokes?
+- Mole (Maybe a mole's name? Like the name of the one from Groundhog Day?)
+- moladjusted
+- moloch
+- mollify
+- molars / arsmol
+- mollusk
+
+# Inorganics
 - Conjugation detection is now sorely needed
 - Ranking algorithm shows deficiencies due to missing conjugation detection.
   Perhaps other deficiencies too?
 - What happens to DG when an assignment is trans-spanning and the bridge is too
   short? Should I / can I add heuristics?
-- I think substituent linking needs to be considered in stereocenter fitting
 - Hapticity support is the main challenge. Impact is large throughout code
   - Bond type
   - Adjacents vs. ligands
@@ -13,8 +29,7 @@ Inorganics
   - How to calculate angles, dihedrals in DG?
 
 
-Remaining DG deficiencies
--------------------------
+# Remaining DG deficiencies
 - I *think* that something about embedding is wrong. Super wrong.
   In every case, despite all the information added by MoleculeSpatialModel, the
   first coordinates look like absolute garbage.
@@ -35,15 +50,7 @@ Remaining DG deficiencies
   unviolated in strained molecules (see strained-db-aromatic-multicycle
   examples)
            
-TODO
-----
-- Idea to remove obviously unfeasible trans-spanning ligand assignments:
-  Replace A - X - B plus the intrinsic stereocenter angle with the direct edge
-  between A and B. Since A and B are bridged through another sequence of atoms,
-  check if a cyclic polygon is constructible with the direct edge and the
-  remaining bond distances. If not, remove that assignment.
-- Longterm impossible to do a full BFS per nonterminal atom to determine links.
-  Need to pre-provide data from cycle decomposition instead
+# TODO
 - Fix all the failing tests
 - Stereocenters that merely mark non-standard geometries and do not provide any
   assignments are probably not included in ranking at all, but they should be!
@@ -113,8 +120,9 @@ TODO
   the same applies to aromatic systems. This has to be considered in rotamer
   counting.
 
-Improvement considerations
---------------------------
+# Improvement considerations
+- Check rvalue constructors to ensure that all variable initializations use
+  std::move of the bound rvalue argument in the constructor
 - NL.16 Use a conventional class member declaration order
   types -> constructors, assignments, destructor -> functions -> data
   (public - protected - private)
@@ -143,8 +151,7 @@ Improvement considerations
 
     std::vector<Molecule> addBond(const Molecule& mol);
 
-General notes
--------------
+# General notes
 - License for URF library?
 - Various strained organic molecules are taken from "Survey of strained org
   molecules" by Liebman, Greenberg. 1975

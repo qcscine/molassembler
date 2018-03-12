@@ -295,14 +295,17 @@ void EZStereocenter::propagateVertexRemoval(const AtomIndexType& removedIndex) {
       }
     }
 
-    RankingInformation::LinksType newLinks;
-    for(const auto& linkPair : ranking.linkedPairs) {
-      newLinks.emplace(
-        newIndex(linkPair.first),
-        newIndex(linkPair.second)
+    for(auto& link : ranking.links) {
+      link.indexPair = {
+        std::min(newIndex(link.indexPair.first), newIndex(link.indexPair.second)),
+        std::max(newIndex(link.indexPair.first), newIndex(link.indexPair.second))
+      };
+
+      link.cycleSequence = temple::map(
+        link.cycleSequence,
+        newIndex
       );
     }
-    ranking.linkedPairs = newLinks;
   };
 
   updateRanking(_leftRanking);
@@ -326,7 +329,7 @@ void EZStereocenter::removeSubstituent(
     }
 
     // There cannot be any linked pairs for a single substituent
-    ranking.linkedPairs = {};
+    ranking.links = {};
   };
 
   if(center == _leftCenter) {
@@ -570,8 +573,8 @@ bool EZStereocenter::operator == (const EZStereocenter& other) const {
     _leftCenter == other._leftCenter
     && _leftRanking.sortedSubstituents == other._leftRanking.sortedSubstituents
     && _rightRanking.sortedSubstituents == other._rightRanking.sortedSubstituents
-    && _leftRanking.linkedPairs == other._leftRanking.linkedPairs
-    && _rightRanking.linkedPairs == other._rightRanking.linkedPairs
+    && _leftRanking.links == other._leftRanking.links
+    && _rightRanking.links == other._rightRanking.links
     && _isZOption == other._isZOption
   );
 }

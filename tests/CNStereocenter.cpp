@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+#include "Molecule.h"
 #include "CNStereocenter.h"
 #include "Log.h"
 #include "temple/Stringify.h"
@@ -123,6 +124,34 @@ BOOST_AUTO_TEST_CASE(glueTests) {
     << temple::condenseIterable(atomsAtPositions) << "}, got {"
     << temple::condenseIterable(symmetryMapResult)
   );
+
+  // makeSymmetryPositionMap isn't good enough yet
+  UniqueAssignments::Assignment b {
+    Symmetry::Name::Octahedral,
+    {'A', 'A', 'A', 'A', 'A', 'A'},
+    {
+      {0, 1},
+      {2, 3},
+      {4, 5}
+    }
+  };
+
+  UniqueAssignments::Assignment c {
+    Symmetry::Name::Octahedral,
+    {'A', 'A', 'A', 'A', 'A', 'A'},
+    {
+      {0, 1},
+      {2, 4},
+      {3, 5}
+    }
+  };
+
+  RankingInformation::RankedType canonBC {{10, 11, 12, 13, 14, 15}};
+
+  auto bMap = glue::makeSymmetryPositionMap(b, canonBC);
+  auto cMap = glue::makeSymmetryPositionMap(c, canonBC);
+
+  BOOST_CHECK(bMap != cMap);
 }
 
 BOOST_AUTO_TEST_CASE(stateCorrectness) {
@@ -131,6 +160,9 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
 
   Log::particulars.insert(Log::Particulars::CNStereocenterStatePropagation);
 
+  // Hypothetical assignment eliminations only take place if links are present, but there are no links
+  Molecule dummyMolecule;
+
   // Create a square-pyramidal chiral center
   RankingInformation squarePyramidalRanking;
   squarePyramidalRanking.sortedSubstituents = {
@@ -138,6 +170,7 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
   };
 
   CNStereocenter trialStereocenter {
+    dummyMolecule,
     Symmetry::Name::SquarePyramidal,
     8,
     squarePyramidalRanking
@@ -152,6 +185,7 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
   };
 
   trialStereocenter.addSubstituent(
+    dummyMolecule,
     1,
     octahedralRanking,
     Symmetry::Name::Octahedral,
@@ -171,7 +205,9 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
   newSquarePyramidalRanking.sortedSubstituents = {
     {0, 3}, {1}, {2, 4}
   };
+
   trialStereocenter.removeSubstituent(
+    dummyMolecule,
     std::numeric_limits<AtomIndexType>::max(),
     newSquarePyramidalRanking,
     Symmetry::Name::SquarePyramidal,
@@ -195,9 +231,6 @@ BOOST_AUTO_TEST_CASE(adhesiveTests) {
   using NestedVector = std::vector<
     std::vector<AtomIndexType>
   >;
-  using PairsType = std::set<
-    std::pair<AtomIndexType, AtomIndexType>
-  >;
   using AssignmentPairsType = std::set<
     std::pair<unsigned, unsigned>
   >;
@@ -214,10 +247,13 @@ BOOST_AUTO_TEST_CASE(adhesiveTests) {
     {5, 6}
   };
 
-  auto symmetricHapticPincerLinks = PairsType {
-    {2, 3},
-    {4, 5}
-  };
+  std::vector<GraphAlgorithms::LinkInformation> symmetricHapticPincerLinks;
+  GraphAlgorithms::LinkInformation a, b;
+  a.indexPair = {2, 3};
+  b.indexPair = {4, 5};
+
+  symmetricHapticPincerLinks.push_back(std::move(a));
+  symmetricHapticPincerLinks.push_back(std::move(b));
 
   auto symmetricHapticPincerRankedLigands = ligandRanking(
     symmetricHapticPincerRanking,
@@ -250,10 +286,12 @@ BOOST_AUTO_TEST_CASE(adhesiveTests) {
     {5, 6}
   };
 
-  auto asymmetricHapticPincerLinks = PairsType {
-    {2, 3},
-    {4, 5}
-  };
+  std::vector<GraphAlgorithms::LinkInformation> asymmetricHapticPincerLinks;
+  a.indexPair = {2, 3};
+  b.indexPair = {4, 5};
+
+  asymmetricHapticPincerLinks.push_back(std::move(a));
+  asymmetricHapticPincerLinks.push_back(std::move(b));
 
   auto asymmetricHapticPincerRankedLigands = ligandRanking(
     asymmetricHapticPincerRanking,

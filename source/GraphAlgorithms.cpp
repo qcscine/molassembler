@@ -1,6 +1,7 @@
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/biconnected_components.hpp>
 
+#include "CycleData.h"
 #include "GraphAlgorithms.h"
 
 #include <iostream>
@@ -15,43 +16,105 @@ unsigned numConnectedComponents(const GraphType& graph) {
   return boost::connected_components(graph, &component[0]);
 }
 
-/* Returns a set of links between source's substituents
- */
-std::set<
-  std::pair<AtomIndexType, AtomIndexType>
-> findSubstituentLinks(
+std::vector<LinkInformation> substituentLinks(
   const GraphType& graph,
+  const CycleData& cycleData,
   const AtomIndexType& source,
-  const std::vector<AtomIndexType>& activeSubstituents
+  const std::vector<AtomIndexType>& activeAdjacents
 ) {
-  std::set<
-    std::pair<AtomIndexType, AtomIndexType>
-  > connectedPairs;
+  /* General idea:
+   *
+   * In order to avoid a full O(N) BFS on every CNStereocenter candidate to
+   * determine links, use cached CycleData instead to determine links.
+   *
+   * Iterate through every cycle and look for cycles containing exactly two of
+   * the edge_descriptors corresponding to the edges from the source to an
+   * active substituent
+   */
+  std::vector<LinkInformation> links;
 
-  using ColorMapBase = std::map<
-    AtomIndexType,
-    boost::default_color_type
-  >;
+  temple::TinySet<GraphType::edge_descriptor> sourceAdjacentEdges;
+  for(const auto& adjacentIndex : activeAdjacents) {
+    sourceAdjacentEdges.insert(
+      boost::edge(
+        source,
+        adjacentIndex,
+        graph
+      ).first
+    );
+  }
 
-  ColorMapBase colorMap;
-  boost::associative_property_map<ColorMapBase> propColorMap(colorMap);
-  boost::queue<GraphType::vertex_descriptor> Q;
+  std::map<
+    std::pair<AtomIndexType, AtomIndexType>,
+    unsigned
+  > linksMap;
 
-  BFSVisitors::SubstituentLinkSearcher visitor {
-    source,
-    activeSubstituents,
-    connectedPairs // output
+  auto getAdjacentOfEdge = [&](const auto& edgeDescriptor) -> AtomIndexType {
+    auto edgeSource = boost::source(edgeDescriptor, graph);
+
+    if(source == edgeSource) {
+      return boost::target(edgeDescriptor, graph);
+    }
+
+    return edgeSource;
   };
 
-  boost::breadth_first_visit(
-    graph,
-    source,
-    Q,
-    visitor,
-    propColorMap
-  );
+  for(
+    auto cycleIterator = cycleData.getCyclesIterator();
+    !cycleIterator.atEnd();
+    cycleIterator.advance()
+  ) {
+    auto cycleEdges = cycleIterator.getCurrentCycle();
 
-  return connectedPairs;
+    std::vector<GraphType::edge_descriptor> intersection;
+
+    std::set_intersection(
+      sourceAdjacentEdges.begin(),
+      sourceAdjacentEdges.end(),
+      cycleEdges.begin(),
+      cycleEdges.end(),
+      std::back_inserter(intersection)
+    );
+
+    // Must match exactly two edges
+    if(intersection.size() == 2) {
+      auto a = getAdjacentOfEdge(intersection.front());
+      auto b = getAdjacentOfEdge(intersection.back());
+
+      // Find which adjacents are overlapping
+      auto indexPair = std::pair<AtomIndexType, AtomIndexType> {
+        std::min(a, b),
+        std::max(a, b)
+      };
+
+      if(
+        linksMap.count(indexPair) == 0
+        || (
+          linksMap.count(indexPair) > 0
+          && cycleEdges.size() < links.at(linksMap.at(indexPair)).cycleSequence.size()
+        )
+      ) {
+        LinkInformation newLink;
+        newLink.indexPair = indexPair;
+        newLink.cycleSequence = centralizeRingIndexSequence(
+          makeRingIndexSequence(cycleEdges, graph),
+          source
+        );
+
+        if(linksMap.count(indexPair) == 0) {
+          links.push_back(std::move(newLink));
+          linksMap.emplace(
+            indexPair,
+            links.size() - 1
+          );
+        } else {
+          links.at(linksMap.at(indexPair)) = std::move(newLink);
+        }
+      }
+    }
+  }
+
+  return links;
 }
 
 RemovalSafetyData getRemovalSafetyData(const GraphType& graph) {
@@ -67,7 +130,7 @@ RemovalSafetyData getRemovalSafetyData(const GraphType& graph) {
   ComponentMapBase componentMapData;
   boost::associative_property_map<ComponentMapBase> componentMap(componentMapData);
   unsigned numComponents;
-  
+
   // Calculate the biconnected components and articulation vertices
   std::tie(numComponents, std::ignore) = boost::biconnected_components(
     graph,

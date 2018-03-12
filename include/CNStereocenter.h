@@ -23,6 +23,9 @@ using namespace std::string_literals;
 
 namespace MoleculeManip {
 
+// Forward-declare Molecule
+class Molecule;
+
 namespace Stereocenters {
 
 namespace adhesive {
@@ -50,16 +53,34 @@ namespace glue {
  *
  * Necessary to avoid treating e.g. AAB and ABB separately, although the
  * resulting assignments are identical.
+ *
+ * Example: sortedSubstituents: {5, 8}, {3}, {1, 2, 4}
+ * Result: {1, 2, 4}, {5, 8}, {3}
  */
 RankingInformation::RankedType canonicalize(
   RankingInformation::RankedType sortedSubstituents
 );
 
-//! Transforms canonicalized substituents to character space
+/*! Transforms canonicalized substituents to character space
+ *
+ * Example: canonical ranked substituents: {1, 2, 4}, {5, 8}, {3}
+ * Result: AAABBC
+ */
 std::vector<char> makeCanonicalCharacters(
-  const RankingInformation::RankedType canonicalizedSubstituents
+  const RankingInformation::RankedType& canonicalizedSubstituents
 );
 
+/*! Transform links from atom-index space to character space
+ *
+ * In the determination of unique assignments, we have to construct an initial
+ * assignment that specifies the ranking differences of ligands and their 
+ * links. From the GraphAlgorithm substituentLinks, we receive atom index based
+ * link pairs. These need to be altered to character-referential links.
+ *
+ * Example: canonical ranked substituents: {1, 2, 4}, {5, 8}, {3} == AAABBC
+ *          links: {1, 5}, {2, 5}, {4, 5}
+ * Result: {0, 3}, {1, 3}, {2, 3} == A1-B1, A2-B1, A3-B1
+ */
 UniqueAssignments::Assignment::LinksSetType makeLinksSelfReferential(
   const RankingInformation::RankedType& canonicalizedSubstituents,
   const RankingInformation::LinksType& rankingLinks
@@ -125,10 +146,24 @@ private:
    */
   std::map<AtomIndexType, unsigned> _symmetryPositionMapCache;
 
+  void _removeImpossibleAssignments(
+    UniqueAssignments::AssignmentsWithWeights& data,
+    const Molecule& molecule
+  );
+
 public:
-/* Public state */
+/* Static functions */
+  bool isFeasibleAssignment(
+    const AssignmentType& assignment,
+    const Molecule& molecule,
+    const Symmetry::Name& symmetry,
+    const RankingInformation& ranking
+  );
+
 /* Constructors */
   CNStereocenter(
+    // The base molecule
+    const Molecule& molecule,
     // The symmetry of this Stereocenter
     const Symmetry::Name& symmetry,
     // The atom this Stereocenter is centered on
@@ -145,6 +180,7 @@ public:
    * preservation options
    */
   void addSubstituent(
+    const Molecule& molecule,
     const AtomIndexType& newSubstituentIndex,
     const RankingInformation& newRanking,
     const Symmetry::Name& newSymmetry,
@@ -162,6 +198,7 @@ public:
    * angle and chiral distortions from the idealized symmetry.
    */
   void fit(
+    const Molecule& molecule,
     const Delib::PositionCollection& positions,
     std::vector<Symmetry::Name> excludeSymmetries = {}
   );
@@ -171,7 +208,10 @@ public:
    * substituents, it must be redetermined whether the new configuration is a
    * stereocenter and if so, which assignment corresponds to the previous one.
    */
-  void propagateGraphChange(const RankingInformation& newRanking);
+  void propagateGraphChange(
+    const Molecule& molecule,
+    const RankingInformation& newRanking
+  );
 
   /*!
    * Prepares for the removal of an atom on the graph level, which involves
@@ -185,6 +225,7 @@ public:
    * according to the supplide chiral state preservation option.
    */
   void removeSubstituent(
+    const Molecule& molecule,
     const AtomIndexType& which,
     const RankingInformation& newRanking,
     const Symmetry::Name& newSymmetry,
@@ -192,7 +233,10 @@ public:
   );
 
   //! If the central symmetry group is changed, we must adapt
-  void setSymmetry(const Symmetry::Name& symmetryName);
+  void setSymmetry(
+    const Molecule& molecule,
+    const Symmetry::Name& symmetryName
+  );
 
 /* Information */
   //! Returns the angle between substituent atoms in the idealized symmetry

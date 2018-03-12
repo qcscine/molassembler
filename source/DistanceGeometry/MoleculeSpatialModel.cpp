@@ -1,5 +1,5 @@
 #include "boost/graph/graphviz.hpp"
-#include "cyclic_polygons/Minimal.h"
+#include "cyclic_polygons/CyclicPolygons.h"
 #include "Delib/ElementInfo.h"
 #include "symmetry_information/Properties.h"
 
@@ -58,7 +58,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   CycleData cycleData {molecule.getGraph()};
   auto smallestCycleMap = makeSmallestCycleMap(
     cycleData,
-    molecule
+    molecule.getGraph()
   );
 
   // Check constraints on static constants
@@ -196,6 +196,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       && molecule.getNumAdjacencies(i) > 1 // non-terminal
     ) {
       _stereocenterMap[i] = std::make_shared<Stereocenters::CNStereocenter>(
+        molecule,
         molecule.determineLocalGeometry(i),
         i,
         molecule.rankPriority(i)
@@ -248,7 +249,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         cycleSize == 4
         && countPlanarityEnforcingBonds(
           edgeDescriptors,
-          molecule
+          molecule.getGraph()
         ) >= 1
       )
       /* TODO missing cases: 
@@ -258,7 +259,10 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       /* Gather sequence of atoms in cycle by progressively converting edge
        * descriptors into vertex indices
        */
-      const auto indexSequence = makeRingIndexSequence(edgeDescriptors, molecule);
+      const auto indexSequence = makeRingIndexSequence(
+        edgeDescriptors,
+        molecule.getGraph()
+      );
 
       /* First, we fetch the angles that maximize the cycle area using the
        * cyclic polygon library.

@@ -18,6 +18,9 @@
 
 namespace MoleculeManip {
 
+// Forward-declare CycleData
+class CycleData;
+
 //! Core graph-level algorithms (not requiring stereocenter information)
 namespace GraphAlgorithms {
 
@@ -63,117 +66,6 @@ public:
   template<typename Graph>
   void tree_edge(const EdgeIndexType& e, const Graph& g) {
     _depthMap[boost::target(e, g)] = _depthMap[boost::source(e, g)] + 1;
-  }
-};
-
-class SubstituentLinkSearcher : public boost::default_bfs_visitor {
-private:
-  // Const members
-  const AtomIndexType _source;
-
-  // State
-  std::unordered_map<AtomIndexType, unsigned> _depthMap;
-  std::unordered_map<
-    AtomIndexType,
-    temple::TinyUnorderedSet<AtomIndexType>
-  > _parentMap;
-
-  // Side-effect output
-  std::set<
-    std::pair<AtomIndexType, AtomIndexType>
-  >& _connectedPairs;
-
-public:
-  SubstituentLinkSearcher(
-    const AtomIndexType& source,
-    const std::vector<AtomIndexType>& soughtIndices,
-    std::set<
-      std::pair<AtomIndexType, AtomIndexType>
-    >& connectedPairsOutput
-  ) : _source(source),
-      _depthMap({
-        {source, 0}
-      }),
-      _connectedPairs(connectedPairsOutput)
-  {
-    for(const auto& index : soughtIndices) {
-      _parentMap[index].insert(index);
-    }
-  }
-
-  template<typename Graph>
-  void tree_edge(const EdgeIndexType& e, const Graph& g) {
-    const auto source = boost::source(e, g);
-    const auto target = boost::target(e, g);
-
-    _depthMap[target] = _depthMap[source] + 1;
-
-    if(source == _source) {
-      return;
-    }
-
-    bool sourceInMap = (_parentMap.count(source) == 1);
-    bool targetInMap = (_parentMap.count(target) == 1);
-
-    if(sourceInMap && !targetInMap) {
-      _parentMap[target].insert(
-        _parentMap[source].begin(),
-        _parentMap[source].end()
-      );
-    } else if(targetInMap && !sourceInMap) {
-      _parentMap[source].insert(
-        _parentMap[target].begin(),
-        _parentMap[target].end()
-      );
-    } 
-  }
-
-  template<typename Graph>
-  void non_tree_edge(const EdgeIndexType& e, const Graph& g) {
-    const auto source = boost::source(e, g);
-    const auto target = boost::target(e, g);
-
-    // Skip simple back edges
-    if(_depthMap[target] == _depthMap[source] - 1) {
-      return;
-    }
-
-    bool sourceInMap = _parentMap.count(source) == 1;
-    bool targetInMap = _parentMap.count(target) == 1;
-
-    if(sourceInMap && targetInMap) {
-      auto setDifference = temple::unorderedSetSymmetricDifference(
-        _parentMap[source],
-        _parentMap[target]
-      );
-
-      if(setDifference.size() > 0) {
-        // Pairs must be formed between sets (a - b), (b - a)
-        temple::forAllPairs(
-          temple::unorderedSetDifference(
-            _parentMap[source],
-            _parentMap[target]
-          ),
-          temple::unorderedSetDifference(
-            _parentMap[target],
-            _parentMap[source]
-          ),
-          [this](const auto& a, const auto& b) {
-            _connectedPairs.emplace(
-              std::min(a, b),
-              std::max(a, b)
-            );
-          }
-        );
-
-        if(_depthMap[target] == _depthMap[source] + 1) {
-          _parentMap[target] = temple::unorderedSetUnion(
-            _parentMap[source],
-            _parentMap[target]
-          );
-        }
-      }
-    }
   }
 };
 
@@ -234,16 +126,33 @@ public:
 
 } // namespace BFSVisitors
 
-/*!
- * Shorthand function for using the SubstituentLinkSearcher. Determines whether
- * substituents at a central atom are linked or not at the grpah level.
- */
-std::set<
-  std::pair<AtomIndexType, AtomIndexType>
-> findSubstituentLinks(
+struct LinkInformation {
+  //! An (asc) ordered pair of the substituent indices that are linked
+  std::pair<AtomIndexType, AtomIndexType> indexPair;
+
+  /*! The in-order atom sequence of the cycle atom indices.
+   *
+   * NOTE: The front and back indices are repeated.
+   */
+  std::vector<AtomIndexType> cycleSequence;
+
+  /* TODO this operator isn't quite correct, in principle, the cycle sequence
+   * is not the completely reduced form / has degrees of freedom, and a
+   * lexicographical comparison isn't correct for it
+   */
+  bool operator == (const LinkInformation& other) const {
+    return (
+      indexPair == other.indexPair
+      && cycleSequence == other.cycleSequence
+    );
+  }
+};
+
+std::vector<LinkInformation> substituentLinks(
   const GraphType& graph,
+  const CycleData& cycleData,
   const AtomIndexType& source,
-  const std::vector<AtomIndexType>& activeSubstituents
+  const std::vector<AtomIndexType>& activeAdjacents
 );
 
 /*! 

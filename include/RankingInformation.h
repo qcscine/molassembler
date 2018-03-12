@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include "common_typedefs.h"
+#include "GraphAlgorithms.h"
 
 /*! @file
  *
@@ -25,18 +26,16 @@ struct RankingInformation {
     std::vector<AtomIndexType>
   >;
 
-  using LinksType = std::set<
-    std::pair<AtomIndexType, AtomIndexType>
-  >;
+  using LinksType = std::vector<GraphAlgorithms::LinkInformation>;
 
   //! Sorted substituents grouped by priority ascending
   RankedType sortedSubstituents;
 
   /*!
-   * The set containing pairs of substituents that are linked and therefore form
-   * multidentate ligands.
+   * Information on any links between substituents in the graph.
+   * The LinkInformation struct is documented in GraphAlgorithms.h
    */
-  LinksType linkedPairs;
+  LinksType links;
 };
 
 } // namespace MoleculeManip

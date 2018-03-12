@@ -17,7 +17,9 @@ inline std::ostream& nl(std::ostream& os) {
 }
 
 struct TestingData {
-  using LinksType = RankingInformation::LinksType;
+  using LinksType = std::set<
+    std::pair<AtomIndexType, AtomIndexType>
+  >;
 
   AtomIndexType source;
 
@@ -361,14 +363,29 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
 
   const auto& relevantData = testData.at(filePath.stem().string());
 
-  auto rankedData = mol.rankPriority(relevantData.source);
+  auto links = GraphAlgorithms::substituentLinks(
+    mol.getGraph(),
+    mol.getCycleData(),
+    relevantData.source,
+    mol.getAdjacencies(relevantData.source)
+  );
 
-  if(rankedData.linkedPairs != relevantData.expectedLinks) {
+  TestingData::LinksType condensed;
+  for(const auto& linkData : links) {
+    condensed.insert(linkData.indexPair);
+  }
+
+  if(condensed != relevantData.expectedLinks) {
     std::cout << "Links test fails for " << filePath.stem().string() << "." << nl
       << "Expected: "
       << temple::stringify(relevantData.expectedLinks) << ", got "
-      << temple::stringify(rankedData.linkedPairs)
-      << ".";
+      << temple::stringify(condensed)
+      << ". From:\n";
+
+    for(const auto& link : links) {
+      std::cout << temple::stringify(link.indexPair) << ": "
+        << temple::stringify(link.cycleSequence) << "\n";
+    }
 
     return false;
   }

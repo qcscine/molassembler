@@ -3,6 +3,7 @@
 
 #include "common_typedefs.h"
 #include "RangeForTemporary.h"
+#include "temple/TinySet.h"
 
 // RDL
 #include "RingDecomposerLib/RingDecomposerLib.h"
@@ -111,10 +112,12 @@ private:
 public:
   ~CycleIterator();
 
+  using EdgeSet = temple::TinySet<GraphType::edge_descriptor>;
+
 /* Information */
   bool atEnd() const;
   unsigned cycleSize() const;
-  std::set<GraphType::edge_descriptor> getCurrentCycle() const;
+  EdgeSet getCurrentCycle() const;
 
 /* Modification */
   void advance();
@@ -130,7 +133,7 @@ class Molecule;
  */
 std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
   const CycleData& cycleData,
-  const Molecule& molecule
+  const GraphType& graph
 );
 
 /*!
@@ -138,8 +141,13 @@ std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
  * possible vertex index sequences describing the cycle
  */
 std::vector<AtomIndexType> makeRingIndexSequence(
-  const std::set<GraphType::edge_descriptor>& edgeSet,
-  const Molecule& molecule
+  const CycleIterator::EdgeSet& edgeSet,
+  const GraphType& graph
+);
+
+std::vector<AtomIndexType> centralizeRingIndexSequence(
+  std::vector<AtomIndexType> ringIndexSequence,
+  const AtomIndexType& center
 );
 
 /*!
@@ -147,8 +155,8 @@ std::vector<AtomIndexType> makeRingIndexSequence(
  * Double and aromatic bonds are considered planarity enforcing.
  */
 unsigned countPlanarityEnforcingBonds(
-  const std::set<GraphType::edge_descriptor>& edgeSet,
-  const Molecule& molecule
+  const CycleIterator::EdgeSet& edgeSet,
+  const GraphType& graph
 );
 
 } // namespace MoleculeManip

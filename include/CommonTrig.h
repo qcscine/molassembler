@@ -33,6 +33,27 @@ T lawOfCosines(
 }
 
 /*!
+ * Calculates the angle between a and b in a triangle of three side lengths a,
+ * b and c.
+ */
+template<typename T>
+T lawOfCosinesAngle(
+  const T& a,
+  const T& b,
+  const T& c
+) {
+  return std::acos(
+    (
+      a * a
+      + b * b
+      - c * c
+    ) / (
+      2 * a * b
+    )
+  );
+}
+
+/*!
  * Calculates the law of sines, returning the angle β.
  * From: (sin α) / a = (sin β) / b
  * -> β = arcsin( (b sin α) / a )
