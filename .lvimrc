@@ -1,0 +1,1 @@
+let g:ale_cpp_gcc_options .= ' -Istatic_math/include -I/home/jan-grimo/PhD/projects/libs'
