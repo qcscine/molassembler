@@ -1,0 +1,5 @@
+*.pdf
+.lvimrc
+build/
+.commit-notes
+documentation/
