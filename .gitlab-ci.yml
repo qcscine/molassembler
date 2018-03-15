@@ -1,0 +1,30 @@
+build:
+  stage: build
+  tags:
+    - centos
+  script:
+    - module load gcc/6.2.0
+    - module load boost/gcc-6.2.0/1.62.0
+    - module load boost/gcc-6.2.0/1.62.0-cmake
+    - mkdir -p build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - make -j8
+  cache:
+    key: "$CI_BUILD_REF_NAME"
+    paths:
+    - build/
+
+test:
+  stage: test
+  tags:
+    - centos
+  script:
+    - module load gcc/6.2.0
+    - module load boost/gcc-6.2.0/1.62.0
+    - cd build
+    - make test
+  cache:
+    key: "$CI_BUILD_REF_NAME"
+    paths:
+    - build/
