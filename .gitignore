@@ -1,6 +1,0 @@
-build/
-build*
-documentation/
-.lvimrc
-*.svg
-.commit-notes
