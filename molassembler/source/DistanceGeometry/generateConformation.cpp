@@ -241,7 +241,7 @@ bool moleculeHasUnassignedStereocenters(const Molecule& mol) {
 
 // Non-debug version of DG
 outcome::result<
-  std::list<Delib::PositionCollection>
+  std::vector<Delib::PositionCollection>
 > runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
@@ -267,7 +267,8 @@ outcome::result<
    */
   const double failureRatio = 0.1; // allow only 10% failures in release
   unsigned failures = 0;
-  std::list<Delib::PositionCollection> ensemble;
+  std::vector<Delib::PositionCollection> ensemble;
+  ensemble.reserve(numStructures);
 
   for(
     unsigned currentStructureNumber = 0;
@@ -869,7 +870,7 @@ MoleculeDGInformation gatherDGInformation(
 }
 
 outcome::result<
-  std::list<Delib::PositionCollection>
+  std::vector<Delib::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   const unsigned& numStructures

@@ -24,6 +24,34 @@ namespace molassembler {
 TemperatureRegime Molecule::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Molecule::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 
+/* Static functions */
+Delib::BondOrderCollection Molecule::uffBondOrders(
+  const Delib::AtomCollection& atomCollection
+) {
+  const int N = atomCollection.size();
+
+  auto bondOrders = Delib::BondOrderCollection::createEmpty(N);
+
+  for(int i = 0; i < N; ++i) {
+    for(int j = i + 1; j < N; ++j) {
+      bondOrders.setOrder(
+        i, 
+        j, 
+        Bond::calculateBondOrder(
+          atomCollection.getElement(i),
+          atomCollection.getElement(j),
+          (
+            atomCollection.getPosition(j) 
+            - atomCollection.getPosition(i)
+          ).norm()
+        )
+      );
+    }
+  }
+
+  return bondOrders;
+}
+
 
 /* Private members */
 
@@ -411,6 +439,41 @@ Molecule::Molecule(
 ) : _adjacencies(graph),
     _stereocenters(inferStereocentersFromPositions(positions))
 {}
+
+Molecule::Molecule(
+  const Delib::AtomCollection& atomCollection,
+  const Delib::BondOrderCollection& bondOrders
+) : _adjacencies(atomCollection.size()) {
+  // Discretize bond orders
+  const int N = atomCollection.size();
+
+  for(int i = 0; i < N; ++i) {
+    for(int j = i + 1; j < N; ++j) {
+      double bondOrder = bondOrders.getOrder(i, j);
+
+      if(bondOrder > 0.5) {
+        BondType bond = static_cast<BondType>(
+          std::round(bondOrder) - 1
+        );
+
+        if(bondOrder > 6.5) {
+          bond = BondType::Sextuple;
+        }
+
+        auto edgeAddPair = boost::add_edge(i, j, _adjacencies);
+
+        _adjacencies[edgeAddPair.first].bondType = bond;
+      }
+    }
+  }
+
+  _stereocenters = inferStereocentersFromPositions(
+    atomCollection.getPositions()
+  );
+}
+
+Molecule::Molecule(const Delib::AtomCollection& atomCollection) 
+  : Molecule {atomCollection, uffBondOrders(atomCollection)} {}
 
 /* Modifiers */
 AtomIndexType Molecule::addAtom(
@@ -868,6 +931,18 @@ Delib::ElementType Molecule::getElementType(const AtomIndexType& index) const {
   }
 
   return _adjacencies[index].elementType;
+}
+
+Delib::ElementTypeCollection Molecule::getElementCollection() const {
+  AtomIndexType N = numAtoms();
+  Delib::ElementTypeCollection elements;
+  elements.reserve(N);
+
+  for(AtomIndexType i = 0; i < N; ++i) {
+    elements.push_back(_adjacencies[i].elementType);
+  }
+
+  return elements;
 }
 
 const GraphType& Molecule::getGraph() const {

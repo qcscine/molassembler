@@ -47,8 +47,8 @@ modelled onto every non-terminal atom in the graph.
 
 - Extensive tests
 
-  - Ranking algorithm is tested against nearly all examples from the IUPAC Blue
-    Book, the corresponding MOLFiles can be found in
+  - The ranking algorithm is tested against examples from the IUPAC
+    Blue Book, the corresponding MOLFiles can be found in
     tests/mol_files/ranking_tree_molecules/.
   - The conformational model is tested against a battery of strained molecules
     which test the adaptability of geometrical idealization strictness. Those
@@ -78,20 +78,22 @@ modelled onto every non-terminal atom in the graph.
 
 This library requires the C++14 standard.
 
-Library dependencies:
+External library dependencies:
 
-- STL
 - boost: graph, functional, optional, test
 - Eigen: vector arithmetic
 - dlib: BFGS solver
 - RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
 - Delib: Common chemical exchange types
+
+Sub-libraries:
+
 - constable: constexpr algorithms and data structures
 - temple: randomness, cache, composability improvement shorthands
-- Symmetry information library: constexpr properties of symmetries
-- Unique Assignment library: Stereopermutation of ligands in arbitrary symmetries
-- Cyclic polygons library: Determination of planar cyclic polygon internal
-  angles for any edge lengths
+- Symmetry information: constexpr properties of symmetries
+- Unique Assignment: Stereopermutation of ligands in arbitrary symmetries
+- Cyclic polygons: Determination of planar cyclic polygon internal angles for
+  any edge lengths
 
 
 ## Compilation

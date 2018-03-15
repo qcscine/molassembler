@@ -117,7 +117,7 @@ public:
 /*!
  * Bond radii for each element from the original UFF paper:
  *
- * FIX CITATION
+ * TODO FIX CITATION
  * Rappé, Goddard et al. UFF, a full periodic table force field for ...
  */
 extern const std::array<double, 110> bondRadii;

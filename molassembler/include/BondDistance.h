@@ -24,16 +24,18 @@ static constexpr std::array<double, 8> bondOrderMap {{
 //! UFF bond distance correction constant lambda
 constexpr double bondOrderCorrectionLambda = 0.1332;
 
-/*!
- * Calculate the bond distance as modelled in the original UFF paper:
- *
- * TODO FIX CITATION
- * Rappé, Goddard et al. UFF, a full periodic table force field for ...
- */
+//! Calculates bond distance as modelled by UFF
 double calculateBondDistance(
   const Delib::ElementType& a,
   const Delib::ElementType& b,
   const BondType& bondType
+);
+
+//! Calculates bond distances as modelled by UFF
+double calculateBondOrder(
+  const Delib::ElementType& a,
+  const Delib::ElementType& b,
+  const double& distance
 );
 
 } // namespace Bond

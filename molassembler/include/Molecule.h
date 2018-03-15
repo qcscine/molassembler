@@ -6,6 +6,9 @@
 #include "CycleData.h"
 #include "LocalGeometryModel.h"
 
+#include "Delib/AtomCollection.h"
+#include "Delib/BondOrderCollection.h"
+
 /*! @file
  *
  * Contains the Molecule class declaration, which is the central class of the
@@ -22,6 +25,11 @@ public:
 /* "Global" options */
   static TemperatureRegime temperatureRegime;
   static ChiralStatePreservation chiralStatePreservation;
+
+/* Static functions */
+  static Delib::BondOrderCollection uffBondOrders(
+    const Delib::AtomCollection& atomCollection
+  );
 
 private:
 /* State */
@@ -113,6 +121,13 @@ public:
   Molecule(
     const GraphType& graph,
     const Delib::PositionCollection& positions
+  );
+
+  explicit Molecule(const Delib::AtomCollection& atomCollection);
+
+  Molecule(
+    const Delib::AtomCollection& atomCollection,
+    const Delib::BondOrderCollection& bondOrders
   );
 
 /* Modification */
@@ -248,6 +263,9 @@ public:
    * @throws if the atomic index is invalid
    */
   Delib::ElementType getElementType(const AtomIndexType& index) const;
+
+  //! Returns a collection detailing all element types
+  Delib::ElementTypeCollection getElementCollection() const;
 
   //! Returns the underlying boost graph library adjacency list
   const GraphType& getGraph() const;

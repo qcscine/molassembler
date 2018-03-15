@@ -25,6 +25,22 @@ double calculateBondDistance(
   );
 }
 
+double calculateBondOrder(
+  const Delib::ElementType& a,
+  const Delib::ElementType& b,
+  const double& distance
+) {
+  return std::exp(
+    (
+      distance - AtomInfo::bondRadius(a) - AtomInfo::bondRadius(b)
+    ) / (
+      bondOrderCorrectionLambda * (
+        AtomInfo::bondRadius(a) + AtomInfo::bondRadius(b)
+      )
+    )
+  );
+}
+
 } // namespace Bond
 
 } // namespace molassembler

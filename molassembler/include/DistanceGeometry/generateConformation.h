@@ -43,7 +43,7 @@ std::list<RefinementData> debugDistanceGeometry(
 );
 
 outcome::result<
-  std::list<Delib::PositionCollection>
+  std::vector<Delib::PositionCollection>
 > runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
@@ -67,7 +67,7 @@ MoleculeDGInformation gatherDGInformation(
 
 // "Public" functions
 outcome::result<
-  std::list<Delib::PositionCollection>
+  std::vector<Delib::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   const unsigned& numStructures
