@@ -3,10 +3,12 @@
 cmake_minimum_required(VERSION 3.5.1)
 
 # little variables
-set(WARNING_FLAGS "-Wall -Wpedantic -Wextra")
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # declaration
-project(SymmetryInformation)
+project(CyclicPolygons)
+
 enable_testing()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
@@ -27,12 +29,6 @@ include_directories(SYSTEM
 )
 
 add_executable(Tests tests.cpp)
-target_compile_options(Tests PUBLIC -g)
-set_target_properties(
-  Tests PROPERTIES
-  CXX_STANDARD 14
-  CXX_STANDARD_REQUIRED ON
-  COMPILE_FLAGS ${WARNING_FLAGS}
-)
+target_compile_options(Tests PRIVATE -g -Wall -Wpedantic -Wextra)
 target_include_directories(Tests PRIVATE ${BOOST_ROOT})
 target_link_libraries(Tests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})

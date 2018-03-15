@@ -2,8 +2,10 @@
 #define INCLUDE_CYCLIC_POLYGONS_LIB_H
 
 #include "boost/math/tools/roots.hpp"
+
 #include "temple/Containers.h"
-#include "temple/Numeric.h"
+#include "temple/constexpr/Numeric.h"
+
 #include <cassert>
 #include <vector>
 
@@ -279,17 +281,7 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
 
   const FloatType longestEdge = temple::max(edgeLengths);
 
-  const FloatType minR = longestEdge / 2 + 1e-10;
-
-  /*const FloatType lowerBound = std::max(
-    regularCircumradius(
-      edgeLengths.size(),
-      temple::min(edgeLengths)
-    ),
-    minR
-  );*/
-
-  const FloatType lowerBound = minR;
+  const FloatType lowerBound = longestEdge / 2 + 1e-10;
 
   const FloatType upperBound = std::numeric_limits<FloatType>::max();
 
@@ -297,15 +289,13 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
     edgeLengths.size(),
     std::max(
       temple::average(edgeLengths),
-      minR
+      lowerBound
     )
   );
 
   if(rootGuess < lowerBound) {
     rootGuess = lowerBound;
-  } else if(rootGuess > upperBound) {
-    rootGuess = upperBound;
-  }
+  } 
 
   assert(lowerBound <= rootGuess && rootGuess <= upperBound);
 
