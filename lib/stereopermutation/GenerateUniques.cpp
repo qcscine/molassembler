@@ -8,10 +8,10 @@
 #include <sstream>
 #include <unordered_map>
 
-namespace UniqueAssignments {
+namespace stereopermutation {
 
 bool hasTransArrangedPairs(
-  const Assignment& assignment,
+  const Stereopermutation& assignment,
   const Symmetry::Name& symmetryName
 ) {
   // for every pair in links
@@ -30,8 +30,8 @@ bool hasTransArrangedPairs(
 }
 
 
-std::vector<Assignment> uniqueAssignments(
-  const Assignment& initial,
+std::vector<Stereopermutation> uniqueStereopermutations(
+  const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups
 ) {
@@ -42,12 +42,12 @@ std::vector<Assignment> uniqueAssignments(
    * work, since the pair-wise comparison (see isRotationallySuperimposable) 
    * just generates rotations of one and compares those with the other. It is 
    * chosen here to prefer speed over memory requirements. After all, the 
-   * number of Assignment objects that will be generated and stored is unlikely
+   * number of Stereopermutation objects that will be generated and stored is unlikely
    * to pass 1000.
    */
 
   // make a copy of initial so we can modify it by permutation
-  Assignment assignment = initial;
+  Stereopermutation assignment = initial;
 
   // ensure we start with the lowest permutation
   assignment.lowestPermutation();
@@ -72,7 +72,7 @@ std::vector<Assignment> uniqueAssignments(
   auto rotationsSet = assignment.generateAllRotations(symmetryName);
 
   // The lowest rotation of the passed assignment is the first unique assignment
-  std::vector<Assignment> uniqueAssignments {*rotationsSet.begin()};
+  std::vector<Stereopermutation> uniqueStereopermutations {*rotationsSet.begin()};
 
   // go through all possible permutations of columns
   while(assignment.nextPermutation()) {
@@ -91,7 +91,7 @@ std::vector<Assignment> uniqueAssignments(
       auto assignmentRotations = assignment.generateAllRotations(symmetryName);
 
       // add the smallest assignment from the generated set to the list of uniques
-      uniqueAssignments.push_back(*assignmentRotations.begin());
+      uniqueStereopermutations.push_back(*assignmentRotations.begin());
 
       // and add its rotations to the set
       rotationsSet.insert(
@@ -102,11 +102,11 @@ std::vector<Assignment> uniqueAssignments(
     } 
   }
     
-  return uniqueAssignments;
+  return uniqueStereopermutations;
 }
 
-AssignmentsWithWeights uniqueAssignmentsWithWeights(
-  const Assignment& initial,
+StereopermutationsWithWeights uniqueStereopermutationsWithWeights(
+  const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups
 ) {
@@ -117,21 +117,21 @@ AssignmentsWithWeights uniqueAssignmentsWithWeights(
    * work, since the pair-wise comparison (see isRotationallySuperimposable) 
    * just generates rotations of one and compares those with the other. It is 
    * here chosen to prefer speed over memory requirements. After all, the 
-   * number of Assignment objects that will be generated and stored is unlikely
+   * number of Stereopermutation objects that will be generated and stored is unlikely
    * to pass 1000.
    */
 
   struct RotationsAndOccurrencesCount {
-    std::set<Assignment> rotations;
+    std::set<Stereopermutation> rotations;
     unsigned occurrencesCount = 1;
 
     // Help constructor
     RotationsAndOccurrencesCount() = default;
-    explicit RotationsAndOccurrencesCount(std::set<Assignment>&& rotations) : rotations(rotations) {}
+    explicit RotationsAndOccurrencesCount(std::set<Stereopermutation>&& rotations) : rotations(rotations) {}
   };
 
   // make a copy of initial so we can modify it by permutation
-  Assignment assignment = initial;
+  Stereopermutation assignment = initial;
 
   // ensure we start with the lowest permutation
   assignment.lowestPermutation();
@@ -153,9 +153,9 @@ AssignmentsWithWeights uniqueAssignmentsWithWeights(
   }
 
   auto initialRotations = assignment.generateAllRotations(symmetryName);
-  const Assignment& lowestRotation = *initialRotations.begin();
+  const Stereopermutation& lowestRotation = *initialRotations.begin();
 
-  AssignmentsWithWeights data;
+  StereopermutationsWithWeights data;
 
   data.weights.reserve(40);
   data.assignments.reserve(40);
@@ -163,7 +163,7 @@ AssignmentsWithWeights uniqueAssignmentsWithWeights(
   data.assignments.push_back(lowestRotation);
   data.weights.push_back(1);
 
-  std::unordered_map<Assignment, unsigned, boost::hash<Assignment>> rotationCounterMap;
+  std::unordered_map<Stereopermutation, unsigned, boost::hash<Stereopermutation>> rotationCounterMap;
 
   for(const auto& rotation: initialRotations) {
     rotationCounterMap.emplace(
@@ -203,4 +203,4 @@ AssignmentsWithWeights uniqueAssignmentsWithWeights(
   return data;
 }
 
-} // namespace UniqueAssignments
+} // namespace stereopermutation

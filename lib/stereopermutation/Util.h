@@ -6,7 +6,7 @@
 
 #include "boost/optional.hpp"
 
-namespace UniqueAssignments {
+namespace stereopermutation {
 
 namespace Util {
 
@@ -70,6 +70,6 @@ std::string toString(const T& container) {
 
 } // eo namespace Util
 
-} // eo namespace UniqueAssignments
+} // eo namespace stereopermutation
 
 #endif

@@ -1,5 +1,4 @@
-TODO
-----
+# TODO
 
 - Couldn't this be integrated with the symmetries library? A lot of the
   functionality is probably overlapping by now, and then I could have a

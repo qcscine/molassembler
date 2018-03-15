@@ -1,7 +1,7 @@
 #ifndef LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
 #define LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
 
-#include "Assignment.h"
+#include "Stereopermutation.h"
 
 #include <vector>
 
@@ -12,10 +12,10 @@
  * counting the relative weights of unique assignments.
  */
 
-namespace UniqueAssignments {
+namespace stereopermutation {
 
 bool hasTransArrangedPairs(
-  const Assignment& assignment,
+  const Stereopermutation& assignment,
   const Symmetry::Name& symmetryName
 );
 
@@ -34,15 +34,15 @@ bool hasTransArrangedPairs(
  *  to cis arrangements. Xantphos (with bridge length 7) is the smallest 
  *  trans-spanning ligand mentioned in Wikipedia.
  */
-std::vector<Assignment> uniqueAssignments(
-  const Assignment& initial,
+std::vector<Stereopermutation> uniqueStereopermutations(
+  const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups = true
 );
 
-//! Data class for uniqueAssignments including weights
-struct AssignmentsWithWeights {
-  std::vector<Assignment> assignments;
+//! Data class for uniqueStereopermutations including weights
+struct StereopermutationsWithWeights {
+  std::vector<Stereopermutation> assignments;
   std::vector<unsigned> weights;
 };
 
@@ -50,12 +50,12 @@ struct AssignmentsWithWeights {
  * Returns the set of rotationally unique assignments including absolute
  * occurrence counts.
  */
-AssignmentsWithWeights uniqueAssignmentsWithWeights(
-  const Assignment& initial,
+StereopermutationsWithWeights uniqueStereopermutationsWithWeights(
+  const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups = true
 );
 
-} // namespace UniqueAssignments
+} // namespace stereopermutation
 
 #endif

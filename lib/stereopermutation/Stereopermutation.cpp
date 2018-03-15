@@ -1,15 +1,15 @@
-#include "Assignment.h"
+#include "Stereopermutation.h"
 #include "Util.h"
 
 #include <algorithm>
 #include <cassert>
 #include "boost/functional/hash.hpp"
 
-namespace UniqueAssignments {
+namespace stereopermutation {
 
 /* Public members */
 /*  Constructors */
-Assignment::Assignment(
+Stereopermutation::Stereopermutation(
   const Symmetry::Name& passSymmetryName,
   std::vector<char> passCharacters
 ) : characters(std::move(passCharacters))
@@ -17,7 +17,7 @@ Assignment::Assignment(
   assert(characters.size() == Symmetry::size(passSymmetryName));
 }
 
-Assignment::Assignment(
+Stereopermutation::Stereopermutation(
   const Symmetry::Name& passSymmetryName,
   const std::vector<char>& passCharacters,
   const LinksSetType& passLinks
@@ -42,7 +42,7 @@ Assignment::Assignment(
 
 /* Public members */
 /* Modifiers ––––––––––––––––––––––– */
-void Assignment::columnSwap(
+void Stereopermutation::columnSwap(
   const unsigned& a,
   const unsigned& b
 ) {
@@ -79,7 +79,7 @@ void Assignment::columnSwap(
   links = std::move(newLinks);
 }
 
-bool Assignment::nextPermutation() {
+bool Stereopermutation::nextPermutation() {
   /* This is where it gets interesting. The elements we are permuting are the
    * characters ALONG with their indices in passLinks, and a permutation must
    * be a different operation than a rotation.
@@ -118,7 +118,7 @@ bool Assignment::nextPermutation() {
   }
 }
 
-bool Assignment::previousPermutation() {
+bool Stereopermutation::previousPermutation() {
 
   unsigned i = characters.size() - 1, j, k;
 
@@ -150,7 +150,7 @@ bool Assignment::previousPermutation() {
 
 }
 
-typename Assignment::LinksSetType Assignment::rotateLinks(
+typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
   const LinksSetType& links,
   const std::vector<unsigned>& rotationIndices
 ) const {
@@ -179,13 +179,13 @@ typename Assignment::LinksSetType Assignment::rotateLinks(
   return rotatedSet;
 }
 
-std::set<Assignment> Assignment::generateAllRotations(
+std::set<Stereopermutation> Stereopermutation::generateAllRotations(
   const Symmetry::Name& symmetryName
 ) const {
   return _generateAllRotations(
     [](
-      const Assignment& a __attribute__ ((unused)),
-      const Assignment& b __attribute__ ((unused))
+      const Stereopermutation& a __attribute__ ((unused)),
+      const Stereopermutation& b __attribute__ ((unused))
     ) -> bool {
       return false;
     },
@@ -193,16 +193,16 @@ std::set<Assignment> Assignment::generateAllRotations(
   ).first;
 }
 
-bool Assignment::isRotationallySuperimposable(
-  const Assignment& other,
+bool Stereopermutation::isRotationallySuperimposable(
+  const Stereopermutation& other,
   const Symmetry::Name& symmetryName
 ) const {
   return (
     *this == other
     || _generateAllRotations(
       [&other](
-        const Assignment& a __attribute__ ((unused)),
-        const Assignment& b
+        const Stereopermutation& a __attribute__ ((unused)),
+        const Stereopermutation& b
       ) -> bool {
         return b == other;
       },
@@ -212,7 +212,7 @@ bool Assignment::isRotationallySuperimposable(
 }
 
 //! Converts positionOccupations into a string
-std::string Assignment::toString() const {
+std::string Stereopermutation::toString() const {
 
   std::stringstream out;
 
@@ -239,8 +239,8 @@ std::string Assignment::toString() const {
 }
 
 /* Operators */
-bool Assignment::operator < (
-  const Assignment& other
+bool Stereopermutation::operator < (
+  const Stereopermutation& other
 ) const {
   return Util::compareSmaller(
     this -> characters,
@@ -250,14 +250,14 @@ bool Assignment::operator < (
   );
 }
 
-bool Assignment::operator > (
-  const Assignment& other
+bool Stereopermutation::operator > (
+  const Stereopermutation& other
 ) const {
   return other < *this;
 }
 
-bool Assignment::operator == (
-  const Assignment& other
+bool Stereopermutation::operator == (
+  const Stereopermutation& other
 ) const {
   return (
     this -> characters == other.characters
@@ -265,25 +265,25 @@ bool Assignment::operator == (
   );
 }
 
-bool Assignment::operator != (
-  const Assignment& other
+bool Stereopermutation::operator != (
+  const Stereopermutation& other
 ) const {
   return !(*this == other);
 }
 
 /* Private members */
 std::pair<
-  std::set<Assignment>,
+  std::set<Stereopermutation>,
   bool
-> Assignment::_generateAllRotations(
+> Stereopermutation::_generateAllRotations(
   const std::function<
-    bool(const Assignment&, const Assignment&)
-  >& interruptCallbackOnNewAssignment,
+    bool(const Stereopermutation&, const Stereopermutation&)
+  >& interruptCallbackOnNewStereopermutation,
   const Symmetry::Name& symmetryName
 ) const {
 
-  // add the initial structure to a set of Assignments
-  std::set<Assignment> enumeratedAssignments = {*this};   
+  // add the initial structure to a set of Stereopermutations
+  std::set<Stereopermutation> enumeratedStereopermutations = {*this};   
 
   /* Systematically explore all rotations:
    * The chain exists to keep track of which rotations starting from the base
@@ -312,14 +312,14 @@ std::pair<
 
   // initialize 
   std::vector<unsigned> chain = {0};
-  std::vector<Assignment> chainStructures = {*this};
+  std::vector<Stereopermutation> chainStructures = {*this};
   unsigned depth = 0;
 
   // begin loop
   while(chain.front() < linkLimit) {
     // perform rotation
     // copy the last element in chainStructures
-    Assignment generated = chainStructures.back();
+    Stereopermutation generated = chainStructures.back();
 
     // apply the rotation referenced by the last link in chain
     generated.applyRotation(
@@ -329,16 +329,16 @@ std::pair<
     );
 
     // is it something new?
-    if(enumeratedAssignments.count(generated) == 0) {
+    if(enumeratedStereopermutations.count(generated) == 0) {
       /* give a chance to interrupt if a condition for *this and the newly
        *  generated structures is fulfilled
        */
-      if(interruptCallbackOnNewAssignment(*this, generated)) {
-        return make_pair(enumeratedAssignments, true);
+      if(interruptCallbackOnNewStereopermutation(*this, generated)) {
+        return make_pair(enumeratedStereopermutations, true);
       }
 
       // add it to the set
-      enumeratedAssignments.insert(generated);
+      enumeratedStereopermutations.insert(generated);
 
       // add it to chainStructures
       chainStructures.push_back(generated);
@@ -366,10 +366,10 @@ std::pair<
     }
   }
 
-  return make_pair(enumeratedAssignments, false);
+  return make_pair(enumeratedStereopermutations, false);
 }
 
-void Assignment::lowestPermutation() {
+void Stereopermutation::lowestPermutation() {
   /* laziest way to implement is to call nextPermutation until it returns 
    * false, at which point the data structure is reset to its lowest
    * permutation.
@@ -379,7 +379,7 @@ void Assignment::lowestPermutation() {
   }
 }
 
-void Assignment::reverseColumns(
+void Stereopermutation::reverseColumns(
   const unsigned& from,
   const unsigned& to
 ) {
@@ -389,7 +389,7 @@ void Assignment::reverseColumns(
   }
 }
 
-std::vector<char> Assignment::rotateCharacters(
+std::vector<char> Stereopermutation::rotateCharacters(
   const std::vector<char>& characters,
   const std::vector<unsigned>& rotationIndices
 ) const {
@@ -404,12 +404,12 @@ std::vector<char> Assignment::rotateCharacters(
   return retv;
 }
 
-void Assignment::applyRotation(const std::vector<unsigned>& rotationIndices) {
+void Stereopermutation::applyRotation(const std::vector<unsigned>& rotationIndices) {
   characters = rotateCharacters(characters, rotationIndices);
   links = rotateLinks(links, rotationIndices);
 }
 
-bool Assignment::columnSmaller(
+bool Stereopermutation::columnSmaller(
   const unsigned& a,
   const unsigned& b
 ) const {
@@ -433,7 +433,7 @@ bool Assignment::columnSmaller(
 std::map<
   char,
   std::vector<unsigned>
-> Assignment::getCharMap() const {
+> Stereopermutation::getCharMap() const {
   std::map<
     char,
     std::vector<unsigned>
@@ -451,7 +451,7 @@ std::map<
   return returnMap;
 }
 
-bool Assignment::isSortedAsc() const {
+bool Stereopermutation::isSortedAsc() const {
   bool isSorted = true;
   for(unsigned i = 0; i < characters.size() - 1; i++) {
     /* It is a mistake with to test !columnSmaller(i, i + 1) as equal columns
@@ -469,7 +469,7 @@ bool Assignment::isSortedAsc() const {
   return isSorted;
 }
 
-std::set<unsigned> Assignment::makeConnectedIndicesSet(
+std::set<unsigned> Stereopermutation::makeConnectedIndicesSet(
   const unsigned& index
 ) const {
     std::set<unsigned> connectedIndices;
@@ -486,7 +486,7 @@ std::set<unsigned> Assignment::makeConnectedIndicesSet(
     return connectedIndices;
 }
 
-std::size_t hash_value(const Assignment& assignment) {
+std::size_t hash_value(const Stereopermutation& assignment) {
   std::size_t seed = 0;
 
   boost::hash_combine(
@@ -507,11 +507,11 @@ std::size_t hash_value(const Assignment& assignment) {
  */
 std::ostream& operator << (
   std::ostream& os,
-  const Assignment& a
+  const Stereopermutation& a
 ) {
   os << a.toString();
 
   return os;
 }
 
-} // namespace UniqueAssignments
+} // namespace stereopermutation

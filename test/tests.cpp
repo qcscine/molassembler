@@ -9,13 +9,13 @@
 #include <functional>
 #include <numeric>
 
-#include "GenerateUniques.h"
-#include "LogicalOperatorTests.h"
+#include "stereopermutation/GenerateUniques.h"
+#include "stereopermutation/LogicalOperatorTests.h"
 
 #include "temple/Random.h"
 #include "temple/Containers.h"
 
-using namespace UniqueAssignments;
+using namespace stereopermutation;
 
 /* TODO
  * - add more tests from different geometries
@@ -36,7 +36,7 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
 // create instances of all symmetries with monodentate ligands
 BOOST_AUTO_TEST_CASE( assignmentInstantiation ) {
   for(const auto& symmetryName: Symmetry::allNames) {
-    Assignment testAssignment(
+    Stereopermutation testStereopermutation(
       symmetryName,
       std::vector<char>(
         Symmetry::size(symmetryName),
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE( assignmentInstantiation ) {
 
 BOOST_AUTO_TEST_CASE( assignment_basics ) {
   // Constructors
-  Assignment instanceWithBondedLigands(
+  Stereopermutation instanceWithBondedLigands(
     Symmetry::Name::Octahedral,
     {'A', 'B', 'C', 'D', 'E', 'F'},
     {
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
 }
 
 BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
-  Assignment single {
+  Stereopermutation single {
     Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'A', 'A', 'A'},
     {
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
 }
 
 BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
-  Assignment testCase {
+  Stereopermutation testCase {
     Symmetry::Name::Octahedral,
     {'A', 'A', 'C', 'D', 'B', 'B'},
     {
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
   };
 
   auto testInstance = [&isAorB](
-    const Assignment& instance
+    const Stereopermutation& instance
   ) {
     return std::accumulate(
       instance.links.begin(),
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
 }
 
 BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
-  Assignment octahedralInstance(
+  Stereopermutation octahedralInstance(
     Symmetry::Name::Octahedral,
     {'A', 'B', 'C', 'D', 'E', 'F'}
   );
@@ -221,11 +221,11 @@ void run_tests_with_counts(
     std::tie(characters, pairs, expectedUnique) = tuple;
 
     // instantiate
-    Assignment assignment = (pairs.size() == 0)
-      ? Assignment(symmetryName, characters)
-      : Assignment(symmetryName, characters, pairs);
+    Stereopermutation assignment = (pairs.size() == 0)
+      ? Stereopermutation(symmetryName, characters)
+      : Stereopermutation(symmetryName, characters, pairs);
 
-    auto unique = uniqueAssignmentsWithWeights(assignment, symmetryName);
+    auto unique = uniqueStereopermutationsWithWeights(assignment, symmetryName);
 
     BOOST_CHECK(unique.assignments.size() == expectedUnique );
 
@@ -252,7 +252,7 @@ void run_tests_with_counts(
 }
 
 BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
-  Assignment a {
+  Stereopermutation a {
     Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
       std::make_pair(0, 5)
     }
   };
-  Assignment b {
+  Stereopermutation b {
     Symmetry::Name::Octahedral,
     {'A', 'A', 'B', 'A', 'B', 'B'},
     {
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
     }
   };
 
-  // one and only one of the following can be true for any Assignments a and b
+  // one and only one of the following can be true for any Stereopermutations a and b
   BOOST_CHECK(OperatorTests::testLogicalOperators(a, b));
 
   BOOST_CHECK(a.isRotationallySuperimposable(b, Symmetry::Name::Octahedral));
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
   /* Contrived example of two that have inconsistent logical operators, just
    * reordered op pairs. Will evaluate == but also < w/ current impl.
    */
-  Assignment c {
+  Stereopermutation c {
     Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
       std::make_pair(0, 5)
     }
   };
-  Assignment d {
+  Stereopermutation d {
     Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {

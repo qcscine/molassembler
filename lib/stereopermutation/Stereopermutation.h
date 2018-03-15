@@ -1,7 +1,7 @@
 #ifndef LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_H
 #define LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_H
 
-#include "symmetry_information/Symmetries.h"
+#include "chemical_symmetries/Symmetries.h"
 
 #include <vector>
 #include <map>
@@ -13,7 +13,7 @@
  * which substituents are arranged in various symmetries.
  */
 
-namespace UniqueAssignments {
+namespace stereopermutation {
 
 /*!
  * This class represents a simplified model of a sterically unique assignment
@@ -22,12 +22,12 @@ namespace UniqueAssignments {
  * a systematic generation of all possible configurations. It is generalized 
  * over a number of symmetries which are encoded in a separate library.
  */
-struct Assignment {
+struct Stereopermutation {
 private:
 /* Private member functions */
   /*!
    * Implementation of the generation of a set of all rotational equivalents of
-   * this Assignment as defined by its symmetry template parameter. Takes an 
+   * this Stereopermutation as defined by its symmetry template parameter. Takes an 
    * interrupt callback as an argument to which it passes *this and a new 
    * rotational structure every time one is found. If the callback returns
    * true, the generation of assignments is terminated and a pair containing
@@ -35,10 +35,10 @@ private:
    * returned. If the generation is allowed to finish, the full set and the 
    * boolean false are returned.
    */
-  std::pair<std::set<Assignment>, bool> _generateAllRotations(
+  std::pair<std::set<Stereopermutation>, bool> _generateAllRotations(
     const std::function<
-      bool(const Assignment&, const Assignment&)
-    >& interruptCallbackOnNewAssignment,
+      bool(const Stereopermutation&, const Stereopermutation&)
+    >& interruptCallbackOnNewStereopermutation,
     const Symmetry::Name& symmetryName
   ) const;
 
@@ -54,19 +54,19 @@ public:
 
   /* Constructors */
   // Do not default instantiate
-  Assignment() = delete;
+  Stereopermutation() = delete;
   /*!
-   * Constructs an Assignment from a list of ligand characters.
+   * Constructs an Stereopermutation from a list of ligand characters.
    *
    * \param passSymmetryName The name of the employed symmetry.
    * \param passCharacters A vector of chars signifying abstract ligands.
    */
-  Assignment(
+  Stereopermutation(
     const Symmetry::Name& passSymmetryName,
     std::vector<char> passCharacters
   );
   /*!
-   * Construct an Assignment from a list of ligand characters and a list of 
+   * Construct an Stereopermutation from a list of ligand characters and a list of 
    * bonded indices referencing the ligand characters.
    *
    * \param passSymmetryName The name of the employed symmetry.
@@ -74,7 +74,7 @@ public:
    * \param passLinks A vector of pairs. Describes which ligand characters 
    *  are bonded to one another.
    */
-  Assignment(
+  Stereopermutation(
     const Symmetry::Name& passSymmetryName,
     const std::vector<char>& passCharacters,
     const LinksSetType& passLinks
@@ -84,7 +84,7 @@ public:
   //! Swap two "columns"
   void columnSwap(const unsigned& a, const unsigned& b);
 
-  //! Transform this Assignment into its lowest permutation.
+  //! Transform this Stereopermutation into its lowest permutation.
   void lowestPermutation();
 
   //! Modify the "columns" to the previous permutation
@@ -124,10 +124,10 @@ public:
   bool columnSmaller(const unsigned& a, const unsigned& b) const;
 
   /*!
-   * Generates a set of all rotational equivalents of this Assignment as 
+   * Generates a set of all rotational equivalents of this Stereopermutation as 
    * defined by its symmetry template parameter.
    */
-  std::set<Assignment> generateAllRotations(const Symmetry::Name& symmetryName) const;
+  std::set<Stereopermutation> generateAllRotations(const Symmetry::Name& symmetryName) const;
 
   /*!
    * Gets a map of ligand symbol character to position(s) in the permutational
@@ -142,11 +142,11 @@ public:
   bool isSortedAsc() const;
 
   /*!
-   * Checks whether this Assignment is rotationally superimposable with
+   * Checks whether this Stereopermutation is rotationally superimposable with
    * another.
    */
   bool isRotationallySuperimposable(
-    const Assignment& other,
+    const Stereopermutation& other,
     const Symmetry::Name& symmetryName
   ) const;
 
@@ -161,22 +161,22 @@ public:
   std::string toString() const;
 
   /* Operators */
-  bool operator < (const Assignment& other) const;
-  bool operator > (const Assignment& other) const;
-  bool operator == (const Assignment& other) const;
-  bool operator != (const Assignment& other) const;
+  bool operator < (const Stereopermutation& other) const;
+  bool operator > (const Stereopermutation& other) const;
+  bool operator == (const Stereopermutation& other) const;
+  bool operator != (const Stereopermutation& other) const;
 };
 
-std::size_t hash_value(const Assignment& assignment);
+std::size_t hash_value(const Stereopermutation& assignment);
 
 /*!
  * ostream operator for easier debugging
  */
 std::ostream& operator << (
   std::ostream& os,
-  const Assignment& a
+  const Stereopermutation& a
 );
 
-} // namespace UniqueAssignments
+} // namespace stereopermutation
 
 #endif

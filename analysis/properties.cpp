@@ -7,14 +7,14 @@
 #include "boost/program_options.hpp"
 #include "temple/Stringify.h"
 
-#include "GenerateUniques.h"
+#include "stereopermutation/GenerateUniques.h"
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';
   return os;
 }
 
-using namespace UniqueAssignments;
+using namespace stereopermutation;
 
 int main(int argc, char* argv[]) {
   // Set up option parsing
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
     );
 
     // Validate links (if present)
-    Assignment::LinksSetType links;
+    Stereopermutation::LinksSetType links;
     if(options_variables_map.count("l")) {
       /* Naive parse strategy: 
        * - remove all opening and closing brackets from the string
@@ -142,13 +142,13 @@ int main(int argc, char* argv[]) {
     }
 
     // Generate the assignment
-    Assignment base {
+    Stereopermutation base {
       symmetryName,
       charVec,
       links
     };
 
-    auto uniques = uniqueAssignmentsWithWeights(
+    auto uniques = uniqueStereopermutationsWithWeights(
       base,
       symmetryName,
       false
