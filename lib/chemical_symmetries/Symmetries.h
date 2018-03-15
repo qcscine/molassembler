@@ -2,7 +2,7 @@
 #define LIB_INCLUDE_SYMMETRIES_H
 
 #include "boost/optional.hpp"
-#include "constable/TupleType.h"
+#include "temple/constexpr/TupleType.h"
 #include "Eigen/Core"
 #include "temple/Containers.h"
 
@@ -182,14 +182,14 @@ TetrahedronList makeTetrahedra(
 }
 
 //! Conversion helper to Eigen type from constexpr vector type
-Eigen::Vector3d toEigen(const constable::Vector& cVector);
+Eigen::Vector3d toEigen(const temple::Vector& cVector);
 
 /*! Conversion function to make the dynamic coordinates list type from the
  * constexpr data types given in a specifc symmetry class type
  */
 template<size_t symmetrySize>
 CoordinateList makeCoordinates(
-  const std::array<constable::Vector, symmetrySize>& constexprCoordinates
+  const std::array<temple::Vector, symmetrySize>& constexprCoordinates
 ) {
   return temple::mapToVector(
     constexprCoordinates,
@@ -235,7 +235,7 @@ struct symmetryInformationFunctor {
 };
 
 //! An array containing pointers to all symmetry data types' angle function
-constexpr auto angleFunctions = constable::TupleType::unpackToFunction<
+constexpr auto angleFunctions = temple::TupleType::unpackToFunction<
   allSymmetryDataTypes,
   angleFunctionFunctor
 >();

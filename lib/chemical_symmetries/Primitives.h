@@ -1,7 +1,7 @@
 #ifndef INCLUDE_SYMMETRY_INFORMATION_PRIMITIVES_H
 #define INCLUDE_SYMMETRY_INFORMATION_PRIMITIVES_H
 
-#include "constable/Vector.h"
+#include "temple/constexpr/Vector.h"
 
 #include "CompileTimeOptions.h"
 
@@ -51,7 +51,7 @@ constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
  * - size (unsigned)
  * - stringName (string)
  * - angleFunction ( double(const unsigned&, const unsigned&) )
- * - coordinates ( array<constable::Vector, N> ): N is size of symmetry,
+ * - coordinates ( array<temple::Vector, N> ): N is size of symmetry,
  *   see above
  * - rotations ( array< array<unsigned, size>, R> ): R is however many
  *   rotations are needed to produce all superimposable rotations
@@ -74,7 +74,7 @@ struct Linear {
 
     return M_PI;
   }
-  static constexpr std::array<constable::Vector, 2> coordinates {{
+  static constexpr std::array<temple::Vector, 2> coordinates {{
     { 1 , 0, 0 },
     { -1, 0, 0 }
   }};
@@ -109,9 +109,9 @@ struct Bent {
       return 0;
     }
 
-    return constable::Math::toRadians<double>(107); 
+    return temple::Math::toRadians<double>(107); 
   }
-  static constexpr std::array<constable::Vector, 2> coordinates {{
+  static constexpr std::array<temple::Vector, 2> coordinates {{
     {1., 0., 0.},
     {-0.292372, 0.956305, 0.}
   }};
@@ -147,9 +147,9 @@ struct TrigonalPlanar {
       return 0;
     }
 
-    return constable::Math::toRadians<double>(120);
+    return temple::Math::toRadians<double>(120);
   }
-  static constexpr std::array<constable::Vector, 3> coordinates {{
+  static constexpr std::array<temple::Vector, 3> coordinates {{
       {1, 0, 0},
       {-0.5, 0.866025, 0},
       {-0.5, -0.866025, 0}
@@ -187,9 +187,9 @@ struct TrigonalPyramidal {
       return 0;
     }
 
-    return constable::Math::toRadians<double>(107.5);
+    return temple::Math::toRadians<double>(107.5);
   }
-  static constexpr std::array<constable::Vector, 3> coordinates {{
+  static constexpr std::array<temple::Vector, 3> coordinates {{
     {0, -0.366501, 0.930418},
     {0.805765, -0.366501, -0.465209},
     {-0.805765, -0.366501, -0.465209}
@@ -229,7 +229,7 @@ struct TShaped {
 
     return M_PI;
   }
-  static constexpr std::array<constable::Vector, 3> coordinates {{
+  static constexpr std::array<temple::Vector, 3> coordinates {{
     {-1, -0, -0},
     {0, 1, 0},
     {1, 0, 0},
@@ -275,9 +275,9 @@ struct Tetrahedral {
       return 0;
     }
 
-    return constable::Math::toRadians<double>(109.5);
+    return temple::Math::toRadians<double>(109.5);
   }
-  static constexpr std::array<constable::Vector, 4> coordinates {{
+  static constexpr std::array<temple::Vector, 4> coordinates {{
     {0, 1, 0},
     {0, -0.333807, 0.942641},
     {0.816351, -0.333807, -0.471321},
@@ -325,7 +325,7 @@ struct SquarePlanar {
     // leftover case is trans
     return M_PI;
   }
-  static constexpr std::array<constable::Vector, 4> coordinates {{
+  static constexpr std::array<temple::Vector, 4> coordinates {{
     {1, 0, 0},
     {0, 1, 0},
     {-1, -0, -0},
@@ -367,12 +367,12 @@ struct Seesaw {
     }
 
     if(smaller == 1 && larger == 2) {
-      return constable::Math::toRadians<double>(120);
+      return temple::Math::toRadians<double>(120);
     }
 
     return M_PI / 2;
   }
-  static constexpr std::array<constable::Vector, 4> coordinates {{
+  static constexpr std::array<temple::Vector, 4> coordinates {{
     {0, 1, 0},
     {1, 0, 0},
     {-0.5, 0, -0.866025},
@@ -442,7 +442,7 @@ struct SquarePyramidal {
     // rest are cis
     return M_PI / 2;
   }
-  static constexpr std::array<constable::Vector, 5> coordinates {{
+  static constexpr std::array<temple::Vector, 5> coordinates {{
     {1, 0, 0},
     {0, 1, 0},
     {-1, -0, -0},
@@ -500,7 +500,7 @@ struct TrigonalBiPyramidal {
     unsigned smaller = std::min(a, b), larger = std::max(a, b);
     if(larger < 3) {
       // -> smaller < 2, this means either 0,1 0,2 1,2 axial
-      return constable::Math::toRadians<double>(120);
+      return temple::Math::toRadians<double>(120);
     } else if(larger == 3) {
       // -> smaller < 3, this means {1,2,3}, 3 
       return M_PI / 2;
@@ -512,7 +512,7 @@ struct TrigonalBiPyramidal {
       return M_PI;
     }
   }
-  static constexpr std::array<constable::Vector, 5> coordinates {{
+  static constexpr std::array<temple::Vector, 5> coordinates {{
     {1, 0, 0},
     {-0.5, 0.866025, 0},
     {-0.5, -0.866025, 0},
@@ -556,9 +556,9 @@ struct PentagonalPlanar {
     return std::min(
       absDiff,
       std::min(absDiff - 5, 5 - absDiff)
-    ) * constable::Math::toRadians<double>(72);
+    ) * temple::Math::toRadians<double>(72);
   }
-  static constexpr std::array<constable::Vector, 5> coordinates {{
+  static constexpr std::array<temple::Vector, 5> coordinates {{
     {1, 0, 0},
     {0.309017, 0.951057, 0},
     {-0.809017, 0.587785, 0},
@@ -611,7 +611,7 @@ struct Octahedral {
 
     return M_PI / 2;
   }
-  static constexpr std::array<constable::Vector, 6> coordinates {{
+  static constexpr std::array<temple::Vector, 6> coordinates {{
     {1, 0, 0},
     {0, 1, 0},
     {-1, -0, -0},
@@ -683,7 +683,7 @@ struct TrigonalPrismatic {
     
     // Between plane symmetric
     if(std::min(a - b, b - a) == 3) {
-      return constable::Math::toRadians<double>(76);
+      return temple::Math::toRadians<double>(76);
     } 
 
     // In plane triangle
@@ -691,13 +691,13 @@ struct TrigonalPrismatic {
       (a < 3 && b < 3)
       || (a >= 3 && b >= 3)
     ) {
-      return constable::Math::toRadians<double>(86);
+      return temple::Math::toRadians<double>(86);
     } 
 
     // Between plane asymmetric
-    return constable::Math::toRadians<double>(134);
+    return temple::Math::toRadians<double>(134);
   }
-  static constexpr std::array<constable::Vector, 6> coordinates {{
+  static constexpr std::array<temple::Vector, 6> coordinates {{
     {0.788011, 0, -0.615661},
     {-0.394005, 0.682437, -0.615661},
     {-0.394005, -0.682437, -0.615661},
@@ -752,9 +752,9 @@ struct PentagonalPyramidal {
     return std::min(
       absDiff,
       std::min(absDiff - 5, 5 - absDiff)
-    ) * constable::Math::toRadians<double>(72);
+    ) * temple::Math::toRadians<double>(72);
   }
-  static constexpr std::array<constable::Vector, 6> coordinates {{
+  static constexpr std::array<temple::Vector, 6> coordinates {{
     {1, 0, 0},
     {0.309017, 0.951057, 0},
     {-0.809017, 0.587785, 0},
@@ -817,7 +817,7 @@ struct PentagonalBiPyramidal {
       return M_PI; // trans 5,6
     }
 
-    if(constable::Math::XOR(a > 4, b > 4)) {
+    if(temple::Math::XOR(a > 4, b > 4)) {
       return M_PI / 2; // any angle to axial index
     }
 
@@ -826,9 +826,9 @@ struct PentagonalBiPyramidal {
     return std::min(
       absDiff,
       std::min(absDiff - 5, 5 - absDiff)
-    ) * constable::Math::toRadians<double>(72);
+    ) * temple::Math::toRadians<double>(72);
   }
-  static constexpr std::array<constable::Vector, 7> coordinates {{
+  static constexpr std::array<temple::Vector, 7> coordinates {{
     {1, 0, 0},
     {0.309017, 0.951057, 0},
     {-0.809017, 0.587785, 0},
@@ -916,7 +916,7 @@ struct SquareAntiPrismatic {
   static constexpr Symmetry::Name name = Symmetry::Name::SquareAntiPrismatic;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "square antiprismatic";
-  static constexpr std::array<constable::Vector, 8> coordinates {{
+  static constexpr std::array<temple::Vector, 8> coordinates {{
     // [ReF8]2-, distorted crystal structure
     /*{-0.00928803, 0.611568, 0.791137},
     {0.795627, 0.605641, -0.0132684},
@@ -942,7 +942,7 @@ struct SquareAntiPrismatic {
  * An upper triangular matrix containing angles between particules i,j in
  * degrees using the square antiprismatic reference coordinates
  */
-  static constexpr auto angleLookupTable = constable::makeUpperTriangularMatrix(
+  static constexpr auto angleLookupTable = temple::makeUpperTriangularMatrix(
     detail::makeArray<size>(coordinates)
   );
 #endif
@@ -967,21 +967,21 @@ struct SquareAntiPrismatic {
       || (a >= 4 && b >= 4)
     ) { // in plane
       if((a + b) % 2 == 1) { // cis
-        return constable::Math::toRadians<double>(72.9875); 
+        return temple::Math::toRadians<double>(72.9875); 
       } 
       
       // otherwise trans
-      return constable::Math::toRadians<double>(114.475);
+      return temple::Math::toRadians<double>(114.475);
     }
     
     // remaining cases are between planes
     unsigned minDiff = std::min(a - b, b - a);
     if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
-      return constable::Math::toRadians<double>(78.05);
+      return temple::Math::toRadians<double>(78.05);
     } 
 
     // last case is long between planes
-    return constable::Math::toRadians<double>(142.275);
+    return temple::Math::toRadians<double>(142.275);
 #endif
   }
   static constexpr std::array<

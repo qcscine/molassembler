@@ -4,7 +4,7 @@ namespace Symmetry {
 
 namespace data {
 
-Eigen::Vector3d toEigen(const constable::Vector& cVector) {
+Eigen::Vector3d toEigen(const temple::Vector& cVector) {
   return {
     cVector.data[0],
     cVector.data[1],
@@ -26,7 +26,7 @@ Eigen::Vector3d toEigen(const constable::Vector& cVector) {
  *   deinitialization is random.
  */
 const std::map<Name, SymmetryInformation>& symmetryData() {
-  static const auto dataMap = constable::TupleType::unpackToFunction<
+  static const auto dataMap = temple::TupleType::unpackToFunction<
     data::allSymmetryDataTypes,
     data::symmetryInformationFunctor
   >();

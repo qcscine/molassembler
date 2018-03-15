@@ -1,5 +1,4 @@
-TODO
-----
+# TODO
 
 - Maybe it would have been best to originally use DynamicArrays everywhere with
   the maximum symmetry size or reasonable defaults. Consequentially could have

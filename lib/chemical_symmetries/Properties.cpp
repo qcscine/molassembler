@@ -1,5 +1,5 @@
 #include "Properties.h"
-#include "constable/ToSTL.h"
+#include "temple/constexpr/ToSTL.h"
 
 namespace Symmetry {
 
@@ -12,8 +12,8 @@ struct mappingCalculationFunctor {
 };
 
 // Calculate the symmetryMapping for all possible combinations of symmetries
-constexpr auto allMappings = constable::makeUpperTriangularMatrix(
-  constable::TupleType::mapAllPairs<
+constexpr auto allMappings = temple::makeUpperTriangularMatrix(
+  temple::TupleType::mapAllPairs<
     data::allSymmetryDataTypes,
     mappingCalculationFunctor
   >()
@@ -67,7 +67,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
 
       properties::SymmetryTransitionGroup STLResult;
       STLResult.indexMappings = temple::mapToVector(
-        constable::toSTL(constexprMappings.mappings),
+        temple::toSTL(constexprMappings.mappings),
         [&](const auto& indexList) -> std::vector<unsigned> {
           return {
             indexList.begin(),
@@ -109,7 +109,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
 template<typename Symmetry>
 struct makeAllNumUnlinkedAssignmentsFunctor {
   static constexpr auto value() {
-    constable::DynamicArray<unsigned, constexprProperties::maxSymmetrySize> nums;
+    temple::DynamicArray<unsigned, constexprProperties::maxSymmetrySize> nums;
 
     /* Value for 0 is equal to value for 1, so calculate one less. When all
      * are equal, there is obviously only one assignment, no need to calculate
@@ -124,7 +124,7 @@ struct makeAllNumUnlinkedAssignmentsFunctor {
   }
 };
 
-constexpr auto allNumUnlinkedAssignments = constable::TupleType::map<
+constexpr auto allNumUnlinkedAssignments = temple::TupleType::map<
   data::allSymmetryDataTypes,
   makeAllNumUnlinkedAssignmentsFunctor
 >();
@@ -157,7 +157,7 @@ unsigned getNumUnlinked(
     static_cast<unsigned>(symmetryName)
   );
 
-  auto stlMapped = constable::toSTL(dynArrRef);
+  auto stlMapped = temple::toSTL(dynArrRef);
 
   numUnlinkedCache.add(
     symmetryName,

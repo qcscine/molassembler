@@ -3,9 +3,10 @@
 
 #include "Symmetries.h"
 
-#include "constable/Array.h"
-#include "constable/Boost.h"
-#include "constable/DynamicSet.h"
+#include "temple/constexpr/Array.h"
+#include "temple/constexpr/ConsecutiveCompare.h"
+#include "temple/constexpr/DynamicSet.h"
+#include "temple/constexpr/Numeric.h"
 
 #include "temple/Cache.h"
 
@@ -71,16 +72,16 @@ struct minAngleFunctor {
   }
 };
 
-/* Typedef to use constable's Array instead of std::array as the underlying
+/* Typedef to use temple's Array instead of std::array as the underlying
  * base array type since C++14's std::array has too few members marked constexpr
  * as to be useful. When C++17 rolls around, replace this with std::array!
  */
 template<typename T, size_t size> 
-using ArrayType = constable::Array<T, size>;
+using ArrayType = temple::Array<T, size>;
 
 template<typename SymmetryClass>
 constexpr auto startingIndexSequence() {
-  return constable::iota<
+  return temple::iota<
     ArrayType,
     unsigned,
     SymmetryClass::size
@@ -120,7 +121,7 @@ constexpr unsigned rotationPeriodicityImpl(
   const unsigned& count
 ) {
   if(
-    constable::arraysEqual(
+    temple::arraysEqual(
       runningIndices,
       startingIndexSequence<SymmetryClass>()
     )
@@ -189,11 +190,11 @@ struct maxSymmetrySizeFunctor {
       SymmetryClasses::size...
     };
 
-    return constable::max(sizes);
+    return temple::max(sizes);
   }
 };
 
-constexpr unsigned maxSymmetrySize = constable::TupleType::unpackToFunction<
+constexpr unsigned maxSymmetrySize = temple::TupleType::unpackToFunction<
   Symmetry::data::allSymmetryDataTypes,
   maxSymmetrySizeFunctor
 >();
@@ -203,7 +204,7 @@ constexpr unsigned maxSymmetrySize = constable::TupleType::unpackToFunction<
  * boost::none -> origin mapping.
  */
 template<typename SymmetryClass>
-constexpr constable::Vector getCoordinates(const unsigned& indexInSymmetry) {
+constexpr temple::Vector getCoordinates(const unsigned& indexInSymmetry) {
   if(indexInSymmetry != ORIGIN_PLACEHOLDER) {
     return SymmetryClass::coordinates.at(indexInSymmetry);
   }
@@ -216,10 +217,10 @@ constexpr constable::Vector getCoordinates(const unsigned& indexInSymmetry) {
  * three-dimensional space.
  */
 constexpr double getTetrahedronVolume(
-  const constable::Vector& i,
-  const constable::Vector& j,
-  const constable::Vector& k,
-  const constable::Vector& l
+  const temple::Vector& i,
+  const temple::Vector& j,
+  const temple::Vector& k,
+  const temple::Vector& l
 ) {
   return (i - l).dot(
     (j - l).cross(k - l)
@@ -235,7 +236,7 @@ template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateAngleDistortion(
   const ArrayType<
     unsigned,
-    constable::Math::max(
+    temple::Math::max(
       SymmetryClassFrom::size,
       SymmetryClassTo::size
     )
@@ -245,7 +246,7 @@ constexpr double calculateAngleDistortion(
 
   for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
     for(unsigned j = i + 1; j < SymmetryClassFrom::size; ++j) {
-      angularDistortion += constable::Math::abs(
+      angularDistortion += temple::Math::abs(
         SymmetryClassFrom::angleFunction(i, j)
         - SymmetryClassTo::angleFunction(
           indexMapping.at(i),
@@ -269,7 +270,7 @@ constexpr double calculateAngularDistortion(
 
   for(unsigned i = 0; i < sourceSymmetrySize; ++i) {
     for(unsigned j = i + 1; j < sourceSymmetrySize; ++j) {
-      distortionSum += constable::Math::abs(
+      distortionSum += temple::Math::abs(
         sourceAngleFunction(i, j)
         - targetAngleFunction(
           indexMapping.at(i),
@@ -306,7 +307,7 @@ template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateChiralDistortion(
   const ArrayType<
     unsigned,
-    constable::Math::max(
+    temple::Math::max(
       SymmetryClassFrom::size,
       SymmetryClassTo::size
     )
@@ -319,7 +320,7 @@ constexpr double calculateChiralDistortion(
   for(unsigned i = 0; i < SymmetryClassFrom::tetrahedra.size(); ++i) {
     const auto& tetrahedron = SymmetryClassFrom::tetrahedra.at(i);
 
-    chiralDistortion += constable::Math::abs(
+    chiralDistortion += temple::Math::abs(
       getTetrahedronVolume(
         getCoordinates<SymmetryClassFrom>(tetrahedron.at(0)),
         getCoordinates<SymmetryClassFrom>(tetrahedron.at(1)),
@@ -416,7 +417,7 @@ constexpr unsigned maxRotations() {
    */
   constexpr auto symmetryRotationPeriodicities = rotationPeriodicities<SymmetryClass>();
 
-  return constable::reduce(
+  return temple::reduce(
     symmetryRotationPeriodicities,
     1u,
     std::multiplies<unsigned>()
@@ -433,9 +434,9 @@ constexpr unsigned maxRotations() {
  * lexicographical comparisons between vectors.
  */
 template<typename UnsignedType, size_t size>
-constexpr auto hashIndexList(const constable::Array<unsigned, size>& indexList) {
-  constexpr unsigned maxDigitsStoreable = constable::Math::floor(
-    constable::Math::log10(
+constexpr auto hashIndexList(const temple::Array<unsigned, size>& indexList) {
+  constexpr unsigned maxDigitsStoreable = temple::Math::floor(
+    temple::Math::log10(
       static_cast<double>(
         std::numeric_limits<UnsignedType>::max()
       )
@@ -469,19 +470,19 @@ using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 using IndexListStorageType = unsigned;
 
 template<typename SymmetryClass>
-using RotationsSetType = constable::DynamicSet<
+using RotationsSetType = temple::DynamicSet<
   IndicesList<SymmetryClass>,
   maxRotations<SymmetryClass>()
 >;
 
 template<typename SymmetryClass>
-using ChainStructuresArrayType = constable::DynamicArray<
+using ChainStructuresArrayType = temple::DynamicArray<
   IndicesList<SymmetryClass>,
   maxRotations<SymmetryClass>() * 2 // TODO factor is entirely arbitrary
 >;
 
 template<typename SymmetryClass>
-using ChainArrayType = constable::DynamicArray<
+using ChainArrayType = temple::DynamicArray<
   unsigned,
   maxRotations<SymmetryClass>() * 2 // TODO factor is entirely arbitrary
 >;
@@ -537,8 +538,8 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
 struct MappingsReturnType {
   static constexpr size_t maxMappingsSize = 50;
 
-  using MappingsList = constable::DynamicSet<
-    constable::DynamicArray<unsigned, maxSymmetrySize>,
+  using MappingsList = temple::DynamicSet<
+    temple::DynamicArray<unsigned, maxSymmetrySize>,
     maxMappingsSize
   >;
 
@@ -569,12 +570,13 @@ struct MappingsReturnType {
   }
 
   constexpr bool operator < (const MappingsReturnType& other) const {
-    return constable::componentSmaller(mappings, other.mappings).valueOr(
-      constable::componentSmaller(angularDistortion, other.angularDistortion).valueOr(
-        constable::componentSmaller(chiralDistortion, other.chiralDistortion).valueOr(
-          false
-        )
-      )
+    return temple::consecutiveCompareSmaller(
+      mappings,
+      other.mappings,
+      angularDistortion,
+      other.angularDistortion,
+      chiralDistortion,
+      other.chiralDistortion
     );
   }
 };
@@ -600,12 +602,12 @@ constexpr auto symmetryTransitionMappings() {
 
   auto indexMapping = startingIndexSequence<SymmetryClassTo>();
 
-  constable::DynamicSet<
+  temple::DynamicSet<
     IndexListStorageType,
-    constable::Math::factorial(SymmetryClassTo::size)
+    temple::Math::factorial(SymmetryClassTo::size)
   > encounteredMappings;
 
-  constable::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
   };
 
@@ -673,7 +675,7 @@ constexpr auto symmetryTransitionMappings() {
         }
       }
     }
-  } while(constable::inPlaceNextPermutation(indexMapping));
+  } while(temple::inPlaceNextPermutation(indexMapping));
 
   return MappingsReturnType(
     std::move(bestMappings),
@@ -713,12 +715,12 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
    * last position (the one that is added / deleted).
    */
 
-  constable::DynamicSet<
+  temple::DynamicSet<
     IndexListStorageType,
-    constable::Math::factorial(SymmetryClassFrom::size)
+    temple::Math::factorial(SymmetryClassFrom::size)
   > encounteredMappings;
 
-  constable::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
   };
 
@@ -772,7 +774,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
       }
     }
   } while(
-    constable::inPlaceNextPermutation(indexMapping)
+    temple::inPlaceNextPermutation(indexMapping)
   );
 
   return MappingsReturnType(
@@ -790,7 +792,7 @@ std::enable_if_t<
     SymmetrySource::size == SymmetryTarget::size 
     || SymmetrySource::size + 1 == SymmetryTarget::size
   ),
-  constable::Optional<MappingsReturnType>
+  temple::Optional<MappingsReturnType>
 > calculateMapping() {
   return {
     symmetryTransitionMappings<SymmetrySource, SymmetryTarget>()
@@ -804,7 +806,7 @@ std::enable_if_t<
     SymmetrySource::size == SymmetryTarget::size 
     || SymmetrySource::size + 1 == SymmetryTarget::size
   ),
-  constable::Optional<MappingsReturnType>
+  temple::Optional<MappingsReturnType>
 > calculateMapping() {
   return {};
 }
@@ -821,9 +823,9 @@ constexpr unsigned numUnlinkedAssignments(
     indices.at(i) = 0;
   }
 
-  constable::DynamicSet<
+  temple::DynamicSet<
     unsigned,
-    constable::Math::factorial(Symmetry::size)
+    temple::Math::factorial(Symmetry::size)
   > rotations;
 
   auto initialRotations = generateAllRotations<Symmetry>(indices);
@@ -832,7 +834,7 @@ constexpr unsigned numUnlinkedAssignments(
     rotations.insert(hashIndexList<unsigned>(rotation));
   }
 
-  while(constable::inPlaceNextPermutation(indices)) {
+  while(temple::inPlaceNextPermutation(indices)) {
     if(!rotations.contains(hashIndexList<unsigned>(indices))) {
       auto allRotations = generateAllRotations<Symmetry>(indices);
       for(const auto& rotation : allRotations) {

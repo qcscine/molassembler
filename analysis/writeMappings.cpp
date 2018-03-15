@@ -5,9 +5,9 @@
 #include "boost/filesystem.hpp"
 
 #include "temple/VectorView.h"
-#include "constable/ConsecutiveCompare.h"
+#include "temple/constexpr/ConsecutiveCompare.h"
 
-#include "DynamicProperties.h"
+#include "chemical_symmetries/DynamicProperties.h"
 
 #include <iostream>
 #include <fstream>
@@ -70,7 +70,7 @@ void writeDistortions(
   auto sortedView = temple::sort(
     distortions,
     [](const auto& a, const auto& b) -> bool {
-      return constable::consecutiveCompareSmaller(
+      return temple::consecutiveCompareSmaller(
         b.angularDistortion,
         a.angularDistortion,
         b.chiralDistortion,

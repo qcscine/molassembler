@@ -1,14 +1,14 @@
-#include "Symmetries.h"
-#include "DynamicProperties.h"
+#include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/DynamicProperties.h"
 
 #include <iostream>
 #include <iomanip>
 #include <numeric>
 #include <fstream>
 
-#include "constable/FloatingPointComparison.h"
+#include "temple/constexpr/FloatingPointComparison.h"
+#include "temple/constexpr/Numeric.h"
 #include "temple/Containers.h"
-#include "temple/Numeric.h"
 
 #include <Eigen/Geometry>
 
@@ -226,7 +226,7 @@ void writeSymmetryTransitionDotFile(
           }
 
           dotFile << ", label=\"" 
-            << constable::Math::round(
+            << temple::Math::round(
               mappingData.angularDistortion + mappingData.chiralDistortion,
               2
             );
@@ -333,11 +333,11 @@ void writeLigandLossDotFile(
           allMappings,
           [&](const auto& firstMappingPair, const auto& secondMappingPair) -> bool {
             return (
-              constable::floating::isCloseRelative(
+              temple::floating::isCloseRelative(
                 firstMappingPair.second.angularDistortion,
                 secondMappingPair.second.angularDistortion,
                 Symmetry::properties::floatingPointEqualityThreshold
-              ) && constable::floating::isCloseRelative(
+              ) && temple::floating::isCloseRelative(
                 firstMappingPair.second.chiralDistortion,
                 secondMappingPair.second.chiralDistortion,
                 Symmetry::properties::floatingPointEqualityThreshold
@@ -401,7 +401,7 @@ void writeLigandLossDotFile(
             }
 
             dotFile << ", label=\"" 
-              << constable::Math::round(
+              << temple::Math::round(
                 mappingData.angularDistortion + mappingData.chiralDistortion,
                 2
               );

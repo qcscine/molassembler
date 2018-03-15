@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 
 #include "temple/MemberFetcher.h"
-#include "temple/Numeric.h"
+#include "temple/constexpr/Numeric.h"
 #include "temple/VectorView.h"
 
 /* TODO
@@ -100,8 +100,8 @@ double calculateAngleDistortion(
 }
 
 unsigned long hashIndexList(const std::vector<unsigned>& indexList) {
-  constexpr unsigned maxDigitsStoreable = constable::Math::floor(
-    constable::Math::log10(
+  constexpr unsigned maxDigitsStoreable = temple::Math::floor(
+    temple::Math::log10(
       static_cast<double>(
         std::numeric_limits<unsigned long>::max()
       )

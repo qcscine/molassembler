@@ -2,13 +2,13 @@
 #define BOOST_TEST_DYN_LINK
 
 #include <boost/test/unit_test.hpp>
-#include "constable/ToSTL.h"
+#include "temple/constexpr/ToSTL.h"
 #include <Eigen/Geometry>
 #include "temple/Containers.h"
-#include "temple/Numeric.h"
+#include "temple/constexpr/Numeric.h"
 
-#include "Symmetries.h"
-#include "Properties.h"
+#include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/Properties.h"
 
 #include <set>
 #include <iostream>
@@ -432,7 +432,7 @@ std::enable_if_t<
     )
   );
 
-  constable::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     properties::floatingPointEqualityThreshold
   };
 
@@ -450,7 +450,7 @@ std::enable_if_t<
 
   // Do a full set comparison
   auto convertedMappings = temple::map(
-    constable::toSTL(constexprMappings.mappings),
+    temple::toSTL(constexprMappings.mappings),
     [&](const auto& indexList) -> std::vector<unsigned> {
       return {
         indexList.begin(),
@@ -479,7 +479,7 @@ constexpr bool pairEqualityComparator(
   const IndexAndMappingsPairType& a,
   const IndexAndMappingsPairType& b
 ) {
-  constable::floating::ExpandedRelativeEqualityComparator<double> comparator {
+  temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     Symmetry::properties::floatingPointEqualityThreshold
   };
 
@@ -497,7 +497,7 @@ std::enable_if_t<
   // Ligand loss situation
   
   /* Constexpr part */
-  constable::Array<
+  temple::Array<
     std::pair<
       unsigned,
       Symmetry::constexprProperties::MappingsReturnType
@@ -516,7 +516,7 @@ std::enable_if_t<
   }
 
   // Group the results
-  auto constexprGroups = constable::groupByEquality(
+  auto constexprGroups = temple::groupByEquality(
     constexprMappings,
     pairEqualityComparator // C++17 constexpr lambda
   );
@@ -547,11 +547,11 @@ std::enable_if_t<
     dynamicMappings,
     [&](const auto& firstMappingPair, const auto& secondMappingPair) -> bool {
       return (
-        constable::floating::isCloseRelative(
+        temple::floating::isCloseRelative(
           firstMappingPair.second.angularDistortion,
           secondMappingPair.second.angularDistortion,
           Symmetry::properties::floatingPointEqualityThreshold
-        ) && constable::floating::isCloseRelative(
+        ) && temple::floating::isCloseRelative(
           firstMappingPair.second.chiralDistortion,
           secondMappingPair.second.chiralDistortion,
           Symmetry::properties::floatingPointEqualityThreshold
@@ -620,7 +620,7 @@ struct RotationGenerationTest {
     );
 
     auto convertedRotations = temple::map(
-      constable::toSTL(constexprRotations),
+      temple::toSTL(constexprRotations),
       [&](const auto& indexList) -> std::vector<unsigned> {
         return {
           indexList.begin(),
@@ -744,7 +744,7 @@ std::enable_if_t<
   }
 
   std::cout << ", label=\"" 
-    << constable::Math::round(constexprMapping.angularDistortion, 2);
+    << temple::Math::round(constexprMapping.angularDistortion, 2);
 
   if(multiplicity > 3) {
     std::cout << " (" << multiplicity << ")";
@@ -772,7 +772,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   // Full test of rotation algorithm equivalency for all symmetries
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      constable::TupleType::map<
+      temple::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         RotationGenerationTest
       >()
@@ -782,7 +782,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
   // Write out all mappings
-  constable::TupleType::mapAllPairs<
+  temple::TupleType::mapAllPairs<
     Symmetry::data::allSymmetryDataTypes,
     WriteLigandMapping
   >();
@@ -790,7 +790,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   // Test transitions generation/evaluation algorithm equivalency for all
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      constable::TupleType::mapAllPairs<
+      temple::TupleType::mapAllPairs<
         Symmetry::data::allSymmetryDataTypes,
         LigandGainTest
       >()
@@ -806,7 +806,7 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
 template<typename SymmetryClass>
 struct NumUnlinkedTestFunctor {
   static bool value() {
-    auto constexprResults = constable::toSTL(
+    auto constexprResults = temple::toSTL(
       Symmetry::allNumUnlinkedAssignments.at(
         static_cast<unsigned>(SymmetryClass::name)
       )
@@ -830,7 +830,7 @@ struct NumUnlinkedTestFunctor {
 BOOST_AUTO_TEST_CASE(numUnlinkedTests) {
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      constable::TupleType::map<
+      temple::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         NumUnlinkedTestFunctor
       >()

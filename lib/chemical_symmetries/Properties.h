@@ -14,15 +14,15 @@ namespace Symmetry {
 /* Derived stored constexpr data */
 //! The smallest angle between ligands in any symmetry
 constexpr double smallestAngle __attribute__ ((unused)) 
-= constable::TupleType::unpackToFunction<
+= temple::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
   constexprProperties::minAngleFunctor
 >();
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
 //! All 0, +1 symmetry transition mappings
-extern const constable::UpperTriangularMatrix<
-  constable::Optional<constexprProperties::MappingsReturnType>,
+extern const temple::UpperTriangularMatrix<
+  temple::Optional<constexprProperties::MappingsReturnType>,
   nSymmetries * (nSymmetries - 1) / 2
 > allMappings;
 #endif
@@ -42,8 +42,8 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
 );
 
 #ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
-extern const constable::Array<
-  constable::DynamicArray<unsigned, constexprProperties::maxSymmetrySize>,
+extern const temple::Array<
+  temple::DynamicArray<unsigned, constexprProperties::maxSymmetrySize>,
   nSymmetries
 > allNumUnlinkedAssignments;
 #endif
