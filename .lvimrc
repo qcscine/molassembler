@@ -1,1 +1,4 @@
-let g:ale_cpp_gcc_options .= ' -I/home/jan-grimo/PhD/projects/libs/temple_restructure/lib/'
+let g:ale_cpp_gcc_options .= ' -I/home/jan-grimo/PhD/projects/molassembler/include -I/usr/local/include/Delib -I/usr/local/include/eigen3 -I/usr/include/boost -I/home/jan-grimo/PhD/projects/molassembler/src/molassembler/lib -I/home/jan-grimo/PhD/projects/molassembler/src/gor1 -I/home/jan-grimo/PhD/projects/molassembler/src/temple/lib -I/home/jan-grimo/PhD/projects/molassembler/src/stereopermutation/lib -I/home/jan-grimo/PhD/lib/cpp/RingDecomposerLib/src'
+" Syntax checks take too long, lint only on save
+let g:ale_lint_on_text_changed = 0
+let g:ale_lint_on_enter = 0
