@@ -17,7 +17,7 @@
 
 namespace molassembler {
 
-/*! 
+/*!
  * Central class of the library, modeling a molecular graph with all state.
  */
 class Molecule {
@@ -31,6 +31,14 @@ public:
     const Delib::AtomCollection& atomCollection
   );
 
+  using PseudoHashType = unsigned long long;
+
+  //! Convolutes the atom's element type and bonds into a characteristic number
+  static PseudoHashType hashAtomEnvironment(
+    const Delib::ElementType& elementType,
+    const std::vector<BondType>& sortedBonds
+  );
+
 private:
 /* State */
   GraphType _adjacencies;
@@ -38,7 +46,7 @@ private:
 
 /* Members */
 /* Private members */
-  /*! 
+  /*!
    * Adds an vertex to the graph and sets it's element type property, returning
    * the new index.
    */
@@ -67,7 +75,7 @@ private:
   //! Returns whether the specified index is valid or not
   bool _isValidIndex(const AtomIndexType& index) const;
 
-  /*! 
+  /*!
    * Returns a list of edge indices where each endpoint has 1 or two additional
    * substituent besides the edge neighbor
    */
@@ -105,7 +113,7 @@ public:
     const BondType& bondType
   ) noexcept;
 
-  /*! 
+  /*!
    * Shorthand construction of a molecule using a list of element types and
    * a set of explicit edges
    */
@@ -153,7 +161,7 @@ public:
    * boost::none or smaller than stereocenterPtr->numStereopermutations().
    *
    * NOTE: Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and 
+   * StereocenterList you have accessed prior to calling this function and
    * particularly any iterators thereto invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereocenters or the removal of old ones.
@@ -180,10 +188,10 @@ public:
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
    *
-   * @throws if isSafeToRemoveBond returns false. 
+   * @throws if isSafeToRemoveBond returns false.
    * @note It is not safe to remove a bond just because one of the involved
    * atoms is terminal, since that atom would then be disconnected from the
-   * rest of the molecule. This function merely removes a bond from the graph. 
+   * rest of the molecule. This function merely removes a bond from the graph.
    * It is, however, considered safe to remove the terminal vertex, which
    * involves removing the bond to it.
    */
@@ -214,7 +222,7 @@ public:
    * this index, one is instantiated. In all cases, new or modified
    * stereocenters are default-assigned if there is only one possible
    * assignment.
-   * @throws if 
+   * @throws if
    *   - the supplied atomic index is invalid
    *   - there is an EZStereocenter at that index
    *   - or the provided symmetry is a different size than that of an existing
@@ -292,19 +300,19 @@ public:
     const AtomIndexType& b
   ) const;
 
-  /*! Returns a range-for temporary object allowing c++11 style for loop 
+  /*! Returns a range-for temporary object allowing c++11 style for loop
    * iteration through an atom's adjacencies
    */
   RangeForTemporary<GraphType::adjacency_iterator> iterateAdjacencies(
     const AtomIndexType& a
   ) const;
 
-  /*! Returns a range-for temporary object allowing c++11-style for loop 
+  /*! Returns a range-for temporary object allowing c++11-style for loop
    * iteration through edges
    */
   RangeForTemporary<GraphType::edge_iterator> iterateEdges() const;
 
-  /*! Returns a range-for temporary object allowing c++11-style for loop 
+  /*! Returns a range-for temporary object allowing c++11-style for loop
    * iteration through edges around a specific atom
    */
   RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(

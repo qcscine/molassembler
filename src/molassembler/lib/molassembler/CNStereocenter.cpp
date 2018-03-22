@@ -427,7 +427,7 @@ boost::optional<std::vector<unsigned>> getIndexMapping(
 
   if(preservationOption == ChiralStatePreservation::EffortlessAndUnique) {
     if(
-      mappingsGroup.indexMappings.size() == 1 
+      mappingsGroup.indexMappings.size() == 1
       && mappingsGroup.angularDistortion <= 0.2
     ) {
       return mappingsGroup.indexMappings.front();
@@ -518,6 +518,11 @@ bool CNStereocenter::isFeasibleStereopermutation(
   );
 
   for(const auto& link : ranking.links) {
+    // Ignore cycles of size 3
+    if(link.cycleSequence.size() == 4) {
+      continue;
+    }
+
     double sigma = Symmetry::angleFunction(symmetry)(
       symmetryPositionMap.at(link.indexPair.first),
       symmetryPositionMap.at(link.indexPair.second)
@@ -561,7 +566,7 @@ bool CNStereocenter::isFeasibleStereopermutation(
     );
 
     if(
-      d1 < Bond::calculateBondDistance(
+      d1 <= Bond::calculateBondDistance(
         molecule.getElementType(link.cycleSequence.at(0)),
         // 0 is the central index, 1 is the first ligand
         molecule.getElementType(link.cycleSequence.at(2)),
@@ -592,7 +597,7 @@ bool CNStereocenter::isFeasibleStereopermutation(
       );
 
       if(
-        distances.back() < Bond::calculateBondDistance(
+        distances.back() <= Bond::calculateBondDistance(
           molecule.getElementType(link.cycleSequence.at(0)),
           // 0 is the central index, 1 is the first ligand
           molecule.getElementType(link.cycleSequence.at(i + 2)),
@@ -802,7 +807,7 @@ void CNStereocenter::propagateGraphChange(
 
     boost::optional<unsigned> newStereopermutation = boost::none;
 
-    /* Before we overwrite class state, we need to figure out which assignment 
+    /* Before we overwrite class state, we need to figure out which assignment
      * in the new set of assignments corresponds to the one we have now.
      * This is only necessary in the case that the stereocenter is currently
      * assigned and only possible if the new number of assignments is smaller or
@@ -862,14 +867,14 @@ void CNStereocenter::propagateVertexRemoval(const AtomIndexType& removedIndex) {
       --index;
     } else if(index == removedIndex) {
       index = std::numeric_limits<AtomIndexType>::max();
-    } 
+    }
   };
 
   auto updateIndex = [&removedIndex](const AtomIndexType& index) -> AtomIndexType {
     if(index > removedIndex) {
       return index - 1;
     }
-    
+
     if(index == removedIndex) {
       return std::numeric_limits<AtomIndexType>::max();
     }
@@ -949,7 +954,7 @@ void CNStereocenter::removeSubstituent(
     | temple::callIfSome(
         Symmetry::getMapping,
         _symmetry,
-        newSymmetry, 
+        newSymmetry,
         // Last parameter is the deleted symmetry position, get this from cache
         _symmetryPositionMapCache.at(which)
       )
@@ -1169,8 +1174,8 @@ void CNStereocenter::fit(
         )
       );
 
-      double fitPenalty = angleDeviations 
-        + oneThreeDistanceDeviations 
+      double fitPenalty = angleDeviations
+        + oneThreeDistanceDeviations
         + chiralityDeviations;
 
 
@@ -1197,18 +1202,18 @@ void CNStereocenter::fit(
       }
     }
   }
-  
+
   /* In case NO assignments could be tested, return to the prior state.
    * This guards against situations in which predicates in uniqueStereopermutations
    * could lead no assignments to be returned, such as in e.g. square-planar
    * AAAB with {0, 3}, {1, 3}, {2, 3} with removal of trans-spanning groups.
-   * In that situation, all possible assignments are trans-spanning and 
+   * In that situation, all possible assignments are trans-spanning and
    * uniqueStereopermutations is an empty vector.
    *
    * At the moment, this predicate is disabled, so no such issues should arise.
    * Just being safe.
    */
-  if( 
+  if(
     bestSymmetry == initialSymmetry
     && bestStereopermutation == initialStereopermutation
     && bestPenalty == initialPenalty
@@ -1221,7 +1226,7 @@ void CNStereocenter::fit(
     // Set to best fit
     setSymmetry(molecule, bestSymmetry);
 
-    /* How to handle multiplicity? 
+    /* How to handle multiplicity?
      * Current policy: If there is multiplicity, warn and do not assign
      */
     if(bestStereopermutationMultiplicity > 1) {
@@ -1306,7 +1311,7 @@ std::vector<
         [&](const auto& indexOptional) -> AtomIndexType {
           if(indexOptional) {
             return symmetryPositionToAtomIndexMap.at(indexOptional.value());
-          } 
+          }
 
           return _centerAtom;
         }
@@ -1330,7 +1335,7 @@ std::vector<DihedralLimits> CNStereocenter::dihedralLimits() const {
 
 std::string CNStereocenter::info() const {
   // TODO revisit as soon as linking information is introduced
-  std::string returnString = "CN "s 
+  std::string returnString = "CN "s
     + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +", "s;
 
   auto characters = glue::makeCanonicalCharacters(_ranking.sortedSubstituents);

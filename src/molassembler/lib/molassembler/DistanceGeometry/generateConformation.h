@@ -29,6 +29,8 @@ Delib::PositionCollection convertToPositionCollection(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
 
+bool hasZeroPermutationsStereocenters(const Molecule& molecule);
+
 outcome::result<ChiralityConstraint> propagate(
   const DistanceBoundsMatrix& bounds,
   const Stereocenters::ChiralityConstraintPrototype& prototype

@@ -1,4 +1,10 @@
-let g:ale_cpp_gcc_options .= ' -I/home/jan-grimo/PhD/projects/molassembler/include -I/usr/local/include/Delib -I/usr/local/include/eigen3 -I/usr/include/boost -I/home/jan-grimo/PhD/projects/molassembler/src/molassembler/lib -I/home/jan-grimo/PhD/projects/molassembler/src/gor1 -I/home/jan-grimo/PhD/projects/molassembler/src/temple/lib -I/home/jan-grimo/PhD/projects/molassembler/src/stereopermutation/lib -I/home/jan-grimo/PhD/lib/cpp/RingDecomposerLib/src'
+" Use clang-check, which gets its include and compilation options from the
+" CMake-generated compile_database.json
+let g:ale_linters = {'cpp': ['clangcheck']}
+" Automatically remove any trailing whitespace
+let g:ale_fixers = {'cpp': ['remove_trailing_lines', 'trim_whitespace']}
+let g:ale_fix_on_save = 1
 " Syntax checks take too long, lint only on save
 let g:ale_lint_on_text_changed = 0
+" Do not lint when entering the file
 let g:ale_lint_on_enter = 0

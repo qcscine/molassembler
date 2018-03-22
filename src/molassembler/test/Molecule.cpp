@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   );
 
   AtomIndexType central = 0;
-  std::array<AtomIndexType, 2> outer {1, 6};
+  std::array<AtomIndexType, 2> outer {{1, 6}};
 
   /* If the outer stereocenters have the same assignment, the central
    * stereocenter shouldn't exist. If the outer stereocenters have a different

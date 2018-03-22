@@ -144,15 +144,15 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
         // Reverse exists
         auto reverseEdge = boost::edge(boostTarget, boostSource, spg);
         BOOST_CHECK_MESSAGE(
-          reverseEdge.second, 
-          "Reverse edge does not exist for in-group edge " 
+          reverseEdge.second,
+          "Reverse edge does not exist for in-group edge "
             << boostSource << " -> " << boostTarget
         );
 
         // Reverse has same edge weight
         BOOST_CHECK_MESSAGE(
           boost::get(boost::edge_weight, spg, reverseEdge.first) == boostEdgeWeight,
-          "Reverse edge for " << boostSource << " -> " << boostTarget 
+          "Reverse edge for " << boostSource << " -> " << boostTarget
             << " does not have same edge weight"
         );
       }
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
           if(d(i, k) > d(i, j) + d(j, k)) {
             passTriangleInequalities = false;
             std::cout << "The triangle inequality is falsified along i = " << i
-              << ", j = " << j << ", k = " << k << "!" 
+              << ", j = " << j << ", k = " << k << "!"
               << " d(i, k) = " << (d(i, k)) << " > " << (d(i, j) + d(j, k))
               << " = d(i, j) + d(j, k)"
               << nl;

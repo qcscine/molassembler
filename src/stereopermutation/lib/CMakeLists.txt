@@ -32,10 +32,10 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   message(STATUS "Selected release build")
   # no debug information, disable assert
   target_compile_definitions(stereopermutation PRIVATE NDEBUG)
-  target_compile_options(stereopermutation PUBLIC -O2)
+  target_compile_options(stereopermutation PRIVATE -O2)
 else() # assume Debug
   message(STATUS "Assume debug build")
-  target_compile_options(stereopermutation PUBLIC -g -O2)
+  target_compile_options(stereopermutation PRIVATE -g -O2)
 endif()
 
 # Install all relevant header files in <installdir>/include

@@ -4,8 +4,9 @@
 #include <system_error>
 
 enum class DGError {
-  GraphImpossible = 1,
-  TooManyFailures = 2
+  ZeroPermutationStereocenters = 1,
+  GraphImpossible = 2,
+  TooManyFailures = 3
 };
 
 // Boilerplate to allow interoperability of DGerror with std::error_code
@@ -23,6 +24,8 @@ namespace detail {
 
     virtual std::string message(int c) const override final {
       switch(static_cast<DGError>(c)) {
+        case DGError::ZeroPermutationStereocenters:
+          return "Graph contains Stereocenters with zero possible permutations.";
         case DGError::GraphImpossible:
           return "Graph cannot be modeled in three-dimensional space.";
         case DGError::TooManyFailures:

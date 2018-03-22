@@ -5,6 +5,8 @@
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
 
+#include "chemical_symmetries/ConstexprProperties.h"
+
 #include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
 
@@ -35,13 +37,13 @@ Delib::BondOrderCollection Molecule::uffBondOrders(
   for(int i = 0; i < N; ++i) {
     for(int j = i + 1; j < N; ++j) {
       bondOrders.setOrder(
-        i, 
-        j, 
+        i,
+        j,
         Bond::calculateBondOrder(
           atomCollection.getElement(i),
           atomCollection.getElement(j),
           (
-            atomCollection.getPosition(j) 
+            atomCollection.getPosition(j)
             - atomCollection.getPosition(i)
           ).norm()
         )
@@ -50,6 +52,20 @@ Delib::BondOrderCollection Molecule::uffBondOrders(
   }
 
   return bondOrders;
+}
+
+Molecule::PseudoHashType Molecule::hashAtomEnvironment(
+  const Delib::ElementType& elementType,
+  const std::vector<BondType>& sortedBonds
+) {
+  PseudoHashType value = static_cast<PseudoHashType>(elementType);
+
+  unsigned bondNumber = 0;
+  for(const auto& bond : sortedBonds) {
+    value += static_cast<PseudoHashType>(bond) << (9 + 4 * bondNumber);
+  }
+
+  return value;
 }
 
 
@@ -114,7 +130,6 @@ StereocenterList Molecule::_detectStereocenters() const {
   return stereocenterList;
 }
 
-
 bool Molecule::_isValidIndex(const AtomIndexType& index) const {
   return index < numAtoms();
 }
@@ -131,7 +146,7 @@ bool Molecule::_isCNStereocenterCandidate(const AtomIndexType& atomIndex) const 
      * unless the central atom is part of a cycle of size 4 or smaller
      */
     if(
-      getElementType(atomIndex) == Delib::ElementType::N 
+      getElementType(atomIndex) == Delib::ElementType::N
       && numAdjacencies == 3
     ) {
       auto cycleData = getCycleData();
@@ -179,7 +194,7 @@ bool Molecule::_isEZStereocenterCandidate(const GraphType::edge_descriptor& edge
     _adjacencies[edgeIndex].bondType == BondType::Double
     && 2 <= sourceAdjacencies
     && sourceAdjacencies <= 3
-    && 2 <= targetAdjacencies 
+    && 2 <= targetAdjacencies
     && targetAdjacencies <= 3
   );
 }
@@ -188,7 +203,7 @@ std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {
   std::vector<EdgeIndexType> candidates;
 
   for(
-    const auto& edgeIndex : 
+    const auto& edgeIndex :
     RangeForTemporary<GraphType::edge_iterator>(
       boost::edges(_adjacencies)
     )
@@ -237,11 +252,11 @@ void Molecule::_pickyFitStereocenter(
 std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
   const AtomIndexType& index
 ) const {
-  /* TODO 
+  /* TODO
    * - No L, X determination. Although, will L, X even be needed for metals?
    *   Maybe only for OZ and NVE determination...
    */
-  /* VSEPR formulation is that geometry is a function of 
+  /* VSEPR formulation is that geometry is a function of
    * - localized charge of central atom
    * - atom type of central atom, neighbors
    * - bond types to neighbors
@@ -251,7 +266,7 @@ std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
   assert(getNumAdjacencies(index) > 1);
 
   // first basic stuff for VSEPR, later L and X for transition metals
-  // geometry inference does not care if the substituents are somehow 
+  // geometry inference does not care if the substituents are somehow
   // connected (unless in later models the entire structure is considered)
   std::vector<LocalGeometry::LigandType> ligands;
 
@@ -319,7 +334,7 @@ void Molecule::_propagateGraphChange() {
          * EZStereocenter. Do nothing.
          */
       } else if(
-        !_stereocenters.involving(source) 
+        !_stereocenters.involving(source)
         && !_stereocenters.involving(target)
         && _isEZStereocenterCandidate(edgeIndex)
       ) {
@@ -375,9 +390,9 @@ void Molecule::_propagateGraphChange() {
           }
         }
         /* If the stereocenter at that candidate index is an EZStereocenter, do
-         * nothing 
+         * nothing
          */
-      } else { 
+      } else {
         // No stereocenter yet
         if(_isCNStereocenterCandidate(candidateIndex)) {
           auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
@@ -428,8 +443,8 @@ Molecule::Molecule(
   }
 }
 
-Molecule::Molecule(const GraphType& graph) 
-: _adjacencies(graph), 
+Molecule::Molecule(const GraphType& graph)
+: _adjacencies(graph),
   _stereocenters(_detectStereocenters())
 {}
 
@@ -472,7 +487,7 @@ Molecule::Molecule(
   );
 }
 
-Molecule::Molecule(const Delib::AtomCollection& atomCollection) 
+Molecule::Molecule(const Delib::AtomCollection& atomCollection)
   : Molecule {atomCollection, uffBondOrders(atomCollection)} {}
 
 /* Modifiers */
@@ -537,7 +552,7 @@ void Molecule::addBond(
         } else {
           auto EZPtr = std::dynamic_pointer_cast<Stereocenters::EZStereocenter>(
             _stereocenters.at(toIndex)
-          ); 
+          );
 
           // What is the other central index?
           AtomIndexType otherCenter = (
@@ -669,7 +684,7 @@ void Molecule::removeBond(
      * since _propagateGraphChange cannot iterate over a now-removed edge.
      */
     if(
-      _stereocenters.involving(a) 
+      _stereocenters.involving(a)
       && _stereocenters.involving(b)
       && _stereocenters.at(a) == _stereocenters.at(b)
     ) {
@@ -764,7 +779,7 @@ void Molecule::setGeometryAtAtom(
       );
 
       if(
-        Symmetry::size(CNSPointer->getSymmetry()) 
+        Symmetry::size(CNSPointer->getSymmetry())
         == Symmetry::size(symmetryName)
       ) {
         CNSPointer->setSymmetry(*this, symmetryName);
@@ -896,7 +911,7 @@ boost::optional<BondType> Molecule::getBondType(
 
   if(edgePair.second) {
     return _adjacencies[edgePair.first].bondType;
-  } 
+  }
 
   // fallback
   return boost::none;
@@ -911,7 +926,7 @@ std::vector<Molecule::ExplicitEdge> Molecule::getEdges() const {
   std::vector<ExplicitEdge> edges;
 
   for(
-    const auto& edgeIndex : 
+    const auto& edgeIndex :
     RangeForTemporary<GraphType::edge_iterator>(boost::edges(_adjacencies))
   ) {
     edges.push_back(
@@ -983,7 +998,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
     }
   }
 
-  /* Add a CNStereocenter everywhere where the symmetry yielding the best fit is 
+  /* Add a CNStereocenter everywhere where the symmetry yielding the best fit is
    * not the one that Molecule's determineLocalGeometry gets and where we
    * can fully determine a Stereocenter's assignment from the positions
    */
@@ -1092,7 +1107,7 @@ bool Molecule::isSafeToRemoveBond(
 }
 
 
-/*! Returns a range-for temporary object allowing c++11 style for loop 
+/*! Returns a range-for temporary object allowing c++11 style for loop
  * iteration through an atom's adjacencies
  */
 RangeForTemporary<GraphType::adjacency_iterator> Molecule::iterateAdjacencies(
@@ -1176,7 +1191,7 @@ RangeForTemporary<GraphType::adjacency_iterator> Molecule::operator [] (
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::operator[]: Supplied index is invalid!");
   }
-  
+
   return RangeForTemporary<GraphType::adjacency_iterator>(
     boost::adjacent_vertices(a, _adjacencies)
   );
@@ -1188,6 +1203,44 @@ bool Molecule::operator == (const Molecule& other) const {
   if(thisNumAtoms != other.numAtoms()) {
     return false;
   }
+
+  auto generateHashes = [](const Molecule& mol) -> std::vector<PseudoHashType> {
+    std::vector<PseudoHashType> hashes;
+
+    AtomIndexType N = mol.numAtoms();
+    hashes.reserve(N);
+
+    std::vector<BondType> bonds;
+    bonds.reserve(Symmetry::constexprProperties::maxSymmetrySize);
+
+    for(AtomIndexType i = 0; i < N; ++i) {
+      bonds.clear();
+
+      for(const auto& edge : mol.iterateEdges(i)) {
+        bonds.emplace_back(mol.getGraph()[edge].bondType);
+      }
+
+      std::sort(
+        bonds.begin(),
+        bonds.end()
+      );
+
+      hashes.emplace_back(
+        hashAtomEnvironment(
+          mol.getElementType(i),
+          bonds
+        )
+      );
+    }
+  };
+
+  auto thisHashes = generateHashes(*this);
+  auto otherHashes = generateHashes(other);
+
+  auto maxHash = std::max(
+    temple::max(thisHashes),
+    temple::max(otherHashes)
+  );
 
   // Where the corresponding index from the other graph is stored
   std::vector<AtomIndexType> indexMap(numAtoms());
@@ -1201,21 +1254,19 @@ bool Molecule::operator == (const Molecule& other) const {
         thisNumAtoms,
         boost::get(boost::vertex_index, _adjacencies)
       )
-    )
+    ).vertex_invariant1(
+      [&thisHashes](const AtomIndexType& i) -> PseudoHashType {
+        return thisHashes.at(i);
+      }
+    ).vertex_invariant2(
+      [&otherHashes](const AtomIndexType& i) -> PseudoHashType {
+        return otherHashes.at(i);
+      }
+    ).vertex_max_invariant(maxHash)
   );
 
   if(!isomorphic) {
     return false;
-  }
-
-  // Check that all element types of the isomorphism mapping match
-  for(AtomIndexType thisIndex = 0; thisIndex < thisNumAtoms; ++thisIndex) {
-    if(
-      _adjacencies[thisIndex].elementType 
-        != other._adjacencies[indexMap.at(thisIndex)].elementType
-    ) {
-      return false;
-    }
   }
 
   // Check that all bond types are identical
@@ -1257,7 +1308,7 @@ bool Molecule::operator == (const Molecule& other) const {
 
       // Ensure the type at other is a CNStereocenter too
       if(
-        other._stereocenters.at(otherCentralAtom)->type() 
+        other._stereocenters.at(otherCentralAtom)->type()
           != Stereocenters::Type::CNStereocenter
       ) {
         return false;
@@ -1294,7 +1345,7 @@ bool Molecule::operator == (const Molecule& other) const {
 
       // Address-compare that the stereocenters on other are identical for both
       if(
-        other._stereocenters.at(otherCentralAtoms.front()) 
+        other._stereocenters.at(otherCentralAtoms.front())
           != other._stereocenters.at(otherCentralAtoms.back())
       ) {
         return false;
@@ -1302,7 +1353,7 @@ bool Molecule::operator == (const Molecule& other) const {
 
       // Ensure that it's also an EZStereocenter
       if(
-        other._stereocenters.at(otherCentralAtoms.front())->type() 
+        other._stereocenters.at(otherCentralAtoms.front())->type()
           != Stereocenters::Type::EZStereocenter
       ) {
         return false;

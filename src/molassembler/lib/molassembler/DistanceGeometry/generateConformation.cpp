@@ -78,6 +78,16 @@ Delib::PositionCollection convertToPositionCollection(
   return positions;
 }
 
+bool hasZeroPermutationsStereocenters(const Molecule& molecule) {
+  for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
+    if(stereocenterPtr->numStereopermutations() == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 outcome::result<ChiralityConstraint> propagate(
   const DistanceBoundsMatrix& bounds,
   const Stereocenters::ChiralityConstraintPrototype& prototype
@@ -161,7 +171,7 @@ outcome::result<ChiralityConstraint> propagate(
 
 #ifndef NDEBUG
   // Log in Debug builds, provided particular is set
-  Log::log(Log::Particulars::PrototypePropagatorDebugInfo) 
+  Log::log(Log::Particulars::PrototypePropagatorDebugInfo)
     << "Lower bound Cayley-menger matrix (determinant=" << boundFromLower <<  "): " << std::endl << lowerMatrix << std::endl
     << "Upper bound Cayley-menger matrix (determinant=" << boundFromUpper <<  "): " << std::endl << upperMatrix << std::endl;
 #endif
@@ -249,6 +259,10 @@ outcome::result<
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
+  if(hasZeroPermutationsStereocenters(molecule)) {
+    return DGError::ZeroPermutationStereocenters;
+  }
+
   MoleculeDGInformation DGData;
   /* In case the molecule has unassigned stereocenters, we need to randomly
    * assign them in every step prior to generating the distance bounds matrix
@@ -458,7 +472,7 @@ outcome::result<
       );
 
       if(
-        inversionStopStrategy.iterations > 10000 
+        inversionStopStrategy.iterations > 10000
         || errfDetail::proportionChiralityConstraintsCorrectSign(
           chiralityConstraints,
           dlibPositions
@@ -528,6 +542,12 @@ std::list<RefinementData> debugDistanceGeometry(
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
+  if(hasZeroPermutationsStereocenters(molecule)) {
+    Log::log(Log::Level::Warning)
+      << "This molecule has stereocenters with zero valid permutations!"
+      << std::endl;
+  }
+
   std::list<RefinementData> refinementList;
 
   /* In case the molecule has unassigned stereocenters that are not trivially
@@ -538,7 +558,7 @@ std::list<RefinementData> debugDistanceGeometry(
    * it is necessary only once in the other
    */
 
-  /* There is also some degree of doubt about the relative frequencies of 
+  /* There is also some degree of doubt about the relative frequencies of
    * assignments in stereopermutation. I should get on that too.
    */
 
@@ -554,7 +574,7 @@ std::list<RefinementData> debugDistanceGeometry(
   }
 
   /* If the ratio of failures/total optimizations exceeds this value,
-   * the function throws. Remember that if an optimization is considered a 
+   * the function throws. Remember that if an optimization is considered a
    * failure is dependent only on the stopping criteria!
    */
   const double failureRatio = 3; // more lenient than production, must be > 0
@@ -769,7 +789,7 @@ std::list<RefinementData> debugDistanceGeometry(
       );
 
       if(
-        inversionStopStrategy.iterations > 10000 
+        inversionStopStrategy.iterations > 10000
         || errfDetail::proportionChiralityConstraintsCorrectSign(
           chiralityConstraints,
           dlibPositions
