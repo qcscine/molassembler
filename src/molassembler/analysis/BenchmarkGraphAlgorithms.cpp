@@ -2,7 +2,6 @@
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
-#include "boost/regex.hpp"
 
 #include "temple/Containers.h"
 #include "DistanceGeometry/ImplicitGraphBoost.h"
@@ -109,7 +108,7 @@ void writeHeaders(
   }
 
   for(unsigned i = 2; i < headers.size(); ++i) {
-    benchmarkFile << "\"" << headers.at(i) << "\", \"" << headers.at(i) 
+    benchmarkFile << "\"" << headers.at(i) << "\", \"" << headers.at(i)
       << " sigma\"";
     if(i != headers.size() - 1) {
       benchmarkFile << ", ";
@@ -128,7 +127,7 @@ enum class Algorithm {
 };
 
 void benchmark(
-  const boost::filesystem::path& filePath, 
+  const boost::filesystem::path& filePath,
   std::ofstream& benchmarkFile,
   Algorithm algorithmChoice,
   DistanceGeometry::Partiality partiality,
@@ -148,7 +147,7 @@ void benchmark(
   const auto boundsList = spatialModel.makeBoundList();
 
   /*
-   * Can calculate shortest paths with either: 
+   * Can calculate shortest paths with either:
    * - Floyd-Warshall in DistanceBoundsMatrix
    * - Bellman-Ford (like in ExplicitGraph)
    * - Gor1 (graph-independent implementation
@@ -228,7 +227,7 @@ void benchmark(
 
   auto smallest = *std::min_element(times.begin(), times.end());
 
-  benchmarkFile 
+  benchmarkFile
     << std::fixed << std::setprecision(0)
     << sampleMol.numAtoms() << ", " << sampleMol.numBonds() << ", "
     << std::scientific << std::setprecision(6);
@@ -253,12 +252,12 @@ void benchmark(
 }
 
 using namespace std::string_literals;
-const std::string algorithmChoices = 
+const std::string algorithmChoices =
   "  0 - Matrix Floyd-Warshall\n"
   "  1 - Gor1 with ImplicitGraph\n"
   "  2 - Gor1 with ExplicitGraph\n";
 
-const std::string partialityChoices = 
+const std::string partialityChoices =
   "  0 - Four-Atom Metrization\n"
   "  1 - 10% Metrization\n"
   "  2 - All (default)\n";
@@ -281,7 +280,7 @@ int main(int argc, char* argv[]) {
     boost::program_options::parse_command_line(argc, argv, options_description),
     options_variables_map
   );
-  boost::program_options::notify(options_variables_map);  
+  boost::program_options::notify(options_variables_map);
 
   // Program options
   if(options_variables_map.count("help")) {

@@ -1,5 +1,6 @@
 #include "temple/Optionals.h"
 
+#include "boost/range/join.hpp"
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
@@ -56,13 +57,69 @@ Delib::BondOrderCollection Molecule::uffBondOrders(
 
 Molecule::PseudoHashType Molecule::hashAtomEnvironment(
   const Delib::ElementType& elementType,
-  const std::vector<BondType>& sortedBonds
+  const std::vector<BondType>& sortedBonds,
+  boost::optional<Symmetry::Name> symmetryNameOptional,
+  boost::optional<unsigned> assignedOptional
 ) {
+  static_assert(
+    (
+      7
+      + 4 * Symmetry::constexprProperties::maxSymmetrySize
+      + temple::Math::ceil(
+        temple::Math::log(Symmetry::nSymmetries + 1.0, 2.0)
+      )
+    ) < 64,
+    "Element type, bond and symmetry information no longer fit into a 64-bit unsigned integer"
+  );
+
+
+  /* First 8 bits of the 64 bit unsigned number are from the element type
+   *
+   * Biggest is Cn, which has a value of 112 -> Fits in 7 bits (2^7 = 128)
+   */
   PseudoHashType value = static_cast<PseudoHashType>(elementType);
 
+  /* Bonds have 8 possible values currently, plus None is 9
+   * -> fits into 4 bits (2^4 = 16)
+   *
+   * (You could make an argument for removing Sextuple from the list of bond
+   * types and fitting this precisely into 3 bits only)
+   *
+   * So, left shift by 7 bits (so there are 7 zeros on the right in the bit
+   * representation) plus the current bond number multiplied by 4 to place a
+   * maximum of 8 bonds (maximum symmetry size currently)
+   *
+   * This occupies 4 * 8 = 32 bits.
+   */
   unsigned bondNumber = 0;
   for(const auto& bond : sortedBonds) {
-    value += static_cast<PseudoHashType>(bond) << (9 + 4 * bondNumber);
+    value += (
+      // No bond is represented by 0, while the remaining bond types are shifted
+      static_cast<PseudoHashType>(bond) + 1
+    ) << (7 + 4 * bondNumber);
+
+    ++bondNumber;
+  }
+
+  if(symmetryNameOptional) {
+    /* We add symmetry information on non-terminal atoms. There are currently
+     * 16 symmetries, plus None is 17, which fits into 5 bits (2^5 = 32)
+     */
+    value += (static_cast<PseudoHashType>(symmetryNameOptional.value()) + 1) << 39;
+
+    /* The remaining space 64 - (7 + 32 + 5) = 20 bits is used for the current
+     * permutation. In that space, we can store up to 2^20 - 2 > 1e5
+     * permutations (one (0) for no stereocenter, one (1) for unassigned),
+     * which ought to be plenty of bit space. Maximally asymmetric square
+     * antiprismatic has around 6k permutations, which fits into 13 bits.
+     */
+    PseudoHashType permutationValue;
+    if(assignedOptional) {
+      permutationValue = assignedOptional.value() + 2;
+    } else {
+      permutationValue = 1;
+    }
+    value += static_cast<PseudoHashType>(permutationValue) << 44;
   }
 
   return value;
@@ -1225,22 +1282,76 @@ bool Molecule::operator == (const Molecule& other) const {
         bonds.end()
       );
 
+      boost::optional<Symmetry::Name> symmetryNameOption;
+      boost::optional<unsigned> assignmentOption;
+
+
+      if(mol.getStereocenterList().involving(i)) {
+        const auto& stereocenterPtr = mol.getStereocenterList().at(i);
+        if(stereocenterPtr->type() == Stereocenters::Type::EZStereocenter) {
+          symmetryNameOption = Symmetry::Name::TrigonalPlanar;
+        } else {
+          symmetryNameOption = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+            stereocenterPtr
+          ) -> getSymmetry();
+        }
+
+        assignmentOption = stereocenterPtr -> assigned();
+      }
+
       hashes.emplace_back(
         hashAtomEnvironment(
           mol.getElementType(i),
-          bonds
+          bonds,
+          symmetryNameOption,
+          assignmentOption
         )
       );
     }
+
+    return hashes;
   };
 
   auto thisHashes = generateHashes(*this);
   auto otherHashes = generateHashes(other);
 
-  auto maxHash = std::max(
-    temple::max(thisHashes),
-    temple::max(otherHashes)
-  );
+  /* boost isomorphism will allocate a vector of size maxHash, this is dangerous
+   * as the maximum hash can be immense, another post-processing step is needed
+   * for the calculated hashes to decrease the spatial requirements
+   */
+  std::unordered_map<PseudoHashType, PseudoHashType> reductionMapping;
+  PseudoHashType counter = 0;
+
+  for(const auto& hash : boost::range::join(thisHashes, otherHashes)) {
+    if(reductionMapping.count(hash) == 0) {
+      reductionMapping.emplace(
+        hash,
+        counter
+      );
+
+      ++counter;
+    }
+  }
+
+  for(auto& hash : boost::range::join(thisHashes, otherHashes)) {
+    hash = reductionMapping.at(hash);
+  }
+
+  auto maxHash = counter;
+
+  // This explicit form is needed instead of a lambda for boost's concept checks
+  struct HashLookup {
+    const std::vector<PseudoHashType>* const hashes;
+
+    using argument_type = AtomIndexType;
+    using result_type = PseudoHashType;
+
+    HashLookup(const std::vector<PseudoHashType>& hashes) : hashes(&hashes) {}
+
+    PseudoHashType operator() (const AtomIndexType& i) const {
+      return hashes->at(i);
+    }
+  };
 
   // Where the corresponding index from the other graph is stored
   std::vector<AtomIndexType> indexMap(numAtoms());
@@ -1248,21 +1359,16 @@ bool Molecule::operator == (const Molecule& other) const {
   bool isomorphic = boost::isomorphism(
     _adjacencies,
     other._adjacencies,
-    boost::isomorphism_map(
-      boost::make_safe_iterator_property_map(
-        indexMap.begin(),
-        thisNumAtoms,
-        boost::get(boost::vertex_index, _adjacencies)
-      )
-    ).vertex_invariant1(
-      [&thisHashes](const AtomIndexType& i) -> PseudoHashType {
-        return thisHashes.at(i);
-      }
-    ).vertex_invariant2(
-      [&otherHashes](const AtomIndexType& i) -> PseudoHashType {
-        return otherHashes.at(i);
-      }
-    ).vertex_max_invariant(maxHash)
+    boost::make_safe_iterator_property_map(
+      indexMap.begin(),
+      thisNumAtoms,
+      boost::get(boost::vertex_index, _adjacencies)
+    ),
+    HashLookup(thisHashes),
+    HashLookup(otherHashes),
+    maxHash,
+    boost::get(boost::vertex_index, _adjacencies),
+    boost::get(boost::vertex_index, other._adjacencies)
   );
 
   if(!isomorphic) {

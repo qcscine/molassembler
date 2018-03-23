@@ -8,6 +8,9 @@
 #include <forward_list>
 #include <map>
 #include <unordered_map>
+#include <tuple>
+
+#include "boost/optional.hpp"
 
 /*! @file
  *
@@ -18,7 +21,7 @@ namespace temple {
 
 namespace detail {
 
-template<class T, class R = void>  
+template<class T, class R = void>
 struct enable_if_type { typedef R type; };
 
 template<class T, class Enable = void>
@@ -34,6 +37,15 @@ using namespace std::string_literals;
 inline std::string stringify(const std::string& x) {
   return x;
 }
+
+template<typename T>
+std::string stringify(const boost::optional<T>& optional);
+
+template<typename T>
+std::enable_if_t<
+  std::is_enum<T>::value,
+  std::string
+> stringify(const T& enumType);
 
 template<typename T>
 std::enable_if_t<
@@ -65,6 +77,9 @@ std::string stringify(const std::map<T, U>& map);
 template<typename T, typename U>
 std::string stringify(const std::unordered_map<T, U>& map);
 
+template<typename ... Ts>
+std::string stringify(const std::tuple<Ts...>& tuple);
+
 template<typename T>
 std::enable_if_t<
   detail::isMapType<T>::value,
@@ -73,6 +88,9 @@ std::enable_if_t<
 
 template<typename T>
 std::string stringifyContainer(const T& container);
+
+template<typename TupleType, size_t ... Inds>
+std::string stringifyTuple(const TupleType& tuple, std::index_sequence<Inds...>);
 
 
 // Definitions
@@ -125,6 +143,32 @@ std::string stringify(const std::unordered_map<T, U>& map) {
   return "unord. map "s + stringifyMap(map);
 }
 
+template<typename ... Ts>
+std::string stringify(const std::tuple<Ts...>& tuple) {
+  return "tuple "s + stringifyTuple(tuple, std::make_index_sequence<sizeof...(Ts)> {});
+}
+
+template<typename T>
+std::string stringify(const boost::optional<T>& optional) {
+  if(optional) {
+    return "boost Some "s + stringify(optional.value());
+  } else {
+    return "boost None";
+  }
+}
+
+template<typename T>
+std::enable_if_t<
+  std::is_enum<T>::value,
+  std::string
+> stringify(const T& enumType) {
+  return "Enum underlying = "s + stringify(
+    static_cast<
+      std::underlying_type_t<T>
+    >(enumType)
+  );
+}
+
 template<typename T>
 std::enable_if_t<
   detail::isMapType<T>::value,
@@ -154,6 +198,15 @@ std::string stringifyContainer(const T& container) {
   }
 
   return representation + "}"s;
+}
+
+template<typename TupleType, size_t ... Inds>
+std::string stringifyTuple(const TupleType& tuple, std::index_sequence<Inds...>) {
+  std::array<std::string, sizeof...(Inds)> individualStringifys {
+    stringify(std::get<Inds>(tuple))...
+  };
+
+  return stringifyContainer(individualStringifys);
 }
 
 } // namespace temple

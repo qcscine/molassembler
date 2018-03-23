@@ -36,7 +36,9 @@ public:
   //! Convolutes the atom's element type and bonds into a characteristic number
   static PseudoHashType hashAtomEnvironment(
     const Delib::ElementType& elementType,
-    const std::vector<BondType>& sortedBonds
+    const std::vector<BondType>& sortedBonds,
+    boost::optional<Symmetry::Name> symmetryNameOptional,
+    boost::optional<unsigned> assignedOptional
   );
 
 private:

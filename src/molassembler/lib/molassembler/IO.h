@@ -5,7 +5,8 @@
 #include "Version.h"
 #include "GraphAlgorithms.h"
 
-#include "Delib/ElementInfo.h" // Delib
+#include "Delib/ElementInfo.h"
+#include "temple/Random.h"
 
 #include <fstream>
 #include <iomanip>
@@ -29,21 +30,87 @@ namespace molassembler {
 //! Input and output
 namespace IO {
 
+namespace permutations {
+
+struct Identity {
+  template<typename T>
+  T operator() (const T& t) const {
+    return t;
+  }
+};
+
+struct Random {
+  std::vector<AtomIndexType> permutation;
+
+  Random(AtomIndexType N) {
+    permutation.resize(N);
+    std::iota(permutation.begin(), permutation.end(), 0);
+    std::shuffle(permutation.begin(), permutation.end(), temple::random.randomEngine);
+  }
+
+  AtomIndexType operator() (const AtomIndexType& i) const {
+    return permutation.at(i);
+  }
+};
+
+struct SortByElement {
+  std::vector<AtomIndexType> permutation;
+
+  SortByElement(const Molecule& mol) {
+    permutation.resize(mol.numAtoms());
+    std::iota(permutation.begin(), permutation.end(), 0);
+    std::sort(
+      permutation.begin(),
+      permutation.end(),
+      [&mol](const AtomIndexType& i, const AtomIndexType& j) -> bool {
+        return mol.getElementType(i) < mol.getElementType(j);
+      }
+    );
+  }
+
+  AtomIndexType operator() (const AtomIndexType& i) const {
+    return permutation.at(i);
+  }
+};
+
+struct Inverse {
+  std::vector<AtomIndexType> permutation;
+
+  template<typename Permutation>
+  Inverse(const Permutation& ante, const AtomIndexType& size) {
+    permutation.resize(size);
+    for(AtomIndexType i = 0; i < size; ++i) {
+      permutation.at(ante(i)) = i;
+    }
+  }
+
+  AtomIndexType operator() (const AtomIndexType& i) const {
+    return permutation.at(i);
+  }
+};
+
+} // namespace permutations
+
 //! Abstract base class / interface for file reading classes
-class FileReader {
-public:
+struct FileReader {
   virtual bool canReadFile(const std::string& filename) = 0;
   virtual Molecule readSingle(const std::string& filename) = 0;
 };
 
 //! Abstract base class / interface for file writing classes
-class FileWriter {
-public:
+struct FileWriter {
+  enum class IndexPermutation {
+    Identity,
+    SortByElement,
+    Random
+  };
+
   virtual bool canWriteFile(const std::string& filename) = 0;
   virtual void writeSingle(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions
+    const Delib::PositionCollection& positions,
+    const IndexPermutation& permutation = IndexPermutation::Identity
   ) = 0;
 };
 
@@ -129,7 +196,7 @@ private:
           line.substr(31, 3)
         )
       );
-    } 
+    }
   }
 
   void _parseBondBlockLine(
@@ -140,7 +207,7 @@ private:
       // Extract bond information
       unsigned i, j, bty;
       // MOLFile indices are 1-based, thus subtract one
-      i = std::atoi(line.substr(0, 3).c_str()) - 1; 
+      i = std::atoi(line.substr(0, 3).c_str()) - 1;
       j = std::atoi(line.substr(3, 3).c_str()) - 1;
       bty = std::atoi(line.substr(6, 3).c_str());
 
@@ -158,9 +225,28 @@ private:
     const std::string& filename,
     const Molecule& molecule,
     const Delib::PositionCollection& positions,
-    const MOLFileVersion& version
+    const MOLFileVersion& version,
+    const IndexPermutation& permutation
   ) {
     assert(canWriteFile(filename));
+
+    std::function<AtomIndexType(const AtomIndexType&)> indexMap, inverse;
+
+    unsigned N = molecule.numAtoms();
+
+    if(permutation == IndexPermutation::Identity) {
+      indexMap = permutations::Identity {};
+      inverse = permutations::Identity {};
+    } else if(permutation == IndexPermutation::SortByElement) {
+      auto forwardPermutation = permutations::SortByElement {molecule};
+      inverse = permutations::Inverse {forwardPermutation, N};
+      indexMap = std::move(forwardPermutation);
+    } else if(permutation == IndexPermutation::Random) {
+      auto forwardPermutation = permutations::Random {N};
+      inverse = permutations::Inverse {forwardPermutation, N};
+      indexMap = std::move(forwardPermutation);
+    }
+
     std::ofstream fout(filename);
     fout << std::setprecision(0);
 
@@ -175,7 +261,7 @@ private:
         auto localNow = *localtime(&now);
 
         fout << std::setw(2) << "##" // First and last initial of user
-          << std::setw(8) << "MLib"+Version::majorMinor() // PPPPPPPP (8, Prog name)
+          << std::setw(8) << "MASM"+Version::majorMinor() // PPPPPPPP (8, Prog name)
           << std::put_time(&localNow, "%m%d%y%H%M") // MMDDYYHHmm
           << "3D" // dd (dimensionality)
           // Missing:
@@ -189,7 +275,7 @@ private:
         fout << std::endl;
         state = State::CountsLine;
       } else if(state == State::CountsLine) {
-        fout << std::setw(3) << molecule.numAtoms() // aaa
+        fout << std::setw(3) << N // aaa
           << std::setw(3) << molecule.numBonds() // bbb
           << std::setw(3) << 0u // lll (number of atom lists)
           << std::setw(3) << 0u // fff (obsolete)
@@ -207,26 +293,27 @@ private:
         auto symbolStringLambda = [](const Delib::ElementType& elementType) {
           return Delib::ElementInfo::symbol(elementType);
         };
+
         for(unsigned i = 0; i < molecule.numAtoms(); i++) {
           fout << std::setprecision(4) << std::fixed
-            << std::setw(10) << positions[i].x()
-            << std::setw(10) << positions[i].y()
-            << std::setw(10) << positions[i].z()
+            << std::setw(10) << positions[inverse(i)].x()
+            << std::setw(10) << positions[inverse(i)].y()
+            << std::setw(10) << positions[inverse(i)].z()
             << " " << std::setprecision(0)
             // aaa (atom symbol)
-            << std::setw(3) << symbolStringLambda(molecule.getElementType(i)) 
+            << std::setw(3) << symbolStringLambda(molecule.getElementType(inverse(i)))
             << std::setw(2) << 0u // dd (isotope mass difference)
             << std::setw(3) << 0u // ccc (local charge) -> distant TODO
             << std::setw(3) << 0u // sss (atom stereo parity, ignored)
             << std::setw(3) << 0u // hhh (hydrogen count, for query, ignored)
             << std::setw(3) << 0u // bbb (stereo care box??, ignored)
             // vvv (valence)
-            << std::setw(3) << molecule.getNumAdjacencies(i)
+            << std::setw(3) << molecule.getNumAdjacencies(inverse(i))
             << std::setw(3) << 0u // HHH (H0 designator, ISIS/Desktop, ignored)
             << std::setw(3) << 0u // rrr (unused)
             << std::setw(3) << 0u // iii (unused)
             // mmm (atom-atom mapping number, for reactions, ignored)
-            << std::setw(3) << 0u 
+            << std::setw(3) << 0u
             // nnn (inversion/retention flag, for reactions, ignored)
             << std::setw(3) << 0u
             // eee (exact change flag, for reactions, ignored)
@@ -236,10 +323,14 @@ private:
         state = State::BondBlock;
       } else if(state == State::BondBlock) {
         for(const auto& edge: molecule.getEdges()) {
+          auto i = indexMap(edge.first.first);
+          auto j = indexMap(edge.first.second);
+          auto bty = _bondTypeUnsignedMap.at(edge.second);
+
           // MOLFile indices are 1-based, have to add 1 to internal indices!
-          fout << std::setw(3) << (edge.first.first + 1) // 111 (index of 1st atom)
-            << std::setw(3) << (edge.first.second + 1)  // 222 (index of 2nd atom)
-            << std::setw(3) << _bondTypeUnsignedMap.at(edge.second) // ttt (bond type)
+          fout << std::setw(3) << (1 + std::min(i, j)) // 111 (index of 1st atom)
+            << std::setw(3) << (1 + std::max(i, j))  // 222 (index of 2nd atom)
+            << std::setw(3) << bty // ttt (bond type)
             << std::setw(3) << 0u // sss (bond stereo, ignored for now)
             << std::setw(3) << 0u // xxx (unused)
             << std::setw(3) << 0u // rrr (bond topology) -> distant TODO
@@ -275,13 +366,13 @@ public:
 
     std::ifstream file(filename);
 
-    // Initialization 
+    // Initialization
     State state = State::HeaderMoleculeName;
     MOLFileVersion formatVersion = MOLFileVersion::V2000;
     // clear private state
     _positions.clear();
     _graph.clear();
-    
+
     unsigned atomBlockSize = 0, bondBlockSize = 0;
     std::string line;
 
@@ -355,7 +446,7 @@ public:
       }
     }
 
-    if(nZeroLengthLowerBound > 1) { 
+    if(nZeroLengthLowerBound > 1) {
       /* Assume all are dummies, no 3D Information present -> no Stereocenter
        *  assignments
        */
@@ -376,13 +467,15 @@ public:
   void writeSingle(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions
+    const Delib::PositionCollection& positions,
+    const IndexPermutation& permutation = IndexPermutation::Identity
   ) final {
     _writeSingle(
       filename,
       molecule,
       positions,
-      MOLFileVersion::V2000 
+      MOLFileVersion::V2000,
+      permutation
     );
   }
 

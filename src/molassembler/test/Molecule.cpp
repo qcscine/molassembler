@@ -2,9 +2,18 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#define BOOST_FILESYSTEM_NO_DEPRECATED
+#include "boost/filesystem.hpp"
+#include "boost/regex.hpp"
+
 #include <iostream>
+
 #include "IO.h"
 #include "StdlibTypeAlgorithms.h"
+
+#include "temple/Random.h"
+#include "temple/Invoke.h"
+#include "temple/Stringify.h"
 
 BOOST_AUTO_TEST_CASE( read_mol ) {
   using namespace molassembler;
@@ -69,9 +78,130 @@ BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
   );
 }
 
-const std::string directoryPrefix = "test_files/ranking_tree_molecules/"s;
+using HashArgumentsType = std::tuple<
+  Delib::ElementType,
+  std::vector<molassembler::BondType>,
+  boost::optional<Symmetry::Name>,
+  boost::optional<unsigned>
+>;
+
+HashArgumentsType randomArguments() {
+  auto bonds = temple::random.getN<unsigned>(
+    0,
+    7,
+    temple::random.getSingle<unsigned>(1, 8)
+  );
+  std::sort(bonds.begin(), bonds.end());
+
+  boost::optional<Symmetry::Name> symmetryOptional;
+  boost::optional<unsigned> assignmentOptional;
+  if(temple::random.getSingle<unsigned>(0, 1)) {
+    symmetryOptional = static_cast<Symmetry::Name>(
+      temple::random.getSingle<unsigned>(0, 15)
+    );
+
+    std::geometric_distribution<unsigned> gd {0.2};
+    assignmentOptional = gd(temple::random.randomEngine);
+  }
+
+  return {
+    static_cast<Delib::ElementType>(
+      temple::random.getSingle<unsigned>(1, 112)
+    ),
+    temple::cast<molassembler::BondType>(bonds),
+    symmetryOptional,
+    assignmentOptional
+  };
+}
+
+BOOST_AUTO_TEST_CASE(environmentHashingTests) {
+  using namespace molassembler;
+  // Try to guess a disjoint combination that has the same value
+  std::unordered_map<long long unsigned, HashArgumentsType> resultsMap;
+  for(unsigned N = 0; N < 1e6; ++N) {
+    auto arguments = randomArguments();
+
+    auto result = temple::detail::invokeHelper(
+      Molecule::hashAtomEnvironment,
+      arguments,
+      std::make_index_sequence<4> {}
+    );
+
+    if(resultsMap.count(result) && arguments != resultsMap.at(result)) {
+      BOOST_REQUIRE_MESSAGE(
+        false,
+        "Found overlapping result for different arguments to hashAtomEnvironment!\n"
+          << "A: " << temple::stringify(arguments) << "\n"
+          << "B: " << temple::stringify(resultsMap.at(result)) << "\n"
+          << "both yield " << result << "\n"
+      );
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(isomorphismTests) {
+  using namespace molassembler;
+  IO::MOLFileHandler molReader;
+  const std::string directoryPrefix = "test_files/isomorphisms/"s;
+  const boost::regex isomorphismFileRegex {R"(.+_isomorphism.mol)"};
+  const boost::regex removeRegex {R"(_isomorphism.mol)"};
+
+  /* TODO collect the original molecules in the folder and test all of them
+   * against one another, ensuring !=
+   */
+
+  std::vector<Molecule> originals;
+
+  boost::filesystem::path filesPath(directoryPrefix);
+  boost::filesystem::recursive_directory_iterator end;
+  for(boost::filesystem::recursive_directory_iterator iter(filesPath); iter != end; iter++) {
+    const boost::filesystem::path currentFilePath = *iter;
+
+    boost::smatch what;
+
+    if(!boost::regex_match(iter -> path().filename().string(), what, isomorphismFileRegex)) {
+      continue;
+    }
+
+    /* TODO Find some other way to compose the original string, i.e. regex replace?
+     * replace the matching part with "" -> original path
+     */
+
+    auto originalFilePath = currentFilePath.parent_path() / (
+      boost::regex_replace(iter -> path().filename().string(), removeRegex, "") + ".mol"
+    );
+
+    if(!boost::filesystem::exists(originalFilePath)) {
+      std::cout << "There is no matching file " << originalFilePath
+        << " to " << currentFilePath << std::endl;
+      continue;
+    }
+
+    Molecule a = molReader.readSingle(originalFilePath.string());
+    Molecule b = molReader.readSingle(currentFilePath.string());
+
+    BOOST_CHECK_MESSAGE(
+      a == b,
+      "Molecule isomorphism fails for " << what[0].str() << "!"
+    );
+
+    originals.push_back(std::move(a));
+  }
+
+  BOOST_CHECK_MESSAGE(
+    temple::all_of(
+      temple::mapAllPairs(
+        originals,
+        std::not_equal_to<> {}
+      )
+    ),
+    "Some originals in the isomorphism test folder match one another!"
+  );
+}
 
 BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
+  const std::string directoryPrefix = "test_files/ranking_tree_molecules/"s;
+
   using namespace molassembler;
   IO::MOLFileHandler molReader;
 

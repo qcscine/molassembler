@@ -141,8 +141,8 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
 
   BOOST_CHECK_MESSAGE(
     memberFetcherTime < copyingTime,
-    "Copying is faster than fetching members: copy = " << copyingTime << " vs. " 
-    << memberFetcherTime << " member fetch " 
+    "Copying is faster than fetching members: copy = " << copyingTime << " vs. "
+    << memberFetcherTime << " member fetch "
   );
 
   // Interoperability with VectorView
@@ -261,4 +261,25 @@ BOOST_AUTO_TEST_CASE(stringifyTests) {
   };
 
   std::cout << temple::stringify(complicatedStructure) << std::endl;
+
+  enum class SampleEnum {
+    SomeValue,
+    AnotherValue
+  };
+
+  std::tuple<
+    std::vector<unsigned>,
+    int,
+    std::pair<double, int>,
+    boost::optional<unsigned>,
+    SampleEnum
+  > someTuple {
+    {0, 4, 13, 4},
+    -4,
+    {0.9, -100},
+    boost::optional<unsigned> {10},
+    SampleEnum::SomeValue
+  };
+
+  std::cout << temple::stringify(someTuple) << std::endl;
 }
