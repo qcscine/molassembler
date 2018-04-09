@@ -1,0 +1,11 @@
+find_package(stereopermutation 0.1.0 REQUIRED)
+find_package(chemical_symmetries 0.1.0 REQUIRED)
+find_package(temple 0.1.0 REQUIRED)
+find_package(cyclic_polygons 0.1.0 REQUIRED)
+
+set(MOLASSEMBLER_VERSION 0.1.0)
+
+@PACKAGE_INIT@
+set_and_check(MOLASSEMBLER_INCLUDE_DIR) "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+check_required_components(MOLASSEMBLER)

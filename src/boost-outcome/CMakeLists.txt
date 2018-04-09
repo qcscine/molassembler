@@ -1,4 +1,4 @@
-# Awaiting boost::outcome publication in Boost 1.69
+# Included in source tree awaiting boost::outcome publication in Boost 1.69
 
 # oldest tested version of cmake used (too lazy to figure out newest compatible
 # cmake version)
@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # declaration
 project(OutcomeProject)
+
+set(OUTCOME_VERSION 0.1.0)
 
 set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/boost-outcome/outcome/detail/outcome_exception_observers.hpp
@@ -44,10 +46,50 @@ set(HEADERS_All
 )
 
 add_library(outcome INTERFACE)
-target_sources(outcome INTERFACE ${HEADERS_All})
+target_sources(outcome INTERFACE $<BUILD_INTERFACE:${HEADERS_All}>)
 target_include_directories(
-  outcome INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  outcome INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
-target_include_directories(
-  outcome SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+
+set(ConfigPackageLocation lib/cmake/boost-outcome)
+set(IncludeInstallDir include/)
+
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/boost-outcomeConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/boost-outcome/boost-outcomeConfig.cmake"
+  INSTALL_DESTINATION ${ConfigPackageLocation}
+  PATH_VARS IncludeInstallDir
 )
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/boost-outcome/boost-outcomeConfigVersion.cmake"
+  VERSION ${OUTCOME_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+install(
+  TARGETS outcome
+  EXPORT outcomeTargets
+  DESTINATION include
+)
+
+install(
+  EXPORT outcomeTargets
+  DESTINATION "${ConfigPackageLocation}"
+)
+
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/boost-outcome"
+  DESTINATION IncludeInstallDir
+)
+
+install(
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/boost-outcome/boost-outcomeConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/boost-outcome/boost-outcomeConfigVersion.cmake"
+  DESTINATION ${ConfigPackageLocation}
+)
+
+source_group("Headers" FILES ${HEADERS_All})

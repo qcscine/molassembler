@@ -9,20 +9,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # declaration
 project(CyclicPolygons)
 
+set(CYCLIC_POLYGONS_VERSION 0.1.0)
+
 enable_testing()
 
 add_library(cyclic_polygons INTERFACE)
 target_sources(
-  cyclic_polygons
-  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/CyclicPolygons.h>
+  cyclic_polygons INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/CyclicPolygons.h>
 )
+
 target_include_directories(
-  cyclic_polygons
-  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-)
-target_include_directories(
-  cyclic_polygons
-  SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+  cyclic_polygons INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
 # dependencies
@@ -38,3 +38,44 @@ target_link_libraries(
 )
 
 add_test(NAME CyclicPolygonTests COMMAND cyclicPolygonTests)
+
+set(ConfigPackageLocation lib/cmake/cyclic_polygons)
+set(IncludeInstallDir include/)
+
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/cyclic_polygonsConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfig.cmake"
+  INSTALL_DESTINATION ${ConfigPackageLocation}
+  PATH_VARS IncludeInstallDir
+)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfigVersion.cmake"
+  VERSION ${CYCLIC_POLYGONS_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+install(
+  TARGETS cyclic_polygons
+  EXPORT cyclic_polygonsTargets
+  DESTINATION include
+)
+
+install(
+  EXPORT cyclic_polygonsTargets
+  DESTINATION "${ConfigPackageLocation}"
+)
+
+install(
+  FILES ${HEADERS_ALL}
+  DESTINATION IncludeInstallDir
+)
+
+install(
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfigVersion.cmake"
+  DESTINATION ${ConfigPackageLocation}
+)
+
+source_group("Headers" FILES ${HEADERS_All})

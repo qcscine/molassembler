@@ -1,0 +1,9 @@
+find_package(Eigen3 3.1.1 REQUIRED)
+find_package(temple 0.1.0 REQUIRED)
+
+set(CHEMICAL_SYMMETRIES_VERSION 0.1.0)
+
+@PACKAGE_INIT@
+set_and_check(CHEMICAL_SYMMETRIES_INCLUDE_DIR) "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+check_required_components(CHEMICAL_SYMMETRIES)

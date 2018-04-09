@@ -67,6 +67,7 @@ include(CMakePackageConfigHelpers)
 
 # Set destination for the generated CMake config files
 set(ConfigPackageLocation lib/cmake/chemical_symmetries)
+set(IncludeInstallDir include/)
 
 # Generate a basic configuration file in the binary director and subdir
 # chemical_symmetries
@@ -76,11 +77,11 @@ write_basic_package_version_file(
   COMPATIBILITY AnyNewerVersion
 )
 
-# Copy config file from source directory to CMake binary dir for installation
-# later
-configure_file(chemical_symmetriesConfig.cmake
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetriesConfig.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/chemical_symmetries/chemical_symmetriesConfig.cmake"
-  COPYONLY
+  INSTALL_DESTINATION ${ConfigPackageLocation}
+  PATH_VARS IncludeInstallDir
 )
 
 install(
@@ -98,8 +99,6 @@ install(DIRECTORY
   "${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries"
   DESTINATION
   include
-  COMPONENT
-  Devel
   FILES_MATCHING
   PATTERN "*.h"
 )
@@ -110,7 +109,6 @@ install(
     chemical_symmetriesConfig.cmake
     "${CMAKE_CURRENT_BINARY_DIR}/chemical_symmetries/chemical_symmetriesConfigVersion.cmake"
   DESTINATION ${ConfigPackageLocation}
-  COMPONENT Devel
 )
 
 # Source groups for Visual Studio

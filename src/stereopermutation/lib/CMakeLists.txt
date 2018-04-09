@@ -28,7 +28,7 @@ endif()
 
 target_compile_options(stereopermutation PUBLIC -Wall -Wpedantic -Wextra)
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release") 
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   message(STATUS "Selected release build")
   # no debug information, disable assert
   target_compile_definitions(stereopermutation PRIVATE NDEBUG)
@@ -44,14 +44,16 @@ include(CMakePackageConfigHelpers)
 # Set destination for the generated CMake config files
 set(ConfigPackageLocation lib/cmake/stereopermutation)
 
-# Generate a basic configuration file in the binary director and subdir stereopermutation
+# Generate a basic configuration file in the binary director and subdir
+# stereopermutation
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfigVersion.cmake"
   VERSION ${stereopermutation_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
 
-# Copy config file from source directory to CMake binary dir for installation later
+# Copy config file from source directory to CMake binary dir for installation
+# later
 configure_file(stereopermutationConfig.cmake
   "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfig.cmake"
   COPYONLY
