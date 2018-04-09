@@ -23,8 +23,8 @@ template<
   std::enable_if_t<!traits::hasSize<Container>::value, int> = 0
 > auto size(const Container& container) {
   return std::distance(
-    container.begin(),
-    container.end()
+    std::begin(container),
+    std::end(container)
   );
 }
 
@@ -63,7 +63,7 @@ template<
   UnaryFunction&& function
 ) {
   using U = decltype(
-    invoke(function, *container.begin())
+    invoke(function, *std::begin(container))
   );
 
   Container<U, Dependents<U>...> returnContainer;

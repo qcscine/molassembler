@@ -11,8 +11,8 @@
 
 /*! @file
  *
- * Provides a slew of pseudo-functional-style composable functions to ease 
- * manipulation of containers with lambdas. Functions are typically geared 
+ * Provides a slew of pseudo-functional-style composable functions to ease
+ * manipulation of containers with lambdas. Functions are typically geared
  * towards the minimum set of requirements expected of the containers in order
  * to function well. Most functions will work well with many STL containers,
  * and custom containers that fulfill the function's explicit requirements.
@@ -21,6 +21,19 @@
 namespace temple {
 
 /* Header */
+
+template<typename Container>
+void sort(const Container& container);
+
+template<typename Container, typename Comparator>
+void sort(const Container& container, Comparator&& comparator);
+
+template<typename Container, typename T>
+auto find(const Container& container, const T& needle);
+
+template<typename Container, typename UnaryPredicate>
+auto find_if(const Container& container, UnaryPredicate&& predicate);
+
 //! Composability improvement - returns the call to the size member
 template<typename Container>
 auto size(const Container& container);
@@ -70,6 +83,8 @@ template<
   UnaryFunction&& function
 );
 
+// TODO these should be replaced with a range adaptor, not be present as individual functions
+// perhaps implement these as a special case of the MemberFetcher
 //! Map specialization for std::map that maps the keys, returns a vector
 template<typename T, typename U, class UnaryFunction>
 auto mapKeys(
@@ -77,6 +92,8 @@ auto mapKeys(
   UnaryFunction&& function
 );
 
+// TODO these should be replaced with a range adaptor, not be present as individual functions
+// perhaps implement these as a special case of the MemberFetcher
 //! Map specialization for std::map, which maps the values, returns a vector
 template<typename T, typename U, class UnaryFunction>
 auto mapValues(
@@ -90,7 +107,7 @@ auto mapValues(
 *
 * Requires:
 * - Container must implement begin and end forward-iterators
-* - UnaryFunction must be unary and callable with the type pointed to by 
+* - UnaryFunction must be unary and callable with the type pointed to by
 *   the iterators
 */
 template<
@@ -115,7 +132,7 @@ template<
 *
 * Requires:
 * - Container must implement begin and end forward-iterators
-* - UnaryFunction must be unary and callable with the type pointed to by 
+* - UnaryFunction must be unary and callable with the type pointed to by
 *   the iterators
 */
 template<
@@ -135,9 +152,9 @@ template<
 );
 
 /*!
- * Composable pairwise map function. Instead of a unary function acting on 
- * every element of the container, this takes pairs of successive elements. 
- * The returned type is a container of the same type as the input, containing 
+ * Composable pairwise map function. Instead of a unary function acting on
+ * every element of the container, this takes pairs of successive elements.
+ * The returned type is a container of the same type as the input, containing
  * elements of the type that the binary function returns.
  */
 template<
@@ -150,8 +167,8 @@ template<
   BinaryFunction&& function
 );
 
-/*! 
- * Takes a container and maps all possible pairs of its contents into a new 
+/*!
+ * Takes a container and maps all possible pairs of its contents into a new
  * container of the same type.
  */
 template<
@@ -217,8 +234,8 @@ template<
   const ContainerU& containerU,
   BinaryFunction&& function
 ) {
-  for(auto i = containerT.begin(); i != containerT.end(); ++i) {
-    for(auto j = containerU.begin(); j != containerU.end(); ++j) {
+  for(auto i = std::begin(containerT); i != std::end(containerT); ++i) {
+    for(auto j = std::begin(containerU); j != std::end(containerU); ++j) {
       function(*i, *j);
     }
   }
@@ -268,9 +285,9 @@ template<typename Vector, typename Container, typename ... Containers> Vector co
   Containers... containers
 ) {
   vector.insert(
-    vector.end(),
-    container.begin(),
-    container.end()
+    std::end(vector),
+    std::begin(container),
+    std::end(container)
   );
 
   return concatenateHelper(vector, containers...);
@@ -297,11 +314,11 @@ template<typename... Containers> auto concatenate(
   );
 
   std::vector<T> concatenated;
-  
+
   return detail::concatenateHelper(concatenated, containers...);
 }
 
-//!  Cast the entire data of a container 
+//!  Cast the entire data of a container
 template<
   typename U,
   typename T,
@@ -311,27 +328,27 @@ template<
   const Container<T, Dependents<T>...>& container
 );
 
-/*! 
+/*!
  * Reverses a container. Requires that the container implements begin and
- * end bidirectional iterators and a copy constructor. 
+ * end bidirectional iterators and a copy constructor.
  */
 template<typename Container>
 Container reverse(const Container& container);
 
 /*!
- * Condenses an iterable container into a comma-separated string of string 
+ * Condenses an iterable container into a comma-separated string of string
  * representations of its contents. Requires container iterators to satisfy
  * ForwardIterators and the contained type to be a valid template
  * argument for std::to_string, which in essence means this works only for (a
  * few) STL containers and (most) built-in datatypes.
  */
-template<class Container> 
+template<class Container>
 std::enable_if_t<
   !std::is_same<
     traits::getValueType<Container>,
     std::string
   >::value,
-  std::string 
+  std::string
 > condenseIterable(
   const Container& container,
   const std::string& joiningChar = ", "
@@ -343,7 +360,7 @@ template<class Container> std::enable_if_t<
     traits::getValueType<Container>,
     std::string
   >::value,
-  std::string 
+  std::string
 > condenseIterable(
   const Container& container,
   const std::string& joiningChar = ", "
@@ -351,7 +368,7 @@ template<class Container> std::enable_if_t<
 
 /*!
  * Split a container's values by a mapping function whose return value elements
- * are compared with. Matching mapped values are grouped and returned in a 
+ * are compared with. Matching mapped values are grouped and returned in a
  * ragged 2D vector.
  */
 template<class Container, class UnaryFunction>
@@ -387,7 +404,7 @@ Container copyIf(
 
 /*!
  * Moves all values passing a predicate test of a container into a new one of
- * the same type 
+ * the same type
  */
 template<class Container, class UnaryFunction>
 Container moveIf(
@@ -437,7 +454,7 @@ auto makeContainsPredicate(const Container& container);
 
 /* Algorithms for special STL types */
 /*!
- * Inverts the map. Returns a map that maps the opposite way. Be warned that 
+ * Inverts the map. Returns a map that maps the opposite way. Be warned that
  * this will lead to loss of information if the original map has duplicate
  * mapped values.
  */
@@ -449,7 +466,7 @@ template<
   typename T,
   template<typename> class Comparator,
   template<typename >class Allocator
-> 
+>
 std::set<T, Comparator<T>, Allocator<T>> setIntersection(
   const std::set<T, Comparator<T>, Allocator<T>>& a,
   const std::set<T, Comparator<T>, Allocator<T>>& b
@@ -460,7 +477,7 @@ template<
   typename T,
   template<typename> class Comparator,
   template<typename >class Allocator
-> 
+>
 std::set<T, Comparator<T>, Allocator<T>> setUnion(
   const std::set<T, Comparator<T>, Allocator<T>>& a,
   const std::set<T, Comparator<T>, Allocator<T>>& b
@@ -471,7 +488,7 @@ template<
   typename T,
   template<typename> class Comparator,
   template<typename >class Allocator
-> 
+>
 std::set<T, Comparator<T>, Allocator<T>> setDifference(
   const std::set<T, Comparator<T>, Allocator<T>>& a,
   const std::set<T, Comparator<T>, Allocator<T>>& b
@@ -486,12 +503,12 @@ template<
   ComparisonFunction&& comparator,
   MappingFunction&& mapFunction
 ) {
-  auto selection = container.begin();
+  auto selection = std::begin(container);
   auto selectionValue = mapFunction(*selection);
 
-  auto iter = container.begin();
+  auto iter = std::begin(container);
 
-  while(iter != container.end()) {
+  while(iter != std::end(container)) {
     auto currentValue = mapFunction(*iter);
 
     // Replace if 'better' according to the comparator
@@ -507,6 +524,41 @@ template<
 }
 
 /* Implementation ------------------------------------------------------------*/
+template<typename Container>
+void sort(const Container& container) {
+  std::sort(
+    std::begin(container),
+    std::end(container)
+  );
+}
+
+template<typename Container, typename Comparator>
+void sort(const Container& container, Comparator&& comparator) {
+  std::sort(
+    std::begin(container),
+    std::end(container),
+    std::forward<Comparator>(comparator)
+  );
+}
+
+template<typename Container, typename T>
+auto find(const Container& container, const T& needle) {
+  return std::find(
+    std::begin(container),
+    std::end(container),
+    needle
+  );
+}
+
+template<typename Container, typename UnaryPredicate>
+auto find_if(const Container& container, UnaryPredicate&& predicate) {
+  return std::find_if(
+    std::begin(container),
+    std::end(container),
+    predicate
+  );
+}
+
 template<typename Container>
 auto size(
   const Container& container
@@ -687,12 +739,12 @@ template<
 
   Container<U, Dependents<U>...> returnContainer;
 
-  auto leftIterator = container.begin();
+  auto leftIterator = std::begin(container);
   auto rightIterator = leftIterator; ++rightIterator;
 
-  while(rightIterator != container.end()) {
+  while(rightIterator != std::end(container)) {
     addToContainer(
-      returnContainer, 
+      returnContainer,
       function(
         *leftIterator,
         *rightIterator
@@ -724,11 +776,11 @@ template<
 
   Container<U, Dependents<U>...> returnContainer;
 
-  for(auto i = container.begin(); i != container.end(); ++i) {
+  for(auto i = std::begin(container); i != std::end(container); ++i) {
     auto j = i; ++j;
-    for(/* init before */; j != container.end(); ++j) {
+    for(/* init before */; j != std::end(container); ++j) {
       addToContainer(
-        returnContainer, 
+        returnContainer,
         function(
           *i,
           *j
@@ -761,11 +813,11 @@ template<
 
   std::vector<FunctionReturnType> data;
 
-  const auto tEnd = containerT.end();
-  const auto uEnd = containerU.end();
+  const auto tEnd = std::end(containerT);
+  const auto uEnd = std::end(containerU);
 
-  auto tIter = containerT.begin();
-  auto uIter = containerU.begin();
+  auto tIter = std::begin(containerT);
+  auto uIter = std::begin(containerU);
 
   while(tIter != tEnd && uIter != uEnd) {
     data.emplace_back(
@@ -794,8 +846,8 @@ template<
   BinaryFunction&& function
 ) {
   return std::accumulate(
-    container.begin(),
-    container.end(),
+    std::begin(container),
+    std::end(container),
     init,
     std::forward<BinaryFunction>(function)
   );
@@ -813,8 +865,8 @@ template<
   BinaryFunction&& function
 ) {
   return std::accumulate(
-    array.begin(),
-    array.end(),
+    std::begin(array),
+    std::end(array),
     init,
     std::forward<BinaryFunction>(function)
   );
@@ -826,17 +878,17 @@ auto makeContainsPredicate(const Container& container) {
 
   return [&container](const T& element) -> bool {
     return std::find(
-      container.begin(),
-      container.end(),
+      std::begin(container),
+      std::end(container),
       element
-    ) != container.end();
+    ) != std::end(container);
   };
 }
 
 template<typename T, typename U>
 std::map<U, T> invertMap(const std::map<T, U>& map) {
   std::map<U, T> flipped;
-  
+
   for(const auto& mapPair : map) {
     flipped[mapPair.second] = mapPair.first;
   }
@@ -848,7 +900,7 @@ template<
   typename T,
   template<typename> class Comparator,
   template<typename >class Allocator
-> 
+>
 std::set<T, Comparator<T>, Allocator<T>> setIntersection(
   const std::set<T, Comparator<T>, Allocator<T>>& a,
   const std::set<T, Comparator<T>, Allocator<T>>& b
@@ -856,11 +908,11 @@ std::set<T, Comparator<T>, Allocator<T>> setIntersection(
   std::set<T, Comparator<T>, Allocator<T>> returnSet;
 
   std::set_intersection(
-    a.begin(),
-    a.end(),
-    b.begin(),
-    b.end(),
-    std::inserter(returnSet, returnSet.end()),
+    std::begin(a),
+    std::end(a),
+    std::begin(b),
+    std::end(b),
+    std::inserter(returnSet, std::end(returnSet)),
     Comparator<T>()
   );
 
@@ -871,7 +923,7 @@ template<
   typename T,
   template<typename> class Comparator,
   template<typename >class Allocator
-> 
+>
 std::set<T, Comparator<T>, Allocator<T>> setUnion(
   const std::set<T, Comparator<T>, Allocator<T>>& a,
   const std::set<T, Comparator<T>, Allocator<T>>& b
@@ -879,11 +931,11 @@ std::set<T, Comparator<T>, Allocator<T>> setUnion(
   std::set<T, Comparator<T>, Allocator<T>> returnSet;
 
   std::set_union(
-    a.begin(),
-    a.end(),
-    b.begin(),
-    b.end(),
-    std::inserter(returnSet, returnSet.end()),
+    std::begin(a),
+    std::end(a),
+    std::begin(b),
+    std::end(b),
+    std::inserter(returnSet, std::end(returnSet)),
     Comparator<T>()
   );
 
@@ -894,7 +946,7 @@ template<
   typename T,
   template<typename> class Comparator,
   template<typename >class Allocator
-> 
+>
 std::set<T, Comparator<T>, Allocator<T>> setDifference(
   const std::set<T, Comparator<T>, Allocator<T>>& a,
   const std::set<T, Comparator<T>, Allocator<T>>& b
@@ -902,11 +954,11 @@ std::set<T, Comparator<T>, Allocator<T>> setDifference(
   std::set<T, Comparator<T>, Allocator<T>> returnSet;
 
   std::set_symmetric_difference(
-    a.begin(),
-    a.end(),
-    b.begin(),
-    b.end(),
-    std::inserter(returnSet, returnSet.end()),
+    std::begin(a),
+    std::end(a),
+    std::begin(b),
+    std::end(b),
+    std::inserter(returnSet, std::end(returnSet)),
     Comparator<T>()
   );
 
@@ -952,20 +1004,20 @@ Container reverse(const Container& container) {
   Container copy = container;
 
   std::reverse(
-    copy.begin(),
-    copy.end()
+    std::begin(copy),
+    std::end(copy)
   );
 
   return copy;
 }
 
-template<class Container> 
+template<class Container>
 std::enable_if_t<
   !std::is_same<
     traits::getValueType<Container>,
     std::string
   >::value,
-  std::string 
+  std::string
 > condenseIterable(
   const Container& container,
   const std::string& joiningChar
@@ -974,9 +1026,9 @@ std::enable_if_t<
 
   std::string representation;
 
-  for(auto it = container.begin(); it != container.end(); /*-*/) {
+  for(auto it = std::begin(container); it != std::end(container); /*-*/) {
     representation += std::to_string(*it);
-    if(++it != container.end()) {
+    if(++it != std::end(container)) {
       representation += joiningChar;
     }
   }
@@ -989,7 +1041,7 @@ template<class Container> std::enable_if_t<
     traits::getValueType<Container>,
     std::string
   >::value,
-  std::string 
+  std::string
 > condenseIterable(
   const Container& container,
   const std::string& joiningChar
@@ -998,9 +1050,9 @@ template<class Container> std::enable_if_t<
 
   std::string representation;
 
-  for(auto it = container.begin(); it != container.end(); /*-*/) {
+  for(auto it = std::begin(container); it != std::end(container); /*-*/) {
     representation += *it;
-    if(++it != container.end()) {
+    if(++it != std::end(container)) {
       representation += joiningChar;
     }
   }
@@ -1026,7 +1078,7 @@ std::vector<
 
   std::map<R, unsigned> indexMap;
 
-  for(auto iter = container.begin(); iter != container.end(); ++iter) {
+  for(auto iter = std::begin(container); iter != std::end(container); ++iter) {
     auto ret = function(*iter);
     if(indexMap.count(ret) == 0) {
       indexMap[ret] = groups.size();
@@ -1059,11 +1111,11 @@ std::vector<
     std::vector<T>
   > groups;
 
-  for(auto iter = container.begin(); iter != container.end(); ++iter) {
+  for(auto iter = std::begin(container); iter != std::end(container); ++iter) {
     bool foundEqual = false;
     for(auto& group : groups) {
 
-      if(compareEqual(*iter, *group.begin())) {
+      if(compareEqual(*iter, *std::begin(group))) {
         group.push_back(*iter);
         foundEqual = true;
         break;
@@ -1161,11 +1213,11 @@ template<
 ) {
   container.erase(
     std::remove(
-      container.begin(),
-      container.end(),
+      std::begin(container),
+      std::end(container),
       value
     ),
-    container.end()
+    std::end(container)
   );
 }
 
@@ -1176,11 +1228,11 @@ void inplaceRemoveIf(
 ) {
   container.erase(
     std::remove_if(
-      container.begin(),
-      container.end(),
+      std::begin(container),
+      std::end(container),
       predicate
     ),
-    container.end()
+    std::end(container)
   );
 }
 
@@ -1191,9 +1243,9 @@ template<
   const Container& container,
   BinaryFunction&& function
 ) {
-  for(auto i = container.begin(); i != container.end(); ++i) {
+  for(auto i = std::begin(container); i != std::end(container); ++i) {
     auto j = i; ++j;
-    for(/* init before */; j != container.end(); ++j) {
+    for(/* init before */; j != std::end(container); ++j) {
       function(
         *i,
         *j

@@ -24,7 +24,7 @@ struct SequentialPairGenerator {
     const ContainerValueType&
   >;
 
-  using ContainerIteratorType = decltype(std::declval<const Container>().begin());
+  using ContainerIteratorType = decltype(std::begin(std::declval<const Container>()));
 
   using IteratorType = std::iterator<
     std::forward_iterator_tag, // iterator_category
@@ -40,7 +40,7 @@ struct SequentialPairGenerator {
 
   public:
     Iterator() = default;
-    Iterator(ContainerIteratorType&& left, ContainerIteratorType&& right) 
+    Iterator(ContainerIteratorType&& left, ContainerIteratorType&& right)
       : _left {left},
         _right {right}
     {}
@@ -107,7 +107,7 @@ struct SequentialPairGenerator {
     auto second = ++containerPtr->begin();
 
     return {
-      containerPtr->begin(), 
+      containerPtr->begin(),
       std::move(second)
     };
   }
@@ -134,7 +134,7 @@ struct AllPairsGenerator {
     const ContainerValueType&
   >;
 
-  using ContainerIteratorType = decltype(std::declval<const Container>().begin());
+  using ContainerIteratorType = decltype(std::begin(std::declval<const Container>()));
 
   using IteratorType = std::iterator<
     std::forward_iterator_tag, // iterator_category
@@ -151,7 +151,7 @@ struct AllPairsGenerator {
 
   public:
     Iterator() = default;
-    Iterator(ContainerIterator&& left, ContainerIterator&& right, ContainerIterator&& end) 
+    Iterator(ContainerIterator&& left, ContainerIterator&& right, ContainerIterator&& end)
       : _left {left},
         _right {right},
         _end {end}
@@ -194,7 +194,7 @@ struct AllPairsGenerator {
     auto second = ++containerPtr->begin();
 
     return {
-      containerPtr->begin(), 
+      containerPtr->begin(),
       std::move(second),
       containerPtr->end()
     };
@@ -231,8 +231,8 @@ struct Zipper {
     const U&
   >;
 
-  using ContainerTIteratorType = decltype(std::declval<const ContainerT>().begin());
-  using ContainerUIteratorType = decltype(std::declval<const ContainerU>().begin());
+  using ContainerTIteratorType = decltype(std::begin(std::declval<const ContainerT>()));
+  using ContainerUIteratorType = decltype(std::begin(std::declval<const ContainerU>()));
 
   using IteratorType = std::iterator<
     std::forward_iterator_tag, // iterator_category
@@ -249,7 +249,7 @@ struct Zipper {
 
   public:
     Iterator() = default;
-    Iterator(ContainerTIteratorType&& left, ContainerUIteratorType&& right) 
+    Iterator(ContainerTIteratorType&& left, ContainerUIteratorType&& right)
       : _left {left},
         _right {right}
     {}
@@ -309,7 +309,7 @@ struct Zipper {
         containerTPtr->end(),
         std::move(uIter)
       };
-    } 
+    }
 
     auto tIter = containerTPtr->begin();
     std::advance(tIter, uSize);
@@ -339,7 +339,7 @@ struct Transformer {
     )
   );
 
-  using ContainerIteratorType = decltype(std::declval<const Container>().begin());
+  using ContainerIteratorType = decltype(std::begin(std::declval<const Container>()));
 
   using IteratorType = std::iterator<
     std::forward_iterator_tag, // iterator_category
@@ -360,7 +360,7 @@ struct Transformer {
       const Transformer& base,
       ContainerIteratorType&& iter
     ) : _basePtr(&base),
-        _iter {iter} 
+        _iter {iter}
     {}
 
     Iterator& operator ++ () {

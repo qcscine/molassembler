@@ -53,9 +53,9 @@ void printPermissibleSymmetries() {
     << nl;
 
   for(unsigned i = 0; i < Symmetry::allNames.size(); i++) {
-    std::cout << std::setw(symmetryColumns[0]) << i 
+    std::cout << std::setw(symmetryColumns[0]) << i
       << std::setw(symmetryColumns[1]) << Symmetry::size(Symmetry::allNames.at(i))
-      << std::setw(symmetryColumns[2]) << Symmetry::name(Symmetry::allNames.at(i)) 
+      << std::setw(symmetryColumns[2]) << Symmetry::name(Symmetry::allNames.at(i))
       << nl;
   }
 
@@ -67,7 +67,7 @@ void writeDistortions(
 ) {
   std::cout << std::fixed << std::setprecision(2);
 
-  auto sortedView = temple::sort(
+  auto sortedView = temple::view_sort(
     distortions,
     [](const auto& a, const auto& b) -> bool {
       return temple::consecutiveCompareSmaller(
@@ -91,7 +91,7 @@ double calculateAmbiguity(
    * lowest mapping is.
    */
 
-  auto sortByTotalView = temple::sort(
+  auto sortByTotalView = temple::view_sort(
     distortions,
     [](const auto& a, const auto& b) -> bool {
       return (
@@ -103,20 +103,20 @@ double calculateAmbiguity(
 
   if(distortions.size() <= 1) {
     return 0;
-  } 
+  }
 
   auto firstValue = (
-    sortByTotalView.at(0).angularDistortion 
+    sortByTotalView.at(0).angularDistortion
     + sortByTotalView.at(0).chiralDistortion
   );
   auto secondValue = (
-    sortByTotalView.at(1).angularDistortion 
+    sortByTotalView.at(1).angularDistortion
     + sortByTotalView.at(1).chiralDistortion
   );
 
   if(std::fabs(secondValue - firstValue) < 1e-10) {
     return 1;
-  } 
+  }
 
   return firstValue / secondValue;
 }
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
     boost::program_options::parse_command_line(argc, argv, options_description),
     options_variables_map
   );
-  boost::program_options::notify(options_variables_map);  
+  boost::program_options::notify(options_variables_map);
 
   // Manage the results
   if(options_variables_map.count("help")) {
@@ -270,19 +270,19 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    auto sortedView = temple::sort(
+    auto sortedView = temple::view_sort(
       ambiguities,
       [](const auto& a, const auto& b) -> bool {
         return a.ambiguity < b.ambiguity;
       }
     );
 
-    std::cout 
+    std::cout
       << "Ambiguity tries to quantify how bad choosing the index mapping with the" << nl
       << "lowest total distortion is over considering the next best index mapping." << nl
       << "Zero indicates that the choice is unambiguous, one that the choice is " << nl
-      << "completely ambiguous. Ambiguity values excluding zero and one are shown" << nl 
-      << "(both are common). Idx is the index that is deleted when the target" << nl 
+      << "completely ambiguous. Ambiguity values excluding zero and one are shown" << nl
+      << "(both are common). Idx is the index that is deleted when the target" << nl
       << "symmetry is smaller than the source symmetry." << nl << nl;
 
 
@@ -294,7 +294,7 @@ int main(int argc, char* argv[]) {
 
     for(const auto& entry : sortedView) {
       std::cout << std::setw(ambiguityColumns[0]) << entry.ambiguity
-        << std::setw(ambiguityColumns[1]) << Symmetry::name(entry.source) 
+        << std::setw(ambiguityColumns[1]) << Symmetry::name(entry.source)
         << std::setw(ambiguityColumns[2]) << Symmetry::name(entry.target)
         << std::setw(ambiguityColumns[3]);
 
@@ -303,7 +303,7 @@ int main(int argc, char* argv[]) {
       } else {
         std::cout << " ";
       }
-      
+
       std::cout << nl;
     }
   }

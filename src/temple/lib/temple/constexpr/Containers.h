@@ -5,7 +5,7 @@
 #include <limits>
 
 /*! @file
- * 
+ *
  * Provides constexpr functional-style modification of container elements
  */
 
@@ -33,7 +33,7 @@ template<
   std::index_sequence<Inds...>
 ) {
   return ArrayType<
-    traits::functionReturnType<UnaryFunction, T>, 
+    traits::functionReturnType<UnaryFunction, T>,
     size
   > {
     function(array.at(Inds))...
@@ -61,7 +61,7 @@ template<
 
 /*!
  * Reduction of any array-like container with a binary function. This function
- * is somewhat restricted, in that the type of the reduction must be identical 
+ * is somewhat restricted, in that the type of the reduction must be identical
  * to the value type of the array-like container. The binary function must
  * have the signature T(const T& reduction, const T& element).
  */
@@ -161,7 +161,7 @@ template<
 
 namespace detail {
 
-//! Implementation helper of array-like type concatenation. 
+//! Implementation helper of array-like type concatenation.
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -176,9 +176,9 @@ constexpr ArrayType<T, N1+N2> arrayConcatenateImpl(
   std::index_sequence<AIndices...>,
   std::index_sequence<BIndices...>
 ) {
-  return { 
+  return {
     a.at(AIndices)...,
-    b.at(BIndices)... 
+    b.at(BIndices)...
   };
 }
 
@@ -449,7 +449,7 @@ template<
   }
 }*/
 
-/*! 
+/*!
  * Returns an index within the passed array-like container whose element at that
  * index is not less than the passed vaue. Proceeds via binary search. 1:1
  * constexpr variant of std::lower_bound.
@@ -738,7 +738,7 @@ template<
 }
 
 /*!
- * In-place previous permutation of elements in an array-like type. 1:1 
+ * In-place previous permutation of elements in an array-like type. 1:1
  * index-based variant of std::prev_permutation
  * NOTE: works with std::array only in C++17
  */
@@ -761,7 +761,7 @@ template<
   )) {
     throw "Call parameters to inPlaceNextPermutation make no sense!";
   }
-  
+
   size_t i = last - 1, j = 0, k = 0;
 
   while(true) {
@@ -807,7 +807,7 @@ template<
 }
 
 namespace detail {
-  template<class ContainerType> 
+  template<class ContainerType>
   struct getValueTypeImpl {
     using type = typename std::remove_const<
       typename std::remove_reference<
@@ -825,7 +825,7 @@ template<class ContainerType>
 using getValueType = typename detail::getValueTypeImpl<ContainerType>::type;
 
 /*!
- * Checks if a container holds strictly non-decreasing sequential values, i.e. 
+ * Checks if a container holds strictly non-decreasing sequential values, i.e.
  * its values are partially ordered.
  *
  * Partially ordered: 1, 1, 2, 3
@@ -897,24 +897,6 @@ template<
   }
 
   return true;
-}
-
-template<class ContainerType>
-constexpr typename ContainerType::const_iterator find(
-  const ContainerType& container,
-  const getValueType<ContainerType>& value
-) {
-  auto it = container.begin();
-
-  while(it != container.end()) {
-    if(*it == value) {
-      return it;
-    }
-
-    ++it;
-  }
-
-  return it;
 }
 
 } // namespace temple

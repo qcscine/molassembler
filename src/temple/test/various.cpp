@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
 
   // Interoperability with VectorView
 
-  auto filteredView = temple::filter(
+  auto filteredView = temple::view_filter(
     testClass,
     [](const auto& subVector) -> bool {
       return subVector.size() < 3;

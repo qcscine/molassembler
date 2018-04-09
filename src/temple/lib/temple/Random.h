@@ -21,7 +21,7 @@ private:
 #ifdef NDEBUG
     std::random_device randomDevice;
     for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
-#else 
+#else
     _seeds.emplace_back(2721813754);
 #endif
 
@@ -101,6 +101,15 @@ public:
     std::uniform_int_distribution<T> uniformDistribution(lower, upper);
     return uniformDistribution(randomEngine);
   }
+
+  template<typename T>
+  std::enable_if_t<
+    std::is_same<T, bool>::value,
+    bool
+  > getSingle() const {
+    std::uniform_int_distribution<unsigned> uniformDistribution(0, 1);
+    return uniformDistribution(randomEngine);
+  };
 };
 
 static Generator random;

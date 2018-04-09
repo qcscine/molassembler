@@ -29,7 +29,7 @@ private:
     std::function<bool(const ValueType&)>
   > _filters;
 
-  /*! 
+  /*!
    * The current resulting index sequence of elements in the underlying data
    * based on sorting AND filtering that is passed to iterators that progress
    * through this list. This is maintained at any change of sorting or filtering
@@ -37,8 +37,8 @@ private:
    */
   std::vector<unsigned> _indexSequence;
 
-  /*! 
-   * Recalculates the index sequence if a change has occurred in any of the 
+  /*!
+   * Recalculates the index sequence if a change has occurred in any of the
    * stored lambdas
    */
   void _recalculateSequence() {
@@ -94,7 +94,7 @@ public:
     // Maintain the current position in the sorting sequence
     unsigned _idx;
     // Reference to base data
-    const std::vector<ValueType>& _vector; 
+    const std::vector<ValueType>& _vector;
     // Reference to sorting sequence
     const std::vector<unsigned>& _sorting;
 
@@ -125,8 +125,8 @@ public:
     bool operator == (iterator other) const { return _idx == other._idx; }
     bool operator != (iterator other) const { return _idx != other._idx; }
 
-    typename BaseIteratorType::reference operator * () const { 
-      return _vector.at(_sorting.at(_idx)); 
+    typename BaseIteratorType::reference operator * () const {
+      return _vector.at(_sorting.at(_idx));
     }
   };
 
@@ -141,7 +141,7 @@ public:
     return *this;
   }
 
-  /*! 
+  /*!
    * Filters out data from the underlying vector if the unary predicate
    * returns true
    */
@@ -185,12 +185,12 @@ public:
     return _indexSequence.size();
   }
 
-  iterator<const ValueType*> begin() const { 
-    return iterator<const ValueType*>(0, _baseVectorRef, _indexSequence); 
+  iterator<const ValueType*> begin() const {
+    return iterator<const ValueType*>(0, _baseVectorRef, _indexSequence);
   }
 
-  iterator<const ValueType*> end() const { 
-    return iterator<const ValueType*>(size(), _baseVectorRef, _indexSequence); 
+  iterator<const ValueType*> end() const {
+    return iterator<const ValueType*>(size(), _baseVectorRef, _indexSequence);
   }
 
   std::vector<ValueType> getCopy() const {
@@ -201,14 +201,14 @@ public:
   }
 };
 
-/*! 
+/*!
  * Provides a VectorView proxy object on a container that filters out some
  * elements if the passed unary predicate returns true
  */
 template<typename Container, class FilterFunction>
 VectorView<
   traits::getValueType<Container>
-> filter(
+> view_filter(
   const Container& container,
   const FilterFunction&& filterFunction
 ) {
@@ -219,14 +219,14 @@ VectorView<
   return view;
 }
 
-/*! 
+/*!
  * Provides a VectorView proxy object on a container that sorts the underlying
  * data using a provided binary comparator function.
  */
 template<typename Container, class SortFunction>
 VectorView<
   traits::getValueType<Container>
-> sort(
+> view_sort(
   const Container& container,
   const SortFunction&& sortingFunction
 ) {
@@ -244,7 +244,7 @@ VectorView<
 template<typename Container, typename IndexContainer>
 VectorView<
   traits::getValueType<Container>
-> subset(
+> view_subset(
   const Container& container,
   const IndexContainer& indices
 ) {
