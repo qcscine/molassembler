@@ -53,18 +53,18 @@ target_include_directories(
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
-set(ConfigPackageLocation lib/cmake/boost-outcome)
-set(IncludeInstallDir include/)
+set(ConfigPackageLocation lib/cmake/outcome)
+set(INCLUDE_INSTALL_DIR include)
 
 configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/boost-outcomeConfig.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/boost-outcome/boost-outcomeConfig.cmake"
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/outcome/outcomeConfig.cmake"
   INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS IncludeInstallDir
+  PATH_VARS INCLUDE_INSTALL_DIR
 )
 
 write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/boost-outcome/boost-outcomeConfigVersion.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/outcome/outcomeConfigVersion.cmake"
   VERSION ${OUTCOME_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
@@ -72,23 +72,23 @@ write_basic_package_version_file(
 install(
   TARGETS outcome
   EXPORT outcomeTargets
-  DESTINATION include
+  DESTINATION ${INCLUDE_INSTALL_DIR}
 )
 
 install(
   EXPORT outcomeTargets
-  DESTINATION "${ConfigPackageLocation}"
+  DESTINATION ${ConfigPackageLocation}
 )
 
 install(
   DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/boost-outcome"
-  DESTINATION IncludeInstallDir
+  DESTINATION ${INCLUDE_INSTALL_DIR}
 )
 
 install(
   FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/boost-outcome/boost-outcomeConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/boost-outcome/boost-outcomeConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/outcome/outcomeConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/outcome/outcomeConfigVersion.cmake"
   DESTINATION ${ConfigPackageLocation}
 )
 

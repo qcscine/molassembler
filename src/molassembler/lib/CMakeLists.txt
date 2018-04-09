@@ -103,16 +103,11 @@ set(SOURCES_all
 # specify library target
 add_library(molassembler STATIC ${SOURCES_all} ${HEADERS_all})
 target_include_directories(
-  molassembler
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/molassembler>
+  molassembler PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/molassembler>
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/molassembler>
+    ${EIGEN3_INCLUDE_DIRS}
 )
-target_include_directories(
-  molassembler
-    SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/molassembler>
-)
-
-# build includes
-target_include_directories(molassembler PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
 # Compilation options
 if(UNIX)
@@ -134,14 +129,6 @@ else() # assume Debug
   # set_target_properties(molassembler PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
 endif()
 
-# enable clang-tidy warnings
-#if(CLANG_TIDY_EXE)
-#  set_target_properties(
-#    molassembler PROPERTIES
-#    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
-#  )
-#endif()
-
 # Linking
 target_link_libraries(
   molassembler
@@ -158,13 +145,13 @@ target_link_libraries(
 
 # Installation
 set(ConfigPackageLocation lib/cmake/molassembler)
-set(IncludeInstallDir include/)
+set(INCLUDE_INSTALL_DIR include)
 
 configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/molassemblerConfig.cmake.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfig.cmake"
   INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS IncludeInstallDir
+  PATH_VARS INCLUDE_INSTALL_DIR
 )
 
 write_basic_package_version_file(
@@ -186,7 +173,7 @@ install(
 
 install(
   DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/molassembler"
-  DESTINATION IncludeInstallDir
+  DESTINATION ${INCLUDE_INSTALL_DIR}
   FILES_MATCHING
   PATTERN "*.h"
 )

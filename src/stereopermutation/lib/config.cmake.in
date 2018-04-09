@@ -1,0 +1,10 @@
+find_package(chemical_symmetries 0.1.0 REQUIRED)
+
+set(STEREOPERMUTATION_VERSION 0.1.0)
+
+include(${CMAKE_CURRENT_LIST_DIR}/stereopermutationTargets.cmake)
+
+@PACKAGE_INIT@
+set_and_check(STEREOPERMUTATION_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+check_required_components(STEREOPERMUTATION)

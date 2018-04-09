@@ -1,0 +1,8 @@
+set(CYLCIC_POLYGONS_VERSION 0.1.0)
+
+include(${CMAKE_CURRENT_LIST_DIR}/cyclic_polygonsTargets.cmake)
+
+@PACKAGE_INIT@
+set_and_check(CYCLIC_POLGONS_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+check_required_components(CYCLIC_POLYGONS)

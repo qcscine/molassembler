@@ -40,13 +40,13 @@ target_link_libraries(
 add_test(NAME CyclicPolygonTests COMMAND cyclicPolygonTests)
 
 set(ConfigPackageLocation lib/cmake/cyclic_polygons)
-set(IncludeInstallDir include/)
+set(INCLUDE_INSTALL_DIR include)
 
 configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/cyclic_polygonsConfig.cmake.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfig.cmake"
   INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS IncludeInstallDir
+  PATH_VARS INCLUDE_INSTALL_DIR
 )
 
 write_basic_package_version_file(
@@ -58,7 +58,7 @@ write_basic_package_version_file(
 install(
   TARGETS cyclic_polygons
   EXPORT cyclic_polygonsTargets
-  DESTINATION include
+  DESTINATION ${INCLUDE_INSTALL_DIR}
 )
 
 install(
@@ -68,7 +68,7 @@ install(
 
 install(
   FILES ${HEADERS_ALL}
-  DESTINATION IncludeInstallDir
+  DESTINATION ${INCLUDE_INSTALL_DIR}
 )
 
 install(

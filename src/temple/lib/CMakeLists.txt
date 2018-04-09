@@ -58,7 +58,7 @@ set(ConfigPackageLocation lib/cmake/temple)
 set(INCLUDE_INSTALL_DIR include/)
 
 configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/templeConfig.cmake.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/temple/templeConfig.cmake"
   INSTALL_DESTINATION ${ConfigPackageLocation}
   PATH_VARS INCLUDE_INSTALL_DIR
@@ -70,27 +70,6 @@ write_basic_package_version_file(
   VERSION ${temple_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
-
-# Specify namespace and file for exported targets
-#export(
-#  EXPORT templeTargets
-#  FILE "${CMAKE_CURRENT_BINARY_DIR}/temple/templeTargets.cmake"
-#  NAMESPACE temple::
-#)
-
-# Copy config file from source directory to CMake binary dir for later
-#configure_file(templeConfig.cmake
-#  "${CMAKE_CURRENT_BINARY_DIR}/temple/templeConfig.cmake"
-#  COPYONLY
-#)
-
-# Install templeTargets.cmake in directory above
-#install(
-#  EXPORT templeTargets
-#  FILE templeTargets.cmake
-#  NAMESPACE temple::
-#  DESTINATION ${ConfigPackageLocation}
-#)
 
 install(
   TARGETS temple
@@ -106,9 +85,7 @@ install(
 install(DIRECTORY
   "${CMAKE_CURRENT_SOURCE_DIR}/temple"
   DESTINATION
-  include
-  COMPONENT
-  Devel
+  ${INCLUDE_INSTALL_DIR}
   FILES_MATCHING
   PATTERN "*.h"
 )
@@ -119,7 +96,6 @@ install(
     "${CMAKE_CURRENT_BINARY_DIR}/temple/templeConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/temple/templeConfigVersion.cmake"
   DESTINATION ${ConfigPackageLocation}
-  COMPONENT Devel
 )
 
 # Source groups for Visual Studio

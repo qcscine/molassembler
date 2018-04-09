@@ -27,13 +27,13 @@ target_include_directories(
 )
 
 set(ConfigPackageLocation lib/cmake/gor1)
-set(IncludeInstallDir include/)
+set(INCLUDE_INSTALL_DIR include)
 
 configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/gor1Config.cmake.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/gor1/gor1Config.cmake"
   INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS IncludeInstallDir
+  PATH_VARS INCLUDE_INSTALL_DIR
 )
 
 write_basic_package_version_file(
@@ -45,7 +45,7 @@ write_basic_package_version_file(
 install(
   TARGETS gor1
   EXPORT gor1Targets
-  DESTINATION include
+  DESTINATION ${INCLUDE_INSTALL_DIR}
 )
 
 install(
@@ -55,7 +55,7 @@ install(
 
 install(
   FILES ${HEADERS_ALL}
-  DESTINATION IncludeInstallDir
+  DESTINATION ${INCLUDE_INSTALL_DIR}
 )
 
 install(

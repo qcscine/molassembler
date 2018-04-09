@@ -67,7 +67,7 @@ include(CMakePackageConfigHelpers)
 
 # Set destination for the generated CMake config files
 set(ConfigPackageLocation lib/cmake/chemical_symmetries)
-set(IncludeInstallDir include/)
+set(INCLUDE_INSTALL_DIR include)
 
 # Generate a basic configuration file in the binary director and subdir
 # chemical_symmetries
@@ -78,10 +78,10 @@ write_basic_package_version_file(
 )
 
 configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetriesConfig.cmake.in"
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/chemical_symmetries/chemical_symmetriesConfig.cmake"
   INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS IncludeInstallDir
+  PATH_VARS INCLUDE_INSTALL_DIR
 )
 
 install(
@@ -98,7 +98,7 @@ install(
 install(DIRECTORY
   "${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries"
   DESTINATION
-  include
+  ${INCLUDE_INSTALL_DIR}
   FILES_MATCHING
   PATTERN "*.h"
 )
@@ -106,7 +106,7 @@ install(DIRECTORY
 # Install ...Config.cmake and ...ConfigVersion into specified directory
 install(
   FILES
-    chemical_symmetriesConfig.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/chemical_symmetries/chemical_symmetriesConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/chemical_symmetries/chemical_symmetriesConfigVersion.cmake"
   DESTINATION ${ConfigPackageLocation}
 )

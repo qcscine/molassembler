@@ -43,6 +43,7 @@ include(CMakePackageConfigHelpers)
 
 # Set destination for the generated CMake config files
 set(ConfigPackageLocation lib/cmake/stereopermutation)
+set(INCLUDE_INSTALL_DIR include)
 
 # Generate a basic configuration file in the binary director and subdir
 # stereopermutation
@@ -52,11 +53,11 @@ write_basic_package_version_file(
   COMPATIBILITY AnyNewerVersion
 )
 
-# Copy config file from source directory to CMake binary dir for installation
-# later
-configure_file(stereopermutationConfig.cmake
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfig.cmake"
-  COPYONLY
+  INSTALL_DESTINATION ${ConfigPackageLocation}
+  PATH_VARS INCLUDE_INSTALL_DIR
 )
 
 install(
@@ -73,9 +74,7 @@ install(
 install(DIRECTORY
   "${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation"
   DESTINATION
-  include
-  COMPONENT
-  Devel
+  ${INCLUDE_INSTALL_DIR}
   FILES_MATCHING
   PATTERN "*.h"
 )
@@ -83,10 +82,9 @@ install(DIRECTORY
 # Install ...Config.cmake and ...ConfigVersion into specified directory
 install(
   FILES
-    stereopermutationConfig.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfigVersion.cmake"
   DESTINATION ${ConfigPackageLocation}
-  COMPONENT Devel
 )
 
 # Source groups for Visual Studio
