@@ -75,10 +75,10 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
        */
       if(centralStereocenter -> numStereopermutations() > 100) {
         assignments.resize(10);
-      } 
+      }
 
       for(const auto& assignment : assignments) {
-        molecule.assignStereocenterAtAtom(0, assignment);
+        molecule.assignStereocenter(0, assignment);
 
         // For each possible arrangement of these ligands
         /* Create an ensemble of 3D positions using DG
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         }
 
         /* Check that for every PositionCollection, inferring the StereocenterList
-         * from the generated coordinates yields the same StereocenterList you 
+         * from the generated coordinates yields the same StereocenterList you
          * started out with.
          */
         auto mapped = temple::map(
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
           auto pass = temple::count(mapped, true);
 
           std::cout << "Test fails!" << std::endl
-            << std::setw(8) << " " << " " << Symmetry::name(symmetryName) 
+            << std::setw(8) << " " << " " << Symmetry::name(symmetryName)
             << std::endl
             << std::setw(8) << std::to_string(pass)+ "/100"
             << " comparisons with inferred StereocenterList pass" << std::endl;

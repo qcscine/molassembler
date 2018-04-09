@@ -41,6 +41,11 @@ public:
     boost::optional<unsigned> assignedOptional
   );
 
+  enum class BondDiscretizationOption {
+    Binary,
+    UFF
+  };
+
 private:
 /* State */
   GraphType _adjacencies;
@@ -54,6 +59,7 @@ private:
    */
   AtomIndexType _addAtom(const Delib::ElementType& elementType);
 
+  //! Generates a list of stereocenters based on graph properties alone
   StereocenterList _detectStereocenters() const;
 
   /*! Returns if an atom could be a CNStereocenter with multiple assignments
@@ -83,6 +89,10 @@ private:
    */
   std::vector<EdgeIndexType> _getEZStereocenterCandidates() const;
 
+  /*!
+   * Fits a stereocenter to a position collection, excluding the seesaw symmetry
+   * if a four-coordinate carbon atom is to be fitted to a position collection
+   */
   void _pickyFitStereocenter(
     Stereocenters::CNStereocenter& stereocenter,
     const Symmetry::Name& expectedSymmetry,
@@ -127,17 +137,38 @@ public:
   //! Constructs a molecule from connectivity alone, inferring the stereocenters
   explicit Molecule(const GraphType& graph);
 
-  //! Construct a molecule from connectivity and 3D information
+  /*! Construct a molecule from connectivity and 3D information.
+   *
+   * NOTE: Assumes that the provided position collection is in Angstrom units.
+   */
   Molecule(
     const GraphType& graph,
     const Delib::PositionCollection& positions
   );
 
-  explicit Molecule(const Delib::AtomCollection& atomCollection);
+  /*! Construct a molecule from 3D information alone.
+   *
+   * The graph is inferred via bond discretization from pairwise atom distances.
+   * NOTE: Assumes that the provided atom collection's positions are in
+   * Angstrom units.
+   */
+  explicit Molecule(
+    const Delib::AtomCollection& atomCollection,
+    const BondDiscretizationOption& discretization = BondDiscretizationOption::Binary
+  );
 
+  /*! Construct a molecule from 3D information and a bond order collection.
+   *
+   * The graph is inferred via bond discretization from the bond order
+   * collection.
+   *
+   * NOTE: Assumes that the provided atom collection's positions are in
+   * Angstrom units.
+   */
   Molecule(
     const Delib::AtomCollection& atomCollection,
-    const Delib::BondOrderCollection& bondOrders
+    const Delib::BondOrderCollection& bondOrders,
+    const BondDiscretizationOption& discretization = BondDiscretizationOption::Binary
   );
 
 /* Modification */
@@ -168,13 +199,27 @@ public:
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereocenters or the removal of old ones.
    */
-  void assignStereocenterAtAtom(
+  void assignStereocenter(
     const AtomIndexType& a,
     const boost::optional<unsigned>& assignment
   );
 
-  //! TODO Temporary function prior to proper editing state correctness
-  void refreshStereocenters();
+  /*! Assigns a stereocenter stereopermutation at random
+   *
+   * This sets the stereocetner assignment at a specific index, taking relative
+   * statistical occurence weights of each stereopermutation into account. For
+   * this, a stereocenter must be instantiated and contained in the
+   * StereocenterList returned by getStereocenterList().
+   *
+   * NOTE: Although molecules in which this occurs are infrequent, consider the
+   * StereocenterList you have accessed prior to calling this function and
+   * particularly any iterators thereto invalidated. This is because an
+   * assignment change can trigger a ranking change, which can in turn lead
+   * to the introduction of new stereocenters or the removal of old ones.
+   */
+  void assignStereocenterRandomly(
+    const AtomIndexType& a
+  );
 
   /*! Removes an atom from the graph, including bonds to it.
    *

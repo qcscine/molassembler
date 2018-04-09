@@ -222,12 +222,12 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
    * 6 -> 0 S
    */
   // Make 1 from R to S -> stereocenter should disappear
-  pseudocenter.assignStereocenterAtAtom(outer.front(), 0);
+  pseudocenter.assignStereocenter(outer.front(), 0);
 
   BOOST_CHECK(!pseudocenter.getStereocenterList().involving(central));
 
   // Make 6 from S to R -> stereocenter should reappear
-  pseudocenter.assignStereocenterAtAtom(outer.back(), 1);
+  pseudocenter.assignStereocenter(outer.back(), 1);
 
   BOOST_CHECK(pseudocenter.getStereocenterList().involving(central));
 }

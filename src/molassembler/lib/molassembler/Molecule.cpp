@@ -62,13 +62,19 @@ Molecule::PseudoHashType Molecule::hashAtomEnvironment(
   boost::optional<unsigned> assignedOptional
 ) {
   static_assert(
+    // Sum of information in bits we want to pack in the hash
     (
+      // Element type (fixed as this cannot possibly increase)
       7
+      // Bond type, exactly as many as the largest possible symmetry
       + 4 * Symmetry::constexprProperties::maxSymmetrySize
+      // The symmetry name
       + temple::Math::ceil(
         temple::Math::log(Symmetry::nSymmetries + 1.0, 2.0)
       )
-    ) < 64,
+      // Roughly 6.5k possible assignment values (maximally asymmetric square antiprismatic)
+      + 13
+    ) <= 64,
     "Element type, bond and symmetry information no longer fit into a 64-bit unsigned integer"
   );
 
@@ -345,12 +351,12 @@ std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
 
 void Molecule::_propagateGraphChange() {
   /* Two cases: If the StereocenterList is empty, we can just use detect to
-   * find stereocenters in the Molecule, if there are any new ones.
+   * find any new stereocenters in the Molecule.
    *
-   * In the other case, we have to recheck everywhere. If ranking was affected
-   * and the stereocenter has a set assignment, we need to find the assignment
-   * that the previous ranking represented spatially in the new set of
-   * assignments and assign the stereocenter to that.
+   * In the other case, we have to recheck absolutely everywhere. If ranking
+   * was affected and the stereocenter has a set assignment, we need to find
+   * the assignment that the previous ranking represented spatially in the new
+   * set of assignments and assign the stereocenter to that.
    */
   if(_stereocenters.empty()) {
     _stereocenters = _detectStereocenters();
@@ -514,38 +520,60 @@ Molecule::Molecule(
 
 Molecule::Molecule(
   const Delib::AtomCollection& atomCollection,
-  const Delib::BondOrderCollection& bondOrders
+  const Delib::BondOrderCollection& bondOrders,
+  const BondDiscretizationOption& discretization
 ) : _adjacencies(atomCollection.size()) {
   // Discretize bond orders
   const int N = atomCollection.size();
 
-  for(int i = 0; i < N; ++i) {
-    for(int j = i + 1; j < N; ++j) {
-      double bondOrder = bondOrders.getOrder(i, j);
+  if(discretization == BondDiscretizationOption::Binary) {
+    for(int i = 0; i < N; ++i) {
+      for(int j = i + 1; j < N; ++j) {
+        double bondOrder = bondOrders.getOrder(i, j);
 
-      if(bondOrder > 0.5) {
-        BondType bond = static_cast<BondType>(
-          std::round(bondOrder) - 1
-        );
-
-        if(bondOrder > 6.5) {
-          bond = BondType::Sextuple;
+        if(bondOrder > 0.5) {
+          auto edgeAddPair = boost::add_edge(i, j, _adjacencies);
+          _adjacencies[edgeAddPair.first].bondType = BondType::Single;
         }
+      }
+    }
+  } else if(discretization == BondDiscretizationOption::UFF) {
+    for(int i = 0; i < N; ++i) {
+      for(int j = i + 1; j < N; ++j) {
+        double bondOrder = bondOrders.getOrder(i, j);
 
-        auto edgeAddPair = boost::add_edge(i, j, _adjacencies);
+        if(bondOrder > 0.5) {
+          BondType bond = static_cast<BondType>(
+            std::round(bondOrder) - 1
+          );
 
-        _adjacencies[edgeAddPair.first].bondType = bond;
+          if(bondOrder > 6.5) {
+            bond = BondType::Sextuple;
+          }
+
+          auto edgeAddPair = boost::add_edge(i, j, _adjacencies);
+
+          _adjacencies[edgeAddPair.first].bondType = bond;
+        }
       }
     }
   }
 
+  // Copy element types
+  for(int i = 0; i < N; ++i) {
+    _adjacencies[i].elementType = atomCollection.getElement(i);
+  }
+
+  // Infer stereocenters from the positions
   _stereocenters = inferStereocentersFromPositions(
     atomCollection.getPositions()
   );
 }
 
-Molecule::Molecule(const Delib::AtomCollection& atomCollection)
-  : Molecule {atomCollection, uffBondOrders(atomCollection)} {}
+Molecule::Molecule(
+  const Delib::AtomCollection& atomCollection,
+  const BondDiscretizationOption& discretization
+) : Molecule {atomCollection, uffBondOrders(atomCollection), discretization} {}
 
 /* Modifiers */
 AtomIndexType Molecule::addAtom(
@@ -633,32 +661,45 @@ void Molecule::addBond(
   _propagateGraphChange();
 }
 
-void Molecule::assignStereocenterAtAtom(
+void Molecule::assignStereocenter(
   const AtomIndexType& a,
   const boost::optional<unsigned>& assignment
 ) {
   if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::assignStereocenterAtAtom: Supplied index is invalid!");
+    throw std::out_of_range("Molecule::assignStereocenter: Supplied index is invalid!");
   }
 
-  if(_stereocenters.involving(a)) {
-    auto stereocenterPtr = _stereocenters.at(a);
-
-    if(assignment < stereocenterPtr -> numStereopermutations()) {
-      stereocenterPtr -> assign(assignment);
-
-      // A reassignment can change ranking! See the RankingTree tests
-      _propagateGraphChange();
-    } else {
-      throw std::logic_error("assignStereocenterAtAtom: Invalid assignment index!");
-    }
-  } else {
-    throw std::logic_error("assignStereocenterAtAtom: No stereocenter at this index!");
+  if(!_stereocenters.involving(a)) {
+    throw std::logic_error("assignStereocenter: No stereocenter at this index!");
   }
+
+  auto stereocenterPtr = _stereocenters.at(a);
+
+  if(assignment >= stereocenterPtr -> numStereopermutations()) {
+    throw std::logic_error("assignStereocenter: Invalid assignment index!");
+  }
+
+  stereocenterPtr -> assign(assignment);
+
+  // A reassignment can change ranking! See the RankingTree tests
+  _propagateGraphChange();
 }
 
-void Molecule::refreshStereocenters() {
-  _stereocenters = _detectStereocenters();
+void Molecule::assignStereocenterRandomly(
+  const AtomIndexType& a
+) {
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::assignStereocenterRandomly: Supplied index is invalid!");
+  }
+
+  if(!_stereocenters.involving(a)) {
+    throw std::logic_error("assignStereocenterRandomly: No stereocenter at this index!");
+  }
+
+  _stereocenters.at(a) -> assignRandom();
+
+  // A reassignment can change ranking! See the RankingTree tests
+  _propagateGraphChange();
 }
 
 void Molecule::removeAtom(const AtomIndexType& a) {

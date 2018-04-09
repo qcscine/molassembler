@@ -1,3 +1,4 @@
+# TODO must get rid of absolute paths here!
 set(RDL_LIBRARY_DIR "/usr/local/lib/")
 set(RDL_INCLUDE_DIR "/usr/local/include/")
 
@@ -15,6 +16,8 @@ set_property(TARGET rdl PROPERTY IMPORTED_LOCATION ${RDL_LIBRARY})
 
 # add include directories
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
+
+set(MOLASSEMBLER_VERSION 0.1.0)
 
 # collect headers
 set(HEADERS_all
@@ -112,7 +115,7 @@ target_include_directories(
 target_include_directories(molassembler PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
 # Compilation options
-if( UNIX )
+if(UNIX)
   add_definitions(-fPIC)
 endif()
 
@@ -152,3 +155,48 @@ target_link_libraries(
     blas
     rdl
 )
+
+# Installation
+set(ConfigPackageLocation lib/cmake/molassembler)
+set(IncludeInstallDir include/)
+
+configure_package_config_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/molassemblerConfig.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfig.cmake"
+  INSTALL_DESTINATION ${ConfigPackageLocation}
+  PATH_VARS IncludeInstallDir
+)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfigVersion.cmake"
+  VERSION ${MOLASSEMBLER_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+install(
+  TARGETS molassembler
+  EXPORT molassemblerTargets
+  DESTINATION lib
+)
+
+install(
+  EXPORT molassemblerTargets
+  DESTINATION "${ConfigPackageLocation}"
+)
+
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/molassembler"
+  DESTINATION IncludeInstallDir
+  FILES_MATCHING
+  PATTERN "*.h"
+)
+
+install(
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfigVersion.cmake"
+  DESTINATION ${ConfigPackageLocation}
+)
+
+source_group("Headers" FILES ${HEADERS_All})
+source_group("Sources" FILES ${SOURCES_All})

@@ -30,6 +30,7 @@ RankingInformation::RankedType ligandRanking(
   const RankingInformation::RankedType& sortedSubstituents,
   const RankingInformation::RankedType& ligands
 ) {
+  // TODO templify the find() call
   auto ligandCoefficients = temple::map(
     ligands,
     [&sortedSubstituents](const auto& ligandSet) -> unsigned {
@@ -37,15 +38,10 @@ RankingInformation::RankedType ligandRanking(
         temple::map(
           ligandSet,
           [&sortedSubstituents](const auto& ligandIndex) -> unsigned {
-            return std::find_if(
-              sortedSubstituents.begin(),
-              sortedSubstituents.end(),
+            return temple::find_if(
+              sortedSubstituents,
               [&ligandIndex](const auto& equalPrioritySet) -> bool {
-                return std::find(
-                  equalPrioritySet.begin(),
-                  equalPrioritySet.end(),
-                  ligandIndex
-                ) != equalPrioritySet.end();
+                return temple::find(equalPrioritySet, ligandIndex) != equalPrioritySet.end();
               }
             ) - sortedSubstituents.begin();
           }

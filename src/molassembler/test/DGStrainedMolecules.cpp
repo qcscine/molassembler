@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   unsigned N = stereocenterPtr -> numStereopermutations();
 
   for(unsigned i = 0; i < N; ++i) {
-    mol.assignStereocenterAtAtom(0, i);
+    mol.assignStereocenter(0, i);
 
     auto ensembleResult = DistanceGeometry::generateEnsemble(mol, 10);
     if(!ensembleResult) {

@@ -10,7 +10,7 @@
  */
 
 /* TODO
- * - Could make dihedralAngleVariance constexpr, but unsure about effects on 
+ * - Could make dihedralAngleVariance constexpr, but unsure about effects on
  *   static initialization and if extra declaration required
  *   Also, consider if it violates single responsibility principle
  */
@@ -39,7 +39,7 @@ namespace Stereocenters {
  *
  * Implementation-wise, _isZOption works as true -> Z, false -> E
  *
- * EZStereocenter is explicitly also instantiable on bonds that are not 
+ * EZStereocenter is explicitly also instantiable on bonds that are not
  * stereogenic so that in DG, chirality constraints and dihedral limits that
  * result from the double bond are still collectible.
  */
@@ -52,7 +52,7 @@ public:
 private:
 /* State */
   //! Stores the indices of the minimal indices required to have a stereocenter
-  AtomIndexType _leftCenter, _rightCenter; 
+  AtomIndexType _leftCenter, _rightCenter;
 
   //! Store the ranking of indices
   RankingInformation _leftRanking, _rightRanking;
@@ -112,7 +112,7 @@ public:
     const RankingInformation& firstCenterRanking,
     const AtomIndexType& secondCenter,
     const RankingInformation& secondCenterRanking
-  ); 
+  );
 
 /* Modification */
   void addSubstituent(
@@ -121,6 +121,8 @@ public:
   );
 
   void assign(const boost::optional<unsigned>& assignment) final;
+
+  void assignRandom() final;
 
   void fit(const Delib::PositionCollection& positions);
 

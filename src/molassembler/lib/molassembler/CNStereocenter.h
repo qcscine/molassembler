@@ -12,7 +12,7 @@ using namespace std::string_literals;
 
 /*! @file
  *
- * Coordinative stereocenter class header file. Permits the storage of 
+ * Coordinative stereocenter class header file. Permits the storage of
  * particular arrangements of bonded atoms around a central atom and their
  * manipulation.
  *
@@ -73,7 +73,7 @@ std::vector<char> makeCanonicalCharacters(
 /*! Transform links from atom-index space to character space
  *
  * In the determination of unique assignments, we have to construct an initial
- * assignment that specifies the ranking differences of ligands and their 
+ * assignment that specifies the ranking differences of ligands and their
  * links. From the GraphAlgorithm substituentLinks, we receive atom index based
  * link pairs. These need to be altered to character-referential links.
  *
@@ -191,7 +191,7 @@ public:
   void assign(const boost::optional<unsigned>& assignment) final;
 
   //! Assigns the Stereocenter randomly using relative assignment weights
-  void assignRandom();
+  void assignRandom() final;
 
   /*!
    * The assignment is determined based on three-dimensional positions using
@@ -282,9 +282,9 @@ public:
   std::vector<AtomIndexType> involvedAtoms() const final;
 
   /*!
-   * Fetches the number of different assignments possible with the current 
-   * substituent ranking and connectivity information. This is also the upper 
-   * exclusive bound on the assignment indices that can be used to change the 
+   * Fetches the number of different assignments possible with the current
+   * substituent ranking and connectivity information. This is also the upper
+   * exclusive bound on the assignment indices that can be used to change the
    * arrangement of substituents.
    */
   unsigned numStereopermutations() const final;

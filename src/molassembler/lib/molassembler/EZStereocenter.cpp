@@ -79,7 +79,7 @@ std::vector<
 std::vector<
   std::array<AtomIndexType, 4>
 > EZStereocenter::_differentPriorityDihedralSequences() const {
-  
+
   std::vector<
     std::array<AtomIndexType, 4>
   > sequences;
@@ -158,16 +158,22 @@ void EZStereocenter::addSubstituent(
 
     // Overwrite the remaining state
     _rightRanking = centerRanking;
-  } 
+  }
 }
 
 void EZStereocenter::assign(const boost::optional<unsigned>& assignment) {
   if(assignment) {
-    assert(assignment.value() < numStereopermutations()); 
+    assert(assignment.value() < numStereopermutations());
     _isZOption = static_cast<bool>(assignment.value());
   } else {
     _isZOption = boost::none;
   }
+}
+
+void EZStereocenter::assignRandom() {
+  assert(_isZOption == boost::none);
+
+  _isZOption = temple::random.getSingle<bool>();
 }
 
 void EZStereocenter::fit(const Delib::PositionCollection& positions) {
@@ -231,7 +237,7 @@ void EZStereocenter::propagateGraphChange(
 
   /* As long as the class state isn't overwritten yet, decide which assignment
    * the final stereocenter will have. If the index for the high-priority index
-   * doesn't match the stored one, we have to flip the state once. If this 
+   * doesn't match the stored one, we have to flip the state once. If this
    * occurs at both ends, then we don't have to do anything.
    */
   bool flipStereopermutation = false;
@@ -387,7 +393,7 @@ unsigned EZStereocenter::numStereopermutations() const {
 
 std::vector<ChiralityConstraintPrototype> EZStereocenter::chiralityConstraints() const {
   // Three fixed ChiralityConstraints to enforce six-atom coplanarity
-  
+
   std::vector<ChiralityConstraintPrototype> constraints {
     {
       std::array<AtomIndexType, 4> {
@@ -480,7 +486,7 @@ std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
    * So we just make this dependent on the current _isZOption settings.
    */
 
-  // EZStereocenters can impose dihedral limits 
+  // EZStereocenters can impose dihedral limits
   if(_isZOption && _isZOption.value()) {
     return _cisDihedralLimits();
   }
@@ -493,8 +499,8 @@ std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
    * interval [0, π], and so a corresponding trans dihedral lies on an interval
    * with some tolerance t: [t, π]. What about the negative dihedral interval?
    *
-   * The way this data is used in distance geometry is merely a distance 
-   * consideration depending on all bond lengths and angles involved, which is 
+   * The way this data is used in distance geometry is merely a distance
+   * consideration depending on all bond lengths and angles involved, which is
    * symmetric to the negative interval. By only considering the positive
    * interval, the correct distances are determined for the negative interval
    * as well.
@@ -515,7 +521,7 @@ std::string EZStereocenter::info() const {
     returnString += std::to_string(_leftHighPriority()) +", "s;
   }
 
-  returnString +=  std::to_string(_leftCenter) + ", "s 
+  returnString +=  std::to_string(_leftCenter) + ", "s
     + std::to_string(_rightCenter) + ", "s;
 
   if(_numIndices(_rightRanking) == 2) {
@@ -548,8 +554,8 @@ std::string EZStereocenter::rankInfo() const {
   return (
     "EZ-"s + std::to_string(numStereopermutations())
     + "-"s + (
-      assigned() 
-      ? std::to_string(assigned().value()) 
+      assigned()
+      ? std::to_string(assigned().value())
       : "u"s
     )
   );

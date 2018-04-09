@@ -15,7 +15,7 @@ BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
     // Default-assign any unassigned stereocenters
     for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
       if(!stereocenterPtr -> assigned()) {
-        molecule.assignStereocenterAtAtom(
+        molecule.assignStereocenter(
           stereocenterPtr->involvedAtoms().front(),
           0
         );

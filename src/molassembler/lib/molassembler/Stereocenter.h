@@ -45,9 +45,9 @@ struct DihedralLimits {
   DihedralLimits(
     const std::array<AtomIndexType, 4>& indices,
     const std::pair<double, double>& limits
-  ) : indices(indices), 
+  ) : indices(indices),
       lower(limits.first),
-      upper(limits.second) 
+      upper(limits.second)
   {
     assert(lower < upper);
   }
@@ -55,7 +55,7 @@ struct DihedralLimits {
 
 struct ChiralityConstraintPrototype {
   const std::array<AtomIndexType, 4> indices;
-  const ChiralityConstraintTarget target; 
+  const ChiralityConstraintTarget target;
 
   ChiralityConstraintPrototype(
     const std::array<AtomIndexType, 4>& indices,
@@ -77,6 +77,9 @@ public:
   //!  Assign this feature
   virtual void assign(const boost::optional<unsigned>& assignment) = 0;
 
+  //! Assign this feature at random
+  virtual void assignRandom() = 0;
+
   //! Update vertex descriptors on vertex removal
   virtual void propagateVertexRemoval(const AtomIndexType& removedIndex) = 0;
 
@@ -96,12 +99,12 @@ public:
 
   /*!
    * Return whether this Stereocenter has been assigned or not
-   * -> This leads to different behavior in DG! If unassigned, an Stereopermutation is 
+   * -> This leads to different behavior in DG! If unassigned, an Stereopermutation is
    *    chosen at random and adhered to during coordinate generation.
    */
   virtual boost::optional<unsigned> assigned() const = 0;
 
-  //!  Return the number of possible assignments 
+  //!  Return the number of possible assignments
   virtual unsigned numStereopermutations() const = 0;
 
   //!  Return a list of chirality constraints
@@ -117,7 +120,7 @@ public:
   virtual std::string info() const = 0;
 
   /*!
-   * Return the set of center atoms (atoms that angle information is available 
+   * Return the set of center atoms (atoms that angle information is available
    * on if asked as the central atom of an angle).
    */
   virtual std::vector<AtomIndexType> involvedAtoms() const = 0;
