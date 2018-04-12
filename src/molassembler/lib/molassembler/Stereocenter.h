@@ -1,7 +1,6 @@
 #ifndef INCLUDE_STEREOCENTERS_H
 #define INCLUDE_STEREOCENTERS_H
 
-#include <algorithm>
 #include <memory>
 #include <boost/optional.hpp>
 

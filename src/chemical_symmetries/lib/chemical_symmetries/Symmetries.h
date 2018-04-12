@@ -2,14 +2,12 @@
 #define LIB_INCLUDE_SYMMETRIES_H
 
 #include "boost/optional.hpp"
-#include "temple/constexpr/TupleType.h"
 #include "Eigen/Core"
 #include "temple/Containers.h"
 
 #include "Primitives.h"
 
 #include <functional>
-#include <algorithm>
 
 /*! @file
  *
@@ -50,15 +48,15 @@ using AngleFunctionType = std::function<
   double(const unsigned&, const unsigned&)
 >;
 
-/*! 
+/*!
  * All symmetries have a guess implementation of what could work as the defined
- * tetrahedra. Have to use boost::none to signal to replace this position with 
+ * tetrahedra. Have to use boost::none to signal to replace this position with
  * the central atom as it is not part of the indexing scheme used here.
  *
- * In case all higher symmetries than trigonal pyramidal are representable 
- * without boost::none and that proves to work, then perhaps make an exception 
- * for it and treat all others without the optional. If that cannot be done, 
- * consider refactoring (changing the numbering scheme in some fashion that 
+ * In case all higher symmetries than trigonal pyramidal are representable
+ * without boost::none and that proves to work, then perhaps make an exception
+ * for it and treat all others without the optional. If that cannot be done,
+ * consider refactoring (changing the numbering scheme in some fashion that
  * boost::none does not have to be used.
  */
 using TetrahedronList = std::vector<
@@ -243,7 +241,7 @@ constexpr auto angleFunctions = temple::TupleType::unpackToFunction<
 } // namespace data
 
 /* Core symmetry data, this has dynamic types and is hence initialized in the
- * .cpp file from the tuple containing all symmetry data types and the 
+ * .cpp file from the tuple containing all symmetry data types and the
  * symmetryInformationFunctor
  */
 const std::map<Name, SymmetryInformation>& symmetryData();

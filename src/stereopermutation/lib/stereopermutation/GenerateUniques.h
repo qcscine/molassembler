@@ -3,8 +3,6 @@
 
 #include "Stereopermutation.h"
 
-#include <vector>
-
 /*! @file
  *
  * Main entry point into the library. From here, a set of rotationally unique
@@ -19,19 +17,19 @@ bool hasTransArrangedPairs(
   const Symmetry::Name& symmetryName
 );
 
-/*! 
+/*!
  * Generate the set of rotationally unique assignments for a given assignment.
  * By default removes trans-spanning groups (where a linked group's
  * directly bonded atoms span an angle of 180°).
  *
  * NOTE: Gives NO guarantees as to satisfiability (if assignments can be
- *  fulfilled with real ligands) 
- * E.g. M (A-A)_3 generates a trans-trans-trans assignment, which is extremely 
+ *  fulfilled with real ligands)
+ * E.g. M (A-A)_3 generates a trans-trans-trans assignment, which is extremely
  *  hard to find actual ligands for that work.
- * The satisfiability of assignments must be checked before trying to embed 
- *  structures with completely nonsensical constraints. Perhaps restrict A-A 
+ * The satisfiability of assignments must be checked before trying to embed
+ *  structures with completely nonsensical constraints. Perhaps restrict A-A
  *  ligands with bridge length 4 (chelating atoms included), maybe even up to 6
- *  to cis arrangements. Xantphos (with bridge length 7) is the smallest 
+ *  to cis arrangements. Xantphos (with bridge length 7) is the smallest
  *  trans-spanning ligand mentioned in Wikipedia.
  */
 std::vector<Stereopermutation> uniqueStereopermutations(
@@ -46,7 +44,7 @@ struct StereopermutationsWithWeights {
   std::vector<unsigned> weights;
 };
 
-/*! 
+/*!
  * Returns the set of rotationally unique assignments including absolute
  * occurrence counts.
  */

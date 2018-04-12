@@ -8,6 +8,7 @@
 #include "temple/Containers.h"
 
 #include "IO.h"
+#include <iostream>
 
 void testCycles(const molassembler::CycleData& cycleData) {
 

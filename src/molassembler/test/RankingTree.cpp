@@ -67,40 +67,6 @@ void writeExpandedTree(
   dotFile.close();
 }
 
-void runBFSExplainer(
-  const std::string& fileName,
-  const AtomIndexType& startOn
-) {
-  IO::MOLFileHandler molHandler;
-  auto molecule = molHandler.readSingle(
-    directoryPrefix + fileName
-  );
-
-  GraphAlgorithms::BFSVisitors::ShowAllEventsBFSVisitor visitor;
-
-  using ColorMapBase = std::map<
-    AtomIndexType,
-    boost::default_color_type
-  >;
-
-  ColorMapBase colorMap;
-  boost::associative_property_map<ColorMapBase> propColorMap(colorMap);
-  boost::queue<GraphType::vertex_descriptor> Q;
-
-  boost::breadth_first_visit(
-    // The graph to operate on
-    molecule.getGraph(),
-    // The vertex to start with
-    startOn,
-    // A queue object to store vertex_descriptors
-    Q,
-    // The visitor to use
-    visitor,
-    // A map to store color (state)
-    propColorMap
-  );
-}
-
 RankingTree::TreeGraphType makeTree(
   const std::vector<
     std::pair<unsigned, unsigned>
@@ -161,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
       })
     )
   );
-      
+
 
   auto exampleTwo = molHandler.readSingle(
     directoryPrefix + "2S-23-dichloropropan-1-ol.mol"
@@ -366,7 +332,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
 
   // P-92.4.2.2 Example 2 (stereogenic before non-stereogenic)
   auto inTreeNstgDB = molHandler.readSingle(
-    directoryPrefix 
+    directoryPrefix
     + "(2Z5Z7R8Z11Z)-9-(2Z-but-2-en-1-yl)-5-(2E-but-2-en-1-yl)trideca-2,5,8,11-tetraen-7-ol.mol"s
   );
 
@@ -392,7 +358,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
 
   // (4A) P-92.5.1 Example (stereogenic before non-stereogenic)
   auto pseudoOverNonstg = molHandler.readSingle(
-    directoryPrefix 
+    directoryPrefix
     + "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol"s
   );
 

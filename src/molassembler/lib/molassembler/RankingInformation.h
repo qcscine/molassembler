@@ -1,9 +1,6 @@
 #ifndef INCLUDE_ADJACENCY_LIST_RANKING_INFORMATION_H
 #define INCLUDE_ADJACENCY_LIST_RANKING_INFORMATION_H
 
-#include <vector>
-#include <set>
-#include "common_typedefs.h"
 #include "GraphAlgorithms.h"
 
 /*! @file

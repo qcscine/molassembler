@@ -3,9 +3,7 @@
 
 #include "Molecule.h"
 #include "Version.h"
-#include "GraphAlgorithms.h"
 
-#include "Delib/ElementInfo.h"
 #include "temple/Random.h"
 
 #include <fstream>

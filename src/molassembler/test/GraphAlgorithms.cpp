@@ -9,6 +9,8 @@
 #include "IO.h"
 #include "temple/Stringify.h"
 
+#include <iostream>
+
 using namespace molassembler;
 
 inline std::ostream& nl(std::ostream& os) {

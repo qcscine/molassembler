@@ -3,10 +3,6 @@
 
 #include "chemical_symmetries/Symmetries.h"
 
-#include <vector>
-#include <map>
-#include <set>
-
 /*! @file
  *
  * Contains the base class employed for describing the particular manner in
@@ -17,9 +13,9 @@ namespace stereopermutation {
 
 /*!
  * This class represents a simplified model of a sterically unique assignment
- * of a set of ligands to a stereocenter. It exists to uniquely identify the 
+ * of a set of ligands to a stereocenter. It exists to uniquely identify the
  * steric configuration at this stereocenter, and provides methods to assist
- * a systematic generation of all possible configurations. It is generalized 
+ * a systematic generation of all possible configurations. It is generalized
  * over a number of symmetries which are encoded in a separate library.
  */
 struct Stereopermutation {
@@ -27,12 +23,12 @@ private:
 /* Private member functions */
   /*!
    * Implementation of the generation of a set of all rotational equivalents of
-   * this Stereopermutation as defined by its symmetry template parameter. Takes an 
-   * interrupt callback as an argument to which it passes *this and a new 
+   * this Stereopermutation as defined by its symmetry template parameter. Takes an
+   * interrupt callback as an argument to which it passes *this and a new
    * rotational structure every time one is found. If the callback returns
    * true, the generation of assignments is terminated and a pair containing
-   * the set of generated assignments and a boolean with the value true is 
-   * returned. If the generation is allowed to finish, the full set and the 
+   * the set of generated assignments and a boolean with the value true is
+   * returned. If the generation is allowed to finish, the full set and the
    * boolean false are returned.
    */
   std::pair<std::set<Stereopermutation>, bool> _generateAllRotations(
@@ -66,12 +62,12 @@ public:
     std::vector<char> passCharacters
   );
   /*!
-   * Construct an Stereopermutation from a list of ligand characters and a list of 
+   * Construct an Stereopermutation from a list of ligand characters and a list of
    * bonded indices referencing the ligand characters.
    *
    * \param passSymmetryName The name of the employed symmetry.
    * \param passCharacters A vector of chars signifying abstract ligands.
-   * \param passLinks A vector of pairs. Describes which ligand characters 
+   * \param passLinks A vector of pairs. Describes which ligand characters
    *  are bonded to one another.
    */
   Stereopermutation(
@@ -124,7 +120,7 @@ public:
   bool columnSmaller(const unsigned& a, const unsigned& b) const;
 
   /*!
-   * Generates a set of all rotational equivalents of this Stereopermutation as 
+   * Generates a set of all rotational equivalents of this Stereopermutation as
    * defined by its symmetry template parameter.
    */
   std::set<Stereopermutation> generateAllRotations(const Symmetry::Name& symmetryName) const;

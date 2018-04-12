@@ -2,7 +2,6 @@
 #define INCLUDE_CN_STEREOCENTER_H
 
 #include "stereopermutation/GenerateUniques.h"
-#include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/DynamicProperties.h"
 #include "DistanceGeometry/ValueBounds.h"
 
