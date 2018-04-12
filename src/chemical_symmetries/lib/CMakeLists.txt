@@ -95,12 +95,10 @@ install(
   DESTINATION "${ConfigPackageLocation}"
 )
 
-install(DIRECTORY
-  "${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries"
-  DESTINATION
-  ${INCLUDE_INSTALL_DIR}
-  FILES_MATCHING
-  PATTERN "*.h"
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries"
+  DESTINATION ${INCLUDE_INSTALL_DIR}
+  FILES_MATCHING PATTERN "*.h"
 )
 
 # Install ...Config.cmake and ...ConfigVersion into specified directory
@@ -109,6 +107,7 @@ install(
     "${CMAKE_CURRENT_BINARY_DIR}/chemical_symmetries/chemical_symmetriesConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/chemical_symmetries/chemical_symmetriesConfigVersion.cmake"
   DESTINATION ${ConfigPackageLocation}
+  COMPONENT ${ComponentName}
 )
 
 # Source groups for Visual Studio

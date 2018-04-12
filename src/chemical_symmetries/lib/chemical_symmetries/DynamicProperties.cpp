@@ -7,7 +7,7 @@
 #include "temple/VectorView.h"
 
 /* TODO
- * - Consider unordered_set for rotation contains, using the hash function from 
+ * - Consider unordered_set for rotation contains, using the hash function from
  *   constexpr work
  */
 
@@ -23,14 +23,14 @@ std::vector<unsigned> applyRotation(
   std::vector<unsigned> retv;
 
   for(
-    const auto& index : 
+    const auto& index :
     Symmetry::rotations(symmetryName).at(rotationFunctionIndex)
   ) {
     retv.push_back(
       indices.at(index)
     );
   }
-  
+
   return retv;
 }
 
@@ -40,7 +40,7 @@ Eigen::Vector3d getCoordinates(
 ) {
   assert(
     (
-      indexInSymmetryOption 
+      indexInSymmetryOption
       && indexInSymmetryOption.value() < Symmetry::size(symmetryName)
     ) || !indexInSymmetryOption
   );
@@ -240,7 +240,7 @@ std::set<
       }
 
       // increment last position in chain
-      ++chain.back(); 
+      ++chain.back();
     }
   }
 
@@ -301,7 +301,7 @@ std::vector<unsigned> applyIndexMapping(
       mapping.at(i)
     ) = i;
   }
-  
+
   return symmetryPositions;
 }
 
@@ -319,7 +319,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
   const Symmetry::Name& symmetryTo
 ) {
 
-  /* Symmetries must be adjacent in size (0 = rearrangement, 
+  /* Symmetries must be adjacent in size (0 = rearrangement,
    * +1 = ligand gain. Ligand loss is a special case where a specific position
    * in the symmetry group is removed, and is not covered here!
    */
@@ -331,7 +331,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
   );
 
   /* Base idea: We need to go through all possible mappings. In situations where
-   * the target symmetry has one more or one fewer ligand, the last index in 
+   * the target symmetry has one more or one fewer ligand, the last index in
    * the current sequence is either the added or removed ligand, and merely the
    * others are used to calculate the angular and chiral distortions involved
    * in the transition.
@@ -342,9 +342,9 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
    *                             |
    *                             1
    *
-   *   A mapping of {0 1 2} means that the new ligand is inserted at the 2 
+   *   A mapping of {0 1 2} means that the new ligand is inserted at the 2
    *   position of T-shaped, which would involve distorting the 0-1 angle by
-   *   90°. The optimal mapping would be {0 2 1} (or its equivalent rotation 
+   *   90°. The optimal mapping would be {0 2 1} (or its equivalent rotation
    *   {2 0 1}), which does not have any angular distortion.
    */
 
@@ -386,7 +386,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
       );
 
       /* Any rotations of the mapping in the target symmetry are equivalent, we
-       * do not want to count these as an additional multiplicity, so we 
+       * do not want to count these as an additional multiplicity, so we
        * generate them and add them to the encountered mappings
        */
       auto allRotations = generateAllRotations(
@@ -492,7 +492,7 @@ SymmetryTransitionGroup::SymmetryTransitionGroup(
   const double& passChiralDistortion
 ) : indexMappings(std::move(passIndexMappings)),
     angularDistortion(passAngleDistortion),
-    chiralDistortion(passChiralDistortion) 
+    chiralDistortion(passChiralDistortion)
 {}
 
 SymmetryTransitionGroup selectBestTransitionMappings(
@@ -512,7 +512,7 @@ SymmetryTransitionGroup selectBestTransitionMappings(
     )
   );
 
-  auto distortionsView = temple::filter(
+  auto distortionsView = temple::view_filter(
     distortions,
     [&lowestAngularDistortion](const auto& distortion) -> bool {
       return (

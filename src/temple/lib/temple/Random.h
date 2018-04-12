@@ -109,8 +109,8 @@ public:
   > getSingle() const {
     std::uniform_int_distribution<unsigned> uniformDistribution(0, 1);
     return uniformDistribution(randomEngine);
-  };
-};
+  }
+}
 
 static Generator random;
 

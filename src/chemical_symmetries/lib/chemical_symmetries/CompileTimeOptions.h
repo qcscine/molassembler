@@ -1,16 +1,24 @@
 /* If USE_ALTERNATE_TETRAHEDRA is defined, a reduced set of tetrahedra
- * is used to subdivide higher symmetries. This may provide less information 
- * about the geometry when used but should improve performance as fewer 
+ * is used to subdivide higher symmetries. This may provide less information
+ * about the geometry when used but should improve performance as fewer
  * tetrahedron volumes must be calculated.
  */
 //#define USE_ALTERNATE_TETRAHEDRA
+
+
+/* Depending on the compiler, constexpr bugs or restrictions may prevent the
+ * use of constexpr precomputations entirely.
+ *
+ * At the moment, only Clang >= 4.0.0 is known to be able to compile the
+ * constexpr algorithms.
+ */
+#if __clang__
 
 /* If USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE is defined, a table of all
  * angles resulting from a predefined set of positions is generated and that
  * symmetry's angle function turns into what is essentially a lookup table.
  */
 #define USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
-
 /* If USE_CONSTEXPR_TRANSITION_MAPPINGS is defined, a data structure containing
  * the best index mappings between symmetries is generated at compile-time.
  * Transitions are alterations of the symmetry primitives in three-dimensional
@@ -22,7 +30,7 @@
  * Although the program is well-formed, GCC version 7.2.0 does not recognize it
  * as such due to compiler bugs. Circumventing the bugs with additional
  * measures increases the compilation cost to at least 32 GB of memory, at
- * which compilation is aborted and considered failed here. Clang 4.0.0 can
+ * which compilation is aborted and considered failed here. Clang >= 4.0.0 can
  * compile the full library of dynamic and constexpr algorithms and execute
  * them at compile-time to generate a subset of the complete data structure
  * (transitions up to and within symmetries of size 5) within roughly a minute,
@@ -72,3 +80,4 @@
  * the size of the symmetry.
  */
 #define USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+#endif

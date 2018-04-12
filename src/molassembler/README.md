@@ -88,8 +88,8 @@ External library dependencies:
 
 Sub-libraries:
 
-- constable: constexpr algorithms and data structures
-- temple: randomness, cache, composability improvement shorthands
+- temple: randomness, cache, composability improvement shorthands, constexpr
+  algorithms and data structures
 - Symmetry information: constexpr properties of symmetries
 - Unique Assignment: Stereopermutation of ligands in arbitrary symmetries
 - Cyclic polygons: Determination of planar cyclic polygon internal angles for

@@ -1,9 +1,5 @@
-# TODO must get rid of absolute paths here!
-set(RDL_LIBRARY_DIR "/usr/local/lib/")
-set(RDL_INCLUDE_DIR "/usr/local/include/")
-
 # dependencies: libraries
-find_library(RDL_LIBRARY RingDecomposerLibStatic ${RDL_LIBRARY_DIR})
+find_library(RDL_LIBRARY RingDecomposerLibStatic)
 
 # import assignment and symmetry libraries so we can specify a dependency
 find_package(stereopermutation 0.1.0 REQUIRED)
