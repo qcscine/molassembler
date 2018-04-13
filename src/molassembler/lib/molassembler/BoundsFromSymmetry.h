@@ -43,7 +43,7 @@ molassembler::Molecule symmetricMolecule(
 }
 
 /*!
- * Constructs a prototypical asymmetric (i.e. all ligands different) molecule 
+ * Constructs a prototypical asymmetric (i.e. all ligands different) molecule
  * of a specific size which is not VSEPR compliant past size 5.
  *
  * Does not set the central stereocenter symmetry.
@@ -81,8 +81,6 @@ molassembler::Molecule asymmetricMolecule(
       BondType::Single
     );
   }
-
-  molecule.refreshStereocenters();
 
   return molecule;
 }
