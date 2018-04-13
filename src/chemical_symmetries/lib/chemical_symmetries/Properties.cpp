@@ -103,7 +103,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
         properties::ligandLossTransitionMappings(a, b, removedIndexOption.value())
       )
     );
-  } 
+  }
 
   return mappingsCache.getOption(cacheKey);
 }
@@ -173,7 +173,10 @@ unsigned getNumUnlinked(
   std::vector<unsigned> unlinkedAssignments;
   for(unsigned i = 0; i < Symmetry::size(symmetryName) - 1; ++i) {
     unlinkedAssignments.push_back(
-      dynamicProperties::numUnlinkedAssignments(i + 1)
+      properties::numUnlinkedAssignments(
+        symmetryName,
+        i + 1
+      )
     );
   }
 

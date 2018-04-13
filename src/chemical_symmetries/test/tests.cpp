@@ -26,7 +26,7 @@ std::vector<unsigned> rotate(
   const std::vector<unsigned>& toRotate,
   const std::vector<unsigned>& rotationVector
 ) {
-  std::vector<unsigned> rotated (toRotate.size()); 
+  std::vector<unsigned> rotated (toRotate.size());
 
   for(unsigned i = 0; i < toRotate.size(); i++) {
     rotated[i] = toRotate[
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE( rotationVectorSanityTests ) {
       };
 
       BOOST_CHECK(converted.size() == size(name)); // no duplicates
-      
+
       BOOST_CHECK(
         std::accumulate(
           rotationVector.begin(),
@@ -166,9 +166,9 @@ BOOST_AUTO_TEST_CASE( angleFunctionInputSymmetry ) {
       for(unsigned j = i + 1; j < size(symmetryName); j++) {
         if(angleFunction(symmetryName)(i, j) != angleFunction(symmetryName)(j, i)) {
           passesAll = false;
-          std::cout << name(symmetryName) 
-            << " is not symmetrical w.r.t. input indices: falsified by (" 
-            << i << ", " << j <<") -> (" << angleFunction(symmetryName)(i, j) 
+          std::cout << name(symmetryName)
+            << " is not symmetrical w.r.t. input indices: falsified by ("
+            << i << ", " << j <<") -> (" << angleFunction(symmetryName)(i, j)
             << ", " << angleFunction(symmetryName)(j, i) << ")." << std::endl;
           break;
         }
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(anglesWithinRadiansBounds) {
       for(unsigned j = 0; j < size(symmetryName); j++) {
         if(
           !(
-            0 <= angleFunction(symmetryName)(i, j) 
+            0 <= angleFunction(symmetryName)(i, j)
           ) || !(
             angleFunction(symmetryName)(i, j) <= M_PI
           )
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE( rightAmountOfCoordinates) {
   // every information must have the right amount of coordinates
   for(const auto& symmetryName: allNames) {
     BOOST_CHECK(
-      symmetryData().at(symmetryName).coordinates.size() == 
+      symmetryData().at(symmetryName).coordinates.size() ==
       symmetryData().at(symmetryName).size
     );
   }
@@ -281,10 +281,10 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
         if(std::fabs(angleDifference) > 1) {
           all_pass = false;
 
-          std::cout << name(symmetryName) 
-            << ": angleFunction != angles from coordinates ("  
-            << i << ", " << j << "): " << angleDifference 
-            << ", angleFunction = " << angleFunction(symmetryName)(i, j) 
+          std::cout << name(symmetryName)
+            << ": angleFunction != angles from coordinates ("
+            << i << ", " << j << "): " << angleDifference
+            << ", angleFunction = " << angleFunction(symmetryName)(i, j)
             << ", angle from coordinates = " << angleInCoordinates << std::endl;
         }
       }
@@ -295,7 +295,7 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
 }
 
 BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
-  /* Checks if sequence that tetrahedra are defined in leads to a positive 
+  /* Checks if sequence that tetrahedra are defined in leads to a positive
    * volume when calculated via
    *
    *  (1 - 4) dot [ (2 - 4) x (3 - 4) ]
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
           if(i != 3) std::cout << ", ";
         }
 
-        std::cout << "} has negative volume (" << tetrahedronVolume << ")." 
+        std::cout << "} has negative volume (" << tetrahedronVolume << ")."
           << std::endl;
       }
     }
@@ -397,11 +397,12 @@ BOOST_AUTO_TEST_CASE(smallestAngleValueCorrect) {
     ) < 1e-4,
     "The constant smallest angle set by the library is NOT the smallest "
     << "returned angle within the library. Current value of smallestAngle: "
-    << smallestAngle 
+    << smallestAngle
     << ", true smallest angle:" << comparisonSmallestAngle
   );
 }
 
+#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
 /* NOTE: can refactor out doLigandGainTestIfAdjacent with a simple if-constexpr
  * in C++17
  */
@@ -495,7 +496,7 @@ std::enable_if_t<
   bool
 > doLigandGainTestIfAdjacent() {
   // Ligand loss situation
-  
+
   /* Constexpr part */
   temple::Array<
     std::pair<
@@ -603,6 +604,7 @@ struct LigandGainTest {
     return doLigandGainTestIfAdjacent<SymmetryClassFrom, SymmetryClassTo>();
   }
 };
+#endif
 
 template<class SymmetryClass>
 struct RotationGenerationTest {
@@ -632,7 +634,7 @@ struct RotationGenerationTest {
     if(convertedRotations.size() != constexprRotations.size()) {
       std::cout << "In symmetry " << SymmetryClass::stringName << ", "
         << "constexpr rotations set reports " << constexprRotations.size()
-        << " elements but the STL mapped variant has only " 
+        << " elements but the STL mapped variant has only "
         << convertedRotations.size() << " elements!" << std::endl;
     }
 
@@ -652,30 +654,30 @@ struct RotationGenerationTest {
 
     if(!pass) {
       std::cout << "Rotation generation differs for "
-        << SymmetryClass::stringName 
+        << SymmetryClass::stringName
         << " symmetry: Sizes of generated sets are different. "
         << "constexpr - " << convertedRotations.size() << " != "
         << dynamicRotations.size() << " - dynamic" << std::endl;
-      std::cout << " Maximum #rotations: " << constexprProperties::maxRotations<SymmetryClass>() 
+      std::cout << " Maximum #rotations: " << constexprProperties::maxRotations<SymmetryClass>()
         << std::endl;
 
       std::cout << " Converted constexpr:" << std::endl;
       for(const auto& element : convertedRotations) {
-        std::cout << " {" << temple::condenseIterable(element) 
+        std::cout << " {" << temple::condenseIterable(element)
           << "}\n";
       }
 
       std::cout << " Dynamic:" << std::endl;
       for(const auto& element : dynamicRotations) {
-        std::cout << " {" << temple::condenseIterable(element) 
+        std::cout << " {" << temple::condenseIterable(element)
           << "}\n";
       }
-    } 
+    }
 
     return pass;
   }
 /* Previously, when the interface with which this is used (unpackToFunction) was
- * unable to cope with both value data members and value function members 
+ * unable to cope with both value data members and value function members
  * equally, this was of the form::
  *
  *   static bool initialize() {
@@ -685,13 +687,13 @@ struct RotationGenerationTest {
  *   static bool value = initialize();
  *
  * Although this seems equivalent, it really isn't, since initialize() is called
- * at static initialization time instead of at first use as when value is 
+ * at static initialization time instead of at first use as when value is
  * a function. Since, in this case, the value function depends on another static
  * value (generateAllRotations -> symmetryData), the value-initialize variant
  * leads to a static initialization fiasco, where it is unclear whether the
  * value data member or symmetryData is initialized first.
  *
- * Only in the case of static constexpr is the value-initialize variant 
+ * Only in the case of static constexpr is the value-initialize variant
  * semantically equivalent to the data member variant.
  */
 };
@@ -705,7 +707,7 @@ std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
       stringName.end(),
       [](const char& singleChar) -> bool {
         return (
-          singleChar == ' ' 
+          singleChar == ' '
           || singleChar == '-'
         );
       }
@@ -715,7 +717,8 @@ std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
   return stringName;
 }
 
-template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
+template<typename SymmetryClassFrom, typename SymmetryClassTo>
 std::enable_if_t<
   SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
   void
@@ -743,7 +746,7 @@ std::enable_if_t<
     std::cout << ", style=\"dashed\"";
   }
 
-  std::cout << ", label=\"" 
+  std::cout << ", label=\""
     << temple::Math::round(constexprMapping.angularDistortion, 2);
 
   if(multiplicity > 3) {
@@ -753,19 +756,20 @@ std::enable_if_t<
   std::cout << "\"];\n";
 }
 
-template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+template<typename SymmetryClassFrom, typename SymmetryClassTo>
 std::enable_if_t<
   SymmetryClassFrom::size + 1 != SymmetryClassTo::size,
   void
 > doWriteIfAdjacent() {}
 
-template<typename SymmetryClassFrom, typename SymmetryClassTo> 
+template<typename SymmetryClassFrom, typename SymmetryClassTo>
 struct WriteLigandMapping {
   static bool value() {
     doWriteIfAdjacent<SymmetryClassFrom, SymmetryClassTo>();
     return true;
   }
 };
+#endif
 
 
 BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
@@ -816,7 +820,7 @@ struct NumUnlinkedTestFunctor {
      */
     for(unsigned i = 0; i < constexprResults.size() - 1; ++i) {
       if(
-        constexprResults.at(i) 
+        constexprResults.at(i)
         != Symmetry::properties::numUnlinkedAssignments(SymmetryClass::name, i + 1)
       ) {
         return false;
@@ -870,7 +874,7 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
       unsigned j = static_cast<unsigned>(toSymmetry);
       if(
         i < j
-        && allMappings.at(i, j).hasValue() 
+        && allMappings.at(i, j).hasValue()
           != static_cast<bool>(
             Symmetry::getMapping(fromSymmetry, toSymmetry)
           )
