@@ -6,7 +6,7 @@
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "DistanceGeometry/Error.h"
 
-//#define USE_SPECIALIZED_GOR1_ALGORITHM
+// #define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
 #include "DistanceGeometry/Gor1.h"
 #else
@@ -21,7 +21,7 @@
  * alright since there are, by construction, no negative edge weight sum cycles,
  * which would be the death of the algorithm.
  *
- * But BGL does not allow this, so we would have to use Bellman-Ford, which is 
+ * But BGL does not allow this, so we would have to use Bellman-Ford, which is
  * O(VE), not O(V + E).
  */
 
@@ -52,13 +52,13 @@ ExplicitGraph::ExplicitGraph(
   for(AtomIndexType i = 0; i < N; ++i) {
     auto elementType = molecule.getElementType(i);
     if(
-      static_cast<unsigned>(elementType) 
+      static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
     ) {
       _heaviestAtoms.back() = elementType;
 
       if(
-        static_cast<unsigned>(_heaviestAtoms.back()) 
+        static_cast<unsigned>(_heaviestAtoms.back())
         > static_cast<unsigned>(_heaviestAtoms.front())
       ) {
         std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
@@ -218,7 +218,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
     // re-fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
         / color_map.elements_per_char,
       0
     );
@@ -250,7 +250,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
         || bounds(a, b) <= 0
         || bounds(b, a) <= 0
       ) {
-        return DGError::GraphImpossible;
+        return DGError::GraphImpossible; // NOTE 14
       }
     }
   }
@@ -414,7 +414,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     // re-fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
         / color_map.elements_per_char,
       0
     );

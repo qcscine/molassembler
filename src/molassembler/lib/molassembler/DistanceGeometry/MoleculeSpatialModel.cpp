@@ -13,6 +13,8 @@
 
 /* TODO
  * - Use the static const MolGraphWriter coloring maps
+ * - Move burden of modelling responsibility from stereocenter (i.e. remove
+ *   angle from Stereocenter interface)
  */
 
 namespace molassembler {
@@ -25,7 +27,8 @@ constexpr double MoleculeSpatialModel::angleAbsoluteVariance;
 
 MoleculeSpatialModel::MoleculeSpatialModel(
   const Molecule& molecule,
-  const DistanceMethod& distanceMethod
+  const DistanceMethod& distanceMethod,
+  const double& looseningMultiplier
 ) : _molecule(molecule) {
   /* This is overall a pretty complicated constructor since it encompasses the
    * entire conversion from a molecular graph into some model of the relations
@@ -47,7 +50,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    *     angle and dihedral angle information just like CNStereocenters.
    *   - Instantiate CNStereocenters on all remaining atoms and default-assign
    *     them. This is so that we can get angle data between substituents easily.
-   *     
+   *
    * - Set internal angles of all small flat cycles
    * - Set all remaining 1-3 bounds with additional tolerance if atoms involved
    *   in the angle are part of a small cycle
@@ -73,7 +76,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     "0 < x << (smallest angle any local symmetry returns)"
   );
 
-  // Set 1-2 bounds 
+  // Set 1-2 bounds
   if(distanceMethod == DistanceMethod::UFFLike) {
     for(const auto& edge: molecule.iterateEdges()) {
       unsigned i = boost::source(edge, molecule.getGraph());
@@ -89,7 +92,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       setBondBounds(
         {{i, j}},
         bondDistance,
-        bondRelativeVariance
+        bondRelativeVariance * looseningMultiplier
       );
     }
   } else { // Uniform
@@ -100,7 +103,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       setBondBounds(
         {{i, j}},
         1.5,
-        bondRelativeVariance
+        bondRelativeVariance * looseningMultiplier
       );
     }
   }
@@ -154,7 +157,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     }
   }
 
-  /* For every non-implicated double bond, create an EZStereocenter 
+  /* For every non-implicated double bond, create an EZStereocenter
    * Implicated means here that no stereocenters exist for either of the double
    * edge's atoms.
    *
@@ -167,7 +170,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
            target = boost::target(edgeIndex, molecule.getGraph());
 
       if(
-        _stereocenterMap.count(source) == 0 
+        _stereocenterMap.count(source) == 0
         && _stereocenterMap.count(target) == 0
         && molecule.getNumAdjacencies(source) == 3
         && molecule.getNumAdjacencies(target) == 3
@@ -203,7 +206,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       );
 
       /* New stereocenters encountered at this point can have multiple
-       * assignemnts, since some types of stereocenters are flatly ignored by
+       * assignments, since some types of stereocenters are flatly ignored by
        * the candidate functions from Molecule, such as trigonal pyramidal
        * nitrogens. These are found here, though, and MUST be chosen randomly
        * according to the relative weights
@@ -252,7 +255,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
           molecule.getGraph()
         ) >= 1
       )
-      /* TODO missing cases: 
+      /* TODO missing cases:
        * - Need aromaticity checking routine for cycle size 5
        */
     ) {
@@ -269,7 +272,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
        */
       const auto cycleInternalAngles = CyclicPolygons::internalAngles(
         // Map sequential index pairs to their purported bond length
-        temple::mapSequentialPairs( 
+        temple::mapSequentialPairs(
           indexSequence,
           [&](const AtomIndexType& i, const AtomIndexType& j) -> double {
             auto bondTypeOption = molecule.getBondType(i, j);
@@ -315,7 +318,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
             indexSequence.at(angleCentralIndex + 1)
           }},
           cycleInternalAngles.at(angleCentralIndex - 1),
-          angleAbsoluteVariance
+          angleAbsoluteVariance * looseningMultiplier
         );
       }
 
@@ -327,15 +330,15 @@ MoleculeSpatialModel::MoleculeSpatialModel(
           indexSequence.at(1)
         }},
         cycleInternalAngles.back(),
-        angleAbsoluteVariance
+        angleAbsoluteVariance * looseningMultiplier
       );
 
       /* Internal-external and external-external angles where the central
-       * atom is part of a cycle are taken care of in the general angles 
+       * atom is part of a cycle are taken care of in the general angles
        * calculation below.
        */
-    } 
-    /* Non-flat cases are also taken care of below using a general tolerance 
+    }
+    /* Non-flat cases are also taken care of below using a general tolerance
      * increase on angles which directly effects the purported dihedral
      * distances.
      */
@@ -449,7 +452,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
                 ValueBounds bounds;
 
                 /* The cycle internal angle may have been generated already
-                 * if that cycle is planar, so check the angle bounds 
+                 * if that cycle is planar, so check the angle bounds
                  */
                 if(_angleBounds.count(sequence)) {
                   bounds = _angleBounds.at(sequence);
@@ -462,7 +465,8 @@ MoleculeSpatialModel::MoleculeSpatialModel(
                   );
 
                   double multiplier = cycleMultiplierForIndex(sequence.front())
-                    * cycleMultiplierForIndex(sequence.back());
+                    * cycleMultiplierForIndex(sequence.back())
+                    * looseningMultiplier;
 
                   bounds.lower = StdlibTypeAlgorithms::clamp(
                     centralAngle - multiplier * angleAbsoluteVariance,
@@ -545,7 +549,9 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       temple::forAllPairs(
         adjacentIndices,
         [&](const AtomIndexType& i, const AtomIndexType& j) -> void {
-          double multiplier = cycleMultiplierForIndex(i) * cycleMultiplierForIndex(j);
+          double multiplier = cycleMultiplierForIndex(i)
+            * cycleMultiplierForIndex(j)
+            * looseningMultiplier;
 
           setAngleBoundsIfEmpty(
             {{
@@ -564,7 +570,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       );
     }
   }
-  
+
   // Add EZStereocenter dihedral limit information
   // TODO these need tolerance adaptation in dependence of cycles too!
   for(const auto& mapIterPair : _stereocenterMap) {
@@ -957,7 +963,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
   Delib::ElementType getElementType(const AtomIndexType& vertexIndex) const {
     return (*graphPtr)[vertexIndex].elementType;
   }
-  
+
 /* Accessors for boost::write_graph */
   // Global options
   void operator() (std::ostream& os) const {
@@ -970,9 +976,9 @@ struct MoleculeSpatialModel::ModelGraphWriter {
       const auto& mappingIndex = stereocenterIterPair.first;
       const auto& stereocenterPtr = stereocenterIterPair.second;
 
-      if( 
+      if(
         stereocenterPtr->type() == Stereocenters::Type::EZStereocenter
-      ) { 
+      ) {
         // Avoid writing EZStereocenters twice
         if(*stereocenterPtr->involvedAtoms().rbegin() == mappingIndex) {
           continue;
@@ -990,9 +996,9 @@ struct MoleculeSpatialModel::ModelGraphWriter {
         os << "EZ" << temple::condenseIterable(
             stereocenterPtr -> involvedAtoms(),
             ""
-          ) << R"( [label=")" << ezState 
-          << R"(", fillcolor="tomato", shape="square", fontcolor="white", )" 
-          << R"(tooltip=")" 
+          ) << R"( [label=")" << ezState
+          << R"(", fillcolor="tomato", shape="square", fontcolor="white", )"
+          << R"(tooltip=")"
           << stereocenterPtr -> info()
           << R"("];)" << "\n";
       } else {
@@ -1003,7 +1009,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
         os << "CN" << temple::condenseIterable(
           stereocenterPtr -> involvedAtoms(),
           ""
-        ) << R"( [label=")" << Symmetry::name(cnPtr -> getSymmetry()) 
+        ) << R"( [label=")" << Symmetry::name(cnPtr -> getSymmetry())
           << R"(", fillcolor="steelblue", shape="square", fontcolor="white", )"
           << R"(tooltip=")" << cnPtr -> info()
           << R"("];)" << "\n";
@@ -1018,7 +1024,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
     );
 
     os << "[";
-    
+
     // Add element name and index label
     os << R"(label = ")" << symbolString << vertexIndex << R"(")";
 
@@ -1047,8 +1053,8 @@ struct MoleculeSpatialModel::ModelGraphWriter {
 
       if(indexSequence.at(1) == vertexIndex) {
         angleStrings.emplace_back(
-          "["s + std::to_string(indexSequence.at(0)) + ","s 
-          + std::to_string(indexSequence.at(2)) +"] -> ["s 
+          "["s + std::to_string(indexSequence.at(0)) + ","s
+          + std::to_string(indexSequence.at(2)) +"] -> ["s
           + std::to_string(
             temple::Math::round(
               temple::Math::toDegrees(angleBounds.lower)
@@ -1070,7 +1076,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
         "&#10;"s
       ) << R"(")";
     }
-    
+
     os << "]\n";
 
     // Are there any additional vertices we ought to connect to?

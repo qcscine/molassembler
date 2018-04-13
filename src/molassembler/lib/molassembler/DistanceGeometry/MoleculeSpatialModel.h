@@ -2,7 +2,6 @@
 #define INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
 
 #include "Molecule.h"
-#include "DistanceGeometry/ValueBounds.h"
 
 /*! @file
  *
@@ -85,7 +84,7 @@ public:
   /*! Relative bond distance variance, 0.0x meaning x% variance. Must fulfill
    * 0 < x << 1
    */
-  static constexpr double bondRelativeVariance = 0.01; 
+  static constexpr double bondRelativeVariance = 0.01;
   //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
   static constexpr double angleAbsoluteVariance = M_PI / 36; // ~ 5°
 
@@ -94,11 +93,12 @@ public:
 /* Constructor */
   MoleculeSpatialModel(
     const Molecule& molecule,
-    const DistanceMethod& distanceMethod = DistanceMethod::UFFLike
+    const DistanceMethod& distanceMethod = DistanceMethod::UFFLike,
+    const double& looseningMultiplier = 1.0
   );
 
 /* Modification */
-  /*! 
+  /*!
    * Sets the bond bounds to the model. Does not check if previous information
    * exists
    */
@@ -128,11 +128,11 @@ public:
     const double& upper
   );
 
-  /*! 
+  /*!
    * Adds [0, 2π] default dihedrals to the model. Use immediately before
    * calling makeDistanceBounds if you want default dihedrals modeled in the
    * distance bounds as well. In principle, the default dihedral distances are
-   * inferable from the existing information using bound smoothing, but this 
+   * inferable from the existing information using bound smoothing, but this
    * fashion is probably significantly faster.
    */
   void addDefaultDihedrals();

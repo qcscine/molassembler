@@ -10,17 +10,7 @@
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementProblem.h"
 #include "DistanceGeometry/Error.h"
-
-#define DG_DISTANCES_ALGORITHM_MATRIX 0u
-#define DG_DISTANCES_ALGORITHM_IMPLICIT 1u
-#define DG_DISTANCES_ALGORITHM_EXPLICIT 2u
-#define DG_DISTANCES_ALGORITHM DG_DISTANCES_ALGORITHM_EXPLICIT
-
-#if DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_IMPLICIT
-#include "DistanceGeometry/ImplicitGraph.h"
-#elif DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_EXPLICIT
 #include "DistanceGeometry/ExplicitGraph.h"
-#endif
 
 #include "GraphAlgorithms.h"
 
@@ -32,6 +22,28 @@
 namespace molassembler {
 
 namespace DistanceGeometry {
+
+namespace predicates {
+
+bool hasZeroPermutationsStereocenters(const Molecule& molecule) {
+  return temple::any_of(
+    molecule.getStereocenterList(),
+    [](const auto& stereocenterPtr) -> bool {
+      return stereocenterPtr -> numStereopermutations() == 0;
+    }
+  );
+}
+
+bool hasUnassignedStereocenters(const Molecule& mol) {
+  return temple::any_of(
+    mol.getStereocenterList(),
+    [](const auto& stereocenterPtr) -> bool {
+      return !stereocenterPtr -> assigned();
+    }
+  );
+}
+
+} // namespace predicates
 
 namespace detail {
 
@@ -78,15 +90,6 @@ Delib::PositionCollection convertToPositionCollection(
   return positions;
 }
 
-bool hasZeroPermutationsStereocenters(const Molecule& molecule) {
-  for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
-    if(stereocenterPtr->numStereopermutations() == 0) {
-      return true;
-    }
-  }
-
-  return false;
-}
 
 outcome::result<ChiralityConstraint> propagate(
   const DistanceBoundsMatrix& bounds,
@@ -238,17 +241,6 @@ bool exceededFailureRatio(
   return static_cast<double>(failures) / numStructures >= failureRatio;
 }
 
-bool moleculeHasUnassignedStereocenters(const Molecule& mol) {
-  for(const auto& stereocenterPtr : mol.getStereocenterList()) {
-    if(!stereocenterPtr->assigned()) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-
 // Non-debug version of DG
 outcome::result<
   std::vector<Delib::PositionCollection>
@@ -259,7 +251,9 @@ outcome::result<
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
-  if(hasZeroPermutationsStereocenters(molecule)) {
+  // TODO where to split control depending on loosening factor of spatial model?
+
+  if(predicates::hasZeroPermutationsStereocenters(molecule)) {
     return DGError::ZeroPermutationStereocenters;
   }
 
@@ -267,7 +261,7 @@ outcome::result<
   /* In case the molecule has unassigned stereocenters, we need to randomly
    * assign them in every step prior to generating the distance bounds matrix
    */
-  bool regenerateEachStep = moleculeHasUnassignedStereocenters(molecule);
+  bool regenerateEachStep = predicates::hasUnassignedStereocenters(molecule);
   if(!regenerateEachStep) {
     DGData = gatherDGInformation(
       molecule,
@@ -296,12 +290,8 @@ outcome::result<
       do {
         for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
           if(!stereocenterPtr->assigned()) {
-            moleculeCopy.assignStereocenterAtAtom(
-              stereocenterPtr->involvedAtoms().front(),
-              temple::random.getSingle<unsigned>(
-                0,
-                stereocenterPtr->numStereopermutations() - 1
-              )
+            moleculeCopy.assignStereocenterRandomly(
+              stereocenterPtr->involvedAtoms().front()
             );
 
             /* Jump out of for-loop and re-check if there are still unassigned
@@ -311,7 +301,7 @@ outcome::result<
             break;
           }
         }
-      } while(moleculeHasUnassignedStereocenters(moleculeCopy));
+      } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
       DGData = gatherDGInformation(
@@ -320,25 +310,6 @@ outcome::result<
       );
     }
 
-#if DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_IMPLICIT
-    ImplicitGraph implicitGraph {
-      molecule,
-      DGData.boundList
-    };
-
-    DistanceBoundsMatrix distanceBounds {implicitGraph.makeDistanceBounds()};
-
-    /* No need to smooth the distance bounds, implicitGraph creates it
-     * so that the triangle inequalities are fulfilled
-     */
-
-    assert(distanceBounds.boundInconsistencies() == 0);
-
-    // Make a metric matrix from a generated distances matrix
-    MetricMatrix metric(
-      implicitGraph.makeDistanceMatrix(metrizationOption)
-    );
-#elif DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_EXPLICIT
     ExplicitGraph explicitGraph {
       molecule,
       DGData.boundList
@@ -351,8 +322,8 @@ outcome::result<
 
     DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
 
-    /* No need to smooth the distance bounds, implicitGraph creates it
-     * so that the triangle inequalities are fulfilled
+    /* No need to smooth the distance bounds, the graph type creates them
+     * within the triangle inequality bounds
      */
 
     assert(distanceBounds.boundInconsistencies() == 0);
@@ -366,24 +337,9 @@ outcome::result<
     MetricMatrix metric(
       std::move(distanceMatrixResult.value())
     );
-#else
-    DistanceBoundsMatrix distanceBounds {
-      molecule,
-      DGData.boundList
-    };
-
-    distanceBounds.smooth();
-
-    assert(distanceBounds.boundInconsistencies() == 0);
-
-    // Make a metric matrix from a generated distances matrix
-    MetricMatrix metric(
-      distanceBounds.makeDistanceMatrix()
-    );
-#endif
 
     /* Get the chirality constraints by converting the prototypes found by the
-     * collector into full chiralityConstraints
+     * collector into full ChiralityConstraints
      */
     std::vector<ChiralityConstraint> chiralityConstraints;
 
@@ -426,7 +382,7 @@ outcome::result<
         ) < 0.5
       ) {
         // Invert y coordinates
-        for(unsigned i = 0; i < distanceBounds.N(); i++) {
+        for(unsigned i = 0; i < distanceBounds.N(); ++i) {
           dlibPositions(
             static_cast<dlibIndexType>(i) * 4  + 1
           ) *= -1;
@@ -521,7 +477,7 @@ outcome::result<
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       failures += 1;
 
-      if(static_cast<double>(failures) / numStructures >= failureRatio) {
+      if(exceededFailureRatio(failures, numStructures, failureRatio)) {
         return DGError::TooManyFailures;
       }
     } else {
@@ -542,7 +498,7 @@ std::list<RefinementData> debugDistanceGeometry(
   const bool& useYInversionTrick,
   const MoleculeSpatialModel::DistanceMethod& distanceMethod
 ) {
-  if(hasZeroPermutationsStereocenters(molecule)) {
+  if(predicates::hasZeroPermutationsStereocenters(molecule)) {
     Log::log(Log::Level::Warning)
       << "This molecule has stereocenters with zero valid permutations!"
       << std::endl;
@@ -562,7 +518,7 @@ std::list<RefinementData> debugDistanceGeometry(
    * assignments in stereopermutation. I should get on that too.
    */
 
-  bool regenerateEachStep = moleculeHasUnassignedStereocenters(molecule);
+  bool regenerateEachStep = predicates::hasUnassignedStereocenters(molecule);
 
   MoleculeDGInformation DGData;
 
@@ -583,7 +539,7 @@ std::list<RefinementData> debugDistanceGeometry(
   for(
     unsigned currentStructureNumber = 0;
     // Failed optimizations do not count towards successful completion
-    currentStructureNumber < numStructures;
+    currentStructureNumber - failures < numStructures;
     currentStructureNumber += 1
   ) {
     if(regenerateEachStep) {
@@ -592,12 +548,8 @@ std::list<RefinementData> debugDistanceGeometry(
       do {
         for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
           if(!stereocenterPtr->assigned()) {
-            moleculeCopy.assignStereocenterAtAtom(
-              stereocenterPtr->involvedAtoms().front(),
-              temple::random.getSingle<unsigned>(
-                0,
-                stereocenterPtr->numStereopermutations() - 1
-              )
+            moleculeCopy.assignStereocenterRandomly(
+              stereocenterPtr->involvedAtoms().front()
             );
 
             /* Jump out of for-loop and re-check if there are still unassigned
@@ -608,7 +560,7 @@ std::list<RefinementData> debugDistanceGeometry(
             break;
           }
         }
-      } while(moleculeHasUnassignedStereocenters(moleculeCopy));
+      } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
       DGData = gatherDGInformation(
@@ -619,25 +571,6 @@ std::list<RefinementData> debugDistanceGeometry(
 
     std::list<RefinementStepData> refinementSteps;
 
-#if DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_IMPLICIT
-    ImplicitGraph implicitGraph {
-      molecule,
-      DGData.boundList
-    };
-
-    DistanceBoundsMatrix distanceBounds {implicitGraph.makeDistanceBounds()};
-
-    /* No need to smooth the distance bounds, implicitGraph creates it
-     * so that the triangle inequalities are fulfilled
-     */
-
-    assert(distanceBounds.boundInconsistencies() == 0);
-
-    // Make a metric matrix from a generated distances matrix
-    MetricMatrix metric(
-      implicitGraph.makeDistanceMatrix(metrizationOption)
-    );
-#elif DG_DISTANCES_ALGORITHM == DG_DISTANCES_ALGORITHM_EXPLICIT
     ExplicitGraph explicitGraph {
       molecule,
       DGData.boundList
@@ -679,21 +612,6 @@ std::list<RefinementData> debugDistanceGeometry(
     MetricMatrix metric(
       std::move(distanceMatrixResult.value())
     );
-#else
-    DistanceBoundsMatrix distanceBounds {
-      molecule,
-      DGData.boundList
-    };
-
-    distanceBounds.smooth();
-
-    assert(distanceBounds.boundInconsistencies() == 0);
-
-    // Make a metric matrix from a generated distances matrix
-    MetricMatrix metric(
-      distanceBounds.makeDistanceMatrix(metrizationOption)
-    );
-#endif
 
     /* Get the chirality constraints by converting the prototypes found by the
      * collector into full chiralityConstraints
