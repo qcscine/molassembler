@@ -1,5 +1,3 @@
-set(temple_VERSION 0.1.0)
-
 set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Array.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/BTree.h
@@ -49,54 +47,21 @@ target_include_directories(
   temple SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
-# Install all relevant header files in <installdir>/include
-include(CMakePackageConfigHelpers)
-
-# Set destination for the generated CMake config files
-set(ConfigPackageLocation lib/cmake/temple)
-
-set(INCLUDE_INSTALL_DIR include/)
-
-configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/temple/templeConfig.cmake"
-  INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS INCLUDE_INSTALL_DIR
-)
-
-# Generate a basic configuration file in the binary director and subdir temple
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/temple/templeConfigVersion.cmake"
-  VERSION ${temple_VERSION}
-  COMPATIBILITY AnyNewerVersion
-)
-
+# Make the interface an export-name
 install(
   TARGETS temple
   EXPORT templeTargets
   DESTINATION lib
 )
 
-install(
-  EXPORT templeTargets
-  DESTINATION "${ConfigPackageLocation}"
+molassembler_install_component_cmake_files(
+  COMPONENT temple
+  EXPORT_NAME templeTargets
 )
 
-install(DIRECTORY
-  "${CMAKE_CURRENT_SOURCE_DIR}/temple"
-  DESTINATION
-  ${INCLUDE_INSTALL_DIR}
-  FILES_MATCHING
-  PATTERN "*.h"
-)
+molassembler_install_component_headers(COMPONENT temple DIRECTORY temple)
 
-# Install templeConfig.cmake and templeConfigVersion into specified directory
-install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/temple/templeConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/temple/templeConfigVersion.cmake"
-  DESTINATION ${ConfigPackageLocation}
-)
+add_library(molassembler::temple ALIAS temple)
 
-# Source groups for Visual Studio
+# Source groups for IDEs
 source_group("Headers" FILES ${HEADERS_All})

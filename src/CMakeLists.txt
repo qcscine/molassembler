@@ -21,11 +21,29 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # Externalize parts for sake of brevity
 include(CompilerSpecificSetup)
 include(Dependencies)
+include(Utils)
 
-add_subdirectory(temple)
-add_subdirectory(cyclic_polygons)
-add_subdirectory(gor1)
-add_subdirectory(boost-outcome)
-add_subdirectory(chemical_symmetries)
-add_subdirectory(stereopermutation)
-add_subdirectory(molassembler)
+# All directories
+set(ALL_DIRECTORIES
+)
+
+# Permit limited builds
+if(DEFINED MOLASSEMBLER_INCLUDE_PROJECT_DIRS)
+  foreach(subdirectory ${MOLASSEMBLER_INCLUDE_PROJECT_DIRS})
+    add_subdirectory(${subdirectory})
+  endforeach()
+else()
+  add_subdirectory(extern)
+  add_subdirectory(temple)
+  add_subdirectory(cyclic_polygons)
+  add_subdirectory(gor1)
+  add_subdirectory(chemical_symmetries)
+  add_subdirectory(stereopermutation)
+  add_subdirectory(molassembler)
+endif()
+
+# Add molassembler global configuration
+install(
+  FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/molassemblerConfig.cmake"
+  DESTINATION lib/cmake/molassembler
+)

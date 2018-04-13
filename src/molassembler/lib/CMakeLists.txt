@@ -1,19 +1,14 @@
-# dependencies: libraries
-find_library(RDL_LIBRARY RingDecomposerLibStatic)
-
 # import assignment and symmetry libraries so we can specify a dependency
 find_package(stereopermutation 0.1.0 REQUIRED)
 find_package(chemical_symmetries 0.1.0 REQUIRED)
 find_package(temple 0.1.0 REQUIRED)
 find_package(cyclic_polygons 0.1.0 REQUIRED)
-
-add_library(rdl STATIC IMPORTED)
-set_property(TARGET rdl PROPERTY IMPORTED_LOCATION ${RDL_LIBRARY})
+find_package(scine COMPONENTS Delib REQUIRED)
 
 # add include directories
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
 
-set(MOLASSEMBLER_VERSION 0.1.0)
+set(molassembler_VERSION 0.1.0)
 
 # collect headers
 set(HEADERS_all
@@ -129,31 +124,14 @@ endif()
 target_link_libraries(
   molassembler
   PUBLIC
-    Delib::DelibStatic
+    scine::DelibStatic
     stereopermutation
     cyclic_polygons
-    outcome
+    boost_outcome
     gor1
-    chemicalsymmetries
+    chemical_symmetries
     blas
-    rdl
-)
-
-# Installation
-set(ConfigPackageLocation lib/cmake/molassembler)
-set(INCLUDE_INSTALL_DIR include)
-
-configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfig.cmake"
-  INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS INCLUDE_INSTALL_DIR
-)
-
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfigVersion.cmake"
-  VERSION ${MOLASSEMBLER_VERSION}
-  COMPATIBILITY AnyNewerVersion
+    RingDecomposerLibStatic
 )
 
 install(
@@ -162,23 +140,14 @@ install(
   DESTINATION lib
 )
 
-install(
-  EXPORT molassemblerTargets
-  DESTINATION "${ConfigPackageLocation}"
+molassembler_install_component_cmake_files(
+  COMPONENT molassembler
+  EXPORT_NAME molassemblerTargets
 )
 
-install(
-  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/molassembler"
-  DESTINATION ${INCLUDE_INSTALL_DIR}
-  FILES_MATCHING
-  PATTERN "*.h"
-)
-
-install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/molassembler/molassemblerConfigVersion.cmake"
-  DESTINATION ${ConfigPackageLocation}
+molassembler_install_component_headers(
+  COMPONENT molassembler
+  DIRECTORY molassembler
 )
 
 source_group("Headers" FILES ${HEADERS_All})

@@ -1,9 +1,9 @@
-find_package(stereopermutation 0.1.0 REQUIRED)
-find_package(chemical_symmetries 0.1.0 REQUIRED)
-find_package(temple 0.1.0 REQUIRED)
-find_package(cyclic_polygons 0.1.0 REQUIRED)
-find_package(outcome 0.1.0 REQUIRED)
-find_package(gor1 0.1.0 REQUIRED)
+find_package(molassembler COMPONENTS gor1 boost_outcome cyclic_polygons temple chemical_symmetries stereopermutation REQUIRED)
+find_package(scine COMPONENTS Delib REQUIRED)
+
+find_library(RDL_LIBRARY RingDecomposerLibStatic)
+add_library(RingDecomposerLibStatic STATIC IMPORTED)
+set_property(TARGET RingDecomposerLibStatic PROPERTY IMPORTED_LOCATION ${RDL_LIBRARY})
 
 set(MOLASSEMBLER_VERSION 0.1.0)
 

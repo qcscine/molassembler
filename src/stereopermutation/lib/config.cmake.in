@@ -1,4 +1,4 @@
-find_package(chemical_symmetries 0.1.0 REQUIRED)
+find_package(molassembler COMPONENTS chemical_symmetries REQUIRED)
 
 set(STEREOPERMUTATION_VERSION 0.1.0)
 

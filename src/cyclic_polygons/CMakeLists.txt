@@ -9,14 +9,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # declaration
 project(CyclicPolygons)
 
-set(CYCLIC_POLYGONS_VERSION 0.1.0)
+set(cyclic_polygons_VERSION 0.1.0)
 
 enable_testing()
 
+set(HEADERS_ALL ${CMAKE_CURRENT_SOURCE_DIR}/CyclicPolygons.h)
+
 add_library(cyclic_polygons INTERFACE)
 target_sources(
-  cyclic_polygons INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/CyclicPolygons.h>
+  cyclic_polygons INTERFACE $<BUILD_INTERFACE:${HEADERS_ALL}>
 )
 
 target_include_directories(
@@ -39,43 +40,18 @@ target_link_libraries(
 
 add_test(NAME CyclicPolygonTests COMMAND cyclicPolygonTests)
 
-set(ConfigPackageLocation lib/cmake/cyclic_polygons)
-set(INCLUDE_INSTALL_DIR include)
-
-configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfig.cmake"
-  INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS INCLUDE_INSTALL_DIR
-)
-
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfigVersion.cmake"
-  VERSION ${CYCLIC_POLYGONS_VERSION}
-  COMPATIBILITY AnyNewerVersion
-)
-
 install(
   TARGETS cyclic_polygons
   EXPORT cyclic_polygonsTargets
   DESTINATION ${INCLUDE_INSTALL_DIR}
 )
 
-install(
-  EXPORT cyclic_polygonsTargets
-  DESTINATION "${ConfigPackageLocation}"
+molassembler_install_component_cmake_files(
+  COMPONENT cyclic_polygons
+  EXPORT_NAME cyclic_polygonsTargets
 )
 
 install(
   FILES ${HEADERS_ALL}
   DESTINATION ${INCLUDE_INSTALL_DIR}
 )
-
-install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/cyclic_polygons/cyclic_polygonsConfigVersion.cmake"
-  DESTINATION ${ConfigPackageLocation}
-)
-
-source_group("Headers" FILES ${HEADERS_All})

@@ -1,4 +1,6 @@
-set(CYLCIC_POLYGONS_VERSION 0.1.0)
+set(CYCLIC_POLYGONS_VERSION 0.1.0)
+
+find_package(molassembler COMPONENTS temple REQUIRED)
 
 include(${CMAKE_CURRENT_LIST_DIR}/cyclic_polygonsTargets.cmake)
 

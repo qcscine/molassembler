@@ -80,7 +80,7 @@ This library requires the C++14 standard.
 
 External library dependencies:
 
-- boost: graph, functional, optional, test
+- boost: graph, functional, optional, test, outcome
 - Eigen: vector arithmetic
 - dlib: BFGS solver
 - RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
@@ -125,7 +125,6 @@ $ make test
 
 You can build the documentation by running `doxygen` in the main directory.
 
-## References
 
 [^1]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
   Open-Source implementation of Unique Ring Families and Other Cycle Bases. J.

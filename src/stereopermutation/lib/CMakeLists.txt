@@ -2,7 +2,7 @@ set(stereopermutation_VERSION 0.1.0)
 
 # dependencies
 find_package(Eigen3 3.1.1 REQUIRED)
-find_package(chemical_symmetries 0.1.0 REQUIRED)
+find_package(chemical_symmetries REQUIRED)
 
 set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Stereopermutation.h
@@ -20,7 +20,14 @@ add_library(stereopermutation STATIC ${SOURCES_All} ${HEADERS_all})
 target_include_directories(stereopermutation PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_include_directories(stereopermutation SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)
 target_include_directories(stereopermutation PUBLIC ${EIGEN3_INCLUDE_DIRS})
-target_link_libraries(stereopermutation chemicalsymmetries)
+
+if(TARGET chemical_symmetries)
+  message(STATUS "chemical_symmetries is a target")
+else()
+  message(STATUS "chemical_symmetries isn't a target")
+endif()
+
+target_link_libraries(stereopermutation PUBLIC chemical_symmetries)
 
 if(UNIX)
   add_definitions(-fPIC)
@@ -38,53 +45,20 @@ else() # assume Debug
   target_compile_options(stereopermutation PRIVATE -g -O2)
 endif()
 
-# Install all relevant header files in <installdir>/include
-include(CMakePackageConfigHelpers)
-
-# Set destination for the generated CMake config files
-set(ConfigPackageLocation lib/cmake/stereopermutation)
-set(INCLUDE_INSTALL_DIR include)
-
-# Generate a basic configuration file in the binary director and subdir
-# stereopermutation
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfigVersion.cmake"
-  VERSION ${stereopermutation_VERSION}
-  COMPATIBILITY AnyNewerVersion
-)
-
-configure_package_config_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/config.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfig.cmake"
-  INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS INCLUDE_INSTALL_DIR
-)
-
 install(
   TARGETS stereopermutation
   EXPORT stereopermutationTargets
   DESTINATION lib
 )
 
-install(
-  EXPORT stereopermutationTargets
-  DESTINATION "${ConfigPackageLocation}"
+molassembler_install_component_cmake_files(
+  COMPONENT stereopermutation
+  EXPORT_NAME stereopermutationTargets
 )
 
-install(DIRECTORY
-  "${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation"
-  DESTINATION
-  ${INCLUDE_INSTALL_DIR}
-  FILES_MATCHING
-  PATTERN "*.h"
-)
-
-# Install ...Config.cmake and ...ConfigVersion into specified directory
-install(
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/stereopermutation/stereopermutationConfigVersion.cmake"
-  DESTINATION ${ConfigPackageLocation}
+molassembler_install_component_headers(
+  COMPONENT stereopermutation
+  DIRECTORY stereopermutation
 )
 
 # Source groups for Visual Studio

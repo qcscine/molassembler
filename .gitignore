@@ -19,3 +19,4 @@ build*
 *.aux
 documentation/
 *.json
+install/

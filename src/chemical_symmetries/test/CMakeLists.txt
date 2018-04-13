@@ -22,7 +22,7 @@ target_include_directories(
 target_link_libraries(symmetryTests
   PUBLIC
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-    chemicalsymmetries
+    chemical_symmetries
 )
 
 # add test
