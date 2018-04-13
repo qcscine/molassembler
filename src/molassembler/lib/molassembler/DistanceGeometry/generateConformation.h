@@ -5,7 +5,7 @@
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
-#include "boost-outcome/outcome.hpp"
+#include "boost_outcome/outcome.hpp"
 
 /*! @file
  *

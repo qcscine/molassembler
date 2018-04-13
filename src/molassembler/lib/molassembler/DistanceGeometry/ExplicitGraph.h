@@ -3,7 +3,7 @@
 
 #include "DistanceGeometry/ValueBounds.h"
 #include "boost/graph/adjacency_list.hpp"
-#include "boost-outcome/outcome.hpp"
+#include "boost_outcome/outcome.hpp"
 #include "Eigen/Core"
 #include "Delib/ElementInfo.h"
 

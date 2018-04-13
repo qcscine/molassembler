@@ -1,7 +1,7 @@
 #ifndef INCLUDE_DG_DISTANCE_BOUNDS_MATRIX_HPP
 #define INCLUDE_DG_DISTANCE_BOUNDS_MATRIX_HPP
 
-#include "boost-outcome/outcome.hpp"
+#include "boost_outcome/outcome.hpp"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "AtomInfo.h"
 

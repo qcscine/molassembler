@@ -4,7 +4,7 @@
 #include "boost/functional/hash.hpp"
 #include "boost/variant.hpp"
 #include "boost/optional.hpp"
-#include "boost-outcome/outcome.hpp"
+#include "boost_outcome/outcome.hpp"
 #include <unordered_map>
 #include <tuple>
 #include "Eigen/Core"
@@ -77,9 +77,9 @@ enum class Partiality;
  *
  * Why is the implicit nature of the bonds on the basis of an underlying matrix
  * so much faster than ExplicitGraph when it comes to generating distance
- * matrices? 
- * - The GOR and Bellman-Ford shortest-paths algorithms have a complexity of 
- *   O(V * E), where V is the number of vertices and E the number of edges. 
+ * matrices?
+ * - The GOR and Bellman-Ford shortest-paths algorithms have a complexity of
+ *   O(V * E), where V is the number of vertices and E the number of edges.
  *   Since for every left vertex V, there are V-1 edges to the right side
  *   (whether explicit or implicit does not matter), E is on the order of V²,
  *   so the entire shortest-paths algorithm is O(V³). Under certain conditions
@@ -94,7 +94,7 @@ enum class Partiality;
  *   calculation.
  * - Less memory use is perhaps also a factor. In the generation of distance
  *   bounds, ExplicitGraph requires memory for its underlying BGL graph and edge
- *   weight map, which are heavily redundant, plus an N² double matrix for 
+ *   weight map, which are heavily redundant, plus an N² double matrix for
  *   storing the resulting distance matrix. ImplicitGraph requires only
  *   the N² double matrix.
  *
@@ -111,9 +111,9 @@ enum class Partiality;
  * Do not try to apply an algorithm that uses the existing shortest path
  * information from a previous run to calculate the new shortest paths. There
  * are already few shortest paths algorithms well suited to graphs with negative
- * real edge weights. Dynamic algorithms are differentiated into whether they 
+ * real edge weights. Dynamic algorithms are differentiated into whether they
  * can deal with edge weight changes, vertex additions, vertex removals, etc.
- * A fully dynamic algorithm can deal with any of those (albeit only a singular 
+ * A fully dynamic algorithm can deal with any of those (albeit only a singular
  * one at a time). A fully batch dynamic algorithm can deal with an arbitrary
  * number of any type of graph changes. You need one of those, since fixing
  * a distance in ImplicitGraph either entails changing six edge weights
@@ -166,12 +166,12 @@ public:
   >;
 
   ImplicitGraph(
-    const Molecule& molecule, 
+    const Molecule& molecule,
     const BoundList& bounds
   );
 
   /* Modification */
-  /*! Incorporates a ValueBound into its internal representation. 
+  /*! Incorporates a ValueBound into its internal representation.
    *
    * Assumes that there is no internal bounding information on the indices a
    * and b yet. If there is, it gets overwritten.
@@ -193,7 +193,7 @@ public:
 
   /*! Returns the number of edges currently simulated by the graph
    *
-   * Returns the number of edges currently simulated by the graph. 
+   * Returns the number of edges currently simulated by the graph.
    *
    * Complexity: O(N²)
    */
