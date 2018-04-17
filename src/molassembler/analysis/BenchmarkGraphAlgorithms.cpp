@@ -135,7 +135,7 @@ void benchmark(
 ) {
   using namespace molassembler;
 
-  Molecule sampleMol = molHandler.readSingle(
+  Molecule sampleMol = molHandler.read(
     filePath.string()
   );
 

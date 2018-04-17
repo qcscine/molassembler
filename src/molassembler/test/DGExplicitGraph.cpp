@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
 
-    Molecule molecule = molHandler.readSingle(
+    Molecule molecule = molHandler.read(
       currentFilePath.string()
     );
 

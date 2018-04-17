@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
   IO::MOLFileHandler molHandler;
 
   for(const auto& filename : files) {
-    Molecule mol = molHandler.readSingle(filename);
+    Molecule mol = molHandler.read(filename);
     // Invoke ostream operator
     std::cout << mol << std::endl;
 
@@ -177,8 +177,8 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
       continue;
     }
 
-    Molecule a = molReader.readSingle(originalFilePath.string());
-    Molecule b = molReader.readSingle(currentFilePath.string());
+    Molecule a = molReader.read(originalFilePath.string());
+    Molecule b = molReader.read(currentFilePath.string());
 
     BOOST_CHECK_MESSAGE(
       a == b,
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   using namespace molassembler;
   IO::MOLFileHandler molReader;
 
-  auto pseudocenter = molReader.readSingle(
+  auto pseudocenter = molReader.read(
     directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
   );
 

@@ -373,12 +373,12 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    if(!filehandler.canReadFile(filename)) {
+    if(!filehandler.canRead(filename)) {
       std::cout << "The specified file is not a MOLFile!" << nl;
       return 2;
     }
 
-    auto mol = filehandler.readSingle(filename);
+    auto mol = filehandler.read(filename);
 
     DistanceGeometry::MoleculeSpatialModel spatialModel {
       mol,

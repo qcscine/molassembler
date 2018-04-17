@@ -38,11 +38,11 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    Molecule a = molHandler.readSingle(
+    Molecule a = molHandler.read(
       filepath.string()
     );
 
-    molHandler.writeSingle(
+    molHandler.write(
       filepath.stem().string() + "_isomorphism.mol",
       a,
       molHandler.getPositionCollection(),

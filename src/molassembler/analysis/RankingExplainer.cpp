@@ -27,7 +27,7 @@ void writeExpandedTree(
   const AtomIndexType& expandOnIndex
 ) {
   IO::MOLFileHandler molHandler;
-  auto molecule = molHandler.readSingle(
+  auto molecule = molHandler.read(
     "../tests/mol_files/ranking_tree_molecules/"s
     + fileName
   );
@@ -85,13 +85,13 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    if(!filehandler.canReadFile(filename)) {
+    if(!filehandler.canRead(filename)) {
       std::cout << "The specified file is not a MOLFile!" << nl;
       return 2;
     }
 
     // This triggers all debug messages during tree instantiations and ranking
-    auto mol = filehandler.readSingle(filename);
+    auto mol = filehandler.read(filename);
 
     std::cout << mol << std::endl;
 

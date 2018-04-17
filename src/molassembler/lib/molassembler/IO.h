@@ -5,6 +5,10 @@
 #include "Version.h"
 
 #include "temple/Random.h"
+#include "Delib/AtomCollectionIO.h"
+
+#define BOOST_FILESYSTEM_NO_DEPRECATED
+#include "boost/filesystem.hpp"
 
 #include <fstream>
 #include <iomanip>
@@ -91,8 +95,8 @@ struct Inverse {
 
 //! Abstract base class / interface for file reading classes
 struct FileReader {
-  virtual bool canReadFile(const std::string& filename) = 0;
-  virtual Molecule readSingle(const std::string& filename) = 0;
+  virtual bool canRead(const std::string& filename) const = 0;
+  virtual Molecule read(const std::string& filename) = 0;
 };
 
 //! Abstract base class / interface for file writing classes
@@ -103,8 +107,7 @@ struct FileWriter {
     Random
   };
 
-  virtual bool canWriteFile(const std::string& filename) = 0;
-  virtual void writeSingle(
+  virtual void write(
     const std::string& filename,
     const Molecule& molecule,
     const Delib::PositionCollection& positions,
@@ -219,15 +222,13 @@ private:
    * TODO If BondTypes of 4-6 are to be stored in a MOLFile, the program will
    * crash, no elegant failure exists.
    */
-  void _writeSingle(
+  void _write(
     const std::string& filename,
     const Molecule& molecule,
     const Delib::PositionCollection& positions,
     const MOLFileVersion& version,
     const IndexPermutation& permutation
   ) {
-    assert(canWriteFile(filename));
-
     std::function<AtomIndexType(const AtomIndexType&)> indexMap, inverse;
 
     unsigned N = molecule.numAtoms();
@@ -348,19 +349,20 @@ private:
 public:
 /* Public member functions */
   /* Reading functions */
-  bool canReadFile(const std::string& filename) final {
+  bool canRead(const std::string& filename) const final {
+    boost::filesystem::path filepath {filename};
+
     return (
-      filename.substr(
-        filename.length() - 4
-      ) == ".mol"
+      boost::filesystem::exists(filepath)
+      && filepath.extension() == ".mol"
     );
   }
 
   /*!
    * Throws in a myriad of cases!
    */
-  Molecule readSingle(const std::string& filename) final {
-    assert(canReadFile(filename));
+  Molecule read(const std::string& filename) final {
+    assert(canRead(filename));
 
     std::ifstream file(filename);
 
@@ -454,21 +456,13 @@ public:
     }
   }
 
-  bool canWriteFile(const std::string& filename) final {
-    return (
-      filename.substr(
-        filename.length() - 4
-      ) == ".mol"
-    );
-  }
-
-  void writeSingle(
+  void write(
     const std::string& filename,
     const Molecule& molecule,
     const Delib::PositionCollection& positions,
     const IndexPermutation& permutation = IndexPermutation::Identity
   ) final {
-    _writeSingle(
+    _write(
       filename,
       molecule,
       positions,
@@ -483,6 +477,56 @@ public:
 
   const GraphType& getGraph() const {
     return _graph;
+  }
+};
+
+struct XYZHandler : public FileReader, public FileWriter {
+  bool canRead(const std::string& filename) const final {
+    boost::filesystem::path filepath {filename};
+
+    return (
+      boost::filesystem::exists(filepath)
+      && filepath.extension() == ".xyz"
+    );
+  }
+
+  Molecule read(const std::string& filename) final {
+    assert(canRead(filename));
+    return Molecule {
+      Delib::AtomCollectionIO::read(filename)
+    };
+  }
+
+  void write(
+    const std::string& filename,
+    const Molecule& molecule,
+    const Delib::PositionCollection& positions,
+    const IndexPermutation& permutation = IndexPermutation::Identity
+  ) final {
+    std::function<AtomIndexType(const AtomIndexType&)> indexMap;
+
+    unsigned N = molecule.numAtoms();
+
+    if(permutation == IndexPermutation::Identity) {
+      indexMap = permutations::Identity {};
+    } else if(permutation == IndexPermutation::SortByElement) {
+      indexMap = permutations::SortByElement {molecule};
+    } else if(permutation == IndexPermutation::Random) {
+      indexMap = permutations::Random {N};
+    }
+
+    Delib::AtomCollection ac;
+
+    for(unsigned i = 0; i < N; ++i) {
+      ac.push_back(
+        Delib::Atom {
+          molecule.getElementType(indexMap(i)),
+          Delib::Position {positions.at(indexMap(i))}
+        }
+      );
+    }
+
+    Delib::AtomCollectionIO::write(filename, ac);
   }
 };
 

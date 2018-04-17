@@ -110,12 +110,12 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    if(!filehandler.canReadFile(filename)) {
+    if(!filehandler.canRead(filename)) {
       std::cout << "The specified file is not a MOLFile!" << std::endl;
       return 0;
     }
 
-    auto mol = filehandler.readSingle(filename);
+    auto mol = filehandler.read(filename);
 
     std::cout << mol << std::endl;
 
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
         refinementData
       );
 
-      filehandler.writeSingle(
+      filehandler.write(
         filestem + "-"s + std::to_string(structNum) + "-last.mol"s,
         mol,
         DistanceGeometry::detail::convertToPositionCollection(
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
           refinementData
         );
 
-        filehandler.writeSingle(
+        filehandler.write(
           Symmetry::spaceFreeName(symmetryName) + "-"s 
             + std::to_string(structNum) + "-last.mol"s,
           mol,

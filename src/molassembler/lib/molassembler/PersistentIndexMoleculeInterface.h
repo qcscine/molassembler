@@ -5,7 +5,7 @@
 
 /*! @file
  *
- * Defines a proxy class that aids in atom index book-keeping. 
+ * Defines a proxy class that aids in atom index book-keeping.
  */
 
 namespace molassembler {
@@ -19,14 +19,14 @@ private:
   std::unique_ptr<Molecule> _molecule;
   std::set<AtomIndexType> _deletedIndices;
   /* Converts an external persistent index into the minimal internal one. This
-   * throws if either the internal index has been deleted or the resulting 
+   * throws if either the internal index has been deleted or the resulting
    * internal index is out of bounds (i.e. larger than the amount of internal
    * atoms).
    */
   AtomIndexType _toInternalIndex(const AtomIndexType& a) const;
 
-  /* Converts an internal index into the persistent external index. Throws if 
-   * the internal index passed to it is out of bounds (i.e. larger than the 
+  /* Converts an internal index into the persistent external index. Throws if
+   * the internal index passed to it is out of bounds (i.e. larger than the
    * biggest internal index).
    */
   AtomIndexType _toExternalIndex(const AtomIndexType& a) const;
@@ -46,15 +46,15 @@ public:
   // Rewriting every single function with forwarding calls isn't so attractive
 };
 
-PersistentIndicesInterface::PersistentIndicesInterface() {} 
+PersistentIndicesInterface::PersistentIndicesInterface() {}
 PersistentIndicesInterface::PersistentIndicesInterface(
   const std::string& molFile
 ) {
   IO::MOLFileHandler molReader;
   _molecule = std::make_unique<Molecule>(
-    molReader.readSingle(molFile)
+    molReader.read(molFile)
   );
-} 
+}
 
 PersistentIndicesInterface::PersistentIndicesInterface(
   const Delib::ElementType& a,
@@ -106,4 +106,3 @@ AtomIndexType PersistentIndicesInterface::_toExternalIndex(const AtomIndexType& 
 } // namespace molassembler
 
 #endif
-

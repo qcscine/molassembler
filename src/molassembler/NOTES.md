@@ -2,13 +2,15 @@
 - Conjugation detection is now sorely needed
 - Ranking algorithm shows deficiencies due to missing conjugation detection.
   Perhaps other deficiencies too?
-- What happens to DG when an assignment is trans-spanning and the bridge is too
-  short? Should I / can I add heuristics?
 - Hapticity support is the main challenge. Impact is large throughout code
   - Bond type
-  - Adjacents vs. ligands
+  - Adjacents vs. ligands change
   - How to approach assignment generation?
   - How to calculate angles, dihedrals in DG?
+  - Ligand fluxionality in conformational modelling?
+  - Avoiding overlapping ligand cones
+- Should move burden of responsibility for angles, dihedrals from Stereocenters
+  to SpatialModel
 
 
 # Remaining DG deficiencies

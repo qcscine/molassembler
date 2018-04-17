@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
 
-    Molecule molecule = molHandler.readSingle(
+    Molecule molecule = molHandler.read(
       currentFilePath.string()
     );
 
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
-    Molecule sampleMol = molHandler.readSingle(
+    Molecule sampleMol = molHandler.read(
       currentFilePath.string()
     );
 

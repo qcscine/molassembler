@@ -16,7 +16,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
 
   // Read the file
   IO::MOLFileHandler molHandler;
-  auto mol = molHandler.readSingle(filePath.string());
+  auto mol = molHandler.read(filePath.string());
 
   std::cout << mol << std::endl;
 
@@ -30,7 +30,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   auto positions = positionsResult.value();
 
   // Write the generated conformation to file
-  molHandler.writeSingle(
+  molHandler.write(
     filePath.stem().string() + "-generated.mol"s,
     mol,
     positions
