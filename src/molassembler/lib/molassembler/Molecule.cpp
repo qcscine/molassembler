@@ -56,6 +56,7 @@ Delib::BondOrderCollection Molecule::uffBondOrders(
 }
 
 Molecule::PseudoHashType Molecule::hashAtomEnvironment(
+  const temple::Bitmask<ComparisonComponents>& bitmask,
   const Delib::ElementType& elementType,
   const std::vector<BondType>& sortedBonds,
   boost::optional<Symmetry::Name> symmetryNameOptional,
@@ -83,7 +84,12 @@ Molecule::PseudoHashType Molecule::hashAtomEnvironment(
    *
    * Biggest is Cn, which has a value of 112 -> Fits in 7 bits (2^7 = 128)
    */
-  PseudoHashType value = static_cast<PseudoHashType>(elementType);
+  PseudoHashType value;
+  if(bitmask & ComparisonComponents::ElementTypes) {
+    value = static_cast<PseudoHashType>(elementType);
+  } else {
+    value = 0;
+  }
 
   /* Bonds have 8 possible values currently, plus None is 9
    * -> fits into 4 bits (2^4 = 16)
@@ -97,35 +103,39 @@ Molecule::PseudoHashType Molecule::hashAtomEnvironment(
    *
    * This occupies 4 * 8 = 32 bits.
    */
-  unsigned bondNumber = 0;
-  for(const auto& bond : sortedBonds) {
-    value += (
-      // No bond is represented by 0, while the remaining bond types are shifted
-      static_cast<PseudoHashType>(bond) + 1
-    ) << (7 + 4 * bondNumber);
+  if(bitmask & ComparisonComponents::BondOrders) {
+    unsigned bondNumber = 0;
+    for(const auto& bond : sortedBonds) {
+      value += (
+        // No bond is represented by 0, while the remaining bond types are shifted
+        static_cast<PseudoHashType>(bond) + 1
+      ) << (7 + 4 * bondNumber);
 
-    ++bondNumber;
+      ++bondNumber;
+    }
   }
 
-  if(symmetryNameOptional) {
+  if((bitmask & ComparisonComponents::Symmetries) && symmetryNameOptional) {
     /* We add symmetry information on non-terminal atoms. There are currently
      * 16 symmetries, plus None is 17, which fits into 5 bits (2^5 = 32)
      */
     value += (static_cast<PseudoHashType>(symmetryNameOptional.value()) + 1) << 39;
 
-    /* The remaining space 64 - (7 + 32 + 5) = 20 bits is used for the current
-     * permutation. In that space, we can store up to 2^20 - 2 > 1e5
-     * permutations (one (0) for no stereocenter, one (1) for unassigned),
-     * which ought to be plenty of bit space. Maximally asymmetric square
-     * antiprismatic has around 6k permutations, which fits into 13 bits.
-     */
-    PseudoHashType permutationValue;
-    if(assignedOptional) {
-      permutationValue = assignedOptional.value() + 2;
-    } else {
-      permutationValue = 1;
+    if(bitmask & ComparisonComponents::Stereopermutations) {
+      /* The remaining space 64 - (7 + 32 + 5) = 20 bits is used for the current
+       * permutation. In that space, we can store up to 2^20 - 2 > 1e5
+       * permutations (one (0) for no stereocenter, one (1) for unassigned),
+       * which ought to be plenty of bit space. Maximally asymmetric square
+       * antiprismatic has around 6k permutations, which fits into 13 bits.
+       */
+      PseudoHashType permutationValue;
+      if(assignedOptional) {
+        permutationValue = assignedOptional.value() + 2;
+      } else {
+        permutationValue = 1;
+      }
+      value += static_cast<PseudoHashType>(permutationValue) << 44;
     }
-    value += static_cast<PseudoHashType>(permutationValue) << 44;
   }
 
   return value;
@@ -1295,14 +1305,17 @@ RangeForTemporary<GraphType::adjacency_iterator> Molecule::operator [] (
   );
 }
 
-bool Molecule::operator == (const Molecule& other) const {
+bool Molecule::modularCompare(
+  const Molecule& other,
+  const temple::Bitmask<ComparisonComponents>& comparisonBitmask
+) const {
   const unsigned thisNumAtoms = numAtoms();
 
   if(thisNumAtoms != other.numAtoms()) {
     return false;
   }
 
-  auto generateHashes = [](const Molecule& mol) -> std::vector<PseudoHashType> {
+  auto generateHashes = [&comparisonBitmask](const Molecule& mol) -> std::vector<PseudoHashType> {
     std::vector<PseudoHashType> hashes;
 
     AtomIndexType N = mol.numAtoms();
@@ -1312,20 +1325,21 @@ bool Molecule::operator == (const Molecule& other) const {
     bonds.reserve(Symmetry::constexprProperties::maxSymmetrySize);
 
     for(AtomIndexType i = 0; i < N; ++i) {
-      bonds.clear();
+      if(comparisonBitmask & ComparisonComponents::BondOrders) {
+        bonds.clear();
 
-      for(const auto& edge : mol.iterateEdges(i)) {
-        bonds.emplace_back(mol.getGraph()[edge].bondType);
+        for(const auto& edge : mol.iterateEdges(i)) {
+          bonds.emplace_back(mol.getGraph()[edge].bondType);
+        }
+
+        std::sort(
+          bonds.begin(),
+          bonds.end()
+        );
       }
-
-      std::sort(
-        bonds.begin(),
-        bonds.end()
-      );
 
       boost::optional<Symmetry::Name> symmetryNameOption;
       boost::optional<unsigned> assignmentOption;
-
 
       if(mol.getStereocenterList().involving(i)) {
         const auto& stereocenterPtr = mol.getStereocenterList().at(i);
@@ -1342,6 +1356,7 @@ bool Molecule::operator == (const Molecule& other) const {
 
       hashes.emplace_back(
         hashAtomEnvironment(
+          comparisonBitmask,
           mol.getElementType(i),
           bonds,
           symmetryNameOption,
@@ -1416,110 +1431,135 @@ bool Molecule::operator == (const Molecule& other) const {
     return false;
   }
 
-  // Check that all bond types are identical
-  for(const auto& edgeIndex : iterateEdges()) {
-    // Fetch the corresponding edge from the other graph
-    auto otherEdgePair = boost::edge(
-      indexMap.at(boost::source(edgeIndex, _adjacencies)),
-      indexMap.at(boost::target(edgeIndex, _adjacencies)),
-      other._adjacencies
-    );
+  if(comparisonBitmask & ComparisonComponents::BondOrders) {
+    // Check that all bond types are identical
+    for(const auto& edgeIndex : iterateEdges()) {
+      // Fetch the corresponding edge from the other graph
+      auto otherEdgePair = boost::edge(
+        indexMap.at(boost::source(edgeIndex, _adjacencies)),
+        indexMap.at(boost::target(edgeIndex, _adjacencies)),
+        other._adjacencies
+      );
 
-    // This edge MUST be found, the isomorphism holds
-    assert(otherEdgePair.second);
+      // This edge MUST be found, the isomorphism holds
+      assert(otherEdgePair.second);
 
-    if(
-      _adjacencies[edgeIndex].bondType
-      != other._adjacencies[otherEdgePair.first].bondType
-    ) {
-      return false;
+      if(
+        _adjacencies[edgeIndex].bondType
+        != other._adjacencies[otherEdgePair.first].bondType
+      ) {
+        return false;
+      }
     }
   }
 
-  // Before doing a full equivalence check, peek at the sizes
-  if(_stereocenters.size() != other._stereocenters.size()) {
-    return false;
-  }
+  if(comparisonBitmask & ComparisonComponents::Symmetries) {
+    // Before doing a full equivalence check, peek at the sizes
+    if(_stereocenters.size() != other._stereocenters.size()) {
+      return false;
+    }
 
-  // Check equivalence of the StereocenterLists
-  for(const auto& stereocenterPtr : _stereocenters) {
-    if(stereocenterPtr->type() == Stereocenters::Type::CNStereocenter) {
-      const auto otherCentralAtom = indexMap.at(
-        stereocenterPtr->involvedAtoms().front()
-      );
+    // Check equivalence of the StereocenterLists
+    for(const auto& stereocenterPtr : _stereocenters) {
+      if(stereocenterPtr->type() == Stereocenters::Type::CNStereocenter) {
+        const auto otherCentralAtom = indexMap.at(
+          stereocenterPtr->involvedAtoms().front()
+        );
 
-      // Does other not have a stereocenter there?
-      if(!other._stereocenters.involving(otherCentralAtom)) {
-        return false;
-      }
-
-      // Ensure the type at other is a CNStereocenter too
-      if(
-        other._stereocenters.at(otherCentralAtom)->type()
-          != Stereocenters::Type::CNStereocenter
-      ) {
-        return false;
-      }
-
-      auto thisCNSPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(stereocenterPtr);
-      auto otherCNSPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
-        other._stereocenters.at(otherCentralAtom)
-      );
-
-      // Are they equal in an abstract sense, not object-representation-wise?
-      if(
-        thisCNSPtr->getSymmetry() != otherCNSPtr->getSymmetry()
-        || thisCNSPtr->numStereopermutations() != otherCNSPtr->numStereopermutations()
-        || thisCNSPtr->assigned() != otherCNSPtr->assigned()
-      ) {
-        return false;
-      }
-    } else {
-      const auto otherCentralAtoms = temple::map(
-        stereocenterPtr->involvedAtoms(),
-        [&indexMap](const auto& thisIndex) -> AtomIndexType {
-          return indexMap.at(thisIndex);
+        // Does other not have a stereocenter there?
+        if(!other._stereocenters.involving(otherCentralAtom)) {
+          return false;
         }
-      );
 
-      // Ensure there is a stereocenter on both
-      if(
-        !other._stereocenters.involving(otherCentralAtoms.front())
-        || !other._stereocenters.involving(otherCentralAtoms.back())
-      ) {
-        return false;
-      }
+        // Ensure the type at other is a CNStereocenter too
+        if(
+          other._stereocenters.at(otherCentralAtom)->type()
+            != Stereocenters::Type::CNStereocenter
+        ) {
+          return false;
+        }
 
-      // Address-compare that the stereocenters on other are identical for both
-      if(
-        other._stereocenters.at(otherCentralAtoms.front())
-          != other._stereocenters.at(otherCentralAtoms.back())
-      ) {
-        return false;
-      }
+        auto thisCNSPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(stereocenterPtr);
+        auto otherCNSPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+          other._stereocenters.at(otherCentralAtom)
+        );
 
-      // Ensure that it's also an EZStereocenter
-      if(
-        other._stereocenters.at(otherCentralAtoms.front())->type()
-          != Stereocenters::Type::EZStereocenter
-      ) {
-        return false;
-      }
+        // Are they equal in an abstract sense, not object-representation-wise?
+        if(
+          thisCNSPtr->getSymmetry() != otherCNSPtr->getSymmetry()
+          || thisCNSPtr->numStereopermutations() != otherCNSPtr->numStereopermutations()
+        ) {
+          return false;
+        }
 
-      // Shortcut name
-      const auto& otherPtr = other._stereocenters.at(otherCentralAtoms.front());
+        if(
+          (comparisonBitmask & ComparisonComponents::Stereopermutations)
+          && thisCNSPtr->assigned() != otherCNSPtr->assigned()
+        ) {
+          return false;
+        }
+      } else {
+        const auto otherCentralAtoms = temple::map(
+          stereocenterPtr->involvedAtoms(),
+          [&indexMap](const auto& thisIndex) -> AtomIndexType {
+            return indexMap.at(thisIndex);
+          }
+        );
 
-      // Abstract-compare both
-      if(
-        stereocenterPtr->numStereopermutations() != otherPtr->numStereopermutations()
-        || stereocenterPtr->assigned() != otherPtr->assigned()
-      ) {
-        return false;
+        // Ensure there is a stereocenter on both
+        if(
+          !other._stereocenters.involving(otherCentralAtoms.front())
+          || !other._stereocenters.involving(otherCentralAtoms.back())
+        ) {
+          return false;
+        }
+
+        // Address-compare that the stereocenters on other are identical for both
+        if(
+          other._stereocenters.at(otherCentralAtoms.front())
+            != other._stereocenters.at(otherCentralAtoms.back())
+        ) {
+          return false;
+        }
+
+        // Ensure that it's also an EZStereocenter
+        if(
+          other._stereocenters.at(otherCentralAtoms.front())->type()
+            != Stereocenters::Type::EZStereocenter
+        ) {
+          return false;
+        }
+
+        // Shortcut name
+        const auto& otherPtr = other._stereocenters.at(otherCentralAtoms.front());
+
+        // Abstract-compare both
+        if(stereocenterPtr->numStereopermutations() != otherPtr->numStereopermutations()) {
+          return false;
+        }
+
+        if(
+          (comparisonBitmask & ComparisonComponents::Stereopermutations)
+          && stereocenterPtr->assigned() != otherPtr->assigned()
+        ) {
+          return false;
+        }
       }
     }
   }
 
   return true;
+}
+
+bool Molecule::operator == (const Molecule& other) const {
+  // Operator == performs the most strict comparison possible
+  return modularCompare(
+    other,
+    temple::make_bitmask(ComparisonComponents::ElementTypes)
+      | ComparisonComponents::BondOrders
+      | ComparisonComponents::Symmetries
+      | ComparisonComponents::Stereopermutations
+  );
 }
 
 bool Molecule::operator != (const Molecule& other) const {

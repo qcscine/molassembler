@@ -115,6 +115,13 @@ HashArgumentsType randomArguments() {
 }
 
 BOOST_AUTO_TEST_CASE(environmentHashingTests) {
+  auto bitmaskTuple = std::make_tuple(
+    temple::make_bitmask(molassembler::Molecule::ComparisonComponents::ElementTypes)
+      | molassembler::Molecule::ComparisonComponents::BondOrders
+      | molassembler::Molecule::ComparisonComponents::Symmetries
+      | molassembler::Molecule::ComparisonComponents::Stereopermutations
+  );
+
   using namespace molassembler;
   // Try to guess a disjoint combination that has the same value
   std::unordered_map<long long unsigned, HashArgumentsType> resultsMap;
@@ -123,8 +130,8 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
 
     auto result = temple::detail::invokeHelper(
       Molecule::hashAtomEnvironment,
-      arguments,
-      std::make_index_sequence<4> {}
+      std::tuple_cat(bitmaskTuple, arguments),
+      std::make_index_sequence<5> {}
     );
 
     if(resultsMap.count(result) && arguments != resultsMap.at(result)) {
@@ -136,6 +143,8 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
           << "both yield " << result << "\n"
       );
     }
+
+    resultsMap.emplace(result, std::move(arguments));
   }
 }
 

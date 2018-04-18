@@ -6,6 +6,8 @@
 #include "CycleData.h"
 #include "LocalGeometryModel.h"
 
+#include "temple/Bitmask.h"
+
 #include "Delib/AtomCollection.h"
 #include "Delib/BondOrderCollection.h"
 
@@ -33,8 +35,21 @@ public:
 
   using PseudoHashType = unsigned long long;
 
+  /*! For modifying equality comparison strictness in member modularCompare
+   *
+   * Differing strictnesses of comparisons may be desirable for various
+   * purposes, hence a modular comparison function is provided.
+   */
+  enum class ComparisonComponents : unsigned {
+    ElementTypes,
+    BondOrders,
+    Symmetries,
+    Stereopermutations // Symmetries must be set in conjunction with this
+  };
+
   //! Convolutes the atom's element type and bonds into a characteristic number
   static PseudoHashType hashAtomEnvironment(
+    const temple::Bitmask<ComparisonComponents>& bitmask,
     const Delib::ElementType& elementType,
     const std::vector<BondType>& sortedBonds,
     boost::optional<Symmetry::Name> symmetryNameOptional,
@@ -217,9 +232,7 @@ public:
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereocenters or the removal of old ones.
    */
-  void assignStereocenterRandomly(
-    const AtomIndexType& a
-  );
+  void assignStereocenterRandomly(const AtomIndexType& a);
 
   /*! Removes an atom from the graph, including bonds to it.
    *
@@ -242,10 +255,7 @@ public:
    * It is, however, considered safe to remove the terminal vertex, which
    * involves removing the bond to it.
    */
-  void removeBond(
-    const AtomIndexType& a,
-    const AtomIndexType& b
-  );
+  void removeBond(const AtomIndexType& a, const AtomIndexType& b);
 
   //! Changes an existing bond's type
   bool setBondType(
@@ -342,10 +352,7 @@ public:
 
   bool isSafeToRemoveAtom(const AtomIndexType& a) const;
 
-  bool isSafeToRemoveBond(
-    const AtomIndexType& a,
-    const AtomIndexType& b
-  ) const;
+  bool isSafeToRemoveBond(const AtomIndexType& a, const AtomIndexType& b) const;
 
   /*! Returns a range-for temporary object allowing c++11 style for loop
    * iteration through an atom's adjacencies
@@ -362,9 +369,7 @@ public:
   /*! Returns a range-for temporary object allowing c++11-style for loop
    * iteration through edges around a specific atom
    */
-  RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(
-    const AtomIndexType& a
-  ) const;
+  RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(const AtomIndexType& a) const;
 
   unsigned numAtoms() const;
 
@@ -382,7 +387,38 @@ public:
     const AtomIndexType& a
   ) const;
 
-  //! Equality operator
+  /*! Modular comparison of this Molecule with another.
+   *
+   * This permits detailed specification of which elements of the molecular
+   * information you want to use in the comparison.
+   *
+   * Equality comparison is performed in several stages: First, at each atom
+   * position, a hash is computed that encompasses all local information that
+   * is specified to be used in the comparisonBitmask. This hash is then used
+   * during graph isomorphism calculation to avoid finding an isomorphism that
+   * does not consider the specified factors.
+   *
+   * If an isomorphism is found, it is then validated. Bond orders and
+   * stereocenters across both molecules are compared using the found
+   * isomorphism as an index map.
+   *
+   * NOTE: The number of stereopermutations that a stereocenter has is
+   * considered part of the Symmetry ComparisonOptions.
+   *
+   * NOTE: If you choose to discard bond order checking, this merely
+   * deactivates bond order hashing and a post-isomorphism-search bond order
+   * re-check. Bond order information - if present in the molecule prior to
+   * calling this function - is also present in stereocenter ranking information
+   * and hence can influence the number of stereopermutations and the currently
+   * set stereopermutation index. This can lead to unexpected but logically
+   * consistent comparison behavior.
+   */
+  bool modularCompare(
+    const Molecule& other,
+    const temple::Bitmask<ComparisonComponents>& comparisonBitmask
+  ) const;
+
+  //! Equality operator, performs most strict equality comparison
   bool operator == (const Molecule& other) const;
   bool operator != (const Molecule& other) const;
 

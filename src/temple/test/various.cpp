@@ -283,3 +283,18 @@ BOOST_AUTO_TEST_CASE(stringifyTests) {
 
   std::cout << temple::stringify(someTuple) << std::endl;
 }
+
+#include "temple/Bitmask.h"
+
+enum class ScopedEnum : unsigned {A, B, C};
+enum UnscopedEnum : unsigned {D, E};
+
+BOOST_AUTO_TEST_CASE(bitmaskAll) {
+  using namespace temple;
+
+  auto a = make_bitmask(ScopedEnum::A) | ScopedEnum::C;
+  BOOST_CHECK(a[ScopedEnum::A] && a[ScopedEnum::C] && !a[ScopedEnum::B]);
+
+  auto b = make_bitmask(UnscopedEnum::E);
+  BOOST_CHECK(b[UnscopedEnum::E] && !b[UnscopedEnum::D]);
+}
