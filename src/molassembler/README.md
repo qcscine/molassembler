@@ -10,8 +10,10 @@ modelled onto every non-terminal atom in the graph.
 
 ## Features
 
-- MOLFile input and output, stereocenter assignment detection from 3D
-  coordinates if present
+- XYZ input and output. Graph connectivity is interpreted from pairwise
+  distances, and stereocenter permutations are detected from 3D information.
+- MOLFile input and output. Graph connectivity is imported from the file. 
+  Stereocenter permutations are detected from 3D coordinates (if present).
 - Stereocenters are considered from trigonal pyramidal all the way up to square
   antiprismatic local geometries.
 
@@ -21,7 +23,7 @@ modelled onto every non-terminal atom in the graph.
     form a strained cycle and hence do not invert quickly are considered a
     stereocenter.
   - All non-superimposable configurations of a stereocenter are generated with
-    relative statistical occurrence weights, internally called "assignments".
+    relative statistical occurrence weights.
     Linking of ligands (denticity) is properly considered.
   - Ligand additions, ligand removals and symmetry alterations on stereocenters
     can preserve steric information in several variants:
@@ -74,56 +76,9 @@ modelled onto every non-terminal atom in the graph.
     analysis/graph_benchmarks/
 
 
-## Integrating
-
-This library requires the C++14 standard.
-
-External library dependencies:
-
-- boost: graph, functional, optional, test, outcome
-- Eigen: vector arithmetic
-- dlib: BFGS solver
-- RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
-- Delib: Common chemical exchange types
-
-Sub-libraries:
-
-- temple: randomness, cache, composability improvement shorthands, constexpr
-  algorithms and data structures
-- Symmetry information: constexpr properties of symmetries
-- Unique Assignment: Stereopermutation of ligands in arbitrary symmetries
-- Cyclic polygons: Determination of planar cyclic polygon internal angles for
-  any edge lengths
-
-
-## Compilation
-
-To build, run these commands starting at the main directory. 
-
-```bash
-$ mkdir build-release
-$ cd build-release
-$ cmake .. -DCMAKE_BUILD_TYPE=Release
-$ make
-```
-
-
-## Tests
-
-We recommend running the tests in a debug build of the library. Since the tests
-are fairly extensive, they may require considerable time to complete.
-
-```bash
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ make test
-```
-
 ## Documentation
 
-You can build the documentation by running `doxygen` in the main directory.
+You can build the documentation by running `doxygen`.
 
 
 [^1]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An

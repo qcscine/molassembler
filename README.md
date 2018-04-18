@@ -10,8 +10,10 @@ modelled onto every non-terminal atom in the graph.
 
 ## Features
 
-- MOLFile input and output, stereocenter assignment detection from 3D
-  coordinates if present
+- XYZ input and output. Graph connectivity is interpreted from pairwise
+  distances, and stereocenter permutations are detected from 3D information.
+- MOLFile input and output. Graph connectivity is imported from the file. 
+  Stereocenter permutations are detected from 3D coordinates (if present).
 - Stereocenters are considered from trigonal pyramidal all the way up to square
   antiprismatic local geometries.
 
@@ -21,7 +23,7 @@ modelled onto every non-terminal atom in the graph.
     form a strained cycle and hence do not invert quickly are considered a
     stereocenter.
   - All non-superimposable configurations of a stereocenter are generated with
-    relative statistical occurrence weights, internally called "assignments".
+    relative statistical occurrence weights.
     Linking of ligands (denticity) is properly considered.
   - Ligand additions, ligand removals and symmetry alterations on stereocenters
     can preserve steric information in several variants:
@@ -83,15 +85,18 @@ External library dependencies:
 - boost: graph, functional, optional, test, outcome
 - Eigen: vector arithmetic
 - dlib: BFGS solver
+- scine Delib: Common chemical exchange types
+
+External libraries included in distribution:
 - RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
-- Delib: Common chemical exchange types
+- Outcome: Improved error propagation
 
 Sub-libraries:
 
 - temple: randomness, cache, composability improvement shorthands, constexpr
   algorithms and data structures
 - Symmetry information: constexpr properties of symmetries
-- Unique Assignment: Stereopermutation of ligands in arbitrary symmetries
+- Stereopermutation: Stereopermutation of ligands in arbitrary symmetries
 - Cyclic polygons: Determination of planar cyclic polygon internal angles for
   any edge lengths
 
@@ -103,27 +108,20 @@ To build, run these commands starting at the main directory.
 ```bash
 $ mkdir build-release
 $ cd build-release
-$ cmake .. -DCMAKE_BUILD_TYPE=Release
+$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=<scine-installation-root> ..
 $ make
 ```
-
 
 ## Tests
 
 We recommend running the tests in a debug build of the library. Since the tests
-are fairly extensive, they may require considerable time to complete.
-
-```bash
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ make test
-```
+are extensive, they may require up to 30 minutes to complete in a debug build.
 
 ## Documentation
 
-You can build the documentation by running `doxygen` in the main directory.
+You can build the full tree documentation by running `doxygen` in the main
+directory. Partial documentation can also be built from within the
+sub-libraries' main folders.
 
 
 [^1]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
