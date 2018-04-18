@@ -37,6 +37,7 @@ gcc-build:
     key: "$CI_BUILD_REF_NAME"
     paths:
     - build-gcc/
+    - scine-install/
 
 gcc-test:
   stage: test
@@ -51,6 +52,7 @@ gcc-test:
     key: "$CI_BUILD_REF_NAME"
     paths:
     - build-gcc/
+    policy: pull
 
 clang-build:
   stage: build
@@ -68,6 +70,7 @@ clang-build:
     key: "$CI_BUILD_REF_NAME"
     paths:
     - build-clang/
+    - scine-install
 
 clang-test:
   stage: test
@@ -82,3 +85,4 @@ clang-test:
     key: "$CI_BUILD_REF_NAME"
     paths:
     - build-clang/
+    policy: pull
