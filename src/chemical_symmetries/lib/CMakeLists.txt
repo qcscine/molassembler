@@ -1,5 +1,6 @@
 # dependencies
 find_package(Eigen3 3.1.1 REQUIRED)
+find_package(Boost REQUIRED)
 
 message(STATUS "CREATING chemical_symmetries target")
 set(chemical_symmetries_VERSION 0.1.0)
@@ -34,6 +35,7 @@ target_include_directories(
   chemical_symmetries
     PUBLIC
       ${EIGEN3_INCLUDE_DIRS}
+      ${Boost_INCLUDE_DIRS}
 )
 target_link_libraries(chemical_symmetries molassembler::temple)
 
