@@ -112,7 +112,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   message(STATUS "Selected release build")
   # no debug information, disable assert
   target_compile_definitions(molassembler PRIVATE NDEBUG)
-  target_compile_options(molassembler PUBLIC -O3 -march=native)
+  target_compile_options(molassembler PUBLIC -O2 -march=native)
 else() # assume Debug
   message(STATUS "Assume debug build")
   target_compile_options(molassembler PUBLIC -g)
@@ -130,6 +130,7 @@ target_link_libraries(
     boost_outcome
     gor1
     chemical_symmetries
+    dlib::dlib
     blas
     RingDecomposerLibStatic
 )
