@@ -12,11 +12,7 @@
  * At the moment, only Clang >= 4.0.0 is known to be able to compile the
  * constexpr algorithms.
  */
-#if __clang__
-/* Additionally, a compile-time flag can be set to deactivate compile-time
- * algorithms entirely
- */
-#ifndef CHEMICAL_SYMMETRIES_NO_CONSTEXPR_ALGORITHMS
+#if defined(__clang__) || defined(CHEMICAL_SYMMETRIES_TRY_CONSTEXPR)
 
 /* If USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE is defined, a table of all
  * angles resulting from a predefined set of positions is generated and that
@@ -85,5 +81,4 @@
  * the size of the symmetry.
  */
 #define USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
-#endif
 #endif

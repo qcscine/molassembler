@@ -128,7 +128,10 @@ struct makeAllHasUnlinkedAssignmentsFunctor {
   }
 };
 
-constexpr auto allHasMultipleUnlinkedAssignments = temple::TupleType::map<
+constexpr temple::Array<
+  temple::DynamicArray<bool, constexprProperties::maxSymmetrySize>,
+  nSymmetries
+> allHasMultipleUnlinkedAssignments = temple::TupleType::map<
   data::allSymmetryDataTypes,
   makeAllHasUnlinkedAssignmentsFunctor
 >();

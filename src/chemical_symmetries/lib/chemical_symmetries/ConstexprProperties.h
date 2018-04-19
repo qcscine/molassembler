@@ -604,10 +604,6 @@ constexpr auto symmetryTransitionMappings() {
   auto indexMapping = startingIndexSequence<SymmetryClassTo>();
 
   temple::Bitset<temple::Math::factorial(SymmetryClassTo::size)> encounteredMappings;
-  /*temple::DynamicSet<
-    IndexListStorageType,
-    temple::Math::factorial(SymmetryClassTo::size)
-  > encounteredMappings;*/
 
   temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance

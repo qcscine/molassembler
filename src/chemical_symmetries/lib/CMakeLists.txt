@@ -49,6 +49,11 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0
   )
 endif()
+if(${CHEMICAL_SYMMETRIES_TRY_CONSTEXPR})
+  target_compile_definitions(
+    chemical_symmetries PUBLIC CHEMICAL_SYMMETRIES_TRY_CONSTEXPR
+  )
+endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   message(STATUS "Selected release build")
