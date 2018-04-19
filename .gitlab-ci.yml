@@ -3,23 +3,41 @@ stages:
   - build
   - test
 
-scine-build:
+scine-build-gcc:
   stage: build-dependencies
   tags:
     - centos
   script:
-    - git clone --depth 1 git@gitlab.chab.ethz.ch:scine/scine.git -b develop
+    - git clone --branch v0.2.0 --depth 1 git@gitlab.chab.ethz.ch:scine/scine.git
     - module purge
     - module load module_include_dir gcc/7.3.0 boost/gcc-7.3.0/1.64.0-cmake Eigen/3.3.2-cmake
-    - mkdir scine-build
-    - cd scine-build
-    - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../scine-install -DSCINE_INSTALL_DEV_FILES=ON -DSCINE_INCLUDE_PROJECT_DIRS=Utilities/CppUtil\;Utilities/Delib/lib ../scine
+    - mkdir scine-build-gcc
+    - cd scine-build-gcc
+    - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../scine-install-gcc -DSCINE_INSTALL_DEV_FILES=ON -DSCINE_INCLUDE_PROJECT_DIRS=Utilities/CppUtil\;Utilities/Delib/lib ../scine
     - make
     - make install
   cache:
     key: "$CI_BUILD_REF_NAME"
     paths:
-      - scine-install/
+      - scine-install-gcc/
+
+scine-build-clang:
+  stage: build-dependencies
+  tags:
+    - centos
+  script:
+    - git clone --branch v0.2.0 --depth 1 git@gitlab.chab.ethz.ch:scine/scine.git
+    - module purge
+    - module load module_include_dir gcc/7.3.0 clang/6.0.0 boost/clang-6.0.0/1.64.0-cmake Eigen/3.3.2-cmake
+    - mkdir scine-build-clang
+    - cd scine-build-clang
+    - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../scine-install-clang -DSCINE_INSTALL_DEV_FILES=ON -DSCINE_INCLUDE_PROJECT_DIRS=Utilities/CppUtil\;Utilities/Delib/lib ../scine
+    - make
+    - make install
+  cache:
+    key: "$CI_BUILD_REF_NAME"
+    paths:
+      - scine-install-clang/
 
 gcc-build:
   stage: build
@@ -31,13 +49,13 @@ gcc-build:
     - module load module_include_dir gcc/7.3.0 boost/gcc-7.3.0/1.64.0-cmake Eigen/3.3.2-cmake dlib/gcc-7.3.0/19.10-cmake
     - mkdir -p build-gcc
     - cd build-gcc
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=../scine-install ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=../scine-install-gcc ..
     - make
   cache:
     key: "$CI_BUILD_REF_NAME"
     paths:
     - build-gcc/
-    - scine-install/
+    - scine-install-gcc/
 
 gcc-test:
   stage: test
@@ -64,13 +82,13 @@ clang-build:
     - module load module_include_dir gcc/7.3.0 clang/6.0.0 boost/clang-6.0.0/1.64.0-cmake Eigen/3.3.2-cmake dlib/gcc-7.3.0/19.10-cmake
     - mkdir -p build-clang
     - cd build-clang
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=../scine-install ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=../scine-install-clang ..
     - make
   cache:
     key: "$CI_BUILD_REF_NAME"
     paths:
     - build-clang/
-    - scine-install
+    - scine-install-clang
 
 clang-test:
   stage: test
