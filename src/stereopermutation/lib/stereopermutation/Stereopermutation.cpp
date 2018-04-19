@@ -94,13 +94,13 @@ bool Stereopermutation::nextPermutation() {
     j = i;
 
     if(
-      i != 0 
+      i != 0
       && columnSmaller(--i, j)
     ) {
       k = characters.size();
 
       while(
-        k != 0 
+        k != 0
         && !columnSmaller(i, --k)
       ) { }
 
@@ -126,13 +126,13 @@ bool Stereopermutation::previousPermutation() {
     j = i;
 
     if(
-      i != 0 
+      i != 0
       && columnSmaller(j, --i)
     ) {
       k = characters.size();
 
       while(
-        k != 0 
+        k != 0
         && !columnSmaller(--k, i)
       ) { }
 
@@ -154,9 +154,7 @@ typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
   const LinksSetType& links,
   const std::vector<unsigned>& rotationIndices
 ) const {
-  auto rotateIndex = [&rotationIndices, this](
-    const unsigned& from
-  ) -> unsigned {
+  auto rotateIndex = [&rotationIndices](const unsigned& from) -> unsigned {
     return std::find(
       rotationIndices.begin(),
       rotationIndices.end(),
@@ -283,25 +281,25 @@ std::pair<
 ) const {
 
   // add the initial structure to a set of Stereopermutations
-  std::set<Stereopermutation> enumeratedStereopermutations = {*this};   
+  std::set<Stereopermutation> enumeratedStereopermutations = {*this};
 
   /* Systematically explore all rotations:
    * The chain exists to keep track of which rotations starting from the base
-   * structure we have already explored, and which to perform next on which 
+   * structure we have already explored, and which to perform next on which
    * intermediate structure. Say we have 4 rotations defined in the current
    * symmetry, then linkLimit is 4.
    *
-   * Chain initially is {0} and chainStructures is {copy of *this}. 
+   * Chain initially is {0} and chainStructures is {copy of *this}.
    * So in the loop we copy out the last element of chainStructures and perform
-   * the rotation 0 on it. 
+   * the rotation 0 on it.
    *
    * If it's something new, we add it to a set of generated structures, push it
    * onto the chain of structures, and add an instruction to perform the
    * rotation 0 on the new structure.
    *
-   * If it isn't something new, we increment the instruction at the end of 
-   * the chain. If that happens to be linkLimit, then we pop off the last 
-   * elements of both chains and increment the instruction at the new end 
+   * If it isn't something new, we increment the instruction at the end of
+   * the chain. If that happens to be linkLimit, then we pop off the last
+   * elements of both chains and increment the instruction at the new end
    * position.
    *
    * This leads to a tree traversal that prunes the tree whenever an
@@ -310,7 +308,7 @@ std::pair<
   // maximum element is the size of the rotation vector
   unsigned linkLimit = Symmetry::rotations(symmetryName).size();
 
-  // initialize 
+  // initialize
   std::vector<unsigned> chain = {0};
   std::vector<Stereopermutation> chainStructures = {*this};
   unsigned depth = 0;
@@ -370,7 +368,7 @@ std::pair<
 }
 
 void Stereopermutation::lowestPermutation() {
-  /* laziest way to implement is to call nextPermutation until it returns 
+  /* laziest way to implement is to call nextPermutation until it returns
    * false, at which point the data structure is reset to its lowest
    * permutation.
    */
@@ -455,12 +453,12 @@ bool Stereopermutation::isSortedAsc() const {
   bool isSorted = true;
   for(unsigned i = 0; i < characters.size() - 1; i++) {
     /* It is a mistake with to test !columnSmaller(i, i + 1) as equal columns
-     * can arise, e.g. chars {A, A}, links {[0, 1]}, in which 
+     * can arise, e.g. chars {A, A}, links {[0, 1]}, in which
      * columnSmaller(0, 1) = false. Using abovementioned test also places the
      * restriction of monotonic increase upon the columns. It is better to
      * test columnSmaller(i + 1, i).
      */
-    if(columnSmaller(i + 1, i)) { 
+    if(columnSmaller(i + 1, i)) {
       isSorted = false;
       break;
     }

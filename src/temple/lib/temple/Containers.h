@@ -8,6 +8,7 @@
 #include <numeric>
 #include <set>
 #include <map>
+#include <string>
 
 /*! @file
  *
@@ -351,7 +352,7 @@ std::enable_if_t<
   std::string
 > condenseIterable(
   const Container& container,
-  const std::string& joiningChar = ", "
+  std::string joiningChar = ", "
 );
 
 //! Version for strings
@@ -363,7 +364,7 @@ template<class Container> std::enable_if_t<
   std::string
 > condenseIterable(
   const Container& container,
-  const std::string& joiningChar = ", "
+  std::string joiningChar = ", "
 );
 
 /*!
@@ -1020,7 +1021,7 @@ std::enable_if_t<
   std::string
 > condenseIterable(
   const Container& container,
-  const std::string& joiningChar
+  std::string joiningChar
 ) {
   using namespace std::string_literals;
 
@@ -1044,7 +1045,7 @@ template<class Container> std::enable_if_t<
   std::string
 > condenseIterable(
   const Container& container,
-  const std::string& joiningChar
+  std::string joiningChar
 ) {
   using namespace std::string_literals;
 

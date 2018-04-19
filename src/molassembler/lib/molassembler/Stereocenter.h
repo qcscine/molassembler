@@ -72,6 +72,9 @@ enum class Type {
 
 class Stereocenter {
 public:
+/* Virtual destructor */
+  virtual ~Stereocenter() = default;
+
 /* Modification */
   //!  Assign this feature
   virtual void assign(const boost::optional<unsigned>& assignment) = 0;

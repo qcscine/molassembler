@@ -89,15 +89,13 @@ Library dependencies:
 
 ## Compilation
 
-Since constexpr is a relatively new and complex feature, compiler
-implementations have been spotty. It is known that gcc 6.3.3 and 7.2.0 are
+Since constexpr is a relatively new and complex C++ feature, compiler
+implementations have been spotty. It is known that gcc 6.3.3 and 7.3.0 are
 unable to handle the precomputation of several constexpr algorithms, whose
 results would otherwise be available at runtime. Newer versions of gcc have not
 been tested.
 
-Clang >= 4.0.0 is known to compile these algorithms just fine, but requires 
-significant amounts of memory during compilation. The precomputation of symmetry
-properties should take less than 10 minutes of CPU time.
+Clang >= 4.0.0 is known to compile these algorithms just fine in 3-5 minutes.
 
 Since no other compilers have been tested so far, the symmetry property
 precomputation is enabled only on clang builds.
