@@ -7,11 +7,11 @@
 
 /*! @file
  *
- * Provides \c constexpr basic mathematical function implementations, some 
+ * Provides \c constexpr basic mathematical function implementations, some
  * logical functions and floating-point comparison helpers.
  */
 
-/* TODO 
+/* TODO
  * - Add periodicities of the trigonometric functions
  * - Investigate ill-conditioned quality of inverse trig functions at specific
  *   angles (see https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
@@ -38,6 +38,15 @@ using enableIfIntegralWithReturn = std::enable_if_t<
   std::is_integral<T>::value,
   U
 >;
+
+template<typename FloatingPoint>
+constexpr inline std::enable_if_t<
+  std::is_floating_point<FloatingPoint>::value,
+  bool
+> isnan(const FloatingPoint& x) {
+  // see notes at http://en.cppreference.com/w/cpp/numeric/math/isnan
+  return x != x;
+}
 
 } // namespace traits
 
@@ -199,7 +208,7 @@ constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T& value) {
 }
 
 /* Based on series expansion of ln x:
- * 
+ *
  *   y(x) = (x - 1) / (x + 1)
  *   ln x = 2 [ y + y^3/3 + y^5/5 + ...]
  *
@@ -425,12 +434,12 @@ template<typename T>
 constexpr T pow(const T& base, const int& exponent) noexcept {
   if(exponent < 0) {
     return 1.0 / pow(base, static_cast<unsigned>(temple::Math::abs(exponent)));
-  } 
+  }
 
   if(exponent == 0) {
     return 1;
   }
-  
+
   return pow(base, static_cast<unsigned>(exponent));
 }
 
@@ -543,7 +552,7 @@ constexpr T asin(const T& x) {
       upper_factorial / lower_factorial
     ) * pow(x, 2 * n + 1) / (2 * n + 1);
 
-    if(std::isnan(term)) {
+    if(traits::isnan(term)) {
       break;
     }
 
