@@ -1,7 +1,6 @@
 # dependencies
 find_package(Eigen3 3.1.1 REQUIRED)
 
-message(STATUS "CREATING chemical_symmetries target")
 set(chemical_symmetries_VERSION 0.1.0)
 
 set(HEADERS_All

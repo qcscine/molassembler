@@ -21,12 +21,6 @@ target_include_directories(stereopermutation PUBLIC $<BUILD_INTERFACE:${CMAKE_CU
 target_include_directories(stereopermutation SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)
 target_include_directories(stereopermutation PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
-if(TARGET chemical_symmetries)
-  message(STATUS "chemical_symmetries is a target")
-else()
-  message(STATUS "chemical_symmetries isn't a target")
-endif()
-
 target_link_libraries(stereopermutation PUBLIC chemical_symmetries)
 
 if(UNIX)

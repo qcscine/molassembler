@@ -13,7 +13,7 @@ namespace Symmetry {
 
 /* Derived stored constexpr data */
 //! The smallest angle between ligands in any symmetry
-constexpr double smallestAngle __attribute__ ((unused)) 
+constexpr double smallestAngle __attribute__ ((unused))
 = temple::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
   constexprProperties::minAngleFunctor
@@ -41,19 +41,19 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   const boost::optional<unsigned>& removedIndexOption = boost::none
 );
 
-#ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
 extern const temple::Array<
-  temple::DynamicArray<unsigned, constexprProperties::maxSymmetrySize>,
+  temple::DynamicArray<bool, constexprProperties::maxSymmetrySize>,
   nSymmetries
-> allNumUnlinkedAssignments;
+> allHasMultipleUnlinkedAssignments;
 #endif
 
 extern temple::MinimalCache<
   Symmetry::Name,
-  std::vector<unsigned>
-> numUnlinkedCache;
+  std::vector<bool>
+> hasMultipleUnlinkedCache;
 
-unsigned getNumUnlinked(
+bool hasMultipleUnlinkedAssignments(
   const Symmetry::Name& symmetryName,
   unsigned nIdenticalLigands
 );

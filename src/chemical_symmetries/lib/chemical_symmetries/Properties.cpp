@@ -1,6 +1,7 @@
 #include "Properties.h"
 #include "temple/constexpr/ToSTL.h"
 
+
 namespace Symmetry {
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -108,18 +109,18 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   return mappingsCache.getOption(cacheKey);
 }
 
-#ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
 template<typename Symmetry>
-struct makeAllNumUnlinkedAssignmentsFunctor {
+struct makeAllHasUnlinkedAssignmentsFunctor {
   static constexpr auto value() {
-    temple::DynamicArray<unsigned, constexprProperties::maxSymmetrySize> nums;
+    temple::DynamicArray<bool, constexprProperties::maxSymmetrySize> nums;
 
     /* Value for 0 is equal to value for 1, so calculate one less. When all
      * are equal, there is obviously only one assignment, no need to calculate
      */
     for(unsigned i = 0; i < Symmetry::size - 1; ++i) {
       nums.push_back(
-        constexprProperties::numUnlinkedAssignments<Symmetry>(i + 1)
+        constexprProperties::hasMultipleUnlinkedAssignments<Symmetry>(i + 1)
       );
     }
 
@@ -127,18 +128,18 @@ struct makeAllNumUnlinkedAssignmentsFunctor {
   }
 };
 
-constexpr auto allNumUnlinkedAssignments = temple::TupleType::map<
+constexpr auto allHasMultipleUnlinkedAssignments = temple::TupleType::map<
   data::allSymmetryDataTypes,
-  makeAllNumUnlinkedAssignmentsFunctor
+  makeAllHasUnlinkedAssignmentsFunctor
 >();
 #endif
 
 temple::MinimalCache<
   Symmetry::Name,
-  std::vector<unsigned>
-> numUnlinkedCache;
+  std::vector<bool>
+> hasMultipleUnlinkedCache;
 
-unsigned getNumUnlinked(
+bool hasMultipleUnlinkedAssignments(
   const Symmetry::Name& symmetryName,
   unsigned nIdenticalLigands
 ) {
@@ -150,19 +151,19 @@ unsigned getNumUnlinked(
     ++nIdenticalLigands;
   }
 
-  if(numUnlinkedCache.has(symmetryName)) {
-    return numUnlinkedCache.get(symmetryName).at(nIdenticalLigands - 1);
+  if(hasMultipleUnlinkedCache.has(symmetryName)) {
+    return hasMultipleUnlinkedCache.get(symmetryName).at(nIdenticalLigands - 1);
   }
 
-#ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
   // Generate the cache element from constexpr non-STL data
-  const auto& dynArrRef = allNumUnlinkedAssignments.at(
+  const auto& dynArrRef = allHasMultipleUnlinkedAssignments.at(
     static_cast<unsigned>(symmetryName)
   );
 
   auto stlMapped = temple::toSTL(dynArrRef);
 
-  numUnlinkedCache.add(
+  hasMultipleUnlinkedCache.add(
     symmetryName,
     stlMapped
   );
@@ -170,17 +171,17 @@ unsigned getNumUnlinked(
   return stlMapped.at(nIdenticalLigands - 1);
 #else
   // Generate the cache element using dynamic properties
-  std::vector<unsigned> unlinkedAssignments;
+  std::vector<bool> unlinkedAssignments;
   for(unsigned i = 0; i < Symmetry::size(symmetryName) - 1; ++i) {
     unlinkedAssignments.push_back(
-      properties::numUnlinkedAssignments(
+      properties::hasMultipleUnlinkedAssignments(
         symmetryName,
         i + 1
       )
     );
   }
 
-  numUnlinkedCache.add(
+  hasMultipleUnlinkedCache.add(
     symmetryName,
     unlinkedAssignments
   );

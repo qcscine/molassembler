@@ -55,8 +55,8 @@ public:
 
     bool hasStereocenter = _baseRef._tree[vertexIndex].stereocenterOption.operator bool();
 
-    os << "[" 
-      << R"(label=")" << vertexIndex << "-" << symbolString 
+    os << "["
+      << R"(label=")" << vertexIndex << "-" << symbolString
       << _baseRef._tree[vertexIndex].molIndex << R"(")";
 
     // Node background coloring
@@ -65,15 +65,15 @@ public:
     } else if(hasStereocenter) {
       os << R"(, fillcolor="steelblue")";
     } else if(MolGraphWriter::elementBGColorMap.count(symbolString) != 0u) {
-      os << R"(, fillcolor=")" 
+      os << R"(, fillcolor=")"
         << MolGraphWriter::elementBGColorMap.at(symbolString) << R"(")";
-    } 
+    }
 
     // Font coloring
     if(_colorVertices.count(vertexIndex) > 0) {
       os << R"(, fontcolor="white")";
     } else if(MolGraphWriter::elementTextColorMap.count(symbolString) != 0u) {
-      os << R"(, fontcolor=")" 
+      os << R"(, fontcolor=")"
         << MolGraphWriter::elementTextColorMap.at(symbolString) << R"(")";
     } else if(hasStereocenter) {
       os << R"(, fontcolor="white")";
@@ -91,7 +91,7 @@ public:
 
     // Tooltip
     if(hasStereocenter) {
-      os << R"(, tooltip=")" 
+      os << R"(, tooltip=")"
         << _baseRef._tree[vertexIndex].stereocenterOption.value().info()
         << R"(")";
     }
@@ -115,7 +115,7 @@ public:
     } else if(hasStereocenter) {
       os << R"(color="steelblue")";
     }
-    
+
     // Edge width
     if(_colorEdges.count(edgeIndex) > 0 || hasStereocenter) {
       os << R"(, penwidth="2")";
@@ -159,8 +159,8 @@ public:
       ) < static_cast<unsigned>(
         _base._moleculeRef.getElementType(_base._tree[b].molIndex)
       );
-    } 
-    
+    }
+
     if(aDuplicate && bDuplicate) {
       // That vertex is smaller which is further from root (invert comparison)
       return _base._duplicateDepth(a) > _base._duplicateDepth(b);
@@ -296,7 +296,7 @@ public:
        * This is valid for both CN and EZ types of stereocenters
        */
       return (
-        (StereocenterA.numStereopermutations() > 1) 
+        (StereocenterA.numStereopermutations() > 1)
         > (StereocenterB.numStereopermutations() > 1)
       );
     }
@@ -307,7 +307,7 @@ private:
   VariantComparisonVisitor _variantComparator;
 
 public:
-  SequenceRuleFourVariantComparator(const RankingTree& base) 
+  SequenceRuleFourVariantComparator(const RankingTree& base)
     : _base(base),
       _variantComparator {*this}
   {}
@@ -384,7 +384,7 @@ private:
   VariantComparisonVisitor _variantComparator;
 
 public:
-  SequenceRuleFiveVariantComparator(const RankingTree& base) 
+  SequenceRuleFiveVariantComparator(const RankingTree& base)
     : _base(base),
       _variantComparator {*this}
   {}
@@ -482,7 +482,7 @@ public:
     const auto& bOption = _baseRef._tree[b].stereocenterOption;
 
     return (
-      aOption 
+      aOption
       && bOption
       && aOption.value().numStereopermutations() == bOption.value().numStereopermutations()
       && aOption.value().assigned() == bOption.value().assigned()
@@ -520,18 +520,18 @@ void RankingTree::_applySequenceRules(
 
 
   /* Sequence rule 3: double bond configurations
-   * - Z > E > unassigned > non-stereogenic 
+   * - Z > E > unassigned > non-stereogenic
    *   (seqCis > seqTrans > non-stereogenic)
    */
   /* Before we can compare using sequence rule 3, we have to instantiate all
    * auxiliary descriptors, meaning we have to instantiate EZStereocenters in
    * all double bond positions and CNStereocenters in all candidate
-   * positions. 
+   * positions.
    *
    * In both cases, we have to rank non-duplicate adjacent vertices according
    * to the all of the same sequence rules, with the difference that graph
    * traversal isn't straightforward top-down, but proceeds in all unexplored
-   * directions. 
+   * directions.
    *
    * We want to proceed from the outer parts of the tree inwards, so that
    * branches that are forced to consider later sequence rules have their
@@ -615,7 +615,7 @@ void RankingTree::_applySequenceRules(
         // Instantiate an EZStereocenter here!
 
         auto sourceIndicesToRank = _auxiliaryAdjacentsToRank(
-          sourceIndex, 
+          sourceIndex,
           {targetIndex}
         );
 
@@ -724,7 +724,7 @@ void RankingTree::_applySequenceRules(
         /* In case only one assignment is possible, there is no reason to rank
          * the substituents at all
          */
-        if(Symmetry::getNumUnlinked(localSymmetry, nHydrogens) > 1) {
+        if(Symmetry::hasMultipleUnlinkedAssignments(localSymmetry, nHydrogens)) {
           // Instantiate a CNStereocenter here!
           RankingInformation centerRanking;
 
@@ -781,7 +781,7 @@ void RankingTree::_applySequenceRules(
             // Mark that we instantiated something
             foundCNStereocenters = true;
           }
-          
+
           if /*C++17 constexpr */ (buildTypeIsDebug) {
             if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
               _writeGraphvizFiles({
@@ -814,7 +814,7 @@ void RankingTree::_applySequenceRules(
 
     if /* C++17 constexpr */(buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
-        << "Sets post sequence rule 3: {" 
+        << "Sets post sequence rule 3: {"
         << temple::condenseIterable(
           temple::map(
             _branchOrderingHelper.getSets(),
@@ -844,7 +844,7 @@ void RankingTree::_applySequenceRules(
    *   Procedure:
    *
    *   - Create a set of all stereogenic groups within the branches to rank
-   *   - Establish relative rank by application of sequence rules. 
+   *   - Establish relative rank by application of sequence rules.
    *
    *     Can probably use _auxiliaryApplySequenceRules recursively at the first
    *     junction between competing stereocenters on the respective branch
@@ -857,7 +857,7 @@ void RankingTree::_applySequenceRules(
    *     the following rules:
    *
    *     - The solitarily highest ranked stereogenic group
-   *     - The stereodescriptor occurring more often than all others in 
+   *     - The stereodescriptor occurring more often than all others in
    *       the set of stereodescriptors
    *     - All most-often-occurring stereodescriptors
    *
@@ -979,7 +979,7 @@ void RankingTree::_applySequenceRules(
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "Sets post sequence rule 4A: {" 
+      << "Sets post sequence rule 4A: {"
       << temple::condenseIterable(
         temple::map(
           _branchOrderingHelper.getSets(),
@@ -1059,7 +1059,7 @@ void RankingTree::_applySequenceRules(
             relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
           } else if(bDepth < aDepth) {
             relativeOrders.at(branchIndex).addLessThanRelationship(b, a);
-          } else { 
+          } else {
             // Try to resolve via ranking downwards from the junction
             auto junctionInfo = _junction(
               boost::apply_visitor(sourceNodeFetcher, a),
@@ -1089,7 +1089,7 @@ void RankingTree::_applySequenceRules(
                   relativeOrders.at(branchIndex).addLessThanRelationship(a, b);
                 }
               }
-            } 
+            }
           }
         }
       );
@@ -1190,13 +1190,13 @@ void RankingTree::_applySequenceRules(
 
           // Precedence via amount of representative stereodescriptors
           if(
-            representativeStereodescriptors.at(branchA).size() 
-            < representativeStereodescriptors.at(branchB).size() 
+            representativeStereodescriptors.at(branchA).size()
+            < representativeStereodescriptors.at(branchB).size()
           ) {
             _branchOrderingHelper.addLessThanRelationship(branchA, branchB);
           } else if(
-            representativeStereodescriptors.at(branchB).size() 
-            < representativeStereodescriptors.at(branchA).size() 
+            representativeStereodescriptors.at(branchB).size()
+            < representativeStereodescriptors.at(branchA).size()
           ) {
             _branchOrderingHelper.addLessThanRelationship(branchB, branchA);
           } else {
@@ -1211,7 +1211,7 @@ void RankingTree::_applySequenceRules(
              * stereodescriptors is the guiding principle here.
              *
              * So, we require that CN-tetrahedral-2-0 and EZ-2-0 are
-             * considered like and so are CN-tetrahedral-2-1 and EZ-2-1. 
+             * considered like and so are CN-tetrahedral-2-1 and EZ-2-1.
              *
              * We go about this by deciding that two stereodescriptors compare
              * like if they have the same number of assignments and have the
@@ -1306,7 +1306,7 @@ void RankingTree::_applySequenceRules(
 
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
-        << "Sets post sequence rule 4B: {" 
+        << "Sets post sequence rule 4B: {"
         << temple::condenseIterable(
           temple::map(
             _branchOrderingHelper.getSets(),
@@ -1333,7 +1333,7 @@ void RankingTree::_applySequenceRules(
     return;
   }
 
-  /* Sequence rule 5: 
+  /* Sequence rule 5:
    * - Atom or group with {R, M, Z} precedes {S, P, E}
    */
   _runBFS<
@@ -1350,7 +1350,7 @@ void RankingTree::_applySequenceRules(
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "Sets post sequence rule 5: {" 
+      << "Sets post sequence rule 5: {"
       << temple::condenseIterable(
         temple::map(
           _branchOrderingHelper.getSets(),
@@ -1389,9 +1389,9 @@ std::vector<
 
 #ifndef NEDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
-    << "  Auxiliary ranking substituents of tree index " 
-    << sourceIndex 
-    <<  ": " 
+    << "  Auxiliary ranking substituents of tree index "
+    << sourceIndex
+    <<  ": "
     << temple::condenseIterable(
       temple::map(
         orderingHelper.getSets(),
@@ -1420,7 +1420,7 @@ std::vector<
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "  Sets post sequence rule 1: {" 
+      << "  Sets post sequence rule 1: {"
       << temple::condenseIterable(
         temple::map(
           orderingHelper.getSets(),
@@ -1457,7 +1457,7 @@ std::vector<
    */
 
   /* Sequence rule 3: double bond configurations
-   * - Z > E > unassigned > non-stereogenic 
+   * - Z > E > unassigned > non-stereogenic
    *   (seqCis > seqTrans > non-stereogenic)
    */
   _runBFS<
@@ -1475,7 +1475,7 @@ std::vector<
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "  Sets post sequence rule 3: {" 
+      << "  Sets post sequence rule 3: {"
       << temple::condenseIterable(
         temple::map(
           orderingHelper.getSets(),
@@ -1505,7 +1505,7 @@ std::vector<
    *   Procedure:
    *
    *   - Create a set of all stereogenic groups within the branches to rank
-   *   - Establish relative rank by application of sequence rules. 
+   *   - Establish relative rank by application of sequence rules.
    *
    *     Can probably use _auxiliaryApplySequenceRules recursively at the first
    *     junction between competing stereocenters on the respective branch
@@ -1518,7 +1518,7 @@ std::vector<
    *     the following rules:
    *
    *     - The solitarily highest ranked stereogenic group
-   *     - The stereodescriptor occurring more often than all others in 
+   *     - The stereodescriptor occurring more often than all others in
    *       the set of stereodescriptors
    *     - All most-often-occurring stereodescriptors
    *
@@ -1576,7 +1576,7 @@ std::vector<
         visitedVertices.insert(undecidedBranch);
       }
     }
-    
+
     _compareBFSSets(comparisonSets, undecidedSets, orderingHelper);
 
     undecidedSets = orderingHelper.getUndecidedSets();
@@ -1595,7 +1595,7 @@ std::vector<
     }
 
     while(
-      undecidedSets.size() > 0 
+      undecidedSets.size() > 0
       && _relevantSeeds(seeds, undecidedSets)
       && depth < depthLimitOptional.value_or(std::numeric_limits<unsigned>::max())
     ) {
@@ -1678,7 +1678,7 @@ std::vector<
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "  Sets post sequence rule 4A: {" 
+      << "  Sets post sequence rule 4A: {"
       << temple::condenseIterable(
         temple::map(
           orderingHelper.getSets(),
@@ -1868,13 +1868,13 @@ std::vector<
 
           // Precedence via amount of representative stereodescriptors
           if(
-            representativeStereodescriptors.at(branchA).size() 
-            < representativeStereodescriptors.at(branchB).size() 
+            representativeStereodescriptors.at(branchA).size()
+            < representativeStereodescriptors.at(branchB).size()
           ) {
             orderingHelper.addLessThanRelationship(branchA, branchB);
           } else if(
-            representativeStereodescriptors.at(branchB).size() 
-            < representativeStereodescriptors.at(branchA).size() 
+            representativeStereodescriptors.at(branchB).size()
+            < representativeStereodescriptors.at(branchA).size()
           ) {
             orderingHelper.addLessThanRelationship(branchB, branchA);
           } else {
@@ -1889,7 +1889,7 @@ std::vector<
              * stereodescriptors is the guiding principle here.
              *
              * So, we require that CN-tetrahedral-2-0 and EZ-2-0 are
-             * considered like and so are CN-tetrahedral-2-1 and EZ-2-1. 
+             * considered like and so are CN-tetrahedral-2-1 and EZ-2-1.
              *
              * We go about this by deciding that two stereodescriptors compare
              * like if they have the same number of assignments and have the
@@ -1984,7 +1984,7 @@ std::vector<
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "  Sets post sequence rule 4B: {" 
+      << "  Sets post sequence rule 4B: {"
       << temple::condenseIterable(
         temple::map(
           orderingHelper.getSets(),
@@ -2012,7 +2012,7 @@ std::vector<
 
   } // End sequence rule 4 local scope
 
-  /* Sequence rule 5: 
+  /* Sequence rule 5:
    * - Atom or group with {R, M, Z} precedes {S, P, E}
    */
   _runBFS<
@@ -2030,7 +2030,7 @@ std::vector<
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "  Sets post sequence rule 5: {" 
+      << "  Sets post sequence rule 5: {"
       << temple::condenseIterable(
         temple::map(
           orderingHelper.getSets(),
@@ -2072,7 +2072,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   }
 
   for(
-    const auto& molAdjacentIndex : 
+    const auto& molAdjacentIndex :
     _moleculeRef.iterateAdjacencies(_tree[index].molIndex)
   ) {
     if(treeOutAdjacencies.count(molAdjacentIndex) != 0) {
@@ -2087,7 +2087,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
       newIndices.push_back(newIndex);
 
       boost::add_edge(index, newIndex, _tree);
-      
+
       // Need to add duplicates!
       auto duplicateVertices = _addBondOrderDuplicates(index, newIndex);
       std::copy(
@@ -2134,8 +2134,8 @@ template<>
 std::string RankingTree::toString(const VariantType& variant) const {
   if(variant.which() == 0) {
     return toString<TreeVertexIndex>(boost::get<TreeVertexIndex>(variant));
-  } 
-  
+  }
+
   return toString<TreeEdgeIndex>(boost::get<TreeEdgeIndex>(variant));
 }
 
@@ -2366,7 +2366,7 @@ unsigned RankingTree::_nonDuplicateDegree(const RankingTree::TreeVertexIndex& in
 
 bool RankingTree::_relevantSeeds(
   const std::map<
-    RankingTree::TreeVertexIndex, 
+    RankingTree::TreeVertexIndex,
     std::vector<RankingTree::TreeVertexIndex>
   >& seeds,
   const std::vector<
@@ -2664,7 +2664,7 @@ RankingTree::RankingTree(
    */
   std::set<TreeVertexIndex> branchIndices;
   for(
-    const auto& rootAdjacentIndex : 
+    const auto& rootAdjacentIndex :
     _moleculeRef.iterateAdjacencies(atomToRank)
   ) {
     if(excludeIndices.count(rootAdjacentIndex) == 0) {
@@ -2685,9 +2685,9 @@ RankingTree::RankingTree(
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "Ranking substituents of atom index " 
+      << "Ranking substituents of atom index "
       << _tree[rootIndex].molIndex
-      << ": " 
+      << ": "
       << temple::condenseIterable(
         temple::map(
           _branchOrderingHelper.getSets(),
@@ -2765,11 +2765,11 @@ RankingTree::RankingTree(
         for(const auto& undecidedBranch : undecidedSet) {
           auto& branchSeeds = seeds.at(undecidedBranch);
           auto& branchComparisonSet = comparisonSets.at(undecidedBranch);
-          
+
           branchComparisonSet.clear();
 
           std::vector<TreeVertexIndex> newSeeds;
-          
+
           for(const auto& seedVertex : branchSeeds) {
             auto newVertices = _expand(
               seedVertex,
@@ -2834,10 +2834,10 @@ RankingTree::RankingTree(
       branchIndices.end(),
       std::back_inserter(seeds)
     );
-    
+
     do {
       std::vector<TreeVertexIndex> newSeeds;
-      
+
       for(const auto& seedVertex : seeds) {
         auto newVertices = _expand(
           seedVertex,
@@ -2882,7 +2882,7 @@ RankingTree::RankingTree(
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
-      << "Sets post sequence rule 1: {" 
+      << "Sets post sequence rule 1: {"
       << temple::condenseIterable(
         temple::map(
           _branchOrderingHelper.getSets(),
@@ -2901,7 +2901,7 @@ RankingTree::RankingTree(
   // Perform ranking
   _applySequenceRules(positionsOption);
 
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS 
+#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
       _writeGraphvizFiles({
@@ -3055,7 +3055,7 @@ std::string RankingTree::_make4BGraph(
 
     for(auto iter = branchOrders.rbegin(); iter != branchOrders.rend(); ++iter) {
       const auto& variantList = *iter;
-      
+
       // Node
       branchGraphviz += "  "s + nodePrefix + std::to_string(i) + " [";
       branchGraphviz += R"(shape="none", label=)" + tableBegin;

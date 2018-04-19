@@ -7,6 +7,7 @@
 #include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/constexpr/DynamicSet.h"
 #include "temple/constexpr/Numeric.h"
+#include "temple/constexpr/Bitset.h"
 
 #include "temple/Cache.h"
 
@@ -33,7 +34,7 @@ namespace constexprProperties {
 constexpr double floatingPointEqualityTolerance = 1e-4;
 
 //! Stub to find out the minimum angle returned in a specific symmetry class type
-template<typename SymmetryClass> 
+template<typename SymmetryClass>
 constexpr double calculateSmallestAngle() {
   double smallestAngle = M_PI;
 
@@ -76,7 +77,7 @@ struct minAngleFunctor {
  * base array type since C++14's std::array has too few members marked constexpr
  * as to be useful. When C++17 rolls around, replace this with std::array!
  */
-template<typename T, size_t size> 
+template<typename T, size_t size>
 using ArrayType = temple::Array<T, size>;
 
 template<typename SymmetryClass>
@@ -91,7 +92,7 @@ constexpr auto startingIndexSequence() {
 // applyRotation helper function
 template<typename SymmetryClass, size_t... Indices>
 constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
-  const ArrayType<unsigned, SymmetryClass::size>& indices, 
+  const ArrayType<unsigned, SymmetryClass::size>& indices,
   const unsigned& rotationFunctionIndex,
   std::index_sequence<Indices...>
 ) {
@@ -105,7 +106,7 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
 //! Applies a symmetry group rotation to an array of indices
 template<typename SymmetryClass>
 constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
-  const ArrayType<unsigned, SymmetryClass::size>& indices, 
+  const ArrayType<unsigned, SymmetryClass::size>& indices,
   const unsigned& rotationFunctionIndex
 ) {
   return applyRotationImpl<SymmetryClass>(
@@ -127,7 +128,7 @@ constexpr unsigned rotationPeriodicityImpl(
     )
   ) {
     return count;
-  } 
+  }
 
   return rotationPeriodicityImpl<SymmetryClass, rotationFunctionIndex>(
     applyRotation<SymmetryClass>(
@@ -154,7 +155,7 @@ constexpr unsigned rotationPeriodicity() {
 }
 
 template<typename SymmetryClass, size_t ...Inds>
-constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> 
+constexpr ArrayType<unsigned, SymmetryClass::rotations.size()>
 rotationPeriodicitiesImpl(std::index_sequence<Inds...>) {
   return {
     rotationPeriodicity<SymmetryClass, Inds>()...
@@ -500,7 +501,7 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
   ChainArrayType<SymmetryClass> chain {0u};
 
   while(
-    chain.front() < SymmetryClass::rotations.size() 
+    chain.front() < SymmetryClass::rotations.size()
     && rotations.size() < maxRotations<SymmetryClass>()
   ) {
 
@@ -516,7 +517,7 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
     } else {
       // collapse the chain until we are at an incrementable position (if need be)
       while(
-        chain.size() > 1 
+        chain.size() > 1
         && chain.back() == SymmetryClass::rotations.size() - 1
       ) {
         chain.pop_back();
@@ -531,7 +532,7 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
   return rotations;
 }
 
-/*! 
+/*!
  * Data struct to collect the results of calculating the ideal index mappings
  * between pairs of indices
  */
@@ -602,10 +603,11 @@ constexpr auto symmetryTransitionMappings() {
 
   auto indexMapping = startingIndexSequence<SymmetryClassTo>();
 
-  temple::DynamicSet<
+  temple::Bitset<temple::Math::factorial(SymmetryClassTo::size)> encounteredMappings;
+  /*temple::DynamicSet<
     IndexListStorageType,
     temple::Math::factorial(SymmetryClassTo::size)
-  > encounteredMappings;
+  > encounteredMappings;*/
 
   temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
@@ -613,9 +615,9 @@ constexpr auto symmetryTransitionMappings() {
 
   do {
     auto mapped = symPosMapping(indexMapping);
-    auto storageVersion = hashIndexList<IndexListStorageType>(mapped);
+    auto storageVersion = temple::permutationIndex(mapped);
 
-    if(!encounteredMappings.contains(storageVersion)) {
+    if(!encounteredMappings.test(storageVersion)) {
       auto angularDistortion = calculateAngularDistortion(
         indexMapping,
         SymmetryClassFrom::size,
@@ -630,7 +632,7 @@ constexpr auto symmetryTransitionMappings() {
 
       /* Summary of cases:
        * - If any improvement is made on angular distortion, clear all and add
-       * - If angular distortion is equal but chiral distortion is improved, 
+       * - If angular distortion is equal but chiral distortion is improved,
        *   clear all and add
        * - If angular distortion and chiral distortion are equal, just add
        *
@@ -653,7 +655,7 @@ constexpr auto symmetryTransitionMappings() {
           && comparator.isEqual(chiralDistortion, lowestChiralDistortion)
         )
       );
-        
+
       if(clearExisting) {
         bestMappings.clear();
         lowestAngleDistortion = angularDistortion;
@@ -668,11 +670,9 @@ constexpr auto symmetryTransitionMappings() {
       auto allRotations = generateAllRotations<SymmetryClassTo>(mapped);
 
       for(const auto& rotation : allRotations) {
-        auto hashed = hashIndexList<IndexListStorageType>(rotation);
-
-        if(!encounteredMappings.contains(hashed)) {
-          encounteredMappings.insert(hashed);
-        }
+        encounteredMappings.set(
+          temple::permutationIndex(rotation)
+        );
       }
     }
   } while(temple::inPlaceNextPermutation(indexMapping));
@@ -684,7 +684,7 @@ constexpr auto symmetryTransitionMappings() {
   );
 }
 
-template<class SymmetryClassFrom, class SymmetryClassTo > 
+template<class SymmetryClassFrom, class SymmetryClassTo>
 constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
 
   static_assert(
@@ -751,7 +751,7 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
           && comparator.isEqual(chiralDistortion, lowestChiralDistortion)
         )
       );
-        
+
       if(clearExisting) {
         bestMappings.clear();
         lowestAngleDistortion = angularDistortion;
@@ -786,10 +786,10 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
 
 /* Pre-compute all ligand gain situations */
 template<typename SymmetrySource, typename SymmetryTarget>
-constexpr 
+constexpr
 std::enable_if_t<
   (
-    SymmetrySource::size == SymmetryTarget::size 
+    SymmetrySource::size == SymmetryTarget::size
     || SymmetrySource::size + 1 == SymmetryTarget::size
   ),
   temple::Optional<MappingsReturnType>
@@ -803,7 +803,7 @@ template<typename SymmetrySource, typename SymmetryTarget>
 constexpr
 std::enable_if_t<
   !(
-    SymmetrySource::size == SymmetryTarget::size 
+    SymmetrySource::size == SymmetryTarget::size
     || SymmetrySource::size + 1 == SymmetryTarget::size
   ),
   temple::Optional<MappingsReturnType>
@@ -846,6 +846,39 @@ constexpr unsigned numUnlinkedAssignments(
   }
 
   return count;
+}
+
+template<typename Symmetry>
+constexpr bool hasMultipleUnlinkedAssignments(
+  const unsigned& nIdenticalLigands
+) {
+  auto indices = startingIndexSequence<Symmetry>();
+
+  for(unsigned i = 0; i < nIdenticalLigands; ++i) {
+    indices.at(i) = 0;
+  }
+
+  temple::DynamicSet<
+    unsigned,
+    temple::Math::min(
+      100u,
+      temple::Math::factorial(Symmetry::size)
+    )
+  > rotations;
+
+  auto initialRotations = generateAllRotations<Symmetry>(indices);
+
+  for(const auto& rotation : initialRotations) {
+    rotations.insert(hashIndexList<unsigned>(rotation));
+  }
+
+  while(temple::inPlaceNextPermutation(indices)) {
+    if(!rotations.contains(hashIndexList<unsigned>(indices))) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 } // namespace constexprProperties

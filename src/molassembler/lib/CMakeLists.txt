@@ -4,6 +4,7 @@ find_package(chemical_symmetries 0.1.0 REQUIRED)
 find_package(temple 0.1.0 REQUIRED)
 find_package(cyclic_polygons 0.1.0 REQUIRED)
 find_package(scine COMPONENTS Delib REQUIRED)
+find_package(BLAS REQUIRED)
 
 # add include directories
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
@@ -112,11 +113,11 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   message(STATUS "Selected release build")
   # no debug information, disable assert
   target_compile_definitions(molassembler PRIVATE NDEBUG)
-  target_compile_options(molassembler PUBLIC -O2 -march=native)
+  target_compile_options(molassembler PRIVATE -O2 -march=native)
 else() # assume Debug
   message(STATUS "Assume debug build")
-  target_compile_options(molassembler PUBLIC -g)
-  # target_compile_options(molassembler PUBLIC -g -fsanitize=address -fsanitize=undefined)
+  target_compile_options(molassembler PRIVATE -g)
+  # target_compile_options(molassembler PRIVATE -g -fsanitize=address -fsanitize=undefined)
   # set_target_properties(molassembler PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
 endif()
 
@@ -131,7 +132,7 @@ target_link_libraries(
     gor1
     chemical_symmetries
     dlib::dlib
-    blas
+    ${BLAS_LIBRARIES}
     RingDecomposerLibStatic
 )
 

@@ -1,6 +1,10 @@
 # TODO
 
 - Clean up CMake: Reduce code duplication -> see all the installs
+- Limit chemical symmetries constexpr codes to reduce compile time and memory
+  requirements. In particular, since one algorithm is eventually merely tested
+  against > 1 (I think), this entire algorithm can be rewritten to be
+  significantly more limited and quicker
 - Separate constexpr temple tests just like the non-constexpr ones
 - Figure out how to integrate all documentations with each other
 - Isn't it testable to see if the tetrahedron definitions really encompass all

@@ -6,7 +6,7 @@
 #include "CycleData.h"
 #include "LocalGeometryModel.h"
 
-#include "temple/Bitmask.h"
+#include "temple/constexpr/Bitmask.h"
 
 #include "Delib/AtomCollection.h"
 #include "Delib/BondOrderCollection.h"

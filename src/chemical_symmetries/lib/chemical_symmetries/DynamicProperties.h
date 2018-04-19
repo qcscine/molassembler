@@ -23,8 +23,8 @@ std::vector<unsigned> applyRotation(
   unsigned rotationFunctionIndex
 );
 
-/*! 
- * Gets the coordinates of an indexOptional for a specific symmetry. 
+/*!
+ * Gets the coordinates of an indexOptional for a specific symmetry.
  * As was defined previously, boost::none is a placeholder for the central atom,
  * which is not explicitly held in memory as it is always placed at {0, 0, 0}.
  */
@@ -33,7 +33,7 @@ Eigen::Vector3d getCoordinates(
   const boost::optional<unsigned>& indexInSymmetryOption
 );
 
-/*! 
+/*!
  * Returns the Eigen calculation of a signed tetrahedron volume from four
  * tetrahedron edge point vectos
  */
@@ -46,7 +46,7 @@ double getTetrahedronVolume(
 
 /*!
  * Calculates the angular distortion for a transition between two symmetries and
- * a specific index mapping that connects indices from the source symmetry to 
+ * a specific index mapping that connects indices from the source symmetry to
  * the target symmetry
  */
 double calculateAngleDistortion(
@@ -57,7 +57,7 @@ double calculateAngleDistortion(
 
 /*!
  * Index optionals as used in tetrahedron definitions in symmetries need to be
- * propagated through index mappings generated in the process of finding the 
+ * propagated through index mappings generated in the process of finding the
  * optimal symmetry transitions. Shorthand function that performs a propagation
  * if a the passed indexOptional is not boost::none, returns that otherwise.
  */
@@ -68,8 +68,8 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
 
 /*!
  * Calculates the chiral distortion for a transition between two symmetries and
- * a specific index mapping that connects indices from the source symmetry to 
- * the target symmetry 
+ * a specific index mapping that connects indices from the source symmetry to
+ * the target symmetry
  */
 double calculateChiralDistortion(
   const Symmetry::Name& from,
@@ -78,7 +78,7 @@ double calculateChiralDistortion(
 );
 
 /*!
- * Generates a set of all possible rotations of an index sequence within a 
+ * Generates a set of all possible rotations of an index sequence within a
  * desired symmetry
  */
 std::set<
@@ -146,13 +146,13 @@ struct SymmetryTransitionGroup {
   );
 
   SymmetryTransitionGroup() {}
-  SymmetryTransitionGroup(SymmetryTransitionGroup&& other) 
+  SymmetryTransitionGroup(SymmetryTransitionGroup&& other)
     : indexMappings(std::move(other.indexMappings)),
       angularDistortion(other.angularDistortion),
       chiralDistortion(other.chiralDistortion)
   {}
 
-  SymmetryTransitionGroup(const SymmetryTransitionGroup& other) 
+  SymmetryTransitionGroup(const SymmetryTransitionGroup& other)
     : indexMappings(other.indexMappings),
       angularDistortion(other.angularDistortion),
       chiralDistortion(other.chiralDistortion)
@@ -167,7 +167,7 @@ struct SymmetryTransitionGroup {
   }
 };
 
-/*! 
+/*!
  * Selects index mappings from a DistortionInfo list, choosing those with lowest
  * angular distortion first, and lowest chiral distortion afterwards. Groups
  * them into a SymmetryTransitionGroup.
@@ -185,12 +185,21 @@ unsigned numUnlinkedAssignments(
   const unsigned& nIdenticalLigands
 );
 
+/*!
+ * Calculates if there are multiple unlinked assignments in a specific symmetry
+ * for a number of identical ligands.
+ */
+bool hasMultipleUnlinkedAssignments(
+  const Symmetry::Name& symmetry,
+  const unsigned& nIdenticalLigands
+);
+
 } // namespace properties
 
 namespace detail {
 
-/*! 
- * Generates a vector containing strictly monotonically increasing natural 
+/*!
+ * Generates a vector containing strictly monotonically increasing natural
  * numbers starting from 0.
  */
 template<typename NumericType>
@@ -207,7 +216,7 @@ std::vector<NumericType> iota(NumericType nValues) {
 }
 
 /*!
- * Generates a vector containing strictly monotonically increasing natural 
+ * Generates a vector containing strictly monotonically increasing natural
  * numbers representing the range [start, end). If start == end, an empty
  * range is returned.
  */
@@ -218,7 +227,7 @@ std::vector<NumericType> range(
 ) {
   if(start == end) {
     return {};
-  } 
+  }
 
   std::vector<NumericType> values (end - start);
   std::iota(

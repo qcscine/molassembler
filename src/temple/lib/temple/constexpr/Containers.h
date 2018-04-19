@@ -806,6 +806,33 @@ template<
   return inPlacePreviousPermutation(data, 0, size);
 }
 
+//! Calculates the index of permutation of a container
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t size
+> constexpr size_t permutationIndex(const ArrayType<T, size>& container) {
+  size_t index = 0;
+  size_t position = 2;// position 1 is paired with factor 0 and so is skipped
+  size_t factor = 1;
+
+  for(size_t p = size - 2; p != std::numeric_limits<size_t>::max(); --p) {
+    size_t largerSuccessors = 0;
+
+    for(size_t q = p + 1; q < size; ++q) {
+      if(container.at(p) > container.at(q)) {
+        ++largerSuccessors;
+      }
+    }
+
+    index += (largerSuccessors * factor);
+    factor *= position;
+    ++position;
+  }
+
+  return index;
+}
+
 namespace detail {
   template<class ContainerType>
   struct getValueTypeImpl {

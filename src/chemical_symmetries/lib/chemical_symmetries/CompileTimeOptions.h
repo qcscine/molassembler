@@ -13,6 +13,10 @@
  * constexpr algorithms.
  */
 #if __clang__
+/* Additionally, a compile-time flag can be set to deactivate compile-time
+ * algorithms entirely
+ */
+#ifndef CHEMICAL_SYMMETRIES_NO_CONSTEXPR_ALGORITHMS
 
 /* If USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE is defined, a table of all
  * angles resulting from a predefined set of positions is generated and that
@@ -62,22 +66,24 @@
  */
 #define USE_CONSTEXPR_TRANSITION_MAPPINGS
 
-/* If USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS is defined, a data structure
- * containing the number of possible assignments for a given structure depending
- * on the number of identical ligands is generated for all symmetries.
+/* If USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS is defined, a data structure
+ * containing whether there are multiple assignments for a given symmetry
+ * depending on the number of identical ligands is generated for all
+ * symmetries at compile time.
  *
  * E.g. for Tetrahedral:
  *
- *   0 == ABCD -> 2
- *   1 == ABCD -> 2
- *   2 == AABC -> 1
- *   3 == AAAB -> 1
- *   4 == AAAA -> 1
+ *   0 == ABCD -> 2 -> true
+ *   1 == ABCD -> 2 -> true
+ *   2 == AABC -> 1 -> false
+ *   3 == AAAB -> 1 -> false
+ *   4 == AAAA -> 1 -> false
  *
  * At runtime, when calling getNumUnlinked(Symmetry, nIdenticalLigands), a cache
  * of symmetry-wise results is generated on-demand either from constexpr data
  * at a cost of O(1), or from DynamicProperties at a cost of O(S * S!), where S is
  * the size of the symmetry.
  */
-#define USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
+#define USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
+#endif
 #endif

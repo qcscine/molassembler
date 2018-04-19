@@ -18,6 +18,8 @@
 #include "temple/constexpr/DynamicUIntArray.h"
 #include "temple/constexpr/BTree.h"
 #include "temple/constexpr/ConsecutiveCompare.h"
+#include "temple/constexpr/Bitmask.h"
+#include "temple/constexpr/Bitset.h"
 
 #include <iostream>
 #include <iomanip>
@@ -45,7 +47,7 @@ constexpr temple::Array<T, size> modifyArray(
   inPlaceSwap(arrayCopy, 0, 1);
   return arrayCopy;
 }
-  
+
 constexpr auto modf = modifyArray(testArr);
 
 static_assert(
@@ -239,7 +241,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
       )
     )
   );
-  
+
   auto testRecPow = [&](const double& number, const unsigned& exponent) -> bool {
     const double test = temple::Math::recPow(number, exponent);
     const double reference = std::pow(number, exponent);
@@ -290,8 +292,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
       );
 
       if(!pass) {
-        std::cout << "ln deviates for z = " << std::setw(12) << z 
-          << ", ln(z) = " << std::setw(12) << temple::Math::ln(z) 
+        std::cout << "ln deviates for z = " << std::setw(12) << z
+          << ", ln(z) = " << std::setw(12) << temple::Math::ln(z)
           << ", std::log(z) = " << std::setw(12) << std::log(z)
           << ", |Δ| = " << std::setw(12) << std::fabs(
             temple::Math::ln(z) - std::log(z)
@@ -353,8 +355,7 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
   std::array<unsigned, 4> base {{0, 1, 2, 3}};
   std::array<unsigned, 4> STLComparison {{0, 1, 2, 3}};
 
-  bool customHasNext = true;
-  bool STLHasNext = true;
+  bool customHasNext, STLHasNext;
 
   do {
     customHasNext = temple::inPlaceNextPermutation(base);
@@ -375,8 +376,6 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 
   base = {{3, 2, 1, 0}};
   STLComparison = {{3, 2, 1, 0}};
-  customHasNext = true;
-  STLHasNext = true;
 
   do {
     customHasNext = temple::inPlacePreviousPermutation(base);
@@ -399,8 +398,6 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 
   base = {{0, 1, 2, 3}};
   STLComparison = {{0, 1, 2, 3}};
-  customHasNext = true;
-  STLHasNext = true;
 
   do {
     customHasNext = temple::inPlaceNextPermutation(base, 1, 3);
@@ -422,8 +419,6 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 
   base = {{3, 2, 1, 0}};
   STLComparison = {{3, 2, 1, 0}};
-  customHasNext = true;
-  STLHasNext = true;
 
   do {
     customHasNext = temple::inPlacePreviousPermutation(base, 1, 3);
@@ -453,7 +448,7 @@ constexpr bool compileTimeDynTest() {
 constexpr bool dynArrSpliceTest() {
   temple::DynamicArray<unsigned, 10> nonConstArr {4, 3, 6, 5, 1, 9};
   auto spliced = nonConstArr.splice(2);
-  
+
   return (
     spliced == temple::DynamicArray<unsigned, 10> {6, 5, 1, 9}
     && nonConstArr == temple::DynamicArray<unsigned, 10> {4, 3}
@@ -624,7 +619,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
   BOOST_CHECK(arraysSet.size() == 3);
   BOOST_CHECK(
     std::distance(
-      arraysSet.begin(), 
+      arraysSet.begin(),
       arraysSet.end()
     ) == 3
   );
@@ -634,7 +629,7 @@ template<typename T, size_t size>
 bool validate(const temple::DynamicSet<T, size>& set) {
   // Is the set ordered?
   auto leftIter = set.begin();
-  auto rightIter = leftIter; ++rightIter; 
+  auto rightIter = leftIter; ++rightIter;
   auto bound = set.end(); --bound;
 
   if(leftIter == set.end() || rightIter == set.end()) {
@@ -665,7 +660,7 @@ bool validate(const temple::DynamicSet<T, size>& set) {
 BOOST_AUTO_TEST_CASE(arrayOperators) {
   temple::Array<unsigned, 4> a {4, 2, 3, 1};
   temple::Array<unsigned, 4> b {4, 3, 2, 1};
-  
+
   BOOST_CHECK(temple::testLogicalOperators(a, b));
   BOOST_CHECK(temple::testLogicalOperators(a, a));
 
@@ -694,7 +689,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
 
       bool isValid = validate(subject);
       if(!isValid) {
-        std::cout << "After inserting " << number 
+        std::cout << "After inserting " << number
           << ", set is left in invalid state. Set: {"
           << temple::condenseIterable(subject) << "}\ninsert sequence {"
           << temple::condenseIterable(numbers) << "}."
@@ -1226,7 +1221,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     BOOST_CHECK_NO_THROW(tree.validate());
     BOOST_REQUIRE_MESSAGE(
       lastTestPassed(),
-      "Tree validation failed. Operation sequence: " 
+      "Tree validation failed. Operation sequence: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
@@ -1243,7 +1238,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     // Check that all elements are truly contained or not
     BOOST_REQUIRE_MESSAGE(
       temple::all_of(notInsertedNotContained),
-      "Not all elements recorded as not in the tree are recognized as such!\n" 
+      "Not all elements recorded as not in the tree are recognized as such!\n"
         << "Found in the tree, but should not be present: "
         << temple::condenseIterable(
           temple::moveIf(
@@ -1262,7 +1257,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
               return str != "";
             }
           )
-        ) << "\nSequence of operations: " 
+        ) << "\nSequence of operations: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
@@ -1278,7 +1273,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
 
     BOOST_REQUIRE_MESSAGE(
       temple::all_of(insertedContained),
-      "Not all elements recorded as contained in the tree are recognized as such!\n" 
+      "Not all elements recorded as contained in the tree are recognized as such!\n"
         << "Not found in the tree: "
         << temple::condenseIterable(
           temple::moveIf(
@@ -1297,7 +1292,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
               return str != "";
             }
           )
-        ) << "\nSequence of operations: " 
+        ) << "\nSequence of operations: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
@@ -1364,7 +1359,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
  * definitely fits in the tree
  */
 
-template<size_t minOrder, size_t nElements> 
+template<size_t minOrder, size_t nElements>
 constexpr bool BTreeAllocatedSizeSufficient() {
   temple::BTree<unsigned, minOrder, nElements> tree;
 
@@ -1443,3 +1438,71 @@ namespace ConsecutiveCompareConstexprTests {
     "Consecutive compare with references does not yield true"
   );
 } // namespace ConsecutiveCompareConstexprTests
+
+enum class ScopedEnum : unsigned {A, B, C};
+enum UnscopedEnum : unsigned {D, E};
+
+BOOST_AUTO_TEST_CASE(bitmaskAll) {
+  using namespace temple;
+
+  constexpr auto a = make_bitmask(ScopedEnum::A) | ScopedEnum::C;
+  static_assert(a & ScopedEnum::A, "A must be contained in the bitmask a");
+  BOOST_CHECK(a[ScopedEnum::A] && a[ScopedEnum::C] && !a[ScopedEnum::B]);
+
+  constexpr auto b = make_bitmask(UnscopedEnum::E);
+  BOOST_CHECK(b[UnscopedEnum::E] && !b[UnscopedEnum::D]);
+}
+
+constexpr temple::Bitset<300> make_a_bitset() {
+  temple::Bitset<300> a;
+
+  a.set(0);
+  a.set(299);
+  a.set(63);
+  a.set(128);
+
+  return a;
+}
+
+BOOST_AUTO_TEST_CASE(bitsetTests) {
+  using namespace temple;
+
+  constexpr auto a = make_a_bitset();
+
+  static_assert(a.test(0), "Zero hasn't been set");
+
+  BOOST_CHECK(a.test(0) && a.test(299) && a.test(63) && a.test(128));
+  BOOST_CHECK(!a.test(1) && !a.test(298) && !a.test(64) && !a.test(127));
+
+  auto b = make_a_bitset();
+  b.unset(63);
+  BOOST_CHECK(!b.test(63));
+}
+
+BOOST_AUTO_TEST_CASE(permutationIndexTests) {
+  using namespace temple;
+
+  auto a = iota<Array, unsigned, 6>();
+
+  // expect monotonically increasing permutation index on inplaceNextPermutation
+  auto index = permutationIndex(a);
+
+  BOOST_CHECK(index == 0);
+
+  bool pass = true;
+  auto previousIndex = index;
+  while(inPlaceNextPermutation(a)) {
+    index = permutationIndex(a);
+    if(index != previousIndex + 1) {
+      pass = false;
+      break;
+    }
+    previousIndex = index;
+  }
+
+  BOOST_CHECK_MESSAGE(
+    pass,
+    "inPlaceNextPermutation must yield monotonically increasing permutation "
+    "index values"
+  );
+}

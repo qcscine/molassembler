@@ -592,6 +592,33 @@ unsigned numUnlinkedAssignments(
   return count;
 }
 
+bool hasMultipleUnlinkedAssignments(
+  const Symmetry::Name& symmetry,
+  const unsigned& nIdenticalLigands
+) {
+  auto indices = detail::range(0u, Symmetry::size(symmetry));
+
+  for(unsigned i = 0; i < nIdenticalLigands; ++i) {
+    indices.at(i) = 0;
+  }
+
+  std::set<decltype(indices)> rotations;
+
+  auto initialRotations = generateAllRotations(symmetry, indices);
+
+  for(const auto& rotation : initialRotations) {
+    rotations.insert(rotation);
+  }
+
+  while(std::next_permutation(indices.begin(), indices.end())) {
+    if(rotations.count(indices) == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 } // namespace properties
 
 } // namespace Symmetry

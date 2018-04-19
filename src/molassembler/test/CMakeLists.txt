@@ -2,7 +2,6 @@ project(molassemblerTests)
 
 set(Boost_USE_STATIC_LIBS OFF)
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
-find_package(chemical_symmetries 0.1.0 REQUIRED)
 
 # Testing targets
 # get all test cpp files
@@ -16,11 +15,11 @@ foreach(filename ${testFiles})
   # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})
 
-  target_compile_options(${targetName} PUBLIC -Wall -Wpedantic -Wextra)
+  target_compile_options(${targetName} PRIVATE -Wall -Wpedantic -Wextra)
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    target_compile_options(${targetName} PUBLIC -O3 -march=native)
+    target_compile_options(${targetName} PRIVATE -O2 -march=native)
   else()
-    target_compile_options(${targetName} PUBLIC -g)
+    target_compile_options(${targetName} PRIVATE -g)
     # target_compile_options(
     #  ${targetName} PUBLIC -g -fsanitize=address -fsanitize=undefined
     #)
@@ -32,7 +31,7 @@ foreach(filename ${testFiles})
 
   target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
   target_link_libraries(
-    ${targetName}
+    ${targetName} PRIVATE
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
     molassembler
   )

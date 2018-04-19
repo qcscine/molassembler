@@ -2,7 +2,7 @@
 #include <limits>
 #include <exception>
 
-#include "constexpr/Math.h"
+#include "Math.h"
 
 namespace temple {
 
@@ -19,21 +19,19 @@ struct Bitmask {
 
   Underlying value;
 
-  explicit Bitmask(EnumType a) {
+  explicit constexpr Bitmask(EnumType a) : value {
+    static_cast<Underlying>(1) << static_cast<Underlying>(a)
+  } {
     static_assert(
       std::is_unsigned<Underlying>::value
       && std::is_integral<Underlying>::value,
       "Underlying type for this enum type must unsigned and integral"
     );
-
-    value = 1 << static_cast<Underlying>(a);
   }
 
-  explicit Bitmask(Underlying a) {
-    value = a;
-  }
+  explicit constexpr Bitmask(Underlying a) : value {a} {}
 
-  Bitmask operator | (const EnumType& a) const {
+  constexpr Bitmask operator | (const EnumType& a) const {
     Underlying v = static_cast<Underlying>(a);
 
     if(v > maximum) {
@@ -44,29 +42,29 @@ struct Bitmask {
     }
 
     return Bitmask {
-      value | (1 << v)
+      value | (static_cast<Underlying>(1) << v)
     };
   }
 
-  inline bool isSet(const EnumType& a) const {
+  inline constexpr bool isSet(const EnumType& a) const {
     return (
       value & (
-        1 << static_cast<Underlying>(a)
+        static_cast<Underlying>(1) << static_cast<Underlying>(a)
       )
     ) > 0;
   }
 
-  inline bool operator & (const EnumType& a) const {
+  inline constexpr bool operator & (const EnumType& a) const {
     return isSet(a);
   }
 
-  inline bool operator [] (const EnumType& a) const {
+  inline constexpr bool operator [] (const EnumType& a) const {
     return isSet(a);
   }
 };
 
 template<typename EnumType>
-Bitmask<EnumType> make_bitmask(EnumType a) {
+constexpr Bitmask<EnumType> make_bitmask(EnumType a) {
   return Bitmask<EnumType> {a};
 }
 

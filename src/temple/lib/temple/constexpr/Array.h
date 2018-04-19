@@ -7,10 +7,12 @@
 
 #include "Containers.h"
 
+// TODO replace unsigned with size_t
+
 /*! @file
  *
- * Constexpr fixed-size array to replace std::array in C++14. This class is 
- * largely unneeded in C++17 since many std::array members are then marked 
+ * Constexpr fixed-size array to replace std::array in C++14. This class is
+ * largely unneeded in C++17 since many std::array members are then marked
  * constexpr.
  */
 
@@ -33,22 +35,22 @@ public:
    * form the array mem-initializer with a parameter pack expansion
    */
   template<size_t ... Inds>
-  constexpr Array(const Array& other, std::index_sequence<Inds...>) 
-    :_items {other[Inds]...} 
+  constexpr Array(const Array& other, std::index_sequence<Inds...>)
+    :_items {other[Inds]...}
   {}
 
   /* Constructing from another array is tricky since we're technically not
    * allowed to edit _items in-class, so we delegate to the previous constructor
    * and directly form the mem-initializer
    */
-  constexpr Array(const Array& other) 
+  constexpr Array(const Array& other)
     : Array(other, std::make_index_sequence<nItems>{})
   {}
 
   //! Delegate std::array ctor, using same trick as copy ctor
   template<size_t ... Inds>
-  constexpr Array(const std::array<T, nItems>& other, std::index_sequence<Inds...>) 
-    :_items {other[Inds]...} 
+  constexpr Array(const std::array<T, nItems>& other, std::index_sequence<Inds...>)
+    :_items {other[Inds]...}
   {}
 
   //! Construct from std::array using same trick as copy ctor
@@ -58,8 +60,8 @@ public:
 
   //! Parameter pack constructor, will work as long as the arguments are castable
   template<typename ...Args>
-  constexpr Array(Args... args) 
-    : _items {static_cast<T>(args)...} 
+  constexpr Array(Args... args)
+    : _items {static_cast<T>(args)...}
   {}
 
   constexpr T& operator[] (const unsigned& index) {
@@ -145,15 +147,15 @@ public:
       Array& instance,
       unsigned&& initPosition
     ) : _baseRef(instance),
-        _position(initPosition) 
+        _position(initPosition)
     {}
 
-    constexpr iterator(const iterator& other) 
+    constexpr iterator(const iterator& other)
       : _baseRef(other._baseRef),
         _position(other._position)
     {}
 
-    constexpr iterator& operator = (const iterator& other) { 
+    constexpr iterator& operator = (const iterator& other) {
       _baseRef = other._baseRef;
       _position = other._position;
 
@@ -244,7 +246,7 @@ public:
     const T*,                        // pointer
     const T&                         // reference
   >;
-  
+
   class constIterator : public ConstBaseIteratorType {
   private:
     const Array& _baseRef;
@@ -255,15 +257,15 @@ public:
       const Array& instance,
       unsigned&& initPosition
     ) : _baseRef(instance),
-        _position(initPosition) 
+        _position(initPosition)
     {}
 
-    constexpr constIterator(const constIterator& other) 
+    constexpr constIterator(const constIterator& other)
       : _baseRef(other._baseRef),
         _position(other._position)
     {}
 
-    constexpr constIterator& operator = (const constIterator& other) { 
+    constexpr constIterator& operator = (const constIterator& other) {
       if(_baseRef != other._baseRef) {
         throw "Trying to assign constIterator to other base Array!";
       }
