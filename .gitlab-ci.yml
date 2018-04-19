@@ -57,21 +57,6 @@ gcc-build:
     - build-gcc/
     - scine-install-gcc/
 
-gcc-test:
-  stage: test
-  tags:
-    - centos
-  script:
-    - module purge
-    - module load module_include_dir gcc/7.3.0 boost/gcc-7.3.0/1.64.0-cmake
-    - cd build-gcc
-    - make test
-  cache:
-    key: "$CI_BUILD_REF_NAME"
-    paths:
-    - build-gcc/
-    policy: pull
-
 clang-build:
   stage: build
   tags:
@@ -88,7 +73,23 @@ clang-build:
     key: "$CI_BUILD_REF_NAME"
     paths:
     - build-clang/
-    - scine-install-clang
+    - scine-install-clang/
+
+gcc-test:
+  stage: test
+  tags:
+    - centos
+  script:
+    - module purge
+    - module load module_include_dir gcc/7.3.0 boost/gcc-7.3.0/1.64.0-cmake
+    - cd build-gcc
+    - make test
+  cache:
+    key: "$CI_BUILD_REF_NAME"
+    paths:
+    - build-gcc/
+    policy: pull
+
 
 clang-test:
   stage: test
