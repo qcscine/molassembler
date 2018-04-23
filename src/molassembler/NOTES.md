@@ -1,3 +1,7 @@
+# Deficiencies
+- UFF bond distance modelling is not good enough for 3D coordinate
+  interpretation
+
 # Inorganics
 - Conjugation detection is now sorely needed
 - Ranking algorithm shows deficiencies due to missing conjugation detection.

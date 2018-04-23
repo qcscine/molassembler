@@ -12,7 +12,8 @@ namespace molassembler {
  * - Neither atom connected by the bond may be terminal
  * - May not be member of a small cycle. The threshold of this criterion
  *   can be set by the user. An edge that is a member of a cycle smaller than
- *   the threshold is not considered rotatable. The default is 5.
+ *   the threshold is not considered rotatable. The default is 5. To deactivate
+ *   this feature, pass std::numeric_limits<unsigned>::max().
  *
  */
 unsigned numRotatableBonds(

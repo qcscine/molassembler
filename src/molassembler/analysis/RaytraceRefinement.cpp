@@ -18,7 +18,7 @@ using namespace std::string_literals;
 using namespace molassembler;
 using namespace molassembler::DistanceGeometry;
 
-const std::string partialityChoices = 
+const std::string partialityChoices =
   "  0 - Four-Atom Metrization\n"
   "  1 - 10% Metrization\n"
   "  2 - All (default)\n";
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
     boost::program_options::parse_command_line(argc, argv, options_description),
     options_variables_map
   );
-  boost::program_options::notify(options_variables_map);  
+  boost::program_options::notify(options_variables_map);
 
   // Manage the results
   if(options_variables_map.count("help")) {
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
     unsigned index =  options_variables_map["p"].as<unsigned>();
 
     if(index > 2) {
-      std::cout << "Specified metrization option is out of bounds. Valid choices are:\n" 
+      std::cout << "Specified metrization option is out of bounds. Valid choices are:\n"
         << partialityChoices;
       return 0;
     }
@@ -95,14 +95,13 @@ int main(int argc, char* argv[]) {
 
 /* Generating work */
   // Generate from file
-  if(options_variables_map.count("f") == 1) { 
+  if(options_variables_map.count("f") == 1) {
     bool useYInversionTrick = false;
 
     if(options_variables_map.count("i")) {
       useYInversionTrick = options_variables_map["i"].as<bool>();
     }
 
-    IO::MOLFileHandler filehandler;
     auto filename = options_variables_map["f"].as<std::string>();
 
     if(!boost::filesystem::exists(filename)) {
@@ -110,12 +109,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    if(!filehandler.canRead(filename)) {
-      std::cout << "The specified file is not a MOLFile!" << std::endl;
-      return 0;
-    }
-
-    auto mol = filehandler.read(filename);
+    auto mol = IO::read(filename);
 
     std::cout << mol << std::endl;
 
@@ -141,7 +135,7 @@ int main(int argc, char* argv[]) {
         refinementData
       );
 
-      filehandler.write(
+      IO::write(
         filestem + "-"s + std::to_string(structNum) + "-last.mol"s,
         mol,
         DistanceGeometry::detail::convertToPositionCollection(
@@ -166,7 +160,6 @@ int main(int argc, char* argv[]) {
 
   // Not from file, then a basic molecule from symmetry
   if(options_variables_map.count("f") == 0) {
-    IO::MOLFileHandler filehandler;
 
     for(const auto& symmetryName : symmetries) {
 
@@ -192,8 +185,8 @@ int main(int argc, char* argv[]) {
           refinementData
         );
 
-        filehandler.write(
-          Symmetry::spaceFreeName(symmetryName) + "-"s 
+        IO::write(
+          Symmetry::spaceFreeName(symmetryName) + "-"s
             + std::to_string(structNum) + "-last.mol"s,
           mol,
           DistanceGeometry::detail::convertToPositionCollection(

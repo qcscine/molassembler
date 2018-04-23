@@ -83,6 +83,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/EZStereocenter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphDistanceMatrix.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/LocalGeometryModel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Log.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/MolGraphWriter.cpp

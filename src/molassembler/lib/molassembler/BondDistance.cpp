@@ -32,7 +32,7 @@ double calculateBondOrder(
 ) {
   return std::exp(
     (
-      distance - AtomInfo::bondRadius(a) - AtomInfo::bondRadius(b)
+      AtomInfo::bondRadius(a) + AtomInfo::bondRadius(b) - distance
     ) / (
       bondOrderCorrectionLambda * (
         AtomInfo::bondRadius(a) + AtomInfo::bondRadius(b)

@@ -1,5 +1,4 @@
 # TODO
-
 - Clean up CMake: Reduce code duplication -> see all the installs
 - Limit chemical symmetries constexpr codes to reduce compile time and memory
   requirements. In particular, since one algorithm is eventually merely tested

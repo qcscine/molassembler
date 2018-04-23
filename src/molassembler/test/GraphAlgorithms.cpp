@@ -357,9 +357,7 @@ const std::map<
 };
 
 bool testSubstituentLinks(const boost::filesystem::path& filePath) {
-  IO::MOLFileHandler molHandler;
-
-  auto mol = molHandler.read(filePath.string());
+  auto mol = IO::read(filePath.string());
 
   std::cout << mol << nl;
 

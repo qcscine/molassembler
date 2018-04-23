@@ -26,8 +26,7 @@ void writeExpandedTree(
   const std::string& fileName,
   const AtomIndexType& expandOnIndex
 ) {
-  IO::MOLFileHandler molHandler;
-  auto molecule = molHandler.read(
+  auto molecule = IO::read(
     "../tests/mol_files/ranking_tree_molecules/"s
     + fileName
   );
@@ -64,7 +63,7 @@ int main(int argc, char* argv[]) {
     boost::program_options::parse_command_line(argc, argv, options_description),
     options_variables_map
   );
-  boost::program_options::notify(options_variables_map);  
+  boost::program_options::notify(options_variables_map);
 
   if(options_variables_map.count("help")) {
     std::cout << options_description << nl;
@@ -76,8 +75,6 @@ int main(int argc, char* argv[]) {
     Log::level = Log::Level::Debug;
     Log::particulars.insert(Log::Particulars::RankingTreeDebugInfo);
 
-    IO::MOLFileHandler filehandler;
-
     auto filename = options_variables_map["f"].as<std::string>();
 
     if(!boost::filesystem::exists(filename)) {
@@ -85,13 +82,8 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    if(!filehandler.canRead(filename)) {
-      std::cout << "The specified file is not a MOLFile!" << nl;
-      return 2;
-    }
-
     // This triggers all debug messages during tree instantiations and ranking
-    auto mol = filehandler.read(filename);
+    auto mol = IO::read(filename);
 
     std::cout << mol << std::endl;
 

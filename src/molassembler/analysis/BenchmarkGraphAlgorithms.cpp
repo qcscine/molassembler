@@ -16,6 +16,7 @@
 #include "DistanceGeometry/Gor1.h"
 
 #include <chrono>
+#include <iomanip>
 
 using namespace molassembler;
 
@@ -130,12 +131,11 @@ void benchmark(
   const boost::filesystem::path& filePath,
   std::ofstream& benchmarkFile,
   Algorithm algorithmChoice,
-  DistanceGeometry::Partiality partiality,
-  IO::MOLFileHandler& molHandler
+  DistanceGeometry::Partiality partiality
 ) {
   using namespace molassembler;
 
-  Molecule sampleMol = molHandler.read(
+  Molecule sampleMol = IO::read(
     filePath.string()
   );
 
@@ -322,7 +322,6 @@ int main(int argc, char* argv[]) {
   }
 
   // Benchmark everything
-  IO::MOLFileHandler molHandler;
   std::ofstream benchmarkFile ("graph_timings.csv");
   writeHeaders(benchmarkFile);
 
@@ -332,7 +331,7 @@ int main(int argc, char* argv[]) {
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
 
-    benchmark(currentFilePath, benchmarkFile, choice, partiality, molHandler);
+    benchmark(currentFilePath, benchmarkFile, choice, partiality);
   }
 
   return 0;

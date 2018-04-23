@@ -69,8 +69,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   std::cout << "Processing " << filePath.stem().string() << std::endl;
 
   // Read the file
-  IO::MOLFileHandler molHandler;
-  auto mol = molHandler.read(filePath.string());
+  auto mol = IO::read(filePath.string());
 
   CycleData cycleData {mol.getGraph()};
 

@@ -27,28 +27,28 @@ BOOST_AUTO_TEST_CASE(graphConcepts) {
   BOOST_CONCEPT_ASSERT(( boost::EdgeListGraphConcept<GraphType> ));
   BOOST_CONCEPT_ASSERT(( boost::AdjacencyMatrixConcept<GraphType> ));
 
-  BOOST_CONCEPT_ASSERT(( 
+  BOOST_CONCEPT_ASSERT((
     boost::ReadablePropertyMapConcept<
       boost::property_map<GraphType, boost::vertex_index_t>::type,
       boost::graph_traits<GraphType>::vertex_descriptor
     >
   ));
 
-  BOOST_CONCEPT_ASSERT(( 
+  BOOST_CONCEPT_ASSERT((
     boost::ReadablePropertyMapConcept<
       boost::property_map<GraphType, boost::edge_weight_t>::type,
       boost::graph_traits<GraphType>::edge_descriptor
     >
   ));
 
-  /*BOOST_CONCEPT_ASSERT(( 
+  /*BOOST_CONCEPT_ASSERT((
     boost::WritablePropertyMapConcept<
       boost::property_map<GraphType, boost::edge_weight_t>::type,
       boost::graph_traits<GraphType>::edge_descriptor
     >
   ));*/
 
-  /*BOOST_CONCEPT_ASSERT(( 
+  /*BOOST_CONCEPT_ASSERT((
     boost::PropertyGraphConcept<
       GraphType,
       boost::graph_traits<GraphType>::edge_descriptor,
@@ -75,11 +75,10 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
   boost::filesystem::path filesPath("test_files/stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
-  IO::MOLFileHandler molHandler;
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
 
-    Molecule molecule = molHandler.read(
+    Molecule molecule = IO::read(
       currentFilePath.string()
     );
 
@@ -153,7 +152,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
         BOOST_CHECK_MESSAGE(
           weight > 0,
-          "in-group-edge weight isn't greater than zero for edge " << i << " -> " 
+          "in-group-edge weight isn't greater than zero for edge " << i << " -> "
             << target << ", weight = " << weight
         );
 
@@ -228,7 +227,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
         std::distance(
           spg.ebegin(),
           spg.eend()
-        ) 
+        )
       ) == boost::num_edges(spg),
       "Number of edges does not match edge iterator begin-end distance"
     );
@@ -270,15 +269,15 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
         // Reverse exists
         auto reverseEdge = boost::edge(boostTarget, boostSource, spg);
         BOOST_CHECK_MESSAGE(
-          reverseEdge.second, 
-          "Reverse edge does not exist for in-group edge " 
+          reverseEdge.second,
+          "Reverse edge does not exist for in-group edge "
             << boostSource << " -> " << boostTarget
         );
 
         // Reverse has same edge weight
         BOOST_CHECK_MESSAGE(
           boost::get(boost::edge_weight, spg, reverseEdge.first) == boostEdgeWeight,
-          "Reverse edge for " << boostSource << " -> " << boostTarget 
+          "Reverse edge for " << boostSource << " -> " << boostTarget
             << " does not have same edge weight"
         );
       }
@@ -316,7 +315,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
           if(d(i, k) > d(i, j) + d(j, k)) {
             ++triangleInequalitiesFailures;
             std::cout << "The triangle inequality is falsified along i = " << i
-              << ", j = " << j << ", k = " << k << "!" 
+              << ", j = " << j << ", k = " << k << "!"
               << " d(i, k) = " << (d(i, k)) << " > " << (d(i, j) + d(j, k))
               << " = d(i, j) + d(j, k)"
               << nl;
@@ -325,10 +324,10 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       }
     }
 
-    std::cout << "In matrix of size " << matrN << ", got " 
-      << triangleInequalitiesFailures 
-      << " triangle inequality violations. There are " 
-      << std::pow(matrN, 3) << " such relations in this matrix. (" 
+    std::cout << "In matrix of size " << matrN << ", got "
+      << triangleInequalitiesFailures
+      << " triangle inequality violations. There are "
+      << std::pow(matrN, 3) << " such relations in this matrix. ("
       << (static_cast<double>(triangleInequalitiesFailures) / std::pow(matrN, 3))
       << " %)" << nl;
 

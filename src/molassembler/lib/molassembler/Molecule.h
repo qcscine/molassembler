@@ -61,6 +61,37 @@ public:
     UFF
   };
 
+  struct InterpretResult {
+    std::vector<Molecule> molecules;
+    std::vector<unsigned> componentMap;
+  };
+
+  /*! Interpret molecules in 3D information and a bond order collection.
+   *
+   * The graph is inferred via bond discretization from the bond order
+   * collection.
+   *
+   * NOTE: Assumes that the provided atom collection's positions are in
+   * Angstrom units.
+   */
+  static InterpretResult interpret(
+    const Delib::AtomCollection& atomCollection,
+    const Delib::BondOrderCollection& bondOrders,
+    const BondDiscretizationOption& discretization = BondDiscretizationOption::Binary
+  );
+
+  /*! Interpret molecules in 3D information.
+   *
+   * The graph is inferred via bond discretization from pairwise atom distances.
+   *
+   * NOTE: Assumes that the provided atom collection's positions are in
+   * Angstrom units.
+   */
+  static InterpretResult interpret(
+    const Delib::AtomCollection& atomCollection,
+    const BondDiscretizationOption& discretization = BondDiscretizationOption::Binary
+  );
+
 private:
 /* State */
   GraphType _adjacencies;
@@ -159,31 +190,6 @@ public:
   Molecule(
     const GraphType& graph,
     const Delib::PositionCollection& positions
-  );
-
-  /*! Construct a molecule from 3D information alone.
-   *
-   * The graph is inferred via bond discretization from pairwise atom distances.
-   * NOTE: Assumes that the provided atom collection's positions are in
-   * Angstrom units.
-   */
-  explicit Molecule(
-    const Delib::AtomCollection& atomCollection,
-    const BondDiscretizationOption& discretization = BondDiscretizationOption::Binary
-  );
-
-  /*! Construct a molecule from 3D information and a bond order collection.
-   *
-   * The graph is inferred via bond discretization from the bond order
-   * collection.
-   *
-   * NOTE: Assumes that the provided atom collection's positions are in
-   * Angstrom units.
-   */
-  Molecule(
-    const Delib::AtomCollection& atomCollection,
-    const Delib::BondOrderCollection& bondOrders,
-    const BondDiscretizationOption& discretization = BondDiscretizationOption::Binary
   );
 
 /* Modification */
@@ -317,6 +323,8 @@ public:
     const AtomIndexType& b
   ) const;
 
+  BondType getBondType(const GraphType::edge_descriptor& edge) const;
+
   CycleData getCycleData() const;
 
   //! Creates a copy of the contained data suitable for the Edges class
@@ -371,22 +379,6 @@ public:
    */
   RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(const AtomIndexType& a) const;
 
-  unsigned numAtoms() const;
-
-  unsigned numBonds() const;
-
-  RankingInformation rankPriority(
-    const AtomIndexType& a,
-    const std::set<AtomIndexType>& excludeAdjacent = {},
-    const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
-  ) const;
-
-/* Operators */
-  //! Returns the adjacencies of the specified atom index
-  RangeForTemporary<GraphType::adjacency_iterator> operator [] (
-    const AtomIndexType& a
-  ) const;
-
   /*! Modular comparison of this Molecule with another.
    *
    * This permits detailed specification of which elements of the molecular
@@ -416,6 +408,24 @@ public:
   bool modularCompare(
     const Molecule& other,
     const temple::Bitmask<ComparisonComponents>& comparisonBitmask
+  ) const;
+
+  unsigned numAtoms() const;
+
+  unsigned numBonds() const;
+
+  RankingInformation rankPriority(
+    const AtomIndexType& a,
+    const std::set<AtomIndexType>& excludeAdjacent = {},
+    const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
+  ) const;
+
+  std::array<AtomIndexType, 2> vertices(const GraphType::edge_descriptor& edge) const;
+
+/* Operators */
+  //! Returns the adjacencies of the specified atom index
+  RangeForTemporary<GraphType::adjacency_iterator> operator [] (
+    const AtomIndexType& a
   ) const;
 
   //! Equality operator, performs most strict equality comparison

@@ -16,7 +16,7 @@
  */
 
 /* ostream operators for sets, pairs and vectors */
-/* TODO 
+/* TODO
  * - ostream operators for non-selfmade datasructures violates DO NOT OPEN
  *   OTHER namespaces rule, prefer implementations below, BUT also this allows
  *   complex composite output operators to be formed automatically, the others
@@ -226,11 +226,11 @@ bool vectorOfSetsEqual(
   >& b
 ) {
   return (
-    a.size() == b.size() 
-    /* if a and b are same-sized, then finding a match for every element in a 
+    a.size() == b.size()
+    /* if a and b are same-sized, then finding a match for every element in a
      * in b is sufficient
      */
-    && std::all_of( 
+    && std::all_of(
       a.begin(),
       a.end(),
       [&b](const auto& setI) {
@@ -240,7 +240,7 @@ bool vectorOfSetsEqual(
           false,
           [&setI](const bool& carry, const auto& setJ) {
             return (
-              carry 
+              carry
               || setI == setJ
             );
           }

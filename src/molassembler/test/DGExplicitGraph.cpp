@@ -34,11 +34,10 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
   boost::filesystem::path filesPath("test_files/stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
-  IO::MOLFileHandler molHandler;
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
 
-    Molecule molecule = molHandler.read(
+    Molecule molecule = IO::read(
       currentFilePath.string()
     );
 

@@ -28,8 +28,7 @@ bool checkIsomorphicExpansion(
   const AtomIndexType& expandOnIndex,
   const RankingTree::TreeGraphType& comparisonGraph
 ) {
-  IO::MOLFileHandler molHandler;
-  auto molecule = molHandler.read(
+  auto molecule = IO::read(
     directoryPrefix + fileName
   );
 
@@ -50,8 +49,7 @@ void writeExpandedTree(
   const std::string& fileName,
   const AtomIndexType& expandOnIndex
 ) {
-  IO::MOLFileHandler molHandler;
-  auto molecule = molHandler.read(
+  auto molecule = IO::read(
     directoryPrefix + fileName
   );
 
@@ -93,12 +91,11 @@ RankingTree::TreeGraphType makeTree(
 BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
   using namespace std::string_literals;
 
-  IO::MOLFileHandler molHandler;
 
   // Basic tests
 
   /* P-92.2.1.1.2 Spheres I and II */
-  auto exampleOne = molHandler.read(
+  auto exampleOne = IO::read(
     directoryPrefix + "2R-2-chloropropan-1-ol.mol"s
   );
 
@@ -129,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
   );
 
 
-  auto exampleTwo = molHandler.read(
+  auto exampleTwo = IO::read(
     directoryPrefix + "2S-23-dichloropropan-1-ol.mol"
   );
 
@@ -164,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
 
   // P. 92.2.2 Sequence subrule 1b: Priority due to duplicate atoms
   // Cycle and multiple-bond splitting
-  auto exampleThree = molHandler.read(
+  auto exampleThree = IO::read(
     directoryPrefix + "1S5R-bicyclo-3-1-0-hex-2-ene.mol"
   );
 
@@ -276,10 +273,8 @@ std::string condenseSets (const std::vector<std::vector<T>>& sets) {
 }
 
 BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
-  IO::MOLFileHandler molHandler;
-
   // P-92.4.2.1 Example 1 (Z before E)
-  auto ZEDifference = molHandler.read(
+  auto ZEDifference = IO::read(
     directoryPrefix + "2Z5S7E-nona-2,7-dien-5-ol.mol"s
   );
 
@@ -311,7 +306,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   );
 
   // P-92.4.2.2 Example 1 (Z before E in aux. stereocenters, splitting)
-  auto EECyclobutane = molHandler.read(
+  auto EECyclobutane = IO::read(
     directoryPrefix + "1E3E-1,3-difluoromethylidenecyclobutane.mol"
   );
 
@@ -331,7 +326,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   );
 
   // P-92.4.2.2 Example 2 (stereogenic before non-stereogenic)
-  auto inTreeNstgDB = molHandler.read(
+  auto inTreeNstgDB = IO::read(
     directoryPrefix
     + "(2Z5Z7R8Z11Z)-9-(2Z-but-2-en-1-yl)-5-(2E-but-2-en-1-yl)trideca-2,5,8,11-tetraen-7-ol.mol"s
   );
@@ -347,8 +342,6 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
 }
 
 BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
-  IO::MOLFileHandler molHandler;
-
   /* TODO
    * is it necessary to add a test to ensure full partial ordering?
    * stereogenic > pseudostereogenic > non-stereogenic
@@ -357,7 +350,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
    */
 
   // (4A) P-92.5.1 Example (stereogenic before non-stereogenic)
-  auto pseudoOverNonstg = molHandler.read(
+  auto pseudoOverNonstg = IO::read(
     directoryPrefix
     + "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol"s
   );
@@ -385,7 +378,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   // (4B) P-92.5.2.2 Example 1 (single chain pairing, ordering and reference selection)
-  auto simpleLikeUnlike = molHandler.read(
+  auto simpleLikeUnlike = IO::read(
     directoryPrefix + "(2R,3R,4R,5S,6R)-2,3,4,5,6-pentachloroheptanedioic-acid.mol"s
   );
 
@@ -400,7 +393,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   // (4B) P-92.5.2.2 Example 3 (single-chain pairing, cycle splitting)
-  auto lAlphaLindane = molHandler.read(
+  auto lAlphaLindane = IO::read(
     directoryPrefix + "l-alpha-lindane.mol"s
   );
 
@@ -422,7 +415,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   // (4B) P-92.5.2.2 Example 4 (multiple-chain stereocenter ranking)
-  auto oxyNitroDiffBranches = molHandler.read(
+  auto oxyNitroDiffBranches = IO::read(
     directoryPrefix + "(2R,3S,6R,9R,10S)-6-chloro-5-(1R,2S)-1,2-dihydroxypropoxy-7-(1S,2S)-1,2-dihydroxypropoxy-4,8-dioxa-5,7-diazaundecande-2,3,9,10-tetrol.mol"s
   );
 
@@ -436,7 +429,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   // (4B) P-92.5.2.2 Example 5 (multiple-chain stereocenter ranking)
-  auto groupingDifferences = molHandler.read(
+  auto groupingDifferences = IO::read(
     directoryPrefix + "(2R,3R,5R,7R,8R)-4.4-bis(2S,3R-3-chlorobutan-2-yl)-6,6-bis(2S,4S-3-chlorobutan-2-yl)-2,8-dichloro-3,7-dimethylnonan-5-ol.mol"s
   );
 
@@ -450,7 +443,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   // (4B) P-92.5.2.2 Example 6 (number of reference descriptors)
-  auto numReferenceDescriptors = molHandler.read(
+  auto numReferenceDescriptors = IO::read(
     directoryPrefix + "2R-2-bis(1R)-1-hydroxyethylamino-2-(1R)-1-hydroxyethyl(1S)-1-hydroxyethylaminoacetic-acid.mol"
   );
 
@@ -465,10 +458,8 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
 }
 
 BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
-  IO::MOLFileHandler molHandler;
-
   // (4C) P-92.5.3 Example r/s leads to R difference
-  auto rsDifference = molHandler.read(
+  auto rsDifference = IO::read(
     directoryPrefix + "(2R,3r,4R,5s,6R)-2,6-dichloro-3,5-bis(1S-1-chloroethyl)heptan-4-ol.mol"
   );
 
@@ -482,7 +473,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   // (5) P-92.6 Example 1 simple R/S difference leads to r
-  auto pseudo = molHandler.read(
+  auto pseudo = IO::read(
     directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
   );
 
@@ -496,7 +487,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   // (5) P-92.6 Example 2 cyclobutane splitting
-  auto cyclobutane = molHandler.read(
+  auto cyclobutane = IO::read(
     directoryPrefix + "(1r,3r)-cyclobutane-1,3-diol.mol"
   );
 
@@ -513,7 +504,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   // (5) P-92.6 Example 5 double bond ranking
-  auto pseudoDB = molHandler.read(
+  auto pseudoDB = IO::read(
     directoryPrefix + "(2E,4R)-4-chloro-3-(1S-1-chloroethyl)pent-2-ene.mol"
   );
 
@@ -527,7 +518,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   // (5) P-92.6 Example 6
-  auto fourDoesNothing = molHandler.read(
+  auto fourDoesNothing = IO::read(
     directoryPrefix + "1s-1-(1R,2R-1,2-dichloropropyl-1S,2R-1,2-dichloropropylamino)1-(1R,2S-1,2-dichloropropyl-1S,2S-1,2-dichloropropylamino)methan-1-ol.mol"
   );
 

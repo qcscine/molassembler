@@ -290,7 +290,7 @@ public:
   void makeGraphvizFiles(const Graph& g) {
     using namespace std::string_literals;
 
-    const std::string prefix = "gor1-explainer-"s 
+    const std::string prefix = "gor1-explainer-"s
       + std::to_string(_counter)
       + "-"s;
 
@@ -351,7 +351,7 @@ int main(int argc, char* argv[]) {
     boost::program_options::parse_command_line(argc, argv, options_description),
     options_variables_map
   );
-  boost::program_options::notify(options_variables_map);  
+  boost::program_options::notify(options_variables_map);
 
   unsigned root_vertex = 0;
   if(options_variables_map.count("r")) {
@@ -364,8 +364,6 @@ int main(int argc, char* argv[]) {
   }
 
   if(options_variables_map.count("f")) {
-    IO::MOLFileHandler filehandler;
-
     auto filename = options_variables_map["f"].as<std::string>();
 
     if(!boost::filesystem::exists(filename)) {
@@ -373,12 +371,7 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
-    if(!filehandler.canRead(filename)) {
-      std::cout << "The specified file is not a MOLFile!" << nl;
-      return 2;
-    }
-
-    auto mol = filehandler.read(filename);
+    auto mol = IO::read(filename);
 
     DistanceGeometry::MoleculeSpatialModel spatialModel {
       mol,

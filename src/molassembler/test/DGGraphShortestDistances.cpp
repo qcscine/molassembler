@@ -161,11 +161,10 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
   boost::filesystem::path filesPath("test_files/stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
-  IO::MOLFileHandler molHandler;
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
 
-    Molecule molecule = molHandler.read(
+    Molecule molecule = IO::read(
       currentFilePath.string()
     );
 
@@ -258,7 +257,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
   /* Want to do combination tests with the iodo-alkane.
    *
-   * Can calculate shortest paths with either: 
+   * Can calculate shortest paths with either:
    * - Floyd-Warshall in DistanceBoundsMatrix (all-pairs!)
    * - Bellman-Ford
    * - Simplified Gor1
@@ -277,7 +276,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
    * The bottom four combinations should yield equal shortest paths distances,
    * although they are not consistent with the triangle inequalities. One such
    * shortest paths calculation yields only the triangle inequality limits for
-   * one pair of atom indices.  
+   * one pair of atom indices.
    *
    * Only DBM + FW is assumed correct.
    */
@@ -286,13 +285,12 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
   // DBM + FW
   using namespace molassembler;
 
-  IO::MOLFileHandler molHandler;
   boost::filesystem::path filesPath("test_files/stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
     const boost::filesystem::path currentFilePath = *i;
-    Molecule sampleMol = molHandler.read(
+    Molecule sampleMol = IO::read(
       currentFilePath.string()
     );
 
@@ -387,19 +385,19 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
     /* If the shortest paths calculation can yield the full upper and lower
      * bounds within the triangle inequality limits for one source atom, then the
-     * full triangle inequality bounds can be calculated within 
+     * full triangle inequality bounds can be calculated within
      * O(N * O(shortest paths calc)). While generating the distances matrix,
      * this full calculation is unnecessary, a single shortest paths calculation
      * yields the bounds for the random distance choice. The full complexity of
      * creating a distance matrix should be O(N² * O(shortest paths calc)).
-     * 
+     *
      * Hopefully, the complexity of the shortest paths calculation can stay
      * constant as distance bounds are added / narrowed. This is difficult, and
      * perhaps direct access to the emerging distance matrix is necessary to
      * ensure O(1) bounds access!
      */
     DistanceGeometry::ImplicitGraph shortestPathsGraph {sampleMol, boundsList};
-    
+
     using SPGVertex = DistanceGeometry::ImplicitGraph::VertexDescriptor;
     SPGVertex N = boost::num_vertices(shortestPathsGraph);
 
@@ -453,7 +451,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
         std::cout << "Not all pairs of Bellmann-Ford and Gor1 shortest-paths-distances on the ImplicitGraph are within 1e-8 relative tolerance!" << nl;
         break;
       }
-    
+
       auto spec_Gor_SPG_distances = Gor1SPG(shortestPathsGraph, 2 * a);
 
       if(

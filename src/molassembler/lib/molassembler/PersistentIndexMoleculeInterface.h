@@ -48,11 +48,10 @@ public:
 
 PersistentIndicesInterface::PersistentIndicesInterface() {}
 PersistentIndicesInterface::PersistentIndicesInterface(
-  const std::string& molFile
+  const std::string& file
 ) {
-  IO::MOLFileHandler molReader;
   _molecule = std::make_unique<Molecule>(
-    molReader.read(molFile)
+    IO::read(file)
   );
 }
 

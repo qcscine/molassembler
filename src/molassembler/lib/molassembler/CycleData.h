@@ -14,15 +14,6 @@
  * cycle data can be used in idiomatic C++.
  */
 
-/* ISSUE
- * - TODO is this still relevant / unfixed?
- * - Memory management issues -> use-after-free, destructor of one iterator is 
- *   called twice...
- * - Now that RangeForTemporary uses move, the trivial move constructor does a
- *   member-wise copy, on elimination of the temporary the cycleiterator both
- *   are pointing to is deleted
- */
-
 namespace molassembler {
 
 // Pre-declare CycleIterator so that it can be friended

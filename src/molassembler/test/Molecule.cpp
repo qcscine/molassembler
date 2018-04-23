@@ -28,11 +28,8 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
     "test_files/opt-bent0.mol"
   };
 
-  // instantiate reader
-  IO::MOLFileHandler molHandler;
-
   for(const auto& filename : files) {
-    Molecule mol = molHandler.read(filename);
+    Molecule mol = IO::read(filename);
     // Invoke ostream operator
     std::cout << mol << std::endl;
 
@@ -150,7 +147,6 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
 
 BOOST_AUTO_TEST_CASE(isomorphismTests) {
   using namespace molassembler;
-  IO::MOLFileHandler molReader;
   const std::string directoryPrefix = "test_files/isomorphisms/"s;
   const boost::regex isomorphismFileRegex {R"(.+_isomorphism.mol)"};
   const boost::regex removeRegex {R"(_isomorphism.mol)"};
@@ -186,8 +182,8 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
       continue;
     }
 
-    Molecule a = molReader.read(originalFilePath.string());
-    Molecule b = molReader.read(currentFilePath.string());
+    Molecule a = IO::read(originalFilePath.string());
+    Molecule b = IO::read(currentFilePath.string());
 
     BOOST_CHECK_MESSAGE(
       a == b,
@@ -212,9 +208,8 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   const std::string directoryPrefix = "test_files/ranking_tree_molecules/"s;
 
   using namespace molassembler;
-  IO::MOLFileHandler molReader;
 
-  auto pseudocenter = molReader.read(
+  auto pseudocenter = IO::read(
     directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
   );
 
@@ -239,4 +234,17 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   pseudocenter.assignStereocenter(outer.back(), 1);
 
   BOOST_CHECK(pseudocenter.getStereocenterList().involving(central));
+}
+
+BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
+  using namespace molassembler;
+
+  auto molSplat = IO::split("test_files/multiple_molecules/ethane_four_water.mol");
+
+  auto xyzHandler = IO::XYZHandler {};
+  auto xyzData = xyzHandler.read("test_files/multiple_molecules/ethane_four_water.xyz");
+
+  auto xyzSplat = IO::split("test_files/multiple_molecules/ethane_four_water.xyz");
+
+  BOOST_CHECK(molSplat.size() == 5 && xyzSplat.size() == 5);
 }

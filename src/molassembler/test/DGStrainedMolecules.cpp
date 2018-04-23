@@ -12,8 +12,7 @@
 BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   using namespace molassembler;
 
-  IO::MOLFileHandler molHandler;
-  auto mol = molHandler.read("test_files/inorganics/multidentate/Co(ox)3.mol");
+  auto mol = IO::read("test_files/inorganics/multidentate/Co(ox)3.mol");
 
   const auto& stereocenterPtr = mol.getStereocenterList().at(0);
   unsigned N = stereocenterPtr -> numStereopermutations();
@@ -34,8 +33,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   std::cout << "Processing " << filePath.stem().string() << std::endl;
 
   // Read the file
-  IO::MOLFileHandler molHandler;
-  auto mol = molHandler.read(filePath.string());
+  auto mol = IO::read(filePath.string());
 
   DistanceGeometry::MoleculeSpatialModel spatialModel {
     mol,
@@ -48,7 +46,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
     // Generate a conformation
     if(auto positionsResult = DistanceGeometry::generateConformation(mol)) {
       // Write the generated conformation to file
-      molHandler.write(
+      IO::write(
         filePath.stem().string() + "-generated.mol"s,
         mol,
         positionsResult.value()

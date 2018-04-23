@@ -27,7 +27,6 @@ int main(int argc, char* argv[]) {
   boost::program_options::notify(options_variables_map);
 
   if(options_variables_map.count("f")) {
-    IO::MOLFileHandler molHandler;
 
     boost::filesystem::path filepath {
       options_variables_map["f"].as<std::string>()
@@ -38,14 +37,17 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    Molecule a = molHandler.read(
+    Molecule a = IO::read(
       filepath.string()
     );
+
+    // TODO this is not ideal, reads the file twice
+    IO::MOLFileHandler molHandler;
 
     molHandler.write(
       filepath.stem().string() + "_isomorphism.mol",
       a,
-      molHandler.getPositionCollection(),
+      molHandler.read(filepath.string()).atoms.getPositions(),
       IO::MOLFileHandler::IndexPermutation::Random
     );
   } else {
