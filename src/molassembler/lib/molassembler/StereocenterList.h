@@ -19,8 +19,8 @@ public:
   using PtrType = std::shared_ptr<Stereocenters::Stereocenter>;
   /* Important detail here:
    * Remember that when using shared_ptr in an ordered container, all comparison
-   * operators simply compare the address where elements are stored. When 
-   * checking equality, this merely amounts to checking if they are the SAME, 
+   * operators simply compare the address where elements are stored. When
+   * checking equality, this merely amounts to checking if they are the SAME,
    * NOT whether they are EQUAL.
    */
 
@@ -32,7 +32,7 @@ public:
 
   using SetType = std::set<PtrType, PtrCompare>;
   using ListType = std::vector<PtrType>;
-  using MapType = std::unordered_map<AtomIndexType, const PtrType>;
+  using MapType = std::unordered_map<AtomIndexType, PtrType>;
 
   using const_iterator = SetType::const_iterator;
   using iterator = SetType::iterator;
@@ -141,7 +141,7 @@ public:
   }*/
 
   /*!
-   * Returns a map of atom indices to Stereocenter pointers. 
+   * Returns a map of atom indices to Stereocenter pointers.
    * The returned map does NOT contain a key for every atom in the Molecule.
    * When using the returned map, use count() before accessing with at()
    */
