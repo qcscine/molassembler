@@ -1,4 +1,5 @@
 #include "DelibHelpers.h"
+#include "temple/Containers.h"
 
 #include <Eigen/Geometry>
 
@@ -6,12 +7,39 @@ namespace molassembler {
 
 namespace DelibHelpers {
 
+bool validPositionIndices(
+  const Delib::PositionCollection& positions,
+  std::initializer_list<AtomIndexType> indices
+) {
+  /* scine::Delib casts its' underlying vector<Vector3>::size_type to int, so
+   * we have to get at the unsigned std::size_t differently. Since vector
+   * iterators are RandomAccessIterators, we can get a std::ptrdiff_t in O(1),
+   * which is typically bigger than int in most data models.
+   */
+  auto signedPtrDiffDistance = std::distance(
+    std::begin(positions),
+    std::end(positions)
+  );
+
+  // Casting that to size_t gives us the maximum addressable space back
+  std::size_t unsignedPositionCollectionSize = signedPtrDiffDistance;
+
+  return temple::all_of(
+    indices,
+    [&unsignedPositionCollectionSize](const AtomIndexType& index) -> bool {
+      return index < unsignedPositionCollectionSize;
+    }
+  );
+}
+
 double getDistance(
   const Delib::PositionCollection& positions,
   const AtomIndexType& i,
   const AtomIndexType& j
 ) {
-  assert(i < positions.size() && j < positions.size());
+  assert(
+    validPositionIndices(positions, {i, j})
+  );
 
   return (
     positions[i].asEigenVector()
@@ -26,9 +54,7 @@ double getAngle(
   const AtomIndexType& k
 ) {
   assert(
-    i < positions.size()
-    && j < positions.size()
-    && k < positions.size()
+    validPositionIndices(positions, {i, j, k})
   );
 
   auto a = positions[i].asEigenVector() - positions[j].asEigenVector(),
@@ -49,10 +75,7 @@ double getDihedral(
   const AtomIndexType& l
 ) {
   assert(
-    i < positions.size()
-    && j < positions.size()
-    && k < positions.size()
-    && l < positions.size()
+    validPositionIndices(positions, {i, j, k, l})
   );
 
   Eigen::Vector3d a = positions[j].asEigenVector() - positions[i].asEigenVector();
@@ -97,10 +120,7 @@ double getSignedVolume(
   const AtomIndexType& l
 ) {
   assert(
-    i < positions.size()
-    && j < positions.size()
-    && k < positions.size()
-    && l < positions.size()
+    validPositionIndices(positions, {i, j, k, l})
   );
 
   return (
