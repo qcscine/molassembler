@@ -17,16 +17,38 @@
 BOOST_AUTO_TEST_CASE( GraphDistanceMatrixTests ) {
   using namespace molassembler;
 
-  Edges edges {
-    {{0, 1}, BondType::Single},
-    {{1, 2}, BondType::Single},
-    {{1, 4}, BondType::Single},
-    {{2, 3}, BondType::Single},
-    {{3, 4}, BondType::Single},
-    {{4, 5}, BondType::Single},
-    {{5, 6}, BondType::Single},
-    {{5, 7}, BondType::Single}
+  struct Edge {
+    AtomIndexType i, j;
+    BondType bty;
+
+    Edge() = default;
+    Edge(AtomIndexType i, AtomIndexType j, BondType bty)
+      : i {i}, j {j}, bty {bty}
+    {}
   };
+
+  unsigned size = 8;
+  std::vector<Edge> edges {
+    {0, 1, BondType::Single},
+    {1, 2, BondType::Single},
+    {1, 4, BondType::Single},
+    {2, 3, BondType::Single},
+    {3, 4, BondType::Single},
+    {4, 5, BondType::Single},
+    {5, 6, BondType::Single},
+    {5, 7, BondType::Single}
+  };
+
+  GraphType graph(size);
+
+  for(const auto& edge : edges) {
+    auto addPair = boost::add_edge(edge.i, edge.j, graph);
+    graph[addPair.first].bondType = edge.bty;
+  }
+
+  for(AtomIndexType i = 0; i < size; ++i) {
+    graph[i].elementType = Delib::ElementType::H;
+  }
 
   /* AdjacencyMatrix(Molecule(Edge))
    *
@@ -55,19 +77,11 @@ BOOST_AUTO_TEST_CASE( GraphDistanceMatrixTests ) {
    */
 
   /* 1 */
-  /* TODO change implementation to avoid "most vexing parse":
-   * AdjacencyMatrix testInstance( ... );
-   *
-   * -> can be interpreted as function declaration! How to avoid?
-   */
-  auto testInstance = GraphDistanceMatrix(
-    AdjacencyMatrix(
-      Molecule(
-        makeRepeatedElementCollection(Delib::ElementType::H, 8),
-        edges
-      )
-    )
-  );
+  auto testInstance = GraphDistanceMatrix {
+    AdjacencyMatrix {
+      Molecule { std::move(graph) }
+    }
+  };
 
   BOOST_CHECK(testInstance.N == 8);
 
@@ -76,8 +90,8 @@ BOOST_AUTO_TEST_CASE( GraphDistanceMatrixTests ) {
     /* 4 */
     BOOST_CHECK(
       testInstance(
-        edge.first.second, // since order shouldn't matter
-        edge.first.first
+        edge.j,
+        edge.i
       ) == 1
     );
   }

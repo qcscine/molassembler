@@ -14,11 +14,6 @@
 #include <random>
 #include <fstream>
 
-/* TODO
- * - add tests from every sequence rule that is applied and see if the resulting
- *   ranking is correct!
- */
-
 using namespace molassembler;
 
 const std::string directoryPrefix = "test_files/ranking_tree_molecules/";

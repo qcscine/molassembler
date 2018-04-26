@@ -155,10 +155,11 @@ void MOLFileHandler::_write(
       }
       state = State::BondBlock;
     } else if(state == State::BondBlock) {
-      for(const auto& edge: molecule.getEdges()) {
-        auto i = indexMap(edge.first.first);
-        auto j = indexMap(edge.first.second);
-        auto bty = _bondTypeMap.right.at(edge.second);
+      for(const auto& edge: molecule.iterateEdges()) {
+        auto edgeVertices = molecule.vertices(edge);
+        auto i = indexMap(edgeVertices.front());
+        auto j = indexMap(edgeVertices.back());
+        auto bty = _bondTypeMap.right.at(molecule.getBondType(edge));
 
         // MOLFile indices are 1-based, have to add 1 to internal indices!
         fout << std::setw(3) << (1 + std::min(i, j)) // 111 (index of 1st atom)

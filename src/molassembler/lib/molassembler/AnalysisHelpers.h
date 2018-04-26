@@ -52,12 +52,12 @@ void writeDGPOVandProgressFiles(
     assert(stepData.positions.size() % dimensionality == 0);
     const unsigned N = stepData.positions.size() / dimensionality;
 
-    progressFile 
-      << stepData.distanceError << "," 
-      << stepData.chiralError << "," 
-      << stepData.fourthDimError << "," 
-      << dlib::length(stepData.gradient) << "," 
-      << static_cast<unsigned>(stepData.compress) << "," 
+    progressFile
+      << stepData.distanceError << ","
+      << stepData.chiralError << ","
+      << stepData.fourthDimError << ","
+      << dlib::length(stepData.gradient) << ","
+      << static_cast<unsigned>(stepData.compress) << ","
       << stepData.proportionCorrectChiralityConstraints << "\n";
 
     // Write the POV file for this step
@@ -89,17 +89,18 @@ void writeDGPOVandProgressFiles(
       if(fourthDimAbs < 1e-4) {
         outStream << "Atom(" << detail::mapIndexToChar(i) << ")\n";
       } else {
-        outStream << "Atom4D(" << detail::mapIndexToChar(i) << ", " 
+        outStream << "Atom4D(" << detail::mapIndexToChar(i) << ", "
           << fourthDimAbs << ")\n";
       }
     }
     outStream << "\n";
 
     // Bonds
-    for(const auto& edgePair : mol.getEdges()) {
-      outStream << "Bond(" 
-        << detail::mapIndexToChar(edgePair.first.first) << ","
-        << detail::mapIndexToChar(edgePair.first.second) 
+    for(const auto& edge : mol.iterateEdges()) {
+      auto edgeVertices = mol.vertices(edge);
+      outStream << "Bond("
+        << detail::mapIndexToChar(edgeVertices.front()) << ","
+        << detail::mapIndexToChar(edgeVertices.back())
         << ")\n";
     }
     outStream << "\n";
@@ -111,7 +112,7 @@ void writeDGPOVandProgressFiles(
           << detail::mapIndexToChar(chiralityConstraint.indices[0]) << ", "
           << detail::mapIndexToChar(chiralityConstraint.indices[1]) << ", "
           << detail::mapIndexToChar(chiralityConstraint.indices[2]) << ", "
-          << detail::mapIndexToChar(chiralityConstraint.indices[3]) 
+          << detail::mapIndexToChar(chiralityConstraint.indices[3])
           << ")\n";
       }
       outStream << "\n";

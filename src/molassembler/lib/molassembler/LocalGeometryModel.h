@@ -18,19 +18,20 @@ namespace molassembler {
 namespace LocalGeometry {
 
 /* Typedefs */
+struct BindingSiteInformation {
+  using ElementAndBondPair = std::pair<
+    Delib::ElementType,
+    BondType
+  >;
 
-using ElementAndBondPair = std::pair<
-  Delib::ElementType,
-  BondType
->;
+  unsigned L, X;
+  std::vector<ElementAndBondPair> elementsAndBonds;
 
-using LigandType = std::tuple<
-  unsigned, // L
-  unsigned, // X
-  std::vector<
-    ElementAndBondPair
-  >
->;
+  BindingSiteInformation() = default;
+  BindingSiteInformation(unsigned L, unsigned X, std::vector<ElementAndBondPair> elementsAndBonds)
+    : L {L}, X {X}, elementsAndBonds {elementsAndBonds}
+  {}
+};
 
 // Mapping of bond type to a floating-point weight
 extern const std::map<BondType, double> bondWeights;
@@ -39,7 +40,7 @@ extern const std::map<BondType, double> bondWeights;
 boost::optional<Symmetry::Name> vsepr(
   const Delib::ElementType& centerAtomType,
   const unsigned& nSites,
-  const std::vector<LigandType>& ligands,
+  const std::vector<BindingSiteInformation>& ligands,
   const int& formalCharge
 );
 

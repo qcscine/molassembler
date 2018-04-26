@@ -13,7 +13,7 @@ using TestCaseType = std::tuple<
   std::string, // a Name for the current compound
   Delib::ElementType, // The central atom type
   unsigned, // The number of bonding sites
-  std::vector<LigandType>, // a list of ligand types
+  std::vector<BindingSiteInformation>, // a list of ligand types
   int // charge centered on the central atom
 >;
 
@@ -25,7 +25,7 @@ void testVSEPR(
   std::string complexName;
   unsigned nSites;
   int charge;
-  std::vector<LigandType> ligands;
+  std::vector<BindingSiteInformation> ligands;
   Delib::ElementType centerAtomType;
 
   for(const auto& testCase : testCases) {
@@ -42,7 +42,7 @@ void testVSEPR(
         charge
       );
     } catch(std::exception& e) {
-      std::cout << "Caught an exception when trying " 
+      std::cout << "Caught an exception when trying "
         << complexName << "." << std::endl;
       throw e;
     }
@@ -55,7 +55,7 @@ void testVSEPR(
     if(symmetryName) {
       BOOST_CHECK_MESSAGE(
         symmetryName.value() == expectedSymmetryName,
-        complexName << " has been determined as " 
+        complexName << " has been determined as "
           << Symmetry::name(symmetryName.value())
           << ", expected: "
           << Symmetry::name(expectedSymmetryName)
@@ -71,9 +71,9 @@ auto makeLigand(
   const Delib::ElementType& type,
   const BondType& bty
 ) {
-  return LigandType {
+  return BindingSiteInformation {
     L,
-    X, 
+    X,
     {
       {
         type,
@@ -84,19 +84,19 @@ auto makeLigand(
 }
 
 // Helper function to compose ligand situations
-std::vector<LigandType> repeat(
-  const LigandType& ligand,
+std::vector<BindingSiteInformation> repeat(
+  const BindingSiteInformation& ligand,
   const unsigned& N
 ) {
-  return std::vector<LigandType> (N, ligand);
+  return std::vector<BindingSiteInformation> (N, ligand);
 }
 
 // Helper function to compose ligand situations
-std::vector<LigandType> merge(
-  const std::vector<LigandType>& a,
-  const std::vector<LigandType>& b
+std::vector<BindingSiteInformation> merge(
+  const std::vector<BindingSiteInformation>& a,
+  const std::vector<BindingSiteInformation>& b
 ) {
-  std::vector<LigandType> ret = a;
+  std::vector<BindingSiteInformation> ret = a;
   std::copy(
     b.begin(),
     b.end(),
@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
           makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
           makeLigand(0, 3, Delib::ElementType::N, BondType::Triple)
         },
-        0 
+        0
       }
     }
   );
@@ -378,7 +378,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
         "I3-",
         Delib::ElementType::I,
         2,
-        { 
+        {
           makeLigand(0, 1, Delib::ElementType::I, BondType::Single),
           makeLigand(1, 0, Delib::ElementType::I, BondType::Single)
         },
@@ -522,7 +522,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
         -1
       }
     }
-  ); 
+  );
 
   // dative bonding
   testVSEPR(

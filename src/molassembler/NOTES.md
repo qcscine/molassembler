@@ -39,11 +39,8 @@
   examples)
            
 # TODO
-- Fix all the failing tests
 - Stereocenters that merely mark non-standard geometries and do not provide any
   assignments are probably not included in ranking at all, but they should be!
-- Documentation:
-  - README.md file
 - EZStereocenters in small cycles aren't truly stereocenters. There's no reason
   to be permuting 3 EZStereocenters in a benzene, any E arrangements are
   infulfillable anyway. But in oct-1-ene, E/Z differences are realizable. How

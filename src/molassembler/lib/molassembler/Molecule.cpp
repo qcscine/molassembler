@@ -318,8 +318,8 @@ StereocenterList Molecule::_detectStereocenters() const {
    */
   // Find EZStereocenters
   for(const auto& edgeIndex : _getEZStereocenterCandidates()) {
-    auto source = boost::source(edgeIndex, _adjacencies),
-         target = boost::target(edgeIndex, _adjacencies);
+    AtomIndexType source = boost::source(edgeIndex, _adjacencies),
+                  target = boost::target(edgeIndex, _adjacencies);
 
     // Construct a Stereocenter here
     auto newStereocenter = std::make_shared<Stereocenters::EZStereocenter>(
@@ -360,6 +360,16 @@ StereocenterList Molecule::_detectStereocenters() const {
   }
 
   return stereocenterList;
+}
+
+void Molecule::_ensureModelInvariants() const {
+  if(GraphAlgorithms::numConnectedComponents(_adjacencies) > 1) {
+    throw std::logic_error("Molecules must be a single connected component. The supplied graph has multiple");
+  }
+
+  if(numAtoms() < 2) {
+    throw std::logic_error("Molecules must consist of at least two atoms!");
+  }
 }
 
 bool Molecule::_isValidIndex(const AtomIndexType& index) const {
@@ -481,7 +491,7 @@ void Molecule::_pickyFitStereocenter(
   }
 }
 
-std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
+std::vector<LocalGeometry::BindingSiteInformation> Molecule::_reduceToSiteInformation(
   const AtomIndexType& index
 ) const {
   /* TODO
@@ -500,12 +510,14 @@ std::vector<LocalGeometry::LigandType> Molecule::_reduceToLigandTypes(
   // first basic stuff for VSEPR, later L and X for transition metals
   // geometry inference does not care if the substituents are somehow
   // connected (unless in later models the entire structure is considered)
-  std::vector<LocalGeometry::LigandType> ligands;
+  std::vector<LocalGeometry::BindingSiteInformation> ligands;
 
   for(const auto& adjacentIndex: iterateAdjacencies(index)) {
     ligands.push_back(
-      LocalGeometry::LigandType {
-        0, 0, {
+      LocalGeometry::BindingSiteInformation {
+        0,
+        0,
+        {
           {  // L and X are 0 since only VSEPR is considered for now
             getElementType(adjacentIndex),
             getBondType(index, adjacentIndex).value()
@@ -662,37 +674,20 @@ Molecule::Molecule(
   addBond(0, 1, bondType);
 }
 
-Molecule::Molecule(
-  const Delib::ElementTypeCollection& elements,
-  const Edges& edges
-) {
-  for(const auto& element: elements) {
-    _addAtom(element);
-  }
-
-  for(const auto& edge: edges) {
-    addBond(edge.first.first, edge.first.second, edge.second);
-  }
-}
-
-Molecule::Molecule(const GraphType& graph)
-: _adjacencies(graph),
+Molecule::Molecule(GraphType graph)
+: _adjacencies(std::move(graph)),
   _stereocenters(_detectStereocenters())
 {
-  if(GraphAlgorithms::numConnectedComponents(_adjacencies) > 1) {
-    throw std::logic_error("Molecules must be a single connected component. The supplied graph has multiple");
-  }
+  _ensureModelInvariants();
 }
 
 Molecule::Molecule(
-  const GraphType& graph,
+  GraphType graph,
   const Delib::PositionCollection& positions
-) : _adjacencies(graph),
+) : _adjacencies(std::move(graph)),
     _stereocenters(inferStereocentersFromPositions(positions))
 {
-  if(GraphAlgorithms::numConnectedComponents(_adjacencies) > 1) {
-    throw std::logic_error("Molecules must be a single connected component. The supplied graph has multiple");
-  }
+  _ensureModelInvariants();
 }
 
 /* Modifiers */
@@ -1065,7 +1060,7 @@ Symmetry::Name Molecule::determineLocalGeometry(
     );
   }
 
-  auto ligandsVector = _reduceToLigandTypes(index);
+  auto ligandsVector = _reduceToSiteInformation(index);
 
   // TODO this below is invalid for metals!
   unsigned nSites = getNumAdjacencies(index);
@@ -1141,25 +1136,6 @@ BondType Molecule::getBondType(const GraphType::edge_descriptor& edge) const {
 
 CycleData Molecule::getCycleData() const {
   return CycleData(_adjacencies);
-}
-
-// Creates a copy of the contained data suitable for the Edges class
-std::vector<Molecule::ExplicitEdge> Molecule::getEdges() const {
-  std::vector<ExplicitEdge> edges;
-
-  for(
-    const auto& edgeIndex :
-    RangeForTemporary<GraphType::edge_iterator>(boost::edges(_adjacencies))
-  ) {
-    edges.push_back(
-      ExplicitEdge({
-        {boost::source(edgeIndex, _adjacencies), boost::target(edgeIndex, _adjacencies)},
-        _adjacencies[edgeIndex].bondType
-      })
-    );
-  }
-
-  return edges;
 }
 
 Delib::ElementType Molecule::getElementType(const AtomIndexType& index) const {
@@ -1243,11 +1219,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
       rankPriority(candidateIndex, {}, positions)
     );
 
-    _pickyFitStereocenter(
-      *stereocenterPtr,
-      expectedGeometry,
-      positions
-    );
+    _pickyFitStereocenter(*stereocenterPtr, expectedGeometry, positions);
 
     /* Add the CNStereocenter to the list, unless if it has one assignment only
      * and the symmetry is the same as expected
@@ -1360,6 +1332,7 @@ RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(
   );
 }
 
+
 bool Molecule::modularCompare(
   const Molecule& other,
   const temple::Bitmask<ComparisonComponents>& comparisonBitmask
@@ -1463,6 +1436,14 @@ bool Molecule::modularCompare(
       return hashes->at(i);
     }
   };
+
+  /* Ensure this matches the required boost concept. Although the documentation
+   * asks for the UnaryFunction concept, in reality it requires
+   * AdaptableUnaryFunction with typedefs for argument and result.
+   */
+  BOOST_CONCEPT_ASSERT((
+    boost::AdaptableUnaryFunctionConcept<HashLookup, PseudoHashType, AtomIndexType>
+  ));
 
   // Where the corresponding index from the other graph is stored
   std::vector<AtomIndexType> indexMap(numAtoms());

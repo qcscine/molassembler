@@ -17,6 +17,7 @@
   Eta.
 - Stereocenters on non-metal ligand atoms are to disregard eta bonds in
   determining which atoms are adjacent, fitting geometries, et cetera.
+- Stereocenters on metal ligand atoms group eta bonds as singular ligands
 - Stereocenters on metal ligand atoms must consider eta bonds in all regards.
 
 ## Class handling haptic bonds specification

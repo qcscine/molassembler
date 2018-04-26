@@ -20,7 +20,7 @@ const std::map<BondType, double> bondWeights {
 boost::optional<Symmetry::Name> vsepr(
   const Delib::ElementType& centerAtomType,
   const unsigned& nSites,
-  const std::vector<LigandType>& ligands,
+  const std::vector<BindingSiteInformation>& sites,
   const int& formalCharge
 ) {
   if(nSites <= 1) {
@@ -34,46 +34,48 @@ boost::optional<Symmetry::Name> vsepr(
     return boost::none;
   }
 
+  /* Make sure the ligand set doesn't include multiple atoms on a site.
+   * VSEPR probably can't handle this.
+   */
   if(
     std::any_of(
-      ligands.begin(),
-      ligands.end(),
-      [](const auto& ligand) {
-        return std::get<2>(ligand).size() > 1;
+      sites.begin(),
+      sites.end(),
+      [](const auto& ligand) -> bool {
+        return ligand.elementsAndBonds.size() > 1;
       }
     )
   ) {
     return boost::none;
-    /*"The ligand set includes ligands with multiple atoms on a site!"
-    " This is just VSEPR, there should be no eta bond situations!"*/
   }
-  
-  // get uncharged VE count
+
+  // get uncharged VE count, returns none if not a main group element
   auto VEOption = molassembler::AtomInfo::mainGroupVE(centerAtomType);
 
-  // return 
   if(!VEOption) {
     return boost::none;
   }
 
-  // calculate X, E (VSEPR parameters)
+  /* calculate X, E (VSEPR parameters). X is the number of connected atoms and E
+   * is the number of non-bonding electron pairs
+   */
   const unsigned& X = nSites;
   const int E = std::ceil(
     (
-      static_cast<double>(VEOption.value()) 
-      - formalCharge 
+      static_cast<double>(VEOption.value())
+      - formalCharge
       - std::accumulate(
-        ligands.begin(),
-        ligands.end(),
+        sites.begin(),
+        sites.end(),
         0.0,
-        [](const double& carry, const auto& ligand) {
+        [](const double& carry, const auto& ligand) -> double {
           /* can abort multiple ways:
            * vector front() is end() -> no ligands => API misuse
            * bondWeights has no entry for bty => error in bondWeights
            */
           return carry + bondWeights.at(
-            std::get<2>(ligand).front().second
-            // vec (pairs) ---^ pair -^ bty -^
+            ligand.elementsAndBonds.front().second
+            //     vec (pairs) ---^ pair -^ bty -^
           );
         }
       )
@@ -92,7 +94,7 @@ boost::optional<Symmetry::Name> vsepr(
   if(XESum == 2) {
     return Name::Linear;
   }
-  
+
   if(XESum == 3) {
     if(X == 3) {
       return Name::TrigonalPlanar;

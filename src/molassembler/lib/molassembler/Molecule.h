@@ -1,7 +1,6 @@
 #ifndef INCLUDE_MOLECULE_MANIP_MOLECULE_H
 #define INCLUDE_MOLECULE_MANIP_MOLECULE_H
 
-#include "Edges.h"
 #include "StereocenterList.h"
 #include "CycleData.h"
 #include "LocalGeometryModel.h"
@@ -19,9 +18,7 @@
 
 namespace molassembler {
 
-/*!
- * Central class of the library, modeling a molecular graph with all state.
- */
+//!  Central class of the library, modeling a molecular graph with all state.
 class Molecule {
 public:
 /* "Global" options */
@@ -34,6 +31,11 @@ public:
   );
 
   using PseudoHashType = unsigned long long;
+  static_assert(
+    std::is_same<PseudoHashType, GraphType::size_type>::value,
+    "Pseudo-hash implementation expects its 64 bit unsigned to match with graph "
+    "base size type"
+  );
 
   /*! For modifying equality comparison strictness in member modularCompare
    *
@@ -56,7 +58,7 @@ public:
     boost::optional<unsigned> assignedOptional
   );
 
-  enum class BondDiscretizationOption {
+  enum class BondDiscretizationOption : unsigned {
     Binary,
     UFF
   };
@@ -108,6 +110,9 @@ private:
   //! Generates a list of stereocenters based on graph properties alone
   StereocenterList _detectStereocenters() const;
 
+  //! Ensures basic expectations about what constitutes a Molecule are met
+  void _ensureModelInvariants() const;
+
   /*! Returns if an atom could be a CNStereocenter with multiple assignments
    *
    * Criteria applied are:
@@ -146,7 +151,7 @@ private:
   ) const;
 
   //!  Reduces an atom's neighbors to ligand types
-  std::vector<LocalGeometry::LigandType> _reduceToLigandTypes(
+  std::vector<LocalGeometry::BindingSiteInformation> _reduceToSiteInformation(
     const AtomIndexType& index
   ) const;
 
@@ -154,12 +159,6 @@ private:
   void _propagateGraphChange();
 
 public:
-/* Typedefs */
-  using ExplicitEdge = std::pair<
-    Edges::MapType::key_type, // pair<AtomIndexType, AtomIndexType>
-    Edges::MapType::mapped_type // BondType
-  >;
-
 /* Constructors */
   //!  Default-constructor creates a hydrogen molecule.
   Molecule() noexcept;
@@ -171,24 +170,15 @@ public:
     const BondType& bondType
   ) noexcept;
 
-  /*!
-   * Shorthand construction of a molecule using a list of element types and
-   * a set of explicit edges
-   */
-  Molecule(
-    const Delib::ElementTypeCollection& elements,
-    const Edges& edges
-  );
-
   //! Constructs a molecule from connectivity alone, inferring the stereocenters
-  explicit Molecule(const GraphType& graph);
+  explicit Molecule(GraphType graph);
 
   /*! Construct a molecule from connectivity and 3D information.
    *
    * NOTE: Assumes that the provided position collection is in Angstrom units.
    */
   Molecule(
-    const GraphType& graph,
+    GraphType graph,
     const Delib::PositionCollection& positions
   );
 
@@ -327,9 +317,6 @@ public:
 
   CycleData getCycleData() const;
 
-  //! Creates a copy of the contained data suitable for the Edges class
-  std::vector<ExplicitEdge> getEdges() const;
-
   /*! Returns the element type of an atomic index
    *
    * Returns the element type of an atomic index
@@ -410,8 +397,10 @@ public:
     const temple::Bitmask<ComparisonComponents>& comparisonBitmask
   ) const;
 
+  //! Fetch the number of atoms
   unsigned numAtoms() const;
 
+  //! Fetch the number of bonds
   unsigned numBonds() const;
 
   RankingInformation rankPriority(
@@ -420,6 +409,7 @@ public:
     const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
   ) const;
 
+  //! Get the vertex indices on both ends of a graph edge
   std::array<AtomIndexType, 2> vertices(const GraphType::edge_descriptor& edge) const;
 
 /* Operators */
