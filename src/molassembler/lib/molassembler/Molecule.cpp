@@ -1301,38 +1301,6 @@ bool Molecule::isSafeToRemoveBond(
 }
 
 
-/*! Returns a range-for temporary object allowing c++11 style for loop
- * iteration through an atom's adjacencies
- */
-RangeForTemporary<GraphType::adjacency_iterator> Molecule::iterateAdjacencies(
-  const AtomIndexType& a
-) const {
-  if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::iterateAdjacencies: Supplied index is invalid!");
-  }
-
-  return RangeForTemporary<GraphType::adjacency_iterator>(
-    boost::adjacent_vertices(a, _adjacencies)
-  );
-}
-
-RangeForTemporary<GraphType::edge_iterator> Molecule::iterateEdges() const {
-  return RangeForTemporary<GraphType::edge_iterator>(boost::edges(_adjacencies));
-}
-
-RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(
-  const AtomIndexType& a
-) const {
-  if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::iterateEdges: Supplied index is invalid!");
-  }
-
-  return RangeForTemporary<GraphType::out_edge_iterator>(
-    boost::out_edges(a, _adjacencies)
-  );
-}
-
-
 bool Molecule::modularCompare(
   const Molecule& other,
   const temple::Bitmask<ComparisonComponents>& comparisonBitmask
@@ -1406,6 +1374,7 @@ bool Molecule::modularCompare(
   std::unordered_map<PseudoHashType, PseudoHashType> reductionMapping;
   PseudoHashType counter = 0;
 
+  // Generate mapping from hash values to integer-incremented reduction
   for(const auto& hash : boost::range::join(thisHashes, otherHashes)) {
     if(reductionMapping.count(hash) == 0) {
       reductionMapping.emplace(
@@ -1417,11 +1386,19 @@ bool Molecule::modularCompare(
     }
   }
 
+  // Reduce the hash representations
   for(auto& hash : boost::range::join(thisHashes, otherHashes)) {
     hash = reductionMapping.at(hash);
   }
 
   auto maxHash = counter;
+
+  if(maxHash > std::numeric_limits<GraphType::vertices_size_type>::max()) {
+    throw std::logic_error(
+      "Number of distinct atom environment hashes exceeds limits of boost "
+      " graph's isomorphism algorithm type used to store it!"
+    );
+  }
 
   // This explicit form is needed instead of a lambda for boost's concept checks
   struct HashLookup {
@@ -1641,6 +1618,40 @@ std::array<AtomIndexType, 2> Molecule::vertices(
     boost::target(edge, _adjacencies)
   };
 }
+
+/* Iterators */
+/*! Returns a range-for temporary object allowing c++11 style for loop
+ * iteration through an atom's adjacencies
+ */
+RangeForTemporary<GraphType::adjacency_iterator> Molecule::iterateAdjacencies(
+  const AtomIndexType& a
+) const {
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::iterateAdjacencies: Supplied index is invalid!");
+  }
+
+  return RangeForTemporary<GraphType::adjacency_iterator>(
+    boost::adjacent_vertices(a, _adjacencies)
+  );
+}
+
+RangeForTemporary<GraphType::edge_iterator> Molecule::iterateEdges() const {
+  return RangeForTemporary<GraphType::edge_iterator>(boost::edges(_adjacencies));
+}
+
+RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(
+  const AtomIndexType& a
+) const {
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Molecule::iterateEdges: Supplied index is invalid!");
+  }
+
+  return RangeForTemporary<GraphType::out_edge_iterator>(
+    boost::out_edges(a, _adjacencies)
+  );
+}
+
+
 
 /* Operators */
 RangeForTemporary<GraphType::adjacency_iterator> Molecule::operator [] (

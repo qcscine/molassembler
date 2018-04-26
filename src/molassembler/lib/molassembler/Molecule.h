@@ -34,11 +34,6 @@ public:
   );
 
   using PseudoHashType = unsigned long long;
-  static_assert(
-    std::is_same<PseudoHashType, GraphType::size_type>::value,
-    "Pseudo-hash implementation expects its 64 bit unsigned to match with graph "
-    "base size type"
-  );
 
   /*! For modifying equality comparison strictness in member modularCompare
    *
