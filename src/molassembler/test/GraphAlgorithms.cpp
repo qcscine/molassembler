@@ -9,6 +9,9 @@
 #include "IO.h"
 #include "temple/Stringify.h"
 
+#include "boost/graph/graphviz.hpp"
+#include "MolGraphWriter.h"
+
 #include <iostream>
 
 using namespace molassembler;
@@ -18,7 +21,7 @@ inline std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-struct TestingData {
+struct LinkTestData {
   using LinksType = std::set<
     std::pair<AtomIndexType, AtomIndexType>
   >;
@@ -27,8 +30,8 @@ struct TestingData {
 
   LinksType expectedLinks;
 
-  TestingData() = default;
-  TestingData(
+  LinkTestData() = default;
+  LinkTestData(
     AtomIndexType passSource,
     const LinksType& passLinks
   ) : source {passSource},
@@ -37,10 +40,7 @@ struct TestingData {
 
 };
 
-const std::map<
-  std::string,
-  TestingData
-> testData {
+const std::map<std::string, LinkTestData> linkTestData {
   {
     "02_adjusted",
     {
@@ -361,7 +361,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
 
   std::cout << mol << nl;
 
-  const auto& relevantData = testData.at(filePath.stem().string());
+  const auto& relevantData = linkTestData.at(filePath.stem().string());
 
   auto links = GraphAlgorithms::substituentLinks(
     mol.getGraph(),
@@ -370,7 +370,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
     mol.getAdjacencies(relevantData.source)
   );
 
-  TestingData::LinksType condensed;
+  LinkTestData::LinksType condensed;
   for(const auto& linkData : links) {
     condensed.insert(linkData.indexPair);
   }
@@ -393,7 +393,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
   return true;
 }
 
-BOOST_AUTO_TEST_CASE(substituentLinks) {
+BOOST_AUTO_TEST_CASE(substituentLinksTests) {
   boost::filesystem::path filesPath("test_files/inorganics/multidentate");
   boost::filesystem::recursive_directory_iterator end;
 
@@ -405,10 +405,169 @@ BOOST_AUTO_TEST_CASE(substituentLinks) {
 
     if(
       currentFilePath.extension() == ".mol"
-      && testData.count(currentFilePath.stem().string()) > 0
+      && linkTestData.count(currentFilePath.stem().string()) > 0
     ) {
       BOOST_CHECK(
         testSubstituentLinks(currentFilePath)
+      );
+    }
+  }
+}
+
+using BondListType = std::vector<
+  std::array<AtomIndexType, 2>
+>;
+
+const std::map<std::string, BondListType> hapticTestData {
+  {
+    "05",
+    {
+      {0, 24},
+      {0, 26},
+      {0, 27},
+      {0, 29},
+      {0, 31},
+      {0, 33}
+    }
+  },
+  {
+    "10",
+    {
+      {0, 7},
+      {0, 8}
+    }
+  },
+  {
+    "14",
+    {
+      {0, 7},
+      {0, 14}
+    }
+  },
+  {
+    "32",
+    {
+      {0, 4},
+      {0, 5},
+      {0, 6},
+      {0, 7}
+    }
+  },
+};
+
+bool testHapticBonds(boost::filesystem::path filePath) {
+  IO::MOLFileHandler molHandler;
+  auto rawData = molHandler.read(filePath.string());
+
+  unsigned N = rawData.atoms.size();
+  GraphType graph (N);
+
+  // Basically a UFF bond discretization scheme
+  for(unsigned i = 0; i < N; ++i) {
+    for(unsigned j = i + 1; j < N; ++j) {
+      double bondOrder = rawData.bondOrders.getOrder(i, j);
+
+      if(bondOrder > 0.5) {
+        BondType bond = static_cast<BondType>(
+          std::round(bondOrder) - 1
+        );
+
+        if(bondOrder > 6.5) {
+          bond = BondType::Sextuple;
+        }
+
+        auto edgeAddPair = boost::add_edge(i, j, graph);
+        graph[edgeAddPair.first].bondType = bond;
+      }
+    }
+
+    // copy element type data too
+    graph[i].elementType = rawData.atoms.getElement(i);
+  }
+
+  graph = GraphAlgorithms::findAndSetEtaBonds(std::move(graph));
+
+  const auto& relevantData = hapticTestData.at(filePath.stem().string());
+
+  /* TODO do this differently. Check ALL bonds, and make sure only those
+   * expected were turned into eta bonds. If findAndSetEtaBonds just made
+   * everything an eta bond this would pass
+   */
+
+  bool pass = true;
+  temple::TinyUnorderedSet<GraphType::edge_descriptor> expectedEtaBonds;
+  for(const auto& expectedEtaBond : relevantData) {
+    AtomIndexType i = expectedEtaBond.front(),
+                  j = expectedEtaBond.back();
+    auto edgePair = boost::edge(i, j, graph);
+
+    if(!edgePair.second) {
+      std::cout << "The expected eta bond " << i << " - " << j
+        << " is not even present in the graph!" << std::endl;
+      pass = false;
+    }
+
+    expectedEtaBonds.insert(edgePair.first);
+  }
+
+  GraphType::edge_iterator iter, end;
+  std::tie(iter, end) = boost::edges(graph);
+
+  for(; iter != end; ++iter) {
+    AtomIndexType i = boost::source(*iter, graph);
+    AtomIndexType j = boost::target(*iter, graph);
+    BondType bty = graph[*iter].bondType;
+    bool expectEtaBond = expectedEtaBonds.count(*iter);
+
+    if(expectEtaBond && bty != BondType::Eta) {
+      std::cout << "The expected eta bond " << i << " - " << j
+        << " is not an Eta bond type, but has underlying enum value "
+        << static_cast<std::underlying_type<BondType>::type>(bty)
+        << std::endl;
+      pass = false;
+    }
+
+    if(!expectEtaBond && bty == BondType::Eta) {
+      std::cout << "Did not expect an eta bond for " << i << " - " << j
+        << ", but is one in the graph!" << std::endl;
+      pass = false;
+    }
+  }
+
+  if(!pass) {
+    MolGraphWriter propertyWriter(&graph);
+
+    std::ofstream outFile(filePath.stem().string() + ".dot");
+    boost::write_graphviz(
+      outFile,
+      graph,
+      propertyWriter,
+      propertyWriter,
+      propertyWriter
+    );
+
+    outFile.close();
+  }
+
+  return pass;
+}
+
+BOOST_AUTO_TEST_CASE(hapticGraphsTests) {
+  boost::filesystem::path filesPath("test_files/inorganics/haptic");
+  boost::filesystem::recursive_directory_iterator end;
+
+  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
+    const boost::filesystem::path currentFilePath = *i;
+
+    std::cout << "Stem: '" << currentFilePath.stem().string() << "'" << nl;
+    std::cout << "Extension: '" << currentFilePath.extension().string() << "'" << nl;
+
+    if(
+      currentFilePath.extension() == ".mol"
+      && hapticTestData.count(currentFilePath.stem().string()) > 0
+    ) {
+      BOOST_CHECK(
+        testHapticBonds(currentFilePath)
       );
     }
   }

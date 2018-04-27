@@ -1,6 +1,8 @@
-#include <boost/graph/connected_components.hpp>
-#include <boost/graph/biconnected_components.hpp>
+#include "boost/graph/connected_components.hpp"
+#include "boost/graph/biconnected_components.hpp"
+#include "boost/range/combine.hpp"
 
+#include "AtomInfo.h"
 #include "CycleData.h"
 #include "GraphAlgorithms.h"
 
@@ -115,6 +117,93 @@ std::vector<LinkInformation> substituentLinks(
   }
 
   return links;
+}
+
+GraphType findAndSetEtaBonds(GraphType&& graph) {
+  CycleData cycleData {graph};
+
+  AtomIndexType N = boost::num_vertices(graph);
+  for(AtomIndexType centralIndex = 0; centralIndex < N; ++centralIndex) {
+    // Skip any main group element types, none of these should be eta bonded
+    if(AtomInfo::isMainGroupElement(graph[centralIndex].elementType)) {
+      break;
+    }
+
+    unsigned A = boost::out_degree(centralIndex, graph);
+    temple::TinySet<AtomIndexType> centralAdjacents;
+
+    GraphType::adjacency_iterator iter, end;
+    std::tie(iter, end) = boost::adjacent_vertices(centralIndex, graph);
+
+    for(; iter != end; ++iter) {
+      centralAdjacents.insert(*iter);
+    }
+
+    std::vector<bool> skipList (A, false);
+
+    temple::TinySet<AtomIndexType> ligand;
+
+    std::function<void(const AtomIndexType&)> recursiveDiscover = [&](const AtomIndexType& seed) {
+      GraphType::adjacency_iterator iter, end;
+      std::tie(iter, end) = boost::adjacent_vertices(seed, graph);
+      for(; iter != end; ++iter) {
+        if(centralAdjacents.count(*iter) && !ligand.count(*iter)) {
+          // *iter is shared adjacent of center and seed and not yet discovered
+          ligand.insert(*iter);
+          recursiveDiscover(*iter);
+        }
+      }
+
+      // Make sure the algorithm skips this seed index to avoid duplicate work
+      skipList.at(
+        centralAdjacents.find(seed) - centralAdjacents.begin()
+      ) = true;
+    };
+
+    for(unsigned i = 0; i < A; ++i) {
+      if(skipList.at(i)) {
+        continue;
+      }
+
+      const AtomIndexType& adjacent = centralAdjacents.at(i);
+      ligand = {adjacent};
+      recursiveDiscover(adjacent);
+
+      /* A ligand is a haptic ligand if:
+       * - The number of co-bonded atoms constituting direct bonds is more than one
+       * - It is not a same-type triangle, i.e. we have detected
+       *
+       *     M — B
+       *      \ /   where M, A and B are all non-main-group elements
+       *       A
+       */
+      if(
+        ligand.size() > 1
+        && !( // Exclude the same-type triangle
+          ligand.size() == 2
+          && temple::accumulate(
+            ligand,
+            0u,
+            [&](const unsigned& carry, const AtomIndexType& adjacent) -> unsigned {
+              if(!AtomInfo::isMainGroupElement(graph[adjacent].elementType)) {
+                return carry + 1;
+              }
+
+              return carry;
+            }
+          )
+        )
+      ) {
+        // Mark all bonds to the central atom as haptic bonds
+        for(const auto& hapticIndex : ligand) {
+          auto edgePair = boost::edge(centralIndex, hapticIndex, graph);
+          graph[edgePair.first].bondType = BondType::Eta;
+        }
+      }
+    }
+  }
+
+  return graph;
 }
 
 RemovalSafetyData getRemovalSafetyData(const GraphType& graph) {

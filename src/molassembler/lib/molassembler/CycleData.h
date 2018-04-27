@@ -8,6 +8,10 @@
 // RDL
 #include "RingDecomposerLib.h"
 
+/* TODO
+ * - retry implementing this with unique_ptr or shared_ptr
+ */
+
 /*! @file
  *
  * Contains a wrapper class for the C-style RingDecomposerLib functions so that

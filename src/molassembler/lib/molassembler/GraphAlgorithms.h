@@ -52,6 +52,8 @@ std::vector<LinkInformation> substituentLinks(
   const std::vector<AtomIndexType>& activeAdjacents
 );
 
+GraphType findAndSetEtaBonds(GraphType&& graph);
+
 /*!
  * Returns the number of connected components of the graph. This is a central
  * property as the library enforces this number to be always one for any given
