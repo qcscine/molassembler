@@ -385,6 +385,8 @@ std::vector<
 /*!
  * Split a container's values by a binary comparison function. Returns a ragged
  * 2D vector.
+ *
+ * @note Requires that the equality comparison is symmetric and transitive!
  */
 template<class Container, class BinaryFunction>
 std::vector<

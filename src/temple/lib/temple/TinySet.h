@@ -93,13 +93,26 @@ struct TinySet {
 
   type data;
 
+  void clear() {
+    data.clear();
+  }
+
+  template<typename It>
+  void erase(It a) {
+    data.erase(a);
+  }
+
+  typename type::iterator find(T a) {
+    return std::lower_bound(
+      data.begin(),
+      data.end(),
+      a
+    );
+  }
+
   void insert(T a) {
     data.insert(
-      std::lower_bound(
-        data.begin(),
-        data.end(),
-        a
-      ),
+      find(a),
       a
     );
   }
@@ -114,6 +127,15 @@ struct TinySet {
     }
   }
 
+  TinySet& operator = (std::initializer_list<T> init) {
+    data.clear();
+    for(const auto& value : init) {
+      insert(value);
+    }
+
+    return *this;
+  }
+
   unsigned size() const {
     return data.size();
   }
@@ -124,6 +146,18 @@ struct TinySet {
       data.end(),
       a
     );
+  }
+
+  T front() const {
+    return data.front();
+  }
+
+  T back() const {
+    return data.back();
+  }
+
+  T at(std::size_t position) const {
+    return data.at(position);
   }
 
   bool empty() const {
@@ -152,11 +186,6 @@ struct TinySet {
 
   typename type::const_iterator cend() const {
     return data.cend();
-  }
-
-  template<typename It>
-  void erase(It a) {
-    data.erase(a);
   }
 };
 
