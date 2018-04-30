@@ -59,6 +59,9 @@ std::string stringify(const std::pair<T, U>& pair);
 template<typename T>
 std::string stringify(const std::vector<T>& vec);
 
+template<typename T, std::size_t size>
+std::string stringify(const std::array<T, size>& arr);
+
 template<typename T>
 std::string stringify(const std::set<T>& set);
 
@@ -111,6 +114,11 @@ std::string stringify(const std::pair<T, U>& pair) {
 template<typename T>
 std::string stringify(const std::vector<T>& vec) {
   return "vector "s + stringifyContainer(vec);
+}
+
+template<typename T, size_t size>
+std::string stringify(const std::array<T, size>& arr) {
+  return "array "s + stringifyContainer(arr);
 }
 
 template<typename T>

@@ -24,10 +24,10 @@ namespace temple {
 /* Header */
 
 template<typename Container>
-void sort(const Container& container);
+void sort(Container& container);
 
 template<typename Container, typename Comparator>
-void sort(const Container& container, Comparator&& comparator);
+void sort(Container& container, Comparator&& comparator);
 
 template<typename Container, typename T>
 auto find(const Container& container, const T& needle);
@@ -528,7 +528,7 @@ template<
 
 /* Implementation ------------------------------------------------------------*/
 template<typename Container>
-void sort(const Container& container) {
+void sort(Container& container) {
   std::sort(
     std::begin(container),
     std::end(container)
@@ -536,7 +536,7 @@ void sort(const Container& container) {
 }
 
 template<typename Container, typename Comparator>
-void sort(const Container& container, Comparator&& comparator) {
+void sort(Container& container, Comparator&& comparator) {
   std::sort(
     std::begin(container),
     std::end(container),

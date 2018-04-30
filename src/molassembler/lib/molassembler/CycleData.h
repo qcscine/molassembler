@@ -8,10 +8,6 @@
 // RDL
 #include "RingDecomposerLib.h"
 
-/* TODO
- * - retry implementing this with unique_ptr or shared_ptr
- */
-
 /*! @file
  *
  * Contains a wrapper class for the C-style RingDecomposerLib functions so that
@@ -20,124 +16,199 @@
 
 namespace molassembler {
 
-// Pre-declare CycleIterator so that it can be friended
-class CycleIterator;
-
-/*!
- * RingDecomposerLIb wrapper class so that working with cycle data is not
- * polluted by a slew of un-copyable and odd ANSI C types and functions.
+/*! Wrapper class to make working with RDL in C++ more pleasant.
+ *
+ * Calculated data from a graph is movable, copyable and assignable in all the
+ * usual ways, and is therefore suited for caching. Equality comparison of
+ * this type and its nested types follows same-base, not equal-base logic of
+ * comparison due to management of the C pointer types and the associated
+ * allocated memory using shared_ptrs.
  */
-class CycleData {
-public:
-  friend class CycleIterator;
-
+class Cycles {
 private:
-  //! Refrential access to base molecular graph
-  const GraphType& _baseGraphReference;
+  /*! Safe wrapper around RDL's graph and calculated data pointers
+   *
+   * Limited operability type to avoid any accidental moves or copies. Manages
+   * memory allocation and destruction in all situations.
+   */
+  struct RDLDataPtrs {
+    //! Raw pointers to RDL_graph object
+    RDL_graph* graphPtr;
 
-  //! Raw pointers to RDL_graph object
-  RDL_graph* _graphPtr;
+    //! Raw pointer to calculated graph cycle data
+    RDL_data* dataPtr;
 
-  //! Raw pointer to calculated graph cycle data
-  RDL_data* _dataPtr;
+    RDLDataPtrs() = delete;
+    RDLDataPtrs(const GraphType& sourceGraph);
+    RDLDataPtrs(const RDLDataPtrs& other) = delete;
+    RDLDataPtrs(RDLDataPtrs&& other) = delete;
+    RDLDataPtrs& operator = (const RDLDataPtrs& other) = delete;
+    RDLDataPtrs& operator = (RDLDataPtrs&& other) = delete;
+    ~RDLDataPtrs();
+  };
+
+  std::shared_ptr<RDLDataPtrs> _rdlPtr;
 
 public:
-  // Rule of five methods
-  CycleData(const GraphType& sourceGraph);
-  CycleData(CycleData&& other);
-  CycleData(const CycleData& other) = delete;
-  CycleData& operator = (const CycleData& other) = delete;
-  ~CycleData();
+  Cycles() = default;
+  Cycles(const GraphType& sourceGraph);
 
-/* Information */
-  //! Returns an iterator proxy object
-  CycleIterator getCyclesIterator() const;
+  using EdgeList = std::vector<
+    std::array<AtomIndexType, 2>
+  >;
 
-  /*!
-   * Returns an iterator proxy object for cycles that are smaller or equal to
-   * the passed cycle size
-   */
-  CycleIterator getCyclesIteratorSizeLE(
-    const unsigned& maxCycleSize
-  ) const;
-
-  //!  Returns an iterator proxy object for cycles that contain a specific index.
-  CycleIterator getCyclesIteratorContaining(
-    const AtomIndexType& containingIndex
-  ) const;
+  //! Returns the size of a cycle (the number of constuting atoms or edges)
+  static unsigned size(const RDL_cycle* const cyclePtr);
+  //! Returns a list of edges constituted by their edge vertices of a cycle
+  static EdgeList edgeVertices(const RDL_cycle* const cyclePtr);
+  //! Returns a list of edge descriptors from the original graph of a cycle
+  static temple::TinySet<GraphType::edge_descriptor> edges(
+    const RDL_cycle* const cyclePtr,
+    const GraphType& graph
+  );
+  //! Returns a list of edge descriptors from an EdgeList
+  static temple::TinySet<GraphType::edge_descriptor> edges(
+    const EdgeList& edges,
+    const GraphType& graph
+  );
 
   //! Returns the number of unique ring families (URFs)
   unsigned numCycleFamilies() const;
 
   //! Returns the number of unique ring families (URFs) an index is involved in
-  unsigned numCycleFamilies(const AtomIndexType& index) const;
+  unsigned numCycleFamilies(const AtomIndexType index) const;
 
   //! Returns the number of relevant cycles (RCs)
   unsigned numRelevantCycles() const;
 
   //! Returns the number of relevant cycles (RCs)
-  unsigned numRelevantCycles(const AtomIndexType& index) const;
+  unsigned numRelevantCycles(const AtomIndexType index) const;
 
-  RDL_data* getDataPtr();
+  //! namespace struct
+  struct predicates {
+    //! Permits all cycles
+    struct All {
+      bool operator() (const RDL_cycle* const) const;
+    };
+
+    //! Limits iterator to cycles smaller than the threshold used in constructor
+    struct SizeLessThan {
+      const unsigned threshold;
+
+      SizeLessThan(unsigned threshold);
+
+      bool operator() (const RDL_cycle* const cyclePtr) const;
+    };
+
+    //! Limits iterator to cycles containing a certain atom index
+    struct ContainsIndex {
+      AtomIndexType soughtIndex;
+
+      ContainsIndex(AtomIndexType soughtIndex);
+
+      bool operator() (const RDL_cycle* const cyclePtr) const;
+    };
+  };
+
+  //! non-modifying forward iterator
+  class constIterator {
+  public:
+    using PredicateType = std::function<bool(const RDL_cycle* const)>;
+
+  private:
+    /*! Safe wrapper around RDL's cycle iterator and cycle pointers
+     *
+     * Limited operability type to avoid any accidental moves or copies. Manages
+     * memory allocation and destruction in all situations. Pointer correctness
+     * and iterator advancement is also provided.
+     */
+    struct RDLCyclePtrs {
+      RDL_cycleIterator* cycleIterPtr;
+      RDL_cycle* cyclePtr;
+
+      RDLCyclePtrs() = delete;
+      RDLCyclePtrs(const RDLDataPtrs& dataPtrs);
+      RDLCyclePtrs(const RDLCyclePtrs& other) = delete;
+      RDLCyclePtrs(RDLCyclePtrs&& other) = delete;
+      RDLCyclePtrs& operator = (const RDLCyclePtrs& other) = delete;
+      RDLCyclePtrs& operator = (RDLCyclePtrs&& other) = delete;
+      ~RDLCyclePtrs();
+
+      /*! Advance internal iterator and cycle state
+       *
+       * Frees the memory for the current cycle and advances the iterator state.
+       * If the iterator is now not at the end of all relevant cycles, then
+       * the next cycle is allocated and constructed into cyclePtr. Otherwise,
+       * cyclePtr is a nullptr.
+       */
+      void advance();
+    };
+
+    //! Hold an owning reference to the base data to avoid dangling pointers
+    std::shared_ptr<RDLDataPtrs> _rdlPtr;
+    //! Manage cycle data as shared pointer to permit expected iterator functionality
+    std::shared_ptr<RDLCyclePtrs> _cyclePtr;
+    //! Holds a predicate function that determines which cycles are permissible
+    PredicateType _cyclePermissiblePredicate;
+    //! Current position in the full list of relevant cycles, for comparability and construction
+    unsigned _rCycleIndex = 0;
+
+  public:
+    constIterator() = default;
+    constIterator(
+      const std::shared_ptr<RDLDataPtrs>& dataPtr,
+      PredicateType cyclePredicate = predicates::All {},
+      unsigned rCycleIndex = 0
+    );
+
+    constIterator& operator ++ ();
+    constIterator operator ++ (int);
+
+    RDL_cycle* operator * () const;
+
+    //! Must be constructed from same Cycles base and at same RC to compare equal
+    bool operator == (const constIterator& other) const;
+    bool operator != (const constIterator& other) const;
+  };
+
+  constIterator begin() const;
+  constIterator end() const;
+
+  /*! Iterate through cycles satisfying a predicate.
+   *
+   * PredicateType must be a unary predicate taking a const RDL_cycle* const.
+   * Sample predicates are predicates::SizeLessThan and
+   * predicates::ContainsIndex.
+   */
+  template<typename UnaryPredicate>
+  RangeForTemporary<constIterator> iterate(UnaryPredicate&& predicate) const {
+    return {
+      constIterator {_rdlPtr, predicate},
+      constIterator {_rdlPtr, predicate, numRelevantCycles()}
+    };
+  }
+
+  //! Provide access to calculated data
+  RDL_data* dataPtr() const;
+
+  //! Must be copy of another to compare equal. Constructed from same graph does not suffice
+  bool operator == (const Cycles& other) const;
+  bool operator != (const Cycles& other) const;
 };
-
-/*!
- * Iterator-like class for going through cycles in the generated data from the
- * original graph.
- */
-class CycleIterator {
-public:
-  friend class CycleData;
-
-private:
-  const CycleData& _cycleDataRef;
-  const boost::optional<unsigned> _maxCycleSizeOption;
-  const boost::optional<AtomIndexType> _containingIndexOption;
-  RDL_cycleIterator* _cycleIteratorPtr;
-
-  //! Private constructor so that only CycleData can call it
-  CycleIterator(
-    const CycleData& cycleData,
-    const boost::optional<unsigned>& maxCycleSizeOption = boost::none,
-    const boost::optional<AtomIndexType>& containingIndexOption = boost::none
-  );
-
-  bool _currentCyclePermissible() const;
-
-public:
-  ~CycleIterator();
-
-  using EdgeSet = temple::TinySet<GraphType::edge_descriptor>;
-
-/* Information */
-  bool atEnd() const;
-  unsigned cycleSize() const;
-  EdgeSet getCurrentCycle() const;
-
-/* Modification */
-  void advance();
-};
-
-// Forward-declare Molecule
-class Molecule;
 
 /*!
  * Creates a mapping from atom index to the size of the smallest cycle
  * containing that index. The map does not contain entries for indices not
  * enclosed by a cycle.
  */
-std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
-  const CycleData& cycleData,
-  const GraphType& graph
-);
+std::map<AtomIndexType, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
 
 /*!
  * From a set of graph edge descriptors, this function creates one of the two
  * possible vertex index sequences describing the cycle
  */
 std::vector<AtomIndexType> makeRingIndexSequence(
-  const CycleIterator::EdgeSet& edgeSet,
-  const GraphType& graph
+  const Cycles::EdgeList& edgeSet
 );
 
 std::vector<AtomIndexType> centralizeRingIndexSequence(
@@ -150,10 +221,24 @@ std::vector<AtomIndexType> centralizeRingIndexSequence(
  * Double and aromatic bonds are considered planarity enforcing.
  */
 unsigned countPlanarityEnforcingBonds(
-  const CycleIterator::EdgeSet& edgeSet,
+  const temple::TinySet<GraphType::edge_descriptor>& edgeSet,
   const GraphType& graph
 );
 
 } // namespace molassembler
+
+/* iterator traits for Cycles::constIterator */
+namespace std {
+
+template<>
+struct iterator_traits<molassembler::Cycles::constIterator> {
+  using iterator_category = std::forward_iterator_tag;
+  using difference_type = std::ptrdiff_t;
+  using value_type = RDL_cycle*;
+  using pointer = value_type;
+  using reference = value_type;
+};
+
+} // namespace std
 
 #endif

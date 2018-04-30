@@ -20,16 +20,12 @@ unsigned numRotatableBonds(
   const Molecule& mol,
   const unsigned cycleThreshold = 5
 ) {
-  CycleData cycleData = mol.getCycleData();
+  Cycles cycleData = mol.getCycleData();
 
   std::map<GraphType::edge_descriptor, unsigned> smallestCycle;
 
-  for(
-    auto cycleIter = cycleData.getCyclesIterator();
-    !cycleIter.atEnd();
-    cycleIter.advance()
-  ) {
-    const auto cycleEdges = cycleIter.getCurrentCycle();
+  for(const auto cyclePtr : cycleData) {
+    const auto cycleEdges = Cycles::edges(cyclePtr, mol.getGraph());
     const unsigned cycleSize = cycleEdges.size();
 
     for(const auto& edge : cycleEdges) {

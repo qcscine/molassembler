@@ -106,6 +106,8 @@
   counting.
 
 # Improvement considerations
+- Stop passing simple fundamental types by ref all over the place
+  More overhead than by-value!
 - Check rvalue constructors to ensure that all variable initializations use
   std::move of the bound rvalue argument in the constructor
 - NL.16 Use a conventional class member declaration order

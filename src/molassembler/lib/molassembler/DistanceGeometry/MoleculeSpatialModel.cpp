@@ -58,11 +58,8 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    */
 
   // Helper variables
-  CycleData cycleData {molecule.getGraph()};
-  auto smallestCycleMap = makeSmallestCycleMap(
-    cycleData,
-    molecule.getGraph()
-  );
+  Cycles cycleData {molecule.getGraph()};
+  auto smallestCycleMap = makeSmallestCycleMap(cycleData);
 
   // Check constraints on static constants
   static_assert(
@@ -221,11 +218,10 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    * exactly, add that information
    */
   for(
-    auto cycleIter = cycleData.getCyclesIteratorSizeLE(5);
-    !cycleIter.atEnd();
-    cycleIter.advance()
+    const auto cyclePtr :
+    cycleData.iterate(Cycles::predicates::SizeLessThan {6})
   ) {
-    const auto edgeDescriptors = cycleIter.getCurrentCycle();
+    const auto edgeDescriptors = Cycles::edges(cyclePtr, molecule.getGraph());
     const unsigned cycleSize = edgeDescriptors.size();
 
     /* There are a variety of cases here which all need to be treated
@@ -263,8 +259,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
        * descriptors into vertex indices
        */
       const auto indexSequence = makeRingIndexSequence(
-        edgeDescriptors,
-        molecule.getGraph()
+        Cycles::edgeVertices(cyclePtr)
       );
 
       /* First, we fetch the angles that maximize the cycle area using the
@@ -381,12 +376,12 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         && cycleData.numCycleFamilies(i) == 2
       ) {
         unsigned* URFIDs;
-        auto nIDs = RDL_getURFsContainingNode(cycleData.getDataPtr(), i, &URFIDs);
+        auto nIDs = RDL_getURFsContainingNode(cycleData.dataPtr(), i, &URFIDs);
         assert(nIDs == 2);
 
         bool allURFsSingularRC = true;
         for(unsigned idIdx = 0; idIdx < nIDs; ++idIdx) {
-          if(RDL_getNofRCForURF(cycleData.getDataPtr(), URFIDs[idIdx]) > 1) {
+          if(RDL_getNofRCForURF(cycleData.dataPtr(), URFIDs[idIdx]) > 1) {
             allURFsSingularRC = false;
             break;
           }
@@ -394,9 +389,15 @@ MoleculeSpatialModel::MoleculeSpatialModel(
 
         if(allURFsSingularRC) {
           // The two RCs still have to be disjoint save for i
-          RDL_cycleIterator* cycleIteratorOne = RDL_getRCyclesForURFIterator(cycleData.getDataPtr(), URFIDs[0]);
+          RDL_cycleIterator* cycleIteratorOne = RDL_getRCyclesForURFIterator(
+            cycleData.dataPtr(),
+            URFIDs[0]
+          );
           RDL_cycle* cycleOne = RDL_cycleIteratorGetCycle(cycleIteratorOne);
-          RDL_cycleIterator* cycleIteratorTwo = RDL_getRCyclesForURFIterator(cycleData.getDataPtr(), URFIDs[1]);
+          RDL_cycleIterator* cycleIteratorTwo = RDL_getRCyclesForURFIterator(
+            cycleData.dataPtr(),
+            URFIDs[1]
+          );
           RDL_cycle* cycleTwo = RDL_cycleIteratorGetCycle(cycleIteratorTwo);
 
           // We model them only if both are small.

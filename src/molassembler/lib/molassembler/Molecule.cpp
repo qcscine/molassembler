@@ -59,7 +59,7 @@ Delib::BondOrderCollection Molecule::uffBondOrders(
 
 Molecule::PseudoHashType Molecule::hashAtomEnvironment(
   const temple::Bitmask<ComparisonComponents>& bitmask,
-  const Delib::ElementType& elementType,
+  const Delib::ElementType elementType,
   const std::vector<BondType>& sortedBonds,
   boost::optional<Symmetry::Name> symmetryNameOptional,
   boost::optional<unsigned> assignedOptional
@@ -146,7 +146,7 @@ Molecule::PseudoHashType Molecule::hashAtomEnvironment(
 Molecule::InterpretResult Molecule::interpret(
   const Delib::AtomCollection& atomCollection,
   const Delib::BondOrderCollection& bondOrders,
-  const BondDiscretizationOption& discretization
+  const BondDiscretizationOption discretization
 ) {
   // Discretize bond orders
   const int N = atomCollection.size();
@@ -292,7 +292,7 @@ Molecule::InterpretResult Molecule::interpret(
 
 Molecule::InterpretResult Molecule::interpret(
   const Delib::AtomCollection& atomCollection,
-  const BondDiscretizationOption& discretization
+  const BondDiscretizationOption discretization
 ) {
   return interpret(
     atomCollection,
@@ -303,7 +303,7 @@ Molecule::InterpretResult Molecule::interpret(
 
 /* Private members */
 
-AtomIndexType Molecule::_addAtom(const Delib::ElementType& elementType) {
+AtomIndexType Molecule::_addAtom(const Delib::ElementType elementType) {
   auto vertex = boost::add_vertex(_adjacencies);
   _adjacencies[vertex].elementType = elementType;
   return vertex;
@@ -372,11 +372,11 @@ void Molecule::_ensureModelInvariants() const {
   }
 }
 
-bool Molecule::_isValidIndex(const AtomIndexType& index) const {
+bool Molecule::_isValidIndex(const AtomIndexType index) const {
   return index < numAtoms();
 }
 
-bool Molecule::_isCNStereocenterCandidate(const AtomIndexType& atomIndex) const {
+bool Molecule::_isCNStereocenterCandidate(const AtomIndexType atomIndex) const {
   auto numAdjacencies = getNumAdjacencies(atomIndex);
 
   if(numAdjacencies < 3) {
@@ -396,14 +396,14 @@ bool Molecule::_isCNStereocenterCandidate(const AtomIndexType& atomIndex) const 
       // Find out if the nitrogen is in a cycle of size 4 or smaller
       bool isInCycleOfSize4OrSmaller = false;
 
-      auto cycleIter = cycleData.getCyclesIteratorContaining(atomIndex);
-      while(!cycleIter.atEnd()) {
-        if(cycleIter.cycleSize() <= 4) {
+      for(
+        const auto cyclePtr :
+        cycleData.iterate(Cycles::predicates::ContainsIndex {atomIndex})
+      ) {
+        if(Cycles::size(cyclePtr) <= 4) {
           isInCycleOfSize4OrSmaller = true;
           break;
         }
-
-        cycleIter.advance();
       }
 
       return isInCycleOfSize4OrSmaller;
@@ -414,7 +414,7 @@ bool Molecule::_isCNStereocenterCandidate(const AtomIndexType& atomIndex) const 
 }
 
 bool Molecule::_isEZStereocenterCandidate(const GraphType::edge_descriptor& edgeIndex) const {
-  auto numNonEtaAdjacencies = [&](const AtomIndexType& a) -> unsigned {
+  auto numNonEtaAdjacencies = [&](const AtomIndexType a) -> unsigned {
     unsigned nonEta = 0;
 
     for(const auto& edgeIndex : iterateEdges(a)) {
@@ -460,7 +460,7 @@ std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {
 
 void Molecule::_pickyFitStereocenter(
   Stereocenters::CNStereocenter& stereocenter,
-  const Symmetry::Name& expectedSymmetry,
+  const Symmetry::Name expectedSymmetry,
   const Delib::PositionCollection& positions
 ) const {
   AtomIndexType centralAtom = stereocenter.involvedAtoms().front();
@@ -492,7 +492,7 @@ void Molecule::_pickyFitStereocenter(
 }
 
 std::vector<LocalGeometry::BindingSiteInformation> Molecule::_reduceToSiteInformation(
-  const AtomIndexType& index
+  const AtomIndexType index
 ) const {
   /* TODO
    * - No L, X determination. Although, will L, X even be needed for metals?
@@ -663,9 +663,9 @@ Molecule::Molecule() noexcept
   : Molecule(Delib::ElementType::H, Delib::ElementType::H, BondType::Single) {}
 
 Molecule::Molecule(
-  const Delib::ElementType& a,
-  const Delib::ElementType& b,
-  const BondType& bondType
+  const Delib::ElementType a,
+  const Delib::ElementType b,
+  const BondType bondType
 ) noexcept {
   // update _adjacencies
   _addAtom(a);
@@ -675,7 +675,7 @@ Molecule::Molecule(
 }
 
 Molecule::Molecule(GraphType graph)
-: _adjacencies(std::move(graph)),
+: _adjacencies(GraphAlgorithms::findAndSetEtaBonds(std::move(graph))),
   _stereocenters(_detectStereocenters())
 {
   _ensureModelInvariants();
@@ -684,7 +684,7 @@ Molecule::Molecule(GraphType graph)
 Molecule::Molecule(
   GraphType graph,
   const Delib::PositionCollection& positions
-) : _adjacencies(std::move(graph)),
+) : _adjacencies(GraphAlgorithms::findAndSetEtaBonds(std::move(graph))),
     _stereocenters(inferStereocentersFromPositions(positions))
 {
   _ensureModelInvariants();
@@ -692,9 +692,9 @@ Molecule::Molecule(
 
 /* Modifiers */
 AtomIndexType Molecule::addAtom(
-  const Delib::ElementType& elementType,
-  const AtomIndexType& adjacentTo,
-  const BondType& bondType
+  const Delib::ElementType elementType,
+  const AtomIndexType adjacentTo,
+  const BondType bondType
 ) {
   if(!_isValidIndex(adjacentTo)) {
     throw std::out_of_range("Molecule::addAtom: Supplied atom index is invalid!");
@@ -710,9 +710,9 @@ AtomIndexType Molecule::addAtom(
 }
 
 void Molecule::addBond(
-  const AtomIndexType& a,
-  const AtomIndexType& b,
-  const BondType& bondType
+  const AtomIndexType a,
+  const AtomIndexType b,
+  const BondType bondType
 ) {
   if(!_isValidIndex(a) || !_isValidIndex(b)) {
     throw std::out_of_range("Molecule::addBond: A supplied index is invalid!");
@@ -731,8 +731,8 @@ void Molecule::addBond(
   _adjacencies[edgeAddPair.first].bondType = bondType;
 
   auto notifySubstituentAddition = [this](
-    const AtomIndexType& toIndex,
-    const AtomIndexType& addedIndex
+    const AtomIndexType toIndex,
+    const AtomIndexType addedIndex
   ) {
     if(_stereocenters.involving(toIndex)) {
       if(_stereocenters.at(toIndex)->type() == Stereocenters::Type::CNStereocenter) {
@@ -777,7 +777,7 @@ void Molecule::addBond(
 }
 
 void Molecule::assignStereocenter(
-  const AtomIndexType& a,
+  const AtomIndexType a,
   const boost::optional<unsigned>& assignment
 ) {
   if(!_isValidIndex(a)) {
@@ -800,9 +800,7 @@ void Molecule::assignStereocenter(
   _propagateGraphChange();
 }
 
-void Molecule::assignStereocenterRandomly(
-  const AtomIndexType& a
-) {
+void Molecule::assignStereocenterRandomly(const AtomIndexType a) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::assignStereocenterRandomly: Supplied index is invalid!");
   }
@@ -817,7 +815,7 @@ void Molecule::assignStereocenterRandomly(
   _propagateGraphChange();
 }
 
-void Molecule::removeAtom(const AtomIndexType& a) {
+void Molecule::removeAtom(const AtomIndexType a) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::removeAtom: Supplied index is invalid!");
   }
@@ -877,8 +875,8 @@ void Molecule::removeAtom(const AtomIndexType& a) {
 }
 
 void Molecule::removeBond(
-  const AtomIndexType& a,
-  const AtomIndexType& b
+  const AtomIndexType a,
+  const AtomIndexType b
 ) {
   if(!_isValidIndex(a) || !_isValidIndex(b)) {
     throw std::out_of_range("Molecule::removeBond: Supplied index is invalid!");
@@ -945,9 +943,9 @@ void Molecule::removeBond(
 }
 
 bool Molecule::setBondType(
-  const AtomIndexType& a,
-  const AtomIndexType& b,
-  const BondType& bondType
+  const AtomIndexType a,
+  const AtomIndexType b,
+  const BondType bondType
 ) {
   if(!_isValidIndex(a) || !_isValidIndex(b)) {
     throw std::out_of_range("Molecule::setBondType: A supplied index is invalid!");
@@ -966,8 +964,8 @@ bool Molecule::setBondType(
 }
 
 void Molecule::setElementType(
-  const AtomIndexType& a,
-  const Delib::ElementType& elementType
+  const AtomIndexType a,
+  const Delib::ElementType elementType
 ) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::setElementType: This index is invalid!");
@@ -978,8 +976,8 @@ void Molecule::setElementType(
 }
 
 void Molecule::setGeometryAtAtom(
-  const AtomIndexType& a,
-  const Symmetry::Name& symmetryName
+  const AtomIndexType a,
+  const Symmetry::Name symmetryName
 ) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::setGeometryAtAtom: Supplied atom index is invalid");
@@ -1047,9 +1045,7 @@ void Molecule::setGeometryAtAtom(
 }
 
 /* Information */
-Symmetry::Name Molecule::determineLocalGeometry(
-  const AtomIndexType& index
-) const {
+Symmetry::Name Molecule::determineLocalGeometry(const AtomIndexType index) const {
   if(!_isValidIndex(index)) {
     throw std::out_of_range("Molecule::determineLocalGeometry: Supplied index is invalid!");
   }
@@ -1099,9 +1095,7 @@ std::string Molecule::dumpGraphviz() const {
   return graphvizStream.str();
 }
 
-std::vector<AtomIndexType> Molecule::getAdjacencies(
-  const AtomIndexType& a
-) const {
+std::vector<AtomIndexType> Molecule::getAdjacencies(const AtomIndexType a) const {
   std::vector<AtomIndexType> copy;
 
   // C++17 auto [begin, end] = ...
@@ -1117,8 +1111,8 @@ std::vector<AtomIndexType> Molecule::getAdjacencies(
 }
 
 boost::optional<BondType> Molecule::getBondType(
-  const AtomIndexType& a,
-  const AtomIndexType& b
+  const AtomIndexType a,
+  const AtomIndexType b
 ) const {
   auto edgePair = boost::edge(a, b, _adjacencies);
 
@@ -1134,11 +1128,11 @@ BondType Molecule::getBondType(const GraphType::edge_descriptor& edge) const {
   return _adjacencies[edge].bondType;
 }
 
-CycleData Molecule::getCycleData() const {
-  return CycleData(_adjacencies);
+Cycles Molecule::getCycleData() const {
+  return Cycles {_adjacencies};
 }
 
-Delib::ElementType Molecule::getElementType(const AtomIndexType& index) const {
+Delib::ElementType Molecule::getElementType(const AtomIndexType index) const {
   if(!_isValidIndex(index)) {
     throw std::out_of_range("Molecule::getElementType: Supplied index is invalid");
   }
@@ -1166,7 +1160,7 @@ const StereocenterList& Molecule::getStereocenterList() const {
   return _stereocenters;
 }
 
-unsigned Molecule::getNumAdjacencies(const AtomIndexType& a) const {
+unsigned Molecule::getNumAdjacencies(const AtomIndexType a) const {
   return boost::out_degree(a, _adjacencies);
 }
 
@@ -1253,10 +1247,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
 }
 
 
-bool Molecule::isAdjacent(
-  const AtomIndexType& a,
-  const AtomIndexType& b
-) const {
+bool Molecule::isAdjacent(const AtomIndexType a, const AtomIndexType b) const {
   GraphType::adjacency_iterator begin, end;
   std::tie(begin, end) = boost::adjacent_vertices(a, _adjacencies);
   return std::find(
@@ -1266,7 +1257,7 @@ bool Molecule::isAdjacent(
   ) != end;
 }
 
-bool Molecule::isSafeToRemoveAtom(const AtomIndexType& a) const {
+bool Molecule::isSafeToRemoveAtom(const AtomIndexType a) const {
   // A molecule is by definition at least two atoms!
   if(numAtoms() == 2) {
     return false;
@@ -1279,10 +1270,7 @@ bool Molecule::isSafeToRemoveAtom(const AtomIndexType& a) const {
   return removalSafetyData.articulationVertices.count(a) == 0;
 }
 
-bool Molecule::isSafeToRemoveBond(
-  const AtomIndexType& a,
-  const AtomIndexType& b
-) const {
+bool Molecule::isSafeToRemoveBond(const AtomIndexType a, const AtomIndexType b) const {
   EdgeIndexType edgeIndex;
   bool foundEdge;
 
@@ -1314,7 +1302,7 @@ bool Molecule::modularCompare(
   auto generateHashes = [&comparisonBitmask](const Molecule& mol) -> std::vector<PseudoHashType> {
     std::vector<PseudoHashType> hashes;
 
-    AtomIndexType N = mol.numAtoms();
+    const AtomIndexType N = mol.numAtoms();
     hashes.reserve(N);
 
     std::vector<BondType> bonds;
@@ -1409,7 +1397,7 @@ bool Molecule::modularCompare(
 
     HashLookup(const std::vector<PseudoHashType>& hashes) : hashes(&hashes) {}
 
-    PseudoHashType operator() (const AtomIndexType& i) const {
+    PseudoHashType operator() (const AtomIndexType i) const {
       return hashes->at(i);
     }
   };
@@ -1573,7 +1561,7 @@ unsigned Molecule::numBonds() const {
 }
 
 RankingInformation Molecule::rankPriority(
-  const AtomIndexType& a,
+  const AtomIndexType a,
   const std::set<AtomIndexType>& excludeAdjacent,
   const boost::optional<Delib::PositionCollection>& positionsOption
 ) const {
@@ -1623,9 +1611,7 @@ std::array<AtomIndexType, 2> Molecule::vertices(
 /*! Returns a range-for temporary object allowing c++11 style for loop
  * iteration through an atom's adjacencies
  */
-RangeForTemporary<GraphType::adjacency_iterator> Molecule::iterateAdjacencies(
-  const AtomIndexType& a
-) const {
+RangeForTemporary<GraphType::adjacency_iterator> Molecule::iterateAdjacencies(const AtomIndexType a) const {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::iterateAdjacencies: Supplied index is invalid!");
   }
@@ -1639,9 +1625,7 @@ RangeForTemporary<GraphType::edge_iterator> Molecule::iterateEdges() const {
   return RangeForTemporary<GraphType::edge_iterator>(boost::edges(_adjacencies));
 }
 
-RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(
-  const AtomIndexType& a
-) const {
+RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(const AtomIndexType a) const {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::iterateEdges: Supplied index is invalid!");
   }
@@ -1654,9 +1638,7 @@ RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(
 
 
 /* Operators */
-RangeForTemporary<GraphType::adjacency_iterator> Molecule::operator [] (
-  const AtomIndexType& a
-) const {
+RangeForTemporary<GraphType::adjacency_iterator> Molecule::operator [] (const AtomIndexType a) const {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::operator[]: Supplied index is invalid!");
   }

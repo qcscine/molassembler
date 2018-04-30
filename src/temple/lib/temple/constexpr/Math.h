@@ -43,7 +43,7 @@ template<typename FloatingPoint>
 constexpr inline std::enable_if_t<
   std::is_floating_point<FloatingPoint>::value,
   bool
-> isnan(const FloatingPoint& x) {
+> isnan(const FloatingPoint x) {
   // see notes at http://en.cppreference.com/w/cpp/numeric/math/isnan
   return x != x;
 }
@@ -57,80 +57,80 @@ constexpr bool XOR(Bools ... bools);
 
 /* Some very basic math functions for all types */
 template<typename T>
-inline constexpr T abs(const T& x) noexcept;
+inline constexpr T abs(const T x) noexcept;
 
 template<typename T>
-constexpr T max(const T& a, const T& b) noexcept;
+constexpr T max(const T a, const T b) noexcept;
 
 template<typename T>
-constexpr T min(const T& a, const T& b) noexcept;
+constexpr T min(const T a, const T b) noexcept;
 
 /* Floating-point math functions */
 
 // Angle conversions
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T& inDegrees) noexcept;
+constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T inDegrees) noexcept;
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T& inRadians) noexcept;
+constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T inRadians) noexcept;
 
 /* Comparison helpers, deprecated in favor of identical implementations in
  * FloatingPointComparison.h
  */
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelative(
-  const T& a,
-  const T& b,
-  const T& relativeTolerance
+  const T a,
+  const T b,
+  const T relativeTolerance
 ) __attribute__ ((deprecated));
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseAbsolute(
-  const T& a,
-  const T& b,
-  const T& absoluteTolerance
+  const T a,
+  const T b,
+  const T absoluteTolerance
 ) __attribute__ ((deprecated));
 
 // Rounding
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T& value);
+constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T value);
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T& value);
+constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T value);
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> round(const T& value);
+constexpr traits::enableIfFloatingWithReturn<T, int> round(const T value);
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> round(
-  const T& value,
-  const unsigned& nDigits
+  const T value,
+  const unsigned nDigits
 );
 
 // Powers
 template<typename T>
-constexpr T pow(const T& base, const unsigned& exponent) noexcept;
+constexpr T pow(const T base, const unsigned exponent) noexcept;
 
 template<typename T>
-constexpr T pow(const T& base, const int& exponent) noexcept;
+constexpr T pow(const T base, const int exponent) noexcept;
 
 // Sqrt
 template<typename T>
-constexpr T sqrt(const T& x);
+constexpr T sqrt(const T x);
 
 // Factorial
 template<typename T>
-constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x);
+constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T x);
 
 // Logarithms
 template<typename T>
-constexpr T ln(const T& x);
+constexpr T ln(const T x);
 
 template<typename T>
-constexpr T log10(const T& x);
+constexpr T log10(const T x);
 
 template<typename T>
-constexpr T log(const T& x, const T& base);
+constexpr T log(const T x, const T base);
 
 // Inverse trigonometry
 /*! Computes the inverse sine function.
@@ -138,13 +138,13 @@ constexpr T log(const T& x, const T& base);
  * NOTE: Accurate to only ~1e-9 absolute deviation close to domain boundaries
  */
 template<typename T>
-constexpr T asin(const T& x);
+constexpr T asin(const T x);
 
 template<typename T>
-constexpr T acos(const T& x);
+constexpr T acos(const T x);
 
 template<typename T>
-constexpr T atan(const T& x);
+constexpr T atan(const T x);
 
 
 /* Implementations begin here ------------------------------------------------*/
@@ -164,10 +164,10 @@ constexpr unsigned TPPSum(T1 a, T ... pack) {
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelativeOrAbsolute(
-  const T& a,
-  const T& b,
-  const T& relativeTolerance,
-  const T& absoluteTolerance
+  const T a,
+  const T b,
+  const T relativeTolerance,
+  const T absoluteTolerance
 ) {
   if(!(
     a != std::numeric_limits<T>::infinity()
@@ -199,7 +199,7 @@ constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelativeOrAbsolute(
 }
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T& value) {
+constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T value) {
   if(value * 10 - floor(value) * 10 >= 5) {
     return ceil(value);
   }
@@ -215,7 +215,7 @@ constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T& value) {
  *   for Re x ≥ 0 and x ≠ 0
  */
 template<typename T>
-constexpr T lnSeries(const T& x) {
+constexpr T lnSeries(const T x) {
   if(x <= 0) {
     throw "Ln domain error: x <= 0";
   }
@@ -257,7 +257,7 @@ constexpr T lnSeries(const T& x) {
  * 1964, from http://people.math.sfu.ca/~cbm/aands/abramowitz_and_stegun.pdf
  */
 template<typename T>
-constexpr T asinApprox(const T& x) {
+constexpr T asinApprox(const T x) {
   if(!(0 < x && x < 1)) {
     throw "Asin approximation domain error: only applicable for 0 < x < 1!";
   }
@@ -291,35 +291,35 @@ constexpr bool XOR(Bools ... bools) {
 }
 
 template<typename T>
-inline constexpr T abs(const T& x) noexcept {
+inline constexpr T abs(const T x) noexcept {
   return (x >= 0) ? x : -x;
 }
 
 template<typename T>
-constexpr T max(const T& a, const T& b) noexcept {
+constexpr T max(const T a, const T b) noexcept {
   return (a > b) ? a : b;
 }
 
 template<typename T>
-constexpr T min(const T& a, const T& b) noexcept {
+constexpr T min(const T a, const T b) noexcept {
   return (a < b) ? a : b;
 }
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T& inDegrees) noexcept {
+constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T inDegrees) noexcept {
   return M_PI * inDegrees / 180;
 }
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T& inRadians) noexcept {
+constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T inRadians) noexcept {
   return 180 * inRadians / M_PI;
 }
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelative(
-  const T& a,
-  const T& b,
-  const T& relativeTolerance
+  const T a,
+  const T b,
+  const T relativeTolerance
 ) {
   return detail::isCloseRelativeOrAbsolute(
     a,
@@ -331,9 +331,9 @@ constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseRelative(
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseAbsolute(
-  const T& a,
-  const T& b,
-  const T& absoluteTolerance
+  const T a,
+  const T b,
+  const T absoluteTolerance
 ) {
   return detail::isCloseRelativeOrAbsolute(
     a,
@@ -344,7 +344,7 @@ constexpr traits::enableIfFloatingWithReturn<T, bool> isCloseAbsolute(
 }
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T& value) {
+constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T value) {
   // Truncate to an int
   const int truncated = static_cast<int>(value);
 
@@ -356,7 +356,7 @@ constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T& value) {
 }
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T& value) {
+constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T value) {
   // Truncate to an int
   const int truncated = static_cast<int>(value);
 
@@ -368,7 +368,7 @@ constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T& value) {
 }
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> round(const T& value) {
+constexpr traits::enableIfFloatingWithReturn<T, int> round(const T value) {
   if(value < 0) {
     return -detail::roundImpl(-value);
   }
@@ -378,8 +378,8 @@ constexpr traits::enableIfFloatingWithReturn<T, int> round(const T& value) {
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> round(
-  const T& value,
-  const unsigned& nDigits
+  const T value,
+  const unsigned nDigits
 ) {
   if(value == 0) {
     return 0;
@@ -395,7 +395,7 @@ constexpr traits::enableIfFloatingWithReturn<T, T> round(
 
 // Really weak first implementation
 template<typename T>
-constexpr T pow(const T& base, const unsigned& exponent) noexcept {
+constexpr T pow(const T base, const unsigned exponent) noexcept {
   if(exponent == 0) {
     return 1;
   }
@@ -410,7 +410,7 @@ constexpr T pow(const T& base, const unsigned& exponent) noexcept {
 }
 
 template<typename T>
-constexpr T recPow(const T& base, const unsigned& exponent) noexcept {
+constexpr T recPow(const T base, const unsigned exponent) noexcept {
   if(exponent == 0) {
     return 1;
   }
@@ -431,7 +431,7 @@ constexpr T recPow(const T& base, const unsigned& exponent) noexcept {
  * TODO lots can go wrong here!
  */
 template<typename T>
-constexpr T pow(const T& base, const int& exponent) noexcept {
+constexpr T pow(const T base, const int exponent) noexcept {
   if(exponent < 0) {
     return 1.0 / pow(base, static_cast<unsigned>(temple::Math::abs(exponent)));
   }
@@ -446,7 +446,7 @@ constexpr T pow(const T& base, const int& exponent) noexcept {
 /* Implements Newton's iteration to compute the square root of a positive number
  */
 template<typename T>
-constexpr T sqrt(const T& x) {
+constexpr T sqrt(const T x) {
   if(x < 0) {
     throw "Square-root domain error: Only real if x >= 0!";
   }
@@ -467,7 +467,7 @@ constexpr T sqrt(const T& x) {
 }
 
 template<typename T>
-constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x) {
+constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T x) {
   if(x < 0) {
     throw "Factorial domain error!";
   }
@@ -480,7 +480,7 @@ constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T& x) {
 }
 
 template<typename T>
-constexpr T ln(const T& x) {
+constexpr T ln(const T x) {
   unsigned decimalReduction = 0;
   T calcX = x;
 
@@ -499,7 +499,7 @@ constexpr T ln(const T& x) {
 }
 
 template<typename T>
-constexpr T log10(const T& x) {
+constexpr T log10(const T x) {
   if(x <= 0) {
     throw "Log10 domain error!";
   }
@@ -511,7 +511,7 @@ constexpr T log10(const T& x) {
 }
 
 template<typename T>
-constexpr T log(const T& x, const T& base) {
+constexpr T log(const T x, const T base) {
   if(x <= 0) {
     throw "Log domain error!";
   }
@@ -528,7 +528,7 @@ constexpr T log(const T& x, const T& base) {
  * form there?
  */
 template<typename T>
-constexpr T asin(const T& x) {
+constexpr T asin(const T x) {
   if(!(-1 < x && x < 1)) {
     throw "Inverse sine domain error: only real if -1 < x < 1!";
   }
@@ -563,7 +563,7 @@ constexpr T asin(const T& x) {
 }
 
 template<typename T>
-constexpr T acos(const T& x) {
+constexpr T acos(const T x) {
   if(!(-1 < x && x < 1)) {
     throw "Inverse cosine domain error: only real if -1 < x < 1!";
   }
@@ -572,7 +572,7 @@ constexpr T acos(const T& x) {
 }
 
 template<typename T>
-constexpr T atan(const T& x) {
+constexpr T atan(const T x) {
   if(!(-M_PI / 2 < x && x < M_PI / 2)) {
     throw "Inverse cosine domain error: only real if -1 < x < 1!";
   }

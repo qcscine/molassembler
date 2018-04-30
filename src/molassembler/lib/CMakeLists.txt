@@ -40,7 +40,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/CycleData.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DelibHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/EZStereocenter.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Edges.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphDistanceMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.h

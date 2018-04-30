@@ -17,8 +17,8 @@
 
 namespace molassembler {
 
-// Forward-declare CycleData
-class CycleData;
+// Forward-declare Cycles from CycleData
+class Cycles;
 
 //! Core graph-level algorithms (not requiring stereocenter information)
 namespace GraphAlgorithms {
@@ -47,7 +47,7 @@ struct LinkInformation {
 
 std::vector<LinkInformation> substituentLinks(
   const GraphType& graph,
-  const CycleData& cycleData,
+  const Cycles& cycleData,
   const AtomIndexType& source,
   const std::vector<AtomIndexType>& activeAdjacents
 );

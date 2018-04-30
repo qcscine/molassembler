@@ -1,224 +1,280 @@
 #include "CycleData.h"
-#include "Molecule.h"
 #include "StdlibTypeAlgorithms.h"
 
 #include <iostream>
 
 namespace molassembler {
 
-/* Constructors */
-CycleData::CycleData(const GraphType& sourceGraph) 
-  : _baseGraphReference(sourceGraph)
-{
-  // Initialize
-  _graphPtr = RDL_initNewGraph(boost::num_vertices(sourceGraph));
-
-  // Copy vertices (without bond type information)
-  auto iterPair = boost::edges(sourceGraph);
-  for(auto iter = iterPair.first; iter != iterPair.second; iter++) {
-    RDL_addUEdge(
-      _graphPtr,
-      boost::source(*iter, sourceGraph),
-      boost::target(*iter, sourceGraph)
-    );
-  }
-
-  // Calculate
-  _dataPtr = RDL_calculate(_graphPtr);
-
-  // Ensure it works
-  assert(_dataPtr != nullptr);
-
+Cycles::Cycles(const GraphType& sourceGraph) {
+  _rdlPtr = std::make_shared<RDLDataPtrs>(sourceGraph);
 }
 
-/* Destructor */
-CycleData::~CycleData() {
-  RDL_deleteData(_dataPtr); // this also deletes the graph
+unsigned Cycles::size(const RDL_cycle* const cyclePtr) {
+  return cyclePtr -> weight;
 }
 
-/* Information */
-unsigned CycleData::numCycleFamilies() const {
-  return RDL_getNofURF(_dataPtr);
-}
+Cycles::EdgeList Cycles::edgeVertices(const RDL_cycle* const cyclePtr) {
+  EdgeList cycleEdges;
 
-unsigned CycleData::numCycleFamilies(const AtomIndexType& index) const {
-  return RDL_getNofURFContainingNode(_dataPtr, index);
-}
-
-//! Returns the number of relevant cycles (RCs)
-unsigned CycleData::numRelevantCycles() const {
-  return RDL_getNofRC(_dataPtr);
-}
-
-unsigned CycleData::numRelevantCycles(const AtomIndexType& index) const {
-  return RDL_getNofRCFContainingNode(_dataPtr, index);
-}
-
-RDL_data* CycleData::getDataPtr() {
-  return _dataPtr;
-}
-
-CycleIterator::CycleIterator(
-  const CycleData& cycleData,
-  const boost::optional<unsigned>& maxCycleSizeOption,
-  const boost::optional<AtomIndexType>& containingIndexOption
-) : _cycleDataRef(cycleData),
-    _maxCycleSizeOption(maxCycleSizeOption),
-    _containingIndexOption(containingIndexOption)
-{
-  // Initialize the cycle iterator
-  _cycleIteratorPtr = RDL_getRCyclesIterator(cycleData._dataPtr);
-
-  // Skip to first permissible ring per cycle size restrictions
-  /* NOTE: While-do construction here because if the current cycle is
-   * permisisble, we do not want to advance the cycle iterator
-   */
-  while(
-    !atEnd()
-    && !_currentCyclePermissible() 
-  ) {
-    RDL_cycleIteratorNext(_cycleIteratorPtr);
-  }
-}
-
-bool CycleIterator::atEnd() const {
-  return RDL_cycleIteratorAtEnd(_cycleIteratorPtr) != 0;
-}
-
-void CycleIterator::advance() {
-  assert(!atEnd());
-  /* Do-while construction to ensure that the iterator gets advance and only
-   * after advancing it is checked whether the new cycle is permissible. 
-   */
-  do {
-    RDL_cycleIteratorNext(_cycleIteratorPtr);
-  } while(
-    !atEnd()
-    && !_currentCyclePermissible() 
-  );
-}
-
-bool CycleIterator::_currentCyclePermissible() const {
-  // Are there even constraints?
-  if(_maxCycleSizeOption == boost::none && _containingIndexOption == boost::none) {
-    return true;
-  }
-
-  RDL_cycle* cyclePtr = RDL_cycleIteratorGetCycle(_cycleIteratorPtr);
-  unsigned cycleSize = cyclePtr -> weight;
-
-  // Test against cycle size
-  if(
-    _maxCycleSizeOption 
-    && cycleSize > _maxCycleSizeOption.value()
-  ) {
-    RDL_deleteCycle(cyclePtr);
-    return false;
-  }
-
-  // Test if it contains the index 
-  if(_containingIndexOption) {
-    bool containsIndex = false;
-
-    for(unsigned i = 0; i < cyclePtr -> weight; i++) {
-      if(
-        _containingIndexOption.value() == cyclePtr -> edges[i][0]
-        || _containingIndexOption.value() == cyclePtr -> edges[i][1]
-      ) {
-        containsIndex = true;
-        break;
+  // Collect the pair of atom indices for every edge of this cycle
+  for(unsigned i = 0; i < size(cyclePtr); i++) {
+    cycleEdges.emplace_back(
+      std::array<AtomIndexType, 2> {
+        cyclePtr->edges[i][0],
+        cyclePtr->edges[i][1]
       }
-    }
-
-    if(!containsIndex) {
-      RDL_deleteCycle(cyclePtr);
-      return false;
-    }
-  }
-
-  RDL_deleteCycle(cyclePtr);
-  return true;
-}
-
-CycleIterator::EdgeSet CycleIterator::getCurrentCycle() const {
-  EdgeSet cycleEdges;
-
-  assert(!atEnd());
-
-  if(!atEnd()) {
-    RDL_cycle* cyclePtr = RDL_cycleIteratorGetCycle(_cycleIteratorPtr);
-
-    // Collect edge_descriptors for every edge of this cycle
-    for(unsigned i = 0; i < cyclePtr -> weight; i++) {
-      auto edgeIndexFoundPair = boost::edge(
-        cyclePtr -> edges[i][0],
-        cyclePtr -> edges[i][1],
-        _cycleDataRef._baseGraphReference
-      );
-
-      /* These edges HAVE to be found, there should be a 1:1 mapping between
-       * vertex indices
-       */
-      assert(edgeIndexFoundPair.second);
-
-      cycleEdges.insert(edgeIndexFoundPair.first);
-    }
-
-    RDL_deleteCycle(cyclePtr);
+    );
   }
 
   return cycleEdges;
 }
 
-unsigned CycleIterator::cycleSize() const {
-  assert(!atEnd());
-  RDL_cycle* cyclePtr = RDL_cycleIteratorGetCycle(_cycleIteratorPtr);
-  unsigned cycleSize = cyclePtr -> weight;
-  RDL_deleteCycle(cyclePtr);
-  return cycleSize;
-}
-
-CycleIterator::~CycleIterator() {
-  RDL_deleteCycleIterator(_cycleIteratorPtr);
-}
-
-CycleIterator CycleData::getCyclesIterator() const {
-  return CycleIterator(*this);
-}
-
-CycleIterator CycleData::getCyclesIteratorSizeLE(
-  const unsigned& maxCycleSize
-) const {
-  return CycleIterator(*this, maxCycleSize, boost::none);
-}
-
-CycleIterator CycleData::getCyclesIteratorContaining(
-  const AtomIndexType& containingIndex
-) const {
-  return CycleIterator(*this, boost::none, containingIndex);
-}
-
-std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
-  const CycleData& cycleData,
+temple::TinySet<GraphType::edge_descriptor> Cycles::edges(
+  const RDL_cycle* const cyclePtr,
   const GraphType& graph
 ) {
+  temple::TinySet<GraphType::edge_descriptor> cycleEdges;
+
+  // Collect the pair of atom indices for every edge of this cycle
+  for(unsigned i = 0; i < size(cyclePtr); ++i) {
+    auto edgeFoundPair = boost::edge(
+      cyclePtr->edges[i][0],
+      cyclePtr->edges[i][1],
+      graph
+    );
+
+    assert(edgeFoundPair.second);
+
+    cycleEdges.insert(edgeFoundPair.first);
+  }
+
+  return cycleEdges;
+}
+
+temple::TinySet<GraphType::edge_descriptor> Cycles::edges(
+  const EdgeList& edges,
+  const GraphType& graph
+) {
+  temple::TinySet<GraphType::edge_descriptor> cycleEdges;
+
+  // Collect the pair of atom indices for every edge of this cycle
+  for(const auto& edge : edges) {
+    auto edgeFoundPair = boost::edge(
+      edge.front(),
+      edge.back(),
+      graph
+    );
+
+    assert(edgeFoundPair.second);
+
+    cycleEdges.insert(edgeFoundPair.first);
+  }
+
+  return cycleEdges;
+}
+
+unsigned Cycles::numCycleFamilies() const {
+  return RDL_getNofURF(_rdlPtr->dataPtr);
+}
+
+unsigned Cycles::numCycleFamilies(const AtomIndexType index) const {
+  return RDL_getNofURFContainingNode(_rdlPtr->dataPtr, index);
+}
+
+//! Returns the number of relevant cycles (RCs)
+unsigned Cycles::numRelevantCycles() const {
+  return RDL_getNofRC(_rdlPtr->dataPtr);
+}
+
+unsigned Cycles::numRelevantCycles(const AtomIndexType index) const {
+  return RDL_getNofRCFContainingNode(_rdlPtr->dataPtr, index);
+}
+
+Cycles::constIterator Cycles::begin() const {
+  return {_rdlPtr};
+}
+
+Cycles::constIterator Cycles::end() const {
+  return {
+    _rdlPtr,
+    predicates::All {},
+    numRelevantCycles()
+  };
+}
+
+RDL_data* Cycles::dataPtr() const {
+  return _rdlPtr->dataPtr;
+}
+
+bool Cycles::operator == (const Cycles& other) const {
+  return _rdlPtr == other._rdlPtr;
+}
+
+bool Cycles::operator != (const Cycles& other) const {
+  return !(*this == other);
+}
+
+/* Cycles::RDLDataPtrs */
+Cycles::RDLDataPtrs::RDLDataPtrs(const GraphType& sourceGraph) {
+  // Initialize a new graph
+  graphPtr = RDL_initNewGraph(boost::num_vertices(sourceGraph));
+
+  // Copy vertices (without bond type information)
+  auto iterPair = boost::edges(sourceGraph);
+  for(auto& iter = iterPair.first; iter != iterPair.second; ++iter) {
+    auto edgeAddResult = RDL_addUEdge(
+      graphPtr,
+      boost::source(*iter, sourceGraph),
+      boost::target(*iter, sourceGraph)
+    );
+
+    assert(edgeAddResult != RDL_INVALID_RESULT || edgeAddResult != RDL_DUPLICATE_EDGE);
+  }
+
+  // Calculate, and assure yourself of success
+  dataPtr = RDL_calculate(graphPtr);
+  assert(dataPtr != nullptr);
+}
+
+Cycles::RDLDataPtrs::~RDLDataPtrs() {
+  // Awfully enough, calling this frees both dataPtr and graphPtr
+  RDL_deleteData(dataPtr);
+}
+
+/* predicates */
+bool Cycles::predicates::All::operator() (const RDL_cycle* const) const {
+  return true;
+}
+
+Cycles::predicates::SizeLessThan::SizeLessThan(unsigned threshold) : threshold {threshold} {}
+
+bool Cycles::predicates::SizeLessThan::operator() (const RDL_cycle* const cyclePtr) const {
+  return (cyclePtr -> weight) < threshold;
+}
+
+Cycles::predicates::ContainsIndex::ContainsIndex(AtomIndexType soughtIndex) : soughtIndex {soughtIndex} {}
+
+bool Cycles::predicates::ContainsIndex::operator() (const RDL_cycle* const cyclePtr) const {
+  for(unsigned i = 0; i < cyclePtr->weight; ++i) {
+    if(
+        cyclePtr -> edges[i][0] == soughtIndex
+        || cyclePtr -> edges[i][1] == soughtIndex
+      ) {
+      return true;
+      break;
+    }
+  }
+
+  return false;
+}
+
+/* Cycles::constIterator */
+Cycles::constIterator::constIterator(
+  const std::shared_ptr<RDLDataPtrs>& dataPtr,
+  Cycles::constIterator::PredicateType cyclePredicate,
+  unsigned rCycleIndex
+) : _rdlPtr {dataPtr} {
+  _cyclePtr = std::make_shared<RDLCyclePtrs>(*dataPtr);
+  _cyclePermissiblePredicate = cyclePredicate;
+
+  if(rCycleIndex == 0) { // begin constructor
+    // In case first cycle is not permissible, advance to first permissible
+    if(
+      !RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr)
+      && !_cyclePermissiblePredicate(_cyclePtr->cyclePtr)
+    ) {
+      ++(*this);
+    }
+  } else { // end constructor, advance to end
+    while(_rCycleIndex < rCycleIndex) {
+      ++(*this);
+    }
+
+    assert(_rCycleIndex == rCycleIndex);
+  }
+}
+
+Cycles::constIterator& Cycles::constIterator::operator ++ () {
+  if(!RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr)) {
+    do {
+      _cyclePtr->advance();
+      ++_rCycleIndex;
+    } while(
+      !RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr)
+      && !_cyclePermissiblePredicate(_cyclePtr->cyclePtr)
+    );
+  } else {
+    throw std::logic_error("Advancing Cycles::constIterator past end");
+  }
+
+  return *this;
+}
+
+Cycles::constIterator Cycles::constIterator::operator ++ (int) {
+  constIterator retval = *this;
+  ++(*this);
+  return retval;
+}
+
+RDL_cycle* Cycles::constIterator::operator * () const {
+  if(_cyclePtr->cyclePtr == nullptr) {
+    throw std::range_error("Dereferencing Cycles::constIterator end iterator");
+  }
+
+  return _cyclePtr->cyclePtr;
+}
+
+//! Must be constructed from same Cycles base and at same RC
+bool Cycles::constIterator::operator == (const Cycles::constIterator& other) const {
+  return (
+    _rdlPtr == other._rdlPtr
+    && _rCycleIndex == other._rCycleIndex
+  );
+}
+
+bool Cycles::constIterator::operator != (const Cycles::constIterator& other) const {
+  return !(*this == other);
+}
+
+/* Cycles::constIterator::RDLCyclePtrs implementation */
+Cycles::constIterator::RDLCyclePtrs::RDLCyclePtrs(const RDLDataPtrs& dataPtrs) {
+  cycleIterPtr = RDL_getRCyclesIterator(dataPtrs.dataPtr);
+  if(RDL_cycleIteratorAtEnd(cycleIterPtr)) {
+    cyclePtr = nullptr;
+  } else {
+    cyclePtr = RDL_cycleIteratorGetCycle(cycleIterPtr);
+  }
+}
+
+Cycles::constIterator::RDLCyclePtrs::~RDLCyclePtrs() {
+  if(cyclePtr != nullptr) {
+    RDL_deleteCycle(cyclePtr);
+  }
+
+  RDL_deleteCycleIterator(cycleIterPtr);
+}
+
+void Cycles::constIterator::RDLCyclePtrs::advance() {
+  assert(!RDL_cycleIteratorAtEnd(cycleIterPtr));
+
+  RDL_deleteCycle(cyclePtr);
+  cyclePtr = nullptr;
+
+  RDL_cycleIteratorNext(cycleIterPtr);
+
+  if(!RDL_cycleIteratorAtEnd(cycleIterPtr)) {
+    cyclePtr = RDL_cycleIteratorGetCycle(cycleIterPtr);
+  }
+}
+
+std::map<AtomIndexType, unsigned> makeSmallestCycleMap(const Cycles& cycleData) {
   std::map<AtomIndexType, unsigned> smallestCycle;
 
-  for(
-    auto cycleIter = cycleData.getCyclesIterator();
-    !cycleIter.atEnd();
-    cycleIter.advance()
-  ) {
-    const auto cycleEdges = cycleIter.getCurrentCycle();
-    const unsigned cycleSize = cycleEdges.size();
+  for(const auto cyclePtr : cycleData) {
+    const unsigned cycleSize = Cycles::size(cyclePtr);
 
-    for(const auto& edge : cycleEdges) {
-      std::array<AtomIndexType, 2> indices {
-        boost::source(edge, graph),
-        boost::target(edge, graph)
-      };
-
-      for(const auto& index: indices) {
+    for(const auto& edgeIndices : Cycles::edgeVertices(cyclePtr)) {
+      for(const auto& index: edgeIndices) {
         StdlibTypeAlgorithms::addOrUpdateMapIf(
           smallestCycle,
           index, // key_type to check
@@ -235,17 +291,16 @@ std::map<AtomIndexType, unsigned> makeSmallestCycleMap(
 }
 
 std::vector<AtomIndexType> makeRingIndexSequence(
-  const CycleIterator::EdgeSet& edgeSet,
-  const GraphType& graph
+  const Cycles::EdgeList& edgeSet
 ) {
   // copy the edges so we can modify
   auto edgeDescriptors = edgeSet;
 
   auto firstEdgeIter = edgeDescriptors.begin();
-  // Initialize with last edge descriptor's indices
+  // Initialize with first edge descriptor's indices
   std::vector<AtomIndexType> indexSequence {
-    boost::source(*firstEdgeIter, graph),
-    boost::target(*firstEdgeIter, graph)
+    firstEdgeIter->front(),
+    firstEdgeIter->back()
   };
 
   edgeDescriptors.erase(firstEdgeIter);
@@ -257,18 +312,17 @@ std::vector<AtomIndexType> makeRingIndexSequence(
       edgeIter != edgeDescriptors.end();
       ++edgeIter
     ) {
-      auto& edge = *edgeIter;
-      if(boost::source(edge, graph) == indexSequence.back()) {
+      if(edgeIter->front() == indexSequence.back()) {
         indexSequence.emplace_back(
-          boost::target(edge, graph)
+          edgeIter->back()
         );
         edgeDescriptors.erase(edgeIter);
         break;
       }
-      
-      if(boost::target(edge, graph) == indexSequence.back()) {
+
+      if(edgeIter->back() == indexSequence.back()) {
         indexSequence.emplace_back(
-          boost::source(edge, graph)
+          edgeIter->front()
         );
         edgeDescriptors.erase(edgeIter);
         break;
@@ -276,12 +330,11 @@ std::vector<AtomIndexType> makeRingIndexSequence(
     }
   }
   /* Now indexSequence should contain the entire sequence, but the first
-   * vertex index occurs twice, once at the front and once at the back. 
+   * vertex index occurs twice, once at the front and once at the back.
    */
 
   return indexSequence;
 }
-
 
 std::vector<AtomIndexType> centralizeRingIndexSequence(
   std::vector<AtomIndexType> ringIndexSequence,
@@ -314,7 +367,7 @@ std::vector<AtomIndexType> centralizeRingIndexSequence(
 
 
 unsigned countPlanarityEnforcingBonds(
-  const CycleIterator::EdgeSet& edgeSet,
+  const temple::TinySet<GraphType::edge_descriptor>& edgeSet,
   const GraphType& graph
 ) {
   unsigned count = 0;

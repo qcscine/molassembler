@@ -20,14 +20,14 @@ unsigned numConnectedComponents(const GraphType& graph) {
 
 std::vector<LinkInformation> substituentLinks(
   const GraphType& graph,
-  const CycleData& cycleData,
+  const Cycles& cycleData,
   const AtomIndexType& source,
   const std::vector<AtomIndexType>& activeAdjacents
 ) {
   /* General idea:
    *
    * In order to avoid a full O(N) BFS on every CNStereocenter candidate to
-   * determine links, use cached CycleData instead to determine links.
+   * determine links, use cached Cycles instead to determine links.
    *
    * Iterate through every cycle and look for cycles containing exactly two of
    * the edge_descriptors corresponding to the edges from the source to an
@@ -61,12 +61,8 @@ std::vector<LinkInformation> substituentLinks(
     return edgeSource;
   };
 
-  for(
-    auto cycleIterator = cycleData.getCyclesIterator();
-    !cycleIterator.atEnd();
-    cycleIterator.advance()
-  ) {
-    auto cycleEdges = cycleIterator.getCurrentCycle();
+  for(const auto cyclePtr : cycleData) {
+    auto cycleEdges = Cycles::edges(cyclePtr, graph);
 
     std::vector<GraphType::edge_descriptor> intersection;
 
@@ -99,7 +95,7 @@ std::vector<LinkInformation> substituentLinks(
         LinkInformation newLink;
         newLink.indexPair = indexPair;
         newLink.cycleSequence = centralizeRingIndexSequence(
-          makeRingIndexSequence(cycleEdges, graph),
+          makeRingIndexSequence(Cycles::edgeVertices(cyclePtr)),
           source
         );
 
@@ -120,8 +116,6 @@ std::vector<LinkInformation> substituentLinks(
 }
 
 GraphType findAndSetEtaBonds(GraphType&& graph) {
-  CycleData cycleData {graph};
-
   AtomIndexType N = boost::num_vertices(graph);
   for(AtomIndexType centralIndex = 0; centralIndex < N; ++centralIndex) {
     // Skip any main group element types, none of these should be eta bonded
