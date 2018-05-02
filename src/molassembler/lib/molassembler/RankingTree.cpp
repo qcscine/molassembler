@@ -16,6 +16,7 @@ namespace molassembler {
 // Must declare constexpr static member without definition!
 constexpr decltype(RankingTree::rootIndex) RankingTree::rootIndex;
 
+//! Helper class to write a graphviz representation of the generated tree
 class RankingTree::GraphvizWriter {
 private:
   // Closures
@@ -133,6 +134,16 @@ public:
 };
 
 /* Sequence rule classes */
+/*! IUPAC Sequence rule one tree vertex comparator
+ *
+ * Comparator class for comparing individual tree vertex indices according to
+ * IUPAC Sequence rule one. Handles all combinations of duplicate and
+ * non-duplicate nodes.
+ *
+ * @note This is a non-default-instantiable Comparator, meaning care must be
+ * taken in the instantiation of the STL Container using this to avoid move
+ * and copy assignment operators. You must use in-place-construction!
+ */
 struct RankingTree::SequenceRuleOneVertexComparator {
 private:
   const RankingTree& _base;
@@ -179,6 +190,15 @@ public:
   }
 };
 
+/*! IUPAC Sequence rule three tree edge comparator
+ *
+ * Comparator class for comparing individual tree edges according to IUPAC
+ * sequence rule three.
+ *
+ * @note This is a non-default-instantiable Comparator, meaning care must be
+ * taken in the instantiation of the STL Container using this to avoid move
+ * and copy assignment operators. You must use in-place-construction!
+ */
 struct RankingTree::SequenceRuleThreeEdgeComparator {
 private:
   const RankingTree& _base;
@@ -235,6 +255,15 @@ public:
   }
 };
 
+/*! IUPAC Sequence rule four tree vertex and edge mixed comparator
+ *
+ * Comparator class for comparing both tree vertices and edges according to
+ * IUPAC sequence rule four.
+ *
+ * @note This is a non-default-instantiable Comparator, meaning care must be
+ * taken in the instantiation of the STL Container using this to avoid move
+ * and copy assignment operators. You must use in-place-construction!
+ */
 struct RankingTree::SequenceRuleFourVariantComparator {
 public:
   class VariantComparisonVisitor : boost::static_visitor<bool> {
@@ -317,6 +346,15 @@ public:
   }
 };
 
+/*! IUPAC Sequence rule five tree vertex and edge mixed comparator
+ *
+ * Comparator class for comparing both tree vertices and edges according to
+ * IUPAC sequence rule five.
+ *
+ * @note This is a non-default-instantiable Comparator, meaning care must be
+ * taken in the instantiation of the STL Container using this to avoid move
+ * and copy assignment operators. You must use in-place-construction!
+ */
 struct RankingTree::SequenceRuleFiveVariantComparator {
 public:
   class VariantComparisonVisitor : boost::static_visitor<bool> {
@@ -395,6 +433,7 @@ public:
 };
 
 /* Variant visitor helper classes */
+//! Predicate of whether tree vertex or edge have an instantiated stereocenter
 class RankingTree::VariantHasInstantiatedStereocenter : boost::static_visitor<bool> {
 private:
   const RankingTree& _baseRef;
@@ -412,6 +451,7 @@ public:
   }
 };
 
+//! Functor calculating mixed depth (see _mixedDepth functions) of tree vertex or edge
 class RankingTree::VariantDepth : boost::static_visitor<unsigned> {
 private:
   const RankingTree& _baseRef;
@@ -428,25 +468,26 @@ public:
   }
 };
 
+//! Functor fetching the source vertex of a tree edge or vertex (identity)
 class RankingTree::VariantSourceNode : boost::static_visitor<TreeVertexIndex> {
 private:
   const RankingTree& _baseRef;
 
 public:
-  explicit VariantSourceNode(
-    const RankingTree& base
-  ) : _baseRef(base) {}
+  explicit VariantSourceNode(const RankingTree& base) : _baseRef(base) {}
 
-  //! Returns the depth of the vertex or edge
+  //! Returns the vertex itself
   TreeVertexIndex operator() (const TreeVertexIndex& a) const {
     return a;
   }
 
+  //! Returns the source of the edge (vertex closer to root)
   TreeVertexIndex operator() (const TreeEdgeIndex& a) const {
     return boost::source(a, _baseRef._tree);
   }
 };
 
+//! Functor returning a string representation of a vertex or edge stereocenter
 class RankingTree::VariantStereocenterStringRepresentation : boost::static_visitor<std::string> {
 private:
   const RankingTree& _baseRef;
@@ -468,6 +509,7 @@ public:
   }
 };
 
+//! Predicate deciding IUPAC like pairing of combination of tree vertex and edge stereocenters
 class RankingTree::VariantLikePair : boost::static_visitor<bool> {
 private:
   const RankingTree& _baseRef;
@@ -475,7 +517,6 @@ private:
 public:
   explicit VariantLikePair(const RankingTree& base) : _baseRef(base) {}
 
-  //! Returns a string representation of the *type* of the stereocenter
   template<typename T, typename U>
   bool operator() (const T& a, const U& b) const {
     const auto& aOption = _baseRef._tree[a].stereocenterOption;
@@ -2114,11 +2155,13 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   return newIndices;
 }
 
+//! Specialization of toString for tree vertices
 template<>
 std::string RankingTree::toString(const TreeVertexIndex& vertexIndex) const {
   return std::to_string(vertexIndex);
 }
 
+//! Specialization of toString for tree edges
 template<>
 std::string RankingTree::toString(const TreeEdgeIndex& edgeIndex) const {
   return (
@@ -2130,6 +2173,7 @@ std::string RankingTree::toString(const TreeEdgeIndex& edgeIndex) const {
   );
 }
 
+//! Specialization of toString for variant types containing either a vertex or edge
 template<>
 std::string RankingTree::toString(const VariantType& variant) const {
   if(variant.which() == 0) {
@@ -2536,6 +2580,7 @@ unsigned RankingTree::_mixedDepth(const TreeEdgeIndex& edgeIndex) const {
   ) + 1;
 }
 
+//! A data class, stores both the junction vertex and paths from the source vertices.
 struct RankingTree::JunctionInfo {
   TreeVertexIndex junction;
 
