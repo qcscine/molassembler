@@ -12,6 +12,13 @@ namespace molassembler {
 
 namespace GraphAlgorithms {
 
+bool LinkInformation::operator == (const LinkInformation& other) const {
+  return (
+    indexPair == other.indexPair
+    && cycleSequence == other.cycleSequence
+  );
+}
+
 unsigned numConnectedComponents(const GraphType& graph) {
   std::vector<AtomIndexType> component(boost::num_vertices(graph));
 
@@ -21,9 +28,12 @@ unsigned numConnectedComponents(const GraphType& graph) {
 std::vector<LinkInformation> substituentLinks(
   const GraphType& graph,
   const Cycles& cycleData,
-  const AtomIndexType& source,
+  const AtomIndexType source,
   const std::vector<AtomIndexType>& activeAdjacents
 ) {
+  /* TODO
+   * - must ignore cycles containing only ligand-internal indices and the metal
+   */
   /* General idea:
    *
    * In order to avoid a full O(N) BFS on every CNStereocenter candidate to
@@ -38,11 +48,7 @@ std::vector<LinkInformation> substituentLinks(
   temple::TinySet<GraphType::edge_descriptor> sourceAdjacentEdges;
   for(const auto& adjacentIndex : activeAdjacents) {
     sourceAdjacentEdges.insert(
-      boost::edge(
-        source,
-        adjacentIndex,
-        graph
-      ).first
+      boost::edge(source, adjacentIndex, graph).first
     );
   }
 
@@ -115,6 +121,128 @@ std::vector<LinkInformation> substituentLinks(
   return links;
 }
 
+std::vector<
+  std::vector<AtomIndexType>
+> ligandSiteGroups(GraphType& graph, AtomIndexType centralIndex) {
+  // A non-metal central index cannot have any eta bonds
+  if(AtomInfo::isMainGroupElement(graph[centralIndex].elementType)) {
+    std::vector<
+      std::vector<AtomIndexType>
+    > adjacents;
+
+    adjacents.reserve(boost::out_degree(centralIndex, graph));
+
+    GraphType::adjacency_iterator iter, end;
+    std::tie(iter, end) = boost::adjacent_vertices(centralIndex, graph);
+
+    for(; iter != end; ++iter) {
+      adjacents.push_back(
+        std::vector<AtomIndexType> {{*iter}}
+      );
+
+      auto edgeFoundPair = boost::edge(*iter, centralIndex, graph);
+
+      // If an edge is mislabeled as Eta, correct it
+      if(graph[edgeFoundPair.first].bondType == BondType::Eta) {
+        graph[edgeFoundPair.first].bondType = BondType::Single;
+      }
+    }
+
+    return adjacents;
+  }
+
+  std::vector<
+    std::vector<AtomIndexType>
+  > groupedLigands;
+
+  unsigned A = boost::out_degree(centralIndex, graph);
+  temple::TinySet<AtomIndexType> centralAdjacents;
+
+  GraphType::adjacency_iterator iter, end;
+  std::tie(iter, end) = boost::adjacent_vertices(centralIndex, graph);
+
+  for(; iter != end; ++iter) {
+    centralAdjacents.insert(*iter);
+  }
+
+  std::vector<bool> skipList (A, false);
+
+  temple::TinySet<AtomIndexType> ligand;
+
+  std::function<void(const AtomIndexType&)> recursiveDiscover = [&](const AtomIndexType& seed) {
+    GraphType::adjacency_iterator iter, end;
+    std::tie(iter, end) = boost::adjacent_vertices(seed, graph);
+    for(; iter != end; ++iter) {
+      if(centralAdjacents.count(*iter) && !ligand.count(*iter)) {
+        // *iter is shared adjacent of center and seed and not yet discovered
+        ligand.insert(*iter);
+        recursiveDiscover(*iter);
+      }
+    }
+
+    // Make sure the algorithm skips this seed index to avoid duplicate work
+    skipList.at(
+      centralAdjacents.find(seed) - centralAdjacents.begin()
+    ) = true;
+  };
+
+  for(unsigned i = 0; i < A; ++i) {
+    if(skipList.at(i)) {
+      continue;
+    }
+
+    const AtomIndexType& adjacent = centralAdjacents.at(i);
+    ligand = {adjacent};
+    recursiveDiscover(adjacent);
+
+    /* A ligand is a haptic ligand if:
+     * - The number of co-bonded atoms constituting direct bonds is more than one
+     * - It is not a same-type triangle, i.e. we have detected
+     *
+     *     M — B
+     *      \ /   where M, A and B are all non-main-group elements
+     *       A
+     */
+    if(
+      ligand.size() > 1
+      && !( // Exclude the same-type triangle
+        ligand.size() == 2
+        && temple::accumulate(
+          ligand,
+          0u,
+          [&](const unsigned& carry, const AtomIndexType& adjacent) -> unsigned {
+            if(!AtomInfo::isMainGroupElement(graph[adjacent].elementType)) {
+              return carry + 1;
+            }
+
+            return carry;
+          }
+        ) < 2
+      )
+    ) {
+      // Mark all bonds to the central atom as haptic bonds
+      for(const auto& hapticIndex : ligand) {
+        auto edgePair = boost::edge(centralIndex, hapticIndex, graph);
+        graph[edgePair.first].bondType = BondType::Eta;
+      }
+
+      groupedLigands.emplace_back(ligand.begin(), ligand.end());
+    } else {
+      // Ligand is non-haptic
+      for(const auto& nonHapticIndex : ligand) {
+        auto edgePair = boost::edge(centralIndex, nonHapticIndex, graph);
+        if(graph[edgePair.first].bondType == BondType::Eta) {
+          graph[edgePair.first].bondType = BondType::Single;
+        }
+      }
+
+      groupedLigands.emplace_back(ligand.begin(), ligand.end());
+    }
+  }
+
+  return groupedLigands;
+}
+
 GraphType findAndSetEtaBonds(GraphType&& graph) {
   AtomIndexType N = boost::num_vertices(graph);
   for(AtomIndexType centralIndex = 0; centralIndex < N; ++centralIndex) {
@@ -185,7 +313,7 @@ GraphType findAndSetEtaBonds(GraphType&& graph) {
 
               return carry;
             }
-          )
+          ) < 2
         )
       ) {
         // Mark all bonds to the central atom as haptic bonds

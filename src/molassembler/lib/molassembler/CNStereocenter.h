@@ -29,18 +29,36 @@ namespace Stereocenters {
 
 namespace adhesive {
 
-RankingInformation::RankedType ligandRanking(
+using RankedLigandsType = std::vector<
+  std::vector<unsigned>
+>;
+
+/*! Gets ranking positions of a ligand's constituting atoms in descending order
+ *
+ *                               0     1       2      3
+ * Input:  sortedSubstituents: {{0}, {4, 3}, {1, 9}, {5}}
+ *         ligand: {5, 3, 0}
+ * Output: {3, 1, 0}
+ */
+std::vector<unsigned> ligandConstitutingAtomsRankedPositions(
+  const std::vector<AtomIndexType>& ligand,
+  const RankingInformation::RankedType& sortedSubstituents
+);
+
+//! Rank ligands using atom-level ranking information
+RankedLigandsType ligandRanking(
   const RankingInformation::RankedType& sortedSubstituents,
   const RankingInformation::RankedType& ligands
 );
 
+//! Condense ligand ranking information into canonical characters for symbolic computation
 std::vector<char> canonicalCharacters(
-  const RankingInformation::RankedType& rankedLigands
+  const RankedLigandsType& rankedLigands
 );
 
 stereopermutation::Stereopermutation::LinksSetType canonicalLinks(
   const RankingInformation::RankedType& ligands,
-  const RankingInformation::RankedType& rankedLigands,
+  const RankedLigandsType& rankedLigands,
   const RankingInformation::LinksType& rankingLinks
 );
 

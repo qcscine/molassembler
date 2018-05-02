@@ -33,25 +33,44 @@ struct LinkInformation {
    */
   std::vector<AtomIndexType> cycleSequence;
 
-  /* TODO this operator isn't quite correct, in principle, the cycle sequence
+  /*! Performs a lexicographical comparison on cycleSequence
+   *
+   * TODO this operator isn't quite correct, in principle, the cycle sequence
    * is not the completely reduced form / has degrees of freedom, and a
    * lexicographical comparison isn't correct for it
    */
-  bool operator == (const LinkInformation& other) const {
-    return (
-      indexPair == other.indexPair
-      && cycleSequence == other.cycleSequence
-    );
-  }
+  bool operator == (const LinkInformation& other) const;
 };
 
 std::vector<LinkInformation> substituentLinks(
   const GraphType& graph,
   const Cycles& cycleData,
-  const AtomIndexType& source,
+  const AtomIndexType source,
   const std::vector<AtomIndexType>& activeAdjacents
 );
 
+/*! Differentiate adjacent vertices of a central index into ligand site groups
+ *
+ * A ligand site group is made up of all immediately group-internally-adjacent
+ * substituents of a central index. The reverse subdivision starting from a
+ * ligand may be more intuitive: A ligand may be multidentate and have varying
+ * hapticity at any denticity point. It consists of bonding atoms (those
+ * connecting to the central metal) and non-bonding atoms (which may make up a
+ * linker or other extraneous groups). Bonding atoms can be subdivided into
+ * connected components that are separated by non-bonding atoms, each of which
+ * make up a possibly haptic group. These are called ligand site groups because
+ * they each take up a site of the central index's coordination geometry.
+ *
+ * @warning Bond types in the graph are modified by this function. Haptic
+ * ligands' constituting atoms' bond types to the central index are set as
+ * Eta bonds. Likewise, if a non-haptic ligand is bonded to the central index
+ * by an Eta bond, that bond type is changed to a Single bond.
+ */
+std::vector<
+  std::vector<AtomIndexType>
+> ligandSiteGroups(GraphType& graph, AtomIndexType centralIndex);
+
+[[deprecated]]
 GraphType findAndSetEtaBonds(GraphType&& graph);
 
 /*!

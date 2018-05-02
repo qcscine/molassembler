@@ -1,8 +1,14 @@
 # In-progress notes
-- CycleData needs to ignore any and all cycles that contain eta bonded edges.
-  We could just not copy those to RDL's graph, but that will cause a discrepancy
-  between edge descriptors, if that is relied upon somewhere (which I do not
-  think it is)
+- CycleData needs to be able to selectively ignore some cycles that are merely
+  between a central symmetry and an eta-bonded ligand. It is not a solution to
+  skip copying eta bonds to the algorithm since substituentLinks will not
+  work. These cycles complicate the overall picture and are unintuitive for a 
+  human handler.
+- Before ranking takes place, Eta bonds must be set properly, to both haptic
+  and non-haptic ligands. In the algorithm differentiating ligands, every
+  time a haptic ligand is identified, check / set the bonds to Eta, and likewise
+  if the ligand is non-eta, ensure the bond is non-Eta. If it is Eta, set it to
+  Single.
 
 # Haptic ligands implementation plan
 
@@ -70,15 +76,3 @@
   literature to encounter polyhapto heterocyclic ligands, it is unlikely that
   such distorted polygons will be encountered where the approximation is
   problematic.
-
-## How to combine ranking results for comparability across all ligand types
-- rank all adjacent atoms, including all eta-bonded atoms at each site,
-  separately
-- starting with all haptic ligands, find their constituent atoms' positions in
-  the ranking
-- ligands are ranked according to their hapticity number, more individual
-  bonding atoms means higher priority
-- pairwise compare haptic ligands if there are multiple. start at the
-  highest priority constituent atom for each. if there is no difference,
-  continue down the list. if there is, consider it the difference between both
-  ligands

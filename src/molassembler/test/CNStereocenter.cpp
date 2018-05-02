@@ -30,8 +30,8 @@ std::string condenseMap(const std::map<T, U>& map) {
 
   std::string condensed;
   for(auto it = map.begin(); it != map.end(); ++it) {
-    condensed += "{"s 
-      + std::to_string(it->first) 
+    condensed += "{"s
+      + std::to_string(it->first)
       + " -> "s
       + std::to_string(it->second)
       + "}"s;
@@ -225,23 +225,29 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
   );
 }
 
+template<typename T>
+using RaggedVector = std::vector<
+  std::vector<T>
+>;
+
 BOOST_AUTO_TEST_CASE(adhesiveTests) {
   using namespace molassembler::Stereocenters::adhesive;
   using namespace molassembler;
-  using NestedVector = std::vector<
-    std::vector<AtomIndexType>
-  >;
+
+  using RaggedAtoms = RaggedVector<AtomIndexType>;
+  using RaggedLigands = RaggedVector<unsigned>;
+
   using StereopermutationPairsType = std::set<
     std::pair<unsigned, unsigned>
   >;
 
-  auto symmetricHapticPincerRanking = NestedVector {
+  auto symmetricHapticPincerRanking = RaggedAtoms {
     {1, 6},
     {2, 5},
     {3, 4}
   };
 
-  auto symmetricHapticPincerLigands = NestedVector {
+  auto symmetricHapticPincerLigands = RaggedAtoms {
     {1, 2},
     {3, 4},
     {5, 6}
@@ -260,11 +266,14 @@ BOOST_AUTO_TEST_CASE(adhesiveTests) {
     symmetricHapticPincerLigands
   );
 
-  BOOST_CHECK((symmetricHapticPincerRankedLigands == NestedVector {{0, 2}, {1}}));
+  BOOST_CHECK_MESSAGE(
+    (symmetricHapticPincerRankedLigands == RaggedLigands {{0, 2}, {1}}),
+    "Expected {{0, 2}, 1}, got " << temple::stringify(symmetricHapticPincerRankedLigands)
+  );
   BOOST_CHECK((
-    canonicalCharacters(symmetricHapticPincerRankedLigands) 
+    canonicalCharacters(symmetricHapticPincerRankedLigands)
     == std::vector<char> {'A', 'A', 'B'}
-    ));
+  ));
   BOOST_CHECK((
     canonicalLinks(
       symmetricHapticPincerLigands,
@@ -276,11 +285,11 @@ BOOST_AUTO_TEST_CASE(adhesiveTests) {
     }
   ));
 
-  auto asymmetricHapticPincerRanking = NestedVector {
+  auto asymmetricHapticPincerRanking = RaggedAtoms {
     {1}, {6}, {2}, {5}, {3}, {4}
   };
 
-  auto asymmetricHapticPincerLigands = NestedVector {
+  auto asymmetricHapticPincerLigands = RaggedAtoms {
     {1, 2},
     {3, 4},
     {5, 6}
@@ -298,11 +307,11 @@ BOOST_AUTO_TEST_CASE(adhesiveTests) {
     asymmetricHapticPincerLigands
   );
 
-  BOOST_CHECK((asymmetricHapticPincerRankedLigands == NestedVector {{0}, {2}, {1}}));
+  BOOST_CHECK((asymmetricHapticPincerRankedLigands == RaggedLigands {{0}, {2}, {1}}));
   BOOST_CHECK((
-    canonicalCharacters(asymmetricHapticPincerRankedLigands) 
+    canonicalCharacters(asymmetricHapticPincerRankedLigands)
     == std::vector<char> {'A', 'B', 'C'}
-    ));
+  ));
   BOOST_CHECK((
     canonicalLinks(
       asymmetricHapticPincerLigands,

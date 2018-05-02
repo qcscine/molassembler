@@ -35,6 +35,9 @@ auto find(const Container& container, const T& needle);
 template<typename Container, typename UnaryPredicate>
 auto find_if(const Container& container, UnaryPredicate&& predicate);
 
+template<typename T>
+std::vector<T> iota(T size);
+
 //! Composability improvement - returns the call to the size member
 template<typename Container>
 auto size(const Container& container);
@@ -560,6 +563,18 @@ auto find_if(const Container& container, UnaryPredicate&& predicate) {
     std::end(container),
     predicate
   );
+}
+
+template<typename T>
+std::vector<T> iota(T size) {
+  std::vector<T> a;
+  a.reserve(size);
+
+  for(T i = 0; i < size; ++i) {
+    a.push_back(i);
+  }
+
+  return a;
 }
 
 template<typename Container>

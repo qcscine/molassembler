@@ -17,6 +17,7 @@
 #include "DelibHelpers.h"
 #include "Log.h"
 #include "StdlibTypeAlgorithms.h"
+#include "OrderDiscoveryHelper.h"
 
 #include <iomanip>
 
@@ -26,70 +27,85 @@ namespace Stereocenters {
 
 namespace adhesive {
 
-RankingInformation::RankedType ligandRanking(
+std::vector<unsigned> ligandConstitutingAtomsRankedPositions(
+  const std::vector<AtomIndexType>& ligand,
+  const RankingInformation::RankedType& sortedSubstituents
+) {
+  auto positionIndices = temple::map(
+    ligand,
+    [&sortedSubstituents](AtomIndexType constitutingIndex) -> unsigned {
+      return temple::find_if(
+        sortedSubstituents,
+        [&constitutingIndex](const auto& equalPrioritySet) -> bool {
+          return temple::find(equalPrioritySet, constitutingIndex) != equalPrioritySet.end();
+        }
+      ) - sortedSubstituents.begin();
+    }
+  );
+
+  std::sort(
+    positionIndices.begin(),
+    positionIndices.end(),
+    std::greater<> {}
+  );
+
+  return positionIndices;
+}
+
+RankedLigandsType ligandRanking(
   const RankingInformation::RankedType& sortedSubstituents,
   const RankingInformation::RankedType& ligands
 ) {
-  // TODO templify the find() call
-  auto ligandCoefficients = temple::map(
-    ligands,
-    [&sortedSubstituents](const auto& ligandSet) -> unsigned {
-      return temple::sum(
-        temple::map(
-          ligandSet,
-          [&sortedSubstituents](const auto& ligandIndex) -> unsigned {
-            return temple::find_if(
-              sortedSubstituents,
-              [&ligandIndex](const auto& equalPrioritySet) -> bool {
-                return temple::find(equalPrioritySet, ligandIndex) != equalPrioritySet.end();
-              }
-            ) - sortedSubstituents.begin();
-          }
-        )
-      );
-    }
+  // Use partial ordering helper
+  OrderDiscoveryHelper<unsigned> ligandOrdering;
+  ligandOrdering.setUnorderedValues(
+    temple::iota<unsigned>(
+      ligands.size()
+    )
   );
 
-  std::vector<unsigned> sortPermutation (ligands.size());
-  std::iota(sortPermutation.begin(), sortPermutation.end(), 0);
-  std::sort(
-    sortPermutation.begin(),
-    sortPermutation.end(),
-    [&ligandCoefficients](const auto& a, const auto& b) -> bool {
-      return ligandCoefficients.at(a) < ligandCoefficients.at(b);
-    }
-  );
+  // Pairwise compare all ligands, adding relational discoveries to the ordering helper
+  for(unsigned i = 0; i < ligands.size(); ++i) {
+    for(unsigned j = i + 1; j < ligands.size(); ++j) {
+      const auto& a = ligands.at(i);
+      const auto& b = ligands.at(j);
 
-  /* Since the sort does not group ligands of equal coefficients, we have to do
-   * that in a separate step:
-   */
-
-  RankingInformation::RankedType rankedLigands;
-  for(const auto& ligandPosition : sortPermutation) {
-    if(rankedLigands.size() == 0) {
-      rankedLigands.emplace_back();
-      rankedLigands.back().push_back(ligandPosition);
-    } else {
-      if(
-        ligandCoefficients.at(ligandPosition)
-        == ligandCoefficients.at(rankedLigands.back().back())
-      ) {
-        rankedLigands.back().push_back(ligandPosition);
+      if(a.size() < b.size()) {
+        ligandOrdering.addLessThanRelationship(i, j);
+      } else if(a.size() > b.size()) {
+        ligandOrdering.addLessThanRelationship(j, i);
       } else {
-        rankedLigands.emplace_back();
-        rankedLigands.back().push_back(ligandPosition);
+        auto aPositions = ligandConstitutingAtomsRankedPositions(a, sortedSubstituents);
+        auto bPositions = ligandConstitutingAtomsRankedPositions(b, sortedSubstituents);
+
+        // lexicographical comparison
+        if(aPositions < bPositions) {
+          ligandOrdering.addLessThanRelationship(i, j);
+        } else if(aPositions > bPositions) {
+          ligandOrdering.addLessThanRelationship(j, i);
+        }
+
+        // No further differentiation.
       }
     }
   }
 
-  return rankedLigands;
+  // OrderingDiscoveryHelper's getSets() returns DESC order, so we reverse it to ASC
+  auto finalSets = ligandOrdering.getSets();
+
+  std::reverse(
+    finalSets.begin(),
+    finalSets.end()
+  );
+
+  return finalSets;
 }
 
 /* Can use output of ligandRanking directly to get canonical characters.
  * NOTE: this is the same as in glue
  */
 std::vector<char> canonicalCharacters(
-  const RankingInformation::RankedType& rankedLigands
+  const RankedLigandsType& rankedLigands
 ) {
   std::vector<char> characters;
 
@@ -107,7 +123,7 @@ std::vector<char> canonicalCharacters(
 
 stereopermutation::Stereopermutation::LinksSetType canonicalLinks(
   const RankingInformation::RankedType& ligands,
-  const RankingInformation::RankedType& rankedLigands,
+  const RankedLigandsType& rankedLigands,
   const RankingInformation::LinksType& rankingLinks
 ) {
   stereopermutation::Stereopermutation::LinksSetType links;
@@ -627,11 +643,11 @@ CNStereocenter::CNStereocenter(
 
   // Generate the set of unique assignments possible here
   _uniqueStereopermutationsCache = stereopermutation::uniqueStereopermutationsWithWeights(
-    StereopermutationType(
+    StereopermutationType {
       symmetry,
       glue::makeCanonicalCharacters(_ranking.sortedSubstituents),
       glue::makeLinksSelfReferential(_ranking.sortedSubstituents, _ranking.links)
-    ),
+    },
     symmetry,
     false // Do NOT remove trans-spanning linked groups
   );
