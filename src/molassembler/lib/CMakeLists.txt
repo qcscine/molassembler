@@ -5,6 +5,7 @@ find_package(temple 0.1.0 REQUIRED)
 find_package(cyclic_polygons 0.1.0 REQUIRED)
 find_package(scine COMPONENTS Delib REQUIRED)
 find_package(BLAS REQUIRED)
+find_package(dlib REQUIRED)
 
 # add include directories
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
