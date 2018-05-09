@@ -27,7 +27,7 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
       ${targetName}
       ${Boost_PROGRAM_OPTIONS_LIBRARY}
       ${Boost_SYSTEM_LIBRARY}
-      molassembler
+      molassemblerStatic
     )
   endforeach()
 else()
@@ -40,6 +40,6 @@ else()
   target_link_libraries(
     analysis_BenchmarkGraphAlgorithms
       ${Boost_PROGRAM_OPTIONS_LIBRARY}
-      molassembler
+      molassemblerStatic
   )
 endif()
