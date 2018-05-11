@@ -2,7 +2,7 @@
 #define INCLUDE_TEMPLATE_MAGIC_RANDOM_H
 
 #include <random>
-#include <vector>
+#include "Traits.h"
 
 /*! @file
  *
@@ -32,8 +32,38 @@ private:
 public:
   mutable std::mt19937 randomEngine;
 
+  template<typename Container>
+  std::enable_if_t<
+    std::is_same<
+      traits::getValueType<Container>,
+      unsigned
+    >::value,
+    void
+  > seed(const Container& container) {
+    _seeds.clear();
+
+    std::copy(
+      std::begin(container),
+      std::end(container),
+      std::back_inserter(_seeds)
+    );
+
+    std::seed_seq seedSequence {
+      std::begin(_seeds),
+      std::end(_seeds)
+    };
+
+    randomEngine.seed(seedSequence);
+  }
+
+
   Generator() {
     _initGenerator();
+  }
+
+  template<typename Container>
+  explicit Generator(const Container& seeds) {
+    seed(seeds);
   }
 
   template<typename T>
@@ -109,6 +139,29 @@ public:
   > getSingle() const {
     std::uniform_int_distribution<unsigned> uniformDistribution(0, 1);
     return uniformDistribution(randomEngine);
+  }
+
+  template<typename Container>
+  unsigned pickDiscrete(const Container& weights) {
+    std::discrete_distribution<unsigned> distribution {
+      std::begin(weights),
+      std::end(weights)
+    };
+
+    return distribution(randomEngine);
+  }
+
+  template<typename Container>
+  void shuffle(Container& container) {
+    std::shuffle(
+      std::begin(container),
+      std::end(container),
+      randomEngine
+    );
+  }
+
+  const std::vector<unsigned>& getSeeds() const {
+    return _seeds;
   }
 };
 
