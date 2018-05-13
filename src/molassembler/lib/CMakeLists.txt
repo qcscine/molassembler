@@ -119,22 +119,6 @@ endif()
 target_compile_options(molassemblerStatic PRIVATE -Wall -Wpedantic -Wextra)
 target_compile_options(molassembler PRIVATE -Wall -Wpedantic -Wextra)
 
-# Switch debug and release build types
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  message(STATUS "Selected release build")
-  # no debug information, disable assert
-  target_compile_definitions(molassemblerStatic PRIVATE NDEBUG)
-  target_compile_options(molassemblerStatic PRIVATE -O2 -march=native)
-  target_compile_definitions(molassembler PRIVATE NDEBUG)
-  target_compile_options(molassembler PRIVATE -O2 -march=native)
-else() # assume Debug
-  message(STATUS "Assume debug build")
-  target_compile_options(molassemblerStatic PRIVATE -g)
-  target_compile_options(molassembler PRIVATE -g)
-  # target_compile_options(molassembler PRIVATE -g -fsanitize=address -fsanitize=undefined)
-  # set_target_properties(molassembler PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
-endif()
-
 # Linking
 target_link_libraries(
   molassembler
