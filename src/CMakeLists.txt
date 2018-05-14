@@ -8,6 +8,9 @@ set(molassembler_VERSION_PATCH 0)
 
 set(as_subproject chemical_symmetries cyclic_polygons stereopermutation temple)
 
+# Force the linker to report undefined symbols in shared libraries
+string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
+
 # overwrite find_package with test against subproject list
 macro(find_package)
   if(NOT "${ARGV0}" IN_LIST as_subproject)

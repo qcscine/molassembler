@@ -7,6 +7,9 @@ find_package(scine COMPONENTS Delib REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(dlib REQUIRED)
 
+set(Boost_USE_STATIC_LIBS OFF)
+find_package(Boost REQUIRED COMPONENTS filesystem system)
+
 # add include directories
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
 
@@ -103,7 +106,7 @@ target_include_directories(
 )
 
 # specify library target
-add_library(molassembler STATIC ${SOURCES_all} ${HEADERS_all})
+add_library(molassembler SHARED ${SOURCES_all} ${HEADERS_all})
 target_include_directories(
   molassembler PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/molassembler>
@@ -133,6 +136,8 @@ target_link_libraries(
     ${BLAS_LIBRARIES}
   PRIVATE
     cyclic_polygons
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
 )
 
 target_link_libraries(
@@ -148,6 +153,8 @@ target_link_libraries(
     ${BLAS_LIBRARIES}
   PRIVATE
     cyclic_polygons
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
 )
 
 install(

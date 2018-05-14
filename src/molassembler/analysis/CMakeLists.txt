@@ -40,6 +40,7 @@ else()
   target_link_libraries(
     analysis_BenchmarkGraphAlgorithms
       ${Boost_PROGRAM_OPTIONS_LIBRARY}
+      ${Boost_SYSTEM_LIBRARY}
       molassemblerStatic
   )
 endif()
