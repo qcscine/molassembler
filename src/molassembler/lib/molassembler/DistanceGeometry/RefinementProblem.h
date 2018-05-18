@@ -73,8 +73,8 @@ namespace errfDetail {
     return sum;
   }
 
-  //! Signed tetrahedron volume
-  inline double volume(
+  //! Signed tetrahedron volume adjusted by V' = 6 * V
+  inline double adjustedSignedVolume(
     const Vector& positions,
     const ChiralityConstraint::LigandSequence& ligands
   ) {
@@ -175,7 +175,7 @@ struct errfValue {
     double error = 0, volume, upperTerm, lowerTerm;
 
     for(const auto& constraint : chiralityConstraints) {
-      volume = errfDetail::volume(positions, constraint.sites);
+      volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
 
       // Upper bound term
       upperTerm = volume - constraint.upper;
@@ -420,7 +420,7 @@ public:
     dlib::set_all_elements(gradient, 0);
 
     for(const auto& constraint : chiralityConstraints) {
-      const double volume = errfDetail::volume(positions, constraint.sites);
+      const double volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
       const double upperTerm = volume - constraint.upper;
       const double lowerTerm = constraint.lower - volume;
 
@@ -556,7 +556,7 @@ public:
 
     // Chirality gradient contributions (C)
     for(const auto& constraint : chiralityConstraints) {
-      const double volume = errfDetail::volume(positions, constraint.sites);
+      const double volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
 
       // It may not occur that both terms contribute!
       assert(!(volume - constraint.upper > 0 && constraint.lower - volume > 0));

@@ -16,7 +16,7 @@ namespace errfDetail {
       if(std::fabs(chiralityConstraint.lower) > 1e-4) {
         nonZeroChiralityConstraints += 1;
 
-        const auto currentVolume = errfDetail::volume(
+        const auto currentVolume = errfDetail::adjustedSignedVolume(
           positions,
           chiralityConstraint.sites
         );
@@ -65,7 +65,7 @@ namespace errfDetail {
 
     // Check chiral bound deviations
     for(const auto& constraint : chiralityConstraints) {
-      double volume = errfDetail::volume(positions, constraint.sites);
+      double volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
 
       if(
         volume - constraint.upper > deviationThreshold

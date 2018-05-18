@@ -1021,7 +1021,7 @@ void CNStereocenter::fit(
                   return positions.at(_centerAtom).asEigenVector();
                 }
               ),
-              DelibHelpers::signedVolume
+              DelibHelpers::adjustedSignedVolume
             );
 
             // minimalChiralityConstraints() supplies only Positive targets

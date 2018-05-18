@@ -95,7 +95,11 @@ double dihedral(
   const Eigen::Vector3d& l
 );
 
-double signedVolume(
+/*!
+ * Returns the signed tetrahedron volume spanned by four spatial positions
+ * adjusted by V' = 6 * V
+ */
+double adjustedSignedVolume(
   const Eigen::Vector3d& i,
   const Eigen::Vector3d& j,
   const Eigen::Vector3d& k,

@@ -2,7 +2,6 @@
 - More granular CNStereocenter and PermutationState tests needed
 - Cone overlap check missing
 - Eta bond dynamism is missing
-- Check signed volume calculation adjustment (V' = 6 V), and make explicit in code
 - DG visualization needs a replacement for tetrahedronHighlights
 
 # Haptic ligands implementation plan

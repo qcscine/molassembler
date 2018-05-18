@@ -222,7 +222,7 @@ double dihedral(
   );
 }
 
-double signedVolume(
+double adjustedSignedVolume(
   const Eigen::Vector3d& i,
   const Eigen::Vector3d& j,
   const Eigen::Vector3d& k,
@@ -230,7 +230,7 @@ double signedVolume(
 ) {
   return (i - l).dot(
     (j - l).cross(k - l)
-  ) / 6.0;
+  );
 }
 
 } // namespace DelibHelpers
