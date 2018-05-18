@@ -1,14 +1,9 @@
 # In-progress notes
-- CycleData needs to be able to selectively ignore some cycles that are merely
-  between a central symmetry and an eta-bonded ligand. It is not a solution to
-  skip copying eta bonds to the algorithm since substituentLinks will not
-  work. These cycles complicate the overall picture and are unintuitive for a 
-  human handler.
-- Before ranking takes place, Eta bonds must be set properly, to both haptic
-  and non-haptic ligands. In the algorithm differentiating ligands, every
-  time a haptic ligand is identified, check / set the bonds to Eta, and likewise
-  if the ligand is non-eta, ensure the bond is non-Eta. If it is Eta, set it to
-  Single.
+- More granular CNStereocenter and PermutationState tests needed
+- Cone overlap check missing
+- Eta bond dynamism is missing
+- Check signed volume calculation adjustment (V' = 6 V), and make explicit in code
+- DG visualization needs a replacement for tetrahedronHighlights
 
 # Haptic ligands implementation plan
 

@@ -993,7 +993,7 @@ void Molecule::setGeometryAtAtom(
         Symmetry::size(CNSPointer->getSymmetry())
         == Symmetry::size(symmetryName)
       ) {
-        CNSPointer->setSymmetry(*this, symmetryName);
+        CNSPointer->setSymmetry(symmetryName, *this);
         _propagateGraphChange();
       } else {
         throw std::logic_error(
@@ -1567,6 +1567,12 @@ RankingInformation Molecule::rankPriority(
 ) const {
   RankingInformation rankingResult;
 
+  // Expects that bond types are set properly, complains otherwise
+  rankingResult.ligands = GraphAlgorithms::ligandSiteGroups(
+    _adjacencies,
+    a
+  );
+
   // Rank the substituents
   auto expandedTree = RankingTree(
     *this,
@@ -1577,6 +1583,11 @@ RankingInformation Molecule::rankPriority(
   );
 
   rankingResult.sortedSubstituents = expandedTree.getRanked();
+
+  rankingResult.ligandsRanking = RankingInformation::rankLigands(
+    rankingResult.ligands,
+    rankingResult.sortedSubstituents
+  );
 
   auto activeIndices = getAdjacencies(a);
 
@@ -1592,6 +1603,7 @@ RankingInformation Molecule::rankPriority(
     _adjacencies,
     getCycleData(),
     a,
+    rankingResult.ligands,
     activeIndices
   );
 

@@ -6,3 +6,5 @@
   (i.e. only Molecule, generateConformation, StereocenterList, Stereocenter,
   CNStereocenter and EZStereocenter public function headers)
   see particularly: https://gcc.gnu.org/wiki/Visibility
+- Have a look at link time optimization and profile guided optimization so that
+  the parts constituting libmolassembler.a fuse nicely

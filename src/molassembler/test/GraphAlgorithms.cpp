@@ -363,23 +363,54 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
 
   const auto& relevantData = linkTestData.at(filePath.stem().string());
 
+  auto ligands = GraphAlgorithms::ligandSiteGroups(
+    mol.getGraph(),
+    relevantData.source
+  );
+
   auto links = GraphAlgorithms::substituentLinks(
     mol.getGraph(),
     mol.getCycleData(),
     relevantData.source,
+    ligands,
     mol.getAdjacencies(relevantData.source)
   );
 
-  LinkTestData::LinksType condensed;
+  using LigandLevelSet = std::set<
+    std::pair<unsigned, unsigned>
+  >;
+
+  LigandLevelSet condensedCalculated;
   for(const auto& linkData : links) {
-    condensed.insert(linkData.indexPair);
+    condensedCalculated.insert(linkData.indexPair);
   }
 
-  if(condensed != relevantData.expectedLinks) {
+  std::map<AtomIndexType, unsigned> indexToLigandMap;
+  for(unsigned i = 0; i < ligands.size(); ++i) {
+    for(const auto& ligandIndex : ligands.at(i)) {
+      indexToLigandMap.emplace(
+        ligandIndex,
+        i
+      );
+    }
+  }
+
+  LigandLevelSet condensedExpected;
+  for(const auto& linkData : relevantData.expectedLinks) {
+    auto aLigand = indexToLigandMap.at(linkData.first);
+    auto bLigand = indexToLigandMap.at(linkData.second);
+
+    condensedExpected.emplace(
+      std::min(aLigand, bLigand),
+      std::max(aLigand, bLigand)
+    );
+  }
+
+  if(condensedExpected != condensedCalculated) {
     std::cout << "Links test fails for " << filePath.stem().string() << "." << nl
       << "Expected: "
-      << temple::stringify(relevantData.expectedLinks) << ", got "
-      << temple::stringify(condensed)
+      << temple::stringify(condensedExpected) << ", got "
+      << temple::stringify(condensedCalculated)
       << ". From:\n";
 
     for(const auto& link : links) {

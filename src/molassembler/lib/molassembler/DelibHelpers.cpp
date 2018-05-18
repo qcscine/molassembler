@@ -9,7 +9,7 @@ namespace DelibHelpers {
 
 bool validPositionIndices(
   const Delib::PositionCollection& positions,
-  std::initializer_list<AtomIndexType> indices
+  const std::vector<AtomIndexType>& indices
 ) {
   /* scine::Delib casts its' underlying vector<Vector3>::size_type to int, so
    * we have to get at the unsigned std::size_t differently. Since vector
@@ -134,7 +134,7 @@ double getSignedVolume(
       positions[k].asEigenVector()
       - positions[l].asEigenVector()
     )
-  );
+  ) / 6.0;
 }
 
 double getSignedVolume(
@@ -148,6 +148,89 @@ double getSignedVolume(
     indices[2],
     indices[3]
   );
+}
+
+Eigen::Vector3d averagePosition(
+  const Delib::PositionCollection& positions,
+  const std::vector<AtomIndexType>& indices
+) {
+  assert(
+    validPositionIndices(positions, indices)
+  );
+
+  if(indices.size() == 1) {
+    return positions[indices.front()].asEigenVector();
+  }
+
+  Eigen::Vector3d mean;
+  mean.setZero();
+
+  for(const auto& index : indices) {
+    mean += positions[index].asEigenVector();
+  }
+
+  mean /= indices.size();
+
+  return mean;
+}
+
+double distance(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j
+) {
+  return (i-j).norm();
+}
+
+double angle(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j,
+  const Eigen::Vector3d& k
+) {
+  Eigen::Vector3d a = i - j;
+  Eigen::Vector3d b = k - j;
+
+  return std::acos(
+    a.dot(b) / (
+      a.norm() * b.norm()
+    )
+  );
+}
+
+double dihedral(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j,
+  const Eigen::Vector3d& k,
+  const Eigen::Vector3d& l
+) {
+  Eigen::Vector3d a = j - i,
+                 b = k - j,
+                 c = l - k;
+
+  return std::atan2(
+    (
+      a.cross(b)
+    ).cross(
+      b.cross(c)
+    ).dot(
+      b.normalized()
+    ),
+    (
+      a.cross(b)
+    ).dot(
+      b.cross(c)
+    )
+  );
+}
+
+double signedVolume(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j,
+  const Eigen::Vector3d& k,
+  const Eigen::Vector3d& l
+) {
+  return (i - l).dot(
+    (j - l).cross(k - l)
+  ) / 6.0;
 }
 
 } // namespace DelibHelpers

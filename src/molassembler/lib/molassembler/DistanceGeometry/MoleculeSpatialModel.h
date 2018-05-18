@@ -61,6 +61,9 @@ private:
   const Molecule& _molecule;
 
   // Mutable state
+
+  double _looseningMultiplier;
+
   std::map<
     std::array<AtomIndexType, 2>,
     ValueBounds
@@ -87,14 +90,31 @@ public:
   static constexpr double bondRelativeVariance = 0.01;
   //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
   static constexpr double angleAbsoluteVariance = M_PI / 36; // ~ 5°
+  //! Absolute dihedral angle variance in radians.
+  static constexpr double dihedralAbsoluteVariance = M_PI / 36; // ~ 5°
 
-  static double spiroCrossAngle(const double& alpha, const double& beta);
+/* Static functions */
+  static boost::optional<ValueBounds> coneAngle(
+    const std::vector<AtomIndexType>& baseConstituents,
+    const ValueBounds& coneHeightBounds,
+    const double bondRelativeVariance,
+    const Molecule& molecule
+  );
+
+  static double spiroCrossAngle(const double alpha, const double beta);
+
+  static ValueBounds ligandDistanceFromCenter(
+    const std::vector<AtomIndexType>& ligandIndices,
+    const AtomIndexType centralIndex,
+    const double bondRelativeVariance,
+    const Molecule& molecule
+  );
 
 /* Constructor */
   MoleculeSpatialModel(
     const Molecule& molecule,
-    const DistanceMethod& distanceMethod = DistanceMethod::UFFLike,
-    const double& looseningMultiplier = 1.0
+    const DistanceMethod distanceMethod = DistanceMethod::UFFLike,
+    const double looseningMultiplier = 1.0
   );
 
 /* Modification */
@@ -102,10 +122,15 @@ public:
    * Sets the bond bounds to the model. Does not check if previous information
    * exists
    */
-  void setBondBounds(
+  void setBondBoundsIfEmpty(
     const std::array<AtomIndexType, 2>& bondIndices,
-    const double& centralValue,
-    const double& relativeVariance
+    const double centralValue
+  );
+
+  //! Sets bond bounds to exact value bounds.
+  void setBondBoundsIfEmpty(
+    const std::array<AtomIndexType, 2>& bondIndices,
+    const ValueBounds& bounds
   );
 
   /*!
@@ -114,8 +139,13 @@ public:
    */
   void setAngleBoundsIfEmpty(
     const std::array<AtomIndexType, 3>& angleIndices,
-    const double& centralValue,
-    const double& absoluteVariance
+    const double centralValue,
+    const double absoluteVariance
+  );
+
+  void setAngleBoundsIfEmpty(
+    const std::array<AtomIndexType, 3>& angleIndices,
+    const ValueBounds& bounds
   );
 
   /*!
@@ -124,8 +154,8 @@ public:
    */
   void setDihedralBoundsIfEmpty(
     const std::array<AtomIndexType, 4>& dihedralIndices,
-    const double& lower,
-    const double& upper
+    const double lower,
+    const double upper
   );
 
   /*!
@@ -141,13 +171,26 @@ public:
     std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
   >;
 
-  BoundList makeBoundList() const;
 
-  std::vector<
-    Stereocenters::ChiralityConstraintPrototype
-  > getChiralityPrototypes() const;
+/* Information */
+
+  boost::optional<ValueBounds> coneAngle(
+    const std::vector<AtomIndexType>& ligandIndices,
+    const ValueBounds& coneHeightBounds
+  ) const;
 
   void dumpDebugInfo() const;
+
+  ValueBounds ligandDistance(
+    const std::vector<AtomIndexType>& ligandIndices,
+    const AtomIndexType centralIndex
+  ) const;
+
+
+  std::vector<ChiralityConstraint> getChiralityConstraints() const;
+
+  BoundList makeBoundList() const;
+
   void writeGraphviz(const std::string& filename) const;
 };
 

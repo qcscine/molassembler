@@ -4,6 +4,7 @@
 #include "common_typedefs.h"
 #include "RangeForTemporary.h"
 #include "temple/TinySet.h"
+#include "temple/Traits.h"
 
 // RDL
 #include "RingDecomposerLib.h"
@@ -95,7 +96,7 @@ public:
     struct SizeLessThan {
       const unsigned threshold;
 
-      SizeLessThan(unsigned threshold);
+      explicit SizeLessThan(unsigned threshold);
 
       bool operator() (const RDL_cycle* const cyclePtr) const;
     };
@@ -104,7 +105,28 @@ public:
     struct ContainsIndex {
       AtomIndexType soughtIndex;
 
-      ContainsIndex(AtomIndexType soughtIndex);
+      explicit ContainsIndex(AtomIndexType soughtIndex);
+
+      bool operator() (const RDL_cycle* const cyclePtr) const;
+    };
+
+    struct ConsistsOf {
+      temple::TinySet<AtomIndexType> indices;
+
+      template<typename Container>
+      explicit ConsistsOf(const Container& container) {
+        static_assert(
+          std::is_same<
+            temple::traits::getValueType<Container>,
+            AtomIndexType
+          >::value,
+          "ConsistsOf predicate ctor Container must contain AtomIndexType"
+        );
+
+        for(const auto index : container) {
+          indices.insert(index);
+        }
+      }
 
       bool operator() (const RDL_cycle* const cyclePtr) const;
     };
@@ -113,6 +135,13 @@ public:
   //! non-modifying forward iterator
   class constIterator {
   public:
+    // Iterator traits
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = RDL_cycle*;
+    using pointer = value_type;
+    using reference = value_type;
+
     using PredicateType = std::function<bool(const RDL_cycle* const)>;
 
   private:
@@ -226,19 +255,5 @@ unsigned countPlanarityEnforcingBonds(
 );
 
 } // namespace molassembler
-
-/* iterator traits for Cycles::constIterator */
-namespace std {
-
-template<>
-struct iterator_traits<molassembler::Cycles::constIterator> {
-  using iterator_category = std::forward_iterator_tag;
-  using difference_type = std::ptrdiff_t;
-  using value_type = RDL_cycle*;
-  using pointer = value_type;
-  using reference = value_type;
-};
-
-} // namespace std
 
 #endif

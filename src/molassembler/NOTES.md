@@ -1,3 +1,8 @@
+# Structure
+- EZStereocenter needs to be removed entirely. A different mechanism for
+  handling emergent stereocenters due to hindered bond rotations is needed in
+  order to be more general.
+
 # Deficiencies
 - UFF bond distance modelling is not good enough for 3D coordinate
   interpretation

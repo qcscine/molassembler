@@ -18,7 +18,7 @@ namespace errfDetail {
 
         const auto currentVolume = errfDetail::volume(
           positions,
-          chiralityConstraint.indices
+          chiralityConstraint.sites
         );
 
         if( // can this be simplified? -> sign bit XOR?
@@ -65,7 +65,7 @@ namespace errfDetail {
 
     // Check chiral bound deviations
     for(const auto& constraint : chiralityConstraints) {
-      double volume = errfDetail::volume(positions, constraint.indices);
+      double volume = errfDetail::volume(positions, constraint.sites);
 
       if(
         volume - constraint.upper > deviationThreshold
@@ -83,4 +83,3 @@ namespace errfDetail {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
-

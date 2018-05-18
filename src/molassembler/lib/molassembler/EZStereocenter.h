@@ -13,6 +13,9 @@
  * - Could make dihedralAngleVariance constexpr, but unsure about effects on
  *   static initialization and if extra declaration required
  *   Also, consider if it violates single responsibility principle
+ *
+ * - Deprecate the entire class and polymorphic handling of both stereocenters
+ *   throughout the library in favor of an overarching construct
  */
 
 namespace molassembler {
@@ -37,7 +40,10 @@ namespace Stereocenters {
  *
  *   is properly considered as having E and Z conformers
  *
- * Implementation-wise, _isZOption works as true -> Z, false -> E
+ * Implementation-wise, _isZOption models the permutations as:
+ * - Some true -> Z
+ * - Some false -> E,
+ * - None -> unassigned
  *
  * EZStereocenter is explicitly also instantiable on bonds that are not
  * stereogenic so that in DG, chirality constraints and dihedral limits that
@@ -49,7 +55,24 @@ public:
     std::pair<AtomIndexType, AtomIndexType>
   >;
 
+  static constexpr double chiralityConstraintTolerance = 1e-2;
+
 private:
+  struct DihedralLimits {
+    const std::array<AtomIndexType, 4> indices;
+    const double lower, upper;
+
+    DihedralLimits(
+      const std::array<AtomIndexType, 4>& indices,
+      const std::pair<double, double>& limits
+    ) : indices(indices),
+        lower(limits.first),
+        upper(limits.second)
+    {
+      assert(lower < upper);
+    }
+  };
+
 /* State */
   //! Stores the indices of the minimal indices required to have a stereocenter
   AtomIndexType _leftCenter, _rightCenter;
@@ -59,9 +82,6 @@ private:
 
   //! Stores the current assignment state of the stereocenter
   boost::optional<bool> _isZOption;
-
-  //! Static tolerance in dihedral angle for DG
-  static const double _dihedralAngleVariance; // in Degrees
 
 /* Private members */
   inline AtomIndexType _leftHighPriority() const {
@@ -96,11 +116,14 @@ private:
     std::array<AtomIndexType, 4>
   > _differentPriorityDihedralSequences() const;
 
-  //! Generates cis dihedral limits
-  std::vector<DihedralLimits> _cisDihedralLimits() const;
-
-  //! Generates trans dihedral limits
-  std::vector<DihedralLimits> _transDihedralLimits() const;
+  /*!
+   * Return the dihedral angle limits imposed by the underlying symmetries and
+   * the current assignment.
+   */
+  std::vector<DihedralLimits> _dihedralLimits(
+    const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
+    const double looseningMultiplier
+  ) const;
 
   static unsigned _numIndices(const RankingInformation& ranking);
 
@@ -131,27 +154,19 @@ public:
     const RankingInformation& secondCenterRanking
   );
 
-  void propagateVertexRemoval(const AtomIndexType& removedIndex) final;
+  void propagateVertexRemoval(const AtomIndexType removedIndex) final;
 
   void removeSubstituent(
-    const AtomIndexType& center,
-    const AtomIndexType& which
+    const AtomIndexType center,
+    const AtomIndexType which
   );
 
 /* Information */
-  double angle(
-    const AtomIndexType& i,
-    const AtomIndexType& j,
-    const AtomIndexType& k
-  ) const final;
-
   boost::optional<unsigned> assigned() const final;
 
   unsigned numStereopermutations() const final;
 
-  std::vector<ChiralityConstraintPrototype> chiralityConstraints() const final;
-
-  std::vector<DihedralLimits> dihedralLimits() const final;
+  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const final;
 
   std::string info() const final;
 
@@ -159,12 +174,17 @@ public:
 
   std::vector<AtomIndexType> involvedAtoms() const final;
 
+  void setModelInformation(
+    DistanceGeometry::MoleculeSpatialModel& model,
+    const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
+    const double looseningMultiplier
+  ) const final;
+
   Type type() const final;
 
 /* Operators */
   bool operator == (const EZStereocenter& other) const;
   bool operator < (const EZStereocenter& other) const;
-
 };
 
 } // namespace Stereocenters

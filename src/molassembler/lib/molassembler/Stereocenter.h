@@ -18,57 +18,21 @@
 
 namespace molassembler {
 
-// Predeclaration
-namespace Stereocenters {
-class Stereocenter;
-}
+/* Predeclarations */
+class Molecule;
 
-std::basic_ostream<char>& operator << (
-  std::basic_ostream<char>& os,
-  const std::shared_ptr<Stereocenters::Stereocenter>& stereocenterPtr
-);
+namespace DistanceGeometry {
+struct ChiralityConstraint;
+class MoleculeSpatialModel;
+} // namespace DistanceGeometry
 
 //! Classes that store and manipulate steric information not intrinsic to the graph
 namespace Stereocenters {
-
-enum class ChiralityConstraintTarget {
-  Positive,
-  Flat,
-  Negative
-};
-
-struct DihedralLimits {
-  const std::array<AtomIndexType, 4> indices;
-  const double lower, upper;
-
-  DihedralLimits(
-    const std::array<AtomIndexType, 4>& indices,
-    const std::pair<double, double>& limits
-  ) : indices(indices),
-      lower(limits.first),
-      upper(limits.second)
-  {
-    assert(lower < upper);
-  }
-};
-
-struct ChiralityConstraintPrototype {
-  const std::array<AtomIndexType, 4> indices;
-  const ChiralityConstraintTarget target;
-
-  ChiralityConstraintPrototype(
-    const std::array<AtomIndexType, 4>& indices,
-    const ChiralityConstraintTarget& target
-  ) : indices(indices),
-      target(target)
-  {}
-};
 
 enum class Type {
   CNStereocenter,
   EZStereocenter
 };
-
 
 class Stereocenter {
 public:
@@ -83,22 +47,9 @@ public:
   virtual void assignRandom() = 0;
 
   //! Update vertex descriptors on vertex removal
-  virtual void propagateVertexRemoval(const AtomIndexType& removedIndex) = 0;
+  virtual void propagateVertexRemoval(const AtomIndexType removedIndex) = 0;
 
 /* Information */
-  /*!
-   * Return the angle imposed by the underlying symmetry defined by three
-   * involved atoms in degrees. It needs to be a ternary function in order for
-   * the angle requested to be clearly defined in both CNStereocenters and
-   * EZStereocenters, in the latter of which two central atoms (that could be
-   * j) exist.
-   */
-  virtual double angle(
-    const AtomIndexType& i,
-    const AtomIndexType& j,
-    const AtomIndexType& k
-  ) const = 0;
-
   /*!
    * Return whether this Stereocenter has been assigned or not
    * -> This leads to different behavior in DG! If unassigned, an Stereopermutation is
@@ -110,13 +61,7 @@ public:
   virtual unsigned numStereopermutations() const = 0;
 
   //!  Return a list of chirality constraints
-  virtual std::vector<ChiralityConstraintPrototype> chiralityConstraints() const = 0;
-
-  /*!
-   * Return the dihedral angle limits imposed by the underlying symmetries and
-   * the current assignment.
-   */
-  virtual std::vector<DihedralLimits> dihedralLimits() const = 0;
+  virtual std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const = 0;
 
   //!  Return a string giving information about the stereocenter
   virtual std::string info() const = 0;
@@ -127,15 +72,14 @@ public:
    */
   virtual std::vector<AtomIndexType> involvedAtoms() const = 0;
 
+  virtual void setModelInformation(
+    DistanceGeometry::MoleculeSpatialModel& model,
+    const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
+    const double looseningMultiplier
+  ) const = 0;
+
   //! Return the Subtype of the Stereocenter
   virtual Type type() const = 0;
-
-/* Operators */
-  //!  Ostream operator for debugging
-  friend std::basic_ostream<char>& molassembler::operator << (
-    std::basic_ostream<char>& os,
-    const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& stereocenterPtr
-  );
 };
 
 bool compareStereocenterEqual(

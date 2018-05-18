@@ -11,9 +11,7 @@ enum class DGError {
 
 // Boilerplate to allow interoperability of DGerror with std::error_code
 namespace std {
-  template<> struct is_error_code_enum<
-    DGError
-  > : std::true_type {};
+  template<> struct is_error_code_enum<DGError> : std::true_type {};
 } // namespace std
 
 namespace detail {

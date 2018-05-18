@@ -38,16 +38,6 @@ Delib::PositionCollection convertToPositionCollection(
 );
 
 /*!
- * Calculate the volume bounds on a chirality constraint from a fully
- * determined and smoothed distance bounds matrix and a chirality constraint
- * prototype.
- */
-outcome::result<ChiralityConstraint> propagate(
-  const DistanceBoundsMatrix& bounds,
-  const Stereocenters::ChiralityConstraintPrototype& prototype
-);
-
-/*!
  * A logging, not throwing otherwise identical implementation of
  * runDistanceGeometry, that returns detailed intermediate data from a
  * refinement, while runDistanceGeometry returns only the final result.
@@ -96,7 +86,7 @@ outcome::result<
 //! Intermediate conformational data about a Molecule given by a spatial model
 struct MoleculeDGInformation {
   MoleculeSpatialModel::BoundList boundList;
-  std::vector<Stereocenters::ChiralityConstraintPrototype> chiralityConstraintPrototypes;
+  std::vector<ChiralityConstraint> chiralityConstraints;
 };
 
 //! Collects intermediate conformational data about a Molecule using a spatial model

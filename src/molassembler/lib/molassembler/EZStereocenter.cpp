@@ -4,12 +4,19 @@
 #include "temple/constexpr/Numeric.h"
 #include "temple/Random.h"
 
+#include "DistanceGeometry/DistanceGeometry.h"
+#include "DistanceGeometry/MoleculeSpatialModel.h"
+
 #include "DelibHelpers.h"
 #include "EZStereocenter.h"
+#include "BondDistance.h"
+#include "Molecule.h"
 
 namespace molassembler {
 
 namespace Stereocenters {
+
+constexpr double EZStereocenter::chiralityConstraintTolerance;
 
 /* Constructors */
 EZStereocenter::EZStereocenter(
@@ -265,7 +272,7 @@ void EZStereocenter::propagateGraphChange(
   }
 }
 
-void EZStereocenter::propagateVertexRemoval(const AtomIndexType& removedIndex) {
+void EZStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
   auto updateIndex = [&removedIndex](AtomIndexType& index) -> void {
     if(index > removedIndex) {
       --index;
@@ -319,8 +326,8 @@ void EZStereocenter::propagateVertexRemoval(const AtomIndexType& removedIndex) {
 }
 
 void EZStereocenter::removeSubstituent(
-  const AtomIndexType& center,
-  const AtomIndexType& which
+  const AtomIndexType center,
+  const AtomIndexType which
 ) {
   assert(center == _leftCenter || center == _rightCenter);
 
@@ -348,19 +355,6 @@ void EZStereocenter::removeSubstituent(
 
 
 /* Information */
-double EZStereocenter::angle(
-  const AtomIndexType& i __attribute__ ((unused)),
-  const AtomIndexType& j __attribute__ ((unused)),
-  const AtomIndexType& k __attribute__ ((unused))
-) const {
-  assert(j == _leftCenter || j == _rightCenter);
-  /* Little optimization here -> As long as the triple i-j-k is valid, the angle
-   * is always 120°
-   */
-
-  return temple::Math::toRadians<double>(120);
-}
-
 boost::optional<unsigned> EZStereocenter::assigned() const {
   if(_isZOption) {
     return static_cast<unsigned>(
@@ -391,91 +385,57 @@ unsigned EZStereocenter::numStereopermutations() const {
   return 2;
 }
 
-std::vector<ChiralityConstraintPrototype> EZStereocenter::chiralityConstraints() const {
+std::vector<DistanceGeometry::ChiralityConstraint> EZStereocenter::chiralityConstraints() const {
   // Three fixed ChiralityConstraints to enforce six-atom coplanarity
 
-  std::vector<ChiralityConstraintPrototype> constraints {
+  using LigandSequence = DistanceGeometry::ChiralityConstraint::LigandSequence;
+
+  std::vector<DistanceGeometry::ChiralityConstraint> constraints {
     {
-      std::array<AtomIndexType, 4> {
-        _leftHighPriority(),
-        _leftCenter,
-        _rightCenter,
-        _rightHighPriority(),
-      },
-      ChiralityConstraintTarget::Flat
+      LigandSequence {{
+        {_leftHighPriority()},
+        {_leftCenter},
+        {_rightCenter},
+        {_rightHighPriority()}
+      }},
+      -chiralityConstraintTolerance,
+      chiralityConstraintTolerance
     }
   };
 
   if(_numIndices(_leftRanking) == 2) {
     constraints.emplace_back(
-      std::array<AtomIndexType, 4> {
-        _leftHighPriority(),
-        _leftCenter,
-        _rightCenter,
-        _leftLowPriority()
-      },
-      ChiralityConstraintTarget::Flat
+      LigandSequence {{
+        {_leftHighPriority()},
+        {_leftCenter},
+        {_rightCenter},
+        {_leftLowPriority()}
+      }},
+      -chiralityConstraintTolerance,
+      chiralityConstraintTolerance
     );
   }
 
   if(_numIndices(_rightRanking) == 2) {
     constraints.emplace_back(
-      std::array<AtomIndexType, 4> {
-        _rightHighPriority(),
-        _rightCenter,
-        _leftCenter,
-        _rightLowPriority()
-      },
-      ChiralityConstraintTarget::Flat
+      LigandSequence {{
+        {_rightHighPriority()},
+        {_rightCenter},
+        {_leftCenter},
+        {_rightLowPriority()}
+      }},
+      -chiralityConstraintTolerance,
+      chiralityConstraintTolerance
     );
   }
 
   return constraints;
 }
 
-std::vector<DihedralLimits> EZStereocenter::_cisDihedralLimits() const {
-  std::vector<DihedralLimits> limits;
-
-  // In Z, equal priorities are cis
-  for(const auto& dihedralSequence : _equalPriorityDihedralSequences()) {
-    limits.emplace_back(
-      dihedralSequence,
-      std::pair<double, double> {0, _dihedralAngleVariance} // cis limit
-    );
-  }
-
-  for(const auto& dihedralSequence : _differentPriorityDihedralSequences()) {
-    limits.emplace_back(
-      dihedralSequence,
-      std::pair<double, double> {M_PI - _dihedralAngleVariance, M_PI} // trans
-    );
-  }
-
-  return limits;
-}
-
-std::vector<DihedralLimits> EZStereocenter::_transDihedralLimits() const {
-  std::vector<DihedralLimits> limits;
-
-  // In E, equal priorities are trans
-  for(const auto& dihedralSequence : _equalPriorityDihedralSequences()) {
-    limits.emplace_back(
-      dihedralSequence,
-      std::pair<double, double> {M_PI - _dihedralAngleVariance, M_PI} // trans
-    );
-  }
-
-  for(const auto& dihedralSequence : _differentPriorityDihedralSequences()) {
-    limits.emplace_back(
-      dihedralSequence,
-      std::pair<double, double> {0, _dihedralAngleVariance} // cis limit
-    );
-  }
-
-  return limits;
-}
-
-std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
+std::vector<EZStereocenter::DihedralLimits> EZStereocenter::_dihedralLimits(
+  const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
+  const double looseningMultiplier
+) const {
   /* Whether we have _numStereopermutations == 1 or 2 can be completely ignored because
    * when _numStereopermutations == 1, it is irrelevant which state _isZOption is in,
    * so long as it is set (which it is, already in the constructor). Since both
@@ -486,13 +446,62 @@ std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
    * So we just make this dependent on the current _isZOption settings.
    */
 
+  std::vector<DihedralLimits> limits;
+
+  auto varianceForSequence = [&](const std::array<AtomIndexType, 4>& sequence) -> double {
+    return (
+      DistanceGeometry::MoleculeSpatialModel::dihedralAbsoluteVariance
+      * looseningMultiplier
+      * cycleMultiplierForIndex(sequence.front())
+      * cycleMultiplierForIndex(sequence.back())
+    );
+  };
+
   // EZStereocenters can impose dihedral limits
   if(_isZOption && _isZOption.value()) {
-    return _cisDihedralLimits();
+    // In Z, equal priorities are cis
+    for(const auto& dihedralSequence : _equalPriorityDihedralSequences()) {
+      limits.emplace_back(
+        dihedralSequence,
+        std::pair<double, double> {
+          0,
+          std::min(M_PI, varianceForSequence(dihedralSequence))
+        } // cis limit
+      );
+    }
+
+    for(const auto& dihedralSequence : _differentPriorityDihedralSequences()) {
+      limits.emplace_back(
+        dihedralSequence,
+        std::pair<double, double> {
+          std::max(0.0, M_PI - varianceForSequence(dihedralSequence)),
+          M_PI
+        } // trans
+      );
+    }
   }
 
   if(_isZOption && !_isZOption.value()) {
-    return _transDihedralLimits();
+    // In E, equal priorities are trans
+    for(const auto& dihedralSequence : _equalPriorityDihedralSequences()) {
+      limits.emplace_back(
+        dihedralSequence,
+        std::pair<double, double> {
+          std::max(0.0, M_PI - varianceForSequence(dihedralSequence)),
+          M_PI
+        } // trans
+      );
+    }
+
+    for(const auto& dihedralSequence : _differentPriorityDihedralSequences()) {
+      limits.emplace_back(
+        dihedralSequence,
+        std::pair<double, double> {
+          0,
+          std::min(M_PI, varianceForSequence(dihedralSequence))
+        } // cis limit
+      );
+    }
   }
 
   /* It could occur to you that the limits are defined only on the positive
@@ -506,8 +515,9 @@ std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
    * as well.
    */
 
-  return {};
+  return limits;
 }
+
 
 std::string EZStereocenter::info() const {
   using namespace std::string_literals;
@@ -569,6 +579,60 @@ std::vector<AtomIndexType> EZStereocenter::involvedAtoms() const {
   };
 }
 
+void EZStereocenter::setModelInformation(
+  DistanceGeometry::MoleculeSpatialModel& model,
+  const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
+  const double looseningMultiplier
+) const {
+  using ModelType = DistanceGeometry::MoleculeSpatialModel;
+
+  /* Angles */
+  auto addAngle = [&](
+    const AtomIndexType i,
+    const AtomIndexType j,
+    const AtomIndexType k
+  ) -> void {
+    double variance = (
+      ModelType::angleAbsoluteVariance
+      * looseningMultiplier
+      * cycleMultiplierForIndex(i)
+      * cycleMultiplierForIndex(k)
+    );
+
+    model.setAngleBoundsIfEmpty(
+      {{i, j, k}},
+      DistanceGeometry::ValueBounds {
+        std::max(0.0, 2 * M_PI / 3 - variance),
+        std::min(M_PI, 2 * M_PI / 3 + variance)
+      }
+    );
+  };
+
+  // Left
+  addAngle(_leftHighPriority(), _leftCenter, _rightCenter);
+  if(_numIndices(_leftRanking) == 2) {
+    addAngle(_leftLowPriority(), _leftCenter, _rightCenter);
+  }
+
+  // Right
+  addAngle(_leftCenter, _rightCenter, _rightHighPriority());
+  if(_numIndices(_rightRanking) == 2) {
+    addAngle(_leftCenter, _rightCenter, _rightLowPriority());
+  }
+
+  /* Dihedrals */
+  for(
+    const auto& dihedralLimit :
+    _dihedralLimits(cycleMultiplierForIndex, looseningMultiplier)
+  ) {
+    model.setDihedralBoundsIfEmpty(
+      dihedralLimit.indices,
+      dihedralLimit.lower,
+      dihedralLimit.upper
+    );
+  }
+}
+
 Type EZStereocenter::type() const {
   return Type::EZStereocenter;
 }
@@ -599,9 +663,6 @@ bool EZStereocenter::operator < (const EZStereocenter& other) const {
     other._isZOption
   );
 }
-
-// Static data
-const double EZStereocenter::_dihedralAngleVariance = temple::Math::toRadians<double>(5);
 
 } // namespace Stereocenters
 

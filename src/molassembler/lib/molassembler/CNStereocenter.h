@@ -20,123 +20,131 @@ using namespace std::string_literals;
  * 'assignments'.
  */
 
+/* Forward declarations */
+
 namespace molassembler {
 
-// Forward-declare Molecule
 class Molecule;
+
+namespace DistanceGeometry {
+
+class MoleculeSpatialModel;
+struct ChiralityConstraint;
+
+} // namespace DistanceGeometry
+
+} // namespace molassembler
+
+
+namespace molassembler {
 
 namespace Stereocenters {
 
-namespace adhesive {
-
-using RankedLigandsType = std::vector<
-  std::vector<unsigned>
->;
-
-/*! Gets ranking positions of a ligand's constituting atoms in descending order
- *
- *                               0     1       2      3
- * Input:  sortedSubstituents: {{0}, {4, 3}, {1, 9}, {5}}
- *         ligand: {5, 3, 0}
- * Output: {3, 1, 0}
- */
-std::vector<unsigned> ligandConstitutingAtomsRankedPositions(
-  const std::vector<AtomIndexType>& ligand,
-  const RankingInformation::RankedType& sortedSubstituents
-);
-
-//! Rank ligands using atom-level ranking information
-RankedLigandsType ligandRanking(
-  const RankingInformation::RankedType& sortedSubstituents,
-  const RankingInformation::RankedType& ligands
-);
-
-//! Condense ligand ranking information into canonical characters for symbolic computation
-std::vector<char> canonicalCharacters(
-  const RankedLigandsType& rankedLigands
-);
-
-stereopermutation::Stereopermutation::LinksSetType canonicalLinks(
-  const RankingInformation::RankedType& ligands,
-  const RankedLigandsType& rankedLigands,
-  const RankingInformation::LinksType& rankingLinks
-);
-
-} // namespace adhesive
-
-namespace glue {
-
-/*! Stably re-sort ranked substituents in decreasing set size
- *
- * Necessary to avoid treating e.g. AAB and ABB separately, although the
- * resulting assignments are identical.
- *
- * Example: sortedSubstituents: {5, 8}, {3}, {1, 2, 4}
- * Result: {1, 2, 4}, {5, 8}, {3}
- */
-RankingInformation::RankedType canonicalize(
-  RankingInformation::RankedType sortedSubstituents
-);
-
-/*! Transforms canonicalized substituents to character space
- *
- * Example: canonical ranked substituents: {1, 2, 4}, {5, 8}, {3}
- * Result: AAABBC
- */
-std::vector<char> makeCanonicalCharacters(
-  const RankingInformation::RankedType& canonicalizedSubstituents
-);
-
-/*! Transform links from atom-index space to character space
- *
- * In the determination of unique assignments, we have to construct an initial
- * assignment that specifies the ranking differences of ligands and their
- * links. From the GraphAlgorithm substituentLinks, we receive atom index based
- * link pairs. These need to be altered to character-referential links.
- *
- * Example: canonical ranked substituents: {1, 2, 4}, {5, 8}, {3} == AAABBC
- *          links: {1, 5}, {2, 5}, {4, 5}
- * Result: {0, 3}, {1, 3}, {2, 3} == A1-B1, A2-B1, A3-B1
- */
-stereopermutation::Stereopermutation::LinksSetType makeLinksSelfReferential(
-  const RankingInformation::RankedType& canonicalizedSubstituents,
-  const RankingInformation::LinksType& rankingLinks
-);
-
-std::map<AtomIndexType, unsigned> makeSymmetryPositionMap(
-  const stereopermutation::Stereopermutation& assignment,
-  const RankingInformation::RankedType& canonicalizedSubstituents
-);
-
-std::vector<AtomIndexType> mapToSymmetryPositions(
-  const stereopermutation::Stereopermutation& assignment,
-  const RankingInformation::RankedType& canonicalizedSubstituents
-);
-
-std::vector<char> makeStereopermutationCharacters(
-  const RankingInformation::RankedType& canonicalizedSubstituents,
-  const std::vector<char>& canonicalizedStereopermutationCharacters,
-  const std::vector<AtomIndexType>& atomsAtSymmetryPositions
-);
-
-/* WARNING: This has to be a copy-initialized optional. Don't change it, unless
- * you want to sift through -fsanitize=address output to find the bug in the
- * optional propagation. It's not safe to return a reference to within a
- * temporary object where this is used.
- */
-boost::optional<std::vector<unsigned>> getIndexMapping(
-  const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
-  const ChiralStatePreservation& preservationOption
-);
-
-} // namespace glue
-
 class CNStereocenter : public Stereocenter {
-private:
+public:
 /* Typedefs */
   using StereopermutationType = stereopermutation::Stereopermutation;
 
-/* Private State */
+/* Auxiliary classes */
+  struct PermutationState {
+    //! Stably resorted (by set size) ligands ranking
+    RankingInformation::RankedLigandsType canonicalLigands;
+
+    //! Character representation of bonding case
+    std::vector<char> symbolicCharacters;
+
+    //! Self-referential representation of links
+    stereopermutation::Stereopermutation::LinksSetType selfReferentialLinks;
+
+    //! Mapping from ligand index to modeled ligand plane distance
+    std::vector<DistanceGeometry::ValueBounds> ligandDistances;
+
+    using ConeAngleType = std::vector<
+      boost::optional<DistanceGeometry::ValueBounds>
+    >;
+    //! Mapping from ligand index to cone angle optional
+    ConeAngleType coneAngles;
+
+    //! Vector of rotationally unique stereopermutations with associated weights
+    stereopermutation::StereopermutationsWithWeights permutations;
+
+    //! Mapping from ligand index to permutational symmetry position
+    std::vector<unsigned> symmetryPositionMap;
+
+    PermutationState() = default;
+    PermutationState(
+      const RankingInformation& ranking,
+      const AtomIndexType centerAtom,
+      const Symmetry::Name symmetry,
+      const Molecule& molecule
+    );
+
+    /*! Stably re-sort ranked ligand indices in decreasing set size
+     *
+     * Necessary to avoid treating e.g. AAB and ABB separately, although the
+     * resulting assignments are identical.
+     *
+     * Example: rankedLigands: {5, 8}, {3}, {1, 2, 4}
+     * Result: {1, 2, 4}, {5, 8}, {3}
+     */
+    static RankingInformation::RankedLigandsType canonicalize(
+      RankingInformation::RankedLigandsType rankedLigands
+    );
+
+    //! Condense ligand ranking information into canonical characters for symbolic computation
+    static std::vector<char> transferToSymbolicCharacters(
+      const RankingInformation::RankedLigandsType& canonicalLigands
+    );
+
+    //! Make ligand-index based ligands self-referential within canonical ligands
+    static stereopermutation::Stereopermutation::LinksSetType selfReferentialTransform(
+      const RankingInformation::LinksType& rankingLinks,
+      const RankingInformation::RankedLigandsType& canonicalLigands
+    );
+
+    static std::vector<unsigned> generateLigandToSymmetryPositionMap(
+      const stereopermutation::Stereopermutation& assignment,
+      const RankingInformation::RankedLigandsType& canonicalLigands
+    );
+
+    static std::vector<unsigned> generateSymmetryPositionToLigandMap(
+      const stereopermutation::Stereopermutation& assignment,
+      const RankingInformation::RankedLigandsType& canonicalLigands
+    );
+
+    /*!
+     * Generate the character representation of a particular stereopermutation
+     * using its map from ?? TODO
+     */
+    static std::vector<char> makeStereopermutationCharacters(
+      const RankingInformation::RankedLigandsType& canonicalLigands,
+      const std::vector<char>& canonicalStereopermutationCharacters,
+      const std::vector<unsigned>& ligandsAtSymmetryPositions
+    );
+
+    /* WARNING: This has to be a copy-initialized optional. Don't change it, unless
+     * you want to sift through -fsanitize=address output to find the bug in the
+     * optional propagation. It's not safe to return a reference to within a
+     * temporary object where this is used.
+     */
+    static boost::optional<
+      std::vector<unsigned>
+    > getIndexMapping(
+      const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
+      const ChiralStatePreservation& preservationOption
+    );
+
+    bool isFeasibleStereopermutation(
+      const StereopermutationType& assignment,
+      const RankingInformation::RankedLigandsType& canonicalLigands,
+      const RankingInformation& ranking,
+      const Symmetry::Name symmetry,
+      const Molecule& molecule
+    );
+  };
+
+private:
+/* State */
   //! Ranking information of substituents
   RankingInformation _ranking;
 
@@ -150,33 +158,10 @@ private:
   boost::optional<unsigned> _assignmentOption;
 
   /* Derivative state (cache) */
-  /*! Vector of rotationally unique Stereopermutations
-   *
-   * Essentially a cached value, valid only for the current ranking.
-   */
-  stereopermutation::StereopermutationsWithWeights _uniqueStereopermutationsCache;
-
-  /*! Mapping between next neighbor atom index to permutational symmetry position
-   *
-   * Essentially a cached value, valid only for the current assignment
-   * (excluding boost::none).
-   */
-  std::map<AtomIndexType, unsigned> _symmetryPositionMapCache;
-
-  void _removeImpossibleStereopermutations(
-    stereopermutation::StereopermutationsWithWeights& data,
-    const Molecule& molecule
-  );
+  PermutationState _cache;
 
 public:
 /* Static functions */
-  bool isFeasibleStereopermutation(
-    const StereopermutationType& assignment,
-    const Molecule& molecule,
-    const Symmetry::Name& symmetry,
-    const RankingInformation& ranking
-  );
-
 /* Constructors */
   CNStereocenter(
     // The base molecule
@@ -184,7 +169,7 @@ public:
     // The symmetry of this Stereocenter
     const Symmetry::Name& symmetry,
     // The atom this Stereocenter is centered on
-    const AtomIndexType& centerAtom,
+    const AtomIndexType centerAtom,
     // Ranking information of substituents
     const RankingInformation& ranking
   );
@@ -198,7 +183,7 @@ public:
    */
   void addSubstituent(
     const Molecule& molecule,
-    const AtomIndexType& newSubstituentIndex,
+    const AtomIndexType newSubstituentIndex,
     const RankingInformation& newRanking,
     const Symmetry::Name& newSymmetry,
     const ChiralStatePreservation& preservationOption
@@ -220,6 +205,7 @@ public:
     std::vector<Symmetry::Name> excludeSymmetries = {}
   );
 
+  // TODO HAPTIC all of these need work to ensure atom indices are removed, not ligand indices
   /*!
    * In case a graph modification changes the ranking of this stereocenter's
    * substituents, it must be redetermined whether the new configuration is a
@@ -234,7 +220,7 @@ public:
    * Prepares for the removal of an atom on the graph level, which involves
    * the generation of new atom indices.
    */
-  void propagateVertexRemoval(const AtomIndexType& removedIndex) final;
+  void propagateVertexRemoval(const AtomIndexType removedIndex) final;
 
   /*!
    * Handles the removal of a substituent from the stereocenter. If the
@@ -243,7 +229,7 @@ public:
    */
   void removeSubstituent(
     const Molecule& molecule,
-    const AtomIndexType& which,
+    const AtomIndexType which,
     const RankingInformation& newRanking,
     const Symmetry::Name& newSymmetry,
     const ChiralStatePreservation& preservationOption
@@ -251,25 +237,22 @@ public:
 
   //! If the central symmetry group is changed, we must adapt
   void setSymmetry(
-    const Molecule& molecule,
-    const Symmetry::Name& symmetryName
+    const Symmetry::Name symmetryName,
+    const Molecule& molecule
   );
 
 /* Information */
-  //! Returns the angle between substituent atoms in the idealized symmetry
+  //! Returns the angle between substituent ligands in the idealized symmetry
   double angle(
-    const AtomIndexType& i,
-    const AtomIndexType& j,
-    const AtomIndexType& k
-  ) const final;
-
-#if false
-  DistanceGeometry::ValueBounds angles(
-    const AtomIndexType& i,
-    const AtomIndexType& j,
-    const AtomIndexType& k
+    const unsigned i,
+    const unsigned j
   ) const;
-#endif
+
+  void setModelInformation(
+    DistanceGeometry::MoleculeSpatialModel& model,
+    const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
+    const double looseningMultiplier
+  ) const final;
 
   /*!
    * Returns the (public) information of whether the stereocenter is assigned
@@ -277,14 +260,20 @@ public:
    */
   boost::optional<unsigned> assigned() const final;
 
-  //! Generates a list of chirality constraints on its substituents for DG
-  std::vector<ChiralityConstraintPrototype> chiralityConstraints() const final;
-
-  /*!
-   * Generates a list of dihedral constraints on its substituents for DG. This
-   * is unused here, always returns an empty list.
+  /*! Returns a minimal representation of chirality constraints
+   *
+   * Every minimal representation consists only of ligand indices.
+   *
+   * The minimal representation assumes that all Symmetry tetrahedron
+   * definitions are defined to be Positive targets, which is checked in
+   * the chemical_symmetries tests.
    */
-  std::vector<DihedralLimits> dihedralLimits() const final;
+  std::vector<
+    std::array<boost::optional<unsigned>, 4>
+  > minimalChiralityConstraints() const;
+
+  //! Generates a list of chirality constraints on its substituents for DG
+  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const final;
 
   //! Returns an information string for diagnostic purposes
   std::string info() const final;
@@ -315,11 +304,6 @@ public:
 /* Operators */
   bool operator == (const CNStereocenter& other) const;
   bool operator < (const CNStereocenter& other) const;
-
-  friend std::basic_ostream<char>& molassembler::operator << (
-    std::basic_ostream<char>& os,
-    const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& stereocenterPtr
-  );
 };
 
 } // namespace Stereocenters

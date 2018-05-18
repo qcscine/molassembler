@@ -106,7 +106,8 @@ void writeDGPOVandProgressFiles(
     outStream << "\n";
 
     // Tetrahedra
-    if(!refinementData.constraints.empty()) {
+    // TODO haptic
+    /*if(!refinementData.constraints.empty()) {
       for(const auto& chiralityConstraint : refinementData.constraints) {
         outStream << "TetrahedronHighlight("
           << detail::mapIndexToChar(chiralityConstraint.indices[0]) << ", "
@@ -116,7 +117,7 @@ void writeDGPOVandProgressFiles(
           << ")\n";
       }
       outStream << "\n";
-    }
+    }*/
 
     // Gradients
     for(unsigned i = 0; i < N; i++) {

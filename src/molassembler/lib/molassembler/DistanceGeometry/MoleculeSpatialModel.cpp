@@ -4,6 +4,7 @@
 #include "chemical_symmetries/Properties.h"
 
 #include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/DistanceGeometry.h"
 #include "CommonTrig.h"
 #include "Log.h"
 #include "StdlibTypeAlgorithms.h"
@@ -24,12 +25,13 @@ namespace DistanceGeometry {
 // General availability of static constexpr members
 constexpr double MoleculeSpatialModel::bondRelativeVariance;
 constexpr double MoleculeSpatialModel::angleAbsoluteVariance;
+constexpr double MoleculeSpatialModel::dihedralAbsoluteVariance;
 
 MoleculeSpatialModel::MoleculeSpatialModel(
   const Molecule& molecule,
-  const DistanceMethod& distanceMethod,
-  const double& looseningMultiplier
-) : _molecule(molecule) {
+  const DistanceMethod distanceMethod,
+  const double looseningMultiplier
+) : _molecule(molecule), _looseningMultiplier(looseningMultiplier) {
   /* This is overall a pretty complicated constructor since it encompasses the
    * entire conversion from a molecular graph into some model of the relations
    * between atoms, determining which conformations are accessible.
@@ -58,7 +60,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    */
 
   // Helper variables
-  Cycles cycleData {molecule.getGraph()};
+  Cycles cycleData = molecule.getCycleData();
   auto smallestCycleMap = makeSmallestCycleMap(cycleData);
 
   // Check constraints on static constants
@@ -76,9 +78,15 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   // Set 1-2 bounds
   if(distanceMethod == DistanceMethod::UFFLike) {
     for(const auto& edge: molecule.iterateEdges()) {
-      unsigned i = boost::source(edge, molecule.getGraph());
-      unsigned j = boost::target(edge, molecule.getGraph());
       auto bondType = molecule.getGraph()[edge].bondType;
+
+      // Do not model eta bonds, stereocenters are responsible for those
+      if(bondType == BondType::Eta) {
+        continue;
+      }
+
+      AtomIndexType i = boost::source(edge, molecule.getGraph());
+      AtomIndexType j = boost::target(edge, molecule.getGraph());
 
       auto bondDistance = Bond::calculateBondDistance(
         molecule.getElementType(i),
@@ -86,21 +94,19 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         bondType
       );
 
-      setBondBounds(
+      setBondBoundsIfEmpty(
         {{i, j}},
-        bondDistance,
-        bondRelativeVariance * looseningMultiplier
+        bondDistance
       );
     }
   } else { // Uniform
     for(const auto& edge: molecule.iterateEdges()) {
-      unsigned i = boost::source(edge, molecule.getGraph());
-      unsigned j = boost::target(edge, molecule.getGraph());
+      AtomIndexType i = boost::source(edge, molecule.getGraph());
+      AtomIndexType j = boost::target(edge, molecule.getGraph());
 
-      setBondBounds(
+      setBondBoundsIfEmpty(
         {{i, j}},
-        1.5,
-        bondRelativeVariance * looseningMultiplier
+        1.5
       );
     }
   }
@@ -269,7 +275,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         // Map sequential index pairs to their purported bond length
         temple::mapSequentialPairs(
           indexSequence,
-          [&](const AtomIndexType& i, const AtomIndexType& j) -> double {
+          [&](const AtomIndexType i, const AtomIndexType j) -> double {
             auto bondTypeOption = molecule.getBondType(i, j);
 
             // These vertices really ought to be bonded
@@ -342,7 +348,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   /* Returns a multiplier intended for the absolute angle variance for an atom
    * index. If that index is in a cycle of size < 6, the multiplier is > 1.
    */
-  auto cycleMultiplierForIndex = [&](const AtomIndexType& i) -> double {
+  auto cycleMultiplierForIndex = [&](const AtomIndexType i) -> double {
     if(smallestCycleMap.count(i) == 1) {
       if(smallestCycleMap.at(i) == 3) {
         return 2.5;
@@ -355,6 +361,17 @@ MoleculeSpatialModel::MoleculeSpatialModel(
 
     return 1.0;
   };
+
+  // Get all 1-3 and 1-4 information possible from stereocenters
+  for(const auto& mapIterPair : _stereocenterMap) {
+    const auto& stereocenterPtr = mapIterPair.second;
+
+    stereocenterPtr->setModelInformation(
+      *this,
+      cycleMultiplierForIndex,
+      looseningMultiplier
+    );
+  }
 
   /* Model spiro centers */
   /* For an atom to be a spiro center, it needs to be contained in exactly two
@@ -449,79 +466,59 @@ MoleculeSpatialModel::MoleculeSpatialModel(
                 secondAdjacents.back()
               }});
 
-              auto populateBounds = [&](const auto& sequence) {
-                ValueBounds bounds;
+              /* We can only set these angles if the angle bounds for both
+               * sequences already exist.
+               */
+              if(
+                _angleBounds.count(firstSequence) == 1
+                && _angleBounds.count(secondSequence) == 1
+              ) {
+                ValueBounds firstAngleBounds = _angleBounds.at(firstSequence);
+                ValueBounds secondAngleBounds = _angleBounds.at(secondSequence);
 
-                /* The cycle internal angle may have been generated already
-                 * if that cycle is planar, so check the angle bounds
-                 */
-                if(_angleBounds.count(sequence)) {
-                  bounds = _angleBounds.at(sequence);
-                } else {
-                  // We have to generate some bounds on the cycle internal angle
-                  double centralAngle = _stereocenterMap.at(i) -> angle(
-                    sequence.front(),
-                    i,
-                    sequence.back()
-                  );
+                // Increases in cycle angles yield decrease in the cross angle
+                double crossAngleLower = StdlibTypeAlgorithms::clamp(
+                  spiroCrossAngle(
+                    firstAngleBounds.upper,
+                    secondAngleBounds.upper
+                  ),
+                  0.0,
+                  M_PI
+                );
 
-                  double multiplier = cycleMultiplierForIndex(sequence.front())
-                    * cycleMultiplierForIndex(sequence.back())
-                    * looseningMultiplier;
+                double crossAngleUpper = StdlibTypeAlgorithms::clamp(
+                  spiroCrossAngle(
+                    firstAngleBounds.lower,
+                    secondAngleBounds.lower
+                  ),
+                  0.0,
+                  M_PI
+                );
 
-                  bounds.lower = StdlibTypeAlgorithms::clamp(
-                    centralAngle - multiplier * angleAbsoluteVariance,
-                    0.0,
-                    M_PI
-                  );
+                ValueBounds crossBounds {
+                  crossAngleLower,
+                  crossAngleUpper
+                };
 
-                  bounds.upper = StdlibTypeAlgorithms::clamp(
-                    centralAngle + multiplier * angleAbsoluteVariance,
-                    0.0,
-                    M_PI
-                  );
-                }
+                temple::forAllPairs(
+                  firstAdjacents,
+                  secondAdjacents,
+                  [&](const auto& firstAdjacent, const auto& secondAdjacent) {
+                    auto sequence = orderedIndexSequence<3>({{firstAdjacent, i, secondAdjacent}});
 
-                return bounds;
-              };
-
-              ValueBounds firstAngleBounds = populateBounds(firstSequence);
-              ValueBounds secondAngleBounds = populateBounds(secondSequence);
-
-              // Increases in cycle angles yield decrease in the cross angle
-              double crossAngleLower = StdlibTypeAlgorithms::clamp(
-                spiroCrossAngle(
-                  firstAngleBounds.upper,
-                  secondAngleBounds.upper
-                ),
-                0.0,
-                M_PI
-              );
-
-              double crossAngleUpper = StdlibTypeAlgorithms::clamp(
-                spiroCrossAngle(
-                  firstAngleBounds.lower,
-                  secondAngleBounds.lower
-                ),
-                0.0,
-                M_PI
-              );
-
-              temple::forAllPairs(
-                firstAdjacents,
-                secondAdjacents,
-                [&](const auto& firstAdjacent, const auto& secondAdjacent) {
-                  _angleBounds.emplace(
-                    std::make_pair(
-                      orderedIndexSequence<3>({{firstAdjacent, i, secondAdjacent}}),
-                      ValueBounds {
-                        crossAngleLower,
-                        crossAngleUpper
-                      }
-                    )
-                  );
-                }
-              );
+                    auto findIter = _angleBounds.find(sequence);
+                    if(findIter == _angleBounds.end()) {
+                      _angleBounds.emplace(
+                        std::make_pair(sequence, crossBounds)
+                      );
+                    } else {
+                      // Tighten the cross-angle bounds
+                      findIter->second = crossBounds;
+                      // TODO maybe log this behavior?
+                    }
+                  }
+                );
+              }
             }
           }
 
@@ -538,73 +535,14 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       }
     }
   }
-
-  // Set 1-3 bounds using all angles we can exploit from stereocenters
-  for(const auto& mapIterPair : _stereocenterMap) {
-    const auto& stereocenterPtr = mapIterPair.second;
-
-    for(const auto& centralIndex : stereocenterPtr -> involvedAtoms()) {
-      // All combinations between molecule of this index
-      auto adjacentIndices = molecule.getAdjacencies(centralIndex);
-
-      temple::forAllPairs(
-        adjacentIndices,
-        [&](const AtomIndexType& i, const AtomIndexType& j) -> void {
-          double multiplier = cycleMultiplierForIndex(i)
-            * cycleMultiplierForIndex(j)
-            * looseningMultiplier;
-
-          setAngleBoundsIfEmpty(
-            {{
-              i,
-              centralIndex,
-              j
-            }},
-            stereocenterPtr -> angle(
-              i,
-              centralIndex,
-              j
-            ),
-            multiplier * angleAbsoluteVariance
-          );
-        }
-      );
-    }
-  }
-
-  // Add EZStereocenter dihedral limit information
-  // TODO these need tolerance adaptation in dependence of cycles too!
-  for(const auto& mapIterPair : _stereocenterMap) {
-    const auto& mappingIndex = mapIterPair.first;
-    const auto& stereocenterPtr = mapIterPair.second;
-    if(
-      // Filter out CNStereocenters
-      stereocenterPtr -> type() == Stereocenters::Type::EZStereocenter
-      /* Since EZStereocenters are in the map twice (for each of their
-       * involvedAtoms()), and we only want to process their dihedral
-       * information once, check the mapping index against the first index in
-       * the involvedAtoms set
-       */
-      && mappingIndex == *(
-        stereocenterPtr -> involvedAtoms().begin()
-      )
-    ) {
-      for(const auto& dihedralLimit : stereocenterPtr -> dihedralLimits()) {
-        setDihedralBoundsIfEmpty(
-          dihedralLimit.indices,
-          dihedralLimit.lower,
-          dihedralLimit.upper
-        );
-      }
-    }
-  }
 }
 
-void MoleculeSpatialModel::setBondBounds(
+void MoleculeSpatialModel::setBondBoundsIfEmpty(
   const std::array<AtomIndexType, 2>& bondIndices,
-  const double& centralValue,
-  const double& relativeVariance
+  const double centralValue
 ) {
+  double relativeVariance = bondRelativeVariance * _looseningMultiplier;
+
   /* Ensure correct use, variance for bounds should at MOST smaller than half
    * of the central value
    */
@@ -625,14 +563,30 @@ void MoleculeSpatialModel::setBondBounds(
   }
 }
 
+void MoleculeSpatialModel::setBondBoundsIfEmpty(
+  const std::array<AtomIndexType, 2>& bondIndices,
+  const ValueBounds& bounds
+) {
+  // C++17: try_emplace
+  auto indexSequence = orderedIndexSequence<2>(bondIndices);
+  if(_bondBounds.count(indexSequence) == 0) {
+    _bondBounds.emplace(
+      std::make_pair(
+        indexSequence,
+        bounds
+      )
+    );
+  }
+}
+
 /*!
  * Adds the angle bounds to the model, but only if the information for that
  * set of indices does not exist yet.
  */
 void MoleculeSpatialModel::setAngleBoundsIfEmpty(
   const std::array<AtomIndexType, 3>& angleIndices,
-  const double& centralValue,
-  const double& absoluteVariance
+  const double centralValue,
+  const double absoluteVariance
 ) {
   auto orderedIndices = orderedIndexSequence<3>(angleIndices);
 
@@ -658,14 +612,42 @@ void MoleculeSpatialModel::setAngleBoundsIfEmpty(
   }
 }
 
+void MoleculeSpatialModel::setAngleBoundsIfEmpty(
+  const std::array<AtomIndexType, 3>& angleIndices,
+  const ValueBounds& bounds
+) {
+  auto orderedIndices = orderedIndexSequence<3>(angleIndices);
+
+  // C++17: try_emplace
+  if(_angleBounds.count(orderedIndices) == 0) {
+    _angleBounds.emplace(
+      std::make_pair(
+        orderedIndices,
+        ValueBounds {
+          StdlibTypeAlgorithms::clamp(
+            bounds.lower,
+            0.0,
+            M_PI
+          ),
+          StdlibTypeAlgorithms::clamp(
+            bounds.upper,
+            0.0,
+            M_PI
+          )
+        }
+      )
+    );
+  }
+}
+
 /*!
  * Adds the dihedral bounds to the model, but only if the information for that
  * set of indices does not exist yet.
  */
 void MoleculeSpatialModel::setDihedralBoundsIfEmpty(
   const std::array<AtomIndexType, 4>& dihedralIndices,
-  const double& lower,
-  const double& upper
+  const double lower,
+  const double upper
 ) {
   assert(lower < upper);
 
@@ -695,8 +677,8 @@ void MoleculeSpatialModel::setDihedralBoundsIfEmpty(
 
 void MoleculeSpatialModel::addDefaultDihedrals() {
   for(const auto& edgeDescriptor : _molecule.iterateEdges()) {
-    const auto& sourceIndex = boost::source(edgeDescriptor, _molecule.getGraph());
-    const auto& targetIndex = boost::target(edgeDescriptor, _molecule.getGraph());
+    const AtomIndexType sourceIndex = boost::source(edgeDescriptor, _molecule.getGraph());
+    const AtomIndexType targetIndex = boost::target(edgeDescriptor, _molecule.getGraph());
 
     auto sourceAdjacencies = _molecule.getAdjacencies(sourceIndex);
     auto targetAdjacencies = _molecule.getAdjacencies(targetIndex);
@@ -750,7 +732,7 @@ MoleculeSpatialModel::BoundList MoleculeSpatialModel::makeBoundList() const {
     );
   }
 
-  auto bondBound = [&adjacencyList](const AtomIndexType& i, const AtomIndexType& j) -> ValueBounds {
+  auto bondBound = [&adjacencyList](const AtomIndexType i, const AtomIndexType j) -> ValueBounds {
     AtomIndexType smallerIndex = std::min(i, j);
     AtomIndexType biggerIndex = std::max(i, j);
 
@@ -862,23 +844,45 @@ MoleculeSpatialModel::BoundList MoleculeSpatialModel::makeBoundList() const {
   return boundList;
 }
 
-std::vector<
-  Stereocenters::ChiralityConstraintPrototype
-> MoleculeSpatialModel::getChiralityPrototypes() const {
-  std::vector<Stereocenters::ChiralityConstraintPrototype> prototypes;
+boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
+  const std::vector<AtomIndexType>& ligandIndices,
+  const ValueBounds& coneHeightBounds
+) const {
+  return coneAngle(
+    ligandIndices,
+    coneHeightBounds,
+    bondRelativeVariance * _looseningMultiplier,
+    _molecule
+  );
+}
+
+ValueBounds MoleculeSpatialModel::ligandDistance(
+  const std::vector<AtomIndexType>& ligandIndices,
+  const AtomIndexType centralIndex
+) const {
+  return ligandDistanceFromCenter(
+    ligandIndices,
+    centralIndex,
+    bondRelativeVariance * _looseningMultiplier,
+    _molecule
+  );
+}
+
+std::vector<DistanceGeometry::ChiralityConstraint> MoleculeSpatialModel::getChiralityConstraints() const {
+  std::vector<DistanceGeometry::ChiralityConstraint> constraints;
 
   for(const auto& iterPair : _stereocenterMap) {
     const auto& stereocenterPtr = iterPair.second;
 
     auto chiralityPrototypes = stereocenterPtr -> chiralityConstraints();
-    std::copy(
+    std::move(
       chiralityPrototypes.begin(),
       chiralityPrototypes.end(),
-      std::back_inserter(prototypes)
+      std::back_inserter(constraints)
     );
   }
 
-  return prototypes;
+  return constraints;
 }
 
 void MoleculeSpatialModel::dumpDebugInfo() const {
@@ -1146,11 +1150,269 @@ void MoleculeSpatialModel::writeGraphviz(const std::string& filename) const {
   outStream.close();
 }
 
-double MoleculeSpatialModel::spiroCrossAngle(const double& alpha, const double& beta) {
+/* Static functions */
+boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
+  const std::vector<AtomIndexType>& baseConstituents,
+  const ValueBounds& coneHeightBounds,
+  const double bondRelativeVariance,
+  const Molecule& molecule
+) {
+  /* Have to decide cone base radius in order to calculate this. There are some
+   * simple cases to get out of the way first:
+   */
+
+  assert(!baseConstituents.empty());
+  if(baseConstituents.size() == 1) {
+    return ValueBounds {0.0, 0.0};
+  }
+
+  if(baseConstituents.size() == 2) {
+    auto bondTypeOptional = molecule.getBondType(
+      baseConstituents.front(),
+      baseConstituents.back()
+    );
+
+    // If a ligand is haptic and consists of two ligands, these MUST be bonded
+    assert(bondTypeOptional);
+
+    double radius = Bond::calculateBondDistance(
+      molecule.getElementType(baseConstituents.front()),
+      molecule.getElementType(baseConstituents.back()),
+      bondTypeOptional.value()
+    ) / 2;
+
+    // Angle gets smaller if height bigger or cone base radius smaller
+    double lowerAngle = std::atan2(
+      (1 - bondRelativeVariance) * radius,
+      coneHeightBounds.upper
+    );
+
+    double upperAngle = std::atan2(
+      (1 + bondRelativeVariance) * radius,
+      coneHeightBounds.lower
+    );
+
+    return ValueBounds {
+      lowerAngle,
+      upperAngle
+    };
+  }
+
+  // Now it gets tricky. The base constituents may be part of a cycle or not
+  Cycles cycles = molecule.getCycleData();
+
+  /* This is essentially an if - only one cycle can consist of exactly the base
+   * constituents
+   */
+  for(
+    const auto cyclePtr :
+    cycles.iterate(Cycles::predicates::ConsistsOf {baseConstituents})
+  ) {
+    /* So if it IS a cycle, we need a ring index sequence to calculate a cyclic
+     * polygon circumradius, which is how flat cycles are modelled here
+     */
+    auto ringIndexSequence = makeRingIndexSequence(
+      Cycles::edgeVertices(cyclePtr)
+    );
+
+    auto distances = temple::mapSequentialPairs(
+      ringIndexSequence,
+      [&](const AtomIndexType i, const AtomIndexType j) -> double {
+        auto bondTypeOption = molecule.getBondType(i, j);
+
+        // These vertices really ought to be bonded
+        assert(bondTypeOption);
+
+        return Bond::calculateBondDistance(
+          molecule.getElementType(i),
+          molecule.getElementType(j),
+          bondTypeOption.value()
+        );
+      }
+    );
+
+    auto lowerCircumradiusResult = CyclicPolygons::detail::convexCircumradius(
+      temple::map(
+        distances,
+        [&](const double& distance) -> double {
+          return (1 - bondRelativeVariance) * distance;
+        }
+      )
+    );
+
+    auto upperCircumradiusResult = CyclicPolygons::detail::convexCircumradius(
+      temple::map(
+        distances,
+        [&](const double& distance) -> double {
+          return (1 + bondRelativeVariance) * distance;
+        }
+      )
+    );
+
+    /* We assume that the circumcenter for any of these cyclic polygons should
+     * be inside the polygon, not outside (meaning that the variation in edge
+     * lengths is typically relatively small). If the circumcenter were outside
+     * the polygon, it is clear that cycle atoms are not well approximated.
+     */
+    assert(upperCircumradiusResult.second);
+    assert(lowerCircumradiusResult.second);
+
+    return ValueBounds {
+      std::atan2(lowerCircumradiusResult.first, coneHeightBounds.upper),
+      std::atan2(upperCircumradiusResult.first, coneHeightBounds.lower)
+    };
+  }
+
+  /* So the ligand atoms are NOT the sole constituents of a closed cycle.
+   *
+   * For some types of ligands, we can still figure out a cone angle. If the
+   * ligand group is actually a path in which any intermediate atom merely
+   * connects the subsequent atoms (i.e. the path is not branched, there are no
+   * cycles), and if all the involved intermediate geometries constituting the
+   * longest path have only one distinct angle value, then we can create a
+   * conformational model anyway.
+   */
+
+  // Try to find a path including all atoms without any cross-bonds
+  // Wrap baseConstituents with an TinyUnorderedSet for easier member searches
+  temple::TinyUnorderedSet<AtomIndexType> ligandIndicesSet;
+  ligandIndicesSet.data = baseConstituents;
+
+  std::deque<AtomIndexType> pathSequence;
+  pathSequence.push_back(baseConstituents.front());
+
+  auto initialAdjacents = molecule.getAdjacencies(baseConstituents.front());
+  temple::TinyUnorderedSet<AtomIndexType> initialAdjacentsSet;
+  initialAdjacentsSet.data = initialAdjacents;
+
+  auto intersection = temple::unorderedSetIntersection(
+    ligandIndicesSet,
+    initialAdjacentsSet
+  );
+
+  // Early exit, there can be no path involving all without cross-bonds
+  if(intersection.size() > 2 || intersection.size() == 0) {
+    return boost::none;
+  }
+
+  bool frontFinished = false;
+  bool backFinished = false;
+  bool crossEdgeDiscovered = false;
+
+  if(intersection.size() == 1) {
+    pathSequence.push_front(intersection.data.front());
+    backFinished = true;
+  }
+
+  if(intersection.size() == 2) {
+    pathSequence.push_front(intersection.data.front());
+    pathSequence.push_back(intersection.data.back());
+  }
+
+  while(pathSequence.size() != ligandIndicesSet.size()) {
+    if(frontFinished && backFinished) {
+      break;
+    }
+
+    // Try to expand at front
+    if(!frontFinished) {
+      frontFinished = true;
+      unsigned count = 0;
+      for(const auto adjacent : molecule.iterateAdjacencies(pathSequence.front())) {
+        if(ligandIndicesSet.count(adjacent)) {
+          if(adjacent != pathSequence.at(1)) {
+            pathSequence.push_front(adjacent);
+            frontFinished = false;
+          }
+
+          ++count;
+        }
+      }
+
+      if(count > 2) {
+        crossEdgeDiscovered = true;
+        break;
+      }
+    }
+
+    if(!backFinished) {
+      backFinished = true;
+      unsigned count = 0;
+      for(const auto adjacent : molecule.iterateAdjacencies(pathSequence.back())) {
+        if(ligandIndicesSet.count(adjacent)) {
+          if(adjacent != pathSequence.at(pathSequence.size() - 2)) {
+            pathSequence.push_back(adjacent);
+            backFinished = false;
+          }
+
+          ++count;
+        }
+      }
+
+      if(count > 2) {
+        crossEdgeDiscovered = true;
+        break;
+      }
+    }
+  }
+
+  if(pathSequence.size() == ligandIndicesSet.size() && !crossEdgeDiscovered) {
+    // TODO model the path and determine a cone angle!
+    throw std::logic_error("Modeling of path ligands is not implemented.");
+  }
+
+  return boost::none;
+}
+
+double MoleculeSpatialModel::spiroCrossAngle(const double alpha, const double beta) {
   // The source of this equation is explained in documents/
   return std::acos(
     -1 * std::cos(alpha / 2) * std::cos(beta / 2)
   );
+}
+
+ValueBounds MoleculeSpatialModel::ligandDistanceFromCenter(
+  const std::vector<AtomIndexType>& ligandIndices,
+  const AtomIndexType centralIndex,
+  const double bondRelativeVariance,
+  const Molecule& molecule
+) {
+  assert(ligandIndices.size() > 0);
+
+  Delib::ElementType centralIndexType = molecule.getElementType(centralIndex);
+
+  if(ligandIndices.size() == 1) {
+    auto ligandIndex = ligandIndices.front();
+
+    double distance = Bond::calculateBondDistance(
+      molecule.getElementType(ligandIndex),
+      centralIndexType,
+      molecule.getBondType(ligandIndex, centralIndex).value()
+    );
+
+    return {
+      (1 - bondRelativeVariance) * distance,
+      (1 + bondRelativeVariance) * distance
+    };
+  }
+
+  double distance = 0.9 * temple::average(
+    temple::map(
+      ligandIndices,
+      [&](AtomIndexType ligandIndex) -> double {
+        return Bond::calculateBondDistance(
+          molecule.getElementType(ligandIndex),
+          centralIndexType,
+          molecule.getBondType(ligandIndex, centralIndex).value()
+        );
+      }
+    )
+  );
+
+  return {
+    (1 - bondRelativeVariance) * distance,
+    (1 + bondRelativeVariance) * distance
+  };
 }
 
 } // namespace DistanceGeometry

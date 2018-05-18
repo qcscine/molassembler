@@ -168,6 +168,23 @@ bool Cycles::predicates::ContainsIndex::operator() (const RDL_cycle* const cycle
   return false;
 }
 
+bool Cycles::predicates::ConsistsOf::operator() (const RDL_cycle* const cyclePtr) const {
+  if(cyclePtr->weight != indices.size()) {
+    return false;
+  }
+
+  for(unsigned i = 0; i < cyclePtr->weight; ++i) {
+    if(
+      !indices.count(cyclePtr->edges[i][0])
+      || !indices.count(cyclePtr->edges[i][1])
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /* Cycles::constIterator */
 Cycles::constIterator::constIterator(
   const std::shared_ptr<RDLDataPtrs>& dataPtr,

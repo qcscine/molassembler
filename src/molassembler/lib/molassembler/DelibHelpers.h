@@ -70,6 +70,38 @@ double getSignedVolume(
   const std::array<AtomIndexType, 4>& indices
 );
 
+/* Reimplementation on vector basis alone */
+
+Eigen::Vector3d averagePosition(
+  const Delib::PositionCollection& positions,
+  const std::vector<AtomIndexType>& indices
+);
+
+double distance(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j
+);
+
+double angle(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j,
+  const Eigen::Vector3d& k
+);
+
+double dihedral(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j,
+  const Eigen::Vector3d& k,
+  const Eigen::Vector3d& l
+);
+
+double signedVolume(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j,
+  const Eigen::Vector3d& k,
+  const Eigen::Vector3d& l
+);
+
 }
 
 }

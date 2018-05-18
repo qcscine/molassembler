@@ -29,11 +29,11 @@ std::vector<LinkInformation> substituentLinks(
   const GraphType& graph,
   const Cycles& cycleData,
   const AtomIndexType source,
+  const std::vector<
+    std::vector<AtomIndexType>
+  >& ligands,
   const std::vector<AtomIndexType>& activeAdjacents
 ) {
-  /* TODO
-   * - must ignore cycles containing only ligand-internal indices and the metal
-   */
   /* General idea:
    *
    * In order to avoid a full O(N) BFS on every CNStereocenter candidate to
@@ -41,9 +41,22 @@ std::vector<LinkInformation> substituentLinks(
    *
    * Iterate through every cycle and look for cycles containing exactly two of
    * the edge_descriptors corresponding to the edges from the source to an
-   * active substituent
+   * active substituent.
+   *
+   * The two atoms adjacent to the central atom represented by those edges must
+   * be from different ligands.
    */
   std::vector<LinkInformation> links;
+
+  std::map<AtomIndexType, unsigned> indexToLigandMap;
+  for(unsigned i = 0; i < ligands.size(); ++i) {
+    for(const auto& ligandIndex : ligands.at(i)) {
+      indexToLigandMap.emplace(
+        ligandIndex,
+        i
+      );
+    }
+  }
 
   temple::TinySet<GraphType::edge_descriptor> sourceAdjacentEdges;
   for(const auto& adjacentIndex : activeAdjacents) {
@@ -53,8 +66,8 @@ std::vector<LinkInformation> substituentLinks(
   }
 
   std::map<
-    std::pair<AtomIndexType, AtomIndexType>,
-    unsigned
+    std::pair<unsigned, unsigned>,
+    unsigned // Index of LinkInformation in links
   > linksMap;
 
   auto getAdjacentOfEdge = [&](const auto& edgeDescriptor) -> AtomIndexType {
@@ -82,15 +95,23 @@ std::vector<LinkInformation> substituentLinks(
 
     // Must match exactly two edges
     if(intersection.size() == 2) {
-      auto a = getAdjacentOfEdge(intersection.front());
-      auto b = getAdjacentOfEdge(intersection.back());
+      AtomIndexType a = getAdjacentOfEdge(intersection.front());
+      AtomIndexType b = getAdjacentOfEdge(intersection.back());
 
-      // Find which adjacents are overlapping
-      auto indexPair = std::pair<AtomIndexType, AtomIndexType> {
-        std::min(a, b),
-        std::max(a, b)
+      unsigned ligandOfA = indexToLigandMap.at(a);
+      unsigned ligandOfB = indexToLigandMap.at(b);
+
+      if(ligandOfA == ligandOfB) {
+        // If the cycle adjacents are from the same ligand, ignore this cycle
+        continue;
+      }
+
+      auto indexPair = std::pair<unsigned, unsigned> {
+        std::min(ligandOfA, ligandOfB),
+        std::max(ligandOfA, ligandOfB),
       };
 
+      // Find which adjacents are overlapping
       if(
         linksMap.count(indexPair) == 0
         || (
@@ -121,40 +142,44 @@ std::vector<LinkInformation> substituentLinks(
   return links;
 }
 
-std::vector<
-  std::vector<AtomIndexType>
-> ligandSiteGroups(GraphType& graph, AtomIndexType centralIndex) {
-  // A non-metal central index cannot have any eta bonds
-  if(AtomInfo::isMainGroupElement(graph[centralIndex].elementType)) {
-    std::vector<
-      std::vector<AtomIndexType>
-    > adjacents;
+namespace detail {
 
-    adjacents.reserve(boost::out_degree(centralIndex, graph));
+bool isHapticLigand(
+  const std::vector<AtomIndexType>& ligand,
+  const GraphType& graph
+) {
+  /* A ligand is a haptic ligand if:
+   * - The number of co-bonded atoms constituting direct bonds is more than one
+   * - It is not a same-type triangle, i.e. we have detected
+   *
+   *     M — B
+   *      \ /   where M, A and B are all non-main-group elements
+   *       A
+   */
+  return (
+    ligand.size() > 1
+    && !( // Exclude the same-type triangle
+      ligand.size() == 2
+      && temple::accumulate(
+        ligand,
+        0u,
+        [&](const unsigned carry, const AtomIndexType adjacent) -> unsigned {
+          if(!AtomInfo::isMainGroupElement(graph[adjacent].elementType)) {
+            return carry + 1;
+          }
 
-    GraphType::adjacency_iterator iter, end;
-    std::tie(iter, end) = boost::adjacent_vertices(centralIndex, graph);
+          return carry;
+        }
+      ) < 2
+    )
+  );
+}
 
-    for(; iter != end; ++iter) {
-      adjacents.push_back(
-        std::vector<AtomIndexType> {{*iter}}
-      );
-
-      auto edgeFoundPair = boost::edge(*iter, centralIndex, graph);
-
-      // If an edge is mislabeled as Eta, correct it
-      if(graph[edgeFoundPair.first].bondType == BondType::Eta) {
-        graph[edgeFoundPair.first].bondType = BondType::Single;
-      }
-    }
-
-    return adjacents;
-  }
-
-  std::vector<
-    std::vector<AtomIndexType>
-  > groupedLigands;
-
+void findLigands(
+  const GraphType& graph,
+  const AtomIndexType centralIndex,
+  std::function<void(const std::vector<AtomIndexType>&)> callback
+) {
   unsigned A = boost::out_degree(centralIndex, graph);
   temple::TinySet<AtomIndexType> centralAdjacents;
 
@@ -195,50 +220,94 @@ std::vector<
     ligand = {adjacent};
     recursiveDiscover(adjacent);
 
-    /* A ligand is a haptic ligand if:
-     * - The number of co-bonded atoms constituting direct bonds is more than one
-     * - It is not a same-type triangle, i.e. we have detected
-     *
-     *     M — B
-     *      \ /   where M, A and B are all non-main-group elements
-     *       A
-     */
-    if(
-      ligand.size() > 1
-      && !( // Exclude the same-type triangle
-        ligand.size() == 2
-        && temple::accumulate(
-          ligand,
-          0u,
-          [&](const unsigned& carry, const AtomIndexType& adjacent) -> unsigned {
-            if(!AtomInfo::isMainGroupElement(graph[adjacent].elementType)) {
-              return carry + 1;
-            }
+    callback(ligand.data);
+  }
+}
 
-            return carry;
-          }
-        ) < 2
-      )
-    ) {
-      // Mark all bonds to the central atom as haptic bonds
-      for(const auto& hapticIndex : ligand) {
-        auto edgePair = boost::edge(centralIndex, hapticIndex, graph);
-        graph[edgePair.first].bondType = BondType::Eta;
+} // namespace detail
+
+std::vector<
+  std::vector<AtomIndexType>
+> ligandSiteGroups(const GraphType& graph, AtomIndexType centralIndex) {
+  // A non-metal central index cannot have any eta bonds
+  if(AtomInfo::isMainGroupElement(graph[centralIndex].elementType)) {
+    std::vector<
+      std::vector<AtomIndexType>
+    > adjacents;
+
+    adjacents.reserve(boost::out_degree(centralIndex, graph));
+
+    GraphType::adjacency_iterator iter, end;
+    std::tie(iter, end) = boost::adjacent_vertices(centralIndex, graph);
+
+    for(; iter != end; ++iter) {
+      auto edgeFoundPair = boost::edge(*iter, centralIndex, graph);
+
+      // If an edge is mislabeled as Eta, correct it
+      if(graph[edgeFoundPair.first].bondType == BondType::Eta) {
+        // is the other vertex a non-main-group element?
+        auto otherVertex = boost::source(edgeFoundPair.first, graph);
+        if(otherVertex == *iter) {
+          otherVertex = boost::target(edgeFoundPair.first, graph);
+        }
+
+        if(AtomInfo::isMainGroupElement(graph[otherVertex].elementType)) {
+          std::string error = "Two main group elements are connected by an eta bond! ";
+          error += std::to_string(*iter);
+          error += " and ";
+          error += std::to_string(otherVertex);
+
+          throw std::logic_error(error);
+        }
+        /* If the central index is a main-group element and connected to a
+         * non-main-group element via an eta bond, this adjacency is not
+         * recorded for the determination of ligand site groups. The symmetry
+         * modelling at that center should not include individual eta bond
+         * contributions.
+         */
+      } else {
+        adjacents.push_back(
+          std::vector<AtomIndexType> {{*iter}}
+        );
       }
+    }
 
-      groupedLigands.emplace_back(ligand.begin(), ligand.end());
-    } else {
-      // Ligand is non-haptic
-      for(const auto& nonHapticIndex : ligand) {
-        auto edgePair = boost::edge(centralIndex, nonHapticIndex, graph);
-        if(graph[edgePair.first].bondType == BondType::Eta) {
-          graph[edgePair.first].bondType = BondType::Single;
+    return adjacents;
+  }
+
+  std::vector<
+    std::vector<AtomIndexType>
+  > groupedLigands;
+
+  detail::findLigands(
+    graph,
+    centralIndex,
+    [&](const std::vector<AtomIndexType>& ligand) -> void {
+      // Make sure all bonds are marked properly
+      if(detail::isHapticLigand(ligand, graph)) {
+        for(const auto& hapticIndex : ligand) {
+          auto edgePair = boost::edge(centralIndex, hapticIndex, graph);
+          if(graph[edgePair.first].bondType != BondType::Eta) {
+            throw std::logic_error(
+              "Haptic ligand constituting atom bound to non-main-group element via non-eta bond"
+            );
+          }
+        }
+      } else {
+        for(const auto& nonHapticIndex : ligand) {
+          auto edgePair = boost::edge(centralIndex, nonHapticIndex, graph);
+          if(graph[edgePair.first].bondType == BondType::Eta) {
+            throw std::logic_error(
+              "Non-haptic ligand bound to non-main-group element via eta bond"
+            );
+          }
         }
       }
 
+      // Add the ligand to the set
       groupedLigands.emplace_back(ligand.begin(), ligand.end());
     }
-  }
+  );
 
   return groupedLigands;
 }
@@ -251,78 +320,19 @@ GraphType findAndSetEtaBonds(GraphType&& graph) {
       break;
     }
 
-    unsigned A = boost::out_degree(centralIndex, graph);
-    temple::TinySet<AtomIndexType> centralAdjacents;
-
-    GraphType::adjacency_iterator iter, end;
-    std::tie(iter, end) = boost::adjacent_vertices(centralIndex, graph);
-
-    for(; iter != end; ++iter) {
-      centralAdjacents.insert(*iter);
-    }
-
-    std::vector<bool> skipList (A, false);
-
-    temple::TinySet<AtomIndexType> ligand;
-
-    std::function<void(const AtomIndexType&)> recursiveDiscover = [&](const AtomIndexType& seed) {
-      GraphType::adjacency_iterator iter, end;
-      std::tie(iter, end) = boost::adjacent_vertices(seed, graph);
-      for(; iter != end; ++iter) {
-        if(centralAdjacents.count(*iter) && !ligand.count(*iter)) {
-          // *iter is shared adjacent of center and seed and not yet discovered
-          ligand.insert(*iter);
-          recursiveDiscover(*iter);
+    detail::findLigands(
+      graph,
+      centralIndex,
+      [&](const std::vector<AtomIndexType>& ligand) -> void {
+        if(detail::isHapticLigand(ligand, graph)) {
+          // Mark all bonds to the central atom as haptic bonds
+          for(const auto& hapticIndex : ligand) {
+            auto edgePair = boost::edge(centralIndex, hapticIndex, graph);
+            graph[edgePair.first].bondType = BondType::Eta;
+          }
         }
       }
-
-      // Make sure the algorithm skips this seed index to avoid duplicate work
-      skipList.at(
-        centralAdjacents.find(seed) - centralAdjacents.begin()
-      ) = true;
-    };
-
-    for(unsigned i = 0; i < A; ++i) {
-      if(skipList.at(i)) {
-        continue;
-      }
-
-      const AtomIndexType& adjacent = centralAdjacents.at(i);
-      ligand = {adjacent};
-      recursiveDiscover(adjacent);
-
-      /* A ligand is a haptic ligand if:
-       * - The number of co-bonded atoms constituting direct bonds is more than one
-       * - It is not a same-type triangle, i.e. we have detected
-       *
-       *     M — B
-       *      \ /   where M, A and B are all non-main-group elements
-       *       A
-       */
-      if(
-        ligand.size() > 1
-        && !( // Exclude the same-type triangle
-          ligand.size() == 2
-          && temple::accumulate(
-            ligand,
-            0u,
-            [&](const unsigned& carry, const AtomIndexType& adjacent) -> unsigned {
-              if(!AtomInfo::isMainGroupElement(graph[adjacent].elementType)) {
-                return carry + 1;
-              }
-
-              return carry;
-            }
-          ) < 2
-        )
-      ) {
-        // Mark all bonds to the central atom as haptic bonds
-        for(const auto& hapticIndex : ligand) {
-          auto edgePair = boost::edge(centralIndex, hapticIndex, graph);
-          graph[edgePair.first].bondType = BondType::Eta;
-        }
-      }
-    }
+    );
   }
 
   return graph;

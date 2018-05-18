@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 
   Log::level = Log::Level::None;
   Log::particulars = {};
-  
+
   // Generate a wide array of RefinementProblems and check their gradients
 
   for(const auto& symmetryName: Symmetry::allNames) {
@@ -83,24 +83,6 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
       )
     );
 
-    auto chiralityConstraints = temple::map(
-      DGInfo.chiralityConstraintPrototypes,
-      [&distanceBounds](
-        const Stereocenters::ChiralityConstraintPrototype& prototype
-      ) -> ChiralityConstraint {
-        auto propagateResult = detail::propagate(
-          distanceBounds,
-          prototype
-        );
-
-        if(!propagateResult) {
-          BOOST_FAIL(propagateResult.error().message());
-        }
-
-        return propagateResult.value();
-      }
-    );
-
     dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
       static_cast<Eigen::MatrixXd>(
         distanceBounds.access().cwiseProduct(distanceBounds.access())
@@ -109,12 +91,12 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 
     errfValue<false> valueFunctor {
       squaredBounds,
-      chiralityConstraints
+      DGInfo.chiralityConstraints
     };
 
     errfGradient<false> gradientFunctor {
       squaredBounds,
-      chiralityConstraints
+      DGInfo.chiralityConstraints
     };
 
     // Finite difference is calculated to 1e-7 precision
@@ -150,12 +132,12 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 
     errfValue<true> compressingValueFunctor {
       squaredBounds,
-      chiralityConstraints
+      DGInfo.chiralityConstraints
     };
 
     errfGradient<true> compressingGradientFunctor {
       squaredBounds,
-      chiralityConstraints
+      DGInfo.chiralityConstraints
     };
 
     Vector compressedFiniteDifferenceGradient = dlib::derivative(compressingValueFunctor)(dlibPositions);
@@ -195,7 +177,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
     const auto DGData = gatherDGInformation(molecule);
-    
+
     DistanceBoundsMatrix distanceBounds {
       molecule,
       DGData.boundList
@@ -206,24 +188,6 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       BOOST_FAIL(distancesMatrixResult.error().message());
     }
     auto distancesMatrix = distancesMatrixResult.value();
-
-    auto chiralityConstraints = temple::map(
-      DGData.chiralityConstraintPrototypes,
-      [&distanceBounds](
-        const Stereocenters::ChiralityConstraintPrototype& prototype
-      ) -> ChiralityConstraint {
-        auto propagateResult = detail::propagate(
-          distanceBounds,
-          prototype
-        );
-
-        if(!propagateResult) {
-          BOOST_FAIL(propagateResult.error().message());
-        }
-
-        return propagateResult.value();
-      }
-    );
 
     // Make a metric matrix from the distances matrix
     MetricMatrix metric(distancesMatrix);
@@ -249,7 +213,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
 
     errfValue<true> valueFunctor {
       squaredBounds,
-      chiralityConstraints
+      DGData.chiralityConstraints
     };
 
     // get a value
@@ -295,7 +259,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       ) {
         std::cout << "RefinementProblem distance error is not 3D rot-trans "
           << "invariant for " << Symmetry::name(symmetryName) << "." << std::endl;
-        
+
         distanceErrorRotTransInvariant = false;
       }
 
@@ -344,24 +308,6 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     }
     auto distancesMatrix = distancesMatrixResult.value();
 
-    auto chiralityConstraints = temple::map(
-      DGData.chiralityConstraintPrototypes,
-      [&distanceBounds](
-        const Stereocenters::ChiralityConstraintPrototype& prototype
-      ) -> ChiralityConstraint {
-        auto propagateResult = detail::propagate(
-          distanceBounds,
-          prototype
-        );
-
-        if(!propagateResult) {
-          BOOST_FAIL(propagateResult.error().message());
-        }
-
-        return propagateResult.value();
-      }
-    );
-
     // Make a metric matrix from the distances matrix
     MetricMatrix metric(distancesMatrix);
 
@@ -386,7 +332,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
 
     errfGradient<true> gradientFunctor {
       squaredBounds,
-      chiralityConstraints
+      DGData.chiralityConstraints
     };
 
     const unsigned N = referencePositions.size() / 4;
@@ -398,7 +344,6 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     referenceGradients.emplace_back(gradientFunctor.referenceB(referencePositions));
     referenceGradients.emplace_back(gradientFunctor.referenceC(referencePositions));
     referenceGradients.emplace_back(gradientFunctor.referenceD(referencePositions));
-    referenceGradients.emplace_back(gradientFunctor.referenceE(referencePositions));
 
     assert(
       temple::all_of(
@@ -412,7 +357,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     );
 
     /* Check that sum of reference implementations is equal to optimized
-     * implementation 
+     * implementation
      */
     DlibVector optimizedGradient = gradientFunctor(referencePositions);
     DlibVector referenceGradientsSum = (
@@ -474,13 +419,11 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       rotatedGradients.emplace_back(gradientFunctor.referenceB(rotatedPositions));
       rotatedGradients.emplace_back(gradientFunctor.referenceC(rotatedPositions));
       rotatedGradients.emplace_back(gradientFunctor.referenceD(rotatedPositions));
-      rotatedGradients.emplace_back(gradientFunctor.referenceE(rotatedPositions));
 
       translatedGradients.emplace_back(gradientFunctor.referenceA(translatedPositions));
       translatedGradients.emplace_back(gradientFunctor.referenceB(translatedPositions));
       translatedGradients.emplace_back(gradientFunctor.referenceC(translatedPositions));
       translatedGradients.emplace_back(gradientFunctor.referenceD(translatedPositions));
-      translatedGradients.emplace_back(gradientFunctor.referenceE(translatedPositions));
 
       // Transform the rotated gradients
       auto rotatedReferenceGradients = referenceGradients;
@@ -493,7 +436,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
           dlib::set_rowm(
             rotatedReferenceGradient,
             dlib::range(4 * i, 4 * i + 2)
-          ) = dlibRotationMatrix * dlib::rowm(  
+          ) = dlibRotationMatrix * dlib::rowm(
             rotatedReferenceGradient,
             dlib::range(4 * i, 4 * i + 2)
           );
@@ -508,7 +451,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
             rotatedGradients[i],
             1e-10
           ),
-          "Gradient component " << static_cast<char>('A' + i) 
+          "Gradient component " << static_cast<char>('A' + i)
             << " is not rotationally invariant! Difference norm: "
             << dlib::length(rotatedReferenceGradients[i] - rotatedGradients[i])
         );
@@ -519,7 +462,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
             translatedGradients[i],
             1e-10
           ),
-          "Gradient component " << static_cast<char>('A' + i) 
+          "Gradient component " << static_cast<char>('A' + i)
             << " is not translationally invariant! Difference norm: "
             << dlib::length(referenceGradients[i] - translatedGradients[i])
         );

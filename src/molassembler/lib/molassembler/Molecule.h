@@ -10,6 +10,11 @@
 #include "Delib/AtomCollection.h"
 #include "Delib/BondOrderCollection.h"
 
+/* TODO
+ * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
+ *   may become or cease to be eta bond types.
+ */
+
 /*! @file
  *
  * Contains the Molecule class declaration, which is the central class of the

@@ -24,8 +24,8 @@ class Cycles;
 namespace GraphAlgorithms {
 
 struct LinkInformation {
-  //! An (asc) ordered pair of the substituent indices that are linked
-  std::pair<AtomIndexType, AtomIndexType> indexPair;
+  //! An (asc) ordered pair of the ligand site indices that are linked
+  std::pair<unsigned, unsigned> indexPair;
 
   /*! The in-order atom sequence of the cycle atom indices.
    *
@@ -46,8 +46,28 @@ std::vector<LinkInformation> substituentLinks(
   const GraphType& graph,
   const Cycles& cycleData,
   const AtomIndexType source,
+  const std::vector<
+    std::vector<AtomIndexType>
+  >& ligands,
   const std::vector<AtomIndexType>& activeAdjacents
 );
+
+namespace detail {
+
+//! Predicate to determin if a ligand is haptic
+bool isHapticLigand(
+  const std::vector<AtomIndexType>& ligand,
+  const GraphType& graph
+);
+
+//! Implementation of ligand site grouping algorithm
+void findLigands(
+  const GraphType& graph,
+  const AtomIndexType centralIndex,
+  std::function<void(const std::vector<AtomIndexType>&)> callback
+);
+
+} // namespace detail
 
 /*! Differentiate adjacent vertices of a central index into ligand site groups
  *
@@ -60,17 +80,12 @@ std::vector<LinkInformation> substituentLinks(
  * connected components that are separated by non-bonding atoms, each of which
  * make up a possibly haptic group. These are called ligand site groups because
  * they each take up a site of the central index's coordination geometry.
- *
- * @warning Bond types in the graph are modified by this function. Haptic
- * ligands' constituting atoms' bond types to the central index are set as
- * Eta bonds. Likewise, if a non-haptic ligand is bonded to the central index
- * by an Eta bond, that bond type is changed to a Single bond.
  */
 std::vector<
   std::vector<AtomIndexType>
-> ligandSiteGroups(GraphType& graph, AtomIndexType centralIndex);
+> ligandSiteGroups(const GraphType& graph, AtomIndexType centralIndex);
 
-[[deprecated]]
+//! For each atom, determines ligands and sets eta bond type for haptic ligands
 GraphType findAndSetEtaBonds(GraphType&& graph);
 
 /*!
