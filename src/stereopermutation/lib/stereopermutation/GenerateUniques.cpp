@@ -30,18 +30,18 @@ bool hasTransArrangedPairs(
 }
 
 
-std::vector<Stereopermutation> uniqueStereopermutations(
+std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
-   * could, insted of keeping a full set of all rotations of all unique 
-   * assignments, just do pair-wise comparisons between a new assignment and 
-   * all existing unique ones. However, one would be doing a lot of repeated 
-   * work, since the pair-wise comparison (see isRotationallySuperimposable) 
-   * just generates rotations of one and compares those with the other. It is 
-   * chosen here to prefer speed over memory requirements. After all, the 
+   * could, insted of keeping a full set of all rotations of all unique
+   * assignments, just do pair-wise comparisons between a new assignment and
+   * all existing unique ones. However, one would be doing a lot of repeated
+   * work, since the pair-wise comparison (see isRotationallySuperimposable)
+   * just generates rotations of one and compares those with the other. It is
+   * chosen here to prefer speed over memory requirements. After all, the
    * number of Stereopermutation objects that will be generated and stored is unlikely
    * to pass 1000.
    */
@@ -59,7 +59,7 @@ std::vector<Stereopermutation> uniqueStereopermutations(
     while(hasTransArrangedPairs(assignment, symmetryName)) {
       bool hasAnotherPermutation = assignment.nextPermutation();
       if(!hasAnotherPermutation) {
-        /* This can happen, e.g. in square-planar AAAB with 
+        /* This can happen, e.g. in square-planar AAAB with
          * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
          * trans-arranged pairs. Then we return an empty vector.
          */
@@ -77,7 +77,7 @@ std::vector<Stereopermutation> uniqueStereopermutations(
   // go through all possible permutations of columns
   while(assignment.nextPermutation()) {
     if( // skip permutations with trans pairs if desired
-      removeTransSpanningGroups 
+      removeTransSpanningGroups
       && hasTransArrangedPairs(assignment, symmetryName)
     ) {
       continue;
@@ -99,24 +99,24 @@ std::vector<Stereopermutation> uniqueStereopermutations(
         assignmentRotations.end()
       );
 
-    } 
+    }
   }
-    
+
   return uniqueStereopermutations;
 }
 
-StereopermutationsWithWeights uniqueStereopermutationsWithWeights(
+StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
-   * could, insted of keeping a full set of all rotations of all unique 
-   * assignments, just do pair-wise comparisons between a new assignment and 
-   * all existing unique ones. However, one would be doing a lot of repeated 
-   * work, since the pair-wise comparison (see isRotationallySuperimposable) 
-   * just generates rotations of one and compares those with the other. It is 
-   * here chosen to prefer speed over memory requirements. After all, the 
+   * could, insted of keeping a full set of all rotations of all unique
+   * assignments, just do pair-wise comparisons between a new assignment and
+   * all existing unique ones. However, one would be doing a lot of repeated
+   * work, since the pair-wise comparison (see isRotationallySuperimposable)
+   * just generates rotations of one and compares those with the other. It is
+   * here chosen to prefer speed over memory requirements. After all, the
    * number of Stereopermutation objects that will be generated and stored is unlikely
    * to pass 1000.
    */
@@ -143,7 +143,7 @@ StereopermutationsWithWeights uniqueStereopermutationsWithWeights(
     while(hasTransArrangedPairs(assignment, symmetryName)) {
       bool hasAnotherPermutation = assignment.nextPermutation();
       if(!hasAnotherPermutation) {
-        /* This can happen, e.g. in square-planar AAAB with 
+        /* This can happen, e.g. in square-planar AAAB with
          * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
          * trans-arranged pairs. Then we return an empty vector.
          */
@@ -174,7 +174,7 @@ StereopermutationsWithWeights uniqueStereopermutationsWithWeights(
 
   while(assignment.nextPermutation()) {
     if( // skip permutations with trans pairs if desired
-      removeTransSpanningGroups 
+      removeTransSpanningGroups
       && hasTransArrangedPairs(assignment, symmetryName)
     ) {
       continue;
