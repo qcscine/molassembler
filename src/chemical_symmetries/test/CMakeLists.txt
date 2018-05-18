@@ -17,11 +17,12 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 target_include_directories(
-  symmetryTests PRIVATE ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS}
+  symmetryTests PRIVATE ${EIGEN3_INCLUDE_DIRS}
 )
 target_link_libraries(symmetryTests
   PUBLIC
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+    Boost::boost
+    Boost::unit_test_framework
     chemical_symmetries
 )
 

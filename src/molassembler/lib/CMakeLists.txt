@@ -5,6 +5,10 @@ find_package(temple 0.1.0 REQUIRED)
 find_package(cyclic_polygons 0.1.0 REQUIRED)
 find_package(scine COMPONENTS Delib REQUIRED)
 find_package(BLAS REQUIRED)
+find_package(dlib REQUIRED)
+
+set(Boost_USE_STATIC_LIBS OFF)
+find_package(Boost REQUIRED COMPONENTS filesystem system)
 
 # add include directories
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
@@ -87,13 +91,23 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Log.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/MolGraphWriter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StdlibTypeAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenter.cpp
 )
 
-# specify library target
-add_library(molassembler STATIC ${SOURCES_all} ${HEADERS_all})
+# Static variant
+add_library(molassemblerStatic STATIC ${SOURCES_all} ${HEADERS_all})
+target_include_directories(
+  molassemblerStatic PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/molassembler>
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/molassembler>
+    ${EIGEN3_INCLUDE_DIRS}
+)
+
+# Shared variant
+add_library(molassembler SHARED ${SOURCES_all} ${HEADERS_all})
 target_include_directories(
   molassembler PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/molassembler>
@@ -106,38 +120,53 @@ if(UNIX)
   add_definitions(-fPIC)
 endif()
 
+target_compile_options(molassemblerStatic PRIVATE -Wall -Wpedantic -Wextra)
 target_compile_options(molassembler PRIVATE -Wall -Wpedantic -Wextra)
 
-# Switch debug and release build types
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  message(STATUS "Selected release build")
-  # no debug information, disable assert
-  target_compile_definitions(molassembler PRIVATE NDEBUG)
-  target_compile_options(molassembler PRIVATE -O2 -march=native)
-else() # assume Debug
-  message(STATUS "Assume debug build")
-  target_compile_options(molassembler PRIVATE -g)
-  # target_compile_options(molassembler PRIVATE -g -fsanitize=address -fsanitize=undefined)
-  # set_target_properties(molassembler PROPERTIES LINK_FLAGS "-fsanitize=address -fsanitize=undefined")
-endif()
-
 # Linking
+# NOTE: For the shared variant, it is necessary to use the cmake variables
+# instead of the imported targets since the imported targets are not changed
+# between find_package(Boost) invocations, but the Boost scoped variables are.
+# Otherwise, Boost::filesystem is the static library (despite setting
+# Boost_USE_STATIC_LIBS OFF) above.
 target_link_libraries(
   molassembler
   PUBLIC
-    scine::DelibStatic
+    Boost::boost
+    scine::Delib
     stereopermutation
-    cyclic_polygons
     boost_outcome
-    gor1
     chemical_symmetries
+    RingDecomposerLibStatic
+    gor1
     dlib::dlib
     ${BLAS_LIBRARIES}
+  PRIVATE
+    cyclic_polygons
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
+)
+
+target_link_libraries(
+  molassemblerStatic
+  PUBLIC
+    Boost::boost
+    scine::DelibStatic
+    stereopermutation
+    boost_outcome
+    chemical_symmetries
     RingDecomposerLibStatic
+    gor1
+    dlib::dlib
+    ${BLAS_LIBRARIES}
+  PRIVATE
+    cyclic_polygons
+    Boost::filesystem
+    Boost::system
 )
 
 install(
-  TARGETS molassembler
+  TARGETS molassembler molassemblerStatic
   EXPORT molassemblerTargets
   DESTINATION lib
 )

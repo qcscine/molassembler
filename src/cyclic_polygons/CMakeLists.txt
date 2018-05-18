@@ -33,9 +33,11 @@ find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(cyclicPolygonTests tests.cpp)
 target_compile_options(cyclicPolygonTests PRIVATE -g -Wall -Wpedantic -Wextra)
-target_include_directories(cyclicPolygonTests PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(
-  cyclicPolygonTests ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} temple
+target_link_libraries(cyclicPolygonTests
+  PRIVATE
+    Boost::boost
+    Boost::unit_test_framework
+    temple
 )
 
 add_test(NAME CyclicPolygonTests COMMAND cyclicPolygonTests)

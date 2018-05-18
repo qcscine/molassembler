@@ -30,13 +30,12 @@ target_include_directories(
   chemical_symmetries
     SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
-target_include_directories(
-  chemical_symmetries
-    PUBLIC
-      ${EIGEN3_INCLUDE_DIRS}
-      ${Boost_INCLUDE_DIRS}
+target_include_directories(chemical_symmetries PUBLIC ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries(chemical_symmetries
+  PUBLIC
+    Boost::boost
+    molassembler::temple
 )
-target_link_libraries(chemical_symmetries molassembler::temple)
 
 if(UNIX)
   add_definitions(-fPIC)

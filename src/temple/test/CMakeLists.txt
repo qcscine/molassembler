@@ -37,11 +37,11 @@ foreach(filename ${testFiles})
     )
   endif()
 
-  target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
-  target_link_libraries(
-    ${targetName}
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-    temple
+  target_link_libraries(${targetName}
+    PRIVATE
+      Boost::boost
+      Boost::unit_test_framework
+      temple
   )
 
   # add target to tests

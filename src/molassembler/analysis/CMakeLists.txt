@@ -1,6 +1,6 @@
 project(molassemblerAnalyses)
 
-find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(Boost REQUIRED COMPONENTS regex program_options system)
 
 # Analysis targets. Build only if Debug
 if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -17,28 +17,26 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     #  COMPILE_FLAGS ${WARNING_FLAGS}
     #  LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
     #)
-    target_compile_options(
-      ${targetName}
-        PRIVATE -Wall -Wpedantic -Wextra -Og -g
+    target_compile_options(${targetName}
+      PRIVATE -Wall -Wpedantic -Wextra -Og -g
     )
 
-    target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
-    target_link_libraries(
-      ${targetName}
-      ${Boost_PROGRAM_OPTIONS_LIBRARY}
-      molassembler
+    target_link_libraries(${targetName}
+      PRIVATE
+        Boost::boost
+        Boost::program_options
+        Boost::regex
+        Boost::system
+        molassembler
     )
   endforeach()
 else()
   # Build the benchmark anyway
   add_executable(analysis_BenchmarkGraphAlgorithms BenchmarkGraphAlgorithms.cpp)
-  target_compile_options(
-    analysis_BenchmarkGraphAlgorithms
-      PUBLIC -O3 -g -march=native -Wall -Wpedantic -Wextra
+  target_compile_options(analysis_BenchmarkGraphAlgorithms
+    PUBLIC -O3 -g -march=native -Wall -Wpedantic -Wextra
   )
-  target_link_libraries(
-    analysis_BenchmarkGraphAlgorithms
-      ${Boost_PROGRAM_OPTIONS_LIBRARY}
-      molassembler
+  target_link_libraries(analysis_BenchmarkGraphAlgorithms
+    PRIVATE Boost::program_options molassembler
   )
 endif()

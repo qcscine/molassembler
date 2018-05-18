@@ -56,8 +56,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 else()
   target_compile_options(gor1Tests PRIVATE -g)
 endif()
-target_include_directories(gor1Tests PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(gor1Tests PRIVATE ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+target_link_libraries(gor1Tests PRIVATE Boost::boost Boost::unit_test_framework)
 
 add_test(NAME gor1Tests COMMAND gor1Tests)
 

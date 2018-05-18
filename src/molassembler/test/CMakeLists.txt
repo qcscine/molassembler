@@ -1,7 +1,7 @@
 project(molassemblerTests)
 
 set(Boost_USE_STATIC_LIBS OFF)
-find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost REQUIRED COMPONENTS unit_test_framework regex)
 
 # Testing targets
 # get all test cpp files
@@ -40,11 +40,12 @@ foreach(filename ${testFiles})
     )
   endif()
 
-  target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
-  target_link_libraries(
-    ${targetName} PRIVATE
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-    molassembler
+  target_link_libraries(${targetName}
+    PRIVATE
+      Boost::boost
+      Boost::regex
+      Boost::unit_test_framework
+      molassembler
   )
 
   # add target to tests
