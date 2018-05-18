@@ -134,9 +134,10 @@ public:
       const ChiralStatePreservation& preservationOption
     );
 
-    bool isFeasibleStereopermutation(
+    static bool isFeasibleStereopermutation(
       const StereopermutationType& assignment,
       const RankingInformation::RankedLigandsType& canonicalLigands,
+      const ConeAngleType& coneAngles,
       const RankingInformation& ranking,
       const Symmetry::Name symmetry,
       const Molecule& molecule
@@ -205,7 +206,6 @@ public:
     std::vector<Symmetry::Name> excludeSymmetries = {}
   );
 
-  // TODO HAPTIC all of these need work to ensure atom indices are removed, not ligand indices
   /*!
    * In case a graph modification changes the ranking of this stereocenter's
    * substituents, it must be redetermined whether the new configuration is a

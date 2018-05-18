@@ -82,6 +82,7 @@ CNStereocenter::PermutationState::PermutationState(
       return !isFeasibleStereopermutation(
         assignment,
         canonicalLigands,
+        coneAngles,
         ranking,
         symmetry,
         molecule
@@ -399,15 +400,11 @@ boost::optional<std::vector<unsigned>> CNStereocenter::PermutationState::getInde
 bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
   const StereopermutationType& assignment,
   const RankingInformation::RankedLigandsType& canonicalLigands,
+  const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
   const Symmetry::Name symmetry,
   const Molecule& molecule
 ) {
-  /* TODO HAPTIC
-   * - impossible ligand co-arrangements are unchecked by cone angle
-   * - angles imposed by symmetry directly to the first bonded ligand atoms are
-   *   modified by cone angles (if present) in trig below for links
-   */
   if(ranking.links.size() == 0) {
     return true;
   }
@@ -430,9 +427,36 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
       continue;
     }
 
-    double sigma = Symmetry::angleFunction(symmetry)(
+    const DistanceGeometry::ValueBounds ligandIConeAngle = coneAngles.at(link.indexPair.first).value_or(
+      DistanceGeometry::ValueBounds {0.0, 0.0}
+    );
+
+    const DistanceGeometry::ValueBounds ligandJConeAngle = coneAngles.at(link.indexPair.second).value_or(
+      DistanceGeometry::ValueBounds {0.0, 0.0}
+    );
+
+    const double symmetryAngle = Symmetry::angleFunction(symmetry)(
       symmetryPositionMap.at(link.indexPair.first),
       symmetryPositionMap.at(link.indexPair.second)
+    );
+
+    /* A haptic steropermutation of ligands is only obviously impossible if the
+     * haptic ligands have no spatial freedom to arrange in a fashion that does
+     * not overlap.
+     */
+    if(symmetryAngle - ligandIConeAngle.lower - ligandJConeAngle.lower < 0) {
+      return false;
+    }
+
+    /* A link across haptic ligands is only obviously impossible if it is
+     * impossible in the best case scenario. In this case, especially for alpha,
+     * ligand bridge links must be possible only in the best case spatial
+     * arrangement for the haptic ligand link to be possible. That means
+     * subtracting the upper bound of the respective cone angles.
+     */
+    const double alpha = std::max(
+      0.0,
+      symmetryAngle - ligandIConeAngle.upper - ligandJConeAngle.upper
     );
 
     auto edgeLengths = temple::mapSequentialPairs(
@@ -446,9 +470,9 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
       }
     );
 
-    double a = edgeLengths.front();
-    double b = edgeLengths.back();
-    double c = CommonTrig::lawOfCosines(a, b, sigma);
+    const double a = edgeLengths.front();
+    const double b = edgeLengths.back();
+    const double c = CommonTrig::lawOfCosines(a, b, alpha);
 
     edgeLengths.front() = c;
     edgeLengths.erase(edgeLengths.end() - 1);
@@ -462,11 +486,9 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
      * distance to central atom.
      */
 
-    auto phis = CyclicPolygons::internalAngles(edgeLengths);
+    const auto phis = CyclicPolygons::internalAngles(edgeLengths);
 
-    double alpha = CommonTrig::lawOfCosinesAngle(a, c, b);
-
-    double d1 = CommonTrig::lawOfCosines(
+    const double d1 = CommonTrig::lawOfCosines(
       a,
       edgeLengths.at(1), // i
       phis.at(0) + alpha

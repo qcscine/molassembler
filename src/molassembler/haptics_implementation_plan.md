@@ -1,8 +1,8 @@
 # In-progress notes
 - More granular CNStereocenter and PermutationState tests needed
-- Cone overlap check missing
 - Eta bond dynamism is missing
 - DG visualization needs a replacement for tetrahedronHighlights
+- CNStereocenter TODOs
 
 # Haptic ligands implementation plan
 
