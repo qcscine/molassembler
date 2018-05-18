@@ -279,11 +279,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     0
   );
 
-  std::shuffle(
-    indices.begin(),
-    indices.end(),
-    temple::random.randomEngine
-  );
+  temple::random.shuffle(indices);
 
   unsigned M = boost::num_vertices(_graph);
   std::vector<double> distance (M);
@@ -319,11 +315,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       }
     }
 
-    std::shuffle(
-      otherIndices.begin(),
-      otherIndices.end(),
-      temple::random.randomEngine
-    );
+    temple::random.shuffle(otherIndices);
 
     // Again through N - 1 indices: N²
     for(const auto& b : otherIndices) {

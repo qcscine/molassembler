@@ -16,20 +16,6 @@ foreach(filename ${testFiles})
   # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})
 
-  target_compile_options(${targetName} PRIVATE -Wall -Wpedantic -Wextra)
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    target_compile_options(${targetName} PRIVATE -O2 -march=native)
-  else()
-    target_compile_options(${targetName} PRIVATE -g)
-    # target_compile_options(
-    #  ${targetName} PUBLIC -g -fsanitize=address -fsanitize=undefined
-    #)
-    # set_target_properties(
-    #  ${targetName} PROPERTIES
-    #    LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
-    #)
-  endif()
-
   if("${baseName}" STREQUAL "CycleData")
     message(STATUS "Adding sanitizers to ${targetName}")
     target_compile_options(${targetName}

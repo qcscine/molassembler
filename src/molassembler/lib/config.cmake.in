@@ -1,9 +1,6 @@
-find_package(molassembler COMPONENTS gor1 boost_outcome cyclic_polygons temple chemical_symmetries stereopermutation REQUIRED)
+find_package(molassembler COMPONENTS RingDecomposerLib gor1 boost_outcome cyclic_polygons temple chemical_symmetries stereopermutation REQUIRED)
 find_package(scine COMPONENTS Delib REQUIRED)
-
-find_library(RDL_LIBRARY RingDecomposerLibStatic)
-add_library(RingDecomposerLibStatic STATIC IMPORTED)
-set_property(TARGET RingDecomposerLibStatic PROPERTY IMPORTED_LOCATION ${RDL_LIBRARY})
+find_package(dlib REQUIRED)
 
 set(MOLASSEMBLER_VERSION 0.1.0)
 

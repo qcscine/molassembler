@@ -101,11 +101,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
     0
   );
 
-  std::shuffle(
-    indices.begin(),
-    indices.end(),
-    temple::random.randomEngine
-  );
+  temple::random.shuffle(indices);
 
   std::vector<AtomIndexType>::const_iterator separator;
 

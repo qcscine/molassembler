@@ -46,13 +46,13 @@ ImplicitGraph::ImplicitGraph(
   for(AtomIndexType i = 0; i < N; ++i) {
     auto elementType = molecule.getElementType(i);
     if(
-      static_cast<unsigned>(elementType) 
+      static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
     ) {
       _heaviestAtoms.back() = elementType;
 
       if(
-        static_cast<unsigned>(_heaviestAtoms.back()) 
+        static_cast<unsigned>(_heaviestAtoms.back())
         > static_cast<unsigned>(_heaviestAtoms.front())
       ) {
         std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
@@ -124,7 +124,7 @@ std::pair<ImplicitGraph::EdgeDescriptor, bool> ImplicitGraph::edge(const VertexD
 
   if(a < N && b < N && _distances(a, b) != 0) {
     return {
-      EdgeDescriptor {i, j}, 
+      EdgeDescriptor {i, j},
       true
     };
   }
@@ -170,7 +170,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexc
     // re-fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
         / color_map.elements_per_char,
       0
     );
@@ -221,11 +221,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
     0
   );
 
-  std::shuffle(
-    indices.begin(),
-    indices.end(),
-    temple::random.randomEngine
-  );
+  temple::random.shuffle(indices);
 
   unsigned M = num_vertices();
   std::vector<double> distances (M);
@@ -261,11 +257,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       }
     }
 
-    std::shuffle(
-      otherIndices.begin(),
-      otherIndices.end(),
-      temple::random.randomEngine
-    );
+    temple::random.shuffle(otherIndices);
 
     for(const AtomIndexType& b : otherIndices) {
       auto predecessor_map = boost::make_iterator_property_map(
@@ -345,7 +337,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
     // re-fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1) 
+      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
         / color_map.elements_per_char,
       0
     );
@@ -452,7 +444,7 @@ double ImplicitGraph::maximalImplicitLowerBound(const VertexDescriptor& i) const
     return AtomInfo::vdwRadius(
       _heaviestAtoms.back()
     ) + AtomInfo::vdwRadius(elementType);
-  } 
+  }
 
   return AtomInfo::vdwRadius(
     _heaviestAtoms.front()
@@ -640,7 +632,7 @@ double ImplicitGraph::edge_iterator::weight() const {
 ImplicitGraph::VertexDescriptor ImplicitGraph::edge_iterator::target() const {
   if(_crossGroup) {
     return right(_b);
-  } 
+  }
 
   if(isLeft(_i)) {
     return left(_b);
@@ -730,14 +722,14 @@ std::string ImplicitGraph::edge_iterator::state() const {
 
 ImplicitGraph::edge_iterator ImplicitGraph::ebegin() const {
   return {
-    *this, 
+    *this,
     0
   };
 }
 
 ImplicitGraph::edge_iterator ImplicitGraph::eend() const {
   return {
-    *this, 
+    *this,
     num_vertices()
   };
 }

@@ -2,6 +2,7 @@
 #define INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 
 #include "Molecule.h"
+#include "StdlibTypeAlgorithms.h"
 
 namespace molassembler {
 
