@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 
 project(analysis)
 
-find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options)
+find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options system)
 find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(writeTransitionDotFiles writeTransitionDotFiles.cpp)
@@ -24,6 +24,7 @@ target_include_directories(writeMappings PRIVATE ${Boost_INCLUDE_DIRS} chemical_
 target_link_libraries(
   writeMappings 
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   chemical_symmetries
 )
 

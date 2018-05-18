@@ -1,6 +1,6 @@
 project(molassemblerAnalyses)
 
-find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(Boost REQUIRED COMPONENTS program_options system)
 
 # Analysis targets. Build only if Debug
 if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
@@ -26,7 +26,8 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     target_link_libraries(
       ${targetName}
       ${Boost_PROGRAM_OPTIONS_LIBRARY}
-      molassembler
+      ${Boost_SYSTEM_LIBRARY}
+      molassemblerStatic
     )
   endforeach()
 else()
@@ -39,6 +40,7 @@ else()
   target_link_libraries(
     analysis_BenchmarkGraphAlgorithms
       ${Boost_PROGRAM_OPTIONS_LIBRARY}
-      molassembler
+      ${Boost_SYSTEM_LIBRARY}
+      molassemblerStatic
   )
 endif()

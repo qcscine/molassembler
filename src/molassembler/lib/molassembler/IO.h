@@ -40,7 +40,8 @@ struct Random {
   inline explicit Random(AtomIndexType N) {
     permutation.resize(N);
     std::iota(permutation.begin(), permutation.end(), 0);
-    std::shuffle(permutation.begin(), permutation.end(), temple::random.randomEngine);
+
+    temple::random.shuffle(permutation);
   }
 
   inline AtomIndexType operator() (const AtomIndexType& i) const {

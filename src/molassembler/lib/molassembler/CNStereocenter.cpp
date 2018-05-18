@@ -767,13 +767,8 @@ void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
 }
 
 void CNStereocenter::assignRandom() {
-  std::discrete_distribution<unsigned> decider {
-    _uniqueStereopermutationsCache.weights.begin(),
-    _uniqueStereopermutationsCache.weights.end()
-  };
-
   assign(
-    decider(temple::random.randomEngine)
+    temple::random.pickDiscrete(_uniqueStereopermutationsCache.weights)
   );
 }
 

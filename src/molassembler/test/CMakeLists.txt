@@ -33,7 +33,7 @@ foreach(filename ${testFiles})
   target_link_libraries(
     ${targetName} PRIVATE
     ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-    molassembler
+    molassemblerStatic
   )
 
   # add target to tests
