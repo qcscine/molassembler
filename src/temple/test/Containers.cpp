@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   );
 
   static_assert(
-    std::is_same<decltype(fMapped), std::set<double>>::value, 
+    std::is_same<decltype(fMapped), std::set<double>>::value,
     "Map to same container does not work as expected"
   );
 
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   );
 
   static_assert(
-    std::is_same<decltype(xMapped), std::vector<unsigned long>>::value, 
+    std::is_same<decltype(xMapped), std::vector<unsigned long>>::value,
     "Map to same container does not work as expected"
   );
 }
@@ -209,3 +209,18 @@ BOOST_AUTO_TEST_CASE(concatenateTests) {
   );
 }
 
+unsigned quaternarySum(
+  unsigned a,
+  unsigned b,
+  unsigned c,
+  unsigned d
+) {
+  return a + b + c + d;
+}
+
+BOOST_AUTO_TEST_CASE(unpackArrayTests) {
+  std::array<unsigned, 4> values {{1, 2, 3, 5}};
+  BOOST_CHECK(
+    temple::unpackArrayToFunction(values, quaternarySum) == 11u
+  );
+}

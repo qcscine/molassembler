@@ -237,13 +237,7 @@ template<
   const ContainerT& containerT,
   const ContainerU& containerU,
   BinaryFunction&& function
-) {
-  for(auto i = std::begin(containerT); i != std::end(containerT); ++i) {
-    for(auto j = std::begin(containerU); j != std::end(containerU); ++j) {
-      function(*i, *j);
-    }
-  }
-}
+);
 
 //! Makes std::accumulate composable for most STL containers
 template<
@@ -528,6 +522,16 @@ template<
 
   return selection;
 }
+
+template<
+  class NAryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N
+> auto unpackArrayToFunction(
+  const ArrayType<T, N>& array,
+  NAryFunction&& function
+);
 
 /* Implementation ------------------------------------------------------------*/
 template<typename Container>
@@ -1270,6 +1274,59 @@ template<
       );
     }
   }
+}
+
+template<
+  class ContainerT,
+  class ContainerU,
+  class BinaryFunction
+> void forAllPairs(
+  const ContainerT& containerT,
+  const ContainerU& containerU,
+  BinaryFunction&& function
+) {
+  for(auto i = std::begin(containerT); i != std::end(containerT); ++i) {
+    for(auto j = std::begin(containerU); j != std::end(containerU); ++j) {
+      function(*i, *j);
+    }
+  }
+}
+
+namespace detail {
+
+template<
+  class NAryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N,
+  std::size_t ... Inds
+> auto unpackArrayToFunctionHelper(
+  const ArrayType<T, N>& array,
+  NAryFunction&& function,
+  std::index_sequence<Inds...>
+) {
+  return function(
+    array.at(Inds)...
+  );
+}
+
+
+} // namespace detail
+
+template<
+  class NAryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N
+> auto unpackArrayToFunction(
+  const ArrayType<T, N>& array,
+  NAryFunction&& function
+) {
+  return detail::unpackArrayToFunctionHelper(
+    array,
+    std::forward<NAryFunction>(function),
+    std::make_index_sequence<N>{}
+  );
 }
 
 } // namespace temple

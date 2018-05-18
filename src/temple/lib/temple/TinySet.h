@@ -187,6 +187,14 @@ struct TinySet {
   typename type::const_iterator cend() const {
     return data.cend();
   }
+
+  bool operator == (const TinySet& other) const {
+    return data == other.data;
+  }
+
+  bool operator != (const TinySet& other) const {
+    return !(*this == other);
+  }
 };
 
 } // namespace temple
