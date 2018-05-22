@@ -520,11 +520,6 @@ bool testHapticBonds(boost::filesystem::path filePath) {
 
   const auto& relevantData = hapticTestData.at(filePath.stem().string());
 
-  /* TODO do this differently. Check ALL bonds, and make sure only those
-   * expected were turned into eta bonds. If findAndSetEtaBonds just made
-   * everything an eta bond this would pass
-   */
-
   bool pass = true;
   temple::TinyUnorderedSet<GraphType::edge_descriptor> expectedEtaBonds;
   for(const auto& expectedEtaBond : relevantData) {
@@ -552,7 +547,7 @@ bool testHapticBonds(boost::filesystem::path filePath) {
 
     if(expectEtaBond && bty != BondType::Eta) {
       std::cout << "The expected eta bond " << i << " - " << j
-        << " is not an Eta bond type, but has underlying enum value "
+        << " is not an Eta bond type, instead has underlying enum value "
         << static_cast<std::underlying_type<BondType>::type>(bty)
         << std::endl;
       pass = false;

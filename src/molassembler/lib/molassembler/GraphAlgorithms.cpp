@@ -160,6 +160,7 @@ bool isHapticLigand(
     ligand.size() > 1
     && !( // Exclude the same-type triangle
       ligand.size() == 2
+      // The number of non-main-group elements is more than 1
       && temple::accumulate(
         ligand,
         0u,
@@ -170,7 +171,7 @@ bool isHapticLigand(
 
           return carry;
         }
-      ) < 2
+      ) > 1
     )
   );
 }
