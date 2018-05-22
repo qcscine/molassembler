@@ -10,7 +10,7 @@ namespace stereopermutation {
 /* Public members */
 /*  Constructors */
 Stereopermutation::Stereopermutation(
-  const Symmetry::Name& passSymmetryName,
+  const Symmetry::Name passSymmetryName,
   std::vector<char> passCharacters
 ) : characters(std::move(passCharacters))
 {
@@ -18,11 +18,11 @@ Stereopermutation::Stereopermutation(
 }
 
 Stereopermutation::Stereopermutation(
-  const Symmetry::Name& passSymmetryName,
-  const std::vector<char>& passCharacters,
-  const LinksSetType& passLinks
-) : characters(passCharacters),
-    links(passLinks)
+  const Symmetry::Name passSymmetryName,
+  const std::vector<char> passCharacters,
+  const LinksSetType passLinks
+) : characters(std::move(passCharacters)),
+    links(std::move(passLinks))
 {
   // make sure the number of characters matches the current symmetry
   assert(characters.size() == Symmetry::size(passSymmetryName));
@@ -31,7 +31,7 @@ Stereopermutation::Stereopermutation(
    * indices to the characters
    */
 #ifndef NDEBUG
-  for(const auto& linkPair : passLinks) {
+  for(const auto& linkPair : links) {
     assert(
       linkPair.first < passCharacters.size()
       && linkPair.second < passCharacters.size()

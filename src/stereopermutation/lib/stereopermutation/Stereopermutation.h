@@ -58,7 +58,7 @@ public:
    * \param passCharacters A vector of chars signifying abstract ligands.
    */
   Stereopermutation(
-    const Symmetry::Name& passSymmetryName,
+    const Symmetry::Name passSymmetryName,
     std::vector<char> passCharacters
   );
   /*!
@@ -71,9 +71,9 @@ public:
    *  are bonded to one another.
    */
   Stereopermutation(
-    const Symmetry::Name& passSymmetryName,
-    const std::vector<char>& passCharacters,
-    const LinksSetType& passLinks
+    const Symmetry::Name passSymmetryName,
+    const std::vector<char> passCharacters,
+    const LinksSetType passLinks
   );
 
   /* Modifiers ––––––––––––––––––––––––––––*/
