@@ -45,7 +45,7 @@ using RotationsList = std::vector<
  * They return angles in radians.
  */
 using AngleFunctionType = std::function<
-  double(const unsigned&, const unsigned&)
+  double(const unsigned, const unsigned)
 >;
 
 /*!
@@ -109,7 +109,7 @@ constexpr std::array<Name, nSymmetries> allNames = makeAllNames(
 namespace data {
 
 // Typedef to avoid reusing C-Style function ptr type
-using AngleFunctionPtr = double(*)(const unsigned&, const unsigned&);
+using AngleFunctionPtr = double(*)(const unsigned, const unsigned);
 
 /*!
  * Constructs an array of function pointers to all static angle functions
@@ -165,7 +165,7 @@ TetrahedronList makeTetrahedra(
     tetrahedra.push_back(
       temple::map(
         tetrahedron,
-        [](const unsigned& index) -> boost::optional<unsigned> {
+        [](const unsigned index) -> boost::optional<unsigned> {
           if(index == ORIGIN_PLACEHOLDER) {
             return boost::none;
           }
@@ -248,12 +248,12 @@ const std::map<Name, SymmetryInformation>& symmetryData();
 
 /* Interface */
 //! Fetch the string name of a symmetry
-inline const std::string& name(const Name& name) {
+inline const std::string& name(const Name name) {
   return symmetryData().at(name).stringName;
 }
 
 //! Fetch a space-free name for file naming
-inline std::string spaceFreeName(const Name& name) {
+inline std::string spaceFreeName(const Name name) {
   std::string toModify = symmetryData().at(name).stringName;
 
   std::replace(
@@ -267,23 +267,23 @@ inline std::string spaceFreeName(const Name& name) {
 }
 
 //! Fetch the number of symmetry positions of a symmetry
-inline const unsigned& size(const Name& name) {
+inline unsigned size(const Name name) {
   return symmetryData().at(name).size;
 }
 
 //! Fetches a symmetry's list of rotations
-inline const RotationsList& rotations(const Name& name) {
+inline const RotationsList& rotations(const Name name) {
   return symmetryData().at(name).rotations;
 }
 
 //! Gets a symmetry's angle function
-inline data::AngleFunctionPtr angleFunction(const Name& name) {
+inline data::AngleFunctionPtr angleFunction(const Name name) {
   unsigned symmetryIndex = static_cast<unsigned>(name);
   return data::angleFunctions.at(symmetryIndex);
 }
 
 //! Returns the index of a symmetry name within allNames
-inline unsigned nameIndex(const Name& name) {
+inline unsigned nameIndex(const Name name) {
   return std::find(
     allNames.begin(),
     allNames.end(),
@@ -292,7 +292,7 @@ inline unsigned nameIndex(const Name& name) {
 }
 
 //! Fetches the list of tetrahedra defined in a symmetry
-inline const TetrahedronList& tetrahedra(const Name& name) {
+inline const TetrahedronList& tetrahedra(const Name name) {
   return symmetryData().at(name).tetrahedra;
 }
 
