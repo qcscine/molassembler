@@ -2,6 +2,7 @@
 #define INCLUDE_ANALYSIS_HELPERS_H
 
 #include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/RefinementProblem.h"
 #include "temple/Enumerate.h"
 
 /*! @file
@@ -106,18 +107,37 @@ void writeDGPOVandProgressFiles(
     outStream << "\n";
 
     // Tetrahedra
-    // TODO haptic
-    /*if(!refinementData.constraints.empty()) {
+    if(!refinementData.constraints.empty()) {
+      auto writePosition = [&stepData](
+        std::ostream& os,
+        const std::vector<AtomIndexType>& indices
+      ) -> std::ostream& {
+        // Calculate the average position
+        auto averagePosition = DistanceGeometry::errfDetail::getAveragePos3D(
+          stepData.positions,
+          indices
+        );
+
+        os << "<" << averagePosition.x() << ","
+          << averagePosition.y() << ","
+          << averagePosition.z() << ">";
+
+        return os;
+      };
+
       for(const auto& chiralityConstraint : refinementData.constraints) {
-        outStream << "TetrahedronHighlight("
-          << detail::mapIndexToChar(chiralityConstraint.indices[0]) << ", "
-          << detail::mapIndexToChar(chiralityConstraint.indices[1]) << ", "
-          << detail::mapIndexToChar(chiralityConstraint.indices[2]) << ", "
-          << detail::mapIndexToChar(chiralityConstraint.indices[3])
-          << ")\n";
+        outStream << "TetrahedronHighlight(";
+        writePosition(outStream, chiralityConstraint.sites[0]);
+        outStream << ", ";
+        writePosition(outStream, chiralityConstraint.sites[1]);
+        outStream << ", ";
+        writePosition(outStream, chiralityConstraint.sites[2]);
+        outStream << ", ";
+        writePosition(outStream, chiralityConstraint.sites[3]);
+        outStream << ")\n";
       }
       outStream << "\n";
-    }*/
+    }
 
     // Gradients
     for(unsigned i = 0; i < N; i++) {
