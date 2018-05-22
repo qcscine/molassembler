@@ -109,7 +109,10 @@ boost::optional<Symmetry::Name> vsepr(
     }
 
     if(X == 3) {
-      return Name::TrigonalPyramidal;
+      /* In VSEPR naming, this is Trigonal pyramidal, but that symmetry exists
+       * too, which is trigonal bipyramidal minus an apical ligand.
+       */
+      return Name::CutTetrahedral;
     }
 
     return Name::Bent;

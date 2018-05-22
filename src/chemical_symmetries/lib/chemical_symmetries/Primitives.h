@@ -21,11 +21,12 @@ enum class Name : unsigned {
   Linear, // 2
   Bent,
   TrigonalPlanar, // 3
-  TrigonalPyramidal,
+  CutTetrahedral,
   TShaped,
   Tetrahedral, // 4
   SquarePlanar,
   Seesaw,
+  TrigonalPyramidal,
   SquarePyramidal, // 5
   TrigonalBiPyramidal,
   PentagonalPlanar,
@@ -37,7 +38,7 @@ enum class Name : unsigned {
 };
 
 //! Total number of contained symmetries
-constexpr unsigned nSymmetries = 16;
+constexpr unsigned nSymmetries = 17;
 
 //! A placeholder value for constexpr tetrahedra specification of origin
 constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
@@ -167,22 +168,18 @@ struct TrigonalPlanar {
   > tetrahedra {{}};
 };
 
-struct TrigonalPyramidal {
+struct CutTetrahedral {
   /*
-   *     0
-   *     |
-   *    (_)
-   *   /   \
-   *  1     2
+   *   (_)
+   *  /  \ °2
+   * 0    1
    *
-   * This is not quite ideal since the angles are thoroughly misrepresented, 
-   * but all positions including the central atom are in one plane. The angles
-   * are idealized as 120°.
+   * Where /, \ denote in front of plane bonds, ° a behind the plane bond.
    */
-  static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPyramidal;
+  static constexpr Symmetry::Name name = Symmetry::Name::CutTetrahedral;
   static constexpr unsigned size = 3;
-  static constexpr char stringName[] = "trigonal pyramidal";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr char stringName[] = "cut tetrahedral";
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -401,6 +398,54 @@ struct Seesaw {
     {{ORIGIN_PLACEHOLDER, 3, 1, 2}},
   }};
 #endif
+};
+
+struct TrigonalPyramidal {
+  /* Viewed from the top of the pyramid. The central atom is ( ), 3 is apical
+   *
+   *     3
+   *     |  2
+   *     | :    <- behind view plane
+   * 0--(_)
+   *       \    <- in front of view plane
+   *        1
+   *
+   */
+  static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPyramidal;
+  static constexpr unsigned size = 4;
+  static constexpr char stringName[] = "trigonal pyramidal";
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    unsigned smaller = std::min(a, b), larger = std::max(a, b);
+    if(larger < 3) {
+      // -> smaller < 2, this means either 0,1 0,2 1,2 axial
+      return temple::Math::toRadians<double>(120);
+    } else {
+      // -> smaller < 3, this means {1,2,3}, 3
+      return M_PI / 2;
+    }
+  }
+  static constexpr std::array<temple::Vector, 4> coordinates {{
+    {1, 0, 0},
+    {-0.5, 0.866025, 0},
+    {-0.5, -0.866025, 0},
+    {0, 0, 1}
+  }};
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    1
+  > rotations {{
+    {{2, 0, 1, 3}} // C3
+  }};
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    1
+  > tetrahedra {{
+    {{0, 1, 3, 2}}
+  }};
 };
 
 struct SquarePyramidal {
@@ -1047,6 +1092,7 @@ using allSymmetryDataTypes = std::tuple<
   Tetrahedral, // 4
   SquarePlanar,
   Seesaw,
+  TrigonalPyramidal,
   SquarePyramidal, // 5
   TrigonalBiPyramidal,
   PentagonalPlanar,

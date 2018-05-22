@@ -8,7 +8,7 @@ namespace data {
  * not even with preprocessor
  *
  * NOTE: Although clang-tidy marks the entire block of declarations below as
- * redundant declarations, they are definitely NOT redundant. 
+ * redundant declarations, they are definitely NOT redundant.
  * - Removing the grouped declarations for each Symmetry below, which are all
  *   constexpr, makes it impossible to use these values outside of a constexpr
  *   context.  However, since symmetryData is generated from these classes at
@@ -38,12 +38,12 @@ constexpr decltype(TrigonalPlanar::rotations) TrigonalPlanar::rotations;
 constexpr decltype(TrigonalPlanar::tetrahedra) TrigonalPlanar::tetrahedra;
 constexpr decltype(TrigonalPlanar::stringName) TrigonalPlanar::stringName;
 
-constexpr decltype(TrigonalPyramidal::name) TrigonalPyramidal::name;
-constexpr decltype(TrigonalPyramidal::size) TrigonalPyramidal::size;
-constexpr decltype(TrigonalPyramidal::coordinates) TrigonalPyramidal::coordinates;
-constexpr decltype(TrigonalPyramidal::rotations) TrigonalPyramidal::rotations;
-constexpr decltype(TrigonalPyramidal::tetrahedra) TrigonalPyramidal::tetrahedra;
-constexpr decltype(TrigonalPyramidal::stringName) TrigonalPyramidal::stringName;
+constexpr decltype(CutTetrahedral::name) CutTetrahedral::name;
+constexpr decltype(CutTetrahedral::size) CutTetrahedral::size;
+constexpr decltype(CutTetrahedral::coordinates) CutTetrahedral::coordinates;
+constexpr decltype(CutTetrahedral::rotations) CutTetrahedral::rotations;
+constexpr decltype(CutTetrahedral::tetrahedra) CutTetrahedral::tetrahedra;
+constexpr decltype(CutTetrahedral::stringName) CutTetrahedral::stringName;
 
 constexpr decltype(TShaped::name) TShaped::name;
 constexpr decltype(TShaped::size) TShaped::size;
@@ -72,6 +72,13 @@ constexpr decltype(Seesaw::coordinates) Seesaw::coordinates;
 constexpr decltype(Seesaw::rotations) Seesaw::rotations;
 constexpr decltype(Seesaw::tetrahedra) Seesaw::tetrahedra;
 constexpr decltype(Seesaw::stringName) Seesaw::stringName;
+
+constexpr decltype(TrigonalPyramidal::name) TrigonalPyramidal::name;
+constexpr decltype(TrigonalPyramidal::size) TrigonalPyramidal::size;
+constexpr decltype(TrigonalPyramidal::coordinates) TrigonalPyramidal::coordinates;
+constexpr decltype(TrigonalPyramidal::rotations) TrigonalPyramidal::rotations;
+constexpr decltype(TrigonalPyramidal::tetrahedra) TrigonalPyramidal::tetrahedra;
+constexpr decltype(TrigonalPyramidal::stringName) TrigonalPyramidal::stringName;
 
 constexpr decltype(SquarePyramidal::name) SquarePyramidal::name;
 constexpr decltype(SquarePyramidal::size) SquarePyramidal::size;
