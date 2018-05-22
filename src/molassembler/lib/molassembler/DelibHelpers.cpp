@@ -202,9 +202,9 @@ double dihedral(
   const Eigen::Vector3d& k,
   const Eigen::Vector3d& l
 ) {
-  Eigen::Vector3d a = j - i,
-                 b = k - j,
-                 c = l - k;
+  Eigen::Vector3d a = j - i;
+  Eigen::Vector3d b = k - j;
+  Eigen::Vector3d c = l - k;
 
   return std::atan2(
     (

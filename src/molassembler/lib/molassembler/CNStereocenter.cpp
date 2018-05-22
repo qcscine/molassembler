@@ -76,42 +76,60 @@ CNStereocenter::PermutationState::PermutationState(
   );
 
   // Remove unfeasible stereopermutations
-  auto toRemove = temple::map(
-    permutations.assignments,
-    [&](const auto& assignment) -> bool {
-      return !isFeasibleStereopermutation(
-        assignment,
-        canonicalLigands,
-        coneAngles,
-        ranking,
-        symmetry,
-        molecule
-      );
-    }
-  );
+  if(
+    // Links are present
+    ranking.links.size() > 0
+    // OR there are haptic ligands
+    || temple::sum(
+      temple::map(
+        ranking.ligands,
+        [](const auto& ligandIndices) -> unsigned {
+          if(ligandIndices.size() == 1) {
+            return 0;
+          }
 
-  permutations.assignments.erase(
-    std::remove_if(
-      permutations.assignments.begin(),
-      permutations.assignments.end(),
+          return 1;
+        }
+      )
+    )
+  ) {
+    auto toRemove = temple::map(
+      permutations.assignments,
       [&](const auto& assignment) -> bool {
-        // For this wonderful pointer arithmetic, see https://stackoverflow.com/a/23123481
-        return toRemove.at(&assignment - &*permutations.assignments.begin());
+        return !isFeasibleStereopermutation(
+          assignment,
+          canonicalLigands,
+          coneAngles,
+          ranking,
+          symmetry,
+          molecule
+        );
       }
-    ),
-    permutations.assignments.end()
-  );
+    );
 
-  permutations.weights.erase(
-    std::remove_if(
-      permutations.weights.begin(),
-      permutations.weights.end(),
-      [&](const auto& weight) -> bool {
-        return toRemove.at(&weight - &*permutations.weights.begin());
-      }
-    ),
-    permutations.weights.end()
-  );
+    permutations.assignments.erase(
+      std::remove_if(
+        permutations.assignments.begin(),
+        permutations.assignments.end(),
+        [&](const auto& assignment) -> bool {
+          // For this wonderful pointer arithmetic, see https://stackoverflow.com/a/23123481
+          return toRemove.at(&assignment - &*permutations.assignments.begin());
+        }
+      ),
+      permutations.assignments.end()
+    );
+
+    permutations.weights.erase(
+      std::remove_if(
+        permutations.weights.begin(),
+        permutations.weights.end(),
+        [&](const auto& weight) -> bool {
+          return toRemove.at(&weight - &*permutations.weights.begin());
+        }
+      ),
+      permutations.weights.end()
+    );
+  }
 }
 
 RankingInformation::RankedLigandsType CNStereocenter::PermutationState::canonicalize(
@@ -405,10 +423,7 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
   const Symmetry::Name symmetry,
   const Molecule& molecule
 ) {
-  if(ranking.links.size() == 0) {
-    return true;
-  }
-
+  // TODO checks when no links are present for haptic ligands
   /* Idea: An assignment is unfeasible if any link's cycle cannot be realized
    * as a flat cyclic polygon, in which the edges from the central atom are
    * merged using the joint angle calculable from the assignment and symmetry.
@@ -917,17 +932,12 @@ void CNStereocenter::fit(
   std::vector<Symmetry::Name> excludeSymmetries
 ) {
   // For all atoms making up a ligand, decide on the spatial average position
-  std::vector<Eigen::Vector3d> ligandPositions;
-  ligandPositions.reserve(_ranking.ligands.size());
-
-  for(const auto& ligand : _ranking.ligands) {
-    ligandPositions.push_back(
-      DelibHelpers::averagePosition(
-        positions,
-        ligand
-      )
-    );
-  }
+  const std::vector<Eigen::Vector3d> ligandPositions = temple::mapToVector(
+    _ranking.ligands,
+    [&positions](const std::vector<AtomIndexType>& ligandAtoms) -> Eigen::Vector3d {
+      return DelibHelpers::averagePosition(positions, ligandAtoms);
+    }
+  );
 
   // Save stereocenter state to return to if no fit is viable
   const Symmetry::Name priorSymmetry {this->_symmetry};
@@ -935,7 +945,7 @@ void CNStereocenter::fit(
 
   const Symmetry::Name initialSymmetry {Symmetry::Name::Linear};
   const unsigned initialStereopermutation = 0;
-  const unsigned initialPenalty = 100;
+  const double initialPenalty = 100;
 
   Symmetry::Name bestSymmetry = initialSymmetry;
   unsigned bestStereopermutation = initialStereopermutation;
@@ -968,7 +978,7 @@ void CNStereocenter::fit(
       const double angleDeviations = temple::sum(
         temple::mapAllPairs(
           temple::iota<unsigned>(Symmetry::size(_symmetry)),
-          [&](const unsigned& ligandI, const unsigned& ligandJ) -> double {
+          [&](const unsigned ligandI, const unsigned ligandJ) -> double {
             return std::fabs(
               DelibHelpers::angle(
                 ligandPositions.at(ligandI),
@@ -991,7 +1001,7 @@ void CNStereocenter::fit(
       const double oneThreeDistanceDeviations = temple::sum(
         temple::mapAllPairs(
           temple::iota<unsigned>(Symmetry::size(_symmetry)),
-          [&](const unsigned& ligandI, const unsigned& ligandJ) -> double {
+          [&](const unsigned ligandI, const unsigned ligandJ) -> double {
             return std::fabs(
               // ligandI - ligandJ 1-3 distance from positions
               DelibHelpers::distance(
@@ -1098,7 +1108,6 @@ void CNStereocenter::fit(
     // Return to prior
     setSymmetry(priorSymmetry, molecule);
     assign(priorStereopermutation);
-
   } else {
     // Set to best fit
     setSymmetry(bestSymmetry, molecule);
@@ -1465,15 +1474,17 @@ void CNStereocenter::setSymmetry(
   const Symmetry::Name symmetryName,
   const Molecule& molecule
 ) {
+  _symmetry = symmetryName;
+
+  // TODO Chiral information in same symmetry size change can also be preserved
+  // But careful, this could effect fit() negatively
+
   _cache = PermutationState {
     _ranking,
     _centerAtom,
-    symmetryName,
+    _symmetry,
     molecule
   };
-
-  // TODO Chiral information in same symmetry size change can also be preserved
-  // But careful, this can effect fit() negatively
 
   // The Stereocenter is now unassigned
   _assignmentOption = boost::none;

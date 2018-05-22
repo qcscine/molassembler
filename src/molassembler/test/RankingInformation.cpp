@@ -16,10 +16,6 @@ BOOST_AUTO_TEST_CASE(rankingCombinationTests) {
   using RaggedAtoms = RaggedVector<AtomIndexType>;
   using RaggedLigands = RaggedVector<unsigned>;
 
-  using StereopermutationPairsType = std::set<
-    std::pair<unsigned, unsigned>
-  >;
-
   auto symmetricHapticPincerRanking = RaggedAtoms {
     {1, 6},
     {2, 5},

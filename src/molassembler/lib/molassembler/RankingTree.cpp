@@ -644,6 +644,23 @@ void RankingTree::_applySequenceRules(
   bool foundEZStereocenters = false;
   bool foundCNStereocenters = false;
 
+
+  auto auxiliaryLigands = [](
+    const RankingInformation::RankedType& rankedAtoms
+  ) -> RankingInformation::LigandsType {
+    RankingInformation::LigandsType ligands;
+
+    for(const auto& equalAtomSet : rankedAtoms) {
+      for(const AtomIndexType individualAtom : equalAtomSet) {
+        ligands.push_back(
+          std::vector<AtomIndexType> {{individualAtom}}
+        );
+      }
+    }
+
+    return ligands;
+  };
+
   // Process the tree, from the bottom up
   for(auto it = byDepth.rbegin(); it != byDepth.rend(); ++it) {
     const auto& currentEdges = *it;
@@ -669,27 +686,42 @@ void RankingTree::_applySequenceRules(
           1 <= sourceIndicesToRank.size() && sourceIndicesToRank.size() <= 2
           && 1 <= targetIndicesToRank.size() && targetIndicesToRank.size() <= 2
         ) {
-          RankingInformation sourceRanking, targetRanking;
+          auto makeEZRanking = [&](
+            const TreeVertexIndex sourceIndex,
+            const std::set<TreeVertexIndex>& indicesToRank
+          ) -> RankingInformation {
+            RankingInformation ranking;
 
-          // Get ranking for the edge substituents
-          sourceRanking.sortedSubstituents = _mapToAtomIndices(
-            _auxiliaryApplySequenceRules(
-              sourceIndex,
-              sourceIndicesToRank
-            )
+            ranking.sortedSubstituents = _mapToAtomIndices(
+              _auxiliaryApplySequenceRules(
+                sourceIndex,
+                indicesToRank
+              )
+            );
+
+            ranking.ligands = auxiliaryLigands(ranking.sortedSubstituents);
+            ranking.ligandsRanking = RankingInformation::rankLigands(
+              ranking.ligands,
+              ranking.sortedSubstituents
+            );
+
+            /* NOTE: There is no need to collect linking information since we
+             * are in an acyclic digraph, and any cycles in the original molecule
+             * are no longer present.
+             */
+
+            return ranking;
+          };
+
+          RankingInformation sourceRanking = makeEZRanking(
+            sourceIndex,
+            sourceIndicesToRank
           );
 
-          targetRanking.sortedSubstituents = _mapToAtomIndices(
-            _auxiliaryApplySequenceRules(
-              targetIndex,
-              targetIndicesToRank
-            )
+          RankingInformation targetRanking = makeEZRanking(
+            targetIndex,
+            targetIndicesToRank
           );
-
-          /* NOTE: There is no need to collect linking information since we
-           * are in an acyclic digraph, and any cycles in the original molecule
-           * are no longer present.
-           */
 
           const AtomIndexType molSourceIndex = _tree[sourceIndex].molIndex;
           const AtomIndexType molTargetIndex = _tree[targetIndex].molIndex;
@@ -776,6 +808,13 @@ void RankingTree::_applySequenceRules(
             )
           );
 
+          centerRanking.ligands = auxiliaryLigands(centerRanking.sortedSubstituents);
+          centerRanking.ligandsRanking = RankingInformation::rankLigands(
+            centerRanking.ligands,
+            centerRanking.sortedSubstituents
+          );
+
+          // Again, no links since we're in an acyclic graph now
 
           auto newStereocenter = Stereocenters::CNStereocenter {
             _moleculeRef,
