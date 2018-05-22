@@ -365,7 +365,6 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       + referenceGradients.at(1)
       + referenceGradients.at(2)
       + referenceGradients.at(3)
-      + referenceGradients.at(4)
     );
 
     BOOST_CHECK_MESSAGE(
@@ -444,7 +443,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       }
 
       // Compare
-      for(unsigned i = 0; i < 5; i++) {
+      for(unsigned i = 0; i < 4; i++) {
         BOOST_CHECK_MESSAGE(
           isApprox(
             rotatedReferenceGradients[i],
@@ -518,7 +517,11 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
     );
 
     // The average error of the ensemble should be below 1e-5 (already achieved)
-    BOOST_CHECK(temple::average(finalErrors) < maximumErrorThreshold);
+    BOOST_CHECK_MESSAGE(
+      temple::average(finalErrors) < maximumErrorThreshold,
+      "Expected average error less than " << maximumErrorThreshold
+        << ", yet got: " << temple::average(finalErrors)
+    );
 
     for(const auto& enumPair : enumerate(DGResult)) {
       const auto& refinementData = enumPair.value;
