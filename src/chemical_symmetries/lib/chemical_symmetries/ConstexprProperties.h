@@ -614,14 +614,14 @@ constexpr auto symmetryTransitionMappings() {
     auto storageVersion = temple::permutationIndex(mapped);
 
     if(!encounteredMappings.test(storageVersion)) {
-      auto angularDistortion = calculateAngularDistortion(
+      double angularDistortion = calculateAngularDistortion(
         indexMapping,
         SymmetryClassFrom::size,
         SymmetryClassFrom::angleFunction,
         SymmetryClassTo::angleFunction
       );
 
-      auto chiralDistortion = calculateChiralDistortion<
+      double chiralDistortion = calculateChiralDistortion<
         SymmetryClassFrom,
         SymmetryClassTo
       >(indexMapping);
@@ -722,12 +722,12 @@ constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
 
   do {
     if(!encounteredMappings.contains(hashIndexList<IndexListStorageType>(indexMapping))) {
-      auto angularDistortion = calculateAngleDistortion<
+      double angularDistortion = calculateAngleDistortion<
         SymmetryClassTo,
         SymmetryClassFrom
       >(indexMapping);
 
-      auto chiralDistortion = calculateChiralDistortion<
+      double chiralDistortion = calculateChiralDistortion<
         SymmetryClassTo,
         SymmetryClassFrom
       >(indexMapping);

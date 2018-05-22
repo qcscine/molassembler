@@ -1086,7 +1086,7 @@ using allSymmetryDataTypes = std::tuple<
   Linear, // 2
   Bent,
   TrigonalPlanar, // 3
-  TrigonalPyramidal,
+  CutTetrahedral,
   TShaped,
   Tetrahedral, // 4
   SquarePlanar,
