@@ -168,10 +168,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {
-      molecule,
-      DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-    };
+    DistanceGeometry::MoleculeSpatialModel spatialModel {molecule};
 
     using LG = DistanceGeometry::ExplicitGraph;
     using Vertex = LG::GraphType::vertex_descriptor;
@@ -294,10 +291,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {
-      sampleMol,
-      DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-    };
+    DistanceGeometry::MoleculeSpatialModel spatialModel {sampleMol};
 
     const auto boundsList = spatialModel.makeBoundList();
 

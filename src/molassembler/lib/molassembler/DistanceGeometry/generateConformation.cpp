@@ -105,8 +105,7 @@ outcome::result<
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption,
-  const bool& useYInversionTrick,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod
+  const bool& useYInversionTrick
 ) {
   // TODO where to split control depending on loosening factor of spatial model?
 
@@ -120,10 +119,7 @@ outcome::result<
    */
   bool regenerateEachStep = predicates::hasUnassignedStereocenters(molecule);
   if(!regenerateEachStep) {
-    DGData = gatherDGInformation(
-      molecule,
-      distanceMethod
-    );
+    DGData = gatherDGInformation(molecule);
   }
 
   /* If the ratio of failures/total optimizations exceeds this value,
@@ -161,10 +157,7 @@ outcome::result<
       } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
-      DGData = gatherDGInformation(
-        moleculeCopy,
-        distanceMethod
-      );
+      DGData = gatherDGInformation(moleculeCopy);
     }
 
     ExplicitGraph explicitGraph {
@@ -337,8 +330,7 @@ std::list<RefinementData> debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption,
-  const bool& useYInversionTrick,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod
+  const bool& useYInversionTrick
 ) {
   if(predicates::hasZeroPermutationsStereocenters(molecule)) {
     Log::log(Log::Level::Warning)
@@ -365,10 +357,7 @@ std::list<RefinementData> debugDistanceGeometry(
   MoleculeDGInformation DGData;
 
   if(!regenerateEachStep) { // Collect once, keep all the time
-    DGData = gatherDGInformation(
-      molecule,
-      distanceMethod
-    );
+    DGData = gatherDGInformation(molecule);
   }
 
   /* If the ratio of failures/total optimizations exceeds this value,
@@ -405,10 +394,7 @@ std::list<RefinementData> debugDistanceGeometry(
       } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
-      DGData = gatherDGInformation(
-        moleculeCopy,
-        distanceMethod
-      );
+      DGData = gatherDGInformation(moleculeCopy);
     }
 
     std::list<RefinementStepData> refinementSteps;
@@ -609,18 +595,12 @@ std::list<RefinementData> debugDistanceGeometry(
 
 } // namespace detail
 
-MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod
-) {
+MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
   // Initialize the return object
   MoleculeDGInformation data;
 
   // Generate a spatial model from the molecular graph and stereocenters
-  MoleculeSpatialModel spatialModel {
-    molecule,
-    distanceMethod
-  };
+  MoleculeSpatialModel spatialModel {molecule};
 
   // Generate the distance bounds from the spatial model
   spatialModel.addDefaultDihedrals();

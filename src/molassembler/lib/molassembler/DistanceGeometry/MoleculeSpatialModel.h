@@ -51,11 +51,6 @@ public:
 /* Typedefs */
   struct ModelGraphWriter;
 
-  enum class DistanceMethod {
-    Uniform,
-    UFFLike
-  };
-
 private:
   // Closures
   const Molecule& _molecule;
@@ -113,7 +108,6 @@ public:
 /* Constructor */
   MoleculeSpatialModel(
     const Molecule& molecule,
-    const DistanceMethod distanceMethod = DistanceMethod::UFFLike,
     const double looseningMultiplier = 1.0
   );
 

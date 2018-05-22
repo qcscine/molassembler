@@ -29,7 +29,6 @@ constexpr double MoleculeSpatialModel::dihedralAbsoluteVariance;
 
 MoleculeSpatialModel::MoleculeSpatialModel(
   const Molecule& molecule,
-  const DistanceMethod distanceMethod,
   const double looseningMultiplier
 ) : _molecule(molecule), _looseningMultiplier(looseningMultiplier) {
   /* This is overall a pretty complicated constructor since it encompasses the
@@ -75,40 +74,28 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     "0 < x << (smallest angle any local symmetry returns)"
   );
 
-  // Set 1-2 bounds
-  if(distanceMethod == DistanceMethod::UFFLike) {
-    for(const auto& edge: molecule.iterateEdges()) {
-      auto bondType = molecule.getGraph()[edge].bondType;
+  // Set bond distances
+  for(const auto& edge: molecule.iterateEdges()) {
+    auto bondType = molecule.getGraph()[edge].bondType;
 
-      // Do not model eta bonds, stereocenters are responsible for those
-      if(bondType == BondType::Eta) {
-        continue;
-      }
-
-      AtomIndexType i = boost::source(edge, molecule.getGraph());
-      AtomIndexType j = boost::target(edge, molecule.getGraph());
-
-      auto bondDistance = Bond::calculateBondDistance(
-        molecule.getElementType(i),
-        molecule.getElementType(j),
-        bondType
-      );
-
-      setBondBoundsIfEmpty(
-        {{i, j}},
-        bondDistance
-      );
+    // Do not model eta bonds, stereocenters are responsible for those
+    if(bondType == BondType::Eta) {
+      continue;
     }
-  } else { // Uniform
-    for(const auto& edge: molecule.iterateEdges()) {
-      AtomIndexType i = boost::source(edge, molecule.getGraph());
-      AtomIndexType j = boost::target(edge, molecule.getGraph());
 
-      setBondBoundsIfEmpty(
-        {{i, j}},
-        1.5
-      );
-    }
+    AtomIndexType i = boost::source(edge, molecule.getGraph());
+    AtomIndexType j = boost::target(edge, molecule.getGraph());
+
+    auto bondDistance = Bond::calculateBondDistance(
+      molecule.getElementType(i),
+      molecule.getElementType(j),
+      bondType
+    );
+
+    setBondBoundsIfEmpty(
+      {{i, j}},
+      bondDistance
+    );
   }
 
   // Populate the stereocenterMap with copies of the molecule's stereocenters

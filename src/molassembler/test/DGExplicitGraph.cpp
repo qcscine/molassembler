@@ -43,10 +43,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
     using EG = DistanceGeometry::ExplicitGraph;
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {
-      molecule,
-      DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-    };
+    DistanceGeometry::MoleculeSpatialModel spatialModel {molecule};
 
     EG explicitGraph {
       molecule,

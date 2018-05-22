@@ -88,8 +88,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
           molecule,
           100,
           Partiality::All,
-          false, // no y-inversion trick
-          MoleculeSpatialModel::DistanceMethod::Uniform
+          false // no y-inversion trick
         );
 
         if(!ensembleResult) {

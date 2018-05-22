@@ -170,8 +170,7 @@ int main(int argc, char* argv[]) {
         mol,
         nStructures,
         metrizationOption,
-        false,
-        MoleculeSpatialModel::DistanceMethod::Uniform
+        false
       );
 
       for(const auto& enumPair : enumerate(debugData)) {

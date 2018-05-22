@@ -22,10 +22,7 @@ BOOST_AUTO_TEST_CASE(dumpDebugInfo) {
       }
     }
 
-    MoleculeSpatialModel spatialModel {
-      molecule,
-      MoleculeSpatialModel::DistanceMethod::UFFLike
-    };
+    MoleculeSpatialModel spatialModel {molecule};
 
     std::cout << Symmetry::name(symmetryName) << std::endl;
     spatialModel.dumpDebugInfo();

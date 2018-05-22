@@ -46,8 +46,7 @@ std::list<RefinementData> debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption = Partiality::FourAtom,
-  const bool& useYInversionTrick = true,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
+  const bool& useYInversionTrick = true
 );
 
 /*!
@@ -76,8 +75,7 @@ outcome::result<
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption = Partiality::FourAtom,
-  const bool& useYInversionTrick = true,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
+  const bool& useYInversionTrick = true
 );
 
 } // namespace detail
@@ -90,10 +88,7 @@ struct MoleculeDGInformation {
 };
 
 //! Collects intermediate conformational data about a Molecule using a spatial model
-MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
-);
+MoleculeDGInformation gatherDGInformation(const Molecule& molecule);
 
 /*! Generate a conformational ensemble of a Molecule
  *

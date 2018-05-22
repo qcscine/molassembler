@@ -373,10 +373,7 @@ int main(int argc, char* argv[]) {
 
     auto mol = IO::read(filename);
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {
-      mol,
-      DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-    };
+    DistanceGeometry::MoleculeSpatialModel spatialModel {mol};
 
     DistanceGeometry::ImplicitGraph shortestPathsGraph {
       mol,

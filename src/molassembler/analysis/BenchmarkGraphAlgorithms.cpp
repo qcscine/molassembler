@@ -139,10 +139,7 @@ void benchmark(
     filePath.string()
   );
 
-  DistanceGeometry::MoleculeSpatialModel spatialModel {
-    sampleMol,
-    DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-  };
+  DistanceGeometry::MoleculeSpatialModel spatialModel {sampleMol};
 
   const auto boundsList = spatialModel.makeBoundList();
 

@@ -15,93 +15,95 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 namespace errfDetail {
-  using Vector = dlib::matrix<double, 0, 1>;
 
-  inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned& i) {
-    assert(4 * i + 3 < positions.size());
+using Vector = dlib::matrix<double, 0, 1>;
 
-    return dlib::rowm(
-      positions,
-      dlib::range(4 * i, 4 * i + 2)
-    );
+inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned& i) {
+  assert(4 * i + 3 < positions.size());
+
+  return dlib::rowm(
+    positions,
+    dlib::range(4 * i, 4 * i + 2)
+  );
+}
+
+inline Vector getPos(const Vector& positions, const unsigned& i) {
+  assert(4 * i + 3 < positions.size());
+
+  return dlib::rowm(
+    positions,
+    dlib::range(4 * i, 4 * i + 3)
+  );
+}
+
+inline dlib::vector<double, 3> getAveragePos3D(
+  const Vector& positions,
+  const ChiralityConstraint::AtomListType& atomList
+) {
+  if(atomList.size() == 1) {
+    return getPos3D(positions, atomList.front());
   }
 
-  inline Vector getPos(const Vector& positions, const unsigned& i) {
-    assert(4 * i + 3 < positions.size());
+  dlib::vector<double, 3> sum {0.0, 0.0, 0.0};
 
-    return dlib::rowm(
-      positions,
-      dlib::range(4 * i, 4 * i + 3)
-    );
+  for(const auto& atomIndex : atomList) {
+    sum += getPos3D(positions, atomIndex);
   }
 
-  inline dlib::vector<double, 3> getAveragePos3D(
-    const Vector& positions,
-    const ChiralityConstraint::AtomListType& atomList
-  ) {
-    if(atomList.size() == 1) {
-      return getPos3D(positions, atomList.front());
-    }
+  sum /= atomList.size();
 
-    dlib::vector<double, 3> sum {0.0, 0.0, 0.0};
+  return sum;
+}
 
-    for(const auto& atomIndex : atomList) {
-      sum += getPos3D(positions, atomIndex);
-    }
-
-    sum /= atomList.size();
-
-    return sum;
+inline Vector getAveragePos(
+  const Vector& positions,
+  const ChiralityConstraint::AtomListType& atomList
+) {
+  if(atomList.size() == 1) {
+    return getPos(positions, atomList.front());
   }
 
-  inline Vector getAveragePos(
-    const Vector& positions,
-    const ChiralityConstraint::AtomListType& atomList
-  ) {
-    if(atomList.size() == 1) {
-      return getPos(positions, atomList.front());
-    }
+  Vector sum = dlib::zeros_matrix<double>(4, 1);
 
-    Vector sum = dlib::zeros_matrix<double>(4, 1);
-
-    for(const auto& atomIndex : atomList) {
-      sum += getPos(positions, atomIndex);
-    }
-
-    sum /= atomList.size();
-
-    return sum;
+  for(const auto& atomIndex : atomList) {
+    sum += getPos(positions, atomIndex);
   }
 
-  //! Signed tetrahedron volume adjusted by V' = 6 * V
-  inline double adjustedSignedVolume(
-    const Vector& positions,
-    const ChiralityConstraint::LigandSequence& ligands
-  ) {
-    return (
-      getAveragePos3D(positions, ligands[0])
+  sum /= atomList.size();
+
+  return sum;
+}
+
+//! Signed tetrahedron volume adjusted by V' = 6 * V
+inline double adjustedSignedVolume(
+  const Vector& positions,
+  const ChiralityConstraint::LigandSequence& ligands
+) {
+  return (
+    getAveragePos3D(positions, ligands[0])
+    - getAveragePos3D(positions, ligands[3])
+  ).dot(
+    (
+      getAveragePos3D(positions, ligands[1])
       - getAveragePos3D(positions, ligands[3])
-    ).dot(
-      (
-        getAveragePos3D(positions, ligands[1])
-        - getAveragePos3D(positions, ligands[3])
-      ).cross(
-        getAveragePos3D(positions, ligands[2])
-        - getAveragePos3D(positions, ligands[3])
-      )
-    );
-  }
-
-  double proportionChiralityConstraintsCorrectSign(
-    const std::vector<ChiralityConstraint>& chiralityConstraints,
-    const Vector& positions
+    ).cross(
+      getAveragePos3D(positions, ligands[2])
+      - getAveragePos3D(positions, ligands[3])
+    )
   );
+}
 
-  bool finalStructureAcceptable(
-    const DistanceBoundsMatrix& bounds,
-    const std::vector<ChiralityConstraint> chiralityConstraints,
-    const Vector& positions
-  );
+double proportionChiralityConstraintsCorrectSign(
+  const std::vector<ChiralityConstraint>& chiralityConstraints,
+  const Vector& positions
+);
+
+bool finalStructureAcceptable(
+  const DistanceBoundsMatrix& bounds,
+  const std::vector<ChiralityConstraint> chiralityConstraints,
+  const Vector& positions
+);
+
 } // namespace errfDetail
 
 template<bool compress>

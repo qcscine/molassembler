@@ -497,8 +497,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
       molecule,
       100,
       Partiality::FourAtom,
-      false,
-      MoleculeSpatialModel::DistanceMethod::Uniform
+      false
     );
 
     // For something this simple, there really shouldn't be any failures

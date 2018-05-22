@@ -84,10 +84,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
     using SPG = DistanceGeometry::ImplicitGraph;
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {
-      molecule,
-      DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-    };
+    DistanceGeometry::MoleculeSpatialModel spatialModel {molecule};
 
     SPG spg {
       molecule,
