@@ -419,8 +419,7 @@ struct TrigonalPyramidal {
       return 0;
     }
 
-    unsigned smaller = std::min(a, b), larger = std::max(a, b);
-    if(larger < 3) {
+    if(std::max(a, b) != 3) {
       // -> smaller < 2, this means either 0,1 0,2 1,2 axial
       return temple::Math::toRadians<double>(120);
     } else {
