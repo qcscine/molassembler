@@ -238,25 +238,23 @@ std::vector<
 
     adjacents.reserve(boost::out_degree(centralIndex, graph));
 
-    GraphType::adjacency_iterator iter, end;
-    std::tie(iter, end) = boost::adjacent_vertices(centralIndex, graph);
+    for(
+      const AtomIndexType centralAdjacent :
+      RangeForTemporary<GraphType::adjacency_iterator>(
+        boost::adjacent_vertices(centralIndex, graph)
+      )
+    ) {
+      auto edgeFoundPair = boost::edge(centralAdjacent, centralIndex, graph);
 
-    for(; iter != end; ++iter) {
-      auto edgeFoundPair = boost::edge(*iter, centralIndex, graph);
-
-      // If an edge is mislabeled as Eta, correct it
       if(graph[edgeFoundPair.first].bondType == BondType::Eta) {
+        // Determine if the edge is mislabeled
         // is the other vertex a non-main-group element?
-        auto otherVertex = boost::source(edgeFoundPair.first, graph);
-        if(otherVertex == *iter) {
-          otherVertex = boost::target(edgeFoundPair.first, graph);
-        }
 
-        if(AtomInfo::isMainGroupElement(graph[otherVertex].elementType)) {
+        if(AtomInfo::isMainGroupElement(graph[centralAdjacent].elementType)) {
           std::string error = "Two main group elements are connected by an eta bond! ";
-          error += std::to_string(*iter);
+          error += std::to_string(centralAdjacent);
           error += " and ";
-          error += std::to_string(otherVertex);
+          error += std::to_string(centralIndex);
 
           throw std::logic_error(error);
         }
@@ -268,7 +266,7 @@ std::vector<
          */
       } else {
         adjacents.push_back(
-          std::vector<AtomIndexType> {{*iter}}
+          std::vector<AtomIndexType> {{centralAdjacent}}
         );
       }
     }
