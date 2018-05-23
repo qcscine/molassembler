@@ -188,19 +188,61 @@ struct XYZHandler : public FileHandler {
   ) const final;
 };
 
+//! Binary file IO
+struct BinaryHandler {
+  using BinaryType = std::vector<std::uint8_t>;
+
+  static bool canRead(const std::string& filename);
+
+  static void write(
+    const std::string& filename,
+    const BinaryType& binary
+  );
+
+  static BinaryType read(const std::string& filename);
+};
+
 namespace detail {
 
 Molecule::InterpretResult interpret(const FileHandler::RawData& data);
 
 } // namespace detail
 
+/*! Read a single molecule from a file.
+ *
+ * @throws If interpretation of coordinates and connectivity yields multiple
+ *   molecules.
+ * @note Interprets file type from extension. mol is a MOLFile, xyz an XYZ file
+ *   and masm a CBOR serial representation of Molecule
+ */
 Molecule read(const std::string& filename);
+
+/*! Read multiple molecules from a file.
+ *
+ * @note Interprets file type from extension. mol is a MOLFile, xyz an XYZ file
+ *   and masm a CBOR serial representation of Molecule
+ */
 std::vector<Molecule> split(const std::string& filename);
+
+/*! Writer function for MOL and XYZ formats
+ *
+ * @throws If the file extension does not match either mol or xyz.
+ * @note Interprets which file type is to be written from filename extension.
+ */
 void write(
   const std::string& filename,
   const Molecule& molecule,
   const Delib::PositionCollection& positions,
   const FileHandler::IndexPermutation& permutation = FileHandler::IndexPermutation::Identity
+);
+
+/*! Writer function to make files containing binary Molecule representation.
+ *
+ * @throws If the file extension does not match .masm
+ */
+void write(
+  const std::string& filename,
+  const Molecule& molecule
 );
 
 } // namespace IO

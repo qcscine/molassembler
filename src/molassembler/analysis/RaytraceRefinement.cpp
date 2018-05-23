@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     ("help", "Produce help message")
     ("s", boost::program_options::value<unsigned>(), "Specify symmetry index (zero-based)")
     ("n", boost::program_options::value<unsigned>(), "Set number of structures to generate")
-    ("f", boost::program_options::value<std::string>(), "Read molecule to generate from file (MOLFiles only!)")
+    ("f", boost::program_options::value<std::string>(), "Read molecule to generate from file")
     ("i", boost::program_options::value<bool>(), "Specify whether inversion trick is to be used (Default: false)")
     ("p", boost::program_options::value<unsigned>(), "Set metrization partiality option (Default: full)")
   ;
