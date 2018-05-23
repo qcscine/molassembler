@@ -1,4 +1,6 @@
 #include "DistanceGeometry/RefinementProblem.h"
+#include "Log.h"
+#include "temple/Containers.h"
 
 namespace molassembler {
 
@@ -78,9 +80,49 @@ namespace errfDetail {
     return true;
   }
 
+  void explainAcceptanceFailure(
+    const DistanceBoundsMatrix& bounds,
+    const std::vector<ChiralityConstraint> chiralityConstraints,
+    const Vector& positions
+  ) {
+    auto& log = Log::log(Log::Particulars::DGStructureAcceptanceFailures);
+    const double deviationThreshold = 0.5;
+
+    // Check distance bound deviations
+    for(unsigned i = 0; i < bounds.N(); i++) {
+      for(unsigned j = i + 1; j < bounds.N(); j++) {
+        double ijDistance = dlib::length(
+          errfDetail::getPos(positions, j) - errfDetail::getPos(positions, i)
+        );
+
+        if(
+          ijDistance - bounds.upperBound(i, j) > deviationThreshold
+          || bounds.lowerBound(i, j) - ijDistance > deviationThreshold
+        ) {
+          log << "Distance constraint " << i << " - " << j << " : ["
+            << bounds.lowerBound(i, j) << ", " << bounds.upperBound(i, j)
+            << "] deviation over threshold, is : " << ijDistance << "\n";
+        }
+      }
+    }
+
+    // Check chiral bound deviations
+    for(const auto& constraint : chiralityConstraints) {
+      double volume = errfDetail::volume(positions, constraint.indices);
+
+      if(
+        volume - constraint.upper > deviationThreshold
+        || constraint.lower - volume > deviationThreshold
+      ) {
+        log << "Chiral constraint " << temple::condenseIterable(constraint.indices) << " : ["
+          << constraint.lower << ", " << constraint.upper
+          << "] deviation over threshold, is : " << volume << "\n";
+      }
+    }
+  }
+
 } // namespace errfDetail
 
 } // namespace DistanceGeometry
 
 } // namespace molassembler
-

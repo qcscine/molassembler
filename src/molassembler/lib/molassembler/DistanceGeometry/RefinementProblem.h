@@ -30,7 +30,7 @@ namespace errfDetail {
     assert(4 * i + 3 < positions.size());
 
     return dlib::rowm(
-      positions, 
+      positions,
       dlib::range(4 * i, 4 * i + 3)
     );
   }
@@ -53,6 +53,12 @@ namespace errfDetail {
   );
 
   bool finalStructureAcceptable(
+    const DistanceBoundsMatrix& bounds,
+    const std::vector<ChiralityConstraint> chiralityConstraints,
+    const Vector& positions
+  );
+
+  void explainAcceptanceFailure(
     const DistanceBoundsMatrix& bounds,
     const std::vector<ChiralityConstraint> chiralityConstraints,
     const Vector& positions
@@ -97,7 +103,7 @@ struct errfValue {
         upperTerm = diffLength / upperBoundSquared - 1;
 
         assert(!( // Ensure early continue logic is correct
-          upperTerm > 0 
+          upperTerm > 0
           && (
             2 * lowerBoundSquared / (
               lowerBoundSquared + diffLength
@@ -142,7 +148,7 @@ struct errfValue {
 
       if(upperTerm > 0) {
         error += upperTerm * upperTerm;
-        
+
         // If the upper term contributes, the lower certainly doesn't
         continue;
       }
@@ -189,8 +195,8 @@ struct errfValue {
     // Before chiral inversion, typically: chiral >> distance > extraDim
     return (
       extraDimensionError(positions)
-      + distanceError(positions) 
-      + chiralError(positions) 
+      + distanceError(positions)
+      + chiralError(positions)
     );
   }
 };
@@ -235,7 +241,7 @@ public:
 
         if(upperTerm > 0) {
           dlib::set_rowm(
-            gradient, 
+            gradient,
             dlib::range(4 * alpha, 4 * alpha + 3)
           ) += 4 * diff * upperTerm / squaredBounds(
             std::min(i, alpha),
@@ -459,7 +465,7 @@ public:
 
     // For both
     const Vector alphaMinusI = (
-      errfDetail::getPos(positions, alpha) 
+      errfDetail::getPos(positions, alpha)
       - errfDetail::getPos(positions, i)
     );
 
@@ -495,7 +501,7 @@ public:
 
     if(lowerTerm > 0) {
       /* We use -= because the lower term needs the position vector
-       * difference (i - alpha), so we reuse alphaMinusI and just subtract 
+       * difference (i - alpha), so we reuse alphaMinusI and just subtract
        * from the gradient instead of adding to it
        */
       dlib::set_rowm(
@@ -550,7 +556,7 @@ public:
       assert(!(volume - constraint.upper > 0 && constraint.lower - volume > 0));
 
       const double factor = 2 * (
-        std::max(0.0, volume - constraint.upper) 
+        std::max(0.0, volume - constraint.upper)
         - std::max(0.0, constraint.lower - volume)
       );
 

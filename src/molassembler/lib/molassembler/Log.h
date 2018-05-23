@@ -14,7 +14,7 @@ namespace Log {
 namespace detail {
   class NullBuffer : public std::streambuf {
   public:
-    int overflow(int c); 
+    int overflow(int c);
   };
 
   // Some objects we need
@@ -53,6 +53,8 @@ enum class Particulars {
    * on the current status of the optimization
    */
   DGRefinementProgress,
+  // Explain why a structure was not accepted
+  DGStructureAcceptanceFailures,
   // In generateConformation, show the Trees generated from the molecules
   gatherDGInformationTrees,
   // in debugDistanceGeometry, progress information

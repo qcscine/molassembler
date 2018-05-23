@@ -8,6 +8,7 @@
 #include "IO.h"
 #include "AnalysisHelpers.h"
 #include "StdlibTypeAlgorithms.h"
+#include "Log.h"
 
 #include "temple/constexpr/Numeric.h"
 
@@ -93,9 +94,16 @@ int main(int argc, char* argv[]) {
     metrizationOption = static_cast<DistanceGeometry::Partiality>(index);
   }
 
+  Log::particulars.insert(Log::Particulars::DGStructureAcceptanceFailures);
+
 /* Generating work */
   // Generate from file
   if(options_variables_map.count("f") == 1) {
+    unsigned conformations = 1;
+    if(options_variables_map.count("n")) {
+      conformations = options_variables_map["n"].as<unsigned>();
+    }
+
     bool useYInversionTrick = false;
 
     if(options_variables_map.count("i")) {
@@ -115,7 +123,7 @@ int main(int argc, char* argv[]) {
 
     auto debugData = detail::debugDistanceGeometry(
       mol,
-      1,
+      conformations,
       metrizationOption,
       useYInversionTrick
     );
