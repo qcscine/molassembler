@@ -59,11 +59,12 @@ BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
           &Symmetry::data::Linear::angleFunction,
           &Symmetry::data::Bent::angleFunction,
           &Symmetry::data::TrigonalPlanar::angleFunction, // 3
-          &Symmetry::data::TrigonalPyramidal::angleFunction,
+          &Symmetry::data::CutTetrahedral::angleFunction,
           &Symmetry::data::TShaped::angleFunction,
           &Symmetry::data::Tetrahedral::angleFunction, // 4
           &Symmetry::data::SquarePlanar::angleFunction,
           &Symmetry::data::Seesaw::angleFunction,
+          &Symmetry::data::TrigonalPyramidal::angleFunction,
           &Symmetry::data::SquarePyramidal::angleFunction, // 5
           &Symmetry::data::TrigonalBiPyramidal::angleFunction,
           &Symmetry::data::PentagonalPlanar::angleFunction,
@@ -534,7 +535,7 @@ std::enable_if_t<
     dynamicMappings.emplace_back(
       i,
       selectBestTransitionMappings(
-        ligandLossTransitionMappings(
+        properties::ligandLossTransitionMappings(
           SymmetryClassFrom::name,
           SymmetryClassTo::name,
           i

@@ -168,6 +168,9 @@ public:
 
   std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const final;
 
+  const RankingInformation& getLeftRanking() const;
+  const RankingInformation& getRightRanking() const;
+
   std::string info() const final;
 
   std::string rankInfo() const;

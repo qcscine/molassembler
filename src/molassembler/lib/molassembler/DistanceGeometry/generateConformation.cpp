@@ -582,6 +582,25 @@ std::list<RefinementData> debugDistanceGeometry(
 
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       Log::log(Log::Level::Warning) << "Second stage of refinement fails.\n";
+      if(reachedMaxIterations) {
+        Log::log(Log::Level::Warning) << "- Reached max iterations.\n";
+      }
+
+      if(notAllChiralitiesCorrect) {
+        Log::log(Log::Level::Warning) << "- Not all chirality constraints have the correct sign.\n";
+      }
+
+      if(!structureAcceptable) {
+        Log::log(Log::Level::Warning) << "- The final structure is unacceptable.\n";
+        if(Log::particulars.count(Log::Particulars::DGStructureAcceptanceFailures)) {
+          errfDetail::explainAcceptanceFailure(
+            distanceBounds,
+            DGData.chiralityConstraints,
+            dlibPositions
+          );
+        }
+      }
+
       failures += 1;
       if(exceededFailureRatio(failures, numStructures, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";

@@ -27,7 +27,7 @@ void writeAngleAnalysisFiles(
     detail::regularCircumradius(
       edgeLengths.size(),
       longestEdge
-    ), 
+    ),
     minR
   );
 
@@ -58,7 +58,7 @@ void writeAngleAnalysisFiles(
   for(unsigned i = 0; i <= nScanSteps; i++) {
     const double currentR = lowerBound + i * stepSize;
     scanFile << currentR << ", "
-      << detail::circumcenterInside::centralAnglesDeviation(currentR, edgeLengths, longestEdge)
+      << detail::circumcenterInside::centralAnglesDeviation(currentR, edgeLengths)
       << ", "
       << detail::circumcenterOutside::centralAnglesDeviation(currentR, edgeLengths, longestEdge)
       << std::endl;
@@ -110,8 +110,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
         circumcenterInside
         ? CyclicPolygons::detail::circumcenterInside::centralAnglesDeviation(
           circumradius,
-          edgeLengths,
-          temple::max(edgeLengths)
+          edgeLengths
         ) : CyclicPolygons::detail::circumcenterOutside::centralAnglesDeviation(
           circumradius,
           edgeLengths,
@@ -135,9 +134,9 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 
       BOOST_CHECK_MESSAGE(
         std::fabs(internalAngleSumDeviation) < 1e-6,
-        "Internal angle sum deviation from " << (nSides - 2) 
+        "Internal angle sum deviation from " << (nSides - 2)
           <<  "π for edge lengths " << temple::stringify(edgeLengths)
-          << " is " << internalAngleSumDeviation 
+          << " is " << internalAngleSumDeviation
           << ", whose norm is not less than 1e-6"
       );
 

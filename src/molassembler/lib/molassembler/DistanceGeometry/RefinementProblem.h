@@ -104,6 +104,12 @@ bool finalStructureAcceptable(
   const Vector& positions
 );
 
+void explainAcceptanceFailure(
+  const DistanceBoundsMatrix& bounds,
+  const std::vector<ChiralityConstraint> chiralityConstraints,
+  const Vector& positions
+);
+
 } // namespace errfDetail
 
 template<bool compress>

@@ -21,11 +21,12 @@ enum class Name : unsigned {
   Linear, // 2
   Bent,
   TrigonalPlanar, // 3
-  TrigonalPyramidal,
+  CutTetrahedral,
   TShaped,
   Tetrahedral, // 4
   SquarePlanar,
   Seesaw,
+  TrigonalPyramidal,
   SquarePyramidal, // 5
   TrigonalBiPyramidal,
   PentagonalPlanar,
@@ -37,12 +38,12 @@ enum class Name : unsigned {
 };
 
 //! Total number of contained symmetries
-constexpr unsigned nSymmetries = 16;
+constexpr unsigned nSymmetries = 17;
 
 //! A placeholder value for constexpr tetrahedra specification of origin
 constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
 
-/*! 
+/*!
  * Namespace containing all symmetry data classes and some minor helper functions
  *
  * Each symmetry data class must have the following members, all of which must
@@ -50,7 +51,7 @@ constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
  * - name (Symmetry::Name)
  * - size (unsigned)
  * - stringName (string)
- * - angleFunction ( double(const unsigned&, const unsigned&) )
+ * - angleFunction ( double(const unsigned, const unsigned) )
  * - coordinates ( array<temple::Vector, N> ): N is size of symmetry,
  *   see above
  * - rotations ( array< array<unsigned, size>, R> ): R is however many
@@ -67,7 +68,7 @@ struct Linear {
   static constexpr Symmetry::Name name = Symmetry::Name::Linear;
   static constexpr unsigned size = 2;
   static constexpr char stringName[] = "linear";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -100,8 +101,8 @@ struct Bent {
   static constexpr Symmetry::Name name = Symmetry::Name::Bent;
   static constexpr unsigned size = 2;
   static constexpr char stringName[] = "bent";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
-    /* subject to a lot of variation, between 90 and 109 degrees pursuant to 
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    /* subject to a lot of variation, between 90 and 109 degrees pursuant to
      * english wikipedia, using experimental data here to improve instances
      * of this geometry on e.g. O center would a big improvement to DG runs
      */
@@ -109,7 +110,7 @@ struct Bent {
       return 0;
     }
 
-    return temple::Math::toRadians<double>(107); 
+    return temple::Math::toRadians<double>(107);
   }
   static constexpr std::array<temple::Vector, 2> coordinates {{
     {1., 0., 0.},
@@ -135,14 +136,14 @@ struct TrigonalPlanar {
    *   /   \
    *  1     2
    *
-   * This is not quite ideal since the angles are thoroughly misrepresented, 
+   * This is not quite ideal since the angles are thoroughly misrepresented,
    * but all positions including the central atom are in one plane. The angles
    * are idealized as 120°.
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPlanar;
   static constexpr unsigned size = 3;
   static constexpr char stringName[] = "trigonal planar";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -167,22 +168,18 @@ struct TrigonalPlanar {
   > tetrahedra {{}};
 };
 
-struct TrigonalPyramidal {
+struct CutTetrahedral {
   /*
-   *     0
-   *     |
-   *    (_)
-   *   /   \
-   *  1     2
+   *   (_)
+   *  /  \ °2
+   * 0    1
    *
-   * This is not quite ideal since the angles are thoroughly misrepresented, 
-   * but all positions including the central atom are in one plane. The angles
-   * are idealized as 120°.
+   * Where /, \ denote in front of plane bonds, ° a behind the plane bond.
    */
-  static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPyramidal;
+  static constexpr Symmetry::Name name = Symmetry::Name::CutTetrahedral;
   static constexpr unsigned size = 3;
-  static constexpr char stringName[] = "trigonal pyramidal";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr char stringName[] = "cut tetrahedral";
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -218,14 +215,14 @@ struct TShaped {
   static constexpr Symmetry::Name name = Symmetry::Name::TShaped;
   static constexpr unsigned size = 3;
   static constexpr char stringName[] = "T-shaped";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
 
     if((a + b) % 2 == 1) {
       return M_PI / 2;
-    } 
+    }
 
     return M_PI;
   }
@@ -247,7 +244,7 @@ struct TShaped {
 };
 
 struct Tetrahedral {
-  /* 
+  /*
    *    1
    *    |
    *   (0) (0 is on top, ( ) signifies the central atom  beneath it
@@ -260,9 +257,9 @@ struct Tetrahedral {
    *
    *    0
    *    |
-   *   (_)   
+   *   (_)
    *  /  \ °3
-   * 1    2 
+   * 1    2
    *
    * Where /, \ denote in front of plane bonds, ° a behind the plane bond.
    *
@@ -270,7 +267,7 @@ struct Tetrahedral {
   static constexpr Symmetry::Name name = Symmetry::Name::Tetrahedral;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "tetrahedral";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -301,7 +298,7 @@ struct Tetrahedral {
 };
 
 struct SquarePlanar {
-  /* 
+  /*
    * 3   2
    *  \_/
    *  (_) <- central atom
@@ -312,7 +309,7 @@ struct SquarePlanar {
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePlanar;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "square planar";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -320,7 +317,7 @@ struct SquarePlanar {
     if((a + b) % 2 == 1) {
       // this expression indicates cis
       return M_PI / 2;
-    } 
+    }
 
     // leftover case is trans
     return M_PI;
@@ -355,7 +352,7 @@ struct Seesaw {
   static constexpr Symmetry::Name name = Symmetry::Name::Seesaw;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "seesaw";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -403,11 +400,58 @@ struct Seesaw {
 #endif
 };
 
+struct TrigonalPyramidal {
+  /* Viewed from the top of the pyramid. The central atom is ( ), 3 is apical
+   *
+   *     3
+   *     |  2
+   *     | :    <- behind view plane
+   * 0--(_)
+   *       \    <- in front of view plane
+   *        1
+   *
+   */
+  static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPyramidal;
+  static constexpr unsigned size = 4;
+  static constexpr char stringName[] = "trigonal pyramidal";
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
+    if(a == b) {
+      return 0;
+    }
+
+    if(std::max(a, b) != 3) {
+      // -> smaller < 2, this means either 0,1 0,2 1,2 axial
+      return temple::Math::toRadians<double>(120);
+    } else {
+      // -> smaller < 3, this means {1,2,3}, 3
+      return M_PI / 2;
+    }
+  }
+  static constexpr std::array<temple::Vector, 4> coordinates {{
+    {1, 0, 0},
+    {-0.5, 0.866025, 0},
+    {-0.5, -0.866025, 0},
+    {0, 0, 1}
+  }};
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    1
+  > rotations {{
+    {{2, 0, 1, 3}} // C3
+  }};
+  static constexpr std::array<
+    std::array<unsigned, 4>,
+    1
+  > tetrahedra {{
+    {{0, 1, 3, 2}}
+  }};
+};
+
 struct SquarePyramidal {
-  /* 
+  /*
    * 3   2
    *  \_/
-   *  (4)   
+   *  (4)
    *  / \
    * 0   1
    *
@@ -426,13 +470,13 @@ struct SquarePyramidal {
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePyramidal;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "square pyramidal";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
 
     if(a == 4 || b == 4) { // all bonds to axial ligand are 90°
-      return M_PI / 2; 
+      return M_PI / 2;
     }
 
     if((a + b) % 2 == 0) { // 0 + 2 or 1 + 3 are trans
@@ -461,7 +505,7 @@ struct SquarePyramidal {
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
-    {{0, 1, 4, 2}}, 
+    {{0, 1, 4, 2}},
     {{0, 3, 2, 4}}
   }};
 #else // Regular
@@ -478,7 +522,7 @@ struct SquarePyramidal {
 };
 
 struct TrigonalBiPyramidal {
-  /* Viewed from the top of the pyramid. The central atom is ( ), 3 and 4 
+  /* Viewed from the top of the pyramid. The central atom is ( ), 3 and 4
    * are axial.
    *
    *     3
@@ -492,7 +536,7 @@ struct TrigonalBiPyramidal {
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalBiPyramidal;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "trigonal bipyramidal";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -502,7 +546,7 @@ struct TrigonalBiPyramidal {
       // -> smaller < 2, this means either 0,1 0,2 1,2 axial
       return temple::Math::toRadians<double>(120);
     } else if(larger == 3) {
-      // -> smaller < 3, this means {1,2,3}, 3 
+      // -> smaller < 3, this means {1,2,3}, 3
       return M_PI / 2;
     } else if(smaller < 3) {
       // now, larger must be 4 (process of elimination), so if a is not 3:
@@ -538,7 +582,7 @@ struct TrigonalBiPyramidal {
 };
 
 struct PentagonalPlanar {
-  /* 
+  /*
    * All in plane:
    *
    *      0
@@ -551,7 +595,7 @@ struct PentagonalPlanar {
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPlanar;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "pentagonal planar";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     unsigned absDiff = std::min(a - b, b - a);
     return std::min(
       absDiff,
@@ -584,7 +628,7 @@ struct Octahedral {
    *     4
    *  3  |  2
    *   : | :
-   *    (_)        
+   *    (_)
    *   / | \
    *  0  |  1
    *     5
@@ -595,19 +639,19 @@ struct Octahedral {
   static constexpr Symmetry::Name name = Symmetry::Name::Octahedral;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "octahedral";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
-    
+
     if(
       (
-        std::max(a, b) < 4 // if the largest is < 4, then equatorial 
+        std::max(a, b) < 4 // if the largest is < 4, then equatorial
         && (a + b) % 2 == 0 // this gives trans eq ligands
       ) || std::min(a, b) == 4 // this indicates 4,5 (axial trans)
     ) {
       return M_PI;
-    } 
+    }
 
     return M_PI / 2;
   }
@@ -656,35 +700,35 @@ struct Octahedral {
 };
 
 struct TrigonalPrismatic {
-  /* 
+  /*
    *  3  4  5
    *   : | :
-   *    (_)        
+   *    (_)
    *   : | :
    *  0  1  2
    *
    * Where /, \ denote bonds in front of the view plane, : denotes bonds
    * behind the view plane.
    *
-   * Angles 
+   * Angles
    *  0-1, 0-2 -> 86°
    *  0-3 -> 76°
    *  0-4, 0-5 -> 134°
-   * 
-   * From [W(CH3)6], Haaland, Hammel, Rypdal, Volden, J. Am. Chem. Soc. 1990 
+   *
+   * From [W(CH3)6], Haaland, Hammel, Rypdal, Volden, J. Am. Chem. Soc. 1990
    */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPrismatic;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "trigonal prismatic";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
-    } 
-    
+    }
+
     // Between plane symmetric
     if(std::min(a - b, b - a) == 3) {
       return temple::Math::toRadians<double>(76);
-    } 
+    }
 
     // In plane triangle
     if(
@@ -692,7 +736,7 @@ struct TrigonalPrismatic {
       || (a >= 3 && b >= 3)
     ) {
       return temple::Math::toRadians<double>(86);
-    } 
+    }
 
     // Between plane asymmetric
     return temple::Math::toRadians<double>(134);
@@ -724,7 +768,7 @@ struct TrigonalPrismatic {
 };
 
 struct PentagonalPyramidal {
-  /* 
+  /*
    *      0
    *  1.  |  .4
    *    °(5)°
@@ -738,15 +782,15 @@ struct PentagonalPyramidal {
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPyramidal;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "pentagonal pyramidal";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
 
     if(a == 5 || b == 5) {
       return M_PI / 2;
-    }  
-    
+    }
+
     // remainder are identical to PentagonalPlanar
     unsigned absDiff = std::min(a - b, b - a);
     return std::min(
@@ -793,7 +837,7 @@ struct PentagonalPyramidal {
 };
 
 struct PentagonalBiPyramidal {
-    /* 
+    /*
      * 3, 5, (_) and 6 in plane, 1 and 2 in front, 0 and 4 in back
      *
      *      5
@@ -802,13 +846,13 @@ struct PentagonalBiPyramidal {
      *  1   |°·2
      *      6
      *
-     * 0-4 are equatorial, 
+     * 0-4 are equatorial,
      * 5,6 are axial
      */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalBiPyramidal;
   static constexpr unsigned size = 7;
   static constexpr char stringName[] = "pentagonal bipyramidal";
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
     if(a == b) {
       return 0;
     }
@@ -877,15 +921,15 @@ struct PentagonalBiPyramidal {
 
 struct SquareAntiPrismatic {
   /*  Two representations, one oblique, the other more helpful.
-   *  The first is a side-on view. 0 is mostly hidden by 1, 3 mostly hidden 
+   *  The first is a side-on view. 0 is mostly hidden by 1, 3 mostly hidden
    *  by 2. 4 and 6 are in the viewing plane while 5 juts out above plane and
-   *  7 dips behind plane. 
+   *  7 dips behind plane.
    *
    *  4   7 5 6
    *    : ·/ :
    *     (__)
    *    ·/  \·
-   *   01    23 
+   *   01    23
    *
    * Below is a top-down view. Strong lines indicate above-plane bonds, dots
    * indicate below-plane bonds.
@@ -947,7 +991,7 @@ struct SquareAntiPrismatic {
   );
 #endif
 
-  static constexpr double angleFunction(const unsigned& a, const unsigned& b) {
+  static constexpr double angleFunction(const unsigned a, const unsigned b) {
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
     if(a == b) {
       return 0;
@@ -960,25 +1004,25 @@ struct SquareAntiPrismatic {
 #else
     if(a == b) {
       return 0;
-    } 
-    
+    }
+
     if(
       (a < 4 && b < 4)
       || (a >= 4 && b >= 4)
     ) { // in plane
       if((a + b) % 2 == 1) { // cis
-        return temple::Math::toRadians<double>(72.9875); 
-      } 
-      
+        return temple::Math::toRadians<double>(72.9875);
+      }
+
       // otherwise trans
       return temple::Math::toRadians<double>(114.475);
     }
-    
+
     // remaining cases are between planes
     unsigned minDiff = std::min(a - b, b - a);
     if(minDiff == 3 || minDiff == 4 || minDiff == 7) { // short
       return temple::Math::toRadians<double>(78.05);
-    } 
+    }
 
     // last case is long between planes
     return temple::Math::toRadians<double>(142.275);
@@ -989,7 +1033,7 @@ struct SquareAntiPrismatic {
     2
   > rotations {{
     {{3, 0, 1, 2, 7, 4, 5, 6}}, // C4 axial
-    /* 180° on equatorial axis in plane with 4, 6 
+    /* 180° on equatorial axis in plane with 4, 6
      *
      *   1   5   2
      *     \ · /
@@ -998,7 +1042,7 @@ struct SquareAntiPrismatic {
      *   0   7   3
      *
      * and 45° anticlockwise on axial axis
-     *           
+     *
      *   5   2   6
      *     · | ·
      *   1 –( )– 3
@@ -1006,7 +1050,7 @@ struct SquareAntiPrismatic {
      *   4   0   7
      *
      */
-    {{5, 4, 7, 6, 1, 0, 3, 2}}, 
+    {{5, 4, 7, 6, 1, 0, 3, 2}},
   }};
 
 #ifdef USE_ALTERNATE_TETRAHEDRA
@@ -1042,11 +1086,12 @@ using allSymmetryDataTypes = std::tuple<
   Linear, // 2
   Bent,
   TrigonalPlanar, // 3
-  TrigonalPyramidal,
+  CutTetrahedral,
   TShaped,
   Tetrahedral, // 4
   SquarePlanar,
   Seesaw,
+  TrigonalPyramidal,
   SquarePyramidal, // 5
   TrigonalBiPyramidal,
   PentagonalPlanar,

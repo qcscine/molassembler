@@ -1,7 +1,7 @@
 #include "IO.h"
 #include "Version.h"
 #include "BondDistance.h"
-
+#include "Serialization.h"
 #include "Delib/AtomCollectionIO.h"
 #include "Delib/Constants.h"
 
@@ -362,6 +362,61 @@ void XYZHandler::write(
   Delib::AtomCollectionIO::write(filename, ac);
 }
 
+bool BinaryHandler::canRead(const std::string& filename) {
+  boost::filesystem::path filepath {filename};
+
+  return (
+    boost::filesystem::exists(filepath)
+    && filepath.extension() == ".masm"
+  );
+}
+
+void BinaryHandler::write(
+  const std::string& filename,
+  const BinaryType& binary
+) {
+  std::ofstream file(filename, std::ios::binary);
+
+  unsigned nElements = binary.size();
+  file.write(
+    reinterpret_cast<char*>(&nElements),
+    sizeof(unsigned)
+  );
+
+  if(nElements > 0) {
+    file.write(
+      reinterpret_cast<const char*>(&binary[0]),
+      sizeof(std::uint8_t) * nElements
+    );
+  }
+
+  file.close(); // Write EOF and close handle
+}
+
+BinaryHandler::BinaryType BinaryHandler::read(const std::string& filename) {
+  std::ifstream file(filename, std::ios::binary);
+
+  BinaryType data;
+
+  unsigned binarySize;
+  file.read(
+    reinterpret_cast<char*>(&binarySize),
+    sizeof(unsigned)
+  );
+
+  if(binarySize > 0) {
+    data.resize(binarySize);
+    file.read(
+      reinterpret_cast<char*>(&data[0]),
+      binarySize * sizeof(std::uint8_t)
+    );
+  }
+
+  file.close();
+
+  return data;
+}
+
 namespace detail {
 
 Molecule::InterpretResult interpret(const FileHandler::RawData& data) {
@@ -388,6 +443,12 @@ Molecule read(const std::string& filename) {
   boost::filesystem::path filepath {filename};
   if(!boost::filesystem::exists(filepath)) {
     throw std::logic_error("File selected to read does not exist.");
+  }
+
+  if(filepath.extension() == ".masm") {
+    return fromCBOR(
+      BinaryHandler::read(filename)
+    );
   }
 
   std::unique_ptr<FileHandler> handler;
@@ -454,6 +515,24 @@ void write(
   }
 
   handler->write(filename, molecule, positions, permutation);
+}
+
+void write(
+  const std::string& filename,
+  const Molecule& molecule
+) {
+  boost::filesystem::path filepath {filename};
+
+  if(filepath.extension() == ".masm") {
+    BinaryHandler::write(
+      filename,
+      toCBOR(molecule)
+    );
+  } else {
+    throw std::logic_error(
+      "It makes no sense to write MOL or XYZ files without a PositionCollection"
+    );
+  }
 }
 
 } // namespace IO

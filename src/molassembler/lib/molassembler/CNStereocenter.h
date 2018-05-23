@@ -281,6 +281,9 @@ public:
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
 
+  //! Returns the underlying ranking
+  const RankingInformation& getRanking() const;
+
   //! Returns the underlying symmetry
   Symmetry::Name getSymmetry() const;
 
