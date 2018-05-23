@@ -240,11 +240,6 @@ nlohmann::json serialize(const Molecule& molecule) {
 Molecule deserialize(const nlohmann::json& m) {
   GraphType graph = m["graph"];
 
-  // Construct a molecule from the graph alone
-  // Modify the StereocenterList from there
-
-  Molecule mol {graph};
-
   StereocenterList stereocenters;
   for(const auto& j : m["stereocenters"]) {
     if(j["type"] == "CN"s) {
@@ -252,7 +247,7 @@ Molecule deserialize(const nlohmann::json& m) {
       AtomIndexType centralIndex = j["centers"].front();
 
       auto cnPtr = std::make_shared<Stereocenters::CNStereocenter>(
-        mol,
+        graph,
         symmetry,
         centralIndex,
         j["ranking"].get<RankingInformation>()

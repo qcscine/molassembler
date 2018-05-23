@@ -817,7 +817,7 @@ void RankingTree::_applySequenceRules(
           // Again, no links since we're in an acyclic graph now
 
           auto newStereocenter = Stereocenters::CNStereocenter {
-            _moleculeRef,
+            _moleculeRef.getGraph(),
             localSymmetry,
             molSourceIndex,
             centerRanking

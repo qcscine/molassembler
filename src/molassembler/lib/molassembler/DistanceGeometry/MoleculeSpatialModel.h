@@ -93,7 +93,7 @@ public:
     const std::vector<AtomIndexType>& baseConstituents,
     const ValueBounds& coneHeightBounds,
     const double bondRelativeVariance,
-    const Molecule& molecule
+    const GraphType& graph
   );
 
   static double spiroCrossAngle(const double alpha, const double beta);
@@ -102,7 +102,7 @@ public:
     const std::vector<AtomIndexType>& ligandIndices,
     const AtomIndexType centralIndex,
     const double bondRelativeVariance,
-    const Molecule& molecule
+    const GraphType& graph
   );
 
 /* Constructor */

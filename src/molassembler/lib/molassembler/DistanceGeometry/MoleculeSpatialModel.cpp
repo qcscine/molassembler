@@ -189,7 +189,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       && molecule.getNumAdjacencies(i) > 1 // non-terminal
     ) {
       _stereocenterMap[i] = std::make_shared<Stereocenters::CNStereocenter>(
-        molecule,
+        molecule.getGraph(),
         molecule.determineLocalGeometry(i),
         i,
         molecule.rankPriority(i)
@@ -839,7 +839,7 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
     ligandIndices,
     coneHeightBounds,
     bondRelativeVariance * _looseningMultiplier,
-    _molecule
+    _molecule.getGraph()
   );
 }
 
@@ -851,7 +851,7 @@ ValueBounds MoleculeSpatialModel::ligandDistance(
     ligandIndices,
     centralIndex,
     bondRelativeVariance * _looseningMultiplier,
-    _molecule
+    _molecule.getGraph()
   );
 }
 
@@ -1142,7 +1142,7 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   const std::vector<AtomIndexType>& baseConstituents,
   const ValueBounds& coneHeightBounds,
   const double bondRelativeVariance,
-  const Molecule& molecule
+  const GraphType& graph
 ) {
   /* Have to decide cone base radius in order to calculate this. There are some
    * simple cases to get out of the way first:
@@ -1154,18 +1154,19 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   }
 
   if(baseConstituents.size() == 2) {
-    auto bondTypeOptional = molecule.getBondType(
+    auto findEdgePair = boost::edge(
       baseConstituents.front(),
-      baseConstituents.back()
+      baseConstituents.back(),
+      graph
     );
 
     // If a ligand is haptic and consists of two ligands, these MUST be bonded
-    assert(bondTypeOptional);
+    assert(findEdgePair.second);
 
     double radius = Bond::calculateBondDistance(
-      molecule.getElementType(baseConstituents.front()),
-      molecule.getElementType(baseConstituents.back()),
-      bondTypeOptional.value()
+      graph[baseConstituents.front()].elementType,
+      graph[baseConstituents.back()].elementType,
+      graph[findEdgePair.first].bondType
     ) / 2;
 
     // Angle gets smaller if height bigger or cone base radius smaller
@@ -1186,7 +1187,8 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   }
 
   // Now it gets tricky. The base constituents may be part of a cycle or not
-  Cycles cycles = molecule.getCycleData();
+  // TODO this needs to be cached / gotten from before
+  Cycles cycles {graph};
 
   /* This is essentially an if - only one cycle can consist of exactly the base
    * constituents
@@ -1205,15 +1207,15 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
     auto distances = temple::mapSequentialPairs(
       ringIndexSequence,
       [&](const AtomIndexType i, const AtomIndexType j) -> double {
-        auto bondTypeOption = molecule.getBondType(i, j);
+        auto findEdgePair = boost::edge(i, j, graph);
 
         // These vertices really ought to be bonded
-        assert(bondTypeOption);
+        assert(findEdgePair.second);
 
         return Bond::calculateBondDistance(
-          molecule.getElementType(i),
-          molecule.getElementType(j),
-          bondTypeOption.value()
+          graph[i].elementType,
+          graph[j].elementType,
+          graph[findEdgePair.first].bondType
         );
       }
     );
@@ -1268,7 +1270,14 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   std::deque<AtomIndexType> pathSequence;
   pathSequence.push_back(baseConstituents.front());
 
-  auto initialAdjacents = molecule.getAdjacencies(baseConstituents.front());
+  auto adjacentIters = boost::adjacent_vertices(baseConstituents.front(), graph);
+  std::vector<AtomIndexType> initialAdjacents;
+  std::copy(
+    adjacentIters.first,
+    adjacentIters.second,
+    std::back_inserter(initialAdjacents)
+  );
+
   temple::TinyUnorderedSet<AtomIndexType> initialAdjacentsSet;
   initialAdjacentsSet.data = initialAdjacents;
 
@@ -1305,7 +1314,12 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
     if(!frontFinished) {
       frontFinished = true;
       unsigned count = 0;
-      for(const auto adjacent : molecule.iterateAdjacencies(pathSequence.front())) {
+      for(
+        const AtomIndexType adjacent :
+        RangeForTemporary<GraphType::adjacency_iterator>(
+          boost::adjacent_vertices(pathSequence.front(), graph)
+        )
+      ) {
         if(ligandIndicesSet.count(adjacent)) {
           if(adjacent != pathSequence.at(1)) {
             pathSequence.push_front(adjacent);
@@ -1325,7 +1339,12 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
     if(!backFinished) {
       backFinished = true;
       unsigned count = 0;
-      for(const auto adjacent : molecule.iterateAdjacencies(pathSequence.back())) {
+      for(
+        const auto adjacent :
+        RangeForTemporary<GraphType::adjacency_iterator>(
+          boost::adjacent_vertices(pathSequence.back(), graph)
+        )
+      ) {
         if(ligandIndicesSet.count(adjacent)) {
           if(adjacent != pathSequence.at(pathSequence.size() - 2)) {
             pathSequence.push_back(adjacent);
@@ -1362,19 +1381,22 @@ ValueBounds MoleculeSpatialModel::ligandDistanceFromCenter(
   const std::vector<AtomIndexType>& ligandIndices,
   const AtomIndexType centralIndex,
   const double bondRelativeVariance,
-  const Molecule& molecule
+  const GraphType& graph
 ) {
   assert(ligandIndices.size() > 0);
 
-  Delib::ElementType centralIndexType = molecule.getElementType(centralIndex);
+  Delib::ElementType centralIndexType = graph[centralIndex].elementType;
 
   if(ligandIndices.size() == 1) {
     auto ligandIndex = ligandIndices.front();
 
+    auto edgeFindPair = boost::edge(ligandIndex, centralIndex, graph);
+    assert(edgeFindPair.second);
+
     double distance = Bond::calculateBondDistance(
-      molecule.getElementType(ligandIndex),
+      graph[ligandIndex].elementType,
       centralIndexType,
-      molecule.getBondType(ligandIndex, centralIndex).value()
+      graph[edgeFindPair.first].bondType
     );
 
     return {
@@ -1387,10 +1409,13 @@ ValueBounds MoleculeSpatialModel::ligandDistanceFromCenter(
     temple::map(
       ligandIndices,
       [&](AtomIndexType ligandIndex) -> double {
+        auto edgeFindPair = boost::edge(ligandIndex, centralIndex, graph);
+        assert(edgeFindPair.second);
+
         return Bond::calculateBondDistance(
-          molecule.getElementType(ligandIndex),
+          graph[ligandIndex].elementType,
           centralIndexType,
-          molecule.getBondType(ligandIndex, centralIndex).value()
+          graph[edgeFindPair.first].bondType
         );
       }
     )

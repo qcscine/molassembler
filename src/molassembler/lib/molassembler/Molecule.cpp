@@ -345,7 +345,7 @@ StereocenterList Molecule::_detectStereocenters() const {
     if(_isCNStereocenterCandidate(candidateIndex)) {
       // Construct a Stereocenter here
       auto newStereocenter = std::make_shared<Stereocenters::CNStereocenter>(
-        *this,
+        _adjacencies,
         determineLocalGeometry(candidateIndex),
         candidateIndex,
         rankPriority(candidateIndex)
@@ -482,12 +482,12 @@ void Molecule::_pickyFitStereocenter(
     && expectedSymmetry == Symmetry::Name::Tetrahedral
   ) {
     stereocenter.fit(
-      *this,
+      _adjacencies,
       positions,
       {Symmetry::Name::Seesaw, Symmetry::Name::TrigonalPyramidal}
     );
   } else {
-    stereocenter.fit(*this, positions);
+    stereocenter.fit(_adjacencies, positions);
   }
 }
 
@@ -616,7 +616,7 @@ void Molecule::_propagateGraphChange() {
 
             // Propagate the state of the stereocenter to the new ranking
             CNStereocenterPtr -> propagateGraphChange(
-              *this,
+              _adjacencies,
               rankPriority(candidateIndex)
             );
 
@@ -640,7 +640,7 @@ void Molecule::_propagateGraphChange() {
         // No stereocenter yet
         if(_isCNStereocenterCandidate(candidateIndex)) {
           auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
-            *this,
+            _adjacencies,
             determineLocalGeometry(candidateIndex),
             candidateIndex,
             rankPriority(candidateIndex)
@@ -748,7 +748,7 @@ void Molecule::addBond(
         std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
           _stereocenters.at(toIndex)
         ) -> addSubstituent(
-          *this,
+          _adjacencies,
           addedIndex,
           rankPriority(toIndex),
           determineLocalGeometry(toIndex),
@@ -863,7 +863,7 @@ void Molecule::removeAtom(const AtomIndexType a) {
         std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
           _stereocenters.at(indexToUpdate)
         ) -> removeSubstituent(
-          *this,
+          _adjacencies,
           std::numeric_limits<AtomIndexType>::max(),
           rankPriority(indexToUpdate),
           determineLocalGeometry(indexToUpdate),
@@ -921,7 +921,7 @@ void Molecule::removeBond(
           std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
             _stereocenters.at(indexToUpdate)
           ) -> removeSubstituent(
-            *this,
+            _adjacencies,
             removedIndex,
             rankPriority(indexToUpdate),
             determineLocalGeometry(indexToUpdate),
@@ -1002,7 +1002,7 @@ void Molecule::setGeometryAtAtom(
         Symmetry::size(CNSPointer->getSymmetry())
         == Symmetry::size(symmetryName)
       ) {
-        CNSPointer->setSymmetry(symmetryName, *this);
+        CNSPointer->setSymmetry(symmetryName, _adjacencies);
         _propagateGraphChange();
       } else {
         throw std::logic_error(
@@ -1033,7 +1033,7 @@ void Molecule::setGeometryAtAtom(
     if(expectedSymmetry != symmetryName) {
       // Add the stereocenter irrespective of how many assignments it has
       auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
-        *this,
+        _adjacencies,
         symmetryName,
         a,
         rankPriority(a)
@@ -1216,7 +1216,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
 
     // Construct it
     auto stereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
-      *this,
+      _adjacencies,
       expectedGeometry,
       candidateIndex,
       rankPriority(candidateIndex, {}, positions)

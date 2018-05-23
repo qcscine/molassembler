@@ -11,7 +11,6 @@
 
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/DistanceGeometry.h"
-#include "Molecule.h"
 #include "BuildTypeSwitch.h"
 #include "CNStereocenter.h"
 #include "CommonTrig.h"
@@ -29,7 +28,7 @@ CNStereocenter::PermutationState::PermutationState(
   const RankingInformation& ranking,
   const AtomIndexType centerAtom,
   const Symmetry::Name symmetry,
-  const Molecule& molecule
+  const GraphType& graph
 ) {
   canonicalLigands = canonicalize(ranking.ligandsRanking);
   symbolicCharacters = transferToSymbolicCharacters(canonicalLigands);
@@ -47,7 +46,7 @@ CNStereocenter::PermutationState::PermutationState(
         ligandIndices,
         centerAtom,
         ModelType::bondRelativeVariance,
-        molecule
+        graph
       );
     }
   );
@@ -60,7 +59,7 @@ CNStereocenter::PermutationState::PermutationState(
         ranking.ligands.at(i),
         ligandDistances.at(i),
         ModelType::bondRelativeVariance,
-        molecule
+        graph
       )
     );
   }
@@ -102,7 +101,7 @@ CNStereocenter::PermutationState::PermutationState(
           coneAngles,
           ranking,
           symmetry,
-          molecule
+          graph
         );
       }
     );
@@ -421,7 +420,7 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
   const Symmetry::Name symmetry,
-  const Molecule& molecule
+  const GraphType& graph
 ) {
   // TODO checks when no links are present for haptic ligands
   /* Idea: An assignment is unfeasible if any link's cycle cannot be realized
@@ -477,10 +476,13 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
     auto edgeLengths = temple::mapSequentialPairs(
       link.cycleSequence,
       [&](const auto& i, const auto& j) -> double {
+        auto findEdgePair = boost::edge(i, j, graph);
+        assert(findEdgePair.second);
+
         return Bond::calculateBondDistance(
-          molecule.getElementType(i),
-          molecule.getElementType(j),
-          molecule.getBondType(i, j).value()
+          graph[i].elementType,
+          graph[j].elementType,
+          graph[findEdgePair.first].bondType
         );
       }
     );
@@ -511,9 +513,9 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
 
     if(
       d1 <= Bond::calculateBondDistance(
-        molecule.getElementType(link.cycleSequence.at(0)),
+        graph[link.cycleSequence.at(0)].elementType,
         // 0 is the central index, 1 is the first ligand
-        molecule.getElementType(link.cycleSequence.at(2)),
+        graph[link.cycleSequence.at(2)].elementType,
         BondType::Single
       )
     ) {
@@ -542,9 +544,9 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
 
       if(
         distances.back() <= Bond::calculateBondDistance(
-          molecule.getElementType(link.cycleSequence.at(0)),
+          graph[link.cycleSequence.at(0)].elementType,
           // 0 is the central index, 1 is the first ligand
-          molecule.getElementType(link.cycleSequence.at(i + 2)),
+          graph[link.cycleSequence.at(i + 2)].elementType,
           BondType::Single
         )
       ) {
@@ -560,7 +562,7 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
 /* Static functions */
 /* Constructors */
 CNStereocenter::CNStereocenter(
-  const Molecule& molecule,
+  const GraphType& graph,
   // The symmetry of this Stereocenter
   const Symmetry::Name& symmetry,
   // The atom this Stereocenter is centered on
@@ -576,13 +578,13 @@ CNStereocenter::CNStereocenter(
     _ranking,
     _centerAtom,
     _symmetry,
-    molecule
+    graph
   };
 }
 
 /* Modification */
 void CNStereocenter::addSubstituent(
-  const Molecule& molecule,
+  const GraphType& graph,
   const AtomIndexType newSubstituentIndex,
   const RankingInformation& newRanking,
   const Symmetry::Name& newSymmetry,
@@ -593,7 +595,7 @@ void CNStereocenter::addSubstituent(
     newRanking,
     _centerAtom,
     newSymmetry,
-    molecule
+    graph
   };
 
   /* Try to find a continuation of chiral state (index of permutation in the new
@@ -711,7 +713,7 @@ void CNStereocenter::assignRandom() {
 }
 
 void CNStereocenter::propagateGraphChange(
-  const Molecule& molecule,
+  const GraphType& graph,
   const RankingInformation& newRanking
 ) {
   if(
@@ -725,7 +727,7 @@ void CNStereocenter::propagateGraphChange(
     newRanking,
     _centerAtom,
     _symmetry,
-    molecule
+    graph
   };
 
   boost::optional<unsigned> newStereopermutation = boost::none;
@@ -830,7 +832,7 @@ void CNStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
 }
 
 void CNStereocenter::removeSubstituent(
-  const Molecule& molecule,
+  const GraphType& graph,
   const AtomIndexType which,
   const RankingInformation& newRanking,
   const Symmetry::Name& newSymmetry,
@@ -840,7 +842,7 @@ void CNStereocenter::removeSubstituent(
     newRanking,
     _centerAtom,
     newSymmetry,
-    molecule
+    graph
   };
 
   boost::optional<unsigned> newStereopermutation;
@@ -931,7 +933,7 @@ Symmetry::Name CNStereocenter::getSymmetry() const {
 }
 
 void CNStereocenter::fit(
-  const Molecule& molecule,
+  const GraphType& graph,
   const Delib::PositionCollection& positions,
   std::vector<Symmetry::Name> excludeSymmetries
 ) {
@@ -969,7 +971,7 @@ void CNStereocenter::fit(
     }
 
     // Change the symmetry of the CNStereocenter
-    setSymmetry(symmetryName, molecule);
+    setSymmetry(symmetryName, graph);
 
     for(
       unsigned assignment = 0;
@@ -1110,11 +1112,11 @@ void CNStereocenter::fit(
     && bestPenalty == initialPenalty
   ) {
     // Return to prior
-    setSymmetry(priorSymmetry, molecule);
+    setSymmetry(priorSymmetry, graph);
     assign(priorStereopermutation);
   } else {
     // Set to best fit
-    setSymmetry(bestSymmetry, molecule);
+    setSymmetry(bestSymmetry, graph);
 
     /* How to handle multiplicity?
      * Current policy: If there is multiplicity, do not assign
@@ -1476,7 +1478,7 @@ unsigned CNStereocenter::numStereopermutations() const {
 
 void CNStereocenter::setSymmetry(
   const Symmetry::Name symmetryName,
-  const Molecule& molecule
+  const GraphType& graph
 ) {
   _symmetry = symmetryName;
 
@@ -1487,7 +1489,7 @@ void CNStereocenter::setSymmetry(
     _ranking,
     _centerAtom,
     _symmetry,
-    molecule
+    graph
   };
 
   // The Stereocenter is now unassigned

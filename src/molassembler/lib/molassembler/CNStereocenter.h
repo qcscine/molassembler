@@ -24,8 +24,6 @@ using namespace std::string_literals;
 
 namespace molassembler {
 
-class Molecule;
-
 namespace DistanceGeometry {
 
 class MoleculeSpatialModel;
@@ -76,7 +74,7 @@ public:
       const RankingInformation& ranking,
       const AtomIndexType centerAtom,
       const Symmetry::Name symmetry,
-      const Molecule& molecule
+      const GraphType& graph
     );
 
     /*! Stably re-sort ranked ligand indices in decreasing set size
@@ -140,7 +138,7 @@ public:
       const ConeAngleType& coneAngles,
       const RankingInformation& ranking,
       const Symmetry::Name symmetry,
-      const Molecule& molecule
+      const GraphType& graph
     );
   };
 
@@ -165,8 +163,8 @@ public:
 /* Static functions */
 /* Constructors */
   CNStereocenter(
-    // The base molecule
-    const Molecule& molecule,
+    // The base graph
+    const GraphType& graph,
     // The symmetry of this Stereocenter
     const Symmetry::Name& symmetry,
     // The atom this Stereocenter is centered on
@@ -183,7 +181,7 @@ public:
    * preservation options
    */
   void addSubstituent(
-    const Molecule& molecule,
+    const GraphType& graph,
     const AtomIndexType newSubstituentIndex,
     const RankingInformation& newRanking,
     const Symmetry::Name& newSymmetry,
@@ -201,7 +199,7 @@ public:
    * angle and chiral distortions from the idealized symmetry.
    */
   void fit(
-    const Molecule& molecule,
+    const GraphType& graph,
     const Delib::PositionCollection& positions,
     std::vector<Symmetry::Name> excludeSymmetries = {}
   );
@@ -212,7 +210,7 @@ public:
    * stereocenter and if so, which assignment corresponds to the previous one.
    */
   void propagateGraphChange(
-    const Molecule& molecule,
+    const GraphType& graph,
     const RankingInformation& newRanking
   );
 
@@ -228,7 +226,7 @@ public:
    * according to the supplide chiral state preservation option.
    */
   void removeSubstituent(
-    const Molecule& molecule,
+    const GraphType& graph,
     const AtomIndexType which,
     const RankingInformation& newRanking,
     const Symmetry::Name& newSymmetry,
@@ -238,7 +236,7 @@ public:
   //! If the central symmetry group is changed, we must adapt
   void setSymmetry(
     const Symmetry::Name symmetryName,
-    const Molecule& molecule
+    const GraphType& graph
   );
 
 /* Information */
