@@ -186,6 +186,12 @@ public:
     GraphType graph,
     const Delib::PositionCollection& positions
   );
+
+  //! Construct a molecule from the underlying data fragments
+  Molecule(
+    GraphType graph,
+    StereocenterList stereocenters
+  );
 //!@}
 
 //!@name Modifiers

@@ -153,6 +153,9 @@ public:
 
   std::vector<DihedralLimits> dihedralLimits() const final;
 
+  const RankingInformation& getLeftRanking() const;
+  const RankingInformation& getRightRanking() const;
+
   std::string info() const final;
 
   std::string rankInfo() const;

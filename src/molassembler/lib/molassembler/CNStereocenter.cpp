@@ -1010,6 +1010,10 @@ void CNStereocenter::removeSubstituent(
   assign(newStereopermutation);
 }
 
+const RankingInformation& CNStereocenter::getRanking() const {
+  return _ranking;
+}
+
 Symmetry::Name CNStereocenter::getSymmetry() const {
   return _symmetry;
 }

@@ -690,6 +690,15 @@ Molecule::Molecule(
   _ensureModelInvariants();
 }
 
+Molecule::Molecule(
+  GraphType graph,
+  StereocenterList stereocenters
+) : _adjacencies(std::move(graph)),
+    _stereocenters(std::move(stereocenters))
+{
+  _ensureModelInvariants();
+}
+
 /* Modifiers */
 AtomIndexType Molecule::addAtom(
   const Delib::ElementType& elementType,
