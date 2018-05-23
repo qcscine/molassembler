@@ -465,12 +465,12 @@ void Molecule::_pickyFitStereocenter(
 ) const {
   AtomIndexType centralAtom = stereocenter.involvedAtoms().front();
 
-  /* Seesaw and tetrahedral are surprisingly close in terms of angles, and
-   * sometimes just slightly distorted tetrahedral centers can be recognized
-   * as seesaws, even though it makes absolutely zero sense. So in case
-   * the atom is a carbon, the expected geometry is tetrahedral and it has
-   * four adjacencies, just exclude Seesaw from the list of symmetries being
-   * fitted against.
+  /* Seesaw, trigonal pyramidal and tetrahedral are surprisingly close in terms
+   * of angles, and sometimes just slightly distorted tetrahedral centers can
+   * be recognized as seesaws, even though it makes absolutely zero sense. So
+   * in case the atom is a carbon, the expected geometry is tetrahedral and it
+   * has four adjacencies, just exclude Seesaw and trigonal pyramidal from the
+   * list of symmetries being fitted against.
    *
    * Calling
    * determineLocalGeometry is somewhat overkill here, but possibly more
@@ -484,7 +484,7 @@ void Molecule::_pickyFitStereocenter(
     stereocenter.fit(
       *this,
       positions,
-      {Symmetry::Name::Seesaw}
+      {Symmetry::Name::Seesaw, Symmetry::Name::TrigonalPyramidal}
     );
   } else {
     stereocenter.fit(*this, positions);
