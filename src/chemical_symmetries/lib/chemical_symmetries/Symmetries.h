@@ -252,6 +252,16 @@ inline const std::string& name(const Name name) {
   return symmetryData().at(name).stringName;
 }
 
+inline Name nameFromString(const std::string& nameString) {
+  for(const Name symmetryName : allNames) {
+    if(symmetryData().at(symmetryName).stringName == nameString) {
+      return symmetryName;
+    }
+  }
+
+  throw std::logic_error("No symmetry exists under that name!");
+}
+
 //! Fetch a space-free name for file naming
 inline std::string spaceFreeName(const Name name) {
   std::string toModify = symmetryData().at(name).stringName;

@@ -1,4 +1,4 @@
-find_package(molassembler COMPONENTS RingDecomposerLib gor1 boost_outcome cyclic_polygons temple chemical_symmetries stereopermutation REQUIRED)
+find_package(molassembler COMPONENTS RingDecomposerLib gor1 boost_outcome cyclic_polygons temple chemical_symmetries stereopermutation json REQUIRED)
 find_package(scine COMPONENTS Delib REQUIRED)
 find_package(dlib REQUIRED)
 

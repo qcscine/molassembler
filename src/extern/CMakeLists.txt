@@ -1,2 +1,3 @@
 add_subdirectory(RingDecomposerLib)
 add_subdirectory(boost_outcome)
+add_subdirectory(json)

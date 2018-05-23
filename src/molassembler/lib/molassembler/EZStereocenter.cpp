@@ -509,6 +509,13 @@ std::vector<DihedralLimits> EZStereocenter::dihedralLimits() const {
   return {};
 }
 
+const RankingInformation& EZStereocenter::getLeftRanking() const {
+  return _leftRanking;
+}
+const RankingInformation& EZStereocenter::getRightRanking() const {
+  return _rightRanking;
+}
+
 std::string EZStereocenter::info() const {
   using namespace std::string_literals;
 

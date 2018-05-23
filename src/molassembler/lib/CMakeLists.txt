@@ -36,6 +36,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AdjacencyMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AnalysisHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomInfo.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Base64.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondDistance.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BoundsFromSymmetry.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BuildTypeSwitch.h
@@ -59,6 +60,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/SequenceSet.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StdlibTypeAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.h
@@ -92,6 +94,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/MolGraphWriter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingTree.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StdlibTypeAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenter.cpp
 )
@@ -129,6 +132,7 @@ target_link_libraries(
     scine::Delib
     stereopermutation
     boost_outcome
+    json
     chemical_symmetries
     RingDecomposerLibStatic
     gor1
@@ -146,6 +150,7 @@ target_link_libraries(
     scine::DelibStatic
     stereopermutation
     boost_outcome
+    json
     chemical_symmetries
     RingDecomposerLibStatic
     gor1
