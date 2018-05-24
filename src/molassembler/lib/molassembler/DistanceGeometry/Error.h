@@ -35,9 +35,7 @@ namespace detail {
   };
 } // namespace detail
 
-#define THIS_MODULE_API_DECL extern inline
-
-THIS_MODULE_API_DECL const detail::DGError_category& DGError_category() {
+extern inline const detail::DGError_category& DGError_category() {
   static detail::DGError_category c;
   return c;
 }

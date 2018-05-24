@@ -406,10 +406,37 @@ std::list<RefinementData> debugDistanceGeometry(
 
     auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
     if(!distanceBoundsResult) {
-      Log::log(Log::Level::Warning) << "Failure in distance bounds matrix construction.\n";
+      Log::log(Log::Level::Warning) << "Failure in distance bounds matrix construction: "
+        << distanceBoundsResult.error().message() << "\n";
       failures += 1;
       if(exceededFailureRatio(failures, numStructures, failureRatio)) {
-        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG. Sample spatial model written to 'DG-failure-spatial-model.dot'.\n";
+        if(regenerateEachStep) {
+          auto moleculeCopy = molecule;
+
+          do {
+            for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
+              if(!stereocenterPtr->assigned()) {
+                moleculeCopy.assignStereocenterRandomly(
+                  stereocenterPtr->involvedAtoms().front()
+                );
+
+                /* Jump out of for-loop and re-check if there are still unassigned
+                 * stereocenters since assigning a stereocenter can invalidate
+                 * the list iterators (because stereocenters may appear or disappear
+                 * on assignment)
+                 */
+                break;
+              }
+            }
+          } while(predicates::hasUnassignedStereocenters(moleculeCopy));
+
+          MoleculeSpatialModel model {moleculeCopy};
+          model.writeGraphviz("DG-failure-spatial-model.dot");
+        } else {
+          MoleculeSpatialModel model {molecule};
+          model.writeGraphviz("DG-failure-spatial-model.dot");
+        }
         return refinementList;
       }
 
@@ -622,7 +649,7 @@ MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
   MoleculeSpatialModel spatialModel {molecule};
 
   // Generate the distance bounds from the spatial model
-  spatialModel.addDefaultDihedrals();
+  //spatialModel.addDefaultDihedrals();
 
   data.boundList = spatialModel.makeBoundList();
 

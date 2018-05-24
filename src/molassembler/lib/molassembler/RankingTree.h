@@ -18,7 +18,7 @@
  * For particularly complex trees, it is, however, absolutely essential so that
  * ranking completes in a reasonable timeframe.
  */
-#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+//#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
 #include "BondDistance.h"
 #include "BuildTypeSwitch.h"
@@ -27,6 +27,8 @@
 #include "OrderDiscoveryHelper.h"
 
 /* TODO
+ * - Maybe you can only add transferability edges when in down-only BFS?
+ * - Consider transition to more unordered containers
  * - Pseudo-asymmetry considerations
  *   - Is the propagation of pseudoasymmetry REALLY necessary? It makes sense
  *     to permute a stereocenter designated as pseudo-asymmetric. Dunno if

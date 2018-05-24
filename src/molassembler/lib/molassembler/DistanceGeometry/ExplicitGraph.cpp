@@ -5,6 +5,7 @@
 #include "boost/graph/two_bit_color_map.hpp"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "DistanceGeometry/Error.h"
+#include "Log.h"
 
 // #define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
@@ -172,8 +173,8 @@ double ExplicitGraph::upperBound(
 
 double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor& i) const {
   assert(isLeft(i));
-  auto a = i % 2;
-  auto elementType = _molecule.getElementType(a);
+  AtomIndexType a = i / 2;
+  Delib::ElementType elementType = _molecule.getElementType(a);
 
   if(elementType == _heaviestAtoms.front()) {
     return AtomInfo::vdwRadius(
@@ -242,7 +243,9 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
 #endif
 
     for(AtomIndexType b = a + 1; b < N; ++b) {
+      // Get upper bound from distances
       bounds(a, b) = distances.at(left(b));
+      // Get lower bound from distances
       bounds(b, a) = -distances.at(right(b));
 
       if(
@@ -250,7 +253,34 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
         || bounds(a, b) <= 0
         || bounds(b, a) <= 0
       ) {
-        return DGError::GraphImpossible; // NOTE 14
+        using LevelBaseType = std::underlying_type<Log::Level>::type;
+        if(
+          static_cast<LevelBaseType>(Log::level)
+          >= static_cast<LevelBaseType>(Log::Level::Warning)
+        ) {
+          // Report the contradiction in the log
+          auto& logRef = Log::log(Log::Level::Warning);
+          logRef << "Encountered contradiction in gathered distance bounds.\n";
+          logRef << "Path in graph for lower bound: l" << b;
+
+          AtomIndexType intermediate = left(b);
+          do {
+            intermediate = predecessors[intermediate];
+            logRef << " <- l" << (intermediate / 2);
+          } while (intermediate != left(a));
+          logRef << "\nPath in graph for upper bound: r" << b;
+
+          intermediate = right(b);
+          do {
+            intermediate = predecessors[intermediate];
+            logRef << " <- "
+              << (intermediate % 2 == 0 ? "l" : "r")
+              << (intermediate / 2);
+          } while (intermediate != left(a));
+          logRef << "\n";
+        }
+
+        return DGError::GraphImpossible;
       }
     }
   }

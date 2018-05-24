@@ -336,7 +336,7 @@ int main(int argc, char* argv[]) {
     (
       "f",
       boost::program_options::value<std::string>(),
-      "Read molecule to generate from file (MOLFiles only!)"
+      "Read molecule to generate from file"
     )
     (
       "r",

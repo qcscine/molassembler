@@ -15,7 +15,13 @@ namespace errfDetail {
     unsigned incorrectNonZeroChiralityConstraints = 0;
 
     for(const auto& chiralityConstraint : chiralityConstraints) {
-      if(std::fabs(chiralityConstraint.lower) > 1e-4) {
+      /* Make sure that chirality constraints meant to cause coplanarity of
+       * four indices aren't counted here - Their volume bounds are
+       * usually so tight that they might be slightly outside in any given
+       * refinement step. If they are outside their target values by a large
+       * amount, that is caught by finalStructureAcceptable anyway.
+       */
+      if(std::fabs(chiralityConstraint.lower + chiralityConstraint.upper) > 1e-4) {
         nonZeroChiralityConstraints += 1;
 
         const auto currentVolume = errfDetail::adjustedSignedVolume(

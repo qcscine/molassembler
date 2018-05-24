@@ -194,10 +194,16 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
         return std::fabs(
-          DelibHelpers::getDihedral(
-            positions,
-            indices
-          )
+          DelibHelpers::getDihedral(positions, indices)
+        );
+      }
+    )
+  ) + temple::sum(
+    temple::map(
+      _differentPriorityDihedralSequences(),
+      [&](const std::array<AtomIndexType, 4>& indices) -> double {
+        return M_PI - std::fabs(
+          DelibHelpers::getDihedral(positions, indices)
         );
       }
     )
@@ -208,10 +214,16 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
         return M_PI - std::fabs(
-          DelibHelpers::getDihedral(
-            positions,
-            indices
-          )
+          DelibHelpers::getDihedral(positions, indices)
+        );
+      }
+    )
+  ) + temple::sum(
+    temple::map(
+      _differentPriorityDihedralSequences(),
+      [&](const std::array<AtomIndexType, 4>& indices) -> double {
+        return std::fabs(
+          DelibHelpers::getDihedral(positions, indices)
         );
       }
     )

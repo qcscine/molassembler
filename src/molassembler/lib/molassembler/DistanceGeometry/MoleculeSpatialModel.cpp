@@ -979,9 +979,9 @@ struct MoleculeSpatialModel::ModelGraphWriter {
         char ezState = 'u';
         if(stereocenterPtr -> assigned()) {
           if(stereocenterPtr -> assigned().value() == 1) {
-            ezState = 'E';
-          } else {
             ezState = 'Z';
+          } else {
+            ezState = 'E';
           }
         }
 

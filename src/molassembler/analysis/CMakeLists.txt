@@ -12,11 +12,16 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 
     # add the executable and specify compilation and linking options
     add_executable(${targetName} ${filename})
-    #set_target_properties(
-    #  ${targetName} PROPERTIES
-    #  COMPILE_FLAGS ${WARNING_FLAGS}
-    #  LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
-    #)
+
+    #if("${targetName}" STREQUAL "analysis_RaytraceRefinement")
+    #  message(STATUS "Adding sanitizers to ${targetName}")
+    #  target_compile_options(${targetName}
+    #    PUBLIC -g -fsanitize=address -fsanitize=undefined
+    #  )
+    #  set_target_properties(${targetName} PROPERTIES
+    #    LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
+    #  )
+    #endif()
     target_compile_options(${targetName}
       PRIVATE -Wall -Wpedantic -Wextra -Og -g
     )
