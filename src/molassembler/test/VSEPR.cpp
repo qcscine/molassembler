@@ -74,12 +74,8 @@ auto makeLigand(
   return BindingSiteInformation {
     L,
     X,
-    {
-      {
-        type,
-        bty
-      }
-    }
+    {type},
+    bty
   };
 }
 

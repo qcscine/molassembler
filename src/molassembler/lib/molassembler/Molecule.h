@@ -161,7 +161,8 @@ private:
 
   //!  Reduces an atom's neighbors to ligand types
   std::vector<LocalGeometry::BindingSiteInformation> _reduceToSiteInformation(
-    const AtomIndexType index
+    const AtomIndexType index,
+    const RankingInformation& ranking
   ) const;
 
   //!  Updates the molecule's StereocenterList after a graph modification
@@ -315,7 +316,8 @@ public:
    * @throws if the supplied atomic index is invalid
    */
   Symmetry::Name determineLocalGeometry(
-    const AtomIndexType index
+    const AtomIndexType index,
+    const RankingInformation& ranking
   ) const;
 
   //! Returns a graphivz string representation of the molecule

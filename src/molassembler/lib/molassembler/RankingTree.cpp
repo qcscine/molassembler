@@ -791,7 +791,23 @@ void RankingTree::_applySequenceRules(
       ) {
         const AtomIndexType molSourceIndex = _tree[targetIndex].molIndex;
 
-        const auto localSymmetry = _moleculeRef.determineLocalGeometry(molSourceIndex);
+        RankingInformation centerRanking;
+
+        centerRanking.sortedSubstituents = _mapToAtomIndices(
+          _auxiliaryApplySequenceRules(
+            targetIndex,
+            _auxiliaryAdjacentsToRank(targetIndex, {})
+          )
+        );
+
+        centerRanking.ligands = auxiliaryLigands(centerRanking.sortedSubstituents);
+        centerRanking.ligandsRanking = RankingInformation::rankLigands(
+          centerRanking.ligands,
+          centerRanking.sortedSubstituents
+        );
+
+          // Again, no links since we're in an acyclic graph now
+        const auto localSymmetry = _moleculeRef.determineLocalGeometry(molSourceIndex, centerRanking);
         const unsigned nHydrogens = _adjacentTerminalHydrogens(targetIndex);
 
         /* In case only one assignment is possible, there is no reason to rank
@@ -799,22 +815,6 @@ void RankingTree::_applySequenceRules(
          */
         if(Symmetry::hasMultipleUnlinkedAssignments(localSymmetry, nHydrogens)) {
           // Instantiate a CNStereocenter here!
-          RankingInformation centerRanking;
-
-          centerRanking.sortedSubstituents = _mapToAtomIndices(
-            _auxiliaryApplySequenceRules(
-              targetIndex,
-              _auxiliaryAdjacentsToRank(targetIndex, {})
-            )
-          );
-
-          centerRanking.ligands = auxiliaryLigands(centerRanking.sortedSubstituents);
-          centerRanking.ligandsRanking = RankingInformation::rankLigands(
-            centerRanking.ligands,
-            centerRanking.sortedSubstituents
-          );
-
-          // Again, no links since we're in an acyclic graph now
 
           auto newStereocenter = Stereocenters::CNStereocenter {
             _moleculeRef.getGraph(),
@@ -2206,7 +2206,7 @@ std::string RankingTree::toString(const TreeEdgeIndex& edgeIndex) const {
   return (
     std::to_string(
       boost::source(edgeIndex, _tree)
-    ) + "->"s + std::to_string(
+    ) + "→"s + std::to_string(
       boost::target(edgeIndex, _tree)
     )
   );

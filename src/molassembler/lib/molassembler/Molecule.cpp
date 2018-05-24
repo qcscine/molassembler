@@ -343,12 +343,14 @@ StereocenterList Molecule::_detectStereocenters() const {
     ++candidateIndex
   ) {
     if(_isCNStereocenterCandidate(candidateIndex)) {
+      RankingInformation localRanking = rankPriority(candidateIndex);
+
       // Construct a Stereocenter here
       auto newStereocenter = std::make_shared<Stereocenters::CNStereocenter>(
         _adjacencies,
-        determineLocalGeometry(candidateIndex),
+        determineLocalGeometry(candidateIndex, localRanking),
         candidateIndex,
-        rankPriority(candidateIndex)
+        localRanking
       );
 
       if(newStereocenter -> numStereopermutations() > 1) {
@@ -492,7 +494,8 @@ void Molecule::_pickyFitStereocenter(
 }
 
 std::vector<LocalGeometry::BindingSiteInformation> Molecule::_reduceToSiteInformation(
-  const AtomIndexType index
+  const AtomIndexType index,
+  const RankingInformation& ranking
 ) const {
   /* TODO
    * - No L, X determination. Although, will L, X even be needed for metals?
@@ -512,17 +515,15 @@ std::vector<LocalGeometry::BindingSiteInformation> Molecule::_reduceToSiteInform
   // connected (unless in later models the entire structure is considered)
   std::vector<LocalGeometry::BindingSiteInformation> ligands;
 
-  for(const auto& adjacentIndex: iterateAdjacencies(index)) {
+  for(const auto& ligand : ranking.ligands) {
     ligands.push_back(
       LocalGeometry::BindingSiteInformation {
         0,
         0,
-        {
-          {  // L and X are 0 since only VSEPR is considered for now
-            getElementType(adjacentIndex),
-            getBondType(index, adjacentIndex).value()
-          }
-        }
+        temple::map(ligand, [&](const AtomIndexType i) -> Delib::ElementType {
+          return getElementType(i);
+        }),
+        getBondType(index, ligand.front()).value()
       }
     );
   }
@@ -614,17 +615,22 @@ void Molecule::_propagateGraphChange() {
               _stereocenters.at(candidateIndex)
             );
 
+            RankingInformation localRanking = rankPriority(candidateIndex);
+
             // Propagate the state of the stereocenter to the new ranking
             CNStereocenterPtr -> propagateGraphChange(
               _adjacencies,
-              rankPriority(candidateIndex)
+              localRanking
             );
 
             /* If the modified stereocenter has only one assignment and the
              * determined symmetry adds nothing, remove it
              */
             if(CNStereocenterPtr -> numStereopermutations() == 1) {
-              if(CNStereocenterPtr -> getSymmetry() == determineLocalGeometry(candidateIndex)) {
+              if(
+                CNStereocenterPtr -> getSymmetry()
+                == determineLocalGeometry(candidateIndex, localRanking)
+              ) {
                 _stereocenters.remove(candidateIndex);
               }
             }
@@ -639,11 +645,12 @@ void Molecule::_propagateGraphChange() {
       } else {
         // No stereocenter yet
         if(_isCNStereocenterCandidate(candidateIndex)) {
+          auto localRanking = rankPriority(candidateIndex);
           auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
             _adjacencies,
-            determineLocalGeometry(candidateIndex),
+            determineLocalGeometry(candidateIndex, localRanking),
             candidateIndex,
-            rankPriority(candidateIndex)
+            localRanking
           );
 
           if(newStereocenterPtr -> numStereopermutations() > 1) {
@@ -745,13 +752,15 @@ void Molecule::addBond(
   ) {
     if(_stereocenters.involving(toIndex)) {
       if(_stereocenters.at(toIndex)->type() == Stereocenters::Type::CNStereocenter) {
+        auto localRanking = rankPriority(toIndex);
+
         std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
           _stereocenters.at(toIndex)
         ) -> addSubstituent(
           _adjacencies,
           addedIndex,
-          rankPriority(toIndex),
-          determineLocalGeometry(toIndex),
+          localRanking,
+          determineLocalGeometry(toIndex, localRanking),
           chiralStatePreservation
         );
       } else {
@@ -860,13 +869,15 @@ void Molecule::removeAtom(const AtomIndexType a) {
   for(const auto& indexToUpdate : previouslyAdjacentVertices) {
     if(_stereocenters.involving(indexToUpdate)) {
       if(_stereocenters.at(indexToUpdate) -> type() == Stereocenters::Type::CNStereocenter) {
+        auto localRanking = rankPriority(indexToUpdate);
+
         std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
           _stereocenters.at(indexToUpdate)
         ) -> removeSubstituent(
           _adjacencies,
           std::numeric_limits<AtomIndexType>::max(),
-          rankPriority(indexToUpdate),
-          determineLocalGeometry(indexToUpdate),
+          localRanking,
+          determineLocalGeometry(indexToUpdate, localRanking),
           chiralStatePreservation
         );
       } else {
@@ -918,13 +929,14 @@ void Molecule::removeBond(
     ) {
       if(_stereocenters.involving(indexToUpdate)) {
         if(_stereocenters.at(indexToUpdate) -> type() == Stereocenters::Type::CNStereocenter) {
+          auto localRanking = rankPriority(indexToUpdate);
           std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
             _stereocenters.at(indexToUpdate)
           ) -> removeSubstituent(
             _adjacencies,
             removedIndex,
-            rankPriority(indexToUpdate),
-            determineLocalGeometry(indexToUpdate),
+            localRanking,
+            determineLocalGeometry(indexToUpdate, localRanking),
             chiralStatePreservation
           );
         } else {
@@ -1017,7 +1029,8 @@ void Molecule::setGeometryAtAtom(
       );
     }
   } else {
-    const Symmetry::Name expectedSymmetry = determineLocalGeometry(a);
+    RankingInformation localRanking = rankPriority(a);
+    const Symmetry::Name expectedSymmetry = determineLocalGeometry(a, localRanking);
 
     if(Symmetry::size(expectedSymmetry) != Symmetry::size(symmetryName)) {
       throw std::logic_error(
@@ -1036,7 +1049,7 @@ void Molecule::setGeometryAtAtom(
         _adjacencies,
         symmetryName,
         a,
-        rankPriority(a)
+        localRanking
       );
 
       // Default-assign stereocenters with only one assignment
@@ -1054,7 +1067,10 @@ void Molecule::setGeometryAtAtom(
 }
 
 /* Information */
-Symmetry::Name Molecule::determineLocalGeometry(const AtomIndexType index) const {
+Symmetry::Name Molecule::determineLocalGeometry(
+  const AtomIndexType index,
+  const RankingInformation& ranking
+) const {
   if(!_isValidIndex(index)) {
     throw std::out_of_range("Molecule::determineLocalGeometry: Supplied index is invalid!");
   }
@@ -1065,10 +1081,10 @@ Symmetry::Name Molecule::determineLocalGeometry(const AtomIndexType index) const
     );
   }
 
-  auto ligandsVector = _reduceToSiteInformation(index);
+  auto ligandsVector = _reduceToSiteInformation(index, ranking);
+  unsigned nSites = ligandsVector.size();
 
-  // TODO this below is invalid for metals!
-  unsigned nSites = getNumAdjacencies(index);
+  // TODO no charges
   int formalCharge = 0;
 
   auto symmetryOptional = LocalGeometry::vsepr(
@@ -1212,14 +1228,15 @@ StereocenterList Molecule::inferStereocentersFromPositions(
       continue;
     }
 
-    const Symmetry::Name expectedGeometry = determineLocalGeometry(candidateIndex);
+    RankingInformation localRanking = rankPriority(candidateIndex, {}, positions);
+    const Symmetry::Name expectedGeometry = determineLocalGeometry(candidateIndex, localRanking);
 
     // Construct it
     auto stereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
       _adjacencies,
       expectedGeometry,
       candidateIndex,
-      rankPriority(candidateIndex, {}, positions)
+      localRanking
     );
 
     _pickyFitStereocenter(*stereocenterPtr, expectedGeometry, positions);

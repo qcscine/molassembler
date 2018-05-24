@@ -19,18 +19,22 @@ namespace LocalGeometry {
 
 /* Typedefs */
 struct BindingSiteInformation {
-  using ElementAndBondPair = std::pair<
-    Delib::ElementType,
-    BondType
-  >;
-
   unsigned L, X;
-  std::vector<ElementAndBondPair> elementsAndBonds;
+
+  std::vector<Delib::ElementType> elements;
+  /* Only one bond type is needed - If the ligand consists of a single atom,
+   * then we only need to store one bond. If the ligand consists of multiple
+   * atoms, then the BondType is Eta.
+   */
+  BondType bondType;
 
   BindingSiteInformation() = default;
-  BindingSiteInformation(unsigned L, unsigned X, std::vector<ElementAndBondPair> elementsAndBonds)
-    : L {L}, X {X}, elementsAndBonds {elementsAndBonds}
-  {}
+  BindingSiteInformation(
+    unsigned L,
+    unsigned X,
+    std::vector<Delib::ElementType> elements,
+    BondType bondType
+  ) : L {L}, X {X}, elements {elements}, bondType {bondType} {}
 };
 
 // Mapping of bond type to a floating-point weight

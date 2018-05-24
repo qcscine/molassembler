@@ -35,14 +35,14 @@ boost::optional<Symmetry::Name> vsepr(
   }
 
   /* Make sure the ligand set doesn't include multiple atoms on a site.
-   * VSEPR probably can't handle this.
+   * VSEPR shouldn't try to handle haptic ligands.
    */
   if(
     std::any_of(
       sites.begin(),
       sites.end(),
       [](const auto& ligand) -> bool {
-        return ligand.elementsAndBonds.size() > 1;
+        return ligand.elements.size() > 1;
       }
     )
   ) {
@@ -69,14 +69,7 @@ boost::optional<Symmetry::Name> vsepr(
         sites.end(),
         0.0,
         [](const double& carry, const auto& ligand) -> double {
-          /* can abort multiple ways:
-           * vector front() is end() -> no ligands => API misuse
-           * bondWeights has no entry for bty => error in bondWeights
-           */
-          return carry + bondWeights.at(
-            ligand.elementsAndBonds.front().second
-            //     vec (pairs) ---^ pair -^ bty -^
-          );
+          return carry + bondWeights.at(ligand.bondType);
         }
       )
     ) / 2.0

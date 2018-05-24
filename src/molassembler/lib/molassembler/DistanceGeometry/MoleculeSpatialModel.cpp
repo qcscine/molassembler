@@ -188,11 +188,13 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       _stereocenterMap.count(i) == 0  // not already in the map
       && molecule.getNumAdjacencies(i) > 1 // non-terminal
     ) {
+      auto localRanking = molecule.rankPriority(i);
+
       _stereocenterMap[i] = std::make_shared<Stereocenters::CNStereocenter>(
         molecule.getGraph(),
-        molecule.determineLocalGeometry(i),
+        molecule.determineLocalGeometry(i, localRanking),
         i,
-        molecule.rankPriority(i)
+        localRanking
       );
 
       /* New stereocenters encountered at this point can have multiple
@@ -368,6 +370,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    * particularly small, i.e. are sizes 3-5
    */
   for(AtomIndexType i = 0; i < _molecule.numAtoms(); ++i) {
+    // TODO HAPTIC this is unsafe now
     if(
       _molecule.getNumAdjacencies(i) == 4
       && _stereocenterMap.count(i) == 1
@@ -770,7 +773,7 @@ MoleculeSpatialModel::BoundList MoleculeSpatialModel::makeBoundList() const {
     const auto& indexSequence = dihedralPair.first;
     const auto& dihedralBounds = dihedralPair.second;
 
-    const auto& abAngleBounds = _angleBounds.at(
+    auto firstAngleFindIter = _angleBounds.find(
       orderedIndexSequence<3>({{
         indexSequence.at(0),
         indexSequence.at(1),
@@ -778,13 +781,23 @@ MoleculeSpatialModel::BoundList MoleculeSpatialModel::makeBoundList() const {
       }})
     );
 
-    const auto& bcAngleBounds = _angleBounds.at(
+    auto secondAngleFindIter = _angleBounds.find(
       orderedIndexSequence<3>({{
         indexSequence.at(1),
         indexSequence.at(2),
         indexSequence.at(3)
       }})
     );
+
+    if(
+      firstAngleFindIter == _angleBounds.end()
+      || secondAngleFindIter == _angleBounds.end()
+    ) {
+      continue;
+    }
+
+    const auto& abAngleBounds = firstAngleFindIter->second;
+    const auto& bcAngleBounds = secondAngleFindIter->second;
 
     boundList.emplace_back(
       indexSequence.front(),
