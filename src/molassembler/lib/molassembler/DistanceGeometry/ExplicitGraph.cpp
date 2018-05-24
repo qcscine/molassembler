@@ -68,22 +68,56 @@ ExplicitGraph::ExplicitGraph(
   }
 }
 
+void ExplicitGraph::_explainContradictionPaths(
+  const VertexDescriptor a,
+  const VertexDescriptor b,
+  const std::vector<VertexDescriptor> predecessors
+) {
+  using LevelBaseType = std::underlying_type<Log::Level>::type;
+  if(
+    static_cast<LevelBaseType>(Log::level)
+    >= static_cast<LevelBaseType>(Log::Level::Warning)
+  ) {
+    // Report the contradiction in the log
+    auto& logRef = Log::log(Log::Level::Warning);
+    logRef << "Encountered contradiction in gathered distance bounds.\n";
+    logRef << "Path in graph for lower bound: l" << b;
+
+    AtomIndexType intermediate = left(b);
+    do {
+      intermediate = predecessors[intermediate];
+      logRef << " <- l" << (intermediate / 2);
+    } while (intermediate != left(a));
+    logRef << "\nPath in graph for upper bound: r" << b;
+
+    intermediate = right(b);
+    do {
+      intermediate = predecessors[intermediate];
+      logRef << " <- "
+        << (intermediate % 2 == 0 ? "l" : "r")
+        << (intermediate / 2);
+    } while (intermediate != left(a));
+
+    logRef << "\n";
+  }
+}
+
 void ExplicitGraph::_updateOrAddEdge(
-  const VertexDescriptor& a,
-  const VertexDescriptor& b,
+  const VertexDescriptor i,
+  const VertexDescriptor j,
   const double& edgeWeight
 ) {
-  auto edgeSearchPair = boost::edge(a, b, _graph);
+  auto edgeSearchPair = boost::edge(i, j, _graph);
   if(edgeSearchPair.second) {
     boost::get(boost::edge_weight, _graph, edgeSearchPair.first) = edgeWeight;
   } else {
-    boost::add_edge(a, b, edgeWeight, _graph);
+    boost::add_edge(i, j, edgeWeight, _graph);
   }
 }
 
 void ExplicitGraph::_updateGraphWithFixedDistance(
-  const AtomIndexType& a,
-  const AtomIndexType& b,
+  const VertexDescriptor a,
+  const VertexDescriptor b,
   const double& fixedDistance
 ) {
   _updateOrAddEdge(left(a), left(b), fixedDistance);
@@ -97,8 +131,8 @@ void ExplicitGraph::_updateGraphWithFixedDistance(
 }
 
 void ExplicitGraph::addBound(
-  const AtomIndexType& a,
-  const AtomIndexType& b,
+  const VertexDescriptor a,
+  const VertexDescriptor b,
   const ValueBounds& bound
 ) {
   // Bidirectional edge in left graph with upper weight
@@ -141,12 +175,12 @@ void ExplicitGraph::addImplicitEdges() {
 }
 
 double ExplicitGraph::lowerBound(
-  const AtomIndexType& i,
-  const AtomIndexType& j
+  const VertexDescriptor a,
+  const VertexDescriptor b
 ) const {
   auto edgeSearchPair = boost::edge(
-    left(i),
-    right(j),
+    left(a),
+    right(b),
     _graph
   );
 
@@ -157,12 +191,12 @@ double ExplicitGraph::lowerBound(
 }
 
 double ExplicitGraph::upperBound(
-  const AtomIndexType& i,
-  const AtomIndexType& j
+  const VertexDescriptor a,
+  const VertexDescriptor b
 ) const {
   auto edgeSearchPair = boost::edge(
-    left(i),
-    left(j),
+    left(a),
+    left(b),
     _graph
   );
 
@@ -171,7 +205,7 @@ double ExplicitGraph::upperBound(
   return boost::get(boost::edge_weight, _graph, edgeSearchPair.first);
 }
 
-double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor& i) const {
+double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   AtomIndexType a = i / 2;
   Delib::ElementType elementType = _molecule.getElementType(a);
@@ -253,33 +287,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
         || bounds(a, b) <= 0
         || bounds(b, a) <= 0
       ) {
-        using LevelBaseType = std::underlying_type<Log::Level>::type;
-        if(
-          static_cast<LevelBaseType>(Log::level)
-          >= static_cast<LevelBaseType>(Log::Level::Warning)
-        ) {
-          // Report the contradiction in the log
-          auto& logRef = Log::log(Log::Level::Warning);
-          logRef << "Encountered contradiction in gathered distance bounds.\n";
-          logRef << "Path in graph for lower bound: l" << b;
-
-          AtomIndexType intermediate = left(b);
-          do {
-            intermediate = predecessors[intermediate];
-            logRef << " <- l" << (intermediate / 2);
-          } while (intermediate != left(a));
-          logRef << "\nPath in graph for upper bound: r" << b;
-
-          intermediate = right(b);
-          do {
-            intermediate = predecessors[intermediate];
-            logRef << " <- "
-              << (intermediate % 2 == 0 ? "l" : "r")
-              << (intermediate / 2);
-          } while (intermediate != left(a));
-          logRef << "\n";
-        }
-
+        _explainContradictionPaths(a, b, predecessors);
         return DGError::GraphImpossible;
       }
     }
@@ -394,6 +402,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       );
 
       if(distance.at(left(b)) < -distance.at(right(b))) {
+        _explainContradictionPaths(a, b, predecessors);
         return DGError::GraphImpossible;
       }
 
