@@ -648,12 +648,8 @@ MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
   // Generate a spatial model from the molecular graph and stereocenters
   MoleculeSpatialModel spatialModel {molecule};
 
-  // Generate the distance bounds from the spatial model
-  //spatialModel.addDefaultDihedrals();
-
+  // Extract gathered data
   data.boundList = spatialModel.makeBoundList();
-
-  // Extract the chirality constraint prototypes
   data.chiralityConstraints = spatialModel.getChiralityConstraints();
 
   return data;

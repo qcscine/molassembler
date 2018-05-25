@@ -152,6 +152,9 @@ public:
     const double upper
   );
 
+  //! Adds [0, 2π] default angle bounds for all bonded atom triples
+  void addDefaultAngles();
+
   /*!
    * Adds [0, 2π] default dihedrals to the model. Use immediately before
    * calling makeDistanceBounds if you want default dihedrals modeled in the

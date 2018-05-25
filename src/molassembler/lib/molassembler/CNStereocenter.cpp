@@ -1239,10 +1239,8 @@ std::vector<
     std::array<boost::optional<unsigned>, 4>
   > precursors;
 
-  /* Only collect constraints if there is more than one assignment for this and
-   * it's actually assigned
-   */
-  if(numStereopermutations() > 1 && assigned()) {
+  // Only collect constraints if it's actually assigned
+  if(_assignmentOption) {
 
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index

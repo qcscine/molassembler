@@ -14,8 +14,6 @@
 
 /* TODO
  * - Use the static const MolGraphWriter coloring maps
- * - Move burden of modelling responsibility from stereocenter (i.e. remove
- *   angle from Stereocenter interface)
  */
 
 namespace molassembler {
@@ -369,17 +367,16 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    * We also only have to worry about modeling them if the two URFs are
    * particularly small, i.e. are sizes 3-5
    */
-  for(AtomIndexType i = 0; i < _molecule.numAtoms(); ++i) {
-    // TODO HAPTIC this is unsafe now
-    if(
-      _molecule.getNumAdjacencies(i) == 4
-      && _stereocenterMap.count(i) == 1
-      && _stereocenterMap.at(i) -> type() == Stereocenters::Type::CNStereocenter
-    ) {
+  for(const auto& stereocenterPtr : _molecule.getStereocenterList()) {
+    if(stereocenterPtr -> type() == Stereocenters::Type::CNStereocenter) {
+      auto cnPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+        stereocenterPtr
+      );
+
+      AtomIndexType i = cnPtr->involvedAtoms().front();
+
       if(
-        std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
-          _stereocenterMap.at(i)
-        ) -> getSymmetry() == Symmetry::Name::Tetrahedral
+        cnPtr -> getSymmetry() == Symmetry::Name::Tetrahedral
         && cycleData.numCycleFamilies(i) == 2
       ) {
         unsigned* URFIDs;
@@ -525,6 +522,10 @@ MoleculeSpatialModel::MoleculeSpatialModel(
       }
     }
   }
+
+  // Add default angles and dihedrals for all adjacent sequences
+  addDefaultAngles();
+  addDefaultDihedrals();
 }
 
 void MoleculeSpatialModel::setBondBoundsIfEmpty(
@@ -665,6 +666,22 @@ void MoleculeSpatialModel::setDihedralBoundsIfEmpty(
   }
 }
 
+void MoleculeSpatialModel::addDefaultAngles() {
+  const AtomIndexType N = _molecule.numAtoms();
+  for(AtomIndexType center = 0; center < N; ++center) {
+    temple::forAllPairs(
+      _molecule.getAdjacencies(center),
+      [&](const AtomIndexType i, const AtomIndexType j) -> void {
+        setAngleBoundsIfEmpty(
+          {{i, center, j}},
+          0,
+          M_PI
+        );
+      }
+    );
+  }
+}
+
 void MoleculeSpatialModel::addDefaultDihedrals() {
   for(const auto& edgeDescriptor : _molecule.iterateEdges()) {
     const AtomIndexType sourceIndex = boost::source(edgeDescriptor, _molecule.getGraph());
@@ -676,9 +693,10 @@ void MoleculeSpatialModel::addDefaultDihedrals() {
     temple::inplaceRemove(sourceAdjacencies, targetIndex);
     temple::inplaceRemove(targetAdjacencies, sourceIndex);
 
-    // Now, every combination
-    for(const auto& sourceAdjacentIndex : sourceAdjacencies) {
-      for(const auto& targetAdjacentIndex : targetAdjacencies) {
+    temple::forAllPairs(
+      sourceAdjacencies,
+      targetAdjacencies,
+      [&](const AtomIndexType sourceAdjacentIndex, const AtomIndexType targetAdjacentIndex) -> void {
         setDihedralBoundsIfEmpty(
           {{
             sourceAdjacentIndex,
@@ -690,7 +708,7 @@ void MoleculeSpatialModel::addDefaultDihedrals() {
           M_PI
         );
       }
-    }
+    );
   }
 }
 

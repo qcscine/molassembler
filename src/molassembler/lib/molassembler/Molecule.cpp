@@ -353,11 +353,12 @@ StereocenterList Molecule::_detectStereocenters() const {
         localRanking
       );
 
-      if(newStereocenter -> numStereopermutations() > 1) {
-        stereocenterList.add(
-          std::move(newStereocenter)
-        );
+      if(newStereocenter -> numStereopermutations() == 1) {
+        newStereocenter -> assign(0);
       }
+      stereocenterList.add(
+        std::move(newStereocenter)
+      );
     }
   }
 
@@ -623,15 +624,12 @@ void Molecule::_propagateGraphChange() {
               localRanking
             );
 
-            /* If the modified stereocenter has only one assignment and the
-             * determined symmetry adds nothing, remove it
+            /* If the modified stereocenter has only one assignment and is
+             * unassigned due to the graph change, default-assign it
              */
             if(CNStereocenterPtr -> numStereopermutations() == 1) {
-              if(
-                CNStereocenterPtr -> getSymmetry()
-                == determineLocalGeometry(candidateIndex, localRanking)
-              ) {
-                _stereocenters.remove(candidateIndex);
+              if(CNStereocenterPtr -> assigned() == boost::none) {
+                CNStereocenterPtr -> assign(0);
               }
             }
           } else {
@@ -653,11 +651,12 @@ void Molecule::_propagateGraphChange() {
             localRanking
           );
 
-          if(newStereocenterPtr -> numStereopermutations() > 1) {
-            _stereocenters.add(
-              std::move(newStereocenterPtr)
-            );
+          if(newStereocenterPtr -> numStereopermutations() == 1) {
+            newStereocenterPtr -> assign(0);
           }
+          _stereocenters.add(
+            std::move(newStereocenterPtr)
+          );
         }
       }
     }
@@ -1241,19 +1240,10 @@ StereocenterList Molecule::inferStereocentersFromPositions(
 
     _pickyFitStereocenter(*stereocenterPtr, expectedGeometry, positions);
 
-    /* Add the CNStereocenter to the list, unless if it has one assignment only
-     * and the symmetry is the same as expected
-     */
-    if(
-      !(
-        stereocenterPtr -> numStereopermutations() == 1
-        && expectedGeometry == stereocenterPtr -> getSymmetry()
-      )
-    ) {
-      stereocenters.add(
-        std::move(stereocenterPtr)
-      );
-    }
+    // Add the stereocenter to the list unconditionally
+    stereocenters.add(
+      std::move(stereocenterPtr)
+    );
   }
 
   // TODO EZStereocenters

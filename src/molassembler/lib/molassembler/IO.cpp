@@ -30,12 +30,23 @@ const boost::bimap<std::string, MOLFileHandler::MOLFileVersion> MOLFileHandler::
   // {"V3000", MOLFileVersion::V3000}
 });
 
+/* CTFile specification for V2000
+ * 1 - Single
+ * 2 - Double
+ * 3 - Triple
+ * 4 - Aromatic
+ * 5 - Single / Double
+ * 6 - Single / Aromatic
+ * 7 - Double / Aromatic
+ * 8 - Any
+ */
 const boost::bimap<unsigned, BondType> MOLFileHandler::_bondTypeMap
 = makeBimap<unsigned, BondType>({
   {1, BondType::Single},
   {2, BondType::Double},
   {3, BondType::Triple},
-  {4, BondType::Aromatic}
+  {4, BondType::Aromatic},
+  {8, BondType::Eta}
 });
 
 std::string MOLFileHandler::_removeAllSpaces(std::string&& a) {
