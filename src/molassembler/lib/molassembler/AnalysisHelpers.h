@@ -42,6 +42,7 @@ void writePOVFile(
   const unsigned dimensionality = 4;
   assert(stepData.positions.size() % dimensionality == 0);
   const unsigned N = stepData.positions.size() / dimensionality;
+  assert(N == mol.numAtoms());
 
 
   /* Write the POV file for this step */
@@ -58,7 +59,7 @@ void writePOVFile(
     << "#include \"scene.inc\"\n\n";
 
   // Define atom names with positions
-  for(unsigned i = 0; i < N; i++) {
+  for(unsigned i = 0; i < N; ++i) {
     outStream << "#declare " << detail::mapIndexToChar(i) <<  " = <";
     outStream << std::fixed << std::setprecision(4);
     outStream << stepData.positions(dimensionality * i) << ", ";
@@ -68,7 +69,7 @@ void writePOVFile(
   outStream << "\n";
 
   // Atoms
-  for(unsigned i = 0; i < N; i++) {
+  for(unsigned i = 0; i < N; ++i) {
     double fourthDimAbs = std::fabs(stepData.positions(dimensionality * i + 3));
     if(fourthDimAbs < 1e-4) {
       outStream << "Atom(" << detail::mapIndexToChar(i) << ")\n";
@@ -180,6 +181,7 @@ void writeDGPOVandProgressFiles(
       unsigned targetIndex = std::floor(i * stepLength);
       assert(targetIndex >= currentIndex && targetIndex < refinementData.steps.size());
       std::advance(listIter, targetIndex - currentIndex);
+      currentIndex = targetIndex;
 
       detail::writePOVFile(
         mol,

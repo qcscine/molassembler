@@ -9,7 +9,7 @@
 
 /*! @file
  *
- * Contains the declarations of a number of debug data structures for the 
+ * Contains the declarations of a number of debug data structures for the
  * debugging of DG refinement.
  */
 
