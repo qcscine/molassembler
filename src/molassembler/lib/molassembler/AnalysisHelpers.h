@@ -32,6 +32,118 @@ inline std::string mapIndexToChar(const unsigned& index) {
   return result;
 }
 
+void writePOVFile(
+  const Molecule& mol,
+  const std::string& baseFilename,
+  const unsigned structureIndex,
+  const DistanceGeometry::detail::RefinementStepData& stepData,
+  const std::vector<DistanceGeometry::ChiralityConstraint>& constraints
+) {
+  const unsigned dimensionality = 4;
+  assert(stepData.positions.size() % dimensionality == 0);
+  const unsigned N = stepData.positions.size() / dimensionality;
+
+
+  /* Write the POV file for this step */
+  std::stringstream filename;
+  filename << baseFilename << "-"
+    << std::setfill('0') << std::setw(3) << structureIndex
+    << ".pov";
+
+  std::ofstream outStream(
+    filename.str()
+  );
+
+  outStream << "#version 3.7;\n"
+    << "#include \"scene.inc\"\n\n";
+
+  // Define atom names with positions
+  for(unsigned i = 0; i < N; i++) {
+    outStream << "#declare " << detail::mapIndexToChar(i) <<  " = <";
+    outStream << std::fixed << std::setprecision(4);
+    outStream << stepData.positions(dimensionality * i) << ", ";
+    outStream << stepData.positions(dimensionality * i + 1) << ", ";
+    outStream << stepData.positions(dimensionality * i + 2) << ">;\n";
+  }
+  outStream << "\n";
+
+  // Atoms
+  for(unsigned i = 0; i < N; i++) {
+    double fourthDimAbs = std::fabs(stepData.positions(dimensionality * i + 3));
+    if(fourthDimAbs < 1e-4) {
+      outStream << "Atom(" << detail::mapIndexToChar(i) << ")\n";
+    } else {
+      outStream << "Atom4D(" << detail::mapIndexToChar(i) << ", "
+        << fourthDimAbs << ")\n";
+    }
+  }
+  outStream << "\n";
+
+  // Bonds
+  for(const auto& edge : mol.iterateEdges()) {
+    auto edgeVertices = mol.vertices(edge);
+    outStream << "Bond("
+      << detail::mapIndexToChar(edgeVertices.front()) << ","
+      << detail::mapIndexToChar(edgeVertices.back())
+      << ")\n";
+  }
+  outStream << "\n";
+
+  // Tetrahedra
+  if(!constraints.empty()) {
+    auto writePosition = [&stepData](
+      std::ostream& os,
+      const std::vector<AtomIndexType>& indices
+    ) -> std::ostream& {
+      // Calculate the average position
+      auto averagePosition = DistanceGeometry::errfDetail::getAveragePos3D(
+        stepData.positions,
+        indices
+      );
+
+      os << "<" << averagePosition.x() << ","
+        << averagePosition.y() << ","
+        << averagePosition.z() << ">";
+
+      return os;
+    };
+
+    for(const auto& chiralityConstraint : constraints) {
+      outStream << "TetrahedronHighlight(";
+      writePosition(outStream, chiralityConstraint.sites[0]);
+      outStream << ", ";
+      writePosition(outStream, chiralityConstraint.sites[1]);
+      outStream << ", ";
+      writePosition(outStream, chiralityConstraint.sites[2]);
+      outStream << ", ";
+      writePosition(outStream, chiralityConstraint.sites[3]);
+      outStream << ")\n";
+    }
+    outStream << "\n";
+  }
+
+  // Gradients
+  for(unsigned i = 0; i < N; i++) {
+    if(
+      dlib::length(
+        dlib::rowm(
+          stepData.gradient,
+          dlib::range(dimensionality * i, dimensionality * i + 2)
+        )
+      ) > 1e-5
+    ) {
+      outStream << "GradientVector(" << detail::mapIndexToChar(i) <<", <"
+        << std::fixed << std::setprecision(4)
+        << (-stepData.gradient(dimensionality * i)) << ", "
+        << (-stepData.gradient(dimensionality * i + 1)) << ", "
+        << (-stepData.gradient(dimensionality * i + 2)) << ", "
+        << ">)\n";
+    }
+  }
+
+  outStream.close();
+}
+
 } // namespace detail
 
 void writeDGPOVandProgressFiles(
@@ -39,127 +151,54 @@ void writeDGPOVandProgressFiles(
   const std::string& baseFilename,
   const DistanceGeometry::detail::RefinementData& refinementData
 ) {
-  const unsigned dimensionality = 4;
-
-  // Write the POV-Ray files and progress files
+  /* Write the progress file */
   std::string progressFilename = baseFilename + "-progress.csv"s;
   std::ofstream progressFile (progressFilename);
 
   progressFile << std::scientific;
 
-  for(const auto& refinementEnumPair : enumerate(refinementData.steps)) {
-
-    const auto& stepData = refinementEnumPair.value;
-    assert(stepData.positions.size() % dimensionality == 0);
-    const unsigned N = stepData.positions.size() / dimensionality;
-
+  for(const auto& refinementStep : refinementData.steps) {
     progressFile
-      << stepData.distanceError << ","
-      << stepData.chiralError << ","
-      << stepData.fourthDimError << ","
-      << dlib::length(stepData.gradient) << ","
-      << static_cast<unsigned>(stepData.compress) << ","
-      << stepData.proportionCorrectChiralityConstraints << "\n";
+      << refinementStep.distanceError << ","
+      << refinementStep.chiralError << ","
+      << refinementStep.fourthDimError << ","
+      << dlib::length(refinementStep.gradient) << ","
+      << static_cast<unsigned>(refinementStep.compress) << ","
+      << refinementStep.proportionCorrectChiralityConstraints << "\n";
+  }
 
-    // Write the POV file for this step
-    std::stringstream filename;
-    filename << baseFilename << "-"
-      << std::setfill('0') << std::setw(3) << refinementEnumPair.index
-      << ".pov";
+  progressFile.close();
 
-    std::ofstream outStream(
-      filename.str()
-    );
+  const unsigned maxPOVFiles = 100;
 
-    outStream << "#version 3.7;\n"
-      << "#include \"scene.inc\"\n\n";
+  if(refinementData.steps.size() > maxPOVFiles) {
+    // Determine 100 roughly equispaced conformations to write to POV files
+    double stepLength = static_cast<double>(refinementData.steps.size()) / maxPOVFiles;
+    auto listIter = refinementData.steps.begin();
+    unsigned currentIndex = 0;
+    for(unsigned i = 0; i < maxPOVFiles; ++i) {
+      unsigned targetIndex = std::floor(i * stepLength);
+      assert(targetIndex >= currentIndex && targetIndex < refinementData.steps.size());
+      std::advance(listIter, targetIndex - currentIndex);
 
-    // Define atom names with positions
-    for(unsigned i = 0; i < N; i++) {
-      outStream << "#declare " << detail::mapIndexToChar(i) <<  " = <";
-      outStream << std::fixed << std::setprecision(4);
-      outStream << stepData.positions(dimensionality * i) << ", ";
-      outStream << stepData.positions(dimensionality * i + 1) << ", ";
-      outStream << stepData.positions(dimensionality * i + 2) << ">;\n";
+      detail::writePOVFile(
+        mol,
+        baseFilename,
+        i,
+        *listIter,
+        refinementData.constraints
+      );
     }
-    outStream << "\n";
-
-    // Atoms
-    for(unsigned i = 0; i < N; i++) {
-      double fourthDimAbs = std::fabs(stepData.positions(dimensionality * i + 3));
-      if(fourthDimAbs < 1e-4) {
-        outStream << "Atom(" << detail::mapIndexToChar(i) << ")\n";
-      } else {
-        outStream << "Atom4D(" << detail::mapIndexToChar(i) << ", "
-          << fourthDimAbs << ")\n";
-      }
+  } else {
+    for(const auto enumPair : enumerate(refinementData.steps)) {
+      detail::writePOVFile(
+        mol,
+        baseFilename,
+        enumPair.index,
+        enumPair.value,
+        refinementData.constraints
+      );
     }
-    outStream << "\n";
-
-    // Bonds
-    for(const auto& edge : mol.iterateEdges()) {
-      auto edgeVertices = mol.vertices(edge);
-      outStream << "Bond("
-        << detail::mapIndexToChar(edgeVertices.front()) << ","
-        << detail::mapIndexToChar(edgeVertices.back())
-        << ")\n";
-    }
-    outStream << "\n";
-
-    // Tetrahedra
-    if(!refinementData.constraints.empty()) {
-      auto writePosition = [&stepData](
-        std::ostream& os,
-        const std::vector<AtomIndexType>& indices
-      ) -> std::ostream& {
-        // Calculate the average position
-        auto averagePosition = DistanceGeometry::errfDetail::getAveragePos3D(
-          stepData.positions,
-          indices
-        );
-
-        os << "<" << averagePosition.x() << ","
-          << averagePosition.y() << ","
-          << averagePosition.z() << ">";
-
-        return os;
-      };
-
-      for(const auto& chiralityConstraint : refinementData.constraints) {
-        outStream << "TetrahedronHighlight(";
-        writePosition(outStream, chiralityConstraint.sites[0]);
-        outStream << ", ";
-        writePosition(outStream, chiralityConstraint.sites[1]);
-        outStream << ", ";
-        writePosition(outStream, chiralityConstraint.sites[2]);
-        outStream << ", ";
-        writePosition(outStream, chiralityConstraint.sites[3]);
-        outStream << ")\n";
-      }
-      outStream << "\n";
-    }
-
-    // Gradients
-    for(unsigned i = 0; i < N; i++) {
-      if(
-        dlib::length(
-          dlib::rowm(
-            stepData.gradient,
-            dlib::range(dimensionality * i, dimensionality * i + 2)
-          )
-        ) > 1e-5
-      ) {
-        outStream << "GradientVector(" << detail::mapIndexToChar(i) <<", <"
-          << std::fixed << std::setprecision(4)
-          << (-stepData.gradient(dimensionality * i)) << ", "
-          << (-stepData.gradient(dimensionality * i + 1)) << ", "
-          << (-stepData.gradient(dimensionality * i + 2)) << ", "
-          << ">)\n";
-      }
-    }
-
-    outStream.close();
-
   }
 }
 
