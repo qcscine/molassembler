@@ -29,6 +29,38 @@ TemperatureRegime Molecule::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Molecule::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 
 /* Static functions */
+bool Molecule::disregardStereocenter(
+  const Stereocenters::CNStereocenter& stereocenter,
+  const Molecule& molecule,
+  const TemperatureRegime temperatureRegimeSetting
+) {
+  if(temperatureRegimeSetting == TemperatureRegime::High) {
+    AtomIndexType centralIndex = stereocenter.involvedAtoms().front();
+
+    if(
+      stereocenter.getSymmetry() == Symmetry::Name::CutTetrahedral
+      && molecule.getElementType(centralIndex) == Delib::ElementType::N
+    ) {
+      Cycles cycleData = molecule.getCycleData();
+      // Figure out if the nitrogen is in a cycle of size 4 or smaller
+      for(
+        const auto cyclePtr :
+        cycleData.iterate(Cycles::predicates::ContainsIndex {centralIndex})
+      ) {
+        if(Cycles::size(cyclePtr) <= 4) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    return false;
+  }
+
+  return false;
+}
+
 Delib::BondOrderCollection Molecule::uffBondOrders(
   const Delib::AtomCollection& atomCollection
 ) {
@@ -342,20 +374,21 @@ StereocenterList Molecule::_detectStereocenters() const {
     candidateIndex < numAtoms();
     ++candidateIndex
   ) {
-    if(_isCNStereocenterCandidate(candidateIndex)) {
-      RankingInformation localRanking = rankPriority(candidateIndex);
+    RankingInformation localRanking = rankPriority(candidateIndex);
 
-      // Construct a Stereocenter here
-      auto newStereocenter = std::make_shared<Stereocenters::CNStereocenter>(
-        _adjacencies,
-        determineLocalGeometry(candidateIndex, localRanking),
-        candidateIndex,
-        localRanking
-      );
+    // Construct a Stereocenter here
+    auto newStereocenter = std::make_shared<Stereocenters::CNStereocenter>(
+      _adjacencies,
+      determineLocalGeometry(candidateIndex, localRanking),
+      candidateIndex,
+      localRanking
+    );
 
-      if(newStereocenter -> numStereopermutations() == 1) {
-        newStereocenter -> assign(0);
-      }
+    if(newStereocenter -> numStereopermutations() == 1) {
+      newStereocenter -> assign(0);
+    }
+
+    if(!disregardStereocenter(*newStereocenter, *this, temperatureRegime)) {
       stereocenterList.add(
         std::move(newStereocenter)
       );
@@ -377,43 +410,6 @@ void Molecule::_ensureModelInvariants() const {
 
 bool Molecule::_isValidIndex(const AtomIndexType index) const {
   return index < numAtoms();
-}
-
-bool Molecule::_isCNStereocenterCandidate(const AtomIndexType atomIndex) const {
-  auto numAdjacencies = getNumAdjacencies(atomIndex);
-
-  if(numAdjacencies < 3) {
-    return false;
-  }
-
-  if(temperatureRegime == TemperatureRegime::High) {
-    /* Skip any instances of nitrogen with exactly three adjacencies,
-     * unless the central atom is part of a cycle of size 4 or smaller
-     */
-    if(
-      getElementType(atomIndex) == Delib::ElementType::N
-      && numAdjacencies == 3
-    ) {
-      auto cycleData = getCycleData();
-
-      // Find out if the nitrogen is in a cycle of size 4 or smaller
-      bool isInCycleOfSize4OrSmaller = false;
-
-      for(
-        const auto cyclePtr :
-        cycleData.iterate(Cycles::predicates::ContainsIndex {atomIndex})
-      ) {
-        if(Cycles::size(cyclePtr) <= 4) {
-          isInCycleOfSize4OrSmaller = true;
-          break;
-        }
-      }
-
-      return isInCycleOfSize4OrSmaller;
-    }
-  }
-
-  return true;
 }
 
 bool Molecule::_isEZStereocenterCandidate(const GraphType::edge_descriptor& edgeIndex) const {
@@ -611,28 +607,28 @@ void Molecule::_propagateGraphChange() {
       if(_stereocenters.involving(candidateIndex)) {
         if(_stereocenters.at(candidateIndex)->type() == Stereocenters::Type::CNStereocenter) {
           // Is it possible for this atom to continue to be a CNStereocenter?
-          if(_isCNStereocenterCandidate(candidateIndex)) {
-            auto CNStereocenterPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
-              _stereocenters.at(candidateIndex)
-            );
+          auto CNStereocenterPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+            _stereocenters.at(candidateIndex)
+          );
 
-            RankingInformation localRanking = rankPriority(candidateIndex);
+          RankingInformation localRanking = rankPriority(candidateIndex);
 
-            // Propagate the state of the stereocenter to the new ranking
-            CNStereocenterPtr -> propagateGraphChange(
-              _adjacencies,
-              localRanking
-            );
+          // Propagate the state of the stereocenter to the new ranking
+          CNStereocenterPtr -> propagateGraphChange(
+            _adjacencies,
+            localRanking
+          );
 
-            /* If the modified stereocenter has only one assignment and is
-             * unassigned due to the graph change, default-assign it
-             */
-            if(CNStereocenterPtr -> numStereopermutations() == 1) {
-              if(CNStereocenterPtr -> assigned() == boost::none) {
-                CNStereocenterPtr -> assign(0);
-              }
+          /* If the modified stereocenter has only one assignment and is
+           * unassigned due to the graph change, default-assign it
+           */
+          if(CNStereocenterPtr -> numStereopermutations() == 1) {
+            if(CNStereocenterPtr -> assigned() == boost::none) {
+              CNStereocenterPtr -> assign(0);
             }
-          } else {
+          }
+
+          if(disregardStereocenter(*CNStereocenterPtr, *this, temperatureRegime)) {
             // Since this index cannot be a CNStereocenter anymore, drop it
             _stereocenters.remove(candidateIndex);
           }
@@ -642,18 +638,18 @@ void Molecule::_propagateGraphChange() {
          */
       } else {
         // No stereocenter yet
-        if(_isCNStereocenterCandidate(candidateIndex)) {
-          auto localRanking = rankPriority(candidateIndex);
-          auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
-            _adjacencies,
-            determineLocalGeometry(candidateIndex, localRanking),
-            candidateIndex,
-            localRanking
-          );
+        auto localRanking = rankPriority(candidateIndex);
+        auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
+          _adjacencies,
+          determineLocalGeometry(candidateIndex, localRanking),
+          candidateIndex,
+          localRanking
+        );
 
-          if(newStereocenterPtr -> numStereopermutations() == 1) {
-            newStereocenterPtr -> assign(0);
-          }
+        if(newStereocenterPtr -> numStereopermutations() == 1) {
+          newStereocenterPtr -> assign(0);
+        }
+        if(!disregardStereocenter(*newStereocenterPtr, *this, temperatureRegime)) {
           _stereocenters.add(
             std::move(newStereocenterPtr)
           );
@@ -1220,10 +1216,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
    */
   for(unsigned candidateIndex = 0; candidateIndex < numAtoms(); candidateIndex++) {
     // Skip unsuitable atoms and ones that already have a stereocenter
-    if(
-      !_isCNStereocenterCandidate(candidateIndex)
-      || stereocenters.involving(candidateIndex)
-    ) {
+    if(stereocenters.involving(candidateIndex)) {
       continue;
     }
 
@@ -1240,10 +1233,11 @@ StereocenterList Molecule::inferStereocentersFromPositions(
 
     _pickyFitStereocenter(*stereocenterPtr, expectedGeometry, positions);
 
-    // Add the stereocenter to the list unconditionally
-    stereocenters.add(
-      std::move(stereocenterPtr)
-    );
+    if(!disregardStereocenter(*stereocenterPtr, *this, temperatureRegime)) {
+      stereocenters.add(
+        std::move(stereocenterPtr)
+      );
+    }
   }
 
   // TODO EZStereocenters

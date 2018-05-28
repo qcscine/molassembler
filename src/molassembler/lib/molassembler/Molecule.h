@@ -33,6 +33,20 @@ public:
   static ChiralStatePreservation chiralStatePreservation;
 
 /* Static functions */
+  /*! Decides whether to keep a stereocenter or not within a temperature regime
+   *
+   * Criteria applied are:
+   * - Minimum of three adjacent indices
+   * - If the high-temperature approximation is invoked, trivalent nitrogen
+   *   inverts too rapidly to carry stereoinformation (unless part of a cycle
+   *   of size 4 or smaller, where strain hinders inversion)
+   */
+  static bool disregardStereocenter(
+    const Stereocenters::CNStereocenter& stereocenter,
+    const Molecule& molecule,
+    const TemperatureRegime temperatureRegimeSetting
+  );
+
   //! Calculates a bond order collection via UFF-like bond distance modelling
   static Delib::BondOrderCollection uffBondOrders(
     const Delib::AtomCollection& atomCollection
@@ -121,16 +135,6 @@ private:
 
   //! Ensures basic expectations about what constitutes a Molecule are met
   void _ensureModelInvariants() const;
-
-  /*! Returns if an atom could be a CNStereocenter with multiple assignments
-   *
-   * Criteria applied are:
-   * - Minimum of three adjacent indices
-   * - If the high-temperature approximation is invoked, trivalent nitrogen
-   *   inverts too rapidly to carry stereoinformation (unless part of a cycle
-   *   of size 4 or smaller, where strain hinders inversion)
-   */
-  bool _isCNStereocenterCandidate(const AtomIndexType atomIndex) const;
 
   /*! Returns if an edge could be an EZStereocenter with multiple assignments
    *

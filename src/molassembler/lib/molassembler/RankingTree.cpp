@@ -787,7 +787,6 @@ void RankingTree::_applySequenceRules(
         !_tree[edge].stereocenterOption // No EZStereocenter on this edge
         && !_tree[targetIndex].stereocenterOption // No CNStereocenter
         && _nonDuplicateDegree(targetIndex) >= 3 // Min. degree for chirality
-        && _moleculeRef._isCNStereocenterCandidate(_tree[targetIndex].molIndex)
       ) {
         const AtomIndexType molSourceIndex = _tree[targetIndex].molIndex;
 
@@ -856,10 +855,18 @@ void RankingTree::_applySequenceRules(
               }
             }
 
-            _tree[targetIndex].stereocenterOption = newStereocenter;
+            if(
+              !Molecule::disregardStereocenter(
+                newStereocenter,
+                _moleculeRef,
+                Molecule::temperatureRegime
+              )
+            ) {
+              _tree[targetIndex].stereocenterOption = newStereocenter;
 
-            // Mark that we instantiated something
-            foundCNStereocenters = true;
+              // Mark that we instantiated something
+              foundCNStereocenters = true;
+            }
           }
 
           if /*C++17 constexpr */ (buildTypeIsDebug) {
