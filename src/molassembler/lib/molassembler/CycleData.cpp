@@ -1,12 +1,13 @@
 #include "CycleData.h"
 #include "StdlibTypeAlgorithms.h"
 
-#include <iostream>
-
 namespace molassembler {
 
-Cycles::Cycles(const GraphType& sourceGraph) {
-  _rdlPtr = std::make_shared<RDLDataPtrs>(sourceGraph);
+Cycles::Cycles(
+  const GraphType& sourceGraph,
+  const bool ignoreEtaBonds
+) {
+  _rdlPtr = std::make_shared<RDLDataPtrs>(sourceGraph, ignoreEtaBonds);
 }
 
 unsigned Cycles::size(const RDL_cycle* const cyclePtr) {
@@ -115,20 +116,43 @@ bool Cycles::operator != (const Cycles& other) const {
 }
 
 /* Cycles::RDLDataPtrs */
-Cycles::RDLDataPtrs::RDLDataPtrs(const GraphType& sourceGraph) {
+Cycles::RDLDataPtrs::RDLDataPtrs(
+  const GraphType& sourceGraph,
+  const bool ignoreEtaBonds
+) {
   // Initialize a new graph
   graphPtr = RDL_initNewGraph(boost::num_vertices(sourceGraph));
 
-  // Copy vertices (without bond type information)
-  auto iterPair = boost::edges(sourceGraph);
-  for(auto& iter = iterPair.first; iter != iterPair.second; ++iter) {
-    auto edgeAddResult = RDL_addUEdge(
-      graphPtr,
-      boost::source(*iter, sourceGraph),
-      boost::target(*iter, sourceGraph)
-    );
+  if(ignoreEtaBonds) {
+    for(
+      const auto edge :
+      RangeForTemporary<GraphType::edge_iterator>(
+        boost::edges(sourceGraph)
+      )
+    ) {
+      // Copy vertices (without bond type information)
+      if(sourceGraph[edge].bondType != BondType::Eta) {
+        auto edgeAddResult = RDL_addUEdge(
+          graphPtr,
+          boost::source(edge, sourceGraph),
+          boost::target(edge, sourceGraph)
+        );
 
-    assert(edgeAddResult != RDL_INVALID_RESULT || edgeAddResult != RDL_DUPLICATE_EDGE);
+        assert(edgeAddResult != RDL_INVALID_RESULT || edgeAddResult != RDL_DUPLICATE_EDGE);
+      }
+    }
+  } else {
+    // Copy vertices (without bond type information)
+    auto iterPair = boost::edges(sourceGraph);
+    for(auto& iter = iterPair.first; iter != iterPair.second; ++iter) {
+      auto edgeAddResult = RDL_addUEdge(
+        graphPtr,
+        boost::source(*iter, sourceGraph),
+        boost::target(*iter, sourceGraph)
+      );
+
+      assert(edgeAddResult != RDL_INVALID_RESULT || edgeAddResult != RDL_DUPLICATE_EDGE);
+    }
   }
 
   // Calculate, and assure yourself of success
@@ -175,8 +199,8 @@ bool Cycles::predicates::ConsistsOf::operator() (const RDL_cycle* const cyclePtr
 
   for(unsigned i = 0; i < cyclePtr->weight; ++i) {
     if(
-      !indices.count(cyclePtr->edges[i][0])
-      || !indices.count(cyclePtr->edges[i][1])
+      indices.count(cyclePtr->edges[i][0]) == 0
+      || indices.count(cyclePtr->edges[i][1]) == 0
     ) {
       return false;
     }

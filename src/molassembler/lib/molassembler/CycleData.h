@@ -40,7 +40,10 @@ private:
     RDL_data* dataPtr;
 
     RDLDataPtrs() = delete;
-    RDLDataPtrs(const GraphType& sourceGraph);
+    RDLDataPtrs(
+      const GraphType& sourceGraph,
+      const bool ignoreEtaBonds
+    );
     RDLDataPtrs(const RDLDataPtrs& other) = delete;
     RDLDataPtrs(RDLDataPtrs&& other) = delete;
     RDLDataPtrs& operator = (const RDLDataPtrs& other) = delete;
@@ -52,7 +55,7 @@ private:
 
 public:
   Cycles() = default;
-  Cycles(const GraphType& sourceGraph);
+  Cycles(const GraphType& sourceGraph, const bool ignoreEtaBonds = false);
 
   using EdgeList = std::vector<
     std::array<AtomIndexType, 2>
