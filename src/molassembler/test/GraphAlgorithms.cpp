@@ -373,7 +373,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
     mol.getCycleData(),
     relevantData.source,
     ligands,
-    mol.getAdjacencies(relevantData.source)
+    {}
   );
 
   using LigandLevelSet = std::set<
@@ -456,9 +456,9 @@ const std::map<std::string, BondListType> hapticTestData {
       {0, 24},
       {0, 26},
       {0, 27},
+      {0, 28},
       {0, 29},
-      {0, 31},
-      {0, 33}
+      {0, 31}
     }
   },
   {
@@ -482,6 +482,48 @@ const std::map<std::string, BondListType> hapticTestData {
       {0, 5},
       {0, 6},
       {0, 7}
+    }
+  },
+};
+
+using LigandsList = std::vector<
+  std::vector<AtomIndexType>
+>;
+
+// Pre-sorted ligands in ascending size and index
+const std::map<std::string, LigandsList> hapticLigandsData {
+  {
+    "05",
+    {
+       {1},
+       {2},
+       {24, 26, 27, 28, 29, 31}
+    }
+  },
+  {
+    "10",
+    {
+       {15},
+       {17},
+       {19},
+       {7, 8}
+    }
+  },
+  {
+    "14",
+    {
+       {1},
+       {2},
+       {7, 14}
+    }
+  },
+  {
+    "32",
+    {
+       {11},
+       {12},
+       {13},
+       {4, 5, 6, 7}
     }
   },
 };
@@ -520,6 +562,7 @@ bool testHapticBonds(boost::filesystem::path filePath) {
 
   const auto& relevantData = hapticTestData.at(filePath.stem().string());
 
+  // Test Eta edge classification correctness
   bool pass = true;
   temple::TinyUnorderedSet<GraphType::edge_descriptor> expectedEtaBonds;
   for(const auto& expectedEtaBond : relevantData) {
@@ -536,14 +579,16 @@ bool testHapticBonds(boost::filesystem::path filePath) {
     expectedEtaBonds.insert(edgePair.first);
   }
 
-  GraphType::edge_iterator iter, end;
-  std::tie(iter, end) = boost::edges(graph);
-
-  for(; iter != end; ++iter) {
-    AtomIndexType i = boost::source(*iter, graph);
-    AtomIndexType j = boost::target(*iter, graph);
-    BondType bty = graph[*iter].bondType;
-    bool expectEtaBond = expectedEtaBonds.count(*iter);
+  for(
+    const auto edge :
+    RangeForTemporary<GraphType::edge_iterator>(
+      boost::edges(graph)
+    )
+  ) {
+    AtomIndexType i = boost::source(edge, graph);
+    AtomIndexType j = boost::target(edge, graph);
+    BondType bty = graph[edge].bondType;
+    bool expectEtaBond = expectedEtaBonds.count(edge);
 
     if(expectEtaBond && bty != BondType::Eta) {
       std::cout << "The expected eta bond " << i << " - " << j
@@ -558,6 +603,36 @@ bool testHapticBonds(boost::filesystem::path filePath) {
         << ", but is one in the graph!" << std::endl;
       pass = false;
     }
+  }
+
+  // Test ligands classification
+  auto ligands = GraphAlgorithms::ligandSiteGroups(graph, 0);
+
+  /* Sort the ligands by size and then by individual atom indices so that we can
+   * compare lexicograhically
+   */
+  std::stable_sort(
+    std::begin(ligands),
+    std::end(ligands),
+    [&](const auto& a, const auto& b) -> bool {
+      return a.size() < b.size();
+    }
+  );
+
+  for(auto& ligand : ligands) {
+    std::sort(
+      std::begin(ligand),
+      std::end(ligand),
+      std::less<>()
+    );
+  }
+
+  auto& expectedLigands = hapticLigandsData.at(filePath.stem().string());
+  if(ligands != expectedLigands) {
+    pass = false;
+    std::cout << "Ligands at the central atom do not match expectation.\n"
+      << "Expected: " << temple::stringify(expectedLigands) << "\n"
+      << "Got: " << temple::stringify(ligands) << "\n\n";
   }
 
   if(!pass) {

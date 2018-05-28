@@ -23,8 +23,10 @@ class Molecule;
 
 namespace DistanceGeometry {
 
-// Forward-declare Partiality
+// Forward-declarations
 enum class Partiality;
+class DistanceBoundsMatrix;
+
 
 /*!
  * A class that helps with lower complexity determination of distance bounds
@@ -64,19 +66,20 @@ private:
   static void _explainContradictionPaths(
     const VertexDescriptor a,
     const VertexDescriptor b,
-    const std::vector<VertexDescriptor> predecessors
+    const std::vector<VertexDescriptor>& predecessors,
+    const std::vector<double>& distances
   );
 
   void _updateOrAddEdge(
     const VertexDescriptor i,
     const VertexDescriptor j,
-    const double& edgeWeight
+    const double edgeWeight
   );
 
   void _updateGraphWithFixedDistance(
     const VertexDescriptor a,
     const VertexDescriptor b,
-    const double& fixedDistance
+    const double fixedDistance
   );
 
   static inline VertexDescriptor left(const VertexDescriptor a) {
@@ -91,18 +94,14 @@ public:
   using BoundList = std::vector<
     std::tuple<VertexDescriptor, VertexDescriptor, ValueBounds>
   >;
-  ExplicitGraph(const Molecule& molecule, const BoundList& bounds);
+  ExplicitGraph(
+    const Molecule& molecule,
+    const DistanceBoundsMatrix& bounds
+  );
 
   static inline bool isLeft(const VertexDescriptor i) {
     return i % 2 == 0;
   }
-
-  //! Adds edges to the underlying graph to represent the bound between the atoms
-  void addBound(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
-    const ValueBounds& bound
-  );
 
   //! Adds edges to the underlying graph representing implicit lower bounds
   void addImplicitEdges();

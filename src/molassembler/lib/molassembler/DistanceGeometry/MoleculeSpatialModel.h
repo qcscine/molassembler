@@ -1,7 +1,8 @@
-#ifndef INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
-#define INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 
 #include "Molecule.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 
 /*! @file
  *
@@ -168,7 +169,6 @@ public:
     std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
   >;
 
-
 /* Information */
 
   boost::optional<ValueBounds> coneAngle(
@@ -186,7 +186,7 @@ public:
 
   std::vector<ChiralityConstraint> getChiralityConstraints() const;
 
-  BoundList makeBoundList() const;
+  DistanceBoundsMatrix makeBounds() const;
 
   void writeGraphviz(const std::string& filename) const;
 };

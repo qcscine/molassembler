@@ -171,6 +171,18 @@ template<
   BinaryFunction&& function
 );
 
+//! Composable pairwise map function specialization for array types
+template<
+  class BinaryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N
+> auto mapSequentialPairs(
+  const ArrayType<T, N>& array,
+  BinaryFunction&& function
+);
+
+
 /*!
  * Takes a container and maps all possible pairs of its contents into a new
  * container of the same type.
@@ -775,6 +787,44 @@ template<
 
     ++leftIterator;
     ++rightIterator;
+  }
+
+  return returnContainer;
+}
+
+//! Composable pairwise map function specialization for array types
+template<
+  class BinaryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N
+> auto mapSequentialPairs(
+  const ArrayType<T, N>& array,
+  BinaryFunction&& function
+) {
+  static_assert(N > 1, "No sequential pairs can be mapped in an array of size 1");
+  using U = decltype(
+    function(
+      std::declval<T>(),
+      std::declval<T>()
+    )
+  );
+
+  ArrayType<U, N - 1> returnContainer;
+
+  auto leftIterator = std::begin(array);
+  auto rightIterator = leftIterator; ++rightIterator;
+  auto insertIterator = std::begin(returnContainer);
+
+  while(rightIterator != std::end(array)) {
+    *insertIterator = function(
+      *leftIterator,
+      *rightIterator
+    );
+
+    ++leftIterator;
+    ++rightIterator;
+    ++insertIterator;
   }
 
   return returnContainer;

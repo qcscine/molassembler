@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
     EG explicitGraph {
       molecule,
-      spatialModel.makeBoundList()
+      spatialModel.makeBounds()
     };
 
     auto spg = explicitGraph.getGraph();

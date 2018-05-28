@@ -9,6 +9,7 @@
 #include "Log.h"
 #include "StdlibTypeAlgorithms.h"
 #include "temple/Random.h"
+#include "temple/Containers.h"
 
 #include <fstream>
 
@@ -57,7 +58,9 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    */
 
   // Helper variables
-  Cycles cycleData = molecule.getCycleData();
+  // Ignore eta bonds in construction of cycle data
+  Cycles cycleData {molecule.getGraph(), true};
+  //Cycles cycleData = molecule.getCycleData();
   auto smallestCycleMap = makeSmallestCycleMap(cycleData);
 
   // Check constraints on static constants
@@ -672,11 +675,13 @@ void MoleculeSpatialModel::addDefaultAngles() {
     temple::forAllPairs(
       _molecule.getAdjacencies(center),
       [&](const AtomIndexType i, const AtomIndexType j) -> void {
-        setAngleBoundsIfEmpty(
-          {{i, center, j}},
-          0,
-          M_PI
-        );
+        if(i != j) {
+          setAngleBoundsIfEmpty(
+            {{i, center, j}},
+            0,
+            M_PI
+          );
+        }
       }
     );
   }
@@ -696,114 +701,128 @@ void MoleculeSpatialModel::addDefaultDihedrals() {
     temple::forAllPairs(
       sourceAdjacencies,
       targetAdjacencies,
-      [&](const AtomIndexType sourceAdjacentIndex, const AtomIndexType targetAdjacentIndex) -> void {
-        setDihedralBoundsIfEmpty(
-          {{
-            sourceAdjacentIndex,
-            sourceIndex,
-            targetIndex,
-            targetAdjacentIndex,
-          }},
-          0,
-          M_PI
-        );
+      [&](
+        const AtomIndexType sourceAdjacentIndex,
+        const AtomIndexType targetAdjacentIndex
+      ) -> void {
+        if(sourceAdjacentIndex != targetAdjacentIndex) {
+          setDihedralBoundsIfEmpty(
+            {{
+              sourceAdjacentIndex,
+              sourceIndex,
+              targetIndex,
+              targetAdjacentIndex,
+            }},
+            0,
+            M_PI
+          );
+        }
       }
     );
   }
 }
 
-MoleculeSpatialModel::BoundList MoleculeSpatialModel::makeBoundList() const {
-  BoundList boundList;
+template<std::size_t N>
+bool bondInformationIsPresent(
+  const DistanceBoundsMatrix& bounds,
+  const std::array<AtomIndexType, N>& indices
+) {
+  // Ensure all indices are unique
+  std::set<AtomIndexType> indicesSet {indices.begin(), indices.end()};
+  if(indicesSet.size() < indices.size()) {
+    return false;
+  }
 
-  std::vector<
-    std::vector<
-      std::pair<AtomIndexType, ValueBounds>
-    >
-  > adjacencyList;
-  adjacencyList.resize(_molecule.numAtoms());
+  // Check that the bond information in the sequence is present
+  return temple::all_of(
+    temple::mapSequentialPairs(
+      indices,
+      [&bounds](const AtomIndexType i, const AtomIndexType j) -> bool {
+        return (
+          bounds.lowerBound(i, j) != DistanceBoundsMatrix::defaultLower
+          && bounds.upperBound(i, j) != DistanceBoundsMatrix::defaultUpper
+        );
+      }
+    )
+  );
+}
+
+DistanceBoundsMatrix MoleculeSpatialModel::makeBounds() const {
+  DistanceBoundsMatrix bounds {_molecule.numAtoms()};
 
   for(const auto& bondPair : _bondBounds) {
-    const auto& indexSequence = bondPair.first;
+    const auto& indices = bondPair.first;
     const auto& bondBounds = bondPair.second;
 
-    boundList.emplace_back(
-      indexSequence.front(),
-      indexSequence.back(),
-      bondBounds
-    );
+    assert(indices.front() != indices.back());
 
-    adjacencyList.at(
-      std::min(indexSequence.front(), indexSequence.back())
-    ).emplace_back(
-      std::max(indexSequence.front(), indexSequence.back()),
-      bondBounds
+    /* Any elements in the bond bounds MUST improve the existing bounds and
+     * may not cause contradictions.
+     */
+    assert(
+      bounds.setLowerBound(indices.front(), indices.back(), bondBounds.lower)
+      && bounds.setUpperBound(indices.front(), indices.back(), bondBounds.upper)
     );
   }
 
-  auto bondBound = [&adjacencyList](const AtomIndexType i, const AtomIndexType j) -> ValueBounds {
-    AtomIndexType smallerIndex = std::min(i, j);
-    AtomIndexType biggerIndex = std::max(i, j);
-
-    return std::find_if(
-      adjacencyList.at(smallerIndex).begin(),
-      adjacencyList.at(smallerIndex).end(),
-      [&biggerIndex](const auto& entryPair) -> bool {
-        return entryPair.first == biggerIndex;
-      }
-    )->second;
-  };
-
   for(const auto& anglePair : _angleBounds) {
-    const auto& indexSequence = anglePair.first;
+    const auto& indices = anglePair.first;
     const auto& angleBounds = anglePair.second;
 
-    boundList.emplace_back(
-      indexSequence.front(),
-      indexSequence.back(),
-      ValueBounds {
-        CommonTrig::lawOfCosines(
-          bondBound(
-            indexSequence.front(),
-            indexSequence.at(1)
-          ).lower,
-          bondBound(
-            indexSequence.at(1),
-            indexSequence.back()
-          ).lower,
-          angleBounds.lower
+    assert(bondInformationIsPresent(bounds, indices));
+
+    bounds.setLowerBound(
+      indices.front(),
+      indices.back(),
+      CommonTrig::lawOfCosines(
+        bounds.lowerBound(
+          indices.front(),
+          indices.at(1)
         ),
-        CommonTrig::lawOfCosines(
-          bondBound(
-            indexSequence.front(),
-            indexSequence.at(1)
-          ).upper,
-          bondBound(
-            indexSequence.at(1),
-            indexSequence.back()
-          ).upper,
-          angleBounds.upper
-        )
-      }
+        bounds.lowerBound(
+          indices.at(1),
+          indices.back()
+        ),
+        angleBounds.lower
+      )
+    );
+
+    bounds.setUpperBound(
+      indices.front(),
+      indices.back(),
+      CommonTrig::lawOfCosines(
+        bounds.upperBound(
+          indices.front(),
+          indices.at(1)
+        ),
+        bounds.upperBound(
+          indices.at(1),
+          indices.back()
+        ),
+        angleBounds.upper
+      )
     );
   }
 
   for(const auto& dihedralPair : _dihedralBounds) {
-    const auto& indexSequence = dihedralPair.first;
+    const auto& indices = dihedralPair.first;
     const auto& dihedralBounds = dihedralPair.second;
+
+    assert(bondInformationIsPresent(bounds, indices));
 
     auto firstAngleFindIter = _angleBounds.find(
       orderedIndexSequence<3>({{
-        indexSequence.at(0),
-        indexSequence.at(1),
-        indexSequence.at(2)
+        indices.at(0),
+        indices.at(1),
+        indices.at(2)
       }})
     );
 
     auto secondAngleFindIter = _angleBounds.find(
       orderedIndexSequence<3>({{
-        indexSequence.at(1),
-        indexSequence.at(2),
-        indexSequence.at(3)
+        indices.at(1),
+        indices.at(2),
+        indices.at(3)
       }})
     );
 
@@ -817,49 +836,52 @@ MoleculeSpatialModel::BoundList MoleculeSpatialModel::makeBoundList() const {
     const auto& abAngleBounds = firstAngleFindIter->second;
     const auto& bcAngleBounds = secondAngleFindIter->second;
 
-    boundList.emplace_back(
-      indexSequence.front(),
-      indexSequence.back(),
-      ValueBounds {
-        CommonTrig::dihedralLength(
-          bondBound(
-            indexSequence.front(),
-            indexSequence.at(1)
-          ).lower,
-          bondBound(
-            indexSequence.at(1),
-            indexSequence.at(2)
-          ).lower,
-          bondBound(
-            indexSequence.at(2),
-            indexSequence.back()
-          ).lower,
-          abAngleBounds.lower,
-          bcAngleBounds.lower,
-          dihedralBounds.lower // cis dihedral
+    bounds.setLowerBound(
+      indices.front(),
+      indices.back(),
+      CommonTrig::dihedralLength(
+        bounds.lowerBound(
+          indices.front(),
+          indices.at(1)
         ),
-        CommonTrig::dihedralLength(
-          bondBound(
-            indexSequence.front(),
-            indexSequence.at(1)
-          ).upper,
-          bondBound(
-            indexSequence.at(1),
-            indexSequence.at(2)
-          ).upper,
-          bondBound(
-            indexSequence.at(2),
-            indexSequence.back()
-          ).upper,
-          abAngleBounds.upper,
-          bcAngleBounds.upper,
-          dihedralBounds.upper // trans dihedral
-        )
-      }
+        bounds.lowerBound(
+          indices.at(1),
+          indices.at(2)
+        ),
+        bounds.lowerBound(
+          indices.at(2),
+          indices.back()
+        ),
+        abAngleBounds.lower,
+        bcAngleBounds.lower,
+        dihedralBounds.lower // cis dihedral
+      )
+    );
+
+    bounds.setUpperBound(
+      indices.front(),
+      indices.back(),
+      CommonTrig::dihedralLength(
+        bounds.upperBound(
+          indices.front(),
+          indices.at(1)
+        ),
+        bounds.upperBound(
+          indices.at(1),
+          indices.at(2)
+        ),
+        bounds.upperBound(
+          indices.at(2),
+          indices.back()
+        ),
+        abAngleBounds.upper,
+        bcAngleBounds.upper,
+        dihedralBounds.upper // trans dihedral
+      )
     );
   }
 
-  return boundList;
+  return bounds;
 }
 
 boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
@@ -1218,8 +1240,20 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   }
 
   // Now it gets tricky. The base constituents may be part of a cycle or not
-  // TODO this needs to be cached / gotten from before
-  Cycles cycles {graph};
+  /* TODO This works, but it might be preferable to just iterate through
+   * combinations of RCs instead, the full cycle MUST be there. Unsure if this
+   * may be prohibitively expensive, though.
+   */
+  // For this cycle interpretation, we need to ignore eta bonds
+  Cycles cycles {graph, true};
+
+  /*for(const auto cyclePtr : cycles) {
+    std::cout << "Cycle " << temple::condenseIterable(
+      makeRingIndexSequence(
+        Cycles::edgeVertices(cyclePtr)
+      )
+    ) << std::endl;
+  }*/
 
   /* This is essentially an if - only one cycle can consist of exactly the base
    * constituents

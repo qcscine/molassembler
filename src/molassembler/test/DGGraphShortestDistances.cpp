@@ -21,11 +21,6 @@
 
 #include <chrono>
 
-/* TODO
- * VERY WEIRD: Algorithms executed on SPG find better shortest paths than on LG
- * or DBM (-> tighter bounds).
- */
-
 std::ostream& nl(std::ostream& os) {
   os << '\n';
   return os;
@@ -175,7 +170,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
 
     LG lg {
       molecule,
-      spatialModel.makeBoundList()
+      spatialModel.makeBounds()
     };
 
     auto lgGraph = lg.getGraph();
@@ -293,7 +288,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
     DistanceGeometry::MoleculeSpatialModel spatialModel {sampleMol};
 
-    const auto boundsList = spatialModel.makeBoundList();
+    const auto boundsList = spatialModel.makeBounds();
 
     DistanceGeometry::ExplicitGraph limits {sampleMol, boundsList};
     DistanceGeometry::DistanceBoundsMatrix spatialModelBounds {sampleMol, boundsList};

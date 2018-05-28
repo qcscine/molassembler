@@ -1,5 +1,5 @@
-#ifndef INCLUDE_DG_DISTANCE_BOUNDS_MATRIX_HPP
-#define INCLUDE_DG_DISTANCE_BOUNDS_MATRIX_HPP
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_DISTANCE_BOUNDS_MATRIX_H
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_DISTANCE_BOUNDS_MATRIX_H
 
 #include "boost_outcome/outcome.hpp"
 #include "DistanceGeometry/DistanceGeometry.h"
@@ -23,14 +23,14 @@ class DistanceBoundsMatrix {
 private:
   Eigen::MatrixXd _matrix;
 
-  inline double& _lowerBound(const AtomIndexType& i, const AtomIndexType& j) {
+  inline double& _lowerBound(const AtomIndexType i, const AtomIndexType j) {
     return _matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  inline double& _upperBound(const AtomIndexType& i, const AtomIndexType& j) {
+  inline double& _upperBound(const AtomIndexType i, const AtomIndexType j) {
     return _matrix(
       std::min(i, j),
       std::max(i, j)
@@ -38,28 +38,31 @@ private:
   }
 
 public:
-  static inline double& lowerBound(Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
+  static constexpr double defaultLower = 0.0;
+  static constexpr double defaultUpper = 100.0;
+
+  static inline double& lowerBound(Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
     return matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  static inline double& upperBound(Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
+  static inline double& upperBound(Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
     return matrix(
       std::min(i, j),
       std::max(i, j)
     );
   }
 
-  static inline double lowerBound(const Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
+  static inline double lowerBound(const Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
     return matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  static inline double upperBound(const Eigen::MatrixXd& matrix, const AtomIndexType& i, const AtomIndexType& j) {
+  static inline double upperBound(const Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
     return matrix(
       std::min(i, j),
       std::max(i, j)
@@ -77,21 +80,9 @@ public:
   explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix);
 
   template<typename Molecule>
-  DistanceBoundsMatrix(const Molecule& molecule, const BoundList& bounds) {
+  DistanceBoundsMatrix(const Molecule& molecule, const DistanceBoundsMatrix& bounds) {
+    _matrix = bounds.access();
     unsigned N = molecule.numAtoms();
-    _matrix.resize(N, N);
-    _matrix.triangularView<Eigen::Lower>().setZero();
-    _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
-
-    // Populate the matrix with explicit bounds
-    AtomIndexType a, b;
-    ValueBounds bound;
-    for(const auto& boundTuple : bounds) {
-      std::tie(a, b, bound) = boundTuple;
-
-      setUpperBound(a, b, bound.upper);
-      setLowerBound(a, b, bound.lower);
-    }
 
     // Populate the lower bounds if no explicit information is present
     for(AtomIndexType i = 0; i < N - 1; ++i) {
@@ -117,22 +108,22 @@ public:
     assert(boundInconsistencies() == 0);
   }
 
-  bool setUpperBound(const AtomIndexType& i, const AtomIndexType& j, double newUpperBound);
+  bool setUpperBound(const AtomIndexType i, const AtomIndexType j, const double newUpperBound);
 
-  bool setLowerBound(const AtomIndexType& i, const AtomIndexType& j, const double& newLowerBound);
+  bool setLowerBound(const AtomIndexType i, const AtomIndexType j, const double newLowerBound);
 
   static void smooth(Eigen::MatrixXd& matrix);
 
   void smooth();
 
-  inline double upperBound(const AtomIndexType& i, const AtomIndexType& j) const {
+  inline double upperBound(const AtomIndexType i, const AtomIndexType j) const {
     return _matrix(
       std::min(i, j),
       std::max(i, j)
     );
   }
 
-  inline double lowerBound(const AtomIndexType& i, const AtomIndexType& j) const {
+  inline double lowerBound(const AtomIndexType i, const AtomIndexType j) const {
     return _matrix(
       std::max(i, j),
       std::min(i, j)

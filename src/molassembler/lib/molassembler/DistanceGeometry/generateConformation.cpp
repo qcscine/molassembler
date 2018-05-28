@@ -162,7 +162,7 @@ outcome::result<
 
     ExplicitGraph explicitGraph {
       molecule,
-      DGData.boundList
+      DGData.bounds
     };
 
     auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
@@ -401,7 +401,7 @@ std::list<RefinementData> debugDistanceGeometry(
 
     ExplicitGraph explicitGraph {
       molecule,
-      DGData.boundList
+      DGData.bounds
     };
 
     auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
@@ -649,7 +649,7 @@ MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
   MoleculeSpatialModel spatialModel {molecule};
 
   // Extract gathered data
-  data.boundList = spatialModel.makeBoundList();
+  data.bounds = spatialModel.makeBounds();
   data.chiralityConstraints = spatialModel.getChiralityConstraints();
 
   return data;

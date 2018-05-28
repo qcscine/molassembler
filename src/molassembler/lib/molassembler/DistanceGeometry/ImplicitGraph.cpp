@@ -11,6 +11,7 @@
 #include "temple/Random.h"
 
 #include "DistanceGeometry/DistanceGeometry.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/Error.h"
 #include "AtomInfo.h"
 #include "Log.h"
@@ -26,24 +27,26 @@ namespace DistanceGeometry {
 void ImplicitGraph::_explainContradictionPaths(
   const VertexDescriptor a,
   const VertexDescriptor b,
-  const std::vector<VertexDescriptor> predecessors
+  const std::vector<VertexDescriptor>& predecessors,
+  const std::vector<double>& distances
 ) {
   using LevelBaseType = std::underlying_type<Log::Level>::type;
   if(
     static_cast<LevelBaseType>(Log::level)
-    >= static_cast<LevelBaseType>(Log::Level::Warning)
+    <= static_cast<LevelBaseType>(Log::Level::Warning)
   ) {
     // Report the contradiction in the log
     auto& logRef = Log::log(Log::Level::Warning);
-    logRef << "Encountered contradiction in gathered distance bounds.\n";
-    logRef << "Path in graph for lower bound: l" << b;
+    logRef << "Encountered contradiction in triangle ineqaulity limits calculation.\n";
+    logRef << "Path in graph for upper bound: l" << b;
 
     AtomIndexType intermediate = left(b);
     do {
       intermediate = predecessors[intermediate];
       logRef << " <- l" << (intermediate / 2);
     } while (intermediate != left(a));
-    logRef << "\nPath in graph for upper bound: r" << b;
+    logRef << ". Length " << distances.at(left(b))
+      << "\nPath in graph for lower bound: r" << b;
 
     intermediate = right(b);
     do {
@@ -53,28 +56,18 @@ void ImplicitGraph::_explainContradictionPaths(
         << (intermediate / 2);
     } while (intermediate != left(a));
 
-    logRef << "\n";
+    logRef << ". Length " << distances.at(right(b)) << "\n";
   }
 }
 
 ImplicitGraph::ImplicitGraph(
   const Molecule& molecule,
-  const BoundList& bounds
-) : _moleculePtr(&molecule)
+  const DistanceBoundsMatrix& bounds
+) : _moleculePtr(&molecule), _distances {bounds.access()}
 {
-  unsigned N = molecule.numAtoms();
-  _distances.resize(N, N);
-  _distances.setZero();
+  const unsigned N = molecule.numAtoms();
 
   // Populate _distances with bounds from list
-  VertexDescriptor a, b;
-  ValueBounds bound;
-  for(const auto& boundTuple : bounds) {
-    std::tie(a, b, bound) = boundTuple;
-
-    upperBound(a, b) = bound.upper;
-    lowerBound(a, b) = bound.lower;
-  }
 
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
@@ -234,7 +227,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexc
       bounds(b, a) = -distances.at(right(b));
 
       if(bounds(a, b) < bounds(b, a)) {
-        _explainContradictionPaths(a, b, predecessors);
+        _explainContradictionPaths(a, b, predecessors, distances);
         return DGError::GraphImpossible;
       }
     }

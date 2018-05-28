@@ -29,8 +29,9 @@ class Molecule;
 
 namespace DistanceGeometry {
 
-// Forward-declare Partiality enum
+// Forward-declarations
 enum class Partiality;
+class DistanceBoundsMatrix;
 
 /*! Simulates a graph from which triangle inequality bounds can be calculated by shortest-paths
  *
@@ -163,17 +164,14 @@ private:
   static void _explainContradictionPaths(
     const VertexDescriptor a,
     const VertexDescriptor b,
-    const std::vector<VertexDescriptor> predecessors
+    const std::vector<VertexDescriptor>& predecessors,
+    const std::vector<double>& distances
   );
 
 public:
-  using BoundList = std::vector<
-    std::tuple<VertexDescriptor, VertexDescriptor, ValueBounds>
-  >;
-
   ImplicitGraph(
     const Molecule& molecule,
-    const BoundList& bounds
+    const DistanceBoundsMatrix& bounds
   );
 
   /* Modification */
@@ -245,6 +243,9 @@ public:
    *
    * Complexity: O(N² * O(shortest paths algorithm)). For experimental data,
    * run analysis_BenchmarkGraphAlgorithms.
+   *
+   * NOTE: This double definition may seem strange, but is necessary to use
+   * the forward-declared enum class Partiality correctly.
    */
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix() noexcept;
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality) noexcept;

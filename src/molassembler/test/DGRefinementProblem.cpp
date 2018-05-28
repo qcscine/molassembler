@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 
     DistanceBoundsMatrix distanceBounds {
       molecule,
-      DGInfo.boundList
+      DGInfo.bounds
     };
 
     auto distancesResult = distanceBounds.makeDistanceMatrix();
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
 
     DistanceBoundsMatrix distanceBounds {
       molecule,
-      DGData.boundList
+      DGData.bounds
     };
 
     auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();
@@ -299,7 +299,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     const auto DGData = gatherDGInformation(molecule);
     DistanceBoundsMatrix distanceBounds {
       molecule,
-      DGData.boundList
+      DGData.bounds
     };
 
     auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();

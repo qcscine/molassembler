@@ -4,6 +4,7 @@
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
 #include "DistanceGeometry/DistanceGeometry.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/Error.h"
 #include "Log.h"
 
@@ -32,24 +33,38 @@ namespace DistanceGeometry {
 
 ExplicitGraph::ExplicitGraph(
   const Molecule& molecule,
-  const BoundList& bounds
+  const DistanceBoundsMatrix& bounds
 ) : _graph {2 * molecule.numAtoms()},
     _molecule {molecule}
 {
-  // Populate the graph with bounds from list
-  VertexDescriptor a, b;
-  ValueBounds bound;
-  for(const auto& boundTuple : bounds) {
-    std::tie(a, b, bound) = boundTuple;
+  const VertexDescriptor N = molecule.numAtoms();
+  for(VertexDescriptor a = 0; a < N; ++a) {
+    for(VertexDescriptor b = a + 1; b < N; ++b) {
+      double lower = bounds.lowerBound(a, b);
+      double upper = bounds.upperBound(a, b);
 
-    addBound(a, b, bound);
+      if(lower != DistanceBoundsMatrix::defaultLower) {
+        // Forward edge from left to right graph with negative lower bound weight
+        boost::add_edge(left(a), right(b), -lower, _graph);
+        boost::add_edge(left(b), right(a), -lower, _graph);
+      }
+
+      if(upper != DistanceBoundsMatrix::defaultUpper) {
+        // Bidirectional edge in left graph with upper weight
+        boost::add_edge(left(a), left(b), upper, _graph);
+        boost::add_edge(left(b), left(a), upper, _graph);
+
+        // Bidirectional edge in right graph with upper weight
+        boost::add_edge(right(a), right(b), upper, _graph);
+        boost::add_edge(right(b), right(a), upper, _graph);
+      }
+    }
   }
 
   addImplicitEdges();
 
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
-  unsigned N = molecule.numAtoms();
   for(AtomIndexType i = 0; i < N; ++i) {
     auto elementType = molecule.getElementType(i);
     if(
@@ -71,24 +86,26 @@ ExplicitGraph::ExplicitGraph(
 void ExplicitGraph::_explainContradictionPaths(
   const VertexDescriptor a,
   const VertexDescriptor b,
-  const std::vector<VertexDescriptor> predecessors
+  const std::vector<VertexDescriptor>& predecessors,
+  const std::vector<double>& distances
 ) {
   using LevelBaseType = std::underlying_type<Log::Level>::type;
   if(
     static_cast<LevelBaseType>(Log::level)
-    >= static_cast<LevelBaseType>(Log::Level::Warning)
+    <= static_cast<LevelBaseType>(Log::Level::Warning)
   ) {
     // Report the contradiction in the log
     auto& logRef = Log::log(Log::Level::Warning);
-    logRef << "Encountered contradiction in gathered distance bounds.\n";
-    logRef << "Path in graph for lower bound: l" << b;
+    logRef << "Encountered contradiction in triangle inequality limits calculation.\n";
+    logRef << "Path in graph for upper bound: l" << b;
 
     AtomIndexType intermediate = left(b);
     do {
       intermediate = predecessors[intermediate];
       logRef << " <- l" << (intermediate / 2);
     } while (intermediate != left(a));
-    logRef << "\nPath in graph for upper bound: r" << b;
+    logRef << ". Length " << distances.at(left(b))
+      << "\nPath in graph for lower bound: r" << b;
 
     intermediate = right(b);
     do {
@@ -98,14 +115,14 @@ void ExplicitGraph::_explainContradictionPaths(
         << (intermediate / 2);
     } while (intermediate != left(a));
 
-    logRef << "\n";
+    logRef << ". Length " << distances.at(right(b)) << "\n";
   }
 }
 
 void ExplicitGraph::_updateOrAddEdge(
   const VertexDescriptor i,
   const VertexDescriptor j,
-  const double& edgeWeight
+  const double edgeWeight
 ) {
   auto edgeSearchPair = boost::edge(i, j, _graph);
   if(edgeSearchPair.second) {
@@ -118,7 +135,7 @@ void ExplicitGraph::_updateOrAddEdge(
 void ExplicitGraph::_updateGraphWithFixedDistance(
   const VertexDescriptor a,
   const VertexDescriptor b,
-  const double& fixedDistance
+  const double fixedDistance
 ) {
   _updateOrAddEdge(left(a), left(b), fixedDistance);
   _updateOrAddEdge(left(b), left(a), fixedDistance);
@@ -128,24 +145,6 @@ void ExplicitGraph::_updateGraphWithFixedDistance(
 
   _updateOrAddEdge(left(a), right(b), -fixedDistance);
   _updateOrAddEdge(left(b), right(a), -fixedDistance);
-}
-
-void ExplicitGraph::addBound(
-  const VertexDescriptor a,
-  const VertexDescriptor b,
-  const ValueBounds& bound
-) {
-  // Bidirectional edge in left graph with upper weight
-  boost::add_edge(left(a), left(b), bound.upper, _graph);
-  boost::add_edge(left(b), left(a), bound.upper, _graph);
-
-  // Bidirectional edge in right graph with upper weight
-  boost::add_edge(right(a), right(b), bound.upper, _graph);
-  boost::add_edge(right(b), right(a), bound.upper, _graph);
-
-  // Forward edge from left to right graph with negative lower bound weight
-  boost::add_edge(left(a), right(b), -bound.lower, _graph);
-  boost::add_edge(left(b), right(a), -bound.lower, _graph);
 }
 
 void ExplicitGraph::addImplicitEdges() {
@@ -282,12 +281,12 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
       // Get lower bound from distances
       bounds(b, a) = -distances.at(right(b));
 
-      if(
-        bounds(a, b) < bounds(b, a)
-        || bounds(a, b) <= 0
-        || bounds(b, a) <= 0
-      ) {
-        _explainContradictionPaths(a, b, predecessors);
+      if(bounds(a, b) < bounds(b, a)) {
+        _explainContradictionPaths(a, b, predecessors, distances);
+        return DGError::GraphImpossible;
+      }
+
+      if(bounds(a, b) <= 0 || bounds(b, a) <= 0) {
         return DGError::GraphImpossible;
       }
     }
@@ -320,7 +319,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
   temple::random.shuffle(indices);
 
   unsigned M = boost::num_vertices(_graph);
-  std::vector<double> distance (M);
+  std::vector<double> distances (M);
   boost::two_bit_color_map<> color_map {M};
   std::vector<VertexDescriptor> predecessors (M);
 
@@ -364,7 +363,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       );
 
       auto distance_map = boost::make_iterator_property_map(
-        distance.begin(),
+        distances.begin(),
         boost::get(boost::vertex_index, _graph)
       );
 
@@ -384,14 +383,6 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
         color_map,
         distance_map
       );
-
-      double presumedLower = -distance.at(right(b));
-      double presumedUpper = distance.at(left(b));
-
-      double tightenedBound = temple::random.getSingle<double>(
-        std::min(presumedLower, presumedUpper),
-        std::max(presumedLower, presumedUpper)
-      );
 #else
       boost::gor1_simplified_shortest_paths(
         _graph,
@@ -400,20 +391,20 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
         color_map,
         distance_map
       );
+#endif
 
-      if(distance.at(left(b)) < -distance.at(right(b))) {
-        _explainContradictionPaths(a, b, predecessors);
+      double lower = -distances.at(right(b));
+      double upper = distances.at(left(b));
+
+      if(upper < lower) {
+        _explainContradictionPaths(a, b, predecessors, distances);
         return DGError::GraphImpossible;
       }
 
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = temple::random.getSingle<double>(
-        -distance.at(right(b)),
-        distance.at(left(b))
-      );
-#endif
+      double tightenedBound = temple::random.getSingle<double>(lower, upper);
 
       upperTriangle(
         std::min(a, b),
@@ -421,11 +412,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       ) = tightenedBound;
 
       // Modify the graph accordingly
-      _updateGraphWithFixedDistance(
-        a,
-        b,
-        tightenedBound
-      );
+      _updateGraphWithFixedDistance(a, b, tightenedBound);
     }
   }
 
@@ -438,7 +425,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     );
 
     auto distance_map = boost::make_iterator_property_map(
-      distance.begin(),
+      distances.begin(),
       boost::get(boost::vertex_index, _graph)
     );
 
@@ -473,8 +460,8 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
         continue;
       }
 
-      double presumedLower = -distance.at(right(b));
-      double presumedUpper = distance.at(left(b));
+      double presumedLower = -distances.at(right(b));
+      double presumedUpper = distances.at(left(b));
 
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
@@ -490,11 +477,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       ) = tightenedBound;
 
       // Modify the graph accordingly
-      _updateGraphWithFixedDistance(
-        a,
-        b,
-        tightenedBound
-      );
+      _updateGraphWithFixedDistance(a, b, tightenedBound);
     }
   }
 
