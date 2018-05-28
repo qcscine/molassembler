@@ -1148,16 +1148,17 @@ void CNStereocenter::setModelInformation(
   const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
   const double looseningMultiplier
 ) const {
+  /* Single ligand-level modelling:
+   * - Distance of ligand-constituting atoms to center
+   * - Angle between ligand-constituting atoms
+   */
   for(unsigned ligandI = 0; ligandI < _cache.ligandDistances.size(); ++ligandI) {
     /* Every haptic index is on the cone base circle
      * Cone height is defined by _cache.ligandDistance
      * Cone angle is defined by _cache.coneAngle (if present)
      */
     DistanceGeometry::ValueBounds coneAngleBounds = _cache.coneAngles.at(ligandI).value_or(
-      DistanceGeometry::ValueBounds {
-        0.0,
-        M_PI / 6
-      }
+      DistanceGeometry::ValueBounds {0.0, M_PI / 6}
     );
 
     double upperHypotenuse = (
@@ -1179,6 +1180,24 @@ void CNStereocenter::setModelInformation(
         }
       );
     }
+
+    /* Angles between ligand-constituting atoms within a single index
+     * - Minimally 0° (if there were a zero-length bond)
+     *   TODO could compute shortest possible bond constexpr and insert a trig calc here
+     * - Maximally 2 * the upper cone angle (but not more than M_PI)
+     */
+    temple::forAllPairs(
+      _ranking.ligands.at(ligandI),
+      [&](const AtomIndexType i, const AtomIndexType j) {
+        model.setAngleBoundsIfEmpty(
+          {{i, _centerAtom, j}},
+          DistanceGeometry::ValueBounds {
+            0,
+            std::min(M_PI, 2 * coneAngleBounds.upper)
+          }
+        );
+      }
+    );
   }
 
   for(unsigned i = 0; i < _ranking.ligands.size() - 1; ++i) {
