@@ -84,26 +84,40 @@ private:
   boost::optional<bool> _isZOption;
 
 /* Private members */
-  inline AtomIndexType _leftHighPriority() const {
+  static inline AtomIndexType highPriority(const RankingInformation& ranking) {
     /* NOTE: high priority is assigned from the back of the ranking since the list
      * is ordered ascending
      *
      * NOTE: back-back always works out to the right selection for all valid
-     * inputs.
+     * number of ligands.
      */
-    return _leftRanking.sortedSubstituents.back().back();
+    return ranking.ligands.at(
+      // Highest ranked ligand index
+      ranking.ligandsRanking.back().back()
+    ).back();
+  }
+
+  static inline AtomIndexType lowPriority(const RankingInformation& ranking) {
+    return ranking.ligands.at(
+      // Lowest ranked ligand index
+      ranking.ligandsRanking.front().front()
+    ).front();
+  }
+
+  inline AtomIndexType _leftHighPriority() const {
+    return highPriority(_leftRanking);
   }
 
   inline AtomIndexType _leftLowPriority() const {
-    return _leftRanking.sortedSubstituents.front().front();
+    return lowPriority(_leftRanking);
   }
 
   inline AtomIndexType _rightHighPriority() const {
-    return _rightRanking.sortedSubstituents.back().back();
+    return highPriority(_rightRanking);
   }
 
   inline AtomIndexType _rightLowPriority() const {
-    return _rightRanking.sortedSubstituents.front().front();
+    return lowPriority(_rightRanking);
   }
 
   //! Generates the dihedral sequences of equal priority (i.e. high with high)

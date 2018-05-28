@@ -46,7 +46,7 @@ EZStereocenter::EZStereocenter(
 unsigned EZStereocenter::_numIndices(const RankingInformation& ranking) {
   unsigned countElements = 0;
 
-  for(const auto& set : ranking.sortedSubstituents) {
+  for(const auto& set : ranking.ligands) {
     countElements += set.size();
   }
 
@@ -139,7 +139,7 @@ void EZStereocenter::addSubstituent(
     if(
       numStereopermutations() == 2
       && _isZOption
-      && _leftHighPriority() != centerRanking.sortedSubstituents.back().back()
+      && _leftHighPriority() != highPriority(centerRanking)
     ) {
       _isZOption = !_isZOption.value();
     }
@@ -158,7 +158,7 @@ void EZStereocenter::addSubstituent(
     if(
       numStereopermutations() == 2
       && _isZOption
-      && _rightHighPriority() != centerRanking.sortedSubstituents.back().back()
+      && _rightHighPriority() != highPriority(centerRanking)
     ) {
       _isZOption = !_isZOption.value();
     }
@@ -260,12 +260,12 @@ void EZStereocenter::propagateGraphChange(
    * occurs at both ends, then we don't have to do anything.
    */
   bool flipStereopermutation = false;
-  if(firstCenterRanking.sortedSubstituents.back().back() != _leftHighPriority()) {
+  if(highPriority(firstCenterRanking) != _leftHighPriority()) {
     // Negate flipStereopermutation
     flipStereopermutation = !flipStereopermutation;
   }
 
-  if(secondCenterRanking.sortedSubstituents.back().back() != _rightHighPriority()) {
+  if(highPriority(secondCenterRanking) != _rightHighPriority()) {
     // Negate flipStereopermutation
     flipStereopermutation = !flipStereopermutation;
   }
@@ -385,10 +385,10 @@ unsigned EZStereocenter::numStereopermutations() const {
   if(
     (
       _numIndices(_leftRanking) == 2
-      && _leftRanking.sortedSubstituents.size() == 1
+      && _leftRanking.ligands.size() == 1
     ) || (
       _numIndices(_rightRanking) == 2
-      && _rightRanking.sortedSubstituents.size() == 1
+      && _rightRanking.ligands.size() == 1
     )
   ) {
     return 1;
