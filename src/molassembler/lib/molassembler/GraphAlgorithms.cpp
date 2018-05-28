@@ -32,7 +32,7 @@ std::vector<LinkInformation> substituentLinks(
   const std::vector<
     std::vector<AtomIndexType>
   >& ligands,
-  const std::vector<AtomIndexType>& activeAdjacents
+  const std::set<AtomIndexType>& excludeAdjacents
 ) {
   /* General idea:
    *
@@ -59,10 +59,14 @@ std::vector<LinkInformation> substituentLinks(
   }
 
   temple::TinySet<GraphType::edge_descriptor> sourceAdjacentEdges;
-  for(const auto& adjacentIndex : activeAdjacents) {
-    sourceAdjacentEdges.insert(
-      boost::edge(source, adjacentIndex, graph).first
-    );
+  for(const auto& ligand : ligands) {
+    for(const AtomIndexType ligandConstitutingIndex : ligand) {
+      if(excludeAdjacents.count(ligandConstitutingIndex) == 0) {
+        sourceAdjacentEdges.insert(
+          boost::edge(source, ligandConstitutingIndex, graph).first
+        );
+      }
+    }
   }
 
   std::map<
@@ -229,7 +233,11 @@ void findLigands(
 
 std::vector<
   std::vector<AtomIndexType>
-> ligandSiteGroups(const GraphType& graph, AtomIndexType centralIndex) {
+> ligandSiteGroups(
+  const GraphType& graph,
+  AtomIndexType centralIndex,
+  const std::set<AtomIndexType>& excludeAdjacents
+) {
   // A non-metal central index cannot have any eta bonds
   if(AtomInfo::isMainGroupElement(graph[centralIndex].elementType)) {
     std::vector<
@@ -265,9 +273,11 @@ std::vector<
          * contributions.
          */
       } else {
-        adjacents.push_back(
-          std::vector<AtomIndexType> {{centralAdjacent}}
-        );
+        if(excludeAdjacents.count(centralAdjacent) == 0) {
+          adjacents.push_back(
+            std::vector<AtomIndexType> {{centralAdjacent}}
+          );
+        }
       }
     }
 
@@ -303,8 +313,18 @@ std::vector<
         }
       }
 
-      // Add the ligand to the set
-      groupedLigands.emplace_back(ligand.begin(), ligand.end());
+      /* We need to exclude this ligand if it is size one and consists of an
+       * excluded adjacent
+       */
+      if(
+        !(
+          ligand.size() == 1
+          && excludeAdjacents.count(ligand.front()) == 1
+        )
+      ) {
+        // Add the ligand to the set
+        groupedLigands.emplace_back(ligand.begin(), ligand.end());
+      }
     }
   );
 

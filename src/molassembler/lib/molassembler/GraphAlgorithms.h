@@ -49,7 +49,7 @@ std::vector<LinkInformation> substituentLinks(
   const std::vector<
     std::vector<AtomIndexType>
   >& ligands,
-  const std::vector<AtomIndexType>& activeAdjacents
+  const std::set<AtomIndexType>& excludeAdjacents
 );
 
 namespace detail {
@@ -83,7 +83,11 @@ void findLigands(
  */
 std::vector<
   std::vector<AtomIndexType>
-> ligandSiteGroups(const GraphType& graph, AtomIndexType centralIndex);
+> ligandSiteGroups(
+  const GraphType& graph,
+  AtomIndexType centralIndex,
+  const std::set<AtomIndexType>& excludeAdjacents = {}
+);
 
 //! For each atom, determines ligands and sets eta bond type for haptic ligands
 GraphType findAndSetEtaBonds(GraphType&& graph);
