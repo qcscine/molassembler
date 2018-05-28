@@ -1586,7 +1586,8 @@ RankingInformation Molecule::rankPriority(
   // Expects that bond types are set properly, complains otherwise
   rankingResult.ligands = GraphAlgorithms::ligandSiteGroups(
     _adjacencies,
-    a
+    a,
+    excludeAdjacent
   );
 
   // Rank the substituents
@@ -1605,22 +1606,13 @@ RankingInformation Molecule::rankPriority(
     rankingResult.sortedSubstituents
   );
 
-  auto activeIndices = getAdjacencies(a);
-
-  temple::inplaceRemoveIf(
-    activeIndices,
-    [&excludeAdjacent](const auto& adjacentIndex) -> bool {
-      return excludeAdjacent.count(adjacentIndex) == 1;
-    }
-  );
-
   // Find links between them
   rankingResult.links = GraphAlgorithms::substituentLinks(
     _adjacencies,
     getCycleData(),
     a,
     rankingResult.ligands,
-    activeIndices
+    excludeAdjacent
   );
 
   return rankingResult;
