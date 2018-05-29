@@ -25,7 +25,6 @@
 #include "Log.h"
 #include "Molecule.h"
 #include "OrderDiscoveryHelper.h"
-#include "temple/constexpr/Numeric.h"
 
 /* TODO
  * - Maybe you can only add transferability edges when in down-only BFS?
@@ -557,7 +556,7 @@ private:
       visitedVertices.insert(sourceIndex);
     }
 
-    auto countNestedElements = [](
+    /*auto countNestedElements = [](
       const std::vector<std::vector<TreeVertexIndex>>& nestedSets
     ) -> unsigned {
       return temple::sum(
@@ -568,10 +567,10 @@ private:
           }
         )
       );
-    };
+    };*/
 
     auto undecidedSets = orderingHelper.getUndecidedSets();
-    unsigned undecidedElements = countNestedElements(undecidedSets);
+    // unsigned undecidedElements = countNestedElements(undecidedSets);
 
     for(const auto& undecidedSet : undecidedSets) {
       for(const auto& undecidedBranch : undecidedSet) {
@@ -620,14 +619,14 @@ private:
     // Update the undecided sets
     undecidedSets = orderingHelper.getUndecidedSets();
 
-    {
+    /*{
       unsigned u = countNestedElements(undecidedSets);
       if(u > undecidedElements) {
         throw std::logic_error("Undecided sets gained a new element!");
       } else {
         undecidedElements = u;
       }
-    }
+    }*/
 
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       // Write debug graph files if the corresponding log particular is set
@@ -767,14 +766,14 @@ private:
       // Recalculate the undecided sets
       undecidedSets = orderingHelper.getUndecidedSets();
 
-      {
+      /*{
         unsigned u = countNestedElements(undecidedSets);
         if(u > undecidedElements) {
           throw std::logic_error("Undecided sets gained a new element!");
         } else {
           undecidedElements = u;
         }
-      }
+      }*/
 
       // Increment depth
       ++depth;
