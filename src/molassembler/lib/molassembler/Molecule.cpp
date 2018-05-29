@@ -376,6 +376,11 @@ StereocenterList Molecule::_detectStereocenters() const {
   ) {
     RankingInformation localRanking = rankPriority(candidateIndex);
 
+    // Skip terminal atoms
+    if(localRanking.ligands.size() <= 1) {
+      continue;
+    }
+
     // Construct a Stereocenter here
     auto newStereocenter = std::make_shared<Stereocenters::CNStereocenter>(
       _adjacencies,
@@ -613,6 +618,12 @@ void Molecule::_propagateGraphChange() {
 
           RankingInformation localRanking = rankPriority(candidateIndex);
 
+          // If the atom is now terminal, remove the stereocenter
+          if(localRanking.ligands.size() <= 1) {
+            _stereocenters.remove(candidateIndex);
+            continue;
+          }
+
           // Propagate the state of the stereocenter to the new ranking
           CNStereocenterPtr -> propagateGraphChange(
             _adjacencies,
@@ -639,6 +650,12 @@ void Molecule::_propagateGraphChange() {
       } else {
         // No stereocenter yet
         auto localRanking = rankPriority(candidateIndex);
+
+        // Skip terminal atoms
+        if(localRanking.ligands.size() <= 1) {
+          continue;
+        }
+
         auto newStereocenterPtr = std::make_shared<Stereocenters::CNStereocenter>(
           _adjacencies,
           determineLocalGeometry(candidateIndex, localRanking),
@@ -866,6 +883,14 @@ void Molecule::removeAtom(const AtomIndexType a) {
       if(_stereocenters.at(indexToUpdate) -> type() == Stereocenters::Type::CNStereocenter) {
         auto localRanking = rankPriority(indexToUpdate);
 
+        /* If the index on which the CNStereocenter is placed becomes terminal,
+         * drop the stereocenter
+         */
+        if(localRanking.ligands.size() <= 1) {
+          _stereocenters.remove(indexToUpdate);
+          continue;
+        }
+
         std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
           _stereocenters.at(indexToUpdate)
         ) -> removeSubstituent(
@@ -925,6 +950,13 @@ void Molecule::removeBond(
       if(_stereocenters.involving(indexToUpdate)) {
         if(_stereocenters.at(indexToUpdate) -> type() == Stereocenters::Type::CNStereocenter) {
           auto localRanking = rankPriority(indexToUpdate);
+
+          // In case the CNS central atom becomes terminal, just drop the stereocenter
+          if(localRanking.ligands.size() <= 1) {
+            _stereocenters.remove(indexToUpdate);
+            return;
+          }
+
           std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
             _stereocenters.at(indexToUpdate)
           ) -> removeSubstituent(
@@ -1221,6 +1253,12 @@ StereocenterList Molecule::inferStereocentersFromPositions(
     }
 
     RankingInformation localRanking = rankPriority(candidateIndex, {}, positions);
+
+    // Skip terminal atoms
+    if(localRanking.ligands.size() <= 1) {
+      continue;
+    }
+
     const Symmetry::Name expectedGeometry = determineLocalGeometry(candidateIndex, localRanking);
 
     // Construct it
