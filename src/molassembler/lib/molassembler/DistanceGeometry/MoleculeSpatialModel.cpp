@@ -1317,128 +1317,31 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
     };
   }
 
+
   /* So the ligand atoms are NOT the sole constituents of a closed cycle.
    *
-   * For some types of ligands, we can still figure out a cone angle. If the
+   * For some types of ligands, we could still figure out a cone angle. If the
    * ligand group is actually a path in which any intermediate atom merely
    * connects the subsequent atoms (i.e. the path is not branched, there are no
    * cycles), and if all the involved intermediate geometries constituting the
    * longest path have only one distinct angle value, then we can create a
    * conformational model anyway.
+   *
+   * However, a path specific approach cannot treat branched haptic ligands
+   * (i.e. PN3 where both P and N bond to the metal), and we would need access
+   * to the Molecule's StereocenterList in both cases. In that case, this
+   * function, which should only be instrumental to devising which
+   * stereopermutations are obviously impossible, is out of its depth. Perform
+   * any additional modelling when the spatial model requires more information,
+   * but not here.
    */
-
-  // Try to find a path including all atoms without any cross-bonds
-  // Wrap baseConstituents with an TinyUnorderedSet for easier member searches
-  temple::TinyUnorderedSet<AtomIndexType> ligandIndicesSet;
-  ligandIndicesSet.data = baseConstituents;
-
-  std::deque<AtomIndexType> pathSequence;
-  pathSequence.push_back(baseConstituents.front());
-
-  auto adjacentIters = boost::adjacent_vertices(baseConstituents.front(), graph);
-  std::vector<AtomIndexType> initialAdjacents;
-  std::copy(
-    adjacentIters.first,
-    adjacentIters.second,
-    std::back_inserter(initialAdjacents)
-  );
-
-  temple::TinyUnorderedSet<AtomIndexType> initialAdjacentsSet;
-  initialAdjacentsSet.data = initialAdjacents;
-
-  auto intersection = temple::unorderedSetIntersection(
-    ligandIndicesSet,
-    initialAdjacentsSet
-  );
-
-  // Early exit, there can be no path involving all without cross-bonds
-  if(intersection.size() > 2 || intersection.size() == 0) {
-    return boost::none;
-  }
-
-  bool frontFinished = false;
-  bool backFinished = false;
-  bool crossEdgeDiscovered = false;
-
-  if(intersection.size() == 1) {
-    pathSequence.push_front(intersection.data.front());
-    backFinished = true;
-  }
-
-  if(intersection.size() == 2) {
-    pathSequence.push_front(intersection.data.front());
-    pathSequence.push_back(intersection.data.back());
-  }
-
-  while(pathSequence.size() != ligandIndicesSet.size()) {
-    if(frontFinished && backFinished) {
-      break;
-    }
-
-    // Try to expand at front
-    if(!frontFinished) {
-      frontFinished = true;
-      unsigned count = 0;
-      for(
-        const AtomIndexType adjacent :
-        RangeForTemporary<GraphType::adjacency_iterator>(
-          boost::adjacent_vertices(pathSequence.front(), graph)
-        )
-      ) {
-        if(ligandIndicesSet.count(adjacent)) {
-          if(adjacent != pathSequence.at(1)) {
-            pathSequence.push_front(adjacent);
-            frontFinished = false;
-          }
-
-          ++count;
-        }
-      }
-
-      if(count > 2) {
-        crossEdgeDiscovered = true;
-        break;
-      }
-    }
-
-    if(!backFinished) {
-      backFinished = true;
-      unsigned count = 0;
-      for(
-        const auto adjacent :
-        RangeForTemporary<GraphType::adjacency_iterator>(
-          boost::adjacent_vertices(pathSequence.back(), graph)
-        )
-      ) {
-        if(ligandIndicesSet.count(adjacent)) {
-          if(adjacent != pathSequence.at(pathSequence.size() - 2)) {
-            pathSequence.push_back(adjacent);
-            backFinished = false;
-          }
-
-          ++count;
-        }
-      }
-
-      if(count > 2) {
-        crossEdgeDiscovered = true;
-        break;
-      }
-    }
-  }
-
-  if(pathSequence.size() == ligandIndicesSet.size() && !crossEdgeDiscovered) {
-    // TODO model the path and determine a cone angle!
-    throw std::logic_error("Modeling of path ligands is not implemented.");
-  }
-
   return boost::none;
 }
 
 double MoleculeSpatialModel::spiroCrossAngle(const double alpha, const double beta) {
   // The source of this equation is explained in documents/
   return std::acos(
-    -1 * std::cos(alpha / 2) * std::cos(beta / 2)
+    -std::cos(alpha / 2) * std::cos(beta / 2)
   );
 }
 
