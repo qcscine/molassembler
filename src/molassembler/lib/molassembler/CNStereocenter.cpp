@@ -422,7 +422,41 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
   const Symmetry::Name symmetry,
   const GraphType& graph
 ) {
-  // TODO checks when no links are present for haptic ligands
+  auto symmetryPositionMap = generateLigandToSymmetryPositionMap(
+    assignment,
+    canonicalLigands
+  );
+
+  // Check if any haptic ligand cones intersect
+  const unsigned L = ranking.ligands.size();
+  for(unsigned ligandI = 0; ligandI < L - 1; ++ligandI) {
+    for(unsigned ligandJ = 0; ligandJ < L; ++ligandJ) {
+      // Do not test cone angles if no angle could be calculated
+      if(!coneAngles.at(ligandI) || !coneAngles.at(ligandJ)) {
+        continue;
+      }
+
+      double symmetryAngle = Symmetry::angleFunction(symmetry)(
+        symmetryPositionMap.at(ligandI),
+        symmetryPositionMap.at(ligandJ)
+      );
+
+      /* A haptic steropermutation of ligands is only obviously impossible if
+       * the haptic ligands have no spatial freedom to arrange in a fashion
+       * that does not overlap.
+       */
+      if(
+        (
+          symmetryAngle
+          - coneAngles.at(ligandI).value().lower
+          - coneAngles.at(ligandJ).value().lower
+        ) < 0
+      ) {
+        return false;
+      }
+    }
+  }
+
   /* Idea: An assignment is unfeasible if any link's cycle cannot be realized
    * as a flat cyclic polygon, in which the edges from the central atom are
    * merged using the joint angle calculable from the assignment and symmetry.
@@ -430,37 +464,24 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
    * The algorithm below is explained in detail in
    * documents/denticity_feasibility/.
    */
-  auto symmetryPositionMap = generateLigandToSymmetryPositionMap(
-    assignment,
-    canonicalLigands
-  );
-
   for(const auto& link : ranking.links) {
     // Ignore cycles of size 3
     if(link.cycleSequence.size() == 4) {
       continue;
     }
 
-    const DistanceGeometry::ValueBounds ligandIConeAngle = coneAngles.at(link.indexPair.first).value_or(
-      DistanceGeometry::ValueBounds {0.0, 0.0}
-    );
+    // Perform no checks if, for either of the ligands, no cone angle could be calculated
+    if(!coneAngles.at(link.indexPair.first) || !coneAngles.at(link.indexPair.second)) {
+      continue;
+    }
 
-    const DistanceGeometry::ValueBounds ligandJConeAngle = coneAngles.at(link.indexPair.second).value_or(
-      DistanceGeometry::ValueBounds {0.0, 0.0}
-    );
+    const DistanceGeometry::ValueBounds ligandIConeAngle = coneAngles.at(link.indexPair.first).value();
+    const DistanceGeometry::ValueBounds ligandJConeAngle = coneAngles.at(link.indexPair.second).value();
 
     const double symmetryAngle = Symmetry::angleFunction(symmetry)(
       symmetryPositionMap.at(link.indexPair.first),
       symmetryPositionMap.at(link.indexPair.second)
     );
-
-    /* A haptic steropermutation of ligands is only obviously impossible if the
-     * haptic ligands have no spatial freedom to arrange in a fashion that does
-     * not overlap.
-     */
-    if(symmetryAngle - ligandIConeAngle.lower - ligandJConeAngle.lower < 0) {
-      return false;
-    }
 
     /* A link across haptic ligands is only obviously impossible if it is
      * impossible in the best case scenario. In this case, especially for alpha,
