@@ -1169,18 +1169,19 @@ void CNStereocenter::setModelInformation(
   const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
   const double looseningMultiplier
 ) const {
-  /* Single ligand-level modelling:
-   * - Distance of ligand-constituting atoms to center
-   * - Angle between ligand-constituting atoms
-   */
+  /* Intra-site modelling */
   for(unsigned ligandI = 0; ligandI < _cache.ligandDistances.size(); ++ligandI) {
-    /* Every haptic index is on the cone base circle
-     * Cone height is defined by _cache.ligandDistance
-     * Cone angle is defined by _cache.coneAngle (if present)
+    // Do not attempt any modelling if the cone angle could not be calculated
+    if(!_cache.coneAngles.at(ligandI)) {
+      continue;
+    }
+
+    /* Distance of every ligand site atom index to the central atom assumptions
+     * - Every haptic index is on the cone base circle
+     * - Cone height is defined by _cache.ligandDistance
+     * - Cone angle is defined by _cache.coneAngle
      */
-    DistanceGeometry::ValueBounds coneAngleBounds = _cache.coneAngles.at(ligandI).value_or(
-      DistanceGeometry::ValueBounds {0.0, M_PI / 6}
-    );
+    DistanceGeometry::ValueBounds coneAngleBounds = _cache.coneAngles.at(ligandI).value();
 
     double upperHypotenuse = (
       _cache.ligandDistances.at(ligandI).upper
@@ -1204,7 +1205,9 @@ void CNStereocenter::setModelInformation(
 
     /* Angles between ligand-constituting atoms within a single index
      * - Minimally 0° (if there were a zero-length bond)
-     *   TODO could compute shortest possible bond constexpr and insert a trig calc here
+     *   You could compute shortest possible bond constexpr and insert a trig
+     *   calc here, but the bond level distance is supplied elsewhere by
+     *   MoleculeSpatialModel anyway, no need to duplicate that information
      * - Maximally 2 * the upper cone angle (but not more than M_PI)
      */
     temple::forAllPairs(
@@ -1221,6 +1224,7 @@ void CNStereocenter::setModelInformation(
     );
   }
 
+  /* Inter-site modelling */
   for(unsigned i = 0; i < _ranking.ligands.size() - 1; ++i) {
     if(!_cache.coneAngles.at(i)) {
       continue;
