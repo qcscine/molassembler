@@ -87,7 +87,7 @@ outcome::result<
 
 //! Intermediate conformational data about a Molecule given by a spatial model
 struct MoleculeDGInformation {
-  DistanceBoundsMatrix bounds;
+  MoleculeSpatialModel::BoundsList bounds;
   std::vector<ChiralityConstraint> chiralityConstraints;
 };
 

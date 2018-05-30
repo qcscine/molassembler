@@ -648,7 +648,7 @@ MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
   MoleculeSpatialModel spatialModel {molecule};
 
   // Extract gathered data
-  data.bounds = spatialModel.makeBounds();
+  data.bounds = spatialModel.makeBoundsList();
   data.chiralityConstraints = spatialModel.getChiralityConstraints();
 
   return data;

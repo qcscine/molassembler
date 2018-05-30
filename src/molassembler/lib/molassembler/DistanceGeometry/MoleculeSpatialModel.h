@@ -43,6 +43,19 @@ std::array<AtomIndexType, size> orderedIndexSequence(
   );
 }
 
+template<typename ... Inds>
+auto orderedSequence(Inds ... inds) {
+  std::array<AtomIndexType, sizeof...(inds)> indices {{
+    static_cast<AtomIndexType>(inds)...
+  }};
+
+  if(indices.front() > indices.back()) {
+    std::reverse(indices.begin(), indices.end());
+  }
+
+  return indices;
+}
+
 /*!
  * Keeps a record of the internal dimension bounds that a molecular graph is
  * interpreted as and permits the generation of a distance bounds matrix.
@@ -165,8 +178,9 @@ public:
    */
   void addDefaultDihedrals();
 
-  using BoundList = std::vector<
-    std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
+  using BoundsList = std::map<
+    std::array<AtomIndexType, 2>,
+    ValueBounds
   >;
 
 /* Information */
@@ -186,7 +200,10 @@ public:
 
   std::vector<ChiralityConstraint> getChiralityConstraints() const;
 
+  [[deprecated]]
   DistanceBoundsMatrix makeBounds() const;
+
+  BoundsList makeBoundsList() const;
 
   void writeGraphviz(const std::string& filename) const;
 };

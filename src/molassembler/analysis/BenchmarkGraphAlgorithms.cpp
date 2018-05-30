@@ -30,7 +30,7 @@ std::ostream& nl(std::ostream& os) {
 template<typename TimingCallable, size_t N>
 std::pair<double, double> timeFunctor(
   const Molecule& molecule,
-  const DistanceGeometry::DistanceBoundsMatrix& bounds,
+  const DistanceGeometry::MoleculeSpatialModel::BoundsList& bounds,
   DistanceGeometry::Partiality partiality
 ) {
   using namespace std::chrono;
@@ -59,7 +59,7 @@ template<class Graph>
 struct Gor1Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    const DistanceGeometry::DistanceBoundsMatrix& boundsList,
+    const DistanceGeometry::MoleculeSpatialModel::BoundsList& boundsList,
     DistanceGeometry::Partiality partiality
   ) {
 
@@ -76,7 +76,7 @@ struct Gor1Functor {
 struct DBM_FW_Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    const DistanceGeometry::DistanceBoundsMatrix& boundsList,
+    const DistanceGeometry::MoleculeSpatialModel::BoundsList& boundsList,
     DistanceGeometry::Partiality partiality
   ) {
     DistanceGeometry::DistanceBoundsMatrix bounds {molecule, boundsList};
@@ -141,7 +141,7 @@ void benchmark(
 
   DistanceGeometry::MoleculeSpatialModel spatialModel {sampleMol};
 
-  const auto boundsList = spatialModel.makeBounds();
+  const auto boundsList = spatialModel.makeBoundsList();
 
   /*
    * Can calculate shortest paths with either:

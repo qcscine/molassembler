@@ -1,11 +1,10 @@
 #ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
 #define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
 
-#include "boost/functional/hash.hpp"
 #include "boost/variant.hpp"
 #include "boost/optional.hpp"
 #include "boost_outcome/outcome.hpp"
-#include <unordered_map>
+#include <map>
 #include <tuple>
 #include "Eigen/Core"
 
@@ -172,6 +171,16 @@ public:
   ImplicitGraph(
     const Molecule& molecule,
     const DistanceBoundsMatrix& bounds
+  );
+
+  using BoundsList = std::map<
+    std::array<VertexDescriptor, 2>,
+    ValueBounds
+  >;
+
+  ImplicitGraph(
+    const Molecule& molecule,
+    const BoundsList& bounds
   );
 
   /* Modification */

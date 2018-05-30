@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
     SPG spg {
       molecule,
-      spatialModel.makeBounds()
+      spatialModel.makeBoundsList()
     };
 
     SPG::VertexDescriptor N = boost::num_vertices(spg);

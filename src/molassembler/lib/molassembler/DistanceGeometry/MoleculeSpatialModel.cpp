@@ -747,6 +747,138 @@ bool bondInformationIsPresent(
   );
 }
 
+MoleculeSpatialModel::BoundsList MoleculeSpatialModel::makeBoundsList() const {
+  BoundsList bounds = _bondBounds;
+
+  auto addInformation = [&bounds](
+    const AtomIndexType i,
+    const AtomIndexType j,
+    const ValueBounds& newBounds
+  ) {
+    auto indices = orderedSequence(i, j);
+    auto findIter = bounds.lower_bound(indices);
+
+    if(findIter != bounds.end() && findIter->first == indices) {
+      auto& currentBounds = findIter->second;
+      // Try to raise the lower bound first
+      if(
+        newBounds.lower > currentBounds.lower
+        && newBounds.lower < currentBounds.upper
+      ) {
+        currentBounds.lower = newBounds.lower;
+      }
+
+      // Try to lower the upper bound
+      if(
+        newBounds.upper < currentBounds.upper
+        && newBounds.upper > currentBounds.lower
+      ) {
+        currentBounds.upper = newBounds.upper;
+      }
+    } else {
+      bounds.emplace_hint(
+        findIter,
+        indices,
+        newBounds
+      );
+    }
+  };
+
+  auto getBondBounds = [&bounds](
+    const AtomIndexType i,
+    const AtomIndexType j
+  ) -> ValueBounds& {
+    return bounds.at(
+      orderedSequence(i, j)
+    );
+  };
+
+  for(const auto& anglePair : _angleBounds) {
+    const auto& indices = anglePair.first;
+    const auto& angleBounds = anglePair.second;
+
+    const auto& firstBounds = getBondBounds(indices.front(), indices.at(1));
+    const auto& secondBounds = getBondBounds(indices.at(1), indices.back());
+
+    addInformation(
+      indices.front(),
+      indices.back(),
+      ValueBounds {
+        CommonTrig::lawOfCosines(
+          firstBounds.lower,
+          secondBounds.lower,
+          angleBounds.lower
+        ),
+        CommonTrig::lawOfCosines(
+          firstBounds.upper,
+          secondBounds.upper,
+          angleBounds.upper
+        )
+      }
+    );
+  }
+
+  for(const auto& dihedralPair : _dihedralBounds) {
+    const auto& indices = dihedralPair.first;
+    const auto& dihedralBounds = dihedralPair.second;
+
+    const auto& firstBounds = getBondBounds(indices.front(), indices.at(1));
+    const auto& secondBounds = getBondBounds(indices.at(1), indices.at(2));
+    const auto& thirdBounds = getBondBounds(indices.at(2), indices.back());
+
+    auto firstAngleFindIter = _angleBounds.find(
+      orderedIndexSequence<3>({{
+        indices.at(0),
+        indices.at(1),
+        indices.at(2)
+      }})
+    );
+
+    auto secondAngleFindIter = _angleBounds.find(
+      orderedIndexSequence<3>({{
+        indices.at(1),
+        indices.at(2),
+        indices.at(3)
+      }})
+    );
+
+    if(
+      firstAngleFindIter == _angleBounds.end()
+      || secondAngleFindIter == _angleBounds.end()
+    ) {
+      continue;
+    }
+
+    const auto& abAngleBounds = firstAngleFindIter->second;
+    const auto& bcAngleBounds = secondAngleFindIter->second;
+
+    addInformation(
+      indices.front(),
+      indices.back(),
+      ValueBounds {
+        CommonTrig::dihedralLength(
+          firstBounds.lower,
+          secondBounds.lower,
+          thirdBounds.lower,
+          abAngleBounds.lower,
+          bcAngleBounds.lower,
+          dihedralBounds.lower // cis dihedral
+        ),
+        CommonTrig::dihedralLength(
+          firstBounds.upper,
+          secondBounds.upper,
+          thirdBounds.upper,
+          abAngleBounds.upper,
+          bcAngleBounds.upper,
+          dihedralBounds.upper // trans dihedral
+        )
+      }
+    );
+  }
+
+  return bounds;
+}
+
 DistanceBoundsMatrix MoleculeSpatialModel::makeBounds() const {
   DistanceBoundsMatrix bounds {_molecule.numAtoms()};
 

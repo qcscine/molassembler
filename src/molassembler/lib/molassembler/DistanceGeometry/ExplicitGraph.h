@@ -91,12 +91,25 @@ private:
   }
 
 public:
-  using BoundList = std::vector<
-    std::tuple<VertexDescriptor, VertexDescriptor, ValueBounds>
+  using BoundsList = std::map<
+    std::array<VertexDescriptor, 2>,
+    ValueBounds
   >;
+
   ExplicitGraph(
     const Molecule& molecule,
     const DistanceBoundsMatrix& bounds
+  );
+
+  ExplicitGraph(
+    const Molecule& molecule,
+    const BoundsList& bounds
+  );
+
+  void addBound(
+    const VertexDescriptor a,
+    const VertexDescriptor b,
+    const ValueBounds& bound
   );
 
   static inline bool isLeft(const VertexDescriptor i) {

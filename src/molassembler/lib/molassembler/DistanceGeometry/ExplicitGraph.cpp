@@ -33,6 +33,44 @@ namespace DistanceGeometry {
 
 ExplicitGraph::ExplicitGraph(
   const Molecule& molecule,
+  const BoundsList& bounds
+) : _graph {2 * molecule.numAtoms()},
+    _molecule {molecule}
+{
+  const AtomIndexType N = molecule.numAtoms();
+
+  for(const auto& mapPair : bounds) {
+    addBound(
+      mapPair.first.front(),
+      mapPair.first.back(),
+      mapPair.second
+    );
+  }
+
+  addImplicitEdges();
+
+  // Determine the two heaviest element types in the molecule, O(N)
+  _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
+  for(AtomIndexType i = 0; i < N; ++i) {
+    auto elementType = molecule.getElementType(i);
+    if(
+      static_cast<unsigned>(elementType)
+      > static_cast<unsigned>(_heaviestAtoms.back())
+    ) {
+      _heaviestAtoms.back() = elementType;
+
+      if(
+        static_cast<unsigned>(_heaviestAtoms.back())
+        > static_cast<unsigned>(_heaviestAtoms.front())
+      ) {
+        std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
+      }
+    }
+  }
+}
+
+ExplicitGraph::ExplicitGraph(
+  const Molecule& molecule,
   const DistanceBoundsMatrix& bounds
 ) : _graph {2 * molecule.numAtoms()},
     _molecule {molecule}
@@ -81,6 +119,24 @@ ExplicitGraph::ExplicitGraph(
       }
     }
   }
+}
+
+void ExplicitGraph::addBound(
+  const VertexDescriptor a,
+  const VertexDescriptor b,
+  const ValueBounds& bound
+) {
+  // Bidirectional edge in left graph with upper weight
+  boost::add_edge(left(a), left(b), bound.upper, _graph);
+  boost::add_edge(left(b), left(a), bound.upper, _graph);
+
+  // Bidirectional edge in right graph with upper weight
+  boost::add_edge(right(a), right(b), bound.upper, _graph);
+  boost::add_edge(right(b), right(a), bound.upper, _graph);
+
+  // Forward edge from left to right graph with negative lower bound weight
+  boost::add_edge(left(a), right(b), -bound.lower, _graph);
+  boost::add_edge(left(b), right(a), -bound.lower, _graph);
 }
 
 void ExplicitGraph::_explainContradictionPaths(

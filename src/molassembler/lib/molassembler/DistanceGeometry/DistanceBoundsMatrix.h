@@ -69,8 +69,9 @@ public:
     );
   }
 
-  using BoundList = std::vector<
-    std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
+  using BoundsList = std::map<
+    std::array<AtomIndexType, 2>,
+    ValueBounds
   >;
 
   DistanceBoundsMatrix();
@@ -80,11 +81,19 @@ public:
   explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix);
 
   template<typename Molecule>
-  DistanceBoundsMatrix(const Molecule& molecule, const DistanceBoundsMatrix& bounds) {
-    _matrix = bounds.access();
-    unsigned N = molecule.numAtoms();
+  DistanceBoundsMatrix(
+    const Molecule& molecule,
+    const BoundsList& bounds
+  ) : DistanceBoundsMatrix {molecule.numAtoms()}
+  {
+    // Populate the matrix with explicit bounds
+    for(const auto& mapPair : bounds) {
+      setLowerBound(mapPair.first.front(), mapPair.first.back(), mapPair.second.lower);
+      setUpperBound(mapPair.first.front(), mapPair.first.back(), mapPair.second.upper);
+    }
 
     // Populate the lower bounds if no explicit information is present
+    const AtomIndexType N = molecule.numAtoms();
     for(AtomIndexType i = 0; i < N - 1; ++i) {
       for(AtomIndexType j = i + 1; j < N; ++j) {
         /* setting the bounds will fail for bonded pairs as those have strict
