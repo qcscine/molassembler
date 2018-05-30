@@ -184,7 +184,7 @@ public:
   void addSubstituent(
     const GraphType& graph,
     const AtomIndexType newSubstituentIndex,
-    const RankingInformation& newRanking,
+    RankingInformation newRanking,
     const Symmetry::Name& newSymmetry,
     const ChiralStatePreservation& preservationOption
   );

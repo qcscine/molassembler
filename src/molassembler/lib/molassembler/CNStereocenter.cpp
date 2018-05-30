@@ -607,7 +607,7 @@ CNStereocenter::CNStereocenter(
 void CNStereocenter::addSubstituent(
   const GraphType& graph,
   const AtomIndexType newSubstituentIndex,
-  const RankingInformation& newRanking,
+  RankingInformation newRanking,
   const Symmetry::Name& newSymmetry,
   const ChiralStatePreservation& preservationOption
 ) {
@@ -624,84 +624,149 @@ void CNStereocenter::addSubstituent(
    */
   boost::optional<unsigned> newStereopermutation = boost::none;
 
-  /* Does the current stereocenter carry chiral information?
-   * If so, try to get a mapping to the new symmetry
-   * If that returns a Some, try to get a mapping by preservationOption policy
-   *
-   * If any of these steps returns boost::none, the whole expression is
-   * boost::none.
+  /* Two possible situations: Either a full ligand is added, or an atom is
+   * added to a ligand
    */
-  auto suitableMappingOption = _assignmentOption
-    | temple::callIfSome(Symmetry::getMapping, _symmetry, newSymmetry, boost::none)
-    | temple::callIfSome(
-        PermutationState::getIndexMapping,
-        temple::ANS, // Inserts getMapping's optional value here
-        preservationOption
-      );
-
-  if(suitableMappingOption) {
-    /* So now we must transfer the current assignment into the new symmetry
-     * and search for it in the set of uniques.
-     */
-    const auto& symmetryMapping = suitableMappingOption.value();
-
-    // Transform current assignment from characters to indices
-    const auto& currentStereopermutation = _cache.permutations.assignments.at(
-      _assignmentOption.value()
-    );
-
-    std::vector<unsigned> ligandsAtSmallerSymmetryPositions = PermutationState::generateSymmetryPositionToLigandMap(
-      currentStereopermutation,
-      _cache.canonicalLigands
-    );
-
-    ligandsAtSmallerSymmetryPositions.push_back(newSubstituentIndex);
-
-    // Transfer indices from smaller symmetry to larger
-    std::vector<unsigned> ligandsAtLargerSymmetryPositions (Symmetry::size(newSymmetry));
-    for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
-      ligandsAtLargerSymmetryPositions.at(
-        symmetryMapping.at(i)
-      ) = ligandsAtSmallerSymmetryPositions.at(i);
-    }
-
-    // Get character representation in new symmetry
-    std::vector<char> charactersInLargerSymmetry = PermutationState::makeStereopermutationCharacters(
-      newPermutationState.canonicalLigands,
-      newPermutationState.symbolicCharacters,
-      ligandsAtLargerSymmetryPositions
-    );
-
-    // Construct an assignment from it
-    auto trialStereopermutation = stereopermutation::Stereopermutation(
-      newSymmetry,
-      charactersInLargerSymmetry,
-      newPermutationState.selfReferentialLinks
-    );
-
-    // Generate the rotational equivalents
-    auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
-
-    // Search for a match from the vector of uniques
-    for(unsigned i = 0; i < newPermutationState.permutations.assignments.size(); ++i) {
-      if(allTrialRotations.count(newPermutationState.permutations.assignments.at(i)) > 0) {
-        newStereopermutation = i;
+  boost::optional<bool> soleConstitutingIndex;
+  unsigned ligandIndexAddedTo;
+  for(
+    unsigned ligandI = 0;
+    ligandI < newRanking.ligands.size() && !soleConstitutingIndex;
+    ++ligandI
+  ) {
+    for(const AtomIndexType constitutingIndex : newRanking.ligands.at(ligandI)) {
+      if(constitutingIndex == newSubstituentIndex) {
+        ligandIndexAddedTo = ligandI;
+        soleConstitutingIndex = (newRanking.ligands.at(ligandI).size() == 1);
         break;
       }
     }
   }
 
-  /* Since either there is no steric information present or no unique
-   * minimal-effort mapping exists to the new symmetry, it is impossible to
-   * unambiguously choose a new assignment. In those cases, newStereopermutation
-   * remains boost::none, and this stereocenter loses any chiral information it
-   * may have had.
-   */
+  // No need to find a new assignment if no chiral state is present
+  if(_assignmentOption) {
+    // Transform current assignment from characters to indices
+    const auto& currentStereopermutation = _cache.permutations.assignments.at(
+      _assignmentOption.value()
+    );
+
+    std::vector<unsigned> ligandsAtOldSymmetryPositions = PermutationState::generateSymmetryPositionToLigandMap(
+      currentStereopermutation,
+      _cache.canonicalLigands
+    );
+
+
+    // Transfer indices from smaller symmetry to larger
+    std::vector<unsigned> ligandsAtNewSymmetryPositions;
+
+    if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry)) {
+      /* If no symmetry transition happens, then all we have to figure out is a
+       * ligand to ligand mapping (since ligands may have reordered completely)
+       */
+      assert(!soleConstitutingIndex.value());
+
+      // Sort ligands in both rankings so we can use lexicographical comparison
+      _ranking.ligands.at(ligandIndexAddedTo).push_back(newSubstituentIndex);
+      for(auto& ligand : _ranking.ligands) {
+        temple::sort(ligand);
+      }
+
+      for(auto& ligand : newRanking.ligands) {
+        temple::sort(ligand);
+      }
+
+      auto ligandMapping = temple::map(
+        _ranking.ligands,
+        [&newRanking](const auto& ligand) -> unsigned {
+          auto findIter = std::find(
+            newRanking.ligands.begin(),
+            newRanking.ligands.end(),
+            ligand
+          );
+
+          assert(findIter != newRanking.ligands.end());
+
+          return findIter - newRanking.ligands.begin();
+        }
+      );
+
+      ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
+      for(unsigned i = 0; i < ligandMapping.size(); ++i) {
+        ligandsAtNewSymmetryPositions.at(i) = ligandMapping.at(
+          ligandsAtOldSymmetryPositions.at(i)
+        );
+      }
+    } else if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry) + 1) {
+      assert(soleConstitutingIndex.value());
+
+      /* Try to get a mapping to the new symmetry
+       * If that returns a Some, try to get a mapping by preservationOption policy
+       *
+       * If any of these steps returns boost::none, the whole expression is
+       * boost::none.
+       */
+      auto suitableMappingOption = Symmetry::getMapping(
+        _symmetry,
+        newSymmetry,
+        boost::none
+      ) | temple::callIfSome(
+        PermutationState::getIndexMapping,
+        temple::ANS,
+        preservationOption
+      );
+
+      if(suitableMappingOption) {
+        /* So now we must transfer the current assignment into the new symmetry
+         * and search for it in the set of uniques.
+         */
+        const auto& symmetryMapping = suitableMappingOption.value();
+
+        ligandsAtOldSymmetryPositions.push_back(ligandIndexAddedTo);
+        ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
+        for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
+          ligandsAtNewSymmetryPositions.at(
+            symmetryMapping.at(i)
+          ) = ligandsAtOldSymmetryPositions.at(i);
+        }
+      }
+      /* If no mapping can be found that fits to the preservationOption,
+       * newStereopermutation remains boost::none, and this stereocenter loses
+       * any chiral information it may have had.
+       */
+    }
+
+    if(!ligandsAtNewSymmetryPositions.empty()) {
+      // Get character representation in new symmetry
+      std::vector<char> charactersInNewSymmetry = PermutationState::makeStereopermutationCharacters(
+        newPermutationState.canonicalLigands,
+        newPermutationState.symbolicCharacters,
+        ligandsAtNewSymmetryPositions
+      );
+
+      // Construct an assignment from it
+      auto trialStereopermutation = stereopermutation::Stereopermutation(
+        newSymmetry,
+        charactersInNewSymmetry,
+        newPermutationState.selfReferentialLinks
+      );
+
+      // Generate the rotational equivalents
+      auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
+
+      // Search for a match from the vector of uniques
+      for(unsigned i = 0; i < newPermutationState.permutations.assignments.size(); ++i) {
+        if(allTrialRotations.count(newPermutationState.permutations.assignments.at(i)) > 0) {
+          newStereopermutation = i;
+          break;
+        }
+      }
+    }
+  }
 
   // Overwrite class state
-  _ranking = newRanking;
+  _ranking = std::move(newRanking);
   _symmetry = newSymmetry;
-  _cache = newPermutationState;
+  _cache = std::move(newPermutationState);
 
   assign(newStereopermutation);
 }
@@ -892,17 +957,23 @@ void CNStereocenter::removeSubstituent(
    */
   boost::optional<bool> soleConstitutingIndex;
   unsigned ligandIndexRemovedFrom;
-  for(unsigned ligandI = 0; ligandI < _ranking.ligands.size(); ++ligandI) {
+  for(
+    unsigned ligandI = 0;
+    ligandI < _ranking.ligands.size() && !soleConstitutingIndex;
+    ++ligandI
+  ) {
     for(const AtomIndexType constitutingIndex : _ranking.ligands.at(ligandI)) {
       if(constitutingIndex == which) {
         ligandIndexRemovedFrom = ligandI;
         soleConstitutingIndex = (_ranking.ligands.at(ligandI).size() == 1);
+        break;
       }
     }
   }
 
   assert(soleConstitutingIndex);
 
+  // No need to find a new assignment if we currently do not carry chiral state
   if(_assignmentOption) {
     // Transform current assignment from characters to ligand indices
     const auto& currentStereopermutation = _cache.permutations.assignments.at(
@@ -914,7 +985,7 @@ void CNStereocenter::removeSubstituent(
       _cache.canonicalLigands
     );
 
-    std::vector<unsigned> ligandsAtNewSymmetryPositions (Symmetry::size(newSymmetry));
+    std::vector<unsigned> ligandsAtNewSymmetryPositions;
 
     if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry)) {
       /* If no symmetry transition happens, then all we have to figure out is a
@@ -950,6 +1021,7 @@ void CNStereocenter::removeSubstituent(
         }
       );
 
+      ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
       // Transfer ligands to new mapping
       for(unsigned i = 0; i < ligandMapping.size(); ++i) {
         ligandsAtNewSymmetryPositions.at(i) = ligandMapping.at(
@@ -979,6 +1051,7 @@ void CNStereocenter::removeSubstituent(
         const auto& symmetryMapping = suitableMappingOptional.value();
 
         // Transfer indices from current symmetry to new symmetry
+        ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
         for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
           ligandsAtNewSymmetryPositions.at(
             symmetryMapping.at(i)
@@ -986,30 +1059,32 @@ void CNStereocenter::removeSubstituent(
         }
       }
 
-      // Get character representation in new symmetry
-      std::vector<char> charactersInNewSymmetry = PermutationState::makeStereopermutationCharacters(
-        newPermutationState.canonicalLigands,
-        newPermutationState.symbolicCharacters,
-        ligandsAtNewSymmetryPositions
-      );
+      if(!ligandsAtNewSymmetryPositions.empty()) {
+        // Get character representation in new symmetry
+        std::vector<char> charactersInNewSymmetry = PermutationState::makeStereopermutationCharacters(
+          newPermutationState.canonicalLigands,
+          newPermutationState.symbolicCharacters,
+          ligandsAtNewSymmetryPositions
+        );
 
-      // TODO Shouldn't the links in the new symmetry be generated too for use in comparison??
+        // TODO Shouldn't the links in the new symmetry be generated too for use in comparison??
 
-      // Construct an assignment
-      auto trialStereopermutation = stereopermutation::Stereopermutation(
-        newSymmetry,
-        charactersInNewSymmetry,
-        newPermutationState.selfReferentialLinks
-      );
+        // Construct an assignment
+        auto trialStereopermutation = stereopermutation::Stereopermutation(
+          newSymmetry,
+          charactersInNewSymmetry,
+          newPermutationState.selfReferentialLinks
+        );
 
-      // Generate the rotational equivalents
-      auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
+        // Generate the rotational equivalents
+        auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
 
-      // Search for a match from the vector of uniques
-      for(unsigned i = 0; i < newPermutationState.permutations.assignments.size(); ++i) {
-        if(allTrialRotations.count(newPermutationState.permutations.assignments.at(i)) > 0) {
-          newStereopermutation = i;
-          break;
+        // Search for a match from the vector of uniques
+        for(unsigned i = 0; i < newPermutationState.permutations.assignments.size(); ++i) {
+          if(allTrialRotations.count(newPermutationState.permutations.assignments.at(i)) > 0) {
+            newStereopermutation = i;
+            break;
+          }
         }
       }
     }
