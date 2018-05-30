@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
       IO::write(
         filestem + "-"s + std::to_string(structNum) + "-last.mol"s,
         mol,
-        DistanceGeometry::detail::convertToPositionCollection(
+        DistanceGeometry::detail::convertToAngstromWrapper(
           refinementData.steps.back().positions
         )
       );
@@ -196,7 +196,7 @@ int main(int argc, char* argv[]) {
           Symmetry::spaceFreeName(symmetryName) + "-"s
             + std::to_string(structNum) + "-last.mol"s,
           mol,
-          DistanceGeometry::detail::convertToPositionCollection(
+          DistanceGeometry::detail::convertToAngstromWrapper(
             refinementData.steps.back().positions
           )
         );

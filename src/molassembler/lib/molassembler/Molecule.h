@@ -4,6 +4,7 @@
 #include "StereocenterList.h"
 #include "CycleData.h"
 #include "LocalGeometryModel.h"
+#include "AngstromWrapper.h"
 
 #include "temple/constexpr/Bitmask.h"
 
@@ -49,7 +50,8 @@ public:
 
   //! Calculates a bond order collection via UFF-like bond distance modelling
   static Delib::BondOrderCollection uffBondOrders(
-    const Delib::AtomCollection& atomCollection
+    const Delib::ElementTypeCollection& elements,
+    const AngstromWrapper& angstromWrapper
   );
 
   using PseudoHashType = unsigned long long;
@@ -91,13 +93,26 @@ public:
     std::vector<unsigned> componentMap;
   };
 
+  static InterpretResult interpret(
+    const Delib::ElementTypeCollection& elements,
+    const AngstromWrapper& angstromWrapper,
+    const Delib::BondOrderCollection& bondOrders,
+    const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  );
+
+  static InterpretResult interpret(
+    const Delib::ElementTypeCollection& elements,
+    const AngstromWrapper& angstromWrapper,
+    const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  );
+
   /*! Interpret molecules in 3D information and a bond order collection.
    *
    * The graph is inferred via bond discretization from the bond order
    * collection.
    *
    * @note Assumes that the provided atom collection's positions are in
-   * Angstrom units.
+   * Bohr units.
    */
   static InterpretResult interpret(
     const Delib::AtomCollection& atomCollection,
@@ -110,7 +125,7 @@ public:
    * The graph is inferred via bond discretization from pairwise atom distances.
    *
    * @note Assumes that the provided atom collection's positions are in
-   * Angstrom units.
+   * Bohr units.
    */
   static InterpretResult interpret(
     const Delib::AtomCollection& atomCollection,
@@ -160,7 +175,7 @@ private:
   void _pickyFitStereocenter(
     Stereocenters::CNStereocenter& stereocenter,
     const Symmetry::Name expectedSymmetry,
-    const Delib::PositionCollection& positions
+    const AngstromWrapper& angstromWrapper
   ) const;
 
   //!  Reduces an atom's neighbors to ligand types
@@ -194,7 +209,7 @@ public:
    */
   Molecule(
     GraphType graph,
-    const Delib::PositionCollection& positions
+    const AngstromWrapper& positions
   );
 
   //! Construct a molecule from the underlying data fragments
@@ -363,9 +378,7 @@ public:
   //! Returns the number of adjacencies of an atomic position
   unsigned getNumAdjacencies(const AtomIndexType a) const;
 
-  StereocenterList inferStereocentersFromPositions(
-    const Delib::PositionCollection& positions
-  ) const;
+  StereocenterList inferStereocentersFromPositions(const AngstromWrapper& angstromWrapper) const;
 
   //! Checks if two atomic indices are connected by a bond
   bool isAdjacent(
@@ -419,7 +432,7 @@ public:
   RankingInformation rankPriority(
     const AtomIndexType a,
     const std::set<AtomIndexType>& excludeAdjacent = {},
-    const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
+    const boost::optional<AngstromWrapper>& positionsOption = boost::none
   ) const;
 
   //! Get the vertex indices on both ends of a graph edge

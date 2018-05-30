@@ -29,11 +29,11 @@ bool hasUnassignedStereocenters(const Molecule& mol);
 
 namespace detail {
 
-Delib::PositionCollection convertToPositionCollection(
+AngstromWrapper convertToAngstromWrapper(
   const Eigen::VectorXd& vectorizedPositions
 );
 
-Delib::PositionCollection convertToPositionCollection(
+AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
 
@@ -41,6 +41,8 @@ Delib::PositionCollection convertToPositionCollection(
  * A logging, not throwing otherwise identical implementation of
  * runDistanceGeometry, that returns detailed intermediate data from a
  * refinement, while runDistanceGeometry returns only the final result.
+ *
+ * @note Contained PositionCollections are in Angstrom length units
  */
 std::list<RefinementData> debugDistanceGeometry(
   const Molecule& molecule,
@@ -68,9 +70,11 @@ std::list<RefinementData> debugDistanceGeometry(
  *
  * Distance method: For debug purposes, using uniform distances between atoms
  * may be desirable for particularly hypothetical structures.
+ *
+ * @note Returns PositionCollections in Angstrom length units
  */
 outcome::result<
-  std::vector<Delib::PositionCollection>
+  std::vector<AngstromWrapper>
 > runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
@@ -101,7 +105,7 @@ outcome::result<
   std::vector<Delib::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
-  const unsigned& numStructures
+  const unsigned numStructures
 );
 
 /*! Generate a 3D structure of a Molecule

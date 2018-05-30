@@ -34,6 +34,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/dlibDebugAdaptors.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/generateConformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AdjacencyMatrix.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AngstromWrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AnalysisHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomInfo.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Base64.h

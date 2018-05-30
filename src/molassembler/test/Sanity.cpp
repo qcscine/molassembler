@@ -102,9 +102,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         auto mapped = temple::map(
           ensembleResult.value(),
           [&](const auto& positions) -> bool {
-            auto inferredStereocenterList = molecule.inferStereocentersFromPositions(
-              positions
-            );
+            auto inferredStereocenterList = molecule.inferStereocentersFromPositions(positions);
 
             bool pass = molecule.getStereocenterList() == inferredStereocenterList;
 

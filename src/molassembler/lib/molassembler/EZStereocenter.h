@@ -2,6 +2,7 @@
 #define INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
 
 #include "Stereocenter.h"
+#include "AngstromWrapper.h"
 
 /*! @file
  *
@@ -161,7 +162,7 @@ public:
 
   void assignRandom() final;
 
-  void fit(const Delib::PositionCollection& positions);
+  void fit(const AngstromWrapper& angstromWrapper);
 
   void propagateGraphChange(
     const RankingInformation& firstCenterRanking,

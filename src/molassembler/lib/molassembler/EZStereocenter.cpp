@@ -183,7 +183,7 @@ void EZStereocenter::assignRandom() {
   _isZOption = temple::random.getSingle<bool>();
 }
 
-void EZStereocenter::fit(const Delib::PositionCollection& positions) {
+void EZStereocenter::fit(const AngstromWrapper& angstromWrapper) {
   /* The only sequences that we can be sure of exist is the singular one from
    * equalPriorityDihedralSequences(). There may be two of those, though, in
    * case we have four substituents, so consider that too if it exists.
@@ -194,7 +194,7 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
         return std::fabs(
-          DelibHelpers::getDihedral(positions, indices)
+          DelibHelpers::getDihedral(angstromWrapper.positions, indices)
         );
       }
     )
@@ -203,7 +203,7 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
       _differentPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
         return M_PI - std::fabs(
-          DelibHelpers::getDihedral(positions, indices)
+          DelibHelpers::getDihedral(angstromWrapper.positions, indices)
         );
       }
     )
@@ -214,7 +214,7 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
       _equalPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
         return M_PI - std::fabs(
-          DelibHelpers::getDihedral(positions, indices)
+          DelibHelpers::getDihedral(angstromWrapper.positions, indices)
         );
       }
     )
@@ -223,7 +223,7 @@ void EZStereocenter::fit(const Delib::PositionCollection& positions) {
       _differentPriorityDihedralSequences(),
       [&](const std::array<AtomIndexType, 4>& indices) -> double {
         return std::fabs(
-          DelibHelpers::getDihedral(positions, indices)
+          DelibHelpers::getDihedral(angstromWrapper.positions, indices)
         );
       }
     )

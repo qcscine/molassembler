@@ -543,7 +543,7 @@ public:
  * meaning from lowest priority to highest priority.
  */
 void RankingTree::_applySequenceRules(
-  const boost::optional<Delib::PositionCollection>& positionsOption
+  const boost::optional<AngstromWrapper>& positionsOption
 ) {
   /* Sequence rule 2
    * - A node with higher atomic mass precedes ones with lower atomic mass
@@ -2743,7 +2743,7 @@ RankingTree::RankingTree(
   const AtomIndexType& atomToRank,
   const std::set<AtomIndexType>& excludeIndices,
   const ExpansionOption& expansionMethod,
-  const boost::optional<Delib::PositionCollection>& positionsOption
+  const boost::optional<AngstromWrapper>& positionsOption
 ) : _moleculeRef(molecule) {
   // Set the root vertex
   auto rootIndex = boost::add_vertex(_tree);

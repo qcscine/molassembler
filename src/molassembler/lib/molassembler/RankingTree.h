@@ -1040,7 +1040,7 @@ private:
    * also included in this library.
    */
   void _applySequenceRules(
-    const boost::optional<Delib::PositionCollection>& positionsOption
+    const boost::optional<AngstromWrapper>& positionsOption
   );
 
   /*!
@@ -1119,7 +1119,7 @@ public:
     const AtomIndexType& atomToRank,
     const std::set<AtomIndexType>& excludeIndices = {},
     const ExpansionOption& expansionMethod = ExpansionOption::Optimized,
-    const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
+    const boost::optional<AngstromWrapper>& positionsOption = boost::none
   );
 
   /*! Fetches the ranked result

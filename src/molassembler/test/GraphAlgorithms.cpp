@@ -532,7 +532,7 @@ bool testHapticBonds(boost::filesystem::path filePath) {
   IO::MOLFileHandler molHandler;
   auto rawData = molHandler.read(filePath.string());
 
-  unsigned N = rawData.atoms.size();
+  const unsigned N = rawData.elements.size();
   GraphType graph (N);
 
   // Basically a UFF bond discretization scheme
@@ -555,7 +555,7 @@ bool testHapticBonds(boost::filesystem::path filePath) {
     }
 
     // copy element type data too
-    graph[i].elementType = rawData.atoms.getElement(i);
+    graph[i].elementType = rawData.elements.at(i);
   }
 
   graph = GraphAlgorithms::findAndSetEtaBonds(std::move(graph));

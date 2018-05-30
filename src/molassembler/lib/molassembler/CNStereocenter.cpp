@@ -1032,14 +1032,14 @@ Symmetry::Name CNStereocenter::getSymmetry() const {
 
 void CNStereocenter::fit(
   const GraphType& graph,
-  const Delib::PositionCollection& positions,
+  const AngstromWrapper& angstromWrapper,
   std::vector<Symmetry::Name> excludeSymmetries
 ) {
   // For all atoms making up a ligand, decide on the spatial average position
   const std::vector<Eigen::Vector3d> ligandPositions = temple::mapToVector(
     _ranking.ligands,
-    [&positions](const std::vector<AtomIndexType>& ligandAtoms) -> Eigen::Vector3d {
-      return DelibHelpers::averagePosition(positions, ligandAtoms);
+    [&angstromWrapper](const std::vector<AtomIndexType>& ligandAtoms) -> Eigen::Vector3d {
+      return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
     }
   );
 
@@ -1086,7 +1086,7 @@ void CNStereocenter::fit(
             return std::fabs(
               DelibHelpers::angle(
                 ligandPositions.at(ligandI),
-                positions.at(_centerAtom).toEigenVector(),
+                angstromWrapper.positions.at(_centerAtom).toEigenVector(),
                 ligandPositions.at(ligandJ)
               ) - angle(ligandI, ligandJ)
             );
@@ -1117,11 +1117,11 @@ void CNStereocenter::fit(
                 // i-j 1-2 distance from positions
                 DelibHelpers::distance(
                   ligandPositions.at(ligandI),
-                  positions.at(_centerAtom).toEigenVector()
+                  angstromWrapper.positions.at(_centerAtom).toEigenVector()
                 ),
                 // j-k 1-2 distance from positions
                 DelibHelpers::distance(
-                  positions.at(_centerAtom).toEigenVector(),
+                  angstromWrapper.positions.at(_centerAtom).toEigenVector(),
                   ligandPositions.at(ligandJ)
                 ),
                 // idealized Stereocenter angle
@@ -1149,7 +1149,7 @@ void CNStereocenter::fit(
                     return ligandPositions.at(ligandIndexOptional.value());
                   }
 
-                  return positions.at(_centerAtom).asEigenVector();
+                  return angstromWrapper.positions.at(_centerAtom).asEigenVector();
                 }
               ),
               DelibHelpers::adjustedSignedVolume
@@ -1248,9 +1248,16 @@ void CNStereocenter::setModelInformation(
 ) const {
   /* Intra-site modelling */
   for(unsigned ligandI = 0; ligandI < _cache.ligandDistances.size(); ++ligandI) {
-    // Do not attempt any modelling if the cone angle could not be calculated
+    /* If no cone information is present, do not correct the distance to the
+     * ligand using the cone angle
+     */
     if(!_cache.coneAngles.at(ligandI)) {
-      continue;
+      for(const AtomIndexType i : _ranking.ligands.at(ligandI)) {
+        model.setBondBoundsIfEmpty(
+          {{i, _centerAtom}},
+          _cache.ligandDistances.at(ligandI)
+        );
+      }
     }
 
     /* Distance of every ligand site atom index to the central atom assumptions

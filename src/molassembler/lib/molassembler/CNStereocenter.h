@@ -6,6 +6,7 @@
 #include "DistanceGeometry/ValueBounds.h"
 
 #include "Stereocenter.h"
+#include "AngstromWrapper.h"
 
 using namespace std::string_literals;
 
@@ -200,7 +201,7 @@ public:
    */
   void fit(
     const GraphType& graph,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     std::vector<Symmetry::Name> excludeSymmetries = {}
   );
 

@@ -53,7 +53,7 @@ enum class TemperatureRegime {Low, High};
  *   mappings. Those are the green edges in the graphs below. Note that the
  *   ligand gain situation from square planar to square pyramidal is not
  *   unique, and therefore not shown as green.
- * - Unique: Propagates if the best symmetry mapping is unique, i.e. there 
+ * - Unique: Propagates if the best symmetry mapping is unique, i.e. there
  *   are no other mappings with the same quality measures. This enables all
  *   green and black edges.
  * - RandomFromMultipleBest: Chooses randomly from the set of best mappings,
@@ -150,6 +150,11 @@ enum class ChiralStatePreservation {
   RandomFromMultipleBest
 };
 
+enum class LengthUnit {
+  Bohr,
+  Angstrom
+};
+
 
 //! Boost graph vertex and edge property types
 namespace GraphDetail {
@@ -195,7 +200,7 @@ using GraphType = boost::adjacency_list<
    */
   GraphDetail::VertexData,
   /* EdgeProperty = What information is stored about edges?
-   * Choice: BondType, a custom enum class 
+   * Choice: BondType, a custom enum class
    */
   GraphDetail::EdgeData
   /* GraphProperty

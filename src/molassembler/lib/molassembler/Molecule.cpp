@@ -7,6 +7,8 @@
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
 
+#include "Delib/Constants.h"
+
 #include "chemical_symmetries/ConstexprProperties.h"
 
 #include "temple/Containers.h"
@@ -62,9 +64,10 @@ bool Molecule::disregardStereocenter(
 }
 
 Delib::BondOrderCollection Molecule::uffBondOrders(
-  const Delib::AtomCollection& atomCollection
+  const Delib::ElementTypeCollection& elements,
+  const AngstromWrapper& angstromWrapper
 ) {
-  const int N = atomCollection.size();
+  const int N = elements.size();
 
   auto bondOrders = Delib::BondOrderCollection::createEmpty(N);
 
@@ -75,11 +78,11 @@ Delib::BondOrderCollection Molecule::uffBondOrders(
         i,
         j,
         Bond::calculateBondOrder(
-          atomCollection.getElement(i),
-          atomCollection.getElement(j),
+          elements.at(i),
+          elements.at(j),
           (
-            atomCollection.getPosition(j)
-            - atomCollection.getPosition(i)
+            angstromWrapper.positions.at(j)
+            - angstromWrapper.positions.at(i)
           ).norm()
         )
       );
@@ -176,12 +179,13 @@ Molecule::PseudoHashType Molecule::hashAtomEnvironment(
 }
 
 Molecule::InterpretResult Molecule::interpret(
-  const Delib::AtomCollection& atomCollection,
+  const Delib::ElementTypeCollection& elements,
+  const AngstromWrapper& angstromWrapper,
   const Delib::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization
 ) {
   // Discretize bond orders
-  const int N = atomCollection.size();
+  const int N = elements.size();
 
   GraphType atomCollectionGraph {
     static_cast<GraphType::vertices_size_type>(N)
@@ -227,7 +231,7 @@ Molecule::InterpretResult Molecule::interpret(
 
   struct MoleculeParts {
     GraphType graph;
-    Delib::PositionCollection positions;
+    AngstromWrapper angstromWrapper;
   };
 
   std::vector<MoleculeParts> moleculePrecursors {numComponents};
@@ -243,7 +247,7 @@ Molecule::InterpretResult Molecule::interpret(
 
   unsigned nZeroLengthPositions = 0;
 
-  for(int i = 0; i < atomCollection.size(); ++i) {
+  for(int i = 0; i < N; ++i) {
     auto& precursor = moleculePrecursors.at(
       componentMap.at(i)
     );
@@ -254,15 +258,15 @@ Molecule::InterpretResult Molecule::interpret(
     indexInComponentMap.at(i) = newIndex;
 
     // Copy over the element information into the precursor
-    precursor.graph[newIndex].elementType = atomCollection.getElement(i);
+    precursor.graph[newIndex].elementType = elements.at(i);
 
-    if(atomCollection.getPosition(i).asEigenVector().norm() <= 1e-14) {
+    if(angstromWrapper.positions.at(i).asEigenVector().norm() <= 1e-14) {
       ++nZeroLengthPositions;
     }
 
-    // Copy over position information
-    precursor.positions.push_back(
-      atomCollection.getPosition(i)
+    // Copy over position information adjusted by lengthScale
+    precursor.angstromWrapper.positions.push_back(
+      angstromWrapper.positions.at(i)
     );
   }
 
@@ -304,7 +308,7 @@ Molecule::InterpretResult Molecule::interpret(
       [](const MoleculeParts& precursor) -> Molecule {
         return {
           precursor.graph,
-          precursor.positions
+          precursor.angstromWrapper
         };
       }
     );
@@ -323,12 +327,41 @@ Molecule::InterpretResult Molecule::interpret(
 }
 
 Molecule::InterpretResult Molecule::interpret(
-  const Delib::AtomCollection& atomCollection,
+  const Delib::ElementTypeCollection& elements,
+  const AngstromWrapper& angstromWrapper,
   const BondDiscretizationOption discretization
 ) {
   return interpret(
-    atomCollection,
-    uffBondOrders(atomCollection),
+    elements,
+    angstromWrapper,
+    uffBondOrders(elements, angstromWrapper),
+    discretization
+  );
+}
+
+Molecule::InterpretResult Molecule::interpret(
+  const Delib::AtomCollection& atomCollection,
+  const Delib::BondOrderCollection& bondOrders,
+  const BondDiscretizationOption discretization
+) {
+  return interpret(
+    atomCollection.getElements(),
+    AngstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr},
+    bondOrders,
+    discretization
+  );
+}
+
+Molecule::InterpretResult Molecule::interpret(
+  const Delib::AtomCollection& atomCollection,
+  const BondDiscretizationOption discretization
+) {
+  AngstromWrapper angstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr};
+
+  return interpret(
+    atomCollection.getElements(),
+    angstromWrapper,
+    uffBondOrders(atomCollection.getElements(), angstromWrapper),
     discretization
   );
 }
@@ -465,7 +498,7 @@ std::vector<EdgeIndexType> Molecule::_getEZStereocenterCandidates() const {
 void Molecule::_pickyFitStereocenter(
   Stereocenters::CNStereocenter& stereocenter,
   const Symmetry::Name expectedSymmetry,
-  const Delib::PositionCollection& positions
+  const AngstromWrapper& angstromWrapper
 ) const {
   AtomIndexType centralAtom = stereocenter.involvedAtoms().front();
 
@@ -487,11 +520,11 @@ void Molecule::_pickyFitStereocenter(
   ) {
     stereocenter.fit(
       _adjacencies,
-      positions,
+      angstromWrapper,
       {Symmetry::Name::Seesaw, Symmetry::Name::TrigonalPyramidal}
     );
   } else {
-    stereocenter.fit(_adjacencies, positions);
+    stereocenter.fit(_adjacencies, angstromWrapper);
   }
 }
 
@@ -702,9 +735,9 @@ Molecule::Molecule(GraphType graph)
 
 Molecule::Molecule(
   GraphType graph,
-  const Delib::PositionCollection& positions
+  const AngstromWrapper& angstromWrapper
 ) : _adjacencies(GraphAlgorithms::findAndSetEtaBonds(std::move(graph))),
-    _stereocenters(inferStereocentersFromPositions(positions))
+    _stereocenters(inferStereocentersFromPositions(angstromWrapper))
 {
   _ensureModelInvariants();
 }
@@ -1217,7 +1250,7 @@ unsigned Molecule::getNumAdjacencies(const AtomIndexType a) const {
 }
 
 StereocenterList Molecule::inferStereocentersFromPositions(
-  const Delib::PositionCollection& positions
+  const AngstromWrapper& angstromWrapper
 ) const {
   StereocenterList stereocenters;
 
@@ -1228,12 +1261,12 @@ StereocenterList Molecule::inferStereocentersFromPositions(
     // Construct a Stereocenter here
     auto newStereocenter = std::make_shared<Stereocenters::EZStereocenter>(
       source,
-      rankPriority(source, {target}, positions),
+      rankPriority(source, {target}, angstromWrapper),
       target,
-      rankPriority(target, {source}, positions)
+      rankPriority(target, {source}, angstromWrapper)
     );
 
-    newStereocenter -> fit(positions);
+    newStereocenter -> fit(angstromWrapper);
 
     if(newStereocenter -> numStereopermutations() == 2) {
       stereocenters.add(
@@ -1252,7 +1285,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
       continue;
     }
 
-    RankingInformation localRanking = rankPriority(candidateIndex, {}, positions);
+    RankingInformation localRanking = rankPriority(candidateIndex, {}, angstromWrapper);
 
     // Skip terminal atoms
     if(localRanking.ligands.size() <= 1) {
@@ -1269,7 +1302,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
       localRanking
     );
 
-    _pickyFitStereocenter(*stereocenterPtr, expectedGeometry, positions);
+    _pickyFitStereocenter(*stereocenterPtr, expectedGeometry, angstromWrapper);
 
     if(!disregardStereocenter(*stereocenterPtr, *this, temperatureRegime)) {
       stereocenters.add(
@@ -1611,7 +1644,7 @@ unsigned Molecule::numBonds() const {
 RankingInformation Molecule::rankPriority(
   const AtomIndexType a,
   const std::set<AtomIndexType>& excludeAdjacent,
-  const boost::optional<Delib::PositionCollection>& positionsOption
+  const boost::optional<AngstromWrapper>& positionsOption
 ) const {
   RankingInformation rankingResult;
 

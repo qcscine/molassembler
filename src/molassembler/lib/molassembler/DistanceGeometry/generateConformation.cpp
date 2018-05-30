@@ -1,5 +1,8 @@
 #include <dlib/optimization.h>
 #include <Eigen/Dense>
+
+#include "Delib/Constants.h"
+
 #include "temple/Containers.h"
 #include "temple/Random.h"
 
@@ -47,47 +50,43 @@ bool hasUnassignedStereocenters(const Molecule& mol) {
 
 namespace detail {
 
-Delib::PositionCollection convertToPositionCollection(
+AngstromWrapper convertToAngstromWrapper(
   const Eigen::VectorXd& vectorizedPositions
 ) {
   const unsigned dimensionality = 4;
   assert(vectorizedPositions.size() % dimensionality == 0);
 
-  Delib::PositionCollection positions;
   const unsigned N = vectorizedPositions.size() / dimensionality;
+  AngstromWrapper angstromWrapper {N};
 
   for(unsigned i = 0; i < N; i++) {
-    positions.push_back(
-      Delib::Position {
-        vectorizedPositions.template segment<3>(
-          static_cast<Eigen::Index>(dimensionality) * i
-        )
-      }
-    );
+    angstromWrapper.positions.at(i) = Delib::Position {
+      vectorizedPositions.template segment<3>(
+        static_cast<Eigen::Index>(dimensionality) * i
+      )
+    };
   }
 
-  return positions;
+  return angstromWrapper;
 }
 
-Delib::PositionCollection convertToPositionCollection(
+AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 ) {
   const Eigen::Index dimensionality = 4;
   assert(vectorizedPositions.size() % dimensionality == 0);
 
-  Delib::PositionCollection positions;
   const unsigned N = vectorizedPositions.size() / dimensionality;
+  AngstromWrapper angstromWrapper {N};
   for(unsigned i = 0; i < N; i++) {
-    positions.push_back(
-      Delib::Position {
-        vectorizedPositions(dimensionality * i),
-        vectorizedPositions(dimensionality * i + 1),
-        vectorizedPositions(dimensionality * i + 2)
-      }
-    );
+    angstromWrapper.positions.at(i) = Delib::Position {
+      vectorizedPositions(dimensionality * i),
+      vectorizedPositions(dimensionality * i + 1),
+      vectorizedPositions(dimensionality * i + 2)
+    };
   }
 
-  return positions;
+  return angstromWrapper;
 }
 
 bool exceededFailureRatio(
@@ -100,7 +99,7 @@ bool exceededFailureRatio(
 
 // Non-debug version of DG
 outcome::result<
-  std::vector<Delib::PositionCollection>
+  std::vector<AngstromWrapper>
 > runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
@@ -128,7 +127,7 @@ outcome::result<
    */
   const double failureRatio = 0.1; // allow only 10% failures in release
   unsigned failures = 0;
-  std::vector<Delib::PositionCollection> ensemble;
+  std::vector<AngstromWrapper> ensemble;
   ensemble.reserve(numStructures);
 
   for(
@@ -317,7 +316,7 @@ outcome::result<
       }
     } else {
       ensemble.emplace_back(
-        detail::convertToPositionCollection(dlibPositions)
+        detail::convertToAngstromWrapper(dlibPositions)
       );
     }
   }
@@ -659,16 +658,27 @@ outcome::result<
   std::vector<Delib::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
-  const unsigned& numStructures
+  const unsigned numStructures
 ) {
-  return detail::runDistanceGeometry(molecule, numStructures);
+  if(auto result = detail::runDistanceGeometry(molecule, numStructures)) {
+    return temple::map(
+      result.value(),
+      [](AngstromWrapper wrapper) -> Delib::PositionCollection {
+        return wrapper.getBohr();
+      }
+    );
+  } else {
+    return result.as_failure();
+  }
 }
 
 outcome::result<Delib::PositionCollection> generateConformation(const Molecule& molecule) {
   if(auto result = detail::runDistanceGeometry(molecule, 1)) {
-    const auto& conformationList = result.value();
+    auto& conformationList = result.value();
     assert(conformationList.size() == 1);
-    return conformationList.front();
+    auto& wrapper = conformationList.front();
+
+    return wrapper.getBohr();
   } else {
     return result.as_failure();
   }

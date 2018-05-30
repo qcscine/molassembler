@@ -98,7 +98,8 @@ struct FileHandler {
   };
 
   struct RawData {
-    Delib::AtomCollection atoms;
+    Delib::ElementTypeCollection elements;
+    AngstromWrapper angstromWrapper;
     Delib::BondOrderCollection bondOrders;
   };
 
@@ -108,7 +109,7 @@ struct FileHandler {
   virtual void write(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     const IndexPermutation& permutation = IndexPermutation::Identity
   ) const = 0;
 };
@@ -151,7 +152,7 @@ private:
   void _write(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     const MOLFileVersion& version,
     const IndexPermutation& permutation
   ) const;
@@ -168,7 +169,7 @@ public:
   void write(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     const IndexPermutation& permutation = IndexPermutation::Identity
   ) const final;
 };
@@ -183,7 +184,7 @@ struct XYZHandler : public FileHandler {
   void write(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     const IndexPermutation& permutation = IndexPermutation::Identity
   ) const final;
 };
@@ -232,8 +233,16 @@ std::vector<Molecule> split(const std::string& filename);
 void write(
   const std::string& filename,
   const Molecule& molecule,
+  const AngstromWrapper& angstromWrapper,
+  const FileHandler::IndexPermutation permutation = FileHandler::IndexPermutation::Identity
+);
+
+//! Writer function from a PositionCollection in bohr
+void write(
+  const std::string& filename,
+  const Molecule& molecule,
   const Delib::PositionCollection& positions,
-  const FileHandler::IndexPermutation& permutation = FileHandler::IndexPermutation::Identity
+  const FileHandler::IndexPermutation permutation = FileHandler::IndexPermutation::Identity
 );
 
 /*! Writer function to make files containing binary Molecule representation.
