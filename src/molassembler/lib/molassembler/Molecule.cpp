@@ -868,14 +868,14 @@ void Molecule::removeAtom(const AtomIndexType a) {
   boost::remove_vertex(a, _adjacencies);
 
   /* Removing the vertex invalidates some vertex descriptors, which are used
-   * liberally in the stereocenter classes. We have to correct of all of those
-   * to ensure that _propagateGraphChange works properly.
+   * liberally in the stereocenter classes' state. We have to correct of all of
+   * those to ensure that _propagateGraphChange works properly.
    */
   _stereocenters.propagateVertexRemoval(a);
 
   /* call removeSubstituent on all adjacent stereocenters, with
-   * std::numeric_limits<AtomIndexType>::max() as the 'which' parameter,
-   * which is what propagateVertexRemoval replaces the removed index with in the
+   * removalPlaceholder as the 'which' parameter, which is what
+   * propagateVertexRemoval replaces the removed index with in the
    * stereocenters' internal state
    */
   for(const auto& indexToUpdate : previouslyAdjacentVertices) {
@@ -895,7 +895,7 @@ void Molecule::removeAtom(const AtomIndexType a) {
           _stereocenters.at(indexToUpdate)
         ) -> removeSubstituent(
           _adjacencies,
-          std::numeric_limits<AtomIndexType>::max(),
+          Stereocenters::Stereocenter::removalPlaceholder,
           localRanking,
           determineLocalGeometry(indexToUpdate, localRanking),
           chiralStatePreservation
@@ -905,7 +905,7 @@ void Molecule::removeAtom(const AtomIndexType a) {
           _stereocenters.at(indexToUpdate)
         ) -> removeSubstituent(
           indexToUpdate,
-          std::numeric_limits<AtomIndexType>::max()
+          Stereocenters::Stereocenter::removalPlaceholder
         );
       }
     }

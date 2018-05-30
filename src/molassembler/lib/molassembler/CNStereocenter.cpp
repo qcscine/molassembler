@@ -809,11 +809,22 @@ void CNStereocenter::propagateGraphChange(
 }
 
 void CNStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
+  /* This function replaces any occurrences of the atom index that is being
+   * removed in the global state with a placeholder of the same type and updates
+   * any invalidated atom indices.
+   */
+
+  /* If the central atom is being removed, just drop this stereocenter
+   * beforehand in caller. This would just be unnecessary work.
+   */
+  assert(_centerAtom != removedIndex);
+
+  // Define some helper functions
   auto updateIndexInplace = [&removedIndex](AtomIndexType& index) -> void {
     if(index > removedIndex) {
       --index;
     } else if(index == removedIndex) {
-      index = std::numeric_limits<AtomIndexType>::max();
+      index = Stereocenter::removalPlaceholder;
     }
   };
 
@@ -823,13 +834,13 @@ void CNStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
     }
 
     if(index == removedIndex) {
-      return std::numeric_limits<AtomIndexType>::max();
+      return Stereocenter::removalPlaceholder;
     }
 
     return index;
   };
 
-
+  /* Update indices in RankingInformation */
   for(auto& equalPrioritySet : _ranking.sortedSubstituents) {
     for(auto& index : equalPrioritySet) {
       updateIndexInplace(index);
@@ -848,17 +859,25 @@ void CNStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
       updateIndex
     );
   }
-
-  updateIndexInplace(_centerAtom);
 }
 
 void CNStereocenter::removeSubstituent(
   const GraphType& graph,
   const AtomIndexType which,
-  const RankingInformation& newRanking,
+  RankingInformation newRanking,
   const Symmetry::Name& newSymmetry,
   const ChiralStatePreservation& preservationOption
 ) {
+  /* This function tries to find a new assignment for the situation in which
+   * the previously replaced atom index is actually removed.
+   *
+   * Since the introduction of haptic ligands, the prior graph change can
+   * encompass two things:
+   * - A ligand that is comprised of a singular atom has been removed. The
+   *   symmetry size is reduced and a state continuation must be found.
+   * - A constituting atom of a haptic ligand has been removed. No symmetry
+   *   change happens.
+   */
   PermutationState newPermutationState {
     newRanking,
     _centerAtom,
@@ -868,31 +887,24 @@ void CNStereocenter::removeSubstituent(
 
   boost::optional<unsigned> newStereopermutation;
 
-  /* Does the stereocenter carry chiral information?
-   * If so, try to get a symmetry mapping to the new symmetry position
-   * If there are mappings, try to select one according to preservationOption policy
-   *
-   * If any of those steps returns boost::none, the whole expression is
-   * boost::none.
+  /* Find out in which ligand the atom is removed, and whether it is the sole
+   * constituting index
    */
-  auto suitableMappingOptional = _assignmentOption
-    | temple::callIfSome(
-        Symmetry::getMapping,
-        _symmetry,
-        newSymmetry,
-        // Last parameter is the deleted symmetry position, get this from cache
-        _cache.symmetryPositionMap.at(which)
-      )
-    | temple::callIfSome(
-        PermutationState::getIndexMapping,
-        temple::ANS,
-        preservationOption
-      );
+  boost::optional<bool> soleConstitutingIndex;
+  unsigned ligandIndexRemovedFrom;
+  for(unsigned ligandI = 0; ligandI < _ranking.ligands.size(); ++ligandI) {
+    for(const AtomIndexType constitutingIndex : _ranking.ligands.at(ligandI)) {
+      if(constitutingIndex == which) {
+        ligandIndexRemovedFrom = ligandI;
+        soleConstitutingIndex = (_ranking.ligands.at(ligandI).size() == 1);
+      }
+    }
+  }
 
-  if(suitableMappingOptional) {
-    const auto& symmetryMapping = suitableMappingOptional.value();
+  assert(soleConstitutingIndex);
 
-    // Transform current assignment from characters to atom indices
+  if(_assignmentOption) {
+    // Transform current assignment from characters to ligand indices
     const auto& currentStereopermutation = _cache.permutations.assignments.at(
       _assignmentOption.value()
     );
@@ -902,46 +914,111 @@ void CNStereocenter::removeSubstituent(
       _cache.canonicalLigands
     );
 
-    // Transfer indices from current symmetry to new symmetry
     std::vector<unsigned> ligandsAtNewSymmetryPositions (Symmetry::size(newSymmetry));
-    for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
-      ligandsAtNewSymmetryPositions.at(
-        symmetryMapping.at(i)
-      ) = ligandsAtCurrentSymmetryPositions.at(i);
-    }
 
-    // Get character representation in new symmetry
-    std::vector<char> charactersInNewSymmetry = PermutationState::makeStereopermutationCharacters(
-      newPermutationState.canonicalLigands,
-      newPermutationState.symbolicCharacters,
-      ligandsAtNewSymmetryPositions
-    );
+    if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry)) {
+      /* If no symmetry transition happens, then all we have to figure out is a
+       * ligand to ligand mapping.
+       */
+      assert(!soleConstitutingIndex.value());
 
-    // TODO Shouldn't the links in the new symmetry be generated too for use in comparison??
+      /* Sort ligands in the old ranking and new so we can use lexicographical
+       * comparison to figure out a mapping
+       */
+      for(auto& ligand : _ranking.ligands) {
+        temple::inplaceRemove(ligand, which);
+        temple::sort(ligand);
+      }
 
-    // Construct an assignment
-    auto trialStereopermutation = stereopermutation::Stereopermutation(
-      newSymmetry,
-      charactersInNewSymmetry,
-      newPermutationState.selfReferentialLinks
-    );
+      for(auto& ligand : newRanking.ligands) {
+        temple::sort(ligand);
+      }
 
-    // Generate the rotational equivalents
-    auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
+      // Calculate the mapping from old ligands to new ones
+      auto ligandMapping = temple::map(
+        _ranking.ligands,
+        [&newRanking](const auto& ligand) -> unsigned {
+          auto findIter = std::find(
+            newRanking.ligands.begin(),
+            newRanking.ligands.end(),
+            ligand
+          );
 
-    // Search for a match from the vector of uniques
-    for(unsigned i = 0; i < newPermutationState.permutations.assignments.size(); ++i) {
-      if(allTrialRotations.count(newPermutationState.permutations.assignments.at(i)) > 0) {
-        newStereopermutation = i;
-        break;
+          assert(findIter != newRanking.ligands.end());
+
+          return findIter - newRanking.ligands.begin();
+        }
+      );
+
+      // Transfer ligands to new mapping
+      for(unsigned i = 0; i < ligandMapping.size(); ++i) {
+        ligandsAtNewSymmetryPositions.at(i) = ligandMapping.at(
+          ligandsAtCurrentSymmetryPositions.at(i)
+        );
+      }
+    } else if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry) - 1) {
+      assert(soleConstitutingIndex.value());
+      /* Try to get a symmetry mapping to the new symmetry position
+       * If there are mappings, try to select one according to preservationOption policy
+       *
+       * If any of those steps returns boost::none, the whole expression is
+       * boost::none.
+       */
+      auto suitableMappingOptional = Symmetry::getMapping(
+        _symmetry,
+        newSymmetry,
+        // Last parameter is the deleted symmetry position, get this from cache
+        _cache.symmetryPositionMap.at(ligandIndexRemovedFrom)
+      ) | temple::callIfSome(
+        PermutationState::getIndexMapping,
+        temple::ANS,
+        preservationOption
+      );
+
+      if(suitableMappingOptional) {
+        const auto& symmetryMapping = suitableMappingOptional.value();
+
+        // Transfer indices from current symmetry to new symmetry
+        for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
+          ligandsAtNewSymmetryPositions.at(
+            symmetryMapping.at(i)
+          ) = ligandsAtCurrentSymmetryPositions.at(i);
+        }
+      }
+
+      // Get character representation in new symmetry
+      std::vector<char> charactersInNewSymmetry = PermutationState::makeStereopermutationCharacters(
+        newPermutationState.canonicalLigands,
+        newPermutationState.symbolicCharacters,
+        ligandsAtNewSymmetryPositions
+      );
+
+      // TODO Shouldn't the links in the new symmetry be generated too for use in comparison??
+
+      // Construct an assignment
+      auto trialStereopermutation = stereopermutation::Stereopermutation(
+        newSymmetry,
+        charactersInNewSymmetry,
+        newPermutationState.selfReferentialLinks
+      );
+
+      // Generate the rotational equivalents
+      auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
+
+      // Search for a match from the vector of uniques
+      for(unsigned i = 0; i < newPermutationState.permutations.assignments.size(); ++i) {
+        if(allTrialRotations.count(newPermutationState.permutations.assignments.at(i)) > 0) {
+          newStereopermutation = i;
+          break;
+        }
       }
     }
   }
 
   // Overwrite class state
-  _ranking = newRanking;
+  _ranking = std::move(newRanking);
   _symmetry = newSymmetry;
-  _cache = newPermutationState;
+  _cache = std::move(newPermutationState);
   assign(newStereopermutation);
 }
 

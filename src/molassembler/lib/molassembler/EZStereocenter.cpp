@@ -289,7 +289,7 @@ void EZStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
     if(index > removedIndex) {
       --index;
     } else if(index == removedIndex) {
-      index = std::numeric_limits<AtomIndexType>::max();
+      index = Stereocenter::removalPlaceholder;
     }
   };
 
@@ -301,7 +301,7 @@ void EZStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
     }
 
     if(index == removedIndex) {
-      return std::numeric_limits<AtomIndexType>::max();
+      return Stereocenter::removalPlaceholder;
     }
 
     return index;

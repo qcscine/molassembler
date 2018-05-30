@@ -7,6 +7,9 @@ namespace molassembler {
 
 namespace Stereocenters {
 
+/* Static constants */
+constexpr AtomIndexType Stereocenter::removalPlaceholder;
+
 bool compareStereocenterEqual(
   const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& a,
   const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& b

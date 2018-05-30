@@ -36,6 +36,9 @@ enum class Type {
 
 class Stereocenter {
 public:
+/* Static constants */
+  static constexpr AtomIndexType removalPlaceholder = std::numeric_limits<AtomIndexType>::max();
+
 /* Virtual destructor */
   virtual ~Stereocenter() = default;
 

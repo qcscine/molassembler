@@ -228,7 +228,7 @@ public:
   void removeSubstituent(
     const GraphType& graph,
     const AtomIndexType which,
-    const RankingInformation& newRanking,
+    RankingInformation newRanking,
     const Symmetry::Name& newSymmetry,
     const ChiralStatePreservation& preservationOption
   );
