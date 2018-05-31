@@ -120,7 +120,7 @@ std::vector<
 /* Modification */
 void EZStereocenter::addSubstituent(
   const AtomIndexType& center,
-  const RankingInformation& centerRanking
+  RankingInformation centerRanking
 ) {
   /* The center must be either left or right. Any call that doesn't match
    * either is malformed
@@ -145,7 +145,7 @@ void EZStereocenter::addSubstituent(
     }
 
     // Overwrite the remaining state
-    _leftRanking = centerRanking;
+    _leftRanking = std::move(centerRanking);
   } else if(center == _rightCenter) {
     assert(
       _numIndices(_rightRanking) == 1
@@ -164,11 +164,11 @@ void EZStereocenter::addSubstituent(
     }
 
     // Overwrite the remaining state
-    _rightRanking = centerRanking;
+    _rightRanking = std::move(centerRanking);
   }
 }
 
-void EZStereocenter::assign(const boost::optional<unsigned>& assignment) {
+void EZStereocenter::assign(boost::optional<unsigned> assignment) {
   if(assignment) {
     assert(assignment.value() < numStereopermutations());
     _isZOption = static_cast<bool>(assignment.value());
@@ -240,8 +240,8 @@ void EZStereocenter::fit(const AngstromWrapper& angstromWrapper) {
 }
 
 void EZStereocenter::propagateGraphChange(
-  const RankingInformation& firstCenterRanking,
-  const RankingInformation& secondCenterRanking
+  RankingInformation firstCenterRanking,
+  RankingInformation secondCenterRanking
 ) {
   // Assume parts of the state of EZStereocenter
   assert(numStereopermutations() == 2);
@@ -271,8 +271,8 @@ void EZStereocenter::propagateGraphChange(
   }
 
   // Now we can overwrite class state
-  _leftRanking = firstCenterRanking;
-  _rightRanking = secondCenterRanking;
+  _leftRanking = std::move(firstCenterRanking);
+  _rightRanking = std::move(secondCenterRanking);
 
   // Change the assignment if assigned and we determined that we need to negate
   if(
@@ -375,6 +375,14 @@ boost::optional<unsigned> EZStereocenter::assigned() const {
   }
 
   return {};
+}
+
+boost::optional<unsigned> EZStereocenter::indexOfPermutation() const {
+  return assigned();
+}
+
+unsigned EZStereocenter::numAssignments() const {
+  return numStereopermutations();
 }
 
 unsigned EZStereocenter::numStereopermutations() const {

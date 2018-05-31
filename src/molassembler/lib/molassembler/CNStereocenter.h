@@ -67,6 +67,9 @@ public:
     //! Vector of rotationally unique stereopermutations with associated weights
     stereopermutation::StereopermutationsWithWeights permutations;
 
+    //! Vector of whether permutations are feasible or obviously infeasible
+    std::vector<unsigned> feasiblePermutations;
+
     //! Mapping from ligand index to permutational symmetry position
     std::vector<unsigned> symmetryPositionMap;
 
@@ -190,7 +193,7 @@ public:
   );
 
   //! Changes the assignment of the stereocenter
-  void assign(const boost::optional<unsigned>& assignment) final;
+  void assign(boost::optional<unsigned> assignment) final;
 
   //! Assigns the Stereocenter randomly using relative assignment weights
   void assignRandom() final;
@@ -212,7 +215,7 @@ public:
    */
   void propagateGraphChange(
     const GraphType& graph,
-    const RankingInformation& newRanking
+    RankingInformation newRanking
   );
 
   /*!
@@ -253,11 +256,20 @@ public:
     const double looseningMultiplier
   ) const final;
 
-  /*!
+  /*! Returns the permutation index within the set of possible permutations, if set
+   *
    * Returns the (public) information of whether the stereocenter is assigned
    * or not, and if so, which assignment it is.
    */
   boost::optional<unsigned> assigned() const final;
+
+  /*! Returns IOP within the set of symbolic ligand permutations
+   *
+   * This is different to the assignment. The assignment denotes the index
+   * within the set of possible (more specifically, not obviously infeasible)
+   * stereopermutations.
+   */
+  boost::optional<unsigned> indexOfPermutation() const final;
 
   /*! Returns a minimal representation of chirality constraints
    *
@@ -289,11 +301,19 @@ public:
   //! Returns a single-element vector containing the central atom
   std::vector<AtomIndexType> involvedAtoms() const final;
 
-  /*!
+  /*! Returns the number of possible permutations
+   *
    * Fetches the number of different assignments possible with the current
    * substituent ranking and connectivity information. This is also the upper
    * exclusive bound on the assignment indices that can be used to change the
    * arrangement of substituents.
+   */
+  unsigned numAssignments() const final;
+
+  /*! Returns the number of symbolic ligand permutations
+   *
+   * Fetches the number of permutations determined by symbolic ligand
+   * calculation, not considering linking or haptic ligand cones.
    */
   unsigned numStereopermutations() const final;
 

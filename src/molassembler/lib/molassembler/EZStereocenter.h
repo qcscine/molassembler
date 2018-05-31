@@ -155,18 +155,18 @@ public:
 /* Modification */
   void addSubstituent(
     const AtomIndexType& center,
-    const RankingInformation& centerRanking
+    RankingInformation centerRanking
   );
 
-  void assign(const boost::optional<unsigned>& assignment) final;
+  void assign(boost::optional<unsigned> assignment) final;
 
   void assignRandom() final;
 
   void fit(const AngstromWrapper& angstromWrapper);
 
   void propagateGraphChange(
-    const RankingInformation& firstCenterRanking,
-    const RankingInformation& secondCenterRanking
+    RankingInformation firstCenterRanking,
+    RankingInformation secondCenterRanking
   );
 
   void propagateVertexRemoval(const AtomIndexType removedIndex) final;
@@ -178,6 +178,10 @@ public:
 
 /* Information */
   boost::optional<unsigned> assigned() const final;
+
+  boost::optional<unsigned> indexOfPermutation() const final;
+
+  unsigned numAssignments() const final;
 
   unsigned numStereopermutations() const final;
 

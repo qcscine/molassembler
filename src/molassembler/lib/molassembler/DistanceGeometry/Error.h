@@ -4,7 +4,7 @@
 #include <system_error>
 
 enum class DGError {
-  ZeroPermutationStereocenters = 1,
+  ZeroAssignmentStereocenters = 1,
   GraphImpossible = 2,
   TooManyFailures = 3
 };
@@ -22,7 +22,7 @@ namespace detail {
 
     virtual std::string message(int c) const override final {
       switch(static_cast<DGError>(c)) {
-        case DGError::ZeroPermutationStereocenters:
+        case DGError::ZeroAssignmentStereocenters:
           return "Graph contains Stereocenters with zero possible permutations.";
         case DGError::GraphImpossible:
           return "Graph cannot be modeled in three-dimensional space.";

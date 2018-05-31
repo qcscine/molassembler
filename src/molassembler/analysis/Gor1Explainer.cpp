@@ -377,7 +377,7 @@ int main(int argc, char* argv[]) {
 
     DistanceGeometry::ImplicitGraph shortestPathsGraph {
       mol,
-      spatialModel.makeBounds()
+      spatialModel.makeBoundsList()
     };
 
     /* Prep */

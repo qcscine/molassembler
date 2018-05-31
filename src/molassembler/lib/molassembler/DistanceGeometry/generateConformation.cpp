@@ -28,11 +28,11 @@ namespace DistanceGeometry {
 
 namespace predicates {
 
-bool hasZeroPermutationsStereocenters(const Molecule& molecule) {
+bool hasZeroAssignmentStereocenters(const Molecule& molecule) {
   return temple::any_of(
     molecule.getStereocenterList(),
     [](const auto& stereocenterPtr) -> bool {
-      return stereocenterPtr -> numStereopermutations() == 0;
+      return stereocenterPtr -> numAssignments() == 0;
     }
   );
 }
@@ -108,8 +108,8 @@ outcome::result<
 ) {
   // TODO where to split control depending on loosening factor of spatial model?
 
-  if(predicates::hasZeroPermutationsStereocenters(molecule)) {
-    return DGError::ZeroPermutationStereocenters;
+  if(predicates::hasZeroAssignmentStereocenters(molecule)) {
+    return DGError::ZeroAssignmentStereocenters;
   }
 
   MoleculeDGInformation DGData;
@@ -331,7 +331,7 @@ std::list<RefinementData> debugDistanceGeometry(
   const Partiality& metrizationOption,
   const bool& useYInversionTrick
 ) {
-  if(predicates::hasZeroPermutationsStereocenters(molecule)) {
+  if(predicates::hasZeroAssignmentStereocenters(molecule)) {
     Log::log(Log::Level::Warning)
       << "This molecule has stereocenters with zero valid permutations!"
       << std::endl;

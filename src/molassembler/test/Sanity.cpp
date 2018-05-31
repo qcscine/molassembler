@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
 
       // Create a full list of the possible assignments
       std::vector<unsigned> assignments;
-      assignments.resize(centralStereocenter -> numStereopermutations());
+      assignments.resize(centralStereocenter -> numAssignments());
       std::iota(
         assignments.begin(),
         assignments.end(),
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
        * 1000 * 5040 assignments tested
        * 1000 * 5040 * 8 * 7 ~= 3e8 angle function calls
        */
-      if(centralStereocenter -> numStereopermutations() > 100) {
+      if(centralStereocenter -> numAssignments() > 100) {
         assignments.resize(10);
       }
 

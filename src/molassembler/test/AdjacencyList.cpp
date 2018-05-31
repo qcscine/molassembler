@@ -20,10 +20,10 @@
  */
 
 /* TODO
- * - Convert fixture tests to rapidcheck fixture properties so they can be 
+ * - Convert fixture tests to rapidcheck fixture properties so they can be
  *   repeatedly checked randomly
  * - Consider separation of validation checking from the implemented class
- *   Should validate() and its properties be specified outside the class or be 
+ *   Should validate() and its properties be specified outside the class or be
  *   expressed as pre- and postconditions for function calls?
  */
 
@@ -57,7 +57,7 @@ struct MoleculeValidator {
         const Molecule&
       )
     >
-  > validators; 
+  > validators;
 
   static bool validate(const Molecule& a) {
     for(const auto& validator : validators) {
@@ -133,8 +133,8 @@ struct ALFixture {
       AtomIndexType j = temple::random.getSingle<double>(0u, N - 1);
 
       /* cannot connect
-       * - equal indices 
-       * - already adjacent ones 
+       * - equal indices
+       * - already adjacent ones
        * - if either has maximum edge number
        */
       if(
@@ -146,7 +146,7 @@ struct ALFixture {
         // skip a pair where any applies
         continue;
       }
-      
+
       molecule.addBond(i, j, BondType::Single);
       nCycles += 1;
     }
@@ -162,7 +162,7 @@ BOOST_FIXTURE_TEST_CASE(validFixture, ALFixture) {
 BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
   // generate a list of terminal vertices
   std::vector<AtomIndexType> terminalVertices;
-  
+
   for(AtomIndexType i = 0; i < molecule.numAtoms(); i++) {
     if(molecule.getAdjacencies(i).size() == 1) {
       terminalVertices.push_back(i);
@@ -180,5 +180,5 @@ BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
 
     // test validity
     BOOST_CHECK(MoleculeValidator::validate(molecule));
-  } 
+  }
 }

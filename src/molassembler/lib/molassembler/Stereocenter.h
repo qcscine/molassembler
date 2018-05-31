@@ -44,7 +44,7 @@ public:
 
 /* Modification */
   //!  Assign this feature
-  virtual void assign(const boost::optional<unsigned>& assignment) = 0;
+  virtual void assign(boost::optional<unsigned> assignment) = 0;
 
   //! Assign this feature at random
   virtual void assignRandom() = 0;
@@ -60,13 +60,18 @@ public:
    */
   virtual boost::optional<unsigned> assigned() const = 0;
 
-  //!  Return the number of possible assignments
+  virtual boost::optional<unsigned> indexOfPermutation() const = 0;
+
+  //! Return the number of possible assignments
+  virtual unsigned numAssignments() const = 0;
+
+  //! Return the number of symbolic stereopermutations
   virtual unsigned numStereopermutations() const = 0;
 
-  //!  Return a list of chirality constraints
+  //! Return a list of chirality constraints
   virtual std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const = 0;
 
-  //!  Return a string giving information about the stereocenter
+  //! Return a string giving information about the stereocenter
   virtual std::string info() const = 0;
 
   /*!

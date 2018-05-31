@@ -21,7 +21,7 @@ namespace DistanceGeometry {
 
 namespace predicates {
 
-bool hasZeroPermutationsStereocenters(const Molecule& molecule);
+bool hasZeroAssignmentStereocenters(const Molecule& molecule);
 
 bool hasUnassignedStereocenters(const Molecule& mol);
 

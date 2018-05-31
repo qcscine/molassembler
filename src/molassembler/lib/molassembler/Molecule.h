@@ -240,7 +240,7 @@ public:
    * This sets the stereocenter assignment at a specific atom index. For this,
    * a stereocenter must be instantiated and contained in the StereocenterList
    * returned by getStereocenterList(). The supplied assignment must be either
-   * boost::none or smaller than stereocenterPtr->numStereopermutations().
+   * boost::none or smaller than stereocenterPtr->numAssignments().
    *
    * @note Although molecules in which this occurs are infrequent, consider the
    * StereocenterList you have accessed prior to calling this function and

@@ -74,7 +74,7 @@ CNStereocenter::PermutationState::PermutationState(
     false // Do NOT remove trans-spanning linked groups
   );
 
-  // Remove unfeasible stereopermutations
+  // Determine which permutations are feasible and which aren't
   if(
     // Links are present
     ranking.links.size() > 0
@@ -92,42 +92,25 @@ CNStereocenter::PermutationState::PermutationState(
       )
     )
   ) {
-    auto toRemove = temple::map(
-      permutations.assignments,
-      [&](const auto& assignment) -> bool {
-        return !isFeasibleStereopermutation(
-          assignment,
+    feasiblePermutations.reserve(permutations.assignments.size());
+    const unsigned P = permutations.assignments.size();
+    for(unsigned i = 0; i < P; ++i) {
+      if(
+        isFeasibleStereopermutation(
+          permutations.assignments.at(i),
           canonicalLigands,
           coneAngles,
           ranking,
           symmetry,
           graph
-        );
+        )
+      ) {
+        feasiblePermutations.push_back(i);
       }
-    );
-
-    permutations.assignments.erase(
-      std::remove_if(
-        permutations.assignments.begin(),
-        permutations.assignments.end(),
-        [&](const auto& assignment) -> bool {
-          // For this wonderful pointer arithmetic, see https://stackoverflow.com/a/23123481
-          return toRemove.at(&assignment - &*permutations.assignments.begin());
-        }
-      ),
-      permutations.assignments.end()
-    );
-
-    permutations.weights.erase(
-      std::remove_if(
-        permutations.weights.begin(),
-        permutations.weights.end(),
-        [&](const auto& weight) -> bool {
-          return toRemove.at(&weight - &*permutations.weights.begin());
-        }
-      ),
-      permutations.weights.end()
-    );
+    }
+    feasiblePermutations.shrink_to_fit();
+  } else {
+    feasiblePermutations = temple::iota<unsigned>(permutations.assignments.size());
   }
 }
 
@@ -644,10 +627,12 @@ void CNStereocenter::addSubstituent(
   }
 
   // No need to find a new assignment if no chiral state is present
-  if(_assignmentOption) {
+  if(_assignmentOption && numStereopermutations() > 1) {
     // Transform current assignment from characters to indices
     const auto& currentStereopermutation = _cache.permutations.assignments.at(
-      _assignmentOption.value()
+      _cache.feasiblePermutations.at(
+        _assignmentOption.value()
+      )
     );
 
     std::vector<unsigned> ligandsAtOldSymmetryPositions = PermutationState::generateSymmetryPositionToLigandMap(
@@ -771,20 +756,24 @@ void CNStereocenter::addSubstituent(
   assign(newStereopermutation);
 }
 
-void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
+void CNStereocenter::assign(boost::optional<unsigned> assignment) {
   if(assignment) {
-    assert(assignment.value() < _cache.permutations.assignments.size());
+    assert(assignment.value() < _cache.feasiblePermutations.size());
   }
 
   // Store current assignment
-  _assignmentOption = assignment;
+  _assignmentOption = std::move(assignment);
 
   /* save a mapping of next neighbor indices to symmetry positions after
    * assigning (AtomIndexType -> unsigned).
    */
-  if(assignment) {
+  if(_assignmentOption) {
     _cache.symmetryPositionMap = PermutationState::generateLigandToSymmetryPositionMap(
-      _cache.permutations.assignments.at(assignment.value()),
+      _cache.permutations.assignments.at(
+        _cache.feasiblePermutations.at(
+          _assignmentOption.value()
+        )
+      ),
       _cache.canonicalLigands
     );
   } else { // Wipe the map
@@ -794,13 +783,21 @@ void CNStereocenter::assign(const boost::optional<unsigned>& assignment) {
 
 void CNStereocenter::assignRandom() {
   assign(
-    temple::random.pickDiscrete(_cache.permutations.weights)
+    temple::random.pickDiscrete(
+      // Map the feasible permutations onto their weights
+      temple::map(
+        _cache.feasiblePermutations,
+        [&](const unsigned permutationIndex) -> unsigned {
+          return _cache.permutations.weights.at(permutationIndex);
+        }
+      )
+    )
   );
 }
 
 void CNStereocenter::propagateGraphChange(
   const GraphType& graph,
-  const RankingInformation& newRanking
+  RankingInformation newRanking
 ) {
   if(
     newRanking.ligandsRanking == _ranking.ligandsRanking
@@ -826,13 +823,16 @@ void CNStereocenter::propagateGraphChange(
    */
   if(
     _assignmentOption
+    && numStereopermutations() > 1
     && (
       newPermutationState.permutations.assignments.size()
       <= _cache.permutations.assignments.size()
     )
   ) {
     const auto& currentStereopermutation = _cache.permutations.assignments.at(
-      _assignmentOption.value()
+      _cache.feasiblePermutations.at(
+        _assignmentOption.value()
+      )
     );
 
     // Replace the characters by their corresponding indices from the old ranking
@@ -868,8 +868,8 @@ void CNStereocenter::propagateGraphChange(
   }
 
   // Overwrite the class state
-  _ranking = newRanking;
-  _cache = newPermutationState;
+  _ranking = std::move(newRanking);
+  _cache = std::move(newPermutationState);
   assign(newStereopermutation);
 }
 
@@ -974,10 +974,12 @@ void CNStereocenter::removeSubstituent(
   assert(soleConstitutingIndex);
 
   // No need to find a new assignment if we currently do not carry chiral state
-  if(_assignmentOption) {
+  if(_assignmentOption && numStereopermutations() > 1) {
     // Transform current assignment from characters to ligand indices
     const auto& currentStereopermutation = _cache.permutations.assignments.at(
-      _assignmentOption.value()
+      _cache.feasiblePermutations.at(
+        _assignmentOption.value()
+      )
     );
 
     std::vector<unsigned> ligandsAtCurrentSymmetryPositions = PermutationState::generateSymmetryPositionToLigandMap(
@@ -1148,7 +1150,7 @@ void CNStereocenter::fit(
 
     for(
       unsigned assignment = 0;
-      assignment < numStereopermutations();
+      assignment < numAssignments();
       ++assignment
     ) {
       // Assign the stereocenter
@@ -1435,6 +1437,14 @@ boost::optional<unsigned> CNStereocenter::assigned() const {
   return _assignmentOption;
 }
 
+boost::optional<unsigned> CNStereocenter::indexOfPermutation() const {
+  if(_assignmentOption) {
+    return _cache.feasiblePermutations.at(_assignmentOption.value());
+  }
+
+  return boost::none;
+}
+
 std::vector<
   std::array<boost::optional<unsigned>, 4>
 > CNStereocenter::minimalChiralityConstraints() const {
@@ -1449,7 +1459,11 @@ std::vector<
      *  (position in symmetry) -> atom index
      */
     auto symmetryPositionToLigandIndexMap = PermutationState::generateSymmetryPositionToLigandMap(
-      _cache.permutations.assignments.at(_assignmentOption.value()),
+      _cache.permutations.assignments.at(
+        _cache.feasiblePermutations.at(
+          _assignmentOption.value()
+        )
+      ),
       _cache.canonicalLigands
     );
 
@@ -1652,18 +1666,27 @@ std::string CNStereocenter::info() const {
     returnString += "u";
   }
 
-  returnString += "/"s + std::to_string(numStereopermutations());
+  const unsigned A = numAssignments();
+  returnString += "/"s + std::to_string(A);
+
+  const unsigned P = numStereopermutations();
+  if(P != A) {
+    returnString += " ("s + std::to_string(P) + ")"s;
+  }
 
   return returnString;
 }
 
 std::string CNStereocenter::rankInfo() const {
+  /* rankInfo is specifically geared towards RankingTree's consumption,
+   * and MUST use indices of permutation
+   */
   return (
     "CN-"s + std::to_string(static_cast<unsigned>(_symmetry))
     + "-"s + std::to_string(numStereopermutations())
     + "-"s + (
-      assigned()
-      ? std::to_string(assigned().value())
+      indexOfPermutation()
+      ? std::to_string(indexOfPermutation().value())
       : "u"s
     )
   );
@@ -1671,6 +1694,10 @@ std::string CNStereocenter::rankInfo() const {
 
 std::vector<AtomIndexType> CNStereocenter::involvedAtoms() const {
   return {_centerAtom};
+}
+
+unsigned CNStereocenter::numAssignments() const {
+  return _cache.feasiblePermutations.size();
 }
 
 unsigned CNStereocenter::numStereopermutations() const {
@@ -1693,8 +1720,8 @@ void CNStereocenter::setSymmetry(
     graph
   };
 
-  // The Stereocenter is now unassigned
-  _assignmentOption = boost::none;
+  // Dis-assign the stereocenter
+  assign(boost::none);
 }
 
 Type CNStereocenter::type() const {
@@ -1705,7 +1732,7 @@ bool CNStereocenter::operator == (const CNStereocenter& other) const {
   return (
     _symmetry == other._symmetry
     && _centerAtom == other._centerAtom
-    && _cache.permutations.assignments.size() == other._cache.permutations.assignments.size()
+    && numStereopermutations() == other.numStereopermutations()
     && _assignmentOption == other._assignmentOption
   );
 }
@@ -1717,10 +1744,10 @@ bool CNStereocenter::operator < (const CNStereocenter& other) const {
   return temple::consecutiveCompareSmaller(
     _centerAtom,
     other._centerAtom,
-    _cache.permutations.assignments.size(),
-    other._cache.permutations.assignments.size(),
     _symmetry,
     other._symmetry,
+    numAssignments(),
+    other.numAssignments(),
     _assignmentOption,
     other._assignmentOption
   );

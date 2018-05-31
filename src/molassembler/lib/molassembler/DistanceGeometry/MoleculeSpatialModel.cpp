@@ -136,12 +136,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
 
           if(!_stereocenterMap[involvedAtom] -> assigned()) {
             // Assign the EZStereocenter at random
-            _stereocenterMap[involvedAtom] -> assign(
-              temple::random.getSingle<unsigned>(
-                0,
-                _stereocenterMap[involvedAtom] -> numStereopermutations() - 1
-              )
-            );
+            _stereocenterMap[involvedAtom] -> assignRandom();
           }
         }
       }

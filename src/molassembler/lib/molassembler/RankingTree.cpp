@@ -249,8 +249,8 @@ public:
       /* Mixed optional comparison (includes comparison of assignment value if
        * assigned)
        */
-      EZStereocenterB.assigned(),
-      EZStereocenterA.assigned()
+      EZStereocenterB.indexOfPermutation(),
+      EZStereocenterA.indexOfPermutation()
     );
   }
 };
@@ -407,7 +407,7 @@ public:
       /* In our context, sequence rule 5 directly compares the assignment
        * of the assigned stereocenters.
        */
-      return StereocenterA.assigned() < StereocenterB.assigned();
+      return StereocenterA.indexOfPermutation() < StereocenterB.indexOfPermutation();
     }
 
     // For different types
@@ -526,7 +526,7 @@ public:
       aOption
       && bOption
       && aOption.value().numStereopermutations() == bOption.value().numStereopermutations()
-      && aOption.value().assigned() == bOption.value().assigned()
+      && aOption.value().indexOfPermutation() == bOption.value().indexOfPermutation()
     );
   }
 };

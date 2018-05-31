@@ -394,7 +394,7 @@ StereocenterList Molecule::_detectStereocenters() const {
       rankPriority(target, {source})
     );
 
-    if(newStereocenter -> numStereopermutations() == 2) {
+    if(newStereocenter -> numAssignments() == 2) {
       stereocenterList.add(
         std::move(newStereocenter)
       );
@@ -422,7 +422,7 @@ StereocenterList Molecule::_detectStereocenters() const {
       localRanking
     );
 
-    if(newStereocenter -> numStereopermutations() == 1) {
+    if(newStereocenter -> numAssignments() == 1) {
       newStereocenter -> assign(0);
     }
 
@@ -601,7 +601,7 @@ void Molecule::_propagateGraphChange() {
             );
 
             // If this EZStereocenter has only one assignment now, remove it
-            if(_stereocenters.at(source) -> numStereopermutations() == 1) {
+            if(_stereocenters.at(source) -> numAssignments() == 1) {
               _stereocenters.remove(source);
             }
           } else {
@@ -625,7 +625,7 @@ void Molecule::_propagateGraphChange() {
           rankPriority(target, {source})
         );
 
-        if(newStereocenterPtr -> numStereopermutations() == 2) {
+        if(newStereocenterPtr -> numAssignments() == 2) {
           _stereocenters.add(
             std::move(newStereocenterPtr)
           );
@@ -666,7 +666,7 @@ void Molecule::_propagateGraphChange() {
           /* If the modified stereocenter has only one assignment and is
            * unassigned due to the graph change, default-assign it
            */
-          if(CNStereocenterPtr -> numStereopermutations() == 1) {
+          if(CNStereocenterPtr -> numAssignments() == 1) {
             if(CNStereocenterPtr -> assigned() == boost::none) {
               CNStereocenterPtr -> assign(0);
             }
@@ -696,7 +696,7 @@ void Molecule::_propagateGraphChange() {
           localRanking
         );
 
-        if(newStereocenterPtr -> numStereopermutations() == 1) {
+        if(newStereocenterPtr -> numAssignments() == 1) {
           newStereocenterPtr -> assign(0);
         }
         if(!disregardStereocenter(*newStereocenterPtr, *this, temperatureRegime)) {
@@ -853,7 +853,7 @@ void Molecule::assignStereocenter(
 
   auto stereocenterPtr = _stereocenters.at(a);
 
-  if(assignment >= stereocenterPtr -> numStereopermutations()) {
+  if(assignment >= stereocenterPtr -> numAssignments()) {
     throw std::logic_error("assignStereocenter: Invalid assignment index!");
   }
 
@@ -1113,7 +1113,7 @@ void Molecule::setGeometryAtAtom(
       );
 
       // Default-assign stereocenters with only one assignment
-      if(newStereocenterPtr->numStereopermutations() == 1) {
+      if(newStereocenterPtr->numAssignments() == 1) {
         newStereocenterPtr->assign(0u);
       }
 
@@ -1268,7 +1268,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
 
     newStereocenter -> fit(angstromWrapper);
 
-    if(newStereocenter -> numStereopermutations() == 2) {
+    if(newStereocenter -> numAssignments() == 2) {
       stereocenters.add(
         std::move(newStereocenter)
       );
@@ -1569,7 +1569,7 @@ bool Molecule::modularCompare(
         // Are they equal in an abstract sense, not object-representation-wise?
         if(
           thisCNSPtr->getSymmetry() != otherCNSPtr->getSymmetry()
-          || thisCNSPtr->numStereopermutations() != otherCNSPtr->numStereopermutations()
+          || thisCNSPtr->numAssignments() != otherCNSPtr->numAssignments()
         ) {
           return false;
         }
@@ -1616,7 +1616,7 @@ bool Molecule::modularCompare(
         const auto& otherPtr = other._stereocenters.at(otherCentralAtoms.front());
 
         // Abstract-compare both
-        if(stereocenterPtr->numStereopermutations() != otherPtr->numStereopermutations()) {
+        if(stereocenterPtr->numAssignments() != otherPtr->numAssignments()) {
           return false;
         }
 
