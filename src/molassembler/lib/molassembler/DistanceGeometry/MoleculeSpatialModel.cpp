@@ -886,10 +886,9 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeBounds() const {
     /* Any elements in the bond bounds MUST improve the existing bounds and
      * may not cause contradictions.
      */
-    assert(
-      bounds.setLowerBound(indices.front(), indices.back(), bondBounds.lower)
-      && bounds.setUpperBound(indices.front(), indices.back(), bondBounds.upper)
-    );
+    bool improveLowerBound = bounds.setLowerBound(indices.front(), indices.back(), bondBounds.lower);
+    bool improveUpperBound = bounds.setUpperBound(indices.front(), indices.back(), bondBounds.upper);
+    assert(improveLowerBound && improveUpperBound);
   }
 
   for(const auto& anglePair : _angleBounds) {
