@@ -393,10 +393,10 @@ unsigned EZStereocenter::numStereopermutations() const {
   if(
     (
       _numIndices(_leftRanking) == 2
-      && _leftRanking.ligands.size() == 1
+      && _leftRanking.ligandsRanking.size() == 1
     ) || (
       _numIndices(_rightRanking) == 2
-      && _rightRanking.ligands.size() == 1
+      && _rightRanking.ligandsRanking.size() == 1
     )
   ) {
     return 1;

@@ -661,6 +661,10 @@ void RankingTree::_applySequenceRules(
     return ligands;
   };
 
+
+  Cycles cycleData = _moleculeRef.getCycleData();
+  const auto& stereocenters = _moleculeRef.getStereocenterList();
+
   // Process the tree, from the bottom up
   for(auto it = byDepth.rbegin(); it != byDepth.rend(); ++it) {
     const auto& currentEdges = *it;
@@ -805,14 +809,34 @@ void RankingTree::_applySequenceRules(
           centerRanking.sortedSubstituents
         );
 
-          // Again, no links since we're in an acyclic graph now
-        const auto localSymmetry = _moleculeRef.determineLocalGeometry(molSourceIndex, centerRanking);
+        // Again, no links since we're in an acyclic graph now
+        Symmetry::Name localSymmetry;
+        if(
+          stereocenters.involving(molSourceIndex)
+          && stereocenters.at(molSourceIndex)->type() == Stereocenters::Type::CNStereocenter
+        ) {
+          localSymmetry = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+            stereocenters.at(molSourceIndex)
+          ) -> getSymmetry();
+        } else {
+          localSymmetry = _moleculeRef.determineLocalGeometry(molSourceIndex, centerRanking);
+        }
         const unsigned nHydrogens = _adjacentTerminalHydrogens(targetIndex);
 
-        /* In case only one assignment is possible, there is no reason to rank
-         * the substituents at all
+        /* In case only one assignment is possible in the set of symmetries of
+         * the same size, there is no reason to fit the stereocenter at all
          */
-        if(Symmetry::hasMultipleUnlinkedAssignments(localSymmetry, nHydrogens)) {
+        if(
+          temple::any_of(
+            Symmetry::allNames,
+            [&localSymmetry, nHydrogens](const Symmetry::Name name) -> bool {
+              return (
+                Symmetry::size(name) == Symmetry::size(localSymmetry)
+                && Symmetry::hasMultipleUnlinkedAssignments(name, nHydrogens)
+              );
+            }
+          )
+        ) {
           // Instantiate a CNStereocenter here!
 
           auto newStereocenter = Stereocenters::CNStereocenter {
@@ -862,7 +886,7 @@ void RankingTree::_applySequenceRules(
                 Molecule::temperatureRegime
               )
             ) {
-              _tree[targetIndex].stereocenterOption = newStereocenter;
+              _tree[targetIndex].stereocenterOption = std::move(newStereocenter);
 
               // Mark that we instantiated something
               foundCNStereocenters = true;
@@ -879,7 +903,6 @@ void RankingTree::_applySequenceRules(
           }
         }
       }
-
     }
   }
 

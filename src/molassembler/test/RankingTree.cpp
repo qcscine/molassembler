@@ -337,6 +337,17 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
 }
 
 BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
+  auto isStereogenic = [&](
+    const StereocenterList& stereocenterList,
+    const AtomIndexType index
+  ) -> bool {
+    if(stereocenterList.involving(index)) {
+      return stereocenterList.at(index) -> numStereopermutations() > 1;
+    }
+
+    return false;
+  };
+
   /* TODO
    * is it necessary to add a test to ensure full partial ordering?
    * stereogenic > pseudostereogenic > non-stereogenic
@@ -353,21 +364,19 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   const auto& pseudoOverNonstgStereocenters = pseudoOverNonstg.getStereocenterList();
 
   BOOST_CHECK_MESSAGE(
-    !pseudoOverNonstgStereocenters.involving(10),
+    !isStereogenic(pseudoOverNonstgStereocenters, 10),
     "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
     "branch with R-R aux. stereocenters not non-stereogenic"
   );
 
   BOOST_CHECK_MESSAGE(
-    pseudoOverNonstgStereocenters.involving(1)
-    && pseudoOverNonstgStereocenters.at(1)->numAssignments() == 2,
+    isStereogenic(pseudoOverNonstgStereocenters, 1),
     "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
     "branch with R-S aux. stereocenters not stereogenic"
   );
 
   BOOST_CHECK_MESSAGE(
-    pseudoOverNonstgStereocenters.involving(0)
-    && pseudoOverNonstgStereocenters.at(0)->numAssignments() == 2,
+    isStereogenic(pseudoOverNonstgStereocenters, 0),
     "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
     "sequence rule 4A does not recognize stereogenic over non-stereogenic"
   );

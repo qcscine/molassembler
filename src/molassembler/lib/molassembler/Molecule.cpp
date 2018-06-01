@@ -50,11 +50,11 @@ bool Molecule::disregardStereocenter(
         cycleData.iterate(Cycles::predicates::ContainsIndex {centralIndex})
       ) {
         if(Cycles::size(cyclePtr) <= 4) {
-          return true;
+          return false;
         }
       }
 
-      return false;
+      return true;
     }
 
     return false;
@@ -401,6 +401,7 @@ StereocenterList Molecule::_detectStereocenters() const {
     }
   }
 
+  Cycles cycleData = getCycleData();
   // Find CNStereocenters
   for(
     AtomIndexType candidateIndex = 0;
@@ -636,6 +637,7 @@ void Molecule::_propagateGraphChange() {
        */
     }
 
+    Cycles cycleData = getCycleData();
     // Now CNStereocenters
     for(
       AtomIndexType candidateIndex = 0;
@@ -1275,6 +1277,7 @@ StereocenterList Molecule::inferStereocentersFromPositions(
     }
   }
 
+  Cycles cycleData = getCycleData();
   /* Add a CNStereocenter everywhere where the symmetry yielding the best fit is
    * not the one that Molecule's determineLocalGeometry gets and where we
    * can fully determine a Stereocenter's assignment from the positions
