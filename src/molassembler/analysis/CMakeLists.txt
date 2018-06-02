@@ -22,9 +22,7 @@ if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     #    LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
     #  )
     #endif()
-    target_compile_options(${targetName}
-      PRIVATE -Wall -Wpedantic -Wextra -Og -g
-    )
+    target_compile_options(${targetName} PRIVATE -Og -g)
 
     target_link_libraries(${targetName}
       PRIVATE
@@ -39,7 +37,7 @@ else()
   # Build the benchmark anyway
   add_executable(analysis_BenchmarkGraphAlgorithms BenchmarkGraphAlgorithms.cpp)
   target_compile_options(analysis_BenchmarkGraphAlgorithms
-    PUBLIC -O3 -g -march=native -Wall -Wpedantic -Wextra
+    PRIVATE -O3 -g -march=native
   )
   target_link_libraries(analysis_BenchmarkGraphAlgorithms
     PRIVATE Boost::program_options molassembler

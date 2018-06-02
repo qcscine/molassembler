@@ -8,7 +8,7 @@ find_package(Eigen3 3.1.1 REQUIRED)
 find_package(temple 0.1.0 REQUIRED)
 
 add_executable(symmetryTests tests.cpp)
-target_compile_options(symmetryTests PUBLIC -g -O2 -Wall -Wpedantic -Wextra)
+target_compile_options(symmetryTests PUBLIC -g -O2)
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   target_compile_options(
     symmetryTests

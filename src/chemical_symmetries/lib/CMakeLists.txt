@@ -41,7 +41,7 @@ if(UNIX)
   add_definitions(-fPIC)
 endif()
 
-target_compile_options(chemical_symmetries PUBLIC -Wall -Wpedantic -Wextra)
+target_compile_options(chemical_symmetries PUBLIC)
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   target_compile_options(
     chemical_symmetries

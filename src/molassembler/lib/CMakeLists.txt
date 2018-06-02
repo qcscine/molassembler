@@ -124,9 +124,6 @@ if(UNIX)
   add_definitions(-fPIC)
 endif()
 
-target_compile_options(molassemblerStatic PRIVATE -Wall -Wpedantic -Wextra)
-target_compile_options(molassembler PRIVATE -Wall -Wpedantic -Wextra)
-
 # Linking
 # NOTE: For the shared variant, it is necessary to use the cmake variables
 # instead of the imported targets since the imported targets are not changed

@@ -7,11 +7,6 @@ cmake_minimum_required(VERSION 3.5.1)
 # declaration
 project(temple VERSION 0.1.0)
 
-# Compilation flags
-set(WARNING_FLAGS -Wall -Wpedantic -Wextra)
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # Add testing
 enable_testing()
 

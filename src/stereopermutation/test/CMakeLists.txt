@@ -7,7 +7,7 @@ find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options)
 find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(permutationTests tests.cpp)
-target_compile_options(permutationTests PUBLIC -O2 -g -Wall -Wpedantic -Wextra)
+target_compile_options(permutationTests PUBLIC -O2 -g)
 target_link_libraries(permutationTests
   PRIVATE
     Boost::boost

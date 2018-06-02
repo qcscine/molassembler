@@ -32,7 +32,7 @@ find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(cyclicPolygonTests tests.cpp)
-target_compile_options(cyclicPolygonTests PRIVATE -g -Wall -Wpedantic -Wextra)
+target_compile_options(cyclicPolygonTests PRIVATE -g)
 target_link_libraries(cyclicPolygonTests
   PRIVATE
     Boost::boost
