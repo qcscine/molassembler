@@ -331,7 +331,7 @@ std::vector<
   return groupedLigands;
 }
 
-GraphType findAndSetEtaBonds(GraphType&& graph) {
+void findAndSetEtaBonds(GraphType& graph) {
   AtomIndexType N = boost::num_vertices(graph);
   for(AtomIndexType centralIndex = 0; centralIndex < N; ++centralIndex) {
     // Skip any main group element types, none of these should be eta bonded
@@ -353,8 +353,6 @@ GraphType findAndSetEtaBonds(GraphType&& graph) {
       }
     );
   }
-
-  return graph;
 }
 
 RemovalSafetyData getRemovalSafetyData(const GraphType& graph) {

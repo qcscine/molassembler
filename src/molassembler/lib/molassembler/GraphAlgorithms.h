@@ -90,7 +90,7 @@ std::vector<
 );
 
 //! For each atom, determines ligands and sets eta bond type for haptic ligands
-GraphType findAndSetEtaBonds(GraphType&& graph);
+void findAndSetEtaBonds(GraphType& graph);
 
 /*!
  * Returns the number of connected components of the graph. This is a central

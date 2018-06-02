@@ -579,6 +579,8 @@ void Molecule::_propagateGraphChange() {
   if(_stereocenters.empty()) {
     _stereocenters = _detectStereocenters();
   } else {
+    GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
+
     // EZStereocenters first
     for(const auto& edgeIndex : iterateEdges()) {
       auto source = boost::source(edgeIndex, _adjacencies),
@@ -729,18 +731,20 @@ Molecule::Molecule(
 }
 
 Molecule::Molecule(GraphType graph)
-: _adjacencies(GraphAlgorithms::findAndSetEtaBonds(std::move(graph))),
-  _stereocenters(_detectStereocenters())
+: _adjacencies(std::move(graph))
 {
+  GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
+  _stereocenters = _detectStereocenters();
   _ensureModelInvariants();
 }
 
 Molecule::Molecule(
   GraphType graph,
   const AngstromWrapper& angstromWrapper
-) : _adjacencies(GraphAlgorithms::findAndSetEtaBonds(std::move(graph))),
-    _stereocenters(inferStereocentersFromPositions(angstromWrapper))
+) : _adjacencies(std::move(graph))
 {
+  GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
+  _stereocenters = inferStereocentersFromPositions(angstromWrapper);
   _ensureModelInvariants();
 }
 

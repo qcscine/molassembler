@@ -558,7 +558,7 @@ bool testHapticBonds(boost::filesystem::path filePath) {
     graph[i].elementType = rawData.elements.at(i);
   }
 
-  graph = GraphAlgorithms::findAndSetEtaBonds(std::move(graph));
+  GraphAlgorithms::findAndSetEtaBonds(graph);
 
   const auto& relevantData = hapticTestData.at(filePath.stem().string());
 
