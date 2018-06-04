@@ -6,7 +6,7 @@
 /*! @file
  *
  * A constexpr fixed-maximum-size managed set so that the type signature does
- * not change upon element insertion and deletion. STL parallel is std::set, 
+ * not change upon element insertion and deletion. STL parallel is std::set,
  * with the difference that here the maximum number of elements must be known at
  * compile time.
  */
@@ -38,7 +38,7 @@ public:
   }
 
   //! Checks if an element exists. O(log N)
-  constexpr bool contains(const T& item) const {
+  constexpr bool contains(const T& item) const PURITY_WEAK {
     return _tree.contains(item);
   }
 
@@ -47,7 +47,7 @@ public:
     _tree.insert(item);
   }
 
-  constexpr Optional<T> getOption(const T& item) const {
+  constexpr Optional<T> getOption(const T& item) const PURITY_WEAK {
     return _tree.getOption(item);
   }
 
@@ -58,33 +58,33 @@ public:
   using constIterator = typename TreeType::constIterator;
   using const_iterator = constIterator;
 
-  constexpr constIterator begin() const {
+  constexpr constIterator begin() const PURITY_WEAK {
     return _tree.begin();
   }
 
-  constexpr constIterator end() const {
+  constexpr constIterator end() const PURITY_WEAK {
     return _tree.end();
   }
 
-  constexpr size_t size() const {
+  constexpr size_t size() const PURITY_WEAK {
     return _tree.size();
   }
 
-  constexpr bool operator == (const DynamicSet& other) const {
+  constexpr bool operator == (const DynamicSet& other) const PURITY_WEAK {
     return _tree == other._tree;
   }
 
-  constexpr bool operator != (const DynamicSet& other) const {
+  constexpr bool operator != (const DynamicSet& other) const PURITY_WEAK {
     return !(
       _tree == other._tree
     );
   }
 
-  constexpr bool operator < (const DynamicSet& other) const {
+  constexpr bool operator < (const DynamicSet& other) const PURITY_WEAK {
     return _tree < other._tree;
   }
 
-  constexpr bool operator > (const DynamicSet& other) const {
+  constexpr bool operator > (const DynamicSet& other) const PURITY_WEAK {
     return other._tree < _tree;
   }
 };

@@ -11,7 +11,7 @@
 namespace temple {
 
 /*!
- * A constexpr option type much like std::optional with the limitation that T 
+ * A constexpr option type much like std::optional with the limitation that T
  * must be default-constructible and equality and less-than comparison operators
  * must be defined for the underlying type.
  */
@@ -25,19 +25,19 @@ public:
   constexpr Optional() : _value(T {}), _hasValue(false) {}
   constexpr Optional(T value) : _value(std::move(value)), _hasValue(true) {}
 
-  constexpr operator bool () const {
+  constexpr operator bool () const PURITY_WEAK {
     return _hasValue;
   }
 
-  constexpr bool hasValue() const {
+  constexpr bool hasValue() const PURITY_WEAK {
     return _hasValue;
   }
 
-  constexpr T value() const {
+  constexpr T value() const PURITY_WEAK {
     return _value;
   }
 
-  constexpr T valueOr(const T& alternative) const {
+  constexpr T valueOr(const T& alternative) const PURITY_WEAK {
     if(_hasValue) {
       return _value;
     }
@@ -49,7 +49,7 @@ public:
     _value = assignment;
   }
 
-  constexpr bool operator == (const Optional& other) const {
+  constexpr bool operator == (const Optional& other) const PURITY_WEAK {
     if(!_hasValue && !other._hasValue) {
       return true;
     }
@@ -61,11 +61,11 @@ public:
     return false;
   }
 
-  constexpr bool operator != (const Optional& other) const {
+  constexpr bool operator != (const Optional& other) const PURITY_WEAK {
     return !(*this == other);
   }
 
-  constexpr bool operator < (const Optional& other) const {
+  constexpr bool operator < (const Optional& other) const PURITY_WEAK {
     // If neither has a value, they are equal
     if(!_hasValue && !other._hasValue) {
       return false;
@@ -87,7 +87,7 @@ public:
     );
   }
 
-  constexpr bool operator > (const Optional& other) const {
+  constexpr bool operator > (const Optional& other) const PURITY_WEAK {
     return (other < *this);
   }
 };

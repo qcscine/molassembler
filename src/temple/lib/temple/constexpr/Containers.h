@@ -4,6 +4,8 @@
 #include <array>
 #include <limits>
 
+#include "../Preprocessor.h"
+
 /*! @file
  *
  * Provides constexpr functional-style modification of container elements
@@ -123,7 +125,19 @@ template<
   template<typename, size_t> class ArrayType,
   typename T,
   size_t size
-> constexpr ArrayType<T, size> iota() {
+> constexpr std::enable_if_t<
+  std::is_arithmetic<T>::value,
+  ArrayType<T, size>
+> iota() PURITY_STRONG;
+
+template<
+  template<typename, size_t> class ArrayType,
+  typename T,
+  size_t size
+> constexpr std::enable_if_t<
+  std::is_arithmetic<T>::value,
+  ArrayType<T, size>
+> iota() {
   return detail::iotaHelper<ArrayType, T, size>(
     std::make_index_sequence<size>()
   );

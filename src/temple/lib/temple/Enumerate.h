@@ -2,11 +2,12 @@
 #define INCLUDE_CONTAINER_ENUMERATE_H
 
 #include <memory>
+#include "Preprocessor.h"
 
 /*! @file
  *
  * Provides a range-for compatible struct exposing begin and end forward
- * iterators that have a pair as their value_type, the first of which is the 
+ * iterators that have a pair as their value_type, the first of which is the
  * current index, the second of which is the current object in the container.
  *
  */
@@ -41,7 +42,7 @@ private:
 public:
   EnumerateTemporary(
     const Container& container
-  ) : _containerRef(container) 
+  ) : _containerRef(container)
   {}
 
   using BaseIteratorType = std::iterator<
@@ -52,7 +53,7 @@ public:
     const EnumerationStruct    // reference
   >;
 
-  template<typename PointerType> 
+  template<typename PointerType>
   class iterator : public BaseIteratorType {
   private:
     typename Container::const_iterator _it;
@@ -64,16 +65,16 @@ public:
       unsigned index
     ) : _it(it), _index(index) {}
 
-    iterator& operator ++ () { 
+    iterator& operator ++ () {
       ++_it;
       ++_index;
-      return *this; 
+      return *this;
     }
 
     iterator operator++ (int) {
       iterator retval = *this;
       ++(*this);
-      return retval; 
+      return retval;
     }
 
     bool operator == (iterator other) const {
@@ -86,7 +87,7 @@ public:
       );
     }
 
-    typename BaseIteratorType::reference operator * () const { 
+    typename BaseIteratorType::reference operator * () const {
       return EnumerationStruct {
         _index,
         *_it
@@ -117,10 +118,10 @@ public:
 /*! Returns an EnerateTemporary for use with range-for expressions that
  * generates a struct with members index and value for every contained element.
  * Requires that the container implements begin(), end() and size() members.
- * Should involve minimal copying, mostly uses references, though no space or 
+ * Should involve minimal copying, mostly uses references, though no space or
  * time complexity guarantees are given.
- * 
- * We realize this may seem like overkill, particularly when many STL Containers 
+ *
+ * We realize this may seem like overkill, particularly when many STL Containers
  * elements can be accessed with operator [], and customary loops are more
  * adequate. However, perhaps some custom containers do not follow STL
  * conventions or do not implement operator [], and for these, use this.
@@ -128,10 +129,13 @@ public:
 template<class Container>
 enumerate_detail::EnumerateTemporary<Container> enumerate(
   const Container& container
+) PURITY_WEAK;
+
+template<class Container>
+enumerate_detail::EnumerateTemporary<Container> enumerate(
+  const Container& container
 ) {
-  return enumerate_detail::EnumerateTemporary<Container> (
-    container
-  );
+  return enumerate_detail::EnumerateTemporary<Container> (container);
 }
 
 #endif

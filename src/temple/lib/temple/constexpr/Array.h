@@ -7,8 +7,6 @@
 
 #include "Containers.h"
 
-// TODO replace unsigned with size_t
-
 /*! @file
  *
  * Constexpr fixed-size array to replace std::array in C++14. This class is
@@ -64,36 +62,36 @@ public:
     : _items {static_cast<T>(args)...}
   {}
 
-  constexpr T& operator[] (const unsigned& index) {
+  constexpr T& operator[] (const std::size_t index) noexcept {
     return _items[index];
   }
 
-  constexpr const T& operator[] (const unsigned& index) const {
+  constexpr const T& operator[] (const std::size_t index) const noexcept {
     return _items[index];
   }
 
-  constexpr T& at(const unsigned& index) {
+  constexpr T& at(const std::size_t index) noexcept {
     return _items[index];
   }
 
-  constexpr const T& at(const unsigned& index) const {
+  constexpr const T& at(const std::size_t index) const noexcept {
     return _items[index];
   }
 
-  constexpr const T& front() const {
+  constexpr const T& front() const noexcept {
     return _items[0];
   }
 
-  constexpr const T& back() const {
+  constexpr const T& back() const noexcept {
     return _items[nItems - 1];
   }
 
-  constexpr size_t size() const {
+  constexpr size_t size() const noexcept {
     return nItems;
   }
 
-  constexpr bool operator == (const Array& other) const {
-    for(unsigned i = 0; i < nItems; ++i) {
+  constexpr bool operator == (const Array& other) const noexcept {
+    for(std::size_t i = 0; i < nItems; ++i) {
       if(_items[i] != other._items[i]) {
         return false;
       }
@@ -102,8 +100,8 @@ public:
     return true;
   }
 
-  constexpr bool operator != (const Array& other) const {
-    for(unsigned i = 0; i < nItems; ++i) {
+  constexpr bool operator != (const Array& other) const noexcept {
+    for(std::size_t i = 0; i < nItems; ++i) {
       if(_items[i] != other._items[i]) {
         return true;
       }
@@ -112,8 +110,8 @@ public:
     return false;
   }
 
-  constexpr bool operator < (const Array& other) const {
-    for(unsigned i = 0; i < nItems; ++i) {
+  constexpr bool operator < (const Array& other) const noexcept {
+    for(std::size_t i = 0; i < nItems; ++i) {
       if(_items[i] < other._items[i]) {
         return true;
       } else if(_items[i] > other._items[i]) {
@@ -124,7 +122,7 @@ public:
     return false;
   }
 
-  constexpr bool operator > (const Array& other) const {
+  constexpr bool operator > (const Array& other) const noexcept {
     return (other < *this);
   }
 
@@ -140,102 +138,103 @@ public:
   class iterator : public BaseIteratorType {
   private:
     Array& _baseRef;
-    unsigned _position;
+    std::size_t _position;
 
   public:
     constexpr iterator(
       Array& instance,
-      unsigned&& initPosition
-    ) : _baseRef(instance),
+      std::size_t initPosition
+    ) noexcept
+      : _baseRef(instance),
         _position(initPosition)
     {}
 
-    constexpr iterator(const iterator& other)
+    constexpr iterator(const iterator& other) noexcept
       : _baseRef(other._baseRef),
         _position(other._position)
     {}
 
-    constexpr iterator& operator = (const iterator& other) {
+    constexpr iterator& operator = (const iterator& other) noexcept {
       _baseRef = other._baseRef;
       _position = other._position;
 
       return *this;
     }
 
-    constexpr iterator& operator ++ () {
+    constexpr iterator& operator ++ () noexcept {
       _position += 1;
       return *this;
     }
 
-    constexpr iterator operator ++ (int) {
+    constexpr iterator operator ++ (int) noexcept {
       iterator retval = *this;
       ++(*this);
       return retval;
     }
 
-    constexpr iterator& operator --() {
+    constexpr iterator& operator --() noexcept {
       _position -= 1;
       return *this;
     }
 
-    constexpr iterator operator -- (int) {
+    constexpr iterator operator -- (int) noexcept {
       iterator retval = *this;
       --(*this);
       return retval;
     }
 
-    constexpr iterator operator + (const int& increment) {
+    constexpr iterator operator + (const int increment) noexcept {
       iterator retval = *this;
       retval += increment;
       return retval;
     }
 
-    constexpr iterator operator - (const int& increment) {
+    constexpr iterator operator - (const int increment) noexcept {
       iterator retval = *this;
       retval -= increment;
       return retval;
     }
 
-    constexpr iterator& operator += (const int& increment) {
+    constexpr iterator& operator += (const int increment) noexcept {
       _position += increment;
       return *this;
     }
 
-    constexpr iterator& operator -= (const int& increment) {
+    constexpr iterator& operator -= (const int increment) noexcept {
       _position -= increment;
       return *this;
     }
 
-    constexpr int operator - (const iterator& other) const {
+    constexpr int operator - (const iterator& other) const noexcept PURITY_WEAK {
       return (
         static_cast<int>(_position)
         - static_cast<int>(other._position)
       );
     }
 
-    constexpr bool operator == (const iterator& other) const {
+    constexpr bool operator == (const iterator& other) const noexcept PURITY_WEAK {
       return (
         &_baseRef == &other._baseRef
         && _position == other._position
       );
     }
 
-    constexpr bool operator != (const iterator& other) const {
+    constexpr bool operator != (const iterator& other) const noexcept PURITY_WEAK {
       return !(
         *this == other
       );
     }
 
-    constexpr typename BaseIteratorType::reference operator * () const {
+    constexpr typename BaseIteratorType::reference operator * () const noexcept PURITY_WEAK {
       return _baseRef[_position];
     }
   };
 
-  constexpr iterator begin() {
+  constexpr iterator begin() noexcept PURITY_WEAK {
     return iterator(*this, 0);
   }
 
-  constexpr iterator end() {
+  constexpr iterator end() noexcept PURITY_WEAK {
     return iterator(*this, nItems);
   }
 
@@ -250,17 +249,18 @@ public:
   class constIterator : public ConstBaseIteratorType {
   private:
     const Array& _baseRef;
-    unsigned _position;
+    std::size_t _position;
 
   public:
     constexpr explicit constIterator(
       const Array& instance,
-      unsigned&& initPosition
-    ) : _baseRef(instance),
+      std::size_t initPosition
+    ) noexcept
+      : _baseRef(instance),
         _position(initPosition)
     {}
 
-    constexpr constIterator(const constIterator& other)
+    constexpr constIterator(const constIterator& other) noexcept
       : _baseRef(other._baseRef),
         _position(other._position)
     {}
@@ -275,71 +275,71 @@ public:
       return *this;
     }
 
-    constexpr constIterator& operator ++ () {
+    constexpr constIterator& operator ++ () noexcept {
       _position += 1;
       return *this;
     }
 
-    constexpr constIterator operator ++ (int) {
+    constexpr constIterator operator ++ (int) noexcept {
       constIterator retval = *this;
       ++(*this);
       return retval;
     }
 
-    constexpr constIterator& operator --() {
+    constexpr constIterator& operator --() noexcept {
       _position -= 1;
       return *this;
     }
 
-    constexpr constIterator operator -- (int) {
+    constexpr constIterator operator -- (int) noexcept {
       constIterator retval = *this;
       --(*this);
       return retval;
     }
 
-    constexpr constIterator operator + (const int& increment) {
+    constexpr constIterator operator + (const int increment) noexcept {
       constIterator retval = *this;
       retval += increment;
       return retval;
     }
 
-    constexpr constIterator operator - (const int& increment) {
+    constexpr constIterator operator - (const int increment) noexcept {
       constIterator retval = *this;
       retval -= increment;
       return retval;
     }
 
-    constexpr constIterator& operator += (const int& increment) {
+    constexpr constIterator& operator += (const int increment) noexcept {
       _position += increment;
       return *this;
     }
 
-    constexpr constIterator& operator -= (const int& increment) {
+    constexpr constIterator& operator -= (const int increment) noexcept {
       _position -= increment;
       return *this;
     }
 
-    constexpr int operator - (const constIterator& other) const {
+    constexpr int operator - (const constIterator& other) const noexcept {
       return (
         static_cast<int>(_position)
         - static_cast<int>(other._position)
       );
     }
 
-    constexpr bool operator == (const constIterator& other) const {
+    constexpr bool operator == (const constIterator& other) const noexcept {
       return (
         &_baseRef == &other._baseRef
         && _position == other._position
       );
     }
 
-    constexpr bool operator != (const constIterator& other) const {
+    constexpr bool operator != (const constIterator& other) const noexcept {
       return !(
         *this == other
       );
     }
 
-    constexpr typename ConstBaseIteratorType::reference operator * () const {
+    constexpr typename ConstBaseIteratorType::reference operator * () const noexcept {
       return _baseRef[_position];
     }
   };
@@ -347,11 +347,11 @@ public:
   //! Type alias for compatibility with STL algorithms
   using const_iterator = constIterator;
 
-  constexpr constIterator begin() const {
+  constexpr constIterator begin() const noexcept {
     return constIterator(*this, 0);
   }
 
-  constexpr constIterator end() const {
+  constexpr constIterator end() const noexcept {
     return constIterator(*this, nItems);
   }
 
@@ -366,6 +366,7 @@ public:
   }
 };
 
+// This way, makeArray must be called with at least one argument
 template<typename T, typename... Tail>
 constexpr auto makeArray(T head, Tail... tail) -> Array<T, 1 + sizeof...(Tail)> {
   return { head, tail ... };

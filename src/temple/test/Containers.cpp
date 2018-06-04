@@ -15,6 +15,7 @@
 #include <boost/range/numeric.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
+double divByThree (unsigned a) PURITY_STRONG;
 double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
 }
@@ -210,10 +211,17 @@ BOOST_AUTO_TEST_CASE(concatenateTests) {
 }
 
 unsigned quaternarySum(
-  unsigned a,
-  unsigned b,
-  unsigned c,
-  unsigned d
+  const unsigned a,
+  const unsigned b,
+  const unsigned c,
+  const unsigned d
+) PURITY_STRONG;
+
+unsigned quaternarySum(
+  const unsigned a,
+  const unsigned b,
+  const unsigned c,
+  const unsigned d
 ) {
   return a + b + c + d;
 }

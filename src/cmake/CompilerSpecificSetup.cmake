@@ -9,8 +9,7 @@ if(UNIX)
       -Wsuggest-attribute=const \
       -Wsuggest-attribute=pure \
       -Wsuggest-final-types \
-      -Wsuggest-final-methods \
-      -Wsuggest-override"
+      -Wsuggest-final-methods"
     )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wsuggest-attribute=pure")
   endif()

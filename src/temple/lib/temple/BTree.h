@@ -18,7 +18,7 @@ namespace nonconstexpr {
 
 /*! A B-Tree that merely stores keys, not key-value pairs.
  *
- * This class is a B-Tree that stores keys in its nodes, not key-value pairs. 
+ * This class is a B-Tree that stores keys in its nodes, not key-value pairs.
  * (This can be turned into an associative container with a simple modification,
  * though: Set KeyType to std::pair<KeyType, ValueType> and supply custom
  * LessThanComparator and EqualityComparators that merely compare using the
@@ -27,7 +27,7 @@ namespace nonconstexpr {
  *
  * @tparam KeyType The desired stored type
  * @tparam minDegree The minimum degree t of the B-Tree. Must be >= 2, since
- *   Nodes store a minimum of t-1 keys. A Node of degree t can store up to 2t-1 
+ *   Nodes store a minimum of t-1 keys. A Node of degree t can store up to 2t-1
  *   keys and has up to 2t children.
  * @tparam LessThanComparator A binary functor that takes two keys and returns
  *   whether a is smaller than b. Must implement strict weak ordering. Defaults
@@ -52,17 +52,17 @@ private:
 
     Node() {}
 
-    bool isLeaf() const {
+    bool isLeaf() const PURITY_WEAK {
       return children.size() == 0;
     }
 
-    bool isFull() const {
+    bool isFull() const PURITY_WEAK {
       return keys.size() == maxKeys;
     }
   };
 
   //! Pointer to root node
-  Node* _rootPtr; 
+  Node* _rootPtr;
 
   //! Less-than comparator instance
   LessThanComparator _lt;
@@ -84,7 +84,7 @@ private:
   }
 
   //! Recursive search for an element in a subtree rooted at node
-  Node* _search(Node* node, const KeyType& key) const {
+  Node* _search(Node* node, const KeyType& key) const PURITY_WEAK {
     auto keyLB = lowerBound<KeyType, LessThanComparator>(
       node->keys.begin(),
       node->keys.end(),
@@ -188,12 +188,12 @@ private:
     }
   }
 
-  bool _isRootNode(const Node* const node) const {
+  bool _isRootNode(const Node* const node) const PURITY_WEAK {
     return node == _rootPtr;
   }
 
   //! Returns the smallest leaf node in the sub-tree rooted at nodePtr
-  Node* _smallestLeafNode(Node* nodePtr) const {
+  Node* _smallestLeafNode(Node* nodePtr) const PURITY_WEAK {
     while(!nodePtr->isLeaf()) {
       nodePtr = nodePtr->children.front();
     }
@@ -202,7 +202,7 @@ private:
   }
 
   //! Returns the largest leaf node in the sub-tree rooted at nodePtr
-  Node* _largestLeafNode(Node* nodePtr) const {
+  Node* _largestLeafNode(Node* nodePtr) const PURITY_WEAK {
     while(!nodePtr->isLeaf()) {
       nodePtr = nodePtr->children.back();
     }
@@ -218,10 +218,10 @@ private:
       key,
       _lt
     );
-    
+
     unsigned indexOfLB = keyLB - node->keys.begin();
 
-    if(keyLB != node->keys.end() && _eq(*keyLB, key)) { 
+    if(keyLB != node->keys.end() && _eq(*keyLB, key)) {
       // Key to remove is in this node's keys
       if(node->isLeaf()) {
         // Case 1
@@ -230,7 +230,7 @@ private:
         // Case 2
         if(node->children.at(indexOfLB)->keys.size() >= minDegree) {
           // Case 2a: Predecessor of key is maximum in subtree to the left
-          
+
           // Predecessor key is largest key of largest leaf node in left subtree
           KeyType predecessor = _largestLeafNode(
             node->children.at(indexOfLB)
@@ -285,7 +285,7 @@ private:
           _delete(leftChild, key);
         }
       }
-    } else { 
+    } else {
       /* Case 3: The key to delete is not in this node's keys and we have to
        * descend in the tree. Need to ensure that any node we descend to has
        * at least minDegree keys!
@@ -293,10 +293,10 @@ private:
       Node* targetChild = node->children.at(indexOfLB);
 
       if(targetChild->keys.size() == minDegree - 1) {
-        // Case 3a Move some keys around from left or right siblings 
+        // Case 3a Move some keys around from left or right siblings
 
         if(
-          indexOfLB != 0 
+          indexOfLB != 0
           && node->children.at(indexOfLB - 1)->keys.size() >= minDegree
         ) {
           Node* leftSibling = node->children.at(indexOfLB - 1);
@@ -406,7 +406,7 @@ private:
   void _validate(const Node& node) const {
     // A non-root node has min. t-1 keys
     if(
-      !_isRootNode(&node) 
+      !_isRootNode(&node)
       && node.keys.size() < minDegree - 1
     ) {
       throw "Not every internal node has min. t-1 keys!";
@@ -414,8 +414,8 @@ private:
 
     // Every internal node with n keys has n+1 children
     if(
-      !_isRootNode(&node) 
-      && !node.isLeaf() 
+      !_isRootNode(&node)
+      && !node.isLeaf()
       && node.keys.size() != node.children.size() - 1
     ) {
       throw "Not every internal node with n keys has n+1 children!";
@@ -483,12 +483,12 @@ public:
    * is O(t log_t N), where t is the minimum degree of the tree and N the
    * number of contained elements.
    */
-  bool contains(const KeyType& key) const {
+  bool contains(const KeyType& key) const PURITY_WEAK {
     Node* foundPtr = _search(_rootPtr, key);
     return foundPtr != nullptr;
   }
 
-  Optional<KeyType> getOption(const KeyType& key) const {
+  Optional<KeyType> getOption(const KeyType& key) const PURITY_WEAK {
     Node* foundPtr = _search(_rootPtr, key);
 
     if(foundPtr == nullptr) {
@@ -521,12 +521,12 @@ public:
 
       _markNodeDeleted(emptyRoot);
     }
-    
+
     --_count;
   }
 
   //! Dumps a graphViz representation of the B-Tree.
-  std::string dumpGraphviz() const {
+  std::string dumpGraphviz() const PURITY_WEAK {
     using namespace std::string_literals;
 
     std::stringstream graph;
@@ -541,7 +541,7 @@ public:
         nodeNames[nodePtr] = "node"s + std::to_string(nodeCounter);
         ++nodeCounter;
       }
-      
+
       return nodeNames.at(nodePtr);
     };
 
@@ -583,7 +583,7 @@ public:
       // Write all connections
       if(!node.isLeaf()) {
         for(unsigned i = 0; i < node.children.size(); ++i) {
-          graph << "  \"" << getName(&node) << "\":f" << i 
+          graph << "  \"" << getName(&node) << "\":f" << i
             << " -> \"" << getName(node.children.at(i)) << "\";\n";
         }
       }
@@ -633,7 +633,7 @@ public:
   private:
     const Node* const _leftMostNode;
     const Node* const _rightMostNode;
-    
+
     std::vector<const Node*> _nodeStack;
     std::vector<unsigned> _indexStack;
 
@@ -655,11 +655,11 @@ public:
       const InitializeAs& initDecision
     ) : _leftMostNode(tree._smallestLeafNode(tree._rootPtr)),
         _rightMostNode(tree._largestLeafNode(tree._rootPtr)),
-        _nodeStack {tree._rootPtr} 
+        _nodeStack {tree._rootPtr}
     {
       if(!static_cast<bool>(static_cast<unsigned>(initDecision))) {
         // 0 is Begin, so not-false is begin
-        
+
         while(!_nodeStack.back()->isLeaf()) {
           _indexStack.push_back(0);
 
@@ -718,9 +718,9 @@ public:
          * node, we have to go up the tree and to the right
          */
         if(
-          _indexStack.back() == indexLimit 
+          _indexStack.back() == indexLimit
           && _nodeStack.back() != _rightMostNode
-        ) { 
+        ) {
           // Unwind the stack until we are at an incrementable position
           do {
             _indexStack.pop_back();
@@ -732,8 +732,8 @@ public:
         }
 
         return *this;
-      } 
-      
+      }
+
       // We are on an internal node, incrementing puts us on a child
       ++_indexStack.back();
       _nodeStack.push_back(
@@ -777,11 +777,11 @@ public:
             _nodeStack.pop_back();
           } while(_indexStack.back() == 0);
         }
-        
+
         // Decrement and return
         --_indexStack.back();
         return *this;
-      } 
+      }
 
       // We are an internal node, decrementing puts us on a child
       --_indexStack.back();
@@ -873,7 +873,7 @@ public:
   //! Returns a const iterator to the first key in the tree
   constIterator begin() const {
     return constIterator(
-      *this, 
+      *this,
       constIterator::InitializeAs::Begin
     );
   }
@@ -881,7 +881,7 @@ public:
   //! Returns a past-the-end const iterator
   constIterator end() const {
     return constIterator(
-      *this, 
+      *this,
       constIterator::InitializeAs::End
     );
   }
@@ -889,7 +889,7 @@ public:
   bool operator < (const BTree& other) const {
     if(this->size() < other.size()) {
       return true;
-    } 
+    }
 
     if(this->size() > other.size()) {
       return false;

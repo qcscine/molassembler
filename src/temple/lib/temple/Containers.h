@@ -262,7 +262,7 @@ template<
   const Container<T, Dependents...>& container,
   ReturnType&& init,
   BinaryFunction&& function
-);
+) PURITY_WEAK;
 
 //! Special fix for std::array accumulate composability
 template<
@@ -431,7 +431,7 @@ bool all_of(const Container& container, UnaryPredicate&& predicate);
 
 //! Tests if all elements of a container are true
 template<class Container>
-bool all_of(const Container& container);
+bool all_of(const Container& container) PURITY_WEAK;
 
 //! Tests if any elements of a container evaluate true against a predicate
 template<class Container, class UnaryPredicate>

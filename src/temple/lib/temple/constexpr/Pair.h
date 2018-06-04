@@ -2,6 +2,7 @@
 #define INCLUDE_CONSTEXPR_MAGIC_PAIR_H
 
 #include <utility>
+#include "../Preprocessor.h"
 
 /*! @file
  *
@@ -10,7 +11,7 @@
 
 namespace temple {
 
-/*! 
+/*!
  * Heterogeneous pair type.
  *
  * Requires that both types T and U are default-constructible.
@@ -23,21 +24,21 @@ struct Pair {
   constexpr Pair() : first(T {}), second (U {}) {}
 
   /* Value initialization */
-  constexpr Pair(const T& passFirst, const U& passSecond) 
+  constexpr Pair(const T& passFirst, const U& passSecond)
     : first(passFirst), second(passSecond)
   {}
 
-  constexpr Pair(T&& passFirst, U&& passSecond) 
+  constexpr Pair(T&& passFirst, U&& passSecond)
     : first(passFirst), second(passSecond)
   {}
 
   /* Copy initialization */
-  constexpr Pair(const Pair& other) 
-    : first(other.first), second(other.second) 
+  constexpr Pair(const Pair& other)
+    : first(other.first), second(other.second)
   {}
 
-  constexpr Pair(Pair&& other) 
-    : first(other.first), second(other.second) 
+  constexpr Pair(Pair&& other)
+    : first(other.first), second(other.second)
   {}
 
   /* Assignment */
@@ -56,11 +57,11 @@ struct Pair {
   }
 
   /* Comparison operators */
-  constexpr bool operator < (const Pair& other) const {
+  constexpr bool operator < (const Pair& other) const PURITY_WEAK {
     if(first > other.first) {
       return false;
-    } 
-    
+    }
+
     if(first == other.first) {
       return second < other.second;
     }
@@ -68,18 +69,18 @@ struct Pair {
     return true;
   }
 
-  constexpr bool operator > (const Pair& other) const {
+  constexpr bool operator > (const Pair& other) const PURITY_WEAK {
     return (other < *this);
   }
 
-  constexpr bool operator == (const Pair& other) const {
+  constexpr bool operator == (const Pair& other) const PURITY_WEAK {
     return (
       first == other.first
       && second == other.second
     );
   }
 
-  constexpr bool operator != (const Pair& other) const {
+  constexpr bool operator != (const Pair& other) const PURITY_WEAK {
     return !(*this == other);
   }
 };

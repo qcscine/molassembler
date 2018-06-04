@@ -24,9 +24,9 @@ constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseRelative(
-  const T& a,
-  const T& b,
-  const T& relativeTolerance
+  const T a,
+  const T b,
+  const T relativeTolerance
 );
 
 template<typename T>
@@ -34,9 +34,9 @@ constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseAbsolute(
-  const T& a,
-  const T& b,
-  const T& absoluteTolerance
+  const T a,
+  const T b,
+  const T absoluteTolerance
 );
 
 
@@ -48,10 +48,21 @@ constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseRelativeOrAbsolute(
-  const T& a,
-  const T& b,
-  const T& relativeTolerance,
-  const T& absoluteTolerance
+  const T a,
+  const T b,
+  const T relativeTolerance,
+  const T absoluteTolerance
+) PURITY_STRONG;
+
+template<typename T>
+constexpr std::enable_if_t<
+  std::is_floating_point<T>::value,
+  bool
+> isCloseRelativeOrAbsolute(
+  const T a,
+  const T b,
+  const T relativeTolerance,
+  const T absoluteTolerance
 ) {
   if(!(
     a != std::numeric_limits<T>::infinity()
@@ -90,9 +101,19 @@ constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseRelative(
-  const T& a,
-  const T& b,
-  const T& relativeTolerance
+  const T a,
+  const T b,
+  const T relativeTolerance
+) PURITY_STRONG;
+
+template<typename T>
+constexpr std::enable_if_t<
+  std::is_floating_point<T>::value,
+  bool
+> isCloseRelative(
+  const T a,
+  const T b,
+  const T relativeTolerance
 ) {
   return detail::isCloseRelativeOrAbsolute(
     a,
@@ -107,9 +128,19 @@ constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseAbsolute(
-  const T& a,
-  const T& b,
-  const T& absoluteTolerance
+  const T a,
+  const T b,
+  const T absoluteTolerance
+) PURITY_STRONG;
+
+template<typename T>
+constexpr std::enable_if_t<
+  std::is_floating_point<T>::value,
+  bool
+> isCloseAbsolute(
+  const T a,
+  const T b,
+  const T absoluteTolerance
 ) {
   return detail::isCloseRelativeOrAbsolute(
     a,
@@ -127,7 +158,7 @@ private:
   const T _absoluteTolerance;
 
 public:
-  constexpr ExpandedAbsoluteEqualityComparator(const T& absoluteTolerance)
+  constexpr ExpandedAbsoluteEqualityComparator(const T absoluteTolerance)
     : _absoluteTolerance(absoluteTolerance)
   {
     assert(
@@ -138,32 +169,32 @@ public:
     );
   }
 
-  constexpr bool isLessThan(const T& a, const T& b) const noexcept {
+  constexpr bool isLessThan(const T a, const T b) const noexcept PURITY_STRONG {
     return a < (b - _absoluteTolerance);
   }
 
-  constexpr bool isMoreThan(const T& a, const T& b) const noexcept {
+  constexpr bool isMoreThan(const T a, const T b) const noexcept PURITY_STRONG {
     return a > (b + _absoluteTolerance);
   }
 
-  constexpr bool isLessOrEqual(const T& a, const T& b) const noexcept {
+  constexpr bool isLessOrEqual(const T a, const T b) const noexcept PURITY_STRONG {
     return a < (b + _absoluteTolerance);
   }
 
-  constexpr bool isMoreOrEqual(const T& a, const T& b) const noexcept {
+  constexpr bool isMoreOrEqual(const T a, const T b) const noexcept PURITY_STRONG {
     return a > (b - _absoluteTolerance);
   }
 
-  constexpr bool isEqual(const T& a, const T& b) const noexcept {
+  constexpr bool isEqual(const T a, const T b) const noexcept PURITY_STRONG {
     return Math::abs(Math::abs(a) - Math::abs(b)) <= _absoluteTolerance;
   }
 
-  constexpr bool isUnequal(const T& a, const T& b) const noexcept {
+  constexpr bool isUnequal(const T a, const T b) const noexcept PURITY_STRONG {
     return !isEqual(a, b);
   }
 
   //! Function call operator compares equality
-  constexpr bool operator () (const T& a, const T& b) const noexcept {
+  constexpr bool operator () (const T a, const T b) const noexcept PURITY_STRONG {
     return isEqual(a, b);
   }
 };
@@ -174,35 +205,35 @@ private:
   const T _relativeTolerance;
 
 public:
-  constexpr ExpandedRelativeEqualityComparator(const T& relativeTolerance)
+  constexpr ExpandedRelativeEqualityComparator(const T relativeTolerance)
     : _relativeTolerance(relativeTolerance)
   {
     assert(relativeTolerance > 0);
   }
 
-  constexpr bool isLessThan(const T& a, const T& b) const {
+  constexpr bool isLessThan(const T a, const T b) const PURITY_STRONG {
     return (
       (a < b) && !detail::isCloseRelativeOrAbsolute(
         a,
         b,
         _relativeTolerance,
         T {0}
-      ) 
+      )
     );
   }
 
-  constexpr bool isMoreThan(const T& a, const T& b) const {
+  constexpr bool isMoreThan(const T a, const T b) const PURITY_STRONG {
     return (
       (a > b) && !detail::isCloseRelativeOrAbsolute(
         a,
         b,
         _relativeTolerance,
         T {0}
-      ) 
+      )
     );
   }
 
-  constexpr bool isLessOrEqual(const T& a, const T& b) const {
+  constexpr bool isLessOrEqual(const T a, const T b) const PURITY_STRONG {
     return (
       (a < b) || detail::isCloseRelativeOrAbsolute(
         a,
@@ -213,7 +244,7 @@ public:
     );
   }
 
-  constexpr bool isMoreOrEqual(const T& a, const T& b) const {
+  constexpr bool isMoreOrEqual(const T a, const T b) const PURITY_STRONG {
     return (
       (a > b) || detail::isCloseRelativeOrAbsolute(
         a,
@@ -224,7 +255,7 @@ public:
     );
   }
 
-  constexpr bool isEqual(const T& a, const T& b) const {
+  constexpr bool isEqual(const T a, const T b) const PURITY_STRONG {
     return detail::isCloseRelativeOrAbsolute(
       a,
       b,
@@ -233,7 +264,7 @@ public:
     );
   }
 
-  constexpr bool isUnequal(const T& a, const T& b) const {
+  constexpr bool isUnequal(const T a, const T b) const PURITY_STRONG {
     return !detail::isCloseRelativeOrAbsolute(
       a,
       b,
@@ -243,7 +274,7 @@ public:
   }
 
   //! Function call operator compares equality
-  constexpr bool operator () (const T& a, const T& b) const noexcept {
+  constexpr bool operator () (const T a, const T b) const noexcept PURITY_STRONG {
     return isEqual(a, b);
   }
 };
