@@ -36,8 +36,8 @@ extern temple::MinimalCache<
 
 //! Cached access to mappings. Populates the cache from constexpr if generated.
 const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
-  const Symmetry::Name& a,
-  const Symmetry::Name& b,
+  const Symmetry::Name a,
+  const Symmetry::Name b,
   const boost::optional<unsigned>& removedIndexOption = boost::none
 );
 
@@ -54,7 +54,7 @@ extern temple::MinimalCache<
 > hasMultipleUnlinkedCache;
 
 bool hasMultipleUnlinkedAssignments(
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Name symmetryName,
   unsigned nIdenticalLigands
 );
 

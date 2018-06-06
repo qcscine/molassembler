@@ -19,7 +19,7 @@ constexpr double floatingPointEqualityThreshold __attribute__ ((unused)) = 1e-4;
 //! Rotates a passed list of indices of a specific symmetry
 std::vector<unsigned> applyRotation(
   const std::vector<unsigned>& indices,
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Name symmetryName,
   unsigned rotationFunctionIndex
 );
 
@@ -29,7 +29,7 @@ std::vector<unsigned> applyRotation(
  * which is not explicitly held in memory as it is always placed at {0, 0, 0}.
  */
 Eigen::Vector3d getCoordinates(
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Name symmetryName,
   const boost::optional<unsigned>& indexInSymmetryOption
 );
 
@@ -50,8 +50,8 @@ double getTetrahedronVolume(
  * the target symmetry
  */
 double calculateAngleDistortion(
-  const Symmetry::Name& from,
-  const Symmetry::Name& to,
+  const Symmetry::Name from,
+  const Symmetry::Name to,
   const std::vector<unsigned>& indexMapping
 );
 
@@ -72,8 +72,8 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
  * the target symmetry
  */
 double calculateChiralDistortion(
-  const Symmetry::Name& from,
-  const Symmetry::Name& to,
+  const Symmetry::Name from,
+  const Symmetry::Name to,
   const std::vector<unsigned>& indexMapping
 );
 
@@ -84,7 +84,7 @@ double calculateChiralDistortion(
 std::set<
   std::vector<unsigned>
 > generateAllRotations(
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Name symmetryName,
   const std::vector<unsigned>& indices
 );
 
@@ -93,7 +93,7 @@ std::set<
  * symmetry's indexing scheme.
  */
 std::vector<unsigned> applyIndexMapping(
-  const Symmetry::Name& to,
+  const Symmetry::Name to,
   const std::vector<unsigned>& mapping
 );
 
@@ -116,8 +116,8 @@ struct DistortionInfo {
  * and ±1.
  */
 std::vector<DistortionInfo> symmetryTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo
+  const Symmetry::Name symmetryFrom,
+  const Symmetry::Name symmetryTo
 );
 
 /*!
@@ -125,9 +125,9 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
  * loss, in which a ligand is removed from a particular position in the symmetry
  */
 std::vector<DistortionInfo> ligandLossTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo,
-  const unsigned& positionInSourceSymmetry
+  const Symmetry::Name symmetryFrom,
+  const Symmetry::Name symmetryTo,
+  const unsigned positionInSourceSymmetry
 );
 
 //! A grouping of index mappings of equal angular and chiral distortion
@@ -181,8 +181,8 @@ SymmetryTransitionGroup selectBestTransitionMappings(
  * identical ligands.
  */
 unsigned numUnlinkedAssignments(
-  const Symmetry::Name& symmetry,
-  const unsigned& nIdenticalLigands
+  const Symmetry::Name symmetry,
+  const unsigned nIdenticalLigands
 );
 
 /*!
@@ -190,8 +190,8 @@ unsigned numUnlinkedAssignments(
  * for a number of identical ligands.
  */
 bool hasMultipleUnlinkedAssignments(
-  const Symmetry::Name& symmetry,
-  const unsigned& nIdenticalLigands
+  const Symmetry::Name symmetry,
+  const unsigned nIdenticalLigands
 );
 
 } // namespace properties
@@ -222,8 +222,8 @@ std::vector<NumericType> iota(NumericType nValues) {
  */
 template<typename NumericType>
 std::vector<NumericType> range(
-  const NumericType& start,
-  const NumericType& end
+  const NumericType start,
+  const NumericType end
 ) {
   if(start == end) {
     return {};
