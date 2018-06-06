@@ -1018,7 +1018,8 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
     ligandIndices,
     coneHeightBounds,
     bondRelativeVariance * _looseningMultiplier,
-    _molecule.getGraph()
+    _molecule.getGraph(),
+    Cycles {_molecule.getGraph(), true}
   );
 }
 
@@ -1321,7 +1322,8 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   const std::vector<AtomIndexType>& baseConstituents,
   const ValueBounds& coneHeightBounds,
   const double bondRelativeVariance,
-  const GraphType& graph
+  const GraphType& graph,
+  const Cycles& etaLessCycles
 ) {
   /* Have to decide cone base radius in order to calculate this. There are some
    * simple cases to get out of the way first:
@@ -1366,27 +1368,12 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   }
 
   // Now it gets tricky. The base constituents may be part of a cycle or not
-  /* TODO This works, but it might be preferable to just iterate through
-   * combinations of RCs instead, the full cycle MUST be there. Unsure if this
-   * may be prohibitively expensive, though.
-   */
-  // For this cycle interpretation, we need to ignore eta bonds
-  Cycles cycles {graph, true};
-
-  /*for(const auto cyclePtr : cycles) {
-    std::cout << "Cycle " << temple::condenseIterable(
-      makeRingIndexSequence(
-        Cycles::edgeVertices(cyclePtr)
-      )
-    ) << std::endl;
-  }*/
-
   /* This is essentially an if - only one cycle can consist of exactly the base
    * constituents
    */
   for(
     const auto cyclePtr :
-    cycles.iterate(Cycles::predicates::ConsistsOf {baseConstituents})
+    etaLessCycles.iterate(Cycles::predicates::ConsistsOf {baseConstituents})
   ) {
     /* So if it IS a cycle, we need a ring index sequence to calculate a cyclic
      * polygon circumradius, which is how flat cycles are modelled here

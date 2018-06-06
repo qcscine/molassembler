@@ -51,6 +51,7 @@ CNStereocenter::PermutationState::PermutationState(
     }
   );
 
+  Cycles etaLessCycles {graph, true};
   coneAngles.reserve(ranking.ligands.size());
 
   for(unsigned i = 0; i < ranking.ligands.size(); ++i) {
@@ -59,7 +60,8 @@ CNStereocenter::PermutationState::PermutationState(
         ranking.ligands.at(i),
         ligandDistances.at(i),
         ModelType::bondRelativeVariance,
-        graph
+        graph,
+        etaLessCycles
       )
     );
   }
@@ -92,6 +94,7 @@ CNStereocenter::PermutationState::PermutationState(
       )
     )
   ) {
+    Cycles cycleData {graph};
     feasiblePermutations.reserve(permutations.assignments.size());
     const unsigned P = permutations.assignments.size();
     for(unsigned i = 0; i < P; ++i) {
