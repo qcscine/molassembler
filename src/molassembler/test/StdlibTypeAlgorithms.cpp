@@ -2,7 +2,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "StdlibTypeAlgorithms.h"
+#include "detail/StdlibTypeAlgorithms.h"
 #include "temple/Containers.h"
 
 /* Algorithms to test
@@ -71,8 +71,8 @@ BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
   );
 
   /* 4 */
-  std::vector<unsigned> 
-    a {1, 4, 7}, 
+  std::vector<unsigned>
+    a {1, 4, 7},
     b {2, 9, 3},
     expectedMerge {1, 4, 7, 2, 9, 3};
   auto merged = copyMerge(a, b);

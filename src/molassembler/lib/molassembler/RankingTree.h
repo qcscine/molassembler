@@ -1,5 +1,5 @@
-#ifndef INCLUDE_MOLECULE_MANIP_RANKING_HIERARCHICAL_TREE_H
-#define INCLUDE_MOLECULE_MANIP_RANKING_HIERARCHICAL_TREE_H
+#ifndef INCLUDE_MOLASSEMBLER_RANKING_HIERARCHICAL_TREE_H
+#define INCLUDE_MOLASSEMBLER_RANKING_HIERARCHICAL_TREE_H
 
 /* Compile-time optimization options */
 /* If RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS is defined, RankingTree
@@ -20,11 +20,13 @@
  */
 //#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
+#include "detail/BuildTypeSwitch.h"
 #include "BondDistance.h"
-#include "BuildTypeSwitch.h"
 #include "Log.h"
 #include "Molecule.h"
 #include "OrderDiscoveryHelper.h"
+
+#include "boost/variant.hpp"
 
 /* TODO
  * - Maybe you can only add transferability edges when in down-only BFS?
@@ -179,7 +181,10 @@ private:
 #endif
 
   // Closures
-  const Molecule& _moleculeRef;
+  const GraphType& _graphRef;
+  const Cycles& _cyclesRef;
+  const StereocenterList& _stereocentersRef;
+  const std::string _adaptedMolGraphviz;
 
 /* Minor helper classes and functions */
   //! Helper class to write a graphviz representation of the generated tree
@@ -640,7 +645,7 @@ private:
         );
 
         _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          _adaptedMolGraphviz,
           dumpGraphviz(
             header,
             {sourceIndex},
@@ -787,7 +792,7 @@ private:
           header += "R"s + std::to_string(ruleNumber);
 
           _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            _adaptedMolGraphviz,
             dumpGraphviz(
               header,
               {sourceIndex},
@@ -1115,7 +1120,10 @@ public:
    * at the atom instantiated upon.
    */
   RankingTree(
-    const Molecule& molecule,
+    const GraphType& graph,
+    const Cycles& cycles,
+    const StereocenterList& stereocenters,
+    const std::string molGraphviz,
     const AtomIndexType& atomToRank,
     const std::set<AtomIndexType>& excludeIndices = {},
     const ExpansionOption& expansionMethod = ExpansionOption::Optimized,

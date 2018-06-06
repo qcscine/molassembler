@@ -9,9 +9,9 @@
 #include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
 
-#include "AnalysisHelpers.h"
+#include "detail/AnalysisHelpers.h"
+#include "detail/CommonTrig.h"
 #include "BoundsFromSymmetry.h"
-#include "CommonTrig.h"
 #include "DistanceGeometry/generateConformation.h"
 #include "DistanceGeometry/MetricMatrix.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"

@@ -1,5 +1,6 @@
-#include "CycleData.h"
-#include "StdlibTypeAlgorithms.h"
+#include "Cycles.h"
+
+#include "detail/StdlibTypeAlgorithms.h"
 
 namespace molassembler {
 

@@ -2,7 +2,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "DelibHelpers.h"
+#include "detail/DelibHelpers.h"
 #include "temple/Random.h"
 
 #include <Eigen/Geometry>

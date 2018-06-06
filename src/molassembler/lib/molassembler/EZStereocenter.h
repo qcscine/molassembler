@@ -2,7 +2,7 @@
 #define INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
 
 #include "Stereocenter.h"
-#include "AngstromWrapper.h"
+#include "detail/AngstromWrapper.h"
 
 /*! @file
  *
@@ -50,7 +50,7 @@ namespace Stereocenters {
  * stereogenic so that in DG, chirality constraints and dihedral limits that
  * result from the double bond are still collectible.
  */
-class EZStereocenter : public Stereocenter {
+class EZStereocenter final : public Stereocenter {
 public:
   using IndexPairsSet = std::set<
     std::pair<AtomIndexType, AtomIndexType>

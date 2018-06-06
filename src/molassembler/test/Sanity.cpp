@@ -6,7 +6,6 @@
 
 #include "DistanceGeometry/generateConformation.h"
 #include "BoundsFromSymmetry.h"
-#include "IterateStereocenterPermutations.h"
 
 #include "temple/Containers.h"
 #include "temple/Random.h"

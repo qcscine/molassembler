@@ -7,7 +7,7 @@
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 
-#include "DelibHelpers.h"
+#include "detail/DelibHelpers.h"
 #include "EZStereocenter.h"
 #include "BondDistance.h"
 #include "Molecule.h"

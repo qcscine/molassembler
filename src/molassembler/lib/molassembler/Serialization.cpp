@@ -1,6 +1,6 @@
 #include "json/json.hpp"
 
-#include "Base64.h"
+#include "detail/Base64.h"
 #include "Serialization.h"
 
 namespace nlohmann {

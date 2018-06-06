@@ -1,15 +1,15 @@
-#ifndef INCLUDE_MOLECULE_MANIP_MOLECULE_H
-#define INCLUDE_MOLECULE_MANIP_MOLECULE_H
+#ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
+#define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
+#include "detail/AngstromWrapper.h"
+#include "AtomEnvironmentHash.h"
+#include "Cycles.h"
 #include "StereocenterList.h"
-#include "CycleData.h"
-#include "LocalGeometryModel.h"
-#include "AngstromWrapper.h"
 
-#include "temple/constexpr/Bitmask.h"
-
-#include "Delib/AtomCollection.h"
-#include "Delib/BondOrderCollection.h"
+#if __cpp_lib_experimental_propagate_const >= 201505
+#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+#include <experimental/propagate_const>
+#endif
 
 /* TODO
  * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
@@ -24,174 +24,19 @@
 
 namespace molassembler {
 
-//!  Central class of the library, modeling a molecular graph with all state.
+//! Central class of the library, modeling a molecular graph with all state.
 class Molecule {
-public:
-/* "Global" options */
-  //! Sets the temperature regime to be used for all Molecules
-  static TemperatureRegime temperatureRegime;
-  //! Sets the manner in which chiral state is preserved for all Molecules
-  static ChiralStatePreservation chiralStatePreservation;
-
-/* Static functions */
-  /*! Decides whether to keep a stereocenter or not within a temperature regime
-   *
-   * Criteria applied are:
-   * - Minimum of three adjacent indices
-   * - If the high-temperature approximation is invoked, trivalent nitrogen
-   *   inverts too rapidly to carry stereoinformation (unless part of a cycle
-   *   of size 4 or smaller, where strain hinders inversion)
-   */
-  static bool disregardStereocenter(
-    const Stereocenters::CNStereocenter& stereocenter,
-    const Molecule& molecule,
-    const TemperatureRegime temperatureRegimeSetting
-  );
-
-  //! Calculates a bond order collection via UFF-like bond distance modelling
-  static Delib::BondOrderCollection uffBondOrders(
-    const Delib::ElementTypeCollection& elements,
-    const AngstromWrapper& angstromWrapper
-  );
-
-  using PseudoHashType = unsigned long long;
-
-  /*! For modifying equality comparison strictness in member modularCompare
-   *
-   * Differing strictnesses of comparisons may be desirable for various
-   * purposes, hence a modular comparison function is provided.
-   */
-  enum class ComparisonComponents : unsigned {
-    ElementTypes,
-    BondOrders,
-    Symmetries,
-    Stereopermutations // Symmetries must be set in conjunction with this
-  };
-
-  //! Convolutes the atom's element type and bonds into a characteristic number
-  static PseudoHashType hashAtomEnvironment(
-    const temple::Bitmask<ComparisonComponents>& bitmask,
-    const Delib::ElementType elementType,
-    const std::vector<BondType>& sortedBonds,
-    boost::optional<Symmetry::Name> symmetryNameOptional,
-    boost::optional<unsigned> assignedOptional
-  );
-
-  //! Specify the algorithm used to discretize floating-point bond orders into bond types
-  enum class BondDiscretizationOption : unsigned {
-    //! All bond orders >= 0.5 are considered single bonds
-    Binary,
-    //! Bond orders are rounded to the nearest integer
-    UFF
-  };
-
-  //! Result type of an interpret call.
-  struct InterpretResult {
-    //! The list of individual molecules found in the 3D information
-    std::vector<Molecule> molecules;
-    //! A map from an index within the AtomCollection to its index in molecules member
-    std::vector<unsigned> componentMap;
-  };
-
-  static InterpretResult interpret(
-    const Delib::ElementTypeCollection& elements,
-    const AngstromWrapper& angstromWrapper,
-    const Delib::BondOrderCollection& bondOrders,
-    const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
-  );
-
-  static InterpretResult interpret(
-    const Delib::ElementTypeCollection& elements,
-    const AngstromWrapper& angstromWrapper,
-    const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
-  );
-
-  /*! Interpret molecules in 3D information and a bond order collection.
-   *
-   * The graph is inferred via bond discretization from the bond order
-   * collection.
-   *
-   * @note Assumes that the provided atom collection's positions are in
-   * Bohr units.
-   */
-  static InterpretResult interpret(
-    const Delib::AtomCollection& atomCollection,
-    const Delib::BondOrderCollection& bondOrders,
-    const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
-  );
-
-  /*! Interpret molecules in 3D information.
-   *
-   * The graph is inferred via bond discretization from pairwise atom distances.
-   *
-   * @note Assumes that the provided atom collection's positions are in
-   * Bohr units.
-   */
-  static InterpretResult interpret(
-    const Delib::AtomCollection& atomCollection,
-    const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
-  );
-
-private:
-/* State */
-  GraphType _adjacencies;
-  StereocenterList _stereocenters;
-
-/* Members */
-/* Private members */
-  /*!
-   * Adds an vertex to the graph and sets it's element type property, returning
-   * the new index.
-   */
-  AtomIndexType _addAtom(const Delib::ElementType elementType);
-
-  //! Generates a list of stereocenters based on graph properties alone
-  StereocenterList _detectStereocenters() const;
-
-  //! Ensures basic expectations about what constitutes a Molecule are met
-  void _ensureModelInvariants() const;
-
-  /*! Returns if an edge could be an EZStereocenter with multiple assignments
-   *
-   * Criteria applied are:
-   * - Bond type must be double
-   * - 2-3 non-eta bonds for each edge vertex
-   */
-  bool _isEZStereocenterCandidate(const GraphType::edge_descriptor& edgeIndex) const;
-
-  //! Returns whether the specified index is valid or not
-  bool _isValidIndex(const AtomIndexType index) const;
-
-  /*!
-   * Returns a list of edge indices where each endpoint has 1 or two additional
-   * substituent besides the edge neighbor
-   */
-  std::vector<EdgeIndexType> _getEZStereocenterCandidates() const;
-
-  /*!
-   * Fits a stereocenter to a position collection, excluding the seesaw symmetry
-   * if a four-coordinate carbon atom is to be fitted to a position collection
-   */
-  void _pickyFitStereocenter(
-    Stereocenters::CNStereocenter& stereocenter,
-    const Symmetry::Name expectedSymmetry,
-    const AngstromWrapper& angstromWrapper
-  ) const;
-
-  //!  Reduces an atom's neighbors to ligand types
-  std::vector<LocalGeometry::BindingSiteInformation> _reduceToSiteInformation(
-    const AtomIndexType index,
-    const RankingInformation& ranking
-  ) const;
-
-  //!  Updates the molecule's StereocenterList after a graph modification
-  void _propagateGraphChange();
-
 public:
 //!@name Constructors
 //!@{
+  /* Rule of five members */
   //! Default-constructor creates a hydrogen molecule.
   Molecule() noexcept;
+  Molecule(Molecule&& other);
+  Molecule& operator = (Molecule&& rhs);
+  Molecule(const Molecule& other);
+  Molecule& operator = (const Molecule& rhs);
+  ~Molecule();
 
   //! Construct a minimal molecule from two element types and a shared bond type
   Molecule(
@@ -420,7 +265,7 @@ public:
    */
   bool modularCompare(
     const Molecule& other,
-    const temple::Bitmask<ComparisonComponents>& comparisonBitmask
+    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
   ) const;
 
   //! Fetch the number of atoms
@@ -441,6 +286,9 @@ public:
 
 //!@name Iterators
 //!@{
+  //! Returns a range-for temporary object iterating through all atom indices
+  RangeForTemporary<GraphType::vertex_iterator> iterateAtoms() const;
+
   /*! Returns a range-for temporary object allowing c++11 style for loop
    * iteration through an atom's adjacencies
    */
@@ -475,6 +323,17 @@ public:
 /* Friends */
   friend struct MoleculeValidator;
   friend class RankingTree;
+
+private:
+  struct Impl;
+
+#ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+  std::experimental::propagate_const<
+    std::unique_ptr<Impl>
+  > _pImpl;
+#else
+  std::unique_ptr<Impl> _pImpl;
+#endif
 };
 
 } // namespace molassembler

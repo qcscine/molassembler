@@ -1,37 +1,12 @@
-#ifndef INCLUDE_COMMON_TYPEDEFS_H
-#define INCLUDE_COMMON_TYPEDEFS_H
+#ifndef INCLUDE_MOLASSEMBLER_OPTIONS_H
+#define INCLUDE_MOLASSEMBLER_OPTIONS_H
 
-// External libraries
-#include "boost/graph/adjacency_list.hpp"
+#include "chemical_symmetries/Symmetries.h"
 
-// In-house libraries
-#include "Delib/ElementTypes.h"
-
-/*! @file
- *
- * Central types required across the entire project are defined here.
- */
+#include "detail/SharedTypes.h"
+#include "detail/AngstromWrapper.h"
 
 namespace molassembler {
-
-/* Global typedefs */
-/*!
- * Bond type enumeration. Besides the classic organic single, double and triple
- * bonds, bond orders up to sextuple are explicitly included.
- *
- * Although currently unused, Aromatic and Eta bonds are included in
- * anticipation of their necessity.
- */
-enum class BondType : unsigned {
-  Single,
-  Double,
-  Triple,
-  Quadruple,
-  Quintuple,
-  Sextuple,
-  Aromatic,
-  Eta
-};
 
 /*!
  * Specifies for which temperature regime the Molecule is being modeled.
@@ -150,75 +125,54 @@ enum class ChiralStatePreservation {
   RandomFromMultipleBest
 };
 
-enum class LengthUnit {
-  Bohr,
-  Angstrom
+
+struct Options {
+  /*! Sets the temperature regime to be used for all Molecules
+   *
+   * Defaults to high temperature approximation.
+   */
+  static TemperatureRegime temperatureRegime;
+  /*! Sets the manner in which chiral state is preserved for all Molecules
+   *
+   * Defaults to EffortlessAndUnique.
+   */
+  static ChiralStatePreservation chiralStatePreservation;
 };
 
+// Forward-declare Cycles and CNStereocenter
+class Cycles;
 
-//! Boost graph vertex and edge property types
-namespace GraphDetail {
+namespace Stereocenters {
+  class CNStereocenter;
+} // namespace Stereocenters
 
-struct VertexData {
-  Delib::ElementType elementType;
-};
+/*! Decides whether to keep a stereocenter or not within a temperature regime
+ *
+ * Criteria applied are:
+ * - Minimum of three adjacent indices
+ * - If the high-temperature approximation is invoked, trivalent nitrogen
+ *   inverts too rapidly to carry stereoinformation (unless part of a cycle
+ *   of size 4 or smaller, where strain hinders inversion)
+ */
+bool disregardStereocenter(
+  const Stereocenters::CNStereocenter& stereocenter,
+  const Delib::ElementType centralType,
+  const Cycles& cycleData,
+  const TemperatureRegime temperatureRegimeSetting
+);
 
-struct EdgeData {
-  BondType bondType;
-};
-
-} // namespace GraphDetail
 
 /*!
- * The type of the molecular graph. An adjacency list is used due to sparsity
- * of the molecular graph. Further explanation of graph representation choices
- * are found in the code.
+ * Fits a stereocenter to a position collection, excluding the seesaw symmetry
+ * if a four-coordinate carbon atom is to be fitted to a position collection
  */
-using GraphType = boost::adjacency_list<
-  /* OutEdgeListS = Type of Container for edges of a vertex
-   * Options: vector, list, slist, set, multiset, unordered_set
-   * Choice: setS, enforces absence of parallel edges in graph
-   */
-  boost::setS,
-  /* VertexListS = Type of Container for vertices
-   * Options: vector, list, slist, set, multiset, unordered_set
-   * Choice: vecS, removing vertices is rare, keep memory use limited
-   * Consequence: operation remove_vertex() invalidates:
-   *   - Vertex descriptors / iterators
-   *   - Edge descriptors / iterators
-   *   - Adjacency iterators
-   *
-   *   Upshot is that graph traversal is faster
-   */
-  boost::vecS,
-  /* DirectedS = Is the graph directed or not?
-   * Choice: Undirected
-   */
-  boost::undirectedS,
-  /* VertexProperty = What information is stored about vertices?
-   * Choice: Atom, containing an index and an element type
-   */
-  GraphDetail::VertexData,
-  /* EdgeProperty = What information is stored about edges?
-   * Choice: BondType, a custom enum class
-   */
-  GraphDetail::EdgeData
-  /* GraphProperty
-   * Omitted, defaults
-   */
-  /* EdgeListS
-   * Ommitted, defaults
-   */
->;
+void pickyFit(
+  Stereocenters::CNStereocenter& stereocenter,
+  const GraphType& graph,
+  const AngstromWrapper& angstromWrapper,
+  const Symmetry::Name expectedSymmetry
+);
 
-//! Shorthand to boost graph vertex descriptor
-using AtomIndexType = GraphType::vertex_descriptor;
-
-//! Shorthand to boost graph edge descriptor
-using EdgeIndexType = GraphType::edge_descriptor;
-
-//! Descriptive name for dlib indices
-using dlibIndexType = long;
 
 } // namespace molassembler
 

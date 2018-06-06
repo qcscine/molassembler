@@ -1,10 +1,10 @@
-#ifndef INCLUDE_MOLECULE_MANIP_ORDER_DISCORVERY_HELPER
-#define INCLUDE_MOLECULE_MANIP_ORDER_DISCORVERY_HELPER
+#ifndef INCLUDE_MOLASSEMBLER_ORDER_DISCORVERY_HELPER
+#define INCLUDE_MOLASSEMBLER_ORDER_DISCORVERY_HELPER
 
 #include "boost/graph/graphviz.hpp"
 #include "temple/Containers.h"
 
-#include "common_typedefs.h"
+#include "detail/SharedTypes.h"
 
 /* TODO
  * - may be preferable to have OrderDiscoveryHelper emit pairs of Ts whose

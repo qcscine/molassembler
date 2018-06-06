@@ -3,11 +3,11 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "detail/AnalysisHelpers.h"
+#include "detail/StdlibTypeAlgorithms.h"
 #include "DistanceGeometry/generateConformation.h"
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
-#include "AnalysisHelpers.h"
-#include "StdlibTypeAlgorithms.h"
 #include "Log.h"
 
 #include "temple/constexpr/Numeric.h"

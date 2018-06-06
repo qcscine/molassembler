@@ -1,12 +1,14 @@
 #include "IO.h"
-#include "Version.h"
-#include "BondDistance.h"
-#include "Serialization.h"
-#include "Delib/AtomCollectionIO.h"
-#include "Delib/Constants.h"
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
+#include "Delib/AtomCollection.h"
+#include "Delib/AtomCollectionIO.h"
+#include "Delib/Constants.h"
+
+#include "BondDistance.h"
+#include "Serialization.h"
+#include "Version.h"
 
 #include <fstream>
 #include <iomanip>
@@ -432,23 +434,23 @@ BinaryHandler::BinaryType BinaryHandler::read(const std::string& filename) {
 
 namespace detail {
 
-Molecule::InterpretResult interpret(const FileHandler::RawData& data) {
+InterpretResult interpret(const FileHandler::RawData& data) {
   /* Some readers may not set bond orders at all. In those cases, bondOrders
    * has size zero.
    */
   if(data.bondOrders.getSystemSize() > 0) {
-    return Molecule::interpret(
+    return interpret(
       data.elements,
       data.angstromWrapper,
       data.bondOrders,
-      Molecule::BondDiscretizationOption::UFF
+      BondDiscretizationOption::UFF
     );
   }
 
-  return Molecule::interpret(
+  return interpret(
     data.elements,
     data.angstromWrapper,
-    Molecule::BondDiscretizationOption::UFF
+    BondDiscretizationOption::UFF
   );
 }
 

@@ -1,22 +1,22 @@
+#include "CNStereocenter.h"
+
 #include <Eigen/Dense>
 
+#include "chemical_symmetries/Properties.h"
+#include "CyclicPolygons.h"
 #include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/Optionals.h"
 #include "temple/Random.h"
 
-#include "chemical_symmetries/Properties.h"
-#include "CyclicPolygons.h"
-
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/DistanceGeometry.h"
-#include "BuildTypeSwitch.h"
-#include "CNStereocenter.h"
-#include "CommonTrig.h"
-#include "DelibHelpers.h"
+#include "detail/BuildTypeSwitch.h"
+#include "detail/CommonTrig.h"
+#include "detail/DelibHelpers.h"
+#include "detail/StdlibTypeAlgorithms.h"
 #include "Log.h"
-#include "StdlibTypeAlgorithms.h"
 
 #include <iomanip>
 
@@ -628,19 +628,6 @@ void CNStereocenter::addSubstituent(
 
   // No need to find a new assignment if no chiral state is present
   if(_assignmentOption && numStereopermutations() > 1) {
-    // Transform current assignment from characters to indices
-    const auto& currentStereopermutation = _cache.permutations.assignments.at(
-      _cache.feasiblePermutations.at(
-        _assignmentOption.value()
-      )
-    );
-
-    std::vector<unsigned> ligandsAtOldSymmetryPositions = PermutationState::generateSymmetryPositionToLigandMap(
-      currentStereopermutation,
-      _cache.canonicalLigands
-    );
-
-
     // Transfer indices from smaller symmetry to larger
     std::vector<unsigned> ligandsAtNewSymmetryPositions;
 
@@ -678,7 +665,7 @@ void CNStereocenter::addSubstituent(
       ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
       for(unsigned i = 0; i < ligandMapping.size(); ++i) {
         ligandsAtNewSymmetryPositions.at(i) = ligandMapping.at(
-          ligandsAtOldSymmetryPositions.at(i)
+          _cache.symmetryPositionMap.at(i)
         );
       }
     } else if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry) + 1) {
@@ -706,8 +693,12 @@ void CNStereocenter::addSubstituent(
          */
         const auto& symmetryMapping = suitableMappingOption.value();
 
+
+        // Copy over the current symmetry position map
+        std::vector<unsigned> ligandsAtOldSymmetryPositions = _cache.symmetryPositionMap;
         ligandsAtOldSymmetryPositions.push_back(ligandIndexAddedTo);
         ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
+
         for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
           ligandsAtNewSymmetryPositions.at(
             symmetryMapping.at(i)
@@ -820,6 +811,13 @@ void CNStereocenter::propagateGraphChange(
    * This is only necessary in the case that the stereocenter is currently
    * assigned and only possible if the new number of assignments is smaller or
    * equal to the amount we have currently.
+   *
+   * Additionally, in some circumstances, propagateGraphChange can be called
+   * with either fewer or more ligands than the current ranking indicates. This
+   * happens if e.g. a bond is added between ligands, forming a single haptic
+   * ligand, or breaking a haptic ligand into two. These cases are excluded
+   * with the condition of an equal number of ligands, and thus universally
+   * lead to a loss of stereoinformation.
    */
   if(
     _assignmentOption
@@ -827,7 +825,7 @@ void CNStereocenter::propagateGraphChange(
     && (
       newPermutationState.permutations.assignments.size()
       <= _cache.permutations.assignments.size()
-    )
+    ) && newRanking.ligands.size() == _ranking.ligands.size()
   ) {
     const auto& currentStereopermutation = _cache.permutations.assignments.at(
       _cache.feasiblePermutations.at(
@@ -975,18 +973,6 @@ void CNStereocenter::removeSubstituent(
 
   // No need to find a new assignment if we currently do not carry chiral state
   if(_assignmentOption && numStereopermutations() > 1) {
-    // Transform current assignment from characters to ligand indices
-    const auto& currentStereopermutation = _cache.permutations.assignments.at(
-      _cache.feasiblePermutations.at(
-        _assignmentOption.value()
-      )
-    );
-
-    std::vector<unsigned> ligandsAtCurrentSymmetryPositions = PermutationState::generateSymmetryPositionToLigandMap(
-      currentStereopermutation,
-      _cache.canonicalLigands
-    );
-
     std::vector<unsigned> ligandsAtNewSymmetryPositions;
 
     if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry)) {
@@ -1027,7 +1013,7 @@ void CNStereocenter::removeSubstituent(
       // Transfer ligands to new mapping
       for(unsigned i = 0; i < ligandMapping.size(); ++i) {
         ligandsAtNewSymmetryPositions.at(i) = ligandMapping.at(
-          ligandsAtCurrentSymmetryPositions.at(i)
+          _cache.symmetryPositionMap.at(i)
         );
       }
     } else if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry) - 1) {
@@ -1041,7 +1027,9 @@ void CNStereocenter::removeSubstituent(
       auto suitableMappingOptional = Symmetry::getMapping(
         _symmetry,
         newSymmetry,
-        // Last parameter is the deleted symmetry position, get this from cache
+        /* Last parameter is the deleted symmetry position, which is the
+         * symmetry position at which the ligand being removed is currently at
+         */
         _cache.symmetryPositionMap.at(ligandIndexRemovedFrom)
       ) | temple::callIfSome(
         PermutationState::getIndexMapping,
@@ -1055,9 +1043,19 @@ void CNStereocenter::removeSubstituent(
         // Transfer indices from current symmetry to new symmetry
         ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
         for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
-          ligandsAtNewSymmetryPositions.at(
+          ligandsAtNewSymmetryPositions.at(i) = _cache.symmetryPositionMap.at(
             symmetryMapping.at(i)
-          ) = ligandsAtCurrentSymmetryPositions.at(i);
+          );
+        }
+
+        /* Now we have the old ligand indices in the new symmetry positions.
+         * Since we know which ligand is deleted, we can decrement any indices
+         * larger than it and obtain the new ligand indices.
+         */
+        for(auto& ligandIndex : ligandsAtNewSymmetryPositions) {
+          if(ligandIndex > ligandIndexRemovedFrom) {
+            --ligandIndex;
+          }
         }
       }
 

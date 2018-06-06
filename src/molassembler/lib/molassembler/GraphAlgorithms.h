@@ -1,7 +1,7 @@
 #ifndef INCLUDE_GRAPH_ALGORITHMS_H
 #define INCLUDE_GRAPH_ALGORITHMS_H
 
-#include "common_typedefs.h"
+#include "detail/SharedTypes.h"
 #include <boost/graph/breadth_first_search.hpp>
 
 #include "Delib/ElementInfo.h"

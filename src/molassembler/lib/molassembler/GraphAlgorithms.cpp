@@ -3,7 +3,7 @@
 #include "boost/range/combine.hpp"
 
 #include "AtomInfo.h"
-#include "CycleData.h"
+#include "Cycles.h"
 #include "GraphAlgorithms.h"
 
 #include <iostream>

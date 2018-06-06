@@ -7,10 +7,10 @@
 
 #include "temple/Containers.h"
 
+#include "detail/StdlibTypeAlgorithms.h"
 #include "DistanceGeometry/ImplicitGraphBoost.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "IO.h"
-#include "StdlibTypeAlgorithms.h"
 
 #include "gor1/Gor1.h"
 

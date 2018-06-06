@@ -3,7 +3,8 @@
 
 #include "Delib/PositionCollection.h"
 #include "Delib/Constants.h"
-#include "common_typedefs.h"
+
+#include "SharedTypes.h"
 
 namespace molassembler {
 

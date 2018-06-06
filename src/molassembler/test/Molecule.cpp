@@ -8,8 +8,8 @@
 
 #include <iostream>
 
+#include "detail/StdlibTypeAlgorithms.h"
 #include "IO.h"
-#include "StdlibTypeAlgorithms.h"
 
 #include "temple/Random.h"
 #include "temple/Invoke.h"
@@ -113,10 +113,10 @@ HashArgumentsType randomArguments() {
 
 BOOST_AUTO_TEST_CASE(environmentHashingTests) {
   auto bitmaskTuple = std::make_tuple(
-    temple::make_bitmask(molassembler::Molecule::ComparisonComponents::ElementTypes)
-      | molassembler::Molecule::ComparisonComponents::BondOrders
-      | molassembler::Molecule::ComparisonComponents::Symmetries
-      | molassembler::Molecule::ComparisonComponents::Stereopermutations
+    temple::make_bitmask(molassembler::AtomEnvironmentComponents::ElementTypes)
+      | molassembler::AtomEnvironmentComponents::BondOrders
+      | molassembler::AtomEnvironmentComponents::Symmetries
+      | molassembler::AtomEnvironmentComponents::Stereopermutations
   );
 
   using namespace molassembler;
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
     auto arguments = randomArguments();
 
     auto result = temple::detail::invokeHelper(
-      Molecule::hashAtomEnvironment,
+      hashes::atomEnvironment,
       std::tuple_cat(bitmaskTuple, arguments),
       std::make_index_sequence<5> {}
     );

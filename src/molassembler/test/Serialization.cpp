@@ -4,10 +4,11 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "temple/Random.h"
+
+#include "detail/Base64.h"
 #include "Serialization.h"
 #include "IO.h"
-#include "Base64.h"
-#include "temple/Random.h"
 
 using namespace molassembler;
 

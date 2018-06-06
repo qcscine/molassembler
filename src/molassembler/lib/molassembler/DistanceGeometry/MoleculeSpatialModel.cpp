@@ -5,9 +5,9 @@
 
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/DistanceGeometry.h"
-#include "CommonTrig.h"
+#include "detail/CommonTrig.h"
+#include "detail/StdlibTypeAlgorithms.h"
 #include "Log.h"
-#include "StdlibTypeAlgorithms.h"
 #include "temple/Random.h"
 #include "temple/Containers.h"
 

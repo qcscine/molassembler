@@ -5,11 +5,11 @@
 #include "boost/graph/isomorphism.hpp"
 #include "temple/Containers.h"
 
+#include "detail/StdlibTypeAlgorithms.h"
 #include "GraphAlgorithms.h"
 #include "IO.h"
 #include "RankingTree.h"
 #include "RepeatedElementCollection.h"
-#include "StdlibTypeAlgorithms.h"
 
 #include <random>
 #include <fstream>
@@ -28,7 +28,10 @@ bool checkIsomorphicExpansion(
   );
 
   auto expandedTree = RankingTree(
-    molecule,
+    molecule.getGraph(),
+    molecule.getCycleData(),
+    molecule.getStereocenterList(),
+    molecule.dumpGraphviz(),
     expandOnIndex,
     {},
     RankingTree::ExpansionOption::Full
@@ -49,7 +52,10 @@ void writeExpandedTree(
   );
 
   auto expandedTree = RankingTree(
-    molecule,
+    molecule.getGraph(),
+    molecule.getCycleData(),
+    molecule.getStereocenterList(),
+    molecule.dumpGraphviz(),
     expandOnIndex,
     {},
     RankingTree::ExpansionOption::Full
@@ -95,7 +101,10 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
   );
 
   auto exampleOneExpanded = RankingTree(
-    exampleOne,
+    exampleOne.getGraph(),
+    exampleOne.getCycleData(),
+    exampleOne.getStereocenterList(),
+    exampleOne.dumpGraphviz(),
     2,
     {},
     RankingTree::ExpansionOption::Full
@@ -126,7 +135,10 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
   );
 
   auto exampleTwoExpanded = RankingTree(
-    exampleTwo,
+    exampleTwo.getGraph(),
+    exampleTwo.getCycleData(),
+    exampleTwo.getStereocenterList(),
+    exampleTwo.dumpGraphviz(),
     3,
     {},
     RankingTree::ExpansionOption::Full
@@ -161,7 +173,10 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
   );
 
   auto exampleThreeExpanded = RankingTree(
-    exampleThree,
+    exampleThree.getGraph(),
+    exampleThree.getCycleData(),
+    exampleThree.getStereocenterList(),
+    exampleThree.dumpGraphviz(),
     0,
     {},
     RankingTree::ExpansionOption::Full
@@ -242,7 +257,10 @@ BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
   );
 
   auto exampleThreeExpandedAgain = RankingTree(
-    exampleThree,
+    exampleThree.getGraph(),
+    exampleThree.getCycleData(),
+    exampleThree.getStereocenterList(),
+    exampleThree.dumpGraphviz(),
     1,
     {},
     RankingTree::ExpansionOption::Full
@@ -285,19 +303,6 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   BOOST_CHECK_MESSAGE(
     stereocenters.at(0)->assigned() == 0u,
     "Stereocenter at C0 in 2Z5S7E-nona-2,7-dien-5-ol is not S"
-  );
-
-  /* Re-expand (assignment of auxiliary EZStereocenters has to occur from
-   * molecule information
-   */
-  auto reExpanded = RankingTree(ZEDifference, 0);
-
-  BOOST_CHECK_MESSAGE(
-    reExpanded.getRanked().size() == 4,
-    "Re-expanding 2Z5S7E-nona-2,7-dien-5-ol at 0 does not yield a difference "
-    " between the Z and E branches. Perhaps the auxiliary stereocenters aren't "
-    " properly instantiated from molecular graph information in sequence rule 3 "
-    " prep? The ranked sets are " << condenseSets(reExpanded.getRanked())
   );
 
   // P-92.4.2.2 Example 1 (Z before E in aux. stereocenters, splitting)

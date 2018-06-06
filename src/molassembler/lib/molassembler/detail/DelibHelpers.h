@@ -2,7 +2,7 @@
 #define INCLUDE_DELIB_HELPERS_H
 
 #include "Delib/PositionCollection.h"
-#include "common_typedefs.h"
+#include "SharedTypes.h"
 
 /*! @file
  *

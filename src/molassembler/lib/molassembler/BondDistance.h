@@ -2,7 +2,8 @@
 #define INCLUDE_BOND_DISTANCE_H
 
 #include "AtomInfo.h"
-#include "common_typedefs.h"
+
+#include "detail/SharedTypes.h"
 
 #include <cmath>
 #include <array>
@@ -43,4 +44,3 @@ double calculateBondOrder(
 } // namespace molassembler
 
 #endif
-

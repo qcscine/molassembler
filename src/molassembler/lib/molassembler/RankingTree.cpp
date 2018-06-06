@@ -1,12 +1,16 @@
 #include "RankingTree.h"
 
-#include "temple/constexpr/ConsecutiveCompare.h"
 #include "boost/algorithm/string/replace.hpp"
 #include "boost/graph/breadth_first_search.hpp"
-#include "chemical_symmetries/Properties.h"
-
 #include "Delib/ElementInfo.h"
-#include "MolGraphWriter.h"
+
+#include "chemical_symmetries/Properties.h"
+#include "temple/constexpr/ConsecutiveCompare.h"
+
+#include "detail/MolGraphWriter.h"
+#include "GraphHelpers.h"
+#include "LocalGeometryModel.h"
+#include "Options.h"
 
 #include <fstream>
 #include <iostream>
@@ -49,8 +53,9 @@ public:
 
   void operator() (std::ostream& os, const TreeVertexIndex& vertexIndex) const {
     auto symbolString = Delib::ElementInfo::symbol(
-      _baseRef._moleculeRef.getElementType(
-        _baseRef._tree[vertexIndex].molIndex
+      graph::elementType(
+        _baseRef._tree[vertexIndex].molIndex,
+        _baseRef._graphRef
       )
     );
 
@@ -166,9 +171,15 @@ public:
     if(!aDuplicate && !bDuplicate) {
       // Casting elementType to unsigned basically gives Z
       return static_cast<unsigned>(
-        _base._moleculeRef.getElementType(_base._tree[a].molIndex)
+        graph::elementType(
+          _base._tree[a].molIndex,
+          _base._graphRef
+        )
       ) < static_cast<unsigned>(
-        _base._moleculeRef.getElementType(_base._tree[b].molIndex)
+        graph::elementType(
+          _base._tree[b].molIndex,
+          _base._graphRef
+        )
       );
     }
 
@@ -661,10 +672,6 @@ void RankingTree::_applySequenceRules(
     return ligands;
   };
 
-
-  Cycles cycleData = _moleculeRef.getCycleData();
-  const auto& stereocenters = _moleculeRef.getStereocenterList();
-
   // Process the tree, from the bottom up
   for(auto it = byDepth.rbegin(); it != byDepth.rend(); ++it) {
     const auto& currentEdges = *it;
@@ -750,10 +757,8 @@ void RankingTree::_applySequenceRules(
                * different symmetries and different ranking for the same
                * substituents
                */
-              if(_moleculeRef.getStereocenterList().involving(molSourceIndex)) {
-                const auto& stereocenterPtr = _moleculeRef.getStereocenterList().at(
-                  molSourceIndex
-                );
+              if(_stereocentersRef.involving(molSourceIndex)) {
+                const auto& stereocenterPtr = _stereocentersRef.at(molSourceIndex);
 
                 if(
                   stereocenterPtr->type() == Stereocenters::Type::EZStereocenter
@@ -779,7 +784,7 @@ void RankingTree::_applySequenceRules(
           if /* C++17 constexpr */ (buildTypeIsDebug) {
             if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
               _writeGraphvizFiles({
-                _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+                _adaptedMolGraphviz,
                 dumpGraphviz("Sequence rule 3 preparation", {rootIndex})
               });
             }
@@ -812,14 +817,18 @@ void RankingTree::_applySequenceRules(
         // Again, no links since we're in an acyclic graph now
         Symmetry::Name localSymmetry;
         if(
-          stereocenters.involving(molSourceIndex)
-          && stereocenters.at(molSourceIndex)->type() == Stereocenters::Type::CNStereocenter
+          _stereocentersRef.involving(molSourceIndex)
+          && _stereocentersRef.at(molSourceIndex)->type() == Stereocenters::Type::CNStereocenter
         ) {
           localSymmetry = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
-            stereocenters.at(molSourceIndex)
+            _stereocentersRef.at(molSourceIndex)
           ) -> getSymmetry();
         } else {
-          localSymmetry = _moleculeRef.determineLocalGeometry(molSourceIndex, centerRanking);
+          localSymmetry = LocalGeometry::determineLocalGeometry(
+            _graphRef,
+            molSourceIndex,
+            centerRanking
+          );
         }
         const unsigned nHydrogens = _adjacentTerminalHydrogens(targetIndex);
 
@@ -840,7 +849,7 @@ void RankingTree::_applySequenceRules(
           // Instantiate a CNStereocenter here!
 
           auto newStereocenter = Stereocenters::CNStereocenter {
-            _moleculeRef.getGraph(),
+            _graphRef,
             localSymmetry,
             molSourceIndex,
             centerRanking
@@ -848,16 +857,15 @@ void RankingTree::_applySequenceRules(
 
           if(newStereocenter.numStereopermutations() > 1) {
             if(positionsOption) {
-              _moleculeRef._pickyFitStereocenter(
+              pickyFit(
                 newStereocenter,
-                localSymmetry,
-                positionsOption.value()
+                _graphRef,
+                positionsOption.value(),
+                localSymmetry
               );
             } else { // Try to get an assignment from the molecule
-              if(_moleculeRef.getStereocenterList().involving(molSourceIndex)) {
-                const auto& stereocenterPtr = _moleculeRef.getStereocenterList().at(
-                  molSourceIndex
-                );
+              if(_stereocentersRef.involving(molSourceIndex)) {
+                const auto& stereocenterPtr = _stereocentersRef.at(molSourceIndex);
 
                 /* TODO
                  * consider what to do in cases in which molecule number of
@@ -880,10 +888,11 @@ void RankingTree::_applySequenceRules(
             }
 
             if(
-              !Molecule::disregardStereocenter(
+              !disregardStereocenter(
                 newStereocenter,
-                _moleculeRef,
-                Molecule::temperatureRegime
+                graph::elementType(molSourceIndex, _graphRef),
+                _cyclesRef,
+                Options::temperatureRegime
               )
             ) {
               _tree[targetIndex].stereocenterOption = std::move(newStereocenter);
@@ -896,7 +905,7 @@ void RankingTree::_applySequenceRules(
           if /*C++17 constexpr */ (buildTypeIsDebug) {
             if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
               _writeGraphvizFiles({
-                _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+                _adaptedMolGraphviz,
                 dumpGraphviz("Sequence rule 3 preparation", {rootIndex})
               });
             }
@@ -1029,7 +1038,7 @@ void RankingTree::_applySequenceRules(
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          _adaptedMolGraphviz,
           dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
           _makeBFSStateGraph("4A", rootIndex, comparisonSets, undecidedSets),
           _branchOrderingHelper.dumpGraphviz()
@@ -1078,7 +1087,7 @@ void RankingTree::_applySequenceRules(
       if /* C++17 constexpr */ (buildTypeIsDebug) {
         if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
           _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            _adaptedMolGraphviz,
             dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
             _makeBFSStateGraph("4A", rootIndex, comparisonSets, undecidedSets),
             _branchOrderingHelper.dumpGraphviz()
@@ -1207,7 +1216,7 @@ void RankingTree::_applySequenceRules(
       if /* C++17 constexpr */ (buildTypeIsDebug) {
         if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
           _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            _adaptedMolGraphviz,
             dumpGraphviz("Sequence rule 4B prep", {rootIndex}),
             relativeOrders.at(branchIndex).dumpGraphviz()
           });
@@ -1276,7 +1285,7 @@ void RankingTree::_applySequenceRules(
         }
 
         _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          _adaptedMolGraphviz,
           dumpGraphviz("Sequence rule 4B prep", {rootIndex}, representativeVertices, representativeEdges)
         });
       }
@@ -1393,7 +1402,7 @@ void RankingTree::_applySequenceRules(
             if /* C++17 constexpr */ (buildTypeIsDebug) {
               if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
                 _writeGraphvizFiles({
-                  _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+                  _adaptedMolGraphviz,
                   dumpGraphviz("4B"s),
                   _make4BGraph(
                     rootIndex,
@@ -1696,7 +1705,7 @@ std::vector<
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
         _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          _adaptedMolGraphviz,
           dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
           _makeBFSStateGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
           orderingHelper.dumpGraphviz()
@@ -1777,7 +1786,7 @@ std::vector<
       if /* C++17 constexpr */ (buildTypeIsDebug) {
         if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
           _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            _adaptedMolGraphviz,
             dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
             _makeBFSStateGraph("aux 4A", sourceIndex, comparisonSets, undecidedSets),
             orderingHelper.dumpGraphviz()
@@ -1911,7 +1920,7 @@ std::vector<
       if /* C++17 constexpr */ (buildTypeIsDebug) {
         if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
           _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            _adaptedMolGraphviz,
             dumpGraphviz("Aux 4B prep", {rootIndex}),
             relativeOrders.at(branchIndex).dumpGraphviz()
           });
@@ -2071,7 +2080,7 @@ std::vector<
             if /* C++17 constexpr */ (buildTypeIsDebug) {
               if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
                 _writeGraphvizFiles({
-                  _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+                  _adaptedMolGraphviz,
                   dumpGraphviz("aux 4B"s),
                   _make4BGraph(
                     sourceIndex,
@@ -2183,7 +2192,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
 
   for(
     const auto& molAdjacentIndex :
-    _moleculeRef.iterateAdjacencies(_tree[index].molIndex)
+    graph::adjacents(_tree[index].molIndex, _graphRef)
   ) {
     if(treeOutAdjacencies.count(molAdjacentIndex) != 0) {
       continue;
@@ -2334,7 +2343,7 @@ unsigned RankingTree::_adjacentTerminalHydrogens(const TreeVertexIndex& index) c
     auto edgeTarget = boost::target(*outIterPair.first, _tree);
 
     if(
-      _moleculeRef.getElementType(_tree[edgeTarget].molIndex) == Delib::ElementType::H
+      graph::elementType(_tree[edgeTarget].molIndex, _graphRef) == Delib::ElementType::H
       && boost::out_degree(edgeTarget, _tree) == 0
     ) {
       ++count;
@@ -2503,20 +2512,17 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_addBondOrderDuplicates(
 ) {
   std::vector<TreeVertexIndex> newIndices;
 
-  const auto& molGraph = _moleculeRef.getGraph();
-
-  auto molGraphEdge = boost::edge(
+  auto molGraphEdge = graph::edge(
     _tree[treeSource].molIndex,
     _tree[treeTarget].molIndex,
-    molGraph
+    _graphRef
   );
 
   /* In case the bond order is non-fractional (aromatic / eta)
    * and > 1, add duplicate atoms
    */
-  assert(molGraphEdge.second);
 
-  auto bondType = molGraph[molGraphEdge.first].bondType;
+  auto bondType = graph::bondType(molGraphEdge, _graphRef);
 
   /* If the bond is double, we must remember it for sequence rule 2.
    * Remembering these edges is way more convenient than looking for subgraphs
@@ -2762,12 +2768,19 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
 }
 
 RankingTree::RankingTree(
-  const Molecule& molecule,
+  const GraphType& graph,
+  const Cycles& cycles,
+  const StereocenterList& stereocenters,
+  const std::string molGraphviz,
   const AtomIndexType& atomToRank,
   const std::set<AtomIndexType>& excludeIndices,
   const ExpansionOption& expansionMethod,
   const boost::optional<AngstromWrapper>& positionsOption
-) : _moleculeRef(molecule) {
+) : _graphRef(graph),
+    _cyclesRef(cycles),
+    _stereocentersRef(stereocenters),
+    _adaptedMolGraphviz(_adaptMolGraph(std::move(molGraphviz)))
+{
   // Set the root vertex
   auto rootIndex = boost::add_vertex(_tree);
   _tree[rootIndex].molIndex = atomToRank;
@@ -2777,10 +2790,7 @@ RankingTree::RankingTree(
    * excluded by parameters
    */
   std::set<TreeVertexIndex> branchIndices;
-  for(
-    const auto& rootAdjacentIndex :
-    _moleculeRef.iterateAdjacencies(atomToRank)
-  ) {
+  for(const auto rootAdjacentIndex : graph::adjacents(atomToRank, _graphRef)) {
     if(excludeIndices.count(rootAdjacentIndex) == 0) {
       auto branchIndex = boost::add_vertex(_tree);
       _tree[branchIndex].molIndex = rootAdjacentIndex;
@@ -2853,7 +2863,7 @@ RankingTree::RankingTree(
         std::string header = "Sequence rule 1";
 
         _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          _adaptedMolGraphviz,
           dumpGraphviz(
             header,
             {rootIndex},
@@ -2922,7 +2932,7 @@ RankingTree::RankingTree(
           std::string header = "Sequence rule 1";
 
           _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            _adaptedMolGraphviz,
             dumpGraphviz(
               header,
               {rootIndex},

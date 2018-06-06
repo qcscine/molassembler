@@ -2,7 +2,7 @@
 #define DISTANCE_GEOMETRY_HPP
 
 #include <tuple>
-#include "common_typedefs.h"
+#include "detail/SharedTypes.h"
 #include "DistanceGeometry/ValueBounds.h"
 
 /*! @file

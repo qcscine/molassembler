@@ -1,6 +1,11 @@
 #include "LocalGeometryModel.h"
+
 #include "Delib/ElementInfo.h"
+
+#include "temple/Optionals.h"
+
 #include "AtomInfo.h"
+#include "GraphHelpers.h"
 
 namespace molassembler {
 
@@ -178,6 +183,76 @@ boost::optional<Symmetry::Name> firstOfSize(const unsigned& size) {
   }
 
   return *findIter;
+}
+
+std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
+  const GraphType& molGraph,
+  const AtomIndexType index,
+  const RankingInformation& ranking
+) {
+  /* TODO
+   * - No L, X determination. Although, will L, X even be needed for metals?
+   *   Maybe only for OZ and NVE determination...
+   */
+  /* VSEPR formulation is that geometry is a function of
+   * - localized charge of central atom
+   * - atom type of central atom, neighbors
+   * - bond types to neighbors
+   */
+
+  // Ensure this is only called on non-terminal atoms
+  assert(ranking.ligands.size() > 1);
+
+  // first basic stuff for VSEPR, later L and X for transition metals
+  // geometry inference does not care if the substituents are somehow
+  // connected (unless in later models the entire structure is considered)
+  std::vector<LocalGeometry::BindingSiteInformation> ligands;
+
+  for(const auto& ligand : ranking.ligands) {
+    ligands.push_back(
+      LocalGeometry::BindingSiteInformation {
+        0,
+        0,
+        temple::map(ligand, [&](const AtomIndexType i) -> Delib::ElementType {
+          return graph::elementType(i, molGraph);
+        }),
+        graph::bondType(
+          graph::edge(index, ligand.front(), molGraph),
+          molGraph
+        )
+      }
+    );
+  }
+
+  return ligands;
+}
+
+Symmetry::Name determineLocalGeometry(
+  const GraphType& graph,
+  const AtomIndexType index,
+  const RankingInformation& ranking
+) {
+  auto ligandsVector = reduceToSiteInformation(graph, index, ranking);
+  unsigned nSites = ligandsVector.size();
+
+  // TODO no charges
+  int formalCharge = 0;
+
+  auto symmetryOptional = LocalGeometry::vsepr(
+    graph::elementType(index, graph),
+    nSites,
+    ligandsVector,
+    formalCharge
+  ) | temple::callIfNone(LocalGeometry::firstOfSize, nSites);
+
+  if(!symmetryOptional) {
+    throw std::logic_error(
+      "Could not determine a geometry! Perhaps you have more substituents "
+      "than the largest symmety can handle?"
+    );
+  }
+
+  return symmetryOptional.value();
 }
 
 } // namespace LocalGeometry

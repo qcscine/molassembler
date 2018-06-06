@@ -10,7 +10,7 @@
 #include "temple/Stringify.h"
 
 #include "boost/graph/graphviz.hpp"
-#include "MolGraphWriter.h"
+#include "detail/MolGraphWriter.h"
 
 #include <iostream>
 

@@ -10,7 +10,7 @@
 #include "DistanceGeometry/generateConformation.h"
 
 #include "chemical_symmetries/Symmetries.h"
-#include "StdlibTypeAlgorithms.h"
+#include "detail/StdlibTypeAlgorithms.h"
 #include "BoundsFromSymmetry.h"
 
 #include <Eigen/Eigenvalues>

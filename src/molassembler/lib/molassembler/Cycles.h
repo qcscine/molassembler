@@ -1,13 +1,14 @@
 #ifndef INCLUDE_URF_DATA_H
 #define INCLUDE_URF_DATA_H
 
-#include "common_typedefs.h"
-#include "RangeForTemporary.h"
+// RDL
+#include "RingDecomposerLib.h"
+
 #include "temple/TinySet.h"
 #include "temple/Traits.h"
 
-// RDL
-#include "RingDecomposerLib.h"
+#include "detail/RangeForTemporary.h"
+#include "detail/SharedTypes.h"
 
 /*! @file
  *

@@ -1,9 +1,12 @@
 #ifndef INCLUDE_MOLECULE_IO_H
 #define INCLUDE_MOLECULE_IO_H
 
-#include "Molecule.h"
-#include "temple/Random.h"
 #include "boost/bimap.hpp"
+
+#include "temple/Random.h"
+
+#include "Molecule.h"
+#include "Interpret.h"
 
 /*! @file
  *
@@ -205,7 +208,7 @@ struct BinaryHandler {
 
 namespace detail {
 
-Molecule::InterpretResult interpret(const FileHandler::RawData& data);
+InterpretResult interpret(const FileHandler::RawData& data);
 
 } // namespace detail
 

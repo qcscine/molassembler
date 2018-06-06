@@ -1,5 +1,6 @@
 #include "GraphDistanceMatrix.h"
-#include "StdlibTypeAlgorithms.h"
+
+#include "detail/StdlibTypeAlgorithms.h"
 
 namespace molassembler {
 
@@ -25,7 +26,7 @@ void GraphDistanceMatrix::_copyInRow(
 ) {
   for(unsigned col = targetRow + 1; col < N; col++) {
     if(
-      col != sourceRow 
+      col != sourceRow
       && this->operator()(sourceRow, col) != 0
     ) {
       // C++17 if-init opportunity!
@@ -81,8 +82,8 @@ void GraphDistanceMatrix::_transformToDistances() {
   }
 }
 
-/*! 
- * Extract shortest chains of indices from a to b, e.g. in 
+/*!
+ * Extract shortest chains of indices from a to b, e.g. in
  *
  *     1
  *    / \
@@ -92,8 +93,8 @@ void GraphDistanceMatrix::_transformToDistances() {
  *
  * if a = 0 and b = 4, return vector{vector{0, 1, 3, 4}, vector{0, 2, 3, 4}}.
  *
- * Main Idea behind algorithm: Keep a vector of chains. If, from the last 
- * position in the chain, there are multiple adjacent atoms that have lower 
+ * Main Idea behind algorithm: Keep a vector of chains. If, from the last
+ * position in the chain, there are multiple adjacent atoms that have lower
  * distance to the target atom, create a chain for each in every iteration.
  */
 std::vector<

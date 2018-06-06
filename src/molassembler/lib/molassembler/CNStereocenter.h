@@ -5,8 +5,9 @@
 #include "chemical_symmetries/DynamicProperties.h"
 #include "DistanceGeometry/ValueBounds.h"
 
+#include "detail/AngstromWrapper.h"
+#include "Options.h"
 #include "Stereocenter.h"
-#include "AngstromWrapper.h"
 
 using namespace std::string_literals;
 
@@ -39,7 +40,7 @@ namespace molassembler {
 
 namespace Stereocenters {
 
-class CNStereocenter : public Stereocenter {
+class CNStereocenter final : public Stereocenter {
 public:
 /* Typedefs */
   using StereopermutationType = stereopermutation::Stereopermutation;

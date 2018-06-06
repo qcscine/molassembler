@@ -1,8 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 #define INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 
+#include "detail/StdlibTypeAlgorithms.h"
 #include "Molecule.h"
-#include "StdlibTypeAlgorithms.h"
 
 namespace molassembler {
 

@@ -3,8 +3,8 @@
 
 #include "chemical_symmetries/Symmetries.h"
 
-#include "common_typedefs.h"
-#include "boost/variant.hpp"
+#include "detail/SharedTypes.h"
+#include "RankingInformation.h"
 
 /*! @file
  *
@@ -49,6 +49,20 @@ boost::optional<Symmetry::Name> vsepr(
 );
 
 boost::optional<Symmetry::Name> firstOfSize(const unsigned& size);
+
+
+/* Tiered geometry determination function */
+std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
+  const GraphType& graph,
+  const AtomIndexType index,
+  const RankingInformation& ranking
+);
+
+Symmetry::Name determineLocalGeometry(
+  const GraphType& graph,
+  const AtomIndexType index,
+  const RankingInformation& ranking
+);
 
 } // namespace LocalGeometry
 
