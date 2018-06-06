@@ -3,6 +3,11 @@
 
 #include <system_error>
 
+/*!@file
+ *
+ * Contains the DG error_category definitions for use with boost::outcome
+ */
+
 enum class DGError {
   ZeroAssignmentStereocenters = 1,
   GraphImpossible = 2,

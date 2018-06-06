@@ -1,6 +1,11 @@
 #include "Math.h"
 #include "Array.h"
 
+/*!@file
+ *
+ * Contains a fixed-size bitset implementation.
+ */
+
 namespace temple {
 
 template<size_t N>

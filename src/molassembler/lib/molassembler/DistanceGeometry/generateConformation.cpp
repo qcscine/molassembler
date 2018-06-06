@@ -125,7 +125,7 @@ outcome::result<
    * the function returns an error code. Remember that if an optimization is
    * considered a failure is dependent only on the stopping criteria!
    */
-  const double failureRatio = 0.1; // allow only 10% failures in release
+  const double failureRatio = 2; // allow for max 2x #conformations embedding failures
   unsigned failures = 0;
   std::vector<AngstromWrapper> ensemble;
   ensemble.reserve(numStructures);

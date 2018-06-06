@@ -1,7 +1,6 @@
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
-#include "detail/AngstromWrapper.h"
 #include "AtomEnvironmentHash.h"
 #include "Cycles.h"
 #include "StereocenterList.h"

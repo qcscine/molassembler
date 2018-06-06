@@ -3,8 +3,12 @@
 
 #include "chemical_symmetries/Symmetries.h"
 
-#include "detail/SharedTypes.h"
 #include "detail/AngstromWrapper.h"
+
+/*!@file
+ *
+ * Centralizes the main customization points of the library's behavior.
+ */
 
 namespace molassembler {
 

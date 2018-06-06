@@ -4,6 +4,11 @@
 #include "detail/StdlibTypeAlgorithms.h"
 #include "Molecule.h"
 
+/*!@file
+ *
+ * Contains various descriptor calculations for Molecule instances
+ */
+
 namespace molassembler {
 
 /*! Calculates number of freely rotatable bonds in a molecule

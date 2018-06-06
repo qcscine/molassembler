@@ -1,11 +1,9 @@
 #ifndef INCLUDE_DG_GENERATE_CONFORMATION_H
 #define INCLUDE_DG_GENERATE_CONFORMATION_H
 
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
-#include "boost_outcome/outcome.hpp"
 
 /*! @file
  *

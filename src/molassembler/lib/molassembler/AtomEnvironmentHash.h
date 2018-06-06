@@ -6,6 +6,11 @@
 
 #include "detail/SharedTypes.h"
 
+/*!@file
+ *
+ * Contains a function for hashing an atom's environment in a Molecule
+ */
+
 namespace molassembler {
 
 namespace hashes {

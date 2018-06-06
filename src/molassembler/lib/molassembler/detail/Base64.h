@@ -2,6 +2,11 @@
 #include <vector>
 #include <stdexcept>
 
+/*!@file
+ *
+ * Provides base 64 encoding and decoding between strings and vectors of uint_8
+ */
+
 namespace base64 {
 
 /* Adapted from public domain licensed code at

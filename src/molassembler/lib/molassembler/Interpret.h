@@ -6,6 +6,12 @@
 #include "Delib/AtomCollection.h"
 #include "Delib/BondOrderCollection.h"
 
+/*!@file
+ *
+ * Contains functionality permitting the interpretation of several Molecules
+ * from three-dimensional structures with or without accompanying bond orders.
+ */
+
 namespace molassembler {
 
 //! Specify the algorithm used to discretize floating-point bond orders into bond types

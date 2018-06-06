@@ -5,7 +5,6 @@
 #include "chemical_symmetries/DynamicProperties.h"
 #include "DistanceGeometry/ValueBounds.h"
 
-#include "detail/AngstromWrapper.h"
 #include "Options.h"
 #include "Stereocenter.h"
 

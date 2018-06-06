@@ -5,9 +5,6 @@
 
 #include "detail/SharedTypes.h"
 
-#include <cmath>
-#include <array>
-
 /*! @file
  *
  * Bond distance modelling functions.

@@ -4,6 +4,11 @@
 #include "detail/SharedTypes.h"
 #include "detail/RangeForTemporary.h"
 
+/*!@file
+ *
+ * Contains common graph manipulation and information stubs
+ */
+
 namespace molassembler {
 
 namespace graph {

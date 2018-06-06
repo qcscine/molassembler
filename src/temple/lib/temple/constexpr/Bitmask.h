@@ -1,8 +1,12 @@
-#include <type_traits>
-#include <limits>
 #include <exception>
 
 #include "Math.h"
+
+/*!@file
+ *
+ * Contains a bitmask implementation for strong enums with explicit underlying
+ * types and unmodified representational values.
+ */
 
 namespace temple {
 

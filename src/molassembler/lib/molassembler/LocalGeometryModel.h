@@ -3,7 +3,6 @@
 
 #include "chemical_symmetries/Symmetries.h"
 
-#include "detail/SharedTypes.h"
 #include "RankingInformation.h"
 
 /*! @file
