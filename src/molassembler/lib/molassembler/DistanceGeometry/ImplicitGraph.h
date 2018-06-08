@@ -4,6 +4,7 @@
 #include "boost/variant.hpp"
 #include "boost/optional.hpp"
 #include "boost_outcome/outcome.hpp"
+#include <array>
 #include <map>
 #include <tuple>
 #include "Eigen/Core"
