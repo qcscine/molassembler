@@ -24,16 +24,19 @@ namespace temple {
 /* Header */
 
 template<typename Container>
-void sort(const Container& container);
+void sort(Container& container);
 
 template<typename Container, typename Comparator>
-void sort(const Container& container, Comparator&& comparator);
+void sort(Container& container, Comparator&& comparator);
 
 template<typename Container, typename T>
 auto find(const Container& container, const T& needle);
 
 template<typename Container, typename UnaryPredicate>
 auto find_if(const Container& container, UnaryPredicate&& predicate);
+
+template<typename T>
+std::vector<T> iota(T size);
 
 //! Composability improvement - returns the call to the size member
 template<typename Container>
@@ -168,6 +171,18 @@ template<
   BinaryFunction&& function
 );
 
+//! Composable pairwise map function specialization for array types
+template<
+  class BinaryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N
+> auto mapSequentialPairs(
+  const ArrayType<T, N>& array,
+  BinaryFunction&& function
+);
+
+
 /*!
  * Takes a container and maps all possible pairs of its contents into a new
  * container of the same type.
@@ -234,13 +249,7 @@ template<
   const ContainerT& containerT,
   const ContainerU& containerU,
   BinaryFunction&& function
-) {
-  for(auto i = std::begin(containerT); i != std::end(containerT); ++i) {
-    for(auto j = std::begin(containerU); j != std::end(containerU); ++j) {
-      function(*i, *j);
-    }
-  }
-}
+);
 
 //! Makes std::accumulate composable for most STL containers
 template<
@@ -253,7 +262,7 @@ template<
   const Container<T, Dependents...>& container,
   ReturnType&& init,
   BinaryFunction&& function
-);
+) PURITY_WEAK;
 
 //! Special fix for std::array accumulate composability
 template<
@@ -422,7 +431,7 @@ bool all_of(const Container& container, UnaryPredicate&& predicate);
 
 //! Tests if all elements of a container are true
 template<class Container>
-bool all_of(const Container& container);
+bool all_of(const Container& container) PURITY_WEAK;
 
 //! Tests if any elements of a container evaluate true against a predicate
 template<class Container, class UnaryPredicate>
@@ -526,9 +535,19 @@ template<
   return selection;
 }
 
+template<
+  class NAryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N
+> auto unpackArrayToFunction(
+  const ArrayType<T, N>& array,
+  NAryFunction&& function
+);
+
 /* Implementation ------------------------------------------------------------*/
 template<typename Container>
-void sort(const Container& container) {
+void sort(Container& container) {
   std::sort(
     std::begin(container),
     std::end(container)
@@ -536,7 +555,7 @@ void sort(const Container& container) {
 }
 
 template<typename Container, typename Comparator>
-void sort(const Container& container, Comparator&& comparator) {
+void sort(Container& container, Comparator&& comparator) {
   std::sort(
     std::begin(container),
     std::end(container),
@@ -560,6 +579,18 @@ auto find_if(const Container& container, UnaryPredicate&& predicate) {
     std::end(container),
     predicate
   );
+}
+
+template<typename T>
+std::vector<T> iota(T size) {
+  std::vector<T> a;
+  a.reserve(size);
+
+  for(T i = 0; i < size; ++i) {
+    a.push_back(i);
+  }
+
+  return a;
 }
 
 template<typename Container>
@@ -756,6 +787,44 @@ template<
 
     ++leftIterator;
     ++rightIterator;
+  }
+
+  return returnContainer;
+}
+
+//! Composable pairwise map function specialization for array types
+template<
+  class BinaryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N
+> auto mapSequentialPairs(
+  const ArrayType<T, N>& array,
+  BinaryFunction&& function
+) {
+  static_assert(N > 1, "No sequential pairs can be mapped in an array of size 1");
+  using U = decltype(
+    function(
+      std::declval<T>(),
+      std::declval<T>()
+    )
+  );
+
+  ArrayType<U, N - 1> returnContainer;
+
+  auto leftIterator = std::begin(array);
+  auto rightIterator = leftIterator; ++rightIterator;
+  auto insertIterator = std::begin(returnContainer);
+
+  while(rightIterator != std::end(array)) {
+    *insertIterator = function(
+      *leftIterator,
+      *rightIterator
+    );
+
+    ++leftIterator;
+    ++rightIterator;
+    ++insertIterator;
   }
 
   return returnContainer;
@@ -1255,6 +1324,59 @@ template<
       );
     }
   }
+}
+
+template<
+  class ContainerT,
+  class ContainerU,
+  class BinaryFunction
+> void forAllPairs(
+  const ContainerT& containerT,
+  const ContainerU& containerU,
+  BinaryFunction&& function
+) {
+  for(auto i = std::begin(containerT); i != std::end(containerT); ++i) {
+    for(auto j = std::begin(containerU); j != std::end(containerU); ++j) {
+      function(*i, *j);
+    }
+  }
+}
+
+namespace detail {
+
+template<
+  class NAryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N,
+  std::size_t ... Inds
+> auto unpackArrayToFunctionHelper(
+  const ArrayType<T, N>& array,
+  NAryFunction&& function,
+  std::index_sequence<Inds...>
+) {
+  return function(
+    array.at(Inds)...
+  );
+}
+
+
+} // namespace detail
+
+template<
+  class NAryFunction,
+  template<typename, std::size_t> class ArrayType,
+  typename T,
+  std::size_t N
+> auto unpackArrayToFunction(
+  const ArrayType<T, N>& array,
+  NAryFunction&& function
+) {
+  return detail::unpackArrayToFunctionHelper(
+    array,
+    std::forward<NAryFunction>(function),
+    std::make_index_sequence<N>{}
+  );
 }
 
 } // namespace temple

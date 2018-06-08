@@ -1,6 +1,6 @@
 #include "json/json.hpp"
 
-#include "Base64.h"
+#include "detail/Base64.h"
 #include "Serialization.h"
 
 namespace nlohmann {
@@ -72,6 +72,8 @@ struct adl_serializer<molassembler::RankingInformation> {
   static void to_json(json& j, const Type& ranking) {
     j["sorted"] = ranking.sortedSubstituents;
     j["links"] = ranking.links;
+    j["ligands"] = ranking.ligands;
+    j["ligandsRanking"] = ranking.ligandsRanking;
   }
 
   static void from_json(const json& j, Type& ranking) {
@@ -90,6 +92,24 @@ struct adl_serializer<molassembler::RankingInformation> {
 
     for(const auto& listJSON : j["links"]) {
       ranking.links.push_back(listJSON);
+    }
+
+    ranking.ligands.reserve(j["ligands"].size());
+    for(const auto& listJSON : j["ligands"]) {
+      std::vector<molassembler::AtomIndexType> ligandConstitutingAtoms;
+      for(const auto& listElementJSON : listJSON) {
+        ligandConstitutingAtoms.push_back(listElementJSON);
+      }
+      ranking.ligands.push_back(ligandConstitutingAtoms);
+    }
+
+    ranking.ligandsRanking.reserve(j["ligandsRanking"].size());
+    for(const auto& listJSON : j["ligandsRanking"]) {
+      std::vector<unsigned> equalLigandIndices;
+      for(const auto& listElementJSON : listJSON) {
+        equalLigandIndices.push_back(listElementJSON);
+      }
+      ranking.ligandsRanking.push_back(equalLigandIndices);
     }
   }
 };
@@ -220,11 +240,6 @@ nlohmann::json serialize(const Molecule& molecule) {
 Molecule deserialize(const nlohmann::json& m) {
   GraphType graph = m["graph"];
 
-  // Construct a molecule from the graph alone
-  // Modify the StereocenterList from there
-
-  Molecule mol {graph};
-
   StereocenterList stereocenters;
   for(const auto& j : m["stereocenters"]) {
     if(j["type"] == "CN"s) {
@@ -232,7 +247,7 @@ Molecule deserialize(const nlohmann::json& m) {
       AtomIndexType centralIndex = j["centers"].front();
 
       auto cnPtr = std::make_shared<Stereocenters::CNStereocenter>(
-        mol,
+        graph,
         symmetry,
         centralIndex,
         j["ranking"].get<RankingInformation>()

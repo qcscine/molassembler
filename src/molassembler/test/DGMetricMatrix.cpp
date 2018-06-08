@@ -10,7 +10,7 @@
 #include "DistanceGeometry/generateConformation.h"
 
 #include "chemical_symmetries/Symmetries.h"
-#include "StdlibTypeAlgorithms.h"
+#include "detail/StdlibTypeAlgorithms.h"
 #include "BoundsFromSymmetry.h"
 
 #include <Eigen/Eigenvalues>
@@ -25,26 +25,26 @@ Eigen::MatrixXd reorder(
   Eigen::MatrixXd retMatrix(reorderSequence.size(), reorderSequence.size());
 
   /* e.g. reorderSequence is {4, 2, 1, 3}
-   *  and input is 
+   *  and input is
    *
    *     1  2  3  4          4  2  1  3
-   *                        
-   * 1   -  1  2  3      4   -  5  3  6 
-   * 2   -  -  4  5  ->  2   -  -  1  4 
-   * 3   -  -  -  6  ->  1   -  -  -  2 
+   *
+   * 1   -  1  2  3      4   -  5  3  6
+   * 2   -  -  4  5  ->  2   -  -  1  4
+   * 3   -  -  -  6  ->  1   -  -  -  2
    * 4   -  -  -  -      3   -  -  -  -
    *
    * reverse:
    *
    *     1  2  3  4          3  2  4  1
-   *                        
-   * 1   -  5  3  6      3   -  1  2  3 
-   * 2   -  -  1  4  ->  2   -  -  4  5 
-   * 3   -  -  -  2  ->  4   -  -  -  6 
+   *
+   * 1   -  5  3  6      3   -  1  2  3
+   * 2   -  -  1  4  ->  2   -  -  4  5
+   * 3   -  -  -  2  ->  4   -  -  -  6
    * 4   -  -  -  -      1   -  -  -  -
    */
 
-  
+
   for(unsigned i = 0; i < reorderSequence.size(); i++) {
     // Diagonal
     retMatrix(i, i) = sourceMatrix(
@@ -126,7 +126,7 @@ std::vector<unsigned> randomReorderingSequence(const unsigned& length) {
 #ifdef NDEBUG
   std::random_device randomDevice;
   for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
-#else 
+#else
   _seeds.emplace_back(2721813754);
 #endif
 
@@ -233,7 +233,7 @@ void showEmbedding(const MetricMatrix& metricMatrix) {
   Eigen::MatrixXd V = eigenSolver.eigenvectors();
 
   std::cout << "Eigenvectors:\n" << V << std::endl;
-  // Eigen has its own concept of rows and columns, I would have thought it's 
+  // Eigen has its own concept of rows and columns, I would have thought it's
   // columns. But tests have shown it has to be row-wise.
   V.rowwise().reverseInPlace();
 
@@ -252,7 +252,7 @@ void showEmbedding(const MetricMatrix& metricMatrix) {
    * transpose (V * L)
    * -> dimensionality x Natoms
    */
-  std::cout << "Resulting positions matrix:\n" << (V * L).transpose() << std::endl; 
+  std::cout << "Resulting positions matrix:\n" << (V * L).transpose() << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
 
       DistanceBoundsMatrix distanceBounds {
         molecule,
-        DGData.boundList
+        DGData.bounds
       };
 
       // choose a random reordering
@@ -308,7 +308,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
         std::cout << "Failed reordering test for Symmetry "
           << Symmetry::name(symmetryName) << ":" << std::endl
           << "Metric matrix from original distances matrix: " << std::endl
-          << originalMetric << std::endl 
+          << originalMetric << std::endl
           << "un-reordered Metric matrix from reordered:"
           << std::endl << revert << std::endl;
         break;
@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
 }
 
 BOOST_AUTO_TEST_CASE( explicitFromLecture ) {
-  // From Algorithms & Programming in C++ lecture 
+  // From Algorithms & Programming in C++ lecture
   Eigen::MatrixXd exactDistanceMatrix (4, 4);
   // No need to enter lower triangle
   exactDistanceMatrix << 0, 1, sqrt(2),       1,

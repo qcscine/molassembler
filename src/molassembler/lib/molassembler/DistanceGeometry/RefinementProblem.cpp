@@ -1,6 +1,6 @@
 #include "DistanceGeometry/RefinementProblem.h"
 #include "Log.h"
-#include "temple/Containers.h"
+#include "temple/Stringify.h"
 
 namespace molassembler {
 
@@ -15,12 +15,18 @@ namespace errfDetail {
     unsigned incorrectNonZeroChiralityConstraints = 0;
 
     for(const auto& chiralityConstraint : chiralityConstraints) {
-      if(std::fabs(chiralityConstraint.lower) > 1e-4) {
+      /* Make sure that chirality constraints meant to cause coplanarity of
+       * four indices aren't counted here - Their volume bounds are
+       * usually so tight that they might be slightly outside in any given
+       * refinement step. If they are outside their target values by a large
+       * amount, that is caught by finalStructureAcceptable anyway.
+       */
+      if(std::fabs(chiralityConstraint.lower + chiralityConstraint.upper) > 1e-4) {
         nonZeroChiralityConstraints += 1;
 
-        const auto currentVolume = errfDetail::volume(
+        const auto currentVolume = errfDetail::adjustedSignedVolume(
           positions,
-          chiralityConstraint.indices
+          chiralityConstraint.sites
         );
 
         if( // can this be simplified? -> sign bit XOR?
@@ -67,7 +73,7 @@ namespace errfDetail {
 
     // Check chiral bound deviations
     for(const auto& constraint : chiralityConstraints) {
-      double volume = errfDetail::volume(positions, constraint.indices);
+      double volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
 
       if(
         volume - constraint.upper > deviationThreshold
@@ -108,13 +114,13 @@ namespace errfDetail {
 
     // Check chiral bound deviations
     for(const auto& constraint : chiralityConstraints) {
-      double volume = errfDetail::volume(positions, constraint.indices);
+      double volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
 
       if(
         volume - constraint.upper > deviationThreshold
         || constraint.lower - volume > deviationThreshold
       ) {
-        log << "Chiral constraint " << temple::condenseIterable(constraint.indices) << " : ["
+        log << "Chiral constraint " << temple::stringify(constraint.sites) << " : ["
           << constraint.lower << ", " << constraint.upper
           << "] deviation over threshold, is : " << volume << "\n";
       }

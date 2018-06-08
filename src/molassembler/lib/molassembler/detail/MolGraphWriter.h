@@ -1,5 +1,5 @@
-#ifndef INCLUDE_MOLECULE_MANIP_MOL_GRAPH_WRITER_H
-#define INCLUDE_MOLECULE_MANIP_MOL_GRAPH_WRITER_H
+#ifndef INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
+#define INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
 
 /*! @file
  *
@@ -7,7 +7,7 @@
  * molecular graph.
  */
 
-#include "common_typedefs.h"
+#include "SharedTypes.h"
 
 namespace molassembler {
 

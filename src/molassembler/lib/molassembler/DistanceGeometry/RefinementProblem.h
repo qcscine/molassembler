@@ -15,54 +15,101 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 namespace errfDetail {
-  using Vector = dlib::matrix<double, 0, 1>;
 
-  inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned& i) {
-    assert(4 * i + 3 < positions.size());
+using Vector = dlib::matrix<double, 0, 1>;
 
-    return dlib::rowm(
-      positions,
-      dlib::range(4 * i, 4 * i + 2)
-    );
+inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned& i) {
+  assert(4 * i + 3 < positions.size());
+
+  return dlib::rowm(
+    positions,
+    dlib::range(4 * i, 4 * i + 2)
+  );
+}
+
+inline Vector getPos(const Vector& positions, const unsigned& i) {
+  assert(4 * i + 3 < positions.size());
+
+  return dlib::rowm(
+    positions,
+    dlib::range(4 * i, 4 * i + 3)
+  );
+}
+
+inline dlib::vector<double, 3> getAveragePos3D(
+  const Vector& positions,
+  const ChiralityConstraint::AtomListType& atomList
+) {
+  if(atomList.size() == 1) {
+    return getPos3D(positions, atomList.front());
   }
 
-  inline Vector getPos(const Vector& positions, const unsigned& i) {
-    assert(4 * i + 3 < positions.size());
+  dlib::vector<double, 3> sum {0.0, 0.0, 0.0};
 
-    return dlib::rowm(
-      positions,
-      dlib::range(4 * i, 4 * i + 3)
-    );
+  for(const auto& atomIndex : atomList) {
+    sum += getPos3D(positions, atomIndex);
   }
 
-  inline double volume(const Vector& positions, const std::array<AtomIndexType, 4>& indices) {
-    return (
-      getPos3D(positions, indices[0]) - getPos3D(positions, indices[3])
-    ).dot(
-      (
-        getPos3D(positions, indices[1]) - getPos3D(positions, indices[3])
-      ).cross(
-        getPos3D(positions, indices[2]) - getPos3D(positions, indices[3])
-      )
-    );
+  sum /= atomList.size();
+
+  return sum;
+}
+
+inline Vector getAveragePos(
+  const Vector& positions,
+  const ChiralityConstraint::AtomListType& atomList
+) {
+  if(atomList.size() == 1) {
+    return getPos(positions, atomList.front());
   }
 
-  double proportionChiralityConstraintsCorrectSign(
-    const std::vector<ChiralityConstraint>& chiralityConstraints,
-    const Vector& positions
-  );
+  Vector sum = dlib::zeros_matrix<double>(4, 1);
 
-  bool finalStructureAcceptable(
-    const DistanceBoundsMatrix& bounds,
-    const std::vector<ChiralityConstraint> chiralityConstraints,
-    const Vector& positions
-  );
+  for(const auto& atomIndex : atomList) {
+    sum += getPos(positions, atomIndex);
+  }
 
-  void explainAcceptanceFailure(
-    const DistanceBoundsMatrix& bounds,
-    const std::vector<ChiralityConstraint> chiralityConstraints,
-    const Vector& positions
+  sum /= atomList.size();
+
+  return sum;
+}
+
+//! Signed tetrahedron volume adjusted by V' = 6 * V
+inline double adjustedSignedVolume(
+  const Vector& positions,
+  const ChiralityConstraint::LigandSequence& ligands
+) {
+  return (
+    getAveragePos3D(positions, ligands[0])
+    - getAveragePos3D(positions, ligands[3])
+  ).dot(
+    (
+      getAveragePos3D(positions, ligands[1])
+      - getAveragePos3D(positions, ligands[3])
+    ).cross(
+      getAveragePos3D(positions, ligands[2])
+      - getAveragePos3D(positions, ligands[3])
+    )
   );
+}
+
+double proportionChiralityConstraintsCorrectSign(
+  const std::vector<ChiralityConstraint>& chiralityConstraints,
+  const Vector& positions
+);
+
+bool finalStructureAcceptable(
+  const DistanceBoundsMatrix& bounds,
+  const std::vector<ChiralityConstraint> chiralityConstraints,
+  const Vector& positions
+);
+
+void explainAcceptanceFailure(
+  const DistanceBoundsMatrix& bounds,
+  const std::vector<ChiralityConstraint> chiralityConstraints,
+  const Vector& positions
+);
+
 } // namespace errfDetail
 
 template<bool compress>
@@ -88,8 +135,8 @@ struct errfValue {
   double distanceError(const Vector& positions) const {
     double error = 0, lowerTerm, upperTerm;
 
-    for(unsigned i = 0; i < N; i++) {
-      for(unsigned j = i + 1; j < N; j++) {
+    for(unsigned i = 0; i < N; ++i) {
+      for(unsigned j = i + 1; j < N; ++j) {
         const double& upperBoundSquared = squaredBounds(i, j);
         const double& lowerBoundSquared = squaredBounds(j, i);
         // Since i < j, upper Bound is (i, j), lower Bound is (j, i)
@@ -136,7 +183,7 @@ struct errfValue {
     double error = 0, volume, upperTerm, lowerTerm;
 
     for(const auto& constraint : chiralityConstraints) {
-      volume = errfDetail::volume(positions, constraint.indices);
+      volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
 
       // Upper bound term
       upperTerm = volume - constraint.upper;
@@ -289,69 +336,108 @@ public:
     return gradient;
   }
 
+  void referenceAddChiralContribution(
+    Vector& gradient,
+    const Vector& positions,
+    const ChiralityConstraint& constraint,
+    const double factor = 1
+  ) const {
+    // Precalculate repeated expressions
+    const dlib::vector<double, 3> alphaMinusDelta = (
+      errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[0]
+      ) - errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[3]
+      )
+    );
+
+    const dlib::vector<double, 3> betaMinusDelta = (
+      errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[1]
+      ) - errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[3]
+      )
+    );
+
+    const dlib::vector<double, 3> gammaMinusDelta = (
+      errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[2]
+      ) - errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[3]
+      )
+    );
+
+    // Specific to deltaI only but still repeated
+    const dlib::vector<double, 3> alphaMinusGamma = (
+      errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[0]
+      ) - errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[2]
+      )
+    );
+
+    const dlib::vector<double, 3> betaMinusGamma = (
+      errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[1]
+      ) - errfDetail::getAveragePos3D(
+        positions,
+        constraint.sites[2]
+      )
+    );
+
+    for(const auto alphaI : constraint.sites[0]) {
+      dlib::set_rowm(
+        gradient,
+        dlib::range(4 * alphaI, 4 * alphaI + 2)
+      ) += factor * betaMinusDelta.cross(gammaMinusDelta) / constraint.sites[0].size();
+    }
+
+    for(const auto betaI : constraint.sites[1]) {
+      dlib::set_rowm(
+        gradient,
+        dlib::range(4 * betaI, 4 * betaI + 2)
+      ) += factor * gammaMinusDelta.cross(alphaMinusDelta) / constraint.sites[1].size();
+    }
+
+    for(const auto gammaI : constraint.sites[2]) {
+      dlib::set_rowm(
+        gradient,
+        dlib::range(4 * gammaI, 4 * gammaI + 2)
+      ) += factor * alphaMinusDelta.cross(betaMinusDelta) / constraint.sites[2].size();
+    }
+
+    for(const auto deltaI : constraint.sites[3]) {
+      dlib::set_rowm(
+        gradient,
+        dlib::range(4 * deltaI, 4 * deltaI + 2)
+      ) += factor * betaMinusGamma.cross(alphaMinusGamma) / constraint.sites[3].size();
+    }
+  }
+
   Vector referenceC(const Vector& positions) const {
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
 
     for(const auto& constraint : chiralityConstraints) {
-      const double volume = errfDetail::volume(positions, constraint.indices);
-
+      const double volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
       const double upperTerm = volume - constraint.upper;
-      if(upperTerm > 0) {
-        // Set it for i -> constraint.indices[0]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[0], 4 * constraint.indices[0] + 2)
-        ) += 2 * upperTerm * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[2]) // k
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
+      const double lowerTerm = constraint.lower - volume;
 
-        // Set for j -> constraint.indices[1]
-        dlib::set_rowm(
+      if(upperTerm > 0 || lowerTerm > 0) {
+        referenceAddChiralContribution(
           gradient,
-          dlib::range(4 * constraint.indices[1], 4 * constraint.indices[1] + 2)
-        ) += 2 * upperTerm * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[2]) // k
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
-
-        // Set for k -> constraint.indices[2]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[2], 4 * constraint.indices[2] + 2)
-        ) += 2 * upperTerm * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
-
-        // Set for l -> constraint.indices[3]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[3], 4 * constraint.indices[3] + 2)
-        ) += 2 * upperTerm * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[2]) // k
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[2]) // k
-          )
+          positions,
+          constraint,
+          2 * (std::max(0.0, upperTerm) - std::max(0.0, lowerTerm))
         );
       }
     }
@@ -360,77 +446,6 @@ public:
   }
 
   Vector referenceD(const Vector& positions) const {
-    Vector gradient(positions.size());
-    dlib::set_all_elements(gradient, 0);
-
-    for(const auto& constraint : chiralityConstraints) {
-      const double volume = errfDetail::volume(positions, constraint.indices);
-
-      const double lowerTerm = constraint.lower - volume;
-      if(lowerTerm > 0) {
-        // Set it for i -> constraint.indices[0]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[0], 4 * constraint.indices[0] + 2)
-        ) -= 2 * lowerTerm * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[2]) // k
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
-
-        // Set for j -> constraint.indices[1]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[1], 4 * constraint.indices[1] + 2)
-        ) -= 2 * lowerTerm * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[2]) // k
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
-
-        // Set for k -> constraint.indices[2]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[2], 4 * constraint.indices[2] + 2)
-        ) -= 2 * lowerTerm * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
-
-        // Set for l -> constraint.indices[3]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[3], 4 * constraint.indices[3] + 2)
-        ) -= 2 * lowerTerm * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[2]) // k
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[2]) // k
-          )
-        );
-
-      }
-    }
-
-    return gradient;
-  }
-
-  Vector referenceE(const Vector& positions) const {
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
 
@@ -449,7 +464,6 @@ public:
       + referenceB(positions)
       + referenceC(positions)
       + referenceD(positions)
-      + referenceE(positions)
     );
   }
 
@@ -548,9 +562,9 @@ public:
       }
     }
 
-    // Chirality gradient contributions (C and D)
+    // Chirality gradient contributions (C)
     for(const auto& constraint : chiralityConstraints) {
-      const double volume = errfDetail::volume(positions, constraint.indices);
+      const double volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
 
       // It may not occur that both terms contribute!
       assert(!(volume - constraint.upper > 0 && constraint.lower - volume > 0));
@@ -564,60 +578,11 @@ public:
        * one of both terms is actually greater than 0
        */
       if(factor != 0.0) {
-        // Set for i -> constraint.indices[0]
-        dlib::set_rowm(
+        referenceAddChiralContribution(
           gradient,
-          dlib::range(4 * constraint.indices[0], 4 * constraint.indices[0] + 2)
-        ) += factor * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[2]) // k
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
-
-        // Set for j -> constraint.indices[1]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[1], 4 * constraint.indices[1] + 2)
-        ) += factor * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[2]) // k
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
-
-        // Set for k -> constraint.indices[2]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[2], 4 * constraint.indices[2] + 2)
-        ) += factor * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[3]) // l
-          )
-        );
-
-        // Set for l -> constraint.indices[3]
-        dlib::set_rowm(
-          gradient,
-          dlib::range(4 * constraint.indices[3], 4 * constraint.indices[3] + 2)
-        ) += factor * (
-          (
-            errfDetail::getPos3D(positions, constraint.indices[1]) // j
-            - errfDetail::getPos3D(positions, constraint.indices[2]) // k
-          ).cross(
-            errfDetail::getPos3D(positions, constraint.indices[0]) // i
-            - errfDetail::getPos3D(positions, constraint.indices[2]) // k
-          )
+          positions,
+          constraint,
+          factor
         );
       }
     }

@@ -1,14 +1,19 @@
-#ifndef INCLUDE_MOLECULE_MANIP_MOLECULE_H
-#define INCLUDE_MOLECULE_MANIP_MOLECULE_H
+#ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
+#define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
+#include "AtomEnvironmentHash.h"
+#include "Cycles.h"
 #include "StereocenterList.h"
-#include "CycleData.h"
-#include "LocalGeometryModel.h"
 
-#include "temple/constexpr/Bitmask.h"
+#if __cpp_lib_experimental_propagate_const >= 201505
+#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+#include <experimental/propagate_const>
+#endif
 
-#include "Delib/AtomCollection.h"
-#include "Delib/BondOrderCollection.h"
+/* TODO
+ * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
+ *   may become or cease to be eta bond types.
+ */
 
 /*! @file
  *
@@ -18,161 +23,25 @@
 
 namespace molassembler {
 
-//!  Central class of the library, modeling a molecular graph with all state.
+//! Central class of the library, modeling a molecular graph with all state.
 class Molecule {
-public:
-/* "Global" options */
-  //! Sets the temperature regime to be used for all Molecules
-  static TemperatureRegime temperatureRegime;
-  //! Sets the manner in which chiral state is preserved for all Molecules
-  static ChiralStatePreservation chiralStatePreservation;
-
-/* Static functions */
-  //! Calculates a bond order collection via UFF-like bond distance modelling
-  static Delib::BondOrderCollection uffBondOrders(
-    const Delib::AtomCollection& atomCollection
-  );
-
-  using PseudoHashType = unsigned long long;
-
-  /*! For modifying equality comparison strictness in member modularCompare
-   *
-   * Differing strictnesses of comparisons may be desirable for various
-   * purposes, hence a modular comparison function is provided.
-   */
-  enum class ComparisonComponents : unsigned {
-    ElementTypes,
-    BondOrders,
-    Symmetries,
-    Stereopermutations // Symmetries must be set in conjunction with this
-  };
-
-  //! Convolutes the atom's element type and bonds into a characteristic number
-  static PseudoHashType hashAtomEnvironment(
-    const temple::Bitmask<ComparisonComponents>& bitmask,
-    const Delib::ElementType& elementType,
-    const std::vector<BondType>& sortedBonds,
-    boost::optional<Symmetry::Name> symmetryNameOptional,
-    boost::optional<unsigned> assignedOptional
-  );
-
-  //! Specify the algorithm used to discretize floating-point bond orders into bond types
-  enum class BondDiscretizationOption : unsigned {
-    //! All bond orders >= 0.5 are considered single bonds
-    Binary,
-    //! Bond orders are rounded to the nearest integer
-    UFF
-  };
-
-  //! Result type of an interpret call.
-  struct InterpretResult {
-    //! The list of individual molecules found in the 3D information
-    std::vector<Molecule> molecules;
-    //! A map from an index within the AtomCollection to its index in molecules member
-    std::vector<unsigned> componentMap;
-  };
-
-  /*! Interpret molecules in 3D information and a bond order collection.
-   *
-   * The graph is inferred via bond discretization from the bond order
-   * collection.
-   *
-   * @note Assumes that the provided atom collection's positions are in
-   * Angstrom units.
-   */
-  static InterpretResult interpret(
-    const Delib::AtomCollection& atomCollection,
-    const Delib::BondOrderCollection& bondOrders,
-    const BondDiscretizationOption& discretization = BondDiscretizationOption::Binary
-  );
-
-  /*! Interpret molecules in 3D information.
-   *
-   * The graph is inferred via bond discretization from pairwise atom distances.
-   *
-   * @note Assumes that the provided atom collection's positions are in
-   * Angstrom units.
-   */
-  static InterpretResult interpret(
-    const Delib::AtomCollection& atomCollection,
-    const BondDiscretizationOption& discretization = BondDiscretizationOption::Binary
-  );
-
-private:
-/* State */
-  GraphType _adjacencies;
-  StereocenterList _stereocenters;
-
-/* Members */
-/* Private members */
-  /*!
-   * Adds an vertex to the graph and sets it's element type property, returning
-   * the new index.
-   */
-  AtomIndexType _addAtom(const Delib::ElementType& elementType);
-
-  //! Generates a list of stereocenters based on graph properties alone
-  StereocenterList _detectStereocenters() const;
-
-  //! Ensures basic expectations about what constitutes a Molecule are met
-  void _ensureModelInvariants() const;
-
-  /*! Returns if an atom could be a CNStereocenter with multiple assignments
-   *
-   * Criteria applied are:
-   * - Minimum of three adjacent indices
-   * - If the high-temperature approximation is invoked, trivalent nitrogen
-   *   inverts too rapidly to carry stereoinformation (unless part of a cycle
-   *   of size 4 or smaller, where strain hinders inversion)
-   */
-  bool _isCNStereocenterCandidate(const AtomIndexType& atomIndex) const;
-
-  /*! Returns if an edge could be an EZStereocenter with multiple assignments
-   *
-   * Criteria applied are:
-   * - Bond type must be double
-   * - 2-3 non-eta bonds for each edge vertex
-   */
-  bool _isEZStereocenterCandidate(const GraphType::edge_descriptor& edgeIndex) const;
-
-  //! Returns whether the specified index is valid or not
-  bool _isValidIndex(const AtomIndexType& index) const;
-
-  /*!
-   * Returns a list of edge indices where each endpoint has 1 or two additional
-   * substituent besides the edge neighbor
-   */
-  std::vector<EdgeIndexType> _getEZStereocenterCandidates() const;
-
-  /*!
-   * Fits a stereocenter to a position collection, excluding the seesaw symmetry
-   * if a four-coordinate carbon atom is to be fitted to a position collection
-   */
-  void _pickyFitStereocenter(
-    Stereocenters::CNStereocenter& stereocenter,
-    const Symmetry::Name& expectedSymmetry,
-    const Delib::PositionCollection& positions
-  ) const;
-
-  //!  Reduces an atom's neighbors to ligand types
-  std::vector<LocalGeometry::BindingSiteInformation> _reduceToSiteInformation(
-    const AtomIndexType& index
-  ) const;
-
-  //!  Updates the molecule's StereocenterList after a graph modification
-  void _propagateGraphChange();
-
 public:
 //!@name Constructors
 //!@{
+  /* Rule of five members */
   //! Default-constructor creates a hydrogen molecule.
   Molecule() noexcept;
+  Molecule(Molecule&& other);
+  Molecule& operator = (Molecule&& rhs);
+  Molecule(const Molecule& other);
+  Molecule& operator = (const Molecule& rhs);
+  ~Molecule();
 
   //! Construct a minimal molecule from two element types and a shared bond type
   Molecule(
-    const Delib::ElementType& a,
-    const Delib::ElementType& b,
-    const BondType& bondType
+    const Delib::ElementType a,
+    const Delib::ElementType b,
+    const BondType bondType
   ) noexcept;
 
   //! Constructs a molecule from connectivity alone, inferring the stereocenters
@@ -184,7 +53,7 @@ public:
    */
   Molecule(
     GraphType graph,
-    const Delib::PositionCollection& positions
+    const AngstromWrapper& positions
   );
 
   //! Construct a molecule from the underlying data fragments
@@ -198,16 +67,16 @@ public:
 //!@{
   //! Adds an atom by attaching it to an existing atom.
   AtomIndexType addAtom(
-    const Delib::ElementType& elementType,
-    const AtomIndexType& adjacentTo,
-    const BondType& bondType
+    const Delib::ElementType elementType,
+    const AtomIndexType adjacentTo,
+    const BondType bondType
   );
 
   //! Adds a bond between existing atoms.
   void addBond(
-    const AtomIndexType& a,
-    const AtomIndexType& b,
-    const BondType& bondType
+    const AtomIndexType a,
+    const AtomIndexType b,
+    const BondType bondType
   );
 
   /*! Sets the stereocenter assignment at a particular atom
@@ -215,7 +84,7 @@ public:
    * This sets the stereocenter assignment at a specific atom index. For this,
    * a stereocenter must be instantiated and contained in the StereocenterList
    * returned by getStereocenterList(). The supplied assignment must be either
-   * boost::none or smaller than stereocenterPtr->numStereopermutations().
+   * boost::none or smaller than stereocenterPtr->numAssignments().
    *
    * @note Although molecules in which this occurs are infrequent, consider the
    * StereocenterList you have accessed prior to calling this function and
@@ -224,7 +93,7 @@ public:
    * to the introduction of new stereocenters or the removal of old ones.
    */
   void assignStereocenter(
-    const AtomIndexType& a,
+    const AtomIndexType a,
     const boost::optional<unsigned>& assignment
   );
 
@@ -241,7 +110,7 @@ public:
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereocenters or the removal of old ones.
    */
-  void assignStereocenterRandomly(const AtomIndexType& a);
+  void assignStereocenterRandomly(const AtomIndexType a);
 
   /*! Removes an atom from the graph, including bonds to it.
    *
@@ -251,7 +120,7 @@ public:
    *
    * @throws if the supplied index is invalid or isSafeToRemoveAtom returns false.
    */
-  void removeAtom(const AtomIndexType& a);
+  void removeAtom(const AtomIndexType a);
 
   /*!
    * Removes an atom after checking if removing that bond is safe, i.e. does not
@@ -266,19 +135,19 @@ public:
    * It is, however, considered safe to remove the terminal vertex, which
    * involves removing the bond to it.
    */
-  void removeBond(const AtomIndexType& a, const AtomIndexType& b);
+  void removeBond(const AtomIndexType a, const AtomIndexType b);
 
   //! Changes an existing bond's type
   bool setBondType(
-    const AtomIndexType& a,
-    const AtomIndexType& b,
-    const BondType& bondType
+    const AtomIndexType a,
+    const AtomIndexType b,
+    const BondType bondType
   );
 
   //! Changes an existing atom's element type
   void setElementType(
-    const AtomIndexType& a,
-    const Delib::ElementType& elementType
+    const AtomIndexType a,
+    const Delib::ElementType elementType
   );
 
   /*! Sets the local geometry at an atom index
@@ -297,8 +166,8 @@ public:
    *     CNStereocenter or the expected symmetry
    */
   void setGeometryAtAtom(
-    const AtomIndexType& a,
-    const Symmetry::Name& symmetryName
+    const AtomIndexType a,
+    const Symmetry::Name symmetryName
   );
 //!@}
 
@@ -310,7 +179,8 @@ public:
    * @throws if the supplied atomic index is invalid
    */
   Symmetry::Name determineLocalGeometry(
-    const AtomIndexType& index
+    const AtomIndexType index,
+    const RankingInformation& ranking
   ) const;
 
   //! Returns a graphivz string representation of the molecule
@@ -321,24 +191,24 @@ public:
    * Fetches the atomic indices of vertices adjacent to a particular index.
    * @throws if the supplied atomic index is invalid
    */
-  std::vector<AtomIndexType> getAdjacencies(const AtomIndexType& a) const;
+  std::vector<AtomIndexType> getAdjacencies(const AtomIndexType a) const;
 
   //! Fetches the optional bond type between two atom indices
   boost::optional<BondType> getBondType(
-    const AtomIndexType& a,
-    const AtomIndexType& b
+    const AtomIndexType a,
+    const AtomIndexType b
   ) const;
 
   BondType getBondType(const GraphType::edge_descriptor& edge) const;
 
-  CycleData getCycleData() const;
+  Cycles getCycleData() const;
 
   /*! Returns the element type of an atomic index
    *
    * Returns the element type of an atomic index
    * @throws if the atomic index is invalid
    */
-  Delib::ElementType getElementType(const AtomIndexType& index) const;
+  Delib::ElementType getElementType(const AtomIndexType index) const;
 
   //! Returns a collection detailing all element types
   Delib::ElementTypeCollection getElementCollection() const;
@@ -350,23 +220,21 @@ public:
   const StereocenterList& getStereocenterList() const;
 
   //! Returns the number of adjacencies of an atomic position
-  unsigned getNumAdjacencies(const AtomIndexType& a) const;
+  unsigned getNumAdjacencies(const AtomIndexType a) const;
 
-  StereocenterList inferStereocentersFromPositions(
-    const Delib::PositionCollection& positions
-  ) const;
+  StereocenterList inferStereocentersFromPositions(const AngstromWrapper& angstromWrapper) const;
 
   //! Checks if two atomic indices are connected by a bond
   bool isAdjacent(
-    const AtomIndexType& a,
-    const AtomIndexType& b
+    const AtomIndexType a,
+    const AtomIndexType b
   ) const;
 
   //! An atom is considered removable if it isn't an articulation vertex
-  bool isSafeToRemoveAtom(const AtomIndexType& a) const;
+  bool isSafeToRemoveAtom(const AtomIndexType a) const;
 
   //! A bond is considered removable if it isn't a bridge edge
-  bool isSafeToRemoveBond(const AtomIndexType& a, const AtomIndexType& b) const;
+  bool isSafeToRemoveBond(const AtomIndexType a, const AtomIndexType b) const;
 
   /*! Modular comparison of this Molecule with another.
    *
@@ -396,7 +264,7 @@ public:
    */
   bool modularCompare(
     const Molecule& other,
-    const temple::Bitmask<ComparisonComponents>& comparisonBitmask
+    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
   ) const;
 
   //! Fetch the number of atoms
@@ -406,9 +274,9 @@ public:
   unsigned numBonds() const;
 
   RankingInformation rankPriority(
-    const AtomIndexType& a,
+    const AtomIndexType a,
     const std::set<AtomIndexType>& excludeAdjacent = {},
-    const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
+    const boost::optional<AngstromWrapper>& positionsOption = boost::none
   ) const;
 
   //! Get the vertex indices on both ends of a graph edge
@@ -417,11 +285,14 @@ public:
 
 //!@name Iterators
 //!@{
+  //! Returns a range-for temporary object iterating through all atom indices
+  RangeForTemporary<GraphType::vertex_iterator> iterateAtoms() const;
+
   /*! Returns a range-for temporary object allowing c++11 style for loop
    * iteration through an atom's adjacencies
    */
   RangeForTemporary<GraphType::adjacency_iterator> iterateAdjacencies(
-    const AtomIndexType& a
+    const AtomIndexType a
   ) const;
 
   /*! Returns a range-for temporary object allowing c++11-style for loop
@@ -432,7 +303,7 @@ public:
   /*! Returns a range-for temporary object allowing c++11-style for loop
    * iteration through edges around a specific atom
    */
-  RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(const AtomIndexType& a) const;
+  RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(const AtomIndexType a) const;
 //!@}
 
 
@@ -440,7 +311,7 @@ public:
 //!@{
   //! Returns the adjacencies of the specified atom index
   RangeForTemporary<GraphType::adjacency_iterator> operator [] (
-    const AtomIndexType& a
+    const AtomIndexType a
   ) const;
 
   //! Equality operator, performs most strict equality comparison
@@ -451,6 +322,17 @@ public:
 /* Friends */
   friend struct MoleculeValidator;
   friend class RankingTree;
+
+private:
+  struct Impl;
+
+#ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+  std::experimental::propagate_const<
+    std::unique_ptr<Impl>
+  > _pImpl;
+#else
+  std::unique_ptr<Impl> _pImpl;
+#endif
 };
 
 } // namespace molassembler

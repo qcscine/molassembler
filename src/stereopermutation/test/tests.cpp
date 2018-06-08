@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
       std::make_pair(4,5)
     }
   );
-  
+
   { // columnSwap
     auto instanceCopy = instanceWithBondedLigands;
     instanceCopy.columnSwap(0, 1);
@@ -94,13 +94,13 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
     auto instanceCopy = instanceWithBondedLigands;
     instanceCopy.reverseColumns(0, 6);
     BOOST_CHECK(
-      instanceCopy.toString() 
+      instanceCopy.toString()
       == "chars {F, E, D, C, B, A}, links {[0, 1], [2, 3], [4, 5]}"
     );
 
     instanceCopy.reverseColumns(2, 6);
     BOOST_CHECK(
-      instanceCopy.toString() 
+      instanceCopy.toString()
       == "chars {F, E, A, B, C, D}, links {[0, 1], [2, 3], [4, 5]}"
     );
   }
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
     octahedralInstance.generateAllRotations(Symmetry::Name::Octahedral).size()
     == 24 // 4 C4 cases on each of 6 A position selections
   );
-  
+
 }
 
 void run_tests_with_counts(
@@ -225,15 +225,15 @@ void run_tests_with_counts(
       ? Stereopermutation(symmetryName, characters)
       : Stereopermutation(symmetryName, characters, pairs);
 
-    auto unique = uniqueStereopermutationsWithWeights(assignment, symmetryName);
+    auto unique = uniquesWithWeights(assignment, symmetryName);
 
     BOOST_CHECK(unique.assignments.size() == expectedUnique );
 
     if(unique.assignments.size() != expectedUnique) {
       std::cout << "Mismatch: Expected " << expectedUnique
-        << " assignments for: \n" << assignment << ", got " 
+        << " assignments for: \n" << assignment << ", got "
         << unique.assignments.size() << " assignments:" << std::endl;
-    } 
+    }
 
     std::cout << "{";
     for(unsigned i = 0; i < characters.size(); i++) {
@@ -243,7 +243,7 @@ void run_tests_with_counts(
     std::cout << "} " << Symmetry::name(symmetryName) << std::endl;
 
     for(unsigned i = 0; i < unique.assignments.size(); i++) {
-      std::cout << "Weight " << unique.weights[i] << ": " 
+      std::cout << "Weight " << unique.weights[i] << ": "
         << unique.assignments[i] << std::endl;
     }
 
@@ -308,7 +308,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
 /* These were thought up myself */
 BOOST_AUTO_TEST_CASE( tetrahedral_monodentate ) {
   run_tests_with_counts(
-    Symmetry::Name::Tetrahedral, 
+    Symmetry::Name::Tetrahedral,
     {
     // M_A
     std::make_tuple(
@@ -405,7 +405,7 @@ BOOST_AUTO_TEST_CASE( square_planar_monodentate ) {
 /* Octahedral tests */
 /* Expected values taken from
  * Miessler, Gary L., Tarr, Donald A.: Inorganic Chemistry, Third Edition.
- * Do not know whether these are correct! They are "all calculated using a 
+ * Do not know whether these are correct! They are "all calculated using a
  * computer program [...]."
  * The reference however is useful: WE Bennett, Inorg. Chem. 1969
  */
@@ -539,7 +539,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(2, 3),
           std::make_pair(4, 5)
         }),
-        4 
+        4
       ),
       // M(A-B)_2 CD
       std::make_tuple(
@@ -550,7 +550,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(0, 1),
           std::make_pair(2, 3)
         }),
-        11 
+        11
       ),
       // M(A-A)(B-C)DE
       std::make_tuple(
@@ -583,7 +583,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(0, 1),
           std::make_pair(1, 2)
         }),
-        9 
+        9
       ),
       // M(A-B-C)_2
       std::make_tuple(
@@ -621,7 +621,7 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
           std::make_pair(2, 3),
           std::make_pair(3, 4)
         }),
-        7 
+        7
       )
     }
   );

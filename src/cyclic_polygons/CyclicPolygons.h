@@ -119,11 +119,8 @@ std::vector<FloatType> centralAngles(
 template<typename FloatType>
 FloatType centralAnglesDeviation(
   const FloatType& circumradius,
-  const std::vector<FloatType>& edgeLengths,
-  const FloatType& longestEdge
+  const std::vector<FloatType>& edgeLengths
 ) {
-  assert(circumradius > longestEdge / 2);
-
   return temple::sum(
     centralAngles(circumradius, edgeLengths)
   ) - 2 * M_PI;
@@ -295,13 +292,13 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
 
   if(rootGuess < lowerBound) {
     rootGuess = lowerBound;
-  } 
+  }
 
   assert(lowerBound <= rootGuess && rootGuess <= upperBound);
 
   auto rootSearchLambda = [&](const FloatType& circumradius) -> std::tuple<FloatType, FloatType, FloatType> {
     return std::make_tuple<FloatType, FloatType, FloatType>(
-      circumcenterInside::centralAnglesDeviation(circumradius, edgeLengths, longestEdge),
+      circumcenterInside::centralAnglesDeviation(circumradius, edgeLengths),
       circumcenterInside::centralAnglesDeviationDerivative(circumradius, edgeLengths),
       circumcenterInside::centralAnglesDeviationSecondDerivative(circumradius, edgeLengths)
     );
@@ -323,7 +320,7 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
     throw std::logic_error("Could not find polygon circumradius!");
   }
 
-  if(std::fabs(circumcenterInside::centralAnglesDeviation(root, edgeLengths, longestEdge)) >= 1e-6) {
+  if(std::fabs(circumcenterInside::centralAnglesDeviation(root, edgeLengths)) >= 1e-6) {
     // Perhaps the circumcenter is outside the polygon?
 
     auto alternateSearchLambda = [&](const FloatType& circumradius) -> std::tuple<FloatType, FloatType, FloatType> {
@@ -407,7 +404,7 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
   /* If a1, a2, ..., aN satisfy: Each edge length smaller than sum of others
    * -> There exists a convex cyclic polygon (Iosif Pinelis, 2005)
    *
-   * Equivalent to saying largest value in set of edge lengths smaller than 
+   * Equivalent to saying largest value in set of edge lengths smaller than
    * sum of remainder, no need to check all of them.
    */
 

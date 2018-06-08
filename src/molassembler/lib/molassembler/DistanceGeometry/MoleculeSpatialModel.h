@@ -1,7 +1,8 @@
-#ifndef INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
-#define INCLUDE_DG_MOLECULE_SPATIAL_MODEL_H
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 
 #include "Molecule.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 
 /*! @file
  *
@@ -42,6 +43,19 @@ std::array<AtomIndexType, size> orderedIndexSequence(
   );
 }
 
+template<typename ... Inds>
+auto orderedSequence(Inds ... inds) {
+  std::array<AtomIndexType, sizeof...(inds)> indices {{
+    static_cast<AtomIndexType>(inds)...
+  }};
+
+  if(indices.front() > indices.back()) {
+    std::reverse(indices.begin(), indices.end());
+  }
+
+  return indices;
+}
+
 /*!
  * Keeps a record of the internal dimension bounds that a molecular graph is
  * interpreted as and permits the generation of a distance bounds matrix.
@@ -51,16 +65,14 @@ public:
 /* Typedefs */
   struct ModelGraphWriter;
 
-  enum class DistanceMethod {
-    Uniform,
-    UFFLike
-  };
-
 private:
   // Closures
   const Molecule& _molecule;
 
   // Mutable state
+
+  double _looseningMultiplier;
+
   std::map<
     std::array<AtomIndexType, 2>,
     ValueBounds
@@ -87,14 +99,31 @@ public:
   static constexpr double bondRelativeVariance = 0.01;
   //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
   static constexpr double angleAbsoluteVariance = M_PI / 36; // ~ 5°
+  //! Absolute dihedral angle variance in radians.
+  static constexpr double dihedralAbsoluteVariance = M_PI / 36; // ~ 5°
 
-  static double spiroCrossAngle(const double& alpha, const double& beta);
+/* Static functions */
+  static boost::optional<ValueBounds> coneAngle(
+    const std::vector<AtomIndexType>& baseConstituents,
+    const ValueBounds& coneHeightBounds,
+    const double bondRelativeVariance,
+    const GraphType& graph,
+    const Cycles& etaLessCycles
+  );
+
+  static double spiroCrossAngle(const double alpha, const double beta);
+
+  static ValueBounds ligandDistanceFromCenter(
+    const std::vector<AtomIndexType>& ligandIndices,
+    const AtomIndexType centralIndex,
+    const double bondRelativeVariance,
+    const GraphType& graph
+  );
 
 /* Constructor */
   MoleculeSpatialModel(
     const Molecule& molecule,
-    const DistanceMethod& distanceMethod = DistanceMethod::UFFLike,
-    const double& looseningMultiplier = 1.0
+    const double looseningMultiplier = 1.0
   );
 
 /* Modification */
@@ -102,10 +131,15 @@ public:
    * Sets the bond bounds to the model. Does not check if previous information
    * exists
    */
-  void setBondBounds(
+  void setBondBoundsIfEmpty(
     const std::array<AtomIndexType, 2>& bondIndices,
-    const double& centralValue,
-    const double& relativeVariance
+    const double centralValue
+  );
+
+  //! Sets bond bounds to exact value bounds.
+  void setBondBoundsIfEmpty(
+    const std::array<AtomIndexType, 2>& bondIndices,
+    const ValueBounds& bounds
   );
 
   /*!
@@ -114,8 +148,13 @@ public:
    */
   void setAngleBoundsIfEmpty(
     const std::array<AtomIndexType, 3>& angleIndices,
-    const double& centralValue,
-    const double& absoluteVariance
+    const double centralValue,
+    const double absoluteVariance
+  );
+
+  void setAngleBoundsIfEmpty(
+    const std::array<AtomIndexType, 3>& angleIndices,
+    const ValueBounds& bounds
   );
 
   /*!
@@ -124,9 +163,12 @@ public:
    */
   void setDihedralBoundsIfEmpty(
     const std::array<AtomIndexType, 4>& dihedralIndices,
-    const double& lower,
-    const double& upper
+    const double lower,
+    const double upper
   );
+
+  //! Adds [0, 2π] default angle bounds for all bonded atom triples
+  void addDefaultAngles();
 
   /*!
    * Adds [0, 2π] default dihedrals to the model. Use immediately before
@@ -137,17 +179,33 @@ public:
    */
   void addDefaultDihedrals();
 
-  using BoundList = std::vector<
-    std::tuple<AtomIndexType, AtomIndexType, ValueBounds>
+  using BoundsList = std::map<
+    std::array<AtomIndexType, 2>,
+    ValueBounds
   >;
 
-  BoundList makeBoundList() const;
+/* Information */
 
-  std::vector<
-    Stereocenters::ChiralityConstraintPrototype
-  > getChiralityPrototypes() const;
+  boost::optional<ValueBounds> coneAngle(
+    const std::vector<AtomIndexType>& ligandIndices,
+    const ValueBounds& coneHeightBounds
+  ) const;
 
   void dumpDebugInfo() const;
+
+  ValueBounds ligandDistance(
+    const std::vector<AtomIndexType>& ligandIndices,
+    const AtomIndexType centralIndex
+  ) const;
+
+
+  std::vector<ChiralityConstraint> getChiralityConstraints() const;
+
+  [[deprecated]]
+  DistanceBoundsMatrix makeBounds() const;
+
+  BoundsList makeBoundsList() const;
+
   void writeGraphviz(const std::string& filename) const;
 };
 

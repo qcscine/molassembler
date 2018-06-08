@@ -6,19 +6,22 @@ namespace molassembler {
 
 namespace DistanceGeometry {
 
+constexpr double DistanceBoundsMatrix::defaultLower;
+constexpr double DistanceBoundsMatrix::defaultUpper;
+
 DistanceBoundsMatrix::DistanceBoundsMatrix() = default;
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) {
   _matrix.resize(N, N);
-  _matrix.triangularView<Eigen::Lower>().setZero();
-  _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(100);
+  _matrix.triangularView<Eigen::Lower>().setConstant(defaultLower);
+  _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(defaultUpper);
 }
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) : _matrix {matrix} {}
 
-bool DistanceBoundsMatrix::setUpperBound(const AtomIndexType& i, const AtomIndexType& j, double newUpperBound) {
+bool DistanceBoundsMatrix::setUpperBound(const AtomIndexType i, const AtomIndexType j, const double newUpperBound) {
   if(
-    upperBound(i, j) > newUpperBound
+    upperBound(i, j) >= newUpperBound
     && newUpperBound > lowerBound(i, j)
   ) {
     _upperBound(i, j) = newUpperBound;
@@ -28,9 +31,9 @@ bool DistanceBoundsMatrix::setUpperBound(const AtomIndexType& i, const AtomIndex
   return false;
 }
 
-bool DistanceBoundsMatrix::setLowerBound(const AtomIndexType& i, const AtomIndexType& j, const double& newLowerBound) {
+bool DistanceBoundsMatrix::setLowerBound(const AtomIndexType i, const AtomIndexType j, const double newLowerBound) {
   if(
-    lowerBound(i, j) < newLowerBound
+    lowerBound(i, j) <= newLowerBound
     && newLowerBound < upperBound(i, j)
   ) {
     _lowerBound(i, j) = newLowerBound;

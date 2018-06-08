@@ -1,8 +1,13 @@
 #ifndef INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 #define INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 
+#include "detail/StdlibTypeAlgorithms.h"
 #include "Molecule.h"
-#include "StdlibTypeAlgorithms.h"
+
+/*!@file
+ *
+ * Contains various descriptor calculations for Molecule instances
+ */
 
 namespace molassembler {
 
@@ -21,16 +26,12 @@ unsigned numRotatableBonds(
   const Molecule& mol,
   const unsigned cycleThreshold = 5
 ) {
-  CycleData cycleData = mol.getCycleData();
+  Cycles cycleData = mol.getCycleData();
 
   std::map<GraphType::edge_descriptor, unsigned> smallestCycle;
 
-  for(
-    auto cycleIter = cycleData.getCyclesIterator();
-    !cycleIter.atEnd();
-    cycleIter.advance()
-  ) {
-    const auto cycleEdges = cycleIter.getCurrentCycle();
+  for(const auto cyclePtr : cycleData) {
+    const auto cycleEdges = Cycles::edges(cyclePtr, mol.getGraph());
     const unsigned cycleSize = cycleEdges.size();
 
     for(const auto& edge : cycleEdges) {

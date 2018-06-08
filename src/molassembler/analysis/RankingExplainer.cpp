@@ -7,11 +7,11 @@
 
 #include "temple/Containers.h"
 
+#include "detail/StdlibTypeAlgorithms.h"
 #include "GraphAlgorithms.h"
 #include "IO.h"
 #include "Log.h"
 #include "RankingTree.h"
-#include "StdlibTypeAlgorithms.h"
 
 #include <random>
 
@@ -31,7 +31,13 @@ void writeExpandedTree(
     + fileName
   );
 
-  auto expandedTree = RankingTree(molecule, expandOnIndex);
+  auto expandedTree = RankingTree(
+    molecule.getGraph(),
+    molecule.getCycleData(),
+    molecule.getStereocenterList(),
+    molecule.dumpGraphviz(),
+    expandOnIndex
+  );
 
   std::ofstream dotFile(fileName + ".dot");
   dotFile << expandedTree.dumpGraphviz();

@@ -15,6 +15,7 @@
 #include <boost/range/numeric.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
+double divByThree (unsigned a) PURITY_STRONG;
 double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
 }
@@ -166,7 +167,7 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   );
 
   static_assert(
-    std::is_same<decltype(fMapped), std::set<double>>::value, 
+    std::is_same<decltype(fMapped), std::set<double>>::value,
     "Map to same container does not work as expected"
   );
 
@@ -179,7 +180,7 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
   );
 
   static_assert(
-    std::is_same<decltype(xMapped), std::vector<unsigned long>>::value, 
+    std::is_same<decltype(xMapped), std::vector<unsigned long>>::value,
     "Map to same container does not work as expected"
   );
 }
@@ -209,3 +210,25 @@ BOOST_AUTO_TEST_CASE(concatenateTests) {
   );
 }
 
+unsigned quaternarySum(
+  const unsigned a,
+  const unsigned b,
+  const unsigned c,
+  const unsigned d
+) PURITY_STRONG;
+
+unsigned quaternarySum(
+  const unsigned a,
+  const unsigned b,
+  const unsigned c,
+  const unsigned d
+) {
+  return a + b + c + d;
+}
+
+BOOST_AUTO_TEST_CASE(unpackArrayTests) {
+  std::array<unsigned, 4> values {{1, 2, 3, 5}};
+  BOOST_CHECK(
+    temple::unpackArrayToFunction(values, quaternarySum) == 11u
+  );
+}

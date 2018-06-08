@@ -27,8 +27,6 @@ if(UNIX)
   add_definitions(-fPIC)
 endif()
 
-target_compile_options(stereopermutation PUBLIC -Wall -Wpedantic -Wextra)
-
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
   message(STATUS "Selected release build")
   # no debug information, disable assert

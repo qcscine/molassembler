@@ -4,15 +4,6 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(stereopermutations)
 
-# compile flags
-set(WARNING_FLAGS "-Wall -Wpedantic -Wextra")
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# declaration
-project(StericUniqueness)
-
-
 enable_testing()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")

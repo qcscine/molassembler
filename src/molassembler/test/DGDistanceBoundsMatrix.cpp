@@ -62,7 +62,7 @@ Eigen::MatrixXd boundsToSlack(const Eigen::MatrixXd& bounds) {
 
 std::string flattenMatrix(const Eigen::MatrixXd& matrix) {
   std::string retString;
-  
+
   for(unsigned i = 0; i < matrix.rows(); i++) {
     for(unsigned j = 0; j < matrix.cols(); j++) {
       retString += std::to_string(matrix(i, j));
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE( boundsFromSymmetryTests ) {
 
     molassembler::DistanceGeometry::DistanceBoundsMatrix boundsMatrix {
       molecule,
-      info.boundList
+      info.bounds
     };
 
     outStream << enumPair.index << "," << 0 << ","

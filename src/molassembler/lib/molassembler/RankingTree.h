@@ -1,5 +1,5 @@
-#ifndef INCLUDE_MOLECULE_MANIP_RANKING_HIERARCHICAL_TREE_H
-#define INCLUDE_MOLECULE_MANIP_RANKING_HIERARCHICAL_TREE_H
+#ifndef INCLUDE_MOLASSEMBLER_RANKING_HIERARCHICAL_TREE_H
+#define INCLUDE_MOLASSEMBLER_RANKING_HIERARCHICAL_TREE_H
 
 /* Compile-time optimization options */
 /* If RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS is defined, RankingTree
@@ -18,15 +18,19 @@
  * For particularly complex trees, it is, however, absolutely essential so that
  * ranking completes in a reasonable timeframe.
  */
-#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
+//#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
+#include "detail/BuildTypeSwitch.h"
 #include "BondDistance.h"
-#include "BuildTypeSwitch.h"
 #include "Log.h"
 #include "Molecule.h"
 #include "OrderDiscoveryHelper.h"
 
+#include "boost/variant.hpp"
+
 /* TODO
+ * - Maybe you can only add transferability edges when in down-only BFS?
+ * - Consider transition to more unordered containers
  * - Pseudo-asymmetry considerations
  *   - Is the propagation of pseudoasymmetry REALLY necessary? It makes sense
  *     to permute a stereocenter designated as pseudo-asymmetric. Dunno if
@@ -56,7 +60,7 @@
 /*! @file
  *
  * Centerpoint of library ranking algorithm. Implements the RankingTree class,
- * which can be instantiated on any atomic index in a Molecule, which 
+ * which can be instantiated on any atomic index in a Molecule, which
  * splits the Molecule into an acyclic tree. That tree can then be used to rank
  * that atom's direct substituents according to IUPAC-like sequence rules.
  */
@@ -66,7 +70,7 @@ namespace molassembler {
 /*!
  * Central class for unified IUPAC-like ranking of organic and inorganic
  * structures. The general procedure is that any cycles are broken down in a BFS
- * iteration through the molecular graph at the atom vertex of instantiation. 
+ * iteration through the molecular graph at the atom vertex of instantiation.
  * Afterwards, all branches are expanded in a DFS-like manner to ensure that
  * cycle closures are properly reported as duplicate atoms. In the rank() member
  * function, the actual ranking as demanded by the IUPAC sequence rules (adapted
@@ -92,21 +96,28 @@ private:
 #endif
 
 public:
-  /*! The optimized expansion only expands positions that are needed for ranking
+  /*! Option deciding in what manner the ranking tree is expanded
+   *
+   * The optimized expansion only expands positions that are needed for ranking
    * while applying sequence rule 1 immediately. Full expansion expands the
    * entire tree indiscriminately of whether the information will ever be needed
    * prior to applying any sequence rules.
    */
-  enum ExpansionOption {
+  enum class ExpansionOption {
+    //! Expand the tree only as needed
     Optimized,
+    //! Exhaustively expand all vertices until completion before ranking
     Full
   };
 
   //! Data class that sets which supplementary data is stored for a tree vertex
   struct VertexData {
+    //! The original molecule index this vertex represents
     AtomIndexType molIndex;
+    //! Whether this vertex in the tree represents a duplicate
     bool isDuplicate;
 
+    //! A vertex-central stereocenter may be instantiated here or may not
     boost::optional<Stereocenters::CNStereocenter> stereocenterOption;
 
     // TODO not quite ready for this yet
@@ -170,7 +181,10 @@ private:
 #endif
 
   // Closures
-  const Molecule& _moleculeRef;
+  const GraphType& _graphRef;
+  const Cycles& _cyclesRef;
+  const StereocenterList& _stereocentersRef;
+  const std::string _adaptedMolGraphviz;
 
 /* Minor helper classes and functions */
   //! Helper class to write a graphviz representation of the generated tree
@@ -207,7 +221,7 @@ private:
     const std::set<TreeVertexIndex>& excludedIndices
   ) const;
 
-  /*! 
+  /*!
    * Returns the node degree, excluding edges to or from nodes marked as
    * duplicate
    */
@@ -295,7 +309,7 @@ private:
   /*!
    * Compares all possible pairs of multisets of yet undecided branches and
    * adds less-than relationships to the orderingHelper in case new
-   * relationships are discovered. 
+   * relationships are discovered.
    *
    * NOTE: This is a common pattern in the application of sequence rules,
    * although the multiset value type and the applied comparator may vary, so
@@ -309,7 +323,7 @@ private:
    *   they are compared are always the same, so we abstract over this type.
    *
    * @param comparisonSets A mapping from branch indices that are ranked in the
-   *   OrderDiscoveryHelper to multisets containing values that establish 
+   *   OrderDiscoveryHelper to multisets containing values that establish
    *   relative priority in the sequence rule currently being applied
    * @param undecidedSets This is a const reference to an up-to-date result
    *   value of the OrderDiscoveryHelper's getUndecidedSets() function. This
@@ -355,10 +369,10 @@ private:
   }
 
   /* Some helper structs to get _runBFS to compile smoothly. Although the
-   * boolean template parameters to _runBFS are logically constexpr, and any 
+   * boolean template parameters to _runBFS are logically constexpr, and any
    * false branches of if (boolean template parameter) are removed during
    * optimization, they must compile! This requirement is removed in C++17
-   * if-constexpr structures. 
+   * if-constexpr structures.
    *
    * So EdgeInserter and VertexInserter's primary template (with boolean
    * parameter specifying whether they should perform a task or not) does
@@ -490,7 +504,7 @@ private:
 
     static_assert(
       (
-        insertEdges 
+        insertEdges
         && !std::is_same<MultisetValueType, TreeVertexIndex>::value
       ) || (
         insertVertices
@@ -524,7 +538,7 @@ private:
     /* For each branch to compare, keep a set of seed indices to follow in an
      * iteration. These are expanded in each iteration as long as the branch
      * they contain remains relevant (i.e. its relation to the other branches
-     * is still unclear): They themselves are placed in the comparisonSet, 
+     * is still unclear): They themselves are placed in the comparisonSet,
      * while their respective adjacents are the new seeds for the next
      * iteration.
      */
@@ -547,7 +561,21 @@ private:
       visitedVertices.insert(sourceIndex);
     }
 
+    /*auto countNestedElements = [](
+      const std::vector<std::vector<TreeVertexIndex>>& nestedSets
+    ) -> unsigned {
+      return temple::sum(
+        temple::map(
+          nestedSets,
+          [](const std::vector<TreeVertexIndex>& elementsSet) -> unsigned {
+            return elementsSet.size();
+          }
+        )
+      );
+    };*/
+
     auto undecidedSets = orderingHelper.getUndecidedSets();
+    // unsigned undecidedElements = countNestedElements(undecidedSets);
 
     for(const auto& undecidedSet : undecidedSets) {
       for(const auto& undecidedBranch : undecidedSet) {
@@ -596,6 +624,15 @@ private:
     // Update the undecided sets
     undecidedSets = orderingHelper.getUndecidedSets();
 
+    /*{
+      unsigned u = countNestedElements(undecidedSets);
+      if(u > undecidedElements) {
+        throw std::logic_error("Undecided sets gained a new element!");
+      } else {
+        undecidedElements = u;
+      }
+    }*/
+
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       // Write debug graph files if the corresponding log particular is set
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
@@ -608,7 +645,7 @@ private:
         );
 
         _writeGraphvizFiles({
-          _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+          _adaptedMolGraphviz,
           dumpGraphviz(
             header,
             {sourceIndex},
@@ -661,7 +698,7 @@ private:
               visitedVertices.insert(seed);
 
               // In-edges are only relevant for omnidirectional BFS
-              for( 
+              for(
                 auto inIterPair = boost::in_edges(seed, _tree);
                 inIterPair.first != inIterPair.second;
                 ++inIterPair.first
@@ -734,6 +771,15 @@ private:
       // Recalculate the undecided sets
       undecidedSets = orderingHelper.getUndecidedSets();
 
+      /*{
+        unsigned u = countNestedElements(undecidedSets);
+        if(u > undecidedElements) {
+          throw std::logic_error("Undecided sets gained a new element!");
+        } else {
+          undecidedElements = u;
+        }
+      }*/
+
       // Increment depth
       ++depth;
 
@@ -746,7 +792,7 @@ private:
           header += "R"s + std::to_string(ruleNumber);
 
           _writeGraphvizFiles({
-            _adaptMolGraph(_moleculeRef.dumpGraphviz()),
+            _adaptedMolGraphviz,
             dumpGraphviz(
               header,
               {sourceIndex},
@@ -962,8 +1008,8 @@ private:
   ) const;
 
   /*!
-   * In all BFS-like iterations, we need to check that there are suitable 
-   * seeds to continue the BFS expansion for all branches that are yet 
+   * In all BFS-like iterations, we need to check that there are suitable
+   * seeds to continue the BFS expansion for all branches that are yet
    * undifferentiated. This is required in pretty much every sequence rule
    * application, so it is generalized here.
    *
@@ -975,13 +1021,13 @@ private:
    *   is useful since undecidedSets is a commonly required variable in the
    *   application of sequence rules and can therefore be used across all of
    *   them
-   * @returns Whether any of the branches that are yet considered equal (and 
+   * @returns Whether any of the branches that are yet considered equal (and
    *   thus together in one of the undecided sets) have any seeds for another
    *   BFS iteration
    */
   static bool _relevantSeeds(
     const std::map<
-      TreeVertexIndex, 
+      TreeVertexIndex,
       std::vector<TreeVertexIndex>
     >& seeds,
     const std::vector<
@@ -999,7 +1045,7 @@ private:
    * also included in this library.
    */
   void _applySequenceRules(
-    const boost::optional<Delib::PositionCollection>& positionsOption
+    const boost::optional<AngstromWrapper>& positionsOption
   );
 
   /*!
@@ -1032,63 +1078,34 @@ private:
 public:
 /* Sequence rule comparator classes for use in std::multiset */
 
-  /*! 
-   * Comparator class for comparing individual tree vertex indices according to
-   * IUPAC Sequence rule one. Handles all combinations of duplicate and
-   * non-duplicate nodes.
-   *
-   * NOTE: This is a non-default-instantiable Comparator, meaning care must be
-   * taken in the instantiation of the STL Container using this to avoid move
-   * and copy assignment operators. You must use in-place-construction!
-   */
+  // IUPAC Sequence rule one tree vertex comparator (see .cpp)
   struct SequenceRuleOneVertexComparator;
 
-  /*! 
-   * Comparator class for comparing individual tree edges according to IUPAC
-   * sequence rule three.
-   *
-   * NOTE: This is a non-default-instantiable Comparator, meaning care must be
-   * taken in the instantiation of the STL Container using this to avoid move
-   * and copy assignment operators. You must use in-place-construction!
-   */
+  // IUPAC Sequence rule three tree edge comparator (see .cpp)
   struct SequenceRuleThreeEdgeComparator;
 
-  /*! 
-   * Comparator class for comparing both tree vertices and edges according to
-   * IUPAC sequence rule four.
-   *
-   * NOTE: This is a non-default-instantiable Comparator, meaning care must be
-   * taken in the instantiation of the STL Container using this to avoid move
-   * and copy assignment operators. You must use in-place-construction!
-   */
+  // IUPAC Sequence rule four tree vertex and edge mixed comparator (see .cpp)
   struct SequenceRuleFourVariantComparator;
 
-  /*! 
-   * Comparator class for comparing both tree vertices and edges according to
-   * IUPAC sequence rule five.
-   *
-   * NOTE: This is a non-default-instantiable Comparator, meaning care must be
-   * taken in the instantiation of the STL Container using this to avoid move
-   * and copy assignment operators. You must use in-place-construction!
-   */
+  // IUPAC Sequence rule five tree vertex and edge mixed comparator (see .cpp)
   struct SequenceRuleFiveVariantComparator;
 
 
 /* Variant visitor helper classes */
 
-  //! Returns whether the vertex or edge has an instantiated Stereocenter
+  // Returns whether the vertex or edge has an instantiated Stereocenter
   class VariantHasInstantiatedStereocenter;
 
-  //! Returns the mixed depth (see _mixedDepth functions) of the vertex or edge
+  // Returns the mixed depth (see _mixedDepth functions) of the vertex or edge
   class VariantDepth;
 
-  //! Returns the source node of a vertex (identity) or an edge (source node)
+  // Returns the source node of a vertex (identity) or an edge (source node)
   class VariantSourceNode;
 
-  //! Returns a string representation of the stereocenter on vertex or edge
+  // Returns a string representation of the stereocenter on vertex or edge
   class VariantStereocenterStringRepresentation;
 
-  /*!
+  /*
    * Returns whether two variants' stereocenters form a like pair or not
    * according to the sub-rules in IUPAC sequence rule four.
    */
@@ -1103,11 +1120,14 @@ public:
    * at the atom instantiated upon.
    */
   RankingTree(
-    const Molecule& molecule,
+    const GraphType& graph,
+    const Cycles& cycles,
+    const StereocenterList& stereocenters,
+    const std::string molGraphviz,
     const AtomIndexType& atomToRank,
     const std::set<AtomIndexType>& excludeIndices = {},
     const ExpansionOption& expansionMethod = ExpansionOption::Optimized,
-    const boost::optional<Delib::PositionCollection>& positionsOption = boost::none
+    const boost::optional<AngstromWrapper>& positionsOption = boost::none
   );
 
   /*! Fetches the ranked result

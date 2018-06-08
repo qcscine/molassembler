@@ -6,8 +6,8 @@
 #include "FloatingPointComparison.h"
 
 /*! @file
- * 
- * Provides a \c constexpr class that stores the data of an upper-triangular 
+ *
+ * Provides a \c constexpr class that stores the data of an upper-triangular
  * matrix via a std::array and provides two-index access.
  */
 
@@ -15,34 +15,40 @@ namespace temple {
 
 namespace UpperTriangularMatrixImpl {
 
-// Can be changed to std::array and dependency on Array removed with C++17 
+// Can be changed to std::array and dependency on Array removed with C++17
 template<typename T, size_t size>
 using ArrayType = Array<T, size>;
 
 namespace index_conversion {
   //!  Converts from (i, j) matrix indices to the linear k index for the array
   template<size_t N, typename UnsignedType>
-  constexpr unsigned toSingleIndex(const UnsignedType& i, const UnsignedType& j) {
+  constexpr unsigned toSingleIndex(const UnsignedType i, const UnsignedType j) PURITY_STRONG;
+
+  template<size_t N, typename UnsignedType>
+  constexpr unsigned toSingleIndex(const UnsignedType i, const UnsignedType j) {
     return (
       N * (N - 1) / 2
-      - (N - i) * ((N - i) - 1) / 2 
+      - (N - i) * ((N - i) - 1) / 2
       + j - i - 1
     );
   }
 
   //! Converts from the linear array to (i, j) matrix indices
   template<size_t N, typename UnsignedType>
-  constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType& k) {
+  constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType k) PURITY_STRONG;
+
+  template<size_t N, typename UnsignedType>
+  constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType k) {
     UnsignedType i {
-      N - 2 
+      N - 2
       - static_cast<unsigned>(
         Math::floor(
           Math::sqrt(
             0.0
-            + 4 * N * (N - 1) 
-            - 8 * k 
+            + 4 * N * (N - 1)
+            - 8 * k
             - 7
-          ) / 2.0 
+          ) / 2.0
           - 0.5
         )
       )
@@ -51,15 +57,16 @@ namespace index_conversion {
     return {
       i,
       (
-        k + i + 1 
-        - N * (N - 1) / 2 
+        k + i + 1
+        - N * (N - 1) / 2
         + (N - i) * ((N - i) - 1) / 2
       )
     };
   }
 } // namespace index_conversion
 
-constexpr bool isValidMatrixSize(const size_t& dataSize) {
+constexpr bool isValidMatrixSize(const size_t dataSize) PURITY_STRONG;
+constexpr bool isValidMatrixSize(const size_t dataSize) {
   auto root = Math::sqrt(1.0 + 8 * dataSize);
 
   return(
@@ -71,7 +78,8 @@ constexpr bool isValidMatrixSize(const size_t& dataSize) {
   );
 }
 
-constexpr size_t getMatrixSize(const size_t& dataSize) {
+constexpr size_t getMatrixSize(const size_t dataSize) PURITY_STRONG;
+constexpr size_t getMatrixSize(const size_t dataSize) {
   return (
     1 + Math::sqrt(1.0 + 8 * dataSize)
   ) / 2;
@@ -80,7 +88,7 @@ constexpr size_t getMatrixSize(const size_t& dataSize) {
 } // namespace UpperTriangularMatrixImpl
 
 /*!
- * Stores the data of an upper-triangular matrix in a linear array in an 
+ * Stores the data of an upper-triangular matrix in a linear array in an
  * all-constexpr fashion.
  */
 template<typename ValueType, size_t dataSize>
@@ -129,7 +137,7 @@ public:
   constexpr const ValueType& at(
     const unsigned& i,
     const unsigned& j
-  ) const {
+  ) const PURITY_WEAK {
     if(i >= j || i >= N || j >= N) {
       throw "Index out of bounds!";
     }

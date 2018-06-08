@@ -20,6 +20,11 @@ enum class DistancesOption {
  * Constructs a prototypical symmetric (i.e. all ligands identical) molecule
  * with a Ruthenium center and Hydrogen substituents otherwise.
  */
+[[deprecated]]
+molassembler::Molecule symmetricMolecule(
+  const Symmetry::Name& symmetry
+);
+
 molassembler::Molecule symmetricMolecule(
   const Symmetry::Name& symmetry
 ) {
@@ -48,6 +53,10 @@ molassembler::Molecule symmetricMolecule(
  *
  * Does not set the central stereocenter symmetry.
  */
+[[deprecated]]
+molassembler::Molecule asymmetricMolecule(
+  const Symmetry::Name& symmetry
+);
 molassembler::Molecule asymmetricMolecule(
   const Symmetry::Name& symmetry
 ) {

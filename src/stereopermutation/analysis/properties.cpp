@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
     // Validate links (if present)
     Stereopermutation::LinksSetType links;
     if(options_variables_map.count("l")) {
-      /* Naive parse strategy: 
+      /* Naive parse strategy:
        * - remove all opening and closing brackets from the string
        * - split along commas, check size % 2 == 0
        * - parse non-overlapping pairwise as links
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
               a == ',' || std::isdigit(a)
             );
           }
-        ), 
+        ),
         linksString.end()
       );
 
@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
       links
     };
 
-    auto uniques = uniqueStereopermutationsWithWeights(
+    auto uniques = uniquesWithWeights(
       base,
       symmetryName,
       false

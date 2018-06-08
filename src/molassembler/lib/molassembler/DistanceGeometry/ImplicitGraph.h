@@ -1,11 +1,11 @@
 #ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
 #define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
 
-#include "boost/functional/hash.hpp"
 #include "boost/variant.hpp"
 #include "boost/optional.hpp"
 #include "boost_outcome/outcome.hpp"
-#include <unordered_map>
+#include <array>
+#include <map>
 #include <tuple>
 #include "Eigen/Core"
 
@@ -29,8 +29,9 @@ class Molecule;
 
 namespace DistanceGeometry {
 
-// Forward-declare Partiality enum
+// Forward-declarations
 enum class Partiality;
+class DistanceBoundsMatrix;
 
 /*! Simulates a graph from which triangle inequality bounds can be calculated by shortest-paths
  *
@@ -147,27 +148,40 @@ private:
   Eigen::MatrixXd _distances;
 
   /* To outer indexing */
-  inline static VertexDescriptor left(const VertexDescriptor& a) {
+  inline static VertexDescriptor left(const VertexDescriptor a) {
     return 2 * a;
   }
 
-  inline static VertexDescriptor right(const VertexDescriptor& a) {
+  inline static VertexDescriptor right(const VertexDescriptor a) {
     return 2 * a + 1;
   }
 
-  inline static VertexDescriptor internal(const VertexDescriptor& i) {
+  inline static VertexDescriptor internal(const VertexDescriptor i) {
     // Integer division rounds down, which is perfect
     return i / 2;
   }
 
+  static void _explainContradictionPaths(
+    const VertexDescriptor a,
+    const VertexDescriptor b,
+    const std::vector<VertexDescriptor>& predecessors,
+    const std::vector<double>& distances
+  );
+
 public:
-  using BoundList = std::vector<
-    std::tuple<VertexDescriptor, VertexDescriptor, ValueBounds>
+  ImplicitGraph(
+    const Molecule& molecule,
+    const DistanceBoundsMatrix& bounds
+  );
+
+  using BoundsList = std::map<
+    std::array<VertexDescriptor, 2>,
+    ValueBounds
   >;
 
   ImplicitGraph(
     const Molecule& molecule,
-    const BoundList& bounds
+    const BoundsList& bounds
   );
 
   /* Modification */
@@ -177,8 +191,8 @@ public:
    * and b yet. If there is, it gets overwritten.
    */
   void addBound(
-    const VertexDescriptor& a,
-    const VertexDescriptor& b,
+    const VertexDescriptor a,
+    const VertexDescriptor b,
     const ValueBounds& bound
   );
 
@@ -208,13 +222,13 @@ public:
    *
    * Complexity: O(1)
    */
-  std::pair<EdgeDescriptor, bool> edge(const VertexDescriptor& i, const VertexDescriptor& j) const;
+  std::pair<EdgeDescriptor, bool> edge(const VertexDescriptor i, const VertexDescriptor j) const;
 
   //! Checks if there is explicit information present for a left-to-right edge
   bool hasExplicit(const EdgeDescriptor& edge) const;
 
   /* To inner indexing */
-  inline static bool isLeft(const VertexDescriptor& i) {
+  inline static bool isLeft(const VertexDescriptor i) {
     return i % 2 == 0;
   }
 
@@ -239,6 +253,9 @@ public:
    *
    * Complexity: O(N² * O(shortest paths algorithm)). For experimental data,
    * run analysis_BenchmarkGraphAlgorithms.
+   *
+   * NOTE: This double definition may seem strange, but is necessary to use
+   * the forward-declared enum class Partiality correctly.
    */
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix() noexcept;
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality) noexcept;
@@ -261,14 +278,14 @@ public:
   //! Returns the number of out-edges for a particular vertex
   VertexDescriptor out_degree(VertexDescriptor vertex) const;
 
-  double& lowerBound(const VertexDescriptor& a, const VertexDescriptor& b);
-  double& upperBound(const VertexDescriptor& a, const VertexDescriptor& b);
+  double& lowerBound(const VertexDescriptor a, const VertexDescriptor b);
+  double& upperBound(const VertexDescriptor a, const VertexDescriptor b);
 
-  double lowerBound(const VertexDescriptor& a, const VertexDescriptor& b) const;
-  double upperBound(const VertexDescriptor& a, const VertexDescriptor& b) const;
+  double lowerBound(const VertexDescriptor a, const VertexDescriptor b) const;
+  double upperBound(const VertexDescriptor a, const VertexDescriptor b) const;
 
   //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
-  double maximalImplicitLowerBound(const VertexDescriptor& i) const;
+  double maximalImplicitLowerBound(const VertexDescriptor i) const;
 
   //! A helper struct permitting read-access to an edge weight via an edge descriptor
   struct EdgeWeightMap : public boost::put_get_helper<double, EdgeWeightMap> {
@@ -292,8 +309,8 @@ public:
     using key_type = VertexDescriptor;
     using reference = VertexDescriptor;
 
-    inline VertexDescriptor operator [] (const VertexDescriptor& v) const { return v; }
-    inline VertexDescriptor operator () (const VertexDescriptor& v) const { return v; }
+    inline VertexDescriptor operator [] (const VertexDescriptor v) const { return v; }
+    inline VertexDescriptor operator () (const VertexDescriptor v) const { return v; }
   };
 
   using VertexIteratorBase = std::iterator<
@@ -301,7 +318,7 @@ public:
     VertexDescriptor,                   // value_type
     int,                             // difference_type
     VertexDescriptor*,                  // pointer
-    const VertexDescriptor&             // reference
+    const VertexDescriptor             // reference
   >;
 
   //! An random access iterator through all vertex descriptors of the graph
@@ -412,12 +429,12 @@ public:
     // Constructor for the begin iterator
     in_group_edge_iterator(
       const ImplicitGraph& base,
-      const VertexDescriptor& i
+      const VertexDescriptor i
     );
     // Constructor for the end iterator
     in_group_edge_iterator(
       const ImplicitGraph& base,
-      const VertexDescriptor& i,
+      const VertexDescriptor i,
       bool
     );
     in_group_edge_iterator(const in_group_edge_iterator& other);
@@ -479,14 +496,14 @@ public:
     }
   };
 
-  in_group_edge_iterator in_group_edges_begin(const VertexDescriptor& i) const {
+  inline in_group_edge_iterator in_group_edges_begin(const VertexDescriptor i) const {
     return {
       *this,
       i
     };
   }
 
-  in_group_edge_iterator in_group_edges_end(const VertexDescriptor& i) const {
+  inline in_group_edge_iterator in_group_edges_end(const VertexDescriptor i) const {
     return {
       *this,
       i,

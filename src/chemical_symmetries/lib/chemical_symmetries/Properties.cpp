@@ -30,8 +30,8 @@ temple::MinimalCache<
 > mappingsCache;
 
 const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
-  const Symmetry::Name& a,
-  const Symmetry::Name& b,
+  const Symmetry::Name a,
+  const Symmetry::Name b,
   const boost::optional<unsigned>& removedIndexOption
 ) {
   if(a == b) {
@@ -143,7 +143,7 @@ temple::MinimalCache<
 > hasMultipleUnlinkedCache;
 
 bool hasMultipleUnlinkedAssignments(
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Name symmetryName,
   unsigned nIdenticalLigands
 ) {
   if(nIdenticalLigands == Symmetry::size(symmetryName)) {

@@ -5,15 +5,10 @@
 
 namespace molassembler {
 
-std::basic_ostream<char>& operator << (
-  std::basic_ostream<char>& os,
-  const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& stereocenterPtr
-) {
-  os << stereocenterPtr -> info();
-  return os;
-}
-
 namespace Stereocenters {
+
+/* Static constants */
+constexpr AtomIndexType Stereocenter::removalPlaceholder;
 
 bool compareStereocenterEqual(
   const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& a,
@@ -25,14 +20,14 @@ bool compareStereocenterEqual(
       auto bDerived = std::dynamic_pointer_cast<CNStereocenter>(b);
 
       return *aDerived == *bDerived;
-    } 
-    
+    }
+
     // Remaining case is EZStereocenter
     auto aDerived = std::dynamic_pointer_cast<EZStereocenter>(a);
     auto bDerived = std::dynamic_pointer_cast<EZStereocenter>(b);
 
     return *aDerived == *bDerived;
-  } 
+  }
 
   // Differing types are unequal
   return false;
@@ -56,14 +51,13 @@ bool compareStereocenterLessThan(
     auto bDerived = std::dynamic_pointer_cast<CNStereocenter>(b);
 
     return *aDerived < *bDerived;
-  } 
-  
+  }
+
   // Remaining case is EZStereocenter
   auto aDerived = std::dynamic_pointer_cast<EZStereocenter>(a);
   auto bDerived = std::dynamic_pointer_cast<EZStereocenter>(b);
 
   return *aDerived < *bDerived;
-
 }
 
 } // namespace Stereocenters

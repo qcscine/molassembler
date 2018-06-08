@@ -32,7 +32,7 @@ bool hasTransArrangedPairs(
  *  to cis arrangements. Xantphos (with bridge length 7) is the smallest
  *  trans-spanning ligand mentioned in Wikipedia.
  */
-std::vector<Stereopermutation> uniqueStereopermutations(
+std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups = true
@@ -48,7 +48,7 @@ struct StereopermutationsWithWeights {
  * Returns the set of rotationally unique assignments including absolute
  * occurrence counts.
  */
-StereopermutationsWithWeights uniqueStereopermutationsWithWeights(
+StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
   const bool& removeTransSpanningGroups = true

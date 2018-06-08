@@ -4,6 +4,12 @@
 #include "boost/graph/graph_traits.hpp"
 #include "boost/graph/graph_concepts.hpp"
 
+/*!@file
+ *
+ * Contains specializations of the Gor1 algorithm for use with ImplicitGraph
+ * and ExplicitGraph
+ */
+
 // Forward-declare ImplicitGraph
 namespace molassembler {
 namespace DistanceGeometry {
@@ -54,7 +60,7 @@ template<
   class DistanceMap,
   class PredecessorMap,
   class ColorMap
-> 
+>
 std::enable_if_t<
   std::is_same<IncidenceGraph, molassembler::DistanceGeometry::ImplicitGraph>::value,
   void
@@ -142,7 +148,7 @@ template<
   class PredecessorMap,
   class ColorMap,
   typename VertexDescriptor
-> 
+>
 std::enable_if_t<
   std::is_same<IncidenceGraph, molassembler::DistanceGeometry::ImplicitGraph>::value,
   bool
@@ -194,7 +200,7 @@ std::enable_if_t<
          * any of v's descendants to B. Mark it black though to avoid re-doing
          * this when the vertex is popped from the stack a second time
          */
-        B.push(v); 
+        B.push(v);
         put(color_map, v, Color::black());
 
         gor1_ig_scan(

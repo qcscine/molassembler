@@ -1,5 +1,8 @@
 #include <dlib/optimization.h>
 #include <Eigen/Dense>
+
+#include "Delib/Constants.h"
+
 #include "temple/Containers.h"
 #include "temple/Random.h"
 
@@ -25,11 +28,11 @@ namespace DistanceGeometry {
 
 namespace predicates {
 
-bool hasZeroPermutationsStereocenters(const Molecule& molecule) {
+bool hasZeroAssignmentStereocenters(const Molecule& molecule) {
   return temple::any_of(
     molecule.getStereocenterList(),
     [](const auto& stereocenterPtr) -> bool {
-      return stereocenterPtr -> numStereopermutations() == 0;
+      return stereocenterPtr -> numAssignments() == 0;
     }
   );
 }
@@ -47,190 +50,43 @@ bool hasUnassignedStereocenters(const Molecule& mol) {
 
 namespace detail {
 
-Delib::PositionCollection convertToPositionCollection(
+AngstromWrapper convertToAngstromWrapper(
   const Eigen::VectorXd& vectorizedPositions
 ) {
   const unsigned dimensionality = 4;
   assert(vectorizedPositions.size() % dimensionality == 0);
 
-  Delib::PositionCollection positions;
   const unsigned N = vectorizedPositions.size() / dimensionality;
+  AngstromWrapper angstromWrapper {N};
 
   for(unsigned i = 0; i < N; i++) {
-    positions.push_back(
-      Delib::Position {
-        vectorizedPositions.template segment<3>(
-          static_cast<Eigen::Index>(dimensionality) * i
-        )
-      }
-    );
+    angstromWrapper.positions.at(i) = Delib::Position {
+      vectorizedPositions.template segment<3>(
+        static_cast<Eigen::Index>(dimensionality) * i
+      )
+    };
   }
 
-  return positions;
+  return angstromWrapper;
 }
 
-Delib::PositionCollection convertToPositionCollection(
+AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 ) {
   const Eigen::Index dimensionality = 4;
   assert(vectorizedPositions.size() % dimensionality == 0);
 
-  Delib::PositionCollection positions;
   const unsigned N = vectorizedPositions.size() / dimensionality;
+  AngstromWrapper angstromWrapper {N};
   for(unsigned i = 0; i < N; i++) {
-    positions.push_back(
-      Delib::Position {
-        vectorizedPositions(dimensionality * i),
-        vectorizedPositions(dimensionality * i + 1),
-        vectorizedPositions(dimensionality * i + 2)
-      }
-    );
-  }
-
-  return positions;
-}
-
-
-outcome::result<ChiralityConstraint> propagate(
-  const DistanceBoundsMatrix& bounds,
-  const Stereocenters::ChiralityConstraintPrototype& prototype
-) {
-  if(prototype.target == Stereocenters::ChiralityConstraintTarget::Flat) {
-    // TODO introduce flatness tolerance
-    return ChiralityConstraint {
-      prototype.indices,
-      0.0,
-      0.0
+    angstromWrapper.positions.at(i) = Delib::Position {
+      vectorizedPositions(dimensionality * i),
+      vectorizedPositions(dimensionality * i + 1),
+      vectorizedPositions(dimensionality * i + 2)
     };
   }
 
-  /* Calculate the upper and lower bounds on the volume. The target volume of
-   * the chirality constraint created by the tetrahedron is calculated using
-   * internal coordinates (the Cayley-Menger determinant), always leading to V
-   * > 0, so depending on the current assignment, the sign of the result is
-   * switched.  The formula used later in chirality constraint calculation for
-   * explicit coordinates is adjusted by V' = 6 V to avoid an unnecessary
-   * factor, so we do that here too:
-   *
-   *    288 V²  = |...|               | substitute V' = 6 V
-   * -> 8 (V')² = |...|
-   * ->      V' = sqrt(|...| / 8)
-   *
-   * where the Cayley-Menger determinant |...| is square symmetric:
-   *
-   *          |   0    1    1    1    1  |
-   *          |        0  d12² d13² d14² |
-   *  |...| = |             0  d23² d24² |
-   *          |                  0  d34² |
-   *          |  ...                  0  |
-   *
-   */
-
-  Eigen::Matrix<double, 5, 5> lowerMatrix, upperMatrix;
-
-  // Order of operations here is very important!
-
-  lowerMatrix.row(0).setOnes();
-  upperMatrix.row(0).setOnes();
-
-  lowerMatrix.diagonal().setZero();
-  upperMatrix.diagonal().setZero();
-
-  for(unsigned i = 0; i < 4; i++) {
-    for(unsigned j = i + 1; j < 4; j++) {
-      const double& lowerBound = bounds.lowerBound(
-        prototype.indices.at(i),
-        prototype.indices.at(j)
-      );
-
-      const double& upperBound = bounds.upperBound(
-        prototype.indices.at(i),
-        prototype.indices.at(j)
-      );
-
-      lowerMatrix(
-        static_cast<Eigen::Index>(i) + 1,
-        static_cast<Eigen::Index>(j) + 1
-      ) = lowerBound * lowerBound;
-
-      upperMatrix(
-        static_cast<Eigen::Index>(i) + 1,
-        static_cast<Eigen::Index>(j) + 1
-      ) = upperBound * upperBound;
-    }
-  }
-
-  const double boundFromLower = static_cast<
-    Eigen::Matrix<double, 5, 5>
-  >(
-    lowerMatrix.selfadjointView<Eigen::Upper>()
-  ).determinant();
-
-  const double boundFromUpper = static_cast<
-    Eigen::Matrix<double, 5, 5>
-  >(
-    upperMatrix.selfadjointView<Eigen::Upper>()
-  ).determinant();
-
-#ifndef NDEBUG
-  // Log in Debug builds, provided particular is set
-  Log::log(Log::Particulars::PrototypePropagatorDebugInfo)
-    << "Lower bound Cayley-menger matrix (determinant=" << boundFromLower <<  "): " << std::endl << lowerMatrix << std::endl
-    << "Upper bound Cayley-menger matrix (determinant=" << boundFromUpper <<  "): " << std::endl << upperMatrix << std::endl;
-#endif
-
-  /* Check to ensure a volume is constructible from the passed bounds.
-   * If the Cayley-Menger determinant is < 0, then it is impossible. The rather
-   * lax criterion below follows from determinant calculation errors. Rather
-   * be tolerant of approximately zero-volume chirality constraints (which MAY
-   * happen) than have this fail.
-   */
-  if(boundFromLower < -1e-7 || boundFromUpper < -1e-7) {
-    return DGError::GraphImpossible;
-  }
-
-  /* Although it is tempting to assume that the Cayley-Menger determinant using
-   * the lower bounds is smaller than the one using upper bounds, this is NOT
-   * true. We cannot a priori know which of both yields the lower or upper bounds
-   * on the 3D volume, and hence must ensure only that the ordering is preserved
-   * in the generation of the ChiralityConstraint, which checks that the lower
-   * bound on the volume is certainly smaller than the upper one.
-   *
-   * You can check this assertion with a CAS. The relationship between both
-   * determinants (where u_ij = l_ij + Δ) is wholly indeterminant, i.e. no
-   * logical operator (<, >, <=, >=, ==) between both is true. It completely
-   * depends on the individual values. Maybe in very specific cases one can
-   * deduce some relationship, but not generally.
-   */
-
-  /* Abs is necessary to ensure that negative almost-zeros are interpreted as
-   * positive near-zeros. Additionally, we do the adjustment by factor 8 here
-   * (see above)
-   */
-  const double volumeFromLower = std::sqrt(std::fabs(boundFromLower) / 8);
-  const double volumeFromUpper = std::sqrt(std::fabs(boundFromUpper) / 8);
-
-  if(prototype.target == Stereocenters::ChiralityConstraintTarget::Negative) {
-    /* For negative case, be aware inversion around 0 (*= -1) flips the inequality
-     *      lower <  upper | *(-1)
-     * ->  -lower > -upper
-     *
-     * So we construct it with the previous upper bound negated as the lower bound
-     * and similarly for the previous lower bound.
-     */
-    return ChiralityConstraint {
-      prototype.indices,
-      - std::max(volumeFromLower, volumeFromUpper),
-      - std::min(volumeFromLower, volumeFromUpper),
-    };
-  }
-
-  // Regular case (Positive target)
-  return ChiralityConstraint {
-    prototype.indices,
-    std::min(volumeFromLower, volumeFromUpper),
-    std::max(volumeFromLower, volumeFromUpper),
-  };
+  return angstromWrapper;
 }
 
 bool exceededFailureRatio(
@@ -243,18 +99,17 @@ bool exceededFailureRatio(
 
 // Non-debug version of DG
 outcome::result<
-  std::vector<Delib::PositionCollection>
+  std::vector<AngstromWrapper>
 > runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption,
-  const bool& useYInversionTrick,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod
+  const bool& useYInversionTrick
 ) {
   // TODO where to split control depending on loosening factor of spatial model?
 
-  if(predicates::hasZeroPermutationsStereocenters(molecule)) {
-    return DGError::ZeroPermutationStereocenters;
+  if(predicates::hasZeroAssignmentStereocenters(molecule)) {
+    return DGError::ZeroAssignmentStereocenters;
   }
 
   MoleculeDGInformation DGData;
@@ -263,19 +118,16 @@ outcome::result<
    */
   bool regenerateEachStep = predicates::hasUnassignedStereocenters(molecule);
   if(!regenerateEachStep) {
-    DGData = gatherDGInformation(
-      molecule,
-      distanceMethod
-    );
+    DGData = gatherDGInformation(molecule);
   }
 
   /* If the ratio of failures/total optimizations exceeds this value,
    * the function returns an error code. Remember that if an optimization is
    * considered a failure is dependent only on the stopping criteria!
    */
-  const double failureRatio = 0.1; // allow only 10% failures in release
+  const double failureRatio = 2; // allow for max 2x #conformations embedding failures
   unsigned failures = 0;
-  std::vector<Delib::PositionCollection> ensemble;
+  std::vector<AngstromWrapper> ensemble;
   ensemble.reserve(numStructures);
 
   for(
@@ -304,15 +156,12 @@ outcome::result<
       } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
-      DGData = gatherDGInformation(
-        moleculeCopy,
-        distanceMethod
-      );
+      DGData = gatherDGInformation(moleculeCopy);
     }
 
     ExplicitGraph explicitGraph {
       molecule,
-      DGData.boundList
+      DGData.bounds
     };
 
     auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
@@ -338,21 +187,6 @@ outcome::result<
       std::move(distanceMatrixResult.value())
     );
 
-    /* Get the chirality constraints by converting the prototypes found by the
-     * collector into full ChiralityConstraints
-     */
-    std::vector<ChiralityConstraint> chiralityConstraints;
-
-    for(const auto& prototype : DGData.chiralityConstraintPrototypes) {
-      if(auto propagateResult = propagate(distanceBounds, prototype)) {
-        chiralityConstraints.push_back(
-          std::move(propagateResult.value())
-        );
-      } else {
-        return propagateResult.as_failure();
-      }
-    }
-
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
 
@@ -377,7 +211,7 @@ outcome::result<
        */
       if(
         errfDetail::proportionChiralityConstraintsCorrectSign(
-          chiralityConstraints,
+          DGData.chiralityConstraints,
           dlibPositions
         ) < 0.5
       ) {
@@ -403,12 +237,12 @@ outcome::result<
      */
     if(
       errfDetail::proportionChiralityConstraintsCorrectSign(
-        chiralityConstraints,
+        DGData.chiralityConstraints,
         dlibPositions
       ) < 1
     ) {
       dlibAdaptors::iterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
-        chiralityConstraints,
+        DGData.chiralityConstraints,
         10000
       };
 
@@ -417,11 +251,11 @@ outcome::result<
         inversionStopStrategy,
         errfValue<false>(
           squaredBounds,
-          chiralityConstraints
+          DGData.chiralityConstraints
         ),
         errfGradient<false>(
           squaredBounds,
-          chiralityConstraints
+          DGData.chiralityConstraints
         ),
         dlibPositions,
         0
@@ -430,7 +264,7 @@ outcome::result<
       if(
         inversionStopStrategy.iterations > 10000
         || errfDetail::proportionChiralityConstraintsCorrectSign(
-          chiralityConstraints,
+          DGData.chiralityConstraints,
           dlibPositions
         ) < 1.0
       ) { // Failure to invert
@@ -453,11 +287,11 @@ outcome::result<
       refinementStopStrategy,
       errfValue<true>(
         squaredBounds,
-        chiralityConstraints
+        DGData.chiralityConstraints
       ),
       errfGradient<true>(
         squaredBounds,
-        chiralityConstraints
+        DGData.chiralityConstraints
       ),
       dlibPositions,
       0
@@ -465,12 +299,12 @@ outcome::result<
 
     bool reachedMaxIterations = refinementStopStrategy.iterations >= 10000;
     bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
-      chiralityConstraints,
+      DGData.chiralityConstraints,
       dlibPositions
     ) < 1;
     bool structureAcceptable = errfDetail::finalStructureAcceptable(
       distanceBounds,
-      chiralityConstraints,
+      DGData.chiralityConstraints,
       dlibPositions
     );
 
@@ -482,7 +316,7 @@ outcome::result<
       }
     } else {
       ensemble.emplace_back(
-        detail::convertToPositionCollection(dlibPositions)
+        detail::convertToAngstromWrapper(dlibPositions)
       );
     }
   }
@@ -495,10 +329,9 @@ std::list<RefinementData> debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption,
-  const bool& useYInversionTrick,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod
+  const bool& useYInversionTrick
 ) {
-  if(predicates::hasZeroPermutationsStereocenters(molecule)) {
+  if(predicates::hasZeroAssignmentStereocenters(molecule)) {
     Log::log(Log::Level::Warning)
       << "This molecule has stereocenters with zero valid permutations!"
       << std::endl;
@@ -523,10 +356,7 @@ std::list<RefinementData> debugDistanceGeometry(
   MoleculeDGInformation DGData;
 
   if(!regenerateEachStep) { // Collect once, keep all the time
-    DGData = gatherDGInformation(
-      molecule,
-      distanceMethod
-    );
+    DGData = gatherDGInformation(molecule);
   }
 
   /* If the ratio of failures/total optimizations exceeds this value,
@@ -563,25 +393,49 @@ std::list<RefinementData> debugDistanceGeometry(
       } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
-      DGData = gatherDGInformation(
-        moleculeCopy,
-        distanceMethod
-      );
+      DGData = gatherDGInformation(moleculeCopy);
     }
 
     std::list<RefinementStepData> refinementSteps;
 
     ExplicitGraph explicitGraph {
       molecule,
-      DGData.boundList
+      DGData.bounds
     };
 
     auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
     if(!distanceBoundsResult) {
-      Log::log(Log::Level::Warning) << "Failure in distance bounds matrix construction.\n";
+      Log::log(Log::Level::Warning) << "Failure in distance bounds matrix construction: "
+        << distanceBoundsResult.error().message() << "\n";
       failures += 1;
       if(exceededFailureRatio(failures, numStructures, failureRatio)) {
-        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG. Sample spatial model written to 'DG-failure-spatial-model.dot'.\n";
+        if(regenerateEachStep) {
+          auto moleculeCopy = molecule;
+
+          do {
+            for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
+              if(!stereocenterPtr->assigned()) {
+                moleculeCopy.assignStereocenterRandomly(
+                  stereocenterPtr->involvedAtoms().front()
+                );
+
+                /* Jump out of for-loop and re-check if there are still unassigned
+                 * stereocenters since assigning a stereocenter can invalidate
+                 * the list iterators (because stereocenters may appear or disappear
+                 * on assignment)
+                 */
+                break;
+              }
+            }
+          } while(predicates::hasUnassignedStereocenters(moleculeCopy));
+
+          MoleculeSpatialModel model {moleculeCopy};
+          model.writeGraphviz("DG-failure-spatial-model.dot");
+        } else {
+          MoleculeSpatialModel model {molecule};
+          model.writeGraphviz("DG-failure-spatial-model.dot");
+        }
         return refinementList;
       }
 
@@ -613,22 +467,6 @@ std::list<RefinementData> debugDistanceGeometry(
       std::move(distanceMatrixResult.value())
     );
 
-    /* Get the chirality constraints by converting the prototypes found by the
-     * collector into full chiralityConstraints
-     */
-    std::vector<ChiralityConstraint> chiralityConstraints;
-
-    for(const auto& prototype : DGData.chiralityConstraintPrototypes) {
-      if(auto propagateResult = propagate(distanceBounds, prototype)) {
-        chiralityConstraints.push_back(
-          std::move(propagateResult.value())
-        );
-      } else {
-        Log::log(Log::Level::Warning) << "Propagation of chirality constraint failed!\n";
-        return refinementList;
-      }
-    }
-
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
 
@@ -653,7 +491,7 @@ std::list<RefinementData> debugDistanceGeometry(
        */
       if(
         errfDetail::proportionChiralityConstraintsCorrectSign(
-          chiralityConstraints,
+          DGData.chiralityConstraints,
           dlibPositions
         ) < 0.5
       ) {
@@ -678,14 +516,14 @@ std::list<RefinementData> debugDistanceGeometry(
      */
     if(
       errfDetail::proportionChiralityConstraintsCorrectSign(
-        chiralityConstraints,
+        DGData.chiralityConstraints,
         dlibPositions
       ) < 1
     ) {
 
       errfValue<false> valueFunctor {
         squaredBounds,
-        chiralityConstraints
+        DGData.chiralityConstraints
       };
 
       dlibAdaptors::debugIterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
@@ -700,7 +538,7 @@ std::list<RefinementData> debugDistanceGeometry(
         valueFunctor,
         errfGradient<false>(
           squaredBounds,
-          chiralityConstraints
+          DGData.chiralityConstraints
         ),
         dlibPositions,
         0
@@ -709,7 +547,7 @@ std::list<RefinementData> debugDistanceGeometry(
       if(
         inversionStopStrategy.iterations > 10000
         || errfDetail::proportionChiralityConstraintsCorrectSign(
-          chiralityConstraints,
+          DGData.chiralityConstraints,
           dlibPositions
         ) < 1.0
       ) { // Failure to invert
@@ -725,7 +563,7 @@ std::list<RefinementData> debugDistanceGeometry(
 
     errfValue<true> refinementValueFunctor {
       squaredBounds,
-      chiralityConstraints
+      DGData.chiralityConstraints
     };
 
     dlibAdaptors::debugIterationOrGradientNormStopStrategy refinementStopStrategy {
@@ -742,7 +580,7 @@ std::list<RefinementData> debugDistanceGeometry(
       refinementValueFunctor,
       errfGradient<true>(
         squaredBounds,
-        chiralityConstraints
+        DGData.chiralityConstraints
       ),
       dlibPositions,
       0
@@ -750,18 +588,18 @@ std::list<RefinementData> debugDistanceGeometry(
 
     bool reachedMaxIterations = refinementStopStrategy.iterations >= 10000;
     bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
-      chiralityConstraints,
+      DGData.chiralityConstraints,
       dlibPositions
     ) < 1;
     bool structureAcceptable = errfDetail::finalStructureAcceptable(
       distanceBounds,
-      chiralityConstraints,
+      DGData.chiralityConstraints,
       dlibPositions
     );
 
     RefinementData refinementData;
     refinementData.steps = std::move(refinementSteps);
-    refinementData.constraints = chiralityConstraints;
+    refinementData.constraints = DGData.chiralityConstraints;
     refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
 
     refinementList.push_back(
@@ -783,7 +621,7 @@ std::list<RefinementData> debugDistanceGeometry(
         if(Log::particulars.count(Log::Particulars::DGStructureAcceptanceFailures)) {
           errfDetail::explainAcceptanceFailure(
             distanceBounds,
-            chiralityConstraints,
+            DGData.chiralityConstraints,
             dlibPositions
           );
         }
@@ -802,26 +640,16 @@ std::list<RefinementData> debugDistanceGeometry(
 
 } // namespace detail
 
-MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod
-) {
+MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
   // Initialize the return object
   MoleculeDGInformation data;
 
   // Generate a spatial model from the molecular graph and stereocenters
-  MoleculeSpatialModel spatialModel {
-    molecule,
-    distanceMethod
-  };
+  MoleculeSpatialModel spatialModel {molecule};
 
-  // Generate the distance bounds from the spatial model
-  spatialModel.addDefaultDihedrals();
-
-  data.boundList = spatialModel.makeBoundList();
-
-  // Extract the chirality constraint prototypes
-  data.chiralityConstraintPrototypes = spatialModel.getChiralityPrototypes();
+  // Extract gathered data
+  data.bounds = spatialModel.makeBoundsList();
+  data.chiralityConstraints = spatialModel.getChiralityConstraints();
 
   return data;
 }
@@ -830,16 +658,27 @@ outcome::result<
   std::vector<Delib::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
-  const unsigned& numStructures
+  const unsigned numStructures
 ) {
-  return detail::runDistanceGeometry(molecule, numStructures);
+  if(auto result = detail::runDistanceGeometry(molecule, numStructures)) {
+    return temple::map(
+      result.value(),
+      [](AngstromWrapper wrapper) -> Delib::PositionCollection {
+        return wrapper.getBohr();
+      }
+    );
+  } else {
+    return result.as_failure();
+  }
 }
 
 outcome::result<Delib::PositionCollection> generateConformation(const Molecule& molecule) {
   if(auto result = detail::runDistanceGeometry(molecule, 1)) {
-    const auto& conformationList = result.value();
+    auto& conformationList = result.value();
     assert(conformationList.size() == 1);
-    return conformationList.front();
+    auto& wrapper = conformationList.front();
+
+    return wrapper.getBohr();
   } else {
     return result.as_failure();
   }

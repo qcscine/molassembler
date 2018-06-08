@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     molHandler.write(
       filepath.stem().string() + "_isomorphism.mol",
       a,
-      molHandler.read(filepath.string()).atoms.getPositions(),
+      molHandler.read(filepath.string()).angstromWrapper,
       IO::MOLFileHandler::IndexPermutation::Random
     );
   } else {

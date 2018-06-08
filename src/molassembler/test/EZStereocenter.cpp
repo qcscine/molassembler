@@ -7,10 +7,14 @@
 BOOST_AUTO_TEST_CASE(stateConsistency) {
   using namespace molassembler;
   using namespace molassembler::Stereocenters;
-  
+
   RankingInformation left, right;
   left.sortedSubstituents = {{0}, {1}};
+  left.ligands = {{0}, {1}};
+  left.ligandsRanking = {{0}, {1}};
   right.sortedSubstituents = {{4}, {5}};
+  right.ligands = {{4}, {5}};
+  right.ligandsRanking = {{0}, {1}};
 
   EZStereocenter trialStereocenter {
     2,
@@ -24,10 +28,9 @@ BOOST_AUTO_TEST_CASE(stateConsistency) {
   // Update, where right gets flipped
   RankingInformation rightFlipped;
   rightFlipped.sortedSubstituents = {{5}, {4}};
-  trialStereocenter.propagateGraphChange(
-    left,
-    rightFlipped
-  );
+  rightFlipped.ligands = {{4}, {5}};
+  rightFlipped.ligandsRanking = {{1}, {0}};
+  trialStereocenter.propagateGraphChange(left, rightFlipped);
 
   BOOST_CHECK_MESSAGE(
     trialStereocenter.assigned() == 1u,
@@ -38,13 +41,13 @@ BOOST_AUTO_TEST_CASE(stateConsistency) {
   trialStereocenter.propagateVertexRemoval(0);
   trialStereocenter.removeSubstituent(
     1,
-    std::numeric_limits<AtomIndexType>::max()
+    Stereocenter::removalPlaceholder
   );
 
   BOOST_CHECK_MESSAGE(
-    trialStereocenter.numStereopermutations() == 2
+    trialStereocenter.numAssignments() == 2
     && trialStereocenter.assigned() == 1u,
     "Vertex removal does not preserve chiral information!"
-    << " numStereopermutations: " << trialStereocenter.numStereopermutations()
+    << " numAssignments: " << trialStereocenter.numAssignments()
   );
 }

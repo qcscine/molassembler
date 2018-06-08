@@ -30,8 +30,8 @@ std::string condenseMap(const std::map<T, U>& map) {
 
   std::string condensed;
   for(auto it = map.begin(); it != map.end(); ++it) {
-    condensed += "{"s 
-      + std::to_string(it->first) 
+    condensed += "{"s
+      + std::to_string(it->first)
       + " -> "s
       + std::to_string(it->second)
       + "}"s;
@@ -44,117 +44,10 @@ std::string condenseMap(const std::map<T, U>& map) {
   return condensed;
 }
 
-BOOST_AUTO_TEST_CASE(glueTests) {
-  using namespace molassembler;
-  using namespace molassembler::Stereocenters;
-  using namespace std::string_literals;
-
-  // Canonicalization and canon-char generation
-  // AAB vs ABB
-  RankingInformation::RankedType a {{0}, {1, 2}, {3}, {4, 5}};
-  auto expectedChars = glue::makeCanonicalCharacters(
-    glue::canonicalize(a)
-  );
-
-  bool pass = true;
-  do {
-    if(glue::makeCanonicalCharacters(glue::canonicalize(a)) != expectedChars) {
-      pass = false;
-      break;
-    }
-  } while(std::next_permutation(a.begin(), a.end()));
-
-  BOOST_CHECK_MESSAGE(
-    pass,
-    "Combination of canonicalization and character generation is irregular. "
-    "Got an unexpected character sequence for the permutation "
-    << temple::condenseIterable(
-      temple::map(
-        a,
-        [](const auto& equalPriorityIndices) -> std::string {
-          return "{"s + temple::condenseIterable(equalPriorityIndices) + "}"s;
-        }
-      )
-    ) << " -> " << makeString(glue::makeCanonicalCharacters(glue::canonicalize(a)))
-  );
-
-  // Symmetry position mapping
-  RankingInformation::RankedType rankedVariety {
-    {0, 4}, {2}, {3, 5}, {1}
-  };
-  std::vector<AtomIndexType> atomsAtPositions {3, 1, 5, 0, 4, 2};
-
-  auto canonRanked = glue::canonicalize(rankedVariety);
-  BOOST_CHECK((canonRanked == RankingInformation::RankedType {{0, 4}, {3, 5}, {2}, {1}}));
-
-  auto canonCharacters = glue::makeCanonicalCharacters(canonRanked);
-  BOOST_CHECK((canonCharacters == std::vector<char> {'A', 'A', 'B', 'B', 'C', 'D'}));
-
-  auto assignmentCharacters = glue::makeStereopermutationCharacters(
-    canonRanked,
-    canonCharacters,
-    atomsAtPositions
-  );
-  BOOST_CHECK((assignmentCharacters == std::vector<char> {'B', 'D', 'B', 'A', 'A', 'C'}));
-
-  stereopermutation::Stereopermutation sampleOctahedral {
-    Symmetry::Name::Octahedral,
-    assignmentCharacters
-  };
-
-  auto symmetryPositionMap = glue::makeSymmetryPositionMap(sampleOctahedral, canonRanked);
-  std::map<AtomIndexType, unsigned> expectedMap {
-    {0, 3},
-    {1, 1},
-    {2, 5},
-    {3, 0},
-    {4, 4},
-    {5, 2}
-  };
-  BOOST_CHECK_MESSAGE(
-    symmetryPositionMap == expectedMap,
-    "makeSymmetryPositionmap returns an unexpected result! Expected {"
-    << condenseMap(expectedMap) << "}, got {" << condenseMap(symmetryPositionMap)
-  );
-
-  auto symmetryMapResult = glue::mapToSymmetryPositions(sampleOctahedral, canonRanked);
-  BOOST_CHECK_MESSAGE(
-    symmetryMapResult == atomsAtPositions,
-    "mapToSymmetryPositions returns an unexpected result! Expected {"
-    << temple::condenseIterable(atomsAtPositions) << "}, got {"
-    << temple::condenseIterable(symmetryMapResult)
-  );
-
-  // makeSymmetryPositionMap isn't good enough yet
-  stereopermutation::Stereopermutation b {
-    Symmetry::Name::Octahedral,
-    {'A', 'A', 'A', 'A', 'A', 'A'},
-    {
-      {0, 1},
-      {2, 3},
-      {4, 5}
-    }
-  };
-
-  stereopermutation::Stereopermutation c {
-    Symmetry::Name::Octahedral,
-    {'A', 'A', 'A', 'A', 'A', 'A'},
-    {
-      {0, 1},
-      {2, 4},
-      {3, 5}
-    }
-  };
-
-  RankingInformation::RankedType canonBC {{10, 11, 12, 13, 14, 15}};
-
-  auto bMap = glue::makeSymmetryPositionMap(b, canonBC);
-  auto cMap = glue::makeSymmetryPositionMap(c, canonBC);
-
-  BOOST_CHECK(bMap != cMap);
-}
-
 BOOST_AUTO_TEST_CASE(stateCorrectness) {
+  // TODO this test is no longer viable (dummyMolecule must be of appropriate
+  // size and offer element types in order for isFeasiblePermutation to work)
+  /*
   using namespace molassembler;
   using namespace molassembler::Stereocenters;
 
@@ -168,6 +61,13 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
   squarePyramidalRanking.sortedSubstituents = {
     {0, 4}, {2}, {3, 5}
   };
+  squarePyramidalRanking.ligands = {
+    {0}, {2}, {3}, {4}, {5}
+  };
+  squarePyramidalRanking.ligandsRanking = RankingInformation::rankLigands(
+    squarePyramidalRanking.ligands,
+    squarePyramidalRanking.sortedSubstituents
+  );
 
   CNStereocenter trialStereocenter {
     dummyMolecule,
@@ -183,6 +83,13 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
   octahedralRanking.sortedSubstituents = {
     {0, 4}, {2}, {3, 5}, {1}
   };
+  octahedralRanking.ligands = {
+    {0}, {1}, {2}, {3}, {4}, {5}
+  };
+  octahedralRanking.ligandsRanking = RankingInformation::rankLigands(
+    octahedralRanking.ligands,
+    octahedralRanking.sortedSubstituents
+  );
 
   trialStereocenter.addSubstituent(
     dummyMolecule,
@@ -205,6 +112,13 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
   newSquarePyramidalRanking.sortedSubstituents = {
     {0, 3}, {1}, {2, 4}
   };
+  newSquarePyramidalRanking.ligands = {
+    {0}, {1}, {2}, {3}, {4}
+  };
+  newSquarePyramidalRanking.ligandsRanking = RankingInformation::rankLigands(
+    newSquarePyramidalRanking.ligands,
+    newSquarePyramidalRanking.sortedSubstituents
+  );
 
   trialStereocenter.removeSubstituent(
     dummyMolecule,
@@ -223,25 +137,32 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
     trialStereocenter.assigned() == 0u,
     "Addition and removal consistency check fails: Initial assignment is not recovered!"
   );
+  */
 }
 
-BOOST_AUTO_TEST_CASE(adhesiveTests) {
-  using namespace molassembler::Stereocenters::adhesive;
+template<typename T>
+using RaggedVector = std::vector<
+  std::vector<T>
+>;
+
+BOOST_AUTO_TEST_CASE(PermutationStateTests) {
   using namespace molassembler;
-  using NestedVector = std::vector<
-    std::vector<AtomIndexType>
-  >;
+  using TestNamespace = molassembler::Stereocenters::CNStereocenter::PermutationState;
+
+  using RaggedAtoms = RaggedVector<AtomIndexType>;
+  using RaggedLigands = RaggedVector<unsigned>;
+
   using StereopermutationPairsType = std::set<
     std::pair<unsigned, unsigned>
   >;
 
-  auto symmetricHapticPincerRanking = NestedVector {
+  auto symmetricHapticPincerRanking = RaggedAtoms {
     {1, 6},
     {2, 5},
     {3, 4}
   };
 
-  auto symmetricHapticPincerLigands = NestedVector {
+  auto symmetricHapticPincerLigands = RaggedAtoms {
     {1, 2},
     {3, 4},
     {5, 6}
@@ -249,65 +170,68 @@ BOOST_AUTO_TEST_CASE(adhesiveTests) {
 
   std::vector<GraphAlgorithms::LinkInformation> symmetricHapticPincerLinks;
   GraphAlgorithms::LinkInformation a, b;
-  a.indexPair = {2, 3};
-  b.indexPair = {4, 5};
+  a.indexPair = {0, 1};
+  b.indexPair = {1, 2};
 
   symmetricHapticPincerLinks.push_back(std::move(a));
   symmetricHapticPincerLinks.push_back(std::move(b));
 
-  auto symmetricHapticPincerRankedLigands = ligandRanking(
-    symmetricHapticPincerRanking,
-    symmetricHapticPincerLigands
+  auto symmetricHapticPincerRankedLigands = RankingInformation::rankLigands(
+    symmetricHapticPincerLigands,
+    symmetricHapticPincerRanking
   );
 
-  BOOST_CHECK((symmetricHapticPincerRankedLigands == NestedVector {{0, 2}, {1}}));
+  BOOST_CHECK_MESSAGE(
+    (symmetricHapticPincerRankedLigands == RaggedLigands {{0, 2}, {1}}),
+    "Expected {{0, 2}, 1}, got " << temple::stringify(symmetricHapticPincerRankedLigands)
+  );
   BOOST_CHECK((
-    canonicalCharacters(symmetricHapticPincerRankedLigands) 
-    == std::vector<char> {'A', 'A', 'B'}
-    ));
+    TestNamespace::transferToSymbolicCharacters(
+      TestNamespace::canonicalize(symmetricHapticPincerRankedLigands)
+    ) == std::vector<char> {'A', 'A', 'B'}
+  ));
   BOOST_CHECK((
-    canonicalLinks(
-      symmetricHapticPincerLigands,
-      symmetricHapticPincerRankedLigands,
-      symmetricHapticPincerLinks
+    TestNamespace::selfReferentialTransform(
+      symmetricHapticPincerLinks,
+      symmetricHapticPincerRankedLigands
     ) == StereopermutationPairsType {
       {0, 2},
       {1, 2}
     }
   ));
 
-  auto asymmetricHapticPincerRanking = NestedVector {
+  auto asymmetricHapticPincerRanking = RaggedAtoms {
     {1}, {6}, {2}, {5}, {3}, {4}
   };
 
-  auto asymmetricHapticPincerLigands = NestedVector {
+  auto asymmetricHapticPincerLigands = RaggedAtoms {
     {1, 2},
     {3, 4},
     {5, 6}
   };
 
   std::vector<GraphAlgorithms::LinkInformation> asymmetricHapticPincerLinks;
-  a.indexPair = {2, 3};
-  b.indexPair = {4, 5};
+  a.indexPair = {0, 1};
+  b.indexPair = {1, 2};
 
   asymmetricHapticPincerLinks.push_back(std::move(a));
   asymmetricHapticPincerLinks.push_back(std::move(b));
 
-  auto asymmetricHapticPincerRankedLigands = ligandRanking(
-    asymmetricHapticPincerRanking,
-    asymmetricHapticPincerLigands
+  auto asymmetricHapticPincerRankedLigands = RankingInformation::rankLigands(
+    asymmetricHapticPincerLigands,
+    asymmetricHapticPincerRanking
   );
 
-  BOOST_CHECK((asymmetricHapticPincerRankedLigands == NestedVector {{0}, {2}, {1}}));
+  BOOST_CHECK((asymmetricHapticPincerRankedLigands == RaggedLigands {{0}, {2}, {1}}));
   BOOST_CHECK((
-    canonicalCharacters(asymmetricHapticPincerRankedLigands) 
-    == std::vector<char> {'A', 'B', 'C'}
-    ));
+    TestNamespace::transferToSymbolicCharacters(
+      TestNamespace::canonicalize(asymmetricHapticPincerRankedLigands)
+    ) == std::vector<char> {'A', 'B', 'C'}
+  ));
   BOOST_CHECK((
-    canonicalLinks(
-      asymmetricHapticPincerLigands,
-      asymmetricHapticPincerRankedLigands,
-      asymmetricHapticPincerLinks
+    TestNamespace::selfReferentialTransform(
+      asymmetricHapticPincerLinks,
+      asymmetricHapticPincerRankedLigands
     ) == StereopermutationPairsType {
       {0, 2},
       {1, 2}

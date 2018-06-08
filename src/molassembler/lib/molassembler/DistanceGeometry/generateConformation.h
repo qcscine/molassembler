@@ -1,11 +1,9 @@
 #ifndef INCLUDE_DG_GENERATE_CONFORMATION_H
 #define INCLUDE_DG_GENERATE_CONFORMATION_H
 
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
-#include "boost_outcome/outcome.hpp"
 
 /*! @file
  *
@@ -21,7 +19,7 @@ namespace DistanceGeometry {
 
 namespace predicates {
 
-bool hasZeroPermutationsStereocenters(const Molecule& molecule);
+bool hasZeroAssignmentStereocenters(const Molecule& molecule);
 
 bool hasUnassignedStereocenters(const Molecule& mol);
 
@@ -29,35 +27,26 @@ bool hasUnassignedStereocenters(const Molecule& mol);
 
 namespace detail {
 
-Delib::PositionCollection convertToPositionCollection(
+AngstromWrapper convertToAngstromWrapper(
   const Eigen::VectorXd& vectorizedPositions
 );
 
-Delib::PositionCollection convertToPositionCollection(
+AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
-);
-
-/*!
- * Calculate the volume bounds on a chirality constraint from a fully
- * determined and smoothed distance bounds matrix and a chirality constraint
- * prototype.
- */
-outcome::result<ChiralityConstraint> propagate(
-  const DistanceBoundsMatrix& bounds,
-  const Stereocenters::ChiralityConstraintPrototype& prototype
 );
 
 /*!
  * A logging, not throwing otherwise identical implementation of
  * runDistanceGeometry, that returns detailed intermediate data from a
  * refinement, while runDistanceGeometry returns only the final result.
+ *
+ * @note Contained PositionCollections are in Angstrom length units
  */
 std::list<RefinementData> debugDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption = Partiality::FourAtom,
-  const bool& useYInversionTrick = true,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
+  const bool& useYInversionTrick = true
 );
 
 /*!
@@ -79,15 +68,16 @@ std::list<RefinementData> debugDistanceGeometry(
  *
  * Distance method: For debug purposes, using uniform distances between atoms
  * may be desirable for particularly hypothetical structures.
+ *
+ * @note Returns PositionCollections in Angstrom length units
  */
 outcome::result<
-  std::vector<Delib::PositionCollection>
+  std::vector<AngstromWrapper>
 > runDistanceGeometry(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption = Partiality::FourAtom,
-  const bool& useYInversionTrick = true,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
+  const bool& useYInversionTrick = true
 );
 
 } // namespace detail
@@ -95,15 +85,12 @@ outcome::result<
 
 //! Intermediate conformational data about a Molecule given by a spatial model
 struct MoleculeDGInformation {
-  MoleculeSpatialModel::BoundList boundList;
-  std::vector<Stereocenters::ChiralityConstraintPrototype> chiralityConstraintPrototypes;
+  MoleculeSpatialModel::BoundsList bounds;
+  std::vector<ChiralityConstraint> chiralityConstraints;
 };
 
 //! Collects intermediate conformational data about a Molecule using a spatial model
-MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule,
-  const MoleculeSpatialModel::DistanceMethod& distanceMethod = MoleculeSpatialModel::DistanceMethod::UFFLike
-);
+MoleculeDGInformation gatherDGInformation(const Molecule& molecule);
 
 /*! Generate a conformational ensemble of a Molecule
  *
@@ -116,7 +103,7 @@ outcome::result<
   std::vector<Delib::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
-  const unsigned& numStructures
+  const unsigned numStructures
 );
 
 /*! Generate a 3D structure of a Molecule

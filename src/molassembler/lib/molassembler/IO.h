@@ -1,9 +1,11 @@
 #ifndef INCLUDE_MOLECULE_IO_H
 #define INCLUDE_MOLECULE_IO_H
 
-#include "Molecule.h"
-#include "temple/Random.h"
 #include "boost/bimap.hpp"
+
+#include "temple/Random.h"
+
+#include "Interpret.h"
 
 /*! @file
  *
@@ -98,9 +100,13 @@ struct FileHandler {
   };
 
   struct RawData {
-    Delib::AtomCollection atoms;
+    Delib::ElementTypeCollection elements;
+    AngstromWrapper angstromWrapper;
     Delib::BondOrderCollection bondOrders;
   };
+
+  // Virtualize destructor
+  virtual ~FileHandler() = default;
 
   // Demand strong const guarantees for quality of implementation
   virtual bool canRead(const std::string& filename) const = 0;
@@ -108,13 +114,13 @@ struct FileHandler {
   virtual void write(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     const IndexPermutation& permutation = IndexPermutation::Identity
   ) const = 0;
 };
 
 //! MOL file IO
-class MOLFileHandler : public FileHandler {
+class MOLFileHandler final : public FileHandler {
 private:
 /* Typedefs */
   enum class State {
@@ -151,7 +157,7 @@ private:
   void _write(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     const MOLFileVersion& version,
     const IndexPermutation& permutation
   ) const;
@@ -168,13 +174,13 @@ public:
   void write(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     const IndexPermutation& permutation = IndexPermutation::Identity
   ) const final;
 };
 
 //! XYZ file IO
-struct XYZHandler : public FileHandler {
+struct XYZHandler final : public FileHandler {
   bool canRead(const std::string& filename) const final;
 
   RawData read(const std::string& filename) const final;
@@ -183,7 +189,7 @@ struct XYZHandler : public FileHandler {
   void write(
     const std::string& filename,
     const Molecule& molecule,
-    const Delib::PositionCollection& positions,
+    const AngstromWrapper& angstromWrapper,
     const IndexPermutation& permutation = IndexPermutation::Identity
   ) const final;
 };
@@ -204,7 +210,7 @@ struct BinaryHandler {
 
 namespace detail {
 
-Molecule::InterpretResult interpret(const FileHandler::RawData& data);
+InterpretResult interpret(const FileHandler::RawData& data);
 
 } // namespace detail
 
@@ -232,8 +238,16 @@ std::vector<Molecule> split(const std::string& filename);
 void write(
   const std::string& filename,
   const Molecule& molecule,
+  const AngstromWrapper& angstromWrapper,
+  const FileHandler::IndexPermutation permutation = FileHandler::IndexPermutation::Identity
+);
+
+//! Writer function from a PositionCollection in bohr
+void write(
+  const std::string& filename,
+  const Molecule& molecule,
   const Delib::PositionCollection& positions,
-  const FileHandler::IndexPermutation& permutation = FileHandler::IndexPermutation::Identity
+  const FileHandler::IndexPermutation permutation = FileHandler::IndexPermutation::Identity
 );
 
 /*! Writer function to make files containing binary Molecule representation.

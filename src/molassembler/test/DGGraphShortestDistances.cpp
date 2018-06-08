@@ -21,11 +21,6 @@
 
 #include <chrono>
 
-/* TODO
- * VERY WEIRD: Algorithms executed on SPG find better shortest paths than on LG
- * or DBM (-> tighter bounds).
- */
-
 std::ostream& nl(std::ostream& os) {
   os << '\n';
   return os;
@@ -95,7 +90,7 @@ struct Gor1Functor {
 };
 
 // TODO Remove this, make a specialization of the Gor1Functor
-std::vector<double> Gor1SPG (const molassembler::DistanceGeometry::ImplicitGraph& graph, unsigned sourceVertex) {
+std::vector<double> Gor1IG (const molassembler::DistanceGeometry::ImplicitGraph& graph, unsigned sourceVertex) {
   /* Prep */
   using Graph = molassembler::DistanceGeometry::ImplicitGraph;
   using Vertex = typename boost::graph_traits<Graph>::vertex_descriptor;
@@ -168,33 +163,30 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {
+    DistanceGeometry::MoleculeSpatialModel spatialModel {molecule};
+
+    using EG = DistanceGeometry::ExplicitGraph;
+    using Vertex = EG::GraphType::vertex_descriptor;
+
+    EG eg {
       molecule,
-      DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
+      spatialModel.makeBoundsList()
     };
 
-    using LG = DistanceGeometry::ExplicitGraph;
-    using Vertex = LG::GraphType::vertex_descriptor;
+    auto egGraph = eg.getGraph();
 
-    LG lg {
-      molecule,
-      spatialModel.makeBoundList()
-    };
-
-    auto lgGraph = lg.getGraph();
-
-    unsigned N = boost::num_vertices(lgGraph);
+    unsigned N = boost::num_vertices(egGraph);
 
     for(Vertex a = 0; a < N / 2; ++a) {
       for(Vertex b = 0; b < N / 2; ++b) {
         if(a == b) {
           // No lara edge
           BOOST_CHECK_MESSAGE(
-            !boost::edge(left(a), right(a), lgGraph).second,
+            !boost::edge(left(a), right(a), egGraph).second,
             "Same-index l(a) -> r(a) exists for a = " << a
           );
         } else {
-          auto lalb = boost::edge(left(a), left(b), lgGraph);
+          auto lalb = boost::edge(left(a), left(b), egGraph);
           if(lalb.second) {
             /* If there is a la -> lb edge, there must also be
              * - lb -> la (same weight)
@@ -204,14 +196,14 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
              * - rb -> ra (same weight)
              */
 
-            auto lalbWeight = boost::get(boost::edge_weight, lgGraph, lalb.first);
+            auto lalbWeight = boost::get(boost::edge_weight, egGraph, lalb.first);
 
             BOOST_CHECK_MESSAGE(
               temple::all_of(
                 std::vector<decltype(lalb)> {
-                  boost::edge(left(b), left(a), lgGraph),
-                  boost::edge(right(b), right(a), lgGraph),
-                  boost::edge(right(a), right(b), lgGraph)
+                  boost::edge(left(b), left(a), egGraph),
+                  boost::edge(right(b), right(a), egGraph),
+                  boost::edge(right(a), right(b), egGraph)
                 },
                 [&](const auto& edgeFoundPair) -> bool {
                   if(!edgeFoundPair.second) {
@@ -219,7 +211,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
                     return false;
                   }
 
-                  auto weight = boost::get(boost::edge_weight, lgGraph, edgeFoundPair.first);
+                  auto weight = boost::get(boost::edge_weight, egGraph, edgeFoundPair.first);
                   return weight == lalbWeight;
                 }
               ),
@@ -230,8 +222,8 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
             BOOST_CHECK_MESSAGE(
               temple::all_of(
                 std::vector<decltype(lalb)> {
-                  boost::edge(left(a), right(b), lgGraph),
-                  boost::edge(left(b), right(a), lgGraph),
+                  boost::edge(left(a), right(b), egGraph),
+                  boost::edge(left(b), right(a), egGraph),
                 },
                 [&](const auto& edgeFoundPair) -> bool {
                   if(!edgeFoundPair.second) {
@@ -239,7 +231,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
                     return false;
                   }
 
-                  auto weight = boost::get(boost::edge_weight, lgGraph, edgeFoundPair.first);
+                  auto weight = boost::get(boost::edge_weight, egGraph, edgeFoundPair.first);
                   return std::fabs(weight) < lalbWeight;
                 }
               ),
@@ -294,12 +286,9 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {
-      sampleMol,
-      DistanceGeometry::MoleculeSpatialModel::DistanceMethod::UFFLike
-    };
+    DistanceGeometry::MoleculeSpatialModel spatialModel {sampleMol};
 
-    const auto boundsList = spatialModel.makeBoundList();
+    const auto boundsList = spatialModel.makeBoundsList();
 
     DistanceGeometry::ExplicitGraph limits {sampleMol, boundsList};
     DistanceGeometry::DistanceBoundsMatrix spatialModelBounds {sampleMol, boundsList};
@@ -309,15 +298,15 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
     bool pass = true;
     for(unsigned a = 0; a < sampleMol.numAtoms(); ++a) {
-      auto BF_LG_distances = BFFunctor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
+      auto BF_EG_distances = BFFunctor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
 
-      auto Gor_LG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
+      auto Gor_EG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
 
       if(
         !temple::all_of(
           temple::zipMap(
-            BF_LG_distances,
-            Gor_LG_distances,
+            BF_EG_distances,
+            Gor_EG_distances,
             [](const double& a, const double& b) -> bool {
               return temple::floating::isCloseRelative(a, b, 1e-8);
             }
@@ -329,12 +318,12 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
         break;
       }
 
-      for(unsigned j = 0; j < BF_LG_distances.size(); j += 2) {
+      for(unsigned j = 0; j < BF_EG_distances.size(); j += 2) {
         if(j / 2 == a) {
           continue;
         }
 
-        if(-BF_LG_distances.at(j + 1) > BF_LG_distances.at(j)) {
+        if(-BF_EG_distances.at(j + 1) > BF_EG_distances.at(j)) {
           pass = false;
           std::cout << "A lower bound is greater than the corresponding upper bound!" << nl;
           break;
@@ -343,7 +332,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !temple::all_of(
-          enumerate(BF_LG_distances),
+          enumerate(BF_EG_distances),
           [&boundsMatrix, &a](const auto& enumPair) -> bool {
             const auto& index = enumPair.index;
             const auto& distance = enumPair.value;
@@ -373,7 +362,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
         pass = false;
         std::cout << "Bellman-Ford ExplicitGraph shortest paths do not represent triangle inequality bounds!" << nl;
         std::cout << "Failed on a = " << a << nl;
-        std::cout << "Distances:" << nl << temple::condenseIterable(BF_LG_distances) << nl << boundsMatrix.access() << nl;
+        std::cout << "Distances:" << nl << temple::condenseIterable(BF_EG_distances) << nl << boundsMatrix.access() << nl;
         break;
       }
     }
@@ -398,49 +387,49 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
      */
     DistanceGeometry::ImplicitGraph shortestPathsGraph {sampleMol, boundsList};
 
-    using SPGVertex = DistanceGeometry::ImplicitGraph::VertexDescriptor;
-    SPGVertex N = boost::num_vertices(shortestPathsGraph);
+    using IGVertex = DistanceGeometry::ImplicitGraph::VertexDescriptor;
+    IGVertex N = boost::num_vertices(shortestPathsGraph);
 
     // Check that both graphs are 1:1 identical
     bool identical = true;
-    for(SPGVertex i = 0; i < N && identical; ++i) {
-      for(SPGVertex j = 0; j < N; ++j) {
-        auto spg_edge = boost::edge(i, j, shortestPathsGraph);
-        auto lg_edge = boost::edge(i, j, limits.getGraph());
+    for(IGVertex i = 0; i < N && identical; ++i) {
+      for(IGVertex j = 0; j < N; ++j) {
+        auto ig_edge = boost::edge(i, j, shortestPathsGraph);
+        auto eg_edge = boost::edge(i, j, limits.getGraph());
 
-        if(spg_edge.second != lg_edge.second) {
+        if(ig_edge.second != eg_edge.second) {
           identical = false;
-          std::cout << "Graphs do match for edge " << i << " -> " << j << ". "
-            << "LG: " << lg_edge.second << ", SPG: " << spg_edge.second << nl;
+          std::cout << "Graphs do not match for edge " << i << " -> " << j << ". "
+            << "EG: " << eg_edge.second << ", IG: " << ig_edge.second << nl;
         }
 
-        if(spg_edge.second && lg_edge.second) {
-          auto spg_edge_weight = boost::get(boost::edge_weight, shortestPathsGraph, spg_edge.first);
-          auto lg_edge_weight = boost::get(boost::edge_weight, limits.getGraph(), lg_edge.first);
+        if(ig_edge.second && eg_edge.second) {
+          auto ig_edge_weight = boost::get(boost::edge_weight, shortestPathsGraph, ig_edge.first);
+          auto eg_edge_weight = boost::get(boost::edge_weight, limits.getGraph(), eg_edge.first);
 
-          if(spg_edge_weight != lg_edge_weight) {
+          if(ig_edge_weight != eg_edge_weight) {
             identical = false;
             std::cout << "Edge weight on edge " << i << " -> " << j << " does not match! "
-              << "LG: " << lg_edge_weight << ", SPG: " << spg_edge_weight << nl;
+              << "EG: " << eg_edge_weight << ", IG: " << ig_edge_weight << nl;
           }
         }
       }
     }
 
-    BOOST_REQUIRE_MESSAGE(identical, "LG and SPG are not identical graphs");
+    BOOST_REQUIRE_MESSAGE(identical, "EG and IG are not identical graphs");
 
     pass = true;
     for(unsigned a = 0; a < sampleMol.numAtoms(); ++a) {
       // ImplicitGraph without implicit bounds should be consistent with ExplicitGraph
-      auto BF_SPG_distances = BFFunctor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * a);
+      auto BF_IG_distances = BFFunctor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * a);
 
-      auto Gor_SPG_distances = Gor1Functor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * a);
+      auto Gor_IG_distances = Gor1Functor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * a);
 
       if(
         !temple::all_of(
           temple::zipMap(
-            BF_SPG_distances,
-            Gor_SPG_distances,
+            BF_IG_distances,
+            Gor_IG_distances,
             [](const double& a, const double& b) -> bool {
               return temple::floating::isCloseRelative(a, b, 1e-8);
             }
@@ -452,13 +441,13 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
         break;
       }
 
-      auto spec_Gor_SPG_distances = Gor1SPG(shortestPathsGraph, 2 * a);
+      auto spec_Gor_IG_distances = Gor1IG(shortestPathsGraph, 2 * a);
 
       if(
         !temple::all_of(
           temple::zipMap(
-            Gor_SPG_distances,
-            spec_Gor_SPG_distances,
+            Gor_IG_distances,
+            spec_Gor_IG_distances,
             [](const double& a, const double& b) -> bool {
               return temple::floating::isCloseRelative(a, b, 1e-8);
             }
@@ -467,17 +456,17 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       ) {
         pass = false;
         std::cout << "Not all pairs of specialized and unspecialized Gor1 shortest-paths-distances on the ImplicitGraph are within 1e-8 relative tolerance!" << nl;
-        std::cout << temple::condenseIterable(spec_Gor_SPG_distances) << nl << nl
-          << temple::condenseIterable(Gor_SPG_distances) << nl << nl;
+        std::cout << temple::condenseIterable(spec_Gor_IG_distances) << nl << nl
+          << temple::condenseIterable(Gor_IG_distances) << nl << nl;
         break;
       }
 
-      for(unsigned j = 0; j < Gor_SPG_distances.size(); j += 2) {
+      for(unsigned j = 0; j < Gor_IG_distances.size(); j += 2) {
         if(j / 2 == a) {
           continue;
         }
 
-        if(-Gor_SPG_distances.at(j + 1) > Gor_SPG_distances.at(j)) {
+        if(-Gor_IG_distances.at(j + 1) > Gor_IG_distances.at(j)) {
           pass = false;
           std::cout << "A lower bound is greater than the corresponding upper bound!" << nl;
           break;
@@ -486,7 +475,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !temple::all_of(
-          enumerate(BF_SPG_distances),
+          enumerate(BF_IG_distances),
           [&boundsMatrix, &a](const auto& enumPair) -> bool {
             const auto& index = enumPair.index;
             const auto& distance = enumPair.value;
@@ -524,13 +513,13 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
         pass = false;
         std::cout << "Bellman-Ford ImplicitGraph shortest paths do not represent triangle inequality bounds!" << nl;
         std::cout << "Failed on a = " << a << ", j = {";
-        for(unsigned j = 0; j < BF_SPG_distances.size(); ++j) {
+        for(unsigned j = 0; j < BF_IG_distances.size(); ++j) {
           if(j / 2 != a) {
             if(j % 2 == 0) {
               if(
                 !temple::floating::isCloseRelative(
                   boundsMatrix.upperBound(a, j / 2),
-                  BF_SPG_distances.at(j),
+                  BF_IG_distances.at(j),
                   1e-4
                 )
               ) {
@@ -540,7 +529,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
               if(
                 !temple::floating::isCloseRelative(
                   boundsMatrix.lowerBound(a, j / 2),
-                  -BF_SPG_distances.at(j),
+                  -BF_IG_distances.at(j),
                   1e-4
                 )
               ) {
@@ -550,7 +539,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
           }
         }
         std::cout << "}" << nl;
-        std::cout << "Distances:" << nl << temple::condenseIterable(BF_SPG_distances) << nl << boundsMatrix.access() << nl;
+        std::cout << "Distances:" << nl << temple::condenseIterable(BF_IG_distances) << nl << boundsMatrix.access() << nl;
         break;
       }
     }

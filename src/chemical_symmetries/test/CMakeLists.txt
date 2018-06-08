@@ -8,7 +8,7 @@ find_package(Eigen3 3.1.1 REQUIRED)
 find_package(temple 0.1.0 REQUIRED)
 
 add_executable(symmetryTests tests.cpp)
-target_compile_options(symmetryTests PUBLIC -g -O2 -Wall -Wpedantic -Wextra)
+target_compile_options(symmetryTests PUBLIC -g -O2)
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   target_compile_options(
     symmetryTests
@@ -17,11 +17,12 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 endif()
 
 target_include_directories(
-  symmetryTests PRIVATE ${Boost_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS}
+  symmetryTests PRIVATE ${EIGEN3_INCLUDE_DIRS}
 )
 target_link_libraries(symmetryTests
   PUBLIC
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+    Boost::boost
+    Boost::unit_test_framework
     chemical_symmetries
 )
 

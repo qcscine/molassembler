@@ -17,7 +17,7 @@
 using namespace Symmetry;
 
 auto makeCoordinateGetter(const Name& name) {
-  return [&](const unsigned& index) -> Eigen::Vector3d {
+  return [&](const unsigned index) -> Eigen::Vector3d {
     return symmetryData().at(name).coordinates.at(index);
   };
 }
@@ -114,8 +114,8 @@ BOOST_AUTO_TEST_CASE( rotationVectorSanityTests ) {
           rotationVector.begin(),
           rotationVector.end(),
           true,
-          [&members](const bool& carry, const unsigned& rotationElement) {
-            return carry && members.count(rotationElement) == 1;
+          [&members](const bool carry, const unsigned rotationElement) {
+            return carry && (members.count(rotationElement) == 1);
           }
         )
       );
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
    */
 
   for(const auto& symmetryName: allNames) {
-    auto getCoordinates =  [&](const unsigned& index) -> Eigen::Vector3d {
+    auto getCoordinates =  [&](const unsigned index) -> Eigen::Vector3d {
       return symmetryData().at(symmetryName).coordinates.at(index);
     };
 

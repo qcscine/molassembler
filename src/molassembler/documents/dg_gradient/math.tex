@@ -19,19 +19,23 @@
 \small
 
 \newcommand{\posVecDiff}[2]{
-  \left( \vec{r}_{#1} - \vec{r}_{#2} \right)
+  \left(\vec{r}_{#1} - \vec{r}_{#2} \right)
+}
+
+\newcommand{\avgVecDiff}[2]{
+  \left(\vec{s}_{#1} - \vec{s}_{#2} \right)
 }
 
 \newcommand{\vecDiff}[2]{
-  \left( \vec{#1} - \vec{#2}\,\right)
+  \left(\vec{#1} - \vec{#2}\,\right)
 }
 
 \newcommand{\vecCross}[2]{
-  \left( \vec{#1} \times \vec{#2}\,\right)
+  \left(\vec{#1} \times \vec{#2}\,\right)
 }
 
 \newcommand{\posDependence}{
-  \left( \left\{\vec{r}_i \right\} \right)
+  \left(\left\{\vec{r}_i \right\} \right)
 }
 
 \newcommand{\distanceErrorFirstTermPart}{
@@ -43,7 +47,7 @@
 }
 
 \newcommand{\distanceErrorFirstTerm}[1]{
-  \textrm{max}^{#1} \left( 
+  \textrm{max}^{#1} \left(
     0, 
     \distanceErrorFirstTermPart
   \right)
@@ -58,7 +62,7 @@
 }
 
 \newcommand{\distanceErrorSecondTerm}[1]{
-  \textrm{max}^{#1} \left( 
+  \textrm{max}^{#1} \left(
     0,
     \distanceErrorSecondTermPart
   \right)
@@ -67,37 +71,46 @@
 \newcommand{\chiralErrorFirstTerm}[1]{
   \textrm{max}^{#1} \left(
     0,
-    V_{ijkl}\posDependence{} - U_{ijkl}
+    V_{\alpha\beta\gamma\delta}\posDependence{} - U_{\alpha\beta\gamma\delta}
   \right)
 }
 
 \newcommand{\chiralErrorSecondTerm}[1]{
   \textrm{max}^{#1} \left(
     0,
-    L_{ijkl} - V_{ijkl}\posDependence{} 
+    L_{\alpha\beta\gamma\delta} - V_{\alpha\beta\gamma\delta}\posDependence{} 
   \right)
 }
 
 \newcommand{\iNSum}{\sum_{i = 1}^{N}}
 \newcommand{\ijNSum}{\sum_{i < j}^{N}}
 \newcommand{\chiralSum}{
-  \sum_{\left(i, j, k, l, U_{ijkl}, L_{ijkl}\right) \in C} 
+  \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta,
+  U_{\alpha\beta\gamma\delta}, L_{\alpha\beta\gamma\delta}\right) \in C} 
+}
+
+\newcommand{\volumeCalculationSets}[4]{
+  \avgVecDiff{#1}{#4}^{T}
+  \cdot \left[
+    \avgVecDiff{#2}{#4}
+    \times\avgVecDiff{#3}{#4}
+  \right]
 }
 
 \newcommand{\volumeCalculationSub}[4]{
   \posVecDiff{#1}{#4}^{T}
   \cdot \left[
     \posVecDiff{#2}{#4}
-    \times \posVecDiff{#3}{#4}
+    \times\posVecDiff{#3}{#4}
   \right]
 }
 
 % TODO refactor to vecDiff
 \newcommand{\volumeCalculation}[4]{
-  \left( \vec{#1} - \vec{#4} \right)^{T}
+  \left(\vec{#1} - \vec{#4} \right)^{T}
   \cdot \left[
-    \left( \vec{#2} - \vec{#4} \right)
-    \times \left( \vec{#3} - \vec{#4} \right)
+    \left(\vec{#2} - \vec{#4} \right)
+    \times\left(\vec{#3} - \vec{#4} \right)
   \right]
 }
 
@@ -125,24 +138,42 @@ geometry error function is given as:
   &+ \underbrace{
     \chiralSum \left[ 
       \chiralErrorFirstTerm{2} + \chiralErrorSecondTerm{2}
-    \right]^{2}
-  }_{\textrm{Chiral errors}},
+    \right]
+  }_{\textrm{Chiral errors}}.
 \end{aligned}\end{align}
 
-where $V_{ijkl}$ is the signed tetrahedron volume spanned by the position vectors of
-the indices $\{i, j, k, l\}$
+Within the distance errors, the symbols $U_{ij}$ and $L_{ij}$ are the upper and
+lower distance bounds for the atoms $i$ and $j$.\\
+
+Within the chiral errors, $C$ is a set of chiral constraint tuples consisting of
+the sets $S_\alpha, S_\beta, S_\gamma$ and $S_\delta$. These contain mutually
+disjoint particle indices and contain at least one element. In further notation,
+$\vec{s}$ denotes the average spatial position of all elements of a set, e.g.\
+for $S_\alpha$:
 
 \begin{equation}
-  V_{ijkl}\left( \left\{\vec{r}_i \right\} \right) =
-    \volumeCalculationSub{i}{j}{k}{l},
-\end{equation} \\
+  \vec{s}_\alpha = \frac{1}{|S_\alpha|}\sum_{i=1}^{|S_\alpha|}
+  \vec{r}_{S_{\alpha, i}},
+\end{equation}
 
-$U_{ij}$ and $L_{ij}$ are the upper and lower distance bounds for the atoms
-$i$ and $j$, and $U_{ijkl}$ and $L_{ijkl}$ are upper and lower bounds on the
-volume spanned by these indices.\\
+where $|S_\alpha|$ denotes the number of elements in the set and $S_{\alpha,
+i}$ is the $i$-th element in the set.\\
 
-It is important to note that tetrahedron volumes, e.g.\ $U_{ijkl}$, are
-signed values. On odd permutations of indices, these quantities change sign.
+The constraint tuple further consists of the scalars $U_{\alpha\beta\gamma\delta}$ and
+$L_{\alpha\beta\gamma\delta}$, which are upper and lower bounds on
+the volume spanned by the average positions of each set. This volume is
+calculated in the symbol $V_{\alpha\beta\gamma\delta}$, which is the signed
+tetrahedron volume spanned by $\vec{s}_\alpha, \vec{s}_\beta, \vec{s}_\gamma$
+and $\vec{s}_\delta$:
+
+\begin{equation}
+  V_{\alpha\beta\gamma\delta}\left( \left\{\vec{r}_i \right\} \right) =
+    \volumeCalculationSets{\alpha}{\beta}{\gamma}{\delta}.
+\end{equation}
+
+It is important to note that tetrahedron volumes such as
+$U_{\alpha\beta\gamma\delta}$ are signed values. On odd permutations of
+indices, these quantities change sign.
 
 \section{Gradient of the error function}
 
@@ -158,66 +189,66 @@ composed of partial derivatives to the individual position vectors $\vec{r}_i$:
   \right)
 \end{align*}
 
-Each individual component $\left( \partial E / \partial \vec{r}_\alpha \right)$
+Each individual component $\left( \partial E / \partial \vec{r}_\xi \right)$
 is a vector whose components are the scalar derivatives:
 
 \begin{align*}
-  \frac{\partial E}{\partial \vec{r}_\alpha} &= \begin{pmatrix}
-    \partial E / \partial r_{\alpha , x} \\
-    \partial E / \partial r_{\alpha , y} \\
-    \partial E / \partial r_{\alpha , z} 
+  \frac{\partial E}{\partial \vec{r}_\xi} &= \begin{pmatrix}
+    \partial E / \partial r_{\xi , x} \\
+    \partial E / \partial r_{\xi , y} \\
+    \partial E / \partial r_{\xi , z} 
   \end{pmatrix}
 \end{align*}
+\newpage
 
 We split the problem into the main terms:
 
 \begin{align*}
-  \partialPosVec{\alpha} \errf 
+  \partialPosVec{\xi} \errf 
   &= \underbrace{
-    \partialPosVec{\alpha} \left(
+    \partialPosVec{\xi} \left(
       \ijNSum \distanceErrorFirstTerm{2}
     \right)
   }_{\circled{1}}
   + \underbrace{
-    \partialPosVec{\alpha} \left(
+    \partialPosVec{\xi} \left(
       \ijNSum \distanceErrorSecondTerm{2}
     \right)
   }_{\circled{2}}\\
   &+ \underbrace{
-    \partialPosVec{\alpha} \chiralSum \chiralErrorFirstTerm{2}
+    \partialPosVec{\xi} \chiralSum \chiralErrorFirstTerm{2}
   }_{\circled{3}}\\
   &+ \underbrace{
-    \partialPosVec{\alpha} \chiralSum \chiralErrorSecondTerm{2}
+    \partialPosVec{\xi} \chiralSum \chiralErrorSecondTerm{2}
   }_{\circled{4}}
 \end{align*}
 
-\newpage
-And start with \circled{1}. We use the chain rule:
+and start with \circled{1}. We use the chain rule:
 
 \begin{equation}
-  \partialPosVec{\alpha} \ijNSum \distanceErrorFirstTerm{2}
-  = 2 \ijNSum \distanceErrorFirstTerm{} \partialPosVec{\alpha}
+  \partialPosVec{\xi} \ijNSum \distanceErrorFirstTerm{2}
+  = 2 \ijNSum \distanceErrorFirstTerm{} \partialPosVec{\xi}
   \distanceErrorFirstTerm{}.
 \end{equation}
 
-If $\alpha = i$, then:
+If $\xi = i$, then:
 
 \begin{equation}
   \partialPosVec{i} \distanceErrorFirstTermPart
   = - \frac{2}{U_{ij}^{2}} \posVecDiff{j}{i},
 \end{equation}
 
-and likewise, but positive, for $\alpha = j$. Consequently:
+and likewise, but positive, for $\xi = j$. Consequently:
 
 \begin{equation}
-  \partialPosVec{\alpha} \left( \distanceErrorFirstTerm{} \right)
-  = \frac{2}{U_{ij}^{2}} \posVecDiff{j}{i} \left\{ \begin{array}{lr}
-    -1 & \textrm{if }\alpha = i\\
-    1 & \textrm{if }\alpha = j\\
-    0 & \textrm{otherwise}
+  \partialPosVec{\xi} \left( \distanceErrorFirstTerm{} \right)
+  = \frac{2}{U_{ij}^{2}} \posVecDiff{j}{i} \left\{ \begin{array}{r | r}
+    -1 & \xi = i\\
+    1 & \xi = j\\
+    0 & \textrm{else}
   \end{array} \right\}
   = \frac{2}{U_{ij}^{2}} \posVecDiff{j}{i} \left(
-    \delta_{\alpha j} - \delta_{\alpha i} 
+    \delta_{\xi j} - \delta_{\xi i} 
   \right),
 \end{equation}
 
@@ -228,7 +259,7 @@ the Kronecker delta. So, in total:
 \begin{equation}\label{eq_breakdown_deltas}
   \text{\circled{1}}
   = \ijNSum \left(
-    \delta_{\alpha j} - \delta_{\alpha i} 
+    \delta_{\xi j} - \delta_{\xi i} 
   \right) \underbrace{
     \frac{4}{U_{ij}^{2}} \posVecDiff{j}{i} \distanceErrorFirstTerm{}
   }_{f(i, j)}
@@ -236,12 +267,12 @@ the Kronecker delta. So, in total:
 
 We can transform the summation further using the Kronecker deltas:
 \begin{align}
-  \ijNSum \left( \delta_{\alpha j} - \delta_{\alpha i} \right) f(i, j)
-  &= \sum_{i = 1}^{\alpha - 1} f(i, \alpha) 
-    - \sum_{j = \alpha + 1}^{N} f(\alpha, j)\\
-  &= \sum_{i = 1}^{\alpha - 1} f(i, \alpha) 
-    + \sum_{i = \alpha + 1}^{N} f(i, \alpha)\\
-  &= \sum_{i = 1}^{N} \left(1 - \delta_{i\alpha} \right) f(i, \alpha),
+  \ijNSum \left( \delta_{\xi j} - \delta_{\xi i} \right) f(i, j)
+  &= \sum_{i = 1}^{\xi - 1} f(i, \xi) 
+    - \sum_{j = \xi + 1}^{N} f(\xi, j)\\
+  &= \sum_{i = 1}^{\xi - 1} f(i, \xi) 
+    + \sum_{i = \xi + 1}^{N} f(i, \xi)\\
+  &= \sum_{i = 1}^{N} \left(1 - \delta_{i\xi} \right) f(i, \xi),
 \end{align}
 
 where we have used that $f(i, j) = -f(j, i)$ (see Eq.~\ref{eq_breakdown_deltas}).
@@ -249,13 +280,13 @@ All in all:
 
 \begin{equation}
   \text{\circled{1}}
-  = \iNSum \left(1 - \delta_{i\alpha}\right) \frac{4}{U_{i\alpha}^{2}}
-    \posVecDiff{\alpha}{i} \textrm{max} \left(
+  = \iNSum \left(1 - \delta_{i\xi}\right) \frac{4}{U_{i\xi}^{2}}
+    \posVecDiff{\xi}{i} \textrm{max} \left(
       0,
       \frac{
-        \posVecDiff{\alpha}{i}^{2}
+        \posVecDiff{\xi}{i}^{2}
       }{
-        U_{i\alpha}^{2}
+        U_{i\xi}^{2}
       } - 1
     \right)
 \end{equation}
@@ -263,12 +294,12 @@ All in all:
 \newpage
 Let us continue with \circled{2}. The chain rule gives:
 \begin{equation}
-  \partialPosVec{\alpha} \ijNSum \distanceErrorSecondTerm{2}
-  = 2 \ijNSum \distanceErrorSecondTerm{} \partialPosVec{\alpha}
+  \partialPosVec{\xi} \ijNSum \distanceErrorSecondTerm{2}
+  = 2 \ijNSum \distanceErrorSecondTerm{} \partialPosVec{\xi}
     \distanceErrorSecondTerm.
 \end{equation}
 
-For $\alpha = i$,
+For $\xi = i$,
 \begin{equation}
   \partialPosVec{i} \left( \distanceErrorSecondTermPart \right)
   = \frac{
@@ -280,20 +311,20 @@ For $\alpha = i$,
   },
 \end{equation}
 
-and likewise, but negative, for $\alpha = j$. Therefore,
+and likewise, but negative, for $\xi = j$. Therefore,
 
 \begin{align*}
-  \partialPosVec{\alpha} \left( \distanceErrorSecondTerm{} \right)
+  \partialPosVec{\xi} \left( \distanceErrorSecondTerm{} \right)
   &=\frac{
     4 L_{ij}^{2} \posVecDiff{j}{i}
   }{
     \left(
       L_{ij}^{2} + \posVecDiff{j}{i}^2
     \right)^2
-  } \left\{ \begin{array}{lr}
-    1 & \textrm{if }\alpha = i\\
-    - 1 & \textrm{if }\alpha = j\\
-    0 & \textrm{otherwise}
+  } \left\{ \begin{array}{ r | r}
+    1 & \xi = i\\
+    - 1 & \xi = j\\
+    0 & \textrm{else}
   \end{array} \right\}\\
   &= \frac{
     4 L_{ij}^{2} \posVecDiff{j}{i}
@@ -302,7 +333,7 @@ and likewise, but negative, for $\alpha = j$. Therefore,
       L_{ij}^{2} + \posVecDiff{j}{i}^2
     \right)^2
   } \left(
-    \delta_{\alpha i} - \delta_{\alpha j} 
+    \delta_{\xi i} - \delta_{\xi j} 
   \right),
 \end{align*}
 
@@ -312,7 +343,7 @@ since this case is covered by the first maximum function. Altogether:
 \begin{equation}\label{eq_breakdown_deltas_second}
   \text{\circled{2}}
   = \ijNSum \left(
-    \delta_{\alpha i} - \delta_{\alpha j} 
+    \delta_{\xi i} - \delta_{\xi j} 
   \right) \underbrace{
     \frac{
       8 L_{ij}^{2} \posVecDiff{j}{i}
@@ -326,12 +357,12 @@ since this case is covered by the first maximum function. Altogether:
 
 Transforming the summation:
 \begin{align}
-  \ijNSum \left( \delta_{\alpha i} - \delta_{\alpha j} \right) g(i, j)
-  &= - \sum_{i = 1}^{\alpha - 1} g(i, \alpha) 
-    + \sum_{j = \alpha + 1}^{N} g(\alpha, j)\\
-  &= \sum_{i = 1}^{\alpha - 1} g(\alpha, i) 
-    + \sum_{i = \alpha + 1}^{N} g(\alpha, i)\\
-  &= \sum_{i = 1}^{N} \left(1 - \delta_{i\alpha} \right) g(\alpha, i),
+  \ijNSum \left( \delta_{\xi i} - \delta_{\xi j} \right) g(i, j)
+  &= - \sum_{i = 1}^{\xi - 1} g(i, \xi) 
+    + \sum_{j = \xi + 1}^{N} g(\xi, j)\\
+  &= \sum_{i = 1}^{\xi - 1} g(\xi, i) 
+    + \sum_{i = \xi + 1}^{N} g(\xi, i)\\
+  &= \sum_{i = 1}^{N} \left(1 - \delta_{i\xi} \right) g(\xi, i),
 \end{align}
 
 Where we have used $g(i, j) = -g(j, i)$ (see
@@ -339,19 +370,19 @@ Eq.~\ref{eq_breakdown_deltas_second}). All in all:
 
 \begin{equation}
   \text{\circled{2}}
-  = \iNSum \left(1 - \delta_{i\alpha}\right) 
+  = \iNSum \left(1 - \delta_{i\xi}\right) 
     \frac{
-      8 L_{\alpha i}^{2} \posVecDiff{i}{\alpha}
+      8 L_{\xi i}^{2} \posVecDiff{i}{\xi}
     }{
       \left(
-        L_{\alpha i}^{2} + \posVecDiff{i}{\alpha}^2
+        L_{\xi i}^{2} + \posVecDiff{i}{\xi}^2
       \right)^2
     } \textrm{max} \left(
       0,
       \frac{
-        2 L_{\alpha i}^{2}
+        2 L_{\xi i}^{2}
       }{
-        L_{\alpha i}^{2} + \posVecDiff{i}{\alpha}^{2}
+        L_{\xi i}^{2} + \posVecDiff{i}{\xi}^{2}
       } - 1
     \right)
 \end{equation}
@@ -360,115 +391,140 @@ Eq.~\ref{eq_breakdown_deltas_second}). All in all:
 Next, we consider \circled{3}. Applying the chain rule gives:
 
 \begin{align*}
-  &\quad\partialPosVec{\alpha} \chiralSum \chiralErrorFirstTerm{2}\\
-  &= 2 \chiralSum \chiralErrorFirstTerm{} \partialPosVec{\alpha} \chiralErrorFirstTerm{}
+  &\quad\partialPosVec{\xi} \chiralSum \chiralErrorFirstTerm{2}\\
+  &= 2 \chiralSum \chiralErrorFirstTerm{} \partialPosVec{\xi} \chiralErrorFirstTerm{}
 \end{align*}
 
-The partial derivatives of $V_{ijkl}\posDependence$ for $\alpha \in \{i, j, k,
-l\}$ are as follows:
+The partial derivatives of $V_{\alpha\beta\gamma\delta}\posDependence$ with
+respect to $\vec{r}_\xi$ are split into five cases. The index $\xi$ can be an
+element of one of the four sets $S_\alpha, S_\beta, S_\gamma, S_\delta$ (and
+only one, since they are mutually disjoint) or not. The derivative for the last
+case is zero. In the remaining cases, one average vector $\vec{s}$ is a function
+of $\vec{r}_\xi$ but the rest are not. The partial derivative of any average
+vector $\vec{s}$ is:
+
+\begin{equation}
+  \partialPosVec{\xi} \vec{s}_\alpha 
+  = \partialPosVec{\xi} \frac{1}{|S_\alpha|}\sum_{i=1}^{|S_\alpha|}
+  \vec{r}_{S_{\alpha, i}}
+  = \left\{ 
+    \begin{array}{r | r}
+      \frac{1}{|S_\alpha|} \mathbf{I}_3 &  \xi \in S_\alpha\\
+      0 & \textrm{else}
+    \end{array}
+  \right\}
+\end{equation}
+
+where $\mathbf{I}_3$ denotes the three dimensional identity matrix. The individual set
+membership cases are thus as follows:
 
 \begin{align}
-  \text{\circled{i}} &\quad \partialVec{i} \left\{ 
-    \vecDiff{i}{l}^{T}
+  \text{\circled{$S_\alpha$}} &\quad \partialPosVec{\xi} \left\{ 
+    \avgVecDiff{\alpha}{\delta}^{T}
     \cdot \left[
-      \vecDiff{j}{l}
-      \times \vecDiff{k}{l}
+      \avgVecDiff{\beta}{\delta}
+      \times \avgVecDiff{\gamma}{\delta}
     \right]
   \right\} \\
-  &= \partialVec{i} \left\{ 
-    \vec{i}^{\,T}
+  &= \partialPosVec{\xi} \left\{ 
+    \vec{s}_\alpha^{\,T}
     \cdot \left[
-      \vecDiff{j}{l}
-      \times \vecDiff{k}{l}
+      \avgVecDiff{\beta}{\delta}
+      \times \avgVecDiff{\gamma}{\delta}
     \right]
   \right\} - \vec{0} \\
-  &= \vecDiff{j}{l} \times \vecDiff{k}{l} 
+  &= \frac{1}{|S_\alpha|} \left[
+    \avgVecDiff{\beta}{\delta} \times \avgVecDiff{\gamma}{\delta} 
+  \right]
 \end{align}
 
+In shorthand notation, in which all $\vec{s}$ symbols are replaced by their subscripts:
+
 \begin{align}
-  \text{\circled{j}} &\quad \partialVec{j} 
-    \vecDiff{i}{l}^{T}
+  \text{\circled{$S_\beta$}} &\quad \partialPosVec{\xi} 
+    \vecDiff{\alpha}{\delta}^{T}
     \cdot \left[
-      \vecDiff{j}{l}
-      \times \vecDiff{k}{l}
+      \vecDiff{\beta}{\delta}
+      \times \vecDiff{\gamma}{\delta}
     \right] \\
-  &= \partialVec{j}
-    \vecDiff{i}{l}^{T}
+  &= \partialPosVec{\xi}
+    \vecDiff{\alpha}{\delta}^{T}
     \cdot \left[
-      \vec{j} \times \vec{k} - \vec{j} \times \vec{l} - \vec{l} \times \vec{k} + \underbrace{
-        \vec{l} \times \vec{l}
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma} + \underbrace{
+        \vec{\delta} \times \vec{\delta}
       }_{=0}
     \right] \\
-  &= \partialVec{j} \left\{
-    \vec{j}^{\,T} \cdot \left[
-      \vec{k} \times \vecDiff{i}{l}
+  &= \partialPosVec{\xi} \left\{
+    \vec{\beta}^{\,T} \cdot \left[
+      \vec{\gamma} \times \vecDiff{\alpha}{\delta}
     \right] 
-    - \vec{j}^{\,T} \cdot \left[
-      \vec{l} \times \vecDiff{i}{l}
+    - \vec{\beta}^{\,T} \cdot \left[
+      \vec{\delta} \times \vecDiff{\alpha}{\delta}
     \right] 
   \right\} - \vec{0} \\
-  &= \vecDiff{k}{l} \times \vecDiff{i}{l} 
-  = - \vecDiff{i}{l} \times \vecDiff{k}{l}
+&= \frac{1}{|S_\beta|} \vecDiff{\gamma}{\delta} \times \vecDiff{\alpha}{\delta} 
+  = - \frac{1}{|S_\beta|}\vecDiff{\alpha}{\delta} \times \vecDiff{\gamma}{\delta}
 \end{align}
 
 \begin{align}
-  \text{\circled{k}} &\quad \partialVec{k} 
-    \vecDiff{i}{l}^{T}
+  \text{\circled{$S_\gamma$}} &\quad \partialPosVec{\xi} 
+    \vecDiff{\alpha}{\delta}^{T}
     \cdot \left[
-      \vec{j} \times \vec{k} - \vec{j} \times \vec{l} - \vec{l} \times \vec{k} 
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma} 
     \right] \\
-  &= \partialVec{k} \left\{
-    \vec{k}^{\,T} \cdot \left[
-      \vecDiff{i}{l} \times \vec{j}
+  &= \partialPosVec{\xi} \left\{
+    \vec{\gamma}^{\,T} \cdot \left[
+      \vecDiff{\alpha}{\delta} \times \vec{\beta}
     \right] 
-    - \vec{k}^{\,T} \cdot \left[
-      \vecDiff{i}{l} \times \vec{l}\,
+    - \vec{\gamma}^{\,T} \cdot \left[
+      \vecDiff{\alpha}{\delta} \times \vec{\delta}\,
     \right] 
   \right\} - \vec{0} \\
-  &= \vecDiff{i}{l} \times \vecDiff{j}{l} 
+  &= \vecDiff{\alpha}{\delta} \times \vecDiff{\beta}{\delta} 
 \end{align}
 
 \begin{align}
-  \text{\circled{l}} &\quad \frac{\partial}{\partial \vec{l}\,} 
-    \vecDiff{i}{l}^{T}
+  \text{\circled{$S_\delta$}} &\quad \partialPosVec{\xi}
+    \vecDiff{\alpha}{\delta}^{T}
     \cdot \left[
-      \vec{j} \times \vec{k} - \vec{j} \times \vec{l} - \vec{l} \times \vec{k} 
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma} 
     \right] \\
-  &= \frac{\partial}{\partial \vec{l}\,}\, \vec{i}^{\,T} \cdot \left[
-      \vec{j} \times \vec{k} - \vec{j} \times \vec{l} - \vec{l} \times \vec{k} 
-    \right] - \frac{\partial}{\partial \vec{l}\,} \vec{l}^{\,\,T} \cdot \left[
-      \vec{j} \times \vec{k} - \vec{j} \times \vec{l} - \vec{l} \times \vec{k}
+  &= \partialPosVec{\xi} \vec{\alpha}^{\,T} \cdot \left[
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma} 
+    \right] - \partialPosVec{\xi} \vec{\delta}^{\,\,T} \cdot \left[
+      \vec{\beta} \times \vec{\gamma} - \vec{\beta} \times \vec{\delta} - \vec{\delta} \times \vec{\gamma}
     \right]\\
   &= \underbrace{
-      \frac{\partial}{\partial \vec{l}\,} \vec{i}^{\,T} \cdot \vecCross{j}{k}
+      \partialPosVec{\xi} \vec{\alpha}^{\,T} \cdot \vecCross{\beta}{\gamma}
     }_{=0} 
-    - \frac{\partial}{\partial \vec{l}\,} \vec{i}^{\,T} \cdot \left( 
-      \vec{j} \times \vec{l}\,
+    - \partialPosVec{\xi} \vec{\alpha}^{\,T} \cdot \left( 
+      \vec{\beta} \times \vec{\delta}\,
     \right)
-    - \frac{\partial}{\partial \vec{l}\,} \vec{i}^{\,T} \cdot \vecCross{l}{k}
-    - \frac{\partial}{\partial \vec{l}\,} \vec{l}^{\,\,T} \cdot \vecCross{j}{k}
-    + \frac{\partial}{\partial \vec{l}\,} \underbrace{
-      \vec{l}^{\,\,T} \cdot \vecCross{l}{k} 
+    - \partialPosVec{\xi} \vec{\alpha}^{\,T} \cdot \vecCross{\delta}{\gamma}
+    - \partialPosVec{\xi} \vec{\delta}^{\,\,T} \cdot \vecCross{\beta}{\gamma}
+    + \partialPosVec{\xi} \underbrace{
+      \vec{\delta}^{\,\,T} \cdot \vecCross{\delta}{\gamma} 
     }_{=0}
-    + \frac{\partial}{\partial \vec{l}\,} \underbrace{
-      \vec{l}^{\,\,T} \cdot \vecCross{j}{l}
+    + \partialPosVec{\xi} \underbrace{
+      \vec{\delta}^{\,\,T} \cdot \vecCross{\beta}{\delta}
     }_{=0} \\
-  &= - \frac{\partial}{\partial \vec{l}\,} \vec{l}^{\,\,T} \cdot \vecCross{k}{i}
-    - \frac{\partial}{\partial \vec{l}\,} \vec{l}^{\,\,T} \cdot \vecCross{i}{j}
-    - \frac{\partial}{\partial \vec{l}\,} \vec{l}^{\,\,T} \cdot \vecCross{j}{k} \\
-  &= - \vec{k} \times \vec{i} - \vec{i} \times \vec{j} - \vec{j} \times \vec{k} \\
-  &= - \vecDiff{i}{k} \times \vecDiff{j}{k} 
+  &= - \partialPosVec{\xi} \vec{\delta}^{\,\,T} \cdot \vecCross{\gamma}{\alpha}
+    - \partialPosVec{\xi} \vec{\delta}^{\,\,T} \cdot \vecCross{\alpha}{\beta}
+    - \partialPosVec{\xi} \vec{\delta}^{\,\,T} \cdot \vecCross{\beta}{\gamma} \\
+  &= - \frac{1}{|S_\delta|} \vec{\gamma} \times \vec{\alpha} -
+  \frac{1}{|S_\delta|} \vec{\alpha} \times \vec{\beta} - \frac{1}{|S_\delta|} \vec{\beta} \times \vec{\gamma} \\
+  &= - \frac{1}{|S_\delta|} \vecDiff{\alpha}{\gamma} \times \vecDiff{\beta}{\gamma} 
 \end{align}
 
 So, overall:
 
 \begin{equation}
-  \text{\circled{3}} = \chiralSum 2\ \chiralErrorFirstTerm{} \left\{ \begin{array}{rr}
-    \posVecDiff{j}{l} \times \posVecDiff{k}{l} & \textrm{if }\alpha = i\\
-    - \posVecDiff{i}{l} \times \posVecDiff{k}{l} & \textrm{if }\alpha = j\\
-    \posVecDiff{i}{l} \times \posVecDiff{j}{l} & \textrm{if }\alpha = k\\
-    - \posVecDiff{i}{k} \times \posVecDiff{j}{k} & \textrm{if }\alpha = l\\
-    0 & \textrm{otherwise}
+  \text{\circled{3}} = \chiralSum 2\ \chiralErrorFirstTerm{}  \left\{ \begin{array}{r | r}
+    \frac{1}{|S_\alpha|} \avgVecDiff{\beta}{\delta} \times \avgVecDiff{\gamma}{\delta} & \xi \in S_\alpha\\
+    - \frac{1}{|S_\beta|} \avgVecDiff{\alpha}{\delta} \times \avgVecDiff{\gamma}{\delta} & \xi \in S_\beta\\
+    \frac{1}{|S_\gamma|} \avgVecDiff{\alpha}{\delta} \times \avgVecDiff{\beta}{\delta} & \xi \in S_\gamma\\
+    - \frac{1}{|S_\delta|} \avgVecDiff{\alpha}{\gamma} \times \avgVecDiff{\beta}{\gamma} & \xi \in S_\delta\\
+    0 & \textrm{else}
   \end{array} \right\}.
 \end{equation}
 
@@ -476,20 +532,20 @@ For \circled{4}, the derivation is analog save for the sign of the great amount
 of cases, which we extrude from the sum:
 
 \begin{equation}
-  \text{\circled{4}} = - \chiralSum 2\ \chiralErrorSecondTerm{} \left\{ \begin{array}{rr}
-    \posVecDiff{j}{l} \times \posVecDiff{k}{l} & \textrm{if }\alpha = i\\
-    - \posVecDiff{i}{l} \times \posVecDiff{k}{l} & \textrm{if }\alpha = j\\
-    \posVecDiff{i}{l} \times \posVecDiff{j}{l} & \textrm{if }\alpha = k\\
-    - \posVecDiff{i}{k} \times \posVecDiff{j}{k} & \textrm{if }\alpha = l\\
-    0 & \textrm{otherwise}
+  \text{\circled{4}} = - \chiralSum 2\ \chiralErrorSecondTerm{} \left\{ \begin{array}{r | r}
+    \frac{1}{|S_\alpha|} \avgVecDiff{\beta}{\delta} \times \avgVecDiff{\gamma}{\delta} & \xi \in S_\alpha\\
+    - \frac{1}{|S_\beta|} \avgVecDiff{\alpha}{\delta} \times \avgVecDiff{\gamma}{\delta} & \xi \in S_\beta\\
+    \frac{1}{|S_\gamma|} \avgVecDiff{\alpha}{\delta} \times \avgVecDiff{\beta}{\delta} & \xi \in S_\gamma\\
+    - \frac{1}{|S_\delta|} \avgVecDiff{\alpha}{\gamma} \times \avgVecDiff{\beta}{\gamma} & \xi \in S_\delta\\
+    0 & \textrm{else}
   \end{array} \right\}.
 \end{equation}
 
 Both terms concerning the chiral error can be summarized as follows:
 
 \begin{align*}
-  &\quad\chiralSum 2\ \chiralErrorFirstTerm{} \Big\{ \ldots \Big\}
-  - \chiralSum 2\ \chiralErrorSecondTerm{} \Big\{ \ldots \Big\}\\
+  &\quad\chiralSum 2\ \chiralErrorFirstTerm{} \Big\{ \ldots \Big\}\\
+  &\quad - \chiralSum 2\ \chiralErrorSecondTerm{} \Big\{ \ldots \Big\}\\
   &= \chiralSum 2\ \Big\{ \ldots \Big\} \Big[ 
     \chiralErrorFirstTerm{} - \chiralErrorSecondTerm{} 
   \Big],

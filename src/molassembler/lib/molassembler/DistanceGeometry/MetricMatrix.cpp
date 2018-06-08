@@ -1,5 +1,5 @@
 #include "DistanceGeometry/MetricMatrix.h"
-#include "common_typedefs.h"
+#include "detail/SharedTypes.h"
 
 #include <Eigen/Eigenvalues>
 
@@ -23,7 +23,7 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
 
   // Declare D0 vector
   Eigen::VectorXd D0(N);
-  /* D_{i}² =   (1/N) * sum_{j}(distances[i, j]²) 
+  /* D_{i}² =   (1/N) * sum_{j}(distances[i, j]²)
    *          - (1/(N²)) * sum_{j < k}(distances[j, k]²)
    *
    * The second term is independent of i, precalculate!
@@ -59,7 +59,7 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
     D0[i] = firstTerm - doubleSumTerm;
   }
 
-  /* The diagonal of G is just D0! 
+  /* The diagonal of G is just D0!
    * g[i, j] = ( D0[i]² + D0[j]² - distances[i, j]² ) / 2
    * if i == j:    ^--------^      ^-------------^
    *                 equal               =0
@@ -67,14 +67,14 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
    * -> g[i, i] = D0[i]²
    *
    * since we store the squares, no need to do anything but assign the entire
-   * diagonal as the contents of the previous vector. Could also optimize out 
-   * the D0 vector, it's actually unnecessary (just store it on the diagonal 
+   * diagonal as the contents of the previous vector. Could also optimize out
+   * the D0 vector, it's actually unnecessary (just store it on the diagonal
    * immediately).
    */
   _matrix.diagonal() = D0;
 
   /* Write off-diagonal elements into lower triangle
-   * Why the lower triangle? Because that is the only part of the matrix 
+   * Why the lower triangle? Because that is the only part of the matrix
    * referenced by Eigen's SelfAdjointEigenSolver, which we will use in a bit
    * to embed the metric matrix
    */
@@ -134,7 +134,7 @@ Eigen::MatrixXd MetricMatrix::embed() const {
   L.diagonal() = eigenValues;
 
   Eigen::MatrixXd V = eigenSolver.eigenvectors();
-  // Eigen has its own concept of rows and columns, I would have thought it's 
+  // Eigen has its own concept of rows and columns, I would have thought it's
   // columns. But tests have shown it has to be row-wise.
   V.rowwise().reverseInPlace();
   V.conservativeResize(
@@ -148,7 +148,7 @@ Eigen::MatrixXd MetricMatrix::embed() const {
    * transpose (V * L)
    * -> dimensionality x Natoms
    */
-  return (V * L).transpose(); 
+  return (V * L).transpose();
 }
 
 bool MetricMatrix::operator == (const MetricMatrix& other) const {

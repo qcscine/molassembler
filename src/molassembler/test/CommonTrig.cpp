@@ -2,7 +2,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "CommonTrig.h"
+#include "detail/CommonTrig.h"
 #include "temple/Random.h"
 #include "temple/Containers.h"
 
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(randomExamples) {
       ),
       std::sqrt(5)
     ),
-    "It's not " << std::sqrt(5) <<", it's " 
+    "It's not " << std::sqrt(5) <<", it's "
       << dihedralLength(
         1,
         1,
@@ -99,11 +99,11 @@ BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
         angles.at(1),
         M_PI
       ),
-      "Disproved by side lengths {" 
+      "Disproved by side lengths {"
         << temple::condenseIterable(sideLengths)
-        << "} and angles {" 
+        << "} and angles {"
         << temple::condenseIterable(angles)
-        << "}: 0 -> " 
+        << "}: 0 -> "
         << dihedralLength(
           sideLengths.at(0),
           sideLengths.at(1),
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
           angles.at(0),
           angles.at(1),
           0
-        ) << ", π -> " 
+        ) << ", π -> "
         << dihedralLength(
           sideLengths.at(0),
           sideLengths.at(1),

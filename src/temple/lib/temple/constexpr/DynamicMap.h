@@ -10,6 +10,11 @@
  * maximal size.
  */
 
+/* TODO
+ * - There is really no reason this should be based on DynamicSet. It should be
+ *   based on the BTree only!
+ */
+
 namespace temple {
 
 /*!
@@ -79,14 +84,14 @@ public:
   constexpr MappedType at(const KeyType& key) const {
     PairType pair {key, MappedType {}};
     auto keyOptional = _items.getOption(pair);
-    
+
     if(!keyOptional.hasValue()) {
       throw "No such key in this DynamicMap!";
     }
 
     return keyOptional.value().second;
   }
-      
+
   constexpr void insert(
     KeyType key,
     MappedType item

@@ -16,20 +16,6 @@ foreach(filename ${testFiles})
   # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})
 
-  target_compile_options(${targetName} PUBLIC -Wall -Wpedantic -Wextra)
-  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    target_compile_options(${targetName} PUBLIC -O3 -march=native)
-  else()
-    target_compile_options(${targetName} PUBLIC -g)
-    # target_compile_options(
-    #  ${targetName} PUBLIC -g -fsanitize=address -fsanitize=undefined
-    #)
-    # set_target_properties(
-    #  ${targetName} PROPERTIES
-    #    LINK_FLAGS "-fsanitize=address -fsanitize=undefined"
-    #)
-  endif()
-
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     target_compile_options(
       ${targetName}
@@ -37,11 +23,11 @@ foreach(filename ${testFiles})
     )
   endif()
 
-  target_include_directories(${targetName} PRIVATE ${Boost_INCLUDE_DIRS})
-  target_link_libraries(
-    ${targetName}
-    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-    temple
+  target_link_libraries(${targetName}
+    PRIVATE
+      Boost::boost
+      Boost::unit_test_framework
+      temple
   )
 
   # add target to tests

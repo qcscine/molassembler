@@ -58,7 +58,7 @@ public:
    * \param passCharacters A vector of chars signifying abstract ligands.
    */
   Stereopermutation(
-    const Symmetry::Name& passSymmetryName,
+    const Symmetry::Name passSymmetryName,
     std::vector<char> passCharacters
   );
   /*!
@@ -71,9 +71,9 @@ public:
    *  are bonded to one another.
    */
   Stereopermutation(
-    const Symmetry::Name& passSymmetryName,
-    const std::vector<char>& passCharacters,
-    const LinksSetType& passLinks
+    const Symmetry::Name passSymmetryName,
+    const std::vector<char> passCharacters,
+    const LinksSetType passLinks
   );
 
   /* Modifiers ––––––––––––––––––––––––––––*/
@@ -117,7 +117,7 @@ public:
    * in the permutation code where the instruction columnSwap(0, 1) would have
    * no net effect.
    */
-  bool columnSmaller(const unsigned& a, const unsigned& b) const;
+  bool columnSmaller(const unsigned& a, const unsigned& b) const PURITY_WEAK;
 
   /*!
    * Generates a set of all rotational equivalents of this Stereopermutation as
@@ -135,7 +135,7 @@ public:
   > getCharMap() const;
 
   //! Returns whether the "columns" are sorted in ascending order
-  bool isSortedAsc() const;
+  bool isSortedAsc() const PURITY_WEAK;
 
   /*!
    * Checks whether this Stereopermutation is rotationally superimposable with
@@ -157,13 +157,13 @@ public:
   std::string toString() const;
 
   /* Operators */
-  bool operator < (const Stereopermutation& other) const;
-  bool operator > (const Stereopermutation& other) const;
-  bool operator == (const Stereopermutation& other) const;
-  bool operator != (const Stereopermutation& other) const;
+  bool operator < (const Stereopermutation& other) const PURITY_WEAK;
+  bool operator > (const Stereopermutation& other) const PURITY_WEAK;
+  bool operator == (const Stereopermutation& other) const PURITY_WEAK;
+  bool operator != (const Stereopermutation& other) const PURITY_WEAK;
 };
 
-std::size_t hash_value(const Stereopermutation& assignment);
+std::size_t hash_value(const Stereopermutation& assignment) PURITY_WEAK;
 
 /*!
  * ostream operator for easier debugging

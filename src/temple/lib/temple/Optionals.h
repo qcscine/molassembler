@@ -86,7 +86,7 @@ struct CallIfSome {
     );
   }
 
-  template<typename R, typename T> 
+  template<typename R, typename T>
   std::enable_if_t<
     std::is_same<std::decay_t<T>, InjectPlaceholder>::value,
     R
@@ -97,7 +97,7 @@ struct CallIfSome {
     return previousResult;
   }
 
-  template<typename R, typename T> 
+  template<typename R, typename T>
   std::enable_if_t<
     !std::is_same<std::decay_t<T>, InjectPlaceholder>::value,
     const T&

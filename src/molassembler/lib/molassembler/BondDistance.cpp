@@ -1,5 +1,7 @@
 #include "BondDistance.h"
 
+#include <cmath>
+
 namespace molassembler {
 
 namespace Bond {

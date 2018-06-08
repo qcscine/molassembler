@@ -36,7 +36,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   );
 }
 
-BOOST_AUTO_TEST_CASE(strainedOrganicMolecules) {
+BOOST_AUTO_TEST_CASE(ezStereocenterExamples) {
   boost::filesystem::path filesPath("test_files/ez_stereocenters");
   boost::filesystem::recursive_directory_iterator end;
 

@@ -1,12 +1,14 @@
 #include "IO.h"
-#include "Version.h"
-#include "BondDistance.h"
-#include "Serialization.h"
-#include "Delib/AtomCollectionIO.h"
-#include "Delib/Constants.h"
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
+#include "Delib/AtomCollection.h"
+#include "Delib/AtomCollectionIO.h"
+#include "Delib/Constants.h"
+
+#include "BondDistance.h"
+#include "Serialization.h"
+#include "Version.h"
 
 #include <fstream>
 #include <iomanip>
@@ -30,12 +32,23 @@ const boost::bimap<std::string, MOLFileHandler::MOLFileVersion> MOLFileHandler::
   // {"V3000", MOLFileVersion::V3000}
 });
 
+/* CTFile specification for V2000
+ * 1 - Single
+ * 2 - Double
+ * 3 - Triple
+ * 4 - Aromatic
+ * 5 - Single / Double
+ * 6 - Single / Aromatic
+ * 7 - Double / Aromatic
+ * 8 - Any
+ */
 const boost::bimap<unsigned, BondType> MOLFileHandler::_bondTypeMap
 = makeBimap<unsigned, BondType>({
   {1, BondType::Single},
   {2, BondType::Double},
   {3, BondType::Triple},
-  {4, BondType::Aromatic}
+  {4, BondType::Aromatic},
+  {8, BondType::Eta}
 });
 
 std::string MOLFileHandler::_removeAllSpaces(std::string&& a) {
@@ -59,13 +72,13 @@ std::string MOLFileHandler::_removeAllSpaces(const std::string& a) {
 void MOLFileHandler::_write(
   const std::string& filename,
   const Molecule& molecule,
-  const Delib::PositionCollection& positions,
+  const AngstromWrapper& angstromWrapper,
   const MOLFileVersion& version,
   const IndexPermutation& permutation
 ) const {
   std::function<AtomIndexType(const AtomIndexType&)> indexMap, inverse;
 
-  unsigned N = molecule.numAtoms();
+  const unsigned N = molecule.numAtoms();
 
   if(permutation == IndexPermutation::Identity) {
     indexMap = permutations::Identity {};
@@ -129,9 +142,9 @@ void MOLFileHandler::_write(
 
       for(unsigned i = 0; i < molecule.numAtoms(); i++) {
         fout << std::setprecision(4) << std::fixed
-          << std::setw(10) << positions[inverse(i)].x()
-          << std::setw(10) << positions[inverse(i)].y()
-          << std::setw(10) << positions[inverse(i)].z()
+          << std::setw(10) << angstromWrapper.positions[inverse(i)].x()
+          << std::setw(10) << angstromWrapper.positions[inverse(i)].y()
+          << std::setw(10) << angstromWrapper.positions[inverse(i)].z()
           << " " << std::setprecision(0)
           // aaa (atom symbol)
           << std::setw(3) << symbolStringLambda(molecule.getElementType(inverse(i)))
@@ -234,16 +247,15 @@ FileHandler::RawData MOLFileHandler::read(const std::string& filename) const {
         atomPosition.y() = std::stod(line.substr(10, 10));
         atomPosition.z() = std::stod(line.substr(20, 10));
 
-        data.atoms.push_back(
-          Delib::Atom {
-            Delib::ElementInfo::elementTypeForSymbol(
-              _removeAllSpaces(
-                line.substr(31, 3)
-              )
-            ),
-            atomPosition
-          }
+        data.elements.push_back(
+          Delib::ElementInfo::elementTypeForSymbol(
+            _removeAllSpaces(
+              line.substr(31, 3)
+            )
+          )
         );
+
+        data.angstromWrapper.positions.push_back(atomPosition);
       }
 
       // decrement remaning size
@@ -295,13 +307,13 @@ bool MOLFileHandler::canRead(const std::string& filename) const {
 void MOLFileHandler::write(
   const std::string& filename,
   const Molecule& molecule,
-  const Delib::PositionCollection& positions,
+  const AngstromWrapper& angstromWrapper,
   const IndexPermutation& permutation
 ) const {
   _write(
     filename,
     molecule,
-    positions,
+    angstromWrapper,
     MOLFileVersion::V2000,
     permutation
   );
@@ -321,11 +333,13 @@ FileHandler::RawData XYZHandler::read(const std::string& filename) const {
   assert(canRead(filename));
 
   FileHandler::RawData data;
-  data.atoms = Delib::AtomCollectionIO::read(filename);
-  // Delib IO makes everything bohr units, I need Angstroms
-  data.atoms.setPositions(
-    data.atoms.getPositions() * Delib::angstrom_per_bohr
-  );
+  Delib::AtomCollection atoms = Delib::AtomCollectionIO::read(filename);
+
+  data.elements = atoms.getElements();
+  data.angstromWrapper = AngstromWrapper {
+    atoms.getPositions(),
+    LengthUnit::Bohr
+  };
 
   return data;
 }
@@ -333,12 +347,12 @@ FileHandler::RawData XYZHandler::read(const std::string& filename) const {
 void XYZHandler::write(
   const std::string& filename,
   const Molecule& molecule,
-  const Delib::PositionCollection& positions,
+  const AngstromWrapper& angstromWrapper,
   const IndexPermutation& permutation
 ) const {
   std::function<AtomIndexType(const AtomIndexType&)> indexMap;
 
-  unsigned N = molecule.numAtoms();
+  const unsigned N = molecule.numAtoms();
 
   if(permutation == IndexPermutation::Identity) {
     indexMap = permutations::Identity {};
@@ -350,11 +364,12 @@ void XYZHandler::write(
 
   Delib::AtomCollection ac;
 
+  // Delib AtomCollection IO expects positions in bohr
   for(unsigned i = 0; i < N; ++i) {
     ac.push_back(
       Delib::Atom {
         molecule.getElementType(indexMap(i)),
-        Delib::Position {positions.at(indexMap(i))}
+        angstromWrapper.positions.at(indexMap(i)) * Delib::bohr_per_angstrom
       }
     );
   }
@@ -419,21 +434,23 @@ BinaryHandler::BinaryType BinaryHandler::read(const std::string& filename) {
 
 namespace detail {
 
-Molecule::InterpretResult interpret(const FileHandler::RawData& data) {
+InterpretResult interpret(const FileHandler::RawData& data) {
   /* Some readers may not set bond orders at all. In those cases, bondOrders
    * has size zero.
    */
   if(data.bondOrders.getSystemSize() > 0) {
-    return Molecule::interpret(
-      data.atoms,
+    return interpret(
+      data.elements,
+      data.angstromWrapper,
       data.bondOrders,
-      Molecule::BondDiscretizationOption::UFF
+      BondDiscretizationOption::UFF
     );
   }
 
-  return Molecule::interpret(
-    data.atoms,
-    Molecule::BondDiscretizationOption::UFF
+  return interpret(
+    data.elements,
+    data.angstromWrapper,
+    BondDiscretizationOption::UFF
   );
 }
 
@@ -500,8 +517,8 @@ std::vector<Molecule> split(const std::string& filename) {
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const Delib::PositionCollection& positions,
-  const FileHandler::IndexPermutation& permutation
+  const AngstromWrapper& angstromWrapper,
+  const FileHandler::IndexPermutation permutation
 ) {
   boost::filesystem::path filepath {filename};
 
@@ -514,7 +531,17 @@ void write(
     throw std::logic_error("Can only read files with .mol or .xyz extensions!");
   }
 
-  handler->write(filename, molecule, positions, permutation);
+  handler->write(filename, molecule, angstromWrapper, permutation);
+}
+
+void write(
+  const std::string& filename,
+  const Molecule& molecule,
+  const Delib::PositionCollection& positions,
+  const FileHandler::IndexPermutation permutation
+) {
+  AngstromWrapper wrapper {positions};
+  return write(filename, molecule, wrapper, permutation);
 }
 
 void write(

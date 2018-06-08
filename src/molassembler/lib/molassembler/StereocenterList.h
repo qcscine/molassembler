@@ -71,7 +71,7 @@ public:
     }
   }
 
-  PtrType at(const AtomIndexType& index) {
+  PtrType at(const AtomIndexType index) {
     return _indexMap.at(index);
   }
 
@@ -79,7 +79,7 @@ public:
    * liberally in the stereocenter classes. This function ensures that
    * vertex descriptors are valid throughout.
    */
-  void propagateVertexRemoval(const AtomIndexType& removedIndex) {
+  void propagateVertexRemoval(const AtomIndexType removedIndex) {
     // Drop any stereocenters involving this atom from the list
     if(involving(removedIndex)) {
       remove(removedIndex);
@@ -104,7 +104,7 @@ public:
     }
   }
 
-  void remove(const AtomIndexType& index) {
+  void remove(const AtomIndexType index) {
     if(_indexMap.count(index) == 0) {
       throw std::logic_error("StereocenterList::remove: No mapping for that index!");
     }
@@ -114,16 +114,25 @@ public:
   }
 
 /* Information */
-  const PtrType at(const AtomIndexType& index) const {
+  const PtrType at(const AtomIndexType index) const {
     return _indexMap.at(index);
   }
 
-  bool involving(const AtomIndexType& index) const {
+  bool involving(const AtomIndexType index) const {
     if(_indexMap.count(index) > 0) {
       return true;
     }
 
     return false;
+  }
+
+  bool isStereogenic(const AtomIndexType index) const {
+    auto findIter = _indexMap.find(index);
+    if(findIter == _indexMap.end()) {
+      return false;
+    }
+
+    return findIter->second->numStereopermutations() > 1;
   }
   /* As long as the constraint exists that Stereocenters' involvedAtoms do not
    * overlap, this variant below is unneeded.

@@ -3,11 +3,11 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "detail/AnalysisHelpers.h"
+#include "detail/StdlibTypeAlgorithms.h"
 #include "DistanceGeometry/generateConformation.h"
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
-#include "AnalysisHelpers.h"
-#include "StdlibTypeAlgorithms.h"
 #include "Log.h"
 
 #include "temple/constexpr/Numeric.h"
@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
       IO::write(
         filestem + "-"s + std::to_string(structNum) + "-last.mol"s,
         mol,
-        DistanceGeometry::detail::convertToPositionCollection(
+        DistanceGeometry::detail::convertToAngstromWrapper(
           refinementData.steps.back().positions
         )
       );
@@ -178,8 +178,7 @@ int main(int argc, char* argv[]) {
         mol,
         nStructures,
         metrizationOption,
-        false,
-        MoleculeSpatialModel::DistanceMethod::Uniform
+        false
       );
 
       for(const auto& enumPair : enumerate(debugData)) {
@@ -197,7 +196,7 @@ int main(int argc, char* argv[]) {
           Symmetry::spaceFreeName(symmetryName) + "-"s
             + std::to_string(structNum) + "-last.mol"s,
           mol,
-          DistanceGeometry::detail::convertToPositionCollection(
+          DistanceGeometry::detail::convertToAngstromWrapper(
             refinementData.steps.back().positions
           )
         );

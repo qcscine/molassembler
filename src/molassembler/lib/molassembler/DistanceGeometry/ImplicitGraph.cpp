@@ -1,7 +1,6 @@
 #include "DistanceGeometry/ImplicitGraphBoost.h"
 #include "boost/graph/two_bit_color_map.hpp"
 
-
 #define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
 #include "DistanceGeometry/Gor1.h"
@@ -9,12 +8,15 @@
 #include "gor1/Gor1.h"
 #endif
 
-#include "Molecule.h"
-#include "DistanceGeometry/DistanceGeometry.h"
-#include "AtomInfo.h"
 #include "temple/Random.h"
 
+#include "DistanceGeometry/DistanceGeometry.h"
+#include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/Error.h"
+#include "AtomInfo.h"
+#include "Log.h"
+#include "Molecule.h"
+
 
 namespace molassembler {
 
@@ -22,23 +24,90 @@ namespace DistanceGeometry {
 
 /* Class Implementation */
 
+void ImplicitGraph::_explainContradictionPaths(
+  const VertexDescriptor a,
+  const VertexDescriptor b,
+  const std::vector<VertexDescriptor>& predecessors,
+  const std::vector<double>& distances
+) {
+  using LevelBaseType = std::underlying_type<Log::Level>::type;
+  if(
+    static_cast<LevelBaseType>(Log::level)
+    <= static_cast<LevelBaseType>(Log::Level::Warning)
+  ) {
+    // Report the contradiction in the log
+    auto& logRef = Log::log(Log::Level::Warning);
+    logRef << "Encountered contradiction in triangle ineqaulity limits calculation.\n";
+    logRef << "Path in graph for upper bound: l" << b;
+
+    AtomIndexType intermediate = left(b);
+    do {
+      intermediate = predecessors[intermediate];
+      logRef << " <- l" << (intermediate / 2);
+    } while (intermediate != left(a));
+    logRef << ". Length " << distances.at(left(b))
+      << "\nPath in graph for lower bound: r" << b;
+
+    intermediate = right(b);
+    do {
+      intermediate = predecessors[intermediate];
+      logRef << " <- "
+        << (intermediate % 2 == 0 ? "l" : "r")
+        << (intermediate / 2);
+    } while (intermediate != left(a));
+
+    logRef << ". Length " << distances.at(right(b)) << "\n";
+  }
+}
+
 ImplicitGraph::ImplicitGraph(
   const Molecule& molecule,
-  const BoundList& bounds
-) : _moleculePtr(&molecule)
+  const DistanceBoundsMatrix& bounds
+) : _moleculePtr(&molecule), _distances {bounds.access()}
 {
-  unsigned N = molecule.numAtoms();
+  /* TODO this doesn't work because the constant 0 indicates that no explicit
+   * information is available. Either work your way through the entire matrix
+   * and replace defaultUpper with 0 in the N² matrix, or go back to
+   * initializing the matrix from a bounds list, which is more sensible.
+   */
+  assert(false && "This function does not work as it should");
+
+  const unsigned N = molecule.numAtoms();
+
+  // Determine the two heaviest element types in the molecule, O(N)
+  _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
+  for(AtomIndexType i = 0; i < N; ++i) {
+    auto elementType = molecule.getElementType(i);
+    if(
+      static_cast<unsigned>(elementType)
+      > static_cast<unsigned>(_heaviestAtoms.back())
+    ) {
+      _heaviestAtoms.back() = elementType;
+
+      if(
+        static_cast<unsigned>(_heaviestAtoms.back())
+        > static_cast<unsigned>(_heaviestAtoms.front())
+      ) {
+        std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
+      }
+    }
+  }
+}
+
+ImplicitGraph::ImplicitGraph(
+  const Molecule& molecule,
+  const BoundsList& bounds
+) : _moleculePtr(&molecule) {
+  const VertexDescriptor N = molecule.numAtoms();
   _distances.resize(N, N);
   _distances.setZero();
 
-  // Populate _distances with bounds from list
-  VertexDescriptor a, b;
-  ValueBounds bound;
-  for(const auto& boundTuple : bounds) {
-    std::tie(a, b, bound) = boundTuple;
-
-    upperBound(a, b) = bound.upper;
-    lowerBound(a, b) = bound.lower;
+  for(const auto& mapPair : bounds) {
+    addBound(
+      mapPair.first.front(),
+      mapPair.first.back(),
+      mapPair.second
+    );
   }
 
   // Determine the two heaviest element types in the molecule, O(N)
@@ -62,8 +131,8 @@ ImplicitGraph::ImplicitGraph(
 }
 
 void ImplicitGraph::addBound(
-  const VertexDescriptor& a,
-  const VertexDescriptor& b,
+  const VertexDescriptor a,
+  const VertexDescriptor b,
   const ValueBounds& bound
 ) {
   if(a < b) {
@@ -100,7 +169,7 @@ ImplicitGraph::VertexDescriptor ImplicitGraph::num_edges() const {
   return 4 * count + N * (N - 1);
 }
 
-std::pair<ImplicitGraph::EdgeDescriptor, bool> ImplicitGraph::edge(const VertexDescriptor& i, const VertexDescriptor& j) const {
+std::pair<ImplicitGraph::EdgeDescriptor, bool> ImplicitGraph::edge(const VertexDescriptor i, const VertexDescriptor j) const {
   const auto a = internal(i);
   const auto b = internal(j);
 
@@ -199,6 +268,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexc
       bounds(b, a) = -distances.at(right(b));
 
       if(bounds(a, b) < bounds(b, a)) {
+        _explainContradictionPaths(a, b, predecessors, distances);
         return DGError::GraphImpossible;
       }
     }
@@ -259,7 +329,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
 
     temple::random.shuffle(otherIndices);
 
-    for(const AtomIndexType& b : otherIndices) {
+    for(const AtomIndexType b : otherIndices) {
       auto predecessor_map = boost::make_iterator_property_map(
         predecessors.begin(),
         VertexIndexMap()
@@ -304,6 +374,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       );
 
       if(distances.at(left(b)) < -distances.at(right(b))) {
+        _explainContradictionPaths(a, b, predecessors);
         return DGError::GraphImpossible;
       }
 
@@ -407,35 +478,35 @@ ImplicitGraph::VertexDescriptor ImplicitGraph::out_degree(VertexDescriptor i) co
   return count;
 }
 
-double& ImplicitGraph::lowerBound(const VertexDescriptor& a, const VertexDescriptor& b) {
+double& ImplicitGraph::lowerBound(const VertexDescriptor a, const VertexDescriptor b) {
   return _distances(
     std::max(a, b),
     std::min(a, b)
   );
 }
 
-double& ImplicitGraph::upperBound(const VertexDescriptor& a, const VertexDescriptor& b) {
+double& ImplicitGraph::upperBound(const VertexDescriptor a, const VertexDescriptor b) {
   return _distances(
     std::min(a, b),
     std::max(a, b)
   );
 }
 
-double ImplicitGraph::lowerBound(const VertexDescriptor& a, const VertexDescriptor& b) const {
+double ImplicitGraph::lowerBound(const VertexDescriptor a, const VertexDescriptor b) const {
   return _distances(
     std::max(a, b),
     std::min(a, b)
   );
 }
 
-double ImplicitGraph::upperBound(const VertexDescriptor& a, const VertexDescriptor& b) const {
+double ImplicitGraph::upperBound(const VertexDescriptor a, const VertexDescriptor b) const {
   return _distances(
     std::min(a, b),
     std::max(a, b)
   );
 }
 
-double ImplicitGraph::maximalImplicitLowerBound(const VertexDescriptor& i) const {
+double ImplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   auto a = internal(i);
   auto elementType = _moleculePtr->getElementType(a);
@@ -592,8 +663,6 @@ ImplicitGraph::edge_iterator ImplicitGraph::edge_iterator::operator ++ (int) {
   ++(*this);
   return copy;
 }
-
-// unordered_map::iterator is a ForwardIterator, decrement impossible
 
 bool ImplicitGraph::edge_iterator::operator == (const edge_iterator& other) const {
   return (
@@ -766,7 +835,7 @@ ImplicitGraph::in_group_edge_iterator& ImplicitGraph::in_group_edge_iterator::op
 
 ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
   const ImplicitGraph& base,
-  const VertexDescriptor& i
+  const VertexDescriptor i
 ) : _basePtr{&base},
     _i {i},
     _b {0},
@@ -786,7 +855,7 @@ ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
 
 ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
   const ImplicitGraph& base,
-  const VertexDescriptor& i,
+  const VertexDescriptor i,
   bool
 ) : _basePtr{&base},
     _i {i},

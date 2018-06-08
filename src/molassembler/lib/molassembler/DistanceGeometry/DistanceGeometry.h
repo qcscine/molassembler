@@ -2,7 +2,7 @@
 #define DISTANCE_GEOMETRY_HPP
 
 #include <tuple>
-#include "common_typedefs.h"
+#include "detail/SharedTypes.h"
 #include "DistanceGeometry/ValueBounds.h"
 
 /*! @file
@@ -17,14 +17,17 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 struct ChiralityConstraint {
-  std::array<AtomIndexType, 4> indices;
+  using AtomListType = std::vector<AtomIndexType>;
+  using LigandSequence = std::array<AtomListType, 4>;
+
+  LigandSequence sites;
   double lower, upper;
 
   ChiralityConstraint(
-    const std::array<AtomIndexType, 4>& indices,
-    const double& lower,
-    const double& upper
-  ) : indices(indices),
+    const LigandSequence& sites,
+    const double lower,
+    const double upper
+  ) : sites(sites),
       lower(lower),
       upper(upper)
   {

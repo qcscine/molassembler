@@ -1,6 +1,11 @@
 #include "Math.h"
 #include "Array.h"
 
+/*!@file
+ *
+ * Contains a fixed-size bitset implementation.
+ */
+
 namespace temple {
 
 template<size_t N>
@@ -54,7 +59,7 @@ struct Bitset {
     }
   }
 
-  constexpr bool test(size_t i) const {
+  constexpr bool test(size_t i) const PURITY_STRONG {
     size_t blockIndex = Math::floor(static_cast<double>(i) / bitsPerBlock);
     size_t bitIndex = i - bitsPerBlock * blockIndex;
 

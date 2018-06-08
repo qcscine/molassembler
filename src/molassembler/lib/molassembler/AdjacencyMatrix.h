@@ -2,12 +2,11 @@
 #define INCLUDE_ADJACENCY_MATRIX_H
 
 #include "Molecule.h"
-#include <Eigen/Core>
 
 /*! @file
  *
  * Contains a matrix class that represents molecular bonding in a boolean
- * manner. 
+ * manner.
  */
 
 namespace molassembler {

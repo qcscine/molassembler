@@ -17,7 +17,7 @@ namespace properties {
 
 std::vector<unsigned> applyRotation(
   const std::vector<unsigned>& indices,
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Name symmetryName,
   unsigned rotationFunctionIndex
 ) {
   std::vector<unsigned> retv;
@@ -35,7 +35,7 @@ std::vector<unsigned> applyRotation(
 }
 
 Eigen::Vector3d getCoordinates(
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Name symmetryName,
   const boost::optional<unsigned>& indexInSymmetryOption
 ) {
   assert(
@@ -66,8 +66,8 @@ double getTetrahedronVolume(
 }
 
 double calculateAngleDistortion(
-  const Symmetry::Name& from,
-  const Symmetry::Name& to,
+  const Symmetry::Name from,
+  const Symmetry::Name to,
   const std::vector<unsigned>& indexMapping
 ) {
   const unsigned mappingIndexLimit = std::min(
@@ -139,8 +139,8 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
 
 
 double calculateChiralDistortion(
-  const Symmetry::Name& from,
-  const Symmetry::Name& to,
+  const Symmetry::Name from,
+  const Symmetry::Name to,
   const std::vector<unsigned>& indexMapping
 ) {
 
@@ -188,9 +188,11 @@ double calculateChiralDistortion(
 std::set<
   std::vector<unsigned>
 > generateAllRotations(
-  const Symmetry::Name& symmetryName,
+  const Symmetry::Name symmetryName,
   const std::vector<unsigned>& indices
 ) {
+  assert(Symmetry::size(symmetryName) == indices.size());
+
   // Idea: Tree-like expansion of all possible combinations of rotations.
   using IndicesList = std::vector<unsigned>;
 
@@ -248,7 +250,7 @@ std::set<
 }
 
 std::vector<unsigned> applyIndexMapping(
-  const Symmetry::Name& to,
+  const Symmetry::Name to,
   const std::vector<unsigned>& mapping
 ) {
   /* Creates the list of indices in the target symmetry. Why is this necessary?
@@ -315,8 +317,8 @@ DistortionInfo::DistortionInfo(
 {}
 
 std::vector<DistortionInfo> symmetryTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo
+  const Symmetry::Name symmetryFrom,
+  const Symmetry::Name symmetryTo
 ) {
 
   /* Symmetries must be adjacent in size (0 = rearrangement,
@@ -408,27 +410,10 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
 }
 
 std::vector<DistortionInfo> ligandLossTransitionMappings(
-  const Symmetry::Name& symmetryFrom,
-  const Symmetry::Name& symmetryTo,
-  const unsigned& positionInSourceSymmetry
+  const Symmetry::Name symmetryFrom,
+  const Symmetry::Name symmetryTo,
+  const unsigned positionInSourceSymmetry
 ) {
-  /* TODO this algorithm and it's constexpr counterpart may give the same
-   * results, but they are both incorrect. Rotational equivalence of the
-   * mapping must be considered in the target symmetry, not in the source
-   * symmetry. Merely limiting the permutations considered in the
-   * corresponding ligand gain case is insufficient.
-   *
-   * E.g. square-pyramidal to square-planar. This is considered as
-   * square-planar to square-pyramidal ligand gain, where the new ligand is
-   * either an equatorial one (0-3 in the sq-py indexing) or apical (4).
-   * In the apical case, although there is clearly only one rotationally unique
-   * mapping from square-pyramidal to square-planar when the apical ligand is
-   * removed (since 1-2-3-4 and 4-3-2-1 are C2' superposable), the inverse case
-   * is considered, and there are two possible mappings, in which the
-   * positioning of the new apical ligand can be either at the top or bottom of
-   * an existing index sequence for square-planar.
-   */
-
   // Ensure we are dealing with ligand loss
   assert(Symmetry::size(symmetryTo) + 1 == Symmetry::size(symmetryFrom));
   assert(positionInSourceSymmetry < Symmetry::size(symmetryFrom));
@@ -469,10 +454,7 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
         calculateChiralDistortion(symmetryTo, symmetryFrom, indexMapping)
       );
 
-      auto allRotations = generateAllRotations(
-        symmetryTo,
-        indexMapping
-      );
+      auto allRotations = generateAllRotations(symmetryTo, indexMapping);
 
       encounteredSymmetryMappings.insert(
         allRotations.begin(),
@@ -560,8 +542,8 @@ SymmetryTransitionGroup selectBestTransitionMappings(
 
 
 unsigned numUnlinkedAssignments(
-  const Symmetry::Name& symmetry,
-  const unsigned& nIdenticalLigands
+  const Symmetry::Name symmetry,
+  const unsigned nIdenticalLigands
 ) {
   unsigned count = 1;
   auto indices = detail::range(0u, Symmetry::size(symmetry));
@@ -593,8 +575,8 @@ unsigned numUnlinkedAssignments(
 }
 
 bool hasMultipleUnlinkedAssignments(
-  const Symmetry::Name& symmetry,
-  const unsigned& nIdenticalLigands
+  const Symmetry::Name symmetry,
+  const unsigned nIdenticalLigands
 ) {
   auto indices = detail::range(0u, Symmetry::size(symmetry));
 

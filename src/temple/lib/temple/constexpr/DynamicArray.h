@@ -35,7 +35,7 @@ public:
    * directly form the array mem-initializer with a parameter pack expansion
    */
   template<size_t ... Inds>
-  constexpr DynamicArray(const DynamicArray& other, std::index_sequence<Inds...>) 
+  constexpr DynamicArray(const DynamicArray& other, std::index_sequence<Inds...>)
     :_items {other[Inds]...},
      _count(other._count)
   {}
@@ -44,7 +44,7 @@ public:
    * not allowed to edit _items in-class, so we delegate to the previous
    * constructor and directly form the mem-initializer
    */
-  constexpr DynamicArray(const DynamicArray& other) 
+  constexpr DynamicArray(const DynamicArray& other)
     : DynamicArray(other, std::make_index_sequence<nItems>{})
   {}
 
@@ -67,14 +67,14 @@ public:
   > constexpr DynamicArray(
     const ArrayType<T, N>& other,
     std::enable_if_t<(N <= nItems)>* = 0 // Only possible for some sizes
-  ) : DynamicArray(other, std::make_index_sequence<N>{}) 
+  ) : DynamicArray(other, std::make_index_sequence<N>{})
   {}
 
   constexpr DynamicArray() : _items {}, _count(0) {}
 
   //! Parameter pack constructor, will work as long as the arguments are castable
   template<typename ...Args>
-  constexpr DynamicArray(Args... args) 
+  constexpr DynamicArray(Args... args)
     : _items {static_cast<T>(args)...},
       _count(sizeof...(args))
   {}
@@ -101,13 +101,13 @@ public:
     }
   }
 
-  constexpr void pop_back(const unsigned& numberToPop) {
+  constexpr void pop_back(const unsigned numberToPop) {
     if(_count > numberToPop) {
       _count -= numberToPop;
     }
   }
 
-  constexpr DynamicArray<T, nItems> splice(const unsigned& fromIndex) {
+  constexpr DynamicArray<T, nItems> splice(const unsigned fromIndex) {
     DynamicArray<T, nItems> spliced;
 
     for(unsigned i = fromIndex; i < _count; ++i) {
@@ -119,35 +119,49 @@ public:
     return spliced;
   }
 
-  constexpr bool validIndex(const unsigned& index) {
-    return(index < _count);
+  constexpr bool validIndex(const unsigned index) const noexcept PURITY_WEAK {
+    return (index < _count);
   }
 
-  constexpr T& operator[] (const unsigned& index) {
+  constexpr T& operator[] (const unsigned index) noexcept PURITY_WEAK {
+    // Defined behavior instead of UB
+    if(!validIndex(index)) {
+      return back();
+    }
+
     return _items[index];
   }
 
-  constexpr const T& operator[] (const unsigned& index) const {
+  constexpr const T& operator[] (const unsigned index) const noexcept PURITY_WEAK {
+    if(!validIndex(index)) {
+      return back();
+    }
+
     return _items[index];
   }
 
-  constexpr T& at(const unsigned& index) {
-    return _items[index];
+  constexpr T& at(const unsigned index) noexcept PURITY_WEAK {
+    // Not strong purity because _items is just a pointer!
+    return this->operator[](index);
   }
 
-  constexpr const T& at(const unsigned& index) const {
-    return _items[index];
+  constexpr const T& at(const unsigned index) const noexcept PURITY_WEAK {
+    // Not strong purity because _items is just a pointer!
+    return this->operator[](index);
   }
 
-  constexpr T& front() {
+  constexpr T& front() noexcept PURITY_WEAK {
     return _items[0];
   }
 
-  constexpr const T& front() const {
+  constexpr const T& front() const noexcept PURITY_WEAK {
     return _items[0];
   }
 
-  constexpr T& back() {
+  constexpr T& back() noexcept {
+    /* NO UB in constexpr functions allowed, so we must return something within
+     * the array, which is always an initialized value
+     */
     if(_count == 0) {
       return front();
     }
@@ -155,7 +169,10 @@ public:
     return _items[_count - 1];
   }
 
-  constexpr const T& back() const {
+  constexpr const T& back() const noexcept PURITY_WEAK {
+    /* NO UB in constexpr functions allowed, so we must return something within
+     * the array, which is always an initialized value
+     */
     if(_count == 0) {
       return front();
     }
@@ -163,7 +180,7 @@ public:
     return _items[_count - 1];
   }
 
-  constexpr size_t size() const {
+  constexpr size_t size() const noexcept PURITY_WEAK {
     return _count;
   }
 
@@ -171,7 +188,7 @@ public:
     _count = 0;
   }
 
-  constexpr bool operator == (const DynamicArray& other) const {
+  constexpr bool operator == (const DynamicArray& other) const noexcept PURITY_WEAK {
     if(_count != other._count) {
       return false;
     }
@@ -185,7 +202,7 @@ public:
     return true;
   }
 
-  constexpr bool operator != (const DynamicArray& other) const {
+  constexpr bool operator != (const DynamicArray& other) const noexcept PURITY_WEAK {
     if(_count == other._count) {
       for(unsigned i = 0; i < _count; ++i) {
         if(_items[i] != other._items[i]) {
@@ -197,7 +214,7 @@ public:
     return false;
   }
 
-  constexpr bool operator < (const DynamicArray& other) const {
+  constexpr bool operator < (const DynamicArray& other) const noexcept PURITY_WEAK {
     if(_count < other._count) {
       return true;
     }
@@ -213,7 +230,7 @@ public:
     return false;
   }
 
-  constexpr bool operator > (const DynamicArray& other) const {
+  constexpr bool operator > (const DynamicArray& other) const noexcept PURITY_WEAK {
     return other < *this;
   }
 
@@ -236,15 +253,15 @@ public:
       DynamicArray& instance,
       unsigned&& initPosition
     ) : _baseRef(instance),
-        _position(initPosition) 
+        _position(initPosition)
     {}
 
-    constexpr iterator(const iterator& other) 
+    constexpr iterator(const iterator& other)
       : _baseRef(other._baseRef),
         _position(other._position)
     {}
 
-    constexpr iterator& operator = (const iterator& other) { 
+    constexpr iterator& operator = (const iterator& other) {
       _baseRef = other._baseRef;
       _position = other._position;
 
@@ -295,43 +312,41 @@ public:
       return *this;
     }
 
-    constexpr int operator - (const iterator& other) const {
+    constexpr int operator - (const iterator& other) const noexcept PURITY_WEAK {
       return (
         static_cast<int>(_position)
         - static_cast<int>(other._position)
       );
     }
 
-    constexpr bool operator == (const iterator& other) const {
+    constexpr bool operator == (const iterator& other) const noexcept PURITY_WEAK {
       return (
         &_baseRef == &other._baseRef
         && _position == other._position
       );
     }
 
-    constexpr bool operator != (const iterator& other) const {
+    constexpr bool operator != (const iterator& other) const noexcept PURITY_WEAK {
       return !(
         *this == other
       );
     }
 
-    constexpr typename BaseIteratorType::reference operator * () const {
+    constexpr typename BaseIteratorType::reference operator * () const noexcept PURITY_WEAK {
       return _baseRef[_position];
     }
   };
 
-  constexpr iterator begin() {
+  constexpr iterator begin() noexcept PURITY_WEAK {
     return iterator(*this, 0);
   }
 
-  constexpr iterator end() {
+  constexpr iterator end() noexcept PURITY_WEAK {
     return iterator(*this, _count);
   }
 
 private:
-  constexpr void _moveElementsRightUntil(
-    const iterator& position
-  ) {
+  constexpr void _moveElementsRightUntil(const iterator& position) {
     // Add the last element in the array onto the end
     push_back(
       back()
@@ -408,7 +423,7 @@ public:
     const T*,                        // pointer
     const T&                         // reference
   >;
-  
+
   class constIterator : public ConstBaseIteratorType {
   private:
     const DynamicArray& _baseRef;
@@ -419,15 +434,15 @@ public:
       const DynamicArray& instance,
       unsigned&& initPosition
     ) : _baseRef(instance),
-        _position(initPosition) 
+        _position(initPosition)
     {}
 
-    constexpr constIterator(const constIterator& other) 
+    constexpr constIterator(const constIterator& other)
       : _baseRef(other._baseRef),
         _position(other._position)
     {}
 
-    constexpr constIterator& operator = (const constIterator& other) { 
+    constexpr constIterator& operator = (const constIterator& other) {
       if(_baseRef != other._baseRef) {
         throw "Trying to assign constIterator to other base DynamicArray!";
       }
@@ -481,27 +496,27 @@ public:
       return *this;
     }
 
-    constexpr int operator - (const constIterator& other) const {
+    constexpr int operator - (const constIterator& other) const noexcept PURITY_WEAK {
       return (
         static_cast<int>(_position)
         - static_cast<int>(other._position)
       );
     }
 
-    constexpr bool operator == (const constIterator& other) const {
+    constexpr bool operator == (const constIterator& other) const noexcept PURITY_WEAK {
       return (
         &_baseRef == &other._baseRef
         && _position == other._position
       );
     }
 
-    constexpr bool operator != (const constIterator& other) const {
+    constexpr bool operator != (const constIterator& other) const noexcept PURITY_WEAK {
       return !(
         *this == other
       );
     }
 
-    constexpr typename ConstBaseIteratorType::reference operator * () const {
+    constexpr typename ConstBaseIteratorType::reference operator * () const noexcept PURITY_WEAK {
       return _baseRef[_position];
     }
   };
@@ -509,15 +524,15 @@ public:
   //! Type alias for compatibility with STL algorithms
   using const_iterator = constIterator;
 
-  constexpr constIterator begin() const {
+  constexpr constIterator begin() const noexcept PURITY_WEAK {
     return constIterator(*this, 0);
   }
 
-  constexpr constIterator end() const {
+  constexpr constIterator end() const noexcept PURITY_WEAK {
     return constIterator(*this, _count);
   }
 
-  constexpr operator std::array<T, nItems> () const {
+  constexpr operator std::array<T, nItems> () const noexcept PURITY_WEAK {
     return makeArray(std::make_index_sequence<nItems>{});
   }
 

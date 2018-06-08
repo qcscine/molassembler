@@ -24,19 +24,16 @@ class MinimalCache {
 private:
 /* Private members */
   //! Cache data
-  std::map<
-    KeyType,
-    ValueType
-  > _cache;
+  std::map<KeyType, ValueType> _cache;
 
 public:
 /* Public member functions */
   /* Modification */
   //! Adds a data value for a key value into the cache.
-  void add(const KeyType& key, const ValueType& value) {
+  void add(const KeyType key, const ValueType value) {
     _cache.emplace(
-      key,
-      value
+      std::move(key),
+      std::move(value)
     );
   }
 
@@ -80,7 +77,7 @@ public:
  *
  * A class that can store completely variant types in a type safe manner using
  * boost::any. Only the key type is fixed. Selective invalidation of cached data
- * is possible, and cache elements can also be set as generatable, i.e. a 
+ * is possible, and cache elements can also be set as generatable, i.e. a
  * function that generates the cache data can be passed. On first use, the cache
  * element is then generated.
  */
@@ -110,7 +107,7 @@ public:
       std::pair<
         KeyType,
         std::function<
-          boost::any()  
+          boost::any()
         >
       >
     >& initList
@@ -146,7 +143,7 @@ public:
       return boost::any_cast<T>(
         _cache.at(key)
       );
-    } 
+    }
 
     _cache.emplace(
       key,
@@ -170,7 +167,7 @@ public:
     > modifyingUnaryFunction
   ) {
     assert(_generationMap.count(key) == 1);
-    
+
     // if the generatable does not exist yet, generate it
     if(_cache.count(key) == 0) {
       _cache.emplace(
@@ -184,7 +181,7 @@ public:
       boost::any_cast<T>(
         &(
           _cache.find(key) -> second
-        ) 
+        )
       )
     );
 

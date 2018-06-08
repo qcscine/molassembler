@@ -74,12 +74,8 @@ auto makeLigand(
   return BindingSiteInformation {
     L,
     X,
-    {
-      {
-        type,
-        bty
-      }
-    }
+    {type},
+    bty
   };
 }
 
@@ -282,7 +278,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
   );
 
   testVSEPR( // AX3E1
-    Symmetry::Name::TrigonalPyramidal,
+    Symmetry::Name::CutTetrahedral,
     {
       TestCaseType {
         "NH3",

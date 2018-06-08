@@ -23,7 +23,7 @@ namespace detail {
 }
 
 //! Level of logging
-enum class Level {
+enum class Level : unsigned {
   Trace,
   Debug,
   Info,

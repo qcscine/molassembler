@@ -12,6 +12,9 @@
 #include <iostream>
 
 template<class Container, class UnaryPredicate>
+bool trial_all_of(const Container& container, UnaryPredicate&& predicate) PURITY_WEAK;
+
+template<class Container, class UnaryPredicate>
 bool trial_all_of(const Container& container, UnaryPredicate&& predicate) {
   for(const auto& element : container) {
     if(!temple::invoke(predicate, element)) {
@@ -22,10 +25,12 @@ bool trial_all_of(const Container& container, UnaryPredicate&& predicate) {
   return true;
 }
 
+unsigned weirdIntDiv(unsigned a, unsigned b) PURITY_STRONG;
 unsigned weirdIntDiv(unsigned a, unsigned b) {
   return a / (b + 1);
 }
 
+unsigned plusFive(unsigned a) PURITY_STRONG;
 unsigned plusFive(unsigned a) {
   return a + 5;
 }

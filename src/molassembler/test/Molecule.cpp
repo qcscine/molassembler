@@ -8,8 +8,8 @@
 
 #include <iostream>
 
+#include "detail/StdlibTypeAlgorithms.h"
 #include "IO.h"
-#include "StdlibTypeAlgorithms.h"
 
 #include "temple/Random.h"
 #include "temple/Invoke.h"
@@ -113,10 +113,10 @@ HashArgumentsType randomArguments() {
 
 BOOST_AUTO_TEST_CASE(environmentHashingTests) {
   auto bitmaskTuple = std::make_tuple(
-    temple::make_bitmask(molassembler::Molecule::ComparisonComponents::ElementTypes)
-      | molassembler::Molecule::ComparisonComponents::BondOrders
-      | molassembler::Molecule::ComparisonComponents::Symmetries
-      | molassembler::Molecule::ComparisonComponents::Stereopermutations
+    temple::make_bitmask(molassembler::AtomEnvironmentComponents::ElementTypes)
+      | molassembler::AtomEnvironmentComponents::BondOrders
+      | molassembler::AtomEnvironmentComponents::Symmetries
+      | molassembler::AtomEnvironmentComponents::Stereopermutations
   );
 
   using namespace molassembler;
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
     auto arguments = randomArguments();
 
     auto result = temple::detail::invokeHelper(
-      Molecule::hashAtomEnvironment,
+      hashes::atomEnvironment,
       std::tuple_cat(bitmaskTuple, arguments),
       std::make_index_sequence<5> {}
     );
@@ -205,9 +205,9 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
 }
 
 BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
-  const std::string directoryPrefix = "test_files/ranking_tree_molecules/"s;
-
   using namespace molassembler;
+
+  const std::string directoryPrefix = "test_files/ranking_tree_molecules/"s;
 
   auto pseudocenter = IO::read(
     directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
@@ -228,12 +228,12 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   // Make 1 from R to S -> stereocenter should disappear
   pseudocenter.assignStereocenter(outer.front(), 0);
 
-  BOOST_CHECK(!pseudocenter.getStereocenterList().involving(central));
+  BOOST_CHECK(!pseudocenter.getStereocenterList().isStereogenic(central));
 
   // Make 6 from S to R -> stereocenter should reappear
   pseudocenter.assignStereocenter(outer.back(), 1);
 
-  BOOST_CHECK(pseudocenter.getStereocenterList().involving(central));
+  BOOST_CHECK(pseudocenter.getStereocenterList().isStereogenic(central));
 }
 
 BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {

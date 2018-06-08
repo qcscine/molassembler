@@ -1,10 +1,10 @@
-#ifndef INCLUDE_MOLECULE_MANIP_ORDER_DISCORVERY_HELPER
-#define INCLUDE_MOLECULE_MANIP_ORDER_DISCORVERY_HELPER
+#ifndef INCLUDE_MOLASSEMBLER_ORDER_DISCORVERY_HELPER
+#define INCLUDE_MOLASSEMBLER_ORDER_DISCORVERY_HELPER
 
 #include "boost/graph/graphviz.hpp"
 #include "temple/Containers.h"
 
-#include "common_typedefs.h"
+#include "detail/SharedTypes.h"
 
 /* TODO
  * - may be preferable to have OrderDiscoveryHelper emit pairs of Ts whose
@@ -58,10 +58,17 @@ private:
   std::map<T, VertexIndexType> _sourceMap;
   DependencyGraphType _graph;
 
-  //! Get a list of sets by degree.
+  //! Get a grouped list of the ordered data sorted by out_degree ascending
   std::vector<
     std::vector<T>
   > _getSetsByDegree() const {
+    /* Group all vertices's values by vertex out_degree
+     *
+     * The more out edges a vertex has, the "smaller" it is, since a less-than
+     * relationship is represented by a directed edge from the smaller object
+     * to the bigger object.
+     */
+
     // Keep a mapping of out_degree to index in sets to avoid empty sets
     std::map<
       unsigned,
@@ -83,8 +90,9 @@ private:
       ++iter;
     }
 
-    /* The map should be ordered by key, meaning by outDegree, so the result of
-     * mapValues should be ordered, too
+    /* The map is ordered by key (outDegree ASC), so the result of mapValues
+     * should is ordered too, so we can just map the vertex descriptors for
+     * every degree into the stored underlying data
      */
     return temple::mapValues(
       degreeToSetMap,
@@ -159,7 +167,7 @@ public:
           i,
           _sourceMap.at(vertexData)
         );
-      } 
+      }
     }
 
     // Add non-contradicting edges from the other graph
@@ -307,7 +315,7 @@ public:
           if(!boost::edge(i, seed, _graph).second) {
             boost::add_edge(i, seed, _graph);
           }
-          
+
           for(
             auto edgeIterPair = boost::out_edges(seed, _graph);
             edgeIterPair.first != edgeIterPair.second;
@@ -337,6 +345,36 @@ public:
     }
   }
 
+  template<typename It>
+  void setUnorderedValues(It iter, const It end) {
+    if(boost::num_vertices(_graph) > 0) {
+      _graph.clear();
+    }
+
+    _sourceMap.clear();
+
+    for(/* */; iter != end; ++iter) {
+      _addItem(*iter);
+    }
+  }
+
+  // TODO no checks against duplicate values
+  template<typename Container>
+  void setUnorderedValues(Container&& container) {
+    static_assert(
+      std::is_same<
+        temple::traits::getValueType<Container>,
+        T
+      >::value,
+      "Container value must match OrderDiscoveryHelper's template argument T"
+    );
+
+    setUnorderedValues(
+      std::begin(container),
+      std::end(container)
+    );
+  }
+
   //! Get a list of sets (in descending order) as currently discovered
   std::vector<
     std::vector<T>
@@ -345,9 +383,7 @@ public:
     return _getSetsByDegree();
   }
 
-  /*! Returns a list of sets (in ascending order) whose internal order is yet
-   * undecided
-   */
+  //! Returns grouped data (in descending order) whose internal order is undecided
   std::vector<
     std::vector<T>
   > getUndecidedSets() const {
@@ -374,6 +410,9 @@ public:
   ) {
     assert(a != b);
 
+    /* Less-than relationship is represented as directed edge from vertex
+     * storing a to vertex storing b
+     */
     boost::add_edge(
       _sourceMap.at(a),
       _sourceMap.at(b),

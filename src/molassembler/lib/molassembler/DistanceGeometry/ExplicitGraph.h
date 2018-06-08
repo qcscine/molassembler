@@ -23,8 +23,10 @@ class Molecule;
 
 namespace DistanceGeometry {
 
-// Forward-declare Partiality
+// Forward-declarations
 enum class Partiality;
+class DistanceBoundsMatrix;
+
 
 /*!
  * A class that helps with lower complexity determination of distance bounds
@@ -61,64 +63,80 @@ private:
   //! Stores the two heaviest element types
   std::array<Delib::ElementType, 2> _heaviestAtoms;
 
+  static void _explainContradictionPaths(
+    const VertexDescriptor a,
+    const VertexDescriptor b,
+    const std::vector<VertexDescriptor>& predecessors,
+    const std::vector<double>& distances
+  );
+
   void _updateOrAddEdge(
-    const VertexDescriptor& a,
-    const VertexDescriptor& b,
-    const double& edgeWeight
+    const VertexDescriptor i,
+    const VertexDescriptor j,
+    const double edgeWeight
   );
 
   void _updateGraphWithFixedDistance(
-    const VertexDescriptor& a,
-    const VertexDescriptor& b,
-    const double& fixedDistance
+    const VertexDescriptor a,
+    const VertexDescriptor b,
+    const double fixedDistance
   );
 
-  static inline VertexDescriptor left(const VertexDescriptor& a) {
+  static inline VertexDescriptor left(const VertexDescriptor a) {
     return 2 * a;
   }
 
-  static inline VertexDescriptor right(const VertexDescriptor& a) {
+  static inline VertexDescriptor right(const VertexDescriptor a) {
     return 2 * a + 1;
   }
 
 public:
-  using BoundList = std::vector<
-    std::tuple<VertexDescriptor, VertexDescriptor, ValueBounds>
+  using BoundsList = std::map<
+    std::array<VertexDescriptor, 2>,
+    ValueBounds
   >;
-  ExplicitGraph(const Molecule& molecule, const BoundList& bounds);
 
-  static inline bool isLeft(const VertexDescriptor& i) {
-    return i % 2 == 0;
-  }
+  ExplicitGraph(
+    const Molecule& molecule,
+    const DistanceBoundsMatrix& bounds
+  );
 
-  //! Adds edges to the underlying graph to represent the bound between the atoms
+  ExplicitGraph(
+    const Molecule& molecule,
+    const BoundsList& bounds
+  );
+
   void addBound(
-    const VertexDescriptor& a,
-    const VertexDescriptor& b,
+    const VertexDescriptor a,
+    const VertexDescriptor b,
     const ValueBounds& bound
   );
+
+  static inline bool isLeft(const VertexDescriptor i) {
+    return i % 2 == 0;
+  }
 
   //! Adds edges to the underlying graph representing implicit lower bounds
   void addImplicitEdges();
 
   void setDistance(
-    const VertexDescriptor& a,
-    const VertexDescriptor& b,
+    const VertexDescriptor a,
+    const VertexDescriptor b,
     double distance
   );
 
   double lowerBound(
-    const VertexDescriptor& i,
-    const VertexDescriptor& j
+    const VertexDescriptor a,
+    const VertexDescriptor b
   ) const;
 
   double upperBound(
-    const VertexDescriptor& i,
-    const VertexDescriptor& j
+    const VertexDescriptor a,
+    const VertexDescriptor b
   ) const;
 
   //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
-  double maximalImplicitLowerBound(const VertexDescriptor& i) const;
+  double maximalImplicitLowerBound(const VertexDescriptor i) const;
 
   const GraphType& getGraph() const;
 
