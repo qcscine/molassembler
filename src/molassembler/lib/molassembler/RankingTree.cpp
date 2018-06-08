@@ -664,7 +664,7 @@ void RankingTree::_applySequenceRules(
     for(const auto& equalAtomSet : rankedAtoms) {
       for(const AtomIndexType individualAtom : equalAtomSet) {
         ligands.push_back(
-          std::vector<AtomIndexType> {{individualAtom}}
+          std::vector<AtomIndexType> {individualAtom}
         );
       }
     }

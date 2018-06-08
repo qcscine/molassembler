@@ -300,7 +300,7 @@ CNStereocenter::PermutationState::generateLigandToSymmetryPositionMap(
   assert(
     temple::all_of(
       positionMap,
-      [&placeholder](const unsigned& symmetryPosition) -> bool {
+      [](const unsigned& symmetryPosition) -> bool {
         return symmetryPosition != placeholder;
       }
     ) && "A symmetry position is still marked with the placeholder!"

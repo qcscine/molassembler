@@ -105,6 +105,9 @@ struct FileHandler {
     Delib::BondOrderCollection bondOrders;
   };
 
+  // Virtualize destructor
+  virtual ~FileHandler() = default;
+
   // Demand strong const guarantees for quality of implementation
   virtual bool canRead(const std::string& filename) const = 0;
   virtual RawData read(const std::string& filename) const = 0;
@@ -117,7 +120,7 @@ struct FileHandler {
 };
 
 //! MOL file IO
-class MOLFileHandler : public FileHandler {
+class MOLFileHandler final : public FileHandler {
 private:
 /* Typedefs */
   enum class State {
@@ -177,7 +180,7 @@ public:
 };
 
 //! XYZ file IO
-struct XYZHandler : public FileHandler {
+struct XYZHandler final : public FileHandler {
   bool canRead(const std::string& filename) const final;
 
   RawData read(const std::string& filename) const final;

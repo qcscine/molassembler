@@ -275,7 +275,7 @@ std::vector<
       } else {
         if(excludeAdjacents.count(centralAdjacent) == 0) {
           adjacents.push_back(
-            std::vector<AtomIndexType> {{centralAdjacent}}
+            std::vector<AtomIndexType> {centralAdjacent}
           );
         }
       }
