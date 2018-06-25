@@ -276,7 +276,7 @@ public:
   }
 
   //! Returns the number of out-edges for a particular vertex
-  VertexDescriptor out_degree(VertexDescriptor vertex) const;
+  VertexDescriptor out_degree(VertexDescriptor i) const;
 
   double& lowerBound(const VertexDescriptor a, const VertexDescriptor b);
   double& upperBound(const VertexDescriptor a, const VertexDescriptor b);
@@ -329,9 +329,9 @@ public:
     vertex_iterator();
     vertex_iterator(VertexDescriptor i);
     vertex_iterator(const vertex_iterator& other);
-    vertex_iterator(vertex_iterator&& other);
+    vertex_iterator(vertex_iterator&& other) noexcept;
     vertex_iterator& operator = (const vertex_iterator& other);
-    vertex_iterator& operator = (vertex_iterator&& other);
+    vertex_iterator& operator = (vertex_iterator&& other) noexcept;
 
     bool operator == (const vertex_iterator& other) const;
 
@@ -384,9 +384,9 @@ public:
       VertexDescriptor i
     );
     edge_iterator(const edge_iterator& other);
-    edge_iterator(edge_iterator&& other);
+    edge_iterator(edge_iterator&& other) noexcept;
     edge_iterator& operator = (const edge_iterator& other);
-    edge_iterator& operator = (edge_iterator&& other);
+    edge_iterator& operator = (edge_iterator&& other) noexcept;
 
     edge_iterator& operator ++ ();
 
@@ -411,10 +411,10 @@ public:
   edge_iterator eend() const;
 
   //! Returns a begin edge iterator for the out-edges of a specific vertex
-  edge_iterator obegin(VertexDescriptor vertex) const;
+  edge_iterator obegin(VertexDescriptor i) const;
 
   //! Returns an end edge iterator for the out-edges of a specific vertex
-  edge_iterator oend(VertexDescriptor vertex) const;
+  edge_iterator oend(VertexDescriptor i) const;
 
   //! An iterator to enumerate only edges to the same part of the graph from specific vertices
   class in_group_edge_iterator : public EdgeIteratorBase {
@@ -435,11 +435,11 @@ public:
     in_group_edge_iterator(
       const ImplicitGraph& base,
       const VertexDescriptor i,
-      bool
+      bool /* tag */
     );
     in_group_edge_iterator(const in_group_edge_iterator& other);
-    in_group_edge_iterator(in_group_edge_iterator&& other);
-    in_group_edge_iterator& operator = (in_group_edge_iterator&& other);
+    in_group_edge_iterator(in_group_edge_iterator&& other) noexcept;
+    in_group_edge_iterator& operator = (in_group_edge_iterator&& other) noexcept;
     in_group_edge_iterator& operator = (const in_group_edge_iterator& other);
 
     inline in_group_edge_iterator& operator ++ () {

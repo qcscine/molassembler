@@ -56,9 +56,12 @@ public:
    *
    * \param passSymmetryName The name of the employed symmetry.
    * \param passCharacters A vector of chars signifying abstract ligands.
+   *
+   * \throws If size of passSymmetryName does not match the number of
+   *   characters in debug builds
    */
   Stereopermutation(
-    const Symmetry::Name passSymmetryName,
+    const Symmetry::Name passSymmetryName [[gnu::unused]],
     std::vector<char> passCharacters
   );
   /*!
@@ -69,9 +72,12 @@ public:
    * \param passCharacters A vector of chars signifying abstract ligands.
    * \param passLinks A vector of pairs. Describes which ligand characters
    *  are bonded to one another.
+   *
+   * \throws If size of passSymmetryName does not match the number of
+   *   characters in debug builds
    */
   Stereopermutation(
-    const Symmetry::Name passSymmetryName,
+    const Symmetry::Name passSymmetryName [[gnu::unused]],
     const std::vector<char> passCharacters,
     const LinksSetType passLinks
   );

@@ -72,6 +72,7 @@ extern std::set<Particulars> particulars;
 // Logging calls
 std::ostream& log(const Level& decisionLevel);
 std::ostream& log(const Particulars& particular);
+bool isSet(Particulars particular);
 
 } // namespace Log
 

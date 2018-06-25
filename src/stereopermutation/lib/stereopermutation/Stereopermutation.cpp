@@ -19,8 +19,8 @@ Stereopermutation::Stereopermutation(
 
 Stereopermutation::Stereopermutation(
   const Symmetry::Name passSymmetryName,
-  const std::vector<char> passCharacters,
-  const LinksSetType passLinks
+  std::vector<char> passCharacters,
+  LinksSetType passLinks
 ) : characters(std::move(passCharacters)),
     links(std::move(passLinks))
 {
@@ -182,8 +182,8 @@ std::set<Stereopermutation> Stereopermutation::generateAllRotations(
 ) const {
   return _generateAllRotations(
     [](
-      const Stereopermutation& a __attribute__ ((unused)),
-      const Stereopermutation& b __attribute__ ((unused))
+      const Stereopermutation& /* a */,
+      const Stereopermutation& /* b */
     ) -> bool {
       return false;
     },
@@ -199,7 +199,7 @@ bool Stereopermutation::isRotationallySuperimposable(
     *this == other
     || _generateAllRotations(
       [&other](
-        const Stereopermutation& a __attribute__ ((unused)),
+        const Stereopermutation& /* a */,
         const Stereopermutation& b
       ) -> bool {
         return b == other;
@@ -392,6 +392,7 @@ std::vector<char> Stereopermutation::rotateCharacters(
   const std::vector<unsigned>& rotationIndices
 ) const {
   std::vector<char> retv;
+  retv.reserve(characters.size());
 
   for(const auto& index : rotationIndices) {
     retv.push_back(

@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(adaptors) {
   BOOST_CHECK(
     trial_all_of(
       a,
-      std::bind(std::less<unsigned>(), std::placeholders::_1, 6u)
+      std::bind(std::less<>(), std::placeholders::_1, 6u)
     )
   );
 }

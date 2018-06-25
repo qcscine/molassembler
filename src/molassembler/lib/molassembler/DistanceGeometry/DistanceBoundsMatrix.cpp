@@ -17,7 +17,7 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) {
   _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(defaultUpper);
 }
 
-DistanceBoundsMatrix::DistanceBoundsMatrix(const Eigen::MatrixXd& matrix) : _matrix {matrix} {}
+DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) : _matrix {std::move(matrix)} {}
 
 bool DistanceBoundsMatrix::setUpperBound(const AtomIndexType i, const AtomIndexType j, const double newUpperBound) {
   if(

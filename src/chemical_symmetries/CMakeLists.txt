@@ -1,7 +1,3 @@
-# oldest tested version of cmake used (too lazy to figure out newest compatible
-# cmake version)
-cmake_minimum_required(VERSION 3.5.1)
-
 # declaration
 project(chemicalsymmetries VERSION 0.1.0)
 

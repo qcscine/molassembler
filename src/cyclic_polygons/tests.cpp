@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
         CyclicPolygons::detail::generalizedInternalAngles(edgeLengths, circumradius, circumcenterInside)
       ) - (nSides - 2) * M_PI;
 
-      pass = pass && std::fabs(internalAngleSumDeviation < 1e-6);
+      pass = pass && (std::fabs(internalAngleSumDeviation) < 1e-6);
 
       BOOST_CHECK_MESSAGE(
         std::fabs(internalAngleSumDeviation) < 1e-6,

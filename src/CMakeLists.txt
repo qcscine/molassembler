@@ -4,8 +4,8 @@ set(molassembler_VERSION_PATCH 0)
 
 set(as_subproject chemical_symmetries cyclic_polygons stereopermutation temple)
 
-# Force the linker to report undefined symbols in shared libraries
-string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
+# Project-specific options
+option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
 
 # overwrite find_package with test against subproject list
 macro(find_package)
@@ -21,10 +21,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(CompilerSpecificSetup)
 include(Dependencies)
 include(Utils)
-
-# All directories
-set(ALL_DIRECTORIES
-)
 
 # Permit limited builds
 if(DEFINED MOLASSEMBLER_INCLUDE_PROJECT_DIRS)

@@ -35,7 +35,7 @@ InterpretResult interpret(
         double bondOrder = bondOrders.getOrder(i, j);
 
         if(bondOrder > 0.5) {
-          BondType bond = static_cast<BondType>(
+          auto bond = static_cast<BondType>(
             std::round(bondOrder) - 1
           );
 

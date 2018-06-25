@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_CASE(kahanSummation) {
     const double reduceSum = temple::reduce(
       randomNumbers,
       0.0,
-      std::plus<double>()
+      std::plus<>()
     );
 
     const double kahanSum = temple::kahanSum(randomNumbers);
@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(kahanSummation) {
     const double longSum = temple::reduce(
       addedPrecision,
       0.0l,
-      std::plus<long double>()
+      std::plus<>()
     );
 
     // Kahan summation should be equally or more accurate than the standard reduction

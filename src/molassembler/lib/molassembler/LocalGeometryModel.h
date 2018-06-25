@@ -41,10 +41,10 @@ extern const std::map<BondType, double> bondWeights;
 
 /* Models */
 boost::optional<Symmetry::Name> vsepr(
-  const Delib::ElementType& centerAtomType,
-  const unsigned& nSites,
-  const std::vector<BindingSiteInformation>& ligands,
-  const int& formalCharge
+  const Delib::ElementType centerAtomType,
+  const unsigned nSites,
+  const std::vector<BindingSiteInformation>& sites,
+  const int formalCharge
 );
 
 boost::optional<Symmetry::Name> firstOfSize(const unsigned& size);
@@ -52,7 +52,7 @@ boost::optional<Symmetry::Name> firstOfSize(const unsigned& size);
 
 /* Tiered geometry determination function */
 std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
-  const GraphType& graph,
+  const GraphType& molGraph,
   const AtomIndexType index,
   const RankingInformation& ranking
 );

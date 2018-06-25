@@ -1,6 +1,8 @@
-" Use clang-check, which gets its include and compilation options from the
+" Use clang-tidy, which gets its include and compilation options from the
 " CMake-generated compile_database.json
-let g:ale_linters = {'cpp': ['clangcheck']}
+let g:ale_linters = {'cpp': ['clangtidy']}
+let g:ale_cpp_clangtidy_checks = []
+let g:ale_c_build_dir_names = ['build', 'build-clang', 'build-gcc']
 " Automatically remove any trailing whitespace
 let g:ale_fixers = {'cpp': ['remove_trailing_lines', 'trim_whitespace']}
 let g:ale_fix_on_save = 1

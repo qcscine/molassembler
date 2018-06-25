@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.0.2)
-
 project(templeTestProject)
 
 set(Boost_USE_STATIC_LIBS OFF)

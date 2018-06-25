@@ -20,9 +20,13 @@ std::ostream& log(const Level& decisionLevel) {
 std::ostream& log(const Particulars& particular) {
   if(particulars.count(particular) == 1) {
     return std::cout;
-  } 
+  }
 
   return detail::nullStream;
+}
+
+bool isSet(const Particulars particular) {
+  return particulars.count(particular) > 0;
 }
 
 Level level = Level::Trace;

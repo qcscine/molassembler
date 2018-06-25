@@ -23,20 +23,6 @@ target_include_directories(stereopermutation PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
 target_link_libraries(stereopermutation PUBLIC chemical_symmetries)
 
-if(UNIX)
-  add_definitions(-fPIC)
-endif()
-
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  message(STATUS "Selected release build")
-  # no debug information, disable assert
-  target_compile_definitions(stereopermutation PRIVATE NDEBUG)
-  target_compile_options(stereopermutation PRIVATE -O2)
-else() # assume Debug
-  message(STATUS "Assume debug build")
-  target_compile_options(stereopermutation PRIVATE -g -O2)
-endif()
-
 install(
   TARGETS stereopermutation
   EXPORT stereopermutationTargets

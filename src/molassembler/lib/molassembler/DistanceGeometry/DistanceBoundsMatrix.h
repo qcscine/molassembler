@@ -78,7 +78,7 @@ public:
 
   explicit DistanceBoundsMatrix(const unsigned& N);
 
-  explicit DistanceBoundsMatrix(const Eigen::MatrixXd& matrix);
+  explicit DistanceBoundsMatrix(Eigen::MatrixXd matrix);
 
   template<typename Molecule>
   DistanceBoundsMatrix(

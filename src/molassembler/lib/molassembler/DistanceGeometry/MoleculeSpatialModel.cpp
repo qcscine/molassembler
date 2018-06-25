@@ -337,9 +337,13 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     if(smallestCycleMap.count(i) == 1) {
       if(smallestCycleMap.at(i) == 3) {
         return 2.5;
-      } else if(smallestCycleMap.at(i) == 4) {
+      }
+
+      if(smallestCycleMap.at(i) == 4) {
         return 1.7;
-      } else if(smallestCycleMap.at(i) == 5) {
+      }
+
+      if(smallestCycleMap.at(i) == 5) {
         return 1.3;
       }
     }
@@ -428,11 +432,11 @@ MoleculeSpatialModel::MoleculeSpatialModel(
 
               std::vector<AtomIndexType> firstAdjacents, secondAdjacents;
               for(const auto& iAdjacent : iAdjacents) {
-                if(cycleOneVertices.count(iAdjacent)) {
+                if(cycleOneVertices.count(iAdjacent) > 0) {
                   firstAdjacents.push_back(iAdjacent);
                 }
 
-                if(cycleTwoVertices.count(iAdjacent)) {
+                if(cycleTwoVertices.count(iAdjacent) > 0) {
                   secondAdjacents.push_back(iAdjacent);
                 }
               }
@@ -886,8 +890,8 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeBounds() const {
     /* Any elements in the bond bounds MUST improve the existing bounds and
      * may not cause contradictions.
      */
-    bool improveLowerBound = bounds.setLowerBound(indices.front(), indices.back(), bondBounds.lower);
-    bool improveUpperBound = bounds.setUpperBound(indices.front(), indices.back(), bondBounds.upper);
+    bool improveLowerBound [[gnu::unused]] = bounds.setLowerBound(indices.front(), indices.back(), bondBounds.lower);
+    bool improveUpperBound [[gnu::unused]] = bounds.setUpperBound(indices.front(), indices.back(), bondBounds.upper);
     assert(improveLowerBound && improveUpperBound);
   }
 
@@ -1464,7 +1468,7 @@ ValueBounds MoleculeSpatialModel::ligandDistanceFromCenter(
   const double bondRelativeVariance,
   const GraphType& graph
 ) {
-  assert(ligandIndices.size() > 0);
+  assert(!ligandIndices.empty());
 
   Delib::ElementType centralIndexType = graph[centralIndex].elementType;
 

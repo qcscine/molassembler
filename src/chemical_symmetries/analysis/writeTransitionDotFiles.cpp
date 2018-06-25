@@ -57,7 +57,7 @@ public:
     std::stringstream stream;
     stream << "#";
     for(const auto& value : rgb) {
-      stream << std::setfill('0') << std::setw(2) << std::hex 
+      stream << std::setfill('0') << std::setw(2) << std::hex
         << static_cast<int>(value);
     }
 
@@ -74,7 +74,7 @@ std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
       stringName.end(),
       [](const char& singleChar) -> bool {
         return (
-          singleChar == ' ' 
+          singleChar == ' '
           || singleChar == '-'
         );
       }
@@ -103,7 +103,7 @@ void writeSymmetryTransitionDotFile(
 
   // Global stuff
   dotFile << R"(  graph [fontname = "Arial", nodesep="1.5", ranksep="1.2"];)" << br
-    << R"(  node [fontname = "Arial", style = "filled", fillcolor="white"];)" << br 
+    << R"(  node [fontname = "Arial", style = "filled", fillcolor="white"];)" << br
     << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br;
 
   std::set<Symmetry::Name> redNodes {
@@ -126,11 +126,11 @@ void writeSymmetryTransitionDotFile(
 
     dotFile << "    " << getGraphvizNodeName(symmetryName) << R"( [label=")"
       << Symmetry::name(symmetryName) << R"(")";
-    
+
 
     if(redNodes.count(symmetryName) == 1) {
       dotFile << R"(, fillcolor="tomato", fontcolor="white")";
-    } 
+    }
 
     dotFile << "];" << br;
   }
@@ -155,7 +155,7 @@ void writeSymmetryTransitionDotFile(
       }
     }
 
-    if(distortionsMap.size() > 0) {
+    if(!distortionsMap.empty()) {
       double maxDistortion = temple::max(
         temple::mapValues(
           distortionsMap,
@@ -183,17 +183,17 @@ void writeSymmetryTransitionDotFile(
 
         // In case you want transitions explained
         if(explainTransitions) {
-          std::cout << "Transitions of distortion " 
+          std::cout << "Transitions of distortion "
             << (
-              mappingData.angularDistortion 
+              mappingData.angularDistortion
               + mappingData.chiralDistortion
             ) << " from "
             << Symmetry::name(sourceSymmetry)
             << " to " << Symmetry::name(targetSymmetry) << ":\n";
 
           for(const auto& mapping : mappingData.indexMappings) {
-            std::cout << "mapping {" 
-              << temple::condenseIterable(mapping) 
+            std::cout << "mapping {"
+              << temple::condenseIterable(mapping)
               << "}" << std::endl;
           }
         }
@@ -216,16 +216,16 @@ void writeSymmetryTransitionDotFile(
               gradient.getHexString(mappingData.angularDistortion + mappingData.chiralDistortion)
             );
 
-            dotFile << "color=\"" 
-              << temple::condenseIterable(repeatColor, ":invis:") 
+            dotFile << "color=\""
+              << temple::condenseIterable(repeatColor, ":invis:")
               << "\"";
           } else {
-            dotFile << "color=\"" 
-              << gradient.getHexString(mappingData.angularDistortion + mappingData.chiralDistortion) 
-              << "\", style=\"dashed\"";
+            dotFile << "color=\""
+              << gradient.getHexString(mappingData.angularDistortion + mappingData.chiralDistortion)
+              << R"(", style="dashed")";
           }
 
-          dotFile << ", label=\"" 
+          dotFile << ", label=\""
             << temple::Math::round(
               mappingData.angularDistortion + mappingData.chiralDistortion,
               2
@@ -238,7 +238,7 @@ void writeSymmetryTransitionDotFile(
 
           // close label
           dotFile << "\"";
-          
+
           // End edge modifiers
           dotFile << "];\n";
         }
@@ -267,7 +267,7 @@ void writeLigandLossDotFile(
 
   // Global stuff
   dotFile << R"(  graph [fontname = "Arial", nodesep="1.5", ranksep="1.2"];)" << br
-    << R"(  node [fontname = "Arial", style = "filled", fillcolor="white"];)" << br 
+    << R"(  node [fontname = "Arial", style = "filled", fillcolor="white"];)" << br
     << R"(  edge [fontname = "Arial", penwidth=2, labelfontsize="10"];)" << br
     << R"(  rankdir="LR";)" << br;
 
@@ -291,11 +291,11 @@ void writeLigandLossDotFile(
 
     dotFile << "    " << getGraphvizNodeName(symmetryName) << R"( [label=")"
       << Symmetry::name(symmetryName) << R"(")";
-    
+
 
     if(redNodes.count(symmetryName) == 1) {
       dotFile << R"(, fillcolor="tomato", fontcolor="white")";
-    } 
+    }
 
     dotFile << "];" << br;
   }
@@ -360,17 +360,17 @@ void writeLigandLossDotFile(
 
           // In case you want transitions explained
           if(explainTransitions) {
-            std::cout << "Transitions of distortion " 
+            std::cout << "Transitions of distortion "
               << (
-                mappingData.angularDistortion 
+                mappingData.angularDistortion
                 + mappingData.chiralDistortion
               ) << " from "
               << Symmetry::name(sourceSymmetry)
               << " to " << Symmetry::name(targetSymmetry) << ":\n";
 
             for(const auto& mapping : mappingData.indexMappings) {
-              std::cout << "mapping {" 
-                << temple::condenseIterable(mapping) 
+              std::cout << "mapping {"
+                << temple::condenseIterable(mapping)
                 << "}" << std::endl;
             }
           }
@@ -393,14 +393,14 @@ void writeLigandLossDotFile(
                 "black"
               );
 
-              dotFile << "color=\"" 
-                << temple::condenseIterable(repeatColor, ":invis:") 
+              dotFile << "color=\""
+                << temple::condenseIterable(repeatColor, ":invis:")
                 << "\"";
             } else {
-              dotFile << "color=\"black\", style=\"dashed\"";
+              dotFile << R"(color="black", style="dashed")";
             }
 
-            dotFile << ", label=\"" 
+            dotFile << ", label=\""
               << temple::Math::round(
                 mappingData.angularDistortion + mappingData.chiralDistortion,
                 2
@@ -412,13 +412,13 @@ void writeLigandLossDotFile(
             }
 
             // Add equivalent positions to label
-            dotFile << " {" 
+            dotFile << " {"
               << temple::condenseIterable(equivalentPositions)
               << "}";
 
             // close label
             dotFile << "\"";
-            
+
             // End edge modifiers
             dotFile << "];\n";
           }

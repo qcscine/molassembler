@@ -484,7 +484,7 @@ BOOST_AUTO_TEST_CASE(dynamicArrayTests) {
 
   constexpr auto grouped = groupByEquality(
     values,
-    std::equal_to<unsigned>()
+    std::equal_to<>()
   );
 
   static_assert(
@@ -1074,7 +1074,7 @@ BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
 
   constexpr auto grouped = groupByEquality(
     values,
-    std::equal_to<unsigned>()
+    std::equal_to<>()
   );
 
   constexpr temple::Array<unsigned, 4> f {4, 1, 9};
@@ -1254,7 +1254,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
               }
             ),
             [](const std::string& str) -> bool {
-              return str != "";
+              return !str.empty();
             }
           )
         ) << "\nSequence of operations: "
@@ -1289,7 +1289,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
               }
             ),
             [](const std::string& str) -> bool {
-              return str != "";
+              return !str.empty();
             }
           )
         ) << "\nSequence of operations: "
@@ -1346,7 +1346,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     }
 
     // Empty the tree
-    while(inTree.size() > 0) {
+    while(!inTree.empty()) {
       std::string lastTreeGraph = tree.dumpGraphviz();
 
       removeElement(lastTreeGraph);
@@ -1371,7 +1371,7 @@ constexpr bool BTreeAllocatedSizeSufficient() {
 }
 
 template<size_t minOrder, size_t ... nElements>
-constexpr bool testAllBTrees(std::index_sequence<nElements...>) {
+constexpr bool testAllBTrees(std::index_sequence<nElements...> /* elements */) {
   temple::Array<bool, sizeof...(nElements)> results {{
     BTreeAllocatedSizeSufficient<minOrder, 5 + nElements>()...
   }};
@@ -1386,7 +1386,7 @@ constexpr bool testAllBTrees(std::index_sequence<nElements...>) {
 }
 
 template<size_t ... minOrders>
-constexpr bool testAllBTrees(std::index_sequence<minOrders...>) {
+constexpr bool testAllBTrees(std::index_sequence<minOrders...> /* elements */) {
   temple::Array<bool, sizeof...(minOrders)> results {{
     testAllBTrees<2 + minOrders>(std::make_index_sequence<45>{})... // Test sizes 5->50
   }};
@@ -1413,10 +1413,10 @@ static_assert(
 namespace ConsecutiveCompareConstexprTests {
   static_assert(
     temple::consecutiveCompare(
-      std::less<int>(),
+      std::less<>(),
       -4,
       -4,
-      std::greater<unsigned>(),
+      std::greater<>(),
       11,
       10
     ),
@@ -1428,10 +1428,10 @@ namespace ConsecutiveCompareConstexprTests {
 
   static_assert(
     temple::consecutiveCompare(
-      std::less<int>(),
+      std::less<>(),
       x,
       y,
-      std::greater<unsigned>(),
+      std::greater<>(),
       f,
       g
     ),

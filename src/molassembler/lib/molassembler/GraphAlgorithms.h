@@ -64,7 +64,7 @@ bool isHapticLigand(
 void findLigands(
   const GraphType& graph,
   const AtomIndexType centralIndex,
-  std::function<void(const std::vector<AtomIndexType>&)> callback
+  const std::function<void(const std::vector<AtomIndexType>&)>& callback
 );
 
 } // namespace detail

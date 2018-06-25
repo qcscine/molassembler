@@ -1,11 +1,3 @@
-# oldest tested version of cmake used (too lazy to figure out newest compatible
-# cmake version)
-cmake_minimum_required(VERSION 3.5.1)
-
-# little variables
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # declaration
 project(GORProject)
 
@@ -51,11 +43,6 @@ molassembler_install_component_headers(
 
 # Tests
 add_executable(gor1Tests test.cpp)
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  target_compile_options(gor1Tests PRIVATE -O3 -march=native)
-else()
-  target_compile_options(gor1Tests PRIVATE -g)
-endif()
 target_link_libraries(gor1Tests PRIVATE Boost::boost Boost::unit_test_framework)
 
 add_test(NAME gor1Tests COMMAND gor1Tests)

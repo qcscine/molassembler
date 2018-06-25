@@ -126,11 +126,6 @@ target_include_directories(
     ${EIGEN3_INCLUDE_DIRS}
 )
 
-# Compilation options
-if(UNIX)
-  add_definitions(-fPIC)
-endif()
-
 # Linking
 # NOTE: For the shared variant, it is necessary to use the cmake variables
 # instead of the imported targets since the imported targets are not changed

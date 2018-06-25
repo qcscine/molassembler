@@ -79,7 +79,7 @@ CNStereocenter::PermutationState::PermutationState(
   // Determine which permutations are feasible and which aren't
   if(
     // Links are present
-    ranking.links.size() > 0
+    !ranking.links.empty()
     // OR there are haptic ligands
     || temple::sum(
       temple::map(
@@ -92,7 +92,7 @@ CNStereocenter::PermutationState::PermutationState(
           return 1;
         }
       )
-    )
+    ) > 0
   ) {
     Cycles cycleData {graph};
     feasiblePermutations.reserve(permutations.assignments.size());
@@ -365,7 +365,7 @@ boost::optional<std::vector<unsigned>> CNStereocenter::PermutationState::getInde
   const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
   const ChiralStatePreservation& preservationOption
 ) {
-  if(mappingsGroup.indexMappings.size() == 0) {
+  if(mappingsGroup.indexMappings.empty()) {
     return boost::none;
   }
 
@@ -575,8 +575,8 @@ CNStereocenter::CNStereocenter(
   // The atom this Stereocenter is centered on
   const AtomIndexType centerAtom,
   // Ranking information of substituents
-  const RankingInformation& ranking
-) : _ranking {ranking},
+  RankingInformation ranking
+) : _ranking {std::move(ranking)},
     _centerAtom {centerAtom},
     _symmetry {symmetry},
     _assignmentOption {boost::none}
@@ -956,23 +956,29 @@ void CNStereocenter::removeSubstituent(
   /* Find out in which ligand the atom is removed, and whether it is the sole
    * constituting index
    */
-  boost::optional<bool> soleConstitutingIndex;
+  bool soleConstitutingIndex [[gnu::unused]];
   unsigned ligandIndexRemovedFrom;
-  for(
-    unsigned ligandI = 0;
-    ligandI < _ranking.ligands.size() && !soleConstitutingIndex;
-    ++ligandI
-  ) {
-    for(const AtomIndexType constitutingIndex : _ranking.ligands.at(ligandI)) {
-      if(constitutingIndex == which) {
-        ligandIndexRemovedFrom = ligandI;
-        soleConstitutingIndex = (_ranking.ligands.at(ligandI).size() == 1);
-        break;
+
+  { // Temporary local scope to avoid pollution
+    bool found = false;
+    for(
+      unsigned ligandI = 0;
+      ligandI < _ranking.ligands.size() && !found;
+      ++ligandI
+    ) {
+      for(const AtomIndexType constitutingIndex : _ranking.ligands.at(ligandI)) {
+        if(constitutingIndex == which) {
+          found = true;
+          soleConstitutingIndex = (_ranking.ligands.at(ligandI).size() == 1);
+          ligandIndexRemovedFrom = ligandI;
+        }
       }
     }
-  }
 
-  assert(soleConstitutingIndex);
+    if(!found) {
+      throw std::logic_error("Ligand index being removed from not found!");
+    }
+  }
 
   // No need to find a new assignment if we currently do not carry chiral state
   if(_assignmentOption && numStereopermutations() > 1) {
@@ -982,7 +988,7 @@ void CNStereocenter::removeSubstituent(
       /* If no symmetry transition happens, then all we have to figure out is a
        * ligand to ligand mapping.
        */
-      assert(!soleConstitutingIndex.value());
+      assert(!soleConstitutingIndex);
 
       /* Sort ligands in the old ranking and new so we can use lexicographical
        * comparison to figure out a mapping
@@ -1020,7 +1026,7 @@ void CNStereocenter::removeSubstituent(
         );
       }
     } else if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry) - 1) {
-      assert(soleConstitutingIndex.value());
+      assert(soleConstitutingIndex);
       /* Try to get a symmetry mapping to the new symmetry position
        * If there are mappings, try to select one according to preservationOption policy
        *
@@ -1111,7 +1117,7 @@ Symmetry::Name CNStereocenter::getSymmetry() const {
 void CNStereocenter::fit(
   const GraphType& graph,
   const AngstromWrapper& angstromWrapper,
-  std::vector<Symmetry::Name> excludeSymmetries
+  const std::vector<Symmetry::Name>& excludeSymmetries
 ) {
   // For all atoms making up a ligand, decide on the spatial average position
   const std::vector<Eigen::Vector3d> ligandPositions = temple::mapToVector(
@@ -1122,8 +1128,8 @@ void CNStereocenter::fit(
   );
 
   // Save stereocenter state to return to if no fit is viable
-  const Symmetry::Name priorSymmetry {this->_symmetry};
-  const boost::optional<unsigned> priorStereopermutation {this->_assignmentOption};
+  const Symmetry::Name priorSymmetry = _symmetry;
+  const boost::optional<unsigned> priorStereopermutation  = _assignmentOption;
 
   const Symmetry::Name initialSymmetry {Symmetry::Name::Linear};
   const unsigned initialStereopermutation = 0;

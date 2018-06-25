@@ -115,8 +115,8 @@ BOOST_AUTO_TEST_CASE(gor1Tests) {
     // fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
-        / color_map.elements_per_char,
+      color_map.data.get() + (color_map.n + ColorMapType::elements_per_char - 1)
+        / ColorMapType::elements_per_char,
       0
     );
 

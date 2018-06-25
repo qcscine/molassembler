@@ -147,7 +147,7 @@ bool hasMultipleUnlinkedAssignments(
   unsigned nIdenticalLigands
 ) {
   if(nIdenticalLigands == Symmetry::size(symmetryName)) {
-    return 1u;
+    return true;
   }
 
   if(nIdenticalLigands == 0) {

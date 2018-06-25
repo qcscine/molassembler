@@ -618,7 +618,7 @@ std::list<RefinementData> debugDistanceGeometry(
 
       if(!structureAcceptable) {
         Log::log(Log::Level::Warning) << "- The final structure is unacceptable.\n";
-        if(Log::particulars.count(Log::Particulars::DGStructureAcceptanceFailures)) {
+        if(Log::isSet(Log::Particulars::DGStructureAcceptanceFailures)) {
           errfDetail::explainAcceptanceFailure(
             distanceBounds,
             DGData.chiralityConstraints,
@@ -660,28 +660,32 @@ outcome::result<
   const Molecule& molecule,
   const unsigned numStructures
 ) {
-  if(auto result = detail::runDistanceGeometry(molecule, numStructures)) {
+  auto result = detail::runDistanceGeometry(molecule, numStructures);
+
+  if(result) {
     return temple::map(
       result.value(),
       [](AngstromWrapper wrapper) -> Delib::PositionCollection {
         return wrapper.getBohr();
       }
     );
-  } else {
-    return result.as_failure();
   }
+
+  return result.as_failure();
 }
 
 outcome::result<Delib::PositionCollection> generateConformation(const Molecule& molecule) {
-  if(auto result = detail::runDistanceGeometry(molecule, 1)) {
+  auto result = detail::runDistanceGeometry(molecule, 1);
+
+  if(result) {
     auto& conformationList = result.value();
     assert(conformationList.size() == 1);
     auto& wrapper = conformationList.front();
 
     return wrapper.getBohr();
-  } else {
-    return result.as_failure();
   }
+
+  return result.as_failure();
 }
 
 } // namespace DistanceGeometry

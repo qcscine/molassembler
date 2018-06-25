@@ -1,11 +1,3 @@
-# oldest tested version of cmake used (too lazy to figure out newest compatible
-# cmake version)
-cmake_minimum_required(VERSION 3.5.1)
-
-# little variables
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # declaration
 project(nlohmann_json_hpp)
 

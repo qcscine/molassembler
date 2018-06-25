@@ -410,8 +410,8 @@ template<
   sizeA < sizeB,
   bool
 > arraysLess(
-  const ArrayType<T, sizeA>& a __attribute__((unused)),
-  const ArrayType<T, sizeB>& b __attribute__((unused))
+  const ArrayType<T, sizeA>& /* a */,
+  const ArrayType<T, sizeB>& /* b */
 ) {
   return true;
 }
@@ -429,8 +429,8 @@ template<
   (sizeA > sizeB),
   bool
 > arraysLess(
-  const ArrayType<T, sizeA>& a __attribute__((unused)),
-  const ArrayType<T, sizeB>& b __attribute__((unused))
+  const ArrayType<T, sizeA>& /* a */,
+  const ArrayType<T, sizeB>& /* b */
 ) {
   return false;
 }
@@ -545,7 +545,7 @@ template<
   (size == 0),
   ArrayType<T, size + 1>
 > insertIntoSorted(
-  const ArrayType<T, size>& array __attribute__((unused)),
+  const ArrayType<T, size>& /* array */,
   const T& item
 ) {
   return {item};
@@ -603,9 +603,9 @@ template<
   (size == 0),
   ArrayType<T, size + 1>
 > insertIntoSorted(
-  const ArrayType<T, size>& array __attribute__((unused)),
+  const ArrayType<T, size>& /* array */,
   const T& item,
-  Comparator compare __attribute__((unused))
+  Comparator /* compare */
 ) {
   return {item};
 }

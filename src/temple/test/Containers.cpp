@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
 
   auto pairwiseSum = temple::mapSequentialPairs(
     instance,
-    std::plus<unsigned>()
+    std::plus<>()
   );
 
   BOOST_CHECK(pairwiseSum == std::vector<unsigned>({1,3,5}));
@@ -53,16 +53,16 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
     instance,
     boost::adaptors::slice(instance, 1, instance.size() - 1),
     std::back_inserter(bpairwiseSum),
-    std::plus<unsigned>()
+    std::plus<>()
   );
 
   auto pairwiseSmaller = temple::accumulate(
     temple::mapSequentialPairs(
       instance,
-      std::less<unsigned>()
+      std::less<>()
     ),
     true,
-    std::logical_and<bool>()
+    std::logical_and<>()
   );
 
   auto bpairwiseSmaller = boost::algorithm::all_of(
@@ -138,14 +138,14 @@ BOOST_AUTO_TEST_CASE( reduceTests) {
     temple::reduce(
       values,
       0u,
-      std::plus<unsigned>()
+      std::plus<>()
     ) == 15u
   );
   BOOST_CHECK(
     temple::reduce(
       values,
       1u,
-      std::multiplies<unsigned>()
+      std::multiplies<>()
     ) == 120u
   );
 }
@@ -211,10 +211,10 @@ BOOST_AUTO_TEST_CASE(concatenateTests) {
 }
 
 unsigned quaternarySum(
-  const unsigned a,
-  const unsigned b,
-  const unsigned c,
-  const unsigned d
+  unsigned a,
+  unsigned b,
+  unsigned c,
+  unsigned d
 ) PURITY_STRONG;
 
 unsigned quaternarySum(

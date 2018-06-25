@@ -47,7 +47,7 @@ struct Molecule::Impl {
   bool _isEZStereocenterCandidate(const GraphType::edge_descriptor& edgeIndex) const;
 
   //! Returns whether the specified index is valid or not
-  bool _isValidIndex(const AtomIndexType index) const;
+  bool _isValidIndex(AtomIndexType index) const;
 
   /*!
    * Returns a list of edge indices where each endpoint has 1 or two additional
@@ -66,9 +66,9 @@ struct Molecule::Impl {
 
   //! Diatomic constructor
   Impl(
-    const Delib::ElementType a,
-    const Delib::ElementType b,
-    const BondType bondType
+    Delib::ElementType a,
+    Delib::ElementType b,
+    BondType bondType
   ) noexcept;
 
   //! Graph-only constructor
@@ -91,16 +91,16 @@ struct Molecule::Impl {
 //!@{
   //! Adds an atom by attaching it to an existing atom.
   AtomIndexType addAtom(
-    const Delib::ElementType elementType,
-    const AtomIndexType adjacentTo,
-    const BondType bondType
+    Delib::ElementType elementType,
+    AtomIndexType adjacentTo,
+    BondType bondType
   );
 
   //! Adds a bond between existing atoms.
   void addBond(
-    const AtomIndexType a,
-    const AtomIndexType b,
-    const BondType bondType
+    AtomIndexType a,
+    AtomIndexType b,
+    BondType bondType
   );
 
   /*! Sets the stereocenter assignment at a particular atom
@@ -117,7 +117,7 @@ struct Molecule::Impl {
    * to the introduction of new stereocenters or the removal of old ones.
    */
   void assignStereocenter(
-    const AtomIndexType a,
+    AtomIndexType a,
     const boost::optional<unsigned>& assignment
   );
 
@@ -134,7 +134,7 @@ struct Molecule::Impl {
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereocenters or the removal of old ones.
    */
-  void assignStereocenterRandomly(const AtomIndexType a);
+  void assignStereocenterRandomly(AtomIndexType a);
 
   /*! Removes an atom from the graph, including bonds to it.
    *
@@ -144,7 +144,7 @@ struct Molecule::Impl {
    *
    * @throws if the supplied index is invalid or isSafeToRemoveAtom returns false.
    */
-  void removeAtom(const AtomIndexType a);
+  void removeAtom(AtomIndexType a);
 
   /*!
    * Removes an atom after checking if removing that bond is safe, i.e. does not
@@ -159,19 +159,19 @@ struct Molecule::Impl {
    * It is, however, considered safe to remove the terminal vertex, which
    * involves removing the bond to it.
    */
-  void removeBond(const AtomIndexType a, const AtomIndexType b);
+  void removeBond(AtomIndexType a, AtomIndexType b);
 
   //! Changes an existing bond's type
   bool setBondType(
-    const AtomIndexType a,
-    const AtomIndexType b,
-    const BondType bondType
+    AtomIndexType a,
+    AtomIndexType b,
+    BondType bondType
   );
 
   //! Changes an existing atom's element type
   void setElementType(
-    const AtomIndexType a,
-    const Delib::ElementType elementType
+    AtomIndexType a,
+    Delib::ElementType elementType
   );
 
   /*! Sets the local geometry at an atom index
@@ -190,8 +190,8 @@ struct Molecule::Impl {
    *     CNStereocenter or the expected symmetry
    */
   void setGeometryAtAtom(
-    const AtomIndexType a,
-    const Symmetry::Name symmetryName
+    AtomIndexType a,
+    Symmetry::Name symmetryName
   );
 //!@}
 
@@ -203,7 +203,7 @@ struct Molecule::Impl {
    * @throws if the supplied atomic index is invalid
    */
   Symmetry::Name determineLocalGeometry(
-    const AtomIndexType index,
+    AtomIndexType index,
     const RankingInformation& ranking
   ) const;
 
@@ -215,12 +215,12 @@ struct Molecule::Impl {
    * Fetches the atomic indices of vertices adjacent to a particular index.
    * @throws if the supplied atomic index is invalid
    */
-  std::vector<AtomIndexType> getAdjacencies(const AtomIndexType a) const;
+  std::vector<AtomIndexType> getAdjacencies(AtomIndexType a) const;
 
   //! Fetches the optional bond type between two atom indices
   boost::optional<BondType> getBondType(
-    const AtomIndexType a,
-    const AtomIndexType b
+    AtomIndexType a,
+    AtomIndexType b
   ) const;
 
   BondType getBondType(const GraphType::edge_descriptor& edge) const;
@@ -232,7 +232,7 @@ struct Molecule::Impl {
    * Returns the element type of an atomic index
    * @throws if the atomic index is invalid
    */
-  Delib::ElementType getElementType(const AtomIndexType index) const;
+  Delib::ElementType getElementType(AtomIndexType index) const;
 
   //! Returns a collection detailing all element types
   Delib::ElementTypeCollection getElementCollection() const;
@@ -244,21 +244,21 @@ struct Molecule::Impl {
   const StereocenterList& getStereocenterList() const;
 
   //! Returns the number of adjacencies of an atomic position
-  unsigned getNumAdjacencies(const AtomIndexType a) const;
+  unsigned getNumAdjacencies(AtomIndexType a) const;
 
   StereocenterList inferStereocentersFromPositions(const AngstromWrapper& angstromWrapper) const;
 
   //! Checks if two atomic indices are connected by a bond
   bool isAdjacent(
-    const AtomIndexType a,
-    const AtomIndexType b
+    AtomIndexType a,
+    AtomIndexType b
   ) const;
 
   //! An atom is considered removable if it isn't an articulation vertex
-  bool isSafeToRemoveAtom(const AtomIndexType a) const;
+  bool isSafeToRemoveAtom(AtomIndexType a) const;
 
   //! A bond is considered removable if it isn't a bridge edge
-  bool isSafeToRemoveBond(const AtomIndexType a, const AtomIndexType b) const;
+  bool isSafeToRemoveBond(AtomIndexType a, AtomIndexType b) const;
 
   //! Modular comparison of this Impl with another.
   bool modularCompare(
@@ -273,7 +273,7 @@ struct Molecule::Impl {
   unsigned numBonds() const;
 
   RankingInformation rankPriority(
-    const AtomIndexType a,
+    AtomIndexType a,
     const std::set<AtomIndexType>& excludeAdjacent = {},
     const boost::optional<AngstromWrapper>& positionsOption = boost::none
   ) const;
@@ -291,7 +291,7 @@ struct Molecule::Impl {
    * iteration through an atom's adjacencies
    */
   RangeForTemporary<GraphType::adjacency_iterator> iterateAdjacencies(
-    const AtomIndexType a
+    AtomIndexType a
   ) const;
 
   /*! Returns a range-for temporary object allowing c++11-style for loop
@@ -302,7 +302,7 @@ struct Molecule::Impl {
   /*! Returns a range-for temporary object allowing c++11-style for loop
    * iteration through edges around a specific atom
    */
-  RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(const AtomIndexType a) const;
+  RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(AtomIndexType a) const;
 //!@}
 
 
@@ -310,7 +310,7 @@ struct Molecule::Impl {
 //!@{
   //! Returns the adjacencies of the specified atom index
   RangeForTemporary<GraphType::adjacency_iterator> operator [] (
-    const AtomIndexType a
+    AtomIndexType a
   ) const;
 
   //! Equality operator, performs most strict equality comparison
@@ -625,9 +625,11 @@ Molecule::Impl::Impl(
   addBond(0, 1, bondType);
 }
 
-Molecule::Impl::Impl(GraphType graph)
-: _adjacencies(std::move(graph))
-{
+Molecule::Impl::Impl(GraphType graph) {
+  // boost::adjacency_list doesn't implement moves, so use the swap member
+  _adjacencies.swap(graph);
+
+  // Initialization
   GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
   _stereocenters = _detectStereocenters();
   _ensureModelInvariants();
@@ -635,20 +637,24 @@ Molecule::Impl::Impl(GraphType graph)
 
 Molecule::Impl::Impl(
   GraphType graph,
-  const AngstromWrapper& angstromWrapper
-) : _adjacencies(std::move(graph))
-{
+  const AngstromWrapper& positions
+) {
+  // boost::adjacency_list doesn't implement moves, so use the swap member
+  _adjacencies.swap(graph);
+
   GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
-  _stereocenters = inferStereocentersFromPositions(angstromWrapper);
+  _stereocenters = inferStereocentersFromPositions(positions);
   _ensureModelInvariants();
 }
 
 Molecule::Impl::Impl(
   GraphType graph,
   StereocenterList stereocenters
-) : _adjacencies(std::move(graph)),
-    _stereocenters(std::move(stereocenters))
-{
+) : _stereocenters(std::move(stereocenters)) {
+  // boost::adjacency_list doesn't implement moves, so use the swap member
+  _adjacencies.swap(graph);
+
+  // Initialization
   _ensureModelInvariants();
 }
 
@@ -1648,8 +1654,8 @@ Molecule::Molecule() noexcept : _pImpl(
   std::make_unique<Impl>()
 ) {}
 
-Molecule::Molecule(Molecule&& other) = default;
-Molecule& Molecule::operator = (Molecule&& rhs) = default;
+Molecule::Molecule(Molecule&& other) noexcept = default;
+Molecule& Molecule::operator = (Molecule&& rhs) noexcept = default;
 
 Molecule::Molecule(const Molecule& other) : _pImpl(
   std::make_unique<Impl>(*other._pImpl)
@@ -1675,11 +1681,11 @@ Molecule::Molecule(GraphType graph) : _pImpl(
 
 Molecule::Molecule(
   GraphType graph,
-  const AngstromWrapper& angstromWrapper
+  const AngstromWrapper& positions
 ) : _pImpl(
   std::make_unique<Impl>(
     std::move(graph),
-    angstromWrapper
+    positions
   )
 ) {}
 

@@ -174,7 +174,7 @@ public:
     // The atom this Stereocenter is centered on
     const AtomIndexType centerAtom,
     // Ranking information of substituents
-    const RankingInformation& ranking
+    RankingInformation ranking
   );
 
 /* Modification */
@@ -205,7 +205,7 @@ public:
   void fit(
     const GraphType& graph,
     const AngstromWrapper& angstromWrapper,
-    std::vector<Symmetry::Name> excludeSymmetries = {}
+    const std::vector<Symmetry::Name>& excludeSymmetries = {}
   );
 
   /*!

@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE( assignment_basics ) {
   }
 
   { // columnSmaller
-    auto instanceCopy = instanceWithBondedLigands;
+    const auto& instanceCopy = instanceWithBondedLigands;
     BOOST_CHECK(
       instanceCopy.columnSmaller(0, 1)
       && instanceCopy.columnSmaller(1, 2)
@@ -221,7 +221,7 @@ void run_tests_with_counts(
     std::tie(characters, pairs, expectedUnique) = tuple;
 
     // instantiate
-    Stereopermutation assignment = (pairs.size() == 0)
+    Stereopermutation assignment = pairs.empty()
       ? Stereopermutation(symmetryName, characters)
       : Stereopermutation(symmetryName, characters, pairs);
 
@@ -238,7 +238,9 @@ void run_tests_with_counts(
     std::cout << "{";
     for(unsigned i = 0; i < characters.size(); i++) {
       std::cout << characters[i];
-      if(i != characters.size() - 1) std::cout << ", ";
+      if(i != characters.size() - 1) {
+        std::cout << ", ";
+      }
     }
     std::cout << "} " << Symmetry::name(symmetryName) << std::endl;
 

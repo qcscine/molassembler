@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
 
   auto smallestVector = temple::select(
     ragged2D,
-    std::less<unsigned>(),
+    std::less<>(),
     [](const auto& group) -> unsigned {
       return group.size();
     }
@@ -218,14 +218,13 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
 
   auto largestVector = temple::select(
     ragged2D,
-    std::greater<unsigned>(),
+    std::greater<>(),
     [](const auto& group) -> unsigned {
       return group.size();
     }
   );
 
   BOOST_CHECK((*largestVector == std::vector<unsigned> {9, 44, 33, 12}));
-
 }
 
 BOOST_AUTO_TEST_CASE(randomTests) {

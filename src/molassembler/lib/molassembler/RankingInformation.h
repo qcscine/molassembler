@@ -54,7 +54,7 @@ struct RankingInformation {
 
   static RankedLigandsType rankLigands(
     const LigandsType& ligands,
-    const RankedType& substituentRanking
+    const RankedType& sortedSubstituents
   );
 
 

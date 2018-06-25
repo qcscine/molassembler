@@ -13,7 +13,7 @@ namespace Symmetry {
 
 /* Derived stored constexpr data */
 //! The smallest angle between ligands in any symmetry
-constexpr double smallestAngle __attribute__ ((unused))
+constexpr double smallestAngle [[gnu::unused]]
 = temple::TupleType::unpackToFunction<
   data::allSymmetryDataTypes,
   constexprProperties::minAngleFunctor

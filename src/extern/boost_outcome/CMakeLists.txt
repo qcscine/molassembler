@@ -1,13 +1,5 @@
 # Included in source tree awaiting boost::outcome publication in Boost 1.69
 
-# oldest tested version of cmake used (too lazy to figure out newest compatible
-# cmake version)
-cmake_minimum_required(VERSION 3.5.1)
-
-# little variables
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 # declaration
 project(OutcomeProject)
 

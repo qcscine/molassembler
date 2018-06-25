@@ -33,15 +33,15 @@ private:
 public:
   GraphvizWriter(
     const RankingTree& baseTree,
-    const std::string& title = "",
-    const std::set<TreeVertexIndex>& squareVertices = {},
-    const std::set<TreeVertexIndex>& colorVertices = {},
-    const std::set<TreeEdgeIndex>& colorEdges = {}
+    std::string title = "",
+    std::set<TreeVertexIndex> squareVertices = {},
+    std::set<TreeVertexIndex> colorVertices = {},
+    std::set<TreeEdgeIndex> colorEdges = {}
   ) : _baseRef(baseTree),
-      _title(title),
-      _squareVertices(squareVertices),
-      _colorVertices(colorVertices),
-      _colorEdges(colorEdges)
+      _title(std::move(title)),
+      _squareVertices(std::move(squareVertices)),
+      _colorVertices(std::move(colorVertices)),
+      _colorEdges(std::move(colorEdges))
   {}
 
   void operator() (std::ostream& os) const {
@@ -188,16 +188,12 @@ public:
       return _base._duplicateDepth(a) > _base._duplicateDepth(b);
     }
 
-    if(aDuplicate && !bDuplicate) {
-      return true;
-    }
-
     // The case below is not needed, it falls together with equality
     /*if(!aDuplicate && bDuplicate) {
       return false;
     }*/
 
-    return false;
+    return aDuplicate && !bDuplicate;
   }
 };
 
@@ -296,7 +292,9 @@ public:
 
       if(aDepth < bDepth) {
         return true;
-      } else if(aDepth > bDepth) {
+      }
+
+      if(aDepth > bDepth) {
         return false;
       }
 
@@ -423,7 +421,7 @@ public:
 
     // For different types
     template<typename T, typename U>
-    bool operator() (const T&, const U&) const {
+    bool operator() (const T& /* t */, const U& /* u */) const {
       return false;
     }
   };
@@ -680,7 +678,7 @@ void RankingTree::_applySequenceRules(
       auto sourceIndex = boost::source(edge, _tree);
       auto targetIndex = boost::target(edge, _tree);
 
-      if(_doubleBondEdges.count(edge)) {
+      if(_doubleBondEdges.count(edge) > 0) {
         // Instantiate an EZStereocenter here!
 
         auto sourceIndicesToRank = _auxiliaryAdjacentsToRank(
@@ -693,9 +691,10 @@ void RankingTree::_applySequenceRules(
           {sourceIndex}
         );
 
+        // Ensure both index sets have either 1 or 2 elements
         if(
-          1 <= sourceIndicesToRank.size() && sourceIndicesToRank.size() <= 2
-          && 1 <= targetIndicesToRank.size() && targetIndicesToRank.size() <= 2
+          !sourceIndicesToRank.empty() && sourceIndicesToRank.size() <= 2
+          && !targetIndicesToRank.empty() && targetIndicesToRank.size() <= 2
         ) {
           auto makeEZRanking = [&](
             const TreeVertexIndex sourceIndex,
@@ -1046,7 +1045,7 @@ void RankingTree::_applySequenceRules(
       }
     }
 
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
+    while(!undecidedSets.empty() && _relevantSeeds(seeds, undecidedSets)) {
       // Perform a full BFS Step on all undecided set seeds
       for(const auto& undecidedSet : undecidedSets) {
         for(const auto& undecidedTreeIndex : undecidedSet) {
@@ -1162,7 +1161,7 @@ void RankingTree::_applySequenceRules(
       );
 
       // If there are no stereocenters to rank, bounce
-      if(stereocenterMap.at(branchIndex).size() == 0) {
+      if(stereocenterMap.at(branchIndex).empty()) {
         representativeStereodescriptors[branchIndex] = {};
         continue;
       }
@@ -1390,7 +1389,9 @@ void RankingTree::_applySequenceRules(
               if(ABranchLikePairs < BBranchLikePairs) {
                 _branchOrderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
-              } else if(BBranchLikePairs < ABranchLikePairs) {
+              }
+
+              if(BBranchLikePairs < ABranchLikePairs) {
                 _branchOrderingHelper.addLessThanRelationship(branchA, branchB);
                 break;
               }
@@ -1714,7 +1715,7 @@ std::vector<
     }
 
     while(
-      undecidedSets.size() > 0
+      !undecidedSets.empty()
       && _relevantSeeds(seeds, undecidedSets)
       && depth < depthLimitOptional.value_or(std::numeric_limits<unsigned>::max())
     ) {
@@ -1867,7 +1868,7 @@ std::vector<
       );
 
       // If there are no stereocenters to rank, bounce
-      if(stereocenterMap.at(branchIndex).size() == 0) {
+      if(stereocenterMap.at(branchIndex).empty()) {
         representativeStereodescriptors[branchIndex] = {};
         continue;
       }
@@ -2068,7 +2069,9 @@ std::vector<
               if(ABranchLikePairs < BBranchLikePairs) {
                 orderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
-              } else if(BBranchLikePairs < ABranchLikePairs) {
+              }
+
+              if(BBranchLikePairs < ABranchLikePairs) {
                 orderingHelper.addLessThanRelationship(branchA, branchB);
                 break;
               }
@@ -2497,7 +2500,7 @@ bool RankingTree::_relevantSeeds(
 ) {
   for(const auto& undecidedSet : undecidedSets) {
     for(const auto& undecidedTreeIndex : undecidedSet) {
-      if(seeds.at(undecidedTreeIndex).size() > 0) {
+      if(!seeds.at(undecidedTreeIndex).empty()) {
         return true;
       }
     }
@@ -2536,7 +2539,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_addBondOrderDuplicates(
   double bondOrder = Bond::bondOrderMap.at(
     static_cast<unsigned>(bondType)
   );
-  unsigned integralBondOrder = static_cast<unsigned>(bondOrder);
+  auto integralBondOrder = static_cast<unsigned>(bondOrder);
 
   // Check if bond order is integral
   if(static_cast<double>(integralBondOrder) == bondOrder) {
@@ -2679,7 +2682,7 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
   data.junction = rootIndex;
 
   // In case b is included in the path, that is the junction
-  if(aBranchIndices.count(b)) {
+  if(aBranchIndices.count(b) > 0) {
     data.junction = b;
   } else {
     // Backtrack with b, checking at each iteration
@@ -2687,7 +2690,7 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
     while(bCurrent != rootIndex) {
       bCurrent = _parent(bCurrent);
 
-      if(aBranchIndices.count(bCurrent)) {
+      if(aBranchIndices.count(bCurrent) > 0) {
         data.junction = bCurrent;
         break;
       }
@@ -2771,8 +2774,8 @@ RankingTree::RankingTree(
   const GraphType& graph,
   const Cycles& cycles,
   const StereocenterList& stereocenters,
-  const std::string molGraphviz,
-  const AtomIndexType& atomToRank,
+  std::string molGraphviz,
+  const AtomIndexType atomToRank,
   const std::set<AtomIndexType>& excludeIndices,
   const ExpansionOption& expansionMethod,
   const boost::optional<AngstromWrapper>& positionsOption
@@ -2882,7 +2885,7 @@ RankingTree::RankingTree(
 
     // TODO try to avoid repeated computation with _molIndicesInBranch somehow
     // Main BFS loop
-    while(undecidedSets.size() > 0 && _relevantSeeds(seeds, undecidedSets)) {
+    while(!undecidedSets.empty() && _relevantSeeds(seeds, undecidedSets)) {
 
       // Perform a step
       for(const auto& undecidedSet : undecidedSets) {
@@ -2980,7 +2983,7 @@ RankingTree::RankingTree(
       }
 
       seeds = std::move(newSeeds);
-    } while(seeds.size() > 0);
+    } while(!seeds.empty());
 
     /* Apply sequence rule 1 here, not in _applySequenceRules, since the
      * optimized version IS the application of sequence rule 1
@@ -3212,7 +3215,8 @@ std::string RankingTree::_make4BGraph(
         branchGraphviz += likeRow + rowEnd;
       }
 
-      branchGraphviz += tableEnd + R"(];)" + nl;
+      branchGraphviz += tableEnd + R"(];)";
+      branchGraphviz += nl;
 
       // Edge
       branchGraphviz += "  "s + lastNode + " -> " + nodePrefix + std::to_string(i) + ";"s + nl;

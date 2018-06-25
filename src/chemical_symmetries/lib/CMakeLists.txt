@@ -37,10 +37,6 @@ target_link_libraries(chemical_symmetries
     molassembler::temple
 )
 
-if(UNIX)
-  add_definitions(-fPIC)
-endif()
-
 target_compile_options(chemical_symmetries PUBLIC)
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   target_compile_options(
@@ -52,16 +48,6 @@ if(${CHEMICAL_SYMMETRIES_TRY_CONSTEXPR})
   target_compile_definitions(
     chemical_symmetries PUBLIC CHEMICAL_SYMMETRIES_TRY_CONSTEXPR
   )
-endif()
-
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  message(STATUS "Selected release build")
-  # no debug information, disable assert
-  target_compile_definitions(chemical_symmetries PRIVATE NDEBUG)
-  target_compile_options(chemical_symmetries PRIVATE -O2)
-else() # assume Debug
-  message(STATUS "Assume debug build")
-  target_compile_options(chemical_symmetries PRIVATE -g -O2)
 endif()
 
 install(

@@ -115,11 +115,11 @@ unsigned long hashIndexList(const std::vector<unsigned>& indexList) {
   long unsigned hash = 0;
   unsigned tenPowers = 1;
 
-  for(unsigned i = 0; i < indexList.size(); ++i) {
-    if(indexList.at(i) > 9) {
+  for(const auto index: indexList) {
+    if(index > 9) {
       throw std::logic_error("hashIndexList: Index list contains numbers greater than 9!");
     }
-    hash += tenPowers * indexList.at(i);
+    hash += tenPowers * index;
     tenPowers *= 10;
   }
 

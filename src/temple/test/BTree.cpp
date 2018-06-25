@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     BOOST_CHECK_NO_THROW(tree.validate());
     BOOST_REQUIRE_MESSAGE(
       lastTestPassed(),
-      "Tree validation failed. Operation sequence: " 
+      "Tree validation failed. Operation sequence: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     // Check that all elements are truly contained or not
     BOOST_REQUIRE_MESSAGE(
       temple::all_of(notInsertedNotContained),
-      "Not all elements recorded as not in the tree are recognized as such!\n" 
+      "Not all elements recorded as not in the tree are recognized as such!\n"
         << "Found in the tree, but should not be present: "
         << temple::condenseIterable(
           temple::moveIf(
@@ -182,10 +182,10 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
               }
             ),
             [](const std::string& str) -> bool {
-              return str != "";
+              return !str.empty();
             }
           )
-        ) << "\nSequence of operations: " 
+        ) << "\nSequence of operations: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
 
     BOOST_REQUIRE_MESSAGE(
       temple::all_of(insertedContained),
-      "Not all elements recorded as contained in the tree are recognized as such!\n" 
+      "Not all elements recorded as contained in the tree are recognized as such!\n"
         << "Not found in the tree: "
         << temple::condenseIterable(
           temple::moveIf(
@@ -217,10 +217,10 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
               }
             ),
             [](const std::string& str) -> bool {
-              return str != "";
+              return !str.empty();
             }
           )
-        ) << "\nSequence of operations: " 
+        ) << "\nSequence of operations: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
         << lastTreeGraph << "\n\n After last operation: \n"

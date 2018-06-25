@@ -23,10 +23,10 @@ const std::map<BondType, double> bondWeights {
 };
 
 boost::optional<Symmetry::Name> vsepr(
-  const Delib::ElementType& centerAtomType,
-  const unsigned& nSites,
+  const Delib::ElementType centerAtomType,
+  const unsigned nSites,
   const std::vector<BindingSiteInformation>& sites,
-  const int& formalCharge
+  const int formalCharge
 ) {
   if(nSites <= 1) {
     throw std::logic_error(
@@ -207,9 +207,10 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
   // geometry inference does not care if the substituents are somehow
   // connected (unless in later models the entire structure is considered)
   std::vector<LocalGeometry::BindingSiteInformation> ligands;
+  ligands.reserve(ranking.ligands.size());
 
   for(const auto& ligand : ranking.ligands) {
-    ligands.push_back(
+    ligands.emplace_back(
       LocalGeometry::BindingSiteInformation {
         0,
         0,

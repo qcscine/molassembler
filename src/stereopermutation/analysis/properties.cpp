@@ -46,14 +46,14 @@ int main(int argc, char* argv[]) {
   );
   boost::program_options::notify(options_variables_map);
 
-  if(options_variables_map.count("help")) {
+  if(options_variables_map.count("help") != 0) {
     std::cout << options_description << nl;
     return 0;
   }
 
   if(
-    options_variables_map.count("s")
-    && options_variables_map.count("c")
+    options_variables_map.count("s") != 0
+    && options_variables_map.count("c") != 0
   ) {
     // Validate symmetry argument
     unsigned argSymmetry = options_variables_map["s"].as<unsigned>();
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
 
     // Validate links (if present)
     Stereopermutation::LinksSetType links;
-    if(options_variables_map.count("l")) {
+    if(options_variables_map.count("l") != 0) {
       /* Naive parse strategy:
        * - remove all opening and closing brackets from the string
        * - split along commas, check size % 2 == 0
@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
           linksString.end(),
           [](const char& a) -> bool {
             return !(
-              a == ',' || std::isdigit(a)
+              a == ',' || (std::isdigit(a) != 0)
             );
           }
         ),

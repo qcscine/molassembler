@@ -92,7 +92,7 @@ struct CallIfSome {
     R
   > replaceIfPlaceholder(
     const R& previousResult,
-    const T& parameter __attribute__((unused))
+    const T& /* parameter */
   ) const {
     return previousResult;
   }
@@ -102,7 +102,7 @@ struct CallIfSome {
     !std::is_same<std::decay_t<T>, InjectPlaceholder>::value,
     const T&
   > replaceIfPlaceholder(
-    const R& previousResult __attribute__((unused)),
+    const R& /* previousResult */,
     const T& parameter
   ) const {
     return parameter;

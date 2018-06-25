@@ -306,9 +306,9 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
     auto getCoordinates = [&](const boost::optional<unsigned>& indexOption) -> Eigen::Vector3d {
       if(indexOption) {
         return symmetryData().at(symmetryName).coordinates.at(indexOption.value());
-      } else {
-        return {0, 0, 0};
       }
+
+      return {0, 0, 0};
     };
 
     bool all_pass = true;
@@ -330,10 +330,15 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
         std::cout << name(symmetryName) << ": Tetrahedron {";
 
         for(unsigned i = 0; i < 4; i++) {
-          if(tetrahedron[i]) std::cout << tetrahedron[i].value();
-          else std::cout << "C";
+          if(tetrahedron[i]) {
+            std::cout << tetrahedron[i].value();
+          } else {
+            std::cout << "C";
+          }
 
-          if(i != 3) std::cout << ", ";
+          if(i != 3) {
+            std::cout << ", ";
+          }
         }
 
         std::cout << "} has negative volume (" << tetrahedronVolume << ")."
@@ -469,7 +474,7 @@ std::enable_if_t<
   return temple::setDifference(
     convertedMappings,
     dynamicResultSet
-  ).size() == 0;
+  ).empty();
 }
 
 using IndexAndMappingsPairType = std::pair<
@@ -579,11 +584,7 @@ std::enable_if_t<
     constexprGroupSizes.insert(constexprGroup.size());
   }
 
-  if(dynamicGroupSizes != constexprGroupSizes) {
-    return false;
-  }
-
-  return true;
+  return dynamicGroupSizes == constexprGroupSizes;
 }
 
 // Base case in which source and target symmetries are non-adjacent
@@ -646,10 +647,10 @@ struct RotationGenerationTest {
       pass = false;
     } else {
       pass = (
-        temple::setDifference(
+        !temple::setDifference(
           convertedRotations,
           dynamicRotations
-        ).size() == 0
+        ).empty()
       );
     }
 
@@ -870,9 +871,9 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
    */
   bool pass = true;
   for(const auto& fromSymmetry : Symmetry::allNames) {
-    unsigned i = static_cast<unsigned>(fromSymmetry);
+    auto i = static_cast<unsigned>(fromSymmetry);
     for(const auto& toSymmetry : Symmetry::allNames) {
-      unsigned j = static_cast<unsigned>(toSymmetry);
+      auto j = static_cast<unsigned>(toSymmetry);
       if(
         i < j
         && allMappings.at(i, j).hasValue()

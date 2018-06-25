@@ -198,6 +198,30 @@ struct XYZHandler final : public FileHandler {
 struct BinaryHandler {
   using BinaryType = std::vector<std::uint8_t>;
 
+  template<typename T>
+  static std::enable_if_t<
+    std::is_unsigned<T>::value,
+    void
+  > write(
+    std::ofstream& file,
+    const T value
+  ) {
+    std::bitset<8 * sizeof(T)> bits {value};
+    file << bits;
+  }
+
+  template<typename T>
+  static std::enable_if_t<
+    std::is_unsigned<T>::value,
+    T
+  > read(std::ifstream& file) {
+    std::bitset<8 * sizeof(T)> bits;
+    file >> bits;
+    return static_cast<T>(
+      bits.to_ulong()
+    );
+  }
+
   static bool canRead(const std::string& filename);
 
   static void write(

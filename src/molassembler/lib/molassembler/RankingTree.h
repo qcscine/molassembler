@@ -1123,8 +1123,8 @@ public:
     const GraphType& graph,
     const Cycles& cycles,
     const StereocenterList& stereocenters,
-    const std::string molGraphviz,
-    const AtomIndexType& atomToRank,
+    std::string molGraphviz,
+    AtomIndexType atomToRank,
     const std::set<AtomIndexType>& excludeIndices = {},
     const ExpansionOption& expansionMethod = ExpansionOption::Optimized,
     const boost::optional<AngstromWrapper>& positionsOption = boost::none

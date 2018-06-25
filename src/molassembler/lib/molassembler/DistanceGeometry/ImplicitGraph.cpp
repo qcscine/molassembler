@@ -239,8 +239,8 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexc
     // re-fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
-        / color_map.elements_per_char,
+      color_map.data.get() + (color_map.n + ColorMapType::elements_per_char - 1)
+        / ColorMapType::elements_per_char,
       0
     );
 
@@ -343,8 +343,8 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       // re-fill color map with white
       std::fill(
         color_map.data.get(),
-        color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
-          / color_map.elements_per_char,
+        color_map.data.get() + (color_map.n + ColorMapType::elements_per_char - 1)
+          / ColorMapType::elements_per_char,
         0
       );
 
@@ -408,8 +408,8 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
     // re-fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
-        / color_map.elements_per_char,
+      color_map.data.get() + (color_map.n + ColorMapType::elements_per_char - 1)
+        / ColorMapType::elements_per_char,
       0
     );
 
@@ -535,7 +535,7 @@ double ImplicitGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e) const
   if(isLeft(e.first) && !isLeft(e.second)) {
     double explicitValue = _basePtr->lowerBound(a, b);
 
-    if(explicitValue) {
+    if(explicitValue != 0.0) {
       return -explicitValue;
     }
 
@@ -563,9 +563,9 @@ ImplicitGraph::EdgeWeightMap ImplicitGraph::getEdgeWeightPropertyMap() const {
 ImplicitGraph::vertex_iterator::vertex_iterator() = default;
 ImplicitGraph::vertex_iterator::vertex_iterator(ImplicitGraph::VertexDescriptor i) : index(i) {}
 ImplicitGraph::vertex_iterator::vertex_iterator(const ImplicitGraph::vertex_iterator& other) = default;
-ImplicitGraph::vertex_iterator::vertex_iterator(ImplicitGraph::vertex_iterator&& other) = default;
+ImplicitGraph::vertex_iterator::vertex_iterator(ImplicitGraph::vertex_iterator&& other) noexcept = default;
 ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator = (const ImplicitGraph::vertex_iterator& other) = default;
-ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator = (ImplicitGraph::vertex_iterator&& other) = default;
+ImplicitGraph::vertex_iterator& ImplicitGraph::vertex_iterator::operator = (ImplicitGraph::vertex_iterator&& other) noexcept = default;
 
 bool ImplicitGraph::vertex_iterator::operator == (const ImplicitGraph::vertex_iterator& other) const {
   return index == other.index;
@@ -642,16 +642,16 @@ ImplicitGraph::edge_iterator::edge_iterator(
   unsigned N = _basePtr->_distances.outerSize();
 
   if(a < N) {
-    while(_b < N && !_basePtr->_distances(a, _b)) {
+    while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
       ++_b;
     }
   }
 }
 
 ImplicitGraph::edge_iterator::edge_iterator(const ImplicitGraph::edge_iterator& other) = default;
-ImplicitGraph::edge_iterator::edge_iterator(ImplicitGraph::edge_iterator&& other) = default;
+ImplicitGraph::edge_iterator::edge_iterator(ImplicitGraph::edge_iterator&& other) noexcept = default;
 ImplicitGraph::edge_iterator& ImplicitGraph::edge_iterator::operator = (const ImplicitGraph::edge_iterator& other) = default;
-ImplicitGraph::edge_iterator& ImplicitGraph::edge_iterator::operator = (ImplicitGraph::edge_iterator&& other) = default;
+ImplicitGraph::edge_iterator& ImplicitGraph::edge_iterator::operator = (ImplicitGraph::edge_iterator&& other) noexcept = default;
 
 ImplicitGraph::edge_iterator& ImplicitGraph::edge_iterator::operator ++ () {
   _increment();
@@ -682,7 +682,7 @@ double ImplicitGraph::edge_iterator::weight() const {
   if(_crossGroup) {
     double data = _basePtr->lowerBound(a, _b);
 
-    if(data) {
+    if(data != 0.0) {
       return -data;
     }
 
@@ -724,7 +724,7 @@ void ImplicitGraph::edge_iterator::_increment() {
   if(!_crossGroup) {
     ++_b;
     // Find the next explicit information
-    while(_b < N && !_basePtr->_distances(a, _b)) {
+    while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
       ++_b;
     }
 
@@ -749,7 +749,7 @@ void ImplicitGraph::edge_iterator::_increment() {
 
         if(a < N) {
           // Search for next explicit
-          while(_b < N && !_basePtr->_distances(a, _b)) {
+          while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
             ++_b;
           }
         }
@@ -774,7 +774,7 @@ void ImplicitGraph::edge_iterator::_increment() {
         ++_b;
       }
 
-      while(_b < N && !_basePtr->_distances(a, _b)) {
+      while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
         ++_b;
       }
     }
@@ -786,7 +786,7 @@ std::string ImplicitGraph::edge_iterator::state() const {
 
   return std::to_string(_i) + " "s
     + std::to_string(_b) + " "s
-    + std::to_string(_crossGroup);
+    + std::to_string(static_cast<int>(_crossGroup));
 }
 
 ImplicitGraph::edge_iterator ImplicitGraph::ebegin() const {
@@ -825,10 +825,10 @@ ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
 ) = default;
 ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
   ImplicitGraph::in_group_edge_iterator&& other
-) = default;
+) noexcept = default;
 ImplicitGraph::in_group_edge_iterator& ImplicitGraph::in_group_edge_iterator::operator = (
   ImplicitGraph::in_group_edge_iterator&& other
-) = default;
+) noexcept = default;
 ImplicitGraph::in_group_edge_iterator& ImplicitGraph::in_group_edge_iterator::operator = (
   const ImplicitGraph::in_group_edge_iterator& other
 ) = default;
@@ -848,7 +848,7 @@ ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
   }
 
   unsigned N = _basePtr->_distances.outerSize();
-  while(_b < N && !_basePtr->_distances(a, _b)) {
+  while(_b < N && _basePtr->_distances(a, _b) == 0.0) {
     ++_b;
   }
 }
@@ -856,7 +856,7 @@ ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
 ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
   const ImplicitGraph& base,
   const VertexDescriptor i,
-  bool
+  bool /* tag */
 ) : _basePtr{&base},
     _i {i},
     _b {static_cast<VertexDescriptor>(base._distances.outerSize())},

@@ -167,7 +167,7 @@ Cycles::RDLDataPtrs::~RDLDataPtrs() {
 }
 
 /* predicates */
-bool Cycles::predicates::All::operator() (const RDL_cycle* const) const {
+bool Cycles::predicates::All::operator() (const RDL_cycle* const /* cyclePtr */) const {
   return true;
 }
 
@@ -217,12 +217,12 @@ Cycles::constIterator::constIterator(
   unsigned rCycleIndex
 ) : _rdlPtr {dataPtr} {
   _cyclePtr = std::make_shared<RDLCyclePtrs>(*dataPtr);
-  _cyclePermissiblePredicate = cyclePredicate;
+  _cyclePermissiblePredicate = std::move(cyclePredicate);
 
   if(rCycleIndex == 0) { // begin constructor
     // In case first cycle is not permissible, advance to first permissible
     if(
-      !RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr)
+      RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr) == 0
       && !_cyclePermissiblePredicate(_cyclePtr->cyclePtr)
     ) {
       ++(*this);
@@ -237,12 +237,12 @@ Cycles::constIterator::constIterator(
 }
 
 Cycles::constIterator& Cycles::constIterator::operator ++ () {
-  if(!RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr)) {
+  if(RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr) == 0) {
     do {
       _cyclePtr->advance();
       ++_rCycleIndex;
     } while(
-      !RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr)
+      RDL_cycleIteratorAtEnd(_cyclePtr->cycleIterPtr) == 0
       && !_cyclePermissiblePredicate(_cyclePtr->cyclePtr)
     );
   } else {
@@ -281,7 +281,7 @@ bool Cycles::constIterator::operator != (const Cycles::constIterator& other) con
 /* Cycles::constIterator::RDLCyclePtrs implementation */
 Cycles::constIterator::RDLCyclePtrs::RDLCyclePtrs(const RDLDataPtrs& dataPtrs) {
   cycleIterPtr = RDL_getRCyclesIterator(dataPtrs.dataPtr);
-  if(RDL_cycleIteratorAtEnd(cycleIterPtr)) {
+  if(RDL_cycleIteratorAtEnd(cycleIterPtr) != 0) {
     cyclePtr = nullptr;
   } else {
     cyclePtr = RDL_cycleIteratorGetCycle(cycleIterPtr);
@@ -304,7 +304,7 @@ void Cycles::constIterator::RDLCyclePtrs::advance() {
 
   RDL_cycleIteratorNext(cycleIterPtr);
 
-  if(!RDL_cycleIteratorAtEnd(cycleIterPtr)) {
+  if(RDL_cycleIteratorAtEnd(cycleIterPtr) == 0) {
     cyclePtr = RDL_cycleIteratorGetCycle(cycleIterPtr);
   }
 }

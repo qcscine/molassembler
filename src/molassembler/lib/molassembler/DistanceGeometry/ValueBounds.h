@@ -1,5 +1,5 @@
-#ifndef INCLUDE_DISTANCE_GEOMETRY_VALUE_BOUNDS_H
-#define INCLUDE_DISTANCE_GEOMETRY_VALUE_BOUNDS_H
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_VALUE_BOUNDS_H
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_VALUE_BOUNDS_H
 
 /*! @file
  *
@@ -16,12 +16,12 @@ struct ValueBounds {
 
   ValueBounds();
 
-  ValueBounds(const double& lower, const double& upper);
+  ValueBounds(double lower, double upper);
 
   ValueBounds(const ValueBounds& other);
 
   ValueBounds& operator = (const ValueBounds& other);
-  ValueBounds& operator = (ValueBounds&& other);
+  ValueBounds& operator = (ValueBounds&& other) noexcept;
 };
 
 } // namespace DistanceGeometry

@@ -9,9 +9,9 @@
 
 #include "chemical_symmetries/DynamicProperties.h"
 
-#include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 
 const std::array<unsigned, 4> distortionColumns {{8, 8, 8, 30}};
 const std::array<unsigned, 3> symmetryColumns {{5, 5, 25}};
@@ -130,8 +130,8 @@ struct AmbiguityEntry {
     const double& ambiguity,
     const Symmetry::Name& source,
     const Symmetry::Name& target,
-    const boost::optional<unsigned>& deletedIndex = boost::none
-  ) : ambiguity(ambiguity), source(source), target(target), deletedIndex(deletedIndex) {};
+    boost::optional<unsigned> deletedIndex = boost::none
+  ) : ambiguity(ambiguity), source(source), target(target), deletedIndex(std::move(deletedIndex)) {};
 };
 
 int main(int argc, char* argv[]) {
@@ -154,14 +154,17 @@ int main(int argc, char* argv[]) {
   boost::program_options::notify(options_variables_map);
 
   // Manage the results
-  if(options_variables_map.count("help")) {
+  if(options_variables_map.count("help") > 0) {
     std::cout << options_description << nl
       << "The following symmetry indices are permissible:" << nl;
     printPermissibleSymmetries();
     return 0;
   }
 
-  if(options_variables_map.count("s") && options_variables_map.count("t")) {
+  if(
+    options_variables_map.count("s") > 0
+    && options_variables_map.count("t") > 0
+  ) {
     unsigned sourceSymmetryArg = options_variables_map["s"].as<unsigned>();
     unsigned targetSymmetryArg = options_variables_map["t"].as<unsigned>();
 
@@ -217,7 +220,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if(options_variables_map.count("a")) {
+  if(options_variables_map.count("a") > 0) {
     std::vector<AmbiguityEntry> ambiguities;
 
     for(const auto& sourceSymmetry : Symmetry::allNames) {

@@ -6,7 +6,7 @@
 
 /*! @file
  *
- * The numerical minimization of the error function is done with the dlib 
+ * The numerical minimization of the error function is done with the dlib
  * library. This file contains some adapters for strategy, potentials used and
  * end criteria for the minimization.
  *
@@ -31,7 +31,7 @@ namespace DistanceGeometry {
 
 namespace dlibAdaptors {
 
-/*! 
+/*!
  * Dlib minimization strategy that proceeds without compression of the fourth
  * dimension until all chiral centers have inverted to the correct orientation.
  *
@@ -65,8 +65,8 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
   template<typename T>
   bool should_continue_search(
     const T& positions,
-    const double& function_value __attribute__((unused)),
-    const T& gradient __attribute__((unused))
+    const double& /* function_value */,
+    const T& gradient
   ) {
     refinementSteps.emplace_back(
       positions,
@@ -100,7 +100,7 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
   }
 };
 
-/*! 
+/*!
  * Dlib minimization strategy that proceeds with compression of the fourth
  * dimension until all the overall gradient length is below a particular
  * threshold.
@@ -135,7 +135,7 @@ struct debugIterationOrGradientNormStopStrategy {
   template<typename T>
   bool should_continue_search(
     const T& positions,
-    const double& function_value __attribute__((unused)),
+    const double& /* function_value */,
     const T& gradient
   ) {
     refinementSteps.emplace_back(

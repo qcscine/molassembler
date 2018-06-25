@@ -32,7 +32,7 @@ struct adl_serializer<Delib::ElementTypeCollection> {
   }
 
   static void from_json(const json& j, Type& value) {
-    for(const auto elementJSON : j) {
+    for(const auto& elementJSON : j) {
       value.push_back(
         elementJSON.get<Delib::ElementType>()
       );
@@ -59,7 +59,7 @@ struct adl_serializer<molassembler::GraphAlgorithms::LinkInformation> {
     };
 
     link.cycleSequence.reserve(j["sequence"].size());
-    for(const auto sequenceElementJSON : j["sequence"]) {
+    for(const auto& sequenceElementJSON : j["sequence"]) {
       link.cycleSequence.push_back(sequenceElementJSON);
     }
   }
@@ -173,7 +173,7 @@ struct adl_serializer<molassembler::GraphType> {
       graph[i].elementType = j["elements"].at(i);
     }
 
-    for(const auto edgeJSON : j["edges"]) {
+    for(const auto& edgeJSON : j["edges"]) {
       auto addEdgePair = boost::add_edge(
         edgeJSON.at(0),
         edgeJSON.at(1),
@@ -204,7 +204,7 @@ nlohmann::json serialize(const Molecule& molecule) {
 
   // Manual conversion of stereocenters (need access to molecule members for deserialization)
   m["stereocenters"] = json::array();
-  for(const auto stereocenterPtr : molecule.getStereocenterList()) {
+  for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
     json c;
 
     if(stereocenterPtr->type() == Stereocenters::Type::CNStereocenter) {
@@ -254,7 +254,7 @@ Molecule deserialize(const nlohmann::json& m) {
       );
 
       // Assign if present
-      if(j.count("assignment")) {
+      if(j.count("assignment") > 0) {
         cnPtr->assign(
           static_cast<unsigned>(j["assignment"])
         );
@@ -273,7 +273,7 @@ Molecule deserialize(const nlohmann::json& m) {
       );
 
       // Assign if present
-      if(j.count("assignment")) {
+      if(j.count("assignment") > 0) {
         ezPtr->assign(
           static_cast<unsigned>(j["assignment"])
         );

@@ -308,8 +308,8 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
     // re-fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
-        / color_map.elements_per_char,
+      color_map.data.get() + (color_map.n + ColorMapType::elements_per_char - 1)
+        / ColorMapType::elements_per_char,
       0
     );
 
@@ -376,7 +376,8 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
 
   unsigned M = boost::num_vertices(_graph);
   std::vector<double> distances (M);
-  boost::two_bit_color_map<> color_map {M};
+  using ColorMapType = boost::two_bit_color_map<>;
+  ColorMapType color_map {M};
   std::vector<VertexDescriptor> predecessors (M);
 
   std::vector<AtomIndexType>::const_iterator separator;
@@ -426,8 +427,8 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       // re-fill color map with white
       std::fill(
         color_map.data.get(),
-        color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
-          / color_map.elements_per_char,
+        color_map.data.get() + (color_map.n + ColorMapType::elements_per_char - 1)
+          / ColorMapType::elements_per_char,
         0
       );
 
@@ -488,8 +489,8 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     // re-fill color map with white
     std::fill(
       color_map.data.get(),
-      color_map.data.get() + (color_map.n + color_map.elements_per_char - 1)
-        / color_map.elements_per_char,
+      color_map.data.get() + (color_map.n + ColorMapType::elements_per_char - 1)
+        / ColorMapType::elements_per_char,
       0
     );
 

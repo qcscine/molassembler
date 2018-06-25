@@ -260,7 +260,9 @@ FileHandler::RawData MOLFileHandler::read(const std::string& filename) const {
 
       // decrement remaning size
       --atomBlockSize;
-      if(atomBlockSize == 0) state = State::BondBlock;
+      if(atomBlockSize == 0) {
+        state = State::BondBlock;
+      }
     } else if(state == State::BondBlock) {
       std::getline(file, line);
 
@@ -289,7 +291,9 @@ FileHandler::RawData MOLFileHandler::read(const std::string& filename) const {
 
       // decrement
       --bondBlockSize;
-      if(bondBlockSize == 0) state = State::End;
+      if(bondBlockSize == 0) {
+        state = State::End;
+      }
     }
   }
 
@@ -393,16 +397,10 @@ void BinaryHandler::write(
   std::ofstream file(filename, std::ios::binary);
 
   unsigned nElements = binary.size();
-  file.write(
-    reinterpret_cast<char*>(&nElements),
-    sizeof(unsigned)
-  );
+  write(file, nElements);
 
-  if(nElements > 0) {
-    file.write(
-      reinterpret_cast<const char*>(&binary[0]),
-      sizeof(std::uint8_t) * nElements
-    );
+  for(const auto& element: binary) {
+    write(file, element);
   }
 
   file.close(); // Write EOF and close handle
@@ -413,18 +411,13 @@ BinaryHandler::BinaryType BinaryHandler::read(const std::string& filename) {
 
   BinaryType data;
 
-  unsigned binarySize;
-  file.read(
-    reinterpret_cast<char*>(&binarySize),
-    sizeof(unsigned)
-  );
+  auto binarySize = read<unsigned>(file);
 
   if(binarySize > 0) {
     data.resize(binarySize);
-    file.read(
-      reinterpret_cast<char*>(&data[0]),
-      binarySize * sizeof(std::uint8_t)
-    );
+    for(unsigned i = 0; i < binarySize; ++i) {
+      data.at(i) = read<std::uint8_t>(file);
+    }
   }
 
   file.close();

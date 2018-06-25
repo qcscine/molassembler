@@ -14,8 +14,8 @@ ValueBounds::ValueBounds() : ValueBounds(
 ) {}
 
 ValueBounds::ValueBounds(
-  const double& lower,
-  const double& upper
+  const double lower,
+  const double upper
 ) : lower(lower),
     upper(upper)
 {
@@ -23,18 +23,8 @@ ValueBounds::ValueBounds(
 }
 
 ValueBounds::ValueBounds(const ValueBounds& other) : ValueBounds(other.lower, other.upper) {}
-
-ValueBounds& ValueBounds::operator = (const ValueBounds& other) {
-  lower = other.lower;
-  upper = other.upper;
-  return *this;
-}
-
-ValueBounds& ValueBounds::operator = (ValueBounds&& other) {
-  std::swap(lower, other.lower);
-  std::swap(upper, other.upper);
-  return *this;
-}
+ValueBounds& ValueBounds::operator = (const ValueBounds& other) = default;
+ValueBounds& ValueBounds::operator = (ValueBounds&& other) noexcept = default;
 
 } // namespace molassembler
 

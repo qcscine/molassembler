@@ -14,8 +14,11 @@ struct Noisy {
   static unsigned nConstructed;
 
   Noisy() { ++nConstructed; }
-  Noisy(const Noisy&) { ++nConstructed; }
-  Noisy(Noisy&&) { ++nConstructed; }
+  Noisy(const Noisy& /* other */) { ++nConstructed; }
+  Noisy(Noisy&& /* other */) noexcept { ++nConstructed; }
+  Noisy& operator = (const Noisy& other) = delete;
+  Noisy& operator = (Noisy&& other) = delete;
+  ~Noisy() = default;
 };
 
 unsigned Noisy::nConstructed = 0;

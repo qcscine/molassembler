@@ -183,7 +183,7 @@ bool isHapticLigand(
 void findLigands(
   const GraphType& graph,
   const AtomIndexType centralIndex,
-  std::function<void(const std::vector<AtomIndexType>&)> callback
+  const std::function<void(const std::vector<AtomIndexType>&)>& callback
 ) {
   unsigned A = boost::out_degree(centralIndex, graph);
   temple::TinySet<AtomIndexType> centralAdjacents;
@@ -203,7 +203,7 @@ void findLigands(
     GraphType::adjacency_iterator iter, end;
     std::tie(iter, end) = boost::adjacent_vertices(seed, graph);
     for(; iter != end; ++iter) {
-      if(centralAdjacents.count(*iter) && !ligand.count(*iter)) {
+      if(centralAdjacents.count(*iter) > 0 && ligand.count(*iter) == 0) {
         // *iter is shared adjacent of center and seed and not yet discovered
         ligand.insert(*iter);
         recursiveDiscover(*iter);
