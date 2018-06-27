@@ -1,6 +1,7 @@
 #ifndef INCLUDE_DG_GENERATE_CONFORMATION_H
 #define INCLUDE_DG_GENERATE_CONFORMATION_H
 
+#include "boost_outcome/outcome.hpp"
 #include "DistanceGeometry/MoleculeSpatialModel.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
@@ -35,6 +36,8 @@ AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
 
+} // namespace detail
+
 /*!
  * A logging, not throwing otherwise identical implementation of
  * runDistanceGeometry, that returns detailed intermediate data from a
@@ -42,7 +45,7 @@ AngstromWrapper convertToAngstromWrapper(
  *
  * @note Contained PositionCollections are in Angstrom length units
  */
-std::list<RefinementData> debugDistanceGeometry(
+std::list<RefinementData> debug(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption = Partiality::FourAtom,
@@ -73,15 +76,12 @@ std::list<RefinementData> debugDistanceGeometry(
  */
 outcome::result<
   std::vector<AngstromWrapper>
-> runDistanceGeometry(
+> run(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption = Partiality::FourAtom,
   const bool& useYInversionTrick = true
 );
-
-} // namespace detail
-
 
 //! Intermediate conformational data about a Molecule given by a spatial model
 struct MoleculeDGInformation {
@@ -99,6 +99,7 @@ MoleculeDGInformation gatherDGInformation(const Molecule& molecule);
  * in the error case it carries data about the error in order to help diagnose
  * possible mistakes made in the molecular graph specification.
  */
+[[deprecated]]
 outcome::result<
   std::vector<Delib::PositionCollection>
 > generateEnsemble(
@@ -113,6 +114,7 @@ outcome::result<
  * carries data about the error in order to help diagnose possible mistakes
  * made in the molecular graph specification.
  */
+[[deprecated]]
 outcome::result<Delib::PositionCollection> generateConformation(const Molecule& molecule);
 
 } // namespace DistanceGeometry

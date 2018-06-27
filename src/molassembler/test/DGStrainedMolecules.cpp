@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include "IO.h"
-#include "DistanceGeometry/generateConformation.h"
+#include "Conformers.h"
 
 BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   using namespace molassembler;
@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   for(unsigned i = 0; i < N; ++i) {
     mol.assignStereocenter(0, i);
 
-    auto ensembleResult = DistanceGeometry::generateEnsemble(mol, 10);
+    auto ensembleResult = generateEnsemble(mol, 10);
     if(!ensembleResult) {
       BOOST_FAIL(ensembleResult.error().message());
     }
@@ -41,7 +41,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
 
   try {
     // Generate a conformation
-    if(auto positionsResult = DistanceGeometry::generateConformation(mol)) {
+    if(auto positionsResult = generateConformation(mol)) {
       // Write the generated conformation to file
       IO::write(
         filePath.stem().string() + "-generated.mol"s,
@@ -51,7 +51,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
     } else {
       BOOST_FAIL(positionsResult.error().message());
     }
-  } catch(std::exception e) {
+  } catch(std::exception& e) {
     std::cout << "Unhandled exception: " << e.what() << std::endl;
     BOOST_FAIL("Unhandled exception encountered in conformation generation");
     throw;

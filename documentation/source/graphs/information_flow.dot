@@ -1,0 +1,24 @@
+digraph g {
+  graph [rankdir="LR", splines="ortho", concentrate=true];
+  node [shape=box];
+
+  bo [label="Bond orders"];
+  elem [label="Element types"];
+  conn [label="Connectivity"];
+  coord [label="Spatial"];
+  graphn [label="Graph"];
+  stereo [label="Stereocenters"];
+
+  i1 [shape="point"];
+  i2 [shape="point"];
+
+  bo -> conn [style="dashed"];
+  conn -> i1 [dir="none"];
+  elem -> i1 [dir="none"];
+  i1 -> graphn;
+  coord -> bo [style="dashed"];
+
+  graphn -> i2 [dir="none"];
+  coord -> i2 [style="dashed", dir="none"];
+  i2 -> stereo;
+}

@@ -17,7 +17,6 @@
 
 using namespace std::string_literals;
 using namespace molassembler;
-using namespace molassembler::DistanceGeometry;
 
 const std::string partialityChoices =
   "  0 - Four-Atom Metrization\n"
@@ -50,12 +49,12 @@ int main(int argc, char* argv[]) {
   boost::program_options::notify(options_variables_map);
 
   // Manage the results
-  if(options_variables_map.count("help")) {
+  if(options_variables_map.count("help") > 0) {
     std::cout << options_description << std::endl;
     return 0;
   }
 
-  if(options_variables_map.count("s")) {
+  if(options_variables_map.count("s") > 0) {
     unsigned argSymmetry = options_variables_map["s"].as<unsigned>();
     if(argSymmetry >= Symmetry::allNames.size()) {
       std::cout << "Specified symmetry out of bounds. Valid symmetries are 0-"
@@ -70,7 +69,7 @@ int main(int argc, char* argv[]) {
     symmetries = {{Symmetry::allNames[argSymmetry]}};
   }
 
-  if(options_variables_map.count("n")) {
+  if(options_variables_map.count("n") > 0) {
     unsigned argN = options_variables_map["n"].as<unsigned>();
     if(argN == 0) {
       std::cout << "Specified to generate zero structures. Exiting."
@@ -81,8 +80,8 @@ int main(int argc, char* argv[]) {
     nStructures = argN;
   }
 
-  Partiality metrizationOption = Partiality::All;
-  if(options_variables_map.count("p")) {
+  DistanceGeometry::Partiality metrizationOption = DistanceGeometry::Partiality::All;
+  if(options_variables_map.count("p") > 0) {
     unsigned index =  options_variables_map["p"].as<unsigned>();
 
     if(index > 2) {
@@ -100,13 +99,13 @@ int main(int argc, char* argv[]) {
   // Generate from file
   if(options_variables_map.count("f") == 1) {
     unsigned conformations = 1;
-    if(options_variables_map.count("n")) {
+    if(options_variables_map.count("n") > 0) {
       conformations = options_variables_map["n"].as<unsigned>();
     }
 
     bool useYInversionTrick = false;
 
-    if(options_variables_map.count("i")) {
+    if(options_variables_map.count("i") > 0) {
       useYInversionTrick = options_variables_map["i"].as<bool>();
     }
 
@@ -121,7 +120,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << mol << std::endl;
 
-    auto debugData = detail::debugDistanceGeometry(
+    auto debugData = DistanceGeometry::debug(
       mol,
       conformations,
       metrizationOption,
@@ -174,7 +173,7 @@ int main(int argc, char* argv[]) {
       // Make a molecule and generate an ensemble
       auto mol = DGDBM::asymmetricMolecule(symmetryName);
 
-      auto debugData = detail::debugDistanceGeometry(
+      auto debugData = debug(
         mol,
         nStructures,
         metrizationOption,

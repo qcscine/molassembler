@@ -529,7 +529,7 @@ const std::map<std::string, LigandsList> hapticLigandsData {
 };
 
 bool testHapticBonds(boost::filesystem::path filePath) {
-  IO::MOLFileHandler molHandler;
+  IO::FileHandlers::MOLFileHandler molHandler;
   auto rawData = molHandler.read(filePath.string());
 
   const unsigned N = rawData.elements.size();
@@ -541,7 +541,7 @@ bool testHapticBonds(boost::filesystem::path filePath) {
       double bondOrder = rawData.bondOrders.getOrder(i, j);
 
       if(bondOrder > 0.5) {
-        BondType bond = static_cast<BondType>(
+        auto bond = static_cast<BondType>(
           std::round(bondOrder) - 1
         );
 

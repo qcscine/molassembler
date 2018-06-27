@@ -24,6 +24,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BoundsFromSymmetry.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/CNStereocenter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/AnalysisHelpers.h
@@ -32,6 +33,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/BuildTypeSwitch.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/CommonTrig.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/DelibHelpers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/FileHandlers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/MolGraphWriter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/RangeForTemporary.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/SequenceSet.h
@@ -80,9 +82,11 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondDistance.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/CNStereocenter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/CommonTrig.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/DelibHelpers.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/FileHandlers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/MolGraphWriter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/StdlibTypeAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceBoundsMatrix.cpp

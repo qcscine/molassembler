@@ -12,7 +12,6 @@
 
 using namespace std::string_literals;
 using namespace molassembler;
-using namespace molassembler::DistanceGeometry;
 
 void explainDifference(
   const StereocenterList& a,
@@ -39,7 +38,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
     // Get an asymmetric molecule (all ligands different) for the current molecule
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
-    if(molecule.getStereocenterList().size() > 0) {
+    if(!molecule.getStereocenterList().empty()) {
       auto centralStereocenter = molecule.getStereocenterList().at(0);
 
       // Create a full list of the possible assignments
@@ -83,10 +82,10 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         /* Create an ensemble of 3D positions using DG
          * and uniform distance setting
          */
-        auto ensembleResult = detail::runDistanceGeometry(
+        auto ensembleResult = DistanceGeometry::run(
           molecule,
           100,
-          Partiality::All,
+          DistanceGeometry::Partiality::All,
           false // no y-inversion trick
         );
 

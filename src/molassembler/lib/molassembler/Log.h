@@ -35,32 +35,31 @@ enum class Level : unsigned {
 
 //! Particular cases of special logging items that may or may not be desired
 enum class Particulars {
-  /* In Molecule.cpp, where a fit of CNStereocenters against positions is
+  /*! In Molecule.cpp, where a fit of CNStereocenters against positions is
    * performed when a Molecule is read in, you can have numerical details of
    * the fit logged. Corresponding analysis scripts also exist.
    */
   CNStereocenterFit,
-  /* CNStereocenter's addSubstituent, removeSubstituent and propagate* functions
+  /*! CNStereocenter's addSubstituent, removeSubstituent and propagate* functions
    */
   CNStereocenterStatePropagation,
-  /* In generateConformation.cpp, when chirality constraint prototypes are
+  /*! In generateConformation.cpp, when chirality constraint prototypes are
    * fully determined into chirality constraints, emit some debug information
    */
   PrototypePropagatorDebugInfo,
-  // In DGRefinementProblem, chirality constraint numerical debug information
+  //! In DGRefinementProblem, chirality constraint numerical debug information
   DGRefinementChiralityNumericalDebugInfo,
-  /* In DGRefinementProblem, the callback function can reveal some information
+  /*! In DGRefinementProblem, the callback function can reveal some information
    * on the current status of the optimization
    */
   DGRefinementProgress,
-  // Explain why a structure was not accepted
+  //! Explain why a structure was not accepted
   DGStructureAcceptanceFailures,
-  // In generateConformation, show the Trees generated from the molecules
+  //! In generateConformation, show the Trees generated from the molecules
   gatherDGInformationTrees,
-  // in debugDistanceGeometry, progress information
+  //! in debugDistanceGeometry, progress information
   DGDebugInfo,
-  /* Ranking debug information
-   */
+  //! Ranking debug information
   RankingTreeDebugInfo
 };
 

@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include "IO.h"
-#include "DistanceGeometry/generateConformation.h"
+#include "Conformers.h"
 
 void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath) {
   using namespace molassembler;
@@ -20,7 +20,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   std::cout << mol << std::endl;
 
   // Generate a conformation
-  auto positionsResult = DistanceGeometry::generateConformation(mol);
+  auto positionsResult = generateConformation(mol);
 
   if(!positionsResult) {
     BOOST_FAIL(positionsResult.error().message());

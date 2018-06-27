@@ -1,0 +1,10 @@
+@import 'classic.css';
+
+.strikethrough {
+  color: tomato;
+  text-decoration: line-through orangered;
+}
+
+.green {
+  color: olivedrab;
+}

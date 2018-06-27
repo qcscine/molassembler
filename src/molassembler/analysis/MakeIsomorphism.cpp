@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
   );
   boost::program_options::notify(options_variables_map);
 
-  if(options_variables_map.count("f")) {
+  if(options_variables_map.count("f") > 0) {
 
     boost::filesystem::path filepath {
       options_variables_map["f"].as<std::string>()
@@ -42,13 +42,13 @@ int main(int argc, char* argv[]) {
     );
 
     // TODO this is not ideal, reads the file twice
-    IO::MOLFileHandler molHandler;
+    IO::FileHandlers::MOLFileHandler molHandler;
 
     molHandler.write(
       filepath.stem().string() + "_isomorphism.mol",
       a,
       molHandler.read(filepath.string()).angstromWrapper,
-      IO::MOLFileHandler::IndexPermutation::Random
+      IO::FileHandlers::IndexPermutation::Random
     );
   } else {
     std::cout << options_description << std::endl;

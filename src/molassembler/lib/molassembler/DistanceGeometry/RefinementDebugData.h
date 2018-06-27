@@ -17,8 +17,6 @@ namespace molassembler {
 
 namespace DistanceGeometry {
 
-namespace detail {
-
 struct RefinementStepData {
   dlib::matrix<double, 0, 1> positions;
   double distanceError;
@@ -51,8 +49,6 @@ struct RefinementData {
   std::vector<ChiralityConstraint> constraints;
   bool isFailure;
 };
-
-} // namespace detail
 
 } // namespace DistanceGeometry
 

@@ -97,10 +97,12 @@ bool exceededFailureRatio(
   return static_cast<double>(failures) / numStructures >= failureRatio;
 }
 
+} // namespace detail
+
 // Non-debug version of DG
 outcome::result<
   std::vector<AngstromWrapper>
-> runDistanceGeometry(
+> run(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption,
@@ -154,6 +156,8 @@ outcome::result<
           }
         }
       } while(predicates::hasUnassignedStereocenters(moleculeCopy));
+
+      // TODO the moleculecopy may have zero-assignment stereocenters now!
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
       DGData = gatherDGInformation(moleculeCopy);
@@ -269,7 +273,7 @@ outcome::result<
         ) < 1.0
       ) { // Failure to invert
         failures += 1;
-        if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+        if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
           return DGError::TooManyFailures;
         }
         continue; // this triggers a new structure to be generated
@@ -311,7 +315,7 @@ outcome::result<
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       failures += 1;
 
-      if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         return DGError::TooManyFailures;
       }
     } else {
@@ -325,7 +329,7 @@ outcome::result<
 }
 
 // Debug version
-std::list<RefinementData> debugDistanceGeometry(
+std::list<RefinementData> debug(
   const Molecule& molecule,
   const unsigned& numStructures,
   const Partiality& metrizationOption,
@@ -408,7 +412,7 @@ std::list<RefinementData> debugDistanceGeometry(
       Log::log(Log::Level::Warning) << "Failure in distance bounds matrix construction: "
         << distanceBoundsResult.error().message() << "\n";
       failures += 1;
-      if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG. Sample spatial model written to 'DG-failure-spatial-model.dot'.\n";
         if(regenerateEachStep) {
           auto moleculeCopy = molecule;
@@ -454,7 +458,7 @@ std::list<RefinementData> debugDistanceGeometry(
     if(!distanceMatrixResult) {
       Log::log(Log::Level::Warning) << "Failure in distance matrix construction.\n";
       failures += 1;
-      if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
         return refinementList;
       }
@@ -553,7 +557,7 @@ std::list<RefinementData> debugDistanceGeometry(
       ) { // Failure to invert
         Log::log(Log::Level::Warning) << "First stage of refinement fails.\n";
         failures += 1;
-        if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+        if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
           Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
           return refinementList;
         }
@@ -628,7 +632,7 @@ std::list<RefinementData> debugDistanceGeometry(
       }
 
       failures += 1;
-      if(exceededFailureRatio(failures, numStructures, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
         return refinementList;
       }
@@ -637,8 +641,6 @@ std::list<RefinementData> debugDistanceGeometry(
 
   return refinementList;
 }
-
-} // namespace detail
 
 MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
   // Initialize the return object
@@ -660,7 +662,7 @@ outcome::result<
   const Molecule& molecule,
   const unsigned numStructures
 ) {
-  auto result = detail::runDistanceGeometry(molecule, numStructures);
+  auto result = run(molecule, numStructures);
 
   if(result) {
     return temple::map(
@@ -675,7 +677,7 @@ outcome::result<
 }
 
 outcome::result<Delib::PositionCollection> generateConformation(const Molecule& molecule) {
-  auto result = detail::runDistanceGeometry(molecule, 1);
+  auto result = run(molecule, 1);
 
   if(result) {
     auto& conformationList = result.value();

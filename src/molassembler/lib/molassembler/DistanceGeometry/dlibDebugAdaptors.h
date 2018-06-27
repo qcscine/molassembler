@@ -42,19 +42,19 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
   const unsigned maxIterations = 0;
   unsigned iterations = 0;
   // Side effects
-  std::list<detail::RefinementStepData>& refinementSteps;
+  std::list<RefinementStepData>& refinementSteps;
   // Outside state
   const errfValue<false>& valueFunctor;
 
 
 /* Constructors */
   debugIterationOrAllChiralitiesCorrectStrategy(
-    const unsigned& maxIter,
-    std::list<detail::RefinementStepData>& refinementSteps,
-    errfValue<false>& valueFunctor
+    const unsigned maxIter,
+    std::list<RefinementStepData>& passRefinementSteps,
+    errfValue<false>& passValueFunctor
   ) : maxIterations(maxIter),
-      refinementSteps(refinementSteps),
-      valueFunctor(valueFunctor)
+      refinementSteps(passRefinementSteps),
+      valueFunctor(passValueFunctor)
   {}
 
 
@@ -115,16 +115,16 @@ struct debugIterationOrGradientNormStopStrategy {
 /* State */
   unsigned iterations = 0;
   // Side effects
-  std::list<detail::RefinementStepData>& refinementSteps;
+  std::list<RefinementStepData>& refinementSteps;
   // Outside state
   const errfValue<true>& valueFunctor;
 
 /* Constructors */
 
   debugIterationOrGradientNormStopStrategy(
-    const unsigned& maxIterations,
-    const double& gradientNormThreshold,
-    std::list<detail::RefinementStepData>& refinementSteps,
+    const unsigned maxIterations,
+    const double gradientNormThreshold,
+    std::list<RefinementStepData>& refinementSteps,
     errfValue<true>& valueFunctor
   ) : maxIterations(maxIterations),
       gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold),

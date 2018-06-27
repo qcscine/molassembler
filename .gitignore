@@ -6,3 +6,5 @@ install*
 .commit-notes
 *.log
 *.aux
+documentation/doxygen
+documentation/build

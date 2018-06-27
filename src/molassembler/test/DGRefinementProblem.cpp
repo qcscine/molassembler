@@ -492,16 +492,16 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
 
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
-    auto DGResult = DistanceGeometry::detail::debugDistanceGeometry(
+    auto DGResult = DistanceGeometry::debug(
       molecule,
       100,
-      Partiality::FourAtom,
+      DistanceGeometry::Partiality::FourAtom,
       false
     );
 
     // For something this simple, there really shouldn't be any failures
 
-    auto sumErrors = [](const detail::RefinementStepData& stepData) -> double {
+    auto sumErrors = [](const RefinementStepData& stepData) -> double {
       return (
         stepData.distanceError
         + stepData.chiralError
@@ -511,7 +511,7 @@ BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
 
     auto finalErrors = temple::map(
       DGResult,
-      [&](const detail::RefinementData& refinementData) -> double {
+      [&](const RefinementData& refinementData) -> double {
         return sumErrors(refinementData.steps.back());
       }
     );

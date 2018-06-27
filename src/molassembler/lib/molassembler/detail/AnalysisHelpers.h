@@ -36,7 +36,7 @@ void writePOVFile(
   const Molecule& mol,
   const std::string& baseFilename,
   const unsigned structureIndex,
-  const DistanceGeometry::detail::RefinementStepData& stepData,
+  const DistanceGeometry::RefinementStepData& stepData,
   const std::vector<DistanceGeometry::ChiralityConstraint>& constraints
 ) {
   const unsigned dimensionality = 4;
@@ -150,7 +150,7 @@ void writePOVFile(
 void writeDGPOVandProgressFiles(
   const Molecule& mol,
   const std::string& baseFilename,
-  const DistanceGeometry::detail::RefinementData& refinementData
+  const DistanceGeometry::RefinementData& refinementData
 ) {
   /* Write the progress file */
   std::string progressFilename = baseFilename + "-progress.csv"s;
@@ -209,7 +209,7 @@ void writeDGPOVandProgressFiles(
   const Molecule& mol,
   const Symmetry::Name& symmetryName,
   const unsigned& structNum,
-  const DistanceGeometry::detail::RefinementData& refinementData
+  const DistanceGeometry::RefinementData& refinementData
 ) {
   std::string baseName = Symmetry::spaceFreeName(symmetryName)
     + "-"s + std::to_string(structNum);

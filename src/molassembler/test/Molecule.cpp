@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
 
   auto molSplat = IO::split("test_files/multiple_molecules/ethane_four_water.mol");
 
-  auto xyzHandler = IO::XYZHandler {};
+  auto xyzHandler = IO::FileHandlers::XYZHandler {};
   auto xyzData = xyzHandler.read("test_files/multiple_molecules/ethane_four_water.xyz");
 
   auto xyzSplat = IO::split("test_files/multiple_molecules/ethane_four_water.xyz");

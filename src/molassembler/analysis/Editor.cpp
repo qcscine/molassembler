@@ -3,12 +3,11 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "DistanceGeometry/generateConformation.h"
+#include "Conformers.h"
 #include "IO.h"
 
 using namespace std::string_literals;
 using namespace molassembler;
-using namespace molassembler::DistanceGeometry;
 
 const std::string useExplanation =
   "Combination examples:\n"
@@ -32,7 +31,7 @@ Delib::ElementType interpretElementType(const std::string& str) {
   try {
     Delib::ElementType e = Delib::ElementInfo::elementTypeForSymbol(str);
     return e;
-  } catch (std::exception e) {
+  } catch (std::exception& e) {
     std::cout << e.what() << std::endl;
     throw;
   }
@@ -97,7 +96,7 @@ int main(int argc, char* argv[]) {
   );
 
   // Manage the results
-  if(options_variables_map.count("help")) {
+  if(options_variables_map.count("help") > 0) {
     std::cout << allOptions << "\n" << useExplanation;
     return 0;
   }
@@ -238,7 +237,7 @@ int main(int argc, char* argv[]) {
         newGeometry = Symmetry::nameFromString(
           options_variables_map[l("s")].as<std::string>()
         );
-      } catch (std::exception e) {
+      } catch (std::exception& e) {
         std::cout << e.what() << std::endl;
         std::cout << "Existing geometry names:\n";
         for(const auto name : Symmetry::allNames) {
