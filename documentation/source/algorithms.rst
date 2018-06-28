@@ -140,8 +140,8 @@ Nr. Sequence rule
 Cycle detection
 ===============
 Cycle detection and enumeration is handled by the excellent library
-RingDecomposerLib [2]_, which avoids exponential space requirements using Unique
-Ring Families [3]_.
+RingDecomposerLib [2]_, which avoids exponential space requirements in heavily
+fused ring systems using Unique Ring Families [3]_.
 
 Conformer generation
 ====================
