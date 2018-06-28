@@ -78,13 +78,13 @@ public:
    */
   Stereopermutation(
     const Symmetry::Name passSymmetryName [[gnu::unused]],
-    const std::vector<char> passCharacters,
-    const LinksSetType passLinks
+    std::vector<char> passCharacters,
+    LinksSetType passLinks
   );
 
   /* Modifiers ––––––––––––––––––––––––––––*/
   //! Swap two "columns"
-  void columnSwap(const unsigned& a, const unsigned& b);
+  void columnSwap(unsigned a, unsigned b);
 
   //! Transform this Stereopermutation into its lowest permutation.
   void lowestPermutation();
@@ -96,7 +96,7 @@ public:
   bool previousPermutation();
 
   //! Reverse a span of "columns"
-  void reverseColumns(const unsigned& from, const unsigned& to);
+  void reverseColumns(unsigned from, unsigned to);
 
   //! Rotate charactes according to template symmetry
   std::vector<char> rotateCharacters(
@@ -123,7 +123,7 @@ public:
    * in the permutation code where the instruction columnSwap(0, 1) would have
    * no net effect.
    */
-  bool columnSmaller(const unsigned& a, const unsigned& b) const PURITY_WEAK;
+  bool columnSmaller(unsigned a, unsigned b) const PURITY_WEAK;
 
   /*!
    * Generates a set of all rotational equivalents of this Stereopermutation as
@@ -157,7 +157,7 @@ public:
    * If e.g. chars {A, A, A, A, A, A}, links {[0, 1], [1, 2]}, then
    * makeConnectedIndicesSet(1) = set {0, 2}.
    */
-  std::set<unsigned> makeConnectedIndicesSet(const unsigned& index) const;
+  std::set<unsigned> makeConnectedIndicesSet(unsigned index) const;
 
   //! Converts positionOccupations into a string for display
   std::string toString() const;

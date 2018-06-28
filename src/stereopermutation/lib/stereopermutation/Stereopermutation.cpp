@@ -33,8 +33,8 @@ Stereopermutation::Stereopermutation(
 #ifndef NDEBUG
   for(const auto& linkPair : links) {
     assert(
-      linkPair.first < passCharacters.size()
-      && linkPair.second < passCharacters.size()
+      linkPair.first < characters.size()
+      && linkPair.second < characters.size()
     );
   }
 #endif
@@ -43,15 +43,15 @@ Stereopermutation::Stereopermutation(
 /* Public members */
 /* Modifiers ––––––––––––––––––––––– */
 void Stereopermutation::columnSwap(
-  const unsigned& a,
-  const unsigned& b
+  const unsigned a,
+  const unsigned b
 ) {
   assert(a < characters.size() && b < characters.size());
 
   // exchange characters, adjust all LinksSetType accordingly
   std::swap(characters[a], characters[b]);
 
-  auto determineNewIndex = [&a, &b](const unsigned& index) -> unsigned {
+  auto determineNewIndex = [&a, &b](const unsigned index) -> unsigned {
     if(index == a) {
       return b;
     }
@@ -154,7 +154,7 @@ typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
   const LinksSetType& links,
   const std::vector<unsigned>& rotationIndices
 ) const {
-  auto rotateIndex = [&rotationIndices](const unsigned& from) -> unsigned {
+  auto rotateIndex = [&rotationIndices](const unsigned from) -> unsigned {
     return std::find(
       rotationIndices.begin(),
       rotationIndices.end(),
@@ -378,8 +378,8 @@ void Stereopermutation::lowestPermutation() {
 }
 
 void Stereopermutation::reverseColumns(
-  const unsigned& from,
-  const unsigned& to
+  const unsigned from,
+  const unsigned to
 ) {
   unsigned a = from, b = to;
   while(a != b && a != --b) {
@@ -409,8 +409,8 @@ void Stereopermutation::applyRotation(const std::vector<unsigned>& rotationIndic
 }
 
 bool Stereopermutation::columnSmaller(
-  const unsigned& a,
-  const unsigned& b
+  const unsigned a,
+  const unsigned b
 ) const {
   if(links.empty()) {
     return characters[a] < characters[b];
@@ -469,7 +469,7 @@ bool Stereopermutation::isSortedAsc() const {
 }
 
 std::set<unsigned> Stereopermutation::makeConnectedIndicesSet(
-  const unsigned& index
+  const unsigned index
 ) const {
     std::set<unsigned> connectedIndices;
 
