@@ -12,6 +12,7 @@
 #include "chemical_symmetries/Symmetries.h"
 #include "detail/StdlibTypeAlgorithms.h"
 #include "BoundsFromSymmetry.h"
+#include "Options.h"
 
 #include <Eigen/Eigenvalues>
 
@@ -20,7 +21,7 @@ using namespace molassembler::DistanceGeometry;
 
 Eigen::MatrixXd reorder(
   const Eigen::MatrixXd& sourceMatrix,
-  const std::vector<unsigned> reorderSequence
+  const std::vector<unsigned>& reorderSequence
 ) {
   Eigen::MatrixXd retMatrix(reorderSequence.size(), reorderSequence.size());
 
@@ -119,20 +120,6 @@ std::vector<unsigned> inverseReorderSequence(
 }
 
 std::vector<unsigned> randomReorderingSequence(const unsigned& length) {
-  // randomness set up
-  std::vector<unsigned> _seeds;
-  std::mt19937 _randomEngine;
-
-#ifdef NDEBUG
-  std::random_device randomDevice;
-  for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
-#else
-  _seeds.emplace_back(2721813754);
-#endif
-
-  std::seed_seq _seedSequence(_seeds.begin(), _seeds.end());
-  _randomEngine.seed(_seedSequence);
-
   std::vector<unsigned> reorderSequence (length);
 
   std::iota(
@@ -141,11 +128,7 @@ std::vector<unsigned> randomReorderingSequence(const unsigned& length) {
     0
   );
 
-  std::shuffle(
-    reorderSequence.begin(),
-    reorderSequence.end(),
-    _randomEngine
-  );
+  rng.shuffle(reorderSequence);
 
   return reorderSequence;
 }
@@ -213,7 +196,9 @@ void showEmbedding(const MetricMatrix& metricMatrix) {
 
   // If any eigenvalues in the vector are negative, set them to 0
   for(unsigned i = 0; i < dimensionality; i++) {
-    if(eigenValues(i) < 0) eigenValues(i) = 0;
+    if(eigenValues(i) < 0) {
+      eigenValues(i) = 0;
+    }
   }
 
   std::cout << "After setting any negative eigenvalues to zero:\n" << eigenValues << std::endl;

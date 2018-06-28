@@ -10,6 +10,8 @@
 BOOST_AUTO_TEST_CASE(dihedralTests) {
   using namespace molassembler::DelibHelpers;
 
+  temple::Generator rng;
+
   Delib::PositionCollection positions;
   positions.push_back(
     Delib::Position {
@@ -39,7 +41,7 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
     Delib::Position {lastPosition}
   );
 
-  for(const double& randomAngle : temple::random.getN<double>(-M_PI + 0.01, M_PI - 0.01, 100)) {
+  for(const double& randomAngle : rng.getN<double>(-M_PI + 0.01, M_PI - 0.01, 100)) {
 
     positions[3] = Delib::Position {
       Eigen::AngleAxisd(

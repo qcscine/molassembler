@@ -8,13 +8,15 @@
 
 #include <iostream>
 
+temple::Generator rng;
+
 BOOST_AUTO_TEST_CASE(kahanSummation) {
   const unsigned repeats = 100;
   unsigned passed = 0;
   for(unsigned nTest = 0; nTest < repeats; nTest++) {
     const unsigned N = 100;
     const unsigned magnitudeSpread = 20;
-    const auto randomNumbers = temple::random.getN<double>(
+    const auto randomNumbers = rng.getN<double>(
       std::pow(10, - static_cast<double>(magnitudeSpread) / 2),
       std::pow(10, static_cast<double>(magnitudeSpread) / 2),
       N

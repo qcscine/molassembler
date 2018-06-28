@@ -1,5 +1,5 @@
-#ifndef INCLUDE_MOLLIB_VERSION_H
-#define INCLUDE_MOLLIB_VERSION_H
+#ifndef INCLUDE_MOLASSEMBLER_VERSION_H
+#define INCLUDE_MOLASSEMBLER_VERSION_H
 
 #include <string>
 
@@ -22,8 +22,8 @@ std::string majorMinor() {
 
 std::string fullVersion() {
   return (
-    std::to_string(major) 
-    + "." + std::to_string(minor) 
+    std::to_string(major)
+    + "." + std::to_string(minor)
     + "." + std::to_string(fix)
   );
 }

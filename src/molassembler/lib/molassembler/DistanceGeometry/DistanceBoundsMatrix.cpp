@@ -1,5 +1,7 @@
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/Error.h"
+#include "Options.h"
+
 #include <cassert>
 
 namespace molassembler {
@@ -104,7 +106,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
     0
   );
 
-  temple::random.shuffle(indices);
+  rng.shuffle(indices);
 
   std::vector<AtomIndexType>::const_iterator separator;
 
@@ -130,7 +132,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
         return DGError::GraphImpossible;
       }
 
-      double chosenDistance = temple::random.getSingle<double>(
+      double chosenDistance = rng.getSingle<double>(
         lowerBound(matrixCopy, i, j),
         upperBound(matrixCopy, i, j)
       );
@@ -157,7 +159,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
        * Nevertheless, to avoid UB, it is still necessary to properly order
        * the parameters
        */
-      double chosenDistance = temple::random.getSingle<double>(
+      double chosenDistance = rng.getSingle<double>(
         std::min(
           lowerBound(matrixCopy, i, j),
           upperBound(matrixCopy, i, j)

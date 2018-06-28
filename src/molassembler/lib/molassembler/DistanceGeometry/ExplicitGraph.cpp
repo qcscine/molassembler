@@ -372,7 +372,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     0
   );
 
-  temple::random.shuffle(indices);
+  rng.shuffle(indices);
 
   unsigned M = boost::num_vertices(_graph);
   std::vector<double> distances (M);
@@ -409,7 +409,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       }
     }
 
-    temple::random.shuffle(otherIndices);
+    rng.shuffle(otherIndices);
 
     // Again through N - 1 indices: N²
     for(const auto& b : otherIndices) {
@@ -461,7 +461,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = temple::random.getSingle<double>(lower, upper);
+      double tightenedBound = rng.getSingle<double>(lower, upper);
 
       upperTriangle(
         std::min(a, b),
@@ -523,7 +523,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = temple::random.getSingle<double>(
+      double tightenedBound = rng.getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper)
       );

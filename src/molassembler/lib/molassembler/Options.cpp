@@ -6,6 +6,8 @@
 
 namespace molassembler {
 
+temple::Generator rng;
+
 TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 

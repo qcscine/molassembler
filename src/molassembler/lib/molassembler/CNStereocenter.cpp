@@ -390,7 +390,7 @@ boost::optional<std::vector<unsigned>> CNStereocenter::PermutationState::getInde
 
   if(preservationOption == ChiralStatePreservation::RandomFromMultipleBest) {
     return mappingsGroup.indexMappings.at(
-      temple::random.getSingle<unsigned>(
+      rng.getSingle<unsigned>(
         0,
         mappingsGroup.indexMappings.size() - 1
       )
@@ -777,7 +777,7 @@ void CNStereocenter::assign(boost::optional<unsigned> assignment) {
 
 void CNStereocenter::assignRandom() {
   assign(
-    temple::random.pickDiscrete(
+    rng.pickDiscrete(
       // Map the feasible permutations onto their weights
       temple::map(
         _cache.feasiblePermutations,

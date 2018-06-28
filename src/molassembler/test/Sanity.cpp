@@ -51,11 +51,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
       );
 
       // Randomize
-      std::shuffle(
-        assignments.begin(),
-        assignments.end(),
-        temple::random.randomEngine
-      );
+      rng.shuffle(assignments);
 
       /* Limit the number of assignments we're testing per symmetry to 10.
        * Otherwise, with maximally asymmetric square antiprismatic (5040),

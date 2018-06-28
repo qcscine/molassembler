@@ -26,6 +26,8 @@
 
 #include <boost/test/results_collector.hpp>
 
+temple::Generator rng;
+
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
   test_case::id_t id = framework::current_test_case().p_id;
@@ -131,7 +133,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   );
 
   // sqrt
-  const auto randomPositiveNumbers = temple::random.getN<double>(0, 1e6, numTests);
+  const auto randomPositiveNumbers = rng.getN<double>(0, 1e6, numTests);
   auto sqrt_passes = temple::map(
     randomPositiveNumbers,
     [&](const double& randomPositiveNumber) -> bool {
@@ -166,7 +168,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   }
 
   // asin
-  const auto randomInverseTrigNumbers = temple::random.getN<double>(
+  const auto randomInverseTrigNumbers = rng.getN<double>(
     -1 + std::numeric_limits<double>::epsilon(),
     1 - std::numeric_limits<double>::epsilon(),
     numTests
@@ -235,8 +237,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(
     temple::all_of(
       temple::zipMap(
-        temple::random.getN<double>(-1e5, 1e5, numTests),
-        temple::random.getN<int>(-40, 40, numTests),
+        rng.getN<double>(-1e5, 1e5, numTests),
+        rng.getN<int>(-40, 40, numTests),
         testPow
       )
     )
@@ -272,8 +274,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(
     temple::all_of(
       temple::zipMap(
-        temple::random.getN<double>(-1e5, 1e5, numTests),
-        temple::random.getN<unsigned>(0, 40, numTests),
+        rng.getN<double>(-1e5, 1e5, numTests),
+        rng.getN<unsigned>(0, 40, numTests),
         testRecPow
       )
     )
@@ -281,7 +283,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
 
   // ln
-  const auto randomZ = temple::random.getN<double>(1e-10, 1e10, numTests);
+  const auto randomZ = rng.getN<double>(1e-10, 1e10, numTests);
   bool all_ln_pass = temple::all_of(
     randomZ,
     [&](const auto& z) -> bool {
@@ -308,7 +310,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      temple::random.getN<double>(-100, 100, numTests),
+      rng.getN<double>(-100, 100, numTests),
       [](const double& x) -> bool {
         return(temple::Math::floor(x) <= x);
       }
@@ -317,7 +319,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      temple::random.getN<double>(-100, 100, numTests),
+      rng.getN<double>(-100, 100, numTests),
       [](const double& x) -> bool {
         return(temple::Math::ceil(x) >= x);
       }
@@ -326,7 +328,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      temple::random.getN<double>(-100, 100, numTests),
+      rng.getN<double>(-100, 100, numTests),
       [](const double& x) -> bool {
         const double rounded = temple::Math::round(x);
         return(
@@ -339,7 +341,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      temple::random.getN<double>(-M_PI / 2, M_PI / 2, numTests),
+      rng.getN<double>(-M_PI / 2, M_PI / 2, numTests),
       [&](const double& x) -> bool {
         return temple::floating::isCloseRelative(
           temple::Math::atan(x),
@@ -678,11 +680,8 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
       numbers.end(),
       0
     );
-    std::shuffle(
-      numbers.begin(),
-      numbers.end(),
-      temple::random.randomEngine
-    );
+
+    rng.shuffle(numbers);
 
     for(const auto& number : numbers) {
       subject.insert(number);
@@ -1148,7 +1147,7 @@ unsigned popRandom(std::set<unsigned>& values) {
 
   std::advance(
     it,
-    temple::random.getSingle<unsigned>(0, values.size() - 1)
+    rng.getSingle<unsigned>(0, values.size() - 1)
   );
 
   auto value = *it;
@@ -1308,7 +1307,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       lastTreeGraph = tree.dumpGraphviz();
 
       // Decide whether to insert or remove a random item
-      auto decisionFloat = temple::random.getSingle<double>(0.0, 1.0);
+      auto decisionFloat = rng.getSingle<double>(0.0, 1.0);
       if(decisionFloat >= static_cast<double>(inTree.size()) / nKeys) {
         addElement(lastTreeGraph);
       } else {

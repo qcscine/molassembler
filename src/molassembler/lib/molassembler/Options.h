@@ -2,6 +2,7 @@
 #define INCLUDE_MOLASSEMBLER_OPTIONS_H
 
 #include "chemical_symmetries/Symmetries.h"
+#include "temple/Random.h"
 
 #include "detail/AngstromWrapper.h"
 
@@ -11,6 +12,17 @@
  */
 
 namespace molassembler {
+
+/*! Randomness source for the entire library
+ *
+ * This instance supplies the library with randomness. The default seeding
+ * behavior is build-type dependent. In debug builds, the seed is fixed. In
+ * release builds, the generator is seeded from std::random_device.
+ *
+ * If you wish to get deterministic behavior in release builds, re-seed the
+ * generator.
+ */
+extern temple::Generator rng;
 
 /*!
  * Specifies for which temperature regime the Molecule is being modeled.
@@ -134,7 +146,6 @@ enum class ChiralStatePreservation {
    */
   RandomFromMultipleBest
 };
-
 
 struct Options {
   /*! Sets the temperature regime to be used for all Molecules

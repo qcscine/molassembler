@@ -11,6 +11,8 @@
 #include <set>
 #include <iostream>
 
+temple::Generator rng;
+
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
 
@@ -76,7 +78,7 @@ unsigned popRandom(std::set<unsigned>& values) {
 
   std::advance(
     it,
-    temple::random.getSingle<unsigned>(0, values.size() - 1)
+    rng.getSingle<unsigned>(0, values.size() - 1)
   );
 
   auto value = *it;
@@ -236,7 +238,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       lastTreeGraph = tree.dumpGraphviz();
 
       // Decide whether to insert or remove a random item
-      auto decisionFloat = temple::random.getSingle<double>(0.0, 1.0);
+      auto decisionFloat = rng.getSingle<double>(0.0, 1.0);
       if(decisionFloat >= static_cast<double>(inTree.size()) / nKeys) {
         addElement(lastTreeGraph);
       } else {

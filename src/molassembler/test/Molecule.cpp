@@ -15,9 +15,9 @@
 #include "temple/Invoke.h"
 #include "temple/Stringify.h"
 
-BOOST_AUTO_TEST_CASE( read_mol ) {
-  using namespace molassembler;
+using namespace molassembler;
 
+BOOST_AUTO_TEST_CASE( read_mol ) {
   std::vector<std::string> files {
     "test_files/2,2-dimethybutane.mol",
     "test_files/asymCarbon.mol",
@@ -44,8 +44,6 @@ BOOST_AUTO_TEST_CASE( read_mol ) {
 }
 
 BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
-  // Molecule should be trivially usable on the stack
-  using namespace molassembler;
 
   // Default constructor
   Molecule f, g;
@@ -68,7 +66,7 @@ BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
     temple::all_of(
       temple::mapAllPairs(
         allJustHydrogen,
-        std::equal_to<Molecule>()
+        std::equal_to<>()
       )
     ),
     "Basic construction does not generate equal molecules"
@@ -83,27 +81,27 @@ using HashArgumentsType = std::tuple<
 >;
 
 HashArgumentsType randomArguments() {
-  auto bonds = temple::random.getN<unsigned>(
+  auto bonds = rng.getN<unsigned>(
     0,
     7,
-    temple::random.getSingle<unsigned>(1, 8)
+    rng.getSingle<unsigned>(1, 8)
   );
   std::sort(bonds.begin(), bonds.end());
 
   boost::optional<Symmetry::Name> symmetryOptional;
   boost::optional<unsigned> assignmentOptional;
-  if(temple::random.getSingle<unsigned>(0, 1)) {
+  if(rng.getSingle<bool>()) {
     symmetryOptional = static_cast<Symmetry::Name>(
-      temple::random.getSingle<unsigned>(0, 15)
+      rng.getSingle<unsigned>(0, 15)
     );
 
     std::geometric_distribution<unsigned> gd {0.2};
-    assignmentOptional = gd(temple::random.randomEngine);
+    assignmentOptional = gd(rng.engine);
   }
 
   return {
     static_cast<Delib::ElementType>(
-      temple::random.getSingle<unsigned>(1, 112)
+      rng.getSingle<unsigned>(1, 112)
     ),
     temple::cast<molassembler::BondType>(bonds),
     symmetryOptional,
@@ -119,7 +117,6 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
       | molassembler::AtomEnvironmentComponents::Stereopermutations
   );
 
-  using namespace molassembler;
   // Try to guess a disjoint combination that has the same value
   std::unordered_map<long long unsigned, HashArgumentsType> resultsMap;
   for(unsigned N = 0; N < 1e6; ++N) {
@@ -131,7 +128,10 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
       std::make_index_sequence<5> {}
     );
 
-    if(resultsMap.count(result) && arguments != resultsMap.at(result)) {
+    if(
+      resultsMap.count(result) > 0
+      && arguments != resultsMap.at(result)
+    ) {
       BOOST_REQUIRE_MESSAGE(
         false,
         "Found overlapping result for different arguments to hashAtomEnvironment!\n"
@@ -146,7 +146,6 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
 }
 
 BOOST_AUTO_TEST_CASE(isomorphismTests) {
-  using namespace molassembler;
   const std::string directoryPrefix = "test_files/isomorphisms/"s;
   const boost::regex isomorphismFileRegex {R"(.+_isomorphism.mol)"};
   const boost::regex removeRegex {R"(_isomorphism.mol)"};
@@ -205,8 +204,6 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
 }
 
 BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
-  using namespace molassembler;
-
   const std::string directoryPrefix = "test_files/ranking_tree_molecules/"s;
 
   auto pseudocenter = IO::read(
@@ -237,8 +234,6 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
 }
 
 BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
-  using namespace molassembler;
-
   auto molSplat = IO::split("test_files/multiple_molecules/ethane_four_water.mol");
 
   auto xyzHandler = IO::FileHandlers::XYZHandler {};

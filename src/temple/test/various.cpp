@@ -227,10 +227,6 @@ BOOST_AUTO_TEST_CASE(selectTestCases) {
   BOOST_CHECK((*largestVector == std::vector<unsigned> {9, 44, 33, 12}));
 }
 
-BOOST_AUTO_TEST_CASE(randomTests) {
-  BOOST_CHECK(temple::random.getSingle<unsigned>(0, 0) == 0);
-}
-
 BOOST_AUTO_TEST_CASE(stringifyTests) {
   std::vector<
     std::map<

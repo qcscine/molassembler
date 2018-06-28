@@ -180,7 +180,7 @@ void EZStereocenter::assign(boost::optional<unsigned> assignment) {
 void EZStereocenter::assignRandom() {
   assert(_isZOption == boost::none);
 
-  _isZOption = temple::random.getSingle<bool>();
+  _isZOption = rng.getSingle<bool>();
 }
 
 void EZStereocenter::fit(const AngstromWrapper& angstromWrapper) {

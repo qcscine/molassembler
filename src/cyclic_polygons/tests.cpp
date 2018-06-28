@@ -9,6 +9,8 @@
 #include "temple/Random.h"
 #include "temple/Stringify.h"
 
+temple::Generator rng;
+
 using namespace std::string_literals;
 
 void writeAngleAnalysisFiles(
@@ -89,9 +91,9 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 
   for(unsigned nSides = 3; nSides < 10; ++nSides) {
     for(unsigned testNumber = 0; testNumber < nTests; testNumber++) {
-      std::vector<double> edgeLengths = temple::random.getN<double>(lowerLimit, upperLimit, nSides);
+      std::vector<double> edgeLengths = rng.getN<double>(lowerLimit, upperLimit, nSides);
       while(!CyclicPolygons::exists(edgeLengths)) {
-        edgeLengths = temple::random.getN<double>(lowerLimit, upperLimit, nSides);
+        edgeLengths = rng.getN<double>(lowerLimit, upperLimit, nSides);
       }
 
       double circumradius;

@@ -33,7 +33,7 @@ struct Random {
     permutation.resize(N);
     std::iota(permutation.begin(), permutation.end(), 0);
 
-    temple::random.shuffle(permutation);
+    rng.shuffle(permutation);
   }
 
   inline AtomIndexType operator() (const AtomIndexType& i) const {

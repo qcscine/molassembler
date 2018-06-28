@@ -1,8 +1,9 @@
 #ifndef INCLUDE_TEMPLATE_MAGIC_RANDOM_H
 #define INCLUDE_TEMPLATE_MAGIC_RANDOM_H
 
-#include <random>
 #include "Traits.h"
+
+#include <random>
 
 /*! @file
  *
@@ -26,11 +27,11 @@ private:
 #endif
 
     std::seed_seq _seedSequence(_seeds.begin(), _seeds.end());
-    randomEngine.seed(_seedSequence);
+    engine.seed(_seedSequence);
   }
 
 public:
-  mutable std::mt19937 randomEngine;
+  mutable std::mt19937 engine;
 
   template<typename Container>
   std::enable_if_t<
@@ -53,7 +54,7 @@ public:
       std::end(_seeds)
     };
 
-    randomEngine.seed(seedSequence);
+    engine.seed(seedSequence);
   }
 
 
@@ -80,7 +81,7 @@ public:
     std::uniform_real_distribution<T> uniformDistribution(lower, upper);
 
     for(unsigned i = 0; i < N; i++) {
-      returnNumbers.emplace_back(uniformDistribution(randomEngine));
+      returnNumbers.emplace_back(uniformDistribution(engine));
     }
 
     return returnNumbers;
@@ -100,7 +101,7 @@ public:
     std::uniform_int_distribution<T> uniformDistribution(lower, upper);
 
     for(unsigned i = 0; i < N; i++) {
-      returnNumbers.emplace_back(uniformDistribution(randomEngine));
+      returnNumbers.emplace_back(uniformDistribution(engine));
     }
 
     return returnNumbers;
@@ -116,7 +117,7 @@ public:
   ) const {
     assert(lower <= upper);
     std::uniform_real_distribution<T> uniformDistribution(lower, upper);
-    return uniformDistribution(randomEngine);
+    return uniformDistribution(engine);
   }
 
   template<typename T>
@@ -129,7 +130,7 @@ public:
   ) const {
     assert(lower <= upper);
     std::uniform_int_distribution<T> uniformDistribution(lower, upper);
-    return uniformDistribution(randomEngine);
+    return uniformDistribution(engine);
   }
 
   template<typename T>
@@ -138,7 +139,9 @@ public:
     bool
   > getSingle() const {
     std::uniform_int_distribution<unsigned> uniformDistribution(0, 1);
-    return uniformDistribution(randomEngine);
+    return static_cast<bool>(
+      uniformDistribution(engine)
+    );
   }
 
   template<typename Container>
@@ -148,7 +151,7 @@ public:
       std::end(weights)
     };
 
-    return distribution(randomEngine);
+    return distribution(engine);
   }
 
   template<typename Container>
@@ -156,7 +159,7 @@ public:
     std::shuffle(
       std::begin(container),
       std::end(container),
-      randomEngine
+      engine
     );
   }
 
@@ -164,8 +167,6 @@ public:
     return _seeds;
   }
 };
-
-static Generator random;
 
 } // namespace temple
 
