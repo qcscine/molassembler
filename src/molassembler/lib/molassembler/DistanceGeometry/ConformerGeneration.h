@@ -90,7 +90,10 @@ struct MoleculeDGInformation {
 };
 
 //! Collects intermediate conformational data about a Molecule using a spatial model
-MoleculeDGInformation gatherDGInformation(const Molecule& molecule);
+MoleculeDGInformation gatherDGInformation(
+  const Molecule& molecule,
+  const double looseningFactor = 1.0
+);
 
 /*! Generate a conformational ensemble of a Molecule
  *

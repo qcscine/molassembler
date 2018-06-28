@@ -89,10 +89,22 @@ AngstromWrapper convertToAngstromWrapper(
   return angstromWrapper;
 }
 
-bool exceededFailureRatio(
-  const unsigned& failures,
-  const unsigned& numStructures,
-  const unsigned& failureRatio
+inline double looseningFactor(const unsigned failures, const unsigned numStructures) {
+  // x ranges from 0 to failureRatio, which is currently 2
+  double x = static_cast<double>(failures) / numStructures;
+
+  /* Could consider an initially a stronger increase and then linear later, like
+   * -1 / (x + 1)^2 + 3x / 8 + 2,
+   *
+   * but initially prefer linear from (0, 2) to (2, 2.5)
+   */
+  return 3 * x / 4 + 1;
+}
+
+inline bool exceededFailureRatio(
+  const unsigned failures,
+  const unsigned numStructures,
+  const unsigned failureRatio
 ) noexcept {
   return static_cast<double>(failures) / numStructures >= failureRatio;
 }
@@ -108,8 +120,6 @@ outcome::result<
   const Partiality& metrizationOption,
   const bool& useYInversionTrick
 ) {
-  // TODO where to split control depending on loosening factor of spatial model?
-
   if(predicates::hasZeroAssignmentStereocenters(molecule)) {
     return DGError::ZeroAssignmentStereocenters;
   }
@@ -129,6 +139,7 @@ outcome::result<
    */
   const double failureRatio = 2; // allow for max 2x #conformations embedding failures
   unsigned failures = 0;
+  bool loosenBounds = false;
   std::vector<AngstromWrapper> ensemble;
   ensemble.reserve(numStructures);
 
@@ -162,7 +173,17 @@ outcome::result<
       }
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
-      DGData = gatherDGInformation(moleculeCopy);
+      DGData = gatherDGInformation(
+        moleculeCopy,
+        detail::looseningFactor(failures, numStructures)
+      );
+    } else if(loosenBounds) {
+      DGData = gatherDGInformation(
+        molecule,
+        detail::looseningFactor(failures, numStructures)
+      );
+
+      loosenBounds = false;
     }
 
     ExplicitGraph explicitGraph {
@@ -275,6 +296,7 @@ outcome::result<
         ) < 1.0
       ) { // Failure to invert
         failures += 1;
+        loosenBounds = true;
         if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
           return DGError::TooManyFailures;
         }
@@ -316,6 +338,7 @@ outcome::result<
 
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       failures += 1;
+      loosenBounds = true;
 
       if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         return DGError::TooManyFailures;
@@ -371,6 +394,7 @@ std::list<RefinementData> debug(
    */
   const double failureRatio = 3; // more lenient than production, must be > 0
   unsigned failures = 0;
+  bool loosenBounds = false;
 
   for(
     unsigned currentStructureNumber = 0;
@@ -406,7 +430,17 @@ std::list<RefinementData> debug(
       }
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
-      DGData = gatherDGInformation(moleculeCopy);
+      DGData = gatherDGInformation(
+        moleculeCopy,
+        detail::looseningFactor(failures, numStructures)
+      );
+    } else if(loosenBounds) {
+      DGData = gatherDGInformation(
+        molecule,
+        detail::looseningFactor(failures, numStructures)
+      );
+
+      loosenBounds = false;
     }
 
     std::list<RefinementStepData> refinementSteps;
@@ -421,6 +455,7 @@ std::list<RefinementData> debug(
       Log::log(Log::Level::Warning) << "Failure in distance bounds matrix construction: "
         << distanceBoundsResult.error().message() << "\n";
       failures += 1;
+      loosenBounds = true;
       if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG. Sample spatial model written to 'DG-failure-spatial-model.dot'.\n";
         if(regenerateEachStep) {
@@ -467,6 +502,7 @@ std::list<RefinementData> debug(
     if(!distanceMatrixResult) {
       Log::log(Log::Level::Warning) << "Failure in distance matrix construction.\n";
       failures += 1;
+      loosenBounds = true;
       if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
         return refinementList;
@@ -564,8 +600,12 @@ std::list<RefinementData> debug(
           dlibPositions
         ) < 1.0
       ) { // Failure to invert
-        Log::log(Log::Level::Warning) << "First stage of refinement fails.\n";
+        Log::log(Log::Level::Warning)
+          << "First stage of refinement fails. Loosening factor was "
+          << detail::looseningFactor(failures, numStructures)
+          <<  "\n";
         failures += 1;
+        loosenBounds = true;
         if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
           Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
           return refinementList;
@@ -613,6 +653,7 @@ std::list<RefinementData> debug(
     RefinementData refinementData;
     refinementData.steps = std::move(refinementSteps);
     refinementData.constraints = DGData.chiralityConstraints;
+    refinementData.looseningFactor = detail::looseningFactor(failures, numStructures);
     refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
 
     refinementList.push_back(
@@ -620,7 +661,10 @@ std::list<RefinementData> debug(
     );
 
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
-      Log::log(Log::Level::Warning) << "Second stage of refinement fails.\n";
+      Log::log(Log::Level::Warning)
+        << "Second stage of refinement fails. Loosening factor was "
+        << detail::looseningFactor(failures, numStructures)
+        <<  "\n";
       if(reachedMaxIterations) {
         Log::log(Log::Level::Warning) << "- Reached max iterations.\n";
       }
@@ -641,6 +685,7 @@ std::list<RefinementData> debug(
       }
 
       failures += 1;
+      loosenBounds = true;
       if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
         return refinementList;
@@ -651,14 +696,15 @@ std::list<RefinementData> debug(
   return refinementList;
 }
 
-MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
-  // Initialize the return object
-  MoleculeDGInformation data;
-
+MoleculeDGInformation gatherDGInformation(
+  const Molecule& molecule,
+  const double looseningFactor
+) {
   // Generate a spatial model from the molecular graph and stereocenters
-  SpatialModel spatialModel {molecule};
+  SpatialModel spatialModel {molecule, looseningFactor};
 
   // Extract gathered data
+  MoleculeDGInformation data;
   data.bounds = spatialModel.makeBoundsList();
   data.chiralityConstraints = spatialModel.getChiralityConstraints();
 

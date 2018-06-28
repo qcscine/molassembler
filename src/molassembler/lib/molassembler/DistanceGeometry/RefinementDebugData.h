@@ -47,6 +47,7 @@ struct RefinementStepData {
 struct RefinementData {
   std::list<RefinementStepData> steps;
   std::vector<ChiralityConstraint> constraints;
+  double looseningFactor;
   bool isFailure;
 };
 

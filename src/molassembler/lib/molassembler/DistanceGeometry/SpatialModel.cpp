@@ -1040,6 +1040,8 @@ ValueBounds SpatialModel::ligandDistance(
 }
 
 std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
+  // TODO chirality constraints are unmodified by looseningMultiplier
+
   std::vector<DistanceGeometry::ChiralityConstraint> constraints;
 
   for(const auto& iterPair : _stereocenterMap) {
