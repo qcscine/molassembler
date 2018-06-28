@@ -6,7 +6,7 @@
 
 #include "DistanceGeometry/ImplicitGraphBoost.h"
 
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 #include "DistanceGeometry/ExplicitGraph.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "temple/constexpr/Numeric.h"
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {molecule};
+    DistanceGeometry::SpatialModel spatialModel {molecule};
 
     using EG = DistanceGeometry::ExplicitGraph;
     using Vertex = EG::GraphType::vertex_descriptor;
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {sampleMol};
+    DistanceGeometry::SpatialModel spatialModel {sampleMol};
 
     const auto boundsList = spatialModel.makeBoundsList();
 

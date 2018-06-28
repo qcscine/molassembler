@@ -208,15 +208,15 @@ nlohmann::json serialize(const Molecule& molecule) {
   for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
     json c;
 
-    if(stereocenterPtr->type() == Stereocenters::Type::CNStereocenter) {
-      auto cnPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+    if(stereocenterPtr->type() == Stereocenters::Type::AtomStereocenter) {
+      auto cnPtr = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
         stereocenterPtr
       );
 
       c["sym"] = Symmetry::name(cnPtr->getSymmetry());
       c["rank"] = cnPtr->getRanking();
-    } else if(stereocenterPtr->type() == Stereocenters::Type::EZStereocenter) {
-      auto ezPtr = std::dynamic_pointer_cast<Stereocenters::EZStereocenter>(
+    } else if(stereocenterPtr->type() == Stereocenters::Type::BondStereocenter) {
+      auto ezPtr = std::dynamic_pointer_cast<Stereocenters::BondStereocenter>(
         stereocenterPtr
       );
       c["lRank"] = ezPtr->getLeftRanking();
@@ -240,11 +240,11 @@ Molecule deserialize(const nlohmann::json& m) {
 
   StereocenterList stereocenters;
   for(const auto& j : m["s"]) {
-    if(j.count("sym") > 0) { // CNStereocenter
+    if(j.count("sym") > 0) { // AtomStereocenter
       Symmetry::Name symmetry = Symmetry::nameFromString(j["sym"]);
       AtomIndexType centralIndex = j["centers"].front();
 
-      auto cnPtr = std::make_shared<Stereocenters::CNStereocenter>(
+      auto cnPtr = std::make_shared<Stereocenters::AtomStereocenter>(
         graph,
         symmetry,
         centralIndex,
@@ -259,11 +259,11 @@ Molecule deserialize(const nlohmann::json& m) {
       }
 
       stereocenters.add(cnPtr);
-    } else { // EZStereocenter
+    } else { // BondStereocenter
       AtomIndexType left = j["centers"].front();
       AtomIndexType right = j["centers"].back();
 
-      auto ezPtr = std::make_shared<Stereocenters::EZStereocenter>(
+      auto ezPtr = std::make_shared<Stereocenters::BondStereocenter>(
         left,
         j["lRank"].get<RankingInformation>(),
         right,

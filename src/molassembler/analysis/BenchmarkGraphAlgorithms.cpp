@@ -5,7 +5,7 @@
 
 #include "temple/Containers.h"
 #include "DistanceGeometry/ImplicitGraphBoost.h"
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 #include "DistanceGeometry/ExplicitGraph.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "temple/constexpr/Numeric.h"
@@ -30,7 +30,7 @@ std::ostream& nl(std::ostream& os) {
 template<typename TimingCallable, size_t N>
 std::pair<double, double> timeFunctor(
   const Molecule& molecule,
-  const DistanceGeometry::MoleculeSpatialModel::BoundsList& bounds,
+  const DistanceGeometry::SpatialModel::BoundsList& bounds,
   DistanceGeometry::Partiality partiality
 ) {
   using namespace std::chrono;
@@ -59,7 +59,7 @@ template<class Graph>
 struct Gor1Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    const DistanceGeometry::MoleculeSpatialModel::BoundsList& boundsList,
+    const DistanceGeometry::SpatialModel::BoundsList& boundsList,
     DistanceGeometry::Partiality partiality
   ) {
 
@@ -76,7 +76,7 @@ struct Gor1Functor {
 struct DBM_FW_Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    const DistanceGeometry::MoleculeSpatialModel::BoundsList& boundsList,
+    const DistanceGeometry::SpatialModel::BoundsList& boundsList,
     DistanceGeometry::Partiality partiality
   ) {
     DistanceGeometry::DistanceBoundsMatrix bounds {molecule, boundsList};
@@ -139,7 +139,7 @@ void benchmark(
     filePath.string()
   );
 
-  DistanceGeometry::MoleculeSpatialModel spatialModel {sampleMol};
+  DistanceGeometry::SpatialModel spatialModel {sampleMol};
 
   const auto boundsList = spatialModel.makeBoundsList();
 

@@ -8,9 +8,9 @@
 
 #include "DistanceGeometry/dlibAdaptors.h"
 #include "DistanceGeometry/dlibDebugAdaptors.h"
-#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/ConformerGeneration.h"
 #include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 #include "DistanceGeometry/RefinementProblem.h"
 #include "DistanceGeometry/Error.h"
 #include "DistanceGeometry/ExplicitGraph.h"
@@ -157,7 +157,9 @@ outcome::result<
         }
       } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
-      // TODO the moleculecopy may have zero-assignment stereocenters now!
+      if(predicates::hasZeroAssignmentStereocenters(moleculeCopy)) {
+        return DGError::ZeroAssignmentStereocenters;
+      }
 
       // Fetch the DG data from the molecule with no unassigned stereocenters
       DGData = gatherDGInformation(moleculeCopy);
@@ -346,7 +348,7 @@ std::list<RefinementData> debug(
   /* In case the molecule has unassigned stereocenters that are not trivially
    * assignable (u/1 -> 0/1), random assignments have to be made prior to calling
    * gatherDGInformation (which creates the DistanceBoundsMatrix via the
-   * MoleculeSpatialModel, which expects all stereocenters to be assigned).
+   * SpatialModel, which expects all stereocenters to be assigned).
    * Accordingly, gatherDGInformation has to be repeated in those cases, while
    * it is necessary only once in the other
    */
@@ -396,6 +398,13 @@ std::list<RefinementData> debug(
         }
       } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
+      if(predicates::hasZeroAssignmentStereocenters(moleculeCopy)) {
+        Log::log(Log::Level::Warning)
+          << "After setting stereocenters at random, this molecule has "
+          << "stereocenters with zero valid permutations!"
+          << std::endl;
+      }
+
       // Fetch the DG data from the molecule with no unassigned stereocenters
       DGData = gatherDGInformation(moleculeCopy);
     }
@@ -434,10 +443,10 @@ std::list<RefinementData> debug(
             }
           } while(predicates::hasUnassignedStereocenters(moleculeCopy));
 
-          MoleculeSpatialModel model {moleculeCopy};
+          SpatialModel model {moleculeCopy};
           model.writeGraphviz("DG-failure-spatial-model.dot");
         } else {
-          MoleculeSpatialModel model {molecule};
+          SpatialModel model {molecule};
           model.writeGraphviz("DG-failure-spatial-model.dot");
         }
         return refinementList;
@@ -647,7 +656,7 @@ MoleculeDGInformation gatherDGInformation(const Molecule& molecule) {
   MoleculeDGInformation data;
 
   // Generate a spatial model from the molecular graph and stereocenters
-  MoleculeSpatialModel spatialModel {molecule};
+  SpatialModel spatialModel {molecule};
 
   // Extract gathered data
   data.bounds = spatialModel.makeBoundsList();

@@ -1,7 +1,7 @@
 #ifndef INCLUDE_ANALYSIS_HELPERS_H
 #define INCLUDE_ANALYSIS_HELPERS_H
 
-#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/ConformerGeneration.h"
 #include "DistanceGeometry/RefinementProblem.h"
 #include "temple/Enumerate.h"
 

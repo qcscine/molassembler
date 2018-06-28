@@ -231,7 +231,7 @@ public:
 
     if(!EZOptionalA && !EZOptionalB) {
       /* This does not invalidate the program, it just means that all
-       * uninstantiated EZStereocenters are equal, and no relative ordering
+       * uninstantiated BondStereocenters are equal, and no relative ordering
        * is provided.
        */
       return false;
@@ -246,18 +246,18 @@ public:
     }
 
     // Now we know both actually have a stereocenterPtr
-    const auto& EZStereocenterA = EZOptionalA.value();
-    const auto& EZStereocenterB = EZOptionalB.value();
+    const auto& BondStereocenterA = EZOptionalA.value();
+    const auto& BondStereocenterB = EZOptionalB.value();
 
     // Reverse everything below for descending sorting
     return temple::consecutiveCompareSmaller(
-      EZStereocenterB.numStereopermutations(),
-      EZStereocenterA.numStereopermutations(),
+      BondStereocenterB.numStereopermutations(),
+      BondStereocenterA.numStereopermutations(),
       /* Mixed optional comparison (includes comparison of assignment value if
        * assigned)
        */
-      EZStereocenterB.indexOfPermutation(),
-      EZStereocenterA.indexOfPermutation()
+      BondStereocenterB.indexOfPermutation(),
+      BondStereocenterA.indexOfPermutation()
     );
   }
 };
@@ -574,8 +574,8 @@ void RankingTree::_applySequenceRules(
    *   (seqCis > seqTrans > non-stereogenic)
    */
   /* Before we can compare using sequence rule 3, we have to instantiate all
-   * auxiliary descriptors, meaning we have to instantiate EZStereocenters in
-   * all double bond positions and CNStereocenters in all candidate
+   * auxiliary descriptors, meaning we have to instantiate BondStereocenters in
+   * all double bond positions and AtomStereocenters in all candidate
    * positions.
    *
    * In both cases, we have to rank non-duplicate adjacent vertices according
@@ -650,8 +650,8 @@ void RankingTree::_applySequenceRules(
   } while(moreEdges);
 
   // Remember if you found something to instantiate or not
-  bool foundEZStereocenters = false;
-  bool foundCNStereocenters = false;
+  bool foundBondStereocenters = false;
+  bool foundAtomStereocenters = false;
 
 
   auto auxiliaryLigands = [](
@@ -679,7 +679,7 @@ void RankingTree::_applySequenceRules(
       auto targetIndex = boost::target(edge, _tree);
 
       if(_doubleBondEdges.count(edge) > 0) {
-        // Instantiate an EZStereocenter here!
+        // Instantiate an BondStereocenter here!
 
         auto sourceIndicesToRank = _auxiliaryAdjacentsToRank(
           sourceIndex,
@@ -736,7 +736,7 @@ void RankingTree::_applySequenceRules(
           const AtomIndexType molSourceIndex = _tree[sourceIndex].molIndex;
           const AtomIndexType molTargetIndex = _tree[targetIndex].molIndex;
 
-          auto newStereocenter = Stereocenters::EZStereocenter {
+          auto newStereocenter = Stereocenters::BondStereocenter {
             molSourceIndex,
             sourceRanking,
             molTargetIndex,
@@ -760,7 +760,7 @@ void RankingTree::_applySequenceRules(
                 const auto& stereocenterPtr = _stereocentersRef.at(molSourceIndex);
 
                 if(
-                  stereocenterPtr->type() == Stereocenters::Type::EZStereocenter
+                  stereocenterPtr->type() == Stereocenters::Type::BondStereocenter
                   && stereocenterPtr->involvedAtoms() == std::vector<AtomIndexType> {
                     std::min(molSourceIndex, molTargetIndex),
                     std::max(molSourceIndex, molTargetIndex)
@@ -777,7 +777,7 @@ void RankingTree::_applySequenceRules(
             _tree[edge].stereocenterOption = newStereocenter;
 
             // Mark that we instantiated something
-            foundEZStereocenters = true;
+            foundBondStereocenters = true;
           }
 
           if /* C++17 constexpr */ (buildTypeIsDebug) {
@@ -792,8 +792,8 @@ void RankingTree::_applySequenceRules(
       }
 
       if(
-        !_tree[edge].stereocenterOption // No EZStereocenter on this edge
-        && !_tree[targetIndex].stereocenterOption // No CNStereocenter
+        !_tree[edge].stereocenterOption // No BondStereocenter on this edge
+        && !_tree[targetIndex].stereocenterOption // No AtomStereocenter
         && _nonDuplicateDegree(targetIndex) >= 3 // Min. degree for chirality
       ) {
         const AtomIndexType molSourceIndex = _tree[targetIndex].molIndex;
@@ -817,9 +817,9 @@ void RankingTree::_applySequenceRules(
         Symmetry::Name localSymmetry;
         if(
           _stereocentersRef.involving(molSourceIndex)
-          && _stereocentersRef.at(molSourceIndex)->type() == Stereocenters::Type::CNStereocenter
+          && _stereocentersRef.at(molSourceIndex)->type() == Stereocenters::Type::AtomStereocenter
         ) {
-          localSymmetry = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+          localSymmetry = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
             _stereocentersRef.at(molSourceIndex)
           ) -> getSymmetry();
         } else {
@@ -845,9 +845,9 @@ void RankingTree::_applySequenceRules(
             }
           )
         ) {
-          // Instantiate a CNStereocenter here!
+          // Instantiate a AtomStereocenter here!
 
-          auto newStereocenter = Stereocenters::CNStereocenter {
+          auto newStereocenter = Stereocenters::AtomStereocenter {
             _graphRef,
             localSymmetry,
             molSourceIndex,
@@ -874,7 +874,7 @@ void RankingTree::_applySequenceRules(
                  * widening cases are not assignable
                  */
                 if(
-                  stereocenterPtr->type() == Stereocenters::Type::CNStereocenter
+                  stereocenterPtr->type() == Stereocenters::Type::AtomStereocenter
                   && stereocenterPtr->involvedAtoms() == std::vector<AtomIndexType> {
                     molSourceIndex
                   } && stereocenterPtr->numStereopermutations() == newStereocenter.numStereopermutations()
@@ -897,7 +897,7 @@ void RankingTree::_applySequenceRules(
               _tree[targetIndex].stereocenterOption = std::move(newStereocenter);
 
               // Mark that we instantiated something
-              foundCNStereocenters = true;
+              foundAtomStereocenters = true;
             }
           }
 
@@ -914,8 +914,8 @@ void RankingTree::_applySequenceRules(
     }
   }
 
-  // Was any EZStereocenter instantiated? If not, we can skip rule 3.
-  if(foundEZStereocenters) {
+  // Was any BondStereocenter instantiated? If not, we can skip rule 3.
+  if(foundBondStereocenters) {
 
     // Apply sequence rule 3
     _runBFS<
@@ -949,8 +949,8 @@ void RankingTree::_applySequenceRules(
     }
   }
 
-  // In case neither EZ or CNStereocenters were found, we can skip 4-5
-  if(!foundEZStereocenters && !foundCNStereocenters) {
+  // In case neither EZ or AtomStereocenters were found, we can skip 4-5
+  if(!foundBondStereocenters && !foundAtomStereocenters) {
     return;
   }
 

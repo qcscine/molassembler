@@ -12,7 +12,7 @@
 #include "detail/AnalysisHelpers.h"
 #include "detail/CommonTrig.h"
 #include "BoundsFromSymmetry.h"
-#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/ConformerGeneration.h"
 #include "DistanceGeometry/MetricMatrix.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/RefinementProblem.h"

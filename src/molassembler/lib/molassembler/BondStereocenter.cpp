@@ -5,10 +5,10 @@
 #include "temple/Random.h"
 
 #include "DistanceGeometry/DistanceGeometry.h"
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 
 #include "detail/DelibHelpers.h"
-#include "EZStereocenter.h"
+#include "BondStereocenter.h"
 #include "BondDistance.h"
 #include "Molecule.h"
 
@@ -16,10 +16,10 @@ namespace molassembler {
 
 namespace Stereocenters {
 
-constexpr double EZStereocenter::chiralityConstraintTolerance;
+constexpr double BondStereocenter::chiralityConstraintTolerance;
 
 /* Constructors */
-EZStereocenter::EZStereocenter(
+BondStereocenter::BondStereocenter(
   const AtomIndexType& firstCenter,
   const RankingInformation& firstCenterRanking,
   const AtomIndexType& secondCenter,
@@ -43,7 +43,7 @@ EZStereocenter::EZStereocenter(
 #endif
 }
 
-unsigned EZStereocenter::_numIndices(const RankingInformation& ranking) {
+unsigned BondStereocenter::_numIndices(const RankingInformation& ranking) {
   unsigned countElements = 0;
 
   for(const auto& set : ranking.ligands) {
@@ -56,7 +56,7 @@ unsigned EZStereocenter::_numIndices(const RankingInformation& ranking) {
 /* Private members */
 std::vector<
   std::array<AtomIndexType, 4>
-> EZStereocenter::_equalPriorityDihedralSequences() const {
+> BondStereocenter::_equalPriorityDihedralSequences() const {
   std::vector<
     std::array<AtomIndexType, 4>
   > sequences {
@@ -85,7 +85,7 @@ std::vector<
 
 std::vector<
   std::array<AtomIndexType, 4>
-> EZStereocenter::_differentPriorityDihedralSequences() const {
+> BondStereocenter::_differentPriorityDihedralSequences() const {
 
   std::vector<
     std::array<AtomIndexType, 4>
@@ -118,7 +118,7 @@ std::vector<
 
 /* Public members */
 /* Modification */
-void EZStereocenter::addSubstituent(
+void BondStereocenter::addSubstituent(
   const AtomIndexType& center,
   RankingInformation centerRanking
 ) {
@@ -168,7 +168,7 @@ void EZStereocenter::addSubstituent(
   }
 }
 
-void EZStereocenter::assign(boost::optional<unsigned> assignment) {
+void BondStereocenter::assign(boost::optional<unsigned> assignment) {
   if(assignment) {
     assert(assignment.value() < numStereopermutations());
     _isZOption = static_cast<bool>(assignment.value());
@@ -177,13 +177,13 @@ void EZStereocenter::assign(boost::optional<unsigned> assignment) {
   }
 }
 
-void EZStereocenter::assignRandom() {
+void BondStereocenter::assignRandom() {
   assert(_isZOption == boost::none);
 
   _isZOption = rng.getSingle<bool>();
 }
 
-void EZStereocenter::fit(const AngstromWrapper& angstromWrapper) {
+void BondStereocenter::fit(const AngstromWrapper& angstromWrapper) {
   /* The only sequences that we can be sure of exist is the singular one from
    * equalPriorityDihedralSequences(). There may be two of those, though, in
    * case we have four substituents, so consider that too if it exists.
@@ -239,11 +239,11 @@ void EZStereocenter::fit(const AngstromWrapper& angstromWrapper) {
   }
 }
 
-void EZStereocenter::propagateGraphChange(
+void BondStereocenter::propagateGraphChange(
   RankingInformation firstCenterRanking,
   RankingInformation secondCenterRanking
 ) {
-  // Assume parts of the state of EZStereocenter
+  // Assume parts of the state of BondStereocenter
   assert(numStereopermutations() == 2);
 
 #ifndef NDEBUG
@@ -284,7 +284,7 @@ void EZStereocenter::propagateGraphChange(
   }
 }
 
-void EZStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
+void BondStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
   auto updateIndex = [&removedIndex](AtomIndexType& index) -> void {
     if(index > removedIndex) {
       --index;
@@ -337,7 +337,7 @@ void EZStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
   updateRanking(_rightRanking);
 }
 
-void EZStereocenter::removeSubstituent(
+void BondStereocenter::removeSubstituent(
   const AtomIndexType center,
   const AtomIndexType which
 ) {
@@ -367,7 +367,7 @@ void EZStereocenter::removeSubstituent(
 
 
 /* Information */
-boost::optional<unsigned> EZStereocenter::assigned() const {
+boost::optional<unsigned> BondStereocenter::assigned() const {
   if(_isZOption) {
     return static_cast<unsigned>(
       _isZOption.value()
@@ -377,15 +377,15 @@ boost::optional<unsigned> EZStereocenter::assigned() const {
   return {};
 }
 
-boost::optional<unsigned> EZStereocenter::indexOfPermutation() const {
+boost::optional<unsigned> BondStereocenter::indexOfPermutation() const {
   return assigned();
 }
 
-unsigned EZStereocenter::numAssignments() const {
+unsigned BondStereocenter::numAssignments() const {
   return numStereopermutations();
 }
 
-unsigned EZStereocenter::numStereopermutations() const {
+unsigned BondStereocenter::numStereopermutations() const {
   /* Determine whether there can be two assignments or not. There is only one
    * assignment in the case that on either side, there are two equal
    * substituents
@@ -405,7 +405,7 @@ unsigned EZStereocenter::numStereopermutations() const {
   return 2;
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> EZStereocenter::chiralityConstraints() const {
+std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::chiralityConstraints() const {
   // Three fixed ChiralityConstraints to enforce six-atom coplanarity
 
   using LigandSequence = DistanceGeometry::ChiralityConstraint::LigandSequence;
@@ -452,7 +452,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> EZStereocenter::chiralityCons
   return constraints;
 }
 
-std::vector<EZStereocenter::DihedralLimits> EZStereocenter::_dihedralLimits(
+std::vector<BondStereocenter::DihedralLimits> BondStereocenter::_dihedralLimits(
   const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
   const double looseningMultiplier
 ) const {
@@ -470,14 +470,14 @@ std::vector<EZStereocenter::DihedralLimits> EZStereocenter::_dihedralLimits(
 
   auto varianceForSequence = [&](const std::array<AtomIndexType, 4>& sequence) -> double {
     return (
-      DistanceGeometry::MoleculeSpatialModel::dihedralAbsoluteVariance
+      DistanceGeometry::SpatialModel::dihedralAbsoluteVariance
       * looseningMultiplier
       * cycleMultiplierForIndex(sequence.front())
       * cycleMultiplierForIndex(sequence.back())
     );
   };
 
-  // EZStereocenters can impose dihedral limits
+  // BondStereocenters can impose dihedral limits
   if(_isZOption && _isZOption.value()) {
     // In Z, equal priorities are cis
     for(const auto& dihedralSequence : _equalPriorityDihedralSequences()) {
@@ -538,14 +538,14 @@ std::vector<EZStereocenter::DihedralLimits> EZStereocenter::_dihedralLimits(
   return limits;
 }
 
-const RankingInformation& EZStereocenter::getLeftRanking() const {
+const RankingInformation& BondStereocenter::getLeftRanking() const {
   return _leftRanking;
 }
-const RankingInformation& EZStereocenter::getRightRanking() const {
+const RankingInformation& BondStereocenter::getRightRanking() const {
   return _rightRanking;
 }
 
-std::string EZStereocenter::info() const {
+std::string BondStereocenter::info() const {
   using namespace std::string_literals;
 
   std::string returnString =  "EZ indices "s;
@@ -583,7 +583,7 @@ std::string EZStereocenter::info() const {
   return returnString;
 }
 
-std::string EZStereocenter::rankInfo() const {
+std::string BondStereocenter::rankInfo() const {
   // TODO revisit as soon as pseudo-asymmetry is introduced
   using namespace std::string_literals;
 
@@ -597,7 +597,7 @@ std::string EZStereocenter::rankInfo() const {
   );
 }
 
-std::vector<AtomIndexType> EZStereocenter::involvedAtoms() const {
+std::vector<AtomIndexType> BondStereocenter::involvedAtoms() const {
   // Return a standard form of smaller first
   return {
     std::min(_leftCenter, _rightCenter),
@@ -605,12 +605,12 @@ std::vector<AtomIndexType> EZStereocenter::involvedAtoms() const {
   };
 }
 
-void EZStereocenter::setModelInformation(
-  DistanceGeometry::MoleculeSpatialModel& model,
+void BondStereocenter::setModelInformation(
+  DistanceGeometry::SpatialModel& model,
   const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
   const double looseningMultiplier
 ) const {
-  using ModelType = DistanceGeometry::MoleculeSpatialModel;
+  using ModelType = DistanceGeometry::SpatialModel;
 
   /* Angles */
   auto addAngle = [&](
@@ -659,12 +659,12 @@ void EZStereocenter::setModelInformation(
   }
 }
 
-Type EZStereocenter::type() const {
-  return Type::EZStereocenter;
+Type BondStereocenter::type() const {
+  return Type::BondStereocenter;
 }
 
 /* Operators */
-bool EZStereocenter::operator == (const EZStereocenter& other) const {
+bool BondStereocenter::operator == (const BondStereocenter& other) const {
   return (
     _leftCenter == other._leftCenter
     && _leftRanking.sortedSubstituents == other._leftRanking.sortedSubstituents
@@ -675,7 +675,7 @@ bool EZStereocenter::operator == (const EZStereocenter& other) const {
   );
 }
 
-bool EZStereocenter::operator < (const EZStereocenter& other) const {
+bool BondStereocenter::operator < (const BondStereocenter& other) const {
   return temple::consecutiveCompareSmaller(
     _leftCenter,
     other._leftCenter,

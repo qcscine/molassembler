@@ -160,11 +160,11 @@ struct Options {
   static ChiralStatePreservation chiralStatePreservation;
 };
 
-// Forward-declare Cycles and CNStereocenter
+// Forward-declare Cycles and AtomStereocenter
 class Cycles;
 
 namespace Stereocenters {
-  class CNStereocenter;
+  class AtomStereocenter;
 } // namespace Stereocenters
 
 /*! Decides whether to keep a stereocenter or not within a temperature regime
@@ -176,7 +176,7 @@ namespace Stereocenters {
  *   of size 4 or smaller, where strain hinders inversion)
  */
 bool disregardStereocenter(
-  const Stereocenters::CNStereocenter& stereocenter,
+  const Stereocenters::AtomStereocenter& stereocenter,
   const Delib::ElementType centralType,
   const Cycles& cycleData,
   const TemperatureRegime temperatureRegimeSetting
@@ -188,7 +188,7 @@ bool disregardStereocenter(
  * if a four-coordinate carbon atom is to be fitted to a position collection
  */
 void pickyFit(
-  Stereocenters::CNStereocenter& stereocenter,
+  Stereocenters::AtomStereocenter& stereocenter,
   const GraphType& graph,
   const AngstromWrapper& angstromWrapper,
   const Symmetry::Name expectedSymmetry

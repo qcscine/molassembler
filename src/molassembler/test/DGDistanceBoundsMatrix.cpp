@@ -6,7 +6,7 @@
 
 #include "BoundsFromSymmetry.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/ConformerGeneration.h"
 #include "temple/Enumerate.h"
 
 BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {

@@ -1,8 +1,8 @@
-#define BOOST_TEST_MODULE EZStereocenterTestModule
+#define BOOST_TEST_MODULE BondStereocenterTestModule
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "EZStereocenter.h"
+#include "BondStereocenter.h"
 
 BOOST_AUTO_TEST_CASE(stateConsistency) {
   using namespace molassembler;
@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_CASE(stateConsistency) {
   right.ligands = {{4}, {5}};
   right.ligandsRanking = {{0}, {1}};
 
-  EZStereocenter trialStereocenter {
+  BondStereocenter trialStereocenter {
     2,
     left,
     3,

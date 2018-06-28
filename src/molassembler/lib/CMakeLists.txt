@@ -20,10 +20,11 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AdjacencyMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomEnvironmentHash.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomInfo.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondDistance.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BoundsFromSymmetry.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/CNStereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.h
@@ -39,23 +40,22 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/SequenceSet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/SharedTypes.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/StdlibTypeAlgorithms.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ConformerGeneration.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceBoundsMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceGeometry.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/dlibAdaptors.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/dlibDebugAdaptors.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/Error.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ExplicitGraph.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/generateConformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/Gor1.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ImplicitGraphBoost.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ImplicitGraph.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ImplicitGraphHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/MetricMatrix.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/MoleculeSpatialModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementDebugData.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementProblem.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/EZStereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphDistanceMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphHelpers.h
@@ -79,9 +79,10 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AdjacencyMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomEnvironmentHash.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomInfo.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondDistance.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/CNStereocenter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/CommonTrig.cpp
@@ -89,15 +90,14 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/FileHandlers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/MolGraphWriter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/StdlibTypeAlgorithms.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ConformerGeneration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceBoundsMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ExplicitGraph.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/generateConformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ImplicitGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/MetricMatrix.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/MoleculeSpatialModel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementProblem.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/EZStereocenter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphDistanceMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.cpp

@@ -6,7 +6,7 @@
 
 /*! @file
  *
- * Contains the EZStereocenter class declaration, which models E/Z double bond
+ * Contains the BondStereocenter class declaration, which models E/Z double bond
  * stereocenters in molecules.
  */
 
@@ -46,11 +46,11 @@ namespace Stereocenters {
  * - Some false -> E,
  * - None -> unassigned
  *
- * EZStereocenter is explicitly also instantiable on bonds that are not
+ * BondStereocenter is explicitly also instantiable on bonds that are not
  * stereogenic so that in DG, chirality constraints and dihedral limits that
  * result from the double bond are still collectible.
  */
-class EZStereocenter final : public Stereocenter {
+class BondStereocenter final : public Stereocenter {
 public:
   using IndexPairsSet = std::set<
     std::pair<AtomIndexType, AtomIndexType>
@@ -144,8 +144,8 @@ private:
 
 public:
 /* Constructors */
-  EZStereocenter() = delete;
-  EZStereocenter(
+  BondStereocenter() = delete;
+  BondStereocenter(
     const AtomIndexType& firstCenter,
     const RankingInformation& firstCenterRanking,
     const AtomIndexType& secondCenter,
@@ -197,7 +197,7 @@ public:
   std::vector<AtomIndexType> involvedAtoms() const final;
 
   void setModelInformation(
-    DistanceGeometry::MoleculeSpatialModel& model,
+    DistanceGeometry::SpatialModel& model,
     const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
     const double looseningMultiplier
   ) const final;
@@ -205,8 +205,8 @@ public:
   Type type() const final;
 
 /* Operators */
-  bool operator == (const EZStereocenter& other) const;
-  bool operator < (const EZStereocenter& other) const;
+  bool operator == (const BondStereocenter& other) const;
+  bool operator < (const BondStereocenter& other) const;
 };
 
 } // namespace Stereocenters

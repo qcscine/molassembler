@@ -35,7 +35,7 @@ class DistanceBoundsMatrix;
 
 /*! Simulates a graph from which triangle inequality bounds can be calculated by shortest-paths
  *
- * Based off of pairwise bounds collected from MoleculeSpatialModel, this class
+ * Based off of pairwise bounds collected from SpatialModel, this class
  * simulates a graph in which one-to-all triangle inequality bounds can be
  * calculated by a single-source shortest paths calculation.
  *

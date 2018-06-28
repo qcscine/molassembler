@@ -7,7 +7,7 @@
 
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/ConformerGeneration.h"
 
 #include "chemical_symmetries/Symmetries.h"
 #include "detail/StdlibTypeAlgorithms.h"

@@ -47,7 +47,7 @@
  *     to find stereocenters over potential gains from clearing comparisonSets
  *     every BFS step
  *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
- * - Instantiation of EZStereocenters on edge does not keep CNStereocenters
+ * - Instantiation of BondStereocenters on edge does not keep AtomStereocenters
  *   from being instantiated above the edge in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
  * - OrderDiscoveryHelper function naming may be inconsistent. Does
@@ -118,7 +118,7 @@ public:
     bool isDuplicate;
 
     //! A vertex-central stereocenter may be instantiated here or may not
-    boost::optional<Stereocenters::CNStereocenter> stereocenterOption;
+    boost::optional<Stereocenters::AtomStereocenter> stereocenterOption;
 
     // TODO not quite ready for this yet
     // boost::optional<double> deviantAtomicNumber;
@@ -126,7 +126,7 @@ public:
 
   //! Data class that sets which supplementary data is stored for a tree edge
   struct EdgeData {
-    boost::optional<Stereocenters::EZStereocenter> stereocenterOption;
+    boost::optional<Stereocenters::BondStereocenter> stereocenterOption;
   };
 
   //! The BGL Graph type used to store the tree

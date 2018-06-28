@@ -3,8 +3,8 @@
 
 #include <unordered_map>
 
-#include "CNStereocenter.h"
-#include "EZStereocenter.h"
+#include "AtomStereocenter.h"
+#include "BondStereocenter.h"
 
 /*! @file
  *

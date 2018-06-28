@@ -1,11 +1,11 @@
-#define BOOST_TEST_MODULE CNStereocenterTestModule
+#define BOOST_TEST_MODULE AtomStereocenterTestModule
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include <iostream>
 
 #include "Molecule.h"
-#include "CNStereocenter.h"
+#include "AtomStereocenter.h"
 #include "Log.h"
 #include "temple/Stringify.h"
 
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
   using namespace molassembler;
   using namespace molassembler::Stereocenters;
 
-  Log::particulars.insert(Log::Particulars::CNStereocenterStatePropagation);
+  Log::particulars.insert(Log::Particulars::AtomStereocenterStatePropagation);
 
   // Hypothetical assignment eliminations only take place if links are present, but there are no links
   Molecule dummyMolecule;
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(stateCorrectness) {
     squarePyramidalRanking.sortedSubstituents
   );
 
-  CNStereocenter trialStereocenter {
+  AtomStereocenter trialStereocenter {
     dummyMolecule,
     Symmetry::Name::SquarePyramidal,
     8,
@@ -147,7 +147,7 @@ using RaggedVector = std::vector<
 
 BOOST_AUTO_TEST_CASE(PermutationStateTests) {
   using namespace molassembler;
-  using TestNamespace = molassembler::Stereocenters::CNStereocenter::PermutationState;
+  using TestNamespace = molassembler::Stereocenters::AtomStereocenter::PermutationState;
 
   using RaggedAtoms = RaggedVector<AtomIndexType>;
   using RaggedLigands = RaggedVector<unsigned>;

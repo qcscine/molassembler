@@ -34,7 +34,7 @@ class DistanceBoundsMatrix;
  * graph shortest paths calculation.
  *
  * The main idea is to transfer all ValueBounds collected by a
- * MoleculeSpatialModel to this class. The compatible triangle inequality bounds
+ * SpatialModel to this class. The compatible triangle inequality bounds
  * to this set of ValueBounds should then be extracted as a DistanceBoundsMatrix
  * and kept for refinement. For every new conformation, the underlying graph
  * containing the information from the ValueBounds needs to be copied and

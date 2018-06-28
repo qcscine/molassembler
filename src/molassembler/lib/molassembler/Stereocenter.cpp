@@ -1,7 +1,7 @@
 #include "Stereocenter.h"
 
-#include "CNStereocenter.h"
-#include "EZStereocenter.h"
+#include "AtomStereocenter.h"
+#include "BondStereocenter.h"
 
 namespace molassembler {
 
@@ -15,16 +15,16 @@ bool compareStereocenterEqual(
   const std::shared_ptr<molassembler::Stereocenters::Stereocenter>& b
 ) {
   if(a -> type() == b -> type()) {
-    if(a -> type() == Type::CNStereocenter) {
-      auto aDerived = std::dynamic_pointer_cast<CNStereocenter>(a);
-      auto bDerived = std::dynamic_pointer_cast<CNStereocenter>(b);
+    if(a -> type() == Type::AtomStereocenter) {
+      auto aDerived = std::dynamic_pointer_cast<AtomStereocenter>(a);
+      auto bDerived = std::dynamic_pointer_cast<AtomStereocenter>(b);
 
       return *aDerived == *bDerived;
     }
 
-    // Remaining case is EZStereocenter
-    auto aDerived = std::dynamic_pointer_cast<EZStereocenter>(a);
-    auto bDerived = std::dynamic_pointer_cast<EZStereocenter>(b);
+    // Remaining case is BondStereocenter
+    auto aDerived = std::dynamic_pointer_cast<BondStereocenter>(a);
+    auto bDerived = std::dynamic_pointer_cast<BondStereocenter>(b);
 
     return *aDerived == *bDerived;
   }
@@ -46,16 +46,16 @@ bool compareStereocenterLessThan(
   }
 
   // Types are equal now
-  if(a -> type() == Type::CNStereocenter) {
-    auto aDerived = std::dynamic_pointer_cast<CNStereocenter>(a);
-    auto bDerived = std::dynamic_pointer_cast<CNStereocenter>(b);
+  if(a -> type() == Type::AtomStereocenter) {
+    auto aDerived = std::dynamic_pointer_cast<AtomStereocenter>(a);
+    auto bDerived = std::dynamic_pointer_cast<AtomStereocenter>(b);
 
     return *aDerived < *bDerived;
   }
 
-  // Remaining case is EZStereocenter
-  auto aDerived = std::dynamic_pointer_cast<EZStereocenter>(a);
-  auto bDerived = std::dynamic_pointer_cast<EZStereocenter>(b);
+  // Remaining case is BondStereocenter
+  auto aDerived = std::dynamic_pointer_cast<BondStereocenter>(a);
+  auto bDerived = std::dynamic_pointer_cast<BondStereocenter>(b);
 
   return *aDerived < *bDerived;
 }

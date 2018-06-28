@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/ConformerGeneration.h"
 #include "BoundsFromSymmetry.h"
 
 #include "temple/Containers.h"

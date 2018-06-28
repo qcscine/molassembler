@@ -1,4 +1,4 @@
-#include "CNStereocenter.h"
+#include "AtomStereocenter.h"
 
 #include <Eigen/Dense>
 
@@ -10,7 +10,7 @@
 #include "temple/Optionals.h"
 #include "temple/Random.h"
 
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "detail/BuildTypeSwitch.h"
 #include "detail/CommonTrig.h"
@@ -24,7 +24,7 @@ namespace molassembler {
 
 namespace Stereocenters {
 
-CNStereocenter::PermutationState::PermutationState(
+AtomStereocenter::PermutationState::PermutationState(
   const RankingInformation& ranking,
   const AtomIndexType centerAtom,
   const Symmetry::Name symmetry,
@@ -37,7 +37,7 @@ CNStereocenter::PermutationState::PermutationState(
     canonicalLigands
   );
 
-  using ModelType = DistanceGeometry::MoleculeSpatialModel;
+  using ModelType = DistanceGeometry::SpatialModel;
 
   ligandDistances = temple::mapToVector(
     ranking.ligands,
@@ -117,7 +117,7 @@ CNStereocenter::PermutationState::PermutationState(
   }
 }
 
-RankingInformation::RankedLigandsType CNStereocenter::PermutationState::canonicalize(
+RankingInformation::RankedLigandsType AtomStereocenter::PermutationState::canonicalize(
   RankingInformation::RankedLigandsType rankedLigands
 ) {
   std::stable_sort(
@@ -133,7 +133,7 @@ RankingInformation::RankedLigandsType CNStereocenter::PermutationState::canonica
 }
 
 // Transform canonical ranked ligands to canonical characters
-std::vector<char> CNStereocenter::PermutationState::transferToSymbolicCharacters(
+std::vector<char> AtomStereocenter::PermutationState::transferToSymbolicCharacters(
   const RankingInformation::RankedLigandsType& canonicalLigands
 ) {
   std::vector<char> characters;
@@ -151,7 +151,7 @@ std::vector<char> CNStereocenter::PermutationState::transferToSymbolicCharacters
 }
 
 stereopermutation::Stereopermutation::LinksSetType
-CNStereocenter::PermutationState::selfReferentialTransform(
+AtomStereocenter::PermutationState::selfReferentialTransform(
   const RankingInformation::LinksType& rankingLinks,
   const RankingInformation::RankedLigandsType& canonicalLigands
 ) {
@@ -186,7 +186,7 @@ CNStereocenter::PermutationState::selfReferentialTransform(
 }
 
 std::vector<unsigned>
-CNStereocenter::PermutationState::generateLigandToSymmetryPositionMap(
+AtomStereocenter::PermutationState::generateLigandToSymmetryPositionMap(
   const stereopermutation::Stereopermutation& assignment,
   const RankingInformation::RankedLigandsType& canonicalLigands
 ) {
@@ -309,7 +309,7 @@ CNStereocenter::PermutationState::generateLigandToSymmetryPositionMap(
   return positionMap;
 }
 
-std::vector<unsigned> CNStereocenter::PermutationState::generateSymmetryPositionToLigandMap(
+std::vector<unsigned> AtomStereocenter::PermutationState::generateSymmetryPositionToLigandMap(
   const stereopermutation::Stereopermutation& assignment,
   const RankingInformation::RankedLigandsType& canonicalLigands
 ) {
@@ -324,7 +324,7 @@ std::vector<unsigned> CNStereocenter::PermutationState::generateSymmetryPosition
   return inverseMap;
 }
 
-std::vector<char> CNStereocenter::PermutationState::makeStereopermutationCharacters(
+std::vector<char> AtomStereocenter::PermutationState::makeStereopermutationCharacters(
   const RankingInformation::RankedLigandsType& canonicalLigands,
   const std::vector<char>& canonicalStereopermutationCharacters,
   const std::vector<unsigned>& ligandsAtSymmetryPositions
@@ -361,7 +361,7 @@ std::vector<char> CNStereocenter::PermutationState::makeStereopermutationCharact
  * optional propagation. It's not safe to return a reference to within a
  * temporary object where this is used.
  */
-boost::optional<std::vector<unsigned>> CNStereocenter::PermutationState::getIndexMapping(
+boost::optional<std::vector<unsigned>> AtomStereocenter::PermutationState::getIndexMapping(
   const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
   const ChiralStatePreservation& preservationOption
 ) {
@@ -400,7 +400,7 @@ boost::optional<std::vector<unsigned>> CNStereocenter::PermutationState::getInde
   return boost::none;
 }
 
-bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
+bool AtomStereocenter::PermutationState::isFeasibleStereopermutation(
   const StereopermutationType& assignment,
   const RankingInformation::RankedLigandsType& canonicalLigands,
   const ConeAngleType& coneAngles,
@@ -568,7 +568,7 @@ bool CNStereocenter::PermutationState::isFeasibleStereopermutation(
 
 /* Static functions */
 /* Constructors */
-CNStereocenter::CNStereocenter(
+AtomStereocenter::AtomStereocenter(
   const GraphType& graph,
   // The symmetry of this Stereocenter
   const Symmetry::Name& symmetry,
@@ -590,7 +590,7 @@ CNStereocenter::CNStereocenter(
 }
 
 /* Modification */
-void CNStereocenter::addSubstituent(
+void AtomStereocenter::addSubstituent(
   const GraphType& graph,
   const AtomIndexType newSubstituentIndex,
   RankingInformation newRanking,
@@ -750,7 +750,7 @@ void CNStereocenter::addSubstituent(
   assign(newStereopermutation);
 }
 
-void CNStereocenter::assign(boost::optional<unsigned> assignment) {
+void AtomStereocenter::assign(boost::optional<unsigned> assignment) {
   if(assignment) {
     assert(assignment.value() < _cache.feasiblePermutations.size());
   }
@@ -775,7 +775,7 @@ void CNStereocenter::assign(boost::optional<unsigned> assignment) {
   }
 }
 
-void CNStereocenter::assignRandom() {
+void AtomStereocenter::assignRandom() {
   assign(
     rng.pickDiscrete(
       // Map the feasible permutations onto their weights
@@ -789,7 +789,7 @@ void CNStereocenter::assignRandom() {
   );
 }
 
-void CNStereocenter::propagateGraphChange(
+void AtomStereocenter::propagateGraphChange(
   const GraphType& graph,
   RankingInformation newRanking
 ) {
@@ -874,7 +874,7 @@ void CNStereocenter::propagateGraphChange(
   assign(newStereopermutation);
 }
 
-void CNStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
+void AtomStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
   /* This function replaces any occurrences of the atom index that is being
    * removed in the global state with a placeholder of the same type and updates
    * any invalidated atom indices.
@@ -927,7 +927,7 @@ void CNStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
   }
 }
 
-void CNStereocenter::removeSubstituent(
+void AtomStereocenter::removeSubstituent(
   const GraphType& graph,
   const AtomIndexType which,
   RankingInformation newRanking,
@@ -1106,15 +1106,15 @@ void CNStereocenter::removeSubstituent(
   assign(newStereopermutation);
 }
 
-const RankingInformation& CNStereocenter::getRanking() const {
+const RankingInformation& AtomStereocenter::getRanking() const {
   return _ranking;
 }
 
-Symmetry::Name CNStereocenter::getSymmetry() const {
+Symmetry::Name AtomStereocenter::getSymmetry() const {
   return _symmetry;
 }
 
-void CNStereocenter::fit(
+void AtomStereocenter::fit(
   const GraphType& graph,
   const AngstromWrapper& angstromWrapper,
   const std::vector<Symmetry::Name>& excludeSymmetries
@@ -1152,7 +1152,7 @@ void CNStereocenter::fit(
       continue;
     }
 
-    // Change the symmetry of the CNStereocenter
+    // Change the symmetry of the AtomStereocenter
     setSymmetry(symmetryName, graph);
 
     for(
@@ -1255,7 +1255,7 @@ void CNStereocenter::fit(
 
 
 #ifndef NDEBUG
-      Log::log(Log::Particulars::CNStereocenterFit)
+      Log::log(Log::Particulars::AtomStereocenterFit)
         << Symmetry::nameIndex(symmetryName)
         << ", " << assignment
         << ", " << std::setprecision(4) << std::fixed
@@ -1312,7 +1312,7 @@ void CNStereocenter::fit(
 }
 
 /* Information */
-double CNStereocenter::angle(
+double AtomStereocenter::angle(
   const unsigned i,
   const unsigned j
 ) const {
@@ -1325,8 +1325,8 @@ double CNStereocenter::angle(
   );
 }
 
-void CNStereocenter::setModelInformation(
-  DistanceGeometry::MoleculeSpatialModel& model,
+void AtomStereocenter::setModelInformation(
+  DistanceGeometry::SpatialModel& model,
   const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
   const double looseningMultiplier
 ) const {
@@ -1375,7 +1375,7 @@ void CNStereocenter::setModelInformation(
      * - Minimally 0° (if there were a zero-length bond)
      *   You could compute shortest possible bond constexpr and insert a trig
      *   calc here, but the bond level distance is supplied elsewhere by
-     *   MoleculeSpatialModel anyway, no need to duplicate that information
+     *   SpatialModel anyway, no need to duplicate that information
      * - Maximally 2 * the upper cone angle (but not more than M_PI)
      */
     temple::forAllPairs(
@@ -1421,7 +1421,7 @@ void CNStereocenter::setModelInformation(
         _ranking.ligands.at(j),
         [&](const AtomIndexType x, const AtomIndexType y) -> void {
           double variation = (
-            DistanceGeometry::MoleculeSpatialModel::angleAbsoluteVariance
+            DistanceGeometry::SpatialModel::angleAbsoluteVariance
             * looseningMultiplier
             * cycleMultiplierForIndex(x)
             * cycleMultiplierForIndex(y)
@@ -1440,11 +1440,11 @@ void CNStereocenter::setModelInformation(
   }
 }
 
-boost::optional<unsigned> CNStereocenter::assigned() const {
+boost::optional<unsigned> AtomStereocenter::assigned() const {
   return _assignmentOption;
 }
 
-boost::optional<unsigned> CNStereocenter::indexOfPermutation() const {
+boost::optional<unsigned> AtomStereocenter::indexOfPermutation() const {
   if(_assignmentOption) {
     return _cache.feasiblePermutations.at(_assignmentOption.value());
   }
@@ -1454,7 +1454,7 @@ boost::optional<unsigned> CNStereocenter::indexOfPermutation() const {
 
 std::vector<
   std::array<boost::optional<unsigned>, 4>
-> CNStereocenter::minimalChiralityConstraints() const {
+> AtomStereocenter::minimalChiralityConstraints() const {
   std::vector<
     std::array<boost::optional<unsigned>, 4>
   > precursors;
@@ -1504,7 +1504,7 @@ std::vector<
   return precursors;
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> CNStereocenter::chiralityConstraints() const {
+std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityConstraints() const {
   return temple::map(
     minimalChiralityConstraints(),
     [&](const auto& minimalConstraint) -> DistanceGeometry::ChiralityConstraint {
@@ -1650,7 +1650,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> CNStereocenter::chiralityCons
   );
 }
 
-std::string CNStereocenter::info() const {
+std::string AtomStereocenter::info() const {
   std::string returnString = "CN "s
     + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +", "s;
 
@@ -1684,7 +1684,7 @@ std::string CNStereocenter::info() const {
   return returnString;
 }
 
-std::string CNStereocenter::rankInfo() const {
+std::string AtomStereocenter::rankInfo() const {
   /* rankInfo is specifically geared towards RankingTree's consumption,
    * and MUST use indices of permutation
    */
@@ -1699,19 +1699,19 @@ std::string CNStereocenter::rankInfo() const {
   );
 }
 
-std::vector<AtomIndexType> CNStereocenter::involvedAtoms() const {
+std::vector<AtomIndexType> AtomStereocenter::involvedAtoms() const {
   return {_centerAtom};
 }
 
-unsigned CNStereocenter::numAssignments() const {
+unsigned AtomStereocenter::numAssignments() const {
   return _cache.feasiblePermutations.size();
 }
 
-unsigned CNStereocenter::numStereopermutations() const {
+unsigned AtomStereocenter::numStereopermutations() const {
   return _cache.permutations.assignments.size();
 }
 
-void CNStereocenter::setSymmetry(
+void AtomStereocenter::setSymmetry(
   const Symmetry::Name symmetryName,
   const GraphType& graph
 ) {
@@ -1731,11 +1731,11 @@ void CNStereocenter::setSymmetry(
   assign(boost::none);
 }
 
-Type CNStereocenter::type() const {
-  return Type::CNStereocenter;
+Type AtomStereocenter::type() const {
+  return Type::AtomStereocenter;
 }
 
-bool CNStereocenter::operator == (const CNStereocenter& other) const {
+bool AtomStereocenter::operator == (const AtomStereocenter& other) const {
   return (
     _symmetry == other._symmetry
     && _centerAtom == other._centerAtom
@@ -1744,7 +1744,7 @@ bool CNStereocenter::operator == (const CNStereocenter& other) const {
   );
 }
 
-bool CNStereocenter::operator < (const CNStereocenter& other) const {
+bool AtomStereocenter::operator < (const AtomStereocenter& other) const {
   /* Sequentially compare individual components, comparing assignments last
    * if everything else matches
    */

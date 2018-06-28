@@ -27,7 +27,7 @@ namespace molassembler {
 
 namespace DistanceGeometry {
 
-class MoleculeSpatialModel;
+class SpatialModel;
 struct ChiralityConstraint;
 
 } // namespace DistanceGeometry
@@ -39,7 +39,7 @@ namespace molassembler {
 
 namespace Stereocenters {
 
-class CNStereocenter final : public Stereocenter {
+class AtomStereocenter final : public Stereocenter {
 public:
 /* Typedefs */
   using StereopermutationType = stereopermutation::Stereopermutation;
@@ -166,7 +166,7 @@ private:
 public:
 /* Static functions */
 /* Constructors */
-  CNStereocenter(
+  AtomStereocenter(
     // The base graph
     const GraphType& graph,
     // The symmetry of this Stereocenter
@@ -251,7 +251,7 @@ public:
   ) const;
 
   void setModelInformation(
-    DistanceGeometry::MoleculeSpatialModel& model,
+    DistanceGeometry::SpatialModel& model,
     const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
     const double looseningMultiplier
   ) const final;
@@ -318,14 +318,14 @@ public:
   unsigned numStereopermutations() const final;
 
   /*!
-   * Returns Stereocenters::Type::CNStereocenter for resolution of sub-types
+   * Returns Stereocenters::Type::AtomStereocenter for resolution of sub-types
    * in homogeneous containers containing pointers to the base class.
    */
   Type type() const final;
 
 /* Operators */
-  bool operator == (const CNStereocenter& other) const;
-  bool operator < (const CNStereocenter& other) const;
+  bool operator == (const AtomStereocenter& other) const;
+  bool operator < (const AtomStereocenter& other) const;
 };
 
 } // namespace Stereocenters

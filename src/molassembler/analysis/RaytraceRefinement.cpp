@@ -5,7 +5,7 @@
 
 #include "detail/AnalysisHelpers.h"
 #include "detail/StdlibTypeAlgorithms.h"
-#include "DistanceGeometry/generateConformation.h"
+#include "DistanceGeometry/ConformerGeneration.h"
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
 #include "Log.h"

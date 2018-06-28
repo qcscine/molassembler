@@ -5,7 +5,7 @@
 #include "boost/filesystem.hpp"
 
 #include "DistanceGeometry/ExplicitGraph.h"
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 
 #include "boost/graph/graph_concepts.hpp"
 #include "IO.h"
@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
     using EG = DistanceGeometry::ExplicitGraph;
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {molecule};
+    DistanceGeometry::SpatialModel spatialModel {molecule};
 
     EG explicitGraph {
       molecule,

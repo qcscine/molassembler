@@ -1,6 +1,6 @@
 #include "Options.h"
 
-#include "CNStereocenter.h"
+#include "AtomStereocenter.h"
 #include "Cycles.h"
 #include "GraphHelpers.h"
 
@@ -12,7 +12,7 @@ TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 
 bool disregardStereocenter(
-  const Stereocenters::CNStereocenter& stereocenter,
+  const Stereocenters::AtomStereocenter& stereocenter,
   const Delib::ElementType centralType,
   const Cycles& cycleData,
   const TemperatureRegime temperatureRegimeSetting
@@ -44,7 +44,7 @@ bool disregardStereocenter(
 }
 
 void pickyFit(
-  Stereocenters::CNStereocenter& stereocenter,
+  Stereocenters::AtomStereocenter& stereocenter,
   const GraphType& graph,
   const AngstromWrapper& angstromWrapper,
   const Symmetry::Name expectedSymmetry

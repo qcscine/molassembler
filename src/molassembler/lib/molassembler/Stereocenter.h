@@ -23,15 +23,15 @@ class Molecule;
 
 namespace DistanceGeometry {
 struct ChiralityConstraint;
-class MoleculeSpatialModel;
+class SpatialModel;
 } // namespace DistanceGeometry
 
 //! Classes that store and manipulate steric information not intrinsic to the graph
 namespace Stereocenters {
 
 enum class Type {
-  CNStereocenter,
-  EZStereocenter
+  AtomStereocenter,
+  BondStereocenter
 };
 
 class Stereocenter {
@@ -81,7 +81,7 @@ public:
   virtual std::vector<AtomIndexType> involvedAtoms() const = 0;
 
   virtual void setModelInformation(
-    DistanceGeometry::MoleculeSpatialModel& model,
+    DistanceGeometry::SpatialModel& model,
     const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
     const double looseningMultiplier
   ) const = 0;

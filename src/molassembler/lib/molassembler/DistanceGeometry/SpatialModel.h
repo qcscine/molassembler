@@ -60,7 +60,7 @@ auto orderedSequence(Inds ... inds) {
  * Keeps a record of the internal dimension bounds that a molecular graph is
  * interpreted as and permits the generation of a distance bounds matrix.
  */
-class MoleculeSpatialModel {
+class SpatialModel {
 public:
 /* Typedefs */
   struct ModelGraphWriter;
@@ -121,7 +121,7 @@ public:
   );
 
 /* Constructor */
-  MoleculeSpatialModel(
+  SpatialModel(
     const Molecule& molecule,
     const double looseningMultiplier = 1.0
   );

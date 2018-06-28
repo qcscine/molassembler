@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
     && EECyclobutane.getStereocenterList().involving(5)
     && EECyclobutane.getStereocenterList().at(5)->numAssignments() == 2,
     "1E3E-1,3-difluoromethylidenecyclobutane differences between branches "
-    " when breaking the cyclobutane at the EZStereocenters don't register!"
+    " when breaking the cyclobutane at the BondStereocenters don't register!"
   );
 
   BOOST_CHECK_MESSAGE(

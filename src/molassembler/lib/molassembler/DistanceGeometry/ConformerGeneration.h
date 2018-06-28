@@ -1,8 +1,8 @@
-#ifndef INCLUDE_DG_GENERATE_CONFORMATION_H
-#define INCLUDE_DG_GENERATE_CONFORMATION_H
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_CONFORMER_GENERATION_H
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_CONFORMER_GENERATION_H
 
 #include "boost_outcome/outcome.hpp"
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 #include "DistanceGeometry/RefinementDebugData.h"
 #include "Log.h"
 
@@ -85,7 +85,7 @@ outcome::result<
 
 //! Intermediate conformational data about a Molecule given by a spatial model
 struct MoleculeDGInformation {
-  MoleculeSpatialModel::BoundsList bounds;
+  SpatialModel::BoundsList bounds;
   std::vector<ChiralityConstraint> chiralityConstraints;
 };
 

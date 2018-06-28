@@ -35,14 +35,14 @@ enum class Level : unsigned {
 
 //! Particular cases of special logging items that may or may not be desired
 enum class Particulars {
-  /*! In Molecule.cpp, where a fit of CNStereocenters against positions is
+  /*! In Molecule.cpp, where a fit of AtomStereocenters against positions is
    * performed when a Molecule is read in, you can have numerical details of
    * the fit logged. Corresponding analysis scripts also exist.
    */
-  CNStereocenterFit,
-  /*! CNStereocenter's addSubstituent, removeSubstituent and propagate* functions
+  AtomStereocenterFit,
+  /*! AtomStereocenter's addSubstituent, removeSubstituent and propagate* functions
    */
-  CNStereocenterStatePropagation,
+  AtomStereocenterStatePropagation,
   /*! In generateConformation.cpp, when chirality constraint prototypes are
    * fully determined into chirality constraints, emit some debug information
    */

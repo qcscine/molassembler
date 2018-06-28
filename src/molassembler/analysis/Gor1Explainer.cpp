@@ -9,7 +9,7 @@
 
 #include "detail/StdlibTypeAlgorithms.h"
 #include "DistanceGeometry/ImplicitGraphBoost.h"
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 #include "IO.h"
 
 #include "gor1/Gor1.h"
@@ -373,7 +373,7 @@ int main(int argc, char* argv[]) {
 
     auto mol = IO::read(filename);
 
-    DistanceGeometry::MoleculeSpatialModel spatialModel {mol};
+    DistanceGeometry::SpatialModel spatialModel {mol};
 
     DistanceGeometry::ImplicitGraph shortestPathsGraph {
       mol,

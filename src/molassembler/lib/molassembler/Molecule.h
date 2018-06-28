@@ -154,16 +154,16 @@ public:
    *
    * This sets the local geometry at a specific atom index. There are a number
    * of cases that this function treats differently, besides faulty arguments:
-   * If there is already a CNStereocenter instantiated at this atom index, its
-   * underlying symmetry is altered. If there is no CNStereocenter at
+   * If there is already a AtomStereocenter instantiated at this atom index, its
+   * underlying symmetry is altered. If there is no AtomStereocenter at
    * this index, one is instantiated. In all cases, new or modified
    * stereocenters are default-assigned if there is only one possible
    * assignment.
    * @throws if
    *   - the supplied atomic index is invalid
-   *   - there is an EZStereocenter at that index
+   *   - there is an BondStereocenter at that index
    *   - or the provided symmetry is a different size than that of an existing
-   *     CNStereocenter or the expected symmetry
+   *     AtomStereocenter or the expected symmetry
    */
   void setGeometryAtAtom(
     AtomIndexType a,

@@ -3,7 +3,7 @@
 #include "Delib/ElementInfo.h"
 #include "chemical_symmetries/Properties.h"
 
-#include "DistanceGeometry/MoleculeSpatialModel.h"
+#include "DistanceGeometry/SpatialModel.h"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "detail/CommonTrig.h"
 #include "detail/StdlibTypeAlgorithms.h"
@@ -22,11 +22,11 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 // General availability of static constexpr members
-constexpr double MoleculeSpatialModel::bondRelativeVariance;
-constexpr double MoleculeSpatialModel::angleAbsoluteVariance;
-constexpr double MoleculeSpatialModel::dihedralAbsoluteVariance;
+constexpr double SpatialModel::bondRelativeVariance;
+constexpr double SpatialModel::angleAbsoluteVariance;
+constexpr double SpatialModel::dihedralAbsoluteVariance;
 
-MoleculeSpatialModel::MoleculeSpatialModel(
+SpatialModel::SpatialModel(
   const Molecule& molecule,
   const double looseningMultiplier
 ) : _molecule(molecule), _looseningMultiplier(looseningMultiplier) {
@@ -43,18 +43,18 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    *
    *   - Copy original molecule's list of stereocenters. Set unassigned ones to
    *     a random assignment (consistent with occurrence statistics)
-   *   - Instantiate EZStereocenters on all double bonds that aren't immediately
+   *   - Instantiate BondStereocenters on all double bonds that aren't immediately
    *     involved in other stereocenters. This is to ensure that all atoms
    *     involved in non-stereogenic double bonds are also flat in the
    *     resulting 3D structure. They additionally allow extraction of
-   *     angle and dihedral angle information just like CNStereocenters.
-   *   - Instantiate CNStereocenters on all remaining atoms and default-assign
+   *     angle and dihedral angle information just like AtomStereocenters.
+   *   - Instantiate AtomStereocenters on all remaining atoms and default-assign
    *     them. This is so that we can get angle data between substituents easily.
    *
    * - Set internal angles of all small flat cycles
    * - Set all remaining 1-3 bounds with additional tolerance if atoms involved
    *   in the angle are part of a small cycle
-   * - Add EZStereocenter 1-4 bound information
+   * - Add BondStereocenter 1-4 bound information
    */
 
   // Helper variables
@@ -66,12 +66,12 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   // Check constraints on static constants
   static_assert(
     0 < bondRelativeVariance && bondRelativeVariance < 1,
-    "MoleculeSpatialModel static constant bond relative variance must fulfill"
+    "SpatialModel static constant bond relative variance must fulfill"
     "0 < x << 1"
   );
   static_assert(
     0 < angleAbsoluteVariance && angleAbsoluteVariance < Symmetry::smallestAngle,
-    "MoleculeSpatialModel static constant angle absolute variance must fulfill"
+    "SpatialModel static constant angle absolute variance must fulfill"
     "0 < x << (smallest angle any local symmetry returns)"
   );
 
@@ -104,15 +104,15 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
     for(const auto& involvedAtom : stereocenterPtr -> involvedAtoms()) {
       if(_stereocenterMap.count(involvedAtom) == 0) {
-        if(stereocenterPtr -> type() == Stereocenters::Type::CNStereocenter) {
+        if(stereocenterPtr -> type() == Stereocenters::Type::AtomStereocenter) {
           // Downcast the shared ptr
           auto CNSPtr = std::dynamic_pointer_cast<
-            Stereocenters::CNStereocenter
+            Stereocenters::AtomStereocenter
           >(stereocenterPtr);
 
           // Explicit new shared ptr using derived copy-constructor
           _stereocenterMap[involvedAtom] = std::make_shared<
-            Stereocenters::CNStereocenter
+            Stereocenters::AtomStereocenter
           >(*CNSPtr);
 
           /* Now we have a stereocenter, but it might be unassigned, in which
@@ -121,21 +121,21 @@ MoleculeSpatialModel::MoleculeSpatialModel(
            * occurrences
            */
           if(!_stereocenterMap[involvedAtom] -> assigned()) {
-            std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+            std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
               _stereocenterMap[involvedAtom]
             ) -> assignRandom();
           }
         } else {
           auto EZSPtr = std::dynamic_pointer_cast<
-            Stereocenters::EZStereocenter
+            Stereocenters::BondStereocenter
           >(stereocenterPtr);
 
           _stereocenterMap[involvedAtom] = std::make_shared<
-            Stereocenters::EZStereocenter
+            Stereocenters::BondStereocenter
           >(*EZSPtr);
 
           if(!_stereocenterMap[involvedAtom] -> assigned()) {
-            // Assign the EZStereocenter at random
+            // Assign the BondStereocenter at random
             _stereocenterMap[involvedAtom] -> assignRandom();
           }
         }
@@ -143,7 +143,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     }
   }
 
-  /* For every non-implicated double bond, create an EZStereocenter
+  /* For every non-implicated double bond, create an BondStereocenter
    * Implicated means here that no stereocenters exist for either of the double
    * edge's atoms.
    *
@@ -162,7 +162,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
         && molecule.getNumAdjacencies(target) == 3
       ) {
         // Instantiate without regard for number of assignments
-        auto newStereocenterPtr = std::make_shared<Stereocenters::EZStereocenter>(
+        auto newStereocenterPtr = std::make_shared<Stereocenters::BondStereocenter>(
           source,
           molecule.rankPriority(source, {target}), // exclude shared edge
           target,
@@ -176,7 +176,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     }
   }
 
-  /* For every missing non-terminal atom, create a CNStereocenter in the
+  /* For every missing non-terminal atom, create a AtomStereocenter in the
    * determined geometry
    */
   for(unsigned i = 0; i < molecule.numAtoms(); i++) {
@@ -186,7 +186,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
     ) {
       auto localRanking = molecule.rankPriority(i);
 
-      _stereocenterMap[i] = std::make_shared<Stereocenters::CNStereocenter>(
+      _stereocenterMap[i] = std::make_shared<Stereocenters::AtomStereocenter>(
         molecule.getGraph(),
         molecule.determineLocalGeometry(i, localRanking),
         i,
@@ -199,7 +199,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
        * nitrogens. These are found here, though, and MUST be chosen randomly
        * according to the relative weights
        */
-      std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+      std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
         _stereocenterMap[i]
       ) -> assignRandom();
     }
@@ -370,8 +370,8 @@ MoleculeSpatialModel::MoleculeSpatialModel(
    * particularly small, i.e. are sizes 3-5
    */
   for(const auto& stereocenterPtr : _molecule.getStereocenterList()) {
-    if(stereocenterPtr -> type() == Stereocenters::Type::CNStereocenter) {
-      auto cnPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+    if(stereocenterPtr -> type() == Stereocenters::Type::AtomStereocenter) {
+      auto cnPtr = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
         stereocenterPtr
       );
 
@@ -530,7 +530,7 @@ MoleculeSpatialModel::MoleculeSpatialModel(
   addDefaultDihedrals();
 }
 
-void MoleculeSpatialModel::setBondBoundsIfEmpty(
+void SpatialModel::setBondBoundsIfEmpty(
   const std::array<AtomIndexType, 2>& bondIndices,
   const double centralValue
 ) {
@@ -556,7 +556,7 @@ void MoleculeSpatialModel::setBondBoundsIfEmpty(
   }
 }
 
-void MoleculeSpatialModel::setBondBoundsIfEmpty(
+void SpatialModel::setBondBoundsIfEmpty(
   const std::array<AtomIndexType, 2>& bondIndices,
   const ValueBounds& bounds
 ) {
@@ -576,7 +576,7 @@ void MoleculeSpatialModel::setBondBoundsIfEmpty(
  * Adds the angle bounds to the model, but only if the information for that
  * set of indices does not exist yet.
  */
-void MoleculeSpatialModel::setAngleBoundsIfEmpty(
+void SpatialModel::setAngleBoundsIfEmpty(
   const std::array<AtomIndexType, 3>& angleIndices,
   const double centralValue,
   const double absoluteVariance
@@ -605,7 +605,7 @@ void MoleculeSpatialModel::setAngleBoundsIfEmpty(
   }
 }
 
-void MoleculeSpatialModel::setAngleBoundsIfEmpty(
+void SpatialModel::setAngleBoundsIfEmpty(
   const std::array<AtomIndexType, 3>& angleIndices,
   const ValueBounds& bounds
 ) {
@@ -637,7 +637,7 @@ void MoleculeSpatialModel::setAngleBoundsIfEmpty(
  * Adds the dihedral bounds to the model, but only if the information for that
  * set of indices does not exist yet.
  */
-void MoleculeSpatialModel::setDihedralBoundsIfEmpty(
+void SpatialModel::setDihedralBoundsIfEmpty(
   const std::array<AtomIndexType, 4>& dihedralIndices,
   const double lower,
   const double upper
@@ -668,7 +668,7 @@ void MoleculeSpatialModel::setDihedralBoundsIfEmpty(
   }
 }
 
-void MoleculeSpatialModel::addDefaultAngles() {
+void SpatialModel::addDefaultAngles() {
   const AtomIndexType N = _molecule.numAtoms();
   for(AtomIndexType center = 0; center < N; ++center) {
     temple::forAllPairs(
@@ -686,7 +686,7 @@ void MoleculeSpatialModel::addDefaultAngles() {
   }
 }
 
-void MoleculeSpatialModel::addDefaultDihedrals() {
+void SpatialModel::addDefaultDihedrals() {
   for(const auto& edgeDescriptor : _molecule.iterateEdges()) {
     const AtomIndexType sourceIndex = boost::source(edgeDescriptor, _molecule.getGraph());
     const AtomIndexType targetIndex = boost::target(edgeDescriptor, _molecule.getGraph());
@@ -746,7 +746,7 @@ bool bondInformationIsPresent(
   );
 }
 
-MoleculeSpatialModel::BoundsList MoleculeSpatialModel::makeBoundsList() const {
+SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
   BoundsList bounds = _bondBounds;
 
   auto addInformation = [&bounds](
@@ -878,7 +878,7 @@ MoleculeSpatialModel::BoundsList MoleculeSpatialModel::makeBoundsList() const {
   return bounds;
 }
 
-DistanceBoundsMatrix MoleculeSpatialModel::makeBounds() const {
+DistanceBoundsMatrix SpatialModel::makeBounds() const {
   DistanceBoundsMatrix bounds {_molecule.numAtoms()};
 
   for(const auto& bondPair : _bondBounds) {
@@ -1014,7 +1014,7 @@ DistanceBoundsMatrix MoleculeSpatialModel::makeBounds() const {
   return bounds;
 }
 
-boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
+boost::optional<ValueBounds> SpatialModel::coneAngle(
   const std::vector<AtomIndexType>& ligandIndices,
   const ValueBounds& coneHeightBounds
 ) const {
@@ -1027,7 +1027,7 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   );
 }
 
-ValueBounds MoleculeSpatialModel::ligandDistance(
+ValueBounds SpatialModel::ligandDistance(
   const std::vector<AtomIndexType>& ligandIndices,
   const AtomIndexType centralIndex
 ) const {
@@ -1039,7 +1039,7 @@ ValueBounds MoleculeSpatialModel::ligandDistance(
   );
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> MoleculeSpatialModel::getChiralityConstraints() const {
+std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
   std::vector<DistanceGeometry::ChiralityConstraint> constraints;
 
   for(const auto& iterPair : _stereocenterMap) {
@@ -1056,9 +1056,9 @@ std::vector<DistanceGeometry::ChiralityConstraint> MoleculeSpatialModel::getChir
   return constraints;
 }
 
-void MoleculeSpatialModel::dumpDebugInfo() const {
+void SpatialModel::dumpDebugInfo() const {
   auto& logRef = Log::log(Log::Level::Debug);
-  logRef << "MoleculeSpatialModel debug info" << std::endl;
+  logRef << "SpatialModel debug info" << std::endl;
 
   // Bonds
   for(const auto& bondIterPair : _bondBounds) {
@@ -1085,7 +1085,7 @@ void MoleculeSpatialModel::dumpDebugInfo() const {
   }
 }
 
-struct MoleculeSpatialModel::ModelGraphWriter {
+struct SpatialModel::ModelGraphWriter {
   /* Settings to determine appearance */
   // Color maps
   const std::map<
@@ -1125,12 +1125,12 @@ struct MoleculeSpatialModel::ModelGraphWriter {
   /* State */
   // We promise to be good and not change anything
   const GraphType* const graphPtr;
-  const MoleculeSpatialModel& spatialModel;
+  const SpatialModel& spatialModel;
 
 /* Constructor */
   ModelGraphWriter(
     const GraphType* passGraphPtr,
-    const MoleculeSpatialModel& spatialModel
+    const SpatialModel& spatialModel
   ) : graphPtr(passGraphPtr),
     spatialModel(spatialModel)
   {}
@@ -1153,9 +1153,9 @@ struct MoleculeSpatialModel::ModelGraphWriter {
       const auto& stereocenterPtr = stereocenterIterPair.second;
 
       if(
-        stereocenterPtr->type() == Stereocenters::Type::EZStereocenter
+        stereocenterPtr->type() == Stereocenters::Type::BondStereocenter
       ) {
-        // Avoid writing EZStereocenters twice
+        // Avoid writing BondStereocenters twice
         if(*stereocenterPtr->involvedAtoms().rbegin() == mappingIndex) {
           continue;
         }
@@ -1178,7 +1178,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
           << stereocenterPtr -> info()
           << R"("];)" << "\n";
       } else {
-        const auto cnPtr = std::dynamic_pointer_cast<Stereocenters::CNStereocenter>(
+        const auto cnPtr = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
           stereocenterPtr
         );
 
@@ -1258,7 +1258,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
     // Are there any additional vertices we ought to connect to?
     if(spatialModel._stereocenterMap.count(vertexIndex) == 1) {
       const auto& stereocenterPtr = spatialModel._stereocenterMap.at(vertexIndex);
-      if(stereocenterPtr -> type() == Stereocenters::Type::CNStereocenter) {
+      if(stereocenterPtr -> type() == Stereocenters::Type::AtomStereocenter) {
         os << ";CN";
       } else {
         os << ";EZ";
@@ -1302,7 +1302,7 @@ struct MoleculeSpatialModel::ModelGraphWriter {
   }
 };
 
-void MoleculeSpatialModel::writeGraphviz(const std::string& filename) const {
+void SpatialModel::writeGraphviz(const std::string& filename) const {
   ModelGraphWriter graphWriter(
     &_molecule.getGraph(),
     *this
@@ -1322,7 +1322,7 @@ void MoleculeSpatialModel::writeGraphviz(const std::string& filename) const {
 }
 
 /* Static functions */
-boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
+boost::optional<ValueBounds> SpatialModel::coneAngle(
   const std::vector<AtomIndexType>& baseConstituents,
   const ValueBounds& coneHeightBounds,
   const double bondRelativeVariance,
@@ -1455,14 +1455,14 @@ boost::optional<ValueBounds> MoleculeSpatialModel::coneAngle(
   return boost::none;
 }
 
-double MoleculeSpatialModel::spiroCrossAngle(const double alpha, const double beta) {
+double SpatialModel::spiroCrossAngle(const double alpha, const double beta) {
   // The source of this equation is explained in documents/
   return std::acos(
     -std::cos(alpha / 2) * std::cos(beta / 2)
   );
 }
 
-ValueBounds MoleculeSpatialModel::ligandDistanceFromCenter(
+ValueBounds SpatialModel::ligandDistanceFromCenter(
   const std::vector<AtomIndexType>& ligandIndices,
   const AtomIndexType centralIndex,
   const double bondRelativeVariance,
