@@ -647,7 +647,7 @@ struct RotationGenerationTest {
       pass = false;
     } else {
       pass = (
-        !temple::setDifference(
+        temple::setDifference(
           convertedRotations,
           dynamicRotations
         ).empty()
