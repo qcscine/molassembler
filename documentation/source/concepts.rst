@@ -9,8 +9,9 @@ be laid plain.
 Symmetries
 ==========
 
-Information on the various local symmetries that are modeled are centralized
-in a separate library. We have chosen to consider the following symmetries:
+Non-terminal atoms in molecules often adopt nearly ideal local symmetries when
+no strain is placed upon its substituents due to small cycles. The local
+symmetries currently considered in this library are:
 
 ==== ====
 Size Name
@@ -24,35 +25,25 @@ Size Name
 8    Square antiprismatic
 ==== ====
 
-For every symmetry, the following information is stored in a manner that permits
-compile-time computation:
-
-- Ligand to ligand angle function
-- A minimal set of rotation mappings that allow the generation of all
-  superimposable position sequences
-- A set of tetrahedron definitions whose signed volumes permit the distinction
-  of chiral differences between position sequences
-
 
 Stereopermutations
 ==================
-TODO Text about the symbolic calculation of stereopermutations
-In many cases, the relative positioning of a central atom's substituents
-corresponds to a common local symmetry. Most of organic chemistry, for instance,
-can be composed of linear, bent, trigonal planar and tetrahedral local
-symmetries. The most common source of chiral information in organic chemistry is
-an asymmetric tetrahedral carbon, where its four subtituents are all different
-(i.e. have different ranking according to the IUPAC rules). From a local
-symmetry and the information that all substituents are distinct
-ranking-wise, we can conclude that there are two non-superimposable
-permutations of ligands. Stereopermutations of any symmetry can be computed
-symbolically[REF], including cases in which substituents are mutually linked,
-such as in multidentate ligands. Special care must be taken in order to reduce
-haptically bonded ligands to the correct local symmetries and ranking. In
-addition, symbolic computation of permutations does not consider the conditional
-feasibility of assembling linked ligands depending on a symmetry's
-ligand-to-ligand angle, bridge lengths, element types and bond types involved in
-the link.
+
+Figuring out all non-superimposable arrangements of substituents around the
+idealized symmetries is a permutational problem. 
+
+Most of organic chemistry, for instance, can be composed of linear, bent,
+trigonal planar and tetrahedral local symmetries. The most common source of
+chiral information in organic chemistry is an asymmetric tetrahedral carbon,
+where its four subtituents are all different (i.e. have different ranking
+according to the IUPAC rules). From a local symmetry and the information that
+all substituents are distinct ranking-wise, we know that there are two
+non-superimposable permutations of ligands. 
+
+Stereopermutations of any symmetry can be computed symbolically[REF], including
+cases in which substituents are mutually linked, such as in multidentate
+ligands. Special care is taken in order to reduce haptically bonded ligands
+to the correct local symmetries and ranking. 
 
 
 Molecule model
