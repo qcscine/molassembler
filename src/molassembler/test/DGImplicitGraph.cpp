@@ -82,43 +82,43 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       currentFilePath.string()
     );
 
-    using SPG = DistanceGeometry::ImplicitGraph;
+    using IG = DistanceGeometry::ImplicitGraph;
 
     DistanceGeometry::SpatialModel spatialModel {molecule};
 
-    SPG spg {
+    IG ig {
       molecule,
       spatialModel.makeBoundsList()
     };
 
-    SPG::VertexDescriptor N = boost::num_vertices(spg);
+    IG::VertexDescriptor N = boost::num_vertices(ig);
 
-    for(SPG::VertexDescriptor i = 0; i < N; ++i) {
+    for(IG::VertexDescriptor i = 0; i < N; ++i) {
       BOOST_CHECK_MESSAGE(
-        static_cast<SPG::VertexDescriptor>(
+        static_cast<IG::VertexDescriptor>(
           std::distance(
-            spg.obegin(i),
-            spg.oend(i)
+            ig.obegin(i),
+            ig.oend(i)
           )
-        ) == boost::out_degree(i, spg),
+        ) == boost::out_degree(i, ig),
         "Out degree of vertex " << i << " does not match out_edge_iterator begin-end distance"
       );
 
       // Out-edge iterator tests
-      auto iter = spg.obegin(i);
-      auto end = spg.oend(i);
+      auto iter = ig.obegin(i);
+      auto end = ig.oend(i);
 
       while(iter != end) {
         auto edgeDescriptor = *iter;
 
         BOOST_CHECK_MESSAGE(
-          boost::target(edgeDescriptor, spg) == iter.target(),
+          boost::target(edgeDescriptor, ig) == iter.target(),
           "out_edge_iter boost-target and iter-member-target do not match for {"
           << edgeDescriptor.first << ", " << edgeDescriptor.second << "}"
         );
 
         BOOST_CHECK_MESSAGE(
-          boost::get(boost::edge_weight, spg, edgeDescriptor) == iter.weight(),
+          boost::get(boost::edge_weight, ig, edgeDescriptor) == iter.weight(),
           "out_edge_iter boost-get-weight and iter-member-weight do not match for {"
           << edgeDescriptor.first << ", " << edgeDescriptor.second << "}"
         );
@@ -127,17 +127,17 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       }
 
       // in_group_edge_iterator tests
-      auto groupIter = spg.in_group_edges_begin(i);
-      const auto groupEnd = spg.in_group_edges_end(i);
+      auto groupIter = ig.in_group_edges_begin(i);
+      const auto groupEnd = ig.in_group_edges_end(i);
 
       while(groupIter != groupEnd) {
         auto edgeDescriptor = *groupIter;
         auto target = groupIter.target();
         auto weight = groupIter.weight();
-        auto boostWeight = boost::get(boost::edge_weight, spg, edgeDescriptor);
+        auto boostWeight = boost::get(boost::edge_weight, ig, edgeDescriptor);
 
         BOOST_CHECK_MESSAGE(
-          boost::edge(i, target, spg).second,
+          boost::edge(i, target, ig).second,
           "Edge reported by in_group_edge_iterator does not exist per boost::edge. "
             << "iterator: " << i << " -> " << target
         );
@@ -157,34 +157,34 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       }
     }
 
-    for(SPG::VertexDescriptor a = 0; a < N / 2; ++a) {
+    for(IG::VertexDescriptor a = 0; a < N / 2; ++a) {
       BOOST_CHECK_MESSAGE(
-        !boost::edge(2 * a, 2 * a + 1, spg).second,
+        !boost::edge(2 * a, 2 * a + 1, ig).second,
         "Same-a edge exists for a = " << a
       );
 
-      for(SPG::VertexDescriptor b = 0; b < N / 2; ++b) {
+      for(IG::VertexDescriptor b = 0; b < N / 2; ++b) {
         if(a == b) {
           continue;
         }
 
         // No right-to-left edges
         BOOST_CHECK_MESSAGE(
-          !boost::edge(right(a), left(b), spg).second,
+          !boost::edge(right(a), left(b), ig).second,
           "r(a) -> l(b) for a = " << a << ", b = " << b
         );
 
         BOOST_CHECK_MESSAGE(
-          !boost::edge(right(b), left(a), spg).second,
+          !boost::edge(right(b), left(a), ig).second,
           "r(b) -> l(a) for a = " << a << ", b = " << b
         );
 
         // If there is an edge from la to lb
-        auto lalb = boost::edge(2 * a, 2 * b, spg);
+        auto lalb = boost::edge(2 * a, 2 * b, ig);
         if(lalb.second) {
-          auto lalbWeight = boost::get(boost::edge_weight, spg, lalb.first);
+          auto lalbWeight = boost::get(boost::edge_weight, ig, lalb.first);
 
-          auto lbra = boost::edge(2 * b, 2 * a + 1, spg);
+          auto lbra = boost::edge(2 * b, 2 * a + 1, ig);
 
           BOOST_CHECK_MESSAGE(
             lbra.second,
@@ -192,9 +192,9 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
               << ", b = " << b
           );
 
-          auto lbraWeight = boost::get(boost::edge_weight, spg, lbra.first);
+          auto lbraWeight = boost::get(boost::edge_weight, ig, lbra.first);
 
-          auto larb = boost::edge(2 * a, 2 * b + 1, spg);
+          auto larb = boost::edge(2 * a, 2 * b + 1, ig);
 
           BOOST_CHECK_MESSAGE(
             larb.second,
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
               << ", b = " << b
           );
 
-          auto larbWeight = boost::get(boost::edge_weight, spg, larb.first);
+          auto larbWeight = boost::get(boost::edge_weight, ig, larb.first);
 
           BOOST_CHECK_MESSAGE(
             larbWeight == lbraWeight,
@@ -220,23 +220,23 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
     }
 
     BOOST_CHECK_MESSAGE(
-      static_cast<SPG::VertexDescriptor>(
+      static_cast<IG::VertexDescriptor>(
         std::distance(
-          spg.ebegin(),
-          spg.eend()
+          ig.ebegin(),
+          ig.eend()
         )
-      ) == boost::num_edges(spg),
+      ) == boost::num_edges(ig),
       "Number of edges does not match edge iterator begin-end distance"
     );
 
-    auto iter = spg.ebegin();
-    auto end = spg.eend();
+    auto iter = ig.ebegin();
+    auto end = ig.eend();
 
     while(iter != end) {
       auto edgeDescriptor = *iter;
 
-      auto boostSource = boost::source(edgeDescriptor, spg);
-      auto boostTarget = boost::target(edgeDescriptor, spg);
+      auto boostSource = boost::source(edgeDescriptor, ig);
+      auto boostTarget = boost::target(edgeDescriptor, ig);
 
       // Boost and iter target fetch match
       BOOST_CHECK_MESSAGE(
@@ -247,11 +247,11 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
       // No right-to-left edges
       BOOST_CHECK_MESSAGE(
-        !(!SPG::isLeft(boostSource) && SPG::isLeft(boostTarget)),
+        !(!IG::isLeft(boostSource) && IG::isLeft(boostTarget)),
         "Edge points from right to left! " << boostSource << " -> " << boostTarget
       );
 
-      auto boostEdgeWeight = boost::get(boost::edge_weight, spg, edgeDescriptor);
+      auto boostEdgeWeight = boost::get(boost::edge_weight, ig, edgeDescriptor);
 
       // Boost and iter weight fetch match
       BOOST_CHECK_MESSAGE(
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
         // In-group edge
 
         // Reverse exists
-        auto reverseEdge = boost::edge(boostTarget, boostSource, spg);
+        auto reverseEdge = boost::edge(boostTarget, boostSource, ig);
         BOOST_CHECK_MESSAGE(
           reverseEdge.second,
           "Reverse edge does not exist for in-group edge "
@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
         // Reverse has same edge weight
         BOOST_CHECK_MESSAGE(
-          boost::get(boost::edge_weight, spg, reverseEdge.first) == boostEdgeWeight,
+          boost::get(boost::edge_weight, ig, reverseEdge.first) == boostEdgeWeight,
           "Reverse edge for " << boostSource << " -> " << boostTarget
             << " does not have same edge weight"
         );
@@ -283,7 +283,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
     }
 
     // Generated distances matrix must satisfy triangle inequalities
-    auto distancesMatrixResult = spg.makeDistanceMatrix();
+    auto distancesMatrixResult = ig.makeDistanceMatrix();
     if(!distancesMatrixResult) {
       BOOST_FAIL(distancesMatrixResult.error().message());
     }
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       << triangleInequalitiesFailures
       << " triangle inequality violations. There are "
       << std::pow(matrN, 3) << " such relations in this matrix. ("
-      << (static_cast<double>(triangleInequalitiesFailures) / std::pow(matrN, 3))
+      << (100 * static_cast<double>(triangleInequalitiesFailures) / std::pow(matrN, 3))
       << " %)" << nl;
 
     BOOST_CHECK_MESSAGE(

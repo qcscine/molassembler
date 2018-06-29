@@ -136,7 +136,8 @@ public:
       const ChiralStatePreservation& preservationOption
     );
 
-    static bool isFeasibleStereopermutation(
+    //! Determine whether a stereopermutation is not obviously impossible
+    static bool isNotObviouslyImpossibleStereopermutation(
       const StereopermutationType& assignment,
       const RankingInformation::RankedLigandsType& canonicalLigands,
       const ConeAngleType& coneAngles,
@@ -284,7 +285,9 @@ public:
   > minimalChiralityConstraints() const;
 
   //! Generates a list of chirality constraints on its substituents for DG
-  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const final;
+  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
+    double looseningMultiplier
+  ) const final;
 
   //! Returns an information string for diagnostic purposes
   std::string info() const final;

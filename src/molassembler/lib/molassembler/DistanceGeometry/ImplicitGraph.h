@@ -4,14 +4,16 @@
 #include "boost/variant.hpp"
 #include "boost/optional.hpp"
 #include "boost_outcome/outcome.hpp"
-#include <array>
-#include <map>
-#include <tuple>
 #include "Eigen/Core"
 
 #include "DistanceGeometry/ValueBounds.h"
 #include "boost/property_map/property_map.hpp"
 #include "Delib/ElementTypes.h"
+#include "temple/Preprocessor.h"
+
+#include <array>
+#include <map>
+#include <tuple>
 
 /*! @file
  *
@@ -148,15 +150,15 @@ private:
   Eigen::MatrixXd _distances;
 
   /* To outer indexing */
-  inline static VertexDescriptor left(const VertexDescriptor a) {
+  inline static VertexDescriptor left(const VertexDescriptor a) PURITY_STRONG {
     return 2 * a;
   }
 
-  inline static VertexDescriptor right(const VertexDescriptor a) {
+  inline static VertexDescriptor right(const VertexDescriptor a) PURITY_STRONG {
     return 2 * a + 1;
   }
 
-  inline static VertexDescriptor internal(const VertexDescriptor i) {
+  inline static VertexDescriptor internal(const VertexDescriptor i) PURITY_STRONG {
     // Integer division rounds down, which is perfect
     return i / 2;
   }
@@ -228,7 +230,7 @@ public:
   bool hasExplicit(const EdgeDescriptor& edge) const;
 
   /* To inner indexing */
-  inline static bool isLeft(const VertexDescriptor i) {
+  inline static bool isLeft(const VertexDescriptor i) PURITY_STRONG {
     return i % 2 == 0;
   }
 

@@ -7,15 +7,12 @@
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "detail/CommonTrig.h"
 #include "detail/StdlibTypeAlgorithms.h"
+#include "detail/MolGraphWriter.h"
 #include "Log.h"
 #include "temple/Random.h"
 #include "temple/Containers.h"
 
 #include <fstream>
-
-/* TODO
- * - Use the static const MolGraphWriter coloring maps
- */
 
 namespace molassembler {
 
@@ -1040,14 +1037,12 @@ ValueBounds SpatialModel::ligandDistance(
 }
 
 std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
-  // TODO chirality constraints are unmodified by looseningMultiplier
-
   std::vector<DistanceGeometry::ChiralityConstraint> constraints;
 
   for(const auto& iterPair : _stereocenterMap) {
     const auto& stereocenterPtr = iterPair.second;
 
-    auto chiralityPrototypes = stereocenterPtr -> chiralityConstraints();
+    auto chiralityPrototypes = stereocenterPtr -> chiralityConstraints(_looseningMultiplier);
     std::move(
       chiralityPrototypes.begin(),
       chiralityPrototypes.end(),
@@ -1088,42 +1083,6 @@ void SpatialModel::dumpDebugInfo() const {
 }
 
 struct SpatialModel::ModelGraphWriter {
-  /* Settings to determine appearance */
-  // Color maps
-  const std::map<
-    std::string,
-    std::string
-  > elementBGColorMap {
-    {"H", "white"},
-    {"C", "gray"},
-    {"N", "blue"},
-    {"O", "red"}
-  };
-
-  const std::map<
-    std::string,
-    std::string
-  > elementTextColorMap {
-    {"H", "black"},
-    {"C", "white"},
-    {"N", "white"},
-    {"O", "white"}
-  };
-
-  const std::map<
-    BondType,
-    std::string
-  > bondTypeDisplayString {
-    {BondType::Single, R"(color = "black")"},
-    {BondType::Double, R"(color = "black:invis:black")"},
-    {BondType::Triple, R"(color = "black:invis:black:invis:black")"},
-    {BondType::Quadruple, R"(label = "4")"},
-    {BondType::Quintuple, R"(label = "5")"},
-    {BondType::Sextuple, R"(label = "6")"},
-    {BondType::Aromatic, R"(style = "dashed")"},
-    {BondType::Eta, R"(style = "dotted")"}
-  };
-
   /* State */
   // We promise to be good and not change anything
   const GraphType* const graphPtr;
@@ -1207,13 +1166,17 @@ struct SpatialModel::ModelGraphWriter {
     os << R"(label = ")" << symbolString << vertexIndex << R"(")";
 
     // Coloring
-    if(elementBGColorMap.count(symbolString) != 0u) {
-      os << R"(, fillcolor=")" << elementBGColorMap.at(symbolString) << R"(")";
+    // C++17 if-init
+    auto bgColorFindIter = MolGraphWriter::elementBGColorMap.find(symbolString);
+    if(bgColorFindIter != MolGraphWriter::elementBGColorMap.end()) {
+      os << R"(, fillcolor=")" << bgColorFindIter->second << R"(")";
     } else { // default
       os << R"(, fillcolor="white")";
     }
-    if(elementTextColorMap.count(symbolString) != 0u) {
-      os << R"(, fontcolor=")" << elementTextColorMap.at(symbolString) << R"(")";
+
+    auto textColorFindIter = MolGraphWriter::elementTextColorMap.find(symbolString);
+    if(textColorFindIter != MolGraphWriter::elementTextColorMap.end()) {
+      os << R"(, fontcolor=")" << textColorFindIter->second << R"(")";
     } else { // default
       os << R"(, fontcolor="orange")";
     }
@@ -1280,8 +1243,9 @@ struct SpatialModel::ModelGraphWriter {
 
     // Bond Type display options
     auto bondType = (*graphPtr)[edgeIndex].bondType;
-    if(bondTypeDisplayString.count(bondType) != 0u) {
-      os << bondTypeDisplayString.at(bondType);
+    auto stringFindIter = MolGraphWriter::bondTypeDisplayString.find(bondType);
+    if(stringFindIter != MolGraphWriter::bondTypeDisplayString.end()) {
+      os << stringFindIter->second;
     }
 
     // If one of the bonded atoms is a hydrogen, shorten the bond

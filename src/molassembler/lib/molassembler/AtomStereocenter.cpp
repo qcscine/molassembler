@@ -94,12 +94,11 @@ AtomStereocenter::PermutationState::PermutationState(
       )
     ) > 0
   ) {
-    Cycles cycleData {graph};
     feasiblePermutations.reserve(permutations.assignments.size());
     const unsigned P = permutations.assignments.size();
     for(unsigned i = 0; i < P; ++i) {
       if(
-        isFeasibleStereopermutation(
+        isNotObviouslyImpossibleStereopermutation(
           permutations.assignments.at(i),
           canonicalLigands,
           coneAngles,
@@ -400,7 +399,7 @@ boost::optional<std::vector<unsigned>> AtomStereocenter::PermutationState::getIn
   return boost::none;
 }
 
-bool AtomStereocenter::PermutationState::isFeasibleStereopermutation(
+bool AtomStereocenter::PermutationState::isNotObviouslyImpossibleStereopermutation(
   const StereopermutationType& assignment,
   const RankingInformation::RankedLigandsType& canonicalLigands,
   const ConeAngleType& coneAngles,
@@ -1479,8 +1478,8 @@ std::vector<
 
     precursors.reserve(tetrahedraList.size());
     for(const auto& tetrahedron : tetrahedraList) {
-      /* Replace boost::none with centerAtom, indices (represent positions within
-       * the symmetry) with the atom index at that position from the inverted map
+      /* Replace indices (represent positions within the symmetry) with the
+       * ligand index at that position from the inverted map
        */
 
       // Make a minimal sequence from it
@@ -1504,7 +1503,14 @@ std::vector<
   return precursors;
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityConstraints() const {
+std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityConstraints(
+  const double looseningMultiplier
+) const {
+  const double angleVariance = (
+    DistanceGeometry::SpatialModel::angleAbsoluteVariance
+    * looseningMultiplier
+  );
+
   return temple::map(
     minimalChiralityConstraints(),
     [&](const auto& minimalConstraint) -> DistanceGeometry::ChiralityConstraint {
@@ -1536,7 +1542,9 @@ std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityCo
        *
        */
 
-      Eigen::Matrix<double, 5, 5> lowerMatrix, upperMatrix;
+      using DeterminantMatrix = Eigen::Matrix<double, 5, 5>;
+
+      DeterminantMatrix lowerMatrix, upperMatrix;
 
       lowerMatrix.row(0).setOnes();
       upperMatrix.row(0).setOnes();
@@ -1544,6 +1552,9 @@ std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityCo
       lowerMatrix.diagonal().setZero();
       upperMatrix.diagonal().setZero();
 
+      /* Cycle through all combinations of ligand indices in the tetrahedron
+       * definition sequence. boost::none means the central atom.
+       */
       for(unsigned i = 0; i < 4; ++i) {
         boost::optional<DistanceGeometry::ValueBounds> iBounds;
         if(minimalConstraint.at(i)) {
@@ -1564,22 +1575,24 @@ std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityCo
 
           DistanceGeometry::ValueBounds oneThreeDistanceBounds;
           if(iBounds && jBounds) {
+            /* If neither index is the central atom, we can calculate an
+             * expected one-three distance
+             */
+            double siteAngle = angle(
+              minimalConstraint.at(i).value(),
+              minimalConstraint.at(j).value()
+            );
+
             oneThreeDistanceBounds = {
               CommonTrig::lawOfCosines(
                 iBounds.value().lower,
                 jBounds.value().lower,
-                angle(
-                  minimalConstraint.at(i).value(),
-                  minimalConstraint.at(j).value()
-                )
+                std::max(0.0, siteAngle - angleVariance)
               ),
               CommonTrig::lawOfCosines(
                 iBounds.value().upper,
                 jBounds.value().upper,
-                angle(
-                  minimalConstraint.at(i).value(),
-                  minimalConstraint.at(j).value()
-                )
+                std::min(M_PI, siteAngle + angleVariance)
               )
             };
           } else if(iBounds) {
@@ -1593,15 +1606,11 @@ std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityCo
         }
       }
 
-      const double boundFromLower = static_cast<
-        Eigen::Matrix<double, 5, 5>
-      >(
+      const double boundFromLower = static_cast<DeterminantMatrix>(
         lowerMatrix.selfadjointView<Eigen::Upper>()
       ).determinant();
 
-      const double boundFromUpper = static_cast<
-        Eigen::Matrix<double, 5, 5>
-      >(
+      const double boundFromUpper = static_cast<DeterminantMatrix>(
         upperMatrix.selfadjointView<Eigen::Upper>()
       ).determinant();
 
@@ -1624,11 +1633,11 @@ std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityCo
 
       /* Although it is tempting to assume that the Cayley-Menger determinant
        * using the lower bounds is smaller than the one using upper bounds,
-       * this is NOT true. We cannot a priori know which of both yields the
-       * lower or upper bounds on the 3D volume, and hence must ensure only
-       * that the ordering is preserved in the generation of the
-       * ChiralityConstraint, which checks that the lower bound on the volume
-       * is certainly smaller than the upper one.
+       * this is not always true. We cannot a priori know which of both yields
+       * the lower or upper bounds on the 3D volume, and hence must ensure only
+       * that the ordering is preserved in the generation of the constraint,
+       * which checks that the lower bound on the volume is smaller than the
+       * upper one.
        *
        * You can check this assertion with a CAS. The relationship between both
        * determinants (where u_ij = l_ij + Δ) is wholly indeterminant, i.e. no

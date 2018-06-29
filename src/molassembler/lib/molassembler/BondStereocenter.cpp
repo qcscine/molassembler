@@ -405,7 +405,11 @@ unsigned BondStereocenter::numStereopermutations() const {
   return 2;
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::chiralityConstraints() const {
+std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::chiralityConstraints(
+  const double looseningMultiplier
+) const {
+  const double variance = chiralityConstraintTolerance * looseningMultiplier;
+
   // Three fixed ChiralityConstraints to enforce six-atom coplanarity
 
   using LigandSequence = DistanceGeometry::ChiralityConstraint::LigandSequence;
@@ -418,8 +422,8 @@ std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::chiralityCo
         {_rightCenter},
         {_rightHighPriority()}
       }},
-      -chiralityConstraintTolerance,
-      chiralityConstraintTolerance
+      -variance,
+      variance
     }
   };
 
@@ -431,8 +435,8 @@ std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::chiralityCo
         {_rightCenter},
         {_leftLowPriority()}
       }},
-      -chiralityConstraintTolerance,
-      chiralityConstraintTolerance
+      -variance,
+      variance
     );
   }
 
@@ -444,8 +448,8 @@ std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::chiralityCo
         {_leftCenter},
         {_rightLowPriority()}
       }},
-      -chiralityConstraintTolerance,
-      chiralityConstraintTolerance
+      -variance,
+      variance
     );
   }
 

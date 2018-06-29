@@ -185,7 +185,9 @@ public:
 
   unsigned numStereopermutations() const final;
 
-  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const final;
+  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
+    double looseningMultiplier
+  ) const final;
 
   const RankingInformation& getLeftRanking() const;
   const RankingInformation& getRightRanking() const;

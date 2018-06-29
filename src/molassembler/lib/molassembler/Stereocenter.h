@@ -69,7 +69,9 @@ public:
   virtual unsigned numStereopermutations() const = 0;
 
   //! Return a list of chirality constraints
-  virtual std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints() const = 0;
+  virtual std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
+    double looseningMultiplier
+  ) const = 0;
 
   //! Return a string giving information about the stereocenter
   virtual std::string info() const = 0;

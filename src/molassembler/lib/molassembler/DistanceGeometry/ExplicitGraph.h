@@ -6,6 +6,7 @@
 #include "boost_outcome/outcome.hpp"
 #include "Eigen/Core"
 #include "Delib/ElementInfo.h"
+#include "temple/Preprocessor.h"
 
 /*! @file
  *
@@ -82,11 +83,11 @@ private:
     const double fixedDistance
   );
 
-  static inline VertexDescriptor left(const VertexDescriptor a) {
+  static inline VertexDescriptor left(const VertexDescriptor a) PURITY_STRONG {
     return 2 * a;
   }
 
-  static inline VertexDescriptor right(const VertexDescriptor a) {
+  static inline VertexDescriptor right(const VertexDescriptor a) PURITY_STRONG {
     return 2 * a + 1;
   }
 
@@ -112,7 +113,7 @@ public:
     const ValueBounds& bound
   );
 
-  static inline bool isLeft(const VertexDescriptor i) {
+  static inline bool isLeft(const VertexDescriptor i) PURITY_STRONG {
     return i % 2 == 0;
   }
 
