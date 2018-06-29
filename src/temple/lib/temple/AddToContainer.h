@@ -2,10 +2,11 @@
 #define INCLUDE_TEMPLATE_MAGIC_ADD_TO_CONTAINER_H
 
 #include "ContainerTraits.h"
+#include "Functor.h"
 
 /*! @file
  *
- * This file provides the functionality to add an element to a container by 
+ * This file provides the functionality to add an element to a container by
  * calling any of the following members, as appropriate:
  *
  * - insert
@@ -34,6 +35,16 @@ template<class Container, typename T>
 void addToContainer(
   Container& container,
   T&& value
+);
+
+template<
+  class TargetContainer,
+  class SourceContainer,
+  class SizeModifierUnary = Identity
+> void reserveIfPossible(
+  TargetContainer& target,
+  const SourceContainer& source,
+  SizeModifierUnary&& sourceModifierUnary = Identity()
 );
 
 namespace detail {
@@ -95,6 +106,40 @@ std::enable_if_t<
   container.emplace(value);
 }
 
+template<class TargetContainer, class SourceContainer, class SizeModifierUnary>
+std::enable_if_t<
+  (
+    traits::hasSize<SourceContainer>::value
+    && traits::hasReserve<TargetContainer>::value
+  ),
+  void
+> reserve(
+  TargetContainer& target,
+  const SourceContainer& source,
+  SizeModifierUnary&& sizeModifierUnary
+) {
+  target.reserve(
+    sizeModifierUnary(
+      source.size()
+    )
+  );
+}
+
+template<class TargetContainer, class SourceContainer, class SizeModifierUnary>
+std::enable_if_t<
+  !(
+    traits::hasSize<SourceContainer>::value
+    && traits::hasReserve<TargetContainer>::value
+  ),
+  void
+> reserve(
+  TargetContainer& /* target */,
+  const SourceContainer& /* source */,
+  SizeModifierUnary&& /* sizeModifierUnary */
+) {
+  /* do nothing */
+}
+
 } // namespace detail
 
 template<class Container, typename T>
@@ -113,6 +158,22 @@ void addToContainer(
   detail::emplaceOrEmplaceBack(
     container,
     std::forward<T>(value)
+  );
+}
+
+template<
+  class TargetContainer,
+  class SourceContainer,
+  class SizeModifierUnary = Identity
+> void reserveIfPossible(
+  TargetContainer& target,
+  const SourceContainer& source,
+  SizeModifierUnary&& sourceModifierUnary
+) {
+  return detail::reserve(
+    target,
+    source,
+    std::forward<SizeModifierUnary>(sourceModifierUnary)
   );
 }
 

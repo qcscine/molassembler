@@ -21,14 +21,14 @@ template<class>
 struct sfinae_true : std::true_type{};
 
 namespace detail {
-/* Explanation: If the expression EXPR in sfinae_true<EXPR> returns a valid 
+/* Explanation: If the expression EXPR in sfinae_true<EXPR> returns a valid
  * type, sfinae_true can be instantiated, and the default-interpretation of 0
  * as an int succeeds. If this fails, the backup-interpretation of 0 as a long
  * is chosen and returns std::false_type.
  */
 template<class Container>
 static auto testHasInsert(int)
-  -> sfinae_true< 
+  -> sfinae_true<
     decltype(
       std::declval<Container>().insert(
         std::declval<
@@ -109,7 +109,7 @@ struct hasEmplaceBack : decltype(detail::testHasEmplaceBack<Container>(0)){};
 namespace detail {
 template<class Container>
 static auto testHasSize(int)
-  -> sfinae_true< 
+  -> sfinae_true<
     decltype(
       std::declval<Container>().size()
     )
@@ -121,6 +121,22 @@ static auto testHasSize(long) -> std::false_type;
 
 template<class Container>
 struct hasSize : decltype(detail::testHasSize<Container>(0)){};
+
+namespace detail {
+template<class Container>
+static auto testHasReserve(int)
+  -> sfinae_true<
+    decltype(
+      std::declval<Container>().reserve()
+    )
+  >;
+
+template<class Container>
+static auto testHasReserve(long) -> std::false_type;
+} // namespace detail
+
+template<class Container>
+struct hasReserve : decltype(detail::testHasReserve<Container>(0)){};
 
 } // namespace traits
 

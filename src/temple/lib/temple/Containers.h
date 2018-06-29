@@ -106,8 +106,7 @@ auto mapValues(
 );
 
 /*!
-* Maps the contents of a Container to a vector using a unary function. This
-* is the variant for if the container does not implement a size member.
+* Maps the contents of a Container to a vector using a unary function.
 *
 * Requires:
 * - Container must implement begin and end forward-iterators
@@ -117,40 +116,7 @@ auto mapValues(
 template<
   class Container,
   class UnaryFunction
-> std::enable_if_t<
-  !traits::hasSize<Container>::value,
-  std::vector<
-    traits::functionReturnType<
-      UnaryFunction,
-      traits::getValueType<Container>
-    >
-  >
-> mapToVector(
-  const Container& container,
-  UnaryFunction&& function
-);
-
-/*!
-* Maps the contents of a Container to a vector using a unary function. This
-* is the variant for if the container implements the size member.
-*
-* Requires:
-* - Container must implement begin and end forward-iterators
-* - UnaryFunction must be unary and callable with the type pointed to by
-*   the iterators
-*/
-template<
-  class Container,
-  class UnaryFunction
-> std::enable_if_t<
-  traits::hasSize<Container>::value,
-  std::vector<
-    traits::functionReturnType<
-      UnaryFunction,
-      traits::getValueType<Container>
-    >
-  >
-> mapToVector(
+> auto mapToVector(
   const Container& container,
   UnaryFunction&& function
 );
@@ -612,9 +578,10 @@ template<
   using U = traits::functionReturnType<UnaryFunction, T>;
 
   Container<U, Dependents<U>...> returnContainer;
+  reserveIfPossible(returnContainer, container);
 
   for(const auto& element : container) {
-    temple::addToContainer(returnContainer, function(element));
+    addToContainer(returnContainer, function(element));
   }
 
   return returnContainer;
@@ -701,50 +668,14 @@ std::enable_if_t<
 template<
   class Container,
   class UnaryFunction
-> std::enable_if_t<
-  !traits::hasSize<Container>::value,
-  std::vector<
-    traits::functionReturnType<
-      UnaryFunction,
-      traits::getValueType<Container>
-    >
-  >
-> mapToVector(
+> auto mapToVector(
   const Container& container,
   UnaryFunction&& function
 ) {
   using U = traits::functionReturnType<UnaryFunction, traits::getValueType<Container>>;
 
   std::vector<U> returnVector;
-
-  for(const auto& element : container) {
-    returnVector.emplace_back(
-      function(element)
-    );
-  }
-
-  return returnVector;
-}
-
-template<
-  class Container,
-  class UnaryFunction
-> std::enable_if_t<
-  traits::hasSize<Container>::value,
-  std::vector<
-    traits::functionReturnType<
-      UnaryFunction,
-      traits::getValueType<Container>
-    >
-  >
-> mapToVector(
-  const Container& container,
-  UnaryFunction&& function
-) {
-  using U = traits::functionReturnType<UnaryFunction, traits::getValueType<Container>>;
-
-  std::vector<U> returnVector;
-  returnVector.reserve(container.size());
+  reserveIfPossible(returnVector, container);
 
   for(const auto& element : container) {
     returnVector.emplace_back(
@@ -772,6 +703,14 @@ template<
   );
 
   Container<U, Dependents<U>...> returnContainer;
+
+  reserveIfPossible(
+    returnContainer,
+    container,
+    [](const auto size) {
+      return size - 1;
+    }
+  );
 
   auto leftIterator = std::begin(container);
   auto rightIterator = leftIterator; ++rightIterator;
@@ -847,6 +786,17 @@ template<
   );
 
   Container<U, Dependents<U>...> returnContainer;
+  reserveIfPossible(
+    returnContainer,
+    container,
+    [](const auto size) {
+      if(size < 2) {
+        return 0;
+      }
+
+      return size * (size - 1) / 2;
+    }
+  );
 
   for(auto i = std::begin(container); i != std::end(container); ++i) {
     auto j = i; ++j;
@@ -1210,6 +1160,10 @@ Container copyIf(
   UnaryFunction&& predicate
 ) {
   Container returnContainer;
+  reserveIfPossible(
+    returnContainer,
+    container
+  );
 
   for(const auto& elem : container) {
     if(predicate(elem)) {
@@ -1226,6 +1180,7 @@ Container moveIf(
   UnaryFunction&& predicate
 ) {
   Container returnContainer;
+  reserveIfPossible(returnContainer, container);
 
   for(auto& elem : container) {
     if(predicate(elem)) {
