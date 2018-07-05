@@ -164,7 +164,7 @@ void addToContainer(
 template<
   class TargetContainer,
   class SourceContainer,
-  class SizeModifierUnary = Identity
+  class SizeModifierUnary
 > void reserveIfPossible(
   TargetContainer& target,
   const SourceContainer& source,

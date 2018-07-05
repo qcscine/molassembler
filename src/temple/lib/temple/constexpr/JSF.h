@@ -118,7 +118,7 @@ public:
   }
 
   void seed(std::seed_seq& seedSeq) {
-    _seed(seed);
+    _seed(seedSeq);
   }
 
   void seed(int seed) {
