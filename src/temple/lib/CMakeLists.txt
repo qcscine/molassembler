@@ -1,5 +1,7 @@
 set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Array.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Bitset.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Bitmask.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/BTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/ConsecutiveCompare.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Containers.h
