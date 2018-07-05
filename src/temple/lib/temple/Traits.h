@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TEMPLATE_MAGIC_TRAITS_H
-#define INCLUDE_TEMPLATE_MAGIC_TRAITS_H
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_TRAITS_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_TRAITS_H
 
 #include <vector>
 
@@ -23,16 +23,16 @@ namespace traits {
 namespace detail {
   template <typename T>
   using always_void = void;
- 
+
   template <typename Expr, typename Enable = void>
   struct is_callable_impl : std::false_type
   {};
- 
+
   template <typename F, typename ...Args>
   struct is_callable_impl<F(Args...), always_void<std::result_of_t<F(Args...)>>>
     : std::true_type
   {};
- 
+
   template <typename Expr>
   struct is_callable : is_callable_impl<Expr>
   {};
@@ -43,7 +43,7 @@ constexpr bool isCallableValue = detail::is_callable<Expr>::value;
 
 // Get the base type a container holds via the begin iterator
 namespace detail {
-  template<class ContainerType> 
+  template<class ContainerType>
   struct getValueTypeImpl {
     using type = typename std::remove_const<
       typename std::remove_reference<

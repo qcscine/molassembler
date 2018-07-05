@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONSTEXPR_MAGIC_TUPLETYPE_H
-#define INCLUDE_CONSTEXPR_MAGIC_TUPLETYPE_H
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TUPLE_TYPE_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TUPLE_TYPE_H
 
 #include "UpperTriangularMatrix.h"
 
@@ -110,7 +110,7 @@ template<
 }
 
 /*!
- * Implementation of the counter, which returns how often a type occurs in a 
+ * Implementation of the counter, which returns how often a type occurs in a
  * supplied tuple type.
  */
 template<
@@ -140,7 +140,7 @@ template<
 
 } // namespace detail
 
-/*! 
+/*!
  * Takes a tuple type and a template function that accepts all of the tuple's
  * contained types at once and unpacks these as template parameters to the
  * template function, returning it's value.
@@ -178,8 +178,8 @@ template<
  * all distinct possible type pairs.
  *
  * With distinct, we mean that pairs of the same types are not created unless a
- * type is explicitly repeated in the tuple type: Say the tuple contains Apple, 
- * Banana and Orange, then the generated pairs are: Apple & Banana, 
+ * type is explicitly repeated in the tuple type: Say the tuple contains Apple,
+ * Banana and Orange, then the generated pairs are: Apple & Banana,
  * Apple & Orange and Banana & Orange.
  */
 template<
@@ -205,7 +205,7 @@ template<
   );
 }
 
-/*! 
+/*!
  * Tests whether all types in the tuple return true when evaluated against a
  * predicate
  *

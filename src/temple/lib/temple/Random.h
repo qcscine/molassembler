@@ -1,6 +1,7 @@
-#ifndef INCLUDE_TEMPLATE_MAGIC_RANDOM_H
-#define INCLUDE_TEMPLATE_MAGIC_RANDOM_H
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_RANDOM_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_RANDOM_H
 
+#include "constexpr/JSF.h"
 #include "Traits.h"
 
 #include <random>
@@ -14,57 +15,51 @@
 namespace temple {
 
 class Generator {
+public:
+  mutable jsf::JSF32 engine;
+
 private:
-  std::vector<unsigned> _seeds;
-
-  void _initGenerator() {
-
-#ifdef NDEBUG
+  static std::array<uint32_t, 4> getRandomSeeds() {
     std::random_device randomDevice;
-    for(unsigned n = 0; n < 5; n++) _seeds.emplace_back(randomDevice());
-#else
-    _seeds.emplace_back(2721813754);
-#endif
 
-    std::seed_seq _seedSequence(_seeds.begin(), _seeds.end());
-    engine.seed(_seedSequence);
+    return {
+      randomDevice(),
+      randomDevice(),
+      randomDevice(),
+      randomDevice()
+    };
+  }
+
+  void _initializeEngine () {
+#ifndef NDEBUG
+    engine.seed(272181374);
+#else
+    engine.seed(getRandomSeeds());
+#endif
   }
 
 public:
-  mutable std::mt19937 engine;
+  explicit Generator() {
+    _initializeEngine();
+  }
 
   template<typename Container>
   std::enable_if_t<
-    std::is_same<
-      traits::getValueType<Container>,
-      unsigned
+    std::is_signed<
+      traits::getValueType<Container>
     >::value,
     void
-  > seed(const Container& container) {
-    _seeds.clear();
-
-    std::copy(
-      std::begin(container),
-      std::end(container),
-      std::back_inserter(_seeds)
-    );
-
-    std::seed_seq seedSequence {
-      std::begin(_seeds),
-      std::end(_seeds)
+  > seed(const Container& seeds) {
+    std::seed_seq seedSeq {
+      std::begin(seeds),
+      std::end(seeds)
     };
 
-    engine.seed(seedSequence);
+    engine.seed(seedSeq);
   }
 
-
-  Generator() {
-    _initGenerator();
-  }
-
-  template<typename Container>
-  explicit Generator(const Container& seeds) {
-    seed(seeds);
+  void seed(int x) {
+    engine.seed(x);
   }
 
   template<typename T>
@@ -78,6 +73,8 @@ public:
   ) const {
     assert(lower <= upper);
     std::vector<T> returnNumbers;
+    returnNumbers.reserve(N);
+
     std::uniform_real_distribution<T> uniformDistribution(lower, upper);
 
     for(unsigned i = 0; i < N; i++) {
@@ -98,6 +95,8 @@ public:
   ) const {
     assert(lower <= upper);
     std::vector<T> returnNumbers;
+    returnNumbers.reserve(N);
+
     std::uniform_int_distribution<T> uniformDistribution(lower, upper);
 
     for(unsigned i = 0; i < N; i++) {
@@ -161,10 +160,6 @@ public:
       std::end(container),
       engine
     );
-  }
-
-  const std::vector<unsigned>& getSeeds() const {
-    return _seeds;
   }
 };
 

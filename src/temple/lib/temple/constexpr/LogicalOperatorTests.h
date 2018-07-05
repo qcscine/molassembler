@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONSTEXPR_MAGIC_LOGICAL_OPERATOR_TESTS_H
-#define INCLUDE_CONSTEXPR_MAGIC_LOGICAL_OPERATOR_TESTS_H
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_LOGICAL_OPERATOR_TESTS_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_LOGICAL_OPERATOR_TESTS_H
 
 #include "Math.h"
 #include <iostream>
@@ -33,7 +33,7 @@ template<typename T>
 constexpr bool testOperatorSmaller(const T& a, const T& b) {
   return Math::XOR(
     a < b,
-    b < a, 
+    b < a,
     !(a < b) && !(b < a) // a != b expressed with < only
   );
 }
@@ -51,7 +51,7 @@ void explainLogicalOperatorFailures(const T& a, const T& b) {
     )
   ) {
     std::cout << "operator < is inconsistent:\n" << std::boolalpha
-      << " a < b && b > a && a != b -> " 
+      << " a < b && b > a && a != b -> "
       << (a < b) << " && " << (b > a) << " && " << (a != b) << " -> "
       << (a < b && b > a && a != b) << "\n"
       << " b < a && a > b && a != b -> "

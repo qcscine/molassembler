@@ -10,6 +10,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/DynamicSet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/DynamicUIntArray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/FloatingPointComparison.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/JSF.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/LogicalOperatorTests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Numeric.h
@@ -28,10 +29,12 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/ContainerTraits.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Containers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Enumerate.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Functor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Functional.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Invoke.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/MemberFetcher.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optionals.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Preprocessor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Random.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Stringify.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/TinySet.h

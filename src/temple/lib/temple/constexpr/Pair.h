@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONSTEXPR_MAGIC_PAIR_H
-#define INCLUDE_CONSTEXPR_MAGIC_PAIR_H
+#ifndef INLCUDE_MOLASSEMBLER_TEMPLE_PAIR_H
+#define INLCUDE_MOLASSEMBLER_TEMPLE_PAIR_H
 
 #include <utility>
 #include "../Preprocessor.h"

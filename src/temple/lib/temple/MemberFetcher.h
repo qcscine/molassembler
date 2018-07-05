@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TEMPLATE_MAGIC_MEMBER_FETCHER_H
-#define INCLUDE_TEMPLATE_MAGIC_MEMBER_FETCHER_H
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_MEMBER_FETCHER_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_MEMBER_FETCHER_H
 
 #include "Traits.h"
 
@@ -9,7 +9,7 @@
  *
  * Without changing the underlying container elements, this proxy container
  * permits referential access to class members via a lambda function. This is
- * an attractive alternative to using Container.h's map() function to get 
+ * an attractive alternative to using Container.h's map() function to get
  * container class element members since this variant avoids copies.
  */
 
@@ -77,21 +77,21 @@ public:
       return *this;
     }
 
-    iterator& operator ++ () { 
+    iterator& operator ++ () {
       ++_iter;
-      return *this; 
+      return *this;
     }
 
     iterator operator++ (int) {
       iterator retval = *this;
       ++(*this);
-      return retval; 
+      return retval;
     }
 
     bool operator == (iterator other) const { return _iter == other._iter; }
     bool operator != (iterator other) const { return _iter != other._iter; }
 
-    typename BaseIteratorType::reference operator * () const { 
+    typename BaseIteratorType::reference operator * () const {
       return _fetcher(*_iter);
     }
 

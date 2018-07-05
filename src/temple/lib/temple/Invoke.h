@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TEMPLATE_MAGIC_INVOKE_H
-#define INCLUDE_TEMPLATE_MAGIC_INVOKE_H
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_INVOKE_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_INVOKE_H
 
 #include <boost/tuple/tuple.hpp>
 
@@ -61,7 +61,7 @@ static auto isCallableTest(int) -> sfinae_true<
 
 template<class Callable, typename ... Args>
 static auto isCallableTest(long) -> std::false_type;
-  
+
 template<class Callable, typename ... Args>
 struct isCallable : decltype(isCallableTest<Callable, Args...>(0)) {};
 
@@ -72,7 +72,7 @@ static auto isTupleLikeTest(int) -> sfinae_true<
 
 template<class TupleType>
 static auto isTupleLikeTest(long) -> std::false_type;
-  
+
 template<class TupleType>
 struct isTupleLike : decltype(isTupleLikeTest<TupleType>(0)) {};
 
@@ -106,7 +106,7 @@ template<
   );
 }
 
-template<typename Function, typename TupleType> 
+template<typename Function, typename TupleType>
 static auto isTupleCallableTest(int) -> sfinae_true<
     decltype(
       detail::invokeHelper(
@@ -117,7 +117,7 @@ static auto isTupleCallableTest(int) -> sfinae_true<
     )
 >;
 
-template<typename Function, typename TupleType, typename... Args> 
+template<typename Function, typename TupleType, typename... Args>
 static auto isTupleCallableTest(long) -> std::false_type;
 
 template<typename Function, typename TupleType, typename... Args>
@@ -155,9 +155,9 @@ template<
     !(sizeof...(Args) == 1 && detail::isTupleCallable<Fn, Args...>::value)
     && std::is_member_pointer<std::decay_t<Fn>>{},
     int
-  > = 0 
-> constexpr decltype(auto) invoke(Fn&& f, Args&&... args) 
-noexcept(noexcept(std::mem_fn(f)(std::forward<Args>(args)...))) 
+  > = 0
+> constexpr decltype(auto) invoke(Fn&& f, Args&&... args)
+noexcept(noexcept(std::mem_fn(f)(std::forward<Args>(args)...)))
 {
   return std::mem_fn(f)(std::forward<Args>(args)...);
 }

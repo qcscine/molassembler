@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TEMPLATE_MAGIC_CACHE_H
-#define INCLUDE_TEMPLATE_MAGIC_CACHE_H
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CACHE_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_CACHE_H
 
 #include <boost/any.hpp>
 #include <boost/optional.hpp>

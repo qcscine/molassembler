@@ -1,5 +1,5 @@
-#ifndef INCLUDE_CONSTEXPR_MAGIC_UINT_ARRAY_H
-#define INCLUDE_CONSTEXPR_MAGIC_UINT_ARRAY_H
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_UINT_ARRAY_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_UINT_ARRAY_H
 
 #include "Math.h"
 #include "Array.h"
@@ -82,7 +82,7 @@ public:
     constexpr ModificationProxy(
       unsigned digit,
       UIntArray* basePtr
-    ) : _digit(digit), _basePtr(basePtr) 
+    ) : _digit(digit), _basePtr(basePtr)
     {
       if(digit >= N) {
         throw "UInt non-const Array access out of bounds";
@@ -168,7 +168,7 @@ public:
     constexpr iterator(
       unsigned digit,
       UIntArray* basePtr
-    ) : _digit(digit), _basePtr(basePtr) 
+    ) : _digit(digit), _basePtr(basePtr)
     {
       if(digit > N) {
         throw "Initialization of iterator out of bounds of UIntArray parent";
@@ -269,7 +269,7 @@ public:
     unsigned,                        // pointer
     unsigned                         // reference
   >;
-  
+
   class constIterator : public ConstBaseIteratorType {
   private:
     unsigned _digit;
@@ -279,19 +279,19 @@ public:
     constexpr constIterator(
       unsigned digit,
       UIntArray* const basePtr
-    ) : _digit(digit), _basePtr(basePtr) 
+    ) : _digit(digit), _basePtr(basePtr)
     {
       if(digit > N) {
         throw "Initialization of const iterator out of bounds of UIntArray parent";
       }
     }
 
-    constexpr constIterator(const constIterator& other) 
+    constexpr constIterator(const constIterator& other)
       : _basePtr(other._basePtr),
         _digit(other._digit)
     {}
 
-    constexpr constIterator& operator = (const constIterator& other) { 
+    constexpr constIterator& operator = (const constIterator& other) {
       _basePtr = other._basePtr;
       _digit = other._digit;
 
