@@ -1,6 +1,10 @@
 #include "AtomEnvironmentHash.h"
 
+#include "boost/range/join.hpp"
+
 #include "chemical_symmetries/Properties.h"
+
+#include "GraphHelpers.h"
 
 namespace molassembler {
 
@@ -91,6 +95,107 @@ AtomEnvironmentHashType atomEnvironment(
 
   return value;
 }
+
+std::vector<AtomEnvironmentHashType> generate(
+  const GraphType& molGraph,
+  const StereocenterList& stereocenters,
+  const temple::Bitmask<AtomEnvironmentComponents>& bitmask
+) {
+  std::vector<AtomEnvironmentHashType> hashes;
+
+  const AtomIndexType N = graph::numVertices(molGraph);
+  hashes.reserve(N);
+
+  std::vector<BondType> bonds;
+  bonds.reserve(Symmetry::constexprProperties::maxSymmetrySize);
+
+  for(AtomIndexType i = 0; i < N; ++i) {
+    if(bitmask & AtomEnvironmentComponents::BondOrders) {
+      bonds.clear();
+
+      for(const auto& edge : graph::edges(i, molGraph)) {
+        bonds.emplace_back(graph::bondType(edge, molGraph));
+      }
+
+      std::sort(
+        bonds.begin(),
+        bonds.end()
+      );
+    }
+
+    boost::optional<Symmetry::Name> symmetryNameOption;
+    boost::optional<unsigned> assignmentOption;
+
+    if(stereocenters.involving(i)) {
+      const auto& stereocenterPtr = stereocenters.at(i);
+      if(stereocenterPtr->type() == Stereocenters::Type::BondStereocenter) {
+        symmetryNameOption = Symmetry::Name::TrigonalPlanar;
+      } else {
+        symmetryNameOption = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
+          stereocenterPtr
+        ) -> getSymmetry();
+      }
+
+      assignmentOption = stereocenterPtr -> assigned();
+    }
+
+    hashes.emplace_back(
+      atomEnvironment(
+        bitmask,
+        graph::elementType(i, molGraph),
+        bonds,
+        symmetryNameOption,
+        assignmentOption
+      )
+    );
+  }
+
+  return hashes;
+}
+
+AtomEnvironmentHashType regularize(
+  std::vector<AtomEnvironmentHashType>& a,
+  std::vector<AtomEnvironmentHashType>& b
+) {
+  std::unordered_map<AtomEnvironmentHashType, AtomEnvironmentHashType> reductionMapping;
+  AtomEnvironmentHashType counter = 0;
+
+  // Generate mapping from hash values to integer-incremented reduction
+  for(const auto& hash : boost::range::join(a, b)) {
+    if(reductionMapping.count(hash) == 0) {
+      reductionMapping.emplace(
+        hash,
+        counter
+      );
+
+      ++counter;
+    }
+  }
+
+  // counter now contains the maximum new hash for this set of hashes
+
+  // Reduce the hash representations
+  for(auto& hash : boost::range::join(a, b)) {
+    hash = reductionMapping.at(hash);
+  }
+
+  if(counter > std::numeric_limits<GraphType::vertices_size_type>::max()) {
+    throw std::logic_error(
+      "Number of distinct atom environment hashes exceeds limits of boost "
+      " graph's isomorphism algorithm type used to store it!"
+    );
+  }
+
+  return counter;
+}
+
+/* Ensure that the LookupFunctor matches the required boost concept. Although
+ * the documentation asks for the UnaryFunction concept, in reality it requires
+ * AdaptableUnaryFunction with typedefs for argument and result.
+ */
+BOOST_CONCEPT_ASSERT((
+  boost::AdaptableUnaryFunctionConcept<LookupFunctor, AtomEnvironmentHashType, AtomIndexType>
+));
 
 } // namespace hashes
 

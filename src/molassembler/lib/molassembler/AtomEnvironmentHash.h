@@ -4,6 +4,7 @@
 #include "chemical_symmetries/Symmetries.h"
 #include "temple/constexpr/Bitmask.h"
 
+#include "StereocenterList.h"
 #include "detail/SharedTypes.h"
 
 /*!@file
@@ -25,6 +26,37 @@ AtomEnvironmentHashType atomEnvironment(
   boost::optional<Symmetry::Name> symmetryNameOptional,
   boost::optional<unsigned> assignedOptional
 );
+
+//! Generates the hashes for every atom in a molecule's components
+std::vector<AtomEnvironmentHashType> generate(
+  const GraphType& graph,
+  const StereocenterList& stereocenters,
+  const temple::Bitmask<AtomEnvironmentComponents>& bitmask
+);
+
+//! Re-enumerates the hashes in two generated hash lists
+AtomEnvironmentHashType regularize(
+  std::vector<AtomEnvironmentHashType>& a,
+  std::vector<AtomEnvironmentHashType>& b
+);
+
+/*! A functor for getting an atom's hash from a captured list of hashes
+ *
+ * \note This explicit form is needed instead of a lambda for boost's concept
+ *   checks. It satisfies the AdaptableUnaryFunctionConcept.
+ */
+struct LookupFunctor {
+  const std::vector<AtomEnvironmentHashType>* const hashes;
+
+  using argument_type = AtomIndexType;
+  using result_type = AtomEnvironmentHashType;
+
+  inline LookupFunctor(const std::vector<AtomEnvironmentHashType>& hashes) : hashes(&hashes) {}
+
+  inline AtomEnvironmentHashType operator() (const AtomIndexType i) const {
+    return hashes->at(i);
+  }
+};
 
 } // namespace hashes
 

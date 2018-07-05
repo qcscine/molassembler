@@ -26,6 +26,8 @@ struct Bitmask {
 
   Underlying value;
 
+  explicit constexpr Bitmask() : value {0} {}
+
   explicit constexpr Bitmask(EnumType a) : value {
     static_cast<Underlying>(1) << static_cast<Underlying>(a)
   } {

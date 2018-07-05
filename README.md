@@ -49,6 +49,7 @@ External libraries included in tree and distribution:
 
 - RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
 - Outcome (until released in boost): Improved error propagation
+- nlohmann/json: JSON serialization
 - breathe: sphinx extension to extract docstrings from doxygen xml
 
 

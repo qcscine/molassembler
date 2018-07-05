@@ -1,6 +1,5 @@
 #include "temple/Optionals.h"
 
-#include "boost/range/join.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
@@ -933,6 +932,12 @@ bool Molecule::Impl::setBondType(
     throw std::out_of_range("Molecule::setBondType: A supplied index is invalid!");
   }
 
+  if(bondType == BondType::Eta) {
+    throw std::logic_error(
+      "Do not manually change eta bond types, this dynamism is handled internally"
+    );
+  }
+
   auto edgePair = boost::edge(a, b, _adjacencies);
   if(edgePair.second) {
     _adjacencies[edgePair.first].bondType = bondType;
@@ -1264,126 +1269,22 @@ bool Molecule::Impl::modularCompare(
   const Molecule::Impl& other,
   const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
 ) const {
-  using HashType = hashes::AtomEnvironmentHashType;
-  using ComparisonComponents = AtomEnvironmentComponents;
-
   const unsigned thisNumAtoms = numAtoms();
 
   if(thisNumAtoms != other.numAtoms()) {
     return false;
   }
 
-  auto generateHashes = [&comparisonBitmask](const Molecule::Impl& mol) -> std::vector<HashType> {
-
-    std::vector<HashType> hashes;
-
-    const AtomIndexType N = mol.numAtoms();
-    hashes.reserve(N);
-
-    std::vector<BondType> bonds;
-    bonds.reserve(Symmetry::constexprProperties::maxSymmetrySize);
-
-    for(AtomIndexType i = 0; i < N; ++i) {
-      if(comparisonBitmask & ComparisonComponents::BondOrders) {
-        bonds.clear();
-
-        for(const auto& edge : mol.iterateEdges(i)) {
-          bonds.emplace_back(mol.getGraph()[edge].bondType);
-        }
-
-        std::sort(
-          bonds.begin(),
-          bonds.end()
-        );
-      }
-
-      boost::optional<Symmetry::Name> symmetryNameOption;
-      boost::optional<unsigned> assignmentOption;
-
-      if(mol.getStereocenterList().involving(i)) {
-        const auto& stereocenterPtr = mol.getStereocenterList().at(i);
-        if(stereocenterPtr->type() == Stereocenters::Type::BondStereocenter) {
-          symmetryNameOption = Symmetry::Name::TrigonalPlanar;
-        } else {
-          symmetryNameOption = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-            stereocenterPtr
-          ) -> getSymmetry();
-        }
-
-        assignmentOption = stereocenterPtr -> assigned();
-      }
-
-      hashes.emplace_back(
-        hashes::atomEnvironment(
-          comparisonBitmask,
-          mol.getElementType(i),
-          bonds,
-          symmetryNameOption,
-          assignmentOption
-        )
-      );
-    }
-
-    return hashes;
-  };
-
-  auto thisHashes = generateHashes(*this);
-  auto otherHashes = generateHashes(other);
+  auto thisHashes = hashes::generate(getGraph(), getStereocenterList(), comparisonBitmask);
+  auto otherHashes = hashes::generate(other.getGraph(), other.getStereocenterList(), comparisonBitmask);
 
   /* boost isomorphism will allocate a vector of size maxHash, this is dangerous
    * as the maximum hash can be immense, another post-processing step is needed
    * for the calculated hashes to decrease the spatial requirements
+   *
+   * This maps the hashes to an incremented number
    */
-  std::unordered_map<HashType, HashType> reductionMapping;
-  HashType counter = 0;
-
-  // Generate mapping from hash values to integer-incremented reduction
-  for(const auto& hash : boost::range::join(thisHashes, otherHashes)) {
-    if(reductionMapping.count(hash) == 0) {
-      reductionMapping.emplace(
-        hash,
-        counter
-      );
-
-      ++counter;
-    }
-  }
-
-  // Reduce the hash representations
-  for(auto& hash : boost::range::join(thisHashes, otherHashes)) {
-    hash = reductionMapping.at(hash);
-  }
-
-  auto maxHash = counter;
-
-  if(maxHash > std::numeric_limits<GraphType::vertices_size_type>::max()) {
-    throw std::logic_error(
-      "Number of distinct atom environment hashes exceeds limits of boost "
-      " graph's isomorphism algorithm type used to store it!"
-    );
-  }
-
-  // This explicit form is needed instead of a lambda for boost's concept checks
-  struct HashLookup {
-    const std::vector<HashType>* const hashes;
-
-    using argument_type = AtomIndexType;
-    using result_type = HashType;
-
-    HashLookup(const std::vector<HashType>& hashes) : hashes(&hashes) {}
-
-    HashType operator() (const AtomIndexType i) const {
-      return hashes->at(i);
-    }
-  };
-
-  /* Ensure this matches the required boost concept. Although the documentation
-   * asks for the UnaryFunction concept, in reality it requires
-   * AdaptableUnaryFunction with typedefs for argument and result.
-   */
-  BOOST_CONCEPT_ASSERT((
-    boost::AdaptableUnaryFunctionConcept<HashLookup, HashType, AtomIndexType>
-  ));
+  auto maxHash = hashes::regularize(thisHashes, otherHashes);
 
   // Where the corresponding index from the other graph is stored
   std::vector<AtomIndexType> indexMap(numAtoms());
@@ -1396,8 +1297,8 @@ bool Molecule::Impl::modularCompare(
       thisNumAtoms,
       boost::get(boost::vertex_index, _adjacencies)
     ),
-    HashLookup(thisHashes),
-    HashLookup(otherHashes),
+    hashes::LookupFunctor(thisHashes),
+    hashes::LookupFunctor(otherHashes),
     maxHash,
     boost::get(boost::vertex_index, _adjacencies),
     boost::get(boost::vertex_index, other._adjacencies)
@@ -1407,7 +1308,8 @@ bool Molecule::Impl::modularCompare(
     return false;
   }
 
-  if(comparisonBitmask & ComparisonComponents::BondOrders) {
+  // TODO why are the following checks still necessary if hashes are used? document
+  if(comparisonBitmask & AtomEnvironmentComponents::BondOrders) {
     // Check that all bond types are identical
     for(const auto& edgeIndex : iterateEdges()) {
       // Fetch the corresponding edge from the other graph
@@ -1429,7 +1331,7 @@ bool Molecule::Impl::modularCompare(
     }
   }
 
-  if(comparisonBitmask & ComparisonComponents::Symmetries) {
+  if(comparisonBitmask & AtomEnvironmentComponents::Symmetries) {
     // Before doing a full equivalence check, peek at the sizes
     if(_stereocenters.size() != other._stereocenters.size()) {
       return false;
@@ -1469,7 +1371,7 @@ bool Molecule::Impl::modularCompare(
         }
 
         if(
-          (comparisonBitmask & ComparisonComponents::Stereopermutations)
+          (comparisonBitmask & AtomEnvironmentComponents::Stereopermutations)
           && thisCNSPtr->assigned() != otherCNSPtr->assigned()
         ) {
           return false;
@@ -1515,7 +1417,7 @@ bool Molecule::Impl::modularCompare(
         }
 
         if(
-          (comparisonBitmask & ComparisonComponents::Stereopermutations)
+          (comparisonBitmask & AtomEnvironmentComponents::Stereopermutations)
           && stereocenterPtr->assigned() != otherPtr->assigned()
         ) {
           return false;
@@ -1634,14 +1536,13 @@ RangeForTemporary<GraphType::adjacency_iterator> Molecule::Impl::operator [] (co
 }
 
 bool Molecule::Impl::operator == (const Impl& other) const {
-  using ComparisonComponents = AtomEnvironmentComponents;
   // Operator == performs the most strict comparison possible
   return modularCompare(
     other,
-    temple::make_bitmask(ComparisonComponents::ElementTypes)
-      | ComparisonComponents::BondOrders
-      | ComparisonComponents::Symmetries
-      | ComparisonComponents::Stereopermutations
+    temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
+      | AtomEnvironmentComponents::BondOrders
+      | AtomEnvironmentComponents::Symmetries
+      | AtomEnvironmentComponents::Stereopermutations
   );
 }
 

@@ -128,6 +128,10 @@ inline unsigned numAdjacencies(const AtomIndexType a, const GraphType& graph) {
   return boost::out_degree(a, graph);
 }
 
+inline AtomIndexType numVertices(const GraphType& graph) {
+  return boost::num_vertices(graph);
+}
+
 } // namespace graph
 
 } // namespace molassembler
