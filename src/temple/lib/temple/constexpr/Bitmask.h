@@ -1,3 +1,6 @@
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BITMASK_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_BITMASK_H
+
 #include <exception>
 
 #include "Math.h"
@@ -73,3 +76,5 @@ constexpr Bitmask<EnumType> make_bitmask(EnumType a) {
 }
 
 } // namespace temple
+
+#endif

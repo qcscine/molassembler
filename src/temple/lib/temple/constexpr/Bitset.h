@@ -1,3 +1,6 @@
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BITSET_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_BITSET_H
+
 #include "Math.h"
 #include "Array.h"
 
@@ -70,3 +73,5 @@ struct Bitset {
 };
 
 } // namespace temple
+
+#endif
