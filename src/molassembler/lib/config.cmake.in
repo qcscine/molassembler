@@ -1,6 +1,8 @@
 find_package(molassembler COMPONENTS RingDecomposerLib gor1 boost_outcome cyclic_polygons temple chemical_symmetries stereopermutation json REQUIRED)
 find_package(scine COMPONENTS Delib REQUIRED)
 find_package(dlib REQUIRED)
+find_package(BLAS REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem system)
 
 set(MOLASSEMBLER_VERSION 0.1.0)
 
