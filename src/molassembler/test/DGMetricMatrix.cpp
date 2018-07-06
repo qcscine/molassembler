@@ -127,7 +127,7 @@ std::vector<unsigned> randomReorderingSequence(const unsigned& length) {
     0
   );
 
-  rng.shuffle(reorderSequence);
+  prng.shuffle(reorderSequence);
 
   return reorderSequence;
 }

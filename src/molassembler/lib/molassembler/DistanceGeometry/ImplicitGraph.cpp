@@ -291,7 +291,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
     0
   );
 
-  rng.shuffle(indices);
+  prng.shuffle(indices);
 
   unsigned M = num_vertices();
   std::vector<double> distances (M);
@@ -327,7 +327,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       }
     }
 
-    rng.shuffle(otherIndices);
+    prng.shuffle(otherIndices);
 
     for(const AtomIndexType b : otherIndices) {
       auto predecessor_map = boost::make_iterator_property_map(
@@ -360,7 +360,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double presumedLower = -distances.at(right(b));
       double presumedUpper = distances.at(left(b));
 
-      double fixedDistance = rng.getSingle<double>(
+      double fixedDistance = prng.getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper)
       );
@@ -379,7 +379,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       }
 
       // Pick fixed distance
-      double fixedDistance = rng.getSingle<double>(
+      double fixedDistance = prng.getSingle<double>(
         -distances.at(right(b)),
         distances.at(left(b))
       );
@@ -447,7 +447,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double presumedUpper = distances.at(left(b));
 
       // Pick fixed distance
-      double fixedDistance = rng.getSingle<double>(
+      double fixedDistance = prng.getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper)
       );

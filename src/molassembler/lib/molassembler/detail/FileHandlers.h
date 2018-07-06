@@ -33,7 +33,7 @@ struct Random {
     permutation.resize(N);
     std::iota(permutation.begin(), permutation.end(), 0);
 
-    rng.shuffle(permutation);
+    prng.shuffle(permutation);
   }
 
   inline AtomIndexType operator() (const AtomIndexType& i) const {

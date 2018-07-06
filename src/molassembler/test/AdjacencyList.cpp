@@ -106,7 +106,7 @@ struct ALFixture {
     // extend at random with upper bound of 6 edges per vertex
     while(N < atomsLimit) {
       // select a random atom
-      AtomIndexType selection = rng.getSingle<double>(0u, N - 1);
+      AtomIndexType selection = prng.getSingle<double>(0u, N - 1);
 
       // ensure less than 6 edges
       if(molecule.getAdjacencies(selection).size() >= edgesLimit) {
@@ -128,8 +128,8 @@ struct ALFixture {
     unsigned nCycles = 0;
     while(nCycles < cyclesLimit) {
       // select two random atoms
-      AtomIndexType i = rng.getSingle<double>(0u, N - 1);
-      AtomIndexType j = rng.getSingle<double>(0u, N - 1);
+      AtomIndexType i = prng.getSingle<double>(0u, N - 1);
+      AtomIndexType j = prng.getSingle<double>(0u, N - 1);
 
       /* cannot connect
        * - equal indices
@@ -171,7 +171,7 @@ BOOST_FIXTURE_TEST_CASE(indexInvalidation, ALFixture) {
   if(!terminalVertices.empty()) {
     // select a random terminal vertex
     auto selection = terminalVertices.at(
-      rng.getSingle<unsigned>(0, terminalVertices.size() - 1)
+      prng.getSingle<unsigned>(0, terminalVertices.size() - 1)
     );
 
     // remove all bonds involving it

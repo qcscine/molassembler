@@ -14,9 +14,9 @@ BOOST_AUTO_TEST_CASE(base64Tests) {
 
   const unsigned N = 100;
   for(unsigned i = 0; i < N; ++i) {
-    unsigned messageLength = rng.getSingle<unsigned>(90, 110);
+    unsigned messageLength = prng.getSingle<unsigned>(90, 110);
 
-    auto sample = rng.getN<std::uint8_t>(
+    auto sample = prng.getN<std::uint8_t>(
       std::numeric_limits<std::uint8_t>::min(),
       std::numeric_limits<std::uint8_t>::max(),
       messageLength

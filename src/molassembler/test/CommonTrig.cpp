@@ -5,7 +5,7 @@
 #include "temple/Random.h"
 #include "temple/Containers.h"
 
-temple::Generator rng;
+temple::Generator prng;
 
 template<typename T>
 bool isApproxAbs(
@@ -81,8 +81,8 @@ BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
   using namespace molassembler::CommonTrig;
 
   for(unsigned testNum = 0; testNum < 100; ++testNum) {
-    const auto sideLengths = rng.getN<double>(1.4, 5.6, 3);
-    const auto angles = rng.getN<double>(0.0, M_PI, 2);
+    const auto sideLengths = prng.getN<double>(1.4, 5.6, 3);
+    const auto angles = prng.getN<double>(0.0, M_PI, 2);
 
     BOOST_CHECK_MESSAGE(
       dihedralLength(

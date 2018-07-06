@@ -180,7 +180,7 @@ void BondStereocenter::assign(boost::optional<unsigned> assignment) {
 void BondStereocenter::assignRandom() {
   assert(_isZOption == boost::none);
 
-  _isZOption = rng.getSingle<bool>();
+  _isZOption = prng.getSingle<bool>();
 }
 
 void BondStereocenter::fit(const AngstromWrapper& angstromWrapper) {

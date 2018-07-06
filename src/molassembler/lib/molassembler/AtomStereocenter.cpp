@@ -389,7 +389,7 @@ boost::optional<std::vector<unsigned>> AtomStereocenter::PermutationState::getIn
 
   if(preservationOption == ChiralStatePreservation::RandomFromMultipleBest) {
     return mappingsGroup.indexMappings.at(
-      rng.getSingle<unsigned>(
+      prng.getSingle<unsigned>(
         0,
         mappingsGroup.indexMappings.size() - 1
       )
@@ -776,7 +776,7 @@ void AtomStereocenter::assign(boost::optional<unsigned> assignment) {
 
 void AtomStereocenter::assignRandom() {
   assign(
-    rng.pickDiscrete(
+    prng.pickDiscrete(
       // Map the feasible permutations onto their weights
       temple::map(
         _cache.feasiblePermutations,

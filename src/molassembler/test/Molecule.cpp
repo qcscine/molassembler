@@ -80,27 +80,27 @@ using HashArgumentsType = std::tuple<
 >;
 
 HashArgumentsType randomArguments() {
-  auto bonds = rng.getN<unsigned>(
+  auto bonds = prng.getN<unsigned>(
     0,
     7,
-    rng.getSingle<unsigned>(1, 8)
+    prng.getSingle<unsigned>(1, 8)
   );
   std::sort(bonds.begin(), bonds.end());
 
   boost::optional<Symmetry::Name> symmetryOptional;
   boost::optional<unsigned> assignmentOptional;
-  if(rng.getSingle<bool>()) {
+  if(prng.getSingle<bool>()) {
     symmetryOptional = static_cast<Symmetry::Name>(
-      rng.getSingle<unsigned>(0, 15)
+      prng.getSingle<unsigned>(0, 15)
     );
 
     std::geometric_distribution<unsigned> gd {0.2};
-    assignmentOptional = gd(rng.engine);
+    assignmentOptional = gd(prng.engine);
   }
 
   return {
     static_cast<Delib::ElementType>(
-      rng.getSingle<unsigned>(1, 112)
+      prng.getSingle<unsigned>(1, 112)
     ),
     temple::cast<molassembler::BondType>(bonds),
     symmetryOptional,

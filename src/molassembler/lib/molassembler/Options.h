@@ -22,7 +22,7 @@ namespace molassembler {
  * If you wish to get deterministic behavior in release builds, re-seed the
  * generator.
  */
-extern temple::Generator rng;
+extern temple::Generator prng;
 
 /*!
  * Specifies for which temperature regime the Molecule is being modeled.

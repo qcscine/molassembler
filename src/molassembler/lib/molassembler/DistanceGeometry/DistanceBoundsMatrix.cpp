@@ -106,7 +106,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
     0
   );
 
-  rng.shuffle(indices);
+  prng.shuffle(indices);
 
   std::vector<AtomIndexType>::const_iterator separator;
 
@@ -132,7 +132,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
         return DGError::GraphImpossible;
       }
 
-      double chosenDistance = rng.getSingle<double>(
+      double chosenDistance = prng.getSingle<double>(
         lowerBound(matrixCopy, i, j),
         upperBound(matrixCopy, i, j)
       );
@@ -159,7 +159,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
        * Nevertheless, to avoid UB, it is still necessary to properly order
        * the parameters
        */
-      double chosenDistance = rng.getSingle<double>(
+      double chosenDistance = prng.getSingle<double>(
         std::min(
           lowerBound(matrixCopy, i, j),
           upperBound(matrixCopy, i, j)
