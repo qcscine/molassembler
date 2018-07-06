@@ -122,7 +122,7 @@ public:
   }
 
   void seed(int seed) {
-    std::seed_seq seedSeq {seed};
+    std::seed_seq seedSeq {{seed}};
     _seed(seedSeq);
   }
 

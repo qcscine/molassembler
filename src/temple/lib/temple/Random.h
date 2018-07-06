@@ -4,6 +4,7 @@
 #include "constexpr/JSF.h"
 #include "Traits.h"
 
+#include <vector>
 #include <random>
 
 /*! @file
@@ -47,17 +48,11 @@ public:
     engine.seed(x);
   }
 
-  template<typename Container>
-  std::enable_if_t<
-    std::is_signed<
-      traits::getValueType<Container>
-    >::value,
-    void
-  > seed(const Container& seeds) {
-    std::seed_seq seedSeq {
-      std::begin(seeds),
-      std::end(seeds)
-    };
+  void seed(const std::vector<int>& signedSeeds) {
+    std::seed_seq seedSeq(
+      signedSeeds.begin(),
+      signedSeeds.end()
+    );
 
     engine.seed(seedSeq);
   }
