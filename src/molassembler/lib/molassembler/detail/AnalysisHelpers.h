@@ -202,6 +202,12 @@ void writeDGPOVandProgressFiles(
       );
     }
   }
+
+  // Write the graphviz representation of that structure number's spatial model
+  std::string graphvizFilename = baseFilename + "-spatial-model.dot"s;
+  std::ofstream graphvizfile (graphvizFilename);
+  graphvizfile << refinementData.spatialModelGraphviz;
+  graphvizfile.close();
 }
 
 // Shortcut for simple symmetry molecules

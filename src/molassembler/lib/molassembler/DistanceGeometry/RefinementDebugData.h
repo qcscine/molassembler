@@ -49,6 +49,7 @@ struct RefinementData {
   std::vector<ChiralityConstraint> constraints;
   double looseningFactor;
   bool isFailure;
+  std::string spatialModelGraphviz;
 };
 
 } // namespace DistanceGeometry

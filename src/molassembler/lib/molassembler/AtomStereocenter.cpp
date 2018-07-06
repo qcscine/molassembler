@@ -1459,7 +1459,7 @@ std::vector<
   > precursors;
 
   // Only collect constraints if it's actually assigned
-  if(_assignmentOption) {
+  if(_assignmentOption && numStereopermutations() > 1) {
 
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index

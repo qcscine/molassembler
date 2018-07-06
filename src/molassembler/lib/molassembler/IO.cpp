@@ -25,6 +25,15 @@ Molecule read(const std::string& filename) {
     );
   }
 
+  if(filepath.extension() == ".json") {
+    std::ifstream input(filename);
+    std::stringstream buffer;
+    buffer << input.rdbuf();
+    auto mol = fromJSON(buffer.str());
+    input.close();
+    return mol;
+  }
+
   std::unique_ptr<FileHandlers::FileHandler> handler;
   if(filepath.extension() == ".mol") {
     handler = std::make_unique<FileHandlers::MOLFileHandler>();
@@ -112,11 +121,19 @@ void write(
       filename,
       toCBOR(molecule)
     );
-  } else {
-    throw std::logic_error(
-      "It makes no sense to write MOL or XYZ files without a PositionCollection"
-    );
+    return;
   }
+
+  if(filepath.extension() == ".json") {
+    std::ofstream outfile(filename);
+    outfile << toJSON(molecule);
+    outfile.close();
+    return;
+  }
+
+  throw std::logic_error(
+    "It makes no sense to write MOL or XYZ files without a PositionCollection"
+  );
 }
 
 } // namespace IO

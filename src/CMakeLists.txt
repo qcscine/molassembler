@@ -5,7 +5,7 @@ set(molassembler_VERSION_PATCH 0)
 set(as_subproject chemical_symmetries cyclic_polygons stereopermutation temple)
 
 # Project-specific options
-option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
+option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" ON)
 
 # overwrite find_package with test against subproject list
 macro(find_package)

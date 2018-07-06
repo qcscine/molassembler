@@ -123,6 +123,14 @@ namespace errfDetail {
         log << "Chiral constraint " << temple::stringify(constraint.sites) << " : ["
           << constraint.lower << ", " << constraint.upper
           << "] deviation over threshold, is : " << volume << "\n";
+      } else if(
+        volume - constraint.upper > 0
+        || constraint.lower - volume > 0
+      ) {
+        log << "Unsatisfied chiral constraint (within threshold for acceptance) "
+          << temple::stringify(constraint.sites) << ": ["
+          << constraint.lower << ", " << constraint.upper
+          << "], is : " << volume << "\n";
       }
     }
   }

@@ -383,9 +383,10 @@ std::list<RefinementData> debug(
   bool regenerateEachStep = predicates::hasUnassignedStereocenters(molecule);
 
   MoleculeDGInformation DGData;
+  std::string spatialModelGraphviz;
 
   if(!regenerateEachStep) { // Collect once, keep all the time
-    DGData = gatherDGInformation(molecule);
+    DGData = gatherDGInformation(molecule, 1.0, spatialModelGraphviz);
   }
 
   /* If the ratio of failures/total optimizations exceeds this value,
@@ -432,12 +433,14 @@ std::list<RefinementData> debug(
       // Fetch the DG data from the molecule with no unassigned stereocenters
       DGData = gatherDGInformation(
         moleculeCopy,
-        detail::looseningFactor(failures, numStructures)
+        detail::looseningFactor(failures, numStructures),
+        spatialModelGraphviz
       );
     } else if(loosenBounds) {
       DGData = gatherDGInformation(
         molecule,
-        detail::looseningFactor(failures, numStructures)
+        detail::looseningFactor(failures, numStructures),
+        spatialModelGraphviz
       );
 
       loosenBounds = false;
@@ -601,6 +604,7 @@ std::list<RefinementData> debug(
         ) < 1.0
       ) { // Failure to invert
         Log::log(Log::Level::Warning)
+          << "[" << currentStructureNumber << "]: "
           << "First stage of refinement fails. Loosening factor was "
           << detail::looseningFactor(failures, numStructures)
           <<  "\n";
@@ -655,6 +659,7 @@ std::list<RefinementData> debug(
     refinementData.constraints = DGData.chiralityConstraints;
     refinementData.looseningFactor = detail::looseningFactor(failures, numStructures);
     refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
+    refinementData.spatialModelGraphviz = spatialModelGraphviz;
 
     refinementList.push_back(
       std::move(refinementData)
@@ -662,6 +667,7 @@ std::list<RefinementData> debug(
 
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       Log::log(Log::Level::Warning)
+        << "[" << currentStructureNumber << "]: "
         << "Second stage of refinement fails. Loosening factor was "
         << detail::looseningFactor(failures, numStructures)
         <<  "\n";
@@ -702,6 +708,23 @@ MoleculeDGInformation gatherDGInformation(
 ) {
   // Generate a spatial model from the molecular graph and stereocenters
   SpatialModel spatialModel {molecule, looseningFactor};
+
+  // Extract gathered data
+  MoleculeDGInformation data;
+  data.bounds = spatialModel.makeBoundsList();
+  data.chiralityConstraints = spatialModel.getChiralityConstraints();
+
+  return data;
+}
+
+MoleculeDGInformation gatherDGInformation(
+  const Molecule& molecule,
+  const double looseningFactor,
+  std::string& spatialModelGraphvizString
+) {
+  // Generate a spatial model from the molecular graph and stereocenters
+  SpatialModel spatialModel {molecule, looseningFactor};
+  spatialModelGraphvizString = spatialModel.dumpGraphviz();
 
   // Extract gathered data
   MoleculeDGInformation data;

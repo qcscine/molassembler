@@ -95,6 +95,13 @@ MoleculeDGInformation gatherDGInformation(
   const double looseningFactor = 1.0
 );
 
+//! Debug function, also collects graphviz of the conformational model
+MoleculeDGInformation gatherDGInformation(
+  const Molecule& molecule,
+  const double looseningFactor,
+  std::string& spatialModelGraphvizString
+);
+
 /*! Generate a conformational ensemble of a Molecule
  *
  * Returns a result type which may or may not contain a vector of

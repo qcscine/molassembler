@@ -98,7 +98,7 @@ public:
    */
   static constexpr double bondRelativeVariance = 0.01;
   //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
-  static constexpr double angleAbsoluteVariance = M_PI / 36; // ~ 5°
+  static constexpr double angleAbsoluteVariance = M_PI / 90; // ~ 2°
   //! Absolute dihedral angle variance in radians.
   static constexpr double dihedralAbsoluteVariance = M_PI / 36; // ~ 5°
 
@@ -205,6 +205,8 @@ public:
   DistanceBoundsMatrix makeBounds() const;
 
   BoundsList makeBoundsList() const;
+
+  std::string dumpGraphviz() const;
 
   void writeGraphviz(const std::string& filename) const;
 };

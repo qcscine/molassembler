@@ -46,7 +46,7 @@ void writeExpandedTree(
 
 int main(int argc, char* argv[]) {
 #ifdef NDEBUG
-  std::cout << "This analysis binary requires a debug build of the library."
+  std::cout << "This analysis binary requires a debug build of the library.";
   return 0;
 #endif
 

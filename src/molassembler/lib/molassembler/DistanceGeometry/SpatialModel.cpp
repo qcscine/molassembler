@@ -96,8 +96,10 @@ SpatialModel::SpatialModel(
     );
   }
 
-  // Populate the stereocenterMap with copies of the molecule's stereocenters
-  // Start with the existing stereocenters with multiple assignments
+  /* Populate the stereocenterMap with copies of the molecule's stereocenters
+   * Start with the existing stereocenters of multiple assignments
+   * This section is just to explicitly copy the underlying objects and not just the shared pointers
+   */
   for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
     for(const auto& involvedAtom : stereocenterPtr -> involvedAtoms()) {
       if(_stereocenterMap.count(involvedAtom) == 0) {
@@ -140,12 +142,13 @@ SpatialModel::SpatialModel(
     }
   }
 
+  /* Add stereocenters everywhere if they do not yet exist, regardless of
+   * whether they are stereogenic or not
+   */
+
   /* For every non-implicated double bond, create an BondStereocenter
    * Implicated means here that no stereocenters exist for either of the double
    * edge's atoms.
-   *
-   * TODO awkwardness here: double / aromatic bond type schism, aromatic bond
-   * type not considered
    */
   for(const auto& edgeIndex: molecule.iterateEdges()) {
     if(molecule.getGraph()[edgeIndex].bondType == BondType::Double) {
@@ -155,6 +158,7 @@ SpatialModel::SpatialModel(
       if(
         _stereocenterMap.count(source) == 0
         && _stereocenterMap.count(target) == 0
+        // TODO this right here is dangerous -> ligands view
         && molecule.getNumAdjacencies(source) == 3
         && molecule.getNumAdjacencies(target) == 3
       ) {
@@ -176,7 +180,7 @@ SpatialModel::SpatialModel(
   /* For every missing non-terminal atom, create a AtomStereocenter in the
    * determined geometry
    */
-  for(unsigned i = 0; i < molecule.numAtoms(); i++) {
+  for(unsigned i = 0; i < molecule.numAtoms(); ++i) {
     if(
       _stereocenterMap.count(i) == 0  // not already in the map
       && molecule.getNumAdjacencies(i) > 1 // non-terminal
@@ -331,17 +335,19 @@ SpatialModel::SpatialModel(
    * index. If that index is in a cycle of size < 6, the multiplier is > 1.
    */
   auto cycleMultiplierForIndex = [&](const AtomIndexType i) -> double {
-    if(smallestCycleMap.count(i) == 1) {
-      if(smallestCycleMap.at(i) == 3) {
-        return 2.5;
+    auto findIter = smallestCycleMap.find(i);
+
+    if(findIter != smallestCycleMap.end()) {
+      if(findIter->second == 3) {
+        return 6.25 ;
       }
 
-      if(smallestCycleMap.at(i) == 4) {
-        return 1.7;
+      if(findIter->second == 4) {
+        return 4.25;
       }
 
-      if(smallestCycleMap.at(i) == 5) {
-        return 1.3;
+      if(findIter->second == 5) {
+        return 3.25;
       }
     }
 
@@ -1042,10 +1048,21 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
   for(const auto& iterPair : _stereocenterMap) {
     const auto& stereocenterPtr = iterPair.second;
 
-    auto chiralityPrototypes = stereocenterPtr -> chiralityConstraints(_looseningMultiplier);
+    /* Since BondStereocenters are pointed to by both involved atoms, to avoid
+     * duplicates we need to skip constraint collection for either involved atom
+     */
+    if(
+      stereocenterPtr -> type() == Stereocenters::Type::BondStereocenter
+      && iterPair.first == stereocenterPtr -> involvedAtoms().back()
+    ) {
+      continue;
+    }
+
+    auto stereocenterConstraints = stereocenterPtr -> chiralityConstraints(_looseningMultiplier);
+
     std::move(
-      chiralityPrototypes.begin(),
-      chiralityPrototypes.end(),
+      stereocenterConstraints.begin(),
+      stereocenterConstraints.end(),
       std::back_inserter(constraints)
     );
   }
@@ -1134,7 +1151,7 @@ struct SpatialModel::ModelGraphWriter {
             stereocenterPtr -> involvedAtoms(),
             ""
           ) << R"( [label=")" << ezState
-          << R"(", fillcolor="tomato", shape="square", fontcolor="white", )"
+          << R"(", fillcolor="tomato", shape="box", fontcolor="white", )"
           << R"(tooltip=")"
           << stereocenterPtr -> info()
           << R"("];)" << "\n";
@@ -1147,7 +1164,7 @@ struct SpatialModel::ModelGraphWriter {
           stereocenterPtr -> involvedAtoms(),
           ""
         ) << R"( [label=")" << Symmetry::name(cnPtr -> getSymmetry())
-          << R"(", fillcolor="steelblue", shape="square", fontcolor="white", )"
+          << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
           << R"(tooltip=")" << cnPtr -> info()
           << R"("];)" << "\n";
       }
@@ -1209,6 +1226,10 @@ struct SpatialModel::ModelGraphWriter {
       }
     }
 
+    /*if(angleStrings.empty()) {
+      angleStrings.emplace_back("no angles here");
+    }*/
+
     if(angleStrings.empty()) {
       os << R"(, tooltip="no angles here")";
     } else {
@@ -1267,6 +1288,25 @@ struct SpatialModel::ModelGraphWriter {
     os << "]";
   }
 };
+
+std::string SpatialModel::dumpGraphviz() const {
+  ModelGraphWriter graphWriter(
+    &_molecule.getGraph(),
+    *this
+  );
+
+  std::stringstream graphvizStream;
+
+  boost::write_graphviz(
+    graphvizStream,
+    _molecule.getGraph(),
+    graphWriter,
+    graphWriter,
+    graphWriter
+  );
+
+  return graphvizStream.str();
+}
 
 void SpatialModel::writeGraphviz(const std::string& filename) const {
   ModelGraphWriter graphWriter(
