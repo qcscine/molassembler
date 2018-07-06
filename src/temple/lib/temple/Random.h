@@ -43,6 +43,10 @@ public:
     _initializeEngine();
   }
 
+  void seed(int x) {
+    engine.seed(x);
+  }
+
   template<typename Container>
   std::enable_if_t<
     std::is_signed<
@@ -56,10 +60,6 @@ public:
     };
 
     engine.seed(seedSeq);
-  }
-
-  void seed(int x) {
-    engine.seed(x);
   }
 
   template<typename T>

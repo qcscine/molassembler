@@ -121,8 +121,8 @@ public:
 
 /* Modification */
   constexpr ValueType& at(
-    const unsigned& i,
-    const unsigned& j
+    const unsigned i,
+    const unsigned j
   ) {
     if(i >= j || i >= N || j >= N) {
       throw "Index out of bounds!";
@@ -135,8 +135,8 @@ public:
 
 /* Information */
   constexpr const ValueType& at(
-    const unsigned& i,
-    const unsigned& j
+    const unsigned i,
+    const unsigned j
   ) const PURITY_WEAK {
     if(i >= j || i >= N || j >= N) {
       throw "Index out of bounds!";

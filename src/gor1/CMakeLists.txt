@@ -4,7 +4,6 @@ project(GORProject)
 set(gor1_VERSION 0.1.0)
 
 # dependencies
-set(Boost_USE_STATIC_LIBS OFF)
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 
 # Files

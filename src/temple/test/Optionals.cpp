@@ -1,6 +1,3 @@
-#define BOOST_TEST_MODULE OptionalsTestsModule
-#define BOOST_TEST_DYN_LINK
-
 #include <boost/test/unit_test.hpp>
 
 #include "temple/Optionals.h"

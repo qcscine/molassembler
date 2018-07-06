@@ -1,5 +1,3 @@
-#define BOOST_TEST_MODULE NumericTestsModule
-#define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "temple/Containers.h"
@@ -8,7 +6,7 @@
 
 #include <iostream>
 
-temple::Generator rng;
+extern temple::Generator prng;
 
 BOOST_AUTO_TEST_CASE(kahanSummation) {
   const unsigned repeats = 100;
@@ -16,7 +14,7 @@ BOOST_AUTO_TEST_CASE(kahanSummation) {
   for(unsigned nTest = 0; nTest < repeats; nTest++) {
     const unsigned N = 100;
     const unsigned magnitudeSpread = 20;
-    const auto randomNumbers = rng.getN<double>(
+    const auto randomNumbers = prng.getN<double>(
       std::pow(10, - static_cast<double>(magnitudeSpread) / 2),
       std::pow(10, static_cast<double>(magnitudeSpread) / 2),
       N

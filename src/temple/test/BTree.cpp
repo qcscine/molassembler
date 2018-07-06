@@ -1,6 +1,3 @@
-#define BOOST_TEST_MODULE ContainersTestsModule
-#define BOOST_TEST_DYN_LINK
-
 #include <boost/test/results_collector.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -11,7 +8,7 @@
 #include <set>
 #include <iostream>
 
-temple::Generator rng;
+extern temple::Generator prng;
 
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
@@ -21,64 +18,12 @@ inline bool lastTestPassed() {
   return rez.passed();
 }
 
-namespace BTreeStaticTests {
-
-temple::nonconstexpr::BTree<unsigned, 3> generateTree() {
-  temple::nonconstexpr::BTree<unsigned, 3> tree;
-
-  tree.insert(9);
-  tree.insert(3);
-  tree.insert(5);
-  tree.insert(20);
-
-  return tree;
-}
-
-auto testTree = generateTree();
-
-static_assert(
-  /* BTree of minimum order 3 has max 5 keys per node and max 6 children per node
-   *
-   * height  nodes       keys
-   * 0       1           5
-   * 1       1 + 6       5 + 6*5
-   * 2       1 + 6 + 36  5 + 6*5 + 36*5
-   *
-   * #nodes(h) = sum_{i = 0}^{h} (2t)^i
-   *
-   *     (2t)^{h + 1} - 1
-   *  N = ----------------
-   *         2t - 1
-   *
-   * -> N * (2t - 1) + 1 = (2t)^{h + 1}
-   *
-   * -> log_2t [N * (2t - 1) + 1] = h + 1
-   *
-   * -> h = log_2t [N * (2t - 1) + 1] - 1
-   *
-   */
-  temple::BTreeProperties::minHeight(5, 3) == 0
-  && temple::BTreeProperties::minHeight(35, 3) == 1
-  && temple::BTreeProperties::minHeight(215, 3) == 2,
-  "minHeight function is wrong"
-);
-
-static_assert(
-  temple::BTreeProperties::maxNodesInTree(0, 3) == 1
-  && temple::BTreeProperties::maxNodesInTree(1, 3) == 7
-  && temple::BTreeProperties::maxNodesInTree(2, 3) == 43
-  && temple::BTreeProperties::maxNodesInTree(3, 3) == 259,
-  "maxNodesInTree is wrong"
-);
-
-} // namespace BTreeStaticTests
-
-unsigned popRandom(std::set<unsigned>& values) {
+inline unsigned popRandom(std::set<unsigned>& values) {
   auto it = values.begin();
 
   std::advance(
     it,
-    rng.getSingle<unsigned>(0, values.size() - 1)
+    prng.getSingle<unsigned>(0, values.size() - 1)
   );
 
   auto value = *it;
@@ -238,7 +183,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       lastTreeGraph = tree.dumpGraphviz();
 
       // Decide whether to insert or remove a random item
-      auto decisionFloat = rng.getSingle<double>(0.0, 1.0);
+      auto decisionFloat = prng.getSingle<double>(0.0, 1.0);
       if(decisionFloat >= static_cast<double>(inTree.size()) / nKeys) {
         addElement(lastTreeGraph);
       } else {

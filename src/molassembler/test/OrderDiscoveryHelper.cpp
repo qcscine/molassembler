@@ -1,5 +1,4 @@
 #define BOOST_TEST_MODULE OrderDiscoveryHelperTestModule
-#define BOOST_TEST_DYN_LINK
 
 #include "boost/test/unit_test.hpp"
 
@@ -13,7 +12,7 @@ std::string showDiscoveryState(
   const OrderDiscoveryHelper<T>& orderingHelper
 ) {
   return (
-    "Sets: "s 
+    "Sets: "s
     + temple::condenseIterable(
       temple::map(
         orderingHelper.getSets(),
@@ -21,7 +20,7 @@ std::string showDiscoveryState(
           return "{"s + temple::condenseIterable(set) + "}"s;
         }
       )
-    ) 
+    )
     + ", Undecided"s
     + temple::condenseIterable(
       temple::map(
@@ -30,7 +29,7 @@ std::string showDiscoveryState(
           return "{"s + temple::condenseIterable(set) + "}"s;
         }
       )
-    ) 
+    )
   );
 }
 
@@ -44,7 +43,7 @@ BOOST_AUTO_TEST_CASE(sampleTest) {
   helper.addLessThanRelationship(6, 3);
 
   BOOST_CHECK_MESSAGE(
-    helper.getSets().size() == 2 
+    helper.getSets().size() == 2
     && helper.getUndecidedSets().size() == 1,
     "State: " << showDiscoveryState(helper)
   );
@@ -58,7 +57,7 @@ BOOST_AUTO_TEST_CASE(sampleTest) {
   helper.addLessThanRelationship(3, 1);
 
   BOOST_CHECK_MESSAGE(
-    helper.getSets().size() == 3 
+    helper.getSets().size() == 3
     && helper.getUndecidedSets().size() == 1,
     "State: " << showDiscoveryState(helper)
   );
@@ -71,7 +70,7 @@ BOOST_AUTO_TEST_CASE(sampleTest) {
   helper.addLessThanRelationship(3, 2);
 
   BOOST_CHECK_MESSAGE(
-    helper.getSets().size() == 4 
+    helper.getSets().size() == 4
     && helper.getUndecidedSets().size() == 0,
     "State: " << showDiscoveryState(helper)
   );
@@ -92,7 +91,7 @@ BOOST_AUTO_TEST_CASE(sampleTest) {
   pointerHelper.addLessThanRelationship(&z, &y);
 
   BOOST_CHECK_MESSAGE(
-    pointerHelper.getSets().size() == 3 
+    pointerHelper.getSets().size() == 3
     && pointerHelper.getUndecidedSets().size() == 0,
     "State: " << showDiscoveryState(helper)
   );

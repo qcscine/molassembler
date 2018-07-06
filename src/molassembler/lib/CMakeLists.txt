@@ -6,8 +6,6 @@ find_package(cyclic_polygons 0.1.0 REQUIRED)
 find_package(scine COMPONENTS Delib REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(dlib REQUIRED)
-
-set(Boost_USE_STATIC_LIBS OFF)
 find_package(Boost REQUIRED COMPONENTS filesystem system)
 
 # add include directories
@@ -153,8 +151,8 @@ target_link_libraries(
     ${BLAS_LIBRARIES}
   PRIVATE
     cyclic_polygons
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
+    Boost::filesystem
+    Boost::system
 )
 
 target_link_libraries(

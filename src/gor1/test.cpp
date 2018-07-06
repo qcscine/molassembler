@@ -1,5 +1,4 @@
 #define BOOST_TEST_MODULE Gor1TestsModule
-#define BOOST_TEST_DYN_LINK
 #include "boost/test/unit_test.hpp"
 #include "boost/graph/random.hpp"
 #include "boost/graph/bellman_ford_shortest_paths.hpp"

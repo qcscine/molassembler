@@ -1,6 +1,3 @@
-#define BOOST_TEST_MODULE VariousTempleTestsModule
-#define BOOST_TEST_DYN_LINK
-
 #include <boost/test/results_collector.hpp>
 #include <boost/test/unit_test.hpp>
 

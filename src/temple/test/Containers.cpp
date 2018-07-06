@@ -1,6 +1,3 @@
-#define BOOST_TEST_MODULE ContainersTestsModule
-#define BOOST_TEST_DYN_LINK
-
 #include <boost/test/unit_test.hpp>
 
 #include "temple/Containers.h"
