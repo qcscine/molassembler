@@ -631,10 +631,7 @@ void BondStereocenter::setModelInformation(
 
     model.setAngleBoundsIfEmpty(
       {{i, j, k}},
-      DistanceGeometry::ValueBounds {
-        std::max(0.0, 2 * M_PI / 3 - variance),
-        std::min(M_PI, 2 * M_PI / 3 + variance)
-      }
+      ModelType::makeBoundsFromCentralValue(2 * M_PI / 3, variance)
     );
   };
 
@@ -642,12 +639,14 @@ void BondStereocenter::setModelInformation(
   addAngle(_leftHighPriority(), _leftCenter, _rightCenter);
   if(_numIndices(_leftRanking) == 2) {
     addAngle(_leftLowPriority(), _leftCenter, _rightCenter);
+    addAngle(_leftHighPriority(), _leftCenter, _leftLowPriority());
   }
 
   // Right
   addAngle(_leftCenter, _rightCenter, _rightHighPriority());
   if(_numIndices(_rightRanking) == 2) {
     addAngle(_leftCenter, _rightCenter, _rightLowPriority());
+    addAngle(_rightHighPriority(), _rightCenter, _rightLowPriority());
   }
 
   /* Dihedrals */

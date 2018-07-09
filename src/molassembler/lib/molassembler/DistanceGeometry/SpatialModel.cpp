@@ -24,7 +24,7 @@ constexpr double SpatialModel::angleAbsoluteVariance;
 constexpr double SpatialModel::dihedralAbsoluteVariance;
 
 const ValueBounds SpatialModel::angleClampBounds = ValueBounds {0.0, M_PI};
-const ValueBounds SpatialModel::dihedralClampBounds = ValueBounds {-M_PI, M_PI};
+const ValueBounds SpatialModel::dihedralClampBounds = ValueBounds {0.0, M_PI};
 
 SpatialModel::SpatialModel(
   const Molecule& molecule,
