@@ -489,7 +489,7 @@ std::vector<BondStereocenter::DihedralLimits> BondStereocenter::_dihedralLimits(
         dihedralSequence,
         std::pair<double, double> {
           0,
-          std::min(M_PI, varianceForSequence(dihedralSequence))
+          std::min(M_PI / 2, varianceForSequence(dihedralSequence))
         } // cis limit
       );
     }
@@ -498,7 +498,7 @@ std::vector<BondStereocenter::DihedralLimits> BondStereocenter::_dihedralLimits(
       limits.emplace_back(
         dihedralSequence,
         std::pair<double, double> {
-          std::max(0.0, M_PI - varianceForSequence(dihedralSequence)),
+          std::max(M_PI / 2, M_PI - varianceForSequence(dihedralSequence)),
           M_PI
         } // trans
       );
@@ -511,7 +511,7 @@ std::vector<BondStereocenter::DihedralLimits> BondStereocenter::_dihedralLimits(
       limits.emplace_back(
         dihedralSequence,
         std::pair<double, double> {
-          std::max(0.0, M_PI - varianceForSequence(dihedralSequence)),
+          std::max(M_PI / 2, M_PI - varianceForSequence(dihedralSequence)),
           M_PI
         } // trans
       );
@@ -522,7 +522,7 @@ std::vector<BondStereocenter::DihedralLimits> BondStereocenter::_dihedralLimits(
         dihedralSequence,
         std::pair<double, double> {
           0,
-          std::min(M_PI, varianceForSequence(dihedralSequence))
+          std::min(M_PI / 2, varianceForSequence(dihedralSequence))
         } // cis limit
       );
     }
@@ -530,7 +530,7 @@ std::vector<BondStereocenter::DihedralLimits> BondStereocenter::_dihedralLimits(
 
   /* It could occur to you that the limits are defined only on the positive
    * interval [0, π], and so a corresponding trans dihedral lies on an interval
-   * with some tolerance t: [t, π]. What about the negative dihedral interval?
+   * with some tolerance t: [π - t, π]. What about the negative dihedral interval?
    *
    * The way this data is used in distance geometry is merely a distance
    * consideration depending on all bond lengths and angles involved, which is
@@ -657,8 +657,10 @@ void BondStereocenter::setModelInformation(
   ) {
     model.setDihedralBoundsIfEmpty(
       dihedralLimit.indices,
-      dihedralLimit.lower,
-      dihedralLimit.upper
+      DistanceGeometry::ValueBounds {
+        dihedralLimit.lower,
+        dihedralLimit.upper
+      }
     );
   }
 }

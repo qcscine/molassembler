@@ -306,7 +306,7 @@ bool nextCombinationPermutation(
 }
 
 /*! Updates a map, placing the updateValue if the map does not yet have an entry
- * for the passed index. If there is an existing value for the passed index, a
+ * for the passed key. If there is an existing value for the passed key, a
  * predicate function is called to determine whether to update the value or not
  */
 template<typename T, typename U, class UpdatePredicate>
@@ -322,15 +322,21 @@ std::enable_if_t<
   void
 > addOrUpdateMapIf(
   std::map<T, U>& map,
-  const T& index,
+  const T& key,
   const U& updateValue,
   UpdatePredicate&& updatePredicate
 ) {
-  if(map.count(index) == 0) {
-    map[index] = updateValue;
+  auto findIter = map.lower_bound(key);
+
+  if(findIter == map.end() || findIter->first != key) {
+    map.emplace_hint(
+      findIter,
+      key,
+      updateValue
+    );
   } else {
-    if(updatePredicate(map.at(index))) {
-      map.at(index) = updateValue;
+    if(updatePredicate(findIter->second)) {
+      findIter->second = updateValue;
     }
   }
 }

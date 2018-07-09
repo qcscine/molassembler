@@ -102,6 +102,9 @@ public:
   //! Absolute dihedral angle variance in radians.
   static constexpr double dihedralAbsoluteVariance = M_PI / 36; // ~ 5°
 
+  static const ValueBounds angleClampBounds;
+  static const ValueBounds dihedralClampBounds;
+
 /* Static functions */
   static boost::optional<ValueBounds> coneAngle(
     const std::vector<AtomIndexType>& baseConstituents,
@@ -120,6 +123,16 @@ public:
     const GraphType& graph
   );
 
+  static ValueBounds makeBoundsFromCentralValue(
+    const double centralValue,
+    const double absoluteVariance
+  );
+
+  static ValueBounds clamp(
+    const ValueBounds& bounds,
+    const ValueBounds& clampBounds
+  );
+
 /* Constructor */
   SpatialModel(
     const Molecule& molecule,
@@ -127,10 +140,7 @@ public:
   );
 
 /* Modification */
-  /*!
-   * Sets the bond bounds to the model. Does not check if previous information
-   * exists
-   */
+  //! Sets the bond bounds to the model.
   void setBondBoundsIfEmpty(
     const std::array<AtomIndexType, 2>& bondIndices,
     const double centralValue
@@ -148,12 +158,6 @@ public:
    */
   void setAngleBoundsIfEmpty(
     const std::array<AtomIndexType, 3>& angleIndices,
-    const double centralValue,
-    const double absoluteVariance
-  );
-
-  void setAngleBoundsIfEmpty(
-    const std::array<AtomIndexType, 3>& angleIndices,
     const ValueBounds& bounds
   );
 
@@ -163,8 +167,7 @@ public:
    */
   void setDihedralBoundsIfEmpty(
     const std::array<AtomIndexType, 4>& dihedralIndices,
-    const double lower,
-    const double upper
+    const ValueBounds& bounds
   );
 
   //! Adds [0, 2π] default angle bounds for all bonded atom triples
