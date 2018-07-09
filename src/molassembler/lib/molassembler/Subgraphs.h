@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_SUBGRAPHS_H
 #define INCLUDE_MOLASSEMBLER_SUBGRAPHS_H
 
-#include "boost/graph/mcgregor_common_subgraphs.hpp"
+#include "boost/bimap.hpp"
 
 #include "Molecule.h"
 
@@ -10,7 +10,19 @@ namespace molassembler {
 namespace subgraphs {
 
 //! Maybe consider using boost::bimap for this instead?
-using IndexMap = std::unordered_map<AtomIndexType, AtomIndexType>;
+using IndexMap = boost::bimap<AtomIndexType, AtomIndexType>;
+
+enum class VertexStrictness : unsigned {
+  ElementType,
+  LowEffortTransitionToLargerSymmetry,
+  SameSymmetry
+  // What else?
+};
+
+enum class EdgeStrictness : unsigned {
+  BondType,
+  EZIdentical
+};
 
 /*! Mappings for the maximum common subgraph between two molecules
  *
@@ -22,15 +34,23 @@ using IndexMap = std::unordered_map<AtomIndexType, AtomIndexType>;
  * to a common substructure matching.
  */
 std::vector<IndexMap> maximum(
-  const GraphType& a,
-  const GraphType& b
+  const Molecule& a,
+  const Molecule& b,
+  VertexStrictness vertexStrictness = VertexStrictness::ElementType,
+  EdgeStrictness edgeStrictness = EdgeStrictness::BondType
 );
 
-//! Unique mappings for the maximum common subgraph between two molecules
-std::vector<IndexMap> maximumUnique(
-  const GraphType& a,
-  const GraphType& b
-);
+namespace detail {
+
+constexpr std::size_t upperTrigSize = Symmetry::nSymmetries * (Symmetry::nSymmetries - 1) / 2;
+
+extern std::unique_ptr<
+  temple::UpperTriangularMatrix<bool, upperTrigSize>
+> lowEffortMappings;
+
+void generateLowEffortMappings();
+
+} // namespace detail
 
 } // namespace subgraphs
 
