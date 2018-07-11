@@ -5,6 +5,7 @@ find_package(Eigen3 3.1.1 REQUIRED)
 find_package(chemical_symmetries REQUIRED)
 
 set(HEADERS_All
+  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Composites.h
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Stereopermutation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/GenerateUniques.h
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/LogicalOperatorTests.h
@@ -12,6 +13,7 @@ set(HEADERS_All
 )
 
 set(SOURCES_All
+  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Composites.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Stereopermutation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/GenerateUniques.cpp
 )

@@ -10,6 +10,7 @@
 
 #include "stereopermutation/GenerateUniques.h"
 #include "stereopermutation/LogicalOperatorTests.h"
+#include "stereopermutation/Composites.h"
 
 #include "temple/Random.h"
 #include "temple/Containers.h"
@@ -626,4 +627,51 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
       )
     }
   );
+}
+
+BOOST_AUTO_TEST_CASE(compositesTests) {
+  Composite a {
+    Symmetry::Name::Seesaw,
+    Symmetry::Name::Tetrahedral,
+    0,
+    0
+  };
+
+  BOOST_CHECK(a.permutations() == 3u);
+
+  Composite b {
+    Symmetry::Name::Octahedral,
+    Symmetry::Name::Octahedral,
+    4,
+    4
+  };
+
+  BOOST_CHECK(b.permutations() == 4u);
+
+  Composite c {
+    Symmetry::Name::Bent,
+    Symmetry::Name::TrigonalPlanar,
+    0,
+    0
+  };
+
+  BOOST_CHECK(c.permutations() == 2);
+
+  Composite d {
+    Symmetry::Name::TrigonalPlanar,
+    Symmetry::Name::TrigonalPlanar,
+    0,
+    0
+  };
+
+  BOOST_CHECK(d.permutations() == 2);
+
+  Composite e {
+    Symmetry::Name::Bent,
+    Symmetry::Name::Bent,
+    0,
+    0
+  };
+
+  BOOST_CHECK(e.permutations() == 2);
 }
