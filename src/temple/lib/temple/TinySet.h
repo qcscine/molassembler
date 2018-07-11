@@ -19,6 +19,9 @@ struct TinyUnorderedSet {
 
   type data;
 
+  TinyUnorderedSet() = default;
+  TinyUnorderedSet(std::initializer_list<T> list) : data {std::forward<std::initializer_list<T>>(list)} {}
+
   void insert(T a) {
     data.push_back(a);
   }
@@ -92,6 +95,9 @@ struct TinySet {
   using type = std::vector<T>;
 
   type data;
+
+  TinySet() = default;
+  TinySet(std::initializer_list<T> list) : data {std::forward<std::initializer_list<T>>(list)} {}
 
   void clear() {
     data.clear();

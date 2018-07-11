@@ -29,7 +29,7 @@ InterpretResult interpret(
         }
       }
     }
-  } else if(discretization == BondDiscretizationOption::UFF) {
+  } else if(discretization == BondDiscretizationOption::RoundToNearest) {
     for(int i = 0; i < N; ++i) {
       for(int j = i + 1; j < N; ++j) {
         double bondOrder = bondOrders.getOrder(i, j);

@@ -436,14 +436,14 @@ InterpretResult interpret(const FileHandler::RawData& data) {
       data.elements,
       data.angstromWrapper,
       data.bondOrders,
-      BondDiscretizationOption::UFF
+      BondDiscretizationOption::RoundToNearest
     );
   }
 
   return interpret(
     data.elements,
     data.angstromWrapper,
-    BondDiscretizationOption::UFF
+    BondDiscretizationOption::RoundToNearest
   );
 }
 

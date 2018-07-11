@@ -163,6 +163,17 @@ template<
   BinaryFunction&& function
 );
 
+//! Takes two containers and maps all possible pairs into a vector
+template<
+  class ContainerT,
+  class ContainerU,
+  class BinaryFunction
+> auto mapAllPairs(
+  const ContainerT& containerT,
+  const ContainerU& containerU,
+  BinaryFunction&& function
+);
+
 /*!
  * Zip mapping. Always returns a vector containing the type returned by
  * the binary function.
@@ -812,6 +823,41 @@ template<
   }
 
   return returnContainer;
+}
+
+template<
+  class ContainerT,
+  class ContainerU,
+  class BinaryFunction
+> auto mapAllPairs(
+  const ContainerT& containerT,
+  const ContainerU& containerU,
+  BinaryFunction&& function
+) {
+  using T = traits::getValueType<ContainerT>;
+  using U = traits::getValueType<ContainerU>;
+
+  using R = decltype(
+    function(
+      std::declval<T>(),
+      std::declval<U>()
+    )
+  );
+
+  std::vector<R> values;
+  values.reserve(
+    containerT.size() * containerU.size()
+  );
+
+  for(auto i = std::begin(containerT); i != std::end(containerT); ++i) {
+    for(auto j = std::begin(containerU); j != std::end(containerU); ++j) {
+      values.emplace_back(
+        function(*i, *j)
+      );
+    }
+  }
+
+  return values;
 }
 
 template<

@@ -281,7 +281,7 @@ bool nextCombinationPermutation(
 
   // Check if all columns are full
   bool allFull = true;
-  for(unsigned i = 0; i < cols; i++) {
+  for(unsigned i = 0; i < cols; ++i) {
     if(toPermute[i] != limits[i]) {
       allFull = false;
       break;
@@ -292,11 +292,11 @@ bool nextCombinationPermutation(
     return false;
   } else {
     // Make next permutation
-    for(int i = cols - 1; i >= 0; i--) {
+    for(int i = cols - 1; i >= 0; --i) {
       if(toPermute[i] == limits[i]) {
         toPermute[i] = 0;
       } else {
-        toPermute[i]++;
+        ++toPermute[i];
         return true;
       }
     }

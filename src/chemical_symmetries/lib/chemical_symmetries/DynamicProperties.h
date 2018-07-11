@@ -16,11 +16,22 @@ namespace properties {
 
 constexpr double floatingPointEqualityThreshold [[gnu::unused]] = 1e-4;
 
+//! Rotates a passed list of indices with a specified rotation vector
+std::vector<unsigned> applyRotation(
+  const std::vector<unsigned>& indices,
+  const std::vector<unsigned>& rotation
+);
+
 //! Rotates a passed list of indices of a specific symmetry
 std::vector<unsigned> applyRotation(
   const std::vector<unsigned>& indices,
   const Symmetry::Name symmetryName,
   unsigned rotationFunctionIndex
+);
+
+unsigned rotationPeriodicity(
+  const Symmetry::Name symmetryName,
+  const std::vector<unsigned>& rotation
 );
 
 /*!

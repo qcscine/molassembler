@@ -19,7 +19,7 @@ enum class BondDiscretizationOption : unsigned {
   //! All bond orders >= 0.5 are considered single bonds
   Binary,
   //! Bond orders are rounded to the nearest integer
-  UFF
+  RoundToNearest
 };
 
 //! Result type of an interpret call.

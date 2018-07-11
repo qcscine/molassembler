@@ -12,25 +12,25 @@ struct OrderedPair {
   T second;
 
   OrderedPair() = default;
-  OrderedPair(T a, T b) : first {std::min(a, b)}, second {std::max(a, b)} {}
+  constexpr OrderedPair(T a, T b) : first {std::min(a, b)}, second {std::max(a, b)} {}
 
-  T front() const {
+  constexpr T front() const {
     return first;
   }
 
-  T& front() {
+  constexpr T& front() {
     return first;
   }
 
-  T back() const {
+  constexpr T back() const {
     return second;
   }
 
-  T& back() {
+  constexpr T& back() {
     return second;
   }
 
-  T& at(unsigned i) {
+  constexpr T& at(unsigned i) {
     if(i > 1) {
       throw std::out_of_range("Invalid access to pair");
     }
@@ -42,7 +42,7 @@ struct OrderedPair {
     return second;
   }
 
-  T at(unsigned i) const {
+  constexpr T at(unsigned i) const {
     if(i > 1) {
       throw std::out_of_range("Invalid access to pair");
     }
@@ -54,11 +54,11 @@ struct OrderedPair {
     return second;
   }
 
-  T& operator [] (unsigned i) {
+  constexpr T& operator [] (unsigned i) {
     return at(i);
   }
 
-  T operator [] (unsigned i) const {
+  constexpr T operator [] (unsigned i) const {
     return at(i);
   }
 
@@ -187,6 +187,30 @@ struct OrderedPair {
     ConstIterator iter {&second};
     ++iter;
     return iter;
+  }
+
+  // C++17 spaceship operator
+  constexpr bool operator < (const OrderedPair& other) const {
+    if(first < other.first) {
+      return true;
+    }
+
+    if(second < other.second) {
+      return true;
+    }
+
+    return false;
+  }
+
+  constexpr bool operator == (const OrderedPair& other) const {
+    return (
+      first == other.first
+      && second = other.second
+    );
+  }
+
+  constexpr bool operator != (const OrderedPair& other) const {
+    return !(*this == other);
   }
 };
 

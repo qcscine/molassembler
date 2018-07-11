@@ -185,6 +185,7 @@ std::set<Stereopermutation> Stereopermutation::generateAllRotations(
       const Stereopermutation& /* a */,
       const Stereopermutation& /* b */
     ) -> bool {
+      // Never interrupt
       return false;
     },
     symmetryName

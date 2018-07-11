@@ -17,6 +17,24 @@ namespace properties {
 
 std::vector<unsigned> applyRotation(
   const std::vector<unsigned>& indices,
+  const std::vector<unsigned>& rotation
+) {
+  assert(indices.size() == rotation.size());
+
+  std::vector<unsigned> retv;
+  retv.reserve(indices.size());
+
+  for(const auto& index : rotation) {
+    retv.push_back(
+      indices.at(index)
+    );
+  }
+
+  return retv;
+}
+
+std::vector<unsigned> applyRotation(
+  const std::vector<unsigned>& indices,
   const Symmetry::Name symmetryName,
   unsigned rotationFunctionIndex
 ) {
@@ -32,6 +50,27 @@ std::vector<unsigned> applyRotation(
   }
 
   return retv;
+}
+
+unsigned rotationPeriodicity(
+  const Symmetry::Name symmetryName,
+  const std::vector<unsigned>& rotation
+) {
+  assert(rotation.size() == Symmetry::size(symmetryName));
+
+  const auto initialIndices = detail::iota<unsigned>(Symmetry::size(symmetryName));
+
+  std::vector<unsigned> modified = applyRotation(initialIndices, rotation);
+
+  unsigned i = 1;
+  for(/* */; modified != initialIndices && i < 20; ++i) {
+    modified = applyRotation(modified, rotation);
+  }
+
+  // No rotation should have a periodicity of 20.
+  assert(i != 20);
+
+  return i;
 }
 
 Eigen::Vector3d getCoordinates(
