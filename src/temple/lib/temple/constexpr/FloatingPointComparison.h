@@ -83,7 +83,7 @@ constexpr std::enable_if_t<
   }
 
   return(
-    Math::abs(Math::abs(a) - Math::abs(b))
+    Math::abs(a - b)
     <= Math::max(
       relativeTolerance * Math::max(
         Math::abs(a),
@@ -186,7 +186,7 @@ public:
   }
 
   constexpr bool isEqual(const T a, const T b) const noexcept PURITY_STRONG {
-    return Math::abs(Math::abs(a) - Math::abs(b)) <= _absoluteTolerance;
+    return Math::abs(a - b) <= _absoluteTolerance;
   }
 
   constexpr bool isUnequal(const T a, const T b) const noexcept PURITY_STRONG {
