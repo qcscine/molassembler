@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_MEMBER_FETCHER_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_MEMBER_FETCHER_H
 
-#include "Traits.h"
+#include "temple/Traits.h"
 
 #include <functional>
 

@@ -1,9 +1,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_UINT_ARRAY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_UINT_ARRAY_H
 
-#include "Math.h"
-#include "Array.h"
-#include "DynamicArray.h"
+#include "temple/constexpr/Math.h"
+#include "temple/constexpr/Array.h"
+#include "temple/constexpr/DynamicArray.h"
 
 /*! @file
  *

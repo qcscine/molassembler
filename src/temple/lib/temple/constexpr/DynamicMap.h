@@ -1,8 +1,8 @@
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_MAP_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_MAP_H
 
-#include "DynamicSet.h"
-#include "Pair.h"
+#include "temple/constexpr/DynamicSet.h"
+#include "temple/constexpr/Pair.h"
 
 /*! @file
  *

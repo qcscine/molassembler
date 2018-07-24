@@ -1,8 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_UINT_ARRAY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_UINT_ARRAY_H
 
-#include "Math.h"
-#include "Array.h"
+#include "temple/constexpr/Math.h"
+#include "temple/constexpr/Array.h"
 
 /*! @file
  *

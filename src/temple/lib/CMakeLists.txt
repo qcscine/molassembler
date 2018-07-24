@@ -18,6 +18,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Pair.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/ToSTL.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/TupleType.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/TupleTypePairs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/TypeTests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/UIntArray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/UpperTriangularMatrix.h

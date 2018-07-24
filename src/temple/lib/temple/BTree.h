@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BTREE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_BTREE_H
 
-#include "constexpr/BTree.h"
+#include "temple/constexpr/BTree.h"
 
 #include <map>
 #include <vector>

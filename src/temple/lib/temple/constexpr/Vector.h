@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_VECTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_VECTOR_H
 
-#include "Math.h"
+#include "temple/constexpr/Math.h"
 
 #include <array>
 

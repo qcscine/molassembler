@@ -1,9 +1,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 
-#include "Vector.h"
-#include "Array.h"
-#include "FloatingPointComparison.h"
+#include "temple/constexpr/Vector.h"
+#include "temple/constexpr/Array.h"
+#include "temple/constexpr/FloatingPointComparison.h"
 
 /*! @file
  *

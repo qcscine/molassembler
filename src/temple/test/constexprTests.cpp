@@ -10,6 +10,7 @@
 #include "temple/constexpr/DynamicSet.h"
 #include "temple/constexpr/DynamicMap.h"
 #include "temple/constexpr/TupleType.h"
+#include "temple/constexpr/TupleTypePairs.h"
 #include "temple/constexpr/LogicalOperatorTests.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/UIntArray.h"

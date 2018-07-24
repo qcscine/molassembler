@@ -1,11 +1,11 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ARRAY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ARRAY_H
 
+#include "temple/constexpr/Containers.h"
+
 #include <cstddef>
 #include <type_traits>
 #include <utility>
-
-#include "Containers.h"
 
 /*! @file
  *

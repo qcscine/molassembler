@@ -1,15 +1,15 @@
 #ifndef INCLUDE_TEMPLE_CONSTEXPR_NUMERIC_H
 #define INCLUDE_TEMPLE_CONSTEXPR_NUMERIC_H
 
-#include "../Traits.h"
-#include "Math.h"
+#include "temple/Traits.h"
+#include "temple/constexpr/Math.h"
 
 #include <numeric>
 #include <functional>
 #include <cassert>
 
 /*! @file
- * 
+ *
  * Exposes a small set of functions for working with numbers in containers.
  *
  * - Basic summation
@@ -22,7 +22,7 @@
 
 namespace temple {
 
-/*! 
+/*!
  * Composable sum function. Returns the type the container contains, assuming
  * monadic behavior on operator + (value_type + value_type = value_type).
  * Container must implement begin and end members.
@@ -39,7 +39,7 @@ constexpr traits::getValueType<ContainerType> sum(const ContainerType& container
   );
 }
 
-/*! 
+/*!
  * Composable Kahan summation function. Returns the type the container
  * contains, assuming monadic behavior on operator + (value_type + value_type =
  * value_type).  Container must implement begin and end members.
@@ -162,7 +162,7 @@ std::enable_if_t<
   using ValueType = traits::getValueType<ContainerType>;
 
   static_assert(
-    std::is_same<ValueType, FloatingType>::value, 
+    std::is_same<ValueType, FloatingType>::value,
     "The provided average type must match the container vaue type!"
   );
 

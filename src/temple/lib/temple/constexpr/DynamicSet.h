@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_SET_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_SET_H
 
-#include "BTree.h"
+#include "temple/constexpr/BTree.h"
 
 /*! @file
  *

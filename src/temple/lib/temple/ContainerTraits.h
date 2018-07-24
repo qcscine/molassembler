@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONTAINER_TRAITS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONTAINER_TRAITS_H
 
-#include "Traits.h"
+#include "temple/Traits.h"
 
 #include <utility>
 

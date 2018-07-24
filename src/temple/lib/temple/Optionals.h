@@ -2,7 +2,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_OPTIONALS_H
 
 #include <boost/optional.hpp>
-#include "Traits.h"
+#include "temple/Traits.h"
 
 /*! @file
  *

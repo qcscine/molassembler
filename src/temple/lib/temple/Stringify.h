@@ -1,7 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_STRINGIFY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_STRINGIFY_H
 
-#include "Traits.h"
+#include "temple/Traits.h"
+
 #include <set>
 #include <unordered_set>
 #include <list>

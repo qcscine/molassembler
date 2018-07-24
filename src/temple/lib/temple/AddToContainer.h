@@ -1,8 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ADD_TO_CONTAINER_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ADD_TO_CONTAINER_H
 
-#include "ContainerTraits.h"
-#include "Functor.h"
+#include "temple/ContainerTraits.h"
+#include "temple/Functor.h"
 
 /*! @file
  *

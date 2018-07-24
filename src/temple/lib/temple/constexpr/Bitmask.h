@@ -1,9 +1,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BITMASK_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_BITMASK_H
 
-#include <exception>
+#include "temple/constexpr/Math.h"
 
-#include "Math.h"
+#include <stdexcept>
 
 /*!@file
  *

@@ -1,9 +1,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_VECTOR_VIEW_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_VECTOR_VIEW_H
 
-#include <algorithm>
+#include "temple/constexpr/Numeric.h"
 
-#include "constexpr/Numeric.h"
+#include <algorithm>
 
 /*! @file
  *

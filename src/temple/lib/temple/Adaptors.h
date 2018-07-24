@@ -1,8 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 
-#include "Traits.h"
-#include "Invoke.h"
+#include "temple/Traits.h"
+#include "temple/Invoke.h"
 
 /*! @file
  * Boost range like adaptors. Not nearly as good.

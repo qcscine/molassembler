@@ -1,8 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 
-#include "Invoke.h"
-#include "AddToContainer.h"
+#include "temple/Invoke.h"
+#include "temple/AddToContainer.h"
 
 /*! @file
  * Better functional-style composability improvements than Containers.h.

@@ -1,11 +1,12 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_RANDOM_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_RANDOM_H
 
-#include "constexpr/JSF.h"
-#include "Traits.h"
+#include "temple/constexpr/JSF.h"
+#include "temple/Traits.h"
 
 #include <vector>
 #include <random>
+#include <algorithm>
 
 /*! @file
  *

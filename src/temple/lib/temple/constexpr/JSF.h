@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <random>
+#include <array>
 
 namespace temple {
 
