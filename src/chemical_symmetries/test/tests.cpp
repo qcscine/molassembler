@@ -5,6 +5,7 @@
 #include <Eigen/Geometry>
 #include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
+#include "temple/Stringify.h"
 
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/Properties.h"
@@ -619,7 +620,7 @@ struct RotationGenerationTest {
     // This is a std::set of SymmetryClass-sized std::vectors
     auto dynamicRotations = properties::generateAllRotations(
       SymmetryClass::name,
-      detail::iota<unsigned>(SymmetryClass::size)
+      temple::iota<unsigned>(SymmetryClass::size)
     );
 
     auto convertedRotations = temple::map(

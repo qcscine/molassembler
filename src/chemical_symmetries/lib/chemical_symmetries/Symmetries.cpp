@@ -22,7 +22,7 @@ Eigen::Vector3d toEigen(const temple::Vector& cVector) {
  * - By using an instance instead of a pointer-to-new, this is destructed
  *   properly before exit and does not "leak"
  * - This however introduces another possible issue if other static object
- *   destructors use this variable, because once again, the order of static 
+ *   destructors use this variable, because once again, the order of static
  *   deinitialization is random.
  */
 const std::map<Name, SymmetryInformation>& symmetryData() {
@@ -32,6 +32,27 @@ const std::map<Name, SymmetryInformation>& symmetryData() {
   >();
 
   return dataMap;
+}
+
+std::string spaceFreeName(const Name name) {
+  std::string toModify = symmetryData().at(name).stringName;
+
+  std::replace(
+    toModify.begin(),
+    toModify.end(),
+    ' ',
+    '-'
+  );
+
+  return toModify;
+}
+
+unsigned nameIndex(const Name name) {
+  return std::find(
+    allNames.begin(),
+    allNames.end(),
+    name
+  ) - allNames.begin();
 }
 
 } // namespace Symmetry

@@ -4,10 +4,11 @@
 #include "Symmetries.h"
 
 #include "temple/constexpr/Array.h"
+#include "temple/constexpr/Bitset.h"
 #include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/constexpr/DynamicSet.h"
+#include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
-#include "temple/constexpr/Bitset.h"
 
 #include "temple/Cache.h"
 

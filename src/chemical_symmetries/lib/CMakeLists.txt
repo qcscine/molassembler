@@ -9,6 +9,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/CompileTimeOptions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/ConstexprProperties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/DynamicProperties.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Names.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Primitives.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Symmetries.h

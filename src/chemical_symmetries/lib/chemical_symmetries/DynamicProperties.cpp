@@ -4,6 +4,7 @@
 
 #include "temple/MemberFetcher.h"
 #include "temple/constexpr/Numeric.h"
+#include "temple/Containers.h"
 #include "temple/VectorView.h"
 
 /* TODO
@@ -12,6 +13,33 @@
  */
 
 namespace Symmetry {
+
+namespace detail {
+
+/*!
+ * Generates a vector containing strictly monotonically increasing natural
+ * numbers representing the range [start, end). If start == end, an empty
+ * range is returned.
+ */
+template<typename NumericType>
+std::vector<NumericType> range(
+  const NumericType start,
+  const NumericType end
+) {
+  if(start == end) {
+    return {};
+  }
+
+  std::vector<NumericType> values (end - start);
+  std::iota(
+    values.begin(),
+    values.end(),
+    start
+  );
+  return values;
+}
+
+} // namespace detail
 
 namespace properties {
 
@@ -58,7 +86,7 @@ unsigned rotationPeriodicity(
 ) {
   assert(rotation.size() == Symmetry::size(symmetryName));
 
-  const auto initialIndices = detail::iota<unsigned>(Symmetry::size(symmetryName));
+  const auto initialIndices = temple::iota<unsigned>(Symmetry::size(symmetryName));
 
   std::vector<unsigned> modified = applyRotation(initialIndices, rotation);
 
@@ -71,6 +99,49 @@ unsigned rotationPeriodicity(
   assert(i != 20);
 
   return i;
+}
+
+std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName) {
+  auto occupation = temple::iota<unsigned>(Symmetry::size(symmetryName));
+
+  auto getCoordinates = [](
+    const Symmetry::Name symmetryName,
+    const boost::optional<unsigned>& indexOption
+  ) -> Eigen::Vector3d {
+    if(indexOption) {
+      return symmetryData().at(symmetryName).coordinates.at(indexOption.value());
+    }
+
+    return {0, 0, 0};
+  };
+
+  auto mapping = [&occupation](const boost::optional<unsigned>& indexOption) -> boost::optional<unsigned> {
+    if(indexOption) {
+      return occupation.at(indexOption.value());
+    }
+
+    return boost::none;
+  };
+
+  // Brute-force approach
+  while(
+    !temple::all_of(
+      Symmetry::tetrahedra(symmetryName),
+      [&](const auto tetrahedronDefinition) -> bool {
+        return getTetrahedronVolume(
+          getCoordinates(symmetryName, mapping(tetrahedronDefinition[0])),
+          getCoordinates(symmetryName, mapping(tetrahedronDefinition[1])),
+          getCoordinates(symmetryName, mapping(tetrahedronDefinition[2])),
+          getCoordinates(symmetryName, mapping(tetrahedronDefinition[3]))
+        ) < 0;
+      }
+    ) && std::next_permutation(
+      std::begin(occupation),
+      std::end(occupation)
+    )
+  ) {}
+
+  return occupation;
 }
 
 Eigen::Vector3d getCoordinates(
@@ -394,7 +465,7 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
     Symmetry::size(symmetryTo)
   );
 
-  auto indexMapping = detail::iota<unsigned>(largerSize);
+  auto indexMapping = temple::iota<unsigned>(largerSize);
 
   // Store all distortions calculated
   std::vector<DistortionInfo> distortions;
@@ -469,7 +540,7 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
    * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
    */
   std::vector<unsigned> indexMapping = temple::concatenate(
-    detail::iota<unsigned>(positionInSourceSymmetry),
+    temple::iota<unsigned>(positionInSourceSymmetry),
     detail::range(positionInSourceSymmetry + 1, Symmetry::size(symmetryFrom))
   );
 

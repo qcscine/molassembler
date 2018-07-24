@@ -1,7 +1,7 @@
 #ifndef INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 #define INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 
-#include <numeric>
+#include <set>
 
 #include "Symmetries.h"
 
@@ -33,6 +33,8 @@ unsigned rotationPeriodicity(
   const Symmetry::Name symmetryName,
   const std::vector<unsigned>& rotation
 );
+
+std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName);
 
 /*!
  * Gets the coordinates of an indexOptional for a specific symmetry.
@@ -206,50 +208,6 @@ bool hasMultipleUnlinkedAssignments(
 );
 
 } // namespace properties
-
-namespace detail {
-
-/*!
- * Generates a vector containing strictly monotonically increasing natural
- * numbers starting from 0.
- */
-template<typename NumericType>
-std::vector<NumericType> iota(NumericType nValues) {
-  std::vector<NumericType> values (nValues);
-
-  std::iota(
-    values.begin(),
-    values.end(),
-    NumericType {0}
-  );
-
-  return values;
-}
-
-/*!
- * Generates a vector containing strictly monotonically increasing natural
- * numbers representing the range [start, end). If start == end, an empty
- * range is returned.
- */
-template<typename NumericType>
-std::vector<NumericType> range(
-  const NumericType start,
-  const NumericType end
-) {
-  if(start == end) {
-    return {};
-  }
-
-  std::vector<NumericType> values (end - start);
-  std::iota(
-    values.begin(),
-    values.end(),
-    start
-  );
-  return values;
-}
-
-} // namespace detail
 
 } // namespace Symmetry
 

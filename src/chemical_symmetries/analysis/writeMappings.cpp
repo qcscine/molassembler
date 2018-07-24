@@ -5,6 +5,7 @@
 #include "boost/filesystem.hpp"
 
 #include "temple/VectorView.h"
+#include "temple/Containers.h"
 #include "temple/constexpr/ConsecutiveCompare.h"
 
 #include "chemical_symmetries/DynamicProperties.h"

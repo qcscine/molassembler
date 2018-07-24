@@ -1,13 +1,14 @@
-#ifndef LIB_INCLUDE_SYMMETRIES_H
-#define LIB_INCLUDE_SYMMETRIES_H
+#ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_SYMMETRIES_H
+#define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_SYMMETRIES_H
 
 #include "boost/optional.hpp"
 #include "Eigen/Core"
-#include "temple/Containers.h"
+#include "temple/constexpr/TupleType.h"
 
 #include "Primitives.h"
 
-#include <functional>
+#include <vector>
+#include <map>
 
 /*! @file
  *
@@ -159,21 +160,18 @@ TetrahedronList makeTetrahedra(
     nTetrahedra
   >& constexprTetrahedra
 ) {
-  TetrahedronList tetrahedra;
+  TetrahedronList tetrahedra (nTetrahedra);
 
-  for(const auto& tetrahedron : constexprTetrahedra) {
-    tetrahedra.push_back(
-      temple::map(
-        tetrahedron,
-        [](const unsigned index) -> boost::optional<unsigned> {
-          if(index == ORIGIN_PLACEHOLDER) {
-            return boost::none;
-          }
+  for(unsigned i = 0; i < nTetrahedra; ++i) {
+    for(unsigned j = 0; j < 4; ++j) {
+      const auto& constexprValue = constexprTetrahedra.at(i).at(j);
 
-          return index;
-        }
-      )
-    );
+      if(constexprValue == ORIGIN_PLACEHOLDER) {
+        tetrahedra.at(i).at(j) = boost::none;
+      } else {
+        tetrahedra.at(i).at(j) = constexprValue;
+      }
+    }
   }
 
   return tetrahedra;
@@ -189,10 +187,13 @@ template<size_t symmetrySize>
 CoordinateList makeCoordinates(
   const std::array<temple::Vector, symmetrySize>& constexprCoordinates
 ) {
-  return temple::mapToVector(
-    constexprCoordinates,
-    toEigen
-  );
+  CoordinateList coordinates (symmetrySize);
+
+  for(unsigned i = 0; i < symmetrySize; ++i) {
+    coordinates.at(i) = toEigen(constexprCoordinates.at(i));
+  }
+
+  return coordinates;
 }
 
 /*! This constructs the SymmetryInformation instance from a specific symmetry
@@ -263,18 +264,7 @@ inline Name nameFromString(const std::string& nameString) {
 }
 
 //! Fetch a space-free name for file naming
-inline std::string spaceFreeName(const Name name) {
-  std::string toModify = symmetryData().at(name).stringName;
-
-  std::replace(
-    toModify.begin(),
-    toModify.end(),
-    ' ',
-    '-'
-  );
-
-  return toModify;
-}
+std::string spaceFreeName(const Name name);
 
 //! Fetch the number of symmetry positions of a symmetry
 inline unsigned size(const Name name) {
@@ -293,13 +283,7 @@ inline data::AngleFunctionPtr angleFunction(const Name name) {
 }
 
 //! Returns the index of a symmetry name within allNames
-inline unsigned nameIndex(const Name name) {
-  return std::find(
-    allNames.begin(),
-    allNames.end(),
-    name
-  ) - allNames.begin();
-}
+unsigned nameIndex(const Name name);
 
 //! Fetches the list of tetrahedra defined in a symmetry
 inline const TetrahedronList& tetrahedra(const Name name) {
