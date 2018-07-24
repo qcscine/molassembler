@@ -1,5 +1,7 @@
 #include "Composites.h"
 
+#include "Eigen/Geometry"
+
 #include "chemical_symmetries/DynamicProperties.h"
 #include "temple/Containers.h"
 #include "temple/Stringify.h"
@@ -7,6 +9,92 @@
 #include <iostream>
 
 namespace stereopermutation {
+
+namespace detail {
+
+void rotateCoordinates(
+  std::vector<Eigen::Vector3d>& positions,
+  const Eigen::Vector3d& unitSource,
+  const Eigen::Vector3d& unitTarget
+) {
+  // Special case: unitTarget = unitSource. Done.
+  if(unitSource == unitTarget) {
+    return;
+  }
+
+  /* Special case: unitTarget = -unitSource. Here, the rotation is not uniquely
+   * defined, so we just invert all positions instead.
+   */
+  if(unitSource == -unitTarget) {
+    for(auto& position : positions) {
+      position *= -1;
+    }
+
+    return;
+  }
+
+  // Adapted from https://math.stackexchange.com/q/476311
+  // Cross product of the unit vectors
+  Eigen::Vector3d v = unitSource.cross(unitTarget);
+
+  // Skew-symmetric cross product matrix
+  Eigen::Matrix3d v_x;
+  v_x <<     0, -v.z(),  v.y(),
+         v.z(),      0, -v.x(),
+        -v.y(),  v.x(),      0;
+
+  // Dot product (essentially the cosine of the angle for these unit vectors)
+  double c = unitSource.dot(unitTarget);
+
+  // Calculate the rotation matrix
+  Eigen::Matrix3d rotation;
+  rotation = Eigen::Matrix3d::Identity() + v_x + v_x * v_x * (1.0 / (1 + c));
+
+  for(auto& position : positions) {
+    position = rotation * position;
+  }
+}
+
+void translateCoordinates(
+  std::vector<Eigen::Vector3d>& positions,
+  const Eigen::Vector3d& translation
+) {
+  for(auto& position : positions) {
+    position += translation;
+  }
+}
+
+/*! Calculates the dihedral between four positions
+ *
+ * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
+ */
+double dihedral(
+  const Eigen::Vector3d& i,
+  const Eigen::Vector3d& j,
+  const Eigen::Vector3d& k,
+  const Eigen::Vector3d& l
+) {
+  Eigen::Vector3d a = j - i;
+  Eigen::Vector3d b = k - j;
+  Eigen::Vector3d c = l - k;
+
+  return std::atan2(
+    (
+      a.cross(b)
+    ).cross(
+      b.cross(c)
+    ).dot(
+      b.normalized()
+    ),
+    (
+      a.cross(b)
+    ).dot(
+      b.cross(c)
+    )
+  );
+}
+
+} // namespace detail
 
 constexpr temple::floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
 
@@ -35,7 +123,7 @@ std::vector<unsigned> Composite::identityRotation(const Symmetry::Name symmetryN
 std::vector<unsigned> Composite::generateRotation(
   const Symmetry::Name symmetryName,
   const unsigned fixedSymmetryPosition,
-  const std::vector<unsigned> changedPositions
+  const std::vector<unsigned>& changedPositions
 ) {
   auto periodicities = temple::map(
     temple::iota<unsigned>(Symmetry::rotations(symmetryName).size()),
@@ -47,7 +135,7 @@ std::vector<unsigned> Composite::generateRotation(
     }
   );
 
-  auto rotationAltersPositions = [&](const std::vector<unsigned> rotation) -> bool {
+  auto rotationAltersPositions = [&](const std::vector<unsigned>& rotation) -> bool {
     return temple::all_of(
       changedPositions,
       [&rotation](const unsigned symmetryPosition) -> bool {
@@ -135,7 +223,7 @@ std::vector<unsigned> Composite::rotation(
 
     // There may be multiple elements, but no rotation. Return identity
     if(candidateRotation.empty()) {
-      return identityRotation(symmetryName);
+      return {1};
     }
 
     /* Require that the periodicity of the discovered rotation is equal to the
@@ -155,7 +243,7 @@ std::vector<unsigned> Composite::rotation(
      * rotation within that symmetry is the identity rotation, because this
      * single index can be rotated any which way to satisfy the other side.
      */
-    return identityRotation(symmetryName);
+    return {1};
   }
 
   /* Remaining case: There are no elements in perpendicularPlanePositions. Then
@@ -245,7 +333,9 @@ Composite::Composite(
   const Symmetry::Name left,
   const Symmetry::Name right,
   const unsigned leftFusedPosition,
-  const unsigned rightFusedPosition
+  const unsigned rightFusedPosition,
+  const std::vector<char>& leftCharacters,
+  const std::vector<char>& rightCharacters
 ) : _left(left),
     _right(right),
     _leftFusedPosition(leftFusedPosition),
@@ -253,6 +343,21 @@ Composite::Composite(
 {
   assert(leftFusedPosition < Symmetry::size(left));
   assert(rightFusedPosition < Symmetry::size(right));
+
+  auto isIsotropic = [](const std::vector<char>& characters) -> bool {
+    return temple::all_of(
+      characters,
+      [&](const char character) -> bool {
+        return character == characters.front();
+      }
+    );
+  };
+
+  if(isIsotropic(leftCharacters) || isIsotropic(rightCharacters)) {
+    // TODO don't we have to enforce planarity anyway?
+    // No permutations possible
+    return;
+  }
 
   /* Generate a set of stereopermutations for this particular combination,
    * which can then be indexed
@@ -296,84 +401,93 @@ Composite::Composite(
    *   possibility.
    */
 
-  /* Instead of trying to gain understanding of the complete picture, perhaps
-   * a minimal solution is sufficient where dihedrals for one index of one side
-   * to all others is specified. The remaining information should be specified
-   * completely by the two stereocenters on either end of the composite and / or
-   * be inferable with triangle inequalities.
+  /* The central atom of both symmetries is always placed at the origin in the
+   * coordinate definitions.
    */
+  auto leftCoordinates = Symmetry::symmetryData().at(left).coordinates;
+  // Rotate left fused position onto <1, 0, 0>
+  detail::rotateCoordinates(
+    leftCoordinates,
+    leftCoordinates.at(leftFusedPosition).normalized(),
+    Eigen::Vector3d::UnitX()
+  );
 
-  if(leftAngleGroup.symmetryPositions.size() <= rightAngleGroup.symmetryPositions.size()) {
-    // Handle the case for left has fewer
-    unsigned pickedIndex = leftAngleGroup.symmetryPositions.front();
+  auto rightCoordinates = Symmetry::symmetryData().at(right).coordinates;
+  // Rotate right fused position onto <-1, 0, 0>
+  detail::rotateCoordinates(
+    rightCoordinates,
+    rightCoordinates.at(rightFusedPosition).normalized(),
+    -Eigen::Vector3d::UnitX()
+  );
 
-    _stereopermutations.resize(rightAngleGroup.symmetryPositions.size());
+  // Translate positions by <1, 0, 0>
+  detail::translateCoordinates(
+    rightCoordinates,
+    Eigen::Vector3d::UnitX()
+  );
 
-    for(unsigned i = 0; i < rightAngleGroup.symmetryPositions.size(); ++i) {
-      auto& dihedrals = _stereopermutations.at(i);
+  auto getDihedral = [&](const unsigned l, const unsigned r) -> double {
+    return detail::dihedral(
+      leftCoordinates.at(l),
+      Eigen::Vector3d::Zero(),
+      Eigen::Vector3d::UnitX(),
+      rightCoordinates.at(r)
+    );
+  };
 
-      // Model the cis dihedral to right's symmetryPosition i
-      dihedrals.emplace_back(
-        pickedIndex,
-        rightAngleGroup.symmetryPositions.at(i),
-        0.0
+  // TODO abbreviated computation for same symmetry cases?
+
+  /* Sequentially align every pair. Pick that arrangement in which the number
+   * of cis dihedrals is maximal.
+   *
+   * This is essentially brute-forcing the problem. I'm having a hard time
+   * thinking up an elegant solution that can satisfy all possible symmetries.
+   */
+  temple::forAllPairs(
+    leftAngleGroup.symmetryPositions,
+    rightAngleGroup.symmetryPositions,
+    [&](const unsigned l, const unsigned r) -> void {
+      // Calculate the dihedral angle from l.front() to r
+      double dihedralAngle = getDihedral(l, r);
+
+      // Twist the right coordinates around x so that l.front() is cis with r
+      for(auto& position: rightCoordinates) {
+        position = Eigen::AngleAxisd(
+          -dihedralAngle,
+          Eigen::Vector3d::UnitX()
+        ) * position;
+      }
+
+      // Make sure the rotation leads to cis arrangement
+      assert(std::fabs(getDihedral(l, r)) < 1e-10);
+
+      auto dihedralList = temple::mapAllPairs(
+        leftAngleGroup.symmetryPositions,
+        rightAngleGroup.symmetryPositions,
+        [&](const unsigned l, const unsigned r) -> DihedralTuple {
+          return {
+            l,
+            r,
+            getDihedral(l, r)
+          };
+        }
       );
 
-      // And to all others in right if picked - i is cis
-      for(unsigned j = 0; j < rightAngleGroup.symmetryPositions.size(); ++j) {
-        if(i == j) { // Skip identical indices case
-          continue;
-        }
-
-        dihedrals.emplace_back(
-          pickedIndex,
-          rightAngleGroup.symmetryPositions.at(j),
-          perpendicularSubstituentAngle(
-            rightAngleGroup.angle,
-            Symmetry::angleFunction(right)(
-              rightAngleGroup.symmetryPositions.at(i),
-              rightAngleGroup.symmetryPositions.at(j)
-            )
-          )
-        );
+      if(
+        !temple::any_of(
+          _stereopermutations,
+          [&dihedralList](const auto& rhsDihedralList) -> bool {
+            return fpComparator.isEqual(
+              std::get<2>(dihedralList.front()),
+              std::get<2>(rhsDihedralList.front())
+            );
+          }
+        )
+      ) {
+        _stereopermutations.push_back(std::move(dihedralList));
       }
     }
-  } else {
-    // In case right has fewer
-    unsigned pickedIndex = rightAngleGroup.symmetryPositions.front();
-
-    _stereopermutations.resize(leftAngleGroup.symmetryPositions.size());
-
-    for(unsigned i = 0; i < leftAngleGroup.symmetryPositions.size(); ++i) {
-      auto& dihedrals = _stereopermutations.at(i);
-
-      // Model the cis dihedral to left's symmetryPosition i
-      dihedrals.emplace_back(
-        leftAngleGroup.symmetryPositions.at(i),
-        pickedIndex,
-        0.0
-      );
-
-      // And to all others in left if picked - i is cis
-      for(unsigned j = 0; j < leftAngleGroup.symmetryPositions.size(); ++j) {
-        if(i == j) { // Skip identical indices case
-          continue;
-        }
-
-        dihedrals.emplace_back(
-          leftAngleGroup.symmetryPositions.at(j),
-          pickedIndex,
-          perpendicularSubstituentAngle(
-            leftAngleGroup.angle,
-            Symmetry::angleFunction(left)(
-              leftAngleGroup.symmetryPositions.at(i),
-              leftAngleGroup.symmetryPositions.at(j)
-            )
-          )
-        );
-      }
-    }
-  }
+  );
 
   /* For situations in which only one position exists in both symmetries, add
    * the trans dihedral possibility explicitly
@@ -394,8 +508,12 @@ Composite::Composite(
     );
   }
 
-  /*std::cout << "Determined the following stereopermutations : "
-    << temple::stringify(_stereopermutations) << "\n";*/
+  /*std::cout << "Determined the following " << _stereopermutations.size()
+    <<  " stereopermutations:\n";
+
+  for(const auto& permutation : _stereopermutations) {
+    std::cout << "- " << temple::stringify(permutation) << "\n";
+  }*/
 }
 
 unsigned Composite::permutations() const {
@@ -406,97 +524,17 @@ const std::vector<Composite::DihedralTuple>& Composite::dihedrals(unsigned permu
   return _stereopermutations.at(permutationIndex);
 }
 
-/* --------------------------------------------------------------------
- * --------------------------------------------------------------------
- * Dead code for reference if needed later for a more complete solution
- * --------------------------------------------------------------------
- * --------------------------------------------------------------------
- */
+bool Composite::operator == (const Composite& other) const {
+  return (
+    _left == other._left
+    && _right == other._right
+    && _leftFusedPosition == other._leftFusedPosition
+    && _rightFusedPosition == other._rightFusedPosition
+  );
+}
 
-//  /* Look for rotations that keep the fused symmetry position constant but
-//   * move the symmetry positions in the respective angle groups.
-//   */
-//  auto leftRotation = rotation(left, leftFusedPosition, leftAngleGroup.symmetryPositions);
-//  auto rightRotation = rotation(right, rightFusedPosition, rightAngleGroup.symmetryPositions);
-//
-//  std::cout << "Left rotation: " << temple::stringify(leftRotation) << "\n";
-//  std::cout << "Right rotation: " << temple::stringify(rightRotation) << "\n";
-//
-//  auto leftInGroupAngles = inGroupAngles(leftAngleGroup, left);
-//  auto rightInGroupAngles = inGroupAngles(rightAngleGroup, right);
-//
-//  std::cout << "In group angle pairs for " << Symmetry::name(left) << ":\n";
-//  for(const auto& record : leftInGroupAngles) {
-//    std::cout << temple::stringify(record.first.data) << " -> "
-//      << temple::stringify(record.second) << "\n";
-//  }
-//
-//  std::cout << "In group angle pairs for " << Symmetry::name(right) << ":\n";
-//  for(const auto& record : rightInGroupAngles) {
-//    std::cout << temple::stringify(record.first.data) << " -> "
-//      << temple::stringify(record.second) << "\n";
-//  }
-//
-//  // Now look for matching angle sets across both symmetries
-//  std::vector<
-//    std::pair<
-//      std::vector<
-//        std::pair<unsigned, unsigned>
-//      >,
-//      std::vector<
-//        std::pair<unsigned, unsigned>
-//      >
-//    >
-//  > matches;
-//
-//  temple::forAllPairs(
-//    leftInGroupAngles,
-//    rightInGroupAngles,
-//    [&](const auto& leftRecord, const auto& rightRecord) -> void {
-//      if(
-//        temple::any_of(
-//          temple::mapAllPairs(
-//            leftRecord.first,
-//            rightRecord.first,
-//            [&](const double leftAngle, const double rightAngle) -> bool {
-//              return fpComparator.isEqual(leftAngle, rightAngle);
-//            }
-//          )
-//        )
-//      ) {
-//        matches.push_back(
-//          std::make_pair(leftRecord.second, rightRecord.second)
-//        );
-//      }
-//    }
-//  );
-//
-//  /* There can be multiple matches, e.g. in octahedral - octahedral, where
-//   * there are sets of 90° and 180° in each. For those ambiguous cases, we
-//   * select the match where the most symmetry positions are involved.
-//   */
-//  auto matchIter = std::max_element(
-//    std::begin(matches),
-//    std::end(matches),
-//    [](const auto& a, const auto& b) -> unsigned {
-//      return (
-//        a.first.size() + a.second.size()
-//        < b.first.size() + b.second.size()
-//      );
-//    }
-//  );
-//
-//  /* matchIter is matches.end() if
-//   * - Either symmetry has only one symmetry position in angleGroup
-//   */
-//
-//  /*if(matchIter == matches.end()) {
-//    std::cout << "No match between symmetry positions of "
-//      << Symmetry::name(left) << " and " << Symmetry::name(right) << " found.\n";
-//  } else {
-//    std::cout << "Selected match for "
-//      << Symmetry::name(left) << " and " << Symmetry::name(right) << ": "
-//      << temple::stringify(*matchIter) << "\n";
-//  }*/
+bool Composite::operator != (const Composite& other) const {
+  return !(*this == other);
+}
 
 } // namespace stereopermutation

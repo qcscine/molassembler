@@ -634,7 +634,9 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
     Symmetry::Name::Seesaw,
     Symmetry::Name::Tetrahedral,
     0,
-    0
+    0,
+    {'A', 'B', 'C', 'D'},
+    {'A', 'B', 'C', 'D'}
   };
 
   BOOST_CHECK(a.permutations() == 3u);
@@ -643,7 +645,9 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
     Symmetry::Name::Octahedral,
     Symmetry::Name::Octahedral,
     4,
-    4
+    4,
+    {'A', 'B', 'C', 'D', 'E', 'F'},
+    {'A', 'B', 'C', 'D', 'E', 'F'}
   };
 
   BOOST_CHECK(b.permutations() == 4u);
@@ -652,7 +656,9 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
     Symmetry::Name::Bent,
     Symmetry::Name::TrigonalPlanar,
     0,
-    0
+    0,
+    {'A', 'B'},
+    {'A', 'B', 'C'}
   };
 
   BOOST_CHECK(c.permutations() == 2);
@@ -661,7 +667,9 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
     Symmetry::Name::TrigonalPlanar,
     Symmetry::Name::TrigonalPlanar,
     0,
-    0
+    0,
+    {'A', 'B', 'C'},
+    {'A', 'B', 'C'}
   };
 
   BOOST_CHECK(d.permutations() == 2);
@@ -670,7 +678,9 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
     Symmetry::Name::Bent,
     Symmetry::Name::Bent,
     0,
-    0
+    0,
+    {'A', 'B'},
+    {'A', 'B'}
   };
 
   BOOST_CHECK(e.permutations() == 2);

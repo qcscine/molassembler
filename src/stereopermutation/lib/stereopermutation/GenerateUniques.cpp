@@ -2,6 +2,8 @@
 
 #include "boost/functional/hash.hpp"
 
+#include "chemical_symmetries/Symmetries.h"
+
 #include <algorithm>
 #include <cassert>
 #include <functional>

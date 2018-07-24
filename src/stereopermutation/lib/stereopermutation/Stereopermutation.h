@@ -1,7 +1,13 @@
 #ifndef LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_H
 #define LIB_UNIQUE_ASSIGNMENTS_ASSIGNMENT_H
 
-#include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/Names.h"
+#include "temple/Preprocessor.h"
+
+#include <set>
+#include <vector>
+#include <map>
+#include <functional>
 
 /*! @file
  *

@@ -1,9 +1,12 @@
 #include "Stereopermutation.h"
+
+#include "boost/functional/hash.hpp"
+#include "chemical_symmetries/Symmetries.h"
+
 #include "Util.h"
 
 #include <algorithm>
 #include <cassert>
-#include "boost/functional/hash.hpp"
 
 namespace stereopermutation {
 

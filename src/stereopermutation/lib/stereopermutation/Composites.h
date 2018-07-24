@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 
-#include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/Names.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/TinySet.h"
 
@@ -114,7 +114,7 @@ public:
   static std::vector<unsigned> generateRotation(
     const Symmetry::Name symmetryName,
     const unsigned fixedSymmetryPosition,
-    const std::vector<unsigned> changedPositions
+    const std::vector<unsigned>& changedPositions
   );
 
   static std::vector<unsigned> rotation(
@@ -149,11 +149,15 @@ public:
     const Symmetry::Name symmetryName
   );
 
+  Composite() = default;
+
   Composite(
     const Symmetry::Name left,
     const Symmetry::Name right,
     const unsigned leftFusedPosition,
-    const unsigned rightFusedPosition
+    const unsigned rightFusedPosition,
+    const std::vector<char>& leftCharacters,
+    const std::vector<char>& rightCharacters
   );
 
   //! Returns the number of permutations for this Composite
@@ -164,13 +168,6 @@ public:
    * \note The first two elements of each tuple specify the symmetry position
    * within that side's symmetry. The first element is for the left symmetry,
    * the second for the right symmetry.
-   *
-   * \note The dihedral angle is not specified with +/-, even though for chiral
-   * purposes this would be important. This is because for use in Distance
-   * Geometry, this dihedral value is used only to calculate the prospective
-   * distance between indices in the final conformation. This distance is
-   * independent of the sign of the dihedral angle, and chiral information is
-   * preserved by the single-center chiral constraints.
    */
   const std::vector<DihedralTuple>& dihedrals(unsigned permutationIndex) const;
 
@@ -189,6 +186,9 @@ public:
   inline unsigned rightFusedPosition() const {
     return _rightFusedPosition;
   }
+
+  bool operator == (const Composite& other) const;
+  bool operator != (const Composite& other) const;
 };
 
 } // namespace stereopermutation
