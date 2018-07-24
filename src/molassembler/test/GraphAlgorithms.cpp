@@ -4,7 +4,9 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "Cycles.h"
 #include "GraphAlgorithms.h"
+#include "Molecule.h"
 #include "IO.h"
 #include "temple/Stringify.h"
 

@@ -1,12 +1,15 @@
 #include "DistanceGeometry/ExplicitGraph.h"
 
-#include "Molecule.h"
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
+
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/Error.h"
+#include "AtomInfo.h"
 #include "Log.h"
+#include "Molecule.h"
+#include "Options.h"
 
 // #define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
@@ -15,9 +18,6 @@
 #include "gor1/Gor1.h"
 #endif
 
-#include "temple/Random.h"
-
-#include "AtomInfo.h"
 
 /* Using Dijkstra's shortest paths despite there being negative edge weights is
  * alright since there are, by construction, no negative edge weight sum cycles,

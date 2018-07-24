@@ -26,28 +26,6 @@ namespace molassembler {
 
 namespace DistanceGeometry {
 
-namespace predicates {
-
-bool hasZeroAssignmentStereocenters(const Molecule& molecule) {
-  return temple::any_of(
-    molecule.getStereocenterList(),
-    [](const auto& stereocenterPtr) -> bool {
-      return stereocenterPtr -> numAssignments() == 0;
-    }
-  );
-}
-
-bool hasUnassignedStereocenters(const Molecule& mol) {
-  return temple::any_of(
-    mol.getStereocenterList(),
-    [](const auto& stereocenterPtr) -> bool {
-      return !stereocenterPtr -> assigned();
-    }
-  );
-}
-
-} // namespace predicates
-
 namespace detail {
 
 AngstromWrapper convertToAngstromWrapper(
@@ -89,6 +67,48 @@ AngstromWrapper convertToAngstromWrapper(
   return angstromWrapper;
 }
 
+Molecule narrow(Molecule moleculeCopy) {
+  const auto& stereocenterList = moleculeCopy.getStereocenterList();
+
+  do {
+    /* If we change any stereocenter, we must jump out of for-loop and
+     * re-check if there are still unassigned stereocenters since assigning
+     * a stereocenter can invalidate stereocenter list iterators (because
+     * stereocenters may appear or disappear on assignment due to ranking)
+     */
+    bool changedStereocenterFlag = false;
+
+    for(const auto& atomStereocenter : stereocenterList.atomStereocenters()) {
+      if(!atomStereocenter.assigned()) {
+        moleculeCopy.assignStereocenterRandomly(
+          atomStereocenter.centralIndex()
+        );
+
+        changedStereocenterFlag = true;
+        break;
+      }
+    }
+
+    if(changedStereocenterFlag) {
+      // Re-check the do-while loop condition
+      continue;
+    }
+
+    for(const auto& bondStereocenter : stereocenterList.bondStereocenters()) {
+      if(!bondStereocenter.assigned()) {
+        moleculeCopy.assignStereocenterRandomly(
+          bondStereocenter.edge()
+        );
+
+        // Break this loop and re-check do-while loop condition
+        break;
+      }
+    }
+  } while(stereocenterList.hasUnassignedStereocenters());
+
+  return moleculeCopy;
+}
+
 inline double looseningFactor(const unsigned failures, const unsigned numStructures) {
   // x ranges from 0 to failureRatio, which is currently 2
   double x = static_cast<double>(failures) / numStructures;
@@ -120,7 +140,7 @@ outcome::result<
   const Partiality& metrizationOption,
   const bool& useYInversionTrick
 ) {
-  if(predicates::hasZeroAssignmentStereocenters(molecule)) {
+  if(molecule.getStereocenterList().hasZeroAssignmentStereocenters()) {
     return DGError::ZeroAssignmentStereocenters;
   }
 
@@ -128,7 +148,7 @@ outcome::result<
   /* In case the molecule has unassigned stereocenters, we need to randomly
    * assign them in every step prior to generating the distance bounds matrix
    */
-  bool regenerateEachStep = predicates::hasUnassignedStereocenters(molecule);
+  bool regenerateEachStep = molecule.getStereocenterList().hasUnassignedStereocenters();
   if(!regenerateEachStep) {
     DGData = gatherDGInformation(molecule);
   }
@@ -150,25 +170,9 @@ outcome::result<
     currentStructureNumber += 1
   ) {
     if(regenerateEachStep) {
-      auto moleculeCopy = molecule;
+      auto moleculeCopy = detail::narrow(molecule);
 
-      do {
-        for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
-          if(!stereocenterPtr->assigned()) {
-            moleculeCopy.assignStereocenterRandomly(
-              stereocenterPtr->involvedAtoms().front()
-            );
-
-            /* Jump out of for-loop and re-check if there are still unassigned
-             * stereocenters since assigning a stereocenter can invalidate
-             * the list iterators
-             */
-            break;
-          }
-        }
-      } while(predicates::hasUnassignedStereocenters(moleculeCopy));
-
-      if(predicates::hasZeroAssignmentStereocenters(moleculeCopy)) {
+      if(moleculeCopy.getStereocenterList().hasZeroAssignmentStereocenters()) {
         return DGError::ZeroAssignmentStereocenters;
       }
 
@@ -360,7 +364,7 @@ std::list<RefinementData> debug(
   const Partiality& metrizationOption,
   const bool& useYInversionTrick
 ) {
-  if(predicates::hasZeroAssignmentStereocenters(molecule)) {
+  if(molecule.getStereocenterList().hasZeroAssignmentStereocenters()) {
     Log::log(Log::Level::Warning)
       << "This molecule has stereocenters with zero valid permutations!"
       << std::endl;
@@ -380,7 +384,7 @@ std::list<RefinementData> debug(
    * assignments in stereopermutation. I should get on that too.
    */
 
-  bool regenerateEachStep = predicates::hasUnassignedStereocenters(molecule);
+  bool regenerateEachStep = molecule.getStereocenterList().hasUnassignedStereocenters();
 
   MoleculeDGInformation DGData;
   std::string spatialModelGraphviz;
@@ -404,26 +408,9 @@ std::list<RefinementData> debug(
     currentStructureNumber += 1
   ) {
     if(regenerateEachStep) {
-      auto moleculeCopy = molecule;
+      auto moleculeCopy = detail::narrow(molecule);
 
-      do {
-        for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
-          if(!stereocenterPtr->assigned()) {
-            moleculeCopy.assignStereocenterRandomly(
-              stereocenterPtr->involvedAtoms().front()
-            );
-
-            /* Jump out of for-loop and re-check if there are still unassigned
-             * stereocenters since assigning a stereocenter can invalidate
-             * the list iterators (because stereocenters may appear or disappear
-             * on assignment)
-             */
-            break;
-          }
-        }
-      } while(predicates::hasUnassignedStereocenters(moleculeCopy));
-
-      if(predicates::hasZeroAssignmentStereocenters(moleculeCopy)) {
+      if(moleculeCopy.getStereocenterList().hasZeroAssignmentStereocenters()) {
         Log::log(Log::Level::Warning)
           << "After setting stereocenters at random, this molecule has "
           << "stereocenters with zero valid permutations!"
@@ -462,24 +449,7 @@ std::list<RefinementData> debug(
       if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG. Sample spatial model written to 'DG-failure-spatial-model.dot'.\n";
         if(regenerateEachStep) {
-          auto moleculeCopy = molecule;
-
-          do {
-            for(const auto& stereocenterPtr : moleculeCopy.getStereocenterList()) {
-              if(!stereocenterPtr->assigned()) {
-                moleculeCopy.assignStereocenterRandomly(
-                  stereocenterPtr->involvedAtoms().front()
-                );
-
-                /* Jump out of for-loop and re-check if there are still unassigned
-                 * stereocenters since assigning a stereocenter can invalidate
-                 * the list iterators (because stereocenters may appear or disappear
-                 * on assignment)
-                 */
-                break;
-              }
-            }
-          } while(predicates::hasUnassignedStereocenters(moleculeCopy));
+          auto moleculeCopy = detail::narrow(molecule);
 
           SpatialModel model {moleculeCopy};
           model.writeGraphviz("DG-failure-spatial-model.dot");

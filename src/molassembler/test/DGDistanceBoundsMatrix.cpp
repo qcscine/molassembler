@@ -3,10 +3,12 @@
 
 #include <iostream>
 
-#include "BoundsFromSymmetry.h"
+#include "chemical_symmetries/Symmetries.h"
+#include "temple/Enumerate.h"
+
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
 #include "DistanceGeometry/ConformerGeneration.h"
-#include "temple/Enumerate.h"
+#include "BoundsFromSymmetry.h"
 
 BOOST_AUTO_TEST_CASE( DistanceBoundsTests ) {
   using namespace molassembler;

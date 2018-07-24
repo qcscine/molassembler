@@ -13,8 +13,10 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
 
   auto mol = IO::read("test_files/inorganics/multidentate/Co(ox)3.mol");
 
-  const auto& stereocenterPtr = mol.getStereocenterList().at(0);
-  unsigned N = stereocenterPtr -> numAssignments();
+  const auto& stereocenterOption = mol.getStereocenterList().option(0);
+  assert(stereocenterOption);
+
+  unsigned N = stereocenterOption -> numAssignments();
 
   for(unsigned i = 0; i < N; ++i) {
     mol.assignStereocenter(0, i);

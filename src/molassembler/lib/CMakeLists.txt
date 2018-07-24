@@ -34,6 +34,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/DelibHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/FileHandlers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/MolGraphWriter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/PermutationState.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/RangeForTemporary.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/SequenceSet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/SharedTypes.h
@@ -68,7 +69,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
@@ -84,10 +84,13 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/AngstromWrapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/CommonTrig.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/DelibHelpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/FileHandlers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/MolGraphWriter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/PermutationState.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/StdlibTypeAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ConformerGeneration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceBoundsMatrix.cpp
@@ -109,7 +112,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.cpp
 )
 
 # Static variant

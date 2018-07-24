@@ -1,8 +1,10 @@
 #include "AdjacencyMatrix.h"
 
+#include "Molecule.h"
+
 namespace molassembler {
 
-AdjacencyMatrix::AdjacencyMatrix(const Molecule& molecule) 
+AdjacencyMatrix::AdjacencyMatrix(const Molecule& molecule)
 : N(molecule.numAtoms()) {
   _matrix.resize(N, N);
   _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(false);
@@ -17,8 +19,8 @@ AdjacencyMatrix::AdjacencyMatrix(const Molecule& molecule)
 }
 
 bool& AdjacencyMatrix::operator () (
-  const AtomIndexType& i,
-  const AtomIndexType& j
+  const AtomIndexType i,
+  const AtomIndexType j
 ) {
   return _matrix(
     std::min(i, j),
@@ -27,8 +29,8 @@ bool& AdjacencyMatrix::operator () (
 }
 
 bool AdjacencyMatrix::operator () (
-  const AtomIndexType& i,
-  const AtomIndexType& j
+  const AtomIndexType i,
+  const AtomIndexType j
 ) const {
   return _matrix(
     std::min(i, j),

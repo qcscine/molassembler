@@ -9,7 +9,11 @@
 
 #include "detail/StdlibTypeAlgorithms.h"
 #include "IO.h"
+#include "Molecule.h"
+#include "Options.h"
+#include "StereocenterList.h"
 
+#include "temple/Containers.h"
 #include "temple/Random.h"
 #include "temple/Invoke.h"
 #include "temple/Stringify.h"
@@ -145,6 +149,8 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
 }
 
 BOOST_AUTO_TEST_CASE(isomorphismTests) {
+  using namespace std::string_literals;
+
   const std::string directoryPrefix = "test_files/isomorphisms/"s;
   const boost::regex isomorphismFileRegex {R"(.+_isomorphism.mol)"};
   const boost::regex removeRegex {R"(_isomorphism.mol)"};
@@ -202,6 +208,23 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
   );
 }
 
+bool isStereogenic(
+  const Molecule& molecule,
+  AtomIndexType i
+) {
+  auto stereocenterOption = molecule.getStereocenterList().option(i);
+
+  if(!stereocenterOption) {
+    return false;
+  }
+
+  if(stereocenterOption->numStereopermutations() <= 1) {
+    return false;
+  }
+
+  return true;
+}
+
 BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   const std::string directoryPrefix = "test_files/ranking_tree_molecules/"s;
 
@@ -224,12 +247,12 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   // Make 1 from R to S -> stereocenter should disappear
   pseudocenter.assignStereocenter(outer.front(), 0);
 
-  BOOST_CHECK(!pseudocenter.getStereocenterList().isStereogenic(central));
+  BOOST_CHECK(!isStereogenic(pseudocenter, central));
 
   // Make 6 from S to R -> stereocenter should reappear
   pseudocenter.assignStereocenter(outer.back(), 1);
 
-  BOOST_CHECK(pseudocenter.getStereocenterList().isStereogenic(central));
+  BOOST_CHECK(isStereogenic(pseudocenter, central));
 }
 
 BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {

@@ -1,8 +1,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 
-#include "Molecule.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "Molecule.h"
+#include "StereocenterList.h"
 
 /*! @file
  *
@@ -72,6 +73,7 @@ private:
   // Mutable state
 
   double _looseningMultiplier;
+  StereocenterList _stereocenters;
 
   std::map<
     std::array<AtomIndexType, 2>,
@@ -86,10 +88,6 @@ private:
     ValueBounds
   > _dihedralBounds;
 
-  std::map<
-    AtomIndexType,
-    std::shared_ptr<Stereocenters::Stereocenter>
-  > _stereocenterMap;
 
 public:
 /* Static constants */

@@ -3,8 +3,13 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "Delib/ElementInfo.h"
+
+#include "chemical_symmetries/Symmetries.h"
+
 #include "Conformers.h"
 #include "IO.h"
+#include "Molecule.h"
 
 using namespace std::string_literals;
 using namespace molassembler;

@@ -10,13 +10,39 @@
 #include "Delib/AtomCollection.h"
 #include "Delib/AtomCollectionIO.h"
 #include "Delib/Constants.h"
+#include "Delib/ElementInfo.h"
 
 #include "BondDistance.h"
+#include "Molecule.h"
+#include "Options.h"
 #include "Version.h"
 
 namespace molassembler {
 
 namespace IO {
+
+namespace permutations {
+
+Random::Random(AtomIndexType N) {
+  permutation.resize(N);
+  std::iota(permutation.begin(), permutation.end(), 0);
+
+  prng.shuffle(permutation);
+}
+
+SortByElement::SortByElement(const Molecule& mol) {
+  permutation.resize(mol.numAtoms());
+  std::iota(permutation.begin(), permutation.end(), 0);
+  std::sort(
+    permutation.begin(),
+    permutation.end(),
+    [&mol](const AtomIndexType& i, const AtomIndexType& j) -> bool {
+      return mol.getElementType(i) < mol.getElementType(j);
+    }
+  );
+}
+
+} // namespace permutations
 
 namespace FileHandlers {
 

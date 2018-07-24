@@ -2,12 +2,6 @@
 #define INCLUDE_GRAPH_ALGORITHMS_H
 
 #include "detail/SharedTypes.h"
-#include <boost/graph/breadth_first_search.hpp>
-
-#include "Delib/ElementInfo.h"
-#include "temple/Containers.h"
-#include "temple/UnorderedSets.h"
-#include "temple/TinySet.h"
 
 /*! @file
  *

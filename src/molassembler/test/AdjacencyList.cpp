@@ -2,6 +2,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Molecule.h"
+#include "Options.h"
 #include "temple/Random.h"
 
 // Temp, testing

@@ -3,14 +3,15 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "temple/constexpr/Numeric.h"
+#include "temple/Containers.h"
+
 #include "detail/AnalysisHelpers.h"
 #include "detail/StdlibTypeAlgorithms.h"
 #include "DistanceGeometry/ConformerGeneration.h"
 #include "BoundsFromSymmetry.h"
 #include "IO.h"
 #include "Log.h"
-
-#include "temple/constexpr/Numeric.h"
 
 #include <fstream>
 #include <iomanip>

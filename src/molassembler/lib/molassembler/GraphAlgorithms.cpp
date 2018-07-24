@@ -2,6 +2,12 @@
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/range/combine.hpp"
 
+#include "Delib/ElementInfo.h"
+
+#include "temple/Containers.h"
+#include "temple/UnorderedSets.h"
+#include "temple/TinySet.h"
+
 #include "AtomInfo.h"
 #include "Cycles.h"
 #include "GraphAlgorithms.h"

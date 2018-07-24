@@ -9,6 +9,8 @@
 #include "temple/constexpr/Numeric.h"
 
 #include "IO.h"
+#include "Cycles.h"
+#include "Molecule.h"
 #include <iostream>
 
 /* TODO add further tests for free functions

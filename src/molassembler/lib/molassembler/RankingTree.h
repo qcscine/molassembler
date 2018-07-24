@@ -21,7 +21,9 @@
 //#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
 #include "detail/BuildTypeSwitch.h"
+#include "AtomStereocenter.h"
 #include "BondDistance.h"
+#include "BondStereocenter.h"
 #include "Log.h"
 #include "Molecule.h"
 #include "OrderDiscoveryHelper.h"
@@ -55,6 +57,10 @@
  *   Loads of inverted comparisons here where it doesn't make sense to me
  *   anymore, in particular at 4B in counting like pairs at every position
  * - TODOs strewn about
+ * - Get away from as many sets as possible -> unordered sets, tinysets or plain vectors
+ * - Try to figure out a datastructure in which the entire relative ranking can
+ *   be stored as indeterminate and determinate, so to wholly avoid
+ *   recomputation where unnecessary
  */
 
 /*! @file
@@ -118,7 +124,7 @@ public:
     bool isDuplicate;
 
     //! A vertex-central stereocenter may be instantiated here or may not
-    boost::optional<Stereocenters::AtomStereocenter> stereocenterOption;
+    boost::optional<AtomStereocenter> stereocenterOption;
 
     // TODO not quite ready for this yet
     // boost::optional<double> deviantAtomicNumber;
@@ -126,7 +132,7 @@ public:
 
   //! Data class that sets which supplementary data is stored for a tree edge
   struct EdgeData {
-    boost::optional<Stereocenters::BondStereocenter> stereocenterOption;
+    boost::optional<BondStereocenter> stereocenterOption;
   };
 
   //! The BGL Graph type used to store the tree

@@ -3,20 +3,25 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "DistanceGeometry/ImplicitGraphBoost.h"
+#include "boost/graph/two_bit_color_map.hpp"
 
+#include "temple/constexpr/FloatingPointComparison.h"
+#include "temple/constexpr/Numeric.h"
+#include "temple/Containers.h"
+#include "temple/Enumerate.h"
+
+#include "DistanceGeometry/ImplicitGraphBoost.h"
 #include "DistanceGeometry/SpatialModel.h"
 #include "DistanceGeometry/ExplicitGraph.h"
 #include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "temple/constexpr/Numeric.h"
-#include "temple/Enumerate.h"
-#include "temple/constexpr/FloatingPointComparison.h"
 #include "IO.h"
+#include "Molecule.h"
 
-#include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "gor1/Gor1.h"
 #include "DistanceGeometry/Gor1.h"
 
+// This include order may seem weird, but it is necessary like this
+#include "boost/graph/bellman_ford_shortest_paths.hpp"
 
 #include <chrono>
 

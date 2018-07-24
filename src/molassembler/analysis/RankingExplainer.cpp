@@ -8,6 +8,7 @@
 #include "temple/Containers.h"
 
 #include "detail/StdlibTypeAlgorithms.h"
+#include "Cycles.h"
 #include "GraphAlgorithms.h"
 #include "IO.h"
 #include "Log.h"

@@ -31,6 +31,8 @@ double getAngle(
 /*!
  * Fetches the dihedral angle in radians defined by four indices in a
  * PositionCollection.
+ *
+ * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
  */
 double getDihedral(
   const Delib::PositionCollection& positions,
@@ -43,6 +45,8 @@ double getDihedral(
 /*!
  * Fetches the dihedral angle in radians defined by four indices in a
  * PositionCollection, but passed as an array
+ *
+ * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
  */
 double getDihedral(
   const Delib::PositionCollection& positions,
@@ -88,6 +92,10 @@ double angle(
   const Eigen::Vector3d& k
 );
 
+/*! Calculates the dihedral between four positions
+ *
+ * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
+ */
 double dihedral(
   const Eigen::Vector3d& i,
   const Eigen::Vector3d& j,

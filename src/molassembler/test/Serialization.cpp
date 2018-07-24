@@ -3,9 +3,12 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "temple/Containers.h"
+
 #include "detail/Base64.h"
 #include "Serialization.h"
 #include "IO.h"
+#include "Options.h"
 
 using namespace molassembler;
 

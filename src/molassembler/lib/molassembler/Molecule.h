@@ -1,8 +1,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
+#include "Delib/ElementTypes.h"
+#include "detail/RangeForTemporary.h"
+#include "detail/AngstromWrapper.h"
 #include "AtomEnvironmentHash.h"
-#include "Cycles.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
@@ -20,7 +22,16 @@
  * library.
  */
 
+// External forward declarations
+namespace Delib {
+class ElementTypeCollection;
+} // namespace Delib
+
 namespace molassembler {
+
+// Forward declarations
+class Cycles;
+class RankingInformation;
 
 //! Central class of the library, modeling a molecular graph with all state.
 class Molecule {
@@ -48,7 +59,7 @@ public:
 
   /*! Construct a molecule from connectivity and 3D information.
    *
-   * @note Assumes that the provided position collection is in Angstrom units.
+   * \note Assumes that the provided position collection is in Angstrom units.
    */
   Molecule(
     GraphType graph,
@@ -85,7 +96,7 @@ public:
    * returned by getStereocenterList(). The supplied assignment must be either
    * boost::none or smaller than stereocenterPtr->numAssignments().
    *
-   * @note Although molecules in which this occurs are infrequent, consider the
+   * \note Although molecules in which this occurs are infrequent, consider the
    * StereocenterList you have accessed prior to calling this function and
    * particularly any iterators thereto invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
@@ -99,17 +110,32 @@ public:
   /*! Assigns a stereocenter stereopermutation at random
    *
    * This sets the stereocetner assignment at a specific index, taking relative
-   * statistical occurence weights of each stereopermutation into account. For
-   * this, a stereocenter must be instantiated and contained in the
-   * StereocenterList returned by getStereocenterList().
+   * statistical occurence weights of each stereopermutation into account.
    *
-   * @note Although molecules in which this occurs are infrequent, consider the
+   * \pre There must be an AtomStereocenter at the passed index
+   *
+   * \throws If no AtomStereocenter exists at the passed index
+   *
+   * \note Although molecules in which this occurs are infrequent, consider the
    * StereocenterList you have accessed prior to calling this function and
-   * particularly any iterators thereto invalidated. This is because an
+   * particularly any iterators to its members invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereocenters or the removal of old ones.
    */
   void assignStereocenterRandomly(AtomIndexType a);
+
+  /*! Assigns a bond stereocenter to a random assignment
+   *
+   * \pre There must be a BondStereocenter at the passed edge
+   * \throws If no BondStereocenter exists at the passed edge
+   *
+   * \note Although molecules in which this occurs are infrequent, consider the
+   * StereocenterList you have accessed prior to calling this function and
+   * particularly any iterators to its members invalidated. This is because an
+   * assignment change can trigger a ranking change, which can in turn lead
+   * to the introduction of new stereocenters or the removal of old ones.
+   */
+  void assignStereocenterRandomly(const GraphType::edge_descriptor& e);
 
   /*! Removes an atom from the graph, including bonds to it.
    *
@@ -117,7 +143,7 @@ public:
    * after checking that removing it is safe, i.e. the removal does not
    * disconnect the graph.
    *
-   * @throws if the supplied index is invalid or isSafeToRemoveAtom returns false.
+   * \throws if the supplied index is invalid or isSafeToRemoveAtom returns false.
    */
   void removeAtom(AtomIndexType a);
 
@@ -126,9 +152,9 @@ public:
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
    *
-   * @throws if isSafeToRemoveBond returns false.
+   * \throws if isSafeToRemoveBond returns false.
    *
-   * @note It is not safe to remove a bond just because one of the involved
+   * \note It is not safe to remove a bond just because one of the involved
    * atoms is terminal, since that atom would then be disconnected from the
    * rest of the molecule. This function merely removes a bond from the graph.
    * It is, however, considered safe to remove the terminal vertex, which
@@ -158,7 +184,8 @@ public:
    * this index, one is instantiated. In all cases, new or modified
    * stereocenters are default-assigned if there is only one possible
    * assignment.
-   * @throws if
+   *
+   * \throws if
    *   - the supplied atomic index is invalid
    *   - there is an BondStereocenter at that index
    *   - or the provided symmetry is a different size than that of an existing
@@ -175,7 +202,7 @@ public:
   /*! Determines what the local geometry at a non-terminal atom ought to be
    *
    * Returns the expected symmetry name at a non-terminal atom.
-   * @throws if the supplied atomic index is invalid
+   * \throws if the supplied atomic index is invalid
    */
   Symmetry::Name determineLocalGeometry(
     AtomIndexType index,
@@ -185,10 +212,16 @@ public:
   //! Returns a graphivz string representation of the molecule
   std::string dumpGraphviz() const;
 
+  //! Get an edge descriptor for a pair of indices
+  GraphType::edge_descriptor edge(
+    AtomIndexType a,
+    AtomIndexType b
+  ) const;
+
   /*! Fetches the atomic indices of vertices adjacent to a particular index
    *
    * Fetches the atomic indices of vertices adjacent to a particular index.
-   * @throws if the supplied atomic index is invalid
+   * \throws if the supplied atomic index is invalid
    */
   std::vector<AtomIndexType> getAdjacencies(AtomIndexType a) const;
 
@@ -205,7 +238,7 @@ public:
   /*! Returns the element type of an atomic index
    *
    * Returns the element type of an atomic index
-   * @throws if the atomic index is invalid
+   * \throws if the atomic index is invalid
    */
   Delib::ElementType getElementType(AtomIndexType index) const;
 
@@ -250,10 +283,10 @@ public:
    * stereocenters across both molecules are compared using the found
    * isomorphism as an index map.
    *
-   * @note The number of stereopermutations that a stereocenter has is
+   * \note The number of stereopermutations that a stereocenter has is
    * considered part of the Symmetry ComparisonOptions.
    *
-   * @note If you choose to discard bond order checking, this merely
+   * \note If you choose to discard bond order checking, this merely
    * deactivates bond order hashing and a post-isomorphism-search bond order
    * re-check. Bond order information - if present in the molecule prior to
    * calling this function - is also present in stereocenter ranking information

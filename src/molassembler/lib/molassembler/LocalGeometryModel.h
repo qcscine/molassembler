@@ -1,7 +1,7 @@
 #ifndef INCLUDE_GEOMETRY_MODELING_MODEL_H
 #define INCLUDE_GEOMETRY_MODELING_MODEL_H
 
-#include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/Names.h"
 
 #include "RankingInformation.h"
 

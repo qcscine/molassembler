@@ -1,12 +1,10 @@
 #ifndef INCLUDE_CN_STEREOCENTER_H
 #define INCLUDE_CN_STEREOCENTER_H
 
-#include "stereopermutation/GenerateUniques.h"
-#include "chemical_symmetries/DynamicProperties.h"
-#include "DistanceGeometry/ValueBounds.h"
+#include "chemical_symmetries/Names.h"
 
+#include "DistanceGeometry/ValueBounds.h"
 #include "Options.h"
-#include "Stereocenter.h"
 
 using namespace std::string_literals;
 
@@ -25,6 +23,8 @@ using namespace std::string_literals;
 
 namespace molassembler {
 
+class RankingInformation;
+
 namespace DistanceGeometry {
 
 class SpatialModel;
@@ -37,148 +37,32 @@ struct ChiralityConstraint;
 
 namespace molassembler {
 
-namespace Stereocenters {
-
-class AtomStereocenter final : public Stereocenter {
+class AtomStereocenter {
 public:
-/* Typedefs */
-  using StereopermutationType = stereopermutation::Stereopermutation;
+//!@name Constructors
+//!@{
+  /* Rule of five members */
+  AtomStereocenter(AtomStereocenter&& other) noexcept;
+  AtomStereocenter& operator = (AtomStereocenter&& other) noexcept;
+  AtomStereocenter(const AtomStereocenter& other);
+  AtomStereocenter& operator = (const AtomStereocenter& other);
+  ~AtomStereocenter();
 
-/* Auxiliary classes */
-  struct PermutationState {
-    //! Stably resorted (by set size) ligands ranking
-    RankingInformation::RankedLigandsType canonicalLigands;
-
-    //! Character representation of bonding case
-    std::vector<char> symbolicCharacters;
-
-    //! Self-referential representation of links
-    stereopermutation::Stereopermutation::LinksSetType selfReferentialLinks;
-
-    //! Mapping from ligand index to modeled ligand plane distance
-    std::vector<DistanceGeometry::ValueBounds> ligandDistances;
-
-    using ConeAngleType = std::vector<
-      boost::optional<DistanceGeometry::ValueBounds>
-    >;
-    //! Mapping from ligand index to cone angle optional
-    ConeAngleType coneAngles;
-
-    //! Vector of rotationally unique stereopermutations with associated weights
-    stereopermutation::StereopermutationsWithWeights permutations;
-
-    //! Vector of whether permutations are feasible or obviously infeasible
-    std::vector<unsigned> feasiblePermutations;
-
-    //! Mapping from ligand index to permutational symmetry position
-    std::vector<unsigned> symmetryPositionMap;
-
-    PermutationState() = default;
-    PermutationState(
-      const RankingInformation& ranking,
-      const AtomIndexType centerAtom,
-      const Symmetry::Name symmetry,
-      const GraphType& graph
-    );
-
-    /*! Stably re-sort ranked ligand indices in decreasing set size
-     *
-     * Necessary to avoid treating e.g. AAB and ABB separately, although the
-     * resulting assignments are identical.
-     *
-     * Example: rankedLigands: {5, 8}, {3}, {1, 2, 4}
-     * Result: {1, 2, 4}, {5, 8}, {3}
-     */
-    static RankingInformation::RankedLigandsType canonicalize(
-      RankingInformation::RankedLigandsType rankedLigands
-    );
-
-    //! Condense ligand ranking information into canonical characters for symbolic computation
-    static std::vector<char> transferToSymbolicCharacters(
-      const RankingInformation::RankedLigandsType& canonicalLigands
-    );
-
-    //! Make ligand-index based ligands self-referential within canonical ligands
-    static stereopermutation::Stereopermutation::LinksSetType selfReferentialTransform(
-      const RankingInformation::LinksType& rankingLinks,
-      const RankingInformation::RankedLigandsType& canonicalLigands
-    );
-
-    static std::vector<unsigned> generateLigandToSymmetryPositionMap(
-      const stereopermutation::Stereopermutation& assignment,
-      const RankingInformation::RankedLigandsType& canonicalLigands
-    );
-
-    static std::vector<unsigned> generateSymmetryPositionToLigandMap(
-      const stereopermutation::Stereopermutation& assignment,
-      const RankingInformation::RankedLigandsType& canonicalLigands
-    );
-
-    /*!
-     * Generate the character representation of a particular stereopermutation
-     * using its map from ?? TODO
-     */
-    static std::vector<char> makeStereopermutationCharacters(
-      const RankingInformation::RankedLigandsType& canonicalLigands,
-      const std::vector<char>& canonicalStereopermutationCharacters,
-      const std::vector<unsigned>& ligandsAtSymmetryPositions
-    );
-
-    /* WARNING: This has to be a copy-initialized optional. Don't change it, unless
-     * you want to sift through -fsanitize=address output to find the bug in the
-     * optional propagation. It's not safe to return a reference to within a
-     * temporary object where this is used.
-     */
-    static boost::optional<
-      std::vector<unsigned>
-    > getIndexMapping(
-      const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
-      const ChiralStatePreservation& preservationOption
-    );
-
-    //! Determine whether a stereopermutation is not obviously impossible
-    static bool isNotObviouslyImpossibleStereopermutation(
-      const StereopermutationType& assignment,
-      const RankingInformation::RankedLigandsType& canonicalLigands,
-      const ConeAngleType& coneAngles,
-      const RankingInformation& ranking,
-      const Symmetry::Name symmetry,
-      const GraphType& graph
-    );
-  };
-
-private:
-/* State */
-  //! Ranking information of substituents
-  RankingInformation _ranking;
-
-  //! Central atom of the Stereocenter
-  AtomIndexType _centerAtom;
-
-  //! The symmetry the stereocenter represents
-  Symmetry::Name _symmetry;
-
-  //! The current state of assignment (if or not, and if so, which)
-  boost::optional<unsigned> _assignmentOption;
-
-  /* Derivative state (cache) */
-  PermutationState _cache;
-
-public:
-/* Static functions */
-/* Constructors */
+  //! Construct an AtomStereocenter
   AtomStereocenter(
     // The base graph
     const GraphType& graph,
     // The symmetry of this Stereocenter
-    const Symmetry::Name& symmetry,
+    Symmetry::Name symmetry,
     // The atom this Stereocenter is centered on
-    const AtomIndexType centerAtom,
+    AtomIndexType centerAtom,
     // Ranking information of substituents
     RankingInformation ranking
   );
+//!@}
 
-/* Modification */
+//!@name Modifiers
+//!@{
   /*!
    * Handles the addition of a new substituent to the stereocenter. If the
    * stereocenter contains chiral state, it is attempted to transfer the state
@@ -187,21 +71,22 @@ public:
    */
   void addSubstituent(
     const GraphType& graph,
-    const AtomIndexType newSubstituentIndex,
+    AtomIndexType newSubstituentIndex,
     RankingInformation newRanking,
-    const Symmetry::Name& newSymmetry,
-    const ChiralStatePreservation& preservationOption
+    Symmetry::Name newSymmetry,
+    ChiralStatePreservation preservationOption
   );
 
   //! Changes the assignment of the stereocenter
-  void assign(boost::optional<unsigned> assignment) final;
+  void assign(boost::optional<unsigned> assignment);
 
   //! Assigns the Stereocenter randomly using relative assignment weights
-  void assignRandom() final;
+  void assignRandom();
 
   /*!
-   * The assignment is determined based on three-dimensional positions using
-   * angle and chiral distortions from the idealized symmetry.
+   * The symmetry and assignment are determined based on three-dimensional
+   * positions using angle and chiral distortions from the respective idealized
+   * symmetries.
    */
   void fit(
     const GraphType& graph,
@@ -223,7 +108,7 @@ public:
    * Prepares for the removal of an atom on the graph level, which involves
    * the generation of new atom indices.
    */
-  void propagateVertexRemoval(const AtomIndexType removedIndex) final;
+  void propagateVertexRemoval(AtomIndexType removedIndex);
 
   /*!
    * Handles the removal of a substituent from the stereocenter. If the
@@ -232,37 +117,33 @@ public:
    */
   void removeSubstituent(
     const GraphType& graph,
-    const AtomIndexType which,
+    AtomIndexType which,
     RankingInformation newRanking,
-    const Symmetry::Name& newSymmetry,
-    const ChiralStatePreservation& preservationOption
+    Symmetry::Name newSymmetry,
+    ChiralStatePreservation preservationOption
   );
 
   //! If the central symmetry group is changed, we must adapt
   void setSymmetry(
-    const Symmetry::Name symmetryName,
+    Symmetry::Name symmetryName,
     const GraphType& graph
   );
+//!@}
 
-/* Information */
+//!@name Information
+//!@{
   //! Returns the angle between substituent ligands in the idealized symmetry
-  double angle(
-    const unsigned i,
-    const unsigned j
-  ) const;
-
-  void setModelInformation(
-    DistanceGeometry::SpatialModel& model,
-    const std::function<double(const AtomIndexType)> cycleMultiplierForIndex,
-    const double looseningMultiplier
-  ) const final;
+  double angle(unsigned i, unsigned j) const;
 
   /*! Returns the permutation index within the set of possible permutations, if set
    *
    * Returns the (public) information of whether the stereocenter is assigned
    * or not, and if so, which assignment it is.
    */
-  boost::optional<unsigned> assigned() const final;
+  boost::optional<unsigned> assigned() const;
+
+  //! Returns a single-element vector containing the central atom
+  AtomIndexType centralIndex() const;
 
   /*! Returns IOP within the set of symbolic ligand permutations
    *
@@ -270,7 +151,7 @@ public:
    * within the set of possible (more specifically, not obviously infeasible)
    * stereopermutations.
    */
-  boost::optional<unsigned> indexOfPermutation() const final;
+  boost::optional<unsigned> indexOfPermutation() const;
 
   /*! Returns a minimal representation of chirality constraints
    *
@@ -287,10 +168,10 @@ public:
   //! Generates a list of chirality constraints on its substituents for DG
   std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
     double looseningMultiplier
-  ) const final;
+  ) const;
 
   //! Returns an information string for diagnostic purposes
-  std::string info() const final;
+  std::string info() const;
 
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
@@ -301,8 +182,11 @@ public:
   //! Returns the underlying symmetry
   Symmetry::Name getSymmetry() const;
 
-  //! Returns a single-element vector containing the central atom
-  std::vector<AtomIndexType> involvedAtoms() const final;
+  /*! Yields the mapping from ligand indices to symmetry positions
+   *
+   * \throws std::logic_error if the stereocenter is unassigned.
+   */
+  std::vector<unsigned> getSymmetryPositionMap() const;
 
   /*! Returns the number of possible permutations
    *
@@ -311,27 +195,41 @@ public:
    * exclusive bound on the assignment indices that can be used to change the
    * arrangement of substituents.
    */
-  unsigned numAssignments() const final;
+  unsigned numAssignments() const;
 
   /*! Returns the number of symbolic ligand permutations
    *
    * Fetches the number of permutations determined by symbolic ligand
    * calculation, not considering linking or haptic ligand cones.
    */
-  unsigned numStereopermutations() const final;
+  unsigned numStereopermutations() const;
 
-  /*!
-   * Returns Stereocenters::Type::AtomStereocenter for resolution of sub-types
-   * in homogeneous containers containing pointers to the base class.
-   */
-  Type type() const final;
+  void setModelInformation(
+    DistanceGeometry::SpatialModel& model,
+    const std::function<double(const AtomIndexType)>& cycleMultiplierForIndex,
+    double looseningMultiplier
+  ) const;
+//!@}
 
-/* Operators */
+
+//!@name Operators
+//!@{
   bool operator == (const AtomStereocenter& other) const;
+  bool operator != (const AtomStereocenter& other) const;
   bool operator < (const AtomStereocenter& other) const;
-};
+//!@}
 
-} // namespace Stereocenters
+private:
+  struct Impl;
+
+#ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+  std::experimental::propagate_const<
+    std::unique_ptr<Impl>
+  > _pImpl;
+#else
+  std::unique_ptr<Impl> _pImpl;
+#endif
+};
 
 } // namespace molassembler
 

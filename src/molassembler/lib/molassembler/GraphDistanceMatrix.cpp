@@ -1,6 +1,7 @@
 #include "GraphDistanceMatrix.h"
 
 #include "detail/StdlibTypeAlgorithms.h"
+#include "temple/Containers.h"
 
 namespace molassembler {
 

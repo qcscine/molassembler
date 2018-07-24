@@ -5,6 +5,7 @@
 #include "chemical_symmetries/Properties.h"
 
 #include "GraphHelpers.h"
+#include "StereocenterList.h"
 
 namespace molassembler {
 
@@ -97,6 +98,7 @@ struct VertexComparator {
       /* If any of the current symmetries have a low-effort mapping to the large
        * symmetry, return true
        */
+      // TODO continue
     }
 
     return false;
@@ -122,12 +124,12 @@ struct VertexComparator {
        * non-terminal in each molecule and both have a stereocenter defined on
        * it
        */
-      auto iAtomStereocenterOption = a.getStereocenterList().atomStereocenterOn(i);
-      auto jAtomStereocenterOption = b.getStereocenterList().atomStereocenterOn(j);
+      auto iAtomStereocenterOption = a.getStereocenterList().option(i);
+      auto jAtomStereocenterOption = b.getStereocenterList().option(j);
 
       if(iAtomStereocenterOption && jAtomStereocenterOption) {
-        Symmetry::Name iSymmetry = iAtomStereocenterOption.value()->getSymmetry();
-        Symmetry::Name jSymmetry = jAtomStereocenterOption.value()->getSymmetry();
+        Symmetry::Name iSymmetry = iAtomStereocenterOption->getSymmetry();
+        Symmetry::Name jSymmetry = jAtomStereocenterOption->getSymmetry();
 
         if(iSymmetry != jSymmetry) {
           // Establish ordering for the call to lowEffortMapping
@@ -169,23 +171,18 @@ struct EdgeComparator {
     }
 
     if(strictness == EdgeStrictness::EZIdentical) {
-      auto aBondStereocenterOptional = a.getStereocenterList().bondStereocenterOn(
-        a.vertices(i)
-      );
-
-      auto bBondStereocenterOptional = b.getStereocenterList().bondStereocenterOn(
-        b.vertices(j)
-      );
+      auto aBondStereocenterOptional = a.getStereocenterList().option(i);
+      auto bBondStereocenterOptional = b.getStereocenterList().option(j);
 
       // Only if both have a stereocenter do we compare
       if(aBondStereocenterOptional && bBondStereocenterOptional) {
         // If both are assigned and have different values, the edges do not match
         if(
-          aBondStereocenterOptional.value()->assigned()
-          && bBondStereocenterOptional.value()->assigned()
+          aBondStereocenterOptional->assigned()
+          && bBondStereocenterOptional->assigned()
           && (
-            aBondStereocenterOptional.value()->assigned().value()
-            != bBondStereocenterOptional.value()->assigned().value()
+            aBondStereocenterOptional->assigned().value()
+            != bBondStereocenterOptional->assigned().value()
           )
         ) {
           return false;

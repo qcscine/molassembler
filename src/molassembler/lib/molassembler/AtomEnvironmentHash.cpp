@@ -4,6 +4,9 @@
 
 #include "chemical_symmetries/Properties.h"
 
+#include "StereocenterList.h"
+#include "AtomStereocenter.h"
+#include "BondStereocenter.h"
 #include "GraphHelpers.h"
 
 namespace molassembler {
@@ -126,17 +129,8 @@ std::vector<AtomEnvironmentHashType> generate(
     boost::optional<Symmetry::Name> symmetryNameOption;
     boost::optional<unsigned> assignmentOption;
 
-    if(stereocenters.involving(i)) {
-      const auto& stereocenterPtr = stereocenters.at(i);
-      if(stereocenterPtr->type() == Stereocenters::Type::BondStereocenter) {
-        symmetryNameOption = Symmetry::Name::TrigonalPlanar;
-      } else {
-        symmetryNameOption = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-          stereocenterPtr
-        ) -> getSymmetry();
-      }
-
-      assignmentOption = stereocenterPtr -> assigned();
+    if(auto refOption = stereocenters.option(i)) {
+      symmetryNameOption = refOption.value().getSymmetry();
     }
 
     hashes.emplace_back(

@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_OPTIONS_H
 #define INCLUDE_MOLASSEMBLER_OPTIONS_H
 
-#include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/Names.h"
 #include "temple/Random.h"
 
 #include "detail/AngstromWrapper.h"
@@ -162,10 +162,7 @@ struct Options {
 
 // Forward-declare Cycles and AtomStereocenter
 class Cycles;
-
-namespace Stereocenters {
-  class AtomStereocenter;
-} // namespace Stereocenters
+class AtomStereocenter;
 
 /*! Decides whether to keep a stereocenter or not within a temperature regime
  *
@@ -176,7 +173,7 @@ namespace Stereocenters {
  *   of size 4 or smaller, where strain hinders inversion)
  */
 bool disregardStereocenter(
-  const Stereocenters::AtomStereocenter& stereocenter,
+  const AtomStereocenter& stereocenter,
   const Delib::ElementType centralType,
   const Cycles& cycleData,
   const TemperatureRegime temperatureRegimeSetting
@@ -188,7 +185,7 @@ bool disregardStereocenter(
  * if a four-coordinate carbon atom is to be fitted to a position collection
  */
 void pickyFit(
-  Stereocenters::AtomStereocenter& stereocenter,
+  AtomStereocenter& stereocenter,
   const GraphType& graph,
   const AngstromWrapper& angstromWrapper,
   const Symmetry::Name expectedSymmetry

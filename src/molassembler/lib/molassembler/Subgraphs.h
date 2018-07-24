@@ -3,6 +3,8 @@
 
 #include "boost/bimap.hpp"
 
+#include "temple/constexpr/UpperTriangularMatrix.h"
+
 #include "Molecule.h"
 
 namespace molassembler {

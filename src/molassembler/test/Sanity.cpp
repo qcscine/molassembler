@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include "chemical_symmetries/Symmetries.h"
+
 #include "DistanceGeometry/ConformerGeneration.h"
 #include "BoundsFromSymmetry.h"
 
@@ -12,18 +14,19 @@
 using namespace std::string_literals;
 using namespace molassembler;
 
+// Shows atom stereocenter differences only
 void explainDifference(
   const StereocenterList& a,
   const StereocenterList& b
 ) {
   std::cout << "A:" << std::endl;
-  for(const auto& stereocenterPtr : a) {
-    std::cout << stereocenterPtr << std::endl;
+  for(const auto& stereocenter : a.atomStereocenters()) {
+    std::cout << stereocenter.info() << "\n";
   }
 
   std::cout << "B:" << std::endl;
-  for(const auto& stereocenterPtr : b) {
-    std::cout << stereocenterPtr << std::endl;
+  for(const auto& stereocenter : b.atomStereocenters()) {
+    std::cout << stereocenter.info() << "\n";
   }
   std::cout << std::endl;
 }
@@ -38,7 +41,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
     auto molecule = DGDBM::asymmetricMolecule(symmetryName);
 
     if(!molecule.getStereocenterList().empty()) {
-      auto centralStereocenter = molecule.getStereocenterList().at(0);
+      auto centralStereocenter = molecule.getStereocenterList().option(0);
 
       // Create a full list of the possible assignments
       std::vector<unsigned> assignments;
@@ -124,9 +127,9 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
             << std::setw(8) << std::to_string(pass)+ "/100"
             << " comparisons with inferred StereocenterList pass" << std::endl;
 
-          std::cout << "StereocenterList has entries:" << std::endl;
-          for(const auto& stereocenter: molecule.getStereocenterList()) {
-            std::cout << stereocenter << std::endl;
+          std::cout << "StereocenterList has atom stereocenters:" << std::endl;
+          for(const auto& stereocenter : molecule.getStereocenterList().atomStereocenters()) {
+            std::cout << stereocenter.info() << "\n";
           }
         }
 

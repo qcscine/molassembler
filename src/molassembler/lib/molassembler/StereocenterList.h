@@ -1,10 +1,15 @@
-#ifndef INCLUDE_GRAPH_FEATURE_LIST_H
-#define INCLUDE_GRAPH_FEATURE_LIST_H
+#ifndef INCLUDE_MOLASSEMBLER_STEREOCENTER_LIST_H
+#define INCLUDE_MOLASSEMBLER_STEREOCENTER_LIST_H
 
-#include <unordered_map>
+#include "boost/range/adaptor/map.hpp"
+
+#include "temple/constexpr/Bitmask.h"
 
 #include "AtomStereocenter.h"
 #include "BondStereocenter.h"
+
+#include <unordered_map>
+#include <map>
 
 /*! @file
  *
@@ -12,265 +17,104 @@
  * in a molecule.
  */
 
+/* TODO
+ * - Make a hash for GraphType::edge_descriptor so we can use unordered_map
+ * - bond stereocenter state propagation
+ */
+
 namespace molassembler {
 
 class StereocenterList {
 public:
-  using Base = Stereocenters::Stereocenter;
-  using PtrType = std::shared_ptr<Base>;
-  /* Important detail here:
-   * Remember that when using shared_ptr in an ordered container, all comparison
-   * operators simply compare the address where elements are stored. When
-   * checking equality, this merely amounts to checking if they are the SAME,
-   * NOT whether they are EQUAL.
-   */
-
-  struct PtrCompare {
-    bool operator () (const PtrType& a, const PtrType& b) const {
-      return Stereocenters::compareStereocenterLessThan(a, b);
-    }
-  };
-
-  // For comparability, gathered in a set. Owns the actual stereocenters
-  using SetType = std::set<PtrType, PtrCompare>;
-
-  // For quicker access, with only weak pointers
-  using AtomMapType = std::unordered_map<
-    AtomIndexType,
-    std::weak_ptr<Base>
-  >;
-
-  using const_iterator = SetType::const_iterator;
-  using iterator = SetType::iterator;
-
-private:
-/* Private members */
-  SetType _features;
-  AtomMapType _indexMap;
-
-public:
-/* Constructors */
-  StereocenterList() = default;
-  StereocenterList(std::initializer_list<PtrType> initList) {
-    for(const auto& ptr : initList) {
-      add(ptr);
-    }
-  }
+/* Typedefs */
+  using AtomMapType = std::unordered_map<AtomIndexType, AtomStereocenter>;
+  using BondMapType = std::map<GraphType::edge_descriptor, BondStereocenter>;
 
 /* Modification */
-  //! Removes all stored Stereocenters
-  void clear() {
-    _features.clear();
-    _indexMap.clear();
-  }
+  //! Add a new AtomStereocenter to the list
+  void add(AtomIndexType i, AtomStereocenter stereocenter);
 
-  //! Adds a shared_ptr instance to the list.
-  void add(const std::shared_ptr<Stereocenters::Stereocenter>& featurePtr) {
-    _features.insert(featurePtr);
+  //! Add a new BondStereocenter to the list
+  void add(GraphType::edge_descriptor edge, BondStereocenter stereocenter);
 
-    // Add to map as well
-    for(const auto& involvedAtom : featurePtr -> involvedAtoms()) {
-      _indexMap.emplace(
-        involvedAtom,
-        featurePtr
-      );
-    }
-  }
+  //! Remove all stereocenters
+  void clear();
 
-  AtomMapType::iterator find(const AtomIndexType index) {
-    return _indexMap.find(index);
-  }
+  //! Fetch a reference-option to an AtomStereocenter, if present
+  boost::optional<AtomStereocenter&> option(const AtomIndexType index);
 
-  AtomMapType::const_iterator find(const AtomIndexType index) const {
-    return _indexMap.find(index);
-  }
+  //! Fetch a reference-option to an BondStereocenter, if present
+  boost::optional<BondStereocenter&> option(const GraphType::edge_descriptor edge);
 
-  PtrType get(AtomMapType::iterator mapIter) {
-    return mapIter->second.lock();
-  }
-
-  PtrType get(AtomMapType::const_iterator mapIter) {
-    return mapIter->second.lock();
-  }
-
-  PtrType at(const AtomIndexType index) {
-    return _indexMap.at(index).lock();
-  }
-
-  /* Removing a vertex invalidates some vertex descriptors, which are used
+  /*! Communicates the removal of a vertex index to all stereocenters in the list
+   *
+   * Removing a vertex invalidates some vertex descriptors, which are used
    * liberally in the stereocenter classes. This function ensures that
    * vertex descriptors are valid throughout.
    */
-  void propagateVertexRemoval(const AtomIndexType removedIndex) {
-    // Drop any stereocenters involving this atom from the list
-    if(involving(removedIndex)) {
-      remove(removedIndex);
-    }
+  void propagateVertexRemoval(const AtomIndexType removedIndex);
 
-    /* Go through all state in the StereocenterList and decrement any indices
-     * larger than the one being removed
-     */
-    for(const auto& stereocenterPtr : _features) {
-      stereocenterPtr -> propagateVertexRemoval(removedIndex);
-    }
+  //! Removes the AtomStereocenter on a specified index
+  void remove(const AtomIndexType index);
 
-    // Rebuild the index map
-    _indexMap.clear();
-    for(const auto& stereocenterPtr : _features) {
-      for(const auto& involvedAtom : stereocenterPtr -> involvedAtoms()) {
-        _indexMap.emplace(
-          involvedAtom,
-          stereocenterPtr
-        );
-      }
-    }
-  }
+  //! Removes the BondStereocenter on a specified edge
+  void remove(const GraphType::edge_descriptor edge);
 
-  void remove(const AtomIndexType index) {
-    auto findIter = find(index);
+  //! Removes the AtomStereocenter on a specified index, if present
+  void try_remove(const AtomIndexType index);
 
-    if(findIter == _indexMap.end()) {
-      throw std::logic_error("StereocenterList::remove: No mapping for that index!");
-    }
-
-    _features.erase(get(findIter));
-    _indexMap.erase(index);
-  }
+  //! Removes the BondStereocenter on a specified edge, if present
+  void try_remove(const GraphType::edge_descriptor edge);
 
 /* Information */
-  const PtrType at(const AtomIndexType index) const {
-    return _indexMap.at(index).lock();
-  }
+  //! Modular comparison with another StereocenterList using a bitmask
+  bool compare(
+    const StereocenterList& other,
+    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  ) const;
 
-  bool involving(const AtomIndexType index) const {
-    return _indexMap.count(index) > 0;
-  }
+  //! Returns true if there are no stereocenters
+  bool empty() const;
 
-  boost::optional<
-    std::shared_ptr<Stereocenters::AtomStereocenter>
-  > atomStereocenterOn(const AtomIndexType a) const {
-    auto findIter = find(a);
+  //! Returns true if there are any stereocenters with zero possible assignments
+  bool hasZeroAssignmentStereocenters() const;
 
-    if(findIter == _indexMap.end()) {
-      return boost::none;
-    }
+  //! Returns true if there are unassigned stereocenters
+  bool hasUnassignedStereocenters() const;
 
-    auto stereocenterPtr = findIter->second.lock();
-    if(stereocenterPtr -> type() != Stereocenters::Type::AtomStereocenter) {
-      return boost::none;
-    }
+  //! Fetch a const ref-option to an AtomStereocenter, if present
+  boost::optional<const AtomStereocenter&> option(const AtomIndexType index) const;
 
-    return std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(stereocenterPtr);
-  }
+  //! Fetch a const ref-option to an BondStereocenter, if present
+  boost::optional<const BondStereocenter&> option(const GraphType::edge_descriptor edge) const;
 
-  boost::optional<
-    std::shared_ptr<Stereocenters::BondStereocenter>
-  > bondStereocenterOn(
-    const AtomIndexType a,
-    const AtomIndexType b
-  ) const {
-    assert(a != b);
+  //! Combined size of atom and bond-stereocenter lists
+  unsigned size() const;
 
-    auto findIter = find(a);
+/* Iterators */
+  //! Returns an iterable object with modifiable atom stereocenter references
+  boost::range_detail::select_second_mutable_range<AtomMapType> atomStereocenters();
 
-    // Not found for a?
-    if(findIter == _indexMap.end()) {
-      return boost::none;
-    }
+  //! Returns an iterable object with unmodifiable atom stereocenter references
+  boost::range_detail::select_second_const_range<AtomMapType> atomStereocenters() const;
 
-    auto stereocenterPtr = findIter->second.lock();
+  //! Returns an iterable object with modifiable bond stereocenter references
+  boost::range_detail::select_second_mutable_range<BondMapType> bondStereocenters();
 
-    auto involvedAtoms = stereocenterPtr -> involvedAtoms();
+  //! Returns an iterable object with unmodifiable bond stereocenter references
+  boost::range_detail::select_second_const_range<BondMapType> bondStereocenters() const;
 
-    // Ensure the involved atoms match
-    if(
-      !(involvedAtoms.front() == a && involvedAtoms.back() == b)
-      && !(involvedAtoms.front() == b && involvedAtoms.back() == a)
-    ) {
-      return boost::none;
-    }
+/* Operators */
+  //! Strict equality comparison
+  bool operator == (const StereocenterList& other) const;
+  bool operator != (const StereocenterList& other) const;
 
-    return std::dynamic_pointer_cast<Stereocenters::BondStereocenter>(stereocenterPtr);
-  }
+private:
+  //! The underlying storage for atom stereocenters
+  AtomMapType _atomStereocenters;
 
-  boost::optional<
-    std::shared_ptr<Stereocenters::BondStereocenter>
-  > bondStereocenterOn(const std::array<AtomIndexType, 2> vertices) const {
-    return bondStereocenterOn(
-      vertices.front(),
-      vertices.back()
-    );
-  }
-
-  bool isStereogenic(const AtomIndexType index) const {
-    auto findIter = _indexMap.find(index);
-    if(findIter == _indexMap.end()) {
-      return false;
-    }
-
-    return findIter->second.lock()->numStereopermutations() > 1;
-  }
-  /* As long as the constraint exists that Stereocenters' involvedAtoms do not
-   * overlap, this variant below is unneeded.
-   */
-  /*ListType involving(const AtomIndexType& index) {
-    ListType matches;
-
-    for(const auto& stereocenterPtr : _features) {
-      if(stereocenterPtr -> involvedAtoms().count(index)) {
-        matches.emplace_back(stereocenterPtr);
-      }
-    }
-
-    return matches;
-  }*/
-
-  /*!
-   * Returns a map of atom indices to Stereocenter pointers.
-   * The returned map does NOT contain a key for every atom in the Molecule.
-   * When using the returned map, use count() before accessing with at()
-   */
-  const AtomMapType& getAtomIndexMapping() const {
-    return _indexMap;
-  }
-
-  bool empty() const {
-    return _features.empty();
-  }
-
-  unsigned size() const {
-    return _features.size();
-  }
-
-  /* Iterators */
-  // Begin and end iterators for easy traversal
-  SetType::iterator begin() {
-    return _features.begin();
-  }
-
-  SetType::iterator end() {
-    return _features.end();
-  }
-
-  SetType::const_iterator begin() const {
-    return _features.cbegin();
-  }
-
-  SetType::const_iterator end() const {
-    return _features.cend();
-  }
-
-  bool operator == (const StereocenterList& other) const {
-    return std::equal(
-      _features.begin(),
-      _features.end(),
-      other._features.begin(),
-      other._features.end(),
-      [](const auto& ptrA, const auto& ptrB) -> bool {
-        return Stereocenters::compareStereocenterEqual(ptrA, ptrB);
-      }
-    );
-  }
+  //! The underlying storage for bond stereocenters
+  BondMapType _bondStereocenters;
 };
 
 }

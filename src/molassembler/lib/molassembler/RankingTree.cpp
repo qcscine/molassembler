@@ -11,6 +11,7 @@
 #include "GraphHelpers.h"
 #include "LocalGeometryModel.h"
 #include "Options.h"
+#include "StereocenterList.h"
 
 #include <fstream>
 #include <iostream>
@@ -226,10 +227,10 @@ public:
      * all comparisons below are reversed.
      */
 
-    auto EZOptionalA = _base._tree[a].stereocenterOption;
-    auto EZOptionalB = _base._tree[b].stereocenterOption;
+    auto BondStereocenterOptionalA = _base._tree[a].stereocenterOption;
+    auto BondStereocenterOptionalB = _base._tree[b].stereocenterOption;
 
-    if(!EZOptionalA && !EZOptionalB) {
+    if(!BondStereocenterOptionalA && !BondStereocenterOptionalB) {
       /* This does not invalidate the program, it just means that all
        * uninstantiated BondStereocenters are equal, and no relative ordering
        * is provided.
@@ -237,17 +238,17 @@ public:
       return false;
     }
 
-    if(EZOptionalA && !EZOptionalB) {
+    if(BondStereocenterOptionalA && !BondStereocenterOptionalB) {
       return true;
     }
 
-    if(!EZOptionalA && EZOptionalB) {
+    if(!BondStereocenterOptionalA && BondStereocenterOptionalB) {
       return false;
     }
 
     // Now we know both actually have a stereocenterPtr
-    const auto& BondStereocenterA = EZOptionalA.value();
-    const auto& BondStereocenterB = EZOptionalB.value();
+    const auto& BondStereocenterA = BondStereocenterOptionalA.value();
+    const auto& BondStereocenterB = BondStereocenterOptionalB.value();
 
     // Reverse everything below for descending sorting
     return temple::consecutiveCompareSmaller(
@@ -653,7 +654,6 @@ void RankingTree::_applySequenceRules(
   bool foundBondStereocenters = false;
   bool foundAtomStereocenters = false;
 
-
   auto auxiliaryLigands = [](
     const RankingInformation::RankedType& rankedAtoms
   ) -> RankingInformation::LigandsType {
@@ -670,6 +670,96 @@ void RankingTree::_applySequenceRules(
     return ligands;
   };
 
+  auto instantiateAtomStereocenter = [&](const TreeVertexIndex targetIndex) -> void {
+    const AtomIndexType molSourceIndex = _tree[targetIndex].molIndex;
+    auto existingStereocenterOption = _stereocentersRef.option(molSourceIndex);
+
+    RankingInformation centerRanking;
+
+    centerRanking.sortedSubstituents = _mapToAtomIndices(
+      _auxiliaryApplySequenceRules(
+        targetIndex,
+        _auxiliaryAdjacentsToRank(targetIndex, {})
+      )
+    );
+
+    centerRanking.ligands = auxiliaryLigands(centerRanking.sortedSubstituents);
+    centerRanking.ligandsRanking = RankingInformation::rankLigands(
+      centerRanking.ligands,
+      centerRanking.sortedSubstituents
+    );
+
+    // Again, no links since we're in an acyclic graph now
+    Symmetry::Name localSymmetry;
+    if(existingStereocenterOption) {
+      localSymmetry = existingStereocenterOption->getSymmetry();
+    } else {
+      localSymmetry = LocalGeometry::determineLocalGeometry(
+        _graphRef,
+        molSourceIndex,
+        centerRanking
+      );
+    }
+
+    // Instantiate a AtomStereocenter here!
+    auto newStereocenter = AtomStereocenter {
+      _graphRef,
+      localSymmetry,
+      molSourceIndex,
+      centerRanking
+    };
+
+    if(positionsOption) {
+      pickyFit(
+        newStereocenter,
+        _graphRef,
+        positionsOption.value(),
+        localSymmetry
+      );
+    } else if(
+      existingStereocenterOption
+      && existingStereocenterOption->getSymmetry() == localSymmetry
+      && (
+        existingStereocenterOption->numStereopermutations()
+        == newStereocenter.numStereopermutations()
+      )
+    ) {
+      newStereocenter.assign(existingStereocenterOption->assigned());
+    } else if(
+      newStereocenter.numStereopermutations() == 1
+      && newStereocenter.numAssignments() == 1
+    ) {
+      // Default assign it
+      newStereocenter.assign(0);
+    }
+
+    if(
+      newStereocenter.assigned()
+      && !disregardStereocenter(
+        newStereocenter,
+        graph::elementType(molSourceIndex, _graphRef),
+        _cyclesRef,
+        Options::temperatureRegime
+      )
+    ) {
+      if(newStereocenter.numStereopermutations() > 1) {
+        // Mark that we instantiated something interesting
+        foundAtomStereocenters = true;
+      }
+
+      _tree[targetIndex].stereocenterOption = std::move(newStereocenter);
+    }
+
+    if /*C++17 constexpr */ (buildTypeIsDebug) {
+      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        _writeGraphvizFiles({
+          _adaptedMolGraphviz,
+          dumpGraphviz("Sequence rule 3 preparation", {rootIndex})
+        });
+      }
+    }
+  };
+
   // Process the tree, from the bottom up
   for(auto it = byDepth.rbegin(); it != byDepth.rend(); ++it) {
     const auto& currentEdges = *it;
@@ -678,236 +768,113 @@ void RankingTree::_applySequenceRules(
       auto sourceIndex = boost::source(edge, _tree);
       auto targetIndex = boost::target(edge, _tree);
 
-      if(_doubleBondEdges.count(edge) > 0) {
-        // Instantiate an BondStereocenter here!
+      /* It gets a little weird here. Assuming we are at the bottom-most edge
+       * level of the tree, we have to do three things.
+       *
+       * 1. Instantiate AtomStereocenter at the target index
+       * 2. Instantiate AtomStereocenter at the source index
+       * 3. Instantiate BondStereocenter on the edge, provided that 1 and 2
+       *    could be assigned.
+       *
+       * This has the consequence that any auxiliary AtomStereocenter at the
+       * source index will NOT be aware of any BondStereocenter differences to
+       * its immediate descendants (since its rankings are calculated prior to
+       * the instantiation of the BondStereocenter). Any further out, the
+       * sequence rules will catch the differences.
+       *
+       * At later stages, the AtomStereocenter at the target index will already
+       * be present, so you need to check before instantiating it.
+       */
 
-        auto sourceIndicesToRank = _auxiliaryAdjacentsToRank(
-          sourceIndex,
-          {targetIndex}
-        );
-
-        auto targetIndicesToRank = _auxiliaryAdjacentsToRank(
-          targetIndex,
-          {sourceIndex}
-        );
-
-        // Ensure both index sets have either 1 or 2 elements
-        if(
-          !sourceIndicesToRank.empty() && sourceIndicesToRank.size() <= 2
-          && !targetIndicesToRank.empty() && targetIndicesToRank.size() <= 2
-        ) {
-          auto makeEZRanking = [&](
-            const TreeVertexIndex sourceIndex,
-            const std::set<TreeVertexIndex>& indicesToRank
-          ) -> RankingInformation {
-            RankingInformation ranking;
-
-            ranking.sortedSubstituents = _mapToAtomIndices(
-              _auxiliaryApplySequenceRules(
-                sourceIndex,
-                indicesToRank
-              )
-            );
-
-            ranking.ligands = auxiliaryLigands(ranking.sortedSubstituents);
-            ranking.ligandsRanking = RankingInformation::rankLigands(
-              ranking.ligands,
-              ranking.sortedSubstituents
-            );
-
-            /* NOTE: There is no need to collect linking information since we
-             * are in an acyclic digraph, and any cycles in the original molecule
-             * are no longer present.
-             */
-
-            return ranking;
-          };
-
-          RankingInformation sourceRanking = makeEZRanking(
-            sourceIndex,
-            sourceIndicesToRank
-          );
-
-          RankingInformation targetRanking = makeEZRanking(
-            targetIndex,
-            targetIndicesToRank
-          );
-
-          const AtomIndexType molSourceIndex = _tree[sourceIndex].molIndex;
-          const AtomIndexType molTargetIndex = _tree[targetIndex].molIndex;
-
-          auto newStereocenter = Stereocenters::BondStereocenter {
-            molSourceIndex,
-            sourceRanking,
-            molTargetIndex,
-            targetRanking
-          };
-
-          // Try to assign the new stereocenter
-          if(newStereocenter.numStereopermutations() > 1) {
-            if(positionsOption) {
-              // Fit from positions
-              newStereocenter.fit(
-                positionsOption.value()
-              );
-            } else {
-              /* Need to get chiral information from the molecule (if present).
-               * Have to be careful, any stereocenters on the same atom may have
-               * different symmetries and different ranking for the same
-               * substituents
-               */
-              if(_stereocentersRef.involving(molSourceIndex)) {
-                const auto& stereocenterPtr = _stereocentersRef.at(molSourceIndex);
-
-                if(
-                  stereocenterPtr->type() == Stereocenters::Type::BondStereocenter
-                  && stereocenterPtr->involvedAtoms() == std::vector<AtomIndexType> {
-                    std::min(molSourceIndex, molTargetIndex),
-                    std::max(molSourceIndex, molTargetIndex)
-                  } && stereocenterPtr->numStereopermutations() == 2
-                ) {
-                  // Take the assignment from that stereocenter
-                  newStereocenter.assign(
-                    stereocenterPtr->assigned()
-                  );
-                }
-              }
-            }
-
-            _tree[edge].stereocenterOption = newStereocenter;
-
-            // Mark that we instantiated something
-            foundBondStereocenters = true;
-          }
-
-          if /* C++17 constexpr */ (buildTypeIsDebug) {
-            if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-              _writeGraphvizFiles({
-                _adaptedMolGraphviz,
-                dumpGraphviz("Sequence rule 3 preparation", {rootIndex})
-              });
-            }
-          }
-        }
+      if(!_tree[targetIndex].stereocenterOption) {
+        instantiateAtomStereocenter(targetIndex);
       }
 
+      /* TODO Since the tree merges, it's presumably bad for performance that
+       * we cannot store the information that we tried, no stereocenter was
+       * placed, and we shouldn't try again.
+       */
+      if(!_tree[sourceIndex].stereocenterOption) {
+        instantiateAtomStereocenter(sourceIndex);
+      }
+
+      /* The instantiation procedure does not guarantee that there will be a
+       * stereocenter on both vertices. If no assignment can be found
+       */
       if(
-        !_tree[edge].stereocenterOption // No BondStereocenter on this edge
-        && !_tree[targetIndex].stereocenterOption // No AtomStereocenter
-        && _nonDuplicateDegree(targetIndex) >= 3 // Min. degree for chirality
-      ) {
-        const AtomIndexType molSourceIndex = _tree[targetIndex].molIndex;
-
-        RankingInformation centerRanking;
-
-        centerRanking.sortedSubstituents = _mapToAtomIndices(
-          _auxiliaryApplySequenceRules(
-            targetIndex,
-            _auxiliaryAdjacentsToRank(targetIndex, {})
-          )
-        );
-
-        centerRanking.ligands = auxiliaryLigands(centerRanking.sortedSubstituents);
-        centerRanking.ligandsRanking = RankingInformation::rankLigands(
-          centerRanking.ligands,
-          centerRanking.sortedSubstituents
-        );
-
-        // Again, no links since we're in an acyclic graph now
-        Symmetry::Name localSymmetry;
-        if(
-          _stereocentersRef.involving(molSourceIndex)
-          && _stereocentersRef.at(molSourceIndex)->type() == Stereocenters::Type::AtomStereocenter
-        ) {
-          localSymmetry = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-            _stereocentersRef.at(molSourceIndex)
-          ) -> getSymmetry();
-        } else {
-          localSymmetry = LocalGeometry::determineLocalGeometry(
-            _graphRef,
-            molSourceIndex,
-            centerRanking
-          );
-        }
-        const unsigned nHydrogens = _adjacentTerminalHydrogens(targetIndex);
-
-        /* In case only one assignment is possible in the set of symmetries of
-         * the same size, there is no reason to fit the stereocenter at all
+        _tree[sourceIndex].stereocenterOption
+        && _tree[targetIndex].stereocenterOption
+        /* TODO this has to be altered -> any edges with hindered rotation have
+         * to be checked, not just double bonds
          */
-        if(
-          temple::any_of(
-            Symmetry::allNames,
-            [&localSymmetry, nHydrogens](const Symmetry::Name name) -> bool {
-              return (
-                Symmetry::size(name) == Symmetry::size(localSymmetry)
-                && Symmetry::hasMultipleUnlinkedAssignments(name, nHydrogens)
-              );
-            }
-          )
-        ) {
-          // Instantiate a AtomStereocenter here!
+        && _doubleBondEdges.count(edge) > 0
+      ) {
+        // Instantiate a BondStereocenter
+        auto molEdge = graph::edge(
+          _tree[sourceIndex].molIndex,
+          _tree[targetIndex].molIndex,
+          _graphRef
+        );
 
-          auto newStereocenter = Stereocenters::AtomStereocenter {
-            _graphRef,
-            localSymmetry,
-            molSourceIndex,
-            centerRanking
-          };
+        auto newStereocenter = BondStereocenter {
+          _tree[sourceIndex].stereocenterOption.value(),
+          _tree[targetIndex].stereocenterOption.value(),
+          molEdge
+        };
 
-          if(newStereocenter.numStereopermutations() > 1) {
-            if(positionsOption) {
-              pickyFit(
-                newStereocenter,
-                _graphRef,
-                positionsOption.value(),
-                localSymmetry
-              );
-            } else { // Try to get an assignment from the molecule
-              if(_stereocentersRef.involving(molSourceIndex)) {
-                const auto& stereocenterPtr = _stereocentersRef.at(molSourceIndex);
+        // Try to assign the new stereocenter
+        if(newStereocenter.numStereopermutations() > 1) {
+          auto existingStereocenterOption = _stereocentersRef.option(molEdge);
 
-                /* TODO
-                 * consider what to do in cases in which molecule number of
-                 * assignments is fewer finding the equivalent case by means of
-                 * rotations should be possible
-                 *
-                 * widening cases are not assignable
-                 */
-                if(
-                  stereocenterPtr->type() == Stereocenters::Type::AtomStereocenter
-                  && stereocenterPtr->involvedAtoms() == std::vector<AtomIndexType> {
-                    molSourceIndex
-                  } && stereocenterPtr->numStereopermutations() == newStereocenter.numStereopermutations()
-                ) {
-                  newStereocenter.assign(
-                    stereocenterPtr->assigned()
-                  );
-                }
-              }
-            }
-
-            if(
-              !disregardStereocenter(
-                newStereocenter,
-                graph::elementType(molSourceIndex, _graphRef),
-                _cyclesRef,
-                Options::temperatureRegime
-              )
-            ) {
-              _tree[targetIndex].stereocenterOption = std::move(newStereocenter);
-
-              // Mark that we instantiated something
-              foundAtomStereocenters = true;
-            }
+          // Find an assignment
+          if(positionsOption) {
+            // Fit from positions
+            newStereocenter.fit(
+              positionsOption.value(),
+              _tree[sourceIndex].stereocenterOption.value(),
+              _tree[targetIndex].stereocenterOption.value()
+            );
+          } else if(
+            existingStereocenterOption
+            && existingStereocenterOption->left() == newStereocenter.left()
+            && existingStereocenterOption->right() == newStereocenter.right()
+            && (
+              existingStereocenterOption->numStereopermutations()
+              == newStereocenter.numStereopermutations()
+            )
+          ) {
+            /* Need to get chiral information from the molecule (if present).
+             * Have to be careful, any stereocenters on the same atom may have
+             * different symmetries and different ranking for the same
+             * substituents
+             */
+            newStereocenter.assign(
+              existingStereocenterOption->assigned()
+            );
+          } else if(
+            newStereocenter.numStereopermutations() == 1u
+            && newStereocenter.numAssignments() == 1u
+          ) {
+            newStereocenter.assign(0);
           }
 
-          if /*C++17 constexpr */ (buildTypeIsDebug) {
-            if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-              _writeGraphvizFiles({
-                _adaptedMolGraphviz,
-                dumpGraphviz("Sequence rule 3 preparation", {rootIndex})
-              });
+          // If an assignment could be found, add it to the tree
+          if(newStereocenter.assigned()) {
+            if(newStereocenter.numStereopermutations() > 1) {
+              // Mark that we instantiated something
+              foundBondStereocenters = true;
             }
+
+            _tree[edge].stereocenterOption = std::move(newStereocenter);
+          }
+        }
+
+        if /* C++17 constexpr */ (buildTypeIsDebug) {
+          if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+            _writeGraphvizFiles({
+              _adaptedMolGraphviz,
+              dumpGraphviz("Sequence rule 3 preparation", {rootIndex})
+            });
           }
         }
       }

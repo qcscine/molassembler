@@ -2,6 +2,8 @@
 
 #include "Delib/ElementInfo.h"
 
+#include "chemical_symmetries/Symmetries.h"
+#include "temple/Containers.h"
 #include "temple/Optionals.h"
 
 #include "AtomInfo.h"

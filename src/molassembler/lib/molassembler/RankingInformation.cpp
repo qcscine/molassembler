@@ -1,6 +1,7 @@
 #include "RankingInformation.h"
 
 #include "OrderDiscoveryHelper.h"
+#include "temple/Containers.h"
 
 namespace molassembler {
 
@@ -76,6 +77,54 @@ RankingInformation::RankedLigandsType RankingInformation::rankLigands(
   );
 
   return finalSets;
+}
+
+unsigned RankingInformation::getLigandIndexOf(const AtomIndexType i) const {
+  // Find the atom index i within the set of ligand definitions
+  auto findIter = temple::find_if(
+    ligands,
+    [&](const auto& ligandIndexList) -> bool {
+      return temple::any_of(
+        ligandIndexList,
+        [&](const AtomIndexType ligandConstitutingIndex) -> bool {
+          return ligandConstitutingIndex == i;
+        }
+      );
+    }
+  );
+
+  if(findIter == ligands.end()) {
+    throw std::out_of_range(
+      "atom index is not part of a ligand of this stereocenter"
+    );
+  }
+
+  return findIter - ligands.begin();
+}
+
+bool RankingInformation::hasHapticLigands() const {
+  return temple::any_of(
+    ligands,
+    [](const auto& ligandIndices) -> bool {
+      return ligandIndices.size() > 1;
+    }
+  );
+}
+
+bool RankingInformation::operator == (const RankingInformation& other) const {
+  /* This is a nontrivial operator since there is some degree of freedom in how
+   * ligands are chosen
+   */
+
+  throw std::logic_error("Not implemented!");
+
+  return false;
+
+  // TODO
+}
+
+bool RankingInformation::operator != (const RankingInformation& other) const {
+  return !(*this == other);
 }
 
 } // namespace molassembler

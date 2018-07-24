@@ -1,12 +1,14 @@
 #define BOOST_TEST_MODULE AtomStereocenterTestModule
 #include <boost/test/unit_test.hpp>
 
-#include <iostream>
-
-#include "Molecule.h"
-#include "AtomStereocenter.h"
-#include "Log.h"
 #include "temple/Stringify.h"
+
+#include "detail/PermutationState.h"
+#include "AtomStereocenter.h"
+#include "Molecule.h"
+#include "Log.h"
+
+#include <iostream>
 
 std::string makeString(
   const std::vector<char>& charVec
@@ -146,7 +148,7 @@ using RaggedVector = std::vector<
 
 BOOST_AUTO_TEST_CASE(PermutationStateTests) {
   using namespace molassembler;
-  using TestNamespace = molassembler::Stereocenters::AtomStereocenter::PermutationState;
+  using TestNamespace = molassembler::PermutationState;
 
   using RaggedAtoms = RaggedVector<AtomIndexType>;
   using RaggedLigands = RaggedVector<unsigned>;

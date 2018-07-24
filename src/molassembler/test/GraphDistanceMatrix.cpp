@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE GraphDistanceMatrixTests
 #include <boost/test/unit_test.hpp>
 
+#include "Molecule.h"
 #include "GraphDistanceMatrix.h"
 
 // Testing help

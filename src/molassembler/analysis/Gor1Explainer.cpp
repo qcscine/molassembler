@@ -3,6 +3,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "boost/graph/two_bit_color_map.hpp"
 #include "boost/regex.hpp"
 
 #include "temple/Containers.h"
@@ -11,6 +12,7 @@
 #include "DistanceGeometry/ImplicitGraphBoost.h"
 #include "DistanceGeometry/SpatialModel.h"
 #include "IO.h"
+#include "Molecule.h"
 
 #include "gor1/Gor1.h"
 

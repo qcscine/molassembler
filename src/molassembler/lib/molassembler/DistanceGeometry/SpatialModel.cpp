@@ -1,16 +1,19 @@
 #include "boost/graph/graphviz.hpp"
-#include "CyclicPolygons.h"
 #include "Delib/ElementInfo.h"
+#include "CyclicPolygons.h"
+
 #include "chemical_symmetries/Properties.h"
+#include "temple/Random.h"
+#include "temple/Containers.h"
 
 #include "DistanceGeometry/SpatialModel.h"
 #include "DistanceGeometry/DistanceGeometry.h"
 #include "detail/CommonTrig.h"
 #include "detail/StdlibTypeAlgorithms.h"
 #include "detail/MolGraphWriter.h"
+#include "Cycles.h"
 #include "Log.h"
-#include "temple/Random.h"
-#include "temple/Containers.h"
+#include "RankingInformation.h"
 
 #include <fstream>
 
@@ -29,7 +32,10 @@ const ValueBounds SpatialModel::dihedralClampBounds = ValueBounds {0.0, M_PI};
 SpatialModel::SpatialModel(
   const Molecule& molecule,
   const double looseningMultiplier
-) : _molecule(molecule), _looseningMultiplier(looseningMultiplier) {
+) : _molecule(molecule),
+    _looseningMultiplier(looseningMultiplier),
+    _stereocenters(molecule.getStereocenterList())
+{
   /* This is overall a pretty complicated constructor since it encompasses the
    * entire conversion from a molecular graph into some model of the relations
    * between atoms, determining which conformations are accessible.
@@ -99,114 +105,49 @@ SpatialModel::SpatialModel(
     );
   }
 
-  /* Populate the stereocenterMap with copies of the molecule's stereocenters
-   * Start with the existing stereocenters of multiple assignments
-   * This section is just to explicitly copy the underlying objects and not just the shared pointers
-   */
-  for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
-    for(const auto& involvedAtom : stereocenterPtr -> involvedAtoms()) {
-      if(_stereocenterMap.count(involvedAtom) == 0) {
-        if(stereocenterPtr -> type() == Stereocenters::Type::AtomStereocenter) {
-          // Downcast the shared ptr
-          auto CNSPtr = std::dynamic_pointer_cast<
-            Stereocenters::AtomStereocenter
-          >(stereocenterPtr);
-
-          // Explicit new shared ptr using derived copy-constructor
-          _stereocenterMap[involvedAtom] = std::make_shared<
-            Stereocenters::AtomStereocenter
-          >(*CNSPtr);
-
-          /* Now we have a stereocenter, but it might be unassigned, in which
-           * case angle() will fail! Need to assign unassigned ones
-           * at random consistent with the unique assignments' relative
-           * occurrences
-           */
-          if(!_stereocenterMap[involvedAtom] -> assigned()) {
-            std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-              _stereocenterMap[involvedAtom]
-            ) -> assignRandom();
-          }
-        } else {
-          auto EZSPtr = std::dynamic_pointer_cast<
-            Stereocenters::BondStereocenter
-          >(stereocenterPtr);
-
-          _stereocenterMap[involvedAtom] = std::make_shared<
-            Stereocenters::BondStereocenter
-          >(*EZSPtr);
-
-          if(!_stereocenterMap[involvedAtom] -> assigned()) {
-            // Assign the BondStereocenter at random
-            _stereocenterMap[involvedAtom] -> assignRandom();
-          }
-        }
-      }
-    }
-  }
-
-  /* Add stereocenters everywhere if they do not yet exist, regardless of
-   * whether they are stereogenic or not
-   */
-
-  /* For every non-implicated double bond, create an BondStereocenter
-   * Implicated means here that no stereocenters exist for either of the double
-   * edge's atoms.
-   */
-  for(const auto& edgeIndex: molecule.iterateEdges()) {
-    if(molecule.getGraph()[edgeIndex].bondType == BondType::Double) {
-      auto source = boost::source(edgeIndex, molecule.getGraph()),
-           target = boost::target(edgeIndex, molecule.getGraph());
-
-      if(
-        _stereocenterMap.count(source) == 0
-        && _stereocenterMap.count(target) == 0
-        // TODO this right here is dangerous -> ligands view
-        && molecule.getNumAdjacencies(source) == 3
-        && molecule.getNumAdjacencies(target) == 3
-      ) {
-        // Instantiate without regard for number of assignments
-        auto newStereocenterPtr = std::make_shared<Stereocenters::BondStereocenter>(
-          source,
-          molecule.rankPriority(source, {target}), // exclude shared edge
-          target,
-          molecule.rankPriority(target, {source})
-        );
-
-        // Map source *and* target to the same stereocenterPtr
-        _stereocenterMap[source] = newStereocenterPtr;
-        _stereocenterMap[target] = newStereocenterPtr;
-      }
-    }
-  }
-
-  /* For every missing non-terminal atom, create a AtomStereocenter in the
+  /* The StereocenterList is already copy initialized with the Molecule's
+   * stereocenters, but we need to instantiate AtomStereocenters everywhere,
+   * regardless of whether they are stereogenic or not, to ensure that
+   * modelling gets the information it needs.
+   *
+   * So for every missing non-terminal atom, create a AtomStereocenter in the
    * determined geometry
    */
   for(unsigned i = 0; i < molecule.numAtoms(); ++i) {
-    if(
-      _stereocenterMap.count(i) == 0  // not already in the map
-      && molecule.getNumAdjacencies(i) > 1 // non-terminal
-    ) {
-      auto localRanking = molecule.rankPriority(i);
-
-      _stereocenterMap[i] = std::make_shared<Stereocenters::AtomStereocenter>(
-        molecule.getGraph(),
-        molecule.determineLocalGeometry(i, localRanking),
-        i,
-        localRanking
-      );
-
-      /* New stereocenters encountered at this point can have multiple
-       * assignments, since some types of stereocenters are flatly ignored by
-       * the candidate functions from Molecule, such as trigonal pyramidal
-       * nitrogens. These are found here, though, and MUST be chosen randomly
-       * according to the relative weights
-       */
-      std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-        _stereocenterMap[i]
-      ) -> assignRandom();
+    // Already an instantiated AtomStereocenter?
+    if(_stereocenters.option(i)) {
+      continue;
     }
+
+    auto localRanking = molecule.rankPriority(i);
+
+    // Terminal atom index?
+    if(localRanking.ligands.size() <= 1) {
+      continue;
+    }
+
+    Symmetry::Name localSymmetry = molecule.determineLocalGeometry(i, localRanking);
+
+    auto newStereocenter = AtomStereocenter {
+      molecule.getGraph(),
+      localSymmetry,
+      i,
+      std::move(localRanking)
+    };
+
+    /* New stereocenters encountered at this point can have multiple
+     * assignments, since some types of stereocenters are flatly ignored by the
+     * candidate functions from Molecule, such as trigonal pyramidal nitrogens.
+     * These are found here, though, and MUST be chosen randomly according to
+     * the relative weights to get a single conformation in the final model
+     */
+    newStereocenter.assignRandom();
+
+    // Add it to the list of stereocenters
+    _stereocenters.add(
+      i,
+      std::move(newStereocenter)
+    );
   }
 
   /* For all flat cycles for which the internal angles can be determined
@@ -361,23 +302,21 @@ SpatialModel::SpatialModel(
     return 1.0;
   };
 
-  // Get all 1-3 and 1-4 information possible from stereocenters
-  for(const auto& mapIterPair : _stereocenterMap) {
-    const auto& stereocenterPtr = mapIterPair.second;
-
-    /* Since BondStereocenters are pointed to by both involved atoms, to avoid
-     * duplicates we need to skip constraint collection for either involved atom
-     */
-    if(
-      stereocenterPtr -> type() == Stereocenters::Type::BondStereocenter
-      && mapIterPair.first == stereocenterPtr -> involvedAtoms().back()
-    ) {
-      continue;
-    }
-
-    stereocenterPtr->setModelInformation(
+  // Get 1-3 information from AtomStereocenters
+  for(const auto& stereocenter : _stereocenters.atomStereocenters()) {
+    stereocenter.setModelInformation(
       *this,
       cycleMultiplierForIndex,
+      looseningMultiplier
+    );
+  }
+
+  // Get 1-4 information from BondStereocenters
+  for(const auto& bondStereocenter : _stereocenters.bondStereocenters()) {
+    bondStereocenter.setModelInformation(
+      *this,
+      _stereocenters.option(bondStereocenter.left().index).value(),
+      _stereocenters.option(bondStereocenter.right().index).value(),
       looseningMultiplier
     );
   }
@@ -389,160 +328,157 @@ SpatialModel::SpatialModel(
    * We also only have to worry about modeling them if the two URFs are
    * particularly small, i.e. are sizes 3-5
    */
-  for(const auto& stereocenterPtr : _molecule.getStereocenterList()) {
-    if(stereocenterPtr -> type() == Stereocenters::Type::AtomStereocenter) {
-      auto cnPtr = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-        stereocenterPtr
+  for(const auto& stereocenter : _stereocenters.atomStereocenters()) {
+    AtomIndexType i = stereocenter.centralIndex();
+
+    // Skip any stereocenters that do not match our conditions
+    if(
+      stereocenter.getSymmetry() != Symmetry::Name::Tetrahedral
+      || cycleData.numCycleFamilies(i) != 2
+    ) {
+      continue;
+    }
+
+    unsigned* URFIDs;
+    auto nIDs = RDL_getURFsContainingNode(cycleData.dataPtr(), i, &URFIDs);
+    assert(nIDs == 2);
+
+    bool allURFsSingularRC = true;
+    for(unsigned idIdx = 0; idIdx < nIDs; ++idIdx) {
+      if(RDL_getNofRCForURF(cycleData.dataPtr(), URFIDs[idIdx]) > 1) {
+        allURFsSingularRC = false;
+        break;
+      }
+    }
+
+    if(allURFsSingularRC) {
+      // The two RCs still have to be disjoint save for i
+      RDL_cycleIterator* cycleIteratorOne = RDL_getRCyclesForURFIterator(
+        cycleData.dataPtr(),
+        URFIDs[0]
       );
+      RDL_cycle* cycleOne = RDL_cycleIteratorGetCycle(cycleIteratorOne);
+      RDL_cycleIterator* cycleIteratorTwo = RDL_getRCyclesForURFIterator(
+        cycleData.dataPtr(),
+        URFIDs[1]
+      );
+      RDL_cycle* cycleTwo = RDL_cycleIteratorGetCycle(cycleIteratorTwo);
 
-      AtomIndexType i = cnPtr->involvedAtoms().front();
+      // We model them only if both are small.
+      if(cycleOne -> weight <= 5 && cycleTwo -> weight <= 5) {
+        auto makeVerticesSet = [](const auto& cyclePtr) -> std::set<AtomIndexType> {
+          std::set<AtomIndexType> vertices;
 
-      if(
-        cnPtr -> getSymmetry() == Symmetry::Name::Tetrahedral
-        && cycleData.numCycleFamilies(i) == 2
-      ) {
-        unsigned* URFIDs;
-        auto nIDs = RDL_getURFsContainingNode(cycleData.dataPtr(), i, &URFIDs);
-        assert(nIDs == 2);
-
-        bool allURFsSingularRC = true;
-        for(unsigned idIdx = 0; idIdx < nIDs; ++idIdx) {
-          if(RDL_getNofRCForURF(cycleData.dataPtr(), URFIDs[idIdx]) > 1) {
-            allURFsSingularRC = false;
-            break;
+          for(unsigned i = 0; i < cyclePtr -> weight; ++i) {
+            vertices.insert(cyclePtr->edges[i][0]);
+            vertices.insert(cyclePtr->edges[i][1]);
           }
-        }
 
-        if(allURFsSingularRC) {
-          // The two RCs still have to be disjoint save for i
-          RDL_cycleIterator* cycleIteratorOne = RDL_getRCyclesForURFIterator(
-            cycleData.dataPtr(),
-            URFIDs[0]
-          );
-          RDL_cycle* cycleOne = RDL_cycleIteratorGetCycle(cycleIteratorOne);
-          RDL_cycleIterator* cycleIteratorTwo = RDL_getRCyclesForURFIterator(
-            cycleData.dataPtr(),
-            URFIDs[1]
-          );
-          RDL_cycle* cycleTwo = RDL_cycleIteratorGetCycle(cycleIteratorTwo);
+          return vertices;
+        };
 
-          // We model them only if both are small.
-          if(cycleOne -> weight <= 5 && cycleTwo -> weight <= 5) {
-            auto makeVerticesSet = [](const auto& cyclePtr) -> std::set<AtomIndexType> {
-              std::set<AtomIndexType> vertices;
+        auto cycleOneVertices = makeVerticesSet(cycleOne);
+        auto cycleTwoVertices = makeVerticesSet(cycleTwo);
 
-              for(unsigned i = 0; i < cyclePtr -> weight; ++i) {
-                vertices.insert(cyclePtr->edges[i][0]);
-                vertices.insert(cyclePtr->edges[i][1]);
-              }
+        auto intersection = temple::setIntersection(
+          cycleOneVertices,
+          cycleTwoVertices
+        );
 
-              return vertices;
-            };
+        if(intersection.size() == 1 && *intersection.begin() == i) {
+          auto iAdjacents = molecule.getAdjacencies(i);
 
-            auto cycleOneVertices = makeVerticesSet(cycleOne);
-            auto cycleTwoVertices = makeVerticesSet(cycleTwo);
+          std::vector<AtomIndexType> firstAdjacents, secondAdjacents;
+          for(const auto& iAdjacent : iAdjacents) {
+            if(cycleOneVertices.count(iAdjacent) > 0) {
+              firstAdjacents.push_back(iAdjacent);
+            }
 
-            auto intersection = temple::setIntersection(
-              cycleOneVertices,
-              cycleTwoVertices
-            );
-
-            if(intersection.size() == 1 && *intersection.begin() == i) {
-              auto iAdjacents = molecule.getAdjacencies(i);
-
-              std::vector<AtomIndexType> firstAdjacents, secondAdjacents;
-              for(const auto& iAdjacent : iAdjacents) {
-                if(cycleOneVertices.count(iAdjacent) > 0) {
-                  firstAdjacents.push_back(iAdjacent);
-                }
-
-                if(cycleTwoVertices.count(iAdjacent) > 0) {
-                  secondAdjacents.push_back(iAdjacent);
-                }
-              }
-
-              assert(firstAdjacents.size() == 2 && secondAdjacents.size() == 2);
-
-              auto firstSequence = orderedIndexSequence<3>({{
-                firstAdjacents.front(),
-                i,
-                firstAdjacents.back()
-              }});
-
-              auto secondSequence = orderedIndexSequence<3>({{
-                secondAdjacents.front(),
-                i,
-                secondAdjacents.back()
-              }});
-
-              /* We can only set these angles if the angle bounds for both
-               * sequences already exist.
-               */
-              if(
-                _angleBounds.count(firstSequence) == 1
-                && _angleBounds.count(secondSequence) == 1
-              ) {
-                ValueBounds firstAngleBounds = _angleBounds.at(firstSequence);
-                ValueBounds secondAngleBounds = _angleBounds.at(secondSequence);
-
-                // Increases in cycle angles yield decrease in the cross angle
-                double crossAngleLower = StdlibTypeAlgorithms::clamp(
-                  spiroCrossAngle(
-                    firstAngleBounds.upper,
-                    secondAngleBounds.upper
-                  ),
-                  0.0,
-                  M_PI
-                );
-
-                double crossAngleUpper = StdlibTypeAlgorithms::clamp(
-                  spiroCrossAngle(
-                    firstAngleBounds.lower,
-                    secondAngleBounds.lower
-                  ),
-                  0.0,
-                  M_PI
-                );
-
-                ValueBounds crossBounds {
-                  crossAngleLower,
-                  crossAngleUpper
-                };
-
-                temple::forAllPairs(
-                  firstAdjacents,
-                  secondAdjacents,
-                  [&](const auto& firstAdjacent, const auto& secondAdjacent) {
-                    auto sequence = orderedIndexSequence<3>({{firstAdjacent, i, secondAdjacent}});
-
-                    auto findIter = _angleBounds.find(sequence);
-                    if(findIter == _angleBounds.end()) {
-                      _angleBounds.emplace(
-                        std::make_pair(sequence, crossBounds)
-                      );
-                    } else {
-                      // Tighten the cross-angle bounds
-                      findIter->second = crossBounds;
-                      // TODO maybe log this behavior?
-                    }
-                  }
-                );
-              }
+            if(cycleTwoVertices.count(iAdjacent) > 0) {
+              secondAdjacents.push_back(iAdjacent);
             }
           }
 
-          // Must manually free the cycles and iterators
-          RDL_deleteCycle(cycleOne);
-          RDL_deleteCycle(cycleTwo);
+          assert(firstAdjacents.size() == 2 && secondAdjacents.size() == 2);
 
-          RDL_deleteCycleIterator(cycleIteratorOne);
-          RDL_deleteCycleIterator(cycleIteratorTwo);
+          auto firstSequence = orderedIndexSequence<3>({{
+            firstAdjacents.front(),
+            i,
+            firstAdjacents.back()
+          }});
+
+          auto secondSequence = orderedIndexSequence<3>({{
+            secondAdjacents.front(),
+            i,
+            secondAdjacents.back()
+          }});
+
+          /* We can only set these angles if the angle bounds for both
+           * sequences already exist.
+           */
+          if(
+            _angleBounds.count(firstSequence) == 1
+            && _angleBounds.count(secondSequence) == 1
+          ) {
+            ValueBounds firstAngleBounds = _angleBounds.at(firstSequence);
+            ValueBounds secondAngleBounds = _angleBounds.at(secondSequence);
+
+            // Increases in cycle angles yield decrease in the cross angle
+            double crossAngleLower = StdlibTypeAlgorithms::clamp(
+              spiroCrossAngle(
+                firstAngleBounds.upper,
+                secondAngleBounds.upper
+              ),
+              0.0,
+              M_PI
+            );
+
+            double crossAngleUpper = StdlibTypeAlgorithms::clamp(
+              spiroCrossAngle(
+                firstAngleBounds.lower,
+                secondAngleBounds.lower
+              ),
+              0.0,
+              M_PI
+            );
+
+            ValueBounds crossBounds {
+              crossAngleLower,
+              crossAngleUpper
+            };
+
+            temple::forAllPairs(
+              firstAdjacents,
+              secondAdjacents,
+              [&](const auto& firstAdjacent, const auto& secondAdjacent) {
+                auto sequence = orderedIndexSequence<3>({{firstAdjacent, i, secondAdjacent}});
+
+                auto findIter = _angleBounds.find(sequence);
+                if(findIter == _angleBounds.end()) {
+                  _angleBounds.emplace(
+                    std::make_pair(sequence, crossBounds)
+                  );
+                } else {
+                  // Tighten the cross-angle bounds
+                  findIter->second = crossBounds;
+                  // TODO maybe log this behavior?
+                }
+              }
+            );
+          }
         }
-
-        // Must manually free the id array
-        free(URFIDs);
       }
+
+      // Must manually free the cycles and iterators
+      RDL_deleteCycle(cycleOne);
+      RDL_deleteCycle(cycleTwo);
+
+      RDL_deleteCycleIterator(cycleIteratorOne);
+      RDL_deleteCycleIterator(cycleIteratorTwo);
     }
+
+    // Must manually free the id array
+    free(URFIDs);
   }
 
   // Add default angles and dihedrals for all adjacent sequences
@@ -1012,24 +948,26 @@ ValueBounds SpatialModel::ligandDistance(
 std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
   std::vector<DistanceGeometry::ChiralityConstraint> constraints;
 
-  for(const auto& iterPair : _stereocenterMap) {
-    const auto& stereocenterPtr = iterPair.second;
-
-    /* Since BondStereocenters are pointed to by both involved atoms, to avoid
-     * duplicates we need to skip constraint collection for either involved atom
-     */
-    if(
-      stereocenterPtr -> type() == Stereocenters::Type::BondStereocenter
-      && iterPair.first == stereocenterPtr -> involvedAtoms().back()
-    ) {
-      continue;
-    }
-
-    auto stereocenterConstraints = stereocenterPtr -> chiralityConstraints(_looseningMultiplier);
+  for(const auto& stereocenter : _stereocenters.atomStereocenters()) {
+    auto constraints = stereocenter.chiralityConstraints(_looseningMultiplier);
 
     std::move(
-      stereocenterConstraints.begin(),
-      stereocenterConstraints.end(),
+      std::begin(constraints),
+      std::end(constraints),
+      std::back_inserter(constraints)
+    );
+  }
+
+  for(const auto& bondStereocenter : _stereocenters.bondStereocenters()) {
+    auto constraints = bondStereocenter.chiralityConstraints(
+      _looseningMultiplier,
+      _stereocenters.option(bondStereocenter.left().index).value(),
+      _stereocenters.option(bondStereocenter.right().index).value()
+    );
+
+    std::move(
+      std::begin(constraints),
+      std::end(constraints),
       std::back_inserter(constraints)
     );
   }
@@ -1093,47 +1031,43 @@ struct SpatialModel::ModelGraphWriter {
       << "edge [fontname = \"Arial\"];\n";
 
     /* Additional nodes */
-    for(const auto& stereocenterIterPair : spatialModel._stereocenterMap) {
-      const auto& mappingIndex = stereocenterIterPair.first;
-      const auto& stereocenterPtr = stereocenterIterPair.second;
+    for(const auto& atomStereocenter : spatialModel._stereocenters.atomStereocenters()) {
+      const AtomIndexType index = atomStereocenter.centralIndex();
 
-      if(
-        stereocenterPtr->type() == Stereocenters::Type::BondStereocenter
-      ) {
-        // Avoid writing BondStereocenters twice
-        if(*stereocenterPtr->involvedAtoms().rbegin() == mappingIndex) {
-          continue;
-        }
+      os << "A" << index
+        << R"( [label=")" << Symmetry::name(atomStereocenter.getSymmetry())
+        << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
+        << R"(tooltip=")" << atomStereocenter.info()
+        << R"("];)" << "\n";
+    }
 
-        char ezState = 'u';
-        if(stereocenterPtr -> assigned()) {
-          if(stereocenterPtr -> assigned().value() == 1) {
-            ezState = 'Z';
-          } else {
-            ezState = 'E';
-          }
-        }
+    for(const auto& bondStereocenter : spatialModel._stereocenters.bondStereocenters()) {
 
-        os << "EZ" << temple::condenseIterable(
-            stereocenterPtr -> involvedAtoms(),
-            ""
-          ) << R"( [label=")" << ezState
-          << R"(", fillcolor="tomato", shape="box", fontcolor="white", )"
-          << R"(tooltip=")"
-          << stereocenterPtr -> info()
-          << R"("];)" << "\n";
+      std::string state;
+      if(bondStereocenter.assigned()) {
+        state = std::to_string(bondStereocenter.assigned().value());
       } else {
-        const auto cnPtr = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-          stereocenterPtr
-        );
+        state = "u";
+      }
 
-        os << "CN" << temple::condenseIterable(
-          stereocenterPtr -> involvedAtoms(),
-          ""
-        ) << R"( [label=")" << Symmetry::name(cnPtr -> getSymmetry())
-          << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
-          << R"(tooltip=")" << cnPtr -> info()
-          << R"("];)" << "\n";
+      state += "/"s + std::to_string(bondStereocenter.numStereopermutations());
+
+      std::string graphNodeName = "BS" + temple::condenseIterable(
+        spatialModel._molecule.vertices(bondStereocenter.edge()),
+        ""
+      );
+
+      os << graphNodeName << R"( [label=")" << state
+        << R"(", fillcolor="tomato", shape="box", fontcolor="white", )"
+        << R"(tooltip=")"
+        << bondStereocenter.info()
+        << R"("];)" << "\n";
+
+      // Add connections to the vertices (although those don't exist yet)
+      for(const auto& vertex : spatialModel._molecule.vertices(bondStereocenter.edge())) {
+        os << graphNodeName << " -- " << vertex
+          << R"( [color="gray", dir="forward", len="2"];)"
+          << "\n";
       }
     }
   }
@@ -1171,13 +1105,23 @@ struct SpatialModel::ModelGraphWriter {
     }
 
     // Any angles this atom is the central atom in
-    std::vector<std::string> angleStrings;
+    std::vector<std::string> tooltipStrings;
+
+    if(auto stereocenterOption = spatialModel._stereocenters.option(vertexIndex)) {
+      tooltipStrings.emplace_back(
+        Symmetry::name(stereocenterOption.value().getSymmetry())
+      );
+      tooltipStrings.emplace_back(
+        stereocenterOption.value().info()
+      );
+    }
+
     for(const auto& angleIterPair : spatialModel._angleBounds) {
       const auto& indexSequence = angleIterPair.first;
       const auto& angleBounds = angleIterPair.second;
 
       if(indexSequence.at(1) == vertexIndex) {
-        angleStrings.emplace_back(
+        tooltipStrings.emplace_back(
           "["s + std::to_string(indexSequence.at(0)) + ","s
           + std::to_string(indexSequence.at(2)) +"] -> ["s
           + std::to_string(
@@ -1193,33 +1137,13 @@ struct SpatialModel::ModelGraphWriter {
       }
     }
 
-    /*if(angleStrings.empty()) {
-      angleStrings.emplace_back("no angles here");
-    }*/
-
-    if(angleStrings.empty()) {
-      os << R"(, tooltip="no angles here")";
-    } else {
-      os << R"(, tooltip="angles: )" << temple::condenseIterable(
-        angleStrings,
-        "&#10;"s
-      ) << R"(")";
+    if(!tooltipStrings.empty()) {
+      os << R"(, tooltip=")"
+        << temple::condenseIterable(tooltipStrings, "&#10;"s)
+        << R"(")";
     }
 
-    os << "]\n";
-
-    // Are there any additional vertices we ought to connect to?
-    if(spatialModel._stereocenterMap.count(vertexIndex) == 1) {
-      const auto& stereocenterPtr = spatialModel._stereocenterMap.at(vertexIndex);
-      if(stereocenterPtr -> type() == Stereocenters::Type::AtomStereocenter) {
-        os << ";CN";
-      } else {
-        os << ";EZ";
-      }
-
-      os << temple::condenseIterable(stereocenterPtr -> involvedAtoms(), "")
-        << " -- " << vertexIndex << R"([color="gray", dir="forward", len="2"])";
-    }
+    os << "];\n";
   }
 
   // Edge options

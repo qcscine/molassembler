@@ -2,6 +2,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include "AdjacencyMatrix.h"
+#include "Molecule.h"
 
 // Helper header
 #include "RepeatedElementCollection.h"

@@ -1,5 +1,7 @@
 #include "Conformers.h"
 
+#include "temple/Containers.h"
+
 namespace molassembler {
 
 outcome::result<

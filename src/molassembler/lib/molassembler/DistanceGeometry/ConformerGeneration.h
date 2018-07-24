@@ -18,14 +18,6 @@ namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 namespace DistanceGeometry {
 
-namespace predicates {
-
-bool hasZeroAssignmentStereocenters(const Molecule& molecule);
-
-bool hasUnassignedStereocenters(const Molecule& mol);
-
-} // namespace predicates
-
 namespace detail {
 
 AngstromWrapper convertToAngstromWrapper(
@@ -35,6 +27,9 @@ AngstromWrapper convertToAngstromWrapper(
 AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
+
+//! Assigns any unassigned stereocenters in a molecule at random
+Molecule narrow(Molecule moleculeCopy);
 
 } // namespace detail
 

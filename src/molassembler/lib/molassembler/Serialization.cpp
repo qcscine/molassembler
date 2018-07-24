@@ -1,7 +1,14 @@
+#include "Serialization.h"
+
+#include "chemical_symmetries/Symmetries.h"
+#include "boost/range/adaptor/map.hpp"
+#include "Delib/ElementTypeCollection.h"
 #include "json/json.hpp"
 
 #include "detail/Base64.h"
-#include "Serialization.h"
+#include "GraphAlgorithms.h"
+#include "RankingInformation.h"
+#include "StereocenterList.h"
 
 namespace nlohmann {
 
@@ -203,33 +210,37 @@ nlohmann::json serialize(const Molecule& molecule) {
 
   m["g"] = molecule.getGraph();
 
-  // Manual conversion of stereocenters (need access to molecule members for deserialization)
-  m["s"] = json::array();
-  for(const auto& stereocenterPtr : molecule.getStereocenterList()) {
-    json c;
+  const auto& stereocenters = molecule.getStereocenterList();
 
-    if(stereocenterPtr->type() == Stereocenters::Type::AtomStereocenter) {
-      auto cnPtr = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-        stereocenterPtr
-      );
+  // Manual conversion of stereocenters
+  // Atom stereocenters first
+  m["a"] = json::array();
+  for(const auto& stereocenter : stereocenters.atomStereocenters()) {
+    json s;
 
-      c["sym"] = Symmetry::name(cnPtr->getSymmetry());
-      c["rank"] = cnPtr->getRanking();
-    } else if(stereocenterPtr->type() == Stereocenters::Type::BondStereocenter) {
-      auto ezPtr = std::dynamic_pointer_cast<Stereocenters::BondStereocenter>(
-        stereocenterPtr
-      );
-      c["lRank"] = ezPtr->getLeftRanking();
-      c["rRank"] = ezPtr->getRightRanking();
+    s["c"] = stereocenter.centralIndex();
+    s["sym"] = Symmetry::name(stereocenter.getSymmetry());
+    s["rank"] = stereocenter.getRanking();
+
+    if(stereocenter.assigned()) {
+      s["assign"] = stereocenter.assigned().value();
     }
 
-    if(stereocenterPtr->assigned()) {
-      c["assign"] = stereocenterPtr->assigned().value();
+    m["a"].push_back(std::move(s));
+  }
+
+  m["b"] = json::array();
+  for(const auto& stereocenter : stereocenters.bondStereocenters()) {
+    json s;
+
+    s["l"] = stereocenter.left().index;
+    s["r"] = stereocenter.right().index;
+
+    if(stereocenter.assigned()) {
+      s["assign"] = stereocenter.assigned().value();
     }
 
-    c["centers"] = stereocenterPtr->involvedAtoms();
-
-    m["s"].push_back(std::move(c));
+    m["b"].push_back(std::move(s));
   }
 
   return m;
@@ -239,46 +250,55 @@ Molecule deserialize(const nlohmann::json& m) {
   GraphType graph = m["g"];
 
   StereocenterList stereocenters;
-  for(const auto& j : m["s"]) {
-    if(j.count("sym") > 0) { // AtomStereocenter
-      Symmetry::Name symmetry = Symmetry::nameFromString(j["sym"]);
-      AtomIndexType centralIndex = j["centers"].front();
 
-      auto cnPtr = std::make_shared<Stereocenters::AtomStereocenter>(
-        graph,
-        symmetry,
-        centralIndex,
-        j["rank"].get<RankingInformation>()
+  // Atom stereocenters
+  for(const auto& j : m["a"]) {
+    Symmetry::Name symmetry = Symmetry::nameFromString(j["sym"]);
+    AtomIndexType centralIndex = j["centers"].front();
+
+    auto stereocenter = AtomStereocenter {
+      graph,
+      symmetry,
+      centralIndex,
+      j["rank"].get<RankingInformation>()
+    };
+
+    // Assign if present
+    if(j.count("assign") > 0) {
+      stereocenter.assign(
+        static_cast<unsigned>(j["assign"])
       );
-
-      // Assign if present
-      if(j.count("assign") > 0) {
-        cnPtr->assign(
-          static_cast<unsigned>(j["assign"])
-        );
-      }
-
-      stereocenters.add(cnPtr);
-    } else { // BondStereocenter
-      AtomIndexType left = j["centers"].front();
-      AtomIndexType right = j["centers"].back();
-
-      auto ezPtr = std::make_shared<Stereocenters::BondStereocenter>(
-        left,
-        j["lRank"].get<RankingInformation>(),
-        right,
-        j["rRank"].get<RankingInformation>()
-      );
-
-      // Assign if present
-      if(j.count("assign") > 0) {
-        ezPtr->assign(
-          static_cast<unsigned>(j["assign"])
-        );
-      }
-
-      stereocenters.add(ezPtr);
     }
+
+    stereocenters.add(centralIndex, std::move(stereocenter));
+  }
+
+  // Bond stereocenters
+  for(const auto& j : m["b"]) {
+    AtomIndexType left = j["l"];
+    AtomIndexType right = j["r"];
+
+    auto leftStereocenterOption = stereocenters.option(left);
+    auto rightStereocenterOption = stereocenters.option(left);
+
+    assert(leftStereocenterOption && rightStereocenterOption);
+
+    GraphType::edge_descriptor molEdge = boost::edge(left, right, graph).first;
+
+    auto stereocenter = BondStereocenter {
+      leftStereocenterOption.value(),
+      rightStereocenterOption.value(),
+      molEdge
+    };
+
+    // Assign if present
+    if(j.count("assign") > 0) {
+      stereocenter.assign(
+        static_cast<unsigned>(j["assign"])
+      );
+    }
+
+    stereocenters.add(molEdge, std::move(stereocenter));
   }
 
   return Molecule {

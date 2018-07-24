@@ -1,10 +1,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_ATOM_ENVIRONMENT_HASH_H
 #define INCLUDE_MOLASSEMBLER_ATOM_ENVIRONMENT_HASH_H
 
-#include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/Names.h"
 #include "temple/constexpr/Bitmask.h"
 
-#include "StereocenterList.h"
 #include "detail/SharedTypes.h"
 
 /*!@file
@@ -13,6 +12,9 @@
  */
 
 namespace molassembler {
+
+// Forward-declarations
+class StereocenterList;
 
 namespace hashes {
 

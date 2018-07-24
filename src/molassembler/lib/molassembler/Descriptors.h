@@ -1,15 +1,15 @@
 #ifndef INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 #define INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 
-#include "detail/StdlibTypeAlgorithms.h"
-#include "Molecule.h"
-
 /*!@file
  *
  * Contains various descriptor calculations for Molecule instances
  */
 
 namespace molassembler {
+
+// Forward-declare molcule
+class Molecule;
 
 /*! Calculates number of freely rotatable bonds in a molecule
  *
@@ -25,49 +25,7 @@ namespace molassembler {
 unsigned numRotatableBonds(
   const Molecule& mol,
   const unsigned cycleThreshold = 5
-) {
-  Cycles cycleData = mol.getCycleData();
-
-  std::map<GraphType::edge_descriptor, unsigned> smallestCycle;
-
-  for(const auto cyclePtr : cycleData) {
-    const auto cycleEdges = Cycles::edges(cyclePtr, mol.getGraph());
-    const unsigned cycleSize = cycleEdges.size();
-
-    for(const auto& edge : cycleEdges) {
-      StdlibTypeAlgorithms::addOrUpdateMapIf(
-        smallestCycle,
-        edge,
-        cycleSize,
-        [&cycleSize](const unsigned& currentMinCycleSize) -> bool {
-          return cycleSize < currentMinCycleSize;
-        }
-      );
-    }
-  }
-
-  unsigned count = 0;
-  for(const auto& edge : mol.iterateEdges()) {
-    if(
-      mol.getBondType(edge) == BondType::Single
-      && (smallestCycle.count(edge) == 0 || smallestCycle.at(edge) > cycleThreshold)
-    ) {
-      // Neither of the atoms connected by this edge may be terminal
-      if(
-        temple::all_of(
-          mol.vertices(edge),
-          [&mol](const auto& vertexIndex) -> bool {
-            return mol.getNumAdjacencies(vertexIndex) > 1;
-          }
-        )
-      ) {
-        ++count;
-      }
-    }
-  }
-
-  return count;
-}
+);
 
 } // namespace molassembler
 

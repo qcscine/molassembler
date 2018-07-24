@@ -1,10 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_INTERPRET_H
 #define INCLUDE_MOLASSEMBLER_INTERPRET_H
 
-#include "Molecule.h"
-
-#include "Delib/AtomCollection.h"
-#include "Delib/BondOrderCollection.h"
+#include <vector>
 
 /*!@file
  *
@@ -12,7 +9,18 @@
  * from three-dimensional structures with or without accompanying bond orders.
  */
 
+// External forward-declarations
+namespace Delib {
+class AtomCollection;
+class BondOrderCollection;
+class ElementTypeCollection;
+} // namespace Delib
+
 namespace molassembler {
+
+// Forward-declarations
+class Molecule;
+class AngstromWrapper;
 
 //! Specify the algorithm used to discretize floating-point bond orders into bond types
 enum class BondDiscretizationOption : unsigned {

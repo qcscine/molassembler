@@ -73,6 +73,14 @@ struct RankingInformation {
    * The LinkInformation struct is documented in GraphAlgorithms.h
    */
   LinksType links;
+
+/* Information */
+  unsigned getLigandIndexOf(const AtomIndexType i) const;
+
+  bool hasHapticLigands() const;
+
+  bool operator == (const RankingInformation& other) const;
+  bool operator != (const RankingInformation& other) const;
 };
 
 } // namespace molassembler

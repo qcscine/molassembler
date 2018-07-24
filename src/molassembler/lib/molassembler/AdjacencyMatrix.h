@@ -1,7 +1,8 @@
 #ifndef INCLUDE_ADJACENCY_MATRIX_H
 #define INCLUDE_ADJACENCY_MATRIX_H
 
-#include "Molecule.h"
+#include "detail/SharedTypes.h"
+#include <Eigen/Core>
 
 /*! @file
  *
@@ -10,6 +11,9 @@
  */
 
 namespace molassembler {
+
+// Forward-declare Molecule
+class Molecule;
 
 /*!
  * A class constructed from a Molecule that captures bonding in a boolean
@@ -26,19 +30,12 @@ public:
   AdjacencyMatrix() = delete;
   explicit AdjacencyMatrix(const Molecule& molecule);
 
-  Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>& getMatrixRef() {
+  inline Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>& getMatrixRef() {
     return _matrix;
   }
 
-  bool& operator () (
-    const AtomIndexType& i,
-    const AtomIndexType& j
-  );
-
-  bool operator () (
-    const AtomIndexType& i,
-    const AtomIndexType& j
-  ) const;
+  bool& operator () (const AtomIndexType i, const AtomIndexType j);
+  bool operator () (const AtomIndexType i, const AtomIndexType j) const;
 };
 
 }

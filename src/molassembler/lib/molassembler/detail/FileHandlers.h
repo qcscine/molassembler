@@ -6,12 +6,13 @@
 #include "Delib/ElementTypeCollection.h"
 #include "Delib/BondOrderCollection.h"
 
-#include "temple/Random.h"
-
+#include "detail/AngstromWrapper.h"
 #include "Interpret.h"
-#include "Molecule.h"
 
 namespace molassembler {
+
+// Forward-declarations
+class Molecule;
 
 namespace IO {
 
@@ -29,33 +30,18 @@ struct Identity {
 struct Random {
   std::vector<AtomIndexType> permutation;
 
-  inline explicit Random(AtomIndexType N) {
-    permutation.resize(N);
-    std::iota(permutation.begin(), permutation.end(), 0);
-
-    prng.shuffle(permutation);
-  }
+  explicit Random(AtomIndexType N);
 
   inline AtomIndexType operator() (const AtomIndexType& i) const {
     return permutation.at(i);
-  }
+  };
 };
 
 //! Sorts an element's indices by atom elements' Z
 struct SortByElement {
   std::vector<AtomIndexType> permutation;
 
-  inline explicit SortByElement(const Molecule& mol) {
-    permutation.resize(mol.numAtoms());
-    std::iota(permutation.begin(), permutation.end(), 0);
-    std::sort(
-      permutation.begin(),
-      permutation.end(),
-      [&mol](const AtomIndexType& i, const AtomIndexType& j) -> bool {
-        return mol.getElementType(i) < mol.getElementType(j);
-      }
-    );
-  }
+  explicit SortByElement(const Molecule& mol);
 
   inline AtomIndexType operator() (const AtomIndexType& i) const {
     return permutation.at(i);

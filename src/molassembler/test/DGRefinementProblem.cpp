@@ -1,8 +1,8 @@
 #define BOOST_TEST_MODULE RefinementProblemTests
 
 #include "boost/test/unit_test.hpp"
-#include "temple/constexpr/FloatingPointComparison.h"
 #include "Eigen/Geometry"
+#include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/Enumerate.h"
 #include "temple/Random.h"
 #include "temple/Containers.h"

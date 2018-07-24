@@ -7,6 +7,8 @@
 // In-house libraries
 #include "Delib/ElementTypes.h"
 
+#include <limits>
+
 /*! @file
  *
  * Central types required across the entire project are defined here.
@@ -115,6 +117,11 @@ enum class AtomEnvironmentComponents : unsigned {
   Stereopermutations // Symmetries must be set in conjunction with this
 };
 
+namespace Stereocenters {
+
+constexpr AtomIndexType removalPlaceholder = std::numeric_limits<AtomIndexType>::max();
+
+} // namespace Stereocenters
 
 } // namespace molassembler
 
