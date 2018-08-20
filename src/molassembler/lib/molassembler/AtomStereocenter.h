@@ -1,10 +1,13 @@
-#ifndef INCLUDE_CN_STEREOCENTER_H
-#define INCLUDE_CN_STEREOCENTER_H
-
-#include "chemical_symmetries/Names.h"
+#ifndef INCLUDE_MOLASSEMBLER_ATOM_STEREOCENTER_H
+#define INCLUDE_MOLASSEMBLER_ATOM_STEREOCENTER_H
 
 #include "DistanceGeometry/ValueBounds.h"
 #include "Options.h"
+
+#if __cpp_lib_experimental_propagate_const >= 201505
+#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+#include <experimental/propagate_const>
+#endif
 
 using namespace std::string_literals;
 

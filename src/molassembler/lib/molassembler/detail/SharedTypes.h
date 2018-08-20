@@ -1,5 +1,5 @@
-#ifndef INCLUDE_COMMON_TYPEDEFS_H
-#define INCLUDE_COMMON_TYPEDEFS_H
+#ifndef INCLUDE_MOLASSEMBLER_SHARED_TYPES_H
+#define INCLUDE_MOLASSEMBLER_SHARED_TYPES_H
 
 // External libraries
 #include "boost/graph/adjacency_list.hpp"

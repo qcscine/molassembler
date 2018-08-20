@@ -1324,7 +1324,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::Impl::chira
 }
 
 std::string AtomStereocenter::Impl::info() const {
-  std::string returnString = "CN "s
+  std::string returnString = "A on "s
     + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +", "s;
 
   const auto& characters = _cache.symbolicCharacters;

@@ -170,17 +170,17 @@ boost::optional<Symmetry::Name> vsepr(
   return boost::none;
 }
 
-boost::optional<Symmetry::Name> firstOfSize(const unsigned& size) {
+boost::optional<Symmetry::Name> firstOfSize(const unsigned size) {
   // Pick the first Symmetry of fitting size
   auto findIter = std::find_if(
-    Symmetry::allNames.begin(),
-    Symmetry::allNames.end(),
-    [&size](const auto& symmetryName) -> bool {
+    std::begin(Symmetry::allNames),
+    std::end(Symmetry::allNames),
+    [&size](const auto symmetryName) -> bool {
       return Symmetry::size(symmetryName) == size;
     }
   );
 
-  if(findIter == Symmetry::allNames.end()) {
+  if(findIter == std::end(Symmetry::allNames)) {
     return boost::none;
   }
 

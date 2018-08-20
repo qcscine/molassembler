@@ -47,7 +47,7 @@ boost::optional<Symmetry::Name> vsepr(
   const int formalCharge
 );
 
-boost::optional<Symmetry::Name> firstOfSize(const unsigned& size);
+boost::optional<Symmetry::Name> firstOfSize(unsigned size);
 
 
 /* Tiered geometry determination function */
