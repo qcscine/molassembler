@@ -11,7 +11,7 @@
 # * cppcoreguidelines-pro-type-vararg: remove because of Boost test
 Checks:          '-*,
                   bugprone-*,
-                  clang-analyzer-*,
+                  #clang-analyzer-*,
                   #-clang-analyzer-cplusplus.NewDelete,
                   #-clang-analyzer-cplusplus.NewDeleteLeaks,
                   #-clang-analyzer-optin.cplusplus.VirtualCall,
