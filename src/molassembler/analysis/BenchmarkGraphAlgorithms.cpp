@@ -4,16 +4,16 @@
 #include "boost/filesystem.hpp"
 
 #include "temple/Containers.h"
-#include "DistanceGeometry/ImplicitGraphBoost.h"
-#include "DistanceGeometry/SpatialModel.h"
-#include "DistanceGeometry/ExplicitGraph.h"
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "temple/constexpr/Numeric.h"
-#include "IO.h"
+#include "molassembler/IO.h"
 
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "gor1/Gor1.h"
-#include "DistanceGeometry/Gor1.h"
+#include "molassembler/DistanceGeometry/Gor1.h"
 
 #include <chrono>
 #include <iomanip>

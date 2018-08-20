@@ -8,11 +8,11 @@
 
 #include "temple/Containers.h"
 
-#include "detail/StdlibTypeAlgorithms.h"
-#include "DistanceGeometry/ImplicitGraphBoost.h"
-#include "DistanceGeometry/SpatialModel.h"
-#include "IO.h"
-#include "Molecule.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/IO.h"
+#include "molassembler/Molecule.h"
 
 #include "gor1/Gor1.h"
 

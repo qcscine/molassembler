@@ -7,9 +7,9 @@ namespace molassembler {
 namespace Bond {
 
 double calculateBondDistance(
-  const Delib::ElementType& a,
-  const Delib::ElementType& b,
-  const BondType& bondType
+  const Delib::ElementType a,
+  const Delib::ElementType b,
+  const BondType bondType
 ) {
   return (
     AtomInfo::bondRadius(a)
@@ -28,9 +28,9 @@ double calculateBondDistance(
 }
 
 double calculateBondOrder(
-  const Delib::ElementType& a,
-  const Delib::ElementType& b,
-  const double& distance
+  const Delib::ElementType a,
+  const Delib::ElementType b,
+  const double distance
 ) {
   return std::exp(
     (

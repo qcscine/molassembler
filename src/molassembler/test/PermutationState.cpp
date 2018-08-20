@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE AtomStereocenterTestModule
 #include <boost/test/unit_test.hpp>
 
-#include "detail/PermutationState.h"
+#include "molassembler/detail/PermutationState.h"
 
 #include "temple/Stringify.h"
 

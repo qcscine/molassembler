@@ -3,8 +3,8 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "Molecule.h"
-#include "IO.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/IO.h"
 
 #include <iostream>
 

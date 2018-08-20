@@ -1,19 +1,19 @@
 #define BOOST_TEST_MODULE DGMetricMatrixTests
 #include <boost/test/unit_test.hpp>
 
+#include <Eigen/Eigenvalues>
+#include "chemical_symmetries/Symmetries.h"
+#include "temple/Stringify.h"
+
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/MetricMatrix.h"
+#include "molassembler/DistanceGeometry/ConformerGeneration.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/BoundsFromSymmetry.h"
+#include "molassembler/Options.h"
+
 #include <iostream>
 #include <random>
-
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/ConformerGeneration.h"
-
-#include "chemical_symmetries/Symmetries.h"
-#include "detail/StdlibTypeAlgorithms.h"
-#include "BoundsFromSymmetry.h"
-#include "Options.h"
-
-#include <Eigen/Eigenvalues>
 
 using namespace molassembler;
 using namespace molassembler::DistanceGeometry;
@@ -156,8 +156,8 @@ BOOST_AUTO_TEST_CASE( reorderingWorks ) {
 
       std::cout << "Reordering reversibility failed! Original:\n"
         << testMatrix << std::endl
-        << "Reordering sequence: " << reorderingOrder << std::endl
-        << "Unreordering sequence: " << inverseReorderSequence(reorderingOrder)
+        << "Reordering sequence: " << temple::stringify(reorderingOrder) << std::endl
+        << "Unreordering sequence: " << temple::stringify(inverseReorderSequence(reorderingOrder))
         << "Computed result: " << result << std::endl;
 
       break;

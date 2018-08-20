@@ -5,8 +5,8 @@
 #include "boost/filesystem.hpp"
 
 #include <iostream>
-#include "IO.h"
-#include "Conformers.h"
+#include "molassembler/IO.h"
+#include "molassembler/Conformers.h"
 
 BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   using namespace molassembler;

@@ -5,13 +5,14 @@
 #include "temple/Containers.h"
 #include "temple/Stringify.h"
 
-#include "detail/StdlibTypeAlgorithms.h"
-#include "Cycles.h"
-#include "GraphAlgorithms.h"
-#include "IO.h"
-#include "RankingTree.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Cycles.h"
+#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/IO.h"
+#include "molassembler/RankingTree.h"
+#include "molassembler/StereocenterList.h"
+
 #include "RepeatedElementCollection.h"
-#include "StereocenterList.h"
 
 #include <random>
 #include <fstream>

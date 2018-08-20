@@ -8,14 +8,14 @@
 #include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
 
-#include "detail/AnalysisHelpers.h"
-#include "detail/CommonTrig.h"
-#include "BoundsFromSymmetry.h"
-#include "DistanceGeometry/ConformerGeneration.h"
-#include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "DistanceGeometry/RefinementProblem.h"
-#include "IO.h"
+#include "molassembler/detail/AnalysisHelpers.h"
+#include "molassembler/detail/CommonTrig.h"
+#include "molassembler/DistanceGeometry/ConformerGeneration.h"
+#include "molassembler/DistanceGeometry/MetricMatrix.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/RefinementProblem.h"
+#include "molassembler/BoundsFromSymmetry.h"
+#include "molassembler/IO.h"
 
 #include <fstream>
 #include <iomanip>

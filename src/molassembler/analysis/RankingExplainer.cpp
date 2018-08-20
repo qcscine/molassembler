@@ -7,12 +7,12 @@
 
 #include "temple/Containers.h"
 
-#include "detail/StdlibTypeAlgorithms.h"
-#include "Cycles.h"
-#include "GraphAlgorithms.h"
-#include "IO.h"
-#include "Log.h"
-#include "RankingTree.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Cycles.h"
+#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/IO.h"
+#include "molassembler/Log.h"
+#include "molassembler/RankingTree.h"
 
 #include <random>
 

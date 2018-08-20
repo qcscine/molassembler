@@ -5,8 +5,8 @@
 
 #include "chemical_symmetries/Symmetries.h"
 
-#include "DistanceGeometry/ConformerGeneration.h"
-#include "BoundsFromSymmetry.h"
+#include "molassembler/DistanceGeometry/ConformerGeneration.h"
+#include "molassembler/BoundsFromSymmetry.h"
 
 #include "temple/Containers.h"
 #include "temple/Random.h"

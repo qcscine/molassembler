@@ -3,11 +3,11 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "DistanceGeometry/ImplicitGraphBoost.h"
-#include "DistanceGeometry/SpatialModel.h"
+#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
 
 #include "boost/graph/graph_concepts.hpp"
-#include "IO.h"
+#include "molassembler/IO.h"
 
 #include <iostream>
 #include <iomanip>

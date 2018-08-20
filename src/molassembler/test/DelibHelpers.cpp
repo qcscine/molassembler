@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE DelibHelperTests
 #include <boost/test/unit_test.hpp>
 
-#include "detail/DelibHelpers.h"
+#include "molassembler/detail/DelibHelpers.h"
 #include "temple/Random.h"
 
 #include <Eigen/Geometry>

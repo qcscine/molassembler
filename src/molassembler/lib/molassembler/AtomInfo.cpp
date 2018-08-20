@@ -125,7 +125,7 @@ const std::array<double, 110> bondRadii {
   1.6  // Mt
 };
 
-double bondRadius(const Delib::ElementType& elementType) {
+double bondRadius(const Delib::ElementType elementType) {
   return bondRadii.at(
     static_cast<unsigned>(elementType)
   );

@@ -5,18 +5,18 @@
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 
-#include <iostream>
-
-#include "detail/StdlibTypeAlgorithms.h"
-#include "IO.h"
-#include "Molecule.h"
-#include "Options.h"
-#include "StereocenterList.h"
-
 #include "temple/Containers.h"
 #include "temple/Random.h"
 #include "temple/Invoke.h"
 #include "temple/Stringify.h"
+
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/IO.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/Options.h"
+#include "molassembler/StereocenterList.h"
+
+#include <iostream>
 
 using namespace molassembler;
 

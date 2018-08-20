@@ -6,12 +6,12 @@
 #include "temple/constexpr/Numeric.h"
 #include "temple/Containers.h"
 
-#include "detail/AnalysisHelpers.h"
-#include "detail/StdlibTypeAlgorithms.h"
-#include "DistanceGeometry/ConformerGeneration.h"
-#include "BoundsFromSymmetry.h"
-#include "IO.h"
-#include "Log.h"
+#include "molassembler/detail/AnalysisHelpers.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/DistanceGeometry/ConformerGeneration.h"
+#include "molassembler/BoundsFromSymmetry.h"
+#include "molassembler/IO.h"
+#include "molassembler/Log.h"
 
 #include <fstream>
 #include <iomanip>

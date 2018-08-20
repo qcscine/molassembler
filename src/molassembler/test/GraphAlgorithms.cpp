@@ -4,14 +4,14 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "Cycles.h"
-#include "GraphAlgorithms.h"
-#include "Molecule.h"
-#include "IO.h"
+#include "molassembler/Cycles.h"
+#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/IO.h"
 #include "temple/Stringify.h"
 
 #include "boost/graph/graphviz.hpp"
-#include "detail/MolGraphWriter.h"
+#include "molassembler/detail/MolGraphWriter.h"
 
 #include <iostream>
 

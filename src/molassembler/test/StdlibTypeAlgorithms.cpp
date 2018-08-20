@@ -1,8 +1,10 @@
 #define BOOST_TEST_MODULE StdlibTypeAlgorithmTests
 #include <boost/test/unit_test.hpp>
 
-#include "detail/StdlibTypeAlgorithms.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
 #include "temple/Containers.h"
+
+#include <iostream>
 
 /* Algorithms to test
  *

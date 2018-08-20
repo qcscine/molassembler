@@ -10,15 +10,15 @@
 #include "temple/Containers.h"
 #include "temple/Enumerate.h"
 
-#include "DistanceGeometry/ImplicitGraphBoost.h"
-#include "DistanceGeometry/SpatialModel.h"
-#include "DistanceGeometry/ExplicitGraph.h"
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "IO.h"
-#include "Molecule.h"
+#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/IO.h"
+#include "molassembler/Molecule.h"
 
 #include "gor1/Gor1.h"
-#include "DistanceGeometry/Gor1.h"
+#include "molassembler/DistanceGeometry/Gor1.h"
 
 // This include order may seem weird, but it is necessary like this
 #include "boost/graph/bellman_ford_shortest_paths.hpp"

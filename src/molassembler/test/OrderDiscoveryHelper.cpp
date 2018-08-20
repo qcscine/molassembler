@@ -2,7 +2,7 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "OrderDiscoveryHelper.h"
+#include "molassembler/OrderDiscoveryHelper.h"
 
 using namespace molassembler;
 using namespace std::string_literals;

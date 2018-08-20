@@ -5,11 +5,11 @@
 
 #include "Delib/ElementInfo.h"
 
-#include "chemical_symmetries/Symmetries.h"
+#include "molassembler/chemical_symmetries/Symmetries.h"
 
-#include "Conformers.h"
-#include "IO.h"
-#include "Molecule.h"
+#include "molassembler/Conformers.h"
+#include "molassembler/IO.h"
+#include "molassembler/Molecule.h"
 
 using namespace std::string_literals;
 using namespace molassembler;

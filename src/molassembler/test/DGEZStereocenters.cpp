@@ -5,8 +5,8 @@
 #include "boost/filesystem.hpp"
 
 #include <iostream>
-#include "IO.h"
-#include "Conformers.h"
+#include "molassembler/IO.h"
+#include "molassembler/Conformers.h"
 
 void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath) {
   using namespace molassembler;

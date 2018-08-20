@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE RankingInformationTestModule
 #include <boost/test/unit_test.hpp>
 
-#include "RankingInformation.h"
+#include "molassembler/RankingInformation.h"
 #include "temple/Stringify.h"
 
 template<typename T>
