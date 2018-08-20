@@ -306,18 +306,19 @@ std::pair<
    * elements of both chains and increment the instruction at the new end
    * position.
    *
-   * This leads to a tree traversal that prunes the tree whenever an
-   * instruction produces a structure that has already been seen.
+   * This leads to a backtracking tree traversal that prunes the tree whenever
+   * an instruction produces a structure that has already been seen.
+   *
+   * It does not assume that rotations are commutative.
    */
   // maximum element is the size of the rotation vector
-  unsigned linkLimit = Symmetry::rotations(symmetryName).size();
+  const unsigned linkLimit = Symmetry::rotations(symmetryName).size();
 
   // initialize
   std::vector<unsigned> chain = {0};
+  chain.reserve(32);
   std::vector<Stereopermutation> chainStructures = {*this};
-  unsigned depth = 0;
 
-  // begin loop
   while(chain.front() < linkLimit) {
     // perform rotation
     // copy the last element in chainStructures
@@ -345,25 +346,23 @@ std::pair<
       // add it to chainStructures
       chainStructures.push_back(generated);
 
-      // increase depth, add a link
-      depth++;
+      // add a new instruction to the chain
       chain.emplace_back(0);
     } else {
       // if we are not at the maximum instruction
-      if(chain.at(depth) < linkLimit - 1) {
-        chain.at(depth)++;
+      if(chain.back() < linkLimit - 1) {
+        ++chain.back();
       } else {
         // collapse the chain until we are at an incrementable position
         while(
-          depth > 0
-          && chain.at(depth) == linkLimit - 1
+          chain.size() > 1
+          && chain.back() == linkLimit - 1
         ) {
           chain.pop_back();
           chainStructures.pop_back();
-          depth--;
         }
 
-        chain.at(depth)++;
+        ++chain.back();
       }
     }
   }
