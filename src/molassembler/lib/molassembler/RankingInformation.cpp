@@ -2,6 +2,7 @@
 
 #include "OrderDiscoveryHelper.h"
 #include "temple/Containers.h"
+#include "temple/TinySet.h"
 
 namespace molassembler {
 
@@ -116,11 +117,58 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
    * ligands are chosen
    */
 
-  throw std::logic_error("Not implemented!");
+  // Check all sizes
+  if(
+    sortedSubstituents.size() != other.sortedSubstituents.size()
+    || ligands.size() != other.ligands.size()
+    || ligandsRanking.size() != other.ligandsRanking.size()
+    || links.size() != other.links.size()
+  ) {
+    return false;
+  }
 
-  return false;
+  // sortedSubstituents can be compare lexicographically
+  if(sortedSubstituents != other.sortedSubstituents) {
+    return false;
+  }
 
-  // TODO
+  // Combined comparison of ligandsRanking with ligands
+  if(
+    !temple::all_of(
+      temple::zipMap(
+        ligandsRanking,
+        other.ligandsRanking,
+        [&](
+          const auto& thisEqualLigandsGroup,
+          const auto& otherEqualLigandsGroup
+        ) -> bool {
+          temple::TinyUnorderedSet<AtomIndexType> thisLigandGroupVertices;
+
+          for(const auto ligandIndex : thisEqualLigandsGroup) {
+            for(const auto ligandConstitutingIndex : ligands.at(ligandIndex)) {
+              thisLigandGroupVertices.insert(ligandConstitutingIndex);
+            }
+          }
+
+          for(const auto ligandIndex : otherEqualLigandsGroup) {
+            for(const auto ligandConstitutingIndex : other.ligands.at(ligandIndex)) {
+              if(thisLigandGroupVertices.count(ligandConstitutingIndex) == 0) {
+                return false;
+              }
+            }
+          }
+
+          return true;
+        }
+      )
+    )
+  ) {
+    return false;
+  }
+
+
+  // Compare the links (these are sorted since substituentLinks yields them like that)
+  return links == other.links;
 }
 
 bool RankingInformation::operator != (const RankingInformation& other) const {

@@ -332,7 +332,7 @@ public:
        *   (So A < B is false, meaning stereogenic < non-stereogenic, leading
        *   to the desired ordering)
        *
-       * This is valid for both CN and EZ types of stereocenters
+       * This is valid for both A and B types of stereocenters
        */
       return (
         (StereocenterA.numStereopermutations() > 1)
@@ -671,6 +671,11 @@ void RankingTree::_applySequenceRules(
   };
 
   auto instantiateAtomStereocenter = [&](const TreeVertexIndex targetIndex) -> void {
+    // Do not instantiate an atomStereocenter on the root vertex
+    if(targetIndex == rootIndex) {
+      return;
+    }
+
     const AtomIndexType molSourceIndex = _tree[targetIndex].molIndex;
     auto existingStereocenterOption = _stereocentersRef.option(molSourceIndex);
 
@@ -684,6 +689,12 @@ void RankingTree::_applySequenceRules(
     );
 
     centerRanking.ligands = auxiliaryLigands(centerRanking.sortedSubstituents);
+
+    // Stop immediately if the stereocenter is essentially terminal
+    if(centerRanking.ligands.size() <= 1) {
+      return;
+    }
+
     centerRanking.ligandsRanking = RankingInformation::rankLigands(
       centerRanking.ligands,
       centerRanking.sortedSubstituents
@@ -691,7 +702,16 @@ void RankingTree::_applySequenceRules(
 
     // Again, no links since we're in an acyclic graph now
     Symmetry::Name localSymmetry;
-    if(existingStereocenterOption) {
+    if(
+      existingStereocenterOption
+      && Symmetry::size(
+        existingStereocenterOption->getSymmetry()
+      ) == centerRanking.ligands.size()
+    ) {
+      /* NOTE: The symmetry size check is necessary since duplicate tree
+       * vertices may crop up for cycle closures. Those are kept in
+       * _auxiliaryAdjacentsToRank, other duplicate vertices are discarded.
+       */
       localSymmetry = existingStereocenterOption->getSymmetry();
     } else {
       localSymmetry = LocalGeometry::determineLocalGeometry(
@@ -836,12 +856,7 @@ void RankingTree::_applySequenceRules(
             );
           } else if(
             existingStereocenterOption
-            && existingStereocenterOption->left() == newStereocenter.left()
-            && existingStereocenterOption->right() == newStereocenter.right()
-            && (
-              existingStereocenterOption->numStereopermutations()
-              == newStereocenter.numStereopermutations()
-            )
+            && existingStereocenterOption->hasSameCompositeOrientation(newStereocenter)
           ) {
             /* Need to get chiral information from the molecule (if present).
              * Have to be careful, any stereocenters on the same atom may have
@@ -851,11 +866,6 @@ void RankingTree::_applySequenceRules(
             newStereocenter.assign(
               existingStereocenterOption->assigned()
             );
-          } else if(
-            newStereocenter.numStereopermutations() == 1u
-            && newStereocenter.numAssignments() == 1u
-          ) {
-            newStereocenter.assign(0);
           }
 
           // If an assignment could be found, add it to the tree

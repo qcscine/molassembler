@@ -1,5 +1,6 @@
 #include "Composites.h"
 
+#include "boost/dynamic_bitset.hpp"
 #include "Eigen/Geometry"
 
 #include "chemical_symmetries/DynamicProperties.h"
@@ -98,6 +99,248 @@ double dihedral(
 
 constexpr temple::floating::ExpandedAbsoluteEqualityComparator<double> Composite::fpComparator;
 
+Composite::OrientationState::OrientationState(
+  Symmetry::Name passSymmetry,
+  unsigned passFusedPosition,
+  std::vector<char> passCharacters,
+  std::size_t passIdentifier
+) : symmetry(passSymmetry),
+    fusedPosition(passFusedPosition),
+    characters(std::move(passCharacters)),
+    identifier(passIdentifier)
+{
+  assert(fusedPosition < Symmetry::size(symmetry));
+  assert(characters.size() == Symmetry::size(symmetry));
+}
+
+void Composite::OrientationState::applyCharacterRotation(
+  const std::vector<unsigned>& rotation
+) {
+  std::vector<char> newCharacters;
+  newCharacters.reserve(rotation.size());
+
+  for(const auto& index : rotation) {
+    newCharacters.push_back(
+      characters.at(index)
+    );
+  }
+
+  characters = std::move(newCharacters);
+}
+
+std::vector<unsigned> Composite::OrientationState::transformToCanonical() {
+  /* For canonical comparisons, we must treat all fused positions within the
+   * same position group equally. Although the final generated dihedrals must be
+   * different (since indexing is still based on the current symmetry positions
+   * within each partial symmetry, the sequence must be the same across any
+   * position group.
+   */
+  unsigned reducedFusedPosition = lowestEqualPositionInSymmetry();
+
+  // Find the mapping
+  auto toCanonicalMapping = findReductionMapping(reducedFusedPosition);
+
+  // Apply it to the data members of the instance
+  fusedPosition = reducedFusedPosition;
+  applyCharacterRotation(toCanonicalMapping);
+
+  // Return the inverse mapping to allow reversion to the original state
+  return Symmetry::properties::inverseRotation(toCanonicalMapping);
+}
+
+void Composite::OrientationState::revert(const std::vector<unsigned>& reversionMapping) {
+  // Recover the non-canonical state using the reversion mapping
+  applyCharacterRotation(reversionMapping);
+
+  auto findIter = std::find(
+    std::begin(reversionMapping),
+    std::end(reversionMapping),
+    fusedPosition
+  );
+
+  assert(findIter != std::end(reversionMapping));
+
+  fusedPosition = findIter - std::begin(reversionMapping);
+}
+
+std::vector<unsigned> Composite::OrientationState::findReductionMapping(
+  unsigned reducedFusedPosition
+) const {
+  /* Trivial abbreviation: The identity sequence is viable if the fused
+   * position is unchanged. It is the lowest permutation possible, and is hence
+   * the solution to this search case.
+   */
+  if(fusedPosition == reducedFusedPosition) {
+    return temple::iota<unsigned>(Symmetry::size(symmetry));
+  }
+
+  /* Find a mapping that rotates fusedPosition to reducedFusedPosition. In many
+   * cases, there are multiple of these. We can remove these degrees of freedom
+   * by choosing that rotation whose resulting permutation has the lowest index
+   * of permutation.
+   */
+  const auto identitySequence = temple::iota<unsigned>(Symmetry::size(symmetry));
+
+  // Track the best rotation
+  unsigned lowestIndexOfPermutation = std::numeric_limits<unsigned>::max();
+  std::vector<unsigned> bestRotation;
+
+  const unsigned linkLimit = Symmetry::rotations(symmetry).size();
+  std::vector<unsigned> chain = {0};
+  std::vector<
+    std::vector<unsigned>
+  > chainRotations = {identitySequence};
+
+  /* Zero-initialize a bitset that can store if an index of permutation has
+   * been discovered or not.
+   */
+  boost::dynamic_bitset<> discoveredIndicesOfPermutation {
+    temple::Math::factorial(Symmetry::size(symmetry))
+  };
+
+  /* The identity sequence has been discovered (initial element of
+   * chainRotations). We set bit 0 since the identity sequence has this index
+   * of permutation.
+   */
+  discoveredIndicesOfPermutation.set(0);
+
+  while(chain.front() < linkLimit) {
+    // Generate a new rotation
+    auto generatedRotation = Symmetry::properties::applyRotation(
+      chainRotations.back(),
+      Symmetry::rotations(symmetry).at(
+        chain.back()
+      )
+    );
+
+    unsigned indexOfPermutation = temple::permutationIndex(generatedRotation);
+    // Is it new?
+    if(discoveredIndicesOfPermutation.test(indexOfPermutation)) {
+      // Already discovered! Are we at the maximum instruction?
+      if(chain.back() < linkLimit - 1) {
+        // No, so we can just increment
+        ++chain.back();
+      } else {
+        /* Collapse the chain until we reach an incrementable position,
+         * preserve the first position for the exit condition test
+         */
+        while(
+          chain.size() > 1
+          && chain.back() == linkLimit - 1
+        ) {
+          chain.pop_back();
+          chainRotations.pop_back();
+        }
+
+        // Increment the back of the chain
+        ++chain.back();
+      }
+    } else {
+      // The rotation is new, determine if it should replace the tracked best
+      if(
+        generatedRotation.at(reducedFusedPosition) == fusedPosition
+        && indexOfPermutation < lowestIndexOfPermutation
+      ) {
+        bestRotation = generatedRotation;
+        lowestIndexOfPermutation = indexOfPermutation;
+      }
+
+      // Add the new rotation to the set of discovered ones
+      discoveredIndicesOfPermutation.set(indexOfPermutation);
+
+      // Add the rotation and a new instruction to the chain
+      chainRotations.push_back(std::move(generatedRotation));
+      chain.emplace_back(0);
+    }
+  }
+
+  // We must have found some mapping
+  assert(!bestRotation.empty());
+
+  return bestRotation;
+}
+
+unsigned Composite::OrientationState::lowestEqualPositionInSymmetry() const {
+  auto positionGroupCharacters = Symmetry::properties::positionGroups(symmetry);
+
+  /* Return the position of the first character that matches that of the fused
+   * position
+   */
+  auto findIter = std::find_if(
+    std::begin(positionGroupCharacters),
+    std::end(positionGroupCharacters),
+    [&](const char groupLabel) -> bool {
+      return groupLabel == positionGroupCharacters.at(fusedPosition);
+    }
+  );
+
+  assert(findIter != std::end(positionGroupCharacters));
+
+  return findIter - std::begin(positionGroupCharacters);
+}
+
+Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
+  // Initialize the search state
+  AngleGroup angleGroup;
+  angleGroup.symmetryPositions.reserve(Symmetry::size(symmetry));
+  angleGroup.angle = M_PI;
+
+  // Go through all symmetry positions excluding the fused symmetry position
+  for(unsigned i = 0; i < Symmetry::size(symmetry); ++i) {
+    if(i == fusedPosition) {
+      continue;
+    }
+
+    double angleToFusedPosition = Symmetry::angleFunction(symmetry)(fusedPosition, i);
+
+    // This naturally excludes M_PI angles from the smallest angle group
+    if(fpComparator.isLessThan(angleToFusedPosition, angleGroup.angle)) {
+      angleGroup.symmetryPositions = {i};
+      angleGroup.angle = angleToFusedPosition;
+    } else if(fpComparator.isEqual(angleToFusedPosition, angleGroup.angle)) {
+      angleGroup.symmetryPositions.push_back(i);
+    }
+  }
+
+  /* In order to identify if a side is isotropic, check whether the rankings of
+   * ligands at this angle group are all the same.
+   */
+  if(angleGroup.symmetryPositions.size() == 1) {
+    // A single relevant symmetry position is not isotropic
+    angleGroup.isotropic = false;
+  } else {
+    auto relevantCharacters = temple::map(
+      angleGroup.symmetryPositions,
+      [&](const unsigned symmetryPosition) -> char {
+        return characters.at(symmetryPosition);
+      }
+    );
+
+    angleGroup.isotropic = temple::all_of(
+      relevantCharacters,
+      [&](const char character) -> bool {
+        return character == relevantCharacters.front();
+      }
+    );
+  }
+
+  return angleGroup;
+}
+
+bool Composite::OrientationState::operator < (const Composite::OrientationState& other) const {
+  return (
+    std::tie(symmetry, fusedPosition, characters)
+    < std::tie(other.symmetry, other.fusedPosition, other.characters)
+  );
+}
+
+bool Composite::OrientationState::operator == (const Composite::OrientationState& other) const {
+  return (
+    std::tie(symmetry, fusedPosition, characters)
+    == std::tie(other.symmetry, other.fusedPosition, other.characters)
+  );
+}
+
 double Composite::perpendicularSubstituentAngle(
   const double angleFromBoundSymmetryPosition,
   const double angleBetweenSubstituents
@@ -114,10 +357,6 @@ double Composite::perpendicularSubstituentAngle(
       )
     )
   );
-}
-
-std::vector<unsigned> Composite::identityRotation(const Symmetry::Name symmetryName) {
-  return temple::iota<unsigned>(Symmetry::size(symmetryName));
 }
 
 std::vector<unsigned> Composite::generateRotation(
@@ -165,7 +404,7 @@ std::vector<unsigned> Composite::generateRotation(
 
     do {
       // Create the rotation using the index application sequence front-to-back
-      rotation = identityRotation(symmetryName);
+      rotation = temple::iota<unsigned>(Symmetry::size(symmetryName));
 
       for(const auto r : rotationIndexApplicationSequence) {
         rotation = Symmetry::properties::applyRotation(
@@ -175,6 +414,7 @@ std::vector<unsigned> Composite::generateRotation(
         );
       }
 
+      // Determine if the current rotation matches all required criteria
       if(
         rotation.at(fixedSymmetryPosition) == fixedSymmetryPosition
         && rotationAltersPositions(rotation)
@@ -252,35 +492,6 @@ std::vector<unsigned> Composite::rotation(
   return {};
 }
 
-Composite::AngleGroup Composite::smallestAngleGroup(
-  const Symmetry::Name symmetryName,
-  const unsigned fusedSymmetryPosition
-) {
-  // Initialize the search state
-  AngleGroup angleGroup;
-  angleGroup.symmetryPositions.reserve(Symmetry::size(symmetryName));
-  angleGroup.angle = M_PI;
-
-  // Go through all symmetry positions excluding the fused symmetry position
-  for(unsigned i = 0; i < Symmetry::size(symmetryName); ++i) {
-    if(i == fusedSymmetryPosition) {
-      continue;
-    }
-
-    double angleToFusedPosition = Symmetry::angleFunction(symmetryName)(fusedSymmetryPosition, i);
-
-    // This naturally excludes M_PI angles from the smallest angle group
-    if(fpComparator.isLessThan(angleToFusedPosition, angleGroup.angle)) {
-      angleGroup.symmetryPositions = {i};
-      angleGroup.angle = angleToFusedPosition;
-    } else if(fpComparator.isEqual(angleToFusedPosition, angleGroup.angle)) {
-      angleGroup.symmetryPositions.push_back(i);
-    }
-  }
-
-  return angleGroup;
-}
-
 Composite::PerpendicularAngleGroups Composite::inGroupAngles(
   const AngleGroup& angleGroup,
   const Symmetry::Name symmetryName
@@ -329,64 +540,42 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
   return groups;
 }
 
-Composite::Composite(
-  const Symmetry::Name left,
-  const Symmetry::Name right,
-  const unsigned leftFusedPosition,
-  const unsigned rightFusedPosition,
-  const std::vector<char>& leftCharacters,
-  const std::vector<char>& rightCharacters
-) : _left(left),
-    _right(right),
-    _leftFusedPosition(leftFusedPosition),
-    _rightFusedPosition(rightFusedPosition)
+Composite::Composite(OrientationState first, OrientationState second)
+  : _orientations { std::move(first), std::move(second) }
 {
-  assert(leftFusedPosition < Symmetry::size(left));
-  assert(rightFusedPosition < Symmetry::size(right));
+  // Do not construct the ordered pair of OrientationStates with same identifier
+  assert(_orientations.first.identifier != _orientations.second.identifier);
 
-  auto isIsotropic = [](const std::vector<char>& characters) -> bool {
-    return temple::all_of(
-      characters,
-      [&](const char character) -> bool {
-        return character == characters.front();
-      }
-    );
-  };
-
-  if(isIsotropic(leftCharacters) || isIsotropic(rightCharacters)) {
-    // TODO don't we have to enforce planarity anyway?
-    // No permutations possible
-    return;
-  }
-
-  /* Generate a set of stereopermutations for this particular combination,
-   * which can then be indexed
+  /* For canonical comparison, the OrientationStates must be transformed as
+   * though the fused position was the lowest position within the symmetry
+   * position group, and then back-transformed later.
    */
+
+  auto firstReversionMapping = _orientations.first.transformToCanonical();
+  auto secondReversionMapping = _orientations.second.transformToCanonical();
 
   /* Find the group of symmetry positions with the smallest angle to the
    * fused position (these are the only important ones when considering
    * relative position across both groups).
    */
-  auto leftAngleGroup = smallestAngleGroup(left, leftFusedPosition);
-  auto rightAngleGroup = smallestAngleGroup(right, rightFusedPosition);
+  auto angleGroups = _orientations.map(
+    [](const OrientationState& orientation) -> AngleGroup {
+      return orientation.smallestAngleGroup();
+    }
+  );
 
-  /*std::cout << "Angle group for " << Symmetry::name(left) << ": "
-    << leftAngleGroup.angle << " -> "
-    << temple::stringify(leftAngleGroup.symmetryPositions) << "\n";
-
-  std::cout << "Angle group for " << Symmetry::name(right) << ": "
-    << rightAngleGroup.angle << " -> "
-    << temple::stringify(rightAngleGroup.symmetryPositions) << "\n";*/
-
-  /* Range of possibilities for each side:
-   * - no symmetry positions in smallest angle group -> no relative
-   *   positioning possible (probably only in linear)
-   * - one symmetry position (can be rotated any way it's needed)
-   * - multiple symmetry positions (need to determine angle in shared
-   *   perpendicular plane to figure out how they can be arranged)
+  /* Even if either side is isotropic and overall this stereocenter has only one
+   * assignment, the first discovered permutation must be kept in order to
+   * enforce planarity if it exists. Any further stereopermutations lead to
+   * identical three-dimensional arrangements.
+   *
    */
+  bool overallIsotropic = angleGroups.first.isotropic || angleGroups.second.isotropic;
 
-  /* Range of combinatorial possibilities:
+  /* Generate a set of stereopermutations for this particular combination,
+   * which can then be indexed
+   *
+   * Range of combinatorial possibilities:
    * - Either side has zero symmetry positions in the smallest angle group:
    *   No relative positioning possible, this Composite has zero
    *   stereopermutations
@@ -399,43 +588,46 @@ Composite::Composite(
    *   try to find matches across groups -> these can be arranged in a coplanar
    *   fashion. Then each rotation on one side generates a new overlay
    *   possibility.
+   *
+   * NOTE: The central atom of both symmetries is always placed at the origin
+   * in the coordinate definitions.
    */
-
-  /* The central atom of both symmetries is always placed at the origin in the
-   * coordinate definitions.
-   */
-  auto leftCoordinates = Symmetry::symmetryData().at(left).coordinates;
+  auto firstCoordinates = Symmetry::symmetryData().at(
+    _orientations.first.symmetry
+  ).coordinates;
   // Rotate left fused position onto <1, 0, 0>
   detail::rotateCoordinates(
-    leftCoordinates,
-    leftCoordinates.at(leftFusedPosition).normalized(),
+    firstCoordinates,
+    firstCoordinates.at(_orientations.first.fusedPosition).normalized(),
     Eigen::Vector3d::UnitX()
   );
 
-  auto rightCoordinates = Symmetry::symmetryData().at(right).coordinates;
+  auto secondCoordinates = Symmetry::symmetryData().at(
+    _orientations.second.symmetry
+  ).coordinates;
   // Rotate right fused position onto <-1, 0, 0>
   detail::rotateCoordinates(
-    rightCoordinates,
-    rightCoordinates.at(rightFusedPosition).normalized(),
+    secondCoordinates,
+    secondCoordinates.at(_orientations.second.fusedPosition).normalized(),
     -Eigen::Vector3d::UnitX()
   );
 
   // Translate positions by <1, 0, 0>
   detail::translateCoordinates(
-    rightCoordinates,
+    secondCoordinates,
     Eigen::Vector3d::UnitX()
   );
 
-  auto getDihedral = [&](const unsigned l, const unsigned r) -> double {
+  auto getDihedral = [&](const unsigned f, const unsigned s) -> double {
     return detail::dihedral(
-      leftCoordinates.at(l),
+      firstCoordinates.at(f),
       Eigen::Vector3d::Zero(),
       Eigen::Vector3d::UnitX(),
-      rightCoordinates.at(r)
+      secondCoordinates.at(s)
     );
   };
 
-  // TODO abbreviated computation for same symmetry cases?
+  // TODO is there a simple abbreviated computation for same symmetry cases?
 
   /* Sequentially align every pair. Pick that arrangement in which the number
    * of cis dihedrals is maximal.
@@ -443,77 +635,97 @@ Composite::Composite(
    * This is essentially brute-forcing the problem. I'm having a hard time
    * thinking up an elegant solution that can satisfy all possible symmetries.
    */
-  temple::forAllPairs(
-    leftAngleGroup.symmetryPositions,
-    rightAngleGroup.symmetryPositions,
-    [&](const unsigned l, const unsigned r) -> void {
-      // Calculate the dihedral angle from l.front() to r
-      double dihedralAngle = getDihedral(l, r);
+  auto addDihedralCombination = [&](const unsigned f, const unsigned s) -> void {
+    // Calculate the dihedral angle from l.front() to r
+    double dihedralAngle = getDihedral(f, s);
 
-      // Twist the right coordinates around x so that l.front() is cis with r
-      for(auto& position: rightCoordinates) {
-        position = Eigen::AngleAxisd(
-          -dihedralAngle,
-          Eigen::Vector3d::UnitX()
-        ) * position;
-      }
-
-      // Make sure the rotation leads to cis arrangement
-      assert(std::fabs(getDihedral(l, r)) < 1e-10);
-
-      auto dihedralList = temple::mapAllPairs(
-        leftAngleGroup.symmetryPositions,
-        rightAngleGroup.symmetryPositions,
-        [&](const unsigned l, const unsigned r) -> DihedralTuple {
-          return {
-            l,
-            r,
-            getDihedral(l, r)
-          };
-        }
-      );
-
-      if(
-        !temple::any_of(
-          _stereopermutations,
-          [&dihedralList](const auto& rhsDihedralList) -> bool {
-            return fpComparator.isEqual(
-              std::get<2>(dihedralList.front()),
-              std::get<2>(rhsDihedralList.front())
-            );
-          }
-        )
-      ) {
-        _stereopermutations.push_back(std::move(dihedralList));
-      }
+    // Twist the right coordinates around x so that l.front() is cis with r
+    for(auto& position: secondCoordinates) {
+      position = Eigen::AngleAxisd(
+        -dihedralAngle,
+        Eigen::Vector3d::UnitX()
+      ) * position;
     }
-  );
+
+    // Make sure the rotation leads to cis arrangement
+    assert(std::fabs(getDihedral(f, s)) < 1e-10);
+
+    auto dihedralList = temple::mapAllPairs(
+      angleGroups.first.symmetryPositions,
+      angleGroups.second.symmetryPositions,
+      [&](const unsigned f, const unsigned s) -> DihedralTuple {
+        return {
+          f,
+          s,
+          getDihedral(f, s)
+        };
+      }
+    );
+
+    if(
+      !temple::any_of(
+        _stereopermutations,
+        [&dihedralList](const auto& rhsDihedralList) -> bool {
+          return fpComparator.isEqual(
+            std::get<2>(dihedralList.front()),
+            std::get<2>(rhsDihedralList.front())
+          );
+        }
+      )
+    ) {
+      _stereopermutations.push_back(std::move(dihedralList));
+    }
+  };
+
+  // Branch if only one stereopermutation is needed due to isotropicity
+  if(overallIsotropic) {
+    addDihedralCombination(
+      angleGroups.first.symmetryPositions.front(),
+      angleGroups.second.symmetryPositions.front()
+    );
+  } else {
+    temple::forAllPairs(
+      angleGroups.first.symmetryPositions,
+      angleGroups.second.symmetryPositions,
+      addDihedralCombination
+    );
+  }
 
   /* For situations in which only one position exists in both symmetries, add
    * the trans dihedral possibility explicitly
    */
   if(
-    leftAngleGroup.symmetryPositions.size() == 1
-    && rightAngleGroup.symmetryPositions.size() == 1
+    angleGroups.first.symmetryPositions.size() == 1
+    && angleGroups.second.symmetryPositions.size() == 1
   ) {
     // Add trans dihedral possibility
     _stereopermutations.emplace_back(
       std::vector<DihedralTuple> {
         DihedralTuple {
-          leftAngleGroup.symmetryPositions.front(),
-          rightAngleGroup.symmetryPositions.front(),
+          angleGroups.first.symmetryPositions.front(),
+          angleGroups.second.symmetryPositions.front(),
           M_PI
         }
       }
     );
   }
 
-  /*std::cout << "Determined the following " << _stereopermutations.size()
-    <<  " stereopermutations:\n";
+  // Revert the OrientationStates and transform the stereopermutations too
+  _orientations.first.revert(firstReversionMapping);
+  _orientations.second.revert(secondReversionMapping);
 
-  for(const auto& permutation : _stereopermutations) {
-    std::cout << "- " << temple::stringify(permutation) << "\n";
-  }*/
+  for(auto& stereopermutation : _stereopermutations) {
+    for(auto& dihedralTuple : stereopermutation) {
+      std::get<0>(dihedralTuple) = firstReversionMapping.at(
+        std::get<0>(dihedralTuple)
+      );
+
+      std::get<1>(dihedralTuple) = secondReversionMapping.at(
+        std::get<1>(dihedralTuple)
+      );
+    }
+  }
+
 }
 
 unsigned Composite::permutations() const {
@@ -524,13 +736,20 @@ const std::vector<Composite::DihedralTuple>& Composite::dihedrals(unsigned permu
   return _stereopermutations.at(permutationIndex);
 }
 
+const temple::OrderedPair<Composite::OrientationState>& Composite::orientations() const {
+  return _orientations;
+}
+
+Composite::PermutationsList::const_iterator Composite::begin() const {
+  return std::begin(_stereopermutations);
+}
+
+Composite::PermutationsList::const_iterator Composite::end() const {
+  return std::end(_stereopermutations);
+}
+
 bool Composite::operator == (const Composite& other) const {
-  return (
-    _left == other._left
-    && _right == other._right
-    && _leftFusedPosition == other._leftFusedPosition
-    && _rightFusedPosition == other._rightFusedPosition
-  );
+  return _orientations == other._orientations;
 }
 
 bool Composite::operator != (const Composite& other) const {

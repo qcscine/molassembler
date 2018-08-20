@@ -18,22 +18,43 @@ class Cycles;
 namespace GraphAlgorithms {
 
 struct LinkInformation {
+
+
+  /*! Default constructor
+   *
+   * \warning Does not establish member invariants
+   */
+  LinkInformation();
+
+  //! Constructor from data without established invariants
+  LinkInformation(
+    std::pair<unsigned, unsigned> ligandIndices,
+    std::vector<AtomIndexType> cycleSequence,
+    const AtomIndexType source
+  );
+
   //! An (asc) ordered pair of the ligand site indices that are linked
   std::pair<unsigned, unsigned> indexPair;
 
-  /*! The in-order atom sequence of the cycle atom indices.
+  /*! The in-order atom sequence of the cycle atom indices
    *
-   * NOTE: The front and back indices are repeated.
+   * \note The cycle sequence is centralized on the source vertex, meaning the
+   * front and back indices are the source vertex
+   *
+   * \note The cycle sequence between the repeated source vertices is
+   * standardized by ordering the first and last vertices of the remaining
+   * sequence ascending (i.e. reversing the part of the sequence in between
+   * front and back indices if the second index is larger than the
+   * second-to-last one)
    */
   std::vector<AtomIndexType> cycleSequence;
 
-  /*! Performs a lexicographical comparison on cycleSequence
-   *
-   * TODO this operator isn't quite correct, in principle, the cycle sequence
-   * is not the completely reduced form / has degrees of freedom, and a
-   * lexicographical comparison isn't correct for it
-   */
+  //! Performs a lexicographical comparison on both data members
   bool operator == (const LinkInformation& other) const;
+  bool operator != (const LinkInformation& other) const;
+
+  //! Performs a lexicographical comparison on both data members
+  bool operator < (const LinkInformation& other) const;
 };
 
 std::vector<LinkInformation> substituentLinks(

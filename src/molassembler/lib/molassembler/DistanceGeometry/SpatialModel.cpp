@@ -315,8 +315,12 @@ SpatialModel::SpatialModel(
   for(const auto& bondStereocenter : _stereocenters.bondStereocenters()) {
     bondStereocenter.setModelInformation(
       *this,
-      _stereocenters.option(bondStereocenter.left().index).value(),
-      _stereocenters.option(bondStereocenter.right().index).value(),
+      _stereocenters.option(
+        boost::source(bondStereocenter.edge(), molecule.getGraph())
+      ).value(),
+      _stereocenters.option(
+        boost::target(bondStereocenter.edge(), molecule.getGraph())
+      ).value(),
       looseningMultiplier
     );
   }
@@ -961,8 +965,12 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
   for(const auto& bondStereocenter : _stereocenters.bondStereocenters()) {
     auto constraints = bondStereocenter.chiralityConstraints(
       _looseningMultiplier,
-      _stereocenters.option(bondStereocenter.left().index).value(),
-      _stereocenters.option(bondStereocenter.right().index).value()
+      _stereocenters.option(
+        boost::source(bondStereocenter.edge(), _molecule.getGraph())
+      ).value(),
+      _stereocenters.option(
+        boost::target(bondStereocenter.edge(), _molecule.getGraph())
+      ).value()
     );
 
     std::move(

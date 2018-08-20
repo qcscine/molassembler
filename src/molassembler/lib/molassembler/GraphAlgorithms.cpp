@@ -18,11 +18,56 @@ namespace molassembler {
 
 namespace GraphAlgorithms {
 
+LinkInformation::LinkInformation() = default;
+
+LinkInformation::LinkInformation(
+  std::pair<unsigned, unsigned> ligandIndices,
+  std::vector<AtomIndexType> sequence,
+  const AtomIndexType source
+) {
+  /* Fix degrees of freedom of the underlying information so we can
+   * efficiently implement operator <. indexPair can be an ordered pair:
+   */
+  indexPair = std::move(ligandIndices);
+  if(indexPair.first > indexPair.second) {
+    std::swap(indexPair.first, indexPair.second);
+  }
+
+  // The cycle sequence should be centralized on the source vertex
+  cycleSequence = centralizeRingIndexSequence(std::move(sequence), source);
+
+  /* After centralization, the source vertex is first and last. We need to
+   * fix the remaining degree of freedom, which is if that the cycle sequence
+   * in between can be reversed. We choose to fix it by making it ascending
+   * if there are at least four vertices in the sequence between the second
+   * and second-to-last vertices
+   */
+
+  if(
+    cycleSequence.size() >= 4
+    && cycleSequence.at(1) > cycleSequence.at(cycleSequence.size() - 2)
+  ) {
+    // Reverse is [first, last), and cycleSequence is a vector, so:
+    std::reverse(
+      std::begin(cycleSequence) + 1,
+      std::end(cycleSequence) - 1
+    );
+  }
+}
+
 bool LinkInformation::operator == (const LinkInformation& other) const {
   return (
     indexPair == other.indexPair
     && cycleSequence == other.cycleSequence
   );
+}
+
+bool LinkInformation::operator != (const LinkInformation& other) const {
+  return !(*this == other);
+}
+
+bool LinkInformation::operator < (const LinkInformation& other) const {
+  return std::tie(indexPair, cycleSequence) < std::tie(other.indexPair, other.cycleSequence);
 }
 
 unsigned numConnectedComponents(const GraphType& graph) {
@@ -129,13 +174,15 @@ std::vector<LinkInformation> substituentLinks(
           && cycleEdges.size() < links.at(linksMap.at(indexPair)).cycleSequence.size()
         )
       ) {
-        LinkInformation newLink;
-        newLink.indexPair = indexPair;
-        newLink.cycleSequence = centralizeRingIndexSequence(
+        auto newLink = LinkInformation {
+          indexPair,
           makeRingIndexSequence(Cycles::edgeVertices(cyclePtr)),
           source
-        );
+        };
 
+        /* Track the current best link for a given ligand index pair and
+         * improve it if a better one turns up
+         */
         if(linksMap.count(indexPair) == 0) {
           links.push_back(std::move(newLink));
           linksMap.emplace(
@@ -148,6 +195,9 @@ std::vector<LinkInformation> substituentLinks(
       }
     }
   }
+
+  // Sort the links before passing them out in order to ease comparisons
+  temple::sort(links);
 
   return links;
 }

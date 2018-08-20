@@ -390,20 +390,28 @@ StereocenterList Molecule::Impl::_detectStereocenters() const {
     auto sourceAtomStereocenterOption = stereocenterList.option(source);
     auto targetAtomStereocenterOption = stereocenterList.option(target);
 
-    if(sourceAtomStereocenterOption && targetAtomStereocenterOption) {
-      // Construct a Stereocenter here
-      auto newStereocenter = BondStereocenter {
-        *sourceAtomStereocenterOption,
-        *targetAtomStereocenterOption,
-        edgeIndex
-      };
+    // There need to be assigned stereocenters on both vertices
+    if(
+      !sourceAtomStereocenterOption
+      || !targetAtomStereocenterOption
+      || sourceAtomStereocenterOption->assigned() == boost::none
+      || targetAtomStereocenterOption->assigned() == boost::none
+    ) {
+      continue;
+    }
 
-      if(newStereocenter.numAssignments() > 1) {
-        stereocenterList.add(
-          edgeIndex,
-          std::move(newStereocenter)
-        );
-      }
+    // Construct a Stereocenter here
+    auto newStereocenter = BondStereocenter {
+      *sourceAtomStereocenterOption,
+      *targetAtomStereocenterOption,
+      edgeIndex
+    };
+
+    if(newStereocenter.numAssignments() > 1) {
+      stereocenterList.add(
+        edgeIndex,
+        std::move(newStereocenter)
+      );
     }
   }
 
@@ -440,166 +448,97 @@ bool Molecule::Impl::_isGraphBasedBondStereocenterCandidate(
 void Molecule::Impl::_propagateGraphChange() {
   /* Two cases: If the StereocenterList is empty, we can just use detect to
    * find any new stereocenters in the Molecule.
-   *
-   * In the other case, we have to recheck absolutely everywhere. If ranking
+   */
+
+  if(_stereocenters.empty()) {
+    _stereocenters = _detectStereocenters();
+    return;
+  }
+
+  /* In the other case, we have to recheck absolutely everywhere. If ranking
    * was affected and the stereocenter has a set assignment, we need to find
    * the assignment that the previous ranking represented spatially in the new
    * set of assignments and assign the stereocenter to that.
    */
-  if(_stereocenters.empty()) {
-    _stereocenters = _detectStereocenters();
-  } else {
-    GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
 
-    // TODO
-    /* Since changes to BondStereocenter cannot be handled, if either base
-     * AtomStereocenter has a ranking change, remove the BondStereocenter.
-     */
+  GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
 
-    // BondStereocenters first
-//    for(const auto& edgeIndex : iterateEdges()) {
-//      auto source = boost::source(edgeIndex, _adjacencies),
-//           target = boost::target(edgeIndex, _adjacencies);
-//
-//      // Is there already a stereocenter on both edge vertices?
-//      if(_stereocenters.involving(source) && _stereocenters.involving(target)) {
-//        // Is it the same, and an BondStereocenter?
-//        if(
-//          _stereocenters.at(source) == _stereocenters.at(target)
-//          && _stereocenters.at(source)->type() == Stereocenters::Type::BondStereocenter
-//        ) {
-//          // Is it even possible for it to be a candidate anymore?
-//          if(_isBondStereocenterCandidate(edgeIndex)) {
-//            // Re-rank, and adapt it to a new ranking
-//            std::dynamic_pointer_cast<Stereocenters::BondStereocenter>(
-//              _stereocenters.at(source)
-//            ) -> propagateGraphChange(
-//              rankPriority(source, {target}),
-//              rankPriority(target, {source})
-//            );
-//
-//            // If this BondStereocenter has only one assignment now, remove it
-//            if(_stereocenters.at(source) -> numAssignments() == 1) {
-//              _stereocenters.remove(source);
-//            }
-//          } else {
-//            // It cannot be an BondStereocenter anymore, so drop it from the list
-//            _stereocenters.remove(source);
-//          }
-//        }
-//        /* If the stereocenters are NOT the same, in which case both would
-//         * have to be AtomStereocenters, then this edge cannot be an
-//         * BondStereocenter. Do nothing.
-//         */
-//      } else if(
-//        !_stereocenters.involving(source)
-//        && !_stereocenters.involving(target)
-//        && _isBondStereocenterCandidate(edgeIndex)
-//      ) {
-//        auto newStereocenterPtr = std::make_shared<Stereocenters::BondStereocenter>(
-//          source,
-//          rankPriority(source, {target}),
-//          target,
-//          rankPriority(target, {source})
-//        );
-//
-//        if(newStereocenterPtr -> numAssignments() == 2) {
-//          _stereocenters.add(
-//            std::move(newStereocenterPtr)
-//          );
-//        }
-//      }
-//      /* If there is a stereocenter on one vertex, but not the other, then it
-//       * should be a AtomStereocenter, in which case we best do nothing.
-//       */
-//    }
-//
-//    Cycles cycleData = getCycleData();
-//    // Now AtomStereocenters
-//    for(
-//      AtomIndexType candidateIndex = 0;
-//      candidateIndex < numAtoms();
-//      ++candidateIndex
-//    ) {
-//      if(_stereocenters.involving(candidateIndex)) {
-//        if(_stereocenters.at(candidateIndex)->type() == Stereocenters::Type::AtomStereocenter) {
-//          // Is it possible for this atom to continue to be a AtomStereocenter?
-//          auto AtomStereocenterPtr = std::dynamic_pointer_cast<Stereocenters::AtomStereocenter>(
-//            _stereocenters.at(candidateIndex)
-//          );
-//
-//          RankingInformation localRanking = rankPriority(candidateIndex);
-//
-//          // If the atom is now terminal, remove the stereocenter
-//          if(localRanking.ligands.size() <= 1) {
-//            _stereocenters.remove(candidateIndex);
-//            continue;
-//          }
-//
-//          // Propagate the state of the stereocenter to the new ranking
-//          AtomStereocenterPtr -> propagateGraphChange(
-//            _adjacencies,
-//            localRanking
-//          );
-//
-//          /* If the modified stereocenter has only one assignment and is
-//           * unassigned due to the graph change, default-assign it
-//           */
-//          if(AtomStereocenterPtr -> numAssignments() == 1) {
-//            if(AtomStereocenterPtr -> assigned() == boost::none) {
-//              AtomStereocenterPtr -> assign(0);
-//            }
-//          }
-//
-//          if(
-//            disregardStereocenter(
-//              *AtomStereocenterPtr,
-//              getElementType(candidateIndex),
-//              cycleData,
-//              Options::temperatureRegime
-//            )
-//          ) {
-//            // Since this index cannot be a AtomStereocenter anymore, drop it
-//            _stereocenters.remove(candidateIndex);
-//          }
-//        }
-//        /* If the stereocenter at that candidate index is an BondStereocenter, do
-//         * nothing
-//         */
-//      } else {
-//        // No stereocenter yet
-//        auto localRanking = rankPriority(candidateIndex);
-//
-//        // Skip terminal atoms
-//        if(localRanking.ligands.size() <= 1) {
-//          continue;
-//        }
-//
-//        auto newStereocenterPtr = std::make_shared<Stereocenters::AtomStereocenter>(
-//          _adjacencies,
-//          determineLocalGeometry(candidateIndex, localRanking),
-//          candidateIndex,
-//          localRanking
-//        );
-//
-//        if(newStereocenterPtr -> numAssignments() == 1) {
-//          newStereocenterPtr -> assign(0);
-//        }
-//
-//        if(
-//          !disregardStereocenter(
-//            *newStereocenterPtr,
-//            getElementType(candidateIndex),
-//            cycleData,
-//            Options::temperatureRegime
-//          )
-//        ) {
-//          _stereocenters.add(
-//            std::move(newStereocenterPtr)
-//          );
-//        }
-//      }
-//    }
+  /* TODO
+   * - Need state propagation for BondStereocenters, anything else is madness
+   */
+
+  Cycles cycleData = getCycleData();
+
+  for(const auto vertex : iterateAtoms()) {
+    auto stereocenterOption = _stereocenters.option(vertex);
+    RankingInformation localRanking = rankPriority(vertex);
+
+    if(stereocenterOption) {
+      // The atom has become terminal
+      if(localRanking.ligands.size() <= 1) {
+        _stereocenters.remove(vertex);
+        continue;
+      }
+
+      // Unconditionally propagate the graph change
+      stereocenterOption -> propagateGraphChange(
+        _adjacencies,
+        localRanking
+      );
+
+      /* If the modified stereocenter has only one assignment and is unassigned
+       * due to the graph change, default-assign it
+       */
+      if(
+        stereocenterOption -> numStereopermutations() == 1
+        && stereocenterOption -> numAssignments() == 1
+      ) {
+        stereocenterOption -> assign(0);
+      }
+
+      // If the change makes the stereocenter undesirable, remove it
+      if(
+        disregardStereocenter(
+          *stereocenterOption,
+          getElementType(vertex),
+          cycleData,
+          Options::temperatureRegime
+        )
+      ) {
+        _stereocenters.remove(vertex);
+      }
+    } else {
+      // Skip terminal atoms
+      if(localRanking.ligands.size() <= 1) {
+        continue;
+      }
+
+      auto newStereocenter = AtomStereocenter {
+        _adjacencies,
+        determineLocalGeometry(vertex, localRanking),
+        vertex,
+        localRanking
+      };
+
+      // Default-assign trivial stereocenters
+      if(
+        newStereocenter.numStereopermutations() == 1
+        && newStereocenter.numAssignments() == 1
+      ) {
+        newStereocenter.assign(0);
+      }
+
+      if(
+        !disregardStereocenter(
+          newStereocenter,
+          getElementType(vertex),
+          cycleData,
+          Options::temperatureRegime
+        )
+      ) {
+        _stereocenters.add(vertex, newStereocenter);
+      }
+    }
   }
 }
 
@@ -1189,6 +1128,16 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
     auto sourceAtomStereocenterOption = stereocenters.option(source);
     auto targetAtomStereocenterOption = stereocenters.option(target);
 
+    // There need to be assigned stereocenters on both vertices
+    if(
+      !sourceAtomStereocenterOption
+      || !targetAtomStereocenterOption
+      || sourceAtomStereocenterOption->assigned() == boost::none
+      || targetAtomStereocenterOption->assigned() == boost::none
+    ) {
+      continue;
+    }
+
     // Construct a Stereocenter here
     auto newStereocenter = BondStereocenter {
       *sourceAtomStereocenterOption,
@@ -1196,13 +1145,14 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
       edgeIndex
     };
 
-    if(newStereocenter.numAssignments() > 1) {
-      newStereocenter.fit(
-        angstromWrapper,
-        *sourceAtomStereocenterOption,
-        *targetAtomStereocenterOption
-      );
+    std::cout << "Fitting on " << source << " - " << target << "\n";
+    newStereocenter.fit(
+      angstromWrapper,
+      *sourceAtomStereocenterOption,
+      *targetAtomStereocenterOption
+    );
 
+    if(newStereocenter.assigned() != boost::none) {
       stereocenters.add(
         edgeIndex,
         std::move(newStereocenter)

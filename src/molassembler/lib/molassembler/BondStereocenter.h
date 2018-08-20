@@ -1,10 +1,12 @@
 #ifndef INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
 #define INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
 
-#include "stereopermutation/Composites.h"
-
-#include "detail/AngstromWrapper.h"
 #include "detail/SharedTypes.h"
+
+#if __cpp_lib_experimental_propagate_const >= 201505
+#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+#include <experimental/propagate_const>
+#endif
 
 /*! @file
  *
@@ -15,13 +17,13 @@
 /* TODO
  * - Various TODO in implementation
  * - Consistency in 0 = E, 1 = Z (or other) must be established somehow (using
- *   ligandsRanking)
+ *   ligandsRanking hopefully)
  * - State propagation is going to be a nasty piece of work
- *   Will need to store more data, using AtomState, for both, but probably also
- *   including the symmetryPositionMap and the assignment
  */
 
 namespace molassembler {
+
+struct AngstromWrapper;
 
 // Forward-declarations
 class AtomStereocenter;
@@ -34,34 +36,24 @@ struct ChiralityConstraint;
 class BondStereocenter {
 public:
   static constexpr double chiralityConstraintTolerance = 0.1;
-
-  struct AtomState {
-    AtomIndexType index;
-    Symmetry::Name symmetry;
-
-    bool operator == (const AtomState& other) const;
-    bool operator != (const AtomState& other) const;
-  };
-
-private:
-  stereopermutation::Composite _composite;
-  GraphType::edge_descriptor _edge;
-  boost::optional<unsigned> _assignment;
-  AtomState _left, _right;
-
-  static std::vector<char> _charifyRankedLigands(
-    const std::vector<std::vector<unsigned>> ligandsRanking
-  );
+  static constexpr double assignmentAcceptanceDihedralThreshold = M_PI * 3.0 / 180.0;
 
 public:
+  /* Rule of five members */
+  BondStereocenter(BondStereocenter&& other) noexcept;
+  BondStereocenter& operator = (BondStereocenter&& other) noexcept;
+  BondStereocenter(const BondStereocenter& other);
+  BondStereocenter& operator = (const BondStereocenter& other);
+  ~BondStereocenter();
+
   BondStereocenter() = delete;
   /*!
    * @warning No haptic ligands allowed.
    * @note The left stereocenter must have the smaller
    */
   BondStereocenter(
-    const AtomStereocenter& leftStereocenter,
-    const AtomStereocenter& rightStereocenter,
+    const AtomStereocenter& stereocenterA,
+    const AtomStereocenter& stereocenterB,
     const GraphType::edge_descriptor edge
   );
 
@@ -71,12 +63,14 @@ public:
 
   void fit(
     const AngstromWrapper& angstromWrapper,
-    const AtomStereocenter& left,
-    const AtomStereocenter& right
+    const AtomStereocenter& stereocenterA,
+    const AtomStereocenter& stereocenterB
   );
 
 /* Information */
   boost::optional<unsigned> assigned() const;
+
+  bool hasSameCompositeOrientation(const BondStereocenter& other) const;
 
   boost::optional<unsigned> indexOfPermutation() const;
 
@@ -85,9 +79,9 @@ public:
   unsigned numStereopermutations() const;
 
   std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
-    const double looseningMultiplier,
-    const AtomStereocenter& left,
-    const AtomStereocenter& right
+    double looseningMultiplier,
+    const AtomStereocenter& stereocenterA,
+    const AtomStereocenter& stereocenterB
   ) const;
 
   std::string info() const;
@@ -96,24 +90,27 @@ public:
 
   GraphType::edge_descriptor edge() const;
 
-  const AtomState& left() const {
-    return _left;
-  }
-
-  const AtomState& right() const {
-    return _right;
-  }
-
   void setModelInformation(
     DistanceGeometry::SpatialModel& model,
-    const AtomStereocenter& left,
-    const AtomStereocenter& right,
-    const double looseningMultiplier
+    const AtomStereocenter& stereocenterA,
+    const AtomStereocenter& stereocenterB,
+    double looseningMultiplier
   ) const;
 
 /* Operators */
   bool operator == (const BondStereocenter& other) const;
   bool operator != (const BondStereocenter& other) const;
+
+private:
+  struct Impl;
+
+#ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+  std::experimental::propagate_const<
+    std::unique_ptr<Impl>
+  > _pImpl;
+#else
+  std::unique_ptr<Impl> _pImpl;
+#endif
 };
 
 } // namespace molassembler

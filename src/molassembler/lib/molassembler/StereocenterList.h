@@ -18,7 +18,10 @@
  */
 
 /* TODO
- * - Make a hash for GraphType::edge_descriptor so we can use unordered_map
+ * - Make a hash for GraphType::edge_descriptor so we can use unordered_map.
+ *   I think this is impossible since access to the edge_desciptor's source and
+ *   target vertices requires a bgl graph instance to be called. Perhaps as soon
+ *   as graph exists instead?
  * - bond stereocenter state propagation
  */
 
@@ -39,6 +42,9 @@ public:
 
   //! Remove all stereocenters
   void clear();
+
+  //! Remove all stereocenters on bonds
+  void clearBonds();
 
   //! Fetch a reference-option to an AtomStereocenter, if present
   boost::optional<AtomStereocenter&> option(const AtomIndexType index);

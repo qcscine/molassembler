@@ -4,9 +4,11 @@
 #include "chemical_symmetries/Names.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/TinySet.h"
+#include "temple/OrderedPair.h"
 
 namespace stereopermutation {
 
+// TODO these are unneeded here, just move to impl file
 namespace detail {
 
 template<typename T>
@@ -61,20 +63,72 @@ std::pair<T, T> makeOrderedPair(T a, T b) {
 
 class Composite {
 public:
-  enum class Orientation {
-    Ecliptic,
-    Staggered
+  struct AngleGroup {
+    double angle;
+    std::vector<unsigned> symmetryPositions;
+    bool isotropic;
+  };
+
+  struct OrientationState {
+    //! The symmetry of either positional symmetry
+    Symmetry::Name symmetry;
+    //! The symmetry position of the local symmetry that the other is fused at
+    unsigned fusedPosition;
+    //! Abstract ranking-characters of the ligands at their symmetry positions
+    std::vector<char> characters;
+    /*! An identifier to the symmetry source
+     *
+     * Since OrientationState is used internally in an ordered pair which may
+     * swap elements on changes, an identifier can be useful in reassociating
+     * the OrientationState with its data source.
+     */
+    std::size_t identifier;
+
+    OrientationState(
+      Symmetry::Name passSymmetry,
+      unsigned passFusedPosition,
+      std::vector<char> passCharacters,
+      std::size_t passIdentifier
+    );
+
+    void applyCharacterRotation(const std::vector<unsigned>& rotation);
+
+    //! Smallest symmetry position from the same group as the fused position
+    unsigned lowestEqualPositionInSymmetry() const;
+
+    //! Calculates the required reduction mapping to the canonical form
+    std::vector<unsigned> findReductionMapping(unsigned reducedFusedPosition) const;
+
+    /*! Transforms the OrientationState to a canonical form
+     *
+     * Transforms the OrientationState by applying a reduction mapping to the
+     * smallest symmetry position from the same group as the fused position.
+     * Returns the mapping needed to revert the OrientationState back to its
+     * original data values.
+     */
+    [[nodiscard]] std::vector<unsigned> transformToCanonical();
+
+    //! Reverts the OrientationState to non-canonical form
+    void revert(const std::vector<unsigned>& reversionMapping);
+
+    //! Collects all coplanar indices that are closest to the fused symmetry position
+    AngleGroup smallestAngleGroup() const;
+
+    //! Full member lexicographical comparison in order of declaration
+    bool operator < (const OrientationState& other) const;
+    //! Full member lexicographical comparison in order of declaration
+    bool operator == (const OrientationState& other) const;
   };
 
   using DihedralTuple = std::tuple<unsigned, unsigned, double>;
+  using PermutationsList = std::vector<
+    std::vector<DihedralTuple>
+  >;
 
 private:
-  Symmetry::Name _left, _right;
-  unsigned _leftFusedPosition, _rightFusedPosition;
+  temple::OrderedPair<OrientationState> _orientations;
 
-  std::vector<
-    std::vector<DihedralTuple>
-  > _stereopermutations;
+  PermutationsList _stereopermutations;
 
   /*!
    * Calculates the angle between two substituents that have the same angle from
@@ -100,9 +154,6 @@ public:
     temple::Math::toRadians(1.0)
   };
 
-  //! Returns the
-  static std::vector<unsigned> identityRotation(const Symmetry::Name symmetry) ;
-
   /*! Generates a symmetry rotation subject to constraints
    *
    * \param symmetryName The symmetry in which the rotation is sought
@@ -123,17 +174,6 @@ public:
     const std::vector<unsigned>& perpendicularPlanePositions
   );
 
-  struct AngleGroup {
-    double angle;
-    std::vector<unsigned> symmetryPositions;
-  };
-
-  //! Collects all coplanar indices that are closest to the fused symmetry position
-  static AngleGroup smallestAngleGroup(
-    const Symmetry::Name symmetryName,
-    const unsigned fusedSymmetryPosition
-  );
-
   using PerpendicularAngleGroups = std::vector<
     std::pair<
       temple::TinyUnorderedSet<double>,
@@ -149,16 +189,7 @@ public:
     const Symmetry::Name symmetryName
   );
 
-  Composite() = default;
-
-  Composite(
-    const Symmetry::Name left,
-    const Symmetry::Name right,
-    const unsigned leftFusedPosition,
-    const unsigned rightFusedPosition,
-    const std::vector<char>& leftCharacters,
-    const std::vector<char>& rightCharacters
-  );
+  Composite(OrientationState first, OrientationState second);
 
   //! Returns the number of permutations for this Composite
   unsigned permutations() const;
@@ -171,21 +202,12 @@ public:
    */
   const std::vector<DihedralTuple>& dihedrals(unsigned permutationIndex) const;
 
-  inline Symmetry::Name left() const {
-    return _left;
-  }
+  //! Returns the orientation state of the composite
+  const temple::OrderedPair<OrientationState>& orientations() const;
 
-  inline Symmetry::Name right() const {
-    return _right;
-  }
-
-  inline unsigned leftFusedPosition() const {
-    return _leftFusedPosition;
-  }
-
-  inline unsigned rightFusedPosition() const {
-    return _rightFusedPosition;
-  }
+  //! Through-iteration of the generated dihedral permutations
+  PermutationsList::const_iterator begin() const;
+  PermutationsList::const_iterator end() const;
 
   bool operator == (const Composite& other) const;
   bool operator != (const Composite& other) const;

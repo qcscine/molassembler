@@ -29,6 +29,10 @@ void StereocenterList::clear() {
   _bondStereocenters.clear();
 }
 
+void StereocenterList::clearBonds() {
+  _bondStereocenters.clear();
+}
+
 void StereocenterList::propagateVertexRemoval(const AtomIndexType removedIndex) {
   // Drop any stereocenters involving this atom from the list
   auto findIter = _atomStereocenters.find(removedIndex);
@@ -224,10 +228,7 @@ bool StereocenterList::compare(
       }
 
       // Ensure construction state matches
-      if(
-        stereocenter.left() != otherStereocenterOption->left()
-        || stereocenter.right() != otherStereocenterOption->right()
-      ) {
+      if(!stereocenter.hasSameCompositeOrientation(otherStereocenterOption.value())) {
         return false;
       }
 

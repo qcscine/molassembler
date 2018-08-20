@@ -8,12 +8,15 @@
 #include <functional>
 #include <numeric>
 
+#include "chemical_symmetries/Symmetries.h"
+
 #include "stereopermutation/GenerateUniques.h"
 #include "stereopermutation/LogicalOperatorTests.h"
 #include "stereopermutation/Composites.h"
 
-#include "temple/Random.h"
 #include "temple/Containers.h"
+#include "temple/Random.h"
+#include "temple/Stringify.h"
 
 using namespace stereopermutation;
 
@@ -629,59 +632,169 @@ BOOST_AUTO_TEST_CASE( octahedral_multidentate ) {
   );
 }
 
+void writeState(const Composite::OrientationState& a) {
+  std::cout << "OrientationState {\n"
+    << "  symmetry: " << Symmetry::name(a.symmetry) << "\n"
+    << "  fusedPosition: " << a.fusedPosition << "\n"
+    << "  characters: " << temple::stringify(a.characters) << "\n}\n";
+}
+
+bool testOrientationState(const Composite::OrientationState& a) {
+  // Make a copy and modify that
+  auto aCopy = a;
+
+  // Show your work
+  /*unsigned reducedFusedPosition = a.lowestEqualPositionInSymmetry();
+  auto transformation = a.findReductionMapping(reducedFusedPosition);
+
+  std::cout << "Initially: ";
+  writeState(aCopy);
+
+  std::cout << "Mapping to " << reducedFusedPosition << ": "
+    << temple::stringify(transformation)
+    << "\n";*/
+
+  // Transform and revert the OrientationState
+  auto reversionMapping = aCopy.transformToCanonical();
+
+  //std::cout << "Mapped: ";
+  //writeState(aCopy);
+
+  //std::cout << "Inverse mapping: " << temple::stringify(reversionMapping) << "\n";
+  aCopy.revert(reversionMapping);
+
+  //std::cout << "Reverted: ";
+  //writeState(aCopy);
+
+  return aCopy == a;
+}
+
+// Ensure that transformation and reversion work the way they should
+BOOST_AUTO_TEST_CASE(orientationStateTests) {
+  for(const auto& symmetryName : Symmetry::allNames) {
+    const unsigned S = Symmetry::size(symmetryName);
+
+    std::vector<char> maximumAsymmetricCase (S);
+    for(unsigned i = 0; i < S; ++i) {
+      maximumAsymmetricCase.at(i) = 'A' + i;
+    }
+
+    for(unsigned i = 0; i < S; ++i ) {
+      BOOST_CHECK_MESSAGE(
+        testOrientationState(
+          Composite::OrientationState {
+            symmetryName,
+            i,
+            maximumAsymmetricCase,
+            0
+          }
+        ),
+        "Transformation and reversion does not work for "
+        << Symmetry::name(symmetryName)
+        << " on position " << i << "."
+      );
+    }
+  }
+}
+
 BOOST_AUTO_TEST_CASE(compositesTests) {
   Composite a {
-    Symmetry::Name::Seesaw,
-    Symmetry::Name::Tetrahedral,
-    0,
-    0,
-    {'A', 'B', 'C', 'D'},
-    {'A', 'B', 'C', 'D'}
+    Composite::OrientationState {
+      Symmetry::Name::Seesaw,
+      0,
+      {'A', 'B', 'C', 'D'},
+      0
+    },
+    Composite::OrientationState {
+      Symmetry::Name::Tetrahedral,
+      0,
+      {'A', 'B', 'C', 'D'},
+      1
+    }
   };
 
-  BOOST_CHECK(a.permutations() == 3u);
+  BOOST_CHECK_MESSAGE(
+    a.permutations() == 3u,
+    "Expected 3 permutations, got " << a.permutations()
+  );
 
   Composite b {
-    Symmetry::Name::Octahedral,
-    Symmetry::Name::Octahedral,
-    4,
-    4,
-    {'A', 'B', 'C', 'D', 'E', 'F'},
-    {'A', 'B', 'C', 'D', 'E', 'F'}
+    Composite::OrientationState {
+      Symmetry::Name::Octahedral,
+      4,
+      {'A', 'B', 'C', 'D', 'E', 'F'},
+      0
+    },
+    Composite::OrientationState {
+      Symmetry::Name::Octahedral,
+      2,
+      {'A', 'B', 'C', 'D', 'E', 'F'},
+      1
+    }
   };
 
-  BOOST_CHECK(b.permutations() == 4u);
+  BOOST_CHECK_MESSAGE(
+    b.permutations() == 4u,
+    "Expected 4 permutations, got " << b.permutations()
+  );
 
   Composite c {
-    Symmetry::Name::Bent,
-    Symmetry::Name::TrigonalPlanar,
-    0,
-    0,
-    {'A', 'B'},
-    {'A', 'B', 'C'}
+    Composite::OrientationState {
+      Symmetry::Name::Bent,
+      0,
+      {'A', 'B'},
+      0
+    },
+    Composite::OrientationState {
+      Symmetry::Name::TrigonalPlanar,
+      0,
+      {'A', 'B', 'C'},
+      1
+    }
   };
 
-  BOOST_CHECK(c.permutations() == 2);
+  BOOST_CHECK_MESSAGE(
+    c.permutations() == 2,
+    "Expected 2 permutations, got " << c.permutations()
+  );
 
   Composite d {
-    Symmetry::Name::TrigonalPlanar,
-    Symmetry::Name::TrigonalPlanar,
-    0,
-    0,
-    {'A', 'B', 'C'},
-    {'A', 'B', 'C'}
+    Composite::OrientationState {
+      Symmetry::Name::TrigonalPlanar,
+      0,
+      {'A', 'B', 'C'},
+      0
+    },
+    Composite::OrientationState {
+      Symmetry::Name::TrigonalPlanar,
+      0,
+      {'A', 'B', 'C'},
+      1
+    }
   };
 
-  BOOST_CHECK(d.permutations() == 2);
+  BOOST_CHECK_MESSAGE(
+    d.permutations() == 2,
+    "Expected 2 permutations, got " << d.permutations()
+  );
 
   Composite e {
-    Symmetry::Name::Bent,
-    Symmetry::Name::Bent,
-    0,
-    0,
-    {'A', 'B'},
-    {'A', 'B'}
+    Composite::OrientationState {
+      Symmetry::Name::Bent,
+      0,
+      {'A', 'B'},
+      0
+    },
+    Composite::OrientationState {
+      Symmetry::Name::Bent,
+      0,
+      {'A', 'B'},
+      1
+    }
   };
 
-  BOOST_CHECK(e.permutations() == 2);
+  BOOST_CHECK_MESSAGE(
+    e.permutations() == 2,
+    "Expected 2 permutations, got " << e.permutations()
+  );
 }

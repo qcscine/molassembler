@@ -233,8 +233,10 @@ nlohmann::json serialize(const Molecule& molecule) {
   for(const auto& stereocenter : stereocenters.bondStereocenters()) {
     json s;
 
-    s["l"] = stereocenter.left().index;
-    s["r"] = stereocenter.right().index;
+    s["edge"] = {
+      boost::source(stereocenter.edge(), molecule.getGraph()),
+      boost::target(stereocenter.edge(), molecule.getGraph())
+    };
 
     if(stereocenter.assigned()) {
       s["assign"] = stereocenter.assigned().value();
@@ -275,19 +277,19 @@ Molecule deserialize(const nlohmann::json& m) {
 
   // Bond stereocenters
   for(const auto& j : m["b"]) {
-    AtomIndexType left = j["l"];
-    AtomIndexType right = j["r"];
+    AtomIndexType a = j["edge"].at(0);
+    AtomIndexType b = j["edge"].at(1);
 
-    auto leftStereocenterOption = stereocenters.option(left);
-    auto rightStereocenterOption = stereocenters.option(left);
+    auto aStereocenterOption = stereocenters.option(a);
+    auto bStereocenterOption = stereocenters.option(b);
 
-    assert(leftStereocenterOption && rightStereocenterOption);
+    assert(aStereocenterOption && bStereocenterOption);
 
-    GraphType::edge_descriptor molEdge = boost::edge(left, right, graph).first;
+    GraphType::edge_descriptor molEdge = boost::edge(a, b, graph).first;
 
     auto stereocenter = BondStereocenter {
-      leftStereocenterOption.value(),
-      rightStereocenterOption.value(),
+      aStereocenterOption.value(),
+      bStereocenterOption.value(),
       molEdge
     };
 
