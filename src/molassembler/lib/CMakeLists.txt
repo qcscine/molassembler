@@ -15,7 +15,6 @@ set(molassembler_VERSION 0.1.0)
 
 # collect headers
 set(HEADERS_all
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AdjacencyMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomEnvironmentHash.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomInfo.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.h
@@ -56,7 +55,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphDistanceMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.h
@@ -75,7 +73,6 @@ set(HEADERS_all
 
 # collect sources
 set(SOURCES_all
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AdjacencyMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomEnvironmentHash.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomInfo.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.cpp
@@ -101,7 +98,6 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphDistanceMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/LocalGeometryModel.cpp

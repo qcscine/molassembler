@@ -3,6 +3,7 @@
 
 #include "Delib/ElementTypeCollection.h"
 
+[[deprecated]]
 Delib::ElementTypeCollection makeRepeatedElementCollection(
   const Delib::ElementType& elementType,
   const unsigned& repeat
@@ -16,6 +17,7 @@ Delib::ElementTypeCollection makeRepeatedElementCollection(
   return returnCollection;
 }
 
+[[deprecated]]
 Delib::ElementTypeCollection makeIncrementedElementCollection(
   const unsigned& size
 ) {
