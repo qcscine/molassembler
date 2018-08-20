@@ -2,6 +2,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ORDERED_PAIR_H
 
 #include <tuple>
+#include <utility>
 
 namespace temple {
 
@@ -12,7 +13,12 @@ struct OrderedPair {
   T second;
 
   OrderedPair() = default;
-  constexpr OrderedPair(T a, T b) : first {std::min(a, b)}, second {std::max(a, b)} {}
+
+  constexpr OrderedPair(T a, T b) : first {std::move(a)}, second {std::move(b)} {
+    if(b < a) {
+      std::swap(first, second);
+    }
+  }
 
   constexpr T front() const {
     return first;
@@ -191,26 +197,27 @@ struct OrderedPair {
 
   // C++17 spaceship operator
   constexpr bool operator < (const OrderedPair& other) const {
-    if(first < other.first) {
-      return true;
-    }
+    return std::tie(first, second) < std::tie(other.first, other.second);
+  }
 
-    if(second < other.second) {
-      return true;
-    }
-
-    return false;
+  constexpr bool operator > (const OrderedPair& other) const {
+    return std::tie(first, second) > std::tie(other.first, other.second);
   }
 
   constexpr bool operator == (const OrderedPair& other) const {
-    return (
-      first == other.first
-      && second = other.second
-    );
+    return std::tie(first, second) == std::tie(other.first, other.second);
   }
 
   constexpr bool operator != (const OrderedPair& other) const {
-    return !(*this == other);
+    return std::tie(first, second) != std::tie(other.first, other.second);
+  }
+
+  template<typename UnaryFunction>
+  auto map(UnaryFunction&& mapFunction) const {
+    return std::make_pair(
+      mapFunction(first),
+      mapFunction(second)
+    );
   }
 };
 

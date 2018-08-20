@@ -322,6 +322,32 @@ template<
 template<typename Container>
 Container reverse(const Container& container);
 
+//!  Calculate the index of permutation of elements in a container
+template<typename Container>
+std::size_t permutationIndex(const Container& container) {
+  const std::size_t size = container.size();
+
+  std::size_t index = 0;
+  std::size_t position = 2;// position 1 is paired with factor 0 and so is skipped
+  std::size_t factor = 1;
+
+  for(std::size_t p = size - 2; p != std::numeric_limits<std::size_t>::max(); --p) {
+    std::size_t largerSuccessors = 0;
+
+    for(std::size_t q = p + 1; q < size; ++q) {
+      if(container.at(p) > container.at(q)) {
+        ++largerSuccessors;
+      }
+    }
+
+    index += (largerSuccessors * factor);
+    factor *= position;
+    ++position;
+  }
+
+  return index;
+}
+
 /*!
  * Condenses an iterable container into a comma-separated string of string
  * representations of its contents. Requires container iterators to satisfy
