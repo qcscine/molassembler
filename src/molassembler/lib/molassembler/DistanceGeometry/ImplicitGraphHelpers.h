@@ -7,7 +7,7 @@
  * interoperability with boost::graph algorithms.
  */
 
-#include "DistanceGeometry/ImplicitGraph.h"
+#include "molassembler/DistanceGeometry/ImplicitGraph.h"
 #include "boost/graph/properties.hpp"
 
 namespace boost {
@@ -95,7 +95,7 @@ inline double get(
   const molassembler::DistanceGeometry::ImplicitGraph::EdgeDescriptor& x
 ) {
   return get(p, g)[x];
-} 
+}
 
 inline double get(
   const boost::edge_weight_t& p,

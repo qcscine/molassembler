@@ -1,4 +1,4 @@
-#include "Log.h"
+#include "molassembler/Log.h"
 
 namespace Log {
 

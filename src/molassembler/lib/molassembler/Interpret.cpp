@@ -1,4 +1,4 @@
-#include "Interpret.h"
+#include "molassembler/Interpret.h"
 
 #include "boost/graph/connected_components.hpp"
 
@@ -7,8 +7,8 @@
 
 #include "temple/Containers.h"
 
-#include "BondOrders.h"
-#include "Molecule.h"
+#include "molassembler/BondOrders.h"
+#include "molassembler/Molecule.h"
 
 namespace molassembler {
 

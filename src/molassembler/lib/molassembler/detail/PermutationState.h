@@ -1,12 +1,12 @@
-#ifndef INLCUDE_MOLASSEMBLER_DETAIL_PERMUTATION_STATE_H
-#define INLCUDE_MOLASSEMBLER_DETAIL_PERMUTATION_STATE_H
+#ifndef INCLUDE_MOLASSEMBLER_DETAIL_PERMUTATION_STATE_H
+#define INCLUDE_MOLASSEMBLER_DETAIL_PERMUTATION_STATE_H
 
 #include "stereopermutation/GenerateUniques.h"
 #include "chemical_symmetries/Properties.h"
 
-#include "DistanceGeometry/ValueBounds.h"
-#include "RankingInformation.h"
-#include "Options.h"
+#include "molassembler/DistanceGeometry/ValueBounds.h"
+#include "molassembler/RankingInformation.h"
+#include "molassembler/Options.h"
 
 namespace molassembler {
 

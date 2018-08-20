@@ -1,5 +1,5 @@
-#include "BondOrders.h"
-#include "BondDistance.h"
+#include "molassembler/BondOrders.h"
+#include "molassembler/BondDistance.h"
 
 namespace molassembler {
 

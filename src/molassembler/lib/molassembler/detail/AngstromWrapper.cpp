@@ -1,4 +1,4 @@
-#include "detail/AngstromWrapper.h"
+#include "molassembler/detail/AngstromWrapper.h"
 
 #include "Delib/Constants.h"
 

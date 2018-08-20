@@ -6,8 +6,8 @@
 #include "Delib/ElementTypeCollection.h"
 #include "Delib/BondOrderCollection.h"
 
-#include "detail/AngstromWrapper.h"
-#include "Interpret.h"
+#include "molassembler/detail/AngstromWrapper.h"
+#include "molassembler/Interpret.h"
 
 namespace molassembler {
 

@@ -1,4 +1,4 @@
-#include "GenerateUniques.h"
+#include "stereopermutation/GenerateUniques.h"
 
 #include "boost/functional/hash.hpp"
 

@@ -1,3 +1,5 @@
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+
 #include "boost/graph/graphviz.hpp"
 #include "Delib/ElementInfo.h"
 #include "CyclicPolygons.h"
@@ -6,14 +8,13 @@
 #include "temple/Random.h"
 #include "temple/Containers.h"
 
-#include "DistanceGeometry/SpatialModel.h"
-#include "DistanceGeometry/DistanceGeometry.h"
-#include "detail/CommonTrig.h"
-#include "detail/StdlibTypeAlgorithms.h"
-#include "detail/MolGraphWriter.h"
-#include "Cycles.h"
-#include "Log.h"
-#include "RankingInformation.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/detail/CommonTrig.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/detail/MolGraphWriter.h"
+#include "molassembler/Cycles.h"
+#include "molassembler/Log.h"
+#include "molassembler/RankingInformation.h"
 
 #include <fstream>
 

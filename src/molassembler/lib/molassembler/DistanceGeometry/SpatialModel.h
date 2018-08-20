@@ -1,9 +1,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "Molecule.h"
-#include "StereocenterList.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/StereocenterList.h"
 
 /*! @file
  *

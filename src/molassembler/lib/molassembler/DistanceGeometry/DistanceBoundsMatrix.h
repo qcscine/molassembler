@@ -2,11 +2,12 @@
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_DISTANCE_BOUNDS_MATRIX_H
 
 #include "boost_outcome/outcome.hpp"
-#include "DistanceGeometry/DistanceGeometry.h"
-#include "AtomInfo.h"
-
 #include <Eigen/Core>
 #include "temple/Random.h"
+
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/AtomInfo.h"
+
 
 /*! @file
  *

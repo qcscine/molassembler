@@ -1,7 +1,6 @@
 #ifndef LIB_UNIQUE_ASSIGNMENTS_UTIL_H
 #define LIB_UNIQUE_ASSIGNMENTS_UTIL_H
 
-#include <sstream>
 #include <set>
 
 #include "boost/optional.hpp"
@@ -52,20 +51,6 @@ decltype(auto) sortBinaryArgs(
   } else {
     return function(std::forward<T>(b), std::forward<T>(a));
   }
-}
-
-template<typename T>
-std::string toString(const T& container) {
-  std::stringstream sstream;
-  sstream << "{";
-  unsigned nItems = container.size();
-  for(const auto& item : container) {
-    sstream << item;
-    if(--nItems != 0) sstream << ", ";
-  }
-  sstream << "}";
-
-  return sstream.str();
 }
 
 } // eo namespace Util

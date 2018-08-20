@@ -2,7 +2,7 @@
 #define INCLUDE_TESTING_DISTANCE_BOUNDS_FROM_SYMMETRY_H
 
 #include "chemical_symmetries/Symmetries.h"
-#include "Molecule.h"
+#include "molassembler/Molecule.h"
 
 /*! @file
  *

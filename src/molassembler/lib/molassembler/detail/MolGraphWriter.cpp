@@ -1,4 +1,5 @@
-#include "MolGraphWriter.h"
+#include "molassembler/detail/MolGraphWriter.h"
+
 #include "Delib/ElementInfo.h"
 
 namespace molassembler {
@@ -30,7 +31,7 @@ void MolGraphWriter::operator() (
   );
 
   os << "[";
-  
+
   // Add element name and index label
   os << R"(label = ")" << symbolString << vertexIndex << R"(")";
 
@@ -50,7 +51,7 @@ void MolGraphWriter::operator() (
   if(symbolString == "H") {
     os << ", fontsize=10, width=.3, fixedsize=true";
   }
-  
+
   os << "]";
 }
 
@@ -83,7 +84,7 @@ void MolGraphWriter::operator() (
 }
 
 
-// Color maps 
+// Color maps
 const std::map<std::string, std::string> MolGraphWriter::elementBGColorMap {
   {"H", "white"},
   {"C", "gray"},

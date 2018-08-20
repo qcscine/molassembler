@@ -1,4 +1,4 @@
-#include "StereocenterList.h"
+#include "molassembler/StereocenterList.h"
 
 #include "temple/Containers.h"
 

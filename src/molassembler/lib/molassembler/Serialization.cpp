@@ -1,14 +1,15 @@
-#include "Serialization.h"
+#include "molassembler/Serialization.h"
 
 #include "chemical_symmetries/Symmetries.h"
 #include "boost/range/adaptor/map.hpp"
 #include "Delib/ElementTypeCollection.h"
 #include "json/json.hpp"
 
-#include "detail/Base64.h"
-#include "GraphAlgorithms.h"
-#include "RankingInformation.h"
-#include "StereocenterList.h"
+#include "molassembler/detail/Base64.h"
+#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/RankingInformation.h"
+#include "molassembler/StereocenterList.h"
 
 namespace nlohmann {
 

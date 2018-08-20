@@ -1,29 +1,26 @@
-#include "temple/Optionals.h"
+#include "molassembler/Molecule.h"
 
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
-
+#include "chemical_symmetries/ConstexprProperties.h"
 #include "Delib/Constants.h"
 #include "Delib/ElementTypeCollection.h"
-
-#include "chemical_symmetries/ConstexprProperties.h"
-
-#include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
+#include "temple/Containers.h"
+#include "temple/Optionals.h"
 
-#include "detail/CommonTrig.h"
-#include "detail/MolGraphWriter.h"
-#include "Cycles.h"
-#include "GraphAlgorithms.h"
-#include "GraphHelpers.h"
-#include "LocalGeometryModel.h"
-#include "Log.h"
-#include "Molecule.h"
-#include "RankingInformation.h"
-#include "RankingTree.h"
-#include "StereocenterList.h"
-#include "Options.h"
+#include "molassembler/detail/CommonTrig.h"
+#include "molassembler/detail/MolGraphWriter.h"
+#include "molassembler/Cycles.h"
+#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/GraphHelpers.h"
+#include "molassembler/LocalGeometryModel.h"
+#include "molassembler/Log.h"
+#include "molassembler/RankingInformation.h"
+#include "molassembler/RankingTree.h"
+#include "molassembler/StereocenterList.h"
+#include "molassembler/Options.h"
 
 namespace molassembler {
 

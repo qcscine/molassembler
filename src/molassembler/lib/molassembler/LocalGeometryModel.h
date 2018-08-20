@@ -1,9 +1,9 @@
-#ifndef INCLUDE_GEOMETRY_MODELING_MODEL_H
-#define INCLUDE_GEOMETRY_MODELING_MODEL_H
+#ifndef INCLUDE_MOLASSEMBLER_LOCAL_GEOMETRY_MODEL_H
+#define INCLUDE_MOLASSEMBLER_LOCAL_GEOMETRY_MODEL_H
 
 #include "chemical_symmetries/Names.h"
 
-#include "RankingInformation.h"
+#include "molassembler/RankingInformation.h"
 
 /*! @file
  *

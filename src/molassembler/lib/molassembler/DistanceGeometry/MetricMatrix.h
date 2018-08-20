@@ -1,9 +1,9 @@
-#ifndef INCLUDE_DG_METRIC_MATRIX_HPP
-#define INCLUDE_DG_METRIC_MATRIX_HPP
+#ifndef INCLUDE_MOLASSEMBLER_DG_METRIC_MATRIX_HPP
+#define INCLUDE_MOLASSEMBLER_DG_METRIC_MATRIX_HPP
 
 #include <Eigen/Core>
 
-#include "DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
 /*! @file
  *
@@ -26,8 +26,8 @@ private:
 public:
 /* Constructors */
   MetricMatrix() = delete;
-  explicit MetricMatrix(Eigen::MatrixXd&& matrix); 
-  explicit MetricMatrix(const Eigen::MatrixXd& matrix); 
+  explicit MetricMatrix(Eigen::MatrixXd&& matrix);
+  explicit MetricMatrix(const Eigen::MatrixXd& matrix);
 
 /* Information */
   //! Allow const ref access to underlying matrix

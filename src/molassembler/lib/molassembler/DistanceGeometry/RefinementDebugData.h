@@ -1,11 +1,13 @@
-#ifndef INCLUDE_DG_REFINEMENT_DEBUG_DATA_H
-#define INCLUDE_DG_REFINEMENT_DEBUG_DATA_H
+#ifndef INCLUDE_MOLASSEMBLER_DG_REFINEMENT_DEBUG_DATA_H
+#define INCLUDE_MOLASSEMBLER_DG_REFINEMENT_DEBUG_DATA_H
+
+#include "dlib/matrix.h"
+
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
 #include <list>
 #include <vector>
-#include "DistanceGeometry/DistanceGeometry.h"
 
-#include "dlib/matrix.h"
 
 /*! @file
  *

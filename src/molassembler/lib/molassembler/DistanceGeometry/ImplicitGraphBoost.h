@@ -1,7 +1,8 @@
 #ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_BOOST_TRAITS_H
 #define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_BOOST_TRAITS_H
 
-#include "DistanceGeometry/ImplicitGraphHelpers.h"
+// DO NOT CHANGE THIS INCLUDE ORDER
+#include "molassembler/DistanceGeometry/ImplicitGraphHelpers.h"
 #include "boost/graph/graph_traits.hpp"
 
 /*! @file
@@ -20,8 +21,8 @@ namespace boost {
  * invent one that is convertible to vertex_list_graph_tag and edge_list_graph
  * tag here:
  */
-struct vertex_and_edge_list_plus_incidence_graph_tag 
-  : virtual vertex_list_graph_tag, 
+struct vertex_and_edge_list_plus_incidence_graph_tag
+  : virtual vertex_list_graph_tag,
     virtual edge_list_graph_tag,
     virtual incidence_graph_tag {};
 

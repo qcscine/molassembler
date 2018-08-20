@@ -1,4 +1,4 @@
-#include "Symmetries.h"
+#include "chemical_symmetries/Symmetries.h"
 
 namespace Symmetry {
 

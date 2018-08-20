@@ -1,8 +1,8 @@
-#ifndef INCLUDE_DELIB_HELPERS_H
-#define INCLUDE_DELIB_HELPERS_H
+#ifndef INCLUDE_MOLASSEMBLER_DELIB_HELPERS_H
+#define INCLUDE_MOLASSEMBLER_DELIB_HELPERS_H
 
 #include "Delib/PositionCollection.h"
-#include "SharedTypes.h"
+#include "molassembler/detail/SharedTypes.h"
 
 /*! @file
  *
@@ -16,16 +16,16 @@ namespace DelibHelpers {
 //! Fetches the cartesian distance between two indices in a PositionCollection
 double getDistance(
   const Delib::PositionCollection& positions,
-  const AtomIndexType& i,
-  const AtomIndexType& j
+  AtomIndexType i,
+  AtomIndexType j
 );
 
 //! Fetches the angle in radians between three indices in a PostionCollection
 double getAngle(
   const Delib::PositionCollection& positions,
-  const AtomIndexType& i,
-  const AtomIndexType& j,
-  const AtomIndexType& k
+  AtomIndexType i,
+  AtomIndexType j,
+  AtomIndexType k
 );
 
 /*!
@@ -36,10 +36,10 @@ double getAngle(
  */
 double getDihedral(
   const Delib::PositionCollection& positions,
-  const AtomIndexType& i,
-  const AtomIndexType& j,
-  const AtomIndexType& k,
-  const AtomIndexType& l
+  AtomIndexType i,
+  AtomIndexType j,
+  AtomIndexType k,
+  AtomIndexType l
 );
 
 /*!
@@ -59,10 +59,10 @@ double getDihedral(
  */
 double getSignedVolume(
   const Delib::PositionCollection& positions,
-  const AtomIndexType& i,
-  const AtomIndexType& j,
-  const AtomIndexType& k,
-  const AtomIndexType& l
+  AtomIndexType i,
+  AtomIndexType j,
+  AtomIndexType k,
+  AtomIndexType l
 );
 
 /*!

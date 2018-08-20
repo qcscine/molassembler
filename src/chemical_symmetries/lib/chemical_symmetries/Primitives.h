@@ -3,11 +3,11 @@
 
 #include "temple/constexpr/Vector.h"
 
-#include "Names.h"
-#include "CompileTimeOptions.h"
+#include "chemical_symmetries/Names.h"
+#include "chemical_symmetries/CompileTimeOptions.h"
 
 #ifdef USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
-#include "AngleLookup.h"
+#include "chemical_symmetries/AngleLookup.h"
 #endif
 
 /*! @file

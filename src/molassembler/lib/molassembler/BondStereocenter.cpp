@@ -1,22 +1,21 @@
+#include "molassembler/BondStereocenter.h"
+
 #include "stereopermutation/Composites.h"
 #include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/Containers.h"
 #include "temple/OrderedPair.h"
-
 #include "temple/Random.h"
 
-#include "DistanceGeometry/DistanceGeometry.h"
-#include "DistanceGeometry/SpatialModel.h"
-
-#include "detail/AngstromWrapper.h"
-#include "detail/DelibHelpers.h"
-#include "AtomStereocenter.h"
-#include "BondStereocenter.h"
-#include "BondDistance.h"
-#include "Molecule.h"
-#include "RankingInformation.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/detail/AngstromWrapper.h"
+#include "molassembler/detail/DelibHelpers.h"
+#include "molassembler/AtomStereocenter.h"
+#include "molassembler/BondDistance.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/RankingInformation.h"
 
 namespace molassembler {
 

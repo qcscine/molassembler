@@ -1,4 +1,4 @@
-#include "FileHandlers.h"
+#include "molassembler/detail/FileHandlers.h"
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
@@ -12,10 +12,10 @@
 #include "Delib/Constants.h"
 #include "Delib/ElementInfo.h"
 
-#include "BondDistance.h"
-#include "Molecule.h"
-#include "Options.h"
-#include "Version.h"
+#include "molassembler/BondDistance.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/Options.h"
+#include "molassembler/Version.h"
 
 namespace molassembler {
 

@@ -1,7 +1,7 @@
-#ifndef INCLUDE_DG_DLIB_REFINEMENT_PROBLEM_H
-#define INCLUDE_DG_DLIB_REFINEMENT_PROBLEM_H
+#ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_REFINEMENT_PROBLEM_H
+#define INCLUDE_MOLASSEMBLER_DG_DLIB_REFINEMENT_PROBLEM_H
 
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 
 #include <dlib/optimization.h>
 

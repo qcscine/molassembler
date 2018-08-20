@@ -4,7 +4,7 @@
 #include "boost/graph/graphviz.hpp"
 #include "temple/Containers.h"
 
-#include "detail/SharedTypes.h"
+#include "molassembler/detail/SharedTypes.h"
 
 /* TODO
  * - may be preferable to have OrderDiscoveryHelper emit pairs of Ts whose

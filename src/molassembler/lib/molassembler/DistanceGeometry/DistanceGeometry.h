@@ -1,9 +1,10 @@
-#ifndef DISTANCE_GEOMETRY_HPP
-#define DISTANCE_GEOMETRY_HPP
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_H
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_H
+
+#include "molassembler/detail/SharedTypes.h"
+#include "molassembler/DistanceGeometry/ValueBounds.h"
 
 #include <tuple>
-#include "detail/SharedTypes.h"
-#include "DistanceGeometry/ValueBounds.h"
 
 /*! @file
  *

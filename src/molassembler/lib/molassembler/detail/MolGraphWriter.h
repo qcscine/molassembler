@@ -7,7 +7,7 @@
  * molecular graph.
  */
 
-#include "SharedTypes.h"
+#include "molassembler/detail/SharedTypes.h"
 
 namespace molassembler {
 

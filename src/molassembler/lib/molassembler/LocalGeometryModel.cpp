@@ -1,4 +1,4 @@
-#include "LocalGeometryModel.h"
+#include "molassembler/LocalGeometryModel.h"
 
 #include "Delib/ElementInfo.h"
 
@@ -6,8 +6,8 @@
 #include "temple/Containers.h"
 #include "temple/Optionals.h"
 
-#include "AtomInfo.h"
-#include "GraphHelpers.h"
+#include "molassembler/AtomInfo.h"
+#include "molassembler/GraphHelpers.h"
 
 namespace molassembler {
 

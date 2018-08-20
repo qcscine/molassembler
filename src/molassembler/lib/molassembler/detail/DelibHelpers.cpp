@@ -1,7 +1,7 @@
-#include "DelibHelpers.h"
-#include "temple/Containers.h"
+#include "molassembler/detail/DelibHelpers.h"
 
 #include <Eigen/Geometry>
+#include "temple/Containers.h"
 
 namespace molassembler {
 
@@ -26,7 +26,7 @@ bool validPositionIndices(
 
   return temple::all_of(
     indices,
-    [&unsignedPositionCollectionSize](const AtomIndexType& index) -> bool {
+    [&unsignedPositionCollectionSize](const AtomIndexType index) -> bool {
       return index < unsignedPositionCollectionSize;
     }
   );
@@ -34,8 +34,8 @@ bool validPositionIndices(
 
 double getDistance(
   const Delib::PositionCollection& positions,
-  const AtomIndexType& i,
-  const AtomIndexType& j
+  AtomIndexType i,
+  AtomIndexType j
 ) {
   assert(
     validPositionIndices(positions, {i, j})
@@ -49,9 +49,9 @@ double getDistance(
 
 double getAngle(
   const Delib::PositionCollection& positions,
-  const AtomIndexType& i,
-  const AtomIndexType& j,
-  const AtomIndexType& k
+  const AtomIndexType i,
+  const AtomIndexType j,
+  const AtomIndexType k
 ) {
   assert(
     validPositionIndices(positions, {i, j, k})
@@ -69,10 +69,10 @@ double getAngle(
 
 double getDihedral(
   const Delib::PositionCollection& positions,
-  const AtomIndexType& i,
-  const AtomIndexType& j,
-  const AtomIndexType& k,
-  const AtomIndexType& l
+  const AtomIndexType i,
+  const AtomIndexType j,
+  const AtomIndexType k,
+  const AtomIndexType l
 ) {
   assert(
     validPositionIndices(positions, {i, j, k, l})
@@ -114,10 +114,10 @@ double getDihedral(
 
 double getSignedVolume(
   const Delib::PositionCollection& positions,
-  const AtomIndexType& i,
-  const AtomIndexType& j,
-  const AtomIndexType& k,
-  const AtomIndexType& l
+  const AtomIndexType i,
+  const AtomIndexType j,
+  const AtomIndexType k,
+  const AtomIndexType l
 ) {
   assert(
     validPositionIndices(positions, {i, j, k, l})

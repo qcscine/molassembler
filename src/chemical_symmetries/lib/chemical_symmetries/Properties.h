@@ -1,8 +1,8 @@
 #ifndef INCLUDE_SYMMETRY_INFORMATION_PROPERTIES_H
 #define INCLUDE_SYMMETRY_INFORMATION_PROPERTIES_H
 
-#include "ConstexprProperties.h"
-#include "DynamicProperties.h"
+#include "chemical_symmetries/ConstexprProperties.h"
+#include "chemical_symmetries/DynamicProperties.h"
 
 /*! @file
  *

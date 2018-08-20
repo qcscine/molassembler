@@ -1,12 +1,12 @@
-#include "detail/PermutationState.h"
+#include "molassembler/detail/PermutationState.h"
 
 #include "temple/Containers.h"
 #include "CyclicPolygons.h"
 
-#include "DistanceGeometry/SpatialModel.h"
-#include "detail/CommonTrig.h"
-#include "BondDistance.h"
-#include "Cycles.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/detail/CommonTrig.h"
+#include "molassembler/BondDistance.h"
+#include "molassembler/Cycles.h"
 
 namespace molassembler {
 

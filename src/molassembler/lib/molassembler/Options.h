@@ -4,7 +4,7 @@
 #include "chemical_symmetries/Names.h"
 #include "temple/Random.h"
 
-#include "detail/AngstromWrapper.h"
+#include "molassembler/detail/AngstromWrapper.h"
 
 /*!@file
  *

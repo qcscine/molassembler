@@ -1,8 +1,8 @@
-#ifndef INCLUDE_DG_DLIB_DEBUG_ADAPTORS_H
-#define INCLUDE_DG_DLIB_DEBUG_ADAPTORS_H
+#ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_DEBUG_ADAPTORS_H
+#define INCLUDE_MOLASSEMBLER_DG_DLIB_DEBUG_ADAPTORS_H
 
-#include "RefinementProblem.h"
-#include "DistanceGeometry/RefinementDebugData.h"
+#include "molassembler/DistanceGeometry/RefinementDebugData.h"
+#include "molassembler/DistanceGeometry/RefinementProblem.h"
 
 /*! @file
  *

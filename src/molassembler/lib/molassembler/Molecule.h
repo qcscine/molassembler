@@ -2,9 +2,10 @@
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
 #include "Delib/ElementTypes.h"
-#include "detail/RangeForTemporary.h"
-#include "detail/AngstromWrapper.h"
-#include "AtomEnvironmentHash.h"
+
+#include "molassembler/detail/RangeForTemporary.h"
+#include "molassembler/detail/AngstromWrapper.h"
+#include "molassembler/AtomEnvironmentHash.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST

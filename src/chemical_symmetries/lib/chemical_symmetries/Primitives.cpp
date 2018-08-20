@@ -1,4 +1,4 @@
-#include "Primitives.h"
+#include "chemical_symmetries/Primitives.h"
 
 namespace Symmetry {
 

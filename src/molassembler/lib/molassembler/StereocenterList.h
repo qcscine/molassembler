@@ -5,8 +5,8 @@
 
 #include "temple/constexpr/Bitmask.h"
 
-#include "AtomStereocenter.h"
-#include "BondStereocenter.h"
+#include "molassembler/AtomStereocenter.h"
+#include "molassembler/BondStereocenter.h"
 
 #include <unordered_map>
 #include <map>

@@ -1,10 +1,9 @@
-#include "AtomStereocenter.h"
-
-#include <Eigen/Dense>
+#include "molassembler/AtomStereocenter.h"
 
 #include "chemical_symmetries/Properties.h"
 #include "chemical_symmetries/DynamicProperties.h"
 #include "CyclicPolygons.h"
+#include <Eigen/Dense>
 #include "stereopermutation/GenerateUniques.h"
 #include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/Containers.h"
@@ -12,16 +11,16 @@
 #include "temple/Optionals.h"
 #include "temple/Random.h"
 
-#include "DistanceGeometry/SpatialModel.h"
-#include "DistanceGeometry/DistanceGeometry.h"
-#include "detail/BuildTypeSwitch.h"
-#include "detail/CommonTrig.h"
-#include "detail/DelibHelpers.h"
-#include "detail/PermutationState.h"
-#include "detail/StdlibTypeAlgorithms.h"
-#include "Cycles.h"
-#include "Log.h"
-#include "RankingInformation.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/detail/BuildTypeSwitch.h"
+#include "molassembler/detail/CommonTrig.h"
+#include "molassembler/detail/DelibHelpers.h"
+#include "molassembler/detail/PermutationState.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Cycles.h"
+#include "molassembler/Log.h"
+#include "molassembler/RankingInformation.h"
 
 #include <iomanip>
 

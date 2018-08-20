@@ -2,12 +2,17 @@
 #define INCLUDE_MOLASSEMBLER_SUBGRAPHS_H
 
 #include "boost/bimap.hpp"
-
+#include "chemical_symmetries/Names.h"
 #include "temple/constexpr/UpperTriangularMatrix.h"
 
-#include "Molecule.h"
+#include "molassembler/detail/SharedTypes.h"
+
+#include <memory>
 
 namespace molassembler {
+
+// Forward-declare Molecule
+class Molecule;
 
 namespace subgraphs {
 

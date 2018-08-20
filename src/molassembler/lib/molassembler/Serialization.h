@@ -1,14 +1,18 @@
 #ifndef INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 #define INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 
-#include "Molecule.h"
-
 /*!@file
  *
  * Provides serialization / deserialization for Molecule instances
  */
 
+#include <vector>
+#include <string>
+
 namespace molassembler {
+
+// Forward-declarations
+class Molecule;
 
 //! Serializes a molecule into a verbose JSON representation
 std::string toJSON(const Molecule& molecule);

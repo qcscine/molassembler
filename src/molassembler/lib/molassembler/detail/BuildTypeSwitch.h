@@ -1,5 +1,5 @@
-#ifndef INCLUDE_MOLECULEMANIP_BUILD_TYPE_SWITCH_H
-#define INCLUDE_MOLECULEMANIP_BUILD_TYPE_SWITCH_H
+#ifndef INCLUDE_MOLASSEMBLER_BUILD_TYPE_SWITCH_H
+#define INCLUDE_MOLASSEMBLER_BUILD_TYPE_SWITCH_H
 
 /*! @file
  * Defines a compile-time constant boolean indicating the build type.

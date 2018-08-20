@@ -1,5 +1,5 @@
-#ifndef INCLUDE_MOLECULE_IO_H
-#define INCLUDE_MOLECULE_IO_H
+#ifndef INCLUDE_MOLASSEMBLER_IO_H
+#define INCLUDE_MOLASSEMBLER_IO_H
 
 #include "detail/FileHandlers.h"
 
@@ -17,6 +17,9 @@
  */
 
 namespace molassembler {
+
+// Forward declarations
+class Molecule;
 
 //! Input and output
 namespace IO {

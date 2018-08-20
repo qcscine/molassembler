@@ -1,7 +1,7 @@
-#ifndef INCLUDE_GRAPH_ALGORITHMS_H
-#define INCLUDE_GRAPH_ALGORITHMS_H
+#ifndef INCLUDE_MOLASSEMBLER_GRAPH_ALGORITHMS_H
+#define INCLUDE_MOLASSEMBLER_GRAPH_ALGORITHMS_H
 
-#include "detail/SharedTypes.h"
+#include "molassembler/detail/SharedTypes.h"
 
 /*! @file
  *

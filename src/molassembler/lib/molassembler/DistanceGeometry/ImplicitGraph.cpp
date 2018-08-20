@@ -1,17 +1,17 @@
-#include "DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "boost/graph/two_bit_color_map.hpp"
 
-#include "DistanceGeometry/DistanceGeometry.h"
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "DistanceGeometry/Error.h"
-#include "AtomInfo.h"
-#include "Log.h"
-#include "Molecule.h"
-#include "Options.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/Error.h"
+#include "molassembler/AtomInfo.h"
+#include "molassembler/Log.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/Options.h"
 
 #define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
-#include "DistanceGeometry/Gor1.h"
+#include "molassembler/DistanceGeometry/Gor1.h"
 #else
 #include "gor1/Gor1.h"
 #endif

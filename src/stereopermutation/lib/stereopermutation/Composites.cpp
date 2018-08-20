@@ -1,9 +1,10 @@
-#include "Composites.h"
+#include "stereopermutation/Composites.h"
 
 #include "boost/dynamic_bitset.hpp"
 #include "Eigen/Geometry"
 
 #include "chemical_symmetries/DynamicProperties.h"
+#include "chemical_symmetries/Symmetries.h"
 #include "temple/Containers.h"
 #include "temple/Stringify.h"
 

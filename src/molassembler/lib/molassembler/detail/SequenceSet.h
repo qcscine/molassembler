@@ -1,7 +1,7 @@
-#ifndef INCLUDE_DG_SEQUENCE_SET
-#define INCLUDE_DG_SEQUENCE_SET
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SEQUENCE_SET
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SEQUENCE_SET
 
-#include "common_typedefs.h"
+#include "molassembler/detail/common_typedefs.h"
 
 #include <set>
 #include <array>

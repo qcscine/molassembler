@@ -1,4 +1,4 @@
-#include "RankingTree.h"
+#include "molassembler/RankingTree.h"
 
 #include "boost/algorithm/string/replace.hpp"
 #include "boost/graph/breadth_first_search.hpp"
@@ -7,11 +7,11 @@
 #include "chemical_symmetries/Properties.h"
 #include "temple/constexpr/ConsecutiveCompare.h"
 
-#include "detail/MolGraphWriter.h"
-#include "GraphHelpers.h"
-#include "LocalGeometryModel.h"
-#include "Options.h"
-#include "StereocenterList.h"
+#include "molassembler/detail/MolGraphWriter.h"
+#include "molassembler/GraphHelpers.h"
+#include "molassembler/LocalGeometryModel.h"
+#include "molassembler/Options.h"
+#include "molassembler/StereocenterList.h"
 
 #include <fstream>
 #include <iostream>

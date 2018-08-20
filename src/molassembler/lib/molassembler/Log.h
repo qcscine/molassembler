@@ -1,5 +1,5 @@
-#ifndef INCLUDE_LOG_H
-#define INCLUDE_LOG_H
+#ifndef INCLUDE_MOLASSEMBLER_LOG_H
+#define INCLUDE_MOLASSEMBLER_LOG_H
 
 #include <set>
 #include <iostream>

@@ -1,6 +1,7 @@
-#include "DistanceGeometry/DistanceBoundsMatrix.h"
-#include "DistanceGeometry/Error.h"
-#include "Options.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+
+#include "molassembler/DistanceGeometry/Error.h"
+#include "molassembler/Options.h"
 
 #include <cassert>
 

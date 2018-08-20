@@ -1,5 +1,5 @@
-#include "DistanceGeometry/MetricMatrix.h"
-#include "detail/SharedTypes.h"
+#include "molassembler/DistanceGeometry/MetricMatrix.h"
+#include "molassembler/detail/SharedTypes.h"
 
 #include <Eigen/Eigenvalues>
 

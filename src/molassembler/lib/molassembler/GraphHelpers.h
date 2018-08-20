@@ -1,8 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_GRAPH_HELPERS_H
 #define INCLUDE_MOLASSEMBLER_GRAPH_HELPERS_H
 
-#include "detail/SharedTypes.h"
-#include "detail/RangeForTemporary.h"
+#include "molassembler/detail/SharedTypes.h"
+#include "molassembler/detail/RangeForTemporary.h"
 
 /*!@file
  *

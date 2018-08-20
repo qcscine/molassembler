@@ -1,4 +1,4 @@
-#include "DistanceGeometry/ValueBounds.h"
+#include "molassembler/DistanceGeometry/ValueBounds.h"
 
 #include <limits>
 #include <cassert>

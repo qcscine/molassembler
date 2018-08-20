@@ -2,9 +2,10 @@
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_CONFORMER_GENERATION_H
 
 #include "boost_outcome/outcome.hpp"
-#include "DistanceGeometry/SpatialModel.h"
-#include "DistanceGeometry/RefinementDebugData.h"
-#include "Log.h"
+
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/DistanceGeometry/RefinementDebugData.h"
+#include "molassembler/Log.h"
 
 /*! @file
  *

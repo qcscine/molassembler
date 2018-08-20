@@ -1,11 +1,12 @@
-#ifndef INCLUDE_ATOM_INFO_H
-#define INCLUDE_ATOM_INFO_H
+#ifndef INCLUDE_MOLASSEMBLER_ATOM_INFO_H
+#define INCLUDE_MOLASSEMBLER_ATOM_INFO_H
+
+#include "boost/optional/optional_fwd.hpp"
+#include "Delib/ElementTypes.h"
 
 #include <array>
 #include <map>
 #include <vector>
-#include <boost/optional.hpp>
-#include "Delib/ElementTypes.h"
 
 /*! @file
  *
@@ -27,7 +28,7 @@ class ElementInfo {
 private:
   unsigned _valenceElectrons[4];
 
-  unsigned _valenceElectronCount(const char& shell) const {
+  unsigned _valenceElectronCount(const char shell) const {
     switch(shell) {
       case 's':
         return _valenceElectrons[0];
@@ -42,7 +43,7 @@ private:
     }
   }
 
-  unsigned _maxOccupancy(const char& shell) const {
+  unsigned _maxOccupancy(const char shell) const {
     switch(shell) {
       case 's':
         return 2;
@@ -61,11 +62,11 @@ public:
   double vdwRadius;
 
   ElementInfo(
-    const double& _vdwRadius,
-    const unsigned& sValenceElectrons = 0,
-    const unsigned& pValenceElectrons = 0,
-    const unsigned& dValenceElectrons = 0,
-    const unsigned& fValenceElectrons = 0
+    const double _vdwRadius,
+    const unsigned sValenceElectrons = 0,
+    const unsigned pValenceElectrons = 0,
+    const unsigned dValenceElectrons = 0,
+    const unsigned fValenceElectrons = 0
   ) :
     _valenceElectrons {
       sValenceElectrons,
@@ -76,19 +77,19 @@ public:
     vdwRadius (_vdwRadius)
   {};
   //! Returns the valence electrons for a given shell character (s, p, d, f)
-  unsigned valenceElectrons(const char& shell) const {
+  unsigned valenceElectrons(const char shell) const {
     return _valenceElectronCount(shell);
   }
 
   unsigned valenceElectrons(const std::vector<char>& shells) const {
     unsigned sum = 0;
-    for(const char& shell : shells) {
+    for(const char shell : shells) {
       sum += _valenceElectronCount(shell);
     }
     return sum;
   }
 
-  bool shellFullOrEmpty(const char& shell) const {
+  bool shellFullOrEmpty(const char shell) const {
     return (
       _valenceElectronCount(shell) == 0
       || _valenceElectronCount(shell) == _maxOccupancy(shell)
@@ -96,7 +97,7 @@ public:
   }
 
   bool shellsFullOrEmpty(const std::vector<char>& shells) const {
-    for(const char& shell : shells) {
+    for(const char shell : shells) {
       if(!shellFullOrEmpty(shell)) {
         return false;
       }
@@ -123,7 +124,7 @@ public:
  */
 extern const std::array<double, 110> bondRadii;
 
-double bondRadius(const Delib::ElementType& elementType);
+double bondRadius(Delib::ElementType elementType);
 
 /*!
  * ElementData instances for each element type. This is populated with the
@@ -138,18 +139,18 @@ double bondRadius(const Delib::ElementType& elementType);
  */
 extern std::array<ElementInfo, 110> elementData;
 
-bool isMainGroupElement(const Delib::ElementType& elementType);
+bool isMainGroupElement(Delib::ElementType elementType);
 
 /*!
  * Returns a count of valence electrons if the specified element type is a main
  * group element. Otherwise, returns boost::none.
  */
-boost::optional<unsigned> mainGroupVE(const Delib::ElementType& elementType);
+boost::optional<unsigned> mainGroupVE(Delib::ElementType elementType);
 
-unsigned dElectronCount(const Delib::ElementType& elementType);
+unsigned dElectronCount(Delib::ElementType elementType);
 
 //! Accessor function to fetch the vdw radius directly from elementData
-double vdwRadius(const Delib::ElementType& elementType);
+double vdwRadius(Delib::ElementType elementType);
 
 } // namespace AtomInfo
 

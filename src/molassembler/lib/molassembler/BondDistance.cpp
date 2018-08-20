@@ -1,4 +1,4 @@
-#include "BondDistance.h"
+#include "molassembler/BondDistance.h"
 
 #include <cmath>
 

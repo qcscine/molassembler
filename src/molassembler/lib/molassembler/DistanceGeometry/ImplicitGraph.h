@@ -1,15 +1,13 @@
 #ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
 #define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
 
-#include "boost/variant.hpp"
-#include "boost/optional.hpp"
 #include "boost_outcome/outcome.hpp"
-#include "Eigen/Core"
-
-#include "DistanceGeometry/ValueBounds.h"
 #include "boost/property_map/property_map.hpp"
+#include "Eigen/Core"
 #include "Delib/ElementTypes.h"
 #include "temple/Preprocessor.h"
+
+#include "molassembler/DistanceGeometry/ValueBounds.h"
 
 #include <array>
 #include <map>

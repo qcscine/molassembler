@@ -1,9 +1,9 @@
-#include "Stereopermutation.h"
+#include "stereopermutation/Stereopermutation.h"
 
 #include "boost/functional/hash.hpp"
 #include "chemical_symmetries/Symmetries.h"
 
-#include "Util.h"
+#include "stereopermutation/Util.h"
 
 #include <algorithm>
 #include <cassert>
@@ -215,7 +215,6 @@ bool Stereopermutation::isRotationallySuperimposable(
 
 //! Converts positionOccupations into a string
 std::string Stereopermutation::toString() const {
-
   std::stringstream out;
 
   out << "chars {";
@@ -244,12 +243,7 @@ std::string Stereopermutation::toString() const {
 bool Stereopermutation::operator < (
   const Stereopermutation& other
 ) const {
-  return Util::compareSmaller(
-    this -> characters,
-    other.characters
-  ).value_or(
-    this -> links < other.links // size and then lexicographical comparison
-  );
+  return std::tie(characters, links) < std::tie(other.characters, other.links);
 }
 
 bool Stereopermutation::operator > (

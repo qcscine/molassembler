@@ -1,12 +1,10 @@
-#ifndef STDLIB_TYPE_ALGORITHMS_H
-#define STDLIB_TYPE_ALGORITHMS_H
+#ifndef INCLUDE_MOLASSEMBLER_STDLIB_TYPE_ALGORITHMS_H
+#define INCLUDE_MOLASSEMBLER_STDLIB_TYPE_ALGORITHMS_H
 
-#include <iostream>
 #include <set>
 #include <vector>
 #include <algorithm>
 #include <functional>
-#include <sstream>
 #include <numeric>
 #include <map>
 
@@ -14,80 +12,6 @@
  *
  * Contains a few useful functions for dealing with STL containers / types.
  */
-
-/* ostream operators for sets, pairs and vectors */
-/* TODO
- * - ostream operators for non-selfmade datasructures violates DO NOT OPEN
- *   OTHER namespaces rule, prefer implementations below, BUT also this allows
- *   complex composite output operators to be formed automatically, the others
- *   do not!
- */
-template<typename T>
-std::ostream& operator << (std::ostream& os, const std::set<T>& rhs) {
-  os << "set{";
-  bool first = true;
-  for(const auto& element: rhs) {
-    if(first) {
-      first = false;
-      os << element;
-    } else os << ", " << element;
-  }
-  os << "}";
-  return os;
-}
-
-template<typename T1, typename T2>
-std::ostream& operator << (std::ostream& os, const std::pair<T1, T2>& rhs) {
-  os << "(" << rhs.first << ", " << rhs.second << ")";
-  return os;
-}
-
-template<typename T>
-std::ostream& operator << (std::ostream& os, const std::vector<T>& rhs) {
-  os << "vector{";
-  bool first = true;
-  for(const auto& element: rhs) {
-    if(first) {
-      first = false;
-      os << element;
-    } else os << ", " << element;
-  }
-  os << "}";
-  return os;
-}
-
-template<typename T, typename U>
-std::ostream& operator << (std::ostream& os, const std::map<T, U>& rhs) {
-  os << "map{";
-  bool first = true;
-  for(const auto& element: rhs) {
-    if(first) {
-      first = false;
-      os << element;
-    } else os << ", " << element;
-  }
-  os << "}";
-  return os;
-}
-
-// Alternative implementations
-/*
-template<typename T>
-std::string toString(const std::set<T>& set) {
-  std::string retString = "set{";
-  bool first = true;
-  for(const auto& element: set) {
-    if(first) {
-      first = false;
-      retString += std::to_string(element);
-    } else {
-      retString += ", ";
-      retString += std::to_string(element);
-    }
-  }
-  retString += "}";
-  return retString;
-}*/
 
 namespace StdlibTypeAlgorithms {
 

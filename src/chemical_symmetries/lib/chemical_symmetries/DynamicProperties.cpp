@@ -1,4 +1,5 @@
-#include "DynamicProperties.h"
+#include "chemical_symmetries/DynamicProperties.h"
+#include "chemical_symmetries/Symmetries.h"
 
 #include <Eigen/Dense>
 

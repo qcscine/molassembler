@@ -1,10 +1,10 @@
-#include "Options.h"
+#include "molassembler/Options.h"
 
 #include "chemical_symmetries/Symmetries.h"
 
-#include "AtomStereocenter.h"
-#include "Cycles.h"
-#include "GraphHelpers.h"
+#include "molassembler/AtomStereocenter.h"
+#include "molassembler/Cycles.h"
+#include "molassembler/GraphHelpers.h"
 
 namespace molassembler {
 

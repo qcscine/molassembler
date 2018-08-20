@@ -1,7 +1,7 @@
 #ifndef LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
 #define LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
 
-#include "Stereopermutation.h"
+#include "stereopermutation/Stereopermutation.h"
 
 /*! @file
  *

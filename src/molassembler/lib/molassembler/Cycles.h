@@ -7,8 +7,8 @@
 #include "temple/TinySet.h"
 #include "temple/Traits.h"
 
-#include "detail/RangeForTemporary.h"
-#include "detail/SharedTypes.h"
+#include "molassembler/detail/RangeForTemporary.h"
+#include "molassembler/detail/SharedTypes.h"
 
 /*! @file
  *

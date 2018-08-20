@@ -4,7 +4,7 @@
 #include "chemical_symmetries/Names.h"
 #include "temple/constexpr/Bitmask.h"
 
-#include "detail/SharedTypes.h"
+#include "molassembler/detail/SharedTypes.h"
 
 /*!@file
  *

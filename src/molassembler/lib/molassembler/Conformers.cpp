@@ -1,4 +1,4 @@
-#include "Conformers.h"
+#include "molassembler/Conformers.h"
 
 #include "temple/Containers.h"
 

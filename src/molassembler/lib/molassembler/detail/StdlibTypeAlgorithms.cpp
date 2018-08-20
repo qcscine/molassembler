@@ -1,4 +1,6 @@
-#include "StdlibTypeAlgorithms.h"
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+
+#include <sstream>
 
 namespace StdlibTypeAlgorithms {
 

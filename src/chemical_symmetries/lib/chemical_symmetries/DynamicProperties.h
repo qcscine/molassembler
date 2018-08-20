@@ -1,9 +1,14 @@
 #ifndef INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 #define INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 
-#include <set>
+#include "Eigen/Core"
+#include "boost/optional/optional_fwd.hpp"
 
-#include "Symmetries.h"
+#include "chemical_symmetries/Names.h"
+
+#include <set>
+#include <vector>
+
 
 /*! @file
  *

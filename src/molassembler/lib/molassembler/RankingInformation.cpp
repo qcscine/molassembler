@@ -1,8 +1,9 @@
-#include "RankingInformation.h"
+#include "molassembler/RankingInformation.h"
 
-#include "OrderDiscoveryHelper.h"
 #include "temple/Containers.h"
 #include "temple/TinySet.h"
+
+#include "molassembler/OrderDiscoveryHelper.h"
 
 namespace molassembler {
 

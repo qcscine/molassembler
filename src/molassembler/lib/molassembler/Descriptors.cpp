@@ -1,10 +1,10 @@
-#include "Descriptors.h"
-
-#include "detail/StdlibTypeAlgorithms.h"
-#include "Cycles.h"
-#include "Molecule.h"
+#include "molassembler/Descriptors.h"
 
 #include "temple/Containers.h"
+
+#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Cycles.h"
+#include "molassembler/Molecule.h"
 
 namespace molassembler {
 

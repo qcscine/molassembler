@@ -1,21 +1,19 @@
+#include "molassembler/DistanceGeometry/ConformerGeneration.h"
+
 #include <dlib/optimization.h>
 #include <Eigen/Dense>
-
 #include "Delib/Constants.h"
-
 #include "temple/Containers.h"
 #include "temple/Random.h"
 
-#include "DistanceGeometry/dlibAdaptors.h"
-#include "DistanceGeometry/dlibDebugAdaptors.h"
-#include "DistanceGeometry/ConformerGeneration.h"
-#include "DistanceGeometry/MetricMatrix.h"
-#include "DistanceGeometry/SpatialModel.h"
-#include "DistanceGeometry/RefinementProblem.h"
-#include "DistanceGeometry/Error.h"
-#include "DistanceGeometry/ExplicitGraph.h"
-
-#include "GraphAlgorithms.h"
+#include "molassembler/DistanceGeometry/dlibAdaptors.h"
+#include "molassembler/DistanceGeometry/dlibDebugAdaptors.h"
+#include "molassembler/DistanceGeometry/MetricMatrix.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/DistanceGeometry/RefinementProblem.h"
+#include "molassembler/DistanceGeometry/Error.h"
+#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/GraphAlgorithms.h"
 
 /* TODO
  * - Random assignment of unassigned stereocenters isn't ideal yet

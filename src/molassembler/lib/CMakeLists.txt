@@ -115,8 +115,8 @@ set(SOURCES_all
 add_library(molassemblerStatic STATIC ${SOURCES_all} ${HEADERS_all})
 target_include_directories(
   molassemblerStatic PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/molassembler>
-    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/molassembler>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
     ${EIGEN3_INCLUDE_DIRS}
 )
 
@@ -124,8 +124,8 @@ target_include_directories(
 add_library(molassembler SHARED ${SOURCES_all} ${HEADERS_all})
 target_include_directories(
   molassembler PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/molassembler>
-    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/molassembler>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
     ${EIGEN3_INCLUDE_DIRS}
 )
 

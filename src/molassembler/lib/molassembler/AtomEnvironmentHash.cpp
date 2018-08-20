@@ -1,13 +1,12 @@
-#include "AtomEnvironmentHash.h"
+#include "molassembler/AtomEnvironmentHash.h"
 
 #include "boost/range/join.hpp"
-
 #include "chemical_symmetries/Properties.h"
 
-#include "StereocenterList.h"
-#include "AtomStereocenter.h"
-#include "BondStereocenter.h"
-#include "GraphHelpers.h"
+#include "molassembler/StereocenterList.h"
+#include "molassembler/AtomStereocenter.h"
+#include "molassembler/BondStereocenter.h"
+#include "molassembler/GraphHelpers.h"
 
 namespace molassembler {
 

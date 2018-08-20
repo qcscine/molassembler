@@ -5,7 +5,7 @@
 #include "Eigen/Core"
 #include "temple/constexpr/TupleType.h"
 
-#include "Primitives.h"
+#include "chemical_symmetries/Primitives.h"
 
 #include <vector>
 #include <map>
@@ -86,9 +86,9 @@ struct SymmetryInformation {
     CoordinateList coordinates
   ) : stringName(stringName),
       size(size),
-      rotations(rotations),
-      tetrahedra(tetrahedra),
-      coordinates(coordinates)
+      rotations(std::move(rotations)),
+      tetrahedra(std::move(tetrahedra)),
+      coordinates(std::move(coordinates))
   {}
 };
 

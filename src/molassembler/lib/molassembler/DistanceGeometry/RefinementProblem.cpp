@@ -1,6 +1,8 @@
-#include "DistanceGeometry/RefinementProblem.h"
-#include "Log.h"
+#include "molassembler/DistanceGeometry/RefinementProblem.h"
+
 #include "temple/Stringify.h"
+
+#include "molassembler/Log.h"
 
 namespace molassembler {
 

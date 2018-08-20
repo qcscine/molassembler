@@ -1,11 +1,12 @@
-#include "Subgraphs.h"
+#include "molassembler/Subgraphs.h"
 
 #include "boost/graph/mcgregor_common_subgraphs.hpp"
 
 #include "chemical_symmetries/Properties.h"
 
-#include "GraphHelpers.h"
-#include "StereocenterList.h"
+#include "molassembler/GraphHelpers.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/StereocenterList.h"
 
 namespace molassembler {
 

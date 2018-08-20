@@ -3,7 +3,7 @@
 
 #include "Delib/PositionCollection.h"
 
-#include "SharedTypes.h"
+#include "molassembler/detail/SharedTypes.h"
 
 /*!@file
  *

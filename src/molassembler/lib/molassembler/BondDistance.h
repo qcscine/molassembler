@@ -1,9 +1,8 @@
 #ifndef INCLUDE_BOND_DISTANCE_H
 #define INCLUDE_BOND_DISTANCE_H
 
-#include "AtomInfo.h"
-
-#include "detail/SharedTypes.h"
+#include "molassembler/detail/SharedTypes.h"
+#include "molassembler/AtomInfo.h"
 
 /*! @file
  *

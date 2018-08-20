@@ -1,16 +1,16 @@
-#include "CommonTrig.h"
+#include "molassembler/detail/CommonTrig.h"
 
 namespace molassembler {
 
 namespace CommonTrig {
 
 double dihedralLength(
-  const double& a,
-  const double& b,
-  const double& c,
-  const double& abAngle,
-  const double& bcAngle,
-  const double& dihedral
+  const double a,
+  const double b,
+  const double c,
+  const double abAngle,
+  const double bcAngle,
+  const double dihedral
 ) {
   return sqrt(
     a * a

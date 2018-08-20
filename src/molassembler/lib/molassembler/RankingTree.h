@@ -20,15 +20,15 @@
  */
 //#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
-#include "detail/BuildTypeSwitch.h"
-#include "AtomStereocenter.h"
-#include "BondDistance.h"
-#include "BondStereocenter.h"
-#include "Log.h"
-#include "Molecule.h"
-#include "OrderDiscoveryHelper.h"
-
 #include "boost/variant.hpp"
+
+#include "molassembler/detail/BuildTypeSwitch.h"
+#include "molassembler/AtomStereocenter.h"
+#include "molassembler/BondDistance.h"
+#include "molassembler/BondStereocenter.h"
+#include "molassembler/Log.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/OrderDiscoveryHelper.h"
 
 /* TODO
  * - Maybe you can only add transferability edges when in down-only BFS?

@@ -1,16 +1,15 @@
+#include "molassembler/GraphAlgorithms.h"
+
 #include "boost/graph/connected_components.hpp"
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/range/combine.hpp"
-
 #include "Delib/ElementInfo.h"
-
 #include "temple/Containers.h"
 #include "temple/UnorderedSets.h"
 #include "temple/TinySet.h"
 
-#include "AtomInfo.h"
-#include "Cycles.h"
-#include "GraphAlgorithms.h"
+#include "molassembler/AtomInfo.h"
+#include "molassembler/Cycles.h"
 
 #include <iostream>
 

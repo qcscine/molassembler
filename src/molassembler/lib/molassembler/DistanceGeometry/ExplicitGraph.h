@@ -1,12 +1,13 @@
-#ifndef INCLUDE_DG_LIMITS_GRAPH_H
-#define INCLUDE_DG_LIMITS_GRAPH_H
+#ifndef INCLUDE_MOLASSEMBLER_DG_EXPLICIT_GRAPH_H
+#define INCLUDE_MOLASSEMBLER_DG_EXPLICIT_GRAPH_H
 
-#include "DistanceGeometry/ValueBounds.h"
 #include "boost/graph/adjacency_list.hpp"
 #include "boost_outcome/outcome.hpp"
 #include "Eigen/Core"
 #include "Delib/ElementInfo.h"
 #include "temple/Preprocessor.h"
+
+#include "molassembler/DistanceGeometry/ValueBounds.h"
 
 /*! @file
  *

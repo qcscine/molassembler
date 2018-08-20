@@ -4,7 +4,7 @@
 #include "Delib/BondOrderCollection.h"
 #include "Delib/ElementTypeCollection.h"
 
-#include "detail/AngstromWrapper.h"
+#include "molassembler/detail/AngstromWrapper.h"
 
 /*! @file
  *

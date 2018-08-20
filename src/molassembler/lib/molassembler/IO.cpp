@@ -1,9 +1,10 @@
-#include "IO.h"
+#include "molassembler/IO.h"
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "Serialization.h"
+#include "molassembler/Serialization.h"
+#include "molassembler/Molecule.h"
 
 #include <fstream>
 #include <iomanip>

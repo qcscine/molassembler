@@ -1,6 +1,6 @@
-#include "Properties.h"
-#include "temple/constexpr/ToSTL.h"
+#include "chemical_symmetries/Properties.h"
 
+#include "temple/constexpr/ToSTL.h"
 
 namespace Symmetry {
 

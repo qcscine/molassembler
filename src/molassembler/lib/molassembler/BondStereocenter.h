@@ -1,7 +1,9 @@
-#ifndef INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
-#define INCLUDE_GRAPH_FEATURES_EZ_STEREOCENTER_H
+#ifndef INCLUDE_MOLASSEMBLER_BOND_STEREOCENTER_H
+#define INCLUDE_MOLASSEMBLER_BOND_STEREOCENTER_H
 
-#include "detail/SharedTypes.h"
+#include "boost/optional/optional_fwd.hpp"
+
+#include "molassembler/detail/SharedTypes.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST

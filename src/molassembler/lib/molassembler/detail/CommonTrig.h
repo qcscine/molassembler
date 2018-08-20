@@ -1,7 +1,7 @@
-#ifndef INCLUDE_COMMON_TRIG_H
-#define INCLUDE_COMMON_TRIG_H
+#ifndef INCLUDE_MOLASSEMBLER_COMMON_TRIG_H
+#define INCLUDE_MOLASSEMBLER_COMMON_TRIG_H
 
-#include "BondDistance.h"
+#include "molassembler/BondDistance.h"
 
 /*! @file
  *
@@ -21,9 +21,9 @@ namespace CommonTrig {
  */
 template<typename T>
 T lawOfCosines(
-  const T& a,
-  const T& b,
-  const T& phiRadians
+  const T a,
+  const T b,
+  const T phiRadians
 ) {
   return sqrt(
     a * a
@@ -38,9 +38,9 @@ T lawOfCosines(
  */
 template<typename T>
 T lawOfCosinesAngle(
-  const T& a,
-  const T& b,
-  const T& c
+  const T a,
+  const T b,
+  const T c
 ) {
   return std::acos(
     (
@@ -60,9 +60,9 @@ T lawOfCosinesAngle(
  */
 template<typename T>
 T lawOfSinesAngle(
-  const T& a,
-  const T& alphaRadians,
-  const T& b
+  const T a,
+  const T alphaRadians,
+  const T b
 ) {
   return asin(
     b * sin(alphaRadians) / a
@@ -75,12 +75,12 @@ T lawOfSinesAngle(
  * intermediate bond b.
  */
 double dihedralLength(
-  const double& a,
-  const double& b,
-  const double& c,
-  const double& abAngle,
-  const double& bcAngle,
-  const double& dihedral
+  const double a,
+  const double b,
+  const double c,
+  const double abAngle,
+  const double bcAngle,
+  const double dihedral
 );
 
 } // namespace CommonTrig

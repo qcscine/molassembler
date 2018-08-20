@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 #define INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 
-#include "DistanceGeometry/ConformerGeneration.h"
+#include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
 namespace molassembler {
 
