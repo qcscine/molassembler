@@ -34,6 +34,11 @@ unsigned rotationPeriodicity(
   const std::vector<unsigned>& rotation
 );
 
+// Generate a character representation of a symmetry's position groups
+std::vector<char> positionGroups(const Symmetry::Name symmetryName);
+
+std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation);
+
 std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName);
 
 /*!

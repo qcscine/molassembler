@@ -101,6 +101,60 @@ unsigned rotationPeriodicity(
   return i;
 }
 
+std::vector<char> positionGroups(const Symmetry::Name symmetryName) {
+  const unsigned S = Symmetry::size(symmetryName);
+
+  std::vector<
+    std::vector<double>
+  > allAngles (S);
+
+  // Generate sorted lists of all cross-angles for each starting index
+  for(unsigned i = 0; i < S; ++i) {
+    allAngles.at(i).resize(S);
+    for(unsigned j = 0; j < S; ++j) {
+      allAngles.at(i).at(j) = Symmetry::angleFunction(symmetryName)(i, j);
+    }
+
+    std::sort(
+      std::begin(allAngles.at(i)),
+      std::end(allAngles.at(i))
+    );
+  }
+
+  // Group the individual symmetry indices by identical cross-angle sets
+  auto groups = temple::groupByEquality(
+    temple::iota<unsigned>(S),
+    [&allAngles](const unsigned i, const unsigned j) -> bool {
+      return allAngles.at(i) == allAngles.at(j);
+    }
+  );
+
+  // Transpose to a simple symbolic representation
+  std::vector<char> characterRepresentation (S);
+  char currentChar = 'A';
+  for(const auto& equalSet : groups) {
+    for(const auto& equalIndex : equalSet) {
+      characterRepresentation.at(equalIndex) = currentChar;
+    }
+
+    ++currentChar;
+  }
+
+  return characterRepresentation;
+}
+
+std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation) {
+  const unsigned N = rotation.size();
+
+  std::vector<unsigned> permutation (N);
+
+  for(unsigned i = 0; i < N; ++i) {
+    permutation.at(rotation.at(i)) = i;
+  }
+
+  return permutation;
+}
+
 std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName) {
   auto occupation = temple::iota<unsigned>(Symmetry::size(symmetryName));
 
