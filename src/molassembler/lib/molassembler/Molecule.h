@@ -352,10 +352,6 @@ public:
   bool operator != (const Molecule& other) const;
 //!@}
 
-/* Friends */
-  friend struct MoleculeValidator;
-  friend class RankingTree;
-
 private:
   struct Impl;
 

@@ -150,19 +150,6 @@ stereopermutation::Composite::OrientationState BondStereocenter::Impl::_makeOrie
 }
 
 /* Constructors */
-/* TODO
- * - It is not enough to call Composite with particular symmetry positions
- *   every time, I think, in order for permutation indices of Composite to have
- *   a canonical "meaning" in ranking. Check this!
- *
- *   AtomStereocenters are canonical because the symmetry positions are assigned
- *   according to the stereopermutations, which are in turn generated using
- *   canonical ligand rankings.
- *
- * - To make BondStereocenters canonical, there must be an ordering to the
- *   symmetries involved, so the concepts of left and right must be layered
- *   away.
- */
 BondStereocenter::Impl::Impl(
   const AtomStereocenter& stereocenterA,
   const AtomStereocenter& stereocenterB,
@@ -360,7 +347,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::Impl::chira
   for(const auto& dihedralTuple : _composite.dihedrals(_assignment.value())) {
     std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
 
-    if(dihedralAngle == 0.0 || dihedralAngle == M_PI) {
+    if(std::fabs(dihedralAngle) < 1e-4 || std::fabs(M_PI - std::fabs(dihedralAngle)) < 1e-4) {
       constraints.emplace_back(
         DistanceGeometry::ChiralityConstraint::LigandSequence {
           firstStereocenter.getRanking().ligands.at(
@@ -469,6 +456,38 @@ void BondStereocenter::Impl::setModelInformation(
       secondStereocenter.getSymmetryPositionMap()
     );
 
+    /* A simple central plus-minus variance calculation for the dihedral would
+     * yield values outside the SpatialModel dihedralClampBounds, which are [0,
+     * M_PI] (since d(phi) is y-symmetric), so we have some adjusting to do.
+     */
+    auto reduceToBounds = [](double phi) -> double {
+      // Perform 2pi adjustments until we are in (-pi, pi]
+      if(phi <= -M_PI) {
+        unsigned n = std::floor((M_PI + std::fabs(phi)) / (2 * M_PI));
+        phi += n * 2 * M_PI;
+      }
+
+      if(phi > M_PI) {
+        unsigned n = std::floor((M_PI + phi) / (2 * M_PI));
+        phi -= n * 2 * M_PI;
+      }
+
+      // Within (-pi, pi], d(phi) is y-axis-symmetric
+      return std::fabs(phi);
+    };
+
+    // The constructor will swap passed values so that the smaller becomes .first
+    temple::OrderedPair<double> boundedDihedralValues {
+      reduceToBounds(dihedralAngle - ModelType::dihedralAbsoluteVariance * looseningMultiplier),
+      reduceToBounds(dihedralAngle + ModelType::dihedralAbsoluteVariance * looseningMultiplier)
+    };
+
+    // Take the ordered values
+    DistanceGeometry::ValueBounds dihedralBounds {
+      boundedDihedralValues.first,
+      boundedDihedralValues.second
+    };
+
     temple::forAllPairs(
       firstStereocenter.getRanking().ligands.at(firstLigandIndex),
       secondStereocenter.getRanking().ligands.at(secondLigandIndex),
@@ -480,10 +499,7 @@ void BondStereocenter::Impl::setModelInformation(
             secondStereocenter.centralIndex(),
             secondIndex
           },
-          ModelType::makeBoundsFromCentralValue(
-            dihedralAngle,
-            ModelType::dihedralAbsoluteVariance * looseningMultiplier
-          )
+          std::move(dihedralBounds)
         );
       }
     );

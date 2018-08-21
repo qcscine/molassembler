@@ -18,8 +18,6 @@
 
 /* TODO
  * - Various TODO in implementation
- * - Consistency in 0 = E, 1 = Z (or other) must be established somehow (using
- *   ligandsRanking hopefully)
  * - State propagation is going to be a nasty piece of work
  */
 
@@ -38,7 +36,7 @@ struct ChiralityConstraint;
 class BondStereocenter {
 public:
   static constexpr double chiralityConstraintTolerance = 0.1;
-  static constexpr double assignmentAcceptanceDihedralThreshold = M_PI * 3.0 / 180.0;
+  static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 60.0; // ~3°
 
 public:
   /* Rule of five members */

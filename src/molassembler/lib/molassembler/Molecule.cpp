@@ -1142,7 +1142,6 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
       edgeIndex
     };
 
-    std::cout << "Fitting on " << source << " - " << target << "\n";
     newStereocenter.fit(
       angstromWrapper,
       *sourceAtomStereocenterOption,
