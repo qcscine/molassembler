@@ -12,8 +12,6 @@
 #include "molassembler/RankingTree.h"
 #include "molassembler/StereocenterList.h"
 
-#include "RepeatedElementCollection.h"
-
 #include <random>
 #include <fstream>
 

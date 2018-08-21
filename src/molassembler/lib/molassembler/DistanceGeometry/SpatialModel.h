@@ -202,9 +202,6 @@ public:
 
   std::vector<ChiralityConstraint> getChiralityConstraints() const;
 
-  [[deprecated]]
-  DistanceBoundsMatrix makeBounds() const;
-
   BoundsList makeBoundsList() const;
 
   std::string dumpGraphviz() const;
