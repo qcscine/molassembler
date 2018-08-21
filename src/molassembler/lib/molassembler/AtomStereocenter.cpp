@@ -5,7 +5,6 @@
 #include "CyclicPolygons.h"
 #include <Eigen/Dense>
 #include "stereopermutation/GenerateUniques.h"
-#include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/Optionals.h"
@@ -1409,18 +1408,14 @@ bool AtomStereocenter::Impl::operator == (const AtomStereocenter::Impl& other) c
 }
 
 bool AtomStereocenter::Impl::operator < (const AtomStereocenter::Impl& other) const {
+  unsigned thisAssignments = numAssignments(),
+           otherAssignments = other.numAssignments();
   /* Sequentially compare individual components, comparing assignments last
    * if everything else matches
    */
-  return temple::consecutiveCompareSmaller(
-    _centerAtom,
-    other._centerAtom,
-    _symmetry,
-    other._symmetry,
-    numAssignments(),
-    other.numAssignments(),
-    _assignmentOption,
-    other._assignmentOption
+  return (
+    std::tie( _centerAtom, _symmetry, thisAssignments, _assignmentOption)
+    < std::tie(other._centerAtom, other._symmetry, otherAssignments, other._assignmentOption)
   );
 }
 

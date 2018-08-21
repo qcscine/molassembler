@@ -6,8 +6,8 @@
 
 #include "temple/VectorView.h"
 #include "temple/Containers.h"
-#include "temple/constexpr/ConsecutiveCompare.h"
 
+#include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/DynamicProperties.h"
 
 #include <fstream>
@@ -71,11 +71,9 @@ void writeDistortions(
   auto sortedView = temple::view_sort(
     distortions,
     [](const auto& a, const auto& b) -> bool {
-      return temple::consecutiveCompareSmaller(
-        b.angularDistortion,
-        a.angularDistortion,
-        b.chiralDistortion,
-        a.chiralDistortion
+      return (
+        std::tie(b.angularDistortion, b.chiralDistortion)
+        < std::tie(a.angularDistortion, a.chiralDistortion)
       );
     }
   );

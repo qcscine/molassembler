@@ -9,25 +9,6 @@ namespace stereopermutation {
 
 namespace Util {
 
-template<typename Comparable>
-boost::optional<bool> compareSmaller(
-  const Comparable& a,
-  const Comparable& b
-) {
-  if(a < b) return true;
-  else if(b < a) return false;
-  else return {};
-}
-
-template<typename T>
-std::set<T> removeElementFromSet(
-  std::set<T> set,
-  T toRemove
-) {
-  set.erase(toRemove);
-  return set;
-}
-
 template<typename Function, typename T1, typename T2>
 decltype(auto) minMaxAdapt(
   Function function,

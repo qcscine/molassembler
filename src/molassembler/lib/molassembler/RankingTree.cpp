@@ -5,7 +5,6 @@
 #include "Delib/ElementInfo.h"
 
 #include "chemical_symmetries/Properties.h"
-#include "temple/constexpr/ConsecutiveCompare.h"
 
 #include "molassembler/detail/MolGraphWriter.h"
 #include "molassembler/GraphHelpers.h"
@@ -250,14 +249,14 @@ public:
     const auto& BondStereocenterA = BondStereocenterOptionalA.value();
     const auto& BondStereocenterB = BondStereocenterOptionalB.value();
 
-    // Reverse everything below for descending sorting
-    return temple::consecutiveCompareSmaller(
+    /* Reverse everything below for descending sorting and exploit tuple's
+     * lexicographical-like comparator
+     */
+    return std::make_tuple(
       BondStereocenterB.numStereopermutations(),
+      BondStereocenterB.indexOfPermutation()
+    ) < std::make_tuple(
       BondStereocenterA.numStereopermutations(),
-      /* Mixed optional comparison (includes comparison of assignment value if
-       * assigned)
-       */
-      BondStereocenterB.indexOfPermutation(),
       BondStereocenterA.indexOfPermutation()
     );
   }

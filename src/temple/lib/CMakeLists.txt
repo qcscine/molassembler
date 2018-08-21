@@ -1,9 +1,8 @@
 set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Array.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Bitset.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Bitmask.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/BTree.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/ConsecutiveCompare.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Bitmask.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Bitset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Containers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/DynamicArray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/DynamicMap.h
@@ -30,11 +29,12 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/ContainerTraits.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Containers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Enumerate.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Functor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Functional.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Functor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Invoke.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/MemberFetcher.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optionals.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/OrderedPair.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Preprocessor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Random.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Stringify.h
@@ -42,6 +42,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Traits.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/UnorderedSets.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/VectorView.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/crtp.h
 )
 
 add_library(temple INTERFACE)

@@ -1,7 +1,6 @@
 #include "molassembler/BondStereocenter.h"
 
 #include "stereopermutation/Composites.h"
-#include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/Containers.h"
@@ -605,6 +604,7 @@ void BondStereocenter::setModelInformation(
 bool BondStereocenter::operator == (const BondStereocenter& other) const {
   return *_pImpl == *other._pImpl;
 }
+
 bool BondStereocenter::operator != (const BondStereocenter& other) const {
   return !(
     *_pImpl == *other._pImpl

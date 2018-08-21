@@ -5,7 +5,7 @@
 
 #include "Delib/ElementInfo.h"
 
-#include "molassembler/chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/Symmetries.h"
 
 #include "molassembler/Conformers.h"
 #include "molassembler/IO.h"

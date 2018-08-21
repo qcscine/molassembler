@@ -5,7 +5,6 @@
 
 #include "temple/constexpr/Array.h"
 #include "temple/constexpr/Bitset.h"
-#include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/constexpr/DynamicSet.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
@@ -571,13 +570,9 @@ struct MappingsReturnType {
   }
 
   constexpr bool operator < (const MappingsReturnType& other) const {
-    return temple::consecutiveCompareSmaller(
-      mappings,
-      other.mappings,
-      angularDistortion,
-      other.angularDistortion,
-      chiralDistortion,
-      other.chiralDistortion
+    return (
+      std::tie(mappings, angularDistortion, chiralDistortion)
+      < std::tie(other.mappings, other.angularDistortion, other.chiralDistortion)
     );
   }
 };

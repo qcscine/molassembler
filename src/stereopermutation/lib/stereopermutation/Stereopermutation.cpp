@@ -413,17 +413,20 @@ bool Stereopermutation::columnSmaller(
     return characters[a] < characters[b];
   }
 
-  return Util::compareSmaller(
-    characters[a],
-    characters[b]
-  ).value_or(
-    Util::compareSmaller(
-      Util::removeElementFromSet(makeConnectedIndicesSet(a), b),
-      Util::removeElementFromSet(makeConnectedIndicesSet(b), a)
-    ).value_or(
-      false
-    )
-  );
+  if(characters[a] < characters[b]) {
+    return true;
+  }
+
+  if(characters[a] > characters[b]) {
+    return false;
+  }
+
+  auto aSet = makeConnectedIndicesSet(a);
+  aSet.erase(b);
+  auto bSet = makeConnectedIndicesSet(b);
+  bSet.erase(a);
+
+  return aSet < bSet;
 }
 
 std::map<

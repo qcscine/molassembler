@@ -16,7 +16,6 @@
 #include "temple/constexpr/UIntArray.h"
 #include "temple/constexpr/DynamicUIntArray.h"
 #include "temple/constexpr/BTree.h"
-#include "temple/constexpr/ConsecutiveCompare.h"
 #include "temple/constexpr/Bitmask.h"
 #include "temple/constexpr/Bitset.h"
 
@@ -1406,36 +1405,6 @@ static_assert(
   testAllBTrees(),
   "For some B-Trees, you cannot fit as many elements in as requested at instantiation"
 );
-
-
-namespace ConsecutiveCompareConstexprTests {
-  static_assert(
-    temple::consecutiveCompare(
-      std::less<>(),
-      -4,
-      -4,
-      std::greater<>(),
-      11,
-      10
-    ),
-    "consecutive compare does not yield true"
-  );
-
-  constexpr int x = 4, y = 4;
-  constexpr unsigned f = 5, g = 4;
-
-  static_assert(
-    temple::consecutiveCompare(
-      std::less<>(),
-      x,
-      y,
-      std::greater<>(),
-      f,
-      g
-    ),
-    "Consecutive compare with references does not yield true"
-  );
-} // namespace ConsecutiveCompareConstexprTests
 
 enum class ScopedEnum : unsigned {A, B, C};
 enum UnscopedEnum : unsigned {D, E};
