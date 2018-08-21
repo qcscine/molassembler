@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
             temple::zipMap(
               notInsertedNotContained,
               notInTree,
-              [](const bool& passed, const unsigned& value) -> std::string {
+              [](const bool passed, const unsigned value) -> std::string {
                 if(!passed) {
                   return std::to_string(value);
                 }
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
             temple::zipMap(
               insertedContained,
               inTree,
-              [](const bool& passed, const unsigned& value) -> std::string {
+              [](const bool passed, const unsigned value) -> std::string {
                 if(!passed) {
                   return std::to_string(value);
                 }
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
     auto matchingThroughIteration = temple::zipMap(
       tree,
       inTree,
-      [&](const unsigned& treeValue, const unsigned& testValue) -> bool {
+      [&](const unsigned treeValue, const unsigned testValue) -> bool {
         if(treeValue != testValue) {
           std::cout << "Expected " << testValue << ", got " << treeValue << std::endl;
           return false;

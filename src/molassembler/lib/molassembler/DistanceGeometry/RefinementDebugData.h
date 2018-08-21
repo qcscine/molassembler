@@ -30,11 +30,11 @@ struct RefinementStepData {
 
   RefinementStepData(
     const dlib::matrix<double, 0, 1>& positions,
-    const double& distanceError,
-    const double& chiralError,
-    const double& fourthDimError,
+    const double distanceError,
+    const double chiralError,
+    const double fourthDimError,
     const dlib::matrix<double, 0, 1>& gradient,
-    const double& proportionCorrectChiralityConstraints,
+    const double proportionCorrectChiralityConstraints,
     const bool& compress
   ) : positions(positions),
       distanceError(distanceError),

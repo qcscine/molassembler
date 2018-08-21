@@ -220,7 +220,7 @@ private:
     );
   }
 
-  constexpr void _splitChild(unsigned nodeIndex, const unsigned& i) {
+  constexpr void _splitChild(unsigned nodeIndex, const unsigned i) {
     // i is the child index in node's keys being split since that node is full
     auto& parent = _getNode(nodeIndex);
 

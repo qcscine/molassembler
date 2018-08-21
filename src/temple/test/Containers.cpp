@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
     temple::sum(
       temple::mapAllPairs(
         unsignedVector,
-        [](const unsigned& a, const unsigned& b) -> unsigned {
+        [](const unsigned a, const unsigned b) -> unsigned {
           return a + b;
         }
       )
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
     temple::sum(
       temple::mapAllPairs(
         doubleVector,
-        [](const double& a, const double& b) -> double {
+        [](const double a, const double b) -> double {
           return a + b;
         }
       )

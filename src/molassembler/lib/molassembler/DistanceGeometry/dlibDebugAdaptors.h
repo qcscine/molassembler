@@ -65,7 +65,7 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
   template<typename T>
   bool should_continue_search(
     const T& positions,
-    const double& /* function_value */,
+    const double /* function_value */,
     const T& gradient
   ) {
     refinementSteps.emplace_back(
@@ -135,7 +135,7 @@ struct debugIterationOrGradientNormStopStrategy {
   template<typename T>
   bool should_continue_search(
     const T& positions,
-    const double& /* function_value */,
+    const double /* function_value */,
     const T& gradient
   ) {
     refinementSteps.emplace_back(

@@ -29,8 +29,8 @@ template<
 void gor1_scan_helper(
   const VertexDescriptor& vertex,
   const VertexDescriptor& targetVertex,
-  const double& vertexDistance,
-  const double& edgeWeight,
+  const double vertexDistance,
+  const double edgeWeight,
   PredecessorMap& predecessor_map,
   ColorMap& color_map,
   DistanceMap& distance_map,

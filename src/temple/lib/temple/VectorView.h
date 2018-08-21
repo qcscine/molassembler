@@ -53,7 +53,7 @@ private:
       std::sort(
         _indexSequence.begin(),
         _indexSequence.end(),
-        [this](const unsigned& a, const unsigned& b) {
+        [this](const unsigned a, const unsigned b) {
           return _sortingLambda(
             _baseVectorRef[a],
             _baseVectorRef[b]
@@ -68,7 +68,7 @@ private:
           std::remove_if(
             _indexSequence.begin(),
             _indexSequence.end(),
-            [this, filterFunction](const unsigned& a) {
+            [this, filterFunction](const unsigned a) {
               return filterFunction(
                 _baseVectorRef[a]
               );
@@ -169,13 +169,13 @@ public:
     if(update) _recalculateSequence();
   }
 
-  ValueType at(const unsigned& a) const {
+  ValueType at(const unsigned a) const {
     return _baseVectorRef.at(
       _indexSequence.at(a)
     );
   }
 
-  ValueType operator [] (const unsigned& a) const {
+  ValueType operator [] (const unsigned a) const {
     return _baseVectorRef[
       _indexSequence[a]
     ];

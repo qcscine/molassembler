@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
           temple::zipMap(
             BF_EG_distances,
             Gor_EG_distances,
-            [](const double& a, const double& b) -> bool {
+            [](const double a, const double b) -> bool {
               return temple::floating::isCloseRelative(a, b, 1e-8);
             }
           )
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
           temple::zipMap(
             BF_IG_distances,
             Gor_IG_distances,
-            [](const double& a, const double& b) -> bool {
+            [](const double a, const double b) -> bool {
               return temple::floating::isCloseRelative(a, b, 1e-8);
             }
           )
@@ -452,7 +452,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
           temple::zipMap(
             Gor_IG_distances,
             spec_Gor_IG_distances,
-            [](const double& a, const double& b) -> bool {
+            [](const double a, const double b) -> bool {
               return temple::floating::isCloseRelative(a, b, 1e-8);
             }
           )

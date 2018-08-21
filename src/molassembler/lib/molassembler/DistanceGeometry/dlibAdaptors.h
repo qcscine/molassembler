@@ -57,7 +57,7 @@ public:
   template<typename T>
   bool should_continue_search(
     const T& positions,
-    const double& /* function_value */,
+    const double /* function_value */,
     const T& /* gradient */
   ) {
     iterations += 1;
@@ -96,7 +96,7 @@ struct iterationOrGradientNormStopStrategy {
 
   iterationOrGradientNormStopStrategy(
     const unsigned maxIterations,
-    const double& gradientNormThreshold
+    const double gradientNormThreshold
   ) : maxIterations(maxIterations),
       gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold)
   {}
@@ -104,7 +104,7 @@ struct iterationOrGradientNormStopStrategy {
   template<typename T>
   bool should_continue_search(
     const T& /* positions */,
-    const double& /* function_value */,
+    const double /* function_value */,
     const T& gradient
   ) {
     iterations += 1;

@@ -90,8 +90,8 @@ template<class SelectionPredicateFunction>
 void writeSymmetryTransitionDotFile(
   const std::string& filename,
   SelectionPredicateFunction&& predicate,
-  const bool& showEdgesWithHighMultiplicity = true,
-  const bool& explainTransitions = false
+  const bool showEdgesWithHighMultiplicity = true,
+  const bool explainTransitions = false
 ) {
   using namespace Symmetry::properties;
 
@@ -254,8 +254,8 @@ void writeSymmetryTransitionDotFile(
 
 void writeLigandLossDotFile(
   const std::string& filename,
-  const bool& showEdgesWithHighMultiplicity = true,
-  const bool& explainTransitions = false
+  const bool showEdgesWithHighMultiplicity = true,
+  const bool explainTransitions = false
 ) {
   using namespace Symmetry::properties;
 

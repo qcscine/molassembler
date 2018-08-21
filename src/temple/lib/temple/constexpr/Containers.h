@@ -673,8 +673,8 @@ template<
   size_t size
 > constexpr void inPlaceReverse(
   ArrayType<T, size>& data,
-  const unsigned& indexFrom,
-  const unsigned& indexTo
+  const unsigned indexFrom,
+  const unsigned indexTo
 ) {
   size_t a = indexFrom, b = indexTo;
   while(a != b && a != --b) {

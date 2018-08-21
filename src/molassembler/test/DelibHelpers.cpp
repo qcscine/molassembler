@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
     Delib::Position {lastPosition}
   );
 
-  for(const double& randomAngle : prng.getN<double>(-M_PI + 0.01, M_PI - 0.01, 100)) {
+  for(const double randomAngle : prng.getN<double>(-M_PI + 0.01, M_PI - 0.01, 100)) {
 
     positions[3] = Delib::Position {
       Eigen::AngleAxisd(

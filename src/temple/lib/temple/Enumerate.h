@@ -31,7 +31,7 @@ public:
     const T& value;
 
     EnumerationStruct(
-      const unsigned& index,
+      const unsigned index,
       const T& value
     ) : index(index), value(value) {}
   };

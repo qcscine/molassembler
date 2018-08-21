@@ -137,8 +137,8 @@ struct errfValue {
 
     for(unsigned i = 0; i < N; ++i) {
       for(unsigned j = i + 1; j < N; ++j) {
-        const double& upperBoundSquared = squaredBounds(i, j);
-        const double& lowerBoundSquared = squaredBounds(j, i);
+        const double upperBoundSquared = squaredBounds(i, j);
+        const double lowerBoundSquared = squaredBounds(j, i);
         // Since i < j, upper Bound is (i, j), lower Bound is (j, i)
         assert(lowerBoundSquared < upperBoundSquared);
 
@@ -217,7 +217,7 @@ struct errfValue {
 
     double error = 0;
     for(unsigned i = 0; i < N; i++) {
-      const double& w = positions(4 * i + 3);
+      const double w = positions(4 * i + 3);
       error += w * w;
     }
 
@@ -313,7 +313,7 @@ public:
 
         const Vector diff = errfDetail::getPos(positions, i) - errfDetail::getPos(positions, alpha);
 
-        const double& lowerBoundSquared = squaredBounds(
+        const double lowerBoundSquared = squaredBounds(
           std::max(i, alpha),
           std::min(i, alpha)
         );

@@ -113,7 +113,7 @@ private:
     );
   }
 
-  void _splitChild(Node* node, const unsigned& i) {
+  void _splitChild(Node* node, const unsigned i) {
     // i is the child index in node's keys being split since that node is full
 
     // The node being split is afterwards considered the "left" node

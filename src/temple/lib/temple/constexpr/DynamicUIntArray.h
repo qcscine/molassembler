@@ -126,14 +126,14 @@ public:
     }
   };
 
-  constexpr ModificationProxy at(const unsigned& i) {
+  constexpr ModificationProxy at(const unsigned i) {
     return {
       i,
       this
     };
   }
 
-  constexpr void push_back(const unsigned& i) {
+  constexpr void push_back(const unsigned i) {
     _data.at(_count) = i;
     ++_count;
   }
@@ -145,7 +145,7 @@ public:
 
   /* Information */
 
-  constexpr unsigned at(const unsigned& i) const {
+  constexpr unsigned at(const unsigned i) const {
     if(i >= _count) {
       throw "DynamicUIntArray access out of bounds";
     }

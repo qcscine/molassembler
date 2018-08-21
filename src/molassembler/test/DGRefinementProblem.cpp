@@ -29,7 +29,7 @@ using namespace molassembler::DistanceGeometry;
 bool isApprox(
   const dlib::matrix<double, 0, 1>& a,
   const dlib::matrix<double, 0, 1>& b,
-  const double& epsilon
+  const double epsilon
 ) {
   return temple::all_of(
     temple::zipMap(

@@ -1164,7 +1164,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
     auto lowerCircumradiusResult = CyclicPolygons::detail::convexCircumradius(
       temple::map(
         distances,
-        [&](const double& distance) -> double {
+        [&](const double distance) -> double {
           return (1 - bondRelativeVariance) * distance;
         }
       )
@@ -1173,7 +1173,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
     auto upperCircumradiusResult = CyclicPolygons::detail::convexCircumradius(
       temple::map(
         distances,
-        [&](const double& distance) -> double {
+        [&](const double distance) -> double {
           return (1 + bondRelativeVariance) * distance;
         }
       )

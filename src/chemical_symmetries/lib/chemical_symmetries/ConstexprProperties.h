@@ -92,7 +92,7 @@ constexpr auto startingIndexSequence() {
 template<typename SymmetryClass, size_t... Indices>
 constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
   const ArrayType<unsigned, SymmetryClass::size>& indices,
-  const unsigned& rotationFunctionIndex,
+  const unsigned rotationFunctionIndex,
   std::index_sequence<Indices...>
 ) {
   return {
@@ -106,7 +106,7 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
 template<typename SymmetryClass>
 constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
   const ArrayType<unsigned, SymmetryClass::size>& indices,
-  const unsigned& rotationFunctionIndex
+  const unsigned rotationFunctionIndex
 ) {
   return applyRotationImpl<SymmetryClass>(
     indices,
@@ -118,7 +118,7 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
 template<typename SymmetryClass, unsigned rotationFunctionIndex>
 constexpr unsigned rotationPeriodicityImpl(
   const ArrayType<unsigned, SymmetryClass::size>& runningIndices,
-  const unsigned& count
+  const unsigned count
 ) {
   if(
     temple::arraysEqual(
@@ -204,7 +204,7 @@ constexpr unsigned maxSymmetrySize = temple::TupleType::unpackToFunction<
  * boost::none -> origin mapping.
  */
 template<typename SymmetryClass>
-constexpr temple::Vector getCoordinates(const unsigned& indexInSymmetry) {
+constexpr temple::Vector getCoordinates(const unsigned indexInSymmetry) {
   if(indexInSymmetry != ORIGIN_PLACEHOLDER) {
     return SymmetryClass::coordinates.at(indexInSymmetry);
   }
@@ -289,7 +289,7 @@ constexpr double calculateAngularDistortion(
  */
 template<size_t size>
 constexpr unsigned propagateSymmetryPosition(
-  const unsigned& symmetryPosition,
+  const unsigned symmetryPosition,
   const ArrayType<unsigned, size>& indexMapping
 ) {
   if(symmetryPosition != ORIGIN_PLACEHOLDER) {
@@ -676,7 +676,7 @@ constexpr auto symmetryTransitionMappings() {
 }
 
 template<class SymmetryClassFrom, class SymmetryClassTo>
-constexpr auto ligandLossMappings(const unsigned& deletedSymmetryPosition) {
+constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 
   static_assert(
     SymmetryClassFrom::size == SymmetryClassTo::size + 1,
@@ -804,7 +804,7 @@ std::enable_if_t<
 
 template<typename Symmetry>
 constexpr unsigned numUnlinkedAssignments(
-  const unsigned& nIdenticalLigands
+  const unsigned nIdenticalLigands
 ) {
   unsigned count = 1;
 
@@ -841,7 +841,7 @@ constexpr unsigned numUnlinkedAssignments(
 
 template<typename Symmetry>
 constexpr bool hasMultipleUnlinkedAssignments(
-  const unsigned& nIdenticalLigands
+  const unsigned nIdenticalLigands
 ) {
   auto indices = startingIndexSequence<Symmetry>();
 

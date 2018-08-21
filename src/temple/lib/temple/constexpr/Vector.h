@@ -71,7 +71,7 @@ struct Vector {
     };
   }
 
-  constexpr Vector operator * (const double& constant) const noexcept PURITY_WEAK {
+  constexpr Vector operator * (const double constant) const noexcept PURITY_WEAK {
     return Vector {
       {{
         constant * this->data[0],
@@ -82,7 +82,7 @@ struct Vector {
   }
 
   //! Division by double operator, throws on division by zero
-  constexpr Vector operator / (const double& constant) const PURITY_WEAK {
+  constexpr Vector operator / (const double constant) const PURITY_WEAK {
     if(constant == 0) {
       throw "Constexpr::Vector divided by zero!";
     }

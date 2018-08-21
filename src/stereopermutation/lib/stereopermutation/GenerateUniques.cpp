@@ -35,7 +35,7 @@ bool hasTransArrangedPairs(
 std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
-  const bool& removeTransSpanningGroups
+  const bool removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
    * could, insted of keeping a full set of all rotations of all unique
@@ -110,7 +110,7 @@ std::vector<Stereopermutation> uniques(
 StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
-  const bool& removeTransSpanningGroups
+  const bool removeTransSpanningGroups
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
    * could, insted of keeping a full set of all rotations of all unique

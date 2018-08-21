@@ -105,7 +105,7 @@ public:
     }
   };
 
-  constexpr ModificationProxy at(const unsigned& i) {
+  constexpr ModificationProxy at(const unsigned i) {
     return {
       i,
       this
@@ -114,7 +114,7 @@ public:
 
   /* Information */
 
-  constexpr unsigned at(const unsigned& i) const {
+  constexpr unsigned at(const unsigned i) const {
     if(i >= N) {
       throw "UIntArray access out of bounds";
     }

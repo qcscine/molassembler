@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
       instance.links.end(),
       true,
       [&isAorB, &instance](
-        const bool& carry,
+        const bool carry,
         const std::pair<unsigned, unsigned>& pair
       ) {
         return (

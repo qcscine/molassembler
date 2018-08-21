@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   const auto randomPositiveNumbers = prng.getN<double>(0, 1e6, numTests);
   auto sqrt_passes = temple::map(
     randomPositiveNumbers,
-    [&](const double& randomPositiveNumber) -> bool {
+    [&](const double randomPositiveNumber) -> bool {
       return temple::floating::isCloseRelative(
         temple::Math::sqrt(randomPositiveNumber),
         std::sqrt(randomPositiveNumber),
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   auto asin_passes = temple::map(
     randomInverseTrigNumbers,
-    [&](const double& randomInverseTrigNumber) -> bool {
+    [&](const double randomInverseTrigNumber) -> bool {
       return temple::floating::isCloseRelative(
         temple::Math::asin(randomInverseTrigNumber),
         std::asin(randomInverseTrigNumber),
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     std::cout << std::endl;
   }
 
-  auto testPow = [&](const double& number, const int& exponent) -> bool {
+  auto testPow = [&](const double number, const int& exponent) -> bool {
     const double test = temple::Math::pow(number, exponent);
     const double reference = std::pow(number, exponent);
 
@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     )
   );
 
-  auto testRecPow = [&](const double& number, const unsigned& exponent) -> bool {
+  auto testRecPow = [&](const double number, const unsigned exponent) -> bool {
     const double test = temple::Math::recPow(number, exponent);
     const double reference = std::pow(number, exponent);
 
@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(
     temple::all_of(
       prng.getN<double>(-100, 100, numTests),
-      [](const double& x) -> bool {
+      [](const double x) -> bool {
         return(temple::Math::floor(x) <= x);
       }
     )
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(
     temple::all_of(
       prng.getN<double>(-100, 100, numTests),
-      [](const double& x) -> bool {
+      [](const double x) -> bool {
         return(temple::Math::ceil(x) >= x);
       }
     )
@@ -327,7 +327,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(
     temple::all_of(
       prng.getN<double>(-100, 100, numTests),
-      [](const double& x) -> bool {
+      [](const double x) -> bool {
         const double rounded = temple::Math::round(x);
         return(
           rounded == temple::Math::floor(x)
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(
     temple::all_of(
       prng.getN<double>(-M_PI / 2, M_PI / 2, numTests),
-      [&](const double& x) -> bool {
+      [&](const double x) -> bool {
         return temple::floating::isCloseRelative(
           temple::Math::atan(x),
           std::atan(x),
@@ -1242,7 +1242,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
             temple::zipMap(
               notInsertedNotContained,
               notInTree,
-              [](const bool& passed, const unsigned& value) -> std::string {
+              [](const bool passed, const unsigned value) -> std::string {
                 if(!passed) {
                   return std::to_string(value);
                 }
@@ -1277,7 +1277,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
             temple::zipMap(
               insertedContained,
               inTree,
-              [](const bool& passed, const unsigned& value) -> std::string {
+              [](const bool passed, const unsigned value) -> std::string {
                 if(!passed) {
                   return std::to_string(value);
                 }
@@ -1318,7 +1318,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
     auto matchingThroughIteration = temple::zipMap(
       tree,
       inTree,
-      [&](const unsigned& treeValue, const unsigned& testValue) -> bool {
+      [&](const unsigned treeValue, const unsigned testValue) -> bool {
         if(treeValue != testValue) {
           std::cout << "Expected " << testValue << ", got " << treeValue << std::endl;
           return false;

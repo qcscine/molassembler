@@ -35,7 +35,7 @@ bool hasTransArrangedPairs(
 std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
-  const bool& removeTransSpanningGroups = true
+  bool removeTransSpanningGroups = true
 );
 
 //! Data class for uniqueStereopermutations including weights
@@ -51,7 +51,7 @@ struct StereopermutationsWithWeights {
 StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,
   const Symmetry::Name& symmetryName,
-  const bool& removeTransSpanningGroups = true
+  bool removeTransSpanningGroups = true
 );
 
 } // namespace stereopermutation

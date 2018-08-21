@@ -75,7 +75,7 @@ boost::optional<Symmetry::Name> vsepr(
         sites.begin(),
         sites.end(),
         0.0,
-        [](const double& carry, const auto& ligand) -> double {
+        [](const double carry, const auto& ligand) -> double {
           return carry + bondWeights.at(ligand.bondType);
         }
       )
