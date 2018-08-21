@@ -1035,23 +1035,12 @@ struct SpatialModel::ModelGraphWriter {
 /* Accessors for boost::write_graph */
   // Global options
   void operator() (std::ostream& os) const {
-    os << "graph [fontname = \"Arial\", layout = neato];\n"
-      << "node [fontname = \"Arial\", shape = circle, style = filled];\n"
-      << "edge [fontname = \"Arial\"];\n";
+    os << "  graph [fontname = \"Arial\", layout = neato];\n"
+      << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
+      << "  edge [fontname = \"Arial\"];\n";
 
     /* Additional nodes */
-    for(const auto& atomStereocenter : spatialModel._stereocenters.atomStereocenters()) {
-      const AtomIndexType index = atomStereocenter.centralIndex();
-
-      os << "A" << index
-        << R"( [label=")" << Symmetry::name(atomStereocenter.getSymmetry())
-        << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
-        << R"(tooltip=")" << atomStereocenter.info()
-        << R"("];)" << "\n";
-    }
-
     for(const auto& bondStereocenter : spatialModel._stereocenters.bondStereocenters()) {
-
       std::string state;
       if(bondStereocenter.assigned()) {
         state = std::to_string(bondStereocenter.assigned().value());
@@ -1066,15 +1055,15 @@ struct SpatialModel::ModelGraphWriter {
         ""
       );
 
-      os << graphNodeName << R"( [label=")" << state
-        << R"(", fillcolor="tomato", shape="box", fontcolor="white", )"
+      os << "  " << graphNodeName << R"( [label=")" << state
+        << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
         << R"(tooltip=")"
         << bondStereocenter.info()
         << R"("];)" << "\n";
 
       // Add connections to the vertices (although those don't exist yet)
       for(const auto& vertex : spatialModel._molecule.vertices(bondStereocenter.edge())) {
-        os << graphNodeName << " -- " << vertex
+        os << "  " << graphNodeName << " -- " << vertex
           << R"( [color="gray", dir="forward", len="2"];)"
           << "\n";
       }
@@ -1152,7 +1141,7 @@ struct SpatialModel::ModelGraphWriter {
         << R"(")";
     }
 
-    os << "];\n";
+    os << "]";
   }
 
   // Edge options
