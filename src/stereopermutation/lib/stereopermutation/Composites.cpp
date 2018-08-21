@@ -565,6 +565,30 @@ Composite::Composite(OrientationState first, OrientationState second)
     }
   );
 
+  /* Reorder both AngleGroups' symmetryPositions by ranking and index to get
+   * canonical initial combinations
+   */
+  temple::sort(
+    angleGroups.first.symmetryPositions,
+    [&](const unsigned a, const unsigned b) -> bool {
+      // by ranking descending but by index ascending
+      return (
+        std::tie(_orientations.first.characters.at(b), a)
+        < std::tie(_orientations.first.characters.at(a), b)
+      );
+    }
+  );
+
+  temple::sort(
+    angleGroups.second.symmetryPositions,
+    [&](const unsigned a, const unsigned b) -> bool {
+      return (
+        std::tie(_orientations.second.characters.at(b), a)
+        < std::tie(_orientations.second.characters.at(a), b)
+      );
+    }
+  );
+
   /* Even if either side is isotropic and overall this stereocenter has only one
    * assignment, the first discovered permutation must be kept in order to
    * enforce planarity if it exists. Any further stereopermutations lead to
