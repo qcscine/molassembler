@@ -892,7 +892,7 @@ struct SpatialModel::ModelGraphWriter {
   {}
 
 /* Helper functions */
-  Delib::ElementType getElementType(const AtomIndexType& vertexIndex) const {
+  Delib::ElementType getElementType(const AtomIndexType vertexIndex) const {
     return (*graphPtr)[vertexIndex].elementType;
   }
 
@@ -935,7 +935,7 @@ struct SpatialModel::ModelGraphWriter {
   }
 
   // Vertex options
-  void operator() (std::ostream& os, const AtomIndexType& vertexIndex) const {
+  void operator() (std::ostream& os, const AtomIndexType vertexIndex) const {
     const std::string symbolString = Delib::ElementInfo::symbol(
       getElementType(vertexIndex)
     );

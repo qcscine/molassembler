@@ -25,7 +25,7 @@ unsigned numRotatableBonds(
         smallestCycle,
         edge,
         cycleSize,
-        [&cycleSize](const unsigned& currentMinCycleSize) -> bool {
+        [&cycleSize](const unsigned currentMinCycleSize) -> bool {
           return cycleSize < currentMinCycleSize;
         }
       );

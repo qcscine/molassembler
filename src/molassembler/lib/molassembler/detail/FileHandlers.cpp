@@ -36,7 +36,7 @@ SortByElement::SortByElement(const Molecule& mol) {
   std::sort(
     permutation.begin(),
     permutation.end(),
-    [&mol](const AtomIndexType& i, const AtomIndexType& j) -> bool {
+    [&mol](const AtomIndexType i, const AtomIndexType j) -> bool {
       return mol.getElementType(i) < mol.getElementType(j);
     }
   );
@@ -104,7 +104,7 @@ void MOLFileHandler::_write(
   const MOLFileVersion& version,
   const IndexPermutation& permutation
 ) const {
-  std::function<AtomIndexType(const AtomIndexType&)> indexMap, inverse;
+  std::function<AtomIndexType(AtomIndexType)> indexMap, inverse;
 
   const unsigned N = molecule.numAtoms();
 
@@ -382,7 +382,7 @@ void XYZHandler::write(
   const AngstromWrapper& angstromWrapper,
   const IndexPermutation& permutation
 ) const {
-  std::function<AtomIndexType(const AtomIndexType&)> indexMap;
+  std::function<AtomIndexType(AtomIndexType)> indexMap;
 
   const unsigned N = molecule.numAtoms();
 

@@ -77,7 +77,7 @@ public:
 
   DistanceBoundsMatrix();
 
-  explicit DistanceBoundsMatrix(const unsigned& N);
+  explicit DistanceBoundsMatrix(unsigned N);
 
   explicit DistanceBoundsMatrix(Eigen::MatrixXd matrix);
 
@@ -118,22 +118,22 @@ public:
     assert(boundInconsistencies() == 0);
   }
 
-  bool setUpperBound(const AtomIndexType i, const AtomIndexType j, const double newUpperBound);
+  bool setUpperBound(AtomIndexType i, AtomIndexType j, double newUpperBound);
 
-  bool setLowerBound(const AtomIndexType i, const AtomIndexType j, const double newLowerBound);
+  bool setLowerBound(AtomIndexType i, AtomIndexType j, double newLowerBound);
 
   static void smooth(Eigen::MatrixXd& matrix);
 
   void smooth();
 
-  inline double upperBound(const AtomIndexType i, const AtomIndexType j) const {
+  inline double upperBound(AtomIndexType i, AtomIndexType j) const {
     return _matrix(
       std::min(i, j),
       std::max(i, j)
     );
   }
 
-  inline double lowerBound(const AtomIndexType i, const AtomIndexType j) const {
+  inline double lowerBound(AtomIndexType i, AtomIndexType j) const {
     return _matrix(
       std::max(i, j),
       std::min(i, j)

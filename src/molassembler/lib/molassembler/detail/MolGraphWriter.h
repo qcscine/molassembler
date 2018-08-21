@@ -24,13 +24,13 @@ struct MolGraphWriter {
   explicit MolGraphWriter(const GraphType* passGraphPtr);
 
   /* Information */
-  Delib::ElementType getElementType(const AtomIndexType& vertexIndex) const;
+  Delib::ElementType getElementType(const AtomIndexType vertexIndex) const;
 
   // Global options
   void operator() (std::ostream& os) const;
 
   // Vertex options
-  void operator() (std::ostream& os, const AtomIndexType& vertexIndex) const;
+  void operator() (std::ostream& os, const AtomIndexType vertexIndex) const;
 
   // Edge options
   void operator() (std::ostream& os, const EdgeIndexType& edgeIndex) const;

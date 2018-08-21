@@ -274,7 +274,7 @@ private:
 
   //! Returns whether a molecular graph index exists in a specific branch
   bool _molIndexExistsInBranch(
-    const AtomIndexType& molIndex,
+    AtomIndexType molIndex,
     TreeVertexIndex treeIndex
   ) const;
 

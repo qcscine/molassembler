@@ -43,9 +43,9 @@ Molecule narrow(Molecule moleculeCopy);
  */
 std::list<RefinementData> debug(
   const Molecule& molecule,
-  const unsigned& numStructures,
-  const Partiality& metrizationOption = Partiality::FourAtom,
-  const bool& useYInversionTrick = true
+  unsigned numStructures,
+  Partiality metrizationOption = Partiality::FourAtom,
+  bool useYInversionTrick = true
 );
 
 /*!
@@ -74,9 +74,9 @@ outcome::result<
   std::vector<AngstromWrapper>
 > run(
   const Molecule& molecule,
-  const unsigned& numStructures,
-  const Partiality& metrizationOption = Partiality::FourAtom,
-  const bool& useYInversionTrick = true
+  unsigned numStructures,
+  Partiality metrizationOption = Partiality::FourAtom,
+  bool useYInversionTrick = true
 );
 
 //! Intermediate conformational data about a Molecule given by a spatial model

@@ -14,7 +14,7 @@ constexpr double DistanceBoundsMatrix::defaultUpper;
 
 DistanceBoundsMatrix::DistanceBoundsMatrix() = default;
 
-DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned& N) {
+DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned N) {
   _matrix.resize(N, N);
   _matrix.triangularView<Eigen::Lower>().setConstant(defaultLower);
   _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(defaultUpper);

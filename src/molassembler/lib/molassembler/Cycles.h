@@ -246,7 +246,7 @@ std::vector<AtomIndexType> makeRingIndexSequence(
 
 std::vector<AtomIndexType> centralizeRingIndexSequence(
   std::vector<AtomIndexType> ringIndexSequence,
-  const AtomIndexType& center
+  AtomIndexType center
 );
 
 /*!

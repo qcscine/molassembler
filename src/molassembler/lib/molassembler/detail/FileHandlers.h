@@ -32,7 +32,7 @@ struct Random {
 
   explicit Random(AtomIndexType N);
 
-  inline AtomIndexType operator() (const AtomIndexType& i) const {
+  inline AtomIndexType operator() (const AtomIndexType i) const {
     return permutation.at(i);
   };
 };
@@ -43,7 +43,7 @@ struct SortByElement {
 
   explicit SortByElement(const Molecule& mol);
 
-  inline AtomIndexType operator() (const AtomIndexType& i) const {
+  inline AtomIndexType operator() (const AtomIndexType i) const {
     return permutation.at(i);
   }
 };
@@ -53,14 +53,14 @@ struct Inverse {
   std::vector<AtomIndexType> permutation;
 
   template<typename Permutation>
-  inline explicit Inverse(const Permutation& ante, const AtomIndexType& size) {
+  inline explicit Inverse(const Permutation& ante, const AtomIndexType size) {
     permutation.resize(size);
     for(AtomIndexType i = 0; i < size; ++i) {
       permutation.at(ante(i)) = i;
     }
   }
 
-  inline AtomIndexType operator() (const AtomIndexType& i) const {
+  inline AtomIndexType operator() (const AtomIndexType i) const {
     return permutation.at(i);
   }
 };

@@ -25,7 +25,7 @@ std::ostream& nl(std::ostream& os) {
 
 void writeExpandedTree(
   const std::string& fileName,
-  const AtomIndexType& expandOnIndex
+  const AtomIndexType expandOnIndex
 ) {
   auto molecule = IO::read(
     "../tests/mol_files/ranking_tree_molecules/"s

@@ -88,7 +88,7 @@ std::vector<
       countOverlap.begin(),
       countOverlap.end(),
       0u,
-      [](const unsigned& carry, const unsigned& current) {
+      [](const unsigned carry, const unsigned current) {
         if(current > 0) return carry + 1;
         else return carry;
       }
@@ -171,20 +171,6 @@ bool vectorOfSetsEqual(
         );
       }
     )
-  );
-}
-
-template<typename T1, typename T2, typename ReturnType>
-ReturnType minMaxAdaptor(
-  const std::function<
-    ReturnType(const T1&, const T2&)
-  >& function,
-  const T1& a,
-  const T2& b
-) {
-  return function(
-    std::min(a, b),
-    std::max(a, b)
   );
 }
 

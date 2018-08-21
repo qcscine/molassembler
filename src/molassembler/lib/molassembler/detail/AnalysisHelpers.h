@@ -18,7 +18,7 @@ namespace AnalysisHelpers {
 
 namespace detail {
 
-inline std::string mapIndexToChar(const unsigned& index) {
+inline std::string mapIndexToChar(const unsigned index) {
   std::string result {
     static_cast<char>(
       'A' + (
@@ -216,7 +216,7 @@ void writeDGPOVandProgressFiles(
 void writeDGPOVandProgressFiles(
   const Molecule& mol,
   const Symmetry::Name& symmetryName,
-  const unsigned& structNum,
+  const unsigned structNum,
   const DistanceGeometry::RefinementData& refinementData
 ) {
   std::string baseName = Symmetry::spaceFreeName(symmetryName)

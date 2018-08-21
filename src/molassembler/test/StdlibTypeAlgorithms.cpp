@@ -6,24 +6,6 @@
 
 #include <iostream>
 
-/* Algorithms to test
- *
- * t # Name
- *   1 mergeOverlappingSetsInplace
- *   2 mergeOverlappingSets
- *   3 makeIndividualSets
- *   4 copyMerge
- *   5 minMaxAdaptor
- *   6 makeFunction
- */
-
-bool firstSmallerSecond(
-  const unsigned& a,
-  const unsigned& b
-) {
-  return a < b;
-}
-
 BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
   using namespace StdlibTypeAlgorithms;
 
@@ -85,17 +67,8 @@ BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
       expectedMerge.end()
     )
   );
-
-
-  /* 5, 6 */
-  BOOST_CHECK(
-    minMaxAdaptor(
-      makeFunction(firstSmallerSecond),
-      7u,
-      5u
-    )
-  );
 }
+
 
 BOOST_AUTO_TEST_CASE( combinationPermutation ) {
   const std::vector<unsigned> testLimits {4, 1, 3, 6, 9, 2};
@@ -108,7 +81,7 @@ BOOST_AUTO_TEST_CASE( combinationPermutation ) {
         temple::zipMap(
           combination,
           testLimits,
-          [](const unsigned& index, const unsigned& limit) -> bool {
+          [](const unsigned index, const unsigned limit) -> bool {
             return index <= limit;
           }
         )

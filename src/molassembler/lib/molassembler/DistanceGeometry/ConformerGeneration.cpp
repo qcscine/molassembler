@@ -134,9 +134,9 @@ outcome::result<
   std::vector<AngstromWrapper>
 > run(
   const Molecule& molecule,
-  const unsigned& numStructures,
-  const Partiality& metrizationOption,
-  const bool& useYInversionTrick
+  const unsigned numStructures,
+  const Partiality metrizationOption,
+  const bool useYInversionTrick
 ) {
   if(molecule.getStereocenterList().hasZeroAssignmentStereocenters()) {
     return DGError::ZeroAssignmentStereocenters;
@@ -358,9 +358,9 @@ outcome::result<
 // Debug version
 std::list<RefinementData> debug(
   const Molecule& molecule,
-  const unsigned& numStructures,
-  const Partiality& metrizationOption,
-  const bool& useYInversionTrick
+  const unsigned numStructures,
+  const Partiality metrizationOption,
+  const bool useYInversionTrick
 ) {
   if(molecule.getStereocenterList().hasZeroAssignmentStereocenters()) {
     Log::log(Log::Level::Warning)

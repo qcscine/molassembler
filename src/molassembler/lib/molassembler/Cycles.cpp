@@ -321,7 +321,7 @@ std::map<AtomIndexType, unsigned> makeSmallestCycleMap(const Cycles& cycleData) 
           smallestCycle,
           index, // key_type to check
           cycleSize, // mapped_value to place if key does not exist or if ...
-          [&cycleSize](const unsigned& currentMinCycleSize) -> bool {
+          [&cycleSize](const unsigned currentMinCycleSize) -> bool {
             return cycleSize < currentMinCycleSize;
           }
         );
@@ -380,7 +380,7 @@ std::vector<AtomIndexType> makeRingIndexSequence(
 
 std::vector<AtomIndexType> centralizeRingIndexSequence(
   std::vector<AtomIndexType> ringIndexSequence,
-  const AtomIndexType& center
+  const AtomIndexType center
 ) {
   assert(ringIndexSequence.front() == ringIndexSequence.back());
 

@@ -66,8 +66,8 @@ void testVSEPR(
 
 // Helper function to compose ligand situations
 auto makeLigand(
-  const unsigned& L,
-  const unsigned& X,
+  const unsigned L,
+  const unsigned X,
   const Delib::ElementType& type,
   const BondType& bty
 ) {
@@ -82,7 +82,7 @@ auto makeLigand(
 // Helper function to compose ligand situations
 std::vector<BindingSiteInformation> repeat(
   const BindingSiteInformation& ligand,
-  const unsigned& N
+  const unsigned N
 ) {
   return std::vector<BindingSiteInformation> (N, ligand);
 }

@@ -118,7 +118,7 @@ bool isStereogenic(
 
 bool checkIsomorphicExpansion(
   const std::string& fileName,
-  const AtomIndexType& expandOnIndex,
+  const AtomIndexType expandOnIndex,
   const RankingTree::TreeGraphType& comparisonGraph
 ) {
   auto molecule = IO::read(
@@ -143,7 +143,7 @@ bool checkIsomorphicExpansion(
 
 void writeExpandedTree(
   const std::string& fileName,
-  const AtomIndexType& expandOnIndex
+  const AtomIndexType expandOnIndex
 ) {
   auto molecule = IO::read(
     directoryPrefix + fileName
@@ -171,7 +171,7 @@ RankingTree::TreeGraphType makeTree(
 ) {
   RankingTree::TreeGraphType tree;
 
-  auto addNodeIfNotExists = [&](const unsigned& nodeIndex) {
+  auto addNodeIfNotExists = [&](const unsigned nodeIndex) {
     while(nodeIndex >= boost::num_vertices(tree)) {
       boost::add_vertex(tree);
     }

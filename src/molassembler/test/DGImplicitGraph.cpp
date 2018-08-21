@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
     }
     auto distancesMatrix = distancesMatrixResult.value();
 
-    auto d = [&distancesMatrix](const AtomIndexType& i, const AtomIndexType& j) -> double {
+    auto d = [&distancesMatrix](const AtomIndexType i, const AtomIndexType j) -> double {
       return distancesMatrix(
         std::min(i, j),
         std::max(i, j)

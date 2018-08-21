@@ -120,7 +120,7 @@ std::vector<unsigned> inverseReorderSequence(
   return returnSequence;
 }
 
-std::vector<unsigned> randomReorderingSequence(const unsigned& length) {
+std::vector<unsigned> randomReorderingSequence(const unsigned length) {
   std::vector<unsigned> reorderSequence (length);
 
   std::iota(

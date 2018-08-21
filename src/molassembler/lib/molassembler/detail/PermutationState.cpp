@@ -225,7 +225,7 @@ PermutationState::generateLigandToSymmetryPositionMap(
     );
   }
 
-  auto placeAndMark = [&](const unsigned& symmetryPositionIndex) {
+  auto placeAndMark = [&](const unsigned symmetryPositionIndex) {
     char priority = assignment.characters.at(symmetryPositionIndex);
 
     unsigned countUpToPosition = std::count(
@@ -285,7 +285,7 @@ PermutationState::generateLigandToSymmetryPositionMap(
   assert(
     temple::all_of(
       positionMap,
-      [](const unsigned& symmetryPosition) -> bool {
+      [](const unsigned symmetryPosition) -> bool {
         return symmetryPosition != placeholder;
       }
     ) && "A symmetry position is still marked with the placeholder!"

@@ -44,7 +44,7 @@ public:
 
   iterationOrAllChiralitiesCorrectStrategy(
     const std::vector<ChiralityConstraint>& constraints,
-    const unsigned& maxIter
+    const unsigned maxIter
   ) : _constraints(constraints),
       maxIterations(maxIter)
   {}
@@ -95,7 +95,7 @@ struct iterationOrGradientNormStopStrategy {
 /* Constructors */
 
   iterationOrGradientNormStopStrategy(
-    const unsigned& maxIterations,
+    const unsigned maxIterations,
     const double& gradientNormThreshold
   ) : maxIterations(maxIterations),
       gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold)

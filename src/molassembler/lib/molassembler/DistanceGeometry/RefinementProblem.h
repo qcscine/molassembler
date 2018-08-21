@@ -18,7 +18,7 @@ namespace errfDetail {
 
 using Vector = dlib::matrix<double, 0, 1>;
 
-inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned& i) {
+inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned i) {
   assert(4 * i + 3 < positions.size());
 
   return dlib::rowm(
@@ -27,7 +27,7 @@ inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned&
   );
 }
 
-inline Vector getPos(const Vector& positions, const unsigned& i) {
+inline Vector getPos(const Vector& positions, const unsigned i) {
   assert(4 * i + 3 < positions.size());
 
   return dlib::rowm(
@@ -470,10 +470,10 @@ public:
   inline void gradientDistanceContribution(
     const Vector& positions,
     Vector& gradient,
-    const double& lowerBoundSquared,
-    const double& upperBoundSquared,
-    const unsigned& alpha,
-    const unsigned& i
+    const double lowerBoundSquared,
+    const double upperBoundSquared,
+    const unsigned alpha,
+    const unsigned i
   ) const {
     assert(lowerBoundSquared < upperBoundSquared);
 

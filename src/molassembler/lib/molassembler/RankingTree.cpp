@@ -1217,7 +1217,7 @@ void RankingTree::_applySequenceRules(
         auto maxSize = temple::accumulate(
           groupedByStringRep,
           0u,
-          [](const unsigned& maxSize, const auto& stringGroup) -> unsigned {
+          [](const unsigned maxSize, const auto& stringGroup) -> unsigned {
             if(stringGroup.size() > maxSize) {
               return stringGroup.size();
             }
@@ -1924,7 +1924,7 @@ std::vector<
         auto maxSize = temple::accumulate(
           groupedByStringRep,
           0u,
-          [](const unsigned& maxSize, const auto& stringGroup) -> unsigned {
+          [](const unsigned maxSize, const auto& stringGroup) -> unsigned {
             if(stringGroup.size() > maxSize) {
               return stringGroup.size();
             }
@@ -2455,7 +2455,7 @@ unsigned RankingTree::_nonDuplicateDegree(const RankingTree::TreeVertexIndex& in
   auto numDuplicate = temple::accumulate(
     adjacents,
     0u,
-    [&](const unsigned& count, const auto& treeIndex) -> unsigned {
+    [&](const unsigned count, const auto& treeIndex) -> unsigned {
       return count + static_cast<unsigned>(
         _tree[treeIndex].isDuplicate
       );
@@ -2696,7 +2696,7 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
 
 //! Returns whether a molecular graph index exists in a specific branch
 bool RankingTree::_molIndexExistsInBranch(
-  const AtomIndexType& molIndex,
+  const AtomIndexType molIndex,
   TreeVertexIndex treeIndex
 ) const {
   // Check whether this treeIndex already has the molIndex
@@ -3089,7 +3089,7 @@ std::string RankingTree::_make4BGraph(
   const std::string branchColor = "gray60";
 
   auto cellBegin = [&](
-    const unsigned& span = 1,
+    const unsigned span = 1,
     const boost::optional<std::string>& colorOption = boost::none
   ) -> std::string {
     std::string html = R"(<td border="1")";

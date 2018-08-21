@@ -9,7 +9,7 @@ MolGraphWriter::MolGraphWriter(const GraphType* passGraphPtr) : graphPtr(passGra
 
 /* Information */
 Delib::ElementType MolGraphWriter::getElementType(
-  const AtomIndexType& vertexIndex
+  const AtomIndexType vertexIndex
 ) const {
   return (*graphPtr)[vertexIndex].elementType;
 }
@@ -24,7 +24,7 @@ void MolGraphWriter::operator() (std::ostream& os) const {
 // Vertex options
 void MolGraphWriter::operator() (
   std::ostream& os,
-  const AtomIndexType& vertexIndex
+  const AtomIndexType vertexIndex
 ) const {
   const std::string symbolString = Delib::ElementInfo::symbol(
     getElementType(vertexIndex)
