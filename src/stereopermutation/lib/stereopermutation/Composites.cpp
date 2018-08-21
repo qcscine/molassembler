@@ -628,8 +628,6 @@ Composite::Composite(OrientationState first, OrientationState second)
     );
   };
 
-  // TODO is there a simple abbreviated computation for same symmetry cases?
-
   /* Sequentially align every pair. Pick that arrangement in which the number
    * of cis dihedrals is maximal.
    *
@@ -717,16 +715,31 @@ Composite::Composite(OrientationState first, OrientationState second)
 
   for(auto& stereopermutation : _stereopermutations) {
     for(auto& dihedralTuple : stereopermutation) {
-      std::get<0>(dihedralTuple) = firstReversionMapping.at(
+      auto findIter = std::find(
+        std::begin(firstReversionMapping),
+        std::end(firstReversionMapping),
         std::get<0>(dihedralTuple)
       );
 
-      std::get<1>(dihedralTuple) = secondReversionMapping.at(
+      assert(findIter != std::end(firstReversionMapping));
+
+      std::get<0>(dihedralTuple) = findIter - std::begin(firstReversionMapping);
+
+      assert(std::get<0>(dihedralTuple) != _orientations.first.fusedPosition);
+
+      findIter = std::find(
+        std::begin(secondReversionMapping),
+        std::end(secondReversionMapping),
         std::get<1>(dihedralTuple)
       );
+
+      assert(findIter != std::end(secondReversionMapping));
+
+      std::get<1>(dihedralTuple) = findIter - std::begin(secondReversionMapping);
+
+      assert(std::get<1>(dihedralTuple) != _orientations.second.fusedPosition);
     }
   }
-
 }
 
 unsigned Composite::permutations() const {

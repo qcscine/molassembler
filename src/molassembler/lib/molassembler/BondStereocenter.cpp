@@ -241,6 +241,12 @@ void BondStereocenter::Impl::fit(
   double bestPenalty = std::numeric_limits<double>::max();
   std::vector<unsigned> bestAssignment;
 
+  /* TODO long-term, as soon as this is proven to work as it should, this
+   * computation can be abbreviated to exit the dihedralTuple loop as soon as
+   * the threshold is surpassed to avoid unnecessary dihedral computations and
+   * domain corrections.
+   */
+
   for(unsigned i = 0; i < _composite.permutations(); ++i) {
     double penalty = 0.0;
     for(const auto& dihedralTuple : _composite.dihedrals(i)) {
@@ -276,8 +282,6 @@ void BondStereocenter::Impl::fit(
         secondLigandPositions.at(secondLigandIndex)
       ) - dihedralAngle;
 
-      std::cout << "dihedral difference is " << dihedralDifference << "\n";
-
       // + pi is part of the definition interval, so use greater than
       if(dihedralDifference > M_PI) {
         dihedralDifference -= 2 * M_PI;
@@ -287,8 +291,6 @@ void BondStereocenter::Impl::fit(
       if(dihedralDifference <= -M_PI) {
         dihedralDifference += 2 * M_PI;
       }
-
-      std::cout << "corrected dihedral difference is " << dihedralDifference << "\n";
 
       penalty += std::fabs(dihedralDifference);
     }
@@ -308,8 +310,6 @@ void BondStereocenter::Impl::fit(
 
   if(bestAssignment.size() == 1) {
     _assignment = bestAssignment.front();
-  } else {
-    std::cout << "No suitable assignments found.\n";
   }
 }
 
