@@ -21,7 +21,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondDistance.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BoundsFromSymmetry.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.h

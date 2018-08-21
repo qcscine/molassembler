@@ -9,7 +9,6 @@
 #include "molassembler/detail/AnalysisHelpers.h"
 #include "molassembler/detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
-#include "molassembler/BoundsFromSymmetry.h"
 #include "molassembler/IO.h"
 #include "molassembler/Log.h"
 
@@ -28,13 +27,11 @@ int main(int argc, char* argv[]) {
 /* Set program options from command-line arguments */
   // Defaults
   unsigned nStructures = 1;
-  auto symmetries = Symmetry::allNames;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");
   options_description.add_options()
     ("help", "Produce help message")
-    ("s", boost::program_options::value<unsigned>(), "Specify symmetry index (zero-based)")
     ("n", boost::program_options::value<unsigned>(), "Set number of structures to generate")
     ("f", boost::program_options::value<std::string>(), "Read molecule to generate from file")
     ("i", boost::program_options::value<bool>(), "Specify whether inversion trick is to be used (Default: false)")
@@ -53,21 +50,6 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("help") > 0) {
     std::cout << options_description << std::endl;
     return 0;
-  }
-
-  if(options_variables_map.count("s") > 0) {
-    unsigned argSymmetry = options_variables_map["s"].as<unsigned>();
-    if(argSymmetry >= Symmetry::allNames.size()) {
-      std::cout << "Specified symmetry out of bounds. Valid symmetries are 0-"
-        << (Symmetry::allNames.size() - 1) << ":\n\n";
-      for(unsigned i = 0; i < Symmetry::allNames.size(); i++) {
-        std::cout << "  " << i << " - " << Symmetry::name(Symmetry::allNames.at(i)) << "\n";
-      }
-      std::cout << std::endl;
-      return 0;
-    }
-
-    symmetries = {{Symmetry::allNames[argSymmetry]}};
   }
 
   if(options_variables_map.count("n") > 0) {
@@ -99,11 +81,6 @@ int main(int argc, char* argv[]) {
 /* Generating work */
   // Generate from file
   if(options_variables_map.count("f") == 1) {
-    unsigned conformations = 1;
-    if(options_variables_map.count("n") > 0) {
-      conformations = options_variables_map["n"].as<unsigned>();
-    }
-
     bool useYInversionTrick = false;
 
     if(options_variables_map.count("i") > 0) {
@@ -123,7 +100,7 @@ int main(int argc, char* argv[]) {
 
     auto debugData = DistanceGeometry::debug(
       mol,
-      conformations,
+      nStructures,
       metrizationOption,
       useYInversionTrick
     );
@@ -163,57 +140,6 @@ int main(int argc, char* argv[]) {
 
     if(failures > 0) {
       std::cout << "WARNING: " << failures << " refinements failed." << std::endl;
-    }
-  }
-
-  // Not from file, then a basic molecule from symmetry
-  if(options_variables_map.count("f") == 0) {
-
-    for(const auto& symmetryName : symmetries) {
-
-      // Make a molecule and generate an ensemble
-      auto mol = DGDBM::asymmetricMolecule(symmetryName);
-
-      auto debugData = debug(
-        mol,
-        nStructures,
-        metrizationOption,
-        false
-      );
-
-      for(const auto& enumPair : enumerate(debugData)) {
-        const auto& structNum = enumPair.index;
-        const auto& refinementData = enumPair.value;
-
-        AnalysisHelpers::writeDGPOVandProgressFiles(
-          mol,
-          symmetryName,
-          structNum,
-          refinementData
-        );
-
-        IO::write(
-          Symmetry::spaceFreeName(symmetryName) + "-"s
-            + std::to_string(structNum) + "-last.mol"s,
-          mol,
-          DistanceGeometry::detail::convertToAngstromWrapper(
-            refinementData.steps.back().positions
-          )
-        );
-      }
-
-      auto failures = temple::sum(
-        temple::map(
-          debugData,
-          [](const auto& refinementData) -> unsigned {
-            return static_cast<unsigned>(refinementData.isFailure);
-          }
-        )
-      );
-
-      if(failures > 0) {
-        std::cout << "WARNING: " << failures << " refinements failed." << std::endl;
-      }
     }
   }
 }

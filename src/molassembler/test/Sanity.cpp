@@ -6,7 +6,6 @@
 #include "chemical_symmetries/Symmetries.h"
 
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
-#include "molassembler/BoundsFromSymmetry.h"
 
 #include "temple/Containers.h"
 #include "temple/Random.h"
@@ -31,14 +30,38 @@ void explainDifference(
   std::cout << std::endl;
 }
 
+const std::array<Delib::ElementType, 9> elements {
+  Delib::ElementType::F,
+  Delib::ElementType::Cl,
+  Delib::ElementType::Br,
+  Delib::ElementType::I,
+  Delib::ElementType::N,
+  Delib::ElementType::C,
+  Delib::ElementType::O,
+  Delib::ElementType::S,
+  Delib::ElementType::P
+};
+
 /* Test whether generating coordinates from a simple molecule and then
  * recovering all the stereocenter data from the positions alone yields the
  * same StereocenterList as you started out with
  */
 BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
   for(const auto& symmetryName: Symmetry::allNames) {
-    // Get an asymmetric molecule (all ligands different) for the current molecule
-    auto molecule = DGDBM::asymmetricMolecule(symmetryName);
+    // Build an abstract asymmetric molecule (all ligands different) for the current molecule
+    Molecule molecule(
+      Delib::ElementType::Ru,
+      Delib::ElementType::H,
+      BondType::Single
+    );
+
+    for(unsigned i = 0; molecule.numAtoms() - 1 < Symmetry::size(symmetryName); ++i) {
+      molecule.addAtom(
+        elements.at(i),
+        0,
+        BondType::Single
+      );
+    }
 
     if(!molecule.getStereocenterList().empty()) {
       auto centralStereocenter = molecule.getStereocenterList().option(0);

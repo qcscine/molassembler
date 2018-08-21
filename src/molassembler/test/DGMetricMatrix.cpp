@@ -1,15 +1,17 @@
 #define BOOST_TEST_MODULE DGMetricMatrixTests
-#include <boost/test/unit_test.hpp>
+#define BOOST_FILESYSTEM_NO_DEPRECATED
 
-#include <Eigen/Eigenvalues>
+#include "boost/filesystem.hpp"
+#include "boost/test/unit_test.hpp"
 #include "chemical_symmetries/Symmetries.h"
+#include "Eigen/Eigenvalues"
 #include "temple/Stringify.h"
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/detail/StdlibTypeAlgorithms.h"
-#include "molassembler/BoundsFromSymmetry.h"
+#include "molassembler/IO.h"
 #include "molassembler/Options.h"
 
 #include <iostream>
@@ -240,74 +242,71 @@ void showEmbedding(const MetricMatrix& metricMatrix) {
 }
 
 BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
-  // for every symmetry
-  for(const auto& symmetryName : Symmetry::allNames) {
-    const unsigned testsLimit = 10;
+  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::recursive_directory_iterator end;
 
-    bool allPassed = true;
+  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
+    const boost::filesystem::path currentFilePath = *i;
 
-    for(unsigned nTests = 0; nTests < testsLimit; nTests++) {
-      auto molecule = DGDBM::symmetricMolecule(symmetryName);
-      auto DGData = DistanceGeometry::gatherDGInformation(molecule);
+    auto molecule = IO::read(currentFilePath.string());
 
-      DistanceBoundsMatrix distanceBounds {
-        molecule,
-        DGData.bounds
-      };
+    auto DGData = DistanceGeometry::gatherDGInformation(molecule);
 
-      // choose a random reordering
-      auto reorderSequence = randomReorderingSequence(
-        Symmetry::size(symmetryName) + 1
-      );
+    DistanceBoundsMatrix distanceBounds {
+      molecule,
+      DGData.bounds
+    };
 
-      // get a distances matrix from the bounds
-      auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();
-      if(!distancesMatrixResult) {
-        BOOST_FAIL(distancesMatrixResult.error().message());
-      }
-      auto distancesMatrix = distancesMatrixResult.value();
+    // choose a random reordering
+    auto reorderSequence = randomReorderingSequence(
+      molecule.numAtoms() + 1
+    );
 
-      // reorder the distance Bounds matrix
-      auto reorderedDM = reorder(distancesMatrix, reorderSequence);
+    // get a distances matrix from the bounds
+    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();
+    if(!distancesMatrixResult) {
+      BOOST_FAIL(distancesMatrixResult.error().message());
+    }
+    auto distancesMatrix = distancesMatrixResult.value();
 
-      // generate a metric matrix for both
-      auto originalMetric = MetricMatrix(std::move(distancesMatrix));
-      auto reorderedMetric = MetricMatrix(std::move(reorderedDM));
+    // reorder the distance Bounds matrix
+    auto reorderedDM = reorder(distancesMatrix, reorderSequence);
 
-      /* Metric Matrix of original distances has to be identical to
-       * un-reordered metric matrix of reordered distances
-       */
-      auto revert = reorder(
-        reorderedMetric.access(),
-        inverseReorderSequence(reorderSequence)
-      );
+    // generate a metric matrix for both
+    auto originalMetric = MetricMatrix(std::move(distancesMatrix));
+    auto reorderedMetric = MetricMatrix(std::move(reorderedDM));
 
-      if(
-        !originalMetric.access().isApprox(
-          revert,
-          1e-7
-        )
-      ) {
-        allPassed = false;
-        std::cout << "Failed reordering test for Symmetry "
-          << Symmetry::name(symmetryName) << ":" << std::endl
-          << "Metric matrix from original distances matrix: " << std::endl
-          << originalMetric << std::endl
-          << "un-reordered Metric matrix from reordered:"
-          << std::endl << revert << std::endl;
-        break;
-      }
+    /* Metric Matrix of original distances has to be identical to
+     * un-reordered metric matrix of reordered distances
+     */
+    auto revert = reorder(
+      reorderedMetric.access(),
+      inverseReorderSequence(reorderSequence)
+    );
 
-      /*if(symmetryName == Symmetry::Name::SquareAntiPrismatic) {
-        showEmbedding(originalMetric);
-      }*/
-
-      /*if(nTests == 0) { // once per symmetry
-        showEmbedding(originalMetric);
-      }*/
+    if(
+      !originalMetric.access().isApprox(
+        revert,
+        1e-7
+      )
+    ) {
+      std::cout << "Failed reordering test for "
+        << currentFilePath.string() << ":" << std::endl
+        << "Metric matrix from original distances matrix: " << std::endl
+        << originalMetric << std::endl
+        << "un-reordered Metric matrix from reordered:"
+        << std::endl << revert << std::endl;
+      BOOST_FAIL("Reordering test fails!");
+      break;
     }
 
-    BOOST_CHECK(allPassed);
+    /*if(symmetryName == Symmetry::Name::SquareAntiPrismatic) {
+      showEmbedding(originalMetric);
+    }*/
+
+    /*if(nTests == 0) { // once per symmetry
+      showEmbedding(originalMetric);
+    }*/
   }
 }
 

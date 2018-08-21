@@ -1,5 +1,7 @@
 #define BOOST_TEST_MODULE RefinementProblemTests
+#define BOOST_FILESYSTEM_NO_DEPRECATED
 
+#include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
 #include "Eigen/Geometry"
 #include "temple/constexpr/FloatingPointComparison.h"
@@ -14,7 +16,6 @@
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/RefinementProblem.h"
-#include "molassembler/BoundsFromSymmetry.h"
 #include "molassembler/IO.h"
 
 #include <fstream>
@@ -51,10 +52,15 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
   Log::level = Log::Level::None;
   Log::particulars = {};
 
-  // Generate a wide array of RefinementProblems and check their gradients
+  // Generate several RefinementProblems and check their gradients
+  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::recursive_directory_iterator end;
 
-  for(const auto& symmetryName: Symmetry::allNames) {
-    auto molecule = DGDBM::asymmetricMolecule(symmetryName);
+  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
+    const boost::filesystem::path currentFilePath = *i;
+
+    auto molecule = IO::read(currentFilePath.string());
+
     auto DGInfo = gatherDGInformation(molecule);
 
     DistanceBoundsMatrix distanceBounds {
@@ -120,7 +126,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     BOOST_CHECK_MESSAGE(
       passes,
       "Gradient does not equal numerical differentiation of value for "
-        << Symmetry::name(symmetryName)
+        << currentFilePath.string()
         << " error function without compression! Difference norm: "
         << dlib::length(gradient - finiteDifferenceGradient)
         << "\n positions: " << dlib::trans(dlibPositions)
@@ -160,7 +166,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     BOOST_CHECK_MESSAGE(
       compressedPasses,
       "Gradient does not equal numerical differentiation of value for "
-        << Symmetry::name(symmetryName)
+        << currentFilePath.string()
         << " compressed error function! Difference norm: "
         << dlib::length(compressedGradient - compressedFiniteDifferenceGradient)
         << "\n positions: " << dlib::trans(dlibPositions)
@@ -172,8 +178,12 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 }
 
 BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
-  for(const auto& symmetryName : Symmetry::allNames) {
-    auto molecule = DGDBM::asymmetricMolecule(symmetryName);
+  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::recursive_directory_iterator end;
+
+  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
+    const boost::filesystem::path currentFilePath = *i;
+    auto molecule = IO::read(currentFilePath.string());
 
     const auto DGData = gatherDGInformation(molecule);
 
@@ -257,7 +267,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
         && std::fabs(transformedDistanceError - referenceDistanceError) > 1e-10
       ) {
         std::cout << "RefinementProblem distance error is not 3D rot-trans "
-          << "invariant for " << Symmetry::name(symmetryName) << "." << std::endl;
+          << "invariant for " << currentFilePath.string() << "." << std::endl;
 
         distanceErrorRotTransInvariant = false;
       }
@@ -267,7 +277,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
         && std::fabs(transformedChiralError - referenceChiralError) > 1e-10
       ) {
         std::cout << "RefinementProblem chiral error is not 3D rot-trans "
-          << "invariant for " << Symmetry::name(symmetryName) << "." << std::endl;
+          << "invariant for " << currentFilePath.string() << "." << std::endl;
         chiralErrorRotTransInvariant = false;
       }
 
@@ -276,7 +286,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
         && std::fabs(transformedExtraDimError - referenceExtraDimError) > 1e-10
       ) {
         std::cout << "RefinementProblem extra dim error is not 3D rot-trans "
-          << "invariant for " << Symmetry::name(symmetryName)
+          << "invariant for " << currentFilePath.string()
           << ". The fourth dimension is untouched in 3D rotation/translation!"
           << std::endl;
         extraDimErrorRotTransInvariant = false;
@@ -292,8 +302,12 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
 BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
   using DlibVector = dlib::matrix<double, 0, 1>;
 
-  for(const auto& symmetryName : Symmetry::allNames) {
-    auto molecule = DGDBM::asymmetricMolecule(symmetryName);
+  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::recursive_directory_iterator end;
+
+  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
+    const boost::filesystem::path currentFilePath = *i;
+    auto molecule = IO::read(currentFilePath.string());
 
     const auto DGData = gatherDGInformation(molecule);
     DistanceBoundsMatrix distanceBounds {
@@ -467,81 +481,4 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       }
     }
   }
-}
-
-BOOST_AUTO_TEST_CASE( basicMoleculeDGWorksWell ) {
-  Log::level = Log::Level::None;
-  Log::particulars = {
-    Log::Particulars::DGDebugInfo,
-    Log::Particulars::DGRefinementChiralityNumericalDebugInfo
-  };
-
-  const double maximumErrorThreshold = 1e-5;
-
-  // Open output file for R plots
-  std::string filename = "DGRefinementProblem-symmetric-ensemble-errors.csv";
-  std::ofstream outFile(filename);
-  outFile << std::setprecision(4) << std::fixed;
-
-  for(const auto& enumPair : enumerate(Symmetry::allNames)) {
-    const auto& symmetryName = enumPair.value;
-    const auto& symmetryIndex = enumPair.index;
-
-    std::cout << Symmetry::name(symmetryName) << std::endl;
-
-    auto molecule = DGDBM::asymmetricMolecule(symmetryName);
-
-    auto DGResult = DistanceGeometry::debug(
-      molecule,
-      100,
-      DistanceGeometry::Partiality::FourAtom,
-      false
-    );
-
-    // For something this simple, there really shouldn't be any failures
-
-    auto sumErrors = [](const RefinementStepData& stepData) -> double {
-      return (
-        stepData.distanceError
-        + stepData.chiralError
-        + stepData.fourthDimError
-      );
-    };
-
-    auto finalErrors = temple::map(
-      DGResult,
-      [&](const RefinementData& refinementData) -> double {
-        return sumErrors(refinementData.steps.back());
-      }
-    );
-
-    // The average error of the ensemble should be below 1e-5 (already achieved)
-    BOOST_CHECK_MESSAGE(
-      temple::average(finalErrors) < maximumErrorThreshold,
-      "Expected average error less than " << maximumErrorThreshold
-        << ", yet got: " << temple::average(finalErrors)
-    );
-
-    for(const auto& enumPair : enumerate(DGResult)) {
-      const auto& refinementData = enumPair.value;
-
-      const auto& finalError = sumErrors(refinementData.steps.back());
-
-      // Write the final error to file along with the symmetry index
-      outFile << symmetryIndex << "," << finalError << "\n";
-
-      // Should it exceed the threshold, write the corresponding debug files
-      if(finalError >= maximumErrorThreshold) {
-        AnalysisHelpers::writeDGPOVandProgressFiles(
-          molecule,
-          symmetryName,
-          enumPair.index,
-          refinementData
-        );
-      }
-    }
-
-  }
-
-  outFile.close();
 }
