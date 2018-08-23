@@ -1,10 +1,11 @@
 #define BOOST_TEST_MODULE SymmetryTests
 
 #include <boost/test/unit_test.hpp>
-#include "temple/constexpr/ToSTL.h"
 #include <Eigen/Geometry>
-#include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
+#include "temple/constexpr/ToSTL.h"
+#include "temple/constexpr/TupleTypePairs.h"
+#include "temple/Containers.h"
 #include "temple/Stringify.h"
 
 #include "chemical_symmetries/Symmetries.h"

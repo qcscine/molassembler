@@ -63,6 +63,19 @@ struct Bitmask {
     ) > 0;
   }
 
+  inline constexpr void operator |= (const EnumType& a) {
+    Underlying v = static_cast<Underlying>(a);
+
+    if(v > maximum) {
+      throw std::domain_error(
+        "This enum has too many options to be representable as a bitmask "
+        "in the specified underlying type."
+      );
+    }
+
+    value = value | (static_cast<Underlying>(1) << v);
+  }
+
   inline constexpr bool operator & (const EnumType& a) const {
     return isSet(a);
   }

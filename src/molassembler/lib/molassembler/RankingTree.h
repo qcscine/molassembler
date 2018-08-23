@@ -116,7 +116,7 @@ public:
    */
   enum class ExpansionOption {
     //! Expand the tree only as needed
-    Optimized,
+    OnlyRequiredBranches,
     //! Exhaustively expand all vertices until completion before ranking
     Full
   };
@@ -1077,7 +1077,7 @@ public:
     std::string molGraphviz,
     AtomIndexType atomToRank,
     const std::set<AtomIndexType>& excludeIndices = {},
-    const ExpansionOption& expansionMethod = ExpansionOption::Optimized,
+    ExpansionOption expansionMethod = ExpansionOption::OnlyRequiredBranches,
     const boost::optional<AngstromWrapper>& positionsOption = boost::none
   );
 //!@}

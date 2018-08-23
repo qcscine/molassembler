@@ -1,5 +1,5 @@
-#ifndef INCLUDE_BOND_DISTANCE_H
-#define INCLUDE_BOND_DISTANCE_H
+#ifndef INCLUDE_MOLASSEMBLER_BOND_DISTANCE_H
+#define INCLUDE_MOLASSEMBLER_BOND_DISTANCE_H
 
 #include "molassembler/detail/SharedTypes.h"
 #include "molassembler/AtomInfo.h"

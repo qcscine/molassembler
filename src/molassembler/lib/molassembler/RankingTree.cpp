@@ -2726,7 +2726,7 @@ RankingTree::RankingTree(
   std::string molGraphviz,
   const AtomIndexType atomToRank,
   const std::set<AtomIndexType>& excludeIndices,
-  const ExpansionOption& expansionMethod,
+  const ExpansionOption expansionMethod,
   const boost::optional<AngstromWrapper>& positionsOption
 ) : _graphRef(graph),
     _cyclesRef(cycles),
@@ -2775,7 +2775,7 @@ RankingTree::RankingTree(
   }
 
   // The class should work regardless of which tree expansion method is chosen
-  if(expansionMethod == ExpansionOption::Optimized) {
+  if(expansionMethod == ExpansionOption::OnlyRequiredBranches) {
     /* Expand only those branches which are yet undecided, immediately compare
      * using sequence rule 1.
      */
@@ -2791,10 +2791,7 @@ RankingTree::RankingTree(
     > seeds;
 
     for(const auto& branchIndex : branchIndices) {
-      comparisonSets.emplace(
-        branchIndex,
-        *this
-      );
+      comparisonSets.emplace(branchIndex, *this);
 
       comparisonSets.at(branchIndex).insert(branchIndex);
 

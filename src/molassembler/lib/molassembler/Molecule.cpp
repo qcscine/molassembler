@@ -1316,7 +1316,7 @@ RankingInformation Molecule::Impl::rankPriority(
     molGraphviz,
     a,
     excludeAdjacent,
-    RankingTree::ExpansionOption::Optimized,
+    RankingTree::ExpansionOption::OnlyRequiredBranches,
     positionsOption
   );
 
