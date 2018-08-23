@@ -1,0 +1,5 @@
+# get molfiles from the single file
+babel -isdf compounds_3d.sdf -omol vs.mol -m
+
+# get individual CIP records using grap
+grep -A1 CIP_LABELS *
