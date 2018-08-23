@@ -42,9 +42,8 @@ namespace molassembler {
 
 class AtomStereocenter {
 public:
-//!@name Constructors
+//!@name Special member functions
 //!@{
-  /* Rule of five members */
   AtomStereocenter(AtomStereocenter&& other) noexcept;
   AtomStereocenter& operator = (AtomStereocenter&& other) noexcept;
   AtomStereocenter(const AtomStereocenter& other);

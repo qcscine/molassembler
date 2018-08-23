@@ -19,7 +19,8 @@ namespace molassembler {
  * particular central vertex
  */
 struct RankingInformation {
-/* Typedefs */
+//!@name Member types
+//!@{
   //! ASC ordered list (via ranking) of atom index lists (sub-list atoms equal)
   using RankedType = std::vector<
     std::vector<AtomIndexType>
@@ -37,9 +38,10 @@ struct RankingInformation {
 
   //! A list of LinkInformation structs
   using LinksType = std::vector<GraphAlgorithms::LinkInformation>;
+//!@}
 
-
-/* Static members */
+//!@name Static member functions
+//!@{
   /*! Gets ranking positions of a ligand's constituting atoms in descending order
    *
    *                               0     1       2      3
@@ -56,9 +58,10 @@ struct RankingInformation {
     const LigandsType& ligands,
     const RankedType& sortedSubstituents
   );
+//!@}
 
-
-/* State */
+//!@name Data members
+//!@{
   //! Sorted substituents grouped by priority ascending
   RankedType sortedSubstituents;
 
@@ -73,14 +76,20 @@ struct RankingInformation {
    * The LinkInformation struct is documented in GraphAlgorithms.h
    */
   LinksType links;
+//!@}
 
-/* Information */
+//!@name Information
+//!@{
   unsigned getLigandIndexOf(const AtomIndexType i) const;
 
   bool hasHapticLigands() const;
+//!@}
 
+//!@name Operators
+//!@{
   bool operator == (const RankingInformation& other) const;
   bool operator != (const RankingInformation& other) const;
+//!@}
 };
 
 } // namespace molassembler

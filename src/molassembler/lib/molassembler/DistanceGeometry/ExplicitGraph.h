@@ -48,6 +48,8 @@ class DistanceBoundsMatrix;
  */
 class ExplicitGraph {
 public:
+//!@name Member types
+//!@{
   using EdgeWeightProperty = boost::property<boost::edge_weight_t, double>;
   using GraphType = boost::adjacency_list<
     boost::vecS,
@@ -59,45 +61,14 @@ public:
   using VertexDescriptor = GraphType::vertex_descriptor;
   using EdgeDescriptor = GraphType::edge_descriptor;
 
-private:
-  GraphType _graph;
-  const Molecule& _molecule;
-  //! Stores the two heaviest element types
-  std::array<Delib::ElementType, 2> _heaviestAtoms;
-
-  static void _explainContradictionPaths(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
-    const std::vector<VertexDescriptor>& predecessors,
-    const std::vector<double>& distances
-  );
-
-  void _updateOrAddEdge(
-    const VertexDescriptor i,
-    const VertexDescriptor j,
-    const double edgeWeight
-  );
-
-  void _updateGraphWithFixedDistance(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
-    const double fixedDistance
-  );
-
-  static inline VertexDescriptor left(const VertexDescriptor a) PURITY_STRONG {
-    return 2 * a;
-  }
-
-  static inline VertexDescriptor right(const VertexDescriptor a) PURITY_STRONG {
-    return 2 * a + 1;
-  }
-
-public:
   using BoundsList = std::map<
     std::array<VertexDescriptor, 2>,
     ValueBounds
   >;
+//!@}
 
+//!@name Special member functions
+//!@{
   ExplicitGraph(
     const Molecule& molecule,
     const DistanceBoundsMatrix& bounds
@@ -107,16 +78,37 @@ public:
     const Molecule& molecule,
     const BoundsList& bounds
   );
+//!@}
 
-  void addBound(
+//!@name Static member functions
+//!@{
+  static void _explainContradictionPaths(
     const VertexDescriptor a,
     const VertexDescriptor b,
-    const ValueBounds& bound
+    const std::vector<VertexDescriptor>& predecessors,
+    const std::vector<double>& distances
   );
 
   static inline bool isLeft(const VertexDescriptor i) PURITY_STRONG {
     return i % 2 == 0;
   }
+
+  static inline VertexDescriptor left(const VertexDescriptor a) PURITY_STRONG {
+    return 2 * a;
+  }
+
+  static inline VertexDescriptor right(const VertexDescriptor a) PURITY_STRONG {
+    return 2 * a + 1;
+  }
+//!@}
+
+//!@name Modifiers
+//!@{
+  void addBound(
+    const VertexDescriptor a,
+    const VertexDescriptor b,
+    const ValueBounds& bound
+  );
 
   //! Adds edges to the underlying graph representing implicit lower bounds
   void addImplicitEdges();
@@ -137,13 +129,6 @@ public:
     const VertexDescriptor b
   ) const;
 
-  //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
-  double maximalImplicitLowerBound(const VertexDescriptor i) const;
-
-  const GraphType& getGraph() const;
-
-  outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
-
   /*!
    * Generates a distances matrix conforming to the triangle inequality bounds
    * while modifying state information. Can only be called once!
@@ -151,6 +136,36 @@ public:
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix() noexcept;
 
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality) noexcept;
+//!@}
+
+//!@name Information
+//!@{
+  //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
+  double maximalImplicitLowerBound(const VertexDescriptor i) const;
+
+  const GraphType& getGraph() const;
+
+  outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
+//!@}
+
+private:
+  GraphType _graph;
+  const Molecule& _molecule;
+  //! Stores the two heaviest element types
+  std::array<Delib::ElementType, 2> _heaviestAtoms;
+
+  void _updateOrAddEdge(
+    const VertexDescriptor i,
+    const VertexDescriptor j,
+    const double edgeWeight
+  );
+
+  void _updateGraphWithFixedDistance(
+    const VertexDescriptor a,
+    const VertexDescriptor b,
+    const double fixedDistance
+  );
+
 };
 
 } // namespace DistanceGeometry

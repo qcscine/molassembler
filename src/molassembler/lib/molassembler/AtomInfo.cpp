@@ -6,6 +6,90 @@ namespace molassembler {
 
 namespace AtomInfo {
 
+ElementInfo::ElementInfo(
+  const double passVdwRadius,
+  const unsigned sValenceElectrons,
+  const unsigned pValenceElectrons,
+  const unsigned dValenceElectrons,
+  const unsigned fValenceElectrons
+) :
+  _valenceElectrons {
+    sValenceElectrons,
+    pValenceElectrons,
+    dValenceElectrons,
+    fValenceElectrons
+  },
+  _vdwRadius (passVdwRadius)
+{}
+
+unsigned ElementInfo::maxOccupancy(const char shell) {
+  switch(shell) {
+    case 's':
+      return 2;
+    case 'p':
+      return 6;
+    case 'd':
+      return 10;
+    case 'f':
+      return 14;
+    default:
+      return 0;
+  }
+}
+
+unsigned ElementInfo::valenceElectrons(const char shell) const {
+  switch(shell) {
+    case 's':
+      return _valenceElectrons[0];
+    case 'p':
+      return _valenceElectrons[1];
+    case 'd':
+      return _valenceElectrons[2];
+    case 'f':
+      return _valenceElectrons[3];
+    default:
+      return 0;
+  }
+}
+
+unsigned ElementInfo::valenceElectrons(const std::vector<char>& shells) const {
+  unsigned sum = 0;
+  for(const char shell : shells) {
+    sum += valenceElectrons(shell);
+  }
+  return sum;
+}
+
+bool ElementInfo::shellFullOrEmpty(const char shell) const {
+  return (
+    valenceElectrons(shell) == 0
+    || valenceElectrons(shell) == maxOccupancy(shell)
+  );
+}
+
+bool ElementInfo::shellsFullOrEmpty(const std::vector<char>& shells) const {
+  for(const char shell : shells) {
+    if(!shellFullOrEmpty(shell)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+//! Returns the total valence electrons
+unsigned ElementInfo::valenceElectrons() const {
+  unsigned sum = 0;
+  for(unsigned i = 0; i < 4; i++) {
+    sum += _valenceElectrons[i];
+  }
+  return sum;
+}
+
+double ElementInfo::vdwRadius() const {
+  return _vdwRadius;
+}
+
 /* TODO unify bondRadii into ElementData
  */
 
@@ -295,7 +379,7 @@ unsigned dElectronCount(const Delib::ElementType elementType) {
 double vdwRadius(const Delib::ElementType elementType) {
   return elementData.at(
     static_cast<unsigned>(elementType)
-  ).vdwRadius;
+  ).vdwRadius();
 }
 
 } // namespace AtomInfo

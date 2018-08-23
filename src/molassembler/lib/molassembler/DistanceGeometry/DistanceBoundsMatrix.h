@@ -22,8 +22,6 @@ namespace DistanceGeometry {
 
 class DistanceBoundsMatrix {
 private:
-  Eigen::MatrixXd _matrix;
-
   inline double& _lowerBound(const AtomIndexType i, const AtomIndexType j) {
     return _matrix(
       std::max(i, j),
@@ -42,6 +40,8 @@ public:
   static constexpr double defaultLower = 0.0;
   static constexpr double defaultUpper = 100.0;
 
+//!@name Static member functions
+//!@{
   static inline double& lowerBound(Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
     return matrix(
       std::max(i, j),
@@ -70,11 +70,19 @@ public:
     );
   }
 
+  static void smooth(Eigen::MatrixXd& matrix);
+//!@}
+
+//!@name Member types
+//!@{
   using BoundsList = std::map<
     std::array<AtomIndexType, 2>,
     ValueBounds
   >;
+//!@}
 
+//!@name Special member functions
+//!@{
   DistanceBoundsMatrix();
 
   explicit DistanceBoundsMatrix(unsigned N);
@@ -117,15 +125,18 @@ public:
 
     assert(boundInconsistencies() == 0);
   }
+//!@}
 
+//!@name Modifiers
+//!@{
   bool setUpperBound(AtomIndexType i, AtomIndexType j, double newUpperBound);
-
   bool setLowerBound(AtomIndexType i, AtomIndexType j, double newLowerBound);
 
-  static void smooth(Eigen::MatrixXd& matrix);
-
   void smooth();
+//!@}
 
+//!@name Information
+//!@{
   inline double upperBound(AtomIndexType i, AtomIndexType j) const {
     return _matrix(
       std::min(i, j),
@@ -155,6 +166,10 @@ public:
   Eigen::MatrixXd makeSquaredBoundsMatrix() const;
 
   unsigned N() const;
+//!@}
+
+private:
+  Eigen::MatrixXd _matrix;
 };
 
 } // namespace DistanceGeometry

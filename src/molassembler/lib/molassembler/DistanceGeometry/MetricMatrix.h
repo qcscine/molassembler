@@ -17,12 +17,6 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 class MetricMatrix {
-private:
-/* Underlying matrix representation */
-  Eigen::MatrixXd _matrix;
-
-  void _constructFromTemporary(Eigen::MatrixXd&& distances);
-
 public:
 /* Constructors */
   MetricMatrix() = delete;
@@ -42,6 +36,12 @@ public:
 /* Operators */
   bool operator == (const MetricMatrix& other) const;
   friend std::ostream& operator << (std::ostream& os, const MetricMatrix& metricMatrix);
+
+private:
+/* Underlying matrix representation */
+  Eigen::MatrixXd _matrix;
+
+  void _constructFromTemporary(Eigen::MatrixXd&& distances);
 };
 
 } // namespace DistanceGeometry

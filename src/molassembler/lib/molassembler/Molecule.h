@@ -37,16 +37,17 @@ class RankingInformation;
 //! Central class of the library, modeling a molecular graph with all state.
 class Molecule {
 public:
-//!@name Constructors
+//!@name Special member functions
 //!@{
   /* Rule of five members */
-  //! Default-constructor creates a hydrogen molecule.
-  Molecule() noexcept;
   Molecule(Molecule&& other) noexcept;
   Molecule& operator = (Molecule&& rhs) noexcept;
   Molecule(const Molecule& other);
   Molecule& operator = (const Molecule& rhs);
   ~Molecule();
+
+  //! Default-constructor creates a hydrogen molecule.
+  Molecule() noexcept;
 
   //! Construct a minimal molecule from two element types and a shared bond type
   Molecule(

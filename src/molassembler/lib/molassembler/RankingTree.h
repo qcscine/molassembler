@@ -30,6 +30,11 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/OrderDiscoveryHelper.h"
 
+#if __cpp_lib_experimental_propagate_const >= 201505
+#define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
+#include <experimental/propagate_const>
+#endif
+
 /* TODO
  * - Maybe you can only add transferability edges when in down-only BFS?
  * - Consider transition to more unordered containers
@@ -83,9 +88,8 @@ namespace molassembler {
  * for the mixed inorganic/organic molecular graphs) is performed.
  */
 class RankingTree {
-#ifndef NEDBUG
 private:
-  /*! For propertly naming all the log files emitted in case the appropriate log
+  /*! For properly naming all the log files emitted in case the appropriate log
    * particular is set.
    */
   static unsigned _debugMessageCounter;
@@ -99,9 +103,10 @@ private:
   static void _writeGraphvizFiles(
     const std::vector<std::string>& graphvizStrings
   );
-#endif
 
 public:
+//!@name Member types
+//!@{
   /*! Option deciding in what manner the ranking tree is expanded
    *
    * The optimized expansion only expands positions that are needed for ranking
@@ -159,6 +164,43 @@ public:
     EdgeData
   >;
 
+  // IUPAC Sequence rule one tree vertex comparator
+  class SequenceRuleOneVertexComparator;
+
+  // IUPAC Sequence rule three tree edge comparator
+  class SequenceRuleThreeEdgeComparator;
+
+  // IUPAC Sequence rule four tree vertex and edge mixed comparator
+  class SequenceRuleFourVariantComparator;
+
+  // IUPAC Sequence rule five tree vertex and edge mixed comparator
+  class SequenceRuleFiveVariantComparator;
+
+  // Returns whether the vertex or edge has an instantiated Stereocenter
+  class VariantHasInstantiatedStereocenter;
+
+  // Returns the mixed depth (see _mixedDepth functions) of the vertex or edge
+  class VariantDepth;
+
+  // Returns the source node of a vertex (identity) or an edge (source node)
+  class VariantSourceNode;
+
+  // Returns a string representation of the stereocenter on vertex or edge
+  class VariantStereocenterStringRepresentation;
+
+  /*
+   * Returns whether two variants' stereocenters form a like pair or not
+   * according to the sub-rules in IUPAC sequence rule four.
+   */
+  class VariantLikePair;
+
+  //! Helper class to write a graphviz representation of the generated tree
+  class GraphvizWriter;
+
+  //! Data class to store junction vertex and paths from the source vertices
+  struct JunctionInfo;
+//!@}
+
 private:
   //! Type of tree vertex accessor
   using TreeVertexIndex = TreeGraphType::vertex_descriptor;
@@ -193,20 +235,11 @@ private:
   const std::string _adaptedMolGraphviz;
 
 /* Minor helper classes and functions */
-  //! Helper class to write a graphviz representation of the generated tree
-  class GraphvizWriter;
-
   //! Returns the parent of a node. Fails if called on the root!
   TreeVertexIndex _parent(const TreeVertexIndex& index) const;
 
-  //! Returns the direct descendants of a tree node
-  std::set<TreeVertexIndex> _children(const TreeVertexIndex& index) const;
-
-  //! Returns a set of all adjacent vertices (in- and out-adjacents)
-  std::set<TreeVertexIndex> _adjacents(const TreeVertexIndex& index) const;
-
-  //! Returns a set of all adjacent edges (in- and out-edges)
-  std::set<TreeEdgeIndex> _adjacentEdges(const TreeVertexIndex& index) const;
+  //! Returns an unordered list of all adjacent vertices (in- and out-adjacents)
+  std::vector<TreeVertexIndex> _adjacents(const TreeVertexIndex index) const;
 
   //! Counts the number of terminal hydrogens on out-edges of the specified index
   unsigned _adjacentTerminalHydrogens(const TreeVertexIndex& index) const;
@@ -222,9 +255,9 @@ private:
    * Determines which tree indices are to be ranked based on the central index
    * and a list of index excludes
    */
-  std::set<TreeVertexIndex> _auxiliaryAdjacentsToRank(
-    const TreeVertexIndex& sourceIndex,
-    const std::set<TreeVertexIndex>& excludedIndices
+  std::vector<TreeVertexIndex> _auxiliaryAdjacentsToRank(
+    const TreeVertexIndex sourceIndex,
+    const std::vector<TreeVertexIndex>& excludedIndices
   ) const;
 
   /*!
@@ -246,10 +279,10 @@ private:
   );
 
   //! Returns all tree indices in the branch from the specified index up to root
-  std::set<TreeVertexIndex> _treeIndicesInBranch(TreeVertexIndex index) const;
+  std::unordered_set<TreeVertexIndex> _treeIndicesInBranch(TreeVertexIndex index) const;
 
   //! Returns all mol indices in the branch from the specified index up to root
-  std::set<AtomIndexType> _molIndicesInBranch(const TreeVertexIndex& index) const;
+  std::unordered_set<AtomIndexType> _molIndicesInBranch(const TreeVertexIndex index) const;
 
   //! Returns a depth measure of a duplicate vertex for sequence rule 1
   unsigned _duplicateDepth(TreeVertexIndex index) const;
@@ -263,9 +296,6 @@ private:
   //! Returns a mixed depth measure for ranking both vertices and edges
   unsigned _mixedDepth(const TreeEdgeIndex& edgeIndex) const;
 
-  //! A data class, stores both the junction vertex and paths from the source vertices.
-  struct JunctionInfo;
-
   /*!
    * Returns the deepest vertex in the tree in whose child branches both a and
    * b are located
@@ -278,7 +308,6 @@ private:
     TreeVertexIndex treeIndex
   ) const;
 
-
 /* Major helper functions */
   /*! Adds missing adjacents to vertex, returning new and existing tree children
    *
@@ -290,13 +319,13 @@ private:
    */
   std::vector<TreeVertexIndex> _expand(
     const TreeVertexIndex& index,
-    const std::set<AtomIndexType>& molIndicesInBranch
+    const std::unordered_set<AtomIndexType>& molIndicesInBranch
   );
 
   /*!
    * Since multiset's operator < does not actually USE the custom comparator
    * when comparing the contained values, we have to call
-   * lexicographical_compare, supplying the comparator!
+   * lexicographical_compare with a supplied comparator!
    */
   template<typename SetValueType, typename ComparatorType>
   bool _multisetCompare(
@@ -304,10 +333,10 @@ private:
     const std::multiset<SetValueType, ComparatorType>& b
   ) const {
     return std::lexicographical_compare(
-      a.begin(),
-      a.end(),
-      b.begin(),
-      b.end(),
+      std::begin(a),
+      std::end(a),
+      std::begin(b),
+      std::end(b),
       ComparatorType {*this}
     );
   }
@@ -365,14 +394,9 @@ private:
     }
   }
 
-  //! Returns a string representation of vertex indices or edge indices
-  template<typename ValueType>
-  std::string toString(const ValueType& /* value */) const {
-    /* This is the default - does nothing. Specializations for edges,
-     * vertices and the variant are in the .cpp file
-     */
-    return ""s;
-  }
+  std::string toString(const TreeVertexIndex vertex) const;
+  std::string toString(const TreeEdgeIndex& edge) const;
+  std::string toString(const VariantType& vertexOrEdge) const;
 
   /* Some helper structs to get _runBFS to compile smoothly. Although the
    * boolean template parameters to _runBFS are logically constexpr, and any
@@ -459,10 +483,7 @@ private:
     }
   };
 
-  /* When modernizing to C++17, see the comments regarding EdgeInserter and
-   * VertexInserter above
-   */
-  /*! Performs a BFS traversal through the tree
+  /*! Performs a BFS traversal through the tree, performing ranking of a single rule
    *
    * Performs a BFS traversal through the tree, adding encountered edges and/or
    * vertices into a multiset with a custom comparator, and comparing those
@@ -556,7 +577,7 @@ private:
     /* In case the BFS in not down-only, we have to track which indices we
      * have visited to ensure BFS doesn't backtrack or reuse vertices.
      */
-    std::set<TreeVertexIndex> visitedVertices;
+    std::unordered_set<TreeVertexIndex> visitedVertices;
 
 
     /* Initialization */
@@ -567,21 +588,7 @@ private:
       visitedVertices.insert(sourceIndex);
     }
 
-    /*auto countNestedElements = [](
-      const std::vector<std::vector<TreeVertexIndex>>& nestedSets
-    ) -> unsigned {
-      return temple::sum(
-        temple::map(
-          nestedSets,
-          [](const std::vector<TreeVertexIndex>& elementsSet) -> unsigned {
-            return elementsSet.size();
-          }
-        )
-      );
-    };*/
-
     auto undecidedSets = orderingHelper.getUndecidedSets();
-    // unsigned undecidedElements = countNestedElements(undecidedSets);
 
     for(const auto& undecidedSet : undecidedSets) {
       for(const auto& undecidedBranch : undecidedSet) {
@@ -629,15 +636,6 @@ private:
 
     // Update the undecided sets
     undecidedSets = orderingHelper.getUndecidedSets();
-
-    /*{
-      unsigned u = countNestedElements(undecidedSets);
-      if(u > undecidedElements) {
-        throw std::logic_error("Undecided sets gained a new element!");
-      } else {
-        undecidedElements = u;
-      }
-    }*/
 
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       // Write debug graph files if the corresponding log particular is set
@@ -777,15 +775,6 @@ private:
       // Recalculate the undecided sets
       undecidedSets = orderingHelper.getUndecidedSets();
 
-      /*{
-        unsigned u = countNestedElements(undecidedSets);
-        if(u > undecidedElements) {
-          throw std::logic_error("Undecided sets gained a new element!");
-        } else {
-          undecidedElements = u;
-        }
-      }*/
-
       // Increment depth
       ++depth;
 
@@ -818,7 +807,7 @@ private:
   }
 
   // Flatten the undecided branches' seeds into a single set
-  static std::set<TreeVertexIndex> _collectSeeds(
+  static std::unordered_set<TreeVertexIndex> _collectSeeds(
     const std::map<
       TreeVertexIndex,
       std::vector<TreeVertexIndex>
@@ -978,10 +967,7 @@ private:
     return ss.str();
   }
 
-  /*!
-   * Creates a graphviz representation of like/unlike pairing in sequence rule
-   * 4B
-   */
+  //! Creates graphviz representation of like/unlike pairing in sequence rule 4B
   std::string _make4BGraph(
     const TreeVertexIndex& sourceIndex,
     const std::map<
@@ -1075,56 +1061,15 @@ private:
   std::vector<
     std::vector<TreeVertexIndex>
   > _auxiliaryApplySequenceRules(
-    const TreeVertexIndex& sourceIndex,
-    const std::set<TreeVertexIndex>& adjacentsToRank,
+    const TreeVertexIndex sourceIndex,
+    const std::vector<TreeVertexIndex>& adjacentsToRank,
     const boost::optional<unsigned>& depthLimitOptional = boost::none
   ) const;
 
-
 public:
-/* Sequence rule comparator classes for use in std::multiset */
-
-  // IUPAC Sequence rule one tree vertex comparator (see .cpp)
-  struct SequenceRuleOneVertexComparator;
-
-  // IUPAC Sequence rule three tree edge comparator (see .cpp)
-  struct SequenceRuleThreeEdgeComparator;
-
-  // IUPAC Sequence rule four tree vertex and edge mixed comparator (see .cpp)
-  struct SequenceRuleFourVariantComparator;
-
-  // IUPAC Sequence rule five tree vertex and edge mixed comparator (see .cpp)
-  struct SequenceRuleFiveVariantComparator;
-
-
-/* Variant visitor helper classes */
-
-  // Returns whether the vertex or edge has an instantiated Stereocenter
-  class VariantHasInstantiatedStereocenter;
-
-  // Returns the mixed depth (see _mixedDepth functions) of the vertex or edge
-  class VariantDepth;
-
-  // Returns the source node of a vertex (identity) or an edge (source node)
-  class VariantSourceNode;
-
-  // Returns a string representation of the stereocenter on vertex or edge
-  class VariantStereocenterStringRepresentation;
-
-  /*
-   * Returns whether two variants' stereocenters form a like pair or not
-   * according to the sub-rules in IUPAC sequence rule four.
-   */
-  class VariantLikePair;
-
-
-/* Constructors */
-
-  /*! Creates an acyclic tree from the molecular graph.
-   *
-   * Splits any cycles of the molecular graph into an acyclic tree with its root
-   * at the atom instantiated upon.
-   */
+//!@name Special member functions
+//!@{
+  //! Performs ranking of a central atom's substituents
   RankingTree(
     const GraphType& graph,
     const Cycles& cycles,
@@ -1135,7 +1080,10 @@ public:
     const ExpansionOption& expansionMethod = ExpansionOption::Optimized,
     const boost::optional<AngstromWrapper>& positionsOption = boost::none
   );
+//!@}
 
+//!@name Information
+//!@{
   /*! Fetches the ranked result
    *
    * Returns the ranked result as a sorted vector of vectors, in which every
@@ -1153,12 +1101,11 @@ public:
    */
   std::string dumpGraphviz(
     const std::string& title = "",
-    const std::set<TreeVertexIndex>& squareVertices = {},
-    const std::set<TreeVertexIndex>& colorVertices = {},
+    const std::unordered_set<TreeVertexIndex>& squareVertices = {},
+    const std::unordered_set<TreeVertexIndex>& colorVertices = {},
     const std::set<TreeEdgeIndex>& colorEdges = {}
   ) const;
-
-  const TreeGraphType& getGraph() const;
+//!@}
 };
 
 } // namespace molassembler

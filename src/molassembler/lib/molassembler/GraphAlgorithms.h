@@ -18,8 +18,8 @@ class Cycles;
 namespace GraphAlgorithms {
 
 struct LinkInformation {
-
-
+//!@name Special member functions
+//!@{
   /*! Default constructor
    *
    * \warning Does not establish member invariants
@@ -32,7 +32,10 @@ struct LinkInformation {
     std::vector<AtomIndexType> cycleSequence,
     const AtomIndexType source
   );
+//!@}
 
+//!@name Data members
+//!@{
   //! An (asc) ordered pair of the ligand site indices that are linked
   std::pair<unsigned, unsigned> indexPair;
 
@@ -48,13 +51,17 @@ struct LinkInformation {
    * second-to-last one)
    */
   std::vector<AtomIndexType> cycleSequence;
+//!@}
 
+//!@name Operators
+//!@{
   //! Performs a lexicographical comparison on both data members
   bool operator == (const LinkInformation& other) const;
   bool operator != (const LinkInformation& other) const;
 
   //! Performs a lexicographical comparison on both data members
   bool operator < (const LinkInformation& other) const;
+//!@}
 };
 
 std::vector<LinkInformation> substituentLinks(

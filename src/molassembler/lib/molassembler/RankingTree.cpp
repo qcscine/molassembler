@@ -26,16 +26,16 @@ private:
   // Closures
   const RankingTree& _baseRef;
   const std::string _title;
-  const std::set<TreeVertexIndex> _squareVertices;
-  const std::set<TreeVertexIndex> _colorVertices;
+  const std::unordered_set<TreeVertexIndex> _squareVertices;
+  const std::unordered_set<TreeVertexIndex> _colorVertices;
   const std::set<TreeEdgeIndex> _colorEdges;
 
 public:
   GraphvizWriter(
     const RankingTree& baseTree,
     std::string title = "",
-    std::set<TreeVertexIndex> squareVertices = {},
-    std::set<TreeVertexIndex> colorVertices = {},
+    std::unordered_set<TreeVertexIndex> squareVertices = {},
+    std::unordered_set<TreeVertexIndex> colorVertices = {},
     std::set<TreeEdgeIndex> colorEdges = {}
   ) : _baseRef(baseTree),
       _title(std::move(title)),
@@ -149,7 +149,7 @@ public:
  * taken in the instantiation of the STL Container using this to avoid move
  * and copy assignment operators. You must use in-place-construction!
  */
-struct RankingTree::SequenceRuleOneVertexComparator {
+class RankingTree::SequenceRuleOneVertexComparator {
 private:
   const RankingTree& _base;
 
@@ -206,7 +206,7 @@ public:
  * taken in the instantiation of the STL Container using this to avoid move
  * and copy assignment operators. You must use in-place-construction!
  */
-struct RankingTree::SequenceRuleThreeEdgeComparator {
+class RankingTree::SequenceRuleThreeEdgeComparator {
 private:
   const RankingTree& _base;
 
@@ -271,7 +271,7 @@ public:
  * taken in the instantiation of the STL Container using this to avoid move
  * and copy assignment operators. You must use in-place-construction!
  */
-struct RankingTree::SequenceRuleFourVariantComparator {
+class RankingTree::SequenceRuleFourVariantComparator {
 public:
   class VariantComparisonVisitor : boost::static_visitor<bool> {
   private:
@@ -364,7 +364,7 @@ public:
  * taken in the instantiation of the STL Container using this to avoid move
  * and copy assignment operators. You must use in-place-construction!
  */
-struct RankingTree::SequenceRuleFiveVariantComparator {
+class RankingTree::SequenceRuleFiveVariantComparator {
 public:
   class VariantComparisonVisitor : boost::static_visitor<bool> {
   private:
@@ -1241,7 +1241,7 @@ void RankingTree::_applySequenceRules(
 
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-        std::set<TreeVertexIndex> representativeVertices;
+        std::unordered_set<TreeVertexIndex> representativeVertices;
         std::set<TreeEdgeIndex> representativeEdges;
 
         for(const auto& iterPair : representativeStereodescriptors) {
@@ -1261,7 +1261,12 @@ void RankingTree::_applySequenceRules(
 
         _writeGraphvizFiles({
           _adaptedMolGraphviz,
-          dumpGraphviz("Sequence rule 4B prep", {rootIndex}, representativeVertices, representativeEdges)
+          dumpGraphviz(
+            "Sequence rule 4B prep",
+            {rootIndex},
+            representativeVertices,
+            representativeEdges
+          )
         });
       }
     }
@@ -1463,8 +1468,8 @@ void RankingTree::_applySequenceRules(
 std::vector<
   std::vector<RankingTree::TreeVertexIndex>
 > RankingTree::_auxiliaryApplySequenceRules(
-  const RankingTree::TreeVertexIndex& sourceIndex,
-  const std::set<RankingTree::TreeVertexIndex>& adjacentsToRank,
+  const RankingTree::TreeVertexIndex sourceIndex,
+  const std::vector<RankingTree::TreeVertexIndex>& adjacentsToRank,
   const boost::optional<unsigned>& depthLimitOptional
 ) const {
   /* Sequence rule 1 */
@@ -1635,7 +1640,7 @@ std::vector<
      * insertion of uninstantiated edges and vertices entirely?
      */
 
-    std::set<TreeVertexIndex> visitedVertices {sourceIndex};
+    std::unordered_set<TreeVertexIndex> visitedVertices {sourceIndex};
 
     std::map<
       TreeVertexIndex,
@@ -2150,7 +2155,7 @@ std::vector<
 
 std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   const RankingTree::TreeVertexIndex& index,
-  const std::set<AtomIndexType>& molIndicesInBranch
+  const std::unordered_set<AtomIndexType>& molIndicesInBranch
 ) {
   std::vector<TreeVertexIndex> newIndices;
 
@@ -2212,14 +2217,10 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_expand(
   return newIndices;
 }
 
-//! Specialization of toString for tree vertices
-template<>
-std::string RankingTree::toString(const TreeVertexIndex& vertexIndex) const {
+std::string RankingTree::toString(const TreeVertexIndex vertexIndex) const {
   return std::to_string(vertexIndex);
 }
 
-//! Specialization of toString for tree edges
-template<>
 std::string RankingTree::toString(const TreeEdgeIndex& edgeIndex) const {
   return (
     std::to_string(
@@ -2230,14 +2231,12 @@ std::string RankingTree::toString(const TreeEdgeIndex& edgeIndex) const {
   );
 }
 
-//! Specialization of toString for variant types containing either a vertex or edge
-template<>
-std::string RankingTree::toString(const VariantType& variant) const {
-  if(variant.which() == 0) {
-    return toString<TreeVertexIndex>(boost::get<TreeVertexIndex>(variant));
+std::string RankingTree::toString(const VariantType& vertexOrEdge) const {
+  if(vertexOrEdge.which() == 0) {
+    return toString(boost::get<TreeVertexIndex>(vertexOrEdge));
   }
 
-  return toString<TreeEdgeIndex>(boost::get<TreeEdgeIndex>(variant));
+  return toString(boost::get<TreeEdgeIndex>(vertexOrEdge));
 }
 
 //! Returns the parent of a node. Fails if called on the root!
@@ -2252,30 +2251,14 @@ RankingTree::TreeVertexIndex RankingTree::_parent(const RankingTree::TreeVertexI
   return boost::source(*iterPair.first, _tree);
 }
 
-//! Returns the direct descendants of a tree node
-std::set<RankingTree::TreeVertexIndex> RankingTree::_children(const RankingTree::TreeVertexIndex& index) const {
-  std::set<TreeVertexIndex> children;
+std::vector<RankingTree::TreeVertexIndex> RankingTree::_adjacents(const RankingTree::TreeVertexIndex index) const {
+  std::vector<TreeVertexIndex> adjacents;
 
-  TreeGraphType::out_edge_iterator iter, end;
-  std::tie(iter, end) = boost::out_edges(index, _tree);
-
-  while(iter != end) {
-    children.insert(
-      boost::target(*iter, _tree)
-    );
-
-    ++iter;
-  }
-
-  return children;
-}
-
-std::set<RankingTree::TreeVertexIndex> RankingTree::_adjacents(const RankingTree::TreeVertexIndex& index) const {
-  std::set<TreeVertexIndex> adjacents;
+  adjacents.reserve(boost::degree(index, _tree));
 
   auto inIterPair = boost::in_edges(index, _tree);
   while(inIterPair.first != inIterPair.second) {
-    adjacents.emplace(
+    adjacents.push_back(
       boost::source(*inIterPair.first, _tree)
     );
 
@@ -2284,7 +2267,7 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_adjacents(const RankingTree
 
   auto outIterPair = boost::out_edges(index, _tree);
   while(outIterPair.first != outIterPair.second) {
-    adjacents.emplace(
+    adjacents.push_back(
       boost::target(*outIterPair.first, _tree)
     );
 
@@ -2292,26 +2275,6 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_adjacents(const RankingTree
   }
 
   return adjacents;
-}
-
-std::set<RankingTree::TreeEdgeIndex> RankingTree::_adjacentEdges(const RankingTree::TreeVertexIndex& index) const {
-  std::set<TreeEdgeIndex> edges;
-
-  auto inIterPair = boost::in_edges(index, _tree);
-  while(inIterPair.first != inIterPair.second) {
-    edges.emplace(*inIterPair.first);
-
-    ++inIterPair.first;
-  }
-
-  auto outIterPair = boost::out_edges(index, _tree);
-  while(outIterPair.first != outIterPair.second) {
-    edges.emplace(*outIterPair.first);
-
-    ++outIterPair.first;
-  }
-
-  return edges;
 }
 
 unsigned RankingTree::_adjacentTerminalHydrogens(const TreeVertexIndex& index) const {
@@ -2422,15 +2385,21 @@ bool RankingTree::_isCycleClosureDuplicateVertex(const TreeVertexIndex& index) c
   return true;
 }
 
-std::set<RankingTree::TreeVertexIndex> RankingTree::_auxiliaryAdjacentsToRank(
-  const TreeVertexIndex& sourceIndex,
-  const std::set<TreeVertexIndex>& excludeIndices
+std::vector<RankingTree::TreeVertexIndex> RankingTree::_auxiliaryAdjacentsToRank(
+  const TreeVertexIndex sourceIndex,
+  const std::vector<TreeVertexIndex>& excludeIndices
 ) const {
   return temple::moveIf(
     _adjacents(sourceIndex),
-    [&](const auto& nodeIndex) -> bool {
-      // In case we explicitly exclude them, immediately discard
-      if(excludeIndices.count(nodeIndex) > 0) {
+    [&](const TreeVertexIndex nodeIndex) -> bool {
+      // In case we explicitly excluded an index, immediately discard
+      auto findIter = std::find(
+        std::begin(excludeIndices),
+        std::end(excludeIndices),
+        nodeIndex
+      );
+
+      if(findIter != std::end(excludeIndices)) {
         return false;
       }
 
@@ -2541,8 +2510,10 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_addBondOrderDuplicates(
   return newIndices;
 }
 
-std::set<RankingTree::TreeVertexIndex> RankingTree::_treeIndicesInBranch(TreeVertexIndex index) const {
-  std::set<AtomIndexType> indices {index};
+std::unordered_set<RankingTree::TreeVertexIndex> RankingTree::_treeIndicesInBranch(
+  TreeVertexIndex index
+) const {
+  std::unordered_set<AtomIndexType> indices {index};
 
   while(index != rootIndex) {
     // All nodes in the graph must have in_degree of 1
@@ -2558,7 +2529,9 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_treeIndicesInBranch(TreeVer
   return indices;
 }
 
-std::set<AtomIndexType> RankingTree::_molIndicesInBranch(const TreeVertexIndex& index) const {
+std::unordered_set<AtomIndexType> RankingTree::_molIndicesInBranch(
+  const TreeVertexIndex index
+) const {
   return temple::map(
     _treeIndicesInBranch(index),
     [&](const auto& treeIndex) -> AtomIndexType {
@@ -2652,7 +2625,7 @@ typename RankingTree::JunctionInfo RankingTree::_junction(
   JunctionInfo data;
 
   /* Determine the junction vertex */
-  std::set<TreeVertexIndex> aBranchIndices = _treeIndicesInBranch(a);
+  auto aBranchIndices = _treeIndicesInBranch(a);
 
   // By default, the junction is root
   data.junction = rootIndex;
@@ -2724,7 +2697,7 @@ bool RankingTree::_molIndexExistsInBranch(
 }
 
 
-std::set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
+std::unordered_set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
   const std::map<
     TreeVertexIndex,
     std::vector<TreeVertexIndex>
@@ -2733,7 +2706,7 @@ std::set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
     std::vector<TreeVertexIndex>
   >& undecidedSets
 ) {
-  std::set<TreeVertexIndex> visited;
+  std::unordered_set<TreeVertexIndex> visited;
 
   for(const auto& undecidedSet : undecidedSets) {
     for(const auto& undecidedBranch : undecidedSet) {
@@ -3009,10 +2982,7 @@ RankingTree::RankingTree(
     if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
       _writeGraphvizFiles({
         _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz(
-          "Final"s,
-          {rootIndex}
-        ),
+        dumpGraphviz("Final"s, {rootIndex}),
         _branchOrderingHelper.dumpGraphviz(),
         _allOrdering.dumpGraphviz()
       });
@@ -3024,8 +2994,8 @@ RankingTree::RankingTree(
 
 std::string RankingTree::dumpGraphviz(
   const std::string& title,
-  const std::set<TreeVertexIndex>& squareVertices,
-  const std::set<TreeVertexIndex>& colorVertices,
+  const std::unordered_set<TreeVertexIndex>& squareVertices,
+  const std::unordered_set<TreeVertexIndex>& colorVertices,
   const std::set<TreeEdgeIndex>& colorEdges
 ) const {
   GraphvizWriter propertyWriter {
@@ -3047,10 +3017,6 @@ std::string RankingTree::dumpGraphviz(
   );
 
   return ss.str();
-}
-
-const typename RankingTree::TreeGraphType& RankingTree::getGraph() const {
-  return _tree;
 }
 
 std::string RankingTree::_make4BGraph(

@@ -42,7 +42,7 @@ void standardize(std::array<AtomIndexType, size>& sequence) {
 }
 
 /*!
- * Stores index sequences in a fashion that recongizes reverses as part of the
+ * Stores index sequences in a fashion that recognizes reverses as part of the
  * set.
  */
 template<int sequenceLength>
@@ -51,6 +51,50 @@ public:
   using SequenceSetType = std::set<
     std::array<AtomIndexType, sequenceLength>
   >;
+
+//!@name Modification
+//!@{
+  void insert(const std::array<AtomIndexType, sequenceLength>& sequence) {
+    _sequences.insert(
+      _standardize(sequence)
+    );
+  }
+
+  void insert(const std::vector<AtomIndexType>& sequence) {
+    _sequences.insert(
+      _standardize(sequence)
+    );
+  }
+
+//!@name Information
+//!@{
+  bool contains(const std::array<AtomIndexType, sequenceLength>& sequence) const {
+    return _sequences.count(
+      _standardize(sequence)
+    ) > 0;
+  }
+
+  bool contains(const std::vector<AtomIndexType>& sequence) const {
+    return _sequences.count(
+      _standardize(sequence)
+    ) > 0;
+  }
+
+  unsigned size() const {
+    return _sequences.size();
+  }
+//!@}
+
+//!@name Iterators
+//!@{
+  typename SequenceSetType::const_iterator begin() const {
+    return _sequences.cbegin();
+  }
+
+  typename SequenceSetType::const_iterator end() const {
+    return _sequences.cend();
+  }
+//!@}
 
 private:
 /* State */
@@ -108,48 +152,6 @@ private:
     }
 
     return reversed;
-  }
-
-public:
-/* Constructors */
-  SequenceSet() {}
-
-/* Modification */
-  void insert(const std::array<AtomIndexType, sequenceLength>& sequence) {
-    _sequences.insert(
-      _standardize(sequence)
-    );
-  }
-
-  void insert(const std::vector<AtomIndexType>& sequence) {
-    _sequences.insert(
-      _standardize(sequence)
-    );
-  }
-
-/* Information */
-  bool contains(const std::array<AtomIndexType, sequenceLength>& sequence) const {
-    return _sequences.count(
-      _standardize(sequence)
-    ) > 0;
-  }
-
-  bool contains(const std::vector<AtomIndexType>& sequence) const {
-    return _sequences.count(
-      _standardize(sequence)
-    ) > 0;
-  }
-
-  unsigned size() const {
-    return _sequences.size();
-  }
-
-  typename SequenceSetType::const_iterator begin() const {
-    return _sequences.cbegin();
-  }
-
-  typename SequenceSetType::const_iterator end() const {
-    return _sequences.cend();
   }
 };
 

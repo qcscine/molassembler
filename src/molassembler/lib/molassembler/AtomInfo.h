@@ -25,95 +25,34 @@ namespace AtomInfo {
  * Stores information about an element.
  */
 class ElementInfo {
-private:
-  unsigned _valenceElectrons[4];
-
-  unsigned _valenceElectronCount(const char shell) const {
-    switch(shell) {
-      case 's':
-        return _valenceElectrons[0];
-      case 'p':
-        return _valenceElectrons[1];
-      case 'd':
-        return _valenceElectrons[2];
-      case 'f':
-        return _valenceElectrons[3];
-      default:
-        return 0;
-    }
-  }
-
-  unsigned _maxOccupancy(const char shell) const {
-    switch(shell) {
-      case 's':
-        return 2;
-      case 'p':
-        return 6;
-      case 'd':
-        return 10;
-      case 'f':
-        return 14;
-      default:
-        return 0;
-    }
-  }
-
 public:
-  double vdwRadius;
-
+/* Special member functions */
   ElementInfo(
-    const double _vdwRadius,
-    const unsigned sValenceElectrons = 0,
-    const unsigned pValenceElectrons = 0,
-    const unsigned dValenceElectrons = 0,
-    const unsigned fValenceElectrons = 0
-  ) :
-    _valenceElectrons {
-      sValenceElectrons,
-      pValenceElectrons,
-      dValenceElectrons,
-      fValenceElectrons
-    },
-    vdwRadius (_vdwRadius)
-  {};
+    double passVdwRadius,
+    unsigned sValenceElectrons = 0,
+    unsigned pValenceElectrons = 0,
+    unsigned dValenceElectrons = 0,
+    unsigned fValenceElectrons = 0
+  );
+
+/* Static functions */
+  static unsigned maxOccupancy(const char shell);
+
   //! Returns the valence electrons for a given shell character (s, p, d, f)
-  unsigned valenceElectrons(const char shell) const {
-    return _valenceElectronCount(shell);
-  }
+  unsigned valenceElectrons(const char shell) const;
+  unsigned valenceElectrons(const std::vector<char>& shells) const;
 
-  unsigned valenceElectrons(const std::vector<char>& shells) const {
-    unsigned sum = 0;
-    for(const char shell : shells) {
-      sum += _valenceElectronCount(shell);
-    }
-    return sum;
-  }
-
-  bool shellFullOrEmpty(const char shell) const {
-    return (
-      _valenceElectronCount(shell) == 0
-      || _valenceElectronCount(shell) == _maxOccupancy(shell)
-    );
-  }
-
-  bool shellsFullOrEmpty(const std::vector<char>& shells) const {
-    for(const char shell : shells) {
-      if(!shellFullOrEmpty(shell)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
+  bool shellFullOrEmpty(const char shell) const;
+  bool shellsFullOrEmpty(const std::vector<char>& shells) const;
 
   //! Returns the total valence electrons
-  unsigned valenceElectrons() const {
-    unsigned sum = 0;
-    for(unsigned i = 0; i < 4; i++) {
-      sum += _valenceElectrons[i];
-    }
-    return sum;
-  }
+  unsigned valenceElectrons() const;
+
+  double vdwRadius() const;
+
+private:
+  std::array<unsigned, 4> _valenceElectrons;
+  double _vdwRadius;
 };
 
 /*!

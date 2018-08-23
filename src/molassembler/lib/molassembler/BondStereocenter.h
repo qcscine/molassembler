@@ -35,10 +35,13 @@ struct ChiralityConstraint;
 
 class BondStereocenter {
 public:
+  //! The volume tolerance of emitted chirality constraints
   static constexpr double chiralityConstraintTolerance = 0.1;
+  //! An Assignment is accepted if the fit for each dihedral is below this value
   static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 60.0; // ~3°
 
-public:
+//!@name Special member functions
+//!@{
   /* Rule of five members */
   BondStereocenter(BondStereocenter&& other) noexcept;
   BondStereocenter& operator = (BondStereocenter&& other) noexcept;
@@ -56,7 +59,10 @@ public:
     const AtomStereocenter& stereocenterB,
     const GraphType::edge_descriptor edge
   );
+//!@}
 
+//!@name Modifiers
+//!@{
   void assign(boost::optional<unsigned> assignment);
 
   void assignRandom();
@@ -66,8 +72,10 @@ public:
     const AtomStereocenter& stereocenterA,
     const AtomStereocenter& stereocenterB
   );
+//!@}
 
-/* Information */
+//!@name Information
+//!@{
   boost::optional<unsigned> assigned() const;
 
   bool hasSameCompositeOrientation(const BondStereocenter& other) const;
@@ -96,10 +104,13 @@ public:
     const AtomStereocenter& stereocenterB,
     double looseningMultiplier
   ) const;
+//!@}
 
-/* Operators */
+//!@name Operators
+//!@{
   bool operator == (const BondStereocenter& other) const;
   bool operator != (const BondStereocenter& other) const;
+//!@}
 
 private:
   struct Impl;

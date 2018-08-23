@@ -11,6 +11,8 @@
 namespace molassembler {
 
 struct PermutationState {
+//!@name State
+//!@{
   //! Stably resorted (by set size) ligands ranking
   RankingInformation::RankedLigandsType canonicalLigands;
 
@@ -37,15 +39,23 @@ struct PermutationState {
 
   //! Mapping from ligand index to permutational symmetry position
   std::vector<unsigned> symmetryPositionMap;
+//!@}
 
+//!@name Special member functions
+//!@{
   PermutationState() = default;
+
+  // Establish full state
   PermutationState(
     const RankingInformation& ranking,
     const AtomIndexType centerAtom,
     const Symmetry::Name symmetry,
     const GraphType& graph
   );
+//!@}
 
+//!@name Static member functions
+//!@{
   /*! Stably re-sort ranked ligand indices in decreasing set size
    *
    * Necessary to avoid treating e.g. AAB and ABB separately, although the
@@ -110,6 +120,7 @@ struct PermutationState {
     const Symmetry::Name symmetry,
     const GraphType& graph
   );
+//!@}
 };
 
 

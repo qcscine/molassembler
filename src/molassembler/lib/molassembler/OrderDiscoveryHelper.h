@@ -149,6 +149,14 @@ public:
     setUnorderedValues(unorderedValues);
   }
 
+  template<typename Container>
+  explicit OrderDiscoveryHelper(const Container& container) {
+    setUnorderedValues(
+      std::begin(container),
+      std::end(container)
+    );
+  }
+
   /*!
    * Adds any relationships from another OrderDiscoveryHelper that are not
    * yet present in this one. No new vertices are added. Missing transferability

@@ -27,7 +27,7 @@ namespace molassembler {
  * allocated memory using shared_ptrs.
  */
 class Cycles {
-private:
+public:
   /*! Safe wrapper around RDL's graph and calculated data pointers
    *
    * Limited operability type to avoid any accidental moves or copies. Manages
@@ -52,44 +52,7 @@ private:
     ~RDLDataPtrs();
   };
 
-  std::shared_ptr<RDLDataPtrs> _rdlPtr;
-
-public:
-  Cycles() = default;
-  Cycles(const GraphType& sourceGraph, const bool ignoreEtaBonds = false);
-
-  using EdgeList = std::vector<
-    std::array<AtomIndexType, 2>
-  >;
-
-  //! Returns the size of a cycle (the number of constuting atoms or edges)
-  static unsigned size(const RDL_cycle* const cyclePtr);
-  //! Returns a list of edges constituted by their edge vertices of a cycle
-  static EdgeList edgeVertices(const RDL_cycle* const cyclePtr);
-  //! Returns a list of edge descriptors from the original graph of a cycle
-  static temple::TinySet<GraphType::edge_descriptor> edges(
-    const RDL_cycle* const cyclePtr,
-    const GraphType& graph
-  );
-  //! Returns a list of edge descriptors from an EdgeList
-  static temple::TinySet<GraphType::edge_descriptor> edges(
-    const EdgeList& edges,
-    const GraphType& graph
-  );
-
-  //! Returns the number of unique ring families (URFs)
-  unsigned numCycleFamilies() const;
-
-  //! Returns the number of unique ring families (URFs) an index is involved in
-  unsigned numCycleFamilies(const AtomIndexType index) const;
-
-  //! Returns the number of relevant cycles (RCs)
-  unsigned numRelevantCycles() const;
-
-  //! Returns the number of relevant cycles (RCs)
-  unsigned numRelevantCycles(const AtomIndexType index) const;
-
-  //! namespace struct
+  //! Namespacing struct
   struct predicates {
     //! Permits all cycles
     struct All {
@@ -148,7 +111,6 @@ public:
 
     using PredicateType = std::function<bool(const RDL_cycle* const)>;
 
-  private:
     /*! Safe wrapper around RDL's cycle iterator and cycle pointers
      *
      * Limited operability type to avoid any accidental moves or copies. Manages
@@ -161,6 +123,7 @@ public:
 
       RDLCyclePtrs() = delete;
       RDLCyclePtrs(const RDLDataPtrs& dataPtrs);
+
       RDLCyclePtrs(const RDLCyclePtrs& other) = delete;
       RDLCyclePtrs(RDLCyclePtrs&& other) = delete;
       RDLCyclePtrs& operator = (const RDLCyclePtrs& other) = delete;
@@ -177,16 +140,6 @@ public:
       void advance();
     };
 
-    //! Hold an owning reference to the base data to avoid dangling pointers
-    std::shared_ptr<RDLDataPtrs> _rdlPtr;
-    //! Manage cycle data as shared pointer to permit expected iterator functionality
-    std::shared_ptr<RDLCyclePtrs> _cyclePtr;
-    //! Holds a predicate function that determines which cycles are permissible
-    PredicateType _cyclePermissiblePredicate;
-    //! Current position in the full list of relevant cycles, for comparability and construction
-    unsigned _rCycleIndex = 0;
-
-  public:
     constIterator() = default;
     constIterator(
       const std::shared_ptr<RDLDataPtrs>& dataPtr,
@@ -196,14 +149,71 @@ public:
 
     constIterator& operator ++ ();
     constIterator operator ++ (int);
-
     RDL_cycle* operator * () const;
 
     //! Must be constructed from same Cycles base and at same RC to compare equal
     bool operator == (const constIterator& other) const;
     bool operator != (const constIterator& other) const;
+
+  private:
+    //! Hold an owning reference to the base data to avoid dangling pointers
+    std::shared_ptr<RDLDataPtrs> _rdlPtr;
+    //! Manage cycle data as shared pointer to permit expected iterator functionality
+    std::shared_ptr<RDLCyclePtrs> _cyclePtr;
+    //! Holds a predicate function that determines which cycles are permissible
+    PredicateType _cyclePermissiblePredicate;
+    //! Current position in the full list of relevant cycles, for comparability and construction
+    unsigned _rCycleIndex = 0;
   };
 
+  using EdgeList = std::vector<
+    std::array<AtomIndexType, 2>
+  >;
+
+//!@name Special member functions
+//!@{
+  Cycles() = default;
+  Cycles(const GraphType& sourceGraph, const bool ignoreEtaBonds = false);
+//!@}
+
+//!@name Static member functions
+//!@{
+  //! Returns the size of a cycle (the number of constuting atoms or edges)
+  static unsigned size(const RDL_cycle* const cyclePtr);
+  //! Returns a list of edges constituted by their edge vertices of a cycle
+  static EdgeList edgeVertices(const RDL_cycle* const cyclePtr);
+  //! Returns a list of edge descriptors from the original graph of a cycle
+  static temple::TinySet<GraphType::edge_descriptor> edges(
+    const RDL_cycle* const cyclePtr,
+    const GraphType& graph
+  );
+  //! Returns a list of edge descriptors from an EdgeList
+  static temple::TinySet<GraphType::edge_descriptor> edges(
+    const EdgeList& edges,
+    const GraphType& graph
+  );
+//!@}
+
+//!@name Information
+//!@{
+  //! Returns the number of unique ring families (URFs)
+  unsigned numCycleFamilies() const;
+
+  //! Returns the number of unique ring families (URFs) an index is involved in
+  unsigned numCycleFamilies(const AtomIndexType index) const;
+
+  //! Returns the number of relevant cycles (RCs)
+  unsigned numRelevantCycles() const;
+
+  //! Returns the number of relevant cycles (RCs)
+  unsigned numRelevantCycles(const AtomIndexType index) const;
+
+  //! Provide access to calculated data
+  RDL_data* dataPtr() const;
+//!@}
+
+//!@name Iterators
+//!@{
   constIterator begin() const;
   constIterator end() const;
 
@@ -220,13 +230,17 @@ public:
       constIterator {_rdlPtr, predicate, numRelevantCycles()}
     };
   }
+//!@}
 
-  //! Provide access to calculated data
-  RDL_data* dataPtr() const;
-
+//!@name Operators
+//!@{
   //! Must be copy of another to compare equal. Constructed from same graph does not suffice
   bool operator == (const Cycles& other) const;
   bool operator != (const Cycles& other) const;
+//!@}
+
+private:
+  std::shared_ptr<RDLDataPtrs> _rdlPtr;
 };
 
 /*!

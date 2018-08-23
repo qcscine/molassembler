@@ -63,34 +63,18 @@ auto orderedSequence(Inds ... inds) {
  */
 class SpatialModel {
 public:
-/* Typedefs */
+//!@name Member types
+//!@{
   struct ModelGraphWriter;
 
-private:
-  // Closures
-  const Molecule& _molecule;
-
-  // Mutable state
-
-  double _looseningMultiplier;
-  StereocenterList _stereocenters;
-
-  std::map<
+  using BoundsList = std::map<
     std::array<AtomIndexType, 2>,
     ValueBounds
-  > _bondBounds;
-  std::map<
-    std::array<AtomIndexType, 3>,
-    ValueBounds
-  > _angleBounds;
-  std::map<
-    std::array<AtomIndexType, 4>,
-    ValueBounds
-  > _dihedralBounds;
+  >;
+//!@}
 
-
-public:
-/* Static constants */
+//!@name Static members
+//!@{
   /*! Relative bond distance variance, 0.0x meaning x% variance. Must fulfill
    * 0 < x << 1
    */
@@ -130,14 +114,18 @@ public:
     const ValueBounds& bounds,
     const ValueBounds& clampBounds
   );
+//!@}
 
-/* Constructor */
+//!@name Special member functions
+//!@{
   SpatialModel(
     const Molecule& molecule,
     const double looseningMultiplier = 1.0
   );
+//!@}
 
-/* Modification */
+//!@name Modifiers
+//!@{
   //! Sets the bond bounds to the model.
   void setBondBoundsIfEmpty(
     const std::array<AtomIndexType, 2>& bondIndices,
@@ -179,14 +167,10 @@ public:
    * fashion is probably significantly faster.
    */
   void addDefaultDihedrals();
+//!@}
 
-  using BoundsList = std::map<
-    std::array<AtomIndexType, 2>,
-    ValueBounds
-  >;
-
-/* Information */
-
+//!@name Information
+//!@{
   boost::optional<ValueBounds> coneAngle(
     const std::vector<AtomIndexType>& ligandIndices,
     const ValueBounds& coneHeightBounds
@@ -207,6 +191,28 @@ public:
   std::string dumpGraphviz() const;
 
   void writeGraphviz(const std::string& filename) const;
+//!@}
+
+private:
+  // Molecule closure
+  const Molecule& _molecule;
+
+  // Mutable state
+  double _looseningMultiplier;
+  StereocenterList _stereocenters;
+
+  std::map<
+    std::array<AtomIndexType, 2>,
+    ValueBounds
+  > _bondBounds;
+  std::map<
+    std::array<AtomIndexType, 3>,
+    ValueBounds
+  > _angleBounds;
+  std::map<
+    std::array<AtomIndexType, 4>,
+    ValueBounds
+  > _dihedralBounds;
 };
 
 } // namespace DistanceGeometry
