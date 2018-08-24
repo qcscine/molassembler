@@ -53,6 +53,10 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementProblem.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Bridge.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Inner.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Outer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.h
@@ -96,6 +100,9 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementProblem.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Inner.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Outer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/OuterIterators.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.cpp
