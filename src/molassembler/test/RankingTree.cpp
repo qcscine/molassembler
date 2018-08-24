@@ -23,7 +23,7 @@ using namespace molassembler;
 
 const std::string directoryPrefix = "test_files/ranking_tree_molecules/";
 
-bool isStereocenter(
+bool isBondStereocenter(
   const Molecule& molecule,
   const GraphType::edge_descriptor& e,
   const unsigned numPermutations,
@@ -35,6 +35,25 @@ bool isStereocenter(
     std::cout << "No stereocenter on vertices " << temple::stringify(
       molecule.vertices(e)
     ) << "\n";
+
+    for(const auto& stereocenter : molecule.getStereocenterList().bondStereocenters()) {
+      auto vertices = molecule.vertices(stereocenter.edge());
+      auto newEdge = molecule.edge(vertices.front(), vertices.back());
+
+      if(newEdge != stereocenter.edge()) {
+        std::cout << "There is some form of edge decay\n";
+      }
+
+      auto newLookupOptional = molecule.getStereocenterList().option(newEdge);
+      if(!newLookupOptional) {
+        std::cout << "Edge stereocenter cannot be found with its own stored edge!\n";
+      }
+
+      std::cout << "BondStereocenter on "
+        << temple::stringify(
+          molecule.vertices(newEdge)
+        ) << ": " << stereocenter.info() << "\n";
+    }
     return false;
   }
 
@@ -68,7 +87,7 @@ bool isStereocenter(
   return true;
 }
 
-bool isStereocenter(
+bool isAtomStereocenter(
   const Molecule& molecule,
   AtomIndexType i,
   const unsigned numPermutations,
@@ -143,41 +162,8 @@ void writeExpandedTree(
   dotFile.close();
 }
 
-BOOST_AUTO_TEST_CASE(TreeExpansionAndSequenceRuleOneTests) {
+BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
   using namespace std::string_literals;
-
-
-  // Basic tests
-
-  /* P-92.2.1.1.2 Spheres I and II */
-  auto exampleOne = IO::read(
-    directoryPrefix + "2R-2-chloropropan-1-ol.mol"s
-  );
-
-  auto exampleOneExpanded = RankingTree(
-    exampleOne.getGraph(),
-    exampleOne.getCycleData(),
-    exampleOne.getStereocenterList(),
-    exampleOne.dumpGraphviz(),
-    2,
-    {},
-    RankingTree::ExpansionOption::Full
-  );
-
-  auto exampleTwo = IO::read(
-    directoryPrefix + "2S-23-dichloropropan-1-ol.mol"
-  );
-
-  auto exampleTwoExpanded = RankingTree(
-    exampleTwo.getGraph(),
-    exampleTwo.getCycleData(),
-    exampleTwo.getStereocenterList(),
-    exampleTwo.dumpGraphviz(),
-    3,
-    {},
-    RankingTree::ExpansionOption::Full
-  );
-
   // P. 92.2.2 Sequence subrule 1b: Priority due to duplicate atoms
   // Cycle and multiple-bond splitting
   auto exampleThree = IO::read(
@@ -247,7 +233,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(ZEDifference, 0, 2, 0),
+    isAtomStereocenter(ZEDifference, 0, 2, 0),
     "Stereocenter at C0 in 2Z5S7E-nona-2,7-dien-5-ol is not S"
   );
 
@@ -257,10 +243,12 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(EECyclobutane, EECyclobutane.edge(0, 3), 2, 0)
-    && isStereocenter(EECyclobutane, EECyclobutane.edge(5, 6), 2, 0),
-    "1E3E-1,3-difluoromethylidenecyclobutane double bonds aren't E"
+    isBondStereocenter(EECyclobutane, EECyclobutane.edge(0, 3), 2, 0)
+    && isBondStereocenter(EECyclobutane, EECyclobutane.edge(5, 6), 2, 0),
+    "1E3E-1,3-difluoromethylidenecyclobutane double bonds aren't E. "
   );
+
+  std::cout << EECyclobutane << std::endl;
 
   // P-92.4.2.2 Example 2 (stereogenic before non-stereogenic)
   auto inTreeNstgDB = IO::read(
@@ -269,10 +257,10 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(inTreeNstgDB, 0, 2, 1u),
+    isAtomStereocenter(inTreeNstgDB, 0, 2, 1u),
     "(2Z5Z7R8Z11Z)-9-(2Z-but-2-en-1-yl)-5-(2E-but-2-en-1-yl)trideca-2,5,8,11-tetraen-7-ol "
     "difference between non-stereogenic auxiliary stereocenter and assigned "
-    "stereocenter isn't recognized!"
+    "stereocenter isn't recognized! "
   );
 }
 
@@ -296,7 +284,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(pseudoOverNonstg, 0, 2, 0),
+    isAtomStereocenter(pseudoOverNonstg, 0, 2, 0),
     "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
     "sequence rule 4A does not recognize stereogenic over non-stereogenic, 3 as S"
   );
@@ -307,7 +295,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(simpleLikeUnlike, 10, 2, 1u),
+    isAtomStereocenter(simpleLikeUnlike, 10, 2, 1u),
     "(2R,3R,4R,5S,6R)-2,3,4,5,6-pentachloroheptanedioic-acid central carbon does "
     " not register as a stereocenter and/or isn't assigned as R"
   );
@@ -335,7 +323,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(oxyNitroDiffBranches, 0, 2, 1u),
+    isAtomStereocenter(oxyNitroDiffBranches, 0, 2, 1u),
     "(2R,3S,6R,9R,10S)-6-chloro-5-(1R,2S)-1,2-dihydroxypropoxy-7-(1S,2S)-1,2-dihydroxypropoxy-4,8-dioxa-5,7-diazaundecande-2,3,9,10-tetrol central carbon not recognized as R"
   );
 
@@ -345,7 +333,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(groupingDifferences, 0, 2, 1u),
+    isAtomStereocenter(groupingDifferences, 0, 2, 1u),
     "The central carbon in (2R,3R,5R,7R,8R)-4.4-bis(2S,3R-3-chlorobutan-2-yl)-6,6-bis(2S,4S-3-chlorobutan-2-yl)-2,8-dichloro-3,7-dimethylnonan-5-ol is not recognized as R"
   );
 
@@ -355,7 +343,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(numReferenceDescriptors, 0, 2, 1u),
+    isAtomStereocenter(numReferenceDescriptors, 0, 2, 1u),
     "The central carbon in 2R-2-bis(1R)-1-hydroxyethylamino-2-(1R)-1-hydroxyethyl(1S)-1-hydroxyethylaminoacetic-acid is not recognized as R"
   );
 }
@@ -367,7 +355,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(rsDifference, 0, 2, 1u),
+    isAtomStereocenter(rsDifference, 0, 2, 1u),
     "The central carbon in (2R,3r,4R,5s,6R)-2,6-dichloro-3,5-bis(1S-1-chloroethyl)heptan-4-ol is not recognized as R"
   );
 
@@ -377,7 +365,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(pseudo, 0, 2, 1u),
+    isAtomStereocenter(pseudo, 0, 2, 1u),
     "The central carbon in (2R,3r,4S)-pentane-2,3,4-trithiol is not recognized as R"
   );
 
@@ -387,8 +375,8 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(cyclobutane, 2, 2, 1u)
-    && isStereocenter(cyclobutane, 3, 2, 1u),
+    isAtomStereocenter(cyclobutane, 2, 2, 1u)
+    && isAtomStereocenter(cyclobutane, 3, 2, 1u),
     "The chiral carbons in (1r,3r)-cyclobutane-1,3-diol aren't properly recognized"
   );
 
@@ -398,7 +386,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(pseudoDB, pseudoDB.edge(0, 3), 2, 0u),
+    isBondStereocenter(pseudoDB, pseudoDB.edge(0, 3), 2, 0u),
     "Double bond in (2E,4R)-4-chloro-3-(1S-1-chloroethyl)pent-2-ene isn't E"
   );
 
@@ -408,7 +396,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isStereocenter(fourDoesNothing, 0, 2, 0u),
+    isAtomStereocenter(fourDoesNothing, 0, 2, 0u),
     "The central stereocenter in 1s-1-(1R,2R-1,2-dichloropropyl-1S,2R-1,2-dichloropropylamino)1-(1R,2S-1,2-dichloropropyl-1S,2S-1,2-dichloropropylamino)methan-1-ol isn't recognized as S"
   );
 }
@@ -713,8 +701,8 @@ const std::map<char, std::pair<StereocenterType, unsigned>> descriptorToPermutat
   {'S', {StereocenterType::A, 0}},
   {'r', {StereocenterType::A, 1}},
   {'s', {StereocenterType::A, 0}},
-  {'E', {StereocenterType::B, 1}},
-  {'Z', {StereocenterType::B, 0}}
+  {'Z', {StereocenterType::B, 1}},
+  {'E', {StereocenterType::B, 0}}
 };
 
 struct Stereodescriptor {

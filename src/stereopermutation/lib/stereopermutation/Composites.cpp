@@ -565,16 +565,15 @@ Composite::Composite(OrientationState first, OrientationState second)
     }
   );
 
-  /* Reorder both AngleGroups' symmetryPositions by ranking and index to get
-   * canonical initial combinations
+  /* Reorder both AngleGroups' symmetryPositions by descending ranking and
+   * index to get canonical initial combinations
    */
   temple::sort(
     angleGroups.first.symmetryPositions,
     [&](const unsigned a, const unsigned b) -> bool {
-      // by ranking descending but by index ascending
       return (
-        std::tie(_orientations.first.characters.at(b), a)
-        < std::tie(_orientations.first.characters.at(a), b)
+        std::tie(_orientations.first.characters.at(a), a)
+        > std::tie(_orientations.first.characters.at(b), b)
       );
     }
   );
@@ -583,8 +582,8 @@ Composite::Composite(OrientationState first, OrientationState second)
     angleGroups.second.symmetryPositions,
     [&](const unsigned a, const unsigned b) -> bool {
       return (
-        std::tie(_orientations.second.characters.at(b), a)
-        < std::tie(_orientations.second.characters.at(a), b)
+        std::tie(_orientations.second.characters.at(a), a)
+        > std::tie(_orientations.second.characters.at(b), b)
       );
     }
   );
@@ -764,6 +763,12 @@ Composite::Composite(OrientationState first, OrientationState second)
       assert(std::get<1>(dihedralTuple) != _orientations.second.fusedPosition);
     }
   }
+
+  // Reverse the stereopermutation sequence
+  std::reverse(
+    std::begin(_stereopermutations),
+    std::end(_stereopermutations)
+  );
 }
 
 unsigned Composite::permutations() const {
