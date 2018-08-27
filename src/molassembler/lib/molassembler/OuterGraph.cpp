@@ -22,7 +22,9 @@ OuterGraph& OuterGraph::operator = (const OuterGraph& other) {
 }
 OuterGraph::~OuterGraph() = default;
 
-OuterGraph::OuterGraph() = default;
+OuterGraph::OuterGraph() : _innerPtr(
+  std::make_unique<InnerGraph>()
+) {}
 
 OuterGraph::OuterGraph(InnerGraph&& inner) : _innerPtr(
   std::make_unique<InnerGraph>(std::move(inner))

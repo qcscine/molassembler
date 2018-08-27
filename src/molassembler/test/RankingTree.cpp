@@ -227,8 +227,6 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
     "1E3E-1,3-difluoromethylidenecyclobutane double bonds aren't E. "
   );
 
-  std::cout << EECyclobutane << std::endl;
-
   // P-92.4.2.2 Example 2 (stereogenic before non-stereogenic)
   auto inTreeNstgDB = IO::read(
     directoryPrefix
