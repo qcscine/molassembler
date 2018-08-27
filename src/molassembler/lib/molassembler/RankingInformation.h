@@ -1,34 +1,76 @@
 #ifndef INCLUDE_MOLASSEMBLER_RANKING_INFORMATION_H
 #define INCLUDE_MOLASSEMBLER_RANKING_INFORMATION_H
 
-#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/Types.h"
+
+#include <vector>
 
 /*! @file
  *
  * Contains the data struct declaration of ranking information.
  */
 
-/* TODO
- * - document -> where is this used and how?
- */
-
 namespace molassembler {
 
-/*!
- * Data struct to store the ranking information of substituents around a
- * particular central vertex
- */
+struct LinkInformation {
+//!@name Special member functions
+//!@{
+  /*! Default constructor
+   *
+   * \warning Does not establish member invariants
+   */
+  LinkInformation();
+
+  //! Constructor from data without established invariants
+  LinkInformation(
+    std::pair<unsigned, unsigned> ligandIndices,
+    std::vector<AtomIndex> sequence,
+    const AtomIndex source
+  );
+//!@}
+
+//!@name Data members
+//!@{
+  //! An (asc) ordered pair of the ligand site indices that are linked
+  std::pair<unsigned, unsigned> indexPair;
+
+  /*! The in-order atom sequence of the cycle atom indices
+   *
+   * \note The cycle sequence is centralized on the source vertex, meaning the
+   * front and back indices are the source vertex
+   *
+   * \note The cycle sequence between the repeated source vertices is
+   * standardized by ordering the first and last vertices of the remaining
+   * sequence ascending (i.e. reversing the part of the sequence in between
+   * front and back indices if the second index is larger than the
+   * second-to-last one)
+   */
+  std::vector<AtomIndex> cycleSequence;
+//!@}
+
+//!@name Operators
+//!@{
+  //! Performs a lexicographical comparison on both data members
+  bool operator == (const LinkInformation& other) const;
+  bool operator != (const LinkInformation& other) const;
+
+  //! Performs a lexicographical comparison on both data members
+  bool operator < (const LinkInformation& other) const;
+//!@}
+};
+
+//! Ranking data of substituents around a central vertex
 struct RankingInformation {
 //!@name Member types
 //!@{
   //! ASC ordered list (via ranking) of atom index lists (sub-list atoms equal)
   using RankedType = std::vector<
-    std::vector<AtomIndexType>
+    std::vector<AtomIndex>
   >;
 
   //! An unordered list of sets of atom indices that constitute ligand sites
   using LigandsType = std::vector<
-    std::vector<AtomIndexType>
+    std::vector<AtomIndex>
   >;
 
   //! ASC ordered list of ligand site indices (sub-list ligand indices equal)
@@ -37,7 +79,7 @@ struct RankingInformation {
   >;
 
   //! A list of LinkInformation structs
-  using LinksType = std::vector<GraphAlgorithms::LinkInformation>;
+  using LinksType = std::vector<LinkInformation>;
 //!@}
 
 //!@name Static member functions
@@ -50,7 +92,7 @@ struct RankingInformation {
    * Output: {3, 1, 0}
    */
   static std::vector<unsigned> ligandConstitutingAtomsRankedPositions(
-    const std::vector<AtomIndexType>& ligand,
+    const std::vector<AtomIndex>& ligand,
     const RankingInformation::RankedType& sortedSubstituents
   );
 
@@ -80,7 +122,7 @@ struct RankingInformation {
 
 //!@name Information
 //!@{
-  unsigned getLigandIndexOf(const AtomIndexType i) const;
+  unsigned getLigandIndexOf(const AtomIndex i) const;
 
   bool hasHapticLigands() const;
 //!@}

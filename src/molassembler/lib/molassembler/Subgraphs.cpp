@@ -4,8 +4,9 @@
 
 #include "chemical_symmetries/Properties.h"
 
-#include "molassembler/GraphHelpers.h"
+#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/OuterGraph.h"
 #include "molassembler/StereocenterList.h"
 
 namespace molassembler {
@@ -15,19 +16,19 @@ namespace subgraphs {
 namespace detail {
 
 struct SubgraphCallback {
-  AtomIndexType N;
+  AtomIndex N;
   std::vector<IndexMap> mappings;
 
   SubgraphCallback() = default;
-  SubgraphCallback(const GraphType& a) : N {graph::numVertices(a)} {}
+  SubgraphCallback(const OuterGraph& a) : N {a.N()} {}
 
   template<class ABMap>
   IndexMap makeIndexMap(const ABMap& m) {
     IndexMap bimap;
 
-    for(AtomIndexType i = 0; i < N; ++i) {
-      AtomIndexType t = boost::get(m, i);
-      if(t != boost::graph_traits<GraphType>::null_vertex()) {
+    for(AtomIndex i = 0; i < N; ++i) {
+      AtomIndex t = boost::get(m, i);
+      if(t != boost::graph_traits<InnerGraph::BGLType>::null_vertex()) {
         bimap.insert(
           IndexMap::value_type(i, t)
         );
@@ -41,7 +42,7 @@ struct SubgraphCallback {
   bool operator() (
     ABMap a,
     BAMap /* b */,
-    AtomIndexType /* subgraphSize */
+    AtomIndex /* subgraphSize */
   ) {
     mappings.push_back(
       makeIndexMap(a)
@@ -75,8 +76,6 @@ struct VertexComparator {
     const Symmetry::Name small,
     const Symmetry::Name large
   ) {
-
-
     const unsigned largeSize = Symmetry::size(large);
     unsigned currentSize = Symmetry::size(small);
 
@@ -111,8 +110,8 @@ struct VertexComparator {
     VertexStrictness strictness
   ) : a {a}, b {b}, strictness {strictness} {}
 
-  bool operator () (const AtomIndexType i, const AtomIndexType j) const {
-    if(a.getElementType(i) != b.getElementType(j)) {
+  bool operator () (const AtomIndex i, const AtomIndex j) const {
+    if(a.graph().elementType(i) != b.graph().elementType(j)) {
       return false;
     }
 
@@ -125,8 +124,8 @@ struct VertexComparator {
        * non-terminal in each molecule and both have a stereocenter defined on
        * it
        */
-      auto iAtomStereocenterOption = a.getStereocenterList().option(i);
-      auto jAtomStereocenterOption = b.getStereocenterList().option(j);
+      auto iAtomStereocenterOption = a.stereocenters().option(i);
+      auto jAtomStereocenterOption = b.stereocenters().option(j);
 
       if(iAtomStereocenterOption && jAtomStereocenterOption) {
         Symmetry::Name iSymmetry = iAtomStereocenterOption->getSymmetry();
@@ -166,14 +165,24 @@ struct EdgeComparator {
     EdgeStrictness strictness
   ) : a {a}, b {b}, strictness {strictness} {}
 
-  bool operator () (const GraphType::edge_descriptor i, const GraphType::edge_descriptor j) const {
-    if(a.getBondType(i) != b.getBondType(j)) {
+  bool operator () (const InnerGraph::Edge i, const InnerGraph::Edge j) const {
+    if(a.graph().inner().bondType(i) != b.graph().inner().bondType(j)) {
       return false;
     }
 
     if(strictness == EdgeStrictness::EZIdentical) {
-      auto aBondStereocenterOptional = a.getStereocenterList().option(i);
-      auto bBondStereocenterOptional = b.getStereocenterList().option(j);
+      auto aBondStereocenterOptional = a.stereocenters().option(
+        BondIndex {
+          a.graph().inner().source(i),
+          a.graph().inner().target(i)
+        }
+      );
+      auto bBondStereocenterOptional = b.stereocenters().option(
+        BondIndex {
+          b.graph().inner().source(j),
+          b.graph().inner().target(j)
+        }
+      );
 
       // Only if both have a stereocenter do we compare
       if(aBondStereocenterOptional && bBondStereocenterOptional) {
@@ -266,8 +275,8 @@ std::vector<IndexMap> maximum(
   detail::SubgraphCallback callback;
 
   boost::mcgregor_common_subgraphs_maximum(
-    a.getGraph(),
-    b.getGraph(),
+    a.graph().inner().bgl(),
+    b.graph().inner().bgl(),
     false, // Permit disconnected subgraphs
     callback,
     boost::vertices_equivalent(

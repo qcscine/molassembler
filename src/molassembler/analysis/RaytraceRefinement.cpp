@@ -6,8 +6,8 @@
 #include "temple/constexpr/Numeric.h"
 #include "temple/Containers.h"
 
-#include "molassembler/detail/AnalysisHelpers.h"
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Detail/AnalysisHelpers.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/IO.h"
 #include "molassembler/Log.h"

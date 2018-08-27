@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
       BondType::Single
     );
 
-    for(unsigned i = 0; molecule.numAtoms() - 1 < Symmetry::size(symmetryName); ++i) {
+    for(unsigned i = 0; molecule.graph().N() - 1 < Symmetry::size(symmetryName); ++i) {
       molecule.addAtom(
         elements.at(i),
         0,
@@ -63,8 +63,8 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
       );
     }
 
-    if(!molecule.getStereocenterList().empty()) {
-      auto centralStereocenter = molecule.getStereocenterList().option(0);
+    if(!molecule.stereocenters().empty()) {
+      auto centralStereocenter = molecule.stereocenters().option(0);
 
       // Create a full list of the possible assignments
       std::vector<unsigned> assignments;
@@ -123,11 +123,11 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
           [&](const auto& positions) -> bool {
             auto inferredStereocenterList = molecule.inferStereocentersFromPositions(positions);
 
-            bool pass = molecule.getStereocenterList() == inferredStereocenterList;
+            bool pass = molecule.stereocenters() == inferredStereocenterList;
 
             if(!pass) {
               explainDifference(
-                molecule.getStereocenterList(),
+                molecule.stereocenters(),
                 inferredStereocenterList
               );
             }
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
             << " comparisons with inferred StereocenterList pass" << std::endl;
 
           std::cout << "StereocenterList has atom stereocenters:" << std::endl;
-          for(const auto& stereocenter : molecule.getStereocenterList().atomStereocenters()) {
+          for(const auto& stereocenter : molecule.stereocenters().atomStereocenters()) {
             std::cout << stereocenter.info() << "\n";
           }
         }

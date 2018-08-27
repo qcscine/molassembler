@@ -23,17 +23,25 @@ struct TinyUnorderedSet {
   TinyUnorderedSet(std::initializer_list<T> list) : data {std::forward<std::initializer_list<T>>(list)} {}
 
   void insert(T a) {
-    data.push_back(a);
+    data.push_back(std::move(a));
+  }
+
+  void emplace(T a) {
+    data.push_back(std::move(a));
   }
 
   template<typename It>
-  void insert(It a, It b) {
+  void insert(It a, const It& b) {
     while(a != b) {
       if(count(*a) == 0) {
         insert(*a);
       }
       ++a;
     }
+  }
+
+  void reserve(std::size_t size) {
+    data.reserve(size);
   }
 
   unsigned count(T a) const {
@@ -108,7 +116,11 @@ struct TinySet {
     data.erase(a);
   }
 
-  typename type::iterator find(T a) {
+  void reserve(std::size_t size) {
+    data.reserve(size);
+  }
+
+  typename type::iterator find(const T& a) {
     return std::lower_bound(
       data.begin(),
       data.end(),
@@ -119,18 +131,22 @@ struct TinySet {
   void insert(T a) {
     data.insert(
       find(a),
-      a
+      std::move(a)
     );
   }
 
   template<typename It>
-  void insert(It a, It b) {
+  void insert(It a, const It& b) {
     while(a != b) {
       if(count(*a) == 0) {
         insert(*a);
       }
       ++a;
     }
+  }
+
+  void emplace(T&& a) {
+    insert(std::move(a));
   }
 
   TinySet& operator = (std::initializer_list<T> init) {

@@ -87,9 +87,9 @@ std::enable_if_t<
   void
 > emplaceOrEmplaceBack(
   Container& container,
-  const T& value
+  T&& value
 ) {
-  container.emplace_back(value);
+  container.emplace_back(std::forward<T>(value));
 }
 
 template<class Container, typename T>
@@ -101,9 +101,9 @@ std::enable_if_t<
   void
 > emplaceOrEmplaceBack(
   Container& container,
-  const T& value
+  T&& value
 ) {
-  container.emplace(value);
+  container.emplace(std::forward<T>(value));
 }
 
 template<class TargetContainer, class SourceContainer, class SizeModifierUnary>

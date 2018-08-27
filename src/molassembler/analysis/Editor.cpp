@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Molecule before edit:\n" << mol << std::endl;
 
   if(o("i")) {
-    AtomIndexType i = options_variables_map[l("i")].as<unsigned>();
+    AtomIndex i = options_variables_map[l("i")].as<unsigned>();
 
     if(o("b") && (o("e") || o("z"))) {
       BondType b = interpretBondType(
@@ -209,12 +209,12 @@ int main(int argc, char* argv[]) {
     }
 
     if(o("j") && o("b")) {
-      AtomIndexType j = options_variables_map[l("j")].as<unsigned>();
+      AtomIndex j = options_variables_map[l("j")].as<unsigned>();
       BondType b = interpretBondType(
         options_variables_map[l("b")].as<unsigned>()
       );
 
-      if(mol.isAdjacent(i, j)) {
+      if(mol.graph().adjacent(i, j)) {
         std::cout << "The indices " << i << " and " << j
           << " are adjacent. Changing their bond type." << std::endl;
         mol.setBondType(i, j, b);
@@ -230,7 +230,7 @@ int main(int argc, char* argv[]) {
     }
 
     if(removeFlag && o("j")) {
-      AtomIndexType j = options_variables_map[l("j")].as<unsigned>();
+      AtomIndex j = options_variables_map[l("j")].as<unsigned>();
       mol.removeBond(i, j);
     }
 

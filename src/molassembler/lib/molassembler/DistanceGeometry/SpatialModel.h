@@ -19,8 +19,8 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 template<int size>
-std::array<AtomIndexType, size> orderedIndexSequence(
-  const std::array<AtomIndexType, size>& source
+std::array<AtomIndex, size> orderedIndexSequence(
+  const std::array<AtomIndex, size>& source
 ) {
   if(source.front() > source.back()) {
     auto copy = source;
@@ -35,19 +35,19 @@ std::array<AtomIndexType, size> orderedIndexSequence(
 }
 
 template<int size>
-std::array<AtomIndexType, size> orderedIndexSequence(
-  std::initializer_list<AtomIndexType>& initializer
+std::array<AtomIndex, size> orderedIndexSequence(
+  std::initializer_list<AtomIndex>& initializer
 ) {
   assert(size == initializer.size());
   return orderedIndexSequence(
-    std::array<AtomIndexType, size>(initializer)
+    std::array<AtomIndex, size>(initializer)
   );
 }
 
 template<typename ... Inds>
 auto orderedSequence(Inds ... inds) {
-  std::array<AtomIndexType, sizeof...(inds)> indices {{
-    static_cast<AtomIndexType>(inds)...
+  std::array<AtomIndex, sizeof...(inds)> indices {{
+    static_cast<AtomIndex>(inds)...
   }};
 
   if(indices.front() > indices.back()) {
@@ -68,7 +68,7 @@ public:
   struct ModelGraphWriter;
 
   using BoundsList = std::map<
-    std::array<AtomIndexType, 2>,
+    std::array<AtomIndex, 2>,
     ValueBounds
   >;
 //!@}
@@ -89,20 +89,20 @@ public:
 
 /* Static functions */
   static boost::optional<ValueBounds> coneAngle(
-    const std::vector<AtomIndexType>& baseConstituents,
+    const std::vector<AtomIndex>& baseConstituents,
     const ValueBounds& coneHeightBounds,
     const double bondRelativeVariance,
-    const GraphType& graph,
+    const OuterGraph& graph,
     const Cycles& etaLessCycles
   );
 
   static double spiroCrossAngle(const double alpha, const double beta);
 
   static ValueBounds ligandDistanceFromCenter(
-    const std::vector<AtomIndexType>& ligandIndices,
-    const AtomIndexType centralIndex,
+    const std::vector<AtomIndex>& ligandIndices,
+    const AtomIndex centralIndex,
     const double bondRelativeVariance,
-    const GraphType& graph
+    const OuterGraph& graph
   );
 
   static ValueBounds makeBoundsFromCentralValue(
@@ -128,13 +128,13 @@ public:
 //!@{
   //! Sets the bond bounds to the model.
   void setBondBoundsIfEmpty(
-    const std::array<AtomIndexType, 2>& bondIndices,
+    const std::array<AtomIndex, 2>& bondIndices,
     const double centralValue
   );
 
   //! Sets bond bounds to exact value bounds.
   void setBondBoundsIfEmpty(
-    const std::array<AtomIndexType, 2>& bondIndices,
+    const std::array<AtomIndex, 2>& bondIndices,
     const ValueBounds& bounds
   );
 
@@ -143,7 +143,7 @@ public:
    * set of indices does not exist yet.
    */
   void setAngleBoundsIfEmpty(
-    const std::array<AtomIndexType, 3>& angleIndices,
+    const std::array<AtomIndex, 3>& angleIndices,
     const ValueBounds& bounds
   );
 
@@ -152,7 +152,7 @@ public:
    * set of indices does not exist yet.
    */
   void setDihedralBoundsIfEmpty(
-    const std::array<AtomIndexType, 4>& dihedralIndices,
+    const std::array<AtomIndex, 4>& dihedralIndices,
     const ValueBounds& bounds
   );
 
@@ -172,15 +172,15 @@ public:
 //!@name Information
 //!@{
   boost::optional<ValueBounds> coneAngle(
-    const std::vector<AtomIndexType>& ligandIndices,
+    const std::vector<AtomIndex>& ligandIndices,
     const ValueBounds& coneHeightBounds
   ) const;
 
   void dumpDebugInfo() const;
 
   ValueBounds ligandDistance(
-    const std::vector<AtomIndexType>& ligandIndices,
-    const AtomIndexType centralIndex
+    const std::vector<AtomIndex>& ligandIndices,
+    const AtomIndex centralIndex
   ) const;
 
 
@@ -202,15 +202,15 @@ private:
   StereocenterList _stereocenters;
 
   std::map<
-    std::array<AtomIndexType, 2>,
+    std::array<AtomIndex, 2>,
     ValueBounds
   > _bondBounds;
   std::map<
-    std::array<AtomIndexType, 3>,
+    std::array<AtomIndex, 3>,
     ValueBounds
   > _angleBounds;
   std::map<
-    std::array<AtomIndexType, 4>,
+    std::array<AtomIndex, 4>,
     ValueBounds
   > _dihedralBounds;
 };

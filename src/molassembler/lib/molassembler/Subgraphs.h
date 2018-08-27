@@ -5,7 +5,7 @@
 #include "chemical_symmetries/Names.h"
 #include "temple/constexpr/UpperTriangularMatrix.h"
 
-#include "molassembler/detail/SharedTypes.h"
+#include "molassembler/Types.h"
 
 #include <memory>
 
@@ -17,7 +17,7 @@ class Molecule;
 namespace subgraphs {
 
 //! Maybe consider using boost::bimap for this instead?
-using IndexMap = boost::bimap<AtomIndexType, AtomIndexType>;
+using IndexMap = boost::bimap<AtomIndex, AtomIndex>;
 
 enum class VertexStrictness : unsigned {
   ElementType,

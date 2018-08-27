@@ -1,5 +1,5 @@
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
-#include "molassembler/detail/SharedTypes.h"
+#include "molassembler/Types.h"
 
 #include <Eigen/Eigenvalues>
 
@@ -15,7 +15,7 @@ namespace DistanceGeometry {
 void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
   // Beware, only strict upper triangle of distances contains anything
 
-  const AtomIndexType N = distances.rows();
+  const AtomIndex N = distances.rows();
 
   // resize and null-initialize matrix
   _matrix.resize(N, N);
@@ -33,17 +33,17 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
   distances = distances.cwiseProduct(distances);
 
   double doubleSumTerm = 0;
-  for(AtomIndexType j = 0; j < N; j++) {
-    for(AtomIndexType k = j + 1; k < N; k++) {
+  for(AtomIndex j = 0; j < N; j++) {
+    for(AtomIndex k = j + 1; k < N; k++) {
       doubleSumTerm += distances(j, k);
     }
   }
   doubleSumTerm /= N * N;
 
-  for(AtomIndexType i = 0; i < N; i++) {
+  for(AtomIndex i = 0; i < N; i++) {
     // compute first term
     double firstTerm = 0;
-    for(AtomIndexType j = 0; j < N; j++) {
+    for(AtomIndex j = 0; j < N; j++) {
       if(i == j) {
         continue;
       }
@@ -78,8 +78,8 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
    * referenced by Eigen's SelfAdjointEigenSolver, which we will use in a bit
    * to embed the metric matrix
    */
-  for(AtomIndexType i = 0; i < N; i++) {
-    for(AtomIndexType j = i + 1; j < N; j++) {
+  for(AtomIndex i = 0; i < N; i++) {
+    for(AtomIndex j = i + 1; j < N; j++) {
       _matrix(j, i) = (
         D0[i] + D0[j] - distances(i, j)
       ) / 2.0;

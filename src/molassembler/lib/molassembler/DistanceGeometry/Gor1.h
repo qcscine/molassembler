@@ -1,3 +1,6 @@
+#ifndef INCLUDE_MOLASSEMBLER_DG_GOR_SPECIALIZATION_H
+#define INCLUDE_MOLASSEMBLER_DG_GOR_SPECIALIZATION_H
+
 #include <stack>
 #include <limits>
 
@@ -255,7 +258,7 @@ void gor1_eg_scan(
   using ColorValue = typename property_traits<ColorMap>::value_type;
   using Color = color_traits<ColorValue>;
 
-  const auto& graph = graphWrapper.getGraph();
+  const auto& graph = graphWrapper.graph();
 
   auto vertexDistance = get(distance_map, vertex);
 
@@ -356,8 +359,8 @@ std::enable_if_t<
   ColorMap& color_map,
   DistanceMap& distance_map
 ) {
-  using IncidenceGraph = typename GraphClass::GraphType;
-  const auto& graph = graphWrapper.getGraph();
+  using IncidenceGraph = typename GraphClass::OuterGraph;
+  const auto& graph = graphWrapper.graph();
 
   BOOST_CONCEPT_ASSERT(( IncidenceGraphConcept<IncidenceGraph> ));
 
@@ -438,3 +441,5 @@ std::enable_if_t<
 }
 
 } // namespace boost
+
+#endif

@@ -4,7 +4,8 @@
 #include "chemical_symmetries/Names.h"
 #include "temple/Random.h"
 
-#include "molassembler/detail/AngstromWrapper.h"
+#include "Delib/ElementTypes.h"
+#include "molassembler/Containers/AngstromWrapper.h"
 
 /*!@file
  *
@@ -12,6 +13,9 @@
  */
 
 namespace molassembler {
+
+// Forward-declarations
+class OuterGraph;
 
 /*! Randomness source for the entire library
  *
@@ -174,9 +178,9 @@ class AtomStereocenter;
  */
 bool disregardStereocenter(
   const AtomStereocenter& stereocenter,
-  const Delib::ElementType centralType,
+  Delib::ElementType centralType,
   const Cycles& cycleData,
-  const TemperatureRegime temperatureRegimeSetting
+  TemperatureRegime temperatureRegimeSetting
 );
 
 
@@ -186,9 +190,9 @@ bool disregardStereocenter(
  */
 void pickyFit(
   AtomStereocenter& stereocenter,
-  const GraphType& graph,
+  const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper,
-  const Symmetry::Name expectedSymmetry
+  Symmetry::Name expectedSymmetry
 );
 
 

@@ -69,7 +69,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   // Read the file
   auto mol = IO::read(filePath.string());
 
-  Cycles cycles {mol.getGraph()};
+  Cycles cycles {mol.graph()};
 
   std::vector<unsigned> cycleSizes;
   for(const auto cyclePtr : cycles) {

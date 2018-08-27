@@ -7,8 +7,12 @@
 #include "temple/TinySet.h"
 #include "temple/Traits.h"
 
-#include "molassembler/detail/RangeForTemporary.h"
-#include "molassembler/detail/SharedTypes.h"
+#include "molassembler/Detail/RangeForTemporary.h"
+#include "molassembler/OuterGraph.h"
+#include "molassembler/Types.h"
+
+#include <functional>
+#include <map>
 
 /*! @file
  *
@@ -33,24 +37,7 @@ public:
    * Limited operability type to avoid any accidental moves or copies. Manages
    * memory allocation and destruction in all situations.
    */
-  struct RDLDataPtrs {
-    //! Raw pointers to RDL_graph object
-    RDL_graph* graphPtr;
-
-    //! Raw pointer to calculated graph cycle data
-    RDL_data* dataPtr;
-
-    RDLDataPtrs() = delete;
-    RDLDataPtrs(
-      const GraphType& sourceGraph,
-      const bool ignoreEtaBonds
-    );
-    RDLDataPtrs(const RDLDataPtrs& other) = delete;
-    RDLDataPtrs(RDLDataPtrs&& other) = delete;
-    RDLDataPtrs& operator = (const RDLDataPtrs& other) = delete;
-    RDLDataPtrs& operator = (RDLDataPtrs&& other) = delete;
-    ~RDLDataPtrs();
-  };
+  struct RDLDataPtrs;
 
   //! Namespacing struct
   struct predicates {
@@ -70,24 +57,24 @@ public:
 
     //! Limits iterator to cycles containing a certain atom index
     struct ContainsIndex {
-      AtomIndexType soughtIndex;
+      AtomIndex soughtIndex;
 
-      explicit ContainsIndex(AtomIndexType soughtIndex);
+      explicit ContainsIndex(AtomIndex soughtIndex);
 
       bool operator() (const RDL_cycle* const cyclePtr) const;
     };
 
     struct ConsistsOf {
-      temple::TinySet<AtomIndexType> indices;
+      temple::TinySet<AtomIndex> indices;
 
       template<typename Container>
       explicit ConsistsOf(const Container& container) {
         static_assert(
           std::is_same<
             temple::traits::getValueType<Container>,
-            AtomIndexType
+            AtomIndex
           >::value,
-          "ConsistsOf predicate ctor Container must contain AtomIndexType"
+          "ConsistsOf predicate ctor Container must contain AtomIndex"
         );
 
         for(const auto index : container) {
@@ -117,28 +104,7 @@ public:
      * memory allocation and destruction in all situations. Pointer correctness
      * and iterator advancement is also provided.
      */
-    struct RDLCyclePtrs {
-      RDL_cycleIterator* cycleIterPtr;
-      RDL_cycle* cyclePtr;
-
-      RDLCyclePtrs() = delete;
-      RDLCyclePtrs(const RDLDataPtrs& dataPtrs);
-
-      RDLCyclePtrs(const RDLCyclePtrs& other) = delete;
-      RDLCyclePtrs(RDLCyclePtrs&& other) = delete;
-      RDLCyclePtrs& operator = (const RDLCyclePtrs& other) = delete;
-      RDLCyclePtrs& operator = (RDLCyclePtrs&& other) = delete;
-      ~RDLCyclePtrs();
-
-      /*! Advance internal iterator and cycle state
-       *
-       * Frees the memory for the current cycle and advances the iterator state.
-       * If the iterator is now not at the end of all relevant cycles, then
-       * the next cycle is allocated and constructed into cyclePtr. Otherwise,
-       * cyclePtr is a nullptr.
-       */
-      void advance();
-    };
+    struct RDLCyclePtrs;
 
     constIterator() = default;
     constIterator(
@@ -167,13 +133,13 @@ public:
   };
 
   using EdgeList = std::vector<
-    std::array<AtomIndexType, 2>
+    std::array<AtomIndex, 2>
   >;
 
 //!@name Special member functions
 //!@{
   Cycles() = default;
-  Cycles(const GraphType& sourceGraph, const bool ignoreEtaBonds = false);
+  Cycles(const OuterGraph& sourceGraph, bool ignoreEtaBonds = false);
 //!@}
 
 //!@name Static member functions
@@ -183,15 +149,9 @@ public:
   //! Returns a list of edges constituted by their edge vertices of a cycle
   static EdgeList edgeVertices(const RDL_cycle* const cyclePtr);
   //! Returns a list of edge descriptors from the original graph of a cycle
-  static temple::TinySet<GraphType::edge_descriptor> edges(
-    const RDL_cycle* const cyclePtr,
-    const GraphType& graph
-  );
+  static temple::TinySet<BondIndex> edges(const RDL_cycle* const cyclePtr);
   //! Returns a list of edge descriptors from an EdgeList
-  static temple::TinySet<GraphType::edge_descriptor> edges(
-    const EdgeList& edges,
-    const GraphType& graph
-  );
+  static temple::TinySet<BondIndex> edges(const EdgeList& edges);
 //!@}
 
 //!@name Information
@@ -200,13 +160,13 @@ public:
   unsigned numCycleFamilies() const;
 
   //! Returns the number of unique ring families (URFs) an index is involved in
-  unsigned numCycleFamilies(const AtomIndexType index) const;
+  unsigned numCycleFamilies(const AtomIndex index) const;
 
   //! Returns the number of relevant cycles (RCs)
   unsigned numRelevantCycles() const;
 
   //! Returns the number of relevant cycles (RCs)
-  unsigned numRelevantCycles(const AtomIndexType index) const;
+  unsigned numRelevantCycles(const AtomIndex index) const;
 
   //! Provide access to calculated data
   RDL_data* dataPtr() const;
@@ -248,19 +208,19 @@ private:
  * containing that index. The map does not contain entries for indices not
  * enclosed by a cycle.
  */
-std::map<AtomIndexType, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
+std::map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
 
 /*!
  * From a set of graph edge descriptors, this function creates one of the two
  * possible vertex index sequences describing the cycle
  */
-std::vector<AtomIndexType> makeRingIndexSequence(
+std::vector<AtomIndex> makeRingIndexSequence(
   const Cycles::EdgeList& edgeSet
 );
 
-std::vector<AtomIndexType> centralizeRingIndexSequence(
-  std::vector<AtomIndexType> ringIndexSequence,
-  AtomIndexType center
+std::vector<AtomIndex> centralizeRingIndexSequence(
+  std::vector<AtomIndex> ringIndexSequence,
+  AtomIndex center
 );
 
 /*!
@@ -268,8 +228,8 @@ std::vector<AtomIndexType> centralizeRingIndexSequence(
  * Double and aromatic bonds are considered planarity enforcing.
  */
 unsigned countPlanarityEnforcingBonds(
-  const temple::TinySet<GraphType::edge_descriptor>& edgeSet,
-  const GraphType& graph
+  const temple::TinySet<BondIndex>& edgeSet,
+  const OuterGraph& graph
 );
 
 } // namespace molassembler

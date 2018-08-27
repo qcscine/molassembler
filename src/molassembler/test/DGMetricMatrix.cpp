@@ -10,7 +10,7 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Options.h"
 
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
 
     // choose a random reordering
     auto reorderSequence = randomReorderingSequence(
-      molecule.numAtoms() + 1
+      molecule.graph().N() + 1
     );
 
     // get a distances matrix from the bounds

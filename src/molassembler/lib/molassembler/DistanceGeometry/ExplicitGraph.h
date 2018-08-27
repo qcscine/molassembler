@@ -143,7 +143,7 @@ public:
   //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
   double maximalImplicitLowerBound(const VertexDescriptor i) const;
 
-  const GraphType& getGraph() const;
+  const GraphType& graph() const;
 
   outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
 //!@}

@@ -9,11 +9,11 @@
 #include "temple/Containers.h"
 #include "temple/Stringify.h"
 
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Cycles.h"
-#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/IO.h"
-#include "molassembler/RankingTree.h"
+#include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/StereocenterList.h"
 
 #include <random>
@@ -25,43 +25,24 @@ const std::string directoryPrefix = "test_files/ranking_tree_molecules/";
 
 bool isBondStereocenter(
   const Molecule& molecule,
-  const GraphType::edge_descriptor& e,
+  const BondIndex& e,
   const unsigned numPermutations,
   const boost::optional<unsigned>& assignment
 ) {
-  auto stereocenterOption = molecule.getStereocenterList().option(e);
+  auto stereocenterOption = molecule.stereocenters().option(e);
 
   if(!stereocenterOption) {
-    std::cout << "No stereocenter on vertices " << temple::stringify(
-      molecule.vertices(e)
-    ) << "\n";
+    std::cout << "No stereocenter on vertices " << e.first << " - " << e.second << "\n";
 
-    for(const auto& stereocenter : molecule.getStereocenterList().bondStereocenters()) {
-      auto vertices = molecule.vertices(stereocenter.edge());
-      auto newEdge = molecule.edge(vertices.front(), vertices.back());
-
-      if(newEdge != stereocenter.edge()) {
-        std::cout << "There is some form of edge decay\n";
-      }
-
-      auto newLookupOptional = molecule.getStereocenterList().option(newEdge);
-      if(!newLookupOptional) {
-        std::cout << "Edge stereocenter cannot be found with its own stored edge!\n";
-      }
-
-      std::cout << "BondStereocenter on "
-        << temple::stringify(
-          molecule.vertices(newEdge)
-        ) << ": " << stereocenter.info() << "\n";
+    for(const auto& stereocenter : molecule.stereocenters().bondStereocenters()) {
+      std::cout << "BondStereocenter on " << e.first << " - " << e.second << ": " << stereocenter.info() << "\n";
     }
     return false;
   }
 
   if(stereocenterOption->numStereopermutations() != numPermutations) {
-    std::cout << "Bond stereocenter on "
-      << temple::stringify(
-        molecule.vertices(e)
-      )
+    std::cout << "Bond stereocenter on " << stereocenterOption->edge().first
+      << " - " << stereocenterOption->edge().second
       << " has " << stereocenterOption->numStereopermutations()
       << " stereopermutations, not " << numPermutations << "\n";
     return false;
@@ -69,10 +50,8 @@ bool isBondStereocenter(
 
   if(assignment) {
     if(stereocenterOption->assigned() != assignment.value()) {
-      std::cout << "Bond stereocenter on "
-        << temple::stringify(
-          molecule.vertices(e)
-        )
+      std::cout << "Bond stereocenter on " << stereocenterOption->edge().first
+        << " - " << stereocenterOption->edge().second
         << " is assigned "
         << (
           stereocenterOption->assigned()
@@ -89,11 +68,11 @@ bool isBondStereocenter(
 
 bool isAtomStereocenter(
   const Molecule& molecule,
-  AtomIndexType i,
+  AtomIndex i,
   const unsigned numPermutations,
   const boost::optional<unsigned>& assignment
 ) {
-  auto stereocenterOption = molecule.getStereocenterList().option(i);
+  auto stereocenterOption = molecule.stereocenters().option(i);
 
   if(!stereocenterOption) {
     std::cout << "No stereocenter on atom index " << i << "\n";
@@ -124,9 +103,9 @@ bool isAtomStereocenter(
 
 bool isStereogenic(
   const Molecule& molecule,
-  AtomIndexType i
+  AtomIndex i
 ) {
-  auto stereocenterOption = molecule.getStereocenterList().option(i);
+  auto stereocenterOption = molecule.stereocenters().option(i);
 
   if(!stereocenterOption) {
     return false;
@@ -141,16 +120,16 @@ bool isStereogenic(
 
 void writeExpandedTree(
   const std::string& fileName,
-  const AtomIndexType expandOnIndex
+  const AtomIndex expandOnIndex
 ) {
   auto molecule = IO::read(
     directoryPrefix + fileName
   );
 
   auto expandedTree = RankingTree(
-    molecule.getGraph(),
-    molecule.getCycleData(),
-    molecule.getStereocenterList(),
+    molecule.graph(),
+    molecule.cycles(),
+    molecule.stereocenters(),
     molecule.dumpGraphviz(),
     expandOnIndex,
     {},
@@ -171,9 +150,9 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
   );
 
   auto exampleThreeExpanded = RankingTree(
-    exampleThree.getGraph(),
-    exampleThree.getCycleData(),
-    exampleThree.getStereocenterList(),
+    exampleThree.graph(),
+    exampleThree.cycles(),
+    exampleThree.stereocenters(),
     exampleThree.dumpGraphviz(),
     0,
     {},
@@ -198,9 +177,9 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
   );
 
   auto exampleThreeExpandedAgain = RankingTree(
-    exampleThree.getGraph(),
-    exampleThree.getCycleData(),
-    exampleThree.getStereocenterList(),
+    exampleThree.graph(),
+    exampleThree.cycles(),
+    exampleThree.stereocenters(),
     exampleThree.dumpGraphviz(),
     1,
     {},
@@ -243,8 +222,8 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isBondStereocenter(EECyclobutane, EECyclobutane.edge(0, 3), 2, 0)
-    && isBondStereocenter(EECyclobutane, EECyclobutane.edge(5, 6), 2, 0),
+    isBondStereocenter(EECyclobutane, BondIndex {0, 3}, 2, 0)
+    && isBondStereocenter(EECyclobutane, BondIndex {5, 6}, 2, 0),
     "1E3E-1,3-difluoromethylidenecyclobutane double bonds aren't E. "
   );
 
@@ -308,7 +287,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   BOOST_CHECK_MESSAGE(
     (
       temple::all_of(
-        std::vector<AtomIndexType> {6, 7, 8, 9, 10, 11},
+        std::vector<AtomIndex> {6, 7, 8, 9, 10, 11},
         [&](const auto carbonIndex) -> bool {
           return isStereogenic(lAlphaLindane, carbonIndex);
         }
@@ -386,7 +365,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isBondStereocenter(pseudoDB, pseudoDB.edge(0, 3), 2, 0u),
+    isBondStereocenter(pseudoDB, BondIndex {0, 3}, 2, 0u),
     "Double bond in (2E,4R)-4-chloro-3-(1S-1-chloroethyl)pent-2-ene isn't E"
   );
 
@@ -728,7 +707,7 @@ std::ostream& operator << (std::ostream& os, const Stereodescriptor& descriptor)
 std::set<Stereodescriptor> makeDescriptorSet(const Molecule& molecule) {
   std::set<Stereodescriptor> descriptors;
 
-  for(const auto& atomStereocenter : molecule.getStereocenterList().atomStereocenters()) {
+  for(const auto& atomStereocenter : molecule.stereocenters().atomStereocenters()) {
     if(atomStereocenter.numStereopermutations() > 1 && atomStereocenter.assigned()) {
       Stereodescriptor descriptor;
       descriptor.atomIndex = atomStereocenter.centralIndex();
@@ -739,16 +718,15 @@ std::set<Stereodescriptor> makeDescriptorSet(const Molecule& molecule) {
     }
   }
 
-  for(const auto& bondStereocenter : molecule.getStereocenterList().bondStereocenters()) {
+  for(const auto& bondStereocenter : molecule.stereocenters().bondStereocenters()) {
     if(bondStereocenter.numStereopermutations() > 1 && bondStereocenter.assigned()) {
       Stereodescriptor descriptor;
       descriptor.type = StereocenterType::B;
       descriptor.permutation = bondStereocenter.indexOfPermutation().value();
 
-      auto vertices = molecule.vertices(bondStereocenter.edge());
-      descriptor.atomIndex = vertices.front();
+      descriptor.atomIndex = bondStereocenter.edge().first;
       descriptors.insert(descriptor);
-      descriptor.atomIndex = vertices.back();
+      descriptor.atomIndex = bondStereocenter.edge().second;
       descriptors.insert(descriptor);
     }
   }

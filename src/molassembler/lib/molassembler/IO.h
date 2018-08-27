@@ -1,7 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_IO_H
 #define INCLUDE_MOLASSEMBLER_IO_H
 
-#include "detail/FileHandlers.h"
+#include "molassembler/IO/FileHandlers.h"
 
 /*! @file
  *

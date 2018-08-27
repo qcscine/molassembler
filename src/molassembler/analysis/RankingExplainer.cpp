@@ -7,12 +7,12 @@
 
 #include "temple/Containers.h"
 
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Cycles.h"
-#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Log.h"
-#include "molassembler/RankingTree.h"
+#include "molassembler/Molecule/RankingTree.h"
 
 #include <random>
 
@@ -25,7 +25,7 @@ std::ostream& nl(std::ostream& os) {
 
 void writeExpandedTree(
   const std::string& fileName,
-  const AtomIndexType expandOnIndex
+  const AtomIndex expandOnIndex
 ) {
   auto molecule = IO::read(
     "../tests/mol_files/ranking_tree_molecules/"s
@@ -33,9 +33,9 @@ void writeExpandedTree(
   );
 
   auto expandedTree = RankingTree(
-    molecule.getGraph(),
-    molecule.getCycleData(),
-    molecule.getStereocenterList(),
+    molecule.graph(),
+    molecule.cycles(),
+    molecule.stereocenters(),
     molecule.dumpGraphviz(),
     expandOnIndex
   );
@@ -72,12 +72,12 @@ int main(int argc, char* argv[]) {
   );
   boost::program_options::notify(options_variables_map);
 
-  if(options_variables_map.count("help")) {
+  if(options_variables_map.count("help") > 0) {
     std::cout << options_description << nl;
     return 0;
   }
 
-  if(options_variables_map.count("f")) {
+  if(options_variables_map.count("f") > 0) {
     // Set log particulars for debug information
     Log::level = Log::Level::Debug;
     Log::particulars.insert(Log::Particulars::RankingTreeDebugInfo);

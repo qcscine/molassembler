@@ -1,13 +1,14 @@
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "boost/graph/two_bit_color_map.hpp"
 
-#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/Error.h"
-#include "molassembler/AtomInfo.h"
 #include "molassembler/Log.h"
+#include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
+#include "molassembler/OuterGraph.h"
 
 #define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
@@ -39,7 +40,7 @@ void ImplicitGraph::_explainContradictionPaths(
     logRef << "Encountered contradiction in triangle ineqaulity limits calculation.\n";
     logRef << "Path in graph for upper bound: l" << b;
 
-    AtomIndexType intermediate = left(b);
+    AtomIndex intermediate = left(b);
     do {
       intermediate = predecessors[intermediate];
       logRef << " <- l" << (intermediate / 2);
@@ -71,12 +72,12 @@ ImplicitGraph::ImplicitGraph(
    */
   assert(false && "This function does not work as it should");
 
-  const unsigned N = molecule.numAtoms();
+  const unsigned N = molecule.graph().N();
 
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
-  for(AtomIndexType i = 0; i < N; ++i) {
-    auto elementType = molecule.getElementType(i);
+  for(AtomIndex i = 0; i < N; ++i) {
+    auto elementType = molecule.graph().elementType(i);
     if(
       static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
@@ -97,7 +98,7 @@ ImplicitGraph::ImplicitGraph(
   const Molecule& molecule,
   const BoundsList& bounds
 ) : _moleculePtr(&molecule) {
-  const VertexDescriptor N = molecule.numAtoms();
+  const VertexDescriptor N = molecule.graph().N();
   _distances.resize(N, N);
   _distances.setZero();
 
@@ -111,8 +112,8 @@ ImplicitGraph::ImplicitGraph(
 
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
-  for(AtomIndexType i = 0; i < N; ++i) {
-    auto elementType = molecule.getElementType(i);
+  for(AtomIndex i = 0; i < N; ++i) {
+    auto elementType = molecule.graph().elementType(i);
     if(
       static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
@@ -281,9 +282,9 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix() noexcept {
 }
 
 outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality partiality) noexcept {
-  unsigned N = _moleculePtr->numAtoms();
+  unsigned N = _moleculePtr->graph().N();
 
-  std::vector<AtomIndexType> indices(N);
+  std::vector<AtomIndex> indices(N);
   std::iota(
     indices.begin(),
     indices.end(),
@@ -300,7 +301,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
   // Determine triangle inequality limits for pair
   ColorMapType color_map {M};
 
-  std::vector<AtomIndexType>::const_iterator separator;
+  std::vector<AtomIndex>::const_iterator separator;
 
   if(partiality == Partiality::FourAtom) {
     separator = indices.cbegin() + std::min(N, 4u);
@@ -311,16 +312,16 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
   }
 
   for(auto iter = indices.cbegin(); iter != separator; ++iter) {
-    const AtomIndexType a = *iter;
-    std::vector<AtomIndexType> otherIndices;
+    const AtomIndex a = *iter;
+    std::vector<AtomIndex> otherIndices;
     otherIndices.reserve(N - 1);
 
-    for(AtomIndexType b = 0; b < a; ++b) {
+    for(AtomIndex b = 0; b < a; ++b) {
       if(!(_distances(a, b) == _distances(b, a) && _distances(a, b) != 0)) {
         otherIndices.push_back(b);
       }
     }
-    for(AtomIndexType b = a + 1; b < N; ++b) {
+    for(AtomIndex b = a + 1; b < N; ++b) {
       if(!(_distances(a, b) == _distances(b, a) && _distances(a, b) != 0)) {
         otherIndices.push_back(b);
       }
@@ -328,7 +329,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
 
     prng.shuffle(otherIndices);
 
-    for(const AtomIndexType b : otherIndices) {
+    for(const AtomIndex b : otherIndices) {
       auto predecessor_map = boost::make_iterator_property_map(
         predecessors.begin(),
         VertexIndexMap()
@@ -392,7 +393,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
   }
 
   for(auto iter = separator; iter != indices.cend(); ++iter) {
-    const AtomIndexType a = *iter;
+    const AtomIndex a = *iter;
 
     auto predecessor_map = boost::make_iterator_property_map(
       predecessors.begin(),
@@ -430,7 +431,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
     );
 #endif
 
-    for(AtomIndexType b = 0; b < N; ++b) {
+    for(AtomIndex b = 0; b < N; ++b) {
       if(
         a == b
         || (
@@ -508,7 +509,7 @@ double ImplicitGraph::upperBound(const VertexDescriptor a, const VertexDescripto
 double ImplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   auto a = internal(i);
-  auto elementType = _moleculePtr->getElementType(a);
+  auto elementType = _moleculePtr->graph().elementType(a);
 
   if(elementType == _heaviestAtoms.front()) {
     return AtomInfo::vdwRadius(
@@ -540,9 +541,9 @@ double ImplicitGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e) const
 
     return -(
       AtomInfo::vdwRadius(
-        _basePtr->_moleculePtr->getElementType(a)
+        _basePtr->_moleculePtr->graph().elementType(a)
       ) + AtomInfo::vdwRadius(
-        _basePtr->_moleculePtr->getElementType(b)
+        _basePtr->_moleculePtr->graph().elementType(b)
       )
     );
   }
@@ -687,9 +688,9 @@ double ImplicitGraph::edge_iterator::weight() const {
 
     return -(
       AtomInfo::vdwRadius(
-        _basePtr->_moleculePtr->getElementType(a)
+        _basePtr->_moleculePtr->graph().elementType(a)
       ) + AtomInfo::vdwRadius(
-        _basePtr->_moleculePtr->getElementType(_b)
+        _basePtr->_moleculePtr->graph().elementType(_b)
       )
     );
   }

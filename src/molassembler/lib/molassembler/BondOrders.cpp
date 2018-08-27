@@ -1,5 +1,7 @@
 #include "molassembler/BondOrders.h"
-#include "molassembler/BondDistance.h"
+
+#include "molassembler/Containers/AngstromWrapper.h"
+#include "molassembler/Modeling/BondDistance.h"
 
 namespace molassembler {
 

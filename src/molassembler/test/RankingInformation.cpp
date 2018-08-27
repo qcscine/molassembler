@@ -12,7 +12,7 @@ using RaggedVector = std::vector<
 BOOST_AUTO_TEST_CASE(rankingCombinationTests) {
   using namespace molassembler;
 
-  using RaggedAtoms = RaggedVector<AtomIndexType>;
+  using RaggedAtoms = RaggedVector<AtomIndex>;
   using RaggedLigands = RaggedVector<unsigned>;
 
   auto symmetricHapticPincerRanking = RaggedAtoms {
@@ -27,8 +27,8 @@ BOOST_AUTO_TEST_CASE(rankingCombinationTests) {
     {5, 6}
   };
 
-  std::vector<GraphAlgorithms::LinkInformation> symmetricHapticPincerLinks;
-  GraphAlgorithms::LinkInformation a, b;
+  std::vector<LinkInformation> symmetricHapticPincerLinks;
+  LinkInformation a, b;
   a.indexPair = {0, 1};
   b.indexPair = {1, 2};
 
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(rankingCombinationTests) {
     {5, 6}
   };
 
-  std::vector<GraphAlgorithms::LinkInformation> asymmetricHapticPincerLinks;
+  std::vector<LinkInformation> asymmetricHapticPincerLinks;
   a.indexPair = {0, 1};
   b.indexPair = {1, 2};
 

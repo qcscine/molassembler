@@ -10,8 +10,8 @@
 #include "temple/Containers.h"
 #include "temple/constexpr/Numeric.h"
 
-#include "molassembler/detail/AnalysisHelpers.h"
-#include "molassembler/detail/CommonTrig.h"
+#include "molassembler/Detail/AnalysisHelpers.h"
+#include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"

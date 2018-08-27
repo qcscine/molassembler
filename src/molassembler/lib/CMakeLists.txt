@@ -14,29 +14,21 @@ include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
 set(molassembler_VERSION 0.1.0)
 
 # collect headers
+# if a big update happens, use $ find . -name "*.h" | sort
 set(HEADERS_all
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomEnvironmentHash.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomInfo.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondDistance.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Containers/AngstromWrapper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Containers/OrderDiscoveryHelper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/AnalysisHelpers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/AngstromWrapper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/Base64.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/BuildTypeSwitch.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/CommonTrig.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/DelibHelpers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/FileHandlers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/MolGraphWriter.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/PermutationState.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/RangeForTemporary.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/SequenceSet.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/SharedTypes.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/StdlibTypeAlgorithms.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/AnalysisHelpers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/BuildTypeSwitch.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/DelibHelpers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/RangeForTemporary.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/StdlibTypeAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ConformerGeneration.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceBoundsMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceGeometry.h
@@ -53,45 +45,45 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementProblem.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Bridge.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Inner.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Outer.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Types.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphHelpers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/Bridge.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphAlgorithms.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphHelpers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/InnerGraph.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/Base64.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/FileHandlers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/LocalGeometryModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Log.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/AtomInfo.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/BondDistance.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/CommonTrig.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/LocalGeometryModel.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/AtomEnvironmentHash.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/MolGraphWriter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/RankingTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Options.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OrderDiscoveryHelper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OuterGraph.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/PermutationState.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
 
 # collect sources
 set(SOURCES_all
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomEnvironmentHash.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomInfo.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondDistance.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Containers/AngstromWrapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/AngstromWrapper.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/CommonTrig.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/DelibHelpers.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/FileHandlers.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/MolGraphWriter.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/PermutationState.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/detail/StdlibTypeAlgorithms.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/DelibHelpers.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/StdlibTypeAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ConformerGeneration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceBoundsMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ExplicitGraph.cpp
@@ -100,21 +92,29 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementProblem.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Inner.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/Outer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Layers/OuterIterators.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphAlgorithms.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/InnerGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/LocalGeometryModel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/FileHandlers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Log.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/AtomInfo.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/BondDistance.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/CommonTrig.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/LocalGeometryModel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/AtomEnvironmentHash.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/MolGraphWriter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/RankingTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OuterGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OuterGraphIterators.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/PermutationState.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
 )
 
 # Static variant

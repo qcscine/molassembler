@@ -5,8 +5,8 @@
 #include "Delib/ElementTypeCollection.h"
 #include "json/json.hpp"
 
-#include "molassembler/detail/Base64.h"
-#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/Graph/GraphAlgorithms.h"
+#include "molassembler/IO/Base64.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/StereocenterList.h"
@@ -50,8 +50,8 @@ struct adl_serializer<Delib::ElementTypeCollection> {
 };
 
 template<>
-struct adl_serializer<molassembler::GraphAlgorithms::LinkInformation> {
-  using Type = molassembler::GraphAlgorithms::LinkInformation;
+struct adl_serializer<molassembler::LinkInformation> {
+  using Type = molassembler::LinkInformation;
 
   static void to_json(json& j, const Type& link) {
     j["p"] = json::array();
@@ -89,7 +89,7 @@ struct adl_serializer<molassembler::RankingInformation> {
     ranking.sortedSubstituents.reserve(j["sorted"].size());
 
     for(const auto& listJSON : j["sorted"]) {
-      std::vector<molassembler::AtomIndexType> subGroup;
+      std::vector<molassembler::AtomIndex> subGroup;
       for(const auto& listElementJSON : listJSON) {
         subGroup.push_back(listElementJSON);
       }
@@ -105,7 +105,7 @@ struct adl_serializer<molassembler::RankingInformation> {
 
     ranking.ligands.reserve(j["lig"].size());
     for(const auto& listJSON : j["lig"]) {
-      std::vector<molassembler::AtomIndexType> ligandConstitutingAtoms;
+      std::vector<molassembler::AtomIndex> ligandConstitutingAtoms;
       for(const auto& listElementJSON : listJSON) {
         ligandConstitutingAtoms.push_back(listElementJSON);
       }
@@ -124,21 +124,23 @@ struct adl_serializer<molassembler::RankingInformation> {
 };
 
 template<>
-struct adl_serializer<molassembler::GraphType> {
-  using Type = molassembler::GraphType;
+struct adl_serializer<molassembler::OuterGraph> {
+  using Type = molassembler::OuterGraph;
 
   static void to_json(json& j, const Type& graph) {
+    const molassembler::InnerGraph& inner = graph.inner();
+
     j["Z"] = json::array();
     auto& elements = j["Z"];
 
     for(
       const auto vertexIndex :
-      RangeForTemporary<Type::vertex_iterator>(
-        boost::vertices(graph)
+      boost::make_iterator_range(
+        inner.vertices()
       )
     ) {
       elements.push_back(
-        graph[vertexIndex].elementType
+        inner.elementType(vertexIndex)
       );
     }
 
@@ -147,25 +149,25 @@ struct adl_serializer<molassembler::GraphType> {
     auto& edges = j["edges"];
 
     for(
-      const auto& edgeDescriptor :
-      RangeForTemporary<Type::edge_iterator>(
-        boost::edges(graph)
+      const molassembler::InnerGraph::Edge& edgeDescriptor :
+      boost::make_iterator_range(
+        inner.edges()
       )
     ) {
       json e = json::array();
       e.push_back(
         static_cast<int>(
-          boost::source(edgeDescriptor, graph)
+          inner.source(edgeDescriptor)
         )
       );
       e.push_back(
         static_cast<int>(
-          boost::target(edgeDescriptor, graph)
+          inner.target(edgeDescriptor)
         )
       );
       e.push_back(
         static_cast<int>(
-          graph[edgeDescriptor].bondType
+          inner.bondType(edgeDescriptor)
         )
       );
 
@@ -176,25 +178,23 @@ struct adl_serializer<molassembler::GraphType> {
   static void from_json(const json& j, Type& graph) {
     unsigned N = j["Z"].size();
 
-    graph = Type (N);
+    molassembler::InnerGraph inner (N);
 
     for(unsigned i = 0; i < N; ++i) {
-      graph[i].elementType = j["Z"].at(i);
+      inner.elementType(i) = j["Z"].at(i);
     }
 
     for(const auto& edgeJSON : j["edges"]) {
-      auto addEdgePair = boost::add_edge(
+      inner.addEdge(
         edgeJSON.at(0),
         edgeJSON.at(1),
-        graph
-      );
-
-      assert(addEdgePair.second);
-
-      graph[addEdgePair.first].bondType = static_cast<molassembler::BondType>(
-        edgeJSON.at(2)
+        static_cast<molassembler::BondType>(
+          edgeJSON.at(2)
+        )
       );
     }
+
+    graph = Type {std::move(inner)};
   }
 };
 
@@ -209,9 +209,9 @@ nlohmann::json serialize(const Molecule& molecule) {
 
   json m;
 
-  m["g"] = molecule.getGraph();
+  m["g"] = molecule.graph();
 
-  const auto& stereocenters = molecule.getStereocenterList();
+  const auto& stereocenters = molecule.stereocenters();
 
   // Manual conversion of stereocenters
   // Atom stereocenters first
@@ -235,8 +235,8 @@ nlohmann::json serialize(const Molecule& molecule) {
     json s;
 
     s["edge"] = {
-      boost::source(stereocenter.edge(), molecule.getGraph()),
-      boost::target(stereocenter.edge(), molecule.getGraph())
+      stereocenter.edge().first,
+      stereocenter.edge().second
     };
 
     if(stereocenter.assigned()) {
@@ -250,14 +250,14 @@ nlohmann::json serialize(const Molecule& molecule) {
 }
 
 Molecule deserialize(const nlohmann::json& m) {
-  GraphType graph = m["g"];
+  OuterGraph graph = m["g"];
 
   StereocenterList stereocenters;
 
   // Atom stereocenters
   for(const auto& j : m["a"]) {
     Symmetry::Name symmetry = Symmetry::nameFromString(j["sym"]);
-    AtomIndexType centralIndex = j["centers"].front();
+    AtomIndex centralIndex = j["centers"].front();
 
     auto stereocenter = AtomStereocenter {
       graph,
@@ -278,15 +278,15 @@ Molecule deserialize(const nlohmann::json& m) {
 
   // Bond stereocenters
   for(const auto& j : m["b"]) {
-    AtomIndexType a = j["edge"].at(0);
-    AtomIndexType b = j["edge"].at(1);
+    AtomIndex a = j["edge"].at(0);
+    AtomIndex b = j["edge"].at(1);
 
     auto aStereocenterOption = stereocenters.option(a);
     auto bStereocenterOption = stereocenters.option(b);
 
     assert(aStereocenterOption && bStereocenterOption);
 
-    GraphType::edge_descriptor molEdge = boost::edge(a, b, graph).first;
+    BondIndex molEdge {a, b};
 
     auto stereocenter = BondStereocenter {
       aStereocenterOption.value(),

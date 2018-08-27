@@ -42,13 +42,13 @@ InterpretResult interpret(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const Delib::BondOrderCollection& bondOrders,
-  const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
 );
 
 InterpretResult interpret(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
-  const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
 );
 
 /*! Interpret molecules in 3D information and a bond order collection.
@@ -62,7 +62,7 @@ InterpretResult interpret(
 InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
   const Delib::BondOrderCollection& bondOrders,
-  const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
 );
 
 /*! Interpret molecules in 3D information.
@@ -74,7 +74,7 @@ InterpretResult interpret(
  */
 InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
-  const BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
 );
 
 } // namespace molassembler

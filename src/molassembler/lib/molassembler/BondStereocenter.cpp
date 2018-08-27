@@ -7,12 +7,12 @@
 #include "temple/OrderedPair.h"
 #include "temple/Random.h"
 
+#include "molassembler/AtomStereocenter.h"
+#include "molassembler/Containers/AngstromWrapper.h"
+#include "molassembler/Detail/DelibHelpers.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/detail/AngstromWrapper.h"
-#include "molassembler/detail/DelibHelpers.h"
-#include "molassembler/AtomStereocenter.h"
-#include "molassembler/BondDistance.h"
+#include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
 
@@ -44,7 +44,7 @@ struct BondStereocenter::Impl {
   Impl(
     const AtomStereocenter& stereocenterA,
     const AtomStereocenter& stereocenterB,
-    GraphType::edge_descriptor edge
+    BondIndex edge
   );
 
   void assign(boost::optional<unsigned> assignment);
@@ -78,7 +78,7 @@ struct BondStereocenter::Impl {
 
   std::string rankInfo() const;
 
-  GraphType::edge_descriptor edge() const;
+  BondIndex edge() const;
 
   void setModelInformation(
     DistanceGeometry::SpatialModel& model,
@@ -93,7 +93,7 @@ struct BondStereocenter::Impl {
 
 private:
   stereopermutation::Composite _composite;
-  GraphType::edge_descriptor _edge;
+  BondIndex _edge;
   boost::optional<unsigned> _assignment;
 
   //! Yields abstract ligand characters at their symmetry positions
@@ -153,7 +153,7 @@ stereopermutation::Composite::OrientationState BondStereocenter::Impl::_makeOrie
 BondStereocenter::Impl::Impl(
   const AtomStereocenter& stereocenterA,
   const AtomStereocenter& stereocenterB,
-  const GraphType::edge_descriptor edge
+  const BondIndex edge
 ) : _composite {
       _makeOrientationState(stereocenterA, stereocenterB),
       _makeOrientationState(stereocenterB, stereocenterA)
@@ -210,14 +210,14 @@ void BondStereocenter::Impl::fit(
   // For all atoms making up a ligand, decide on the spatial average position
   const std::vector<Eigen::Vector3d> firstLigandPositions = temple::mapToVector(
     firstStereocenter.getRanking().ligands,
-    [&angstromWrapper](const std::vector<AtomIndexType>& ligandAtoms) -> Eigen::Vector3d {
+    [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
     }
   );
 
   const std::vector<Eigen::Vector3d> secondLigandPositions = temple::mapToVector(
     secondStereocenter.getRanking().ligands,
-    [&angstromWrapper](const std::vector<AtomIndexType>& ligandAtoms) -> Eigen::Vector3d {
+    [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
     }
   );
@@ -412,7 +412,7 @@ std::string BondStereocenter::Impl::rankInfo() const {
   );
 }
 
-GraphType::edge_descriptor BondStereocenter::Impl::edge() const {
+BondIndex BondStereocenter::Impl::edge() const {
   // Return a standard form of smaller first
   return _edge;
 }
@@ -491,15 +491,15 @@ void BondStereocenter::Impl::setModelInformation(
     temple::forAllPairs(
       firstStereocenter.getRanking().ligands.at(firstLigandIndex),
       secondStereocenter.getRanking().ligands.at(secondLigandIndex),
-      [&](const AtomIndexType firstIndex, const AtomIndexType secondIndex) -> void {
+      [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
         model.setDihedralBoundsIfEmpty(
-          std::array<AtomIndexType, 4> {
+          std::array<AtomIndex, 4> {
             firstIndex,
             firstStereocenter.centralIndex(),
             secondStereocenter.centralIndex(),
             secondIndex
           },
-          std::move(dihedralBounds)
+          dihedralBounds
         );
       }
     );
@@ -521,13 +521,13 @@ bool BondStereocenter::Impl::operator != (const Impl& other) const {
 
 /* BondStereocenter implementation */
 BondStereocenter::BondStereocenter(BondStereocenter&& other) noexcept = default;
-BondStereocenter& BondStereocenter::operator = (BondStereocenter&& rhs) noexcept = default;
+BondStereocenter& BondStereocenter::operator = (BondStereocenter&& other) noexcept = default;
 
 BondStereocenter::BondStereocenter(const BondStereocenter& other) : _pImpl(
   std::make_unique<Impl>(*other._pImpl)
 ) {}
-BondStereocenter& BondStereocenter::operator = (const BondStereocenter& rhs) {
-  *_pImpl = *rhs._pImpl;
+BondStereocenter& BondStereocenter::operator = (const BondStereocenter& other) {
+  *_pImpl = *other._pImpl;
   return *this;
 }
 BondStereocenter::~BondStereocenter() = default;
@@ -535,7 +535,7 @@ BondStereocenter::~BondStereocenter() = default;
 BondStereocenter::BondStereocenter(
   const AtomStereocenter& stereocenterA,
   const AtomStereocenter& stereocenterB,
-  const GraphType::edge_descriptor edge
+  const BondIndex edge
 ) {
   _pImpl = std::make_unique<Impl>(
     stereocenterA,
@@ -604,7 +604,7 @@ std::string BondStereocenter::rankInfo() const {
   return _pImpl -> rankInfo();
 }
 
-GraphType::edge_descriptor BondStereocenter::edge() const {
+BondIndex BondStereocenter::edge() const {
   return _pImpl -> edge();
 }
 

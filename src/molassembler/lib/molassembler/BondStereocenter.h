@@ -3,12 +3,17 @@
 
 #include "boost/optional/optional_fwd.hpp"
 
-#include "molassembler/detail/SharedTypes.h"
+#include "molassembler/Types.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
 #include <experimental/propagate_const>
 #endif
+
+#include <cmath>
+#include <vector>
+#include <string>
+#include <memory>
 
 /*! @file
  *
@@ -23,7 +28,7 @@
 
 namespace molassembler {
 
-struct AngstromWrapper;
+class AngstromWrapper;
 
 // Forward-declarations
 class AtomStereocenter;
@@ -57,7 +62,7 @@ public:
   BondStereocenter(
     const AtomStereocenter& stereocenterA,
     const AtomStereocenter& stereocenterB,
-    const GraphType::edge_descriptor edge
+    const BondIndex edge
   );
 //!@}
 
@@ -96,7 +101,7 @@ public:
 
   std::string rankInfo() const;
 
-  GraphType::edge_descriptor edge() const;
+  BondIndex edge() const;
 
   void setModelInformation(
     DistanceGeometry::SpatialModel& model,

@@ -1,17 +1,19 @@
 #define BOOST_TEST_MODULE GraphAlgorithmTestModule
-#include <boost/test/unit_test.hpp>
-
 #define BOOST_FILESYSTEM_NO_DEPRECATED
+
 #include "boost/filesystem.hpp"
+#include "boost/range/iterator_range_core.hpp"
+#include "boost/test/unit_test.hpp"
 
 #include "molassembler/Cycles.h"
-#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/RankingInformation.h"
 #include "molassembler/IO.h"
 #include "temple/Stringify.h"
 
 #include "boost/graph/graphviz.hpp"
-#include "molassembler/detail/MolGraphWriter.h"
+#include "molassembler/Molecule/MolGraphWriter.h"
 
 #include <iostream>
 
@@ -24,19 +26,19 @@ inline std::ostream& nl(std::ostream& os) {
 
 struct LinkTestData {
   using LinksType = std::set<
-    std::pair<AtomIndexType, AtomIndexType>
+    std::pair<AtomIndex, AtomIndex>
   >;
 
-  AtomIndexType source;
+  AtomIndex source;
 
   LinksType expectedLinks;
 
   LinkTestData() = default;
   LinkTestData(
-    AtomIndexType passSource,
-    const LinksType& passLinks
+    AtomIndex passSource,
+    LinksType passLinks
   ) : source {passSource},
-      expectedLinks {passLinks}
+      expectedLinks {std::move(passLinks)}
   {}
 
 };
@@ -365,13 +367,13 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
   const auto& relevantData = linkTestData.at(filePath.stem().string());
 
   auto ligands = GraphAlgorithms::ligandSiteGroups(
-    mol.getGraph(),
+    mol.graph().inner(),
     relevantData.source
   );
 
   auto links = GraphAlgorithms::substituentLinks(
-    mol.getGraph(),
-    mol.getCycleData(),
+    mol.graph().inner(),
+    mol.cycles(),
     relevantData.source,
     ligands,
     {}
@@ -386,7 +388,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
     condensedCalculated.insert(linkData.indexPair);
   }
 
-  std::map<AtomIndexType, unsigned> indexToLigandMap;
+  std::map<AtomIndex, unsigned> indexToLigandMap;
   for(unsigned i = 0; i < ligands.size(); ++i) {
     for(const auto& ligandIndex : ligands.at(i)) {
       indexToLigandMap.emplace(
@@ -447,7 +449,7 @@ BOOST_AUTO_TEST_CASE(substituentLinksTests) {
 }
 
 using BondListType = std::vector<
-  std::array<AtomIndexType, 2>
+  std::array<AtomIndex, 2>
 >;
 
 const std::map<std::string, BondListType> hapticTestData {
@@ -488,7 +490,7 @@ const std::map<std::string, BondListType> hapticTestData {
 };
 
 using LigandsList = std::vector<
-  std::vector<AtomIndexType>
+  std::vector<AtomIndex>
 >;
 
 // Pre-sorted ligands in ascending size and index
@@ -529,12 +531,12 @@ const std::map<std::string, LigandsList> hapticLigandsData {
   },
 };
 
-bool testHapticBonds(boost::filesystem::path filePath) {
+bool testHapticBonds(const boost::filesystem::path& filePath) {
   IO::FileHandlers::MOLFileHandler molHandler;
   auto rawData = molHandler.read(filePath.string());
 
   const unsigned N = rawData.elements.size();
-  GraphType graph (N);
+  InnerGraph graph (N);
 
   // Basically a UFF bond discretization scheme
   for(unsigned i = 0; i < N; ++i) {
@@ -550,13 +552,12 @@ bool testHapticBonds(boost::filesystem::path filePath) {
           bond = BondType::Sextuple;
         }
 
-        auto edgeAddPair = boost::add_edge(i, j, graph);
-        graph[edgeAddPair.first].bondType = bond;
+        graph.addEdge(i, j, bond);
       }
     }
 
     // copy element type data too
-    graph[i].elementType = rawData.elements.at(i);
+    graph.elementType(i) = rawData.elements.at(i);
   }
 
   GraphAlgorithms::findAndSetEtaBonds(graph);
@@ -565,31 +566,31 @@ bool testHapticBonds(boost::filesystem::path filePath) {
 
   // Test Eta edge classification correctness
   bool pass = true;
-  temple::TinyUnorderedSet<GraphType::edge_descriptor> expectedEtaBonds;
+  temple::TinyUnorderedSet<InnerGraph::Edge> expectedEtaBonds;
   for(const auto& expectedEtaBond : relevantData) {
-    AtomIndexType i = expectedEtaBond.front(),
+    AtomIndex i = expectedEtaBond.front(),
                   j = expectedEtaBond.back();
-    auto edgePair = boost::edge(i, j, graph);
+    auto edgeOption = graph.edgeOption(i, j);
 
-    if(!edgePair.second) {
+    if(!edgeOption) {
       std::cout << "The expected eta bond " << i << " - " << j
         << " is not even present in the graph!" << std::endl;
       pass = false;
     }
 
-    expectedEtaBonds.insert(edgePair.first);
+    expectedEtaBonds.insert(edgeOption.value());
   }
 
   for(
-    const auto edge :
-    RangeForTemporary<GraphType::edge_iterator>(
-      boost::edges(graph)
+    const InnerGraph::Edge edge :
+    boost::make_iterator_range(
+      graph.edges()
     )
   ) {
-    AtomIndexType i = boost::source(edge, graph);
-    AtomIndexType j = boost::target(edge, graph);
-    BondType bty = graph[edge].bondType;
-    bool expectEtaBond = expectedEtaBonds.count(edge);
+    AtomIndex i = graph.source(edge);
+    AtomIndex j = graph.target(edge);
+    BondType bty = graph.bondType(edge);
+    bool expectEtaBond = expectedEtaBonds.count(edge) > 0;
 
     if(expectEtaBond && bty != BondType::Eta) {
       std::cout << "The expected eta bond " << i << " - " << j
@@ -642,7 +643,7 @@ bool testHapticBonds(boost::filesystem::path filePath) {
     std::ofstream outFile(filePath.stem().string() + ".dot");
     boost::write_graphviz(
       outFile,
-      graph,
+      graph.bgl(),
       propertyWriter,
       propertyWriter,
       propertyWriter

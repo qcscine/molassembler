@@ -2,10 +2,12 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "molassembler/OrderDiscoveryHelper.h"
+#include "molassembler/Containers/OrderDiscoveryHelper.h"
 
 using namespace molassembler;
 using namespace std::string_literals;
+
+#include <set>
 
 template<typename T>
 std::string showDiscoveryState(
@@ -34,7 +36,7 @@ std::string showDiscoveryState(
 }
 
 BOOST_AUTO_TEST_CASE(sampleTest) {
-  auto helper = OrderDiscoveryHelper<unsigned>({1, 2, 3, 6});
+  auto helper = OrderDiscoveryHelper<unsigned>(std::set<unsigned> {1, 2, 3, 6});
 
   BOOST_CHECK(helper.getSets().size() == 1 && helper.getUndecidedSets().size() == 1);
 
@@ -71,7 +73,7 @@ BOOST_AUTO_TEST_CASE(sampleTest) {
 
   BOOST_CHECK_MESSAGE(
     helper.getSets().size() == 4
-    && helper.getUndecidedSets().size() == 0,
+    && helper.getUndecidedSets().empty(),
     "State: " << showDiscoveryState(helper)
   );
 
@@ -92,14 +94,14 @@ BOOST_AUTO_TEST_CASE(sampleTest) {
 
   BOOST_CHECK_MESSAGE(
     pointerHelper.getSets().size() == 3
-    && pointerHelper.getUndecidedSets().size() == 0,
+    && pointerHelper.getUndecidedSets().empty(),
     "State: " << showDiscoveryState(helper)
   );
 }
 
 BOOST_AUTO_TEST_CASE(stateTransferTests) {
   OrderDiscoveryHelper<unsigned> knowledge {
-    {4u, 9u, 13u, 20u}
+    std::set<unsigned> {4u, 9u, 13u, 20u}
   };
 
   knowledge.addLessThanRelationship(4, 9);
@@ -110,7 +112,7 @@ BOOST_AUTO_TEST_CASE(stateTransferTests) {
   knowledge.addLessThanRelationship(13, 20);
 
   OrderDiscoveryHelper<unsigned> partialMatch {
-    {4u, 13u, 20u}
+    std::set<unsigned> {4u, 13u, 20u}
   };
 
   partialMatch.addRelationshipsFromOther(knowledge);
@@ -123,7 +125,7 @@ BOOST_AUTO_TEST_CASE(stateTransferTests) {
   );
 
   OrderDiscoveryHelper<unsigned> toMerge {
-    {10u, 13u}
+    std::set<unsigned> {10u, 13u}
   };
 
 

@@ -10,16 +10,17 @@
 #include "temple/Optionals.h"
 #include "temple/Random.h"
 
-#include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/DistanceGeometry/DistanceGeometry.h"
-#include "molassembler/detail/BuildTypeSwitch.h"
-#include "molassembler/detail/CommonTrig.h"
-#include "molassembler/detail/DelibHelpers.h"
-#include "molassembler/detail/PermutationState.h"
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Cycles.h"
+#include "molassembler/Detail/BuildTypeSwitch.h"
+#include "molassembler/Detail/DelibHelpers.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
+#include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/RankingInformation.h"
+#include "molassembler/Stereocenters/PermutationState.h"
 
 #include <iomanip>
 
@@ -34,11 +35,11 @@ public:
 /* Constructors */
   Impl(
     // The base graph
-    const GraphType& graph,
+    const OuterGraph& graph,
     // The symmetry of this Stereocenter
     Symmetry::Name symmetry,
     // The atom this Stereocenter is centered on
-    AtomIndexType centerAtom,
+    AtomIndex centerAtom,
     // Ranking information of substituents
     RankingInformation ranking
   );
@@ -51,8 +52,8 @@ public:
    * preservation options
    */
   void addSubstituent(
-    const GraphType& graph,
-    AtomIndexType newSubstituentIndex,
+    const OuterGraph& graph,
+    AtomIndex newSubstituentIndex,
     RankingInformation newRanking,
     Symmetry::Name newSymmetry,
     ChiralStatePreservation preservationOption
@@ -70,7 +71,7 @@ public:
    * symmetries.
    */
   void fit(
-    const GraphType& graph,
+    const OuterGraph& graph,
     const AngstromWrapper& angstromWrapper,
     const std::vector<Symmetry::Name>& excludeSymmetries = {}
   );
@@ -81,7 +82,7 @@ public:
    * stereocenter and if so, which assignment corresponds to the previous one.
    */
   void propagateGraphChange(
-    const GraphType& graph,
+    const OuterGraph& graph,
     RankingInformation newRanking
   );
 
@@ -89,7 +90,7 @@ public:
    * Prepares for the removal of an atom on the graph level, which involves
    * the generation of new atom indices.
    */
-  void propagateVertexRemoval(AtomIndexType removedIndex);
+  void propagateVertexRemoval(AtomIndex removedIndex);
 
   /*!
    * Handles the removal of a substituent from the stereocenter. If the
@@ -97,8 +98,8 @@ public:
    * according to the supplide chiral state preservation option.
    */
   void removeSubstituent(
-    const GraphType& graph,
-    AtomIndexType which,
+    const OuterGraph& graph,
+    AtomIndex which,
     RankingInformation newRanking,
     Symmetry::Name newSymmetry,
     ChiralStatePreservation preservationOption
@@ -107,7 +108,7 @@ public:
   //! If the central symmetry group is changed, we must adapt
   void setSymmetry(
     Symmetry::Name symmetryName,
-    const GraphType& graph
+    const OuterGraph& graph
   );
 
 /* Information */
@@ -122,7 +123,7 @@ public:
   boost::optional<unsigned> assigned() const;
 
   //! Returns a single-element vector containing the central atom
-  AtomIndexType centralIndex() const;
+  AtomIndex centralIndex() const;
 
   /*! Returns IOP within the set of symbolic ligand permutations
    *
@@ -185,7 +186,7 @@ public:
 
   void setModelInformation(
     DistanceGeometry::SpatialModel& model,
-    const std::function<double(const AtomIndexType)>& cycleMultiplierForIndex,
+    const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
     double looseningMultiplier
   ) const;
 
@@ -200,7 +201,7 @@ private:
   RankingInformation _ranking;
 
   //! Central atom of the Stereocenter
-  AtomIndexType _centerAtom;
+  AtomIndex _centerAtom;
 
   //! The symmetry the stereocenter represents
   Symmetry::Name _symmetry;
@@ -215,11 +216,11 @@ private:
 /* Static functions */
 /* Constructors */
 AtomStereocenter::Impl::Impl(
-  const GraphType& graph,
+  const OuterGraph& graph,
   // The symmetry of this Stereocenter
   const Symmetry::Name symmetry,
   // The atom this Stereocenter is centered on
-  const AtomIndexType centerAtom,
+  const AtomIndex centerAtom,
   // Ranking information of substituents
   RankingInformation ranking
 ) : _ranking {std::move(ranking)},
@@ -237,8 +238,8 @@ AtomStereocenter::Impl::Impl(
 
 /* Modification */
 void AtomStereocenter::Impl::addSubstituent(
-  const GraphType& graph,
-  const AtomIndexType newSubstituentIndex,
+  const OuterGraph& graph,
+  const AtomIndex newSubstituentIndex,
   RankingInformation newRanking,
   const Symmetry::Name newSymmetry,
   const ChiralStatePreservation preservationOption
@@ -266,7 +267,7 @@ void AtomStereocenter::Impl::addSubstituent(
     ligandI < newRanking.ligands.size() && !soleConstitutingIndex;
     ++ligandI
   ) {
-    for(const AtomIndexType constitutingIndex : newRanking.ligands.at(ligandI)) {
+    for(const AtomIndex constitutingIndex : newRanking.ligands.at(ligandI)) {
       if(constitutingIndex == newSubstituentIndex) {
         ligandIndexAddedTo = ligandI;
         soleConstitutingIndex = (newRanking.ligands.at(ligandI).size() == 1);
@@ -405,7 +406,7 @@ void AtomStereocenter::Impl::assign(boost::optional<unsigned> assignment) {
   _assignmentOption = std::move(assignment);
 
   /* save a mapping of next neighbor indices to symmetry positions after
-   * assigning (AtomIndexType -> unsigned).
+   * assigning (AtomIndex -> unsigned).
    */
   if(_assignmentOption) {
     _cache.symmetryPositionMap = PermutationState::generateLigandToSymmetryPositionMap(
@@ -436,7 +437,7 @@ void AtomStereocenter::Impl::assignRandom() {
 }
 
 void AtomStereocenter::Impl::propagateGraphChange(
-  const GraphType& graph,
+  const OuterGraph& graph,
   RankingInformation newRanking
 ) {
   if(
@@ -520,7 +521,7 @@ void AtomStereocenter::Impl::propagateGraphChange(
   assign(newStereopermutation);
 }
 
-void AtomStereocenter::Impl::propagateVertexRemoval(const AtomIndexType removedIndex) {
+void AtomStereocenter::Impl::propagateVertexRemoval(const AtomIndex removedIndex) {
   /* This function replaces any occurrences of the atom index that is being
    * removed in the global state with a placeholder of the same type and updates
    * any invalidated atom indices.
@@ -532,21 +533,21 @@ void AtomStereocenter::Impl::propagateVertexRemoval(const AtomIndexType removedI
   assert(_centerAtom != removedIndex);
 
   // Define some helper functions
-  auto updateIndexInplace = [&removedIndex](AtomIndexType& index) -> void {
+  auto updateIndexInplace = [&removedIndex](AtomIndex& index) -> void {
     if(index > removedIndex) {
       --index;
     } else if(index == removedIndex) {
-      index = Stereocenters::removalPlaceholder;
+      index = InnerGraph::removalPlaceholder;
     }
   };
 
-  auto updateIndex = [&removedIndex](const AtomIndexType index) -> AtomIndexType {
+  auto updateIndex = [&removedIndex](const AtomIndex index) -> AtomIndex {
     if(index > removedIndex) {
       return index - 1;
     }
 
     if(index == removedIndex) {
-      return Stereocenters::removalPlaceholder;
+      return InnerGraph::removalPlaceholder;
     }
 
     return index;
@@ -574,8 +575,8 @@ void AtomStereocenter::Impl::propagateVertexRemoval(const AtomIndexType removedI
 }
 
 void AtomStereocenter::Impl::removeSubstituent(
-  const GraphType& graph,
-  const AtomIndexType which,
+  const OuterGraph& graph,
+  const AtomIndex which,
   RankingInformation newRanking,
   const Symmetry::Name newSymmetry,
   const ChiralStatePreservation preservationOption
@@ -612,7 +613,7 @@ void AtomStereocenter::Impl::removeSubstituent(
       ligandI < _ranking.ligands.size() && !found;
       ++ligandI
     ) {
-      for(const AtomIndexType constitutingIndex : _ranking.ligands.at(ligandI)) {
+      for(const AtomIndex constitutingIndex : _ranking.ligands.at(ligandI)) {
         if(constitutingIndex == which) {
           found = true;
           soleConstitutingIndex = (_ranking.ligands.at(ligandI).size() == 1);
@@ -772,14 +773,14 @@ std::vector<unsigned> AtomStereocenter::Impl::getSymmetryPositionMap() const {
 }
 
 void AtomStereocenter::Impl::fit(
-  const GraphType& graph,
+  const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper,
   const std::vector<Symmetry::Name>& excludeSymmetries
 ) {
   // For all atoms making up a ligand, decide on the spatial average position
   const std::vector<Eigen::Vector3d> ligandPositions = temple::mapToVector(
     _ranking.ligands,
-    [&angstromWrapper](const std::vector<AtomIndexType>& ligandAtoms) -> Eigen::Vector3d {
+    [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
     }
   );
@@ -984,7 +985,7 @@ double AtomStereocenter::Impl::angle(
 
 void AtomStereocenter::Impl::setModelInformation(
   DistanceGeometry::SpatialModel& model,
-  const std::function<double(const AtomIndexType)>& cycleMultiplierForIndex,
+  const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
   const double looseningMultiplier
 ) const {
   /* Intra-site modelling */
@@ -993,7 +994,7 @@ void AtomStereocenter::Impl::setModelInformation(
      * ligand using the cone angle
      */
     if(!_cache.coneAngles.at(ligandI)) {
-      for(const AtomIndexType i : _ranking.ligands.at(ligandI)) {
+      for(const AtomIndex i : _ranking.ligands.at(ligandI)) {
         model.setBondBoundsIfEmpty(
           {{i, _centerAtom}},
           _cache.ligandDistances.at(ligandI)
@@ -1018,7 +1019,7 @@ void AtomStereocenter::Impl::setModelInformation(
       / std::cos(coneAngleBounds.upper)
     );
 
-    for(const AtomIndexType i : _ranking.ligands.at(ligandI)) {
+    for(const AtomIndex i : _ranking.ligands.at(ligandI)) {
       model.setBondBoundsIfEmpty(
         {{i, _centerAtom}},
         DistanceGeometry::ValueBounds {
@@ -1037,7 +1038,7 @@ void AtomStereocenter::Impl::setModelInformation(
      */
     temple::forAllPairs(
       _ranking.ligands.at(ligandI),
-      [&](const AtomIndexType i, const AtomIndexType j) {
+      [&](const AtomIndex i, const AtomIndex j) {
         model.setAngleBoundsIfEmpty(
           {{i, _centerAtom, j}},
           DistanceGeometry::ValueBounds {
@@ -1076,7 +1077,7 @@ void AtomStereocenter::Impl::setModelInformation(
       temple::forAllPairs(
         _ranking.ligands.at(i),
         _ranking.ligands.at(j),
-        [&](const AtomIndexType x, const AtomIndexType y) -> void {
+        [&](const AtomIndex x, const AtomIndex y) -> void {
           double variation = (
             DistanceGeometry::SpatialModel::angleAbsoluteVariance
             * looseningMultiplier
@@ -1101,8 +1102,8 @@ boost::optional<unsigned> AtomStereocenter::Impl::assigned() const {
   return _assignmentOption;
 }
 
-AtomIndexType AtomStereocenter::Impl::centralIndex() const {
-  return {_centerAtom};
+AtomIndex AtomStereocenter::Impl::centralIndex() const {
+  return _centerAtom;
 }
 
 boost::optional<unsigned> AtomStereocenter::Impl::indexOfPermutation() const {
@@ -1284,7 +1285,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::Impl::chira
       // Map the ligand indices to their constituent indices for use in the prototype
       auto tetrahedronLigands = temple::map(
         minimalConstraint,
-        [&](const boost::optional<unsigned>& ligandIndexOptional) -> std::vector<AtomIndexType> {
+        [&](const boost::optional<unsigned>& ligandIndexOptional) -> std::vector<AtomIndex> {
           if(ligandIndexOptional) {
             return _ranking.ligands.at(ligandIndexOptional.value());
           }
@@ -1380,7 +1381,7 @@ unsigned AtomStereocenter::Impl::numStereopermutations() const {
 
 void AtomStereocenter::Impl::setSymmetry(
   const Symmetry::Name symmetryName,
-  const GraphType& graph
+  const OuterGraph& graph
 ) {
   _symmetry = symmetryName;
 
@@ -1421,9 +1422,9 @@ bool AtomStereocenter::Impl::operator < (const AtomStereocenter::Impl& other) co
 
 /* AtomStereocenter implementations */
 AtomStereocenter::AtomStereocenter(
-  const GraphType& graph,
+  const OuterGraph& graph,
   const Symmetry::Name symmetry,
-  const AtomIndexType centerAtom,
+  const AtomIndex centerAtom,
   RankingInformation ranking
 ) : _pImpl(
   std::make_unique<Impl>(
@@ -1435,21 +1436,21 @@ AtomStereocenter::AtomStereocenter(
 ) {}
 
 AtomStereocenter::AtomStereocenter(AtomStereocenter&& other) noexcept = default;
-AtomStereocenter& AtomStereocenter::operator = (AtomStereocenter&& rhs) noexcept = default;
+AtomStereocenter& AtomStereocenter::operator = (AtomStereocenter&& other) noexcept = default;
 
 AtomStereocenter::AtomStereocenter(const AtomStereocenter& other) : _pImpl(
   std::make_unique<Impl>(*other._pImpl)
 ) {}
-AtomStereocenter& AtomStereocenter::operator = (const AtomStereocenter& rhs) {
-  *_pImpl = *rhs._pImpl;
+AtomStereocenter& AtomStereocenter::operator = (const AtomStereocenter& other) {
+  *_pImpl = *other._pImpl;
   return *this;
 }
 
 AtomStereocenter::~AtomStereocenter() = default;
 
 void AtomStereocenter::addSubstituent(
-  const GraphType& graph,
-  const AtomIndexType newSubstituentIndex,
+  const OuterGraph& graph,
+  const AtomIndex newSubstituentIndex,
   RankingInformation newRanking,
   const Symmetry::Name newSymmetry,
   const ChiralStatePreservation preservationOption
@@ -1472,7 +1473,7 @@ void AtomStereocenter::assignRandom() {
 }
 
 void AtomStereocenter::fit(
-  const GraphType& graph,
+  const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper,
   const std::vector<Symmetry::Name>& excludeSymmetries
 ) {
@@ -1480,7 +1481,7 @@ void AtomStereocenter::fit(
 }
 
 void AtomStereocenter::propagateGraphChange(
-  const GraphType& graph,
+  const OuterGraph& graph,
   RankingInformation newRanking
 ) {
   _pImpl->propagateGraphChange(
@@ -1489,13 +1490,13 @@ void AtomStereocenter::propagateGraphChange(
   );
 }
 
-void AtomStereocenter::propagateVertexRemoval(const AtomIndexType removedIndex) {
+void AtomStereocenter::propagateVertexRemoval(const AtomIndex removedIndex) {
   _pImpl->propagateVertexRemoval(removedIndex);
 }
 
 void AtomStereocenter::removeSubstituent(
-  const GraphType& graph,
-  const AtomIndexType which,
+  const OuterGraph& graph,
+  const AtomIndex which,
   RankingInformation newRanking,
   const Symmetry::Name newSymmetry,
   const ChiralStatePreservation preservationOption
@@ -1511,7 +1512,7 @@ void AtomStereocenter::removeSubstituent(
 
 void AtomStereocenter::setSymmetry(
   const Symmetry::Name symmetryName,
-  const GraphType& graph
+  const OuterGraph& graph
 ) {
   _pImpl->setSymmetry(symmetryName, graph);
 }
@@ -1528,7 +1529,7 @@ boost::optional<unsigned> AtomStereocenter::assigned() const {
   return _pImpl->assigned();
 }
 
-AtomIndexType AtomStereocenter::centralIndex() const {
+AtomIndex AtomStereocenter::centralIndex() const {
   return _pImpl->centralIndex();
 }
 
@@ -1578,7 +1579,7 @@ unsigned AtomStereocenter::numStereopermutations() const {
 
 void AtomStereocenter::setModelInformation(
   DistanceGeometry::SpatialModel& model,
-  const std::function<double(const AtomIndexType)>& cycleMultiplierForIndex,
+  const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
   const double looseningMultiplier
 ) const {
   _pImpl->setModelInformation(

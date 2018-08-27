@@ -4,7 +4,7 @@
 
 #include "molassembler/AtomStereocenter.h"
 #include "molassembler/Cycles.h"
-#include "molassembler/GraphHelpers.h"
+#include "molassembler/OuterGraph.h"
 
 namespace molassembler {
 
@@ -42,7 +42,7 @@ bool disregardStereocenter(
 
 void pickyFit(
   AtomStereocenter& stereocenter,
-  const GraphType& graph,
+  const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper,
   const Symmetry::Name expectedSymmetry
 ) {
@@ -58,7 +58,7 @@ void pickyFit(
    * future-proof.
    */
   if(
-    graph::elementType(stereocenter.centralIndex(), graph) == Delib::ElementType::C
+    graph.elementType(stereocenter.centralIndex()) == Delib::ElementType::C
     && expectedSymmetry == Symmetry::Name::Tetrahedral
   ) {
     stereocenter.fit(

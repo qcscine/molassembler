@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include "molassembler/LocalGeometryModel.h"
+#include "molassembler/Modeling/LocalGeometryModel.h"
 #include "chemical_symmetries/Symmetries.h"
 
 using namespace molassembler;

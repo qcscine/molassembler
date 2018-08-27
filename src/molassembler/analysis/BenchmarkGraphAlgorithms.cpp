@@ -3,17 +3,16 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "temple/Containers.h"
-#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
-#include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
-#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "temple/constexpr/Numeric.h"
-#include "molassembler/IO.h"
-
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "gor1/Gor1.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/Gor1.h"
+#include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/IO.h"
+#include "temple/Containers.h"
+#include "temple/constexpr/Numeric.h"
 
 #include <chrono>
 #include <iomanip>
@@ -66,10 +65,10 @@ struct Gor1Functor {
     Graph graph {molecule, boundsList};
     if(auto distanceMatrixResult = graph.makeDistanceMatrix(partiality)) {
       return distanceMatrixResult.value();
-    } else {
-      std::cout << "Gor1 Functor distance matrix generation failed!";
-      return {};
     }
+
+    std::cout << "Gor1 Functor distance matrix generation failed!";
+    return {};
   }
 };
 
@@ -167,7 +166,7 @@ void benchmark(
 
   /* Timings */
   std::cout << std::fixed << std::setprecision(0);
-  std::cout << std::setw(14) << "N" << std::setw(8) << sampleMol.numAtoms() << nl;
+  std::cout << std::setw(14) << "N" << std::setw(8) << sampleMol.graph().N() << nl;
 
   std::vector<std::string> names;
   std::vector<double> times;
@@ -182,7 +181,7 @@ void benchmark(
         nExperiments
       >(sampleMol, boundsList, partiality);
 
-      names.push_back("DBM FW");
+      names.emplace_back("DBM FW");
       times.push_back(timings.first);
       deviations.push_back(timings.second);
 
@@ -199,7 +198,7 @@ void benchmark(
         nExperiments
       >(sampleMol, boundsList, partiality);
 
-      names.push_back("Explicit Gor");
+      names.emplace_back("Explicit Gor");
       times.push_back(timings.first);
       deviations.push_back(timings.second);
 
@@ -216,7 +215,7 @@ void benchmark(
         nExperiments
       >(sampleMol, boundsList, partiality);
 
-      names.push_back("Implicit Gor");
+      names.emplace_back("Implicit Gor");
       times.push_back(timings.first);
       deviations.push_back(timings.second);
     };
@@ -226,7 +225,7 @@ void benchmark(
 
   benchmarkFile
     << std::fixed << std::setprecision(0)
-    << sampleMol.numAtoms() << ", " << sampleMol.numBonds() << ", "
+    << sampleMol.graph().N() << ", " << sampleMol.graph().B() << ", "
     << std::scientific << std::setprecision(6);
 
   for(unsigned i = 0; i < names.size(); ++i) {
@@ -280,7 +279,7 @@ int main(int argc, char* argv[]) {
   boost::program_options::notify(options_variables_map);
 
   // Program options
-  if(options_variables_map.count("help")) {
+  if(options_variables_map.count("help") > 0) {
     std::cout << options_description << std::endl;
     return 0;
   }
@@ -293,7 +292,7 @@ int main(int argc, char* argv[]) {
   std::string molPath = options_variables_map["m"].as<std::string>();
 
   Algorithm choice = Algorithm::All;
-  if(options_variables_map.count("c")) {
+  if(options_variables_map.count("c") > 0) {
     unsigned combination = options_variables_map["c"].as<unsigned>();
 
     if(combination > 2) {
@@ -306,7 +305,7 @@ int main(int argc, char* argv[]) {
   }
 
   DistanceGeometry::Partiality partiality = DistanceGeometry::Partiality::All;
-  if(options_variables_map.count("p")) {
+  if(options_variables_map.count("p") > 0) {
     unsigned index =  options_variables_map["p"].as<unsigned>();
 
     if(index > 2) {

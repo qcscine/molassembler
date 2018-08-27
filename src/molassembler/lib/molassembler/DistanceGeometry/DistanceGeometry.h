@@ -1,10 +1,11 @@
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_H
 
-#include "molassembler/detail/SharedTypes.h"
 #include "molassembler/DistanceGeometry/ValueBounds.h"
+#include "molassembler/Types.h"
 
 #include <tuple>
+#include <vector>
 
 /*! @file
  *
@@ -18,7 +19,7 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 struct ChiralityConstraint {
-  using AtomListType = std::vector<AtomIndexType>;
+  using AtomListType = std::vector<AtomIndex>;
   using LigandSequence = std::array<AtomListType, 4>;
 
   LigandSequence sites;

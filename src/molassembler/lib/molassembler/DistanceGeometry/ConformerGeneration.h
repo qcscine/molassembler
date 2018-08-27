@@ -88,13 +88,13 @@ struct MoleculeDGInformation {
 //! Collects intermediate conformational data about a Molecule using a spatial model
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const double looseningFactor = 1.0
+  double looseningFactor = 1.0
 );
 
 //! Debug function, also collects graphviz of the conformational model
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const double looseningFactor,
+  double looseningFactor,
   std::string& spatialModelGraphvizString
 );
 

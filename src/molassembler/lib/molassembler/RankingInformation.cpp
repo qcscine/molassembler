@@ -3,17 +3,71 @@
 #include "temple/Containers.h"
 #include "temple/TinySet.h"
 
-#include "molassembler/OrderDiscoveryHelper.h"
+#include "molassembler/Containers/OrderDiscoveryHelper.h"
+#include "molassembler/Cycles.h"
 
 namespace molassembler {
 
+LinkInformation::LinkInformation() = default;
+
+LinkInformation::LinkInformation(
+  std::pair<unsigned, unsigned> ligandIndices,
+  std::vector<AtomIndex> sequence,
+  const AtomIndex source
+) {
+  /* Fix degrees of freedom of the underlying information so we can
+   * efficiently implement operator <. indexPair can be an ordered pair:
+   */
+  indexPair = std::move(ligandIndices);
+  if(indexPair.first > indexPair.second) {
+    std::swap(indexPair.first, indexPair.second);
+  }
+
+  // The cycle sequence should be centralized on the source vertex
+  cycleSequence = centralizeRingIndexSequence(std::move(sequence), source);
+
+  /* After centralization, the source vertex is first and last. We need to
+   * fix the remaining degree of freedom, which is if that the cycle sequence
+   * in between can be reversed. We choose to fix it by making it ascending
+   * if there are at least four vertices in the sequence between the second
+   * and second-to-last vertices
+   */
+
+  if(
+    cycleSequence.size() >= 4
+    && cycleSequence.at(1) > cycleSequence.at(cycleSequence.size() - 2)
+  ) {
+    // Reverse is [first, last), and cycleSequence is a vector, so:
+    std::reverse(
+      std::begin(cycleSequence) + 1,
+      std::end(cycleSequence) - 1
+    );
+  }
+}
+
+bool LinkInformation::operator == (const LinkInformation& other) const {
+  return (
+    indexPair == other.indexPair
+    && cycleSequence == other.cycleSequence
+  );
+}
+
+bool LinkInformation::operator != (const LinkInformation& other) const {
+  return !(*this == other);
+}
+
+bool LinkInformation::operator < (const LinkInformation& other) const {
+  return std::tie(indexPair, cycleSequence) < std::tie(other.indexPair, other.cycleSequence);
+}
+
+
 std::vector<unsigned> RankingInformation::ligandConstitutingAtomsRankedPositions(
-  const std::vector<AtomIndexType>& ligand,
+  const std::vector<AtomIndex>& ligand,
   const RankingInformation::RankedType& sortedSubstituents
 ) {
   auto positionIndices = temple::map(
     ligand,
-    [&sortedSubstituents](AtomIndexType constitutingIndex) -> unsigned {
+    [&sortedSubstituents](AtomIndex constitutingIndex) -> unsigned {
       return temple::find_if(
         sortedSubstituents,
         [&constitutingIndex](const auto& equalPrioritySet) -> bool {
@@ -81,14 +135,14 @@ RankingInformation::RankedLigandsType RankingInformation::rankLigands(
   return finalSets;
 }
 
-unsigned RankingInformation::getLigandIndexOf(const AtomIndexType i) const {
+unsigned RankingInformation::getLigandIndexOf(const AtomIndex i) const {
   // Find the atom index i within the set of ligand definitions
   auto findIter = temple::find_if(
     ligands,
     [&](const auto& ligandIndexList) -> bool {
       return temple::any_of(
         ligandIndexList,
-        [&](const AtomIndexType ligandConstitutingIndex) -> bool {
+        [&](const AtomIndex ligandConstitutingIndex) -> bool {
           return ligandConstitutingIndex == i;
         }
       );
@@ -143,7 +197,7 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
           const auto& thisEqualLigandsGroup,
           const auto& otherEqualLigandsGroup
         ) -> bool {
-          temple::TinyUnorderedSet<AtomIndexType> thisLigandGroupVertices;
+          temple::TinyUnorderedSet<AtomIndex> thisLigandGroupVertices;
 
           for(const auto ligandIndex : thisEqualLigandsGroup) {
             for(const auto ligandConstitutingIndex : ligands.at(ligandIndex)) {

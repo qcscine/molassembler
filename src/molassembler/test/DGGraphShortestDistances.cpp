@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
       spatialModel.makeBoundsList()
     };
 
-    auto egGraph = eg.getGraph();
+    auto egGraph = eg.graph();
 
     unsigned N = boost::num_vertices(egGraph);
 
@@ -301,10 +301,10 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
     auto boundsMatrix = DBM_FW_Functor {spatialModelBounds} ();
 
     bool pass = true;
-    for(unsigned a = 0; a < sampleMol.numAtoms(); ++a) {
-      auto BF_EG_distances = BFFunctor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
+    for(unsigned a = 0; a < sampleMol.graph().N(); ++a) {
+      auto BF_EG_distances = BFFunctor<DistanceGeometry::ExplicitGraph::GraphType> {limits.graph()} (2 * a);
 
-      auto Gor_EG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::GraphType> {limits.getGraph()} (2 * a);
+      auto Gor_EG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::GraphType> {limits.graph()} (2 * a);
 
       if(
         !temple::all_of(
@@ -399,7 +399,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
     for(IGVertex i = 0; i < N && identical; ++i) {
       for(IGVertex j = 0; j < N; ++j) {
         auto ig_edge = boost::edge(i, j, shortestPathsGraph);
-        auto eg_edge = boost::edge(i, j, limits.getGraph());
+        auto eg_edge = boost::edge(i, j, limits.graph());
 
         if(ig_edge.second != eg_edge.second) {
           identical = false;
@@ -409,7 +409,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
         if(ig_edge.second && eg_edge.second) {
           auto ig_edge_weight = boost::get(boost::edge_weight, shortestPathsGraph, ig_edge.first);
-          auto eg_edge_weight = boost::get(boost::edge_weight, limits.getGraph(), eg_edge.first);
+          auto eg_edge_weight = boost::get(boost::edge_weight, limits.graph(), eg_edge.first);
 
           if(ig_edge_weight != eg_edge_weight) {
             identical = false;
@@ -423,7 +423,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
     BOOST_REQUIRE_MESSAGE(identical, "EG and IG are not identical graphs");
 
     pass = true;
-    for(unsigned a = 0; a < sampleMol.numAtoms(); ++a) {
+    for(unsigned a = 0; a < sampleMol.graph().N(); ++a) {
       // ImplicitGraph without implicit bounds should be consistent with ExplicitGraph
       auto BF_IG_distances = BFFunctor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * a);
 

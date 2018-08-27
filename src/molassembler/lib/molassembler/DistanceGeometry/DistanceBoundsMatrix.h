@@ -6,7 +6,7 @@
 #include "temple/Random.h"
 
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
-#include "molassembler/AtomInfo.h"
+#include "molassembler/Modeling/AtomInfo.h"
 
 
 /*! @file
@@ -22,14 +22,14 @@ namespace DistanceGeometry {
 
 class DistanceBoundsMatrix {
 private:
-  inline double& _lowerBound(const AtomIndexType i, const AtomIndexType j) {
+  inline double& _lowerBound(const AtomIndex i, const AtomIndex j) {
     return _matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  inline double& _upperBound(const AtomIndexType i, const AtomIndexType j) {
+  inline double& _upperBound(const AtomIndex i, const AtomIndex j) {
     return _matrix(
       std::min(i, j),
       std::max(i, j)
@@ -42,28 +42,28 @@ public:
 
 //!@name Static member functions
 //!@{
-  static inline double& lowerBound(Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
+  static inline double& lowerBound(Eigen::MatrixXd& matrix, const AtomIndex i, const AtomIndex j) {
     return matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  static inline double& upperBound(Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
+  static inline double& upperBound(Eigen::MatrixXd& matrix, const AtomIndex i, const AtomIndex j) {
     return matrix(
       std::min(i, j),
       std::max(i, j)
     );
   }
 
-  static inline double lowerBound(const Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
+  static inline double lowerBound(const Eigen::MatrixXd& matrix, const AtomIndex i, const AtomIndex j) {
     return matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  static inline double upperBound(const Eigen::MatrixXd& matrix, const AtomIndexType i, const AtomIndexType j) {
+  static inline double upperBound(const Eigen::MatrixXd& matrix, const AtomIndex i, const AtomIndex j) {
     return matrix(
       std::min(i, j),
       std::max(i, j)
@@ -76,7 +76,7 @@ public:
 //!@name Member types
 //!@{
   using BoundsList = std::map<
-    std::array<AtomIndexType, 2>,
+    std::array<AtomIndex, 2>,
     ValueBounds
   >;
 //!@}
@@ -85,7 +85,7 @@ public:
 //!@{
   DistanceBoundsMatrix();
 
-  explicit DistanceBoundsMatrix(unsigned N);
+  explicit DistanceBoundsMatrix(long unsigned N);
 
   explicit DistanceBoundsMatrix(Eigen::MatrixXd matrix);
 
@@ -93,7 +93,7 @@ public:
   DistanceBoundsMatrix(
     const Molecule& molecule,
     const BoundsList& bounds
-  ) : DistanceBoundsMatrix {molecule.numAtoms()}
+  ) : DistanceBoundsMatrix {molecule.graph().N()}
   {
     // Populate the matrix with explicit bounds
     for(const auto& mapPair : bounds) {
@@ -102,9 +102,9 @@ public:
     }
 
     // Populate the lower bounds if no explicit information is present
-    const AtomIndexType N = molecule.numAtoms();
-    for(AtomIndexType i = 0; i < N - 1; ++i) {
-      for(AtomIndexType j = i + 1; j < N; ++j) {
+    const AtomIndex N = molecule.graph().N();
+    for(AtomIndex i = 0; i < N - 1; ++i) {
+      for(AtomIndex j = i + 1; j < N; ++j) {
         /* setting the bounds will fail for bonded pairs as those have strict
          * bounds already and the fairly high sum of vdw would lead to
          * inconsistencies
@@ -114,9 +114,9 @@ public:
             i,
             j,
             AtomInfo::vdwRadius(
-              molecule.getElementType(i)
+              molecule.graph().elementType(i)
             ) + AtomInfo::vdwRadius(
-              molecule.getElementType(j)
+              molecule.graph().elementType(j)
             )
           );
         }
@@ -129,22 +129,22 @@ public:
 
 //!@name Modifiers
 //!@{
-  bool setUpperBound(AtomIndexType i, AtomIndexType j, double newUpperBound);
-  bool setLowerBound(AtomIndexType i, AtomIndexType j, double newLowerBound);
+  bool setUpperBound(AtomIndex i, AtomIndex j, double newUpperBound);
+  bool setLowerBound(AtomIndex i, AtomIndex j, double newLowerBound);
 
   void smooth();
 //!@}
 
 //!@name Information
 //!@{
-  inline double upperBound(AtomIndexType i, AtomIndexType j) const {
+  inline double upperBound(AtomIndex i, AtomIndex j) const {
     return _matrix(
       std::min(i, j),
       std::max(i, j)
     );
   }
 
-  inline double lowerBound(AtomIndexType i, AtomIndexType j) const {
+  inline double lowerBound(AtomIndex i, AtomIndex j) const {
     return _matrix(
       std::max(i, j),
       std::min(i, j)

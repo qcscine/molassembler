@@ -10,23 +10,23 @@
 #include "temple/Containers.h"
 #include "temple/Optionals.h"
 
-#include "molassembler/detail/CommonTrig.h"
-#include "molassembler/detail/MolGraphWriter.h"
 #include "molassembler/Cycles.h"
-#include "molassembler/GraphAlgorithms.h"
-#include "molassembler/GraphHelpers.h"
-#include "molassembler/LocalGeometryModel.h"
-#include "molassembler/Log.h"
+#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Graph/GraphAlgorithms.h"
+#include "molassembler/Modeling/CommonTrig.h"
+#include "molassembler/Modeling/LocalGeometryModel.h"
+#include "molassembler/Molecule/MolGraphWriter.h"
+#include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/RankingTree.h"
 #include "molassembler/StereocenterList.h"
 #include "molassembler/Options.h"
+#include "molassembler/OuterGraph.h"
 
 namespace molassembler {
 
 /* Impl definition */
 struct Molecule::Impl {
-  GraphType _adjacencies;
+  OuterGraph _adjacencies;
   StereocenterList _stereocenters;
 
 /* "Private" helpers */
@@ -37,10 +37,10 @@ struct Molecule::Impl {
   void _ensureModelInvariants() const;
 
   //! Returns whether the specified index is valid or not
-  bool _isValidIndex(AtomIndexType index) const;
+  bool _isValidIndex(AtomIndex index) const;
 
   //! Returns whether an edge is double, aromtic, triple or higher bond order
-  bool _isGraphBasedBondStereocenterCandidate(const GraphType::edge_descriptor& e) const;
+  bool _isGraphBasedBondStereocenterCandidate(const InnerGraph::Edge& e) const;
 
   //! Updates the molecule's StereocenterList after a graph modification
   void _propagateGraphChange();
@@ -59,17 +59,17 @@ struct Molecule::Impl {
   ) noexcept;
 
   //! Graph-only constructor
-  explicit Impl(GraphType graph);
+  explicit Impl(OuterGraph graph);
 
   //! Graph and positions constructor
   Impl(
-    GraphType graph,
+    OuterGraph graph,
     const AngstromWrapper& positions
   );
 
   //! Graph and stereocenters constructor
   Impl(
-    GraphType graph,
+    OuterGraph graph,
     StereocenterList stereocenters
   );
 //!@}
@@ -77,16 +77,16 @@ struct Molecule::Impl {
 //!@name Modifiers
 //!@{
   //! Adds an atom by attaching it to an existing atom.
-  AtomIndexType addAtom(
+  AtomIndex addAtom(
     Delib::ElementType elementType,
-    AtomIndexType adjacentTo,
+    AtomIndex adjacentTo,
     BondType bondType
   );
 
   //! Adds a bond between existing atoms.
   void addBond(
-    AtomIndexType a,
-    AtomIndexType b,
+    AtomIndex a,
+    AtomIndex b,
     BondType bondType
   );
 
@@ -94,7 +94,7 @@ struct Molecule::Impl {
    *
    * This sets the stereocenter assignment at a specific atom index. For this,
    * a stereocenter must be instantiated and contained in the StereocenterList
-   * returned by getStereocenterList(). The supplied assignment must be either
+   * returned by stereocenters(). The supplied assignment must be either
    * boost::none or smaller than stereocenterPtr->numAssignments().
    *
    * \note Although molecules in which this occurs are infrequent, consider the
@@ -104,7 +104,7 @@ struct Molecule::Impl {
    * to the introduction of new stereocenters or the removal of old ones.
    */
   void assignStereocenter(
-    AtomIndexType a,
+    AtomIndex a,
     const boost::optional<unsigned>& assignment
   );
 
@@ -123,7 +123,7 @@ struct Molecule::Impl {
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereocenters or the removal of old ones.
    */
-  void assignStereocenterRandomly(AtomIndexType a);
+  void assignStereocenterRandomly(AtomIndex a);
 
   /*! Assigns a bond stereocenter to a random assignment
    *
@@ -136,7 +136,7 @@ struct Molecule::Impl {
    * assignment change can trigger a ranking change, which can in turn lead
    * to the introduction of new stereocenters or the removal of old ones.
    */
-  void assignStereocenterRandomly(const GraphType::edge_descriptor& e);
+  void assignStereocenterRandomly(const BondIndex& e);
 
   /*! Removes an atom from the graph, including bonds to it.
    *
@@ -146,7 +146,7 @@ struct Molecule::Impl {
    *
    * \throws if the supplied index is invalid or isSafeToRemoveAtom returns false.
    */
-  void removeAtom(AtomIndexType a);
+  void removeAtom(AtomIndex a);
 
   /*!
    * Removes an atom after checking if removing that bond is safe, i.e. does not
@@ -161,18 +161,18 @@ struct Molecule::Impl {
    * It is, however, considered safe to remove the terminal vertex, which
    * involves removing the bond to it.
    */
-  void removeBond(AtomIndexType a, AtomIndexType b);
+  void removeBond(AtomIndex a, AtomIndex b);
 
   //! Changes an existing bond's type
   bool setBondType(
-    AtomIndexType a,
-    AtomIndexType b,
+    AtomIndex a,
+    AtomIndex b,
     BondType bondType
   );
 
   //! Changes an existing atom's element type
   void setElementType(
-    AtomIndexType a,
+    AtomIndex a,
     Delib::ElementType elementType
   );
 
@@ -192,7 +192,7 @@ struct Molecule::Impl {
    *     AtomStereocenter or the expected symmetry
    */
   void setGeometryAtAtom(
-    AtomIndexType a,
+    AtomIndex a,
     Symmetry::Name symmetryName
   );
 //!@}
@@ -205,68 +205,25 @@ struct Molecule::Impl {
    * \throws if the supplied atomic index is invalid
    */
   Symmetry::Name determineLocalGeometry(
-    AtomIndexType index,
+    AtomIndex index,
     const RankingInformation& ranking
   ) const;
 
   //! Returns a graphivz string representation of the molecule
   std::string dumpGraphviz() const;
 
-  //! Get an edge descriptor for a pair of indices
-  GraphType::edge_descriptor edge(
-    AtomIndexType a,
-    AtomIndexType b
-  ) const;
-
-  /*! Fetches the atomic indices of vertices adjacent to a particular index
-   *
-   * Fetches the atomic indices of vertices adjacent to a particular index.
-   * \throws if the supplied atomic index is invalid
-   */
-  std::vector<AtomIndexType> getAdjacencies(AtomIndexType a) const;
-
-  //! Fetches the optional bond type between two atom indices
-  boost::optional<BondType> getBondType(
-    AtomIndexType a,
-    AtomIndexType b
-  ) const;
-
-  BondType getBondType(const GraphType::edge_descriptor& edge) const;
-
-  Cycles getCycleData() const;
-
-  /*! Returns the element type of an atomic index
-   *
-   * Returns the element type of an atomic index
-   * \throws if the atomic index is invalid
-   */
-  Delib::ElementType getElementType(AtomIndexType index) const;
-
-  //! Returns a collection detailing all element types
-  Delib::ElementTypeCollection getElementCollection() const;
+  Cycles cycles() const;
 
   //! Provides read-only access to the graph member
-  const GraphType& getGraph() const;
+  const OuterGraph& graph() const;
 
   //! Provides read-only access to the list of stereocenters
-  const StereocenterList& getStereocenterList() const;
+  const StereocenterList& stereocenters() const;
 
   //! Returns the number of adjacencies of an atomic position
-  unsigned getNumAdjacencies(AtomIndexType a) const;
+  unsigned getNumAdjacencies(AtomIndex a) const;
 
   StereocenterList inferStereocentersFromPositions(const AngstromWrapper& angstromWrapper) const;
-
-  //! Checks if two atomic indices are connected by a bond
-  bool isAdjacent(
-    AtomIndexType a,
-    AtomIndexType b
-  ) const;
-
-  //! An atom is considered removable if it isn't an articulation vertex
-  bool isSafeToRemoveAtom(AtomIndexType a) const;
-
-  //! A bond is considered removable if it isn't a bridge edge
-  bool isSafeToRemoveBond(AtomIndexType a, AtomIndexType b) const;
 
   //! Modular comparison of this Impl with another.
   bool modularCompare(
@@ -274,58 +231,19 @@ struct Molecule::Impl {
     const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
   ) const;
 
-  //! Fetch the number of atoms
-  unsigned numAtoms() const;
-
-  //! Fetch the number of bonds
-  unsigned numBonds() const;
-
   RankingInformation rankPriority(
-    AtomIndexType a,
-    const std::set<AtomIndexType>& excludeAdjacent = {},
+    AtomIndex a,
+    const std::vector<AtomIndex>& excludeAdjacent = {},
     const boost::optional<AngstromWrapper>& positionsOption = boost::none
   ) const;
-
-  //! Get the vertex indices on both ends of a graph edge
-  std::array<AtomIndexType, 2> vertices(const GraphType::edge_descriptor& edge) const;
 //!@}
-
-//!@name Iterators
-//!@{
-  //! Returns a range-for temporary object iterating through all atom indices
-  RangeForTemporary<GraphType::vertex_iterator> iterateAtoms() const;
-
-  /*! Returns a range-for temporary object allowing c++11 style for loop
-   * iteration through an atom's adjacencies
-   */
-  RangeForTemporary<GraphType::adjacency_iterator> iterateAdjacencies(
-    AtomIndexType a
-  ) const;
-
-  /*! Returns a range-for temporary object allowing c++11-style for loop
-   * iteration through edges
-   */
-  RangeForTemporary<GraphType::edge_iterator> iterateEdges() const;
-
-  /*! Returns a range-for temporary object allowing c++11-style for loop
-   * iteration through edges around a specific atom
-   */
-  RangeForTemporary<GraphType::out_edge_iterator> iterateEdges(AtomIndexType a) const;
-//!@}
-
 
 //!@name Operators
 //!@{
-  //! Returns the adjacencies of the specified atom index
-  RangeForTemporary<GraphType::adjacency_iterator> operator [] (
-    AtomIndexType a
-  ) const;
-
   //! Equality operator, performs most strict equality comparison
   bool operator == (const Impl& other) const;
   bool operator != (const Impl& other) const;
 //!@}
-
 };
 
 /* Impl members */
@@ -333,11 +251,11 @@ struct Molecule::Impl {
 StereocenterList Molecule::Impl::_detectStereocenters() const {
   StereocenterList stereocenterList;
 
-  Cycles cycleData = getCycleData();
+  Cycles cycleData = cycles();
   // Find AtomStereocenters
   for(
-    AtomIndexType candidateIndex = 0;
-    candidateIndex < numAtoms();
+    AtomIndex candidateIndex = 0;
+    candidateIndex < graph().N();
     ++candidateIndex
   ) {
     RankingInformation localRanking = rankPriority(candidateIndex);
@@ -362,7 +280,7 @@ StereocenterList Molecule::Impl::_detectStereocenters() const {
     if(
       !disregardStereocenter(
         newStereocenter,
-        getElementType(candidateIndex),
+        graph().elementType(candidateIndex),
         cycleData,
         Options::temperatureRegime
       )
@@ -374,15 +292,20 @@ StereocenterList Molecule::Impl::_detectStereocenters() const {
     }
   }
 
+  const InnerGraph& inner = graph().inner();
+
   // Find BondStereocenters
-  for(const auto& edgeIndex : graph::edges(_adjacencies)) {
+  for(
+    const InnerGraph::Edge& edgeIndex :
+    boost::make_iterator_range(inner.edges())
+  ) {
     // Skip edges that cannot be candidates
     if(!_isGraphBasedBondStereocenterCandidate(edgeIndex)) {
       continue;
     }
 
-    AtomIndexType source = boost::source(edgeIndex, _adjacencies),
-                  target = boost::target(edgeIndex, _adjacencies);
+    AtomIndex source = inner.source(edgeIndex),
+              target = inner.target(edgeIndex);
 
     auto sourceAtomStereocenterOption = stereocenterList.option(source);
     auto targetAtomStereocenterOption = stereocenterList.option(target);
@@ -397,16 +320,18 @@ StereocenterList Molecule::Impl::_detectStereocenters() const {
       continue;
     }
 
+    const auto outerEdgeIndex = BondIndex {source, target};
+
     // Construct a Stereocenter here
     auto newStereocenter = BondStereocenter {
       *sourceAtomStereocenterOption,
       *targetAtomStereocenterOption,
-      edgeIndex
+      outerEdgeIndex
     };
 
     if(newStereocenter.numAssignments() > 1) {
       stereocenterList.add(
-        edgeIndex,
+        outerEdgeIndex,
         std::move(newStereocenter)
       );
     }
@@ -416,29 +341,30 @@ StereocenterList Molecule::Impl::_detectStereocenters() const {
 }
 
 void Molecule::Impl::_ensureModelInvariants() const {
-  if(GraphAlgorithms::numConnectedComponents(_adjacencies) > 1) {
+  if(graph().inner().connectedComponents() > 1) {
     throw std::logic_error("Molecules must be a single connected component. The supplied graph has multiple");
   }
 
-  if(numAtoms() < 2) {
+  if(graph().N() < 2) {
     throw std::logic_error("Molecules must consist of at least two atoms!");
   }
 }
 
-bool Molecule::Impl::_isValidIndex(const AtomIndexType index) const {
-  return index < numAtoms();
+bool Molecule::Impl::_isValidIndex(const AtomIndex index) const {
+  return index < graph().N();
 }
 
 bool Molecule::Impl::_isGraphBasedBondStereocenterCandidate(
-  const GraphType::edge_descriptor& e
+  const InnerGraph::Edge& e
 ) const {
+  const BondType bondType = graph().inner().bondType(e);
   return (
-    _adjacencies[e].bondType == BondType::Double
-    || _adjacencies[e].bondType == BondType::Aromatic
-    || _adjacencies[e].bondType == BondType::Triple
-    || _adjacencies[e].bondType == BondType::Quadruple
-    || _adjacencies[e].bondType == BondType::Quintuple
-    || _adjacencies[e].bondType == BondType::Sextuple
+    bondType == BondType::Double
+    || bondType == BondType::Aromatic
+    || bondType == BondType::Triple
+    || bondType == BondType::Quadruple
+    || bondType == BondType::Quintuple
+    || bondType == BondType::Sextuple
   );
 }
 
@@ -458,15 +384,20 @@ void Molecule::Impl::_propagateGraphChange() {
    * set of assignments and assign the stereocenter to that.
    */
 
-  GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
+  InnerGraph& inner = _adjacencies.inner();
+
+  GraphAlgorithms::findAndSetEtaBonds(inner);
 
   /* TODO
    * - Need state propagation for BondStereocenters, anything else is madness
    */
 
-  Cycles cycleData = getCycleData();
+  Cycles cycleData = cycles();
 
-  for(const auto vertex : iterateAtoms()) {
+  for(
+    const InnerGraph::Vertex vertex :
+    boost::make_iterator_range(inner.vertices())
+  ) {
     auto stereocenterOption = _stereocenters.option(vertex);
     RankingInformation localRanking = rankPriority(vertex);
 
@@ -497,7 +428,7 @@ void Molecule::Impl::_propagateGraphChange() {
       if(
         disregardStereocenter(
           *stereocenterOption,
-          getElementType(vertex),
+          inner.elementType(vertex),
           cycleData,
           Options::temperatureRegime
         )
@@ -528,7 +459,7 @@ void Molecule::Impl::_propagateGraphChange() {
       if(
         !disregardStereocenter(
           newStereocenter,
-          getElementType(vertex),
+          inner.elementType(vertex),
           cycleData,
           Options::temperatureRegime
         )
@@ -550,57 +481,52 @@ Molecule::Impl::Impl(
   const BondType bondType
 ) noexcept {
   // update _adjacencies
-  graph::addAtom(a, _adjacencies);
-  graph::addAtom(b, _adjacencies);
-
-  // Although addBond is potentially-throwing, it never will here
-  addBond(0, 1, bondType);
+  InnerGraph& inner = _adjacencies.inner();
+  InnerGraph::Vertex i = inner.addVertex(a);
+  InnerGraph::Vertex j = inner.addVertex(b);
+  inner.addEdge(i, j, bondType);
 }
 
-Molecule::Impl::Impl(GraphType graph) {
-  // boost::adjacency_list doesn't implement moves, so use the swap member
-  _adjacencies.swap(graph);
-
+Molecule::Impl::Impl(OuterGraph graph)
+  : _adjacencies(std::move(graph))
+{
   // Initialization
-  GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
+  GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
   _stereocenters = _detectStereocenters();
   _ensureModelInvariants();
 }
 
 Molecule::Impl::Impl(
-  GraphType graph,
+  OuterGraph graph,
   const AngstromWrapper& positions
-) {
-  // boost::adjacency_list doesn't implement moves, so use the swap member
-  _adjacencies.swap(graph);
-
-  GraphAlgorithms::findAndSetEtaBonds(_adjacencies);
+) : _adjacencies(std::move(graph))
+{
+  GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
   _stereocenters = inferStereocentersFromPositions(positions);
   _ensureModelInvariants();
 }
 
 Molecule::Impl::Impl(
-  GraphType graph,
+  OuterGraph graph,
   StereocenterList stereocenters
-) : _stereocenters(std::move(stereocenters)) {
-  // boost::adjacency_list doesn't implement moves, so use the swap member
-  _adjacencies.swap(graph);
-
+) : _adjacencies(std::move(graph)),
+    _stereocenters(std::move(stereocenters))
+{
   // Initialization
   _ensureModelInvariants();
 }
 
 /* Modifiers */
-AtomIndexType Molecule::Impl::addAtom(
+AtomIndex Molecule::Impl::addAtom(
   const Delib::ElementType elementType,
-  const AtomIndexType adjacentTo,
+  const AtomIndex adjacentTo,
   const BondType bondType
 ) {
   if(!_isValidIndex(adjacentTo)) {
     throw std::out_of_range("Molecule::addAtom: Supplied atom index is invalid!");
   }
 
-  const auto index = graph::addAtom(elementType, _adjacencies);
+  const AtomIndex index = _adjacencies.inner().addVertex(elementType);
   addBond(index, adjacentTo, bondType);
   // addBond handles the stereocenter update on adjacentTo
 
@@ -610,8 +536,8 @@ AtomIndexType Molecule::Impl::addAtom(
 }
 
 void Molecule::Impl::addBond(
-  const AtomIndexType a,
-  const AtomIndexType b,
+  const AtomIndex a,
+  const AtomIndex b,
   const BondType bondType
 ) {
   if(!_isValidIndex(a) || !_isValidIndex(b)) {
@@ -622,16 +548,23 @@ void Molecule::Impl::addBond(
     throw std::logic_error("Molecule::addBond: Cannot add a bond between identical indices!");
   }
 
-  graph::addBond(a, b, bondType, _adjacencies);
+  InnerGraph& inner = _adjacencies.inner();
+
+  inner.addEdge(a, b, bondType);
 
   auto notifySubstituentAddition = [this](
-    const AtomIndexType toIndex,
-    const AtomIndexType addedIndex
+    const AtomIndex toIndex,
+    const AtomIndex addedIndex
   ) {
     /* Remove any BondStereocenters on adjacent edges of toIndex (no state
      * propagation possible yet TODO)
      */
-    for(const auto& adjacentEdge : graph::edges(toIndex, _adjacencies)) {
+    for(
+      const BondIndex& adjacentEdge :
+      boost::make_iterator_range(
+        _adjacencies.bonds(toIndex)
+      )
+    ) {
       _stereocenters.try_remove(adjacentEdge);
     }
 
@@ -656,7 +589,7 @@ void Molecule::Impl::addBond(
 }
 
 void Molecule::Impl::assignStereocenter(
-  const AtomIndexType a,
+  const AtomIndex a,
   const boost::optional<unsigned>& assignment
 ) {
   if(!_isValidIndex(a)) {
@@ -679,7 +612,7 @@ void Molecule::Impl::assignStereocenter(
   _propagateGraphChange();
 }
 
-void Molecule::Impl::assignStereocenterRandomly(const AtomIndexType a) {
+void Molecule::Impl::assignStereocenterRandomly(const AtomIndex a) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::assignStereocenterRandomly: Supplied index is invalid!");
   }
@@ -696,7 +629,7 @@ void Molecule::Impl::assignStereocenterRandomly(const AtomIndexType a) {
   _propagateGraphChange();
 }
 
-void Molecule::Impl::assignStereocenterRandomly(const GraphType::edge_descriptor& e) {
+void Molecule::Impl::assignStereocenterRandomly(const BondIndex& e) {
   auto stereocenterOption = _stereocenters.option(e);
 
   if(!stereocenterOption) {
@@ -709,30 +642,41 @@ void Molecule::Impl::assignStereocenterRandomly(const GraphType::edge_descriptor
   _propagateGraphChange();
 }
 
-void Molecule::Impl::removeAtom(const AtomIndexType a) {
+void Molecule::Impl::removeAtom(const AtomIndex a) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::removeAtom: Supplied index is invalid!");
   }
 
-  if(!isSafeToRemoveAtom(a)) {
+  if(!graph().canRemove(a)) {
     throw std::logic_error("Removing this atom disconnects the graph!");
   }
 
-  auto previouslyAdjacentVertices = getAdjacencies(a);
+  InnerGraph& inner = _adjacencies.inner();
+
+  std::vector<AtomIndex> previouslyAdjacentVertices;
+  auto adjacencyIterators = inner.adjacents(a);
+  std::copy(
+    adjacencyIterators.first,
+    adjacencyIterators.second,
+    std::back_inserter(previouslyAdjacentVertices)
+  );
 
   // Remove all edges to and from this vertex
-  boost::clear_vertex(a, _adjacencies);
+  inner.clearVertex(a);
 
   // Any stereocenter on this index must be dropped
   _stereocenters.try_remove(a);
 
   // Any adjacent bond stereocenters have to be dropped
-  for(const auto& adjacentEdge : graph::edges(a, _adjacencies)) {
+  for(
+    const BondIndex& adjacentEdge :
+    boost::make_iterator_range(_adjacencies.bonds(a))
+  ) {
     _stereocenters.try_remove(adjacentEdge);
   }
 
   // Remove the vertex itself
-  boost::remove_vertex(a, _adjacencies);
+  inner.removeVertex(a);
 
   /* Removing the vertex invalidates some vertex descriptors, which are used
    * liberally in the stereocenter classes' state. We have to correct of all of
@@ -757,7 +701,7 @@ void Molecule::Impl::removeAtom(const AtomIndexType a) {
 
       stereocenterOption->removeSubstituent(
         _adjacencies,
-        Stereocenters::removalPlaceholder,
+        InnerGraph::removalPlaceholder,
         localRanking,
         determineLocalGeometry(indexToUpdate, localRanking),
         Options::chiralStatePreservation
@@ -782,36 +726,40 @@ void Molecule::Impl::removeAtom(const AtomIndexType a) {
 }
 
 void Molecule::Impl::removeBond(
-  const AtomIndexType a,
-  const AtomIndexType b
+  const AtomIndex a,
+  const AtomIndex b
 ) {
   if(!_isValidIndex(a) || !_isValidIndex(b)) {
     throw std::out_of_range("Molecule::removeBond: Supplied index is invalid!");
   }
 
-  if(!isSafeToRemoveBond(a, b)) {
+  InnerGraph& inner = _adjacencies.inner();
+
+  auto edgeOption = inner.edgeOption(a, b);
+
+  if(!edgeOption) {
+    throw std::logic_error("That bond does not exist!");
+  }
+
+  InnerGraph::Edge edgeToRemove = edgeOption.value();
+
+  if(!inner.canRemove(edgeToRemove)) {
     throw std::logic_error("Removing this bond separates the molecule into two pieces!");
   }
 
-  // Find edge
-  auto edgePair = boost::edge(a, b, _adjacencies);
-
-  if(!edgePair.second) {
-    throw std::logic_error("That bond does not exist!");
-  }
 
   /* If there is an BondStereocenter on this edge, we have to drop it explicitly,
    * since _propagateGraphChange cannot iterate over a now-removed edge.
    */
-  _stereocenters.try_remove(edgePair.first);
+  _stereocenters.try_remove(BondIndex {a, b});
 
   // Remove the edge
-  boost::remove_edge(edgePair.first, _adjacencies);
+  inner.removeEdge(edgeToRemove);
 
   // Notify all immediately adjacent stereocenters of the removal
   auto notifyRemoval = [&](
-    const AtomIndexType indexToUpdate,
-    const AtomIndexType removedIndex
+    const AtomIndex indexToUpdate,
+    const AtomIndex removedIndex
   ) {
     if(auto stereocenterOption = _stereocenters.option(indexToUpdate)) {
       auto localRanking = rankPriority(indexToUpdate);
@@ -856,8 +804,8 @@ void Molecule::Impl::removeBond(
 }
 
 bool Molecule::Impl::setBondType(
-  const AtomIndexType a,
-  const AtomIndexType b,
+  const AtomIndex a,
+  const AtomIndex b,
   const BondType bondType
 ) {
   if(!_isValidIndex(a) || !_isValidIndex(b)) {
@@ -870,32 +818,33 @@ bool Molecule::Impl::setBondType(
     );
   }
 
-  auto edgePair = boost::edge(a, b, _adjacencies);
-  if(edgePair.second) {
-    _adjacencies[edgePair.first].bondType = bondType;
-  } else {
+  InnerGraph& inner = _adjacencies.inner();
+
+  auto edgeOption = inner.edgeOption(a, b);
+  if(!edgeOption) {
     addBond(a, b, bondType);
+    return false;
   }
 
+  inner.bondType(edgeOption.value()) = bondType;
   _propagateGraphChange();
-
-  return edgePair.second;
+  return true;
 }
 
 void Molecule::Impl::setElementType(
-  const AtomIndexType a,
+  const AtomIndex a,
   const Delib::ElementType elementType
 ) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::setElementType: This index is invalid!");
   }
 
-  _adjacencies[a].elementType = elementType;
+  _adjacencies.inner().elementType(a) = elementType;
   _propagateGraphChange();
 }
 
 void Molecule::Impl::setGeometryAtAtom(
-  const AtomIndexType a,
+  const AtomIndex a,
   const Symmetry::Name symmetryName
 ) {
   if(!_isValidIndex(a)) {
@@ -959,7 +908,7 @@ void Molecule::Impl::setGeometryAtAtom(
 
 /* Information */
 Symmetry::Name Molecule::Impl::determineLocalGeometry(
-  const AtomIndexType index,
+  const AtomIndex index,
   const RankingInformation& ranking
 ) const {
   if(!_isValidIndex(index)) {
@@ -980,13 +929,13 @@ Symmetry::Name Molecule::Impl::determineLocalGeometry(
 }
 
 std::string Molecule::Impl::dumpGraphviz() const {
-  MolGraphWriter propertyWriter(&_adjacencies);
+  MolGraphWriter propertyWriter(&_adjacencies.inner());
 
   std::stringstream graphvizStream;
 
   boost::write_graphviz(
     graphvizStream,
-    _adjacencies,
+    _adjacencies.inner().bgl(),
     propertyWriter,
     propertyWriter,
     propertyWriter
@@ -995,90 +944,31 @@ std::string Molecule::Impl::dumpGraphviz() const {
   return graphvizStream.str();
 }
 
-//! Get an edge descriptor for a pair of indices
-GraphType::edge_descriptor Molecule::Impl::edge(
-  const AtomIndexType a,
-  const AtomIndexType b
-) const {
-  return graph::edge(a, b, _adjacencies);
-}
-
-std::vector<AtomIndexType> Molecule::Impl::getAdjacencies(const AtomIndexType a) const {
-  std::vector<AtomIndexType> copy;
-
-  // C++17 auto [begin, end] = ...
-  GraphType::adjacency_iterator begin, end;
-  std::tie(begin, end) = boost::adjacent_vertices(a, _adjacencies);
-  std::copy(
-    begin,
-    end,
-    std::back_inserter(copy)
-  );
-
-  return copy;
-}
-
-boost::optional<BondType> Molecule::Impl::getBondType(
-  const AtomIndexType a,
-  const AtomIndexType b
-) const {
-  if(auto edgeOption = graph::edgeOption(a, b, _adjacencies)) {
-    return graph::bondType(edgeOption.value(), _adjacencies);
-  }
-
-  return boost::none;
-}
-
-BondType Molecule::Impl::getBondType(const GraphType::edge_descriptor& edge) const {
-  return graph::bondType(edge, _adjacencies);
-}
-
-Cycles Molecule::Impl::getCycleData() const {
+Cycles Molecule::Impl::cycles() const {
   return Cycles {_adjacencies};
 }
 
-Delib::ElementType Molecule::Impl::getElementType(const AtomIndexType index) const {
-  if(!_isValidIndex(index)) {
-    throw std::out_of_range("Molecule::getElementType: Supplied index is invalid");
-  }
-
-  return graph::elementType(index, _adjacencies);
-}
-
-Delib::ElementTypeCollection Molecule::Impl::getElementCollection() const {
-  AtomIndexType N = numAtoms();
-  Delib::ElementTypeCollection elements;
-  elements.reserve(N);
-
-  for(AtomIndexType i = 0; i < N; ++i) {
-    elements.push_back(
-      graph::elementType(i, _adjacencies)
-    );
-  }
-
-  return elements;
-}
-
-const GraphType& Molecule::Impl::getGraph() const {
+const OuterGraph& Molecule::Impl::graph() const {
   return _adjacencies;
 }
 
-const StereocenterList& Molecule::Impl::getStereocenterList() const {
+const StereocenterList& Molecule::Impl::stereocenters() const {
   return _stereocenters;
 }
 
-unsigned Molecule::Impl::getNumAdjacencies(const AtomIndexType a) const {
-  return graph::numAdjacencies(a, _adjacencies);
+unsigned Molecule::Impl::getNumAdjacencies(const AtomIndex a) const {
+  return _adjacencies.inner().degree(a);
 }
 
 StereocenterList Molecule::Impl::inferStereocentersFromPositions(
   const AngstromWrapper& angstromWrapper
 ) const {
+  const AtomIndex size = graph().N();
   StereocenterList stereocenters;
 
-  Cycles cycleData = getCycleData();
+  Cycles cycleData = cycles();
 
-  for(unsigned candidateIndex = 0; candidateIndex < numAtoms(); candidateIndex++) {
+  for(unsigned candidateIndex = 0; candidateIndex < size; candidateIndex++) {
     RankingInformation localRanking = rankPriority(candidateIndex, {}, angstromWrapper);
 
     // Skip terminal atoms
@@ -1106,7 +996,7 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
     if(
       !disregardStereocenter(
         stereocenter,
-        graph::elementType(candidateIndex, _adjacencies),
+        _adjacencies.elementType(candidateIndex),
         cycleData,
         Options::temperatureRegime
       )
@@ -1118,9 +1008,14 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
     }
   }
 
-  for(const auto& edgeIndex : graph::edges(_adjacencies)) {
-    auto source = graph::source(edgeIndex, _adjacencies),
-         target = graph::target(edgeIndex, _adjacencies);
+  const InnerGraph& inner = _adjacencies.inner();
+
+  for(
+    const InnerGraph::Edge& edgeIndex :
+    boost::make_iterator_range(inner.edges())
+  ) {
+    InnerGraph::Vertex source = inner.source(edgeIndex),
+                       target = inner.target(edgeIndex);
 
     auto sourceAtomStereocenterOption = stereocenters.option(source);
     auto targetAtomStereocenterOption = stereocenters.option(target);
@@ -1135,11 +1030,13 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
       continue;
     }
 
+    const BondIndex bondIndex {source, target};
+
     // Construct a Stereocenter here
     auto newStereocenter = BondStereocenter {
       *sourceAtomStereocenterOption,
       *targetAtomStereocenterOption,
-      edgeIndex
+      bondIndex
     };
 
     newStereocenter.fit(
@@ -1150,7 +1047,7 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
 
     if(newStereocenter.assigned() != boost::none) {
       stereocenters.add(
-        edgeIndex,
+        bondIndex,
         std::move(newStereocenter)
       );
     }
@@ -1159,54 +1056,23 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
   return stereocenters;
 }
 
-
-bool Molecule::Impl::isAdjacent(const AtomIndexType a, const AtomIndexType b) const {
-  return static_cast<bool>(
-    graph::edgeOption(a, b, _adjacencies)
-  );
-}
-
-bool Molecule::Impl::isSafeToRemoveAtom(const AtomIndexType a) const {
-  // A molecule is by definition at least two atoms!
-  if(numAtoms() == 2) {
-    return false;
-  }
-
-  auto removalSafetyData = GraphAlgorithms::getRemovalSafetyData(
-    getGraph()
-  );
-
-  return removalSafetyData.articulationVertices.count(a) == 0;
-}
-
-bool Molecule::Impl::isSafeToRemoveBond(const AtomIndexType a, const AtomIndexType b) const {
-  if(auto edgeOption = graph::edgeOption(a, b, _adjacencies)) {
-    auto removalSafetyData = GraphAlgorithms::getRemovalSafetyData(
-      getGraph()
-    );
-
-    return removalSafetyData.bridges.count(
-      edgeOption.value()
-    ) == 0;
-  }
-
-  // Bond does not exist -> it is unsafe to remove
-  return false;
-}
-
-
 bool Molecule::Impl::modularCompare(
   const Molecule::Impl& other,
   const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
 ) const {
-  const unsigned thisNumAtoms = numAtoms();
+  const unsigned thisNumAtoms = graph().N();
 
-  if(thisNumAtoms != other.numAtoms()) {
+  if(thisNumAtoms != other.graph().N()) {
     return false;
   }
 
-  auto thisHashes = hashes::generate(getGraph(), getStereocenterList(), comparisonBitmask);
-  auto otherHashes = hashes::generate(other.getGraph(), other.getStereocenterList(), comparisonBitmask);
+  // Compare number of bonds too
+  if(graph().B() != other.graph().B()) {
+    return false;
+  }
+
+  auto thisHashes = hashes::generate(graph().inner(), stereocenters(), comparisonBitmask);
+  auto otherHashes = hashes::generate(other.graph().inner(), other.stereocenters(), comparisonBitmask);
 
   /* boost isomorphism will allocate a vector of size maxHash, this is dangerous
    * as the maximum hash can be immense, another post-processing step is needed
@@ -1217,88 +1083,39 @@ bool Molecule::Impl::modularCompare(
   auto maxHash = hashes::regularize(thisHashes, otherHashes);
 
   // Where the corresponding index from the other graph is stored
-  std::vector<AtomIndexType> indexMap(numAtoms());
+  std::vector<AtomIndex> indexMap(thisNumAtoms);
+
+  const auto& thisBGL = _adjacencies.inner().bgl();
+  const auto& otherBGL = other._adjacencies.inner().bgl();
 
   bool isomorphic = boost::isomorphism(
-    _adjacencies,
-    other._adjacencies,
+    thisBGL,
+    otherBGL,
     boost::make_safe_iterator_property_map(
       indexMap.begin(),
       thisNumAtoms,
-      boost::get(boost::vertex_index, _adjacencies)
+      boost::get(boost::vertex_index, thisBGL)
     ),
     hashes::LookupFunctor(thisHashes),
     hashes::LookupFunctor(otherHashes),
     maxHash,
-    boost::get(boost::vertex_index, _adjacencies),
-    boost::get(boost::vertex_index, other._adjacencies)
+    boost::get(boost::vertex_index, thisBGL),
+    boost::get(boost::vertex_index, otherBGL)
   );
 
-  if(!isomorphic) {
-    return false;
-  }
-
-  // TODO why are the following two checks still necessary if hashes are used? document why
-  if(comparisonBitmask & AtomEnvironmentComponents::BondOrders) {
-    // Check that all bond types are identical
-    for(const auto& edgeIndex : iterateEdges()) {
-      // Fetch the corresponding edge from the other graph
-      auto otherEdgePair = boost::edge(
-        indexMap.at(boost::source(edgeIndex, _adjacencies)),
-        indexMap.at(boost::target(edgeIndex, _adjacencies)),
-        other._adjacencies
-      );
-
-      // This edge MUST be found, the isomorphism holds
-      assert(otherEdgePair.second);
-
-      if(
-        _adjacencies[edgeIndex].bondType
-        != other._adjacencies[otherEdgePair.first].bondType
-      ) {
-        return false;
-      }
-    }
-  }
-
-  if(comparisonBitmask & AtomEnvironmentComponents::Symmetries) {
-    // Before doing a full equivalence check, peek at the sizes
-    if(_stereocenters.size() != other._stereocenters.size()) {
-      return false;
-    }
-
-    // Check equivalence of the StereocenterLists
-    if(
-      !_stereocenters.compare(
-        other._stereocenters,
-        comparisonBitmask
-      )
-    ) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-unsigned Molecule::Impl::numAtoms() const {
-  return boost::num_vertices(_adjacencies);
-}
-
-unsigned Molecule::Impl::numBonds() const {
-  return boost::num_edges(_adjacencies);
+  return isomorphic;
 }
 
 RankingInformation Molecule::Impl::rankPriority(
-  const AtomIndexType a,
-  const std::set<AtomIndexType>& excludeAdjacent,
+  const AtomIndex a,
+  const std::vector<AtomIndex>& excludeAdjacent,
   const boost::optional<AngstromWrapper>& positionsOption
 ) const {
   RankingInformation rankingResult;
 
   // Expects that bond types are set properly, complains otherwise
   rankingResult.ligands = GraphAlgorithms::ligandSiteGroups(
-    _adjacencies,
+    _adjacencies.inner(),
     a,
     excludeAdjacent
   );
@@ -1310,9 +1127,9 @@ RankingInformation Molecule::Impl::rankPriority(
 
   // Rank the substituents
   auto expandedTree = RankingTree(
-    getGraph(),
-    getCycleData(),
-    getStereocenterList(),
+    graph(),
+    cycles(),
+    stereocenters(),
     molGraphviz,
     a,
     excludeAdjacent,
@@ -1329,62 +1146,14 @@ RankingInformation Molecule::Impl::rankPriority(
 
   // Find links between them
   rankingResult.links = GraphAlgorithms::substituentLinks(
-    _adjacencies,
-    getCycleData(),
+    _adjacencies.inner(),
+    cycles(),
     a,
     rankingResult.ligands,
     excludeAdjacent
   );
 
   return rankingResult;
-}
-
-std::array<AtomIndexType, 2> Molecule::Impl::vertices(
-  const GraphType::edge_descriptor& edge
-) const {
-  return {
-    boost::source(edge, _adjacencies),
-    boost::target(edge, _adjacencies)
-  };
-}
-
-/* Iterators */
-RangeForTemporary<GraphType::vertex_iterator> Molecule::Impl::iterateAtoms() const {
-  return graph::vertices(_adjacencies);
-}
-
-/*! Returns a range-for temporary object allowing c++11 style for loop
- * iteration through an atom's adjacencies
- */
-RangeForTemporary<GraphType::adjacency_iterator> Molecule::Impl::iterateAdjacencies(const AtomIndexType a) const {
-  if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::iterateAdjacencies: Supplied index is invalid!");
-  }
-
-  return graph::adjacents(a, _adjacencies);
-}
-
-RangeForTemporary<GraphType::edge_iterator> Molecule::Impl::iterateEdges() const {
-  return graph::edges(_adjacencies);
-}
-
-RangeForTemporary<GraphType::out_edge_iterator> Molecule::Impl::iterateEdges(const AtomIndexType a) const {
-  if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::iterateEdges: Supplied index is invalid!");
-  }
-
-  return graph::edges(a, _adjacencies);
-}
-
-
-
-/* Operators */
-RangeForTemporary<GraphType::adjacency_iterator> Molecule::Impl::operator [] (const AtomIndexType a) const {
-  if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::operator[]: Supplied index is invalid!");
-  }
-
-  return graph::adjacents(a, _adjacencies);
 }
 
 bool Molecule::Impl::operator == (const Impl& other) const {
@@ -1429,12 +1198,12 @@ Molecule::Molecule(
   std::make_unique<Impl>(a, b, bondType)
 ) {}
 
-Molecule::Molecule(GraphType graph) : _pImpl(
+Molecule::Molecule(OuterGraph graph) : _pImpl(
   std::make_unique<Impl>(std::move(graph))
 ) {}
 
 Molecule::Molecule(
-  GraphType graph,
+  OuterGraph graph,
   const AngstromWrapper& positions
 ) : _pImpl(
   std::make_unique<Impl>(
@@ -1444,7 +1213,7 @@ Molecule::Molecule(
 ) {}
 
 Molecule::Molecule(
-  GraphType graph,
+  OuterGraph graph,
   StereocenterList stereocenters
 ) : _pImpl(
   std::make_unique<Impl>(
@@ -1454,65 +1223,65 @@ Molecule::Molecule(
 ) {}
 
 /* Modifiers */
-AtomIndexType Molecule::addAtom(
+AtomIndex Molecule::addAtom(
   const Delib::ElementType elementType,
-  const AtomIndexType adjacentTo,
+  const AtomIndex adjacentTo,
   const BondType bondType
 ) {
   return _pImpl->addAtom(elementType, adjacentTo, bondType);
 }
 
 void Molecule::addBond(
-  const AtomIndexType a,
-  const AtomIndexType b,
+  const AtomIndex a,
+  const AtomIndex b,
   const BondType bondType
 ) {
   _pImpl->addBond(a, b, bondType);
 }
 
 void Molecule::assignStereocenter(
-  const AtomIndexType a,
+  const AtomIndex a,
   const boost::optional<unsigned>& assignment
 ) {
   _pImpl->assignStereocenter(a, assignment);
 }
 
-void Molecule::assignStereocenterRandomly(const AtomIndexType a) {
+void Molecule::assignStereocenterRandomly(const AtomIndex a) {
   _pImpl->assignStereocenterRandomly(a);
 }
 
-void Molecule::assignStereocenterRandomly(const GraphType::edge_descriptor& e) {
+void Molecule::assignStereocenterRandomly(const BondIndex& e) {
   _pImpl->assignStereocenterRandomly(e);
 }
 
-void Molecule::removeAtom(const AtomIndexType a) {
+void Molecule::removeAtom(const AtomIndex a) {
   _pImpl->removeAtom(a);
 }
 
 void Molecule::removeBond(
-  const AtomIndexType a,
-  const AtomIndexType b
+  const AtomIndex a,
+  const AtomIndex b
 ) {
   _pImpl->removeBond(a, b);
 }
 
 bool Molecule::setBondType(
-  const AtomIndexType a,
-  const AtomIndexType b,
+  const AtomIndex a,
+  const AtomIndex b,
   const BondType bondType
 ) {
   return _pImpl->setBondType(a, b, bondType);
 }
 
 void Molecule::setElementType(
-  const AtomIndexType a,
+  const AtomIndex a,
   const Delib::ElementType elementType
 ) {
   _pImpl->setElementType(a, elementType);
 }
 
 void Molecule::setGeometryAtAtom(
-  const AtomIndexType a,
+  const AtomIndex a,
   const Symmetry::Name symmetryName
 ) {
   _pImpl->setGeometryAtAtom(a, symmetryName);
@@ -1521,7 +1290,7 @@ void Molecule::setGeometryAtAtom(
 
 /* Information */
 Symmetry::Name Molecule::determineLocalGeometry(
-  const AtomIndexType index,
+  const AtomIndex index,
   const RankingInformation& ranking
 ) const {
   return _pImpl->determineLocalGeometry(index, ranking);
@@ -1531,49 +1300,19 @@ std::string Molecule::dumpGraphviz() const {
   return _pImpl->dumpGraphviz();
 }
 
-GraphType::edge_descriptor Molecule::edge(
-  AtomIndexType a,
-  AtomIndexType b
-) const {
-  return _pImpl->edge(a, b);
+Cycles Molecule::cycles() const {
+  return _pImpl->cycles();
 }
 
-std::vector<AtomIndexType> Molecule::getAdjacencies(const AtomIndexType a) const {
-  return _pImpl->getAdjacencies(a);
+const OuterGraph& Molecule::graph() const {
+  return _pImpl->graph();
 }
 
-boost::optional<BondType> Molecule::getBondType(
-  const AtomIndexType a,
-  const AtomIndexType b
-) const {
-  return _pImpl->getBondType(a, b);
+const StereocenterList& Molecule::stereocenters() const {
+  return _pImpl->stereocenters();
 }
 
-BondType Molecule::getBondType(const GraphType::edge_descriptor& edge) const {
-  return _pImpl->getBondType(edge);
-}
-
-Cycles Molecule::getCycleData() const {
-  return _pImpl->getCycleData();
-}
-
-Delib::ElementType Molecule::getElementType(const AtomIndexType index) const {
-  return _pImpl->getElementType(index);
-}
-
-Delib::ElementTypeCollection Molecule::getElementCollection() const {
-  return _pImpl->getElementCollection();
-}
-
-const GraphType& Molecule::getGraph() const {
-  return _pImpl->getGraph();
-}
-
-const StereocenterList& Molecule::getStereocenterList() const {
-  return _pImpl->getStereocenterList();
-}
-
-unsigned Molecule::getNumAdjacencies(const AtomIndexType a) const {
+unsigned Molecule::getNumAdjacencies(const AtomIndex a) const {
   return _pImpl->getNumAdjacencies(a);
 }
 
@@ -1583,18 +1322,6 @@ StereocenterList Molecule::inferStereocentersFromPositions(
   return _pImpl->inferStereocentersFromPositions(angstromWrapper);
 }
 
-bool Molecule::isAdjacent(const AtomIndexType a, const AtomIndexType b) const {
-  return _pImpl->isAdjacent(a, b);
-}
-
-bool Molecule::isSafeToRemoveAtom(const AtomIndexType a) const {
-  return _pImpl->isSafeToRemoveAtom(a);
-}
-
-bool Molecule::isSafeToRemoveBond(const AtomIndexType a, const AtomIndexType b) const {
-  return _pImpl->isSafeToRemoveBond(a, b);
-}
-
 bool Molecule::modularCompare(
   const Molecule& other,
   const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
@@ -1602,49 +1329,15 @@ bool Molecule::modularCompare(
   return _pImpl->modularCompare(*other._pImpl, comparisonBitmask);
 }
 
-unsigned Molecule::numAtoms() const {
-  return _pImpl->numAtoms();
-}
-
-unsigned Molecule::numBonds() const {
-  return _pImpl->numBonds();
-}
-
 RankingInformation Molecule::rankPriority(
-  const AtomIndexType a,
-  const std::set<AtomIndexType>& excludeAdjacent,
+  const AtomIndex a,
+  const std::vector<AtomIndex>& excludeAdjacent,
   const boost::optional<AngstromWrapper>& positionsOption
 ) const {
   return _pImpl->rankPriority(a, excludeAdjacent, positionsOption);
 }
 
-std::array<AtomIndexType, 2> Molecule::vertices(
-  const GraphType::edge_descriptor& edge
-) const {
-  return _pImpl->vertices(edge);
-}
-
-RangeForTemporary<GraphType::vertex_iterator> Molecule::iterateAtoms() const {
-  return _pImpl->iterateAtoms();
-}
-
-RangeForTemporary<GraphType::adjacency_iterator> Molecule::iterateAdjacencies(const AtomIndexType a) const {
-  return _pImpl->iterateAdjacencies(a);
-}
-
-RangeForTemporary<GraphType::edge_iterator> Molecule::iterateEdges() const {
-  return _pImpl->iterateEdges();
-}
-
-RangeForTemporary<GraphType::out_edge_iterator> Molecule::iterateEdges(const AtomIndexType a) const {
-  return _pImpl->iterateEdges(a);
-}
-
 /* Operators */
-RangeForTemporary<GraphType::adjacency_iterator> Molecule::operator [] (const AtomIndexType a) const {
-  return _pImpl->operator[](a);
-}
-
 bool Molecule::operator == (const Molecule& other) const {
   return *_pImpl == *other._pImpl;
 }
@@ -1660,7 +1353,7 @@ std::ostream& operator << (
   std::ostream& os,
   const molassembler::Molecule& molecule
 ) {
-  const auto& stereocenters = molecule.getStereocenterList();
+  const auto& stereocenters = molecule.stereocenters();
 
   if(!stereocenters.empty()) {
     os << "Stereocenter information:\n";

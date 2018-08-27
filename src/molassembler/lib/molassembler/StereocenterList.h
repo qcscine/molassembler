@@ -18,7 +18,7 @@
  */
 
 /* TODO
- * - Make a hash for GraphType::edge_descriptor so we can use unordered_map.
+ * - Make a hash for BondIndex so we can use unordered_map.
  *   I think this is impossible since access to the edge_desciptor's source and
  *   target vertices requires a bgl graph instance to be called. Perhaps as soon
  *   as graph exists instead?
@@ -30,15 +30,15 @@ namespace molassembler {
 class StereocenterList {
 public:
 /* Typedefs */
-  using AtomMapType = std::unordered_map<AtomIndexType, AtomStereocenter>;
-  using BondMapType = std::map<GraphType::edge_descriptor, BondStereocenter>;
+  using AtomMapType = std::unordered_map<AtomIndex, AtomStereocenter>;
+  using BondMapType = std::map<BondIndex, BondStereocenter>;
 
 /* Modification */
   //! Add a new AtomStereocenter to the list
-  void add(AtomIndexType i, AtomStereocenter stereocenter);
+  void add(AtomIndex i, AtomStereocenter stereocenter);
 
   //! Add a new BondStereocenter to the list
-  void add(GraphType::edge_descriptor edge, BondStereocenter stereocenter);
+  void add(const BondIndex& edge, BondStereocenter stereocenter);
 
   //! Remove all stereocenters
   void clear();
@@ -47,10 +47,10 @@ public:
   void clearBonds();
 
   //! Fetch a reference-option to an AtomStereocenter, if present
-  boost::optional<AtomStereocenter&> option(const AtomIndexType index);
+  boost::optional<AtomStereocenter&> option(const AtomIndex index);
 
   //! Fetch a reference-option to an BondStereocenter, if present
-  boost::optional<BondStereocenter&> option(const GraphType::edge_descriptor edge);
+  boost::optional<BondStereocenter&> option(const BondIndex& edge);
 
   /*! Communicates the removal of a vertex index to all stereocenters in the list
    *
@@ -58,19 +58,19 @@ public:
    * liberally in the stereocenter classes. This function ensures that
    * vertex descriptors are valid throughout.
    */
-  void propagateVertexRemoval(const AtomIndexType removedIndex);
+  void propagateVertexRemoval(const AtomIndex removedIndex);
 
   //! Removes the AtomStereocenter on a specified index
-  void remove(const AtomIndexType index);
+  void remove(const AtomIndex index);
 
   //! Removes the BondStereocenter on a specified edge
-  void remove(const GraphType::edge_descriptor edge);
+  void remove(const BondIndex& edge);
 
   //! Removes the AtomStereocenter on a specified index, if present
-  void try_remove(const AtomIndexType index);
+  void try_remove(const AtomIndex index);
 
   //! Removes the BondStereocenter on a specified edge, if present
-  void try_remove(const GraphType::edge_descriptor edge);
+  void try_remove(const BondIndex& edge);
 
 /* Information */
   //! Modular comparison with another StereocenterList using a bitmask
@@ -89,10 +89,10 @@ public:
   bool hasUnassignedStereocenters() const;
 
   //! Fetch a const ref-option to an AtomStereocenter, if present
-  boost::optional<const AtomStereocenter&> option(const AtomIndexType index) const;
+  boost::optional<const AtomStereocenter&> option(const AtomIndex index) const;
 
   //! Fetch a const ref-option to an BondStereocenter, if present
-  boost::optional<const BondStereocenter&> option(const GraphType::edge_descriptor edge) const;
+  boost::optional<const BondStereocenter&> option(const BondIndex& edge) const;
 
   //! Combined size of atom and bond-stereocenter lists
   unsigned size() const;

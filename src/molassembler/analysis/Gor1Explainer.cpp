@@ -8,7 +8,7 @@
 
 #include "temple/Containers.h"
 
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/IO.h"
@@ -279,13 +279,13 @@ public:
     makeGraphvizFiles(g);
   }
 
-  void mark_white(const Vertex&, const Graph& g) {
+  void mark_white(const Vertex& /* v */, const Graph& g) {
     makeGraphvizFiles(g);
   }
-  void mark_gray(const Vertex&, const Graph& g) {
+  void mark_gray(const Vertex& /* v */, const Graph& g) {
     makeGraphvizFiles(g);
   }
-  void mark_black(const Vertex&, const Graph& g) {
+  void mark_black(const Vertex& /* v */, const Graph& g) {
     makeGraphvizFiles(g);
   }
 
@@ -356,16 +356,16 @@ int main(int argc, char* argv[]) {
   boost::program_options::notify(options_variables_map);
 
   unsigned root_vertex = 0;
-  if(options_variables_map.count("r")) {
+  if(options_variables_map.count("r") > 0) {
     root_vertex = options_variables_map["r"].as<unsigned>();
   }
 
-  if(options_variables_map.count("help")) {
+  if(options_variables_map.count("help") > 0) {
     std::cout << options_description << nl;
     return 0;
   }
 
-  if(options_variables_map.count("f")) {
+  if(options_variables_map.count("f") > 0) {
     auto filename = options_variables_map["f"].as<std::string>();
 
     if(!boost::filesystem::exists(filename)) {

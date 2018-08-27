@@ -5,7 +5,7 @@
 namespace molassembler {
 
 void StereocenterList::add(
-  AtomIndexType i,
+  AtomIndex i,
   AtomStereocenter stereocenter
 ) {
   _atomStereocenters.emplace(
@@ -15,7 +15,7 @@ void StereocenterList::add(
 }
 
 void StereocenterList::add(
-  GraphType::edge_descriptor edge,
+  const BondIndex& edge,
   BondStereocenter stereocenter
 ) {
   _bondStereocenters.emplace(
@@ -33,7 +33,7 @@ void StereocenterList::clearBonds() {
   _bondStereocenters.clear();
 }
 
-void StereocenterList::propagateVertexRemoval(const AtomIndexType removedIndex) {
+void StereocenterList::propagateVertexRemoval(const AtomIndex removedIndex) {
   // Drop any stereocenters involving this atom from the list
   auto findIter = _atomStereocenters.find(removedIndex);
   if(findIter != _atomStereocenters.end()) {
@@ -52,7 +52,7 @@ void StereocenterList::propagateVertexRemoval(const AtomIndexType removedIndex) 
   }*/
 }
 
-void StereocenterList::remove(const AtomIndexType index) {
+void StereocenterList::remove(const AtomIndex index) {
   auto findIter = _atomStereocenters.find(index);
 
   if(findIter != _atomStereocenters.end()) {
@@ -62,7 +62,7 @@ void StereocenterList::remove(const AtomIndexType index) {
   }
 }
 
-void StereocenterList::remove(const GraphType::edge_descriptor edge) {
+void StereocenterList::remove(const BondIndex& edge) {
   auto findIter = _bondStereocenters.find(edge);
 
   if(findIter != _bondStereocenters.end()) {
@@ -72,7 +72,7 @@ void StereocenterList::remove(const GraphType::edge_descriptor edge) {
   }
 }
 
-void StereocenterList::try_remove(const AtomIndexType index) {
+void StereocenterList::try_remove(const AtomIndex index) {
   auto findIter = _atomStereocenters.find(index);
 
   if(findIter != _atomStereocenters.end()) {
@@ -80,7 +80,7 @@ void StereocenterList::try_remove(const AtomIndexType index) {
   }
 }
 
-void StereocenterList::try_remove(const GraphType::edge_descriptor edge) {
+void StereocenterList::try_remove(const BondIndex& edge) {
   auto findIter = _bondStereocenters.find(edge);
 
   if(findIter != _bondStereocenters.end()) {
@@ -88,7 +88,7 @@ void StereocenterList::try_remove(const GraphType::edge_descriptor edge) {
   }
 }
 
-boost::optional<AtomStereocenter&> StereocenterList::option(const AtomIndexType index) {
+boost::optional<AtomStereocenter&> StereocenterList::option(const AtomIndex index) {
   auto findIter = _atomStereocenters.find(index);
 
   if(findIter != _atomStereocenters.end()) {
@@ -98,7 +98,7 @@ boost::optional<AtomStereocenter&> StereocenterList::option(const AtomIndexType 
   return boost::none;
 }
 
-boost::optional<BondStereocenter&> StereocenterList::option(const GraphType::edge_descriptor edge) {
+boost::optional<BondStereocenter&> StereocenterList::option(const BondIndex& edge) {
   auto findIter = _bondStereocenters.find(edge);
 
   if(findIter != _bondStereocenters.end()) {
@@ -117,7 +117,7 @@ unsigned StereocenterList::size() const {
   return _atomStereocenters.size() + _bondStereocenters.size();
 }
 
-boost::optional<const AtomStereocenter&> StereocenterList::option(const AtomIndexType index) const {
+boost::optional<const AtomStereocenter&> StereocenterList::option(const AtomIndex index) const {
   auto findIter = _atomStereocenters.find(index);
 
   if(findIter != _atomStereocenters.end()) {
@@ -127,7 +127,7 @@ boost::optional<const AtomStereocenter&> StereocenterList::option(const AtomInde
   return boost::none;
 }
 
-boost::optional<const BondStereocenter&> StereocenterList::option(const GraphType::edge_descriptor edge) const {
+boost::optional<const BondStereocenter&> StereocenterList::option(const BondIndex& edge) const {
   auto findIter = _bondStereocenters.find(edge);
 
   if(findIter != _bondStereocenters.end()) {

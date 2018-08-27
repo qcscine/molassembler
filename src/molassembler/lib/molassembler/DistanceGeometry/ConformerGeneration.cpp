@@ -13,7 +13,7 @@
 #include "molassembler/DistanceGeometry/RefinementProblem.h"
 #include "molassembler/DistanceGeometry/Error.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
-#include "molassembler/GraphAlgorithms.h"
+#include "molassembler/Graph/GraphAlgorithms.h"
 
 /* TODO
  * - Random assignment of unassigned stereocenters isn't ideal yet
@@ -66,7 +66,7 @@ AngstromWrapper convertToAngstromWrapper(
 }
 
 Molecule narrow(Molecule moleculeCopy) {
-  const auto& stereocenterList = moleculeCopy.getStereocenterList();
+  const auto& stereocenterList = moleculeCopy.stereocenters();
 
   do {
     /* If we change any stereocenter, we must jump out of for-loop and
@@ -138,7 +138,7 @@ outcome::result<
   const Partiality metrizationOption,
   const bool useYInversionTrick
 ) {
-  if(molecule.getStereocenterList().hasZeroAssignmentStereocenters()) {
+  if(molecule.stereocenters().hasZeroAssignmentStereocenters()) {
     return DGError::ZeroAssignmentStereocenters;
   }
 
@@ -146,7 +146,7 @@ outcome::result<
   /* In case the molecule has unassigned stereocenters, we need to randomly
    * assign them in every step prior to generating the distance bounds matrix
    */
-  bool regenerateEachStep = molecule.getStereocenterList().hasUnassignedStereocenters();
+  bool regenerateEachStep = molecule.stereocenters().hasUnassignedStereocenters();
   if(!regenerateEachStep) {
     DGData = gatherDGInformation(molecule);
   }
@@ -170,7 +170,7 @@ outcome::result<
     if(regenerateEachStep) {
       auto moleculeCopy = detail::narrow(molecule);
 
-      if(moleculeCopy.getStereocenterList().hasZeroAssignmentStereocenters()) {
+      if(moleculeCopy.stereocenters().hasZeroAssignmentStereocenters()) {
         return DGError::ZeroAssignmentStereocenters;
       }
 
@@ -362,7 +362,7 @@ std::list<RefinementData> debug(
   const Partiality metrizationOption,
   const bool useYInversionTrick
 ) {
-  if(molecule.getStereocenterList().hasZeroAssignmentStereocenters()) {
+  if(molecule.stereocenters().hasZeroAssignmentStereocenters()) {
     Log::log(Log::Level::Warning)
       << "This molecule has stereocenters with zero valid permutations!"
       << std::endl;
@@ -382,7 +382,7 @@ std::list<RefinementData> debug(
    * assignments in stereopermutation. I should get on that too.
    */
 
-  bool regenerateEachStep = molecule.getStereocenterList().hasUnassignedStereocenters();
+  bool regenerateEachStep = molecule.stereocenters().hasUnassignedStereocenters();
 
   MoleculeDGInformation DGData;
   std::string spatialModelGraphviz;
@@ -408,7 +408,7 @@ std::list<RefinementData> debug(
     if(regenerateEachStep) {
       auto moleculeCopy = detail::narrow(molecule);
 
-      if(moleculeCopy.getStereocenterList().hasZeroAssignmentStereocenters()) {
+      if(moleculeCopy.stereocenters().hasZeroAssignmentStereocenters()) {
         Log::log(Log::Level::Warning)
           << "After setting stereocenters at random, this molecule has "
           << "stereocenters with zero valid permutations!"

@@ -14,7 +14,7 @@ constexpr double DistanceBoundsMatrix::defaultUpper;
 
 DistanceBoundsMatrix::DistanceBoundsMatrix() = default;
 
-DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned N) {
+DistanceBoundsMatrix::DistanceBoundsMatrix(const long unsigned N) {
   _matrix.resize(N, N);
   _matrix.triangularView<Eigen::Lower>().setConstant(defaultLower);
   _matrix.triangularView<Eigen::StrictlyUpper>().setConstant(defaultUpper);
@@ -22,7 +22,7 @@ DistanceBoundsMatrix::DistanceBoundsMatrix(const unsigned N) {
 
 DistanceBoundsMatrix::DistanceBoundsMatrix(Eigen::MatrixXd matrix) : _matrix {std::move(matrix)} {}
 
-bool DistanceBoundsMatrix::setUpperBound(const AtomIndexType i, const AtomIndexType j, const double newUpperBound) {
+bool DistanceBoundsMatrix::setUpperBound(const AtomIndex i, const AtomIndex j, const double newUpperBound) {
   if(
     upperBound(i, j) >= newUpperBound
     && newUpperBound > lowerBound(i, j)
@@ -34,7 +34,7 @@ bool DistanceBoundsMatrix::setUpperBound(const AtomIndexType i, const AtomIndexT
   return false;
 }
 
-bool DistanceBoundsMatrix::setLowerBound(const AtomIndexType i, const AtomIndexType j, const double newLowerBound) {
+bool DistanceBoundsMatrix::setLowerBound(const AtomIndex i, const AtomIndex j, const double newLowerBound) {
   if(
     lowerBound(i, j) <= newLowerBound
     && newLowerBound < upperBound(i, j)
@@ -53,9 +53,9 @@ void DistanceBoundsMatrix::smooth(Eigen::MatrixXd& matrix) {
    */
   const unsigned N = matrix.cols();
 
-  for(AtomIndexType k = 0; k < N; ++k) {
-    for(AtomIndexType i = 0; i < N - 1; ++i) {
-      for(AtomIndexType j = i + 1; j < N; ++j) {
+  for(AtomIndex k = 0; k < N; ++k) {
+    for(AtomIndex i = 0; i < N - 1; ++i) {
+      for(AtomIndex j = i + 1; j < N; ++j) {
         if(upperBound(matrix, i, j) > upperBound(matrix, i, k) + upperBound(matrix, k, j)) {
           upperBound(matrix, i, j) = upperBound(matrix, i, k) + upperBound(matrix, k, j);
         }
@@ -100,7 +100,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
 
   const unsigned N = _matrix.cols();
 
-  std::vector<AtomIndexType> indices(N);
+  std::vector<AtomIndex> indices(N);
   std::iota(
     indices.begin(),
     indices.end(),
@@ -109,7 +109,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
 
   prng.shuffle(indices);
 
-  std::vector<AtomIndexType>::const_iterator separator;
+  std::vector<AtomIndex>::const_iterator separator;
 
   if(partiality == Partiality::FourAtom) {
     separator = indices.cbegin() + std::min(N, 4u);
@@ -120,8 +120,8 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
   }
 
   for(auto iter = indices.cbegin(); iter != separator; ++iter) {
-    const AtomIndexType i = *iter;
-    for(AtomIndexType j = 0; j < N; j++) {
+    const AtomIndex i = *iter;
+    for(AtomIndex j = 0; j < N; j++) {
       if(
         i == j
         || matrixCopy(i, j) == matrixCopy(j, i)
@@ -146,8 +146,8 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
   }
 
   for(auto iter = separator; iter != indices.cend(); ++iter) {
-    const AtomIndexType i = *iter;
-    for(AtomIndexType j = 0; j < N; j++) {
+    const AtomIndex i = *iter;
+    for(AtomIndex j = 0; j < N; j++) {
       if(
         i == j
         || matrixCopy(i, j) == matrixCopy(j, i)

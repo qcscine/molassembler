@@ -3,13 +3,14 @@
 #include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
 
-#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/Error.h"
-#include "molassembler/AtomInfo.h"
 #include "molassembler/Log.h"
+#include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
+#include "molassembler/OuterGraph.h"
 
 // #define USE_SPECIALIZED_GOR1_ALGORITHM
 #ifdef USE_SPECIALIZED_GOR1_ALGORITHM
@@ -34,10 +35,10 @@ namespace DistanceGeometry {
 ExplicitGraph::ExplicitGraph(
   const Molecule& molecule,
   const BoundsList& bounds
-) : _graph {2 * molecule.numAtoms()},
+) : _graph {2 * molecule.graph().N()},
     _molecule {molecule}
 {
-  const AtomIndexType N = molecule.numAtoms();
+  const AtomIndex N = molecule.graph().N();
 
   for(const auto& mapPair : bounds) {
     addBound(
@@ -51,8 +52,8 @@ ExplicitGraph::ExplicitGraph(
 
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
-  for(AtomIndexType i = 0; i < N; ++i) {
-    auto elementType = molecule.getElementType(i);
+  for(AtomIndex i = 0; i < N; ++i) {
+    auto elementType = molecule.graph().elementType(i);
     if(
       static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
@@ -72,10 +73,10 @@ ExplicitGraph::ExplicitGraph(
 ExplicitGraph::ExplicitGraph(
   const Molecule& molecule,
   const DistanceBoundsMatrix& bounds
-) : _graph {2 * molecule.numAtoms()},
+) : _graph {2 * molecule.graph().N()},
     _molecule {molecule}
 {
-  const VertexDescriptor N = molecule.numAtoms();
+  const VertexDescriptor N = molecule.graph().N();
   for(VertexDescriptor a = 0; a < N; ++a) {
     for(VertexDescriptor b = a + 1; b < N; ++b) {
       double lower = bounds.lowerBound(a, b);
@@ -103,8 +104,8 @@ ExplicitGraph::ExplicitGraph(
 
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
-  for(AtomIndexType i = 0; i < N; ++i) {
-    auto elementType = molecule.getElementType(i);
+  for(AtomIndex i = 0; i < N; ++i) {
+    auto elementType = molecule.graph().elementType(i);
     if(
       static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
@@ -155,7 +156,7 @@ void ExplicitGraph::_explainContradictionPaths(
     logRef << "Encountered contradiction in triangle inequality limits calculation.\n";
     logRef << "Path in graph for upper bound: l" << b;
 
-    AtomIndexType intermediate = left(b);
+    AtomIndex intermediate = left(b);
     do {
       intermediate = predecessors[intermediate];
       logRef << " <- l" << (intermediate / 2);
@@ -204,15 +205,15 @@ void ExplicitGraph::_updateGraphWithFixedDistance(
 }
 
 void ExplicitGraph::addImplicitEdges() {
-  AtomIndexType N = boost::num_vertices(_graph) / 2;
+  AtomIndex N = boost::num_vertices(_graph) / 2;
 
-  for(AtomIndexType a = 0; a < N; ++a) {
-    for(AtomIndexType b = a + 1; b < N; ++b) {
+  for(AtomIndex a = 0; a < N; ++a) {
+    for(AtomIndex b = a + 1; b < N; ++b) {
       double vdwLowerBound = -1 * (
         AtomInfo::vdwRadius(
-          _molecule.getElementType(a)
+          _molecule.graph().elementType(a)
         ) + AtomInfo::vdwRadius(
-          _molecule.getElementType(b)
+          _molecule.graph().elementType(b)
         )
       );
 
@@ -262,8 +263,8 @@ double ExplicitGraph::upperBound(
 
 double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
-  AtomIndexType a = i / 2;
-  Delib::ElementType elementType = _molecule.getElementType(a);
+  AtomIndex a = i / 2;
+  Delib::ElementType elementType = _molecule.graph().elementType(a);
 
   if(elementType == _heaviestAtoms.front()) {
     return AtomInfo::vdwRadius(
@@ -276,13 +277,13 @@ double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const 
   ) + AtomInfo::vdwRadius(elementType);
 }
 
-const ExplicitGraph::GraphType& ExplicitGraph::getGraph() const {
+const ExplicitGraph::GraphType& ExplicitGraph::graph() const {
   return _graph;
 }
 
 // This is O(N²)
 outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexcept {
-  unsigned N = _molecule.numAtoms();
+  unsigned N = _molecule.graph().N();
 
   Eigen::MatrixXd bounds;
   bounds.resize(N, N);
@@ -294,7 +295,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
   using ColorMapType = boost::two_bit_color_map<>;
   ColorMapType color_map {M};
 
-  for(AtomIndexType a = 0; a < N - 1; ++a) {
+  for(AtomIndex a = 0; a < N - 1; ++a) {
     auto predecessor_map = boost::make_iterator_property_map(
       predecessors.begin(),
       boost::get(boost::vertex_index, _graph)
@@ -331,7 +332,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
     );
 #endif
 
-    for(AtomIndexType b = a + 1; b < N; ++b) {
+    for(AtomIndex b = a + 1; b < N; ++b) {
       // Get upper bound from distances
       bounds(a, b) = distances.at(left(b));
       // Get lower bound from distances
@@ -356,7 +357,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix() noexcept {
 }
 
 outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality partiality) noexcept {
-  unsigned N = _molecule.numAtoms();
+  unsigned N = _molecule.graph().N();
 
   Eigen::MatrixXd distancesMatrix;
   distancesMatrix.resize(N, N);
@@ -364,7 +365,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
 
   auto upperTriangle = distancesMatrix.triangularView<Eigen::StrictlyUpper>();
 
-  std::vector<AtomIndexType> indices (N);
+  std::vector<AtomIndex> indices (N);
 
   std::iota(
     indices.begin(),
@@ -380,7 +381,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
   ColorMapType color_map {M};
   std::vector<VertexDescriptor> predecessors (M);
 
-  std::vector<AtomIndexType>::const_iterator separator;
+  std::vector<AtomIndex>::const_iterator separator;
 
   if(partiality == Partiality::FourAtom) {
     separator = indices.cbegin() + std::min(N, 4u);
@@ -391,19 +392,19 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
   }
 
   for(auto iter = indices.cbegin(); iter != separator; ++iter) {
-    const AtomIndexType a = *iter;
+    const AtomIndex a = *iter;
 
-    std::vector<AtomIndexType> otherIndices;
+    std::vector<AtomIndex> otherIndices;
     otherIndices.reserve(N - 1);
 
     // Avoid already-chosen elements
-    for(AtomIndexType b = 0; b < a; ++b) {
+    for(AtomIndex b = 0; b < a; ++b) {
       if(upperTriangle(b, a) == 0) {
         otherIndices.push_back(b);
       }
     }
 
-    for(AtomIndexType b = a + 1; b < N; ++b) {
+    for(AtomIndex b = a + 1; b < N; ++b) {
       if(upperTriangle(a, b) == 0) {
         otherIndices.push_back(b);
       }
@@ -474,7 +475,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
   }
 
   for(auto iter = separator; iter != indices.cend(); ++iter) {
-    const AtomIndexType a = *iter;
+    const AtomIndex a = *iter;
 
     auto predecessor_map = boost::make_iterator_property_map(
       predecessors.begin(),
@@ -512,7 +513,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     );
 #endif
 
-    for(AtomIndexType b = 0; b < N; ++b) {
+    for(AtomIndex b = 0; b < N; ++b) {
       if(a == b || upperTriangle(std::min(a, b), std::max(a, b)) > 0) {
         continue;
       }

@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE AtomStereocenterTestModule
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/detail/PermutationState.h"
+#include "molassembler/Stereocenters/PermutationState.h"
 
 #include "temple/Stringify.h"
 
@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_CASE(PermutationStateTests) {
   using namespace molassembler;
   using TestNamespace = molassembler::PermutationState;
 
-  using RaggedAtoms = RaggedVector<AtomIndexType>;
+  using RaggedAtoms = RaggedVector<AtomIndex>;
   using RaggedLigands = RaggedVector<unsigned>;
 
   using StereopermutationPairsType = std::set<
@@ -33,8 +33,8 @@ BOOST_AUTO_TEST_CASE(PermutationStateTests) {
     {5, 6}
   };
 
-  std::vector<GraphAlgorithms::LinkInformation> symmetricHapticPincerLinks;
-  GraphAlgorithms::LinkInformation a, b;
+  std::vector<LinkInformation> symmetricHapticPincerLinks;
+  LinkInformation a, b;
   a.indexPair = {0, 1};
   b.indexPair = {1, 2};
 
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(PermutationStateTests) {
     {5, 6}
   };
 
-  std::vector<GraphAlgorithms::LinkInformation> asymmetricHapticPincerLinks;
+  std::vector<LinkInformation> asymmetricHapticPincerLinks;
   a.indexPair = {0, 1};
   b.indexPair = {1, 2};
 

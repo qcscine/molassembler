@@ -10,7 +10,7 @@
 #include "temple/Invoke.h"
 #include "temple/Stringify.h"
 
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
@@ -210,9 +210,9 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
 
 bool isStereogenic(
   const Molecule& molecule,
-  AtomIndexType i
+  AtomIndex i
 ) {
-  auto stereocenterOption = molecule.getStereocenterList().option(i);
+  auto stereocenterOption = molecule.stereocenters().option(i);
 
   if(!stereocenterOption) {
     return false;
@@ -232,8 +232,8 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
     directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
   );
 
-  AtomIndexType central = 0;
-  std::array<AtomIndexType, 2> outer {{1, 6}};
+  AtomIndex central = 0;
+  std::array<AtomIndex, 2> outer {{1, 6}};
 
   /* If the outer stereocenters have the same assignment, the central
    * stereocenter shouldn't exist. If the outer stereocenters have a different

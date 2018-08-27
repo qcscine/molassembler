@@ -3,6 +3,7 @@
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "molassembler/Options.h"
+#include "molassembler/OuterGraph.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
@@ -26,7 +27,7 @@ using namespace std::string_literals;
 
 namespace molassembler {
 
-class RankingInformation;
+struct RankingInformation;
 
 namespace DistanceGeometry {
 
@@ -53,11 +54,11 @@ public:
   //! Construct an AtomStereocenter
   AtomStereocenter(
     // The base graph
-    const GraphType& graph,
+    const OuterGraph& graph,
     // The symmetry of this Stereocenter
     Symmetry::Name symmetry,
     // The atom this Stereocenter is centered on
-    AtomIndexType centerAtom,
+    AtomIndex centerAtom,
     // Ranking information of substituents
     RankingInformation ranking
   );
@@ -72,8 +73,8 @@ public:
    * preservation options
    */
   void addSubstituent(
-    const GraphType& graph,
-    AtomIndexType newSubstituentIndex,
+    const OuterGraph& graph,
+    AtomIndex newSubstituentIndex,
     RankingInformation newRanking,
     Symmetry::Name newSymmetry,
     ChiralStatePreservation preservationOption
@@ -91,7 +92,7 @@ public:
    * symmetries.
    */
   void fit(
-    const GraphType& graph,
+    const OuterGraph& graph,
     const AngstromWrapper& angstromWrapper,
     const std::vector<Symmetry::Name>& excludeSymmetries = {}
   );
@@ -102,7 +103,7 @@ public:
    * stereocenter and if so, which assignment corresponds to the previous one.
    */
   void propagateGraphChange(
-    const GraphType& graph,
+    const OuterGraph& graph,
     RankingInformation newRanking
   );
 
@@ -110,7 +111,7 @@ public:
    * Prepares for the removal of an atom on the graph level, which involves
    * the generation of new atom indices.
    */
-  void propagateVertexRemoval(AtomIndexType removedIndex);
+  void propagateVertexRemoval(AtomIndex removedIndex);
 
   /*!
    * Handles the removal of a substituent from the stereocenter. If the
@@ -118,8 +119,8 @@ public:
    * according to the supplide chiral state preservation option.
    */
   void removeSubstituent(
-    const GraphType& graph,
-    AtomIndexType which,
+    const OuterGraph& graph,
+    AtomIndex which,
     RankingInformation newRanking,
     Symmetry::Name newSymmetry,
     ChiralStatePreservation preservationOption
@@ -128,7 +129,7 @@ public:
   //! If the central symmetry group is changed, we must adapt
   void setSymmetry(
     Symmetry::Name symmetryName,
-    const GraphType& graph
+    const OuterGraph& graph
   );
 //!@}
 
@@ -145,7 +146,7 @@ public:
   boost::optional<unsigned> assigned() const;
 
   //! Returns a single-element vector containing the central atom
-  AtomIndexType centralIndex() const;
+  AtomIndex centralIndex() const;
 
   /*! Returns IOP within the set of symbolic ligand permutations
    *
@@ -208,7 +209,7 @@ public:
 
   void setModelInformation(
     DistanceGeometry::SpatialModel& model,
-    const std::function<double(const AtomIndexType)>& cycleMultiplierForIndex,
+    const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
     double looseningMultiplier
   ) const;
 //!@}
@@ -222,7 +223,7 @@ public:
 //!@}
 
 private:
-  struct Impl;
+  class Impl;
 
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
   std::experimental::propagate_const<

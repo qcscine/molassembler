@@ -5,11 +5,11 @@
 
 #include "temple/Containers.h"
 
-#include "molassembler/detail/Base64.h"
-#include "molassembler/Serialization.h"
-#include "molassembler/Molecule.h"
 #include "molassembler/IO.h"
+#include "molassembler/IO/Base64.h"
+#include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
+#include "molassembler/Serialization.h"
 
 using namespace molassembler;
 

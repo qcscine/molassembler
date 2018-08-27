@@ -1,5 +1,6 @@
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 
+#include "boost/range/iterator_range_core.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "Delib/ElementInfo.h"
 #include "CyclicPolygons.h"
@@ -8,13 +9,14 @@
 #include "temple/Random.h"
 #include "temple/Containers.h"
 
-#include "molassembler/DistanceGeometry/DistanceGeometry.h"
-#include "molassembler/detail/CommonTrig.h"
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
-#include "molassembler/detail/MolGraphWriter.h"
 #include "molassembler/Cycles.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Log.h"
+#include "molassembler/Modeling/CommonTrig.h"
+#include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/RankingInformation.h"
+#include "molassembler/Graph/InnerGraph.h"
 
 #include <fstream>
 
@@ -35,7 +37,7 @@ SpatialModel::SpatialModel(
   const double looseningMultiplier
 ) : _molecule(molecule),
     _looseningMultiplier(looseningMultiplier),
-    _stereocenters(molecule.getStereocenterList())
+    _stereocenters(molecule.stereocenters())
 {
   /* This is overall a pretty complicated constructor since it encompasses the
    * entire conversion from a molecular graph into some model of the relations
@@ -66,7 +68,7 @@ SpatialModel::SpatialModel(
 
   // Helper variables
   // Ignore eta bonds in construction of cycle data
-  Cycles cycleData {molecule.getGraph(), true};
+  Cycles cycleData {molecule.graph(), true};
   //Cycles cycleData = molecule.getCycleData();
   auto smallestCycleMap = makeSmallestCycleMap(cycleData);
 
@@ -82,21 +84,26 @@ SpatialModel::SpatialModel(
     "0 < x << (smallest angle any local symmetry returns)"
   );
 
+  const InnerGraph& inner = molecule.graph().inner();
+
   // Set bond distances
-  for(const auto& edge: molecule.iterateEdges()) {
-    auto bondType = molecule.getGraph()[edge].bondType;
+  for(
+    const auto& edge:
+    boost::make_iterator_range(inner.edges())
+  ) {
+    BondType bondType = inner.bondType(edge);
 
     // Do not model eta bonds, stereocenters are responsible for those
     if(bondType == BondType::Eta) {
       continue;
     }
 
-    AtomIndexType i = boost::source(edge, molecule.getGraph());
-    AtomIndexType j = boost::target(edge, molecule.getGraph());
+    InnerGraph::Vertex i = inner.source(edge);
+    InnerGraph::Vertex j = inner.target(edge);
 
     auto bondDistance = Bond::calculateBondDistance(
-      molecule.getElementType(i),
-      molecule.getElementType(j),
+      inner.elementType(i),
+      inner.elementType(j),
       bondType
     );
 
@@ -114,7 +121,8 @@ SpatialModel::SpatialModel(
    * So for every missing non-terminal atom, create a AtomStereocenter in the
    * determined geometry
    */
-  for(unsigned i = 0; i < molecule.numAtoms(); ++i) {
+  const unsigned N = molecule.graph().N();
+  for(unsigned i = 0; i < N; ++i) {
     // Already an instantiated AtomStereocenter?
     if(_stereocenters.option(i)) {
       continue;
@@ -130,7 +138,7 @@ SpatialModel::SpatialModel(
     Symmetry::Name localSymmetry = molecule.determineLocalGeometry(i, localRanking);
 
     auto newStereocenter = AtomStereocenter {
-      molecule.getGraph(),
+      molecule.graph(),
       localSymmetry,
       i,
       std::move(localRanking)
@@ -158,7 +166,7 @@ SpatialModel::SpatialModel(
     const auto cyclePtr :
     cycleData.iterate(Cycles::predicates::SizeLessThan {6})
   ) {
-    const auto edgeDescriptors = Cycles::edges(cyclePtr, molecule.getGraph());
+    const auto edgeDescriptors = Cycles::edges(cyclePtr);
     const unsigned cycleSize = edgeDescriptors.size();
 
     /* There are a variety of cases here which all need to be treated
@@ -185,7 +193,7 @@ SpatialModel::SpatialModel(
         cycleSize == 4
         && countPlanarityEnforcingBonds(
           edgeDescriptors,
-          molecule.getGraph()
+          molecule.graph()
         ) >= 1
       )
       /* TODO missing cases:
@@ -206,16 +214,13 @@ SpatialModel::SpatialModel(
         // Map sequential index pairs to their purported bond length
         temple::mapSequentialPairs(
           indexSequence,
-          [&](const AtomIndexType i, const AtomIndexType j) -> double {
-            auto bondTypeOption = molecule.getBondType(i, j);
-
-            // These vertices really ought to be bonded
-            assert(bondTypeOption);
-
+          [&](const AtomIndex i, const AtomIndex j) -> double {
             return Bond::calculateBondDistance(
-              molecule.getElementType(i),
-              molecule.getElementType(j),
-              bondTypeOption.value()
+              inner.elementType(i),
+              inner.elementType(j),
+              inner.bondType(
+                inner.edge(i, j)
+              )
             );
           }
         )
@@ -283,7 +288,7 @@ SpatialModel::SpatialModel(
   /* Returns a multiplier intended for the absolute angle variance for an atom
    * index. If that index is in a cycle of size < 6, the multiplier is > 1.
    */
-  auto cycleMultiplierForIndex = [&](const AtomIndexType i) -> double {
+  auto cycleMultiplierForIndex = [&](const AtomIndex i) -> double {
     auto findIter = smallestCycleMap.find(i);
 
     if(findIter != smallestCycleMap.end()) {
@@ -317,10 +322,10 @@ SpatialModel::SpatialModel(
     bondStereocenter.setModelInformation(
       *this,
       _stereocenters.option(
-        boost::source(bondStereocenter.edge(), molecule.getGraph())
+        bondStereocenter.edge().first
       ).value(),
       _stereocenters.option(
-        boost::target(bondStereocenter.edge(), molecule.getGraph())
+        bondStereocenter.edge().second
       ).value(),
       looseningMultiplier
     );
@@ -334,7 +339,7 @@ SpatialModel::SpatialModel(
    * particularly small, i.e. are sizes 3-5
    */
   for(const auto& stereocenter : _stereocenters.atomStereocenters()) {
-    AtomIndexType i = stereocenter.centralIndex();
+    AtomIndex i = stereocenter.centralIndex();
 
     // Skip any stereocenters that do not match our conditions
     if(
@@ -371,8 +376,8 @@ SpatialModel::SpatialModel(
 
       // We model them only if both are small.
       if(cycleOne -> weight <= 5 && cycleTwo -> weight <= 5) {
-        auto makeVerticesSet = [](const auto& cyclePtr) -> std::set<AtomIndexType> {
-          std::set<AtomIndexType> vertices;
+        auto makeVerticesSet = [](const auto& cyclePtr) -> std::set<AtomIndex> {
+          std::set<AtomIndex> vertices;
 
           for(unsigned i = 0; i < cyclePtr -> weight; ++i) {
             vertices.insert(cyclePtr->edges[i][0]);
@@ -391,10 +396,11 @@ SpatialModel::SpatialModel(
         );
 
         if(intersection.size() == 1 && *intersection.begin() == i) {
-          auto iAdjacents = molecule.getAdjacencies(i);
-
-          std::vector<AtomIndexType> firstAdjacents, secondAdjacents;
-          for(const auto& iAdjacent : iAdjacents) {
+          std::vector<AtomIndex> firstAdjacents, secondAdjacents;
+          for(
+            const AtomIndex iAdjacent :
+            boost::make_iterator_range(inner.adjacents(i))
+          ) {
             if(cycleOneVertices.count(iAdjacent) > 0) {
               firstAdjacents.push_back(iAdjacent);
             }
@@ -492,7 +498,7 @@ SpatialModel::SpatialModel(
 }
 
 void SpatialModel::setBondBoundsIfEmpty(
-  const std::array<AtomIndexType, 2>& bondIndices,
+  const std::array<AtomIndex, 2>& bondIndices,
   const double centralValue
 ) {
   double relativeVariance = bondRelativeVariance * _looseningMultiplier;
@@ -519,7 +525,7 @@ void SpatialModel::setBondBoundsIfEmpty(
 }
 
 void SpatialModel::setBondBoundsIfEmpty(
-  const std::array<AtomIndexType, 2>& bondIndices,
+  const std::array<AtomIndex, 2>& bondIndices,
   const ValueBounds& bounds
 ) {
   // C++17: try_emplace
@@ -537,7 +543,7 @@ void SpatialModel::setBondBoundsIfEmpty(
 }
 
 void SpatialModel::setAngleBoundsIfEmpty(
-  const std::array<AtomIndexType, 3>& angleIndices,
+  const std::array<AtomIndex, 3>& angleIndices,
   const ValueBounds& bounds
 ) {
   auto orderedIndices = orderedIndexSequence<3>(angleIndices);
@@ -559,7 +565,7 @@ void SpatialModel::setAngleBoundsIfEmpty(
  * set of indices does not exist yet.
  */
 void SpatialModel::setDihedralBoundsIfEmpty(
-  const std::array<AtomIndexType, 4>& dihedralIndices,
+  const std::array<AtomIndex, 4>& dihedralIndices,
   const ValueBounds& bounds
 ) {
   auto orderedIndices = orderedIndexSequence<4>(dihedralIndices);
@@ -582,11 +588,11 @@ void SpatialModel::addDefaultAngles() {
    * minimimum distance (sum of vdw radii) is used instead.
    */
 
-  const AtomIndexType N = _molecule.numAtoms();
-  for(AtomIndexType center = 0; center < N; ++center) {
+  const AtomIndex N = _molecule.graph().N();
+  for(AtomIndex center = 0; center < N; ++center) {
     temple::forAllPairs(
-      _molecule.getAdjacencies(center),
-      [&](const AtomIndexType i, const AtomIndexType j) -> void {
+      boost::make_iterator_range(_molecule.graph().adjacents(center)),
+      [&](const AtomIndex i, const AtomIndex j) -> void {
         assert(i != j);
 
         setAngleBoundsIfEmpty(
@@ -599,24 +605,24 @@ void SpatialModel::addDefaultAngles() {
 }
 
 void SpatialModel::addDefaultDihedrals() {
-  for(const auto& edgeDescriptor : _molecule.iterateEdges()) {
-    const AtomIndexType sourceIndex = boost::source(edgeDescriptor, _molecule.getGraph());
-    const AtomIndexType targetIndex = boost::target(edgeDescriptor, _molecule.getGraph());
+  const InnerGraph& inner = _molecule.graph().inner();
 
-    auto sourceAdjacencies = _molecule.getAdjacencies(sourceIndex);
-    auto targetAdjacencies = _molecule.getAdjacencies(targetIndex);
-
-    temple::inplaceRemove(sourceAdjacencies, targetIndex);
-    temple::inplaceRemove(targetAdjacencies, sourceIndex);
+  for(const auto& edgeDescriptor : boost::make_iterator_range(inner.edges())) {
+    const AtomIndex sourceIndex = inner.source(edgeDescriptor);
+    const AtomIndex targetIndex = inner.target(edgeDescriptor);
 
     temple::forAllPairs(
-      sourceAdjacencies,
-      targetAdjacencies,
+      boost::make_iterator_range(inner.adjacents(sourceIndex)),
+      boost::make_iterator_range(inner.adjacents(targetIndex)),
       [&](
-        const AtomIndexType sourceAdjacentIndex,
-        const AtomIndexType targetAdjacentIndex
+        const AtomIndex sourceAdjacentIndex,
+        const AtomIndex targetAdjacentIndex
       ) -> void {
-        if(sourceAdjacentIndex != targetAdjacentIndex) {
+        if(
+          sourceAdjacentIndex != targetIndex
+          && targetAdjacentIndex != sourceIndex
+          && sourceAdjacentIndex != targetAdjacentIndex
+        ) {
           setDihedralBoundsIfEmpty(
             {{
               sourceAdjacentIndex,
@@ -635,10 +641,10 @@ void SpatialModel::addDefaultDihedrals() {
 template<std::size_t N>
 bool bondInformationIsPresent(
   const DistanceBoundsMatrix& bounds,
-  const std::array<AtomIndexType, N>& indices
+  const std::array<AtomIndex, N>& indices
 ) {
   // Ensure all indices are unique
-  std::set<AtomIndexType> indicesSet {indices.begin(), indices.end()};
+  std::set<AtomIndex> indicesSet {indices.begin(), indices.end()};
   if(indicesSet.size() < indices.size()) {
     return false;
   }
@@ -647,7 +653,7 @@ bool bondInformationIsPresent(
   return temple::all_of(
     temple::mapSequentialPairs(
       indices,
-      [&bounds](const AtomIndexType i, const AtomIndexType j) -> bool {
+      [&bounds](const AtomIndex i, const AtomIndex j) -> bool {
         return (
           bounds.lowerBound(i, j) != DistanceBoundsMatrix::defaultLower
           && bounds.upperBound(i, j) != DistanceBoundsMatrix::defaultUpper
@@ -661,8 +667,8 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
   BoundsList bounds = _bondBounds;
 
   auto addInformation = [&bounds](
-    const AtomIndexType i,
-    const AtomIndexType j,
+    const AtomIndex i,
+    const AtomIndex j,
     const ValueBounds& newBounds
   ) {
     auto indices = orderedSequence(i, j);
@@ -695,8 +701,8 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
   };
 
   auto getBondBounds = [&bounds](
-    const AtomIndexType i,
-    const AtomIndexType j
+    const AtomIndex i,
+    const AtomIndex j
   ) -> ValueBounds& {
     return bounds.at(
       orderedSequence(i, j)
@@ -790,27 +796,27 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
 }
 
 boost::optional<ValueBounds> SpatialModel::coneAngle(
-  const std::vector<AtomIndexType>& ligandIndices,
+  const std::vector<AtomIndex>& ligandIndices,
   const ValueBounds& coneHeightBounds
 ) const {
   return coneAngle(
     ligandIndices,
     coneHeightBounds,
     bondRelativeVariance * _looseningMultiplier,
-    _molecule.getGraph(),
-    Cycles {_molecule.getGraph(), true}
+    _molecule.graph(),
+    Cycles {_molecule.graph(), true}
   );
 }
 
 ValueBounds SpatialModel::ligandDistance(
-  const std::vector<AtomIndexType>& ligandIndices,
-  const AtomIndexType centralIndex
+  const std::vector<AtomIndex>& ligandIndices,
+  const AtomIndex centralIndex
 ) const {
   return ligandDistanceFromCenter(
     ligandIndices,
     centralIndex,
     bondRelativeVariance * _looseningMultiplier,
-    _molecule.getGraph()
+    _molecule.graph()
   );
 }
 
@@ -831,10 +837,10 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
     auto constraints = bondStereocenter.chiralityConstraints(
       _looseningMultiplier,
       _stereocenters.option(
-        boost::source(bondStereocenter.edge(), _molecule.getGraph())
+        bondStereocenter.edge().first
       ).value(),
       _stereocenters.option(
-        boost::target(bondStereocenter.edge(), _molecule.getGraph())
+        bondStereocenter.edge().second
       ).value()
     );
 
@@ -880,20 +886,20 @@ void SpatialModel::dumpDebugInfo() const {
 struct SpatialModel::ModelGraphWriter {
   /* State */
   // We promise to be good and not change anything
-  const GraphType* const graphPtr;
+  const OuterGraph* const graphPtr;
   const SpatialModel& spatialModel;
 
 /* Constructor */
   ModelGraphWriter(
-    const GraphType* passGraphPtr,
+    const OuterGraph* passGraphPtr,
     const SpatialModel& spatialModel
   ) : graphPtr(passGraphPtr),
     spatialModel(spatialModel)
   {}
 
 /* Helper functions */
-  Delib::ElementType getElementType(const AtomIndexType vertexIndex) const {
-    return (*graphPtr)[vertexIndex].elementType;
+  Delib::ElementType getElementType(const AtomIndex vertexIndex) const {
+    return graphPtr->elementType(vertexIndex);
   }
 
 /* Accessors for boost::write_graph */
@@ -914,10 +920,9 @@ struct SpatialModel::ModelGraphWriter {
 
       state += "/"s + std::to_string(bondStereocenter.numStereopermutations());
 
-      std::string graphNodeName = "BS" + temple::condenseIterable(
-        spatialModel._molecule.vertices(bondStereocenter.edge()),
-        ""
-      );
+      std::string graphNodeName = "BS"
+        + std::to_string(bondStereocenter.edge().first)
+        + std::to_string(bondStereocenter.edge().second);
 
       os << "  " << graphNodeName << R"( [label=")" << state
         << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
@@ -926,16 +931,17 @@ struct SpatialModel::ModelGraphWriter {
         << R"("];)" << "\n";
 
       // Add connections to the vertices (although those don't exist yet)
-      for(const auto& vertex : spatialModel._molecule.vertices(bondStereocenter.edge())) {
-        os << "  " << graphNodeName << " -- " << vertex
-          << R"( [color="gray", dir="forward", len="2"];)"
-          << "\n";
-      }
+      os << "  " << graphNodeName << " -- " << bondStereocenter.edge().first
+        << R"( [color="gray", dir="forward", len="2"];)"
+        << "\n";
+      os << "  " << graphNodeName << " -- " << bondStereocenter.edge().second
+        << R"( [color="gray", dir="forward", len="2"];)"
+        << "\n";
     }
   }
 
   // Vertex options
-  void operator() (std::ostream& os, const AtomIndexType vertexIndex) const {
+  void operator() (std::ostream& os, const AtomIndex vertexIndex) const {
     const std::string symbolString = Delib::ElementInfo::symbol(
       getElementType(vertexIndex)
     );
@@ -1009,14 +1015,14 @@ struct SpatialModel::ModelGraphWriter {
   }
 
   // Edge options
-  void operator() (std::ostream& os, const EdgeIndexType& edgeIndex) const {
-    const AtomIndexType source = boost::source(edgeIndex, *graphPtr);
-    const AtomIndexType target = boost::target(edgeIndex, *graphPtr);
+  void operator() (std::ostream& os, const InnerGraph::Edge& edgeIndex) const {
+    const AtomIndex source = graphPtr->inner().source(edgeIndex);
+    const AtomIndex target = graphPtr->inner().target(edgeIndex);
 
     os << "[";
 
     // Bond Type display options
-    auto bondType = (*graphPtr)[edgeIndex].bondType;
+    auto bondType = graphPtr->inner().bondType(edgeIndex);
     auto stringFindIter = MolGraphWriter::bondTypeDisplayString.find(bondType);
     if(stringFindIter != MolGraphWriter::bondTypeDisplayString.end()) {
       os << stringFindIter->second;
@@ -1044,7 +1050,7 @@ struct SpatialModel::ModelGraphWriter {
 
 std::string SpatialModel::dumpGraphviz() const {
   ModelGraphWriter graphWriter(
-    &_molecule.getGraph(),
+    &_molecule.graph(),
     *this
   );
 
@@ -1052,7 +1058,7 @@ std::string SpatialModel::dumpGraphviz() const {
 
   boost::write_graphviz(
     graphvizStream,
-    _molecule.getGraph(),
+    _molecule.graph().inner().bgl(),
     graphWriter,
     graphWriter,
     graphWriter
@@ -1063,7 +1069,7 @@ std::string SpatialModel::dumpGraphviz() const {
 
 void SpatialModel::writeGraphviz(const std::string& filename) const {
   ModelGraphWriter graphWriter(
-    &_molecule.getGraph(),
+    &_molecule.graph(),
     *this
   );
 
@@ -1071,7 +1077,7 @@ void SpatialModel::writeGraphviz(const std::string& filename) const {
 
   boost::write_graphviz(
     outStream,
-    _molecule.getGraph(),
+    _molecule.graph().inner().bgl(),
     graphWriter,
     graphWriter,
     graphWriter
@@ -1082,10 +1088,10 @@ void SpatialModel::writeGraphviz(const std::string& filename) const {
 
 /* Static functions */
 boost::optional<ValueBounds> SpatialModel::coneAngle(
-  const std::vector<AtomIndexType>& baseConstituents,
+  const std::vector<AtomIndex>& baseConstituents,
   const ValueBounds& coneHeightBounds,
   const double bondRelativeVariance,
-  const GraphType& graph,
+  const OuterGraph& graph,
   const Cycles& etaLessCycles
 ) {
   /* Have to decide cone base radius in order to calculate this. There are some
@@ -1098,19 +1104,15 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
   }
 
   if(baseConstituents.size() == 2) {
-    auto findEdgePair = boost::edge(
-      baseConstituents.front(),
-      baseConstituents.back(),
-      graph
-    );
-
-    // If a ligand is haptic and consists of two ligands, these MUST be bonded
-    assert(findEdgePair.second);
-
     double radius = Bond::calculateBondDistance(
-      graph[baseConstituents.front()].elementType,
-      graph[baseConstituents.back()].elementType,
-      graph[findEdgePair.first].bondType
+      graph.elementType(baseConstituents.front()),
+      graph.elementType(baseConstituents.back()),
+      graph.bondType(
+        BondIndex {
+          baseConstituents.front(),
+          baseConstituents.back()
+        }
+      )
     ) / 2;
 
     // Angle gets smaller if height bigger or cone base radius smaller
@@ -1147,16 +1149,11 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
 
     auto distances = temple::mapSequentialPairs(
       ringIndexSequence,
-      [&](const AtomIndexType i, const AtomIndexType j) -> double {
-        auto findEdgePair = boost::edge(i, j, graph);
-
-        // These vertices really ought to be bonded
-        assert(findEdgePair.second);
-
+      [&](const AtomIndex i, const AtomIndex j) -> double {
         return Bond::calculateBondDistance(
-          graph[i].elementType,
-          graph[j].elementType,
-          graph[findEdgePair.first].bondType
+          graph.elementType(i),
+          graph.elementType(j),
+          graph.bondType(BondIndex {i, j})
         );
       }
     );
@@ -1222,25 +1219,24 @@ double SpatialModel::spiroCrossAngle(const double alpha, const double beta) {
 }
 
 ValueBounds SpatialModel::ligandDistanceFromCenter(
-  const std::vector<AtomIndexType>& ligandIndices,
-  const AtomIndexType centralIndex,
+  const std::vector<AtomIndex>& ligandIndices,
+  const AtomIndex centralIndex,
   const double bondRelativeVariance,
-  const GraphType& graph
+  const OuterGraph& graph
 ) {
   assert(!ligandIndices.empty());
 
-  Delib::ElementType centralIndexType = graph[centralIndex].elementType;
+  Delib::ElementType centralIndexType = graph.elementType(centralIndex);
 
   if(ligandIndices.size() == 1) {
     auto ligandIndex = ligandIndices.front();
 
-    auto edgeFindPair = boost::edge(ligandIndex, centralIndex, graph);
-    assert(edgeFindPair.second);
-
     double distance = Bond::calculateBondDistance(
-      graph[ligandIndex].elementType,
+      graph.elementType(ligandIndex),
       centralIndexType,
-      graph[edgeFindPair.first].bondType
+      graph.bondType(
+        BondIndex {ligandIndex, centralIndex}
+      )
     );
 
     return {
@@ -1252,14 +1248,13 @@ ValueBounds SpatialModel::ligandDistanceFromCenter(
   double distance = 0.9 * temple::average(
     temple::map(
       ligandIndices,
-      [&](AtomIndexType ligandIndex) -> double {
-        auto edgeFindPair = boost::edge(ligandIndex, centralIndex, graph);
-        assert(edgeFindPair.second);
-
+      [&](AtomIndex ligandIndex) -> double {
         return Bond::calculateBondDistance(
-          graph[ligandIndex].elementType,
+          graph.elementType(ligandIndex),
           centralIndexType,
-          graph[edgeFindPair.first].bondType
+          graph.bondType(
+            BondIndex {ligandIndex, centralIndex}
+          )
         );
       }
     )

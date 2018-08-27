@@ -1,8 +1,9 @@
 #include "molassembler/Descriptors.h"
 
+#include "boost/range/iterator_range_core.hpp"
 #include "temple/Containers.h"
 
-#include "molassembler/detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Cycles.h"
 #include "molassembler/Molecule.h"
 
@@ -12,12 +13,12 @@ unsigned numRotatableBonds(
   const Molecule& mol,
   const unsigned cycleThreshold
 ) {
-  Cycles cycleData = mol.getCycleData();
+  Cycles cycleData = mol.cycles();
 
-  std::map<GraphType::edge_descriptor, unsigned> smallestCycle;
+  std::map<BondIndex, unsigned> smallestCycle;
 
   for(const auto cyclePtr : cycleData) {
-    const auto cycleEdges = Cycles::edges(cyclePtr, mol.getGraph());
+    const auto cycleEdges = Cycles::edges(cyclePtr);
     const unsigned cycleSize = cycleEdges.size();
 
     for(const auto& edge : cycleEdges) {
@@ -33,19 +34,15 @@ unsigned numRotatableBonds(
   }
 
   unsigned count = 0;
-  for(const auto& edge : mol.iterateEdges()) {
+  for(const auto& edge : boost::make_iterator_range(mol.graph().bonds())) {
     if(
-      mol.getBondType(edge) == BondType::Single
+      mol.graph().bondType(edge) == BondType::Single
       && (smallestCycle.count(edge) == 0 || smallestCycle.at(edge) > cycleThreshold)
     ) {
       // Neither of the atoms connected by this edge may be terminal
       if(
-        temple::all_of(
-          mol.vertices(edge),
-          [&mol](const auto& vertexIndex) -> bool {
-            return mol.getNumAdjacencies(vertexIndex) > 1;
-          }
-        )
+        mol.getNumAdjacencies(edge.first) > 1
+        && mol.getNumAdjacencies(edge.second) > 1
       ) {
         ++count;
       }

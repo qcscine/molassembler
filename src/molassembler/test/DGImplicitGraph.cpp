@@ -40,21 +40,6 @@ BOOST_AUTO_TEST_CASE(graphConcepts) {
     >
   ));
 
-  /*BOOST_CONCEPT_ASSERT((
-    boost::WritablePropertyMapConcept<
-      boost::property_map<GraphType, boost::edge_weight_t>::type,
-      boost::graph_traits<GraphType>::edge_descriptor
-    >
-  ));*/
-
-  /*BOOST_CONCEPT_ASSERT((
-    boost::PropertyGraphConcept<
-      GraphType,
-      boost::graph_traits<GraphType>::edge_descriptor,
-      boost::edge_weight_t
-    >
-  ));*/
-
   BOOST_CONCEPT_ASSERT(( boost::IncidenceGraphConcept<GraphType> ));
 }
 
@@ -288,7 +273,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
     }
     auto distancesMatrix = distancesMatrixResult.value();
 
-    auto d = [&distancesMatrix](const AtomIndexType i, const AtomIndexType j) -> double {
+    auto d = [&distancesMatrix](const AtomIndex i, const AtomIndex j) -> double {
       return distancesMatrix(
         std::min(i, j),
         std::max(i, j)
@@ -297,13 +282,13 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
     unsigned triangleInequalitiesFailures = 0;
     unsigned matrN = distancesMatrix.cols();
-    for(AtomIndexType i = 0; i < matrN; ++i) {
-      for(AtomIndexType j = 0; j < matrN; ++j) {
+    for(AtomIndex i = 0; i < matrN; ++i) {
+      for(AtomIndex j = 0; j < matrN; ++j) {
         if(i == j) {
           continue;
         }
 
-        for(AtomIndexType k = 0; k < matrN; ++k) {
+        for(AtomIndex k = 0; k < matrN; ++k) {
           if(j == k) {
             continue;
           }
