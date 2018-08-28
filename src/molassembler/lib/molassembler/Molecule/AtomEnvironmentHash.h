@@ -24,7 +24,7 @@ class InnerGraph;
 
 namespace hashes {
 
-using AtomEnvironmentHashType = unsigned long long;
+using AtomEnvironmentHashType = std::uint64_t;
 
 //! Convolutes the atom's element type and bonds into a characteristic number
 AtomEnvironmentHashType atomEnvironment(

@@ -38,7 +38,7 @@ AtomEnvironmentHashType atomEnvironment(
   );
 
 
-  /* First 8 bits of the 64 bit unsigned number are from the element type
+  /* First 7 bits of the 64 bit unsigned number are from the element type
    *
    * Biggest is Cn, which has a value of 112 -> Fits in 7 bits (2^7 = 128)
    */

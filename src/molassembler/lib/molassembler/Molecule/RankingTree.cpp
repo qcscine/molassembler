@@ -2383,7 +2383,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_auxiliaryAdjacentsToRank
   const TreeVertexIndex sourceIndex,
   const std::vector<TreeVertexIndex>& excludeIndices
 ) const {
-  return temple::moveIf(
+  return temple::copyIf(
     _adjacents(sourceIndex),
     [&](const TreeVertexIndex nodeIndex) -> bool {
       // In case we explicitly excluded an index, immediately discard
