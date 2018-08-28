@@ -45,6 +45,11 @@ else()
 
   # Some GCC-specific compiler options
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # Handle no gnu unique flags
+    if(MOLASSEMBLER_NO_GNU_UNIQUE)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --no-gnu-unique")
+    endif()
+
     set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} \
       -Wsuggest-attribute=const \

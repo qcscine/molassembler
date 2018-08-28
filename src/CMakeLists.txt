@@ -6,6 +6,7 @@ set(as_subproject chemical_symmetries cyclic_polygons stereopermutation temple)
 
 # Project-specific options
 option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" ON)
+option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
 
 # overwrite find_package with test against subproject list
 macro(find_package)
