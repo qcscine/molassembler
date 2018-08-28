@@ -4,7 +4,7 @@
 #include "boost/filesystem.hpp"
 
 #include "molassembler/Molecule.h"
-#include "molassembler/IO.h"
+#include "molassembler/IO/FileHandlers.h"
 
 #include <iostream>
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
       filepath.stem().string() + "_isomorphism.mol",
       a,
       molHandler.read(filepath.string()).angstromWrapper,
-      IO::FileHandlers::IndexPermutation::Random
+      IO::IndexPermutation::Random
     );
   } else {
     std::cout << options_description << std::endl;

@@ -1,7 +1,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_IO_H
 #define INCLUDE_MOLASSEMBLER_IO_H
 
-#include "molassembler/IO/FileHandlers.h"
+#include "molassembler/Types.h"
+
+#include <string>
+#include <vector>
 
 /*! @file
  *
@@ -16,13 +19,29 @@
  *   information or use them to check against the CTAB
  */
 
+// Forward declarations
+namespace Delib {
+class PositionCollection;
+} // namespace Delib
+
 namespace molassembler {
 
 // Forward declarations
 class Molecule;
+class AngstromWrapper;
 
 //! Input and output
 namespace IO {
+
+//! Defines permutations of atom indices of the molecule
+enum class IndexPermutation {
+  //! Atom indices are unaltered
+  Identity,
+  //! Atom indices are sorted by element type
+  SortByElement,
+  //! Randomize atom indices
+  Random
+};
 
 /*! Read a single molecule from a file.
  *
@@ -49,7 +68,7 @@ void write(
   const std::string& filename,
   const Molecule& molecule,
   const AngstromWrapper& angstromWrapper,
-  const FileHandlers::IndexPermutation permutation = FileHandlers::IndexPermutation::Identity
+  IndexPermutation permutation = IndexPermutation::Identity
 );
 
 //! Writer function from a PositionCollection in bohr
@@ -57,7 +76,7 @@ void write(
   const std::string& filename,
   const Molecule& molecule,
   const Delib::PositionCollection& positions,
-  const FileHandlers::IndexPermutation permutation = FileHandlers::IndexPermutation::Identity
+  IndexPermutation permutation = IndexPermutation::Identity
 );
 
 /*! Writer function to make files containing binary Molecule representation.

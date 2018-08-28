@@ -3,6 +3,11 @@
 
 #include <cstddef>
 
+/*!@file
+ *
+ * Defines basic types widely shared across the project.
+ */
+
 namespace molassembler {
 
 /*!

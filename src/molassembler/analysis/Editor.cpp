@@ -10,6 +10,7 @@
 #include "molassembler/Conformers.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/OuterGraph.h"
 
 using namespace std::string_literals;
 using namespace molassembler;

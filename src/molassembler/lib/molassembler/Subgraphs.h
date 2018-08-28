@@ -9,6 +9,11 @@
 
 #include <memory>
 
+/*!@file
+ *
+ * Enables common subgraph computations
+ */
+
 namespace molassembler {
 
 // Forward-declare Molecule

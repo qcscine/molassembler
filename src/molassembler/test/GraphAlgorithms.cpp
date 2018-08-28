@@ -9,7 +9,7 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/IO.h"
+#include "molassembler/IO/FileHandlers.h"
 #include "temple/Stringify.h"
 
 #include "boost/graph/graphviz.hpp"

@@ -4,12 +4,15 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include <iostream>
-#include "molassembler/IO.h"
 #include "molassembler/Conformers.h"
+#include "molassembler/IO.h"
+#include "molassembler/Molecule.h"
+
+#include <iostream>
 
 void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath) {
   using namespace molassembler;
+  using namespace std::string_literals;
 
   std::cout << "Processing " << filePath.stem().string() << std::endl;
 

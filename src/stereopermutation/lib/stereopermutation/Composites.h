@@ -6,6 +6,13 @@
 #include "temple/TinySet.h"
 #include "temple/OrderedPair.h"
 
+/*!@file
+ *
+ * Enables the computation of relative orientations of arbitrary symmetries
+ * fused at arbitrary positions that yield indices of permutations that are
+ * meaningful for ranking computations.
+ */
+
 namespace stereopermutation {
 
 // TODO these are unneeded here, just move to impl file
@@ -30,19 +37,19 @@ bool nextCombinationPermutation(
 
   if(allFull) {
     return false;
-  } else {
-    // Make next permutation
-    for(int i = cols - 1; i >= 0; --i) {
-      if(toPermute[i] == limits[i]) {
-        toPermute[i] = 0;
-      } else {
-        ++toPermute[i];
-        return true;
-      }
-    }
-
-    return true;
   }
+
+  // Make next permutation
+  for(int i = cols - 1; i >= 0; --i) {
+    if(toPermute[i] == limits[i]) {
+      toPermute[i] = 0;
+    } else {
+      ++toPermute[i];
+      return true;
+    }
+  }
+
+  return true;
 }
 
 template<typename T>
@@ -144,8 +151,8 @@ private:
    * the geometrical idea collapses.
    */
   static double perpendicularSubstituentAngle(
-    const double angleFromBoundSymmetryPosition,
-    const double angleBetweenSubstituents
+    double angleFromBoundSymmetryPosition,
+    double angleBetweenSubstituents
   );
 
 public:
@@ -163,14 +170,14 @@ public:
    *   sought rotation
    */
   static std::vector<unsigned> generateRotation(
-    const Symmetry::Name symmetryName,
-    const unsigned fixedSymmetryPosition,
+    Symmetry::Name symmetryName,
+    unsigned fixedSymmetryPosition,
     const std::vector<unsigned>& changedPositions
   );
 
   static std::vector<unsigned> rotation(
-    const Symmetry::Name symmetryName,
-    const unsigned fixedSymmetryPosition,
+    Symmetry::Name symmetryName,
+    unsigned fixedSymmetryPosition,
     const std::vector<unsigned>& perpendicularPlanePositions
   );
 
@@ -186,7 +193,7 @@ public:
   //! Creates sets of within-group cross angles in the perpendicular plane
   static PerpendicularAngleGroups inGroupAngles(
     const AngleGroup& angleGroup,
-    const Symmetry::Name symmetryName
+    Symmetry::Name symmetryName
   );
 
   Composite(OrientationState first, OrientationState second);

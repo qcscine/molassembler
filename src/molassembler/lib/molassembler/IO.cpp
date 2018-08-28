@@ -3,8 +3,9 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "molassembler/Serialization.h"
+#include "molassembler/IO/FileHandlers.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/Serialization.h"
 
 #include <fstream>
 #include <iomanip>
@@ -85,7 +86,7 @@ void write(
   const std::string& filename,
   const Molecule& molecule,
   const AngstromWrapper& angstromWrapper,
-  const FileHandlers::IndexPermutation permutation
+  const IndexPermutation permutation
 ) {
   boost::filesystem::path filepath {filename};
 
@@ -105,7 +106,7 @@ void write(
   const std::string& filename,
   const Molecule& molecule,
   const Delib::PositionCollection& positions,
-  const FileHandlers::IndexPermutation permutation
+  const IndexPermutation permutation
 ) {
   AngstromWrapper wrapper {positions};
   return write(filename, molecule, wrapper, permutation);

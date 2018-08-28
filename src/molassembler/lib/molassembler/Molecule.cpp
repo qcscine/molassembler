@@ -15,6 +15,7 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Modeling/LocalGeometryModel.h"
+#include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/RankingInformation.h"

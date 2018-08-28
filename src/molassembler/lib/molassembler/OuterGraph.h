@@ -13,6 +13,11 @@
 #include <experimental/propagate_const>
 #endif
 
+/*!@file
+ *
+ * Interface class for the molecular graph
+ */
+
 // Forward-declarations
 namespace Delib {
   class ElementTypeCollection;

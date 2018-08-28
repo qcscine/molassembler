@@ -4,8 +4,6 @@
 #include "temple/constexpr/JSF.h"
 #include "temple/Traits.h"
 
-#include <vector>
-#include <random>
 #include <algorithm>
 
 /*! @file

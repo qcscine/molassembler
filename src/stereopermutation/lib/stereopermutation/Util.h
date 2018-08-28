@@ -5,6 +5,15 @@
 
 #include "boost/optional.hpp"
 
+/*!@file
+ *
+ * Some few still-used utility functions.
+ */
+
+/* TODO
+ * - phase these out from the few places where they are in use in this library
+ */
+
 namespace stereopermutation {
 
 namespace Util {
@@ -29,13 +38,13 @@ decltype(auto) sortBinaryArgs(
 ) {
   if(a < b) {
     return function(std::forward<T>(a), std::forward<T>(b));
-  } else {
-    return function(std::forward<T>(b), std::forward<T>(a));
   }
+
+  return function(std::forward<T>(b), std::forward<T>(a));
 }
 
-} // eo namespace Util
+} // namespace Util
 
-} // eo namespace stereopermutation
+} // namespace stereopermutation
 
 #endif

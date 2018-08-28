@@ -1,6 +1,12 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CRTP_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CRTP_H
 
+/*!@file
+ *
+ * Permits the provision of more operators from fewer initial operator
+ * implementations.
+ */
+
 namespace temple {
 
 namespace crtp {

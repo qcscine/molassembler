@@ -7,6 +7,7 @@
 #include "Delib/BondOrderCollection.h"
 
 #include "molassembler/Containers/AngstromWrapper.h"
+#include "molassembler/IO.h"
 #include "molassembler/Interpret.h"
 
 namespace molassembler {
@@ -68,16 +69,6 @@ struct Inverse {
 } // namespace permutations
 
 namespace FileHandlers {
-
-//! Defines permutations of atom indices of the molecule
-enum class IndexPermutation {
-  //! Atom indices are unaltered
-  Identity,
-  //! Atom indices are sorted by element type
-  SortByElement,
-  //! Randomize atom indices
-  Random
-};
 
 //! Abstract base class to all file handlers
 struct FileHandler {

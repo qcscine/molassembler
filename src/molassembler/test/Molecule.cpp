@@ -11,8 +11,9 @@
 #include "temple/Stringify.h"
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
-#include "molassembler/IO.h"
+#include "molassembler/IO/FileHandlers.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/Options.h"
 #include "molassembler/StereocenterList.h"
 

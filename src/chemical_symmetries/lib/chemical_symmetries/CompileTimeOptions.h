@@ -1,3 +1,8 @@
+/*!@file
+ *
+ * Contains preprocessor definitions that impact the generated code.
+ */
+
 /* If USE_ALTERNATE_TETRAHEDRA is defined, a reduced set of tetrahedra
  * is used to subdivide higher symmetries. This may provide less information
  * about the geometry when used but should improve performance as fewer

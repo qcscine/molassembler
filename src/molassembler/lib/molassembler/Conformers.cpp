@@ -1,6 +1,7 @@
 #include "molassembler/Conformers.h"
 
 #include "temple/Containers.h"
+#include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
 namespace molassembler {
 

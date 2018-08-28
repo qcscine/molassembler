@@ -1,9 +1,25 @@
 #ifndef INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 #define INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 
-#include "molassembler/DistanceGeometry/ConformerGeneration.h"
+#include "boost_outcome/outcome.hpp"
+#include <vector>
+
+// Forward-declarations
+namespace Delib {
+class PositionCollection;
+} // namespace Delib
+
+/*!@file
+ *
+ * Interface for the generation of new conformations of Molecules
+ */
 
 namespace molassembler {
+
+namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
+
+// Forward-declarations
+class Molecule;
 
 /*! Generate a conformational ensemble of a Molecule
  *
@@ -16,7 +32,7 @@ outcome::result<
   std::vector<Delib::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
-  const unsigned numStructures
+  unsigned numStructures
 );
 
 /*! Generate a 3D structure of a Molecule

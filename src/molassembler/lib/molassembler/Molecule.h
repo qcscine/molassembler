@@ -1,12 +1,13 @@
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
-#include "boost/optional.hpp"
 #include "Delib/ElementTypes.h"
+#include "boost/optional.hpp"
+#include "chemical_symmetries/Names.h"
+#include "temple/constexpr/Bitmask.h"
 
 #include "molassembler/Detail/RangeForTemporary.h"
 #include "molassembler/Containers/AngstromWrapper.h"
-#include "molassembler/Molecule/AtomEnvironmentHash.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
@@ -36,6 +37,7 @@ namespace molassembler {
 // Forward declarations
 class OuterGraph;
 class Cycles;
+class StereocenterList;
 struct RankingInformation;
 
 //! Central class of the library, modeling a molecular graph with all state.

@@ -9,7 +9,6 @@
 
 #include "molassembler/Detail/RangeForTemporary.h"
 #include "molassembler/OuterGraph.h"
-#include "molassembler/Types.h"
 
 #include <functional>
 #include <map>

@@ -4,6 +4,16 @@
 #include <tuple>
 #include <utility>
 
+/*!@file
+ *
+ * Contains a class imitating std::pair whose member types are homogeneous and
+ * ordered.
+ */
+
+/* TODO
+ * - Iterator testing
+ */
+
 namespace temple {
 
 template<typename T>

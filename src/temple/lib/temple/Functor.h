@@ -3,6 +3,11 @@
 
 #include <utility>
 
+/*!@file
+ *
+ * Provides the identity functor.
+ */
+
 namespace temple {
 
 struct Identity {

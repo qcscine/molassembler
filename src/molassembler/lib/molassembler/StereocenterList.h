@@ -23,6 +23,8 @@
  *   target vertices requires a bgl graph instance to be called. Perhaps as soon
  *   as graph exists instead?
  * - bond stereocenter state propagation
+ * - pImpl could remove header dependencies on AtomStereocenter and
+ *   BondStereocenter
  */
 
 namespace molassembler {
@@ -47,7 +49,7 @@ public:
   void clearBonds();
 
   //! Fetch a reference-option to an AtomStereocenter, if present
-  boost::optional<AtomStereocenter&> option(const AtomIndex index);
+  boost::optional<AtomStereocenter&> option(AtomIndex index);
 
   //! Fetch a reference-option to an BondStereocenter, if present
   boost::optional<BondStereocenter&> option(const BondIndex& edge);
@@ -58,16 +60,16 @@ public:
    * liberally in the stereocenter classes. This function ensures that
    * vertex descriptors are valid throughout.
    */
-  void propagateVertexRemoval(const AtomIndex removedIndex);
+  void propagateVertexRemoval(AtomIndex removedIndex);
 
   //! Removes the AtomStereocenter on a specified index
-  void remove(const AtomIndex index);
+  void remove(AtomIndex index);
 
   //! Removes the BondStereocenter on a specified edge
   void remove(const BondIndex& edge);
 
   //! Removes the AtomStereocenter on a specified index, if present
-  void try_remove(const AtomIndex index);
+  void try_remove(AtomIndex index);
 
   //! Removes the BondStereocenter on a specified edge, if present
   void try_remove(const BondIndex& edge);
@@ -89,7 +91,7 @@ public:
   bool hasUnassignedStereocenters() const;
 
   //! Fetch a const ref-option to an AtomStereocenter, if present
-  boost::optional<const AtomStereocenter&> option(const AtomIndex index) const;
+  boost::optional<const AtomStereocenter&> option(AtomIndex index) const;
 
   //! Fetch a const ref-option to an BondStereocenter, if present
   boost::optional<const BondStereocenter&> option(const BondIndex& edge) const;
