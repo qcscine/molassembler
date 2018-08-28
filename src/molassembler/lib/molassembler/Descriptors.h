@@ -11,21 +11,18 @@ namespace molassembler {
 // Forward-declare molcule
 class Molecule;
 
-/*! Calculates number of freely rotatable bonds in a molecule
+/*! Calculates a number of freely rotatable bonds in a molecule
  *
- * Criteria:
+ * A freely rotatable bond:
  * - Must be a single bond
  * - Neither atom connected by the bond may be terminal
- * - May not be member of a small cycle. The threshold of this criterion
- *   can be set by the user. An edge that is a member of a cycle smaller than
- *   the threshold is not considered rotatable. The default is 5. To deactivate
- *   this feature, pass std::numeric_limits<unsigned>::max().
+ * - There may not be an assigned stereogenic BondStereocenter on the bond
  *
+ * A rotatable bond in a cycle:
+ * - If the edge is part of a cycle, it contributes at most (S - 3) / 3 to the
+ *   total number of rotatable bonds. The final (fractional) count is rounded.
  */
-unsigned numRotatableBonds(
-  const Molecule& mol,
-  unsigned cycleThreshold = 5
-);
+unsigned numRotatableBonds(const Molecule& mol);
 
 } // namespace molassembler
 

@@ -6,13 +6,11 @@
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Cycles.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/StereocenterList.h"
 
 namespace molassembler {
 
-unsigned numRotatableBonds(
-  const Molecule& mol,
-  const unsigned cycleThreshold
-) {
+unsigned numRotatableBonds(const Molecule& mol) {
   Cycles cycleData = mol.cycles();
 
   std::map<BondIndex, unsigned> smallestCycle;
@@ -27,29 +25,56 @@ unsigned numRotatableBonds(
         edge,
         cycleSize,
         [&cycleSize](const unsigned currentMinCycleSize) -> bool {
-          return cycleSize < currentMinCycleSize;
+          return cycleSize <= currentMinCycleSize;
         }
       );
     }
   }
 
-  unsigned count = 0;
+  double count = 0;
   for(const auto& edge : boost::make_iterator_range(mol.graph().bonds())) {
+    // If the bond is not Single, it cannot be a rotatable bond
+    if(mol.graph().bondType(edge) != BondType::Single) {
+      continue;
+    }
+
+    // If either atom on the bond is terminal, it cannot be rotatable
     if(
-      mol.graph().bondType(edge) == BondType::Single
-      && (smallestCycle.count(edge) == 0 || smallestCycle.at(edge) > cycleThreshold)
+      mol.getNumAdjacencies(edge.first) == 1
+      || mol.getNumAdjacencies(edge.second) == 1
     ) {
-      // Neither of the atoms connected by this edge may be terminal
-      if(
-        mol.getNumAdjacencies(edge.first) > 1
-        && mol.getNumAdjacencies(edge.second) > 1
-      ) {
-        ++count;
-      }
+      continue;
+    }
+
+    // If there is an assigned stereogenic stereocenter on the edge, it cannot be rotatable
+    auto bondStereocenterOption = mol.stereocenters().option(edge);
+    if(
+      bondStereocenterOption
+      && bondStereocenterOption->numStereopermutations() > 1
+      && bondStereocenterOption->assigned() != boost::none
+    ) {
+      continue;
+    }
+
+    auto findIter = smallestCycle.find(edge);
+
+    // Is the edge part of a cycle?
+    if(findIter == std::end(smallestCycle)) {
+      // If not, the edge counts as a whole rotatable bond
+      count += 1.0;
+    } else {
+      /* Otherwise, the contribution to the number of rotatable bonds is
+       * calculated as
+       *
+       *   max(0.0, (cycle size - 3) / cycle size)
+       *
+       */
+      unsigned cycleSize = findIter->second;
+      count += std::max(0.0, (cycleSize - 3.0) / cycleSize);
     }
   }
 
-  return count;
+  return std::round(count);
 }
 
 } // namespace molassmembler
