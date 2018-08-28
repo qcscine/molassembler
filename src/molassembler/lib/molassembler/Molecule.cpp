@@ -65,7 +65,10 @@ struct Molecule::Impl {
   //! Graph and positions constructor
   Impl(
     OuterGraph graph,
-    const AngstromWrapper& positions
+    const AngstromWrapper& positions,
+    const boost::optional<
+      std::vector<BondIndex>
+    >& bondStereocenterCandidatesOptional = boost::none
   );
 
   //! Graph and stereocenters constructor
@@ -224,7 +227,12 @@ struct Molecule::Impl {
   //! Returns the number of adjacencies of an atomic position
   unsigned getNumAdjacencies(AtomIndex a) const;
 
-  StereocenterList inferStereocentersFromPositions(const AngstromWrapper& angstromWrapper) const;
+  StereocenterList inferStereocentersFromPositions(
+    const AngstromWrapper& angstromWrapper,
+    const boost::optional<
+      std::vector<BondIndex>
+    >& explicitBondStereocenterCandidatesOption = boost::none
+  ) const;
 
   //! Modular comparison of this Impl with another.
   bool modularCompare(
@@ -499,11 +507,17 @@ Molecule::Impl::Impl(OuterGraph graph)
 
 Molecule::Impl::Impl(
   OuterGraph graph,
-  const AngstromWrapper& positions
+  const AngstromWrapper& positions,
+  const boost::optional<
+    std::vector<BondIndex>
+  >& bondStereocenterCandidatesOptional
 ) : _adjacencies(std::move(graph))
 {
   GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
-  _stereocenters = inferStereocentersFromPositions(positions);
+  _stereocenters = inferStereocentersFromPositions(
+    positions,
+    bondStereocenterCandidatesOptional
+  );
   _ensureModelInvariants();
 }
 
@@ -962,7 +976,10 @@ unsigned Molecule::Impl::getNumAdjacencies(const AtomIndex a) const {
 }
 
 StereocenterList Molecule::Impl::inferStereocentersFromPositions(
-  const AngstromWrapper& angstromWrapper
+  const AngstromWrapper& angstromWrapper,
+  const boost::optional<
+    std::vector<BondIndex>
+  >& explicitBondStereocenterCandidatesOption
 ) const {
   const AtomIndex size = graph().N();
   StereocenterList stereocenters;
@@ -1011,10 +1028,7 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
 
   const InnerGraph& inner = _adjacencies.inner();
 
-  for(
-    const InnerGraph::Edge& edgeIndex :
-    boost::make_iterator_range(inner.edges())
-  ) {
+  auto tryInstantiateBondStereocenter = [&](const InnerGraph::Edge& edgeIndex) -> void {
     InnerGraph::Vertex source = inner.source(edgeIndex),
                        target = inner.target(edgeIndex);
 
@@ -1028,7 +1042,7 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
       || sourceAtomStereocenterOption->assigned() == boost::none
       || targetAtomStereocenterOption->assigned() == boost::none
     ) {
-      continue;
+      return;
     }
 
     const BondIndex bondIndex {source, target};
@@ -1051,6 +1065,27 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
         bondIndex,
         std::move(newStereocenter)
       );
+    }
+  };
+
+  // Is there an explicit list of bonds on which to try BondStereocenter instantiation?
+  if(explicitBondStereocenterCandidatesOption) {
+    for(const BondIndex& bondIndex : *explicitBondStereocenterCandidatesOption) {
+      // Test if the supplied edge exists first
+      auto edge = inner.edgeOption(bondIndex.first, bondIndex.second);
+      if(!edge) {
+        throw std::domain_error("Explicit bond stereocenter candidate edge does not exist!");
+      }
+
+      tryInstantiateBondStereocenter(*edge);
+    }
+  } else {
+    // Every bond is a candidate
+    for(
+      const InnerGraph::Edge& edgeIndex :
+      boost::make_iterator_range(inner.edges())
+    ) {
+      tryInstantiateBondStereocenter(edgeIndex);
     }
   }
 
@@ -1205,11 +1240,15 @@ Molecule::Molecule(OuterGraph graph) : _pImpl(
 
 Molecule::Molecule(
   OuterGraph graph,
-  const AngstromWrapper& positions
+  const AngstromWrapper& positions,
+  const boost::optional<
+    std::vector<BondIndex>
+  >& bondStereocenterCandidatesOptional
 ) : _pImpl(
   std::make_unique<Impl>(
     std::move(graph),
-    positions
+    positions,
+    bondStereocenterCandidatesOptional
   )
 ) {}
 
@@ -1318,9 +1357,15 @@ unsigned Molecule::getNumAdjacencies(const AtomIndex a) const {
 }
 
 StereocenterList Molecule::inferStereocentersFromPositions(
-  const AngstromWrapper& angstromWrapper
+  const AngstromWrapper& angstromWrapper,
+  const boost::optional<
+    std::vector<BondIndex>
+  >& explicitBondStereocenterCandidatesOption
 ) const {
-  return _pImpl->inferStereocentersFromPositions(angstromWrapper);
+  return _pImpl->inferStereocentersFromPositions(
+    angstromWrapper,
+    explicitBondStereocenterCandidatesOption
+  );
 }
 
 bool Molecule::modularCompare(

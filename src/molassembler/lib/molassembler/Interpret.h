@@ -1,6 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_INTERPRET_H
 #define INCLUDE_MOLASSEMBLER_INTERPRET_H
 
+#include "boost/optional.hpp"
 #include <vector>
 
 /*!@file
@@ -42,13 +43,15 @@ InterpretResult interpret(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const Delib::BondOrderCollection& bondOrders,
-  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
+  const boost::optional<double>& stereocenterBondOrderThresholdOptional = 1.4
 );
 
 InterpretResult interpret(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
-  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
+  const boost::optional<double>& stereocenterBondOrderThresholdOptional = 1.4
 );
 
 /*! Interpret molecules in 3D information and a bond order collection.
@@ -62,7 +65,8 @@ InterpretResult interpret(
 InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
   const Delib::BondOrderCollection& bondOrders,
-  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
+  const boost::optional<double>& stereocenterBondOrderThresholdOptional = 1.4
 );
 
 /*! Interpret molecules in 3D information.
@@ -74,7 +78,8 @@ InterpretResult interpret(
  */
 InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
-  BondDiscretizationOption discretization = BondDiscretizationOption::Binary
+  BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
+  const boost::optional<double>& stereocenterBondOrderThresholdOptional = 1.4
 );
 
 } // namespace molassembler

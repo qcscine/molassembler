@@ -55,23 +55,28 @@ public:
   //! Default-constructor creates a hydrogen molecule.
   Molecule() noexcept;
 
-  //! Construct a minimal molecule from two element types and a shared bond type
+  //! Construct a minimal molecule from two element types and a mutual bond type
   Molecule(
     Delib::ElementType a,
     Delib::ElementType b,
     BondType bondType
   ) noexcept;
 
-  //! Constructs a molecule from connectivity alone, inferring the stereocenters
+  //! Constructs from connectivity alone, inferring the stereocenters from graph
   explicit Molecule(OuterGraph graph);
 
-  /*! Construct a molecule from connectivity and 3D information.
+  /*! Construct from connectivity and positions
    *
-   * \note Assumes that the provided position collection is in Angstrom units.
+   * \param bondStereocenterCandidatesOptional If boost::none, all bonds are
+   *   candidates for BondStereocenter. Otherwise, only the specified bonds are
+   *   checked for BondStereocenters.
    */
   Molecule(
     OuterGraph graph,
-    const AngstromWrapper& positions
+    const AngstromWrapper& positions,
+    const boost::optional<
+      std::vector<BondIndex>
+    >& bondStereocenterCandidatesOptional = boost::none
   );
 
   //! Construct a molecule from the underlying data fragments
@@ -234,7 +239,29 @@ public:
   [[deprecated]]
   unsigned getNumAdjacencies(AtomIndex a) const;
 
-  StereocenterList inferStereocentersFromPositions(const AngstromWrapper& angstromWrapper) const;
+  /*! Generates stereocenters from connectivity and positional information
+   *
+   * Positions are an important source of information for stereocenters as they
+   * will alleviate graph-based symmetry-determination errors and allow for the
+   * determination of stereocenter assignments through spatial fitting.
+   *
+   * \param angstromWrapper Wrapped positions in angstrom length units
+   * \param explicitBondStereocenterCandidatesOption Permits the specification
+   *   of a limited set of bonds on which BondStereocenter instantiation is
+   *   attempted. In Interpret.h, for instance, you can choose not to
+   *   instantiate BondStereocenters below a fractional bond order threshold to
+   *   avoid spurious frozen dihedrals. By default, all bonds are candidates.
+   *
+   * \throws std::domain_error if a BondIndex in
+   *   explicitBondStereocenterCandidatesOption does not reference an existing
+   *   bond (irrelevant if left default).
+   */
+  StereocenterList inferStereocentersFromPositions(
+    const AngstromWrapper& angstromWrapper,
+    const boost::optional<
+      std::vector<BondIndex>
+    >& explicitBondStereocenterCandidatesOption = boost::none
+  ) const;
 
   /*! Modular comparison of this Molecule with another.
    *
