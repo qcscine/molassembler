@@ -24,7 +24,7 @@ class Molecule;
  */
 unsigned numRotatableBonds(
   const Molecule& mol,
-  const unsigned cycleThreshold = 5
+  unsigned cycleThreshold = 5
 );
 
 } // namespace molassembler

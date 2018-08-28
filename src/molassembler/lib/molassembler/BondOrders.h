@@ -1,8 +1,11 @@
 #ifndef INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 #define INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 
-#include "Delib/BondOrderCollection.h"
-#include "Delib/ElementTypeCollection.h"
+// Forward-declarations
+namespace Delib {
+class BondOrderCollection;
+class ElementTypeCollection;
+} // namespace Delib
 
 /*! @file
  *

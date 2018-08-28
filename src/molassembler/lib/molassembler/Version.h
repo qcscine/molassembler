@@ -16,11 +16,11 @@ constexpr unsigned short major = 0;
 constexpr unsigned short minor = 1;
 constexpr unsigned short fix = 0;
 
-std::string majorMinor() {
+inline std::string majorMinor() {
   return std::to_string(major) + "." + std::to_string(minor);
 }
 
-std::string fullVersion() {
+inline std::string fullVersion() {
   return (
     std::to_string(major)
     + "." + std::to_string(minor)

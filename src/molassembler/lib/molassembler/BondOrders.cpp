@@ -1,5 +1,8 @@
 #include "molassembler/BondOrders.h"
 
+#include "Delib/ElementTypeCollection.h"
+#include "Delib/BondOrderCollection.h"
+
 #include "molassembler/Containers/AngstromWrapper.h"
 #include "molassembler/Modeling/BondDistance.h"
 

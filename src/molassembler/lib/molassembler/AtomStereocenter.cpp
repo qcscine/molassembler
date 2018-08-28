@@ -16,6 +16,7 @@
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"

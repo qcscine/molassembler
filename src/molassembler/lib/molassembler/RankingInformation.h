@@ -25,7 +25,7 @@ struct LinkInformation {
   LinkInformation(
     std::pair<unsigned, unsigned> ligandIndices,
     std::vector<AtomIndex> sequence,
-    const AtomIndex source
+    AtomIndex source
   );
 //!@}
 
@@ -122,7 +122,7 @@ struct RankingInformation {
 
 //!@name Information
 //!@{
-  unsigned getLigandIndexOf(const AtomIndex i) const;
+  unsigned getLigandIndexOf(AtomIndex i) const;
 
   bool hasHapticLigands() const;
 //!@}

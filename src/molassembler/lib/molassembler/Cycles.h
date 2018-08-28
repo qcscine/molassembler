@@ -1,5 +1,5 @@
-#ifndef INCLUDE_URF_DATA_H
-#define INCLUDE_URF_DATA_H
+#ifndef INCLUDE_MOLASSEMBLER_CYCLES_H
+#define INCLUDE_MOLASSEMBLER_CYCLES_H
 
 // RDL
 #include "RingDecomposerLib.h"
@@ -159,13 +159,13 @@ public:
   unsigned numCycleFamilies() const;
 
   //! Returns the number of unique ring families (URFs) an index is involved in
-  unsigned numCycleFamilies(const AtomIndex index) const;
+  unsigned numCycleFamilies(AtomIndex index) const;
 
   //! Returns the number of relevant cycles (RCs)
   unsigned numRelevantCycles() const;
 
   //! Returns the number of relevant cycles (RCs)
-  unsigned numRelevantCycles(const AtomIndex index) const;
+  unsigned numRelevantCycles(AtomIndex index) const;
 
   //! Provide access to calculated data
   RDL_data* dataPtr() const;

@@ -1,7 +1,6 @@
 #ifndef INCLUDE_MOLASSEMBLER_ATOM_STEREOCENTER_H
 #define INCLUDE_MOLASSEMBLER_ATOM_STEREOCENTER_H
 
-#include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "molassembler/Options.h"
 #include "molassembler/OuterGraph.h"
 
