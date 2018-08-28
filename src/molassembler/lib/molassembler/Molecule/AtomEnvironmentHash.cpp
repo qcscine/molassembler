@@ -104,6 +104,8 @@ std::vector<AtomEnvironmentHashType> generate(
   const StereocenterList& stereocenters,
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask
 ) {
+  /* TODO BondStereocenter does not factor in yet at all! */
+
   std::vector<AtomEnvironmentHashType> hashes;
 
   const AtomIndex N = inner.N();
@@ -130,7 +132,8 @@ std::vector<AtomEnvironmentHashType> generate(
     boost::optional<unsigned> assignmentOption;
 
     if(auto refOption = stereocenters.option(i)) {
-      symmetryNameOption = refOption.value().getSymmetry();
+      symmetryNameOption = refOption->getSymmetry();
+      assignmentOption = refOption->assigned();
     }
 
     hashes.emplace_back(

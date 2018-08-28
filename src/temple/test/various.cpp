@@ -179,18 +179,18 @@ BOOST_AUTO_TEST_CASE(memberFetcherTests) {
   );
 }
 
-//BOOST_AUTO_TEST_CASE(setRemovalDefect) {
-//  /* Sets and maps cannot use std::remove_if! Not a defect. */
-//
-//  auto testSet = temple::moveIf(
-//    std::set<unsigned> {5, 2, 9, 1, 3, 4, 8},
-//    [](const auto& value) -> bool {
-//      return value % 2 != 0;
-//    }
-//  );
-//
-//  BOOST_CHECK((testSet == std::set<unsigned> {1, 3, 5, 9}));
-//}
+BOOST_AUTO_TEST_CASE(setRemovalDefect) {
+  /* Sets and maps cannot use std::remove_if! Not a defect. */
+
+  auto testSet = temple::copyIf(
+    std::set<unsigned> {5, 2, 9, 1, 3, 4, 8},
+    [](const auto& value) -> bool {
+      return value % 2 != 0;
+    }
+  );
+
+  BOOST_CHECK((testSet == std::set<unsigned> {1, 3, 5, 9}));
+}
 
 BOOST_AUTO_TEST_CASE(selectTestCases) {
   auto ragged2D = std::vector<

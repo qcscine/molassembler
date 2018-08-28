@@ -364,7 +364,7 @@ std::enable_if_t<
   std::string
 > condenseIterable(
   const Container& container,
-  std::string joiningChar = ", "
+  const std::string& joiningChar = ", "
 );
 
 //! Version for strings
@@ -376,7 +376,7 @@ template<class Container> std::enable_if_t<
   std::string
 > condenseIterable(
   const Container& container,
-  std::string joiningChar = ", "
+  const std::string& joiningChar = ", "
 );
 
 /*!
@@ -1114,7 +1114,7 @@ std::enable_if_t<
   std::string
 > condenseIterable(
   const Container& container,
-  std::string joiningChar
+  const std::string& joiningChar
 ) {
   using namespace std::string_literals;
 
@@ -1138,7 +1138,7 @@ template<class Container> std::enable_if_t<
   std::string
 > condenseIterable(
   const Container& container,
-  std::string joiningChar
+  const std::string& joiningChar
 ) {
   using namespace std::string_literals;
 
@@ -1251,6 +1251,11 @@ Container moveIf(
   Container&& container,
   UnaryFunction&& predicate
 ) {
+  static_assert(
+    !std::is_trivial<traits::getValueType<Container>>::value,
+    "It does not make any sense to use moveIf if the container's value type is a trivial type"
+  );
+
   Container returnContainer;
   reserveIfPossible(returnContainer, container);
 
@@ -1380,7 +1385,7 @@ template<
 > auto unpackArrayToFunctionHelper(
   const ArrayType<T, N>& array,
   NAryFunction&& function,
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* index_sequence */
 ) {
   return function(
     array.at(Inds)...
