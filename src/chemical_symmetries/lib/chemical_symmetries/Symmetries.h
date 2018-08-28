@@ -84,7 +84,7 @@ struct SymmetryInformation {
     RotationsList rotations,
     TetrahedronList tetrahedra,
     CoordinateList coordinates
-  ) : stringName(stringName),
+  ) : stringName(std::move(stringName)),
       size(size),
       rotations(std::move(rotations)),
       tetrahedra(std::move(tetrahedra)),
@@ -95,7 +95,7 @@ struct SymmetryInformation {
 // Helper function to create all names vector
 template<size_t ... Inds>
 constexpr std::array<Name, nSymmetries> makeAllNames(
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* indexSequence */
 ) {
   return {{
     static_cast<Name>(Inds)...
@@ -264,7 +264,7 @@ inline Name nameFromString(const std::string& nameString) {
 }
 
 //! Fetch a space-free name for file naming
-std::string spaceFreeName(const Name name);
+std::string spaceFreeName(Name name);
 
 //! Fetch the number of symmetry positions of a symmetry
 inline unsigned size(const Name name) {
@@ -278,12 +278,12 @@ inline const RotationsList& rotations(const Name name) {
 
 //! Gets a symmetry's angle function
 inline data::AngleFunctionPtr angleFunction(const Name name) {
-  unsigned symmetryIndex = static_cast<unsigned>(name);
+  auto symmetryIndex = static_cast<unsigned>(name);
   return data::angleFunctions.at(symmetryIndex);
 }
 
 //! Returns the index of a symmetry name within allNames
-unsigned nameIndex(const Name name);
+unsigned nameIndex(Name name) PURITY_STRONG;
 
 //! Fetches the list of tetrahedra defined in a symmetry
 inline const TetrahedronList& tetrahedra(const Name name) {

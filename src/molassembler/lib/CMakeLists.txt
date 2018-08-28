@@ -27,7 +27,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/AnalysisHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/BuildTypeSwitch.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/DelibHelpers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/RangeForTemporary.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/StdlibTypeAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ConformerGeneration.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceBoundsMatrix.h
@@ -47,7 +46,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/Bridge.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphAlgorithms.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/InnerGraph.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/Base64.h
@@ -146,18 +144,18 @@ target_link_libraries(
   PUBLIC
     Boost::boost
     scine::Delib
-    stereopermutation
     boost_outcome
-    json
     chemical_symmetries
     RingDecomposerLibStatic
-    gor1
-    dlib::dlib
-    ${BLAS_LIBRARIES}
   PRIVATE
     cyclic_polygons
+    stereopermutation
+    gor1
+    json
     Boost::filesystem
     Boost::system
+    dlib::dlib
+    ${BLAS_LIBRARIES}
 )
 
 target_link_libraries(
@@ -165,18 +163,18 @@ target_link_libraries(
   PUBLIC
     Boost::boost
     scine::DelibStatic
-    stereopermutation
     boost_outcome
-    json
     chemical_symmetries
     RingDecomposerLibStatic
-    gor1
-    dlib::dlib
-    ${BLAS_LIBRARIES}
   PRIVATE
     cyclic_polygons
+    stereopermutation
+    gor1
+    json
     Boost::filesystem
     Boost::system
+    dlib::dlib
+    ${BLAS_LIBRARIES}
 )
 
 install(

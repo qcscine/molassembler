@@ -18,5 +18,6 @@ foreach(filename ${analysisFiles})
       Boost::regex
       Boost::system
       molassembler
+      gor1
   )
 endforeach()

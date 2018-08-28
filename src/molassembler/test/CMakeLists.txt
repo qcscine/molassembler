@@ -30,7 +30,9 @@ foreach(filename ${testFiles})
       Boost::boost
       Boost::regex
       Boost::unit_test_framework
+      gor1
       molassembler
+      stereopermutation
   )
 
   # add target to tests

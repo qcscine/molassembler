@@ -34,7 +34,7 @@ void writeExpandedTree(
 
   auto expandedTree = RankingTree(
     molecule.graph(),
-    molecule.cycles(),
+    molecule.graph().cycles(),
     molecule.stereocenters(),
     molecule.dumpGraphviz(),
     expandOnIndex
