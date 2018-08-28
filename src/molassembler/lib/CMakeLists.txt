@@ -147,6 +147,8 @@ target_link_libraries(
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic
+    dlib::dlib
+    ${BLAS_LIBRARIES}
   PRIVATE
     cyclic_polygons
     stereopermutation
@@ -154,8 +156,6 @@ target_link_libraries(
     json
     Boost::filesystem
     Boost::system
-    dlib::dlib
-    ${BLAS_LIBRARIES}
 )
 
 target_link_libraries(
@@ -166,6 +166,8 @@ target_link_libraries(
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic
+    dlib::dlib
+    ${BLAS_LIBRARIES}
   PRIVATE
     cyclic_polygons
     stereopermutation
@@ -173,8 +175,6 @@ target_link_libraries(
     json
     Boost::filesystem
     Boost::system
-    dlib::dlib
-    ${BLAS_LIBRARIES}
 )
 
 install(
