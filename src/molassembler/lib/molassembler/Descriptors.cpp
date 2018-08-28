@@ -46,11 +46,10 @@ unsigned numRotatableBonds(const Molecule& mol) {
       continue;
     }
 
-    // If there is an assigned stereogenic stereocenter on the edge, it cannot be rotatable
+    // If there is an assigned stereocenter on the edge, it cannot be rotatable
     auto bondStereocenterOption = mol.stereocenters().option(edge);
     if(
       bondStereocenterOption
-      && bondStereocenterOption->numStereopermutations() > 1
       && bondStereocenterOption->assigned() != boost::none
     ) {
       continue;
