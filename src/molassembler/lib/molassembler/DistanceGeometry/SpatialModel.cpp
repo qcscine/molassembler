@@ -164,7 +164,9 @@ SpatialModel::SpatialModel(
    */
   for(
     const auto cyclePtr :
-    cycleData.iterate(Cycles::predicates::SizeLessThan {6})
+    boost::make_iterator_range(
+      cycleData.iteratorPair(Cycles::predicates::SizeLessThan {6})
+    )
   ) {
     const auto edgeDescriptors = Cycles::edges(cyclePtr);
     const unsigned cycleSize = edgeDescriptors.size();
@@ -1138,7 +1140,9 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
    */
   for(
     const auto cyclePtr :
-    etaLessCycles.iterate(Cycles::predicates::ConsistsOf {baseConstituents})
+    boost::make_iterator_range(
+      etaLessCycles.iteratorPair(Cycles::predicates::ConsistsOf {baseConstituents})
+    )
   ) {
     /* So if it IS a cycle, we need a ring index sequence to calculate a cyclic
      * polygon circumradius, which is how flat cycles are modelled here

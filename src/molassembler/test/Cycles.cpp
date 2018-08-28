@@ -1,8 +1,9 @@
 #define BOOST_TEST_MODULE RingDecomposition
-#include <boost/test/unit_test.hpp>
-
 #define BOOST_FILESYSTEM_NO_DEPRECATED
+
 #include "boost/filesystem.hpp"
+#include "boost/range/iterator_range_core.hpp"
+#include "boost/test/unit_test.hpp"
 
 #include "temple/Stringify.h"
 #include "temple/Containers.h"
@@ -94,7 +95,11 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
 
     for(
       const auto cyclePtr :
-      cycles.iterate(Cycles::predicates::SizeLessThan(cycleSizeThreshold))
+      boost::make_iterator_range(
+        cycles.iteratorPair(
+          Cycles::predicates::SizeLessThan(cycleSizeThreshold)
+        )
+      )
     ) {
       BOOST_CHECK_MESSAGE(
         Cycles::size(cyclePtr) < cycleSizeThreshold,

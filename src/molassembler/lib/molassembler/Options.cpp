@@ -1,5 +1,6 @@
 #include "molassembler/Options.h"
 
+#include "boost/range/iterator_range_core.hpp"
 #include "chemical_symmetries/Symmetries.h"
 
 #include "molassembler/AtomStereocenter.h"
@@ -27,7 +28,11 @@ bool disregardStereocenter(
     // Figure out if the nitrogen is in a cycle of size 4 or smaller
     for(
       const auto cyclePtr :
-      cycleData.iterate(Cycles::predicates::ContainsIndex {stereocenter.centralIndex()})
+      boost::make_iterator_range(
+        cycleData.iteratorPair(
+          Cycles::predicates::ContainsIndex {stereocenter.centralIndex()}
+        )
+      )
     ) {
       if(Cycles::size(cyclePtr) <= 4) {
         return false;

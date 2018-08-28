@@ -7,7 +7,6 @@
 #include "temple/TinySet.h"
 #include "temple/Traits.h"
 
-#include "molassembler/Detail/RangeForTemporary.h"
 #include "molassembler/OuterGraph.h"
 
 #include <functional>
@@ -176,14 +175,14 @@ public:
   constIterator begin() const;
   constIterator end() const;
 
-  /*! Iterate through cycles satisfying a predicate.
+  /*! Provides two iterators that permit iteration through cycles satisfying a predicate.
    *
    * PredicateType must be a unary predicate taking a const RDL_cycle* const.
    * Sample predicates are predicates::SizeLessThan and
    * predicates::ContainsIndex.
    */
   template<typename UnaryPredicate>
-  RangeForTemporary<constIterator> iterate(UnaryPredicate&& predicate) const {
+  std::pair<constIterator, constIterator> iteratorPair(UnaryPredicate&& predicate) const {
     return {
       constIterator {_rdlPtr, predicate},
       constIterator {_rdlPtr, predicate, numRelevantCycles()}

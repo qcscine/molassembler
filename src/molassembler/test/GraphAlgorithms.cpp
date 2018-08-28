@@ -373,7 +373,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
 
   auto links = GraphAlgorithms::substituentLinks(
     mol.graph().inner(),
-    mol.cycles(),
+    mol.graph().cycles(),
     relevantData.source,
     ligands,
     {}

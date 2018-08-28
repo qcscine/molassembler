@@ -27,6 +27,7 @@ namespace molassembler {
 
 // Forward-declare InnerGraph
 class InnerGraph;
+class Cycles;
 
 class OuterGraph {
 public:
@@ -109,6 +110,8 @@ public:
   BondType bondType(const BondIndex& edge) const;
   bool canRemove(AtomIndex a) const;
   bool canRemove(const BondIndex& edge) const;
+  Cycles cycles() const;
+  unsigned degree(AtomIndex a) const;
   Delib::ElementTypeCollection elementCollection() const;
   Delib::ElementType elementType(AtomIndex a) const;
 

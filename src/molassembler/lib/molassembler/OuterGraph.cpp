@@ -2,6 +2,7 @@
 
 #include "Delib/ElementTypeCollection.h"
 
+#include "molassembler/Cycles.h"
 #include "molassembler/Graph/Bridge.h"
 
 namespace molassembler {
@@ -83,6 +84,14 @@ bool OuterGraph::canRemove(const BondIndex& edge) const {
   return inner().canRemove(
     toInner(edge, inner())
   );
+}
+
+Cycles OuterGraph::cycles() const {
+  return {*this};
+}
+
+unsigned OuterGraph::degree(const AtomIndex a) const {
+  return inner().degree(a);
 }
 
 OuterGraph::Range<OuterGraph::AtomIterator> OuterGraph::atoms() const {

@@ -128,7 +128,7 @@ void writeExpandedTree(
 
   auto expandedTree = RankingTree(
     molecule.graph(),
-    molecule.cycles(),
+    molecule.graph().cycles(),
     molecule.stereocenters(),
     molecule.dumpGraphviz(),
     expandOnIndex,
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
 
   auto exampleThreeExpanded = RankingTree(
     exampleThree.graph(),
-    exampleThree.cycles(),
+    exampleThree.graph().cycles(),
     exampleThree.stereocenters(),
     exampleThree.dumpGraphviz(),
     0,
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
 
   auto exampleThreeExpandedAgain = RankingTree(
     exampleThree.graph(),
-    exampleThree.cycles(),
+    exampleThree.graph().cycles(),
     exampleThree.stereocenters(),
     exampleThree.dumpGraphviz(),
     1,

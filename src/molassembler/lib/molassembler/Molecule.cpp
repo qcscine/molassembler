@@ -216,16 +216,11 @@ struct Molecule::Impl {
   //! Returns a graphivz string representation of the molecule
   std::string dumpGraphviz() const;
 
-  Cycles cycles() const;
-
   //! Provides read-only access to the graph member
   const OuterGraph& graph() const;
 
   //! Provides read-only access to the list of stereocenters
   const StereocenterList& stereocenters() const;
-
-  //! Returns the number of adjacencies of an atomic position
-  unsigned getNumAdjacencies(AtomIndex a) const;
 
   StereocenterList inferStereocentersFromPositions(
     const AngstromWrapper& angstromWrapper,
@@ -260,7 +255,7 @@ struct Molecule::Impl {
 StereocenterList Molecule::Impl::_detectStereocenters() const {
   StereocenterList stereocenterList;
 
-  Cycles cycleData = cycles();
+  Cycles cycleData = graph().cycles();
   // Find AtomStereocenters
   for(
     AtomIndex candidateIndex = 0;
@@ -401,7 +396,7 @@ void Molecule::Impl::_propagateGraphChange() {
    * - Need state propagation for BondStereocenters, anything else is madness
    */
 
-  Cycles cycleData = cycles();
+  Cycles cycleData = graph().cycles();
 
   for(
     const InnerGraph::Vertex vertex :
@@ -930,7 +925,7 @@ Symmetry::Name Molecule::Impl::determineLocalGeometry(
     throw std::out_of_range("Molecule::determineLocalGeometry: Supplied index is invalid!");
   }
 
-  if(getNumAdjacencies(index) <= 1) {
+  if(graph().degree(index) <= 1) {
     throw std::logic_error(
       "Molecule::determineLocalGeometry: No geometries exist for terminal atoms"
     );
@@ -959,20 +954,12 @@ std::string Molecule::Impl::dumpGraphviz() const {
   return graphvizStream.str();
 }
 
-Cycles Molecule::Impl::cycles() const {
-  return Cycles {_adjacencies};
-}
-
 const OuterGraph& Molecule::Impl::graph() const {
   return _adjacencies;
 }
 
 const StereocenterList& Molecule::Impl::stereocenters() const {
   return _stereocenters;
-}
-
-unsigned Molecule::Impl::getNumAdjacencies(const AtomIndex a) const {
-  return _adjacencies.inner().degree(a);
 }
 
 StereocenterList Molecule::Impl::inferStereocentersFromPositions(
@@ -984,7 +971,7 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
   const AtomIndex size = graph().N();
   StereocenterList stereocenters;
 
-  Cycles cycleData = cycles();
+  Cycles cycleData = graph().cycles();
 
   for(unsigned candidateIndex = 0; candidateIndex < size; candidateIndex++) {
     RankingInformation localRanking = rankPriority(candidateIndex, {}, angstromWrapper);
@@ -1164,7 +1151,7 @@ RankingInformation Molecule::Impl::rankPriority(
   // Rank the substituents
   auto expandedTree = RankingTree(
     graph(),
-    cycles(),
+    graph().cycles(),
     stereocenters(),
     molGraphviz,
     a,
@@ -1183,7 +1170,7 @@ RankingInformation Molecule::Impl::rankPriority(
   // Find links between them
   rankingResult.links = GraphAlgorithms::substituentLinks(
     _adjacencies.inner(),
-    cycles(),
+    graph().cycles(),
     a,
     rankingResult.ligands,
     excludeAdjacent
@@ -1340,20 +1327,12 @@ std::string Molecule::dumpGraphviz() const {
   return _pImpl->dumpGraphviz();
 }
 
-Cycles Molecule::cycles() const {
-  return _pImpl->cycles();
-}
-
 const OuterGraph& Molecule::graph() const {
   return _pImpl->graph();
 }
 
 const StereocenterList& Molecule::stereocenters() const {
   return _pImpl->stereocenters();
-}
-
-unsigned Molecule::getNumAdjacencies(const AtomIndex a) const {
-  return _pImpl->getNumAdjacencies(a);
 }
 
 StereocenterList Molecule::inferStereocentersFromPositions(

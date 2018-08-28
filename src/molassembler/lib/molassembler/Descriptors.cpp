@@ -11,7 +11,7 @@
 namespace molassembler {
 
 unsigned numRotatableBonds(const Molecule& mol) {
-  Cycles cycleData = mol.cycles();
+  Cycles cycleData = mol.graph().cycles();
 
   std::map<BondIndex, unsigned> smallestCycle;
 
@@ -40,8 +40,8 @@ unsigned numRotatableBonds(const Molecule& mol) {
 
     // If either atom on the bond is terminal, it cannot be rotatable
     if(
-      mol.getNumAdjacencies(edge.first) == 1
-      || mol.getNumAdjacencies(edge.second) == 1
+      mol.graph().degree(edge.first) == 1
+      || mol.graph().degree(edge.second) == 1
     ) {
       continue;
     }

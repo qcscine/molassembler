@@ -6,7 +6,6 @@
 #include "chemical_symmetries/Names.h"
 #include "temple/constexpr/Bitmask.h"
 
-#include "molassembler/Detail/RangeForTemporary.h"
 #include "molassembler/Containers/AngstromWrapper.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
@@ -36,7 +35,6 @@ namespace molassembler {
 
 // Forward declarations
 class OuterGraph;
-class Cycles;
 class StereocenterList;
 struct RankingInformation;
 
@@ -225,19 +223,11 @@ public:
   //! Returns a graphivz string representation of the molecule
   std::string dumpGraphviz() const;
 
-  // Move to OuterGraph
-  [[deprecated]]
-  Cycles cycles() const;
-
   //! Provides read-only access to the graph member
   const OuterGraph& graph() const;
 
   //! Provides read-only access to the list of stereocenters
   const StereocenterList& stereocenters() const;
-
-  //! Returns the number of adjacencies of an atomic position
-  [[deprecated]]
-  unsigned getNumAdjacencies(AtomIndex a) const;
 
   /*! Generates stereocenters from connectivity and positional information
    *
