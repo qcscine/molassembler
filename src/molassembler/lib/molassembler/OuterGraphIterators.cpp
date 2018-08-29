@@ -113,10 +113,6 @@ struct BaseIteratorWrapper {
    * wrapper never calls it
    */
 
-  typename Iterator::difference_type operator - (const BaseIteratorWrapper& other) const {
-    return iterator - other.iterator;
-  }
-
   bool operator == (const BaseIteratorWrapper& other) const {
     return iterator == other.iterator;
   }

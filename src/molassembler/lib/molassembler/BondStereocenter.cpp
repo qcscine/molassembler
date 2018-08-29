@@ -302,6 +302,16 @@ void BondStereocenter::Impl::fit(
 
 /* Information */
 boost::optional<unsigned> BondStereocenter::Impl::assigned() const {
+  /* If the underlying composite is isotropic, it does not matter which of those
+   * permutations by symmetry position is the factual spatial arrangement (since
+   * they are all rotationally equivalent). We have to spoof that there is only
+   * one arrangement in this case (although we need all of them for spatial
+   * fitting).
+   */
+  if(_assignment && _composite.isIsotropic()) {
+    return 0u;
+  }
+
   return _assignment;
 }
 
@@ -310,14 +320,26 @@ bool BondStereocenter::Impl::hasSameCompositeOrientation(const BondStereocenter:
 }
 
 boost::optional<unsigned> BondStereocenter::Impl::indexOfPermutation() const {
+  if(_assignment && _composite.isIsotropic()) {
+    return 0u;
+  }
+
   return _assignment;
 }
 
 unsigned BondStereocenter::Impl::numAssignments() const {
+  if(_composite.isIsotropic()) {
+    return 1;
+  }
+
   return _composite.permutations();
 }
 
 unsigned BondStereocenter::Impl::numStereopermutations() const {
+  if(_composite.isIsotropic()) {
+    return 1;
+  }
+
   return _composite.permutations();
 }
 
@@ -535,7 +557,7 @@ BondStereocenter::~BondStereocenter() = default;
 BondStereocenter::BondStereocenter(
   const AtomStereocenter& stereocenterA,
   const AtomStereocenter& stereocenterB,
-  const BondIndex edge
+  const BondIndex& edge
 ) {
   _pImpl = std::make_unique<Impl>(
     stereocenterA,

@@ -209,6 +209,30 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
   );
 }
 
+BOOST_AUTO_TEST_CASE(basicInequivalencyTests) {
+  // Build an asymmetric tetrahedral carbon
+  Molecule a {Delib::ElementType::C, Delib::ElementType::H, BondType::Single};
+  a.addAtom(Delib::ElementType::F, 0, BondType::Single);
+  a.addAtom(Delib::ElementType::Cl, 0, BondType::Single);
+  a.addAtom(Delib::ElementType::Br, 0, BondType::Single);
+  a.setGeometryAtAtom(0, Symmetry::Name::Tetrahedral);
+
+  // Make sure it's recognized as asymmetric
+  auto centralStereocenterOption = a.stereocenters().option(0);
+  BOOST_CHECK(
+    centralStereocenterOption
+    && centralStereocenterOption->numStereopermutations() == 2
+  );
+
+  // Assign it and create its opposite stereopermutation in another Molecule
+  a.assignStereocenter(0, 0);
+  Molecule b = a;
+  b.assignStereocenter(0, 1);
+
+  // These must compare unequal
+  BOOST_CHECK(a != b);
+}
+
 bool isStereogenic(
   const Molecule& molecule,
   AtomIndex i

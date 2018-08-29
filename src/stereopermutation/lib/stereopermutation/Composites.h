@@ -70,6 +70,8 @@ std::pair<T, T> makeOrderedPair(T a, T b) {
 
 class Composite {
 public:
+//!@name Member types
+//!@{
   struct AngleGroup {
     double angle;
     std::vector<unsigned> symmetryPositions;
@@ -128,34 +130,29 @@ public:
   };
 
   using DihedralTuple = std::tuple<unsigned, unsigned, double>;
+
   using PermutationsList = std::vector<
     std::vector<DihedralTuple>
   >;
 
-private:
-  temple::OrderedPair<OrientationState> _orientations;
-
-  PermutationsList _stereopermutations;
-
-  /*!
-   * Calculates the angle between two substituents that have the same angle from
-   * the bound symmetry position in a plane perpendicular to their shared axis.
-   *
-   * The axis is defined by the bound symmetry position and the central point of
-   * the symmetry. Symmetry positions with identical angles from the bound
-   * symmetry position are situated together in a plane perpendicular to the
-   * axis. The angle between these symmetry positions via the intersection with
-   * the axis in that plane is calculated by this function.
-   *
-   * \warning Do not call this with angleFromBoundSymmetryPosition == M_PI as
-   * the geometrical idea collapses.
-   */
-  static double perpendicularSubstituentAngle(
-    double angleFromBoundSymmetryPosition,
-    double angleBetweenSubstituents
-  );
+  using PerpendicularAngleGroups = std::vector<
+    std::pair<
+      temple::TinyUnorderedSet<double>,
+      std::vector<
+        std::pair<unsigned, unsigned>
+      >
+    >
+  >;
+//!@}
 
 public:
+//!@name Constructors
+//!@{
+  Composite(OrientationState first, OrientationState second);
+//!@}
+//
+//!@name Static members
+//!@{
   //! 1° absolute tolerance floating point comparison helper for angle groups
   static constexpr temple::floating::ExpandedAbsoluteEqualityComparator<double> fpComparator {
     temple::Math::toRadians(1.0)
@@ -181,26 +178,15 @@ public:
     const std::vector<unsigned>& perpendicularPlanePositions
   );
 
-  using PerpendicularAngleGroups = std::vector<
-    std::pair<
-      temple::TinyUnorderedSet<double>,
-      std::vector<
-        std::pair<unsigned, unsigned>
-      >
-    >
-  >;
-
   //! Creates sets of within-group cross angles in the perpendicular plane
   static PerpendicularAngleGroups inGroupAngles(
     const AngleGroup& angleGroup,
     Symmetry::Name symmetryName
   );
+//!@}
 
-  Composite(OrientationState first, OrientationState second);
-
-  //! Returns the number of permutations for this Composite
-  unsigned permutations() const;
-
+//!@name Information
+//!@{
   /*! Returns a set of dihedrals for a particular permutation
    *
    * \note The first two elements of each tuple specify the symmetry position
@@ -209,15 +195,59 @@ public:
    */
   const std::vector<DihedralTuple>& dihedrals(unsigned permutationIndex) const;
 
+  //! Returns whether the Composite is isotropic overall
+  bool isIsotropic() const;
+
   //! Returns the orientation state of the composite
   const temple::OrderedPair<OrientationState>& orientations() const;
 
+  //! Returns the number of permutations for this Composite
+  unsigned permutations() const;
+//!@}
+
+//!@name Iterators
+//!@{
   //! Through-iteration of the generated dihedral permutations
   PermutationsList::const_iterator begin() const;
   PermutationsList::const_iterator end() const;
+//!@}
 
+//!@name Operators
+//!@{
   bool operator == (const Composite& other) const;
   bool operator != (const Composite& other) const;
+//!@}
+
+private:
+//!@name Private state
+//!@{
+  //! Stores the relative orientation with which the permutations were generated
+  temple::OrderedPair<OrientationState> _orientations;
+
+  //! List of dihedral sets that comprise all spatial arrangements
+  PermutationsList _stereopermutations;
+
+  //! Stores whether the Composite is isotropic
+  bool _isotropic;
+//!@}
+
+  /*!
+   * Calculates the angle between two substituents that have the same angle from
+   * the bound symmetry position in a plane perpendicular to their shared axis.
+   *
+   * The axis is defined by the bound symmetry position and the central point of
+   * the symmetry. Symmetry positions with identical angles from the bound
+   * symmetry position are situated together in a plane perpendicular to the
+   * axis. The angle between these symmetry positions via the intersection with
+   * the axis in that plane is calculated by this function.
+   *
+   * \warning Do not call this with angleFromBoundSymmetryPosition == M_PI as
+   * the geometrical idea collapses.
+   */
+  static double perpendicularSubstituentAngle(
+    double angleFromBoundSymmetryPosition,
+    double angleBetweenSubstituents
+  );
 };
 
 } // namespace stereopermutation

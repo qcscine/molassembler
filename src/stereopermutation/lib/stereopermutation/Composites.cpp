@@ -588,13 +588,13 @@ Composite::Composite(OrientationState first, OrientationState second)
     }
   );
 
-  /* Even if either side is isotropic and overall this stereocenter has only one
-   * assignment, the first discovered permutation must be kept in order to
-   * enforce planarity if it exists. Any further stereopermutations lead to
-   * identical three-dimensional arrangements.
-   *
+  /* From the angle groups' characters, we can figure out if all
+   * stereopermutations that are generated will be ranking-wise equivalent
+   * spatially despite differing in the symmetry positions at which the equally
+   * ranked substituents are placed. This is important information for deciding
+   * whether a Composite yields a stereogenic object.
    */
-  bool overallIsotropic = angleGroups.first.isotropic || angleGroups.second.isotropic;
+  _isotropic = angleGroups.first.isotropic || angleGroups.second.isotropic;
 
   /* Generate a set of stereopermutations for this particular combination,
    * which can then be indexed
@@ -657,61 +657,53 @@ Composite::Composite(OrientationState first, OrientationState second)
    * This is essentially brute-forcing the problem. I'm having a hard time
    * thinking up an elegant solution that can satisfy all possible symmetries.
    */
-  auto addDihedralCombination = [&](const unsigned f, const unsigned s) -> void {
-    // Calculate the dihedral angle from l.front() to r
-    double dihedralAngle = getDihedral(f, s);
 
-    // Twist the right coordinates around x so that l.front() is cis with r
-    for(auto& position: secondCoordinates) {
-      position = Eigen::AngleAxisd(
-        -dihedralAngle,
-        Eigen::Vector3d::UnitX()
-      ) * position;
-    }
+  // Generate all arrangements regarless of whether the Composite is isotropic
+  temple::forAllPairs(
+    angleGroups.first.symmetryPositions,
+    angleGroups.second.symmetryPositions,
+    [&](const unsigned f, const unsigned s) -> void {
+      // Calculate the dihedral angle from l.front() to r
+      double dihedralAngle = getDihedral(f, s);
 
-    // Make sure the rotation leads to cis arrangement
-    assert(std::fabs(getDihedral(f, s)) < 1e-10);
-
-    auto dihedralList = temple::mapAllPairs(
-      angleGroups.first.symmetryPositions,
-      angleGroups.second.symmetryPositions,
-      [&](const unsigned f, const unsigned s) -> DihedralTuple {
-        return {
-          f,
-          s,
-          getDihedral(f, s)
-        };
+      // Twist the right coordinates around x so that l.front() is cis with r
+      for(auto& position: secondCoordinates) {
+        position = Eigen::AngleAxisd(
+          -dihedralAngle,
+          Eigen::Vector3d::UnitX()
+        ) * position;
       }
-    );
 
-    if(
-      !temple::any_of(
-        _stereopermutations,
-        [&dihedralList](const auto& rhsDihedralList) -> bool {
-          return fpComparator.isEqual(
-            std::get<2>(dihedralList.front()),
-            std::get<2>(rhsDihedralList.front())
-          );
+      // Make sure the rotation leads to cis arrangement
+      assert(std::fabs(getDihedral(f, s)) < 1e-10);
+
+      auto dihedralList = temple::mapAllPairs(
+        angleGroups.first.symmetryPositions,
+        angleGroups.second.symmetryPositions,
+        [&](const unsigned f, const unsigned s) -> DihedralTuple {
+          return {
+            f,
+            s,
+            getDihedral(f, s)
+          };
         }
-      )
-    ) {
-      _stereopermutations.push_back(std::move(dihedralList));
-    }
-  };
+      );
 
-  // Branch if only one stereopermutation is needed due to isotropicity
-  if(overallIsotropic) {
-    addDihedralCombination(
-      angleGroups.first.symmetryPositions.front(),
-      angleGroups.second.symmetryPositions.front()
-    );
-  } else {
-    temple::forAllPairs(
-      angleGroups.first.symmetryPositions,
-      angleGroups.second.symmetryPositions,
-      addDihedralCombination
-    );
-  }
+      if(
+        !temple::any_of(
+          _stereopermutations,
+          [&dihedralList](const auto& rhsDihedralList) -> bool {
+            return fpComparator.isEqual(
+              std::get<2>(dihedralList.front()),
+              std::get<2>(rhsDihedralList.front())
+            );
+          }
+        )
+      ) {
+        _stereopermutations.push_back(std::move(dihedralList));
+      }
+    }
+  );
 
   /* For situations in which only one position exists in both symmetries, add
    * the trans dihedral possibility explicitly
@@ -764,7 +756,12 @@ Composite::Composite(OrientationState first, OrientationState second)
     }
   }
 
-  // Reverse the stereopermutation sequence
+  /* Reverse the stereopermutation sequence. This is so that the indices of the
+   * generated permutations yield the following simple comparison:
+   *
+   *   0 is E, 1 is Z
+   *   1 > 0 == Z > E
+   */
   std::reverse(
     std::begin(_stereopermutations),
     std::end(_stereopermutations)
@@ -777,6 +774,10 @@ unsigned Composite::permutations() const {
 
 const std::vector<Composite::DihedralTuple>& Composite::dihedrals(unsigned permutationIndex) const {
   return _stereopermutations.at(permutationIndex);
+}
+
+bool Composite::isIsotropic() const {
+  return _isotropic;
 }
 
 const temple::OrderedPair<Composite::OrientationState>& Composite::orientations() const {

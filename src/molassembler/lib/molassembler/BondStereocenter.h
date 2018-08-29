@@ -47,7 +47,6 @@ public:
 
 //!@name Special member functions
 //!@{
-  /* Rule of five members */
   BondStereocenter(BondStereocenter&& other) noexcept;
   BondStereocenter& operator = (BondStereocenter&& other) noexcept;
   BondStereocenter(const BondStereocenter& other);
@@ -62,7 +61,7 @@ public:
   BondStereocenter(
     const AtomStereocenter& stereocenterA,
     const AtomStereocenter& stereocenterB,
-    const BondIndex edge
+    const BondIndex& edge
   );
 //!@}
 
