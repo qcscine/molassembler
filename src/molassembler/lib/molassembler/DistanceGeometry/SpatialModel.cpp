@@ -911,7 +911,7 @@ struct SpatialModel::ModelGraphWriter {
       << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
       << "  edge [fontname = \"Arial\"];\n";
 
-    /* Additional nodes */
+    /* Additional nodes: BondStereocenters */
     for(const auto& bondStereocenter : spatialModel._stereocenters.bondStereocenters()) {
       std::string state;
       if(bondStereocenter.assigned()) {
@@ -926,10 +926,41 @@ struct SpatialModel::ModelGraphWriter {
         + std::to_string(bondStereocenter.edge().first)
         + std::to_string(bondStereocenter.edge().second);
 
+      std::vector<std::string> tooltipStrings {bondStereocenter.info()};
+
+      // Find any enforced dihedrals
+      for(const auto& dihedralMapPair : spatialModel._dihedralBounds) {
+        const auto& indexSequence = dihedralMapPair.first;
+        const auto& dihedralBounds = dihedralMapPair.second;
+        if(
+          (
+            indexSequence.at(1) == bondStereocenter.edge().first
+            && indexSequence.at(2) == bondStereocenter.edge().second
+          ) || (
+            indexSequence.at(1) == bondStereocenter.edge().second
+            && indexSequence.at(2) == bondStereocenter.edge().first
+          )
+        ) {
+          tooltipStrings.emplace_back(
+            "["s + std::to_string(indexSequence.at(0)) + ","s
+            + std::to_string(indexSequence.at(3)) + "] -> ["s
+            + std::to_string(
+              temple::Math::round(
+                temple::Math::toDegrees(dihedralBounds.lower)
+              )
+            ) + ", "s + std::to_string(
+              temple::Math::round(
+                temple::Math::toDegrees(dihedralBounds.upper)
+              )
+            ) + "]"s
+          );
+        }
+      }
+
       os << "  " << graphNodeName << R"( [label=")" << state
         << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
         << R"(tooltip=")"
-        << bondStereocenter.info()
+        << temple::condenseIterable(tooltipStrings, "&#10;"s)
         << R"("];)" << "\n";
 
       // Add connections to the vertices (although those don't exist yet)
