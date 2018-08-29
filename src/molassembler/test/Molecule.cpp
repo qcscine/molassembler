@@ -23,13 +23,13 @@ using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE( read_mol ) {
   std::vector<std::string> files {
-    "test_files/2,2-dimethybutane.mol",
-    "test_files/asymCarbon.mol",
-    "test_files/C8H12_asym.mol",
-    "test_files/opt-T-shaped0.mol",
-    "test_files/opt-tetrahedral0.mol",
-    "test_files/opt-trigonal-pyramidal0.mol",
-    "test_files/opt-bent0.mol"
+    "2,2-dimethybutane.mol",
+    "asymCarbon.mol",
+    "C8H12_asym.mol",
+    "opt-T-shaped0.mol",
+    "opt-tetrahedral0.mol",
+    "opt-trigonal-pyramidal0.mol",
+    "opt-bent0.mol"
   };
 
   for(const auto& filename : files) {
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
 BOOST_AUTO_TEST_CASE(isomorphismTests) {
   using namespace std::string_literals;
 
-  const std::string directoryPrefix = "test_files/isomorphisms/"s;
+  const std::string directoryPrefix = "isomorphisms/"s;
   const boost::regex isomorphismFileRegex {R"(.+_isomorphism.mol)"};
   const boost::regex removeRegex {R"(_isomorphism.mol)"};
 
@@ -251,7 +251,7 @@ bool isStereogenic(
 }
 
 BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
-  const std::string directoryPrefix = "test_files/ranking_tree_molecules/"s;
+  const std::string directoryPrefix = "ranking_tree_molecules/"s;
 
   auto pseudocenter = IO::read(
     directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
@@ -281,12 +281,12 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
 }
 
 BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
-  auto molSplat = IO::split("test_files/multiple_molecules/ethane_four_water.mol");
+  auto molSplat = IO::split("multiple_molecules/ethane_four_water.mol");
 
   auto xyzHandler = IO::FileHandlers::XYZHandler {};
-  auto xyzData = xyzHandler.read("test_files/multiple_molecules/ethane_four_water.xyz");
+  auto xyzData = xyzHandler.read("multiple_molecules/ethane_four_water.xyz");
 
-  auto xyzSplat = IO::split("test_files/multiple_molecules/ethane_four_water.xyz");
+  auto xyzSplat = IO::split("multiple_molecules/ethane_four_water.xyz");
 
   BOOST_CHECK(molSplat.size() == 5 && xyzSplat.size() == 5);
 }

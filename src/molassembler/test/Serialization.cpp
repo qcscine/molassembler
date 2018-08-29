@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(base64Tests) {
   }
 }
 
-const std::string directoryPrefix = "test_files/ranking_tree_molecules/";
+const std::string directoryPrefix = "ranking_tree_molecules/";
 
 BOOST_AUTO_TEST_CASE(moleculeSerializationTests) {
   boost::filesystem::path filesPath(directoryPrefix);

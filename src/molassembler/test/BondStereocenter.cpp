@@ -163,7 +163,7 @@ void checkExpectations(const boost::filesystem::path& filePath) {
 }
 
 BOOST_AUTO_TEST_CASE(stereocenterExpectationTests) {
-  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::path filesPath("ez_stereocenters");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {

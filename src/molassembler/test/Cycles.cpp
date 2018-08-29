@@ -116,7 +116,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
 }
 
 BOOST_AUTO_TEST_CASE(ringDecomposition) {
-  boost::filesystem::path filesPath("test_files/strained_organic_molecules");
+  boost::filesystem::path filesPath("strained_organic_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {

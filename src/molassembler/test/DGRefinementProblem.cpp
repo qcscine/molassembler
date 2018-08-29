@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
   Log::particulars = {};
 
   // Generate several RefinementProblems and check their gradients
-  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::path filesPath("ez_stereocenters");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 }
 
 BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
-  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::path filesPath("ez_stereocenters");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
 BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
   using DlibVector = dlib::matrix<double, 0, 1>;
 
-  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::path filesPath("ez_stereocenters");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {

@@ -18,16 +18,16 @@ void explainDifference(
   const StereocenterList& a,
   const StereocenterList& b
 ) {
-  std::cout << "A:" << std::endl;
+  std::cout << "First:" << std::endl;
   for(const auto& stereocenter : a.atomStereocenters()) {
     std::cout << stereocenter.info() << "\n";
   }
 
-  std::cout << "B:" << std::endl;
+  std::cout << "Second:" << std::endl;
   for(const auto& stereocenter : b.atomStereocenters()) {
     std::cout << stereocenter.info() << "\n";
   }
-  std::cout << std::endl;
+  std::cout << "\n";
 }
 
 const std::array<Delib::ElementType, 9> elements {
@@ -144,13 +144,13 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         if(!testPass) {
           auto pass = temple::count(mapped, true);
 
-          std::cout << "Test fails!" << std::endl
+          std::cout << "Test fails!\n"
             << std::setw(8) << " " << " " << Symmetry::name(symmetryName)
-            << std::endl
+            << "\n"
             << std::setw(8) << std::to_string(pass)+ "/100"
-            << " comparisons with inferred StereocenterList pass" << std::endl;
+            << " comparisons with inferred StereocenterList pass\n";
 
-          std::cout << "StereocenterList has atom stereocenters:" << std::endl;
+          std::cout << "StereocenterList has atom stereocenters:\n";
           for(const auto& stereocenter : molecule.stereocenters().atomStereocenters()) {
             std::cout << stereocenter.info() << "\n";
           }

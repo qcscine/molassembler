@@ -428,7 +428,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
 }
 
 BOOST_AUTO_TEST_CASE(substituentLinksTests) {
-  boost::filesystem::path filesPath("test_files/inorganics/multidentate");
+  boost::filesystem::path filesPath("inorganics/multidentate");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
@@ -656,7 +656,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
 }
 
 BOOST_AUTO_TEST_CASE(hapticGraphsTests) {
-  boost::filesystem::path filesPath("test_files/inorganics/haptic");
+  boost::filesystem::path filesPath("inorganics/haptic");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {

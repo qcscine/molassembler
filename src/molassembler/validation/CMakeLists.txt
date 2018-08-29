@@ -10,7 +10,7 @@ foreach(filename ${testFiles})
   set(baseName "")
   get_filename_component(baseName ${filename} NAME_WE)
 
-  set(targetName "test_${baseName}")
+  set(targetName "validation_${baseName}")
 
   # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})
@@ -25,10 +25,10 @@ foreach(filename ${testFiles})
       stereopermutation
   )
 
-  # add target to tests
   add_test(
     NAME ${targetName}
     COMMAND ${targetName}
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../data/"
   )
+  set_tests_properties(${targetName} PROPERTIES LABELS "validation")
 endforeach()

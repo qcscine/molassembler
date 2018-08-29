@@ -15,7 +15,7 @@
 BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   using namespace molassembler;
 
-  auto mol = IO::read("test_files/inorganics/multidentate/Co(ox)3.mol");
+  auto mol = IO::read("inorganics/multidentate/Co(ox)3.mol");
 
   const auto& stereocenterOption = mol.stereocenters().option(0);
   assert(stereocenterOption);
@@ -65,7 +65,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
 }
 
 BOOST_AUTO_TEST_CASE(strainedOrganicMolecules) {
-  boost::filesystem::path filesPath("test_files/strained_organic_molecules");
+  boost::filesystem::path filesPath("strained_organic_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {

@@ -242,7 +242,7 @@ void showEmbedding(const MetricMatrix& metricMatrix) {
 }
 
 BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
-  boost::filesystem::path filesPath("test_files/ez_stereocenters");
+  boost::filesystem::path filesPath("ez_stereocenters");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
 
     // choose a random reordering
     auto reorderSequence = randomReorderingSequence(
-      molecule.graph().N() + 1
+      molecule.graph().N()
     );
 
     // get a distances matrix from the bounds

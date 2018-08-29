@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
 
   using namespace molassembler;
 
-  boost::filesystem::path filesPath("test_files/stereocenter_detection_molecules");
+  boost::filesystem::path filesPath("stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
   // DBM + FW
   using namespace molassembler;
 
-  boost::filesystem::path filesPath("test_files/stereocenter_detection_molecules");
+  boost::filesystem::path filesPath("stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
   for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
