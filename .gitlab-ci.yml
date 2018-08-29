@@ -1,67 +1,84 @@
+#
+# Define the CI stages
+#
 stages:
   - build
   - test
 
-gcc-build:
+#
+# Build with GCC on Linux (docker)
+#
+build_gcc:
   stage: build
   tags:
-    - centos
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/sobezj/molassembler/gcc7:latest
   script:
-    - ls
-    - module purge
-    - module load module_include_dir gcc/7.3.0 boost/gcc-7.3.0/1.64.0-cmake Eigen/3.3.2-cmake dlib/gcc-7.3.0/19.10-cmake
-    - mkdir -p build-gcc
-    - cd build-gcc
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/scratch/sobezj/installs/scine/gcc-7.3.0/0.2.0/ ..
-    - make
+    - mkdir -p gcc_build
+    - cd gcc_build
+    - pwd
+    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - make -j8
   cache:
-    key: "$CI_BUILD_REF_NAME"
+    key: gcc_build
     paths:
-    - build-gcc/
+    - gcc_build/
 
-clang-build:
-  stage: build
-  tags:
-    - centos
-  script:
-    - ls
-    - module purge
-    - module load module_include_dir gcc/7.3.0 clang/6.0.0 boost/clang-6.0.0/1.64.0-cmake Eigen/3.3.2-cmake dlib/gcc-7.3.0/19.10-cmake
-    - mkdir -p build-clang
-    - cd build-clang
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/scratch/sobezj/installs/scine/clang-6.0.0/0.2.0/ ..
-    - make
-  cache:
-    key: "$CI_BUILD_REF_NAME"
-    paths:
-    - build-clang/
-
-gcc-test:
+#
+# Test with GCC on Linux (docker)
+#
+test_gcc:
   stage: test
   tags:
-    - centos
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/sobezj/molassembler/gcc7:latest
   script:
-    - module purge
-    - module load module_include_dir gcc/7.3.0 boost/gcc-7.3.0/1.64.0-cmake
-    - cd build-gcc
-    - make test
+    - mkdir -p gcc_build
+    - cd gcc_build
+    - make check
   cache:
-    key: "$CI_BUILD_REF_NAME"
+    key: gcc_build
     paths:
-    - build-gcc/
+    - gcc_build/
     policy: pull
 
-clang-test:
+#
+# Build in with clang docker image
+#
+build_clang:
+  stage: build
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/sobezj/molassembler/clang6:latest
+  only:
+    - master
+  script:
+    - mkdir -p build_clang
+    - cd build_clang
+    - pwd
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    - make -j8
+  cache:
+    key: build_clang
+    paths:
+    - build_clang/
+
+#
+# Test in with clang in docker image
+#
+test_clang:
   stage: test
   tags:
-    - centos
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/sobezj/molassembler/clang6:latest
+  only:
+    - master
   script:
-    - module purge
-    - module load module_include_dir gcc/7.3.0 clang/6.0.0 boost/clang-6.0.0/1.64.0-cmake
-    - cd build-clang
-    - make test
+    - mkdir -p build_clang
+    - cd build_clang
+    - make check
   cache:
-    key: "$CI_BUILD_REF_NAME"
+    key: build_clang
     paths:
-    - build-clang/
+    - build_clang/
     policy: pull
