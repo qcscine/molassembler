@@ -369,7 +369,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::Impl::chira
   for(const auto& dihedralTuple : _composite.dihedrals(_assignment.value())) {
     std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
 
-    if(std::fabs(dihedralAngle) < 1e-4 || std::fabs(M_PI - std::fabs(dihedralAngle)) < 1e-4) {
+    if(std::fabs(dihedralAngle) < M_PI / 180.0 || std::fabs(M_PI - std::fabs(dihedralAngle)) < M_PI / 180.0) {
       constraints.emplace_back(
         DistanceGeometry::ChiralityConstraint::LigandSequence {
           firstStereocenter.getRanking().ligands.at(
@@ -498,10 +498,18 @@ void BondStereocenter::Impl::setModelInformation(
       return std::fabs(phi);
     };
 
+    std::array<double, 3> possibleBoundaryValues {
+      {
+        reduceToBounds(dihedralAngle - ModelType::dihedralAbsoluteVariance * looseningMultiplier),
+        reduceToBounds(dihedralAngle),
+        reduceToBounds(dihedralAngle + ModelType::dihedralAbsoluteVariance * looseningMultiplier)
+      }
+    };
+
     // The constructor will swap passed values so that the smaller becomes .first
     temple::OrderedPair<double> boundedDihedralValues {
-      reduceToBounds(dihedralAngle - ModelType::dihedralAbsoluteVariance * looseningMultiplier),
-      reduceToBounds(dihedralAngle + ModelType::dihedralAbsoluteVariance * looseningMultiplier)
+      *std::min_element(std::begin(possibleBoundaryValues), std::end(possibleBoundaryValues)),
+      *std::max_element(std::begin(possibleBoundaryValues), std::end(possibleBoundaryValues))
     };
 
     // Take the ordered values
