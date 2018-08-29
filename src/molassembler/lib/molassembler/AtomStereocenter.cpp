@@ -1593,14 +1593,14 @@ void AtomStereocenter::setModelInformation(
 
 /* Operators */
 bool AtomStereocenter::operator == (const AtomStereocenter& other) const {
-  return _pImpl == other._pImpl;
+  return *_pImpl == *other._pImpl;
 }
 
 bool AtomStereocenter::operator != (const AtomStereocenter& other) const {
-  return !(_pImpl == other._pImpl);
+  return !(*_pImpl == *other._pImpl);
 }
 bool AtomStereocenter::operator < (const AtomStereocenter& other) const {
-  return _pImpl < other._pImpl;
+  return *_pImpl < *other._pImpl;
 }
 
 } // namespace molassembler
