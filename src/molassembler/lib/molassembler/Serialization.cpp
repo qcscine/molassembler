@@ -257,7 +257,7 @@ Molecule deserialize(const nlohmann::json& m) {
   // Atom stereocenters
   for(const auto& j : m["a"]) {
     Symmetry::Name symmetry = Symmetry::nameFromString(j["sym"]);
-    AtomIndex centralIndex = j["centers"].front();
+    AtomIndex centralIndex = j["c"];
 
     auto stereocenter = AtomStereocenter {
       graph,
