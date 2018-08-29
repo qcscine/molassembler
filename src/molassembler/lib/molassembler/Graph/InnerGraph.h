@@ -109,7 +109,7 @@ public:
   const BGLType& bgl() const;
 
   bool canRemove(Vertex a) const;
-  bool canRemove(const Edge& a) const;
+  bool canRemove(const Edge& edge) const;
 
   unsigned connectedComponents() const;
   unsigned connectedComponents(std::vector<unsigned>& componentMap) const;
@@ -122,6 +122,15 @@ public:
   Vertex degree(Vertex a) const;
   Vertex N() const;
   Vertex B() const;
+//!@}
+
+//!@name Cache management
+//!@{
+  //! Notifies the class that properties have been cached elsewhere
+  void notifyPropertiesCached() const;
+
+  //! Returns whether the InnerGraph has changed since the last notification
+  bool unchangedSinceNotification() const;
 //!@}
 
 //!@name Ranges
@@ -156,6 +165,8 @@ private:
 //!@{
   //! A directly owned Boost Library Graph.
   BGLType _graph;
+  //! Stores whether the graph is unchanged since cached property extraction
+  mutable bool _unchangedSinceNotification = false;
 //!@}
 };
 

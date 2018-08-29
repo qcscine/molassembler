@@ -12,6 +12,9 @@ InnerGraph::InnerGraph(const InnerGraph::Vertex N) : _graph {N} {}
 
 /* Modifiers */
 InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondType bondType) {
+  // Invalidate the cache
+  _unchangedSinceNotification = false;
+
   auto newBondPair = boost::add_edge(a, b, _graph);
 
   // The bond may not yet exist
@@ -22,30 +25,61 @@ InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondT
 }
 
 InnerGraph::Vertex InnerGraph::addVertex(const Delib::ElementType elementType) {
+  // Invalidate the cache values
+  _unchangedSinceNotification = false;
+
   InnerGraph::Vertex newVertex = boost::add_vertex(_graph);
   _graph[newVertex].elementType = elementType;
   return newVertex;
 }
 
 BondType& InnerGraph::bondType(const InnerGraph::Edge& edge) {
+  // Invalidate the cache values
+  _unchangedSinceNotification = false;
+
   return _graph[edge].bondType;
 }
 
 void InnerGraph::clearVertex(Vertex a) {
+  // Invalidate the cache values
+  _unchangedSinceNotification = false;
+
   boost::clear_vertex(a, _graph);
 }
 
+void InnerGraph::notifyPropertiesCached() const {
+  _unchangedSinceNotification = true;
+}
+
 void InnerGraph::removeEdge(const Edge& e) {
+  // Invalidate the cache values
+  _unchangedSinceNotification = false;
+
   boost::remove_edge(e, _graph);
 }
 
 void InnerGraph::removeVertex(Vertex a) {
+  // Invalidate the cache values
+  _unchangedSinceNotification = false;
+
   boost::remove_vertex(a, _graph);
 }
 
 Delib::ElementType& InnerGraph::elementType(const Vertex a) {
+  // Invalidate the cache values
+  _unchangedSinceNotification = false;
+
   return _graph[a].elementType;
 }
+
+InnerGraph::BGLType& InnerGraph::bgl() {
+  // Invalidate the cache values
+  _unchangedSinceNotification = false;
+
+  return _graph;
+}
+
+/* Information */
 
 bool InnerGraph::canRemove(const Vertex a) const {
   // A molecule is by definition at least two atoms!
@@ -57,9 +91,9 @@ bool InnerGraph::canRemove(const Vertex a) const {
   return _removalSafetyData().articulationVertices.count(a) == 0;
 }
 
-bool InnerGraph::canRemove(const Edge& e) const {
+bool InnerGraph::canRemove(const Edge& edge) const {
   // Removable if the edge is not a bridge
-  return _removalSafetyData().bridges.count(e) == 0;
+  return _removalSafetyData().bridges.count(edge) == 0;
 }
 
 /* Information */
@@ -121,6 +155,10 @@ InnerGraph::Vertex InnerGraph::B() const {
   return boost::num_edges(_graph);
 }
 
+bool InnerGraph::unchangedSinceNotification() const {
+  return _unchangedSinceNotification;
+}
+
 InnerGraph::VertexRange InnerGraph::vertices() const {
   return boost::vertices(_graph);
 }
@@ -135,10 +173,6 @@ InnerGraph::AdjacentVertexRange InnerGraph::adjacents(const Vertex a) const {
 
 InnerGraph::IncidentEdgeRange InnerGraph::edges(const Vertex a) const {
   return boost::out_edges(a, _graph);
-}
-
-InnerGraph::BGLType& InnerGraph::bgl() {
-  return _graph;
 }
 
 const InnerGraph::BGLType& InnerGraph::bgl() const {

@@ -86,8 +86,18 @@ bool OuterGraph::canRemove(const BondIndex& edge) const {
   );
 }
 
-Cycles OuterGraph::cycles() const {
-  return {*this};
+const Cycles& OuterGraph::cycles() const {
+  if(
+    // No managed instance yet
+    !_cachedCycles
+    // InnerGraph has been changed
+    || !inner().unchangedSinceNotification()
+  ) {
+    _cachedCycles = std::make_unique<Cycles>(*this);
+    inner().notifyPropertiesCached();
+  }
+
+  return *_cachedCycles;
 }
 
 unsigned OuterGraph::degree(const AtomIndex a) const {

@@ -110,7 +110,7 @@ public:
   BondType bondType(const BondIndex& edge) const;
   bool canRemove(AtomIndex a) const;
   bool canRemove(const BondIndex& edge) const;
-  Cycles cycles() const;
+  const Cycles& cycles() const;
   unsigned degree(AtomIndex a) const;
   Delib::ElementTypeCollection elementCollection() const;
   Delib::ElementType elementType(AtomIndex a) const;
@@ -133,11 +133,16 @@ public:
 
 private:
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
-    std::experimental::propagate_const<
-      std::unique_ptr<InnerGraph>
-    > _innerPtr;
+  std::experimental::propagate_const<
+    std::unique_ptr<InnerGraph>
+  > _innerPtr;
+
+  mutable std::experimental::propagate_const<
+    std::unique_ptr<Cycles>
+  > _cachedCycles;
 #else
-    std::unique_ptr<InnerGraph> _innerPtr;
+  std::unique_ptr<InnerGraph> _innerPtr;
+  mutable std::unique_ptr<Cycles> _cachedCycles;
 #endif
 };
 
