@@ -836,7 +836,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
   }
 
   for(const auto& bondStereocenter : _stereocenters.bondStereocenters()) {
-    auto constraints = bondStereocenter.chiralityConstraints(
+    auto stereocenterConstraints = bondStereocenter.chiralityConstraints(
       _looseningMultiplier,
       _stereocenters.option(
         bondStereocenter.edge().first
@@ -847,8 +847,8 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
     );
 
     std::move(
-      std::begin(constraints),
-      std::end(constraints),
+      std::begin(stereocenterConstraints),
+      std::end(stereocenterConstraints),
       std::back_inserter(constraints)
     );
   }

@@ -100,13 +100,13 @@ double proportionChiralityConstraintsCorrectSign(
 
 bool finalStructureAcceptable(
   const DistanceBoundsMatrix& bounds,
-  const std::vector<ChiralityConstraint> chiralityConstraints,
+  const std::vector<ChiralityConstraint>& chiralityConstraints,
   const Vector& positions
 );
 
 void explainAcceptanceFailure(
   const DistanceBoundsMatrix& bounds,
-  const std::vector<ChiralityConstraint> chiralityConstraints,
+  const std::vector<ChiralityConstraint>& chiralityConstraints,
   const Vector& positions
 );
 
