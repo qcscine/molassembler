@@ -364,7 +364,6 @@ bool Molecule::Impl::_isGraphBasedBondStereocenterCandidate(
   const BondType bondType = graph().inner().bondType(e);
   return (
     bondType == BondType::Double
-    || bondType == BondType::Aromatic
     || bondType == BondType::Triple
     || bondType == BondType::Quadruple
     || bondType == BondType::Quintuple
@@ -1094,16 +1093,19 @@ bool Molecule::Impl::modularCompare(
     return false;
   }
 
-  auto thisHashes = hashes::generate(graph().inner(), stereocenters(), comparisonBitmask);
-  auto otherHashes = hashes::generate(other.graph().inner(), other.stereocenters(), comparisonBitmask);
-
   /* boost isomorphism will allocate a vector of size maxHash, this is dangerous
    * as the maximum hash can be immense, another post-processing step is needed
    * for the calculated hashes to decrease the spatial requirements
    *
    * This maps the hashes to an incremented number
    */
-  auto maxHash = hashes::regularize(thisHashes, otherHashes);
+  std::vector<hashes::HashType> thisHashes, otherHashes;
+  hashes::HashType maxHash;
+
+  std::tie(thisHashes, otherHashes, maxHash) = hashes::narrow(
+    hashes::generate(graph().inner(), stereocenters(), comparisonBitmask),
+    hashes::generate(other.graph().inner(), other.stereocenters(), comparisonBitmask)
+  );
 
   // Where the corresponding index from the other graph is stored
   std::vector<AtomIndex> indexMap(thisNumAtoms);

@@ -442,10 +442,7 @@ unsigned countPlanarityEnforcingBonds(
 
   for(const auto& edge: edgeSet) {
     const BondType edgeType = graph.bondType(edge);
-    if(
-      edgeType == BondType::Double
-      || edgeType == BondType::Aromatic
-    ) {
+    if(edgeType == BondType::Double) {
       count += 1;
     }
   }

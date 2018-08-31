@@ -103,7 +103,6 @@ const std::map<BondType, std::string> MolGraphWriter::bondTypeDisplayString {
   {BondType::Quadruple, R"(label = "4")"},
   {BondType::Quintuple, R"(label = "5")"},
   {BondType::Sextuple, R"(label = "6")"},
-  {BondType::Aromatic, R"(style = "dashed")"},
   {BondType::Eta, R"(style = "dotted")"}
 };
 

@@ -13,9 +13,6 @@ namespace molassembler {
 /*!
  * Bond type enumeration. Besides the classic organic single, double and triple
  * bonds, bond orders up to sextuple are explicitly included.
- *
- * Although currently unused, Aromatic and Eta bonds are included in
- * anticipation of their necessity.
  */
 enum class BondType : unsigned {
   Single,
@@ -24,7 +21,6 @@ enum class BondType : unsigned {
   Quadruple,
   Quintuple,
   Sextuple,
-  Aromatic,
   Eta
 };
 

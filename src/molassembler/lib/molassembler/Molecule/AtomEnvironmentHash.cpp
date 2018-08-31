@@ -5,69 +5,138 @@
 #include "chemical_symmetries/Properties.h"
 
 #include "molassembler/StereocenterList.h"
-#include "molassembler/AtomStereocenter.h"
-#include "molassembler/BondStereocenter.h"
 #include "molassembler/Graph/InnerGraph.h"
+
+#include "temple/Containers.h"
 
 namespace molassembler {
 
 namespace hashes {
 
-AtomEnvironmentHashType atomEnvironment(
+BondInformation::BondInformation(
+  BondType passBondType,
+  bool passStereocenterOnBond,
+  boost::optional<unsigned> passAssignmentOptional
+) : bondType(passBondType),
+    stereocenterOnBond(passStereocenterOnBond),
+    assignmentOptional(std::move(passAssignmentOptional))
+{}
+
+WideHashType BondInformation::hash() const {
+  // Initialize with the bond type
+  WideHashType hash (
+    /* BondType is unsigned, and we want it on the left of the assignment
+     * optional, so we shift it by three
+     */
+    (
+      /* The bond type underlying value has to be incremented because otherwise
+       * Single is the same as None
+       */
+      static_cast<
+        std::underlying_type_t<BondType>
+      >(bondType) + 1
+    ) << 3
+  );
+
+  /* In the other three bits of given width, we have to store the following
+   * cases:
+   *
+   * - 0: No BondStereocenter
+   * - 1: Unassigned BondStereocenter
+   * - 2-7: BondStereocenter assignment
+   *
+   * We can store 6 BondStereocenter assignments, which ought to be okay.
+   * The most you can probably get right now is 5 by fusing something
+   * pentagonal at an axial position.
+   */
+  if(stereocenterOnBond) {
+    if(assignmentOptional == boost::none) {
+      // Information that there is an unassigned BondStereocenter
+      hash += 1;
+    } else {
+      // Explicit assignment information
+      hash += 2 + *assignmentOptional;
+    }
+  }
+
+  // The remaining case, no stereocenter on bond, is just hash += 0
+
+  return hash;
+}
+
+bool BondInformation::operator < (const BondInformation& other) const {
+  return (
+    std::tie(bondType, stereocenterOnBond, assignmentOptional)
+    < std::tie(other.bondType, other.stereocenterOnBond, other.assignmentOptional)
+  );
+}
+
+bool BondInformation::operator == (const BondInformation& other) const {
+  return (
+    std::tie(bondType, stereocenterOnBond, assignmentOptional)
+    == std::tie(other.bondType, other.stereocenterOnBond, other.assignmentOptional)
+  );
+}
+
+WideHashType atomEnvironment(
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask,
   const Delib::ElementType elementType,
-  const std::vector<BondType>& sortedBonds,
+  const std::vector<BondInformation>& sortedBonds,
   boost::optional<Symmetry::Name> symmetryNameOptional,
   boost::optional<unsigned> assignedOptional
 ) {
   static_assert(
-    // Sum of information in bits we want to pack in the hash
+    // Sum of information in bits we want to pack in the 128 bit hash
     (
       // Element type (fixed as this cannot possibly increase)
       7
-      // Bond type, exactly as many as the largest possible symmetry
-      + 4 * Symmetry::constexprProperties::maxSymmetrySize
-      // The symmetry name
+      // Bond information: exactly as many as the largest possible symmetry
+      + Symmetry::constexprProperties::maxSymmetrySize * (
+        BondInformation::hashWidth
+      )
+      // The bits needed to store the symmetry name
       + temple::Math::ceil(
         temple::Math::log(Symmetry::nSymmetries + 1.0, 2.0)
       )
-      // Roughly 6.5k possible assignment values (maximally asymmetric square antiprismatic)
+      // Roughly 5040 possible assignment values (maximally asymmetric square antiprismatic)
       + 13
-    ) <= 64,
+    ) <= 128,
     "Element type, bond and symmetry information no longer fit into a 64-bit unsigned integer"
   );
-
 
   /* First 7 bits of the 64 bit unsigned number are from the element type
    *
    * Biggest is Cn, which has a value of 112 -> Fits in 7 bits (2^7 = 128)
    */
-  AtomEnvironmentHashType value;
+  WideHashType value;
   if(bitmask & AtomEnvironmentComponents::ElementTypes) {
-    value = static_cast<AtomEnvironmentHashType>(elementType);
+    value = static_cast<WideHashType>(elementType);
   } else {
     value = 0;
   }
 
-  /* Bonds have 8 possible values currently, plus None is 9
-   * -> fits into 4 bits (2^4 = 16)
+  /* Bond types have 7 possible values currently, plus None is 8
+   * -> fits into 3 bits (2^3 = 8).
    *
-   * (You could make an argument for removing Sextuple from the list of bond
-   * types and fitting this precisely into 3 bits only)
+   * I think bond stereocenter assignments can be up to 5 (if fused axially
+   * onto some pentagonal structure) maximally, but we can fit up to 7 into 3
+   * bits.
+   *
+   * So, a single bond's information needs 6 bits.
    *
    * So, left shift by 7 bits (so there are 7 zeros on the right in the bit
-   * representation) plus the current bond number multiplied by 4 to place a
-   * maximum of 8 bonds (maximum symmetry size currently)
+   * representation, where the element type is stored) plus the current bond
+   * number multiplied by the width of a BondInformation hash to place a
+   * maximum of 8 bond types (maximum symmetry size currently)
    *
-   * This occupies 4 * 8 = 32 bits.
+   * This occupies 6 * 8 = 48 bits.
    */
   if(bitmask & AtomEnvironmentComponents::BondOrders) {
     unsigned bondNumber = 0;
     for(const auto& bond : sortedBonds) {
       value += (
-        // No bond is represented by 0, while the remaining bond types are shifted
-        static_cast<AtomEnvironmentHashType>(bond) + 1
-      ) << (7 + 4 * bondNumber);
+        bond.hash()
+      ) << (7 + BondInformation::hashWidth * bondNumber);
 
       ++bondNumber;
     }
@@ -77,7 +146,7 @@ AtomEnvironmentHashType atomEnvironment(
     /* We add symmetry information on non-terminal atoms. There are currently
      * 16 symmetries, plus None is 17, which fits into 5 bits (2^5 = 32)
      */
-    value += (static_cast<AtomEnvironmentHashType>(symmetryNameOptional.value()) + 1) << 39;
+    value += (WideHashType(symmetryNameOptional.value()) + 1) << (7 + 48);
 
     if(bitmask & AtomEnvironmentComponents::Stereopermutations) {
       /* The remaining space 64 - (7 + 32 + 5) = 20 bits is used for the current
@@ -86,40 +155,60 @@ AtomEnvironmentHashType atomEnvironment(
        * which ought to be plenty of bit space. Maximally asymmetric square
        * antiprismatic has around 6k permutations, which fits into 13 bits.
        */
-      AtomEnvironmentHashType permutationValue;
+      WideHashType permutationValue;
       if(assignedOptional) {
         permutationValue = assignedOptional.value() + 2;
       } else {
         permutationValue = 1;
       }
-      value += static_cast<AtomEnvironmentHashType>(permutationValue) << 44;
+      value += WideHashType(permutationValue) << (7 + 48 + 5);
     }
   }
 
   return value;
 }
 
-std::vector<AtomEnvironmentHashType> generate(
+std::vector<WideHashType> generate(
   const InnerGraph& inner,
   const StereocenterList& stereocenters,
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask
 ) {
-  /* TODO BondStereocenter does not factor in yet at all! */
-
-  std::vector<AtomEnvironmentHashType> hashes;
+  std::vector<WideHashType> hashes;
 
   const AtomIndex N = inner.N();
   hashes.reserve(N);
 
-  std::vector<BondType> bonds;
+  std::vector<BondInformation> bonds;
   bonds.reserve(Symmetry::constexprProperties::maxSymmetrySize);
 
   for(AtomIndex i = 0; i < N; ++i) {
     if(bitmask & AtomEnvironmentComponents::BondOrders) {
       bonds.clear();
 
-      for(const auto& edge : boost::make_iterator_range(inner.edges())) {
-        bonds.emplace_back(inner.bondType(edge));
+      for(
+        const InnerGraph::Edge& edge :
+        boost::make_iterator_range(inner.edges(i))
+      ) {
+        auto stereocenterOption = stereocenters.option(
+          BondIndex {
+            inner.source(edge),
+            inner.target(edge)
+          }
+        );
+
+        if(stereocenterOption) {
+          bonds.emplace_back(
+            inner.bondType(edge),
+            true,
+            stereocenterOption->assigned()
+          );
+        } else {
+          bonds.emplace_back(
+            inner.bondType(edge),
+            false,
+            boost::none
+          );
+        }
       }
 
       std::sort(
@@ -150,12 +239,16 @@ std::vector<AtomEnvironmentHashType> generate(
   return hashes;
 }
 
-AtomEnvironmentHashType regularize(
-  std::vector<AtomEnvironmentHashType>& a,
-  std::vector<AtomEnvironmentHashType>& b
+std::tuple<
+  std::vector<HashType>,
+  std::vector<HashType>,
+  HashType
+> narrow(
+  const std::vector<WideHashType>& a,
+  const std::vector<WideHashType>& b
 ) {
-  std::unordered_map<AtomEnvironmentHashType, AtomEnvironmentHashType> reductionMapping;
-  AtomEnvironmentHashType counter = 0;
+  std::unordered_map<WideHashType, HashType> reductionMapping;
+  HashType counter = 0;
 
   // Generate mapping from hash values to integer-incremented reduction
   for(const auto& hash : boost::range::join(a, b)) {
@@ -170,20 +263,21 @@ AtomEnvironmentHashType regularize(
   }
 
   // counter now contains the maximum new hash for this set of hashes
-
-  // Reduce the hash representations
-  for(auto& hash : boost::range::join(a, b)) {
-    hash = reductionMapping.at(hash);
-  }
-
-  if(counter > std::numeric_limits<InnerGraph::Vertex>::max()) {
-    throw std::logic_error(
-      "Number of distinct atom environment hashes exceeds limits of boost "
-      " graph's isomorphism algorithm type used to store it!"
-    );
-  }
-
-  return counter;
+  return {
+    temple::map(
+      a,
+      [&reductionMapping](const WideHashType& hash) -> HashType {
+        return reductionMapping.at(hash);
+      }
+    ),
+    temple::map(
+      b,
+      [&reductionMapping](const WideHashType& hash) -> HashType {
+        return reductionMapping.at(hash);
+      }
+    ),
+    counter
+  };
 }
 
 /* Ensure that the LookupFunctor matches the required boost concept. Although
@@ -191,7 +285,7 @@ AtomEnvironmentHashType regularize(
  * AdaptableUnaryFunction with typedefs for argument and result.
  */
 BOOST_CONCEPT_ASSERT((
-  boost::AdaptableUnaryFunctionConcept<LookupFunctor, AtomEnvironmentHashType, AtomIndex>
+  boost::AdaptableUnaryFunctionConcept<LookupFunctor, WideHashType, AtomIndex>
 ));
 
 } // namespace hashes

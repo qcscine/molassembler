@@ -85,12 +85,22 @@ using HashArgumentsType = std::tuple<
 >;
 
 HashArgumentsType randomArguments() {
-  auto bonds = prng.getN<unsigned>(
-    0,
-    7,
-    prng.getSingle<unsigned>(1, 8)
-  );
-  std::sort(bonds.begin(), bonds.end());
+  auto genBondInformation = []() -> molassembler::hashes::BondInformation {
+    BondType bty = static_cast<BondType>(prng.getSingle<unsigned>(0, 6));
+
+    bool bondStereocenterPresent = prng.getSingle<bool>();
+    boost::optional<unsigned> bondStereocenterAssignment = boost::none;
+
+    if(bondStereocenterPresent) {
+      bondStereocenterAssignment = prng.getSingle<unsigned>(0, 1);
+    }
+
+    return {
+      bty,
+      bondStereocenterPresent,
+      bondStereocenterAssignment
+    };
+  };
 
   boost::optional<Symmetry::Name> symmetryOptional;
   boost::optional<unsigned> assignmentOptional;
@@ -103,11 +113,25 @@ HashArgumentsType randomArguments() {
     assignmentOptional = gd(prng.engine);
   }
 
+  // If a symmetry is specified, the bond number must match
+  std::vector<molassembler::hashes::BondInformation> bonds;
+  unsigned S;
+  if(symmetryOptional) {
+    S = Symmetry::size(*symmetryOptional);
+  } else {
+    S = prng.getSingle<unsigned>(1, 8);
+  }
+
+  for(unsigned i = 0; i < S; ++i) {
+    bonds.emplace_back(genBondInformation());
+  }
+  std::sort(bonds.begin(), bonds.end());
+
   return {
     static_cast<Delib::ElementType>(
       prng.getSingle<unsigned>(1, 112)
     ),
-    temple::cast<molassembler::BondType>(bonds),
+    bonds,
     symmetryOptional,
     assignmentOptional
   };
@@ -122,7 +146,7 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
   );
 
   // Try to guess a disjoint combination that has the same value
-  std::unordered_map<long long unsigned, HashArgumentsType> resultsMap;
+  std::unordered_map<molassembler::hashes::WideHashType, HashArgumentsType> resultsMap;
   for(unsigned N = 0; N < 1e6; ++N) {
     auto arguments = randomArguments();
 
@@ -139,9 +163,6 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
       BOOST_REQUIRE_MESSAGE(
         false,
         "Found overlapping result for different arguments to hashAtomEnvironment!\n"
-          << "A: " << temple::stringify(arguments) << "\n"
-          << "B: " << temple::stringify(resultsMap.at(result)) << "\n"
-          << "both yield " << result << "\n"
       );
     }
 

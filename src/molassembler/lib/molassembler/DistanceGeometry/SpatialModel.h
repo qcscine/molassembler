@@ -91,23 +91,23 @@ public:
   static boost::optional<ValueBounds> coneAngle(
     const std::vector<AtomIndex>& baseConstituents,
     const ValueBounds& coneHeightBounds,
-    const double bondRelativeVariance,
+    double bondRelativeVariance,
     const OuterGraph& graph,
     const Cycles& etaLessCycles
   );
 
-  static double spiroCrossAngle(const double alpha, const double beta);
+  static double spiroCrossAngle(double alpha, double beta);
 
   static ValueBounds ligandDistanceFromCenter(
     const std::vector<AtomIndex>& ligandIndices,
-    const AtomIndex centralIndex,
-    const double bondRelativeVariance,
+    AtomIndex centralIndex,
+    double bondRelativeVariance,
     const OuterGraph& graph
   );
 
   static ValueBounds makeBoundsFromCentralValue(
-    const double centralValue,
-    const double absoluteVariance
+    double centralValue,
+    double absoluteVariance
   );
 
   static ValueBounds clamp(
@@ -120,7 +120,7 @@ public:
 //!@{
   SpatialModel(
     const Molecule& molecule,
-    const double looseningMultiplier = 1.0
+    double looseningMultiplier = 1.0
   );
 //!@}
 
@@ -129,7 +129,7 @@ public:
   //! Sets the bond bounds to the model.
   void setBondBoundsIfEmpty(
     const std::array<AtomIndex, 2>& bondIndices,
-    const double centralValue
+    double centralValue
   );
 
   //! Sets bond bounds to exact value bounds.
@@ -180,9 +180,8 @@ public:
 
   ValueBounds ligandDistance(
     const std::vector<AtomIndex>& ligandIndices,
-    const AtomIndex centralIndex
+    AtomIndex centralIndex
   ) const;
-
 
   std::vector<ChiralityConstraint> getChiralityConstraints() const;
 

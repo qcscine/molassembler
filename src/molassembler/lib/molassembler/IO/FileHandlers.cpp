@@ -78,7 +78,6 @@ const boost::bimap<unsigned, BondType> MOLFileHandler::_bondTypeMap
   {1, BondType::Single},
   {2, BondType::Double},
   {3, BondType::Triple},
-  {4, BondType::Aromatic},
   {8, BondType::Eta}
 });
 

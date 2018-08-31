@@ -171,6 +171,8 @@ int main(int argc, char* argv[]) {
       }
       std::cout << nl;
     }
+
+    std::cout << uniques.assignments.size() << " assignments\n";
   }
 
   return 0;

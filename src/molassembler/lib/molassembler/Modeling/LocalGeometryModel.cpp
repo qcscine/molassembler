@@ -21,7 +21,6 @@ const std::map<BondType, double> bondWeights {
   {BondType::Quadruple, 4.0},
   {BondType::Quintuple, 5.0},
   {BondType::Sextuple, 6.0},
-  {BondType::Aromatic, 1.5},
   {BondType::Eta, 0.0} // TODO is this wise? (duplicate in BondDistance!)
 };
 
