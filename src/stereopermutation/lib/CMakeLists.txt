@@ -20,8 +20,8 @@ set(SOURCES_All
 
 add_library(stereopermutation STATIC ${SOURCES_All} ${HEADERS_all})
 target_include_directories(stereopermutation PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-target_include_directories(stereopermutation SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)
-target_include_directories(stereopermutation PUBLIC ${EIGEN3_INCLUDE_DIRS})
+target_include_directories(stereopermutation PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)
+target_include_directories(stereopermutation SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
 target_link_libraries(stereopermutation PUBLIC chemical_symmetries)
 

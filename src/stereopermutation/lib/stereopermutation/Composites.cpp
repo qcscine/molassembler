@@ -680,11 +680,11 @@ Composite::Composite(OrientationState first, OrientationState second)
       auto dihedralList = temple::mapAllPairs(
         angleGroups.first.symmetryPositions,
         angleGroups.second.symmetryPositions,
-        [&](const unsigned f, const unsigned s) -> DihedralTuple {
+        [&](const unsigned a, const unsigned b) -> DihedralTuple {
           return {
-            f,
-            s,
-            getDihedral(f, s)
+            a,
+            b,
+            getDihedral(a, b)
           };
         }
       );

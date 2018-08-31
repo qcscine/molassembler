@@ -196,13 +196,13 @@ bool Cycles::predicates::All::operator() (const RDL_cycle* const /* cyclePtr */)
   return true;
 }
 
-Cycles::predicates::SizeLessThan::SizeLessThan(unsigned threshold) : threshold {threshold} {}
+Cycles::predicates::SizeLessThan::SizeLessThan(unsigned passThreshold) : threshold(passThreshold) {}
 
 bool Cycles::predicates::SizeLessThan::operator() (const RDL_cycle* const cyclePtr) const {
   return (cyclePtr -> weight) < threshold;
 }
 
-Cycles::predicates::ContainsIndex::ContainsIndex(AtomIndex soughtIndex) : soughtIndex {soughtIndex} {}
+Cycles::predicates::ContainsIndex::ContainsIndex(AtomIndex passSoughtIndex) : soughtIndex(passSoughtIndex) {}
 
 bool Cycles::predicates::ContainsIndex::operator() (const RDL_cycle* const cyclePtr) const {
   for(unsigned i = 0; i < cyclePtr->weight; ++i) {

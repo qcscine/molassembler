@@ -90,15 +90,15 @@ std::pair<
  *   checks. It satisfies the AdaptableUnaryFunctionConcept.
  */
 struct LookupFunctor {
-  const std::vector<HashType>* const hashes;
+  const std::vector<HashType>* const hashesPtr;
 
   using argument_type = AtomIndex;
   using result_type = HashType;
 
-  inline LookupFunctor(const std::vector<HashType>& hashes) : hashes(&hashes) {}
+  inline LookupFunctor(const std::vector<HashType>& hashes) : hashesPtr(&hashes) {}
 
   inline HashType operator() (const AtomIndex i) const {
-    return hashes->at(i);
+    return hashesPtr->at(i);
   }
 };
 

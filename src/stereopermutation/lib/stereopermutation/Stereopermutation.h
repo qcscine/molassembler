@@ -45,16 +45,36 @@ private:
   ) const;
 
 public:
-/* Typedefs */
+//!@name Member types
+//!@{
   using LinksSetType = std::set<
     std::pair<unsigned, unsigned>
   >;
+//!@}
 
-/* Public members */
+//!@name Static functions
+//!@{
+  //! Rotate charactes according to template symmetry
+  static std::vector<char> rotateCharacters(
+    const std::vector<char>& characters,
+    const std::vector<unsigned>& rotationIndices
+  );
+
+  //! Rotate links according to template symmetry
+  static LinksSetType rotateLinks(
+    const LinksSetType& links,
+    const std::vector<unsigned>& rotationIndices
+  );
+//!@}
+
+//!@name Member data
+//!@{
   std::vector<char> characters;
   LinksSetType links;
+//!@}
 
-  /* Constructors */
+//!@name Special member functions
+//!@{
   // Do not default instantiate
   Stereopermutation() = delete;
   /*!
@@ -67,7 +87,7 @@ public:
    *   characters in debug builds
    */
   Stereopermutation(
-    const Symmetry::Name passSymmetryName [[gnu::unused]],
+    Symmetry::Name passSymmetryName [[gnu::unused]],
     std::vector<char> passCharacters
   );
   /*!
@@ -83,12 +103,14 @@ public:
    *   characters in debug builds
    */
   Stereopermutation(
-    const Symmetry::Name passSymmetryName [[gnu::unused]],
+    Symmetry::Name passSymmetryName [[gnu::unused]],
     std::vector<char> passCharacters,
     LinksSetType passLinks
   );
+//!@}
 
-  /* Modifiers ––––––––––––––––––––––––––––*/
+//!@name Modifiers
+//!@{
   //! Swap two "columns"
   void columnSwap(unsigned a, unsigned b);
 
@@ -103,22 +125,11 @@ public:
 
   //! Reverse a span of "columns"
   void reverseColumns(unsigned from, unsigned to);
+//!@}
 
-  //! Rotate charactes according to template symmetry
-  std::vector<char> rotateCharacters(
-    const std::vector<char>& characters,
-    const std::vector<unsigned>& rotationIndices
-  ) const;
-
-  //! Rotate links according to template symmetry
-  LinksSetType rotateLinks(
-    const LinksSetType& links,
-    const std::vector<unsigned>& rotationIndices
-  ) const;
-
-  /*!
-   * Applies a Symmetry rotation.
-   */
+//!@name Information
+//!@{
+  //! Applies a Symmetry rotation.
   void applyRotation(const std::vector<unsigned>& rotationIndices);
 
   /* Information –––––––––––––––––––––––– */
@@ -167,12 +178,15 @@ public:
 
   //! Converts positionOccupations into a string for display
   std::string toString() const;
+//!@}
 
-  /* Operators */
+//!@name Operators
+//!@{
   bool operator < (const Stereopermutation& other) const PURITY_WEAK;
   bool operator > (const Stereopermutation& other) const PURITY_WEAK;
   bool operator == (const Stereopermutation& other) const PURITY_WEAK;
   bool operator != (const Stereopermutation& other) const PURITY_WEAK;
+//!@}
 };
 
 std::size_t hash_value(const Stereopermutation& assignment) PURITY_WEAK;

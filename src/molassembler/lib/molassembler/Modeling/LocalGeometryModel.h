@@ -37,11 +37,11 @@ struct BindingSiteInformation {
 
   BindingSiteInformation() = default;
   BindingSiteInformation(
-    unsigned L,
-    unsigned X,
-    std::vector<Delib::ElementType> elements,
-    BondType bondType
-  ) : L {L}, X {X}, elements {std::move(elements)}, bondType {bondType} {}
+    const unsigned passL,
+    const unsigned passX,
+    std::vector<Delib::ElementType> passElements,
+    const BondType passBondType
+  ) : L(passL), X(passX), elements {std::move(passElements)}, bondType {passBondType} {}
 };
 
 // Mapping of bond type to a floating-point weight

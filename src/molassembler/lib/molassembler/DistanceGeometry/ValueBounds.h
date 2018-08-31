@@ -15,13 +15,7 @@ struct ValueBounds {
   double lower, upper;
 
   ValueBounds();
-
-  ValueBounds(double lower, double upper);
-
-  ValueBounds(const ValueBounds& other);
-
-  ValueBounds& operator = (const ValueBounds& other);
-  ValueBounds& operator = (ValueBounds&& other) noexcept;
+  ValueBounds(double passLower, double passUpper);
 };
 
 } // namespace DistanceGeometry

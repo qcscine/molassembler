@@ -1209,12 +1209,12 @@ void RankingTree::_applySequenceRules(
         auto maxSize = temple::accumulate(
           groupedByStringRep,
           0u,
-          [](const unsigned maxSize, const auto& stringGroup) -> unsigned {
-            if(stringGroup.size() > maxSize) {
+          [](const unsigned currentMaxSize, const auto& stringGroup) -> unsigned {
+            if(stringGroup.size() > currentMaxSize) {
               return stringGroup.size();
             }
 
-            return maxSize;
+            return currentMaxSize;
           }
         );
 
@@ -1921,12 +1921,12 @@ std::vector<
         auto maxSize = temple::accumulate(
           groupedByStringRep,
           0u,
-          [](const unsigned maxSize, const auto& stringGroup) -> unsigned {
-            if(stringGroup.size() > maxSize) {
+          [](const unsigned currentMaxSize, const auto& stringGroup) -> unsigned {
+            if(stringGroup.size() > currentMaxSize) {
               return stringGroup.size();
             }
 
-            return maxSize;
+            return currentMaxSize;
           }
         );
 

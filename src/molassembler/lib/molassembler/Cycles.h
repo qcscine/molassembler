@@ -48,7 +48,7 @@ public:
     struct SizeLessThan {
       const unsigned threshold;
 
-      explicit SizeLessThan(unsigned threshold);
+      explicit SizeLessThan(unsigned passThreshold);
 
       bool operator() (const RDL_cycle* const cyclePtr) const;
     };
@@ -57,7 +57,7 @@ public:
     struct ContainsIndex {
       AtomIndex soughtIndex;
 
-      explicit ContainsIndex(AtomIndex soughtIndex);
+      explicit ContainsIndex(AtomIndex passSoughtIndex);
 
       bool operator() (const RDL_cycle* const cyclePtr) const;
     };

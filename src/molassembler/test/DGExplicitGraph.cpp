@@ -30,12 +30,10 @@ UnsignedType right(UnsignedType a) {
 BOOST_AUTO_TEST_CASE(nonVisualTests) {
   using namespace molassembler;
 
-  boost::filesystem::path filesPath("stereocenter_detection_molecules");
-  boost::filesystem::recursive_directory_iterator end;
-
-  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-    const boost::filesystem::path currentFilePath = *i;
-
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
+  ) {
     Molecule molecule = IO::read(
       currentFilePath.string()
     );

@@ -156,7 +156,7 @@ bool Stereopermutation::previousPermutation() {
 typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
   const LinksSetType& links,
   const std::vector<unsigned>& rotationIndices
-) const {
+) {
   auto rotateIndex = [&rotationIndices](const unsigned from) -> unsigned {
     return std::find(
       rotationIndices.begin(),
@@ -387,7 +387,7 @@ void Stereopermutation::reverseColumns(
 std::vector<char> Stereopermutation::rotateCharacters(
   const std::vector<char>& characters,
   const std::vector<unsigned>& rotationIndices
-) const {
+) {
   std::vector<char> retv;
   retv.reserve(characters.size());
 

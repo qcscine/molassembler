@@ -1,11 +1,10 @@
 #define BOOST_SYSTEM_NO_DEPRECATED
-#include "boost/program_options.hpp"
-
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
+#include "boost/program_options.hpp"
 
-#include "temple/VectorView.h"
 #include "temple/Containers.h"
+#include "temple/VectorView.h"
 
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/DynamicProperties.h"
@@ -126,11 +125,15 @@ struct AmbiguityEntry {
   boost::optional<unsigned> deletedIndex;
 
   AmbiguityEntry(
-    const double& ambiguity,
-    const Symmetry::Name& source,
-    const Symmetry::Name& target,
-    boost::optional<unsigned> deletedIndex = boost::none
-  ) : ambiguity(ambiguity), source(source), target(target), deletedIndex(std::move(deletedIndex)) {};
+    const double passAmbiguity,
+    const Symmetry::Name passSource,
+    const Symmetry::Name passTarget,
+    boost::optional<unsigned> passDeletedIndex = boost::none
+  ) : ambiguity(passAmbiguity),
+      source(passSource),
+      target(passTarget),
+      deletedIndex(std::move(passDeletedIndex))
+  {}
 };
 
 int main(int argc, char* argv[]) {

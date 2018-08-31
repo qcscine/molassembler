@@ -122,14 +122,14 @@ struct debugIterationOrGradientNormStopStrategy {
 /* Constructors */
 
   debugIterationOrGradientNormStopStrategy(
-    const unsigned maxIterations,
+    const unsigned passMaxIterations,
     const double gradientNormThreshold,
-    std::list<RefinementStepData>& refinementSteps,
-    errfValue<true>& valueFunctor
-  ) : maxIterations(maxIterations),
+    std::list<RefinementStepData>& passRefinementSteps,
+    const errfValue<true>& passValueFunctor
+  ) : maxIterations(passMaxIterations),
       gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold),
-      refinementSteps(refinementSteps),
-      valueFunctor(valueFunctor)
+      refinementSteps(passRefinementSteps),
+      valueFunctor(passValueFunctor)
   {}
 
   template<typename T>

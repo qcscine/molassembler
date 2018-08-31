@@ -553,12 +553,12 @@ struct MappingsReturnType {
   {}
 
   constexpr MappingsReturnType(
-    MappingsList&& mappings,
-    double&& angularDistortion,
-    double&& chiralDistortion
-  ) : mappings(mappings),
-      angularDistortion(angularDistortion),
-      chiralDistortion(chiralDistortion)
+    MappingsList&& passMappings,
+    double&& passAngularDistortion,
+    double&& passChiralDistortion
+  ) : mappings(passMappings),
+      angularDistortion(passAngularDistortion),
+      chiralDistortion(passChiralDistortion)
   {}
 
   constexpr bool operator == (const MappingsReturnType& other) const {

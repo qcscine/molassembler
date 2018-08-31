@@ -52,7 +52,7 @@ namespace errfDetail {
 
   bool finalStructureAcceptable(
     const DistanceBoundsMatrix& bounds,
-    const std::vector<ChiralityConstraint> chiralityConstraints,
+    const std::vector<ChiralityConstraint>& chiralityConstraints,
     const Vector& positions
   ) {
     const double deviationThreshold = 0.5;

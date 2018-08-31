@@ -6,6 +6,7 @@
 
 #include <tuple>
 #include <vector>
+#include <cassert>
 
 /*! @file
  *
@@ -26,12 +27,12 @@ struct ChiralityConstraint {
   double lower, upper;
 
   ChiralityConstraint(
-    const LigandSequence& sites,
-    const double lower,
-    const double upper
-  ) : sites(sites),
-      lower(lower),
-      upper(upper)
+    LigandSequence passSites,
+    const double passLower,
+    const double passUpper
+  ) : sites(std::move(passSites)),
+      lower(passLower),
+      upper(passUpper)
   {
     // Must be <= because flat targets have lower = upper = 0
     assert(lower <= upper);

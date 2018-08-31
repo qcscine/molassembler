@@ -96,9 +96,9 @@ struct iterationOrGradientNormStopStrategy {
 /* Constructors */
 
   iterationOrGradientNormStopStrategy(
-    const unsigned maxIterations,
+    const unsigned passMaxIterations,
     const double gradientNormThreshold
-  ) : maxIterations(maxIterations),
+  ) : maxIterations(passMaxIterations),
       gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold)
   {}
 

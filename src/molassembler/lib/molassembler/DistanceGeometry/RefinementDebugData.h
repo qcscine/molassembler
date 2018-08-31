@@ -29,20 +29,20 @@ struct RefinementStepData {
   bool compress;
 
   RefinementStepData(
-    const dlib::matrix<double, 0, 1>& positions,
-    const double distanceError,
-    const double chiralError,
-    const double fourthDimError,
-    const dlib::matrix<double, 0, 1>& gradient,
-    const double proportionCorrectChiralityConstraints,
-    const bool& compress
-  ) : positions(positions),
-      distanceError(distanceError),
-      chiralError(chiralError),
-      fourthDimError(fourthDimError),
-      gradient(gradient),
-      proportionCorrectChiralityConstraints(proportionCorrectChiralityConstraints),
-      compress(compress)
+    dlib::matrix<double, 0, 1> passPositions,
+    const double passDistanceError,
+    const double passChiralError,
+    const double passFourthDimError,
+    dlib::matrix<double, 0, 1> passGradient,
+    const double passProportionCorrectChiralityConstraints,
+    const bool& passCompress
+  ) : positions(std::move(passPositions)),
+      distanceError(passDistanceError),
+      chiralError(passChiralError),
+      fourthDimError(passFourthDimError),
+      gradient(std::move(passGradient)),
+      proportionCorrectChiralityConstraints(passProportionCorrectChiralityConstraints),
+      compress(passCompress)
   {}
 };
 

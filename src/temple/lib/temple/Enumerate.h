@@ -31,9 +31,9 @@ public:
     const T& value;
 
     EnumerationStruct(
-      const unsigned index,
-      const T& value
-    ) : index(index), value(value) {}
+      const unsigned passIndex,
+      const T& passValue
+    ) : index(passIndex), value(passValue) {}
   };
 
 private:

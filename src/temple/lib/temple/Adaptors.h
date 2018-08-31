@@ -328,8 +328,8 @@ struct Transformer {
 
   Transformer(
     const Container& container,
-    UnaryFunction&& function
-  ) : containerPtr(&container), function(function) {}
+    UnaryFunction&& passFunction
+  ) : containerPtr(&container), function(passFunction) {}
 
   using ContainerValueType = traits::getValueType<Container>;
   using ReturnType = decltype(

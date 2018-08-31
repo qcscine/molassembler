@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
 
   std::vector<std::string> decisions;
 
-  auto addElement = [&](const std::string& lastTreeGraph) {
+  auto addElement = [&](const std::string& treeGraph) {
     // Add an element
     auto toAdd = popRandom(notInTree);
     decisions.emplace_back("i"s + std::to_string(toAdd));
@@ -66,14 +66,14 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       "Element insertion failed. Operation sequence: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
+        << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
 
     inTree.insert(toAdd);
   };
 
-  auto removeElement = [&](const std::string& lastTreeGraph) {
+  auto removeElement = [&](const std::string& treeGraph) {
     // Remove an element
     auto toRemove = popRandom(inTree);
     decisions.emplace_back("r"s + std::to_string(toRemove));
@@ -84,14 +84,14 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       "Tree element removal failed. Operation sequence: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
+        << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
 
     notInTree.insert(toRemove);
   };
 
-  auto fullValidation = [&](const std::string& lastTreeGraph) {
+  auto fullValidation = [&](const std::string& treeGraph) {
     // Validate the tree
     BOOST_CHECK_NO_THROW(tree.validate());
     BOOST_REQUIRE_MESSAGE(
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
       "Tree validation failed. Operation sequence: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
+        << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
 
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
         ) << "\nSequence of operations: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
+        << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
 
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
         ) << "\nSequence of operations: "
         << temple::condenseIterable(decisions)
         << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
+        << treeGraph << "\n\n After last operation: \n"
         << tree.dumpGraphviz()
     );
   };
@@ -214,18 +214,18 @@ BOOST_AUTO_TEST_CASE(BTreeTests) {
 
     // Fill'er up all the way
     while(inTree.size() != nKeys) {
-      std::string lastTreeGraph = tree.dumpGraphviz();
+      std::string anotherTreeGraph = tree.dumpGraphviz();
 
-      addElement(lastTreeGraph);
-      fullValidation(lastTreeGraph);
+      addElement(anotherTreeGraph);
+      fullValidation(anotherTreeGraph);
     }
 
     // Empty the tree
     while(!inTree.empty()) {
-      std::string lastTreeGraph = tree.dumpGraphviz();
+      std::string anotherTreeGraph = tree.dumpGraphviz();
 
-      removeElement(lastTreeGraph);
-      fullValidation(lastTreeGraph);
+      removeElement(anotherTreeGraph);
+      fullValidation(anotherTreeGraph);
     }
   }
 }

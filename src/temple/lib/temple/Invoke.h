@@ -20,7 +20,7 @@ template<typename TupleType, typename Function, size_t ... Inds>
 auto boostTupleInvokeHelper(
   Function&& function,
   const TupleType& tuple,
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* indices */
 ) {
   return function(
     boost::get<Inds>(tuple)...
@@ -80,7 +80,7 @@ template<typename Function, typename TupleType, size_t ... Inds>
 auto invokeHelper(
   Function&& function,
   const TupleType& tuple,
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* indices */
 ) {
   return function(
     std::get<Inds>(tuple)...
@@ -92,7 +92,7 @@ template<
   typename Function,
   typename ArgumentTuple,
   size_t ... Inds
-> auto unpackHelper(std::index_sequence<Inds...>) {
+> auto unpackHelper(std::index_sequence<Inds...> /* indices */) {
   return TemplateFunction<Function, std::tuple_element_t<Inds, ArgumentTuple>...>::value;
 }
 
@@ -182,7 +182,7 @@ template<typename Functor>
 struct Invoker {
   Functor function;
 
-  Invoker(Functor&& function) : function(function) {}
+  Invoker(Functor&& passFunction) : function(passFunction) {}
 
   template<typename TupleType>
   constexpr auto operator() (const TupleType& tuple) const noexcept {

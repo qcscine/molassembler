@@ -79,16 +79,16 @@ struct SymmetryInformation {
 
   // Direct initialization
   SymmetryInformation(
-    std::string stringName,
-    unsigned size,
-    RotationsList rotations,
-    TetrahedronList tetrahedra,
-    CoordinateList coordinates
-  ) : stringName(std::move(stringName)),
-      size(size),
-      rotations(std::move(rotations)),
-      tetrahedra(std::move(tetrahedra)),
-      coordinates(std::move(coordinates))
+    std::string passStringName,
+    unsigned passSize,
+    RotationsList passRotations,
+    TetrahedronList passTetrahedra,
+    CoordinateList passCoordinates
+  ) : stringName(std::move(passStringName)),
+      size(passSize),
+      rotations(std::move(passRotations)),
+      tetrahedra(std::move(passTetrahedra)),
+      coordinates(std::move(passCoordinates))
   {}
 };
 

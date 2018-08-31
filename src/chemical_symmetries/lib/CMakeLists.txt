@@ -31,7 +31,7 @@ target_include_directories(
   chemical_symmetries
     SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
-target_include_directories(chemical_symmetries PUBLIC ${EIGEN3_INCLUDE_DIRS})
+target_include_directories(chemical_symmetries SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(chemical_symmetries
   PUBLIC
     Boost::boost

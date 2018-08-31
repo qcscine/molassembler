@@ -381,9 +381,9 @@ SpatialModel::SpatialModel(
         auto makeVerticesSet = [](const auto& cyclePtr) -> std::set<AtomIndex> {
           std::set<AtomIndex> vertices;
 
-          for(unsigned i = 0; i < cyclePtr -> weight; ++i) {
-            vertices.insert(cyclePtr->edges[i][0]);
-            vertices.insert(cyclePtr->edges[i][1]);
+          for(unsigned cycleIndex = 0; cycleIndex < cyclePtr -> weight; ++cycleIndex) {
+            vertices.insert(cyclePtr->edges[cycleIndex][0]);
+            vertices.insert(cyclePtr->edges[cycleIndex][1]);
           }
 
           return vertices;
@@ -826,11 +826,11 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
   std::vector<DistanceGeometry::ChiralityConstraint> constraints;
 
   for(const auto& stereocenter : _stereocenters.atomStereocenters()) {
-    auto constraints = stereocenter.chiralityConstraints(_looseningMultiplier);
+    auto stereocenterConstraints = stereocenter.chiralityConstraints(_looseningMultiplier);
 
     std::move(
-      std::begin(constraints),
-      std::end(constraints),
+      std::begin(stereocenterConstraints),
+      std::end(stereocenterConstraints),
       std::back_inserter(constraints)
     );
   }
@@ -894,9 +894,9 @@ struct SpatialModel::ModelGraphWriter {
 /* Constructor */
   ModelGraphWriter(
     const OuterGraph* passGraphPtr,
-    const SpatialModel& spatialModel
+    const SpatialModel& passSpatialModel
   ) : graphPtr(passGraphPtr),
-    spatialModel(spatialModel)
+    spatialModel(passSpatialModel)
   {}
 
 /* Helper functions */

@@ -284,8 +284,8 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
   boost::filesystem::path filesPath("stereocenter_detection_molecules");
   boost::filesystem::recursive_directory_iterator end;
 
-  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-    const boost::filesystem::path currentFilePath = *i;
+  for(boost::filesystem::recursive_directory_iterator fileIterator(filesPath); fileIterator != end; fileIterator++) {
+    const boost::filesystem::path currentFilePath = *fileIterator;
     Molecule sampleMol = IO::read(
       currentFilePath.string()
     );
@@ -301,10 +301,10 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
     auto boundsMatrix = DBM_FW_Functor {spatialModelBounds} ();
 
     bool pass = true;
-    for(unsigned a = 0; a < sampleMol.graph().N(); ++a) {
-      auto BF_EG_distances = BFFunctor<DistanceGeometry::ExplicitGraph::GraphType> {limits.graph()} (2 * a);
+    for(unsigned outerVertex = 0; outerVertex < sampleMol.graph().N(); ++outerVertex) {
+      auto BF_EG_distances = BFFunctor<DistanceGeometry::ExplicitGraph::GraphType> {limits.graph()} (2 * outerVertex);
 
-      auto Gor_EG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::GraphType> {limits.graph()} (2 * a);
+      auto Gor_EG_distances = Gor1Functor<DistanceGeometry::ExplicitGraph::GraphType> {limits.graph()} (2 * outerVertex);
 
       if(
         !temple::all_of(
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       }
 
       for(unsigned j = 0; j < BF_EG_distances.size(); j += 2) {
-        if(j / 2 == a) {
+        if(j / 2 == outerVertex) {
           continue;
         }
 
@@ -337,18 +337,18 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       if(
         !temple::all_of(
           enumerate(BF_EG_distances),
-          [&boundsMatrix, &a](const auto& enumPair) -> bool {
+          [&boundsMatrix, &outerVertex](const auto& enumPair) -> bool {
             const auto& index = enumPair.index;
             const auto& distance = enumPair.value;
 
-            if(index / 2 == a) {
+            if(index / 2 == outerVertex) {
               return true;
             }
 
             if(index % 2 == 0) {
               // To left index -> upper bound
               return temple::floating::isCloseRelative(
-                boundsMatrix.upperBound(a, index / 2),
+                boundsMatrix.upperBound(outerVertex, index / 2),
                 distance,
                 1e-4
               );
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
             // To right index -> lower bound
             return temple::floating::isCloseRelative(
-              boundsMatrix.lowerBound(a, index / 2),
+              boundsMatrix.lowerBound(outerVertex, index / 2),
               -distance,
               1e-4
             );
@@ -365,7 +365,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       ) {
         pass = false;
         std::cout << "Bellman-Ford ExplicitGraph shortest paths do not represent triangle inequality bounds!" << nl;
-        std::cout << "Failed on a = " << a << nl;
+        std::cout << "Failed on outerVertex = " << outerVertex << nl;
         std::cout << "Distances:" << nl << temple::condenseIterable(BF_EG_distances) << nl << boundsMatrix.access() << nl;
         break;
       }
@@ -423,11 +423,11 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
     BOOST_REQUIRE_MESSAGE(identical, "EG and IG are not identical graphs");
 
     pass = true;
-    for(unsigned a = 0; a < sampleMol.graph().N(); ++a) {
+    for(unsigned outerVertex = 0; outerVertex < sampleMol.graph().N(); ++outerVertex) {
       // ImplicitGraph without implicit bounds should be consistent with ExplicitGraph
-      auto BF_IG_distances = BFFunctor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * a);
+      auto BF_IG_distances = BFFunctor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * outerVertex);
 
-      auto Gor_IG_distances = Gor1Functor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * a);
+      auto Gor_IG_distances = Gor1Functor<DistanceGeometry::ImplicitGraph> {shortestPathsGraph} (2 * outerVertex);
 
       if(
         !temple::all_of(
@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
         break;
       }
 
-      auto spec_Gor_IG_distances = Gor1IG(shortestPathsGraph, 2 * a);
+      auto spec_Gor_IG_distances = Gor1IG(shortestPathsGraph, 2 * outerVertex);
 
       if(
         !temple::all_of(
@@ -466,7 +466,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       }
 
       for(unsigned j = 0; j < Gor_IG_distances.size(); j += 2) {
-        if(j / 2 == a) {
+        if(j / 2 == outerVertex) {
           continue;
         }
 
@@ -480,11 +480,11 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       if(
         !temple::all_of(
           enumerate(BF_IG_distances),
-          [&boundsMatrix, &a](const auto& enumPair) -> bool {
+          [&boundsMatrix, &outerVertex](const auto& enumPair) -> bool {
             const auto& index = enumPair.index;
             const auto& distance = enumPair.value;
 
-            if(index / 2 == a) {
+            if(index / 2 == outerVertex) {
               return true;
             }
 
@@ -492,37 +492,37 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
               // To left index -> upper bound
               return (
                 temple::floating::isCloseRelative(
-                  boundsMatrix.upperBound(a, index / 2),
+                  boundsMatrix.upperBound(outerVertex, index / 2),
                   distance,
                   1e-4
                 ) || (
                   // Lower upper bounds are better
-                  boundsMatrix.upperBound(a, index / 2) > distance
+                  boundsMatrix.upperBound(outerVertex, index / 2) > distance
                 )
               );
             }
 
             // To right index -> lower bound
             return temple::floating::isCloseRelative(
-              boundsMatrix.lowerBound(a, index / 2),
+              boundsMatrix.lowerBound(outerVertex, index / 2),
               -distance,
               1e-4
             ) || (
               // Larger lower bounds are better
-              boundsMatrix.lowerBound(a, index / 2) < -distance
+              boundsMatrix.lowerBound(outerVertex, index / 2) < -distance
             );
           }
         )
       ) {
         pass = false;
         std::cout << "Bellman-Ford ImplicitGraph shortest paths do not represent triangle inequality bounds!" << nl;
-        std::cout << "Failed on a = " << a << ", j = {";
+        std::cout << "Failed on outerVertex = " << outerVertex << ", j = {";
         for(unsigned j = 0; j < BF_IG_distances.size(); ++j) {
-          if(j / 2 != a) {
+          if(j / 2 != outerVertex) {
             if(j % 2 == 0) {
               if(
                 !temple::floating::isCloseRelative(
-                  boundsMatrix.upperBound(a, j / 2),
+                  boundsMatrix.upperBound(outerVertex, j / 2),
                   BF_IG_distances.at(j),
                   1e-4
                 )
@@ -532,7 +532,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
             } else {
               if(
                 !temple::floating::isCloseRelative(
-                  boundsMatrix.lowerBound(a, j / 2),
+                  boundsMatrix.lowerBound(outerVertex, j / 2),
                   -BF_IG_distances.at(j),
                   1e-4
                 )

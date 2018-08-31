@@ -168,9 +168,9 @@ BOOST_AUTO_TEST_CASE(mapToSameContainerTests) {
     "Map to same container does not work as expected"
   );
 
-  std::vector<float> x {0, 3.4, 9};
+  std::vector<float> values {0, 3.4, 9};
   auto xMapped = temple::map(
-    x,
+    values,
     [](const float& x) -> unsigned long {
       return static_cast<unsigned long>(x);
     }

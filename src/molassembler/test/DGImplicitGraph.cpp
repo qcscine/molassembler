@@ -56,12 +56,10 @@ UnsignedType right(UnsignedType a) {
 BOOST_AUTO_TEST_CASE(nonVisualTests) {
   using namespace molassembler;
 
-  boost::filesystem::path filesPath("stereocenter_detection_molecules");
-  boost::filesystem::recursive_directory_iterator end;
-
-  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-    const boost::filesystem::path currentFilePath = *i;
-
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
+  ) {
     Molecule molecule = IO::read(
       currentFilePath.string()
     );
@@ -77,20 +75,20 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
     IG::VertexDescriptor N = boost::num_vertices(ig);
 
-    for(IG::VertexDescriptor i = 0; i < N; ++i) {
+    for(IG::VertexDescriptor innerVertex = 0; innerVertex < N; ++innerVertex) {
       BOOST_CHECK_MESSAGE(
         static_cast<IG::VertexDescriptor>(
           std::distance(
-            ig.obegin(i),
-            ig.oend(i)
+            ig.obegin(innerVertex),
+            ig.oend(innerVertex)
           )
-        ) == boost::out_degree(i, ig),
-        "Out degree of vertex " << i << " does not match out_edge_iterator begin-end distance"
+        ) == boost::out_degree(innerVertex, ig),
+        "Out degree of vertex " << innerVertex << " does not match out_edge_iterator begin-end distance"
       );
 
       // Out-edge iterator tests
-      auto iter = ig.obegin(i);
-      auto end = ig.oend(i);
+      auto iter = ig.obegin(innerVertex);
+      auto end = ig.oend(innerVertex);
 
       while(iter != end) {
         auto edgeDescriptor = *iter;
@@ -111,8 +109,8 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       }
 
       // in_group_edge_iterator tests
-      auto groupIter = ig.in_group_edges_begin(i);
-      const auto groupEnd = ig.in_group_edges_end(i);
+      auto groupIter = ig.in_group_edges_begin(innerVertex);
+      const auto groupEnd = ig.in_group_edges_end(innerVertex);
 
       while(groupIter != groupEnd) {
         auto edgeDescriptor = *groupIter;
@@ -121,9 +119,9 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
         auto boostWeight = boost::get(boost::edge_weight, ig, edgeDescriptor);
 
         BOOST_CHECK_MESSAGE(
-          boost::edge(i, target, ig).second,
+          boost::edge(innerVertex, target, ig).second,
           "Edge reported by in_group_edge_iterator does not exist per boost::edge. "
-            << "iterator: " << i << " -> " << target
+            << "iterator: " << innerVertex << " -> " << target
         );
 
         BOOST_CHECK_MESSAGE(
@@ -133,7 +131,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
         BOOST_CHECK_MESSAGE(
           weight > 0,
-          "in-group-edge weight isn't greater than zero for edge " << i << " -> "
+          "in-group-edge weight isn't greater than zero for edge " << innerVertex << " -> "
             << target << ", weight = " << weight
         );
 

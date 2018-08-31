@@ -117,20 +117,24 @@ set(SOURCES_all
 
 # Static variant
 add_library(molassemblerStatic STATIC ${SOURCES_all} ${HEADERS_all})
-target_include_directories(
-  molassemblerStatic PUBLIC
+target_include_directories(molassemblerStatic
+  PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
-    ${EIGEN3_INCLUDE_DIRS}
+)
+target_include_directories(molassemblerStatic
+  SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS}
 )
 
 # Shared variant
 add_library(molassembler SHARED ${SOURCES_all} ${HEADERS_all})
-target_include_directories(
-  molassembler PUBLIC
+target_include_directories(molassembler
+  PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
-    ${EIGEN3_INCLUDE_DIRS}
+)
+target_include_directories(molassembler
+  SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS}
 )
 
 # Linking

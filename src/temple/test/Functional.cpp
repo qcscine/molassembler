@@ -36,8 +36,8 @@ unsigned plusFive(unsigned a) {
 BOOST_AUTO_TEST_CASE(adaptors) {
   using namespace temple;
 
-  std::vector<unsigned> a {4, 1, 3, 5};
-  std::vector<unsigned> b {5, 6, 7, 8};
+  std::vector<unsigned> aValues {4, 1, 3, 5};
+  std::vector<unsigned> bValues {5, 6, 7, 8};
 
   auto loudCompare = [](unsigned a, unsigned b) -> bool {
     std::cout << a << " < " << b << ": " << (a < b) << "\n";
@@ -45,12 +45,12 @@ BOOST_AUTO_TEST_CASE(adaptors) {
   };
 
   bool pairwiseSmaller = all_of(
-    zip(a, b),
+    zip(aValues, bValues),
     make_tuple_callable(loudCompare)
   );
 
   bool bSortedAsc = all_of(
-    sequentialPairs(b),
+    sequentialPairs(bValues),
     make_tuple_callable(std::less<>())
   );
 
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(adaptors) {
 
   BOOST_CHECK(
     trial_all_of(
-      zip(a, b),
+      zip(aValues, bValues),
       std::less<>()
     )
   );
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(adaptors) {
   BOOST_CHECK(
     sum(
       transform(
-        allPairs(a),
+        allPairs(aValues),
         std::plus<>()
       )
     ) == 5u + 7u + 9u + 4u + 6u + 8u
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(adaptors) {
   BOOST_CHECK(
     sum(
       transform(
-        allPairs(a),
+        allPairs(aValues),
         weirdIntDiv
       )
     ) == 3u
@@ -83,20 +83,20 @@ BOOST_AUTO_TEST_CASE(adaptors) {
 
   BOOST_CHECK(
     sum(
-      transform(a, plusFive)
+      transform(aValues, plusFive)
     ) == 33u
   );
 
   BOOST_CHECK(
     trial_all_of(
-      sequentialPairs(b),
+      sequentialPairs(bValues),
       std::less<>()
     )
   );
 
   BOOST_CHECK(
     trial_all_of(
-      a,
+      aValues,
       [](unsigned a) {
         return a < 6;
       }
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(adaptors) {
 
   BOOST_CHECK(
     trial_all_of(
-      a,
+      aValues,
       std::bind(std::less<>(), std::placeholders::_1, 6u)
     )
   );

@@ -105,10 +105,10 @@ struct VertexComparator {
   }
 
   VertexComparator(
-    const Molecule& a,
-    const Molecule& b,
-    VertexStrictness strictness
-  ) : a {a}, b {b}, strictness {strictness} {}
+    const Molecule& passA,
+    const Molecule& passB,
+    VertexStrictness passStrictness
+  ) : a(passA), b(passB), strictness(passStrictness) {}
 
   bool operator () (const AtomIndex i, const AtomIndex j) const {
     if(a.graph().elementType(i) != b.graph().elementType(j)) {
@@ -160,10 +160,10 @@ struct EdgeComparator {
   const EdgeStrictness strictness;
 
   EdgeComparator(
-    const Molecule& a,
-    const Molecule& b,
-    EdgeStrictness strictness
-  ) : a {a}, b {b}, strictness {strictness} {}
+    const Molecule& passA,
+    const Molecule& passB,
+    EdgeStrictness passStrictness
+  ) : a(passA), b(passB), strictness(passStrictness) {}
 
   bool operator () (const InnerGraph::Edge i, const InnerGraph::Edge j) const {
     if(a.graph().inner().bondType(i) != b.graph().inner().bondType(j)) {

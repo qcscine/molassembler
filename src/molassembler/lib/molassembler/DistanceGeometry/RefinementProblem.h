@@ -125,10 +125,10 @@ struct errfValue {
   // Constructor
   explicit errfValue(
     const dlib::matrix<double, 0, 0>& passSquaredBounds,
-    const std::vector<ChiralityConstraint>& chiralityConstraints
+    const std::vector<ChiralityConstraint>& passChiralityConstraints
   ) : N(passSquaredBounds.nc()),
       squaredBounds(passSquaredBounds),
-      chiralityConstraints(chiralityConstraints)
+      chiralityConstraints(passChiralityConstraints)
   {}
 
   // Information
@@ -262,10 +262,10 @@ public:
   // Constructor
   explicit errfGradient(
     const dlib::matrix<double, 0, 0>& passSquaredBounds,
-    const std::vector<ChiralityConstraint>& chiralityConstraints
+    const std::vector<ChiralityConstraint>& passChiralityConstraints
   ) : N(passSquaredBounds.nc()),
       squaredBounds(passSquaredBounds),
-      chiralityConstraints(chiralityConstraints)
+      chiralityConstraints(passChiralityConstraints)
   {}
 
   // Information

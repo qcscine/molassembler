@@ -31,7 +31,7 @@ public:
       _min(min),
       _max(max) {};
 
-  RGBType operator () (const double& value) const {
+  RGBType operator () (const double value) const {
     if(!(
       _min <= value
       && value <= _max
@@ -51,21 +51,21 @@ public:
     }};
   }
 
-  std::string getHexString (const double& value) const {
+  std::string getHexString (const double value) const {
     auto rgb = this -> operator() (value);
 
     std::stringstream stream;
     stream << "#";
-    for(const auto& value : rgb) {
+    for(const auto colorValue : rgb) {
       stream << std::setfill('0') << std::setw(2) << std::hex
-        << static_cast<int>(value);
+        << static_cast<int>(colorValue);
     }
 
     return stream.str();
   }
 };
 
-std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
+std::string getGraphvizNodeName(const Symmetry::Name symmetryName) {
   auto stringName = Symmetry::name(symmetryName);
 
   stringName.erase(

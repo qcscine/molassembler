@@ -160,11 +160,11 @@ std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName) {
   auto occupation = temple::iota<unsigned>(Symmetry::size(symmetryName));
 
   auto getCoordinates = [](
-    const Symmetry::Name symmetryName,
+    const Symmetry::Name symmetry,
     const boost::optional<unsigned>& indexOption
   ) -> Eigen::Vector3d {
     if(indexOption) {
-      return symmetryData().at(symmetryName).coordinates.at(indexOption.value());
+      return symmetryData().at(symmetry).coordinates.at(indexOption.value());
     }
 
     return {0, 0, 0};
