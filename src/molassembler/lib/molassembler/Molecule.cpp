@@ -112,6 +112,24 @@ struct Molecule::Impl {
     const boost::optional<unsigned>& assignment
   );
 
+  /*! Sets the stereocenter assignment on a bond
+   *
+   * This sets the stereocenter assignment at a specific bond index. For this,
+   * a stereocenter must be instantiated and contained in the StereocenterList
+   * returned by stereocenters(). The supplied assignment must be either
+   * boost::none or smaller than stereocenterPtr->numAssignments().
+   *
+   * \note Although molecules in which this occurs are infrequent, consider the
+   * StereocenterList you have accessed prior to calling this function and
+   * particularly any iterators thereto invalidated. This is because an
+   * assignment change can trigger a ranking change, which can in turn lead
+   * to the introduction of new stereocenters or the removal of old ones.
+   */
+  void assignStereocenter(
+    const BondIndex& edge,
+    const boost::optional<unsigned>& assignment
+  );
+
   /*! Assigns a stereocenter stereopermutation at random
    *
    * This sets the stereocetner assignment at a specific index, taking relative
@@ -411,7 +429,12 @@ void Molecule::Impl::_propagateGraphChange() {
         continue;
       }
 
-      // Unconditionally propagate the graph change
+      // Has the ranking changed?
+      if(localRanking == stereocenterOption->getRanking()) {
+        continue;
+      }
+
+      // Propagate the stereocenter state to the new ranking
       stereocenterOption -> propagateGraphChange(
         _adjacencies,
         localRanking
@@ -437,6 +460,16 @@ void Molecule::Impl::_propagateGraphChange() {
         )
       ) {
         _stereocenters.remove(vertex);
+      }
+
+      /* If there are any BondStereocenters on adjacent edges, remove them
+       * (since the Ranking has changed on a constituting AtomStereocenter)
+       */
+      for(
+        const BondIndex& bond :
+        boost::make_iterator_range(_adjacencies.bonds(vertex))
+      ) {
+        _stereocenters.try_remove(bond);
       }
     } else {
       // Skip terminal atoms
@@ -469,6 +502,61 @@ void Molecule::Impl::_propagateGraphChange() {
       ) {
         _stereocenters.add(vertex, newStereocenter);
       }
+    }
+  }
+
+  /* Any BondStereocenters whose constituing AtomStereocenter's rankings have
+   * changed have been removed. So, I think now we just have to check if there
+   * are any new ones we could have.
+   */
+
+  for(
+    const InnerGraph::Edge& edge :
+    boost::make_iterator_range(inner.edges())
+  ) {
+    // Check if the edge could be a stereocenter on graph based grounds
+    if(!_isGraphBasedBondStereocenterCandidate(edge)) {
+      continue;
+    }
+
+    // Fetch some indices
+    AtomIndex source = inner.source(edge),
+              target = inner.target(edge);
+
+    BondIndex bond {source, target};
+
+    // Ensure there isn't already a stereocenter on this edge
+    if(auto stereocenterOption = _stereocenters.option(bond)) {
+      continue;
+    }
+
+    // From here just like _detectStereocenters()
+
+    auto sourceAtomStereocenterOption = _stereocenters.option(source);
+    auto targetAtomStereocenterOption = _stereocenters.option(target);
+
+    // There need to be assigned stereocenters on both vertices
+    if(
+      !sourceAtomStereocenterOption
+      || !targetAtomStereocenterOption
+      || sourceAtomStereocenterOption->assigned() == boost::none
+      || targetAtomStereocenterOption->assigned() == boost::none
+    ) {
+      continue;
+    }
+
+    // Construct a Stereocenter here
+    auto newStereocenter = BondStereocenter {
+      *sourceAtomStereocenterOption,
+      *targetAtomStereocenterOption,
+      bond
+    };
+
+    if(newStereocenter.numAssignments() > 1) {
+      _stereocenters.add(
+        bond,
+        std::move(newStereocenter)
+      );
     }
   }
 }
@@ -609,6 +697,30 @@ void Molecule::Impl::assignStereocenter(
 
   if(!stereocenterOption) {
     throw std::logic_error("assignStereocenter: No stereocenter at this index!");
+  }
+
+  if(assignment >= stereocenterOption->numAssignments()) {
+    throw std::logic_error("assignStereocenter: Invalid assignment index!");
+  }
+
+  stereocenterOption -> assign(assignment);
+
+  // A reassignment can change ranking! See the RankingTree tests
+  _propagateGraphChange();
+}
+
+void Molecule::Impl::assignStereocenter(
+  const BondIndex& edge,
+  const boost::optional<unsigned>& assignment
+) {
+  if(!_isValidIndex(edge.first) || !_isValidIndex(edge.second)) {
+    throw std::out_of_range("Molecule::assignStereocenter: Supplied bond atom indices is invalid!");
+  }
+
+  auto stereocenterOption = _stereocenters.option(edge);
+
+  if(!stereocenterOption) {
+    throw std::logic_error("assignStereocenter: No stereocenter at this bond!");
   }
 
   if(assignment >= stereocenterOption->numAssignments()) {
@@ -865,7 +977,6 @@ void Molecule::Impl::setGeometryAtAtom(
   // If there is no stereocenter at this position yet, we have to create it
   if(!stereocenterOption) {
     RankingInformation localRanking = rankPriority(a);
-    const Symmetry::Name expectedSymmetry = determineLocalGeometry(a, localRanking);
 
     if(localRanking.ligands.size() != Symmetry::size(symmetryName)) {
       throw std::logic_error(
@@ -874,31 +985,26 @@ void Molecule::Impl::setGeometryAtAtom(
       );
     }
 
-    /* In case the expected symmetry is the same as the supplied symmetry, this
-     * is a no-op, since it adds no information to the Molecule (this
-     * stereocenter would otherwise be created during DG initialization)
-     */
-    if(expectedSymmetry != symmetryName) {
-      // Add the stereocenter irrespective of how many assignments it has
-      auto newStereocenter = AtomStereocenter {
-        _adjacencies,
-        symmetryName,
-        a,
-        localRanking
-      };
+    // Add the stereocenter irrespective of how many assignments it has
+    auto newStereocenter = AtomStereocenter {
+      _adjacencies,
+      symmetryName,
+      a,
+      localRanking
+    };
 
-      // Default-assign stereocenters with only one assignment
-      if(newStereocenter.numAssignments() == 1) {
-        newStereocenter.assign(0u);
-      }
-
-      _stereocenters.add(
-        a,
-        std::move(newStereocenter)
-      );
-
-      _propagateGraphChange();
+    // Default-assign stereocenters with only one assignment
+    if(newStereocenter.numAssignments() == 1) {
+      newStereocenter.assign(0u);
     }
+
+    _stereocenters.add(
+      a,
+      std::move(newStereocenter)
+    );
+
+    _propagateGraphChange();
+    return;
   }
 
   if(
@@ -912,6 +1018,10 @@ void Molecule::Impl::setGeometryAtAtom(
   }
 
   stereocenterOption->setSymmetry(symmetryName, _adjacencies);
+  if(stereocenterOption->numStereopermutations() == 1) {
+    assignStereocenter(a, 0);
+    return;
+  }
   _propagateGraphChange();
 }
 
@@ -1273,6 +1383,13 @@ void Molecule::assignStereocenter(
   const boost::optional<unsigned>& assignment
 ) {
   _pImpl->assignStereocenter(a, assignment);
+}
+
+void Molecule::assignStereocenter(
+  const BondIndex& edge,
+  const boost::optional<unsigned>& assignment
+) {
+  _pImpl->assignStereocenter(edge, assignment);
 }
 
 void Molecule::assignStereocenterRandomly(const AtomIndex a) {

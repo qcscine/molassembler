@@ -118,6 +118,24 @@ public:
     const boost::optional<unsigned>& assignment
   );
 
+  /*! Sets the stereocenter assignment on a bond
+   *
+   * This sets the stereocenter assignment at a specific bond index. For this,
+   * a stereocenter must be instantiated and contained in the StereocenterList
+   * returned by stereocenters(). The supplied assignment must be either
+   * boost::none or smaller than stereocenterPtr->numAssignments().
+   *
+   * \note Although molecules in which this occurs are infrequent, consider the
+   * StereocenterList you have accessed prior to calling this function and
+   * particularly any iterators thereto invalidated. This is because an
+   * assignment change can trigger a ranking change, which can in turn lead
+   * to the introduction of new stereocenters or the removal of old ones.
+   */
+  void assignStereocenter(
+    const BondIndex& edge,
+    const boost::optional<unsigned>& assignment
+  );
+
   /*! Assigns a stereocenter stereopermutation at random
    *
    * This sets the stereocetner assignment at a specific index, taking relative
@@ -198,9 +216,8 @@ public:
    *
    * \throws if
    *   - the supplied atomic index is invalid
-   *   - there is an BondStereocenter at that index
-   *   - or the provided symmetry is a different size than that of an existing
-   *     AtomStereocenter or the expected symmetry
+   *   - the provided symmetry is a different size than that of an existing
+   *     AtomStereocenter
    */
   void setGeometryAtAtom(
     AtomIndex a,

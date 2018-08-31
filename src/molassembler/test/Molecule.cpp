@@ -5,6 +5,8 @@
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
 
+#include "chemical_symmetries/Symmetries.h"
+
 #include "temple/Containers.h"
 #include "temple/Random.h"
 #include "temple/Invoke.h"
@@ -79,7 +81,7 @@ BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
 
 using HashArgumentsType = std::tuple<
   Delib::ElementType,
-  std::vector<molassembler::BondType>,
+  std::vector<molassembler::hashes::BondInformation>,
   boost::optional<Symmetry::Name>,
   boost::optional<unsigned>
 >;
@@ -230,7 +232,7 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(basicInequivalencyTests) {
+BOOST_AUTO_TEST_CASE(basicRSInequivalencyTests) {
   // Build an asymmetric tetrahedral carbon
   Molecule a {Delib::ElementType::C, Delib::ElementType::H, BondType::Single};
   a.addAtom(Delib::ElementType::F, 0, BondType::Single);
@@ -249,6 +251,43 @@ BOOST_AUTO_TEST_CASE(basicInequivalencyTests) {
   a.assignStereocenter(0, 0);
   Molecule b = a;
   b.assignStereocenter(0, 1);
+
+  // These must compare unequal
+  BOOST_CHECK(a != b);
+}
+
+BOOST_AUTO_TEST_CASE(basicEZInequivalencyTests) {
+  Molecule a {Delib::ElementType::C, Delib::ElementType::C, BondType::Double};
+  a.addAtom(Delib::ElementType::H, 0, BondType::Single);
+  a.addAtom(Delib::ElementType::F, 0, BondType::Single);
+  a.addAtom(Delib::ElementType::H, 1, BondType::Single);
+  a.addAtom(Delib::ElementType::F, 1, BondType::Single);
+
+  // Set the geometries
+  a.setGeometryAtAtom(0, Symmetry::Name::TrigonalPlanar);
+  a.setGeometryAtAtom(1, Symmetry::Name::TrigonalPlanar);
+
+  // Progression must recognize the new stereocenter
+  auto stereocenterOption = a.stereocenters().option(
+    BondIndex {0, 1}
+  );
+  BOOST_CHECK(
+    stereocenterOption
+    && stereocenterOption->numStereopermutations() == 2
+  );
+
+  std::cout << a << "\n";
+
+  a.assignStereocenter(
+    BondIndex {0, 1},
+    0
+  );
+
+  Molecule b = a;
+  b.assignStereocenter(
+    BondIndex {0, 1},
+    1
+  );
 
   // These must compare unequal
   BOOST_CHECK(a != b);
