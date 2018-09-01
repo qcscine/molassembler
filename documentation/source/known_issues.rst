@@ -10,13 +10,13 @@ actually identical.
 
 Rotational isomery
 ------------------
-
 The current data model of bond-centric stereocenters can treat a large number of
 cases correctly, but is insufficient. For instance, allene systems' rotational
-isomery cannot be captured with the current model. The current limitation to
-trigonal pyramidal - double bond - trigonal pyramidal patterns is too tight, and
-a more general solution must be found.
+isomery cannot be captured with the current model.
 
+Helicity
+--------
+No stereodescriptors or ranking algorithms for helicity are implemented.
 
 Conjugated systems
 ------------------
@@ -25,9 +25,8 @@ systems would require special care in the following places:
 
 - In ranking, the enumeration of Kekule structures is part of a sequence rule
   priority determination algorithm.
-- In bond order discretization, aromatic bond orders (around 1.5) may be
-  randomly rounded up or down, with no care taken to generate a Kekule structure
-  of a contained conjugated system
-- In conformer generation, conjugated systems should be flat.
-- In molecule comparison, mesomer kekule structures are not recognized as
+- In bond order discretization, if nearest integer discretization is chosen,
+  aromatic bond orders (around 1.5) may be randomly rounded up or down, with no
+  care taken to generate a Kekule structure of a contained conjugated system
+- In molecule comparison, mesomer kekule structures may not be recognized as
   equivalent molecules

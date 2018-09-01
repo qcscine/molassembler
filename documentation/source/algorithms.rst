@@ -14,12 +14,23 @@ pitfalls and misconceptions about their applicability.
 
 Bond discretization
 ===================
-The discretization of fractional bond orders to bond types is currently a fairly
-boorish round-to-nearest-integer algorithm and is hence particularly error prone
+In the discretization of fractional bond orders to classic integer internal bond
+types (e.g. single, double, etc.), there are two options. You can choose to 
+round bond orders to the nearest integer, but this is particularly error prone 
 for particularly weakly-bound metal ligands (around 0.5) and aromatic bonds
-(around 1.5). Until conjugated system detection is implemented and this
-algorithm is improved, you may want to consider using binary bond discretization
-(bonded / not bonded) if you work with conjugated systems.
+(around 1.5). For instance, two adjacent aromatic bonds that both show a
+fractional bond order around 1.5 may be randomly rounded up or down depending on
+the bond order generation method or its particular conformation. This can cause
+unexpected ranking inequivalency / equivalency artifacts. If you expect there
+to be conjugated systems or transition metals in your set of interpreted
+molecules, discretizing bond orders in this fashion is disadvised.
+
+It is instead preferable to discretize bond orders in a purely binary manner,
+i.e. bond orders are interpreted as a single bond if the fractional bond order
+is is more than or equal to 0.5. Double bond stereocenters (i.e. in organic
+molecules E/Z stereocenters) are still interpreted from coordinate information
+despite the main bond type discretized to a single bond. This part of a
+Molecule's interpretation is discussed elsewhere.
 
 
 Symmetry determination
@@ -30,7 +41,7 @@ substituents within the set of appropriately sized symmetries. For main-group
 atoms, this is accomplished by application of a very basic valence shell
 electron pair repulsion (VSEPR) algorithm. No symmetry determination algorithms
 are currently implemented for non-main-group atoms, and the first symmetry of
-appropriate size is chosen.
+appropriate size is chosen instead.
 
 
 Ranking

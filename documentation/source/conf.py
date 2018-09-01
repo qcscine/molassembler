@@ -180,6 +180,8 @@ breathe_projects_source = {
   "molassembler" : (
     "../../src/molassembler/lib/molassembler/",
     [
+      "AtomStereocenter.h",
+      "BondStereocenter.h",
       "Conformers.h",
       "Cycles.h",
       "Descriptors.h",
@@ -189,6 +191,7 @@ breathe_projects_source = {
       "Molecule.h",
       "Options.h",
       "Serialization.h",
+      "StereocenterList.h",
       "Version.h"
     ]
   )

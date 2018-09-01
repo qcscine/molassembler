@@ -22,21 +22,30 @@ Atom connectivity can also be discretized from a bond order matrix, which in
 turn can be very roughly approximated using pairwise atom distances from spatial
 information.
 
-Atom-centric symmetries and stereocenter assignments can be gleaned from spatial
-information.
+Atom-centric symmetries and its stereocenter assignments can be gleaned from
+spatial information.
+
+Bond-centric stereocenters are interpreted at each bond where both ends have an
+assigned atom-centric stereocenter. If the supplied conformation matches a
+permutation of the bond-centric stereocenter, the bond-centric stereocenter is
+assigned and kept. Incidental matches and undesired dihedral freezes can be
+avoided by specifying a minimal bond order for which a rotational barrier can
+exist. Any bonds whose bond orders do not meet this threshold are not considered
+for bond-centric stereocenter interpretation.
 
 Molecular file formats supply varying levels of information about molecules,
 ranging from the XYZ format, which supplies merely element types and spatial
 information, to the MOLFile format, which supplies element types, discretized
 connectivity and spatial information.
 
-It is recommended to fix the connectivity of a molecule with previously known
-connectivity information. The discretization of bond orders to connectivity
-currently has pitfalls for conjugated systems, and the calculation of bond
-orders from spatial distances is fragile.
+Recommendations
+---------------
+The preferred method for mass molecule construction is binary discretization
+from supplied fractional bond orders and coordinate information.
 
-The best supported file format for the extraction of assignments of
-stereocenters is therefore the MOLFile.
+Nearest-integer bond discretization has pitfalls for conjugated systems, and the
+calculation of bond orders from spatial distances only is unreliable due to the
+limited underlying model of UFF bond distances.
 
 
 Options
@@ -72,6 +81,10 @@ at odds with either the reduction of stereopermutations to assignments, where
 algorithms throw out obviously impossible permutations (yielding stereocenters
 with no possible assignments) or with the library's spatial modeling in
 conformer generation.
+
+Information about a Molecule can be obtained from its constituting graph and
+stereocenter list classes, but editing is centralized at the Molecule interface
+since graph and stereocenter changes force a full re-ranking of all atoms.
 
 
 Conformer generation
