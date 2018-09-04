@@ -1,6 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_DG_EXPLICIT_GRAPH_H
 #define INCLUDE_MOLASSEMBLER_DG_EXPLICIT_GRAPH_H
 
+// #define MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
+
 #include "boost/graph/adjacency_list.hpp"
 #include "boost_outcome/outcome.hpp"
 #include "Eigen/Core"
@@ -83,8 +85,8 @@ public:
 //!@name Static member functions
 //!@{
   static void _explainContradictionPaths(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
+    VertexDescriptor a,
+    VertexDescriptor b,
     const std::vector<VertexDescriptor>& predecessors,
     const std::vector<double>& distances
   );
@@ -105,8 +107,8 @@ public:
 //!@name Modifiers
 //!@{
   void addBound(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
+    VertexDescriptor a,
+    VertexDescriptor b,
     const ValueBounds& bound
   );
 
@@ -114,19 +116,19 @@ public:
   void addImplicitEdges();
 
   void setDistance(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
+    VertexDescriptor a,
+    VertexDescriptor b,
     double distance
   );
 
   double lowerBound(
-    const VertexDescriptor a,
-    const VertexDescriptor b
+    VertexDescriptor a,
+    VertexDescriptor b
   ) const;
 
   double upperBound(
-    const VertexDescriptor a,
-    const VertexDescriptor b
+    VertexDescriptor a,
+    VertexDescriptor b
   ) const;
 
   /*!
@@ -141,7 +143,7 @@ public:
 //!@name Information
 //!@{
   //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
-  double maximalImplicitLowerBound(const VertexDescriptor i) const;
+  double maximalImplicitLowerBound(VertexDescriptor i) const;
 
   const GraphType& graph() const;
 
@@ -155,15 +157,15 @@ private:
   std::array<Delib::ElementType, 2> _heaviestAtoms;
 
   void _updateOrAddEdge(
-    const VertexDescriptor i,
-    const VertexDescriptor j,
-    const double edgeWeight
+    VertexDescriptor i,
+    VertexDescriptor j,
+    double edgeWeight
   );
 
   void _updateGraphWithFixedDistance(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
-    const double fixedDistance
+    VertexDescriptor a,
+    VertexDescriptor b,
+    double fixedDistance
   );
 
 };

@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       );
     };
 
-    bool passTriangleInequalities = true;
+    unsigned triangleInequalityFailures = 0;
     unsigned matrN = distancesMatrix.cols();
     for(AtomIndex i = 0; i < matrN; ++i) {
       for(AtomIndex j = 0; j < matrN; ++j) {
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
           }
 
           if(d(i, k) > d(i, j) + d(j, k)) {
-            passTriangleInequalities = false;
+            ++triangleInequalityFailures;
             std::cout << "The triangle inequality is falsified along i = " << i
               << ", j = " << j << ", k = " << k << "!"
               << " d(i, k) = " << (d(i, k)) << " > " << (d(i, j) + d(j, k))
@@ -192,10 +192,18 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       }
     }
 
+#ifdef MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
     BOOST_CHECK_MESSAGE(
-      passTriangleInequalities,
+      static_cast<double>(triangleInequalityFailures) < std::max(1.0, 1e-3 * std::pow(matrN, 3)),
+      "More than 0.1 % triangle inequality violations!"
+        << nl << distancesMatrix << nl
+    );
+#else
+    BOOST_CHECK_MESSAGE(
+      triangleInequalityFailures == 0,
       "Generated distance matrix does not satisfy triangle inequalities!"
         << nl << distancesMatrix << nl
     );
   }
+#endif
 }

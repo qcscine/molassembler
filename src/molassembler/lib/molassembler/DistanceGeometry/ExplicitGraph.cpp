@@ -12,8 +12,7 @@
 #include "molassembler/Options.h"
 #include "molassembler/OuterGraph.h"
 
-// #define USE_SPECIALIZED_GOR1_ALGORITHM
-#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 #include "molassembler/DistanceGeometry/Gor1.h"
 #else
 #include "gor1/Gor1.h"
@@ -314,7 +313,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
       0
     );
 
-#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
     boost::gor1_ig_shortest_paths(
       *this,
       VertexDescriptor {left(a)},
@@ -433,7 +432,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
         0
       );
 
-#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
       boost::gor1_eg_shortest_paths(
         *this,
         left(a),
@@ -495,7 +494,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       0
     );
 
-#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
     boost::gor1_eg_shortest_paths(
       *this,
       left(a),

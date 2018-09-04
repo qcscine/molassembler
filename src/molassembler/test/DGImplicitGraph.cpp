@@ -311,10 +311,17 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
       << (100 * static_cast<double>(triangleInequalitiesFailures) / std::pow(matrN, 3))
       << " %)" << nl;
 
+#ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
     BOOST_CHECK_MESSAGE(
       static_cast<double>(triangleInequalitiesFailures) < std::max(1.0, 1e-3 * std::pow(matrN, 3)),
       "More than 0.1 % triangle inequality violations!"
         << nl << distancesMatrix << nl
     );
+#else
+    BOOST_CHECK_MESSAGE(
+      triangleInequalitiesFailures == 0,
+      "There are triangle inequality violations!" << nl << distancesMatrix << nl
+    );
+#endif
   }
 }

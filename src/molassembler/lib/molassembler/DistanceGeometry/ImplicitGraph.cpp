@@ -10,8 +10,7 @@
 #include "molassembler/Options.h"
 #include "molassembler/OuterGraph.h"
 
-#define USE_SPECIALIZED_GOR1_ALGORITHM
-#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 #include "molassembler/DistanceGeometry/Gor1.h"
 #else
 #include "gor1/Gor1.h"
@@ -244,7 +243,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexc
       0
     );
 
-#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
     boost::gor1_ig_shortest_paths(
       *this,
       VertexDescriptor {left(a)},
@@ -348,7 +347,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
         0
       );
 
-#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
       boost::gor1_ig_shortest_paths(
         *this,
         VertexDescriptor {left(a)},
@@ -374,7 +373,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       );
 
       if(distances.at(left(b)) < -distances.at(right(b))) {
-        _explainContradictionPaths(a, b, predecessors);
+        _explainContradictionPaths(a, b, predecessors, distances);
         return DGError::GraphImpossible;
       }
 
@@ -413,7 +412,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       0
     );
 
-#ifdef USE_SPECIALIZED_GOR1_ALGORITHM
+#ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
     boost::gor1_ig_shortest_paths(
       *this,
       VertexDescriptor {left(a)},
