@@ -13,14 +13,24 @@ class Molecule;
 
 /*! Calculates a number of freely rotatable bonds in a molecule
  *
- * A freely rotatable bond:
- * - Must be a single bond
- * - Neither atom connected by the bond may be terminal
- * - There may not be an assigned stereogenic BondStereocenter on the bond
+ * The number of rotatable bonds is calculated as a bond-wise sum of
+ * contributions that is rounded at the end:
  *
- * A rotatable bond in a cycle:
- * - If the edge is part of a cycle, it contributes at most (S - 3) / 3 to the
- *   total number of rotatable bonds. The final (fractional) count is rounded.
+ * A bond can contribute to the number of rotatable bonds if
+ * - It is of bond type Single
+ * - Neither atom connected by the bond is terminal
+ * - There is no assigned BondStereocenter on the bond
+ *
+ * A bond meeting the prior criteria:
+ * - If not part of a cycle, contributes a full rotatable bond to the sum
+ * - If part of a cycle, contributes (S - 3) / S to the sum (where S is
+ *   the cycle size).
+ *
+ * \warning The number of rotatable bonds is an unphysical descriptor and
+ *   definitions differ across libraries. Take the time to read the algorithm
+ *   description implemented here and do some testing. If need be, all
+ *   information used by this algorithm is accessible from the Molecule
+ *   interface, and a custom algorithm can be implemented.
  */
 unsigned numRotatableBonds(const Molecule& mol);
 

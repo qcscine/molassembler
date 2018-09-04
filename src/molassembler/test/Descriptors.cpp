@@ -16,15 +16,15 @@ std::map<
   std::string,
   unsigned
 > rotatableBondExpectations {
-  {"Benzene", 0},
-  {"Cyclobutadiene", 0},
+  {"Benzene", 2},
+  {"Cyclobutadiene", 1},
   {"Cyclobutane", 1},
   {"Cyclohexane", 3},
   {"Cyclohexene", 3}, // 2.5 rounded up
   {"Cyclopentane", 2},
   {"Cyclopentene", 2}, // 8/5 rounded up
   {"Cyclopropane", 0},
-  {"Toluol", 1}
+  {"Toluol", 3}
 };
 
 BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
