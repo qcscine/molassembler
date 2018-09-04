@@ -696,6 +696,14 @@ Composite::Composite(OrientationState first, OrientationState second)
             return fpComparator.isEqual(
               std::get<2>(dihedralList.front()),
               std::get<2>(rhsDihedralList.front())
+            ) || (
+              fpComparator.isEqual(
+                std::fabs(std::get<2>(dihedralList.front())),
+                M_PI
+              ) && fpComparator.isEqual(
+                std::fabs(std::get<2>(rhsDihedralList.front())),
+                M_PI
+              )
             );
           }
         )

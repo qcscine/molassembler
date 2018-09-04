@@ -698,18 +698,21 @@ BOOST_AUTO_TEST_CASE(orientationStateTests) {
 }
 
 BOOST_AUTO_TEST_CASE(compositesTests) {
+  constexpr unsigned leftIdentifier = 0;
+  constexpr unsigned rightIdentifier = 1;
+
   Composite a {
     Composite::OrientationState {
       Symmetry::Name::Seesaw,
       0,
       {'A', 'B', 'C', 'D'},
-      0
+      leftIdentifier
     },
     Composite::OrientationState {
       Symmetry::Name::Tetrahedral,
       0,
       {'A', 'B', 'C', 'D'},
-      1
+      rightIdentifier
     }
   };
 
@@ -723,13 +726,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
       Symmetry::Name::Octahedral,
       4,
       {'A', 'B', 'C', 'D', 'E', 'F'},
-      0
+      leftIdentifier
     },
     Composite::OrientationState {
       Symmetry::Name::Octahedral,
       2,
       {'A', 'B', 'C', 'D', 'E', 'F'},
-      1
+      rightIdentifier
     }
   };
 
@@ -743,13 +746,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
       Symmetry::Name::Bent,
       0,
       {'A', 'B'},
-      0
+      leftIdentifier
     },
     Composite::OrientationState {
       Symmetry::Name::TrigonalPlanar,
       0,
       {'A', 'B', 'C'},
-      1
+      rightIdentifier
     }
   };
 
@@ -763,13 +766,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
       Symmetry::Name::TrigonalPlanar,
       0,
       {'A', 'B', 'C'},
-      0
+      leftIdentifier
     },
     Composite::OrientationState {
       Symmetry::Name::TrigonalPlanar,
       0,
       {'A', 'B', 'C'},
-      1
+      rightIdentifier
     }
   };
 
@@ -783,13 +786,13 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
       Symmetry::Name::Bent,
       0,
       {'A', 'B'},
-      0
+      leftIdentifier
     },
     Composite::OrientationState {
       Symmetry::Name::Bent,
       0,
       {'A', 'B'},
-      1
+      rightIdentifier
     }
   };
 
