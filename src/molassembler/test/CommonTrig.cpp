@@ -1,5 +1,5 @@
 #define BOOST_TEST_MODULE CommonTrigTests
-#include <boost/test/unit_test.hpp>
+#include "boost/test/unit_test.hpp"
 
 #include "molassembler/Modeling/CommonTrig.h"
 #include "temple/Random.h"

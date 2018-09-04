@@ -1,12 +1,12 @@
 #define BOOST_TEST_MODULE ExplicitGraphTestModule
-#include "boost/test/unit_test.hpp"
 #define BOOST_FILESYSTEM_NO_DEPRECATED
+
 #include "boost/filesystem.hpp"
+#include "boost/graph/graph_concepts.hpp"
+#include "boost/test/unit_test.hpp"
 
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-
-#include "boost/graph/graph_concepts.hpp"
 #include "molassembler/IO.h"
 
 #include <iostream>

@@ -1,9 +1,9 @@
+#define BOOST_FILESYSTEM_NO_DEPRECATED
+
+#include "boost/filesystem.hpp"
+#include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/program_options.hpp"
 
-#define BOOST_FILESYSTEM_NO_DEPRECATED
-#include "boost/filesystem.hpp"
-
-#include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "gor1/Gor1.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
@@ -321,12 +321,10 @@ int main(int argc, char* argv[]) {
   std::ofstream benchmarkFile ("graph_timings.csv");
   writeHeaders(benchmarkFile);
 
-  boost::filesystem::path filesPath(molPath);
-  boost::filesystem::recursive_directory_iterator end;
-
-  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-    const boost::filesystem::path currentFilePath = *i;
-
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator(molPath)
+  ) {
     benchmark(currentFilePath, benchmarkFile, choice, partiality);
   }
 

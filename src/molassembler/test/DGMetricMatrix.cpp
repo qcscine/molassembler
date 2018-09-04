@@ -242,12 +242,10 @@ void showEmbedding(const MetricMatrix& metricMatrix) {
 }
 
 BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
-  boost::filesystem::path filesPath("ez_stereocenters");
-  boost::filesystem::recursive_directory_iterator end;
-
-  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-    const boost::filesystem::path currentFilePath = *i;
-
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator("ez_stereocenters")
+  ) {
     auto molecule = IO::read(currentFilePath.string());
 
     auto DGData = DistanceGeometry::gatherDGInformation(molecule);

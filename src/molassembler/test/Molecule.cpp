@@ -1,9 +1,9 @@
 #define BOOST_TEST_MODULE MoleculeTests
-#include <boost/test/unit_test.hpp>
-
 #define BOOST_FILESYSTEM_NO_DEPRECATED
+
 #include "boost/filesystem.hpp"
 #include "boost/regex.hpp"
+#include "boost/test/unit_test.hpp"
 
 #include "chemical_symmetries/Symmetries.h"
 
@@ -175,7 +175,8 @@ BOOST_AUTO_TEST_CASE(environmentHashingTests) {
 BOOST_AUTO_TEST_CASE(isomorphismTests) {
   using namespace std::string_literals;
 
-  const std::string directoryPrefix = "isomorphisms/"s;
+  boost::filesystem::path directoryBase("isomorphisms");
+
   const boost::regex isomorphismFileRegex {R"(.+_isomorphism.mol)"};
   const boost::regex removeRegex {R"(_isomorphism.mol)"};
 
@@ -185,14 +186,13 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
 
   std::vector<Molecule> originals;
 
-  boost::filesystem::path filesPath(directoryPrefix);
-  boost::filesystem::recursive_directory_iterator end;
-  for(boost::filesystem::recursive_directory_iterator iter(filesPath); iter != end; iter++) {
-    const boost::filesystem::path currentFilePath = *iter;
-
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator(directoryBase)
+  ) {
     boost::smatch what;
 
-    if(!boost::regex_match(iter -> path().filename().string(), what, isomorphismFileRegex)) {
+    if(!boost::regex_match(currentFilePath.filename().string(), what, isomorphismFileRegex)) {
       continue;
     }
 
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
      */
 
     auto originalFilePath = currentFilePath.parent_path() / (
-      boost::regex_replace(iter -> path().filename().string(), removeRegex, "") + ".mol"
+      boost::regex_replace(currentFilePath.filename().string(), removeRegex, "") + ".mol"
     );
 
     if(!boost::filesystem::exists(originalFilePath)) {
@@ -311,10 +311,11 @@ bool isStereogenic(
 }
 
 BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
-  const std::string directoryPrefix = "ranking_tree_molecules/"s;
+  boost::filesystem::path filePath("ranking_tree_molecules");
+  filePath /= "(2R,3r,4S)-pentane-2,3,4-trithiol.mol";
 
   auto pseudocenter = IO::read(
-    directoryPrefix + "(2R,3r,4S)-pentane-2,3,4-trithiol.mol"
+    filePath.string()
   );
 
   AtomIndex central = 0;

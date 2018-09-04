@@ -1,9 +1,9 @@
 #define BOOST_TEST_MODULE DGExplicitGraphTests
-#include "boost/test/unit_test.hpp"
 #define BOOST_FILESYSTEM_NO_DEPRECATED
-#include "boost/filesystem.hpp"
 
+#include "boost/filesystem.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
+#include "boost/test/unit_test.hpp"
 
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
@@ -154,15 +154,12 @@ UnsignedType right(UnsignedType a) {
 }
 
 BOOST_AUTO_TEST_CASE(conceptTests) {
-
   using namespace molassembler;
 
-  boost::filesystem::path filesPath("stereocenter_detection_molecules");
-  boost::filesystem::recursive_directory_iterator end;
-
-  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-    const boost::filesystem::path currentFilePath = *i;
-
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
+  ) {
     Molecule molecule = IO::read(
       currentFilePath.string()
     );
@@ -281,11 +278,10 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
   // DBM + FW
   using namespace molassembler;
 
-  boost::filesystem::path filesPath("stereocenter_detection_molecules");
-  boost::filesystem::recursive_directory_iterator end;
-
-  for(boost::filesystem::recursive_directory_iterator fileIterator(filesPath); fileIterator != end; fileIterator++) {
-    const boost::filesystem::path currentFilePath = *fileIterator;
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator("stereocenter_detection_molecules")
+  ) {
     Molecule sampleMol = IO::read(
       currentFilePath.string()
     );

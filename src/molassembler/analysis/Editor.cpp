@@ -1,7 +1,7 @@
-#include "boost/program_options.hpp"
-
 #define BOOST_FILESYSTEM_NO_DEPRECATED
+
 #include "boost/filesystem.hpp"
+#include "boost/program_options.hpp"
 
 #include "Delib/ElementInfo.h"
 

@@ -39,18 +39,12 @@ BOOST_AUTO_TEST_CASE(base64Tests) {
   }
 }
 
-const std::string directoryPrefix = "ranking_tree_molecules/";
-
 BOOST_AUTO_TEST_CASE(moleculeSerializationTests) {
-  boost::filesystem::path filesPath(directoryPrefix);
-  boost::filesystem::recursive_directory_iterator end;
-
-  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-    const boost::filesystem::path currentFilePath = *i;
-
-    Molecule molecule = IO::read(
-      currentFilePath.string()
-    );
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator("ranking_tree_molecules")
+  ) {
+    auto molecule = IO::read(currentFilePath.string());
 
     std::string json = toJSON(molecule);
     Molecule decoded = fromJSON(json);

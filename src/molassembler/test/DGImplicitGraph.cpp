@@ -1,7 +1,8 @@
 #define BOOST_TEST_MODULE ImplicitGraphTestModule
-#include "boost/test/unit_test.hpp"
 #define BOOST_FILESYSTEM_NO_DEPRECATED
+
 #include "boost/filesystem.hpp"
+#include "boost/test/unit_test.hpp"
 
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"

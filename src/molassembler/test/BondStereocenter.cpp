@@ -1,8 +1,8 @@
 #define BOOST_TEST_MODULE BondStereocenterTestModule
-#include <boost/test/unit_test.hpp>
-
 #define BOOST_FILESYSTEM_NO_DEPRECATED
+
 #include "boost/filesystem.hpp"
+#include "boost/test/unit_test.hpp"
 
 #include "molassembler/Conformers.h"
 #include "molassembler/IO.h"
@@ -163,11 +163,10 @@ void checkExpectations(const boost::filesystem::path& filePath) {
 }
 
 BOOST_AUTO_TEST_CASE(stereocenterExpectationTests) {
-  boost::filesystem::path filesPath("ez_stereocenters");
-  boost::filesystem::recursive_directory_iterator end;
-
-  for(boost::filesystem::recursive_directory_iterator i(filesPath); i != end; i++) {
-    const boost::filesystem::path currentFilePath = *i;
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator("ez_stereocenters")
+  ) {
     BOOST_CHECK_NO_THROW(
       checkExpectations(currentFilePath)
     );

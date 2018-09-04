@@ -1,9 +1,8 @@
-#include "boost/program_options.hpp"
-
 #define BOOST_FILESYSTEM_NO_DEPRECATED
-#include "boost/filesystem.hpp"
 
+#include "boost/filesystem.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
+#include "boost/program_options.hpp"
 #include "boost/regex.hpp"
 
 #include "temple/Containers.h"

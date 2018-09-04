@@ -1,8 +1,7 @@
-#include "boost/program_options.hpp"
-
 #define BOOST_FILESYSTEM_NO_DEPRECATED
-#include "boost/filesystem.hpp"
 
+#include "boost/filesystem.hpp"
+#include "boost/program_options.hpp"
 #include "boost/regex.hpp"
 
 #include "temple/Containers.h"
@@ -127,7 +126,7 @@ int main(int argc, char* argv[]) {
         continue;
       }
 
-      boost::filesystem::path newPath {"./"s + folderName};
+      boost::filesystem::path newPath(folderName);
       newPath /= iter->path().filename();
 
       auto splat = StdlibTypeAlgorithms::split(iter->path().filename().string(), '-');
