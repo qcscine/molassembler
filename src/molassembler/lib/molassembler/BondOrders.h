@@ -17,7 +17,11 @@ namespace molassembler {
 // Forward-declarations
 class AngstromWrapper;
 
-//! Calculates a bond order collection via UFF-like bond distance modelling
+/*! Calculates a bond order collection via UFF-like bond distance modelling
+ *
+ * \warning UFF parameter bond order calculation is a very primitive
+ *   approximation and carries a high risk of misinterpretation
+ */
 Delib::BondOrderCollection uffBondOrders(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper

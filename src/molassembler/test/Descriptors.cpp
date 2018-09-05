@@ -24,6 +24,7 @@ std::map<
   {"Cyclopentane", 2},
   {"Cyclopentene", 2}, // 8/5 rounded up
   {"Cyclopropane", 0},
+  {"EEDifluorobutadiene", 1},
   {"Toluol", 3}
 };
 

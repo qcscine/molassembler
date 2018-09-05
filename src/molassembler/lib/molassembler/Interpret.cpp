@@ -135,6 +135,7 @@ InterpretResult interpret(
       atomCollectionGraph.bondType(edge)
     );
 
+    // If the edge's bond order exceeds the threshold optional
     if(
       stereocenterBondOrderThresholdOptional
       && bondOrders.getOrder(source, target) > *stereocenterBondOrderThresholdOptional
