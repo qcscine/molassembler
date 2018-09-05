@@ -137,6 +137,49 @@ namespace errfDetail {
     }
   }
 
+  void explainFinalContributions(
+    const DistanceBoundsMatrix& bounds,
+    const std::vector<ChiralityConstraint>& chiralityConstraints,
+    const Vector& positions
+  ) {
+    auto& log = Log::log(Log::Particulars::DGFinalErrorContributions);
+    log << "Final contributing constraints:\n";
+
+    // Check distance bound deviations
+    for(unsigned i = 0; i < bounds.N(); i++) {
+      for(unsigned j = i + 1; j < bounds.N(); j++) {
+        double ijDistance = dlib::length(
+          errfDetail::getPos(positions, j) - errfDetail::getPos(positions, i)
+        );
+
+        if(
+          ijDistance - bounds.upperBound(i, j) > 0
+          || bounds.lowerBound(i, j) - ijDistance > 0
+        ) {
+          log << "Distance constraint " << i << " - " << j << " : ["
+            << bounds.lowerBound(i, j) << ", " << bounds.upperBound(i, j)
+            << "] is unsatisfied : " << ijDistance << "\n";
+        }
+      }
+    }
+
+    // Check chiral bound deviations
+    for(const auto& constraint : chiralityConstraints) {
+      double volume = errfDetail::adjustedSignedVolume(positions, constraint.sites);
+
+      if(
+        volume - constraint.upper > 0
+        || constraint.lower - volume > 0
+      ) {
+        log << "Chiral constraint " << temple::stringify(constraint.sites) << " : ["
+          << constraint.lower << ", " << constraint.upper
+          << "] is unsatisfied : " << volume << "\n";
+      }
+    }
+
+    log << "\n";
+  }
+
 } // namespace errfDetail
 
 } // namespace DistanceGeometry

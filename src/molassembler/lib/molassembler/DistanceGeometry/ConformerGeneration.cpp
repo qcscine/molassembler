@@ -622,6 +622,14 @@ std::list<RefinementData> debug(
       dlibPositions
     );
 
+    if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions)) {
+      errfDetail::explainFinalContributions(
+        distanceBounds,
+        DGData.chiralityConstraints,
+        dlibPositions
+      );
+    }
+
     RefinementData refinementData;
     refinementData.steps = std::move(refinementSteps);
     refinementData.constraints = DGData.chiralityConstraints;

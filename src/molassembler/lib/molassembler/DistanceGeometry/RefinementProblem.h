@@ -110,6 +110,12 @@ void explainAcceptanceFailure(
   const Vector& positions
 );
 
+void explainFinalContributions(
+  const DistanceBoundsMatrix& bounds,
+  const std::vector<ChiralityConstraint>& chiralityConstraints,
+  const Vector& positions
+);
+
 } // namespace errfDetail
 
 template<bool compress>

@@ -53,6 +53,8 @@ enum class Particulars {
    * on the current status of the optimization
    */
   DGRefinementProgress,
+  //! In ConformerGeneration, explain final contributions to the error function
+  DGFinalErrorContributions,
   //! Explain why a structure was not accepted
   DGStructureAcceptanceFailures,
   //! In generateConformation, show the Trees generated from the molecules
