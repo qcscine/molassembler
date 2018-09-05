@@ -15,7 +15,7 @@ Minimally, the atoms' element types and their connectivity are needed to
 constitute a molecule's graph. From a graph, the presence of stereocenters can
 be inferred by using algorithms to determine the local symmetry at an atom using
 information present in the graph about its substituents. Any inferred
-setereocenters are unassigned, i.e. generated conformers will be composed of
+stereocenters are unassigned, i.e. generated conformers will be composed of
 all possible stereopermutations at those stereocenters.
 
 Atom connectivity can also be discretized from a bond order matrix, which in

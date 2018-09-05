@@ -5,16 +5,21 @@
 
 /*! @file
  *
- * Contains the library versioning scheme information
+ * Contains the library versioning scheme information.
+ * This library adheres to semantic versioning
+ * (http://semver.org/spec/v2.0.0.html).
  */
 
 namespace molassembler {
 
 namespace Version {
 
-constexpr unsigned short major = 0;
-constexpr unsigned short minor = 1;
-constexpr unsigned short fix = 0;
+//! The major version number. Incremented on incompatible API changes
+constexpr unsigned major = 0;
+//! The minor version number. Incremented on backwards-compatible functionality additions
+constexpr unsigned minor = 1;
+//! The patch version number. Incremented on backwards-compatible bug fixes
+constexpr unsigned patch = 0;
 
 inline std::string majorMinor() {
   return std::to_string(major) + "." + std::to_string(minor);
@@ -24,7 +29,7 @@ inline std::string fullVersion() {
   return (
     std::to_string(major)
     + "." + std::to_string(minor)
-    + "." + std::to_string(fix)
+    + "." + std::to_string(patch)
   );
 }
 

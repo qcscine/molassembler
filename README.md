@@ -2,10 +2,10 @@
 ## Overview
 
 Molassembler is a C++ library that aims to facilitate crossings between
-Cartesian and graph representations of chemical molecules. It provides the
-necessary functionality to represent a chemical molecule as a graph, modify it
-in graph space, and generate coordinates from graphs. Local geometries are
-modelled onto every non-terminal atom in the graph.
+Cartesian and graph representations of molecules. It provides the necessary
+functionality to represent a molecule as a graph, modify it in graph space, and
+generate coordinates from graphs. Local geometries are modelled onto every
+non-terminal atom in the graph.
 
 
 ## Features
@@ -16,10 +16,11 @@ modelled onto every non-terminal atom in the graph.
 - High-temperature approximation is invoked by default to avoid considering
   inverting nitrogen centers as stereocenters, but this is optional. Even in
   the high-temperature approximation, nitrogen centers whose substituents
-  form a strained cycle and hence do not invert quickly are considered a
+  form a strained cycle and hence do not invert rapidly are considered a
   stereocenter.
 - All stereocenter permutations are generated with relative statistical
   occurrence weights. Linking of ligands (denticity) is properly considered.
+  Several classes of haptic ligands are supported.
 - Editing of molecules preservers chiral information by default, and is highly
   configurable.
 - Ranking algorithms are nearly fully IUPAC Blue Book 2013 compliant, extended
@@ -39,7 +40,7 @@ This library requires the C++14 standard and a recent compiler (GCC >= 7).
 
 External library dependencies:
 
-- boost: graph, functional, optional, test, outcome
+- Boost 1.64
 - Eigen: vector arithmetic
 - dlib: BFGS solver
 - scine Delib: Common chemical exchange types
@@ -67,9 +68,12 @@ $ make
 
 ## Tests
 
-We recommend running the tests in a release build of the library. Since the
-tests are extensive, they may take more than 10 minutes.
+We recommend running the tests in a release build of the library. The tests are
+split into two sets. After building the library and tests, run:
 
+- Brief end-to-end tests: `make check`
+- Library validation: `make validate`
+- Both: `make test`
 
 ## Documentation
 
