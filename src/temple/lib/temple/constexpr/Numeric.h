@@ -13,7 +13,6 @@
  * Exposes a small set of functions for working with numbers in containers.
  *
  * - Basic summation
- * - Kahan summation
  * - Average
  * - Geometric mean
  * - Standard deviation
@@ -37,34 +36,6 @@ constexpr traits::getValueType<ContainerType> sum(const ContainerType& container
     ValueType {0},
     std::plus<ValueType>()
   );
-}
-
-/*!
- * Composable Kahan summation function. Returns the type the container
- * contains, assuming monadic behavior on operator + (value_type + value_type =
- * value_type).  Container must implement begin and end members.
- */
-template<class ContainerType>
-constexpr std::enable_if_t<
-  std::is_floating_point<
-    traits::getValueType<ContainerType>
-  >::value,
-  traits::getValueType<ContainerType>
-> kahanSum(const ContainerType& container) {
-  using ValueType = traits::getValueType<ContainerType>;
-
-  ValueType counter {0};
-  ValueType error {0};
-
-  for(const auto& value: container) {
-    ValueType y = value - error;
-    ValueType kt = counter + y;
-
-    error = (kt - counter) - y;
-    counter = kt;
-  }
-
-  return counter;
 }
 
 /*!

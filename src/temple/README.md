@@ -87,7 +87,7 @@ compile-time programming.
   - count types in tuple types
 
 - Some stubs to work with numeric data
-  - Non-compensated summation, Kahan summation
+  - Uncompensated summation
   - Average, geometric mean, standard deviation
   - Min / Max
 
