@@ -4,44 +4,85 @@
 #include "boost/graph/graph_traits.hpp"
 #include "boost/graph/graph_concepts.hpp"
 
+/*!@file
+ *
+ * Implements a simplified GOR1 single-source shortest paths algorithm in the
+ * boost namespace in Boost Graph Library style (including a Visitor for
+ * algorithm observation and side effects).
+ *
+ * Reference:
+ * - Cherkassky, B. V., Goldberg, A. V., & Radzik, T. (1996). Shortest paths
+ *   algorithms: Theory and experimental evaluation. Mathematical Programming,
+ *   73(2), 129–174. https://doi.org/10.1007/BF02592101
+ */
+
 namespace boost {
 
 namespace detail {
 
+/*!
+ * @brief A Dummy Visitor object demonstrating the interface needed to enable
+ *   GOR1 algorithm observation and side effects.
+ */
 struct DummyGor1Visitor {
 /* Stack operations */
+  //! Dummy stack A push event caller
   template<typename VertexDescriptor, typename IncidenceGraph>
   void a_push(const VertexDescriptor& /* v */, const IncidenceGraph& /* g */) {}
 
+  //! Dummy stack A pop event caller
   template<typename VertexDescriptor, typename IncidenceGraph>
   void a_pop(const VertexDescriptor& /* v */, const IncidenceGraph& /* g */) {}
 
+  //! Dummy stack A push event caller
   template<typename VertexDescriptor, typename IncidenceGraph>
   void b_push(const VertexDescriptor& /* v */, const IncidenceGraph& /* g */) {}
 
+  //! Dummy stack A pop event caller
   template<typename VertexDescriptor, typename IncidenceGraph>
   void b_pop(const VertexDescriptor& /* v */, const IncidenceGraph& /* g */) {}
 
 /* Edge operations */
+  //! Dummy edge examine event caller
   template<typename EdgeDescriptor, typename IncidenceGraph>
   void examine_edge(const EdgeDescriptor& /* e */, const IncidenceGraph& /* g */) {}
 
+  //! Dummy edge relax event caller
   template<typename EdgeDescriptor, typename IncidenceGraph>
   void relax_edge(const EdgeDescriptor& /* e */, const IncidenceGraph& /* g */) {}
 
 /* Vertex colorings */
+  //! Dummy vertex marked white event caller
   template<typename VertexDescriptor, typename IncidenceGraph>
   void mark_white(const VertexDescriptor& /* v */, const IncidenceGraph& /* g */) {}
 
+  //! Dummy vertex marked gray event caller
   template<typename VertexDescriptor, typename IncidenceGraph>
   void mark_gray(const VertexDescriptor& /* v */, const IncidenceGraph& /* g */) {}
 
+  //! Dummy vertex marked blac event caller
   template<typename VertexDescriptor, typename IncidenceGraph>
   void mark_black(const VertexDescriptor& /* v */, const IncidenceGraph& /* g */) {}
 };
 
-} // namespace detail
-
+/*! GOR1 helper function that performs the scanning of a vertex' edges
+ *
+ * @tparam VertexDescriptor Type of the Graph's vertex descriptor
+ * @tparam IncidenceGraph Type modeling Boost's IncidenceGraph concept
+ * @tparam DistanceMap Type mapping vertex descriptors to distance
+ * @tparam PredecessorMap Type mapping vertex descriptors to their predecessor
+ *   vertex
+ * @tparam ColorMap Type mapping vertex descriptors to a color
+ * @tparam Visitor Type that performs event visitation operations
+ *
+ * @param vertex The vertex to scan
+ * @param graph The graph that vertex is contained in
+ * @param predecessor_map The map of vertices to their predecessors
+ * @param color_map The map of vertices to their color
+ * @param distance_map The map of vertices to their distance
+ * @param B The B stack as described in the paper
+ * @param visitor A visitor that matches the DummyGor1Visitor interface
+ */
 template<
   typename VertexDescriptor,
   class IncidenceGraph,
@@ -94,6 +135,34 @@ void gor1_simplified_scan(
   }
 }
 
+} // namespace detail
+
+/*! Simplified GOR1 single source shortest paths algorithm
+ *
+ * Implements the algorithm described in
+ * - Cherkassky, B. V., Goldberg, A. V., & Radzik, T. (1996). Shortest paths
+ *   algorithms: Theory and experimental evaluation. Mathematical Programming,
+ *   73(2), 129–174. https://doi.org/10.1007/BF02592101
+ *
+ * Reference C implementation in
+ * - https://github.com/skvadrik/cherkassky_goldberg_radzik
+ *
+ * @tparam IncidenceGraph Type modeling Boost's IncidenceGraph concept
+ * @tparam DistanceMap Type mapping vertex descriptors to distance
+ * @tparam PredecessorMap Type mapping vertex descriptors to their predecessor
+ *   vertex
+ * @tparam ColorMap Type mapping vertex descriptors to a color
+ * @tparam Visitor Type that performs event visitation operations
+ * @tparam VertexDescriptor Type of the Graph's vertex descriptor
+ *
+ * @param graph The graph that vertex is contained in
+ * @param root_vertex The source vertex from which shortest distances are to be
+ *   calculated
+ * @param predecessor_map The map of vertices to their predecessors
+ * @param color_map The map of vertices to their color
+ * @param distance_map The map of vertices to their distance
+ * @param visitor A visitor that matches the DummyGor1Visitor interface
+ */
 template<
   class IncidenceGraph,
   class DistanceMap,
@@ -155,7 +224,7 @@ bool gor1_simplified_shortest_paths(
         put(color_map, v, Color::black());
         visitor.mark_black(v, graph);
 
-        gor1_simplified_scan(
+        detail::gor1_simplified_scan(
           v,
           graph,
           predecessor_map,
@@ -175,7 +244,7 @@ bool gor1_simplified_shortest_paths(
       visitor.a_pop(v, graph);
 
       // Scan
-      gor1_simplified_scan(
+      detail::gor1_simplified_scan(
         v,
         graph,
         predecessor_map,
@@ -208,6 +277,15 @@ bool gor1_simplified_shortest_paths(
   ColorMap& color_map,
   DistanceMap& distance_map
 ) {
+  /* This function is needed since binding an rvalue to a lvalue reference is
+   * not permitted in:
+   *
+   * template<..., Visitor = detail::DummyGor1Visitor>
+   * bool shortest_paths(
+   *   ...,
+   *   Visitor& visitor = Visitor {}
+   * )
+   */
   detail::DummyGor1Visitor visitor;
 
   return gor1_simplified_shortest_paths(

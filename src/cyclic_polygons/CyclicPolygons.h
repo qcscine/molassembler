@@ -14,17 +14,28 @@
  * Provides functionality to calculate the circumradii and internal angles of
  * cyclic polygons of any size.  Contains shortcut calculations of the internal angles
  * for triangles and quadrilaterals, which are easier to treat.
+ *
+ * The general implementation is split into two variants for when the
+ * circumcenter is inside the convex cyclic polygon, and when it is outside.
+ * The overall strategy is to try out first the variant if it is inside, and
+ * if finding a result fails, try if it is outside. One of both must work, but
+ * there is no obvious algorithm to determine the position of the circumcenter
+ * a priori.
  */
 
 namespace CyclicPolygons {
 
 namespace detail {
 
+/*!
+ * @brief Helper function to calculate an angle from three side lengths in a
+ *   triangle using the law of cosines
+ */
 template<typename FloatType>
 inline FloatType inverseLawOfCosines(
-  const FloatType& opposingSideLength,
-  const FloatType& adjacentSideLengthA,
-  const FloatType& adjacentSideLengthB
+  const FloatType opposingSideLength,
+  const FloatType adjacentSideLengthA,
+  const FloatType adjacentSideLengthB
 ) {
   return std::acos(
     (
@@ -37,6 +48,10 @@ inline FloatType inverseLawOfCosines(
   );
 }
 
+/*!
+ * For triangles, there are no degrees of freedom in arranging the edges at all,
+ * and the triangle's inner angles can be calculated directly.
+ */
 template<typename FloatType>
 std::vector<FloatType> triangleShortcut(const std::vector<FloatType>& edgeLengths) {
   return {
@@ -46,6 +61,7 @@ std::vector<FloatType> triangleShortcut(const std::vector<FloatType>& edgeLength
   };
 }
 
+//! Readability of implementation helper
 template<typename T>
 inline T square(const T& value) {
   return value * value;
@@ -82,6 +98,7 @@ FloatType quadrilateralInternalAngle(
   );
 }
 
+//! The inner angles of a cyclic quadrilateral is also explicitly calculable
 template<typename FloatType>
 std::vector<FloatType> quadrilateralShortcut(const std::vector<FloatType>& edgeLengths) {
   return {
@@ -92,8 +109,12 @@ std::vector<FloatType> quadrilateralShortcut(const std::vector<FloatType>& edgeL
   };
 }
 
+/*!
+ * @brief Calculates the angle for the isosceles triangle spanned from the
+ *   circumcenter to an edge
+ */
 template<typename FloatType>
-FloatType centralAnglesHelper(const FloatType& edgeLength, const FloatType& circumradius) {
+FloatType centralAnglesHelper(const FloatType edgeLength, const FloatType circumradius) {
   return std::acos(
     1 - (edgeLength * edgeLength) / (
       2 * circumradius * circumradius
@@ -103,22 +124,32 @@ FloatType centralAnglesHelper(const FloatType& edgeLength, const FloatType& circ
 
 namespace circumcenterInside {
 
+//! Calculates the angles at the circumcenter for each edge
 template<typename FloatType>
 std::vector<FloatType> centralAngles(
-  const FloatType& circumradius,
+  const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
   return temple::map(
     edgeLengths,
-    [&](const FloatType& edgeLength) -> FloatType {
+    [&](const FloatType edgeLength) -> FloatType {
       return centralAnglesHelper(edgeLength, circumradius);
     }
   );
 }
 
+/*! Calculates how close to closed a hypothetical convex cyclic polygon is
+ *
+ * Calculates the deviation of the sum of central angles of the hypothetic
+ * cyclic polygon to 2π, which would signify that it is a closed polygon.
+ *
+ * @param circumradius The circumradius of the hypothetical cyclic polygon
+ * @param edgeLengths The adjacent edge lengths composing the polygon
+ * @param longestEdge the length of the maximum edge in the edge lengths
+ */
 template<typename FloatType>
 FloatType centralAnglesDeviation(
-  const FloatType& circumradius,
+  const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
   return temple::sum(
@@ -126,15 +157,16 @@ FloatType centralAnglesDeviation(
   ) - 2 * M_PI;
 }
 
+//! The first derivative of the central angles deviation
 template<typename FloatType>
 FloatType centralAnglesDeviationDerivative(
-  const FloatType& circumradius,
+  const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
   return temple::sum(
     temple::map(
       edgeLengths,
-      [&](const FloatType& a) -> FloatType {
+      [&](const FloatType a) -> FloatType {
         return -2 * a / (
           circumradius * std::sqrt(
             4 * circumradius * circumradius - a * a
@@ -145,9 +177,10 @@ FloatType centralAnglesDeviationDerivative(
   );
 }
 
+//! The second derivative of the central angles deviation
 template<typename FloatType>
 FloatType centralAnglesDeviationSecondDerivative(
-  const FloatType& circumradius,
+  const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths
 ) {
   const FloatType squareCircumradius = circumradius * circumradius;
@@ -155,7 +188,7 @@ FloatType centralAnglesDeviationSecondDerivative(
   return temple::sum(
     temple::map(
       edgeLengths,
-      [&](const FloatType& a) -> FloatType {
+      [&](const FloatType a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
         return -2 * a * (
           - 4 * std::pow(temp, -1.5)
@@ -173,15 +206,16 @@ FloatType centralAnglesDeviationSecondDerivative(
 
 namespace circumcenterOutside {
 
+//! Calculates the angles at the circumcenter for each edge
 template<typename FloatType>
 std::vector<FloatType> centralAngles(
-  const FloatType& circumradius,
+  const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths,
-  const FloatType& longestEdge
+  const FloatType longestEdge
 ) {
   return temple::map(
     edgeLengths,
-    [&](const FloatType& edgeLength) -> FloatType {
+    [&](const FloatType edgeLength) -> FloatType {
       if(edgeLength == longestEdge) {
         return 2 * M_PI - centralAnglesHelper(edgeLength, circumradius);
       }
@@ -191,11 +225,20 @@ std::vector<FloatType> centralAngles(
   );
 }
 
+/*! Calculates how close to closed a hypothetical convex cyclic polygon is
+ *
+ * Calculates the deviation of the sum of central angles of the hypothetic
+ * cyclic polygon to 2π, which would signify that it is a closed polygon.
+ *
+ * @param circumradius The circumradius of the hypothetical cyclic polygon
+ * @param edgeLengths The adjacent edge lengths composing the polygon
+ * @param longestEdge the length of the maximum edge in the edge lengths
+ */
 template<typename FloatType>
 FloatType centralAnglesDeviation(
-  const FloatType& circumradius,
+  const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths,
-  const FloatType& longestEdge
+  const FloatType longestEdge
 ) {
   assert(circumradius > longestEdge / 2);
 
@@ -204,16 +247,17 @@ FloatType centralAnglesDeviation(
   ) - 2 * M_PI;
 }
 
+//! The first derivative of the central angles deviation
 template<typename FloatType>
 FloatType centralAnglesDeviationDerivative(
-  const FloatType& circumradius,
+  const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths,
-  const FloatType& longestEdge
+  const FloatType longestEdge
 ) {
   return temple::sum(
     temple::map(
       edgeLengths,
-      [&](const FloatType& a) -> FloatType {
+      [&](const FloatType a) -> FloatType {
         FloatType value = -2 * a / (
           circumradius * std::sqrt(
             4 * circumradius * circumradius - a * a
@@ -230,18 +274,19 @@ FloatType centralAnglesDeviationDerivative(
   );
 }
 
+//! The second derivative of the central angles deviation
 template<typename FloatType>
 FloatType centralAnglesDeviationSecondDerivative(
-  const FloatType& circumradius,
+  const FloatType circumradius,
   const std::vector<FloatType>& edgeLengths,
-  const FloatType& longestEdge
+  const FloatType longestEdge
 ) {
   const FloatType squareCircumradius = circumradius * circumradius;
 
   return temple::sum(
     temple::map(
       edgeLengths,
-      [&](const FloatType& a) -> FloatType {
+      [&](const FloatType a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
         FloatType value = -2 * a * (
           - 4 * std::pow(temp, -1.5)
@@ -262,16 +307,25 @@ FloatType centralAnglesDeviationSecondDerivative(
 
 } // namespace circumcenterOutside
 
-// TODO try upping the precision requirements using numeric_limits
+//! The circumradius of a regular polygon composed of a single edge length
 template<typename FloatType>
 FloatType regularCircumradius(
-  const unsigned& nSides,
-  const FloatType& a
+  const unsigned nSides,
+  const FloatType a
 ) {
   return 0.5 * a / std::sin(M_PI / nSides);
 }
 
-//! Precise only to 6 * sizeof(FloatType) bits
+/*!
+ * @brief Calculates the circumradius of a convex cyclic polygon
+ *
+ * Calculates the circumradius and whether the circumcenter is inside of the
+ * cyclic polygon constructed using the passed adjacent edge lengths.
+ *
+ * @param edgeLengths adjacent edge lengths composing the polygon
+ *
+ * @note Precise only to 6 * sizeof(FloatType) bits
+ */
 template<typename FloatType>
 std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edgeLengths) {
   const unsigned bitPrecision = 6 * sizeof(FloatType);
@@ -296,7 +350,7 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
 
   assert(lowerBound <= rootGuess && rootGuess <= upperBound);
 
-  auto rootSearchLambda = [&](const FloatType& circumradius) -> std::tuple<FloatType, FloatType, FloatType> {
+  auto rootSearchLambda = [&](const FloatType circumradius) -> std::tuple<FloatType, FloatType, FloatType> {
     return std::make_tuple<FloatType, FloatType, FloatType>(
       circumcenterInside::centralAnglesDeviation(circumradius, edgeLengths),
       circumcenterInside::centralAnglesDeviationDerivative(circumradius, edgeLengths),
@@ -323,7 +377,7 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
   if(std::fabs(circumcenterInside::centralAnglesDeviation(root, edgeLengths)) >= 1e-6) {
     // Perhaps the circumcenter is outside the polygon?
 
-    auto alternateSearchLambda = [&](const FloatType& circumradius) -> std::tuple<FloatType, FloatType, FloatType> {
+    auto alternateSearchLambda = [&](const FloatType circumradius) -> std::tuple<FloatType, FloatType, FloatType> {
       return std::make_tuple<FloatType, FloatType, FloatType>(
         circumcenterOutside::centralAnglesDeviation(circumradius, edgeLengths, longestEdge),
         circumcenterOutside::centralAnglesDeviationDerivative(circumradius, edgeLengths, longestEdge),
@@ -348,10 +402,20 @@ std::pair<FloatType, bool> convexCircumradius(const std::vector<FloatType>& edge
   return {root, true};
 }
 
+/*!
+ * @brief Calculates the internal angles of a polygon when the circumradius and
+ *   position of the circumcenter are known
+ *
+ * @param edgeLengths Consecutive adjacent edge lengths composing the polygon
+ * @param circumradius The discovered circumradius on which all vertices can
+ *   be placed
+ * @param circumcenterInside Whether the circumcenter is inside the final
+ *   polygon or outside
+ */
 template<typename FloatType>
 std::vector<FloatType> generalizedInternalAngles(
   const std::vector<FloatType>& edgeLengths,
-  const FloatType& circumradius,
+  const FloatType circumradius,
   bool circumcenterInside
 ) {
   // Immediately multiply with 2 to avoid doing so in every calculation
@@ -368,13 +432,13 @@ std::vector<FloatType> generalizedInternalAngles(
   if(circumcenterInside) {
     return temple::mapSequentialPairs(
       lengthsCopy,
-      [&](const FloatType& a, const FloatType& b) -> FloatType {
+      [&](const FloatType a, const FloatType b) -> FloatType {
         return std::acos(a / doubleR) + std::acos(b / doubleR);
       }
     );
   }
 
-  auto delta = [&](const FloatType& a) -> FloatType {
+  auto delta = [&](const FloatType a) -> FloatType {
     FloatType value = std::acos(a / doubleR);
 
     if(a == longestEdge) {
@@ -386,7 +450,7 @@ std::vector<FloatType> generalizedInternalAngles(
 
   return temple::mapSequentialPairs(
     lengthsCopy,
-    [&](const FloatType& a, const FloatType& b) -> FloatType {
+    [&](const FloatType a, const FloatType b) -> FloatType {
       return delta(a) + delta(b);
     }
   );
@@ -396,7 +460,7 @@ std::vector<FloatType> generalizedInternalAngles(
 
 
 /*!
- * Returns whether a cyclic polygon exists for the specified sequence of edge
+ * @brief Returns whether a cyclic polygon exists for the specified sequence of edge
  * lengths.
  */
 template<typename FloatType>
@@ -413,7 +477,8 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
   return maxValue < temple::sum(edgeLengths) - maxValue - 0.01 * maxValue;
 }
 
-/*!
+/*! Calculates the internal angles of a convex cyclic polygon
+ *
  * Returns internal angles of the convex cyclic polygon specified by the passed
  * edge lengths. Angles are returned in the following sequence:
  *
@@ -442,7 +507,7 @@ std::enable_if_t<
   assert(
     temple::all_of(
       edgeLengths,
-      [&](const FloatType& length) -> bool {
+      [&](const FloatType length) -> bool {
         return length != 0;
       }
     ) && "At least one edge length in the sequence is zero "
