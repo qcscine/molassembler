@@ -43,7 +43,7 @@ External library dependencies:
 - Boost 1.64
 - Eigen: vector arithmetic
 - dlib: BFGS solver
-- scine Delib: Common chemical exchange types
+- Delib: Common chemical exchange types
 
 
 External libraries included in tree and distribution:

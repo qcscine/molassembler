@@ -11,7 +11,7 @@ bool validPositionIndices(
   const Delib::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 ) {
-  /* scine::Delib casts its' underlying vector<Vector3>::size_type to int, so
+  /* Delib casts its' underlying vector<Vector3>::size_type to int, so
    * we have to get at the unsigned std::size_t differently. Since vector
    * iterators are RandomAccessIterators, we can get a std::ptrdiff_t in O(1),
    * which is typically bigger than int in most data models.

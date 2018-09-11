@@ -17,12 +17,6 @@
 
 using namespace Symmetry;
 
-auto makeCoordinateGetter(const Name& name) {
-  return [&](const unsigned index) -> Eigen::Vector3d {
-    return symmetryData().at(name).coordinates.at(index);
-  };
-}
-
 std::vector<unsigned> rotate(
   const std::vector<unsigned>& toRotate,
   const std::vector<unsigned>& rotationVector

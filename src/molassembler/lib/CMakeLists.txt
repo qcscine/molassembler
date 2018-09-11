@@ -3,7 +3,7 @@ find_package(stereopermutation 0.1.0 REQUIRED)
 find_package(chemical_symmetries 0.1.0 REQUIRED)
 find_package(temple 0.1.0 REQUIRED)
 find_package(cyclic_polygons 0.1.0 REQUIRED)
-find_package(scine COMPONENTS Delib REQUIRED)
+find_package(Delib REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(dlib REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem system)
@@ -147,7 +147,7 @@ target_link_libraries(
   molassembler
   PUBLIC
     Boost::boost
-    scine::Delib
+    delib::Delib
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic
@@ -166,7 +166,7 @@ target_link_libraries(
   molassemblerStatic
   PUBLIC
     Boost::boost
-    scine::DelibStatic
+    delib::DelibStatic
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic
