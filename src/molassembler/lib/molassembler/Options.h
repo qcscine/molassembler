@@ -5,7 +5,7 @@
 #include "temple/Random.h"
 
 #include "Delib/ElementTypes.h"
-#include "molassembler/Containers/AngstromWrapper.h"
+#include "molassembler/AngstromWrapper.h"
 
 /*!@file
  *

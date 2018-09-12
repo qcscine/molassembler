@@ -4,6 +4,13 @@
 #include "temple/Traits.h"
 
 #include <vector>
+#include <map>
+
+/*! @file
+ *
+ * Provides functionality to group elements of a container together by various
+ * methods.
+ */
 
 namespace temple {
 

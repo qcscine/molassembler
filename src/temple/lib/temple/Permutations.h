@@ -3,6 +3,11 @@
 
 #include <algorithm>
 
+/*!@file
+ *
+ * Provides functionality related to permutations.
+ */
+
 namespace temple {
 
 /*! Calculate the index of permutation of elements in a container

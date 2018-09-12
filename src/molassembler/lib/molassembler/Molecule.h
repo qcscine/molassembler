@@ -6,7 +6,7 @@
 #include "chemical_symmetries/Names.h"
 #include "temple/constexpr/Bitmask.h"
 
-#include "molassembler/Containers/AngstromWrapper.h"
+#include "molassembler/AngstromWrapper.h"
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST

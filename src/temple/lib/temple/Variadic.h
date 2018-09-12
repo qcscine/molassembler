@@ -12,6 +12,11 @@
  *   concatenate to preallocate space)
  */
 
+/*!@file
+ *
+ * Provides functions that can apply to as many Containers as needed.
+ */
+
 namespace temple {
 
 namespace variadic {

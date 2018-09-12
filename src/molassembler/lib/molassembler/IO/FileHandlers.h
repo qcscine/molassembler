@@ -6,7 +6,7 @@
 #include "Delib/ElementTypeCollection.h"
 #include "Delib/BondOrderCollection.h"
 
-#include "molassembler/Containers/AngstromWrapper.h"
+#include "molassembler/AngstromWrapper.h"
 #include "molassembler/IO.h"
 #include "molassembler/Interpret.h"
 

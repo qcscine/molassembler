@@ -3,6 +3,11 @@
 
 #include <algorithm>
 
+/*!@file
+ *
+ * Provides shortcuts to call STL set algorithms.
+ */
+
 namespace temple {
 
 template<

@@ -9,7 +9,7 @@
 #include "temple/Random.h"
 
 #include "molassembler/AtomStereocenter.h"
-#include "molassembler/Containers/AngstromWrapper.h"
+#include "molassembler/AngstromWrapper.h"
 #include "molassembler/Detail/DelibHelpers.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"

@@ -3,7 +3,7 @@
 #include "Delib/ElementTypeCollection.h"
 #include "Delib/BondOrderCollection.h"
 
-#include "molassembler/Containers/AngstromWrapper.h"
+#include "molassembler/AngstromWrapper.h"
 #include "molassembler/Modeling/BondDistance.h"
 
 namespace molassembler {

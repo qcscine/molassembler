@@ -16,11 +16,11 @@ set(molassembler_VERSION 0.1.0)
 # collect headers
 # if a big update happens, use $ find . -name "*.h" | sort
 set(HEADERS_all
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AngstromWrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Containers/AngstromWrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Containers/OrderDiscoveryHelper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.h
@@ -72,11 +72,11 @@ set(HEADERS_all
 
 # collect sources
 set(SOURCES_all
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AngstromWrapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Containers/AngstromWrapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/DelibHelpers.cpp
