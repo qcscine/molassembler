@@ -38,10 +38,15 @@ constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
  */
 namespace data {
 
+/*! Linear symmetry
+ *
+ * @verbatim
+ *
+ *  0 – (_) – 1
+ *
+ * @endverbatim
+ */
 struct Linear {
-  /*
-   *  0 – (_) – 1
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::Linear;
   static constexpr unsigned size = 2;
   static constexpr char stringName[] = "linear";
@@ -68,13 +73,17 @@ struct Linear {
   > tetrahedra {{}};
 };
 
+/*! Bent symmetry
+ *
+ * @verbatim
+ *
+ *  1
+ *   \
+ *    (_) – 0
+ *
+ * @endverbatim
+ */
 struct Bent {
-  /*
-   *  1
-   *   \
-   *    (_) – 0
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::Bent;
   static constexpr unsigned size = 2;
   static constexpr char stringName[] = "bent";
@@ -105,18 +114,23 @@ struct Bent {
   > tetrahedra {{}};
 };
 
+/*! Trigonal planar symmetry
+ *
+ * @verbatim
+ *
+ *     0
+ *     |
+ *    (_)
+ *   /   \
+ *  1     2
+ *
+ * @endverbatim
+ *
+ * This character art is not quite ideal since the angles are thoroughly
+ * misrepresented, but all positions including the central atom are in one
+ * plane. The angles are idealized as 120°.
+ */
 struct TrigonalPlanar {
-  /*
-   *     0
-   *     |
-   *    (_)
-   *   /   \
-   *  1     2
-   *
-   * This is not quite ideal since the angles are thoroughly misrepresented,
-   * but all positions including the central atom are in one plane. The angles
-   * are idealized as 120°.
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPlanar;
   static constexpr unsigned size = 3;
   static constexpr char stringName[] = "trigonal planar";
@@ -145,14 +159,23 @@ struct TrigonalPlanar {
   > tetrahedra {{}};
 };
 
+/*! A Tetrahedral symmetry missing a ligand
+ *
+ * This symmetry is widely called trigonal pyramidal, but this is clearly a
+ * misnomer. Trigonal pyramidal should denote the symmetry that is trigonal
+ * planar plus an axial ligand, one short of trigonal bipyramidal.
+ *
+ * @verbatim
+ *
+ *     (_)
+ *    /  \ °2
+ *   0    1
+ *
+ * Where /, \ denote in front of plane bonds, ° a behind the plane bond.
+ *
+ * @endverbatim
+ */
 struct CutTetrahedral {
-  /*
-   *   (_)
-   *  /  \ °2
-   * 0    1
-   *
-   * Where /, \ denote in front of plane bonds, ° a behind the plane bond.
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::CutTetrahedral;
   static constexpr unsigned size = 3;
   static constexpr char stringName[] = "cut tetrahedral";
@@ -182,13 +205,17 @@ struct CutTetrahedral {
   }};
 };
 
+/*! A T-shaped symmetry
+ *
+ * @verbatim
+ *
+ * 0 – (_) – 2
+ *      |
+ *      1
+ *
+ * @endverbatim
+ */
 struct TShaped {
-  /*
-   * 0 – (_) – 2
-   *      |
-   *      1
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::TShaped;
   static constexpr unsigned size = 3;
   static constexpr char stringName[] = "T-shaped";
@@ -220,27 +247,21 @@ struct TShaped {
   > tetrahedra {{}};
 };
 
+/*! A tetrahedral symmetry
+ *
+ * @verbatim
+ *
+ *      0
+ *      |
+ *     (_)
+ *    /  \ °3
+ *   1    2
+ *
+ * Where /, \ denote in front of plane bonds, ° a behind the plane bond.
+ *
+ * @endverbatim
+ */
 struct Tetrahedral {
-  /*
-   *    1
-   *    |
-   *   (0) (0 is on top, ( ) signifies the central atom  beneath it
-   *  /   \
-   * 2     3
-   *
-   * Remember Newman projections? This is sort of supposed to be that.
-   *
-   * Alternatively:
-   *
-   *    0
-   *    |
-   *   (_)
-   *  /  \ °3
-   * 1    2
-   *
-   * Where /, \ denote in front of plane bonds, ° a behind the plane bond.
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::Tetrahedral;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "tetrahedral";
@@ -274,15 +295,19 @@ struct Tetrahedral {
   }};
 };
 
+/*! A square planar symmetry
+ *
+ * @verbatim
+ *
+ *   3   2
+ *    \_/
+ *    (_) <- central atom
+ *    / \
+ *   0   1
+ *
+ * @endverbatim
+ */
 struct SquarePlanar {
-  /*
-   * 3   2
-   *  \_/
-   *  (_) <- central atom
-   *  / \
-   * 0   1
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePlanar;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "square planar";
@@ -319,13 +344,17 @@ struct SquarePlanar {
   > tetrahedra {{}};
 };
 
+/*! A seesaw symmetry
+ *
+ * @verbatim
+ *
+ *   0 – (_) – 3
+ *       / :
+ *      1   2
+ *
+ * @endverbatim
+ */
 struct Seesaw {
-  /*
-   * 0 – (_) – 3
-   *     / :
-   *    1   2
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::Seesaw;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "seesaw";
@@ -377,17 +406,24 @@ struct Seesaw {
 #endif
 };
 
+/*! A trigonal pyramidal symmetry = trig. pl. + an axial ligand
+ *
+ * A trigonal planar symmetry + an axial ligand.
+ *
+ * @verbatim
+ *
+ * Viewed from the top of the pyramid. The central atom is ( ), 3 is apical
+ *
+ *       3
+ *       |  2
+ *       | :    <- behind view plane
+ *   0--(_)
+ *         \    <- in front of view plane
+ *          1
+ *
+ * @endverbatim
+ */
 struct TrigonalPyramidal {
-  /* Viewed from the top of the pyramid. The central atom is ( ), 3 is apical
-   *
-   *     3
-   *     |  2
-   *     | :    <- behind view plane
-   * 0--(_)
-   *       \    <- in front of view plane
-   *        1
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPyramidal;
   static constexpr unsigned size = 4;
   static constexpr char stringName[] = "trigonal pyramidal";
@@ -424,26 +460,20 @@ struct TrigonalPyramidal {
   }};
 };
 
+/*! A square pyramidal symmetry
+ *
+ * @verbatim
+ *
+ *      4
+ *   3  |  2
+ *    : | :    <- behind view plane
+ *     (_)
+ *    /   \    <- in front of view plane
+ *   0     1
+ *
+ * @endverbatim
+ */
 struct SquarePyramidal {
-  /*
-   * 3   2
-   *  \_/
-   *  (4)
-   *  / \
-   * 0   1
-   *
-   * Viewed from the top of the pyramid. The central atom is ( ), 5 is axial.
-   *
-   * Alternatively,
-   *
-   *    4
-   * 3  |  2
-   *  : | :    <- behind view plane
-   *   (_)
-   *  /   \    <- in front of view plane
-   * 0     1
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::SquarePyramidal;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "square pyramidal";
@@ -498,18 +528,24 @@ struct SquarePyramidal {
 #endif
 };
 
+/*! A trigonal bipyramidal symmetry
+ *
+ * @verbatim
+ *
+ * Viewed from the top of the pyramid. The central atom is ( ), 3 and 4
+ * are axial.
+ *
+ *       3
+ *       |  2
+ *       | :    <- behind view plane
+ *   0--(_)
+ *       | \    <- in front of view plane
+ *       |  1
+ *       4
+ *
+ * @endverbatim
+ */
 struct TrigonalBiPyramidal {
-  /* Viewed from the top of the pyramid. The central atom is ( ), 3 and 4
-   * are axial.
-   *
-   *     3
-   *     |  2
-   *     | :    <- behind view plane
-   * 0--(_)
-   *     | \    <- in front of view plane
-   *     |  1
-   *     4
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalBiPyramidal;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "trigonal bipyramidal";
@@ -558,17 +594,21 @@ struct TrigonalBiPyramidal {
   }};
 };
 
+/*! A pentagonal planar symmetry
+ *
+ * @verbatim
+ *
+ * All in plane:
+ *
+ *      0
+ *  1.  |  .4
+ *    °(_)°
+ *    /   \
+ *   2     3
+ *
+ * @endverbatim
+ */
 struct PentagonalPlanar {
-  /*
-   * All in plane:
-   *
-   *      0
-   *  1.  |  .4
-   *    °(_)°
-   *    /   \
-   *   2     3
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPlanar;
   static constexpr unsigned size = 5;
   static constexpr char stringName[] = "pentagonal planar";
@@ -599,20 +639,26 @@ struct PentagonalPlanar {
   > tetrahedra {{}};
 };
 
+/*! An octahedral symmetry.
+ *
+ * @verbatim
+ *
+ * The central atom is ( ), 4 and 5 are axial, the rest equatorial.
+ *
+ *       4
+ *    3  |  2
+ *     : | :
+ *      (_)
+ *     / | \
+ *    0  |  1
+ *       5
+ *
+ * Where /, \ denote bonds in front of the view plane, : denotes bonds
+ * behind the view plane.
+ *
+ * @endverbatim
+ */
 struct Octahedral {
-  /* The central atom is ( ), 4 and 5 are axial, the rest equatorial.
-   *
-   *     4
-   *  3  |  2
-   *   : | :
-   *    (_)
-   *   / | \
-   *  0  |  1
-   *     5
-   *
-   * Where /, \ denote bonds in front of the view plane, : denotes bonds
-   * behind the view plane.
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::Octahedral;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "octahedral";
@@ -676,24 +722,29 @@ struct Octahedral {
 #endif
 };
 
+/*! A trigonal prismatic symmetry
+ *
+ * @verbatim
+ *
+ *   3  4  5
+ *    : | :
+ *     (_)
+ *    : | :
+ *   0  1  2
+ *
+ * Where /, \ denote bonds in front of the view plane, : denotes bonds
+ * behind the view plane.
+ *
+ * @endverbatim
+ *
+ * Angles
+ *  0-1, 0-2 -> 86°
+ *  0-3 -> 76°
+ *  0-4, 0-5 -> 134°
+ *
+ * From [W(CH3)6], Haaland, Hammel, Rypdal, Volden, J. Am. Chem. Soc. 1990
+ */
 struct TrigonalPrismatic {
-  /*
-   *  3  4  5
-   *   : | :
-   *    (_)
-   *   : | :
-   *  0  1  2
-   *
-   * Where /, \ denote bonds in front of the view plane, : denotes bonds
-   * behind the view plane.
-   *
-   * Angles
-   *  0-1, 0-2 -> 86°
-   *  0-3 -> 76°
-   *  0-4, 0-5 -> 134°
-   *
-   * From [W(CH3)6], Haaland, Hammel, Rypdal, Volden, J. Am. Chem. Soc. 1990
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::TrigonalPrismatic;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "trigonal prismatic";
@@ -744,18 +795,23 @@ struct TrigonalPrismatic {
   }};
 };
 
+/*! A pentagonal pyramidal symmetry
+ *
+ * @verbatim
+ *
+ *      0
+ *  1.  |  .4
+ *    °(5)°
+ *    :   :
+ *   2     3
+ *
+ * 0-4 are in plane,
+ * 5 is above plane,
+ * ( ) signifies the central atom beneath it
+ *
+ * @endverbatim
+ */
 struct PentagonalPyramidal {
-  /*
-   *      0
-   *  1.  |  .4
-   *    °(5)°
-   *    :   :
-   *   2     3
-   *
-   * 0-4 are in plane,
-   * 5 is above plane,
-   * ( ) signifies the central atom beneath it
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalPyramidal;
   static constexpr unsigned size = 6;
   static constexpr char stringName[] = "pentagonal pyramidal";
@@ -813,19 +869,24 @@ struct PentagonalPyramidal {
 #endif
 };
 
+/*! A pentagonal bipyramidal symmetry
+ *
+ * @verbatim
+ *
+ * 3, 5, (_) and 6 in plane, 1 and 2 in front, 0 and 4 in back
+ *
+ *      5
+ *  0_  | .4
+ *   _:(_) – 3
+ *  1   |°·2
+ *      6
+ *
+ * 0-4 are equatorial,
+ * 5,6 are axial
+ *
+ * @endverbatim
+ */
 struct PentagonalBiPyramidal {
-    /*
-     * 3, 5, (_) and 6 in plane, 1 and 2 in front, 0 and 4 in back
-     *
-     *      5
-     *  0_  | .4
-     *   _:(_) – 3
-     *  1   |°·2
-     *      6
-     *
-     * 0-4 are equatorial,
-     * 5,6 are axial
-     */
   static constexpr Symmetry::Name name = Symmetry::Name::PentagonalBiPyramidal;
   static constexpr unsigned size = 7;
   static constexpr char stringName[] = "pentagonal bipyramidal";
@@ -896,57 +957,44 @@ struct PentagonalBiPyramidal {
 #endif
 };
 
+/*! A square antiprismatic symmetry
+ *
+ * @verbatim
+ *
+ * Two representations, one oblique, the other more helpful.
+ * The first is a side-on view. 0 is mostly hidden by 1, 3 mostly hidden
+ * by 2. 4 and 6 are in the viewing plane while 5 juts out above plane and
+ * 7 dips behind plane.
+ *
+ *  4   7 5 6
+ *    : ·/ :
+ *     (__)
+ *    ·/  \·
+ *   01    23
+ *
+ * Below is a top-down view. Strong lines indicate above-plane bonds, dots
+ * indicate below-plane bonds.
+ *
+ *   0   7   3
+ *     · | ·
+ *   4 –( )– 6
+ *     · | ·
+ *   1   5   2
+ *
+ * @endverbatim
+ *
+ * Reference coodrinates:
+ * - [W(CN)8]2-, (Alcock, M. W.; Samotus, A.; Szklarzewicz, J. J. Chem. Soc.,
+ *   Dalton Trans. 1993, 885. DOI: 10.1039/dt9930000885, CSD: PECMOZ), took
+ *   idealized geometry from http://symmetry.otterbein.edu/gallery/ instead
+ *   of distorted crystallographic coordinates, normalized lengths
+ *
+ */
 struct SquareAntiPrismatic {
-  /*  Two representations, one oblique, the other more helpful.
-   *  The first is a side-on view. 0 is mostly hidden by 1, 3 mostly hidden
-   *  by 2. 4 and 6 are in the viewing plane while 5 juts out above plane and
-   *  7 dips behind plane.
-   *
-   *  4   7 5 6
-   *    : ·/ :
-   *     (__)
-   *    ·/  \·
-   *   01    23
-   *
-   * Below is a top-down view. Strong lines indicate above-plane bonds, dots
-   * indicate below-plane bonds.
-   *
-   *   0   7   3
-   *     · | ·
-   *   4 –( )– 6
-   *     · | ·
-   *   1   5   2
-   *
-   * Two sets of reference coordinates are stored here:
-   * - [ReF8]2-, (Koz'min, P.A., Zhurnal Strukturnoi Khimii 1964), retrieved
-   *   from the ICSD, Re translated to origin and positions normalized (origin
-   *   to symmetry position is length 1)
-   * - [W(CN)8]2-, (Alcock, M. W.; Samotus, A.; Szklarzewicz, J. J. Chem. Soc.,
-   *   Dalton Trans. 1993, 885. DOI: 10.1039/dt9930000885, CSD: PECMOZ), took
-   *   idealized geometry from http://symmetry.otterbein.edu/gallery/ instead
-   *   of distorted crystallographic coordinates, normalized lengths
-   *
-   * Angles (from [ReF8]2-):
-   *
-   *   in-plane cis (4, 5) -> 55°
-   *   in-plane trans (4, 6) -> 148°
-   *   short between planes (0, 4) -> 51°
-   *   long between planes (0, 5) -> 175°
-   *
-   */
   static constexpr Symmetry::Name name = Symmetry::Name::SquareAntiPrismatic;
   static constexpr unsigned size = 8;
   static constexpr char stringName[] = "square antiprismatic";
   static constexpr std::array<temple::Vector, 8> coordinates {{
-    // [ReF8]2-, distorted crystal structure
-    /*{-0.00928803, 0.611568, 0.791137},
-    {0.795627, 0.605641, -0.0132684},
-    {0.795627, -0.605641, -0.0132684},
-    {-0.00928803, -0.611568, 0.791137},
-    {-0.396172, 0.852169, -0.341841},
-    {0.293758, 0, -0.95588},
-    {-0.396172, -0.852169, -0.341841},
-    {-0.983087, 0, 0.183141}*/
     // [W(CN)8]2-, idealized to square antiprism
     {-0.23838567,  0.50141283,  0.83171957},
     {-0.7568846,   0.61167543, -0.2301714 },

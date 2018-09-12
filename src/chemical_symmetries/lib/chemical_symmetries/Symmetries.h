@@ -18,18 +18,6 @@
  * without losing universal accessibility at run-time.
  */
 
-/* TODO
- * - More docstrings
- * - Debug and Release builds
- * - Improve trigonal pyramidal coordinates definition to get 107.5 angle as a
- *   parameter.  Currently, the rotation angle choice of 111.5 works well, but
- *   completely arbitrary!
- * - Consider making constexpr calculation of all angles from coordinates into
- *   const lookup table
- * - Could replicate angle parametrization of coordinates with a constexpr
- *   matrix class and matrix * vector multiplication
- */
-
 namespace Symmetry {
 
 /* Typedefs */

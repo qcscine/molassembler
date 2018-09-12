@@ -14,7 +14,7 @@ namespace stereopermutation {
 
 bool hasTransArrangedPairs(
   const Stereopermutation& assignment,
-  const Symmetry::Name& symmetryName
+  const Symmetry::Name symmetryName
 ) {
   // for every pair in links
   for(const auto& indexPair : assignment.links) {

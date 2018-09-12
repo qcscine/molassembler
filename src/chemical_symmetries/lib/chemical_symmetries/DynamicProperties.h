@@ -34,16 +34,19 @@ std::vector<unsigned> applyRotation(
   unsigned rotationFunctionIndex
 );
 
+//! Calculate the periodicty of a symmetry's rotation
 unsigned rotationPeriodicity(
   const Symmetry::Name symmetryName,
   const std::vector<unsigned>& rotation
 );
 
-// Generate a character representation of a symmetry's position groups
+//! Generate a character representation of a symmetry's position groups
 std::vector<char> positionGroups(const Symmetry::Name symmetryName);
 
+//! Generate the inverse rotation to a symmetry's rotation
 std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation);
 
+//! Generate a symmetry's occupation sequence that causes all tetrahedra to invert
 std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName);
 
 /*!

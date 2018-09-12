@@ -6,6 +6,8 @@
  * Functionality for testing the consistency of established object ordering.
  */
 
+// TODO remove
+
 namespace OperatorTests {
 
 // n-argument boolean XOR with the definition: only one argument may be true

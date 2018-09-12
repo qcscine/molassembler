@@ -15,59 +15,6 @@
 
 namespace stereopermutation {
 
-// TODO these are unneeded here, just move to impl file
-namespace detail {
-
-template<typename T>
-bool nextCombinationPermutation(
-  std::vector<T>& toPermute,
-  const std::vector<T>& limits
-) {
-  assert(toPermute.size() == limits.size());
-  const unsigned cols = toPermute.size();
-
-  // Check if all columns are full
-  bool allFull = true;
-  for(unsigned i = 0; i < cols; ++i) {
-    if(toPermute[i] != limits[i]) {
-      allFull = false;
-      break;
-    }
-  }
-
-  if(allFull) {
-    return false;
-  }
-
-  // Make next permutation
-  for(int i = cols - 1; i >= 0; --i) {
-    if(toPermute[i] == limits[i]) {
-      toPermute[i] = 0;
-    } else {
-      ++toPermute[i];
-      return true;
-    }
-  }
-
-  return true;
-}
-
-template<typename T>
-std::pair<T, T> makeOrderedPair(T a, T b) {
-  std::pair<T, T> pair {
-    std::move(a),
-    std::move(b)
-  };
-
-  if(pair.second < pair.first) {
-    std::swap(pair.first, pair.second);
-  }
-
-  return pair;
-}
-
-} // namespace detail
-
 class Composite {
 public:
 //!@name Member types
@@ -78,6 +25,7 @@ public:
     bool isotropic;
   };
 
+  //! Encompasses the orientation of a symmetry along a fused bond
   struct OrientationState {
     //! The symmetry of either positional symmetry
     Symmetry::Name symmetry;
@@ -93,6 +41,7 @@ public:
      */
     std::size_t identifier;
 
+    //! Member initializing constructor
     OrientationState(
       Symmetry::Name passSymmetry,
       unsigned passFusedPosition,
@@ -100,6 +49,7 @@ public:
       std::size_t passIdentifier
     );
 
+    //! Applies a rotation to the fused position and characters
     void applyCharacterRotation(const std::vector<unsigned>& rotation);
 
     //! Smallest symmetry position from the same group as the fused position
@@ -129,8 +79,10 @@ public:
     bool operator == (const OrientationState& other) const;
   };
 
+  //! First symmetry position, second symmetry position, dihedral angle tuple
   using DihedralTuple = std::tuple<unsigned, unsigned, double>;
 
+  //! List of lists of dihedral angles for distinct rotational configurations
   using PermutationsList = std::vector<
     std::vector<DihedralTuple>
   >;

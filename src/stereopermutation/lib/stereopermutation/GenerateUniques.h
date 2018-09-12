@@ -1,5 +1,5 @@
-#ifndef LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
-#define LIB_UNIQUE_ASSIGNMENTS_GENERATE_UNIQUES_H
+#ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_GENERATE_UNIQUES_H
+#define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_GENERATE_UNIQUES_H
 
 #include "stereopermutation/Stereopermutation.h"
 
@@ -12,9 +12,10 @@
 
 namespace stereopermutation {
 
+//! Whether a stereopermutation has trans arranged linked substituents
 bool hasTransArrangedPairs(
   const Stereopermutation& assignment,
-  const Symmetry::Name& symmetryName
+  Symmetry::Name symmetryName
 );
 
 /*!
@@ -34,8 +35,8 @@ bool hasTransArrangedPairs(
  */
 std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
-  const Symmetry::Name symmetryName,
-  bool removeTransSpanningGroups = true
+  Symmetry::Name symmetryName,
+  bool removeTransSpanningGroups = false
 );
 
 //! Data class for uniqueStereopermutations including weights
@@ -50,8 +51,8 @@ struct StereopermutationsWithWeights {
  */
 StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,
-  const Symmetry::Name symmetryName,
-  bool removeTransSpanningGroups = true
+  Symmetry::Name symmetryName,
+  bool removeTransSpanningGroups = false
 );
 
 } // namespace stereopermutation

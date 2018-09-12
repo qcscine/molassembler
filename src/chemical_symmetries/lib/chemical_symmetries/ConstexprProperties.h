@@ -19,11 +19,9 @@
  */
 
 /* TODO
- * - A number of functions depend merely on members of symmetry classes that
- *   always have the same type, e.g. size or angle functions. These functions
- *   need not have the symmetry class as template parameter! But be aware that
- *   this can introduce quite a performance difference since when loops
- *   sizes are non-constexpr, no loop unrolling can be done
+ * - remove hashIndexList in favor of the bitset hashing algorithm for
+ *   constexpr speed
+ * - remove unused stuff
  */
 
 namespace Symmetry {
@@ -72,13 +70,15 @@ struct minAngleFunctor {
   }
 };
 
-/* Typedef to use temple's Array instead of std::array as the underlying
+/*!
+ * Typedef to use temple's Array instead of std::array as the underlying
  * base array type since C++14's std::array has too few members marked constexpr
  * as to be useful. When C++17 rolls around, replace this with std::array!
  */
 template<typename T, size_t size>
 using ArrayType = temple::Array<T, size>;
 
+//! Generate an integer sequence to use with stereopermutations
 template<typename SymmetryClass>
 constexpr auto startingIndexSequence() {
   return temple::iota<
@@ -88,12 +88,12 @@ constexpr auto startingIndexSequence() {
   >();
 }
 
-// applyRotation helper function
+//! Helper to perform applyRotation in constexpr fashion
 template<typename SymmetryClass, size_t... Indices>
 constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
   const ArrayType<unsigned, SymmetryClass::size>& indices,
   const unsigned rotationFunctionIndex,
-  std::index_sequence<Indices...>
+  std::index_sequence<Indices...> /* inds */
 ) {
   return {
     indices.at(
@@ -115,6 +115,7 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
   );
 }
 
+//! Helper to perform rotationPeriodicity in constexpr fashion
 template<typename SymmetryClass, unsigned rotationFunctionIndex>
 constexpr unsigned rotationPeriodicityImpl(
   const ArrayType<unsigned, SymmetryClass::size>& runningIndices,
@@ -153,9 +154,10 @@ constexpr unsigned rotationPeriodicity() {
   );
 }
 
+//! Helper function to calculate all rotation periodicities
 template<typename SymmetryClass, size_t ...Inds>
 constexpr ArrayType<unsigned, SymmetryClass::rotations.size()>
-rotationPeriodicitiesImpl(std::index_sequence<Inds...>) {
+rotationPeriodicitiesImpl(std::index_sequence<Inds...> /* inds */) {
   return {
     rotationPeriodicity<SymmetryClass, Inds>()...
   };
@@ -183,6 +185,7 @@ struct allRotationPeriodicities {
   );
 };
 
+//! Finds the largest size value of a set of symmetries
 template<typename ... SymmetryClasses>
 struct maxSymmetrySizeFunctor {
   static constexpr unsigned value() {
@@ -194,6 +197,7 @@ struct maxSymmetrySizeFunctor {
   }
 };
 
+//! The largest symmetry size defined in the library
 constexpr unsigned maxSymmetrySize = temple::TupleType::unpackToFunction<
   Symmetry::data::allSymmetryDataTypes,
   maxSymmetrySizeFunctor
@@ -259,10 +263,18 @@ constexpr double calculateAngleDistortion(
   return angularDistortion;
 }
 
+/*! Calculates distortion caused by a symmetry transition mapping
+ *
+ * @param indexMapping An integer sequence specifying how indices from the
+ *   source symmetry are mapped to the target symmetry
+ * @param sourceSymmetrySize The size of the source symmetry
+ * @param sourceAngleFunction A pointer to the source symmetry's angle function
+ * @param targetAngleFunction A pointer to the target symmetry's angle function
+ */
 template<size_t size>
 constexpr double calculateAngularDistortion(
   const ArrayType<unsigned, size>& indexMapping,
-  const size_t& sourceSymmetrySize,
+  const size_t sourceSymmetrySize,
   const data::AngleFunctionPtr& sourceAngleFunction,
   const data::AngleFunctionPtr& targetAngleFunction
 ) {
@@ -286,6 +298,10 @@ constexpr double calculateAngularDistortion(
 /*!
  * Propagates a source symmetry position through an index mapping, properly
  * handling the origin placeholder special unsigned value.
+ *
+ * @param symmetryPosition The symmetry position to be mapped
+ * @param indexMapping The index mapping that specifies how indices are mapped
+ *   from a source symmetry to a target symmetry
  */
 template<size_t size>
 constexpr unsigned propagateSymmetryPosition(
@@ -302,6 +318,9 @@ constexpr unsigned propagateSymmetryPosition(
 /*!
  * Calculate the chiral distortion between the source symmetry and the target
  * symmetry specified by an index mapping.
+ *
+ * @param indexMapping The index mapping that specifies how indices are mapped
+ *   from a source symmetry to a target symmetry
  */
 template<typename SymmetryClassFrom, typename SymmetryClassTo>
 constexpr double calculateChiralDistortion(
@@ -349,6 +368,9 @@ constexpr double calculateChiralDistortion(
 /*!
  * Writes the indices of the original symmetry in the mapping into the target
  * symmetry's indexing scheme.
+ *
+ * @param mapping An index mapping that specifies how indices are mapped
+ *   from a source symmetry to a target symmetry
  */
 template<size_t size>
 constexpr ArrayType<unsigned, size> symPosMapping(
@@ -409,6 +431,8 @@ constexpr ArrayType<unsigned, size> symPosMapping(
 /*!
  * Calculate the maximum number of non-superimposable rotations a symmetry
  * class can produce for entirely unequal indices
+ *
+ * @tparam SymmetryClass A Symmetry class as defined in Primitives.h
  */
 template<typename SymmetryClass>
 constexpr unsigned maxRotations() {
@@ -463,7 +487,7 @@ constexpr auto hashIndexList(const temple::Array<unsigned, size>& indexList) {
   return hash;
 }
 
-// Some helper types
+// Some helper types for use in generateAllRotations
 template<typename SymmetryClass>
 using IndicesList = ArrayType<unsigned, SymmetryClass::size>;
 
@@ -547,8 +571,7 @@ struct MappingsReturnType {
   double angularDistortion, chiralDistortion;
 
   constexpr MappingsReturnType()
-    : mappings(),
-      angularDistortion(std::numeric_limits<double>::max()),
+    : angularDistortion(std::numeric_limits<double>::max()),
       chiralDistortion(std::numeric_limits<double>::max())
   {}
 
@@ -675,6 +698,7 @@ constexpr auto symmetryTransitionMappings() {
   );
 }
 
+//! Find index mappings for ligand loss situations
 template<class SymmetryClassFrom, class SymmetryClassTo>
 constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 
@@ -776,6 +800,7 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 }
 
 /* Pre-compute all ligand gain situations */
+//! If symmetries are adjacent, calculate their symmetry transition mapping
 template<typename SymmetrySource, typename SymmetryTarget>
 constexpr
 std::enable_if_t<
@@ -790,6 +815,7 @@ std::enable_if_t<
   };
 }
 
+//! If symmetries are not adjacent, return a None
 template<typename SymmetrySource, typename SymmetryTarget>
 constexpr
 std::enable_if_t<
@@ -802,6 +828,12 @@ std::enable_if_t<
   return temple::Optional<MappingsReturnType> {};
 }
 
+/*! Calculate stereopermutations for an unlinked symmetry
+ *
+ * @tparam Symmetry The symmetry for which to calculate this property.
+ * @param nIdenticalLigands The number of ligands whose ranking is identical.
+ *   E.g. 0 generates ABCDEF, 3 generates AAABCD, etc. for octahedral.
+ */
 template<typename Symmetry>
 constexpr unsigned numUnlinkedAssignments(
   const unsigned nIdenticalLigands
@@ -839,6 +871,12 @@ constexpr unsigned numUnlinkedAssignments(
   return count;
 }
 
+/*! Calculates whether a symmetry has multiple stereopermutations
+ *
+ * @tparam Symmetry The symmetry for which to calculate this property.
+ * @param nIdenticalLigands The number of ligands whose ranking is identical.
+ *   E.g. 0 generates ABCDEF, 3 generates AAABCD, etc. for octahedral.
+ */
 template<typename Symmetry>
 constexpr bool hasMultipleUnlinkedAssignments(
   const unsigned nIdenticalLigands

@@ -36,25 +36,28 @@ extern temple::MinimalCache<
 
 //! Cached access to mappings. Populates the cache from constexpr if generated.
 const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
-  const Symmetry::Name a,
-  const Symmetry::Name b,
+  Symmetry::Name a,
+  Symmetry::Name b,
   const boost::optional<unsigned>& removedIndexOption = boost::none
 );
 
 #ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
+//! All precomputed values for hasMultipleUnlinkedAssignments
 extern const temple::Array<
   temple::DynamicArray<bool, constexprProperties::maxSymmetrySize>,
   nSymmetries
 > allHasMultipleUnlinkedAssignments;
 #endif
 
+//! Run-time cache
 extern temple::MinimalCache<
   Symmetry::Name,
   std::vector<bool>
 > hasMultipleUnlinkedCache;
 
+//! Cached access to multiple unlinked values
 bool hasMultipleUnlinkedAssignments(
-  const Symmetry::Name symmetryName,
+  Symmetry::Name symmetryName,
   unsigned nIdenticalLigands
 );
 

@@ -16,6 +16,20 @@ namespace stereopermutation {
 
 namespace detail {
 
+template<typename T>
+std::pair<T, T> makeOrderedPair(T a, T b) {
+  std::pair<T, T> pair {
+    std::move(a),
+    std::move(b)
+  };
+
+  if(pair.second < pair.first) {
+    std::swap(pair.first, pair.second);
+  }
+
+  return pair;
+}
+
 void rotateCoordinates(
   std::vector<Eigen::Vector3d>& positions,
   const Eigen::Vector3d& unitSource,
@@ -426,15 +440,12 @@ std::vector<unsigned> Composite::generateRotation(
       }
     } while(
       !rotationFound
-      && std::next_permutation(
-        std::begin(rotationIndexApplicationSequence),
-        std::end(rotationIndexApplicationSequence)
-      )
+      && temple::inplace::next_permutation(rotationIndexApplicationSequence)
     );
 
   } while(
     !rotationFound
-    && detail::nextCombinationPermutation(rotationUses, periodicities)
+    && temple::inplace::nextCombinationPermutation(rotationUses, periodicities)
   );
 
   if(rotationFound) {

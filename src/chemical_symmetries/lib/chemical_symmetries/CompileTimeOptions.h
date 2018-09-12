@@ -3,7 +3,9 @@
  * Contains preprocessor definitions that impact the generated code.
  */
 
-/* If USE_ALTERNATE_TETRAHEDRA is defined, a reduced set of tetrahedra
+/*! If defined, a reduced set of tetrahedra is used in defining symmetries
+ *
+ * If USE_ALTERNATE_TETRAHEDRA is defined, a reduced set of tetrahedra
  * is used to subdivide higher symmetries. This may provide less information
  * about the geometry when used but should improve performance as fewer
  * tetrahedron volumes must be calculated.
@@ -19,12 +21,17 @@
  */
 #if defined(__clang__) || defined(CHEMICAL_SYMMETRIES_TRY_CONSTEXPR)
 
-/* If USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE is defined, a table of all
+/*! If defined, an angle lookup table is generated for square antiprismatic
+ *
+ * If USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE is defined, a table of all
  * angles resulting from a predefined set of positions is generated and that
  * symmetry's angle function turns into what is essentially a lookup table.
  */
 #define USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
-/* If USE_CONSTEXPR_TRANSITION_MAPPINGS is defined, a data structure containing
+
+/*! If defined, symmetry transition mappings are generated at compile time
+ *
+ * If USE_CONSTEXPR_TRANSITION_MAPPINGS is defined, a data structure containing
  * the best index mappings between symmetries is generated at compile-time.
  * Transitions are alterations of the symmetry primitives in three-dimensional
  * space which can involve loss of a ligand position, merely a rearrangement to
@@ -67,9 +74,11 @@
  */
 #define USE_CONSTEXPR_TRANSITION_MAPPINGS
 
-/* If USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS is defined, a data structure
- * containing whether there are multiple assignments for a given symmetry
- * depending on the number of identical ligands is generated for all
+/*! If defined, all possible unlinked permutations are generated at compile-time
+ *
+ * If USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS is defined, a data
+ * structure containing whether there are multiple assignments for a given
+ * symmetry depending on the number of identical ligands is generated for all
  * symmetries at compile time.
  *
  * E.g. for Tetrahedral:
@@ -80,10 +89,10 @@
  *   3 == AAAB -> 1 -> false
  *   4 == AAAA -> 1 -> false
  *
- * At runtime, when calling getNumUnlinked(Symmetry, nIdenticalLigands), a cache
- * of symmetry-wise results is generated on-demand either from constexpr data
- * at a cost of O(1), or from DynamicProperties at a cost of O(S * S!), where S is
- * the size of the symmetry.
+ * At runtime, when calling getNumUnlinked(Symmetry, nIdenticalLigands), a
+ * cache of symmetry-wise results is generated on-demand either from constexpr
+ * data at a cost of O(1), or from DynamicProperties at a cost of O(S * S!),
+ * where S is the size of the symmetry.
  */
 #define USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
 #endif
