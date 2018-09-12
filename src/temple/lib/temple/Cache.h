@@ -12,23 +12,17 @@
 
 /*! @file
  *
- * Contains the Cache class implementation.
+ * Contains a map-like MinimalCache and a full-blown boost::any-Cache.
  */
 
 namespace temple {
 
-/*! A minimal cache-like class.
- */
+//! A minimal wrapper around a map-like class with cache semantics
 template<typename KeyType, typename ValueType>
 class MinimalCache {
-private:
-/* Private members */
-  //! Cache data
-  std::map<KeyType, ValueType> _cache;
-
 public:
-/* Public member functions */
-  /* Modification */
+//!@name Modification
+//!@{
   //! Adds a data value for a key value into the cache.
   void add(const KeyType key, const ValueType value) {
     _cache.emplace(
@@ -48,15 +42,19 @@ public:
       _cache.erase(key);
     }
   }
+//!@}
 
-  /* Information */
+//!@name Information
+//!@{
   //! Fetches a cache entry via an optional
   boost::optional<const ValueType&> getOption(const KeyType& key) const {
     if(_cache.count(key) == 1) {
       return boost::optional<const ValueType&>(
         _cache.at(key)
       );
-    } else return {};
+    }
+
+    return {};
   }
 
   //! Tests whether the cache contains an entry for a key
@@ -64,6 +62,7 @@ public:
     return _cache.count(key) > 0;
   }
 
+  //! Fetches a particular key, assuming that it is currently cached
   const ValueType& get(const KeyType& key) const {
     if(_cache.count(key) == 0) {
       throw "Fetching member in Cache whose key does not exist!";
@@ -71,6 +70,12 @@ public:
 
     return _cache.at(key);
   }
+//!@}
+
+private:
+/* Private members */
+  //! Cache data
+  std::map<KeyType, ValueType> _cache;
 };
 
 /*!
@@ -83,24 +88,9 @@ public:
  */
 template<typename KeyType>
 class Cache {
-private:
-/* Private members */
-  //! Cache data
-  std::map<
-    KeyType,
-    boost::any
-  > _cache;
-
-  //! Map of key values to generating functions
-  std::map<
-    KeyType,
-    std::function<
-      boost::any()
-    >
-  > _generationMap;
-
 public:
-/* Constructors */
+//!@name Constructors
+//!@{
   Cache() = default;
   Cache(
     const std::initializer_list<
@@ -117,10 +107,11 @@ public:
       _generationMap[pair.first] = pair.second;
     }
   }
+//!@}
 
 
-/* Public member functions */
-  /* Modification */
+//!@name Modification
+//!@{
   //! Adds a data value for a key value into the cache.
   template<typename T>
   void add(const KeyType& key, const T& value) {
@@ -198,8 +189,10 @@ public:
       _cache.erase(key);
     }
   }
+//!@}
 
-  /* Information */
+//!@name Information
+//!@{
   //! Fetches a cache entry via an optional
   template<typename T>
   boost::optional<T> getOption(const KeyType& key) const {
@@ -209,15 +202,32 @@ public:
           _cache.at(key)
         )
       );
-    } else return {};
+    }
+
+    return {};
   }
 
   //! Tests whether the cache contains an entry for a key
   bool has(const KeyType& key) const {
-    return (_cache.count(key) > 0)
-      ? true
-      : false;
+    return (_cache.count(key) > 0);
   }
+//!@}
+
+private:
+/* Private members */
+  //! Cache data
+  std::map<
+    KeyType,
+    boost::any
+  > _cache;
+
+  //! Map of key values to generating functions
+  std::map<
+    KeyType,
+    std::function<
+      boost::any()
+    >
+  > _generationMap;
 };
 
 } //  namespace temple

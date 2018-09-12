@@ -1,6 +1,7 @@
 #include "molassembler/RankingInformation.h"
 
-#include "temple/Containers.h"
+#include "temple/Adaptors/Zip.h"
+#include "temple/Functional.h"
 #include "temple/TinySet.h"
 
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
@@ -190,32 +191,32 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
   // Combined comparison of ligandsRanking with ligands
   if(
     !temple::all_of(
-      temple::zipMap(
+      temple::adaptors::zip(
         ligandsRanking,
-        other.ligandsRanking,
-        [&](
-          const auto& thisEqualLigandsGroup,
-          const auto& otherEqualLigandsGroup
-        ) -> bool {
-          temple::TinyUnorderedSet<AtomIndex> thisLigandGroupVertices;
+        other.ligandsRanking
+      ),
+      [&](
+        const auto& thisEqualLigandsGroup,
+        const auto& otherEqualLigandsGroup
+      ) -> bool {
+        temple::TinyUnorderedSet<AtomIndex> thisLigandGroupVertices;
 
-          for(const auto ligandIndex : thisEqualLigandsGroup) {
-            for(const auto ligandConstitutingIndex : ligands.at(ligandIndex)) {
-              thisLigandGroupVertices.insert(ligandConstitutingIndex);
-            }
+        for(const auto ligandIndex : thisEqualLigandsGroup) {
+          for(const auto ligandConstitutingIndex : ligands.at(ligandIndex)) {
+            thisLigandGroupVertices.insert(ligandConstitutingIndex);
           }
-
-          for(const auto ligandIndex : otherEqualLigandsGroup) {
-            for(const auto ligandConstitutingIndex : other.ligands.at(ligandIndex)) {
-              if(thisLigandGroupVertices.count(ligandConstitutingIndex) == 0) {
-                return false;
-              }
-            }
-          }
-
-          return true;
         }
-      )
+
+        for(const auto ligandIndex : otherEqualLigandsGroup) {
+          for(const auto ligandConstitutingIndex : other.ligands.at(ligandIndex)) {
+            if(thisLigandGroupVertices.count(ligandConstitutingIndex) == 0) {
+              return false;
+            }
+          }
+        }
+
+        return true;
+      }
     )
   ) {
     return false;

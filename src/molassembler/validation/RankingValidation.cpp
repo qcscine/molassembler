@@ -5,7 +5,6 @@
 #include "boost/test/unit_test.hpp"
 
 #include "temple/constexpr/Bitmask.h"
-#include "temple/Containers.h"
 #include "temple/Stringify.h"
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"

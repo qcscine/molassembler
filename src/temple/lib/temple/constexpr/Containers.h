@@ -32,7 +32,7 @@ template<
 > constexpr auto mapImpl(
   const ArrayType<T, size>& array,
   UnaryFunction&& function,
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* inds */
 ) {
   return ArrayType<
     traits::functionReturnType<UnaryFunction, T>,
@@ -111,7 +111,7 @@ template<
   size_t size,
   size_t ... Inds
 > constexpr ArrayType<T, size> iotaHelper(
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* inds */
 ) {
   return ArrayType<T, size> {
     Inds...
@@ -152,7 +152,7 @@ template<
   size_t end,
   size_t ... Inds
 > constexpr ArrayType<T, (end - begin)> rangeHelper(
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* inds */
 ) {
   return ArrayType<T, (end - begin)> {
     (begin + Inds)...
@@ -187,8 +187,8 @@ template<
 constexpr ArrayType<T, N1+N2> arrayConcatenateImpl(
   const ArrayType<T, N1>& a,
   const ArrayType<T, N2>& b,
-  std::index_sequence<AIndices...>,
-  std::index_sequence<BIndices...>
+  std::index_sequence<AIndices...> /* aInds */,
+  std::index_sequence<BIndices...> /* bInds */
 ) {
   return {
     a.at(AIndices)...,
@@ -272,7 +272,7 @@ template<
 > constexpr ArrayType<T, (size + 1)> arrayPushImpl(
   const ArrayType<T, size>& array,
   const T& element,
-  std::index_sequence<Indices...>
+  std::index_sequence<Indices...> /* inds */
 ) {
   return {
     array.at(Indices)...,
@@ -325,7 +325,7 @@ template<
   size_t... ArrayIndices
 > constexpr ArrayType<T, (size - 1)> arrayPopImpl(
   const ArrayType<T, size>& array,
-  std::index_sequence<ArrayIndices...>
+  std::index_sequence<ArrayIndices...> /* inds */
 ) {
   return {
     array.at(ArrayIndices)...
@@ -478,7 +478,11 @@ template<
   const T& item,
   LessThanPredicate predicate
 ) {
-  using DiffType = typename std::iterator_traits<Iter>::difference_type;
+  using DiffType = decltype(last - bound);
+  static_assert(
+    std::is_signed<DiffType>::value,
+    "Difference between iterators must be a signed type!"
+  );
 
   Iter it = bound;
   DiffType count = last - bound, step = 0;
@@ -505,10 +509,10 @@ template<
  * sought element if found, otherwise returns the end iterator.
  */
 template<
-  typename Container,
+  class Container,
   typename T,
   class LessThanPredicate
-> constexpr typename Container::const_iterator binarySearch(
+> constexpr class Container::const_iterator binarySearch(
   const Container& container,
   const T& item,
   LessThanPredicate predicate = std::less<T>()
@@ -724,7 +728,7 @@ template<
           data.at(i) < data.at(--k)
         )
       ) {
-        continue;
+        // continue;
       }
 
       inPlaceSwap(data, i, k);
@@ -793,7 +797,7 @@ template<
           data.at(--k) < data.at(i)
         )
       ) {
-        continue;
+        // continue;
       }
 
       inPlaceSwap(data, i, k);

@@ -2,7 +2,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
-#include "temple/Containers.h"
+#include "temple/Adaptors/Zip.h"
+#include "temple/Functional.h"
+#include "temple/Stringify.h"
 
 #include <iostream>
 
@@ -78,18 +80,18 @@ BOOST_AUTO_TEST_CASE( combinationPermutation ) {
   while(StdlibTypeAlgorithms::nextCombinationPermutation(combination, testLimits)) {
     if(
       !temple::all_of(
-        temple::zipMap(
+        temple::adaptors::zip(
           combination,
-          testLimits,
-          [](const unsigned index, const unsigned limit) -> bool {
-            return index <= limit;
-          }
-        )
+          testLimits
+        ),
+        [](const unsigned index, const unsigned limit) -> bool {
+          return index <= limit;
+        }
       )
     ) {
       alwaysSmallerOrEqual = false;
       std::cout << "Falsified for combination {"
-        << temple::condenseIterable(combination)
+        << temple::condense(combination)
         << "}" << std::endl;
       break;
     }

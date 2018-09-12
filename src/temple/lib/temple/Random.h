@@ -16,9 +16,14 @@ namespace temple {
 
 class Generator {
 public:
+//!@name State
+//!@{
+  //! Underyling PRNG engine
   mutable jsf::JSF32 engine;
+//!@}
 
 private:
+  //! Generate random seeds from a hardware random device (if STL implemented)
   static std::array<uint32_t, 4> getRandomSeeds() {
     std::random_device randomDevice;
 
@@ -30,6 +35,7 @@ private:
     };
   }
 
+  //! Initialize the underlying engine
   void _initializeEngine () {
 #ifndef NDEBUG
     engine.seed(272181374);
@@ -39,23 +45,32 @@ private:
   }
 
 public:
+  //! Default constructor
   explicit Generator() {
     _initializeEngine();
   }
 
+//!@name Modification
+//!@{
+  //! Re-seed the underlying PRNG
   void seed(int x) {
     engine.seed(x);
   }
 
+  //! Re-seed the underlying PRNG
   void seed(const std::vector<int>& signedSeeds) {
     std::seed_seq seedSeq(
-      signedSeeds.begin(),
-      signedSeeds.end()
+      std::begin(signedSeeds),
+      std::end(signedSeeds)
     );
 
     engine.seed(seedSeq);
   }
+//!@}
 
+//!@name Generators
+//!@{
+  //! Generate N floating point values in the range [lower, upper)
   template<typename T>
   std::enable_if_t<
     std::is_floating_point<T>::value,
@@ -78,6 +93,7 @@ public:
     return returnNumbers;
   }
 
+  //! Generate N integral values in the range [lower, upper]
   template<typename T>
   std::enable_if_t<
     std::is_integral<T>::value,
@@ -100,6 +116,7 @@ public:
     return returnNumbers;
   }
 
+  //! Generate a single floating point value in the range [lower, upper)
   template<typename T>
   std::enable_if_t<
     std::is_floating_point<T>::value,
@@ -113,6 +130,7 @@ public:
     return uniformDistribution(engine);
   }
 
+  //! Generate a single integral value in the range [lower, upper]
   template<typename T>
   std::enable_if_t<
     std::is_integral<T>::value,
@@ -126,6 +144,7 @@ public:
     return uniformDistribution(engine);
   }
 
+  //! Flip a coin
   template<typename T>
   std::enable_if_t<
     std::is_same<T, bool>::value,
@@ -137,7 +156,8 @@ public:
     );
   }
 
-  template<typename Container>
+  //! Pick a value using provided discrete distribution weights
+  template<class Container>
   unsigned pickDiscrete(const Container& weights) {
     std::discrete_distribution<unsigned> distribution {
       std::begin(weights),
@@ -146,8 +166,12 @@ public:
 
     return distribution(engine);
   }
+//!@}
 
-  template<typename Container>
+//!@name Auxiliary
+//!@{
+  //! Use underlying PRNG to shuffle a Container in-place
+  template<class Container>
   void shuffle(Container& container) {
     std::shuffle(
       std::begin(container),
@@ -155,6 +179,7 @@ public:
       engine
     );
   }
+//!@}
 };
 
 } // namespace temple

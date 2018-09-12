@@ -1,8 +1,17 @@
 set(HEADERS_All
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/All.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/AllPairs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Enumerate.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Iota.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/SequentialPairs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Transform.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Zip.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/AddToContainer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Cache.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Array.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/BTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Bitmask.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Bitset.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/BTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Containers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/DynamicArray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/DynamicMap.h
@@ -22,27 +31,24 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/UIntArray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/UpperTriangularMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/constexpr/Vector.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/AddToContainer.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/BTree.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Cache.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/ContainerTraits.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Containers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Enumerate.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Functional.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Functor.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/GroupBy.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Invoke.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/MemberFetcher.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/OperatorSuppliers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optionals.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/OrderedPair.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Permutations.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Preprocessor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Random.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/SetAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Stringify.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/TinySet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Traits.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/UnorderedSets.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/UnorderedSetAlgorithms.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Variadic.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/VectorView.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/temple/crtp.h
 )
 
 add_library(temple INTERFACE)

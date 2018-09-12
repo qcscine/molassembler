@@ -25,7 +25,7 @@ private:
   TreeType _tree;
 
 public:
-  constexpr DynamicSet() {}
+  constexpr DynamicSet() = default;
 
   //! Warning: These constructors expect ordered arrays!
   template<
@@ -55,14 +55,13 @@ public:
     _tree.clear();
   }
 
-  using constIterator = typename TreeType::constIterator;
-  using const_iterator = constIterator;
+  using const_iterator = typename TreeType::const_iterator;
 
-  constexpr constIterator begin() const PURITY_WEAK {
+  constexpr const_iterator begin() const PURITY_WEAK {
     return _tree.begin();
   }
 
-  constexpr constIterator end() const PURITY_WEAK {
+  constexpr const_iterator end() const PURITY_WEAK {
     return _tree.end();
   }
 

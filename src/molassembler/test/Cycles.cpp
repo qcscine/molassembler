@@ -6,7 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "temple/Stringify.h"
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
 #include "molassembler/IO.h"
@@ -20,9 +20,8 @@
 struct ExpectationData {
   std::vector<unsigned> cycleSizes;
 
-  ExpectationData(std::vector<unsigned>&& passCycleSizes) : cycleSizes {std::move(passCycleSizes)} {
-    temple::sort(cycleSizes);
-  }
+  ExpectationData(std::vector<unsigned>&& passCycleSizes)
+    : cycleSizes(temple::sort(passCycleSizes)) {}
 };
 
 std::map<std::string, ExpectationData> decompositionData {
@@ -82,12 +81,12 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   auto findIter = decompositionData.find(filePath.stem().string());
 
   if(findIter != decompositionData.end()) {
-    temple::sort(cycleSizes);
+    temple::inplace::sort(cycleSizes);
 
     BOOST_CHECK_MESSAGE(
       cycleSizes == findIter->second.cycleSizes,
-      "Expected cycle sizes " << temple::condenseIterable(findIter->second.cycleSizes)
-        << ", but got " << temple::condenseIterable(cycleSizes) << " for "
+      "Expected cycle sizes " << temple::condense(findIter->second.cycleSizes)
+        << ", but got " << temple::condense(cycleSizes) << " for "
         << filePath.stem().string()
     );
 
@@ -111,7 +110,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   }
 
   std::cout << "'" << filePath.stem().string() << "' -> "
-    << temple::condenseIterable(cycleSizes)
+    << temple::condense(cycleSizes)
     << std::endl;
 }
 

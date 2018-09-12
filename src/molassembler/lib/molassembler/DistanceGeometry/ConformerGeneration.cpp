@@ -3,8 +3,6 @@
 #include <dlib/optimization.h>
 #include <Eigen/Dense>
 #include "Delib/Constants.h"
-#include "temple/Containers.h"
-#include "temple/Random.h"
 
 #include "molassembler/DistanceGeometry/dlibAdaptors.h"
 #include "molassembler/DistanceGeometry/dlibDebugAdaptors.h"

@@ -4,8 +4,6 @@
 #include "boost/program_options.hpp"
 #include "boost/regex.hpp"
 
-#include "temple/Containers.h"
-
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Graph/GraphAlgorithms.h"

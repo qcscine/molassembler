@@ -6,6 +6,9 @@
 #include "Delib/ElementInfo.h"
 
 #include "chemical_symmetries/Properties.h"
+#include "temple/Adaptors/AllPairs.h"
+#include "temple/GroupBy.h"
+#include "temple/Stringify.h"
 
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Modeling/LocalGeometryModel.h"
@@ -901,11 +904,11 @@ void RankingTree::_applySequenceRules(
     if /* C++17 constexpr */(buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
         << "Sets post sequence rule 3: {"
-        << temple::condenseIterable(
+        << temple::condense(
           temple::map(
             _branchOrderingHelper.getSets(),
             [](const auto& indexSet) -> std::string {
-              return "{"s + temple::condenseIterable(indexSet) + "}"s;
+              return "{"s + temple::condense(indexSet) + "}"s;
             }
           )
         ) << "}\n";
@@ -1066,11 +1069,11 @@ void RankingTree::_applySequenceRules(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 4A: {"
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1135,8 +1138,8 @@ void RankingTree::_applySequenceRules(
       }
 
       // Compare variants in a branch based on mixed depth
-      temple::forAllPairs(
-        variantSet,
+      temple::forEach(
+        temple::adaptors::allPairs(variantSet),
         [&](const auto& a, const auto& b) {
           auto aDepth = boost::apply_visitor(depthFetcher, a);
           auto bDepth = boost::apply_visitor(depthFetcher, b);
@@ -1268,8 +1271,8 @@ void RankingTree::_applySequenceRules(
     VariantLikePair variantLikeComparator {*this};
 
     for(const auto& undecidedSet : undecidedBranchSets) {
-      temple::forAllPairs(
-        undecidedSet,
+      temple::forEach(
+        temple::adaptors::allPairs(undecidedSet),
         [&](const auto& branchA, const auto& branchB) {
           // Do nothing if neither have representative stereodescriptors
           if(
@@ -1326,9 +1329,11 @@ void RankingTree::_applySequenceRules(
               unsigned ABranchLikePairs = 0, BBranchLikePairs = 0;
 
               // Count A-branch like pairs
-              temple::forAllPairs(
-                *branchAStereocenterGroupIter,
-                representativeStereodescriptors.at(branchA),
+              temple::forEach(
+                temple::adaptors::allPairs(
+                  *branchAStereocenterGroupIter,
+                  representativeStereodescriptors.at(branchA)
+                ),
                 [&](const auto& variantA, const auto& variantB) {
                   if(
                     boost::apply_visitor(
@@ -1343,9 +1348,11 @@ void RankingTree::_applySequenceRules(
               );
 
               // Count B-branch like pairs
-              temple::forAllPairs(
-                *branchBStereocenterGroupIter,
-                representativeStereodescriptors.at(branchB),
+              temple::forEach(
+                temple::adaptors::allPairs(
+                  *branchBStereocenterGroupIter,
+                  representativeStereodescriptors.at(branchB)
+                ),
                 [&](const auto& variantA, const auto& variantB) {
                   if(
                     boost::apply_visitor(
@@ -1400,11 +1407,11 @@ void RankingTree::_applySequenceRules(
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       Log::log(Log::Particulars::RankingTreeDebugInfo)
         << "Sets post sequence rule 4B: {"
-        << temple::condenseIterable(
+        << temple::condense(
           temple::map(
             _branchOrderingHelper.getSets(),
             [](const auto& indexSet) -> std::string {
-              return "{"s + temple::condenseIterable(indexSet) + "}"s;
+              return "{"s + temple::condense(indexSet) + "}"s;
             }
           )
         ) << "}\n";
@@ -1444,11 +1451,11 @@ void RankingTree::_applySequenceRules(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 5: {"
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1485,11 +1492,11 @@ std::vector<
     << "  Auxiliary ranking substituents of tree index "
     << sourceIndex
     <<  ": "
-    << temple::condenseIterable(
+    << temple::condense(
       temple::map(
         orderingHelper.getSets(),
         [](const auto& indexSet) -> std::string {
-          return "{"s + temple::condenseIterable(indexSet) + "}"s;
+          return "{"s + temple::condense(indexSet) + "}"s;
         }
       )
     ) << "\n";
@@ -1514,11 +1521,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 1: {"
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1569,11 +1576,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 3: {"
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1772,11 +1779,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 4A: {"
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -1847,8 +1854,8 @@ std::vector<
       }
 
       // Compare based on depth
-      temple::forAllPairs(
-        variantSet,
+      temple::forEach(
+        temple::adaptors::allPairs(variantSet),
         [&](const auto& a, const auto& b) {
           auto aDepth = boost::apply_visitor(depthFetcher, a);
           auto bDepth = boost::apply_visitor(depthFetcher, b);
@@ -1948,8 +1955,8 @@ std::vector<
     VariantLikePair variantLikeComparator {*this};
 
     for(const auto& undecidedSet : undecidedBranchSets) {
-      temple::forAllPairs(
-        undecidedSet,
+      temple::forEach(
+        temple::adaptors::allPairs(undecidedSet),
         [&](const auto& branchA, const auto& branchB) {
           // Do nothing if neither have representative stereodescriptors
           if(
@@ -2006,9 +2013,11 @@ std::vector<
               unsigned ABranchLikePairs = 0, BBranchLikePairs = 0;
 
               // Count A-branch like pairs
-              temple::forAllPairs(
-                *branchAStereocenterGroupIter,
-                representativeStereodescriptors.at(branchA),
+              temple::forEach(
+                temple::adaptors::allPairs(
+                  *branchAStereocenterGroupIter,
+                  representativeStereodescriptors.at(branchA)
+                ),
                 [&](const auto& variantA, const auto& variantB) {
                   if(
                     boost::apply_visitor(
@@ -2023,9 +2032,11 @@ std::vector<
               );
 
               // Count B-branch like pairs
-              temple::forAllPairs(
-                *branchBStereocenterGroupIter,
-                representativeStereodescriptors.at(branchB),
+              temple::forEach(
+                temple::adaptors::allPairs(
+                  *branchBStereocenterGroupIter,
+                  representativeStereodescriptors.at(branchB)
+                ),
                 [&](const auto& variantA, const auto& variantB) {
                   if(
                     boost::apply_visitor(
@@ -2080,11 +2091,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 4B: {"
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -2126,11 +2137,11 @@ std::vector<
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "  Sets post sequence rule 5: {"
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           orderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";
@@ -2383,7 +2394,7 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_auxiliaryAdjacentsToRank
   const TreeVertexIndex sourceIndex,
   const std::vector<TreeVertexIndex>& excludeIndices
 ) const {
-  return temple::copyIf(
+  return temple::copy_if(
     _adjacents(sourceIndex),
     [&](const TreeVertexIndex nodeIndex) -> bool {
       // In case we explicitly excluded an index, immediately discard
@@ -2525,7 +2536,7 @@ std::unordered_set<RankingTree::TreeVertexIndex> RankingTree::_treeIndicesInBran
 std::unordered_set<AtomIndex> RankingTree::_molIndicesInBranch(
   const TreeVertexIndex index
 ) const {
-  return temple::map(
+  return temple::map_stl(
     _treeIndicesInBranch(index),
     [&](const auto& treeIndex) -> AtomIndex {
       return _tree[treeIndex].molIndex;
@@ -2768,11 +2779,11 @@ RankingTree::RankingTree(
       << "Ranking substituents of atom index "
       << _tree[rootIndex].molIndex
       << ": "
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "\n";
@@ -2960,11 +2971,11 @@ RankingTree::RankingTree(
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)
       << "Sets post sequence rule 1: {"
-      << temple::condenseIterable(
+      << temple::condense(
         temple::map(
           _branchOrderingHelper.getSets(),
           [](const auto& indexSet) -> std::string {
-            return "{"s + temple::condenseIterable(indexSet) + "}"s;
+            return "{"s + temple::condense(indexSet) + "}"s;
           }
         )
       ) << "}\n";

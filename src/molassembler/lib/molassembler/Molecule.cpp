@@ -6,9 +6,6 @@
 #include "chemical_symmetries/ConstexprProperties.h"
 #include "Delib/Constants.h"
 #include "Delib/ElementTypeCollection.h"
-#include "temple/constexpr/Numeric.h"
-#include "temple/Containers.h"
-#include "temple/Optionals.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph/InnerGraph.h"

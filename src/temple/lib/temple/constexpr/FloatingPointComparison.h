@@ -24,20 +24,20 @@ constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseRelative(
-  const T a,
-  const T b,
-  const T relativeTolerance
-);
+  T a,
+  T b,
+  T relativeTolerance
+) PURITY_STRONG;
 
 template<typename T>
 constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseAbsolute(
-  const T a,
-  const T b,
-  const T absoluteTolerance
-);
+  T a,
+  T b,
+  T absoluteTolerance
+) PURITY_STRONG;
 
 
 // Implementation details
@@ -48,10 +48,10 @@ constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseRelativeOrAbsolute(
-  const T a,
-  const T b,
-  const T relativeTolerance,
-  const T absoluteTolerance
+  T a,
+  T b,
+  T relativeTolerance,
+  T absoluteTolerance
 ) PURITY_STRONG;
 
 template<typename T>
@@ -104,16 +104,6 @@ constexpr std::enable_if_t<
   const T a,
   const T b,
   const T relativeTolerance
-) PURITY_STRONG;
-
-template<typename T>
-constexpr std::enable_if_t<
-  std::is_floating_point<T>::value,
-  bool
-> isCloseRelative(
-  const T a,
-  const T b,
-  const T relativeTolerance
 ) {
   return detail::isCloseRelativeOrAbsolute(
     a,
@@ -122,16 +112,6 @@ constexpr std::enable_if_t<
     T {0}
   );
 }
-
-template<typename T>
-constexpr std::enable_if_t<
-  std::is_floating_point<T>::value,
-  bool
-> isCloseAbsolute(
-  const T a,
-  const T b,
-  const T absoluteTolerance
-) PURITY_STRONG;
 
 template<typename T>
 constexpr std::enable_if_t<

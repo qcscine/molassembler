@@ -11,7 +11,7 @@
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/IO.h"
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
 #include <chrono>
@@ -187,9 +187,9 @@ void benchmark(
 
       if(!dontBreak) {
         break;
-      } else {
-        [[fallthrough]];
       }
+
+      [[fallthrough]];
     };
 
     case Algorithm::ExplicitGor: {
@@ -204,9 +204,9 @@ void benchmark(
 
       if(!dontBreak) {
         break;
-      } else {
-        [[fallthrough]];
       }
+
+      [[fallthrough]];
     };
 
     case Algorithm::ImplicitGor: {

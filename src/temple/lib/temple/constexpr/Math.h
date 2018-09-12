@@ -55,7 +55,7 @@ template<typename FloatingPoint>
 constexpr inline std::enable_if_t<
   std::is_floating_point<FloatingPoint>::value,
   bool
-> isnan(const FloatingPoint x) PURITY_STRONG;
+> isnan(FloatingPoint x) PURITY_STRONG;
 
 template<typename FloatingPoint>
 constexpr inline std::enable_if_t<
@@ -75,63 +75,63 @@ constexpr bool XOR(Bools ... bools);
 
 /* Some very basic math functions for arithmetic types */
 template<typename T>
-inline constexpr traits::enableIfArithmeticWithReturn<T, T> abs(const T x) noexcept PURITY_STRONG;
+inline constexpr traits::enableIfArithmeticWithReturn<T, T> abs(T x) noexcept PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfArithmeticWithReturn<T, T> max(const T a, const T b) noexcept PURITY_STRONG;
+constexpr traits::enableIfArithmeticWithReturn<T, T> max(T a, T b) noexcept PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfArithmeticWithReturn<T, T> min(const T a, const T b) noexcept PURITY_STRONG;
+constexpr traits::enableIfArithmeticWithReturn<T, T> min(T a, T b) noexcept PURITY_STRONG;
 
 /* Floating-point math functions */
 
 // Angle conversions
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(const T inDegrees) noexcept PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(T inDegrees) noexcept PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T inRadians) noexcept PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(T inRadians) noexcept PURITY_STRONG;
 
 // Rounding
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T value) noexcept PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, int> ceil(T value) noexcept PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T value) noexcept PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, int> floor(T value) noexcept PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> round(const T value) noexcept PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, int> round(T value) noexcept PURITY_STRONG;
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> round(
-  const T value,
-  const unsigned nDigits
+  T value,
+  unsigned nDigits
 ) PURITY_STRONG;
 
 // Powers
 template<typename T>
-constexpr traits::enableIfArithmeticWithReturn<T, T> pow(const T base, const unsigned exponent) noexcept PURITY_STRONG;
+constexpr traits::enableIfArithmeticWithReturn<T, T> pow(T base, unsigned exponent) noexcept PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfArithmeticWithReturn<T, double> pow(const T base, const int exponent) noexcept PURITY_STRONG;
+constexpr traits::enableIfArithmeticWithReturn<T, double> pow(T base, int exponent) noexcept PURITY_STRONG;
 
 // Sqrt
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> sqrt(const T x) PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> sqrt(T x) PURITY_STRONG;
 
 // Factorial
 template<typename T>
-constexpr traits::enableIfIntegralWithReturn<T, T> factorial(const T x) PURITY_STRONG;
+constexpr traits::enableIfIntegralWithReturn<T, T> factorial(T x) PURITY_STRONG;
 
 // Logarithms
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> ln(const T x) PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> ln(T x) PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> log10(const T x) PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> log10(T x) PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> log(const T x, const T base) PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> log(T x, T base) PURITY_STRONG;
 
 // Inverse trigonometry
 /*! Computes the inverse sine function.
@@ -139,13 +139,13 @@ constexpr traits::enableIfFloatingWithReturn<T, T> log(const T x, const T base) 
  * NOTE: Accurate to only ~1e-9 absolute deviation close to domain boundaries
  */
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> asin(const T x) PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> asin(T x) PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> acos(const T x) PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> acos(T x) PURITY_STRONG;
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, T> atan(const T x) PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, T> atan(T x) PURITY_STRONG;
 
 
 /* Implementations begin here ------------------------------------------------*/
@@ -164,7 +164,7 @@ constexpr unsigned TPPSum(T1 a, T ... pack) {
 }
 
 template<typename T>
-constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T value) PURITY_STRONG;
+constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(T value) PURITY_STRONG;
 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T value) {
@@ -183,7 +183,7 @@ constexpr traits::enableIfFloatingWithReturn<T, int> roundImpl(const T value) {
  *   for Re x ≥ 0 and x ≠ 0
  */
 template<typename T>
-constexpr T lnSeries(const T x) PURITY_STRONG;
+constexpr T lnSeries(T x) PURITY_STRONG;
 
 template<typename T>
 constexpr T lnSeries(const T x) {
@@ -228,11 +228,11 @@ constexpr T lnSeries(const T x) {
  * 1964, from http://people.math.sfu.ca/~cbm/aands/abramowitz_and_stegun.pdf
  */
 template<typename T>
-constexpr T asinApprox(const T x) PURITY_STRONG;
+constexpr T asinApprox(T x) PURITY_STRONG;
 
 template<typename T>
 constexpr T asinApprox(const T x) {
-  if(!(0 < x && x < 1)) {
+  if(!(0.0 < x && x < 1.0)) {
     throw "Asin approximation domain error: only applicable for 0 < x < 1!";
   }
 
@@ -292,7 +292,7 @@ constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(const T inRadians) 
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T value) noexcept {
   // Truncate to an int
-  const int truncated = static_cast<int>(value);
+  const auto truncated = static_cast<int>(value);
 
   if(truncated < value) {
     return truncated + 1;
@@ -304,7 +304,7 @@ constexpr traits::enableIfFloatingWithReturn<T, int> ceil(const T value) noexcep
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, int> floor(const T value) noexcept {
   // Truncate to an int
-  const int truncated = static_cast<int>(value);
+  const auto truncated = static_cast<int>(value);
 
   if(truncated > value) {
     return truncated - 1;

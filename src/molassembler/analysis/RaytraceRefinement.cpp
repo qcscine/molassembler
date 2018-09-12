@@ -3,7 +3,8 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "temple/Containers.h"
+#include "temple/Adaptors/Enumerate.h"
+#include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
 #include "molassembler/Detail/AnalysisHelpers.h"
@@ -135,7 +136,7 @@ int main(int argc, char* argv[]) {
     boost::filesystem::path filepath {filename};
     std::string filestem = filepath.stem().string();
 
-    for(const auto& enumPair : enumerate(debugData)) {
+    for(const auto& enumPair : temple::adaptors::enumerate(debugData)) {
       const auto& structNum = enumPair.index;
       const auto& refinementData = enumPair.value;
 

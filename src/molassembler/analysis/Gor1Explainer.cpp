@@ -5,8 +5,6 @@
 #include "boost/program_options.hpp"
 #include "boost/regex.hpp"
 
-#include "temple/Containers.h"
-
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"

@@ -47,7 +47,7 @@ template<
   typename Tuple,
   template<typename ...> class TemplateFunction,
   std::size_t... I
-> constexpr auto unpackHelper(std::index_sequence<I...>) {
+> constexpr auto unpackHelper(std::index_sequence<I...> /* inds */) {
   /* Convert the indices parameter pack into a parameter pack containing all
    * types of the tuple, and return the evaluated template function instantiated
    * with all those types
@@ -68,7 +68,7 @@ template<
   typename TupleType,
   template<typename> class TemplateFunction,
   std::size_t... Inds
-> constexpr auto mapHelper(std::index_sequence<Inds...>) {
+> constexpr auto mapHelper(std::index_sequence<Inds...> /* inds */) {
   return makeArray(
     handleValueVariants<
       TemplateFunction<
@@ -87,7 +87,7 @@ template<
   typename T,
   size_t ... Inds
 > constexpr unsigned countTypeHelper(
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* inds */
 ) {
   constexpr std::array<unsigned, sizeof...(Inds)> trues {{
     static_cast<unsigned>(

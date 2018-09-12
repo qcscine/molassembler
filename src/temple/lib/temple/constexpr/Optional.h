@@ -1,6 +1,8 @@
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_OPTIONAL_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_OPTIONAL_H
 
+#include "temple/Preprocessor.h"
+
 #include <utility>
 
 /*! @file
@@ -14,29 +16,70 @@ namespace temple {
  * A constexpr option type much like std::optional with the limitation that T
  * must be default-constructible and equality and less-than comparison operators
  * must be defined for the underlying type.
+ *
+ * @warning T must not be reference or const-qualified type
  */
 template<typename T>
 class Optional {
-private:
-  T _value;
-  bool _hasValue;
-
 public:
-  constexpr Optional() : _value(T {}), _hasValue(false) {}
-  constexpr Optional(T value) : _value(std::move(value)), _hasValue(true) {}
-
-  constexpr operator bool () const PURITY_WEAK {
-    return _hasValue;
+//!@name Constructors
+//!@{
+  //! Default constructor
+  constexpr Optional() {
+    static_assert(
+      std::is_same<T, std::decay_t<T>>::value,
+      "T must not be a reference or const-qualified type"
+    );
   }
 
+  //! Value constructor
+  constexpr explicit Optional(T value) : _value(std::move(value)), _hasValue(true) {
+    static_assert(
+      std::is_same<T, std::decay_t<T>>::value,
+      "T must not be a reference or const-qualified type"
+    );
+  }
+//!@}
+
+//!@name Information
+//!@{
+  //! Returns whether the optional contains a value
   constexpr bool hasValue() const PURITY_WEAK {
     return _hasValue;
   }
 
+  //! Returns a value unchecked
   constexpr T value() const PURITY_WEAK {
     return _value;
   }
 
+  template<class UnaryFunction>
+  constexpr auto map(UnaryFunction&& function) const {
+    // Function has signature T -> U
+    using U = decltype(function(_value));
+
+    if(_hasValue) {
+      return Optional<U> {
+        function(_value)
+      };
+    }
+
+    return Optional<U> {};
+  }
+
+  template<class UnaryFunction>
+  constexpr auto flatMap(UnaryFunction&& function) const {
+    // Function has signature T -> Optional<U>
+    using OptionalU = decltype(function(_value));
+
+    if(_hasValue) {
+      return OptionalU {function(_value)};
+    }
+
+    return OptionalU {};
+  }
+
+  //! Returns a value if initialized, and another if not
   constexpr T valueOr(const T& alternative) const PURITY_WEAK {
     if(_hasValue) {
       return _value;
@@ -44,11 +87,24 @@ public:
 
     return alternative;
   }
+//!@}
 
-  constexpr void operator = (T assignment) {
+//!@name Operators
+//!@{
+  //! Assignment from T
+  constexpr Optional& operator = (T assignment) {
     _value = assignment;
+    _hasValue = true;
+
+    return *this;
   }
 
+  //! Convert-to-bool operator
+  constexpr operator bool () const PURITY_WEAK {
+    return _hasValue;
+  }
+
+  //! Compares on basis of contained value. Nones do compare equal
   constexpr bool operator == (const Optional& other) const PURITY_WEAK {
     if(!_hasValue && !other._hasValue) {
       return true;
@@ -61,10 +117,12 @@ public:
     return false;
   }
 
+  //! Compares on basis of contained value. Nones do compare equal
   constexpr bool operator != (const Optional& other) const PURITY_WEAK {
     return !(*this == other);
   }
 
+  //! Lexicographical-like comparison
   constexpr bool operator < (const Optional& other) const PURITY_WEAK {
     // If neither has a value, they are equal
     if(!_hasValue && !other._hasValue) {
@@ -87,9 +145,18 @@ public:
     );
   }
 
+  //! Lexicographical-like comparison
   constexpr bool operator > (const Optional& other) const PURITY_WEAK {
     return (other < *this);
   }
+//!@}
+
+private:
+//!@name State
+//!@{
+  T _value = T {};
+  bool _hasValue = false;
+//!@}
 };
 
 } // namespace temple

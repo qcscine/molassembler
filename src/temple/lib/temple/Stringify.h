@@ -15,10 +15,66 @@
 
 /*! @file
  *
- * Recursive serialization for quicker debugging of common STL containers.
+ * Recursive serialization for easier debugging involving common STL containers.
  */
 
 namespace temple {
+
+/*!
+ * Condenses an iterable container into a comma-separated string of string
+ * representations of its contents. Requires container iterators to satisfy
+ * ForwardIterators and the contained type to be a valid template
+ * argument for std::to_string, which in essence means this works only for (a
+ * few) STL containers and (most) built-in datatypes.
+ */
+template<class Container>
+std::enable_if_t<
+  !std::is_same<
+    traits::getValueType<Container>,
+    std::string
+  >::value,
+  std::string
+> condense(
+  const Container& container,
+  const std::string& joiningChar = ","
+) {
+  using namespace std::string_literals;
+
+  std::string representation;
+
+  for(auto it = std::begin(container); it != std::end(container); /*-*/) {
+    representation += std::to_string(*it);
+    if(++it != std::end(container)) {
+      representation += joiningChar;
+    }
+  }
+
+  return representation;
+}
+
+template<class Container> std::enable_if_t<
+  std::is_same<
+    traits::getValueType<Container>,
+    std::string
+  >::value,
+  std::string
+> condense(
+  const Container& container,
+  const std::string& joiningChar = ","
+) {
+  using namespace std::string_literals;
+
+  std::string representation;
+
+  for(auto it = std::begin(container); it != std::end(container); /*-*/) {
+    representation += *it;
+    if(++it != std::end(container)) {
+      representation += joiningChar;
+    }
+  }
+
+  return representation;
+}
 
 namespace detail {
 
@@ -94,7 +150,10 @@ template<typename T>
 std::string stringifyContainer(const T& container);
 
 template<typename TupleType, size_t ... Inds>
-std::string stringifyTuple(const TupleType& tuple, std::index_sequence<Inds...>);
+std::string stringifyTuple(
+  const TupleType& tuple,
+  std::index_sequence<Inds...> /* inds */
+);
 
 
 // Definitions
@@ -161,9 +220,9 @@ template<typename T>
 std::string stringify(const boost::optional<T>& optional) {
   if(optional) {
     return "boost Some "s + stringify(optional.value());
-  } else {
-    return "boost None";
   }
+
+  return "boost None";
 }
 
 template<typename T>
@@ -210,7 +269,10 @@ std::string stringifyContainer(const T& container) {
 }
 
 template<typename TupleType, size_t ... Inds>
-std::string stringifyTuple(const TupleType& tuple, std::index_sequence<Inds...>) {
+std::string stringifyTuple(
+  const TupleType& tuple,
+  std::index_sequence<Inds...> /* inds */
+) {
   std::array<std::string, sizeof...(Inds)> individualStringifys {
     stringify(std::get<Inds>(tuple))...
   };

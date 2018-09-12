@@ -3,7 +3,9 @@
 
 #include "boost/math/tools/roots.hpp"
 
-#include "temple/Containers.h"
+#include "temple/Adaptors/Transform.h"
+#include "temple/Adaptors/SequentialPairs.h"
+#include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
 #include <cassert>
@@ -164,7 +166,7 @@ FloatType centralAnglesDeviationDerivative(
   const std::vector<FloatType>& edgeLengths
 ) {
   return temple::sum(
-    temple::map(
+    temple::adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         return -2 * a / (
@@ -186,7 +188,7 @@ FloatType centralAnglesDeviationSecondDerivative(
   const FloatType squareCircumradius = circumradius * circumradius;
 
   return temple::sum(
-    temple::map(
+    temple::adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
@@ -255,7 +257,7 @@ FloatType centralAnglesDeviationDerivative(
   const FloatType longestEdge
 ) {
   return temple::sum(
-    temple::map(
+    temple::adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         FloatType value = -2 * a / (
@@ -284,7 +286,7 @@ FloatType centralAnglesDeviationSecondDerivative(
   const FloatType squareCircumradius = circumradius * circumradius;
 
   return temple::sum(
-    temple::map(
+    temple::adaptors::transform(
       edgeLengths,
       [&](const FloatType a) -> FloatType {
         const auto temp = 4 * squareCircumradius - a * a;
@@ -430,8 +432,8 @@ std::vector<FloatType> generalizedInternalAngles(
   double longestEdge = temple::max(edgeLengths);
 
   if(circumcenterInside) {
-    return temple::mapSequentialPairs(
-      lengthsCopy,
+    return temple::map(
+      temple::adaptors::sequentialPairs(lengthsCopy),
       [&](const FloatType a, const FloatType b) -> FloatType {
         return std::acos(a / doubleR) + std::acos(b / doubleR);
       }
@@ -448,8 +450,8 @@ std::vector<FloatType> generalizedInternalAngles(
     return value;
   };
 
-  return temple::mapSequentialPairs(
-    lengthsCopy,
+  return temple::map(
+    temple::adaptors::sequentialPairs(lengthsCopy),
     [&](const FloatType a, const FloatType b) -> FloatType {
       return delta(a) + delta(b);
     }

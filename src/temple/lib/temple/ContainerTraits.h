@@ -16,15 +16,19 @@ namespace temple {
 // We need four custom traits that check for each of the members we want.
 namespace traits {
 
-// template class for SFINAE expression validity checking
+/*! Template base class for SFINAE expression validity checking
+ *
+ * @note The integer-long substitution trick is explained in Tricks.md
+ */
 template<class>
 struct sfinae_true : std::true_type{};
 
 namespace detail {
-/* Explanation: If the expression EXPR in sfinae_true<EXPR> returns a valid
- * type, sfinae_true can be instantiated, and the default-interpretation of 0
- * as an int succeeds. If this fails, the backup-interpretation of 0 as a long
- * is chosen and returns std::false_type.
+
+/* Short explanation: If the expression EXPR in sfinae_true<EXPR> returns a
+ * valid type, sfinae_true can be instantiated, and the default-interpretation
+ * of 0 as an int succeeds. If this fails, the backup-interpretation of 0 as a
+ * long is chosen and returns std::false_type.
  */
 template<class Container>
 static auto testHasInsert(int)

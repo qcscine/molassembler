@@ -1,7 +1,7 @@
 #include "molassembler/Detail/DelibHelpers.h"
 
 #include <Eigen/Geometry>
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 
 namespace molassembler {
 

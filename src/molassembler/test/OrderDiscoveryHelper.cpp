@@ -4,6 +4,8 @@
 
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
 
+#include "temple/Stringify.h"
+
 using namespace molassembler;
 using namespace std::string_literals;
 
@@ -15,20 +17,20 @@ std::string showDiscoveryState(
 ) {
   return (
     "Sets: "s
-    + temple::condenseIterable(
+    + temple::condense(
       temple::map(
         orderingHelper.getSets(),
         [](const auto& set) -> std::string {
-          return "{"s + temple::condenseIterable(set) + "}"s;
+          return "{"s + temple::condense(set) + "}"s;
         }
       )
     )
     + ", Undecided"s
-    + temple::condenseIterable(
+    + temple::condense(
       temple::map(
         orderingHelper.getUndecidedSets(),
         [](const auto& set) -> std::string {
-          return "{"s + temple::condenseIterable(set) + "}"s;
+          return "{"s + temple::condense(set) + "}"s;
         }
       )
     )

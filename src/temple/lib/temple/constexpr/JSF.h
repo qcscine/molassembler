@@ -37,17 +37,123 @@ namespace jsf {
  * DEALINGS IN THE SOFTWARE.
  */
 
+/*!
+ * @brief General class enabling the construction of a pattern of PRNGs by
+ *   Bob Jenkins
+ *
+ * @tparam UnsignedType An unsigned integer type that contains the main state of
+ *   the PRNG. Choosen between 32 and 64-bit state here!
+ * @tparam p A parameter that influences the state advance operations.
+ * @tparam q A parameter that influences the state advance operations.
+ * @tparam r A parameter that influences the state advance operations.
+ *
+ */
 template<
   typename UnsignedType,
   unsigned p,
   unsigned q,
   unsigned r
 > class JSF {
+public:
+  //! When used as a functor, this is the return type of operator ()
+  using result_type = UnsignedType;
+
+//!@name Public static properties
+//!@{
+  //! Minimum value of result_type
+  static constexpr result_type min() {
+    return 0;
+  }
+
+  //! Maximum value of result_type
+  static constexpr result_type max() {
+    return ~result_type(0);
+  }
+//!@}
+
+//!@name Constructors
+//!@{
+  //! Default constructor
+  constexpr explicit JSF() = default;
+
+  //! Construct from four seed values
+  constexpr explicit JSF(const std::array<UnsignedType, 4>& input) {
+    static_assert(
+      std::is_unsigned<UnsignedType>::value,
+      "The underlying type of the JSF generator must be unsigned!"
+    );
+
+    _seed(input);
+  }
+
+  //! Construct from a seed sequence
+  explicit JSF(std::seed_seq& seedSeq) {
+    _seed(seedSeq);
+  }
+
+  //! Construct from a single integer seed value
+  explicit JSF(int seed) {
+    _seed(seed);
+  }
+//!@}
+
+//!@name Modifiers
+//!@{
+  //! Seed the underlying state with four values
+  constexpr void seed(const std::array<UnsignedType, 4>& input) {
+    _seed(input);
+  }
+
+  //! Seed the underlying state with a seed sequence
+  void seed(std::seed_seq& seedSeq) {
+    _seed(seedSeq);
+  }
+
+  //! Seed the underlying state with a single integer value
+  void seed(int seed) {
+    std::seed_seq seedSeq {{seed}};
+    _seed(seedSeq);
+  }
+//!@}
+
+//!@name Operators
+//!@{
+  //! Advance the state and return the current value
+  constexpr UnsignedType operator() () {
+    _advance();
+
+    return _d;
+  }
+
+  //! Compares the underlying state of two instances
+  constexpr bool operator == (const JSF& other) const {
+    return (
+      _a == other._a
+      && _b == other._b
+      && _c == other._c
+      && _d == other._d
+    );
+  }
+
+  //! Compares the underlying state of two instances
+  constexpr bool operator != (const JSF& other) const {
+    return !(*this == other);
+  }
+//!@}
+
 private:
+//!@name State
+//!@{
   UnsignedType _a, _b, _c, _d;
+//!@}
 
+//!@name Static properties
+//!@{
   static constexpr unsigned bits = 8 * sizeof(UnsignedType);
+//!@}
 
+//!@name Private member functions
+//!@{
   static constexpr UnsignedType _rotate(UnsignedType x, unsigned k) {
     return (x << k) | (x >> (bits - k));
   }
@@ -55,7 +161,7 @@ private:
   constexpr void _advance() {
     UnsignedType e = _a - _rotate(_b, p);
     _a = _b ^ _rotate(_c, q);
-    _b = _c + (r ? _rotate(_d, r) : _d);
+    _b = _c + ((r > 0) ? _rotate(_d, r) : _d);
     _c = _d + e;
     _d = e + _a;
   }
@@ -81,7 +187,12 @@ private:
       std::end(stateArray)
     );
 
-    //! C++17 if constexpr
+    /* C++17 replace with if constexpr
+     *
+     * You can safely ignore the warning that shift cout >= width of type for
+     * instantiations with uint32_t by clang. In those cases, stateArray is
+     * already adequately filled.
+     */
     if(std::is_same<UnsignedType, std::uint64_t>::value) {
       /* seed_seq only generates 32 bit unsigneds, so just combine 8 32-bit
        * values into 4 64-bit values for the state array
@@ -101,69 +212,7 @@ private:
 
     _seed(stateArray);
   }
-
-
-public:
-  using result_type = UnsignedType;
-
-  static constexpr result_type min() {
-    return 0;
-  }
-
-  static constexpr result_type max() {
-    return ~result_type(0);
-  }
-
-  constexpr void seed(const std::array<UnsignedType, 4>& input) {
-    _seed(input);
-  }
-
-  void seed(std::seed_seq& seedSeq) {
-    _seed(seedSeq);
-  }
-
-  void seed(int seed) {
-    std::seed_seq seedSeq {{seed}};
-    _seed(seedSeq);
-  }
-
-  constexpr explicit JSF() = default;
-
-  constexpr explicit JSF(const std::array<UnsignedType, 4>& input) {
-    static_assert(
-      std::is_unsigned<UnsignedType>::value,
-      "The underlying type of the JSF generator must be unsigned!"
-    );
-
-    _seed(input);
-  }
-
-  explicit JSF(std::seed_seq& seedSeq) {
-    _seed(seedSeq);
-  }
-
-  explicit JSF(int seed) {
-    _seed(seed);
-  }
-
-  constexpr UnsignedType operator() () {
-    _advance();
-
-    return _d;
-  }
-
-  constexpr bool operator == (const JSF& other) const {
-    return (
-      _a == other._a
-      && _b == other._b
-      && _c == other._c
-      && _d == other._d
-    );
-  }
-
-  constexpr bool operator != (const JSF& other) const {
-    return !(*this == other);
-  }
+//!@}
 };
 
 ///// ---- Specific JSF Generators ---- ////

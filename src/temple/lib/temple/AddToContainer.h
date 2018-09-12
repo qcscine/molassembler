@@ -18,8 +18,8 @@
 namespace temple {
 
 /*!
- * Adds an element to a container by calling the container's insert or push_back
- * member functions, if one of either exists.
+ * @brief Adds an lvalue element to a container by calling the container's
+ *   insert or push_back member functions, if one of either exists.
  */
 template<class Container, typename T>
 void addToContainer(
@@ -28,8 +28,8 @@ void addToContainer(
 );
 
 /*!
- * Adds an element to a container by calling the container's emplace or
- * emplace_back member functions, if one of either exists.
+ * @brief Adds an rvalue to a container by calling the container's emplace or
+ *   emplace_back member functions, if one of either exists.
  */
 template<class Container, typename T>
 void addToContainer(
@@ -37,6 +37,28 @@ void addToContainer(
   T&& value
 );
 
+/*!
+ * @brief Rerves the space required in the target container if size can
+ *   be determined from the source container
+ *
+ * If the source container implements a size() const member and the target
+ * container implements a reserve() member, the target container reserves space
+ * according to the result of the source container size() call modified by the
+ * sourceModifierUnary.
+ *
+ * @tparam TargetContainer the Container type in which space should be reserved
+ * @tparam SourceContainer The Container type whose size is used to calculate
+ *   required size of the target
+ * @tparam SizeModifierUnary A unary callable type that transforms the type
+ *   returned by SourceContainer.size(), if applicable
+ *
+ * @param target The container in which space should be reserved
+ * @param source The container whose size should determined for reservation in
+ *   the target
+ * @param sourceModifierUnary A unary function that transforms the size
+ *   determined from the source container. This is for if you expect to generate
+ *   more or less elements in the target container.
+ */
 template<
   class TargetContainer,
   class SourceContainer,
@@ -49,7 +71,7 @@ template<
 
 namespace detail {
 
-// SFINAE insertOrPushBack
+//! Calls push_back on a container with a passed value if push_back exists
 template<class Container, typename T>
 std::enable_if_t<
   std::is_same<
@@ -64,6 +86,7 @@ std::enable_if_t<
   container.push_back(value);
 }
 
+//! Calls insert on a container with a passed value if insert exists
 template<class Container, typename T>
 std::enable_if_t<
   std::is_same<
@@ -78,6 +101,7 @@ std::enable_if_t<
   container.insert(value);
 }
 
+//! Calls emplace_back on a container with a passed rvalue if emplace_back exists
 template<class Container, typename T>
 std::enable_if_t<
   std::is_same<
@@ -92,6 +116,7 @@ std::enable_if_t<
   container.emplace_back(std::forward<T>(value));
 }
 
+//! Calls empalce on a container with a passed rvalue if emplace exists
 template<class Container, typename T>
 std::enable_if_t<
   std::is_same<
@@ -106,6 +131,7 @@ std::enable_if_t<
   container.emplace(std::forward<T>(value));
 }
 
+//! Reserves demanded size if all required traits are implemented
 template<class TargetContainer, class SourceContainer, class SizeModifierUnary>
 std::enable_if_t<
   (
@@ -125,6 +151,7 @@ std::enable_if_t<
   );
 }
 
+//! Does nothing if either of the required traits are not implemented
 template<class TargetContainer, class SourceContainer, class SizeModifierUnary>
 std::enable_if_t<
   !(

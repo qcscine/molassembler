@@ -5,7 +5,10 @@
 #include "CyclicPolygons.h"
 #include <Eigen/Dense>
 #include "stereopermutation/GenerateUniques.h"
-#include "temple/Containers.h"
+#include "temple/Adaptors/AllPairs.h"
+#include "temple/Adaptors/Iota.h"
+#include "temple/Adaptors/Transform.h"
+#include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/Optionals.h"
 #include "temple/Random.h"
@@ -291,11 +294,11 @@ void AtomStereocenter::Impl::addSubstituent(
       // Sort ligands in both rankings so we can use lexicographical comparison
       _ranking.ligands.at(ligandIndexAddedTo).push_back(newSubstituentIndex);
       for(auto& ligand : _ranking.ligands) {
-        temple::sort(ligand);
+        temple::inplace::sort(ligand);
       }
 
       for(auto& ligand : newRanking.ligands) {
-        temple::sort(ligand);
+        temple::inplace::sort(ligand);
       }
 
       auto ligandMapping = temple::map(
@@ -642,12 +645,12 @@ void AtomStereocenter::Impl::removeSubstituent(
        * comparison to figure out a mapping
        */
       for(auto& ligand : _ranking.ligands) {
-        temple::inplaceRemove(ligand, which);
-        temple::sort(ligand);
+        temple::inplace::remove(ligand, which);
+        temple::inplace::sort(ligand);
       }
 
       for(auto& ligand : newRanking.ligands) {
-        temple::sort(ligand);
+        temple::inplace::sort(ligand);
       }
 
       // Calculate the mapping from old ligands to new ones
@@ -779,7 +782,7 @@ void AtomStereocenter::Impl::fit(
   const std::vector<Symmetry::Name>& excludeSymmetries
 ) {
   // For all atoms making up a ligand, decide on the spatial average position
-  const std::vector<Eigen::Vector3d> ligandPositions = temple::mapToVector(
+  const std::vector<Eigen::Vector3d> ligandPositions = temple::map(
     _ranking.ligands,
     [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
@@ -823,8 +826,10 @@ void AtomStereocenter::Impl::fit(
       assign(assignment);
 
       const double angleDeviations = temple::sum(
-        temple::mapAllPairs(
-          temple::iota<unsigned>(Symmetry::size(_symmetry)),
+        temple::adaptors::transform(
+          temple::adaptors::allPairs(
+            temple::adaptors::range(Symmetry::size(_symmetry))
+          ),
           [&](const unsigned ligandI, const unsigned ligandJ) -> double {
             return std::fabs(
               DelibHelpers::angle(
@@ -846,8 +851,10 @@ void AtomStereocenter::Impl::fit(
        * What value does it bring?
        */
       const double oneThreeDistanceDeviations = temple::sum(
-        temple::mapAllPairs(
-          temple::iota<unsigned>(Symmetry::size(_symmetry)),
+        temple::adaptors::transform(
+          temple::adaptors::allPairs(
+            temple::adaptors::range(Symmetry::size(_symmetry))
+          ),
           [&](const unsigned ligandI, const unsigned ligandJ) -> double {
             return std::fabs(
               // ligandI - ligandJ 1-3 distance from positions
@@ -881,21 +888,22 @@ void AtomStereocenter::Impl::fit(
       }
 
       const double chiralityDeviations = temple::sum(
-        temple::map(
+        temple::adaptors::transform(
           minimalChiralityConstraints(),
           [&](const auto& minimalPrototype) -> double {
-            double volume = temple::unpackArrayToFunction(
-              temple::map(
-                minimalPrototype,
-                [&](const boost::optional<unsigned>& ligandIndexOptional) -> Eigen::Vector3d {
-                  if(ligandIndexOptional) {
-                    return ligandPositions.at(ligandIndexOptional.value());
-                  }
+            auto fetchPosition = [&](const boost::optional<unsigned>& ligandIndexOptional) -> Eigen::Vector3d {
+              if(ligandIndexOptional) {
+                return ligandPositions.at(ligandIndexOptional.value());
+              }
 
-                  return angstromWrapper.positions.at(_centerAtom).asEigenVector();
-                }
-              ),
-              DelibHelpers::adjustedSignedVolume
+              return angstromWrapper.positions.at(_centerAtom).asEigenVector();
+            };
+
+            double volume = DelibHelpers::adjustedSignedVolume(
+              fetchPosition(minimalPrototype[0]),
+              fetchPosition(minimalPrototype[1]),
+              fetchPosition(minimalPrototype[2]),
+              fetchPosition(minimalPrototype[3])
             );
 
             // minimalChiralityConstraints() supplies only Positive targets
@@ -1037,8 +1045,8 @@ void AtomStereocenter::Impl::setModelInformation(
      *   SpatialModel anyway, no need to duplicate that information
      * - Maximally 2 * the upper cone angle (but not more than M_PI)
      */
-    temple::forAllPairs(
-      _ranking.ligands.at(ligandI),
+    temple::forEach(
+      temple::adaptors::allPairs(_ranking.ligands.at(ligandI)),
       [&](const AtomIndex i, const AtomIndex j) {
         model.setAngleBoundsIfEmpty(
           {{i, _centerAtom, j}},
@@ -1075,9 +1083,11 @@ void AtomStereocenter::Impl::setModelInformation(
         )
       };
 
-      temple::forAllPairs(
-        _ranking.ligands.at(i),
-        _ranking.ligands.at(j),
+      temple::forEach(
+        temple::adaptors::allPairs(
+          _ranking.ligands.at(i),
+          _ranking.ligands.at(j)
+        ),
         [&](const AtomIndex x, const AtomIndex y) -> void {
           double variation = (
             DistanceGeometry::SpatialModel::angleAbsoluteVariance

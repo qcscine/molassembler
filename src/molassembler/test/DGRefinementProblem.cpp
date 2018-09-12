@@ -1,13 +1,13 @@
 #define BOOST_TEST_MODULE RefinementProblemTests
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
+#include "Eigen/Geometry"
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
-#include "Eigen/Geometry"
-#include "temple/constexpr/FloatingPointComparison.h"
-#include "temple/Enumerate.h"
+#include "temple/Adaptors/Zip.h"
+#include "temple/Functional.h"
 #include "temple/Random.h"
-#include "temple/Containers.h"
+#include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
 
 #include "molassembler/Detail/AnalysisHelpers.h"
@@ -32,17 +32,14 @@ bool isApprox(
   const double epsilon
 ) {
   return temple::all_of(
-    temple::zipMap(
-      a,
-      b,
-      [&](const auto& i, const auto& j) -> bool {
-        return temple::floating::isCloseAbsolute(
-          i,
-          j,
-          epsilon
-        );
-      }
-    )
+    temple::adaptors::zip(a, b),
+    [&](const auto i, const auto j) -> bool {
+      return temple::floating::isCloseAbsolute(
+        i,
+        j,
+        epsilon
+      );
+    }
   );
 }
 
@@ -107,18 +104,18 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     Vector gradient = gradientFunctor(dlibPositions);
 
     bool passes = temple::all_of(
-      temple::zipMap(
+      temple::adaptors::zip(
         gradient,
-        finiteDifferenceGradient,
-        [](const auto& a, const auto& b) -> bool {
-          return temple::floating::detail::isCloseRelativeOrAbsolute(
-            a,
-            b,
-            1e-5,
-            1e-5
-          );
-        }
-      )
+        finiteDifferenceGradient
+      ),
+      [](const double a, const double b) -> bool {
+        return temple::floating::detail::isCloseRelativeOrAbsolute(
+          a,
+          b,
+          1e-5,
+          1e-5
+        );
+      }
     );
 
     BOOST_CHECK_MESSAGE(
@@ -147,18 +144,18 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
     Vector compressedGradient = compressingGradientFunctor(dlibPositions);
 
     bool compressedPasses = temple::all_of(
-      temple::zipMap(
+      temple::adaptors::zip(
         compressedGradient,
-        compressedFiniteDifferenceGradient,
-        [](const auto& a, const auto& b) -> bool {
-          return temple::floating::detail::isCloseRelativeOrAbsolute(
-            a,
-            b,
-            1e-5,
-            1e-5
-          );
-        }
-      )
+        compressedFiniteDifferenceGradient
+      ),
+      [](const double a, const double b) -> bool {
+        return temple::floating::detail::isCloseRelativeOrAbsolute(
+          a,
+          b,
+          1e-5,
+          1e-5
+        );
+      }
     );
 
     BOOST_CHECK_MESSAGE(
@@ -356,12 +353,10 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
 
     assert(
       temple::all_of(
-        temple::map(
-          referenceGradients,
-          [&N](const auto& referenceGradient) -> bool {
-            return referenceGradient.size() == 4 * N;
-          }
-        )
+        referenceGradients,
+        [&N](const auto& referenceGradient) -> bool {
+          return referenceGradient.size() == 4 * N;
+        }
       )
     );
 

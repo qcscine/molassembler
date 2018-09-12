@@ -33,7 +33,7 @@ private:
   struct OnlyFirstComparator {
     constexpr static auto _keyComparator = std::less<KeyType>();
 
-    constexpr OnlyFirstComparator() {};
+    constexpr OnlyFirstComparator() = default;
 
     constexpr bool operator() (
       const PairType& a,
@@ -46,7 +46,7 @@ private:
   struct OnlyFirstEquality {
     constexpr static auto _keyComparator = std::equal_to<KeyType>();
 
-    constexpr OnlyFirstEquality() {};
+    constexpr OnlyFirstEquality() = default;
 
     constexpr bool operator() (
       const PairType& a,
@@ -61,9 +61,11 @@ private:
   SetType _items;
 
 public:
-  constexpr DynamicMap() {}
+//!@name Special member functions
+//!@{
+  constexpr DynamicMap() = default;
 
-  constexpr DynamicMap(DynamicMap&& other)
+  constexpr DynamicMap(DynamicMap&& other) noexcept
     : _items(other._items)
   {}
 
@@ -76,22 +78,14 @@ public:
     return *this;
   }
 
-  constexpr DynamicMap& operator = (DynamicMap&& other) {
+  constexpr DynamicMap& operator = (DynamicMap&& other) noexcept {
     _items = other._items;
     return *this;
   }
+//!@}
 
-  constexpr MappedType at(const KeyType& key) const {
-    PairType pair {key, MappedType {}};
-    auto keyOptional = _items.getOption(pair);
-
-    if(!keyOptional.hasValue()) {
-      throw "No such key in this DynamicMap!";
-    }
-
-    return keyOptional.value().second;
-  }
-
+//!@name Modification
+//!@{
   constexpr void insert(
     KeyType key,
     MappedType item
@@ -116,8 +110,8 @@ public:
     if(searchIter == _items.end()) {
       _items.insert(pair);
     } else {
-      // searchIter is a constIterator unfortunately, so need to go via index
-      unsigned indexOfElement = static_cast<unsigned>(
+      // searchIter is a const_iterator unfortunately, so need to go via index
+      auto indexOfElement = static_cast<unsigned>(
         searchIter - _items.begin()
       );
 
@@ -129,22 +123,41 @@ public:
   constexpr void clear() {
     _items.clear();
   }
+//!@}
+
+//!@name Information
+//!@{
+  constexpr MappedType at(const KeyType& key) const {
+    PairType pair {key, MappedType {}};
+    auto keyOptional = _items.getOption(pair);
+
+    if(!keyOptional.hasValue()) {
+      throw "No such key in this DynamicMap!";
+    }
+
+    return keyOptional.value().second;
+  }
+
 
   constexpr unsigned size() const {
     return _items.size();
   }
+//!@}
 
-  using constIterator = typename SetType::constIterator;
-  using const_iterator = constIterator;
+//!@name Iterators
+//!@{
+  using const_iterator = typename SetType::const_iterator;
 
-  constexpr constIterator begin() const {
+  constexpr const_iterator begin() const {
     return _items.begin();
   }
 
-  constexpr constIterator end() const {
+  constexpr const_iterator end() const {
     return _items.end();
   }
+//!@}
 
+//!@name Operators
   constexpr bool operator == (const DynamicMap& other) const {
     return _items == other._items;
   }
@@ -162,6 +175,7 @@ public:
   constexpr bool operator > (const DynamicMap& other) const {
     return other._items < _items;
   }
+//!@}
 };
 
 

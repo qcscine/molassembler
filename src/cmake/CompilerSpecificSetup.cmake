@@ -21,18 +21,6 @@ if(MOLASSEMBLER_IPO)
   endif()
 endif()
 
-# If in a debug build with clang, try to find clang-tidy and enable it
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  find_program(CLANG_TIDY_EXE
-    NAMES "clang-tidy"
-    DOC "Path to clang-tidy binary"
-  )
-  if(CLANG_TIDY_EXE)
-    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
-  endif()
-  message(STATUS "Enabled Clang-Tidy")
-endif()
-
 # Compilation flags
 if(MSVC)
   #Compilation on different cores (faster)
@@ -45,6 +33,7 @@ else()
 
   # Some GCC-specific compiler options
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    message(STATUS "Enabling GCC specific warning flags")
     # Handle no gnu unique flags
     if(MOLASSEMBLER_NO_GNU_UNIQUE)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --no-gnu-unique")

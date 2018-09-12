@@ -7,7 +7,8 @@
 
 /*! @file
  *
- * Implements a constexpr container much like std::pair.
+ * Implements a constexpr container much like std::pair. Yes, this really is
+ * necessary since C++14's pair isn't constexpr everywhere!
  */
 
 namespace temple {
@@ -19,9 +20,14 @@ namespace temple {
  */
 template<typename T, typename U>
 struct Pair {
+//!@name State
+//!@{
   T first;
   U second;
+//!@}
 
+//!@name Constructors
+//!@{
   constexpr Pair() : first(T {}), second (U {}) {}
 
   /* Value initialization */
@@ -32,32 +38,31 @@ struct Pair {
   constexpr Pair(T&& passFirst, U&& passSecond)
     : first(passFirst), second(passSecond)
   {}
+//!@}
 
-  /* Copy initialization */
+//!@name Special member functions
   constexpr Pair(const Pair& other)
-    : first(other.first), second(other.second)
-  {}
-
-  constexpr Pair(Pair&& other)
-    : first(other.first), second(other.second)
-  {}
-
-  /* Assignment */
+    : first(other.first), second(other.second) {}
+  constexpr Pair(Pair&& other) noexcept
+    : first(other.first), second(other.second) {}
   constexpr Pair& operator = (const Pair& other) {
     first = other.first;
     second = other.second;
 
     return *this;
   }
-
-  constexpr Pair& operator = (Pair&& other) {
+  constexpr Pair& operator = (Pair&& other) noexcept {
     first = std::move(other.first);
     second = std::move(other.second);
 
     return *this;
   }
+  ~Pair() = default;
+//!@}
 
-  /* Comparison operators */
+//!@name Operators
+//!@{
+  //! Lexicographical comparison
   constexpr bool operator < (const Pair& other) const PURITY_WEAK {
     if(first > other.first) {
       return false;
@@ -70,10 +75,12 @@ struct Pair {
     return true;
   }
 
+  //! Lexicographical comparison
   constexpr bool operator > (const Pair& other) const PURITY_WEAK {
     return (other < *this);
   }
 
+  //! Lexicographical comparison
   constexpr bool operator == (const Pair& other) const PURITY_WEAK {
     return (
       first == other.first
@@ -81,9 +88,11 @@ struct Pair {
     );
   }
 
+  //! Lexicographical comparison
   constexpr bool operator != (const Pair& other) const PURITY_WEAK {
     return !(*this == other);
   }
+//!@}
 };
 
 } // namespace temple

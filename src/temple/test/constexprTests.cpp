@@ -1,7 +1,9 @@
 #include <boost/test/unit_test.hpp>
 
-#include "temple/Containers.h"
+#include "temple/Adaptors/Zip.h"
+#include "temple/Functional.h"
 #include "temple/Random.h"
+#include "temple/Stringify.h"
 
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Containers.h"
@@ -13,9 +15,6 @@
 #include "temple/constexpr/TupleTypePairs.h"
 #include "temple/constexpr/LogicalOperatorTests.h"
 #include "temple/constexpr/FloatingPointComparison.h"
-#include "temple/constexpr/UIntArray.h"
-#include "temple/constexpr/DynamicUIntArray.h"
-#include "temple/constexpr/BTree.h"
 #include "temple/constexpr/Bitmask.h"
 #include "temple/constexpr/Bitset.h"
 
@@ -131,11 +130,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   );
 
   // sqrt
-  const auto randomPositiveNumbers = prng.getN<double>(0, 1e6, numTests);
-  auto sqrt_passes = temple::map(
-    randomPositiveNumbers,
+  auto sqrt_failures = temple::copy_if(
+    prng.getN<double>(0, 1e6, numTests),
     [&](const double randomPositiveNumber) -> bool {
-      return temple::floating::isCloseRelative(
+      return !temple::floating::isCloseRelative(
         temple::Math::sqrt(randomPositiveNumber),
         std::sqrt(randomPositiveNumber),
         accuracy
@@ -143,23 +141,18 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     }
   );
 
-  bool all_sqrt_pass = temple::all_of(sqrt_passes);
+  BOOST_CHECK(sqrt_failures.empty());
 
-  BOOST_CHECK(all_sqrt_pass);
-
-  if(!all_sqrt_pass) {
+  if(!sqrt_failures.empty()) {
     std::cout << "Square-root implementation is lacking! Failures: " << std::endl;
 
-    for(unsigned i = 0; i < sqrt_passes.size(); i++) {
-      if(!sqrt_passes[i]) {
-        std::cout << "  x = " << std::setw(12) << randomPositiveNumbers[i]
-          << ", sqrt = " << std::setw(12) << temple::Math::sqrt(randomPositiveNumbers[i])
-          << ", std::sqrt = " << std::setw(12) << std::sqrt(randomPositiveNumbers[i])
-          << ", |Δ| = " << std::setw(12) << std::fabs(
-            temple::Math::sqrt(randomPositiveNumbers[i])
-            - std::sqrt(randomPositiveNumbers[i])
-          ) << std::endl;
-      }
+    for(const double value : sqrt_failures) {
+      std::cout << "  x = " << std::setw(12) << value
+        << ", sqrt = " << std::setw(12) << temple::Math::sqrt(value)
+        << ", std::sqrt = " << std::setw(12) << std::sqrt(value)
+        << ", |Δ| = " << std::setw(12) << std::fabs(
+          temple::Math::sqrt(value) - std::sqrt(value)
+        ) << std::endl;
     }
 
     std::cout << std::endl;
@@ -172,10 +165,10 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     numTests
   );
 
-  auto asin_passes = temple::map(
+  auto asin_failures = temple::copy_if(
     randomInverseTrigNumbers,
     [&](const double randomInverseTrigNumber) -> bool {
-      return temple::floating::isCloseRelative(
+      return !temple::floating::isCloseRelative(
         temple::Math::asin(randomInverseTrigNumber),
         std::asin(randomInverseTrigNumber),
         1e-8
@@ -183,23 +176,18 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
     }
   );
 
-  bool all_asin_pass = temple::all_of(asin_passes);
+  BOOST_CHECK(asin_failures.empty());
 
-  BOOST_CHECK(all_asin_pass);
-
-  if(!all_asin_pass) {
+  if(!asin_failures.empty()) {
     std::cout << "Inverse sine implementation is lacking! Failures: " << std::endl;
 
-    for(unsigned i = 0; i < asin_passes.size(); i++) {
-      if(!asin_passes[i]) {
-        std::cout << "  x = " << std::setw(12) << randomInverseTrigNumbers[i]
-          << ", asin = " << std::setw(12) << temple::Math::asin(randomInverseTrigNumbers[i])
-          << ", std::asin = " << std::setw(12) << std::asin(randomInverseTrigNumbers[i])
-          << ", |Δ| = " << std::setw(12) << std::fabs(
-            temple::Math::asin(randomInverseTrigNumbers[i])
-            - std::asin(randomInverseTrigNumbers[i])
-          ) << std::endl;
-      }
+    for(const double value : asin_failures) {
+      std::cout << "  x = " << std::setw(12) << value
+        << ", asin = " << std::setw(12) << temple::Math::asin(value)
+        << ", std::asin = " << std::setw(12) << std::asin(value)
+        << ", |Δ| = " << std::setw(12) << std::fabs(
+          temple::Math::asin(value) - std::asin(value)
+        ) << std::endl;
     }
 
     std::cout << std::endl;
@@ -234,11 +222,11 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      temple::zipMap(
+      temple::adaptors::zip(
         prng.getN<double>(-1e5, 1e5, numTests),
-        prng.getN<int>(-40, 40, numTests),
-        testPow
-      )
+        prng.getN<int>(-40, 40, numTests)
+      ),
+      testPow
     )
   );
 
@@ -271,11 +259,11 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      temple::zipMap(
+      temple::adaptors::zip(
         prng.getN<double>(-1e5, 1e5, numTests),
-        prng.getN<unsigned>(0, 40, numTests),
-        testRecPow
-      )
+        prng.getN<unsigned>(0, 40, numTests)
+      ),
+      testRecPow
     )
   );
 
@@ -363,8 +351,8 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 
     BOOST_CHECK_MESSAGE(
       base == STLComparison,
-      "In forward permutation, base is {" << temple::condenseIterable(base)
-      << "} and and STL is {" << temple::condenseIterable(STLComparison)
+      "In forward permutation, base is {" << temple::condense(base)
+      << "} and and STL is {" << temple::condense(STLComparison)
       << "}"
     );
   } while(customHasNext && STLHasNext);
@@ -383,8 +371,8 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 
     BOOST_CHECK_MESSAGE(
       base == STLComparison,
-      "In backward permutation, base is {" << temple::condenseIterable(base)
-      << "} and and STL is {" << temple::condenseIterable(STLComparison)
+      "In backward permutation, base is {" << temple::condense(base)
+      << "} and and STL is {" << temple::condense(STLComparison)
       << "}"
     );
   } while(customHasNext && STLHasNext);
@@ -405,8 +393,8 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 
     BOOST_CHECK_MESSAGE(
       base == STLComparison,
-      "In limited forward permutation, base is {" << temple::condenseIterable(base)
-      << "} and and STL is {" << temple::condenseIterable(STLComparison)
+      "In limited forward permutation, base is {" << temple::condense(base)
+      << "} and and STL is {" << temple::condense(STLComparison)
       << "}"
     );
   } while(customHasNext && STLHasNext);
@@ -426,8 +414,8 @@ BOOST_AUTO_TEST_CASE(arrayPermutation) {
 
     BOOST_CHECK_MESSAGE(
       base == STLComparison,
-      "In limited backward permutation, base is {" << temple::condenseIterable(base)
-      << "} and and STL is {" << temple::condenseIterable(STLComparison)
+      "In limited backward permutation, base is {" << temple::condense(base)
+      << "} and and STL is {" << temple::condense(STLComparison)
       << "}"
     );
   } while(customHasNext && STLHasNext);
@@ -547,7 +535,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
     BOOST_CHECK_MESSAGE(
       !set.contains(item),
       "Set says it contains " << item << " when it shouldn't (set is {"
-        << temple::condenseIterable(set)
+        << temple::condense(set)
         << "}."
     );
   }
@@ -579,7 +567,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetTests) {
     && !setInitList.contains(1)
     && !setInitList.contains(25),
     "setInitList {"
-      << temple::condenseIterable(setInitList)
+      << temple::condense(setInitList)
       << "} does not conform to expectations concerning contains:\n"
       << std::boolalpha
       << "contains 4, expect true:" << setInitList.contains(4)
@@ -688,8 +676,8 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
       if(!isValid) {
         std::cout << "After inserting " << number
           << ", set is left in invalid state. Set: {"
-          << temple::condenseIterable(subject) << "}\ninsert sequence {"
-          << temple::condenseIterable(numbers) << "}."
+          << temple::condense(subject) << "}\ninsert sequence {"
+          << temple::condense(numbers) << "}."
           << std::endl;
       }
 
@@ -997,414 +985,6 @@ constexpr auto fromArray = temple::makeUpperTriangularMatrix(
 );
 
 } // namespace UpperTriangularMatrixTests
-
-namespace UIntArrayTests {
-
-using Small = temple::UIntArray<unsigned>;
-using Medium = temple::UIntArray<unsigned long>;
-using Large = temple::UIntArray<unsigned long long>;
-
-static_assert(Small::N == 9, "Small variant can store 9 integers");
-static_assert(Medium::N == 19, "Medium variant can store 19 integers");
-static_assert(Large::N == 19, "Large variant can store 19 integers");
-
-//constexpr auto sampleArr = Small {1234567};
-// constexpr auto sampleArr = Small {Array<unsigned, 7> {7, 6, 5, 4, 3, 2, 1}};
-constexpr auto sampleArr = Small {7, 6, 5, 4, 3, 2, 1};
-
-static_assert(sampleArr.at(0) == 7, "At doesn't work");
-static_assert(sampleArr.at(1) == 6, "At doesn't work");
-static_assert(sampleArr.at(2) == 5, "At doesn't work");
-static_assert(sampleArr.at(3) == 4, "At doesn't work");
-static_assert(sampleArr.at(4) == 3, "At doesn't work");
-static_assert(sampleArr.at(5) == 2, "At doesn't work");
-static_assert(sampleArr.at(6) == 1, "At doesn't work");
-
-constexpr bool tryModifyArray() {
-  Small arr {1, 2, 3, 4, 5, 6, 7};
-
-  arr.at(0) = 4u;
-
-  return arr.at(0) == 4;
-}
-
-static_assert(tryModifyArray(), "Modifying the array works");
-
-} // namespace UIntArrayTests
-
-BOOST_AUTO_TEST_CASE(dynamicUIntArrayTests) {
-  constexpr temple::DynamicUIntArray<unsigned> arr {4, 3, 5};
-
-  static_assert(
-    arr.size() == 3,
-    "Array size isn't initialized correctly from parameter pack ctor"
-  );
-  static_assert(
-    arr.end() - arr.begin() == 3,
-    "Subtracting begin/end iterators does not yield dynamic length"
-  );
-
-  static_assert(
-    arr.begin() - arr.end() == -3,
-    "Subtracting begin/end iterators does not yield dynamic length"
-  );
-
-  static_assert(
-    *arr.begin() == 4,
-    "Pointer to begin isn't correct"
-  );
-
-  static_assert(arr.front() == 4, "Front isn't right");
-  static_assert(arr.back() == 5, "Back isn't right");
-
-  temple::DynamicUIntArray<unsigned> changeable {4, 9, 1, 3, 5};
-
-  BOOST_CHECK_MESSAGE(
-    *changeable.begin() == 4
-    && *(--changeable.end()) == 5
-    && changeable.front() == 4
-    && changeable.back() == 5,
-    "non-const iterators don't work right"
-  );
-
-  constexpr temple::DynamicUIntArray<unsigned long> values {1, 2, 2, 3, 3, 3, 4, 4, 4, 4};
-
-  constexpr auto grouped = groupByEquality(
-    values,
-    std::equal_to<>()
-  );
-
-  constexpr temple::Array<unsigned, 4> f {4, 1, 9};
-  constexpr auto initFromFixed = temple::DynamicUIntArray<unsigned> {f};
-
-  BOOST_CHECK_MESSAGE(
-    grouped.size() == 4
-    && grouped.at(0).size() == 1
-    && grouped.at(1).size() == 2
-    && grouped.at(2).size() == 3
-    && grouped.at(3).size() == 4,
-    "Grouped doesn't work as expected, result is a size " << grouped.size()
-    << " split"
-  );
-}
-
-namespace BTreeStaticTests {
-
-constexpr temple::BTree<unsigned, 3, 20> generateTree() {
-  temple::BTree<unsigned, 3, 20> tree;
-
-  tree.insert(9);
-  tree.insert(3);
-  tree.insert(5);
-  tree.insert(20);
-
-  return tree;
-}
-
-constexpr auto testTree = generateTree();
-
-static_assert(
-  /* BTree of minimum order 3 has max 5 keys per node and max 6 children per node
-   *
-   * height  nodes       keys
-   * 0       1           5
-   * 1       1 + 6       5 + 6*5
-   * 2       1 + 6 + 36  5 + 6*5 + 36*5
-   *
-   * #nodes(h) = sum_{i = 0}^{h} (2t)^i
-   *
-   *     (2t)^{h + 1} - 1
-   *  N = ----------------
-   *         2t - 1
-   *
-   * -> N * (2t - 1) + 1 = (2t)^{h + 1}
-   *
-   * -> log_2t [N * (2t - 1) + 1] = h + 1
-   *
-   * -> h = log_2t [N * (2t - 1) + 1] - 1
-   *
-   */
-  temple::BTreeProperties::minHeight(5, 3) == 0
-  && temple::BTreeProperties::minHeight(35, 3) == 1
-  && temple::BTreeProperties::minHeight(215, 3) == 2,
-  "minHeight function is wrong"
-);
-
-static_assert(
-  temple::BTreeProperties::maxNodesInTree(0, 3) == 1
-  && temple::BTreeProperties::maxNodesInTree(1, 3) == 7
-  && temple::BTreeProperties::maxNodesInTree(2, 3) == 43
-  && temple::BTreeProperties::maxNodesInTree(3, 3) == 259,
-  "maxNodesInTree is wrong"
-);
-
-} // namespace BTreeStaticTests
-
-inline unsigned popRandom(std::set<unsigned>& values) {
-  auto it = values.begin();
-
-  std::advance(
-    it,
-    prng.getSingle<unsigned>(0, values.size() - 1)
-  );
-
-  auto value = *it;
-
-  values.erase(it);
-
-  return value;
-}
-
-BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
-  constexpr unsigned nKeys = 100;
-
-  using namespace std::string_literals;
-
-  std::vector<unsigned> values (nKeys);
-
-  std::iota(
-    values.begin(),
-    values.end(),
-    0
-  );
-
-  std::set<unsigned> notInTree {values.begin(), values.end()};
-  std::set<unsigned> inTree;
-
-  temple::BTree<unsigned, 3, nKeys> tree;
-
-  std::string lastTreeGraph;
-
-  std::vector<std::string> decisions;
-
-  auto addElement = [&](const std::string& lastTreeGraph) {
-    // Add an element
-    auto toAdd = popRandom(notInTree);
-    decisions.emplace_back("i"s + std::to_string(toAdd));
-
-    BOOST_CHECK_NO_THROW(tree.insert(toAdd));
-    BOOST_REQUIRE_MESSAGE(
-      lastTestPassed(),
-      "Element insertion failed. Operation sequence: "
-        << temple::condenseIterable(decisions)
-        << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
-        << tree.dumpGraphviz()
-    );
-
-    inTree.insert(toAdd);
-  };
-
-  auto removeElement = [&](const std::string& lastTreeGraph) {
-    // Remove an element
-    auto toRemove = popRandom(inTree);
-    decisions.emplace_back("r"s + std::to_string(toRemove));
-
-    BOOST_CHECK_NO_THROW(tree.remove(toRemove));
-    BOOST_REQUIRE_MESSAGE(
-      lastTestPassed(),
-      "Tree element removal failed. Operation sequence: "
-        << temple::condenseIterable(decisions)
-        << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
-        << tree.dumpGraphviz()
-    );
-
-    notInTree.insert(toRemove);
-  };
-
-  auto fullValidation = [&](const std::string& lastTreeGraph) {
-    // Validate the tree
-    BOOST_CHECK_NO_THROW(tree.validate());
-    BOOST_REQUIRE_MESSAGE(
-      lastTestPassed(),
-      "Tree validation failed. Operation sequence: "
-        << temple::condenseIterable(decisions)
-        << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
-        << tree.dumpGraphviz()
-    );
-
-    auto notInsertedNotContained = temple::mapToVector(
-      notInTree,
-      [&](const auto& notInTreeValue) -> bool {
-        return !tree.contains(notInTreeValue);
-      }
-    );
-
-    // Check that all elements are truly contained or not
-    BOOST_REQUIRE_MESSAGE(
-      temple::all_of(notInsertedNotContained),
-      "Not all elements recorded as not in the tree are recognized as such!\n"
-        << "Found in the tree, but should not be present: "
-        << temple::condenseIterable(
-          temple::moveIf(
-            temple::zipMap(
-              notInsertedNotContained,
-              notInTree,
-              [](const bool passed, const unsigned value) -> std::string {
-                if(!passed) {
-                  return std::to_string(value);
-                }
-
-                return "";
-              }
-            ),
-            [](const std::string& str) -> bool {
-              return !str.empty();
-            }
-          )
-        ) << "\nSequence of operations: "
-        << temple::condenseIterable(decisions)
-        << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
-        << tree.dumpGraphviz()
-    );
-
-    auto insertedContained = temple::mapToVector(
-      inTree,
-      [&](const auto& inTreeValue) -> bool {
-        return tree.contains(inTreeValue);
-      }
-    );
-
-    BOOST_REQUIRE_MESSAGE(
-      temple::all_of(insertedContained),
-      "Not all elements recorded as contained in the tree are recognized as such!\n"
-        << "Not found in the tree: "
-        << temple::condenseIterable(
-          temple::moveIf(
-            temple::zipMap(
-              insertedContained,
-              inTree,
-              [](const bool passed, const unsigned value) -> std::string {
-                if(!passed) {
-                  return std::to_string(value);
-                }
-
-                return "";
-              }
-            ),
-            [](const std::string& str) -> bool {
-              return !str.empty();
-            }
-          )
-        ) << "\nSequence of operations: "
-        << temple::condenseIterable(decisions)
-        << ". Prior to last operation: \n"
-        << lastTreeGraph << "\n\n After last operation: \n"
-        << tree.dumpGraphviz()
-    );
-  };
-
-  for(unsigned i = 0; i < 10; ++i) {
-    decisions.clear();
-
-    // Heavy insert-delete workload
-    for(unsigned nSteps = 0; nSteps < 1000; ++nSteps) {
-      lastTreeGraph = tree.dumpGraphviz();
-
-      // Decide whether to insert or remove a random item
-      auto decisionFloat = prng.getSingle<double>(0.0, 1.0);
-      if(decisionFloat >= static_cast<double>(inTree.size()) / nKeys) {
-        addElement(lastTreeGraph);
-      } else {
-        removeElement(lastTreeGraph);
-      }
-
-      fullValidation(lastTreeGraph);
-    }
-
-    auto matchingThroughIteration = temple::zipMap(
-      tree,
-      inTree,
-      [&](const unsigned treeValue, const unsigned testValue) -> bool {
-        if(treeValue != testValue) {
-          std::cout << "Expected " << testValue << ", got " << treeValue << std::endl;
-          return false;
-        }
-
-        return true;
-      }
-    );
-
-    BOOST_REQUIRE_MESSAGE(
-      temple::all_of(matchingThroughIteration),
-      "BTree through-iteration does not yield the same elements as expected!\n"
-        << tree.dumpGraphviz()
-    );
-
-    // Fill'er up all the way
-    while(inTree.size() != nKeys) {
-      std::string lastTreeGraph = tree.dumpGraphviz();
-
-      addElement(lastTreeGraph);
-      fullValidation(lastTreeGraph);
-    }
-
-    // Empty the tree
-    while(!inTree.empty()) {
-      std::string lastTreeGraph = tree.dumpGraphviz();
-
-      removeElement(lastTreeGraph);
-      fullValidation(lastTreeGraph);
-    }
-  }
-}
-
-/* Test that if a BTree is instantiated with a specific size, that size
- * definitely fits in the tree
- */
-
-template<size_t minOrder, size_t nElements>
-constexpr bool BTreeAllocatedSizeSufficient() {
-  temple::BTree<unsigned, minOrder, nElements> tree;
-
-  for(unsigned i = 0; i < nElements; ++i) {
-    tree.insert(i);
-  }
-
-  return true;
-}
-
-template<size_t minOrder, size_t ... nElements>
-constexpr bool testAllBTrees(std::index_sequence<nElements...> /* elements */) {
-  temple::Array<bool, sizeof...(nElements)> results {{
-    BTreeAllocatedSizeSufficient<minOrder, 5 + nElements>()...
-  }};
-
-  for(unsigned i = 0; i < sizeof...(nElements); ++i) {
-    if(!results.at(i)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-template<size_t ... minOrders>
-constexpr bool testAllBTrees(std::index_sequence<minOrders...> /* elements */) {
-  temple::Array<bool, sizeof...(minOrders)> results {{
-    testAllBTrees<2 + minOrders>(std::make_index_sequence<45>{})... // Test sizes 5->50
-  }};
-
-  for(unsigned i = 0; i < sizeof...(minOrders); ++i) {
-    if(!results.at(i)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-constexpr bool testAllBTrees() {
-  return testAllBTrees(std::make_index_sequence<3>{}); // Test min orders 2->5
-}
-
-static_assert(
-  testAllBTrees(),
-  "For some B-Trees, you cannot fit as many elements in as requested at instantiation"
-);
 
 enum class ScopedEnum : unsigned {A, B, C};
 enum UnscopedEnum : unsigned {D, E};

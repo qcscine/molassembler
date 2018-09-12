@@ -3,7 +3,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "temple/Containers.h"
+#include "temple/Stringify.h"
 
 #include "molassembler/IO.h"
 #include "molassembler/IO/Base64.h"
@@ -32,9 +32,9 @@ BOOST_AUTO_TEST_CASE(base64Tests) {
     BOOST_CHECK_MESSAGE(
       decoded == sample,
       "Encode / decode pair failed for message of length " << messageLength
-        << ": {" << temple::condenseIterable(sample) << "}.\n"
+        << ": {" << temple::condense(sample) << "}.\n"
         << "Encoded : {" << encoded << "}\n"
-        << "Decoded : {" << temple::condenseIterable(decoded) << "}"
+        << "Decoded : {" << temple::condense(decoded) << "}"
     );
   }
 }

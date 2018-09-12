@@ -6,8 +6,13 @@
 #include "CyclicPolygons.h"
 
 #include "chemical_symmetries/Properties.h"
+#include "temple/Adaptors/AllPairs.h"
+#include "temple/Adaptors/SequentialPairs.h"
+#include "temple/Adaptors/Transform.h"
+#include "temple/Functional.h"
 #include "temple/Random.h"
-#include "temple/Containers.h"
+#include "temple/SetAlgorithms.h"
+#include "temple/Stringify.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
@@ -214,8 +219,8 @@ SpatialModel::SpatialModel(
        */
       const auto cycleInternalAngles = CyclicPolygons::internalAngles(
         // Map sequential index pairs to their purported bond length
-        temple::mapSequentialPairs(
-          indexSequence,
+        temple::map(
+          temple::adaptors::sequentialPairs(indexSequence),
           [&](const AtomIndex i, const AtomIndex j) -> double {
             return Bond::calculateBondDistance(
               inner.elementType(i),
@@ -392,7 +397,7 @@ SpatialModel::SpatialModel(
         auto cycleOneVertices = makeVerticesSet(cycleOne);
         auto cycleTwoVertices = makeVerticesSet(cycleTwo);
 
-        auto intersection = temple::setIntersection(
+        auto intersection = temple::set_intersection(
           cycleOneVertices,
           cycleTwoVertices
         );
@@ -460,9 +465,11 @@ SpatialModel::SpatialModel(
               crossAngleUpper
             };
 
-            temple::forAllPairs(
-              firstAdjacents,
-              secondAdjacents,
+            temple::forEach(
+              temple::adaptors::allPairs(
+                firstAdjacents,
+                secondAdjacents
+              ),
               [&](const auto& firstAdjacent, const auto& secondAdjacent) {
                 auto sequence = orderedIndexSequence<3>({{firstAdjacent, i, secondAdjacent}});
 
@@ -585,6 +592,7 @@ void SpatialModel::setDihedralBoundsIfEmpty(
 }
 
 void SpatialModel::addDefaultAngles() {
+  const InnerGraph& inner = _molecule.graph().inner();
   /* If no explicit angle can be provided for a triple of bonded atoms, we need
    * to at least specify the range of possible angles so that no implicit
    * minimimum distance (sum of vdw radii) is used instead.
@@ -592,8 +600,10 @@ void SpatialModel::addDefaultAngles() {
 
   const AtomIndex N = _molecule.graph().N();
   for(AtomIndex center = 0; center < N; ++center) {
-    temple::forAllPairs(
-      boost::make_iterator_range(_molecule.graph().adjacents(center)),
+    temple::forEach(
+      temple::adaptors::allPairs(
+        boost::make_iterator_range(inner.adjacents(center))
+      ),
       [&](const AtomIndex i, const AtomIndex j) -> void {
         assert(i != j);
 
@@ -613,9 +623,11 @@ void SpatialModel::addDefaultDihedrals() {
     const AtomIndex sourceIndex = inner.source(edgeDescriptor);
     const AtomIndex targetIndex = inner.target(edgeDescriptor);
 
-    temple::forAllPairs(
-      boost::make_iterator_range(inner.adjacents(sourceIndex)),
-      boost::make_iterator_range(inner.adjacents(targetIndex)),
+    temple::forEach(
+      temple::adaptors::allPairs(
+        boost::make_iterator_range(inner.adjacents(sourceIndex)),
+        boost::make_iterator_range(inner.adjacents(targetIndex))
+      ),
       [&](
         const AtomIndex sourceAdjacentIndex,
         const AtomIndex targetAdjacentIndex
@@ -653,15 +665,13 @@ bool bondInformationIsPresent(
 
   // Check that the bond information in the sequence is present
   return temple::all_of(
-    temple::mapSequentialPairs(
-      indices,
-      [&bounds](const AtomIndex i, const AtomIndex j) -> bool {
-        return (
-          bounds.lowerBound(i, j) != DistanceBoundsMatrix::defaultLower
-          && bounds.upperBound(i, j) != DistanceBoundsMatrix::defaultUpper
-        );
-      }
-    )
+    temple::adaptors::sequentialPairs(indices),
+    [&bounds](const AtomIndex i, const AtomIndex j) -> bool {
+      return (
+        bounds.lowerBound(i, j) != DistanceBoundsMatrix::defaultLower
+        && bounds.upperBound(i, j) != DistanceBoundsMatrix::defaultUpper
+      );
+    }
   );
 }
 
@@ -864,7 +874,7 @@ void SpatialModel::dumpDebugInfo() const {
   for(const auto& bondIterPair : _bondBounds) {
     const auto& indexArray = bondIterPair.first;
     const auto& bounds = bondIterPair.second;
-    logRef << "Bond " << temple::condenseIterable(indexArray)
+    logRef << "Bond " << temple::condense(indexArray)
       << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
   }
 
@@ -872,7 +882,7 @@ void SpatialModel::dumpDebugInfo() const {
   for(const auto& angleIterPair : _angleBounds) {
     const auto& indexArray = angleIterPair.first;
     const auto& bounds = angleIterPair.second;
-    logRef << "Angle " << temple::condenseIterable(indexArray)
+    logRef << "Angle " << temple::condense(indexArray)
       << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
   }
 
@@ -880,7 +890,7 @@ void SpatialModel::dumpDebugInfo() const {
   for(const auto& dihedralIterPair : _dihedralBounds) {
     const auto& indexArray = dihedralIterPair.first;
     const auto& bounds = dihedralIterPair.second;
-    logRef << "Dihedral " << temple::condenseIterable(indexArray)
+    logRef << "Dihedral " << temple::condense(indexArray)
       << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
   }
 }
@@ -960,7 +970,7 @@ struct SpatialModel::ModelGraphWriter {
       os << "  " << graphNodeName << R"( [label=")" << state
         << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
         << R"(tooltip=")"
-        << temple::condenseIterable(tooltipStrings, "&#10;"s)
+        << temple::condense(tooltipStrings, "&#10;"s)
         << R"("];)" << "\n";
 
       // Add connections to the vertices (although those don't exist yet)
@@ -1040,7 +1050,7 @@ struct SpatialModel::ModelGraphWriter {
 
     if(!tooltipStrings.empty()) {
       os << R"(, tooltip=")"
-        << temple::condenseIterable(tooltipStrings, "&#10;"s)
+        << temple::condense(tooltipStrings, "&#10;"s)
         << R"(")";
     }
 
@@ -1182,8 +1192,8 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
       Cycles::edgeVertices(cyclePtr)
     );
 
-    auto distances = temple::mapSequentialPairs(
-      ringIndexSequence,
+    auto distances = temple::map(
+      temple::adaptors::sequentialPairs(ringIndexSequence),
       [&](const AtomIndex i, const AtomIndex j) -> double {
         return Bond::calculateBondDistance(
           graph.elementType(i),
@@ -1281,7 +1291,7 @@ ValueBounds SpatialModel::ligandDistanceFromCenter(
   }
 
   double distance = 0.9 * temple::average(
-    temple::map(
+    temple::adaptors::transform(
       ligandIndices,
       [&](AtomIndex ligandIndex) -> double {
         return Bond::calculateBondDistance(

@@ -5,8 +5,6 @@
 #include "Delib/AtomCollection.h"
 #include "Delib/BondOrderCollection.h"
 
-#include "temple/Containers.h"
-
 #include "molassembler/BondOrders.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/OuterGraph.h"

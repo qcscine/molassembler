@@ -5,8 +5,8 @@
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/range/combine.hpp"
 #include "Delib/ElementInfo.h"
-#include "temple/Containers.h"
-#include "temple/UnorderedSets.h"
+#include "temple/Functional.h"
+#include "temple/UnorderedSetAlgorithms.h"
 #include "temple/TinySet.h"
 
 #include "molassembler/Modeling/AtomInfo.h"
@@ -157,7 +157,7 @@ std::vector<LinkInformation> substituentLinks(
   }
 
   // Sort the links before passing them out in order to ease comparisons
-  temple::sort(links);
+  temple::inplace::sort(links);
 
   return links;
 }

@@ -5,10 +5,12 @@
 #include "boost/graph/two_bit_color_map.hpp"
 #include "boost/test/unit_test.hpp"
 
+#include "temple/Adaptors/Enumerate.h"
+#include "temple/Adaptors/Zip.h"
+#include "temple/Functional.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
-#include "temple/Containers.h"
-#include "temple/Enumerate.h"
+#include "temple/Stringify.h"
 
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
@@ -304,13 +306,13 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !temple::all_of(
-          temple::zipMap(
+          temple::adaptors::zip(
             BF_EG_distances,
-            Gor_EG_distances,
-            [](const double a, const double b) -> bool {
-              return temple::floating::isCloseRelative(a, b, 1e-8);
-            }
-          )
+            Gor_EG_distances
+          ),
+          [](const double a, const double b) -> bool {
+            return temple::floating::isCloseRelative(a, b, 1e-8);
+          }
         )
       ) {
         pass = false;
@@ -332,7 +334,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !temple::all_of(
-          enumerate(BF_EG_distances),
+          temple::adaptors::enumerate(BF_EG_distances),
           [&boundsMatrix, &outerVertex](const auto& enumPair) -> bool {
             const auto& index = enumPair.index;
             const auto& distance = enumPair.value;
@@ -362,7 +364,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
         pass = false;
         std::cout << "Bellman-Ford ExplicitGraph shortest paths do not represent triangle inequality bounds!" << nl;
         std::cout << "Failed on outerVertex = " << outerVertex << nl;
-        std::cout << "Distances:" << nl << temple::condenseIterable(BF_EG_distances) << nl << boundsMatrix.access() << nl;
+        std::cout << "Distances:" << nl << temple::condense(BF_EG_distances) << nl << boundsMatrix.access() << nl;
         break;
       }
     }
@@ -427,13 +429,13 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !temple::all_of(
-          temple::zipMap(
+          temple::adaptors::zip(
             BF_IG_distances,
-            Gor_IG_distances,
-            [](const double a, const double b) -> bool {
-              return temple::floating::isCloseRelative(a, b, 1e-8);
-            }
-          )
+            Gor_IG_distances
+          ),
+          [](const double a, const double b) -> bool {
+            return temple::floating::isCloseRelative(a, b, 1e-8);
+          }
         )
       ) {
         pass = false;
@@ -445,19 +447,19 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !temple::all_of(
-          temple::zipMap(
+          temple::adaptors::zip(
             Gor_IG_distances,
-            spec_Gor_IG_distances,
-            [](const double a, const double b) -> bool {
-              return temple::floating::isCloseRelative(a, b, 1e-8);
-            }
-          )
+            spec_Gor_IG_distances
+          ),
+          [](const double a, const double b) -> bool {
+            return temple::floating::isCloseRelative(a, b, 1e-8);
+          }
         )
       ) {
         pass = false;
         std::cout << "Not all pairs of specialized and unspecialized Gor1 shortest-paths-distances on the ImplicitGraph are within 1e-8 relative tolerance!" << nl;
-        std::cout << temple::condenseIterable(spec_Gor_IG_distances) << nl << nl
-          << temple::condenseIterable(Gor_IG_distances) << nl << nl;
+        std::cout << temple::condense(spec_Gor_IG_distances) << nl << nl
+          << temple::condense(Gor_IG_distances) << nl << nl;
         break;
       }
 
@@ -475,7 +477,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
       if(
         !temple::all_of(
-          enumerate(BF_IG_distances),
+          temple::adaptors::enumerate(BF_IG_distances),
           [&boundsMatrix, &outerVertex](const auto& enumPair) -> bool {
             const auto& index = enumPair.index;
             const auto& distance = enumPair.value;
@@ -539,7 +541,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
           }
         }
         std::cout << "}" << nl;
-        std::cout << "Distances:" << nl << temple::condenseIterable(BF_IG_distances) << nl << boundsMatrix.access() << nl;
+        std::cout << "Distances:" << nl << temple::condense(BF_IG_distances) << nl << boundsMatrix.access() << nl;
         break;
       }
     }

@@ -1,6 +1,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ORDERED_PAIR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ORDERED_PAIR_H
 
+#include "OperatorSuppliers.h"
+
 #include <tuple>
 #include <utility>
 
@@ -10,26 +12,45 @@
  * ordered.
  */
 
-/* TODO
- * - Iterator testing
- */
-
 namespace temple {
 
+/*!
+ * @brief A class that imitates std::pair<T, U>, but whose template arguments
+ *   are homogeneous and the stored values ordered (.first < .second).
+ *
+ * @note We can implement iterators for this really cheaply since the standard
+ *   guarantees that successively defined same-aligment types are laid out
+ *   successively in memory. Since the pair is homogeneous, we can just use
+ *   a T pointer as an iterator.
+ */
 template<typename T>
-struct OrderedPair {
-  // Standard guarantees first and second are laid out sucessively in memory
-  T first;
-  T second;
+struct OrderedPair : crtp::AllOperatorsFromTupleMethod<OrderedPair<T>> {
+//!@name Types
+//!@{
+  using iterator = T*;
+  using const_iterator = const T*;
+//!@}
 
-  OrderedPair() = default;
+//!@name State
+//!@{
+  // Standard guarantees first and second are laid out sucessively in memory
+  T first = T{};
+  T second = T{};
+//!@}
+
+//!@name Constructors
+//!@{
+  constexpr OrderedPair() = default;
 
   constexpr OrderedPair(T a, T b) : first {std::move(a)}, second {std::move(b)} {
     if(b < a) {
       std::swap(first, second);
     }
   }
+//!@}
 
+//!@name Element access
+//!@{
   constexpr T front() const {
     return first;
   }
@@ -45,182 +66,41 @@ struct OrderedPair {
   constexpr T& back() {
     return second;
   }
+//!@}
 
-  constexpr T& at(unsigned i) {
-    if(i > 1) {
-      throw std::out_of_range("Invalid access to pair");
-    }
-
-    if(i == 0) {
-      return first;
-    }
-
-    return second;
+//!@name Iterators
+//!@{
+  iterator begin() {
+    return &first;
   }
 
-  constexpr T at(unsigned i) const {
-    if(i > 1) {
-      throw std::out_of_range("Invalid access to pair");
-    }
-
-    if(i == 0) {
-      return first;
-    }
-
-    return second;
+  iterator end() {
+    return std::next(&second);
   }
 
-  constexpr T& operator [] (unsigned i) {
-    return at(i);
+  const_iterator begin() const {
+    return &first;
   }
 
-  constexpr T operator [] (unsigned i) const {
-    return at(i);
+  const_iterator end() const {
+    return std::next(&second);
   }
 
-  class Iterator {
-  public:
-    // TODO iterator typedefs
-    /*using iterator_category = std::bidirectional_iterator_tag;
-    using value_type = T;
-    using difference_type = std::ptrdiff_t;
-    using pointer = const T*;
-    using reference = T&;*/
-
-  private:
-    T* _ptr;
-
-  public:
-    Iterator() = default;
-    Iterator(T* ptr) : _ptr {ptr} {}
-
-    Iterator& operator ++ () {
-      ++_ptr;
-      return *this;
-    }
-
-    Iterator operator ++ (int) {
-      Iterator retval = *this;
-      ++(*this);
-      return retval;
-    }
-
-    Iterator& operator -- () {
-      --_ptr;
-      return *this;
-    }
-
-    Iterator operator -- (int) {
-      Iterator retval = *this;
-      --(*this);
-      return retval;
-    }
-
-    T& operator * () const {
-      return *_ptr;
-    }
-
-    std::ptrdiff_t operator - (const Iterator& other) const {
-      return other._ptr - _ptr;
-    }
-
-    bool operator == (const Iterator& other) const {
-      return _ptr == other._ptr;
-    }
-
-    bool operator != (const Iterator& other) const {
-      return !(*this == other);
-    }
-  };
-
-  Iterator begin() {
-    return Iterator {&first};
+  const_iterator cbegin() const {
+    return &first;
   }
 
-  Iterator end() {
-    // Make a past-the-end iterator
-    Iterator iter {&second};
-    ++iter;
-    return iter;
+  const_iterator cend() const {
+    return std::next(&second);
   }
+//!@}
 
-  class ConstIterator {
-  public:
-    // TODO iterator typedefs
-
-  private:
-    T* const _ptr;
-
-  public:
-    ConstIterator() = default;
-    ConstIterator(T* ptr) : _ptr {ptr} {}
-
-    ConstIterator& operator ++ () {
-      ++_ptr;
-      return *this;
-    }
-
-    ConstIterator operator ++ (int) {
-      ConstIterator retval = *this;
-      ++(*this);
-      return retval;
-    }
-
-    ConstIterator& operator -- () {
-      --_ptr;
-      return *this;
-    }
-
-    ConstIterator operator -- (int) {
-      ConstIterator retval = *this;
-      --(*this);
-      return retval;
-    }
-
-    const T& operator * () const {
-      return *_ptr;
-    }
-
-    std::ptrdiff_t operator - (const Iterator& other) const {
-      return other._ptr - _ptr;
-    }
-
-    bool operator == (const ConstIterator& other) const {
-      return _ptr == other._ptr;
-    }
-
-    bool operator != (const ConstIterator& other) const {
-      return !(*this == other);
-    }
-  };
-
-  ConstIterator begin() const {
-    return ConstIterator {&first};
+//!@name Operators
+//!@{
+  constexpr auto tuple() const {
+    return std::tie(first, second);
   }
-
-  ConstIterator end() const {
-    // Make a past-the-end iterator
-    ConstIterator iter {&second};
-    ++iter;
-    return iter;
-  }
-
-  // C++17 spaceship operator
-  constexpr bool operator < (const OrderedPair& other) const {
-    return std::tie(first, second) < std::tie(other.first, other.second);
-  }
-
-  constexpr bool operator > (const OrderedPair& other) const {
-    return std::tie(first, second) > std::tie(other.first, other.second);
-  }
-
-  constexpr bool operator == (const OrderedPair& other) const {
-    return std::tie(first, second) == std::tie(other.first, other.second);
-  }
-
-  constexpr bool operator != (const OrderedPair& other) const {
-    return std::tie(first, second) != std::tie(other.first, other.second);
-  }
+//!@}
 
   template<typename UnaryFunction>
   auto map(UnaryFunction&& mapFunction) const {

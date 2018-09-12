@@ -22,7 +22,7 @@ using ArrayType = Array<T, size>;
 namespace index_conversion {
   //!  Converts from (i, j) matrix indices to the linear k index for the array
   template<size_t N, typename UnsignedType>
-  constexpr unsigned toSingleIndex(const UnsignedType i, const UnsignedType j) PURITY_STRONG;
+  constexpr unsigned toSingleIndex(UnsignedType i, UnsignedType j) PURITY_STRONG;
 
   template<size_t N, typename UnsignedType>
   constexpr unsigned toSingleIndex(const UnsignedType i, const UnsignedType j) {
@@ -35,7 +35,7 @@ namespace index_conversion {
 
   //! Converts from the linear array to (i, j) matrix indices
   template<size_t N, typename UnsignedType>
-  constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType k) PURITY_STRONG;
+  constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(UnsignedType k) PURITY_STRONG;
 
   template<size_t N, typename UnsignedType>
   constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType k) {
@@ -65,7 +65,7 @@ namespace index_conversion {
   }
 } // namespace index_conversion
 
-constexpr bool isValidMatrixSize(const size_t dataSize) PURITY_STRONG;
+constexpr bool isValidMatrixSize(size_t dataSize) PURITY_STRONG;
 constexpr bool isValidMatrixSize(const size_t dataSize) {
   auto root = Math::sqrt(1.0 + 8 * dataSize);
 
@@ -78,7 +78,7 @@ constexpr bool isValidMatrixSize(const size_t dataSize) {
   );
 }
 
-constexpr size_t getMatrixSize(const size_t dataSize) PURITY_STRONG;
+constexpr size_t getMatrixSize(size_t dataSize) PURITY_STRONG;
 constexpr size_t getMatrixSize(const size_t dataSize) {
   return (
     1 + Math::sqrt(1.0 + 8 * dataSize)
@@ -93,18 +93,16 @@ constexpr size_t getMatrixSize(const size_t dataSize) {
  */
 template<typename ValueType, size_t dataSize>
 class UpperTriangularMatrix {
-private:
-/* State */
-  UpperTriangularMatrixImpl::ArrayType<
-    ValueType,
-    dataSize
-  > _data;
-
 public:
-/* Public information */
-  static constexpr unsigned N = UpperTriangularMatrixImpl::getMatrixSize(dataSize);
+  using DataType = UpperTriangularMatrixImpl::ArrayType<ValueType, dataSize>;
 
-/* Constructors */
+//!@name Static properties
+//!@{
+  static constexpr unsigned N = UpperTriangularMatrixImpl::getMatrixSize(dataSize);
+//!@}
+
+//!@name Constructors
+//!@{
   constexpr UpperTriangularMatrix() : _data {} {}
 
   template<
@@ -118,8 +116,10 @@ public:
       "Passed data size is not consistent with an upper triangular matrix!"
     );
   }
+//!@}
 
-/* Modification */
+//!@name Element access
+//!@{
   constexpr ValueType& at(
     const unsigned i,
     const unsigned j
@@ -133,7 +133,6 @@ public:
     );
   }
 
-/* Information */
   constexpr const ValueType& at(
     const unsigned i,
     const unsigned j
@@ -146,10 +145,16 @@ public:
       UpperTriangularMatrixImpl::index_conversion::toSingleIndex<N>(i, j)
     );
   }
+//!@}
 
-  constexpr const decltype(_data)& getData() const {
+  //! Get full underlying data in raw form
+  constexpr const DataType& getData() const {
     return _data;
   }
+
+private:
+/* State */
+  DataType _data;
 };
 
 //! Helper constructing function that deduces the required type signature

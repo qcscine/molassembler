@@ -7,7 +7,7 @@
 
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 #include "temple/Random.h"
 
 using namespace std::string_literals;
@@ -118,45 +118,26 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
          * from the generated coordinates yields the same StereocenterList you
          * started out with.
          */
-        auto mapped = temple::map(
-          ensembleResult.value(),
-          [&](const auto& positions) -> bool {
-            auto inferredStereocenterList = molecule.inferStereocentersFromPositions(positions);
+        BOOST_CHECK_MESSAGE(
+          temple::all_of(
+            ensembleResult.value(),
+            [&](const auto& positions) -> bool {
+              auto inferredStereocenterList = molecule.inferStereocentersFromPositions(positions);
 
-            bool pass = molecule.stereocenters() == inferredStereocenterList;
+              bool pass = molecule.stereocenters() == inferredStereocenterList;
 
-            if(!pass) {
-              explainDifference(
-                molecule.stereocenters(),
-                inferredStereocenterList
-              );
+              if(!pass) {
+                explainDifference(
+                  molecule.stereocenters(),
+                  inferredStereocenterList
+                );
+              }
+
+              return pass;
             }
-
-            return pass;
-          }
+          ),
+          "Some reinterpretations of generated conformers did not yield identical stereopermutations!"
         );
-
-        /* The test passes only if this is true for all PositionCollections
-         * yielded by DG
-         */
-        bool testPass = temple::all_of(mapped);
-
-        if(!testPass) {
-          auto pass = temple::count(mapped, true);
-
-          std::cout << "Test fails!\n"
-            << std::setw(8) << " " << " " << Symmetry::name(symmetryName)
-            << "\n"
-            << std::setw(8) << std::to_string(pass)+ "/100"
-            << " comparisons with inferred StereocenterList pass\n";
-
-          std::cout << "StereocenterList has atom stereocenters:\n";
-          for(const auto& stereocenter : molecule.stereocenters().atomStereocenters()) {
-            std::cout << stereocenter.info() << "\n";
-          }
-        }
-
-        BOOST_CHECK(testPass);
       }
     }
   }

@@ -7,7 +7,8 @@
 
 #include "chemical_symmetries/Symmetries.h"
 
-#include "temple/Containers.h"
+#include "temple/Adaptors/AllPairs.h"
+#include "temple/Functional.h"
 #include "temple/Random.h"
 #include "temple/Invoke.h"
 #include "temple/Stringify.h"
@@ -70,10 +71,8 @@ BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
 
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      temple::mapAllPairs(
-        allJustHydrogen,
-        std::equal_to<>()
-      )
+      temple::adaptors::allPairs(allJustHydrogen),
+      std::equal_to<>()
     ),
     "Basic construction does not generate equal molecules"
   );
@@ -223,10 +222,8 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
 
   BOOST_CHECK_MESSAGE(
     temple::all_of(
-      temple::mapAllPairs(
-        originals,
-        std::not_equal_to<> {}
-      )
+      temple::adaptors::allPairs(originals),
+      std::not_equal_to<> {}
     ),
     "Some originals in the isomorphism test folder match one another!"
   );

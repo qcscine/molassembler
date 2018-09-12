@@ -14,7 +14,7 @@
 #include "stereopermutation/LogicalOperatorTests.h"
 #include "stereopermutation/Composites.h"
 
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 #include "temple/Random.h"
 #include "temple/Stringify.h"
 

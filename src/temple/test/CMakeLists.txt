@@ -4,12 +4,13 @@ find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(templeTests
-  ${CMAKE_CURRENT_SOURCE_DIR}/BTree.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Adaptors.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Cache.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Containers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Functional.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Numeric.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Optionals.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/constexprBTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/constexprTests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/various.cpp

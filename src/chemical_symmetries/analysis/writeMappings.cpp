@@ -3,8 +3,9 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 #include "temple/VectorView.h"
+#include "temple/Stringify.h"
 
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/DynamicProperties.h"
@@ -24,7 +25,7 @@ std::ostream& nl(std::ostream& out) {
 
 std::string condense(const std::vector<unsigned>& indexVector) {
   using namespace std::string_literals;
-  return "{"s + temple::condenseIterable(indexVector) + "}"s;
+  return "{"s + temple::condense(indexVector) + "}"s;
 }
 
 std::ostream& operator << (

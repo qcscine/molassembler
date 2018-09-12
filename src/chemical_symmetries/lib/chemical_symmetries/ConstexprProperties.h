@@ -785,7 +785,7 @@ std::enable_if_t<
   ),
   temple::Optional<MappingsReturnType>
 > calculateMapping() {
-  return {
+  return temple::Optional<MappingsReturnType> {
     symmetryTransitionMappings<SymmetrySource, SymmetryTarget>()
   };
 }
@@ -799,7 +799,7 @@ std::enable_if_t<
   ),
   temple::Optional<MappingsReturnType>
 > calculateMapping() {
-  return {};
+  return temple::Optional<MappingsReturnType> {};
 }
 
 template<typename Symmetry>

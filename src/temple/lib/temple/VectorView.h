@@ -12,6 +12,10 @@
  * resulting data set in a range-for compatible fashion.
  */
 
+/* TODO
+ * - Try to find usages and refactor them to not require this. DELETE THIS
+ */
+
 namespace temple {
 
 template<typename ValueType>
@@ -44,15 +48,15 @@ private:
   void _recalculateSequence() {
     _indexSequence.resize(_baseVectorRef.size());
     std::iota(
-      _indexSequence.begin(),
-      _indexSequence.end(),
+      std::begin(_indexSequence),
+      std::end(_indexSequence),
       0
     );
 
     if(_sortingLambda) {
       std::sort(
-        _indexSequence.begin(),
-        _indexSequence.end(),
+        std::begin(_indexSequence),
+        std::end(_indexSequence),
         [this](const unsigned a, const unsigned b) {
           return _sortingLambda(
             _baseVectorRef[a],
@@ -66,15 +70,15 @@ private:
       for(const auto& filterFunction : _filters) {
         _indexSequence.erase(
           std::remove_if(
-            _indexSequence.begin(),
-            _indexSequence.end(),
+            std::begin(_indexSequence),
+            std::end(_indexSequence),
             [this, filterFunction](const unsigned a) {
               return filterFunction(
                 _baseVectorRef[a]
               );
             }
           ),
-          _indexSequence.end()
+          std::end(_indexSequence)
         );
       }
     }
@@ -205,7 +209,7 @@ public:
  * Provides a VectorView proxy object on a container that filters out some
  * elements if the passed unary predicate returns true
  */
-template<typename Container, class FilterFunction>
+template<class Container, class FilterFunction>
 VectorView<
   traits::getValueType<Container>
 > view_filter(
@@ -223,7 +227,7 @@ VectorView<
  * Provides a VectorView proxy object on a container that sorts the underlying
  * data using a provided binary comparator function.
  */
-template<typename Container, class SortFunction>
+template<class Container, class SortFunction>
 VectorView<
   traits::getValueType<Container>
 > view_sort(
@@ -241,7 +245,7 @@ VectorView<
  * Provides a VectorView proxy object on a container that subsets the underlying
  * data based on a provided index list.
  */
-template<typename Container, typename IndexContainer>
+template<class Container, typename IndexContainer>
 VectorView<
   traits::getValueType<Container>
 > view_subset(

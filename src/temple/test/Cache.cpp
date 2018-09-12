@@ -12,21 +12,6 @@ unsigned int ackermann(unsigned int m, unsigned int n) {
   return ackermann(m - 1, ackermann(m, n - 1));
 }
 
-/* Cache members to test
- *
- * t # name
- * y 1 default constructor
- * y 2 init list constructor
- * y 3 add
- * y 4 getGeneratable
- * y 5 changeGeneratable
- * y 6 invalidate (blanket)
- * y 7 invalidate (selective)
- * y 8 getOption
- * y 9 has
- *
- */
-
 /* Sample class with mutable Cache member and a generatable cache object
  * Also includes an example of how to modify a cache object
  */

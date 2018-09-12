@@ -30,6 +30,8 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
 
+#include "temple/Adaptors/AllPairs.h"
+
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
 #include <experimental/propagate_const>
@@ -383,9 +385,9 @@ private:
     OrderDiscoveryHelper<TreeVertexIndex>& orderingHelper
   ) const {
     for(const auto& undecidedSet : undecidedSets) {
-      temple::forAllPairs(
-        undecidedSet,
-        [&](const TreeVertexIndex& a, const TreeVertexIndex& b) {
+      temple::forEach(
+        temple::adaptors::allPairs(undecidedSet),
+        [&](const TreeVertexIndex a, const TreeVertexIndex b) {
           if(_multisetCompare(comparisonSets.at(a), comparisonSets.at(b))) {
             orderingHelper.addLessThanRelationship(a, b);
           } else if(_multisetCompare(comparisonSets.at(b), comparisonSets.at(a))) {

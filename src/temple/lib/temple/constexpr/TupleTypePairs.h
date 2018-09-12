@@ -20,7 +20,7 @@ template<
   template<typename ...> class TemplateFunction,
   size_t ... Inds
 > constexpr auto mapAllPairsHelper(
-  std::index_sequence<Inds...>
+  std::index_sequence<Inds...> /* inds */
 ) {
   constexpr size_t N = std::tuple_size<TupleType>::value;
 

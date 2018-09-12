@@ -2,11 +2,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include "CyclicPolygons.h"
-#include <iostream>
-#include <fstream>
-#include "temple/VectorView.h"
+
 #include "temple/Random.h"
 #include "temple/Stringify.h"
+
+#include <iostream>
+#include <fstream>
 
 temple::Generator rng;
 

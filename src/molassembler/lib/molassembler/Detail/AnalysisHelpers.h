@@ -3,7 +3,7 @@
 
 #include "boost/range/iterator_range_core.hpp"
 #include "chemical_symmetries/Symmetries.h"
-#include "temple/Enumerate.h"
+#include "temple/Adaptors/Enumerate.h"
 
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/RefinementProblem.h"
@@ -193,7 +193,7 @@ void writeDGPOVandProgressFiles(
       );
     }
   } else {
-    for(const auto enumPair : enumerate(refinementData.steps)) {
+    for(const auto enumPair : temple::adaptors::enumerate(refinementData.steps)) {
       detail::writePOVFile(
         mol,
         baseFilename,

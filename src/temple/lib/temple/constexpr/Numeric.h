@@ -31,8 +31,8 @@ constexpr traits::getValueType<ContainerType> sum(const ContainerType& container
   using ValueType = traits::getValueType<ContainerType>;
 
   return std::accumulate(
-    container.begin(),
-    container.end(),
+    std::begin(container),
+    std::end(container),
     ValueType {0},
     std::plus<ValueType>()
   );
@@ -51,7 +51,7 @@ constexpr std::enable_if_t<
   std::is_floating_point<traits::getValueType<ContainerType>>::value,
   traits::getValueType<ContainerType>
 > average(const ContainerType& container) {
-  if(&(*container.begin()) == &(*container.end())) {
+  if(container.begin() == container.end()) {
     throw "Average called on an empty container!";
   }
 
@@ -63,7 +63,7 @@ constexpr std::enable_if_t<
   !std::is_floating_point<traits::getValueType<ContainerType>>::value,
   double
 > average(const ContainerType& container) {
-  if(&(*container.begin()) == &(*container.end())) {
+  if(container.begin() == container.end()) {
     throw "Average called on an empty container!";
   }
 
@@ -77,7 +77,7 @@ constexpr std::enable_if_t<
   std::is_floating_point<traits::getValueType<ContainerType>>::value,
   traits::getValueType<ContainerType>
 > geometricMean(const ContainerType& container) {
-  if(&(*container.begin()) == &(*container.end())) {
+  if(container.begin() == container.end()) {
     throw "geometricMean called on an empty container!";
   }
 
@@ -93,6 +93,28 @@ constexpr std::enable_if_t<
   );
 }
 
+//! Calculate the standard deviation of a container with a known average
+template<class ContainerType, typename FloatingType>
+constexpr std::enable_if_t<
+  std::is_floating_point<FloatingType>::value,
+  FloatingType
+> stddev(
+  const ContainerType& container,
+  const FloatingType averageValue
+) {
+  assert(container.begin() != container.end());
+
+  FloatingType sum = 0;
+
+  for(const auto value : container) {
+    auto diff = static_cast<FloatingType>(value) - averageValue;
+    sum += diff * diff;
+  }
+
+  return Math::sqrt(sum / container.size());
+}
+
+
 /*!
  * Container must implement begin, end and size members, the contained type
  * must have operator+.
@@ -101,55 +123,7 @@ template<class ContainerType>
 constexpr auto stddev(const ContainerType& container) {
   assert(container.begin() != container.end());
 
-  using ValueType = traits::getValueType<ContainerType>;
-  assert(&(*container.begin()) != &(*container.end()));
-
-  const auto averageValue = average(container);
-
-  return Math::sqrt(
-    sum(
-      map(
-        container,
-        [&averageValue](const ValueType& value) -> ValueType {
-          ValueType diff = averageValue - value;
-          return diff * diff;
-        }
-      )
-    ) / container.size()
-  );
-}
-
-//! Variant with known average value
-template<class ContainerType, typename FloatingType>
-std::enable_if_t<
-  std::is_floating_point<FloatingType>::value,
-  FloatingType
-> stddev(
-  const ContainerType& container,
-  const FloatingType& averageValue
-) {
-  assert(container.begin() != container.end());
-
-  using ValueType = traits::getValueType<ContainerType>;
-
-  static_assert(
-    std::is_same<ValueType, FloatingType>::value,
-    "The provided average type must match the container vaue type!"
-  );
-
-  assert(&(*container.begin()) != &(*container.end()));
-
-  return Math::sqrt(
-    sum(
-      map(
-        container,
-        [&averageValue](const ValueType& value) -> ValueType {
-          FloatingType diff = averageValue - value;
-          return diff * diff;
-        }
-      )
-    ) / container.size()
-  );
+  return stddev(container, average(container));
 }
 
 /*! Composable min function. Returns the smallest value of any container.

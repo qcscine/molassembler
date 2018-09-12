@@ -315,19 +315,17 @@ public:
     inline VertexDescriptor operator () (const VertexDescriptor v) const { return v; }
   };
 
-  using VertexIteratorBase = std::iterator<
-    std::random_access_iterator_tag, // iterator category
-    VertexDescriptor,                   // value_type
-    int,                             // difference_type
-    VertexDescriptor*,                  // pointer
-    const VertexDescriptor             // reference
-  >;
-
   //! An random access iterator through all vertex descriptors of the graph
-  class vertex_iterator : public VertexIteratorBase {
+  class vertex_iterator {
     VertexDescriptor index = 0;
 
   public:
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = VertexDescriptor;
+    using difference_type = int;
+    using pointer = VertexDescriptor*;
+    using reference = const VertexDescriptor&;
+
     vertex_iterator();
     vertex_iterator(VertexDescriptor i);
     vertex_iterator(const vertex_iterator& other);
@@ -362,16 +360,8 @@ public:
   //! Returns an end-iterator for vertices
   vertex_iterator vend() const;
 
-  using EdgeIteratorBase = std::iterator<
-    std::forward_iterator_tag, // iterator category
-    EdgeDescriptor,                   // value_type
-    int,                       // difference_type
-    EdgeDescriptor*,                  // pointer
-    const EdgeDescriptor&             // reference
-  >;
-
   //! An iterator to enumerate all edges in a graph.
-  class edge_iterator : public EdgeIteratorBase {
+  class edge_iterator {
     const ImplicitGraph* _basePtr;
 
     VertexDescriptor _i, _b;
@@ -380,6 +370,12 @@ public:
     void _increment();
 
   public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = EdgeDescriptor;
+    using difference_type = int;
+    using pointer = EdgeDescriptor*;
+    using reference = const EdgeDescriptor&;
+
     edge_iterator();
     edge_iterator(
       const ImplicitGraph& base,
@@ -419,13 +415,19 @@ public:
   edge_iterator oend(VertexDescriptor i) const;
 
   //! An iterator to enumerate only edges to the same part of the graph from specific vertices
-  class in_group_edge_iterator : public EdgeIteratorBase {
+  class in_group_edge_iterator {
     const ImplicitGraph* _basePtr;
     VertexDescriptor _i;
     VertexDescriptor _b;
     bool _isLeft;
 
   public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = EdgeDescriptor;
+    using difference_type = int;
+    using pointer = EdgeDescriptor*;
+    using reference = const EdgeDescriptor&;
+
     // Default constructor
     in_group_edge_iterator();
     // Constructor for the begin iterator

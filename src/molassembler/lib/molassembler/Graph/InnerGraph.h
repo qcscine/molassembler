@@ -32,9 +32,10 @@ public:
   using BGLType = boost::adjacency_list<
     /* OutEdgeListS = Type of Container for edges of a vertex
      * Options: vector, list, slist, set, multiset, unordered_set
-     * Choice: setS, enforces absence of parallel edges in graph
+     * Choice: vecS, we have to rigorously test that no parallel edges are
+     *   created
      */
-    boost::setS,
+    boost::vecS,
     /* VertexListS = Type of Container for vertices
      * Options: vector, list, slist, set, multiset, unordered_set
      * Choice: vecS, removing vertices is rare, keep memory use limited

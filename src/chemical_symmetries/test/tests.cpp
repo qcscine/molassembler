@@ -2,11 +2,15 @@
 
 #include <boost/test/unit_test.hpp>
 #include <Eigen/Geometry>
+
+#include "temple/Adaptors/Zip.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/constexpr/ToSTL.h"
 #include "temple/constexpr/TupleTypePairs.h"
-#include "temple/Containers.h"
+#include "temple/Functional.h"
+#include "temple/SetAlgorithms.h"
 #include "temple/Stringify.h"
+#include "temple/Functor.h"
 
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/Properties.h"
@@ -48,7 +52,7 @@ BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
 BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
   BOOST_CHECK(
     temple::all_of(
-      temple::zipMap(
+      temple::adaptors::zip(
         Symmetry::data::angleFunctions,
         std::vector<Symmetry::data::AngleFunctionPtr> {{
           &Symmetry::data::Linear::angleFunction,
@@ -68,11 +72,11 @@ BOOST_AUTO_TEST_CASE(angleFuntionsInSequence) {
           &Symmetry::data::PentagonalPyramidal::angleFunction,
           &Symmetry::data::PentagonalBiPyramidal::angleFunction, // 7
           &Symmetry::data::SquareAntiPrismatic::angleFunction // 8
-        }},
-        [](const auto& aPtr, const auto& bPtr) -> bool {
-          return aPtr == bPtr;
-        }
-      )
+        }}
+      ),
+      [](const auto& aPtr, const auto& bPtr) -> bool {
+        return aPtr == bPtr;
+      }
     )
   );
 }
@@ -451,12 +455,12 @@ std::enable_if_t<
   }
 
   // Do a full set comparison
-  auto convertedMappings = temple::map(
+  auto convertedMappings = temple::map_stl(
     temple::toSTL(constexprMappings.mappings),
     [&](const auto& indexList) -> std::vector<unsigned> {
       return {
-        indexList.begin(),
-        indexList.end()
+        std::begin(indexList),
+        std::end(indexList)
       };
     }
   );
@@ -466,7 +470,7 @@ std::enable_if_t<
     dynamicMappings.indexMappings.end()
   };
 
-  return temple::setDifference(
+  return temple::set_symmetric_difference(
     convertedMappings,
     dynamicResultSet
   ).empty();
@@ -618,7 +622,7 @@ struct RotationGenerationTest {
       temple::iota<unsigned>(SymmetryClass::size)
     );
 
-    auto convertedRotations = temple::map(
+    auto convertedRotations = temple::map_stl(
       temple::toSTL(constexprRotations),
       [&](const auto& indexList) -> std::vector<unsigned> {
         return {
@@ -642,7 +646,7 @@ struct RotationGenerationTest {
       pass = false;
     } else {
       pass = (
-        temple::setDifference(
+        temple::set_symmetric_difference(
           convertedRotations,
           dynamicRotations
         ).empty()
@@ -660,13 +664,13 @@ struct RotationGenerationTest {
 
       std::cout << " Converted constexpr:" << std::endl;
       for(const auto& element : convertedRotations) {
-        std::cout << " {" << temple::condenseIterable(element)
+        std::cout << " {" << temple::condense(element)
           << "}\n";
       }
 
       std::cout << " Dynamic:" << std::endl;
       for(const auto& element : dynamicRotations) {
-        std::cout << " {" << temple::condenseIterable(element)
+        std::cout << " {" << temple::condense(element)
           << "}\n";
       }
     }
@@ -737,7 +741,7 @@ std::enable_if_t<
       "black"
     );
 
-    std::cout << "color=\"" << temple::condenseIterable(repeatColor, ":invis:") << "\"";
+    std::cout << "color=\"" << temple::condense(repeatColor, ":invis:") << "\"";
   } else {
     std::cout << "color=\"" << "black" << "\"";
     std::cout << ", style=\"dashed\"";
@@ -776,7 +780,8 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
       temple::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         RotationGenerationTest
-      >()
+      >(),
+      temple::Identity {}
     ),
     "There is a discrepancy between constexpr and dynamic rotation generation"
   );
@@ -794,7 +799,8 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
       temple::TupleType::mapAllPairs<
         Symmetry::data::allSymmetryDataTypes,
         LigandGainTest
-      >()
+      >(),
+      temple::Identity {}
     ),
     "There is a discrepancy between constexpr and dynamic ligand gain mapping"
     << " generation!"

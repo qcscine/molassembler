@@ -1,7 +1,6 @@
 #include "molassembler/Descriptors.h"
 
 #include "boost/range/iterator_range_core.hpp"
-#include "temple/Containers.h"
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Cycles.h"

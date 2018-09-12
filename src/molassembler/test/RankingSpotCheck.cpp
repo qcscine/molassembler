@@ -6,7 +6,7 @@
 #include "boost/test/unit_test.hpp"
 
 #include "temple/constexpr/Bitmask.h"
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 #include "temple/Stringify.h"
 
 #include "molassembler/Cycles.h"
@@ -147,14 +147,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
       std::vector<unsigned long>
     > { {6}, {3}, {2}, {1} }),
     "Example three expanded is not {{6}, {3}, {2}, {1}}, but: "
-    << temple::condenseIterable(
-      temple::map(
-        exampleThreeRanked,
-        [](const auto& set) -> std::string {
-          return temple::condenseIterable(set);
-        }
-      )
-    )
+    << temple::stringify(exampleThreeRanked)
   );
 
   auto exampleThreeExpandedAgain = RankingTree(
@@ -172,18 +165,6 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
       std::vector<unsigned long>
     > { {7}, {4}, {2}, {0} }
   ));
-}
-
-template<typename T>
-std::string condenseSets(const std::vector<std::vector<T>>& sets) {
-  return temple::condenseIterable(
-    temple::map(
-      sets,
-      [](const auto& set) -> std::string {
-        return "{"s + temple::condenseIterable(set) + "}"s;
-      }
-    )
-  );
 }
 
 BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {

@@ -3,7 +3,8 @@
 
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/graphviz.hpp"
-#include "temple/Containers.h"
+#include "temple/Adaptors/Transform.h"
+#include "temple/Functional.h"
 
 /* TODO
  * - may be preferable to have OrderDiscoveryHelper emit pairs of Ts whose
@@ -93,11 +94,11 @@ private:
      * should is ordered too, so we can just map the vertex descriptors for
      * every degree into the stored underlying data
      */
-    return temple::mapValues(
+    return temple::map(
       degreeToSetMap,
-      [&](const auto& indexSet) -> std::vector<T> {
-        return temple::map(
-          indexSet,
+      [&](const auto& mapIterPair) -> std::vector<T> {
+        return temple::map_stl(
+          mapIterPair.second,
           [&](const auto& index) -> T {
             return _graph[index].data;
           }
@@ -136,7 +137,7 @@ private:
       os << R"([label=")" << _baseRef._graph[vertexIndex].data << R"("])";
     }
 
-    void operator() (std::ostream&, const typename DependencyGraphType::edge_descriptor& /* edge */) const {
+    void operator() (std::ostream& /* os */, const typename DependencyGraphType::edge_descriptor& /* edge */) const {
       // do nothing particular
     }
   };
@@ -391,7 +392,7 @@ public:
     std::vector<T>
   > getUndecidedSets() const {
     // Keep only sets with more than one member
-    return temple::moveIf(
+    return temple::copy_if(
       _getSetsByDegree(),
       [](const auto& set) -> bool {
         return set.size() > 1;

@@ -6,9 +6,12 @@
 #include <numeric>
 #include <fstream>
 
+#include "temple/GroupBy.h"
+#include "temple/Adaptors/Transform.h"
+#include "temple/Functional.h"
+#include "temple/Stringify.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
-#include "temple/Containers.h"
 
 #include <Eigen/Geometry>
 
@@ -157,9 +160,11 @@ void writeSymmetryTransitionDotFile(
 
     if(!distortionsMap.empty()) {
       double maxDistortion = temple::max(
-        temple::mapValues(
+        temple::adaptors::transform(
           distortionsMap,
-          [](const auto& ligandGainReturnStruct) -> double {
+          [](const auto& mapIteratorPair) -> double {
+            const auto& ligandGainReturnStruct = mapIteratorPair.second;
+
             return (
               ligandGainReturnStruct.angularDistortion
               + ligandGainReturnStruct.chiralDistortion
@@ -193,7 +198,7 @@ void writeSymmetryTransitionDotFile(
 
           for(const auto& mapping : mappingData.indexMappings) {
             std::cout << "mapping {"
-              << temple::condenseIterable(mapping)
+              << temple::condense(mapping)
               << "}" << std::endl;
           }
         }
@@ -217,7 +222,7 @@ void writeSymmetryTransitionDotFile(
             );
 
             dotFile << "color=\""
-              << temple::condenseIterable(repeatColor, ":invis:")
+              << temple::condense(repeatColor, ":invis:")
               << "\"";
           } else {
             dotFile << "color=\""
@@ -370,7 +375,7 @@ void writeLigandLossDotFile(
 
             for(const auto& mapping : mappingData.indexMappings) {
               std::cout << "mapping {"
-                << temple::condenseIterable(mapping)
+                << temple::condense(mapping)
                 << "}" << std::endl;
             }
           }
@@ -394,7 +399,7 @@ void writeLigandLossDotFile(
               );
 
               dotFile << "color=\""
-                << temple::condenseIterable(repeatColor, ":invis:")
+                << temple::condense(repeatColor, ":invis:")
                 << "\"";
             } else {
               dotFile << R"(color="black", style="dashed")";
@@ -413,7 +418,7 @@ void writeLigandLossDotFile(
 
             // Add equivalent positions to label
             dotFile << " {"
-              << temple::condenseIterable(equivalentPositions)
+              << temple::condense(equivalentPositions)
               << "}";
 
             // close label

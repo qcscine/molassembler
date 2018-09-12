@@ -1,6 +1,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_BTREE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_BTREE_H
 
+#include "temple/constexpr/Containers.h"
 #include "temple/constexpr/DynamicArray.h"
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Optional.h"
@@ -9,12 +10,9 @@
 
 /*! @file
  *
- * Implements a BTree which doesn't store key-value pairs, only keys.
- */
-
-
-/* TODO
- * - node constIterators?
+ * Implements a constexpr BTree which stores keys. Can be used for an ordered
+ * set-like container with good complexity guarantees. Can be turned into an
+ * associative container with some comparator tweaking.
  */
 
 namespace temple {
@@ -25,7 +23,7 @@ namespace BTreeProperties {
  * Calculates the maximum number of nodes in a B-tree of a specific minDegree and
  * height.
  */
-constexpr size_t maxNodesInTree(const size_t height, const size_t minDegree) PURITY_STRONG;
+constexpr size_t maxNodesInTree(size_t height, size_t minDegree) PURITY_STRONG;
 constexpr size_t maxNodesInTree(const size_t height, const size_t minDegree) {
   return static_cast<double>(
     Math::pow(2 * minDegree, static_cast<unsigned>(height + 1)) - 1
@@ -38,7 +36,7 @@ constexpr size_t maxNodesInTree(const size_t height, const size_t minDegree) {
  * Calculates the minimal height needed for a B-Tree of a specific minDegree to
  * be able to hold a certain number of keys
  */
-constexpr size_t minHeight(const size_t numKeys, const size_t minDegree) PURITY_STRONG;
+constexpr size_t minHeight(size_t numKeys, size_t minDegree) PURITY_STRONG;
 constexpr size_t minHeight(const size_t numKeys, const size_t minDegree) {
   return Math::ceil(
     Math::log(
@@ -53,7 +51,7 @@ constexpr size_t minHeight(const size_t numKeys, const size_t minDegree) {
  * minDegree to be able to hold a certain number of keys. The actual maximal
  * height may be lower.
  */
-constexpr size_t maxHeightBound(const size_t numKeys, const size_t minDegree) PURITY_STRONG;
+constexpr size_t maxHeightBound(size_t numKeys, size_t minDegree) PURITY_STRONG;
 constexpr size_t maxHeightBound(const size_t numKeys, const size_t minDegree) {
   return Math::floor(
     Math::log(
@@ -65,7 +63,7 @@ constexpr size_t maxHeightBound(const size_t numKeys, const size_t minDegree) {
 
 } // namespace BTreeImpl
 
-/*! A B-Tree that merely stores keys, not key-value pairs.
+/*! A constexpr B-Tree that stores keys.
  *
  * This class is a B-Tree that stores keys in its nodes, not key-value pairs.
  * (This can be turned into an associative container with a simple modification,
@@ -90,6 +88,22 @@ constexpr size_t maxHeightBound(const size_t numKeys, const size_t minDegree) {
  *   Defaults to std::less<KeyType>.
  * @tparam EqualityComparator A pure binary functor that takes two keys and
  *   returns whether they are equal. Defaults to std::equal_to<KeyType>.
+ *
+ * @warning Since we are working in constexpr, we have to work around a large
+ *   range of constraints, one of which is that we cannot dynamically allocate
+ *   or delete objects. This is particularly bad for BTrees since the height
+ *   of the tree can vary by a full level for the same contained information,
+ *   so the total amount of allocated keys may exceed the desired maximum
+ *   number of elements by a factor proportional to the minimum degree. The
+ *   amount of pre-allocated Keys is accessible via the maxKeys static member.
+ *
+ * @note Nodes of the tree cannot be truly allocated or deleted dynamically, so
+ *   they are all pre-allocated on construction and merely marked deleted.
+ *   Indices into the pre-allocated array of nodes are the 'pointers' of this
+ *   implementation.
+ *
+ * @note No differentiation is made in the type system for internal or leaf
+ *   nodes. Leaves just have no children.
  */
 template<
   typename KeyType,
@@ -99,26 +113,12 @@ template<
   class EqualityComparator = std::equal_to<KeyType>
 > class BTree {
 private:
-  //! Type for Nodes
-  struct Node {
-    static constexpr unsigned minKeys = minDegree - 1;
-    static constexpr unsigned maxKeys = 2 * minDegree - 1;
-
-    DynamicArray<KeyType, maxKeys> keys;
-    DynamicArray<unsigned, maxKeys + 1> children;
-
-    constexpr Node() {}
-
-    constexpr bool isLeaf() const PURITY_WEAK {
-      return children.size() == 0;
-    }
-
-    constexpr bool isFull() const PURITY_WEAK {
-      return keys.size() == maxKeys;
-    }
-  };
+  // Forward-declare Node
+  struct Node;
 
 public:
+//!@name Static properties
+//!@{
   //! The height needed to be able to hold at least numElements keys
   static constexpr size_t maxHeight = BTreeProperties::maxHeightBound(
     numElements,
@@ -133,15 +133,573 @@ public:
 
   //! The maximum number of keys that the tree can hold
   static constexpr size_t maxKeys = maxNodes * (2 * minDegree - 1);
+//!@}
+
+
+public:
+  constexpr BTree() : _rootPtr {0} {
+    _rootPtr = _newNode();
+  }
+
+//!@name Modification
+//!@{
+  //! Clears the tree. This operation is O(N)
+  constexpr void clear() {
+    // Refresh all nodes
+    for(auto& node: _nodes) {
+      node = Node {};
+    }
+
+    // Clear the garbage
+    _garbage.clear();
+
+    // Assign a new root
+    _rootPtr = _newNode();
+  }
+
+  /*! Add a key to the tree.
+   *
+   * Inserts a new key into the tree. This key must not already be in the tree.
+   * Complexity is O(t log_t N), where t is the minimum degree of the tree and
+   * N the number of contained elements.
+   */
+  constexpr void insert(const KeyType& key) {
+    unsigned r = _rootPtr;
+
+    if(_getNode(r).isFull()) { // Root is full, must be split
+      unsigned s = _newNode();
+
+      _rootPtr = s;
+
+      _getNode(s).children.push_back(r);
+      _splitChild(s, 0);
+      _insertNonFull(s, key);
+    } else {
+      _insertNonFull(r, key);
+    }
+
+    ++_count;
+  }
+
+  /*! Remove a key from the tree.
+   *
+   * Deletes a key from the tree. This key must exist in the tree. The
+   * complexity of this operation is O(t log_t N), where t is the minimum
+   * degree of the tree and N the number of contained elements.
+   */
+  constexpr void remove(const KeyType& key) {
+    _delete(_rootPtr, key);
+
+    // In case the root node is keyless but has a child, shrink the tree
+    if(_getNode(_rootPtr).keys.size() == 0 && !_getNode(_rootPtr).isLeaf()) {
+      unsigned emptyRoot = _rootPtr;
+
+      _rootPtr = _getNode(_rootPtr).children.front();
+
+      _markNodeDeleted(emptyRoot);
+    }
+
+    --_count;
+  }
+
+//!@}
+
+//!@name Information
+//!@{
+  /*! Check whether a key is stored in the tree.
+   *
+   * Check whether a key is stored in the tree. The complexity of this operation
+   * is O(t log_t N), where t is the minimum degree of the tree and N the
+   * number of contained elements.
+   */
+  constexpr bool contains(const KeyType& key) const PURITY_WEAK {
+    auto nodeIndexOptional = _search(_rootPtr, key);
+
+    return nodeIndexOptional.hasValue();
+  }
+
+  constexpr Optional<KeyType> getOption(const KeyType& key) const PURITY_WEAK {
+    auto nodeIndexOptional = _search(_rootPtr, key);
+
+    if(!nodeIndexOptional.hasValue()) {
+      return {};
+    }
+
+    auto keyLB = lowerBound<KeyType, LessThanComparator>(
+      _getNode(nodeIndexOptional.value()).keys.begin(),
+      _getNode(nodeIndexOptional.value()).keys.end(),
+      key,
+      _lt
+    );
+
+    return Optional<KeyType> {*keyLB};
+  }
+
+  //! Dumps a graphViz representation of the B-Tree.
+  std::string dumpGraphviz() const PURITY_WEAK {
+    using namespace std::string_literals;
+
+    std::stringstream graph;
+    graph << "digraph g {\n"
+      << "  node [shape=record, height=.1]\n\n";
+
+    DynamicArray<unsigned, maxNodes> stack {_rootPtr};
+
+    while(stack.size() > 0) {
+      unsigned nodeIndex = stack.back();
+      stack.pop_back();
+
+      for(auto& childIndex : _getNode(nodeIndex).children) {
+        stack.push_back(childIndex);
+      }
+
+      const auto& node = _getNode(nodeIndex);
+
+      graph << "  node" << nodeIndex << "[label=\"";
+
+      if(node.isLeaf()) {
+        for(unsigned i = 0; i < node.keys.size(); ++i) {
+          graph << node.keys.at(i);
+          if(i != node.keys.size() - 1) {
+            graph << "|";
+          }
+        }
+      } else {
+        graph << "<f0>|";
+        for(unsigned i = 1; i < node.children.size(); ++i) {
+          graph << node.keys.at(i-1) << "|<f" << i << ">";
+          if(i != node.children.size() - 1) {
+            graph << "|";
+          }
+        }
+      }
+
+      graph << "\"];\n";
+
+      // Write all connections
+      if(!node.isLeaf()) {
+        for(unsigned i = 0; i < node.children.size(); ++i) {
+          graph << "  \"node" << nodeIndex << "\":f" << i
+            << " -> \"node" << node.children.at(i) << "\";\n";
+        }
+      }
+    }
+
+    graph << "}";
+
+    return graph.str();
+  }
+
+  //! Validates the state of the tree by DFS traversal. Throws if anything is off.
+  constexpr void validate() const {
+    DynamicArray<unsigned, maxNodes> stack {_rootPtr};
+
+    while(stack.size() > 0) {
+      unsigned nodeIndex = stack.back();
+      auto& node = _getNode(nodeIndex);
+      stack.pop_back();
+
+      for(auto& childIndex : node.children) {
+        stack.push_back(childIndex);
+      }
+
+      _validate(nodeIndex);
+    }
+  }
+
+  //! Returns the number of elements in the tree
+  constexpr unsigned size() const PURITY_WEAK {
+    return _count;
+  }
+//!@}
+
+//!@name Iterators
+//!@{
+  //! Nonmodifiable in-order iteration
+  class const_iterator {
+  public:
+  //!@name Member types
+  //!@{
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = KeyType;
+    using difference_type = int;
+    using pointer = const KeyType* const;
+    using reference = const KeyType&;
+
+    enum class InitializeAs : unsigned {
+      Begin = 0,
+      End = 1
+    };
+  //!@}
+
+  //!@name Constructor
+  //!@{
+    constexpr const_iterator(
+      const BTree& tree,
+      const InitializeAs& initDecision
+    ) : _baseRef(tree),
+        _leftMostNode(tree._smallestLeafNode(tree._rootPtr)),
+        _rightMostNode(tree._largestLeafNode(tree._rootPtr)),
+        _nodeStack {tree._rootPtr}
+    {
+      if(!static_cast<bool>(static_cast<unsigned>(initDecision))) {
+        // 0 is Begin, so not-false is begin
+
+        while(!_getCurrentNode().isLeaf()) {
+          _indexStack.push_back(0);
+
+          _nodeStack.push_back(
+            _getCurrentNode().children.front()
+          );
+        }
+
+        // At pos 0 of the leaf indices
+        _indexStack.push_back(0);
+      } else {
+        // End const_iterator initialization
+
+        while(!_getCurrentNode().isLeaf()) {
+          _indexStack.push_back(
+            2 * _getCurrentNode().keys.size()
+          );
+
+          _nodeStack.push_back(
+            _getCurrentNode().children.back()
+          );
+        }
+
+        // past-the-end of indices
+        _indexStack.push_back(_getCurrentNode().keys.size());
+      }
+    }
+  //!@}
+
+  //!@name Special member functions
+  //!@{
+    const_iterator() = delete;
+    constexpr const_iterator(const const_iterator& other)
+      : _baseRef(other._baseRef),
+        _leftMostNode(other._leftMostNode),
+        _rightMostNode(other._rightMostNode),
+        _nodeStack(other._nodeStack),
+        _indexStack(other._indexStack)
+    {}
+    constexpr const_iterator(const_iterator&& other) = default;
+    constexpr const_iterator& operator = (const const_iterator& other) {
+      if(this->_baseRef != other._baseRef) {
+        throw "Assigning BTree const_iterator to another base instance!";
+      }
+
+      _leftMostNode = other._leftMostNode;
+      _rightMostNode = other._rightMostNode;
+      _nodeStack = other._nodeStack;
+      _indexStack = other._indexStack;
+    }
+    constexpr const_iterator& operator = (const_iterator&& other) = default;
+    ~const_iterator() = default;
+  //!@}
+
+    //! Prefix increment
+    constexpr const_iterator& operator ++ () {
+      auto indexLimit = _currentNodeIndexLimit();
+
+      if(_indexStack.back() == indexLimit) { // We are already the end const_iterator
+        // Do nothing and return immediately
+        return *this;
+      }
+
+      // In case we are a leaf, increment and re-check
+      if(_getCurrentNode().isLeaf()) {
+        ++_indexStack.back();
+
+        /* If we hit the index limit for the node and we're not the rightmost
+         * node, we have to go up the tree and to the right
+         */
+        if(
+          _indexStack.back() == indexLimit
+          && _nodeStack.back() != _rightMostNode
+        ) {
+          // Unwind the stack until we are at an incrementable position
+          do {
+            _indexStack.pop_back();
+            _nodeStack.pop_back();
+          } while(_indexStack.back() >= _currentNodeIndexLimit() - 1);
+
+          // Increment here, now we are placed on a key at an internal node
+          ++_indexStack.back();
+        }
+
+        return *this;
+      }
+
+      // We are on an internal node, incrementing puts us on a child
+      ++_indexStack.back();
+      _nodeStack.push_back(
+        _getCurrentNode().children.at(
+          _indexStack.back() / 2 // children are at even indices
+        )
+      );
+
+      while(!_getCurrentNode().isLeaf()) {
+        _indexStack.push_back(0);
+        _nodeStack.push_back(
+          _getCurrentNode().children.front()
+        );
+      }
+
+      // Now we are a leaf, and placed on the first key
+      _indexStack.push_back(0);
+
+      return *this;
+    }
+
+    //! Postfix increment
+    constexpr const_iterator operator ++ (int) {
+      const_iterator retval = *this;
+      ++(*this);
+      return retval;
+    }
+
+    //! Prefix decrement
+    constexpr const_iterator& operator -- () {
+      if(_nodeStack.back() == _leftMostNode && _indexStack.back() == 0) {
+        // We are the begin const_iterator
+        return *this;
+      }
+
+      // In case we are a leaf, decrement and re-check
+      if(_getCurrentNode().isLeaf()) {
+        // If we are at zero, we have to find a decrementable position
+        if(_indexStack.back() == 0) {
+          // Unwind the stack until we can decrement
+          do {
+            _indexStack.pop_back();
+            _nodeStack.pop_back();
+          } while(_indexStack.back() == 0);
+        }
+
+        // Decrement and return
+        --_indexStack.back();
+        return *this;
+      }
+
+      // We are an internal node, decrementing puts us on a child
+      --_indexStack.back();
+      _nodeStack.push_back(
+        _getCurrentNode().children.at(
+          _indexStack.back() / 2
+        )
+      );
+
+      while(!_getCurrentNode().isLeaf()) {
+        _indexStack.push_back(
+          2 * _getCurrentNode().keys.size()
+        );
+        _nodeStack.push_back(
+          _getCurrentNode().children.back()
+        );
+      }
+
+      _indexStack.push_back(
+         _getCurrentNode().keys.size() - 1
+      );
+
+      return *this;
+    }
+
+    //! Postfix decrement
+    constexpr const_iterator operator -- (int) {
+      const_iterator retval = *this;
+      --(*this);
+      return retval;
+    }
+
+    //! Compares on basis of positional equality
+    constexpr bool operator == (const const_iterator& other) const PURITY_WEAK {
+      return (
+        _nodeStack == other._nodeStack
+        && _indexStack == other._indexStack
+        && _leftMostNode == other._leftMostNode
+        && _rightMostNode == other._rightMostNode
+      );
+    }
+
+    constexpr bool operator != (const const_iterator& other) const PURITY_WEAK {
+      return !(
+        *this == other
+      );
+    }
+
+    //! Non-modifiable access
+    constexpr reference operator *() const PURITY_WEAK {
+      if(_getCurrentNode().isLeaf()) {
+        return _getCurrentNode().keys.at(
+          _indexStack.back()
+        );
+      }
+
+      return _getCurrentNode().keys.at(
+        _indexStack.back() / 2
+      );
+    }
+
+  private:
+  //!@name State
+  //!@{
+    const BTree& _baseRef;
+    const unsigned _leftMostNode;
+    const unsigned _rightMostNode;
+    DynamicArray<unsigned, maxHeight + 1> _nodeStack;
+    DynamicArray<unsigned, maxHeight + 1> _indexStack;
+  //!@}
+
+  //!@name Private member functions
+  //!@{
+    constexpr const Node& _getCurrentNode() const PURITY_WEAK {
+      return _baseRef._getNode(_nodeStack.back());
+    }
+
+    constexpr unsigned _currentNodeIndexLimit() const PURITY_WEAK {
+      // For leaves, the past-the-end position is the size of keys
+      if(_getCurrentNode().isLeaf()) {
+        return _getCurrentNode().keys.size();
+      }
+
+      /* For internal nodes, the past-the-end position is the size of keys
+       * plus the size of children + 1
+       */
+      return 2 * _getCurrentNode().keys.size() + 1;
+    }
+  //@}
+  };
+  //! Returns a const iterator to the first key in the tree
+  constexpr const_iterator begin() const PURITY_WEAK {
+    return const_iterator(
+      *this,
+      const_iterator::InitializeAs::Begin
+    );
+  }
+
+  //! Returns a past-the-end const iterator
+  constexpr const_iterator end() const PURITY_WEAK {
+    return const_iterator(
+      *this,
+      const_iterator::InitializeAs::End
+    );
+  }
+//!@}
+
+//!@name Operators
+//!@{
+  //! Lexicographical comparison
+  constexpr bool operator < (const BTree& other) const PURITY_WEAK {
+    if(this->size() < other.size()) {
+      return true;
+    }
+
+    if(this->size() > other.size()) {
+      return false;
+    }
+
+    auto thisIter = this->begin();
+    auto thisEnd = this->end();
+
+    auto otherIter = other.begin();
+
+    while(thisIter != thisEnd) {
+      if(*thisIter < *otherIter) {
+        return true;
+      }
+
+      if(*thisIter > *otherIter) {
+        return false;
+      }
+
+      ++thisIter;
+      ++otherIter;
+    }
+
+    return false;
+  }
+
+  //! Lexicographical comparison
+  constexpr bool operator > (const BTree& other) const PURITY_WEAK {
+    return (other < *this);
+  }
+
+  //! Lexicographical comparison
+  constexpr bool operator == (const BTree& other) const PURITY_WEAK {
+    if(this->size() != other.size()) {
+      return false;
+    }
+
+    auto thisIter = this->begin();
+    auto thisEnd = this->end();
+
+    auto otherIter = other.begin();
+
+    while(thisIter != thisEnd) {
+      if(*thisIter != *otherIter) {
+        return false;
+      }
+
+      ++thisIter;
+      ++otherIter;
+    }
+
+    return true;
+  }
+
+  //! Lexicographical comparison
+  constexpr bool operator != (const BTree& other) const PURITY_WEAK {
+    return !(*this == other);
+  }
+//!@}
 
 private:
-  //! Pointer to root node
+//!@name Private types
+//!@{
+  //! Type for Nodes
+  struct Node {
+  //!@name Static properties
+  //!@{
+    static constexpr unsigned minKeys = minDegree - 1;
+    static constexpr unsigned maxKeys = 2 * minDegree - 1;
+  //!@}
+
+  //!@name State
+  //!@{
+    DynamicArray<KeyType, maxKeys> keys;
+    DynamicArray<unsigned, maxKeys + 1> children;
+  //!@}
+
+    //! Default constructor
+    constexpr Node() = default;
+
+  //!@name Information
+  //!@{
+    //! Returns whether the node is a leaf node (i.e. has no children)
+    constexpr bool isLeaf() const PURITY_WEAK {
+      return children.size() == 0;
+    }
+
+    //! Returns whether the node is full
+    constexpr bool isFull() const PURITY_WEAK {
+      return keys.size() == maxKeys;
+    }
+  //!@}
+  };
+//!@}
+
+//!@name Private state
+//!@{
+  //! 'Pointer' to root node
   unsigned _rootPtr;
 
   //! Array holding all tree nodes
   DynamicArray<Node, maxNodes> _nodes;
 
-  //! Array holding pointers to any 'deleted' tree nodes
+  //! Array holding 'pointers' to any 'deleted' tree nodes
   DynamicArray<unsigned, maxNodes> _garbage;
 
   //! Less-than comparator instance
@@ -152,9 +710,13 @@ private:
 
   //! Number of contained elements
   unsigned _count = 0;
+//!@}
 
-  //! 'Allocates' a new node and returns a pointer to it
+//!@name Private member functions
+//!@{
+  //! 'Allocates' a new node and returns a 'pointer' to it
   constexpr unsigned _newNode() {
+    // If there are nodes in the garbage, take those first
     if(_garbage.size() > 0) {
       unsigned newNodeIndex = _garbage.back();
       _garbage.pop_back();
@@ -166,10 +728,11 @@ private:
     }
 
     if(_nodes.size() == maxNodes) {
-      // We cannot get any new nodes! Nothing on the garbage
+      // We cannot get any new nodes! Nothing in the garbage
       throw "The maximum number of nodes has been reached for a BTree!";
     }
 
+    // Default: Just expand the dynamic array with a fresh Node
     _nodes.push_back(Node {});
     return _nodes.size() - 1;
   }
@@ -179,10 +742,12 @@ private:
     _garbage.push_back(nodeIndex);
   }
 
+  //! Fetch a modifiable node by its 'pointer'
   constexpr Node& _getNode(unsigned nodeIndex) {
     return _nodes.at(nodeIndex);
   }
 
+  //! Fetch an unmodifiable node by its 'pointer'
   constexpr const Node& _getNode(unsigned nodeIndex) const PURITY_WEAK {
     return _nodes.at(nodeIndex);
   }
@@ -200,12 +765,12 @@ private:
 
     // In case the lower bound is actually our sought key, return this node
     if(keyLB != node.keys.end() && _eq(*keyLB, key)) {
-      return nodeIndex;
+      return Optional<unsigned> {nodeIndex};
     }
 
     // If we haven't found the key and this node is a leaf, search fails
     if(node.isLeaf()) {
-      return {};
+      return Optional<unsigned> {};
     }
 
     /* Otherwise descend to the child at the same index as the lower bound in
@@ -220,6 +785,11 @@ private:
     );
   }
 
+  /*!
+   * @brief If a child we want to descend into during insertion is full, we
+   *   have to split it in order to be certain we can insert into it if
+   *   necessary.
+   */
   constexpr void _splitChild(unsigned nodeIndex, const unsigned i) {
     // i is the child index in node's keys being split since that node is full
     auto& parent = _getNode(nodeIndex);
@@ -261,6 +831,7 @@ private:
     );
   }
 
+  //! Insert case if the node we can insert into isn't full yet
   constexpr void _insertNonFull(unsigned nodeIndex, const KeyType& key) {
     auto& node = _getNode(nodeIndex);
 
@@ -305,6 +876,7 @@ private:
     }
   }
 
+  //! Returns whether a node is the root
   constexpr bool _isRootNode(unsigned nodeIndex) const PURITY_WEAK {
     return nodeIndex == _rootPtr;
   }
@@ -590,490 +1162,7 @@ private:
       }
     }
   }
-
-public:
-  constexpr BTree() : _rootPtr {0} {
-    _rootPtr = _newNode();
-  }
-
-  /*! Add a key to the tree.
-   *
-   * Inserts a new key into the tree. This key must not already be in the tree.
-   * Complexity is O(t log_t N), where t is the minimum degree of the tree and
-   * N the number of contained elements.
-   */
-  constexpr void insert(const KeyType& key) {
-    unsigned r = _rootPtr;
-
-    if(_getNode(r).isFull()) { // Root is full, must be split
-      unsigned s = _newNode();
-
-      _rootPtr = s;
-
-      _getNode(s).children.push_back(r);
-      _splitChild(s, 0);
-      _insertNonFull(s, key);
-    } else {
-      _insertNonFull(r, key);
-    }
-
-    ++_count;
-  }
-
-  /*! Check whether a key is stored in the tree.
-   *
-   * Check whether a key is stored in the tree. The complexity of this operation
-   * is O(t log_t N), where t is the minimum degree of the tree and N the
-   * number of contained elements.
-   */
-  constexpr bool contains(const KeyType& key) const PURITY_WEAK {
-    auto nodeIndexOptional = _search(_rootPtr, key);
-
-    return nodeIndexOptional.hasValue();
-  }
-
-  constexpr Optional<KeyType> getOption(const KeyType& key) const PURITY_WEAK {
-    auto nodeIndexOptional = _search(_rootPtr, key);
-
-    if(!nodeIndexOptional.hasValue()) {
-      return {};
-    }
-
-    auto keyLB = lowerBound<KeyType, LessThanComparator>(
-      _getNode(nodeIndexOptional.value()).keys.begin(),
-      _getNode(nodeIndexOptional.value()).keys.end(),
-      key,
-      _lt
-    );
-
-    return *keyLB;
-  }
-
-  /*!
-   * Deletes a key from the tree. This key must exist in the tree. The
-   * complexity of this operation is O(t log_t N), where t is the minimum
-   * degree of the tree and N the number of contained elements.
-   */
-  constexpr void remove(const KeyType& key) {
-    _delete(_rootPtr, key);
-
-    // In case the root node is keyless but has a child, shrink the tree
-    if(_getNode(_rootPtr).keys.size() == 0 && !_getNode(_rootPtr).isLeaf()) {
-      unsigned emptyRoot = _rootPtr;
-
-      _rootPtr = _getNode(_rootPtr).children.front();
-
-      _markNodeDeleted(emptyRoot);
-    }
-
-    --_count;
-  }
-
-  //! Dumps a graphViz representation of the B-Tree.
-  std::string dumpGraphviz() const PURITY_WEAK {
-    using namespace std::string_literals;
-
-    std::stringstream graph;
-    graph << "digraph g {\n"
-      << "  node [shape=record, height=.1]\n\n";
-
-    DynamicArray<unsigned, maxNodes> stack {_rootPtr};
-
-    while(stack.size() > 0) {
-      unsigned nodeIndex = stack.back();
-      stack.pop_back();
-
-      for(auto& childIndex : _getNode(nodeIndex).children) {
-        stack.push_back(childIndex);
-      }
-
-      const auto& node = _getNode(nodeIndex);
-
-      graph << "  node" << nodeIndex << "[label=\"";
-
-      if(node.isLeaf()) {
-        for(unsigned i = 0; i < node.keys.size(); ++i) {
-          graph << node.keys.at(i);
-          if(i != node.keys.size() - 1) {
-            graph << "|";
-          }
-        }
-      } else {
-        graph << "<f0>|";
-        for(unsigned i = 1; i < node.children.size(); ++i) {
-          graph << node.keys.at(i-1) << "|<f" << i << ">";
-          if(i != node.children.size() - 1) {
-            graph << "|";
-          }
-        }
-      }
-
-      graph << "\"];\n";
-
-      // Write all connections
-      if(!node.isLeaf()) {
-        for(unsigned i = 0; i < node.children.size(); ++i) {
-          graph << "  \"node" << nodeIndex << "\":f" << i
-            << " -> \"node" << node.children.at(i) << "\";\n";
-        }
-      }
-    }
-
-    graph << "}";
-
-    return graph.str();
-  }
-
-  //! Validates the state of the tree by DFS traversal. Throws if anything is off.
-  constexpr void validate() const {
-    DynamicArray<unsigned, maxNodes> stack {_rootPtr};
-
-    while(stack.size() > 0) {
-      unsigned nodeIndex = stack.back();
-      auto& node = _getNode(nodeIndex);
-      stack.pop_back();
-
-      for(auto& childIndex : node.children) {
-        stack.push_back(childIndex);
-      }
-
-      _validate(nodeIndex);
-    }
-  }
-
-  //! Returns the number of elements in the tree
-  constexpr unsigned size() const PURITY_WEAK {
-    return _count;
-  }
-
-  using ValueIteratorBase = std::iterator<
-    std::bidirectional_iterator_tag, // iterator category
-    KeyType,                         // value_type
-    int,                             // difference_type
-    const KeyType* const,            // pointer
-    const KeyType&                   // reference
-  >;
-
-  class constIterator : public ValueIteratorBase {
-  public:
-    enum class InitializeAs : unsigned {
-      Begin = 0,
-      End = 1
-    };
-
-  private:
-    const BTree& _baseRef;
-    const unsigned _leftMostNode;
-    const unsigned _rightMostNode;
-    DynamicArray<unsigned, maxHeight + 1> _nodeStack;
-    DynamicArray<unsigned, maxHeight + 1> _indexStack;
-
-    constexpr const Node& _getCurrentNode() const PURITY_WEAK {
-      return _baseRef._getNode(_nodeStack.back());
-    }
-
-    constexpr unsigned _currentNodeIndexLimit() const PURITY_WEAK {
-      // For leaves, the past-the-end position is the size of keys
-      if(_getCurrentNode().isLeaf()) {
-        return _getCurrentNode().keys.size();
-      }
-
-      /* For internal nodes, the past-the-end position is the size of keys
-       * plus the size of children + 1
-       */
-      return 2 * _getCurrentNode().keys.size() + 1;
-    }
-
-  public:
-    constexpr constIterator(
-      const BTree& tree,
-      const InitializeAs& initDecision
-    ) : _baseRef(tree),
-        _leftMostNode(tree._smallestLeafNode(tree._rootPtr)),
-        _rightMostNode(tree._largestLeafNode(tree._rootPtr)),
-        _nodeStack {tree._rootPtr}
-    {
-      if(!static_cast<bool>(static_cast<unsigned>(initDecision))) {
-        // 0 is Begin, so not-false is begin
-
-        while(!_getCurrentNode().isLeaf()) {
-          _indexStack.push_back(0);
-
-          _nodeStack.push_back(
-            _getCurrentNode().children.front()
-          );
-        }
-
-        // At pos 0 of the leaf indices
-        _indexStack.push_back(0);
-      } else {
-        // End constIterator initialization
-
-        while(!_getCurrentNode().isLeaf()) {
-          _indexStack.push_back(
-            2 * _getCurrentNode().keys.size()
-          );
-
-          _nodeStack.push_back(
-            _getCurrentNode().children.back()
-          );
-        }
-
-        // past-the-end of indices
-        _indexStack.push_back(_getCurrentNode().keys.size());
-      }
-    }
-
-    constexpr constIterator(const constIterator& other)
-      : _baseRef(other._baseRef),
-        _leftMostNode(other._leftMostNode),
-        _rightMostNode(other._rightMostNode),
-        _nodeStack(other._nodeStack),
-        _indexStack(other._indexStack)
-    {}
-
-    constexpr constIterator& operator = (const constIterator& other) {
-      if(this->_baseRef != other._baseRef) {
-        throw "Assigning BTree constIterator to another base instance!";
-      }
-
-      _leftMostNode = other._leftMostNode;
-      _rightMostNode = other._rightMostNode;
-      _nodeStack = other._nodeStack;
-      _indexStack = other._indexStack;
-    }
-
-    constexpr constIterator& operator ++ () {
-      auto indexLimit = _currentNodeIndexLimit();
-
-      if(_indexStack.back() == indexLimit) { // We are already the end constIterator
-        // Do nothing and return immediately
-        return *this;
-      }
-
-      // In case we are a leaf, increment and re-check
-      if(_getCurrentNode().isLeaf()) {
-        ++_indexStack.back();
-
-        /* If we hit the index limit for the node and we're not the rightmost
-         * node, we have to go up the tree and to the right
-         */
-        if(
-          _indexStack.back() == indexLimit
-          && _nodeStack.back() != _rightMostNode
-        ) {
-          // Unwind the stack until we are at an incrementable position
-          do {
-            _indexStack.pop_back();
-            _nodeStack.pop_back();
-          } while(_indexStack.back() >= _currentNodeIndexLimit() - 1);
-
-          // Increment here, now we are placed on a key at an internal node
-          ++_indexStack.back();
-        }
-
-        return *this;
-      }
-
-      // We are on an internal node, incrementing puts us on a child
-      ++_indexStack.back();
-      _nodeStack.push_back(
-        _getCurrentNode().children.at(
-          _indexStack.back() / 2 // children are at even indices
-        )
-      );
-
-      while(!_getCurrentNode().isLeaf()) {
-        _indexStack.push_back(0);
-        _nodeStack.push_back(
-          _getCurrentNode().children.front()
-        );
-      }
-
-      // Now we are a leaf, and placed on the first key
-      _indexStack.push_back(0);
-
-      return *this;
-    }
-
-    constexpr constIterator operator ++ (int) {
-      constIterator retval = *this;
-      ++(*this);
-      return retval;
-    }
-
-    constexpr constIterator& operator -- () {
-      if(_nodeStack.back() == _leftMostNode && _indexStack.back() == 0) {
-        // We are the begin constIterator
-        return *this;
-      }
-
-      // In case we are a leaf, decrement and re-check
-      if(_getCurrentNode().isLeaf()) {
-        // If we are at zero, we have to find a decrementable position
-        if(_indexStack.back() == 0) {
-          // Unwind the stack until we can decrement
-          do {
-            _indexStack.pop_back();
-            _nodeStack.pop_back();
-          } while(_indexStack.back() == 0);
-        }
-
-        // Decrement and return
-        --_indexStack.back();
-        return *this;
-      }
-
-      // We are an internal node, decrementing puts us on a child
-      --_indexStack.back();
-      _nodeStack.push_back(
-        _getCurrentNode().children.at(
-          _indexStack.back() / 2
-        )
-      );
-
-      while(!_getCurrentNode().isLeaf()) {
-        _indexStack.push_back(
-          2 * _getCurrentNode().keys.size()
-        );
-        _nodeStack.push_back(
-          _getCurrentNode().children.back()
-        );
-      }
-
-      _indexStack.push_back(
-         _getCurrentNode().keys.size() - 1
-      );
-
-      return *this;
-    }
-
-    constexpr constIterator operator -- (int) {
-      constIterator retval = *this;
-      --(*this);
-      return retval;
-    }
-
-    constexpr bool operator == (const constIterator& other) const PURITY_WEAK {
-      return (
-        _nodeStack == other._nodeStack
-        && _indexStack == other._indexStack
-        && _leftMostNode == other._leftMostNode
-        && _rightMostNode == other._rightMostNode
-      );
-    }
-
-    constexpr bool operator != (const constIterator& other) const PURITY_WEAK {
-      return !(
-        *this == other
-      );
-    }
-
-    constexpr typename ValueIteratorBase::reference operator *() const PURITY_WEAK {
-      if(_getCurrentNode().isLeaf()) {
-        return _getCurrentNode().keys.at(
-          _indexStack.back()
-        );
-      }
-
-      return _getCurrentNode().keys.at(
-        _indexStack.back() / 2
-      );
-    }
-  };
-
-  //! Clears the tree. This operation is O(N)
-  constexpr void clear() {
-    // Refresh all nodes
-    for(auto& node: _nodes) {
-      node = Node {};
-    }
-
-    // Clear the garbage
-    _garbage.clear();
-
-    // Assign a new root
-    _rootPtr = _newNode();
-  }
-
-  //! Alias for STL algorithm compatibility
-  using const_iterator = constIterator;
-
-  //! Returns a const iterator to the first key in the tree
-  constexpr constIterator begin() const PURITY_WEAK {
-    return constIterator(
-      *this,
-      constIterator::InitializeAs::Begin
-    );
-  }
-
-  //! Returns a past-the-end const iterator
-  constexpr constIterator end() const PURITY_WEAK {
-    return constIterator(
-      *this,
-      constIterator::InitializeAs::End
-    );
-  }
-
-  constexpr bool operator < (const BTree& other) const PURITY_WEAK {
-    if(this->size() < other.size()) {
-      return true;
-    }
-
-    if(this->size() > other.size()) {
-      return false;
-    }
-
-    auto thisIter = this->begin();
-    auto thisEnd = this->end();
-
-    auto otherIter = other.begin();
-
-    while(thisIter != thisEnd) {
-      if(*thisIter < *otherIter) {
-        return true;
-      }
-
-      if(*thisIter > *otherIter) {
-        return false;
-      }
-
-      ++thisIter;
-      ++otherIter;
-    }
-
-    return false;
-  }
-
-  constexpr bool operator > (const BTree& other) const PURITY_WEAK {
-    return (other < *this);
-  }
-
-  constexpr bool operator == (const BTree& other) const PURITY_WEAK {
-    if(this->size() != other.size()) {
-      return false;
-    }
-
-    auto thisIter = this->begin();
-    auto thisEnd = this->end();
-
-    auto otherIter = other.begin();
-
-    while(thisIter != thisEnd) {
-      if(*thisIter != *otherIter) {
-        return false;
-      }
-
-      ++thisIter;
-      ++otherIter;
-    }
-
-    return true;
-  }
-
-  constexpr bool operator != (const BTree& other) const PURITY_WEAK {
-    return !(*this == other);
-  }
+//!@}
 };
 
 } // namespace temple

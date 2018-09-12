@@ -5,7 +5,9 @@
 
 #include "chemical_symmetries/DynamicProperties.h"
 #include "chemical_symmetries/Symmetries.h"
-#include "temple/Containers.h"
+#include "temple/Adaptors/AllPairs.h"
+#include "temple/Functional.h"
+#include "temple/Permutations.h"
 #include "temple/Stringify.h"
 
 #include <iostream>
@@ -401,7 +403,7 @@ std::vector<unsigned> Composite::generateRotation(
       }
     }
 
-    temple::sort(rotationIndexApplicationSequence);
+    temple::inplace::sort(rotationIndexApplicationSequence);
 
     do {
       // Create the rotation using the index application sequence front-to-back
@@ -503,8 +505,8 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
     std::pair<unsigned, unsigned>
   >;
 
-  temple::forAllPairs(
-    angleGroup.symmetryPositions,
+  temple::forEach(
+    temple::adaptors::allPairs(angleGroup.symmetryPositions),
     [&](const unsigned a, const unsigned b) -> void {
       double perpendicularAngle = perpendicularSubstituentAngle(
         angleGroup.angle,
@@ -568,7 +570,7 @@ Composite::Composite(OrientationState first, OrientationState second)
   /* Reorder both AngleGroups' symmetryPositions by descending ranking and
    * index to get canonical initial combinations
    */
-  temple::sort(
+  temple::inplace::sort(
     angleGroups.first.symmetryPositions,
     [&](const unsigned a, const unsigned b) -> bool {
       return (
@@ -578,7 +580,7 @@ Composite::Composite(OrientationState first, OrientationState second)
     }
   );
 
-  temple::sort(
+  temple::inplace::sort(
     angleGroups.second.symmetryPositions,
     [&](const unsigned a, const unsigned b) -> bool {
       return (
@@ -659,9 +661,11 @@ Composite::Composite(OrientationState first, OrientationState second)
    */
 
   // Generate all arrangements regarless of whether the Composite is isotropic
-  temple::forAllPairs(
-    angleGroups.first.symmetryPositions,
-    angleGroups.second.symmetryPositions,
+  temple::forEach(
+    temple::adaptors::allPairs(
+      angleGroups.first.symmetryPositions,
+      angleGroups.second.symmetryPositions
+    ),
     [&](const unsigned f, const unsigned s) -> void {
       // Calculate the dihedral angle from l.front() to r
       double dihedralAngle = getDihedral(f, s);
@@ -677,9 +681,11 @@ Composite::Composite(OrientationState first, OrientationState second)
       // Make sure the rotation leads to cis arrangement
       assert(std::fabs(getDihedral(f, s)) < 1e-10);
 
-      auto dihedralList = temple::mapAllPairs(
-        angleGroups.first.symmetryPositions,
-        angleGroups.second.symmetryPositions,
+      auto dihedralList = temple::map(
+        temple::adaptors::allPairs(
+          angleGroups.first.symmetryPositions,
+          angleGroups.second.symmetryPositions
+        ),
         [&](const unsigned a, const unsigned b) -> DihedralTuple {
           return {
             a,

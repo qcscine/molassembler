@@ -4,7 +4,7 @@
 #include "Delib/ElementInfo.h"
 
 #include "chemical_symmetries/Symmetries.h"
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 #include "temple/Optionals.h"
 
 #include "molassembler/Modeling/AtomInfo.h"

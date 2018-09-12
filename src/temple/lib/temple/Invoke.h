@@ -54,28 +54,10 @@ namespace detail {
 
 template<class> struct sfinae_true : std::true_type {};
 
-template<class Callable, typename ... Args>
-static auto isCallableTest(int) -> sfinae_true<
-  typename std::result_of<Callable(Args...)>::type
->;
-
-template<class Callable, typename ... Args>
-static auto isCallableTest(long) -> std::false_type;
-
-template<class Callable, typename ... Args>
-struct isCallable : decltype(isCallableTest<Callable, Args...>(0)) {};
-
-template<class TupleType>
-static auto isTupleLikeTest(int) -> sfinae_true<
-  std::tuple_element_t<0, TupleType>
->;
-
-template<class TupleType>
-static auto isTupleLikeTest(long) -> std::false_type;
-
-template<class TupleType>
-struct isTupleLike : decltype(isTupleLikeTest<TupleType>(0)) {};
-
+/*!
+ * @brief Performs invocation of a function by unpacking a tuple-like argument
+ *   as arguments and returns the result.
+ */
 template<typename Function, typename TupleType, size_t ... Inds>
 auto invokeHelper(
   Function&& function,
@@ -87,45 +69,66 @@ auto invokeHelper(
   );
 }
 
-template<
-  template<typename...> class TemplateFunction,
-  typename Function,
-  typename ArgumentTuple,
-  size_t ... Inds
-> auto unpackHelper(std::index_sequence<Inds...> /* indices */) {
-  return TemplateFunction<Function, std::tuple_element_t<Inds, ArgumentTuple>...>::value;
-}
-
-template<
-  template<typename...> class TemplateFunction,
-  typename Function,
-  typename ArgumentTuple
-> auto unpack() {
-  return unpackHelper<TemplateFunction, Function, ArgumentTuple>(
-    std::make_index_sequence<std::tuple_size<ArgumentTuple>::value>()
+/*!
+ * @brief Purely type-based deduction helper for whether a function is callable
+ *   by passing an unpacked tuple as arguments. No function body.
+ */
+struct InvokeTester {
+  template<typename Function, typename TupleType, std::size_t ... Inds>
+  constexpr auto operator() (
+    Function&& function,
+    const TupleType& tuple,
+    std::index_sequence<Inds...> /* inds */
+  ) -> decltype(
+    function(
+      std::declval<
+        std::tuple_element_t<Inds, TupleType>
+      >()...
+    )
   );
-}
+};
 
+/*!
+ * @brief Figure out if Function is callable by unpacking TupleType by
+ *   forwarding the types and an integer sequence of the tuple's size
+ *
+ * @note We have to use the InvokeTester instead of deducing the type from
+ *   calling invokeHelper because instantiating it and reaching incompatible
+ *   types leads to a compilation error instead of a substitution failure.
+ */
 template<typename Function, typename TupleType>
 static auto isTupleCallableTest(int) -> sfinae_true<
-    decltype(
-      detail::invokeHelper(
-        std::declval<Function>(),
-        std::declval<TupleType>(),
-        std::make_index_sequence<std::tuple_size<TupleType>::value>()
-      )
+  decltype(
+    std::declval<InvokeTester>()(
+      std::declval<Function>(),
+      std::declval<TupleType>(),
+      std::make_index_sequence<std::tuple_size<TupleType>::value>()
     )
+  )
 >;
 
 template<typename Function, typename TupleType, typename... Args>
 static auto isTupleCallableTest(long) -> std::false_type;
 
+/*!
+ * @brief Returns std::integral_constant<bool> for if Function is callable
+ *   by unpacking a single tuple argument supplied in the argument list.
+ *
+ * @note The integer-long substitution failure trick is explained in Tricks.md
+ */
 template<typename Function, typename TupleType, typename... Args>
 struct isTupleCallable : decltype(isTupleCallableTest<Function, TupleType, Args...>(0)) {};
 
 } // namespace detail
 
-//! Invokes a function with all values in a given tuple
+/*!
+ * @brief If a callable can be called by unpacking a supplied tuple of
+ *   arguments, the tuple is called.
+ *
+ * @note This function is SFINAE-friendly in that if TupleType isn't tuple-like
+ *   or the function does not accept the unpacked arguments, this will only
+ *   cause a substitution failure and not a compilation error.
+ */
 template<
   typename Function,
   typename TupleType,
@@ -146,8 +149,14 @@ template<
   );
 }
 
-// Suggested C++17 std::invoke reference implementation from N4169
-
+/*!
+ * @brief If a callable is a member function pointer, invoke it with forwarded
+ *   arguments
+ *
+ * @note This is the suggested C++17 std::invoke reference implementation from
+ *   N4169, except with the additional SFINAE constraint that Fn may not be
+ *   callable by unpacking a tuple-like singular argument in the parameter pack.
+ */
 template<
   typename Fn,
   typename... Args,
@@ -162,6 +171,14 @@ noexcept(noexcept(std::mem_fn(f)(std::forward<Args>(args)...)))
   return std::mem_fn(f)(std::forward<Args>(args)...);
 }
 
+/*
+ * @brief If a callable is not a member pointer, invoke it with forwarded
+ *   arguments
+ *
+ * @note This is the suggested C++17 std::invoke reference implementation from
+ *   N4169, except with the additional SFINAE constraint that Fn may not be
+ *   callable by unpacking a tuple-like singular argument in the parameter pack.
+ */
 template<
   typename Fn,
   typename... Args,
@@ -185,7 +202,7 @@ struct Invoker {
   Invoker(Functor&& passFunction) : function(passFunction) {}
 
   template<typename TupleType>
-  constexpr auto operator() (const TupleType& tuple) const noexcept {
+  constexpr auto operator() (const TupleType& tuple) const noexcept(noexcept(invoke(function, tuple))) {
     return invoke(function, tuple);
   }
 };

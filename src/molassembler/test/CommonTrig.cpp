@@ -3,7 +3,7 @@
 
 #include "molassembler/Modeling/CommonTrig.h"
 #include "temple/Random.h"
-#include "temple/Containers.h"
+#include "temple/Stringify.h"
 
 temple::Generator prng;
 
@@ -101,9 +101,9 @@ BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
         M_PI
       ),
       "Disproved by side lengths {"
-        << temple::condenseIterable(sideLengths)
+        << temple::condense(sideLengths)
         << "} and angles {"
-        << temple::condenseIterable(angles)
+        << temple::condense(angles)
         << "}: 0 -> "
         << dihedralLength(
           sideLengths.at(0),

@@ -3,12 +3,10 @@
 
 #include "boost/optional.hpp"
 
-#include "temple/Containers.h"
-#include "temple/constexpr/Numeric.h"
-#include "temple/Enumerate.h"
-#include "temple/MemberFetcher.h"
-#include "temple/VectorView.h"
+#include "temple/Functional.h"
+#include "temple/OperatorSuppliers.h"
 #include "temple/Stringify.h"
+#include "temple/constexpr/Numeric.h"
 
 #include <chrono>
 #include <cmath>
@@ -49,140 +47,10 @@ double timeNullaryCallable(
 }
 
 
-BOOST_AUTO_TEST_CASE( enumerateTests) {
-  std::vector<unsigned> testVec {5, 2, 3, 4};
-
-  bool pass = true;
-  for(const auto& enumPair : enumerate(testVec)) {
-    if(testVec.at(enumPair.index) != enumPair.value) {
-      pass = false;
-      break;
-    }
-  }
-
-  BOOST_CHECK(pass);
-
-  auto weirdSum = temple::sum(
-    temple::mapToVector(
-      enumerate(testVec),
-      [](const auto& enumPair) -> unsigned {
-        return enumPair.index + enumPair.value;
-      }
-    )
-  );
-
-  BOOST_CHECK(weirdSum == 5 + 3 + 5 + 7);
-}
-
-BOOST_AUTO_TEST_CASE(memberFetcherTests) {
-  std::vector<
-    std::vector<unsigned>
-  > testClass {
-    {4, 3, 9, 10},
-    {1, 2, 3, 4, 5},
-    {11},
-    {44, 93}
-  };
-
-  auto memberFetcherClass = temple::getMember(
-    testClass,
-    [](const auto& container) -> unsigned {
-      return container.size();
-    }
-  );
-
-  BOOST_CHECK_MESSAGE(
-    temple::sum(memberFetcherClass) == 12u,
-    "Member fetcher does not work as expected, begin()-end() contains {"
-      << temple::condenseIterable(memberFetcherClass)
-      << "} instead of expected {4, 5, 1, 2}"
-  );
-
-  BOOST_CHECK_MESSAGE(
-    temple::min(memberFetcherClass) == 1
-    && temple::max(memberFetcherClass) == 5,
-    "Usage of min/max does not return expected result"
-  );
-
-  // Is this approach more efficient than copying member information?
-  double copyingTime = timeNullaryCallable(
-    [&]() {
-      auto mappedData = temple::map(
-        testClass,
-        [](const auto& subVector) -> unsigned {
-          return subVector.size();
-        }
-      );
-
-      for(const auto& size : mappedData) {
-        static_cast<void>(size);
-      }
-    }
-  );
-
-  double memberFetcherTime = timeNullaryCallable(
-    [&]() {
-      auto fetcher = temple::getMember(
-        testClass,
-        [](const auto& subVector) -> unsigned {
-          return subVector.size();
-        }
-      );
-
-      for(const auto& size : fetcher) {
-        static_cast<void>(size);
-      }
-    }
-  );
-
-  BOOST_CHECK_MESSAGE(
-    memberFetcherTime < copyingTime,
-    "Copying is faster than fetching members: copy = " << copyingTime << " vs. "
-    << memberFetcherTime << " member fetch "
-  );
-
-  // Interoperability with VectorView
-
-  auto filteredView = temple::view_filter(
-    testClass,
-    [](const auto& subVector) -> bool {
-      return subVector.size() < 3;
-    }
-  );
-
-  auto minSize = temple::min(
-    temple::getMember(
-      filteredView,
-      [](const auto& subVector) -> unsigned {
-        return subVector.size();
-      }
-    )
-  );
-
-  BOOST_CHECK_MESSAGE(
-    minSize == 4,
-    "Min size of filteredView returns " << minSize << ", not 4"
-  );
-
-  auto maxSize = temple::max(
-    temple::getMember(
-      filteredView,
-      [](const auto& subVector) -> unsigned {
-        return subVector.size();
-      }
-    )
-  );
-
-  BOOST_CHECK_MESSAGE(
-    maxSize == 5,
-    "Max size of filteredView returns " << maxSize << ", not 5"
-  );
-}
-
 BOOST_AUTO_TEST_CASE(setRemovalDefect) {
   /* Sets and maps cannot use std::remove_if! Not a defect. */
 
-  auto testSet = temple::copyIf(
+  auto testSet = temple::copy_if(
     std::set<unsigned> {5, 2, 9, 1, 3, 4, 8},
     [](const auto& value) -> bool {
       return value % 2 != 0;
@@ -273,4 +141,24 @@ BOOST_AUTO_TEST_CASE(stringifyTests) {
   };
 
   std::cout << temple::stringify(someTuple) << std::endl;
+}
+
+struct TupleLike : temple::crtp::AllOperatorsFromTupleMethod<TupleLike> {
+  unsigned x;
+  int f;
+
+  TupleLike(unsigned x_, int f_) : x(x_), f(f_) {}
+
+  auto tuple() const {
+    return std::tie(x, f);
+  }
+};
+
+BOOST_AUTO_TEST_CASE(crtpTests) {
+  TupleLike a {4u, -3}, b {9u, 4}, c {9u, 4};
+  BOOST_CHECK(b == c);
+  BOOST_CHECK(a < b);
+  BOOST_CHECK(b > a);
+  BOOST_CHECK(b <= c);
+  BOOST_CHECK(b >= c);
 }

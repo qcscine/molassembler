@@ -15,7 +15,10 @@ namespace temple {
 
 template<typename EnumType>
 struct Bitmask {
+//!@name Types
+//!@{
   using Underlying = std::underlying_type_t<EnumType>;
+//!@}
 
   static constexpr Underlying maximum = temple::Math::floor(
     temple::Math::log(
@@ -24,8 +27,13 @@ struct Bitmask {
     )
   );
 
+//!@name Public state
+//!@{
   Underlying value;
+//!@}
 
+//!@name Constructors
+//!@{
   explicit constexpr Bitmask() : value {0} {}
 
   explicit constexpr Bitmask(EnumType a) : value {
@@ -39,9 +47,23 @@ struct Bitmask {
   }
 
   explicit constexpr Bitmask(Underlying a) : value {a} {}
+//!@}
 
+//!@name Information
+//!@{
+  constexpr bool isSet(const EnumType& a) const {
+    return (
+      value & (
+        static_cast<Underlying>(1) << static_cast<Underlying>(a)
+      )
+    ) > 0;
+  }
+//!@}
+
+//!@name Operators
+//!@{
   constexpr Bitmask operator | (const EnumType& a) const {
-    Underlying v = static_cast<Underlying>(a);
+    auto v = static_cast<Underlying>(a);
 
     if(v > maximum) {
       throw std::domain_error(
@@ -55,16 +77,8 @@ struct Bitmask {
     };
   }
 
-  inline constexpr bool isSet(const EnumType& a) const {
-    return (
-      value & (
-        static_cast<Underlying>(1) << static_cast<Underlying>(a)
-      )
-    ) > 0;
-  }
-
-  inline constexpr void operator |= (const EnumType& a) {
-    Underlying v = static_cast<Underlying>(a);
+  constexpr void operator |= (const EnumType& a) {
+    auto v = static_cast<Underlying>(a);
 
     if(v > maximum) {
       throw std::domain_error(
@@ -76,13 +90,14 @@ struct Bitmask {
     value = value | (static_cast<Underlying>(1) << v);
   }
 
-  inline constexpr bool operator & (const EnumType& a) const {
+  constexpr bool operator & (const EnumType& a) const {
     return isSet(a);
   }
 
-  inline constexpr bool operator [] (const EnumType& a) const {
+  constexpr bool operator [] (const EnumType& a) const {
     return isSet(a);
   }
+//!@}
 };
 
 template<typename EnumType>

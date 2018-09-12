@@ -1,9 +1,10 @@
 #include "molassembler/BondStereocenter.h"
 
 #include "stereopermutation/Composites.h"
+#include "temple/Adaptors/AllPairs.h"
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Numeric.h"
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 #include "temple/OrderedPair.h"
 #include "temple/Random.h"
 
@@ -208,14 +209,14 @@ void BondStereocenter::Impl::fit(
   );
 
   // For all atoms making up a ligand, decide on the spatial average position
-  const std::vector<Eigen::Vector3d> firstLigandPositions = temple::mapToVector(
+  const std::vector<Eigen::Vector3d> firstLigandPositions = temple::map(
     firstStereocenter.getRanking().ligands,
     [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
     }
   );
 
-  const std::vector<Eigen::Vector3d> secondLigandPositions = temple::mapToVector(
+  const std::vector<Eigen::Vector3d> secondLigandPositions = temple::map(
     secondStereocenter.getRanking().ligands,
     [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
@@ -518,9 +519,11 @@ void BondStereocenter::Impl::setModelInformation(
       boundedDihedralValues.second
     };
 
-    temple::forAllPairs(
-      firstStereocenter.getRanking().ligands.at(firstLigandIndex),
-      secondStereocenter.getRanking().ligands.at(secondLigandIndex),
+    temple::forEach(
+      temple::adaptors::allPairs(
+        firstStereocenter.getRanking().ligands.at(firstLigandIndex),
+        secondStereocenter.getRanking().ligands.at(secondLigandIndex)
+      ),
       [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
         model.setDihedralBoundsIfEmpty(
           std::array<AtomIndex, 4> {

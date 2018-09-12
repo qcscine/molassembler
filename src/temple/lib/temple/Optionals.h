@@ -12,6 +12,40 @@
 
 namespace temple {
 
+namespace optionals {
+
+template<
+  template<typename> class OptionalType,
+  typename T,
+  class UnaryFunction
+>
+auto map(const OptionalType<T>& optional, UnaryFunction&& function) {
+  using U = decltype(function(std::declval<T>()));
+
+  if(optional) {
+    return OptionalType<U> {function(optional.value())};
+  }
+
+  return OptionalType<U> {};
+}
+
+template<
+  template<typename> class OptionalType,
+  typename T,
+  class UnaryFunction
+>
+auto flatMap(const OptionalType<T>& optional, UnaryFunction&& function) {
+  using OptionalU = decltype(function(std::declval<T>()));
+
+  if(optional) {
+    return OptionalU {function(optional.value())};
+  }
+
+  return OptionalU {};
+}
+
+} // namespace optionals
+
 namespace detail {
 
 template<typename T>
@@ -66,7 +100,7 @@ struct CallIfSome {
   PartialFunction partialFunction;
   TupleType parameters;
 
-  CallIfSome(
+  explicit CallIfSome(
     PartialFunction passPartial,
     Parameters&&... passParameters
   ) : partialFunction(passPartial),
@@ -110,7 +144,7 @@ struct CallIfSome {
 
   template<typename R, size_t ... Inds> detail::Optional<ReturnType> injectedCallHelper(
     const R& previousResult,
-    std::index_sequence<Inds...>
+    std::index_sequence<Inds...> /* inds */
   ) const {
     return partialFunction(
       replaceIfPlaceholder(
@@ -126,7 +160,7 @@ CallIfSome<PartialFunction, Parameters...> callIfSome (
   PartialFunction partialFunction,
   Parameters&&... parameters
 ) {
-  return {
+  return CallIfSome<PartialFunction, Parameters...> {
     partialFunction,
     std::forward<Parameters>(parameters)...
   };
@@ -149,7 +183,7 @@ struct CallIfNone {
   PartialFunction partialFunction;
   TupleType parameters;
 
-  CallIfNone(
+  explicit CallIfNone(
     PartialFunction passPartial,
     Parameters&&... passParameters
   ) : partialFunction(passPartial),
@@ -165,7 +199,7 @@ struct CallIfNone {
   }
 
   template<size_t ... Inds> detail::Optional<ReturnType> callHelper(
-    std::index_sequence<Inds...>
+    std::index_sequence<Inds...> /* inds */
   ) const {
     return partialFunction(
       std::get<Inds>(parameters)...
@@ -178,7 +212,7 @@ CallIfNone<PartialFunction, Parameters...> callIfNone (
   PartialFunction partialFunction,
   Parameters&&... parameters
 ) {
-  return {
+  return CallIfNone<PartialFunction, Parameters...> {
     partialFunction,
     std::forward<Parameters>(parameters)...
   };

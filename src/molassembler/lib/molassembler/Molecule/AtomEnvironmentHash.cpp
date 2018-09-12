@@ -7,7 +7,7 @@
 #include "molassembler/StereocenterList.h"
 #include "molassembler/Graph/InnerGraph.h"
 
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 
 namespace molassembler {
 

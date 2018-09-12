@@ -16,12 +16,20 @@ namespace temple {
 
 //! Constexpr three-dimensional vector math class.
 struct Vector {
+//!@name State
+//!@{
   std::array<double, 3> data;
+//!@}
 
+//!@name Constructors
+//!@{
   constexpr Vector() : data({{0, 0, 0}}) {}
   constexpr Vector(std::array<double, 3> positions) : data(positions) {}
   constexpr Vector(double x, double y, double z) : data({{x, y, z}}) {}
+//!@}
 
+//!@name Common vector operations
+//!@{
   //! Computes the dot product with another vector
   constexpr double dot(const Vector& other) const noexcept PURITY_WEAK {
     return (
@@ -106,6 +114,7 @@ struct Vector {
       }}
     };
   }
+//!@}
 };
 
 //! Free-standing binary angle in radians calculation

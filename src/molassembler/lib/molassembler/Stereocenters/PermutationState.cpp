@@ -1,7 +1,9 @@
 #include "molassembler/Stereocenters/PermutationState.h"
 
 #include "CyclicPolygons.h"
-#include "temple/Containers.h"
+#include "temple/Adaptors/SequentialPairs.h"
+#include "temple/Adaptors/Transform.h"
+#include "temple/Functional.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
@@ -25,7 +27,7 @@ PermutationState::PermutationState(
 
   using ModelType = DistanceGeometry::SpatialModel;
 
-  ligandDistances = temple::mapToVector(
+  ligandDistances = temple::map(
     ranking.ligands,
     [&](const auto& ligandIndices) -> DistanceGeometry::ValueBounds {
       return ModelType::ligandDistanceFromCenter(
@@ -68,7 +70,7 @@ PermutationState::PermutationState(
     !ranking.links.empty()
     // OR there are haptic ligands
     || temple::sum(
-      temple::map(
+      temple::adaptors::transform(
         ranking.ligands,
         [](const auto& ligandIndices) -> unsigned {
           if(ligandIndices.size() == 1) {
@@ -465,8 +467,8 @@ bool PermutationState::isNotObviouslyImpossibleStereopermutation(
       symmetryAngle - ligandIConeAngle.upper - ligandJConeAngle.upper
     );
 
-    auto edgeLengths = temple::mapSequentialPairs(
-      link.cycleSequence,
+    auto edgeLengths = temple::map(
+      temple::adaptors::sequentialPairs(link.cycleSequence),
       [&](const auto& i, const auto& j) -> double {
         return Bond::calculateBondDistance(
           graph.elementType(i),

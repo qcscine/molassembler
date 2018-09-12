@@ -2,7 +2,7 @@
 
 #include "temple/constexpr/ToSTL.h"
 #include "temple/constexpr/TupleTypePairs.h"
-#include "temple/Containers.h"
+#include "temple/Functional.h"
 
 namespace Symmetry {
 
@@ -72,7 +72,7 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
       const auto& constexprMappings = constexprOption.value();
 
       properties::SymmetryTransitionGroup STLResult;
-      STLResult.indexMappings = temple::mapToVector(
+      STLResult.indexMappings = temple::map(
         temple::toSTL(constexprMappings.mappings),
         [&](const auto& indexList) -> std::vector<unsigned> {
           return {

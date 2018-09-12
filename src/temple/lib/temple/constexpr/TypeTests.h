@@ -41,7 +41,7 @@ constexpr bool testOperatorSmaller(const T& a, const T& b) {
   );
 }
 
-template<typename Container>
+template<class Container>
 constexpr bool testConstIterators(const Container& container) {
   if(!( // Very basic tests
     container.begin() == container.begin()
@@ -54,7 +54,7 @@ constexpr bool testConstIterators(const Container& container) {
   return true;
 }
 
-template<typename Container>
+template<class Container>
 constexpr bool testIterators(Container container) {
   /* TODO
    * - different tests depending on the type of iterator

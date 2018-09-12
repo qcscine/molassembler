@@ -3,9 +3,11 @@
 
 #include <Eigen/Dense>
 
-#include "temple/MemberFetcher.h"
+#include "temple/Adaptors/Transform.h"
 #include "temple/constexpr/Numeric.h"
-#include "temple/Containers.h"
+#include "temple/Functional.h"
+#include "temple/GroupBy.h"
+#include "temple/Variadic.h"
 #include "temple/VectorView.h"
 
 /* TODO
@@ -182,7 +184,7 @@ std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName) {
   while(
     !temple::all_of(
       Symmetry::tetrahedra(symmetryName),
-      [&](const auto tetrahedronDefinition) -> bool {
+      [&](const auto& tetrahedronDefinition) -> bool {
         return getTetrahedronVolume(
           getCoordinates(symmetryName, mapping(tetrahedronDefinition[0])),
           getCoordinates(symmetryName, mapping(tetrahedronDefinition[1])),
@@ -594,7 +596,7 @@ std::vector<DistortionInfo> ligandLossTransitionMappings(
    *
    * 1, 2, ..., (pos - 1), (pos + 1), ..., (from_size - 1), pos
    */
-  std::vector<unsigned> indexMapping = temple::concatenate(
+  std::vector<unsigned> indexMapping = temple::variadic::concatenate(
     temple::iota<unsigned>(positionInSourceSymmetry),
     detail::range(positionInSourceSymmetry + 1, Symmetry::size(symmetryFrom))
   );
@@ -651,7 +653,7 @@ SymmetryTransitionGroup selectBestTransitionMappings(
    */
 
   double lowestAngularDistortion = temple::min(
-    temple::getMember(
+    temple::adaptors::transform(
       distortions,
       [](const auto& distortion) -> double {
         return distortion.angularDistortion;
@@ -672,7 +674,7 @@ SymmetryTransitionGroup selectBestTransitionMappings(
 
   // And now sub-set further on the lowest chiral distortion
   double lowestChiralDistortion = temple::min(
-    temple::getMember(
+    temple::adaptors::transform(
       distortionsView,
       [](const auto& distortion) -> double {
         return distortion.chiralDistortion;
