@@ -12,7 +12,7 @@
 
 namespace molassembler {
 
-namespace Version {
+namespace version {
 
 //! The major version number. Incremented on incompatible API changes
 constexpr unsigned major = 0;
@@ -33,7 +33,7 @@ inline std::string fullVersion() {
   );
 }
 
-} // namespace Version
+} // namespace version
 
 } // namespace molassembler
 

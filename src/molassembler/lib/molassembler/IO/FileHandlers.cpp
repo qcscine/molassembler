@@ -137,7 +137,7 @@ void MOLFileHandler::_write(
       auto localNow = *localtime(&now);
 
       fout << std::setw(2) << "##" // First and last initial of user
-        << std::setw(8) << "MASM"+Version::majorMinor() // PPPPPPPP (8, Prog name)
+        << std::setw(8) << "MASM"+version::majorMinor() // PPPPPPPP (8, Prog name)
         << std::put_time(&localNow, "%m%d%y%H%M") // MMDDYYHHmm
         << "3D" // dd (dimensionality)
         // Missing:

@@ -10,6 +10,7 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/StereocenterList.h"
+#include "molassembler/Version.h"
 
 namespace nlohmann {
 
@@ -209,6 +210,13 @@ nlohmann::json serialize(const Molecule& molecule) {
 
   json m;
 
+  // Add a version tag. Always serialize to the newest version information
+  m["v"] = {
+    version::major,
+    version::minor,
+    version::patch
+  };
+
   m["g"] = molecule.graph();
 
   const auto& stereocenters = molecule.stereocenters();
@@ -250,6 +258,22 @@ nlohmann::json serialize(const Molecule& molecule) {
 }
 
 Molecule deserialize(const nlohmann::json& m) {
+  /* In the future, we will have to check the version information to ensure the
+   * chosen deserialization algorithm is compatible (in case breaking changes
+   * are made). As long as we do not increment the version past major = 1,
+   * though, this algorithm does not require any changes.
+   */
+  // Ensure the future hasn't come yet
+  static_assert(
+    version::major <= 1,
+    "Incrementing the major version past 1 requires that you look at JSON deserialization!"
+  );
+
+  /* Look at the version information to determine if there is a suitable
+   * deserialization algorithm or not
+   */
+  // std::vector<unsigned> version = m["v"];
+
   OuterGraph graph = m["g"];
 
   StereocenterList stereocenters;
