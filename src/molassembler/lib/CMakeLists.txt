@@ -66,7 +66,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/PermutationState.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
@@ -111,7 +110,6 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/PermutationState.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
 )
 
