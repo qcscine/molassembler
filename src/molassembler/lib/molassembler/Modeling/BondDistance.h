@@ -6,7 +6,7 @@
 
 /*! @file
  *
- * Bond distance modelling functions.
+ * @brief Bond distance modelling functions.
  */
 
 namespace molassembler {

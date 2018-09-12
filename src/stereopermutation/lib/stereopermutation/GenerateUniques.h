@@ -5,6 +5,8 @@
 
 /*! @file
  *
+ * @brief Generate non-superposable atom-centered stereopermutations
+ *
  * Main entry point into the library. From here, a set of rotationally unique
  * assignments for a specific assignment can be generated, with or without
  * counting the relative weights of unique assignments.

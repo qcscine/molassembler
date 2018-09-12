@@ -11,6 +11,8 @@
 
 /*! @file
  *
+ * @brief Data struct for DG refinement step data
+ *
  * Contains the declarations of a number of debug data structures for the
  * debugging of DG refinement.
  */

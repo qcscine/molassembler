@@ -13,6 +13,8 @@
 
 /*! @file
  *
+ * @brief Fast shortest paths graph for triangle inequalities
+ *
  * Declaration of a graph class that aids in the determination of triangle
  * inequality limit distance bounds and the generation of a distance matrix
  * from a list of atom-index pairwise distance bounds.

@@ -1,6 +1,6 @@
 /*!@file
  *
- * Contains preprocessor definitions that impact the generated code.
+ * @brief Preprocessor definitions to alter library compilation behavior
  */
 
 /*! If defined, a reduced set of tetrahedra is used in defining symmetries

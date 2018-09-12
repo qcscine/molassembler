@@ -3,7 +3,7 @@
 
 /*! @file
  *
- * Defines a data struct for storing a numeric interval.
+ * @brief Data struct for storing a numeric interval.
  */
 
 namespace molassembler {

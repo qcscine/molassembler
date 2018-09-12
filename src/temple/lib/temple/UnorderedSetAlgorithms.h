@@ -3,7 +3,7 @@
 
 /*! @file
  *
- * Set-level algorithms for unordered sets.
+ * @brief Set-level algorithms for unordered sets.
  */
 
 namespace temple {

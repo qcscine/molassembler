@@ -6,6 +6,8 @@
 
 /*! @file
  *
+ * @brief Vector-adapting set-like objects for small collections
+ *
  * Vector-based set-like objects for very small collections in order to reduce
  * space overhead and avoid <set>'s trees for better performance.
  */

@@ -3,6 +3,8 @@
 
 /*! @file
  *
+ * @brief boost-namespace functions for use of ImplicitGraph with BGL
+ *
  * Includes function definitions necessary for ImplicitGraph
  * interoperability with boost::graph algorithms.
  */

@@ -7,6 +7,8 @@
 
 /*! @file
  *
+ * @brief Traits definitions for use of ImplicitGraph with Boost Graph Library
+ *
  * Includes graph trait, property map and property trait type definitions
  * necessary for ImplicitGraph interoperability with boost::graph
  * algorithms.

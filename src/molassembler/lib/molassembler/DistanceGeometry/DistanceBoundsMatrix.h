@@ -11,7 +11,7 @@
 
 /*! @file
  *
- * Contains the implementation of a class that stores distance bounds.
+ * @brief Class storing atom-pairwise distance bounds
  */
 
 namespace molassembler {

@@ -7,6 +7,8 @@
 
 /*! @file
  *
+ * @brief Convert a Molecule to atom-pairwise distance bounds
+ *
  * The molecular graph with all its conformational specifications via
  * stereocenter assignments must be transformed into a spatial model that
  * describes its internal degrees of freedom in a manner translatable to

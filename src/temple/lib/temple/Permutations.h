@@ -5,7 +5,7 @@
 
 /*!@file
  *
- * Provides functionality related to permutations.
+ * @brief Provides functionality related to permutations.
  */
 
 namespace temple {

@@ -8,6 +8,8 @@
 
 /*!@file
  *
+ * @brief Generate rotational orientations of two symmetries fused over a bond
+ *
  * Enables the computation of relative orientations of arbitrary symmetries
  * fused at arbitrary positions that yield indices of permutations that are
  * meaningful for ranking computations.

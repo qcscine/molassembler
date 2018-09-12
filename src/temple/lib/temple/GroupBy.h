@@ -8,6 +8,8 @@
 
 /*! @file
  *
+ * @brief Group container elements together by various methods
+ *
  * Provides functionality to group elements of a container together by various
  * methods.
  */

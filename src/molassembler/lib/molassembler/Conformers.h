@@ -11,7 +11,7 @@ class PositionCollection;
 
 /*!@file
  *
- * Interface for the generation of new conformations of Molecules
+ * @brief Interface for the generation of new conformations of Molecules
  */
 
 namespace molassembler {

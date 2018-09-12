@@ -8,6 +8,8 @@
 
 /*! @file
  *
+ * @brief Randomness helper functions
+ *
  * Provides both an initialized randomness engine as well as random uniform
  * integers or floating-point numbers.
  */

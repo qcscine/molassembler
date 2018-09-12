@@ -7,6 +7,8 @@
 
 /*! @file
  *
+ * @brief Metric matrix class for DG semantics
+ *
  * In the Distance Geometry algorithm, a metric matrix is generated from the
  * distance bounds. This file hold the declaration of the implementation of that
  * matrix.

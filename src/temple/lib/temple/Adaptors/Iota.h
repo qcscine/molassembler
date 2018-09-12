@@ -3,6 +3,11 @@
 
 #include "temple/Traits.h"
 
+/*!@file
+ *
+ * @brief Provides an integer range generator.
+ */
+
 namespace temple {
 
 namespace adaptors {

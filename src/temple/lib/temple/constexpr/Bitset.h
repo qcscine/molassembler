@@ -6,6 +6,8 @@
 
 /*!@file
  *
+ * @brief Fixed-size bitset class
+ *
  * Contains a fixed-size bitset implementation.
  */
 

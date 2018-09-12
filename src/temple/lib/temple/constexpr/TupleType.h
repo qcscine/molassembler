@@ -7,7 +7,7 @@
 
 /*! @file
  *
- * Provides type-level computations for types enumerated in a tuple.
+ * @brief Provides type-level computations for types enumerated in a tuple.
  */
 
 namespace temple {

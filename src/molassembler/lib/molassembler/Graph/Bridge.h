@@ -4,6 +4,11 @@
 #include "molassembler/OuterGraph.h"
 #include "molassembler/Graph/InnerGraph.h"
 
+/*!@file
+ *
+ * @brief OuterGraph and InnerGraph vertex- & edge descriptor conversions
+ */
+
 namespace molassembler {
 
 inline InnerGraph::Edge toInner(const BondIndex& bondIndex, const InnerGraph& graph) {

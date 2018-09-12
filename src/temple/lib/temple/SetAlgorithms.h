@@ -3,9 +3,9 @@
 
 #include <algorithm>
 
-/*!@file
+/*! @file
  *
- * Provides shortcuts to call STL set algorithms.
+ * @brief Shortcuts to call STL set algorithms.
  */
 
 namespace temple {

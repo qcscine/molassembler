@@ -6,6 +6,8 @@
 
 /*!@file
  *
+ * @brief GOR1 single-source shortest-paths algorithm with boost graph
+ *
  * Implements a simplified GOR1 single-source shortest paths algorithm in the
  * boost namespace in Boost Graph Library style (including a Visitor for
  * algorithm observation and side effects).

@@ -8,6 +8,11 @@
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Options.h"
 
+/*!@file
+ *
+ * @brief Permutational state of AtomStereocenter member class
+ */
+
 namespace molassembler {
 
 struct PermutationState {

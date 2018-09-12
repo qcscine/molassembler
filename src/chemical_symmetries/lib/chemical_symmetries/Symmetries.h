@@ -12,6 +12,8 @@
 
 /*! @file
  *
+ * @brief Centralizes basic symmetry data in name-accessible fashion
+ *
  * Central inclusion point of the library. Defines the main symmetry data and
  * all accessors. Symmetries are defined in a constexpr fashion and homogenized
  * into a single container at compile-time to allow for compile-time computation

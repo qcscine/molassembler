@@ -8,6 +8,8 @@
 
 /*! @file
  *
+ * @brief Uniform callable invoke from arguments or tuple of arguments
+ *
  * Provides uniform C++14 function-like object invoke from arguments or tuple
  * of arguments.
  */

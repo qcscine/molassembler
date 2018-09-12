@@ -7,6 +7,8 @@
 
 /*!@file
  *
+ * @brief bitmask class
+ *
  * Contains a bitmask implementation for strong enums with explicit underlying
  * types and unmodified representational values.
  */

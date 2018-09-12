@@ -12,6 +12,8 @@
 
 /*! @file
  *
+ * @brief Run-time symmetry property calculations
+ *
  * Contains a suite of property calculations on the dynamic symmetry data.
  */
 

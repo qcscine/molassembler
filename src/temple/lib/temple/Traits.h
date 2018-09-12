@@ -5,7 +5,7 @@
 
 /*! @file
  *
- * Provides a few basic function and container traits.
+ * @brief Provides a few basic function and container traits.
  */
 
 namespace temple {

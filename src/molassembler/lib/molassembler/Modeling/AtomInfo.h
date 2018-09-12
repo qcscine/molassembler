@@ -10,6 +10,8 @@
 
 /*! @file
  *
+ * @brief Element type information classes
+ *
  * A set of electron-counting helper functions. We keep a dataset of s-p-d-f
  * valence electron counts for all elements. These are required in e.g. VSEPR
  * geometry determinations.

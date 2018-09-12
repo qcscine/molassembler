@@ -10,6 +10,8 @@
 
 /*! @file
  *
+ * @brief Create STL analogues of constexpr containers
+ *
  * Offers quick functions to create STL analog data structures from the ones
  * defined in this library.
  */

@@ -8,6 +8,8 @@
 
 /*! @file
  *
+ * @brief Purely graph-based algorithms
+ *
  * Contains a number of graph-level algorithms where connectivity alone is
  * relevant.
  */

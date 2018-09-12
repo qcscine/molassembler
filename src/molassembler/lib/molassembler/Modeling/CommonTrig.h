@@ -7,10 +7,11 @@
 
 /*! @file
  *
+ * @brief Trigonometric stubs
+ *
  * Contains some common trigonometric functionality. Does not contain custom
  * implementations of the basic trigonometric functions, but rather common
  * combinations of them in specific contexts.
- *
  */
 
 namespace molassembler {

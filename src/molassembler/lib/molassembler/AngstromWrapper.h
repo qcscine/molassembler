@@ -7,6 +7,8 @@
 
 /*!@file
  *
+ * @brief Wrapper class to typify Angstrom scale positional information
+ *
  * Provides a class that exists purely to strongly separate position collections
  * in bohr units and angstrom units in library interfaces
  */

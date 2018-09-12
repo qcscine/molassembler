@@ -3,6 +3,11 @@
 
 #include "temple/ContainerTraits.h"
 
+/*!@file
+ *
+ * @brief Provides zip iteration for two containers
+ */
+
 namespace temple {
 
 namespace adaptors {

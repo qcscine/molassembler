@@ -3,6 +3,8 @@
 
 /*!@file
  *
+ * @brief Test consistency of object ordering
+ *
  * Functionality for testing the consistency of established object ordering.
  */
 

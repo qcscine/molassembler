@@ -10,6 +10,8 @@
 
 /*! @file
  *
+ * @brief Stubs to work with numeric data
+ *
  * Exposes a small set of functions for working with numbers in containers.
  *
  * - Basic summation

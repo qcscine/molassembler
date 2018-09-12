@@ -9,7 +9,7 @@
 
 /*!@file
  *
- * Centralizes the main customization points of the library's behavior.
+ * @brief Centralizes the main customization points of the library's behavior.
  */
 
 namespace molassembler {

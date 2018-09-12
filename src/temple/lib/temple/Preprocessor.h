@@ -2,7 +2,8 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_PREPROCESSOR_H
 
 /*! @file
- * Defines a set of useful preprocessor macros
+ *
+ * @brief Defines a set of useful preprocessor macros
  *
  * @note When applying the contained function attributes, remember that
  * exception branch correctness must be considered during e.g. common

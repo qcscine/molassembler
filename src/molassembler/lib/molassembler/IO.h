@@ -8,6 +8,8 @@
 
 /*! @file
  *
+ * @brief Input/output interface
+ *
  * Contains main IO definitions of the library. Currently only supports
  * MOLFile V2000 specification.
  */

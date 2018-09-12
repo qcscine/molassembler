@@ -10,7 +10,7 @@
 
 /*! @file
  *
- * Contains a few useful functions for dealing with STL containers / types.
+ * @brief Useful functions for dealing with STL containers / types.
  */
 
 namespace StdlibTypeAlgorithms {

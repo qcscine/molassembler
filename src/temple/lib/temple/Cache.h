@@ -12,6 +12,8 @@
 
 /*! @file
  *
+ * @brief Cache classes
+ *
  * Contains a map-like MinimalCache and a full-blown boost::any-Cache.
  */
 

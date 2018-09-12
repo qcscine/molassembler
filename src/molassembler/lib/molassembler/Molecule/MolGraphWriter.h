@@ -3,6 +3,8 @@
 
 /*! @file
  *
+ * @brief Write graphviz representations of Molecules for state visualization
+ *
  * Implements a graphviz writing helper class for the visualization of a
  * molecular graph.
  */

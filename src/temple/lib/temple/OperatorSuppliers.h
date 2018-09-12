@@ -3,6 +3,8 @@
 
 /*!@file
  *
+ * @brief Operator-supplying CRTP base classes
+ *
  * Permits the provision of more operators from fewer initial operator
  * implementations.
  */

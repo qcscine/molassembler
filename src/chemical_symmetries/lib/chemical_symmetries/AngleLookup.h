@@ -5,6 +5,8 @@
 
 /*! @file
  *
+ * @brief Generate lookup table for a symmetry's angles
+ *
  * Facilitates the calculation of all possible angles between ligand positions
  * of symmetries with many binding sites in a constexpr manner from the
  * coordinates.

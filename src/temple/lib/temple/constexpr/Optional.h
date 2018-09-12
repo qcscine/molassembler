@@ -7,7 +7,7 @@
 
 /*! @file
  *
- * Includes an optional type implementation.
+ * @brief Basic optional type
  */
 
 namespace temple {

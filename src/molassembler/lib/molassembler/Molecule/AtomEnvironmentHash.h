@@ -14,7 +14,7 @@
 
 /*!@file
  *
- * Contains a function for hashing an atom's environment in a Molecule
+ * @brief Hash an atom's environment in a Molecule for isomorphism calculations
  */
 
 namespace molassembler {

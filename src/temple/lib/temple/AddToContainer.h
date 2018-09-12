@@ -6,6 +6,8 @@
 
 /*! @file
  *
+ * @brief Central interface to add elements to many types of containers
+ *
  * This file provides the functionality to add an element to a container by
  * calling any of the following members, as appropriate:
  *

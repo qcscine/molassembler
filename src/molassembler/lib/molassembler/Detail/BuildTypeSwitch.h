@@ -2,7 +2,8 @@
 #define INCLUDE_MOLASSEMBLER_BUILD_TYPE_SWITCH_H
 
 /*! @file
- * Defines a compile-time constant boolean indicating the build type.
+ *
+ * @brief Defines a compile-time constant boolean indicating the build type.
  */
 
 namespace molassembler {

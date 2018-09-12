@@ -8,6 +8,8 @@
 
 /*! @file
  *
+ * @brief Helpers for comparing floating point values
+ *
  * Some floating point comparison helpers for direct equality testing on the
  * basis of either relative or absolute tolerance. Two comparator classes for
  * better legibility of common comparison operators in expanded equality

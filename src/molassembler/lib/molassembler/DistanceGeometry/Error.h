@@ -5,6 +5,8 @@
 
 /*!@file
  *
+ * @brief Defines DG result type error categories and strings for boost::outcome
+ *
  * Contains the DG error_category definitions for use with boost::outcome
  */
 

@@ -14,6 +14,8 @@
 
 /*! @file
  *
+ * @brief Class to explore cyclic structure of molecules
+ *
  * Contains a wrapper class for the C-style RingDecomposerLib functions so that
  * cycle data can be used in idiomatic C++.
  */

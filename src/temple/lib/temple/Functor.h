@@ -5,7 +5,7 @@
 
 /*!@file
  *
- * Provides the identity functor.
+ * @brief Provides an identity functor.
  */
 
 namespace temple {

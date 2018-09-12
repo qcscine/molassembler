@@ -18,6 +18,8 @@
 
 /*! @file
  *
+ * @brief Graph class to help in gradual discovery of ordering relations
+ *
  * Implements a class that aids in the gradual discovery of ordering relations
  * for a set of values.
  */

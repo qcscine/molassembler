@@ -3,7 +3,7 @@
 
 /*!@file
  *
- * Contains various descriptor calculations for Molecule instances
+ * @brief Calculates properties of molecules
  */
 
 namespace molassembler {

@@ -22,6 +22,8 @@
 
 /*! @file
  *
+ * @brief Molecule class interface
+ *
  * Contains the Molecule class declaration, which is the central class of the
  * library.
  */

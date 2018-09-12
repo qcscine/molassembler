@@ -8,6 +8,8 @@
 
 /*!@file
  *
+ * @brief An ordered homogeneous pair-like class
+ *
  * Contains a class imitating std::pair whose member types are homogeneous and
  * ordered.
  */

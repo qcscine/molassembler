@@ -9,6 +9,8 @@
 
 /*! @file
  *
+ * @brief Functional-style container-related algorithms
+ *
  * Supplies a large number of functional-style algorithm definitions. Most are
  * STL algorithm shortcuts but many are composable with the range adaptors
  * provided in Adaptors/ using the function call template functions in

@@ -9,7 +9,7 @@ class ElementTypeCollection;
 
 /*! @file
  *
- * Contains the interpretation of bond orders from 3D coordinates
+ * @brief Interpret bond orders from 3D coordinates only
  */
 
 namespace molassembler {

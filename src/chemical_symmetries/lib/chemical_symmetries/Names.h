@@ -3,6 +3,8 @@
 
 /*! @file
  *
+ * @brief Defines symmetry names and total count
+ *
  * Contains only the symmetry names and count for minimal header inclusion
  * necessities in dependencies
  */

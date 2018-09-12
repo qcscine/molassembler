@@ -8,10 +8,9 @@
 #include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
-#include <cassert>
-#include <vector>
-
 /*! @file
+ *
+ * @brief Calculate internal angles of cyclic polygons from edge lengths
  *
  * Provides functionality to calculate the circumradii and internal angles of
  * cyclic polygons of any size.  Contains shortcut calculations of the internal angles

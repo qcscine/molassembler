@@ -1,6 +1,11 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 
+/*!@file
+ *
+ * @brief Includes all adaptors.
+ */
+
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/Enumerate.h"
 #include "temple/Adaptors/Iota.h"

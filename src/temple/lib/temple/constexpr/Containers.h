@@ -8,6 +8,8 @@
 
 /*! @file
  *
+ * @brief Functional-style constexpr container algorithms
+ *
  * Provides constexpr functional-style modification of container elements
  */
 

@@ -9,6 +9,8 @@
 
 /*! @file
  *
+ * @brief constexpr math implementations
+ *
  * Provides \c constexpr basic mathematical function implementations, some
  * logical functions and floating-point comparison helpers.
  *

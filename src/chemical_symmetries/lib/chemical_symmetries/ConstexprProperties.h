@@ -12,6 +12,8 @@
 
 /*! @file
  *
+ * @brief Compile-time symmetry property calculations
+ *
  * Constexpr parallel to Properties.h. Contains a slew of computations on the
  * base symmetry data to compute derived properties. You can e.g. apply
  * rotations, extract rotation multiplicities, calculate angular and chiral

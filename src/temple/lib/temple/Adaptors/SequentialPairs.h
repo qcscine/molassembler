@@ -3,6 +3,11 @@
 
 #include "temple/ContainerTraits.h"
 
+/*!@file
+ *
+ * @brief Provides sequential pair generation from a single container
+ */
+
 namespace temple {
 
 namespace adaptors {

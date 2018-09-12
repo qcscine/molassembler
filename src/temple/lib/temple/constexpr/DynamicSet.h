@@ -5,6 +5,8 @@
 
 /*! @file
  *
+ * @brief BTree-based std::set-like container (but max size is space allocated)
+ *
  * A constexpr fixed-maximum-size managed set so that the type signature does
  * not change upon element insertion and deletion. STL parallel is std::set,
  * with the difference that here the maximum number of elements must be known at

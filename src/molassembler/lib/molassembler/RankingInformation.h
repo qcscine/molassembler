@@ -7,7 +7,7 @@
 
 /*! @file
  *
- * Contains the data struct declaration of ranking information.
+ * @brief Data struct storing results of ranking and local graph algorithms
  */
 
 namespace molassembler {

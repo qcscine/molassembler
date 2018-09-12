@@ -5,7 +5,9 @@
 
 #include <iostream>
 
-/*!  @file
+/*! @file
+ *
+ * @brief Operator consistency checks
  *
  * Contains a suite of constexpr logical operator consistency checks. These can
  * aid in the diagnosis of custom operator weak ordering inconsistencies and

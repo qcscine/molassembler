@@ -9,6 +9,8 @@
 
 /*! @file
  *
+ * @brief Distance Geometry conformation generating procedures
+ *
  * Declares the central conformation (and -ensemble) generating functions that
  * start the DG procedure.
  */

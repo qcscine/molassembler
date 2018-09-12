@@ -15,7 +15,7 @@
 
 /*! @file
  *
- * Recursive serialization for easier debugging involving common STL containers.
+ * @brief Recursive serialization for debugging involving common STL containers.
  */
 
 namespace temple {

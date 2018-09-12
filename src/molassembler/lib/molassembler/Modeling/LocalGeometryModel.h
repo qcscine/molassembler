@@ -12,6 +12,8 @@
 
 /*! @file
  *
+ * @brief Algorithms to determine local symmetry from graph information
+ *
  * Declarations for the general interface with which a number of classes can
  * determine the local geometry that a specific arrangement of atoms should
  * have.

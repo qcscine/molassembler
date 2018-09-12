@@ -5,7 +5,8 @@
 
 /*! @file
  *
- * Contains the library versioning scheme information.
+ * @brief Library versioning scheme information.
+ *
  * This library adheres to semantic versioning
  * (http://semver.org/spec/v2.0.0.html).
  */
@@ -21,10 +22,12 @@ constexpr unsigned minor = 1;
 //! The patch version number. Incremented on backwards-compatible bug fixes
 constexpr unsigned patch = 0;
 
+//! Major.minor string
 inline std::string majorMinor() {
   return std::to_string(major) + "." + std::to_string(minor);
 }
 
+//! Major.minor.patch string
 inline std::string fullVersion() {
   return (
     std::to_string(major)

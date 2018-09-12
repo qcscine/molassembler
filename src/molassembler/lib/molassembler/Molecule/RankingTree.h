@@ -72,6 +72,8 @@
 
 /*! @file
  *
+ * @brief IUPAC-like ranking of substituents at atoms
+ *
  * Centerpoint of library ranking algorithm. Implements the RankingTree class,
  * which can be instantiated on any atomic index in a Molecule, which
  * splits the Molecule into an acyclic tree. That tree can then be used to rank

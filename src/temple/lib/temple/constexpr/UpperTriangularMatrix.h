@@ -7,6 +7,8 @@
 
 /*! @file
  *
+ * @brief Matrix-like class that stores only upper triangular part
+ *
  * Provides a \c constexpr class that stores the data of an upper-triangular
  * matrix via a std::array and provides two-index access.
  */

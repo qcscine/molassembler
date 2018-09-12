@@ -6,6 +6,8 @@
 
 /*! @file
  *
+ * @brief Helper functions for dealing with optional types
+ *
  * Implements optional-returning function composition syntactic sugar to avoid
  * repetitive patterns when dealing with lots of optionals.
  */

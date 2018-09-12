@@ -6,6 +6,8 @@
 
 /*! @file
  *
+ * @brief A std::map-like class based on BTree (but max size is space allocated)
+ *
  * Implements a constexpr container much like std::map, except with fixed
  * maximal size.
  */

@@ -11,6 +11,8 @@
 
 /*! @file
  *
+ * @brief Base class to describe substituent arrangements in symmetries
+ *
  * Contains the base class employed for describing the particular manner in
  * which substituents are arranged in various symmetries.
  */

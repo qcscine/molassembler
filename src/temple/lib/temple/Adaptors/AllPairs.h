@@ -5,6 +5,11 @@
 
 #include <tuple>
 
+/*!@file
+ *
+ * @brief Provides pair-generation within a single container or two.
+ */
+
 namespace temple {
 
 namespace adaptors {

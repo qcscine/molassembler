@@ -6,6 +6,8 @@
 
 /*!@file
  *
+ * @brief Interpret multiple molecules in positional information
+ *
  * Contains functionality permitting the interpretation of several Molecules
  * from three-dimensional structures with or without accompanying bond orders.
  */

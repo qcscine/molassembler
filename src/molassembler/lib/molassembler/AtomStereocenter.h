@@ -13,6 +13,8 @@ using namespace std::string_literals;
 
 /*! @file
  *
+ * @brief Handle arrangements of substituents around an atom-centered symmetry
+ *
  * Coordinative stereocenter class header file. Permits the storage of
  * particular arrangements of bonded atoms around a central atom and their
  * manipulation.

@@ -5,7 +5,7 @@
 
 /*!@file
  *
- * Defines basic types widely shared across the project.
+ * @brief Defines basic types widely shared across the project.
  */
 
 namespace molassembler {

@@ -9,6 +9,8 @@
 
 /*! @file
  *
+ * @brief std::vector-like class (but max size is size allocated)
+ *
  * A constexpr fixed-maximum size managed array so that insertions and deletions
  * do not change the type signature. Principally similar to std::vector except
  * that the maximum size must be known at compile time and cannot change.

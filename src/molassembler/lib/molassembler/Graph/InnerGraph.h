@@ -9,6 +9,11 @@
 
 #include <limits>
 
+/*!@file
+ *
+ * @brief Boost Graph Library wrapper to help in concealing underlying type
+ */
+
 namespace molassembler {
 
 class InnerGraph {

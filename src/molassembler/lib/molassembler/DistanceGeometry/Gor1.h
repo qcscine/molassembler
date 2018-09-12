@@ -9,6 +9,8 @@
 
 /*!@file
  *
+ * @brief GOR1 specializations for use with ImplicitGraph and ExplicitGraph
+ *
  * Contains specializations of the Gor1 algorithm for use with ImplicitGraph
  * and ExplicitGraph
  */

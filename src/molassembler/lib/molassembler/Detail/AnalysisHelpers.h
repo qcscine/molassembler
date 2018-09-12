@@ -10,7 +10,7 @@
 
 /*! @file
  *
- * Contains some helper functions to write DG step raytrace and analysis files.
+ * @brief Helper functions to write DG step raytrace and analysis files.
  */
 
 namespace molassembler {

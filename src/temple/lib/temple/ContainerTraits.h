@@ -7,6 +7,8 @@
 
 /*! @file
  *
+ * @brief Compile-time container type traits
+ *
  * Helper file that allows the use of container traits such as whether specific
  * member functions exist in SFINAE enable_ifs.
  */

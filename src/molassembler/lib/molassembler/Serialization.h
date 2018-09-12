@@ -3,7 +3,7 @@
 
 /*!@file
  *
- * Provides serialization / deserialization for Molecule instances
+ * @brief Provides serialization / deserialization for Molecule instances
  */
 
 #include <vector>

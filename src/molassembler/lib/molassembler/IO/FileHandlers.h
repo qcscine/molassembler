@@ -10,6 +10,16 @@
 #include "molassembler/IO.h"
 #include "molassembler/Interpret.h"
 
+/*!@file
+ *
+ * @brief Input/output of various file formats
+ *
+ * Centralizes input and output of several file formats
+ * - MOL (V2000)
+ * - XYZ
+ * - MASM (Binary)
+ */
+
 namespace molassembler {
 
 // Forward-declarations

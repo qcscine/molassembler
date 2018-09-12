@@ -4,7 +4,7 @@
 
 /*!@file
  *
- * Provides base 64 encoding and decoding between strings and vectors of uint_8
+ * @brief Base 64 encoding and decoding between strings and vectors of uint_8
  */
 
 namespace base64 {

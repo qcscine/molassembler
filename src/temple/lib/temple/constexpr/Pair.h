@@ -7,6 +7,8 @@
 
 /*! @file
  *
+ * @brief std::pair-like container
+ *
  * Implements a constexpr container much like std::pair. Yes, this really is
  * necessary since C++14's pair isn't constexpr everywhere!
  */

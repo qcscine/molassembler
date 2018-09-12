@@ -7,7 +7,7 @@
 
 /*! @file
  *
- * Specifies the refinement minimization problem for the dlib library.
+ * @brief Specifies the refinement minimization problem for the dlib library.
  */
 
 namespace molassembler {

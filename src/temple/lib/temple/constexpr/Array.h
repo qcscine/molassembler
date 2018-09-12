@@ -9,6 +9,8 @@
 
 /*! @file
  *
+ * @brief std::array-like class
+ *
  * Constexpr fixed-size array to replace std::array in C++14. This class is
  * largely unneeded in C++17 since many std::array members are then marked
  * constexpr.

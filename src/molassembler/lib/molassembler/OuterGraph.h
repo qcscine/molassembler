@@ -15,7 +15,7 @@
 
 /*!@file
  *
- * Interface class for the molecular graph
+ * @brief Interface class for the molecular graph
  */
 
 // Forward-declarations

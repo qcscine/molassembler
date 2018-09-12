@@ -7,6 +7,8 @@
 
 /*! @file
  *
+ * @brief 3D Vector class with some operations defined
+ *
  * Provides a very basic \c constexpr three-dimensional vector class with some
  * limited geometric functionality such as dot- and cross-product. Directly
  * includes the calculation of angles between two vectors.

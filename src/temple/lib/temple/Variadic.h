@@ -3,6 +3,7 @@
 
 #include "temple/constexpr/Optional.h"
 #include "temple/constexpr/TupleType.h"
+#include "temple/Traits.h"
 
 #include <algorithm>
 #include <vector>
@@ -13,6 +14,8 @@
  */
 
 /*!@file
+ *
+ * @brief Variadic functions
  *
  * Provides functions that can apply to as many Containers as needed.
  */

@@ -5,6 +5,11 @@
 #include <random>
 #include <array>
 
+/*!@file
+ *
+ * @brief Bob Jenkins' small fast noncryptographic PRNG
+ */
+
 namespace temple {
 
 namespace jsf {

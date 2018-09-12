@@ -17,6 +17,8 @@
 
 /*! @file
  *
+ * @brief Handle rotational arrangements of adjacent atom-centered symmetries
+ *
  * Contains the BondStereocenter class declaration, which models E/Z double bond
  * stereocenters in molecules.
  */

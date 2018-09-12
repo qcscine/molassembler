@@ -6,7 +6,7 @@
 
 /*! @file
  *
- * Contains the interface for property generation and access.
+ * @brief Interface for property generation and access at runtime
  */
 
 namespace Symmetry {

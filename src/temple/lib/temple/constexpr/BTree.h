@@ -10,6 +10,8 @@
 
 /*! @file
  *
+ * @brief constexpr BTree
+ *
  * Implements a constexpr BTree which stores keys. Can be used for an ordered
  * set-like container with good complexity guarantees. Can be turned into an
  * associative container with some comparator tweaking.

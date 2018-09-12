@@ -10,6 +10,8 @@
 
 /*! @file
  *
+ * @brief Data struct to store chiral constraints for DG
+ *
  * Contains some central data class declarations and type definitions for the
  * entire Distance Geometry scheme.
  */

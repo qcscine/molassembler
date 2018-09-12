@@ -7,7 +7,7 @@
 
 /*!@file
  *
- * Some few still-used utility functions.
+ * @brief Some few still-used utility functions.
  */
 
 /* TODO

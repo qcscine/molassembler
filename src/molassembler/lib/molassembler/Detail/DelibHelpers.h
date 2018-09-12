@@ -6,7 +6,7 @@
 
 /*! @file
  *
- * A series of helpers to interface with the Delib library
+ * @brief A series of helpers to interface with the Delib library
  */
 
 namespace molassembler {

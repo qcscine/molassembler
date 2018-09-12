@@ -12,7 +12,7 @@
 
 /*! @file
  *
- * Contains the central symmetry class definitions
+ * @brief Central symmetry data class definitions
  */
 
 namespace Symmetry {

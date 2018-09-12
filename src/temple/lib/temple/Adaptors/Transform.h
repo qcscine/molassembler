@@ -4,6 +4,11 @@
 #include "temple/ContainerTraits.h"
 #include "temple/Invoke.h"
 
+/*!@file
+ *
+ * @brief Provides functional-style transformation of container elements
+ */
+
 namespace temple {
 
 namespace adaptors {

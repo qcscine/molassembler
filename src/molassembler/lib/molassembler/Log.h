@@ -6,7 +6,7 @@
 
 /*! @file
  *
- * Basic Logging functionality for debugging
+ * @brief Basic Logging functionality for debugging
  */
 
 namespace Log {

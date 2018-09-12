@@ -13,6 +13,8 @@
 
 /*! @file
  *
+ * @brief Owning class storing all stereocenters in a molecule
+ *
  * Contains the declaration for a class that stores a list of all stereocenters
  * in a molecule.
  */

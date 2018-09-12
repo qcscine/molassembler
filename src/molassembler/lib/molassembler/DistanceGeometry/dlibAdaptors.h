@@ -6,6 +6,8 @@
 
 /*! @file
  *
+ * @brief Adaptors for type interconversions to/from dlib
+ *
  * The numerical minimization of the error function is done with the dlib
  * library. This file contains some adapters for strategy, potentials used and
  * end criteria for the minimization.
