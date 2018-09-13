@@ -228,7 +228,12 @@ void run_tests_with_counts(
       ? Stereopermutation(symmetryName, characters)
       : Stereopermutation(symmetryName, characters, pairs);
 
-    auto unique = uniquesWithWeights(assignment, symmetryName);
+    // The count of uniques in the tests are all without trans-arranged pairs!
+    auto unique = uniquesWithWeights(
+      assignment,
+      symmetryName,
+      true // remove trans arranged pairs
+    );
 
     BOOST_CHECK(unique.assignments.size() == expectedUnique );
 
