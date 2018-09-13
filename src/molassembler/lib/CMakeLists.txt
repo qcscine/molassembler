@@ -3,10 +3,21 @@ find_package(stereopermutation 0.1.0 REQUIRED)
 find_package(chemical_symmetries 0.1.0 REQUIRED)
 find_package(temple 0.1.0 REQUIRED)
 find_package(cyclic_polygons 0.1.0 REQUIRED)
-find_package(Delib REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(dlib REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem system)
+
+# Try to find the Delib if installed locally. Alternatively, import it as a
+# dependent project from gitlab
+find_package(Delib QUIET)
+if(NOT TARGET delib::Delib)
+  message(STATUS "Could not find Delib locally, downloading from gitlab.")
+  include(DelibImport)
+  import_delib()
+  if(NOT TARGET delib::Delib)
+    message(FATAL_ERROR "Delib could not be downloaded from gitlab!")
+  endif()
+endif()
 
 # add include directories
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
@@ -136,11 +147,6 @@ target_include_directories(molassembler
 )
 
 # Linking
-# NOTE: For the shared variant, it is necessary to use the cmake variables
-# instead of the imported targets since the imported targets are not changed
-# between find_package(Boost) invocations, but the Boost scoped variables are.
-# Otherwise, Boost::filesystem is the static library (despite setting
-# Boost_USE_STATIC_LIBS OFF) above.
 target_link_libraries(
   molassembler
   PUBLIC

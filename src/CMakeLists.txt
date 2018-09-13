@@ -1,14 +1,14 @@
 set(molassembler_VERSION_MAJOR 0)
 set(molassembler_VERSION_MINOR 1)
 set(molassembler_VERSION_PATCH 0)
-
-set(as_subproject chemical_symmetries cyclic_polygons stereopermutation temple)
+set(molassembler_VERSION ${molassembler_VERSION_MAJOR}.${molassembler_VERSION_MINOR}.${molassembler_VERSION_PATCH})
 
 # Project-specific options
-option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" ON)
+option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
 option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
 
 # overwrite find_package with test against subproject list
+set(as_subproject chemical_symmetries cyclic_polygons stereopermutation temple)
 macro(find_package)
   if(NOT "${ARGV0}" IN_LIST as_subproject)
     _find_package(${ARGV})
