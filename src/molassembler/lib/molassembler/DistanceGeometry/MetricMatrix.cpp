@@ -101,6 +101,8 @@ const Eigen::MatrixXd& MetricMatrix::access() const {
 }
 
 Eigen::MatrixXd MetricMatrix::embed() const {
+  // TODO This needs much better documentation!
+  // A lot of things here are also completely unnecessary!
   const unsigned dimensionality = 4;
 
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(_matrix);

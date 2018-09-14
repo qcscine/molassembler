@@ -3,7 +3,6 @@ find_package(stereopermutation 0.1.0 REQUIRED)
 find_package(chemical_symmetries 0.1.0 REQUIRED)
 find_package(temple 0.1.0 REQUIRED)
 find_package(cyclic_polygons 0.1.0 REQUIRED)
-find_package(BLAS REQUIRED)
 find_package(dlib REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem system)
 
@@ -19,7 +18,25 @@ if(NOT TARGET delib::Delib)
   endif()
 endif()
 
-# add include directories
+# Some notes on BLAS / LAPACK:
+# Both dlib and Eigen can use BLAS / LAPACK routines.
+# - Eigen, as a header-only library, merely requires use to add the definitions
+#   and link against the library.
+# - dlib sets DLIB_USE_BLAS and DLIB_USE_LAPACK for itself at compile-time if
+#   it can find either type of library. However, since dlib is itself template-
+#   heavy, it may dynamically choose whether to use the libraries, so we
+#   also need to set the headers
+#
+# Although we enable the use of both types of libraries, currently only BLAS is
+# truly needed by either. We keep LAPACK use enabled in order to quickly add it
+# as a dependency if either library can make use of it in any way.
+#
+# Try to find suitable BLAS and LAPACK libraries:
+find_package(BLAS REQUIRED)
+# Currently, molassembler does not require LAPACK routines
+# find_package(LAPACK REQUIRED)
+
+# Add RingDecomposerLib include directory
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
 
 set(molassembler_VERSION 0.1.0)
@@ -146,6 +163,19 @@ target_include_directories(molassembler
   SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS}
 )
 
+# Add BLAS / LAPACK compile definitions
+target_compile_definitions(molassembler PUBLIC
+  EIGEN_USE_BLAS=1
+  EIGEN_USE_LAPACK=1
+  DLIB_USE_BLAS=1
+  DLIB_USE_LAPACK=1
+)
+target_compile_definitions(molassemblerStatic PUBLIC
+  EIGEN_USE_BLAS=1
+  EIGEN_USE_LAPACK=1
+  DLIB_USE_BLAS=1
+  DLIB_USE_LAPACK=1
+)
 # Linking
 target_link_libraries(
   molassembler
@@ -155,9 +185,9 @@ target_link_libraries(
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic
-    dlib::dlib
     ${BLAS_LIBRARIES}
   PRIVATE
+    dlib::dlib
     cyclic_polygons
     stereopermutation
     gor1
@@ -174,9 +204,9 @@ target_link_libraries(
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic
-    dlib::dlib
     ${BLAS_LIBRARIES}
   PRIVATE
+    dlib::dlib
     cyclic_polygons
     stereopermutation
     gor1
