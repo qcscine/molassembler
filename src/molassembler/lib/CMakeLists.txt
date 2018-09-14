@@ -23,18 +23,20 @@ endif()
 # - Eigen, as a header-only library, merely requires use to add the definitions
 #   and link against the library.
 # - dlib sets DLIB_USE_BLAS and DLIB_USE_LAPACK for itself at compile-time if
-#   it can find either type of library. However, since dlib is itself template-
-#   heavy, it may dynamically choose whether to use the libraries, so we
-#   also need to set the headers
+#   it can find either type of library in two fashions:
+#   - cblas bindings are undefined in the static library, but the dlib::dlib
+#     target has the found libraries in its INTERFACE_LINK_LIBRARIES
+#   - it configures config.h.in to reflect the use of DLIB_USE_BLAS and
+#     DLIB_USE_LAPACK so that all dependent uses have the same definitions
 #
 # Although we enable the use of both types of libraries, currently only BLAS is
-# truly needed by either. We keep LAPACK use enabled in order to quickly add it
-# as a dependency if either library can make use of it in any way.
+# used by either. We keep LAPACK use enabled in order to quickly add it as a
+# dependency if either library can make use of it in any way.
 #
-# Try to find suitable BLAS and LAPACK libraries:
-find_package(BLAS REQUIRED)
-# Currently, molassembler does not require LAPACK routines
-# find_package(LAPACK REQUIRED)
+# Try to find suitable BLAS and LAPACK libraries
+find_package(BLAS QUIET)
+# Currently, molassembler does not use LAPACK routines, so this is commented out
+# find_package(LAPACK QUIET)
 
 # Add RingDecomposerLib include directory
 include_directories(SYSTEM ${RDL_INCLUDE_DIR} include)
@@ -163,33 +165,35 @@ target_include_directories(molassembler
   SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS}
 )
 
-# Add BLAS / LAPACK compile definitions
-target_compile_definitions(molassembler PUBLIC
-  EIGEN_USE_BLAS=1
-  EIGEN_USE_LAPACK=1
-  DLIB_USE_BLAS=1
-  DLIB_USE_LAPACK=1
-)
-target_compile_definitions(molassemblerStatic PUBLIC
-  EIGEN_USE_BLAS=1
-  EIGEN_USE_LAPACK=1
-  DLIB_USE_BLAS=1
-  DLIB_USE_LAPACK=1
-)
+# Handle BLAS / LAPACK if found
+if(BLAS_FOUND)
+  # Add BLAS / LAPACK compile definitions
+  target_compile_definitions(molassembler PUBLIC
+    EIGEN_USE_BLAS
+    EIGEN_USE_LAPACK
+  )
+  target_compile_definitions(molassemblerStatic PUBLIC
+    EIGEN_USE_BLAS
+    EIGEN_USE_LAPACK
+  )
+
+  target_link_libraries(molassembler PUBLIC ${BLAS_LIBARIES})
+  target_link_libraries(molassemblerStatic PUBLIC ${BLAS_LIBRARIES})
+endif()
+
 # Linking
 target_link_libraries(
   molassembler
   PUBLIC
     Boost::boost
-    delib::Delib
+    delib::DelibStatic
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic
-    ${BLAS_LIBRARIES}
-  PRIVATE
     dlib::dlib
-    cyclic_polygons
+  PRIVATE
     stereopermutation
+    cyclic_polygons
     gor1
     json
     Boost::filesystem
@@ -204,15 +208,14 @@ target_link_libraries(
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic
-    ${BLAS_LIBRARIES}
-  PRIVATE
-    dlib::dlib
-    cyclic_polygons
     stereopermutation
-    gor1
-    json
+    dlib::dlib
     Boost::filesystem
     Boost::system
+  PRIVATE
+    cyclic_polygons
+    gor1
+    json
 )
 
 install(
