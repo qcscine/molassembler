@@ -50,4 +50,6 @@ else()
 endif()
 
 # Force the linker to report undefined symbols in shared libraries
-string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
+if(UNIX)
+  string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
+endif()
