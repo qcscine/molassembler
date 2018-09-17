@@ -124,18 +124,18 @@ public:
 
 //!@name Information
 //!@{
-  constexpr bool validIndex(const unsigned index) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr bool validIndex(const unsigned index) const noexcept {
     return (index < _count);
   }
 
-  constexpr std::size_t size() const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr std::size_t size() const noexcept {
     return _count;
   }
 //!@}
 
 //!@name Element access
 //!@{
-  constexpr T& operator[] (const unsigned index) noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr T& operator[] (const unsigned index) noexcept {
     // Defined behavior instead of UB
     if(!validIndex(index)) {
       return back();
@@ -144,7 +144,7 @@ public:
     return _items[index];
   }
 
-  constexpr const T& operator[] (const unsigned index) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr const T& operator[] (const unsigned index) const noexcept {
     if(!validIndex(index)) {
       return back();
     }
@@ -152,21 +152,21 @@ public:
     return _items[index];
   }
 
-  constexpr T& at(const unsigned index) noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr T& at(const unsigned index) noexcept {
     // Not strong purity because _items is just a pointer!
     return this->operator[](index);
   }
 
-  constexpr const T& at(const unsigned index) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr const T& at(const unsigned index) const noexcept {
     // Not strong purity because _items is just a pointer!
     return this->operator[](index);
   }
 
-  constexpr T& front() noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr T& front() noexcept {
     return _items[0];
   }
 
-  constexpr const T& front() const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr const T& front() const noexcept {
     return _items[0];
   }
 
@@ -181,7 +181,7 @@ public:
     return _items[_count - 1];
   }
 
-  constexpr const T& back() const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr const T& back() const noexcept {
     /* NO UB in constexpr functions allowed, so we must return something within
      * the array, which is always an initialized value
      */
@@ -262,7 +262,7 @@ public:
 
 //!@name Operators
 //!@{
-  constexpr bool operator == (const DynamicArray& other) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator == (const DynamicArray& other) const noexcept {
     if(_count != other._count) {
       return false;
     }
@@ -276,7 +276,7 @@ public:
     return true;
   }
 
-  constexpr bool operator != (const DynamicArray& other) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator != (const DynamicArray& other) const noexcept {
     if(_count == other._count) {
       for(unsigned i = 0; i < _count; ++i) {
         if(_items[i] != other._items[i]) {
@@ -288,7 +288,7 @@ public:
     return false;
   }
 
-  constexpr bool operator < (const DynamicArray& other) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator < (const DynamicArray& other) const noexcept {
     if(_count < other._count) {
       return true;
     }
@@ -306,7 +306,7 @@ public:
     return false;
   }
 
-  constexpr bool operator > (const DynamicArray& other) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator > (const DynamicArray& other) const noexcept {
     return other < *this;
   }
 //!@}
@@ -384,27 +384,27 @@ public:
       return *this;
     }
 
-    constexpr std::ptrdiff_t operator - (const iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr std::ptrdiff_t operator - (const iterator& other) const noexcept {
       return (
         static_cast<std::ptrdiff_t>(_position)
         - static_cast<std::ptrdiff_t>(other._position)
       );
     }
 
-    constexpr bool operator == (const iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr bool operator == (const iterator& other) const noexcept {
       return (
         &_baseRef == &other._baseRef
         && _position == other._position
       );
     }
 
-    constexpr bool operator != (const iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr bool operator != (const iterator& other) const noexcept {
       return !(
         *this == other
       );
     }
 
-    constexpr reference operator * () const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr reference operator * () const noexcept {
       return _baseRef[_position];
     }
 
@@ -413,11 +413,11 @@ public:
     unsigned _position;
   };
 
-  constexpr iterator begin() noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr iterator begin() noexcept {
     return iterator(*this, 0);
   }
 
-  constexpr iterator end() noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr iterator end() noexcept {
     return iterator(*this, _count);
   }
 
@@ -499,27 +499,27 @@ public:
       return *this;
     }
 
-    constexpr std::ptrdiff_t operator - (const const_iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr std::ptrdiff_t operator - (const const_iterator& other) const noexcept {
       return (
         static_cast<std::ptrdiff_t>(_position)
         - static_cast<std::ptrdiff_t>(other._position)
       );
     }
 
-    constexpr bool operator == (const const_iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr bool operator == (const const_iterator& other) const noexcept {
       return (
         &_baseRef == &other._baseRef
         && _position == other._position
       );
     }
 
-    constexpr bool operator != (const const_iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr bool operator != (const const_iterator& other) const noexcept {
       return !(
         *this == other
       );
     }
 
-    constexpr reference operator * () const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr reference operator * () const noexcept {
       return _baseRef[_position];
     }
   };
@@ -527,18 +527,18 @@ public:
   //! Type alias for compatibility with STL algorithms
   using const_iterator = const_iterator;
 
-  constexpr const_iterator begin() const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr const_iterator begin() const noexcept {
     return const_iterator(*this, 0);
   }
 
-  constexpr const_iterator end() const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr const_iterator end() const noexcept {
     return const_iterator(*this, _count);
   }
 //!@}
 
 //!@name Converting operators
 //!@{
-  constexpr operator std::array<T, nItems> () const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr operator std::array<T, nItems> () const noexcept {
     return makeArray(std::make_index_sequence<nItems>{});
   }
 //!@}

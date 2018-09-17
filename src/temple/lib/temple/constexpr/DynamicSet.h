@@ -40,7 +40,7 @@ public:
   }
 
   //! Checks if an element exists. O(log N)
-  constexpr bool contains(const T& item) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool contains(const T& item) const {
     return _tree.contains(item);
   }
 
@@ -49,7 +49,7 @@ public:
     _tree.insert(item);
   }
 
-  constexpr Optional<T> getOption(const T& item) const PURITY_WEAK {
+  PURITY_WEAK constexpr Optional<T> getOption(const T& item) const {
     return _tree.getOption(item);
   }
 
@@ -59,33 +59,33 @@ public:
 
   using const_iterator = typename TreeType::const_iterator;
 
-  constexpr const_iterator begin() const PURITY_WEAK {
+  PURITY_WEAK constexpr const_iterator begin() const {
     return _tree.begin();
   }
 
-  constexpr const_iterator end() const PURITY_WEAK {
+  PURITY_WEAK constexpr const_iterator end() const {
     return _tree.end();
   }
 
-  constexpr size_t size() const PURITY_WEAK {
+  PURITY_WEAK constexpr size_t size() const {
     return _tree.size();
   }
 
-  constexpr bool operator == (const DynamicSet& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator == (const DynamicSet& other) const {
     return _tree == other._tree;
   }
 
-  constexpr bool operator != (const DynamicSet& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator != (const DynamicSet& other) const {
     return !(
       _tree == other._tree
     );
   }
 
-  constexpr bool operator < (const DynamicSet& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator < (const DynamicSet& other) const {
     return _tree < other._tree;
   }
 
-  constexpr bool operator > (const DynamicSet& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator > (const DynamicSet& other) const {
     return other._tree < _tree;
   }
 };

@@ -29,7 +29,7 @@ constexpr std::enable_if_t<
   T a,
   T b,
   T relativeTolerance
-) PURITY_STRONG;
+);
 
 template<typename T>
 constexpr std::enable_if_t<
@@ -39,7 +39,7 @@ constexpr std::enable_if_t<
   T a,
   T b,
   T absoluteTolerance
-) PURITY_STRONG;
+);
 
 
 // Implementation details
@@ -54,10 +54,10 @@ constexpr std::enable_if_t<
   T b,
   T relativeTolerance,
   T absoluteTolerance
-) PURITY_STRONG;
+);
 
 template<typename T>
-constexpr std::enable_if_t<
+PURITY_STRONG constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseRelativeOrAbsolute(
@@ -99,7 +99,7 @@ constexpr std::enable_if_t<
 } // namespace detail
 
 template<typename T>
-constexpr std::enable_if_t<
+PURITY_STRONG constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseRelative(
@@ -116,7 +116,7 @@ constexpr std::enable_if_t<
 }
 
 template<typename T>
-constexpr std::enable_if_t<
+PURITY_STRONG constexpr std::enable_if_t<
   std::is_floating_point<T>::value,
   bool
 > isCloseAbsolute(
@@ -151,32 +151,32 @@ public:
     );
   }
 
-  constexpr bool isLessThan(const T a, const T b) const noexcept PURITY_STRONG {
+  PURITY_STRONG constexpr bool isLessThan(const T a, const T b) const noexcept {
     return a < (b - _absoluteTolerance);
   }
 
-  constexpr bool isMoreThan(const T a, const T b) const noexcept PURITY_STRONG {
+  PURITY_STRONG constexpr bool isMoreThan(const T a, const T b) const noexcept {
     return a > (b + _absoluteTolerance);
   }
 
-  constexpr bool isLessOrEqual(const T a, const T b) const noexcept PURITY_STRONG {
+  PURITY_STRONG constexpr bool isLessOrEqual(const T a, const T b) const noexcept {
     return a < (b + _absoluteTolerance);
   }
 
-  constexpr bool isMoreOrEqual(const T a, const T b) const noexcept PURITY_STRONG {
+  PURITY_STRONG constexpr bool isMoreOrEqual(const T a, const T b) const noexcept {
     return a > (b - _absoluteTolerance);
   }
 
-  constexpr bool isEqual(const T a, const T b) const noexcept PURITY_STRONG {
+  PURITY_STRONG constexpr bool isEqual(const T a, const T b) const noexcept {
     return Math::abs(a - b) <= _absoluteTolerance;
   }
 
-  constexpr bool isUnequal(const T a, const T b) const noexcept PURITY_STRONG {
+  PURITY_STRONG constexpr bool isUnequal(const T a, const T b) const noexcept {
     return !isEqual(a, b);
   }
 
   //! Function call operator compares equality
-  constexpr bool operator () (const T a, const T b) const noexcept PURITY_STRONG {
+  PURITY_STRONG constexpr bool operator () (const T a, const T b) const noexcept {
     return isEqual(a, b);
   }
 };
@@ -193,7 +193,7 @@ public:
     assert(relativeTolerance > 0);
   }
 
-  constexpr bool isLessThan(const T a, const T b) const PURITY_STRONG {
+  PURITY_STRONG constexpr bool isLessThan(const T a, const T b) const {
     return (
       (a < b) && !detail::isCloseRelativeOrAbsolute(
         a,
@@ -204,7 +204,7 @@ public:
     );
   }
 
-  constexpr bool isMoreThan(const T a, const T b) const PURITY_STRONG {
+  PURITY_STRONG constexpr bool isMoreThan(const T a, const T b) const {
     return (
       (a > b) && !detail::isCloseRelativeOrAbsolute(
         a,
@@ -215,7 +215,7 @@ public:
     );
   }
 
-  constexpr bool isLessOrEqual(const T a, const T b) const PURITY_STRONG {
+  PURITY_STRONG constexpr bool isLessOrEqual(const T a, const T b) const {
     return (
       (a < b) || detail::isCloseRelativeOrAbsolute(
         a,
@@ -226,7 +226,7 @@ public:
     );
   }
 
-  constexpr bool isMoreOrEqual(const T a, const T b) const PURITY_STRONG {
+  PURITY_STRONG constexpr bool isMoreOrEqual(const T a, const T b) const {
     return (
       (a > b) || detail::isCloseRelativeOrAbsolute(
         a,
@@ -237,7 +237,7 @@ public:
     );
   }
 
-  constexpr bool isEqual(const T a, const T b) const PURITY_STRONG {
+  PURITY_STRONG constexpr bool isEqual(const T a, const T b) const {
     return detail::isCloseRelativeOrAbsolute(
       a,
       b,
@@ -246,7 +246,7 @@ public:
     );
   }
 
-  constexpr bool isUnequal(const T a, const T b) const PURITY_STRONG {
+  PURITY_STRONG constexpr bool isUnequal(const T a, const T b) const {
     return !detail::isCloseRelativeOrAbsolute(
       a,
       b,
@@ -256,7 +256,7 @@ public:
   }
 
   //! Function call operator compares equality
-  constexpr bool operator () (const T a, const T b) const noexcept PURITY_STRONG {
+  PURITY_STRONG constexpr bool operator () (const T a, const T b) const noexcept {
     return isEqual(a, b);
   }
 };

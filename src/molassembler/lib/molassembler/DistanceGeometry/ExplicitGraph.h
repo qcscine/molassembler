@@ -93,15 +93,15 @@ public:
     const std::vector<double>& distances
   );
 
-  static inline bool isLeft(const VertexDescriptor i) PURITY_STRONG {
+  PURITY_STRONG static inline bool isLeft(const VertexDescriptor i) {
     return i % 2 == 0;
   }
 
-  static inline VertexDescriptor left(const VertexDescriptor a) PURITY_STRONG {
+  PURITY_STRONG static inline VertexDescriptor left(const VertexDescriptor a) {
     return 2 * a;
   }
 
-  static inline VertexDescriptor right(const VertexDescriptor a) PURITY_STRONG {
+  PURITY_STRONG static inline VertexDescriptor right(const VertexDescriptor a) {
     return 2 * a + 1;
   }
 //!@}

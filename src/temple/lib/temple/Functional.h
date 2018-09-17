@@ -285,8 +285,9 @@ void remove_if(
 
 } // namespace inplace
 
+// C++17 nodiscard
 template<class Container, class Predicate>
-[[nodiscard]] Container copy_if(const Container& container, Predicate&& predicate) {
+Container copy_if(const Container& container, Predicate&& predicate) {
   Container returnContainer;
 
   for(const auto& value : container) {
@@ -298,20 +299,23 @@ template<class Container, class Predicate>
   return returnContainer;
 }
 
+// C++17 nodiscard
 template<class Container>
-[[nodiscard]] Container sort(Container container) {
+Container sort(Container container) {
   inplace::sort(container);
   return container;
 }
 
+// C++17 nodiscard
 template<class Container, typename Comparator>
-[[nodiscard]] Container sort(Container container, Comparator&& comparator) {
+Container sort(Container container, Comparator&& comparator) {
   inplace::sort(container, std::forward<Comparator>(comparator));
   return container;
 }
 
+// C++17 nodiscard
 template<class Container, class UnaryFunction>
-[[nodiscard]] Container transform(Container container, UnaryFunction&& function) {
+Container transform(Container container, UnaryFunction&& function) {
   inplace::transform(container, std::forward<UnaryFunction>(function));
   return container;
 }

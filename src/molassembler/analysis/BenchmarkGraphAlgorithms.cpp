@@ -172,53 +172,37 @@ void benchmark(
   std::vector<double> times;
   std::vector<double> deviations;
 
-  bool dontBreak = algorithmChoice == Algorithm::All;
-  switch(algorithmChoice) {
-    case Algorithm::All:
-    case Algorithm::MatrixFW: {
-      auto timings = timeFunctor<
-        DBM_FW_Functor,
-        nExperiments
-      >(sampleMol, boundsList, partiality);
+  if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::MatrixFW) {
+    auto timings = timeFunctor<
+      DBM_FW_Functor,
+      nExperiments
+    >(sampleMol, boundsList, partiality);
 
-      names.emplace_back("DBM FW");
-      times.push_back(timings.first);
-      deviations.push_back(timings.second);
+    names.emplace_back("DBM FW");
+    times.push_back(timings.first);
+    deviations.push_back(timings.second);
+  }
 
-      if(!dontBreak) {
-        break;
-      }
+  if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::ExplicitGor) {
+    auto timings = timeFunctor<
+      Gor1Functor<DistanceGeometry::ExplicitGraph>,
+      nExperiments
+    >(sampleMol, boundsList, partiality);
 
-      [[fallthrough]];
-    };
+    names.emplace_back("Explicit Gor");
+    times.push_back(timings.first);
+    deviations.push_back(timings.second);
+  }
 
-    case Algorithm::ExplicitGor: {
-      auto timings = timeFunctor<
-        Gor1Functor<DistanceGeometry::ExplicitGraph>,
-        nExperiments
-      >(sampleMol, boundsList, partiality);
+  if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::ImplicitGor) {
+    auto timings = timeFunctor<
+      Gor1Functor<DistanceGeometry::ImplicitGraph>,
+      nExperiments
+    >(sampleMol, boundsList, partiality);
 
-      names.emplace_back("Explicit Gor");
-      times.push_back(timings.first);
-      deviations.push_back(timings.second);
-
-      if(!dontBreak) {
-        break;
-      }
-
-      [[fallthrough]];
-    };
-
-    case Algorithm::ImplicitGor: {
-      auto timings = timeFunctor<
-        Gor1Functor<DistanceGeometry::ImplicitGraph>,
-        nExperiments
-      >(sampleMol, boundsList, partiality);
-
-      names.emplace_back("Implicit Gor");
-      times.push_back(timings.first);
-      deviations.push_back(timings.second);
-    };
+    names.emplace_back("Implicit Gor");
+    times.push_back(timings.first);
+    deviations.push_back(timings.second);
   }
 
   auto smallest = *std::min_element(times.begin(), times.end());

@@ -11,8 +11,7 @@
 #include <boost/range/numeric.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
-double divByThree (unsigned a) PURITY_STRONG;
-double divByThree (unsigned a) {
+PURITY_STRONG double divByThree (unsigned a) {
   return static_cast<double>(a) / 3.0;
 }
 

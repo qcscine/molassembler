@@ -25,8 +25,7 @@ namespace BTreeProperties {
  * Calculates the maximum number of nodes in a B-tree of a specific minDegree and
  * height.
  */
-constexpr size_t maxNodesInTree(size_t height, size_t minDegree) PURITY_STRONG;
-constexpr size_t maxNodesInTree(const size_t height, const size_t minDegree) {
+PURITY_STRONG constexpr size_t maxNodesInTree(const size_t height, const size_t minDegree) {
   return static_cast<double>(
     Math::pow(2 * minDegree, static_cast<unsigned>(height + 1)) - 1
   ) / (
@@ -38,8 +37,7 @@ constexpr size_t maxNodesInTree(const size_t height, const size_t minDegree) {
  * Calculates the minimal height needed for a B-Tree of a specific minDegree to
  * be able to hold a certain number of keys
  */
-constexpr size_t minHeight(size_t numKeys, size_t minDegree) PURITY_STRONG;
-constexpr size_t minHeight(const size_t numKeys, const size_t minDegree) {
+PURITY_STRONG constexpr size_t minHeight(const size_t numKeys, const size_t minDegree) {
   return Math::ceil(
     Math::log(
       static_cast<double>(numKeys + 1),
@@ -53,8 +51,7 @@ constexpr size_t minHeight(const size_t numKeys, const size_t minDegree) {
  * minDegree to be able to hold a certain number of keys. The actual maximal
  * height may be lower.
  */
-constexpr size_t maxHeightBound(size_t numKeys, size_t minDegree) PURITY_STRONG;
-constexpr size_t maxHeightBound(const size_t numKeys, const size_t minDegree) {
+PURITY_STRONG constexpr size_t maxHeightBound(const size_t numKeys, const size_t minDegree) {
   return Math::floor(
     Math::log(
       static_cast<double>(numKeys + 1) / 2,
@@ -214,13 +211,13 @@ public:
    * is O(t log_t N), where t is the minimum degree of the tree and N the
    * number of contained elements.
    */
-  constexpr bool contains(const KeyType& key) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool contains(const KeyType& key) const {
     auto nodeIndexOptional = _search(_rootPtr, key);
 
     return nodeIndexOptional.hasValue();
   }
 
-  constexpr Optional<KeyType> getOption(const KeyType& key) const PURITY_WEAK {
+  PURITY_WEAK constexpr Optional<KeyType> getOption(const KeyType& key) const {
     auto nodeIndexOptional = _search(_rootPtr, key);
 
     if(!nodeIndexOptional.hasValue()) {
@@ -238,7 +235,7 @@ public:
   }
 
   //! Dumps a graphViz representation of the B-Tree.
-  std::string dumpGraphviz() const PURITY_WEAK {
+  PURITY_WEAK std::string dumpGraphviz() const {
     using namespace std::string_literals;
 
     std::stringstream graph;
@@ -310,7 +307,7 @@ public:
   }
 
   //! Returns the number of elements in the tree
-  constexpr unsigned size() const PURITY_WEAK {
+  PURITY_WEAK constexpr unsigned size() const {
     return _count;
   }
 //!@}
@@ -517,7 +514,7 @@ public:
     }
 
     //! Compares on basis of positional equality
-    constexpr bool operator == (const const_iterator& other) const PURITY_WEAK {
+    PURITY_WEAK constexpr bool operator == (const const_iterator& other) const {
       return (
         _nodeStack == other._nodeStack
         && _indexStack == other._indexStack
@@ -526,14 +523,14 @@ public:
       );
     }
 
-    constexpr bool operator != (const const_iterator& other) const PURITY_WEAK {
+    PURITY_WEAK constexpr bool operator != (const const_iterator& other) const {
       return !(
         *this == other
       );
     }
 
     //! Non-modifiable access
-    constexpr reference operator *() const PURITY_WEAK {
+    PURITY_WEAK constexpr reference operator *() const {
       if(_getCurrentNode().isLeaf()) {
         return _getCurrentNode().keys.at(
           _indexStack.back()
@@ -557,11 +554,11 @@ public:
 
   //!@name Private member functions
   //!@{
-    constexpr const Node& _getCurrentNode() const PURITY_WEAK {
+    PURITY_WEAK constexpr const Node& _getCurrentNode() const {
       return _baseRef._getNode(_nodeStack.back());
     }
 
-    constexpr unsigned _currentNodeIndexLimit() const PURITY_WEAK {
+    PURITY_WEAK constexpr unsigned _currentNodeIndexLimit() const {
       // For leaves, the past-the-end position is the size of keys
       if(_getCurrentNode().isLeaf()) {
         return _getCurrentNode().keys.size();
@@ -575,7 +572,7 @@ public:
   //@}
   };
   //! Returns a const iterator to the first key in the tree
-  constexpr const_iterator begin() const PURITY_WEAK {
+  PURITY_WEAK constexpr const_iterator begin() const {
     return const_iterator(
       *this,
       const_iterator::InitializeAs::Begin
@@ -583,7 +580,7 @@ public:
   }
 
   //! Returns a past-the-end const iterator
-  constexpr const_iterator end() const PURITY_WEAK {
+  PURITY_WEAK constexpr const_iterator end() const {
     return const_iterator(
       *this,
       const_iterator::InitializeAs::End
@@ -594,7 +591,7 @@ public:
 //!@name Operators
 //!@{
   //! Lexicographical comparison
-  constexpr bool operator < (const BTree& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator < (const BTree& other) const {
     if(this->size() < other.size()) {
       return true;
     }
@@ -625,12 +622,12 @@ public:
   }
 
   //! Lexicographical comparison
-  constexpr bool operator > (const BTree& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator > (const BTree& other) const {
     return (other < *this);
   }
 
   //! Lexicographical comparison
-  constexpr bool operator == (const BTree& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator == (const BTree& other) const {
     if(this->size() != other.size()) {
       return false;
     }
@@ -653,7 +650,7 @@ public:
   }
 
   //! Lexicographical comparison
-  constexpr bool operator != (const BTree& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator != (const BTree& other) const {
     return !(*this == other);
   }
 //!@}
@@ -681,12 +678,12 @@ private:
   //!@name Information
   //!@{
     //! Returns whether the node is a leaf node (i.e. has no children)
-    constexpr bool isLeaf() const PURITY_WEAK {
+    PURITY_WEAK constexpr bool isLeaf() const {
       return children.size() == 0;
     }
 
     //! Returns whether the node is full
-    constexpr bool isFull() const PURITY_WEAK {
+    PURITY_WEAK constexpr bool isFull() const {
       return keys.size() == maxKeys;
     }
   //!@}
@@ -750,12 +747,12 @@ private:
   }
 
   //! Fetch an unmodifiable node by its 'pointer'
-  constexpr const Node& _getNode(unsigned nodeIndex) const PURITY_WEAK {
+  PURITY_WEAK constexpr const Node& _getNode(unsigned nodeIndex) const {
     return _nodes.at(nodeIndex);
   }
 
   //! Recursive search for an element in a subtree rooted at node
-  constexpr Optional<unsigned> _search(unsigned nodeIndex, const KeyType& key) const PURITY_WEAK {
+  PURITY_WEAK constexpr Optional<unsigned> _search(unsigned nodeIndex, const KeyType& key) const {
     auto node = _getNode(nodeIndex);
 
     auto keyLB = lowerBound<KeyType, LessThanComparator>(
@@ -879,12 +876,12 @@ private:
   }
 
   //! Returns whether a node is the root
-  constexpr bool _isRootNode(unsigned nodeIndex) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool _isRootNode(unsigned nodeIndex) const {
     return nodeIndex == _rootPtr;
   }
 
   //! Returns the smallest leaf node in the sub-tree rooted at nodePtr
-  constexpr unsigned _smallestLeafNode(unsigned nodeIndex) const PURITY_WEAK {
+  PURITY_WEAK constexpr unsigned _smallestLeafNode(unsigned nodeIndex) const {
     while(!_getNode(nodeIndex).isLeaf()) {
       nodeIndex = _getNode(nodeIndex).children.front();
     }
@@ -893,7 +890,7 @@ private:
   }
 
   //! Returns the largest leaf node in the sub-tree rooted at nodePtr
-  constexpr unsigned _largestLeafNode(unsigned nodeIndex) const PURITY_WEAK {
+  PURITY_WEAK constexpr unsigned _largestLeafNode(unsigned nodeIndex) const {
     while(!_getNode(nodeIndex).isLeaf()) {
       nodeIndex = _getNode(nodeIndex).children.back();
     }

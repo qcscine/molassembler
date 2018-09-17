@@ -33,7 +33,7 @@ struct Vector {
 //!@name Common vector operations
 //!@{
   //! Computes the dot product with another vector
-  constexpr double dot(const Vector& other) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr double dot(const Vector& other) const noexcept {
     return (
       this->data[0] * other.data[0]
       + this->data[1] * other.data[1]
@@ -42,7 +42,7 @@ struct Vector {
   }
 
   //! Computes the cross product with another vector
-  constexpr Vector cross(const Vector& other) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr Vector cross(const Vector& other) const noexcept {
     return Vector {
       {{
         this -> data[1] * other.data[2] - this -> data[2] * other.data[1],
@@ -53,7 +53,7 @@ struct Vector {
   }
 
   //! Calculates the L2 norm of the vector (cartesian length)
-  constexpr double norm() const PURITY_WEAK {
+  PURITY_WEAK constexpr double norm() const {
     return Math::sqrt(
       this -> data[0] * this -> data[0]
       + this -> data[1] * this -> data[1]
@@ -61,7 +61,7 @@ struct Vector {
     );
   }
 
-  constexpr Vector operator + (const Vector& other) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr Vector operator + (const Vector& other) const noexcept {
     return Vector {
       {{
         this->data[0] + other.data[0],
@@ -71,7 +71,7 @@ struct Vector {
     };
   }
 
-  constexpr Vector operator - (const Vector& other) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr Vector operator - (const Vector& other) const noexcept {
     return Vector {
       {{
         this->data[0] - other.data[0],
@@ -81,7 +81,7 @@ struct Vector {
     };
   }
 
-  constexpr Vector operator * (const double constant) const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr Vector operator * (const double constant) const noexcept {
     return Vector {
       {{
         constant * this->data[0],
@@ -92,7 +92,7 @@ struct Vector {
   }
 
   //! Division by double operator, throws on division by zero
-  constexpr Vector operator / (const double constant) const PURITY_WEAK {
+  PURITY_WEAK constexpr Vector operator / (const double constant) const {
     if(constant == 0) {
       throw "Constexpr::Vector divided by zero!";
     }
@@ -107,7 +107,7 @@ struct Vector {
   }
 
   //! Unitary inversion operator
-  constexpr Vector operator - () const noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr Vector operator - () const noexcept {
     return Vector {
       {{
         - this -> data[0],
@@ -120,8 +120,7 @@ struct Vector {
 };
 
 //! Free-standing binary angle in radians calculation
-constexpr double angle(const Vector& a, const Vector& b) PURITY_WEAK;
-constexpr double angle(const Vector& a, const Vector& b) {
+PURITY_WEAK constexpr double angle(const Vector& a, const Vector& b) {
   return Math::acos(
     a.dot(b) / (
       a.norm() * b.norm()

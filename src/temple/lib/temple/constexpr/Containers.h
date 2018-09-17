@@ -123,20 +123,12 @@ template<
 } // namespace detail
 
 //! Iota for any array type
-template<
-  template<typename, size_t> class ArrayType,
-  typename T,
-  size_t size
-> constexpr std::enable_if_t<
-  std::is_arithmetic<T>::value,
-  ArrayType<T, size>
-> iota() PURITY_STRONG;
 
 template<
   template<typename, size_t> class ArrayType,
   typename T,
   size_t size
-> constexpr std::enable_if_t<
+> PURITY_STRONG constexpr std::enable_if_t<
   std::is_arithmetic<T>::value,
   ArrayType<T, size>
 > iota() {

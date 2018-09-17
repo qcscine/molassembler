@@ -152,22 +152,22 @@ private:
   Eigen::MatrixXd _distances;
 
   /* To outer indexing */
-  inline static VertexDescriptor left(const VertexDescriptor a) PURITY_STRONG {
+  PURITY_STRONG inline static VertexDescriptor left(const VertexDescriptor a) {
     return 2 * a;
   }
 
-  inline static VertexDescriptor right(const VertexDescriptor a) PURITY_STRONG {
+  PURITY_STRONG inline static VertexDescriptor right(const VertexDescriptor a) {
     return 2 * a + 1;
   }
 
-  inline static VertexDescriptor internal(const VertexDescriptor i) PURITY_STRONG {
+  PURITY_STRONG inline static VertexDescriptor internal(const VertexDescriptor i) {
     // Integer division rounds down, which is perfect
     return i / 2;
   }
 
   static void _explainContradictionPaths(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
+    VertexDescriptor a,
+    VertexDescriptor b,
     const std::vector<VertexDescriptor>& predecessors,
     const std::vector<double>& distances
   );
@@ -195,8 +195,8 @@ public:
    * and b yet. If there is, it gets overwritten.
    */
   void addBound(
-    const VertexDescriptor a,
-    const VertexDescriptor b,
+    VertexDescriptor a,
+    VertexDescriptor b,
     const ValueBounds& bound
   );
 
@@ -226,13 +226,13 @@ public:
    *
    * Complexity: O(1)
    */
-  std::pair<EdgeDescriptor, bool> edge(const VertexDescriptor i, const VertexDescriptor j) const;
+  std::pair<EdgeDescriptor, bool> edge(VertexDescriptor i, VertexDescriptor j) const;
 
   //! Checks if there is explicit information present for a left-to-right edge
   bool hasExplicit(const EdgeDescriptor& edge) const;
 
   /* To inner indexing */
-  inline static bool isLeft(const VertexDescriptor i) PURITY_STRONG {
+  PURITY_STRONG inline static bool isLeft(const VertexDescriptor i) {
     return i % 2 == 0;
   }
 
@@ -282,14 +282,14 @@ public:
   //! Returns the number of out-edges for a particular vertex
   VertexDescriptor out_degree(VertexDescriptor i) const;
 
-  double& lowerBound(const VertexDescriptor a, const VertexDescriptor b);
-  double& upperBound(const VertexDescriptor a, const VertexDescriptor b);
+  double& lowerBound(VertexDescriptor a, VertexDescriptor b);
+  double& upperBound(VertexDescriptor a, VertexDescriptor b);
 
-  double lowerBound(const VertexDescriptor a, const VertexDescriptor b) const;
-  double upperBound(const VertexDescriptor a, const VertexDescriptor b) const;
+  double lowerBound(VertexDescriptor a, VertexDescriptor b) const;
+  double upperBound(VertexDescriptor a, VertexDescriptor b) const;
 
   //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
-  double maximalImplicitLowerBound(const VertexDescriptor i) const;
+  double maximalImplicitLowerBound(VertexDescriptor i) const;
 
   //! A helper struct permitting read-access to an edge weight via an edge descriptor
   struct EdgeWeightMap : public boost::put_get_helper<double, EdgeWeightMap> {
@@ -435,12 +435,12 @@ public:
     // Constructor for the begin iterator
     in_group_edge_iterator(
       const ImplicitGraph& base,
-      const VertexDescriptor i
+      VertexDescriptor i
     );
     // Constructor for the end iterator
     in_group_edge_iterator(
       const ImplicitGraph& base,
-      const VertexDescriptor i,
+      VertexDescriptor i,
       bool /* tag */
     );
     in_group_edge_iterator(const in_group_edge_iterator& other);
@@ -457,7 +457,7 @@ public:
       ++_b;
       while(
         _b < static_cast<VertexDescriptor>(_basePtr->_distances.outerSize())
-        && !_basePtr->_distances(internal(_i), _b)
+        && (_basePtr->_distances(internal(_i), _b) == 0.0)
       ) {
         ++_b;
       }

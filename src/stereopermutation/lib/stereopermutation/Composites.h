@@ -60,6 +60,7 @@ public:
     //! Calculates the required reduction mapping to the canonical form
     std::vector<unsigned> findReductionMapping(unsigned reducedFusedPosition) const;
 
+    /* c++17 nodiscard */
     /*! Transforms the OrientationState to a canonical form
      *
      * Transforms the OrientationState by applying a reduction mapping to the
@@ -67,7 +68,7 @@ public:
      * Returns the mapping needed to revert the OrientationState back to its
      * original data values.
      */
-    [[nodiscard]] std::vector<unsigned> transformToCanonical();
+    std::vector<unsigned> transformToCanonical();
 
     //! Reverts the OrientationState to non-canonical form
     void revert(const std::vector<unsigned>& reversionMapping);

@@ -273,7 +273,7 @@ inline data::AngleFunctionPtr angleFunction(const Name name) {
 }
 
 //! Returns the index of a symmetry name within allNames
-unsigned nameIndex(Name name) PURITY_STRONG;
+PURITY_STRONG unsigned nameIndex(Name name);
 
 //! Fetches the list of tetrahedra defined in a symmetry
 inline const TetrahedronList& tetrahedra(const Name name) {

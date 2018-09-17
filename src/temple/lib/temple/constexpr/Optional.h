@@ -44,12 +44,12 @@ public:
 //!@name Information
 //!@{
   //! Returns whether the optional contains a value
-  constexpr bool hasValue() const PURITY_WEAK {
+  PURITY_WEAK constexpr bool hasValue() const {
     return _hasValue;
   }
 
   //! Returns a value unchecked
-  constexpr T value() const PURITY_WEAK {
+  PURITY_WEAK constexpr T value() const {
     return _value;
   }
 
@@ -80,7 +80,7 @@ public:
   }
 
   //! Returns a value if initialized, and another if not
-  constexpr T valueOr(const T& alternative) const PURITY_WEAK {
+  PURITY_WEAK constexpr T valueOr(const T& alternative) const {
     if(_hasValue) {
       return _value;
     }
@@ -100,12 +100,12 @@ public:
   }
 
   //! Convert-to-bool operator
-  constexpr operator bool () const PURITY_WEAK {
+  PURITY_WEAK constexpr operator bool () const {
     return _hasValue;
   }
 
   //! Compares on basis of contained value. Nones do compare equal
-  constexpr bool operator == (const Optional& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator == (const Optional& other) const {
     if(!_hasValue && !other._hasValue) {
       return true;
     }
@@ -118,12 +118,12 @@ public:
   }
 
   //! Compares on basis of contained value. Nones do compare equal
-  constexpr bool operator != (const Optional& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator != (const Optional& other) const {
     return !(*this == other);
   }
 
   //! Lexicographical-like comparison
-  constexpr bool operator < (const Optional& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator < (const Optional& other) const {
     // If neither has a value, they are equal
     if(!_hasValue && !other._hasValue) {
       return false;
@@ -146,7 +146,7 @@ public:
   }
 
   //! Lexicographical-like comparison
-  constexpr bool operator > (const Optional& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator > (const Optional& other) const {
     return (other < *this);
   }
 //!@}

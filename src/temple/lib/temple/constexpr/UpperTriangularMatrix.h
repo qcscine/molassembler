@@ -24,10 +24,7 @@ using ArrayType = Array<T, size>;
 namespace index_conversion {
   //!  Converts from (i, j) matrix indices to the linear k index for the array
   template<size_t N, typename UnsignedType>
-  constexpr unsigned toSingleIndex(UnsignedType i, UnsignedType j) PURITY_STRONG;
-
-  template<size_t N, typename UnsignedType>
-  constexpr unsigned toSingleIndex(const UnsignedType i, const UnsignedType j) {
+  PURITY_STRONG constexpr unsigned toSingleIndex(const UnsignedType i, const UnsignedType j) {
     return (
       N * (N - 1) / 2
       - (N - i) * ((N - i) - 1) / 2
@@ -37,10 +34,7 @@ namespace index_conversion {
 
   //! Converts from the linear array to (i, j) matrix indices
   template<size_t N, typename UnsignedType>
-  constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(UnsignedType k) PURITY_STRONG;
-
-  template<size_t N, typename UnsignedType>
-  constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType k) {
+  PURITY_STRONG constexpr std::pair<UnsignedType, UnsignedType> toDoubleIndex(const UnsignedType k) {
     UnsignedType i {
       N - 2
       - static_cast<unsigned>(
@@ -67,8 +61,7 @@ namespace index_conversion {
   }
 } // namespace index_conversion
 
-constexpr bool isValidMatrixSize(size_t dataSize) PURITY_STRONG;
-constexpr bool isValidMatrixSize(const size_t dataSize) {
+PURITY_STRONG constexpr bool isValidMatrixSize(const size_t dataSize) {
   auto root = Math::sqrt(1.0 + 8 * dataSize);
 
   return(
@@ -80,8 +73,7 @@ constexpr bool isValidMatrixSize(const size_t dataSize) {
   );
 }
 
-constexpr size_t getMatrixSize(size_t dataSize) PURITY_STRONG;
-constexpr size_t getMatrixSize(const size_t dataSize) {
+PURITY_STRONG constexpr size_t getMatrixSize(const size_t dataSize) {
   return (
     1 + Math::sqrt(1.0 + 8 * dataSize)
   ) / 2;
@@ -135,10 +127,10 @@ public:
     );
   }
 
-  constexpr const ValueType& at(
+  PURITY_WEAK constexpr const ValueType& at(
     const unsigned i,
     const unsigned j
-  ) const PURITY_WEAK {
+  ) const {
     if(i >= j || i >= N || j >= N) {
       throw "Index out of bounds!";
     }

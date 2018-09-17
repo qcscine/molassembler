@@ -142,7 +142,7 @@ public:
    * in the permutation code where the instruction columnSwap(0, 1) would have
    * no net effect.
    */
-  bool columnSmaller(unsigned a, unsigned b) const PURITY_WEAK;
+  PURITY_WEAK bool columnSmaller(unsigned a, unsigned b) const;
 
   /*!
    * Generates a set of all rotational equivalents of this Stereopermutation as
@@ -160,7 +160,7 @@ public:
   > getCharMap() const;
 
   //! Returns whether the "columns" are sorted in ascending order
-  bool isSortedAsc() const PURITY_WEAK;
+  PURITY_WEAK bool isSortedAsc() const;
 
   /*!
    * Checks whether this Stereopermutation is rotationally superimposable with
@@ -184,14 +184,14 @@ public:
 
 //!@name Operators
 //!@{
-  bool operator < (const Stereopermutation& other) const PURITY_WEAK;
-  bool operator > (const Stereopermutation& other) const PURITY_WEAK;
-  bool operator == (const Stereopermutation& other) const PURITY_WEAK;
-  bool operator != (const Stereopermutation& other) const PURITY_WEAK;
+  PURITY_WEAK bool operator < (const Stereopermutation& other) const;
+  PURITY_WEAK bool operator > (const Stereopermutation& other) const;
+  PURITY_WEAK bool operator == (const Stereopermutation& other) const;
+  PURITY_WEAK bool operator != (const Stereopermutation& other) const;
 //!@}
 };
 
-std::size_t hash_value(const Stereopermutation& assignment) PURITY_WEAK;
+PURITY_WEAK std::size_t hash_value(const Stereopermutation& assignment);
 
 /*!
  * ostream operator for easier debugging

@@ -65,7 +65,7 @@ struct Pair {
 //!@name Operators
 //!@{
   //! Lexicographical comparison
-  constexpr bool operator < (const Pair& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator < (const Pair& other) const {
     if(first > other.first) {
       return false;
     }
@@ -78,12 +78,12 @@ struct Pair {
   }
 
   //! Lexicographical comparison
-  constexpr bool operator > (const Pair& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator > (const Pair& other) const {
     return (other < *this);
   }
 
   //! Lexicographical comparison
-  constexpr bool operator == (const Pair& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator == (const Pair& other) const {
     return (
       first == other.first
       && second == other.second
@@ -91,7 +91,7 @@ struct Pair {
   }
 
   //! Lexicographical comparison
-  constexpr bool operator != (const Pair& other) const PURITY_WEAK {
+  PURITY_WEAK constexpr bool operator != (const Pair& other) const {
     return !(*this == other);
   }
 //!@}

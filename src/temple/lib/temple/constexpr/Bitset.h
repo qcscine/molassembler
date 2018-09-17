@@ -81,7 +81,7 @@ struct Bitset {
 
 //!@name Information
 //!@{
-  constexpr bool test(std::size_t i) const PURITY_STRONG {
+  PURITY_STRONG constexpr bool test(std::size_t i) const {
     std::size_t blockIndex = Math::floor(static_cast<double>(i) / bitsPerBlock);
     std::size_t bitIndex = i - bitsPerBlock * blockIndex;
 

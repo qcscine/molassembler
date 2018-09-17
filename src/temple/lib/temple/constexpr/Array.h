@@ -208,27 +208,27 @@ public:
       return *this;
     }
 
-    constexpr int operator - (const iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr int operator - (const iterator& other) const noexcept {
       return (
         static_cast<int>(_position)
         - static_cast<int>(other._position)
       );
     }
 
-    constexpr bool operator == (const iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr bool operator == (const iterator& other) const noexcept {
       return (
         &_baseRef == &other._baseRef
         && _position == other._position
       );
     }
 
-    constexpr bool operator != (const iterator& other) const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr bool operator != (const iterator& other) const noexcept {
       return !(
         *this == other
       );
     }
 
-    constexpr reference operator * () const noexcept PURITY_WEAK {
+    PURITY_WEAK constexpr reference operator * () const noexcept {
       return _baseRef[_position];
     }
 
@@ -237,11 +237,11 @@ public:
     std::size_t _position;
   };
 
-  constexpr iterator begin() noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr iterator begin() noexcept {
     return iterator(*this, 0);
   }
 
-  constexpr iterator end() noexcept PURITY_WEAK {
+  PURITY_WEAK constexpr iterator end() noexcept {
     return iterator(*this, nItems);
   }
 

@@ -10,6 +10,9 @@
  * subexpression elimination. It is helpful in many cases to additionally
  * annotate low-level often-used functions with the noexcept specifier (if
  * possible) to enable more optimizations.
+ *
+ * @note MSVC does not implement any of these attributes, so we must replace
+ * them with empty defines if compiling with it.
  */
 
 /*! Applies a weak purity function attribute
@@ -28,7 +31,7 @@
  * without also providing exception guarantees. See
  * https://kristerw.blogspot.com/2016/12/gcc-attributepure-and-c-exceptions.html
  */
-#define PURITY_WEAK __attribute__((pure))
+#define PURITY_WEAK [[gnu::pure]]
 
 /*! Applies a strong purity function attribute
  *
@@ -57,6 +60,6 @@
  * without also providing exception guarantees. See
  * https://kristerw.blogspot.com/2016/12/gcc-attributepure-and-c-exceptions.html
  */
-#define PURITY_STRONG __attribute__((const))
+#define PURITY_STRONG [[gnu::const]]
 
 #endif
