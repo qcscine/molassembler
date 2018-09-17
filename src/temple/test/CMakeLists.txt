@@ -16,7 +16,10 @@ add_executable(templeTests
   ${CMAKE_CURRENT_SOURCE_DIR}/various.cpp
 )
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if(
+  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
+)
   target_compile_options(templeTests
     PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0
   )

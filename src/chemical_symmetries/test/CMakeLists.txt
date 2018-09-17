@@ -6,7 +6,10 @@ find_package(temple 0.1.0 REQUIRED)
 
 add_executable(symmetryTests tests.cpp)
 target_compile_options(symmetryTests PUBLIC -g -O2)
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if(
+  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
+)
   target_compile_options(
     symmetryTests
     PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0

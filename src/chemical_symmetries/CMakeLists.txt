@@ -1,7 +1,10 @@
 # declaration
 project(chemicalsymmetries VERSION 0.1.0)
 
-if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if(
+  NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+  OR NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
+)
   string(
     CONCAT buildWarning
     "Due to compiler restrictions, this build of chemical_symmetries will not"

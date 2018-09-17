@@ -39,7 +39,10 @@ target_link_libraries(chemical_symmetries
 )
 
 target_compile_options(chemical_symmetries PUBLIC)
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if(
+  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
+)
   target_compile_options(
     chemical_symmetries
     PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0

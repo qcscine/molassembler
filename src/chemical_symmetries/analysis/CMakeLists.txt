@@ -8,7 +8,10 @@ find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(writeTransitionDotFiles writeTransitionDotFiles.cpp)
 target_compile_options(writeTransitionDotFiles PUBLIC -g -O2)
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if(
+  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
+)
   target_compile_options(writeTransitionDotFiles
     PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0
   )
@@ -19,7 +22,10 @@ target_link_libraries(writeTransitionDotFiles
 
 add_executable(writeMappings writeMappings.cpp)
 target_compile_options(writeMappings PUBLIC -g -O2)
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if(
+  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
+)
   target_compile_options(writeMappings
     PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0
   )
