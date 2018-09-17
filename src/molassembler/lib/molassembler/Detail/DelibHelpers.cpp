@@ -3,6 +3,8 @@
 #include <Eigen/Geometry>
 #include "temple/Functional.h"
 
+#include <array>
+
 namespace molassembler {
 
 namespace DelibHelpers {

@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 #include <cassert>
+#include <array>
 
 /*! @file
  *

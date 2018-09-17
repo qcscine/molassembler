@@ -12,6 +12,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
+#include <array>
 
 template<typename T>
 std::ostream& operator << (std::ostream& os, const boost::optional<T>& valueOptional) {

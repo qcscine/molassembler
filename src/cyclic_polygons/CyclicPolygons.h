@@ -8,6 +8,8 @@
 #include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
+#include <array>
+
 /*! @file
  *
  * @brief Calculate internal angles of cyclic polygons from edge lengths

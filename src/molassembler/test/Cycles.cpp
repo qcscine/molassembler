@@ -13,6 +13,7 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/Molecule.h"
 #include <iostream>
+#include <array>
 
 /* TODO add further tests for free functions
  */
