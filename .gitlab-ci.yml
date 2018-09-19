@@ -88,3 +88,14 @@ test_clang:
     paths:
       - build_clang/
     policy: pull
+
+#
+# Verify that the ETH license is present in all source files
+#
+eth_license:
+  stage: quality_checks
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - bash scripts/license_validity_check.sh
