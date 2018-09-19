@@ -25,26 +25,6 @@ namespace DistanceGeometry {
 namespace detail {
 
 AngstromWrapper convertToAngstromWrapper(
-  const Eigen::VectorXd& vectorizedPositions
-) {
-  const unsigned dimensionality = 4;
-  assert(vectorizedPositions.size() % dimensionality == 0);
-
-  const unsigned N = vectorizedPositions.size() / dimensionality;
-  AngstromWrapper angstromWrapper {N};
-
-  for(unsigned i = 0; i < N; i++) {
-    angstromWrapper.positions.at(i) = Delib::Position {
-      vectorizedPositions.template segment<3>(
-        static_cast<Eigen::Index>(dimensionality) * i
-      )
-    };
-  }
-
-  return angstromWrapper;
-}
-
-AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 ) {
   const Eigen::Index dimensionality = 4;

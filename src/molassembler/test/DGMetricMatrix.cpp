@@ -8,6 +8,7 @@
 #include "temple/Stringify.h"
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
@@ -282,29 +283,24 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
       inverseReorderSequence(reorderSequence)
     );
 
-    if(
-      !originalMetric.access().isApprox(
-        revert,
-        1e-7
-      )
-    ) {
+    /* Since the metric matrix doesn't care about the top triangle of the
+     * matrix, we have to take care of the random elements there here for
+     * comparability.
+     */
+    revert.template triangularView<Eigen::Upper>().setZero();
+    Eigen::MatrixXd originalMetricUnderlying = originalMetric.access();
+    originalMetricUnderlying.template triangularView<Eigen::Upper>().setZero();
+
+    if(!originalMetricUnderlying.isApprox(revert, 1e-7)) {
       std::cout << "Failed reordering test for "
         << currentFilePath.string() << ":" << std::endl
         << "Metric matrix from original distances matrix: " << std::endl
-        << originalMetric << std::endl
+        << originalMetric.access() << std::endl
         << "un-reordered Metric matrix from reordered:"
         << std::endl << revert << std::endl;
       BOOST_FAIL("Reordering test fails!");
       break;
     }
-
-    /*if(symmetryName == Symmetry::Name::SquareAntiPrismatic) {
-      showEmbedding(originalMetric);
-    }*/
-
-    /*if(nTests == 0) { // once per symmetry
-      showEmbedding(originalMetric);
-    }*/
   }
 }
 

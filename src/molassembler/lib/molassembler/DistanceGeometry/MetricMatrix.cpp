@@ -1,49 +1,67 @@
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/Types.h"
 
+#include "Spectra/SymEigsSolver.h"
+
 #include <Eigen/Eigenvalues>
 
-/* TODO
- * - Is numerical accuracy maybe an issue somewhere here?
- */
-
-// C++17 alter to namespace molassembler::DistanceGeometry {
 namespace molassembler {
 
 namespace DistanceGeometry {
 
 void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
-  // Beware, only strict upper triangle of distances contains anything
+  /* We have to be a little careful since only strict upper triangle of
+   * distances contains anything of use to us.
+   *
+   * So we have to make sure the first index is always smaller than the second
+   * to reference the correct entry.
+   */
 
   const AtomIndex N = distances.rows();
 
-  // resize and null-initialize matrix
+  /* Resize our underlying matrix. There is no need to zero-initialize since all
+   * parts of the lower triangle (including the diagonal) are overwritten.
+   */
   _matrix.resize(N, N);
-  _matrix.setZero();
 
-  // Declare D0 vector
-  Eigen::VectorXd D0(N);
-  /* D_{i}² =   (1/N) * sum_{j}(distances[i, j]²)
+  /* We need to accomplish the following:
+   *
+   * Every entry in the lower triangle of _matrix (including the diagonal)
+   * needs to be set according to the result of the following equations:
+   *
+   * D0[i]² =   (1/N) * sum_{j}(distances[i, j]²)
    *          - (1/(N²)) * sum_{j < k}(distances[j, k]²)
    *
-   * The second term is independent of i, precalculate!
+   *  (The second term is independent of i and can be precalculated!)
+   *
+   * _matrix[i, j] = ( D0[i]² + D0[j]² - distances[i, j]² ) / 2
+   *
+   * On the diagonal, where i == j:
+   * _matrix[i, i] = ( D0[i]² + D0[i]² - distances[i, i]² ) / 2
+   *                     ^--------^      ^-------------^
+   *                       equal               =0
+   *
+   * -> _matrix[i, i] = D0[i]²
+   *
+   * So, we can store all of D0 immediately on _matrix's diagonal and perform
+   * the remaining transformation afterwards.
    */
 
   // Since we need squares EVERYWHERE, just square the whole distances matrix
   distances = distances.cwiseProduct(distances);
 
   double doubleSumTerm = 0;
-  for(AtomIndex j = 0; j < N; j++) {
-    for(AtomIndex k = j + 1; k < N; k++) {
+  for(AtomIndex j = 0; j < N; ++j) {
+    for(AtomIndex k = j + 1; k < N; ++k) {
       doubleSumTerm += distances(j, k);
     }
   }
   doubleSumTerm /= N * N;
 
-  for(AtomIndex i = 0; i < N; i++) {
+  for(AtomIndex i = 0; i < N; ++i) {
     // compute first term
     double firstTerm = 0;
-    for(AtomIndex j = 0; j < N; j++) {
+    for(AtomIndex j = 0; j < N; ++j) {
       if(i == j) {
         continue;
       }
@@ -56,22 +74,8 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
     firstTerm /= N;
 
     // assign as difference, no need to sqrt, we need the squares in a moment
-    D0[i] = firstTerm - doubleSumTerm;
+    _matrix.diagonal()(i) = firstTerm - doubleSumTerm;
   }
-
-  /* The diagonal of G is just D0!
-   * g[i, j] = ( D0[i]² + D0[j]² - distances[i, j]² ) / 2
-   * if i == j:    ^--------^      ^-------------^
-   *                 equal               =0
-   *
-   * -> g[i, i] = D0[i]²
-   *
-   * since we store the squares, no need to do anything but assign the entire
-   * diagonal as the contents of the previous vector. Could also optimize out
-   * the D0 vector, it's actually unnecessary (just store it on the diagonal
-   * immediately).
-   */
-  _matrix.diagonal() = D0;
 
   /* Write off-diagonal elements into lower triangle
    * Why the lower triangle? Because that is the only part of the matrix
@@ -81,19 +85,15 @@ void MetricMatrix::_constructFromTemporary(Eigen::MatrixXd&& distances) {
   for(AtomIndex i = 0; i < N; i++) {
     for(AtomIndex j = i + 1; j < N; j++) {
       _matrix(j, i) = (
-        D0[i] + D0[j] - distances(i, j)
+        // D0[i]²             + D0[j]²                - d(i, j)²
+        _matrix.diagonal()(i) + _matrix.diagonal()(j) - distances(i, j)
       ) / 2.0;
     }
   }
 }
 
-MetricMatrix::MetricMatrix(Eigen::MatrixXd&& matrix) {
-  _constructFromTemporary(std::forward<Eigen::MatrixXd>(matrix));
-}
-
-MetricMatrix::MetricMatrix(const Eigen::MatrixXd& matrix) {
-  auto copy = matrix;
-  _constructFromTemporary(std::move(copy));
+MetricMatrix::MetricMatrix(Eigen::MatrixXd distanceMatrix) {
+  _constructFromTemporary(std::move(distanceMatrix));
 }
 
 const Eigen::MatrixXd& MetricMatrix::access() const {
@@ -101,68 +101,106 @@ const Eigen::MatrixXd& MetricMatrix::access() const {
 }
 
 Eigen::MatrixXd MetricMatrix::embed() const {
-  // TODO This needs much better documentation!
-  // A lot of things here are also completely unnecessary!
-  const unsigned dimensionality = 4;
+  const unsigned N = _matrix.cols();
 
+  if(N > 20) {
+    /* Try to use needed eigenpairs only, which may return an empty matrix if
+     * something goes wrong computationally
+     */
+    Eigen::MatrixXd possiblyEmbeddedCoordinates = embedWithNeededEigenpairs();
+
+    if(possiblyEmbeddedCoordinates.size() > 0) {
+      return possiblyEmbeddedCoordinates;
+    }
+  }
+
+  return embedWithFullDiagonalization();
+}
+
+Eigen::MatrixXd MetricMatrix::embedWithFullDiagonalization() const {
+  constexpr unsigned dimensionality = 4;
+
+  // SelfAdjointEigenSolver only references the lower triangle
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eigenSolver(_matrix);
 
-  // reverse because smallest are listed first by Eigen
-  Eigen::VectorXd eigenValues = eigenSolver.eigenvalues().reverse();
-  auto numEigenValues = eigenValues.size();
+  Eigen::VectorXd eigenvalues = eigenSolver.eigenvalues();
 
-  eigenValues.conservativeResize(dimensionality); // dimensionality x 1
-
-  // If we have upscaled, the new elements must be zero!
-  if(numEigenValues < dimensionality) {
-    for(unsigned i = numEigenValues; i < dimensionality; i++) {
-      eigenValues(i) = 0;
-    }
-  }
-
-  // If any eigenvalues in the vector are negative, set them to 0
-  for(unsigned i = 0; i < dimensionality; i++) {
-    if(eigenValues(i) < 0) {
-      eigenValues(i) = 0;
-    }
-  }
-
-  // take square root of eigenvalues
-  eigenValues = eigenValues.cwiseSqrt();
-
-  Eigen::MatrixXd L;
-  L.resize(dimensionality, dimensionality);
-  L.setZero();
-  L.diagonal() = eigenValues;
-
-  Eigen::MatrixXd V = eigenSolver.eigenvectors();
-  // Eigen has its own concept of rows and columns, I would have thought it's
-  // columns. But tests have shown it has to be row-wise.
-  V.rowwise().reverseInPlace();
-  V.conservativeResize(
-    V.rows(),
+  // Construct L
+  Eigen::MatrixXd L = Eigen::MatrixXd::Zero(dimensionality, dimensionality);
+  // We want the algebraically largest eigenvalues (up to four, if present)
+  unsigned numEigenvalues = std::min(
+    static_cast<unsigned>(eigenvalues.size()),
     dimensionality
-  ); // now Natoms x dimensionality
+  );
+  for(unsigned i = 0; i < numEigenvalues; ++i) {
+    /* Since Eigen stores them in increasing order, we have to fetch the
+     * algebraically largest from the back. We only want to use the eigenpair
+     * if the eigenvalue is greater than zero.
+     */
+    if(eigenvalues(eigenvalues.size() - i - 1) > 0) {
+      L.diagonal()(i) = std::sqrt(
+        eigenvalues(eigenvalues.size() - i - 1)
+      );
+    }
+  }
 
-  /* V * L
-   * (Natoms x dimensionality) · (dimensionality x dimensionality )
-   * -> (Natoms x dimensionality)
-   * transpose (V * L)
-   * -> dimensionality x Natoms
+  // V is initially N x N
+  Eigen::MatrixXd V = eigenSolver.eigenvectors();
+  /* Again, eigenvectors are sorted in increasing corresponding eigenvalues
+   * algebraic value. We have to reverse them to match the ordering in L.
+   */
+  V.rowwise().reverseInPlace();
+  V.conservativeResize(V.rows(), dimensionality);
+  // now N x dimensionality
+
+  /* Calculate X = VL
+   * (N x 4) · (4 x 4) -> (N x 4), but we want (4 x N), so we transpose
    */
   return (V * L).transpose();
 }
 
-bool MetricMatrix::operator == (const MetricMatrix& other) const {
-  return _matrix == other._matrix;
+Eigen::MatrixXd MetricMatrix::embedWithNeededEigenpairs() const {
+  constexpr unsigned dimensionality = 4;
+
+  /* By default, DenseSymMatProd constructs a selfadjointView using the lower
+   * triangle of _matrix, so we can pass in _matrix unaltered.
+   */
+  Spectra::DenseSymMatProd<double> op(_matrix);
+  Spectra::SymEigsSolver<double, Spectra::LARGEST_ALGE, Spectra::DenseSymMatProd<double>> solver(
+    &op,
+    dimensionality,
+    2 * dimensionality
+  );
+
+  solver.init();
+  solver.compute();
+  int resultInfo = solver.info();
+
+  if(resultInfo == Spectra::NOT_CONVERGING) {
+    return {};
+  }
+
+  if(resultInfo == Spectra::NUMERICAL_ISSUE) {
+    return {};
+  }
+
+  Eigen::VectorXd eigenvalues = solver.eigenvalues();
+  Eigen::MatrixXd eigenvectors = solver.eigenvectors();
+
+  // Construct an L-matrix
+  Eigen::MatrixXd L = Eigen::MatrixXd::Zero(dimensionality, dimensionality);
+  for(unsigned i = 0; i < eigenvalues.rows(); ++i) {
+    if(eigenvalues(i) > 0) {
+      L.diagonal()(i) = std::sqrt(eigenvalues(i));
+    }
+  }
+
+  // Calculate X = VL, except we want N x 4, not 4 x N, so we transpose the result
+  return (eigenvectors * L).transpose();
 }
 
-std::ostream& operator << (
-  std::ostream& os,
-  const MetricMatrix& metricMatrix
-) {
-  os << metricMatrix._matrix;
-  return os;
+bool MetricMatrix::operator == (const MetricMatrix& other) const {
+  return _matrix == other._matrix;
 }
 
 } // namespace DistanceGeometry

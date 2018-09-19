@@ -196,6 +196,7 @@ target_link_libraries(
     cyclic_polygons
     gor1
     json
+    spectra
     Boost::filesystem
     Boost::system
 )
@@ -216,6 +217,7 @@ target_link_libraries(
     cyclic_polygons
     gor1
     json
+    spectra
 )
 
 install(

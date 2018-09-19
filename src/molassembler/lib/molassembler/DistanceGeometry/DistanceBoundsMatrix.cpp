@@ -119,6 +119,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
     separator = indices.cend();
   }
 
+  // Up to the separator decided by partiality
   for(auto iter = indices.cbegin(); iter != separator; ++iter) {
     const AtomIndex i = *iter;
     for(AtomIndex j = 0; j < N; j++) {
