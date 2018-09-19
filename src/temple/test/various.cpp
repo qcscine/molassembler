@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #include <boost/test/results_collector.hpp>
 #include <boost/test/unit_test.hpp>
 

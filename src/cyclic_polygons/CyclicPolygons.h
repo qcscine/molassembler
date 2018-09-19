@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #ifndef INCLUDE_CYCLIC_POLYGONS_LIB_H
 #define INCLUDE_CYCLIC_POLYGONS_LIB_H
 

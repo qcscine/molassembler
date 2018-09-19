@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #ifndef INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
 #define INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
 

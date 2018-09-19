@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #ifndef INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 #define INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 

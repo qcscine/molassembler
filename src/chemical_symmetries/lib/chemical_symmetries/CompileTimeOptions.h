@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 /*!@file
  *
  * @brief Preprocessor definitions to alter library compilation behavior

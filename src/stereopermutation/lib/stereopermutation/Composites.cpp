@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #include "stereopermutation/Composites.h"
 
 #include "boost/dynamic_bitset.hpp"

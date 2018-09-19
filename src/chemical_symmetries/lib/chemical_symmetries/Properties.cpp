@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #include "chemical_symmetries/Properties.h"
 
 #include "temple/constexpr/ToSTL.h"

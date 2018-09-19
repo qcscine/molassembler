@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_METRIC_MATRIX_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_METRIC_MATRIX_H
 

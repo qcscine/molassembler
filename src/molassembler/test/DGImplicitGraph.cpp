@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #define BOOST_TEST_MODULE ImplicitGraphTestModule
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 

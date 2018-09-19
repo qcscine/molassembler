@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #ifndef INCLUDE_TEMPLE_CONSTEXPR_NUMERIC_H
 #define INCLUDE_TEMPLE_CONSTEXPR_NUMERIC_H
 

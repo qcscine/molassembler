@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_LOGICAL_OPERATOR_TESTS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_LOGICAL_OPERATOR_TESTS_H
 

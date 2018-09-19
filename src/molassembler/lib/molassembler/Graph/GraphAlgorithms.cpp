@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #include "molassembler/Graph/GraphAlgorithms.h"
 
 #include "boost/graph/connected_components.hpp"
