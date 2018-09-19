@@ -41,8 +41,7 @@ namespace jsf {
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /*!
@@ -283,6 +282,29 @@ using JSF64ra = JSF<uint64_t,  7, 13, 37>;
 using JSF64n = JSF64na;
 using JSF64r = JSF64ra;
 using JSF64  = JSF64r;
+
+//! Provides a seeded engine instance
+template<class Engine = JSF32>
+struct Generator {
+  Engine engine;
+
+  explicit Generator() {
+#ifndef NDEBUG
+    engine.seed(272181374);
+#else
+    std::random_device randomDevice;
+
+    return {
+      randomDevice(),
+      randomDevice(),
+      randomDevice(),
+      randomDevice()
+    };
+
+    engine.seed(getRandomSeeds());
+#endif
+  }
+};
 
 } // namespace jsf
 

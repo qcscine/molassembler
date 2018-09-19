@@ -8,25 +8,26 @@
 #include "temple/Random.h"
 #include "temple/Stringify.h"
 
-#include "temple/constexpr/Math.h"
-#include "temple/constexpr/Containers.h"
 #include "temple/constexpr/Array.h"
-#include "temple/constexpr/DynamicArray.h"
-#include "temple/constexpr/DynamicSet.h"
-#include "temple/constexpr/DynamicMap.h"
-#include "temple/constexpr/TupleType.h"
-#include "temple/constexpr/TupleTypePairs.h"
-#include "temple/constexpr/LogicalOperatorTests.h"
-#include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Bitmask.h"
 #include "temple/constexpr/Bitset.h"
+#include "temple/constexpr/Containers.h"
+#include "temple/constexpr/DynamicArray.h"
+#include "temple/constexpr/DynamicMap.h"
+#include "temple/constexpr/DynamicSet.h"
+#include "temple/constexpr/FloatingPointComparison.h"
+#include "temple/constexpr/JSF.h"
+#include "temple/constexpr/LogicalOperatorTests.h"
+#include "temple/constexpr/Math.h"
+#include "temple/constexpr/TupleType.h"
+#include "temple/constexpr/TupleTypePairs.h"
 
 #include <iostream>
 #include <iomanip>
 
 #include <boost/test/results_collector.hpp>
 
-extern temple::Generator prng;
+extern temple::jsf::Generator<> generator;
 
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
@@ -134,7 +135,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   // sqrt
   auto sqrt_failures = temple::copy_if(
-    prng.getN<double>(0, 1e6, numTests),
+    temple::random::getN<double>(0, 1e6, numTests, generator.engine),
     [&](const double randomPositiveNumber) -> bool {
       return !temple::floating::isCloseRelative(
         temple::Math::sqrt(randomPositiveNumber),
@@ -162,10 +163,11 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   }
 
   // asin
-  const auto randomInverseTrigNumbers = prng.getN<double>(
+  const auto randomInverseTrigNumbers = temple::random::getN<double>(
     -1 + std::numeric_limits<double>::epsilon(),
     1 - std::numeric_limits<double>::epsilon(),
-    numTests
+    numTests,
+    generator.engine
   );
 
   auto asin_failures = temple::copy_if(
@@ -226,8 +228,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(
     temple::all_of(
       temple::adaptors::zip(
-        prng.getN<double>(-1e5, 1e5, numTests),
-        prng.getN<int>(-40, 40, numTests)
+        temple::random::getN<double>(-1e5, 1e5, numTests, generator.engine),
+        temple::random::getN<int>(-40, 40, numTests, generator.engine)
       ),
       testPow
     )
@@ -263,8 +265,8 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
   BOOST_CHECK(
     temple::all_of(
       temple::adaptors::zip(
-        prng.getN<double>(-1e5, 1e5, numTests),
-        prng.getN<unsigned>(0, 40, numTests)
+        temple::random::getN<double>(-1e5, 1e5, numTests, generator.engine),
+        temple::random::getN<unsigned>(0, 40, numTests, generator.engine)
       ),
       testRecPow
     )
@@ -272,7 +274,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
 
   // ln
-  const auto randomZ = prng.getN<double>(1e-10, 1e10, numTests);
+  const auto randomZ = temple::random::getN<double>(1e-10, 1e10, numTests, generator.engine);
   bool all_ln_pass = temple::all_of(
     randomZ,
     [&](const auto& z) -> bool {
@@ -299,7 +301,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      prng.getN<double>(-100, 100, numTests),
+      temple::random::getN<double>(-100, 100, numTests, generator.engine),
       [](const double x) -> bool {
         return(temple::Math::floor(x) <= x);
       }
@@ -308,7 +310,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      prng.getN<double>(-100, 100, numTests),
+      temple::random::getN<double>(-100, 100, numTests, generator.engine),
       [](const double x) -> bool {
         return(temple::Math::ceil(x) >= x);
       }
@@ -317,7 +319,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      prng.getN<double>(-100, 100, numTests),
+      temple::random::getN<double>(-100, 100, numTests, generator.engine),
       [](const double x) -> bool {
         const double rounded = temple::Math::round(x);
         return(
@@ -330,7 +332,7 @@ BOOST_AUTO_TEST_CASE( mathApproxEqual ) {
 
   BOOST_CHECK(
     temple::all_of(
-      prng.getN<double>(-M_PI / 2, M_PI / 2, numTests),
+      temple::random::getN<double>(-M_PI / 2, M_PI / 2, numTests, generator.engine),
       [&](const double x) -> bool {
         return temple::floating::isCloseRelative(
           temple::Math::atan(x),
@@ -670,7 +672,7 @@ BOOST_AUTO_TEST_CASE(dynamicSetFuzzing) {
       0
     );
 
-    prng.shuffle(numbers);
+    temple::random::shuffle(numbers, generator.engine);
 
     for(const auto& number : numbers) {
       subject.insert(number);

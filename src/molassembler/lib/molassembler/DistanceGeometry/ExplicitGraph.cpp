@@ -375,7 +375,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     0
   );
 
-  prng.shuffle(indices);
+  temple::random::shuffle(indices, randomnessEngine());
 
   unsigned M = boost::num_vertices(_graph);
   std::vector<double> distances (M);
@@ -412,7 +412,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       }
     }
 
-    prng.shuffle(otherIndices);
+    temple::random::shuffle(otherIndices, randomnessEngine());
 
     // Again through N - 1 indices: N²
     for(const auto& b : otherIndices) {
@@ -464,7 +464,11 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = prng.getSingle<double>(lower, upper);
+      double tightenedBound = temple::random::getSingle<double>(
+        lower,
+        upper,
+        randomnessEngine()
+      );
 
       upperTriangle(
         std::min(a, b),
@@ -526,9 +530,10 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       /* Shortest distance from left a vertex to right b vertex is lower bound (negative)
        * Shortest distance from left a vertex to left b vertex is upper bound
        */
-      double tightenedBound = prng.getSingle<double>(
+      double tightenedBound = temple::random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
-        std::max(presumedLower, presumedUpper)
+        std::max(presumedLower, presumedUpper),
+        randomnessEngine()
       );
 
       upperTriangle(

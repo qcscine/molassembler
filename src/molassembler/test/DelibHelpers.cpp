@@ -6,13 +6,12 @@
 
 #include "molassembler/Detail/DelibHelpers.h"
 #include "temple/Random.h"
+#include "molassembler/Options.h"
 
 #include <Eigen/Geometry>
 
 BOOST_AUTO_TEST_CASE(dihedralTests) {
   using namespace molassembler::DelibHelpers;
-
-  temple::Generator prng;
 
   Delib::PositionCollection positions;
   positions.push_back(
@@ -43,7 +42,15 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
     Delib::Position {lastPosition}
   );
 
-  for(const double randomAngle : prng.getN<double>(-M_PI + 0.01, M_PI - 0.01, 100)) {
+  for(
+    const double randomAngle :
+    temple::random::getN<double>(
+      -M_PI + 0.01,
+      M_PI - 0.01,
+      100,
+      molassembler::randomnessEngine()
+    )
+  ) {
 
     positions[3] = Delib::Position {
       Eigen::AngleAxisd(

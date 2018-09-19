@@ -184,7 +184,11 @@ void BondStereocenter::Impl::assign(boost::optional<unsigned> assignment) {
 void BondStereocenter::Impl::assignRandom() {
   assert(_composite.permutations() > 0);
 
-  _assignment = prng.getSingle<unsigned>(0, _composite.permutations() - 1);
+  _assignment = temple::random::getSingle<unsigned>(
+    0,
+    _composite.permutations() - 1,
+    randomnessEngine()
+  );
 }
 
 void BondStereocenter::Impl::fit(

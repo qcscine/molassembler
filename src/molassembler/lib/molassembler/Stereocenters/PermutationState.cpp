@@ -380,9 +380,10 @@ boost::optional<std::vector<unsigned>> PermutationState::getIndexMapping(
 
   if(preservationOption == ChiralStatePreservation::RandomFromMultipleBest) {
     return mappingsGroup.indexMappings.at(
-      prng.getSingle<unsigned>(
+      temple::random::getSingle<unsigned>(
         0,
-        mappingsGroup.indexMappings.size() - 1
+        mappingsGroup.indexMappings.size() - 1,
+        randomnessEngine()
       )
     );
   }

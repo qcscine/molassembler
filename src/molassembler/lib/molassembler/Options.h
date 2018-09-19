@@ -5,7 +5,7 @@
 #define INCLUDE_MOLASSEMBLER_OPTIONS_H
 
 #include "chemical_symmetries/Names.h"
-#include "temple/Random.h"
+#include "molassembler/PRNG.h"
 
 #include "Delib/ElementTypes.h"
 #include "molassembler/AngstromWrapper.h"
@@ -28,8 +28,10 @@ class OuterGraph;
  *
  * If you wish to get deterministic behavior in release builds, re-seed the
  * generator.
+ *
+ * @warning Do not use this instance in any static object's destructor!
  */
-extern temple::Generator prng;
+random::Engine& randomnessEngine();
 
 /*!
  * Specifies for which temperature regime the Molecule is being modeled.

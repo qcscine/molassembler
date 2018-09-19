@@ -23,6 +23,8 @@
 #include "molassembler/Options.h"
 #include "molassembler/Version.h"
 
+#include "temple/Random.h"
+
 namespace molassembler {
 
 namespace IO {
@@ -33,7 +35,7 @@ Random::Random(AtomIndex N) {
   permutation.resize(N);
   std::iota(permutation.begin(), permutation.end(), 0);
 
-  prng.shuffle(permutation);
+  temple::random::shuffle(permutation, randomnessEngine());
 }
 
 SortByElement::SortByElement(const Molecule& mol) {

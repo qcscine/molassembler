@@ -90,13 +90,15 @@ using HashArgumentsType = std::tuple<
 
 HashArgumentsType randomArguments() {
   auto genBondInformation = []() -> molassembler::hashes::BondInformation {
-    BondType bty = static_cast<BondType>(prng.getSingle<unsigned>(0, 6));
+    BondType bty = static_cast<BondType>(
+      temple::random::getSingle<unsigned>(0, 6, randomnessEngine())
+    );
 
-    bool bondStereocenterPresent = prng.getSingle<bool>();
+    bool bondStereocenterPresent = temple::random::getSingle<bool>(randomnessEngine());
     boost::optional<unsigned> bondStereocenterAssignment = boost::none;
 
     if(bondStereocenterPresent) {
-      bondStereocenterAssignment = prng.getSingle<unsigned>(0, 1);
+      bondStereocenterAssignment = temple::random::getSingle<unsigned>(0, 1, randomnessEngine());
     }
 
     return {
@@ -108,13 +110,13 @@ HashArgumentsType randomArguments() {
 
   boost::optional<Symmetry::Name> symmetryOptional;
   boost::optional<unsigned> assignmentOptional;
-  if(prng.getSingle<bool>()) {
+  if(temple::random::getSingle<bool>(randomnessEngine())) {
     symmetryOptional = static_cast<Symmetry::Name>(
-      prng.getSingle<unsigned>(0, 15)
+      temple::random::getSingle<unsigned>(0, 15, randomnessEngine())
     );
 
     std::geometric_distribution<unsigned> gd {0.2};
-    assignmentOptional = gd(prng.engine);
+    assignmentOptional = gd(randomnessEngine());
   }
 
   // If a symmetry is specified, the bond number must match
@@ -123,7 +125,7 @@ HashArgumentsType randomArguments() {
   if(symmetryOptional) {
     S = Symmetry::size(*symmetryOptional);
   } else {
-    S = prng.getSingle<unsigned>(1, 8);
+    S = temple::random::getSingle<unsigned>(1, 8, randomnessEngine());
   }
 
   for(unsigned i = 0; i < S; ++i) {
@@ -133,7 +135,7 @@ HashArgumentsType randomArguments() {
 
   return {
     static_cast<Delib::ElementType>(
-      prng.getSingle<unsigned>(1, 112)
+      temple::random::getSingle<unsigned>(1, 112, randomnessEngine())
     ),
     bonds,
     symmetryOptional,

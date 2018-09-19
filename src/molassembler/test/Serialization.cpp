@@ -6,6 +6,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "temple/Random.h"
 #include "temple/Stringify.h"
 
 #include "molassembler/IO.h"
@@ -21,12 +22,13 @@ BOOST_AUTO_TEST_CASE(base64Tests) {
 
   const unsigned N = 100;
   for(unsigned i = 0; i < N; ++i) {
-    unsigned messageLength = prng.getSingle<unsigned>(90, 110);
+    unsigned messageLength = temple::random::getSingle<unsigned>(90, 110, randomnessEngine());
 
-    auto sample = prng.getN<std::uint8_t>(
+    auto sample = temple::random::getN<std::uint8_t>(
       std::numeric_limits<std::uint8_t>::min(),
       std::numeric_limits<std::uint8_t>::max(),
-      messageLength
+      messageLength,
+      randomnessEngine()
     );
 
     std::string encoded = base64::encode(sample);

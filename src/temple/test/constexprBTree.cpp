@@ -4,17 +4,18 @@
 #include <boost/test/results_collector.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "temple/constexpr/Array.h"
 #include "temple/Adaptors/Zip.h"
-#include "temple/constexpr/BTree.h"
 #include "temple/Functional.h"
 #include "temple/Random.h"
 #include "temple/Stringify.h"
+#include "temple/constexpr/Array.h"
+#include "temple/constexpr/BTree.h"
+#include "temple/constexpr/JSF.h"
 
 #include <set>
 #include <iostream>
 
-extern temple::Generator prng;
+extern temple::jsf::Generator<> generator;
 
 inline bool lastTestPassed() {
   using namespace boost::unit_test;
@@ -81,7 +82,7 @@ inline unsigned popRandom(std::set<unsigned>& values) {
 
   std::advance(
     it,
-    prng.getSingle<unsigned>(0, values.size() - 1)
+    temple::random::getSingle<unsigned>(0, values.size() - 1, generator.engine)
   );
 
   auto value = *it;
@@ -210,7 +211,7 @@ BOOST_AUTO_TEST_CASE(constexprBTreeTests) {
       lastTreeGraph = tree.dumpGraphviz();
 
       // Decide whether to insert or remove a random item
-      auto decisionFloat = prng.getSingle<double>(0.0, 1.0);
+      auto decisionFloat = temple::random::getSingle<double>(0.0, 1.0, generator.engine);
       if(decisionFloat >= static_cast<double>(inTree.size()) / nKeys) {
         addElement(lastTreeGraph);
       } else {

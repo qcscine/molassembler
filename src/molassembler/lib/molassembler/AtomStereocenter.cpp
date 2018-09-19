@@ -431,14 +431,15 @@ void AtomStereocenter::Impl::assign(boost::optional<unsigned> assignment) {
 
 void AtomStereocenter::Impl::assignRandom() {
   assign(
-    prng.pickDiscrete(
+    temple::random::pickDiscrete(
       // Map the feasible permutations onto their weights
       temple::map(
         _cache.feasiblePermutations,
         [&](const unsigned permutationIndex) -> unsigned {
           return _cache.permutations.weights.at(permutationIndex);
         }
-      )
+      ),
+      randomnessEngine()
     )
   );
 }

@@ -4,6 +4,6 @@
 #define BOOST_TEST_MODULE templeTests
 #include <boost/test/unit_test.hpp>
 
-#include "temple/Random.h"
+#include "temple/constexpr/JSF.h"
 
-temple::Generator prng;
+temple::jsf::Generator<> generator;

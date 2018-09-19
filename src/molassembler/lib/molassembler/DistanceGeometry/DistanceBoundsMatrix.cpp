@@ -110,7 +110,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
     0
   );
 
-  prng.shuffle(indices);
+  temple::random::shuffle(indices, randomnessEngine());
 
   std::vector<AtomIndex>::const_iterator separator;
 
@@ -137,9 +137,10 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
         return DGError::GraphImpossible;
       }
 
-      double chosenDistance = prng.getSingle<double>(
+      double chosenDistance = temple::random::getSingle<double>(
         lowerBound(matrixCopy, i, j),
-        upperBound(matrixCopy, i, j)
+        upperBound(matrixCopy, i, j),
+        randomnessEngine()
       );
 
       lowerBound(matrixCopy, i, j) = chosenDistance;
@@ -164,7 +165,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
        * Nevertheless, to avoid UB, it is still necessary to properly order
        * the parameters
        */
-      double chosenDistance = prng.getSingle<double>(
+      double chosenDistance = temple::random::getSingle<double>(
         std::min(
           lowerBound(matrixCopy, i, j),
           upperBound(matrixCopy, i, j)
@@ -172,7 +173,8 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
         std::max(
           lowerBound(matrixCopy, i, j),
           upperBound(matrixCopy, i, j)
-        )
+        ),
+        randomnessEngine()
       );
 
       lowerBound(matrixCopy, i, j) = chosenDistance;

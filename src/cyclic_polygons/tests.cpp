@@ -8,11 +8,12 @@
 
 #include "temple/Random.h"
 #include "temple/Stringify.h"
+#include "temple/constexpr/JSF.h"
 
 #include <iostream>
 #include <fstream>
 
-temple::Generator rng;
+temple::jsf::Generator<> generator;
 
 using namespace std::string_literals;
 
@@ -94,9 +95,9 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
 
   for(unsigned nSides = 3; nSides < 10; ++nSides) {
     for(unsigned testNumber = 0; testNumber < nTests; testNumber++) {
-      std::vector<double> edgeLengths = rng.getN<double>(lowerLimit, upperLimit, nSides);
+      std::vector<double> edgeLengths = temple::random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
       while(!CyclicPolygons::exists(edgeLengths)) {
-        edgeLengths = rng.getN<double>(lowerLimit, upperLimit, nSides);
+        edgeLengths = temple::random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
       }
 
       double circumradius;

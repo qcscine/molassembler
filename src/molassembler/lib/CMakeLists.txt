@@ -92,6 +92,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/RankingTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OuterGraph.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/PRNG.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.h
@@ -136,6 +137,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OuterGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OuterGraphIterators.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/PRNG.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.cpp

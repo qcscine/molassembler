@@ -133,7 +133,7 @@ std::vector<unsigned> randomReorderingSequence(const unsigned length) {
     0
   );
 
-  prng.shuffle(reorderSequence);
+  temple::random::shuffle(reorderSequence, randomnessEngine());
 
   return reorderSequence;
 }

@@ -12,7 +12,11 @@
 
 namespace molassembler {
 
-temple::Generator prng;
+random::Engine& randomnessEngine() {
+  // Pursuant to Construct-on-first-use idiom
+  static random::Engine engine;
+  return engine;
+}
 
 TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;

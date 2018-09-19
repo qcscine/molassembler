@@ -293,7 +293,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
     0
   );
 
-  prng.shuffle(indices);
+  temple::random::shuffle(indices, randomnessEngine());
 
   unsigned M = num_vertices();
   std::vector<double> distances (M);
@@ -329,7 +329,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       }
     }
 
-    prng.shuffle(otherIndices);
+    temple::random::shuffle(otherIndices, randomnessEngine());
 
     for(const AtomIndex b : otherIndices) {
       auto predecessor_map = boost::make_iterator_property_map(
@@ -362,9 +362,10 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double presumedLower = -distances.at(right(b));
       double presumedUpper = distances.at(left(b));
 
-      double fixedDistance = prng.getSingle<double>(
+      double fixedDistance = temple::random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
-        std::max(presumedLower, presumedUpper)
+        std::max(presumedLower, presumedUpper),
+        randomnessEngine()
       );
 #else
       boost::gor1_simplified_shortest_paths(
@@ -381,9 +382,10 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       }
 
       // Pick fixed distance
-      double fixedDistance = prng.getSingle<double>(
+      double fixedDistance = temple::random::getSingle<double>(
         -distances.at(right(b)),
-        distances.at(left(b))
+        distances.at(left(b)),
+        randomnessEngine()
       );
 
 #endif
@@ -449,9 +451,10 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double presumedUpper = distances.at(left(b));
 
       // Pick fixed distance
-      double fixedDistance = prng.getSingle<double>(
+      double fixedDistance = temple::random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
-        std::max(presumedLower, presumedUpper)
+        std::max(presumedLower, presumedUpper),
+        randomnessEngine()
       );
 
       // Record in distances matrix
