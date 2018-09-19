@@ -40,7 +40,7 @@ according to the IUPAC rules). From a local symmetry and the information that
 all substituents are distinct ranking-wise, we know that there are two
 non-superimposable permutations of ligands. 
 
-Stereopermutations of any symmetry can be computed symbolically[REF], including
+Stereopermutations of any symmetry can be computed symbolically [1]_, including
 cases in which substituents are mutually linked, such as in multidentate
 ligands. Special care is taken in order to reduce haptically bonded ligands
 to the correct local symmetries and ranking. 
@@ -105,3 +105,10 @@ combinations of two symmetries and their respective fused symmetry positions.
 The fused symmetry positions of each side effect the overall permutations if the
 symmetry has multiple position groups. For instance, this is the case in square
 pyramidal symmetries, where there are axial and equatorial symmetry positions.
+
+
+References
+==========
+.. [1] Bennett, W. E.. Computation of the Number of Isomers and Their
+   Structures. *Coordination Compounds. Inorg. Chem.*, **1969**, 8(6),
+   1325–1328.
