@@ -27,7 +27,7 @@ public:
   //! The type this engine generates
   using result_type = uint32_t;
 
-  Engine();
+  explicit Engine();
   Engine(Engine&& other) noexcept;
   Engine& operator = (Engine&& other) noexcept;
   Engine(const Engine& other);

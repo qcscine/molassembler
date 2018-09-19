@@ -508,11 +508,11 @@ template<
 template<
   class Container,
   typename T,
-  class LessThanPredicate
+  class LessThanPredicate = std::less<>
 > constexpr class Container::const_iterator binarySearch(
   const Container& container,
   const T& item,
-  LessThanPredicate predicate = std::less<T>()
+  LessThanPredicate predicate = LessThanPredicate()
 ) {
   auto bound = lowerBound<T, LessThanPredicate>(
     container.begin(),

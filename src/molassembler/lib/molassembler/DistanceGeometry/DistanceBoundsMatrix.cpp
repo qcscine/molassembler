@@ -7,6 +7,7 @@
 #include "molassembler/Options.h"
 
 #include <cassert>
+#include <algorithm>
 
 namespace molassembler {
 

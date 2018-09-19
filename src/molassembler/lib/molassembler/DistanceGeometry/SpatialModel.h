@@ -8,6 +8,10 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/StereocenterList.h"
 
+// For MSVC
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 /*! @file
  *
  * @brief Convert a Molecule to atom-pairwise distance bounds

@@ -13,6 +13,10 @@
 #include "chemical_symmetries/AngleLookup.h"
 #endif
 
+// For MSVC
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 /*! @file
  *
  * @brief Central symmetry data class definitions

@@ -6,6 +6,8 @@
 
 #include "temple/Preprocessor.h"
 
+// For MSVC, otherwise M_* are not defined
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <limits>
 #include <type_traits>

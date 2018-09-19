@@ -10,10 +10,8 @@ also part of the public interface are currently:
 
 - temple/
   - Preprocessor
-  - Random
   - TinySet
   - Traits
   - constexpr/
     - Bitmask
-    - JSF
     - Math

@@ -10,6 +10,10 @@
 
 #include <Eigen/Geometry>
 
+// For MSVC
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 BOOST_AUTO_TEST_CASE(dihedralTests) {
   using namespace molassembler::DelibHelpers;
 

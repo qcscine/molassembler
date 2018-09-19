@@ -23,10 +23,13 @@ endif()
 
 # Compilation flags
 if(MSVC)
-  #Compilation on different cores (faster)
+  # Compilation on different cores (faster)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-  #For recursive template depth
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _VARIADIC_MAX=10")
+  # We require way more variadic templates in the constexpr evaluation
+  # No idea if this is still relevant, but we're going to assume so
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _VARIADIC_MAX=200")
+  # Allow more constexpr steps
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:steps:100000000") # 100M
 else()
   # This ought to work for GCC and Clang equally
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra -Wshadow")
