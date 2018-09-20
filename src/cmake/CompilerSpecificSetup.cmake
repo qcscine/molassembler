@@ -30,6 +30,8 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _VARIADIC_MAX=200")
   # Allow more constexpr steps
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:steps 100000000") # 100M
+  # Enable use of math constants like M_PI, M_LN10 by compiling sources with
+  add_definitions(/D_USE_MATH_DEFINES)
 else()
   # This ought to work for GCC and Clang equally
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra -Wshadow")

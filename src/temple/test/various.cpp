@@ -12,7 +12,6 @@
 #include "temple/constexpr/Numeric.h"
 
 #include <chrono>
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
 #include <vector>
