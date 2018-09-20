@@ -29,7 +29,7 @@ if(MSVC)
   # No idea if this is still relevant, but we're going to assume so
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _VARIADIC_MAX=200")
   # Allow more constexpr steps
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:steps:100000000") # 100M
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:steps:10000000") # 10M
 else()
   # This ought to work for GCC and Clang equally
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra -Wshadow")
