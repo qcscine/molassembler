@@ -45,6 +45,11 @@ else()
     list(APPEND MOLASSEMBLER_CXX_FLAGS
       -Wsuggest-final-types
       -Wsuggest-final-methods
+      -Wduplicated-cond
+      -Wlogical-op
+      -Wold-style-cast
+      -Wuseless-cast
+      -Wdouble-promotion
     )
   endif()
 

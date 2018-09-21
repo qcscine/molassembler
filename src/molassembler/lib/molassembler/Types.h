@@ -32,8 +32,10 @@ enum class LengthUnit {
   Angstrom
 };
 
+//! Unsigned integer atom index type. Used to refer to particular atoms.
 using AtomIndex = std::size_t;
 
+//! Type used to refer to particular bonds. Orders first < second.
 struct BondIndex {
   AtomIndex first, second;
 

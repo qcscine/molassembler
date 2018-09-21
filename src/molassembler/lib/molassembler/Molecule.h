@@ -43,7 +43,29 @@ class OuterGraph;
 class StereocenterList;
 struct RankingInformation;
 
-//! Central class of the library, modeling a molecular graph with all state.
+/*!
+ * @brief Models a molecule as a molecular graph (connectivity of atoms) and a
+ * list of stereocenters.
+ *
+ * This class models chemical molecules as a combination of a mathematical graph
+ * and a list of stereocenters.
+ *
+ * In the graph, vertices additionally store an element type (and thus
+ * represent atoms) and edges store a discretized bond type (and therefore
+ * represent bonds).
+ *
+ * Stereocenters represent the absolute configuration at an atom or bond in an
+ * abstract fashion and do not store coordinate information.
+ *
+ * @note You may be surprised to see that all basic editing of Molecules, even
+ * if it seems to concern the graph only, happens in this class interface. That
+ * is because a graph edit may affect rankings at any stereocenters in the
+ * molecule due to the algorithm by which substituents are ranked. This means
+ * that for every tiny edit, all stereocenter substituents are re-ranked and
+ * chiral state, if present, is propagated through a possible ranking change.
+ * For that, the list of stereocenters is required, which is accessible only
+ * in this class.
+ */
 class Molecule {
 public:
 //!@name Special member functions
@@ -65,14 +87,29 @@ public:
     BondType bondType
   ) noexcept;
 
-  //! Constructs from connectivity alone, inferring the stereocenters from graph
+  /*! Constructs from connectivity alone, inferring the stereocenters from graph
+   *
+   * Constructs a molecule from connectivity alone. Local symmetries and
+   * stereocenters are inferred from the graph alone.
+   *
+   * @throws std::logic_error If the supplied graph has multiple connected
+   *   components or there are less than 2 atoms
+   */
   explicit Molecule(OuterGraph graph);
 
   /*! Construct from connectivity and positions
    *
-   * \param bondStereocenterCandidatesOptional If boost::none, all bonds are
+   * Construct an instance from a constituting graph and positional information.
+   * Local symmetries are deduced from positional information. Stereocenters
+   * are inferred from the graph and assigned using the supplied positional
+   * information.
+   *
+   * @param bondStereocenterCandidatesOptional If boost::none, all bonds are
    *   candidates for BondStereocenter. Otherwise, only the specified bonds are
    *   checked for BondStereocenters.
+   *
+   * @throws std::logic_error If the supplied graph has multiple connected
+   *   components or there are less than 2 atoms
    */
   Molecule(
     OuterGraph graph,
@@ -82,7 +119,14 @@ public:
     >& bondStereocenterCandidatesOptional = boost::none
   );
 
-  //! Construct a molecule from the underlying data fragments
+  /* TODO this probably ought to have hidden visibility (only used internally)
+   * for serialization
+   */
+  /*! Construct a molecule from the underlying data fragments
+   *
+   * @throws std::logic_error If the supplied graph has multiple connected
+   *   components or there are less than 2 atoms
+   */
   Molecule(
     OuterGraph graph,
     StereocenterList stereocenters
@@ -112,7 +156,7 @@ public:
    * returned by stereocenters(). The supplied assignment must be either
    * boost::none or smaller than stereocenterPtr->numAssignments().
    *
-   * \note Although molecules in which this occurs are infrequent, consider the
+   * @note Although molecules in which this occurs are infrequent, consider the
    * StereocenterList you have accessed prior to calling this function and
    * particularly any iterators thereto invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
@@ -130,7 +174,7 @@ public:
    * returned by stereocenters(). The supplied assignment must be either
    * boost::none or smaller than stereocenterPtr->numAssignments().
    *
-   * \note Although molecules in which this occurs are infrequent, consider the
+   * @note Although molecules in which this occurs are infrequent, consider the
    * StereocenterList you have accessed prior to calling this function and
    * particularly any iterators thereto invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
@@ -146,11 +190,11 @@ public:
    * This sets the stereocetner assignment at a specific index, taking relative
    * statistical occurence weights of each stereopermutation into account.
    *
-   * \pre There must be an AtomStereocenter at the passed index
+   * @pre There must be an AtomStereocenter at the passed index
    *
-   * \throws If no AtomStereocenter exists at the passed index
+   * @throws If no AtomStereocenter exists at the passed index
    *
-   * \note Although molecules in which this occurs are infrequent, consider the
+   * @note Although molecules in which this occurs are infrequent, consider the
    * StereocenterList you have accessed prior to calling this function and
    * particularly any iterators to its members invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
@@ -160,10 +204,10 @@ public:
 
   /*! Assigns a bond stereocenter to a random assignment
    *
-   * \pre There must be a BondStereocenter at the passed edge
-   * \throws If no BondStereocenter exists at the passed edge
+   * @pre There must be a BondStereocenter at the passed edge
+   * @throws If no BondStereocenter exists at the passed edge
    *
-   * \note Although molecules in which this occurs are infrequent, consider the
+   * @note Although molecules in which this occurs are infrequent, consider the
    * StereocenterList you have accessed prior to calling this function and
    * particularly any iterators to its members invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
@@ -177,7 +221,10 @@ public:
    * after checking that removing it is safe, i.e. the removal does not
    * disconnect the graph.
    *
-   * \throws if the supplied index is invalid or isSafeToRemoveAtom returns false.
+   * @throws std::out_of_range If the supplied index is invalid
+   * @throws std::logic_error If removing the atom disconnects the graph.
+   *
+   * @warning Invalidates all atom indices due to renumbering
    */
   void removeAtom(AtomIndex a);
 
@@ -186,9 +233,9 @@ public:
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
    *
-   * \throws if isSafeToRemoveBond returns false.
+   * @throws if isSafeToRemoveBond returns false.
    *
-   * \note It is not safe to remove a bond just because one of the involved
+   * @note It is not safe to remove a bond just because one of the involved
    * atoms is terminal, since that atom would then be disconnected from the
    * rest of the molecule. This function merely removes a bond from the graph.
    * It is, however, considered safe to remove the terminal vertex, which
@@ -219,7 +266,7 @@ public:
    * stereocenters are default-assigned if there is only one possible
    * assignment.
    *
-   * \throws if
+   * @throws if
    *   - the supplied atomic index is invalid
    *   - the provided symmetry is a different size than that of an existing
    *     AtomStereocenter
@@ -235,7 +282,7 @@ public:
   /*! Determines what the local geometry at a non-terminal atom ought to be
    *
    * Returns the expected symmetry name at a non-terminal atom.
-   * \throws if the supplied atomic index is invalid
+   * @throws if the supplied atomic index is invalid
    */
   Symmetry::Name determineLocalGeometry(
     AtomIndex index,
@@ -257,14 +304,14 @@ public:
    * will alleviate graph-based symmetry-determination errors and allow for the
    * determination of stereocenter assignments through spatial fitting.
    *
-   * \param angstromWrapper Wrapped positions in angstrom length units
-   * \param explicitBondStereocenterCandidatesOption Permits the specification
+   * @param angstromWrapper Wrapped positions in angstrom length units
+   * @param explicitBondStereocenterCandidatesOption Permits the specification
    *   of a limited set of bonds on which BondStereocenter instantiation is
    *   attempted. In Interpret.h, for instance, you can choose not to
    *   instantiate BondStereocenters below a fractional bond order threshold to
    *   avoid spurious frozen dihedrals. By default, all bonds are candidates.
    *
-   * \throws std::domain_error if a BondIndex in
+   * @throws std::domain_error if a BondIndex in
    *   explicitBondStereocenterCandidatesOption does not reference an existing
    *   bond (irrelevant if left default).
    */
@@ -290,10 +337,10 @@ public:
    * stereocenters across both molecules are compared using the found
    * isomorphism as an index map.
    *
-   * \note The number of stereopermutations that a stereocenter has is
+   * @note The number of stereopermutations that a stereocenter has is
    * considered part of the Symmetry ComparisonOptions.
    *
-   * \note If you choose to discard bond order checking, this merely
+   * @note If you choose to discard bond order checking, this merely
    * deactivates bond order hashing and a post-isomorphism-search bond order
    * re-check. Bond order information - if present in the molecule prior to
    * calling this function - is also present in stereocenter ranking information
