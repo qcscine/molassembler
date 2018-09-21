@@ -35,10 +35,14 @@ public:
   ~Engine();
 
   //! Minimum value of result_type
-  static result_type min();
+  static constexpr result_type min() {
+    return 0;
+  }
 
   //! Maximum value of result_type
-  static result_type max();
+  static constexpr result_type max() {
+    return ~result_type(0);
+  }
 
   //! Seed the underlying state with an integer value
   void seed(int x);
