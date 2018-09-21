@@ -6,15 +6,6 @@ find_package(temple 0.1.0 REQUIRED)
 
 add_executable(symmetryTests tests.cpp)
 target_compile_options(symmetryTests PUBLIC -g -O2)
-if(
-  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
-  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
-)
-  target_compile_options(
-    symmetryTests
-    PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0
-  )
-endif()
 
 target_include_directories(
   symmetryTests PRIVATE ${EIGEN3_INCLUDE_DIRS}
@@ -25,6 +16,8 @@ target_link_libraries(symmetryTests
     Boost::unit_test_framework
     chemical_symmetries
 )
+
+target_compile_options(symmetryTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
 # add test
 add_test(NAME SymmetryTests COMMAND symmetryTests)

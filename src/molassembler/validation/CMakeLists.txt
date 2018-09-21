@@ -30,6 +30,8 @@ foreach(filename ${testFiles})
       stereopermutation
   )
 
+  target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+
   add_test(
     NAME ${targetName}
     COMMAND ${targetName}

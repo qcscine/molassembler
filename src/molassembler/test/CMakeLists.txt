@@ -25,6 +25,8 @@ foreach(filename ${testFiles})
       stereopermutation
   )
 
+  target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+
   # add target to tests
   add_test(
     NAME ${targetName}

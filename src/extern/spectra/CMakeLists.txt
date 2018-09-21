@@ -44,4 +44,7 @@ target_include_directories(
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
+# We do not care to see warnings from spectra, so we do not add
+# MOLASSEMBLER_CXX_FLAGS here
+
 source_group("Headers" FILES ${HEADERS_All})

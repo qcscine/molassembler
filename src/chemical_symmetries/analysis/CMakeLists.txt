@@ -1,42 +1,32 @@
-project(analysis)
+if(NOT MOLASSEMBLER_ANALYSIS_BINARIES)
+  return()
+endif()
 
-find_package(Boost
-  REQUIRED
+project(ChemicalSymmetriesAnalysisBinaries)
+
+find_package(Boost REQUIRED
   COMPONENTS unit_test_framework program_options system
 )
 find_package(Eigen3 3.1.1 REQUIRED)
 
-add_executable(writeTransitionDotFiles writeTransitionDotFiles.cpp)
-target_compile_options(writeTransitionDotFiles PUBLIC -g -O2)
-if(
-  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
-  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
-)
-  target_compile_options(writeTransitionDotFiles
-    PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0
-  )
-endif()
-target_link_libraries(writeTransitionDotFiles
-  PRIVATE Boost::boost chemical_symmetries
-)
+file(GLOB analysisFiles "*.cpp")
+foreach(filename ${analysisFiles})
+  set(targetName "")
+  get_filename_component(targetName ${filename} NAME_WE)
+  set(targetName "analysis_${targetName}")
 
-add_executable(writeMappings writeMappings.cpp)
-target_compile_options(writeMappings PUBLIC -g -O2)
-if(
-  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
-  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
-)
-  target_compile_options(writeMappings
-    PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0
-  )
-endif()
-target_link_libraries(writeMappings
-  PRIVATE
-    Boost::boost
-    Boost::program_options
-    Boost::system
-    chemical_symmetries
-)
+  # add the executable and specify compilation and linking options
+  add_executable(${targetName} ${filename})
 
-set_property(TARGET writeMappings PROPERTY FOLDER "Analysis")
-set_property(TARGET writeTransitionDotFiles PROPERTY FOLDER "Analysis")
+  target_link_libraries(${targetName}
+    PRIVATE
+      Boost::boost
+      Boost::program_options
+      Boost::system
+      chemical_symmetries
+  )
+
+  target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+
+  set_property(${targetName} writeMappings PROPERTY FOLDER "Analysis")
+endforeach()

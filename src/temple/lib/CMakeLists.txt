@@ -58,6 +58,15 @@ target_include_directories(
   temple SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
+target_compile_options(temple INTERFACE ${MOLASSEMBLER_CXX_FLAGS})
+
+# Add function purity suggestion flags when compiling with GCC
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(temple
+    INTERFACE -Wsuggest-attribute=const -Wsuggest-attribute=pure
+  )
+endif()
+
 # Make the interface an export-name
 install(
   TARGETS temple

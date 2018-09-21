@@ -112,17 +112,19 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       BOOST_CHECK_NO_THROW(assignCircumradius());
       BOOST_CHECK(!std::isnan(circumradius));
 
-      double deviation = (
-        circumcenterInside
-        ? CyclicPolygons::detail::circumcenterInside::centralAnglesDeviation(
+      double deviation;
+      if(circumcenterInside) {
+        deviation = CyclicPolygons::detail::circumcenterInside::centralAnglesDeviation(
           circumradius,
           edgeLengths
-        ) : CyclicPolygons::detail::circumcenterOutside::centralAnglesDeviation(
+        );
+      } else {
+        deviation = CyclicPolygons::detail::circumcenterOutside::centralAnglesDeviation(
           circumradius,
           edgeLengths,
           temple::max(edgeLengths)
-        )
-      );
+        );
+      }
 
       bool pass = std::fabs(deviation) < 1e-6;
 

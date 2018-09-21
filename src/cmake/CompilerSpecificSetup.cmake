@@ -24,30 +24,37 @@ endif()
 # Compilation flags
 if(MSVC)
   # Compilation on different cores (faster)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+  list(APPEND MOLASSEMBLER_CXX_FLAGS /MP)
   # We require way more variadic templates in the constexpr evaluation
   # No idea if this is still relevant, but we're going to assume so
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D _VARIADIC_MAX=200")
+  list(APPEND MOLASSEMBLER_CXX_FLAGS /D _VARIADIC_MAX=200)
   # Allow more constexpr steps
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:steps:100000000") # 100M
+  list(APPEND MOLASSEMBLER_CXX_FLAGS /constexpr:steps:100000000) # 100M
 else()
   # This ought to work for GCC and Clang equally
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra -Wshadow")
+  list(APPEND MOLASSEMBLER_CXX_FLAGS -Wall -Wpedantic -Wextra -Wshadow)
 
   # Some GCC-specific compiler options
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     message(STATUS "Enabling GCC specific warning flags")
     # Handle no gnu unique flags
     if(MOLASSEMBLER_NO_GNU_UNIQUE)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --no-gnu-unique")
+      list(APPEND MOLASSEMBLER_CXX_FLAGS --no-gnu-unique)
     endif()
 
-    set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} \
-      -Wsuggest-attribute=const \
-      -Wsuggest-attribute=pure \
-      -Wsuggest-final-types \
-      -Wsuggest-final-methods"
+    list(APPEND MOLASSEMBLER_CXX_FLAGS
+      -Wsuggest-final-types
+      -Wsuggest-final-methods
+    )
+  endif()
+
+  if(
+    "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
+    OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
+  )
+    list(APPEND MOLASSEMBLER_CXX_FLAGS
+      -fconstexpr-steps=1999999999
+      -fconstexpr-backtrace-limit=0
     )
   endif()
 endif()

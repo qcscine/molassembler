@@ -38,16 +38,7 @@ target_link_libraries(chemical_symmetries
     molassembler::temple
 )
 
-target_compile_options(chemical_symmetries PUBLIC)
-if(
-  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
-  OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang"
-)
-  target_compile_options(
-    chemical_symmetries
-    PRIVATE -fconstexpr-steps=1999999999 -fconstexpr-backtrace-limit=0
-  )
-endif()
+target_compile_options(chemical_symmetries PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 if(${CHEMICAL_SYMMETRIES_TRY_CONSTEXPR})
   target_compile_definitions(
     chemical_symmetries PUBLIC CHEMICAL_SYMMETRIES_TRY_CONSTEXPR

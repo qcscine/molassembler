@@ -3,7 +3,7 @@ project(analysis)
 find_package(Boost REQUIRED COMPONENTS program_options)
 
 add_executable(stereopermutationProperties properties.cpp)
-target_compile_options(stereopermutationProperties PUBLIC -O2 -std=c++14)
+target_compile_options(stereopermutationProperties PUBLIC ${MOLASSEMBLER_CXX_FLAGS})
 target_link_libraries(stereopermutationProperties
   PRIVATE Boost::program_options stereopermutation
 )

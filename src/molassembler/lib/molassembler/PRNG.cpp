@@ -35,14 +35,14 @@ Engine::Engine() : _pImpl(std::make_unique<Impl>()) {
 #else
   std::random_device randomDevice;
 
-  return {
-    randomDevice(),
-    randomDevice(),
-    randomDevice(),
-    randomDevice()
-  };
-
-  _pImpl->seed(getRandomSeeds());
+  _pImpl->seed(
+    std::vector<int> {
+      randomDevice(),
+      randomDevice(),
+      randomDevice(),
+      randomDevice()
+    }
+  );
 #endif
 }
 Engine::Engine(Engine&& other) noexcept = default;

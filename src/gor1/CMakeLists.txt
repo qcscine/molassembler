@@ -23,6 +23,8 @@ target_include_directories(
   gor1 SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
+target_compile_options(gor1 INTERFACE ${MOLASSEMBLER_CXX_FLAGS})
+
 # Installation
 install(
   TARGETS gor1
