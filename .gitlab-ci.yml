@@ -18,7 +18,7 @@ build_gcc:
     - mkdir -p gcc_build
     - cd gcc_build
     - pwd
-    - cmake -DCMAKE_BUILD_TYPE=Release ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON ..
     - make -j8
   cache:
     key: gcc_build
@@ -62,7 +62,7 @@ build_clang:
     - mkdir -p build_clang
     - cd build_clang
     - pwd
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON ..
     - make -j8
   cache:
     key: build_clang

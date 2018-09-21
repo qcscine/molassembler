@@ -1,21 +1,28 @@
-# import assignment and symmetry libraries so we can specify a dependency
-find_package(stereopermutation 0.1.0 REQUIRED)
-find_package(chemical_symmetries 0.1.0 REQUIRED)
-find_package(temple 0.1.0 REQUIRED)
-find_package(cyclic_polygons 0.1.0 REQUIRED)
+# Dependencies
 find_package(dlib REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem system)
 
-# Try to find the Delib if installed locally. Alternatively, import it as a
-# dependent project from gitlab
-find_package(Delib QUIET)
-if(NOT TARGET delib::Delib)
-  message(STATUS "Could not find Delib locally, downloading from gitlab.")
-  include(DelibImport)
-  import_delib()
+# For CI purposes, it is very useful to just download in-tree dependencies from
+# GitLab. This avoids having to install the dependencies in the docker image and
+# also avoids recompiling the dependencies in every build due to the CI cache.
+# However, downloading the dependencies adds the files into the tree, but does
+# NOT mean that the dependencies are also installed!
+#
+# Every human user of this project should independently install each project
+# and specify delib_DIR or CMAKE_PREFIX_PATH
+if(MOLASSEMBLER_DOWNLOAD_DEPENDENCIES)
+  # Attempt to find Delib locally
+  find_package(Delib QUIET)
   if(NOT TARGET delib::Delib)
-    message(FATAL_ERROR "Delib could not be downloaded from gitlab!")
+    message(STATUS "Could not find Delib locally, downloading from gitlab.")
+    include(DelibImport)
+    import_delib()
+    if(NOT TARGET delib::Delib)
+      message(FATAL_ERROR "Delib could not be downloaded from gitlab!")
+    endif()
   endif()
+else()
+  find_package(Delib REQUIRED)
 endif()
 
 # Some notes on BLAS / LAPACK:
