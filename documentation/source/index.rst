@@ -21,5 +21,5 @@ Index
    concepts.rst
    working_with_molecules.rst
    algorithms.rst
-   headers.rst
+   public_interface.rst
    known_issues.rst

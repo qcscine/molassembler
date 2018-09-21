@@ -34,24 +34,40 @@ non-terminal atom in the graph.
   - Can optionally choose four-atom or 10% partial metrization.
   - Embedding and refinement is performed in four spatial dimensions.
 
+
 ## Integrating
 
-This library requires the C++14 standard and a recent compiler (GCC >= 7).
+This library requires the C++14 standard.
 
-External library dependencies:
+Dependencies:
 
-- Boost 1.64
-- Eigen: vector arithmetic
-- dlib: BFGS solver
-- Delib: Common chemical exchange types
+- Boost >= 1.64
+- dlib >= 19.4
+- Eigen >= 3
+- Delib >= 0.2
+- (BLAS library, added if detected during compilation)
 
 
-External libraries included in tree and distribution:
+Can currently be compiled with:
+
+- [x] GCC >= 7
+- [x] Clang >= 4
+- [ ] MSVC (compatibility issues with `constexpr` code)
+
+Windows compatibility is in progress. In the meantime, consider options like
+MinGW (compiles with GCC) or Visual Studio Codegen with Clang to create Windows
+libraries.
+
+Unowned libraries included this distribution:
 
 - RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
 - Outcome (until released in boost): Improved error propagation
 - nlohmann/json: JSON serialization
 - breathe: sphinx extension to extract docstrings from doxygen xml
+- spectra: ARPACK-like interface built on top of Eigen
+
+This library uses CMake to model dependencies and make builds
+platform-independent.
 
 
 ## Compilation
@@ -65,7 +81,6 @@ $ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=<scine-installation-root>
 $ make
 ```
 
-
 ## Tests
 
 We recommend running the tests in a release build of the library. The tests are
@@ -74,6 +89,7 @@ split into two sets. After building the library and tests, run:
 - Brief end-to-end tests: `make check`
 - Library validation: `make validate`
 - Both: `make test`
+
 
 ## Documentation
 

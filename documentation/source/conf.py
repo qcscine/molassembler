@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.abspath('../extensions'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.graphviz', 'breathe']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.graphviz']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -171,32 +171,3 @@ texinfo_documents = [
      author, 'Molassembler', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-# -- Options fo breathe --------------------------------------------------
-
-breathe_projects = { "molassembler": "../doxygen/xml/" }
-breathe_default_project = "molassembler"
-breathe_projects_source = {
-  "molassembler" : (
-    "../../src/molassembler/lib/molassembler/",
-    [
-      "AtomStereocenter.h",
-      "BondStereocenter.h",
-      "Conformers.h",
-      "Cycles.h",
-      "Descriptors.h",
-      "IO.h",
-      "Interpret.h",
-      "Log.h",
-      "Molecule.h",
-      "Options.h",
-      "Serialization.h",
-      "StereocenterList.h",
-      "Version.h"
-    ]
-  )
-}
-breathe_doxygen_config_options = {
-  "EXTRACT_PRIVATE": "NO",
-  "EXCLUDE_SYMBOLS": "detail"
-}
