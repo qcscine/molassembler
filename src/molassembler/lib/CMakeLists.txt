@@ -188,7 +188,7 @@ target_link_libraries(
   molassembler
   PUBLIC
     Boost::boost
-    delib::DelibStatic
+    delib::Delib
     boost_outcome
     chemical_symmetries
     RingDecomposerLibStatic

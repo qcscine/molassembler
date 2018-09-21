@@ -54,15 +54,6 @@ Engine& Engine::operator = (const Engine& other) {
 }
 Engine::~Engine() = default;
 
-// Engine's member functions
-Engine::result_type Engine::min() {
-  return 0;
-}
-
-Engine::result_type Engine::max() {
-  return ~result_type(0);
-}
-
 void Engine::seed(int x) {
   _pImpl->seed(x);
 }
