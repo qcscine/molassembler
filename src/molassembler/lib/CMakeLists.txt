@@ -174,23 +174,17 @@ target_include_directories(molassembler
   SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS}
 )
 
-# Handle BLAS / LAPACK if found
-if(BLAS_FOUND)
-  # Add BLAS / LAPACK compile definitions
-  target_compile_definitions(molassembler PUBLIC
-    EIGEN_USE_BLAS
-    EIGEN_USE_LAPACK
-  )
-  target_compile_definitions(molassemblerStatic PUBLIC
-    EIGEN_USE_BLAS
-    EIGEN_USE_LAPACK
-  )
+# -- BEGIN Linking
 
-  target_link_libraries(molassembler PUBLIC ${BLAS_LIBARIES})
-  target_link_libraries(molassemblerStatic PUBLIC ${BLAS_LIBRARIES})
-endif()
-
-# Linking
+# Linking for the shared version of molassembler is fairly straightforward.
+# Some notes:
+# - Boost::boost Types like boost::optional form part of the public interface
+# - Boost::filesystem, ::system are required for implementation details and
+#   hence PRIVATE, subsumed since we are using the boost static libraries
+# - boost_outcome Result types form part of the public interface, distributed
+#   as a COMPONENT in this build tree (see extern)
+# - All other PRIVATE libraries are STATIC or INTERFACE libraries that we can
+#   subsume
 target_link_libraries(
   molassembler
   PUBLIC
@@ -210,6 +204,52 @@ target_link_libraries(
     Boost::system
 )
 
+# The linking for the static version of molassembler is more complicated.
+#
+# Regarding the differentiation between public and private dependencies, it is
+# important to note two things:
+# - When B is linked into A, and both A and B are static libraries, no transfer
+#   of symbols from B into A is performed at all. If you wish to perform
+#   something of that likeness, you need to literally concatenate the two
+#   static libraries together with the platform archiver. This does NOT perform
+#   anything of the normal duties of a linker in the sense that no distinction
+#   is made whether the symbols in B are actually needed or not, the archiver
+#   merely pastes these libraries together.
+# - For the above reason, and since static libraries carry no information by
+#   themselves about where encountered undefined symbols may be found, CMake
+#   handles PRIVATE linking of a static library as if it were PUBLIC and
+#   propagates the linking requirements of B onto A.
+#
+# In effect, no distinction is made between PUBLIC and PRIVATE for static A and
+# B. The behavioral claims here are based on
+# https://cmake.org/pipermail/cmake/2016-May/063400.html
+#
+# However, some of the dependencies of this static version of molassembler are
+# targets declared via add_library(x INTERFACE), i.e. they are header-only. We
+# need them only for implementation details and they do not provide any symbols,
+# so they are PRIVATE. CMake still references their targets as LINK_ONLY
+# dependencies in INTERFACE_LINK_LIBRARIES for molassemblerStatic!
+#
+# Yet we want only the include information from these libraries so that
+# molassemblerStatic can be built properly, yet not the link dependency.
+#
+# So we link the special cases, populating all dependency information:
+target_link_libraries(
+  molassemblerStatic
+  PRIVATE
+    cyclic_polygons
+    gor1
+    json
+    spectra
+)
+
+# And then reset the libraries listed in INTERFACE_LINK_LIBRARIES (which are
+# only the aforementioned libraries specified in a LINK_ONLY generator
+# expression). This removes the link dependency but does retain the information
+# required to build molassemblerStatic from those targets.
+set_target_properties(molassemblerStatic PROPERTIES INTERFACE_LINK_LIBRARIES "")
+
+# And finally we link in the rest of the public interface libraries
 target_link_libraries(
   molassemblerStatic
   PUBLIC
@@ -222,12 +262,25 @@ target_link_libraries(
     dlib::dlib
     Boost::filesystem
     Boost::system
-  PRIVATE
-    cyclic_polygons
-    gor1
-    json
-    spectra
 )
+
+# Handle BLAS / LAPACK if found
+if(BLAS_FOUND)
+  # Add BLAS / LAPACK compile definitions
+  target_compile_definitions(molassembler PUBLIC
+    EIGEN_USE_BLAS
+    EIGEN_USE_LAPACK
+  )
+  target_compile_definitions(molassemblerStatic PUBLIC
+    EIGEN_USE_BLAS
+    EIGEN_USE_LAPACK
+  )
+
+  target_link_libraries(molassembler PUBLIC ${BLAS_LIBARIES})
+  target_link_libraries(molassemblerStatic PUBLIC ${BLAS_LIBRARIES})
+endif()
+
+# -- END Linking
 
 install(
   TARGETS molassembler molassemblerStatic

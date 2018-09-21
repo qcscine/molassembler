@@ -15,20 +15,4 @@ target_include_directories(
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
-install(
-  TARGETS json
-  EXPORT jsonTargets
-  DESTINATION ${INCLUDE_INSTALL_DIR}
-)
-
-molassembler_install_component_cmake_files(
-  COMPONENT json
-  EXPORT_NAME jsonTargets
-)
-
-molassembler_install_component_headers(
-  COMPONENT json
-  DIRECTORY json
-)
-
 source_group("Headers" FILES ${HEADERS_All})

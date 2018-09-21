@@ -44,20 +44,4 @@ target_include_directories(
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
-install(
-  TARGETS spectra
-  EXPORT spectraTargets
-  DESTINATION ${INCLUDE_INSTALL_DIR}
-)
-
-molassembler_install_component_cmake_files(
-  COMPONENT spectra
-  EXPORT_NAME spectraTargets
-)
-
-molassembler_install_component_headers(
-  COMPONENT spectra
-  DIRECTORY spectra
-)
-
 source_group("Headers" FILES ${HEADERS_All})
