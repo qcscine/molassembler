@@ -294,14 +294,14 @@ struct Generator {
 #else
     std::random_device randomDevice;
 
-    return {
-      randomDevice(),
-      randomDevice(),
-      randomDevice(),
-      randomDevice()
-    };
-
-    engine.seed(getRandomSeeds());
+    engine.seed(
+      std::array<typename Engine::result_type, 4> {
+        randomDevice(),
+        randomDevice(),
+        randomDevice(),
+        randomDevice()
+      }
+    );
 #endif
   }
 };

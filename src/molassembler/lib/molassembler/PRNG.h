@@ -54,7 +54,7 @@ public:
   result_type operator() () const;
 
 private:
-  class Impl;
+  struct Impl;
 
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
   std::experimental::propagate_const<
