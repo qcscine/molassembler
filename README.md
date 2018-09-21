@@ -63,7 +63,6 @@ Unowned libraries included this distribution:
 - RingDecomposerLib[^1]: Unique Ring Family[^2] cycle detection
 - Outcome (until released in boost): Improved error propagation
 - nlohmann/json: JSON serialization
-- breathe: sphinx extension to extract docstrings from doxygen xml
 - spectra: ARPACK-like interface built on top of Eigen
 
 This library uses CMake to model dependencies and make builds

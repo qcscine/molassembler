@@ -1,3 +1,8 @@
+# Early return in case analysis binaries are not to be compiled
+if(NOT MOLASSEMBLER_ANALYSIS_BINARIES)
+  return()
+endif()
+
 project(molassemblerAnalyses)
 
 find_package(Boost REQUIRED COMPONENTS regex program_options system)
