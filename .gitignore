@@ -11,3 +11,4 @@ documentation/build
 compile_commands.json
 *.vim
 scripts/**/*.tar
+*.pyc
