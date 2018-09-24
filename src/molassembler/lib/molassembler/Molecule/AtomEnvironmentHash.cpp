@@ -164,7 +164,7 @@ WideHashType atomEnvironment(
       } else {
         permutationValue = 1;
       }
-      value += WideHashType(permutationValue) << (7 + 48 + 5);
+      value += permutationValue << (7 + 48 + 5);
     }
   }
 

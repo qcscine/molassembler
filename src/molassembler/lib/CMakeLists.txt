@@ -84,6 +84,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/Bridge.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/InnerGraph.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/Base64.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/FileHandlers.h
@@ -129,6 +130,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/InnerGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/GraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/FileHandlers.cpp

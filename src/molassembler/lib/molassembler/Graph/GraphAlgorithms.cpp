@@ -3,6 +3,9 @@
 
 #include "molassembler/Graph/GraphAlgorithms.h"
 
+#include "boost/graph/visitors.hpp"
+#include "boost/graph/named_function_params.hpp"
+#include "boost/graph/breadth_first_search.hpp"
 #include "boost/graph/connected_components.hpp"
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/range/iterator_range_core.hpp"
@@ -383,6 +386,24 @@ void findAndSetEtaBonds(InnerGraph& graph) {
       }
     );
   }
+}
+
+std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph) {
+  assert(a < graph.N());
+
+  std::vector<unsigned> distances (graph.N(), 0);
+
+  boost::breadth_first_search(
+    graph.bgl(),
+    a,
+    boost::visitor(
+      boost::make_bfs_visitor(
+        boost::record_distances(&distances[0], boost::on_tree_edge {})
+      )
+    )
+  );
+
+  return distances;
 }
 
 } // namespace GraphAlgorithms

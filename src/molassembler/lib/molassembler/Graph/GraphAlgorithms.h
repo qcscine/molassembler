@@ -85,6 +85,8 @@ void findAndSetEtaBonds(InnerGraph& graph);
 [[deprecated]]
 unsigned numConnectedComponents(const InnerGraph& graph);
 
+std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph);
+
 } // namespace GraphAlgorithms
 
 } // namespace molassembler
