@@ -687,7 +687,7 @@ void Molecule::Impl::addBond(
 
 void Molecule::Impl::assignStereocenter(
   const AtomIndex a,
-  const boost::optional<unsigned>& assignment
+  const boost::optional<unsigned>& assignmentOption
 ) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::assignStereocenter: Supplied index is invalid!");
@@ -696,14 +696,17 @@ void Molecule::Impl::assignStereocenter(
   auto stereocenterOption = _stereocenters.option(a);
 
   if(!stereocenterOption) {
-    throw std::logic_error("assignStereocenter: No stereocenter at this index!");
+    throw std::out_of_range("assignStereocenter: No stereocenter at this index!");
   }
 
-  if(assignment >= stereocenterOption->numAssignments()) {
-    throw std::logic_error("assignStereocenter: Invalid assignment index!");
+  if(
+    assignmentOption
+    && assignmentOption.value() >= stereocenterOption->numAssignments()
+  ) {
+    throw std::out_of_range("assignStereocenter: Invalid assignment index!");
   }
 
-  stereocenterOption -> assign(assignment);
+  stereocenterOption -> assign(assignmentOption);
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
@@ -711,7 +714,7 @@ void Molecule::Impl::assignStereocenter(
 
 void Molecule::Impl::assignStereocenter(
   const BondIndex& edge,
-  const boost::optional<unsigned>& assignment
+  const boost::optional<unsigned>& assignmentOption
 ) {
   if(!_isValidIndex(edge.first) || !_isValidIndex(edge.second)) {
     throw std::out_of_range("Molecule::assignStereocenter: Supplied bond atom indices is invalid!");
@@ -720,14 +723,17 @@ void Molecule::Impl::assignStereocenter(
   auto stereocenterOption = _stereocenters.option(edge);
 
   if(!stereocenterOption) {
-    throw std::logic_error("assignStereocenter: No stereocenter at this bond!");
+    throw std::out_of_range("assignStereocenter: No stereocenter at this bond!");
   }
 
-  if(assignment >= stereocenterOption->numAssignments()) {
-    throw std::logic_error("assignStereocenter: Invalid assignment index!");
+  if(
+    assignmentOption
+    && assignmentOption.value() >= stereocenterOption->numAssignments()
+  ) {
+    throw std::out_of_range("assignStereocenter: Invalid assignment index!");
   }
 
-  stereocenterOption -> assign(assignment);
+  stereocenterOption -> assign(assignmentOption);
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
@@ -741,7 +747,7 @@ void Molecule::Impl::assignStereocenterRandomly(const AtomIndex a) {
   auto stereocenterOption = _stereocenters.option(a);
 
   if(!stereocenterOption) {
-    throw std::logic_error("assignStereocenterRandomly: No stereocenter at this index!");
+    throw std::out_of_range("assignStereocenterRandomly: No stereocenter at this index!");
   }
 
   stereocenterOption->assignRandom();
@@ -754,7 +760,7 @@ void Molecule::Impl::assignStereocenterRandomly(const BondIndex& e) {
   auto stereocenterOption = _stereocenters.option(e);
 
   if(!stereocenterOption) {
-    throw std::logic_error("assignStereocenterRandomly: No stereocenter at this edge!");
+    throw std::out_of_range("assignStereocenterRandomly: No stereocenter at this edge!");
   }
 
   stereocenterOption->assignRandom();
@@ -859,7 +865,7 @@ void Molecule::Impl::removeBond(
   auto edgeOption = inner.edgeOption(a, b);
 
   if(!edgeOption) {
-    throw std::logic_error("That bond does not exist!");
+    throw std::out_of_range("That bond does not exist!");
   }
 
   InnerGraph::Edge edgeToRemove = edgeOption.value();
@@ -885,7 +891,7 @@ void Molecule::Impl::removeBond(
     if(auto stereocenterOption = _stereocenters.option(indexToUpdate)) {
       auto localRanking = rankPriority(indexToUpdate);
 
-      // In case the CNS central atom becomes terminal, just drop the stereocenter
+      // In case the central atom becomes terminal, just drop the stereocenter
       if(localRanking.ligands.size() <= 1) {
         _stereocenters.remove(indexToUpdate);
         return;
@@ -1170,7 +1176,7 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
       // Test if the supplied edge exists first
       auto edge = inner.edgeOption(bondIndex.first, bondIndex.second);
       if(!edge) {
-        throw std::domain_error("Explicit bond stereocenter candidate edge does not exist!");
+        throw std::out_of_range("Explicit bond stereocenter candidate edge does not exist!");
       }
 
       tryInstantiateBondStereocenter(*edge);
@@ -1246,6 +1252,10 @@ RankingInformation Molecule::Impl::rankPriority(
   const std::vector<AtomIndex>& excludeAdjacent,
   const boost::optional<AngstromWrapper>& positionsOption
 ) const {
+  if(!_isValidIndex(a)) {
+    throw std::out_of_range("Supplied atom index is invalid!");
+  }
+
   RankingInformation rankingResult;
 
   // Expects that bond types are set properly, complains otherwise

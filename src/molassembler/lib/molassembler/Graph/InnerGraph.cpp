@@ -15,7 +15,15 @@ InnerGraph::InnerGraph(const InnerGraph::Vertex N) : _graph {N} {}
 
 /* Modifiers */
 InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondType bondType) {
-  // Invalidate the cache
+  /* We have to be careful here since the edge list for a vector is not a set
+   * (see BGLType).  Check if there is already such an edge before adding it.
+   */
+  auto existingEdgePair = boost::edge(a, b, _graph);
+  if(existingEdgePair.second) {
+    throw std::logic_error("Edge already exists!");
+  }
+
+  // Invalidate the cache only after all throwing conditions
   _unchangedSinceNotification = false;
 
   auto newBondPair = boost::add_edge(a, b, _graph);

@@ -135,14 +135,50 @@ public:
 
 //!@name Modifiers
 //!@{
-  //! Adds an atom by attaching it to an existing atom.
+  /*! Adds an atom by attaching it to an existing atom.
+   *
+   * Adds a new atom, attaching it to an existing atom by a specified bond type.
+   *
+   * @param elementType The element type of the new atom
+   * @param adjacentTo The atom to which the new atom is to be attached
+   * @param bondType The bond type with which the new atom is to be attached
+   *
+   * @throws std::out_of_range If adjacentTo is invalid, i.e. >= N()
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
+   */
   AtomIndex addAtom(
     Delib::ElementType elementType,
     AtomIndex adjacentTo,
     BondType bondType
   );
 
-  //! Adds a bond between existing atoms.
+  /*! Adds a bond between two existing atoms
+   *
+   * Adds a bond between two already-existing atoms.
+   *
+   * @param a The first atom index
+   * @param b The second atom index
+   * @param bondType The bond type with which to connect a and b.
+   *
+   * @throws std::out_of_range If either atom index is invalid, i.e. >= N()
+   * @throws std::logic_error If the atom indices match or the edge already
+   *   exists.
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
+   */
   void addBond(
     AtomIndex a,
     AtomIndex b,
@@ -156,15 +192,28 @@ public:
    * returned by stereocenters(). The supplied assignment must be either
    * boost::none or smaller than stereocenterPtr->numAssignments().
    *
-   * @note Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and
-   * particularly any iterators thereto invalidated. This is because an
-   * assignment change can trigger a ranking change, which can in turn lead
-   * to the introduction of new stereocenters or the removal of old ones.
+   * @param a The atom index at which a stereocenter is to be assigned.
+   * @param assignmentOption The new assignment. The special value boost::none
+   *   makes the stereocenter indeterminate. Any indeterminate atom
+   *   stereocenters in a molecule at conformation-generation will be assigned
+   *   with a probability according to their sterepermutation's relative
+   *   statistical occurence.
+   *
+   * @throws std::out_of_range If the atom index is invalid, i.e. >= N(),
+   *   there is no stereocenter at this position or the assignment index is
+   *   invalid.
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
    */
   void assignStereocenter(
     AtomIndex a,
-    const boost::optional<unsigned>& assignment
+    const boost::optional<unsigned>& assignmentOption
   );
 
   /*! Sets the stereocenter assignment on a bond
@@ -174,44 +223,62 @@ public:
    * returned by stereocenters(). The supplied assignment must be either
    * boost::none or smaller than stereocenterPtr->numAssignments().
    *
-   * @note Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and
-   * particularly any iterators thereto invalidated. This is because an
-   * assignment change can trigger a ranking change, which can in turn lead
-   * to the introduction of new stereocenters or the removal of old ones.
+   * @param edge The edge at which a stereocenter is to be assigned.
+   * @param assignmentOption The new assignment. The special value boost::none
+   *   makes the stereocenter indeterminate. Any indeterminate bond
+   *   stereocenters in a molecule at conformation-generation will be assigned
+   *   randomly.
+   *
+   * @throws std::out_of_range If the BondIndex is invalid (i.e. either atom
+   *   index >= N()), there is no bond stereocenter at the supplied edge
+   *   or the assignment index is inalid.
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
    */
   void assignStereocenter(
     const BondIndex& edge,
-    const boost::optional<unsigned>& assignment
+    const boost::optional<unsigned>& assignmentOption
   );
 
   /*! Assigns a stereocenter stereopermutation at random
    *
-   * This sets the stereocetner assignment at a specific index, taking relative
+   * This sets the stereocenter assignment at a specific index, taking relative
    * statistical occurence weights of each stereopermutation into account.
    *
-   * @pre There must be an AtomStereocenter at the passed index
+   * @param a The atom index at which the atom stereocenter is to be assigned
+   *   randomly
    *
-   * @throws If no AtomStereocenter exists at the passed index
+   * @throws std::out_of_range If the atom index is invalid (i.e. is >= N()) or
+   *   there is no atom stereocenter at this bond index.
    *
-   * @note Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and
-   * particularly any iterators to its members invalidated. This is because an
-   * assignment change can trigger a ranking change, which can in turn lead
-   * to the introduction of new stereocenters or the removal of old ones.
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
    */
   void assignStereocenterRandomly(AtomIndex a);
 
   /*! Assigns a bond stereocenter to a random assignment
    *
-   * @pre There must be a BondStereocenter at the passed edge
-   * @throws If no BondStereocenter exists at the passed edge
+   * @throws std::out_of_range If the bond index is invalid (i.e. either atom
+   *   index is >= N()) or there is no bond stereocenter at this bond index.
    *
-   * @note Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and
-   * particularly any iterators to its members invalidated. This is because an
-   * assignment change can trigger a ranking change, which can in turn lead
-   * to the introduction of new stereocenters or the removal of old ones.
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
    */
   void assignStereocenterRandomly(const BondIndex& e);
 
@@ -221,10 +288,18 @@ public:
    * after checking that removing it is safe, i.e. the removal does not
    * disconnect the graph.
    *
-   * @throws std::out_of_range If the supplied index is invalid
+   * @throws std::out_of_range If the supplied index is invalid, i.e. >= N()
    * @throws std::logic_error If removing the atom disconnects the graph.
    *
-   * @warning Invalidates all atom indices due to renumbering
+   * @warning Invalidates **all** atom indices due to renumbering
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
    */
   void removeAtom(AtomIndex a);
 
@@ -233,24 +308,73 @@ public:
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
    *
-   * @throws if isSafeToRemoveBond returns false.
+   * @throws std::out_of_range If the supplied bond index is invalid, i.e. either
+   *   atom index >= N() or the specified bond does not exist.
+   * @throws std::logic_error If graph().canRemove() returns false.
    *
    * @note It is not safe to remove a bond just because one of the involved
-   * atoms is terminal, since that atom would then be disconnected from the
-   * rest of the molecule. This function merely removes a bond from the graph.
-   * It is, however, considered safe to remove the terminal vertex, which
-   * involves removing the bond to it.
+   *   atoms is terminal, since that atom would then be disconnected from the
+   *   rest of the molecule. This function merely removes a bond from the graph.
+   *   It is, however, considered safe to remove the terminal vertex, which
+   *   involves removing the bond to it.
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
    */
   void removeBond(AtomIndex a, AtomIndex b);
 
-  //! Changes a bond type. Returns whether the bond already existed
+  /*! Changes a bond type. Returns whether the bond already existed
+   *
+   * Changes the bond type between two atom indices. If the bond does not exist
+   * yet, adds the bond.
+   *
+   * @param a The first index of the bond whose type should be changed
+   * @param b The second index of the bond whose type should be changed
+   * @param bondType The new bond type
+   *
+   * @return If the bond type already existed.
+   *
+   * @throws out_of_range If a or b are invalid, i.e. >= N()
+   * @throws std::logic_error If bondType is specified as BondType::Eta. The
+   *   representation of bonding to haptic ligands and its dynamism is handled
+   *   internally.
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
+   */
   bool setBondType(
     AtomIndex a,
     AtomIndex b,
     BondType bondType
   );
 
-  //! Changes an existing atom's element type
+  /*! Changes an existing atom's element type
+   *
+   * Changes the element type of an existing atom.
+   *
+   * @param a The atom index of the atom whose element type is to be changed
+   * @param The new element type
+   *
+   * @throws std::out_of_range If a is invalid >= N()
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
+   */
   void setElementType(
     AtomIndex a,
     Delib::ElementType elementType
@@ -270,6 +394,14 @@ public:
    *   - the supplied atomic index is invalid
    *   - the provided symmetry is a different size than that of an existing
    *     AtomStereocenter
+   *
+   * @note Any molecular edit causes a full re-rank at each non-terminal
+   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   may disappear, change their assignment and number of assignments, or new
+   *   stereocenters can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereocenterList members and
+   *   any stereocenter state stored external to a Molecule instance and its
+   *   members invalidated.
    */
   void setGeometryAtAtom(
     AtomIndex a,
@@ -281,18 +413,46 @@ public:
 //!@{
   /*! Determines what the local geometry at a non-terminal atom ought to be
    *
-   * Returns the expected symmetry name at a non-terminal atom.
-   * @throws if the supplied atomic index is invalid
+   * Returns the expected symmetry name at a non-terminal atom by inference
+   * from graph information only.
+   *
+   * Can be extended to apply various levels of theory to determine the
+   * geometry based on various information contained in the graph, such as
+   * ligand field theory.
+   *
+   * @param index The atom index where the local geometry should be determined
+   * @param ranking The ranking of all substituents at the supplied index. See
+   *   rankPriority()
+   *
+   * @returns A local geometry (of the appropriate size to fit the number of
+   *   ligand sites) which may or may not be the symmetry with the lowest
+   *   energy.
+   *
+   * @throws std::out_of_range If the supplied atomic index is >= N()
+   * @throws std::logic_error If the supplied atom is terminal or if the amount
+   *   of ligand sites exceeds the size of the largest defined symmetry.
+   *
+   * @note Currently applies VSEPR if the element type at the supplied index is
+   *   not a transition metal, and returns the first symmetry of appropriate
+   *   size otherwise.
    */
   Symmetry::Name determineLocalGeometry(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;
 
-  //! Returns a graphivz string representation of the molecule
+  /*! Returns a graphivz string representation of the molecule
+   *
+   * Creates a graphviz representation of a molecule that can be written into a
+   * dotfile and processed with graphviz's `dot` binary to create an image of
+   * the molecular graph.
+   *
+   * Includes information on stereocenters in svg-format when hovering over
+   * individual nodes.
+   */
   std::string dumpGraphviz() const;
 
-  //! Provides read-only access to the graph member
+  //! Provides read-only access to the graph representation
   const OuterGraph& graph() const;
 
   //! Provides read-only access to the list of stereocenters
@@ -311,7 +471,7 @@ public:
    *   instantiate BondStereocenters below a fractional bond order threshold to
    *   avoid spurious frozen dihedrals. By default, all bonds are candidates.
    *
-   * @throws std::domain_error if a BondIndex in
+   * @throws std::out_of_range if a BondIndex in
    *   explicitBondStereocenterCandidatesOption does not reference an existing
    *   bond (irrelevant if left default).
    */
@@ -353,6 +513,29 @@ public:
     const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
   ) const;
 
+  /*! Rank substituents of an atom
+   *
+   * Performs a ranking algorithm that attempts to differentiate branches
+   * extending at each substituent atom (haptic ligands are not considered a
+   * single unit, rather their component atoms are all individual substituents).
+   *
+   * Groups substituents into ligands (these are not the same since haptic
+   * ligands exist) and ranks those too.
+   *
+   * @param a The atom whose substituents are to be ranked
+   * @param excludeAdjacent A list of substituent atom indices that should be
+   *   excluded from ranking
+   * @param positionsOption Positional information can be used to determine
+   *   auxiliary stereocenter assignments that arise in the ranking algorithm
+   *   and may have different sub-rankings than at the same position in the
+   *   molecule considered on its own. It is preferable to supply this if
+   *   positional information is present!
+   *
+   * @throws std::out_of_range If the supplied atom index is i.e. >= N()
+   *
+   * @returns a RankingInformation instance that contains all gathered
+   * information.
+   */
   RankingInformation rankPriority(
     AtomIndex a,
     const std::vector<AtomIndex>& excludeAdjacent = {},
@@ -368,6 +551,7 @@ public:
 //!@}
 
 private:
+  //! Private implementation member
   struct Impl;
 
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
