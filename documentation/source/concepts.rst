@@ -60,7 +60,7 @@ bond edges. Vertices store the atomic element type while vertices store a bond
 type that distinguishes the bond orders one through six as well as a so-called
 eta bond, which models connections between a central atom and a
 haptically-bonded subset of atoms (i.e. a contiguous group of atoms all bonded
-to a transition metal)
+to a transition metal).
 
 The Graph class leaves a library consumer a lot of freedom in the specification
 of the molecule's graph, but does enforces some model limitations.  A molecule's

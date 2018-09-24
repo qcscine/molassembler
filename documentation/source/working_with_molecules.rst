@@ -84,7 +84,32 @@ conformer generation.
 
 Information about a Molecule can be obtained from its constituting graph and
 stereocenter list classes, but editing is centralized at the Molecule interface
-since graph and stereocenter changes force a full re-ranking of all atoms.
+since graph and stereocenter changes force a full re-ranking of all atoms and
+possibly changes in the list of stereocenters.
+
+Among the possible changes in the list of stereocenters on re-ranking are:
+
+- Stereocenters may change the number of possible assignments. This means a
+  stereocenter may become chiral (i.e. there are multiple stereopermutations) or
+  cease to be chiral (there is only one stereopermutation).
+- If a stereocenter is assigned, its assignment may change.
+
+It is therefore important that **upon each molecular edit**, any state about or
+within the StereocenterList of the molecule being edit that is stored externally
+to the instance itself is considered invalidated.
+
+
+The Eta bond type
+-----------------
+
+On a graph level, each constituting atom of a haptic ligand that is part of the
+bond of the ligand to a transition metal must have a bond to that transition
+metal. These bonds are of the Eta bond type, regardless of their individual
+order. It is, however, the task of the library to differentiate which bonds
+between atoms are to be considered an Eta bond type and which are not, based
+wholly upon the graph structure. The public API of molassembler does not accept
+user-defined Eta bond types. Specify Single as bond type in the creation of
+haptic bonding.
 
 
 Conformer generation
