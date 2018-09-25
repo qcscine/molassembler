@@ -7,9 +7,15 @@ project(molassemblerValidationTests)
 
 find_package(Boost REQUIRED COMPONENTS unit_test_framework regex)
 
+# Explicitly set all test files
+set(testFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/GraphAlgorithms.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/RankingValidation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Sanity.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/StrainedMolecules.cpp
+)
+
 # Testing targets
-# get all test cpp files
-file(GLOB testFiles "*.cpp")
 foreach(filename ${testFiles})
   # get a target name from the filename
   set(baseName "")

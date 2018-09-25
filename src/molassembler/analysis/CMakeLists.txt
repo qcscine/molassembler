@@ -7,7 +7,16 @@ project(molassemblerAnalyses)
 
 find_package(Boost REQUIRED COMPONENTS regex program_options system)
 
-file(GLOB analysisFiles "*.cpp")
+set(analysisFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkEigenvalues.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkGraphAlgorithms.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Editor.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Gor1Explainer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/MakeIsomorphism.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/RankingExplainer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/RaytraceRefinement.cpp
+)
+
 foreach(filename ${analysisFiles})
   set(targetName "")
   get_filename_component(targetName ${filename} NAME_WE)

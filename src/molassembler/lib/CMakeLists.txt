@@ -298,9 +298,24 @@ molassembler_install_component_cmake_files(
   EXPORT_NAME molassemblerTargets
 )
 
-molassembler_install_component_headers(
+# We wish to install headers only and not install any subdirectories since
+# molassembler's public API is defined via the top-level-directory headers
+install(
+  DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/molassembler"
+  DESTINATION ${INCLUDE_INSTALL_DIR}
   COMPONENT molassembler
-  DIRECTORY molassembler
+  FILES_MATCHING
+    PATTERN "*.h"
+    PATTERN "*.hpp"
+    PATTERN "*.hxx"
+    REGEX ".+/molassembler/Containers$" EXCLUDE
+    REGEX ".+/molassembler/Detail$" EXCLUDE
+    REGEX ".+/molassembler/DistanceGeometry$" EXCLUDE
+    REGEX ".+/molassembler/Graph$" EXCLUDE
+    REGEX ".+/molassembler/IO$" EXCLUDE
+    REGEX ".+/molassembler/Modeling$" EXCLUDE
+    REGEX ".+/molassembler/Molecule$" EXCLUDE
+    REGEX ".+/molassembler/Stereocenters$" EXCLUDE
 )
 
 source_group("Headers" FILES ${HEADERS_All})

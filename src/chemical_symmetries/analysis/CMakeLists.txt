@@ -9,7 +9,11 @@ find_package(Boost REQUIRED
 )
 find_package(Eigen3 3.1.1 REQUIRED)
 
-file(GLOB analysisFiles "*.cpp")
+set(analysisFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/writeMappings.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/writeTransitionDotFiles.cpp
+)
+
 foreach(filename ${analysisFiles})
   set(targetName "")
   get_filename_component(targetName ${filename} NAME_WE)
