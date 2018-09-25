@@ -28,3 +28,9 @@ It is inadvisable to include these files directly and make use of their
 functionality since the types therein may be moved around in future versions.
 Any molassembler headers that use types from these files include them, and there
 are no forward declarations.
+
+Additionally, some (very few) functions carry an explicit warning that they
+exist solely for library-internal purporses. It is advisable not to use these
+functions or create functionality dependent on possibly forward-declared types
+involved. They do not form part of the public interface and are thus subject to
+free developmental flux.

@@ -119,13 +119,13 @@ public:
     >& bondStereocenterCandidatesOptional = boost::none
   );
 
-  /* TODO this probably ought to have hidden visibility (only used internally)
-   * for serialization
-   */
   /*! Construct a molecule from the underlying data fragments
    *
    * @throws std::logic_error If the supplied graph has multiple connected
    *   components or there are less than 2 atoms
+   *
+   * @warning This function is not intended for library consumers. It is used
+   * internally in implementation details.
    */
   Molecule(
     OuterGraph graph,

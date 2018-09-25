@@ -130,8 +130,18 @@ public:
   Range<IncidentEdgesIterator> bonds(AtomIndex a) const;
 //!@}
 
-  // Access to BGL-level descriptors (for inner layer users only)
+  /*! Access to library-internal graph representation class
+   *
+   * @warning This function is not intended for library consumers, merely used
+   * for implementation purposes.
+   */
   InnerGraph& inner() { return *_innerPtr; }
+
+  /*! Const-access to library-internal graph representation class
+   *
+   * @warning This function is not intended for library consumers, merely used
+   * for implementation purposes.
+   */
   const InnerGraph& inner() const { return *_innerPtr; }
 
 private:
