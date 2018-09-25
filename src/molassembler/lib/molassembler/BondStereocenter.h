@@ -13,8 +13,6 @@
 #include <experimental/propagate_const>
 #endif
 
-// For MSVC compatibility, require the define below
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include <vector>
 #include <string>

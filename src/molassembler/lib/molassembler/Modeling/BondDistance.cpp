@@ -3,8 +3,6 @@
 
 #include "molassembler/Modeling/BondDistance.h"
 
-// For MSVC compatibility, require the define below
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 namespace molassembler {

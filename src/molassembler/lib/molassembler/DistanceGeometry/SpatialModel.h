@@ -8,8 +8,6 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/StereocenterList.h"
 
-// For MSVC
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 /*! @file

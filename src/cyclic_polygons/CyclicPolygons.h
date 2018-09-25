@@ -11,8 +11,6 @@
 #include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
-// For MSVC
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include <array>

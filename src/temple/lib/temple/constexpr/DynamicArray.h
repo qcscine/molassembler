@@ -527,9 +527,6 @@ public:
     }
   };
 
-  //! Type alias for compatibility with STL algorithms
-  using const_iterator = const_iterator;
-
   PURITY_WEAK constexpr const_iterator begin() const noexcept {
     return const_iterator(*this, 0);
   }

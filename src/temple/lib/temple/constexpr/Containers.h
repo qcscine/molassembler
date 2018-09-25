@@ -509,7 +509,7 @@ template<
   class Container,
   typename T,
   class LessThanPredicate = std::less<>
-> constexpr class Container::const_iterator binarySearch(
+> constexpr typename Container::const_iterator binarySearch(
   const Container& container,
   const T& item,
   LessThanPredicate predicate = LessThanPredicate()
