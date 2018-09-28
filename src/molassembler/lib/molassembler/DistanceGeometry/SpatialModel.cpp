@@ -48,8 +48,9 @@ SpatialModel::SpatialModel(
     _stereocenters(molecule.stereocenters())
 {
   /* This is overall a pretty complicated constructor since it encompasses the
-   * entire conversion from a molecular graph into some model of the relations
-   * between atoms, determining which conformations are accessible.
+   * entire conversion from a molecular graph into some model of the internal
+   * coordinates of all connected atoms, determining which conformations are
+   * accessible.
    *
    * The rough sequence of operations is
    * - Make helper variables
@@ -679,8 +680,14 @@ bool bondInformationIsPresent(
 }
 
 SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
+  // We can straight up copy the bonds' 1-2 information
   BoundsList bounds = _bondBounds;
 
+  /* There may be overlapping and possibly conflicting information present in
+   * the gathered data. If data affects the same atom-pair, we must ensure that
+   * we merely raise the lower bound and lower the upper bound, while never
+   * inverting the bounds overall.
+   */
   auto addInformation = [&bounds](
     const AtomIndex i,
     const AtomIndex j,
@@ -724,6 +731,7 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
     );
   };
 
+  // Add 1-3 information
   for(const auto& anglePair : _angleBounds) {
     const auto& indices = anglePair.first;
     const auto& angleBounds = anglePair.second;
@@ -749,6 +757,7 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
     );
   }
 
+  // Add 1-4 information
   for(const auto& dihedralPair : _dihedralBounds) {
     const auto& indices = dihedralPair.first;
     const auto& dihedralBounds = dihedralPair.second;
@@ -858,6 +867,40 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
         bondStereocenter.edge().second
       ).value()
     );
+
+    /* BondStereocenter issues ±0 chirality constraints since it does not have
+     * all of the available information regarding the internal coordinates it
+     * needs to calculate its bounds. Here, after construction of SpatialModel,
+     * we have all the internal coordinate information we require to calculate
+     * proper bounds for flat chirality constraints.
+     *
+     * The signed volume of a tetrahedron spanned by a 1-4 sequence i-j-k-l is
+     *
+     *   V = 1/6 (i-l) dot [(j-l) x (k-l)]
+     *
+     * or, in internal coordinates (a, b, c are bond lengths, α and β angles,
+     * φ the dihedral)
+     *
+     *   V = 1/6 a b c sin α sin β sin φ
+     *
+     * We calculate the volume spanned by the combination of all lower bounds
+     * and all upper bounds on the internal coordinates and set the flat
+     * chirality constraint's tolerance as ± whichever is larger by magnitude
+     */
+    /* This is not a good place to perform this work.
+     *
+     * - chirality constraints are haptic-level, and pretending all
+     *   bond stereocenters are not is limiting
+     * - Moving it to BondStereocenter (where principally all knowledge is
+     *   available due to references to its constituting atom stereocenters)
+     *   is hardly ideal either because it has no knowledge on other constraints
+     *   placed on any given atom pair that may be placed in the SpatialModel
+     *   constructor or elsewhere
+     * - Ideally, all spatial modelling, even of atomstereocenter's haptic
+     *   ligands (which is needed for the reduction of stereopermutations to
+     *   assignments in haptic ligands and otherwise) should be moved to within
+     *   this class
+     */
 
     std::move(
       std::begin(stereocenterConstraints),

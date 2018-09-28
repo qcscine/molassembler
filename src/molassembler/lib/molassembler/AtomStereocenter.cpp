@@ -1020,14 +1020,14 @@ void AtomStereocenter::Impl::setModelInformation(
      * - Cone height is defined by _cache.ligandDistance
      * - Cone angle is defined by _cache.coneAngle
      */
-    DistanceGeometry::ValueBounds coneAngleBounds = _cache.coneAngles.at(ligandI).value();
+    const DistanceGeometry::ValueBounds coneAngleBounds = _cache.coneAngles.at(ligandI).value();
 
-    double upperHypotenuse = (
+    const double upperHypotenuse = (
       _cache.ligandDistances.at(ligandI).upper
       / std::cos(coneAngleBounds.lower)
     );
 
-    double lowerHypotenuse = (
+    const double lowerHypotenuse = (
       _cache.ligandDistances.at(ligandI).lower
       / std::cos(coneAngleBounds.upper)
     );
@@ -1064,6 +1064,13 @@ void AtomStereocenter::Impl::setModelInformation(
   }
 
   /* Inter-site modelling */
+  /* If for either site no cone angles could be calculated (currently only
+   * happens if a haptic ligand does not match the existing modeling patterns),
+   * we have to skip this step entirely and hope that the remaining modeling
+   * can pick up the slack.
+   *
+   * NOTE: Cone angles are calculated for non-haptic ligands too -> (0, 0).
+   */
   for(unsigned i = 0; i < _ranking.ligands.size() - 1; ++i) {
     if(!_cache.coneAngles.at(i)) {
       continue;
@@ -1074,6 +1081,9 @@ void AtomStereocenter::Impl::setModelInformation(
         continue;
       }
 
+      /* The idealized symmetry angles are modified by the upper (!) cone angles
+       * at each site, not split between lower and upper.
+       */
       DistanceGeometry::ValueBounds angleBounds {
         (
           angle(i, j)
@@ -1087,6 +1097,9 @@ void AtomStereocenter::Impl::setModelInformation(
         )
       };
 
+      /* The computed angle bounds are valid for each pair of atoms
+       * constituting each ligand
+       */
       temple::forEach(
         temple::adaptors::allPairs(
           _ranking.ligands.at(i),
@@ -1152,7 +1165,7 @@ std::vector<
     );
 
     // Get list of tetrahedra from symmetry
-    auto tetrahedraList = Symmetry::tetrahedra(_symmetry);
+    const auto& tetrahedraList = Symmetry::tetrahedra(_symmetry);
 
     precursors.reserve(tetrahedraList.size());
     for(const auto& tetrahedron : tetrahedraList) {

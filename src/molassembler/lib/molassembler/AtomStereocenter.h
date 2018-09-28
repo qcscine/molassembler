@@ -195,16 +195,41 @@ public:
    */
   std::vector<unsigned> getSymmetryPositionMap() const;
 
-  /*! Returns the number of possible permutations
+  /*! Returns the number of possible assignments
    *
-   * Fetches the number of different assignments possible with the current
-   * substituent ranking and connectivity information. This is also the upper
-   * exclusive bound on the assignment indices that can be used to change the
-   * arrangement of substituents.
+   * The number of possible assignments is the number of non-superposable
+   * arrangements of the abstract ligand case reduced by trans-arranged
+   * multidentate pairs where the bridge length is too short or overlapping
+   * haptic cones.
+   *
+   * For instance, if octahedral M[(A-A)3], there are four abstract arrangements
+   * - trans-trans-trans
+   * - trans-cis-cis
+   * - 2x cis-cis-cis (Δ and Λ isomers, ship propeller-like chirality)
+   *
+   * However, the number of stereopermutations for a concrete case in which the
+   * bridges are too short to allow trans bonding is reduced by all
+   * arrangements containing a trans-bonded bidentate ligand, i.e. only Δ and Λ
+   * remain. The number of assignments is then only two.
+   *
+   * This is the upper exclusive bound on Some-type arguments to assign().
    */
   unsigned numAssignments() const;
 
-  /*! Returns the number of symbolic ligand permutations
+  /*! Returns the number of possible stereopermutations
+   *
+   * The number of possible stereopermutations is the number of
+   * non-superposable arrangements of the abstract ligand case without removing
+   * trans-arranged multidentate pairs or overlapping haptic cones.
+   *
+   * For instance, if octahedral M[(A-A)3], there are four abstract arrangements
+   * - trans-trans-trans
+   * - trans-cis-cis
+   * - 2x cis-cis-cis (Δ and Λ isomers, ship propeller-like chirality)
+   *
+   * However, the number of assignments for a concrete case in which the bridges
+   * are too short to allow trans binding is reduced by all arrangements
+   * containing a trans-bonded bidentate ligand, i.e. only Δ and Λ remain.
    *
    * Fetches the number of permutations determined by symbolic ligand
    * calculation, not considering linking or haptic ligand cones.

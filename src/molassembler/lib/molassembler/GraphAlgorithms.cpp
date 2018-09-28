@@ -1,3 +1,6 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
 #include "molassembler/GraphAlgorithms.h"
 
 #include "molassembler/OuterGraph.h"

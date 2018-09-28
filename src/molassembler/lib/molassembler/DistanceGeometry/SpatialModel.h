@@ -12,7 +12,7 @@
 
 /*! @file
  *
- * @brief Convert a Molecule to atom-pairwise distance bounds
+ * @brief Convert a Molecule to atom-pair distance bounds and chiral constraints
  *
  * The molecular graph with all its conformational specifications via
  * stereocenter assignments must be transformed into a spatial model that
@@ -65,8 +65,9 @@ auto orderedSequence(Inds ... inds) {
 }
 
 /*!
- * Keeps a record of the internal dimension bounds that a molecular graph is
- * interpreted as and permits the generation of a distance bounds matrix.
+ * Keeps a record of the internal coordinate bounds that a molecular graph is
+ * interpreted as and generates a list of atom-pairwise bounds from which
+ * classes performing smoothing can be constructed.
  */
 class SpatialModel {
 public:
@@ -163,15 +164,17 @@ public:
     const ValueBounds& bounds
   );
 
-  //! Adds [0, 2π] default angle bounds for all bonded atom triples
+  //! Adds [0, π] default angle bounds for all bonded atom triples
   void addDefaultAngles();
 
   /*!
-   * Adds [0, 2π] default dihedrals to the model. Use immediately before
+   * Adds [0, π] default dihedrals to the model. Use immediately before
    * calling makeDistanceBounds if you want default dihedrals modeled in the
-   * distance bounds as well. In principle, the default dihedral distances are
-   * inferable from the existing information using bound smoothing, but this
-   * fashion is probably significantly faster.
+   * distance bounds as well. In principle, the default dihedral distances
+   * should be inferable from the existing information using bound smoothing,
+   * but this fashion is probably significantly faster.
+   *
+   * It also avoids treating 1-4 pairs as nonbonded.
    */
   void addDefaultDihedrals();
 //!@}

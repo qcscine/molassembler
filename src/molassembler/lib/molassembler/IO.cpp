@@ -6,6 +6,7 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
+#include "molassembler/OuterGraph.h"
 #include "molassembler/IO/FileHandlers.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Serialization.h"
@@ -91,6 +92,8 @@ void write(
   const AngstromWrapper& angstromWrapper,
   const IndexPermutation permutation
 ) {
+  assert(molecule.graph().N() == angstromWrapper.positions.size());
+
   boost::filesystem::path filepath {filename};
 
   std::unique_ptr<FileHandlers::FileHandler> handler;
