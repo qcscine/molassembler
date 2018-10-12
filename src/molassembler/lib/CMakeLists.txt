@@ -160,8 +160,56 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
 )
 
+# Object library to avoid compiling twice
+add_library(molassembler_obj OBJECT ${SOURCES_all} ${HEADERS_all})
+set_target_properties(molassembler_obj PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+)
+target_include_directories(molassembler_obj PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+)
+# transitively populate include directories with Core's dependencies
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
+  # this is clearly the preferred method of handling this mess, but only
+  # available from 3.12 onward. The proper linking an interface population is
+  # handled below
+  target_link_libraries(molassembler_obj 
+    PRIVATE
+      temple
+      Boost::boost
+      delib::Delib
+      boost_outcome
+      RingDecomposerLibStatic
+      dlib::dlib
+      stereopermutation
+      cyclic_polygons
+      gor1
+      json
+      spectra
+      Boost::filesystem
+      Boost::system
+  )
+else()
+  target_include_directories(molassembler_obj
+    PUBLIC
+      $<TARGET_PROPERTY:temple,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:delib::Delib,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:boost_outcome,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:dlib::dlib,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
+    PRIVATE
+      $<TARGET_PROPERTY:stereopermutation,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:cyclic_polygons,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:gor1,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:spectra,INTERFACE_INCLUDE_DIRECTORIES>
+  )
+endif()
+
 # Shared variant
-add_library(molassembler SHARED ${SOURCES_all} ${HEADERS_all})
+add_library(molassembler SHARED $<TARGET_OBJECTS:molassembler_obj>)
 target_include_directories(molassembler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -173,7 +221,7 @@ target_include_directories(molassembler
 target_compile_options(molassembler PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
 # Static variant
-add_library(molassemblerStatic STATIC ${SOURCES_all} ${HEADERS_all})
+add_library(molassemblerStatic STATIC $<TARGET_OBJECTS:molassembler_obj>)
 target_include_directories(molassemblerStatic
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
