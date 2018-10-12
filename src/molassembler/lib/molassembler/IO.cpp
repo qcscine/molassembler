@@ -92,7 +92,7 @@ void write(
   const AngstromWrapper& angstromWrapper,
   const IndexPermutation permutation
 ) {
-  assert(molecule.graph().N() == angstromWrapper.positions.size());
+  assert(molecule.graph().N() == static_cast<AtomIndex>(angstromWrapper.positions.size()));
 
   boost::filesystem::path filepath {filename};
 

@@ -18,6 +18,8 @@ target_include_directories(
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
+target_link_libraries(cyclic_polygons INTERFACE temple)
+
 # dependencies
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 find_package(Eigen3 3.1.1 REQUIRED)

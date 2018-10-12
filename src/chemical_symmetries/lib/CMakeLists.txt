@@ -35,7 +35,7 @@ target_include_directories(chemical_symmetries SYSTEM PUBLIC ${EIGEN3_INCLUDE_DI
 target_link_libraries(chemical_symmetries
   PUBLIC
     Boost::boost
-    molassembler::temple
+    temple
 )
 
 target_compile_options(chemical_symmetries PRIVATE ${MOLASSEMBLER_CXX_FLAGS})

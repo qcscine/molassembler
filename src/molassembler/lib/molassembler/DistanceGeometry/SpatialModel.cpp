@@ -859,7 +859,6 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
 
   for(const auto& bondStereocenter : _stereocenters.bondStereocenters()) {
     auto stereocenterConstraints = bondStereocenter.chiralityConstraints(
-      _looseningMultiplier,
       _stereocenters.option(
         bondStereocenter.edge().first
       ).value(),

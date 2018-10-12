@@ -96,7 +96,6 @@ public:
   unsigned numStereopermutations() const;
 
   std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
-    double looseningMultiplier,
     const AtomStereocenter& stereocenterA,
     const AtomStereocenter& stereocenterB
   ) const;

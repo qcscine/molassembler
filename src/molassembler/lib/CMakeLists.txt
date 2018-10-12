@@ -94,9 +94,10 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/BondDistance.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/CommonTrig.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/LocalGeometryModel.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/AtomEnvironmentHash.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/AtomEnvironmentHash.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/MolGraphWriter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/MoleculeImpl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/RankingTree.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OuterGraph.h
@@ -104,6 +105,8 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/AtomStereocenterImpl.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/BondStereocenterImpl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/PermutationState.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
@@ -139,9 +142,10 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/BondDistance.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/CommonTrig.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/LocalGeometryModel.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/AtomEnvironmentHash.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/AtomEnvironmentHash.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/MolGraphWriter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/MoleculeImpl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Molecule/RankingTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/OuterGraph.cpp
@@ -150,6 +154,8 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/AtomStereocenterImpl.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/BondStereocenterImpl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/PermutationState.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
 )
@@ -193,10 +199,10 @@ target_compile_options(molassemblerStatic PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_link_libraries(
   molassembler
   PUBLIC
+    temple
     Boost::boost
     delib::Delib
     boost_outcome
-    chemical_symmetries
     RingDecomposerLibStatic
     dlib::dlib
   PRIVATE
@@ -261,7 +267,6 @@ target_link_libraries(
     Boost::boost
     delib::DelibStatic
     boost_outcome
-    chemical_symmetries
     RingDecomposerLibStatic
     stereopermutation
     dlib::dlib
