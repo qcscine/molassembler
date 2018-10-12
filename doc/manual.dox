@@ -1,0 +1,65 @@
+/*!
+
+@mainpage User Manual
+ 
+@tableofcontents
+
+@section manual-description Description
+
+--------------------------------------------------------------------------------
+Molassembler is a C++ library that aims to facilitate crossings between
+Cartesian and graph representations of molecules. It provides the necessary
+functionality to represent a molecule as a graph, modify it in graph space, and
+generate new coordinates from graphs. It can capture the absolute configuration
+of multidentate and haptic inorganic molecules and generate only
+non-superposable stereopermutations as output.
+
+
+@section manual-installation Prerequisites and installation
+
+--------------------------------------------------------------------------------
+Molassembler depends on several libraries:
+
+- Boost >= 1.64
+- dlib >= 19.4
+- Eigen >= 3
+- Delib >= 0.2
+- (BLAS library, added if detected during compilation)
+
+Molassembler is coded in the C++14 standard and makes heavy use of the
+`constexpr` feature. As a result, fairly modern compilers are needed to build
+the library:
+
+Compiler   | Status
+---------- | -------------
+Clang >= 4 | Fully working
+GCC >= 7   | Fully working
+VS2017     | Not working
+
+Regarding VS2017, an effort needs to be made to make the library compatible.
+Perhaps the `constexpr` code can yet be made palatable.
+
+@section manual-introduction Introduction
+
+--------------------------------------------------------------------------------
+
+@section manual-quickstart Quick start
+
+--------------------------------------------------------------------------------
+@subsection manual-quickstart-data Basic data types
+@subsection manual-quickstart-flow Dataflow & conversions
+@subsection manual-quickstart-examples Examples
+
+@section manual-cheatsheet Cheatsheet
+
+--------------------------------------------------------------------------------
+
+@section manual-sublibraries Sub-libraries
+
+--------------------------------------------------------------------------------
+
+@section manual-glossary Glossary
+
+--------------------------------------------------------------------------------
+
+*/
