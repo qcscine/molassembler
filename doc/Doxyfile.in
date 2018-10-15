@@ -703,7 +703,7 @@ FILE_VERSION_FILTER    =
 # DoxygenLayout.xml, doxygen will parse it automatically even if the LAYOUT_FILE
 # tag is left empty.
 
-LAYOUT_FILE            =
+LAYOUT_FILE            = @molassembler_SOURCE_DIR@/doc/layout.xml
 
 # The CITE_BIB_FILES tag can be used to specify one or more bib files containing
 # the reference definitions. This must be a list of .bib files. The .bib
@@ -889,7 +889,7 @@ EXAMPLE_RECURSIVE      = NO
 # that contain images that are to be included in the documentation (see the
 # \image command).
 
-IMAGE_PATH             =
+IMAGE_PATH             = @molassembler_SOURCE_DIR@/doc/image/
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
@@ -2339,7 +2339,7 @@ DIRECTORY_GRAPH        = YES
 # The default value is: png.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_IMAGE_FORMAT       = png
+DOT_IMAGE_FORMAT       = svg
 
 # If DOT_IMAGE_FORMAT is set to svg, then this option can be set to YES to
 # enable generation of interactive SVG images that allow zooming and panning.
@@ -2364,7 +2364,7 @@ DOT_PATH               =
 # command).
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOTFILE_DIRS           =
+DOTFILE_DIRS           = @molassembler_SOURCE_DIR@/doc/graphs/
 
 # The MSCFILE_DIRS tag can be used to specify one or more directories that
 # contain msc files that are included in the documentation (see the \mscfile

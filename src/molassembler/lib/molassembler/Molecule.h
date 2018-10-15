@@ -87,7 +87,8 @@ public:
     BondType bondType
   ) noexcept;
 
-  /*! Constructs from connectivity alone, inferring the stereocenters from graph
+  /*!
+   * @brief Constructs from connectivity alone, inferring the stereocenters from graph
    *
    * Constructs a molecule from connectivity alone. Local symmetries and
    * stereocenters are inferred from the graph alone.
@@ -97,7 +98,8 @@ public:
    */
   explicit Molecule(OuterGraph graph);
 
-  /*! Construct from connectivity and positions
+  /*!
+   * @brief Construct from connectivity and positions
    *
    * Construct an instance from a constituting graph and positional information.
    * Local symmetries are deduced from positional information. Stereocenters
@@ -119,7 +121,8 @@ public:
     >& bondStereocenterCandidatesOptional = boost::none
   );
 
-  /*! Construct a molecule from the underlying data fragments
+  /*!
+   * @brief Construct a molecule from the underlying data fragments
    *
    * @throws std::logic_error If the supplied graph has multiple connected
    *   components or there are less than 2 atoms
@@ -135,7 +138,8 @@ public:
 
 //!@name Modifiers
 //!@{
-  /*! Adds an atom by attaching it to an existing atom.
+  /*!
+   * @brief Adds an atom by attaching it to an existing atom.
    *
    * Adds a new atom, attaching it to an existing atom by a specified bond type.
    *
@@ -159,7 +163,8 @@ public:
     BondType bondType
   );
 
-  /*! Adds a bond between two existing atoms
+  /*!
+   * @brief Adds a bond between two existing atoms
    *
    * Adds a bond between two already-existing atoms.
    *
@@ -185,7 +190,8 @@ public:
     BondType bondType
   );
 
-  /*! Sets the stereocenter assignment at a particular atom
+  /*!
+   * @brief Sets the stereocenter assignment at a particular atom
    *
    * This sets the stereocenter assignment at a specific atom index. For this,
    * a stereocenter must be instantiated and contained in the StereocenterList
@@ -216,7 +222,8 @@ public:
     const boost::optional<unsigned>& assignmentOption
   );
 
-  /*! Sets the stereocenter assignment on a bond
+  /*!
+   * @brief Sets the stereocenter assignment on a bond
    *
    * This sets the stereocenter assignment at a specific bond index. For this,
    * a stereocenter must be instantiated and contained in the StereocenterList
@@ -246,7 +253,8 @@ public:
     const boost::optional<unsigned>& assignmentOption
   );
 
-  /*! Assigns a stereocenter stereopermutation at random
+  /*!
+   * @brief Assigns a stereocenter stereopermutation at random
    *
    * This sets the stereocenter assignment at a specific index, taking relative
    * statistical occurence weights of each stereopermutation into account.
@@ -267,7 +275,8 @@ public:
    */
   void assignStereocenterRandomly(AtomIndex a);
 
-  /*! Assigns a bond stereocenter to a random assignment
+  /*!
+   * @brief Assigns a bond stereocenter to a random assignment
    *
    * @throws std::out_of_range If the bond index is invalid (i.e. either atom
    *   index is >= N()) or there is no bond stereocenter at this bond index.
@@ -282,7 +291,8 @@ public:
    */
   void assignStereocenterRandomly(const BondIndex& e);
 
-  /*! Removes an atom from the graph, including bonds to it.
+  /*!
+   * @brief Removes an atom from the graph, including bonds to it.
    *
    * Removes an atom from the molecular graph, including bonds to the atom,
    * after checking that removing it is safe, i.e. the removal does not
@@ -304,6 +314,8 @@ public:
   void removeAtom(AtomIndex a);
 
   /*!
+   * @brief Removes a bond from the graph
+   *
    * Removes an atom after checking if removing that bond is safe, i.e. does not
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
@@ -328,7 +340,8 @@ public:
    */
   void removeBond(AtomIndex a, AtomIndex b);
 
-  /*! Changes a bond type. Returns whether the bond already existed
+  /*!
+   * @brief Changes a bond type. Returns whether the bond already existed
    *
    * Changes the bond type between two atom indices. If the bond does not exist
    * yet, adds the bond.
@@ -358,7 +371,8 @@ public:
     BondType bondType
   );
 
-  /*! Changes an existing atom's element type
+  /*!
+   * @brief Changes an existing atom's element type
    *
    * Changes the element type of an existing atom.
    *
@@ -380,7 +394,8 @@ public:
     Delib::ElementType elementType
   );
 
-  /*! Sets the local geometry at an atom index
+  /*!
+   * @brief Sets the local geometry at an atom index
    *
    * This sets the local geometry at a specific atom index. There are a number
    * of cases that this function treats differently, besides faulty arguments:
@@ -411,7 +426,8 @@ public:
 
 //!@name Information
 //!@{
-  /*! Determines what the local geometry at a non-terminal atom ought to be
+  /*!
+   * @brief Determines what the local geometry at a non-terminal atom ought to be
    *
    * Returns the expected symmetry name at a non-terminal atom by inference
    * from graph information only.
@@ -441,13 +457,14 @@ public:
     const RankingInformation& ranking
   ) const;
 
-  /*! Returns a graphivz string representation of the molecule
+  /*!
+   * @brief Returns a graphivz string representation of the molecule
    *
    * Creates a graphviz representation of a molecule that can be written into a
    * dotfile and processed with graphviz's `dot` binary to create an image of
    * the molecular graph.
    *
-   * Includes information on stereocenters in svg-format when hovering over
+   * Includes tooltip information on stereocenters when hovering over
    * individual nodes.
    */
   std::string dumpGraphviz() const;
@@ -458,7 +475,8 @@ public:
   //! Provides read-only access to the list of stereocenters
   const StereocenterList& stereocenters() const;
 
-  /*! Generates stereocenters from connectivity and positional information
+  /*!
+   * @brief Generates stereocenters from connectivity and positional information
    *
    * Positions are an important source of information for stereocenters as they
    * will alleviate graph-based symmetry-determination errors and allow for the
@@ -482,7 +500,8 @@ public:
     >& explicitBondStereocenterCandidatesOption = boost::none
   ) const;
 
-  /*! Modular comparison of this Molecule with another.
+  /*!
+   * @brief Modular comparison of this Molecule with another.
    *
    * This permits detailed specification of which elements of the molecular
    * information you want to use in the comparison.
@@ -513,7 +532,8 @@ public:
     const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
   ) const;
 
-  /*! Rank substituents of an atom
+  /*!
+   * @brief Rank substituents of an atom
    *
    * Performs a ranking algorithm that attempts to differentiate branches
    * extending at each substituent atom (haptic ligands are not considered a

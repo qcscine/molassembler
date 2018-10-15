@@ -1202,12 +1202,12 @@ dl.section dd {
 
 .image
 {
-        text-align: center;
+        text-align: left;
 }
 
 .dotgraph
 {
-        text-align: center;
+        text-align: left;
 }
 
 .mscgraph

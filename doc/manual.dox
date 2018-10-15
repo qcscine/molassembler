@@ -11,8 +11,8 @@ Molassembler is a C++ library that aims to facilitate crossings between
 Cartesian and graph representations of molecules. It provides the necessary
 functionality to represent a molecule as a graph, modify it in graph space, and
 generate new coordinates from graphs. It can capture the absolute configuration
-of multidentate and haptic inorganic molecules and generate only
-non-superposable stereopermutations as output.
+of multidentate and haptic inorganic molecules from positional data and
+generate non-superposable stereopermutations as output.
 
 
 @section manual-installation Prerequisites and installation
@@ -26,9 +26,9 @@ Molassembler depends on several libraries:
 - Delib >= 0.2
 - (BLAS library, added if detected during compilation)
 
-Molassembler is coded in the C++14 standard and makes heavy use of the
-`constexpr` feature. As a result, fairly modern compilers are needed to build
-the library:
+Molassembler is coded in the C++14 standard and makes heavy use of `constexpr`
+algorithms. As a result, fairly modern compilers are needed to build the
+library:
 
 Compiler   | Status
 ---------- | -------------
@@ -46,19 +46,108 @@ Perhaps the `constexpr` code can yet be made palatable.
 @section manual-quickstart Quick start
 
 --------------------------------------------------------------------------------
+
 @subsection manual-quickstart-data Basic data types
+
+The following types of data are instrumental as input to the library:
+
+Data type      | Description
+-------------- | -----------
+Bond orders    | Fractional bond order matrix from a quantum chemical calculation
+Element types  | Atomic element type information
+Bonds          | Graph connectivity between atoms, discretized as integer bonds
+Positions      | Three-dimensional spatial positions of atoms
+
+The representation of a molecule is composed of further types:
+
+Data type         | Description
+----------------- | -----------
+Graph             | Product type of element types and connectivity
+Symmetry          | Idealization of spatial arrangement of substituents around a central atom
+Ligand site       | Contiguous atom set, all connected to the central atom
+Ranked ligands    | All ligand sites at an atom, sorted using IUPAC ranking rules
+Stereopermutation | Abstract representation of an absolute configuration of (possibly bridged) ligand sites around an atom
+Stereopermutator  | Object managing absolute configuration of ligand sites around an atom or bond
+Molecule          | Product type of a Graph and a list of stereopermutators
+
+Stereopermutators are not called stereocenters - which might seem the more
+natural choice - because these objects also manage symmetry and ranking
+combinations in which there is only one possible arrangement and its central
+atom therefore cannot be considered a stereocenter.
+
 @subsection manual-quickstart-flow Dataflow & conversions
+
+@image html records.svg "Data flow paths in molassembler"
+
+Solid lines indicate default information flow paths, while dashed lines
+indicate optional information flow paths. In brief, the algorithms employed in
+data conversions are the following: 
+
+-# From positional data, atom-pairwise distances can be used to approximate fractional bond orders using e.g. UFF parameters
+-# Integer bonds are obtained from fractional bond orders by rounding to the nearest integer (see @ref manual-algorithms-discretization)
+-# From a fully specified molecular graph, VSEPR or LFT may be applied to guess local symmetries (see @ref manual-algorithms-symmetry-det)
+-# Ligands are ranked using an algorithm implementing IUPAC sequence rules (see @ref manual-algorithms-ranking)
+-# Symmetry and ranked ligands are combined in a symbolic permutation that determines which stereopermutations exist (see @ref manual-algorithms-symbolic-perm)
+-# Positional data is used to fit idealized symmetries directly (see @ref manual-algorithms-symmetry-fit)
+-# Positional data is used to find the realized permutation within the set of possible stereopermutations via fitting (see @ref manual-algorithms-symmetry-fit)
+
+Depending on the type of information you supply when constructing Molecule
+instances, molecules will have varying levels of stored information. For
+correctness, it is preferable to supply positional information, since fitting
+idealized symmetries to positions is more accurate (in particular for
+transition metals, since LFT is not implemented) and does not require the graph
+to be absolutely correct. Additionally, only supplying positional information
+allows you to determine the currently realized index of permutation for
+stereocenters.
+
 @subsection manual-quickstart-examples Examples
 
 @section manual-cheatsheet Cheatsheet
 
+IO            | Description
+------------- | -----------
+IO::read      | Extract a single molecule from an XYZ, MOL or MASM file
+IO::split     | Extract multiple molecules from an XYZ, MOL or MASM file
+IO::write     | Write a single molecule to XYZ, MOL or MASM
+interpret     | Find (possibly multiple) molecules in various input data types
+
+
+Information           | Description
+--------------------- | -----------
+mol.graph             | Yields the molecular graph (purely connectivity and element type data)
+mol.stereopermutators | Yields objects managing stereopermutation state at atoms or bonds
+mol.dumpGraphviz      | Yields a graphviz string of the molecule representation
+mol.modularCompare    | Compare two molecules, choosing which parts are to be compared
+
+Molecule manipulation  | Description
+---------------------- | -----------
+mol.addAtom            | Adds an atom to the molecule, attaching it to an existing one
+mol.addBond            | Adds a bond between two existing atoms
+mol.assignStereocenter | Changes the assignment of a sterepermutator
+mol.removeAtom         | Removes a removable (!) atom
+mol.removeBond         | Removes a removable (!) bond
+mol.setBondType        | Changes the bond type between two atoms
+mol.setElementType     | Changes an atom element type
+mol.setGeometryAtAtom  | Changes the local idealized symmetry at an atom
+
 --------------------------------------------------------------------------------
 
 @section manual-sublibraries Sub-libraries
+@subsection manual-sublibraries-temple Temple
+@subsection manual-sublibraries-symmetries Chemical symmetries
+@subsection manual-sublibraries-stereopermutation Stereopermutation
+
+@section manual-algorithms Important algorithms
+@subsection manual-algorithms-discretization Bond discretization
+@subsection manual-algorithms-symmetry-det Symmetry determination
+@subsection manual-algorithms-ranking Ranking
+@subsection manual-algorithms-symbolic-perm Symbolic permutation
+@subsection manual-algorithms-symmetry-fit Symmetry fitting
 
 --------------------------------------------------------------------------------
 
 @section manual-glossary Glossary
+
 
 --------------------------------------------------------------------------------
 

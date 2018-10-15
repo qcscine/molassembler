@@ -1,6 +1,7 @@
 digraph g {
-  graph [rankdir="LR", splines="ortho", concentrate=true];
-  node [shape=box];
+  graph [rankdir="LR", splines="ortho", concentrate=true, fontname="helvetica"];
+  node [shape=box, fontname="helvetica"];
+  edge [fontname="helvetica"];
 
   bo [label="Bond orders"];
   elem [label="Element types"];
