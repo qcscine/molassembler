@@ -468,8 +468,16 @@ std::vector<FloatType> generalizedInternalAngles(
 
 
 /*!
- * @brief Returns whether a cyclic polygon exists for the specified sequence of edge
- * lengths.
+ * @brief Check whether a cyclic polygon exists for a specified sequence of edge
+ *   lengths.
+ *
+ * @param edgeLengths The lengths of the edges that will compose the polygon.
+ *   Positionally adjacent edge lengths will be adjacent in the polygon.
+ *
+ * @pre Passed edge lengths must be positive.
+ *
+ * @return Whether the cyclic polygon exists. It does if the longest edge is
+ * smaller than the sum of all other edge lengths.
  */
 template<typename FloatType>
 bool exists(const std::vector<FloatType>& edgeLengths) {
@@ -485,17 +493,20 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
   return maxValue < temple::sum(edgeLengths) - maxValue - 0.01 * maxValue;
 }
 
-/*! Calculates the internal angles of a convex cyclic polygon
+/*!
+ * @brief Calculates the internal angles of a convex cyclic polygon
  *
- * Returns internal angles of the convex cyclic polygon specified by the passed
- * edge lengths. Angles are returned in the following sequence:
+ * @param edgeLengths The lengths of the edges that will compose the polygon.
+ *   Positionally adjacent edge lengths will be adjacent in the polygon.
  *
- *   edge lengths: a1, a2, ..., aN
- *   angles: a1 ∡ a2, a2 ∡ a3, ..., a(N-1) ∡ aN, aN ∡ a1
+ * @pre You must pass at least three positive edge lengths. The cyclic polygon
+ *   must exist (use exists to check beforehand) and no edge length may be zero
+ *   (assumes logical error in calling code).
  *
- * Requires that the passed vector of edge lengths contains at minimum 3 edges.
- * The cyclic polygon must exist (use exists to check beforehand)
- * and no edge length may be zero (assumes logical error in calling code).
+ * @return Internal angles of the convex cyclic polygon specified by the passed
+ *   edge lengths. Angles are returned in the following sequence:
+ *   - passed edge lengths: a1, a2, ..., aN
+ *   - angles: a1 ∡ a2, a2 ∡ a3, ..., a(N-1) ∡ aN, aN ∡ a1
  */
 template<typename FloatType>
 std::enable_if_t<

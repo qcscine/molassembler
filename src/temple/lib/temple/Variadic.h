@@ -9,7 +9,6 @@
 #include "temple/Traits.h"
 
 #include <algorithm>
-#include <vector>
 
 /* TODO
  * - variadic size returning an optional<SumType> (would permit variadic
