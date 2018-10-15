@@ -9,41 +9,11 @@ be laid plain.
 Symmetries
 ==========
 
-Non-terminal atoms in molecules often adopt nearly ideal local symmetries when
-no strain is placed upon its substituents due to small cycles. The local
-symmetries currently considered in this library are:
-
-==== ====
-Size Name
-==== ====
-2    Linear, bent
-3    Trigonal planar, trigonal pyramidal, T-shaped
-4    Tetrahedral, square planar, seesaw
-5    Square pyramidal, trigonal bipyramidal, pentagonal planar
-6    Octahedral, trigonal prismatic, pentagonal pyramidal
-7    Pentagonal bipyramidal
-8    Square antiprismatic
-==== ====
 
 
 Stereopermutations
 ==================
 
-Figuring out all non-superimposable arrangements of substituents around the
-idealized symmetries is a permutational problem. 
-
-Most of organic chemistry, for instance, can be composed of linear, bent,
-trigonal planar and tetrahedral local symmetries. The most common source of
-chiral information in organic chemistry is an asymmetric tetrahedral carbon,
-where its four subtituents are all different (i.e. have different ranking
-according to the IUPAC rules). From a local symmetry and the information that
-all substituents are distinct ranking-wise, we know that there are two
-non-superimposable permutations of ligands. 
-
-Stereopermutations of any symmetry can be computed symbolically [1]_, including
-cases in which substituents are mutually linked, such as in multidentate
-ligands. Special care is taken in order to reduce haptically bonded ligands
-to the correct local symmetries and ranking. 
 
 
 Molecule model
@@ -55,24 +25,6 @@ stereocenters.
 
 Graph
 -----
-Molecules are modeled as an undirected graph consisting of atom vertices and
-bond edges. Vertices store the atomic element type while vertices store a bond
-type that distinguishes the bond orders one through six as well as a so-called
-eta bond, which models connections between a central atom and a
-haptically-bonded subset of atoms (i.e. a contiguous group of atoms all bonded
-to a transition metal).
-
-The Graph class leaves a library consumer a lot of freedom in the specification
-of the molecule's graph, but does enforces some model limitations.  A molecule's
-graph must consist of a single connected component, meaning that there must be a
-path from any atom of the molecule to any other. Single atoms are not considered
-molecules, so a molecule must consist of at least two mutually bonded atoms.
-Removing atoms or bonds from diatomic molecules are disallowed operations.
-Similarly, disconnecting a molecule into two logical molecules by removing a
-particular bond or atom is also disallowed.
-
-Every non-terminal atom (i.e. any vertex with more than one edge) may carry
-geometric and stereocenter information. 
 
 
 Stereocenters

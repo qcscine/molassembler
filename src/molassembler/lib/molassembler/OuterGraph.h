@@ -19,6 +19,25 @@
 /*!@file
  *
  * @brief Interface class for the molecular graph
+ *
+ * An undirected graph consisting of atom vertices and bond edges. Vertices
+ * store the atomic element type while vertices store a bond type that
+ * distinguishes the bond orders one through six as well as a so-called eta
+ * bond, which models connections between a central atom and a
+ * haptically-bonded subset of atoms (i.e. a contiguous group of atoms all
+ * bonded to a transition metal).
+ *
+ * The Graph class leaves a consumer a lot of freedom in the
+ * specification of the molecule's graph, but does enforce some model
+ * limitations.
+ * - A molecule's graph must consist of a single connected
+ *   component, meaning that there must be a path from any atom of the molecule
+ *   to any other.
+ * - Single atoms are not considered molecules, so a molecule must consist of
+ *   at least two mutually bonded atoms.
+ * - Removing atoms or bonds from diatomic molecules are disallowed operations.
+ * - Disconnecting a molecule into two logical molecules by removing a
+ *   particular bond or atom is also disallowed.
  */
 
 // Forward-declarations

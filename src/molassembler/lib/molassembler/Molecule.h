@@ -47,7 +47,7 @@ struct RankingInformation;
  * @brief Models a molecule as a molecular graph (connectivity of atoms) and a
  * list of stereopermutators.
  *
- * This class models chemical molecules as a combination of a mathematical graph
+ * This class models chemical molecules as a combination of a graph
  * and a list of stereopermutators.
  *
  * In the graph, vertices additionally store an element type (and thus

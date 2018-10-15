@@ -14,172 +14,20 @@ pitfalls and misconceptions about their applicability.
 
 Bond discretization
 ===================
-In the discretization of fractional bond orders to classic integer internal bond
-types (e.g. single, double, etc.), there are two options. You can choose to 
-round bond orders to the nearest integer, but this is particularly error prone 
-for particularly weakly-bound metal ligands (around 0.5) and aromatic bonds
-(around 1.5). For instance, two adjacent aromatic bonds that both show a
-fractional bond order around 1.5 may be randomly rounded up or down depending on
-the bond order generation method or its particular conformation. This can cause
-unexpected ranking inequivalency / equivalency artifacts. If you expect there
-to be conjugated systems or transition metals in your set of interpreted
-molecules, discretizing bond orders in this fashion is disadvised.
-
-It is instead preferable to discretize bond orders in a purely binary manner,
-i.e. bond orders are interpreted as a single bond if the fractional bond order
-is is more than or equal to 0.5. Double bond stereocenters (i.e. in organic
-molecules E/Z stereocenters) are still interpreted from coordinate information
-despite the main bond type discretized to a single bond. This part of a
-Molecule's interpretation is discussed elsewhere.
 
 
 Symmetry determination
 ======================
-If no coordinates are present when constructing a Molecule, the idealized
-symmetry on any non-terminal atom must be determined from its local
-substituents within the set of appropriately sized symmetries. For main-group
-atoms, this is accomplished by application of a very basic valence shell
-electron pair repulsion (VSEPR) algorithm. No symmetry determination algorithms
-are currently implemented for non-main-group atoms, and the first symmetry of
-appropriate size is chosen instead.
 
 
 Ranking
 =======
-In order to establish the relative priority of an atom's substituents, a ranking
-algorithm is applied that follows the IUPAC recommendations laid out in the 2013
-Blue Book [1]_, generalized to larger symmetries. The IUPAC sequence rules are as
-follows, slightly reworded:
-
-=== =============
-Nr. Sequence rule
-=== =============
-1a  Higher atomic number precedes lower. Atomic numbers in Mancude rings and
-    ring systems are the mean of the atomic numbers in all mesomeric Kekule
-    structures.
---- -------------
-1b  A duplicate atom node whose corresponding nonduplicated atom node is closer
-    to the root ranks higher than a duplicate atom node whose corresponding
-    nonduplicated atom node is farther from the root
---- -------------
-2   Higher atomic mass number precedes lower
---- -------------
-3   When considering double bonds and planar tetraligand atoms Z precedes E and
-    this precedes nonstereogenic double bonds.
---- -------------
-4a  Chiral stereogenic units precede pseudoasymmetric stereogenic units and
-    these precede nonstereogenic units
---- -------------
-4b  When two ligands have different descriptor pairs, then the one with the
-    first chosen *like* descriptor pairs has priority over the one with a
-    corresponding *unlike* descriptor pair. Descriptors are alike if they are
-    within the same set. The two sets are {R, M, Z} and {S, P, E}.
---- -------------
-4c  r precedes s and m precedes p
---- -------------
-5   An atom or group with descriptors {R, M, Z} has priority over its
-    enantiomorph {S, P, E}
-=== =============
-
-The following alterations arise due to the current implementation state:
-
-- Stereodescriptors are transformed into the index of permutation within the
-  symmetry's abstract ligand case set of stereopermutations. The descriptors R/S
-  correspond to indices of permutation within the set of stereopermutations of
-  the abstract tetrahedral ABCD ligand case. Z/E exist as indices of
-  permutations within the set of stereopermutations of the bond-centric
-  stereocenter. M and P stereocenters are not modelled.
-- For larger or smaller symmetries, sequence rule 5 is altered to give priority
-  according to the index of permutation: {R = 1, Z = 1} > {S = 0, E = 0}.
-- *Like* is altered to mean stereodescriptors with the same index of
-  permutation.
-- No distinction is made whether a stereocenter is merely psuedoasymmetric. When
-  based on indices of permutation, sequence rules 4c and 5 can be conflated, and
-  I cannot think of a molecule in which removing the distinction changes the
-  sequence rule application for sequence rule 4a. Additionally, 
-  it does not affect whether the exact chirality of that stereocenter must be
-  fixed in the final conformation for this library. Keeping this information
-  merely permits direct generation of the enantiomer for molecules in which
-  each stereocenter has only two stereopermutations. Since we aim to be
-  applicable to stereocenters with many more stereopermutations, the value of
-  the distinction is slight. Sequence rule 4a is shortened to enforce priority
-  of stereogenic units over nonstereogenic units. Sequence rule 4c is conflated
-  with 5.
-- No functionality currently exists to alter atomic mass number. Sequence rule 2
-  is discarded.
-- Conjugation detection is currently not implemented. No regularization of
-  Mancude rings and rings systems is performed. This is the only change that can
-  lead to false differences between substituents when they are actually
-  identical.
-
-In summary, the applied sequence rules are:
-
-=== =============
-Nr. Sequence rule
-=== =============
-1a  Higher atomic number precedes lower. :strikethrough:`Atomic numbers in
-    Mancude rings and ring systems are the mean of the atomic numbers in all
-    mesomeric Kekule structures.`
---- -------------
-1b  A duplicate atom node whose corresponding nonduplicated atom node is closer
-    to the root ranks higher than a duplicate atom node whose corresponding
-    nonduplicated atom node is farther from the root
---- -------------
-2   :strikethrough:`Higher atomic mass number precedes lower`
---- -------------
-3   When considering double bonds and planar tetraligand atoms Z precedes E and
-    this precedes nonstereogenic double bonds.
---- -------------
-4a  Chiral stereogenic units precede :strikethrough:`pseudoasymmetric
-    stereogenic units and these precede` nonstereogenic units
---- -------------
-4b  When two ligands have different descriptor pairs, then the one with the
-    first chosen *like* descriptor pairs has priority over the one with a
-    corresponding *unlike* descriptor pair. Descriptors are alike if they
-    :green:`have an equal number of stereopermutations and equal index of
-    permutation` :strikethrough:`are within the same set. The two sets are {R,
-    M, Z} and {S, P, E}`.
---- -------------
-4c  :strikethrough:`r precedes s and m precedes p`
---- -------------
-5   An atom or group with :green:`higher index of permutation has priority`
-    :strikethrough:`descriptors {R, M, Z} has priority over its enantiomorph {S,
-    P, E}` 
-=== =============
-
 
 Cycle detection
 ===============
-Cycle detection and enumeration is handled by the excellent library
-RingDecomposerLib [2]_, which avoids exponential space requirements in heavily
-fused ring systems using Unique Ring Families [3]_.
 
 Conformer generation
 ====================
-For each sought conformation, unassigned stereocenters in the input molecule are
-assigned randomly according to the relative statistical occurrence weights of
-the stereopermutations.
-
-Conformer generation itself is based on four-dimensional Distance Geometry [4]_.
-This library's implementation features the following:
-
-1. A spatial model generates atom-pairwise bounds on their distance in the final
-   conformations and four-atom chiral constraints when distance bounds cannot
-   encompass chiral elements of complex symmetries. For large symmetries, chiral
-   information is captured by using multiple chiral constraints.
-2. The distance bounds are smoothed to conform to the triangle inequalities.
-   After each successive choice of a fixed distance between the bounds, you can
-   choose to re-smooth all bounds (full metrization) or stop re-smoothing after
-   a fixed number of chosen distances (partial metrization). Smoothing is
-   performed by transferring the problem to a graph shortest-paths problem [5]_
-   and finding the shortest paths with the GOR1 algorithm [6]_ instead of the
-   naive Floyd-Warshall algorithm.
-3. The bounds are embedded in four dimensions and refined in two stages,
-   permitting the chiral constraints to invert by expanding into four
-   dimensions, and then compressing the fourth dimension back out.
-4. The refinement error function is modified to enable the placement of haptic
-   ligand's bonding atoms' average position at symmetries' idealized ligand
-   sites.
 
 
 References

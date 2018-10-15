@@ -58,17 +58,17 @@ Element types  | Atomic element type information
 Bonds          | Graph connectivity between atoms, discretized as integer bonds
 Positions      | Three-dimensional spatial positions of atoms
 
-The representation of a molecule is composed of further types:
+The representation of a \masm{Molecule} is composed of further types:
 
-Data type         | Description
------------------ | -----------
-Graph             | Product type of element types and connectivity
-Symmetry          | Idealization of spatial arrangement of substituents around a central atom
-Ligand site       | Contiguous atom set, all connected to the central atom
-Ranked ligands    | All ligand sites at an atom, sorted using IUPAC ranking rules
-Stereopermutation | Abstract representation of an absolute configuration of (possibly bridged) ligand sites around an atom
-Stereopermutator  | Object managing absolute configuration of ligand sites around an atom or bond
-Molecule          | Product type of a Graph and a list of stereopermutators
+Data type               | Description
+-----------------       | -----------
+\masm{OuterGraph,Graph} | Product type of element types and connectivity
+Symmetry                | Idealization of spatial arrangement of substituents around a central atom
+Ligand site             | Contiguous atom set, all connected to the central atom
+Ranked ligands          | All ligand sites at an atom, sorted using IUPAC ranking rules
+Stereopermutation       | Abstract representation of an absolute configuration of (possibly bridged) ligand sites around an atom
+Stereopermutator        | Object managing absolute configuration of ligand sites around an atom (\masm{AtomStereopermutator}) or bond (\masm{BondStereopermutator})
+\masm{Molecule}         | Product type of a \masm{OuterGraph,Graph} and a \masm{StereopermutatorList,list of stereopermutators}
 
 Stereopermutators are not called stereocenters - which might seem the more
 natural choice - because these objects also manage symmetry and ranking
@@ -91,14 +91,14 @@ data conversions are the following:
 -# Positional data is used to fit idealized symmetries directly (see @ref manual-algorithms-symmetry-fit)
 -# Positional data is used to find the realized permutation within the set of possible stereopermutations via fitting (see @ref manual-algorithms-symmetry-fit)
 
-Depending on the type of information you supply when constructing Molecule
-instances, molecules will have varying levels of stored information. For
-correctness, it is preferable to supply positional information, since fitting
-idealized symmetries to positions is more accurate (in particular for
-transition metals, since LFT is not implemented) and does not require the graph
-to be absolutely correct. Additionally, only supplying positional information
-allows you to determine the currently realized index of permutation for
-stereocenters.
+Depending on the type of information you supply when constructing
+\masm{Molecule} instances, molecules will have varying levels of stored
+information. For correctness, it is preferable to supply positional
+information, since fitting idealized symmetries to positions is more accurate
+(in particular for transition metals, since LFT is not implemented) and does
+not require the graph to be absolutely correct. Additionally, only supplying
+positional information allows you to determine the currently realized index of
+permutation for stereocenters.
 
 @subsection manual-quickstart-examples Examples
 
@@ -106,16 +106,16 @@ stereocenters.
 
 IO            | Description
 ------------- | -----------
-IO::read      | Extract a single molecule from an XYZ, MOL or MASM file
-IO::split     | Extract multiple molecules from an XYZ, MOL or MASM file
-IO::write     | Write a single molecule to XYZ, MOL or MASM
-interpret     | Find (possibly multiple) molecules in various input data types
+IO::read      | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
+IO::split     | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
+IO::write     | Write a single \masm{Molecule} to XYZ, MOL or MASM
+interpret     | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
 
 
 Information           | Description
 --------------------- | -----------
-mol.graph             | Yields the molecular graph (purely connectivity and element type data)
-mol.stereopermutators | Yields objects managing stereopermutation state at atoms or bonds
+mol.graph             | Yields the molecular \masm{OuterGraph, graph} (purely connectivity and element type data)
+mol.stereopermutators | Yields \masm{StereopermutatorList, list of stereopermutators}
 mol.dumpGraphviz      | Yields a graphviz string of the molecule representation
 mol.modularCompare    | Compare two molecules, choosing which parts are to be compared
 
@@ -130,24 +130,318 @@ mol.setBondType        | Changes the bond type between two atoms
 mol.setElementType     | Changes an atom element type
 mol.setGeometryAtAtom  | Changes the local idealized symmetry at an atom
 
---------------------------------------------------------------------------------
 
 @section manual-sublibraries Sub-libraries
-@subsection manual-sublibraries-temple Temple
-@subsection manual-sublibraries-symmetries Chemical symmetries
-@subsection manual-sublibraries-stereopermutation Stereopermutation
-
-@section manual-algorithms Important algorithms
-@subsection manual-algorithms-discretization Bond discretization
-@subsection manual-algorithms-symmetry-det Symmetry determination
-@subsection manual-algorithms-ranking Ranking
-@subsection manual-algorithms-symbolic-perm Symbolic permutation
-@subsection manual-algorithms-symmetry-fit Symmetry fitting
 
 --------------------------------------------------------------------------------
 
-@section manual-glossary Glossary
+@subsection manual-sublibraries-temple Temple
+@subsection manual-sublibraries-symmetries Chemical symmetries
 
+Non-terminal atoms in molecules often adopt nearly ideal local symmetries when
+no strain is placed upon its substituents due to small cycles. The local
+symmetries currently provided by this library are:
+
+Size | Name
+---- | ----
+2    | Linear, bent
+3    | Trigonal planar, cut tetrahedral, T-shaped
+4    | Tetrahedral, trigonal pyramidal, square planar, seesaw
+5    | Square pyramidal, trigonal bipyramidal, pentagonal planar
+6    | Octahedral, trigonal prismatic, pentagonal pyramidal
+7    | Pentagonal bipyramidal
+8    | Square antiprismatic
+
+In addition, this libraries computes ligand addition and ligand loss
+transitions between symmetries at compile-time.
+
+
+@subsection manual-sublibraries-stereopermutation Stereopermutation
+
+Figuring out all non-superimposable arrangements of substituents around the
+idealized symmetries is a permutational problem and is the core task of this
+library. It builds upon the definitions provided by the chemical symmetries
+library to achieve its task.
+
+Most of organic chemistry, can be composed of linear, bent, trigonal planar and
+tetrahedral local symmetries. The most common source of chiral information in
+organic chemistry is an asymmetric tetrahedral carbon, where its four
+subtituents are all different (i.e. have different ranking according to the
+IUPAC rules). From a local symmetry and the information that all substituents
+are distinct ranking-wise, we know that there are two non-superimposable
+permutations of ligands. 
+
+Stereopermutations of any symmetry can be computed symbolically 
+@cite bennett1969computation , including cases in which substituents are
+mutually linked, such as in multidentate ligands. Special care is taken in
+order to reduce haptically bonded ligands to the correct local symmetries and
+ranking. 
+
+
+@section manual-algorithms Important algorithms
+
+--------------------------------------------------------------------------------
+
+@subsection manual-algorithms-discretization Bond discretization
+
+In the discretization of fractional bond orders to classic integer internal bond
+types (e.g. single, double, etc.), there are two options. You can choose to 
+round bond orders to the nearest integer, but this is particularly error prone 
+for particularly weakly-bound metal ligands (around 0.5) and aromatic bonds
+(around 1.5). For instance, two adjacent aromatic bonds that both show a
+fractional bond order around 1.5 may be randomly rounded up or down depending on
+the bond order generation method or its particular conformation. This can cause
+unexpected ranking inequivalency / equivalency artifacts. If you expect there
+to be conjugated systems or transition metals in your set of interpreted
+molecules, discretizing bond orders in this fashion is disadvised.
+
+It is instead preferable to discretize bond orders in a purely binary manner,
+i.e. bond orders are interpreted as a single bond if the fractional bond order
+is is more than or equal to 0.5. Double bond stereocenters (i.e. in organic
+molecules E/Z stereocenters) are still interpreted from coordinate information
+despite the main bond type discretized to a single bond. This part of a
+`Molecule`'s interpretation is discussed elsewhere.
+
+@subsection manual-algorithms-symmetry-det Symmetry determination
+
+If no coordinates are present when constructing a Molecule, the idealized
+symmetry on any non-terminal atom must be determined from its local
+substituents within the set of appropriately sized symmetries. For main-group
+atoms, this is accomplished by application of a very basic valence shell
+electron pair repulsion (VSEPR) algorithm. No symmetry determination algorithms
+are currently implemented for non-main-group atoms, and the first symmetry of
+appropriate size is chosen instead.
+
+@subsection manual-algorithms-ranking Ranking
+
+In order to establish the relative priority of an atom's substituents, a ranking
+algorithm is applied that follows the IUPAC recommendations laid out in the 2013
+Blue Book @cite IUPAC2013, generalized to larger symmetries. The IUPAC
+sequence rules are as follows, slightly reworded:
+
+Nr. | Sequence rule
+--- | -------------
+1a  | Higher atomic number precedes lower. Atomic numbers in Mancude rings and ring systems are the mean of the atomic numbers in all mesomeric Kekule structures.
+1b  | A duplicate atom node whose corresponding nonduplicated atom node is closer to the root ranks higher than a duplicate atom node whose corresponding nonduplicated atom node is farther from the root
+2   | Higher atomic mass number precedes lower
+3   | When considering double bonds and planar tetraligand atoms Z precedes E and this precedes nonstereogenic double bonds.
+4a  | Chiral stereogenic units precede pseudoasymmetric stereogenic units and these precede nonstereogenic units
+4b  | When two ligands have different descriptor pairs, then the one with the first chosen *like* descriptor pairs has priority over the one with a corresponding *unlike* descriptor pair. Descriptors are alike if they are within the same set. The two sets are {R, M, Z} and {S, P, E}.
+4c  | r precedes s and m precedes p
+5   | An atom or group with descriptors {R, M, Z} has priority over its enantiomorph {S, P, E}
+
+
+The following alterations arise due to the current implementation state:
+
+- Stereodescriptors are transformed into the index of permutation within the
+  symmetry's abstract ligand case set of stereopermutations. The descriptors R/S
+  correspond to indices of permutation within the set of stereopermutations of
+  the abstract tetrahedral ABCD ligand case. Z/E exist as indices of
+  permutations within the set of stereopermutations of the bond-centric
+  stereocenter. M and P stereocenters are not modelled.
+- For larger or smaller symmetries, sequence rule 5 is altered to give priority
+  according to the index of permutation: {R = 1, Z = 1} > {S = 0, E = 0}.
+- *Like* is altered to mean stereodescriptors with the same index of
+  permutation. This is strictly equivalent, as indices of permutation are
+  implemented 'canonically', enabling a bijective mapping.
+- No distinction is made whether a stereocenter is merely psuedoasymmetric. When
+  based on indices of permutation, sequence rules 4c and 5 can be conflated, and
+  I cannot think of a molecule in which removing the distinction changes the
+  sequence rule application for sequence rule 4a. Additionally, 
+  it does not affect whether the exact chirality of that stereocenter must be
+  fixed in the final conformation for this library. Keeping this information
+  merely permits direct generation of the enantiomer for molecules in which
+  each stereocenter has only two stereopermutations. Since we aim to be
+  applicable to stereocenters with many more stereopermutations, the value of
+  the distinction is slight. Sequence rule 4a is shortened to enforce priority
+  of stereogenic units over nonstereogenic units. Sequence rule 4c is conflated
+  with 5.
+- No functionality currently exists to alter atomic mass number. Sequence rule 2
+  is discarded.
+- Conjugation detection is currently not implemented. No regularization of
+  Mancude rings and rings systems is performed. This is the only change that can
+  lead to false differences between substituents when they are actually
+  identical.
+
+In summary, the currently applied sequence rules are:
+
+Nr. | Sequence rule
+--- | -------------
+1a  | Higher atomic number precedes lower. \diffminus{Atomic numbers in Mancude rings and ring systems are the mean of the atomic numbers in all mesomeric Kekule structures.}
+1b  | A duplicate atom node whose corresponding nonduplicated atom node is closer to the root ranks higher than a duplicate atom node whose corresponding nonduplicated atom node is farther from the root
+2   | \diffminus{Higher atomic mass number precedes lower}
+3   | When considering double bonds and planar tetraligand atoms Z precedes E and this precedes nonstereogenic double bonds.
+4a  | Chiral stereogenic units precede \diffminus{pseudoasymmetric stereogenic units and these precede} nonstereogenic units
+4b  | When two ligands have different descriptor pairs, then the one with the first chosen *like* descriptor pairs has priority over the one with a corresponding *unlike* descriptor pair. Descriptors are alike if they \diffplus{have an equal number of stereopermutations and equal index of permutation} \diffminus{are within the same set. The two sets are {R, M, Z} and {S, P, E}}.
+4c  | \diffminus{r precedes s and m precedes p}
+5   | An atom or group with \diffplus{higher index of permutation has priority} \diffminus{descriptors {R, M, Z} has priority over its enantiomorph {S, P, E}} 
+
+@subsection manual-algorithms-symbolic-perm Symbolic permutation
+@subsection manual-algorithms-symmetry-fit Symmetry fitting
+@subsection manual-algorithms-cycle-detection Cycle detection
+
+Cycle detection and enumeration is handled by the excellent library
+RingDecomposerLib @cite Flachsenberg2017 , which avoids exponential space
+requirements in heavily fused ring systems using Unique Ring Families
+@cite Kolodzik2012 .
+
+@subsection manual-algorithms-conformer-generation
+
+For each sought conformation, unassigned stereocenters in the input molecule are
+assigned randomly according to the relative statistical occurrence weights of
+the stereopermutations.
+
+Conformer generation itself is based on four-dimensional Distance Geometry
+@cite Blaney1994 . This library's implementation features the following:
+
+1. A spatial model generates atom-pairwise bounds on their distance in the final
+   conformations and four-atom chiral constraints when distance bounds cannot
+   encompass chiral elements of complex symmetries. For large symmetries, chiral
+   information is captured by using multiple chiral constraints.
+2. The distance bounds are smoothed to conform to the triangle inequalities.
+   After each successive choice of a fixed distance between the bounds, you can
+   choose to re-smooth all bounds (full metrization) or stop re-smoothing after
+   a fixed number of chosen distances (partial metrization). Smoothing is
+   performed by transferring the problem to a graph shortest-paths problem
+   @cite havel1984distance  and finding the shortest paths with the GOR1
+   algorithm @cite Cherkassky1996  instead of the naive Floyd-Warshall
+   algorithm.
+3. The bounds are embedded in four dimensions and refined in two stages,
+   permitting the chiral constraints to invert by expanding into four
+   dimensions, and then compressing the fourth dimension back out.
+4. The refinement error function is modified to enable the placement of haptic
+   ligand's bonding atoms' average position at symmetries' idealized ligand
+   sites.
+
+@section manual-molecules Working with Molecules
+
+--------------------------------------------------------------------------------
+
+@subsection manual-molecules-construction Molecule construction
+
+In order to create a molecule instance, information can be supplied and inferred
+in many ways. 
+
+Minimally, the atoms' element types and their connectivity are needed to
+constitute a molecule's graph. From a graph, the presence of stereocenters can
+be inferred by using algorithms to determine the local symmetry at an atom using
+information present in the graph about its substituents. Any inferred
+stereocenters are unassigned, i.e. generated conformers will be composed of
+all possible stereopermutations at those stereocenters.
+
+Atom connectivity can also be discretized from a bond order matrix, which in
+turn can be very roughly approximated using pairwise atom distances from spatial
+information.
+
+Atom-centric symmetries and its stereocenter assignments can be gleaned from
+spatial information.
+
+Bond-centric stereocenters are interpreted at each bond where both ends have an
+assigned atom-centric stereocenter. If the supplied conformation matches a
+permutation of the bond-centric stereocenter, the bond-centric stereocenter is
+assigned and kept. Incidental matches and undesired dihedral freezes can be
+avoided by specifying a minimal bond order for which a rotational barrier can
+exist. Any bonds whose bond orders do not meet this threshold are not considered
+for bond-centric stereocenter interpretation.
+
+Molecular file formats supply varying levels of information about molecules,
+ranging from the XYZ format, which supplies merely element types and spatial
+information, to the MOLFile format, which supplies element types, discretized
+connectivity and spatial information.
+
+@remark The preferred method for mass molecule construction is binary
+  discretization from supplied fractional bond orders and coordinate information.
+
+@remark Nearest-integer bond discretization has pitfalls for conjugated
+  systems, and the calculation of bond orders from spatial distances only is
+  unreliable due to the limited underlying model of UFF bond distances.
+
+
+@subsection manual-molecules-options Behavioral options
+
+The global behavior of the library can be altered in several respects.
+
+In some cases, whether an atom is a stereocenter is dependent on ambient
+temperature. Trigonal-pyramidal nitrogen can invert rapidly at room temperature,
+but is a stereocenter at low temperature. By default, the library invokes the
+high-temperature approximation, where trigonal-pyramidal nitrogen centers can
+only be a stereocenter if it is part of a small cycle (sizes 3, 4) where the
+strain hinders inversion.
+
+While editing a molecule on the graph level, the library attempts to propagate
+existing chiral state in its list of stereocenters to the new graph. By default,
+state is propagated only if a singular mapping of indices to the new symmetry
+exists in which no symmetry angles are altered. Which propagations of chiral
+state are acceptable can be altered.
+
+The pseudo-random number generator is centralized and can be re-seeded for
+reproducible behavior.
+
+@subsection manual-molecules-editing Editing molecules
+
+The maxim of the library is to permit the specification of any desired graph,
+however unreasonable, within the logical constraints of the molecular model.
+These constraints are that a Molecule class can only contain a single connected
+component and must consist of at least two atoms. Apart from that, you can
+create completely unreasonable graphs. Keep in mind, however, that these can be
+at odds with either the reduction of stereopermutations to assignments, where
+algorithms throw out obviously impossible permutations (yielding stereocenters
+with no possible assignments) or with the library's spatial modeling in
+conformer generation.
+
+Information about a Molecule can be obtained from its constituting graph and
+stereocenter list classes, but editing is centralized at the Molecule interface
+since graph and stereocenter changes force a full re-ranking of all atoms and
+possibly changes in the list of stereocenters.
+
+Among the possible changes in the list of stereocenters on re-ranking are:
+
+- Stereocenters may change the number of possible assignments. This means a
+  stereocenter may become chiral (i.e. there are multiple stereopermutations) or
+  cease to be chiral (there is only one stereopermutation).
+- If a stereocenter is assigned, its assignment may change.
+
+It is therefore important that **upon each molecular edit**, any state about or
+within the StereocenterList of the molecule being edit that is stored externally
+to the instance itself is considered invalidated.
+
+@subsection manual-molecules-eta The Eta bond type
+
+On a graph level, each constituting atom of a haptic ligand that is part of the
+bond of the ligand to a transition metal must have a bond to that transition
+metal. These bonds are of the Eta bond type, regardless of their individual
+order. It is, however, the task of the library to differentiate which bonds
+between atoms are to be considered an Eta bond type and which are not, based
+wholly upon the graph structure. The public API of molassembler does not accept
+user-defined Eta bond types. Specify Single as bond type in the creation of
+haptic bonding.
+
+@subsection manual-molecules-conformers Conformer generation
+
+The generation of conformational ensembles of molecular graphs has a few
+peculiarities you need to know about.
+
+For one, it is very explicit in the library that conformer generation can fail.
+The possibility of failure is expressed by the explicit Result type of conformer
+generation interfaces, which is essentially a two-state variant type holding
+either your requested conformational ensemble or some information about the
+reason for failure. The possibility of failure is explicit precisely to force
+you to consider it when integrating this library. A molecule you have generated
+may have stereocenters with no possible assignments due to too short bridge
+lengths for multidentate ligands or too many large haptic ligands whose cones
+overlap in any arrangements. It may also conflict with the spatial model, which
+has upper limits on granted slack for particularly strained graphs.
+
+Furthermore, the conformer generation sequence will increase modeling tolerances
+for each progressive embedding failure across the entire molecule. Even if only
+one part of your molecule is strained and requires this additional effort, the
+spatial model for the entire molecule will slacken, reducing local symmetry
+idealization strictness even in clear-cut cases. Heavily loosened tolerances can
+lead to odd-looking spatial structures. In those cases, you may want to further
+refine these with force field or semiempirical quantum chemical methods before
+running any more precise calculations.
+
+@section manual-glossary Glossary
 
 --------------------------------------------------------------------------------
 

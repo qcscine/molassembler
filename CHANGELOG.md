@@ -8,7 +8,7 @@ TODO
 - date
 - Bug fix regarding chiral constraints
 
-## [1.0.0] - 2018-09-DD
+## [1.0.0] - 2018-10-DD
 ### Added
 - Explicit definition of which headers make up the public API in the
   tutorial-like documentation
@@ -16,6 +16,11 @@ TODO
   graph distance BFS algorithm 
 
 ### Changed
+- Renamed AtomStereocenter and BondStereocenter to AtomStereopermutator and
+  BondStereopermutator respectively. StereocenterList is accordingly renamed to
+  StereopermutatorList. The classes in question often handle cases where there
+  is merely a single stereopermutation and hence **are not** a stereocenter. It
+  seemed misleading to keep the name. 
 - PRNG seeding has been changed. The PRNG Engine is seeded directly instead of
   a wrapper object that helps with generating random numbers. The PRNG engine
   is part of molassembler's public interface instead of the sublibrary temple.
