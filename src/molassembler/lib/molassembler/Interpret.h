@@ -50,7 +50,7 @@ InterpretResult interpret(
   const AngstromWrapper& angstromWrapper,
   const Delib::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
-  const boost::optional<double>& stereocenterBondOrderThresholdOptional = 1.4
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
 //! A forwarding function with the library-internal wrapper types
@@ -58,7 +58,7 @@ InterpretResult interpret(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
-  const boost::optional<double>& stereocenterBondOrderThresholdOptional = 1.4
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
 /*! Interpret molecules from element types, positional information and a bond order collection.
@@ -67,14 +67,14 @@ InterpretResult interpret(
  * positional information and a bond order collection. Bond orders are
  * discretized into bond types. Connected components within the space are
  * identified and individually instantiated into Molecules. The instantiation
- * behavior of BondStereocenters in the Molecules can be limited to edges whose
+ * behavior of BondStereopermutators in the Molecules can be limited to edges whose
  * bond order exceeds a particular value.
  *
  * \param atomCollection Element types and positional information in Bohr units.
  * \param bondOrders Fractional bond orders
  * \param discretization Decide how bond orders are discretized into bond types
- * \param stereocenterBondOrderThresholdOptional If specified, limits the
- *   instantiation of BondStereocenters onto edges whose fractional bond orders
+ * \param stereopermutatorBondOrderThresholdOptional If specified, limits the
+ *   instantiation of BondStereopermutators onto edges whose fractional bond orders
  *   exceed the provided threshold. If this is not desired, specify boost::none.
  *
  * \note Assumes that the provided atom collection's positions are in
@@ -84,7 +84,7 @@ InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
   const Delib::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
-  const boost::optional<double>& stereocenterBondOrderThresholdOptional = 1.4
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
 /*! Interpret molecules in 3D information.
@@ -94,14 +94,14 @@ InterpretResult interpret(
  * spatial distances using UFF parameters. The bond orders are then discretized
  * into bond types. Connected components within the space are identified and
  * individually instantiated into Molecules. The instantiation behavior of
- * BondStereocenters in the Molecules can be limited to edges whose bond order
+ * BondStereopermutators in the Molecules can be limited to edges whose bond order
  * exceeds a particular value.
  *
  * \param atomCollection Element types and positional information in Bohr units.
  * \param bondOrders Fractional bond orders
  * \param discretization Decide how bond orders are discretized into bond types
- * \param stereocenterBondOrderThresholdOptional If specified, limits the
- *   instantiation of BondStereocenters onto edges whose fractional bond orders
+ * \param stereopermutatorBondOrderThresholdOptional If specified, limits the
+ *   instantiation of BondStereopermutators onto edges whose fractional bond orders
  *   exceed the provided threshold
  *
  * \note Assumes that the provided atom collection's positions are in
@@ -113,7 +113,7 @@ InterpretResult interpret(
 InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
-  const boost::optional<double>& stereocenterBondOrderThresholdOptional = 1.4
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
 } // namespace molassembler

@@ -17,7 +17,7 @@
 #include "molassembler/Modeling/LocalGeometryModel.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Options.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 #include <fstream>
 #include <iostream>
@@ -65,7 +65,7 @@ public:
       )
     );
 
-    bool hasStereocenter = _baseRef._tree[vertexIndex].stereocenterOption.operator bool();
+    bool hasStereopermutator = _baseRef._tree[vertexIndex].stereopermutatorOption.operator bool();
 
     os << "["
       << R"(label=")" << vertexIndex << "-" << symbolString
@@ -74,7 +74,7 @@ public:
     // Node background coloring
     if(_colorVertices.count(vertexIndex) > 0) {
       os << R"(, fillcolor="tomato")";
-    } else if(hasStereocenter) {
+    } else if(hasStereopermutator) {
       os << R"(, fillcolor="steelblue")";
     } else if(MolGraphWriter::elementBGColorMap.count(symbolString) != 0u) {
       os << R"(, fillcolor=")"
@@ -87,7 +87,7 @@ public:
     } else if(MolGraphWriter::elementTextColorMap.count(symbolString) != 0u) {
       os << R"(, fontcolor=")"
         << MolGraphWriter::elementTextColorMap.at(symbolString) << R"(")";
-    } else if(hasStereocenter) {
+    } else if(hasStereopermutator) {
       os << R"(, fontcolor="white")";
     }
 
@@ -97,14 +97,14 @@ public:
     } else if(_baseRef._tree[vertexIndex].isDuplicate) {
       // Duplicate atoms get double-circle shape
       os << R"(, shape="doublecircle")";
-    } else if(hasStereocenter) {
+    } else if(hasStereopermutator) {
       os << R"(, shape="diamond")";
     }
 
     // Tooltip
-    if(hasStereocenter) {
+    if(hasStereopermutator) {
       os << R"(, tooltip=")"
-        << _baseRef._tree[vertexIndex].stereocenterOption.value().info()
+        << _baseRef._tree[vertexIndex].stereopermutatorOption.value().info()
         << R"(")";
     }
 
@@ -117,26 +117,26 @@ public:
   }
 
   void operator() (std::ostream& os, const TreeEdgeIndex& edgeIndex) const {
-    auto hasStereocenter = _baseRef._tree[edgeIndex].stereocenterOption.operator bool();
+    auto hasStereopermutator = _baseRef._tree[edgeIndex].stereopermutatorOption.operator bool();
 
     os << "[";
 
     // Coloring
     if(_colorEdges.count(edgeIndex) > 0) {
       os << R"(color="tomato")";
-    } else if(hasStereocenter) {
+    } else if(hasStereopermutator) {
       os << R"(color="steelblue")";
     }
 
     // Edge width
-    if(_colorEdges.count(edgeIndex) > 0 || hasStereocenter) {
+    if(_colorEdges.count(edgeIndex) > 0 || hasStereopermutator) {
       os << R"(, penwidth="2")";
     }
 
     // Tooltip
-    if(hasStereocenter) {
+    if(hasStereopermutator) {
       os << R"(, tooltip=")"
-        << _baseRef._tree[edgeIndex].stereocenterOption.value().info()
+        << _baseRef._tree[edgeIndex].stereopermutatorOption.value().info()
         << R"(")";
     }
 
@@ -226,38 +226,38 @@ public:
      * all comparisons below are reversed.
      */
 
-    auto BondStereocenterOptionalA = _base._tree[a].stereocenterOption;
-    auto BondStereocenterOptionalB = _base._tree[b].stereocenterOption;
+    auto BondStereopermutatorOptionalA = _base._tree[a].stereopermutatorOption;
+    auto BondStereopermutatorOptionalB = _base._tree[b].stereopermutatorOption;
 
-    if(!BondStereocenterOptionalA && !BondStereocenterOptionalB) {
+    if(!BondStereopermutatorOptionalA && !BondStereopermutatorOptionalB) {
       /* This does not invalidate the program, it just means that all
-       * uninstantiated BondStereocenters are equal, and no relative ordering
+       * uninstantiated BondStereopermutators are equal, and no relative ordering
        * is provided.
        */
       return false;
     }
 
-    if(BondStereocenterOptionalA && !BondStereocenterOptionalB) {
+    if(BondStereopermutatorOptionalA && !BondStereopermutatorOptionalB) {
       return true;
     }
 
-    if(!BondStereocenterOptionalA && BondStereocenterOptionalB) {
+    if(!BondStereopermutatorOptionalA && BondStereopermutatorOptionalB) {
       return false;
     }
 
-    // Now we know both actually have a stereocenterPtr
-    const auto& BondStereocenterA = BondStereocenterOptionalA.value();
-    const auto& BondStereocenterB = BondStereocenterOptionalB.value();
+    // Now we know both actually have a stereopermutatorPtr
+    const auto& BondStereopermutatorA = BondStereopermutatorOptionalA.value();
+    const auto& BondStereopermutatorB = BondStereopermutatorOptionalB.value();
 
     /* Reverse everything below for descending sorting and exploit tuple's
      * lexicographical-like comparator
      */
     return std::make_tuple(
-      BondStereocenterB.numStereopermutations(),
-      BondStereocenterB.indexOfPermutation()
+      BondStereopermutatorB.numStereopermutations(),
+      BondStereopermutatorB.indexOfPermutation()
     ) < std::make_tuple(
-      BondStereocenterA.numStereopermutations(),
-      BondStereocenterA.indexOfPermutation()
+      BondStereopermutatorA.numStereopermutations(),
+      BondStereopermutatorA.indexOfPermutation()
     );
   }
 };
@@ -298,10 +298,10 @@ public:
         return false;
       }
 
-      const auto& aOption = _base._tree[a].stereocenterOption;
-      const auto& bOption = _base._tree[b].stereocenterOption;
+      const auto& aOption = _base._tree[a].stereopermutatorOption;
+      const auto& bOption = _base._tree[b].stereopermutatorOption;
 
-      // Uninstantiated stereocenters always compare false
+      // Uninstantiated stereopermutators always compare false
       if(!aOption && !bOption) {
         return false;
       }
@@ -315,9 +315,9 @@ public:
         return false;
       }
 
-      // Now we know both actually have an instantiated stereocenter
-      const auto& StereocenterA = aOption.value();
-      const auto& StereocenterB = bOption.value();
+      // Now we know both actually have an instantiated stereopermutator
+      const auto& StereopermutatorA = aOption.value();
+      const auto& StereopermutatorB = bOption.value();
 
       /* We only want to know whether they differ in stereogenicity, i.e.
        * whether one is stereogenic while the other isn't. In effect, this
@@ -331,11 +331,11 @@ public:
        *   (So A < B is false, meaning stereogenic < non-stereogenic, leading
        *   to the desired ordering)
        *
-       * This is valid for both A and B types of stereocenters
+       * This is valid for both A and B types of stereopermutators
        */
       return (
-        (StereocenterA.numStereopermutations() > 1)
-        > (StereocenterB.numStereopermutations() > 1)
+        (StereopermutatorA.numStereopermutations() > 1)
+        > (StereopermutatorB.numStereopermutations() > 1)
       );
     }
   };
@@ -383,10 +383,10 @@ public:
      */
     template<typename T>
     bool operator() (const T& b, const T& a) const {
-      const auto& aOption = _treeRef[a].stereocenterOption;
-      const auto& bOption = _treeRef[b].stereocenterOption;
+      const auto& aOption = _treeRef[a].stereopermutatorOption;
+      const auto& bOption = _treeRef[b].stereopermutatorOption;
 
-      // Uninstantiated stereocenters always compare false
+      // Uninstantiated stereopermutators always compare false
       if(!aOption && !bOption) {
         return false;
       }
@@ -400,23 +400,23 @@ public:
         return true;
       }
 
-      // Now we know both actually have an instantiated stereocenter
-      const auto& StereocenterA = aOption.value();
-      const auto& StereocenterB = bOption.value();
+      // Now we know both actually have an instantiated stereopermutator
+      const auto& StereopermutatorA = aOption.value();
+      const auto& StereopermutatorB = bOption.value();
 
       // Need to compare using the number of assignments first
-      if(StereocenterA.numStereopermutations() < StereocenterB.numStereopermutations()) {
+      if(StereopermutatorA.numStereopermutations() < StereopermutatorB.numStereopermutations()) {
         return true;
       }
 
-      if(StereocenterB.numStereopermutations() < StereocenterA.numStereopermutations()) {
+      if(StereopermutatorB.numStereopermutations() < StereopermutatorA.numStereopermutations()) {
         return false;
       }
 
       /* In our context, sequence rule 5 directly compares the assignment
-       * of the assigned stereocenters.
+       * of the assigned stereopermutators.
        */
-      return StereocenterA.indexOfPermutation() < StereocenterB.indexOfPermutation();
+      return StereopermutatorA.indexOfPermutation() < StereopermutatorB.indexOfPermutation();
     }
 
     // For different types
@@ -442,21 +442,21 @@ public:
 };
 
 /* Variant visitor helper classes */
-//! Predicate of whether tree vertex or edge have an instantiated stereocenter
-class RankingTree::VariantHasInstantiatedStereocenter : boost::static_visitor<bool> {
+//! Predicate of whether tree vertex or edge have an instantiated stereopermutator
+class RankingTree::VariantHasInstantiatedStereopermutator : boost::static_visitor<bool> {
 private:
   const RankingTree& _baseRef;
 
 public:
-  explicit VariantHasInstantiatedStereocenter(
+  explicit VariantHasInstantiatedStereopermutator(
     const RankingTree& base
   ) : _baseRef(base) {}
 
-  //! Check if the variant is an instantiated stereocenter
+  //! Check if the variant is an instantiated stereopermutator
   template<typename T>
   bool operator() (const T& a) const {
-    const auto& stereocenterOption = _baseRef._tree[a].stereocenterOption;
-    return stereocenterOption.operator bool();
+    const auto& stereopermutatorOption = _baseRef._tree[a].stereopermutatorOption;
+    return stereopermutatorOption.operator bool();
   }
 };
 
@@ -496,20 +496,20 @@ public:
   }
 };
 
-//! Functor returning a string representation of a vertex or edge stereocenter
-class RankingTree::VariantStereocenterStringRepresentation : boost::static_visitor<std::string> {
+//! Functor returning a string representation of a vertex or edge stereopermutator
+class RankingTree::VariantStereopermutatorStringRepresentation : boost::static_visitor<std::string> {
 private:
   const RankingTree& _baseRef;
 
 public:
-  explicit VariantStereocenterStringRepresentation(
+  explicit VariantStereopermutatorStringRepresentation(
     const RankingTree& base
   ) : _baseRef(base) {}
 
-  //! Returns a string representation of the *type* of the stereocenter
+  //! Returns a string representation of the *type* of the stereopermutator
   template<typename T>
   std::string operator() (const T& a) const {
-    const auto& aOption = _baseRef._tree[a].stereocenterOption;
+    const auto& aOption = _baseRef._tree[a].stereopermutatorOption;
     if(aOption) {
       return aOption.value().rankInfo();
     }
@@ -518,7 +518,7 @@ public:
   }
 };
 
-//! Predicate deciding IUPAC like pairing of combination of tree vertex and edge stereocenters
+//! Predicate deciding IUPAC like pairing of combination of tree vertex and edge stereopermutators
 class RankingTree::VariantLikePair : boost::static_visitor<bool> {
 private:
   const RankingTree& _baseRef;
@@ -528,8 +528,8 @@ public:
 
   template<typename T, typename U>
   bool operator() (const T& a, const U& b) const {
-    const auto& aOption = _baseRef._tree[a].stereocenterOption;
-    const auto& bOption = _baseRef._tree[b].stereocenterOption;
+    const auto& aOption = _baseRef._tree[a].stereopermutatorOption;
+    const auto& bOption = _baseRef._tree[b].stereopermutatorOption;
 
     return (
       aOption
@@ -574,8 +574,8 @@ void RankingTree::_applySequenceRules(
    *   (seqCis > seqTrans > non-stereogenic)
    */
   /* Before we can compare using sequence rule 3, we have to instantiate all
-   * auxiliary descriptors, meaning we have to instantiate BondStereocenters in
-   * all double bond positions and AtomStereocenters in all candidate
+   * auxiliary descriptors, meaning we have to instantiate BondStereopermutators in
+   * all double bond positions and AtomStereopermutators in all candidate
    * positions.
    *
    * In both cases, we have to rank non-duplicate adjacent vertices according
@@ -585,7 +585,7 @@ void RankingTree::_applySequenceRules(
    *
    * We want to proceed from the outer parts of the tree inwards, so that
    * branches that are forced to consider later sequence rules have their
-   * required stereocenters instantiated already.
+   * required stereopermutators instantiated already.
    */
   // Cleanly divide the tree into depths by its edges
   std::vector<
@@ -650,8 +650,8 @@ void RankingTree::_applySequenceRules(
   } while(moreEdges);
 
   // Remember if you found something to instantiate or not
-  bool foundBondStereocenters = false;
-  bool foundAtomStereocenters = false;
+  bool foundBondStereopermutators = false;
+  bool foundAtomStereopermutators = false;
 
   auto auxiliaryLigands = [](
     const RankingInformation::RankedType& rankedAtoms
@@ -669,14 +669,14 @@ void RankingTree::_applySequenceRules(
     return ligands;
   };
 
-  auto instantiateAtomStereocenter = [&](const TreeVertexIndex targetIndex) -> void {
-    // Do not instantiate an atomStereocenter on the root vertex
+  auto instantiateAtomStereopermutator = [&](const TreeVertexIndex targetIndex) -> void {
+    // Do not instantiate an atomStereopermutator on the root vertex
     if(targetIndex == rootIndex) {
       return;
     }
 
     const AtomIndex molSourceIndex = _tree[targetIndex].molIndex;
-    auto existingStereocenterOption = _stereocentersRef.option(molSourceIndex);
+    auto existingStereopermutatorOption = _stereopermutatorsRef.option(molSourceIndex);
 
     RankingInformation centerRanking;
 
@@ -689,7 +689,7 @@ void RankingTree::_applySequenceRules(
 
     centerRanking.ligands = auxiliaryLigands(centerRanking.sortedSubstituents);
 
-    // Stop immediately if the stereocenter is essentially terminal
+    // Stop immediately if the stereopermutator is essentially terminal
     if(centerRanking.ligands.size() <= 1) {
       return;
     }
@@ -702,16 +702,16 @@ void RankingTree::_applySequenceRules(
     // Again, no links since we're in an acyclic graph now
     Symmetry::Name localSymmetry;
     if(
-      existingStereocenterOption
+      existingStereopermutatorOption
       && Symmetry::size(
-        existingStereocenterOption->getSymmetry()
+        existingStereopermutatorOption->getSymmetry()
       ) == centerRanking.ligands.size()
     ) {
       /* NOTE: The symmetry size check is necessary since duplicate tree
        * vertices may crop up for cycle closures. Those are kept in
        * _auxiliaryAdjacentsToRank, other duplicate vertices are discarded.
        */
-      localSymmetry = existingStereocenterOption->getSymmetry();
+      localSymmetry = existingStereopermutatorOption->getSymmetry();
     } else {
       localSymmetry = LocalGeometry::determineLocalGeometry(
         _graphRef,
@@ -720,8 +720,8 @@ void RankingTree::_applySequenceRules(
       );
     }
 
-    // Instantiate a AtomStereocenter here!
-    auto newStereocenter = AtomStereocenter {
+    // Instantiate a AtomStereopermutator here!
+    auto newStereopermutator = AtomStereopermutator {
       _graphRef,
       localSymmetry,
       molSourceIndex,
@@ -730,43 +730,43 @@ void RankingTree::_applySequenceRules(
 
     if(positionsOption) {
       pickyFit(
-        newStereocenter,
+        newStereopermutator,
         _graphRef,
         positionsOption.value(),
         localSymmetry
       );
     } else if(
-      existingStereocenterOption
-      && existingStereocenterOption->getSymmetry() == localSymmetry
+      existingStereopermutatorOption
+      && existingStereopermutatorOption->getSymmetry() == localSymmetry
       && (
-        existingStereocenterOption->numStereopermutations()
-        == newStereocenter.numStereopermutations()
+        existingStereopermutatorOption->numStereopermutations()
+        == newStereopermutator.numStereopermutations()
       )
     ) {
-      newStereocenter.assign(existingStereocenterOption->assigned());
+      newStereopermutator.assign(existingStereopermutatorOption->assigned());
     } else if(
-      newStereocenter.numStereopermutations() == 1
-      && newStereocenter.numAssignments() == 1
+      newStereopermutator.numStereopermutations() == 1
+      && newStereopermutator.numAssignments() == 1
     ) {
       // Default assign it
-      newStereocenter.assign(0);
+      newStereopermutator.assign(0);
     }
 
     if(
-      newStereocenter.assigned()
-      && !disregardStereocenter(
-        newStereocenter,
+      newStereopermutator.assigned()
+      && !disregardStereopermutator(
+        newStereopermutator,
         _graphRef.elementType(molSourceIndex),
         _cyclesRef,
         Options::temperatureRegime
       )
     ) {
-      if(newStereocenter.numStereopermutations() > 1) {
+      if(newStereopermutator.numStereopermutations() > 1) {
         // Mark that we instantiated something interesting
-        foundAtomStereocenters = true;
+        foundAtomStereopermutators = true;
       }
 
-      _tree[targetIndex].stereocenterOption = std::move(newStereocenter);
+      _tree[targetIndex].stereopermutatorOption = std::move(newStereopermutator);
     }
 
     if /*C++17 constexpr */ (buildTypeIsDebug) {
@@ -790,39 +790,39 @@ void RankingTree::_applySequenceRules(
       /* It gets a little weird here. Assuming we are at the bottom-most edge
        * level of the tree, we have to do three things.
        *
-       * 1. Instantiate AtomStereocenter at the target index
-       * 2. Instantiate AtomStereocenter at the source index
-       * 3. Instantiate BondStereocenter on the edge, provided that 1 and 2
+       * 1. Instantiate AtomStereopermutator at the target index
+       * 2. Instantiate AtomStereopermutator at the source index
+       * 3. Instantiate BondStereopermutator on the edge, provided that 1 and 2
        *    could be assigned.
        *
-       * This has the consequence that any auxiliary AtomStereocenter at the
-       * source index will NOT be aware of any BondStereocenter differences to
+       * This has the consequence that any auxiliary AtomStereopermutator at the
+       * source index will NOT be aware of any BondStereopermutator differences to
        * its immediate descendants (since its rankings are calculated prior to
-       * the instantiation of the BondStereocenter). Any further out, the
+       * the instantiation of the BondStereopermutator). Any further out, the
        * sequence rules will catch the differences.
        *
-       * At later stages, the AtomStereocenter at the target index will already
+       * At later stages, the AtomStereopermutator at the target index will already
        * be present, so you need to check before instantiating it.
        */
 
-      if(!_tree[targetIndex].stereocenterOption) {
-        instantiateAtomStereocenter(targetIndex);
+      if(!_tree[targetIndex].stereopermutatorOption) {
+        instantiateAtomStereopermutator(targetIndex);
       }
 
       /* TODO Since the tree merges, it's presumably bad for performance that
-       * we cannot store the information that we tried, no stereocenter was
+       * we cannot store the information that we tried, no stereopermutator was
        * placed, and we shouldn't try again.
        */
-      if(!_tree[sourceIndex].stereocenterOption) {
-        instantiateAtomStereocenter(sourceIndex);
+      if(!_tree[sourceIndex].stereopermutatorOption) {
+        instantiateAtomStereopermutator(sourceIndex);
       }
 
       /* The instantiation procedure does not guarantee that there will be a
-       * stereocenter on both vertices. If no assignment can be found
+       * stereopermutator on both vertices. If no assignment can be found
        */
       if(
-        _tree[sourceIndex].stereocenterOption
-        && _tree[targetIndex].stereocenterOption
+        _tree[sourceIndex].stereopermutatorOption
+        && _tree[targetIndex].stereopermutatorOption
         /* TODO this has to be altered -> any edges with hindered rotation have
          * to be checked, not just double bonds
          */
@@ -833,46 +833,46 @@ void RankingTree::_applySequenceRules(
           _tree[targetIndex].molIndex
         };
 
-        auto newStereocenter = BondStereocenter {
-          _tree[sourceIndex].stereocenterOption.value(),
-          _tree[targetIndex].stereocenterOption.value(),
+        auto newStereopermutator = BondStereopermutator {
+          _tree[sourceIndex].stereopermutatorOption.value(),
+          _tree[targetIndex].stereopermutatorOption.value(),
           molEdge
         };
 
-        // Try to assign the new stereocenter
-        if(newStereocenter.numStereopermutations() > 1) {
-          auto existingStereocenterOption = _stereocentersRef.option(molEdge);
+        // Try to assign the new stereopermutator
+        if(newStereopermutator.numStereopermutations() > 1) {
+          auto existingStereopermutatorOption = _stereopermutatorsRef.option(molEdge);
 
           // Find an assignment
           if(positionsOption) {
             // Fit from positions
-            newStereocenter.fit(
+            newStereopermutator.fit(
               positionsOption.value(),
-              _tree[sourceIndex].stereocenterOption.value(),
-              _tree[targetIndex].stereocenterOption.value()
+              _tree[sourceIndex].stereopermutatorOption.value(),
+              _tree[targetIndex].stereopermutatorOption.value()
             );
           } else if(
-            existingStereocenterOption
-            && existingStereocenterOption->hasSameCompositeOrientation(newStereocenter)
+            existingStereopermutatorOption
+            && existingStereopermutatorOption->hasSameCompositeOrientation(newStereopermutator)
           ) {
             /* Need to get chiral information from the molecule (if present).
-             * Have to be careful, any stereocenters on the same atom may have
+             * Have to be careful, any stereopermutators on the same atom may have
              * different symmetries and different ranking for the same
              * substituents
              */
-            newStereocenter.assign(
-              existingStereocenterOption->assigned()
+            newStereopermutator.assign(
+              existingStereopermutatorOption->assigned()
             );
           }
 
           // If an assignment could be found, add it to the tree
-          if(newStereocenter.assigned()) {
-            if(newStereocenter.numStereopermutations() > 1) {
+          if(newStereopermutator.assigned()) {
+            if(newStereopermutator.numStereopermutations() > 1) {
               // Mark that we instantiated something
-              foundBondStereocenters = true;
+              foundBondStereopermutators = true;
             }
 
-            _tree[edge].stereocenterOption = std::move(newStereocenter);
+            _tree[edge].stereopermutatorOption = std::move(newStereopermutator);
           }
         }
 
@@ -888,8 +888,8 @@ void RankingTree::_applySequenceRules(
     }
   }
 
-  // Was any BondStereocenter instantiated? If not, we can skip rule 3.
-  if(foundBondStereocenters) {
+  // Was any BondStereopermutator instantiated? If not, we can skip rule 3.
+  if(foundBondStereopermutators) {
 
     // Apply sequence rule 3
     _runBFS<
@@ -923,8 +923,8 @@ void RankingTree::_applySequenceRules(
     }
   }
 
-  // In case neither EZ or AtomStereocenters were found, we can skip 4-5
-  if(!foundBondStereocenters && !foundAtomStereocenters) {
+  // In case neither EZ or AtomStereopermutators were found, we can skip 4-5
+  if(!foundBondStereopermutators && !foundAtomStereopermutators) {
     return;
   }
 
@@ -939,7 +939,7 @@ void RankingTree::_applySequenceRules(
    *   - Establish relative rank by application of sequence rules.
    *
    *     Can probably use _auxiliaryApplySequenceRules recursively at the first
-   *     junction between competing stereocenters on the respective branch
+   *     junction between competing stereopermutators on the respective branch
    *     indices to find out which precedes which, provided both are at the
    *     same depth from root.
    *
@@ -955,7 +955,7 @@ void RankingTree::_applySequenceRules(
    *
    *   - Precedence:
    *     - The branch with fewer representative stereodescriptors has priority
-   *     - Go through both lists of ranked stereocenters simultaneously,
+   *     - Go through both lists of ranked stereopermutators simultaneously,
    *       proceeding from highest rank to lowest, pairing each occurring
    *       descriptor with the reference descriptor.
    *
@@ -1093,18 +1093,18 @@ void RankingTree::_applySequenceRules(
     std::map<
       TreeVertexIndex,
       std::set<VariantType>
-    > stereocenterMap;
+    > stereopermutatorMap;
 
-    VariantHasInstantiatedStereocenter isInstantiatedChecker {*this};
+    VariantHasInstantiatedStereopermutator isInstantiatedChecker {*this};
 
     // Copy all variants from part A that are actually instantiated
     for(const auto& undecidedSet : _branchOrderingHelper.getUndecidedSets()) {
       for(const auto& undecidedBranch : undecidedSet) {
-        stereocenterMap[undecidedBranch] = {};
+        stereopermutatorMap[undecidedBranch] = {};
 
         for(const auto& variantValue : comparisonSets.at(undecidedBranch)) {
           if(boost::apply_visitor(isInstantiatedChecker, variantValue)) {
-            stereocenterMap.at(undecidedBranch).insert(variantValue);
+            stereopermutatorMap.at(undecidedBranch).insert(variantValue);
           }
         }
       }
@@ -1117,14 +1117,14 @@ void RankingTree::_applySequenceRules(
 
     VariantDepth depthFetcher {*this};
     VariantSourceNode sourceNodeFetcher {*this};
-    VariantStereocenterStringRepresentation stringRepFetcher {*this};
+    VariantStereopermutatorStringRepresentation stringRepFetcher {*this};
 
     std::map<
       TreeVertexIndex,
       std::set<VariantType>
     > representativeStereodescriptors;
 
-    for(const auto& mapIterPair : stereocenterMap) {
+    for(const auto& mapIterPair : stereopermutatorMap) {
       const auto& branchIndex = mapIterPair.first;
       const auto& variantSet = mapIterPair.second;
 
@@ -1134,8 +1134,8 @@ void RankingTree::_applySequenceRules(
         variantSet
       );
 
-      // If there are no stereocenters to rank, bounce
-      if(stereocenterMap.at(branchIndex).empty()) {
+      // If there are no stereopermutators to rank, bounce
+      if(stereopermutatorMap.at(branchIndex).empty()) {
         representativeStereodescriptors[branchIndex] = {};
         continue;
       }
@@ -1197,16 +1197,16 @@ void RankingTree::_applySequenceRules(
       }
 
       // Pick the representative stereodescriptor for each branch!
-      auto stereocenterSets = relativeOrders.at(branchIndex).getSets();
-      if(stereocenterSets.back().size() == 1) {
+      auto stereopermutatorSets = relativeOrders.at(branchIndex).getSets();
+      if(stereopermutatorSets.back().size() == 1) {
         // 1 - The solitary highest ranked stereogenic group
         representativeStereodescriptors[branchIndex] = {
-          stereocenterSets.back().front()
+          stereopermutatorSets.back().front()
         };
       } else {
         // 2 - The stereodescriptor(s) occurring more often than all others
         auto groupedByStringRep = temple::groupByMapping(
-          stereocenterSets.back(),
+          stereopermutatorSets.back(),
           [&](const auto& variantType) -> std::string {
             return boost::apply_visitor(stringRepFetcher, variantType);
           }
@@ -1226,7 +1226,7 @@ void RankingTree::_applySequenceRules(
 
         representativeStereodescriptors[branchIndex] = {};
 
-        // All stereocenter string groups with maximum size are representative
+        // All stereopermutator string groups with maximum size are representative
         for(const auto& stringGroup : groupedByStringRep) {
           if(stringGroup.size() == maxSize) {
             representativeStereodescriptors.at(branchIndex).insert(
@@ -1321,20 +1321,20 @@ void RankingTree::_applySequenceRules(
             auto branchAOrders = relativeOrders.at(branchA).getSets();
             auto branchBOrders = relativeOrders.at(branchB).getSets();
 
-            // Go through the ranked stereocenter groups in DESC order!
-            auto branchAStereocenterGroupIter = branchAOrders.rbegin();
-            auto branchBStereocenterGroupIter = branchBOrders.rbegin();
+            // Go through the ranked stereopermutator groups in DESC order!
+            auto branchAStereopermutatorGroupIter = branchAOrders.rbegin();
+            auto branchBStereopermutatorGroupIter = branchBOrders.rbegin();
 
             while(
-              branchAStereocenterGroupIter != branchAOrders.rend()
-              && branchBStereocenterGroupIter != branchBOrders.rend()
+              branchAStereopermutatorGroupIter != branchAOrders.rend()
+              && branchBStereopermutatorGroupIter != branchBOrders.rend()
             ) {
               unsigned ABranchLikePairs = 0, BBranchLikePairs = 0;
 
               // Count A-branch like pairs
               temple::forEach(
                 temple::adaptors::allPairs(
-                  *branchAStereocenterGroupIter,
+                  *branchAStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchA)
                 ),
                 [&](const auto& variantA, const auto& variantB) {
@@ -1353,7 +1353,7 @@ void RankingTree::_applySequenceRules(
               // Count B-branch like pairs
               temple::forEach(
                 temple::adaptors::allPairs(
-                  *branchBStereocenterGroupIter,
+                  *branchBStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchB)
                 ),
                 [&](const auto& variantA, const auto& variantB) {
@@ -1379,8 +1379,8 @@ void RankingTree::_applySequenceRules(
                 break;
               }
 
-              ++branchAStereocenterGroupIter;
-              ++branchBStereocenterGroupIter;
+              ++branchAStereopermutatorGroupIter;
+              ++branchBStereopermutatorGroupIter;
             }
 
             if /* C++17 constexpr */ (buildTypeIsDebug) {
@@ -1395,8 +1395,8 @@ void RankingTree::_applySequenceRules(
                     branchB,
                     branchAOrders,
                     branchBOrders,
-                    branchAStereocenterGroupIter,
-                    branchBStereocenterGroupIter
+                    branchAStereopermutatorGroupIter,
+                    branchBStereopermutatorGroupIter
                   ),
                   _branchOrderingHelper.dumpGraphviz()
                 });
@@ -1611,7 +1611,7 @@ std::vector<
    *   - Establish relative rank by application of sequence rules.
    *
    *     Can probably use _auxiliaryApplySequenceRules recursively at the first
-   *     junction between competing stereocenters on the respective branch
+   *     junction between competing stereopermutators on the respective branch
    *     indices to find out which precedes which, provided both are at the
    *     same depth from root.
    *
@@ -1627,7 +1627,7 @@ std::vector<
    *
    *   - Precedence:
    *     - The branch with fewer representative stereodescriptors has priority
-   *     - Go through both lists of ranked stereocenters simultaneously,
+   *     - Go through both lists of ranked stereopermutators simultaneously,
    *       proceeding from highest rank to lowest, pairing each occurring
    *       descriptor with the reference descriptor.
    *
@@ -1809,18 +1809,18 @@ std::vector<
     std::map<
       TreeVertexIndex,
       std::set<VariantType>
-    > stereocenterMap;
+    > stereopermutatorMap;
 
-    VariantHasInstantiatedStereocenter isInstantiatedChecker {*this};
+    VariantHasInstantiatedStereopermutator isInstantiatedChecker {*this};
 
     // Copy all those variants from part A that are actually instantiated
     for(const auto& undecidedSet : orderingHelper.getUndecidedSets()) {
       for(const auto& undecidedBranch : undecidedSet) {
-        stereocenterMap[undecidedBranch] = {};
+        stereopermutatorMap[undecidedBranch] = {};
 
         for(const auto& variantValue : comparisonSets.at(undecidedBranch)) {
           if(boost::apply_visitor(isInstantiatedChecker, variantValue)) {
-            stereocenterMap.at(undecidedBranch).insert(variantValue);
+            stereopermutatorMap.at(undecidedBranch).insert(variantValue);
           }
         }
       }
@@ -1833,14 +1833,14 @@ std::vector<
 
     VariantDepth depthFetcher {*this};
     VariantSourceNode sourceNodeFetcher {*this};
-    VariantStereocenterStringRepresentation stringRepFetcher {*this};
+    VariantStereopermutatorStringRepresentation stringRepFetcher {*this};
 
     std::map<
       TreeVertexIndex,
       std::set<VariantType>
     > representativeStereodescriptors;
 
-    for(const auto& mapIterPair : stereocenterMap) {
+    for(const auto& mapIterPair : stereopermutatorMap) {
       const auto& branchIndex = mapIterPair.first;
       const auto& variantSet = mapIterPair.second;
 
@@ -1850,8 +1850,8 @@ std::vector<
         variantSet
       );
 
-      // If there are no stereocenters to rank, bounce
-      if(stereocenterMap.at(branchIndex).empty()) {
+      // If there are no stereopermutators to rank, bounce
+      if(stereopermutatorMap.at(branchIndex).empty()) {
         representativeStereodescriptors[branchIndex] = {};
         continue;
       }
@@ -1912,17 +1912,17 @@ std::vector<
       }
 
       // Pick the representative stereodescriptor for each branch!
-      auto stereocenterSets = relativeOrders.at(branchIndex).getSets();
+      auto stereopermutatorSets = relativeOrders.at(branchIndex).getSets();
 
-      if(stereocenterSets.back().size() == 1) {
+      if(stereopermutatorSets.back().size() == 1) {
         // 1 - The solitary highest ranked stereogenic group
         representativeStereodescriptors[branchIndex] = {
-          stereocenterSets.back().front()
+          stereopermutatorSets.back().front()
         };
       } else {
         // 2 - The stereodescriptor occurring more often than all others
         auto groupedByStringRep = temple::groupByMapping(
-          stereocenterSets.back(),
+          stereopermutatorSets.back(),
           [&](const auto& variantType) -> std::string {
             return boost::apply_visitor(stringRepFetcher, variantType);
           }
@@ -1942,7 +1942,7 @@ std::vector<
 
         representativeStereodescriptors[branchIndex] = {};
 
-        // All stereocenter string groups with maximum size are representative
+        // All stereopermutator string groups with maximum size are representative
         for(const auto& stringGroup : groupedByStringRep) {
           if(stringGroup.size() == maxSize) {
             representativeStereodescriptors.at(branchIndex).insert(
@@ -2005,20 +2005,20 @@ std::vector<
             auto branchAOrders = relativeOrders.at(branchA).getSets();
             auto branchBOrders = relativeOrders.at(branchB).getSets();
 
-            // Go through the ranked stereocenter groups in DESC order!
-            auto branchAStereocenterGroupIter = branchAOrders.rbegin();
-            auto branchBStereocenterGroupIter = branchBOrders.rbegin();
+            // Go through the ranked stereopermutator groups in DESC order!
+            auto branchAStereopermutatorGroupIter = branchAOrders.rbegin();
+            auto branchBStereopermutatorGroupIter = branchBOrders.rbegin();
 
             while(
-              branchAStereocenterGroupIter != branchAOrders.rend()
-              && branchBStereocenterGroupIter != branchBOrders.rend()
+              branchAStereopermutatorGroupIter != branchAOrders.rend()
+              && branchBStereopermutatorGroupIter != branchBOrders.rend()
             ) {
               unsigned ABranchLikePairs = 0, BBranchLikePairs = 0;
 
               // Count A-branch like pairs
               temple::forEach(
                 temple::adaptors::allPairs(
-                  *branchAStereocenterGroupIter,
+                  *branchAStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchA)
                 ),
                 [&](const auto& variantA, const auto& variantB) {
@@ -2037,7 +2037,7 @@ std::vector<
               // Count B-branch like pairs
               temple::forEach(
                 temple::adaptors::allPairs(
-                  *branchBStereocenterGroupIter,
+                  *branchBStereopermutatorGroupIter,
                   representativeStereodescriptors.at(branchB)
                 ),
                 [&](const auto& variantA, const auto& variantB) {
@@ -2063,8 +2063,8 @@ std::vector<
                 break;
               }
 
-              ++branchAStereocenterGroupIter;
-              ++branchBStereocenterGroupIter;
+              ++branchAStereopermutatorGroupIter;
+              ++branchBStereopermutatorGroupIter;
             }
 
             if /* C++17 constexpr */ (buildTypeIsDebug) {
@@ -2079,8 +2079,8 @@ std::vector<
                     branchB,
                     branchAOrders,
                     branchBOrders,
-                    branchAStereocenterGroupIter,
-                    branchBStereocenterGroupIter
+                    branchAStereopermutatorGroupIter,
+                    branchBStereopermutatorGroupIter
                   ),
                   orderingHelper.dumpGraphviz()
                 });
@@ -2729,7 +2729,7 @@ std::unordered_set<RankingTree::TreeVertexIndex> RankingTree::_collectSeeds(
 RankingTree::RankingTree(
   const OuterGraph& graph,
   const Cycles& cycles,
-  const StereocenterList& stereocenters,
+  const StereopermutatorList& stereopermutators,
   std::string molGraphviz,
   const AtomIndex atomToRank,
   const std::vector<AtomIndex>& excludeIndices,
@@ -2737,7 +2737,7 @@ RankingTree::RankingTree(
   const boost::optional<AngstromWrapper>& positionsOption
 ) : _graphRef(graph),
     _cyclesRef(cycles),
-    _stereocentersRef(stereocenters),
+    _stereopermutatorsRef(stereopermutators),
     _adaptedMolGraphviz(_adaptMolGraph(std::move(molGraphviz)))
 {
   // Set the root vertex
@@ -3055,7 +3055,7 @@ std::string RankingTree::_make4BGraph(
     std::vector<VariantType>
   >::reverse_iterator& branchBIter
 ) const {
-  VariantStereocenterStringRepresentation stringFetcher {*this};
+  VariantStereopermutatorStringRepresentation stringFetcher {*this};
   VariantLikePair likeComparator {*this};
 
   const std::string nl = "\n"s;
@@ -3144,20 +3144,20 @@ std::string RankingTree::_make4BGraph(
       branchGraphviz += "  "s + nodePrefix + std::to_string(i) + " [";
       branchGraphviz += R"(shape="none", label=)" + tableBegin;
 
-      std::string stereocenterRow = rowBegin;
+      std::string stereopermutatorRow = rowBegin;
       std::string likeRow = rowBegin;
 
-      for(const auto& stereocenterVariant : variantList) {
-        stereocenterRow += cellBegin(
+      for(const auto& stereopermutatorVariant : variantList) {
+        stereopermutatorRow += cellBegin(
           representativeStereodescriptors.at(branchIndex).size()
         );
-        stereocenterRow += toString(stereocenterVariant) + br;
-        stereocenterRow += boost::apply_visitor(stringFetcher, stereocenterVariant);
-        stereocenterRow += cellEnd;
+        stereopermutatorRow += toString(stereopermutatorVariant) + br;
+        stereopermutatorRow += boost::apply_visitor(stringFetcher, stereopermutatorVariant);
+        stereopermutatorRow += cellEnd;
 
         if(branchIter == iter) {
           for(const auto& representativeVariant : representativeStereodescriptors.at(branchIndex)) {
-            if(boost::apply_visitor(likeComparator, stereocenterVariant, representativeVariant)) {
+            if(boost::apply_visitor(likeComparator, stereopermutatorVariant, representativeVariant)) {
               likeRow += cellBegin(1, greenColor) + cellEnd;
             } else {
               likeRow += cellBegin(1, redColor) + cellEnd;
@@ -3166,7 +3166,7 @@ std::string RankingTree::_make4BGraph(
         }
       }
 
-      branchGraphviz += stereocenterRow + rowEnd;
+      branchGraphviz += stereopermutatorRow + rowEnd;
 
       if(branchIter == iter) {
         branchGraphviz += likeRow + rowEnd;

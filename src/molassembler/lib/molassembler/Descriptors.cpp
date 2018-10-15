@@ -8,7 +8,7 @@
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Cycles.h"
 #include "molassembler/Molecule.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 namespace molassembler {
 
@@ -48,11 +48,11 @@ unsigned numRotatableBonds(const Molecule& mol) {
       continue;
     }
 
-    // If there is an assigned stereocenter on the edge, it cannot be rotatable
-    auto bondStereocenterOption = mol.stereocenters().option(edge);
+    // If there is an assigned stereopermutator on the edge, it cannot be rotatable
+    auto bondStereopermutatorOption = mol.stereopermutators().option(edge);
     if(
-      bondStereocenterOption
-      && bondStereocenterOption->assigned() != boost::none
+      bondStereopermutatorOption
+      && bondStereopermutatorOption->assigned() != boost::none
     ) {
       continue;
     }

@@ -17,7 +17,7 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 
 /* TODO
- * - Random assignment of unassigned stereocenters isn't ideal yet
+ * - Random assignment of unassigned stereopermutators isn't ideal yet
  *   - Sequence randomization
  */
 
@@ -47,43 +47,43 @@ AngstromWrapper convertToAngstromWrapper(
 }
 
 Molecule narrow(Molecule moleculeCopy) {
-  const auto& stereocenterList = moleculeCopy.stereocenters();
+  const auto& stereopermutatorList = moleculeCopy.stereopermutators();
 
   do {
-    /* If we change any stereocenter, we must jump out of for-loop and
-     * re-check if there are still unassigned stereocenters since assigning
-     * a stereocenter can invalidate stereocenter list iterators (because
-     * stereocenters may appear or disappear on assignment due to ranking)
+    /* If we change any stereopermutator, we must jump out of for-loop and
+     * re-check if there are still unassigned stereopermutators since assigning
+     * a stereopermutator can invalidate stereopermutator list iterators (because
+     * stereopermutators may appear or disappear on assignment due to ranking)
      */
-    bool changedStereocenterFlag = false;
+    bool changedStereopermutatorFlag = false;
 
-    for(const auto& atomStereocenter : stereocenterList.atomStereocenters()) {
-      if(!atomStereocenter.assigned()) {
-        moleculeCopy.assignStereocenterRandomly(
-          atomStereocenter.centralIndex()
+    for(const auto& atomStereopermutator : stereopermutatorList.atomStereopermutators()) {
+      if(!atomStereopermutator.assigned()) {
+        moleculeCopy.assignStereopermutatorRandomly(
+          atomStereopermutator.centralIndex()
         );
 
-        changedStereocenterFlag = true;
+        changedStereopermutatorFlag = true;
         break;
       }
     }
 
-    if(changedStereocenterFlag) {
+    if(changedStereopermutatorFlag) {
       // Re-check the do-while loop condition
       continue;
     }
 
-    for(const auto& bondStereocenter : stereocenterList.bondStereocenters()) {
-      if(!bondStereocenter.assigned()) {
-        moleculeCopy.assignStereocenterRandomly(
-          bondStereocenter.edge()
+    for(const auto& bondStereopermutator : stereopermutatorList.bondStereopermutators()) {
+      if(!bondStereopermutator.assigned()) {
+        moleculeCopy.assignStereopermutatorRandomly(
+          bondStereopermutator.edge()
         );
 
         // Break this loop and re-check do-while loop condition
         break;
       }
     }
-  } while(stereocenterList.hasUnassignedStereocenters());
+  } while(stereopermutatorList.hasUnassignedStereopermutators());
 
   return moleculeCopy;
 }
@@ -119,15 +119,15 @@ outcome::result<
   const Partiality metrizationOption,
   const bool useYInversionTrick
 ) {
-  if(molecule.stereocenters().hasZeroAssignmentStereocenters()) {
-    return DGError::ZeroAssignmentStereocenters;
+  if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
+    return DGError::ZeroAssignmentStereopermutators;
   }
 
   MoleculeDGInformation DGData;
-  /* In case the molecule has unassigned stereocenters, we need to randomly
+  /* In case the molecule has unassigned stereopermutators, we need to randomly
    * assign them in every step prior to generating the distance bounds matrix
    */
-  bool regenerateEachStep = molecule.stereocenters().hasUnassignedStereocenters();
+  bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
   if(!regenerateEachStep) {
     DGData = gatherDGInformation(molecule);
   }
@@ -151,11 +151,11 @@ outcome::result<
     if(regenerateEachStep) {
       auto moleculeCopy = detail::narrow(molecule);
 
-      if(moleculeCopy.stereocenters().hasZeroAssignmentStereocenters()) {
-        return DGError::ZeroAssignmentStereocenters;
+      if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
+        return DGError::ZeroAssignmentStereopermutators;
       }
 
-      // Fetch the DG data from the molecule with no unassigned stereocenters
+      // Fetch the DG data from the molecule with no unassigned stereopermutators
       DGData = gatherDGInformation(
         moleculeCopy,
         detail::looseningFactor(failures, numStructures)
@@ -343,18 +343,18 @@ std::list<RefinementData> debug(
   const Partiality metrizationOption,
   const bool useYInversionTrick
 ) {
-  if(molecule.stereocenters().hasZeroAssignmentStereocenters()) {
+  if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
     Log::log(Log::Level::Warning)
-      << "This molecule has stereocenters with zero valid permutations!"
+      << "This molecule has stereopermutators with zero valid permutations!"
       << std::endl;
   }
 
   std::list<RefinementData> refinementList;
 
-  /* In case the molecule has unassigned stereocenters that are not trivially
+  /* In case the molecule has unassigned stereopermutators that are not trivially
    * assignable (u/1 -> 0/1), random assignments have to be made prior to calling
    * gatherDGInformation (which creates the DistanceBoundsMatrix via the
-   * SpatialModel, which expects all stereocenters to be assigned).
+   * SpatialModel, which expects all stereopermutators to be assigned).
    * Accordingly, gatherDGInformation has to be repeated in those cases, while
    * it is necessary only once in the other
    */
@@ -363,7 +363,7 @@ std::list<RefinementData> debug(
    * assignments in stereopermutation. I should get on that too.
    */
 
-  bool regenerateEachStep = molecule.stereocenters().hasUnassignedStereocenters();
+  bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
 
   MoleculeDGInformation DGData;
   std::string spatialModelGraphviz;
@@ -389,14 +389,14 @@ std::list<RefinementData> debug(
     if(regenerateEachStep) {
       auto moleculeCopy = detail::narrow(molecule);
 
-      if(moleculeCopy.stereocenters().hasZeroAssignmentStereocenters()) {
+      if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
         Log::log(Log::Level::Warning)
-          << "After setting stereocenters at random, this molecule has "
-          << "stereocenters with zero valid permutations!"
+          << "After setting stereopermutators at random, this molecule has "
+          << "stereopermutators with zero valid permutations!"
           << std::endl;
       }
 
-      // Fetch the DG data from the molecule with no unassigned stereocenters
+      // Fetch the DG data from the molecule with no unassigned stereopermutators
       DGData = gatherDGInformation(
         moleculeCopy,
         detail::looseningFactor(failures, numStructures),
@@ -663,7 +663,7 @@ MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
   const double looseningFactor
 ) {
-  // Generate a spatial model from the molecular graph and stereocenters
+  // Generate a spatial model from the molecular graph and stereopermutators
   SpatialModel spatialModel {molecule, looseningFactor};
 
   // Extract gathered data
@@ -679,7 +679,7 @@ MoleculeDGInformation gatherDGInformation(
   const double looseningFactor,
   std::string& spatialModelGraphvizString
 ) {
-  // Generate a spatial model from the molecular graph and stereocenters
+  // Generate a spatial model from the molecular graph and stereopermutators
   SpatialModel spatialModel {molecule, looseningFactor};
   spatialModelGraphvizString = spatialModel.dumpGraphviz();
 

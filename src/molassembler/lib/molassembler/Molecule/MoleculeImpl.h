@@ -6,17 +6,17 @@
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/OuterGraph.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 namespace molassembler {
 
 struct Molecule::Impl {
   OuterGraph _adjacencies;
-  StereocenterList _stereocenters;
+  StereopermutatorList _stereopermutators;
 
 /* "Private" helpers */
-  //! Generates a list of stereocenters based on graph properties alone
-  StereocenterList _detectStereocenters() const;
+  //! Generates a list of stereopermutators based on graph properties alone
+  StereopermutatorList _detectStereopermutators() const;
 
   //! Ensures basic expectations about what constitutes a Molecule are met
   void _ensureModelInvariants() const;
@@ -25,9 +25,9 @@ struct Molecule::Impl {
   bool _isValidIndex(AtomIndex index) const;
 
   //! Returns whether an edge is double, aromtic, triple or higher bond order
-  bool _isGraphBasedBondStereocenterCandidate(const InnerGraph::Edge& e) const;
+  bool _isGraphBasedBondStereopermutatorCandidate(const InnerGraph::Edge& e) const;
 
-  //! Updates the molecule's StereocenterList after a graph modification
+  //! Updates the molecule's StereopermutatorList after a graph modification
   void _propagateGraphChange();
 
 
@@ -52,13 +52,13 @@ struct Molecule::Impl {
     const AngstromWrapper& positions,
     const boost::optional<
       std::vector<BondIndex>
-    >& bondStereocenterCandidatesOptional = boost::none
+    >& bondStereopermutatorCandidatesOptional = boost::none
   );
 
-  //! Graph and stereocenters constructor
+  //! Graph and stereopermutators constructor
   Impl(
     OuterGraph graph,
-    StereocenterList stereocenters
+    StereopermutatorList stereopermutators
   );
 //!@}
 
@@ -78,71 +78,71 @@ struct Molecule::Impl {
     BondType bondType
   );
 
-  /*! Sets the stereocenter assignment at a particular atom
+  /*! Sets the stereopermutator assignment at a particular atom
    *
-   * This sets the stereocenter assignment at a specific atom index. For this,
-   * a stereocenter must be instantiated and contained in the StereocenterList
-   * returned by stereocenters(). The supplied assignment must be either
-   * boost::none or smaller than stereocenterPtr->numAssignments().
+   * This sets the stereopermutator assignment at a specific atom index. For this,
+   * a stereopermutator must be instantiated and contained in the StereopermutatorList
+   * returned by stereopermutators(). The supplied assignment must be either
+   * boost::none or smaller than stereopermutatorPtr->numAssignments().
    *
    * \note Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and
+   * StereopermutatorList you have accessed prior to calling this function and
    * particularly any iterators thereto invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
-   * to the introduction of new stereocenters or the removal of old ones.
+   * to the introduction of new stereopermutators or the removal of old ones.
    */
-  void assignStereocenter(
+  void assignStereopermutator(
     AtomIndex a,
     const boost::optional<unsigned>& assignment
   );
 
-  /*! Sets the stereocenter assignment on a bond
+  /*! Sets the stereopermutator assignment on a bond
    *
-   * This sets the stereocenter assignment at a specific bond index. For this,
-   * a stereocenter must be instantiated and contained in the StereocenterList
-   * returned by stereocenters(). The supplied assignment must be either
-   * boost::none or smaller than stereocenterPtr->numAssignments().
+   * This sets the stereopermutator assignment at a specific bond index. For this,
+   * a stereopermutator must be instantiated and contained in the StereopermutatorList
+   * returned by stereopermutators(). The supplied assignment must be either
+   * boost::none or smaller than stereopermutatorPtr->numAssignments().
    *
    * \note Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and
+   * StereopermutatorList you have accessed prior to calling this function and
    * particularly any iterators thereto invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
-   * to the introduction of new stereocenters or the removal of old ones.
+   * to the introduction of new stereopermutators or the removal of old ones.
    */
-  void assignStereocenter(
+  void assignStereopermutator(
     const BondIndex& edge,
     const boost::optional<unsigned>& assignment
   );
 
-  /*! Assigns a stereocenter stereopermutation at random
+  /*! Assigns a stereopermutator stereopermutation at random
    *
    * This sets the stereocetner assignment at a specific index, taking relative
    * statistical occurence weights of each stereopermutation into account.
    *
-   * \pre There must be an AtomStereocenter at the passed index
+   * \pre There must be an AtomStereopermutator at the passed index
    *
-   * \throws If no AtomStereocenter exists at the passed index
+   * \throws If no AtomStereopermutator exists at the passed index
    *
    * \note Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and
+   * StereopermutatorList you have accessed prior to calling this function and
    * particularly any iterators to its members invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
-   * to the introduction of new stereocenters or the removal of old ones.
+   * to the introduction of new stereopermutators or the removal of old ones.
    */
-  void assignStereocenterRandomly(AtomIndex a);
+  void assignStereopermutatorRandomly(AtomIndex a);
 
-  /*! Assigns a bond stereocenter to a random assignment
+  /*! Assigns a bond stereopermutator to a random assignment
    *
-   * \pre There must be a BondStereocenter at the passed edge
-   * \throws If no BondStereocenter exists at the passed edge
+   * \pre There must be a BondStereopermutator at the passed edge
+   * \throws If no BondStereopermutator exists at the passed edge
    *
    * \note Although molecules in which this occurs are infrequent, consider the
-   * StereocenterList you have accessed prior to calling this function and
+   * StereopermutatorList you have accessed prior to calling this function and
    * particularly any iterators to its members invalidated. This is because an
    * assignment change can trigger a ranking change, which can in turn lead
-   * to the introduction of new stereocenters or the removal of old ones.
+   * to the introduction of new stereopermutators or the removal of old ones.
    */
-  void assignStereocenterRandomly(const BondIndex& e);
+  void assignStereopermutatorRandomly(const BondIndex& e);
 
   /*! Removes an atom from the graph, including bonds to it.
    *
@@ -186,16 +186,16 @@ struct Molecule::Impl {
    *
    * This sets the local geometry at a specific atom index. There are a number
    * of cases that this function treats differently, besides faulty arguments:
-   * If there is already a AtomStereocenter instantiated at this atom index, its
-   * underlying symmetry is altered. If there is no AtomStereocenter at
+   * If there is already a AtomStereopermutator instantiated at this atom index, its
+   * underlying symmetry is altered. If there is no AtomStereopermutator at
    * this index, one is instantiated. In all cases, new or modified
-   * stereocenters are default-assigned if there is only one possible
+   * stereopermutators are default-assigned if there is only one possible
    * assignment.
    * \throws if
    *   - the supplied atomic index is invalid
-   *   - there is an BondStereocenter at that index
+   *   - there is an BondStereopermutator at that index
    *   - or the provided symmetry is a different size than that of an existing
-   *     AtomStereocenter or the expected symmetry
+   *     AtomStereopermutator or the expected symmetry
    */
   void setGeometryAtAtom(
     AtomIndex a,
@@ -221,14 +221,14 @@ struct Molecule::Impl {
   //! Provides read-only access to the graph member
   const OuterGraph& graph() const;
 
-  //! Provides read-only access to the list of stereocenters
-  const StereocenterList& stereocenters() const;
+  //! Provides read-only access to the list of stereopermutators
+  const StereopermutatorList& stereopermutators() const;
 
-  StereocenterList inferStereocentersFromPositions(
+  StereopermutatorList inferStereopermutatorsFromPositions(
     const AngstromWrapper& angstromWrapper,
     const boost::optional<
       std::vector<BondIndex>
-    >& explicitBondStereocenterCandidatesOption = boost::none
+    >& explicitBondStereopermutatorCandidatesOption = boost::none
   ) const;
 
   //! Modular comparison of this Impl with another.

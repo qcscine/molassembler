@@ -36,18 +36,18 @@ random::Engine& randomnessEngine();
 /*!
  * Specifies for which temperature regime the Molecule is being modeled.
  * This currently affects only whether nitrogen atoms with a trigonal
- * pyramidal geometry are considered stereocenters.
+ * pyramidal geometry are considered stereopermutators.
  */
 enum class TemperatureRegime {
-  //! No pyramidal inversion, all nitrogens can be stereocenters
+  //! No pyramidal inversion, all nitrogens can be stereopermutators
   Low,
-  //! Only nitrogen geometries in particularly strained cycles (3, 4) can be stereocenters
+  //! Only nitrogen geometries in particularly strained cycles (3, 4) can be stereopermutators
   High
 };
 
 /*!
  * Specifies the effects of graph modifications. In case a substituent is
- * added or removed at a stereocenter, an attempt is made to transfer chiral
+ * added or removed at a stereopermutator, an attempt is made to transfer chiral
  * information into the new geometry. How this attempt is made can be altered.
  *
  * The following graphs are to illustrate which chiral information transfers
@@ -169,11 +169,11 @@ struct Options {
   static ChiralStatePreservation chiralStatePreservation;
 };
 
-// Forward-declare Cycles and AtomStereocenter
+// Forward-declare Cycles and AtomStereopermutator
 class Cycles;
-class AtomStereocenter;
+class AtomStereopermutator;
 
-/*! Decides whether to keep a stereocenter or not within a temperature regime
+/*! Decides whether to keep a stereopermutator or not within a temperature regime
  *
  * Criteria applied are:
  * - Minimum of three adjacent indices
@@ -181,8 +181,8 @@ class AtomStereocenter;
  *   inverts too rapidly to carry stereoinformation (unless part of a cycle
  *   of size 4 or smaller, where strain hinders inversion)
  */
-bool disregardStereocenter(
-  const AtomStereocenter& stereocenter,
+bool disregardStereopermutator(
+  const AtomStereopermutator& stereopermutator,
   Delib::ElementType centralType,
   const Cycles& cycleData,
   TemperatureRegime temperatureRegimeSetting
@@ -190,11 +190,11 @@ bool disregardStereocenter(
 
 
 /*!
- * Fits a stereocenter to a position collection, excluding the seesaw symmetry
+ * Fits a stereopermutator to a position collection, excluding the seesaw symmetry
  * if a four-coordinate carbon atom is to be fitted to a position collection
  */
 void pickyFit(
-  AtomStereocenter& stereocenter,
+  AtomStereopermutator& stereopermutator,
   const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper,
   Symmetry::Name expectedSymmetry

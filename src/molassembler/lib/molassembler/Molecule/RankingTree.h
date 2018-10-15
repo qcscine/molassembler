@@ -26,9 +26,9 @@
 #include "boost/variant.hpp"
 
 #include "molassembler/Detail/BuildTypeSwitch.h"
-#include "molassembler/AtomStereocenter.h"
+#include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Modeling/BondDistance.h"
-#include "molassembler/BondStereocenter.h"
+#include "molassembler/BondStereopermutator.h"
 #include "molassembler/Log.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
@@ -45,21 +45,21 @@
  * - Consider transition to more unordered containers
  * - Pseudo-asymmetry considerations
  *   - Is the propagation of pseudoasymmetry REALLY necessary? It makes sense
- *     to permute a stereocenter designated as pseudo-asymmetric. Dunno if
+ *     to permute a stereopermutator designated as pseudo-asymmetric. Dunno if
  *     creating the exact diastereomer of a molecule will ever be needed as an
  *     operation (if so, then yes, pseudoasymmetry pop is needed). Creating
  *     ALL stereomers of a molecule can be done without pseudoasymmetry.
  *     All other points below are only relevant in case pseudo-asymmetry needs
  *     to be included.
- *   - Stereocenter interface change to support pseudo-asymmetry tag (?)
+ *   - Stereopermutator interface change to support pseudo-asymmetry tag (?)
  *   - Ranking function interface change to propagate pseudo-asymmetry result
  * - Optimizations / Refactors
  *   - 4A could be refactored into _runBFS, if 4B could collect the variants it
  *     needs to rank itself. Don't know if an improvement to avoid BFS-ing again
- *     to find stereocenters over potential gains from clearing comparisonSets
+ *     to find stereopermutators over potential gains from clearing comparisonSets
  *     every BFS step
  *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
- * - Instantiation of BondStereocenters on edge does not keep AtomStereocenters
+ * - Instantiation of BondStereopermutators on edge does not keep AtomStereopermutators
  *   from being instantiated above the edge in sequence rule 3 prep
  *   (see 2Z... file ranking), probably innocuous, but unnecessary
  * - OrderDiscoveryHelper function naming may be inconsistent. Does
@@ -135,8 +135,8 @@ public:
     //! Whether this vertex in the tree represents a duplicate
     bool isDuplicate;
 
-    //! A vertex-central stereocenter may be instantiated here or may not
-    boost::optional<AtomStereocenter> stereocenterOption;
+    //! A vertex-central stereopermutator may be instantiated here or may not
+    boost::optional<AtomStereopermutator> stereopermutatorOption;
 
     // TODO not quite ready for this yet
     // boost::optional<double> deviantAtomicNumber;
@@ -144,7 +144,7 @@ public:
 
   //! Data class that sets which supplementary data is stored for a tree edge
   struct EdgeData {
-    boost::optional<BondStereocenter> stereocenterOption;
+    boost::optional<BondStereopermutator> stereopermutatorOption;
   };
 
   //! The BGL Graph type used to store the tree
@@ -183,8 +183,8 @@ public:
   // IUPAC Sequence rule five tree vertex and edge mixed comparator
   class SequenceRuleFiveVariantComparator;
 
-  // Returns whether the vertex or edge has an instantiated Stereocenter
-  class VariantHasInstantiatedStereocenter;
+  // Returns whether the vertex or edge has an instantiated Stereopermutator
+  class VariantHasInstantiatedStereopermutator;
 
   // Returns the mixed depth (see _mixedDepth functions) of the vertex or edge
   class VariantDepth;
@@ -192,11 +192,11 @@ public:
   // Returns the source node of a vertex (identity) or an edge (source node)
   class VariantSourceNode;
 
-  // Returns a string representation of the stereocenter on vertex or edge
-  class VariantStereocenterStringRepresentation;
+  // Returns a string representation of the stereopermutator on vertex or edge
+  class VariantStereopermutatorStringRepresentation;
 
   /*
-   * Returns whether two variants' stereocenters form a like pair or not
+   * Returns whether two variants' stereopermutators form a like pair or not
    * according to the sub-rules in IUPAC sequence rule four.
    */
   class VariantLikePair;
@@ -240,7 +240,7 @@ private:
   // Closures
   const OuterGraph& _graphRef;
   const Cycles& _cyclesRef;
-  const StereocenterList& _stereocentersRef;
+  const StereopermutatorList& _stereopermutatorsRef;
   const std::string _adaptedMolGraphviz;
 
 /* Minor helper classes and functions */
@@ -1082,7 +1082,7 @@ public:
   RankingTree(
     const OuterGraph& graph,
     const Cycles& cycles,
-    const StereocenterList& stereocenters,
+    const StereopermutatorList& stereopermutators,
     std::string molGraphviz,
     AtomIndex atomToRank,
     const std::vector<AtomIndex>& excludeIndices = {},

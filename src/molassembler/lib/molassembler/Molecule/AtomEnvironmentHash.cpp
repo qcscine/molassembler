@@ -7,7 +7,7 @@
 #include "boost/range/join.hpp"
 #include "chemical_symmetries/Properties.h"
 
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 #include "molassembler/Graph/InnerGraph.h"
 
 #include "temple/Functional.h"
@@ -18,10 +18,10 @@ namespace hashes {
 
 BondInformation::BondInformation(
   BondType passBondType,
-  bool passStereocenterOnBond,
+  bool passStereopermutatorOnBond,
   boost::optional<unsigned> passAssignmentOptional
 ) : bondType(passBondType),
-    stereocenterOnBond(passStereocenterOnBond),
+    stereopermutatorOnBond(passStereopermutatorOnBond),
     assignmentOptional(std::move(passAssignmentOptional))
 {}
 
@@ -44,17 +44,17 @@ WideHashType BondInformation::hash() const {
   /* In the other three bits of given width, we have to store the following
    * cases:
    *
-   * - 0: No BondStereocenter
-   * - 1: Unassigned BondStereocenter
-   * - 2-7: BondStereocenter assignment
+   * - 0: No BondStereopermutator
+   * - 1: Unassigned BondStereopermutator
+   * - 2-7: BondStereopermutator assignment
    *
-   * We can store 6 BondStereocenter assignments, which ought to be okay.
+   * We can store 6 BondStereopermutator assignments, which ought to be okay.
    * The most you can probably get right now is 5 by fusing something
    * pentagonal at an axial position.
    */
-  if(stereocenterOnBond) {
+  if(stereopermutatorOnBond) {
     if(assignmentOptional == boost::none) {
-      // Information that there is an unassigned BondStereocenter
+      // Information that there is an unassigned BondStereopermutator
       hash += 1;
     } else {
       // Explicit assignment information
@@ -62,22 +62,22 @@ WideHashType BondInformation::hash() const {
     }
   }
 
-  // The remaining case, no stereocenter on bond, is just hash += 0
+  // The remaining case, no stereopermutator on bond, is just hash += 0
 
   return hash;
 }
 
 bool BondInformation::operator < (const BondInformation& other) const {
   return (
-    std::tie(bondType, stereocenterOnBond, assignmentOptional)
-    < std::tie(other.bondType, other.stereocenterOnBond, other.assignmentOptional)
+    std::tie(bondType, stereopermutatorOnBond, assignmentOptional)
+    < std::tie(other.bondType, other.stereopermutatorOnBond, other.assignmentOptional)
   );
 }
 
 bool BondInformation::operator == (const BondInformation& other) const {
   return (
-    std::tie(bondType, stereocenterOnBond, assignmentOptional)
-    == std::tie(other.bondType, other.stereocenterOnBond, other.assignmentOptional)
+    std::tie(bondType, stereopermutatorOnBond, assignmentOptional)
+    == std::tie(other.bondType, other.stereopermutatorOnBond, other.assignmentOptional)
   );
 }
 
@@ -121,7 +121,7 @@ WideHashType atomEnvironment(
   /* Bond types have 7 possible values currently, plus None is 8
    * -> fits into 3 bits (2^3 = 8).
    *
-   * I think bond stereocenter assignments can be up to 5 (if fused axially
+   * I think bond stereopermutator assignments can be up to 5 (if fused axially
    * onto some pentagonal structure) maximally, but we can fit up to 7 into 3
    * bits.
    *
@@ -154,7 +154,7 @@ WideHashType atomEnvironment(
     if(bitmask & AtomEnvironmentComponents::Stereopermutations) {
       /* The remaining space 64 - (7 + 32 + 5) = 20 bits is used for the current
        * permutation. In that space, we can store up to 2^20 - 2 > 1e5
-       * permutations (one (0) for no stereocenter, one (1) for unassigned),
+       * permutations (one (0) for no stereopermutator, one (1) for unassigned),
        * which ought to be plenty of bit space. Maximally asymmetric square
        * antiprismatic has around 6k permutations, which fits into 13 bits.
        */
@@ -173,7 +173,7 @@ WideHashType atomEnvironment(
 
 std::vector<WideHashType> generate(
   const InnerGraph& inner,
-  const StereocenterList& stereocenters,
+  const StereopermutatorList& stereopermutators,
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask
 ) {
   std::vector<WideHashType> hashes;
@@ -192,18 +192,18 @@ std::vector<WideHashType> generate(
         const InnerGraph::Edge& edge :
         boost::make_iterator_range(inner.edges(i))
       ) {
-        auto stereocenterOption = stereocenters.option(
+        auto stereopermutatorOption = stereopermutators.option(
           BondIndex {
             inner.source(edge),
             inner.target(edge)
           }
         );
 
-        if(stereocenterOption) {
+        if(stereopermutatorOption) {
           bonds.emplace_back(
             inner.bondType(edge),
             true,
-            stereocenterOption->assigned()
+            stereopermutatorOption->assigned()
           );
         } else {
           bonds.emplace_back(
@@ -223,7 +223,7 @@ std::vector<WideHashType> generate(
     boost::optional<Symmetry::Name> symmetryNameOption;
     boost::optional<unsigned> assignmentOption;
 
-    if(auto refOption = stereocenters.option(i)) {
+    if(auto refOption = stereopermutators.option(i)) {
       symmetryNameOption = refOption->getSymmetry();
       assignmentOption = refOption->assigned();
     }

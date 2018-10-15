@@ -12,7 +12,7 @@
 #include "molassembler/IO/Base64.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 #include "molassembler/Version.h"
 
 namespace nlohmann {
@@ -222,36 +222,36 @@ nlohmann::json serialize(const Molecule& molecule) {
 
   m["g"] = molecule.graph();
 
-  const auto& stereocenters = molecule.stereocenters();
+  const auto& stereopermutators = molecule.stereopermutators();
 
-  // Manual conversion of stereocenters
-  // Atom stereocenters first
+  // Manual conversion of stereopermutators
+  // Atom stereopermutators first
   m["a"] = json::array();
-  for(const auto& stereocenter : stereocenters.atomStereocenters()) {
+  for(const auto& stereopermutator : stereopermutators.atomStereopermutators()) {
     json s;
 
-    s["c"] = stereocenter.centralIndex();
-    s["sym"] = Symmetry::name(stereocenter.getSymmetry());
-    s["rank"] = stereocenter.getRanking();
+    s["c"] = stereopermutator.centralIndex();
+    s["sym"] = Symmetry::name(stereopermutator.getSymmetry());
+    s["rank"] = stereopermutator.getRanking();
 
-    if(stereocenter.assigned()) {
-      s["assign"] = stereocenter.assigned().value();
+    if(stereopermutator.assigned()) {
+      s["assign"] = stereopermutator.assigned().value();
     }
 
     m["a"].push_back(std::move(s));
   }
 
   m["b"] = json::array();
-  for(const auto& stereocenter : stereocenters.bondStereocenters()) {
+  for(const auto& stereopermutator : stereopermutators.bondStereopermutators()) {
     json s;
 
     s["edge"] = {
-      stereocenter.edge().first,
-      stereocenter.edge().second
+      stereopermutator.edge().first,
+      stereopermutator.edge().second
     };
 
-    if(stereocenter.assigned()) {
-      s["assign"] = stereocenter.assigned().value();
+    if(stereopermutator.assigned()) {
+      s["assign"] = stereopermutator.assigned().value();
     }
 
     m["b"].push_back(std::move(s));
@@ -279,14 +279,14 @@ Molecule deserialize(const nlohmann::json& m) {
 
   OuterGraph graph = m["g"];
 
-  StereocenterList stereocenters;
+  StereopermutatorList stereopermutators;
 
-  // Atom stereocenters
+  // Atom stereopermutators
   for(const auto& j : m["a"]) {
     Symmetry::Name symmetry = Symmetry::nameFromString(j["sym"]);
     AtomIndex centralIndex = j["c"];
 
-    auto stereocenter = AtomStereocenter {
+    auto stereopermutator = AtomStereopermutator {
       graph,
       symmetry,
       centralIndex,
@@ -295,45 +295,45 @@ Molecule deserialize(const nlohmann::json& m) {
 
     // Assign if present
     if(j.count("assign") > 0) {
-      stereocenter.assign(
+      stereopermutator.assign(
         static_cast<unsigned>(j["assign"])
       );
     }
 
-    stereocenters.add(centralIndex, std::move(stereocenter));
+    stereopermutators.add(centralIndex, std::move(stereopermutator));
   }
 
-  // Bond stereocenters
+  // Bond stereopermutators
   for(const auto& j : m["b"]) {
     AtomIndex a = j["edge"].at(0);
     AtomIndex b = j["edge"].at(1);
 
-    auto aStereocenterOption = stereocenters.option(a);
-    auto bStereocenterOption = stereocenters.option(b);
+    auto aStereopermutatorOption = stereopermutators.option(a);
+    auto bStereopermutatorOption = stereopermutators.option(b);
 
-    assert(aStereocenterOption && bStereocenterOption);
+    assert(aStereopermutatorOption && bStereopermutatorOption);
 
     BondIndex molEdge {a, b};
 
-    auto stereocenter = BondStereocenter {
-      aStereocenterOption.value(),
-      bStereocenterOption.value(),
+    auto stereopermutator = BondStereopermutator {
+      aStereopermutatorOption.value(),
+      bStereopermutatorOption.value(),
       molEdge
     };
 
     // Assign if present
     if(j.count("assign") > 0) {
-      stereocenter.assign(
+      stereopermutator.assign(
         static_cast<unsigned>(j["assign"])
       );
     }
 
-    stereocenters.add(molEdge, std::move(stereocenter));
+    stereopermutators.add(molEdge, std::move(stereopermutator));
   }
 
   return Molecule {
     graph,
-    stereocenters
+    stereopermutators
   };
 }
 

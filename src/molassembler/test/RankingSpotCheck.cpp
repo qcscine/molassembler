@@ -17,46 +17,46 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule/RankingTree.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 #include <random>
 #include <fstream>
 
 using namespace molassembler;
 
-bool isBondStereocenter(
+bool isBondStereopermutator(
   const Molecule& molecule,
   const BondIndex& e,
   const unsigned numPermutations,
   const boost::optional<unsigned>& assignment
 ) {
-  auto stereocenterOption = molecule.stereocenters().option(e);
+  auto stereopermutatorOption = molecule.stereopermutators().option(e);
 
-  if(!stereocenterOption) {
-    std::cout << "No stereocenter on vertices " << e.first << " - " << e.second << "\n";
+  if(!stereopermutatorOption) {
+    std::cout << "No stereopermutator on vertices " << e.first << " - " << e.second << "\n";
 
-    for(const auto& stereocenter : molecule.stereocenters().bondStereocenters()) {
-      std::cout << "BondStereocenter on " << e.first << " - " << e.second << ": " << stereocenter.info() << "\n";
+    for(const auto& stereopermutator : molecule.stereopermutators().bondStereopermutators()) {
+      std::cout << "BondStereopermutator on " << e.first << " - " << e.second << ": " << stereopermutator.info() << "\n";
     }
     return false;
   }
 
-  if(stereocenterOption->numStereopermutations() != numPermutations) {
-    std::cout << "Bond stereocenter on " << stereocenterOption->edge().first
-      << " - " << stereocenterOption->edge().second
-      << " has " << stereocenterOption->numStereopermutations()
+  if(stereopermutatorOption->numStereopermutations() != numPermutations) {
+    std::cout << "Bond stereopermutator on " << stereopermutatorOption->edge().first
+      << " - " << stereopermutatorOption->edge().second
+      << " has " << stereopermutatorOption->numStereopermutations()
       << " stereopermutations, not " << numPermutations << "\n";
     return false;
   }
 
   if(assignment) {
-    if(stereocenterOption->assigned() != assignment.value()) {
-      std::cout << "Bond stereocenter on " << stereocenterOption->edge().first
-        << " - " << stereocenterOption->edge().second
+    if(stereopermutatorOption->assigned() != assignment.value()) {
+      std::cout << "Bond stereopermutator on " << stereopermutatorOption->edge().first
+        << " - " << stereopermutatorOption->edge().second
         << " is assigned "
         << (
-          stereocenterOption->assigned()
-          ? std::to_string(stereocenterOption->assigned().value())
+          stereopermutatorOption->assigned()
+          ? std::to_string(stereopermutatorOption->assigned().value())
           : "u"
         )
         << ", not " << assignment.value() << "\n";
@@ -73,26 +73,26 @@ bool isAtomStereocenter(
   const unsigned numPermutations,
   const boost::optional<unsigned>& assignment
 ) {
-  auto stereocenterOption = molecule.stereocenters().option(i);
+  auto stereopermutatorOption = molecule.stereopermutators().option(i);
 
-  if(!stereocenterOption) {
-    std::cout << "No stereocenter on atom index " << i << "\n";
+  if(!stereopermutatorOption) {
+    std::cout << "No stereopermutator on atom index " << i << "\n";
     return false;
   }
 
-  if(stereocenterOption->numStereopermutations() != numPermutations) {
-    std::cout << "Atom stereocenter on " << i << " has "
-      << stereocenterOption->numStereopermutations() << " stereopermutations, not "
+  if(stereopermutatorOption->numStereopermutations() != numPermutations) {
+    std::cout << "Atom stereopermutator on " << i << " has "
+      << stereopermutatorOption->numStereopermutations() << " stereopermutations, not "
       << numPermutations << "\n";
     return false;
   }
 
   if(assignment) {
-    if(stereocenterOption->assigned() != assignment.value()) {
-      std::cout << "Atom stereocenter on " << i << " is assigned "
+    if(stereopermutatorOption->assigned() != assignment.value()) {
+      std::cout << "Atom stereopermutator on " << i << " is assigned "
         << (
-          stereocenterOption->assigned()
-          ? std::to_string(stereocenterOption->assigned().value())
+          stereopermutatorOption->assigned()
+          ? std::to_string(stereopermutatorOption->assigned().value())
           : "u"
         ) << ", not " << assignment.value() << "\n";
       return false;
@@ -106,13 +106,13 @@ bool isStereogenic(
   const Molecule& molecule,
   AtomIndex i
 ) {
-  auto stereocenterOption = molecule.stereocenters().option(i);
+  auto stereopermutatorOption = molecule.stereopermutators().option(i);
 
-  if(!stereocenterOption) {
+  if(!stereopermutatorOption) {
     return false;
   }
 
-  if(stereocenterOption->numStereopermutations() <= 1) {
+  if(stereopermutatorOption->numStereopermutations() <= 1) {
     return false;
   }
 
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
   auto exampleThreeExpanded = RankingTree(
     exampleThree.graph(),
     exampleThree.graph().cycles(),
-    exampleThree.stereocenters(),
+    exampleThree.stereopermutators(),
     exampleThree.dumpGraphviz(),
     0,
     {},
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleOneTests) {
   auto exampleThreeExpandedAgain = RankingTree(
     exampleThree.graph(),
     exampleThree.graph().cycles(),
-    exampleThree.stereocenters(),
+    exampleThree.stereopermutators(),
     exampleThree.dumpGraphviz(),
     1,
     {},
@@ -178,17 +178,17 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
 
   BOOST_CHECK_MESSAGE(
     isAtomStereocenter(ZEDifference, 0, 2, 0),
-    "Stereocenter at C0 in 2Z5S7E-nona-2,7-dien-5-ol is not S"
+    "Stereopermutator at C0 in 2Z5S7E-nona-2,7-dien-5-ol is not S"
   );
 
-  // P-92.4.2.2 Example 1 (Z before E in aux. stereocenters, splitting)
+  // P-92.4.2.2 Example 1 (Z before E in aux. stereopermutators, splitting)
   auto EECyclobutane = IO::read(
     getPathString("1E3E-1,3-difluoromethylidenecyclobutane.mol")
   );
 
   BOOST_CHECK_MESSAGE(
-    isBondStereocenter(EECyclobutane, BondIndex {0, 3}, 2, 0)
-    && isBondStereocenter(EECyclobutane, BondIndex {5, 6}, 2, 0),
+    isBondStereopermutator(EECyclobutane, BondIndex {0, 3}, 2, 0)
+    && isBondStereopermutator(EECyclobutane, BondIndex {5, 6}, 2, 0),
     "1E3E-1,3-difluoromethylidenecyclobutane double bonds aren't E. "
   );
 
@@ -200,8 +200,8 @@ BOOST_AUTO_TEST_CASE(sequenceRuleThreeTests) {
   BOOST_CHECK_MESSAGE(
     isAtomStereocenter(inTreeNstgDB, 0, 2, 1u),
     "(2Z5Z7R8Z11Z)-9-(2Z-but-2-en-1-yl)-5-(2E-but-2-en-1-yl)trideca-2,5,8,11-tetraen-7-ol "
-    "difference between non-stereogenic auxiliary stereocenter and assigned "
-    "stereocenter isn't recognized! "
+    "difference between non-stereogenic auxiliary stereopermutator and assigned "
+    "stereopermutator isn't recognized! "
   );
 }
 
@@ -214,13 +214,13 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   BOOST_CHECK_MESSAGE(
     !isStereogenic(pseudoOverNonstg, 10),
     "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
-    "branch with R-R aux. stereocenters not non-stereogenic"
+    "branch with R-R aux. stereopermutators not non-stereogenic"
   );
 
   BOOST_CHECK_MESSAGE(
     isStereogenic(pseudoOverNonstg, 1),
     "(2R,3s,4S,6R)-2,6-dichloro-5-(1R-1-chloroethyl)-3-(1S-1-chloroethyl)heptan-4-ol.mol "
-    "branch with R-S aux. stereocenters not stereogenic"
+    "branch with R-S aux. stereopermutators not stereogenic"
   );
 
   BOOST_CHECK_MESSAGE(
@@ -237,7 +237,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
   BOOST_CHECK_MESSAGE(
     isAtomStereocenter(simpleLikeUnlike, 10, 2, 1u),
     "(2R,3R,4R,5S,6R)-2,3,4,5,6-pentachloroheptanedioic-acid central carbon does "
-    " not register as a stereocenter and/or isn't assigned as R"
+    " not register as a stereopermutator and/or isn't assigned as R"
   );
 
   // (4B) P-92.5.2.2 Example 3 (single-chain pairing, cycle splitting)
@@ -254,10 +254,10 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
         }
       )
     ),
-    "Not all L-alpha-lindane carbon atoms not recognized as stereocenters!"
+    "Not all L-alpha-lindane carbon atoms not recognized as stereopermutators!"
   );
 
-  // (4B) P-92.5.2.2 Example 4 (multiple-chain stereocenter ranking)
+  // (4B) P-92.5.2.2 Example 4 (multiple-chain stereopermutator ranking)
   auto oxyNitroDiffBranches = IO::read(
     getPathString("(2R,3S,6R,9R,10S)-6-chloro-5-(1R,2S)-1,2-dihydroxypropoxy-7-(1S,2S)-1,2-dihydroxypropoxy-4,8-dioxa-5,7-diazaundecande-2,3,9,10-tetrol.mol"s)
   );
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFourTests) {
     "(2R,3S,6R,9R,10S)-6-chloro-5-(1R,2S)-1,2-dihydroxypropoxy-7-(1S,2S)-1,2-dihydroxypropoxy-4,8-dioxa-5,7-diazaundecande-2,3,9,10-tetrol central carbon not recognized as R"
   );
 
-  // (4B) P-92.5.2.2 Example 5 (multiple-chain stereocenter ranking)
+  // (4B) P-92.5.2.2 Example 5 (multiple-chain stereopermutator ranking)
   auto groupingDifferences = IO::read(
     getPathString("(2R,3R,5R,7R,8R)-4.4-bis(2S,3R-3-chlorobutan-2-yl)-6,6-bis(2S,4S-3-chlorobutan-2-yl)-2,8-dichloro-3,7-dimethylnonan-5-ol.mol"s)
   );
@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
   );
 
   BOOST_CHECK_MESSAGE(
-    isBondStereocenter(pseudoDB, BondIndex {0, 3}, 2, 0u),
+    isBondStereopermutator(pseudoDB, BondIndex {0, 3}, 2, 0u),
     "Double bond in (2E,4R)-4-chloro-3-(1S-1-chloroethyl)pent-2-ene isn't E"
   );
 
@@ -337,6 +337,6 @@ BOOST_AUTO_TEST_CASE(sequenceRuleFiveTests) {
 
   BOOST_CHECK_MESSAGE(
     isAtomStereocenter(fourDoesNothing, 0, 2, 0u),
-    "The central stereocenter in 1s-1-(1R,2R-1,2-dichloropropyl-1S,2R-1,2-dichloropropylamino)1-(1R,2S-1,2-dichloropropyl-1S,2S-1,2-dichloropropylamino)methan-1-ol isn't recognized as S"
+    "The central stereopermutator in 1s-1-(1R,2R-1,2-dichloropropyl-1S,2R-1,2-dichloropropylamino)1-(1R,2S-1,2-dichloropropyl-1S,2S-1,2-dichloropropylamino)methan-1-ol isn't recognized as S"
   );
 }

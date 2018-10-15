@@ -13,7 +13,7 @@
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule/RankingTree.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 using namespace molassembler;
 
@@ -310,20 +310,20 @@ const std::unordered_map<unsigned, std::string> cipIdentifiers {
   {99, "1R"}
 };
 
-enum class StereocenterType {A, B};
+enum class StereopermutatorType {A, B};
 
-const std::map<char, std::pair<StereocenterType, unsigned>> descriptorToPermutationMap {
-  {'R', {StereocenterType::A, 1}},
-  {'S', {StereocenterType::A, 0}},
-  {'r', {StereocenterType::A, 1}},
-  {'s', {StereocenterType::A, 0}},
-  {'Z', {StereocenterType::B, 1}},
-  {'E', {StereocenterType::B, 0}}
+const std::map<char, std::pair<StereopermutatorType, unsigned>> descriptorToPermutationMap {
+  {'R', {StereopermutatorType::A, 1}},
+  {'S', {StereopermutatorType::A, 0}},
+  {'r', {StereopermutatorType::A, 1}},
+  {'s', {StereopermutatorType::A, 0}},
+  {'Z', {StereopermutatorType::B, 1}},
+  {'E', {StereopermutatorType::B, 0}}
 };
 
 struct Stereodescriptor {
   std::size_t atomIndex;
-  StereocenterType type;
+  StereopermutatorType type;
   unsigned permutation;
 
   bool operator < (const Stereodescriptor& other) const {
@@ -336,7 +336,7 @@ struct Stereodescriptor {
 
 std::ostream& operator << (std::ostream& os, const Stereodescriptor& descriptor) {
   os << descriptor.atomIndex
-    << "-" << (descriptor.type == StereocenterType::A ? 'A' : 'B')
+    << "-" << (descriptor.type == StereopermutatorType::A ? 'A' : 'B')
     << "-" << descriptor.permutation;
   return os;
 }
@@ -344,26 +344,26 @@ std::ostream& operator << (std::ostream& os, const Stereodescriptor& descriptor)
 std::set<Stereodescriptor> makeDescriptorSet(const Molecule& molecule) {
   std::set<Stereodescriptor> descriptors;
 
-  for(const auto& atomStereocenter : molecule.stereocenters().atomStereocenters()) {
-    if(atomStereocenter.numStereopermutations() > 1 && atomStereocenter.assigned()) {
+  for(const auto& atomStereopermutator : molecule.stereopermutators().atomStereopermutators()) {
+    if(atomStereopermutator.numStereopermutations() > 1 && atomStereopermutator.assigned()) {
       Stereodescriptor descriptor;
-      descriptor.atomIndex = atomStereocenter.centralIndex();
-      descriptor.type = StereocenterType::A;
-      descriptor.permutation = atomStereocenter.indexOfPermutation().value();
+      descriptor.atomIndex = atomStereopermutator.centralIndex();
+      descriptor.type = StereopermutatorType::A;
+      descriptor.permutation = atomStereopermutator.indexOfPermutation().value();
 
       descriptors.insert(descriptor);
     }
   }
 
-  for(const auto& bondStereocenter : molecule.stereocenters().bondStereocenters()) {
-    if(bondStereocenter.numStereopermutations() > 1 && bondStereocenter.assigned()) {
+  for(const auto& bondStereopermutator : molecule.stereopermutators().bondStereopermutators()) {
+    if(bondStereopermutator.numStereopermutations() > 1 && bondStereopermutator.assigned()) {
       Stereodescriptor descriptor;
-      descriptor.type = StereocenterType::B;
-      descriptor.permutation = bondStereocenter.indexOfPermutation().value();
+      descriptor.type = StereopermutatorType::B;
+      descriptor.permutation = bondStereopermutator.indexOfPermutation().value();
 
-      descriptor.atomIndex = bondStereocenter.edge().first;
+      descriptor.atomIndex = bondStereopermutator.edge().first;
       descriptors.insert(descriptor);
-      descriptor.atomIndex = bondStereocenter.edge().second;
+      descriptor.atomIndex = bondStereopermutator.edge().second;
       descriptors.insert(descriptor);
     }
   }
@@ -595,6 +595,6 @@ BOOST_AUTO_TEST_CASE(CIPValidationSuiteTests) {
 
   std::cout << "\nTotal: " << total << "\n"
     << "Skipped: " << skipped << " (" << std::round(100.0 * skipped / total) << " %)\n"
-    << "Missing expected stereocenters (failures): " << errors << " (" << std::round(100.0 * errors / (total - skipped)) << " %)\n"
-    << "With unexpected stereocenters: " << withUnexpected << " (" << std::round(100.0 * withUnexpected / (total - skipped)) << " %)\n";
+    << "Missing expected stereopermutators (failures): " << errors << " (" << std::round(100.0 * errors / (total - skipped)) << " %)\n"
+    << "With unexpected stereopermutators: " << withUnexpected << " (" << std::round(100.0 * withUnexpected / (total - skipped)) << " %)\n";
 }

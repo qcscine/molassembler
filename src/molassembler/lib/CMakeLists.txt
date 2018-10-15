@@ -54,9 +54,9 @@ set(molassembler_VERSION 0.1.0)
 # if a big update happens, use $ find . -name "*.h" | sort
 set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AngstromWrapper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereopermutator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereopermutator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Containers/OrderDiscoveryHelper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.h
@@ -104,10 +104,10 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/PRNG.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/AtomStereocenterImpl.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/BondStereocenterImpl.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/PermutationState.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereopermutatorList.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/AtomStereopermutatorImpl.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/BondStereopermutatorImpl.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/PermutationState.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
@@ -115,9 +115,9 @@ set(HEADERS_all
 # collect sources
 set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AngstromWrapper.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereocenter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/AtomStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondOrders.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereocenter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/BondStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Conformers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.cpp
@@ -153,10 +153,10 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/PRNG.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereocenterList.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/AtomStereocenterImpl.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/BondStereocenterImpl.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereocenters/PermutationState.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereopermutatorList.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/AtomStereopermutatorImpl.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/BondStereopermutatorImpl.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/PermutationState.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
 )
 
@@ -368,7 +368,7 @@ install(
     REGEX ".+/molassembler/IO$" EXCLUDE
     REGEX ".+/molassembler/Modeling$" EXCLUDE
     REGEX ".+/molassembler/Molecule$" EXCLUDE
-    REGEX ".+/molassembler/Stereocenters$" EXCLUDE
+    REGEX ".+/molassembler/Stereopermutators$" EXCLUDE
 )
 
 source_group("Headers" FILES ${HEADERS_All})

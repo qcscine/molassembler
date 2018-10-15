@@ -23,7 +23,7 @@
 namespace molassembler {
 
 // Forward-declarations
-class StereocenterList;
+class StereopermutatorList;
 class InnerGraph;
 
 namespace hashes {
@@ -35,12 +35,12 @@ struct BondInformation {
   static constexpr unsigned hashWidth = 6;
 
   BondType bondType;
-  bool stereocenterOnBond;
+  bool stereopermutatorOnBond;
   boost::optional<unsigned> assignmentOptional;
 
   BondInformation(
     BondType passBondType,
-    bool passStereocenterOnBond,
+    bool passStereopermutatorOnBond,
     boost::optional<unsigned> passAssignmentOptional
   );
 
@@ -62,7 +62,7 @@ WideHashType atomEnvironment(
 //! Generates the hashes for every atom in a molecule's components
 std::vector<WideHashType> generate(
   const InnerGraph& inner,
-  const StereocenterList& stereocenters,
+  const StereopermutatorList& stereopermutators,
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask
 );
 
@@ -81,9 +81,9 @@ std::pair<
   std::vector<HashType>
 > generate(
   const InnerGraph& aGraph,
-  const StereocenterList& aStereocenters,
+  const StereopermutatorList& aStereopermutators,
   const InnerGraph& bGraph,
-  const StereocenterList& bStereocenters,
+  const StereopermutatorList& bStereopermutators,
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask
 );
 

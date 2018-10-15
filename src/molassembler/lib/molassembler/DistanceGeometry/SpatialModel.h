@@ -6,7 +6,7 @@
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/Molecule.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 #include <cmath>
 
@@ -15,7 +15,7 @@
  * @brief Convert a Molecule to atom-pair distance bounds and chiral constraints
  *
  * The molecular graph with all its conformational specifications via
- * stereocenter assignments must be transformed into a spatial model that
+ * stereopermutator assignments must be transformed into a spatial model that
  * describes its internal degrees of freedom in a manner translatable to
  * pairwise distance bounds for the distance geometry algorithm. This file
  * contains the class declaration for that spatial model.
@@ -208,7 +208,7 @@ private:
 
   // Mutable state
   double _looseningMultiplier;
-  StereocenterList _stereocenters;
+  StereopermutatorList _stereopermutators;
 
   std::map<
     std::array<AtomIndex, 2>,

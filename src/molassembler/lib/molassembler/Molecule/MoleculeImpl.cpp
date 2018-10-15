@@ -18,11 +18,11 @@
 
 namespace molassembler {
 
-StereocenterList Molecule::Impl::_detectStereocenters() const {
-  StereocenterList stereocenterList;
+StereopermutatorList Molecule::Impl::_detectStereopermutators() const {
+  StereopermutatorList stereopermutatorList;
 
   Cycles cycleData = graph().cycles();
-  // Find AtomStereocenters
+  // Find AtomStereopermutators
   for(
     AtomIndex candidateIndex = 0;
     candidateIndex < graph().N();
@@ -35,79 +35,79 @@ StereocenterList Molecule::Impl::_detectStereocenters() const {
       continue;
     }
 
-    // Construct a Stereocenter here
-    auto newStereocenter = AtomStereocenter {
+    // Construct a Stereopermutator here
+    auto newStereopermutator = AtomStereopermutator {
       _adjacencies,
       determineLocalGeometry(candidateIndex, localRanking),
       candidateIndex,
       localRanking
     };
 
-    if(newStereocenter.numAssignments() == 1) {
-      newStereocenter.assign(0);
+    if(newStereopermutator.numAssignments() == 1) {
+      newStereopermutator.assign(0);
     }
 
     if(
-      !disregardStereocenter(
-        newStereocenter,
+      !disregardStereopermutator(
+        newStereopermutator,
         graph().elementType(candidateIndex),
         cycleData,
         Options::temperatureRegime
       )
     ) {
-      stereocenterList.add(
+      stereopermutatorList.add(
         candidateIndex,
-        std::move(newStereocenter)
+        std::move(newStereopermutator)
       );
     }
   }
 
   const InnerGraph& inner = graph().inner();
 
-  // Find BondStereocenters
+  // Find BondStereopermutators
   for(
     const InnerGraph::Edge& edgeIndex :
     boost::make_iterator_range(inner.edges())
   ) {
     // Skip edges that cannot be candidates
-    if(!_isGraphBasedBondStereocenterCandidate(edgeIndex)) {
+    if(!_isGraphBasedBondStereopermutatorCandidate(edgeIndex)) {
       continue;
     }
 
     AtomIndex source = inner.source(edgeIndex),
               target = inner.target(edgeIndex);
 
-    auto sourceAtomStereocenterOption = stereocenterList.option(source);
-    auto targetAtomStereocenterOption = stereocenterList.option(target);
+    auto sourceAtomStereopermutatorOption = stereopermutatorList.option(source);
+    auto targetAtomStereopermutatorOption = stereopermutatorList.option(target);
 
-    // There need to be assigned stereocenters on both vertices
+    // There need to be assigned stereopermutators on both vertices
     if(
-      !sourceAtomStereocenterOption
-      || !targetAtomStereocenterOption
-      || sourceAtomStereocenterOption->assigned() == boost::none
-      || targetAtomStereocenterOption->assigned() == boost::none
+      !sourceAtomStereopermutatorOption
+      || !targetAtomStereopermutatorOption
+      || sourceAtomStereopermutatorOption->assigned() == boost::none
+      || targetAtomStereopermutatorOption->assigned() == boost::none
     ) {
       continue;
     }
 
     const auto outerEdgeIndex = BondIndex {source, target};
 
-    // Construct a Stereocenter here
-    auto newStereocenter = BondStereocenter {
-      *sourceAtomStereocenterOption,
-      *targetAtomStereocenterOption,
+    // Construct a Stereopermutator here
+    auto newStereopermutator = BondStereopermutator {
+      *sourceAtomStereopermutatorOption,
+      *targetAtomStereopermutatorOption,
       outerEdgeIndex
     };
 
-    if(newStereocenter.numAssignments() > 1) {
-      stereocenterList.add(
+    if(newStereopermutator.numAssignments() > 1) {
+      stereopermutatorList.add(
         outerEdgeIndex,
-        std::move(newStereocenter)
+        std::move(newStereopermutator)
       );
     }
   }
 
-  return stereocenterList;
+  return stereopermutatorList;
 }
 
 void Molecule::Impl::_ensureModelInvariants() const {
@@ -124,7 +124,7 @@ bool Molecule::Impl::_isValidIndex(const AtomIndex index) const {
   return index < graph().N();
 }
 
-bool Molecule::Impl::_isGraphBasedBondStereocenterCandidate(
+bool Molecule::Impl::_isGraphBasedBondStereopermutatorCandidate(
   const InnerGraph::Edge& e
 ) const {
   const BondType bondType = graph().inner().bondType(e);
@@ -138,19 +138,19 @@ bool Molecule::Impl::_isGraphBasedBondStereocenterCandidate(
 }
 
 void Molecule::Impl::_propagateGraphChange() {
-  /* Two cases: If the StereocenterList is empty, we can just use detect to
-   * find any new stereocenters in the Molecule.
+  /* Two cases: If the StereopermutatorList is empty, we can just use detect to
+   * find any new stereopermutators in the Molecule.
    */
 
-  if(_stereocenters.empty()) {
-    _stereocenters = _detectStereocenters();
+  if(_stereopermutators.empty()) {
+    _stereopermutators = _detectStereopermutators();
     return;
   }
 
   /* In the other case, we have to recheck absolutely everywhere. If ranking
-   * was affected and the stereocenter has a set assignment, we need to find
+   * was affected and the stereopermutator has a set assignment, we need to find
    * the assignment that the previous ranking represented spatially in the new
-   * set of assignments and assign the stereocenter to that.
+   * set of assignments and assign the stereopermutator to that.
    */
 
   InnerGraph& inner = _adjacencies.inner();
@@ -158,7 +158,7 @@ void Molecule::Impl::_propagateGraphChange() {
   GraphAlgorithms::findAndSetEtaBonds(inner);
 
   /* TODO
-   * - Need state propagation for BondStereocenters, anything else is madness
+   * - Need state propagation for BondStereopermutators, anything else is madness
    */
 
   Cycles cycleData = graph().cycles();
@@ -167,57 +167,57 @@ void Molecule::Impl::_propagateGraphChange() {
     const InnerGraph::Vertex vertex :
     boost::make_iterator_range(inner.vertices())
   ) {
-    auto stereocenterOption = _stereocenters.option(vertex);
+    auto stereopermutatorOption = _stereopermutators.option(vertex);
     RankingInformation localRanking = rankPriority(vertex);
 
-    if(stereocenterOption) {
+    if(stereopermutatorOption) {
       // The atom has become terminal
       if(localRanking.ligands.size() <= 1) {
-        _stereocenters.remove(vertex);
+        _stereopermutators.remove(vertex);
         continue;
       }
 
       // Has the ranking changed?
-      if(localRanking == stereocenterOption->getRanking()) {
+      if(localRanking == stereopermutatorOption->getRanking()) {
         continue;
       }
 
-      // Propagate the stereocenter state to the new ranking
-      stereocenterOption -> propagateGraphChange(
+      // Propagate the stereopermutator state to the new ranking
+      stereopermutatorOption -> propagateGraphChange(
         _adjacencies,
         localRanking
       );
 
-      /* If the modified stereocenter has only one assignment and is unassigned
+      /* If the modified stereopermutator has only one assignment and is unassigned
        * due to the graph change, default-assign it
        */
       if(
-        stereocenterOption -> numStereopermutations() == 1
-        && stereocenterOption -> numAssignments() == 1
+        stereopermutatorOption -> numStereopermutations() == 1
+        && stereopermutatorOption -> numAssignments() == 1
       ) {
-        stereocenterOption -> assign(0);
+        stereopermutatorOption -> assign(0);
       }
 
-      // If the change makes the stereocenter undesirable, remove it
+      // If the change makes the stereopermutator undesirable, remove it
       if(
-        disregardStereocenter(
-          *stereocenterOption,
+        disregardStereopermutator(
+          *stereopermutatorOption,
           inner.elementType(vertex),
           cycleData,
           Options::temperatureRegime
         )
       ) {
-        _stereocenters.remove(vertex);
+        _stereopermutators.remove(vertex);
       }
 
-      /* If there are any BondStereocenters on adjacent edges, remove them
-       * (since the Ranking has changed on a constituting AtomStereocenter)
+      /* If there are any BondStereopermutators on adjacent edges, remove them
+       * (since the Ranking has changed on a constituting AtomStereopermutator)
        */
       for(
         const BondIndex& bond :
         boost::make_iterator_range(_adjacencies.bonds(vertex))
       ) {
-        _stereocenters.try_remove(bond);
+        _stereopermutators.try_remove(bond);
       }
     } else {
       // Skip terminal atoms
@@ -225,35 +225,35 @@ void Molecule::Impl::_propagateGraphChange() {
         continue;
       }
 
-      auto newStereocenter = AtomStereocenter {
+      auto newStereopermutator = AtomStereopermutator {
         _adjacencies,
         determineLocalGeometry(vertex, localRanking),
         vertex,
         localRanking
       };
 
-      // Default-assign trivial stereocenters
+      // Default-assign trivial stereopermutators
       if(
-        newStereocenter.numStereopermutations() == 1
-        && newStereocenter.numAssignments() == 1
+        newStereopermutator.numStereopermutations() == 1
+        && newStereopermutator.numAssignments() == 1
       ) {
-        newStereocenter.assign(0);
+        newStereopermutator.assign(0);
       }
 
       if(
-        !disregardStereocenter(
-          newStereocenter,
+        !disregardStereopermutator(
+          newStereopermutator,
           inner.elementType(vertex),
           cycleData,
           Options::temperatureRegime
         )
       ) {
-        _stereocenters.add(vertex, newStereocenter);
+        _stereopermutators.add(vertex, newStereopermutator);
       }
     }
   }
 
-  /* Any BondStereocenters whose constituing AtomStereocenter's rankings have
+  /* Any BondStereopermutators whose constituing AtomStereopermutator's rankings have
    * changed have been removed. So, I think now we just have to check if there
    * are any new ones we could have.
    */
@@ -262,8 +262,8 @@ void Molecule::Impl::_propagateGraphChange() {
     const InnerGraph::Edge& edge :
     boost::make_iterator_range(inner.edges())
   ) {
-    // Check if the edge could be a stereocenter on graph based grounds
-    if(!_isGraphBasedBondStereocenterCandidate(edge)) {
+    // Check if the edge could be a stereopermutator on graph based grounds
+    if(!_isGraphBasedBondStereopermutatorCandidate(edge)) {
       continue;
     }
 
@@ -273,37 +273,37 @@ void Molecule::Impl::_propagateGraphChange() {
 
     BondIndex bond {source, target};
 
-    // Ensure there isn't already a stereocenter on this edge
-    if(auto stereocenterOption = _stereocenters.option(bond)) {
+    // Ensure there isn't already a stereopermutator on this edge
+    if(auto stereopermutatorOption = _stereopermutators.option(bond)) {
       continue;
     }
 
-    // From here just like _detectStereocenters()
+    // From here just like _detectStereopermutators()
 
-    auto sourceAtomStereocenterOption = _stereocenters.option(source);
-    auto targetAtomStereocenterOption = _stereocenters.option(target);
+    auto sourceAtomStereopermutatorOption = _stereopermutators.option(source);
+    auto targetAtomStereopermutatorOption = _stereopermutators.option(target);
 
-    // There need to be assigned stereocenters on both vertices
+    // There need to be assigned stereopermutators on both vertices
     if(
-      !sourceAtomStereocenterOption
-      || !targetAtomStereocenterOption
-      || sourceAtomStereocenterOption->assigned() == boost::none
-      || targetAtomStereocenterOption->assigned() == boost::none
+      !sourceAtomStereopermutatorOption
+      || !targetAtomStereopermutatorOption
+      || sourceAtomStereopermutatorOption->assigned() == boost::none
+      || targetAtomStereopermutatorOption->assigned() == boost::none
     ) {
       continue;
     }
 
-    // Construct a Stereocenter here
-    auto newStereocenter = BondStereocenter {
-      *sourceAtomStereocenterOption,
-      *targetAtomStereocenterOption,
+    // Construct a Stereopermutator here
+    auto newStereopermutator = BondStereopermutator {
+      *sourceAtomStereopermutatorOption,
+      *targetAtomStereopermutatorOption,
       bond
     };
 
-    if(newStereocenter.numAssignments() > 1) {
-      _stereocenters.add(
+    if(newStereopermutator.numAssignments() > 1) {
+      _stereopermutators.add(
         bond,
-        std::move(newStereocenter)
+        std::move(newStereopermutator)
       );
     }
   }
@@ -331,7 +331,7 @@ Molecule::Impl::Impl(OuterGraph graph)
 {
   // Initialization
   GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
-  _stereocenters = _detectStereocenters();
+  _stereopermutators = _detectStereopermutators();
   _ensureModelInvariants();
 }
 
@@ -340,22 +340,22 @@ Molecule::Impl::Impl(
   const AngstromWrapper& positions,
   const boost::optional<
     std::vector<BondIndex>
-  >& bondStereocenterCandidatesOptional
+  >& bondStereopermutatorCandidatesOptional
 ) : _adjacencies(std::move(graph))
 {
   GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
-  _stereocenters = inferStereocentersFromPositions(
+  _stereopermutators = inferStereopermutatorsFromPositions(
     positions,
-    bondStereocenterCandidatesOptional
+    bondStereopermutatorCandidatesOptional
   );
   _ensureModelInvariants();
 }
 
 Molecule::Impl::Impl(
   OuterGraph graph,
-  StereocenterList stereocenters
+  StereopermutatorList stereopermutators
 ) : _adjacencies(std::move(graph)),
-    _stereocenters(std::move(stereocenters))
+    _stereopermutators(std::move(stereopermutators))
 {
   // Initialization
   _ensureModelInvariants();
@@ -373,7 +373,7 @@ AtomIndex Molecule::Impl::addAtom(
 
   const AtomIndex index = _adjacencies.inner().addVertex(elementType);
   addBond(index, adjacentTo, bondType);
-  // addBond handles the stereocenter update on adjacentTo
+  // addBond handles the stereopermutator update on adjacentTo
 
   _propagateGraphChange();
 
@@ -401,7 +401,7 @@ void Molecule::Impl::addBond(
     const AtomIndex toIndex,
     const AtomIndex addedIndex
   ) {
-    /* Remove any BondStereocenters on adjacent edges of toIndex (no state
+    /* Remove any BondStereopermutators on adjacent edges of toIndex (no state
      * propagation possible yet TODO)
      */
     for(
@@ -410,14 +410,14 @@ void Molecule::Impl::addBond(
         _adjacencies.bonds(toIndex)
       )
     ) {
-      _stereocenters.try_remove(adjacentEdge);
+      _stereopermutators.try_remove(adjacentEdge);
     }
 
-    if(auto atomStereocenterOption = _stereocenters.option(toIndex)) {
+    if(auto atomStereopermutatorOption = _stereopermutators.option(toIndex)) {
       // Re-rank around toIndex
       auto localRanking = rankPriority(toIndex);
 
-      atomStereocenterOption->addSubstituent(
+      atomStereopermutatorOption->addSubstituent(
         _adjacencies,
         addedIndex,
         localRanking,
@@ -433,85 +433,85 @@ void Molecule::Impl::addBond(
   _propagateGraphChange();
 }
 
-void Molecule::Impl::assignStereocenter(
+void Molecule::Impl::assignStereopermutator(
   const AtomIndex a,
   const boost::optional<unsigned>& assignmentOption
 ) {
   if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::assignStereocenter: Supplied index is invalid!");
+    throw std::out_of_range("Molecule::assignStereopermutator: Supplied index is invalid!");
   }
 
-  auto stereocenterOption = _stereocenters.option(a);
+  auto stereopermutatorOption = _stereopermutators.option(a);
 
-  if(!stereocenterOption) {
-    throw std::out_of_range("assignStereocenter: No stereocenter at this index!");
+  if(!stereopermutatorOption) {
+    throw std::out_of_range("assignStereopermutator: No stereopermutator at this index!");
   }
 
   if(
     assignmentOption
-    && assignmentOption.value() >= stereocenterOption->numAssignments()
+    && assignmentOption.value() >= stereopermutatorOption->numAssignments()
   ) {
-    throw std::out_of_range("assignStereocenter: Invalid assignment index!");
+    throw std::out_of_range("assignStereopermutator: Invalid assignment index!");
   }
 
-  stereocenterOption -> assign(assignmentOption);
+  stereopermutatorOption -> assign(assignmentOption);
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
 }
 
-void Molecule::Impl::assignStereocenter(
+void Molecule::Impl::assignStereopermutator(
   const BondIndex& edge,
   const boost::optional<unsigned>& assignmentOption
 ) {
   if(!_isValidIndex(edge.first) || !_isValidIndex(edge.second)) {
-    throw std::out_of_range("Molecule::assignStereocenter: Supplied bond atom indices is invalid!");
+    throw std::out_of_range("Molecule::assignStereopermutator: Supplied bond atom indices is invalid!");
   }
 
-  auto stereocenterOption = _stereocenters.option(edge);
+  auto stereopermutatorOption = _stereopermutators.option(edge);
 
-  if(!stereocenterOption) {
-    throw std::out_of_range("assignStereocenter: No stereocenter at this bond!");
+  if(!stereopermutatorOption) {
+    throw std::out_of_range("assignStereopermutator: No stereopermutator at this bond!");
   }
 
   if(
     assignmentOption
-    && assignmentOption.value() >= stereocenterOption->numAssignments()
+    && assignmentOption.value() >= stereopermutatorOption->numAssignments()
   ) {
-    throw std::out_of_range("assignStereocenter: Invalid assignment index!");
+    throw std::out_of_range("assignStereopermutator: Invalid assignment index!");
   }
 
-  stereocenterOption -> assign(assignmentOption);
+  stereopermutatorOption -> assign(assignmentOption);
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
 }
 
-void Molecule::Impl::assignStereocenterRandomly(const AtomIndex a) {
+void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a) {
   if(!_isValidIndex(a)) {
-    throw std::out_of_range("Molecule::assignStereocenterRandomly: Supplied index is invalid!");
+    throw std::out_of_range("Molecule::assignStereopermutatorRandomly: Supplied index is invalid!");
   }
 
-  auto stereocenterOption = _stereocenters.option(a);
+  auto stereopermutatorOption = _stereopermutators.option(a);
 
-  if(!stereocenterOption) {
-    throw std::out_of_range("assignStereocenterRandomly: No stereocenter at this index!");
+  if(!stereopermutatorOption) {
+    throw std::out_of_range("assignStereopermutatorRandomly: No stereopermutator at this index!");
   }
 
-  stereocenterOption->assignRandom();
+  stereopermutatorOption->assignRandom();
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
 }
 
-void Molecule::Impl::assignStereocenterRandomly(const BondIndex& e) {
-  auto stereocenterOption = _stereocenters.option(e);
+void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e) {
+  auto stereopermutatorOption = _stereopermutators.option(e);
 
-  if(!stereocenterOption) {
-    throw std::out_of_range("assignStereocenterRandomly: No stereocenter at this edge!");
+  if(!stereopermutatorOption) {
+    throw std::out_of_range("assignStereopermutatorRandomly: No stereopermutator at this edge!");
   }
 
-  stereocenterOption->assignRandom();
+  stereopermutatorOption->assignRandom();
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
@@ -539,42 +539,42 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
   // Remove all edges to and from this vertex
   inner.clearVertex(a);
 
-  // Any stereocenter on this index must be dropped
-  _stereocenters.try_remove(a);
+  // Any stereopermutator on this index must be dropped
+  _stereopermutators.try_remove(a);
 
-  // Any adjacent bond stereocenters have to be dropped
+  // Any adjacent bond stereopermutators have to be dropped
   for(
     const BondIndex& adjacentEdge :
     boost::make_iterator_range(_adjacencies.bonds(a))
   ) {
-    _stereocenters.try_remove(adjacentEdge);
+    _stereopermutators.try_remove(adjacentEdge);
   }
 
   // Remove the vertex itself
   inner.removeVertex(a);
 
   /* Removing the vertex invalidates some vertex descriptors, which are used
-   * liberally in the stereocenter classes' state. We have to correct of all of
+   * liberally in the stereopermutator classes' state. We have to correct of all of
    * those to ensure that _propagateGraphChange works properly.
    */
-  _stereocenters.propagateVertexRemoval(a);
+  _stereopermutators.propagateVertexRemoval(a);
 
-  /* call removeSubstituent on all adjacent stereocenters, with
+  /* call removeSubstituent on all adjacent stereopermutators, with
    * removalPlaceholder as the 'which' parameter, which is what
    * propagateVertexRemoval replaces the removed index with in the
-   * stereocenters' internal state
+   * stereopermutators' internal state
    */
   for(const auto& indexToUpdate : previouslyAdjacentVertices) {
-    if(auto stereocenterOption = _stereocenters.option(indexToUpdate)) {
+    if(auto stereopermutatorOption = _stereopermutators.option(indexToUpdate)) {
       auto localRanking = rankPriority(indexToUpdate);
 
-      // If index becomes terminal, drop the stereocenter
+      // If index becomes terminal, drop the stereopermutator
       if(localRanking.ligands.size() <= 1) {
-        _stereocenters.remove(indexToUpdate);
+        _stereopermutators.remove(indexToUpdate);
         continue;
       }
 
-      stereocenterOption->removeSubstituent(
+      stereopermutatorOption->removeSubstituent(
         _adjacencies,
         InnerGraph::removalPlaceholder,
         localRanking,
@@ -583,15 +583,15 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
       );
     }
 
-    // TODO BondStereocenter update
-    /*if(_stereocenters.involving(indexToUpdate)) {
-      if(_stereocenters.at(indexToUpdate) -> type() == Stereocenters::Type::AtomStereocenter) {
+    // TODO BondStereopermutator update
+    /*if(_stereopermutators.involving(indexToUpdate)) {
+      if(_stereopermutators.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
       } else {
-        std::dynamic_pointer_cast<Stereocenters::BondStereocenter>(
-          _stereocenters.at(indexToUpdate)
+        std::dynamic_pointer_cast<Stereopermutators::BondStereopermutator>(
+          _stereopermutators.at(indexToUpdate)
         ) -> removeSubstituent(
           indexToUpdate,
-          Stereocenters::Stereocenter::removalPlaceholder
+          Stereopermutators::Stereopermutator::removalPlaceholder
         );
       }
     }*/
@@ -623,29 +623,29 @@ void Molecule::Impl::removeBond(
   }
 
 
-  /* If there is an BondStereocenter on this edge, we have to drop it explicitly,
+  /* If there is an BondStereopermutator on this edge, we have to drop it explicitly,
    * since _propagateGraphChange cannot iterate over a now-removed edge.
    */
-  _stereocenters.try_remove(BondIndex {a, b});
+  _stereopermutators.try_remove(BondIndex {a, b});
 
   // Remove the edge
   inner.removeEdge(edgeToRemove);
 
-  // Notify all immediately adjacent stereocenters of the removal
+  // Notify all immediately adjacent stereopermutators of the removal
   auto notifyRemoval = [&](
     const AtomIndex indexToUpdate,
     const AtomIndex removedIndex
   ) {
-    if(auto stereocenterOption = _stereocenters.option(indexToUpdate)) {
+    if(auto stereopermutatorOption = _stereopermutators.option(indexToUpdate)) {
       auto localRanking = rankPriority(indexToUpdate);
 
-      // In case the central atom becomes terminal, just drop the stereocenter
+      // In case the central atom becomes terminal, just drop the stereopermutator
       if(localRanking.ligands.size() <= 1) {
-        _stereocenters.remove(indexToUpdate);
+        _stereopermutators.remove(indexToUpdate);
         return;
       }
 
-      stereocenterOption->removeSubstituent(
+      stereopermutatorOption->removeSubstituent(
         _adjacencies,
         removedIndex,
         localRanking,
@@ -655,11 +655,11 @@ void Molecule::Impl::removeBond(
     }
 
     // TODO
-    /*if(_stereocenters.involving(indexToUpdate)) {
-      if(_stereocenters.at(indexToUpdate) -> type() == Stereocenters::Type::AtomStereocenter) {
+    /*if(_stereopermutators.involving(indexToUpdate)) {
+      if(_stereopermutators.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
       } else {
-        std::dynamic_pointer_cast<Stereocenters::BondStereocenter>(
-          _stereocenters.at(indexToUpdate)
+        std::dynamic_pointer_cast<Stereopermutators::BondStereopermutator>(
+          _stereopermutators.at(indexToUpdate)
         ) -> removeSubstituent(
           indexToUpdate,
           removedIndex
@@ -671,7 +671,7 @@ void Molecule::Impl::removeBond(
   notifyRemoval(a, b);
   notifyRemoval(b, a);
 
-  /* All other cases, where there may be BondStereocenters or AtomStereocenters
+  /* All other cases, where there may be BondStereopermutators or AtomStereopermutators
    * on a or b, should be handled correctly by _propagateGraphChange.
    */
 
@@ -726,10 +726,10 @@ void Molecule::Impl::setGeometryAtAtom(
     throw std::out_of_range("Molecule::setGeometryAtAtom: Supplied atom index is invalid");
   }
 
-  auto stereocenterOption = _stereocenters.option(a);
+  auto stereopermutatorOption = _stereopermutators.option(a);
 
-  // If there is no stereocenter at this position yet, we have to create it
-  if(!stereocenterOption) {
+  // If there is no stereopermutator at this position yet, we have to create it
+  if(!stereopermutatorOption) {
     RankingInformation localRanking = rankPriority(a);
 
     if(localRanking.ligands.size() != Symmetry::size(symmetryName)) {
@@ -739,22 +739,22 @@ void Molecule::Impl::setGeometryAtAtom(
       );
     }
 
-    // Add the stereocenter irrespective of how many assignments it has
-    auto newStereocenter = AtomStereocenter {
+    // Add the stereopermutator irrespective of how many assignments it has
+    auto newStereopermutator = AtomStereopermutator {
       _adjacencies,
       symmetryName,
       a,
       localRanking
     };
 
-    // Default-assign stereocenters with only one assignment
-    if(newStereocenter.numAssignments() == 1) {
-      newStereocenter.assign(0u);
+    // Default-assign stereopermutators with only one assignment
+    if(newStereopermutator.numAssignments() == 1) {
+      newStereopermutator.assign(0u);
     }
 
-    _stereocenters.add(
+    _stereopermutators.add(
       a,
-      std::move(newStereocenter)
+      std::move(newStereopermutator)
     );
 
     _propagateGraphChange();
@@ -762,18 +762,18 @@ void Molecule::Impl::setGeometryAtAtom(
   }
 
   if(
-    Symmetry::size(stereocenterOption->getSymmetry())
+    Symmetry::size(stereopermutatorOption->getSymmetry())
     != Symmetry::size(symmetryName)
   ) {
     throw std::logic_error(
       "Molecule::setGeometryAtAtom: The size of the supplied symmetry is "
-      "not the same as that of the existing stereocenter's current symmetry!"
+      "not the same as that of the existing stereopermutator's current symmetry!"
     );
   }
 
-  stereocenterOption->setSymmetry(symmetryName, _adjacencies);
-  if(stereocenterOption->numStereopermutations() == 1) {
-    assignStereocenter(a, 0);
+  stereopermutatorOption->setSymmetry(symmetryName, _adjacencies);
+  if(stereopermutatorOption->numStereopermutations() == 1) {
+    assignStereopermutator(a, 0);
     return;
   }
   _propagateGraphChange();
@@ -821,18 +821,18 @@ const OuterGraph& Molecule::Impl::graph() const {
   return _adjacencies;
 }
 
-const StereocenterList& Molecule::Impl::stereocenters() const {
-  return _stereocenters;
+const StereopermutatorList& Molecule::Impl::stereopermutators() const {
+  return _stereopermutators;
 }
 
-StereocenterList Molecule::Impl::inferStereocentersFromPositions(
+StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   const AngstromWrapper& angstromWrapper,
   const boost::optional<
     std::vector<BondIndex>
-  >& explicitBondStereocenterCandidatesOption
+  >& explicitBondStereopermutatorCandidatesOption
 ) const {
   const AtomIndex size = graph().N();
-  StereocenterList stereocenters;
+  StereopermutatorList stereopermutators;
 
   Cycles cycleData = graph().cycles();
 
@@ -847,7 +847,7 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
     const auto expectedGeometry = determineLocalGeometry(candidateIndex, localRanking);
 
     // Construct it
-    auto stereocenter = AtomStereocenter {
+    auto stereopermutator = AtomStereopermutator {
       _adjacencies,
       expectedGeometry,
       candidateIndex,
@@ -855,79 +855,79 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
     };
 
     pickyFit(
-      stereocenter,
+      stereopermutator,
       _adjacencies,
       angstromWrapper,
       expectedGeometry
     );
 
     if(
-      !disregardStereocenter(
-        stereocenter,
+      !disregardStereopermutator(
+        stereopermutator,
         _adjacencies.elementType(candidateIndex),
         cycleData,
         Options::temperatureRegime
       )
     ) {
-      stereocenters.add(
+      stereopermutators.add(
         candidateIndex,
-        std::move(stereocenter)
+        std::move(stereopermutator)
       );
     }
   }
 
   const InnerGraph& inner = _adjacencies.inner();
 
-  auto tryInstantiateBondStereocenter = [&](const InnerGraph::Edge& edgeIndex) -> void {
+  auto tryInstantiateBondStereopermutator = [&](const InnerGraph::Edge& edgeIndex) -> void {
     InnerGraph::Vertex source = inner.source(edgeIndex),
                        target = inner.target(edgeIndex);
 
-    auto sourceAtomStereocenterOption = stereocenters.option(source);
-    auto targetAtomStereocenterOption = stereocenters.option(target);
+    auto sourceAtomStereopermutatorOption = stereopermutators.option(source);
+    auto targetAtomStereopermutatorOption = stereopermutators.option(target);
 
-    // There need to be assigned stereocenters on both vertices
+    // There need to be assigned stereopermutators on both vertices
     if(
-      !sourceAtomStereocenterOption
-      || !targetAtomStereocenterOption
-      || sourceAtomStereocenterOption->assigned() == boost::none
-      || targetAtomStereocenterOption->assigned() == boost::none
+      !sourceAtomStereopermutatorOption
+      || !targetAtomStereopermutatorOption
+      || sourceAtomStereopermutatorOption->assigned() == boost::none
+      || targetAtomStereopermutatorOption->assigned() == boost::none
     ) {
       return;
     }
 
     const BondIndex bondIndex {source, target};
 
-    // Construct a Stereocenter here
-    auto newStereocenter = BondStereocenter {
-      *sourceAtomStereocenterOption,
-      *targetAtomStereocenterOption,
+    // Construct a Stereopermutator here
+    auto newStereopermutator = BondStereopermutator {
+      *sourceAtomStereopermutatorOption,
+      *targetAtomStereopermutatorOption,
       bondIndex
     };
 
-    newStereocenter.fit(
+    newStereopermutator.fit(
       angstromWrapper,
-      *sourceAtomStereocenterOption,
-      *targetAtomStereocenterOption
+      *sourceAtomStereopermutatorOption,
+      *targetAtomStereopermutatorOption
     );
 
-    if(newStereocenter.assigned() != boost::none) {
-      stereocenters.add(
+    if(newStereopermutator.assigned() != boost::none) {
+      stereopermutators.add(
         bondIndex,
-        std::move(newStereocenter)
+        std::move(newStereopermutator)
       );
     }
   };
 
-  // Is there an explicit list of bonds on which to try BondStereocenter instantiation?
-  if(explicitBondStereocenterCandidatesOption) {
-    for(const BondIndex& bondIndex : *explicitBondStereocenterCandidatesOption) {
+  // Is there an explicit list of bonds on which to try BondStereopermutator instantiation?
+  if(explicitBondStereopermutatorCandidatesOption) {
+    for(const BondIndex& bondIndex : *explicitBondStereopermutatorCandidatesOption) {
       // Test if the supplied edge exists first
       auto edge = inner.edgeOption(bondIndex.first, bondIndex.second);
       if(!edge) {
-        throw std::out_of_range("Explicit bond stereocenter candidate edge does not exist!");
+        throw std::out_of_range("Explicit bond stereopermutator candidate edge does not exist!");
       }
 
-      tryInstantiateBondStereocenter(*edge);
+      tryInstantiateBondStereopermutator(*edge);
     }
   } else {
     // Every bond is a candidate
@@ -935,11 +935,11 @@ StereocenterList Molecule::Impl::inferStereocentersFromPositions(
       const InnerGraph::Edge& edgeIndex :
       boost::make_iterator_range(inner.edges())
     ) {
-      tryInstantiateBondStereocenter(edgeIndex);
+      tryInstantiateBondStereopermutator(edgeIndex);
     }
   }
 
-  return stereocenters;
+  return stereopermutators;
 }
 
 bool Molecule::Impl::modularCompare(
@@ -967,8 +967,8 @@ bool Molecule::Impl::modularCompare(
   hashes::HashType maxHash;
 
   std::tie(thisHashes, otherHashes, maxHash) = hashes::narrow(
-    hashes::generate(graph().inner(), stereocenters(), comparisonBitmask),
-    hashes::generate(other.graph().inner(), other.stereocenters(), comparisonBitmask)
+    hashes::generate(graph().inner(), stereopermutators(), comparisonBitmask),
+    hashes::generate(other.graph().inner(), other.stereopermutators(), comparisonBitmask)
   );
 
   // Where the corresponding index from the other graph is stored
@@ -1022,7 +1022,7 @@ RankingInformation Molecule::Impl::rankPriority(
   auto expandedTree = RankingTree(
     graph(),
     graph().cycles(),
-    stereocenters(),
+    stereopermutators(),
     molGraphviz,
     a,
     excludeAdjacent,

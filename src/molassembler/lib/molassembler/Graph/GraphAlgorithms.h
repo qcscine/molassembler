@@ -23,7 +23,7 @@ namespace molassembler {
 class Cycles;
 struct LinkInformation;
 
-//! Core graph-level algorithms (not requiring stereocenter information)
+//! Core graph-level algorithms (not requiring stereopermutator information)
 namespace GraphAlgorithms {
 
 std::vector<LinkInformation> substituentLinks(

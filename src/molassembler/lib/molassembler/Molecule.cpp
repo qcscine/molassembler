@@ -40,22 +40,22 @@ Molecule::Molecule(
   const AngstromWrapper& positions,
   const boost::optional<
     std::vector<BondIndex>
-  >& bondStereocenterCandidatesOptional
+  >& bondStereopermutatorCandidatesOptional
 ) : _pImpl(
   std::make_unique<Impl>(
     std::move(graph),
     positions,
-    bondStereocenterCandidatesOptional
+    bondStereopermutatorCandidatesOptional
   )
 ) {}
 
 Molecule::Molecule(
   OuterGraph graph,
-  StereocenterList stereocenters
+  StereopermutatorList stereopermutators
 ) : _pImpl(
   std::make_unique<Impl>(
     std::move(graph),
-    std::move(stereocenters)
+    std::move(stereopermutators)
   )
 ) {}
 
@@ -76,26 +76,26 @@ void Molecule::addBond(
   _pImpl->addBond(a, b, bondType);
 }
 
-void Molecule::assignStereocenter(
+void Molecule::assignStereopermutator(
   const AtomIndex a,
   const boost::optional<unsigned>& assignment
 ) {
-  _pImpl->assignStereocenter(a, assignment);
+  _pImpl->assignStereopermutator(a, assignment);
 }
 
-void Molecule::assignStereocenter(
+void Molecule::assignStereopermutator(
   const BondIndex& edge,
   const boost::optional<unsigned>& assignment
 ) {
-  _pImpl->assignStereocenter(edge, assignment);
+  _pImpl->assignStereopermutator(edge, assignment);
 }
 
-void Molecule::assignStereocenterRandomly(const AtomIndex a) {
-  _pImpl->assignStereocenterRandomly(a);
+void Molecule::assignStereopermutatorRandomly(const AtomIndex a) {
+  _pImpl->assignStereopermutatorRandomly(a);
 }
 
-void Molecule::assignStereocenterRandomly(const BondIndex& e) {
-  _pImpl->assignStereocenterRandomly(e);
+void Molecule::assignStereopermutatorRandomly(const BondIndex& e) {
+  _pImpl->assignStereopermutatorRandomly(e);
 }
 
 void Molecule::removeAtom(const AtomIndex a) {
@@ -148,19 +148,19 @@ const OuterGraph& Molecule::graph() const {
   return _pImpl->graph();
 }
 
-const StereocenterList& Molecule::stereocenters() const {
-  return _pImpl->stereocenters();
+const StereopermutatorList& Molecule::stereopermutators() const {
+  return _pImpl->stereopermutators();
 }
 
-StereocenterList Molecule::inferStereocentersFromPositions(
+StereopermutatorList Molecule::inferStereopermutatorsFromPositions(
   const AngstromWrapper& angstromWrapper,
   const boost::optional<
     std::vector<BondIndex>
-  >& explicitBondStereocenterCandidatesOption
+  >& explicitBondStereopermutatorCandidatesOption
 ) const {
-  return _pImpl->inferStereocentersFromPositions(
+  return _pImpl->inferStereopermutatorsFromPositions(
     angstromWrapper,
-    explicitBondStereocenterCandidatesOption
+    explicitBondStereopermutatorCandidatesOption
   );
 }
 
@@ -195,17 +195,17 @@ std::ostream& operator << (
   std::ostream& os,
   const molassembler::Molecule& molecule
 ) {
-  const auto& stereocenters = molecule.stereocenters();
+  const auto& stereopermutators = molecule.stereopermutators();
 
-  if(!stereocenters.empty()) {
-    os << "Stereocenter information:\n";
+  if(!stereopermutators.empty()) {
+    os << "Stereopermutator information:\n";
 
-    for(const auto& stereocenter : stereocenters.atomStereocenters()) {
-      os << stereocenter.info() << "\n";
+    for(const auto& stereopermutator : stereopermutators.atomStereopermutators()) {
+      os << stereopermutator.info() << "\n";
     }
 
-    for(const auto& stereocenter : stereocenters.bondStereocenters()) {
-      os << stereocenter.info() << "\n";
+    for(const auto& stereopermutator : stereopermutators.bondStereopermutators()) {
+      os << stereopermutator.info() << "\n";
     }
   }
 

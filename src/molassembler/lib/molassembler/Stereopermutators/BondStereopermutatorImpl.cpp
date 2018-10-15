@@ -1,4 +1,4 @@
-#include "molassembler/Stereocenters/BondStereocenterImpl.h"
+#include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
 
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/constexpr/Math.h"
@@ -7,7 +7,7 @@
 #include "temple/OrderedPair.h"
 #include "temple/Random.h"
 
-#include "molassembler/AtomStereocenter.h"
+#include "molassembler/AtomStereopermutator.h"
 #include "molassembler/AngstromWrapper.h"
 #include "molassembler/Detail/DelibHelpers.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
@@ -35,7 +35,7 @@ struct SymmetryMapHelper {
   }
 };
 
-std::vector<char> BondStereocenter::Impl::_charifyRankedLigands(
+std::vector<char> BondStereopermutator::Impl::_charifyRankedLigands(
   const std::vector<std::vector<unsigned>>& ligandsRanking,
   const std::vector<unsigned>& symmetryPositionMap
 ) {
@@ -55,47 +55,47 @@ std::vector<char> BondStereocenter::Impl::_charifyRankedLigands(
   return characters;
 }
 
-stereopermutation::Composite::OrientationState BondStereocenter::Impl::_makeOrientationState(
-  const AtomStereocenter& focalStereocenter,
-  const AtomStereocenter& attachedStereocenter
+stereopermutation::Composite::OrientationState BondStereopermutator::Impl::_makeOrientationState(
+  const AtomStereopermutator& focalStereopermutator,
+  const AtomStereopermutator& attachedStereopermutator
 ) {
   return {
-    focalStereocenter.getSymmetry(),
+    focalStereopermutator.getSymmetry(),
     SymmetryMapHelper::getSymmetryPositionOf(
-      focalStereocenter.getRanking().getLigandIndexOf(
-        attachedStereocenter.centralIndex()
+      focalStereopermutator.getRanking().getLigandIndexOf(
+        attachedStereopermutator.centralIndex()
       ),
-      focalStereocenter.getSymmetryPositionMap()
+      focalStereopermutator.getSymmetryPositionMap()
     ),
     _charifyRankedLigands(
-      focalStereocenter.getRanking().ligandsRanking,
-      focalStereocenter.getSymmetryPositionMap()
+      focalStereopermutator.getRanking().ligandsRanking,
+      focalStereopermutator.getSymmetryPositionMap()
     ),
-    focalStereocenter.centralIndex()
+    focalStereopermutator.centralIndex()
   };
 }
 
 /* Constructors */
-BondStereocenter::Impl::Impl(
-  const AtomStereocenter& stereocenterA,
-  const AtomStereocenter& stereocenterB,
+BondStereopermutator::Impl::Impl(
+  const AtomStereopermutator& stereopermutatorA,
+  const AtomStereopermutator& stereopermutatorB,
   const BondIndex edge
 ) : _composite {
-      _makeOrientationState(stereocenterA, stereocenterB),
-      _makeOrientationState(stereocenterB, stereocenterA)
+      _makeOrientationState(stereopermutatorA, stereopermutatorB),
+      _makeOrientationState(stereopermutatorB, stereopermutatorA)
     },
     _edge(edge),
     _assignment(boost::none)
 {
   assert(
-    !stereocenterA.getRanking().hasHapticLigands()
-    && !stereocenterB.getRanking().hasHapticLigands()
+    !stereopermutatorA.getRanking().hasHapticLigands()
+    && !stereopermutatorB.getRanking().hasHapticLigands()
   );
 }
 
 /* Public members */
 /* Modification */
-void BondStereocenter::Impl::assign(boost::optional<unsigned> assignment) {
+void BondStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   if(assignment) {
     assert(assignment.value() < _composite.permutations());
   }
@@ -103,7 +103,7 @@ void BondStereocenter::Impl::assign(boost::optional<unsigned> assignment) {
   _assignment = assignment;
 }
 
-void BondStereocenter::Impl::assignRandom() {
+void BondStereopermutator::Impl::assignRandom() {
   assert(_composite.permutations() > 0);
 
   _assignment = temple::random::getSingle<unsigned>(
@@ -113,10 +113,10 @@ void BondStereocenter::Impl::assignRandom() {
   );
 }
 
-void BondStereocenter::Impl::fit(
+void BondStereopermutator::Impl::fit(
   const AngstromWrapper& angstromWrapper,
-  const AtomStereocenter& stereocenterA,
-  const AtomStereocenter& stereocenterB
+  const AtomStereopermutator& stereopermutatorA,
+  const AtomStereopermutator& stereopermutatorB
 ) {
   // Early exit
   if(_composite.permutations() == 0) {
@@ -125,28 +125,28 @@ void BondStereocenter::Impl::fit(
   }
 
   // Can the following selections be done with a single branch?
-  const AtomStereocenter& firstStereocenter = (
-    stereocenterA.centralIndex() == _composite.orientations().first.identifier
-    ? stereocenterA
-    : stereocenterB
+  const AtomStereopermutator& firstStereopermutator = (
+    stereopermutatorA.centralIndex() == _composite.orientations().first.identifier
+    ? stereopermutatorA
+    : stereopermutatorB
   );
 
-  const AtomStereocenter& secondStereocenter = (
-    stereocenterB.centralIndex() == _composite.orientations().second.identifier
-    ? stereocenterB
-    : stereocenterA
+  const AtomStereopermutator& secondStereopermutator = (
+    stereopermutatorB.centralIndex() == _composite.orientations().second.identifier
+    ? stereopermutatorB
+    : stereopermutatorA
   );
 
   // For all atoms making up a ligand, decide on the spatial average position
   const std::vector<Eigen::Vector3d> firstLigandPositions = temple::map(
-    firstStereocenter.getRanking().ligands,
+    firstStereopermutator.getRanking().ligands,
     [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
     }
   );
 
   const std::vector<Eigen::Vector3d> secondLigandPositions = temple::map(
-    secondStereocenter.getRanking().ligands,
+    secondStereopermutator.getRanking().ligands,
     [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
     }
@@ -172,11 +172,11 @@ void BondStereocenter::Impl::fit(
       // Get ligand index of leftSymmetryPosition in left
       unsigned firstLigandIndex = SymmetryMapHelper::getLigandIndexAt(
         firstSymmetryPosition,
-        firstStereocenter.getSymmetryPositionMap()
+        firstStereopermutator.getSymmetryPositionMap()
       );
       unsigned secondLigandIndex = SymmetryMapHelper::getLigandIndexAt(
         secondSymmetryPosition,
-        secondStereocenter.getSymmetryPositionMap()
+        secondStereopermutator.getSymmetryPositionMap()
       );
 
       /* Dihedral angle differences aren't as easy as |b - a|, since
@@ -194,8 +194,8 @@ void BondStereocenter::Impl::fit(
 
       double dihedralDifference = DelibHelpers::dihedral(
         firstLigandPositions.at(firstLigandIndex),
-        angstromWrapper.positions.at(firstStereocenter.centralIndex()).toEigenVector(),
-        angstromWrapper.positions.at(secondStereocenter.centralIndex()).toEigenVector(),
+        angstromWrapper.positions.at(firstStereopermutator.centralIndex()).toEigenVector(),
+        angstromWrapper.positions.at(secondStereopermutator.centralIndex()).toEigenVector(),
         secondLigandPositions.at(secondLigandIndex)
       ) - dihedralAngle;
 
@@ -231,7 +231,7 @@ void BondStereocenter::Impl::fit(
 }
 
 /* Information */
-boost::optional<unsigned> BondStereocenter::Impl::assigned() const {
+boost::optional<unsigned> BondStereopermutator::Impl::assigned() const {
   /* If the underlying composite is isotropic, it does not matter which of those
    * permutations by symmetry position is the factual spatial arrangement (since
    * they are all rotationally equivalent). We have to spoof that there is only
@@ -245,11 +245,11 @@ boost::optional<unsigned> BondStereocenter::Impl::assigned() const {
   return _assignment;
 }
 
-bool BondStereocenter::Impl::hasSameCompositeOrientation(const BondStereocenter::Impl& other) const {
+bool BondStereopermutator::Impl::hasSameCompositeOrientation(const BondStereopermutator::Impl& other) const {
   return _composite == other._composite;
 }
 
-boost::optional<unsigned> BondStereocenter::Impl::indexOfPermutation() const {
+boost::optional<unsigned> BondStereopermutator::Impl::indexOfPermutation() const {
   if(_assignment && _composite.isIsotropic()) {
     return 0u;
   }
@@ -257,7 +257,7 @@ boost::optional<unsigned> BondStereocenter::Impl::indexOfPermutation() const {
   return _assignment;
 }
 
-unsigned BondStereocenter::Impl::numAssignments() const {
+unsigned BondStereopermutator::Impl::numAssignments() const {
   if(_composite.isIsotropic()) {
     return 1;
   }
@@ -265,7 +265,7 @@ unsigned BondStereocenter::Impl::numAssignments() const {
   return _composite.permutations();
 }
 
-unsigned BondStereocenter::Impl::numStereopermutations() const {
+unsigned BondStereopermutator::Impl::numStereopermutations() const {
   if(_composite.isIsotropic()) {
     return 1;
   }
@@ -273,21 +273,21 @@ unsigned BondStereocenter::Impl::numStereopermutations() const {
   return _composite.permutations();
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::Impl::chiralityConstraints(
-  const AtomStereocenter& stereocenterA,
-  const AtomStereocenter& stereocenterB
+std::vector<DistanceGeometry::ChiralityConstraint> BondStereopermutator::Impl::chiralityConstraints(
+  const AtomStereopermutator& stereopermutatorA,
+  const AtomStereopermutator& stereopermutatorB
 ) const {
   // Can the following selections be done with a single branch?
-  const AtomStereocenter& firstStereocenter = (
-    stereocenterA.centralIndex() == _composite.orientations().first.identifier
-    ? stereocenterA
-    : stereocenterB
+  const AtomStereopermutator& firstStereopermutator = (
+    stereopermutatorA.centralIndex() == _composite.orientations().first.identifier
+    ? stereopermutatorA
+    : stereopermutatorB
   );
 
-  const AtomStereocenter& secondStereocenter = (
-    stereocenterB.centralIndex() == _composite.orientations().second.identifier
-    ? stereocenterB
-    : stereocenterA
+  const AtomStereopermutator& secondStereopermutator = (
+    stereopermutatorB.centralIndex() == _composite.orientations().second.identifier
+    ? stereopermutatorB
+    : stereopermutatorA
   );
 
   std::vector<DistanceGeometry::ChiralityConstraint> constraints;
@@ -301,18 +301,18 @@ std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::Impl::chira
     if(std::fabs(dihedralAngle) < M_PI / 180.0 || std::fabs(M_PI - std::fabs(dihedralAngle)) < M_PI / 180.0) {
       constraints.emplace_back(
         DistanceGeometry::ChiralityConstraint::LigandSequence {
-          firstStereocenter.getRanking().ligands.at(
+          firstStereopermutator.getRanking().ligands.at(
             SymmetryMapHelper::getLigandIndexAt(
               firstSymmetryPosition,
-              firstStereocenter.getSymmetryPositionMap()
+              firstStereopermutator.getSymmetryPositionMap()
             )
           ),
-          {firstStereocenter.centralIndex()},
-          {secondStereocenter.centralIndex()},
-          secondStereocenter.getRanking().ligands.at(
+          {firstStereopermutator.centralIndex()},
+          {secondStereopermutator.centralIndex()},
+          secondStereopermutator.getRanking().ligands.at(
             SymmetryMapHelper::getLigandIndexAt(
               secondSymmetryPosition,
-              secondStereocenter.getSymmetryPositionMap()
+              secondStereopermutator.getSymmetryPositionMap()
             )
           )
         },
@@ -325,7 +325,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> BondStereocenter::Impl::chira
   return constraints;
 }
 
-std::string BondStereocenter::Impl::info() const {
+std::string BondStereopermutator::Impl::info() const {
   using namespace std::string_literals;
 
   std::string returnString =  "B on "s;
@@ -350,7 +350,7 @@ std::string BondStereocenter::Impl::info() const {
   return returnString;
 }
 
-std::string BondStereocenter::Impl::rankInfo() const {
+std::string BondStereopermutator::Impl::rankInfo() const {
   using namespace std::string_literals;
 
   return (
@@ -363,28 +363,28 @@ std::string BondStereocenter::Impl::rankInfo() const {
   );
 }
 
-BondIndex BondStereocenter::Impl::edge() const {
+BondIndex BondStereopermutator::Impl::edge() const {
   // Return a standard form of smaller first
   return _edge;
 }
 
-void BondStereocenter::Impl::setModelInformation(
+void BondStereopermutator::Impl::setModelInformation(
   DistanceGeometry::SpatialModel& model,
-  const AtomStereocenter& stereocenterA,
-  const AtomStereocenter& stereocenterB,
+  const AtomStereopermutator& stereopermutatorA,
+  const AtomStereopermutator& stereopermutatorB,
   const double looseningMultiplier
 ) const {
   // Can the following selections be done with a single branch?
-  const AtomStereocenter& firstStereocenter = (
-    stereocenterA.centralIndex() == _composite.orientations().first.identifier
-    ? stereocenterA
-    : stereocenterB
+  const AtomStereopermutator& firstStereopermutator = (
+    stereopermutatorA.centralIndex() == _composite.orientations().first.identifier
+    ? stereopermutatorA
+    : stereopermutatorB
   );
 
-  const AtomStereocenter& secondStereocenter = (
-    stereocenterB.centralIndex() == _composite.orientations().second.identifier
-    ? stereocenterB
-    : stereocenterA
+  const AtomStereopermutator& secondStereopermutator = (
+    stereopermutatorB.centralIndex() == _composite.orientations().second.identifier
+    ? stereopermutatorB
+    : stereopermutatorA
   );
 
   using ModelType = DistanceGeometry::SpatialModel;
@@ -400,11 +400,11 @@ void BondStereocenter::Impl::setModelInformation(
 
     unsigned firstLigandIndex = SymmetryMapHelper::getLigandIndexAt(
       firstSymmetryPosition,
-      firstStereocenter.getSymmetryPositionMap()
+      firstStereopermutator.getSymmetryPositionMap()
     );
     unsigned secondLigandIndex = SymmetryMapHelper::getLigandIndexAt(
       secondSymmetryPosition,
-      secondStereocenter.getSymmetryPositionMap()
+      secondStereopermutator.getSymmetryPositionMap()
     );
 
     /* A simple central plus-minus variance calculation for the dihedral would
@@ -449,15 +449,15 @@ void BondStereocenter::Impl::setModelInformation(
 
     temple::forEach(
       temple::adaptors::allPairs(
-        firstStereocenter.getRanking().ligands.at(firstLigandIndex),
-        secondStereocenter.getRanking().ligands.at(secondLigandIndex)
+        firstStereopermutator.getRanking().ligands.at(firstLigandIndex),
+        secondStereopermutator.getRanking().ligands.at(secondLigandIndex)
       ),
       [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
         model.setDihedralBoundsIfEmpty(
           std::array<AtomIndex, 4> {
             firstIndex,
-            firstStereocenter.centralIndex(),
-            secondStereocenter.centralIndex(),
+            firstStereopermutator.centralIndex(),
+            secondStereopermutator.centralIndex(),
             secondIndex
           },
           dihedralBounds
@@ -468,14 +468,14 @@ void BondStereocenter::Impl::setModelInformation(
 }
 
 /* Operators */
-bool BondStereocenter::Impl::operator == (const Impl& other) const {
+bool BondStereopermutator::Impl::operator == (const Impl& other) const {
   return (
     _composite == other._composite
     && _assignment == other._assignment
   );
 }
 
-bool BondStereocenter::Impl::operator != (const Impl& other) const {
+bool BondStereopermutator::Impl::operator != (const Impl& other) const {
   return !(*this == other);
 }
 

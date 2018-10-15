@@ -22,7 +22,7 @@ class Molecule;
  * A bond can contribute to the number of rotatable bonds if
  * - It is of bond type Single
  * - Neither atom connected by the bond is terminal
- * - There is no assigned BondStereocenter on the bond
+ * - There is no assigned BondStereopermutator on the bond
  *
  * A bond meeting the prior criteria:
  * - If not part of a cycle, contributes a full rotatable bond to the sum

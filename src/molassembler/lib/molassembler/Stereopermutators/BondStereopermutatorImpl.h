@@ -1,7 +1,7 @@
-#ifndef INCLUDE_MOLASSEMBLER_BOND_STEREOCENTER_IMPL_H
-#define INCLUDE_MOLASSEMBLER_BOND_STEREOCENTER_IMPL_H
+#ifndef INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_IMPL_H
+#define INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_IMPL_H
 
-#include "molassembler/BondStereocenter.h"
+#include "molassembler/BondStereopermutator.h"
 
 #include "boost/optional.hpp"
 
@@ -10,10 +10,10 @@
 
 namespace molassembler {
 
-struct BondStereocenter::Impl {
+struct BondStereopermutator::Impl {
   Impl(
-    const AtomStereocenter& stereocenterA,
-    const AtomStereocenter& stereocenterB,
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB,
     BondIndex edge
   );
 
@@ -23,14 +23,14 @@ struct BondStereocenter::Impl {
 
   void fit(
     const AngstromWrapper& angstromWrapper,
-    const AtomStereocenter& stereocenterA,
-    const AtomStereocenter& stereocenterB
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB
   );
 
 /* Information */
   boost::optional<unsigned> assigned() const;
 
-  bool hasSameCompositeOrientation(const BondStereocenter::Impl& other) const;
+  bool hasSameCompositeOrientation(const BondStereopermutator::Impl& other) const;
 
   boost::optional<unsigned> indexOfPermutation() const;
 
@@ -39,8 +39,8 @@ struct BondStereocenter::Impl {
   unsigned numStereopermutations() const;
 
   std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
-    const AtomStereocenter& stereocenterA,
-    const AtomStereocenter& stereocenterB
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB
   ) const;
 
   std::string info() const;
@@ -51,8 +51,8 @@ struct BondStereocenter::Impl {
 
   void setModelInformation(
     DistanceGeometry::SpatialModel& model,
-    const AtomStereocenter& stereocenterA,
-    const AtomStereocenter& stereocenterB,
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB,
     double looseningMultiplier
   ) const;
 
@@ -72,8 +72,8 @@ private:
   );
 
   static stereopermutation::Composite::OrientationState _makeOrientationState(
-    const AtomStereocenter& focalStereocenter,
-    const AtomStereocenter& attachedStereocenter
+    const AtomStereopermutator& focalStereopermutator,
+    const AtomStereopermutator& attachedStereopermutator
   );
 };
 

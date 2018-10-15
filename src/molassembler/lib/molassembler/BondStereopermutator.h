@@ -1,8 +1,8 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#ifndef INCLUDE_MOLASSEMBLER_BOND_STEREOCENTER_H
-#define INCLUDE_MOLASSEMBLER_BOND_STEREOCENTER_H
+#ifndef INCLUDE_MOLASSEMBLER_BOND_stereopermutator_H
+#define INCLUDE_MOLASSEMBLER_BOND_stereopermutator_H
 
 #include "boost/optional/optional_fwd.hpp"
 
@@ -22,8 +22,8 @@
  *
  * @brief Handle rotational arrangements of adjacent atom-centered symmetries
  *
- * Contains the BondStereocenter class declaration, which models E/Z double bond
- * stereocenters in molecules.
+ * Contains the BondStereopermutator class declaration, which models E/Z double bond
+ * stereopermutators in molecules.
  */
 
 /* TODO
@@ -36,14 +36,14 @@ namespace molassembler {
 class AngstromWrapper;
 
 // Forward-declarations
-class AtomStereocenter;
+class AtomStereopermutator;
 
 namespace DistanceGeometry {
 class SpatialModel;
 struct ChiralityConstraint;
 } // namespace DistanceGeometry
 
-class BondStereocenter {
+class BondStereopermutator {
 public:
   //! The volume tolerance of emitted chirality constraints
   static constexpr double chiralityConstraintTolerance = 0.1;
@@ -52,20 +52,20 @@ public:
 
 //!@name Special member functions
 //!@{
-  BondStereocenter(BondStereocenter&& other) noexcept;
-  BondStereocenter& operator = (BondStereocenter&& other) noexcept;
-  BondStereocenter(const BondStereocenter& other);
-  BondStereocenter& operator = (const BondStereocenter& other);
-  ~BondStereocenter();
+  BondStereopermutator(BondStereopermutator&& other) noexcept;
+  BondStereopermutator& operator = (BondStereopermutator&& other) noexcept;
+  BondStereopermutator(const BondStereopermutator& other);
+  BondStereopermutator& operator = (const BondStereopermutator& other);
+  ~BondStereopermutator();
 
-  BondStereocenter() = delete;
+  BondStereopermutator() = delete;
   /*!
    * @warning No haptic ligands allowed.
-   * @note The left stereocenter must have the smaller
+   * @note The left stereopermutator must have the smaller
    */
-  BondStereocenter(
-    const AtomStereocenter& stereocenterA,
-    const AtomStereocenter& stereocenterB,
+  BondStereopermutator(
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB,
     const BondIndex& edge
   );
 //!@}
@@ -78,8 +78,8 @@ public:
 
   void fit(
     const AngstromWrapper& angstromWrapper,
-    const AtomStereocenter& stereocenterA,
-    const AtomStereocenter& stereocenterB
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB
   );
 //!@}
 
@@ -87,7 +87,7 @@ public:
 //!@{
   boost::optional<unsigned> assigned() const;
 
-  bool hasSameCompositeOrientation(const BondStereocenter& other) const;
+  bool hasSameCompositeOrientation(const BondStereopermutator& other) const;
 
   boost::optional<unsigned> indexOfPermutation() const;
 
@@ -96,8 +96,8 @@ public:
   unsigned numStereopermutations() const;
 
   std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
-    const AtomStereocenter& stereocenterA,
-    const AtomStereocenter& stereocenterB
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB
   ) const;
 
   std::string info() const;
@@ -108,16 +108,16 @@ public:
 
   void setModelInformation(
     DistanceGeometry::SpatialModel& model,
-    const AtomStereocenter& stereocenterA,
-    const AtomStereocenter& stereocenterB,
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB,
     double looseningMultiplier
   ) const;
 //!@}
 
 //!@name Operators
 //!@{
-  bool operator == (const BondStereocenter& other) const;
-  bool operator != (const BondStereocenter& other) const;
+  bool operator == (const BondStereopermutator& other) const;
+  bool operator != (const BondStereopermutator& other) const;
 //!@}
 
 private:

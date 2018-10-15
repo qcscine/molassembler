@@ -1,9 +1,9 @@
 project(molassemblerTests)
 
-find_package(Boost REQUIRED COMPONENTS unit_test_framework regex)
+find_package(Boost REQUIRED COMPONENTS unit_test_framework regex filesystem)
 
 set(testFiles
-  ${CMAKE_CURRENT_SOURCE_DIR}/BondStereocenter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/BondStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommonTrig.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGExplicitGraph.cpp
@@ -38,10 +38,11 @@ foreach(filename ${testFiles})
     PRIVATE
       Boost::boost
       Boost::regex
-      Boost::unit_test_framework
       gor1
       molassembler
       stereopermutation
+      Boost::unit_test_framework
+      Boost::filesystem
   )
 
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})

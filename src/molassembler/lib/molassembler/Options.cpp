@@ -6,7 +6,7 @@
 #include "boost/range/iterator_range_core.hpp"
 #include "chemical_symmetries/Symmetries.h"
 
-#include "molassembler/AtomStereocenter.h"
+#include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Cycles.h"
 #include "molassembler/OuterGraph.h"
 
@@ -21,15 +21,15 @@ random::Engine& randomnessEngine() {
 TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 
-bool disregardStereocenter(
-  const AtomStereocenter& stereocenter,
+bool disregardStereopermutator(
+  const AtomStereopermutator& stereopermutator,
   const Delib::ElementType centralType,
   const Cycles& cycleData,
   const TemperatureRegime temperatureRegimeSetting
 ) {
   if(
     temperatureRegimeSetting == TemperatureRegime::High
-    && stereocenter.getSymmetry() == Symmetry::Name::CutTetrahedral
+    && stereopermutator.getSymmetry() == Symmetry::Name::CutTetrahedral
     && centralType == Delib::ElementType::N
   ) {
     // Figure out if the nitrogen is in a cycle of size 4 or smaller
@@ -37,7 +37,7 @@ bool disregardStereocenter(
       const auto cyclePtr :
       boost::make_iterator_range(
         cycleData.iteratorPair(
-          Cycles::predicates::ContainsIndex {stereocenter.centralIndex()}
+          Cycles::predicates::ContainsIndex {stereopermutator.centralIndex()}
         )
       )
     ) {
@@ -53,7 +53,7 @@ bool disregardStereocenter(
 }
 
 void pickyFit(
-  AtomStereocenter& stereocenter,
+  AtomStereopermutator& stereopermutator,
   const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper,
   const Symmetry::Name expectedSymmetry
@@ -70,16 +70,16 @@ void pickyFit(
    * future-proof.
    */
   if(
-    graph.elementType(stereocenter.centralIndex()) == Delib::ElementType::C
+    graph.elementType(stereopermutator.centralIndex()) == Delib::ElementType::C
     && expectedSymmetry == Symmetry::Name::Tetrahedral
   ) {
-    stereocenter.fit(
+    stereopermutator.fit(
       graph,
       angstromWrapper,
       {Symmetry::Name::Seesaw, Symmetry::Name::TrigonalPyramidal}
     );
   } else {
-    stereocenter.fit(graph, angstromWrapper);
+    stereopermutator.fit(graph, angstromWrapper);
   }
 }
 

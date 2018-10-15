@@ -1,7 +1,7 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#define BOOST_TEST_MODULE BondStereocenterTestModule
+#define BOOST_TEST_MODULE BondStereopermutatorTestModule
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
@@ -10,7 +10,7 @@
 #include "molassembler/Conformers.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 #include <iostream>
 
@@ -45,7 +45,7 @@ struct Expectation {
 };
 
 /* This is the current interpretation of yielded indices of permutations of
- * BondStereocenter for all combinations of the symmetries trigonal planar and
+ * BondStereopermutator for all combinations of the symmetries trigonal planar and
  * bent.
  */
 constexpr unsigned Z = 1;
@@ -78,7 +78,7 @@ std::map<std::string, Expectation> recognitionExpectations {
     "methanimine",
     {{0, 1}, nonStereogenic}
   }
-  // formaldehyde is omitted, since there cannot be a BondStereocenter on it
+  // formaldehyde is omitted, since there cannot be a BondStereopermutator on it
 };
 
 void checkExpectations(const boost::filesystem::path& filePath) {
@@ -95,42 +95,42 @@ void checkExpectations(const boost::filesystem::path& filePath) {
   // Check if expectations are met
   auto findIter = recognitionExpectations.find(filePath.stem().string());
   if(findIter == std::end(recognitionExpectations)) {
-    // There should be no BondStereocenter in this molecule
-    auto bondStereocenterRange = mol.stereocenters().bondStereocenters();
+    // There should be no BondStereopermutator in this molecule
+    auto bondStereopermutatorRange = mol.stereopermutators().bondStereopermutators();
     BOOST_CHECK(
       std::distance(
-        std::begin(bondStereocenterRange),
-        std::end(bondStereocenterRange)
+        std::begin(bondStereopermutatorRange),
+        std::end(bondStereopermutatorRange)
       ) == 0
     );
 
-    /* No DG work is needed since it doesn't involve BondStereocenter (there
+    /* No DG work is needed since it doesn't involve BondStereopermutator (there
      * are none in the molecule)
      */
   } else {
     const Expectation& expectation = findIter->second;
-    auto bondStereocenterOption = mol.stereocenters().option(expectation.edge);
+    auto bondStereopermutatorOption = mol.stereopermutators().option(expectation.edge);
 
     BOOST_REQUIRE_MESSAGE(
-      bondStereocenterOption,
-      "There is no BondStereocenter on the expected edge for " << moleculeName
+      bondStereopermutatorOption,
+      "There is no BondStereopermutator on the expected edge for " << moleculeName
     );
 
     BOOST_REQUIRE_MESSAGE(
-      bondStereocenterOption->numStereopermutations() == expectation.numPermutations,
+      bondStereopermutatorOption->numStereopermutations() == expectation.numPermutations,
       "The expected number of permutations was not met for " << moleculeName
         << ": expected " << expectation.numPermutations << ", got "
-        << bondStereocenterOption->numStereopermutations()
+        << bondStereopermutatorOption->numStereopermutations()
     );
 
     if(expectation.numPermutations == stereogenic) {
-      auto assignmentOptional = bondStereocenterOption->assigned();
+      auto assignmentOptional = bondStereopermutatorOption->assigned();
 
       BOOST_REQUIRE(assignmentOptional);
 
       BOOST_REQUIRE_MESSAGE(
         assignmentOptional.value() == expectation.fittedAssignment,
-        "The stereocenter is not assigned the expected value for "
+        "The stereopermutator is not assigned the expected value for "
           << moleculeName << ": Expected " << expectation.fittedAssignment
           << ", got " << *assignmentOptional << " instead"
       );
@@ -165,7 +165,7 @@ void checkExpectations(const boost::filesystem::path& filePath) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(stereocenterExpectationTests) {
+BOOST_AUTO_TEST_CASE(stereopermutatorExpectationTests) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")

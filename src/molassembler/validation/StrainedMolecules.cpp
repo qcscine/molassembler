@@ -11,7 +11,7 @@
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 #include <iostream>
 
@@ -20,13 +20,13 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
 
   auto mol = IO::read("inorganics/multidentate/Co(ox)3.mol");
 
-  const auto& stereocenterOption = mol.stereocenters().option(0);
-  assert(stereocenterOption);
+  const auto& stereopermutatorOption = mol.stereopermutators().option(0);
+  assert(stereopermutatorOption);
 
-  unsigned N = stereocenterOption -> numAssignments();
+  unsigned N = stereopermutatorOption -> numAssignments();
 
   for(unsigned i = 0; i < N; ++i) {
-    mol.assignStereocenter(0, i);
+    mol.assignStereopermutator(0, i);
 
     auto ensembleResult = generateEnsemble(mol, 10);
     if(!ensembleResult) {

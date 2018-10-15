@@ -17,7 +17,7 @@
  *
  * The minimization proceeds in two stages. In the first stage, the
  * conformation is permitted to expand into a fourth spatial dimension to aid
- * in stereocenter inversion. Afterwards, the absolute value of the fourth
+ * in stereopermutator inversion. Afterwards, the absolute value of the fourth
  * spatial dimension is penalized and compressed out.
  *
  * This set of minimization strategies is intended for debugging. They create,

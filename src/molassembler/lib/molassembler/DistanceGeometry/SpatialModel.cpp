@@ -45,7 +45,7 @@ SpatialModel::SpatialModel(
   const double looseningMultiplier
 ) : _molecule(molecule),
     _looseningMultiplier(looseningMultiplier),
-    _stereocenters(molecule.stereocenters())
+    _stereopermutators(molecule.stereopermutators())
 {
   /* This is overall a pretty complicated constructor since it encompasses the
    * entire conversion from a molecular graph into some model of the internal
@@ -56,23 +56,23 @@ SpatialModel::SpatialModel(
    * - Make helper variables
    * - Set 1-2 bounds.
    * - Gather information on local geometries of all non-terminal atoms, using
-   *   the existing stereocenter data and supplanting it with random-assignment
-   *   inferred stereocenters on all other non-terminal atoms or double bonds.
+   *   the existing stereopermutator data and supplanting it with random-assignment
+   *   inferred stereopermutators on all other non-terminal atoms or double bonds.
    *
-   *   - Copy original molecule's list of stereocenters. Set unassigned ones to
+   *   - Copy original molecule's list of stereopermutators. Set unassigned ones to
    *     a random assignment (consistent with occurrence statistics)
-   *   - Instantiate BondStereocenters on all double bonds that aren't immediately
-   *     involved in other stereocenters. This is to ensure that all atoms
+   *   - Instantiate BondStereopermutators on all double bonds that aren't immediately
+   *     involved in other stereopermutators. This is to ensure that all atoms
    *     involved in non-stereogenic double bonds are also flat in the
    *     resulting 3D structure. They additionally allow extraction of
-   *     angle and dihedral angle information just like AtomStereocenters.
-   *   - Instantiate AtomStereocenters on all remaining atoms and default-assign
+   *     angle and dihedral angle information just like AtomStereopermutators.
+   *   - Instantiate AtomStereopermutators on all remaining atoms and default-assign
    *     them. This is so that we can get angle data between substituents easily.
    *
    * - Set internal angles of all small flat cycles
    * - Set all remaining 1-3 bounds with additional tolerance if atoms involved
    *   in the angle are part of a small cycle
-   * - Add BondStereocenter 1-4 bound information
+   * - Add BondStereopermutator 1-4 bound information
    */
 
   // Helper variables
@@ -102,7 +102,7 @@ SpatialModel::SpatialModel(
   ) {
     BondType bondType = inner.bondType(edge);
 
-    // Do not model eta bonds, stereocenters are responsible for those
+    // Do not model eta bonds, stereopermutators are responsible for those
     if(bondType == BondType::Eta) {
       continue;
     }
@@ -122,18 +122,18 @@ SpatialModel::SpatialModel(
     );
   }
 
-  /* The StereocenterList is already copy initialized with the Molecule's
-   * stereocenters, but we need to instantiate AtomStereocenters everywhere,
+  /* The StereopermutatorList is already copy initialized with the Molecule's
+   * stereopermutators, but we need to instantiate AtomStereopermutators everywhere,
    * regardless of whether they are stereogenic or not, to ensure that
    * modelling gets the information it needs.
    *
-   * So for every missing non-terminal atom, create a AtomStereocenter in the
+   * So for every missing non-terminal atom, create a AtomStereopermutator in the
    * determined geometry
    */
   const unsigned N = molecule.graph().N();
   for(unsigned i = 0; i < N; ++i) {
-    // Already an instantiated AtomStereocenter?
-    if(_stereocenters.option(i)) {
+    // Already an instantiated AtomStereopermutator?
+    if(_stereopermutators.option(i)) {
       continue;
     }
 
@@ -146,25 +146,25 @@ SpatialModel::SpatialModel(
 
     Symmetry::Name localSymmetry = molecule.determineLocalGeometry(i, localRanking);
 
-    auto newStereocenter = AtomStereocenter {
+    auto newStereopermutator = AtomStereopermutator {
       molecule.graph(),
       localSymmetry,
       i,
       std::move(localRanking)
     };
 
-    /* New stereocenters encountered at this point can have multiple
-     * assignments, since some types of stereocenters are flatly ignored by the
+    /* New stereopermutators encountered at this point can have multiple
+     * assignments, since some types of stereopermutators are flatly ignored by the
      * candidate functions from Molecule, such as trigonal pyramidal nitrogens.
      * These are found here, though, and MUST be chosen randomly according to
      * the relative weights to get a single conformation in the final model
      */
-    newStereocenter.assignRandom();
+    newStereopermutator.assignRandom();
 
-    // Add it to the list of stereocenters
-    _stereocenters.add(
+    // Add it to the list of stereopermutators
+    _stereopermutators.add(
       i,
-      std::move(newStereocenter)
+      std::move(newStereopermutator)
     );
   }
 
@@ -319,24 +319,24 @@ SpatialModel::SpatialModel(
     return 1.0;
   };
 
-  // Get 1-3 information from AtomStereocenters
-  for(const auto& stereocenter : _stereocenters.atomStereocenters()) {
-    stereocenter.setModelInformation(
+  // Get 1-3 information from AtomStereopermutators
+  for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
+    stereopermutator.setModelInformation(
       *this,
       cycleMultiplierForIndex,
       looseningMultiplier
     );
   }
 
-  // Get 1-4 information from BondStereocenters
-  for(const auto& bondStereocenter : _stereocenters.bondStereocenters()) {
-    bondStereocenter.setModelInformation(
+  // Get 1-4 information from BondStereopermutators
+  for(const auto& bondStereopermutator : _stereopermutators.bondStereopermutators()) {
+    bondStereopermutator.setModelInformation(
       *this,
-      _stereocenters.option(
-        bondStereocenter.edge().first
+      _stereopermutators.option(
+        bondStereopermutator.edge().first
       ).value(),
-      _stereocenters.option(
-        bondStereocenter.edge().second
+      _stereopermutators.option(
+        bondStereopermutator.edge().second
       ).value(),
       looseningMultiplier
     );
@@ -349,12 +349,12 @@ SpatialModel::SpatialModel(
    * We also only have to worry about modeling them if the two URFs are
    * particularly small, i.e. are sizes 3-5
    */
-  for(const auto& stereocenter : _stereocenters.atomStereocenters()) {
-    AtomIndex i = stereocenter.centralIndex();
+  for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
+    AtomIndex i = stereopermutator.centralIndex();
 
-    // Skip any stereocenters that do not match our conditions
+    // Skip any stereopermutators that do not match our conditions
     if(
-      stereocenter.getSymmetry() != Symmetry::Name::Tetrahedral
+      stereopermutator.getSymmetry() != Symmetry::Name::Tetrahedral
       || cycleData.numCycleFamilies(i) != 2
     ) {
       continue;
@@ -847,27 +847,27 @@ ValueBounds SpatialModel::ligandDistance(
 std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
   std::vector<DistanceGeometry::ChiralityConstraint> constraints;
 
-  for(const auto& stereocenter : _stereocenters.atomStereocenters()) {
-    auto stereocenterConstraints = stereocenter.chiralityConstraints(_looseningMultiplier);
+  for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
+    auto stereopermutatorConstraints = stereopermutator.chiralityConstraints(_looseningMultiplier);
 
     std::move(
-      std::begin(stereocenterConstraints),
-      std::end(stereocenterConstraints),
+      std::begin(stereopermutatorConstraints),
+      std::end(stereopermutatorConstraints),
       std::back_inserter(constraints)
     );
   }
 
-  for(const auto& bondStereocenter : _stereocenters.bondStereocenters()) {
-    auto stereocenterConstraints = bondStereocenter.chiralityConstraints(
-      _stereocenters.option(
-        bondStereocenter.edge().first
+  for(const auto& bondStereopermutator : _stereopermutators.bondStereopermutators()) {
+    auto stereopermutatorConstraints = bondStereopermutator.chiralityConstraints(
+      _stereopermutators.option(
+        bondStereopermutator.edge().first
       ).value(),
-      _stereocenters.option(
-        bondStereocenter.edge().second
+      _stereopermutators.option(
+        bondStereopermutator.edge().second
       ).value()
     );
 
-    /* BondStereocenter issues ±0 chirality constraints since it does not have
+    /* BondStereopermutator issues ±0 chirality constraints since it does not have
      * all of the available information regarding the internal coordinates it
      * needs to calculate its bounds. Here, after construction of SpatialModel,
      * we have all the internal coordinate information we require to calculate
@@ -889,21 +889,21 @@ std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityCon
     /* This is not a good place to perform this work.
      *
      * - chirality constraints are haptic-level, and pretending all
-     *   bond stereocenters are not is limiting
-     * - Moving it to BondStereocenter (where principally all knowledge is
-     *   available due to references to its constituting atom stereocenters)
+     *   bond stereopermutators are not is limiting
+     * - Moving it to BondStereopermutator (where principally all knowledge is
+     *   available due to references to its constituting atom stereopermutators)
      *   is hardly ideal either because it has no knowledge on other constraints
      *   placed on any given atom pair that may be placed in the SpatialModel
      *   constructor or elsewhere
-     * - Ideally, all spatial modelling, even of atomstereocenter's haptic
+     * - Ideally, all spatial modelling, even of atomstereopermutator's haptic
      *   ligands (which is needed for the reduction of stereopermutations to
      *   assignments in haptic ligands and otherwise) should be moved to within
      *   this class
      */
 
     std::move(
-      std::begin(stereocenterConstraints),
-      std::end(stereocenterConstraints),
+      std::begin(stereopermutatorConstraints),
+      std::end(stereopermutatorConstraints),
       std::back_inserter(constraints)
     );
   }
@@ -966,22 +966,22 @@ struct SpatialModel::ModelGraphWriter {
       << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
       << "  edge [fontname = \"Arial\"];\n";
 
-    /* Additional nodes: BondStereocenters */
-    for(const auto& bondStereocenter : spatialModel._stereocenters.bondStereocenters()) {
+    /* Additional nodes: BondStereopermutators */
+    for(const auto& bondStereopermutator : spatialModel._stereopermutators.bondStereopermutators()) {
       std::string state;
-      if(bondStereocenter.assigned()) {
-        state = std::to_string(bondStereocenter.assigned().value());
+      if(bondStereopermutator.assigned()) {
+        state = std::to_string(bondStereopermutator.assigned().value());
       } else {
         state = "u";
       }
 
-      state += "/"s + std::to_string(bondStereocenter.numStereopermutations());
+      state += "/"s + std::to_string(bondStereopermutator.numStereopermutations());
 
       std::string graphNodeName = "BS"
-        + std::to_string(bondStereocenter.edge().first)
-        + std::to_string(bondStereocenter.edge().second);
+        + std::to_string(bondStereopermutator.edge().first)
+        + std::to_string(bondStereopermutator.edge().second);
 
-      std::vector<std::string> tooltipStrings {bondStereocenter.info()};
+      std::vector<std::string> tooltipStrings {bondStereopermutator.info()};
 
       // Find any enforced dihedrals
       for(const auto& dihedralMapPair : spatialModel._dihedralBounds) {
@@ -989,11 +989,11 @@ struct SpatialModel::ModelGraphWriter {
         const auto& dihedralBounds = dihedralMapPair.second;
         if(
           (
-            indexSequence.at(1) == bondStereocenter.edge().first
-            && indexSequence.at(2) == bondStereocenter.edge().second
+            indexSequence.at(1) == bondStereopermutator.edge().first
+            && indexSequence.at(2) == bondStereopermutator.edge().second
           ) || (
-            indexSequence.at(1) == bondStereocenter.edge().second
-            && indexSequence.at(2) == bondStereocenter.edge().first
+            indexSequence.at(1) == bondStereopermutator.edge().second
+            && indexSequence.at(2) == bondStereopermutator.edge().first
           )
         ) {
           tooltipStrings.emplace_back(
@@ -1019,10 +1019,10 @@ struct SpatialModel::ModelGraphWriter {
         << R"("];)" << "\n";
 
       // Add connections to the vertices (although those don't exist yet)
-      os << "  " << graphNodeName << " -- " << bondStereocenter.edge().first
+      os << "  " << graphNodeName << " -- " << bondStereopermutator.edge().first
         << R"( [color="gray", dir="forward", len="2"];)"
         << "\n";
-      os << "  " << graphNodeName << " -- " << bondStereocenter.edge().second
+      os << "  " << graphNodeName << " -- " << bondStereopermutator.edge().second
         << R"( [color="gray", dir="forward", len="2"];)"
         << "\n";
     }
@@ -1063,12 +1063,12 @@ struct SpatialModel::ModelGraphWriter {
     // Any angles this atom is the central atom in
     std::vector<std::string> tooltipStrings;
 
-    if(auto stereocenterOption = spatialModel._stereocenters.option(vertexIndex)) {
+    if(auto stereopermutatorOption = spatialModel._stereopermutators.option(vertexIndex)) {
       tooltipStrings.emplace_back(
-        Symmetry::name(stereocenterOption.value().getSymmetry())
+        Symmetry::name(stereopermutatorOption.value().getSymmetry())
       );
       tooltipStrings.emplace_back(
-        stereocenterOption.value().info()
+        stereopermutatorOption.value().info()
       );
     }
 
@@ -1292,7 +1292,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
    *
    * However, a path specific approach cannot treat branched haptic ligands
    * (i.e. PN3 where both P and N bond to the metal), and we would need access
-   * to the Molecule's StereocenterList in both cases. In that case, this
+   * to the Molecule's StereopermutatorList in both cases. In that case, this
    * function, which should only be instrumental to devising which
    * stereopermutations are obviously impossible, is out of its depth. Perform
    * any additional modelling when the spatial model requires more information,

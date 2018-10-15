@@ -21,7 +21,7 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/Options.h"
-#include "molassembler/StereocenterList.h"
+#include "molassembler/StereopermutatorList.h"
 
 #include <iostream>
 
@@ -94,17 +94,17 @@ HashArgumentsType randomArguments() {
       temple::random::getSingle<unsigned>(0, 6, randomnessEngine())
     );
 
-    bool bondStereocenterPresent = temple::random::getSingle<bool>(randomnessEngine());
-    boost::optional<unsigned> bondStereocenterAssignment = boost::none;
+    bool bondStereopermutatorPresent = temple::random::getSingle<bool>(randomnessEngine());
+    boost::optional<unsigned> bondStereopermutatorAssignment = boost::none;
 
-    if(bondStereocenterPresent) {
-      bondStereocenterAssignment = temple::random::getSingle<unsigned>(0, 1, randomnessEngine());
+    if(bondStereopermutatorPresent) {
+      bondStereopermutatorAssignment = temple::random::getSingle<unsigned>(0, 1, randomnessEngine());
     }
 
     return {
       bty,
-      bondStereocenterPresent,
-      bondStereocenterAssignment
+      bondStereopermutatorPresent,
+      bondStereopermutatorAssignment
     };
   };
 
@@ -243,16 +243,16 @@ BOOST_AUTO_TEST_CASE(basicRSInequivalencyTests) {
   a.setGeometryAtAtom(0, Symmetry::Name::Tetrahedral);
 
   // Make sure it's recognized as asymmetric
-  auto centralStereocenterOption = a.stereocenters().option(0);
+  auto centralStereopermutatorOption = a.stereopermutators().option(0);
   BOOST_CHECK(
-    centralStereocenterOption
-    && centralStereocenterOption->numStereopermutations() == 2
+    centralStereopermutatorOption
+    && centralStereopermutatorOption->numStereopermutations() == 2
   );
 
   // Assign it and create its opposite stereopermutation in another Molecule
-  a.assignStereocenter(0, 0);
+  a.assignStereopermutator(0, 0);
   Molecule b = a;
-  b.assignStereocenter(0, 1);
+  b.assignStereopermutator(0, 1);
 
   // These must compare unequal
   BOOST_CHECK(a != b);
@@ -269,24 +269,24 @@ BOOST_AUTO_TEST_CASE(basicEZInequivalencyTests) {
   a.setGeometryAtAtom(0, Symmetry::Name::TrigonalPlanar);
   a.setGeometryAtAtom(1, Symmetry::Name::TrigonalPlanar);
 
-  // Progression must recognize the new stereocenter
-  auto stereocenterOption = a.stereocenters().option(
+  // Progression must recognize the new stereopermutator
+  auto stereopermutatorOption = a.stereopermutators().option(
     BondIndex {0, 1}
   );
   BOOST_CHECK(
-    stereocenterOption
-    && stereocenterOption->numStereopermutations() == 2
+    stereopermutatorOption
+    && stereopermutatorOption->numStereopermutations() == 2
   );
 
   std::cout << a << "\n";
 
-  a.assignStereocenter(
+  a.assignStereopermutator(
     BondIndex {0, 1},
     0
   );
 
   Molecule b = a;
-  b.assignStereocenter(
+  b.assignStereopermutator(
     BondIndex {0, 1},
     1
   );
@@ -299,13 +299,13 @@ bool isStereogenic(
   const Molecule& molecule,
   AtomIndex i
 ) {
-  auto stereocenterOption = molecule.stereocenters().option(i);
+  auto stereopermutatorOption = molecule.stereopermutators().option(i);
 
-  if(!stereocenterOption) {
+  if(!stereopermutatorOption) {
     return false;
   }
 
-  if(stereocenterOption->numStereopermutations() <= 1) {
+  if(stereopermutatorOption->numStereopermutations() <= 1) {
     return false;
   }
 
@@ -323,22 +323,22 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   AtomIndex central = 0;
   std::array<AtomIndex, 2> outer {{1, 6}};
 
-  /* If the outer stereocenters have the same assignment, the central
-   * stereocenter shouldn't exist. If the outer stereocenters have a different
-   * assignment, the central stereocenter has to exist.
+  /* If the outer stereopermutators have the same assignment, the central
+   * stereopermutator shouldn't exist. If the outer stereopermutators have a different
+   * assignment, the central stereopermutator has to exist.
    *
    * Initially, we have
    * 0 -> 1 r
    * 1 -> 1 R
    * 6 -> 0 S
    */
-  // Make 1 from R to S -> stereocenter should disappear
-  pseudocenter.assignStereocenter(outer.front(), 0);
+  // Make 1 from R to S -> stereopermutator should disappear
+  pseudocenter.assignStereopermutator(outer.front(), 0);
 
   BOOST_CHECK(!isStereogenic(pseudocenter, central));
 
-  // Make 6 from S to R -> stereocenter should reappear
-  pseudocenter.assignStereocenter(outer.back(), 1);
+  // Make 6 from S to R -> stereopermutator should reappear
+  pseudocenter.assignStereopermutator(outer.back(), 1);
 
   BOOST_CHECK(isStereogenic(pseudocenter, central));
 }

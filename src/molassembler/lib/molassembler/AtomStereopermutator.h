@@ -1,8 +1,8 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#ifndef INCLUDE_MOLASSEMBLER_ATOM_STEREOCENTER_H
-#define INCLUDE_MOLASSEMBLER_ATOM_STEREOCENTER_H
+#ifndef INCLUDE_MOLASSEMBLER_ATOM_stereopermutator_H
+#define INCLUDE_MOLASSEMBLER_ATOM_stereopermutator_H
 
 #include "molassembler/Options.h"
 #include "molassembler/OuterGraph.h"
@@ -18,7 +18,7 @@ using namespace std::string_literals;
  *
  * @brief Handle arrangements of substituents around an atom-centered symmetry
  *
- * Coordinative stereocenter class header file. Permits the storage of
+ * Coordinative stereopermutator class header file. Permits the storage of
  * particular arrangements of bonded atoms around a central atom and their
  * manipulation.
  *
@@ -45,23 +45,23 @@ struct ChiralityConstraint;
 
 namespace molassembler {
 
-class AtomStereocenter {
+class AtomStereopermutator {
 public:
 //!@name Special member functions
 //!@{
-  AtomStereocenter(AtomStereocenter&& other) noexcept;
-  AtomStereocenter& operator = (AtomStereocenter&& other) noexcept;
-  AtomStereocenter(const AtomStereocenter& other);
-  AtomStereocenter& operator = (const AtomStereocenter& other);
-  ~AtomStereocenter();
+  AtomStereopermutator(AtomStereopermutator&& other) noexcept;
+  AtomStereopermutator& operator = (AtomStereopermutator&& other) noexcept;
+  AtomStereopermutator(const AtomStereopermutator& other);
+  AtomStereopermutator& operator = (const AtomStereopermutator& other);
+  ~AtomStereopermutator();
 
-  //! Construct an AtomStereocenter
-  AtomStereocenter(
+  //! Construct an AtomStereopermutator
+  AtomStereopermutator(
     // The base graph
     const OuterGraph& graph,
-    // The symmetry of this Stereocenter
+    // The symmetry of this Stereopermutator
     Symmetry::Name symmetry,
-    // The atom this Stereocenter is centered on
+    // The atom this Stereopermutator is centered on
     AtomIndex centerAtom,
     // Ranking information of substituents
     RankingInformation ranking
@@ -71,8 +71,8 @@ public:
 //!@name Modifiers
 //!@{
   /*!
-   * Handles the addition of a new substituent to the stereocenter. If the
-   * stereocenter contains chiral state, it is attempted to transfer the state
+   * Handles the addition of a new substituent to the stereopermutator. If the
+   * stereopermutator contains chiral state, it is attempted to transfer the state
    * into the new assignment space according to the supplied chiral state
    * preservation options
    */
@@ -84,10 +84,10 @@ public:
     ChiralStatePreservation preservationOption
   );
 
-  //! Changes the assignment of the stereocenter
+  //! Changes the assignment of the stereopermutator
   void assign(boost::optional<unsigned> assignment);
 
-  //! Assigns the Stereocenter randomly using relative assignment weights
+  //! Assigns the Stereopermutator randomly using relative assignment weights
   void assignRandom();
 
   /*!
@@ -102,9 +102,9 @@ public:
   );
 
   /*!
-   * In case a graph modification changes the ranking of this stereocenter's
+   * In case a graph modification changes the ranking of this stereopermutator's
    * substituents, it must be redetermined whether the new configuration is a
-   * stereocenter and if so, which assignment corresponds to the previous one.
+   * stereopermutator and if so, which assignment corresponds to the previous one.
    */
   void propagateGraphChange(
     const OuterGraph& graph,
@@ -118,8 +118,8 @@ public:
   void propagateVertexRemoval(AtomIndex removedIndex);
 
   /*!
-   * Handles the removal of a substituent from the stereocenter. If the
-   * stereocenter carries chiral information, a new assignment can be chosen
+   * Handles the removal of a substituent from the stereopermutator. If the
+   * stereopermutator carries chiral information, a new assignment can be chosen
    * according to the supplide chiral state preservation option.
    */
   void removeSubstituent(
@@ -144,7 +144,7 @@ public:
 
   /*! Returns the permutation index within the set of possible permutations, if set
    *
-   * Returns the (public) information of whether the stereocenter is assigned
+   * Returns the (public) information of whether the stereopermutator is assigned
    * or not, and if so, which assignment it is.
    */
   boost::optional<unsigned> assigned() const;
@@ -191,7 +191,7 @@ public:
 
   /*! Yields the mapping from ligand indices to symmetry positions
    *
-   * \throws std::logic_error if the stereocenter is unassigned.
+   * \throws std::logic_error if the stereopermutator is unassigned.
    */
   std::vector<unsigned> getSymmetryPositionMap() const;
 
@@ -246,9 +246,9 @@ public:
 
 //!@name Operators
 //!@{
-  bool operator == (const AtomStereocenter& other) const;
-  bool operator != (const AtomStereocenter& other) const;
-  bool operator < (const AtomStereocenter& other) const;
+  bool operator == (const AtomStereopermutator& other) const;
+  bool operator != (const AtomStereopermutator& other) const;
+  bool operator < (const AtomStereopermutator& other) const;
 //!@}
 
 private:

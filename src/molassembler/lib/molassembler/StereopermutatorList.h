@@ -1,0 +1,135 @@
+// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+// See LICENSE.txt for details.
+
+#ifndef INCLUDE_MOLASSEMBLER_stereopermutator_LIST_H
+#define INCLUDE_MOLASSEMBLER_stereopermutator_LIST_H
+
+#include "boost/range/adaptor/map.hpp"
+
+#include "temple/constexpr/Bitmask.h"
+
+#include "molassembler/AtomStereopermutator.h"
+#include "molassembler/BondStereopermutator.h"
+
+#include <unordered_map>
+#include <map>
+
+/*! @file
+ *
+ * @brief Owning class storing all stereopermutators in a molecule
+ *
+ * Contains the declaration for a class that stores a list of all stereopermutators
+ * in a molecule.
+ */
+
+/* TODO
+ * - Make a hash for BondIndex so we can use unordered_map.
+ *   I think this is impossible since access to the edge_desciptor's source and
+ *   target vertices requires a bgl graph instance to be called. Perhaps as soon
+ *   as graph exists instead?
+ * - bond stereopermutator state propagation
+ * - pImpl could remove header dependencies on AtomStereopermutator and
+ *   BondStereopermutator
+ */
+
+namespace molassembler {
+
+class StereopermutatorList {
+public:
+/* Typedefs */
+  using AtomMapType = std::unordered_map<AtomIndex, AtomStereopermutator>;
+  using BondMapType = std::map<BondIndex, BondStereopermutator>;
+
+/* Modification */
+  //! Add a new AtomStereopermutator to the list
+  void add(AtomIndex i, AtomStereopermutator stereopermutator);
+
+  //! Add a new BondStereopermutator to the list
+  void add(const BondIndex& edge, BondStereopermutator stereopermutator);
+
+  //! Remove all stereopermutators
+  void clear();
+
+  //! Remove all stereopermutators on bonds
+  void clearBonds();
+
+  //! Fetch a reference-option to an AtomStereopermutator, if present
+  boost::optional<AtomStereopermutator&> option(AtomIndex index);
+
+  //! Fetch a reference-option to an BondStereopermutator, if present
+  boost::optional<BondStereopermutator&> option(const BondIndex& edge);
+
+  /*! Communicates the removal of a vertex index to all stereopermutators in the list
+   *
+   * Removing a vertex invalidates some vertex descriptors, which are used
+   * liberally in the stereopermutator classes. This function ensures that
+   * vertex descriptors are valid throughout.
+   */
+  void propagateVertexRemoval(AtomIndex removedIndex);
+
+  //! Removes the AtomStereopermutator on a specified index
+  void remove(AtomIndex index);
+
+  //! Removes the BondStereopermutator on a specified edge
+  void remove(const BondIndex& edge);
+
+  //! Removes the AtomStereopermutator on a specified index, if present
+  void try_remove(AtomIndex index);
+
+  //! Removes the BondStereopermutator on a specified edge, if present
+  void try_remove(const BondIndex& edge);
+
+/* Information */
+  //! Modular comparison with another StereopermutatorList using a bitmask
+  bool compare(
+    const StereopermutatorList& other,
+    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  ) const;
+
+  //! Returns true if there are no stereopermutators
+  bool empty() const;
+
+  //! Returns true if there are any stereopermutators with zero possible assignments
+  bool hasZeroAssignmentStereopermutators() const;
+
+  //! Returns true if there are unassigned stereopermutators
+  bool hasUnassignedStereopermutators() const;
+
+  //! Fetch a const ref-option to an AtomStereopermutator, if present
+  boost::optional<const AtomStereopermutator&> option(AtomIndex index) const;
+
+  //! Fetch a const ref-option to an BondStereopermutator, if present
+  boost::optional<const BondStereopermutator&> option(const BondIndex& edge) const;
+
+  //! Combined size of atom and bond-stereopermutator lists
+  unsigned size() const;
+
+/* Iterators */
+  //! Returns an iterable object with modifiable atom stereopermutator references
+  boost::range_detail::select_second_mutable_range<AtomMapType> atomStereopermutators();
+
+  //! Returns an iterable object with unmodifiable atom stereopermutator references
+  boost::range_detail::select_second_const_range<AtomMapType> atomStereopermutators() const;
+
+  //! Returns an iterable object with modifiable bond stereopermutator references
+  boost::range_detail::select_second_mutable_range<BondMapType> bondStereopermutators();
+
+  //! Returns an iterable object with unmodifiable bond stereopermutator references
+  boost::range_detail::select_second_const_range<BondMapType> bondStereopermutators() const;
+
+/* Operators */
+  //! Strict equality comparison
+  bool operator == (const StereopermutatorList& other) const;
+  bool operator != (const StereopermutatorList& other) const;
+
+private:
+  //! The underlying storage for atom stereopermutators
+  AtomMapType _atomStereopermutators;
+
+  //! The underlying storage for bond stereopermutators
+  BondMapType _bondStereopermutators;
+};
+
+}
+
+#endif

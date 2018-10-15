@@ -34,7 +34,7 @@ AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
 
-//! Assigns any unassigned stereocenters in a molecule at random
+//! Assigns any unassigned stereopermutators in a molecule at random
 Molecule narrow(Molecule moleculeCopy);
 
 } // namespace detail

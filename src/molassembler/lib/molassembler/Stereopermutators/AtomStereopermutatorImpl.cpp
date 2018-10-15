@@ -1,4 +1,4 @@
-#include "molassembler/Stereocenters/AtomStereocenterImpl.h"
+#include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
 #include "chemical_symmetries/Properties.h"
 #include "chemical_symmetries/DynamicProperties.h"
@@ -27,11 +27,11 @@ namespace molassembler {
 
 /* Static functions */
 /* Constructors */
-AtomStereocenter::Impl::Impl(
+AtomStereopermutator::Impl::Impl(
   const OuterGraph& graph,
-  // The symmetry of this Stereocenter
+  // The symmetry of this Stereopermutator
   const Symmetry::Name symmetry,
-  // The atom this Stereocenter is centered on
+  // The atom this Stereopermutator is centered on
   const AtomIndex centerAtom,
   // Ranking information of substituents
   RankingInformation ranking
@@ -49,7 +49,7 @@ AtomStereocenter::Impl::Impl(
 }
 
 /* Modification */
-void AtomStereocenter::Impl::addSubstituent(
+void AtomStereopermutator::Impl::addSubstituent(
   const OuterGraph& graph,
   const AtomIndex newSubstituentIndex,
   RankingInformation newRanking,
@@ -168,7 +168,7 @@ void AtomStereocenter::Impl::addSubstituent(
         }
       }
       /* If no mapping can be found that fits to the preservationOption,
-       * newStereopermutation remains boost::none, and this stereocenter loses
+       * newStereopermutation remains boost::none, and this stereopermutator loses
        * any chiral information it may have had.
        */
     }
@@ -209,7 +209,7 @@ void AtomStereocenter::Impl::addSubstituent(
   assign(newStereopermutation);
 }
 
-void AtomStereocenter::Impl::assign(boost::optional<unsigned> assignment) {
+void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   if(assignment) {
     assert(assignment.value() < _cache.feasiblePermutations.size());
   }
@@ -234,7 +234,7 @@ void AtomStereocenter::Impl::assign(boost::optional<unsigned> assignment) {
   }
 }
 
-void AtomStereocenter::Impl::assignRandom() {
+void AtomStereopermutator::Impl::assignRandom() {
   assign(
     temple::random::pickDiscrete(
       // Map the feasible permutations onto their weights
@@ -249,7 +249,7 @@ void AtomStereocenter::Impl::assignRandom() {
   );
 }
 
-void AtomStereocenter::Impl::propagateGraphChange(
+void AtomStereopermutator::Impl::propagateGraphChange(
   const OuterGraph& graph,
   RankingInformation newRanking
 ) {
@@ -271,7 +271,7 @@ void AtomStereocenter::Impl::propagateGraphChange(
 
   /* Before we overwrite class state, we need to figure out which assignment
    * in the new set of assignments corresponds to the one we have now.
-   * This is only necessary in the case that the stereocenter is currently
+   * This is only necessary in the case that the stereopermutator is currently
    * assigned and only possible if the new number of assignments is smaller or
    * equal to the amount we have currently.
    *
@@ -334,13 +334,13 @@ void AtomStereocenter::Impl::propagateGraphChange(
   assign(newStereopermutation);
 }
 
-void AtomStereocenter::Impl::propagateVertexRemoval(const AtomIndex removedIndex) {
+void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedIndex) {
   /* This function replaces any occurrences of the atom index that is being
    * removed in the global state with a placeholder of the same type and updates
    * any invalidated atom indices.
    */
 
-  /* If the central atom is being removed, just drop this stereocenter
+  /* If the central atom is being removed, just drop this stereopermutator
    * beforehand in caller. This would just be unnecessary work.
    */
   assert(_centerAtom != removedIndex);
@@ -387,7 +387,7 @@ void AtomStereocenter::Impl::propagateVertexRemoval(const AtomIndex removedIndex
   }
 }
 
-void AtomStereocenter::Impl::removeSubstituent(
+void AtomStereopermutator::Impl::removeSubstituent(
   const OuterGraph& graph,
   const AtomIndex which,
   RankingInformation newRanking,
@@ -566,18 +566,18 @@ void AtomStereocenter::Impl::removeSubstituent(
   assign(newStereopermutation);
 }
 
-const RankingInformation& AtomStereocenter::Impl::getRanking() const {
+const RankingInformation& AtomStereopermutator::Impl::getRanking() const {
   return _ranking;
 }
 
-Symmetry::Name AtomStereocenter::Impl::getSymmetry() const {
+Symmetry::Name AtomStereopermutator::Impl::getSymmetry() const {
   return _symmetry;
 }
 
-std::vector<unsigned> AtomStereocenter::Impl::getSymmetryPositionMap() const {
+std::vector<unsigned> AtomStereopermutator::Impl::getSymmetryPositionMap() const {
   if(_assignmentOption == boost::none) {
     throw std::logic_error(
-      "The AtomStereocenter is unassigned, ligands are not assigned to "
+      "The AtomStereopermutator is unassigned, ligands are not assigned to "
       "symmetry positions"
     );
   }
@@ -585,7 +585,7 @@ std::vector<unsigned> AtomStereocenter::Impl::getSymmetryPositionMap() const {
   return _cache.symmetryPositionMap;
 }
 
-void AtomStereocenter::Impl::fit(
+void AtomStereopermutator::Impl::fit(
   const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper,
   const std::vector<Symmetry::Name>& excludeSymmetries
@@ -598,7 +598,7 @@ void AtomStereocenter::Impl::fit(
     }
   );
 
-  // Save stereocenter state to return to if no fit is viable
+  // Save stereopermutator state to return to if no fit is viable
   const Symmetry::Name priorSymmetry = _symmetry;
   const boost::optional<unsigned> priorStereopermutation  = _assignmentOption;
 
@@ -623,7 +623,7 @@ void AtomStereocenter::Impl::fit(
       continue;
     }
 
-    // Change the symmetry of the AtomStereocenter
+    // Change the symmetry of the AtomStereopermutator
     setSymmetry(symmetryName, graph);
 
     for(
@@ -631,7 +631,7 @@ void AtomStereocenter::Impl::fit(
       assignment < numAssignments();
       ++assignment
     ) {
-      // Assign the stereocenter
+      // Assign the stereopermutator
       assign(assignment);
 
       const double angleDeviations = temple::sum(
@@ -683,7 +683,7 @@ void AtomStereocenter::Impl::fit(
                   angstromWrapper.positions.at(_centerAtom).toEigenVector(),
                   ligandPositions.at(ligandJ)
                 ),
-                // idealized Stereocenter angle
+                // idealized Stereopermutator angle
                 angle(ligandI, ligandJ)
               )
             );
@@ -731,7 +731,7 @@ void AtomStereocenter::Impl::fit(
 
 
 #ifndef NDEBUG
-      Log::log(Log::Particulars::AtomStereocenterFit)
+      Log::log(Log::Particulars::AtomStereopermutatorFit)
         << Symmetry::nameIndex(symmetryName)
         << ", " << assignment
         << ", " << std::setprecision(4) << std::fixed
@@ -788,7 +788,7 @@ void AtomStereocenter::Impl::fit(
 }
 
 /* Information */
-double AtomStereocenter::Impl::angle(
+double AtomStereopermutator::Impl::angle(
   const unsigned i,
   const unsigned j
 ) const {
@@ -801,7 +801,7 @@ double AtomStereocenter::Impl::angle(
   );
 }
 
-void AtomStereocenter::Impl::setModelInformation(
+void AtomStereopermutator::Impl::setModelInformation(
   DistanceGeometry::SpatialModel& model,
   const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
   const double looseningMultiplier
@@ -931,15 +931,15 @@ void AtomStereocenter::Impl::setModelInformation(
   }
 }
 
-boost::optional<unsigned> AtomStereocenter::Impl::assigned() const {
+boost::optional<unsigned> AtomStereopermutator::Impl::assigned() const {
   return _assignmentOption;
 }
 
-AtomIndex AtomStereocenter::Impl::centralIndex() const {
+AtomIndex AtomStereopermutator::Impl::centralIndex() const {
   return _centerAtom;
 }
 
-boost::optional<unsigned> AtomStereocenter::Impl::indexOfPermutation() const {
+boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const {
   if(_assignmentOption) {
     return _cache.feasiblePermutations.at(_assignmentOption.value());
   }
@@ -949,7 +949,7 @@ boost::optional<unsigned> AtomStereocenter::Impl::indexOfPermutation() const {
 
 std::vector<
   std::array<boost::optional<unsigned>, 4>
-> AtomStereocenter::Impl::minimalChiralityConstraints() const {
+> AtomStereopermutator::Impl::minimalChiralityConstraints() const {
   std::vector<
     std::array<boost::optional<unsigned>, 4>
   > precursors;
@@ -999,7 +999,7 @@ std::vector<
   return precursors;
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::Impl::chiralityConstraints(
+std::vector<DistanceGeometry::ChiralityConstraint> AtomStereopermutator::Impl::chiralityConstraints(
   const double looseningMultiplier
 ) const {
   const double angleVariance = (
@@ -1155,7 +1155,7 @@ std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::Impl::chira
   );
 }
 
-std::string AtomStereocenter::Impl::info() const {
+std::string AtomStereopermutator::Impl::info() const {
   std::string returnString = "A on "s
     + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +", "s;
 
@@ -1189,7 +1189,7 @@ std::string AtomStereocenter::Impl::info() const {
   return returnString;
 }
 
-std::string AtomStereocenter::Impl::rankInfo() const {
+std::string AtomStereopermutator::Impl::rankInfo() const {
   /* rankInfo is specifically geared towards RankingTree's consumption,
    * and MUST use indices of permutation
    */
@@ -1204,15 +1204,15 @@ std::string AtomStereocenter::Impl::rankInfo() const {
   );
 }
 
-unsigned AtomStereocenter::Impl::numAssignments() const {
+unsigned AtomStereopermutator::Impl::numAssignments() const {
   return _cache.feasiblePermutations.size();
 }
 
-unsigned AtomStereocenter::Impl::numStereopermutations() const {
+unsigned AtomStereopermutator::Impl::numStereopermutations() const {
   return _cache.permutations.assignments.size();
 }
 
-void AtomStereocenter::Impl::setSymmetry(
+void AtomStereopermutator::Impl::setSymmetry(
   const Symmetry::Name symmetryName,
   const OuterGraph& graph
 ) {
@@ -1228,11 +1228,11 @@ void AtomStereocenter::Impl::setSymmetry(
     graph
   };
 
-  // Dis-assign the stereocenter
+  // Dis-assign the stereopermutator
   assign(boost::none);
 }
 
-bool AtomStereocenter::Impl::operator == (const AtomStereocenter::Impl& other) const {
+bool AtomStereopermutator::Impl::operator == (const AtomStereopermutator::Impl& other) const {
   return (
     _symmetry == other._symmetry
     && _centerAtom == other._centerAtom
@@ -1241,7 +1241,7 @@ bool AtomStereocenter::Impl::operator == (const AtomStereocenter::Impl& other) c
   );
 }
 
-bool AtomStereocenter::Impl::operator < (const AtomStereocenter::Impl& other) const {
+bool AtomStereopermutator::Impl::operator < (const AtomStereopermutator::Impl& other) const {
   unsigned thisAssignments = numAssignments(),
            otherAssignments = other.numAssignments();
   /* Sequentially compare individual components, comparing assignments last

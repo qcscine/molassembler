@@ -1,12 +1,12 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#include "molassembler/Stereocenters/AtomStereocenterImpl.h"
+#include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
 namespace molassembler {
 
-/* AtomStereocenter implementations */
-AtomStereocenter::AtomStereocenter(
+/* AtomStereopermutator implementations */
+AtomStereopermutator::AtomStereopermutator(
   const OuterGraph& graph,
   const Symmetry::Name symmetry,
   const AtomIndex centerAtom,
@@ -20,20 +20,20 @@ AtomStereocenter::AtomStereocenter(
   )
 ) {}
 
-AtomStereocenter::AtomStereocenter(AtomStereocenter&& other) noexcept = default;
-AtomStereocenter& AtomStereocenter::operator = (AtomStereocenter&& other) noexcept = default;
+AtomStereopermutator::AtomStereopermutator(AtomStereopermutator&& other) noexcept = default;
+AtomStereopermutator& AtomStereopermutator::operator = (AtomStereopermutator&& other) noexcept = default;
 
-AtomStereocenter::AtomStereocenter(const AtomStereocenter& other) : _pImpl(
+AtomStereopermutator::AtomStereopermutator(const AtomStereopermutator& other) : _pImpl(
   std::make_unique<Impl>(*other._pImpl)
 ) {}
-AtomStereocenter& AtomStereocenter::operator = (const AtomStereocenter& other) {
+AtomStereopermutator& AtomStereopermutator::operator = (const AtomStereopermutator& other) {
   *_pImpl = *other._pImpl;
   return *this;
 }
 
-AtomStereocenter::~AtomStereocenter() = default;
+AtomStereopermutator::~AtomStereopermutator() = default;
 
-void AtomStereocenter::addSubstituent(
+void AtomStereopermutator::addSubstituent(
   const OuterGraph& graph,
   const AtomIndex newSubstituentIndex,
   RankingInformation newRanking,
@@ -49,15 +49,15 @@ void AtomStereocenter::addSubstituent(
   );
 }
 
-void AtomStereocenter::assign(boost::optional<unsigned> assignment) {
+void AtomStereopermutator::assign(boost::optional<unsigned> assignment) {
   _pImpl->assign(std::move(assignment));
 }
 
-void AtomStereocenter::assignRandom() {
+void AtomStereopermutator::assignRandom() {
   _pImpl->assignRandom();
 }
 
-void AtomStereocenter::fit(
+void AtomStereopermutator::fit(
   const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper,
   const std::vector<Symmetry::Name>& excludeSymmetries
@@ -65,7 +65,7 @@ void AtomStereocenter::fit(
   _pImpl->fit(graph, angstromWrapper, excludeSymmetries);
 }
 
-void AtomStereocenter::propagateGraphChange(
+void AtomStereopermutator::propagateGraphChange(
   const OuterGraph& graph,
   RankingInformation newRanking
 ) {
@@ -75,11 +75,11 @@ void AtomStereocenter::propagateGraphChange(
   );
 }
 
-void AtomStereocenter::propagateVertexRemoval(const AtomIndex removedIndex) {
+void AtomStereopermutator::propagateVertexRemoval(const AtomIndex removedIndex) {
   _pImpl->propagateVertexRemoval(removedIndex);
 }
 
-void AtomStereocenter::removeSubstituent(
+void AtomStereopermutator::removeSubstituent(
   const OuterGraph& graph,
   const AtomIndex which,
   RankingInformation newRanking,
@@ -95,7 +95,7 @@ void AtomStereocenter::removeSubstituent(
   );
 }
 
-void AtomStereocenter::setSymmetry(
+void AtomStereopermutator::setSymmetry(
   const Symmetry::Name symmetryName,
   const OuterGraph& graph
 ) {
@@ -103,66 +103,66 @@ void AtomStereocenter::setSymmetry(
 }
 
 /* Information */
-double AtomStereocenter::angle(
+double AtomStereopermutator::angle(
   const unsigned i,
   const unsigned j
 ) const {
   return _pImpl->angle(i, j);
 }
 
-boost::optional<unsigned> AtomStereocenter::assigned() const {
+boost::optional<unsigned> AtomStereopermutator::assigned() const {
   return _pImpl->assigned();
 }
 
-AtomIndex AtomStereocenter::centralIndex() const {
+AtomIndex AtomStereopermutator::centralIndex() const {
   return _pImpl->centralIndex();
 }
 
-boost::optional<unsigned> AtomStereocenter::indexOfPermutation() const {
+boost::optional<unsigned> AtomStereopermutator::indexOfPermutation() const {
   return _pImpl->indexOfPermutation();
 }
 
 std::vector<
   std::array<boost::optional<unsigned>, 4>
-> AtomStereocenter::minimalChiralityConstraints() const {
+> AtomStereopermutator::minimalChiralityConstraints() const {
   return _pImpl->minimalChiralityConstraints();
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> AtomStereocenter::chiralityConstraints(
+std::vector<DistanceGeometry::ChiralityConstraint> AtomStereopermutator::chiralityConstraints(
   double looseningMultiplier
 ) const {
   return _pImpl->chiralityConstraints(looseningMultiplier);
 }
 
-std::string AtomStereocenter::info() const {
+std::string AtomStereopermutator::info() const {
   return _pImpl->info();
 }
 
-std::string AtomStereocenter::rankInfo() const {
+std::string AtomStereopermutator::rankInfo() const {
   return _pImpl->rankInfo();
 }
 
-const RankingInformation& AtomStereocenter::getRanking() const {
+const RankingInformation& AtomStereopermutator::getRanking() const {
   return _pImpl->getRanking();
 }
 
-Symmetry::Name AtomStereocenter::getSymmetry() const {
+Symmetry::Name AtomStereopermutator::getSymmetry() const {
   return _pImpl->getSymmetry();
 }
 
-std::vector<unsigned> AtomStereocenter::getSymmetryPositionMap() const {
+std::vector<unsigned> AtomStereopermutator::getSymmetryPositionMap() const {
   return _pImpl->getSymmetryPositionMap();
 }
 
-unsigned AtomStereocenter::numAssignments() const {
+unsigned AtomStereopermutator::numAssignments() const {
   return _pImpl->numAssignments();
 }
 
-unsigned AtomStereocenter::numStereopermutations() const {
+unsigned AtomStereopermutator::numStereopermutations() const {
   return _pImpl->numStereopermutations();
 }
 
-void AtomStereocenter::setModelInformation(
+void AtomStereopermutator::setModelInformation(
   DistanceGeometry::SpatialModel& model,
   const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
   const double looseningMultiplier
@@ -176,14 +176,14 @@ void AtomStereocenter::setModelInformation(
 
 
 /* Operators */
-bool AtomStereocenter::operator == (const AtomStereocenter& other) const {
+bool AtomStereopermutator::operator == (const AtomStereopermutator& other) const {
   return *_pImpl == *other._pImpl;
 }
 
-bool AtomStereocenter::operator != (const AtomStereocenter& other) const {
+bool AtomStereopermutator::operator != (const AtomStereopermutator& other) const {
   return !(*_pImpl == *other._pImpl);
 }
-bool AtomStereocenter::operator < (const AtomStereocenter& other) const {
+bool AtomStereopermutator::operator < (const AtomStereopermutator& other) const {
   return *_pImpl < *other._pImpl;
 }
 

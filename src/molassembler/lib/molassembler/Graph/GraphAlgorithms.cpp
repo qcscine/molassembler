@@ -42,7 +42,7 @@ std::vector<LinkInformation> substituentLinks(
 ) {
   /* General idea:
    *
-   * In order to avoid a full O(N) BFS on every AtomStereocenter candidate to
+   * In order to avoid a full O(N) BFS on every AtomStereopermutator candidate to
    * determine links, use cached Cycles instead to determine links.
    *
    * Iterate through every cycle and look for cycles containing exactly two of

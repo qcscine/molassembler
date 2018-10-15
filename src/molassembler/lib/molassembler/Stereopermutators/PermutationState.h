@@ -13,7 +13,7 @@
 
 /*!@file
  *
- * @brief Permutational state of AtomStereocenter member class
+ * @brief Permutational state of AtomStereopermutator member class
  */
 
 namespace molassembler {

@@ -40,30 +40,30 @@ namespace molassembler {
 
 // Forward declarations
 class OuterGraph;
-class StereocenterList;
+class StereopermutatorList;
 struct RankingInformation;
 
 /*!
  * @brief Models a molecule as a molecular graph (connectivity of atoms) and a
- * list of stereocenters.
+ * list of stereopermutators.
  *
  * This class models chemical molecules as a combination of a mathematical graph
- * and a list of stereocenters.
+ * and a list of stereopermutators.
  *
  * In the graph, vertices additionally store an element type (and thus
  * represent atoms) and edges store a discretized bond type (and therefore
  * represent bonds).
  *
- * Stereocenters represent the absolute configuration at an atom or bond in an
+ * Stereopermutators represent the absolute configuration at an atom or bond in an
  * abstract fashion and do not store coordinate information.
  *
  * @note You may be surprised to see that all basic editing of Molecules, even
  * if it seems to concern the graph only, happens in this class interface. That
- * is because a graph edit may affect rankings at any stereocenters in the
+ * is because a graph edit may affect rankings at any stereopermutators in the
  * molecule due to the algorithm by which substituents are ranked. This means
- * that for every tiny edit, all stereocenter substituents are re-ranked and
+ * that for every tiny edit, all stereopermutator substituents are re-ranked and
  * chiral state, if present, is propagated through a possible ranking change.
- * For that, the list of stereocenters is required, which is accessible only
+ * For that, the list of stereopermutators is required, which is accessible only
  * in this class.
  */
 class Molecule {
@@ -88,10 +88,10 @@ public:
   ) noexcept;
 
   /*!
-   * @brief Constructs from connectivity alone, inferring the stereocenters from graph
+   * @brief Constructs from connectivity alone, inferring the stereopermutators from graph
    *
    * Constructs a molecule from connectivity alone. Local symmetries and
-   * stereocenters are inferred from the graph alone.
+   * stereopermutators are inferred from the graph alone.
    *
    * @throws std::logic_error If the supplied graph has multiple connected
    *   components or there are less than 2 atoms
@@ -102,13 +102,13 @@ public:
    * @brief Construct from connectivity and positions
    *
    * Construct an instance from a constituting graph and positional information.
-   * Local symmetries are deduced from positional information. Stereocenters
+   * Local symmetries are deduced from positional information. Stereopermutators
    * are inferred from the graph and assigned using the supplied positional
    * information.
    *
-   * @param bondStereocenterCandidatesOptional If boost::none, all bonds are
-   *   candidates for BondStereocenter. Otherwise, only the specified bonds are
-   *   checked for BondStereocenters.
+   * @param bondStereopermutatorCandidatesOptional If boost::none, all bonds are
+   *   candidates for BondStereopermutator. Otherwise, only the specified bonds are
+   *   checked for BondStereopermutators.
    *
    * @throws std::logic_error If the supplied graph has multiple connected
    *   components or there are less than 2 atoms
@@ -118,7 +118,7 @@ public:
     const AngstromWrapper& positions,
     const boost::optional<
       std::vector<BondIndex>
-    >& bondStereocenterCandidatesOptional = boost::none
+    >& bondStereopermutatorCandidatesOptional = boost::none
   );
 
   /*!
@@ -132,7 +132,7 @@ public:
    */
   Molecule(
     OuterGraph graph,
-    StereocenterList stereocenters
+    StereopermutatorList stereopermutators
   );
 //!@}
 
@@ -150,11 +150,11 @@ public:
    * @throws std::out_of_range If adjacentTo is invalid, i.e. >= N()
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
   AtomIndex addAtom(
@@ -177,11 +177,11 @@ public:
    *   exists.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
   void addBond(
@@ -191,105 +191,105 @@ public:
   );
 
   /*!
-   * @brief Sets the stereocenter assignment at a particular atom
+   * @brief Sets the stereopermutator assignment at a particular atom
    *
-   * This sets the stereocenter assignment at a specific atom index. For this,
-   * a stereocenter must be instantiated and contained in the StereocenterList
-   * returned by stereocenters(). The supplied assignment must be either
-   * boost::none or smaller than stereocenterPtr->numAssignments().
+   * This sets the stereopermutator assignment at a specific atom index. For this,
+   * a stereopermutator must be instantiated and contained in the StereopermutatorList
+   * returned by stereopermutators(). The supplied assignment must be either
+   * boost::none or smaller than stereopermutatorPtr->numAssignments().
    *
-   * @param a The atom index at which a stereocenter is to be assigned.
+   * @param a The atom index at which a stereopermutator is to be assigned.
    * @param assignmentOption The new assignment. The special value boost::none
-   *   makes the stereocenter indeterminate. Any indeterminate atom
-   *   stereocenters in a molecule at conformation-generation will be assigned
+   *   makes the stereopermutator indeterminate. Any indeterminate atom
+   *   stereopermutators in a molecule at conformation-generation will be assigned
    *   with a probability according to their sterepermutation's relative
    *   statistical occurence.
    *
    * @throws std::out_of_range If the atom index is invalid, i.e. >= N(),
-   *   there is no stereocenter at this position or the assignment index is
+   *   there is no stereopermutator at this position or the assignment index is
    *   invalid.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
-  void assignStereocenter(
+  void assignStereopermutator(
     AtomIndex a,
     const boost::optional<unsigned>& assignmentOption
   );
 
   /*!
-   * @brief Sets the stereocenter assignment on a bond
+   * @brief Sets the stereopermutator assignment on a bond
    *
-   * This sets the stereocenter assignment at a specific bond index. For this,
-   * a stereocenter must be instantiated and contained in the StereocenterList
-   * returned by stereocenters(). The supplied assignment must be either
-   * boost::none or smaller than stereocenterPtr->numAssignments().
+   * This sets the stereopermutator assignment at a specific bond index. For this,
+   * a stereopermutator must be instantiated and contained in the StereopermutatorList
+   * returned by stereopermutators(). The supplied assignment must be either
+   * boost::none or smaller than stereopermutatorPtr->numAssignments().
    *
-   * @param edge The edge at which a stereocenter is to be assigned.
+   * @param edge The edge at which a stereopermutator is to be assigned.
    * @param assignmentOption The new assignment. The special value boost::none
-   *   makes the stereocenter indeterminate. Any indeterminate bond
-   *   stereocenters in a molecule at conformation-generation will be assigned
+   *   makes the stereopermutator indeterminate. Any indeterminate bond
+   *   stereopermutators in a molecule at conformation-generation will be assigned
    *   randomly.
    *
    * @throws std::out_of_range If the BondIndex is invalid (i.e. either atom
-   *   index >= N()), there is no bond stereocenter at the supplied edge
+   *   index >= N()), there is no bond stereopermutator at the supplied edge
    *   or the assignment index is inalid.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
-  void assignStereocenter(
+  void assignStereopermutator(
     const BondIndex& edge,
     const boost::optional<unsigned>& assignmentOption
   );
 
   /*!
-   * @brief Assigns a stereocenter stereopermutation at random
+   * @brief Assigns a stereopermutator stereopermutation at random
    *
-   * This sets the stereocenter assignment at a specific index, taking relative
+   * This sets the stereopermutator assignment at a specific index, taking relative
    * statistical occurence weights of each stereopermutation into account.
    *
-   * @param a The atom index at which the atom stereocenter is to be assigned
+   * @param a The atom index at which the atom stereopermutator is to be assigned
    *   randomly
    *
    * @throws std::out_of_range If the atom index is invalid (i.e. is >= N()) or
-   *   there is no atom stereocenter at this bond index.
+   *   there is no atom stereopermutator at this bond index.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
-  void assignStereocenterRandomly(AtomIndex a);
+  void assignStereopermutatorRandomly(AtomIndex a);
 
   /*!
-   * @brief Assigns a bond stereocenter to a random assignment
+   * @brief Assigns a bond stereopermutator to a random assignment
    *
    * @throws std::out_of_range If the bond index is invalid (i.e. either atom
-   *   index is >= N()) or there is no bond stereocenter at this bond index.
+   *   index is >= N()) or there is no bond stereopermutator at this bond index.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
-  void assignStereocenterRandomly(const BondIndex& e);
+  void assignStereopermutatorRandomly(const BondIndex& e);
 
   /*!
    * @brief Removes an atom from the graph, including bonds to it.
@@ -304,11 +304,11 @@ public:
    * @warning Invalidates **all** atom indices due to renumbering
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
   void removeAtom(AtomIndex a);
@@ -331,11 +331,11 @@ public:
    *   involves removing the bond to it.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
   void removeBond(AtomIndex a, AtomIndex b);
@@ -358,11 +358,11 @@ public:
    *   internally.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
   bool setBondType(
@@ -382,11 +382,11 @@ public:
    * @throws std::out_of_range If a is invalid >= N()
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
   void setElementType(
@@ -399,23 +399,23 @@ public:
    *
    * This sets the local geometry at a specific atom index. There are a number
    * of cases that this function treats differently, besides faulty arguments:
-   * If there is already a AtomStereocenter instantiated at this atom index, its
-   * underlying symmetry is altered. If there is no AtomStereocenter at
+   * If there is already a AtomStereopermutator instantiated at this atom index, its
+   * underlying symmetry is altered. If there is no AtomStereopermutator at
    * this index, one is instantiated. In all cases, new or modified
-   * stereocenters are default-assigned if there is only one possible
+   * stereopermutators are default-assigned if there is only one possible
    * assignment.
    *
    * @throws if
    *   - the supplied atomic index is invalid
    *   - the provided symmetry is a different size than that of an existing
-   *     AtomStereocenter
+   *     AtomStereopermutator
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereocenters. Stereocenters
+   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
    *   may disappear, change their assignment and number of assignments, or new
-   *   stereocenters can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereocenterList members and
-   *   any stereocenter state stored external to a Molecule instance and its
+   *   stereopermutators can appear as a consequence of the most minor edit. For
+   *   procedural safety, consider iterators to StereopermutatorList members and
+   *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
   void setGeometryAtAtom(
@@ -464,7 +464,7 @@ public:
    * dotfile and processed with graphviz's `dot` binary to create an image of
    * the molecular graph.
    *
-   * Includes tooltip information on stereocenters when hovering over
+   * Includes tooltip information on stereopermutators when hovering over
    * individual nodes.
    */
   std::string dumpGraphviz() const;
@@ -472,32 +472,32 @@ public:
   //! Provides read-only access to the graph representation
   const OuterGraph& graph() const;
 
-  //! Provides read-only access to the list of stereocenters
-  const StereocenterList& stereocenters() const;
+  //! Provides read-only access to the list of stereopermutators
+  const StereopermutatorList& stereopermutators() const;
 
   /*!
-   * @brief Generates stereocenters from connectivity and positional information
+   * @brief Generates stereopermutators from connectivity and positional information
    *
-   * Positions are an important source of information for stereocenters as they
+   * Positions are an important source of information for stereopermutators as they
    * will alleviate graph-based symmetry-determination errors and allow for the
-   * determination of stereocenter assignments through spatial fitting.
+   * determination of stereopermutator assignments through spatial fitting.
    *
    * @param angstromWrapper Wrapped positions in angstrom length units
-   * @param explicitBondStereocenterCandidatesOption Permits the specification
-   *   of a limited set of bonds on which BondStereocenter instantiation is
+   * @param explicitBondStereopermutatorCandidatesOption Permits the specification
+   *   of a limited set of bonds on which BondStereopermutator instantiation is
    *   attempted. In Interpret.h, for instance, you can choose not to
-   *   instantiate BondStereocenters below a fractional bond order threshold to
+   *   instantiate BondStereopermutators below a fractional bond order threshold to
    *   avoid spurious frozen dihedrals. By default, all bonds are candidates.
    *
    * @throws std::out_of_range if a BondIndex in
-   *   explicitBondStereocenterCandidatesOption does not reference an existing
+   *   explicitBondStereopermutatorCandidatesOption does not reference an existing
    *   bond (irrelevant if left default).
    */
-  StereocenterList inferStereocentersFromPositions(
+  StereopermutatorList inferStereopermutatorsFromPositions(
     const AngstromWrapper& angstromWrapper,
     const boost::optional<
       std::vector<BondIndex>
-    >& explicitBondStereocenterCandidatesOption = boost::none
+    >& explicitBondStereopermutatorCandidatesOption = boost::none
   ) const;
 
   /*!
@@ -513,16 +513,16 @@ public:
    * does not consider the specified factors.
    *
    * If an isomorphism is found, it is then validated. Bond orders and
-   * stereocenters across both molecules are compared using the found
+   * stereopermutators across both molecules are compared using the found
    * isomorphism as an index map.
    *
-   * @note The number of stereopermutations that a stereocenter has is
+   * @note The number of stereopermutations that a stereopermutator has is
    * considered part of the Symmetry ComparisonOptions.
    *
    * @note If you choose to discard bond order checking, this merely
    * deactivates bond order hashing and a post-isomorphism-search bond order
    * re-check. Bond order information - if present in the molecule prior to
-   * calling this function - is also present in stereocenter ranking information
+   * calling this function - is also present in stereopermutator ranking information
    * and hence can influence the number of stereopermutations and the currently
    * set stereopermutation index. This can lead to unexpected but logically
    * consistent comparison behavior.
@@ -546,7 +546,7 @@ public:
    * @param excludeAdjacent A list of substituent atom indices that should be
    *   excluded from ranking
    * @param positionsOption Positional information can be used to determine
-   *   auxiliary stereocenter assignments that arise in the ranking algorithm
+   *   auxiliary stereopermutator assignments that arise in the ranking algorithm
    *   and may have different sub-rankings than at the same position in the
    *   molecule considered on its own. It is preferable to supply this if
    *   positional information is present!

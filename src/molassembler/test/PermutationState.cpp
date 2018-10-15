@@ -1,10 +1,10 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#define BOOST_TEST_MODULE AtomStereocenterTestModule
+#define BOOST_TEST_MODULE AtomStereopermutatorTestModule
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Stereocenters/PermutationState.h"
+#include "molassembler/Stereopermutators/PermutationState.h"
 
 #include "temple/Stringify.h"
 

@@ -20,7 +20,7 @@ InterpretResult interpret(
   const AngstromWrapper& angstromWrapper,
   const Delib::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereocenterBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {
   // Discretize bond orders (unfortunately signed type because of Delib signature)
   const int N = elements.size();
@@ -68,15 +68,15 @@ InterpretResult interpret(
     AngstromWrapper angstromWrapper;
     boost::optional<
       std::vector<BondIndex>
-    > bondStereocenterCandidatesOptional;
+    > bondStereopermutatorCandidatesOptional;
   };
 
   std::vector<MoleculeParts> moleculePrecursors {numComponents};
 
-  if(stereocenterBondOrderThresholdOptional) {
+  if(stereopermutatorBondOrderThresholdOptional) {
     for(auto& precursor : moleculePrecursors) {
       // Empty-vector-initialize the candidate optionals
-      precursor.bondStereocenterCandidatesOptional = std::vector<BondIndex> {};
+      precursor.bondStereopermutatorCandidatesOptional = std::vector<BondIndex> {};
     }
   }
 
@@ -138,10 +138,10 @@ InterpretResult interpret(
 
     // If the edge's bond order exceeds the threshold optional
     if(
-      stereocenterBondOrderThresholdOptional
-      && bondOrders.getOrder(source, target) > *stereocenterBondOrderThresholdOptional
+      stereopermutatorBondOrderThresholdOptional
+      && bondOrders.getOrder(source, target) > *stereopermutatorBondOrderThresholdOptional
     ) {
-      precursor.bondStereocenterCandidatesOptional->emplace_back(
+      precursor.bondStereopermutatorCandidatesOptional->emplace_back(
         indexInComponentMap.at(source),
         indexInComponentMap.at(target)
       );
@@ -162,7 +162,7 @@ InterpretResult interpret(
       result.molecules.emplace_back(
         OuterGraph {std::move(precursor.graph)},
         precursor.angstromWrapper,
-        precursor.bondStereocenterCandidatesOptional
+        precursor.bondStereopermutatorCandidatesOptional
       );
     }
   } else {
@@ -183,14 +183,14 @@ InterpretResult interpret(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereocenterBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {
   return interpret(
     elements,
     angstromWrapper,
     uffBondOrders(elements, angstromWrapper),
     discretization,
-    stereocenterBondOrderThresholdOptional
+    stereopermutatorBondOrderThresholdOptional
   );
 }
 
@@ -198,21 +198,21 @@ InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
   const Delib::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereocenterBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {
   return interpret(
     atomCollection.getElements(),
     AngstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr},
     bondOrders,
     discretization,
-    stereocenterBondOrderThresholdOptional
+    stereopermutatorBondOrderThresholdOptional
   );
 }
 
 InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
   const BondDiscretizationOption discretization,
-  const boost::optional<double>& stereocenterBondOrderThresholdOptional
+  const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {
   AngstromWrapper angstromWrapper {atomCollection.getPositions(), LengthUnit::Bohr};
 
@@ -221,7 +221,7 @@ InterpretResult interpret(
     angstromWrapper,
     uffBondOrders(atomCollection.getElements(), angstromWrapper),
     discretization,
-    stereocenterBondOrderThresholdOptional
+    stereopermutatorBondOrderThresholdOptional
   );
 }
 
