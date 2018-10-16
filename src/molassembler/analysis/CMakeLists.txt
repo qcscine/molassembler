@@ -32,6 +32,7 @@ foreach(filename ${analysisFiles})
       Boost::regex
       Boost::system
       molassembler
+      chemical_symmetries
       gor1
   )
 

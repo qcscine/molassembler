@@ -32,5 +32,6 @@ foreach(filename ${analysisFiles})
 
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
-  set_property(${targetName} writeMappings PROPERTY FOLDER "Analysis")
+  set_target_properties(${targetName} PROPERTIES FOLDER "Analysis")
+  #set_property(${targetName} writeMappings PROPERTY FOLDER "Analysis")
 endforeach()

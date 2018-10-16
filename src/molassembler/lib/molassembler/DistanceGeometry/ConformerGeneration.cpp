@@ -88,16 +88,15 @@ Molecule narrow(Molecule molecule) {
   return molecule;
 }
 
-inline double looseningFactor(const unsigned failures, const unsigned numConformers) {
-  // x ranges from 0 to failureRatio, which is currently 2
+inline double looseningFactor(
+  const unsigned failures,
+  const unsigned numConformers,
+  const double failureRatio
+) {
+  // x ranges from 0 to failureRatio
   double x = static_cast<double>(failures) / numConformers;
 
-  /* Could consider an initially a stronger increase and then linear later, like
-   * -1 / (x + 1)^2 + 3x / 8 + 2,
-   *
-   * but initially prefer linear from (0, 2) to (2, 2.5)
-   */
-  return 3 * x / 4 + 1;
+  return (1 + x / failureRatio);
 }
 
 inline bool exceededFailureRatio(
@@ -116,8 +115,7 @@ outcome::result<
 > run(
   const Molecule& molecule,
   const unsigned numConformers,
-  const Partiality metrizationOption,
-  const bool useYInversionTrick
+  const Configuration& configuration
 ) {
   if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
     return DGError::ZeroAssignmentStereopermutators;
@@ -142,7 +140,6 @@ outcome::result<
   /* Allow up to failures / numConformers = 2 of errors.
    * function returns an error code.
    */
-  const double failureRatio = 2;
   unsigned failures = 0;
   // Track whether a failure should lead to a bounds loosening
   bool loosenBounds = false;
@@ -165,12 +162,12 @@ outcome::result<
       // Fetch the DG data from the molecule with no unassigned stereopermutators
       DGData = gatherDGInformation(
         moleculeCopy,
-        detail::looseningFactor(failures, numConformers)
+        detail::looseningFactor(failures, numConformers, configuration.failureRatio)
       );
     } else if(loosenBounds) {
       DGData = gatherDGInformation(
         molecule,
-        detail::looseningFactor(failures, numConformers)
+        detail::looseningFactor(failures, numConformers, configuration.failureRatio)
       );
 
       loosenBounds = false;
@@ -194,7 +191,7 @@ outcome::result<
 
     assert(distanceBounds.boundInconsistencies() == 0);
 
-    auto distanceMatrixResult = explicitGraph.makeDistanceMatrix(metrizationOption);
+    auto distanceMatrixResult = explicitGraph.makeDistanceMatrix(configuration.partiality);
     if(!distanceMatrixResult) {
       return distanceMatrixResult.as_failure();
     }
@@ -217,27 +214,25 @@ outcome::result<
       )
     );
 
-    if(useYInversionTrick) {
-      /* If a count of chirality constraints reveals that more than half are
-       * incorrect, we can invert the structure (by multiplying e.g. all y
-       * coordinates with -1) and then have more than half of chirality
-       * constraints correct! In the count, chirality constraints with a target
-       * value of zero are not considered (this would skew the count as those
-       * chirality constraints should not have to pass an energetic maximum to
-       * converge properly as opposed to tetrahedra with volume).
-       */
-      if(
-        errfDetail::proportionChiralityConstraintsCorrectSign(
-          DGData.chiralityConstraints,
-          dlibPositions
-        ) < 0.5
-      ) {
-        // Invert y coordinates
-        for(unsigned i = 0; i < distanceBounds.N(); ++i) {
-          dlibPositions(
-            static_cast<dlibIndexType>(i) * 4  + 1
-          ) *= -1;
-        }
+    /* If a count of chirality constraints reveals that more than half are
+     * incorrect, we can invert the structure (by multiplying e.g. all y
+     * coordinates with -1) and then have more than half of chirality
+     * constraints correct! In the count, chirality constraints with a target
+     * value of zero are not considered (this would skew the count as those
+     * chirality constraints should not have to pass an energetic maximum to
+     * converge properly as opposed to tetrahedra with volume).
+     */
+    if(
+      errfDetail::proportionChiralityConstraintsCorrectSign(
+        DGData.chiralityConstraints,
+        dlibPositions
+      ) < 0.5
+    ) {
+      // Invert y coordinates
+      for(unsigned i = 0; i < distanceBounds.N(); ++i) {
+        dlibPositions(
+          static_cast<dlibIndexType>(i) * 4  + 1
+        ) *= -1;
       }
     }
 
@@ -260,7 +255,7 @@ outcome::result<
     ) {
       dlibAdaptors::iterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
         DGData.chiralityConstraints,
-        10000
+        configuration.refinementStepLimit
       };
 
       dlib::find_min(
@@ -279,7 +274,7 @@ outcome::result<
       );
 
       if(
-        inversionStopStrategy.iterations > 10000
+        inversionStopStrategy.iterations >= configuration.refinementStepLimit
         || errfDetail::proportionChiralityConstraintsCorrectSign(
           DGData.chiralityConstraints,
           dlibPositions
@@ -287,7 +282,7 @@ outcome::result<
       ) { // Failure to invert
         failures += 1;
         loosenBounds = true;
-        if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
+        if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
           return DGError::TooManyFailures;
         }
         continue; // this triggers a new structure to be generated
@@ -295,8 +290,8 @@ outcome::result<
     }
 
     dlibAdaptors::iterationOrGradientNormStopStrategy refinementStopStrategy {
-      10000, // iteration limit
-      1e-5 // gradient limit
+      configuration.refinementStepLimit,
+      configuration.refinementGradientTarget
     };
 
     // Refinement with penalty on fourth dimension is always necessary
@@ -315,7 +310,7 @@ outcome::result<
       0
     );
 
-    bool reachedMaxIterations = refinementStopStrategy.iterations >= 10000;
+    bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
     bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
       DGData.chiralityConstraints,
       dlibPositions
@@ -330,7 +325,7 @@ outcome::result<
       failures += 1;
       loosenBounds = true;
 
-      if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
         return DGError::TooManyFailures;
       }
     } else {
@@ -347,8 +342,7 @@ outcome::result<
 std::list<RefinementData> debug(
   const Molecule& molecule,
   const unsigned numConformers,
-  const Partiality metrizationOption,
-  const bool useYInversionTrick
+  const Configuration& configuration
 ) {
   if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
     Log::log(Log::Level::Warning)
@@ -383,7 +377,6 @@ std::list<RefinementData> debug(
    * the function throws. Remember that if an optimization is considered a
    * failure is dependent only on the stopping criteria!
    */
-  const double failureRatio = 3; // more lenient than production, must be > 0
   unsigned failures = 0;
   bool loosenBounds = false;
 
@@ -406,13 +399,13 @@ std::list<RefinementData> debug(
       // Fetch the DG data from the molecule with no unassigned stereopermutators
       DGData = gatherDGInformation(
         moleculeCopy,
-        detail::looseningFactor(failures, numConformers),
+        detail::looseningFactor(failures, numConformers, configuration.failureRatio),
         spatialModelGraphviz
       );
     } else if(loosenBounds) {
       DGData = gatherDGInformation(
         molecule,
-        detail::looseningFactor(failures, numConformers),
+        detail::looseningFactor(failures, numConformers, configuration.failureRatio),
         spatialModelGraphviz
       );
 
@@ -432,7 +425,7 @@ std::list<RefinementData> debug(
         << distanceBoundsResult.error().message() << "\n";
       failures += 1;
       loosenBounds = true;
-      if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG. Sample spatial model written to 'DG-failure-spatial-model.dot'.\n";
         if(regenerateEachStep) {
           auto moleculeCopy = detail::narrow(molecule);
@@ -458,12 +451,12 @@ std::list<RefinementData> debug(
 
     assert(distanceBounds.boundInconsistencies() == 0);
 
-    auto distanceMatrixResult = explicitGraph.makeDistanceMatrix(metrizationOption);
+    auto distanceMatrixResult = explicitGraph.makeDistanceMatrix(configuration.partiality);
     if(!distanceMatrixResult) {
       Log::log(Log::Level::Warning) << "Failure in distance matrix construction.\n";
       failures += 1;
       loosenBounds = true;
-      if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
         return refinementList;
       }
@@ -489,27 +482,25 @@ std::list<RefinementData> debug(
       )
     );
 
-    if(useYInversionTrick) {
-      /* If a count of chirality constraints reveals that more than half are
-       * incorrect, we can invert the structure (by multiplying e.g. all y
-       * coordinates with -1) and then have more than half of chirality
-       * constraints correct! In the count, chirality constraints with a target
-       * value of zero are not considered (this would skew the count as those
-       * chirality constraints should not have to pass an energetic maximum to
-       * converge properly as opposed to tetrahedra with volume).
-       */
-      if(
-        errfDetail::proportionChiralityConstraintsCorrectSign(
-          DGData.chiralityConstraints,
-          dlibPositions
-        ) < 0.5
-      ) {
-        // Invert y coordinates
-        for(unsigned i = 0; i < distanceBounds.N(); i++) {
-          dlibPositions(
-            static_cast<dlibIndexType>(i) * 4 + 1
-          ) *= -1;
-        }
+    /* If a count of chirality constraints reveals that more than half are
+     * incorrect, we can invert the structure (by multiplying e.g. all y
+     * coordinates with -1) and then have more than half of chirality
+     * constraints correct! In the count, chirality constraints with a target
+     * value of zero are not considered (this would skew the count as those
+     * chirality constraints should not have to pass an energetic maximum to
+     * converge properly as opposed to tetrahedra with volume).
+     */
+    if(
+      errfDetail::proportionChiralityConstraintsCorrectSign(
+        DGData.chiralityConstraints,
+        dlibPositions
+      ) < 0.5
+    ) {
+      // Invert y coordinates
+      for(unsigned i = 0; i < distanceBounds.N(); i++) {
+        dlibPositions(
+          static_cast<dlibIndexType>(i) * 4 + 1
+        ) *= -1;
       }
     }
 
@@ -519,9 +510,12 @@ std::list<RefinementData> debug(
       )
     );
 
-    /* Refinement without penalty on fourth dimension only necessary if not all
-     * chiral centers are correct. Of course, for molecules without chiral
-     * centers at all, this stage is unnecessary
+    /* Our embedded coordinates are four dimensional. Now we want to make sure
+     * that all chiral constraints are correct, allowing the structure to expand
+     * into the fourth spatial dimension if necessary to allow inversion.
+     *
+     * This stage of refinement is only needed if not all chirality constraints
+     * are already correct (or there are none).
      */
     if(
       errfDetail::proportionChiralityConstraintsCorrectSign(
@@ -529,14 +523,13 @@ std::list<RefinementData> debug(
         dlibPositions
       ) < 1
     ) {
-
       errfValue<false> valueFunctor {
         squaredBounds,
         DGData.chiralityConstraints
       };
 
       dlibAdaptors::debugIterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
-        10000,
+        configuration.refinementStepLimit,
         refinementSteps,
         valueFunctor
       };
@@ -553,21 +546,22 @@ std::list<RefinementData> debug(
         0
       );
 
+      // Handle inversion failure (hit step limit)
       if(
-        inversionStopStrategy.iterations > 10000
+        inversionStopStrategy.iterations > configuration.refinementStepLimit
         || errfDetail::proportionChiralityConstraintsCorrectSign(
           DGData.chiralityConstraints,
           dlibPositions
         ) < 1.0
-      ) { // Failure to invert
+      ) {
         Log::log(Log::Level::Warning)
           << "[" << currentStructureNumber << "]: "
           << "First stage of refinement fails. Loosening factor was "
-          << detail::looseningFactor(failures, numConformers)
+          << detail::looseningFactor(failures, numConformers, configuration.failureRatio)
           <<  "\n";
         failures += 1;
         loosenBounds = true;
-        if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
+        if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
           Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
           return refinementList;
         }
@@ -575,19 +569,22 @@ std::list<RefinementData> debug(
       }
     }
 
+    /* Set up the second stage of refinement where we compress out the fourth
+     * dimension that we allowed expansion into to invert the chiralities.
+     */
+
     errfValue<true> refinementValueFunctor {
       squaredBounds,
       DGData.chiralityConstraints
     };
 
     dlibAdaptors::debugIterationOrGradientNormStopStrategy refinementStopStrategy {
-      10000, // iteration limit
-      1e-5, // gradient limit
+      configuration.refinementStepLimit,
+      configuration.refinementGradientTarget,
       refinementSteps,
       refinementValueFunctor
     };
 
-    // Refinement with penalty on fourth dimension is always necessary
     dlib::find_min(
       dlib::bfgs_search_strategy(),
       refinementStopStrategy,
@@ -600,7 +597,7 @@ std::list<RefinementData> debug(
       0
     );
 
-    bool reachedMaxIterations = refinementStopStrategy.iterations >= 10000;
+    bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
     bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
       DGData.chiralityConstraints,
       dlibPositions
@@ -611,7 +608,7 @@ std::list<RefinementData> debug(
       dlibPositions
     );
 
-    if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions)) {
+    if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions) > 0) {
       errfDetail::explainFinalContributions(
         distanceBounds,
         DGData.chiralityConstraints,
@@ -622,7 +619,7 @@ std::list<RefinementData> debug(
     RefinementData refinementData;
     refinementData.steps = std::move(refinementSteps);
     refinementData.constraints = DGData.chiralityConstraints;
-    refinementData.looseningFactor = detail::looseningFactor(failures, numConformers);
+    refinementData.looseningFactor = detail::looseningFactor(failures, numConformers, configuration.failureRatio);
     refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
     refinementData.spatialModelGraphviz = spatialModelGraphviz;
 
@@ -634,7 +631,7 @@ std::list<RefinementData> debug(
       Log::log(Log::Level::Warning)
         << "[" << currentStructureNumber << "]: "
         << "Second stage of refinement fails. Loosening factor was "
-        << detail::looseningFactor(failures, numConformers)
+        << detail::looseningFactor(failures, numConformers, configuration.failureRatio)
         <<  "\n";
       if(reachedMaxIterations) {
         Log::log(Log::Level::Warning) << "- Reached max iterations.\n";
@@ -657,7 +654,7 @@ std::list<RefinementData> debug(
 
       failures += 1;
       loosenBounds = true;
-      if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
         return refinementList;
       }

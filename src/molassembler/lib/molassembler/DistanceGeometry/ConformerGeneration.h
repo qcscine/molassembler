@@ -6,6 +6,7 @@
 
 #include "boost_outcome/outcome.hpp"
 
+#include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/DistanceGeometry/RefinementDebugData.h"
 #include "molassembler/Log.h"
@@ -49,41 +50,29 @@ Molecule narrow(Molecule molecule);
 } // namespace detail
 
 /*!
- * A logging, not throwing, otherwise identical implementation of
+ * A logging, not throwing, mostly identical implementation of
  * runDistanceGeometry that returns detailed intermediate data from
  * refinements, while run returns only the final conformers.
  */
 std::list<RefinementData> debug(
   const Molecule& molecule,
   unsigned numConformers,
-  Partiality metrizationOption = Partiality::FourAtom,
-  bool useYInversionTrick = true
+  const Configuration& configuration
 );
 
 /*!
  * The main implementation of Distance Geometry. Generates an ensemble of 3D
  * structures of a given Molecule.
  *
- * @param metrizationOption After choosing an element of distance matrix between its
- * triangle inequality bounds, it is optional whether to ensure that all other
- * bounds afterwards also conform to the triangle inequality. Since the slack
- * removed from the distance bounds per chosen distance and thus the accuracy
- * gained decrease exponentially, you may choose to perform re-smoothing only
- * for a limited set of atoms.
- *
- * @param useYInversionTrick After embedding coordinates for the first time,
- * whether chiral constraints are correct by sign is normally distributed
- * around 0.5. If fewer than half of all chiral constraints are correct, an
- * inversion of a coordinate will lead to a structure that has exactly 1 - x
- * chiral constraints correct.
+ * @param configuration A configuration object controlling the Distance
+ *   Geometry procedure
  */
 outcome::result<
   std::vector<AngstromWrapper>
 > run(
   const Molecule& molecule,
   unsigned numConformers,
-  Partiality metrizationOption = Partiality::FourAtom,
-  bool useYInversionTrick = true
+  const Configuration& configuration
 );
 
 //! Intermediate conformational data about a Molecule given by a spatial model

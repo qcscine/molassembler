@@ -33,7 +33,6 @@ int main(int argc, char* argv[]) {
   unsigned nStructures = 1;
 
   bool showFinalContributions = false;
-  bool useInversionTrick = false;
 
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");
@@ -48,11 +47,6 @@ int main(int argc, char* argv[]) {
       "from_file,f",
       boost::program_options::value<std::string>(),
       "Read molecule to generate from file"
-    )
-    (
-      "use_inversion,u",
-      boost::program_options::bool_switch(&useInversionTrick),
-      "Use inversion trick when setting up first positions"
     )
     (
       "partiality,p",
@@ -129,11 +123,13 @@ int main(int argc, char* argv[]) {
 
     std::cout << mol << std::endl;
 
+    DistanceGeometry::Configuration DGConfiguration;
+    DGConfiguration.partiality = metrizationOption;
+
     auto debugData = DistanceGeometry::debug(
       mol,
       nStructures,
-      metrizationOption,
-      useInversionTrick
+      DGConfiguration
     );
 
     boost::filesystem::path filepath {filename};

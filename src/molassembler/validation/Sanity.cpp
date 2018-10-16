@@ -50,6 +50,9 @@ const std::array<Delib::ElementType, 9> elements {
  * same StereopermutatorList as you started out with
  */
 BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
+  DistanceGeometry::Configuration DGConfiguration;
+  DGConfiguration.partiality = DistanceGeometry::Partiality::All;
+
   for(const auto& symmetryName: Symmetry::allNames) {
     // Build an abstract asymmetric molecule (all ligands different) for the current molecule
     Molecule molecule(
@@ -109,8 +112,7 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         auto ensembleResult = DistanceGeometry::run(
           molecule,
           100,
-          DistanceGeometry::Partiality::All,
-          false // no y-inversion trick
+          DGConfiguration
         );
 
         if(!ensembleResult) {

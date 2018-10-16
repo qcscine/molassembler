@@ -4,8 +4,9 @@
 Molassembler is a C++ library that aims to facilitate crossings between
 Cartesian and graph representations of molecules. It provides the necessary
 functionality to represent a molecule as a graph, modify it in graph space, and
-generate coordinates from graphs. Local geometries are modelled onto every
-non-terminal atom in the graph.
+generate coordinates from graphs. It can capture the absolute configuration
+of multidentate and haptic inorganic molecules from positional data and
+generate non-superposable stereopermutations as output.
 
 
 ## Features
@@ -76,7 +77,7 @@ To build, run these commands starting at the main directory.
 ```bash
 $ mkdir build-release
 $ cd build-release
-$ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=<scine-installation-root> ..
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
 $ make
 ```
 
@@ -92,21 +93,15 @@ split into two sets. After building the library and tests, run:
 
 ## Documentation
 
-There are two types of documentation available: A full technical documentation
-generated with Doxygen, and a tutorial-like introductory documentation built
-with sphinx.
-
-You can build both with:
+The documentation can be built from the root directory with:
 
 ```bash
-$ cd documentation
-$ doxygen # builds the technical documentation
-$ make html # builds a tutorial-like documentation using sphinx
+$ cd build
+$ cmake ..
+$ make doc
 ```
 
-Partial technical documentations can also be built from within sub-libraries'
-main folders.
-
+This generates the Doxygen documentation in a `doc` subfolder.
 
 [^1]: Flachsenberg, F.; Andresen, N.; Rarey, M. RingDecomposerLib: An
   Open-Source implementation of Unique Ring Families and Other Cycle Bases. J.
