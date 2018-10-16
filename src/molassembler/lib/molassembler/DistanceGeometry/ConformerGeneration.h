@@ -34,21 +34,28 @@ AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
 
-//! Assigns any unassigned stereopermutators in a molecule at random
-Molecule narrow(Molecule moleculeCopy);
+/*!
+ * @brief Assigns any unassigned stereopermutators in a molecule at random
+ *
+ * If any stereopermutators in a molecule are unassigned, we must progressively
+ * assign them at random (consistent with relative occurrences) through
+ * Molecule's interface (so that ranking change effects w.r.t. the number of
+ * stereopermutations in permutators are handled gracefully) before attempting
+ * to model the Molecule (which requires that all stereopermutators are
+ * assigned).
+ */
+Molecule narrow(Molecule molecule);
 
 } // namespace detail
 
 /*!
- * A logging, not throwing otherwise identical implementation of
- * runDistanceGeometry, that returns detailed intermediate data from a
- * refinement, while runDistanceGeometry returns only the final result.
- *
- * @note Contained PositionCollections are in Angstrom length units
+ * A logging, not throwing, otherwise identical implementation of
+ * runDistanceGeometry that returns detailed intermediate data from
+ * refinements, while run returns only the final conformers.
  */
 std::list<RefinementData> debug(
   const Molecule& molecule,
-  unsigned numStructures,
+  unsigned numConformers,
   Partiality metrizationOption = Partiality::FourAtom,
   bool useYInversionTrick = true
 );
@@ -57,29 +64,24 @@ std::list<RefinementData> debug(
  * The main implementation of Distance Geometry. Generates an ensemble of 3D
  * structures of a given Molecule.
  *
- * Metrization options: After choosing an element of distance matrix between its
+ * @param metrizationOption After choosing an element of distance matrix between its
  * triangle inequality bounds, it is optional whether to ensure that all other
  * bounds afterwards also conform to the triangle inequality. Since the slack
  * removed from the distance bounds per chosen distance and thus the accuracy
  * gained decrease exponentially, you may choose to perform re-smoothing only
  * for a limited set of atoms.
  *
- * Use Y-inversion trick: After embedding coordinates for the first time,
+ * @param useYInversionTrick After embedding coordinates for the first time,
  * whether chiral constraints are correct by sign is normally distributed
  * around 0.5. If fewer than half of all chiral constraints are correct, an
  * inversion of a coordinate will lead to a structure that has exactly 1 - x
  * chiral constraints correct.
- *
- * Distance method: For debug purposes, using uniform distances between atoms
- * may be desirable for particularly hypothetical structures.
- *
- * @note Returns PositionCollections in Angstrom length units
  */
 outcome::result<
   std::vector<AngstromWrapper>
 > run(
   const Molecule& molecule,
-  unsigned numStructures,
+  unsigned numConformers,
   Partiality metrizationOption = Partiality::FourAtom,
   bool useYInversionTrick = true
 );

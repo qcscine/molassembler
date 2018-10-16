@@ -308,7 +308,13 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
   if(partiality == Partiality::FourAtom) {
     separator = indices.cbegin() + std::min(N, 4u);
   } else if(partiality == Partiality::TenPercent) {
-    separator = indices.cbegin() + std::min(N, static_cast<unsigned>(0.1 * N));
+    /* Advance the separator at most by N positions (guards against advancing
+     * past-the-end), and at least by four atoms (guards against situations
+     * where 4 <= N < 40 and 10% would yield less smoothing than FourAtom)
+     *
+     * Not equivalent to std::clamp(4u, cast<u>(0.1 * N), N) if N < 4!
+     */
+    separator = indices.cbegin() + std::min(N, std::max(4u, static_cast<unsigned>(0.1 * N)));
   } else { // All
     separator = indices.cend();
   }

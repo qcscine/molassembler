@@ -46,8 +46,8 @@ AngstromWrapper convertToAngstromWrapper(
   return angstromWrapper;
 }
 
-Molecule narrow(Molecule moleculeCopy) {
-  const auto& stereopermutatorList = moleculeCopy.stereopermutators();
+Molecule narrow(Molecule molecule) {
+  const auto& stereopermutatorList = molecule.stereopermutators();
 
   do {
     /* If we change any stereopermutator, we must jump out of for-loop and
@@ -59,7 +59,7 @@ Molecule narrow(Molecule moleculeCopy) {
 
     for(const auto& atomStereopermutator : stereopermutatorList.atomStereopermutators()) {
       if(!atomStereopermutator.assigned()) {
-        moleculeCopy.assignStereopermutatorRandomly(
+        molecule.assignStereopermutatorRandomly(
           atomStereopermutator.centralIndex()
         );
 
@@ -75,7 +75,7 @@ Molecule narrow(Molecule moleculeCopy) {
 
     for(const auto& bondStereopermutator : stereopermutatorList.bondStereopermutators()) {
       if(!bondStereopermutator.assigned()) {
-        moleculeCopy.assignStereopermutatorRandomly(
+        molecule.assignStereopermutatorRandomly(
           bondStereopermutator.edge()
         );
 
@@ -85,12 +85,12 @@ Molecule narrow(Molecule moleculeCopy) {
     }
   } while(stereopermutatorList.hasUnassignedStereopermutators());
 
-  return moleculeCopy;
+  return molecule;
 }
 
-inline double looseningFactor(const unsigned failures, const unsigned numStructures) {
+inline double looseningFactor(const unsigned failures, const unsigned numConformers) {
   // x ranges from 0 to failureRatio, which is currently 2
-  double x = static_cast<double>(failures) / numStructures;
+  double x = static_cast<double>(failures) / numConformers;
 
   /* Could consider an initially a stronger increase and then linear later, like
    * -1 / (x + 1)^2 + 3x / 8 + 2,
@@ -102,10 +102,10 @@ inline double looseningFactor(const unsigned failures, const unsigned numStructu
 
 inline bool exceededFailureRatio(
   const unsigned failures,
-  const unsigned numStructures,
+  const unsigned numConformers,
   const unsigned failureRatio
 ) noexcept {
-  return static_cast<double>(failures) / numStructures >= failureRatio;
+  return static_cast<double>(failures) / numConformers >= failureRatio;
 }
 
 } // namespace detail
@@ -115,7 +115,7 @@ outcome::result<
   std::vector<AngstromWrapper>
 > run(
   const Molecule& molecule,
-  const unsigned numStructures,
+  const unsigned numConformers,
   const Partiality metrizationOption,
   const bool useYInversionTrick
 ) {
@@ -124,28 +124,35 @@ outcome::result<
   }
 
   MoleculeDGInformation DGData;
+
   /* In case the molecule has unassigned stereopermutators, we need to randomly
-   * assign them in every step prior to generating the distance bounds matrix
+   * assign them for each conformer generated prior to generating the distance
+   * bounds matrix
    */
   bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
+
+  /* If there are no unassigned stereocenters, DGData does not have to be
+   * regenerated. If there are no failures, DGData stays the same for the rest
+   * of the procedure.
+   */
   if(!regenerateEachStep) {
     DGData = gatherDGInformation(molecule);
   }
 
-  /* If the ratio of failures/total optimizations exceeds this value,
-   * the function returns an error code. Remember that if an optimization is
-   * considered a failure is dependent only on the stopping criteria!
+  /* Allow up to failures / numConformers = 2 of errors.
+   * function returns an error code.
    */
-  const double failureRatio = 2; // allow for max 2x #conformations embedding failures
+  const double failureRatio = 2;
   unsigned failures = 0;
+  // Track whether a failure should lead to a bounds loosening
   bool loosenBounds = false;
   std::vector<AngstromWrapper> ensemble;
-  ensemble.reserve(numStructures);
+  ensemble.reserve(numConformers);
 
   for(
     unsigned currentStructureNumber = 0;
     // Failed optimizations do not count towards successful completion
-    currentStructureNumber - failures < numStructures;
+    currentStructureNumber - failures < numConformers;
     currentStructureNumber += 1
   ) {
     if(regenerateEachStep) {
@@ -158,12 +165,12 @@ outcome::result<
       // Fetch the DG data from the molecule with no unassigned stereopermutators
       DGData = gatherDGInformation(
         moleculeCopy,
-        detail::looseningFactor(failures, numStructures)
+        detail::looseningFactor(failures, numConformers)
       );
     } else if(loosenBounds) {
       DGData = gatherDGInformation(
         molecule,
-        detail::looseningFactor(failures, numStructures)
+        detail::looseningFactor(failures, numConformers)
       );
 
       loosenBounds = false;
@@ -280,7 +287,7 @@ outcome::result<
       ) { // Failure to invert
         failures += 1;
         loosenBounds = true;
-        if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
+        if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
           return DGError::TooManyFailures;
         }
         continue; // this triggers a new structure to be generated
@@ -323,7 +330,7 @@ outcome::result<
       failures += 1;
       loosenBounds = true;
 
-      if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
         return DGError::TooManyFailures;
       }
     } else {
@@ -339,7 +346,7 @@ outcome::result<
 // Debug version
 std::list<RefinementData> debug(
   const Molecule& molecule,
-  const unsigned numStructures,
+  const unsigned numConformers,
   const Partiality metrizationOption,
   const bool useYInversionTrick
 ) {
@@ -383,7 +390,7 @@ std::list<RefinementData> debug(
   for(
     unsigned currentStructureNumber = 0;
     // Failed optimizations do not count towards successful completion
-    currentStructureNumber - failures < numStructures;
+    currentStructureNumber - failures < numConformers;
     currentStructureNumber += 1
   ) {
     if(regenerateEachStep) {
@@ -399,13 +406,13 @@ std::list<RefinementData> debug(
       // Fetch the DG data from the molecule with no unassigned stereopermutators
       DGData = gatherDGInformation(
         moleculeCopy,
-        detail::looseningFactor(failures, numStructures),
+        detail::looseningFactor(failures, numConformers),
         spatialModelGraphviz
       );
     } else if(loosenBounds) {
       DGData = gatherDGInformation(
         molecule,
-        detail::looseningFactor(failures, numStructures),
+        detail::looseningFactor(failures, numConformers),
         spatialModelGraphviz
       );
 
@@ -425,7 +432,7 @@ std::list<RefinementData> debug(
         << distanceBoundsResult.error().message() << "\n";
       failures += 1;
       loosenBounds = true;
-      if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG. Sample spatial model written to 'DG-failure-spatial-model.dot'.\n";
         if(regenerateEachStep) {
           auto moleculeCopy = detail::narrow(molecule);
@@ -436,6 +443,7 @@ std::list<RefinementData> debug(
           SpatialModel model {molecule};
           model.writeGraphviz("DG-failure-spatial-model.dot");
         }
+
         return refinementList;
       }
 
@@ -455,7 +463,7 @@ std::list<RefinementData> debug(
       Log::log(Log::Level::Warning) << "Failure in distance matrix construction.\n";
       failures += 1;
       loosenBounds = true;
-      if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
         return refinementList;
       }
@@ -555,11 +563,11 @@ std::list<RefinementData> debug(
         Log::log(Log::Level::Warning)
           << "[" << currentStructureNumber << "]: "
           << "First stage of refinement fails. Loosening factor was "
-          << detail::looseningFactor(failures, numStructures)
+          << detail::looseningFactor(failures, numConformers)
           <<  "\n";
         failures += 1;
         loosenBounds = true;
-        if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
+        if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
           Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
           return refinementList;
         }
@@ -614,7 +622,7 @@ std::list<RefinementData> debug(
     RefinementData refinementData;
     refinementData.steps = std::move(refinementSteps);
     refinementData.constraints = DGData.chiralityConstraints;
-    refinementData.looseningFactor = detail::looseningFactor(failures, numStructures);
+    refinementData.looseningFactor = detail::looseningFactor(failures, numConformers);
     refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
     refinementData.spatialModelGraphviz = spatialModelGraphviz;
 
@@ -626,7 +634,7 @@ std::list<RefinementData> debug(
       Log::log(Log::Level::Warning)
         << "[" << currentStructureNumber << "]: "
         << "Second stage of refinement fails. Loosening factor was "
-        << detail::looseningFactor(failures, numStructures)
+        << detail::looseningFactor(failures, numConformers)
         <<  "\n";
       if(reachedMaxIterations) {
         Log::log(Log::Level::Warning) << "- Reached max iterations.\n";
@@ -649,7 +657,7 @@ std::list<RefinementData> debug(
 
       failures += 1;
       loosenBounds = true;
-      if(detail::exceededFailureRatio(failures, numStructures, failureRatio)) {
+      if(detail::exceededFailureRatio(failures, numConformers, failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
         return refinementList;
       }

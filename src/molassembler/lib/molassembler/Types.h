@@ -14,6 +14,8 @@
 namespace molassembler {
 
 /*!
+ * @brief Discrete bond type numeration
+ *
  * Bond type enumeration. Besides the classic organic single, double and triple
  * bonds, bond orders up to sextuple are explicitly included.
  */
@@ -49,7 +51,8 @@ struct BondIndex {
 //! Descriptive name for dlib indices
 using dlibIndexType = long;
 
-/*! For bitmasks grouping components of immediate atom environments
+/*!
+ * @brief For bitmasks grouping components of immediate atom environments
  *
  * Differing strictnesses of comparisons may be desirable for various
  * purposes, hence a modular comparison function is provided.

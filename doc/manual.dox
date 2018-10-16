@@ -106,10 +106,10 @@ permutation for stereocenters.
 
 IO            | Description
 ------------- | -----------
-IO::read      | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
-IO::split     | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
-IO::write     | Write a single \masm{Molecule} to XYZ, MOL or MASM
-interpret     | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
+<code>\link molassembler::IO::read(const std::string&) IO::read\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
+<code>\link molassembler::IO::split(const std::string&) IO::split\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
+<code>\link molassembler::IO::write(const std::string&, const Molecule&) IO::write\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
+<code>\link molassembler::interpret(const Delib::ElementTypeCollection &, const AngstromWrapper &, const Delib::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
 
 
 Information           | Description
@@ -285,7 +285,7 @@ RingDecomposerLib @cite Flachsenberg2017 , which avoids exponential space
 requirements in heavily fused ring systems using Unique Ring Families
 @cite Kolodzik2012 .
 
-@subsection manual-algorithms-conformer-generation
+@subsection manual-algorithms-conformer-generation Conformer Generation
 
 For each sought conformation, unassigned stereocenters in the input molecule are
 assigned randomly according to the relative statistical occurrence weights of
