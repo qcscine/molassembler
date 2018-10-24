@@ -5,7 +5,12 @@ endif()
 
 project(molassemblerAnalyses)
 
-find_package(Boost REQUIRED COMPONENTS regex program_options system)
+if(NOT TARGET Boost::regex
+  OR NOT TARGET Boost::program_options
+  OR NOT TARGET Boost::system
+)
+  find_package(Boost REQUIRED COMPONENTS regex program_options system)
+endif()
 
 set(analysisFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkEigenvalues.cpp

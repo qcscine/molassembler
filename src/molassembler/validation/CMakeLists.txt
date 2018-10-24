@@ -5,7 +5,9 @@ endif()
 
 project(molassemblerValidationTests)
 
-find_package(Boost REQUIRED COMPONENTS unit_test_framework regex)
+if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::regex)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework regex)
+endif()
 
 # Explicitly set all test files
 set(testFiles

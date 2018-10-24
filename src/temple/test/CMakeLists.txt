@@ -1,6 +1,8 @@
 project(templeTestProject)
 
-find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+if(NOT TARGET Boost::unit_test_framework)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+endif()
 find_package(Eigen3 3.1.1 REQUIRED)
 
 add_executable(templeTests

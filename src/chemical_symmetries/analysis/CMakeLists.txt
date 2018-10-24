@@ -4,9 +4,11 @@ endif()
 
 project(ChemicalSymmetriesAnalysisBinaries)
 
-find_package(Boost REQUIRED
-  COMPONENTS unit_test_framework program_options system
-)
+if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::program_options OR NOT TARGET Boost::system)
+  find_package(Boost REQUIRED
+    COMPONENTS unit_test_framework program_options system
+  )
+endif()
 find_package(Eigen3 3.1.1 REQUIRED)
 
 set(analysisFiles

@@ -4,7 +4,9 @@ project(GORProject)
 set(gor1_VERSION 0.1.0)
 
 # dependencies
-find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+if(NOT TARGET Boost::unit_test_framework)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+endif()
 
 # Files
 set(HEADERS_All ${CMAKE_CURRENT_SOURCE_DIR}/gor1/Gor1.h)

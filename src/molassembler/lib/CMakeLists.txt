@@ -1,6 +1,9 @@
 # Dependencies
 find_package(dlib REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem system)
+
+if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
+  find_package(Boost REQUIRED COMPONENTS filesystem system)
+endif()
 
 # For CI purposes, it is very useful to just download in-tree dependencies from
 # GitLab. This avoids having to install the dependencies in the docker image and
@@ -22,7 +25,7 @@ if(MOLASSEMBLER_DOWNLOAD_DEPENDENCIES)
     endif()
   endif()
 else()
-  find_package(Delib REQUIRED)
+  find_package(Delib QUIET REQUIRED)
 endif()
 
 # Some notes on BLAS / LAPACK:
@@ -174,7 +177,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
   # this is clearly the preferred method of handling this mess, but only
   # available from 3.12 onward. The proper linking an interface population is
   # handled below
-  target_link_libraries(molassembler_obj 
+  target_link_libraries(molassembler_obj
     PRIVATE
       temple
       Boost::boost

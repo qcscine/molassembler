@@ -1,6 +1,8 @@
 # dependencies
 find_package(Eigen3 3.1.1 REQUIRED)
-find_package(Boost REQUIRED)
+if(NOT TARGET Boost::boost)
+  find_package(Boost REQUIRED)
+endif()
 
 set(chemical_symmetries_VERSION 0.1.0)
 

@@ -1,6 +1,11 @@
 project(molassemblerTests)
 
-find_package(Boost REQUIRED COMPONENTS unit_test_framework regex filesystem)
+if(NOT TARGET Boost::unit_test_framework
+    OR NOT TARGET Boost::regex
+    OR NOT TARGET Boost::filesystem
+)
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework regex filesystem)
+endif()
 
 set(testFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/BondStereopermutator.cpp
