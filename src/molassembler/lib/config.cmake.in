@@ -1,7 +1,13 @@
-find_package(molassembler COMPONENTS RingDecomposerLib boost_outcome temple chemical_symmetries stereopermutation REQUIRED)
-find_package(Delib REQUIRED)
-find_package(dlib REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem system)
+include(CMakeFindDependencyMacro)
+
+find_dependency(molassembler COMPONENTS RingDecomposerLib boost_outcome temple chemical_symmetries stereopermutation REQUIRED)
+find_dependency(Delib REQUIRED)
+find_dependency(dlib REQUIRED)
+
+if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
+  unset(Boost_FOUND)
+  find_dependency(Boost REQUIRED COMPONENTS filesystem system)
+endif()
 
 set(MOLASSEMBLER_VERSION 0.1.0)
 

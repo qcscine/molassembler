@@ -1,4 +1,5 @@
-find_package(molassembler COMPONENTS chemical_symmetries REQUIRED)
+include(CMakeFindDependencyMacro)
+find_dependency(molassembler COMPONENTS chemical_symmetries REQUIRED)
 
 set(STEREOPERMUTATION_VERSION 0.1.0)
 

@@ -1,5 +1,6 @@
-find_package(Eigen3 3.1.1 REQUIRED)
-find_package(molassembler COMPONENTS temple REQUIRED)
+include(CMakeFindDependencyMacro)
+find_dependency(Eigen3 3.1.1 REQUIRED)
+find_dependency(molassembler COMPONENTS temple REQUIRED)
 
 set(CHEMICAL_SYMMETRIES_VERSION 0.1.0)
 
