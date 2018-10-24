@@ -23,13 +23,11 @@ set(SOURCES_All
 )
 
 add_library(chemical_symmetries STATIC ${SOURCES_All} ${HEADERS_all})
-target_include_directories(
-  chemical_symmetries
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+target_include_directories(chemical_symmetries
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-target_include_directories(
-  chemical_symmetries
-    SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
+target_include_directories(chemical_symmetries
+  SYSTEM PUBLIC $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 target_include_directories(chemical_symmetries SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(chemical_symmetries
@@ -40,15 +38,17 @@ target_link_libraries(chemical_symmetries
 
 target_compile_options(chemical_symmetries PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 if(${CHEMICAL_SYMMETRIES_TRY_CONSTEXPR})
-  target_compile_definitions(
-    chemical_symmetries PUBLIC CHEMICAL_SYMMETRIES_TRY_CONSTEXPR
+  target_compile_definitions(chemical_symmetries
+    PUBLIC CHEMICAL_SYMMETRIES_TRY_CONSTEXPR
   )
 endif()
 
+# NOTE: The entirety of the generator expression below is provided purely for
+# the convenience of installing multiple build types into a single prefix folder
 install(
   TARGETS chemical_symmetries
   EXPORT chemical_symmetriesTargets
-  DESTINATION lib
+  DESTINATION $<$<NOT:$<CONFIG:Release>>:$<CONFIG>/>lib
 )
 
 molassembler_install_component_cmake_files(

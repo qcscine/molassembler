@@ -34,7 +34,7 @@ target_compile_options(stereopermutation PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 install(
   TARGETS stereopermutation
   EXPORT stereopermutationTargets
-  DESTINATION lib
+  DESTINATION $<$<NOT:$<CONFIG:Release>>:$<CONFIG>/>lib
 )
 
 molassembler_install_component_cmake_files(

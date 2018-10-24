@@ -343,7 +343,7 @@ endif()
 install(
   TARGETS molassembler molassemblerStatic
   EXPORT molassemblerTargets
-  DESTINATION lib
+  DESTINATION $<$<NOT:$<CONFIG:Release>>:$<CONFIG>/>lib
 )
 
 molassembler_install_component_cmake_files(
