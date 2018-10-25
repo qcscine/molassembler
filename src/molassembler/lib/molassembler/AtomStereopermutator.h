@@ -55,7 +55,18 @@ public:
   AtomStereopermutator& operator = (const AtomStereopermutator& other);
   ~AtomStereopermutator();
 
-  //! Construct an AtomStereopermutator
+  /*!
+   * @brief Construct an AtomStereopermutator
+   *
+   * @param graph The molecule's graph. This information is needed to model
+   *   haptic ligands.
+   * @param symmetry The local idealized symmetry to model. Typically the
+   *   result of Molecule's determineLocalSymmetry.
+   * @param centerAtom The atom index within the molecule that is the center of
+   *   the local idealized symmetry
+   * @param ranking The ranking of the central atom's substituents and ligand
+   *   sites. Typically the result of Molecule's rankPriority.
+   */
   AtomStereopermutator(
     // The base graph
     const OuterGraph& graph,
@@ -71,10 +82,20 @@ public:
 //!@name Modifiers
 //!@{
   /*!
+   * @brief Add a new substituent to the permutator, propagating chiral state
+   *
    * Handles the addition of a new substituent to the stereopermutator. If the
    * stereopermutator contains chiral state, it is attempted to transfer the state
    * into the new assignment space according to the supplied chiral state
    * preservation options
+   *
+   * @param graph The molecule's graph which this permutator helps model.
+   * @param newSubstituentIndex The atom index of the new substituent
+   * @param newRanking The updated ranking information (after graph addition of
+   *   the new substituent)
+   * @param newSymmetry The target symmetry of increased size
+   * @param preservationOption The behavioral option deciding how chiral state
+   *   is propagated.
    */
   void addSubstituent(
     const OuterGraph& graph,
@@ -87,13 +108,33 @@ public:
   //! Changes the assignment of the stereopermutator
   void assign(boost::optional<unsigned> assignment);
 
-  //! Assigns the Stereopermutator randomly using relative assignment weights
+  /*!
+   * @brief Assign the Stereopermutator randomly using relative statistical weights
+   *
+   * Stereopermutations are generated with relative statistical occurrence
+   * weights. The assignment is then chosen from the possible stereopermutations
+   * with a discrete distribution whose weights are the corresponding relative
+   * statistical occurrences.
+   *
+   * @note If the stereocenter is already assigned, it is reassigned.
+   */
   void assignRandom();
 
   /*!
+   * @brief Determine the symmetry and assignment realized in positions
+   *
    * The symmetry and assignment are determined based on three-dimensional
    * positions using angle and chiral distortions from the respective idealized
    * symmetries.
+   *
+   * @param graph The molecule's graph which this permutator helps model
+   * @param angstromWrapper The wrapped positions
+   * @param excludeSymmetries Any symmetries that should be excluded from
+   *   the fitting procedure
+   *
+   * @note Distorted tetrahedral structures are often closer to seesaw than
+   *   tetrahedral. It is advisable to bias fitting towards tetrahedral (by
+   *   exclusion) in cases where seesaw is not expected.
    */
   void fit(
     const OuterGraph& graph,
@@ -102,6 +143,8 @@ public:
   );
 
   /*!
+   * @brief Propagate the stereocenter state through a possible ranking change
+   *
    * In case a graph modification changes the ranking of this stereopermutator's
    * substituents, it must be redetermined whether the new configuration is a
    * stereopermutator and if so, which assignment corresponds to the previous one.
@@ -112,15 +155,21 @@ public:
   );
 
   /*!
-   * Prepares for the removal of an atom on the graph level, which involves
-   * the generation of new atom indices.
+   * @brief Adapts atom indices in the internal state to the removal of an atom
+   *
+   * Atom indices are adapted to a graph-level removal of an atom. The removed
+   * index is changed to a placeholder value.
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
 
   /*!
+   * @brief Removes a substituent, propagating state to the new smaller symmetry
+   *
    * Handles the removal of a substituent from the stereopermutator. If the
    * stereopermutator carries chiral information, a new assignment can be chosen
    * according to the supplide chiral state preservation option.
+   *
+   * @warning This should be called after the removal of an atom on the graph level
    */
   void removeSubstituent(
     const OuterGraph& graph,
@@ -130,7 +179,11 @@ public:
     ChiralStatePreservation preservationOption
   );
 
-  //! If the central symmetry group is changed, we must adapt
+  /*!
+   * @brief Change the symmetry of the permutator
+   *
+   * @post The permutator is unassigned (chiral state is discarded)
+   */
   void setSymmetry(
     Symmetry::Name symmetryName,
     const OuterGraph& graph
@@ -139,7 +192,17 @@ public:
 
 //!@name Information
 //!@{
-  //! Returns the angle between substituent ligands in the idealized symmetry
+  /*!
+   * @brief Fetches angle between substituent ligands in the idealized symmetry
+   *
+   * @param i Ligand index one
+   * @param j Ligand index two
+   *
+   * @pre @p i and @p j are valid ligand indices into the underlying
+   * RankingInformation's RankingInformation#ligands member.
+   *
+   * @sa getRanking()
+   */
   double angle(unsigned i, unsigned j) const;
 
   /*! Returns the permutation index within the set of possible permutations, if set

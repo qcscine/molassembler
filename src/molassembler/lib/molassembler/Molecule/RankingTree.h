@@ -40,7 +40,7 @@
 #include <experimental/propagate_const>
 #endif
 
-/* TODO
+/*! @todo
  * - Maybe you can only add transferability edges when in down-only BFS?
  * - Consider transition to more unordered containers
  * - Pseudo-asymmetry considerations
@@ -66,7 +66,6 @@
  *   addLessThanRelationship really semantically do what it says?
  *   Loads of inverted comparisons here where it doesn't make sense to me
  *   anymore, in particular at 4B in counting like pairs at every position
- * - TODOs strewn about
  * - Get away from as many sets as possible -> unordered sets, tinysets or plain vectors
  * - Try to figure out a datastructure in which the entire relative ranking can
  *   be stored as indeterminate and determinate, so to wholly avoid
@@ -138,7 +137,7 @@ public:
     //! A vertex-central stereopermutator may be instantiated here or may not
     boost::optional<AtomStereopermutator> stereopermutatorOption;
 
-    // TODO not quite ready for this yet
+    // This is the place for eventual atomic number deviations
     // boost::optional<double> deviantAtomicNumber;
   };
 

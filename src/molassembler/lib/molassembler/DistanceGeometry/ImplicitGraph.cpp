@@ -67,7 +67,7 @@ ImplicitGraph::ImplicitGraph(
   const DistanceBoundsMatrix& bounds
 ) : _moleculePtr(&molecule), _distances {bounds.access()}
 {
-  /* TODO this doesn't work because the constant 0 indicates that no explicit
+  /*! @todo this doesn't work because the constant 0 indicates that no explicit
    * information is available. Either work your way through the entire matrix
    * and replace defaultUpper with 0 in the N² matrix, or go back to
    * initializing the matrix from a bounds list, which is more sensible.

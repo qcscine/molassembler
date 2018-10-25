@@ -24,7 +24,7 @@ const std::map<BondType, double> bondWeights {
   {BondType::Quadruple, 4.0},
   {BondType::Quintuple, 5.0},
   {BondType::Sextuple, 6.0},
-  {BondType::Eta, 0.0} // TODO is this wise? (duplicate in BondDistance!)
+  {BondType::Eta, 0.0} //! @todo is this wise? (duplicate in BondDistance!)
 };
 
 boost::optional<Symmetry::Name> vsepr(
@@ -195,7 +195,7 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
   const AtomIndex index,
   const RankingInformation& ranking
 ) {
-  /* TODO
+  /*! @todo
    * - No L, X determination. Although, will L, X even be needed for metals?
    *   Maybe only for OZ and NVE determination...
    */
@@ -240,7 +240,7 @@ Symmetry::Name determineLocalGeometry(
   auto ligandsVector = reduceToSiteInformation(graph, index, ranking);
   unsigned nSites = ligandsVector.size();
 
-  // TODO no charges
+  //!@todo NO CHARGES
   int formalCharge = 0;
 
   auto symmetryOptional = LocalGeometry::vsepr(

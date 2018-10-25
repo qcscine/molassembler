@@ -809,7 +809,7 @@ void RankingTree::_applySequenceRules(
         instantiateAtomStereopermutator(targetIndex);
       }
 
-      /* TODO Since the tree merges, it's presumably bad for performance that
+      /*! @todo Since the tree merges, it's presumably bad for performance that
        * we cannot store the information that we tried, no stereopermutator was
        * placed, and we shouldn't try again.
        */
@@ -823,7 +823,7 @@ void RankingTree::_applySequenceRules(
       if(
         _tree[sourceIndex].stereopermutatorOption
         && _tree[targetIndex].stereopermutatorOption
-        /* TODO this has to be altered -> any edges with hindered rotation have
+        /*! @todo this has to be altered -> any edges with hindered rotation have
          * to be checked, not just double bonds
          */
         && _doubleBondEdges.count(edge) > 0
@@ -2847,7 +2847,7 @@ RankingTree::RankingTree(
       }
     }
 
-    // TODO try to avoid repeated computation with _molIndicesInBranch somehow
+    //! @todo try to avoid repeated computation with _molIndicesInBranch somehow
     // Main BFS loop
     while(!undecidedSets.empty() && _relevantSeeds(seeds, undecidedSets)) {
 

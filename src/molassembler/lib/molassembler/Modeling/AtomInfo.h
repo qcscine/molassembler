@@ -63,8 +63,9 @@ private:
 /*!
  * Bond radii for each element from the original UFF paper:
  *
- * TODO FIX CITATION
- * Rappé, Goddard et al. UFF, a full periodic table force field for ...
+ * Rappé, Anthony K., et al. "UFF, a full periodic table force field for
+ * molecular mechanics and molecular dynamics simulations." Journal of the
+ * American chemical society 114.25 (1992): 10024-10035.
  */
 extern const std::array<double, 110> bondRadii;
 

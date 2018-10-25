@@ -158,7 +158,7 @@ void BondStereopermutator::Impl::fit(
   double bestPenalty = std::numeric_limits<double>::max();
   std::vector<unsigned> bestAssignment;
 
-  /* TODO long-term, as soon as this is proven to work as it should, this
+  /*! @todo long-term, as soon as this is proven to work as it should, this
    * computation can be abbreviated to exit the dihedralTuple loop as soon as
    * the threshold is surpassed to avoid unnecessary dihedral computations and
    * domain corrections.

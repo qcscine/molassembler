@@ -9,7 +9,7 @@
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
 
-/* TODO
+/*! @todo
  * - may be preferable to have OrderDiscoveryHelper emit pairs of Ts whose
  *   ordering relation is not yet known instead of iterating through the
  *   getUnorderedSets()
@@ -367,7 +367,7 @@ public:
     }
   }
 
-  // TODO no checks against duplicate values
+  //! @todo no checks against duplicate values
   template<typename Container>
   void setUnorderedValues(Container&& container) {
     static_assert(

@@ -142,7 +142,7 @@ std::vector<char> PermutationState::transferToSymbolicCharacters(
 
 stereopermutation::Stereopermutation::LinksSetType
 PermutationState::selfReferentialTransform(
-  const RankingInformation::LinksType& rankingLinks,
+  const std::vector<LinkInformation>& rankingLinks,
   const RankingInformation::RankedLigandsType& canonicalLigands
 ) {
   stereopermutation::Stereopermutation::LinksSetType links;
@@ -180,7 +180,7 @@ PermutationState::generateLigandToSymmetryPositionMap(
   const stereopermutation::Stereopermutation& assignment,
   const RankingInformation::RankedLigandsType& canonicalLigands
 ) {
-  /* TODO NO Stereopermutation link information is used here!
+  /*! @todo NO Stereopermutation link information is used here! Is that right?
    *
    * Need to ensure that
    * AAAAAA {0, 1}, {2, 3}, {4, 5}

@@ -155,7 +155,7 @@ unsigned RankingInformation::getLigandIndexOf(const AtomIndex i) const {
 
   if(findIter == ligands.end()) {
     throw std::out_of_range(
-      "atom index is not part of a ligand of this stereopermutator"
+      "Specified atom index is not part of any ligand"
     );
   }
 

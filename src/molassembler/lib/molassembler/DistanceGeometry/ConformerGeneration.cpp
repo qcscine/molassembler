@@ -16,8 +16,8 @@
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 
-/* TODO
- * - Random assignment of unassigned stereopermutators isn't ideal yet
+/*! @todo
+ * - Random assignment of unassigned stereopermutators isn't ideal yet:
  *   - Sequence randomization
  */
 

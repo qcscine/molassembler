@@ -20,7 +20,7 @@ struct LinkInformation {
 //!@{
   /*! Default constructor
    *
-   * \warning Does not establish member invariants
+   * @warning Does not establish member invariants
    */
   LinkInformation();
 
@@ -39,10 +39,10 @@ struct LinkInformation {
 
   /*! The in-order atom sequence of the cycle atom indices
    *
-   * \note The cycle sequence is centralized on the source vertex, meaning the
+   * @note The cycle sequence is centralized on the source vertex, meaning the
    * front and back indices are the source vertex
    *
-   * \note The cycle sequence between the repeated source vertices is
+   * @note The cycle sequence between the repeated source vertices is
    * standardized by ordering the first and last vertices of the remaining
    * sequence ascending (i.e. reversing the part of the sequence in between
    * front and back indices if the second index is larger than the
@@ -76,29 +76,38 @@ struct RankingInformation {
     std::vector<AtomIndex>
   >;
 
-  //! ASC ordered list of ligand site indices (sub-list ligand indices equal)
+  //! ascending ordered list of ligand site indices (sub-list ligand indices equal)
   using RankedLigandsType = std::vector<
     std::vector<unsigned>
   >;
-
-  //! A list of LinkInformation structs
-  using LinksType = std::vector<LinkInformation>;
 //!@}
 
 //!@name Static member functions
 //!@{
-  /*! Gets ranking positions of a ligand's constituting atoms in descending order
+  /*!
+   * @brief Gets ranking positions of a ligand's constituting atoms in descending order
    *
+   * @verbatim
    *                               0     1       2      3
    * Input:  sortedSubstituents: {{0}, {4, 3}, {1, 9}, {5}}
    *         ligand: {5, 3, 0}
    * Output: {3, 1, 0}
+   * @endverbatim
    */
   static std::vector<unsigned> ligandConstitutingAtomsRankedPositions(
     const std::vector<AtomIndex>& ligand,
     const RankingInformation::RankedType& sortedSubstituents
   );
 
+  /**
+   * @brief Combines the ranking of substituents with the ligand site
+   *   constitutions into a ligand-level ranking
+   *
+   * @param ligands Ligand site constitution
+   * @param sortedSubstituents The substituent-level ranking result
+   *
+   * @return A ranked (ascending) nested list of ligand indices
+   */
   static RankedLigandsType rankLigands(
     const LigandsType& ligands,
     const RankedType& sortedSubstituents
@@ -110,23 +119,48 @@ struct RankingInformation {
   //! Sorted substituents grouped by priority ascending
   RankedType sortedSubstituents;
 
-  //! Ligand atom index groupings
+  /*!
+   * @brief Ligand atom index groupings
+   *
+   * This is an unordered nested list of atom index lists that each constitute
+   * a ligand site. If a nested list has only a single element, the ligand is
+   * 'normal'. If there are multiple elements in a nested list, the ligand site
+   * is haptically bonded.
+   */
   LigandsType ligands;
 
-  //! Ranking of ligands
+  /*!
+   * @brief Ligands ranking
+   *
+   * This is a ranked (ascending) nested list of ligand indices (indices into
+   * #ligands).
+   */
   RankedLigandsType ligandsRanking;
 
   /*!
-   * Information on any links between substituents in the graph.
-   * The LinkInformation struct is documented in GraphAlgorithms.h
+   * @brief A list of information on all links between ligand sites
+   *
+   * @note This list is typically sorted, enabling use of the comparator
    */
-  LinksType links;
+  std::vector<LinkInformation> links;
 //!@}
 
 //!@name Information
 //!@{
+  /*!
+   * @brief Fetches the ligand index of a substituent
+   *
+   * @throws std::out_of_range If the specified atom index is not part of any
+   *   ligand
+   */
   unsigned getLigandIndexOf(AtomIndex i) const;
 
+  /*!
+   * @brief Checks whether there are haptic ligands
+   *
+   * @note These are identified by the #ligands member having sets of
+   *   substituents with more than one element
+   */
   bool hasHapticLigands() const;
 //!@}
 

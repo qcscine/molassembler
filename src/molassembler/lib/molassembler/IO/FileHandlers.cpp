@@ -160,7 +160,7 @@ void MOLFileHandler::_write(
         << std::setw(3) << molecule.graph().B() // bbb
         << std::setw(3) << 0u // lll (number of atom lists)
         << std::setw(3) << 0u // fff (obsolete)
-        << std::setw(3) << 0u // ccc (chiral or not?) unhandled -> distant TODO
+        << std::setw(3) << 0u // ccc (chiral or not?)
         << std::setw(3) << 0u // sss (num s-text entries, irrelevant here)
         << std::setw(3) << 0u // xxx (obsolete)
         << std::setw(3) << 0u // rrr (obsolete)
@@ -184,7 +184,7 @@ void MOLFileHandler::_write(
           // aaa (atom symbol)
           << std::setw(3) << symbolStringLambda(molecule.graph().elementType(inverse(i)))
           << std::setw(2) << 0u // dd (isotope mass difference)
-          << std::setw(3) << 0u // ccc (local charge) -> distant TODO
+          << std::setw(3) << 0u // ccc (local charge)
           << std::setw(3) << 0u // sss (atom stereo parity, ignored)
           << std::setw(3) << 0u // hhh (hydrogen count, for query, ignored)
           << std::setw(3) << 0u // bbb (stereo care box??, ignored)
@@ -221,7 +221,7 @@ void MOLFileHandler::_write(
           << std::setw(3) << bty // ttt (bond type)
           << std::setw(3) << 0u // sss (bond stereo, ignored for now)
           << std::setw(3) << 0u // xxx (unused)
-          << std::setw(3) << 0u // rrr (bond topology) -> distant TODO
+          << std::setw(3) << 0u // rrr (bond topology)
           << std::setw(3) << 0u // ccc (reacting center status, ignored)
           << std::endl;
       }

@@ -26,11 +26,6 @@
  * stereopermutators in molecules.
  */
 
-/* TODO
- * - Various TODO in implementation
- * - State propagation is going to be a nasty piece of work
- */
-
 namespace molassembler {
 
 class AngstromWrapper;

@@ -157,7 +157,7 @@ void Molecule::Impl::_propagateGraphChange() {
 
   GraphAlgorithms::findAndSetEtaBonds(inner);
 
-  /* TODO
+  /*! @todo
    * - Need state propagation for BondStereopermutators, anything else is madness
    */
 
@@ -401,8 +401,8 @@ void Molecule::Impl::addBond(
     const AtomIndex toIndex,
     const AtomIndex addedIndex
   ) {
-    /* Remove any BondStereopermutators on adjacent edges of toIndex (no state
-     * propagation possible yet TODO)
+    /*! @todo Remove any BondStereopermutators on adjacent edges of toIndex (no
+     * state propagation possible yet)
      */
     for(
       const BondIndex& adjacentEdge :
@@ -554,8 +554,9 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
   inner.removeVertex(a);
 
   /* Removing the vertex invalidates some vertex descriptors, which are used
-   * liberally in the stereopermutator classes' state. We have to correct of all of
-   * those to ensure that _propagateGraphChange works properly.
+   * liberally in the stereopermutator classes' state. We have to correct
+   * all vertex descriptors across all permutators to ensure that chiral state
+   * is modeled correctly.
    */
   _stereopermutators.propagateVertexRemoval(a);
 
@@ -583,7 +584,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
       );
     }
 
-    // TODO BondStereopermutator update
+    //! @todo BondStereopermutator update
     /*if(_stereopermutators.involving(indexToUpdate)) {
       if(_stereopermutators.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
       } else {
@@ -654,7 +655,7 @@ void Molecule::Impl::removeBond(
       );
     }
 
-    // TODO
+    //! @todo propagation
     /*if(_stereopermutators.involving(indexToUpdate)) {
       if(_stereopermutators.at(indexToUpdate) -> type() == Stereopermutators::Type::AtomStereopermutator) {
       } else {

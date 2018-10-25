@@ -136,8 +136,8 @@ private:
 
 /* Private member functions */
 
-  /* NOTE: Important cases, perhaps to be altered
-   * TODO If BondTypes of 4-6 are to be stored in a MOLFile, the program will
+  /*!
+   * @todo If BondTypes of 4-6 are to be stored in a MOLFile, the program will
    * crash, no elegant failure exists.
    */
   void _write(

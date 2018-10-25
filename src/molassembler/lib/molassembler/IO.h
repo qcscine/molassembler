@@ -17,7 +17,7 @@
  * MOLFile V2000 specification.
  */
 
-/* TODO
+/*! @todo
  * - test V2000
  * - implement V3000
  * - Read coordinates are currently discarded. Either process them for

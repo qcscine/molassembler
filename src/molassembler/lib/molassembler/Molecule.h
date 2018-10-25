@@ -18,7 +18,7 @@
 
 #include <memory>
 
-/* TODO
+/*! @todo
  * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
  *   may become or cease to be eta bond types.
  */

@@ -93,7 +93,7 @@ double ElementInfo::vdwRadius() const {
   return _vdwRadius;
 }
 
-/* TODO unify bondRadii into ElementData
+/*! @todo unify bondRadii into ElementData
  */
 
 /* From the original UFF paper

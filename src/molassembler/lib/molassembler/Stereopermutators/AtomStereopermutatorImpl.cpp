@@ -536,7 +536,7 @@ void AtomStereopermutator::Impl::removeSubstituent(
           ligandsAtNewSymmetryPositions
         );
 
-        // TODO Shouldn't the links in the new symmetry be generated too for use in comparison??
+        //! @todo Shouldn't the links in the new symmetry be generated too for use in comparison??
 
         // Construct an assignment
         auto trialStereopermutation = stereopermutation::Stereopermutation(
@@ -656,7 +656,7 @@ void AtomStereopermutator::Impl::fit(
         continue;
       }
 
-      /* TODO should this be kept at all? Just a follow-up error from the angle
+      /*! @todo should this be kept at all? Just a follow-up error from the angle
        * What value does it bring?
        */
       const double oneThreeDistanceDeviations = temple::sum(
@@ -1217,9 +1217,6 @@ void AtomStereopermutator::Impl::setSymmetry(
   const OuterGraph& graph
 ) {
   _symmetry = symmetryName;
-
-  // TODO Chiral information in same symmetry size change can also be preserved
-  // But careful, this could effect fit() negatively
 
   _cache = PermutationState {
     _ranking,

@@ -127,25 +127,49 @@ public:
 
 //!@name Information
 //!@{
+  //! Returns whether two atoms are bonded
   bool adjacent(AtomIndex a, AtomIndex b) const;
+  //! Optionally fetch the bond index of a possibly non-existent bond
   boost::optional<BondIndex> bond(AtomIndex a, AtomIndex b) const;
+  //! Fetch the bond type at a particular bond
   BondType bondType(const BondIndex& edge) const;
+  //! Returns whether an atom can be removed without disconnecting the graph
   bool canRemove(AtomIndex a) const;
+  //! Returns whether a bond can be removed without disconnecting the graph
   bool canRemove(const BondIndex& edge) const;
+  //! Fetch a reference to Cycles
   const Cycles& cycles() const;
+  //! Returns the number of bonds incident upon an atom
   unsigned degree(AtomIndex a) const;
+  //! Fetch an element collection of all atoms
   Delib::ElementTypeCollection elementCollection() const;
+  //! Fetch the element type of an atom
   Delib::ElementType elementType(AtomIndex a) const;
 
+  //! Number of atoms in the graph
   AtomIndex N() const;
+  //! Number of bonds in the graph
   unsigned B() const;
 //!@}
 
 //!@name Ranges
 //!@{
+  //! A begin-end pair of iterators that yield the range of valid atom indices.
   Range<AtomIterator> atoms() const;
+  //! A begin-end pair of iterators that yield the range of valid bond indices
   Range<BondIterator> bonds() const;
+  /*!
+   * @brief Fetch iterator pair yielding adjacents of an atom
+   * @param a The atom whose adjacents are desired
+   * @returns A begin-end pair of iterators that yield adjacent atoms of an atom
+   */
   Range<AdjacencyIterator> adjacents(AtomIndex a) const;
+  /*!
+   * @brief Fetch iterator pair yielding bonds indices indicent to an atom
+   * @param a The atom whose incident atoms are desired
+   * @returns A begin-end pair of iterators that yield incident bond indices of
+   *   an atom
+   */
   Range<IncidentEdgesIterator> bonds(AtomIndex a) const;
 //!@}
 

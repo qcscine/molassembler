@@ -440,17 +440,18 @@ unsigned countPlanarityEnforcingBonds(
   const temple::TinySet<BondIndex>& edgeSet,
   const OuterGraph& graph
 ) {
-  // TODO this should really be a map-reduce
-  unsigned count = 0;
+  return std::accumulate(
+    std::begin(edgeSet),
+    std::end(edgeSet),
+    0u,
+    [&graph](const unsigned carry, const auto& edge) {
+      if(graph.bondType(edge) == BondType::Double) {
+        return carry + 1;
+      }
 
-  for(const auto& edge: edgeSet) {
-    const BondType edgeType = graph.bondType(edge);
-    if(edgeType == BondType::Double) {
-      count += 1;
+      return carry;
     }
-  }
-
-  return count;
+  );
 }
 
 } // namespace molassembler

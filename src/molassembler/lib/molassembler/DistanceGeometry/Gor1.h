@@ -89,7 +89,7 @@ std::enable_if_t<
    * if the (current!) shortest paths distance to the vertex is greater than
    * the largest implicit vdw bound, supply false
    *
-   * the idea being that if we are fucking around in the left graph and our
+   * the idea being that if we are messing around in the left graph and our
    * current shortest paths distance is higher than the largest implicit bound,
    * then we should have taken an implicit bound instead of an explicit in-group
    * arc instead of the last arc in the path
@@ -274,7 +274,7 @@ void gor1_eg_scan(
    * if the (current!) shortest paths distance to the vertex is greater than
    * the largest implicit vdw bound, supply false
    *
-   * the idea being that if we are fucking around in the left graph and our
+   * the idea being that if we are messing around in the left graph and our
    * current shortest paths distance is higher than the largest implicit bound,
    * then we should have taken an implicit bound instead of an explicit in-group
    * arc instead of the last arc in the path

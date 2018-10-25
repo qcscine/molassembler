@@ -137,7 +137,7 @@ class DistanceBoundsMatrix;
  * pair is in the stable part of the shortest-paths tree after the prior
  * distance fixture. Creating an oracle to decide this is probably about as hard
  * as creating a batch dynamic SSSP algorithm that can deal with negative edge
- * weights, so: really damn hard.
+ * weights, so: really hard.
  */
 class ImplicitGraph {
 public:

@@ -22,7 +22,7 @@
  * in a molecule.
  */
 
-/* TODO
+/*! @todo
  * - Make a hash for BondIndex so we can use unordered_map.
  *   I think this is impossible since access to the edge_desciptor's source and
  *   target vertices requires a bgl graph instance to be called. Perhaps as soon

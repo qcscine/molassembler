@@ -20,10 +20,6 @@ AngstromWrapper::AngstromWrapper(
   }
 }
 
-/* TODO Unsure if I should explicitly move from this, or whether that would
- * be a pessimization in all cases, but it most clearly states intent - after
- * calling this function, AngstromWrapper is not supposed to be reused.
- */
 Delib::PositionCollection AngstromWrapper::getBohr() {
   if(_invalidated) {
     throw std::logic_error("AngstromWrapper was invalidated!");

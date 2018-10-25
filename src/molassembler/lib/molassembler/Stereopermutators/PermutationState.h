@@ -83,7 +83,7 @@ struct PermutationState {
 
   //! Make ligand-index based ligands self-referential within canonical ligands
   static stereopermutation::Stereopermutation::LinksSetType selfReferentialTransform(
-    const RankingInformation::LinksType& rankingLinks,
+    const std::vector<LinkInformation>& rankingLinks,
     const RankingInformation::RankedLigandsType& canonicalLigands
   );
 
@@ -98,8 +98,9 @@ struct PermutationState {
   );
 
   /*!
+   * @todo document this
    * Generate the character representation of a particular stereopermutation
-   * using its map from ?? TODO
+   * using its map from ??
    */
   static std::vector<char> makeStereopermutationCharacters(
     const RankingInformation::RankedLigandsType& canonicalLigands,

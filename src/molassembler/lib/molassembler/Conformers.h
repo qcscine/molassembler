@@ -11,6 +11,7 @@
 // Forward-declarations
 namespace Delib {
 class PositionCollection;
+class Position;
 } // namespace Delib
 
 /*!@file
@@ -61,6 +62,24 @@ struct Configuration {
    * faster and admit defeat quicker.
    */
   double failureRatio {2};
+
+  /**
+   * @brief Set fixed positions for a subset of atoms
+   *
+   * By default does not set any fixed positions.
+   *
+   * @pre Any fixed atom must have zero, one or all ligand sites fully
+   *   fixed. No atoms constituting a haptic ligand site may be fixed.
+   *
+   * @todo Haptic ligand sites currently cannot be fixed since it nontrivially
+   *   affects angle calculations in modeling. Once this is implemented, alter
+   *   the precondition text to read "No individual ligand sites may be
+   *   partially fixed (i.e. the atoms constituting a haptic ligand binding
+   *   site must be either completely unfixed or fixed, but may not be mixed)."
+   */
+  std::vector<
+    std::pair<AtomIndex, Delib::Position>
+  > fixedPositions;
 };
 
 } // namespace DistanceGeometry
@@ -79,6 +98,11 @@ struct Configuration {
  * @param numStructures The number of desired structures to generate
  * @param configuration The configuration object to control Distance Geometry
  *   in detail. The defaults are usually fine.
+ *
+ * @pre @p molecule may not contain stereopermutators with zero assignments.
+ * @pre @p configuration's preconditions must be met
+ *
+ * @throws std::runtime_error if any preconditions are unmet
  *
  * @returns A result type which may or may not contain a vector of
  *   PositionCollections (in Bohr length units). The result type is much like
