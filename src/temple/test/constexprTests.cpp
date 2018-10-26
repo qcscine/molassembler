@@ -976,10 +976,13 @@ namespace UpperTriangularMatrixTests {
 
 // Can default-construct
 constexpr auto defaultMatr = temple::UpperTriangularMatrix<bool, 15> {};
+static_assert(decltype(defaultMatr)::N == 6u, "Size isn't right");
 
 constexpr auto matr = temple::makeUpperTriangularMatrix(
   std::array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
 );
+
+static_assert(decltype(matr)::N == 4u, "Size isn't right");
 
 /*constexpr auto failing = temple::makeUpperTriangularMatrix(
   std::array<unsigned, 5> {{1, 2, 3, 4, 5}}
@@ -988,6 +991,7 @@ constexpr auto matr = temple::makeUpperTriangularMatrix(
 constexpr auto fromArray = temple::makeUpperTriangularMatrix(
   temple::Array<unsigned, 6> {{1, 2, 3, 4, 5, 6}}
 );
+static_assert(decltype(fromArray)::N == 4u, "Size isn't right");
 
 } // namespace UpperTriangularMatrixTests
 

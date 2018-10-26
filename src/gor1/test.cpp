@@ -54,11 +54,12 @@ public:
 
 static RNG rng;
 
+// Imitate the testing setup in the paper (see the Gor1 header)
 Graph SPACYC_P2N(
-  unsigned vertices,
-  unsigned edges,
-  double lower,
-  double upper
+  const unsigned vertices,
+  const unsigned edges,
+  const double lower,
+  const double upper
 ) {
   Graph graph {vertices};
 
@@ -95,7 +96,7 @@ BOOST_AUTO_TEST_CASE(gor1Tests) {
   double l = -10000;
   double u = 10000;
 
-  for(unsigned i = 0; i < 100; ++i) {
+  for(unsigned i = 0; i < 10; ++i) {
     Graph testGraph = SPACYC_P2N(V, E, l, u);
 
     /* GOR1 */
