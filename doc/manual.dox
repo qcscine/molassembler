@@ -317,6 +317,38 @@ Conformer generation itself is based on four-dimensional Distance Geometry
 
 --------------------------------------------------------------------------------
 
+@subsection manual-molecules-stereopermutators Stereopermutators
+
+Currently, this library models two types of stereocenters: The first models the
+atom-centric relative placement of substituents across geometries ranging from
+linear to square-antiprismatic. The second type models configurational
+permutations owing to bond-centric rotational barriers.
+
+In order to determine whether a particular atom in a molecule is an atom-centric
+stereocenter, its substituents are ranked according to a nearly-compliant
+implementation of the IUPAC sequence rules as laid out in the 2013 Blue Book.
+The rankings are transformed into an abstract substituent case (e.g. octahedral
+(A-A)BBCD) and a symbolic computation is carried out to determine the number of
+permutations that are not superimposable via spatial rotations within the
+idealized symmetry. The set of resulting permutations of the substituent symbols
+is called the set of stereopermutations. If this set contains more than one
+stereopermutations, then the atom is an atom-centric stereocenter under that
+symmetry.
+
+If substituents are haptic or multidentate, an additional algorithm removes
+stereopermutations it deems clearly impossible. All bridge lengths between
+pairs of chelating atoms of a multidentate ligand are checked against the atom
+pair's bite angle within the idealized symmetry. Additionally, haptic ligands'
+cones are checked to ensure they do not overlap. Indices within the set of not
+clearly impossible stereopermutations are called assignments.
+
+Bond-centric stereocenters model rotational configurations of arbitrary
+combinations of two symmetries and their respective fused symmetry positions.
+The fused symmetry positions of each side effect the overall permutations if the
+symmetry has multiple position groups. For instance, this is the case in square
+pyramidal symmetries, where there are axial and equatorial symmetry positions.
+
+
 @subsection manual-molecules-construction Molecule construction
 
 In order to create a molecule instance, information can be supplied and inferred
@@ -440,6 +472,35 @@ idealization strictness even in clear-cut cases. Heavily loosened tolerances can
 lead to odd-looking spatial structures. In those cases, you may want to further
 refine these with force field or semiempirical quantum chemical methods before
 running any more precise calculations.
+
+@section known-issues Known issues
+
+--------------------------------------------------------------------------------
+
+@subsection Ranking algorithm deficiencies
+No regularization of Mancude rings and rings systems is performed in sequence
+rule 1. This can lead to false differences between substituents when they are
+actually identical.
+
+@subsection known-issues-rotational-isomery Rotational isomery
+The current data model of bond-centric stereocenters can treat a large number of
+cases correctly, but is insufficient. For instance, allene systems' rotational
+isomery cannot be captured with the current model.
+
+@subsection known-issues-helicity Helicity
+No stereodescriptors or ranking algorithms for helicity are implemented.
+
+@subsection known-issues-conjugation Conjugated systems
+No detection algorithms are in place to find conjugated systems. Conjugated
+systems would require special care in the following places:
+
+- In ranking, the enumeration of Kekule structures is part of a sequence rule
+  priority determination algorithm.
+- In bond order discretization, if nearest integer discretization is chosen,
+  aromatic bond orders (around 1.5) may be randomly rounded up or down, with no
+  care taken to generate a Kekule structure of a contained conjugated system
+- In molecule comparison, mesomer kekule structures may not be recognized as
+  equivalent molecules
 
 @section manual-glossary Glossary
 

@@ -1,5 +1,5 @@
-Public interface
-================
+/*!
+@page public-interface Public interface
 
 v1.0.0
 ------
@@ -10,27 +10,28 @@ are part of the public interface.
 The auxiliary library headers that are by inclusion also part of the public
 interface are currently:
 
+@verbatim
 - chemical symmetries/
-
   - Names
 
 - temple/
-
   - Preprocessor
   - TinySet
   - Traits
   - constexpr/
-
     - Bitmask
     - Math
+@endverbatim
 
-It is inadvisable to include these files directly and make use of their
-functionality since the types therein may be moved around in future versions.
-Any molassembler headers that use types from these files include them, and there
-are no forward declarations.
+@warning It is inadvisable to include the listed files directly and make use of
+their functionality since the types therein may be moved around or deleted in
+future versions. Any molassembler headers that use types from these files
+include them, and there are no forward declarations.
 
-Additionally, some (very few) functions carry an explicit warning that they
+@note Additionally, some (very few) functions carry an explicit warning that they
 exist solely for library-internal purporses. It is advisable not to use these
 functions or create functionality dependent on possibly forward-declared types
 involved. They do not form part of the public interface and are thus subject to
 free developmental flux.
+
+*/

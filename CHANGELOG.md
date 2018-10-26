@@ -14,6 +14,8 @@ TODO
   tutorial-like documentation
 - GraphAlgorithms.h for public graph algorithms. Currently contains only a
   graph distance BFS algorithm 
+- A `doc` target that builds the Doxygen documentation, which is now more
+  extensive and contains the beginnings of a tutorial
 
 ### Changed
 - Renamed AtomStereocenter and BondStereocenter to AtomStereopermutator and
@@ -37,6 +39,10 @@ TODO
 - `molassemblerStatic` no longer has interface dependencies on header-only
   libraries used in its implementation only
 - Only permit downloading of `Delib` from GitLab if explicitly enabled for CI
+
+### Removed
+- The sphinx parallel documentation, including the distributed sphinx breathe
+  extension to get C++ docstrings from doxygen
 
 ## [Unreleased]
 ### Added

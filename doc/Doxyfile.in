@@ -800,6 +800,7 @@ INPUT                  = @molassembler_SOURCE_DIR@/src/chemical_symmetries/lib/c
                          @molassembler_SOURCE_DIR@/src/stereopermutation/lib/stereopermutation \
                          @molassembler_SOURCE_DIR@/src/temple/lib/temple \
                          @molassembler_SOURCE_DIR@/doc/manual.dox \
+                         @molassembler_SOURCE_DIR@/doc/api.dox \
                          @molassembler_SOURCE_DIR@/README.md
 
 # This tag can be used to specify the character encoding of the source files
