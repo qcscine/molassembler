@@ -155,6 +155,15 @@ struct RankingInformation {
    */
   unsigned getLigandIndexOf(AtomIndex i) const;
 
+  /**
+   * @brief Fetches the position of a ligand index within the ligands ranking
+   *
+   * @param i The ligand index to find
+   *
+   * @return The position within @p ligandsRanking of the supplied ligand index
+   */
+  unsigned getRankedIndexOfLigand(unsigned i) const;
+
   /*!
    * @brief Checks whether there are haptic ligands
    *

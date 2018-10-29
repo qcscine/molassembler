@@ -153,13 +153,31 @@ unsigned RankingInformation::getLigandIndexOf(const AtomIndex i) const {
     }
   );
 
-  if(findIter == ligands.end()) {
-    throw std::out_of_range(
-      "Specified atom index is not part of any ligand"
-    );
+  if(findIter == std::end(ligands)) {
+    throw std::out_of_range("Specified atom index is not part of any ligand");
   }
 
-  return findIter - ligands.begin();
+  return findIter - std::begin(ligands);
+}
+
+unsigned RankingInformation::getRankedIndexOfLigand(const unsigned i) const {
+  auto findIter = temple::find_if(
+    ligandsRanking,
+    [&](const auto& equallyRankedLigands) -> bool {
+      return temple::any_of(
+        equallyRankedLigands,
+        [&](const unsigned ligandIndex) -> bool {
+          return ligandIndex == i;
+        }
+      );
+    }
+  );
+
+  if(findIter == std::end(ligandsRanking)) {
+    throw std::out_of_range("Specified ligand index is not ranked.");
+  }
+
+  return findIter - std::begin(ligandsRanking);
 }
 
 bool RankingInformation::hasHapticLigands() const {
