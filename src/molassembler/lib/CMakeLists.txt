@@ -366,14 +366,6 @@ install(
     PATTERN "*.h"
     PATTERN "*.hpp"
     PATTERN "*.hxx"
-    REGEX ".+/molassembler/Containers$" EXCLUDE
-    REGEX ".+/molassembler/Detail$" EXCLUDE
-    REGEX ".+/molassembler/DistanceGeometry$" EXCLUDE
-    REGEX ".+/molassembler/Graph$" EXCLUDE
-    REGEX ".+/molassembler/IO$" EXCLUDE
-    REGEX ".+/molassembler/Modeling$" EXCLUDE
-    REGEX ".+/molassembler/Molecule$" EXCLUDE
-    REGEX ".+/molassembler/Stereopermutators$" EXCLUDE
 )
 
 source_group("Headers" FILES ${HEADERS_All})
