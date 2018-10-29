@@ -16,20 +16,36 @@
 
 namespace molassembler {
 
+class StereopermutatorList;
+class AtomStereopermutator;
+class BondStereopermutator;
+
 // Helper class to write the Graph as Graphviz output
 struct MolGraphWriter {
+//!@name Static data
+//!@{
   static const std::map<std::string, std::string> elementBGColorMap;
   static const std::map<std::string, std::string> elementTextColorMap;
   static const std::map<BondType, std::string> bondTypeDisplayString;
+//!@}
 
-  /* State */
-  // We promise to be good and not change anything
+//!@name Closures
+//!@{
   const InnerGraph* const graphPtr;
+  const StereopermutatorList* const stereopermutatorListPtr;
+//!@}
 
-  explicit MolGraphWriter(const InnerGraph* passGraphPtr);
+  MolGraphWriter(
+    const InnerGraph* passGraphPtr,
+    const StereopermutatorList* passPermutatorListPtr
+  );
+
+  virtual ~MolGraphWriter() = default;
 
   /* Information */
   Delib::ElementType getElementType(InnerGraph::Vertex vertexIndex) const;
+
+  void writeBondStereopermutatorNodes(std::ostream& os) const;
 
   // Global options
   void operator() (std::ostream& os) const;
@@ -39,6 +55,16 @@ struct MolGraphWriter {
 
   // Edge options
   void operator() (std::ostream& os, const InnerGraph::Edge& edgeIndex) const;
+
+  virtual std::vector<std::string> edgeTooltips(AtomIndex source, AtomIndex target) const;
+
+  virtual std::vector<std::string> atomStereopermutatorTooltips(
+    const AtomStereopermutator& permutator
+  ) const;
+
+  virtual std::vector<std::string> bondStereopermutatorTooltips(
+    const BondStereopermutator& permutator
+  ) const;
 };
 
 } // namespace molassembler

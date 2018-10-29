@@ -803,7 +803,7 @@ Symmetry::Name Molecule::Impl::determineLocalGeometry(
 }
 
 std::string Molecule::Impl::dumpGraphviz() const {
-  MolGraphWriter propertyWriter(&_adjacencies.inner());
+  MolGraphWriter propertyWriter(&_adjacencies.inner(), &_stereopermutators);
 
   std::stringstream graphvizStream;
 

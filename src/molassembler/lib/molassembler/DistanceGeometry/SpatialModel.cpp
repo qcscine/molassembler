@@ -940,144 +940,44 @@ void SpatialModel::dumpDebugInfo() const {
   }
 }
 
-struct SpatialModel::ModelGraphWriter {
+struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
   /* State */
-  // We promise to be good and not change anything
-  const OuterGraph* const graphPtr;
   const SpatialModel& spatialModel;
 
 /* Constructor */
-  ModelGraphWriter(
-    const OuterGraph* passGraphPtr,
-    const SpatialModel& passSpatialModel
-  ) : graphPtr(passGraphPtr),
-    spatialModel(passSpatialModel)
-  {}
+  ModelGraphWriter(const InnerGraph& inner, const SpatialModel& passSpatialModel)
+    : MolGraphWriter(&inner, &passSpatialModel._stereopermutators),
+      spatialModel(passSpatialModel) {}
 
-/* Helper functions */
-  Delib::ElementType getElementType(const AtomIndex vertexIndex) const {
-    return graphPtr->elementType(vertexIndex);
+  std::vector<std::string> edgeTooltips(AtomIndex source, AtomIndex target) const final {
+    const auto indexSequence = orderedIndexSequence<2>({{source, target}});
+    if(spatialModel._bondBounds.count(indexSequence) == 1) {
+      const auto& bondBounds = spatialModel._bondBounds.at(indexSequence);
+      std::string tooltip = "[" + std::to_string(bondBounds.lower);
+      tooltip += ", ";
+      tooltip += std::to_string(bondBounds.upper);
+      tooltip += "]";
+
+      return {std::move(tooltip)};
+    }
+
+    return {};
   }
 
-/* Accessors for boost::write_graph */
-  // Global options
-  void operator() (std::ostream& os) const {
-    os << "  graph [fontname = \"Arial\", layout = neato];\n"
-      << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
-      << "  edge [fontname = \"Arial\"];\n";
-
-    /* Additional nodes: BondStereopermutators */
-    for(const auto& bondStereopermutator : spatialModel._stereopermutators.bondStereopermutators()) {
-      std::string state;
-      if(bondStereopermutator.assigned()) {
-        state = std::to_string(bondStereopermutator.assigned().value());
-      } else {
-        state = "u";
-      }
-
-      state += "/"s + std::to_string(bondStereopermutator.numStereopermutations());
-
-      std::string graphNodeName = "BS"
-        + std::to_string(bondStereopermutator.edge().first)
-        + std::to_string(bondStereopermutator.edge().second);
-
-      std::vector<std::string> tooltipStrings {bondStereopermutator.info()};
-
-      // Find any enforced dihedrals
-      for(const auto& dihedralMapPair : spatialModel._dihedralBounds) {
-        const auto& indexSequence = dihedralMapPair.first;
-        const auto& dihedralBounds = dihedralMapPair.second;
-        if(
-          (
-            indexSequence.at(1) == bondStereopermutator.edge().first
-            && indexSequence.at(2) == bondStereopermutator.edge().second
-          ) || (
-            indexSequence.at(1) == bondStereopermutator.edge().second
-            && indexSequence.at(2) == bondStereopermutator.edge().first
-          )
-        ) {
-          tooltipStrings.emplace_back(
-            "["s + std::to_string(indexSequence.at(0)) + ","s
-            + std::to_string(indexSequence.at(3)) + "] -> ["s
-            + std::to_string(
-              temple::Math::round(
-                temple::Math::toDegrees(dihedralBounds.lower)
-              )
-            ) + ", "s + std::to_string(
-              temple::Math::round(
-                temple::Math::toDegrees(dihedralBounds.upper)
-              )
-            ) + "]"s
-          );
-        }
-      }
-
-      os << "  " << graphNodeName << R"( [label=")" << state
-        << R"(", fillcolor="steelblue", shape="box", fontcolor="white", )"
-        << R"(tooltip=")"
-        << temple::condense(tooltipStrings, "&#10;"s)
-        << R"("];)" << "\n";
-
-      // Add connections to the vertices (although those don't exist yet)
-      os << "  " << graphNodeName << " -- " << bondStereopermutator.edge().first
-        << R"( [color="gray", dir="forward", len="2"];)"
-        << "\n";
-      os << "  " << graphNodeName << " -- " << bondStereopermutator.edge().second
-        << R"( [color="gray", dir="forward", len="2"];)"
-        << "\n";
-    }
-  }
-
-  // Vertex options
-  void operator() (std::ostream& os, const AtomIndex vertexIndex) const {
-    const std::string symbolString = Delib::ElementInfo::symbol(
-      getElementType(vertexIndex)
-    );
-
-    os << "[";
-
-    // Add element name and index label
-    os << R"(label = ")" << symbolString << vertexIndex << R"(")";
-
-    // Coloring
-    // C++17 if-init
-    auto bgColorFindIter = MolGraphWriter::elementBGColorMap.find(symbolString);
-    if(bgColorFindIter != MolGraphWriter::elementBGColorMap.end()) {
-      os << R"(, fillcolor=")" << bgColorFindIter->second << R"(")";
-    } else { // default
-      os << R"(, fillcolor="white")";
-    }
-
-    auto textColorFindIter = MolGraphWriter::elementTextColorMap.find(symbolString);
-    if(textColorFindIter != MolGraphWriter::elementTextColorMap.end()) {
-      os << R"(, fontcolor=")" << textColorFindIter->second << R"(")";
-    } else { // default
-      os << R"(, fontcolor="orange")";
-    }
-
-    // Font sizing
-    if(symbolString == "H") {
-      os << ", fontsize=10, width=.3, fixedsize=true";
-    }
-
-    // Any angles this atom is the central atom in
-    std::vector<std::string> tooltipStrings;
-
-    if(auto stereopermutatorOption = spatialModel._stereopermutators.option(vertexIndex)) {
-      tooltipStrings.emplace_back(
-        Symmetry::name(stereopermutatorOption.value().getSymmetry())
-      );
-      tooltipStrings.emplace_back(
-        stereopermutatorOption.value().info()
-      );
-    }
+  std::vector<std::string> atomStereopermutatorTooltips(
+    const AtomStereopermutator& permutator
+  ) const final {
+    std::vector<std::string> tooltips {
+      Symmetry::name(permutator.getSymmetry()),
+      permutator.info()
+    };
 
     for(const auto& angleIterPair : spatialModel._angleBounds) {
       const auto& indexSequence = angleIterPair.first;
       const auto& angleBounds = angleIterPair.second;
 
-      if(indexSequence.at(1) == vertexIndex) {
-        tooltipStrings.emplace_back(
+      if(indexSequence.at(1) == permutator.centralIndex()) {
+        tooltips.emplace_back(
           "["s + std::to_string(indexSequence.at(0)) + ","s
           + std::to_string(indexSequence.at(2)) +"] -> ["s
           + std::to_string(
@@ -1093,52 +993,49 @@ struct SpatialModel::ModelGraphWriter {
       }
     }
 
-    if(!tooltipStrings.empty()) {
-      os << R"(, tooltip=")"
-        << temple::condense(tooltipStrings, "&#10;"s)
-        << R"(")";
-    }
-
-    os << "]";
+    return tooltips;
   }
 
-  // Edge options
-  void operator() (std::ostream& os, const InnerGraph::Edge& edgeIndex) const {
-    const AtomIndex source = graphPtr->inner().source(edgeIndex);
-    const AtomIndex target = graphPtr->inner().target(edgeIndex);
+  std::vector<std::string> bondStereopermutatorTooltips(
+    const BondStereopermutator& permutator
+  ) const final {
+    std::vector<std::string> tooltips;
 
-    os << "[";
-
-    // Bond Type display options
-    auto bondType = graphPtr->inner().bondType(edgeIndex);
-    auto stringFindIter = MolGraphWriter::bondTypeDisplayString.find(bondType);
-    if(stringFindIter != MolGraphWriter::bondTypeDisplayString.end()) {
-      os << stringFindIter->second;
+    for(const auto& dihedralMapPair : spatialModel._dihedralBounds) {
+      const auto& indexSequence = dihedralMapPair.first;
+      const auto& dihedralBounds = dihedralMapPair.second;
+      if(
+        (
+          indexSequence.at(1) == permutator.edge().first
+          && indexSequence.at(2) == permutator.edge().second
+        ) || (
+          indexSequence.at(1) == permutator.edge().second
+          && indexSequence.at(2) == permutator.edge().first
+        )
+      ) {
+        tooltips.emplace_back(
+          "["s + std::to_string(indexSequence.at(0)) + ","s
+          + std::to_string(indexSequence.at(3)) + "] -> ["s
+          + std::to_string(
+            temple::Math::round(
+              temple::Math::toDegrees(dihedralBounds.lower)
+            )
+          ) + ", "s + std::to_string(
+            temple::Math::round(
+              temple::Math::toDegrees(dihedralBounds.upper)
+            )
+          ) + "]"s
+        );
+      }
     }
 
-    // If one of the bonded atoms is a hydrogen, shorten the bond
-    /*if(
-      getElementType(target) == Delib::ElementType::H
-      || getElementType(source) == Delib::ElementType::H
-    ) {
-      os << ", len=0.5";
-    }*/
-
-    os << ", penwidth=3";
-
-    const auto indexSequence = orderedIndexSequence<2>({{source, target}});
-    if(spatialModel._bondBounds.count(indexSequence) == 1) {
-      const auto& bondBounds = spatialModel._bondBounds.at(indexSequence);
-      os << R"(, edgetooltip="[)" << bondBounds.lower << ", " << bondBounds.upper <<  R"(]")";
-    }
-
-    os << "]";
+    return tooltips;
   }
 };
 
 std::string SpatialModel::dumpGraphviz() const {
   ModelGraphWriter graphWriter(
-    &_molecule.graph(),
+    _molecule.graph().inner(),
     *this
   );
 
@@ -1157,7 +1054,7 @@ std::string SpatialModel::dumpGraphviz() const {
 
 void SpatialModel::writeGraphviz(const std::string& filename) const {
   ModelGraphWriter graphWriter(
-    &_molecule.graph(),
+    _molecule.graph().inner(),
     *this
   );
 
