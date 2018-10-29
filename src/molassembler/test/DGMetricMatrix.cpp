@@ -1,7 +1,6 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#define BOOST_TEST_MODULE DGMetricMatrixTests
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
@@ -252,7 +251,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    auto DGData = DistanceGeometry::gatherDGInformation(molecule);
+    auto DGData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     DistanceBoundsMatrix distanceBounds {
       molecule,

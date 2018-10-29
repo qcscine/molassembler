@@ -11,11 +11,6 @@ set(testFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/BondStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommonTrig.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Cycles.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGExplicitGraph.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGGraphShortestDistances.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGImplicitGraph.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGMetricMatrix.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGRefinementProblem.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DelibHelpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Descriptors.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Molecule.cpp
@@ -26,6 +21,16 @@ set(testFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/Serialization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/StdlibTypeAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/VSEPR.cpp
+)
+
+set(DGTestFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGExplicitGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGGraphShortestDistances.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGImplicitGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGMetricMatrix.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGRefinementProblem.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGFixedPositions.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGmain.cpp
 )
 
 # Testing targets
@@ -59,3 +64,22 @@ foreach(filename ${testFiles})
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../data/"
   )
 endforeach()
+
+add_executable(DistanceGeometryTests ${DGTestFiles})
+target_link_libraries(DistanceGeometryTests
+  PRIVATE
+    Boost::boost
+    Boost::regex
+    gor1
+    molassembler
+    stereopermutation
+    Boost::unit_test_framework
+    Boost::filesystem
+)
+target_compile_options(DistanceGeometryTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+add_test(
+  NAME DistanceGeometryTests
+  COMMAND DistanceGeometryTests
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../data/"
+)
+set_property(TARGET DistanceGeometryTests PROPERTY FOLDER "Tests")

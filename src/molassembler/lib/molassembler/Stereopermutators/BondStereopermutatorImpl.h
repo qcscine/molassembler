@@ -30,6 +30,8 @@ struct BondStereopermutator::Impl {
 /* Information */
   boost::optional<unsigned> assigned() const;
 
+  const stereopermutation::Composite& composite() const;
+
   bool hasSameCompositeOrientation(const BondStereopermutator::Impl& other) const;
 
   boost::optional<unsigned> indexOfPermutation() const;
@@ -48,13 +50,6 @@ struct BondStereopermutator::Impl {
   std::string rankInfo() const;
 
   BondIndex edge() const;
-
-  void setModelInformation(
-    DistanceGeometry::SpatialModel& model,
-    const AtomStereopermutator& stereopermutatorA,
-    const AtomStereopermutator& stereopermutatorB,
-    double looseningMultiplier
-  ) const;
 
 /* Operators */
   bool operator == (const Impl& other) const;

@@ -566,6 +566,10 @@ void AtomStereopermutator::Impl::removeSubstituent(
   assign(newStereopermutation);
 }
 
+const PermutationState& AtomStereopermutator::Impl::getPermutationState() const {
+  return _cache;
+}
+
 const RankingInformation& AtomStereopermutator::Impl::getRanking() const {
   return _ranking;
 }
@@ -799,136 +803,6 @@ double AtomStereopermutator::Impl::angle(
     _cache.symmetryPositionMap.at(i),
     _cache.symmetryPositionMap.at(j)
   );
-}
-
-void AtomStereopermutator::Impl::setModelInformation(
-  DistanceGeometry::SpatialModel& model,
-  const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
-  const double looseningMultiplier
-) const {
-  /* Intra-site modelling */
-  for(unsigned ligandI = 0; ligandI < _cache.ligandDistances.size(); ++ligandI) {
-    /* If no cone information is present, do not correct the distance to the
-     * ligand using the cone angle
-     */
-    if(!_cache.coneAngles.at(ligandI)) {
-      for(const AtomIndex i : _ranking.ligands.at(ligandI)) {
-        model.setBondBoundsIfEmpty(
-          {{i, _centerAtom}},
-          _cache.ligandDistances.at(ligandI)
-        );
-      }
-    }
-
-    /* Distance of every ligand site atom index to the central atom assumptions
-     * - Every haptic index is on the cone base circle
-     * - Cone height is defined by _cache.ligandDistance
-     * - Cone angle is defined by _cache.coneAngle
-     */
-    const DistanceGeometry::ValueBounds coneAngleBounds = _cache.coneAngles.at(ligandI).value();
-
-    const double upperHypotenuse = (
-      _cache.ligandDistances.at(ligandI).upper
-      / std::cos(coneAngleBounds.lower)
-    );
-
-    const double lowerHypotenuse = (
-      _cache.ligandDistances.at(ligandI).lower
-      / std::cos(coneAngleBounds.upper)
-    );
-
-    for(const AtomIndex i : _ranking.ligands.at(ligandI)) {
-      model.setBondBoundsIfEmpty(
-        {{i, _centerAtom}},
-        DistanceGeometry::ValueBounds {
-          lowerHypotenuse,
-          upperHypotenuse
-        }
-      );
-    }
-
-    /* Angles between ligand-constituting atoms within a single index
-     * - Minimally 0° (if there were a zero-length bond)
-     *   You could compute shortest possible bond constexpr and insert a trig
-     *   calc here, but the bond level distance is supplied elsewhere by
-     *   SpatialModel anyway, no need to duplicate that information
-     * - Maximally 2 * the upper cone angle (but not more than M_PI)
-     */
-    temple::forEach(
-      temple::adaptors::allPairs(_ranking.ligands.at(ligandI)),
-      [&](const AtomIndex i, const AtomIndex j) {
-        model.setAngleBoundsIfEmpty(
-          {{i, _centerAtom, j}},
-          DistanceGeometry::ValueBounds {
-            0,
-            std::min(M_PI, 2 * coneAngleBounds.upper)
-          }
-        );
-      }
-    );
-  }
-
-  /* Inter-site modelling */
-  /* If for either site no cone angles could be calculated (currently only
-   * happens if a haptic ligand does not match the existing modeling patterns),
-   * we have to skip this step entirely and hope that the remaining modeling
-   * can pick up the slack.
-   *
-   * NOTE: Cone angles are calculated for non-haptic ligands too -> (0, 0).
-   */
-  for(unsigned i = 0; i < _ranking.ligands.size() - 1; ++i) {
-    if(!_cache.coneAngles.at(i)) {
-      continue;
-    }
-
-    for(unsigned j = i + 1; j < _ranking.ligands.size(); ++j) {
-      if(!_cache.coneAngles.at(j)) {
-        continue;
-      }
-
-      /* The idealized symmetry angles are modified by the upper (!) cone angles
-       * at each site, not split between lower and upper.
-       */
-      DistanceGeometry::ValueBounds angleBounds {
-        (
-          angle(i, j)
-          - _cache.coneAngles.at(i).value().upper
-          - _cache.coneAngles.at(j).value().upper
-        ),
-        (
-          angle(i, j)
-          + _cache.coneAngles.at(i).value().upper
-          + _cache.coneAngles.at(j).value().upper
-        )
-      };
-
-      /* The computed angle bounds are valid for each pair of atoms
-       * constituting each ligand
-       */
-      temple::forEach(
-        temple::adaptors::allPairs(
-          _ranking.ligands.at(i),
-          _ranking.ligands.at(j)
-        ),
-        [&](const AtomIndex x, const AtomIndex y) -> void {
-          double variation = (
-            DistanceGeometry::SpatialModel::angleAbsoluteVariance
-            * looseningMultiplier
-            * cycleMultiplierForIndex(x)
-            * cycleMultiplierForIndex(y)
-          );
-
-          model.setAngleBoundsIfEmpty(
-            {{x, _centerAtom, y}},
-            DistanceGeometry::ValueBounds {
-              std::max(0.0, angleBounds.lower - variation),
-              std::min(M_PI, angleBounds.upper + variation)
-            }
-          );
-        }
-      );
-    }
-  }
 }
 
 boost::optional<unsigned> AtomStereopermutator::Impl::assigned() const {

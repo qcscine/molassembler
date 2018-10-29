@@ -26,6 +26,12 @@
  * stereopermutators in molecules.
  */
 
+namespace stereopermutation {
+
+class Composite;
+
+} // namespace stereopermutation
+
 namespace molassembler {
 
 class AngstromWrapper;
@@ -82,6 +88,8 @@ public:
 //!@{
   boost::optional<unsigned> assigned() const;
 
+  const stereopermutation::Composite& composite() const;
+
   bool hasSameCompositeOrientation(const BondStereopermutator& other) const;
 
   boost::optional<unsigned> indexOfPermutation() const;
@@ -101,12 +109,6 @@ public:
 
   BondIndex edge() const;
 
-  void setModelInformation(
-    DistanceGeometry::SpatialModel& model,
-    const AtomStereopermutator& stereopermutatorA,
-    const AtomStereopermutator& stereopermutatorB,
-    double looseningMultiplier
-  ) const;
 //!@}
 
 //!@name Operators

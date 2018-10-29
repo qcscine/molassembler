@@ -112,6 +112,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/BondStereopermutatorImpl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/PermutationState.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Utils/QuaternionFit.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
 
@@ -161,6 +162,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/BondStereopermutatorImpl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/PermutationState.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Utils/QuaternionFit.cpp
 )
 
 # Object library to avoid compiling twice

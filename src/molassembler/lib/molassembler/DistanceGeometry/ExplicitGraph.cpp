@@ -3,7 +3,6 @@
 
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 
-#include "boost/graph/bellman_ford_shortest_paths.hpp"
 #include "boost/graph/two_bit_color_map.hpp"
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
@@ -27,7 +26,7 @@
  * which would be the death of the algorithm.
  *
  * But BGL does not allow this, so we would have to use Bellman-Ford, which is
- * O(VE), not O(V + E).
+ * O(VE), not O(V + E). Instead of accepting this, we use GOR1 instead.
  */
 
 namespace molassembler {

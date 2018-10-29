@@ -1,7 +1,6 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#define BOOST_TEST_MODULE ImplicitGraphTestModule
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
@@ -57,7 +56,7 @@ UnsignedType right(UnsignedType a) {
   return 2 * a + 1;
 }
 
-BOOST_AUTO_TEST_CASE(nonVisualTests) {
+BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
   using namespace molassembler;
 
   for(
@@ -70,7 +69,7 @@ BOOST_AUTO_TEST_CASE(nonVisualTests) {
 
     using IG = DistanceGeometry::ImplicitGraph;
 
-    DistanceGeometry::SpatialModel spatialModel {molecule};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     IG ig {
       molecule,

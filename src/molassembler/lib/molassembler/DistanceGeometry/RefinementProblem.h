@@ -149,7 +149,7 @@ struct errfValue {
         const double upperBoundSquared = squaredBounds(i, j);
         const double lowerBoundSquared = squaredBounds(j, i);
         // Since i < j, upper Bound is (i, j), lower Bound is (j, i)
-        assert(lowerBoundSquared < upperBoundSquared);
+        assert(lowerBoundSquared <= upperBoundSquared);
 
         const double diffLength = dlib::length_squared(
           errfDetail::getPos(positions, j) - errfDetail::getPos(positions, i)
@@ -484,7 +484,7 @@ public:
     const unsigned alpha,
     const unsigned i
   ) const {
-    assert(lowerBoundSquared < upperBoundSquared);
+    assert(lowerBoundSquared <= upperBoundSquared);
 
     // For both
     const Vector alphaMinusI = (

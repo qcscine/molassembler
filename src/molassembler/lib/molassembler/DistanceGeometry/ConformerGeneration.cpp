@@ -15,9 +15,10 @@
 #include "molassembler/DistanceGeometry/Error.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
+#include "molassembler/Utils/QuaternionFit.h"
 
 /*! @todo
- * - Random assignment of unassigned stereopermutators isn't ideal yet:
+ * - Random assignment of unassigned stereopermutators isn't ideal yet
  *   - Sequence randomization
  */
 
@@ -44,6 +45,58 @@ AngstromWrapper convertToAngstromWrapper(
   }
 
   return angstromWrapper;
+}
+
+AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positionsMatrix) {
+  assert(positionsMatrix.cols() == 3);
+  const unsigned N = positionsMatrix.rows();
+  AngstromWrapper angstromWrapper {N};
+  for(unsigned i = 0; i < N; ++i) {
+    angstromWrapper.positions.at(i) = Delib::Position {
+      positionsMatrix.row(i).transpose()
+    };
+  }
+  return angstromWrapper;
+}
+
+Eigen::MatrixXd fitAndSetFixedPositions(
+  const dlib::matrix<double, 0, 1>& vectorizedPositions,
+  const Configuration& configuration
+) {
+  /* Fixed positions postprocessing:
+   * - Rotate and translate the generated coordinates towards the fixed
+   *   positions indicated for each.
+   * - Assuming the fit isn't absolutely exact, overwrite the existing
+   *   positions with the fixed ones
+   */
+  // Convert the vectorized dlib positions into a positions matrix
+  const unsigned dimensionality = 4;
+  const unsigned N = vectorizedPositions.size() / dimensionality;
+  Eigen::MatrixXd positionMatrix(N, 3);
+  for(unsigned i = 0; i < N; ++i) {
+    positionMatrix.row(i) = Eigen::RowVector3d(
+      vectorizedPositions(dimensionality * i),
+      vectorizedPositions(dimensionality * i + 1),
+      vectorizedPositions(dimensionality * i + 2)
+    );
+  }
+
+  /* Construct a reference matrix from the fixed positions (these are still in
+   * bohr!) and a weights vector
+   */
+  Eigen::MatrixXd referenceMatrix = Eigen::MatrixXd::Zero(N, 3);
+  Eigen::VectorXd weights = Eigen::VectorXd::Zero(N);
+  for(const auto& indexPositionPair : configuration.fixedPositions) {
+    referenceMatrix.row(indexPositionPair.first) = indexPositionPair.second.asEigenVector().transpose();
+    weights(indexPositionPair.first) = 1;
+  }
+
+  referenceMatrix *= Delib::angstrom_per_bohr;
+
+  // Perform the QuaternionFit
+  Scine::Utils::QuaternionFit fit(referenceMatrix, positionMatrix, weights);
+
+  return fit.getFittedData();
 }
 
 Molecule narrow(Molecule molecule) {
@@ -109,233 +162,38 @@ inline bool exceededFailureRatio(
 
 } // namespace detail
 
-// Non-debug version of DG
-outcome::result<
-  std::vector<AngstromWrapper>
-> run(
+MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const unsigned numConformers,
-  const Configuration& configuration
+  const Configuration& configuration,
+  const double looseningFactor
 ) {
-  if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
-    return DGError::ZeroAssignmentStereopermutators;
-  }
+  // Generate a spatial model from the molecular graph and stereopermutators
+  SpatialModel spatialModel {molecule, configuration, looseningFactor};
 
-  MoleculeDGInformation DGData;
+  // Extract gathered data
+  MoleculeDGInformation data;
+  data.bounds = spatialModel.makeBoundsList();
+  data.chiralityConstraints = spatialModel.getChiralityConstraints();
 
-  /* In case the molecule has unassigned stereopermutators, we need to randomly
-   * assign them for each conformer generated prior to generating the distance
-   * bounds matrix
-   */
-  bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
+  return data;
+}
 
-  /* If there are no unassigned stereocenters, DGData does not have to be
-   * regenerated. If there are no failures, DGData stays the same for the rest
-   * of the procedure.
-   */
-  if(!regenerateEachStep) {
-    DGData = gatherDGInformation(molecule);
-  }
+MoleculeDGInformation gatherDGInformation(
+  const Molecule& molecule,
+  const Configuration& configuration,
+  const double looseningFactor,
+  std::string& spatialModelGraphvizString
+) {
+  // Generate a spatial model from the molecular graph and stereopermutators
+  SpatialModel spatialModel {molecule, configuration, looseningFactor};
+  spatialModelGraphvizString = spatialModel.dumpGraphviz();
 
-  /* Allow up to failures / numConformers = 2 of errors.
-   * function returns an error code.
-   */
-  unsigned failures = 0;
-  // Track whether a failure should lead to a bounds loosening
-  bool loosenBounds = false;
-  std::vector<AngstromWrapper> ensemble;
-  ensemble.reserve(numConformers);
+  // Extract gathered data
+  MoleculeDGInformation data;
+  data.bounds = spatialModel.makeBoundsList();
+  data.chiralityConstraints = spatialModel.getChiralityConstraints();
 
-  for(
-    unsigned currentStructureNumber = 0;
-    // Failed optimizations do not count towards successful completion
-    currentStructureNumber - failures < numConformers;
-    currentStructureNumber += 1
-  ) {
-    if(regenerateEachStep) {
-      auto moleculeCopy = detail::narrow(molecule);
-
-      if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
-        return DGError::ZeroAssignmentStereopermutators;
-      }
-
-      // Fetch the DG data from the molecule with no unassigned stereopermutators
-      DGData = gatherDGInformation(
-        moleculeCopy,
-        detail::looseningFactor(failures, numConformers, configuration.failureRatio)
-      );
-    } else if(loosenBounds) {
-      DGData = gatherDGInformation(
-        molecule,
-        detail::looseningFactor(failures, numConformers, configuration.failureRatio)
-      );
-
-      loosenBounds = false;
-    }
-
-    ExplicitGraph explicitGraph {
-      molecule,
-      DGData.bounds
-    };
-
-    auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
-    if(!distanceBoundsResult) {
-      return distanceBoundsResult.as_failure();
-    }
-
-    DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
-
-    /* No need to smooth the distance bounds, the graph type creates them
-     * within the triangle inequality bounds
-     */
-
-    assert(distanceBounds.boundInconsistencies() == 0);
-
-    auto distanceMatrixResult = explicitGraph.makeDistanceMatrix(configuration.partiality);
-    if(!distanceMatrixResult) {
-      return distanceMatrixResult.as_failure();
-    }
-
-    // Make a metric matrix from a generated distances matrix
-    MetricMatrix metric(
-      std::move(distanceMatrixResult.value())
-    );
-
-    // Get a position matrix by embedding the metric matrix
-    auto embeddedPositions = metric.embed();
-
-    // Vectorize and transfer to dlib
-    errfValue<true>::Vector dlibPositions = dlib::mat(
-      static_cast<Eigen::VectorXd>(
-        Eigen::Map<Eigen::VectorXd>(
-          embeddedPositions.data(),
-          embeddedPositions.cols() * embeddedPositions.rows()
-        )
-      )
-    );
-
-    /* If a count of chirality constraints reveals that more than half are
-     * incorrect, we can invert the structure (by multiplying e.g. all y
-     * coordinates with -1) and then have more than half of chirality
-     * constraints correct! In the count, chirality constraints with a target
-     * value of zero are not considered (this would skew the count as those
-     * chirality constraints should not have to pass an energetic maximum to
-     * converge properly as opposed to tetrahedra with volume).
-     */
-    if(
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        DGData.chiralityConstraints,
-        dlibPositions
-      ) < 0.5
-    ) {
-      // Invert y coordinates
-      for(unsigned i = 0; i < distanceBounds.N(); ++i) {
-        dlibPositions(
-          static_cast<dlibIndexType>(i) * 4  + 1
-        ) *= -1;
-      }
-    }
-
-    // Create the squared bounds matrix for use in refinement
-    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-      static_cast<Eigen::MatrixXd>(
-        distanceBounds.access().cwiseProduct(distanceBounds.access())
-      )
-    );
-
-    /* Refinement without penalty on fourth dimension only necessary if not all
-     * chiral centers are correct. Of course, for molecules without chiral
-     * centers at all, this stage is unnecessary
-     */
-    if(
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        DGData.chiralityConstraints,
-        dlibPositions
-      ) < 1
-    ) {
-      dlibAdaptors::iterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
-        DGData.chiralityConstraints,
-        configuration.refinementStepLimit
-      };
-
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        inversionStopStrategy,
-        errfValue<false>(
-          squaredBounds,
-          DGData.chiralityConstraints
-        ),
-        errfGradient<false>(
-          squaredBounds,
-          DGData.chiralityConstraints
-        ),
-        dlibPositions,
-        0
-      );
-
-      if(
-        inversionStopStrategy.iterations >= configuration.refinementStepLimit
-        || errfDetail::proportionChiralityConstraintsCorrectSign(
-          DGData.chiralityConstraints,
-          dlibPositions
-        ) < 1.0
-      ) { // Failure to invert
-        failures += 1;
-        loosenBounds = true;
-        if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
-          return DGError::TooManyFailures;
-        }
-        continue; // this triggers a new structure to be generated
-      }
-    }
-
-    dlibAdaptors::iterationOrGradientNormStopStrategy refinementStopStrategy {
-      configuration.refinementStepLimit,
-      configuration.refinementGradientTarget
-    };
-
-    // Refinement with penalty on fourth dimension is always necessary
-    dlib::find_min(
-      dlib::bfgs_search_strategy(),
-      refinementStopStrategy,
-      errfValue<true>(
-        squaredBounds,
-        DGData.chiralityConstraints
-      ),
-      errfGradient<true>(
-        squaredBounds,
-        DGData.chiralityConstraints
-      ),
-      dlibPositions,
-      0
-    );
-
-    bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
-    bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
-      DGData.chiralityConstraints,
-      dlibPositions
-    ) < 1;
-    bool structureAcceptable = errfDetail::finalStructureAcceptable(
-      distanceBounds,
-      DGData.chiralityConstraints,
-      dlibPositions
-    );
-
-    if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
-      failures += 1;
-      loosenBounds = true;
-
-      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
-        return DGError::TooManyFailures;
-      }
-    } else {
-      ensemble.emplace_back(
-        detail::convertToAngstromWrapper(dlibPositions)
-      );
-    }
-  }
-
-  return ensemble;
+  return data;
 }
 
 // Debug version
@@ -349,6 +207,8 @@ std::list<RefinementData> debug(
       << "This molecule has stereopermutators with zero valid permutations!"
       << std::endl;
   }
+
+  SpatialModel::checkFixedPositionsPreconditions(molecule, configuration);
 
   std::list<RefinementData> refinementList;
 
@@ -370,7 +230,7 @@ std::list<RefinementData> debug(
   std::string spatialModelGraphviz;
 
   if(!regenerateEachStep) { // Collect once, keep all the time
-    DGData = gatherDGInformation(molecule, 1.0, spatialModelGraphviz);
+    DGData = gatherDGInformation(molecule, configuration, 1.0, spatialModelGraphviz);
   }
 
   /* If the ratio of failures/total optimizations exceeds this value,
@@ -399,12 +259,14 @@ std::list<RefinementData> debug(
       // Fetch the DG data from the molecule with no unassigned stereopermutators
       DGData = gatherDGInformation(
         moleculeCopy,
+        configuration,
         detail::looseningFactor(failures, numConformers, configuration.failureRatio),
         spatialModelGraphviz
       );
     } else if(loosenBounds) {
       DGData = gatherDGInformation(
         molecule,
+        configuration,
         detail::looseningFactor(failures, numConformers, configuration.failureRatio),
         spatialModelGraphviz
       );
@@ -427,13 +289,16 @@ std::list<RefinementData> debug(
       loosenBounds = true;
       if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
         Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG. Sample spatial model written to 'DG-failure-spatial-model.dot'.\n";
+
+        double looseningFactor = detail::looseningFactor(failures, numConformers, configuration.failureRatio);
+
         if(regenerateEachStep) {
           auto moleculeCopy = detail::narrow(molecule);
 
-          SpatialModel model {moleculeCopy};
+          SpatialModel model {moleculeCopy, configuration, looseningFactor};
           model.writeGraphviz("DG-failure-spatial-model.dot");
         } else {
-          SpatialModel model {molecule};
+          SpatialModel model {molecule, configuration, looseningFactor};
           model.writeGraphviz("DG-failure-spatial-model.dot");
         }
 
@@ -664,36 +529,244 @@ std::list<RefinementData> debug(
   return refinementList;
 }
 
-MoleculeDGInformation gatherDGInformation(
+
+// Non-debug version of DG
+outcome::result<
+  std::vector<AngstromWrapper>
+> run(
   const Molecule& molecule,
-  const double looseningFactor
+  const unsigned numConformers,
+  const Configuration& configuration
 ) {
-  // Generate a spatial model from the molecular graph and stereopermutators
-  SpatialModel spatialModel {molecule, looseningFactor};
+  if(molecule.stereopermutators().hasZeroAssignmentStereopermutators()) {
+    return DGError::ZeroAssignmentStereopermutators;
+  }
 
-  // Extract gathered data
-  MoleculeDGInformation data;
-  data.bounds = spatialModel.makeBoundsList();
-  data.chiralityConstraints = spatialModel.getChiralityConstraints();
+  MoleculeDGInformation DGData;
 
-  return data;
-}
+  /* In case the molecule has unassigned stereopermutators, we need to randomly
+   * assign them for each conformer generated prior to generating the distance
+   * bounds matrix
+   */
+  bool regenerateEachStep = molecule.stereopermutators().hasUnassignedStereopermutators();
 
-MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule,
-  const double looseningFactor,
-  std::string& spatialModelGraphvizString
-) {
-  // Generate a spatial model from the molecular graph and stereopermutators
-  SpatialModel spatialModel {molecule, looseningFactor};
-  spatialModelGraphvizString = spatialModel.dumpGraphviz();
+  /* If there are no unassigned stereocenters, DGData does not have to be
+   * regenerated. If there are no failures, DGData stays the same for the rest
+   * of the procedure.
+   */
+  if(!regenerateEachStep) {
+    DGData = gatherDGInformation(molecule, configuration);
+  }
 
-  // Extract gathered data
-  MoleculeDGInformation data;
-  data.bounds = spatialModel.makeBoundsList();
-  data.chiralityConstraints = spatialModel.getChiralityConstraints();
+  /* Allow up to failures / numConformers = 2 of errors.
+   * function returns an error code.
+   */
+  unsigned failures = 0;
+  // Track whether a failure should lead to a bounds loosening
+  bool loosenBounds = false;
+  std::vector<AngstromWrapper> ensemble;
+  ensemble.reserve(numConformers);
 
-  return data;
+  for(
+    unsigned currentStructureNumber = 0;
+    // Failed optimizations do not count towards successful completion
+    currentStructureNumber - failures < numConformers;
+    currentStructureNumber += 1
+  ) {
+    if(regenerateEachStep) {
+      auto moleculeCopy = detail::narrow(molecule);
+
+      if(moleculeCopy.stereopermutators().hasZeroAssignmentStereopermutators()) {
+        return DGError::ZeroAssignmentStereopermutators;
+      }
+
+      // Fetch the DG data from the molecule with no unassigned stereopermutators
+      DGData = gatherDGInformation(
+        moleculeCopy,
+        configuration,
+        detail::looseningFactor(failures, numConformers, configuration.failureRatio)
+      );
+    } else if(loosenBounds) {
+      DGData = gatherDGInformation(
+        molecule,
+        configuration,
+        detail::looseningFactor(failures, numConformers, configuration.failureRatio)
+      );
+
+      loosenBounds = false;
+    }
+
+    ExplicitGraph explicitGraph {
+      molecule,
+      DGData.bounds
+    };
+
+    auto distanceBoundsResult = explicitGraph.makeDistanceBounds();
+    if(!distanceBoundsResult) {
+      return distanceBoundsResult.as_failure();
+    }
+
+    DistanceBoundsMatrix distanceBounds {std::move(distanceBoundsResult.value())};
+
+    /* No need to smooth the distance bounds, the graph type creates them
+     * within the triangle inequality bounds
+     */
+
+    assert(distanceBounds.boundInconsistencies() == 0);
+
+    auto distanceMatrixResult = explicitGraph.makeDistanceMatrix(configuration.partiality);
+    if(!distanceMatrixResult) {
+      return distanceMatrixResult.as_failure();
+    }
+
+    // Make a metric matrix from a generated distances matrix
+    MetricMatrix metric(
+      std::move(distanceMatrixResult.value())
+    );
+
+    // Get a position matrix by embedding the metric matrix
+    auto embeddedPositions = metric.embed();
+
+    // Vectorize and transfer to dlib
+    errfValue<true>::Vector dlibPositions = dlib::mat(
+      static_cast<Eigen::VectorXd>(
+        Eigen::Map<Eigen::VectorXd>(
+          embeddedPositions.data(),
+          embeddedPositions.cols() * embeddedPositions.rows()
+        )
+      )
+    );
+
+    /* If a count of chirality constraints reveals that more than half are
+     * incorrect, we can invert the structure (by multiplying e.g. all y
+     * coordinates with -1) and then have more than half of chirality
+     * constraints correct! In the count, chirality constraints with a target
+     * value of zero are not considered (this would skew the count as those
+     * chirality constraints should not have to pass an energetic maximum to
+     * converge properly as opposed to tetrahedra with volume).
+     */
+    if(
+      errfDetail::proportionChiralityConstraintsCorrectSign(
+        DGData.chiralityConstraints,
+        dlibPositions
+      ) < 0.5
+    ) {
+      // Invert y coordinates
+      for(unsigned i = 0; i < distanceBounds.N(); ++i) {
+        dlibPositions(
+          static_cast<dlibIndexType>(i) * 4  + 1
+        ) *= -1;
+      }
+    }
+
+    // Create the squared bounds matrix for use in refinement
+    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+      static_cast<Eigen::MatrixXd>(
+        distanceBounds.access().cwiseProduct(distanceBounds.access())
+      )
+    );
+
+    /* Refinement without penalty on fourth dimension only necessary if not all
+     * chiral centers are correct. Of course, for molecules without chiral
+     * centers at all, this stage is unnecessary
+     */
+    if(
+      errfDetail::proportionChiralityConstraintsCorrectSign(
+        DGData.chiralityConstraints,
+        dlibPositions
+      ) < 1
+    ) {
+      dlibAdaptors::iterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
+        DGData.chiralityConstraints,
+        configuration.refinementStepLimit
+      };
+
+      dlib::find_min(
+        dlib::bfgs_search_strategy(),
+        inversionStopStrategy,
+        errfValue<false>(
+          squaredBounds,
+          DGData.chiralityConstraints
+        ),
+        errfGradient<false>(
+          squaredBounds,
+          DGData.chiralityConstraints
+        ),
+        dlibPositions,
+        0
+      );
+
+      if(
+        inversionStopStrategy.iterations >= configuration.refinementStepLimit
+        || errfDetail::proportionChiralityConstraintsCorrectSign(
+          DGData.chiralityConstraints,
+          dlibPositions
+        ) < 1.0
+      ) { // Failure to invert
+        failures += 1;
+        loosenBounds = true;
+        if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+          return DGError::TooManyFailures;
+        }
+        continue; // this triggers a new structure to be generated
+      }
+    }
+
+    dlibAdaptors::iterationOrGradientNormStopStrategy refinementStopStrategy {
+      configuration.refinementStepLimit,
+      configuration.refinementGradientTarget
+    };
+
+    // Refinement with penalty on fourth dimension is always necessary
+    dlib::find_min(
+      dlib::bfgs_search_strategy(),
+      refinementStopStrategy,
+      errfValue<true>(
+        squaredBounds,
+        DGData.chiralityConstraints
+      ),
+      errfGradient<true>(
+        squaredBounds,
+        DGData.chiralityConstraints
+      ),
+      dlibPositions,
+      0
+    );
+
+    bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
+    bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
+      DGData.chiralityConstraints,
+      dlibPositions
+    ) < 1;
+    bool structureAcceptable = errfDetail::finalStructureAcceptable(
+      distanceBounds,
+      DGData.chiralityConstraints,
+      dlibPositions
+    );
+
+    if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
+      failures += 1;
+      loosenBounds = true;
+
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+        return DGError::TooManyFailures;
+      }
+    } else {
+      if(!configuration.fixedPositions.empty()) {
+        auto positionMatrix = detail::fitAndSetFixedPositions(dlibPositions, configuration);
+
+        ensemble.emplace_back(
+          detail::convertToAngstromWrapper(positionMatrix)
+        );
+      } else {
+        ensemble.emplace_back(
+          detail::convertToAngstromWrapper(dlibPositions)
+        );
+      }
+    }
+  }
+
+  return ensemble;
 }
 
 } // namespace DistanceGeometry

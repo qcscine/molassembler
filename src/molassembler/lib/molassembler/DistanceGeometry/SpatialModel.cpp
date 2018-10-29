@@ -6,9 +6,11 @@
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "Delib/ElementInfo.h"
+#include "Delib/Constants.h"
 #include "CyclicPolygons.h"
 
 #include "chemical_symmetries/Properties.h"
+#include "stereopermutation/Composites.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/SequentialPairs.h"
 #include "temple/Adaptors/Transform.h"
@@ -18,13 +20,15 @@
 #include "temple/Stringify.h"
 
 #include "molassembler/Cycles.h"
+#include "molassembler/Detail/DelibHelpers.h"
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Stereopermutators/PermutationState.h"
 
 #include <fstream>
 
@@ -42,6 +46,7 @@ const ValueBounds SpatialModel::dihedralClampBounds = ValueBounds {0.0, M_PI};
 
 SpatialModel::SpatialModel(
   const Molecule& molecule,
+  const Configuration& configuration,
   const double looseningMultiplier
 ) : _molecule(molecule),
     _looseningMultiplier(looseningMultiplier),
@@ -52,7 +57,7 @@ SpatialModel::SpatialModel(
    * coordinates of all connected atoms, determining which conformations are
    * accessible.
    *
-   * The rough sequence of operations is
+   * The rough sequence of operations is:
    * - Make helper variables
    * - Set 1-2 bounds.
    * - Gather information on local geometries of all non-terminal atoms, using
@@ -73,12 +78,23 @@ SpatialModel::SpatialModel(
    * - Set all remaining 1-3 bounds with additional tolerance if atoms involved
    *   in the angle are part of a small cycle
    * - Add BondStereopermutator 1-4 bound information
+   *
+   * The manner in which fixed positions are incorporated is that, whenever an
+   * internal coordinate is modeled (i.e. bond lengths, angles or dihedrals)
+   * between all-fixed atoms, this property is extracted from the supplied
+   * positions, not generated from graph or stereopermutator information.
    */
+
+  // Check invariants
+  assert(
+    !molecule.stereopermutators().hasZeroAssignmentStereopermutators()
+    && !molecule.stereopermutators().hasUnassignedStereopermutators()
+    && "The passed molecule may not have zero-assignment or unassigned stereopermutators!"
+  );
 
   // Helper variables
   // Ignore eta bonds in construction of cycle data
   Cycles cycleData {molecule.graph(), true};
-  //Cycles cycleData = molecule.getCycleData();
   auto smallestCycleMap = makeSmallestCycleMap(cycleData);
 
   // Check constraints on static constants
@@ -95,11 +111,33 @@ SpatialModel::SpatialModel(
 
   const InnerGraph& inner = molecule.graph().inner();
 
+  // Add all information pertaining to fixed positions immediately
+  temple::forEach(
+    temple::adaptors::allPairs(configuration.fixedPositions),
+    [&](const auto& indexPositionPairA, const auto& indexPositionPairB) -> void {
+      double spatialDistance = DelibHelpers::distance(
+        indexPositionPairA.second.asEigenVector(),
+        indexPositionPairB.second.asEigenVector()
+      ) * Delib::angstrom_per_bohr ;
+
+      _constraints.emplace(
+        orderedIndexSequence<2>({{indexPositionPairA.first, indexPositionPairB.first}}),
+        ValueBounds {spatialDistance, spatialDistance}
+      );
+    }
+  );
+  // Add any fixed positions to an unordered map for fast access:
+  std::unordered_map<AtomIndex, Delib::Position> fixedAngstromPositions;
+
+  for(const auto& fixedPositionPair : configuration.fixedPositions) {
+    fixedAngstromPositions.emplace(
+      fixedPositionPair.first,
+      fixedPositionPair.second * Delib::angstrom_per_bohr
+    );
+  }
+
   // Set bond distances
-  for(
-    const auto& edge:
-    boost::make_iterator_range(inner.edges())
-  ) {
+  for(const auto& edge: boost::make_iterator_range(inner.edges())) {
     BondType bondType = inner.bondType(edge);
 
     // Do not model eta bonds, stereopermutators are responsible for those
@@ -110,16 +148,28 @@ SpatialModel::SpatialModel(
     InnerGraph::Vertex i = inner.source(edge);
     InnerGraph::Vertex j = inner.target(edge);
 
-    auto bondDistance = Bond::calculateBondDistance(
-      inner.elementType(i),
-      inner.elementType(j),
-      bondType
-    );
-
-    setBondBoundsIfEmpty(
-      {{i, j}},
-      bondDistance
-    );
+    if(fixedAngstromPositions.count(i) > 0 && fixedAngstromPositions.count(j) > 0) {
+      // If both atoms are fixed, their mutual bond distance is known exactly
+      double bondDistance = DelibHelpers::distance(
+        fixedAngstromPositions.at(i).asEigenVector(),
+        fixedAngstromPositions.at(j).asEigenVector()
+      );
+      setBondBoundsIfEmpty(
+        {{i, j}},
+        ValueBounds {bondDistance, bondDistance}
+      );
+    } else {
+      // Otherwise, create variable bounds on it
+      double bondDistance = Bond::calculateBondDistance(
+        inner.elementType(i),
+        inner.elementType(j),
+        bondType
+      );
+      setBondBoundsIfEmpty(
+        {{i, j}},
+        bondDistance
+      );
+    }
   }
 
   /* The StereopermutatorList is already copy initialized with the Molecule's
@@ -207,7 +257,7 @@ SpatialModel::SpatialModel(
           molecule.graph()
         ) >= 1
       )
-      /* TODO missing cases:
+      /*! @todo missing cases:
        * - Need aromaticity checking routine for cycle size 5
        */
     ) {
@@ -217,6 +267,18 @@ SpatialModel::SpatialModel(
       const auto indexSequence = makeRingIndexSequence(
         Cycles::edgeVertices(cyclePtr)
       );
+
+      // Skip any cycles that have fixed atoms
+      if(
+        temple::any_of(
+          indexSequence,
+          [&fixedAngstromPositions](const AtomIndex i) -> bool {
+            return fixedAngstromPositions.count(i) > 0;
+          }
+        )
+      ) {
+        continue;
+      }
 
       /* First, we fetch the angles that maximize the cycle area using the
        * cyclic polygon library.
@@ -321,24 +383,26 @@ SpatialModel::SpatialModel(
 
   // Get 1-3 information from AtomStereopermutators
   for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
-    stereopermutator.setModelInformation(
-      *this,
+    addAtomStereopermutatorAngles(
+      stereopermutator,
       cycleMultiplierForIndex,
-      looseningMultiplier
+      looseningMultiplier,
+      fixedAngstromPositions
     );
   }
 
   // Get 1-4 information from BondStereopermutators
   for(const auto& bondStereopermutator : _stereopermutators.bondStereopermutators()) {
-    bondStereopermutator.setModelInformation(
-      *this,
+    addBondStereopermutatorDihedrals(
+      bondStereopermutator,
       _stereopermutators.option(
         bondStereopermutator.edge().first
       ).value(),
       _stereopermutators.option(
         bondStereopermutator.edge().second
       ).value(),
-      looseningMultiplier
+      looseningMultiplier,
+      fixedAngstromPositions
     );
   }
 
@@ -351,6 +415,11 @@ SpatialModel::SpatialModel(
    */
   for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
     AtomIndex i = stereopermutator.centralIndex();
+
+    // Skip any fixed central atoms
+    if(fixedAngstromPositions.count(i) > 0) {
+      continue;
+    }
 
     // Skip any stereopermutators that do not match our conditions
     if(
@@ -485,7 +554,6 @@ SpatialModel::SpatialModel(
                 } else {
                   // Tighten the cross-angle bounds
                   findIter->second = crossBounds;
-                  // TODO maybe log this behavior?
                 }
               }
             );
@@ -505,7 +573,10 @@ SpatialModel::SpatialModel(
     free(URFIDs);
   }
 
-  // Add default angles and dihedrals for all adjacent sequences
+  /* Add default angles and dihedrals for all adjacent sequences (unpopulated
+   * if e.g. the internal coordinates could not be modelled) to avoid using vdw
+   * radius sums as minimum bounds for connected atom sequences.
+   */
   addDefaultAngles();
   addDefaultDihedrals();
 }
@@ -595,11 +666,339 @@ void SpatialModel::setDihedralBoundsIfEmpty(
   }
 }
 
+void SpatialModel::addAtomStereopermutatorAngles(
+  const AtomStereopermutator& permutator,
+  const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
+  const double looseningMultiplier,
+  const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
+) {
+  const auto& permutationState = permutator.getPermutationState();
+  const auto& ranking = permutator.getRanking();
+  const AtomIndex centerAtom = permutator.centralIndex();
+
+  /* Rough outline
+   * - For each ligand
+   *   - Set the distance to the center
+   *     - For multi-atom ligands, correct the distance with the cone angle
+   *   - Add angles between ligand-constituting atoms using the cone angle
+   *     (if there are multiple ligand-constituting atoms at all)
+   * - For each pair of ligands
+   *   - The angle bounds between ligands are initially set by the idealized
+   *     symmetry position angle modified by the upper cone angles
+   *   - For each pair of atoms between both ligands
+   *     - The ligand angle bounds variance is modified by cycle multipliers
+   *       and loosening
+   */
+
+  /* Concerning fixed positions, if the center isn't fixed, then we do not
+   * have to do anything differently at all.
+   */
+  std::vector<bool> ligandFixed;
+  bool centerFixed = fixedAngstromPositions.count(centerAtom) > 0;
+  if(centerFixed) {
+    // Map from ligand indices to whether the entire ligand is fixed or not
+    ligandFixed = temple::map(
+      ranking.ligands,
+      [&fixedAngstromPositions](const auto& ligandConstitutingIndices) -> bool {
+        return temple::all_of(
+          ligandConstitutingIndices,
+          [&fixedAngstromPositions](const AtomIndex ligandConstitutingIndex) -> bool {
+            return fixedAngstromPositions.count(ligandConstitutingIndex) > 0;
+          }
+        );
+      }
+    );
+  }
+
+  /* Intra-site modelling / For each ligand */
+  for(unsigned ligandI = 0; ligandI < permutationState.ligandDistances.size(); ++ligandI) {
+    /* Set the distance to the center:
+     * If no cone information is present, do not correct the distance to the
+     * ligand using the cone angle
+     *
+     * NOTE: This is probably superfluous as non-eta bonds are modelled by the
+     * SpatialModel beforehand. Try removing this block below and see if that
+     * causes any issues.
+     */
+    if(!permutationState.coneAngles.at(ligandI)) {
+      for(const AtomIndex i : ranking.ligands.at(ligandI)) {
+        setBondBoundsIfEmpty(
+          {{i, centerAtom}},
+          permutationState.ligandDistances.at(ligandI)
+        );
+      }
+
+      // No further work has to be done for single-atom ligands
+      continue;
+    }
+
+    if(centerFixed && ligandFixed.at(ligandI)) {
+      // All center to ligand constituting atom distances are fixed *exactly*
+      for(const AtomIndex i : ranking.ligands.at(ligandI)) {
+        double bondDistance = DelibHelpers::distance(
+          fixedAngstromPositions.at(i).asEigenVector(),
+          fixedAngstromPositions.at(centerAtom).asEigenVector()
+        );
+
+        setBondBoundsIfEmpty(
+          {{i, centerAtom}},
+          ValueBounds {bondDistance, bondDistance}
+        );
+      }
+
+      // and so are the ligand constituting atom to ligand constituting atom angles
+      temple::forEach(
+        temple::adaptors::allPairs(ranking.ligands.at(ligandI)),
+        [&](const AtomIndex i, const AtomIndex j) {
+          double angle = DelibHelpers::angle(
+            fixedAngstromPositions.at(i).asEigenVector(),
+            fixedAngstromPositions.at(centerAtom).asEigenVector(),
+            fixedAngstromPositions.at(i).asEigenVector()
+          );
+
+          setAngleBoundsIfEmpty(
+            {{i, centerAtom, j}},
+            ValueBounds {angle, angle}
+          );
+        }
+      );
+    } else {
+      /* Distance of every ligand site atom index to the central atom assumptions
+       * - Every haptic index is on the cone base circle
+       * - Cone height is defined by permutationState.ligandDistance
+       * - Cone angle is defined by permutationState.coneAngle
+       */
+      const DistanceGeometry::ValueBounds coneAngleBounds = permutationState.coneAngles.at(ligandI).value();
+
+      const double upperHypotenuse = (
+        permutationState.ligandDistances.at(ligandI).upper
+        / std::cos(coneAngleBounds.lower)
+      );
+
+      const double lowerHypotenuse = (
+        permutationState.ligandDistances.at(ligandI).lower
+        / std::cos(coneAngleBounds.upper)
+      );
+
+      for(const AtomIndex i : ranking.ligands.at(ligandI)) {
+        setBondBoundsIfEmpty(
+          {{i, centerAtom}},
+          DistanceGeometry::ValueBounds {
+            lowerHypotenuse,
+            upperHypotenuse
+          }
+        );
+      }
+
+      /* Set angles between ligand-constituting atoms within a single ligand
+       * - Minimally 0° (if there were a zero-length bond)
+       *   You could compute shortest possible bond constexpr and insert a trig
+       *   calc here, but the bond level distance is supplied elsewhere by
+       *   SpatialModel anyway, no need to duplicate that information
+       * - Maximally 2 * the upper cone angle (but not more than M_PI)
+       */
+      temple::forEach(
+        temple::adaptors::allPairs(ranking.ligands.at(ligandI)),
+        [&](const AtomIndex i, const AtomIndex j) {
+          setAngleBoundsIfEmpty(
+            {{i, centerAtom, j}},
+            DistanceGeometry::ValueBounds {
+              0,
+              std::min(M_PI, 2 * coneAngleBounds.upper)
+            }
+          );
+        }
+      );
+    }
+  }
+
+  /* Inter-site modelling / Between ligands */
+  /* If for either site no cone angles could be calculated (currently only
+   * happens if a haptic ligand does not match the existing modeling patterns),
+   * we have to skip this step entirely and hope that the remaining modeling
+   * can pick up the slack.
+   *
+   * NOTE: Cone angles are calculated for non-haptic ligands too -> (0, 0).
+   */
+  for(unsigned i = 0; i < ranking.ligands.size() - 1; ++i) {
+    if(!permutationState.coneAngles.at(i)) {
+      continue;
+    }
+
+    for(unsigned j = i + 1; j < ranking.ligands.size(); ++j) {
+      if(!permutationState.coneAngles.at(j)) {
+        continue;
+      }
+
+      if(centerFixed && ligandFixed.at(i) && ligandFixed.at(j)) {
+        // All angles are known exactly!
+        temple::forEach(
+          temple::adaptors::allPairs(
+            ranking.ligands.at(i),
+            ranking.ligands.at(j)
+          ),
+          [&](const AtomIndex x, const AtomIndex y) -> void {
+            double angle = DelibHelpers::angle(
+              fixedAngstromPositions.at(x).asEigenVector(),
+              fixedAngstromPositions.at(centerAtom).asEigenVector(),
+              fixedAngstromPositions.at(y).asEigenVector()
+            );
+
+            setAngleBoundsIfEmpty(
+              {{x, centerAtom, y}},
+              ValueBounds {angle, angle}
+            );
+          }
+        );
+      } else {
+        /* The idealized symmetry angles are modified by the upper (!) cone angles
+         * at each site, not split between lower and upper.
+         */
+        DistanceGeometry::ValueBounds angleBounds {
+          (
+            permutator.angle(i, j)
+            - permutationState.coneAngles.at(i).value().upper
+            - permutationState.coneAngles.at(j).value().upper
+          ),
+          (
+            permutator.angle(i, j)
+            + permutationState.coneAngles.at(i).value().upper
+            + permutationState.coneAngles.at(j).value().upper
+          )
+        };
+
+        /* The computed angle bounds are valid for each pair of atoms
+         * constituting each ligand
+         */
+        temple::forEach(
+          temple::adaptors::allPairs(
+            ranking.ligands.at(i),
+            ranking.ligands.at(j)
+          ),
+          [&](const AtomIndex x, const AtomIndex y) -> void {
+            double variation = (
+              DistanceGeometry::SpatialModel::angleAbsoluteVariance
+              * looseningMultiplier
+              * cycleMultiplierForIndex(x)
+              * cycleMultiplierForIndex(y)
+            );
+
+            setAngleBoundsIfEmpty(
+              {{x, centerAtom, y}},
+              DistanceGeometry::ValueBounds {
+                std::max(0.0, angleBounds.lower - variation),
+                std::min(M_PI, angleBounds.upper + variation)
+              }
+            );
+          }
+        );
+      }
+    }
+  }
+}
+
+void SpatialModel::addBondStereopermutatorDihedrals(
+  const BondStereopermutator& permutator,
+  const AtomStereopermutator& stereopermutatorA,
+  const AtomStereopermutator& stereopermutatorB,
+  const double looseningMultiplier,
+  const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
+) {
+  const auto& composite = permutator.composite();
+  const auto& assignment = permutator.assigned();
+
+  // Can the following selections be done with a single branch?
+  const AtomStereopermutator& firstStereopermutator = (
+    stereopermutatorA.centralIndex() == composite.orientations().first.identifier
+    ? stereopermutatorA
+    : stereopermutatorB
+  );
+
+  const AtomStereopermutator& secondStereopermutator = (
+    stereopermutatorB.centralIndex() == composite.orientations().second.identifier
+    ? stereopermutatorB
+    : stereopermutatorA
+  );
+
+  using ModelType = DistanceGeometry::SpatialModel;
+
+  /* Only dihedrals */
+  unsigned firstSymmetryPosition, secondSymmetryPosition;
+  double dihedralAngle;
+
+  for(const auto& dihedralTuple : composite.dihedrals(assignment.value())) {
+    std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
+
+    unsigned firstLigandIndex = firstStereopermutator.getSymmetryPositionMap().at(firstSymmetryPosition);
+    unsigned secondLigandIndex = secondStereopermutator.getSymmetryPositionMap().at(secondSymmetryPosition);
+
+    /* A simple central plus-minus variance calculation for the dihedral would
+     * yield values outside the SpatialModel dihedralClampBounds, which are [0,
+     * M_PI] (since d(phi) is y-symmetric), so we have some adjusting to do.
+     */
+    auto reduceToBounds = [](double phi) -> double {
+      // Perform 2pi adjustments until we are in (-pi, pi]
+      if(phi <= -M_PI) {
+        unsigned n = std::floor((M_PI + std::fabs(phi)) / (2 * M_PI));
+        phi += n * 2 * M_PI;
+      }
+
+      if(phi > M_PI) {
+        unsigned n = std::floor((M_PI + phi) / (2 * M_PI));
+        phi -= n * 2 * M_PI;
+      }
+
+      // Within (-pi, pi], d(phi) is y-axis-symmetric
+      return std::fabs(phi);
+    };
+
+    std::array<double, 3> possibleBoundaryValues {
+      {
+        reduceToBounds(dihedralAngle - ModelType::dihedralAbsoluteVariance * looseningMultiplier),
+        reduceToBounds(dihedralAngle),
+        reduceToBounds(dihedralAngle + ModelType::dihedralAbsoluteVariance * looseningMultiplier)
+      }
+    };
+
+    // The constructor will swap passed values so that the smaller becomes .first
+    temple::OrderedPair<double> boundedDihedralValues {
+      *std::min_element(std::begin(possibleBoundaryValues), std::end(possibleBoundaryValues)),
+      *std::max_element(std::begin(possibleBoundaryValues), std::end(possibleBoundaryValues))
+    };
+
+    // Take the ordered values
+    DistanceGeometry::ValueBounds dihedralBounds {
+      boundedDihedralValues.first,
+      boundedDihedralValues.second
+    };
+
+    temple::forEach(
+      temple::adaptors::allPairs(
+        firstStereopermutator.getRanking().ligands.at(firstLigandIndex),
+        secondStereopermutator.getRanking().ligands.at(secondLigandIndex)
+      ),
+      [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
+        setDihedralBoundsIfEmpty(
+          std::array<AtomIndex, 4> {
+            firstIndex,
+            firstStereopermutator.centralIndex(),
+            secondStereopermutator.centralIndex(),
+            secondIndex
+          },
+          dihedralBounds
+        );
+      }
+    );
+  }
+}
+
 void SpatialModel::addDefaultAngles() {
   const InnerGraph& inner = _molecule.graph().inner();
   /* If no explicit angle can be provided for a triple of bonded atoms, we need
    * to at least specify the range of possible angles so that no implicit
-   * minimimum distance (sum of vdw radii) is used instead.
+   * minimimum distance (sum of vdw radii) is used instead. This is important
+   * for haptic ligands as for some ligand site connectivity, no circumradius
+   * can be modelled and hence angle calculation cannot be completed.
    */
 
   const AtomIndex N = _molecule.graph().N();
@@ -680,8 +1079,8 @@ bool bondInformationIsPresent(
 }
 
 SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
-  // We can straight up copy the bonds' 1-2 information
-  BoundsList bounds = _bondBounds;
+  // Copy the constraints as ground truth
+  BoundsList bounds = _constraints;
 
   /* There may be overlapping and possibly conflicting information present in
    * the gathered data. If data affects the same atom-pair, we must ensure that
@@ -730,6 +1129,24 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
       orderedSequence(i, j)
     );
   };
+
+  // Add 1-2 information from the bonds
+  if(_constraints.empty()) {
+    /* If there are no ground constraints, then we can just copy over the
+     * entire bond bounds (these are definitely compatible with triangle
+     * inequalities)
+     */
+    bounds = _bondBounds;
+  } else {
+    // Otherwise, we have to carefully add bond information
+    for(const auto& bondPair : _bondBounds) {
+      addInformation(
+        bondPair.first.front(),
+        bondPair.first.back(),
+        bondPair.second
+      );
+    }
+  }
 
   // Add 1-3 information
   for(const auto& anglePair : _angleBounds) {
@@ -1279,6 +1696,61 @@ ValueBounds SpatialModel::clamp(
       clampBounds.upper
     )
   };
+}
+
+void SpatialModel::checkFixedPositionsPreconditions(
+  const Molecule& molecule,
+  const Configuration& configuration
+) {
+  // Early exit if there are no fixed positions
+  if(configuration.fixedPositions.empty()) {
+    return;
+  }
+
+  /* Check to ensure that every fixed atom has zero, one or all ligand sites
+   * fully fixed.
+   */
+  std::unordered_set<AtomIndex> fixedAtoms;
+  for(const auto& fixedPositionPair : configuration.fixedPositions) {
+    fixedAtoms.insert(fixedPositionPair.first);
+  }
+
+  for(const auto& indexPositionPair : configuration.fixedPositions) {
+    const AtomIndex& atomIndex = indexPositionPair.first;
+    const Delib::Position& position = indexPositionPair.second;
+
+    auto stereopermutatorOption = molecule.stereopermutators().option(atomIndex);
+    if(stereopermutatorOption) {
+      // Check to ensure either 0, 1 or L ligand sites are fixed
+      unsigned numFixedLigands = temple::accumulate(
+        stereopermutatorOption->getRanking().ligands,
+        0u,
+        [&fixedAtoms](const unsigned carry, const auto& indexSet) -> unsigned {
+          const unsigned countFixed = temple::accumulate(
+            indexSet,
+            0u,
+            [&fixedAtoms](const unsigned carry, const AtomIndex i) -> unsigned {
+              return carry + fixedAtoms.count(i);
+            }
+          );
+
+          if(countFixed != 0 && countFixed != indexSet.size()) {
+            throw std::runtime_error(
+              "DG preconditions for fixed atoms are not met: A non-terminal "
+              "atom's ligand site is only partially fixed."
+            );
+          }
+        }
+      );
+
+      if(1 < numFixedLigands && numFixedLigands < Symmetry::size(stereopermutatorOption->getSymmetry())) {
+        throw std::runtime_error(
+          "DG preconditions for fixed atoms are not met: A non-terminal atom "
+          "does not have 0, 1 or all ligand sites fixed."
+        );
+      }
+    }
+  }
 }
 
 } // namespace DistanceGeometry

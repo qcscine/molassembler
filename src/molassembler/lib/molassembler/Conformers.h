@@ -69,13 +69,11 @@ struct Configuration {
    * By default does not set any fixed positions.
    *
    * @pre Any fixed atom must have zero, one or all ligand sites fully
-   *   fixed. No atoms constituting a haptic ligand site may be fixed.
+   *   fixed. No individual ligand sites may be partially fixed (i.e. the atoms
+   *   constituting a haptic ligand binding site must be either completely
+   *   unfixed or fixed and may not be mixed).
    *
-   * @todo Haptic ligand sites currently cannot be fixed since it nontrivially
-   *   affects angle calculations in modeling. Once this is implemented, alter
-   *   the precondition text to read "No individual ligand sites may be
-   *   partially fixed (i.e. the atoms constituting a haptic ligand binding
-   *   site must be either completely unfixed or fixed, but may not be mixed)."
+   * @note Remember Delib::Positions are in bohr length units!
    */
   std::vector<
     std::pair<AtomIndex, Delib::Position>

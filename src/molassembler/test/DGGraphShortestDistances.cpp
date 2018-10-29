@@ -1,7 +1,6 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#define BOOST_TEST_MODULE DGExplicitGraphTests
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
@@ -169,7 +168,7 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::SpatialModel spatialModel {molecule};
+    DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     using EG = DistanceGeometry::ExplicitGraph;
     using Vertex = EG::GraphType::vertex_descriptor;
@@ -291,7 +290,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
       currentFilePath.string()
     );
 
-    DistanceGeometry::SpatialModel spatialModel {sampleMol};
+    DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
 
     const auto boundsList = spatialModel.makeBoundsList();
 

@@ -142,6 +142,10 @@ std::string AtomStereopermutator::rankInfo() const {
   return _pImpl->rankInfo();
 }
 
+const PermutationState& AtomStereopermutator::getPermutationState() const {
+  return _pImpl->getPermutationState();
+}
+
 const RankingInformation& AtomStereopermutator::getRanking() const {
   return _pImpl->getRanking();
 }
@@ -161,19 +165,6 @@ unsigned AtomStereopermutator::numAssignments() const {
 unsigned AtomStereopermutator::numStereopermutations() const {
   return _pImpl->numStereopermutations();
 }
-
-void AtomStereopermutator::setModelInformation(
-  DistanceGeometry::SpatialModel& model,
-  const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
-  const double looseningMultiplier
-) const {
-  _pImpl->setModelInformation(
-    model,
-    cycleMultiplierForIndex,
-    looseningMultiplier
-  );
-}
-
 
 /* Operators */
 bool AtomStereopermutator::operator == (const AtomStereopermutator& other) const {

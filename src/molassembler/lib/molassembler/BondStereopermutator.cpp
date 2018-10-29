@@ -61,6 +61,10 @@ boost::optional<unsigned> BondStereopermutator::assigned() const {
   return _pImpl -> assigned();
 }
 
+const stereopermutation::Composite& BondStereopermutator::composite() const {
+  return _pImpl -> composite();
+}
+
 bool BondStereopermutator::hasSameCompositeOrientation(const BondStereopermutator& other) const {
   return _pImpl -> hasSameCompositeOrientation(*other._pImpl);
 }
@@ -97,15 +101,6 @@ std::string BondStereopermutator::rankInfo() const {
 
 BondIndex BondStereopermutator::edge() const {
   return _pImpl -> edge();
-}
-
-void BondStereopermutator::setModelInformation(
-  DistanceGeometry::SpatialModel& model,
-  const AtomStereopermutator& stereopermutatorA,
-  const AtomStereopermutator& stereopermutatorB,
-  double looseningMultiplier
-) const {
-  _pImpl -> setModelInformation(model, stereopermutatorA, stereopermutatorB, looseningMultiplier);
 }
 
 bool BondStereopermutator::operator == (const BondStereopermutator& other) const {

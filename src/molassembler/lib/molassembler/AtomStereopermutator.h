@@ -32,6 +32,7 @@ using namespace std::string_literals;
 namespace molassembler {
 
 struct RankingInformation;
+struct PermutationState;
 
 namespace DistanceGeometry {
 
@@ -246,6 +247,12 @@ public:
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
 
+  /*! Returns the underlying PermutationState
+   *
+   * @note This is library-internal and not part of the public API
+   */
+  const PermutationState& getPermutationState() const;
+
   //! Returns the underlying ranking
   const RankingInformation& getRanking() const;
 
@@ -254,7 +261,7 @@ public:
 
   /*! Yields the mapping from ligand indices to symmetry positions
    *
-   * \throws std::logic_error if the stereopermutator is unassigned.
+   * @throws std::logic_error if the stereopermutator is unassigned.
    */
   std::vector<unsigned> getSymmetryPositionMap() const;
 
@@ -298,12 +305,6 @@ public:
    * calculation, not considering linking or haptic ligand cones.
    */
   unsigned numStereopermutations() const;
-
-  void setModelInformation(
-    DistanceGeometry::SpatialModel& model,
-    const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
-    double looseningMultiplier
-  ) const;
 //!@}
 
 

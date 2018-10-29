@@ -55,6 +55,10 @@ std::vector<char> BondStereopermutator::Impl::_charifyRankedLigands(
   return characters;
 }
 
+const stereopermutation::Composite& BondStereopermutator::Impl::composite() const {
+  return _composite;
+}
+
 stereopermutation::Composite::OrientationState BondStereopermutator::Impl::_makeOrientationState(
   const AtomStereopermutator& focalStereopermutator,
   const AtomStereopermutator& attachedStereopermutator
@@ -366,105 +370,6 @@ std::string BondStereopermutator::Impl::rankInfo() const {
 BondIndex BondStereopermutator::Impl::edge() const {
   // Return a standard form of smaller first
   return _edge;
-}
-
-void BondStereopermutator::Impl::setModelInformation(
-  DistanceGeometry::SpatialModel& model,
-  const AtomStereopermutator& stereopermutatorA,
-  const AtomStereopermutator& stereopermutatorB,
-  const double looseningMultiplier
-) const {
-  // Can the following selections be done with a single branch?
-  const AtomStereopermutator& firstStereopermutator = (
-    stereopermutatorA.centralIndex() == _composite.orientations().first.identifier
-    ? stereopermutatorA
-    : stereopermutatorB
-  );
-
-  const AtomStereopermutator& secondStereopermutator = (
-    stereopermutatorB.centralIndex() == _composite.orientations().second.identifier
-    ? stereopermutatorB
-    : stereopermutatorA
-  );
-
-  using ModelType = DistanceGeometry::SpatialModel;
-
-  assert(_assignment);
-
-  /* Only dihedrals */
-  unsigned firstSymmetryPosition, secondSymmetryPosition;
-  double dihedralAngle;
-
-  for(const auto& dihedralTuple : _composite.dihedrals(_assignment.value())) {
-    std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
-
-    unsigned firstLigandIndex = SymmetryMapHelper::getLigandIndexAt(
-      firstSymmetryPosition,
-      firstStereopermutator.getSymmetryPositionMap()
-    );
-    unsigned secondLigandIndex = SymmetryMapHelper::getLigandIndexAt(
-      secondSymmetryPosition,
-      secondStereopermutator.getSymmetryPositionMap()
-    );
-
-    /* A simple central plus-minus variance calculation for the dihedral would
-     * yield values outside the SpatialModel dihedralClampBounds, which are [0,
-     * M_PI] (since d(phi) is y-symmetric), so we have some adjusting to do.
-     */
-    auto reduceToBounds = [](double phi) -> double {
-      // Perform 2pi adjustments until we are in (-pi, pi]
-      if(phi <= -M_PI) {
-        unsigned n = std::floor((M_PI + std::fabs(phi)) / (2 * M_PI));
-        phi += n * 2 * M_PI;
-      }
-
-      if(phi > M_PI) {
-        unsigned n = std::floor((M_PI + phi) / (2 * M_PI));
-        phi -= n * 2 * M_PI;
-      }
-
-      // Within (-pi, pi], d(phi) is y-axis-symmetric
-      return std::fabs(phi);
-    };
-
-    std::array<double, 3> possibleBoundaryValues {
-      {
-        reduceToBounds(dihedralAngle - ModelType::dihedralAbsoluteVariance * looseningMultiplier),
-        reduceToBounds(dihedralAngle),
-        reduceToBounds(dihedralAngle + ModelType::dihedralAbsoluteVariance * looseningMultiplier)
-      }
-    };
-
-    // The constructor will swap passed values so that the smaller becomes .first
-    temple::OrderedPair<double> boundedDihedralValues {
-      *std::min_element(std::begin(possibleBoundaryValues), std::end(possibleBoundaryValues)),
-      *std::max_element(std::begin(possibleBoundaryValues), std::end(possibleBoundaryValues))
-    };
-
-    // Take the ordered values
-    DistanceGeometry::ValueBounds dihedralBounds {
-      boundedDihedralValues.first,
-      boundedDihedralValues.second
-    };
-
-    temple::forEach(
-      temple::adaptors::allPairs(
-        firstStereopermutator.getRanking().ligands.at(firstLigandIndex),
-        secondStereopermutator.getRanking().ligands.at(secondLigandIndex)
-      ),
-      [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
-        model.setDihedralBoundsIfEmpty(
-          std::array<AtomIndex, 4> {
-            firstIndex,
-            firstStereopermutator.centralIndex(),
-            secondStereopermutator.centralIndex(),
-            secondIndex
-          },
-          dihedralBounds
-        );
-      }
-    );
-  }
 }
 
 /* Operators */

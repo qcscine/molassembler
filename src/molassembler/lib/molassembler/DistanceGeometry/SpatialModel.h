@@ -4,6 +4,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
 
+#include "molassembler/Conformers.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
@@ -122,12 +123,33 @@ public:
     const ValueBounds& bounds,
     const ValueBounds& clampBounds
   );
+
+  static void checkFixedPositionsPreconditions(
+    const Molecule& molecule,
+    const Configuration& configuration
+  );
 //!@}
 
 //!@name Special member functions
 //!@{
+  /**
+   * @brief Model a molecule into internal coordinate bounds stored internally
+   *
+   * Main space where modeling is performed. This is where a molecule's
+   * graph and list of stereopermutators are transformed into explicit bounds
+   * on 1-2 (bonds), 1-3 (angles) and 1-4 (dihedral) internal coordinates. This
+   * determines which conformations are accessible.
+   *
+   * @param molecule The molecule that is to be modeled. This may not contain
+   *   stereopermutators with zero assignments or unassigned stereopermutators.
+   * @param configuration The Distance Geometry configuration object. Relevant
+   *   for this stage of the process are fixed positions, if set.
+   * @param looseningMultiplier A multiplier that loosens all bounds set upon
+   *   internal coordinates. Affects the entire conformation.
+   */
   SpatialModel(
     const Molecule& molecule,
+    const Configuration& configuration,
     double looseningMultiplier = 1.0
   );
 //!@}
@@ -164,17 +186,28 @@ public:
     const ValueBounds& bounds
   );
 
+  void addAtomStereopermutatorAngles(
+    const AtomStereopermutator& permutator,
+    const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
+    double looseningMultiplier,
+    const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
+  );
+
+  void addBondStereopermutatorDihedrals(
+    const BondStereopermutator& permutator,
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB,
+    double looseningMultiplier,
+    const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
+  );
+
   //! Adds [0, π] default angle bounds for all bonded atom triples
   void addDefaultAngles();
 
-  /*!
-   * Adds [0, π] default dihedrals to the model. Use immediately before
-   * calling makeDistanceBounds if you want default dihedrals modeled in the
-   * distance bounds as well. In principle, the default dihedral distances
-   * should be inferable from the existing information using bound smoothing,
-   * but this fashion is probably significantly faster.
+  /*! @brief Adds [0, π] default dihedrals to the model (of connected sequences)
    *
-   * It also avoids treating 1-4 pairs as nonbonded.
+   * Adds [0, π] default dihedrals to the model. Avoids treating 1-4 pairs as
+   * nonbonded.
    */
   void addDefaultDihedrals();
 //!@}
@@ -210,6 +243,10 @@ private:
   double _looseningMultiplier;
   StereopermutatorList _stereopermutators;
 
+  std::map<
+    std::array<AtomIndex, 2>,
+    ValueBounds
+  > _constraints;
   std::map<
     std::array<AtomIndex, 2>,
     ValueBounds

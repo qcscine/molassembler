@@ -28,11 +28,12 @@ namespace DistanceGeometry {
 namespace detail {
 
 AngstromWrapper convertToAngstromWrapper(
-  const Eigen::VectorXd& vectorizedPositions
+  const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
 
-AngstromWrapper convertToAngstromWrapper(
-  const dlib::matrix<double, 0, 1>& vectorizedPositions
+Eigen::MatrixXd fitAndSetFixedPositions(
+  const dlib::matrix<double, 0, 1>& vectorizedPositions,
+  const Configuration& configuration
 );
 
 /*!
@@ -48,6 +49,27 @@ AngstromWrapper convertToAngstromWrapper(
 Molecule narrow(Molecule molecule);
 
 } // namespace detail
+
+//! Intermediate conformational data about a Molecule given by a spatial model
+struct MoleculeDGInformation {
+  SpatialModel::BoundsList bounds;
+  std::vector<ChiralityConstraint> chiralityConstraints;
+};
+
+//! Collects intermediate conformational data about a Molecule using a spatial model
+MoleculeDGInformation gatherDGInformation(
+  const Molecule& molecule,
+  const Configuration& configuration,
+  double looseningFactor = 1.0
+);
+
+//! Debug function, also collects graphviz of the conformational model
+MoleculeDGInformation gatherDGInformation(
+  const Molecule& molecule,
+  const Configuration& configuration,
+  double looseningFactor,
+  std::string& spatialModelGraphvizString
+);
 
 /*!
  * A logging, not throwing, mostly identical implementation of
@@ -73,25 +95,6 @@ outcome::result<
   const Molecule& molecule,
   unsigned numConformers,
   const Configuration& configuration
-);
-
-//! Intermediate conformational data about a Molecule given by a spatial model
-struct MoleculeDGInformation {
-  SpatialModel::BoundsList bounds;
-  std::vector<ChiralityConstraint> chiralityConstraints;
-};
-
-//! Collects intermediate conformational data about a Molecule using a spatial model
-MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule,
-  double looseningFactor = 1.0
-);
-
-//! Debug function, also collects graphviz of the conformational model
-MoleculeDGInformation gatherDGInformation(
-  const Molecule& molecule,
-  double looseningFactor,
-  std::string& spatialModelGraphvizString
 );
 
 } // namespace DistanceGeometry

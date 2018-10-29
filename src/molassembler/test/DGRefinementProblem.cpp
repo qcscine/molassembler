@@ -1,7 +1,6 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#define BOOST_TEST_MODULE RefinementProblemTests
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "Eigen/Geometry"
@@ -59,7 +58,7 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    auto DGInfo = gatherDGInformation(molecule);
+    auto DGInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     DistanceBoundsMatrix distanceBounds {
       molecule,
@@ -182,7 +181,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    const auto DGData = gatherDGInformation(molecule);
+    const auto DGData = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     DistanceBoundsMatrix distanceBounds {
       molecule,
@@ -305,7 +304,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    const auto DGData = gatherDGInformation(molecule);
+    const auto DGData = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
     DistanceBoundsMatrix distanceBounds {
       molecule,
       DGData.bounds
