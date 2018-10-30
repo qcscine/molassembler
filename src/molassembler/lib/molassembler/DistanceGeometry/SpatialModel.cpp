@@ -1740,6 +1740,13 @@ void SpatialModel::checkFixedPositionsPreconditions(
               "atom's ligand site is only partially fixed."
             );
           }
+
+          // Count this ligand if the site is fully fixed
+          if(countFixed == indexSet.size()) {
+            return carry + 1;
+          }
+
+          return carry;
         }
       );
 

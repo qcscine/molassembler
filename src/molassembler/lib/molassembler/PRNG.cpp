@@ -40,10 +40,10 @@ Engine::Engine() : _pImpl(std::make_unique<Impl>()) {
 
   _pImpl->seed(
     std::vector<int> {
-      randomDevice(),
-      randomDevice(),
-      randomDevice(),
-      randomDevice()
+      static_cast<int>(randomDevice()),
+      static_cast<int>(randomDevice()),
+      static_cast<int>(randomDevice()),
+      static_cast<int>(randomDevice())
     }
   );
 #endif
