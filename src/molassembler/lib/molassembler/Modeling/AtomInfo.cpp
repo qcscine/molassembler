@@ -354,9 +354,14 @@ std::array<ElementInfo, 110> elementData {{
 }};
 
 bool isMainGroupElement(const Delib::ElementType elementType) {
-  return elementData.at(
-    static_cast<unsigned>(elementType)
-  ).shellsFullOrEmpty({'d', 'f'});
+  auto Z = static_cast<unsigned>(elementType);
+  return (
+    Z <= 20
+    || (31 <= Z && Z <= 38)
+    || (49 <= Z && Z <= 56)
+    || (81 <= Z && Z <= 88)
+    || (113 <= Z && Z <= 118)
+  );
 }
 
 boost::optional<unsigned> mainGroupVE(const Delib::ElementType elementType) {

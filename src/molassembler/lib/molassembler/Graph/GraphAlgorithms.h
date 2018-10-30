@@ -26,6 +26,7 @@ struct LinkInformation;
 //! Core graph-level algorithms (not requiring stereopermutator information)
 namespace GraphAlgorithms {
 
+//! Find links between substituent atoms
 std::vector<LinkInformation> substituentLinks(
   const InnerGraph& graph,
   const Cycles& cycleData,
@@ -38,7 +39,10 @@ std::vector<LinkInformation> substituentLinks(
 
 namespace detail {
 
-//! Predicate to determin if a ligand is haptic
+/*!
+ * @brief Predicate to determine if a ligand is haptic
+ * @note This is not as simple as ligand.size() > 1.
+ */
 bool isHapticLigand(
   const std::vector<AtomIndex>& ligand,
   const InnerGraph& graph
@@ -73,7 +77,12 @@ std::vector<
   const std::vector<AtomIndex>& excludeAdjacents = {}
 );
 
-//! For each atom, determines ligands and sets eta bond type for haptic ligands
+/*!
+ * @brief For each atom, determine ligands and set eta bond for haptic ligands
+ *
+ * Cycle through all atoms, determine the ligands and set the eta bond type for
+ * atoms constituting haptic ligand sites.
+ */
 void findAndSetEtaBonds(InnerGraph& graph);
 
 /*!

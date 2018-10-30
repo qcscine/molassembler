@@ -141,7 +141,7 @@ void benchmark(
     filePath.string()
   );
 
-  DistanceGeometry::SpatialModel spatialModel {sampleMol};
+  DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
 
   const auto boundsList = spatialModel.makeBoundsList();
 

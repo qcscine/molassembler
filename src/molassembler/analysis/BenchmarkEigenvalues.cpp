@@ -114,7 +114,7 @@ void benchmark(
     return;
   }
 
-  DistanceGeometry::SpatialModel spatialModel {molecule};
+  DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
   const auto boundsList = spatialModel.makeBoundsList();
 

@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
         edgeLengths = temple::random::getN<double>(lowerLimit, upperLimit, nSides, generator.engine);
       }
 
-      double circumradius;
+      double circumradius = std::nan("");
       bool circumcenterInside;
 
       auto assignCircumradius = [&]() -> void {

@@ -19,8 +19,6 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/RankingInformation.h"
 
-#include <iostream>
-
 namespace molassembler {
 
 namespace GraphAlgorithms {
@@ -369,7 +367,7 @@ void findAndSetEtaBonds(InnerGraph& graph) {
   for(AtomIndex centralIndex = 0; centralIndex < N; ++centralIndex) {
     // Skip any main group element types, none of these should be eta bonded
     if(AtomInfo::isMainGroupElement(graph.elementType(centralIndex))) {
-      break;
+      continue;
     }
 
     detail::findLigands(
