@@ -12,9 +12,26 @@ set(molassembler_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 # Project-specific options
 option(MOLASSEMBLER_ANALYSIS_BINARIES "Compile analysis binaries" OFF)
 option(MOLASSEMBLER_VALIDATION_TESTS "Compile validation tests" OFF)
-option(MOLASSEMBLER_DOWNLOAD_DEPENDENICES "Enable downloading dependencies (for CI-Only!)" OFF)
+option(MOLASSEMBLER_DOWNLOAD_DEPENDENCIES "Enable downloading dependencies (for CI-Only!)" OFF)
 option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
 option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
+
+# Set a default build type
+set(default_build_type "Release")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  set(default_build_type "Debug")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to default '${default_build_type}'")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+    STRING "Choose the type of the build."
+    FORCE
+  )
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
+    STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo"
+  )
+endif()
 
 add_subdirectory(doc)
 add_subdirectory(src)
