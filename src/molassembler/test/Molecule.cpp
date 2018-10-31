@@ -353,3 +353,21 @@ BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
 
   BOOST_CHECK(molSplat.size() == 5 && xyzSplat.size() == 5);
 }
+
+BOOST_AUTO_TEST_CASE(moleculeGeometryChoices) {
+  molassembler::Molecule testMol(Delib::ElementType::Ru, Delib::ElementType::N, BondType::Single);
+  testMol.addAtom(Delib::ElementType::H, 1u, BondType::Single);
+  testMol.addAtom(Delib::ElementType::H, 1u, BondType::Single);
+
+  BOOST_CHECK(
+    testMol.stereopermutators().option(1u)
+    && testMol.stereopermutators().option(1u)->getSymmetry() == Symmetry::Name::CutTetrahedral
+  );
+
+  testMol.addAtom(Delib::ElementType::H, 1u, BondType::Single);
+
+  BOOST_CHECK(
+    testMol.stereopermutators().option(1u)
+    && testMol.stereopermutators().option(1u)->getSymmetry() == Symmetry::Name::Tetrahedral
+  );
+}

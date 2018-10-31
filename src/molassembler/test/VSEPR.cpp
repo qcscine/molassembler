@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
         0 // charge is not on central chlorine atom!
       },
       TestCaseType {
-        "SNF3",
+        "N≡SF3",
         Delib::ElementType::S,
         4,
         {

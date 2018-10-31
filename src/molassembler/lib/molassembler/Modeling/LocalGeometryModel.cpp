@@ -3,6 +3,7 @@
 
 #include "molassembler/Modeling/LocalGeometryModel.h"
 
+#include "boost/range/iterator_range_core.hpp"
 #include "boost/optional.hpp"
 #include "Delib/ElementInfo.h"
 
@@ -232,6 +233,38 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
   return ligands;
 }
 
+int formalCharge(
+  const OuterGraph& graph,
+  const AtomIndex index
+) {
+  int formalCharge = 0;
+
+  if(AtomInfo::isMainGroupElement(graph.elementType(index))) {
+    int valenceElectrons = AtomInfo::elementData.at(
+      static_cast<unsigned>(graph.elementType(index))
+    ).valenceElectrons();
+
+    for(const AtomIndex adjacent : boost::make_iterator_range(graph.adjacents(index))) {
+      valenceElectrons -= bondWeights.at(
+        graph.bondType(
+          *graph.bond(index, adjacent)
+        )
+      );
+    }
+
+    if(valenceElectrons > 0) {
+      // Make any electrons that we can pair off non-bonding electron pairs
+      int freeElectronPairs = valenceElectrons / 2;
+      valenceElectrons -= 2 * freeElectronPairs;
+    }
+
+    // Assign the result of our calculation to formal charge
+    formalCharge = valenceElectrons;
+  }
+
+  return formalCharge;
+}
+
 Symmetry::Name determineLocalGeometry(
   const OuterGraph& graph,
   const AtomIndex index,
@@ -240,14 +273,11 @@ Symmetry::Name determineLocalGeometry(
   auto ligandsVector = reduceToSiteInformation(graph, index, ranking);
   unsigned nSites = ligandsVector.size();
 
-  //!@todo NO CHARGES
-  int formalCharge = 0;
-
   auto symmetryOptional = LocalGeometry::vsepr(
     graph.elementType(index),
     nSites,
     ligandsVector,
-    formalCharge
+    formalCharge(graph, index)
   ) | temple::callIfNone(LocalGeometry::firstOfSize, nSites);
 
   if(!symmetryOptional) {

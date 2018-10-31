@@ -52,6 +52,27 @@ struct BindingSiteInformation {
 // Mapping of bond type to a floating-point weight
 extern const std::map<BondType, double> bondWeights;
 
+/**
+ * @brief Calculates the formal charge on a main group-element atom.
+ *
+ * @param graph The graph to which the atom index belongs
+ * @param index The atom index for which to calculate the formal charge
+ *
+ * @warning This is an awful function and should be avoided in any sort of
+ *   important calculation.
+ *
+ * @warning This will yield nonsense if the bond orders in your graph are unset.
+ *
+ * @warning This function may work sometimes for organic surroundings. That's
+ *   how confident we are in this function.
+ *
+ * @return 0 for non-main group elements, the formal charge otherwise
+ */
+int formalCharge(
+  const OuterGraph& graph,
+  AtomIndex index
+);
+
 /* Models */
 boost::optional<Symmetry::Name> vsepr(
   Delib::ElementType centerAtomType,
