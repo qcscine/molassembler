@@ -4,6 +4,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_COMMON_TRIG_H
 #define INCLUDE_MOLASSEMBLER_COMMON_TRIG_H
 
+#include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "molassembler/Modeling/BondDistance.h"
 
 #include <cmath>
@@ -20,6 +21,8 @@
 namespace molassembler {
 
 namespace CommonTrig {
+
+using ValueBounds = ::molassembler::DistanceGeometry::ValueBounds;
 
 /*!
  * Calculates the law of cosines, returning c:
@@ -84,9 +87,31 @@ double dihedralLength(
   double a,
   double b,
   double c,
-  double abAngle,
-  double bcAngle,
+  double alpha,
+  double beta,
   double dihedral
+);
+
+/**
+ * @brief Calculates the bounds on the dihedral length given bounds for all
+ *   constituting variables
+ *
+ * @param aBounds The bond length bounds between atoms i and j
+ * @param bBounds The bond length bounds between atoms j and k
+ * @param cBounds The bond length bounds between atoms k and l
+ * @param alphaBounds The angle bounds for the sequence i-j-k
+ * @param betaBounds The angle bounds for the sequence j-k-l
+ * @param dihedralBounds The dihedral bounds for the sequence i-j-k-l
+ *
+ * @return Bounds on the dihedral length
+ */
+ValueBounds dihedralLengthBounds(
+  const ValueBounds& aBounds,
+  const ValueBounds& bBounds,
+  const ValueBounds& cBounds,
+  const ValueBounds& alphaBounds,
+  const ValueBounds& betaBounds,
+  const ValueBounds& dihedralBounds
 );
 
 } // namespace CommonTrig

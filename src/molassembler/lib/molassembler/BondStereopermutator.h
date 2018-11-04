@@ -44,12 +44,19 @@ class SpatialModel;
 struct ChiralityConstraint;
 } // namespace DistanceGeometry
 
+/**
+ * @brief Handles specific relative arrangements of two atom stereopermutators
+ *   joined by a bond
+ *
+ * This class exists to model rotational barriers in bond orders higher than
+ * Single that join an arbitrary pair of idealized symmetries.
+ */
 class BondStereopermutator {
 public:
   //! The volume tolerance of emitted chirality constraints
   static constexpr double chiralityConstraintTolerance = 0.1;
   //! An Assignment is accepted if the fit for each dihedral is below this value
-  static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 60.0; // ~3°
+  static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 36.0; // 5°
 
 //!@name Special member functions
 //!@{
@@ -97,11 +104,6 @@ public:
   unsigned numAssignments() const;
 
   unsigned numStereopermutations() const;
-
-  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
-    const AtomStereopermutator& stereopermutatorA,
-    const AtomStereopermutator& stereopermutatorB
-  ) const;
 
   std::string info() const;
 

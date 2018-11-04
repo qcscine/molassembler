@@ -25,11 +25,11 @@ set(testFiles
 
 set(DGTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/DGExplicitGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGFixedPositions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGGraphShortestDistances.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGImplicitGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGMetricMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGRefinementProblem.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGFixedPositions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGmain.cpp
 )
 

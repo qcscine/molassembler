@@ -212,6 +212,13 @@ else()
       $<TARGET_PROPERTY:spectra,INTERFACE_INCLUDE_DIRECTORIES>
   )
 endif()
+target_compile_options(molassembler_obj PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+# Suppress warnings coming from various external libraries
+target_include_directories(molassembler_obj
+  SYSTEM PRIVATE
+    ${EIGEN3_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIR}
+)
 
 # Shared variant
 add_library(molassembler SHARED $<TARGET_OBJECTS:molassembler_obj>)
@@ -220,10 +227,6 @@ target_include_directories(molassembler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
-target_include_directories(molassembler
-  SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS}
-)
-target_compile_options(molassembler PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
 # Static variant
 add_library(molassemblerStatic STATIC $<TARGET_OBJECTS:molassembler_obj>)
@@ -232,11 +235,6 @@ target_include_directories(molassemblerStatic
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
-target_include_directories(molassemblerStatic
-  SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS}
-)
-
-target_compile_options(molassemblerStatic PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
 # -- BEGIN Linking
 

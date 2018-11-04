@@ -4,8 +4,6 @@
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 
 #include <limits>
-#include <cassert>
-#include <utility>
 
 namespace molassembler {
 
@@ -16,13 +14,15 @@ ValueBounds::ValueBounds() : ValueBounds(
   std::numeric_limits<double>::max()
 ) {}
 
-ValueBounds::ValueBounds(
-  const double passLower,
-  const double passUpper
-) : lower(passLower),
-    upper(passUpper)
-{
-  assert(lower <= upper);
+bool ValueBounds::operator == (const ValueBounds& other) const {
+  return (
+    lower == other.lower
+    && upper == other.upper
+  );
+}
+
+bool ValueBounds::operator != (const ValueBounds& other) const {
+  return !(*this == other);
 }
 
 } // namespace molassembler

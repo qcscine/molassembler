@@ -91,10 +91,10 @@ public:
   //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
   static constexpr double angleAbsoluteVariance = M_PI / 90; // ~ 2°
   //! Absolute dihedral angle variance in radians.
-  static constexpr double dihedralAbsoluteVariance = M_PI / 36; // ~ 5°
+  static constexpr double dihedralAbsoluteVariance = M_PI / 90; // ~ 2°
 
-  static const ValueBounds angleClampBounds;
-  static const ValueBounds dihedralClampBounds;
+  static constexpr ValueBounds angleClampBounds {0.0, M_PI};
+  static ValueBounds defaultDihedralBounds;
 
 /* Static functions */
   static boost::optional<ValueBounds> coneAngle(
@@ -114,16 +114,42 @@ public:
     const OuterGraph& graph
   );
 
+  /**
+   * @brief Yields central value plus/minus some absolute variance bounds
+   *
+   * @param centralValue The central value
+   * @param absoluteVariance The value to subtract and add to yield new bounds
+   *
+   * @return bounds with median central value and width 2 * absoluteVariance
+   */
   static ValueBounds makeBoundsFromCentralValue(
     double centralValue,
     double absoluteVariance
   );
 
+  /**
+   * @brief Analogous to C++17's clamp, reduces ValueBounds to the maximal
+   *   extent specified by some clamping bounds
+   *
+   * @param bounds The bounds to be clamped
+   * @param clampBounds The range in which bounds may exist
+   *
+   * @return New bounds that are within the clamp bounds
+   */
   static ValueBounds clamp(
     const ValueBounds& bounds,
     const ValueBounds& clampBounds
   );
 
+  /**
+   * @brief Ensures that the preconditions for fixed positions in Distance
+   *   Geometry detailed in the Configuration object are met
+   *
+   * @param molecule The molecule for which the Configuration is valid
+   * @param configuration The Configuration object detailing fixed positions
+   *
+   * @throws std::runtime_error If the preconditions are not met
+   */
   static void checkFixedPositionsPreconditions(
     const Molecule& molecule,
     const Configuration& configuration
@@ -186,14 +212,14 @@ public:
     const ValueBounds& bounds
   );
 
-  void addAtomStereopermutatorAngles(
+  void addAtomStereopermutatorInformation(
     const AtomStereopermutator& permutator,
     const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
     double looseningMultiplier,
     const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
   );
 
-  void addBondStereopermutatorDihedrals(
+  void addBondStereopermutatorInformation(
     const BondStereopermutator& permutator,
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
@@ -243,10 +269,14 @@ private:
   double _looseningMultiplier;
   StereopermutatorList _stereopermutators;
 
+  //! Constraints by fixed positions
   std::map<
     std::array<AtomIndex, 2>,
     ValueBounds
   > _constraints;
+
+  //!@name Bounds on internal angles
+  //!@{
   std::map<
     std::array<AtomIndex, 2>,
     ValueBounds
@@ -259,6 +289,10 @@ private:
     std::array<AtomIndex, 4>,
     ValueBounds
   > _dihedralBounds;
+  //!@}
+
+  //! Chiral constraints
+  std::vector<ChiralityConstraint> _chiralConstraints;
 };
 
 } // namespace DistanceGeometry

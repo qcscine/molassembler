@@ -132,11 +132,6 @@ public:
     std::array<boost::optional<unsigned>, 4>
   > minimalChiralityConstraints() const;
 
-  //! Generates a list of chirality constraints on its substituents for DG
-  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
-    double looseningMultiplier
-  ) const;
-
   //! Returns an information string for diagnostic purposes
   std::string info() const;
 

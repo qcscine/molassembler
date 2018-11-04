@@ -128,12 +128,6 @@ std::vector<
   return _pImpl->minimalChiralityConstraints();
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> AtomStereopermutator::chiralityConstraints(
-  double looseningMultiplier
-) const {
-  return _pImpl->chiralityConstraints(looseningMultiplier);
-}
-
 std::string AtomStereopermutator::info() const {
   return _pImpl->info();
 }

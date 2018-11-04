@@ -3,6 +3,7 @@
 
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 
+#include "boost/numeric/interval.hpp"
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "Delib/ElementInfo.h"
@@ -31,8 +32,27 @@
 #include "molassembler/Stereopermutators/PermutationState.h"
 
 #include <fstream>
+#include <Eigen/Dense>
 
 namespace molassembler {
+
+struct SymmetryMapHelper {
+  static unsigned getSymmetryPositionOf(unsigned ligandIndex, const std::vector<unsigned>& map) {
+    return map.at(ligandIndex);
+  }
+
+  static unsigned getLigandIndexAt(unsigned symmetryPosition, const std::vector<unsigned>& map) {
+    auto findIter = std::find(
+      std::begin(map),
+      std::end(map),
+      symmetryPosition
+    );
+
+    assert(findIter != std::end(map));
+
+    return findIter - std::begin(map);
+  }
+};
 
 namespace DistanceGeometry {
 
@@ -41,8 +61,8 @@ constexpr double SpatialModel::bondRelativeVariance;
 constexpr double SpatialModel::angleAbsoluteVariance;
 constexpr double SpatialModel::dihedralAbsoluteVariance;
 
-const ValueBounds SpatialModel::angleClampBounds = ValueBounds {0.0, M_PI};
-const ValueBounds SpatialModel::dihedralClampBounds = ValueBounds {0.0, M_PI};
+constexpr ValueBounds SpatialModel::angleClampBounds;
+ValueBounds SpatialModel::defaultDihedralBounds = {std::nextafter(-M_PI, 0), M_PI};
 
 SpatialModel::SpatialModel(
   const Molecule& molecule,
@@ -189,7 +209,7 @@ SpatialModel::SpatialModel(
 
     auto localRanking = molecule.rankPriority(i);
 
-    // Terminal atom index?
+    // Terminal atom index? skip those
     if(localRanking.ligands.size() <= 1) {
       continue;
     }
@@ -383,7 +403,7 @@ SpatialModel::SpatialModel(
 
   // Get 1-3 information from AtomStereopermutators
   for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
-    addAtomStereopermutatorAngles(
+    addAtomStereopermutatorInformation(
       stereopermutator,
       cycleMultiplierForIndex,
       looseningMultiplier,
@@ -393,7 +413,7 @@ SpatialModel::SpatialModel(
 
   // Get 1-4 information from BondStereopermutators
   for(const auto& bondStereopermutator : _stereopermutators.bondStereopermutators()) {
-    addBondStereopermutatorDihedrals(
+    addBondStereopermutatorInformation(
       bondStereopermutator,
       _stereopermutators.option(
         bondStereopermutator.edge().first
@@ -661,12 +681,12 @@ void SpatialModel::setDihedralBoundsIfEmpty(
     _dihedralBounds.emplace_hint(
       findIter,
       orderedIndices,
-      clamp(bounds, dihedralClampBounds)
+      bounds
     );
   }
 }
 
-void SpatialModel::addAtomStereopermutatorAngles(
+void SpatialModel::addAtomStereopermutatorInformation(
   const AtomStereopermutator& permutator,
   const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
   const double looseningMultiplier,
@@ -676,7 +696,7 @@ void SpatialModel::addAtomStereopermutatorAngles(
   const auto& ranking = permutator.getRanking();
   const AtomIndex centerAtom = permutator.centralIndex();
 
-  /* Rough outline
+  /* Angle information addition: Rough outline
    * - For each ligand
    *   - Set the distance to the center
    *     - For multi-atom ligands, correct the distance with the cone angle
@@ -854,18 +874,13 @@ void SpatialModel::addAtomStereopermutatorAngles(
         /* The idealized symmetry angles are modified by the upper (!) cone angles
          * at each site, not split between lower and upper.
          */
-        DistanceGeometry::ValueBounds angleBounds {
+        ValueBounds angleBounds = makeBoundsFromCentralValue(
+          permutator.angle(i, j),
           (
-            permutator.angle(i, j)
-            - permutationState.coneAngles.at(i).value().upper
-            - permutationState.coneAngles.at(j).value().upper
-          ),
-          (
-            permutator.angle(i, j)
-            + permutationState.coneAngles.at(i).value().upper
+            permutationState.coneAngles.at(i).value().upper
             + permutationState.coneAngles.at(j).value().upper
           )
-        };
+        );
 
         /* The computed angle bounds are valid for each pair of atoms
          * constituting each ligand
@@ -885,27 +900,210 @@ void SpatialModel::addAtomStereopermutatorAngles(
 
             setAngleBoundsIfEmpty(
               {{x, centerAtom, y}},
-              DistanceGeometry::ValueBounds {
-                std::max(0.0, angleBounds.lower - variation),
-                std::min(M_PI, angleBounds.upper + variation)
-              }
+              clamp(
+                ValueBounds {
+                  angleBounds.lower - variation,
+                  angleBounds.upper + variation
+                },
+                angleClampBounds
+              )
             );
           }
         );
       }
     }
   }
+
+  // Chiral constraints addition
+  for(const auto& minimalConstraint : permutator.minimalChiralityConstraints()) {
+    /* We need to calculate target upper and lower volumes for the chirality
+     * constraints. _cache.ligandDistances contains bounds for the distance to
+     * each ligand site plane, and since the center of each cone should
+     * constitute the average ligand position, we can calculate 1-3 distances
+     * between the centerpoints of ligands using the idealized angles.
+     *
+     * The target volume of the chirality constraint created by the
+     * tetrahedron is calculated using internal coordinates (the
+     * Cayley-Menger determinant), always leading to V > 0, so depending on
+     * the current assignment, the sign of the result is switched. The
+     * formula used later in chirality constraint calculation for explicit
+     * coordinates is adjusted by V' = 6 V to avoid an unnecessary factor, so
+     * we do that here too:
+     *
+     *    288 V²  = |...|               | substitute V' = 6 V
+     * -> 8 (V')² = |...|
+     * ->      V' = sqrt(|...| / 8)
+     *
+     * where the Cayley-Menger determinant |...| is square symmetric:
+     *
+     *          |   0    1    1    1    1  |
+     *          |        0  d12² d13² d14² |
+     *  |...| = |             0  d23² d24² |
+     *          |                  0  d34² |
+     *          |  ...                  0  |
+     *
+     */
+
+    using DeterminantMatrix = Eigen::Matrix<double, 5, 5>;
+
+    DeterminantMatrix lowerMatrix, upperMatrix;
+
+    lowerMatrix.row(0).setOnes();
+    upperMatrix.row(0).setOnes();
+
+    lowerMatrix.diagonal().setZero();
+    upperMatrix.diagonal().setZero();
+
+    /* Cycle through all combinations of ligand indices in the tetrahedron
+     * definition sequence. boost::none means the central atom.
+     */
+    for(unsigned i = 0; i < 4; ++i) {
+      boost::optional<DistanceGeometry::ValueBounds> iBounds;
+      if(minimalConstraint.at(i)) {
+        iBounds = permutationState.ligandDistances.at(
+          minimalConstraint.at(i).value()
+        );
+      }
+
+      for(unsigned j = i + 1; j < 4; ++j) {
+        boost::optional<DistanceGeometry::ValueBounds> jBounds;
+        if(minimalConstraint.at(j)) {
+          jBounds = permutationState.ligandDistances.at(
+            minimalConstraint.at(j).value()
+          );
+        }
+
+        assert(iBounds || jBounds);
+
+        DistanceGeometry::ValueBounds oneThreeDistanceBounds;
+        if(iBounds && jBounds) {
+          /* If neither index is the central atom, we can calculate an
+           * expected one-three distance
+           */
+          double siteAngle = permutator.angle(
+            minimalConstraint.at(i).value(),
+            minimalConstraint.at(j).value()
+          );
+
+          oneThreeDistanceBounds = {
+            CommonTrig::lawOfCosines(
+              iBounds.value().lower,
+              jBounds.value().lower,
+              std::max(0.0, siteAngle - angleAbsoluteVariance * looseningMultiplier)
+            ),
+            CommonTrig::lawOfCosines(
+              iBounds.value().upper,
+              jBounds.value().upper,
+              std::min(M_PI, siteAngle + angleAbsoluteVariance * looseningMultiplier)
+            )
+          };
+        } else if(iBounds) {
+          oneThreeDistanceBounds = iBounds.value();
+        } else {
+          oneThreeDistanceBounds = jBounds.value();
+        }
+
+        lowerMatrix(i + 1, j + 1) = std::pow(oneThreeDistanceBounds.lower, 2);
+        upperMatrix(i + 1, j + 1) = std::pow(oneThreeDistanceBounds.upper, 2);
+      }
+    }
+
+    const double boundFromLower = static_cast<DeterminantMatrix>(
+      lowerMatrix.selfadjointView<Eigen::Upper>()
+    ).determinant();
+
+    const double boundFromUpper = static_cast<DeterminantMatrix>(
+      upperMatrix.selfadjointView<Eigen::Upper>()
+    ).determinant();
+
+    assert(boundFromLower > 0 && boundFromUpper > 0);
+
+    const double volumeFromLower = std::sqrt(boundFromLower / 8);
+    const double volumeFromUpper = std::sqrt(boundFromUpper / 8);
+
+    // Map the ligand indices to their constituent indices for use in the prototype
+    auto tetrahedronLigands = temple::map(
+      minimalConstraint,
+      [&](const boost::optional<unsigned>& ligandIndexOptional) -> std::vector<AtomIndex> {
+        if(ligandIndexOptional) {
+          return ranking.ligands.at(ligandIndexOptional.value());
+        }
+
+        return {centerAtom};
+      }
+    );
+
+    /* Although it is tempting to assume that the Cayley-Menger determinant
+     * using the lower bounds is smaller than the one using upper bounds,
+     * this is not always true. We cannot a priori know which of both yields
+     * the lower or upper bounds on the 3D volume, and hence must ensure only
+     * that the ordering is preserved in the generation of the constraint,
+     * which checks that the lower bound on the volume is smaller than the
+     * upper one.
+     *
+     * You can check this assertion with a CAS. The relationship between both
+     * determinants (where u_ij = l_ij + Δ) is wholly indeterminate, i.e. no
+     * logical operator (<, >, <=, >=, ==) between both is true. It
+     * completely depends on the individual values. Maybe in very specific
+     * cases one can deduce some relationship, but not generally.
+     *
+     * Helpfully, chemical_symmetry only emits positive chiral target volume
+     * index sequences (see test case name allTetrahedraPositive), so no
+     * negative volumes have to be considered.
+     */
+
+    _chiralConstraints.emplace_back(
+      std::move(tetrahedronLigands),
+      std::min(volumeFromLower, volumeFromUpper),
+      std::max(volumeFromLower, volumeFromUpper)
+    );
+  }
 }
 
-void SpatialModel::addBondStereopermutatorDihedrals(
+void SpatialModel::addBondStereopermutatorInformation(
   const BondStereopermutator& permutator,
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB,
   const double looseningMultiplier,
   const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
 ) {
-  const auto& composite = permutator.composite();
+  // Check preconditions and get access to commonly needed things
+  assert(permutator.assigned());
+  const stereopermutation::Composite& composite = permutator.composite();
   const auto& assignment = permutator.assigned();
+
+  /* The signed volume of a tetrahedron spanned by a 1-4 sequence i-j-k-l is
+   *
+   *   V = 1/6 (i-l) dot [(j-l) x (k-l)]
+   *
+   * or, in internal coordinates (a, b, c are bond lengths, α and β angles,
+   * φ the dihedral)
+   *
+   *   V = 1/6 a b c sin α sin β sin φ
+   *
+   * We calculate the maximal volume spanned by the combination of all bounds
+   * on the internal coordinates and set the flat chirality constraint's
+   * tolerance as ± its magnitude.
+   *
+   * Just like in atomStereopermutatorChiralityConstraints, we adjust the volume
+   * by V' = 6 * V to avoid calculating the factor everywhere.
+   *
+   * As it currently stands, only dihedral approx 0° chirality constraints
+   * are emitted. For more complicated composites, in which no such chirality
+   * constraints exist, it would be considerably more helpful if all chirality
+   * constraints were emitted.
+   *
+   * To change this, remove the if-condition in the loop and reconsider the
+   * algorithm generating dihedral angle bounds and the maximum sine value.
+   * Additionally, it will be necesssary to compute the minimum sine values
+   * as well as using the lower bounds on the bounded distances to get
+   * the lower volume. It will not be reasonable to clamp the dihedral to 0,
+   * M_PI, but will instead be necessary to retain the +- orientation to get
+   * correct +- values for the volume bounds around 0° dihedrals.
+   *
+   * How exactly to combine the bounds with the angle bounds and their sines to
+   * get the correct bounds on the final volume will be challenging.
+   */
 
   // Can the following selections be done with a single branch?
   const AtomStereopermutator& firstStereopermutator = (
@@ -920,7 +1118,27 @@ void SpatialModel::addBondStereopermutatorDihedrals(
     : stereopermutatorA
   );
 
-  using ModelType = DistanceGeometry::SpatialModel;
+  // To determine the maximal sine value of bounds, we use boost's help
+  auto sinBounds = [](const ValueBounds angleBounds) -> ValueBounds {
+    using boostInterval = boost::numeric::interval<
+      double,
+      boost::numeric::interval_lib::policies<
+        boost::numeric::interval_lib::save_state<
+          boost::numeric::interval_lib::rounded_transc_std<double>
+        >,
+        boost::numeric::interval_lib::checking_base<double>
+      >
+    >;
+
+    auto transformedInterval = boost::numeric::sin(
+      boostInterval(angleBounds.lower, angleBounds.upper)
+    );
+
+    return {
+      boost::numeric::lower(transformedInterval),
+      boost::numeric::upper(transformedInterval)
+    };
+  };
 
   /* Only dihedrals */
   unsigned firstSymmetryPosition, secondSymmetryPosition;
@@ -929,55 +1147,51 @@ void SpatialModel::addBondStereopermutatorDihedrals(
   for(const auto& dihedralTuple : composite.dihedrals(assignment.value())) {
     std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
 
-    unsigned firstLigandIndex = firstStereopermutator.getSymmetryPositionMap().at(firstSymmetryPosition);
-    unsigned secondLigandIndex = secondStereopermutator.getSymmetryPositionMap().at(secondSymmetryPosition);
+    unsigned ligandIndexIAtFirst = SymmetryMapHelper::getLigandIndexAt(
+      firstSymmetryPosition,
+      firstStereopermutator.getSymmetryPositionMap()
+    );
+    unsigned ligandIndexKAtFirst = firstStereopermutator.getRanking().getLigandIndexOf(secondStereopermutator.centralIndex());
+    unsigned ligandIndexJAtSecond = secondStereopermutator.getRanking().getLigandIndexOf(firstStereopermutator.centralIndex());
+    unsigned ligandIndexLAtSecond = SymmetryMapHelper::getLigandIndexAt(
+      secondSymmetryPosition,
+      secondStereopermutator.getSymmetryPositionMap()
+    );
 
-    /* A simple central plus-minus variance calculation for the dihedral would
-     * yield values outside the SpatialModel dihedralClampBounds, which are [0,
-     * M_PI] (since d(phi) is y-symmetric), so we have some adjusting to do.
+    // TODO it might be smarter not to model instances where the cone angles are unknown
+    ValueBounds coneAngleI = firstStereopermutator.getPermutationState().coneAngles.at(ligandIndexIAtFirst).value_or(ValueBounds {0.0, 0.0});
+    ValueBounds coneAngleL = secondStereopermutator.getPermutationState().coneAngles.at(ligandIndexLAtSecond).value_or(ValueBounds {0.0, 0.0});
+
+    /* Modify the dihedral angle by the upper cone angles of the i and l
+     * ligands and the usual variances.
      */
-    auto reduceToBounds = [](double phi) -> double {
-      // Perform 2pi adjustments until we are in (-pi, pi]
-      if(phi <= -M_PI) {
-        unsigned n = std::floor((M_PI + std::fabs(phi)) / (2 * M_PI));
-        phi += n * 2 * M_PI;
-      }
+    ValueBounds dihedralBounds = makeBoundsFromCentralValue(
+      dihedralAngle,
+      coneAngleI.upper + coneAngleL.upper + dihedralAbsoluteVariance * looseningMultiplier
+    );
 
-      if(phi > M_PI) {
-        unsigned n = std::floor((M_PI + phi) / (2 * M_PI));
-        phi -= n * 2 * M_PI;
-      }
-
-      // Within (-pi, pi], d(phi) is y-axis-symmetric
-      return std::fabs(phi);
-    };
-
-    std::array<double, 3> possibleBoundaryValues {
-      {
-        reduceToBounds(dihedralAngle - ModelType::dihedralAbsoluteVariance * looseningMultiplier),
-        reduceToBounds(dihedralAngle),
-        reduceToBounds(dihedralAngle + ModelType::dihedralAbsoluteVariance * looseningMultiplier)
-      }
-    };
-
-    // The constructor will swap passed values so that the smaller becomes .first
-    temple::OrderedPair<double> boundedDihedralValues {
-      *std::min_element(std::begin(possibleBoundaryValues), std::end(possibleBoundaryValues)),
-      *std::max_element(std::begin(possibleBoundaryValues), std::end(possibleBoundaryValues))
-    };
-
-    // Take the ordered values
-    DistanceGeometry::ValueBounds dihedralBounds {
-      boundedDihedralValues.first,
-      boundedDihedralValues.second
-    };
+    /* If the width of the dihedral angle is now larger than 2π, then we may
+     * overrepresent some dihedral values, and it is preferable to reset the
+     * interval to (-π,π].
+     *
+     * This should be very rare, and is just a safeguard.
+     */
+    if(dihedralBounds.upper - dihedralBounds.lower >= 2 * M_PI) {
+      dihedralBounds = defaultDihedralBounds;
+    }
 
     temple::forEach(
       temple::adaptors::allPairs(
-        firstStereopermutator.getRanking().ligands.at(firstLigandIndex),
-        secondStereopermutator.getRanking().ligands.at(secondLigandIndex)
+        firstStereopermutator.getRanking().ligands.at(ligandIndexIAtFirst),
+        secondStereopermutator.getRanking().ligands.at(ligandIndexLAtSecond)
       ),
       [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
+
+        /*std::cout << "Setting bounds on " << firstIndex << ", " <<
+        firstStereopermutator.centralIndex() << ", " <<
+        secondStereopermutator.centralIndex() << ", " << secondIndex << " to ["
+        << dihedralBounds.lower << ", " << dihedralBounds.upper << "]\n";*/
+
         setDihedralBoundsIfEmpty(
           std::array<AtomIndex, 4> {
             firstIndex,
@@ -988,6 +1202,96 @@ void SpatialModel::addBondStereopermutatorDihedrals(
           dihedralBounds
         );
       }
+    );
+
+    /* Figure out tolerance from interal bounds on bonds, angles and dihedral
+     * - a is the ligand distance from the firstStereopermutator to the
+     *   ligand at the symmetry position given by the composite
+     * - b is the bond distance between firstStereopermutator and
+     *   secondStereopermutator
+     * - c is the ligand distance from the secondStereopermutator to the
+     *   ligand at the symmetry position given by the composite
+     * - alpha is the angle between the secondStereopermutator and the ligand
+     *   at the symmetry position given by the composite at the
+     *   firstStereopermutator
+     * - beta is the angle between the firstStereopermutator and the ligand
+     *   at the symmetry position given by the composite at the
+     *   secondStereopermutator
+     * - phi is the dihedralAngle (this doesn't really have any bounds yet,
+     *   which we add using the dihedralAbsoluteVariance)
+     */
+    ValueBounds a = firstStereopermutator.getPermutationState().ligandDistances.at(ligandIndexIAtFirst);
+    ValueBounds b = _bondBounds.at(
+      orderedSequence(firstStereopermutator.centralIndex(), secondStereopermutator.centralIndex())
+    );
+    ValueBounds c = secondStereopermutator.getPermutationState().ligandDistances.at(ligandIndexLAtSecond);
+
+    /* Construct bounds for the central values and then determine the maximal
+     * sine value for each set of bounds when determining the volume
+     */
+    ValueBounds alphaSineBounds = sinBounds(
+      clamp(
+        makeBoundsFromCentralValue(
+          firstStereopermutator.angle(ligandIndexIAtFirst, ligandIndexKAtFirst),
+          angleAbsoluteVariance * looseningMultiplier
+        ),
+        angleClampBounds
+      )
+    );
+    ValueBounds betaSineBounds = sinBounds(
+      clamp(
+        makeBoundsFromCentralValue(
+          secondStereopermutator.angle(ligandIndexJAtSecond, ligandIndexLAtSecond),
+          angleAbsoluteVariance * looseningMultiplier
+        ),
+        angleClampBounds
+      )
+    );
+
+    /* NOTE: no clamp! Best to let the sine take care of periodicity for us
+     * Also: this dihedral needs to be computed anew as it indicates the
+     * dihedral between the ligand site center of masses. They are not the
+     * per-atom dihedral bounds (which are modified by the ligands' cone
+     * angles).
+     */
+    ValueBounds phiSineBounds = sinBounds(
+      makeBoundsFromCentralValue(
+        std::fabs(dihedralAngle),
+        dihedralAbsoluteVariance * looseningMultiplier
+      )
+    );
+
+    /* min and max have to be understood more in terms of most negative and
+     * most positive.
+     *
+     * The phi sine bounds can be negative (as opposed to all other bounds)
+     * and hence, if the lower phi sine bound is negative, then the most
+     * negative value can be achieved with the upper value of all other bounds.
+     *
+     * If the lower phi sine bound is positive, then the minimal value is
+     * achieved with the lower value of all bounds.
+     */
+    double minVolume, maxVolume;
+    if(phiSineBounds.lower < 0 && phiSineBounds.upper > 0) {
+      double baseVolume = a.upper * b.upper * c.upper * alphaSineBounds.upper * betaSineBounds.upper;
+      minVolume = baseVolume * phiSineBounds.lower;
+      maxVolume = baseVolume * phiSineBounds.upper;
+    } else {
+      minVolume = a.lower * b.lower * c.lower * alphaSineBounds.lower * betaSineBounds.lower * phiSineBounds.lower;
+      minVolume = a.upper * b.upper * c.upper * alphaSineBounds.upper * betaSineBounds.upper * phiSineBounds.upper;
+    }
+
+    assert(minVolume < maxVolume);
+
+    _chiralConstraints.emplace_back(
+      DistanceGeometry::ChiralityConstraint::LigandSequence {
+        firstStereopermutator.getRanking().ligands.at(ligandIndexIAtFirst),
+        {firstStereopermutator.centralIndex()},
+        {secondStereopermutator.centralIndex()},
+        secondStereopermutator.getRanking().ligands.at(ligandIndexLAtSecond)
+      },
+      minVolume,
+      maxVolume
     );
   }
 }
@@ -1047,7 +1351,7 @@ void SpatialModel::addDefaultDihedrals() {
               targetIndex,
               targetAdjacentIndex,
             }},
-            dihedralClampBounds
+            defaultDihedralBounds
           );
         }
       }
@@ -1212,24 +1516,14 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
     addInformation(
       indices.front(),
       indices.back(),
-      ValueBounds {
-        CommonTrig::dihedralLength(
-          firstBounds.lower,
-          secondBounds.lower,
-          thirdBounds.lower,
-          abAngleBounds.lower,
-          bcAngleBounds.lower,
-          dihedralBounds.lower // cis dihedral
-        ),
-        CommonTrig::dihedralLength(
-          firstBounds.upper,
-          secondBounds.upper,
-          thirdBounds.upper,
-          abAngleBounds.upper,
-          bcAngleBounds.upper,
-          dihedralBounds.upper // trans dihedral
-        )
-      }
+      CommonTrig::dihedralLengthBounds(
+        firstBounds,
+        secondBounds,
+        thirdBounds,
+        abAngleBounds,
+        bcAngleBounds,
+        dihedralBounds
+      )
     );
   }
 
@@ -1262,70 +1556,7 @@ ValueBounds SpatialModel::ligandDistance(
 }
 
 std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
-  std::vector<DistanceGeometry::ChiralityConstraint> constraints;
-
-  for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
-    auto stereopermutatorConstraints = stereopermutator.chiralityConstraints(_looseningMultiplier);
-
-    std::move(
-      std::begin(stereopermutatorConstraints),
-      std::end(stereopermutatorConstraints),
-      std::back_inserter(constraints)
-    );
-  }
-
-  for(const auto& bondStereopermutator : _stereopermutators.bondStereopermutators()) {
-    auto stereopermutatorConstraints = bondStereopermutator.chiralityConstraints(
-      _stereopermutators.option(
-        bondStereopermutator.edge().first
-      ).value(),
-      _stereopermutators.option(
-        bondStereopermutator.edge().second
-      ).value()
-    );
-
-    /* BondStereopermutator issues ±0 chirality constraints since it does not have
-     * all of the available information regarding the internal coordinates it
-     * needs to calculate its bounds. Here, after construction of SpatialModel,
-     * we have all the internal coordinate information we require to calculate
-     * proper bounds for flat chirality constraints.
-     *
-     * The signed volume of a tetrahedron spanned by a 1-4 sequence i-j-k-l is
-     *
-     *   V = 1/6 (i-l) dot [(j-l) x (k-l)]
-     *
-     * or, in internal coordinates (a, b, c are bond lengths, α and β angles,
-     * φ the dihedral)
-     *
-     *   V = 1/6 a b c sin α sin β sin φ
-     *
-     * We calculate the volume spanned by the combination of all lower bounds
-     * and all upper bounds on the internal coordinates and set the flat
-     * chirality constraint's tolerance as ± whichever is larger by magnitude
-     */
-    /* This is not a good place to perform this work.
-     *
-     * - chirality constraints are haptic-level, and pretending all
-     *   bond stereopermutators are not is limiting
-     * - Moving it to BondStereopermutator (where principally all knowledge is
-     *   available due to references to its constituting atom stereopermutators)
-     *   is hardly ideal either because it has no knowledge on other constraints
-     *   placed on any given atom pair that may be placed in the SpatialModel
-     *   constructor or elsewhere
-     * - Ideally, all spatial modelling, even of atomstereopermutator's haptic
-     *   ligands (which is needed for the reduction of stereopermutations to
-     *   assignments in haptic ligands and otherwise) should be moved to within
-     *   this class
-     */
-
-    std::move(
-      std::begin(stereopermutatorConstraints),
-      std::end(stereopermutatorConstraints),
-      std::back_inserter(constraints)
-    );
-  }
-
-  return constraints;
+  return _chiralConstraints;
 }
 
 void SpatialModel::dumpDebugInfo() const {
@@ -1717,7 +1948,6 @@ void SpatialModel::checkFixedPositionsPreconditions(
 
   for(const auto& indexPositionPair : configuration.fixedPositions) {
     const AtomIndex& atomIndex = indexPositionPair.first;
-    const Delib::Position& position = indexPositionPair.second;
 
     auto stereopermutatorOption = molecule.stereopermutators().option(atomIndex);
     if(stereopermutatorOption) {
@@ -1729,8 +1959,8 @@ void SpatialModel::checkFixedPositionsPreconditions(
           const unsigned countFixed = temple::accumulate(
             indexSet,
             0u,
-            [&fixedAtoms](const unsigned carry, const AtomIndex i) -> unsigned {
-              return carry + fixedAtoms.count(i);
+            [&fixedAtoms](const unsigned nestedCarry, const AtomIndex i) -> unsigned {
+              return nestedCarry + fixedAtoms.count(i);
             }
           );
 

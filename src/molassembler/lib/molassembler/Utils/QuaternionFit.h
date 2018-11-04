@@ -38,7 +38,7 @@ class QuaternionFit {
     assert(refMat_.rows() == fitMat_.rows());
     assert(refMat_.rows() == weights_.size());
     align();
-  };
+  }
   /**
    * @brief Construct a new Quaternion Fit object
    * @param Rref The positions of the reference data.
@@ -48,7 +48,7 @@ class QuaternionFit {
   template<typename DerivedA, typename DerivedB>
   QuaternionFit(const Eigen::DenseBase<DerivedA>& refMat, const Eigen::DenseBase<DerivedB>& fitMat,
                 bool improperRotationIsAllowed = false)
-    : QuaternionFit(refMat, fitMat, Eigen::VectorXd::Ones(fitMat.rows()), improperRotationIsAllowed){};
+    : QuaternionFit(refMat, fitMat, Eigen::VectorXd::Ones(fitMat.rows()), improperRotationIsAllowed) {}
   /**
    * @brief Getter for the reverse of the applied rotation.
    * @return Eigen::Matrix3d The rotation from the reference structure to the second structure before fitting.

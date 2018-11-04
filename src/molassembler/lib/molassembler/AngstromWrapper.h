@@ -18,20 +18,25 @@
 
 namespace molassembler {
 
+/**
+ * @brief A wrapper class around Delib's PositionCollection to emphasize that
+ *   the positions stored therein are in Angstrom
+ */
 class AngstromWrapper {
 public:
   Delib::PositionCollection positions;
 
   AngstromWrapper() = default;
-  explicit AngstromWrapper(const unsigned N);
+  explicit AngstromWrapper(unsigned N);
   explicit AngstromWrapper(
     Delib::PositionCollection pos,
-    const LengthUnit lengthUnit = LengthUnit::Bohr
+    LengthUnit lengthUnit = LengthUnit::Bohr
   );
 
-  /*! Fetch a bohr representation of the wrapped positions
+  /*!
+   * @brief Fetch a bohr representation of the wrapped positions
    *
-   * \warning After calling this function, you should not reuse the
+   * @warning After calling this function, you should not reuse the
    * corresponding instance, as the underlying positions have been converted to
    * bohr.
    */

@@ -81,16 +81,6 @@ unsigned BondStereopermutator::numStereopermutations() const {
   return _pImpl -> numStereopermutations();
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> BondStereopermutator::chiralityConstraints(
-  const AtomStereopermutator& stereopermutatorA,
-  const AtomStereopermutator& stereopermutatorB
-) const {
-  return _pImpl -> chiralityConstraints(
-    stereopermutatorA,
-    stereopermutatorB
-  );
-}
-
 std::string BondStereopermutator::info() const {
   return _pImpl -> info();
 }

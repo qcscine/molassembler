@@ -46,6 +46,34 @@ struct ChiralityConstraint;
 
 namespace molassembler {
 
+/**
+ * @brief Handles the steric permutation of substituents of a non-terminal
+ *   central atom
+ *
+ * This class handles the permutation of ranked ligands around a central atom.
+ * It models its haptic ligands' binding sites and bridges in multidentate
+ * ligands in order to decide which stereopermutations are feasible. A
+ * stereopermutation may be infeasible, i.e. not realizable in
+ * three-dimensional space, if either haptic ligands would intersect due to
+ * too close ligand angles for their spatial heft, or if a multidentate
+ * ligand's bridge length between binding sites were too short to match the
+ * angle. The list of stereopermutations reduced by infeasible
+ * stereopermutations is then re-indexed and those indices into the list are
+ * called assignments.
+ *
+ * A Stereopermutator can be unassigned, i.e. the distinct stereopermutation
+ * that the substituents are can be indeterminate. If you choose to generate
+ * conformers for a molecule that includes unassigned stereopermutators, every
+ * conformer will choose an assignment from the pool of feasible assignments
+ * randomly, but consistent with relative statistical occurrence weights.
+ *
+ * E.g. a square planar AABC ligand set will have an A-A cis stereopermutation
+ * that occurs twice as often as the A-A trans stereopermutation.
+ *
+ * @note An instance of this class on a given central atom does not indicate
+ *   that that atom is a stereocenter. That is only the case if there are
+ *   multiple stereopermutations of the ranked substituents / ligands.
+ */
 class AtomStereopermutator {
 public:
 //!@name Special member functions
@@ -106,7 +134,12 @@ public:
     ChiralStatePreservation preservationOption
   );
 
-  //! Changes the assignment of the stereopermutator
+  /*!
+   * @brief Changes the assignment of the stereopermutator
+   *
+   * @param assignment The new assignment of the stereopermutator. May be
+   *   boost::none. Must be less than the number of assignments if not None.
+   */
   void assign(boost::optional<unsigned> assignment);
 
   /*!
@@ -236,11 +269,6 @@ public:
     std::array<boost::optional<unsigned>, 4>
   > minimalChiralityConstraints() const;
 
-  //! Generates a list of chirality constraints on its substituents for DG
-  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
-    double looseningMultiplier
-  ) const;
-
   //! Returns an information string for diagnostic purposes
   std::string info() const;
 
@@ -310,8 +338,27 @@ public:
 
 //!@name Operators
 //!@{
+  /**
+   * @brief Checks whether the underlying symmetry, central atom index, number
+   *   of stereopermutations and current assignment match
+   *
+   * @param other The other atom stereopermutator to compare against
+   *
+   * @return Whether the underlying symmetry, central atom index, number of
+   *   stereopermutations and current assignment match
+   */
   bool operator == (const AtomStereopermutator& other) const;
+  //! Inverts operator ==
   bool operator != (const AtomStereopermutator& other) const;
+
+  /**
+   * @brief Lexicographically compares the central atom index, the symmetry,
+   *   the number of assignments, and the current assignment
+   *
+   * @param other The other atom stereopermutator to compare against
+   *
+   * @return Which atom stereopermutator is lexicographically smaller
+   */
   bool operator < (const AtomStereopermutator& other) const;
 //!@}
 

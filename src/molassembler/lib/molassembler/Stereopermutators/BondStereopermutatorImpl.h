@@ -40,11 +40,6 @@ struct BondStereopermutator::Impl {
 
   unsigned numStereopermutations() const;
 
-  std::vector<DistanceGeometry::ChiralityConstraint> chiralityConstraints(
-    const AtomStereopermutator& stereopermutatorA,
-    const AtomStereopermutator& stereopermutatorB
-  ) const;
-
   std::string info() const;
 
   std::string rankInfo() const;

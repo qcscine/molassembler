@@ -277,58 +277,6 @@ unsigned BondStereopermutator::Impl::numStereopermutations() const {
   return _composite.permutations();
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> BondStereopermutator::Impl::chiralityConstraints(
-  const AtomStereopermutator& stereopermutatorA,
-  const AtomStereopermutator& stereopermutatorB
-) const {
-  // Can the following selections be done with a single branch?
-  const AtomStereopermutator& firstStereopermutator = (
-    stereopermutatorA.centralIndex() == _composite.orientations().first.identifier
-    ? stereopermutatorA
-    : stereopermutatorB
-  );
-
-  const AtomStereopermutator& secondStereopermutator = (
-    stereopermutatorB.centralIndex() == _composite.orientations().second.identifier
-    ? stereopermutatorB
-    : stereopermutatorA
-  );
-
-  std::vector<DistanceGeometry::ChiralityConstraint> constraints;
-
-  unsigned firstSymmetryPosition, secondSymmetryPosition;
-  double dihedralAngle;
-
-  for(const auto& dihedralTuple : _composite.dihedrals(_assignment.value())) {
-    std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
-
-    if(std::fabs(dihedralAngle) < M_PI / 180.0 || std::fabs(M_PI - std::fabs(dihedralAngle)) < M_PI / 180.0) {
-      constraints.emplace_back(
-        DistanceGeometry::ChiralityConstraint::LigandSequence {
-          firstStereopermutator.getRanking().ligands.at(
-            SymmetryMapHelper::getLigandIndexAt(
-              firstSymmetryPosition,
-              firstStereopermutator.getSymmetryPositionMap()
-            )
-          ),
-          {firstStereopermutator.centralIndex()},
-          {secondStereopermutator.centralIndex()},
-          secondStereopermutator.getRanking().ligands.at(
-            SymmetryMapHelper::getLigandIndexAt(
-              secondSymmetryPosition,
-              secondStereopermutator.getSymmetryPositionMap()
-            )
-          )
-        },
-        0,
-        0
-      );
-    }
-  }
-
-  return constraints;
-}
-
 std::string BondStereopermutator::Impl::info() const {
   using namespace std::string_literals;
 
