@@ -133,7 +133,7 @@ private:
     GraphvizWriter(const OrderDiscoveryHelper& base) : _baseRef(base) {}
 
     void operator() (std::ostream& os) const {
-      os << "graph [fontname = \"Arial\"];\n"
+      os << "graph [fontname = \"Arial\", layout = \"dot\"];\n"
         << "node [fontname = \"Arial\", shape = circle, style = filled];\n"
         << "edge [fontname = \"Arial\"];\n";
     }

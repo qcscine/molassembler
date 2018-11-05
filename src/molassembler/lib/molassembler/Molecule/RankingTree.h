@@ -54,10 +54,6 @@
  *   - Stereopermutator interface change to support pseudo-asymmetry tag (?)
  *   - Ranking function interface change to propagate pseudo-asymmetry result
  * - Optimizations / Refactors
- *   - 4A could be refactored into _runBFS, if 4B could collect the variants it
- *     needs to rank itself. Don't know if an improvement to avoid BFS-ing again
- *     to find stereopermutators over potential gains from clearing comparisonSets
- *     every BFS step
  *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
  * - Instantiation of BondStereopermutators on edge does not keep AtomStereopermutators
  *   from being instantiated above the edge in sequence rule 3 prep
@@ -926,7 +922,7 @@ private:
       {}
 
       void operator() (std::ostream& os) const {
-        os << "  graph [fontname = \"Arial\"];\n"
+        os << "  graph [fontname = \"Arial\", layout=\"dot\"];\n"
           << "  node [fontname = \"Arial\", shape = circle, style = filled];\n"
           << "  edge [fontname = \"Arial\"];\n"
           << R"(  labelloc="t"; label=")" << _title << "\"\n";

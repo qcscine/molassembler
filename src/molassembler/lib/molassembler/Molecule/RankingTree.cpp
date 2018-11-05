@@ -52,7 +52,7 @@ public:
   {}
 
   void operator() (std::ostream& os) const {
-    os << R"(  graph [fontname = "Arial"];)" << "\n"
+    os << R"(  graph [fontname = "Arial", layout="dot"];)" << "\n"
       << R"(  node [fontname = "Arial", shape = "circle", style = "filled"];)" << "\n"
       << R"(  edge [fontname = "Arial"];)" << "\n"
       << R"(  labelloc="t"; label=")" << _title << R"(")" << ";\n";
@@ -994,11 +994,27 @@ void RankingTree::_applySequenceRules(
       std::vector<TreeVertexIndex>
     > seeds;
 
+    /* For part B, in which representational stereodescriptors for all
+     * branches are chosen and paired in sequence of priority for branches.
+     *
+     * Instead of BFSing a second time in B, prior to clearing the multisets
+     * in a step, move out the variants with instantiated stereopermutators
+     */
+    std::map<
+      TreeVertexIndex,
+      std::set<VariantType>
+    > stereopermutatorMap;
+
+    VariantHasInstantiatedStereopermutator isInstantiatedChecker {*this};
+
     undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
     // Initialize the BFS state
     for(const auto& undecidedSet : undecidedSets) {
       for(const auto& undecidedBranch : undecidedSet) {
+        // Add an empty set to the stereopermutator set map for this branch
+        stereopermutatorMap[undecidedBranch] = {};
+
         comparisonSets.emplace(
           undecidedBranch,
           *this
@@ -1032,15 +1048,28 @@ void RankingTree::_applySequenceRules(
       }
     }
 
+    /* Loop BFS */
+
     while(!undecidedSets.empty() && _relevantSeeds(seeds, undecidedSets)) {
       // Perform a full BFS Step on all undecided set seeds
       for(const auto& undecidedSet : undecidedSets) {
-        for(const auto& undecidedTreeIndex : undecidedSet) {
-          auto& branchSeeds = seeds[undecidedTreeIndex];
+        for(const auto& undecidedBranch : undecidedSet) {
+          // Move any instantiated comparisonset variants to stereopermutatorMap
+          std::copy_if(
+            std::make_move_iterator(std::begin(comparisonSets.at(undecidedBranch))),
+            std::make_move_iterator(std::end(comparisonSets.at(undecidedBranch))),
+            std::inserter(stereopermutatorMap.at(undecidedBranch), std::begin(stereopermutatorMap.at(undecidedBranch))),
+            [&](const VariantType& vertexEdgeVariant) -> bool {
+              return boost::apply_visitor(isInstantiatedChecker, vertexEdgeVariant);
+            }
+          );
+
+          // Clear the comparison set for clarity of debug interpretation and speed
+          comparisonSets.at(undecidedBranch).clear();
 
           std::vector<TreeVertexIndex> newSeeds;
 
-          for(const auto& seed: branchSeeds) {
+          for(const auto& seed: seeds.at(undecidedBranch)) {
             for( // Out-edges
               auto outIterPair = boost::out_edges(seed, _tree);
               outIterPair.first != outIterPair.second;
@@ -1051,8 +1080,8 @@ void RankingTree::_applySequenceRules(
               auto edgeTarget = boost::target(outEdge, _tree);
 
               if(!_tree[edgeTarget].isDuplicate) {
-                comparisonSets.at(undecidedTreeIndex).emplace(edgeTarget);
-                comparisonSets.at(undecidedTreeIndex).emplace(outEdge);
+                comparisonSets.at(undecidedBranch).emplace(edgeTarget);
+                comparisonSets.at(undecidedBranch).emplace(outEdge);
 
                 newSeeds.push_back(edgeTarget);
               }
@@ -1060,7 +1089,7 @@ void RankingTree::_applySequenceRules(
           }
 
           // Overwrite the seeds
-          branchSeeds = std::move(newSeeds);
+          seeds.at(undecidedBranch) = std::move(newSeeds);
         }
       }
 
@@ -1100,26 +1129,19 @@ void RankingTree::_applySequenceRules(
       return;
     }
 
-    /* Second part: Choosing representational stereodescriptors for all
-     * branches and pairing in sequence of priority for branches.
-     */
-    std::map<
-      TreeVertexIndex,
-      std::set<VariantType>
-    > stereopermutatorMap;
+    /* Part B: Choose representational stereodescriptors and pair up */
 
-    VariantHasInstantiatedStereopermutator isInstantiatedChecker {*this};
-
-    // Copy all variants from part A that are actually instantiated
+    // Move all remaining variants from part A that are instantiated
     for(const auto& undecidedSet : _branchOrderingHelper.getUndecidedSets()) {
       for(const auto& undecidedBranch : undecidedSet) {
-        stereopermutatorMap[undecidedBranch] = {};
-
-        for(const auto& variantValue : comparisonSets.at(undecidedBranch)) {
-          if(boost::apply_visitor(isInstantiatedChecker, variantValue)) {
-            stereopermutatorMap.at(undecidedBranch).insert(variantValue);
+        std::copy_if(
+          std::make_move_iterator(std::begin(comparisonSets.at(undecidedBranch))),
+          std::make_move_iterator(std::end(comparisonSets.at(undecidedBranch))),
+          std::inserter(stereopermutatorMap.at(undecidedBranch), std::begin(stereopermutatorMap.at(undecidedBranch))),
+          [&](const VariantType& vertexEdgeVariant) -> bool {
+            return boost::apply_visitor(isInstantiatedChecker, vertexEdgeVariant);
           }
-        }
+        );
       }
     }
 
@@ -2763,7 +2785,7 @@ RankingTree::RankingTree(
    */
   std::set<TreeVertexIndex> branchIndices;
   for(
-    const auto rootAdjacentIndex :
+    const AtomIndex rootAdjacentIndex :
     boost::make_iterator_range(
       _graphRef.inner().adjacents(atomToRank)
     )
@@ -2775,7 +2797,7 @@ RankingTree::RankingTree(
         rootAdjacentIndex
       ) == std::end(excludeIndices)
     ) {
-      auto branchIndex = boost::add_vertex(_tree);
+      TreeVertexIndex branchIndex = boost::add_vertex(_tree);
       _tree[branchIndex].molIndex = rootAdjacentIndex;
       _tree[branchIndex].isDuplicate = false;
 
@@ -3103,7 +3125,7 @@ std::string RankingTree::_make4BGraph(
 
   std::string graphviz = (
     "digraph G {\n"s
-    + R"(  graph [fontname="Arial"];)" + nl
+    + R"(  graph [fontname="Arial", layout="dot"];)" + nl
     + R"(  node [fontname="Arial", shape="record"];)" + nl
     + R"(  edge [fontname="Arial"];)" + nl
   );
