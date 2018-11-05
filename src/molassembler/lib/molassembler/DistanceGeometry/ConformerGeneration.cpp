@@ -17,11 +17,6 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Utils/QuaternionFit.h"
 
-/*! @todo
- * - Random assignment of unassigned stereopermutators isn't ideal yet
- *   - Sequence randomization
- */
-
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -103,39 +98,58 @@ Molecule narrow(Molecule molecule) {
   const auto& stereopermutatorList = molecule.stereopermutators();
 
   do {
-    /* If we change any stereopermutator, we must jump out of for-loop and
-     * re-check if there are still unassigned stereopermutators since assigning
-     * a stereopermutator can invalidate stereopermutator list iterators (because
-     * stereopermutators may appear or disappear on assignment due to ranking)
+    /* If we change any stereopermutator, we must re-check if there are still
+     * unassigned stereopermutators since assigning a stereopermutator can
+     * invalidate the entire stereopermutator list (because stereopermutators
+     * may appear or disappear on assignment due to ranking)
      */
-    bool changedStereopermutatorFlag = false;
+    std::vector<AtomIndex> unassignedAtomStereopermutators;
 
     for(const auto& atomStereopermutator : stereopermutatorList.atomStereopermutators()) {
       if(!atomStereopermutator.assigned()) {
-        molecule.assignStereopermutatorRandomly(
+        unassignedAtomStereopermutators.push_back(
           atomStereopermutator.centralIndex()
         );
-
-        changedStereopermutatorFlag = true;
-        break;
       }
     }
 
-    if(changedStereopermutatorFlag) {
-      // Re-check the do-while loop condition
+    if(!unassignedAtomStereopermutators.empty()) {
+      unsigned choice = temple::random::getSingle<unsigned>(
+        0,
+        unassignedAtomStereopermutators.size() - 1,
+        randomnessEngine()
+      );
+
+      molecule.assignStereopermutatorRandomly(
+        unassignedAtomStereopermutators.at(choice)
+      );
+
+      // Re-check the loop condition
       continue;
     }
 
+    std::vector<BondIndex> unassignedBondStereopermutators;
+
     for(const auto& bondStereopermutator : stereopermutatorList.bondStereopermutators()) {
       if(!bondStereopermutator.assigned()) {
-        molecule.assignStereopermutatorRandomly(
+        unassignedBondStereopermutators.push_back(
           bondStereopermutator.edge()
         );
-
-        // Break this loop and re-check do-while loop condition
-        break;
       }
     }
+
+    if(!unassignedBondStereopermutators.empty()) {
+      unsigned choice = temple::random::getSingle<unsigned>(
+        0,
+        unassignedBondStereopermutators.size() - 1,
+        randomnessEngine()
+      );
+
+      molecule.assignStereopermutatorRandomly(
+        unassignedBondStereopermutators.at(choice)
+      );
+    }
+
   } while(stereopermutatorList.hasUnassignedStereopermutators());
 
   return molecule;
