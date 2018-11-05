@@ -18,10 +18,8 @@
  */
 
 /*! @todo
- * - test V2000
- * - implement V3000
- * - Read coordinates are currently discarded. Either process them for
- *   information or use them to check against the CTAB
+ * - test MOLFile V2000
+ * - implement MOLFile V3000
  */
 
 // Forward declarations
@@ -66,7 +64,12 @@ std::vector<Molecule> split(const std::string& filename);
 
 /*! Writer function for MOL and XYZ formats
  *
- * @throws If the file extension does not match either mol or xyz.
+ * @throws std::logic_error If the file extension does not match either mol or
+ *   xyz.
+ * @throws std::runtime_error If the file extension is mol and the molecule
+ *   contains any bonds of the orders quadruple, quintuple or sextuple (these
+ *   are not supported in the MOLFile format)
+ *
  * @note Interprets which file type is to be written from filename extension.
  */
 void write(
@@ -76,7 +79,7 @@ void write(
   IndexPermutation permutation = IndexPermutation::Identity
 );
 
-//! Writer function from a PositionCollection in bohr
+//! @overload
 void write(
   const std::string& filename,
   const Molecule& molecule,

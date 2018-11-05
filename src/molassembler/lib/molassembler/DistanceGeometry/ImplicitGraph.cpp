@@ -64,40 +64,6 @@ void ImplicitGraph::_explainContradictionPaths(
 
 ImplicitGraph::ImplicitGraph(
   const Molecule& molecule,
-  const DistanceBoundsMatrix& bounds
-) : _moleculePtr(&molecule), _distances {bounds.access()}
-{
-  /*! @todo this doesn't work because the constant 0 indicates that no explicit
-   * information is available. Either work your way through the entire matrix
-   * and replace defaultUpper with 0 in the N² matrix, or go back to
-   * initializing the matrix from a bounds list, which is more sensible.
-   */
-  assert(false && "This function does not work as it should");
-
-  const unsigned N = molecule.graph().N();
-
-  // Determine the two heaviest element types in the molecule, O(N)
-  _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
-  for(AtomIndex i = 0; i < N; ++i) {
-    auto elementType = molecule.graph().elementType(i);
-    if(
-      static_cast<unsigned>(elementType)
-      > static_cast<unsigned>(_heaviestAtoms.back())
-    ) {
-      _heaviestAtoms.back() = elementType;
-
-      if(
-        static_cast<unsigned>(_heaviestAtoms.back())
-        > static_cast<unsigned>(_heaviestAtoms.front())
-      ) {
-        std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
-      }
-    }
-  }
-}
-
-ImplicitGraph::ImplicitGraph(
-  const Molecule& molecule,
   const BoundsList& bounds
 ) : _moleculePtr(&molecule) {
   const VertexDescriptor N = molecule.graph().N();

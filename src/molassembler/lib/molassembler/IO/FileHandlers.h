@@ -137,8 +137,9 @@ private:
 /* Private member functions */
 
   /*!
-   * @todo If BondTypes of 4-6 are to be stored in a MOLFile, the program will
-   * crash, no elegant failure exists.
+   * @throws std::runtime_error If the molecule contains quadruple, quintuple or
+   * sextuple bonds because the MOLFile format does not support these bond
+   * orders.
    */
   void _write(
     const std::string& filename,

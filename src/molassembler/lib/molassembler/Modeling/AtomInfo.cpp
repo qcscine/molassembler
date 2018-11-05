@@ -93,9 +93,6 @@ double ElementInfo::vdwRadius() const {
   return _vdwRadius;
 }
 
-/*! @todo unify bondRadii into ElementData
- */
-
 /* From the original UFF paper
  * Rappé, Goddard et al. UFF, a full periodic table force field for ...
  */

@@ -1,8 +1,8 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#ifndef INCLUDE_MOLASSEMBLER_stereopermutator_LIST_H
-#define INCLUDE_MOLASSEMBLER_stereopermutator_LIST_H
+#ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_H
+#define INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_H
 
 #include "boost/range/adaptor/map.hpp"
 

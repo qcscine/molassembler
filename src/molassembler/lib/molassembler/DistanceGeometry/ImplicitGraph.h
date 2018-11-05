@@ -176,11 +176,6 @@ private:
   );
 
 public:
-  ImplicitGraph(
-    const Molecule& molecule,
-    const DistanceBoundsMatrix& bounds
-  );
-
   using BoundsList = std::map<
     std::array<VertexDescriptor, 2>,
     ValueBounds

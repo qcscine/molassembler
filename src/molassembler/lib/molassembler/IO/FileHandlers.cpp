@@ -213,12 +213,18 @@ void MOLFileHandler::_write(
       ) {
         auto i = indexMap(inner.source(edge));
         auto j = indexMap(inner.target(edge));
-        auto bty = _bondTypeMap.right.at(inner.bondType(edge));
+
+        auto findIter = _bondTypeMap.right.find(inner.bondType(edge));
+        if(findIter == _bondTypeMap.right.end()) {
+          throw std::runtime_error("Trying to write a bond order to a MOLFile which doesn't support that bond type.");
+        }
+
+        unsigned MOLBondType = findIter->second;
 
         // MOLFile indices are 1-based, have to add 1 to internal indices!
         fout << std::setw(3) << (1 + std::min(i, j)) // 111 (index of 1st atom)
           << std::setw(3) << (1 + std::max(i, j))  // 222 (index of 2nd atom)
-          << std::setw(3) << bty // ttt (bond type)
+          << std::setw(3) << MOLBondType // ttt (bond type)
           << std::setw(3) << 0u // sss (bond stereo, ignored for now)
           << std::setw(3) << 0u // xxx (unused)
           << std::setw(3) << 0u // rrr (bond topology)

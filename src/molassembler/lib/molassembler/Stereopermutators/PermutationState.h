@@ -98,9 +98,8 @@ struct PermutationState {
   );
 
   /*!
-   * @todo document this
-   * Generate the character representation of a particular stereopermutation
-   * using its map from ??
+   * @brief Generates the reduced character representation of ligands at their
+   *   current symmetry positions
    */
   static std::vector<char> makeStereopermutationCharacters(
     const RankingInformation::RankedLigandsType& canonicalLigands,
@@ -108,10 +107,14 @@ struct PermutationState {
     const std::vector<unsigned>& ligandsAtSymmetryPositions
   );
 
-  /* WARNING: This has to be a copy-initialized optional. Don't change it, unless
-   * you want to sift through -fsanitize=address output to find the bug in the
-   * optional propagation. It's not safe to return a reference to within a
-   * temporary object where this is used.
+  /*!
+   * @brief Generates an symmetry position index mapping from a symmetry
+   *   transition group
+   *
+   * @note This has to be a copy-initialized optional in the return value.
+   *   Don't change it, unless you want to sift through -fsanitize=address
+   *   output to find the bug in the optional propagation. It's not safe to
+   *   return a reference to within a temporary object where this is used.
    */
   static boost::optional<
     std::vector<unsigned>
