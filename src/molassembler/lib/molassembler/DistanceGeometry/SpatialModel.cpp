@@ -1158,9 +1158,16 @@ void SpatialModel::addBondStereopermutatorInformation(
       secondStereopermutator.getSymmetryPositionMap()
     );
 
-    // TODO it might be smarter not to model instances where the cone angles are unknown
-    ValueBounds coneAngleI = firstStereopermutator.getPermutationState().coneAngles.at(ligandIndexIAtFirst).value_or(ValueBounds {0.0, 0.0});
-    ValueBounds coneAngleL = secondStereopermutator.getPermutationState().coneAngles.at(ligandIndexLAtSecond).value_or(ValueBounds {0.0, 0.0});
+    const auto& coneAngleIOption = firstStereopermutator.getPermutationState().coneAngles.at(ligandIndexIAtFirst);
+    const auto& coneAngleLOption = secondStereopermutator.getPermutationState().coneAngles.at(ligandIndexLAtSecond);
+
+    // Do not emit chiral constraints if cone angles are unknown
+    if(!coneAngleIOption || !coneAngleLOption) {
+      continue;
+    }
+
+    const ValueBounds& coneAngleI = *coneAngleIOption;
+    const ValueBounds& coneAngleL = *coneAngleLOption;
 
     /* Modify the dihedral angle by the upper cone angles of the i and l
      * ligands and the usual variances.
@@ -1171,8 +1178,8 @@ void SpatialModel::addBondStereopermutatorInformation(
     );
 
     /* If the width of the dihedral angle is now larger than 2π, then we may
-     * overrepresent some dihedral values, and it is preferable to reset the
-     * interval to (-π,π].
+     * overrepresent some dihedral values when choosing randomly in that
+     * interval, and it is preferable to reset the interval to (-π,π].
      *
      * This should be very rare, and is just a safeguard.
      */
@@ -1186,12 +1193,6 @@ void SpatialModel::addBondStereopermutatorInformation(
         secondStereopermutator.getRanking().ligands.at(ligandIndexLAtSecond)
       ),
       [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
-
-        /*std::cout << "Setting bounds on " << firstIndex << ", " <<
-        firstStereopermutator.centralIndex() << ", " <<
-        secondStereopermutator.centralIndex() << ", " << secondIndex << " to ["
-        << dihedralBounds.lower << ", " << dihedralBounds.upper << "]\n";*/
-
         setDihedralBoundsIfEmpty(
           std::array<AtomIndex, 4> {
             firstIndex,
