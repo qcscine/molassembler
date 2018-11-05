@@ -780,6 +780,17 @@ void RankingTree::_applySequenceRules(
   };
 
   // Process the tree, from the bottom up
+
+  /* Instantiate the target index stereopermutator for the bottom-most set of
+   * edges (to avoid lots of checking and doing possibly both source and
+   * target instantiations multiple times). We can reliably assume that the
+   * target vertices in this layer do not have stereopermutators yet.
+   */
+  for(const auto& edge : *byDepth.rbegin()) {
+    assert(!_tree[boost::target(edge, _tree)].stereopermutatorOption);
+    instantiateAtomStereopermutator(boost::target(edge, _tree));
+  }
+
   for(auto it = byDepth.rbegin(); it != byDepth.rend(); ++it) {
     const auto& currentEdges = *it;
 
@@ -787,31 +798,33 @@ void RankingTree::_applySequenceRules(
       auto sourceIndex = boost::source(edge, _tree);
       auto targetIndex = boost::target(edge, _tree);
 
-      /* It gets a little weird here. Assuming we are at the bottom-most edge
-       * level of the tree, we have to do three things.
+      /* At any level of the tree, we have to do two things.
        *
-       * 1. Instantiate AtomStereopermutator at the target index
-       * 2. Instantiate AtomStereopermutator at the source index
-       * 3. Instantiate BondStereopermutator on the edge, provided that 1 and 2
-       *    could be assigned.
+       * 1. Instantiate AtomStereopermutator at the source index
+       * 2. Instantiate BondStereopermutator on the edge, provided that 1 and 2
+       *    are AtomStereopermutators
        *
-       * This has the consequence that any auxiliary AtomStereopermutator at the
-       * source index will NOT be aware of any BondStereopermutator differences to
-       * its immediate descendants (since its rankings are calculated prior to
-       * the instantiation of the BondStereopermutator). Any further out, the
-       * sequence rules will catch the differences.
+       * We do not instantiate an AtomStereopermutator at the target index,
+       * because for the bottom-most vertices this is handled by the separate
+       * loop above and for subsequent layers, the target index is the previous
+       * layer's source index, which may or may not already have an
+       * AtomStereopermutator.
        *
-       * At later stages, the AtomStereopermutator at the target index will already
-       * be present, so you need to check before instantiating it.
-       */
-
-      if(!_tree[targetIndex].stereopermutatorOption) {
-        instantiateAtomStereopermutator(targetIndex);
-      }
-
-      /*! @todo Since the tree merges, it's presumably bad for performance that
-       * we cannot store the information that we tried, no stereopermutator was
-       * placed, and we shouldn't try again.
+       * Since a BondStereopermutator requires two AtomStereopermutators to
+       * exist, this has the consequence that any auxiliary
+       * AtomStereopermutator at the source index will NOT be aware of any
+       * BondStereopermutator differences to its immediate descendants (since
+       * its rankings are calculated prior to the instantiation of the
+       * BondStereopermutator). Any further out, the sequence rules will catch
+       * the differences.
+       *
+       * This is not a problem since the bottom-most layer should be
+       * constituted by the substuents of one end of the BondStereopermutator,
+       * and if it doesn't the BondStereopermutator cannot be chiral.
+       *
+       * We have to check if a stereopermutator already exists at the source
+       * index since the tree is divergent. Every edge in the same layer has
+       * different targets, but not necessarily different sources.
        */
       if(!_tree[sourceIndex].stereopermutatorOption) {
         instantiateAtomStereopermutator(sourceIndex);
@@ -888,7 +901,7 @@ void RankingTree::_applySequenceRules(
     }
   }
 
-  // Was any BondStereopermutator instantiated? If not, we can skip rule 3.
+  // Was any BondStereopermutator added? If not, we can skip rule 3.
   if(foundBondStereopermutators) {
 
     // Apply sequence rule 3
