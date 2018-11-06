@@ -1205,6 +1205,10 @@ void SpatialModel::addBondStereopermutatorInformation(
       }
     );
 
+    /* TODO a, c, alphaSineBounds and betaSineBounds must be modified by cone
+     * angles
+     */
+
     /* Figure out tolerance from interal bounds on bonds, angles and dihedral
      * - a is the ligand distance from the firstStereopermutator to the
      *   ligand at the symmetry position given by the composite

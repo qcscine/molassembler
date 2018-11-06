@@ -26,7 +26,9 @@ namespace temple {
  * @note We can implement iterators for this really cheaply since the standard
  *   guarantees that successively defined same-aligment types are laid out
  *   successively in memory. Since the pair is homogeneous, we can just use
- *   a T pointer as an iterator.
+ *   a T pointer as an iterator. These do not, however, fulfill all the
+ *   requirements for STL algorithms such as having typedefs for the results of
+ *   various operations.
  */
 template<typename T>
 struct OrderedPair : crtp::AllOperatorsFromTupleMethod<OrderedPair<T>> {

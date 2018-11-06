@@ -74,9 +74,10 @@ MoleculeDGInformation gatherDGInformation(
 /*!
  * A logging, not throwing, mostly identical implementation of
  * runDistanceGeometry that returns detailed intermediate data from
- * refinements, while run returns only the final conformers.
+ * refinements, while run returns only the final conformers, which may
+ * also be translated and rotated to satisfy fixed position constraints.
  */
-std::list<RefinementData> debug(
+std::list<RefinementData> debugRefinement(
   const Molecule& molecule,
   unsigned numConformers,
   const Configuration& configuration

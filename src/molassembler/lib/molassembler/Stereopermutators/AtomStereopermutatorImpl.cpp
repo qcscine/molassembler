@@ -912,7 +912,7 @@ std::string AtomStereopermutator::Impl::rankInfo() const {
    * and MUST use indices of permutation
    */
   return (
-    "CN-"s + std::to_string(static_cast<unsigned>(_symmetry))
+    "B-"s + std::to_string(static_cast<unsigned>(_symmetry))
     + "-"s + std::to_string(numStereopermutations())
     + "-"s + (
       indexOfPermutation()

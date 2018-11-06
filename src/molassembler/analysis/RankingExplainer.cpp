@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
         bashFile << "<(dot ranking-tree-" << step << "-" << i << ".dot) ";
       }
 
-      bashFile << "| gvpack -array_uc1 2>/dev/null "
+      bashFile << "| gvpack -array_uc1 -Glayout=neato 2>/dev/null "
         << "| neato -n2 -Tsvg "
         << "> ranking-tree-"
         << std::setw(3) << std::setfill('0') << step

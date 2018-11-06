@@ -211,7 +211,7 @@ MoleculeDGInformation gatherDGInformation(
 }
 
 // Debug version
-std::list<RefinementData> debug(
+std::list<RefinementData> debugRefinement(
   const Molecule& molecule,
   const unsigned numConformers,
   const Configuration& configuration

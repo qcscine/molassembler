@@ -123,17 +123,21 @@ int main(int argc, char* argv[]) {
 
     std::cout << mol << std::endl;
 
+    boost::filesystem::path filepath {filename};
+    std::string filestem = filepath.stem().string();
+
+    std::ofstream graphFile(filestem +  "-graph.dot");
+    graphFile << mol.dumpGraphviz();
+    graphFile.close();
+
     DistanceGeometry::Configuration DGConfiguration;
     DGConfiguration.partiality = metrizationOption;
 
-    auto debugData = DistanceGeometry::debug(
+    auto debugData = DistanceGeometry::debugRefinement(
       mol,
       nStructures,
       DGConfiguration
     );
-
-    boost::filesystem::path filepath {filename};
-    std::string filestem = filepath.stem().string();
 
     for(const auto& enumPair : temple::adaptors::enumerate(debugData)) {
       const auto& structNum = enumPair.index;
