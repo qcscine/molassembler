@@ -20,8 +20,10 @@ namespace molassembler {
 // Forward-declarations
 class AngstromWrapper;
 
-/*! Calculates a bond order collection via UFF-like bond distance modelling
- *
+/*!
+ * @brief Calculates a bond order collection via UFF-like bond distance modelling
+ * @throws std::logic_error If interpreted fractional bond orders are greater
+ *   than 6.5.  In these cases, the structure is most likely unreasonable.
  * @warning UFF parameter bond order calculation is a very primitive
  *   approximation and carries a high risk of misinterpretation
  */
