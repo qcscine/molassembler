@@ -407,7 +407,7 @@ bool PermutationState::isNotObviouslyImpossibleStereopermutation(
   // Check if any haptic ligand cones intersect
   const unsigned L = ranking.ligands.size();
   for(unsigned ligandI = 0; ligandI < L - 1; ++ligandI) {
-    for(unsigned ligandJ = 0; ligandJ < L; ++ligandJ) {
+    for(unsigned ligandJ = ligandI + 1; ligandJ < L; ++ligandJ) {
       // Do not test cone angles if no angle could be calculated
       if(!coneAngles.at(ligandI) || !coneAngles.at(ligandJ)) {
         continue;
