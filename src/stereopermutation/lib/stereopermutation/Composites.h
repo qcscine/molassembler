@@ -172,6 +172,15 @@ public:
 
 //!@name Operators
 //!@{
+  /**
+   * @brief Compares the orientations of two Composite objects
+   *
+   * @param other The other Composite to compare against
+   *
+   * @return Whether the orientation of one Composite object is less than the
+   *   other, as defined by that operator
+   */
+  bool operator < (const Composite& other) const;
   bool operator == (const Composite& other) const;
   bool operator != (const Composite& other) const;
 //!@}

@@ -9,6 +9,7 @@
 #include "Delib/ElementInfo.h"
 
 #include "chemical_symmetries/Properties.h"
+#include "stereopermutation/Composites.h"
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/GroupBy.h"
 #include "temple/Stringify.h"
@@ -357,8 +358,8 @@ public:
 
 /*! IUPAC Sequence rule five tree vertex and edge mixed comparator
  *
- * Comparator class for comparing both tree vertices and edges according to
- * IUPAC sequence rule five.
+ * Comparator class for variants that may contain tree vertices or edges,
+ * sorting them according to IUPAC sequence rule five.
  *
  * @note This is a non-default-instantiable Comparator, meaning care must be
  * taken in the instantiation of the STL Container using this to avoid move
@@ -375,54 +376,128 @@ public:
       const SequenceRuleFiveVariantComparator& base
     ) : _treeRef(base._base._tree) {}
 
-    /* The code for edge and vertex indices is completely identical, so we
-     * can abstract over the types.
-     *
-     * NOTE: Since we desire the inverted ordering sequence, this comparison
-     * is implemented as normal, but swapping the parameters a and b.
-     */
-    template<typename T>
-    bool operator() (const T& b, const T& a) const {
+    template<typename T, typename U>
+    boost::optional<bool> compareInstantiation(const T& a, const U& b) const {
       const auto& aOption = _treeRef[a].stereopermutatorOption;
       const auto& bOption = _treeRef[b].stereopermutatorOption;
 
-      // Uninstantiated stereopermutators always compare false
+      // The order of uninstantiated permutators is undefined
       if(!aOption && !bOption) {
         return false;
       }
 
-      // Instantiated is less than uninstantiated
+      /* Split the list into instantiated permutators first and uninstantiated
+       * permutators second. Instantiated permutators are then smaller than
+       * uninstantiated permutators. Continue comparing if both are instantiated
+       */
       if(aOption && !bOption) {
-        return false;
+        return true;
       }
 
       if(!aOption && bOption) {
-        return true;
-      }
-
-      // Now we know both actually have an instantiated stereopermutator
-      const auto& StereopermutatorA = aOption.value();
-      const auto& StereopermutatorB = bOption.value();
-
-      // Need to compare using the number of assignments first
-      if(StereopermutatorA.numStereopermutations() < StereopermutatorB.numStereopermutations()) {
-        return true;
-      }
-
-      if(StereopermutatorB.numStereopermutations() < StereopermutatorA.numStereopermutations()) {
         return false;
       }
 
-      /* In our context, sequence rule 5 directly compares the assignment
-       * of the assigned stereopermutators.
-       */
-      return StereopermutatorA.indexOfPermutation() < StereopermutatorB.indexOfPermutation();
+      return boost::none;
     }
 
-    // For different types
-    template<typename T, typename U>
-    bool operator() (const T& /* t */, const U& /* u */) const {
-      return false;
+    template<typename T>
+    std::enable_if_t<
+      std::is_same<std::decay_t<T>, AtomStereopermutator>::value,
+      boost::optional<bool>
+    > permutatorSpecificComparison(const T& a, const T& b) const {
+      unsigned aSymmetryIndex = Symmetry::nameIndex(a.getSymmetry());
+      unsigned bSymmetryIndex = Symmetry::nameIndex(b.getSymmetry());
+
+      if(aSymmetryIndex < bSymmetryIndex) {
+        return true;
+      }
+
+      if(aSymmetryIndex > bSymmetryIndex) {
+        return false;
+      }
+
+      return boost::none;
+    }
+
+    template<typename T>
+    std::enable_if_t<
+      std::is_same<std::decay_t<T>, BondStereopermutator>::value,
+      boost::optional<bool>
+    > permutatorSpecificComparison(const T& a, const T& b) const {
+      // BondStereopermutators can be ordered by their composites
+      if(a.composite() < b.composite()) {
+        return true;
+      }
+
+      if(b.composite() < a.composite()) {
+        return false;
+      }
+
+      return boost::none;
+    }
+
+    template<typename T>
+    bool homogeneousComparison(const T& a , const T& b) const {
+      const auto& stereopermutatorA = _treeRef[a].stereopermutatorOption.value();
+      const auto& stereopermutatorB = _treeRef[b].stereopermutatorOption.value();
+
+      return permutatorSpecificComparison(stereopermutatorA, stereopermutatorB).value_or_eval(
+        [&]() -> bool {
+          if(stereopermutatorA.numStereopermutations() < stereopermutatorB.numStereopermutations()) {
+            return true;
+          }
+
+          if(stereopermutatorB.numStereopermutations() < stereopermutatorA.numStereopermutations()) {
+            return false;
+          }
+
+          /* This is the sole inverted comparison here, which is somehow
+           * necessary to match the behavior of OrderDiscoveryHelper's
+           * addLessThanRelationship.
+           *
+           * Principally, R <-> 1 and S <-> 0 in the tetrahedral ABCD case
+           * and hence in an ascending sorting according to priority
+           * S (0) < R (1) with a natural less-than operator, but this is
+           * inverted somewhere. Fix this during a rewrite of the ranking.
+           */
+          return stereopermutatorA.indexOfPermutation() > stereopermutatorB.indexOfPermutation();
+        }
+      );
+    }
+
+    /* Homogeneous comparison can be nicely abstracted over both types
+     * with a single type-specific function (see permutatorSpecificComparison).
+     */
+    template<typename T>
+    bool operator() (const T& a, const T& b) const {
+      // Homogeneous comparison
+      return compareInstantiation(a, b).value_or_eval(
+        [&]() -> bool {
+          return homogeneousComparison(a, b);
+        }
+      );
+    }
+
+    // Heterogeneous comparison vertex < edge
+    bool operator() (const TreeVertexIndex& a, const TreeEdgeIndex& b) const {
+      /* Start by comparing the instantiation state. This sorts instantiated
+       * stereopermutators before uninstantiated ones and creates indeterminate
+       * order for uninstantiated permutators. If both are instantiated,
+       * this returns a None.
+       *
+       * Remaining case: Both have a stereopermutator. We sort atom
+       * stereopermutators before bond stereopermutators on the same level.
+       */
+      return compareInstantiation(a, b).value_or(true);
+    }
+
+    // Heterogeneous comparison edge < vertex
+    bool operator() (const TreeEdgeIndex& a, const TreeVertexIndex& b) const {
+      // Just invert the vertex < edge comparison
+      return !(
+        this->operator()(b, a)
+      );
     }
   };
 

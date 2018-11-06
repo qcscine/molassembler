@@ -820,6 +820,10 @@ Composite::PermutationsList::const_iterator Composite::end() const {
   return std::end(_stereopermutations);
 }
 
+bool Composite::operator < (const Composite& other) const {
+  return _orientations < other._orientations;
+}
+
 bool Composite::operator == (const Composite& other) const {
   return _orientations == other._orientations;
 }

@@ -55,9 +55,6 @@
  *   - Ranking function interface change to propagate pseudo-asymmetry result
  * - Optimizations / Refactors
  *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
- * - Instantiation of BondStereopermutators on edge does not keep AtomStereopermutators
- *   from being instantiated above the edge in sequence rule 3 prep
- *   (see 2Z... file ranking), probably innocuous, but unnecessary
  * - OrderDiscoveryHelper function naming may be inconsistent. Does
  *   addLessThanRelationship really semantically do what it says?
  *   Loads of inverted comparisons here where it doesn't make sense to me
@@ -1061,6 +1058,13 @@ private:
    * any auxiliary stereodescriptors have already been instantiated, while
    * rank() explicitly instantiates them prior to the application of sequence
    * rule three.
+   *
+   * @param sourceIndex The tree vertex from which to rank substituents
+   * @param adjacentsToRank A list of adjacent tree vertices to rank
+   * @param depthLimitOptional An optional limitation on depth of sequence rule
+   *   application
+   *
+   * @returns A ranked nested list of tree vertex sets as a ragged vector
    */
   std::vector<
     std::vector<TreeVertexIndex>
