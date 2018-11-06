@@ -755,10 +755,43 @@ void RankingTree::_applySequenceRules(
 
     RankingInformation centerRanking;
 
+    /* Do not consider an Eta bond when placed at the main-group haptic
+     * ligand-constituting atom.
+     */
+    std::vector<TreeVertexIndex> etaAdjacents = temple::copy_if(
+      _adjacents(targetIndex),
+      [&](const TreeVertexIndex nodeIndex) -> bool {
+        return (
+          AtomInfo::isMainGroupElement(
+            _graphRef.elementType(_tree[targetIndex].molIndex)
+          ) && _graphRef.bondType(
+            BondIndex {
+              _tree[targetIndex].molIndex,
+              _tree[nodeIndex].molIndex
+            }
+          ) == BondType::Eta
+        );
+      }
+    );
+
+    if(!etaAdjacents.empty()) {
+      Log::log(Log::Particulars::RankingTreeDebugInfo)
+        << "Suggest ignoring " << temple::condense(etaAdjacents)
+        << " (mol idxs "
+        << temple::condense(
+          temple::map(etaAdjacents, [&](const TreeVertexIndex a) -> AtomIndex {
+            return _tree[a].molIndex;
+          })
+        )
+        << ") when considering instantiation at tree index " << targetIndex
+        << " (mol idx " << molSourceIndex
+        << ")\n";
+    }
+
     centerRanking.sortedSubstituents = _mapToAtomIndices(
       _auxiliaryApplySequenceRules(
         targetIndex,
-        _auxiliaryAdjacentsToRank(targetIndex, {})
+        _auxiliaryAdjacentsToRank(targetIndex, etaAdjacents)
       )
     );
 
