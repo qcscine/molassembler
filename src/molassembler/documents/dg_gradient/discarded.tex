@@ -1,0 +1,274 @@
+% expression for atan2
+\begin{align}\begin{aligned}
+  \phiSymbol = \textrm{atan2} \Big( &
+    \underbrace{
+      \left[
+        \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
+      \right] \times \left[
+        \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
+      \right] \cdot \frac{
+        \avgVecDiff{\gamma}{\beta}
+      }{
+        \lvert\avgVecDiff{\gamma}{\beta}\rvert
+      }
+    }_{y\posDependence{}},\\
+    &\underbrace{
+      \left[
+        \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
+      \right] \cdot \left[
+        \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
+      \right]
+    }_{x\posDependence{}}
+  \Big)
+\end{aligned}\end{align}
+
+% TODO cite karplus from the wikipedia reference
+Here we have used a three-vector dihedral angle definition and inserted
+the index set average-position differences that constitute the dihedral angle.\\
+% simplification of y in atan2(y, x)
+
+The expression for $y\posDependence{}$ can be rewritten somewhat, which will
+prove useful in the derivation of the error function gradient. We transform to a
+shorthand where $\vec{i} := \vec{s}_{i}$:
+
+\begin{align}
+  y\posDependence{} &= 
+    \left[
+      \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
+    \right] \times \left[
+      \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
+    \right] \cdot \frac{
+      \avgVecDiff{\gamma}{\beta}
+    }{
+      \lvert\avgVecDiff{\gamma}{\beta}\rvert
+    }\\
+  &= 
+    \left[
+      \left(\vec{\beta} - \vec{\alpha}\right) 
+      \times \left(\vec{\gamma} - \vec{\beta}\right)
+    \right] \times \left[
+      \left(\vec{\gamma} - \vec{\beta}\right)
+      \times \left(\vec{\delta} - \vec{\gamma}\right)
+    \right] \cdot \frac{
+      \vec{\gamma} - \vec{\beta}
+    }{
+      \lvert\vec{\gamma} - \vec{\beta}\rvert
+    }
+\end{align}
+
+The central quadruple product repeats two vectors. Expanding it symbolically
+into triple products yields:
+
+\begin{equation}
+  \left(\vec{a} \times \vec{b}\right) \times \left(\vec{b} \times \vec{c}\right)
+    = \left[\left(\vec{a} \times \vec{b}\right) \cdot \vec{c} \right] \vec{b}
+      - \Big[\underbrace{\left(\vec{a} \times \vec{b}\right) \cdot
+      \vec{b}}_{=0} \Big] \vec{c}
+\end{equation}
+
+We expand the central quadruple product accordingly and transform:
+
+\begin{align}
+  y\posDependence &= \left\{
+      \left[
+        \left(\vec{\beta} - \vec{\alpha}\right) 
+        \times \left(\vec{\gamma} - \vec{\beta}\right)
+      \right]\cdot\left(\vec{\delta} - \vec{\gamma}\right)
+    \right\} \left(\vec{\gamma} - \vec{\beta}\right)\frac{
+    \vec{\gamma} - \vec{\beta}
+    }{
+      \lvert\vec{\gamma} - \vec{\beta}\rvert
+    }\\
+  &= \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \left[
+      \vec{\beta} \times \vec{\gamma} 
+      + \vec{\gamma} \times \vec{\alpha}
+      + \vec{\alpha} \times \vec{\beta}
+    \right] \cdot \left(\vec{\delta} - \vec{\gamma}\right)\\
+  &= \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \left[
+      \left(
+        \vec{\alpha} \times \vec{\beta}
+        + \vec{\beta} \times \vec{\gamma} 
+        + \vec{\gamma} \times \vec{\alpha}
+      \right) \cdot \vec{\delta}
+      - \left(\vec{\alpha} \times \vec{\beta}\right) \cdot \vec{\gamma}
+    \right].
+\end{align}
+
+% derivative of atan2 w.r.t. y and x
+
+And the second part:
+
+\begin{equation}
+  \partialPosVec{\xi}\phi\left(y, x\right) = \partialPosVec{\xi}
+    \textrm{atan2}\left(y\posDependence, x\posDependence\right)\\
+  = \frac{\partial\phi}{\partial y} \frac{\partial y}{\partial \vec{r}_{\xi}}
+    + \frac{\partial\phi}{\partial x} \frac{\partial x}{\partial \vec{r}_{\xi}}
+\end{equation}
+
+The derivatives of atan2 are known as:
+
+\begin{equation}
+  \frac{\partial\phi}{\partial y} = \frac{\partial}{\partial y} \textrm{atan2}(y,
+  x)= \frac{x}{x^2 + y^2}, 
+  \quad\frac{\partial\phi}{\partial x} = -\frac{y}{x^2 + y^2}
+\end{equation}
+
+What remains now is to find the derivatives of $y$ and $x$ w.r.t.
+$\vec{r}_{\xi}$. We begin with the rewritten from of $y$ and once again
+distinguish membership cases of $\xi $ among each tuple's constituting particle
+sets.
+
+\begin{align}
+  \text{\circled{$S_\alpha$}} &\quad\partialPosVec{\xi}
+    \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \left[
+      \left(
+        \vec{\alpha} \times \vec{\beta}
+        + \vec{\beta} \times \vec{\gamma} 
+        + \vec{\gamma} \times \vec{\alpha}
+      \right) \cdot \vec{\delta}
+      - \left(\vec{\alpha} \times \vec{\beta}\right) \cdot \vec{\gamma}
+    \right]\\
+  &= \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \partialPosVec{\xi}\left[
+      \vec{\delta}\vecCross{\alpha}{\beta} 
+      + \vec{\delta}\vecCross{\gamma}{\alpha}
+      - \vec{\gamma}\vecCross{\alpha}{\beta}
+    \right]\\
+  &= \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \partialPosVec{\xi}\left[
+      \vec{\alpha}\vecCross{\beta}{\delta} 
+      + \vec{\alpha}\vecCross{\delta}{\gamma}
+      + \vec{\alpha}\vecCross{\gamma}{\beta}
+    \right]\\
+  &= \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \partialPosVec{\xi}\vec{\alpha}\left(
+      \vec{\beta} \times \vec{\delta} 
+      + \vec{\delta} \times \vec{\gamma}
+      + \vec{\gamma} \times \vec{\beta}
+    \right)\\
+  &=  \frac{\lvert\vec{\gamma} - \vec{\beta}\rvert}{\lvert S_\alpha\rvert}
+    \left(
+      \vec{\beta} \times \vec{\delta} 
+      + \vec{\delta} \times \vec{\gamma}
+      + \vec{\gamma} \times \vec{\beta}
+    \right)
+\end{align}
+
+\begin{align}
+  \text{\circled{$S_\beta$}} &\quad\partialPosVec{\xi}
+    \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \left[
+      \left(
+        \vec{\alpha} \times \vec{\beta}
+        + \vec{\beta} \times \vec{\gamma} 
+        + \vec{\gamma} \times \vec{\alpha}
+      \right) \cdot \vec{\delta}
+      - \left(\vec{\alpha} \times \vec{\beta}\right) \cdot \vec{\gamma}
+    \right]\\
+  &= \lvert\vec{\gamma} - \vec{\beta}\rvert\partialPosVec{\xi}
+    \vec{\beta}
+    \left(
+      \vec{\alpha} \times \vec{\gamma}
+      + \vec{\gamma} \times \vec{\delta}
+      + \vec{\delta} \times \vec{\alpha}
+    \right)\\
+  &=  \frac{\lvert\vec{\gamma} - \vec{\beta}\rvert}{\lvert S_\beta\rvert}
+    \left(
+      \vec{\alpha} \times \vec{\gamma}
+      + \vec{\gamma} \times \vec{\delta}
+      + \vec{\delta} \times \vec{\alpha}
+    \right)
+\end{align}
+
+\begin{align}
+  \text{\circled{$S_\gamma$}} &\quad\partialPosVec{\xi}
+    \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \left[
+      \left(
+        \vec{\alpha} \times \vec{\beta}
+        + \vec{\beta} \times \vec{\gamma} 
+        + \vec{\gamma} \times \vec{\alpha}
+      \right) \cdot \vec{\delta}
+      - \left(\vec{\alpha} \times \vec{\beta}\right) \cdot \vec{\gamma}
+    \right]\\
+  &= \lvert\vec{\gamma} - \vec{\beta}\rvert\partialPosVec{\xi}
+    \vec{\gamma}
+    \left(
+      \vec{\delta} \times \vec{\beta}
+      + \vec{\beta} \times \vec{\alpha}
+      + \vec{\alpha} \times \vec{\delta}
+    \right)\\
+  &=  \frac{\lvert\vec{\gamma} - \vec{\beta}\rvert}{\lvert S_\gamma\rvert}
+    \left(
+      \vec{\delta} \times \vec{\beta}
+      + \vec{\beta} \times \vec{\alpha}
+      + \vec{\alpha} \times \vec{\delta}
+    \right)
+\end{align}
+
+\begin{align}
+  \text{\circled{$S_\delta$}} &\quad\partialPosVec{\xi}
+    \lvert\vec{\gamma} - \vec{\beta}\rvert 
+    \left[
+      \left(
+        \vec{\alpha} \times \vec{\beta}
+        + \vec{\beta} \times \vec{\gamma} 
+        + \vec{\gamma} \times \vec{\alpha}
+      \right) \cdot \vec{\delta}
+      - \left(\vec{\alpha} \times \vec{\beta}\right) \cdot \vec{\gamma}
+    \right]\\
+  &=  \frac{\lvert\vec{\gamma} - \vec{\beta}\rvert}{\lvert S_\delta\rvert}
+    \left(
+      \vec{\alpha} \times \vec{\beta}
+      + \vec{\beta} \times \vec{\gamma} 
+      + \vec{\gamma} \times \vec{\alpha}
+    \right)
+\end{align}
+
+Lastly, we consider the derivatives of $x$, once again in shorthand:
+
+\begin{align}
+  \text{\circled{$S_\alpha$}} &\quad\partialPosVec{\xi}
+    \left[
+      \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
+    \right] \cdot \left[
+      \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
+    \right]\\
+  &= \partialPosVec{\xi}\left[
+    \vecDiff{\beta}{\alpha} \cdot \vecDiff{\gamma}{\beta}
+  \right]\left[
+    \vecDiff{\gamma}{\beta} \cdot \vecDiff{\delta}{\gamma}
+  \right] - \left[
+    \vecDiff{\gamma}{\beta} \cdot \vecDiff{\gamma}{\beta}
+  \right]\left[
+    \vecDiff{\beta}{\alpha} \cdot \vecDiff{\delta}{\gamma}
+  \right]\\
+  &= \left[
+    \vecDiff{\gamma}{\beta} \cdot \vecDiff{\delta}{\gamma}
+  \right]\partialPosVec{\xi}\left[
+    \vecDiff{\beta}{\alpha} \cdot \vecDiff{\gamma}{\beta}
+  \right]
+  - \vecDiff{\gamma}{\beta}^2
+  \partialPosVec{\xi}\left[
+    \vecDiff{\beta}{\alpha} \cdot \vecDiff{\delta}{\gamma}
+  \right]\\
+  &= \frac{1}{\lvert S_\alpha\rvert}\left\{
+    \vecDiff{\gamma}{\beta}^2 \vecDiff{\delta}{\gamma}
+    - \left[
+      \vecDiff{\gamma}{\beta} \cdot \vecDiff{\delta}{\gamma}
+    \right]\vecDiff{\gamma}{\beta}
+  \right\}
+\end{align}
+
+\begin{align}
+  \text{\circled{$S_\beta$}} &\quad\partialPosVec{\xi}\left[
+    \vecDiff{\beta}{\alpha} \cdot \vecDiff{\gamma}{\beta}
+  \right]\left[
+    \vecDiff{\gamma}{\beta} \cdot \vecDiff{\delta}{\gamma}
+  \right] - \vecDiff{\gamma}{\beta}^2 \left[
+    \vecDiff{\beta}{\alpha} \cdot \vecDiff{\delta}{\gamma}
+  \right]\\
+\end{align}

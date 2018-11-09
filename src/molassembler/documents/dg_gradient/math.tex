@@ -14,91 +14,88 @@
 \renewcommand{\baselinestretch}{1.5}
 \setlength{\parindent}{0pt}
 
+% TODO in the second phi definition, maybe reverse all the vectors (it's
+% equivalent) to match the first one. It does have an effect on the derivatives,
+% whereever the vectors themselves are used, it would reverse the sign
 
 \begin{document}
 \small
 
-\newcommand{\posVecDiff}[2]{
-  \left(\vec{r}_{#1} - \vec{r}_{#2} \right)
-}
+\newcommand{\posVecDiff}[2]
+{\left(\vec{r}_{#1}-\vec{r}_{#2}\right)}
 
-\newcommand{\avgVecDiff}[2]{
-  \left(\vec{s}_{#1} - \vec{s}_{#2} \right)
-}
+\newcommand{\avgVecDiff}[2]
+{\left(\vec{s}_{#1}-\vec{s}_{#2}\right)}
 
-\newcommand{\vecDiff}[2]{
-  \left(\vec{#1} - \vec{#2}\,\right)
-}
+\newcommand{\vecDiff}[2]
+{\left(\vec{#1}-\vec{#2}\,\right)}
 
-\newcommand{\vecCross}[2]{
-  \left(\vec{#1} \times \vec{#2}\,\right)
-}
+\newcommand{\vecCross}[2]
+{\left(\vec{#1}\times\vec{#2}\,\right)}
 
-\newcommand{\posDependence}{
-  \left(\left\{\vec{r}_i \right\} \right)
-}
+\newcommand{\posDependence}
+{\left(\left\{\vec{r}_i \right\}\right)}
 
-\newcommand{\distanceErrorFirstTermPart}{
-  \frac{
-    \posVecDiff{j}{i}^{2}
-  }{
-    U_{ij}^{2}
-  } - 1
-}
+\newcommand{\distanceErrorFirstTermPart}
+{\frac{\posVecDiff{j}{i}^{2}}{U_{ij}^{2}}-1}
 
-\newcommand{\distanceErrorFirstTerm}[1]{
-  \textrm{max}^{#1} \left(
-    0, 
-    \distanceErrorFirstTermPart
+\newcommand{\distanceErrorFirstTerm}[1]
+{\textrm{max}^{#1}\left(0, \distanceErrorFirstTermPart\right)}
+
+\newcommand{\distanceErrorSecondTermPart}
+{\frac{2 L_{ij}^{2}}{L_{ij}^{2} + \posVecDiff{j}{i}^{2}}-1}
+
+\newcommand{\distanceErrorSecondTerm}[1]
+{\textrm{max}^{#1} \left(0, \distanceErrorSecondTermPart\right)}
+
+\newcommand{\chiralErrorFirstTerm}[1]
+{\textrm{max}^{#1} \left(0, 
+    V_{\alpha\beta\gamma\delta}\posDependence{}-U_{V}
   \right)
 }
 
-\newcommand{\distanceErrorSecondTermPart}{
-  \frac{
-    2 L_{ij}^{2}
-  }{
-    L_{ij}^{2} + \posVecDiff{j}{i}^{2}
-  } - 1
-}
-
-\newcommand{\distanceErrorSecondTerm}[1]{
-  \textrm{max}^{#1} \left(
-    0,
-    \distanceErrorSecondTermPart
-  \right)
-}
-
-\newcommand{\chiralErrorFirstTerm}[1]{
-  \textrm{max}^{#1} \left(
-    0,
-    V_{\alpha\beta\gamma\delta}\posDependence{} - U_{\alpha\beta\gamma\delta}
-  \right)
-}
-
-\newcommand{\chiralErrorSecondTerm}[1]{
-  \textrm{max}^{#1} \left(
-    0,
-    L_{\alpha\beta\gamma\delta} - V_{\alpha\beta\gamma\delta}\posDependence{} 
+\newcommand{\chiralErrorSecondTerm}[1]
+{\textrm{max}^{#1} \left(0,
+    L_{V}-V_{\alpha\beta\gamma\delta}\posDependence{} 
   \right)
 }
 
 \newcommand{\iNSum}{\sum_{i = 1}^{N}}
 \newcommand{\ijNSum}{\sum_{i < j}^{N}}
-\newcommand{\chiralSum}{
-  \sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta,
-  U_{\alpha\beta\gamma\delta}, L_{\alpha\beta\gamma\delta}\right) \in C} 
+\newcommand{\chiralSum}
+{\sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta,
+  U_{V}, L_{V}\right) \in{} C} 
+}
+\newcommand{\dihedralSum}
+{\sum_{\left(S_\alpha, S_\beta, S_\gamma, S_\delta,
+  U_\phi, L_\phi\right) \in{} D}
+}
+\newcommand{\phiSymbol}
+{\phi_{\alpha\beta\gamma\delta}\posDependence{}}
+
+\newcommand{\dihedralTerm}[1]
+{\textrm{max}^{#1} \left(0,
+    \left\lvert\phiSymbol{} + \left\{
+        \begin{array}{r | r}
+        2\pi & \phi < \frac{U_\phi + L_\phi - 2\pi}{2}\\
+        0 & \\
+        -2\pi & \phi > \frac{U_\phi + L_\phi + 2\pi}{2}\\
+        \end{array}
+      \right\}-\frac{U_\phi{}+L_\phi}{2}
+    \right\rvert-\frac{U_\phi{}-L_\phi}{2}
+  \right)
 }
 
-\newcommand{\volumeCalculationSets}[4]{
-  \avgVecDiff{#1}{#4}^{T}
+\newcommand{\volumeCalculationSets}[4]
+{\avgVecDiff{#1}{#4}^{T}
   \cdot \left[
     \avgVecDiff{#2}{#4}
     \times\avgVecDiff{#3}{#4}
   \right]
 }
 
-\newcommand{\volumeCalculationSub}[4]{
-  \posVecDiff{#1}{#4}^{T}
+\newcommand{\volumeCalculationSub}[4]
+{\posVecDiff{#1}{#4}^{T}
   \cdot \left[
     \posVecDiff{#2}{#4}
     \times\posVecDiff{#3}{#4}
@@ -106,21 +103,19 @@
 }
 
 % TODO refactor to vecDiff
-\newcommand{\volumeCalculation}[4]{
-  \left(\vec{#1} - \vec{#4} \right)^{T}
+\newcommand{\volumeCalculation}[4]
+{\left(\vec{#1}-\vec{#4} \right)^{T}
   \cdot \left[
-    \left(\vec{#2} - \vec{#4} \right)
-    \times\left(\vec{#3} - \vec{#4} \right)
+    \left(\vec{#2}-\vec{#4} \right)
+    \times\left(\vec{#3}-\vec{#4} \right)
   \right]
 }
 
-\newcommand{\partialPosVec}[1]{
-  \frac{\partial}{\partial \vec{r}_{#1}}
-}
+\newcommand{\partialPosVec}[1]
+{\frac{\partial}{\partial\vec{r}_{#1}}}
 
-\newcommand{\partialVec}[1]{
-  \frac{\partial}{\partial \vec{#1}\,}
-}
+\newcommand{\partialVec}[1]
+{\frac{\partial}{\partial\vec{#1}\,}}
 
 \newcommand{\errf}{\textrm{errf}\posDependence}
 
@@ -130,16 +125,16 @@ For a given set of $N$ particles with positions $\vec{r}_i$, the distance
 geometry error function is given as:
 
 \begin{align}\begin{aligned} % nested to get only a single numbered equation
-  \errf &= \underbrace {
-    \ijNSum \left[
+  \errf &= \underbrace{\ijNSum \left[
       \distanceErrorFirstTerm{2} + \distanceErrorSecondTerm{2}
     \right]
   }_{\textrm{Distance errors}}\\
-  &+ \underbrace{
-    \chiralSum \left[ 
+  &+ \underbrace{\chiralSum \left[ 
       \chiralErrorFirstTerm{2} + \chiralErrorSecondTerm{2}
     \right]
-  }_{\textrm{Chiral errors}}.
+  }_{\textrm{Chiral errors}}\\
+  &+ \underbrace{\dihedralSum \dihedralTerm{2}
+  }_{\textrm{Dihedral errors}}.
 \end{aligned}\end{align}
 
 Within the distance errors, the symbols $U_{ij}$ and $L_{ij}$ are the upper and
@@ -159,9 +154,10 @@ for $S_\alpha$:
 where $|S_\alpha|$ denotes the number of elements in the set and $S_{\alpha,
 i}$ is the $i$-th element in the set.\\
 
-The constraint tuple further consists of the scalars $U_{\alpha\beta\gamma\delta}$ and
-$L_{\alpha\beta\gamma\delta}$, which are upper and lower bounds on
-the volume spanned by the average positions of each set. This volume is
+The constraint tuple further consists of the scalars $U_{V}$ and
+$L_{V}$, which are upper and lower bounds on
+the volume spanned by the average positions of the sets $S_\alpha$, $S_\beta$,
+$S_\gamma$ and $S_\delta$. This volume is
 calculated in the symbol $V_{\alpha\beta\gamma\delta}$, which is the signed
 tetrahedron volume spanned by $\vec{s}_\alpha, \vec{s}_\beta, \vec{s}_\gamma$
 and $\vec{s}_\delta$:
@@ -172,8 +168,55 @@ and $\vec{s}_\delta$:
 \end{equation}
 
 It is important to note that tetrahedron volumes such as
-$U_{\alpha\beta\gamma\delta}$ are signed values. On odd permutations of
-indices, these quantities change sign.
+$U_{V}$ are signed values. On odd permutations of indices, these quantities
+change sign.\\
+
+Within the dihedral errors, $D$ is a set of dihedral constraint tuples.
+Each tuple consists of particle index sets $S_\alpha, S_\beta, S_\gamma$ and
+$S_\delta$. Exactly as for chiral errors, these sets do not intersect and each
+contain at least a single element. Furthermore, $U_{\phi}$ and $L_{\phi}$ are
+upper and lower bounds on the dihedral angle $\phi$ defined by the particle
+index sets:
+
+\begin{align}\begin{aligned}
+  \phiSymbol = \textrm{atan2} \Big( &
+    \left[
+      \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
+    \right] \times \left[
+      \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
+    \right] \cdot 
+    \frac{\avgVecDiff{\gamma}{\beta}}{\lvert\avgVecDiff{\gamma}{\beta}\rvert}\\
+    & \left[
+      \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
+    \right] \cdot \left[
+      \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
+    \right]
+  \Big)
+\end{aligned}\end{align}
+
+% TODO cite karplus from the wikipedia reference
+Here we have used a three-vector dihedral angle definition and inserted
+the index set average-position differences that constitute the dihedral angle.
+Another definition of the dihedral angle using merely the inverse cosine is:\\
+
+\begin{align}\begin{aligned}
+  \phiSymbol = \arccos
+    \frac{\left[
+      \avgVecDiff{\alpha}{\beta} \times \avgVecDiff{\beta}{\gamma}
+    \right]\left[
+      \avgVecDiff{\beta}{\gamma} \times \avgVecDiff{\gamma}{\delta}
+    \right]}{\lvert
+      \avgVecDiff{\alpha}{\beta} \times \avgVecDiff{\beta}{\gamma}
+    \rvert\lvert
+      \avgVecDiff{\beta}{\gamma} \times \avgVecDiff{\gamma}{\delta}
+    \rvert
+    },
+\end{aligned}\end{align}
+
+whose derivatives w.r.t.\ the constituting position vectors are considerably
+easier to evaluate.
+
+\newpage
 
 \section{Gradient of the error function}
 
@@ -199,31 +242,30 @@ is a vector whose components are the scalar derivatives:
     \partial E / \partial r_{\xi , z} 
   \end{pmatrix}
 \end{align*}
-\newpage
 
 We split the problem into the main terms:
 
 \begin{align*}
   \partialPosVec{\xi} \errf 
-  &= \underbrace{
-    \partialPosVec{\xi} \left(
+  &= \underbrace{\partialPosVec{\xi} \left(
       \ijNSum \distanceErrorFirstTerm{2}
     \right)
   }_{\circled{1}}
-  + \underbrace{
-    \partialPosVec{\xi} \left(
+  + \underbrace{\partialPosVec{\xi} \left(
       \ijNSum \distanceErrorSecondTerm{2}
     \right)
   }_{\circled{2}}\\
-  &+ \underbrace{
-    \partialPosVec{\xi} \chiralSum \chiralErrorFirstTerm{2}
+  &+ \underbrace{\partialPosVec{\xi} \chiralSum \chiralErrorFirstTerm{2}
   }_{\circled{3}}\\
-  &+ \underbrace{
-    \partialPosVec{\xi} \chiralSum \chiralErrorSecondTerm{2}
-  }_{\circled{4}}
+  &+ \underbrace{\partialPosVec{\xi} \chiralSum \chiralErrorSecondTerm{2}
+  }_{\circled{4}}\\
+  &+ \underbrace{\partialPosVec{\xi} \dihedralSum \dihedralTerm{2}
+  }_{\circled{5}}.
 \end{align*}
 
-and start with \circled{1}. We use the chain rule:
+\subsection{Distance error terms}
+
+We begin with \circled{1}. We use the chain rule:
 
 \begin{equation}
   \partialPosVec{\xi} \ijNSum \distanceErrorFirstTerm{2}
@@ -247,8 +289,7 @@ and likewise, but positive, for $\xi = j$. Consequently:
     1 & \xi = j\\
     0 & \textrm{else}
   \end{array} \right\}
-  = \frac{2}{U_{ij}^{2}} \posVecDiff{j}{i} \left(
-    \delta_{\xi j} - \delta_{\xi i} 
+  = \frac{2}{U_{ij}^{2}} \posVecDiff{j}{i} \left(\delta_{\xi j}-\delta_{\xi i} 
   \right),
 \end{equation}
 
@@ -260,8 +301,8 @@ the Kronecker delta. So, in total:
   \text{\circled{1}}
   = \ijNSum \left(
     \delta_{\xi j} - \delta_{\xi i} 
-  \right) \underbrace{
-    \frac{4}{U_{ij}^{2}} \posVecDiff{j}{i} \distanceErrorFirstTerm{}
+  \right) \underbrace{\frac{4}{U_{ij}^{2}} 
+    \posVecDiff{j}{i} \distanceErrorFirstTerm{}
   }_{f(i, j)}
 \end{equation}
 
@@ -281,34 +322,23 @@ All in all:
 \begin{equation}
   \text{\circled{1}}
   = \iNSum \left(1 - \delta_{i\xi}\right) \frac{4}{U_{i\xi}^{2}}
-    \posVecDiff{\xi}{i} \textrm{max} \left(
-      0,
-      \frac{
-        \posVecDiff{\xi}{i}^{2}
-      }{
-        U_{i\xi}^{2}
-      } - 1
+    \posVecDiff{\xi}{i}\max\left(0,
+      \frac{\posVecDiff{\xi}{i}^{2}}{U_{i\xi}^{2}}-1
     \right)
 \end{equation}
 
-\newpage
 Let us continue with \circled{2}. The chain rule gives:
 \begin{equation}
   \partialPosVec{\xi} \ijNSum \distanceErrorSecondTerm{2}
   = 2 \ijNSum \distanceErrorSecondTerm{} \partialPosVec{\xi}
-    \distanceErrorSecondTerm.
+    \distanceErrorSecondTerm{}
 \end{equation}
 
 For $\xi = i$,
 \begin{equation}
   \partialPosVec{i} \left( \distanceErrorSecondTermPart \right)
-  = \frac{
-    4 L_{ij}^{2} \posVecDiff{j}{i}
-  }{
-    \left(
-      L_{ij}^{2} + \posVecDiff{j}{i}^2
-    \right)^2
-  },
+  = \frac{4 L_{ij}^{2} \posVecDiff{j}{i}}
+    {\left(L_{ij}^{2} + \posVecDiff{j}{i}^2\right)^2},
 \end{equation}
 
 and likewise, but negative, for $\xi = j$. Therefore,
@@ -387,7 +417,8 @@ Eq.~\ref{eq_breakdown_deltas_second}). All in all:
     \right)
 \end{equation}
 
-\newpage
+\subsection{Chiral error terms}
+
 Next, we consider \circled{3}. Applying the chain rule gives:
 
 \begin{align*}
@@ -544,13 +575,95 @@ of cases, which we extrude from the sum:
 Both terms concerning the chiral error can be summarized as follows:
 
 \begin{align*}
-  &\quad\chiralSum 2\ \chiralErrorFirstTerm{} \Big\{ \ldots \Big\}\\
-  &\quad - \chiralSum 2\ \chiralErrorSecondTerm{} \Big\{ \ldots \Big\}\\
+  \text{\circled{3}} + \text{\circled{4}} &=\chiralSum 2\ \chiralErrorFirstTerm{} \Big\{ \ldots \Big\}\\
+  &- \chiralSum 2\ \chiralErrorSecondTerm{} \Big\{ \ldots \Big\}\\
   &= \chiralSum 2\ \Big\{ \ldots \Big\} \Big[ 
     \chiralErrorFirstTerm{} - \chiralErrorSecondTerm{} 
   \Big],
 \end{align*}
 
 which ought to save some time in an implementation.
+
+\newpage
+\subsection{Dihedral error terms}
+
+Finally, we consider $\circled{5}$. The chain rule yields:
+
+\begin{equation}
+  \partialPosVec{\xi} \sum_{(\ldots) \in D} \textrm{max}^2 \left(0, h(\phi)\right)
+  = 2\ \sum_{(\ldots) \in D} \max\left(0, h(\phi)\right) 
+    \partialPosVec{\xi} \max\left(0, h(\phi)\right),
+\end{equation}
+
+where we have abbreviated the complicated expression in the maximum function
+with $h(\phi)$. The first maximum function adequately covers the case
+$h(\phi) < 0$. Employing the chain rule yet again, we note 
+$\partialPosVec{\xi} h(\phi) = \frac{\partial h}{\partial \phi}
+\frac{\partial \phi}{\partial \vec{r}_{\xi}}$. The first part is:
+
+\begin{equation}
+  \frac{\partial h}{\partial \phi} = \frac{\partial}{\partial \phi}
+    \Bigg\lvert
+      \underbrace{\phiSymbol + \left\{
+        \begin{array}{r | r}
+        2\pi & \phi < \frac{U_\phi + L_\phi - 2\pi}{2}\\
+        0 & \\
+        -2\pi & \phi > \frac{U_\phi + L_\phi + 2\pi}{2}\\
+        \end{array}
+      \right\}-\frac{U_\phi+ L_\phi}{2}
+      }_{w(\phi)}
+    \Bigg\rvert - \frac{U_\phi - L_\phi}{2}
+  = \textrm{sgn}\left(w(\phi)\right).
+\end{equation}
+
+The individual derivatives $\frac{\partial\phi}{\partial\vec{s}_{\alpha}}, 
+\frac{\partial\phi}{\partial\vec{s}_{\beta}}, 
+\frac{\partial\phi}{\partial\vec{s}_{\gamma}}, 
+\frac{\partial\phi}{\partial\vec{s}_{\delta}}$ are given as:
+
+\begin{equation}
+  \vec{f} = \avgVecDiff{\alpha}{\beta},
+  \quad\vec{g} = \avgVecDiff{\beta}{\gamma},
+  \quad\vec{h} = \avgVecDiff{\gamma}{\delta},
+  \quad\vec{a} = \vec{f} \times \vec{g},
+  \quad\vec{b} = \vec{g} \times \vec{h}
+\end{equation}
+
+\begin{align}\begin{aligned}
+  \frac{\partial\phi}{\partial\vec{s}_{\alpha}} &= 
+    -\frac{\lvert\vec{g}\rvert}{\vec{a}\,^2}\vec{a}\\
+  \frac{\partial\phi}{\partial\vec{s}_{\beta}}  &= 
+    \frac{\lvert\vec{g}\rvert}{\vec{a}\,^2}\vec{a}
+    + \frac{\vec{f}\vec{g}}{\vec{a}\,^2\lvert\vec{g}\rvert}\vec{a}
+    - \frac{\vec{g}\vec{h}}{\vec{b}\,^2\lvert\vec{g}\rvert}\vec{b}\\
+  \frac{\partial\phi}{\partial\vec{s}_{\gamma}} &= 
+    - \frac{\lvert\vec{g}\rvert}{\vec{b}\,^2}\vec{b}
+    + \frac{\vec{g}\vec{h}}{\vec{b}\,^2\lvert\vec{g}\rvert}\vec{b}
+    - \frac{\vec{f}\vec{g}}{\vec{a}\,^2\lvert\vec{g}\rvert}\vec{a}\\
+  \frac{\partial\phi}{\partial\vec{s}_{\delta}} &= 
+    \frac{\lvert\vec{g}\rvert}{\vec{b}\,^2}\vec{b}\\
+\end{aligned}\end{align}
+
+The individual membership cases are thus:
+\begin{align}
+  \text{\circled{$S_i$}} &\quad\frac{\partial\phi}{\partial\vec{r}_{\xi}} 
+    = \frac{\partial\phi}{\partial\vec{s}_{i}}
+      \frac{\partial\vec{s_{i}}}{\partial\vec{r}_{\xi}}
+    = \frac{1}{\lvert S_i\rvert}
+      \frac{\partial\phi}{\partial\vec{s}_{i}}
+\end{align}
+
+And altogether:
+
+\begin{equation}
+  \text{\circled{5}} = 2 \sum_{(\ldots) \in D} \max(0, h(\phi))\ \textrm{sgn}
+  (w(\phi)) \left\{ \begin{array}{r | r}
+    \frac{1}{|S_\alpha|} \frac{\partial\phi}{\partial\vec{s_{\alpha}}} & \xi \in S_\alpha\\
+    \frac{1}{|S_\beta|} \frac{\partial\phi}{\partial\vec{s_{\beta}}} & \xi \in S_\beta\\
+    \frac{1}{|S_\gamma|} \frac{\partial\phi}{\partial\vec{s_{\gamma}}} & \xi \in S_\gamma\\
+    \frac{1}{|S_\delta|} \frac{\partial\phi}{\partial\vec{s_{\delta}}} & \xi \in S_\delta\\
+    0 & \textrm{else}
+  \end{array} \right\}
+\end{equation}
 
 \end{document}
