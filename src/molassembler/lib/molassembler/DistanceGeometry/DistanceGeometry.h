@@ -45,6 +45,25 @@ struct ChiralityConstraint {
   }
 };
 
+struct DihedralConstraint {
+  using AtomListType = std::vector<AtomIndex>;
+  using LigandSequence = std::array<AtomListType, 4>;
+
+  LigandSequence sites;
+  double lower, upper;
+
+  DihedralConstraint(
+    LigandSequence passSites,
+    const double passLower,
+    const double passUpper
+  ) : sites(std::move(passSites)),
+      lower(passLower),
+      upper(passUpper)
+  {
+    assert(lower <= upper);
+  }
+};
+
 } // namespace DistanceGeometry
 
 } // namespace molassembler

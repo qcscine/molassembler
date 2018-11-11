@@ -21,6 +21,14 @@ namespace errfDetail {
 
 using Vector = dlib::matrix<double, 0, 1>;
 
+/**
+ * @brief Fetches a three-dimensional position sub-part of the positions vector
+ *
+ * @param positions All positions
+ * @param i The index of the particle whose position to extract
+ *
+ * @return The position of a particle in the positions
+ */
 inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned i) {
   assert(4 * i + 3 < positions.size());
 
@@ -30,6 +38,15 @@ inline dlib::vector<double, 3> getPos3D(const Vector& positions, const unsigned 
   );
 }
 
+/**
+ * @brief Fetches a four-dimensional position sub-part of the positions vector
+ *
+ * @param positions The long vector of positions from which to extract a
+ *   four-dimensional position
+ * @param i The index of the particle whose position to extract
+ *
+ * @return The four-dimensional position of a particle in the positions
+ */
 inline Vector getPos(const Vector& positions, const unsigned i) {
   assert(4 * i + 3 < positions.size());
 
@@ -39,6 +56,14 @@ inline Vector getPos(const Vector& positions, const unsigned i) {
   );
 }
 
+/**
+ * @brief Calculates the average three-dimensional position of a set of particles
+ *
+ * @param positions All positions
+ * @param atomList A list of atom indices whose average position to calculate
+ *
+ * @return The average three-dimensional position of a set of particles
+ */
 inline dlib::vector<double, 3> getAveragePos3D(
   const Vector& positions,
   const ChiralityConstraint::AtomListType& atomList
@@ -58,6 +83,14 @@ inline dlib::vector<double, 3> getAveragePos3D(
   return sum;
 }
 
+/**
+ * @brief Calculates the average four-dimensional position of a set of particles
+ *
+ * @param positions All positions
+ * @param atomList A list of atom indices whose average position to calculate
+ *
+ * @return The average four-dimensional position of a set of particles
+ */
 inline Vector getAveragePos(
   const Vector& positions,
   const ChiralityConstraint::AtomListType& atomList
@@ -77,7 +110,18 @@ inline Vector getAveragePos(
   return sum;
 }
 
-//! Signed tetrahedron volume adjusted by V' = 6 * V
+/**
+ * @brief Calculates the adjusted signed tetrahedron volume spanned by four
+ *   sets of particle indices
+ *
+ * @param positions All positions
+ * @param ligands Four particle index sets
+ *
+ * @note The volume is adjusted by V' = 6 * V
+ *
+ * @return The adjusted signed tetrahedron volume spanned by four sets of
+ *   particle indices
+ */
 inline double adjustedSignedVolume(
   const Vector& positions,
   const ChiralityConstraint::LigandSequence& ligands
@@ -96,23 +140,97 @@ inline double adjustedSignedVolume(
   );
 }
 
+/**
+ * @brief Calculate the dihedral angle spanned by four particle index sets
+ *
+ * @param positions All positions
+ * @param ligands The four particle index sets that span the dihedral
+ *
+ * @return The dihedral angle spanned by four particle index sets
+ */
+inline double dihedralAngle(
+  const Vector& positions,
+  const DihedralConstraint::LigandSequence& ligands
+) {
+  const dlib::vector<double, 3> alpha = getAveragePos3D(positions, ligands[0]);
+  const dlib::vector<double, 3> beta = getAveragePos3D(positions, ligands[1]);
+  const dlib::vector<double, 3> gamma = getAveragePos3D(positions, ligands[2]);
+  const dlib::vector<double, 3> delta = getAveragePos3D(positions, ligands[3]);
+
+  const dlib::vector<double, 3> g = gamma - beta;
+
+  const dlib::vector<double, 3> m = (beta - alpha).cross(g);
+  const dlib::vector<double, 3> n = g.cross(delta - gamma);
+
+  return std::atan2(
+    m.cross(n).dot(
+      dlib::normalize(g)
+    ),
+    m.dot(n)
+  );
+}
+
+/**
+ * @brief Calculates the proportion of chirality constraints with the correct
+ *   sign
+ *
+ * @param chiralityConstraints The list of chirality constraints
+ * @param positions All positions
+ *
+ * @return The ratio of chirality constraints with the correct sign to the
+ *   total number of chirality constraints
+ */
 double proportionChiralityConstraintsCorrectSign(
   const std::vector<ChiralityConstraint>& chiralityConstraints,
   const Vector& positions
 );
 
+/**
+ * @brief Decides whether the final structure from a refinement is acceptable
+ *
+ * A final structure is acceptable if
+ * - All distance bounds are within 0.5 of either the lower or upper boundary
+ * - All chiral constraints are within 0.5 of either the lower or upper boundary
+ *
+ * @param bounds The distance bounds
+ * @param chiralityConstraints All chirality constraints
+ * @param positions The final positions from a refinement
+ *
+ * @return Whether the final structure is acceptable
+ */
 bool finalStructureAcceptable(
   const DistanceBoundsMatrix& bounds,
   const std::vector<ChiralityConstraint>& chiralityConstraints,
   const Vector& positions
 );
 
+/**
+ * @brief Writes messages to the log explaining why a structure was rejected
+ *
+ * @see finalStructureAcceptable for criteria on acceptability
+ *
+ * A final structure is acceptable if
+ * - All distance bounds are within 0.5 of either the lower or upper boundary
+ * - All chiral constraints are within 0.5 of either the lower or upper boundary
+ *
+ * @param bounds The distance bounds
+ * @param chiralityConstraints All chirality constraints
+ * @param positions The final positions from a refinement
+ */
 void explainAcceptanceFailure(
   const DistanceBoundsMatrix& bounds,
   const std::vector<ChiralityConstraint>& chiralityConstraints,
   const Vector& positions
 );
 
+/**
+ * @brief Writes messages to the log explaining the final contributions to
+ *   the error function
+ *
+ * @param bounds The distance bounds
+ * @param chiralityConstraints All chirality constraints
+ * @param positions The final positions from a refinement
+ */
 void explainFinalContributions(
   const DistanceBoundsMatrix& bounds,
   const std::vector<ChiralityConstraint>& chiralityConstraints,
@@ -121,6 +239,20 @@ void explainFinalContributions(
 
 } // namespace errfDetail
 
+/**
+ * @brief Functor to calculate the DG refinement error function value
+ *
+ * Refinement progresses in two stages:
+ * - Uncompressed, in which the spatial coordinates are free to expand into
+ *   the fourth dimension. This is so that chiral constraints can invert
+ *   more easily. Once all chiral constraints have the correct sign, we move
+ *   on to the next stage.
+ * - Compressed, in which the remaining distance bounds and chiral constraints
+ *   are optimized further and the fourth dimension is "compressed" out.
+ *
+ * @tparam compress Whether to compress out the fourth spatial dimension (i.e.
+ *   penalize non-zero values of the fourth dimension).
+ */
 template<bool compress>
 struct errfValue {
   // Typedefs
@@ -130,17 +262,26 @@ struct errfValue {
   const unsigned N;
   const dlib::matrix<double, 0, 0>& squaredBounds;
   const std::vector<ChiralityConstraint>& chiralityConstraints;
+  const std::vector<DihedralConstraint>& dihedralConstraints;
 
   // Constructor
   explicit errfValue(
     const dlib::matrix<double, 0, 0>& passSquaredBounds,
-    const std::vector<ChiralityConstraint>& passChiralityConstraints
+    const std::vector<ChiralityConstraint>& passChiralityConstraints,
+    const std::vector<DihedralConstraint>& passDihedralConstraints
   ) : N(passSquaredBounds.nc()),
       squaredBounds(passSquaredBounds),
-      chiralityConstraints(passChiralityConstraints)
+      chiralityConstraints(passChiralityConstraints),
+      dihedralConstraints(passDihedralConstraints)
   {}
 
-  // Information
+//!@name Information
+//!@{
+  /**
+   * @brief Calculates the error function terms caused by distance errors
+   * @param positions All positions
+   * @return The sum of error function terms caused by distance error
+   */
   double distanceError(const Vector& positions) const {
     double error = 0, lowerTerm, upperTerm;
 
@@ -188,6 +329,11 @@ struct errfValue {
     return error;
   }
 
+  /**
+   * @brief Calculate the error function terms caused by chiral errors
+   * @param positions All positions
+   * @return The sum of error function terms caused by chiral errors
+   */
   double chiralError(const Vector& positions) const {
     double error = 0, volume, upperTerm, lowerTerm;
 
@@ -219,11 +365,43 @@ struct errfValue {
     return error;
   }
 
-  double extraDimensionError(const Vector& positions) const {
-    if(!compress) {
-      return 0;
+  /**
+   * @brief Calculate the error function term caused by dihedrals
+   * @param positions All positions
+   * @return The sum of error function terms caused by dihedrals
+   */
+  double dihedralError(const Vector& positions) const {
+    double error = 0, phi, constraintSumHalved, term;
+
+    for(const auto& constraint : dihedralConstraints) {
+      phi = dihedralAngle(positions, constraint.sites);
+
+      constraintSumHalved = (constraint.lower + constraint.upper) / 2;
+
+      if(phi < constraintSumHalved - M_PI) {
+        phi += 2 * M_PI;
+      } else if(phi > constraintSumHalved + M_PI) {
+        phi -= 2 * M_PI;
+      }
+
+      term = std::fabs(phi - constraintSumHalved) - (constraint.upper - constraint.lower) / 2;
+
+      if(term > 0) {
+        error += term * term;
+      }
     }
 
+    return error;
+  }
+
+  /**
+   * @brief Calculates the error contribution due to the fourth spatial dimension
+   * @note This should be calculated only if compress is true, where the
+   *   refinement compresses out the fourth dimension
+   * @param positions All positions
+   * @return The sum of the squares of all fourth spatial dimension values
+   */
+  double extraDimensionError(const Vector& positions) const {
     double error = 0;
     for(unsigned i = 0; i < N; i++) {
       const double w = positions(4 * i + 3);
@@ -232,8 +410,12 @@ struct errfValue {
 
     return error;
   }
+//!@}
 
-  // Operators
+  /*!
+   * @brief Function call operator for dlib optimization routine
+   * Calculates all terms of the error function for a given set of positions
+   */
   double operator() (const Vector& positions) const {
     assert(positions.size() % 4 == 0);
     assert(positions.size() / 4 == N);
@@ -248,15 +430,28 @@ struct errfValue {
       );
     }
 
-    // Before chiral inversion, typically: chiral >> distance > extraDim
+    // Before chiral inversion, typically: chiral >> distance
     return (
-      extraDimensionError(positions)
-      + distanceError(positions)
+      distanceError(positions)
       + chiralError(positions)
     );
   }
 };
 
+/**
+ * @brief Functor to calculate the gradient of the DG refinement error function
+ *
+ * Refinement progresses in two stages:
+ * - Uncompressed, in which the spatial coordinates are free to expand into
+ *   the fourth dimension. This is so that chiral constraints can invert
+ *   more easily. Once all chiral constraints have the correct sign, we move
+ *   on to the next stage.
+ * - Compressed, in which the remaining distance bounds and chiral constraints
+ *   are optimized further and the fourth dimension is "compressed" out.
+ *
+ * @tparam compress Whether to compress out the fourth spatial dimension (i.e.
+ *   penalize non-zero values of the fourth dimension).
+ */
 template<bool compress>
 struct errfGradient {
 public:
@@ -267,17 +462,30 @@ public:
   const unsigned N;
   const dlib::matrix<double, 0, 0>& squaredBounds;
   const std::vector<ChiralityConstraint>& chiralityConstraints;
+  const std::vector<DihedralConstraint>& dihedralConstraints;
 
   // Constructor
   explicit errfGradient(
     const dlib::matrix<double, 0, 0>& passSquaredBounds,
-    const std::vector<ChiralityConstraint>& passChiralityConstraints
+    const std::vector<ChiralityConstraint>& passChiralityConstraints,
+    const std::vector<DihedralConstraint>& passDihedralConstraints
   ) : N(passSquaredBounds.nc()),
       squaredBounds(passSquaredBounds),
-      chiralityConstraints(passChiralityConstraints)
+      chiralityConstraints(passChiralityConstraints),
+      dihedralConstraints(passDihedralConstraints)
   {}
 
-  // Information
+//!@name Information
+//!@{
+  /**
+   * @brief A reference, unoptimized implementation of the A term (The first
+   * distance bounds error term)
+   *
+   * @param positions All positions
+   *
+   * @return A vector containing only the contributions of the A term to the
+   *   gradient
+   */
   Vector referenceA(const Vector& positions) const {
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
@@ -310,6 +518,15 @@ public:
     return gradient;
   }
 
+  /**
+   * @brief A reference, unoptimized implementation of the B term (The second
+   * distance bounds error term)
+   *
+   * @param positions All positions
+   *
+   * @return A vector containing only the contributions of the B term to the
+   *   gradient
+   */
   Vector referenceB(const Vector& positions) const {
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
@@ -345,6 +562,14 @@ public:
     return gradient;
   }
 
+  /**
+   * @brief Adds a chiral errors contribution to the gradient vector
+   *
+   * @param gradient A reference to the gradient vector
+   * @param positions All positions
+   * @param constraint A particular chiral constraint
+   * @param factor A prefactor with which to multiply contributions
+   */
   void referenceAddChiralContribution(
     Vector& gradient,
     const Vector& positions,
@@ -353,54 +578,29 @@ public:
   ) const {
     // Precalculate repeated expressions
     const dlib::vector<double, 3> alphaMinusDelta = (
-      errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[0]
-      ) - errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[3]
-      )
+      errfDetail::getAveragePos3D(positions, constraint.sites[0])
+      - errfDetail::getAveragePos3D(positions, constraint.sites[3])
     );
 
     const dlib::vector<double, 3> betaMinusDelta = (
-      errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[1]
-      ) - errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[3]
-      )
+      errfDetail::getAveragePos3D(positions, constraint.sites[1])
+      - errfDetail::getAveragePos3D(positions, constraint.sites[3])
     );
 
     const dlib::vector<double, 3> gammaMinusDelta = (
-      errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[2]
-      ) - errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[3]
-      )
+      errfDetail::getAveragePos3D(positions, constraint.sites[2])
+      - errfDetail::getAveragePos3D(positions, constraint.sites[3])
     );
 
     // Specific to deltaI only but still repeated
     const dlib::vector<double, 3> alphaMinusGamma = (
-      errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[0]
-      ) - errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[2]
-      )
+      errfDetail::getAveragePos3D(positions, constraint.sites[0])
+      - errfDetail::getAveragePos3D(positions, constraint.sites[2])
     );
 
     const dlib::vector<double, 3> betaMinusGamma = (
-      errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[1]
-      ) - errfDetail::getAveragePos3D(
-        positions,
-        constraint.sites[2]
-      )
+      errfDetail::getAveragePos3D(positions, constraint.sites[1])
+      - errfDetail::getAveragePos3D(positions, constraint.sites[2])
     );
 
     for(const auto alphaI : constraint.sites[0]) {
@@ -432,6 +632,15 @@ public:
     }
   }
 
+  /**
+   * @brief A reference, unoptimized implementation of the C term (The first
+   * chiral bounds error term)
+   *
+   * @param positions All positions
+   *
+   * @return A vector containing only the contributions of the C term to the
+   *   gradient
+   */
   Vector referenceC(const Vector& positions) const {
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
@@ -454,6 +663,15 @@ public:
     return gradient;
   }
 
+  /**
+   * @brief A reference, unoptimized implementation of the D term (The second
+   * chiral bounds error term)
+   *
+   * @param positions All positions
+   *
+   * @return A vector containing only the contributions of the D term to the
+   *   gradient
+   */
   Vector referenceD(const Vector& positions) const {
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
@@ -467,6 +685,11 @@ public:
     return gradient;
   }
 
+  /**
+   * @brief A reference, unoptimized implementation of the gradient calculation
+   *
+   * Exists solely to double-check the optimized calculations.
+   */
   Vector reference(const Vector& positions) const {
     return (
       referenceA(positions)
@@ -476,6 +699,16 @@ public:
     );
   }
 
+  /**
+   * @brief Adds the contribution of a pair of atoms to the gradient
+   *
+   * @param positions All positions
+   * @param gradient A reference to the gradient under construction
+   * @param lowerBoundSquared The square of the lower bound
+   * @param upperBoundSquared The square of the upper bound
+   * @param alpha
+   * @param i
+   */
   inline void gradientDistanceContribution(
     const Vector& positions,
     Vector& gradient,
@@ -536,7 +769,114 @@ public:
     }
   }
 
-  // Operators
+  inline void addDihedralConstributions(
+    const Vector& positions,
+    Vector& gradient
+  ) const {
+    double phi, constraintSumHalved, w_phi, h_phi;
+
+    for(const auto& constraint : dihedralConstraints) {
+      const dlib::vector<double, 3> alpha = getAveragePos3D(positions, constraint.sites[0]);
+      const dlib::vector<double, 3> beta = getAveragePos3D(positions, constraint.sites[1]);
+      const dlib::vector<double, 3> gamma = getAveragePos3D(positions, constraint.sites[2]);
+      const dlib::vector<double, 3> delta = getAveragePos3D(positions, constraint.sites[3]);
+
+      const dlib::vector<double, 3> f = beta - alpha;
+      const dlib::vector<double, 3> g = gamma - beta;
+      const dlib::vector<double, 3> h = delta - gamma;
+
+      const dlib::vector<double, 3> a = f.cross(g);
+      const dlib::vector<double, 3> b = g.cross(h);
+
+      phi = std::atan2(
+        a.cross(b).dot(
+          dlib::normalize(g)
+        ),
+        a.dot(b)
+      );
+
+      constraintSumHalved = (constraint.lower + constraint.upper) / 2;
+
+      if(phi < constraintSumHalved - M_PI) {
+        phi += 2 * M_PI;
+      } else if(phi > constraintSumHalved + M_PI) {
+        phi -= 2 * M_PI;
+      }
+
+      w_phi = phi - constraintSumHalved;
+
+      h_phi = std::fabs(w_phi) - (constraint.upper - constraint.lower) / 2;
+
+      /* "Apply the max function": If h <= 0, then the max function yields zero,
+       * so we can skip this
+       */
+      if(h_phi <= 0) {
+        continue;
+      }
+
+      // Multiply with sgn (w) -> (-1) if
+      if(w_phi < 0) {
+        h_phi *= -1;
+      }
+
+      // Add in the prefactor
+      h_phi *= 2.0;
+
+      // Precompute some reused expressions
+      const double gNorm = dlib::norm(g);
+      const dlib::vector<double, 3> aAdjusted = a / dlib::length_squared(a);
+      const dlib::vector<double, 3> bAdjusted = b / dlib::length_squared(b);
+      std::array<unsigned, 4> siteSizes;
+      for(unsigned i = 0; i < 4; ++i) {
+        siteSizes[i] = constraint.sites[i].size();
+      }
+      const double fDotG = f.dot(g);
+      const double gDotH = g.dot(h);
+
+      for(const auto& alphaConstitutingIndex : constraint.sites[0]) {
+        dlib::set_rowm(
+          gradient,
+          dlib::range(4 * alphaConstitutingIndex, 4 * alphaConstitutingIndex + 2)
+        ) -= gNorm * aAdjusted / siteSizes[0];
+      }
+
+      for(const auto& betaConstitutingIndex: constraint.sites[1]) {
+        dlib::set_rowm(
+          gradient,
+          dlib::range(4 * betaConstitutingIndex, 4 * betaConstitutingIndex + 2)
+        ) += (
+          gNorm * aAdjusted
+          + fDotG * aAdjusted / gNorm
+          - gDotH * bAdjusted / gNorm
+        ) / siteSizes[1];
+      }
+
+      for(const auto& gammaConstitutingIndex : constraint.sites[3]) {
+        dlib::set_rowm(
+          gradient,
+          dlib::range(4 * gammaConstitutingIndex, 4 * gammaConstitutingIndex + 2)
+        ) += (
+          - gNorm * bAdjusted
+          + gDotH * bAdjusted / gNorm
+          - fDotG * aAdjusted / gNorm
+        ) / siteSizes[2];
+      }
+
+      for(const auto& deltaConstitutingIndex : constraint.sites[3]) {
+        dlib::set_rowm(
+          gradient,
+          dlib::range(4 * deltaConstitutingIndex, 4 * deltaConstitutingIndex + 2)
+        ) += gNorm * bAdjusted / siteSizes[3];
+      }
+    }
+  }
+
+//!@}
+
+  /*!
+   * @brief Function call operator for dlib optimization routine
+   * Calculates all terms of the error function gradient for a given set of positions
+   */
   Vector operator() (const Vector& positions) const {
     assert(positions.size() % 4 == 0);
     assert(positions.size() / 4 == N);

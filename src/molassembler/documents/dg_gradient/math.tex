@@ -202,13 +202,13 @@ Another definition of the dihedral angle using merely the inverse cosine is:\\
 \begin{align}\begin{aligned}
   \phiSymbol = \arccos
     \frac{\left[
-      \avgVecDiff{\alpha}{\beta} \times \avgVecDiff{\beta}{\gamma}
+      \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
     \right]\left[
-      \avgVecDiff{\beta}{\gamma} \times \avgVecDiff{\gamma}{\delta}
+      \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
     \right]}{\lvert
-      \avgVecDiff{\alpha}{\beta} \times \avgVecDiff{\beta}{\gamma}
+      \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
     \rvert\lvert
-      \avgVecDiff{\beta}{\gamma} \times \avgVecDiff{\gamma}{\delta}
+      \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
     \rvert
     },
 \end{aligned}\end{align}
@@ -622,9 +622,9 @@ The individual derivatives $\frac{\partial\phi}{\partial\vec{s}_{\alpha}},
 \frac{\partial\phi}{\partial\vec{s}_{\delta}}$ are given as:
 
 \begin{equation}
-  \vec{f} = \avgVecDiff{\alpha}{\beta},
-  \quad\vec{g} = \avgVecDiff{\beta}{\gamma},
-  \quad\vec{h} = \avgVecDiff{\gamma}{\delta},
+  \vec{f} = \avgVecDiff{\beta}{\alpha},
+  \quad\vec{g} = \avgVecDiff{\gamma}{\beta},
+  \quad\vec{h} = \avgVecDiff{\delta}{\gamma},
   \quad\vec{a} = \vec{f} \times \vec{g},
   \quad\vec{b} = \vec{g} \times \vec{h}
 \end{equation}
