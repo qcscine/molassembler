@@ -105,6 +105,14 @@ public:
     const Cycles& etaLessCycles
   );
 
+  /**
+   * @brief Calculates the cross angle between opposite cycle atoms in a spirocenter
+   *
+   * @param alpha The left cycle-internal angle
+   * @param beta The right cycle-internal angle
+   *
+   * @return The cross angle between cycle atoms in the spirocenter
+   */
   static double spiroCrossAngle(double alpha, double beta);
 
   static ValueBounds ligandDistanceFromCenter(
@@ -254,6 +262,8 @@ public:
 
   std::vector<ChiralityConstraint> getChiralityConstraints() const;
 
+  std::vector<DihedralConstraint> getDihedralConstraints() const;
+
   BoundsList makeBoundsList() const;
 
   std::string dumpGraphviz() const;
@@ -293,6 +303,7 @@ private:
 
   //! Chiral constraints
   std::vector<ChiralityConstraint> _chiralConstraints;
+  std::vector<DihedralConstraint> _dihedralConstraints;
 };
 
 } // namespace DistanceGeometry

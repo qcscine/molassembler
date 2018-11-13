@@ -54,6 +54,7 @@ Molecule narrow(Molecule molecule);
 struct MoleculeDGInformation {
   SpatialModel::BoundsList bounds;
   std::vector<ChiralityConstraint> chiralityConstraints;
+  std::vector<DihedralConstraint> dihedralConstraints;
 };
 
 //! Collects intermediate conformational data about a Molecule using a spatial model

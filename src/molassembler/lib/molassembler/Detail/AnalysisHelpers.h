@@ -166,6 +166,7 @@ void writeDGPOVandProgressFiles(
     progressFile
       << refinementStep.distanceError << ","
       << refinementStep.chiralError << ","
+      << refinementStep.dihedralError << ","
       << refinementStep.fourthDimError << ","
       << dlib::length(refinementStep.gradient) << ","
       << static_cast<unsigned>(refinementStep.compress) << ","

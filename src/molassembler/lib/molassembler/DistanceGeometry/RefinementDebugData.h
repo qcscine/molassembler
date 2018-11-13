@@ -28,6 +28,7 @@ struct RefinementStepData {
   dlib::matrix<double, 0, 1> positions;
   double distanceError;
   double chiralError;
+  double dihedralError;
   double fourthDimError;
   dlib::matrix<double, 0, 1> gradient;
   double proportionCorrectChiralityConstraints;
@@ -37,6 +38,7 @@ struct RefinementStepData {
     dlib::matrix<double, 0, 1> passPositions,
     const double passDistanceError,
     const double passChiralError,
+    const double passDihedralError,
     const double passFourthDimError,
     dlib::matrix<double, 0, 1> passGradient,
     const double passProportionCorrectChiralityConstraints,
@@ -44,6 +46,7 @@ struct RefinementStepData {
   ) : positions(std::move(passPositions)),
       distanceError(passDistanceError),
       chiralError(passChiralError),
+      dihedralError(passDihedralError),
       fourthDimError(passFourthDimError),
       gradient(std::move(passGradient)),
       proportionCorrectChiralityConstraints(passProportionCorrectChiralityConstraints),

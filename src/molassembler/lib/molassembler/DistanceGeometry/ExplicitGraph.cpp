@@ -358,7 +358,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix() noexcept {
 }
 
 outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality partiality) noexcept {
-  unsigned N = _molecule.graph().N();
+  const unsigned N = _molecule.graph().N();
 
   Eigen::MatrixXd distancesMatrix;
   distancesMatrix.resize(N, N);
@@ -376,7 +376,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
 
   temple::random::shuffle(indices, randomnessEngine());
 
-  unsigned M = boost::num_vertices(_graph);
+  const unsigned M = boost::num_vertices(_graph);
   std::vector<double> distances (M);
   using ColorMapType = boost::two_bit_color_map<>;
   ColorMapType color_map {M};

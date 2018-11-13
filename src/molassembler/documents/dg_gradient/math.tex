@@ -14,10 +14,6 @@
 \renewcommand{\baselinestretch}{1.5}
 \setlength{\parindent}{0pt}
 
-% TODO in the second phi definition, maybe reverse all the vectors (it's
-% equivalent) to match the first one. It does have an effect on the derivatives,
-% whereever the vectors themselves are used, it would reverse the sign
-
 \begin{document}
 \small
 
@@ -595,8 +591,9 @@ Finally, we consider $\circled{5}$. The chain rule yields:
     \partialPosVec{\xi} \max\left(0, h(\phi)\right),
 \end{equation}
 
-where we have abbreviated the complicated expression in the maximum function
-with $h(\phi)$. The first maximum function adequately covers the case
+where we have abbreviated the dihedral expression in the maximum function
+with $h(\phi)$. We can drop the wrapping maximum function in the derivative
+since the first maximum function adequately covers the case
 $h(\phi) < 0$. Employing the chain rule yet again, we note 
 $\partialPosVec{\xi} h(\phi) = \frac{\partial h}{\partial \phi}
 \frac{\partial \phi}{\partial \vec{r}_{\xi}}$. The first part is:

@@ -188,6 +188,7 @@ MoleculeDGInformation gatherDGInformation(
   MoleculeDGInformation data;
   data.bounds = spatialModel.makeBoundsList();
   data.chiralityConstraints = spatialModel.getChiralityConstraints();
+  data.dihedralConstraints = spatialModel.getDihedralConstraints();
 
   return data;
 }
@@ -206,6 +207,7 @@ MoleculeDGInformation gatherDGInformation(
   MoleculeDGInformation data;
   data.bounds = spatialModel.makeBoundsList();
   data.chiralityConstraints = spatialModel.getChiralityConstraints();
+  data.dihedralConstraints = spatialModel.getDihedralConstraints();
 
   return data;
 }
@@ -404,7 +406,8 @@ std::list<RefinementData> debugRefinement(
     ) {
       errfValue<false> valueFunctor {
         squaredBounds,
-        DGData.chiralityConstraints
+        DGData.chiralityConstraints,
+        DGData.dihedralConstraints
       };
 
       dlibAdaptors::debugIterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
@@ -419,7 +422,8 @@ std::list<RefinementData> debugRefinement(
         valueFunctor,
         errfGradient<false>(
           squaredBounds,
-          DGData.chiralityConstraints
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
         ),
         dlibPositions,
         0
@@ -427,7 +431,7 @@ std::list<RefinementData> debugRefinement(
 
       // Handle inversion failure (hit step limit)
       if(
-        inversionStopStrategy.iterations > configuration.refinementStepLimit
+        inversionStopStrategy.iterations >= configuration.refinementStepLimit
         || errfDetail::proportionChiralityConstraintsCorrectSign(
           DGData.chiralityConstraints,
           dlibPositions
@@ -454,7 +458,8 @@ std::list<RefinementData> debugRefinement(
 
     errfValue<true> refinementValueFunctor {
       squaredBounds,
-      DGData.chiralityConstraints
+      DGData.chiralityConstraints,
+      DGData.dihedralConstraints
     };
 
     dlibAdaptors::debugIterationOrGradientNormStopStrategy refinementStopStrategy {
@@ -470,7 +475,8 @@ std::list<RefinementData> debugRefinement(
       refinementValueFunctor,
       errfGradient<true>(
         squaredBounds,
-        DGData.chiralityConstraints
+        DGData.chiralityConstraints,
+        DGData.dihedralConstraints
       ),
       dlibPositions,
       0
@@ -484,6 +490,7 @@ std::list<RefinementData> debugRefinement(
     bool structureAcceptable = errfDetail::finalStructureAcceptable(
       distanceBounds,
       DGData.chiralityConstraints,
+      DGData.dihedralConstraints,
       dlibPositions
     );
 
@@ -491,6 +498,7 @@ std::list<RefinementData> debugRefinement(
       errfDetail::explainFinalContributions(
         distanceBounds,
         DGData.chiralityConstraints,
+        DGData.dihedralConstraints,
         dlibPositions
       );
     }
@@ -526,6 +534,7 @@ std::list<RefinementData> debugRefinement(
           errfDetail::explainAcceptanceFailure(
             distanceBounds,
             DGData.chiralityConstraints,
+            DGData.dihedralConstraints,
             dlibPositions
           );
         }
@@ -700,11 +709,13 @@ outcome::result<
         inversionStopStrategy,
         errfValue<false>(
           squaredBounds,
-          DGData.chiralityConstraints
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
         ),
         errfGradient<false>(
           squaredBounds,
-          DGData.chiralityConstraints
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
         ),
         dlibPositions,
         0
@@ -737,11 +748,13 @@ outcome::result<
       refinementStopStrategy,
       errfValue<true>(
         squaredBounds,
-        DGData.chiralityConstraints
+        DGData.chiralityConstraints,
+        DGData.dihedralConstraints
       ),
       errfGradient<true>(
         squaredBounds,
-        DGData.chiralityConstraints
+        DGData.chiralityConstraints,
+        DGData.dihedralConstraints
       ),
       dlibPositions,
       0
@@ -755,6 +768,7 @@ outcome::result<
     bool structureAcceptable = errfDetail::finalStructureAcceptable(
       distanceBounds,
       DGData.chiralityConstraints,
+      DGData.dihedralConstraints,
       dlibPositions
     );
 

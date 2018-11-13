@@ -93,12 +93,14 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 
     errfValue<false> valueFunctor {
       squaredBounds,
-      DGInfo.chiralityConstraints
+      DGInfo.chiralityConstraints,
+      DGInfo.dihedralConstraints
     };
 
     errfGradient<false> gradientFunctor {
       squaredBounds,
-      DGInfo.chiralityConstraints
+      DGInfo.chiralityConstraints,
+      DGInfo.dihedralConstraints
     };
 
     // Finite difference is calculated to 1e-7 precision
@@ -134,12 +136,14 @@ BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
 
     errfValue<true> compressingValueFunctor {
       squaredBounds,
-      DGInfo.chiralityConstraints
+      DGInfo.chiralityConstraints,
+      DGInfo.dihedralConstraints
     };
 
     errfGradient<true> compressingGradientFunctor {
       squaredBounds,
-      DGInfo.chiralityConstraints
+      DGInfo.chiralityConstraints,
+      DGInfo.dihedralConstraints
     };
 
     Vector compressedFiniteDifferenceGradient = dlib::derivative(compressingValueFunctor)(dlibPositions);
@@ -218,7 +222,8 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
 
     errfValue<true> valueFunctor {
       squaredBounds,
-      DGData.chiralityConstraints
+      DGData.chiralityConstraints,
+      DGData.dihedralConstraints
     };
 
     // get a value
@@ -340,7 +345,8 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
 
     errfGradient<true> gradientFunctor {
       squaredBounds,
-      DGData.chiralityConstraints
+      DGData.chiralityConstraints,
+      DGData.dihedralConstraints
     };
 
     const unsigned N = referencePositions.size() / 4;

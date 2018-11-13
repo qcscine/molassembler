@@ -77,6 +77,7 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
       positions,
       valueFunctor.distanceError(positions),
       valueFunctor.chiralError(positions),
+      valueFunctor.dihedralError(positions),
       valueFunctor.extraDimensionError(positions),
       gradient,
       errfDetail::proportionChiralityConstraintsCorrectSign(
@@ -147,6 +148,7 @@ struct debugIterationOrGradientNormStopStrategy {
       positions,
       valueFunctor.distanceError(positions),
       valueFunctor.chiralError(positions),
+      valueFunctor.dihedralError(positions),
       valueFunctor.extraDimensionError(positions),
       gradient,
       errfDetail::proportionChiralityConstraintsCorrectSign(

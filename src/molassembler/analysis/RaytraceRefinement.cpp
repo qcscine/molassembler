@@ -54,6 +54,11 @@ int main(int argc, char* argv[]) {
       "Set metrization partiality option (Default: full)"
     )
     (
+      "steps,s",
+      boost::program_options::value<unsigned>(),
+      "Alter the maximum number of refinement steps (Default: 10'000)"
+    )
+    (
       "contributions,c",
       boost::program_options::bool_switch(&showFinalContributions),
       "Show the final contributions to the refinement error functions"
@@ -109,6 +114,11 @@ int main(int argc, char* argv[]) {
     Log::particulars.insert(Log::Particulars::DGFinalErrorContributions);
   }
 
+  unsigned nSteps = 10000;
+  if(options_variables_map.count("steps") > 0) {
+    nSteps = options_variables_map["steps"].as<unsigned>();
+  }
+
 /* Generating work */
   // Generate from file
   if(options_variables_map.count("from_file") == 1) {
@@ -132,7 +142,9 @@ int main(int argc, char* argv[]) {
 
     DistanceGeometry::Configuration DGConfiguration;
     DGConfiguration.partiality = metrizationOption;
+    DGConfiguration.refinementStepLimit = nSteps;
 
+#ifndef NDEBUG
     auto debugData = DistanceGeometry::debugRefinement(
       mol,
       nStructures,
@@ -172,5 +184,27 @@ int main(int argc, char* argv[]) {
     if(failures > 0) {
       std::cout << "WARNING: " << failures << " refinements failed." << std::endl;
     }
+#else
+    auto conformers = DistanceGeometry::run(
+      mol,
+      nStructures,
+      DGConfiguration
+    );
+
+    if(!conformers) {
+      std::cout << "All conformer generations failed." << std::endl;
+      return 1;
+    }
+
+    unsigned i = 0;
+    for(const AngstromWrapper& generatedPositions : conformers.value()) {
+      IO::write(
+        filestem + "-"s + std::to_string(i) + "-last.mol"s,
+        mol,
+        generatedPositions
+      );
+      ++i;
+    }
+#endif
   }
 }

@@ -13,19 +13,21 @@ filedata <- read.csv(
 # format is
 # V1 - distanceError
 # V2 - chiralError
-# V3 - fourthDimError
-# V4 - gradient norm
-# V5 - compress
-# V6 - fraction correct
+# V3 - dihedralError
+# V4 - fourthDimError
+# V5 - gradient norm
+# V6 - compress
+# V7 - fraction correct
 
 distanceError <- filedata$V1
 chiralError <- filedata$V2
-fourthDimError <- filedata$V3
-gradientNorm <- filedata$V4
-compress <- filedata$V5
-proportionCorrect <- filedata$V6
+dihedralError <- filedata$V3
+fourthDimError <- filedata$V4
+gradientNorm <- filedata$V5
+compress <- filedata$V6
+proportionCorrect <- filedata$V7
 
-error <- distanceError + chiralError + fourthDimError
+error <- distanceError + chiralError + dihedralError + fourthDimError
 
 
 xSeq <- seq(1, length(error))
@@ -60,11 +62,13 @@ plot(
     min(
       distanceError[which(distanceError > 0)],
       chiralError[which(chiralError > 0)],
+      dihedralError[which(dihedralError > 0)],
       fourthDimError[which(fourthDimError > 0)]
     ),
     max(
       distanceError[which(distanceError > 0)],
       chiralError[which(chiralError > 0)],
+      dihedralError[which(dihedralError > 0)],
       fourthDimError[which(fourthDimError > 0)]
     )
   ),
@@ -90,6 +94,13 @@ lines(
   xSeq,
   chiralError,
   col="tomato",
+  lwd=2
+)
+
+lines(
+  xSeq,
+  dihedralError,
+  col="slateblue",
   lwd=2
 )
 
@@ -122,6 +133,13 @@ lines(
   xSeq,
   chiralError / error,
   col="tomato",
+  lwd=2
+)
+
+lines(
+  xSeq,
+  dihedralError / error,
+  col="slateblue",
   lwd=2
 )
 

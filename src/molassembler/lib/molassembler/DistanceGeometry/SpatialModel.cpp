@@ -1118,28 +1118,6 @@ void SpatialModel::addBondStereopermutatorInformation(
     : stereopermutatorA
   );
 
-  // To determine the maximal sine value of bounds, we use boost's help
-  auto sinBounds = [](const ValueBounds angleBounds) -> ValueBounds {
-    using boostInterval = boost::numeric::interval<
-      double,
-      boost::numeric::interval_lib::policies<
-        boost::numeric::interval_lib::save_state<
-          boost::numeric::interval_lib::rounded_transc_std<double>
-        >,
-        boost::numeric::interval_lib::checking_base<double>
-      >
-    >;
-
-    auto transformedInterval = boost::numeric::sin(
-      boostInterval(angleBounds.lower, angleBounds.upper)
-    );
-
-    return {
-      boost::numeric::lower(transformedInterval),
-      boost::numeric::upper(transformedInterval)
-    };
-  };
-
   /* Only dihedrals */
   unsigned firstSymmetryPosition, secondSymmetryPosition;
   double dihedralAngle;
@@ -1151,8 +1129,6 @@ void SpatialModel::addBondStereopermutatorInformation(
       firstSymmetryPosition,
       firstStereopermutator.getSymmetryPositionMap()
     );
-    unsigned ligandIndexKAtFirst = firstStereopermutator.getRanking().getLigandIndexOf(secondStereopermutator.centralIndex());
-    unsigned ligandIndexJAtSecond = secondStereopermutator.getRanking().getLigandIndexOf(firstStereopermutator.centralIndex());
     unsigned ligandIndexLAtSecond = SymmetryMapHelper::getLigandIndexAt(
       secondSymmetryPosition,
       secondStereopermutator.getSymmetryPositionMap()
@@ -1179,14 +1155,17 @@ void SpatialModel::addBondStereopermutatorInformation(
 
     /* If the width of the dihedral angle is now larger than 2π, then we may
      * overrepresent some dihedral values when choosing randomly in that
-     * interval, and it is preferable to reset the interval to (-π,π].
+     * interval, and it is preferable just not to emit a dihedral constraint or
+     * enter any dihedral distance information (the default values are covered
+     * by addDefaultDihedrals).
      *
-     * This should be very rare, and is just a safeguard.
+     * This should be very rare or not occur at all; it's just a safeguard.
      */
     if(dihedralBounds.upper - dihedralBounds.lower >= 2 * M_PI) {
-      dihedralBounds = defaultDihedralBounds;
+      continue;
     }
 
+    // Set per-atom sequence dihedral distance bounds
     temple::forEach(
       temple::adaptors::allPairs(
         firstStereopermutator.getRanking().ligands.at(ligandIndexIAtFirst),
@@ -1205,98 +1184,16 @@ void SpatialModel::addBondStereopermutatorInformation(
       }
     );
 
-    /* TODO a, c, alphaSineBounds and betaSineBounds must be modified by cone
-     * angles
-     */
-
-    /* Figure out tolerance from interal bounds on bonds, angles and dihedral
-     * - a is the ligand distance from the firstStereopermutator to the
-     *   ligand at the symmetry position given by the composite
-     * - b is the bond distance between firstStereopermutator and
-     *   secondStereopermutator
-     * - c is the ligand distance from the secondStereopermutator to the
-     *   ligand at the symmetry position given by the composite
-     * - alpha is the angle between the secondStereopermutator and the ligand
-     *   at the symmetry position given by the composite at the
-     *   firstStereopermutator
-     * - beta is the angle between the firstStereopermutator and the ligand
-     *   at the symmetry position given by the composite at the
-     *   secondStereopermutator
-     * - phi is the dihedralAngle (this doesn't really have any bounds yet,
-     *   which we add using the dihedralAbsoluteVariance)
-     */
-    ValueBounds a = firstStereopermutator.getPermutationState().ligandDistances.at(ligandIndexIAtFirst);
-    ValueBounds b = _bondBounds.at(
-      orderedSequence(firstStereopermutator.centralIndex(), secondStereopermutator.centralIndex())
-    );
-    ValueBounds c = secondStereopermutator.getPermutationState().ligandDistances.at(ligandIndexLAtSecond);
-
-    /* Construct bounds for the central values and then determine the maximal
-     * sine value for each set of bounds when determining the volume
-     */
-    ValueBounds alphaSineBounds = sinBounds(
-      clamp(
-        makeBoundsFromCentralValue(
-          firstStereopermutator.angle(ligandIndexIAtFirst, ligandIndexKAtFirst),
-          angleAbsoluteVariance * looseningMultiplier
-        ),
-        angleClampBounds
-      )
-    );
-    ValueBounds betaSineBounds = sinBounds(
-      clamp(
-        makeBoundsFromCentralValue(
-          secondStereopermutator.angle(ligandIndexJAtSecond, ligandIndexLAtSecond),
-          angleAbsoluteVariance * looseningMultiplier
-        ),
-        angleClampBounds
-      )
-    );
-
-    /* NOTE: no clamp! Best to let the sine take care of periodicity for us
-     * Also: this dihedral needs to be computed anew as it indicates the
-     * dihedral between the ligand site center of masses. They are not the
-     * per-atom dihedral bounds (which are modified by the ligands' cone
-     * angles).
-     */
-    ValueBounds phiSineBounds = sinBounds(
-      makeBoundsFromCentralValue(
-        std::fabs(dihedralAngle),
-        dihedralAbsoluteVariance * looseningMultiplier
-      )
-    );
-
-    /* min and max have to be understood more in terms of most negative and
-     * most positive.
-     *
-     * The phi sine bounds can be negative (as opposed to all other bounds)
-     * and hence, if the lower phi sine bound is negative, then the most
-     * negative value can be achieved with the upper value of all other bounds.
-     *
-     * If the lower phi sine bound is positive, then the minimal value is
-     * achieved with the lower value of all bounds.
-     */
-    double minVolume, maxVolume;
-    if(phiSineBounds.lower < 0 && phiSineBounds.upper > 0) {
-      double baseVolume = a.upper * b.upper * c.upper * alphaSineBounds.upper * betaSineBounds.upper;
-      minVolume = baseVolume * phiSineBounds.lower;
-      maxVolume = baseVolume * phiSineBounds.upper;
-    } else {
-      minVolume = a.lower * b.lower * c.lower * alphaSineBounds.lower * betaSineBounds.lower * phiSineBounds.lower;
-      minVolume = a.upper * b.upper * c.upper * alphaSineBounds.upper * betaSineBounds.upper * phiSineBounds.upper;
-    }
-
-    assert(minVolume < maxVolume);
-
-    _chiralConstraints.emplace_back(
-      DistanceGeometry::ChiralityConstraint::LigandSequence {
+    // Add a dihedral constraint
+    _dihedralConstraints.emplace_back(
+      DihedralConstraint::LigandSequence {
         firstStereopermutator.getRanking().ligands.at(ligandIndexIAtFirst),
         {firstStereopermutator.centralIndex()},
         {secondStereopermutator.centralIndex()},
         secondStereopermutator.getRanking().ligands.at(ligandIndexLAtSecond)
       },
-      minVolume,
-      maxVolume
+      dihedralBounds.lower,
+      dihedralBounds.upper
     );
   }
 }
@@ -1433,7 +1330,7 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
   auto getBondBounds = [&bounds](
     const AtomIndex i,
     const AtomIndex j
-  ) -> ValueBounds& {
+  ) -> const ValueBounds& {
     return bounds.at(
       orderedSequence(i, j)
     );
@@ -1562,6 +1459,10 @@ ValueBounds SpatialModel::ligandDistance(
 
 std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
   return _chiralConstraints;
+}
+
+std::vector<DistanceGeometry::DihedralConstraint> SpatialModel::getDihedralConstraints() const {
+  return _dihedralConstraints;
 }
 
 void SpatialModel::dumpDebugInfo() const {

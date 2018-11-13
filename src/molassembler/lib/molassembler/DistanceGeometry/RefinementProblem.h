@@ -194,6 +194,7 @@ double proportionChiralityConstraintsCorrectSign(
  *
  * @param bounds The distance bounds
  * @param chiralityConstraints All chirality constraints
+ * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  *
  * @return Whether the final structure is acceptable
@@ -201,6 +202,7 @@ double proportionChiralityConstraintsCorrectSign(
 bool finalStructureAcceptable(
   const DistanceBoundsMatrix& bounds,
   const std::vector<ChiralityConstraint>& chiralityConstraints,
+  const std::vector<DihedralConstraint>& dihedralConstraints,
   const Vector& positions
 );
 
@@ -215,11 +217,13 @@ bool finalStructureAcceptable(
  *
  * @param bounds The distance bounds
  * @param chiralityConstraints All chirality constraints
+ * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  */
 void explainAcceptanceFailure(
   const DistanceBoundsMatrix& bounds,
   const std::vector<ChiralityConstraint>& chiralityConstraints,
+  const std::vector<DihedralConstraint>& dihedralConstraints,
   const Vector& positions
 );
 
@@ -229,11 +233,13 @@ void explainAcceptanceFailure(
  *
  * @param bounds The distance bounds
  * @param chiralityConstraints All chirality constraints
+ * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  */
 void explainFinalContributions(
   const DistanceBoundsMatrix& bounds,
   const std::vector<ChiralityConstraint>& chiralityConstraints,
+  const std::vector<DihedralConstraint>& dihedralConstraints,
   const Vector& positions
 );
 
@@ -374,7 +380,7 @@ struct errfValue {
     double error = 0, phi, constraintSumHalved, term;
 
     for(const auto& constraint : dihedralConstraints) {
-      phi = dihedralAngle(positions, constraint.sites);
+      phi = errfDetail::dihedralAngle(positions, constraint.sites);
 
       constraintSumHalved = (constraint.lower + constraint.upper) / 2;
 
@@ -422,17 +428,23 @@ struct errfValue {
 
     // Evaluation of addition proceeds left-to-right
     if(compress) {
-      // After chiral inversion, generally: distance >> chiral > extraDim
+      /* After chiral inversion, generally:
+       * distance >> dihedral ~ chiral > extraDim
+       */
       return (
         extraDimensionError(positions)
         + chiralError(positions)
         + distanceError(positions)
+        + dihedralError(positions)
       );
     }
 
-    // Before chiral inversion, typically: chiral >> distance
+    /* Before chiral inversion, typically:
+     * chiral >> dihedral ~ distance
+     */
     return (
       distanceError(positions)
+      + dihedralError(positions)
       + chiralError(positions)
     );
   }
@@ -769,17 +781,22 @@ public:
     }
   }
 
-  inline void addDihedralConstributions(
-    const Vector& positions,
-    Vector& gradient
+  /**
+   * @brief Adds the contribution of all dihedral constraints to a gradient vector
+   *
+   * @param gradient The gradient vector to add dihedral constraint
+   *   contributions to
+   * @param positions The current positions vector
+   */
+  inline void addDihedralContributions(
+    Vector& gradient,
+    const Vector& positions
   ) const {
-    double phi, constraintSumHalved, w_phi, h_phi;
-
-    for(const auto& constraint : dihedralConstraints) {
-      const dlib::vector<double, 3> alpha = getAveragePos3D(positions, constraint.sites[0]);
-      const dlib::vector<double, 3> beta = getAveragePos3D(positions, constraint.sites[1]);
-      const dlib::vector<double, 3> gamma = getAveragePos3D(positions, constraint.sites[2]);
-      const dlib::vector<double, 3> delta = getAveragePos3D(positions, constraint.sites[3]);
+    for(const DihedralConstraint& constraint : dihedralConstraints) {
+      const dlib::vector<double, 3> alpha = errfDetail::getAveragePos3D(positions, constraint.sites[0]);
+      const dlib::vector<double, 3> beta = errfDetail::getAveragePos3D(positions, constraint.sites[1]);
+      const dlib::vector<double, 3> gamma = errfDetail::getAveragePos3D(positions, constraint.sites[2]);
+      const dlib::vector<double, 3> delta = errfDetail::getAveragePos3D(positions, constraint.sites[3]);
 
       const dlib::vector<double, 3> f = beta - alpha;
       const dlib::vector<double, 3> g = gamma - beta;
@@ -788,14 +805,14 @@ public:
       const dlib::vector<double, 3> a = f.cross(g);
       const dlib::vector<double, 3> b = g.cross(h);
 
-      phi = std::atan2(
+      double phi = std::atan2(
         a.cross(b).dot(
           dlib::normalize(g)
         ),
         a.dot(b)
       );
 
-      constraintSumHalved = (constraint.lower + constraint.upper) / 2;
+      const double constraintSumHalved = (constraint.lower + constraint.upper) / 2;
 
       if(phi < constraintSumHalved - M_PI) {
         phi += 2 * M_PI;
@@ -803,12 +820,12 @@ public:
         phi -= 2 * M_PI;
       }
 
-      w_phi = phi - constraintSumHalved;
+      const double w_phi = phi - constraintSumHalved;
 
-      h_phi = std::fabs(w_phi) - (constraint.upper - constraint.lower) / 2;
+      double h_phi = std::fabs(w_phi) - (constraint.upper - constraint.lower) / 2;
 
       /* "Apply the max function": If h <= 0, then the max function yields zero,
-       * so we can skip this
+       * so we can skip this constraint
        */
       if(h_phi <= 0) {
         continue;
@@ -823,7 +840,7 @@ public:
       h_phi *= 2.0;
 
       // Precompute some reused expressions
-      const double gNorm = dlib::norm(g);
+      const double gNorm = dlib::length(g);
       const dlib::vector<double, 3> aAdjusted = a / dlib::length_squared(a);
       const dlib::vector<double, 3> bAdjusted = b / dlib::length_squared(b);
       std::array<unsigned, 4> siteSizes;
@@ -833,40 +850,40 @@ public:
       const double fDotG = f.dot(g);
       const double gDotH = g.dot(h);
 
-      for(const auto& alphaConstitutingIndex : constraint.sites[0]) {
+      for(const AtomIndex alphaConstitutingIndex : constraint.sites[0]) {
         dlib::set_rowm(
           gradient,
           dlib::range(4 * alphaConstitutingIndex, 4 * alphaConstitutingIndex + 2)
-        ) -= gNorm * aAdjusted / siteSizes[0];
+        ) -= h_phi * gNorm * aAdjusted / siteSizes[0];
       }
 
-      for(const auto& betaConstitutingIndex: constraint.sites[1]) {
+      for(const AtomIndex betaConstitutingIndex: constraint.sites[1]) {
         dlib::set_rowm(
           gradient,
           dlib::range(4 * betaConstitutingIndex, 4 * betaConstitutingIndex + 2)
-        ) += (
+        ) += h_phi * (
           gNorm * aAdjusted
           + fDotG * aAdjusted / gNorm
           - gDotH * bAdjusted / gNorm
         ) / siteSizes[1];
       }
 
-      for(const auto& gammaConstitutingIndex : constraint.sites[3]) {
+      for(const AtomIndex gammaConstitutingIndex : constraint.sites[2]) {
         dlib::set_rowm(
           gradient,
           dlib::range(4 * gammaConstitutingIndex, 4 * gammaConstitutingIndex + 2)
-        ) += (
+        ) += h_phi * (
           - gNorm * bAdjusted
           + gDotH * bAdjusted / gNorm
           - fDotG * aAdjusted / gNorm
         ) / siteSizes[2];
       }
 
-      for(const auto& deltaConstitutingIndex : constraint.sites[3]) {
+      for(const AtomIndex deltaConstitutingIndex : constraint.sites[3]) {
         dlib::set_rowm(
           gradient,
           dlib::range(4 * deltaConstitutingIndex, 4 * deltaConstitutingIndex + 2)
-        ) += gNorm * bAdjusted / siteSizes[3];
+        ) += h_phi * gNorm * bAdjusted / siteSizes[3];
       }
     }
   }
@@ -935,6 +952,9 @@ public:
         );
       }
     }
+
+    // Add dihedral errors
+    addDihedralContributions(gradient, positions);
 
     // Fourth dimension contribution (E)
     if(compress) {
