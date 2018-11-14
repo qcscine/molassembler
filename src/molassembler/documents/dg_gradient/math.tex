@@ -193,18 +193,18 @@ index sets:
 % TODO cite karplus from the wikipedia reference
 Here we have used a three-vector dihedral angle definition and inserted
 the index set average-position differences that constitute the dihedral angle.
-Another definition of the dihedral angle using merely the inverse cosine is:\\
+Another definition of the dihedral angle with merely the inverse cosine is:\\
 
 \begin{align}\begin{aligned}
   \phiSymbol = \arccos
     \frac{\left[
-      \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
+      \avgVecDiff{\alpha}{\beta} \times \avgVecDiff{\beta}{\gamma}
     \right]\left[
-      \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
+      \avgVecDiff{\beta}{\gamma} \times \avgVecDiff{\delta}{\gamma}
     \right]}{\lvert
-      \avgVecDiff{\beta}{\alpha} \times \avgVecDiff{\gamma}{\beta}
+      \avgVecDiff{\alpha}{\beta} \times \avgVecDiff{\beta}{\gamma}
     \rvert\lvert
-      \avgVecDiff{\gamma}{\beta} \times \avgVecDiff{\delta}{\gamma}
+      \avgVecDiff{\beta}{\gamma} \times \avgVecDiff{\delta}{\gamma}
     \rvert
     },
 \end{aligned}\end{align}
@@ -302,7 +302,7 @@ the Kronecker delta. So, in total:
   }_{f(i, j)}
 \end{equation}
 
-We can transform the summation further using the Kronecker deltas:
+We can transform the summation further with Kronecker deltas:
 \begin{align}
   \ijNSum \left( \delta_{\xi j} - \delta_{\xi i} \right) f(i, j)
   &= \sum_{i = 1}^{\xi - 1} f(i, \xi) 
@@ -619,11 +619,11 @@ The individual derivatives $\frac{\partial\phi}{\partial\vec{s}_{\alpha}},
 \frac{\partial\phi}{\partial\vec{s}_{\delta}}$ are given as:
 
 \begin{equation}
-  \vec{f} = \avgVecDiff{\beta}{\alpha},
-  \quad\vec{g} = \avgVecDiff{\gamma}{\beta},
+  \vec{f} = \avgVecDiff{\alpha}{\beta},
+  \quad\vec{g} = \avgVecDiff{\beta}{\gamma},
   \quad\vec{h} = \avgVecDiff{\delta}{\gamma},
   \quad\vec{a} = \vec{f} \times \vec{g},
-  \quad\vec{b} = \vec{g} \times \vec{h}
+  \quad\vec{b} = \vec{h} \times \vec{g}
 \end{equation}
 
 \begin{align}\begin{aligned}

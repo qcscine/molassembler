@@ -45,7 +45,7 @@ bool isApprox(
   );
 }
 
-BOOST_AUTO_TEST_CASE( cppoptlibGradientCorrectnessCheck ) {
+BOOST_AUTO_TEST_CASE( numericDifferentiationApproximatesGradients ) {
   using Vector = dlib::matrix<double, 0, 1>;
 
   Log::level = Log::Level::None;
@@ -229,10 +229,12 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
     // get a value
     const double referenceDistanceError = valueFunctor.distanceError(referencePositions);
     const double referenceChiralError = valueFunctor.chiralError(referencePositions);
+    const double referenceDihedralError = valueFunctor.dihedralError(referencePositions);
     const double referenceExtraDimError = valueFunctor.extraDimensionError(referencePositions);
 
     bool distanceErrorRotTransInvariant = true;
     bool chiralErrorRotTransInvariant = true;
+    bool dihedralErrorRotTransInvariant = true;
     bool extraDimErrorRotTransInvariant = true;
 
     for(unsigned testNum = 0; testNum < 100; testNum++) {
@@ -261,6 +263,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
 
       const double transformedDistanceError = valueFunctor.distanceError(vectorizedPositions);
       const double transformedChiralError = valueFunctor.chiralError(vectorizedPositions);
+      const double transformedDihedralError = valueFunctor.dihedralError(vectorizedPositions);
       const double transformedExtraDimError = valueFunctor.extraDimensionError(vectorizedPositions);
 
       if(
@@ -283,6 +286,15 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       }
 
       if(
+        dihedralErrorRotTransInvariant
+        && std::fabs(transformedDihedralError - referenceDihedralError) > 1e-10
+      ) {
+        std::cout << "RefinementProblem dihedral error is not 3D rot-trans "
+          << "invariant for " << currentFilePath.string() << "." << std::endl;
+        dihedralErrorRotTransInvariant = false;
+      }
+
+      if(
         extraDimErrorRotTransInvariant
         && std::fabs(transformedExtraDimError - referenceExtraDimError) > 1e-10
       ) {
@@ -296,6 +308,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
 
     BOOST_CHECK(distanceErrorRotTransInvariant);
     BOOST_CHECK(chiralErrorRotTransInvariant);
+    BOOST_CHECK(dihedralErrorRotTransInvariant);
     BOOST_CHECK(extraDimErrorRotTransInvariant);
   }
 }
@@ -327,7 +340,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
 
-    // Vectorize the positions for use with cppoptlib
+    // Vectorize the positions for use with dlib
     errfValue<true>::Vector referencePositions = dlib::mat(
       static_cast<Eigen::VectorXd>(
           Eigen::Map<Eigen::VectorXd>(
@@ -358,6 +371,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     referenceGradients.emplace_back(gradientFunctor.referenceB(referencePositions));
     referenceGradients.emplace_back(gradientFunctor.referenceC(referencePositions));
     referenceGradients.emplace_back(gradientFunctor.referenceD(referencePositions));
+    referenceGradients.emplace_back(gradientFunctor.referenceDihedral(referencePositions));
 
     assert(
       temple::all_of(
@@ -377,6 +391,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       + referenceGradients.at(1)
       + referenceGradients.at(2)
       + referenceGradients.at(3)
+      + referenceGradients.at(4)
     );
 
     BOOST_CHECK_MESSAGE(
@@ -430,11 +445,13 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       rotatedGradients.emplace_back(gradientFunctor.referenceB(rotatedPositions));
       rotatedGradients.emplace_back(gradientFunctor.referenceC(rotatedPositions));
       rotatedGradients.emplace_back(gradientFunctor.referenceD(rotatedPositions));
+      rotatedGradients.emplace_back(gradientFunctor.referenceDihedral(rotatedPositions));
 
       translatedGradients.emplace_back(gradientFunctor.referenceA(translatedPositions));
       translatedGradients.emplace_back(gradientFunctor.referenceB(translatedPositions));
       translatedGradients.emplace_back(gradientFunctor.referenceC(translatedPositions));
       translatedGradients.emplace_back(gradientFunctor.referenceD(translatedPositions));
+      translatedGradients.emplace_back(gradientFunctor.referenceDihedral(translatedPositions));
 
       // Transform the rotated gradients
       auto rotatedReferenceGradients = referenceGradients;

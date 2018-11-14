@@ -502,8 +502,8 @@ public:
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
 
-    for(unsigned alpha = 0; alpha < N; alpha++) {
-      for(unsigned i = 0; i < N; i++) {
+    for(unsigned alpha = 0; alpha < N; ++alpha) {
+      for(unsigned i = 0; i < N; ++i) {
         if(i == alpha) { // skip identical indices
           continue;
         }
@@ -543,8 +543,8 @@ public:
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
 
-    for(unsigned alpha = 0; alpha < N; alpha++) {
-      for(unsigned i = 0; i < N; i++) {
+    for(unsigned alpha = 0; alpha < N; ++alpha) {
+      for(unsigned i = 0; i < N; ++i) {
         if(i == alpha) { // skip identical indices
           continue;
         }
@@ -615,38 +615,54 @@ public:
       - errfDetail::getAveragePos3D(positions, constraint.sites[2])
     );
 
+    const dlib::vector<double, 3> iContribution =
+      factor * betaMinusDelta.cross(gammaMinusDelta)
+      / constraint.sites[0].size();
+
+    const dlib::vector<double, 3> jContribution =
+      factor * gammaMinusDelta.cross(alphaMinusDelta)
+      / constraint.sites[1].size();
+
+    const dlib::vector<double, 3> kContribution =
+      factor * alphaMinusDelta.cross(betaMinusDelta)
+      / constraint.sites[2].size();
+
+    const dlib::vector<double, 3> lContribution =
+      factor * betaMinusGamma.cross(alphaMinusGamma)
+      / constraint.sites[3].size();
+
     for(const auto alphaI : constraint.sites[0]) {
       dlib::set_rowm(
         gradient,
         dlib::range(4 * alphaI, 4 * alphaI + 2)
-      ) += factor * betaMinusDelta.cross(gammaMinusDelta) / constraint.sites[0].size();
+      ) += iContribution;
     }
 
     for(const auto betaI : constraint.sites[1]) {
       dlib::set_rowm(
         gradient,
         dlib::range(4 * betaI, 4 * betaI + 2)
-      ) += factor * gammaMinusDelta.cross(alphaMinusDelta) / constraint.sites[1].size();
+      ) += jContribution;
     }
 
     for(const auto gammaI : constraint.sites[2]) {
       dlib::set_rowm(
         gradient,
         dlib::range(4 * gammaI, 4 * gammaI + 2)
-      ) += factor * alphaMinusDelta.cross(betaMinusDelta) / constraint.sites[2].size();
+      ) += kContribution;
     }
 
     for(const auto deltaI : constraint.sites[3]) {
       dlib::set_rowm(
         gradient,
         dlib::range(4 * deltaI, 4 * deltaI + 2)
-      ) += factor * betaMinusGamma.cross(alphaMinusGamma) / constraint.sites[3].size();
+      ) += lContribution;
     }
   }
 
   /**
-   * @brief A reference, unoptimized implementation of the C term (The first
-   * chiral bounds error term)
+   * @brief A reference, unoptimized implementation of the C term (all chiral
+   * error terms)
    *
    * @param positions All positions
    *
@@ -676,8 +692,7 @@ public:
   }
 
   /**
-   * @brief A reference, unoptimized implementation of the D term (The second
-   * chiral bounds error term)
+   * @brief A reference, unoptimized implementation of the D term (compression)
    *
    * @param positions All positions
    *
@@ -689,10 +704,21 @@ public:
     dlib::set_all_elements(gradient, 0);
 
     if(compress) {
-      for(unsigned i = 0; i < N; i++) {
+      for(unsigned i = 0; i < N; ++i) {
         gradient(4 * i + 3) += 2 * positions(4 * i + 3);
       }
     }
+
+    return gradient;
+  }
+
+  Vector referenceDihedral(const Vector& positions) const {
+    Vector gradient(positions.size());
+    dlib::set_all_elements(gradient, 0);
+
+    // Currently no slower reference implementation of the same gradient
+
+    addDihedralContributions(gradient, positions);
 
     return gradient;
   }
@@ -798,16 +824,17 @@ public:
       const dlib::vector<double, 3> gamma = errfDetail::getAveragePos3D(positions, constraint.sites[2]);
       const dlib::vector<double, 3> delta = errfDetail::getAveragePos3D(positions, constraint.sites[3]);
 
-      const dlib::vector<double, 3> f = beta - alpha;
-      const dlib::vector<double, 3> g = gamma - beta;
+      const dlib::vector<double, 3> f = alpha - beta;
+      const dlib::vector<double, 3> g = beta - gamma;
       const dlib::vector<double, 3> h = delta - gamma;
 
-      const dlib::vector<double, 3> a = f.cross(g);
-      const dlib::vector<double, 3> b = g.cross(h);
+      dlib::vector<double, 3> a = f.cross(g);
+      dlib::vector<double, 3> b = h.cross(g);
 
+      // All of the permutations yield identical expressions within atan2 aside from -g
       double phi = std::atan2(
         a.cross(b).dot(
-          dlib::normalize(g)
+          dlib::normalize(-g)
         ),
         a.dot(b)
       );
@@ -831,59 +858,60 @@ public:
         continue;
       }
 
-      // Multiply with sgn (w) -> (-1) if
-      if(w_phi < 0) {
-        h_phi *= -1;
-      }
+      // Multiply with sgn (w)
+      h_phi *= static_cast<int>(0.0 < w_phi) - static_cast<int>(w_phi < 0.0);
 
-      // Add in the prefactor
+      // Multiply in the prefactor
       h_phi *= 2.0;
 
       // Precompute some reused expressions
-      const double gNorm = dlib::length(g);
-      const dlib::vector<double, 3> aAdjusted = a / dlib::length_squared(a);
-      const dlib::vector<double, 3> bAdjusted = b / dlib::length_squared(b);
-      std::array<unsigned, 4> siteSizes;
-      for(unsigned i = 0; i < 4; ++i) {
-        siteSizes[i] = constraint.sites[i].size();
-      }
+      const double gLength = dlib::length(g);
+      a /= dlib::length_squared(a);
+      b /= dlib::length_squared(b);
       const double fDotG = f.dot(g);
       const double gDotH = g.dot(h);
+
+      const dlib::vector<double, 3> iContribution = -(h_phi / constraint.sites[0].size()) * gLength * a;
+
+      const dlib::vector<double, 3> jContribution = (h_phi / constraint.sites[1].size()) * (
+        (gLength + fDotG / gLength) * a
+        - (gDotH / gLength) * b
+      );
+
+      const dlib::vector<double, 3> kContribution = (h_phi / constraint.sites[2].size()) * (
+        (gDotH / gLength - gLength) * b
+        - (fDotG / gLength) * a
+      );
+
+      const dlib::vector<double, 3> lContribution = (h_phi / constraint.sites[3].size()) * gLength * b;
+
 
       for(const AtomIndex alphaConstitutingIndex : constraint.sites[0]) {
         dlib::set_rowm(
           gradient,
           dlib::range(4 * alphaConstitutingIndex, 4 * alphaConstitutingIndex + 2)
-        ) -= h_phi * gNorm * aAdjusted / siteSizes[0];
+        ) += iContribution;
       }
 
       for(const AtomIndex betaConstitutingIndex: constraint.sites[1]) {
         dlib::set_rowm(
           gradient,
           dlib::range(4 * betaConstitutingIndex, 4 * betaConstitutingIndex + 2)
-        ) += h_phi * (
-          gNorm * aAdjusted
-          + fDotG * aAdjusted / gNorm
-          - gDotH * bAdjusted / gNorm
-        ) / siteSizes[1];
+        ) += jContribution;
       }
 
       for(const AtomIndex gammaConstitutingIndex : constraint.sites[2]) {
         dlib::set_rowm(
           gradient,
           dlib::range(4 * gammaConstitutingIndex, 4 * gammaConstitutingIndex + 2)
-        ) += h_phi * (
-          - gNorm * bAdjusted
-          + gDotH * bAdjusted / gNorm
-          - fDotG * aAdjusted / gNorm
-        ) / siteSizes[2];
+        ) += kContribution;
       }
 
       for(const AtomIndex deltaConstitutingIndex : constraint.sites[3]) {
         dlib::set_rowm(
           gradient,
           dlib::range(4 * deltaConstitutingIndex, 4 * deltaConstitutingIndex + 2)
-        ) += h_phi * gNorm * bAdjusted / siteSizes[3];
+        ) += lContribution;
       }
     }
   }
@@ -902,8 +930,8 @@ public:
     dlib::set_all_elements(gradient, 0);
 
     // Distance gradient contributions (A and B)
-    for(unsigned alpha = 0; alpha < N; alpha++) {
-      for(unsigned i = 0; i < alpha; i++) {
+    for(unsigned alpha = 0; alpha < N; ++alpha) {
+      for(unsigned i = 0; i < alpha; ++i) {
         // Here, i < alpha, so lower bound is (alpha, i), upper bound is (i, alpha)
         gradientDistanceContribution(
           positions,
@@ -915,7 +943,7 @@ public:
         );
       }
 
-      for(unsigned i = alpha + 1; i < N; i++) {
+      for(unsigned i = alpha + 1; i < N; ++i) {
         // Here, i > alpha, so lower bound is (i, alpha), upper bound is (alpha, i)
         gradientDistanceContribution(
           positions,
@@ -958,7 +986,7 @@ public:
 
     // Fourth dimension contribution (E)
     if(compress) {
-      for(unsigned i = 0; i < N; i++) {
+      for(unsigned i = 0; i < N; ++i) {
         gradient(4 * i + 3) += 2 * positions(4 * i + 3);
       }
     }
