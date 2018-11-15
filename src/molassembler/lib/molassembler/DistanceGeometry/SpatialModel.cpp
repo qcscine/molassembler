@@ -36,6 +36,19 @@
 
 namespace molassembler {
 
+template<typename ... Inds>
+inline auto orderedSequence(Inds ... inds) {
+  std::array<AtomIndex, sizeof...(inds)> indices {{
+    static_cast<AtomIndex>(inds)...
+  }};
+
+  if(indices.front() > indices.back()) {
+    std::reverse(indices.begin(), indices.end());
+  }
+
+  return indices;
+}
+
 struct SymmetryMapHelper {
   static unsigned getSymmetryPositionOf(unsigned ligandIndex, const std::vector<unsigned>& map) {
     return map.at(ligandIndex);
@@ -69,7 +82,6 @@ SpatialModel::SpatialModel(
   const Configuration& configuration,
   const double looseningMultiplier
 ) : _molecule(molecule),
-    _looseningMultiplier(looseningMultiplier),
     _stereopermutators(molecule.stereopermutators())
 {
   /* This is overall a pretty complicated constructor since it encompasses the
@@ -141,7 +153,7 @@ SpatialModel::SpatialModel(
       ) * Delib::angstrom_per_bohr ;
 
       _constraints.emplace(
-        orderedIndexSequence<2>({{indexPositionPairA.first, indexPositionPairB.first}}),
+        orderedSequence(indexPositionPairA.first, indexPositionPairB.first),
         ValueBounds {spatialDistance, spatialDistance}
       );
     }
@@ -175,7 +187,7 @@ SpatialModel::SpatialModel(
         fixedAngstromPositions.at(j).asEigenVector()
       );
       setBondBoundsIfEmpty(
-        {{i, j}},
+        orderedSequence(i, j),
         ValueBounds {bondDistance, bondDistance}
       );
     } else {
@@ -185,9 +197,12 @@ SpatialModel::SpatialModel(
         inner.elementType(j),
         bondType
       );
+
+      double absoluteVariance = bondDistance * bondRelativeVariance * looseningMultiplier;
+
       setBondBoundsIfEmpty(
-        {{i, j}},
-        bondDistance
+        orderedSequence(i, j),
+        makeBoundsFromCentralValue(bondDistance, absoluteVariance)
       );
     }
   }
@@ -342,11 +357,11 @@ SpatialModel::SpatialModel(
         ++angleCentralIndex
       ) {
         setAngleBoundsIfEmpty(
-          {{
+          orderedSequence(
             indexSequence.at(angleCentralIndex - 1),
             indexSequence.at(angleCentralIndex),
             indexSequence.at(angleCentralIndex + 1)
-          }},
+          ),
           makeBoundsFromCentralValue(
             cycleInternalAngles.at(angleCentralIndex - 1),
             angleAbsoluteVariance * looseningMultiplier
@@ -356,11 +371,11 @@ SpatialModel::SpatialModel(
 
       // There's a missing triple with the previous approach, which is always
       setAngleBoundsIfEmpty(
-        {{
+        orderedSequence(
           indexSequence.at(indexSequence.size() - 2),
           indexSequence.at(0),
           indexSequence.at(1)
-        }},
+        ),
         makeBoundsFromCentralValue(
           cycleInternalAngles.back(),
           angleAbsoluteVariance * looseningMultiplier
@@ -512,17 +527,17 @@ SpatialModel::SpatialModel(
 
           assert(firstAdjacents.size() == 2 && secondAdjacents.size() == 2);
 
-          auto firstSequence = orderedIndexSequence<3>({{
+          auto firstSequence = orderedSequence(
             firstAdjacents.front(),
             i,
             firstAdjacents.back()
-          }});
+          );
 
-          auto secondSequence = orderedIndexSequence<3>({{
+          auto secondSequence = orderedSequence(
             secondAdjacents.front(),
             i,
             secondAdjacents.back()
-          }});
+          );
 
           /* We can only set these angles if the angle bounds for both
            * sequences already exist.
@@ -564,7 +579,7 @@ SpatialModel::SpatialModel(
                 secondAdjacents
               ),
               [&](const auto& firstAdjacent, const auto& secondAdjacent) {
-                auto sequence = orderedIndexSequence<3>({{firstAdjacent, i, secondAdjacent}});
+                auto sequence = orderedSequence(firstAdjacent, i, secondAdjacent);
 
                 auto findIter = _angleBounds.find(sequence);
                 if(findIter == _angleBounds.end()) {
@@ -602,86 +617,58 @@ SpatialModel::SpatialModel(
 }
 
 void SpatialModel::setBondBoundsIfEmpty(
-  const std::array<AtomIndex, 2>& bondIndices,
-  const double centralValue
+  std::array<AtomIndex, 2> bondIndices,
+  ValueBounds bounds
 ) {
-  double relativeVariance = bondRelativeVariance * _looseningMultiplier;
+  // Check the precondition
+  assert(bondIndices.front() < bondIndices.back());
 
-  /* Ensure correct use, variance for bounds should at MOST smaller than half
-   * of the central value
-   */
-  assert(relativeVariance < 0.5 * centralValue);
-
-  auto indexSequence = orderedIndexSequence<2>(bondIndices);
-
-  auto findIter = _bondBounds.lower_bound(indexSequence);
-
-  if(findIter == _bondBounds.end() || findIter->first != indexSequence) {
-    _bondBounds.emplace_hint(
-      findIter,
-      indexSequence,
-      ValueBounds {
-        (1 - relativeVariance) * centralValue,
-        (1 + relativeVariance) * centralValue
-      }
-    );
-  }
-}
-
-void SpatialModel::setBondBoundsIfEmpty(
-  const std::array<AtomIndex, 2>& bondIndices,
-  const ValueBounds& bounds
-) {
   // C++17: try_emplace
-  auto indexSequence = orderedIndexSequence<2>(bondIndices);
+  auto findIter = _bondBounds.lower_bound(bondIndices);
 
-  auto findIter = _bondBounds.lower_bound(indexSequence);
-
-  if(findIter == _bondBounds.end() || findIter->first != indexSequence) {
+  if(findIter == _bondBounds.end() || findIter->first != bondIndices) {
     _bondBounds.emplace_hint(
       findIter,
-      indexSequence,
-      bounds
+      std::move(bondIndices),
+      std::move(bounds)
     );
   }
 }
 
 void SpatialModel::setAngleBoundsIfEmpty(
-  const std::array<AtomIndex, 3>& angleIndices,
-  const ValueBounds& bounds
+  std::array<AtomIndex, 3> angleIndices,
+  ValueBounds bounds
 ) {
-  auto orderedIndices = orderedIndexSequence<3>(angleIndices);
+  // Check the precondition
+  assert(angleIndices.front() < angleIndices.back());
 
-  auto findIter = _angleBounds.lower_bound(orderedIndices);
+  auto findIter = _angleBounds.lower_bound(angleIndices);
 
   // C++17: try_emplace
-  if(findIter == _angleBounds.end() || findIter->first != orderedIndices) {
+  if(findIter == _angleBounds.end() || findIter->first != angleIndices) {
     _angleBounds.emplace_hint(
       findIter,
-      orderedIndices,
-      clamp(bounds, angleClampBounds)
+      std::move(angleIndices),
+      clamp(std::move(bounds), angleClampBounds)
     );
   }
 }
 
-/*!
- * Adds the dihedral bounds to the model, but only if the information for that
- * set of indices does not exist yet.
- */
 void SpatialModel::setDihedralBoundsIfEmpty(
-  const std::array<AtomIndex, 4>& dihedralIndices,
-  const ValueBounds& bounds
+  std::array<AtomIndex, 4> dihedralIndices,
+  ValueBounds bounds
 ) {
-  auto orderedIndices = orderedIndexSequence<4>(dihedralIndices);
+  // Check the precondition
+  assert(dihedralIndices.front() < dihedralIndices.back());
 
-  auto findIter = _dihedralBounds.lower_bound(orderedIndices);
+  auto findIter = _dihedralBounds.lower_bound(dihedralIndices);
 
   // C++17: try_emplace
-  if(findIter == _dihedralBounds.end() || findIter->first != orderedIndices) {
+  if(findIter == _dihedralBounds.end() || findIter->first != dihedralIndices) {
     _dihedralBounds.emplace_hint(
       findIter,
-      orderedIndices,
-      bounds
+      std::move(dihedralIndices),
+      std::move(bounds)
     );
   }
 }
@@ -743,7 +730,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
     if(!permutationState.coneAngles.at(ligandI)) {
       for(const AtomIndex i : ranking.ligands.at(ligandI)) {
         setBondBoundsIfEmpty(
-          {{i, centerAtom}},
+          orderedSequence(i, centerAtom),
           permutationState.ligandDistances.at(ligandI)
         );
       }
@@ -761,7 +748,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
         );
 
         setBondBoundsIfEmpty(
-          {{i, centerAtom}},
+          orderedSequence(i, centerAtom),
           ValueBounds {bondDistance, bondDistance}
         );
       }
@@ -773,11 +760,11 @@ void SpatialModel::addAtomStereopermutatorInformation(
           double angle = DelibHelpers::angle(
             fixedAngstromPositions.at(i).asEigenVector(),
             fixedAngstromPositions.at(centerAtom).asEigenVector(),
-            fixedAngstromPositions.at(i).asEigenVector()
+            fixedAngstromPositions.at(j).asEigenVector()
           );
 
           setAngleBoundsIfEmpty(
-            {{i, centerAtom, j}},
+            orderedSequence(i, centerAtom, j),
             ValueBounds {angle, angle}
           );
         }
@@ -802,7 +789,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
 
       for(const AtomIndex i : ranking.ligands.at(ligandI)) {
         setBondBoundsIfEmpty(
-          {{i, centerAtom}},
+          orderedSequence(i, centerAtom),
           DistanceGeometry::ValueBounds {
             lowerHypotenuse,
             upperHypotenuse
@@ -821,7 +808,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
         temple::adaptors::allPairs(ranking.ligands.at(ligandI)),
         [&](const AtomIndex i, const AtomIndex j) {
           setAngleBoundsIfEmpty(
-            {{i, centerAtom, j}},
+            orderedSequence(i, centerAtom, j),
             DistanceGeometry::ValueBounds {
               0,
               std::min(M_PI, 2 * coneAngleBounds.upper)
@@ -865,7 +852,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
             );
 
             setAngleBoundsIfEmpty(
-              {{x, centerAtom, y}},
+              orderedSequence(x, centerAtom, y),
               ValueBounds {angle, angle}
             );
           }
@@ -899,7 +886,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
             );
 
             setAngleBoundsIfEmpty(
-              {{x, centerAtom, y}},
+              orderedSequence(x, centerAtom, y),
               clamp(
                 ValueBounds {
                   angleBounds.lower - variation,
@@ -1173,12 +1160,12 @@ void SpatialModel::addBondStereopermutatorInformation(
       ),
       [&](const AtomIndex firstIndex, const AtomIndex secondIndex) -> void {
         setDihedralBoundsIfEmpty(
-          std::array<AtomIndex, 4> {
+          orderedSequence(
             firstIndex,
             firstStereopermutator.centralIndex(),
             secondStereopermutator.centralIndex(),
             secondIndex
-          },
+          ),
           dihedralBounds
         );
       }
@@ -1217,7 +1204,7 @@ void SpatialModel::addDefaultAngles() {
         assert(i != j);
 
         setAngleBoundsIfEmpty(
-          {{i, center, j}},
+          orderedSequence(i, center, j),
           angleClampBounds
         );
       }
@@ -1247,12 +1234,12 @@ void SpatialModel::addDefaultDihedrals() {
           && sourceAdjacentIndex != targetAdjacentIndex
         ) {
           setDihedralBoundsIfEmpty(
-            {{
+            orderedSequence(
               sourceAdjacentIndex,
               sourceIndex,
               targetIndex,
-              targetAdjacentIndex,
-            }},
+              targetAdjacentIndex
+            ),
             defaultDihedralBounds
           );
         }
@@ -1390,19 +1377,19 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
     const auto& thirdBounds = getBondBounds(indices.at(2), indices.back());
 
     auto firstAngleFindIter = _angleBounds.find(
-      orderedIndexSequence<3>({{
+      orderedSequence(
         indices.at(0),
         indices.at(1),
         indices.at(2)
-      }})
+      )
     );
 
     auto secondAngleFindIter = _angleBounds.find(
-      orderedIndexSequence<3>({{
+      orderedSequence(
         indices.at(1),
         indices.at(2),
         indices.at(3)
-      }})
+      )
     );
 
     if(
@@ -1432,66 +1419,12 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
   return bounds;
 }
 
-boost::optional<ValueBounds> SpatialModel::coneAngle(
-  const std::vector<AtomIndex>& ligandIndices,
-  const ValueBounds& coneHeightBounds
-) const {
-  return coneAngle(
-    ligandIndices,
-    coneHeightBounds,
-    bondRelativeVariance * _looseningMultiplier,
-    _molecule.graph(),
-    Cycles {_molecule.graph(), true}
-  );
-}
-
-ValueBounds SpatialModel::ligandDistance(
-  const std::vector<AtomIndex>& ligandIndices,
-  const AtomIndex centralIndex
-) const {
-  return ligandDistanceFromCenter(
-    ligandIndices,
-    centralIndex,
-    bondRelativeVariance * _looseningMultiplier,
-    _molecule.graph()
-  );
-}
-
 std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
   return _chiralConstraints;
 }
 
 std::vector<DistanceGeometry::DihedralConstraint> SpatialModel::getDihedralConstraints() const {
   return _dihedralConstraints;
-}
-
-void SpatialModel::dumpDebugInfo() const {
-  auto& logRef = Log::log(Log::Level::Debug);
-  logRef << "SpatialModel debug info" << std::endl;
-
-  // Bonds
-  for(const auto& bondIterPair : _bondBounds) {
-    const auto& indexArray = bondIterPair.first;
-    const auto& bounds = bondIterPair.second;
-    logRef << "Bond " << temple::condense(indexArray)
-      << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
-  }
-
-  // Angles
-  for(const auto& angleIterPair : _angleBounds) {
-    const auto& indexArray = angleIterPair.first;
-    const auto& bounds = angleIterPair.second;
-    logRef << "Angle " << temple::condense(indexArray)
-      << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
-  }
-
-  // Dihedrals
-  for(const auto& dihedralIterPair : _dihedralBounds) {
-    const auto& indexArray = dihedralIterPair.first;
-    const auto& bounds = dihedralIterPair.second;
-    logRef << "Dihedral " << temple::condense(indexArray)
-      << ": [" << bounds.lower << ", " << bounds.upper << "]" << std::endl;
-  }
 }
 
 struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
@@ -1504,7 +1437,7 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
       spatialModel(passSpatialModel) {}
 
   std::vector<std::string> edgeTooltips(AtomIndex source, AtomIndex target) const final {
-    const auto indexSequence = orderedIndexSequence<2>({{source, target}});
+    const auto indexSequence = orderedSequence(source, target);
     if(spatialModel._bondBounds.count(indexSequence) == 1) {
       const auto& bondBounds = spatialModel._bondBounds.at(indexSequence);
       std::string tooltip = "[" + std::to_string(bondBounds.lower);
@@ -1629,7 +1562,6 @@ void SpatialModel::writeGraphviz(const std::string& filename) const {
 boost::optional<ValueBounds> SpatialModel::coneAngle(
   const std::vector<AtomIndex>& baseConstituents,
   const ValueBounds& coneHeightBounds,
-  const double bondRelativeVariance,
   const OuterGraph& graph,
   const Cycles& etaLessCycles
 ) {
@@ -1762,7 +1694,6 @@ double SpatialModel::spiroCrossAngle(const double alpha, const double beta) {
 ValueBounds SpatialModel::ligandDistanceFromCenter(
   const std::vector<AtomIndex>& ligandIndices,
   const AtomIndex centralIndex,
-  const double bondRelativeVariance,
   const OuterGraph& graph
 ) {
   assert(!ligandIndices.empty());
@@ -1818,21 +1749,22 @@ ValueBounds SpatialModel::makeBoundsFromCentralValue(
 }
 
 ValueBounds SpatialModel::clamp(
-  const ValueBounds& bounds,
+  ValueBounds bounds,
   const ValueBounds& clampBounds
 ) {
-  return {
-    StdlibTypeAlgorithms::clamp(
-      bounds.lower,
-      clampBounds.lower,
-      clampBounds.upper
-    ),
-    StdlibTypeAlgorithms::clamp(
-      bounds.upper,
-      clampBounds.lower,
-      clampBounds.upper
-    )
-  };
+  bounds.lower = StdlibTypeAlgorithms::clamp(
+    bounds.lower,
+    clampBounds.lower,
+    clampBounds.upper
+  );
+
+  bounds.upper = StdlibTypeAlgorithms::clamp(
+    bounds.upper,
+    clampBounds.lower,
+    clampBounds.upper
+  );
+
+  return bounds;
 }
 
 void SpatialModel::checkFixedPositionsPreconditions(

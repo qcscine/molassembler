@@ -393,7 +393,7 @@ struct errfValue {
       term = std::fabs(phi - constraintSumHalved) - (constraint.upper - constraint.lower) / 2;
 
       if(term > 0) {
-        error += term * term;
+        error += term * term / 10;
       }
     }
 
@@ -861,8 +861,8 @@ public:
       // Multiply with sgn (w)
       h_phi *= static_cast<int>(0.0 < w_phi) - static_cast<int>(w_phi < 0.0);
 
-      // Multiply in the prefactor
-      h_phi *= 2.0;
+      // Multiply in the factors 2 * 1/10 -> 1/5
+      h_phi /= 5;
 
       // Precompute some reused expressions
       const double gLength = dlib::length(g);

@@ -20,50 +20,15 @@
  * describes its internal degrees of freedom in a manner translatable to
  * pairwise distance bounds for the distance geometry algorithm. This file
  * contains the class declaration for that spatial model.
+ *
+ * @todo With the change in default representation of a Molecule in that
+ * AtomStereopermutators basically must exist on any non-terminal atom, it
+ * may be possible to remove the StereopermutatorList member of SpatialModel.
  */
 
 namespace molassembler {
 
 namespace DistanceGeometry {
-
-template<int size>
-std::array<AtomIndex, size> orderedIndexSequence(
-  const std::array<AtomIndex, size>& source
-) {
-  if(source.front() > source.back()) {
-    auto copy = source;
-    std::reverse(
-      copy.begin(),
-      copy.end()
-    );
-    return copy;
-  }
-
-  return source;
-}
-
-template<int size>
-std::array<AtomIndex, size> orderedIndexSequence(
-  std::initializer_list<AtomIndex>& initializer
-) {
-  assert(size == initializer.size());
-  return orderedIndexSequence(
-    std::array<AtomIndex, size>(initializer)
-  );
-}
-
-template<typename ... Inds>
-auto orderedSequence(Inds ... inds) {
-  std::array<AtomIndex, sizeof...(inds)> indices {{
-    static_cast<AtomIndex>(inds)...
-  }};
-
-  if(indices.front() > indices.back()) {
-    std::reverse(indices.begin(), indices.end());
-  }
-
-  return indices;
-}
 
 /*!
  * Keeps a record of the internal coordinate bounds that a molecular graph is
@@ -84,8 +49,9 @@ public:
 
 //!@name Static members
 //!@{
-  /*! Relative bond distance variance, 0.0x meaning x% variance. Must fulfill
-   * 0 < x << 1
+  /*!
+   * @brief Relative bond distance variance
+   * 0.0x mean x% variance. Must fulfill 0 < x << 1
    */
   static constexpr double bondRelativeVariance = 0.01;
   //! Absolute angle variance in radians. Must fulfill 0 < x << M_PI
@@ -93,14 +59,27 @@ public:
   //! Absolute dihedral angle variance in radians.
   static constexpr double dihedralAbsoluteVariance = M_PI / 90; // ~ 2°
 
+  //! Defines clamping bounds on angles
   static constexpr ValueBounds angleClampBounds {0.0, M_PI};
+  //! Defines the range (-π,π] using std::nextafter (not constexpr)
   static ValueBounds defaultDihedralBounds;
 
 /* Static functions */
+  /**
+   * @brief Tries to calculate the cone angle for a possibly haptic ligand site
+   *
+   * @param baseConstituents Atom indices constituting the ligand site
+   * @param coneHeightBounds Bounds on the distance of the ligand site to
+   *   the central atom
+   * @param graph The molecular graph to model
+   * @param etaLessCycles Reference to a cycle interpretation object that
+   *   ignored eta bonds
+   *
+   * @return If calculable, bounds on the cone angle spanned by the ligand site
+   */
   static boost::optional<ValueBounds> coneAngle(
     const std::vector<AtomIndex>& baseConstituents,
     const ValueBounds& coneHeightBounds,
-    double bondRelativeVariance,
     const OuterGraph& graph,
     const Cycles& etaLessCycles
   );
@@ -115,10 +94,19 @@ public:
    */
   static double spiroCrossAngle(double alpha, double beta);
 
+  /**
+   * @brief Calculates bounds on the distance of a (possibly haptic) ligand
+   *   site to a central index
+   *
+   * @param ligandIndices Atom indices constituting the ligand site
+   * @param centralIndex The central index to which the ligand is bound
+   * @param graph The molecular graph to model
+   *
+   * @return Bounds on the distance of the ligand site to the central index
+   */
   static ValueBounds ligandDistanceFromCenter(
     const std::vector<AtomIndex>& ligandIndices,
     AtomIndex centralIndex,
-    double bondRelativeVariance,
     const OuterGraph& graph
   );
 
@@ -145,7 +133,7 @@ public:
    * @return New bounds that are within the clamp bounds
    */
   static ValueBounds clamp(
-    const ValueBounds& bounds,
+    ValueBounds bounds,
     const ValueBounds& clampBounds
   );
 
@@ -190,36 +178,58 @@ public:
 
 //!@name Modifiers
 //!@{
-  //! Sets the bond bounds to the model.
+  /*!
+   * @brief Sets bond bounds to exact value bounds if unset
+   *
+   * @param bondIndices The atom pair on which to place bond distance bounds
+   * @param bounds The distance bounds to enforce
+   * @pre @p bondIndices must be ordered (i.e. front() < back())
+   */
   void setBondBoundsIfEmpty(
-    const std::array<AtomIndex, 2>& bondIndices,
-    double centralValue
-  );
-
-  //! Sets bond bounds to exact value bounds.
-  void setBondBoundsIfEmpty(
-    const std::array<AtomIndex, 2>& bondIndices,
-    const ValueBounds& bounds
+    std::array<AtomIndex, 2> bondIndices,
+    ValueBounds bounds
   );
 
   /*!
-   * Adds the angle bounds to the model, but only if the information for that
-   * set of indices does not exist yet.
+   * @brief Adds the angle bounds to the model, but only if the information for that
+   *   set of indices does not exist yet.
+   *
+   * @param angleIndices The atom index sequence specifying an angle
+   * @param bounds The angle bounds to enforce
+   * @pre @p angleIndices must be ordered (i.e. front() < back())
+   *
+   * @note Passed angle bounds are clamped against the angleClampBounds
    */
   void setAngleBoundsIfEmpty(
-    const std::array<AtomIndex, 3>& angleIndices,
-    const ValueBounds& bounds
+    std::array<AtomIndex, 3> angleIndices,
+    ValueBounds bounds
   );
 
   /*!
-   * Adds the dihedral bounds to the model, but only if the information for that
-   * set of indices does not exist yet.
+   * @brief Adds the dihedral bounds to the model, but only if the information for that
+   *   set of indices does not exist yet.
+   *
+   * @param dihedralIndices The atom index sequence specifying a dihedral
+   * @param bounds The dihedral bounds to enforce
+   * @pre @p dihedralIndices must be ordered (i.e. front() < back())
    */
   void setDihedralBoundsIfEmpty(
-    const std::array<AtomIndex, 4>& dihedralIndices,
-    const ValueBounds& bounds
+    std::array<AtomIndex, 4> dihedralIndices,
+    ValueBounds bounds
   );
 
+  /**
+   * @brief Adds angle information to the internal coordinate bounds and
+   *   collects chiral constraints
+   *
+   * @param permutator The AtomStereopermutator to collect information from
+   * @param cycleMultiplierForIndex A function yielding factors with which to
+   *   multiply angular variances depending on the smalles cycle an atom is a
+   *   member of
+   * @param looseningMultiplier A loosening factor for the overall model
+   * @param fixedAngstromPositions A mapping between atom indices and fixed
+   *   spatial positions
+   */
   void addAtomStereopermutatorInformation(
     const AtomStereopermutator& permutator,
     const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
@@ -227,6 +237,17 @@ public:
     const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
   );
 
+  /**
+   * @brief Adds dihedral information to the internal coordinate bounds and
+   *   collects dihedral constraints
+   *
+   * @param permutator The BondStereopermutator to collect information from
+   * @param stereopermutatorA One AtomStereopermutator constituting the BondStereopermutator
+   * @param stereopermutatorB The other AtomStereopermutator constituting the BondStereopermutator
+   * @param looseningMultiplier A loosening factor for the overall model
+   * @param fixedAngstromPositions A mapping between atom indices and fixed
+   *   spatial positions
+   */
   void addBondStereopermutatorInformation(
     const BondStereopermutator& permutator,
     const AtomStereopermutator& stereopermutatorA,
@@ -238,7 +259,8 @@ public:
   //! Adds [0, π] default angle bounds for all bonded atom triples
   void addDefaultAngles();
 
-  /*! @brief Adds [0, π] default dihedrals to the model (of connected sequences)
+  /*!
+   * @brief Adds [0, π] default dihedrals to the model (of connected sequences)
    *
    * Adds [0, π] default dihedrals to the model. Avoids treating 1-4 pairs as
    * nonbonded.
@@ -248,26 +270,39 @@ public:
 
 //!@name Information
 //!@{
-  boost::optional<ValueBounds> coneAngle(
-    const std::vector<AtomIndex>& ligandIndices,
-    const ValueBounds& coneHeightBounds
-  ) const;
-
-  void dumpDebugInfo() const;
-
-  ValueBounds ligandDistance(
-    const std::vector<AtomIndex>& ligandIndices,
-    AtomIndex centralIndex
-  ) const;
-
+  //! Yields all collected chiral constraints
   std::vector<ChiralityConstraint> getChiralityConstraints() const;
 
+  //! Yields all collected dihedral constraints
   std::vector<DihedralConstraint> getDihedralConstraints() const;
 
+  /**
+   * @brief Generates a list of atom-pairwise distance bounds from the internal
+   *   coordinate bounds and fixed positions
+   *
+   * @return A list of atom-pairwise distance bounds
+   */
   BoundsList makeBoundsList() const;
 
+  /**
+   * @brief Generates a string graphviz representation of the modeled molecule
+   *
+   * The graph contains basic connectivity, stereopermutator information
+   * and internal coordinate bounds.
+   *
+   * @return A string that can be converted into an image using graphviz of
+   *   the molecule being modeled.
+   */
   std::string dumpGraphviz() const;
 
+  /**
+   * @brief Writes a graphviz representation of a modeled molecule to a file
+   *
+   * The graph contains basic connectivity, stereopermutator information
+   * and internal coordinate bounds.
+   *
+   * @param filename The filename to which to write the graphviz representation
+   */
   void writeGraphviz(const std::string& filename) const;
 //!@}
 
@@ -276,7 +311,6 @@ private:
   const Molecule& _molecule;
 
   // Mutable state
-  double _looseningMultiplier;
   StereopermutatorList _stereopermutators;
 
   //! Constraints by fixed positions

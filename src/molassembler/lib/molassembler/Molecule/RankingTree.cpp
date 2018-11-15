@@ -2883,8 +2883,9 @@ RankingTree::RankingTree(
     _stereopermutatorsRef(stereopermutators),
     _adaptedMolGraphviz(_adaptMolGraph(std::move(molGraphviz)))
 {
-  // Set the root vertex
-  auto rootIndex = boost::add_vertex(_tree);
+  // Add the root index
+  boost::add_vertex(_tree);
+
   _tree[rootIndex].molIndex = atomToRank;
   _tree[rootIndex].isDuplicate = false;
 

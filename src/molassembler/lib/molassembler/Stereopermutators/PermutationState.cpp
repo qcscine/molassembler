@@ -36,7 +36,6 @@ PermutationState::PermutationState(
       return ModelType::ligandDistanceFromCenter(
         ligandIndices,
         centerAtom,
-        ModelType::bondRelativeVariance,
         graph
       );
     }
@@ -50,7 +49,6 @@ PermutationState::PermutationState(
       ModelType::coneAngle(
         ranking.ligands.at(i),
         ligandDistances.at(i),
-        ModelType::bondRelativeVariance,
         graph,
         etaLessCycles
       )
