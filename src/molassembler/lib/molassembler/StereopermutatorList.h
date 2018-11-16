@@ -13,7 +13,6 @@
 #include "molassembler/BondStereopermutator.h"
 
 #include <unordered_map>
-#include <map>
 
 /*! @file
  *

@@ -158,7 +158,7 @@ void Molecule::Impl::_propagateGraphChange() {
   GraphAlgorithms::findAndSetEtaBonds(inner);
 
   /*! @todo
-   * - Need state propagation for BondStereopermutators, anything else is madness
+   * Need state propagation for BondStereopermutators, anything else is madness
    */
 
   Cycles cycleData = graph().cycles();
@@ -183,17 +183,15 @@ void Molecule::Impl::_propagateGraphChange() {
       }
 
       // Propagate the stereopermutator state to the new ranking
-      stereopermutatorOption -> propagateGraphChange(
-        _adjacencies,
-        localRanking
-      );
+      stereopermutatorOption -> propagateGraphChange(_adjacencies, localRanking);
 
-      /* If the modified stereopermutator has only one assignment and is unassigned
-       * due to the graph change, default-assign it
+      /* If the modified stereopermutator has only one assignment and is
+       * unassigned due to the graph change, default-assign it
        */
       if(
         stereopermutatorOption -> numStereopermutations() == 1
         && stereopermutatorOption -> numAssignments() == 1
+        && stereopermutatorOption -> assigned() == boost::none
       ) {
         stereopermutatorOption -> assign(0);
       }
@@ -220,6 +218,7 @@ void Molecule::Impl::_propagateGraphChange() {
         _stereopermutators.try_remove(bond);
       }
     } else {
+      // There is no stereopermutator yet on this vertex
       // Skip terminal atoms
       if(localRanking.ligands.size() <= 1) {
         continue;

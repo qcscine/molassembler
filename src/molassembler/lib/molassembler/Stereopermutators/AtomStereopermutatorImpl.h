@@ -5,9 +5,11 @@
 
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Stereopermutators/PermutationState.h"
-#include "molassembler/RankingInformation.h"
-#include "chemical_symmetries/Names.h"
-#include "boost/optional.hpp"
+
+/*! @file
+ *
+ * @brief Private implementation of AtomStereopermutator
+ */
 
 namespace molassembler {
 

@@ -4,9 +4,13 @@
 #include "molassembler/Molecule.h"
 
 #include "molassembler/Graph/InnerGraph.h"
-#include "molassembler/OuterGraph.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/StereopermutatorList.h"
+
+/*! @file
+ *
+ * @brief Private implementation of Molecule
+ */
 
 namespace molassembler {
 

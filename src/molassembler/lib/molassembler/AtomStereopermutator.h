@@ -138,7 +138,8 @@ public:
    * @brief Changes the assignment of the stereopermutator
    *
    * @param assignment The new assignment of the stereopermutator. May be
-   *   boost::none. Must be less than the number of assignments if not None.
+   *   @p boost::none, which sets the chiral state as indeterminate. Must be
+   *   less than the number of assignments if not None.
    */
   void assign(boost::optional<unsigned> assignment);
 

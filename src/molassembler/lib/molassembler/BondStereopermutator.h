@@ -67,10 +67,7 @@ public:
   ~BondStereopermutator();
 
   BondStereopermutator() = delete;
-  /*!
-   * @warning No haptic ligands allowed.
-   * @note The left stereopermutator must have the smaller
-   */
+  //! Constructs a bond stereopermutator on two atom stereopermutators
   BondStereopermutator(
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
@@ -80,10 +77,36 @@ public:
 
 //!@name Modifiers
 //!@{
+  /*!
+   * @brief Changes the assignment of the stereopermutator
+   *
+   * @param assignment The new assignment of the stereopermutator. May be
+   *   @p boost::none, which sets the chiral state as indeterminate. Must be
+   *   less than the number of assignments if not None.
+   */
   void assign(boost::optional<unsigned> assignment);
 
+  /*!
+   * @brief Assign the Stereopermutator at random
+   *
+   * @note If the stereocenter is already assigned, it is reassigned.
+   */
   void assignRandom();
 
+  /*!
+   * @brief Determines the assignment the permutator is in from positional
+   *   information
+   *
+   * The assignment of this permutator is determined from three-dimensional
+   * positions using penalties to modeled dihedral angles. An assignment is
+   * considered matched if each dihedral that is part of the permutation is
+   * within @p assignmentAcceptanceDihedralThreshold.
+   *
+   * @param angstromWrapper The positional information to extract the assignment
+   *   from
+   * @param stereopermutatorA One constituting atom stereopermutator
+   * @param stereopermutatorB The other constituting atom stereopermutator
+   */
   void fit(
     const AngstromWrapper& angstromWrapper,
     const AtomStereopermutator& stereopermutatorA,
@@ -93,29 +116,64 @@ public:
 
 //!@name Information
 //!@{
+  /*!
+   * @brief Returns the permutation index within the set of possible permutations, if set
+   * @returns whether the stereopermutator is assigned or not, and if so,
+   * which assignment it is.
+   */
   boost::optional<unsigned> assigned() const;
 
+  //! Gives read-only access to the underlying Composite object
   const stereopermutation::Composite& composite() const;
 
+  /*!
+   * @brief Returns whether this stereopermutator has the same relative
+   *   orientation as another stereopermutator
+   */
   bool hasSameCompositeOrientation(const BondStereopermutator& other) const;
 
+  /*!
+   * @brief Returns the index of permutation
+   * @note For BondStereopermutators, the index of permutation and the
+   *   assignment index are the same as there are no stereopermutation exclusion
+   *   criteria yet.
+   */
   boost::optional<unsigned> indexOfPermutation() const;
 
+  /*!
+   * @brief Returns the number of possible assignments
+   * @note For BondStereopermutators, the number of stereopermutations and the
+   *   number of assignments are the same as there are no stereopermutation
+   *   exclusion criteria yet.
+   */
   unsigned numAssignments() const;
 
+  /*!
+   * @brief Returns the number of possible stereopermutations
+   * @note For BondStereopermutators, the number of stereopermutations and the
+   *   number of assignments are the same as there are no stereopermutation
+   *   exclusion criteria yet.
+   */
   unsigned numStereopermutations() const;
 
+  //! Returns an information string for diagnostic purposes
   std::string info() const;
 
+  //! Returns an information for ranking equality checking purposes
   std::string rankInfo() const;
 
+  //! Returns which bond this stereopermutator is placed on in the molecule
   BondIndex edge() const;
-
 //!@}
 
 //!@name Operators
 //!@{
+  /*!
+   * @brief Compares whether the underlying composite and the assignment are
+   *   equivalent to those of another bond stereopermutator
+   */
   bool operator == (const BondStereopermutator& other) const;
+  //! Inverts @p operator==
   bool operator != (const BondStereopermutator& other) const;
 //!@}
 

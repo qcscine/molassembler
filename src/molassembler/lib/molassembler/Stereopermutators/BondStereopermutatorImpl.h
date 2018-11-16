@@ -8,6 +8,11 @@
 #include "stereopermutation/Composites.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
+/*! @file
+ *
+ * @brief Private implementation of BondStereopermutator
+ */
+
 namespace molassembler {
 
 struct BondStereopermutator::Impl {
