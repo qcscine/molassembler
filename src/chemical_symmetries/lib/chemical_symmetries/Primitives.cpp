@@ -18,6 +18,9 @@ namespace data {
  *   run-time, they need to be available then too.
  * - For the stringName declarations, static const non-literal members require
  *   out-of-class initializers, so they too are non-redundant
+ * - Since coordinates, rotations and tetrahedra all have size-specific or
+ *   symmetry-specific array lengths, and hence different types, it is better
+ *   to just use decltype(...).
  */
 
 constexpr decltype(Linear::name) Linear::name;

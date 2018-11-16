@@ -44,7 +44,19 @@ struct InterpretResult {
   std::vector<unsigned> componentMap;
 };
 
-//! The function that actually does all the work with the library-internal wrapper
+/*!
+ * @brief The function that actually does all the work with the library-internal wrapper
+ *
+ * @param elements Element type collection
+ * @param angstromWrapper Positional information in Angstrom units
+ * @param bondOrders Bond orders
+ * @param discretization How to discretize fractional bond orders
+ * @param stereopermutatorBondOrderThresholdOptional From which fractional bond
+ *   order on to try the interpretation of bond stereopermutator. If set as
+ *   @p boost::none, no bond stereopermutators are interpreted.
+ *
+ * @returns A list of found molecules and an index mapping to each molecule
+ */
 InterpretResult interpret(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
@@ -53,7 +65,23 @@ InterpretResult interpret(
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
-//! A forwarding function with the library-internal wrapper types
+/*!
+ * @brief Interpret a molecule from positional information only. Calculates
+ *   bond orders using uffBondOrders.
+ *
+ * @param elements Element type collection
+ * @param angstromWrapper Positional information in Angstrom units
+ * @param discretization How to discretize fractional bond orders
+ * @param stereopermutatorBondOrderThresholdOptional From which fractional bond
+ *   order on to try the interpretation of bond stereopermutator. If set as
+ *   @p boost::none, no bond stereopermutators are interpreted.
+ *
+ * @warning Using UFF bond order calculation is often not even wrong, i.e. so
+ *   bad as to be completely unusable. Prefer interpreting using supplied bond
+ *   orders from a more advanced calculation.
+ *
+ * @returns A list of found molecules and an index mapping to each molecule
+ */
 InterpretResult interpret(
   const Delib::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
@@ -61,7 +89,8 @@ InterpretResult interpret(
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
-/*! Interpret molecules from element types, positional information and a bond order collection.
+/*!
+ * @brief Interpret molecules from element types, positional information and a bond order collection.
  *
  * Attempts to interpret (possibly multiple) Molecules from element types,
  * positional information and a bond order collection. Bond orders are
@@ -70,15 +99,15 @@ InterpretResult interpret(
  * behavior of BondStereopermutators in the Molecules can be limited to edges whose
  * bond order exceeds a particular value.
  *
- * \param atomCollection Element types and positional information in Bohr units.
- * \param bondOrders Fractional bond orders
- * \param discretization Decide how bond orders are discretized into bond types
- * \param stereopermutatorBondOrderThresholdOptional If specified, limits the
+ * @param atomCollection Element types and positional information in Bohr units.
+ * @param bondOrders Fractional bond orders
+ * @param discretization Decide how bond orders are discretized into bond types
+ * @param stereopermutatorBondOrderThresholdOptional If specified, limits the
  *   instantiation of BondStereopermutators onto edges whose fractional bond orders
  *   exceed the provided threshold. If this is not desired, specify boost::none.
  *
- * \note Assumes that the provided atom collection's positions are in
- * Bohr units.
+ * @note Assumes that the provided atom collection's positions are in
+ *   Bohr units.
  */
 InterpretResult interpret(
   const Delib::AtomCollection& atomCollection,
@@ -87,7 +116,8 @@ InterpretResult interpret(
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
-/*! Interpret molecules in 3D information.
+/*!
+ * @brief Interpret molecules in 3D information.
  *
  * Attempts to interpret (possibly multiple) Molecules from element types and
  * positional information. Bond orders are calculated from atom-pairwise
@@ -97,17 +127,16 @@ InterpretResult interpret(
  * BondStereopermutators in the Molecules can be limited to edges whose bond order
  * exceeds a particular value.
  *
- * \param atomCollection Element types and positional information in Bohr units.
- * \param bondOrders Fractional bond orders
- * \param discretization Decide how bond orders are discretized into bond types
- * \param stereopermutatorBondOrderThresholdOptional If specified, limits the
+ * @param atomCollection Element types and positional information in Bohr units.
+ * @param discretization Decide how bond orders are discretized into bond types
+ * @param stereopermutatorBondOrderThresholdOptional If specified, limits the
  *   instantiation of BondStereopermutators onto edges whose fractional bond orders
  *   exceed the provided threshold
  *
- * \note Assumes that the provided atom collection's positions are in
+ * @note Assumes that the provided atom collection's positions are in
  * Bohr units.
  *
- * \warning UFF parameter bond order calculation is very primitive and carries
+ * @warning UFF parameter bond order calculation is very primitive and carries
  *   a high risk of misinterpretation
  */
 InterpretResult interpret(

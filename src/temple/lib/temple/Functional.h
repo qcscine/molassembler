@@ -272,10 +272,6 @@ void remove_if(
   Container& container,
   UnaryFunction&& predicate
 ) {
-  // TODO if container's value type is a tuple and predicate cannot be called
-  // with it directly, we have to generate a callable object that forwards an
-  // unpacked call!
-
   container.erase(
     std::remove_if(
       std::begin(container),

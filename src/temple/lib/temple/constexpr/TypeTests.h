@@ -46,44 +46,6 @@ constexpr bool testOperatorSmaller(const T& a, const T& b) {
   );
 }
 
-template<class Container>
-constexpr bool testConstIterators(const Container& container) {
-  if(!( // Very basic tests
-    container.begin() == container.begin()
-    && container.end() == container.end()
-    && container.begin() != container.end()
-  )) {
-    return false;
-  }
-
-  return true;
-}
-
-template<class Container>
-constexpr bool testIterators(Container container) {
-  /* TODO
-   * - different tests depending on the type of iterator
-   *   -> forward_iterator / bidirectional_iterator / random_access_iterator
-   * - Maybe with std::advance
-   * - see tests.cpp for the array types, I think there are some RAIter tests
-   *   there
-   */
-
-  if(!testConstIterators(container)) {
-    return false;
-  }
-
-  if(!(
-    container.begin() == container.begin()
-    && container.end() == container.end()
-    && container.begin() != container.end()
-  )) {
-    return false;
-  }
-
-  return true;
-}
-
 //! Dynamic explainer of inconsistencies
 template<typename T>
 void explainLogicalOperatorFailures(const T& a, const T& b) {

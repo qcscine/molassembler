@@ -563,17 +563,21 @@ Composite::Composite(OrientationState first, OrientationState second)
   // Do not construct the ordered pair of OrientationStates with same identifier
   assert(_orientations.first.identifier != _orientations.second.identifier);
 
-  /* For canonical comparison, the OrientationStates must be transformed as
-   * though the fused position was the lowest position within the symmetry
-   * position group, and then back-transformed later.
+  /* In order to get meaningful indices of permutation, combinations of
+   * symmetries across fused positions within the same group of symmetry
+   * positions (e.g. equatorial or apical in square pyramidal) must be the same.
+   *
+   * In order to achieve this, the OrientationStates is transformed by a
+   * rotation that temporarily places the fused position at the lowest index
+   * symmetry position in its symmetry. After permutation are generated,
+   * the orientation state is transformed back.
    */
-
   auto firstReversionMapping = _orientations.first.transformToCanonical();
   auto secondReversionMapping = _orientations.second.transformToCanonical();
 
   /* Find the group of symmetry positions with the smallest angle to the
    * fused position (these are the only important ones when considering
-   * relative position across both groups).
+   * relative arrangements across the bond).
    */
   auto angleGroups = _orientations.map(
     [](const OrientationState& orientation) -> AngleGroup {
@@ -674,7 +678,7 @@ Composite::Composite(OrientationState first, OrientationState second)
    * thinking up an elegant solution that can satisfy all possible symmetries.
    */
 
-  // Generate all arrangements regarless of whether the Composite is isotropic
+  // Generate all arrangements regardless of whether the Composite is isotropic
   temple::forEach(
     temple::adaptors::allPairs(
       angleGroups.first.symmetryPositions,
@@ -701,11 +705,7 @@ Composite::Composite(OrientationState first, OrientationState second)
           angleGroups.second.symmetryPositions
         ),
         [&](const unsigned a, const unsigned b) -> DihedralTuple {
-          return {
-            a,
-            b,
-            getDihedral(a, b)
-          };
+          return {a, b, getDihedral(a, b)};
         }
       );
 

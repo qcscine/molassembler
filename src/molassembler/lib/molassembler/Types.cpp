@@ -3,6 +3,8 @@
 
 #include "molassembler/Types.h"
 
+#include "boost/functional/hash.hpp"
+
 #include <tuple>
 
 namespace molassembler {
@@ -21,6 +23,13 @@ bool BondIndex::operator < (const BondIndex& other) const {
 
 bool BondIndex::operator == (const BondIndex& other) const {
   return std::tie(first, second) == std::tie(other.first, other.second);
+}
+
+std::size_t hash_value(const BondIndex& bond) {
+  std::size_t seed = 0;
+  boost::hash_combine(seed, bond.first);
+  boost::hash_combine(seed, bond.second);
+  return seed;
 }
 
 } // namespace molassembler

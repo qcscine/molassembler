@@ -5,6 +5,7 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_H
 
 #include "boost/range/adaptor/map.hpp"
+#include "boost/functional/hash.hpp"
 
 #include "temple/constexpr/Bitmask.h"
 
@@ -22,23 +23,13 @@
  * in a molecule.
  */
 
-/*! @todo
- * - Make a hash for BondIndex so we can use unordered_map.
- *   I think this is impossible since access to the edge_desciptor's source and
- *   target vertices requires a bgl graph instance to be called. Perhaps as soon
- *   as graph exists instead?
- * - bond stereopermutator state propagation
- * - pImpl could remove header dependencies on AtomStereopermutator and
- *   BondStereopermutator
- */
-
 namespace molassembler {
 
 class StereopermutatorList {
 public:
 /* Typedefs */
   using AtomMapType = std::unordered_map<AtomIndex, AtomStereopermutator>;
-  using BondMapType = std::map<BondIndex, BondStereopermutator>;
+  using BondMapType = std::unordered_map<BondIndex, BondStereopermutator, boost::hash<BondIndex>>;
 
 /* Modification */
   //! Add a new AtomStereopermutator to the list
@@ -120,6 +111,7 @@ public:
 /* Operators */
   //! Strict equality comparison
   bool operator == (const StereopermutatorList& other) const;
+  //! Inverts @p operator ==
   bool operator != (const StereopermutatorList& other) const;
 
 private:

@@ -19,19 +19,10 @@
  *
  * @warning Do not use these math functions for anything other than constexpr
  * evaluations. The standard library implementations are most definitely
- * better.
+ * better. In many cases, even though it is not required by the standard, the
+ * supplied STL functions are constexpr.
  */
 
-/* TODO
- * - Add periodicities of the trigonometric functions
- * - Investigate ill-conditioned quality of inverse trig functions at specific
- *   angles (see https://en.wikipedia.org/wiki/Inverse_trigonometric_functions)
- *
- *   - Patched somewhat with approximation, but still no better than 1e-10 over
- *     the entire domain
- *
- * - Improve power function, it's probably hella awful
- */
 namespace temple {
 
 namespace Math {
@@ -360,8 +351,9 @@ PURITY_STRONG constexpr T recPow(const T base, const unsigned exponent) noexcept
   return base * recPow(base, exponent - 1);
 }
 
-/* Integer version just calls the unsigned power function
- * TODO lots can go wrong here!
+/*!
+ * @brief Integer version that just calls the unsigned power function and inverts the result
+ * @warning lots can go wrong here!
  */
 template<typename T>
 PURITY_STRONG constexpr traits::enableIfArithmeticWithReturn<T, double> pow(const T base, const int exponent) noexcept {

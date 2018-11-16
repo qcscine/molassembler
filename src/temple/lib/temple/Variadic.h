@@ -6,14 +6,9 @@
 
 #include "temple/constexpr/Optional.h"
 #include "temple/constexpr/TupleType.h"
-#include "temple/Traits.h"
+#include "temple/ContainerTraits.h"
 
 #include <algorithm>
-
-/* TODO
- * - variadic size returning an optional<SumType> (would permit variadic
- *   concatenate to preallocate space)
- */
 
 /*!@file
  *
@@ -25,6 +20,51 @@
 namespace temple {
 
 namespace variadic {
+
+namespace detail {
+
+template<typename Container>
+std::enable_if_t<
+  ::temple::traits::hasSize<Container>::value,
+  Optional<std::size_t>
+> size(const Container& container) {
+  return Optional<std::size_t> {container.size()};
+}
+
+template<typename Container>
+std::enable_if_t<
+  !::temple::traits::hasSize<Container>::value,
+  Optional<std::size_t>
+> size(const Container& /* container */) {
+  return {};
+}
+
+} // namespace detail
+
+/**
+ * @brief Calculates a lower bound to the size of multiple containers, i.e. sums
+ *   up the sizes of all passed containers that have a size member function.
+ *
+ * @param containers The containers to sum up sizes of
+ *
+ * @return A lower bound to the amount of elements in all containers combined
+ */
+template<typename ... Containers>
+std::size_t sizeLowerBound(const Containers& ... containers) {
+  std::array<Optional<std::size_t>, sizeof...(containers)> sizeOptionals {{
+    detail::size(containers)...
+  }};
+
+  std::size_t sum = 0;
+
+  for(const auto& sizeOptional : sizeOptionals) {
+    if(sizeOptional) {
+      sum += sizeOptional.value();
+    }
+  }
+
+  return sum;
+}
 
 namespace detail {
 
@@ -50,7 +90,11 @@ Vector concatenateHelper(
 
 } // namespace detail
 
-//! Concatenate various types of containers together with the same ValueType
+/*!
+ * @brief Concatenate various types of containers together with the same ValueType
+ *
+ * Requires that each container implements a begin and end iterator.
+ */
 template<typename... Containers>
 auto concatenate(const Containers& ... containers) {
   using ValueTypes = std::tuple<
@@ -68,6 +112,8 @@ auto concatenate(const Containers& ... containers) {
   );
 
   std::vector<T> concatenated;
+
+  concatenated.reserve(sizeLowerBound(containers...));
 
   return detail::concatenateHelper(concatenated, containers...);
 }

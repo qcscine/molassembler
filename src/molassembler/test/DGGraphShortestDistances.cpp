@@ -97,7 +97,7 @@ struct Gor1Functor {
   }
 };
 
-// TODO Remove this, make a specialization of the Gor1Functor
+// Use specialized GOR1 implementation for ImplicitGraph
 std::vector<double> Gor1IG (const molassembler::DistanceGeometry::ImplicitGraph& graph, unsigned sourceVertex) {
   /* Prep */
   using Graph = molassembler::DistanceGeometry::ImplicitGraph;

@@ -100,7 +100,6 @@ BOOST_AUTO_TEST_CASE( sumTest ) {
 
   std::vector<unsigned> unsignedVector {1, 2, 3};
 
-  // TODO this one is really difficult to do in boost I think
   BOOST_CHECK(
     temple::sum(
       temple::map(

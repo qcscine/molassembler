@@ -48,6 +48,8 @@ struct BondIndex {
   bool operator == (const BondIndex& other) const;
 };
 
+std::size_t hash_value(const BondIndex& bond);
+
 //! Descriptive name for dlib indices
 using dlibIndexType = long;
 

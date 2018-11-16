@@ -12,6 +12,7 @@ add_executable(templeTests
   ${CMAKE_CURRENT_SOURCE_DIR}/Functional.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Numeric.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Optionals.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Variadic.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/constexprBTree.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/constexprTests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp

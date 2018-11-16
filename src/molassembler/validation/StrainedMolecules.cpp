@@ -20,10 +20,10 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
 
   auto mol = IO::read("inorganics/multidentate/Co(ox)3.mol");
 
-  const auto& stereopermutatorOption = mol.stereopermutators().option(0);
-  assert(stereopermutatorOption);
+  const auto stereopermutatorOption = mol.stereopermutators().option(0);
+  BOOST_REQUIRE(stereopermutatorOption);
 
-  unsigned N = stereopermutatorOption -> numAssignments();
+  const unsigned N = stereopermutatorOption -> numAssignments();
 
   for(unsigned i = 0; i < N; ++i) {
     mol.assignStereopermutator(0, i);

@@ -184,10 +184,6 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
   const boost::regex isomorphismFileRegex {R"(.+_isomorphism.mol)"};
   const boost::regex removeRegex {R"(_isomorphism.mol)"};
 
-  /* TODO collect the original molecules in the folder and test all of them
-   * against one another, ensuring !=
-   */
-
   std::vector<Molecule> originals;
 
   for(
@@ -199,10 +195,6 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
     if(!boost::regex_match(currentFilePath.filename().string(), what, isomorphismFileRegex)) {
       continue;
     }
-
-    /* TODO Find some other way to compose the original string, i.e. regex replace?
-     * replace the matching part with "" -> original path
-     */
 
     auto originalFilePath = currentFilePath.parent_path() / (
       boost::regex_replace(currentFilePath.filename().string(), removeRegex, "") + ".mol"

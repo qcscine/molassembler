@@ -17,10 +17,6 @@
  * resulting data set in a range-for compatible fashion.
  */
 
-/* TODO
- * - Try to find usages and refactor them to not require this. DELETE THIS
- */
-
 namespace temple {
 
 template<typename ValueType>

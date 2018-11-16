@@ -65,12 +65,12 @@ Data type               | Description
 \masm{OuterGraph,Graph} | Product type of element types and connectivity
 Symmetry                | Idealization of spatial arrangement of substituents around a central atom
 Ligand site             | Contiguous atom set, all connected to the central atom
-Ranked ligands          | All ligand sites at an atom, sorted using IUPAC ranking rules
+Ranked ligand sites     | All ligand sites at an atom, sorted using IUPAC ranking rules
 Stereopermutation       | Abstract representation of an absolute configuration of (possibly bridged) ligand sites around an atom
 Stereopermutator        | Object managing absolute configuration of ligand sites around an atom (\masm{AtomStereopermutator}) or bond (\masm{BondStereopermutator})
 \masm{Molecule}         | Product type of a \masm{OuterGraph,Graph} and a \masm{StereopermutatorList,list of stereopermutators}
 
-Stereopermutators are not called stereocenters - which might seem the more
+@note Stereopermutators are not called stereocenters - which might seem the more
 natural choice - because these objects also manage symmetry and ranking
 combinations in which there is only one possible arrangement and its central
 atom therefore cannot be considered a stereocenter.
@@ -106,29 +106,31 @@ permutation for stereocenters.
 
 IO            | Description
 ------------- | -----------
-<code>\link molassembler::IO::read(const std::string&) IO::read\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
-<code>\link molassembler::IO::split(const std::string&) IO::split\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
-<code>\link molassembler::IO::write(const std::string&, const Molecule&) IO::write\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
-<code>\link molassembler::interpret(const Delib::ElementTypeCollection &, const AngstromWrapper &, const Delib::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
+<code>\link molassembler::IO::read(const std::string&) IO::read(...)\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
+<code>\link molassembler::IO::split(const std::string&) IO::split(...)\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
+<code>\link molassembler::IO::write(const std::string&, const Molecule&) IO::write(...)\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
+<code>\link molassembler::interpret(const Delib::ElementTypeCollection &, const AngstromWrapper &, const Delib::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
+<code>\link molassembler::toJSON(const Molecule&) toJSON(Molecule)\endlink</code> | Serialize a molecule to JSON
+<code>\link molassembler::fromJSON(const std::string&) fromJSON(std::string)\endlink</code> | Deserialize a molecule from JSON
 
 
 Information           | Description
 --------------------- | -----------
-mol.graph             | Yields the molecular \masm{OuterGraph, graph} (purely connectivity and element type data)
-mol.stereopermutators | Yields \masm{StereopermutatorList, list of stereopermutators}
-mol.dumpGraphviz      | Yields a graphviz string of the molecule representation
-mol.modularCompare    | Compare two molecules, choosing which parts are to be compared
+<code>\link molassembler::Molecule::graph() mol.graph()\endlink</code> | Yields the molecular \masm{OuterGraph, graph} (purely connectivity and element type data)
+<code>\link molassembler::Molecule::stereopermutators() mol.stereopermutators()\endlink</code> | Yields \masm{StereopermutatorList, list of stereopermutators}
+<code>\link molassembler::Molecule::dumpGraphviz() mol.dumpGraphviz()\endlink</code> | Yields a graphviz string of the molecule representation
+<code>\link molassembler::Molecule::modularCompare() mol.modularCompare(...)\endlink</code> | Compare two molecules, choosing which parts are to be compared
 
 Molecule manipulation  | Description
 ---------------------- | -----------
-mol.addAtom            | Adds an atom to the molecule, attaching it to an existing one
-mol.addBond            | Adds a bond between two existing atoms
-mol.assignStereocenter | Changes the assignment of a sterepermutator
-mol.removeAtom         | Removes a removable (!) atom
-mol.removeBond         | Removes a removable (!) bond
-mol.setBondType        | Changes the bond type between two atoms
-mol.setElementType     | Changes an atom element type
-mol.setGeometryAtAtom  | Changes the local idealized symmetry at an atom
+<code>\link molassembler::Molecule::addAtom() mol.addAtom(...)\endlink</code> | Adds an atom to the molecule, attaching it to an existing one
+<code>\link molassembler::Molecule::addBond() mol.addBond(...)\endlink</code> | Adds a bond between two existing atoms
+<code>\link molassembler::Molecule::assignStereopermutator() mol.assignStereopermutator(...)\endlink</code> | Changes the assignment of a sterepermutator
+<code>\link molassembler::Molecule::removeAtom() mol.removeAtom(...)\endlink</code> | Removes a removable (!) atom
+<code>\link molassembler::Molecule::removeBond() mol.removeBond(...)\endlink</code> | Removes a removable (!) bond
+<code>\link molassembler::Molecule::setBondType() mol.setBondType(...)\endlink</code> | Changes the bond type between two atoms
+<code>\link molassembler::Molecule::setElementType() mol.setElementType(...)\endlink</code> | Changes an atom element type
+<code>\link molassembler::Molecule::setGeometryAtAtom() mol.setGeometryAtAtom(...)\endlink</code> | Changes the local idealized symmetry at an atom
 
 
 @section manual-sublibraries Sub-libraries
@@ -136,6 +138,45 @@ mol.setGeometryAtAtom  | Changes the local idealized symmetry at an atom
 --------------------------------------------------------------------------------
 
 @subsection manual-sublibraries-temple Temple
+
+Temple is a data structure and algorithm library that consists of
+- Constexpr containers (of which upper bounds on sizes must still be set)
+  - <code>\link temple::Array Array\endlink</code>: like std::array, fixed-size 
+  - <code>\link temple::Bitmask Bitmask\endlink</code>: Composition helper from an enum
+  - <code>\link temple::DynamicArray DynamicArray\endlink</code>: managed array with fixed-size maximal number of elements, more
+    like std::vector but without reallocation on exceeding reserved size
+  - <code>\link temple::DynamicSet DynamicSet\endlink</code>: fixed-maximum-size managed set
+  - <code>\link temple::DynamicMap DynamicMap\endlink</code>: fixed-maximum-size associative container
+  - <code>\link temple::jsf::Generator JSF\endlink</code>: A PRNG
+  - <code>\link temple::BTree BTree\endlink</code>: A B-tree that stores merely values, not key-value pairs
+  - <code>\link temple::Vector Vector\endlink</code>: 3D cartesian coordinate system constexpr class with basic
+    computations
+  - <code>\link temple::UpperTriangularMatrix UpperTriangularMatrix\endlink</code>: stores data of an upper triangular matrix in a linear
+    array
+  - <code>\link temple::Optional Optional\endlink</code>: To represent operations that may frequently return no result
+  - <code>\link temple::Pair Pair\endlink</code>: Minimal replacement for std::pair, where some member functions are not 
+    yet marked constexpr
+- <code>\link temple::TinySet TinySet\endlink</code>, <code>\link temple::TinyUnorderedSet TinyUnorderedSet\endlink</code>: Set-like use of linear memory for very few
+  elements
+- CRTP base classes that supply comparison operators
+- <code>\link temple::VectorView VectorView\endlink</code>: Dynamically filtering and re-sorting view of a vector's contents
+- A collection of pseudo-functional-style composable range manipulation
+  functions
+  - map (= transform)
+  - reduce / accumulate
+  - variadic concatenate
+  - condense an iterable to a delimiter-separated string of its values
+  - group values of a container by mapping value or equality
+  - all of, any of
+  - composable set union, intersection, difference
+- Range adaptors: zip, unary and binary allPairs, unary sequentialPairs
+- Some SFINAE container and function traits
+  - test for insert / push back / emplace / emplace back members
+  - C++14 is callable implementation (in lieu of C++17's standardization)
+  - get container value type
+  - get function return type
+- boost::optional composition syntactic sugar
+
 @subsection manual-sublibraries-symmetries Chemical symmetries
 
 Non-terminal atoms in molecules often adopt nearly ideal local symmetries when
@@ -152,7 +193,17 @@ Size | Name
 7    | Pentagonal bipyramidal
 8    | Square antiprismatic
 
-In addition, this libraries computes ligand addition and ligand loss
+Data provided per symmetry:
+- Number of binding sites
+- String representation
+- Angle function returning idealized angles between symmetry positions
+- Idealized coordinates
+- A minimal set of rotations to allow the generation of all superimposable
+  sequences of binding site mapping indices
+- A set of tetrahedra whose signed volumes permit the distinction of chiral
+  elements within the symmetry
+
+In addition, this libraries can compute ligand addition and ligand loss
 transitions between symmetries at compile-time.
 
 
@@ -244,7 +295,7 @@ The following alterations arise due to the current implementation state:
 - *Like* is altered to mean stereodescriptors with the same index of
   permutation. This is strictly equivalent, as indices of permutation are
   implemented 'canonically', enabling a bijective mapping.
-- No distinction is made whether a stereocenter is merely psuedoasymmetric. When
+- No distinction is made whether a stereocenter is merely pseudoasymmetric. When
   based on indices of permutation, sequence rules 4c and 5 can be conflated, and
   I cannot think of a molecule in which removing the distinction changes the
   sequence rule application for sequence rule 4a. Additionally, 
@@ -477,7 +528,7 @@ running any more precise calculations.
 
 --------------------------------------------------------------------------------
 
-@subsection Ranking algorithm deficiencies
+@subsection ranking-deficiencies Ranking algorithm deficiencies
 No regularization of Mancude rings and rings systems is performed in sequence
 rule 1. This can lead to false differences between substituents when they are
 actually identical.

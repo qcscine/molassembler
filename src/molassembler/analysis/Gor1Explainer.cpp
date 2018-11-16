@@ -27,10 +27,6 @@ std::ostream& nl(std::ostream& os) {
   return os;
 }
 
-/* TODO
- * - Alter to specialized SPG Gor1 variant
- */
-
 namespace molassembler {
 
 namespace DistanceGeometry {

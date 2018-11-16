@@ -38,7 +38,8 @@ public:
     unsigned fusedPosition;
     //! Abstract ranking-characters of the ligands at their symmetry positions
     std::vector<char> characters;
-    /*! An identifier to the symmetry source
+    /*!
+     * @brief An identifier to the symmetry source
      *
      * Since OrientationState is used internally in an ordered pair which may
      * swap elements on changes, an identifier can be useful in reassociating
@@ -54,7 +55,7 @@ public:
       std::size_t passIdentifier
     );
 
-    //! Applies a rotation to the fused position and characters
+    //! Applies a rotation to the fused position and ranking characters
     void applyCharacterRotation(const std::vector<unsigned>& rotation);
 
     //! Smallest symmetry position from the same group as the fused position
@@ -64,7 +65,8 @@ public:
     std::vector<unsigned> findReductionMapping(unsigned reducedFusedPosition) const;
 
     /* c++17 nodiscard */
-    /*! Transforms the OrientationState to a canonical form
+    /*!
+     * @brief Transforms the OrientationState to a canonical form
      *
      * Transforms the OrientationState by applying a reduction mapping to the
      * smallest symmetry position from the same group as the fused position.
@@ -116,12 +118,13 @@ public:
     temple::Math::toRadians(1.0)
   };
 
-  /*! Generates a symmetry rotation subject to constraints
+  /*!
+   * @brief Generates a symmetry rotation subject to constraints
    *
-   * \param symmetryName The symmetry in which the rotation is sought
-   * \param fixedSymmetryPosition The symmetry position in symmetryName that is
+   * @param symmetryName The symmetry in which the rotation is sought
+   * @param fixedSymmetryPosition The symmetry position in symmetryName that is
    *   to be kept constant
-   * \param changedPositions The symmetry positions which must change in the
+   * @param changedPositions The symmetry positions which must change in the
    *   sought rotation
    */
   static std::vector<unsigned> generateRotation(
@@ -145,9 +148,9 @@ public:
 
 //!@name Information
 //!@{
-  /*! Returns a set of dihedrals for a particular permutation
-   *
-   * \note The first two elements of each tuple specify the symmetry position
+  /*!
+   * @brief Returns a set of dihedrals for a particular permutation
+   * @note The first two elements of each tuple specify the symmetry position
    * within that side's symmetry. The first element is for the left symmetry,
    * the second for the right symmetry.
    */
@@ -199,8 +202,9 @@ private:
 //!@}
 
   /*!
-   * Calculates the angle between two substituents that have the same angle from
-   * the bound symmetry position in a plane perpendicular to their shared axis.
+   * @brief Calculates the angle between two substituents that have the same
+   *   angle from the bound symmetry position in a plane perpendicular to their
+   *   shared axis.
    *
    * The axis is defined by the bound symmetry position and the central point of
    * the symmetry. Symmetry positions with identical angles from the bound
@@ -208,8 +212,8 @@ private:
    * axis. The angle between these symmetry positions via the intersection with
    * the axis in that plane is calculated by this function.
    *
-   * \warning Do not call this with angleFromBoundSymmetryPosition == M_PI as
-   * the geometrical idea collapses.
+   * @warning Do not call this with angleFromBoundSymmetryPosition == M_PI as
+   *   the geometrical idea collapses.
    */
   static double perpendicularSubstituentAngle(
     double angleFromBoundSymmetryPosition,

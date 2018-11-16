@@ -253,9 +253,9 @@ void Molecule::Impl::_propagateGraphChange() {
     }
   }
 
-  /* Any BondStereopermutators whose constituing AtomStereopermutator's rankings have
-   * changed have been removed. So, I think now we just have to check if there
-   * are any new ones we could have.
+  /* Any BondStereopermutators whose constituing AtomStereopermutator's
+   * rankings have changed have been removed. So, I think now we just have to
+   * check if there are any new ones we could have.
    */
 
   for(

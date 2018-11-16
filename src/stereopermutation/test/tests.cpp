@@ -14,16 +14,18 @@
 #include "chemical_symmetries/Symmetries.h"
 
 #include "stereopermutation/GenerateUniques.h"
-#include "stereopermutation/LogicalOperatorTests.h"
 #include "stereopermutation/Composites.h"
 
 #include "temple/Functional.h"
 #include "temple/Random.h"
 #include "temple/Stringify.h"
+#include "temple/constexpr/LogicalOperatorTests.h"
 
 using namespace stereopermutation;
 
-/* TODO
+/*! @file
+ *
+ * @todo
  * - add more tests from different geometries
  */
 
@@ -128,7 +130,7 @@ BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
   do {
     for(unsigned i = 0; i < 6 && pass; i++) {
       for(unsigned j = i + 1; j < 6 && pass; j++) {
-        if(!OperatorTests::XOR(
+        if(!temple::Math::XOR(
             single.columnSmaller(i, j),
             single.columnSmaller(j, i),
             !single.columnSmaller(i, j) && !single.columnSmaller(j, i)
@@ -285,7 +287,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
   };
 
   // one and only one of the following can be true for any Stereopermutations a and b
-  BOOST_CHECK(OperatorTests::testLogicalOperators(a, b));
+  BOOST_CHECK(temple::testLogicalOperators(a, b));
 
   BOOST_CHECK(a.isRotationallySuperimposable(b, Symmetry::Name::Octahedral));
   BOOST_CHECK(b.isRotationallySuperimposable(a, Symmetry::Name::Octahedral));
@@ -312,7 +314,7 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
     }
   };
 
-  BOOST_CHECK(OperatorTests::testLogicalOperators(c, d));
+  BOOST_CHECK(temple::testLogicalOperators(c, d));
   BOOST_CHECK(c.isRotationallySuperimposable(d, Symmetry::Name::Octahedral));
   BOOST_CHECK(d.isRotationallySuperimposable(c, Symmetry::Name::Octahedral));
 }

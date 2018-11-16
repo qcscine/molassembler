@@ -218,6 +218,7 @@ target_include_directories(molassembler_obj
   SYSTEM PRIVATE
     ${EIGEN3_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIR}
+    $<TARGET_PROPERTY:spectra,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 # Shared variant

@@ -4,7 +4,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 #define INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 
-/*!@file
+/*! @file
  *
  * @brief Provides serialization / deserialization for Molecule instances
  */

@@ -9,15 +9,6 @@
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
 
-/*! @todo
- * - may be preferable to have OrderDiscoveryHelper emit pairs of Ts whose
- *   ordering relation is not yet known instead of iterating through the
- *   getUnorderedSets()
- *   particularly now since addAllFromOther and addRelationshipsFromOther
- *   exist, which can hypothetically create completely disjoint sets which can
- *   then get conflated in getSets and getUnorderedSets
- * - addTransferabilityEdges needs a better algorithm
- */
 
 /*! @file
  *
@@ -25,6 +16,15 @@
  *
  * Implements a class that aids in the gradual discovery of ordering relations
  * for a set of values.
+ *
+ * @todo
+ * - may be preferable to have OrderDiscoveryHelper emit pairs of Ts whose
+ *   ordering relation is not yet known instead of iterating through the
+ *   getUnorderedSets()
+ *   particularly now since addAllFromOther and addRelationshipsFromOther
+ *   exist, which can hypothetically create completely disjoint sets which can
+ *   then get conflated in getSets and getUnorderedSets
+ * - addTransferabilityEdges needs a better algorithm
  */
 
 namespace molassembler {

@@ -15,11 +15,6 @@
  * maximal size.
  */
 
-/* TODO
- * - There is really no reason this should be based on DynamicSet. It should be
- *   based on the BTree only!
- */
-
 namespace temple {
 
 /*!

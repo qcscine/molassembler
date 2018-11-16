@@ -34,21 +34,28 @@ template<typename T>
 struct OrderedPair : crtp::AllOperatorsFromTupleMethod<OrderedPair<T>> {
 //!@name Types
 //!@{
+  //! Type of stored elements
+  using value_type = T;
+  //! Iterator type
   using iterator = T*;
+  //! Const iterator type
   using const_iterator = const T*;
 //!@}
 
 //!@name State
 //!@{
-  // Standard guarantees first and second are laid out sucessively in memory
-  T first = T{};
-  T second = T{};
+  //! First element of the pair
+  T first;
+  //! Second element of the pair
+  T second;
 //!@}
 
 //!@name Constructors
 //!@{
+  //! Default constructor
   constexpr OrderedPair() = default;
 
+  //! Reordering pair initializer
   constexpr OrderedPair(T a, T b) : first {std::move(a)}, second {std::move(b)} {
     if(b < a) {
       std::swap(first, second);
@@ -104,11 +111,13 @@ struct OrderedPair : crtp::AllOperatorsFromTupleMethod<OrderedPair<T>> {
 
 //!@name Operators
 //!@{
+  //! Yields the result of std::tie(first, second)
   constexpr auto tuple() const {
     return std::tie(first, second);
   }
 //!@}
 
+  //! Map the pair into an unordered std::pair
   template<typename UnaryFunction>
   auto map(UnaryFunction&& mapFunction) const {
     return std::make_pair(

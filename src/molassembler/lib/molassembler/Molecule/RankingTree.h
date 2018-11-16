@@ -40,7 +40,16 @@
 #include <experimental/propagate_const>
 #endif
 
-/*! @todo
+/*! @file
+ *
+ * @brief IUPAC-like ranking of substituents at atoms
+ *
+ * Centerpoint of library ranking algorithm. Implements the RankingTree class,
+ * which can be instantiated on any atomic index in a Molecule, which
+ * splits the Molecule into an acyclic tree. That tree can then be used to rank
+ * that atom's direct substituents according to IUPAC-like sequence rules.
+ *
+ * @todo
  * - Maybe you can only add transferability edges when in down-only BFS?
  * - Consider transition to more unordered containers
  * - Pseudo-asymmetry considerations
@@ -63,16 +72,6 @@
  * - Try to figure out a datastructure in which the entire relative ranking can
  *   be stored as indeterminate and determinate, so to wholly avoid
  *   recomputation where unnecessary
- */
-
-/*! @file
- *
- * @brief IUPAC-like ranking of substituents at atoms
- *
- * Centerpoint of library ranking algorithm. Implements the RankingTree class,
- * which can be instantiated on any atomic index in a Molecule, which
- * splits the Molecule into an acyclic tree. That tree can then be used to rank
- * that atom's direct substituents according to IUPAC-like sequence rules.
  */
 
 namespace molassembler {

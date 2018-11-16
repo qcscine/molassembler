@@ -159,9 +159,6 @@ template<
 /*!
  * Tests whether all types in the tuple return true when evaluated against a
  * predicate
- *
- * TODO this is wrong by construction, allOf should be implemented at array-level
- * in Containers.h, not take a Predicate
  */
 template<
   typename TupleType,

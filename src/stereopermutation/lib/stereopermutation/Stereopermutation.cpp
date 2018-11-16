@@ -6,8 +6,6 @@
 #include "boost/functional/hash.hpp"
 #include "chemical_symmetries/Symmetries.h"
 
-#include "stereopermutation/Util.h"
-
 #include <algorithm>
 #include <cassert>
 
@@ -171,13 +169,14 @@ typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
   LinksSetType rotatedSet;
 
   for(const auto& pair : links) {
-    rotatedSet.emplace(
-      Util::sortBinaryArgs(
-        std::make_pair<unsigned, unsigned>,
-        rotateIndex(pair.first),
-        rotateIndex(pair.second)
-      )
-    );
+    unsigned a = rotateIndex(pair.first);
+    unsigned b = rotateIndex(pair.second);
+
+    if(b < a) {
+      rotatedSet.emplace(b, a);
+    } else {
+      rotatedSet.emplace(a, b);
+    }
   }
 
   return rotatedSet;

@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
 
   BOOST_CHECK_MESSAGE(
     checkPositions(conformerResult.value(), config.fixedPositions),
-    "The fixed atom isn't approximately placed at the origin!"
+    "The fixed atom isn't approximately placed at the origin"
   );
 
   /* Octadecane carbon positions at both ends of the chain are 16, 17 (0-based).
@@ -79,6 +79,6 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
 
   BOOST_CHECK_MESSAGE(
     checkPositions(conformerResult.value(), config.fixedPositions),
-    "The ring-like positions aren't fixed as demanded."
+    "The ring-like positions aren't fixed as required."
   );
 }

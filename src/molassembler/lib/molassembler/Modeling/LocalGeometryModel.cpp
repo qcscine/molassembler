@@ -25,7 +25,7 @@ const std::map<BondType, double> bondWeights {
   {BondType::Quadruple, 4.0},
   {BondType::Quintuple, 5.0},
   {BondType::Sextuple, 6.0},
-  {BondType::Eta, 0.0} //! @todo is this wise? (duplicate in BondDistance!)
+  {BondType::Eta, 0.0}
 };
 
 boost::optional<Symmetry::Name> vsepr(

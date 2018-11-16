@@ -8,8 +8,6 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Composites.h
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Stereopermutation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/GenerateUniques.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/LogicalOperatorTests.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/stereopermutation/Util.h
 )
 
 set(SOURCES_All

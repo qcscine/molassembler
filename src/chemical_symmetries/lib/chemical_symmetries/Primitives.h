@@ -794,7 +794,6 @@ struct TrigonalPrismatic {
     std::array<unsigned, 4>,
     2
   > tetrahedra {{
-    // TODO dubious if this captures all relevant information, too limited
     {{ORIGIN_PLACEHOLDER, 0, 1, 2}},
     {{3, ORIGIN_PLACEHOLDER, 4, 5}}
   }};

@@ -292,9 +292,6 @@ SpatialModel::SpatialModel(
           molecule.graph()
         ) >= 1
       )
-      /*! @todo missing cases:
-       * - Need aromaticity checking routine for cycle size 5
-       */
     ) {
       /* Gather sequence of atoms in cycle by progressively converting edge
        * descriptors into vertex indices
