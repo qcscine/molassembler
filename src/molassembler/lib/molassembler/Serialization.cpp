@@ -83,19 +83,19 @@ struct adl_serializer<molassembler::RankingInformation> {
   using Type = molassembler::RankingInformation;
 
   static void to_json(json& j, const Type& ranking) {
-    j["sorted"] = ranking.sortedSubstituents;
+    j["s"] = ranking.sortedSubstituents;
     // Omit links member if the list is empty (common)
     if(!ranking.links.empty()) {
-      j["links"] = ranking.links;
+      j["lnk"] = ranking.links;
     }
-    j["lig"] = ranking.ligands;
-    j["ligRank"] = ranking.ligandsRanking;
+    j["l"] = ranking.ligands;
+    j["lr"] = ranking.ligandsRanking;
   }
 
   static void from_json(const json& j, Type& ranking) {
-    ranking.sortedSubstituents.reserve(j["sorted"].size());
+    ranking.sortedSubstituents.reserve(j["s"].size());
 
-    for(const auto& listJSON : j["sorted"]) {
+    for(const auto& listJSON : j["s"]) {
       std::vector<molassembler::AtomIndex> subGroup;
       for(const auto& listElementJSON : listJSON) {
         subGroup.push_back(listElementJSON);
@@ -104,16 +104,16 @@ struct adl_serializer<molassembler::RankingInformation> {
       ranking.sortedSubstituents.push_back(std::move(subGroup));
     }
 
-    if(j.count("links") > 0) {
-      ranking.links.reserve(j["links"].size());
+    if(j.count("lnk") > 0) {
+      ranking.links.reserve(j["lnk"].size());
 
-      for(const auto& listJSON : j["links"]) {
+      for(const auto& listJSON : j["lnk"]) {
         ranking.links.push_back(listJSON);
       }
     }
 
-    ranking.ligands.reserve(j["lig"].size());
-    for(const auto& listJSON : j["lig"]) {
+    ranking.ligands.reserve(j["l"].size());
+    for(const auto& listJSON : j["l"]) {
       std::vector<molassembler::AtomIndex> ligandConstitutingAtoms;
       for(const auto& listElementJSON : listJSON) {
         ligandConstitutingAtoms.push_back(listElementJSON);
@@ -121,8 +121,8 @@ struct adl_serializer<molassembler::RankingInformation> {
       ranking.ligands.push_back(ligandConstitutingAtoms);
     }
 
-    ranking.ligandsRanking.reserve(j["ligRank"].size());
-    for(const auto& listJSON : j["ligRank"]) {
+    ranking.ligandsRanking.reserve(j["lr"].size());
+    for(const auto& listJSON : j["lr"]) {
       std::vector<unsigned> equalLigandIndices;
       for(const auto& listElementJSON : listJSON) {
         equalLigandIndices.push_back(listElementJSON);
@@ -142,26 +142,19 @@ struct adl_serializer<molassembler::OuterGraph> {
     j["Z"] = json::array();
     auto& elements = j["Z"];
 
-    for(
-      const auto vertexIndex :
-      boost::make_iterator_range(
-        inner.vertices()
-      )
-    ) {
+    for(const auto vertexIndex : boost::make_iterator_range(inner.vertices())) {
       elements.push_back(
         inner.elementType(vertexIndex)
       );
     }
 
 
-    j["edges"] = json::array();
-    auto& edges = j["edges"];
+    j["E"] = json::array();
+    auto& edges = j["E"];
 
     for(
       const molassembler::InnerGraph::Edge& edgeDescriptor :
-      boost::make_iterator_range(
-        inner.edges()
-      )
+      boost::make_iterator_range(inner.edges())
     ) {
       json e = json::array();
       e.push_back(
@@ -185,7 +178,7 @@ struct adl_serializer<molassembler::OuterGraph> {
   }
 
   static void from_json(const json& j, Type& graph) {
-    unsigned N = j["Z"].size();
+    const unsigned N = j["Z"].size();
 
     molassembler::InnerGraph inner (N);
 
@@ -193,7 +186,7 @@ struct adl_serializer<molassembler::OuterGraph> {
       inner.elementType(i) = j["Z"].at(i);
     }
 
-    for(const auto& edgeJSON : j["edges"]) {
+    for(const auto& edgeJSON : j["E"]) {
       inner.addEdge(
         edgeJSON.at(0),
         edgeJSON.at(1),
@@ -219,11 +212,7 @@ nlohmann::json serialize(const Molecule& molecule) {
   json m;
 
   // Add a version tag. Always serialize to the newest version information
-  m["v"] = {
-    version::major,
-    version::minor,
-    version::patch
-  };
+  m["v"] = {version::major, version::minor, version::patch};
 
   m["g"] = molecule.graph();
 
@@ -236,11 +225,11 @@ nlohmann::json serialize(const Molecule& molecule) {
     json s;
 
     s["c"] = stereopermutator.centralIndex();
-    s["sym"] = Symmetry::name(stereopermutator.getSymmetry());
-    s["rank"] = stereopermutator.getRanking();
+    s["s"] = Symmetry::nameIndex(stereopermutator.getSymmetry());
+    s["r"] = stereopermutator.getRanking();
 
     if(stereopermutator.assigned()) {
-      s["assign"] = stereopermutator.assigned().value();
+      s["a"] = stereopermutator.assigned().value();
     }
 
     m["a"].push_back(std::move(s));
@@ -250,13 +239,10 @@ nlohmann::json serialize(const Molecule& molecule) {
   for(const auto& stereopermutator : stereopermutators.bondStereopermutators()) {
     json s;
 
-    s["edge"] = {
-      stereopermutator.edge().first,
-      stereopermutator.edge().second
-    };
+    s["e"] = {stereopermutator.edge().first, stereopermutator.edge().second};
 
     if(stereopermutator.assigned()) {
-      s["assign"] = stereopermutator.assigned().value();
+      s["a"] = stereopermutator.assigned().value();
     }
 
     m["b"].push_back(std::move(s));
@@ -288,20 +274,20 @@ Molecule deserialize(const nlohmann::json& m) {
 
   // Atom stereopermutators
   for(const auto& j : m["a"]) {
-    Symmetry::Name symmetry = Symmetry::nameFromString(j["sym"]);
+    Symmetry::Name symmetry = Symmetry::allNames.at(j["s"]);
     AtomIndex centralIndex = j["c"];
 
     auto stereopermutator = AtomStereopermutator {
       graph,
       symmetry,
       centralIndex,
-      j["rank"].get<RankingInformation>()
+      j["r"].get<RankingInformation>()
     };
 
     // Assign if present
-    if(j.count("assign") > 0) {
+    if(j.count("a") > 0) {
       stereopermutator.assign(
-        static_cast<unsigned>(j["assign"])
+        static_cast<unsigned>(j["a"])
       );
     }
 
@@ -310,8 +296,8 @@ Molecule deserialize(const nlohmann::json& m) {
 
   // Bond stereopermutators
   for(const auto& j : m["b"]) {
-    AtomIndex a = j["edge"].at(0);
-    AtomIndex b = j["edge"].at(1);
+    AtomIndex a = j["e"].at(0);
+    AtomIndex b = j["e"].at(1);
 
     auto aStereopermutatorOption = stereopermutators.option(a);
     auto bStereopermutatorOption = stereopermutators.option(b);
@@ -327,19 +313,16 @@ Molecule deserialize(const nlohmann::json& m) {
     };
 
     // Assign if present
-    if(j.count("assign") > 0) {
+    if(j.count("a") > 0) {
       stereopermutator.assign(
-        static_cast<unsigned>(j["assign"])
+        static_cast<unsigned>(j["a"])
       );
     }
 
     stereopermutators.add(molEdge, std::move(stereopermutator));
   }
 
-  return Molecule {
-    graph,
-    stereopermutators
-  };
+  return Molecule {graph, stereopermutators};
 }
 
 } // namespace detail
