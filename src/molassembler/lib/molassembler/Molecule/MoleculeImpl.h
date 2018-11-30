@@ -19,6 +19,16 @@ struct Molecule::Impl {
   StereopermutatorList _stereopermutators;
 
 /* "Private" helpers */
+  void _tryAddAtomStereopermutator(
+    AtomIndex candidateIndex,
+    StereopermutatorList& stereopermutators
+  ) const;
+
+  void _tryAddBondStereopermutator(
+    const BondIndex& bond,
+    StereopermutatorList& stereopermutators
+  ) const;
+
   //! Generates a list of stereopermutators based on graph properties alone
   StereopermutatorList _detectStereopermutators() const;
 
@@ -28,8 +38,8 @@ struct Molecule::Impl {
   //! Returns whether the specified index is valid or not
   bool _isValidIndex(AtomIndex index) const;
 
-  //! Returns whether an edge is double, aromtic, triple or higher bond order
-  bool _isGraphBasedBondStereopermutatorCandidate(const InnerGraph::Edge& e) const;
+  //! Returns whether an edge is double, triple or higher bond order
+  bool _isGraphBasedBondStereopermutatorCandidate(BondType bondType) const;
 
   //! Updates the molecule's StereopermutatorList after a graph modification
   void _propagateGraphChange();

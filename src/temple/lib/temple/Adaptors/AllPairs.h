@@ -114,10 +114,7 @@ struct SingleContainerPairsGenerator {
     }
 
     PairType operator * () const {
-      return {
-        *_left,
-        *_right
-      };
+      return {*_left, *_right};
     }
 
   private:
@@ -272,10 +269,7 @@ struct TwoContainersAllPairsGenerator {
     }
 
     PairType operator * () const {
-      return {
-        *_tIter,
-        *_uIter
-      };
+      return {*_tIter, *_uIter};
     }
 
   private:

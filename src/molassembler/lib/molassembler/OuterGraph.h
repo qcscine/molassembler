@@ -19,6 +19,21 @@
 /*!@file
  *
  * @brief Interface class for the molecular graph
+ */
+
+// Forward-declarations
+namespace Delib {
+  class ElementTypeCollection;
+} // namespace Delib
+
+namespace molassembler {
+
+// Forward-declare InnerGraph
+class InnerGraph;
+class Cycles;
+
+/**
+ * @brief Represents the connectivity of atoms of a molecule
  *
  * An undirected graph consisting of atom vertices and bond edges. Vertices
  * store the atomic element type while vertices store a bond type that
@@ -38,19 +53,10 @@
  * - Removing atoms or bonds from diatomic molecules are disallowed operations.
  * - Disconnecting a molecule into two logical molecules by removing a
  *   particular bond or atom is also disallowed.
+ *
+ * @note This class wraps InnerGraph so that no Boost Graph types are exposed
+ *   to consumers.
  */
-
-// Forward-declarations
-namespace Delib {
-  class ElementTypeCollection;
-} // namespace Delib
-
-namespace molassembler {
-
-// Forward-declare InnerGraph
-class InnerGraph;
-class Cycles;
-
 class OuterGraph {
 public:
 //!@name Member types
@@ -154,19 +160,33 @@ public:
 
 //!@name Ranges
 //!@{
-  //! A begin-end pair of iterators that yield the range of valid atom indices.
+  /*!
+   * @brief A begin-end pair of iterators that yield the range of valid atom
+   *   indices.
+   * @note Use e.g. boost::make_iterator_range to yield an object with begin
+   *   and end members for range-for usage
+   */
   Range<AtomIterator> atoms() const;
-  //! A begin-end pair of iterators that yield the range of valid bond indices
+  /*!
+   * @brief A begin-end pair of iterators that yield the range of valid bond
+   *   indices
+   * @note Use e.g. boost::make_iterator_range to yield an object with begin
+   *   and end members for range-for usage
+   */
   Range<BondIterator> bonds() const;
   /*!
    * @brief Fetch iterator pair yielding adjacents of an atom
    * @param a The atom whose adjacents are desired
+   * @note Use e.g. boost::make_iterator_range to yield an object with begin
+   *   and end members for range-for usage
    * @returns A begin-end pair of iterators that yield adjacent atoms of an atom
    */
   Range<AdjacencyIterator> adjacents(AtomIndex a) const;
   /*!
    * @brief Fetch iterator pair yielding bonds indices indicent to an atom
    * @param a The atom whose incident atoms are desired
+   * @note Use e.g. boost::make_iterator_range to yield an object with begin
+   *   and end members for range-for usage
    * @returns A begin-end pair of iterators that yield incident bond indices of
    *   an atom
    */

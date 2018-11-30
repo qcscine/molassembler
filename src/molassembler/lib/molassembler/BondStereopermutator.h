@@ -35,6 +35,8 @@ class Composite;
 namespace molassembler {
 
 class AngstromWrapper;
+class OuterGraph;
+class RankingInformation;
 
 // Forward-declarations
 class AtomStereopermutator;
@@ -111,6 +113,21 @@ public:
     const AngstromWrapper& angstromWrapper,
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB
+  );
+
+  /*!
+   * @brief Propagates the bond stereocenter's state through a possible ranking
+   *   change on one of its constituting atom stereopermutators.
+   *
+   * @param oldPermutator The AtomStereopermutator that is changing at its
+   *   state before a ranking change effects its current stereopermutation or
+   *   substituent ranking
+   * @param newPermutator The AtomStereopermutator that is changing after its
+   *   internal state has been propagated through a ranking change
+   */
+  void propagateGraphChange(
+    const AtomStereopermutator& oldPermutator,
+    const AtomStereopermutator& newPermutator
   );
 //!@}
 

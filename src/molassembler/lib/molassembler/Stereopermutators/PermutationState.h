@@ -87,11 +87,23 @@ struct PermutationState {
     const RankingInformation::RankedLigandsType& canonicalLigands
   );
 
+  /*!
+   * @brief Generates a flat mapping from ligand indices to symmetry positions
+   *
+   * Generates a mapping from ligand indices to symmetry positions according to
+   * the ranking character distribution to symmetry positions of an assignment
+   * (its characters member) and any defined links between symmetry positions.
+   */
   static std::vector<unsigned> generateLigandToSymmetryPositionMap(
     const stereopermutation::Stereopermutation& assignment,
     const RankingInformation::RankedLigandsType& canonicalLigands
   );
 
+  /*!
+   * @brief Generates a flat mapping from symmetry positions to ligand indices
+   *
+   * Generates exactly the inverse map to generateLigandToSymmetryPositionMap
+   */
   static std::vector<unsigned> generateSymmetryPositionToLigandMap(
     const stereopermutation::Stereopermutation& assignment,
     const RankingInformation::RankedLigandsType& canonicalLigands
@@ -123,7 +135,9 @@ struct PermutationState {
     const ChiralStatePreservation& preservationOption
   );
 
-  //! Determine whether a stereopermutation is not obviously impossible
+  /*! Determine whether a stereopermutation is not obviously impossible
+   * @todo Move this to SpatialModel
+   */
   static bool isNotObviouslyImpossibleStereopermutation(
     const stereopermutation::Stereopermutation& assignment,
     const RankingInformation::RankedLigandsType& canonicalLigands,

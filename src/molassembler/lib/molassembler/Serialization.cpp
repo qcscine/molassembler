@@ -84,7 +84,10 @@ struct adl_serializer<molassembler::RankingInformation> {
 
   static void to_json(json& j, const Type& ranking) {
     j["sorted"] = ranking.sortedSubstituents;
-    j["links"] = ranking.links;
+    // Omit links member if the list is empty (common)
+    if(!ranking.links.empty()) {
+      j["links"] = ranking.links;
+    }
     j["lig"] = ranking.ligands;
     j["ligRank"] = ranking.ligandsRanking;
   }
@@ -101,10 +104,12 @@ struct adl_serializer<molassembler::RankingInformation> {
       ranking.sortedSubstituents.push_back(std::move(subGroup));
     }
 
-    ranking.links.reserve(j["links"].size());
+    if(j.count("links") > 0) {
+      ranking.links.reserve(j["links"].size());
 
-    for(const auto& listJSON : j["links"]) {
-      ranking.links.push_back(listJSON);
+      for(const auto& listJSON : j["links"]) {
+        ranking.links.push_back(listJSON);
+      }
     }
 
     ranking.ligands.reserve(j["lig"].size());
@@ -363,9 +368,7 @@ Molecule fromJSON(const std::string& serializedMolecule) {
 
 Molecule fromCBOR(const std::vector<std::uint8_t>& cbor) {
   return detail::deserialize(
-    nlohmann::json::from_cbor(
-      cbor
-    )
+    nlohmann::json::from_cbor(cbor)
   );
 }
 

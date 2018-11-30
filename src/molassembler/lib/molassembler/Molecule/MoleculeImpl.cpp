@@ -18,6 +18,90 @@
 
 namespace molassembler {
 
+void Molecule::Impl::_tryAddAtomStereopermutator(
+  AtomIndex candidateIndex,
+  StereopermutatorList& stereopermutators
+) const {
+  // If there is already an atom stereopermutator on this index, stop
+  if(stereopermutators.option(candidateIndex)) {
+    return;
+  }
+
+  RankingInformation localRanking = rankPriority(candidateIndex);
+
+  // Only non-terminal atoms may have permutators
+  if(localRanking.ligands.size() <= 1) {
+    return;
+  }
+
+  // Construct a Stereopermutator here
+  auto newStereopermutator = AtomStereopermutator {
+    _adjacencies,
+    determineLocalGeometry(candidateIndex, localRanking),
+    candidateIndex,
+    localRanking
+  };
+
+  // Default assign the stereocenter if there is only one possible assignment
+  if(newStereopermutator.numAssignments() == 1) {
+    newStereopermutator.assign(0);
+  }
+
+  if(
+    !disregardStereopermutator(
+      newStereopermutator,
+      graph().elementType(candidateIndex),
+      graph().cycles(),
+      Options::temperatureRegime
+    )
+  ) {
+    stereopermutators.add(
+      candidateIndex,
+      std::move(newStereopermutator)
+    );
+  }
+}
+
+void Molecule::Impl::_tryAddBondStereopermutator(
+  const BondIndex& bond,
+  StereopermutatorList& stereopermutators
+) const {
+  // If there is already a bond stereopermutator on this edge, stop
+  if(stereopermutators.option(bond)) {
+    return;
+  }
+
+  AtomIndex source = bond.first,
+            target = bond.second;
+
+  auto sourceAtomStereopermutatorOption = stereopermutators.option(source);
+  auto targetAtomStereopermutatorOption = stereopermutators.option(target);
+
+  // There need to be assigned stereopermutators on both vertices
+  if(
+    !sourceAtomStereopermutatorOption
+    || !targetAtomStereopermutatorOption
+    || sourceAtomStereopermutatorOption->assigned() == boost::none
+    || targetAtomStereopermutatorOption->assigned() == boost::none
+  ) {
+    return;
+  }
+
+  // Construct a Stereopermutator here
+  auto newStereopermutator = BondStereopermutator {
+    *sourceAtomStereopermutatorOption,
+    *targetAtomStereopermutatorOption,
+    bond
+  };
+
+  if(newStereopermutator.numAssignments() > 1) {
+    stereopermutators.add(
+      bond,
+      std::move(newStereopermutator)
+    );
+  }
+}
+
 StereopermutatorList Molecule::Impl::_detectStereopermutators() const {
   StereopermutatorList stereopermutatorList;
 
@@ -28,82 +112,13 @@ StereopermutatorList Molecule::Impl::_detectStereopermutators() const {
     candidateIndex < graph().N();
     ++candidateIndex
   ) {
-    RankingInformation localRanking = rankPriority(candidateIndex);
-
-    // Skip terminal atoms
-    if(localRanking.ligands.size() <= 1) {
-      continue;
-    }
-
-    // Construct a Stereopermutator here
-    auto newStereopermutator = AtomStereopermutator {
-      _adjacencies,
-      determineLocalGeometry(candidateIndex, localRanking),
-      candidateIndex,
-      localRanking
-    };
-
-    if(newStereopermutator.numAssignments() == 1) {
-      newStereopermutator.assign(0);
-    }
-
-    if(
-      !disregardStereopermutator(
-        newStereopermutator,
-        graph().elementType(candidateIndex),
-        cycleData,
-        Options::temperatureRegime
-      )
-    ) {
-      stereopermutatorList.add(
-        candidateIndex,
-        std::move(newStereopermutator)
-      );
-    }
+    _tryAddAtomStereopermutator(candidateIndex, stereopermutatorList);
   }
 
-  const InnerGraph& inner = graph().inner();
-
   // Find BondStereopermutators
-  for(
-    const InnerGraph::Edge& edgeIndex :
-    boost::make_iterator_range(inner.edges())
-  ) {
-    // Skip edges that cannot be candidates
-    if(!_isGraphBasedBondStereopermutatorCandidate(edgeIndex)) {
-      continue;
-    }
-
-    AtomIndex source = inner.source(edgeIndex),
-              target = inner.target(edgeIndex);
-
-    auto sourceAtomStereopermutatorOption = stereopermutatorList.option(source);
-    auto targetAtomStereopermutatorOption = stereopermutatorList.option(target);
-
-    // There need to be assigned stereopermutators on both vertices
-    if(
-      !sourceAtomStereopermutatorOption
-      || !targetAtomStereopermutatorOption
-      || sourceAtomStereopermutatorOption->assigned() == boost::none
-      || targetAtomStereopermutatorOption->assigned() == boost::none
-    ) {
-      continue;
-    }
-
-    const auto outerEdgeIndex = BondIndex {source, target};
-
-    // Construct a Stereopermutator here
-    auto newStereopermutator = BondStereopermutator {
-      *sourceAtomStereopermutatorOption,
-      *targetAtomStereopermutatorOption,
-      outerEdgeIndex
-    };
-
-    if(newStereopermutator.numAssignments() > 1) {
-      stereopermutatorList.add(
-        outerEdgeIndex,
-        std::move(newStereopermutator)
-      );
+  for(BondIndex bond : boost::make_iterator_range(graph().bonds())) {
+    if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bond))) {
+      _tryAddBondStereopermutator(bond, stereopermutatorList);
     }
   }
 
@@ -125,9 +140,8 @@ bool Molecule::Impl::_isValidIndex(const AtomIndex index) const {
 }
 
 bool Molecule::Impl::_isGraphBasedBondStereopermutatorCandidate(
-  const InnerGraph::Edge& e
+  BondType bondType
 ) const {
-  const BondType bondType = graph().inner().bondType(e);
   return (
     bondType == BondType::Double
     || bondType == BondType::Triple
@@ -141,7 +155,6 @@ void Molecule::Impl::_propagateGraphChange() {
   /* Two cases: If the StereopermutatorList is empty, we can just use detect to
    * find any new stereopermutators in the Molecule.
    */
-
   if(_stereopermutators.empty()) {
     _stereopermutators = _detectStereopermutators();
     return;
@@ -182,6 +195,23 @@ void Molecule::Impl::_propagateGraphChange() {
         continue;
       }
 
+      // Are there adjacent bond stereopermutators? If so, copy the AtomStereopermutator
+      std::vector<BondIndex> adjacentBondStereopermutators;
+      for(BondIndex bond : boost::make_iterator_range(_adjacencies.bonds(vertex))) {
+        if(_stereopermutators.option(bond)) {
+          adjacentBondStereopermutators.push_back(std::move(bond));
+        }
+      }
+      boost::optional<AtomStereopermutator> oldCopyOptional;
+      if(!adjacentBondStereopermutators.empty()) {
+        oldCopyOptional = *stereopermutatorOption;
+      }
+
+      /* TODO AtomStereopermutator's propagateGraphChange could yield the old
+       * internal state necessary for bond stereopermutators via swap and
+       * return instead of copy beforehand and overwrite later
+       */
+
       // Propagate the stereopermutator state to the new ranking
       stereopermutatorOption -> propagateGraphChange(_adjacencies, localRanking);
 
@@ -208,102 +238,36 @@ void Molecule::Impl::_propagateGraphChange() {
         _stereopermutators.remove(vertex);
       }
 
-      /* If there are any BondStereopermutators on adjacent edges, remove them
-       * (since the Ranking has changed on a constituting AtomStereopermutator)
+      /* If the chiral state for this atom stereopermutator could be
+       * successfully propagated or the permutator could be default-assigned,
+       * we can also propagate adjacent BondStereopermutators. Otherwise, we
+       * must remove them.
+       *
+       * TODO we may have to keep track if assignments change within the
+       * propagated bondstereopermutators, or if any bond stereopermutators
+       * are removed, since this may cause another re-rank!
        */
-      for(
-        const BondIndex& bond :
-        boost::make_iterator_range(_adjacencies.bonds(vertex))
-      ) {
-        _stereopermutators.try_remove(bond);
+      if(stereopermutatorOption -> assigned()) {
+        for(const BondIndex& bond : adjacentBondStereopermutators) {
+          _stereopermutators.option(bond)->propagateGraphChange(
+            *oldCopyOptional,
+            *stereopermutatorOption
+          );
+        }
+      } else {
+        for(const BondIndex& bond : adjacentBondStereopermutators) {
+          _stereopermutators.remove(bond);
+        }
       }
     } else {
-      // There is no stereopermutator yet on this vertex
-      // Skip terminal atoms
-      if(localRanking.ligands.size() <= 1) {
-        continue;
-      }
-
-      auto newStereopermutator = AtomStereopermutator {
-        _adjacencies,
-        determineLocalGeometry(vertex, localRanking),
-        vertex,
-        localRanking
-      };
-
-      // Default-assign trivial stereopermutators
-      if(
-        newStereopermutator.numStereopermutations() == 1
-        && newStereopermutator.numAssignments() == 1
-      ) {
-        newStereopermutator.assign(0);
-      }
-
-      if(
-        !disregardStereopermutator(
-          newStereopermutator,
-          inner.elementType(vertex),
-          cycleData,
-          Options::temperatureRegime
-        )
-      ) {
-        _stereopermutators.add(vertex, newStereopermutator);
-      }
+      _tryAddAtomStereopermutator(vertex, _stereopermutators);
     }
   }
 
-  /* Any BondStereopermutators whose constituing AtomStereopermutator's
-   * rankings have changed have been removed. So, I think now we just have to
-   * check if there are any new ones we could have.
-   */
-
-  for(
-    const InnerGraph::Edge& edge :
-    boost::make_iterator_range(inner.edges())
-  ) {
-    // Check if the edge could be a stereopermutator on graph based grounds
-    if(!_isGraphBasedBondStereopermutatorCandidate(edge)) {
-      continue;
-    }
-
-    // Fetch some indices
-    AtomIndex source = inner.source(edge),
-              target = inner.target(edge);
-
-    BondIndex bond {source, target};
-
-    // Ensure there isn't already a stereopermutator on this edge
-    if(auto stereopermutatorOption = _stereopermutators.option(bond)) {
-      continue;
-    }
-
-    // From here just like _detectStereopermutators()
-
-    auto sourceAtomStereopermutatorOption = _stereopermutators.option(source);
-    auto targetAtomStereopermutatorOption = _stereopermutators.option(target);
-
-    // There need to be assigned stereopermutators on both vertices
-    if(
-      !sourceAtomStereopermutatorOption
-      || !targetAtomStereopermutatorOption
-      || sourceAtomStereopermutatorOption->assigned() == boost::none
-      || targetAtomStereopermutatorOption->assigned() == boost::none
-    ) {
-      continue;
-    }
-
-    // Construct a Stereopermutator here
-    auto newStereopermutator = BondStereopermutator {
-      *sourceAtomStereopermutatorOption,
-      *targetAtomStereopermutatorOption,
-      bond
-    };
-
-    if(newStereopermutator.numAssignments() > 1) {
-      _stereopermutators.add(
-        bond,
-        std::move(newStereopermutator)
-      );
+  // Look for new bond stereopermutators
+  for(BondIndex bond : boost::make_iterator_range(graph().bonds())) {
+    if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bond))) {
+      _tryAddBondStereopermutator(bond, _stereopermutators);
     }
   }
 }
@@ -423,6 +387,8 @@ void Molecule::Impl::addBond(
         determineLocalGeometry(toIndex, localRanking),
         Options::chiralStatePreservation
       );
+
+      // TODO Notify adjacent bond stereopermutators
     }
   };
 

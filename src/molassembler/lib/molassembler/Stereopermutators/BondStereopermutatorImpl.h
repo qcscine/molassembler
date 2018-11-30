@@ -32,6 +32,11 @@ struct BondStereopermutator::Impl {
     const AtomStereopermutator& stereopermutatorB
   );
 
+  void propagateGraphChange(
+    const AtomStereopermutator& oldPermutator,
+    const AtomStereopermutator& newPermutator
+  );
+
 /* Information */
   boost::optional<unsigned> assigned() const;
 

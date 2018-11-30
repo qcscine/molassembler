@@ -24,9 +24,16 @@ class Composite {
 public:
 //!@name Member types
 //!@{
+  //! A group of symmetry positions at an angle from the fused position
   struct AngleGroup {
+    //! The angle this group is placed at from the fused position
     double angle;
+    //! The symmetry positions making up this group
     std::vector<unsigned> symmetryPositions;
+    /*!
+     * @brief Whether the ranking characters indicate that this group of
+     *   symmetry positions is isotropic
+     */
     bool isotropic;
   };
 
@@ -78,7 +85,12 @@ public:
     //! Reverts the OrientationState to non-canonical form
     void revert(const std::vector<unsigned>& reversionMapping);
 
-    //! Collects all coplanar indices that are closest to the fused symmetry position
+    /*!
+     * @brief Collects all coplanar indices that are closest to the fused
+     *   symmetry position
+     *
+     * @post AngleGroup's symmetry positions are sorted
+     */
     AngleGroup smallestAngleGroup() const;
 
     //! Full member lexicographical comparison in order of declaration
@@ -108,6 +120,10 @@ public:
 public:
 //!@name Constructors
 //!@{
+  /*!
+   * @brief Constructor
+   * @post Each permutations' dihedrals are sorted (lexicographically)
+   */
   Composite(OrientationState first, OrientationState second);
 //!@}
 //

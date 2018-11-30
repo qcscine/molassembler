@@ -240,9 +240,10 @@ public:
    */
   double angle(unsigned i, unsigned j) const;
 
-  /*! Returns the permutation index within the set of possible permutations, if set
+  /*!
+   * @brief Returns the permutation index within the set of possible permutations, if set
    *
-   * Returns the (public) information of whether the stereopermutator is assigned
+   * Returns the information of whether the stereopermutator is assigned
    * or not, and if so, which assignment it is.
    */
   boost::optional<unsigned> assigned() const;
@@ -250,7 +251,8 @@ public:
   //! Returns a single-element vector containing the central atom
   AtomIndex centralIndex() const;
 
-  /*! Returns IOP within the set of symbolic ligand permutations
+  /*!
+   * @brief Returns IOP within the set of symbolic ligand permutations
    *
    * This is different to the assignment. The assignment denotes the index
    * within the set of possible (more specifically, not obviously infeasible)
@@ -258,7 +260,8 @@ public:
    */
   boost::optional<unsigned> indexOfPermutation() const;
 
-  /*! Returns a minimal representation of chirality constraints
+  /*!
+   * @brief Returns a minimal representation of chirality constraints
    *
    * Every minimal representation consists only of ligand indices.
    *
@@ -276,8 +279,8 @@ public:
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
 
-  /*! Returns the underlying PermutationState
-   *
+  /*!
+   * @brief Returns the underlying PermutationState
    * @note This is library-internal and not part of the public API
    */
   const PermutationState& getPermutationState() const;
@@ -288,13 +291,14 @@ public:
   //! Returns the underlying symmetry
   Symmetry::Name getSymmetry() const;
 
-  /*! Yields the mapping from ligand indices to symmetry positions
-   *
+  /*!
+   * @brief Yields the mapping from ligand indices to symmetry positions
    * @throws std::logic_error if the stereopermutator is unassigned.
    */
   std::vector<unsigned> getSymmetryPositionMap() const;
 
-  /*! Returns the number of possible assignments
+  /*!
+   * @brief Returns the number of possible assignments
    *
    * The number of possible assignments is the number of non-superposable
    * arrangements of the abstract ligand case reduced by trans-arranged
@@ -315,7 +319,8 @@ public:
    */
   unsigned numAssignments() const;
 
-  /*! Returns the number of possible stereopermutations
+  /*!
+   * @brief Returns the number of possible stereopermutations
    *
    * The number of possible stereopermutations is the number of
    * non-superposable arrangements of the abstract ligand case without removing

@@ -61,11 +61,18 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
       ) * lastPosition
     };
 
-    const auto dihedral = getDihedral(positions, 0, 1, 2, 3);
+    const double dihedral = getDihedral(positions, 0, 1, 2, 3);
 
     BOOST_CHECK_MESSAGE(
        std::fabs(dihedral - randomAngle) < 1e-10,
       "Twist angle: " << randomAngle << ", reported angle: " << dihedral
+    );
+
+    const double reverseDihedral = getDihedral(positions, 3, 2, 1, 0);
+
+    BOOST_CHECK_MESSAGE(
+      std::fabs(dihedral - reverseDihedral) < 1e-10,
+      "Dihedarl of reverse sequence is not identical: " << dihedral <<", " << reverseDihedral
     );
   }
 }

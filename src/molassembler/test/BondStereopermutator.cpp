@@ -6,6 +6,7 @@
 
 #include "boost/filesystem.hpp"
 #include "boost/test/unit_test.hpp"
+#include "boost/range/iterator_range_core.hpp"
 
 #include "molassembler/Conformers.h"
 #include "molassembler/IO.h"
@@ -174,4 +175,51 @@ BOOST_AUTO_TEST_CASE(stereopermutatorExpectationTests) {
       checkExpectations(currentFilePath)
     );
   }
+}
+
+BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
+  using namespace molassembler;
+
+  auto mol = IO::read("ez_stereocenters/but-2E-ene.mol");
+
+  // Alter a hydrogen at the bond stereopermutator
+  const StereopermutatorList& stereopermutators = mol.stereopermutators();
+
+  auto bondStereopermutatorRange = stereopermutators.bondStereopermutators();
+  BOOST_REQUIRE(std::distance(bondStereopermutatorRange.begin(), bondStereopermutatorRange.end()) > 0);
+
+  const BondStereopermutator& mainStereopermutator = *bondStereopermutatorRange.begin();
+
+  BOOST_REQUIRE(mainStereopermutator.assigned());
+
+  unsigned priorAssignment = mainStereopermutator.assigned().value();
+
+  // Pick a side
+  const AtomIndex side = mainStereopermutator.edge().first;
+
+  // Find a hydrogen substituent
+  boost::optional<AtomIndex> hydrogenSubstituent;
+  for(const AtomIndex substituent : boost::make_iterator_range(mol.graph().adjacents(side))) {
+    if(mol.graph().elementType(substituent) == Delib::ElementType::H) {
+      hydrogenSubstituent = substituent;
+      break;
+    }
+  }
+
+  BOOST_REQUIRE(hydrogenSubstituent);
+
+  IO::write("pre_butene.json", mol);
+
+  // Replace the hydrogen substituent with a fluorine
+  mol.setElementType(*hydrogenSubstituent, Delib::ElementType::F);
+
+  // All references are, in principle, invalidated. Just being extra careful.
+  auto postPermutatorRange = stereopermutators.bondStereopermutators();
+  // The new stereopermutator must still be assigned, and have a different assignment
+  BOOST_REQUIRE(std::distance(postPermutatorRange.begin(), postPermutatorRange.end()) > 0);
+  const BondStereopermutator& postPermutator = *postPermutatorRange.begin();
+  BOOST_REQUIRE(postPermutator.assigned());
+
+  // In this particular case, we know that the final assignment has to be different
+  BOOST_CHECK(postPermutator.assigned().value() != priorAssignment);
 }

@@ -344,6 +344,13 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
     );
   }
 
+  assert(
+    std::is_sorted(
+      std::begin(angleGroup.symmetryPositions),
+      std::end(angleGroup.symmetryPositions)
+    )
+  );
+
   return angleGroup;
 }
 
@@ -707,6 +714,12 @@ Composite::Composite(OrientationState first, OrientationState second)
         [&](const unsigned a, const unsigned b) -> DihedralTuple {
           return {a, b, getDihedral(a, b)};
         }
+      );
+
+      // Ensure postcondition
+      std::sort(
+        std::begin(dihedralList),
+        std::end(dihedralList)
       );
 
       if(

@@ -46,7 +46,7 @@ public:
   //! Fetch a reference-option to an AtomStereopermutator, if present
   boost::optional<AtomStereopermutator&> option(AtomIndex index);
 
-  //! Fetch a reference-option to an BondStereopermutator, if present
+  //! Fetch a reference-option to a BondStereopermutator, if present
   boost::optional<BondStereopermutator&> option(const BondIndex& edge);
 
   /*! Communicates the removal of a vertex index to all stereopermutators in the list

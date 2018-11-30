@@ -57,6 +57,13 @@ void BondStereopermutator::fit(
   );
 }
 
+void BondStereopermutator::propagateGraphChange(
+  const AtomStereopermutator& oldPermutator,
+  const AtomStereopermutator& newPermutator
+) {
+  _pImpl -> propagateGraphChange(oldPermutator, newPermutator);
+}
+
 boost::optional<unsigned> BondStereopermutator::assigned() const {
   return _pImpl -> assigned();
 }

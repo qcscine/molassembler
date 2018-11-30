@@ -239,6 +239,7 @@ void findLigands(
     ) = true;
   };
 
+  // Go through all adjacent indices
   for(unsigned i = 0; i < A; ++i) {
     if(skipList.at(i)) {
       continue;

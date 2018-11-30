@@ -1,5 +1,7 @@
 #include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
 
+#include "chemical_symmetries/Symmetries.h"
+
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Numeric.h"
@@ -16,6 +18,60 @@
 #include "molassembler/RankingInformation.h"
 
 namespace molassembler {
+
+namespace detail {
+
+bool piPeriodicFPCompare(const double a, const double b) {
+  /* Reduces everything to [-pi, pi) bounds and then compares
+   */
+  auto reduceToBounds = [](const double x) -> double {
+    return x - std::floor((x + M_PI)/(2 * M_PI)) * 2 * M_PI;
+  };
+
+  return std::fabs(reduceToBounds(a) - reduceToBounds(b)) < 1e-10;
+}
+
+/*
+ * @note If we use tuple_element_t for SFINAE here, this works only for pair and
+ * tuple. This way, it works for all types that have a first and second member,
+ * of which the relevant types are std::pair and temple::OrderedPair here.
+ */
+template<typename HomogeneousPair>
+auto& select(
+  HomogeneousPair& pair,
+  bool selectFirst,
+  std::enable_if_t<
+    std::is_same<
+      decltype(std::declval<HomogeneousPair>().first),
+      decltype(std::declval<HomogeneousPair>().second)
+    >::value,
+    int
+  >* /* enableIfPtr */ = nullptr
+) {
+  if(selectFirst) {
+    return pair.first;
+  }
+
+  return pair.second;
+}
+
+template<typename T1, typename T2, typename ... TupleArgs>
+const auto& select(
+  const std::tuple<T1, T2, TupleArgs...>& tuple,
+  bool selectFirst,
+  std::enable_if_t<
+    std::is_same<T1, T2>::value,
+    int
+  >* /* enableIfPtr */ = nullptr
+) {
+  if(selectFirst) {
+    return std::get<0>(tuple);
+  }
+
+  return std::get<1>(tuple);
+}
+
+} // namespace detail
 
 struct SymmetryMapHelper {
   static unsigned getSymmetryPositionOf(unsigned ligandIndex, const std::vector<unsigned>& map) {
@@ -59,7 +115,8 @@ const stereopermutation::Composite& BondStereopermutator::Impl::composite() cons
   return _composite;
 }
 
-stereopermutation::Composite::OrientationState BondStereopermutator::Impl::_makeOrientationState(
+stereopermutation::Composite::OrientationState
+BondStereopermutator::Impl::_makeOrientationState(
   const AtomStereopermutator& focalStereopermutator,
   const AtomStereopermutator& attachedStereopermutator
 ) {
@@ -101,7 +158,17 @@ BondStereopermutator::Impl::Impl(
 /* Modification */
 void BondStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   if(assignment) {
-    assert(assignment.value() < _composite.permutations());
+    /* The distinction here between numAssignments and _composite.permutations()
+     * is important because if the composite is isotropic, we simulate that
+     * there is only a singular assignment (see numAssignments), although
+     * all permutations are generated and present for fitting anyway.
+     *
+     * If this were _composite.permutations(), we would accept assignments other
+     * than zero if the underlying composite is isotropic, but not yield the
+     * same assignment index when asked which assignment is currently set
+     * in assigned().
+     */
+    assert(assignment.value() < numAssignments());
   }
 
   _assignment = assignment;
@@ -226,6 +293,228 @@ void BondStereopermutator::Impl::fit(
   if(bestAssignment.size() == 1) {
     _assignment = bestAssignment.front();
   }
+}
+
+void BondStereopermutator::Impl::propagateGraphChange(
+  const AtomStereopermutator& oldPermutator,
+  const AtomStereopermutator& newPermutator
+) {
+  // We assume that the supplied permutators are assigned
+  assert(oldPermutator.assigned());
+  assert(newPermutator.assigned());
+
+  /* We assume the old and new symmetry are of the same size (i.e. this is
+   * a ranking change propagation, not a substituent addition / removal
+   * propagation)
+   */
+  assert(oldPermutator.getSymmetry() == newPermutator.getSymmetry());
+
+  using OrientationState = stereopermutation::Composite::OrientationState;
+
+  /* Construct a new Composite with the new information */
+  bool changedIsFirstInOldOrientations = (
+    _composite.orientations().first.identifier == oldPermutator.centralIndex()
+  );
+
+  const OrientationState& oldOrientation = detail::select(
+    _composite.orientations(),
+    changedIsFirstInOldOrientations
+  );
+
+  // Reuse the OrientationState of the "other" atom stereopermutator
+  const OrientationState& unchangedOrientation = detail::select(
+    _composite.orientations(),
+    !changedIsFirstInOldOrientations
+  );
+
+  // Generate a new OrientationState for the modified stereopermutator
+  stereopermutation::Composite::OrientationState possiblyModifiedOrientation {
+    newPermutator.getSymmetry(),
+    SymmetryMapHelper::getSymmetryPositionOf(
+      newPermutator.getRanking().getLigandIndexOf(
+        unchangedOrientation.identifier
+      ),
+      newPermutator.getSymmetryPositionMap()
+    ),
+    _charifyRankedLigands(
+      newPermutator.getRanking().ligandsRanking,
+      newPermutator.getSymmetryPositionMap()
+    ),
+    newPermutator.centralIndex()
+  };
+
+  // In case nothing has changed, we are done and can stop
+  if(oldOrientation == possiblyModifiedOrientation) {
+    return;
+  }
+
+  /* Generate a new set of permutations (note this may reorder its
+   * arguments into the orientations() member)
+   */
+  stereopermutation::Composite newComposite {
+    possiblyModifiedOrientation,
+    unchangedOrientation
+  };
+
+  /* If the new composite is isotropic, there is no reason to try to find
+   * an assignment, we can choose any.
+   */
+  if(newComposite.isIsotropic()) {
+    _composite = std::move(newComposite);
+    _assignment = 0;
+    return;
+  }
+
+  /* If this BondStereopermutator is unassigned, and the permutator is not
+   * isotropic after the ranking change, then this permutator stays unassigned.
+   */
+  if(_assignment == boost::none) {
+    _composite = std::move(newComposite);
+    return;
+  }
+
+  /* Find the old permutation in the set of new permutations
+   * - Since composite only offers dihedral information in terms of symmetry
+   *   positions, we have to translate these back into ligand indices
+   * - Transform symmetry positions through the sequence
+   *
+   *   old symmetry position
+   *   -> ligand index (using old permutation state)
+   *   -> atom index (using old ranking)
+   *   -> ligand index (using new ranking)
+   *   -> new symmetry position (using new permutation state)
+   *
+   *   and then compare dihedral values between the composites. This scheme
+   *   has works even if the fused position has changed.
+   * - Since newComposite may have reordered the OrientationStates, we have
+   *   to be careful which part of the DihedralTuple's we extract symmetry
+   *   positions from.
+   * - Inversions of the dihedral defining sequence do not invert the sign of
+   *   the dihedral
+   */
+  bool modifiedOrientationIsFirstInNewComposite = (
+    newComposite.orientations().first.identifier
+    == possiblyModifiedOrientation.identifier
+  );
+
+  using DihedralTuple = stereopermutation::Composite::DihedralTuple;
+  // This permutator is assigned since that is ensured a few lines earlier
+  const std::vector<DihedralTuple>& oldDihedralList = _composite.dihedrals(
+    _assignment.value()
+  );
+
+  auto getNewSymmetryPosition = [&](unsigned oldSymmetryPosition) -> unsigned {
+    const unsigned oldLigandIndex = SymmetryMapHelper::getLigandIndexAt(
+      oldSymmetryPosition,
+      oldPermutator.getSymmetryPositionMap()
+    );
+
+    const std::vector<AtomIndex>& oldLigand = oldPermutator.getRanking().ligands.at(oldLigandIndex);
+
+    // We assume here that atom indices making up ligands are sorted
+    assert(std::is_sorted(std::begin(oldLigand), std::end(oldLigand)));
+
+    /* Find this ligand in the new ranking
+     * - In case there is truly only a ranking change (not a rearrangement in
+     *   terms of haptic ligands or so), then there should be a vector with
+     *   exactly the same elements.
+     */
+    const auto& newRankingLigands = newPermutator.getRanking().ligands;
+    const auto findLigandIter = std::find(
+      std::begin(newRankingLigands),
+      std::end(newRankingLigands),
+      oldLigand
+    );
+
+    // TODO this might throw in some cases
+    assert(findLigandIter != std::end(newRankingLigands));
+
+    const unsigned newLigandIndex = findLigandIter - std::begin(newRankingLigands);
+
+    return SymmetryMapHelper::getSymmetryPositionOf(
+      newLigandIndex,
+      newPermutator.getSymmetryPositionMap()
+    );
+  };
+
+  // Map the set of old dihedral tuples into the new space
+  std::vector<DihedralTuple> newCompositeDihedrals;
+  newCompositeDihedrals.reserve(oldDihedralList.size());
+  for(const DihedralTuple& oldDihedral : oldDihedralList) {
+    const unsigned changedSymmetryPosition = detail::select(
+      oldDihedral,
+      changedIsFirstInOldOrientations
+    );
+
+    const unsigned unchangedSymmetryPosition = detail::select(
+      oldDihedral,
+      !changedIsFirstInOldOrientations
+    );
+
+    const unsigned newSymmetryPosition = getNewSymmetryPosition(changedSymmetryPosition);
+
+    if(modifiedOrientationIsFirstInNewComposite) {
+      newCompositeDihedrals.emplace_back(
+        newSymmetryPosition,
+        unchangedSymmetryPosition,
+        std::get<2>(oldDihedral)
+      );
+    } else {
+      newCompositeDihedrals.emplace_back(
+        unchangedSymmetryPosition,
+        newSymmetryPosition,
+        std::get<2>(oldDihedral)
+      );
+    }
+  }
+
+  /* Sort the dihedrals for easy comparison. Composite already generates its
+   * dihedrals in a sorted fashion, so newComposite's individual permutations'
+   * dihedrals need not be sorted.
+   */
+  std::sort(
+    std::begin(newCompositeDihedrals),
+    std::end(newCompositeDihedrals)
+  );
+
+  /* Find the matching stereopermutation by finding a bijective mapping from
+   * all old dihedral tuples of the old stereopermutation to all dihedral
+   * tuples of a stereopermutation within the new Composite. Since all lists of
+   * DihedralTuples are sorted, we can use the lexicographical vector
+   * comparison operator that in turn calls the lexicographical tuple
+   * comparison operator:
+   *
+   * However, the match may not be floating-point exact, and can have pi
+   * periodicities!
+   */
+  auto matchIter = std::find_if(
+    std::begin(newComposite),
+    std::end(newComposite),
+    [&](const std::vector<DihedralTuple>& dihedrals) -> bool {
+      return std::lexicographical_compare(
+        std::begin(newCompositeDihedrals),
+        std::end(newCompositeDihedrals),
+        std::begin(dihedrals),
+        std::end(dihedrals),
+        [](const DihedralTuple& a, const DihedralTuple& b) -> bool {
+          return (
+            std::get<0>(a) == std::get<0>(b)
+            && std::get<1>(a) == std::get<1>(b)
+            && detail::piPeriodicFPCompare(std::get<2>(a), std::get<2>(b))
+          );
+        }
+      );
+    }
+  );
+
+  // There should always be a match
+  if(matchIter == std::end(newComposite)) {
+    throw std::logic_error("Bug: no match found in new composite.");
+  }
+
+  // Overwrite class state
+  _assignment = matchIter - std::begin(newComposite);
+  _composite = std::move(newComposite);
 }
 
 /* Information */

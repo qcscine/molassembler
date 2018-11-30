@@ -831,6 +831,8 @@ public:
       dlib::vector<double, 3> a = f.cross(g);
       dlib::vector<double, 3> b = h.cross(g);
 
+      // a and b can be zero-length-vectors!
+
       // All of the permutations yield identical expressions within atan2 aside from -g
       double phi = std::atan2(
         a.cross(b).dot(
@@ -866,8 +868,19 @@ public:
 
       // Precompute some reused expressions
       const double gLength = dlib::length(g);
-      a /= dlib::length_squared(a);
-      b /= dlib::length_squared(b);
+      if(gLength == 0) {
+        // All contributions would be NaNs
+        continue;
+      }
+
+      const double aLengthSq = dlib::length_squared(a);
+      if(aLengthSq > 0) {
+        a /= aLengthSq;
+      }
+      const double bLengthSq = dlib::length_squared(b);
+      if(bLengthSq > 0) {
+        b /= bLengthSq;
+      }
       const double fDotG = f.dot(g);
       const double gDotH = g.dot(h);
 
@@ -884,6 +897,13 @@ public:
       );
 
       const dlib::vector<double, 3> lContribution = (h_phi / constraint.sites[3].size()) * gLength * b;
+
+      assert(
+        dlib::is_finite(iContribution)
+        && dlib::is_finite(jContribution)
+        && dlib::is_finite(kContribution)
+        && dlib::is_finite(lContribution)
+      );
 
 
       for(const AtomIndex alphaConstitutingIndex : constraint.sites[0]) {

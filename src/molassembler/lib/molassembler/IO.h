@@ -15,9 +15,8 @@
  *
  * Contains main IO definitions of the library. Currently only supports
  * MOLFile V2000 specification.
- */
-
-/*! @todo
+ *
+ * @todo
  * - test MOLFile V2000
  * - implement MOLFile V3000
  */
@@ -46,8 +45,8 @@ enum class IndexPermutation {
   Random
 };
 
-/*! Read a single molecule from a file.
- *
+/*!
+ * @brief Read a single molecule from a file.
  * @throws If interpretation of coordinates and connectivity yields multiple
  *   molecules.
  * @note Interprets file type from extension. mol is a MOLFile, xyz an XYZ file

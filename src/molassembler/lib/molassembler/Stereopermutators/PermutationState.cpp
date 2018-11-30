@@ -178,29 +178,35 @@ PermutationState::generateLigandToSymmetryPositionMap(
   const stereopermutation::Stereopermutation& assignment,
   const RankingInformation::RankedLigandsType& canonicalLigands
 ) {
-  /*! @todo NO Stereopermutation link information is used here! Is that right?
+  /* We are given an assignment within some symmetry:
+   *   Characters: ABADCB
+   *   Links: (0, 1), (2, 5)
+   * and canonical ligands (ranked sets of ligand indices re-sorted by
+   * decreasing set size): {{0, 4}, {2, 1}, {5}, {3}}
    *
-   * Need to ensure that
-   * AAAAAA {0, 1}, {2, 3}, {4, 5}
-   * and AAAAAA {0, 1}, {2, 4}, {3, 5}
-   * are different!
+   * We need to distribute the ligand indices (from the canonical ligands) to
+   * the symmetry positions (defined by the assignment) that they match (via
+   * their ranking character).
    *
-   * AABCAD {0,1}, {0, 4}, {1, 4} has to work too
-   * - cannot use index of symmetry position to fetch atom index within equal priority groups
-   * - must be two-stage algorithm that fixes linked symmetry positions first, then distributes
-   *   the remaining
+   * Additionally, we need to ensure that:
+   * - AAAAAA {0, 1}, {2, 3}, {4, 5}
+   * - AAAAAA {0, 1}, {2, 4}, {3, 5}
+   * have different symmetry position maps.
+   *
+   * Link indices (from assignments) specify symmetry positions that are linked.
+   * Since symmetry positions are NOT exchangeable as two ligand indices are
+   * that rank equally, we need to distribute linked symmetry positions first,
+   * and then distribute the remaining characters afterwards.
    */
 
   constexpr unsigned placeholder = std::numeric_limits<unsigned>::max();
+  const unsigned S = assignment.characters.size();
 
-  std::vector<unsigned> positionMap (
-    assignment.characters.size(),
-    placeholder
-  );
+  std::vector<unsigned> positionMap (S, placeholder);
 
-  /* First, process the links.
-   *
-   * For every atom index within the group of indices of equal priority, we
+  /* Process the links */
+
+  /* For every ligand index within the group of ligands of equal priority, we
    * have to keep information on which have been used and which haven't.
    */
   auto usedLists = temple::map(
@@ -210,14 +216,21 @@ PermutationState::generateLigandToSymmetryPositionMap(
     }
   );
 
+  /* Additionally, for each canonical character, a limited set of symmetry
+   * positions are available: Those where the passed assignment's characters
+   * match the character.
+   */
   std::vector<
     std::vector<unsigned>
   > availableSymmetryPositions;
 
-  for(char i = 'A'; i <= temple::max(assignment.characters); ++i) {
+  const char maxChar = temple::max(assignment.characters);
+  // For each ranking character
+  for(char i = 'A'; i <= maxChar; ++i) {
     std::vector<unsigned> positions;
 
-    for(unsigned s = 0; s < assignment.characters.size(); ++s) {
+    // Go through the symmetry positions
+    for(unsigned s = 0; s < S; ++s) {
       if(assignment.characters.at(s) == i) {
         positions.push_back(s);
       }
@@ -228,12 +241,13 @@ PermutationState::generateLigandToSymmetryPositionMap(
     );
   }
 
-  auto placeAndMark = [&](const unsigned symmetryPositionIndex) {
-    char priority = assignment.characters.at(symmetryPositionIndex);
+  // For linked ligands, we need to find a symmetry position to place them
+  auto placeAndMark = [&](const unsigned symmetryPosition) {
+    char priority = assignment.characters.at(symmetryPosition);
 
     unsigned countUpToPosition = std::count(
-      assignment.characters.begin(),
-      assignment.characters.begin() + symmetryPositionIndex,
+      std::begin(assignment.characters),
+      std::begin(assignment.characters) + symmetryPosition,
       priority
     );
 
@@ -252,31 +266,32 @@ PermutationState::generateLigandToSymmetryPositionMap(
     }
   };
 
+  // Place all linked indices
   for(const auto& link: assignment.links) {
     placeAndMark(link.first);
     placeAndMark(link.second);
   }
 
-  // Next, process the characters
+  // Next, process all characters
   for(const auto& priorityChar : assignment.characters) {
-    // Get an unused atom index for that priority
-    auto unusedIndexIter = std::find(
-      usedLists.at(priorityChar - 'A').begin(),
-      usedLists.at(priorityChar - 'A').end(),
+    // Get an unused ligand index for that priority
+    const auto unusedIndexIter = std::find(
+      std::begin(usedLists.at(priorityChar - 'A')),
+      std::end(usedLists.at(priorityChar - 'A')),
       false
     );
 
-    if(unusedIndexIter != usedLists.at(priorityChar - 'A').end()) {
-      unsigned correspondingLigand = canonicalLigands.at(priorityChar - 'A').at(
-        unusedIndexIter - usedLists.at(priorityChar - 'A').begin()
+    if(unusedIndexIter != std::end(usedLists.at(priorityChar - 'A'))) {
+      const unsigned correspondingLigand = canonicalLigands.at(priorityChar - 'A').at(
+        unusedIndexIter - std::begin(usedLists.at(priorityChar - 'A'))
       );
 
       assert(positionMap.at(correspondingLigand) == placeholder);
 
-      unsigned symmetryPosition = availableSymmetryPositions.at(priorityChar - 'A').front();
+      const unsigned symmetryPosition = availableSymmetryPositions.at(priorityChar - 'A').front();
 
       availableSymmetryPositions.at(priorityChar - 'A').erase(
-        availableSymmetryPositions.at(priorityChar - 'A').begin()
+        std::begin(availableSymmetryPositions.at(priorityChar - 'A'))
       );
 
       positionMap.at(correspondingLigand) = symmetryPosition;
@@ -285,13 +300,14 @@ PermutationState::generateLigandToSymmetryPositionMap(
     }
   }
 
+  // Ensure no symmetry positions are marked with placeholders
   assert(
     temple::all_of(
       positionMap,
       [](const unsigned symmetryPosition) -> bool {
         return symmetryPosition != placeholder;
       }
-    ) && "A symmetry position is still marked with the placeholder!"
+    ) && "A symmetry position is still marked with a placeholder!"
   );
 
   return positionMap;
