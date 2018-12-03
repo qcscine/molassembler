@@ -61,8 +61,7 @@ public:
    */
   void fit(
     const OuterGraph& graph,
-    const AngstromWrapper& angstromWrapper,
-    const std::vector<Symmetry::Name>& excludeSymmetries = {}
+    const AngstromWrapper& angstromWrapper
   );
 
   /*!

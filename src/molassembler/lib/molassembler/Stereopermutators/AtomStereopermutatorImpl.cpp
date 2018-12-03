@@ -9,9 +9,10 @@
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
-#include "temple/constexpr/Numeric.h"
 #include "temple/Optionals.h"
 #include "temple/Random.h"
+#include "temple/constexpr/Math.h"
+#include "temple/constexpr/Numeric.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/BuildTypeSwitch.h"
@@ -591,9 +592,10 @@ std::vector<unsigned> AtomStereopermutator::Impl::getSymmetryPositionMap() const
 
 void AtomStereopermutator::Impl::fit(
   const OuterGraph& graph,
-  const AngstromWrapper& angstromWrapper,
-  const std::vector<Symmetry::Name>& excludeSymmetries
+  const AngstromWrapper& angstromWrapper
 ) {
+  const unsigned S = Symmetry::size(_symmetry);
+
   // For all atoms making up a ligand, decide on the spatial average position
   const std::vector<Eigen::Vector3d> ligandPositions = temple::map(
     _ranking.ligands,
@@ -601,6 +603,76 @@ void AtomStereopermutator::Impl::fit(
       return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
     }
   );
+
+  std::vector<Symmetry::Name> excludeSymmetries;
+
+  /* Special case for trigonal bipyramidal and square pyramidal: tau-calculation
+   */
+  if(
+    Options::tauCriterion == TauCriterion::Enable
+    && (S == 4 || S == 5)
+  ) {
+    // Find the two largest angles
+    std::vector<double> angles;
+    for(unsigned i = 0; i < S; ++i) {
+      for(unsigned j = i + 1; j < S; ++j) {
+        angles.push_back(
+          DelibHelpers::angle(
+            ligandPositions.at(i),
+            angstromWrapper.positions.at(_centerAtom).toEigenVector(),
+            ligandPositions.at(j)
+          )
+        );
+      }
+    }
+
+    std::sort(std::begin(angles), std::end(angles));
+
+    // Largest angle is beta
+    const double beta = angles.back();
+    // Second-largest angle is alpha
+    const double alpha = angles.at(angles.size() - 2);
+    if(S == 4) {
+      constexpr double theta = temple::Math::toRadians(109.5);
+      const double tau_prime = (
+        (beta - alpha) / (2 * M_PI - theta)
+        + (M_PI - beta) / (M_PI - theta)
+      );
+
+      /* Significance
+       * - τ₄' = 0 -> Symmetry is square planar
+       * - τ₄' = 0.24 -> Symmetry is seesaw
+       * - τ₄' = 1 -> Symmetry is tetrahedral
+       */
+      if(tau_prime < 0.12) {
+        // Symmetry is square planar
+        excludeSymmetries.push_back(Symmetry::Name::Seesaw);
+        excludeSymmetries.push_back(Symmetry::Name::Tetrahedral);
+      } else if(0.12 <= tau_prime && tau_prime < 0.62) {
+        excludeSymmetries.push_back(Symmetry::Name::SquarePlanar);
+        // Symmetry is seesaw
+        excludeSymmetries.push_back(Symmetry::Name::Tetrahedral);
+      } else if(0.62 <= tau_prime) {
+        excludeSymmetries.push_back(Symmetry::Name::SquarePlanar);
+        excludeSymmetries.push_back(Symmetry::Name::Seesaw);
+        // Symmetry is tetrahedral
+      }
+    } else if(S == 5) {
+      // Calculate tau as largest angle minus second-largest angle divided by 60°
+      const double tau = (angles.back() - angles.at(angles.size() - 2)) / temple::Math::toRadians(60.0);
+
+      /* Significance:
+       * - τ₅ = 0 -> Symmetry is square pyramidal
+       * - τ₅ = 1 -> Symmetry is trigonal bipyramidal
+       */
+
+      if(tau < 0.5) {
+        excludeSymmetries.push_back(Symmetry::Name::TrigonalBiPyramidal);
+      } else if(tau > 0.5) {
+        excludeSymmetries.push_back(Symmetry::Name::SquarePyramidal);
+      }
+    }
+  }
 
   // Save stereopermutator state to return to if no fit is viable
   const Symmetry::Name priorSymmetry = _symmetry;
@@ -620,10 +692,7 @@ void AtomStereopermutator::Impl::fit(
   // Cycle through all symmetries
   for(const auto& symmetryName : Symmetry::allNames) {
     // Skip any Symmetries of different size
-    if(
-      Symmetry::size(symmetryName) != Symmetry::size(_symmetry)
-      || excludesContains(symmetryName)
-    ) {
+    if(Symmetry::size(symmetryName) != S || excludesContains(symmetryName)) {
       continue;
     }
 

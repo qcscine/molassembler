@@ -20,6 +20,7 @@ random::Engine& randomnessEngine() {
 
 TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
+TauCriterion Options::tauCriterion = TauCriterion::Enable;
 
 bool disregardStereopermutator(
   const AtomStereopermutator& stereopermutator,
@@ -51,37 +52,5 @@ bool disregardStereopermutator(
 
   return false;
 }
-
-void pickyFit(
-  AtomStereopermutator& stereopermutator,
-  const OuterGraph& graph,
-  const AngstromWrapper& angstromWrapper,
-  const Symmetry::Name expectedSymmetry
-) {
-  /* Seesaw, trigonal pyramidal and tetrahedral are surprisingly close in terms
-   * of angles, and sometimes just slightly distorted tetrahedral centers can
-   * be recognized as seesaws, even though it makes absolutely zero sense. So
-   * in case the atom is a carbon, the expected geometry is tetrahedral and it
-   * has four adjacencies, just exclude Seesaw and trigonal pyramidal from the
-   * list of symmetries being fitted against.
-   *
-   * Calling
-   * determineLocalGeometry is somewhat overkill here, but possibly more
-   * future-proof.
-   */
-  if(
-    graph.elementType(stereopermutator.centralIndex()) == Delib::ElementType::C
-    && expectedSymmetry == Symmetry::Name::Tetrahedral
-  ) {
-    stereopermutator.fit(
-      graph,
-      angstromWrapper,
-      {Symmetry::Name::Seesaw, Symmetry::Name::TrigonalPyramidal}
-    );
-  } else {
-    stereopermutator.fit(graph, angstromWrapper);
-  }
-}
-
 
 } // namespace molassembler

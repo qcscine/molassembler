@@ -59,10 +59,9 @@ void AtomStereopermutator::assignRandom() {
 
 void AtomStereopermutator::fit(
   const OuterGraph& graph,
-  const AngstromWrapper& angstromWrapper,
-  const std::vector<Symmetry::Name>& excludeSymmetries
+  const AngstromWrapper& angstromWrapper
 ) {
-  _pImpl->fit(graph, angstromWrapper, excludeSymmetries);
+  _pImpl->fit(graph, angstromWrapper);
 }
 
 void AtomStereopermutator::propagateGraphChange(

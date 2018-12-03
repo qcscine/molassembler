@@ -96,7 +96,7 @@ std::string MOLFileHandler::_removeAllSpaces(std::string&& a) {
     a.end()
   );
 
-  return a;
+  return std::move(a);
 }
 
 std::string MOLFileHandler::_removeAllSpaces(const std::string& a) {

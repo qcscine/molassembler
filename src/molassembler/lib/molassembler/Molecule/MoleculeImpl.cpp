@@ -820,12 +820,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       localRanking
     };
 
-    pickyFit(
-      stereopermutator,
-      _adjacencies,
-      angstromWrapper,
-      expectedGeometry
-    );
+    stereopermutator.fit(_adjacencies, angstromWrapper);
 
     if(
       !disregardStereopermutator(

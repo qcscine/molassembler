@@ -36,7 +36,7 @@ namespace molassembler {
 
 class AngstromWrapper;
 class OuterGraph;
-class RankingInformation;
+struct RankingInformation;
 
 // Forward-declarations
 class AtomStereopermutator;

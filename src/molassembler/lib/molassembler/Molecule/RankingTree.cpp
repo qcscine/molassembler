@@ -837,11 +837,9 @@ void RankingTree::_applySequenceRules(
     };
 
     if(positionsOption) {
-      pickyFit(
-        newStereopermutator,
+      newStereopermutator.fit(
         _graphRef,
-        positionsOption.value(),
-        localSymmetry
+        positionsOption.value()
       );
     } else if(
       existingStereopermutatorOption

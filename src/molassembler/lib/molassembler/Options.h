@@ -66,7 +66,7 @@ enum class TemperatureRegime {
  *    edge [fontname = "Arial", penwidth=2, labelfontsize="10"];
  *    rankdir="LR";
  *
- *    trigonalpyramidal [label="trigonal pyramidal"];
+ *    cuttetrahedral [label="cut tetrahedral"];
  *    Tshaped [label="T-shaped"];
  *    tetrahedral [label="tetrahedral"];
  *    squareplanar [label="square planar"];
@@ -76,7 +76,7 @@ enum class TemperatureRegime {
  *    octahedral [label="octahedral"];
  *    pentagonalpyramidal [label="pentagonal pyramidal"];
  *    pentagonalbipyramidal [label="pentagonal bipyramidal"];
- *    trigonalpyramidal -> tetrahedral [color="forestgreen"];
+ *    cuttetrahedral -> tetrahedral [color="forestgreen"];
  *    Tshaped -> squareplanar [color="forestgreen"];
  *    seesaw -> trigonalbipyramidal [color="forestgreen"];
  *    squarepyramidal -> octahedral [color="forestgreen"];
@@ -94,7 +94,7 @@ enum class TemperatureRegime {
  *    edge [fontname = "Arial", penwidth=2, labelfontsize="10"];
  *    rankdir="LR";
  *
- *    trigonalpyramidal [label="trigonal pyramidal"];
+ *    cuttetrahedral [label="cut tetrahedral"];
  *    Tshaped [label="T-shaped"];
  *    tetrahedral [label="tetrahedral"];
  *    squareplanar [label="square planar"];
@@ -107,9 +107,9 @@ enum class TemperatureRegime {
  *    pentagonalpyramidal [label="pentagonal pyramidal"];
  *    pentagonalbipyramidal [label="pentagonal bipyramidal"];
  *
- *    tetrahedral -> trigonalpyramidal [color="forestgreen", label="any"];
+ *    tetrahedral -> cuttetrahedral [color="forestgreen", label="any"];
  *    squareplanar -> Tshaped [color="forestgreen", label="any"];
- *    seesaw -> trigonalpyramidal [color="black", label="axial"];
+ *    seesaw -> cuttetrahedral [color="black", label="axial"];
  *    seesaw -> Tshaped [color="black", label="1 axial"];
  *    seesaw -> Tshaped [color="forestgreen", label="equat."];
  *    squarepyramidal -> tetrahedral [color="black", label="equat."];
@@ -156,17 +156,39 @@ enum class ChiralStatePreservation {
   RandomFromMultipleBest
 };
 
+/**
+ * @brief Specifies use of the tau criterion in differentiating between
+ *   symmetries of sizes four and five
+ *
+ * If enabled, enables hard thresholds for tau values to differentiate between
+ * some symmetries of sizes four @cite Okuniewski2015 and five @cite Addison1984.
+ */
+enum class TauCriterion {
+  Enable,
+  Disable
+};
+
 struct Options {
-  /*! Sets the temperature regime to be used for all Molecules
+  /*!
+   * @brief Sets the temperature regime to be used for all Molecules
    *
    * Defaults to high temperature approximation.
    */
   static TemperatureRegime temperatureRegime;
-  /*! Sets the manner in which chiral state is preserved for all Molecules
+  /*!
+   * @brief Sets the manner in which chiral state is preserved for all Molecules
    *
    * Defaults to EffortlessAndUnique.
    */
   static ChiralStatePreservation chiralStatePreservation;
+
+  /**
+   * @brief Specifies whether the tau criterion is used throughout the library
+   *   in symmetry fitting.
+   *
+   * Defaults to Enable
+   */
+  static TauCriterion tauCriterion;
 };
 
 // Forward-declare Cycles and AtomStereopermutator
@@ -187,19 +209,6 @@ bool disregardStereopermutator(
   const Cycles& cycleData,
   TemperatureRegime temperatureRegimeSetting
 );
-
-
-/*!
- * Fits a stereopermutator to a position collection, excluding the seesaw symmetry
- * if a four-coordinate carbon atom is to be fitted to a position collection
- */
-void pickyFit(
-  AtomStereopermutator& stereopermutator,
-  const OuterGraph& graph,
-  const AngstromWrapper& angstromWrapper,
-  Symmetry::Name expectedSymmetry
-);
-
 
 } // namespace molassembler
 

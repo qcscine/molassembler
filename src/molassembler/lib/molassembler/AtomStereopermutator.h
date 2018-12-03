@@ -167,14 +167,13 @@ public:
    * @param excludeSymmetries Any symmetries that should be excluded from
    *   the fitting procedure
    *
-   * @note Distorted tetrahedral structures are often closer to seesaw than
-   *   tetrahedral. It is advisable to bias fitting towards tetrahedral (by
-   *   exclusion) in cases where seesaw is not expected.
+   * @note If Options::tauCriterion is set to @p Enable, this function may
+   *   exclude some symmetries from the fitting procedure based on geometric
+   *   criteria.
    */
   void fit(
     const OuterGraph& graph,
-    const AngstromWrapper& angstromWrapper,
-    const std::vector<Symmetry::Name>& excludeSymmetries = {}
+    const AngstromWrapper& angstromWrapper
   );
 
   /*!
