@@ -19,25 +19,25 @@ namespace TupleType {
 
 namespace detail {
 
-// Helper type needed for deduced return type template enable-if signatures
-enum class enabler_t {};
-
-/* This type can be added as a parameter pack with the desired condition in a
- * type signature. If there is no type in the enable_if, this results in an
- * expression error that leads to the signature being ignored in substitution.
- */
-template<bool value>
-using EnableIf = typename std::enable_if<value, enabler_t>::type;
-
 //! Value variant handler for functions, returns the function call result.
-template<typename T, EnableIf<std::is_function<decltype(T::value)>::value>...>
-constexpr auto handleValueVariants() {
+template<typename T>
+constexpr auto handleValueVariants(
+  std::enable_if_t<
+    std::is_function<decltype(T::value)>::value,
+    int
+  >* /* enableIfPtr */ = nullptr
+) {
   return T::value();
 }
 
 //! Value variant handler for data members, returns the member itself.
-template<typename T, EnableIf<!std::is_function<decltype(T::value)>::value>...>
-constexpr auto handleValueVariants() {
+template<typename T>
+constexpr auto handleValueVariants(
+  std::enable_if_t<
+    !std::is_function<decltype(T::value)>::value,
+    int
+  >* /* enableIfPtr */ = nullptr
+) {
   return T::value;
 }
 
