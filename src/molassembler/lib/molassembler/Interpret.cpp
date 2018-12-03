@@ -25,6 +25,18 @@ InterpretResult interpret(
   // Discretize bond orders (unfortunately signed type because of Delib signature)
   const int N = elements.size();
 
+  if(angstromWrapper.positions.size() != N) {
+    throw std::invalid_argument(
+      "Number of positions in angstrom wrapper do not match number of elements"
+    );
+  }
+
+  if(bondOrders.getSystemSize() != N) {
+    throw std::invalid_argument(
+      "Bond order argument system size does not match number of elements"
+    );
+  }
+
   InnerGraph atomCollectionGraph {
     static_cast<InnerGraph::Vertex>(N)
   };

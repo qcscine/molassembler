@@ -55,6 +55,9 @@ struct InterpretResult {
  *   order on to try the interpretation of bond stereopermutator. If set as
  *   @p boost::none, no bond stereopermutators are interpreted.
  *
+ * @throws invalid_argument If the number of particles in the element
+ *   collection, angstrom wrapper or bond order collection do not match.
+ *
  * @returns A list of found molecules and an index mapping to each molecule
  */
 InterpretResult interpret(
@@ -75,6 +78,9 @@ InterpretResult interpret(
  * @param stereopermutatorBondOrderThresholdOptional From which fractional bond
  *   order on to try the interpretation of bond stereopermutator. If set as
  *   @p boost::none, no bond stereopermutators are interpreted.
+ *
+ * @throws invalid_argument If the number of particles in the element
+ *   collection and angstrom wrapper do not match.
  *
  * @warning Using UFF bond order calculation is often not even wrong, i.e. so
  *   bad as to be completely unusable. Prefer interpreting using supplied bond
@@ -105,6 +111,9 @@ InterpretResult interpret(
  * @param stereopermutatorBondOrderThresholdOptional If specified, limits the
  *   instantiation of BondStereopermutators onto edges whose fractional bond orders
  *   exceed the provided threshold. If this is not desired, specify boost::none.
+ *
+ * @throws invalid_argument If the number of particles in the atom
+ *   collection and bond order collection do not match.
  *
  * @note Assumes that the provided atom collection's positions are in
  *   Bohr units.
