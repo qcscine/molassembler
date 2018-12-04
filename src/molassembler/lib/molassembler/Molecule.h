@@ -4,7 +4,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
-#include "Delib/ElementTypes.h"
+#include "Utils/ElementTypes.h"
 #include "boost/optional.hpp"
 #include "chemical_symmetries/Names.h"
 #include "temple/constexpr/Bitmask.h"
@@ -32,9 +32,11 @@
  */
 
 // External forward declarations
-namespace Delib {
-class ElementTypeCollection;
-} // namespace Delib
+namespace Scine {
+namespace Utils {
+using ElementTypeCollection = std::vector<ElementType>;
+} // namespace Utils
+} // namespace Scine
 
 namespace molassembler {
 
@@ -82,8 +84,8 @@ public:
 
   //! Construct a minimal molecule from two element types and a mutual bond type
   Molecule(
-    Delib::ElementType a,
-    Delib::ElementType b,
+    Scine::Utils::ElementType a,
+    Scine::Utils::ElementType b,
     BondType bondType
   ) noexcept;
 
@@ -158,7 +160,7 @@ public:
    *   members invalidated.
    */
   AtomIndex addAtom(
-    Delib::ElementType elementType,
+    Scine::Utils::ElementType elementType,
     AtomIndex adjacentTo,
     BondType bondType
   );
@@ -391,7 +393,7 @@ public:
    */
   void setElementType(
     AtomIndex a,
-    Delib::ElementType elementType
+    Scine::Utils::ElementType elementType
   );
 
   /*!

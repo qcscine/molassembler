@@ -6,7 +6,7 @@
 
 #include "boost/multiprecision/cpp_int.hpp"
 #include "boost/optional.hpp"
-#include "Delib/ElementTypes.h"
+#include "Utils/ElementTypes.h"
 
 #include "chemical_symmetries/Names.h"
 #include "temple/constexpr/Bitmask.h"
@@ -53,7 +53,7 @@ struct BondInformation {
 //! Convolutes the atom's element type and bonds into a characteristic number
 WideHashType atomEnvironment(
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask,
-  Delib::ElementType elementType,
+  Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
   boost::optional<Symmetry::Name> symmetryNameOptional,
   boost::optional<unsigned> assignedOptional

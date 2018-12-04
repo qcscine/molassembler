@@ -5,11 +5,12 @@
 #define INCLUDE_MOLASSEMBLER_OUTER_GRAPH_H
 
 #include "boost/optional/optional_fwd.hpp"
-#include "Delib/ElementTypes.h"
+#include "Utils/ElementTypes.h"
 
 #include "molassembler/Types.h"
 
 #include <memory>
+#include <vector>
 
 #if __cpp_lib_experimental_propagate_const >= 201505
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
@@ -22,9 +23,11 @@
  */
 
 // Forward-declarations
-namespace Delib {
-  class ElementTypeCollection;
-} // namespace Delib
+namespace Scine {
+namespace Utils {
+using ElementTypeCollection = std::vector<ElementType>;
+} // namespace Utils
+} // namespace Scine
 
 namespace molassembler {
 
@@ -148,9 +151,9 @@ public:
   //! Returns the number of bonds incident upon an atom
   unsigned degree(AtomIndex a) const;
   //! Fetch an element collection of all atoms
-  Delib::ElementTypeCollection elementCollection() const;
+  Scine::Utils::ElementTypeCollection elementCollection() const;
   //! Fetch the element type of an atom
-  Delib::ElementType elementType(AtomIndex a) const;
+  Scine::Utils::ElementType elementType(AtomIndex a) const;
 
   //! Number of atoms in the graph
   AtomIndex N() const;

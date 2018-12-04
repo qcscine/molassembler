@@ -111,7 +111,7 @@ void write(
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const IndexPermutation permutation
 ) {
   AngstromWrapper wrapper {positions};

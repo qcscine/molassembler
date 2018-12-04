@@ -10,8 +10,8 @@ namespace molassembler {
 namespace Bond {
 
 double calculateBondDistance(
-  const Delib::ElementType a,
-  const Delib::ElementType b,
+  const Scine::Utils::ElementType a,
+  const Scine::Utils::ElementType b,
   const BondType bondType
 ) {
   return (
@@ -31,8 +31,8 @@ double calculateBondDistance(
 }
 
 double calculateBondOrder(
-  const Delib::ElementType a,
-  const Delib::ElementType b,
+  const Scine::Utils::ElementType a,
+  const Scine::Utils::ElementType b,
   const double distance
 ) {
   return std::exp(

@@ -6,7 +6,7 @@
 
 #include "boost/optional/optional_fwd.hpp"
 
-#include "Delib/ElementTypes.h"
+#include "Utils/ElementTypes.h"
 #include "chemical_symmetries/Names.h"
 
 #include "molassembler/RankingInformation.h"
@@ -33,7 +33,7 @@ namespace LocalGeometry {
 struct BindingSiteInformation {
   unsigned L, X;
 
-  std::vector<Delib::ElementType> elements;
+  std::vector<Scine::Utils::ElementType> elements;
   /* Only one bond type is needed - If the ligand consists of a single atom,
    * then we only need to store one bond. If the ligand consists of multiple
    * atoms, then the BondType is Eta.
@@ -44,7 +44,7 @@ struct BindingSiteInformation {
   BindingSiteInformation(
     const unsigned passL,
     const unsigned passX,
-    std::vector<Delib::ElementType> passElements,
+    std::vector<Scine::Utils::ElementType> passElements,
     const BondType passBondType
   ) : L(passL), X(passX), elements {std::move(passElements)}, bondType {passBondType} {}
 };
@@ -78,7 +78,7 @@ int formalCharge(
 
 /* Models */
 boost::optional<Symmetry::Name> vsepr(
-  Delib::ElementType centerAtomType,
+  Scine::Utils::ElementType centerAtomType,
   unsigned nSites,
   const std::vector<BindingSiteInformation>& sites,
   int formalCharge

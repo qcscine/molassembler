@@ -79,7 +79,7 @@ ImplicitGraph::ImplicitGraph(
   }
 
   // Determine the two heaviest element types in the molecule, O(N)
-  _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
+  _heaviestAtoms = {{Scine::Utils::ElementType::H, Scine::Utils::ElementType::H}};
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = molecule.graph().elementType(i);
     if(

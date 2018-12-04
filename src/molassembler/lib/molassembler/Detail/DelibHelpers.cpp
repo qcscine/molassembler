@@ -13,32 +13,20 @@ namespace molassembler {
 namespace DelibHelpers {
 
 bool validPositionIndices(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 ) {
-  /* Delib casts its' underlying vector<Vector3>::size_type to int, so
-   * we have to get at the unsigned std::size_t differently. Since vector
-   * iterators are RandomAccessIterators, we can get a std::ptrdiff_t in O(1),
-   * which is typically bigger than int in most data models.
-   */
-  auto signedPtrDiffDistance = std::distance(
-    std::begin(positions),
-    std::end(positions)
-  );
-
-  // Casting that to size_t gives us the maximum addressable space back
-  std::size_t unsignedPositionCollectionSize = signedPtrDiffDistance;
-
+  const unsigned nRows = positions.rows();
   return temple::all_of(
     indices,
-    [&unsignedPositionCollectionSize](const AtomIndex index) -> bool {
-      return index < unsignedPositionCollectionSize;
+    [&](const AtomIndex i) -> bool {
+      return i < nRows;
     }
   );
 }
 
 double getDistance(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   AtomIndex i,
   AtomIndex j
 ) {
@@ -47,13 +35,12 @@ double getDistance(
   );
 
   return (
-    positions[i].asEigenVector()
-    - positions[j].asEigenVector()
+    positions.row(i) - positions.row(j)
   ).norm();
 }
 
 double getAngle(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const AtomIndex i,
   const AtomIndex j,
   const AtomIndex k
@@ -62,8 +49,8 @@ double getAngle(
     validPositionIndices(positions, {i, j, k})
   );
 
-  auto a = positions[i].asEigenVector() - positions[j].asEigenVector(),
-       b = positions[k].asEigenVector() - positions[j].asEigenVector();
+  auto a = positions.row(i) - positions.row(j),
+       b = positions.row(k) - positions.row(j);
 
   return std::acos(
     a.dot(b) / (
@@ -73,7 +60,7 @@ double getAngle(
 }
 
 double getDihedral(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const AtomIndex i,
   const AtomIndex j,
   const AtomIndex k,
@@ -83,9 +70,9 @@ double getDihedral(
     validPositionIndices(positions, {i, j, k, l})
   );
 
-  Eigen::Vector3d a = positions[j].asEigenVector() - positions[i].asEigenVector();
-  Eigen::Vector3d b = positions[k].asEigenVector() - positions[j].asEigenVector();
-  Eigen::Vector3d c = positions[l].asEigenVector() - positions[k].asEigenVector();
+  Eigen::Vector3d a = positions.row(j) - positions.row(i);
+  Eigen::Vector3d b = positions.row(k) - positions.row(j);
+  Eigen::Vector3d c = positions.row(l) - positions.row(k);
 
   return std::atan2(
     (
@@ -104,7 +91,7 @@ double getDihedral(
 }
 
 double getDihedral(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const std::array<AtomIndex, 4>& indices
 ) {
   return getDihedral(
@@ -118,7 +105,7 @@ double getDihedral(
 
 
 double getSignedVolume(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const AtomIndex i,
   const AtomIndex j,
   const AtomIndex k,
@@ -129,21 +116,21 @@ double getSignedVolume(
   );
 
   return (
-    positions[i].asEigenVector()
-    - positions[l].asEigenVector()
+    positions.row(i)
+    - positions.row(l)
   ).dot(
     (
-      positions[j].asEigenVector()
-      - positions[l].asEigenVector()
+      positions.row(j)
+      - positions.row(l)
     ).cross(
-      positions[k].asEigenVector()
-      - positions[l].asEigenVector()
+      positions.row(k)
+      - positions.row(l)
     )
   ) / 6.0;
 }
 
 double getSignedVolume(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const std::array<AtomIndex, 4>& indices
 ) {
   return getSignedVolume(
@@ -156,7 +143,7 @@ double getSignedVolume(
 }
 
 Eigen::Vector3d averagePosition(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 ) {
   assert(
@@ -164,14 +151,14 @@ Eigen::Vector3d averagePosition(
   );
 
   if(indices.size() == 1) {
-    return positions[indices.front()].asEigenVector();
+    return positions.row(indices.front());
   }
 
   Eigen::Vector3d mean;
   mean.setZero();
 
   for(const auto& index : indices) {
-    mean += positions[index].asEigenVector();
+    mean += positions.row(index);
   }
 
   mean /= indices.size();

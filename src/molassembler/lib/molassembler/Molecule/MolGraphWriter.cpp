@@ -4,7 +4,7 @@
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/StereopermutatorList.h"
 
-#include "Delib/ElementInfo.h"
+#include "Utils/ElementInfo.h"
 
 #include "temple/Stringify.h"
 #include "chemical_symmetries/Symmetries.h"
@@ -18,7 +18,7 @@ MolGraphWriter::MolGraphWriter(
 ) : graphPtr(passGraphPtr), stereopermutatorListPtr(passPermutatorListPtr) {}
 
 /* Information */
-Delib::ElementType MolGraphWriter::getElementType(
+Scine::Utils::ElementType MolGraphWriter::getElementType(
   const AtomIndex vertexIndex
 ) const {
   return graphPtr->elementType(vertexIndex);
@@ -93,7 +93,7 @@ void MolGraphWriter::operator() (
   std::ostream& os,
   const AtomIndex vertexIndex
 ) const {
-  const std::string symbolString = Delib::ElementInfo::symbol(
+  const std::string symbolString = Scine::Utils::ElementInfo::symbol(
     graphPtr->elementType(vertexIndex)
   );
 

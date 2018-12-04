@@ -9,7 +9,7 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "boost_outcome/outcome.hpp"
 #include "Eigen/Core"
-#include "Delib/ElementInfo.h"
+#include "Utils/ElementInfo.h"
 #include "temple/Preprocessor.h"
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
@@ -159,7 +159,7 @@ private:
   GraphType _graph;
   const Molecule& _molecule;
   //! Stores the two heaviest element types
-  std::array<Delib::ElementType, 2> _heaviestAtoms;
+  std::array<Scine::Utils::ElementType, 2> _heaviestAtoms;
 
   void _updateOrAddEdge(
     VertexDescriptor i,

@@ -3,7 +3,7 @@
 
 #include "molassembler/OuterGraph.h"
 
-#include "Delib/ElementTypeCollection.h"
+#include "Utils/Typenames.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph/Bridge.h"
@@ -34,10 +34,10 @@ OuterGraph::OuterGraph(InnerGraph&& inner) : _innerPtr(
   std::make_unique<InnerGraph>(std::move(inner))
 ) {}
 
-Delib::ElementTypeCollection OuterGraph::elementCollection() const {
+Scine::Utils::ElementTypeCollection OuterGraph::elementCollection() const {
   const AtomIndex size = N();
 
-  Delib::ElementTypeCollection elements;
+  Scine::Utils::ElementTypeCollection elements;
   elements.reserve(size);
 
   for(AtomIndex i = 0; i < size; ++i) {
@@ -49,7 +49,7 @@ Delib::ElementTypeCollection OuterGraph::elementCollection() const {
   return elements;
 }
 
-Delib::ElementType OuterGraph::elementType(const AtomIndex a) const {
+Scine::Utils::ElementType OuterGraph::elementType(const AtomIndex a) const {
   return inner().elementType(a);
 }
 

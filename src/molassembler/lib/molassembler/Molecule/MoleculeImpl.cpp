@@ -4,8 +4,8 @@
 #include "boost/graph/isomorphism.hpp"
 #include "boost/graph/graph_utility.hpp"
 #include "chemical_symmetries/ConstexprProperties.h"
-#include "Delib/Constants.h"
-#include "Delib/ElementTypeCollection.h"
+#include "Utils/Constants.h"
+#include "Utils/Typenames.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
@@ -275,11 +275,11 @@ void Molecule::Impl::_propagateGraphChange() {
 /* Public members */
 /* Constructors */
 Molecule::Impl::Impl() noexcept
-  : Impl(Delib::ElementType::H, Delib::ElementType::H, BondType::Single) {}
+  : Impl(Scine::Utils::ElementType::H, Scine::Utils::ElementType::H, BondType::Single) {}
 
 Molecule::Impl::Impl(
-  const Delib::ElementType a,
-  const Delib::ElementType b,
+  const Scine::Utils::ElementType a,
+  const Scine::Utils::ElementType b,
   const BondType bondType
 ) noexcept {
   // update _adjacencies
@@ -326,7 +326,7 @@ Molecule::Impl::Impl(
 
 /* Modifiers */
 AtomIndex Molecule::Impl::addAtom(
-  const Delib::ElementType elementType,
+  const Scine::Utils::ElementType elementType,
   const AtomIndex adjacentTo,
   const BondType bondType
 ) {
@@ -674,7 +674,7 @@ bool Molecule::Impl::setBondType(
 
 void Molecule::Impl::setElementType(
   const AtomIndex a,
-  const Delib::ElementType elementType
+  const Scine::Utils::ElementType elementType
 ) {
   if(!_isValidIndex(a)) {
     throw std::out_of_range("Molecule::setElementType: This index is invalid!");

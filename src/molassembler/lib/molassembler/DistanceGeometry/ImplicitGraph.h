@@ -9,7 +9,7 @@
 #include "boost_outcome/outcome.hpp"
 #include "boost/property_map/property_map.hpp"
 #include "Eigen/Core"
-#include "Delib/ElementTypes.h"
+#include "Utils/ElementTypes.h"
 #include "temple/Preprocessor.h"
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
@@ -149,7 +149,7 @@ private:
   const Molecule* _moleculePtr;
 
   //! Stores the two heaviest element types
-  std::array<Delib::ElementType, 2> _heaviestAtoms;
+  std::array<Scine::Utils::ElementType, 2> _heaviestAtoms;
 
   //! Dense adjacency matrix for O(1) access to fixed distances
   Eigen::MatrixXd _distances;

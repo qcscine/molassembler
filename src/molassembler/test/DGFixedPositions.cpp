@@ -10,7 +10,7 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/IO.h"
 
-#include "Delib/Position.h"
+#include "Utils/Typenames.h"
 
 #include <fstream>
 #include <iomanip>
@@ -21,22 +21,22 @@ using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
   auto checkPositions = [](
-    const Delib::PositionCollection& positions,
-    const std::vector<std::pair<AtomIndex, Delib::Position>>& fixedPositions
+    const Scine::Utils::PositionCollection& positions,
+    const std::vector<std::pair<AtomIndex, Scine::Utils::Position>>& fixedPositions
   ) -> bool {
     bool pass = true;
     for(const auto& fixedPositionPair : fixedPositions) {
       if(
-        !positions.at(fixedPositionPair.first).asEigenVector().isApprox(
-          fixedPositionPair.second.asEigenVector(),
+        !positions.row(fixedPositionPair.first).isApprox(
+          fixedPositionPair.second,
           1e-4
         )
       ) {
         pass = false;
         std::cout << "Fixed position atom " << fixedPositionPair.first
-          << " is at " << positions.at(fixedPositionPair.first).asEigenVector().transpose()
+          << " is at " << positions.row(fixedPositionPair.first).transpose()
           << ", but was supposed to be fixed at "
-          << fixedPositionPair.second.asEigenVector().transpose()
+          << fixedPositionPair.second.transpose()
           << "\n";
       }
     }
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
   auto octadecane = IO::read("various/octadecane.mol");
 
   // Start simple: make an arbitrary atom the origin.
-  const Delib::Position origin(0.0, 0.0, 0.0);
+  const Scine::Utils::Position origin(0.0, 0.0, 0.0);
 
   DistanceGeometry::Configuration config;
   config.fixedPositions = {{13, origin}};
@@ -68,8 +68,8 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
    * adapt.
    */
   config.fixedPositions = {
-    {16, Delib::Position {-3, 0.0, 0.0}},
-    {17, Delib::Position {3, 0.0, 0.0}}
+    {16, Scine::Utils::Position {-3, 0.0, 0.0}},
+    {17, Scine::Utils::Position {3, 0.0, 0.0}}
   };
   conformerResult = generateConformation(octadecane, config);
   BOOST_CHECK_MESSAGE(

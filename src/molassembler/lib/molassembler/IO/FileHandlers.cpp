@@ -11,10 +11,10 @@
 #include <iomanip>
 #include <ctime>
 
-#include "Delib/AtomCollection.h"
-#include "Delib/AtomCollectionIO.h"
-#include "Delib/Constants.h"
-#include "Delib/ElementInfo.h"
+#include "Utils/AtomCollection.h"
+#include "Utils/IO/AtomCollectionIO.h"
+#include "Utils/Constants.h"
+#include "Utils/ElementInfo.h"
 
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Molecule.h"
@@ -171,15 +171,15 @@ void MOLFileHandler::_write(
         << std::endl;
       state = State::AtomBlock;
     } else if(state == State::AtomBlock) {
-      auto symbolStringLambda = [](const Delib::ElementType elementType) {
-        return Delib::ElementInfo::symbol(elementType);
+      auto symbolStringLambda = [](const Scine::Utils::ElementType elementType) {
+        return Scine::Utils::ElementInfo::symbol(elementType);
       };
 
       for(unsigned i = 0; i < molecule.graph().N(); i++) {
         fout << std::setprecision(4) << std::fixed
-          << std::setw(10) << angstromWrapper.positions[inverse(i)].x()
-          << std::setw(10) << angstromWrapper.positions[inverse(i)].y()
-          << std::setw(10) << angstromWrapper.positions[inverse(i)].z()
+          << std::setw(10) << angstromWrapper.positions.row(inverse(i)).x()
+          << std::setw(10) << angstromWrapper.positions.row(inverse(i)).y()
+          << std::setw(10) << angstromWrapper.positions.row(inverse(i)).z()
           << " " << std::setprecision(0)
           // aaa (atom symbol)
           << std::setw(3) << symbolStringLambda(molecule.graph().elementType(inverse(i)))
@@ -255,6 +255,7 @@ FileHandler::RawData MOLFileHandler::read(const std::string& filename) const {
 
   RawData data;
 
+  unsigned atomIndex = 0;
   unsigned atomBlockSize = 0, bondBlockSize = 0;
   std::string line;
 
@@ -280,6 +281,7 @@ FileHandler::RawData MOLFileHandler::read(const std::string& filename) const {
       );
 
       // Reserve space in data members
+      data.angstromWrapper.positions.resize(atomBlockSize, 3);
       data.bondOrders.resize(atomBlockSize);
       data.bondOrders.setZero();
 
@@ -288,24 +290,22 @@ FileHandler::RawData MOLFileHandler::read(const std::string& filename) const {
       std::getline(file, line);
 
       if(formatVersion == MOLFileVersion::V2000) {
-        // Extract position
-        Delib::Position atomPosition;
-        atomPosition.x() = std::stod(line.substr(0, 10));
-        atomPosition.y() = std::stod(line.substr(10, 10));
-        atomPosition.z() = std::stod(line.substr(20, 10));
+        // Write the position into the matrix
+        data.angstromWrapper.positions(atomIndex, 0) = std::stod(line.substr(0, 10));
+        data.angstromWrapper.positions(atomIndex, 1) = std::stod(line.substr(10, 10));
+        data.angstromWrapper.positions(atomIndex, 2) = std::stod(line.substr(20, 10));
 
         data.elements.push_back(
-          Delib::ElementInfo::elementTypeForSymbol(
+          Scine::Utils::ElementInfo::elementTypeForSymbol(
             _removeAllSpaces(
               line.substr(31, 3)
             )
           )
         );
-
-        data.angstromWrapper.positions.push_back(atomPosition);
       }
 
       // decrement remaning size
+      ++atomIndex;
       --atomBlockSize;
       if(atomBlockSize == 0) {
         state = State::BondBlock;
@@ -384,7 +384,7 @@ FileHandler::RawData XYZHandler::read(const std::string& filename) const {
   assert(canRead(filename));
 
   FileHandler::RawData data;
-  Delib::AtomCollection atoms = Delib::AtomCollectionIO::read(filename);
+  Scine::Utils::AtomCollection atoms = Scine::Utils::AtomCollectionIO::read(filename);
 
   data.elements = atoms.getElements();
   data.angstromWrapper = AngstromWrapper {
@@ -413,19 +413,19 @@ void XYZHandler::write(
     indexMap = permutations::Random {N};
   }
 
-  Delib::AtomCollection ac;
+  Scine::Utils::AtomCollection ac;
 
   // Delib AtomCollection IO expects positions in bohr
   for(unsigned i = 0; i < N; ++i) {
     ac.push_back(
-      Delib::Atom {
+      Scine::Utils::Atom {
         molecule.graph().elementType(indexMap(i)),
-        angstromWrapper.positions.at(indexMap(i)) * Delib::bohr_per_angstrom
+        angstromWrapper.positions.row(indexMap(i)) * Scine::Utils::Constants::bohr_per_angstrom
       }
     );
   }
 
-  Delib::AtomCollectionIO::write(filename, ac);
+  Scine::Utils::AtomCollectionIO::write(filename, ac);
 }
 
 bool BinaryHandler::canRead(const std::string& filename) {

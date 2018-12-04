@@ -26,15 +26,15 @@ constexpr double bondOrderCorrectionLambda = 0.1332;
 
 //! Calculates bond distance as modelled by UFF
 double calculateBondDistance(
-  Delib::ElementType a,
-  Delib::ElementType b,
+  Scine::Utils::ElementType a,
+  Scine::Utils::ElementType b,
   BondType bondType
 );
 
 //! Calculates bond distances as modelled by UFF
 double calculateBondOrder(
-  Delib::ElementType a,
-  Delib::ElementType b,
+  Scine::Utils::ElementType a,
+  Scine::Utils::ElementType b,
   double distance
 );
 

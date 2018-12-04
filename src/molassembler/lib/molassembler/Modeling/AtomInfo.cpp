@@ -209,7 +209,7 @@ const std::array<double, 110> bondRadii {
   1.6  // Mt
 };
 
-double bondRadius(const Delib::ElementType elementType) {
+double bondRadius(const Scine::Utils::ElementType elementType) {
   return bondRadii.at(
     static_cast<unsigned>(elementType)
   );
@@ -350,7 +350,7 @@ std::array<ElementInfo, 110> elementData {{
   {0.0, 2u, 0u, 7u, 14u} // Mt
 }};
 
-bool isMainGroupElement(const Delib::ElementType elementType) {
+bool isMainGroupElement(const Scine::Utils::ElementType elementType) {
   auto Z = static_cast<unsigned>(elementType);
   return (
     Z <= 20
@@ -361,7 +361,7 @@ bool isMainGroupElement(const Delib::ElementType elementType) {
   );
 }
 
-boost::optional<unsigned> mainGroupVE(const Delib::ElementType elementType) {
+boost::optional<unsigned> mainGroupVE(const Scine::Utils::ElementType elementType) {
   if(isMainGroupElement(elementType)) {
     return elementData.at(
       static_cast<unsigned>(elementType)
@@ -371,7 +371,7 @@ boost::optional<unsigned> mainGroupVE(const Delib::ElementType elementType) {
   return {};
 }
 
-unsigned dElectronCount(const Delib::ElementType elementType) {
+unsigned dElectronCount(const Scine::Utils::ElementType elementType) {
   if(isMainGroupElement(elementType)) {
     return 0;
   }
@@ -381,7 +381,7 @@ unsigned dElectronCount(const Delib::ElementType elementType) {
   ).valenceElectrons('d');
 }
 
-double vdwRadius(const Delib::ElementType elementType) {
+double vdwRadius(const Scine::Utils::ElementType elementType) {
   return elementData.at(
     static_cast<unsigned>(elementType)
   ).vdwRadius();

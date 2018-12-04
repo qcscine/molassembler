@@ -234,7 +234,7 @@ public:
     const AtomStereopermutator& permutator,
     const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
     double looseningMultiplier,
-    const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
+    const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
   );
 
   /**
@@ -253,7 +253,7 @@ public:
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
     double looseningMultiplier,
-    const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
+    const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
   );
 
   //! Adds [0, π] default angle bounds for all bonded atom triples

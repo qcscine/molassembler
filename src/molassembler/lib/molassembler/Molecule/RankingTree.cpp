@@ -6,7 +6,7 @@
 #include "boost/algorithm/string/replace.hpp"
 #include "boost/graph/breadth_first_search.hpp"
 #include "boost/range/iterator_range_core.hpp"
-#include "Delib/ElementInfo.h"
+#include "Utils/ElementInfo.h"
 
 #include "chemical_symmetries/Properties.h"
 #include "stereopermutation/Composites.h"
@@ -60,7 +60,7 @@ public:
   }
 
   void operator() (std::ostream& os, const TreeVertexIndex& vertexIndex) const {
-    auto symbolString = Delib::ElementInfo::symbol(
+    auto symbolString = Scine::Utils::ElementInfo::symbol(
       _baseRef._graphRef.elementType(
         _baseRef._tree[vertexIndex].molIndex
       )
@@ -2434,7 +2434,7 @@ unsigned RankingTree::_adjacentTerminalHydrogens(const TreeVertexIndex& index) c
     auto edgeTarget = boost::target(*outIterPair.first, _tree);
 
     if(
-      _graphRef.elementType(_tree[edgeTarget].molIndex) == Delib::ElementType::H
+      _graphRef.elementType(_tree[edgeTarget].molIndex) == Scine::Utils::ElementType::H
       && boost::out_degree(edgeTarget, _tree) == 0
     ) {
       ++count;

@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
   // Find a hydrogen substituent
   boost::optional<AtomIndex> hydrogenSubstituent;
   for(const AtomIndex substituent : boost::make_iterator_range(mol.graph().adjacents(side))) {
-    if(mol.graph().elementType(substituent) == Delib::ElementType::H) {
+    if(mol.graph().elementType(substituent) == Scine::Utils::ElementType::H) {
       hydrogenSubstituent = substituent;
       break;
     }
@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
   IO::write("pre_butene.json", mol);
 
   // Replace the hydrogen substituent with a fluorine
-  mol.setElementType(*hydrogenSubstituent, Delib::ElementType::F);
+  mol.setElementType(*hydrogenSubstituent, Scine::Utils::ElementType::F);
 
   // All references are, in principle, invalidated. Just being extra careful.
   auto postPermutatorRange = stereopermutators.bondStereopermutators();

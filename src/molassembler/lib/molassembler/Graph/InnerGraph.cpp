@@ -35,7 +35,7 @@ InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondT
   return newBondPair.first;
 }
 
-InnerGraph::Vertex InnerGraph::addVertex(const Delib::ElementType elementType) {
+InnerGraph::Vertex InnerGraph::addVertex(const Scine::Utils::ElementType elementType) {
   // Invalidate the cache values
   _unchangedSinceNotification = false;
 
@@ -76,7 +76,7 @@ void InnerGraph::removeVertex(Vertex a) {
   boost::remove_vertex(a, _graph);
 }
 
-Delib::ElementType& InnerGraph::elementType(const Vertex a) {
+Scine::Utils::ElementType& InnerGraph::elementType(const Vertex a) {
   // Invalidate the cache values
   _unchangedSinceNotification = false;
 
@@ -126,7 +126,7 @@ BondType InnerGraph::bondType(const InnerGraph::Edge& edge) const {
   return _graph[edge].bondType;
 }
 
-Delib::ElementType InnerGraph::elementType(const Vertex a) const {
+Scine::Utils::ElementType InnerGraph::elementType(const Vertex a) const {
   return _graph[a].elementType;
 }
 

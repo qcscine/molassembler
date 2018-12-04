@@ -24,8 +24,8 @@ Molecule& Molecule::operator = (const Molecule& rhs) {
 Molecule::~Molecule() = default;
 
 Molecule::Molecule(
-  const Delib::ElementType a,
-  const Delib::ElementType b,
+  const Scine::Utils::ElementType a,
+  const Scine::Utils::ElementType b,
   const BondType bondType
 ) noexcept : _pImpl(
   std::make_unique<Impl>(a, b, bondType)
@@ -61,7 +61,7 @@ Molecule::Molecule(
 
 /* Modifiers */
 AtomIndex Molecule::addAtom(
-  const Delib::ElementType elementType,
+  const Scine::Utils::ElementType elementType,
   const AtomIndex adjacentTo,
   const BondType bondType
 ) {
@@ -119,7 +119,7 @@ bool Molecule::setBondType(
 
 void Molecule::setElementType(
   const AtomIndex a,
-  const Delib::ElementType elementType
+  const Scine::Utils::ElementType elementType
 ) {
   _pImpl->setElementType(a, elementType);
 }

@@ -5,7 +5,7 @@
 #define INCLUDE_MOLASSEMBLER_ATOM_INFO_H
 
 #include "boost/optional/optional_fwd.hpp"
-#include "Delib/ElementTypes.h"
+#include "Utils/ElementTypes.h"
 
 #include <array>
 #include <map>
@@ -69,7 +69,7 @@ private:
  */
 extern const std::array<double, 110> bondRadii;
 
-double bondRadius(Delib::ElementType elementType);
+double bondRadius(Scine::Utils::ElementType elementType);
 
 /*!
  * ElementData instances for each element type. This is populated with the
@@ -84,18 +84,18 @@ double bondRadius(Delib::ElementType elementType);
  */
 extern std::array<ElementInfo, 110> elementData;
 
-bool isMainGroupElement(Delib::ElementType elementType);
+bool isMainGroupElement(Scine::Utils::ElementType elementType);
 
 /*!
  * Returns a count of valence electrons if the specified element type is a main
  * group element. Otherwise, returns boost::none.
  */
-boost::optional<unsigned> mainGroupVE(Delib::ElementType elementType);
+boost::optional<unsigned> mainGroupVE(Scine::Utils::ElementType elementType);
 
-unsigned dElectronCount(Delib::ElementType elementType);
+unsigned dElectronCount(Scine::Utils::ElementType elementType);
 
 //! Accessor function to fetch the vdw radius directly from elementData
-double vdwRadius(Delib::ElementType elementType);
+double vdwRadius(Scine::Utils::ElementType elementType);
 
 } // namespace AtomInfo
 

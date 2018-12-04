@@ -7,7 +7,7 @@
 #include "chemical_symmetries/Names.h"
 #include "molassembler/PRNG.h"
 
-#include "Delib/ElementTypes.h"
+#include "Utils/ElementTypes.h"
 #include "molassembler/AngstromWrapper.h"
 
 /*!@file
@@ -205,7 +205,7 @@ class AtomStereopermutator;
  */
 bool disregardStereopermutator(
   const AtomStereopermutator& stereopermutator,
-  Delib::ElementType centralType,
+  Scine::Utils::ElementType centralType,
   const Cycles& cycleData,
   TemperatureRegime temperatureRegimeSetting
 );

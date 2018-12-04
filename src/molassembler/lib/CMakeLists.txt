@@ -5,28 +5,9 @@ if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   find_package(Boost REQUIRED COMPONENTS filesystem system)
 endif()
 
-# For CI purposes, it is very useful to just download in-tree dependencies from
-# GitLab. This avoids having to install the dependencies in the docker image and
-# also avoids recompiling the dependencies in every build due to the CI cache.
-# However, downloading the dependencies adds the files into the tree, but does
-# NOT mean that the dependencies are also installed!
-#
-# Every human user of this project should independently install each project
-# and specify delib_DIR or CMAKE_PREFIX_PATH
-if(MOLASSEMBLER_DOWNLOAD_DEPENDENCIES)
-  # Attempt to find Delib locally
-  find_package(Delib QUIET)
-  if(NOT TARGET delib::Delib)
-    message(STATUS "Could not find Delib locally, downloading from gitlab.")
-    include(DelibImport)
-    import_delib()
-    if(NOT TARGET delib::Delib)
-      message(FATAL_ERROR "Delib could not be downloaded from gitlab!")
-    endif()
-  endif()
-else()
-  find_package(Delib QUIET REQUIRED)
-endif()
+include(ScineUtils)
+include(ImportUtilsOS)
+import_utils_os()
 
 # Some notes on BLAS / LAPACK:
 # Both dlib and Eigen can use BLAS / LAPACK routines.
@@ -112,7 +93,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/BondStereopermutatorImpl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/PermutationState.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Utils/QuaternionFit.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
 
@@ -162,7 +142,6 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/BondStereopermutatorImpl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/PermutationState.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Utils/QuaternionFit.cpp
 )
 
 # Object library to avoid compiling twice
@@ -183,7 +162,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
     PRIVATE
       temple
       Boost::boost
-      delib::Delib
+      Scine::UtilsOS
       boost_outcome
       RingDecomposerLibStatic
       dlib::dlib
@@ -199,7 +178,7 @@ else()
   target_include_directories(molassembler_obj
     PUBLIC
       $<TARGET_PROPERTY:temple,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:delib::Delib,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:Scine::UtilsOS,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:boost_outcome,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:dlib::dlib,INTERFACE_INCLUDE_DIRECTORIES>
@@ -253,7 +232,7 @@ target_link_libraries(
   PUBLIC
     temple
     Boost::boost
-    delib::Delib
+    Scine::UtilsOS
     boost_outcome
     RingDecomposerLibStatic
     dlib::dlib
@@ -317,7 +296,7 @@ target_link_libraries(
   molassemblerStatic
   PUBLIC
     Boost::boost
-    delib::DelibStatic
+    Scine::UtilsOS
     boost_outcome
     RingDecomposerLibStatic
     stereopermutation

@@ -5,6 +5,7 @@
 #define INCLUDE_MOLASSEMBLER_IO_H
 
 #include "molassembler/Types.h"
+#include "Utils/Typenames.h"
 
 #include <string>
 #include <vector>
@@ -20,11 +21,6 @@
  * - test MOLFile V2000
  * - implement MOLFile V3000
  */
-
-// Forward declarations
-namespace Delib {
-class PositionCollection;
-} // namespace Delib
 
 namespace molassembler {
 
@@ -82,7 +78,7 @@ void write(
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   IndexPermutation permutation = IndexPermutation::Identity
 );
 

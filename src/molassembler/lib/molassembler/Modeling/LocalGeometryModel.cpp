@@ -5,7 +5,7 @@
 
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/optional.hpp"
-#include "Delib/ElementInfo.h"
+#include "Utils/ElementInfo.h"
 
 #include "chemical_symmetries/Symmetries.h"
 #include "temple/Functional.h"
@@ -29,7 +29,7 @@ const std::map<BondType, double> bondWeights {
 };
 
 boost::optional<Symmetry::Name> vsepr(
-  const Delib::ElementType centerAtomType,
+  const Scine::Utils::ElementType centerAtomType,
   const unsigned nSites,
   const std::vector<BindingSiteInformation>& sites,
   const int formalCharge
@@ -220,7 +220,7 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
       LocalGeometry::BindingSiteInformation {
         0,
         0,
-        temple::map(ligand, [&](const AtomIndex i) -> Delib::ElementType {
+        temple::map(ligand, [&](const AtomIndex i) -> Scine::Utils::ElementType {
           return molGraph.elementType(i);
         }),
         molGraph.bondType(

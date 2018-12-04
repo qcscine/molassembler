@@ -10,7 +10,6 @@
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/range/combine.hpp"
-#include "Delib/ElementInfo.h"
 #include "temple/Functional.h"
 #include "temple/UnorderedSetAlgorithms.h"
 #include "temple/TinySet.h"

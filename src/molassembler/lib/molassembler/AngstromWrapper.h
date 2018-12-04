@@ -4,7 +4,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_ANGSTROM_POSITIONS_H
 #define INCLUDE_MOLASSEMBLER_ANGSTROM_POSITIONS_H
 
-#include "Delib/PositionCollection.h"
+#include "Utils/Typenames.h"
 
 #include "molassembler/Types.h"
 
@@ -19,17 +19,17 @@
 namespace molassembler {
 
 /**
- * @brief A wrapper class around Delib's PositionCollection to emphasize that
- *   the positions stored therein are in Angstrom
+ * @brief A wrapper class around Scine::Utils' PositionCollection to emphasize
+ *   that the positions stored therein are in Angstrom
  */
 class AngstromWrapper {
 public:
-  Delib::PositionCollection positions;
+  Scine::Utils::PositionCollection positions;
 
   AngstromWrapper() = default;
   explicit AngstromWrapper(unsigned N);
   explicit AngstromWrapper(
-    Delib::PositionCollection pos,
+    Scine::Utils::PositionCollection pos,
     LengthUnit lengthUnit = LengthUnit::Bohr
   );
 
@@ -40,7 +40,7 @@ public:
    * corresponding instance, as the underlying positions have been converted to
    * bohr.
    */
-  Delib::PositionCollection getBohr();
+  Scine::Utils::PositionCollection getBohr();
 
 private:
   bool _invalidated = false;

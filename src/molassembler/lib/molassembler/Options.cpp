@@ -24,14 +24,14 @@ TauCriterion Options::tauCriterion = TauCriterion::Enable;
 
 bool disregardStereopermutator(
   const AtomStereopermutator& stereopermutator,
-  const Delib::ElementType centralType,
+  const Scine::Utils::ElementType centralType,
   const Cycles& cycleData,
   const TemperatureRegime temperatureRegimeSetting
 ) {
   if(
     temperatureRegimeSetting == TemperatureRegime::High
     && stereopermutator.getSymmetry() == Symmetry::Name::CutTetrahedral
-    && centralType == Delib::ElementType::N
+    && centralType == Scine::Utils::ElementType::N
   ) {
     // Figure out if the nitrogen is in a cycle of size 4 or smaller
     for(

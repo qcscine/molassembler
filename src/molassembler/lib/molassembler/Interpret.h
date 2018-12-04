@@ -5,6 +5,7 @@
 #define INCLUDE_MOLASSEMBLER_INTERPRET_H
 
 #include "boost/optional.hpp"
+#include "Utils/ElementTypes.h"
 #include <vector>
 
 /*!@file
@@ -16,11 +17,13 @@
  */
 
 // External forward-declarations
-namespace Delib {
+namespace Scine {
+namespace Utils {
 class AtomCollection;
 class BondOrderCollection;
-class ElementTypeCollection;
-} // namespace Delib
+using ElementTypeCollection = std::vector<ElementType>;
+} // namespace Utils
+} // namespace Scine
 
 namespace molassembler {
 
@@ -61,9 +64,9 @@ struct InterpretResult {
  * @returns A list of found molecules and an index mapping to each molecule
  */
 InterpretResult interpret(
-  const Delib::ElementTypeCollection& elements,
+  const Scine::Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
-  const Delib::BondOrderCollection& bondOrders,
+  const Scine::Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
@@ -89,7 +92,7 @@ InterpretResult interpret(
  * @returns A list of found molecules and an index mapping to each molecule
  */
 InterpretResult interpret(
-  const Delib::ElementTypeCollection& elements,
+  const Scine::Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
@@ -119,8 +122,8 @@ InterpretResult interpret(
  *   Bohr units.
  */
 InterpretResult interpret(
-  const Delib::AtomCollection& atomCollection,
-  const Delib::BondOrderCollection& bondOrders,
+  const Scine::Utils::AtomCollection& atomCollection,
+  const Scine::Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
@@ -149,7 +152,7 @@ InterpretResult interpret(
  *   a high risk of misinterpretation
  */
 InterpretResult interpret(
-  const Delib::AtomCollection& atomCollection,
+  const Scine::Utils::AtomCollection& atomCollection,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );

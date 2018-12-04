@@ -4,11 +4,16 @@
 #ifndef INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 #define INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 
+#include "Utils/ElementTypes.h"
+#include <vector>
+
 // Forward-declarations
-namespace Delib {
+namespace Scine {
+namespace Utils {
 class BondOrderCollection;
-class ElementTypeCollection;
-} // namespace Delib
+using ElementTypeCollection = std::vector<ElementType>;
+} // namespace Utils
+} // namespace Scine
 
 /*! @file
  *
@@ -27,8 +32,8 @@ class AngstromWrapper;
  * @warning UFF parameter bond order calculation is a very primitive
  *   approximation and carries a high risk of misinterpretation
  */
-Delib::BondOrderCollection uffBondOrders(
-  const Delib::ElementTypeCollection& elements,
+Scine::Utils::BondOrderCollection uffBondOrders(
+  const Scine::Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper
 );
 

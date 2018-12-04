@@ -5,7 +5,7 @@
 
 #include "chemical_symmetries/Symmetries.h"
 #include "boost/range/adaptor/map.hpp"
-#include "Delib/ElementTypeCollection.h"
+#include "Utils/Typenames.h"
 #include "json/json.hpp"
 
 #include "molassembler/Graph/GraphAlgorithms.h"
@@ -18,28 +18,28 @@
 namespace nlohmann {
 
 template<>
-struct adl_serializer<Delib::ElementType> {
-  using Type = Delib::ElementType;
-  using Underlying = std::underlying_type<Delib::ElementType>::type;
+struct adl_serializer<Scine::Utils::ElementType> {
+  using Type = Scine::Utils::ElementType;
+  using Underlying = std::underlying_type<Scine::Utils::ElementType>::type;
 
   static void to_json(json& j, const Type& value) {
     j = static_cast<Underlying>(value);
   }
 
   static void from_json(const json& j, Type& value) {
-    value = static_cast<Delib::ElementType>(
+    value = static_cast<Scine::Utils::ElementType>(
       j.get<Underlying>()
     );
   }
 };
 
 template<>
-struct adl_serializer<Delib::ElementTypeCollection> {
-  using Type = Delib::ElementTypeCollection;
+struct adl_serializer<Scine::Utils::ElementTypeCollection> {
+  using Type = Scine::Utils::ElementTypeCollection;
 
   static void to_json(json& j, const Type& value) {
     j = json::array();
-    for(const Delib::ElementType elementType : value) {
+    for(const Scine::Utils::ElementType elementType : value) {
       j.push_back(elementType);
     }
   }
@@ -47,7 +47,7 @@ struct adl_serializer<Delib::ElementTypeCollection> {
   static void from_json(const json& j, Type& value) {
     for(const auto& elementJSON : j) {
       value.push_back(
-        elementJSON.get<Delib::ElementType>()
+        elementJSON.get<Scine::Utils::ElementType>()
       );
     }
   }

@@ -14,7 +14,7 @@ using namespace molassembler::LocalGeometry;
 
 using TestCaseType = std::tuple<
   std::string, // a Name for the current compound
-  Delib::ElementType, // The central atom type
+  Scine::Utils::ElementType, // The central atom type
   unsigned, // The number of bonding sites
   std::vector<BindingSiteInformation>, // a list of ligand types
   int // charge centered on the central atom
@@ -29,7 +29,7 @@ void testVSEPR(
   unsigned nSites;
   int charge;
   std::vector<BindingSiteInformation> ligands;
-  Delib::ElementType centerAtomType;
+  Scine::Utils::ElementType centerAtomType;
 
   for(const auto& testCase : testCases) {
 
@@ -71,7 +71,7 @@ void testVSEPR(
 auto makeLigand(
   const unsigned L,
   const unsigned X,
-  const Delib::ElementType& type,
+  const Scine::Utils::ElementType& type,
   const BondType& bty
 ) {
   return BindingSiteInformation {
@@ -106,36 +106,38 @@ std::vector<BindingSiteInformation> merge(
 }
 
 BOOST_AUTO_TEST_CASE( VSEPRTests ) {
+  using Element = Scine::Utils::ElementType;
+
   testVSEPR( // AX2E0
     Symmetry::Name::Linear,
     {
       TestCaseType {
         "CO2",
-        Delib::ElementType::C,
+        Element::C,
         2,
         repeat(
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
+          makeLigand(0, 2, Element::O, BondType::Double),
           2
         ),
         0
       },
       TestCaseType {
         "BeF2",
-        Delib::ElementType::Be,
+        Element::Be,
         2,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           2
         ),
         0
       },
       TestCaseType {
         "C≡C-H",
-        Delib::ElementType::C,
+        Element::C,
         2,
         {
-          makeLigand(0, 3, Delib::ElementType::C, BondType::Triple),
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single)
+          makeLigand(0, 3, Element::C, BondType::Triple),
+          makeLigand(0, 1, Element::H, BondType::Single)
         },
         0
       }
@@ -147,31 +149,31 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "BCl3",
-        Delib::ElementType::B,
+        Element::B,
         3,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::Cl, BondType::Single),
+          makeLigand(0, 1, Element::Cl, BondType::Single),
           3
         ),
         0
       },
       TestCaseType {
         "H2C=O",
-        Delib::ElementType::C,
+        Element::C,
         3,
         {
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
+          makeLigand(0, 1, Element::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
+          makeLigand(0, 2, Element::O, BondType::Double),
         },
         0
       },
       TestCaseType {
         "SO3",
-        Delib::ElementType::S,
+        Element::S,
         3,
         repeat(
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
+          makeLigand(0, 2, Element::O, BondType::Double),
           3
         ),
         0
@@ -184,30 +186,30 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "SO2",
-        Delib::ElementType::S,
+        Element::S,
         2,
         repeat(
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
+          makeLigand(0, 2, Element::O, BondType::Double),
           2
         ),
         0
       },
       TestCaseType {
         "CH2··",
-        Delib::ElementType::C,
+        Element::C,
         2,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
           2
         ),
         0
       },
       TestCaseType {
         "NH2^+",
-        Delib::ElementType::N,
+        Element::N,
         2,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
           2
         ),
         +1
@@ -219,11 +221,11 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
          *
          */
         "NO2·",
-        Delib::ElementType::N,
+        Element::N,
         2,
         {
-          makeLigand(0, 1, Delib::ElementType::O, BondType::Single),
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
+          makeLigand(0, 1, Element::O, BondType::Single),
+          makeLigand(0, 2, Element::O, BondType::Double),
         },
         +1
       }
@@ -235,45 +237,45 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "CH4",
-        Delib::ElementType::C,
+        Element::C,
         4,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
           4
         ),
         0
       },
       TestCaseType {
         "XeO4",
-        Delib::ElementType::Xe,
+        Element::Xe,
         4,
         repeat(
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
+          makeLigand(0, 2, Element::O, BondType::Double),
           4
         ),
         0
       },
       TestCaseType {
         "ClO4-",
-        Delib::ElementType::Cl,
+        Element::Cl,
         4,
         {
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
-          makeLigand(0, 1, Delib::ElementType::O, BondType::Single)
+          makeLigand(0, 2, Element::O, BondType::Double),
+          makeLigand(0, 2, Element::O, BondType::Double),
+          makeLigand(0, 2, Element::O, BondType::Double),
+          makeLigand(0, 1, Element::O, BondType::Single)
         },
         0 // charge is not on central chlorine atom!
       },
       TestCaseType {
         "N≡SF3",
-        Delib::ElementType::S,
+        Element::S,
         4,
         {
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
-          makeLigand(0, 3, Delib::ElementType::N, BondType::Triple)
+          makeLigand(0, 1, Element::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
+          makeLigand(0, 3, Element::N, BondType::Triple)
         },
         0
       }
@@ -285,20 +287,20 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "NH3",
-        Delib::ElementType::N,
+        Element::N,
         3,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
           3
         ),
         0
       },
       TestCaseType {
         "XeO3",
-        Delib::ElementType::Xe,
+        Element::Xe,
         3,
         repeat(
-          makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
+          makeLigand(0, 2, Element::O, BondType::Double),
           3
         ),
         0
@@ -311,10 +313,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "OH2",
-        Delib::ElementType::O,
+        Element::O,
         2,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
           2
         ),
         0
@@ -327,10 +329,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "PCl5",
-        Delib::ElementType::P,
+        Element::P,
         5,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::Cl, BondType::Single),
+          makeLigand(0, 1, Element::Cl, BondType::Single),
           5
         ),
         0
@@ -343,10 +345,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "SF4",
-        Delib::ElementType::S,
+        Element::S,
         4,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           4
         ),
         0
@@ -359,10 +361,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "ClF3",
-        Delib::ElementType::Cl,
+        Element::Cl,
         3,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           3
         ),
         0
@@ -375,20 +377,20 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "I3-",
-        Delib::ElementType::I,
+        Element::I,
         2,
         {
-          makeLigand(0, 1, Delib::ElementType::I, BondType::Single),
-          makeLigand(1, 0, Delib::ElementType::I, BondType::Single)
+          makeLigand(0, 1, Element::I, BondType::Single),
+          makeLigand(1, 0, Element::I, BondType::Single)
         },
         -1
       },
       TestCaseType {
         "XeF2",
-        Delib::ElementType::Xe,
+        Element::Xe,
         2,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           2
         ),
         0
@@ -401,10 +403,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "SF6",
-        Delib::ElementType::S,
+        Element::S,
         6,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           6
         ),
         0
@@ -417,10 +419,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "BrF5",
-        Delib::ElementType::Br,
+        Element::Br,
         5,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           5
         ),
         0
@@ -433,10 +435,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "XeF4",
-        Delib::ElementType::Xe,
+        Element::Xe,
         4,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           4
         ),
         0
@@ -449,10 +451,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "IF7",
-        Delib::ElementType::I,
+        Element::I,
         7,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           7
         ),
         0
@@ -465,15 +467,15 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "XeOF5^-",
-        Delib::ElementType::Xe,
+        Element::Xe,
         6,
         merge(
           repeat(
-            makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+            makeLigand(0, 1, Element::F, BondType::Single),
             5
           ),
           repeat(
-            makeLigand(0, 2, Delib::ElementType::O, BondType::Double),
+            makeLigand(0, 2, Element::O, BondType::Double),
             1
           )
         ),
@@ -487,10 +489,10 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "XeF5-",
-        Delib::ElementType::Xe,
+        Element::Xe,
         5,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           5
         ),
         -1
@@ -503,19 +505,19 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "XeF8^2-",
-        Delib::ElementType::Xe,
+        Element::Xe,
         8,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           8
         ),
         0 // charge is not located on Xe!
       }, TestCaseType {
         "IF8^-",
-        Delib::ElementType::I,
+        Element::I,
         8,
         repeat(
-          makeLigand(0, 1, Delib::ElementType::F, BondType::Single),
+          makeLigand(0, 1, Element::F, BondType::Single),
           8
         ),
         -1
@@ -529,25 +531,25 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
     {
       TestCaseType {
         "H3N -> BF3, on N",
-        Delib::ElementType::N,
+        Element::N,
         4,
         {
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
-          makeLigand(0, 0, Delib::ElementType::B, BondType::Single)
+          makeLigand(0, 1, Element::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
+          makeLigand(0, 0, Element::B, BondType::Single)
         },
         +1
       },
       TestCaseType {
         "H3N -> BF3, on B",
-        Delib::ElementType::B,
+        Element::B,
         4,
         {
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
-          makeLigand(0, 1, Delib::ElementType::H, BondType::Single),
-          makeLigand(1, 0, Delib::ElementType::N, BondType::Single)
+          makeLigand(0, 1, Element::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
+          makeLigand(0, 1, Element::H, BondType::Single),
+          makeLigand(1, 0, Element::N, BondType::Single)
         },
         -1
       }

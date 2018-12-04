@@ -5,7 +5,8 @@
 
 #include <dlib/optimization.h>
 #include <Eigen/Dense>
-#include "Delib/Constants.h"
+#include "Utils/Constants.h"
+#include "Utils/Typenames.h"
 
 #include "molassembler/DistanceGeometry/dlibAdaptors.h"
 #include "molassembler/DistanceGeometry/dlibDebugAdaptors.h"
@@ -15,7 +16,7 @@
 #include "molassembler/DistanceGeometry/Error.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
-#include "molassembler/Utils/QuaternionFit.h"
+#include "Utils/QuaternionFit.h"
 
 namespace molassembler {
 
@@ -32,7 +33,7 @@ AngstromWrapper convertToAngstromWrapper(
   const unsigned N = vectorizedPositions.size() / dimensionality;
   AngstromWrapper angstromWrapper {N};
   for(unsigned i = 0; i < N; i++) {
-    angstromWrapper.positions.at(i) = Delib::Position {
+    angstromWrapper.positions.row(i) = Scine::Utils::Position {
       vectorizedPositions(dimensionality * i),
       vectorizedPositions(dimensionality * i + 1),
       vectorizedPositions(dimensionality * i + 2)
@@ -47,7 +48,7 @@ AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positionsMatrix)
   const unsigned N = positionsMatrix.rows();
   AngstromWrapper angstromWrapper {N};
   for(unsigned i = 0; i < N; ++i) {
-    angstromWrapper.positions.at(i) = Delib::Position {
+    angstromWrapper.positions.row(i) = Scine::Utils::Position {
       positionsMatrix.row(i).transpose()
     };
   }
@@ -82,11 +83,11 @@ Eigen::MatrixXd fitAndSetFixedPositions(
   Eigen::MatrixXd referenceMatrix = Eigen::MatrixXd::Zero(N, 3);
   Eigen::VectorXd weights = Eigen::VectorXd::Zero(N);
   for(const auto& indexPositionPair : configuration.fixedPositions) {
-    referenceMatrix.row(indexPositionPair.first) = indexPositionPair.second.asEigenVector().transpose();
+    referenceMatrix.row(indexPositionPair.first) = indexPositionPair.second.transpose();
     weights(indexPositionPair.first) = 1;
   }
 
-  referenceMatrix *= Delib::angstrom_per_bohr;
+  referenceMatrix *= Scine::Utils::Constants::angstrom_per_bohr;
 
   // Perform the QuaternionFit
   Scine::Utils::QuaternionFit fit(referenceMatrix, positionMatrix, weights);

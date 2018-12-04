@@ -259,8 +259,8 @@ void BondStereopermutator::Impl::fit(
 
       double dihedralDifference = DelibHelpers::dihedral(
         firstLigandPositions.at(firstLigandIndex),
-        angstromWrapper.positions.at(firstStereopermutator.centralIndex()).toEigenVector(),
-        angstromWrapper.positions.at(secondStereopermutator.centralIndex()).toEigenVector(),
+        angstromWrapper.positions.row(firstStereopermutator.centralIndex()),
+        angstromWrapper.positions.row(secondStereopermutator.centralIndex()),
         secondLigandPositions.at(secondLigandIndex)
       ) - dihedralAngle;
 

@@ -15,34 +15,14 @@
 BOOST_AUTO_TEST_CASE(dihedralTests) {
   using namespace molassembler::DelibHelpers;
 
-  Delib::PositionCollection positions;
-  positions.push_back(
-    Delib::Position {
-      Eigen::Vector3d {
-        1, 0, 0
-      }
-    }
-  );
-  positions.push_back(
-    Delib::Position {
-      Eigen::Vector3d {
-        0, 0, 0
-      }
-    }
-  );
-  positions.push_back(
-    Delib::Position {
-      Eigen::Vector3d {
-        0, 1, 0
-      }
-    }
-  );
+  Scine::Utils::PositionCollection positions(4, 3);
+  positions.row(0) = Scine::Utils::Position {1, 0, 0};
+  positions.row(1) = Scine::Utils::Position {0, 0, 0};
+  positions.row(2) = Scine::Utils::Position {0, 1, 0};
 
   const Eigen::Vector3d lastPosition {1, 1, 0};
 
-  positions.push_back(
-    Delib::Position {lastPosition}
-  );
+  positions.row(3) = lastPosition;
 
   for(
     const double randomAngle :
@@ -54,12 +34,10 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
     )
   ) {
 
-    positions[3] = Delib::Position {
-      Eigen::AngleAxisd(
-        randomAngle,
-        Eigen::Vector3d::UnitY()
-      ) * lastPosition
-    };
+    positions.row(3) = Eigen::AngleAxisd(
+      randomAngle,
+      Eigen::Vector3d::UnitY()
+    ) * lastPosition;
 
     const double dihedral = getDihedral(positions, 0, 1, 2, 3);
 

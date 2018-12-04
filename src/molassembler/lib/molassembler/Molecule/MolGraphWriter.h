@@ -43,7 +43,7 @@ struct MolGraphWriter {
   virtual ~MolGraphWriter() = default;
 
   /* Information */
-  Delib::ElementType getElementType(InnerGraph::Vertex vertexIndex) const;
+  Scine::Utils::ElementType getElementType(InnerGraph::Vertex vertexIndex) const;
 
   void writeBondStereopermutatorNodes(std::ostream& os) const;
 

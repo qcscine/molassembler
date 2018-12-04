@@ -6,7 +6,7 @@
 #include "boost/filesystem.hpp"
 #include "boost/program_options.hpp"
 
-#include "Delib/ElementInfo.h"
+#include "Utils/ElementInfo.h"
 
 #include "chemical_symmetries/Symmetries.h"
 
@@ -36,9 +36,9 @@ BondType interpretBondType(const unsigned index) {
   return static_cast<BondType>(index);
 }
 
-Delib::ElementType interpretElementType(const std::string& str) {
+Scine::Utils::ElementType interpretElementType(const std::string& str) {
   try {
-    Delib::ElementType e = Delib::ElementInfo::elementTypeForSymbol(str);
+    Scine::Utils::ElementType e = Scine::Utils::ElementInfo::elementTypeForSymbol(str);
     return e;
   } catch (std::exception& e) {
     std::cout << e.what() << std::endl;
@@ -183,13 +183,13 @@ int main(int argc, char* argv[]) {
         options_variables_map[l("b")].as<unsigned>()
       );
 
-      Delib::ElementType e;
+      Scine::Utils::ElementType e;
       if(o("e")) {
         e = interpretElementType(
           options_variables_map[l("e")].as<std::string>()
         );
       } else {
-        e = static_cast<Delib::ElementType>(
+        e = static_cast<Scine::Utils::ElementType>(
           options_variables_map[l("z")].as<unsigned>()
         );
       }
@@ -198,13 +198,13 @@ int main(int argc, char* argv[]) {
     }
 
     if(!o("b") && (o("e") || o("z"))) {
-      Delib::ElementType e;
+      Scine::Utils::ElementType e;
       if(o("e")) {
         e = interpretElementType(
           options_variables_map[l("e")].as<std::string>()
         );
       } else {
-        e = static_cast<Delib::ElementType>(
+        e = static_cast<Scine::Utils::ElementType>(
           options_variables_map[l("z")].as<unsigned>()
         );
       }

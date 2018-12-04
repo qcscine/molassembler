@@ -3,34 +3,31 @@
 
 #include "molassembler/AngstromWrapper.h"
 
-#include "Delib/Constants.h"
+#include "Utils/Constants.h"
 
 namespace molassembler {
 
-AngstromWrapper::AngstromWrapper(const unsigned N) : positions(N) {}
+AngstromWrapper::AngstromWrapper(const unsigned N)
+  : positions(Scine::Utils::PositionCollection::Zero(N, 3)) {}
 
 AngstromWrapper::AngstromWrapper(
-  Delib::PositionCollection pos,
+  Scine::Utils::PositionCollection pos,
   const LengthUnit lengthUnit
-) : positions {std::move(pos)} {
+) : positions(std::move(pos)) {
   if(lengthUnit == LengthUnit::Bohr) {
-    for(auto& position : positions) {
-      position *= Delib::angstrom_per_bohr;
-    }
+    positions *= Scine::Utils::Constants::angstrom_per_bohr;
   }
 }
 
-Delib::PositionCollection AngstromWrapper::getBohr() {
+Scine::Utils::PositionCollection AngstromWrapper::getBohr() {
   if(_invalidated) {
     throw std::logic_error("AngstromWrapper was invalidated!");
   }
 
   _invalidated = true;
-  for(auto& position : positions) {
-    position *= Delib::bohr_per_angstrom;
-  }
+  positions *= Scine::Utils::Constants::bohr_per_angstrom;
 
-  return positions;
+  return std::move(positions);
 }
 
 } // namespace molassembler

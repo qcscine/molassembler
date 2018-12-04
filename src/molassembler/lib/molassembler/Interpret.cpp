@@ -5,8 +5,8 @@
 
 #include "boost/range/iterator_range_core.hpp"
 
-#include "Delib/AtomCollection.h"
-#include "Delib/BondOrderCollection.h"
+#include "Utils/AtomCollection.h"
+#include "Utils/Bonds/BondOrderCollection.h"
 
 #include "molassembler/BondOrders.h"
 #include "molassembler/Molecule.h"
@@ -15,23 +15,36 @@
 
 namespace molassembler {
 
+namespace detail {
+
+Scine::Utils::PositionCollection paste(const std::vector<Scine::Utils::Position>& positions) {
+  const unsigned N = positions.size();
+  auto matrix = Scine::Utils::PositionCollection(N, 3);
+  for(unsigned i = 0; i < N; ++i) {
+    matrix.row(i) = positions.at(i);
+  }
+  return matrix;
+}
+
+} // namespace
+
 InterpretResult interpret(
-  const Delib::ElementTypeCollection& elements,
+  const Scine::Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
-  const Delib::BondOrderCollection& bondOrders,
+  const Scine::Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {
-  // Discretize bond orders (unfortunately signed type because of Delib signature)
-  const int N = elements.size();
+  // Discretize bond orders
+  const unsigned N = elements.size();
 
-  if(angstromWrapper.positions.size() != N) {
+  if(angstromWrapper.positions.rows() != N) {
     throw std::invalid_argument(
       "Number of positions in angstrom wrapper do not match number of elements"
     );
   }
 
-  if(bondOrders.getSystemSize() != N) {
+  if(bondOrders.getSystemSize<unsigned>() != N) {
     throw std::invalid_argument(
       "Bond order argument system size does not match number of elements"
     );
@@ -42,8 +55,8 @@ InterpretResult interpret(
   };
 
   if(discretization == BondDiscretizationOption::Binary) {
-    for(int i = 0; i < N; ++i) {
-      for(int j = i + 1; j < N; ++j) {
+    for(unsigned i = 0; i < N; ++i) {
+      for(unsigned j = i + 1; j < N; ++j) {
         double bondOrder = bondOrders.getOrder(i, j);
 
         if(bondOrder > 0.5) {
@@ -52,8 +65,8 @@ InterpretResult interpret(
       }
     }
   } else if(discretization == BondDiscretizationOption::RoundToNearest) {
-    for(int i = 0; i < N; ++i) {
-      for(int j = i + 1; j < N; ++j) {
+    for(unsigned i = 0; i < N; ++i) {
+      for(unsigned j = i + 1; j < N; ++j) {
         double bondOrder = bondOrders.getOrder(i, j);
 
         if(bondOrder > 0.5) {
@@ -77,7 +90,7 @@ InterpretResult interpret(
 
   struct MoleculeParts {
     InnerGraph graph;
-    AngstromWrapper angstromWrapper;
+    std::vector<Scine::Utils::Position> angstromPositions;
     boost::optional<
       std::vector<BondIndex>
     > bondStereopermutatorCandidatesOptional;
@@ -105,7 +118,7 @@ InterpretResult interpret(
 
   unsigned nZeroLengthPositions = 0;
 
-  for(int i = 0; i < N; ++i) {
+  for(unsigned i = 0; i < N; ++i) {
     auto& precursor = moleculePrecursors.at(
       componentMap.at(i)
     );
@@ -116,13 +129,13 @@ InterpretResult interpret(
     // Save new index in precursor graph
     indexInComponentMap.at(i) = newIndex;
 
-    if(angstromWrapper.positions.at(i).asEigenVector().norm() <= 1e-14) {
+    if(angstromWrapper.positions.row(i).norm() <= 1e-14) {
       ++nZeroLengthPositions;
     }
 
-    // Copy over position information adjusted by lengthScale
-    precursor.angstromWrapper.positions.push_back(
-      angstromWrapper.positions.at(i)
+    // Copy over position information
+    precursor.angstromPositions.emplace_back(
+      angstromWrapper.positions.row(i)
     );
   }
 
@@ -173,7 +186,7 @@ InterpretResult interpret(
     for(auto& precursor : moleculePrecursors) {
       result.molecules.emplace_back(
         OuterGraph {std::move(precursor.graph)},
-        precursor.angstromWrapper,
+        AngstromWrapper(detail::paste(precursor.angstromPositions), LengthUnit::Angstrom),
         precursor.bondStereopermutatorCandidatesOptional
       );
     }
@@ -192,7 +205,7 @@ InterpretResult interpret(
 }
 
 InterpretResult interpret(
-  const Delib::ElementTypeCollection& elements,
+  const Scine::Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
@@ -207,8 +220,8 @@ InterpretResult interpret(
 }
 
 InterpretResult interpret(
-  const Delib::AtomCollection& atomCollection,
-  const Delib::BondOrderCollection& bondOrders,
+  const Scine::Utils::AtomCollection& atomCollection,
+  const Scine::Utils::BondOrderCollection& bondOrders,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {
@@ -222,7 +235,7 @@ InterpretResult interpret(
 }
 
 InterpretResult interpret(
-  const Delib::AtomCollection& atomCollection,
+  const Scine::Utils::AtomCollection& atomCollection,
   const BondDiscretizationOption discretization,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional
 ) {

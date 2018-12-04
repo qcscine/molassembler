@@ -6,7 +6,7 @@
 
 #include "boost/optional/optional_fwd.hpp"
 #include "boost/graph/adjacency_list.hpp"
-#include "Delib/ElementTypes.h"
+#include "Utils/ElementTypes.h"
 
 #include "molassembler/Types.h"
 
@@ -25,7 +25,7 @@ public:
 //!@{
   //! Information stored at each graph vertex
   struct VertexData {
-    Delib::ElementType elementType;
+    Scine::Utils::ElementType elementType;
   };
 
   //! Information stored at each graph edge
@@ -90,7 +90,7 @@ public:
 //!@{
   Edge addEdge(Vertex a, Vertex b, BondType bondType);
 
-  Vertex addVertex(Delib::ElementType elementType);
+  Vertex addVertex(Scine::Utils::ElementType elementType);
 
   BondType& bondType(const Edge& edge);
 
@@ -99,7 +99,7 @@ public:
   //! Removes all bonds involving a vertex
   void clearVertex(Vertex a);
 
-  Delib::ElementType& elementType(Vertex a);
+  Scine::Utils::ElementType& elementType(Vertex a);
 
   //! Removes an edge from the graph.
   void removeEdge(const Edge& e);
@@ -113,7 +113,7 @@ public:
 
 //!@name Information
 //!@{
-  Delib::ElementType elementType(Vertex a) const;
+  Scine::Utils::ElementType elementType(Vertex a) const;
   BondType bondType(const Edge& edge) const;
   const BGLType& bgl() const;
 

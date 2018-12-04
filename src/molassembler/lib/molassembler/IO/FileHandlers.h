@@ -6,8 +6,8 @@
 
 #include "boost/bimap.hpp"
 
-#include "Delib/ElementTypeCollection.h"
-#include "Delib/BondOrderCollection.h"
+#include "Utils/Typenames.h"
+#include "Utils/Bonds/BondOrderCollection.h"
 
 #include "molassembler/AngstromWrapper.h"
 #include "molassembler/IO.h"
@@ -86,9 +86,9 @@ namespace FileHandlers {
 //! Abstract base class to all file handlers
 struct FileHandler {
   struct RawData {
-    Delib::ElementTypeCollection elements;
+    Scine::Utils::ElementTypeCollection elements;
     AngstromWrapper angstromWrapper;
-    Delib::BondOrderCollection bondOrders;
+    Scine::Utils::BondOrderCollection bondOrders;
   };
 
   // Virtualize destructor

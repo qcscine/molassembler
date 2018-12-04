@@ -4,7 +4,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_DELIB_HELPERS_H
 #define INCLUDE_MOLASSEMBLER_DELIB_HELPERS_H
 
-#include "Delib/PositionCollection.h"
+#include "Utils/Typenames.h"
 #include "molassembler/Types.h"
 
 /*! @file
@@ -18,14 +18,14 @@ namespace DelibHelpers {
 
 //! Fetches the cartesian distance between two indices in a PositionCollection
 double getDistance(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   AtomIndex i,
   AtomIndex j
 );
 
 //! Fetches the angle in radians between three indices in a PostionCollection
 double getAngle(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   AtomIndex i,
   AtomIndex j,
   AtomIndex k
@@ -38,7 +38,7 @@ double getAngle(
  * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
  */
 double getDihedral(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   AtomIndex i,
   AtomIndex j,
   AtomIndex k,
@@ -52,7 +52,7 @@ double getDihedral(
  * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
  */
 double getDihedral(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const std::array<AtomIndex, 4>& indices
 );
 
@@ -61,7 +61,7 @@ double getDihedral(
  * PositionCollection
  */
 double getSignedVolume(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   AtomIndex i,
   AtomIndex j,
   AtomIndex k,
@@ -73,14 +73,14 @@ double getSignedVolume(
  * PositionCollection, but passed as an array
  */
 double getSignedVolume(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const std::array<AtomIndex, 4>& indices
 );
 
 /* Reimplementation on vector basis alone */
 
 Eigen::Vector3d averagePosition(
-  const Delib::PositionCollection& positions,
+  const Scine::Utils::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 );
 

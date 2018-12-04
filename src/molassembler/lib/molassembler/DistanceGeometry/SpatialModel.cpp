@@ -6,8 +6,9 @@
 #include "boost/numeric/interval.hpp"
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/graph/graphviz.hpp"
-#include "Delib/ElementInfo.h"
-#include "Delib/Constants.h"
+#include "Utils/Typenames.h"
+#include "Utils/ElementInfo.h"
+#include "Utils/Constants.h"
 #include "CyclicPolygons.h"
 
 #include "chemical_symmetries/Properties.h"
@@ -148,9 +149,9 @@ SpatialModel::SpatialModel(
     temple::adaptors::allPairs(configuration.fixedPositions),
     [&](const auto& indexPositionPairA, const auto& indexPositionPairB) -> void {
       double spatialDistance = DelibHelpers::distance(
-        indexPositionPairA.second.asEigenVector(),
-        indexPositionPairB.second.asEigenVector()
-      ) * Delib::angstrom_per_bohr ;
+        indexPositionPairA.second,
+        indexPositionPairB.second
+      ) * Scine::Utils::Constants::angstrom_per_bohr ;
 
       _constraints.emplace(
         orderedSequence(indexPositionPairA.first, indexPositionPairB.first),
@@ -159,12 +160,12 @@ SpatialModel::SpatialModel(
     }
   );
   // Add any fixed positions to an unordered map for fast access:
-  std::unordered_map<AtomIndex, Delib::Position> fixedAngstromPositions;
+  std::unordered_map<AtomIndex, Scine::Utils::Position> fixedAngstromPositions;
 
   for(const auto& fixedPositionPair : configuration.fixedPositions) {
     fixedAngstromPositions.emplace(
       fixedPositionPair.first,
-      fixedPositionPair.second * Delib::angstrom_per_bohr
+      fixedPositionPair.second * Scine::Utils::Constants::angstrom_per_bohr
     );
   }
 
@@ -183,8 +184,8 @@ SpatialModel::SpatialModel(
     if(fixedAngstromPositions.count(i) > 0 && fixedAngstromPositions.count(j) > 0) {
       // If both atoms are fixed, their mutual bond distance is known exactly
       double bondDistance = DelibHelpers::distance(
-        fixedAngstromPositions.at(i).asEigenVector(),
-        fixedAngstromPositions.at(j).asEigenVector()
+        fixedAngstromPositions.at(i),
+        fixedAngstromPositions.at(j)
       );
       setBondBoundsIfEmpty(
         orderedSequence(i, j),
@@ -674,7 +675,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
   const AtomStereopermutator& permutator,
   const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
   const double looseningMultiplier,
-  const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
+  const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
 ) {
   const auto& permutationState = permutator.getPermutationState();
   const auto& ranking = permutator.getRanking();
@@ -740,8 +741,8 @@ void SpatialModel::addAtomStereopermutatorInformation(
       // All center to ligand constituting atom distances are fixed *exactly*
       for(const AtomIndex i : ranking.ligands.at(ligandI)) {
         double bondDistance = DelibHelpers::distance(
-          fixedAngstromPositions.at(i).asEigenVector(),
-          fixedAngstromPositions.at(centerAtom).asEigenVector()
+          fixedAngstromPositions.at(i),
+          fixedAngstromPositions.at(centerAtom)
         );
 
         setBondBoundsIfEmpty(
@@ -755,9 +756,9 @@ void SpatialModel::addAtomStereopermutatorInformation(
         temple::adaptors::allPairs(ranking.ligands.at(ligandI)),
         [&](const AtomIndex i, const AtomIndex j) {
           double angle = DelibHelpers::angle(
-            fixedAngstromPositions.at(i).asEigenVector(),
-            fixedAngstromPositions.at(centerAtom).asEigenVector(),
-            fixedAngstromPositions.at(j).asEigenVector()
+            fixedAngstromPositions.at(i),
+            fixedAngstromPositions.at(centerAtom),
+            fixedAngstromPositions.at(j)
           );
 
           setAngleBoundsIfEmpty(
@@ -843,9 +844,9 @@ void SpatialModel::addAtomStereopermutatorInformation(
           ),
           [&](const AtomIndex x, const AtomIndex y) -> void {
             double angle = DelibHelpers::angle(
-              fixedAngstromPositions.at(x).asEigenVector(),
-              fixedAngstromPositions.at(centerAtom).asEigenVector(),
-              fixedAngstromPositions.at(y).asEigenVector()
+              fixedAngstromPositions.at(x),
+              fixedAngstromPositions.at(centerAtom),
+              fixedAngstromPositions.at(y)
             );
 
             setAngleBoundsIfEmpty(
@@ -1049,7 +1050,7 @@ void SpatialModel::addBondStereopermutatorInformation(
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB,
   const double looseningMultiplier,
-  const std::unordered_map<AtomIndex, Delib::Position>& fixedAngstromPositions
+  const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
 ) {
   // Check preconditions and get access to commonly needed things
   assert(permutator.assigned());
@@ -1695,7 +1696,7 @@ ValueBounds SpatialModel::ligandDistanceFromCenter(
 ) {
   assert(!ligandIndices.empty());
 
-  Delib::ElementType centralIndexType = graph.elementType(centralIndex);
+  Scine::Utils::ElementType centralIndexType = graph.elementType(centralIndex);
 
   if(ligandIndices.size() == 1) {
     auto ligandIndex = ligandIndices.front();

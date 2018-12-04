@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(ruleOfFiveTrivial) {
 }
 
 using HashArgumentsType = std::tuple<
-  Delib::ElementType,
+  Scine::Utils::ElementType,
   std::vector<molassembler::hashes::BondInformation>,
   boost::optional<Symmetry::Name>,
   boost::optional<unsigned>
@@ -134,7 +134,7 @@ HashArgumentsType randomArguments() {
   std::sort(bonds.begin(), bonds.end());
 
   return {
-    static_cast<Delib::ElementType>(
+    static_cast<Scine::Utils::ElementType>(
       temple::random::getSingle<unsigned>(1, 112, randomnessEngine())
     ),
     bonds,
@@ -228,10 +228,10 @@ BOOST_AUTO_TEST_CASE(isomorphismTests) {
 
 BOOST_AUTO_TEST_CASE(basicRSInequivalencyTests) {
   // Build an asymmetric tetrahedral carbon
-  Molecule a {Delib::ElementType::C, Delib::ElementType::H, BondType::Single};
-  a.addAtom(Delib::ElementType::F, 0, BondType::Single);
-  a.addAtom(Delib::ElementType::Cl, 0, BondType::Single);
-  a.addAtom(Delib::ElementType::Br, 0, BondType::Single);
+  Molecule a {Scine::Utils::ElementType::C, Scine::Utils::ElementType::H, BondType::Single};
+  a.addAtom(Scine::Utils::ElementType::F, 0, BondType::Single);
+  a.addAtom(Scine::Utils::ElementType::Cl, 0, BondType::Single);
+  a.addAtom(Scine::Utils::ElementType::Br, 0, BondType::Single);
   a.setGeometryAtAtom(0, Symmetry::Name::Tetrahedral);
 
   // Make sure it's recognized as asymmetric
@@ -251,11 +251,11 @@ BOOST_AUTO_TEST_CASE(basicRSInequivalencyTests) {
 }
 
 BOOST_AUTO_TEST_CASE(basicEZInequivalencyTests) {
-  Molecule a {Delib::ElementType::C, Delib::ElementType::C, BondType::Double};
-  a.addAtom(Delib::ElementType::H, 0, BondType::Single);
-  a.addAtom(Delib::ElementType::F, 0, BondType::Single);
-  a.addAtom(Delib::ElementType::H, 1, BondType::Single);
-  a.addAtom(Delib::ElementType::F, 1, BondType::Single);
+  Molecule a {Scine::Utils::ElementType::C, Scine::Utils::ElementType::C, BondType::Double};
+  a.addAtom(Scine::Utils::ElementType::H, 0, BondType::Single);
+  a.addAtom(Scine::Utils::ElementType::F, 0, BondType::Single);
+  a.addAtom(Scine::Utils::ElementType::H, 1, BondType::Single);
+  a.addAtom(Scine::Utils::ElementType::F, 1, BondType::Single);
 
   // Set the geometries
   a.setGeometryAtAtom(0, Symmetry::Name::TrigonalPlanar);
@@ -347,16 +347,16 @@ BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
 }
 
 BOOST_AUTO_TEST_CASE(moleculeGeometryChoices) {
-  molassembler::Molecule testMol(Delib::ElementType::Ru, Delib::ElementType::N, BondType::Single);
-  testMol.addAtom(Delib::ElementType::H, 1u, BondType::Single);
-  testMol.addAtom(Delib::ElementType::H, 1u, BondType::Single);
+  molassembler::Molecule testMol(Scine::Utils::ElementType::Ru, Scine::Utils::ElementType::N, BondType::Single);
+  testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
+  testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
 
   BOOST_CHECK(
     testMol.stereopermutators().option(1u)
     && testMol.stereopermutators().option(1u)->getSymmetry() == Symmetry::Name::CutTetrahedral
   );
 
-  testMol.addAtom(Delib::ElementType::H, 1u, BondType::Single);
+  testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
 
   BOOST_CHECK(
     testMol.stereopermutators().option(1u)

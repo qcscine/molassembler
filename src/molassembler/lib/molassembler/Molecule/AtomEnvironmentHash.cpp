@@ -83,7 +83,7 @@ bool BondInformation::operator == (const BondInformation& other) const {
 
 WideHashType atomEnvironment(
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask,
-  const Delib::ElementType elementType,
+  const Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
   boost::optional<Symmetry::Name> symmetryNameOptional,
   boost::optional<unsigned> assignedOptional

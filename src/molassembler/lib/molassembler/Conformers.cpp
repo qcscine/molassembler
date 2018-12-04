@@ -7,7 +7,7 @@
 namespace molassembler {
 
 outcome::result<
-  std::vector<Delib::PositionCollection>
+  std::vector<Scine::Utils::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   const unsigned numStructures,
@@ -18,7 +18,7 @@ outcome::result<
   if(result) {
     return temple::map(
       result.value(),
-      [](AngstromWrapper wrapper) -> Delib::PositionCollection {
+      [](AngstromWrapper wrapper) -> Scine::Utils::PositionCollection {
         return wrapper.getBohr();
       }
     );
@@ -27,7 +27,7 @@ outcome::result<
   return result.as_failure();
 }
 
-outcome::result<Delib::PositionCollection> generateConformation(
+outcome::result<Scine::Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   const DistanceGeometry::Configuration& configuration
 ) {

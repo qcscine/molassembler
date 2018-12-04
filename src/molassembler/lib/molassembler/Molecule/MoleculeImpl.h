@@ -52,8 +52,8 @@ struct Molecule::Impl {
 
   //! Diatomic constructor
   Impl(
-    Delib::ElementType a,
-    Delib::ElementType b,
+    Scine::Utils::ElementType a,
+    Scine::Utils::ElementType b,
     BondType bondType
   ) noexcept;
 
@@ -80,7 +80,7 @@ struct Molecule::Impl {
 //!@{
   //! Adds an atom by attaching it to an existing atom.
   AtomIndex addAtom(
-    Delib::ElementType elementType,
+    Scine::Utils::ElementType elementType,
     AtomIndex adjacentTo,
     BondType bondType
   );
@@ -193,7 +193,7 @@ struct Molecule::Impl {
   //! Changes an existing atom's element type
   void setElementType(
     AtomIndex a,
-    Delib::ElementType elementType
+    Scine::Utils::ElementType elementType
   );
 
   /*! Sets the local geometry at an atom index

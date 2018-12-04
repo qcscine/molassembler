@@ -52,7 +52,7 @@ ExplicitGraph::ExplicitGraph(
   addImplicitEdges();
 
   // Determine the two heaviest element types in the molecule, O(N)
-  _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
+  _heaviestAtoms = {{Scine::Utils::ElementType::H, Scine::Utils::ElementType::H}};
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = molecule.graph().elementType(i);
     if(
@@ -104,7 +104,7 @@ ExplicitGraph::ExplicitGraph(
   addImplicitEdges();
 
   // Determine the two heaviest element types in the molecule, O(N)
-  _heaviestAtoms = {{Delib::ElementType::H, Delib::ElementType::H}};
+  _heaviestAtoms = {{Scine::Utils::ElementType::H, Scine::Utils::ElementType::H}};
   for(AtomIndex i = 0; i < N; ++i) {
     auto elementType = molecule.graph().elementType(i);
     if(
@@ -265,7 +265,7 @@ double ExplicitGraph::upperBound(
 double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   AtomIndex a = i / 2;
-  Delib::ElementType elementType = _molecule.graph().elementType(a);
+  Scine::Utils::ElementType elementType = _molecule.graph().elementType(a);
 
   if(elementType == _heaviestAtoms.front()) {
     return AtomInfo::vdwRadius(

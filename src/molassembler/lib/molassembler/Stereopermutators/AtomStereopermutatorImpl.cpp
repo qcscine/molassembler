@@ -619,7 +619,7 @@ void AtomStereopermutator::Impl::fit(
         angles.push_back(
           DelibHelpers::angle(
             ligandPositions.at(i),
-            angstromWrapper.positions.at(_centerAtom).toEigenVector(),
+            angstromWrapper.positions.row(_centerAtom),
             ligandPositions.at(j)
           )
         );
@@ -716,7 +716,7 @@ void AtomStereopermutator::Impl::fit(
             return std::fabs(
               DelibHelpers::angle(
                 ligandPositions.at(ligandI),
-                angstromWrapper.positions.at(_centerAtom).toEigenVector(),
+                angstromWrapper.positions.row(_centerAtom),
                 ligandPositions.at(ligandJ)
               ) - angle(ligandI, ligandJ)
             );
@@ -749,11 +749,11 @@ void AtomStereopermutator::Impl::fit(
                 // i-j 1-2 distance from positions
                 DelibHelpers::distance(
                   ligandPositions.at(ligandI),
-                  angstromWrapper.positions.at(_centerAtom).toEigenVector()
+                  angstromWrapper.positions.row(_centerAtom)
                 ),
                 // j-k 1-2 distance from positions
                 DelibHelpers::distance(
-                  angstromWrapper.positions.at(_centerAtom).toEigenVector(),
+                  angstromWrapper.positions.row(_centerAtom),
                   ligandPositions.at(ligandJ)
                 ),
                 // idealized Stereopermutator angle
@@ -778,7 +778,7 @@ void AtomStereopermutator::Impl::fit(
                 return ligandPositions.at(ligandIndexOptional.value());
               }
 
-              return angstromWrapper.positions.at(_centerAtom).asEigenVector();
+              return angstromWrapper.positions.row(_centerAtom);
             };
 
             double volume = DelibHelpers::adjustedSignedVolume(

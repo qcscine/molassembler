@@ -4,15 +4,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 #define INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 
+#include "Utils/Typenames.h"
 #include "molassembler/Types.h"
 #include "boost_outcome/outcome.hpp"
 #include <vector>
-
-// Forward-declarations
-namespace Delib {
-class PositionCollection;
-class Position;
-} // namespace Delib
 
 /*!@file
  *
@@ -73,10 +68,10 @@ struct Configuration {
    *   constituting a haptic ligand binding site must be either completely
    *   unfixed or fixed and may not be mixed).
    *
-   * @note Remember Delib::Positions are in bohr length units!
+   * @note Remember Scine::Utils::Positions are in bohr length units!
    */
   std::vector<
-    std::pair<AtomIndex, Delib::Position>
+    std::pair<AtomIndex, Scine::Utils::Position>
   > fixedPositions;
 };
 
@@ -109,7 +104,7 @@ struct Configuration {
  *   specification.
  */
 outcome::result<
-  std::vector<Delib::PositionCollection>
+  std::vector<Scine::Utils::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   unsigned numStructures,
@@ -125,11 +120,11 @@ outcome::result<
  *   in detail. The defaults are usually fine.
  *
  * @returns A result type which may or may not contain a PositionCollection (in
- * Bohr length units). The result type is much like an optional, except that in
- * the error case it carries data about the error in order to help diagnose
- * possible mistakes made in the molecular graph specification.
+ *   Bohr length units). The result type is much like an optional, except that
+ *   in the error case it carries data about the error in order to help
+ *   diagnose possible mistakes made in the molecular graph specification.
  */
-outcome::result<Delib::PositionCollection> generateConformation(
+outcome::result<Scine::Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
