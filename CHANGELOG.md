@@ -8,7 +8,7 @@ TODO
 - date
 - Bug fix regarding chiral constraints
 
-## [1.0.0] - 2018-11-DD
+## [1.0.0] - 2018-12-DD
 ### Added
 - Explicit definition of which headers make up the public API in the
   tutorial-like documentation
@@ -18,6 +18,10 @@ TODO
   extensive and contains the beginnings of a tutorial
 
 ### Changed
+- Symmetries are no longer excluded on principle, but using tau criteria (see
+  AtomStereopermutator fitting)
+- Rebased the library on Scine's UtilsOS instead of on the Delib (which is now
+  deprecated)
 - Renamed AtomStereocenter and BondStereocenter to AtomStereopermutator and
   BondStereopermutator respectively. StereocenterList is accordingly renamed to
   StereopermutatorList. The classes in question often handle cases where there
@@ -37,6 +41,7 @@ TODO
 - Add ETH license to all files and a checker script
 
 ### Fixed
+- Several ranking bugs
 - `molassembler` now correctly links against the shared `Delib` library
 - `molassemblerStatic` no longer has interface dependencies on header-only
   libraries used in its implementation only

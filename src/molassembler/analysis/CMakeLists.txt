@@ -8,8 +8,11 @@ project(molassemblerAnalyses)
 if(NOT TARGET Boost::regex
   OR NOT TARGET Boost::program_options
   OR NOT TARGET Boost::system
+  OR NOT TARGET Boost::filesystem
 )
-  find_package(Boost REQUIRED COMPONENTS regex program_options system)
+  find_package(Boost REQUIRED
+    COMPONENTS regex program_options system filesystem
+  )
 endif()
 
 set(analysisFiles
@@ -36,6 +39,7 @@ foreach(filename ${analysisFiles})
       Boost::program_options
       Boost::regex
       Boost::system
+      Boost::filesystem
       molassembler
       chemical_symmetries
       gor1

@@ -56,18 +56,23 @@ int main(int argc, char* argv[]) {
   // Set up option parsing
   boost::program_options::options_description options_description("Recognized options");
   options_description.add_options()
-    ("help", "Produce help message")
+    ("help,h", "Produce help message")
     (
-      "f",
+      "file,f",
       boost::program_options::value<std::string>(),
-      "Read molecule to generate from file (MOLFiles only!)"
+      "Read molecule to generate from file"
     )
   ;
 
   // Parse
   boost::program_options::variables_map options_variables_map;
   boost::program_options::store(
-    boost::program_options::parse_command_line(argc, argv, options_description),
+    boost::program_options::command_line_parser(argc, argv).
+    options(options_description).
+    style(
+      boost::program_options::command_line_style::unix_style
+      | boost::program_options::command_line_style::allow_long_disguise
+    ).run(),
     options_variables_map
   );
   boost::program_options::notify(options_variables_map);
@@ -77,12 +82,12 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  if(options_variables_map.count("f") > 0) {
+  if(options_variables_map.count("file") > 0) {
     // Set log particulars for debug information
     Log::level = Log::Level::Debug;
     Log::particulars.insert(Log::Particulars::RankingTreeDebugInfo);
 
-    auto filename = options_variables_map["f"].as<std::string>();
+    auto filename = options_variables_map["file"].as<std::string>();
 
     if(!boost::filesystem::exists(filename)) {
       std::cout << "The specified file could not be found!" << nl;
