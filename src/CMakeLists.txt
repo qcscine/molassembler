@@ -21,7 +21,7 @@ add_custom_target(validate
 # Externalize parts for sake of brevity
 include(CompilerSpecificSetup)
 include(Dependencies)
-include(Utils)
+include(MolassemblerUtils)
 
 # Permit limited builds
 if(DEFINED MOLASSEMBLER_INCLUDE_PROJECT_DIRS)
