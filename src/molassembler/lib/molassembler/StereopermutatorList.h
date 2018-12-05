@@ -91,6 +91,12 @@ public:
   //! Fetch a const ref-option to an BondStereopermutator, if present
   boost::optional<const BondStereopermutator&> option(const BondIndex& edge) const;
 
+  //! Returns the number of AtomStereopermutators
+  unsigned A() const;
+
+  //! Returns the number of BondStereopermutators
+  unsigned B() const;
+
   //! Combined size of atom and bond-stereopermutator lists
   unsigned size() const;
 

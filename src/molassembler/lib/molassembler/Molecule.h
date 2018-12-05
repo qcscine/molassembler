@@ -569,6 +569,7 @@ public:
 //!@{
   //! Equality operator, performs most strict equality comparison
   bool operator == (const Molecule& other) const;
+  //! Inverts @see operator ==
   bool operator != (const Molecule& other) const;
 //!@}
 

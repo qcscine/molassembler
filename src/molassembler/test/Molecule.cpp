@@ -18,6 +18,7 @@
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/IO/FileHandlers.h"
+#include "molassembler/Isomers.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/Options.h"
@@ -90,7 +91,7 @@ using HashArgumentsType = std::tuple<
 
 HashArgumentsType randomArguments() {
   auto genBondInformation = []() -> molassembler::hashes::BondInformation {
-    BondType bty = static_cast<BondType>(
+    auto bty = static_cast<BondType>(
       temple::random::getSingle<unsigned>(0, 6, randomnessEngine())
     );
 
@@ -361,5 +362,25 @@ BOOST_AUTO_TEST_CASE(moleculeGeometryChoices) {
   BOOST_CHECK(
     testMol.stereopermutators().option(1u)
     && testMol.stereopermutators().option(1u)->getSymmetry() == Symmetry::Name::Tetrahedral
+  );
+}
+
+BOOST_AUTO_TEST_CASE(IsomerPredicateTests) {
+  BOOST_CHECK_MESSAGE(
+    molassembler::enantiomeric(
+      molassembler::IO::read("isomers/enantiomers/Citalopram-R.mol"),
+      molassembler::IO::read("isomers/enantiomers/Citalopram-S.mol"),
+      molassembler::SameIndexingTag {}
+    ),
+    "Citalopram-R and -S are falsely determined not to be enantiomers."
+  );
+
+  BOOST_CHECK_MESSAGE(
+    molassembler::enantiomeric(
+      molassembler::IO::read("isomers/enantiomers/Isoleucine-RS.mol"),
+      molassembler::IO::read("isomers/enantiomers/Isoleucine-SR.mol"),
+      molassembler::SameIndexingTag {}
+    ),
+    "Citalopram-R and -S are falsely determined not to be enantiomers."
   );
 }
