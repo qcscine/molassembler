@@ -72,6 +72,9 @@
  * - Try to figure out a datastructure in which the entire relative ranking can
  *   be stored as indeterminate and determinate, so to wholly avoid
  *   recomputation where unnecessary
+ * - When in _auxiliaryApplySequenceRules, and BFS is omnidirectional, isn't
+ *   the up-edge always top-ranked? It may not be necessary to include it in
+ *   the comparisonSets and as a result, also not complicate BFS handling.
  */
 
 namespace molassembler {
@@ -214,12 +217,6 @@ private:
   //! The BGL Graph representing the acyclic tree
   BGLType _tree;
 
-  /*!
-   * A set of edge indices gathered construction for all tree edges representing
-   * a molecular bond of order two.
-   */
-  std::set<TreeEdgeIndex> _doubleBondEdges;
-
   //! The helper instance for discovering the ordering of the to-rank branches
   OrderDiscoveryHelper<TreeVertexIndex> _branchOrderingHelper;
 
@@ -250,7 +247,7 @@ private:
   //! Checks whether a tree index is the result of a cycle closure
   bool _isCycleClosureDuplicateVertex(const TreeVertexIndex& index) const;
 
-  /*! Determins which tree indices are to be ranked
+  /*! Determines which tree indices are to be ranked
    *
    * Determines which tree indices are to be ranked based on the central index
    * and a list of index excludes
@@ -259,6 +256,17 @@ private:
     TreeVertexIndex sourceIndex,
     const std::vector<TreeVertexIndex>& excludeIndices
   ) const;
+
+  //! Returns whether any of the comparison multisets has an entry
+  template<typename ComparisonSets>
+  bool _notEmpty(const ComparisonSets& comparisonSets) const {
+    return temple::all_of(
+      comparisonSets,
+      [](const auto& mapPair) -> bool {
+        return !mapPair.second.empty();
+      }
+    );
+  }
 
   /*!
    * Returns the node degree, excluding edges to or from nodes marked as
@@ -639,7 +647,10 @@ private:
 
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       // Write debug graph files if the corresponding log particular is set
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+      if(
+        Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+        && _notEmpty(comparisonSets)
+      ) {
         std::string header = (
           (
             BFSDownOnly
@@ -779,7 +790,10 @@ private:
       ++depth;
 
       if /* C++17 constexpr */ (buildTypeIsDebug) {
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        if(
+          Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+          && _notEmpty(comparisonSets)
+        ) {
           std::string header;
           if(!BFSDownOnly) {
             header += "aux "s;

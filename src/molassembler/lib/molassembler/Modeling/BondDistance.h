@@ -17,8 +17,8 @@ namespace molassembler {
 namespace Bond {
 
 //! Bond order definition for bond types as defined in common_typedefs
-static constexpr std::array<double, 8> bondOrderMap {{
-  1, 2, 3, 4, 5, 6, 1.5, 0.5
+static constexpr std::array<double, 7> bondOrderMap {{
+  1, 2, 3, 4, 5, 6, 0.5
 }};
 
 //! UFF bond distance correction constant lambda

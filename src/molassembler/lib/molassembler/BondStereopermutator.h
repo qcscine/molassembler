@@ -55,10 +55,8 @@ struct ChiralityConstraint;
  */
 class BondStereopermutator {
 public:
-  //! The volume tolerance of emitted chirality constraints
-  static constexpr double chiralityConstraintTolerance = 0.1;
   //! An Assignment is accepted if the fit for each dihedral is below this value
-  static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 36.0; // 5°
+  static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 25.0; // ~7°
 
 //!@name Special member functions
 //!@{

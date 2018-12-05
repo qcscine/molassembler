@@ -936,22 +936,31 @@ void RankingTree::_applySequenceRules(
         instantiateAtomStereopermutator(sourceIndex);
       }
 
+      auto isGraphBondStereopermutatorCandidate = [&](const BondIndex& bond) -> bool {
+        BondType bondType = _graphRef.bondType(bond);
+
+        return (
+          bondType == BondType::Double
+          || bondType == BondType::Triple
+          || bondType == BondType::Quadruple
+          || bondType == BondType::Quintuple
+          || bondType == BondType::Sextuple
+        );
+      };
+
+      BondIndex molEdge {
+        _tree[sourceIndex].molIndex,
+        _tree[targetIndex].molIndex
+      };
+
       /* The instantiation procedure does not guarantee that there will be a
-       * stereopermutator on both vertices. If no assignment can be found
+       * stereopermutator on both vertices.
        */
       if(
         _tree[sourceIndex].stereopermutatorOption
         && _tree[targetIndex].stereopermutatorOption
-        /*! @todo this has to be altered -> any edges with hindered rotation have
-         * to be checked, not just double bonds
-         */
-        && _doubleBondEdges.count(edge) > 0
+        && isGraphBondStereopermutatorCandidate(molEdge)
       ) {
-        BondIndex molEdge {
-          _tree[sourceIndex].molIndex,
-          _tree[targetIndex].molIndex
-        };
-
         auto newStereopermutator = BondStereopermutator {
           _tree[sourceIndex].stereopermutatorOption.value(),
           _tree[targetIndex].stereopermutatorOption.value(),
@@ -986,11 +995,8 @@ void RankingTree::_applySequenceRules(
 
           // If an assignment could be found, add it to the tree
           if(newStereopermutator.assigned()) {
-            if(newStereopermutator.numStereopermutations() > 1) {
-              // Mark that we instantiated something
-              foundBondStereopermutators = true;
-            }
-
+            // Mark that we instantiated something
+            foundBondStereopermutators = true;
             _tree[edge].stereopermutatorOption = std::move(newStereopermutator);
           }
         }
@@ -1104,7 +1110,8 @@ void RankingTree::_applySequenceRules(
      * branches are chosen and paired in sequence of priority for branches.
      *
      * Instead of BFSing a second time in B, prior to clearing the multisets
-     * in a step, move out the variants with instantiated stereopermutators
+     * in a step, we move out the variants with instantiated stereopermutators
+     * to this data structure
      */
     std::map<
       TreeVertexIndex,
@@ -1144,7 +1151,10 @@ void RankingTree::_applySequenceRules(
     undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
     if /* C++17 constexpr */ (buildTypeIsDebug) {
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+      if(
+        Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+        && _notEmpty(comparisonSets)
+      ) {
         _writeGraphvizFiles({
           _adaptedMolGraphviz,
           dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
@@ -1170,19 +1180,18 @@ void RankingTree::_applySequenceRules(
             }
           );
 
-          // Clear the comparison set for clarity of debug interpretation and speed
+          // Clear the comparison set for ease of interpretation and speed
           comparisonSets.at(undecidedBranch).clear();
 
           std::vector<TreeVertexIndex> newSeeds;
 
           for(const auto& seed: seeds.at(undecidedBranch)) {
             for( // Out-edges
-              auto outIterPair = boost::out_edges(seed, _tree);
-              outIterPair.first != outIterPair.second;
-              ++outIterPair.first
+              const TreeEdgeIndex outEdge :
+              boost::make_iterator_range(
+                boost::out_edges(seed, _tree)
+              )
             ) {
-              const auto& outEdge = *outIterPair.first;
-
               auto edgeTarget = boost::target(outEdge, _tree);
 
               if(!_tree[edgeTarget].isDuplicate) {
@@ -1206,7 +1215,10 @@ void RankingTree::_applySequenceRules(
       undecidedSets = _branchOrderingHelper.getUndecidedSets();
 
       if /* C++17 constexpr */ (buildTypeIsDebug) {
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        if(
+          Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+          && _notEmpty(comparisonSets)
+        ) {
           _writeGraphvizFiles({
             _adaptedMolGraphviz,
             dumpGraphviz("Sequence rule 4A", {rootIndex}, _collectSeeds(seeds, undecidedSets)),
@@ -1795,11 +1807,26 @@ std::vector<
       std::vector<TreeVertexIndex>
     > seeds;
 
+    /* For part B, in which representational stereodescriptors for all
+     * branches are chosen and paired in sequence of priority for branches.
+     *
+     * Instead of BFSing a second time in B, prior to clearing the multisets
+     * in a step, we move out the variants with instantiated stereopermutators
+     * to this data structure
+     */
+    std::map<
+      TreeVertexIndex,
+      std::set<VariantType>
+    > stereopermutatorMap;
+
     undecidedSets = orderingHelper.getUndecidedSets();
 
     // Initialize the BFS state
     for(const auto& undecidedSet : undecidedSets) {
       for(const auto& undecidedBranch : undecidedSet) {
+        // Add an empty set to the stereopermutator set map for this branch
+        stereopermutatorMap[undecidedBranch] = {};
+
         comparisonSets.emplace(
           undecidedBranch,
           *this
@@ -1828,7 +1855,10 @@ std::vector<
     unsigned depth = 1;
 
     if /* C++17 constexpr */ (buildTypeIsDebug) {
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+      if(
+        Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+        && _notEmpty(comparisonSets)
+      ) {
         _writeGraphvizFiles({
           _adaptedMolGraphviz,
           dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
@@ -1838,6 +1868,8 @@ std::vector<
       }
     }
 
+    VariantHasInstantiatedStereopermutator isInstantiatedChecker {*this};
+
     while(
       !undecidedSets.empty()
       && _relevantSeeds(seeds, undecidedSets)
@@ -1845,26 +1877,38 @@ std::vector<
     ) {
       // Perform a full BFS Step on all undecided set seeds
       for(const auto& undecidedSet : undecidedSets) {
-        for(const auto& undecidedTreeIndex : undecidedSet) {
-          auto& branchSeeds = seeds[undecidedTreeIndex];
+        for(const auto& undecidedBranch : undecidedSet) {
+          // Move any instantiated comparisonset variants to stereopermutatorMap
+          std::copy_if(
+            std::make_move_iterator(std::begin(comparisonSets.at(undecidedBranch))),
+            std::make_move_iterator(std::end(comparisonSets.at(undecidedBranch))),
+            std::inserter(stereopermutatorMap.at(undecidedBranch), std::begin(stereopermutatorMap.at(undecidedBranch))),
+            [&](const VariantType& vertexEdgeVariant) -> bool {
+              return boost::apply_visitor(isInstantiatedChecker, vertexEdgeVariant);
+            }
+          );
+
+          // Clear the comparisonSet for ease of interpretation and speed
+          comparisonSets.at(undecidedBranch).clear();
+
+          auto& branchSeeds = seeds.at(undecidedBranch);
 
           std::vector<TreeVertexIndex> newSeeds;
 
           for(const auto& seed: branchSeeds) {
 
             for( // In-edges
-              auto inIterPair = boost::in_edges(seed, _tree);
-              inIterPair.first != inIterPair.second;
-              ++inIterPair.first
+              const TreeEdgeIndex inEdge :
+              boost::make_iterator_range(
+                boost::in_edges(seed, _tree)
+              )
             ) {
-              const auto& inEdge = *inIterPair.first;
-
               auto edgeSource = boost::source(inEdge, _tree);
 
               // Check if already placed
               if(visitedVertices.count(edgeSource) == 0) {
-                comparisonSets.at(undecidedTreeIndex).emplace(edgeSource);
-                comparisonSets.at(undecidedTreeIndex).emplace(inEdge);
+                comparisonSets.at(undecidedBranch).emplace(edgeSource);
+                comparisonSets.at(undecidedBranch).emplace(inEdge);
 
                 newSeeds.push_back(edgeSource);
                 visitedVertices.insert(edgeSource);
@@ -1872,12 +1916,11 @@ std::vector<
             }
 
             for( // Out-edges
-              auto outIterPair = boost::out_edges(seed, _tree);
-              outIterPair.first != outIterPair.second;
-              ++outIterPair.first
+              const TreeEdgeIndex outEdge :
+              boost::make_iterator_range(
+                boost::out_edges(seed, _tree)
+              )
             ) {
-              const auto& outEdge = *outIterPair.first;
-
               auto edgeTarget = boost::target(outEdge, _tree);
 
               // Check if already placed and non-duplicate
@@ -1885,8 +1928,8 @@ std::vector<
                 visitedVertices.count(edgeTarget) == 0
                 && !_tree[edgeTarget].isDuplicate
               ) {
-                comparisonSets.at(undecidedTreeIndex).emplace(edgeTarget);
-                comparisonSets.at(undecidedTreeIndex).emplace(outEdge);
+                comparisonSets.at(undecidedBranch).emplace(edgeTarget);
+                comparisonSets.at(undecidedBranch).emplace(outEdge);
 
                 newSeeds.push_back(edgeTarget);
                 visitedVertices.insert(edgeTarget);
@@ -1909,7 +1952,10 @@ std::vector<
       ++depth;
 
       if /* C++17 constexpr */ (buildTypeIsDebug) {
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        if(
+          Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+          && _notEmpty(comparisonSets)
+        ) {
           _writeGraphvizFiles({
             _adaptedMolGraphviz,
             dumpGraphviz("aux Sequence rule 4A", {sourceIndex}, visitedVertices),
@@ -1942,29 +1988,6 @@ std::vector<
 #endif
       // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
-    }
-
-    /* Second part: Choosing representational stereodescriptors for all
-     * branches and pairing in sequence of priority for branches.
-     */
-    std::map<
-      TreeVertexIndex,
-      std::set<VariantType>
-    > stereopermutatorMap;
-
-    VariantHasInstantiatedStereopermutator isInstantiatedChecker {*this};
-
-    // Copy all those variants from part A that are actually instantiated
-    for(const auto& undecidedSet : orderingHelper.getUndecidedSets()) {
-      for(const auto& undecidedBranch : undecidedSet) {
-        stereopermutatorMap[undecidedBranch] = {};
-
-        for(const auto& variantValue : comparisonSets.at(undecidedBranch)) {
-          if(boost::apply_visitor(isInstantiatedChecker, variantValue)) {
-            stereopermutatorMap.at(undecidedBranch).insert(variantValue);
-          }
-        }
-      }
     }
 
     std::map<
@@ -2043,7 +2066,10 @@ std::vector<
       );
 
       if /* C++17 constexpr */ (buildTypeIsDebug) {
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        if(
+          Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+          && _notEmpty(comparisonSets)
+        ) {
           _writeGraphvizFiles({
             _adaptedMolGraphviz,
             dumpGraphviz("Aux 4B prep", {rootIndex}),
@@ -2614,20 +2640,10 @@ std::vector<RankingTree::TreeVertexIndex> RankingTree::_addBondOrderDuplicates(
     _tree[treeTarget].molIndex
   };
 
-  /* In case the bond order is non-fractional (aromatic / eta)
-   * and > 1, add duplicate atoms
+  /* In case the bond order is non-fractional (e.g. aromatic / eta)
+   * and > 1, add duplicate atoms corresponding to the order.
    */
-
   BondType bondType = _graphRef.bondType(molGraphEdge);
-
-  /* If the bond is double, we must remember it for sequence rule 2.
-   * Remembering these edges is way more convenient than looking for subgraphs
-   * which have the trace pattern of a split multiple-bond of BO 2.
-   */
-  if(bondType == BondType::Double) {
-    auto edgePair = boost::edge(treeSource, treeTarget, _tree);
-    _doubleBondEdges.emplace(edgePair.first);
-  }
 
   double bondOrder = Bond::bondOrderMap.at(
     static_cast<unsigned>(bondType)
@@ -2968,7 +2984,10 @@ RankingTree::RankingTree(
 
     if /* C++17 constexpr */ (buildTypeIsDebug) {
       // Write debug graph files if the corresponding log particular is set
-      if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+      if(
+        Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+        && _notEmpty(comparisonSets)
+      ) {
         std::string header = "Sequence rule 1";
 
         _writeGraphvizFiles({
@@ -3037,7 +3056,10 @@ RankingTree::RankingTree(
 
       if /* C++17 constexpr */ (buildTypeIsDebug) {
         // Write debug graph files if the corresponding log particular is set
-        if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+        if(
+          Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0
+          && _notEmpty(comparisonSets)
+        ) {
           std::string header = "Sequence rule 1";
 
           _writeGraphvizFiles({

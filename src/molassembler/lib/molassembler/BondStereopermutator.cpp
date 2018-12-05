@@ -5,7 +5,6 @@
 
 namespace molassembler {
 
-constexpr double BondStereopermutator::chiralityConstraintTolerance;
 constexpr double BondStereopermutator::assignmentAcceptanceDihedralThreshold;
 
 /* Impl */
