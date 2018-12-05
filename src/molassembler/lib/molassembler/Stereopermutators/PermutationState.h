@@ -42,7 +42,7 @@ struct PermutationState {
   //! Vector of rotationally unique stereopermutations with associated weights
   stereopermutation::StereopermutationsWithWeights permutations;
 
-  //! Vector of whether permutations are feasible or obviously infeasible
+  //! Vector of permutation indices that are feasible
   std::vector<unsigned> feasiblePermutations;
 
   //! Mapping from ligand index to permutational symmetry position

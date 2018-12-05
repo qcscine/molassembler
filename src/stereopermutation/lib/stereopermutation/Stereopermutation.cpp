@@ -4,7 +4,10 @@
 #include "stereopermutation/Stereopermutation.h"
 
 #include "boost/functional/hash.hpp"
+#include "boost/optional.hpp"
 #include "chemical_symmetries/Symmetries.h"
+
+#include "temple/Adaptors/Iota.h"
 
 #include <algorithm>
 #include <cassert>
@@ -195,6 +198,30 @@ std::set<Stereopermutation> Stereopermutation::generateAllRotations(
     },
     symmetryName
   ).first;
+}
+
+boost::optional<bool> Stereopermutation::isEnantiomer(
+  const Stereopermutation& other,
+  const Symmetry::Name& symmetryName
+) const {
+  /* Generate the mirror image of *this and check whether it is rotationally
+   * superimposable with other.
+   *
+   * Although the mirror mapping isn't really a "rotation", it has the same
+   * properties as one, so we just apply it to a copy of *this.
+   */
+  const auto& mirrorPermutation = Symmetry::mirror(symmetryName);
+
+  /* If the mirror were to yield an identity permutation, it is represented
+   * as an empty constexpr array (now a vector, so:)
+   */
+  if(mirrorPermutation.empty()) {
+    return boost::none;
+  }
+
+  auto thisCopy = *this;
+  thisCopy.applyRotation(mirrorPermutation);
+  return thisCopy.isRotationallySuperimposable(other, symmetryName);
 }
 
 bool Stereopermutation::isRotationallySuperimposable(

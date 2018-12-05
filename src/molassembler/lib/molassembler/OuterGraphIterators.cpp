@@ -112,8 +112,8 @@ struct BaseIteratorWrapper {
     return *this;
   }
 
-  /* BaseIteratorWrapper operator ++ (int) is unneeded since a pImpled iterator
-   * wrapper never calls it
+  /* BaseIteratorWrapper operator ++ (int) is not needed since pImpled iterator
+   * wrappers do not call it
    */
 
   bool operator == (const BaseIteratorWrapper& other) const {
@@ -207,8 +207,8 @@ struct OuterGraph::IncidentEdgesIterator::Impl
 /* Template specializations for all variants (This adds the symbols for all
  * the needed template argument combinations into the library)
  *
- * This can only be done all of the specific Impls have been defined since the
- * operators instantiated explicitly here need Impl to be a complete type.
+ * This can only be done once all of the specific Impls have been defined since
+ * the operators instantiated explicitly here need Impl to be a complete type.
  */
 template class OuterGraph::InnerBasedIterator<AtomIndex, false>;
 template class OuterGraph::InnerBasedIterator<BondIndex, false>;

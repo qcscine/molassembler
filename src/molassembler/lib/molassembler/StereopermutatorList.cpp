@@ -116,6 +116,14 @@ bool StereopermutatorList::empty() const {
   return _atomStereopermutators.empty() && _bondStereopermutators.empty();
 }
 
+unsigned StereopermutatorList::A() const {
+  return _atomStereopermutators.size();
+}
+
+unsigned StereopermutatorList::B() const {
+  return _bondStereopermutators.size();
+}
+
 unsigned StereopermutatorList::size() const {
   return _atomStereopermutators.size() + _bondStereopermutators.size();
 }

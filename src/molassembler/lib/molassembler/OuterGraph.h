@@ -55,12 +55,25 @@ class Cycles;
  *   particular bond or atom is also disallowed.
  *
  * @note This class wraps InnerGraph so that no Boost Graph types are exposed
- *   to consumers.
+ *   to library consumers.
  */
 class OuterGraph {
 public:
 //!@name Member types
 //!@{
+  /*!
+   * @brief Templated iterator facade based on InnerGraph to provide iterative
+   *   access to atom indices and edge indices
+   *
+   * @tparam T The type the iterator should yield
+   * @tparam isVertexInitialized Whether this iterator accepts an atom index
+   *   in its constructor.
+   *
+   * @note Although this is templated, there is no implementation in the header
+   *   in order to hide the underlying Boost Graph types from library consumers.
+   *   The required template specializations for the type defintions below are
+   *   supplied in OuterGraphIterators.cpp. Any other instantiations will fail.
+   */
   template<typename T, bool isVertexInitialized>
   class InnerBasedIterator {
   public:
@@ -79,19 +92,57 @@ public:
     // Default constructor
     InnerBasedIterator();
 
-    // Enable construction from Graph and bool if not vertex initialized
+    /* We want to use this iterator facade in four ways:
+     *
+     * Iterate through all valid atom indices: (graph) -> AtomIndex
+     * Iterate through all valid bond indices: (graph) -> BondIndex
+     * Iterate through all atom indices adjacent to i: (graph, i) -> AtomIndex
+     * Iterate through all bonds incident on i: (graph, i) -> BondIndex
+     *
+     * So, we template and enable-if constructors for the cases that the
+     * template parameter isVertexInitialized (which denotes whether
+     * additionally to the graph, a vertex descriptor is required in the
+     * constructor):
+     */
+
+    /*!
+     * @brief Construct an iterator from a graph and a boolean indicating
+     *   begin/end
+     *
+     * @param inner The InnerGraph (wrapper around BGL Types)
+     * @param begin Whether this iterator denotes a begin or end iterator
+     *
+     * @note This constructor is enabled if the template parameter
+     *   isVertexInitialized is false
+     */
     template<bool Dependent = isVertexInitialized, std::enable_if_t<!Dependent, int>...>
     InnerBasedIterator(const InnerGraph& inner, bool begin);
 
-    // Enable compound construction if vertex initialized
+    /*!
+     * @brief Construct an iterator from an atom index, a graph and a boolean
+     *   indicating begin/end
+     *
+     * @param a An atom index around which adjacent vertices or incident edges
+     *   are to be iterated over (depending on @p T)
+     * @param inner The InnerGraph (wrapper around BGL Types)
+     * @param begin Whether this iterator denotes a begin or end iterator
+     *
+     * @note This constructor is enabled if the template parameter
+     *   isVertexInitialized is false
+     */
     template<bool Dependent = isVertexInitialized, std::enable_if_t<Dependent, int>...>
     InnerBasedIterator(AtomIndex a, const InnerGraph& inner, bool begin);
 
+    //! Prefix increment
     InnerBasedIterator& operator ++ ();
+    //! Postfix increment
     InnerBasedIterator operator ++ (int);
+    //! Dereference
     value_type operator * () const;
 
+    //! Comparison operator
     bool operator == (const InnerBasedIterator& other) const;
+    //! Inverts @see operator ==
     bool operator != (const InnerBasedIterator& other) const;
 
   private:
@@ -106,9 +157,13 @@ public:
 #endif
   };
 
+  //! Iterator type yielding all valid atom indices
   using AtomIterator = InnerBasedIterator<AtomIndex, false>;
+  //! Iterator type yielding all valid bond indices
   using BondIterator = InnerBasedIterator<BondIndex, false>;
+  //! Iterator type yielding adjacent atoms to an atom
   using AdjacencyIterator = InnerBasedIterator<AtomIndex, true>;
+  //! Iterator type yielding incident bonds to an atom
   using IncidentEdgesIterator = InnerBasedIterator<BondIndex, true>;
 
   template<typename Iter>
@@ -193,14 +248,16 @@ public:
   Range<IncidentEdgesIterator> bonds(AtomIndex a) const;
 //!@}
 
-  /*! Access to library-internal graph representation class
+  /*!
+   * @brief Access to library-internal graph representation class
    *
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.
    */
   InnerGraph& inner() { return *_innerPtr; }
 
-  /*! Const-access to library-internal graph representation class
+  /*!
+   * @brief Const-access to library-internal graph representation class
    *
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.

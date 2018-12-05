@@ -40,6 +40,10 @@ constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
  *   rotations are needed to produce all superimposable rotations
  * - tetrahedra ( array< array<unsigned, 4>, T> ): T is however many tetrahedra
  *   are required to completely define the chirality
+ * - mirror (array<unsigned, N>): plane may not slice molecule in any way, it
+ *   is auxiliary to finding enantiomeric pairs. If a mirror were to yield a
+ *   superposable stereopermutation, represent it by an empty array.
+ *
  */
 namespace data {
 
@@ -76,6 +80,7 @@ struct Linear {
     std::array<unsigned, 4>,
     0
   > tetrahedra {{}};
+  static constexpr std::array<unsigned, 0> mirror {};
 };
 
 /*! Bent symmetry
@@ -117,6 +122,7 @@ struct Bent {
     std::array<unsigned, 4>,
     0
   > tetrahedra {{}};
+  static constexpr std::array<unsigned, 0> mirror {};
 };
 
 /*! Trigonal planar symmetry
@@ -162,6 +168,7 @@ struct TrigonalPlanar {
     std::array<unsigned, 4>,
     0
   > tetrahedra {{}};
+  static constexpr std::array<unsigned, 0> mirror {};
 };
 
 /*! A Tetrahedral symmetry missing a ligand
@@ -208,6 +215,7 @@ struct CutTetrahedral {
   > tetrahedra {{
     {{ORIGIN_PLACEHOLDER, 0, 1, 2}}
   }};
+  static constexpr std::array<unsigned, 3> mirror {{0, 2, 1}};
 };
 
 /*! A T-shaped symmetry
@@ -250,6 +258,7 @@ struct TShaped {
     std::array<unsigned, 4>,
     0
   > tetrahedra {{}};
+  static constexpr std::array<unsigned, 0> mirror {};
 };
 
 /*! A tetrahedral symmetry
@@ -298,6 +307,7 @@ struct Tetrahedral {
   > tetrahedra {{
     {{0, 1, 2, 3}}
   }};
+  static constexpr std::array<unsigned, 4> mirror {{0, 2, 1, 3}};
 };
 
 /*! A square planar symmetry
@@ -347,6 +357,7 @@ struct SquarePlanar {
     std::array<unsigned, 4>,
     0
   > tetrahedra {{}};
+  static constexpr std::array<unsigned, 0> mirror {};
 };
 
 /*! A seesaw symmetry
@@ -409,6 +420,8 @@ struct Seesaw {
     {{ORIGIN_PLACEHOLDER, 3, 1, 2}},
   }};
 #endif
+
+  static constexpr std::array<unsigned, 4> mirror {{0, 2, 1, 3}};
 };
 
 /*! A trigonal pyramidal symmetry = trig. pl. + an axial ligand
@@ -463,6 +476,7 @@ struct TrigonalPyramidal {
   > tetrahedra {{
     {{0, 1, 3, 2}}
   }};
+  static constexpr std::array<unsigned, 4> mirror {{0, 2, 1, 3}};
 };
 
 /*! A square pyramidal symmetry
@@ -531,6 +545,8 @@ struct SquarePyramidal {
     {{3, 0, 4, ORIGIN_PLACEHOLDER}}
   }};
 #endif
+
+  static constexpr std::array<unsigned, 5> mirror {{1, 0, 3, 2, 4}};
 };
 
 /*! A trigonal bipyramidal symmetry
@@ -597,6 +613,7 @@ struct TrigonalBiPyramidal {
       {{0, 1, 3, 2}},
       {{0, 1, 2, 4}}
   }};
+  static constexpr std::array<unsigned, 5> mirror {{0, 2, 1, 3, 4}};
 };
 
 /*! A pentagonal planar symmetry
@@ -642,6 +659,7 @@ struct PentagonalPlanar {
     std::array<unsigned, 4>,
     0
   > tetrahedra {{}};
+  static constexpr std::array<unsigned, 0> mirror {};
 };
 
 /*! An octahedral symmetry.
@@ -725,6 +743,7 @@ struct Octahedral {
     {{2, 3, ORIGIN_PLACEHOLDER, 5}}
   }};
 #endif
+  static constexpr std::array<unsigned, 6> mirror {{1, 0, 3, 2, 4, 5}};
 };
 
 /*! A trigonal prismatic symmetry
@@ -797,6 +816,7 @@ struct TrigonalPrismatic {
     {{ORIGIN_PLACEHOLDER, 0, 1, 2}},
     {{3, ORIGIN_PLACEHOLDER, 4, 5}}
   }};
+  static constexpr std::array<unsigned, 6> mirror {{2, 1, 0, 5, 4, 3}};
 };
 
 /*! A pentagonal pyramidal symmetry
@@ -871,6 +891,7 @@ struct PentagonalPyramidal {
     {{4, ORIGIN_PLACEHOLDER, 0, 5}}
   }};
 #endif
+  static constexpr std::array<unsigned, 6> mirror {{0, 4, 3, 2, 1, 5}};
 };
 
 /*! A pentagonal bipyramidal symmetry
@@ -959,6 +980,7 @@ struct PentagonalBiPyramidal {
     {{4, 0, ORIGIN_PLACEHOLDER, 6}}
   }};
 #endif
+  static constexpr std::array<unsigned, 7> mirror {{0, 4, 3, 2, 1, 5, 6}};
 };
 
 /*! A square antiprismatic symmetry
@@ -1107,6 +1129,7 @@ struct SquareAntiPrismatic {
     {{3, 7, ORIGIN_PLACEHOLDER, 0}}
   }};
 #endif
+  static constexpr std::array<unsigned, 8> mirror {{2, 1, 0, 3, 5, 4, 7, 6}};
 };
 
 

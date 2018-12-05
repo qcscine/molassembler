@@ -61,6 +61,7 @@ using TetrahedronList = std::vector<
 >;
 
 using CoordinateList = std::vector<Eigen::Vector3d>;
+using MirrorMap = std::vector<unsigned>;
 
 //! Dynamic symmetry information data struct
 struct SymmetryInformation {
@@ -69,6 +70,7 @@ struct SymmetryInformation {
   const RotationsList rotations;
   const TetrahedronList tetrahedra;
   const CoordinateList coordinates;
+  const MirrorMap mirror;
 
   // Direct initialization
   SymmetryInformation(
@@ -76,12 +78,14 @@ struct SymmetryInformation {
     unsigned passSize,
     RotationsList passRotations,
     TetrahedronList passTetrahedra,
-    CoordinateList passCoordinates
+    CoordinateList passCoordinates,
+    MirrorMap passMirror
   ) : stringName(std::move(passStringName)),
       size(passSize),
       rotations(std::move(passRotations)),
       tetrahedra(std::move(passTetrahedra)),
-      coordinates(std::move(passCoordinates))
+      coordinates(std::move(passCoordinates)),
+      mirror(std::move(passMirror))
   {}
 };
 
@@ -189,6 +193,19 @@ CoordinateList makeCoordinates(
   return coordinates;
 }
 
+template<size_t symmetrySize>
+MirrorMap makeMirror(
+  const std::array<unsigned, symmetrySize>& constexprMirror
+) {
+  std::vector<unsigned> mirror (symmetrySize);
+  std::copy(
+    std::begin(constexprMirror),
+    std::end(constexprMirror),
+    std::begin(mirror)
+  );
+  return mirror;
+}
+
 /*! This constructs the SymmetryInformation instance from a specific symmetry
  * class type.
  */
@@ -199,7 +216,8 @@ SymmetryInformation makeSymmetryInformation() {
     SymmetryClass::size,
     makeRotations(SymmetryClass::rotations),
     makeTetrahedra(SymmetryClass::tetrahedra),
-    makeCoordinates(SymmetryClass::coordinates)
+    makeCoordinates(SymmetryClass::coordinates),
+    makeMirror(SymmetryClass::mirror)
   };
 }
 
@@ -267,6 +285,11 @@ inline unsigned size(const Name name) {
 //! Fetches a symmetry's list of rotations
 inline const RotationsList& rotations(const Name name) {
   return symmetryData().at(name).rotations;
+}
+
+//! Fetches the mirror index mapping for a particular symmetry
+inline const MirrorMap& mirror(const Name name) {
+  return symmetryData().at(name).mirror;
 }
 
 //! Gets a symmetry's angle function

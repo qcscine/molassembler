@@ -1,11 +1,13 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#ifndef INCLUDE_MOLASSEMBELR_STEREOPERMUTATIONS_STEREOPERMUTATION_H
-#define INCLUDE_MOLASSEMBELR_STEREOPERMUTATIONS_STEREOPERMUTATION_H
+#ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
+#define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 
 #include "chemical_symmetries/Names.h"
 #include "temple/Preprocessor.h"
+
+#include "boost/optional/optional_fwd.hpp"
 
 #include <set>
 #include <vector>
@@ -164,6 +166,21 @@ public:
 
   //! Returns whether the "columns" are sorted in ascending order
   PURITY_WEAK bool isSortedAsc() const;
+
+  /*!
+   * @brief Checks whether a stereopermutation is a mirror image of another
+   *   within a particular symmetry
+   *
+   * @returns boost::none If the symmetry does not generate enantiomers
+   * @returns true If the symmetry has enantiomers, and this is the enantiomeric
+   *   stereopermutation to @p other
+   * @return false If the symmetry has enantiomers, and this is not the
+   *   enantiomeric to @p other
+   */
+  boost::optional<bool> isEnantiomer(
+    const Stereopermutation& other,
+    const Symmetry::Name& symmetryName
+  ) const;
 
   /*!
    * Checks whether this Stereopermutation is rotationally superimposable with
