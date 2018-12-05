@@ -231,6 +231,8 @@ target_include_directories(molassembler
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
+add_library(molassembler::molassembler ALIAS molassembler)
+
 # Static variant
 add_library(molassemblerStatic STATIC $<TARGET_OBJECTS:molassembler_obj>)
 target_include_directories(molassemblerStatic
@@ -238,6 +240,8 @@ target_include_directories(molassemblerStatic
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
+
+add_library(molassembler::molassemblerStatic ALIAS molassemblerStatic)
 
 # -- BEGIN Linking
 

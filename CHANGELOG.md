@@ -4,10 +4,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-TODO
-- date
-- Bug fix regarding chiral constraints
-
 ## [1.0.0] - 2018-12-DD
 ### Added
 - Explicit definition of which headers make up the public API in the
@@ -16,6 +12,9 @@ TODO
   graph distance BFS algorithm 
 - A `doc` target that builds the Doxygen documentation, which is now more
   extensive and contains the beginnings of a tutorial
+- Many parameters of Distance Geometry can now be altered by passing a
+  non-defaulted `Configuration` object.
+- Isomer predicate and generator header `Isomers.h`
 
 ### Changed
 - Symmetries are no longer excluded on principle, but using tau criteria (see
