@@ -134,4 +134,82 @@ bool enantiomeric(
   return atLeastOneEnantiomericPair;
 }
 
+Molecule enantiomer(const Molecule& a) {
+  /* Copy a's StereopermutatorList, then find and set the enantiomeric
+   * stereopermutation for each atom stereopermutator with more than one
+   * stereopermutation
+   */
+  StereopermutatorList stereopermutators = a.stereopermutators();
+
+  for(auto& permutator : stereopermutators.atomStereopermutators()) {
+    /* If there is only a single permutation or the permutator is unassigned,
+     * we leave it be
+     */
+    if(permutator.numStereopermutations() <= 1 || !permutator.assigned()) {
+      continue;
+    }
+
+    // If there are no enantiomers for this symmetry, we skip the permutator
+    const auto& mirrorPermutation = Symmetry::mirror(permutator.getSymmetry());
+    if(mirrorPermutation.empty()) {
+      continue;
+    }
+
+    // Find the current permutation
+    auto currentStereopermutation = permutator.getPermutationState().permutations.assignments.at(
+      *permutator.indexOfPermutation()
+    );
+
+    // Apply the mirror
+    currentStereopermutation.applyRotation(mirrorPermutation);
+
+    // Find an existing permutation that is superposable with the mirror permutation
+    const auto& permutationsList = permutator.getPermutationState().permutations.assignments;
+    auto matchingPermutationIter = std::find_if(
+      std::begin(permutationsList),
+      std::end(permutationsList),
+      [&](const auto& permutation) -> bool {
+        return permutation.isRotationallySuperimposable(
+          currentStereopermutation,
+          permutator.getSymmetry()
+        );
+      }
+    );
+
+    // If we cannot find a matching stereopermutation, then unassign
+    if(matchingPermutationIter == std::end(permutationsList)) {
+      permutator.assign(boost::none);
+      continue;
+    }
+
+    // Now we have a stereopermutation index, but we need an assignment index
+    unsigned stereopermutationIndex = matchingPermutationIter - std::begin(permutationsList);
+
+    const auto& feasiblePermutations = permutator.getPermutationState().feasiblePermutations;
+
+    auto assignmentIter = std::find(
+      std::begin(feasiblePermutations),
+      std::end(feasiblePermutations),
+      stereopermutationIndex
+    );
+
+    // If the found permutation is infeasible, then unassign
+    if(assignmentIter == std::end(feasiblePermutations)) {
+      permutator.assign(boost::none);
+      continue;
+    }
+
+    // Otherwise, we can assign it with the found permutation
+    permutator.assign(assignmentIter - std::begin(feasiblePermutations));
+  }
+
+  /* Construct a new molecule by copying the graph and moving in the altered
+   * permutator list
+   */
+  return {
+    a.graph(),
+    std::move(stereopermutators)
+  };
+}
+
 } // namespace molassembler

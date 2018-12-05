@@ -1,6 +1,10 @@
 #ifndef INCLUDE_MOLASSEMBLER_ISOMERS_H
 #define INCLUDE_MOLASSEMBLER_ISOMERS_H
 
+/*!@file
+ * @brief Predicates to determine what kinds of stereoisomers molecule pairs are
+ */
+
 namespace molassembler {
 
 // Forward-declarations
@@ -53,6 +57,20 @@ bool enantiomeric(
   const Molecule& b,
   SameIndexingTag /* sameIndexingTag */
 );
+
+/**
+ * @brief Generates a molecule's enantiomer
+ *
+ * @param a The molecule whose enantiomer to generate
+ *
+ * @note If there are no atom stereopermutators in this molecule with more than
+ *   one stereopermutations, yields a Molecule identical to @p a
+ *
+ * @todo Untested
+ *
+ * @return The enantiomer to a molecule
+ */
+Molecule enantiomer(const Molecule& a);
 
 } // namespace molassembler
 
