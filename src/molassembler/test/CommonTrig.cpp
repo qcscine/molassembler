@@ -1,7 +1,6 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#define BOOST_TEST_MODULE CommonTrigTests
 #include "boost/test/unit_test.hpp"
 
 #include "molassembler/Modeling/CommonTrig.h"

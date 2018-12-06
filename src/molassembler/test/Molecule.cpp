@@ -1,7 +1,7 @@
 // Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
 // See LICENSE.txt for details.
 
-#define BOOST_TEST_MODULE MoleculeTests
+#define BOOST_TEST_MODULE MolassemblerMainTests
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
 #include "boost/filesystem.hpp"
@@ -288,22 +288,11 @@ BOOST_AUTO_TEST_CASE(basicEZInequivalencyTests) {
   BOOST_CHECK(a != b);
 }
 
-bool isStereogenic(
+// Supplied by RankingSpotCheck
+extern bool isStereogenic(
   const Molecule& molecule,
   AtomIndex i
-) {
-  auto stereopermutatorOption = molecule.stereopermutators().option(i);
-
-  if(!stereopermutatorOption) {
-    return false;
-  }
-
-  if(stereopermutatorOption->numStereopermutations() <= 1) {
-    return false;
-  }
-
-  return true;
-}
+);
 
 BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   boost::filesystem::path filePath("ranking_tree_molecules");
@@ -366,21 +355,24 @@ BOOST_AUTO_TEST_CASE(moleculeGeometryChoices) {
 }
 
 BOOST_AUTO_TEST_CASE(IsomerPredicateTests) {
+  Molecule a, b;
+  BOOST_REQUIRE_NO_THROW(a = molassembler::IO::read("isomers/enantiomers/Citalopram-R.mol"));
+  BOOST_REQUIRE_NO_THROW(b = molassembler::IO::read("isomers/enantiomers/Citalopram-S.mol"));
+
+  /* For some reason, when read in here, a and be have different links on a and b
+   * They don't if you use the analysis ranking binary. No clue what's going on.
+   */
+
   BOOST_CHECK_MESSAGE(
-    molassembler::enantiomeric(
-      molassembler::IO::read("isomers/enantiomers/Citalopram-R.mol"),
-      molassembler::IO::read("isomers/enantiomers/Citalopram-S.mol"),
-      molassembler::SameIndexingTag {}
-    ),
+    molassembler::enantiomeric(a, b, molassembler::SameIndexingTag {}),
     "Citalopram-R and -S are falsely determined not to be enantiomers."
   );
 
+  BOOST_REQUIRE_NO_THROW(a = molassembler::IO::read("isomers/enantiomers/Isoleucine-RS.mol"));
+  BOOST_REQUIRE_NO_THROW(b = molassembler::IO::read("isomers/enantiomers/Isoleucine-SR.mol"));
+
   BOOST_CHECK_MESSAGE(
-    molassembler::enantiomeric(
-      molassembler::IO::read("isomers/enantiomers/Isoleucine-RS.mol"),
-      molassembler::IO::read("isomers/enantiomers/Isoleucine-SR.mol"),
-      molassembler::SameIndexingTag {}
-    ),
-    "Citalopram-R and -S are falsely determined not to be enantiomers."
+    molassembler::enantiomeric(a, b, molassembler::SameIndexingTag {}),
+    "Isoleucine-RS and -SR are falsely determined not to be enantiomers."
   );
 }

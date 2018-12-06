@@ -531,7 +531,10 @@ public:
   template<typename T>
   bool operator() (const T& a) const {
     const auto& stereopermutatorOption = _baseRef._tree[a].stereopermutatorOption;
-    return stereopermutatorOption.operator bool();
+    return (
+      stereopermutatorOption.operator bool()
+      && stereopermutatorOption->numStereopermutations() > 1
+    );
   }
 };
 
@@ -1522,6 +1525,26 @@ void RankingTree::_applySequenceRules(
                 }
               );
 
+              if /* C++17 constexpr */ (buildTypeIsDebug) {
+                if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+                  _writeGraphvizFiles({
+                    _adaptedMolGraphviz,
+                    dumpGraphviz("4B"s),
+                    _make4BGraph(
+                      rootIndex,
+                      representativeStereodescriptors,
+                      branchA,
+                      branchB,
+                      branchAOrders,
+                      branchBOrders,
+                      branchAStereopermutatorGroupIter,
+                      branchBStereopermutatorGroupIter
+                    ),
+                    _branchOrderingHelper.dumpGraphviz()
+                  });
+                }
+              }
+
               if(ABranchLikePairs < BBranchLikePairs) {
                 _branchOrderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
@@ -1534,26 +1557,6 @@ void RankingTree::_applySequenceRules(
 
               ++branchAStereopermutatorGroupIter;
               ++branchBStereopermutatorGroupIter;
-            }
-
-            if /* C++17 constexpr */ (buildTypeIsDebug) {
-              if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-                _writeGraphvizFiles({
-                  _adaptedMolGraphviz,
-                  dumpGraphviz("4B"s),
-                  _make4BGraph(
-                    rootIndex,
-                    representativeStereodescriptors,
-                    branchA,
-                    branchB,
-                    branchAOrders,
-                    branchBOrders,
-                    branchAStereopermutatorGroupIter,
-                    branchBStereopermutatorGroupIter
-                  ),
-                  _branchOrderingHelper.dumpGraphviz()
-                });
-              }
             }
           }
         }
@@ -1632,6 +1635,11 @@ std::vector<
 
   // Return immediately if depthLimit is zero
   if(depthLimitOptional && depthLimitOptional.value() == 0u) {
+    return orderingHelper.getSets();
+  }
+
+  // Return immediately if the set to rank is of size 1 or lower
+  if(adjacentsToRank.size() <= 1) {
     return orderingHelper.getSets();
   }
 
@@ -2220,6 +2228,26 @@ std::vector<
                 }
               );
 
+              if /* C++17 constexpr */ (buildTypeIsDebug) {
+                if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
+                  _writeGraphvizFiles({
+                    _adaptedMolGraphviz,
+                    dumpGraphviz("aux 4B"s),
+                    _make4BGraph(
+                      sourceIndex,
+                      representativeStereodescriptors,
+                      branchA,
+                      branchB,
+                      branchAOrders,
+                      branchBOrders,
+                      branchAStereopermutatorGroupIter,
+                      branchBStereopermutatorGroupIter
+                    ),
+                    orderingHelper.dumpGraphviz()
+                  });
+                }
+              }
+
               if(ABranchLikePairs < BBranchLikePairs) {
                 orderingHelper.addLessThanRelationship(branchB, branchA);
                 break;
@@ -2232,26 +2260,6 @@ std::vector<
 
               ++branchAStereopermutatorGroupIter;
               ++branchBStereopermutatorGroupIter;
-            }
-
-            if /* C++17 constexpr */ (buildTypeIsDebug) {
-              if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-                _writeGraphvizFiles({
-                  _adaptedMolGraphviz,
-                  dumpGraphviz("aux 4B"s),
-                  _make4BGraph(
-                    sourceIndex,
-                    representativeStereodescriptors,
-                    branchA,
-                    branchB,
-                    branchAOrders,
-                    branchBOrders,
-                    branchAStereopermutatorGroupIter,
-                    branchBStereopermutatorGroupIter
-                  ),
-                  orderingHelper.dumpGraphviz()
-                });
-              }
             }
           }
         }
@@ -2934,6 +2942,11 @@ RankingTree::RankingTree(
 
   // Set the ordering helper's list of unordered values
   _branchOrderingHelper.setUnorderedValues(branchIndices);
+
+  // If there is only one index in the list, there is no need to do anything
+  if(branchIndices.size() <= 1) {
+    return;
+  }
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)

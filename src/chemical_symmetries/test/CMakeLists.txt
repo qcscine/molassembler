@@ -22,6 +22,6 @@ target_link_libraries(symmetryTests
 target_compile_options(symmetryTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
 # add test
-add_test(NAME SymmetryTests COMMAND symmetryTests)
+add_test(NAME MASMSymmetryTests COMMAND symmetryTests)
 
 set_property(TARGET symmetryTests PROPERTY FOLDER "Tests")

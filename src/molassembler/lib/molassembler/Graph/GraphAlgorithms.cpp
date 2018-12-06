@@ -37,6 +37,11 @@ std::vector<LinkInformation> substituentLinks(
   >& ligands,
   const std::vector<AtomIndex>& excludeAdjacents
 ) {
+  // Early return: If the atom is terminal, there can be no links
+  if(ligands.size() == 1) {
+    return {};
+  }
+
   /* General idea:
    *
    * In order to avoid a full O(N) BFS on every AtomStereopermutator candidate to
@@ -54,10 +59,7 @@ std::vector<LinkInformation> substituentLinks(
   std::map<AtomIndex, unsigned> indexToLigandMap;
   for(unsigned i = 0; i < ligands.size(); ++i) {
     for(const auto& ligandIndex : ligands.at(i)) {
-      indexToLigandMap.emplace(
-        ligandIndex,
-        i
-      );
+      indexToLigandMap.emplace(ligandIndex, i);
     }
   }
 
@@ -83,16 +85,6 @@ std::vector<LinkInformation> substituentLinks(
     unsigned // Index of LinkInformation in links
   > linksMap;
 
-  auto getAdjacentOfEdge = [&](const InnerGraph::Edge& edgeDescriptor) -> InnerGraph::Vertex {
-    InnerGraph::Vertex sourceVertex = graph.source(edgeDescriptor);
-
-    if(source == sourceVertex) {
-      return graph.target(edgeDescriptor);
-    }
-
-    return sourceVertex;
-  };
-
   for(const auto cyclePtr : cycleData) {
     auto cycleEdges = temple::map(
       Cycles::edges(cyclePtr),
@@ -101,23 +93,35 @@ std::vector<LinkInformation> substituentLinks(
       }
     );
 
+    // For set_intersection to work, cycle edges need to be sorted too
+    std::sort(
+      std::begin(cycleEdges),
+      std::end(cycleEdges)
+    );
+
     std::vector<InnerGraph::Edge> intersection;
 
+    // Set intersection copies intersected elements from the first range
     std::set_intersection(
-      sourceAdjacentEdges.begin(),
-      sourceAdjacentEdges.end(),
-      cycleEdges.begin(),
-      cycleEdges.end(),
+      std::begin(sourceAdjacentEdges),
+      std::end(sourceAdjacentEdges),
+      std::begin(cycleEdges),
+      std::end(cycleEdges),
       std::back_inserter(intersection)
     );
 
     // Must match exactly two edges
     if(intersection.size() == 2) {
-      AtomIndex a = getAdjacentOfEdge(intersection.front());
-      AtomIndex b = getAdjacentOfEdge(intersection.back());
+      /* Intersected edges come from sourceAdjacentEdges, which are from an
+       * out_edges call, where it is guaranteed that source is the vertex
+       * out_edges was called with. The atom indices of interest are therefore
+       * the targets of these edges.
+       */
+      const AtomIndex a = graph.target(intersection.front());
+      const AtomIndex b = graph.target(intersection.back());
 
-      unsigned ligandOfA = indexToLigandMap.at(a);
-      unsigned ligandOfB = indexToLigandMap.at(b);
+      const unsigned ligandOfA = indexToLigandMap.at(a);
+      const unsigned ligandOfB = indexToLigandMap.at(b);
 
       if(ligandOfA == ligandOfB) {
         // If the cycle adjacents are from the same ligand, ignore this cycle

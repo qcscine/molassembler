@@ -185,6 +185,7 @@ else()
       $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:dlib::dlib,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:chemical_symmetries,INTERFACE_INCLUDE_DIRECTORIES>
     PRIVATE
       $<TARGET_PROPERTY:stereopermutation,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:cyclic_polygons,INTERFACE_INCLUDE_DIRECTORIES>
@@ -210,6 +211,8 @@ target_include_directories(molassembler
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
+add_library(molassembler::molassembler ALIAS molassembler)
+
 # Static variant
 add_library(molassemblerStatic STATIC $<TARGET_OBJECTS:molassembler_obj>)
 target_include_directories(molassemblerStatic
@@ -217,6 +220,8 @@ target_include_directories(molassemblerStatic
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
+
+add_library(molassembler::molassemblerStatic ALIAS molassemblerStatic)
 
 # -- BEGIN Linking
 
@@ -238,6 +243,7 @@ target_link_libraries(
     boost_outcome
     RingDecomposerLibStatic
     dlib::dlib
+    chemical_symmetries
   PRIVATE
     stereopermutation
     cyclic_polygons

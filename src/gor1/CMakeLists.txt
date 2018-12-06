@@ -48,7 +48,7 @@ molassembler_install_component_headers(
 add_executable(gor1Tests test.cpp)
 target_link_libraries(gor1Tests PRIVATE Boost::boost Boost::unit_test_framework)
 
-add_test(NAME gor1Tests COMMAND gor1Tests)
+add_test(NAME MASMGOR1Tests COMMAND gor1Tests)
 
 set_property(TARGET gor1Tests PROPERTY FOLDER "Tests")
 
