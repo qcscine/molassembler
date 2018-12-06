@@ -206,6 +206,7 @@ else()
       $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:dlib::dlib,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:chemical_symmetries,INTERFACE_INCLUDE_DIRECTORIES>
     PRIVATE
       $<TARGET_PROPERTY:stereopermutation,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:cyclic_polygons,INTERFACE_INCLUDE_DIRECTORIES>
@@ -263,6 +264,7 @@ target_link_libraries(
     boost_outcome
     RingDecomposerLibStatic
     dlib::dlib
+    chemical_symmetries
   PRIVATE
     stereopermutation
     cyclic_polygons
