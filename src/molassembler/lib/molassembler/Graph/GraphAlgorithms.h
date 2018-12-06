@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Purely graph-based algorithms
+ *
+ * Contains a number of graph-level algorithms where connectivity alone is
+ * relevant.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_GRAPH_ALGORITHMS_H
 #define INCLUDE_MOLASSEMBLER_GRAPH_ALGORITHMS_H
@@ -8,14 +14,6 @@
 
 #include <tuple>
 #include <vector>
-
-/*! @file
- *
- * @brief Purely graph-based algorithms
- *
- * Contains a number of graph-level algorithms where connectivity alone is
- * relevant.
- */
 
 namespace molassembler {
 

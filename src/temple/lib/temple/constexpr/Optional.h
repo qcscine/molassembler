@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Basic optional type
+ */
 
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_OPTIONAL_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_OPTIONAL_H
@@ -7,11 +10,6 @@
 #include "temple/Preprocessor.h"
 
 #include <utility>
-
-/*! @file
- *
- * @brief Basic optional type
- */
 
 namespace temple {
 

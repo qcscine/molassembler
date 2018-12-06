@@ -1,14 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ADD_TO_CONTAINER_H
-#define INCLUDE_MOLASSEMBLER_TEMPLE_ADD_TO_CONTAINER_H
-
-#include "temple/ContainerTraits.h"
-#include "temple/Functor.h"
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Central interface to add elements to many types of containers
  *
  * This file provides the functionality to add an element to a container by
@@ -19,6 +11,12 @@
  * - push_back
  * - emplace_back
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ADD_TO_CONTAINER_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_ADD_TO_CONTAINER_H
+
+#include "temple/ContainerTraits.h"
+#include "temple/Functor.h"
 
 namespace temple {
 

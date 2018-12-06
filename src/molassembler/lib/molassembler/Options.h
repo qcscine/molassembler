@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Centralizes the main customization points of the library's behavior.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_OPTIONS_H
 #define INCLUDE_MOLASSEMBLER_OPTIONS_H
@@ -9,11 +12,6 @@
 
 #include "Delib/ElementTypes.h"
 #include "molassembler/AngstromWrapper.h"
-
-/*!@file
- *
- * @brief Centralizes the main customization points of the library's behavior.
- */
 
 namespace molassembler {
 

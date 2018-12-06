@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Boost Graph Library wrapper to help in concealing underlying type
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_INNER_GRAPH_H
 #define INCLUDE_MOLASSEMBLER_INNER_GRAPH_H
@@ -11,11 +14,6 @@
 #include "molassembler/Types.h"
 
 #include <limits>
-
-/*!@file
- *
- * @brief Boost Graph Library wrapper to help in concealing underlying type
- */
 
 namespace molassembler {
 

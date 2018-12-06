@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Recursive serialization for debugging involving common STL containers.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_STRINGIFY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_STRINGIFY_H
@@ -15,11 +18,6 @@
 #include <tuple>
 
 #include "boost/optional.hpp"
-
-/*! @file
- *
- * @brief Recursive serialization for debugging involving common STL containers.
- */
 
 namespace temple {
 

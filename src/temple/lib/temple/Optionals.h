@@ -1,19 +1,17 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Helper functions for dealing with optional types
+ *
+ * Implements optional-returning function composition syntactic sugar to avoid
+ * repetitive patterns when dealing with lots of optionals.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_OPTIONALS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_OPTIONALS_H
 
 #include <boost/optional.hpp>
 #include "temple/Traits.h"
-
-/*! @file
- *
- * @brief Helper functions for dealing with optional types
- *
- * Implements optional-returning function composition syntactic sugar to avoid
- * repetitive patterns when dealing with lots of optionals.
- */
 
 namespace temple {
 

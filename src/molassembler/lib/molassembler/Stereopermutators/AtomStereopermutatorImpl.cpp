@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
 #include "chemical_symmetries/Properties.h"

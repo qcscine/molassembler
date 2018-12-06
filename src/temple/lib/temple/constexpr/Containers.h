@@ -1,5 +1,10 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Functional-style constexpr container algorithms
+ *
+ * Provides constexpr functional-style modification of container elements
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_CONTAINERS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_CONTAINERS_H
@@ -8,13 +13,6 @@
 
 #include <array>
 #include <limits>
-
-/*! @file
- *
- * @brief Functional-style constexpr container algorithms
- *
- * Provides constexpr functional-style modification of container elements
- */
 
 namespace temple {
 

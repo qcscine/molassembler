@@ -1,5 +1,16 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Molecule class interface
+ *
+ * Contains the Molecule class declaration, which is the central class of the
+ * library.
+ *
+ * @todo
+ * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
+ *   may become or cease to be eta bond types, and this is not checked for
+ *   and appropriately altered in the graph.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
@@ -17,19 +28,6 @@
 #endif
 
 #include <memory>
-
-/*! @file
- *
- * @brief Molecule class interface
- *
- * Contains the Molecule class declaration, which is the central class of the
- * library.
- *
- * @todo
- * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
- *   may become or cease to be eta bond types, and this is not checked for
- *   and appropriately altered in the graph.
- */
 
 // External forward declarations
 namespace Delib {

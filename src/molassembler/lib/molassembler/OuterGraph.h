@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Interface class for the molecular graph
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_OUTER_GRAPH_H
 #define INCLUDE_MOLASSEMBLER_OUTER_GRAPH_H
@@ -15,11 +18,6 @@
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
 #include <experimental/propagate_const>
 #endif
-
-/*!@file
- *
- * @brief Interface class for the molecular graph
- */
 
 // Forward-declarations
 namespace Delib {

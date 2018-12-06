@@ -1,16 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_IO_H
-#define INCLUDE_MOLASSEMBLER_IO_H
-
-#include "molassembler/Types.h"
-
-#include <string>
-#include <vector>
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Input/output interface
  *
  * Contains main IO definitions of the library. Currently only supports
@@ -20,6 +10,14 @@
  * - test MOLFile V2000
  * - implement MOLFile V3000
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_IO_H
+#define INCLUDE_MOLASSEMBLER_IO_H
+
+#include "molassembler/Types.h"
+
+#include <string>
+#include <vector>
 
 // Forward declarations
 namespace Delib {

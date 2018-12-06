@@ -1,5 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Helpers for comparing floating point values
+ *
+ * Some floating point comparison helpers for direct equality testing on the
+ * basis of either relative or absolute tolerance. Two comparator classes for
+ * better legibility of common comparison operators in expanded equality
+ * contexts.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLTE_CONSTEXPR_FP_COMPARISON_H
 #define INCLUDE_MOLASSEMBLER_TEMPLTE_CONSTEXPR_FP_COMPARISON_H
@@ -8,16 +16,6 @@
 
 #include <tuple>
 #include <cassert>
-
-/*! @file
- *
- * @brief Helpers for comparing floating point values
- *
- * Some floating point comparison helpers for direct equality testing on the
- * basis of either relative or absolute tolerance. Two comparator classes for
- * better legibility of common comparison operators in expanded equality
- * contexts.
- */
 
 namespace temple {
 

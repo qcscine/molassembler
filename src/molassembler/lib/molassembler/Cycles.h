@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*! @file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Class to explore cyclic structure of molecules
+ *
+ * Contains a wrapper class for the C-style RingDecomposerLib functions so that
+ * cycle data can be used in idiomatic C++.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_CYCLES_H
 #define INCLUDE_MOLASSEMBLER_CYCLES_H
@@ -14,14 +20,6 @@
 
 #include <functional>
 #include <map>
-
-/*! @file
- *
- * @brief Class to explore cyclic structure of molecules
- *
- * Contains a wrapper class for the C-style RingDecomposerLib functions so that
- * cycle data can be used in idiomatic C++.
- */
 
 namespace molassembler {
 

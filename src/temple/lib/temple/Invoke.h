@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Uniform callable invoke from arguments or tuple of arguments
+ *
+ * Provides uniform C++14 function-like object invoke from arguments or tuple
+ * of arguments.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_INVOKE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_INVOKE_H
@@ -8,14 +14,6 @@
 
 #include <tuple>
 #include <functional>
-
-/*! @file
- *
- * @brief Uniform callable invoke from arguments or tuple of arguments
- *
- * Provides uniform C++14 function-like object invoke from arguments or tuple
- * of arguments.
- */
 
 namespace temple {
 

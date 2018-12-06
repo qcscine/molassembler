@@ -1,13 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Defines a compile-time constant boolean indicating the build type.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_BUILD_TYPE_SWITCH_H
 #define INCLUDE_MOLASSEMBLER_BUILD_TYPE_SWITCH_H
-
-/*! @file
- *
- * @brief Defines a compile-time constant boolean indicating the build type.
- */
 
 namespace molassembler {
 

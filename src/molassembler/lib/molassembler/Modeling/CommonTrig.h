@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Trigonometric stubs
+ *
+ * Contains some common trigonometric functionality. Does not contain custom
+ * implementations of the basic trigonometric functions, but rather common
+ * combinations of them in specific contexts.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_COMMON_TRIG_H
 #define INCLUDE_MOLASSEMBLER_COMMON_TRIG_H
@@ -8,15 +15,6 @@
 #include "molassembler/Modeling/BondDistance.h"
 
 #include <cmath>
-
-/*! @file
- *
- * @brief Trigonometric stubs
- *
- * Contains some common trigonometric functionality. Does not contain custom
- * implementations of the basic trigonometric functions, but rather common
- * combinations of them in specific contexts.
- */
 
 namespace molassembler {
 

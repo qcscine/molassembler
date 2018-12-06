@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief GOR1 specializations for use with ImplicitGraph and ExplicitGraph
+ *
+ * Contains specializations of the Gor1 algorithm for use with ImplicitGraph
+ * and ExplicitGraph
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DG_GOR_SPECIALIZATION_H
 #define INCLUDE_MOLASSEMBLER_DG_GOR_SPECIALIZATION_H
@@ -9,14 +15,6 @@
 
 #include "boost/graph/graph_traits.hpp"
 #include "boost/graph/graph_concepts.hpp"
-
-/*!@file
- *
- * @brief GOR1 specializations for use with ImplicitGraph and ExplicitGraph
- *
- * Contains specializations of the Gor1 algorithm for use with ImplicitGraph
- * and ExplicitGraph
- */
 
 // Forward-declare ImplicitGraph
 namespace molassembler {

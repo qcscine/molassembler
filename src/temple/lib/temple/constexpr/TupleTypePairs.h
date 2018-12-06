@@ -1,16 +1,14 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Pass pairs of types contained in a tuple to template functions
+ */
 
 #ifndef INCLUDE_TEMPLE_TUPLE_TYPE_PAIRS_H
 #define INCLUDE_TEMPLE_TUPLE_TYPE_PAIRS_H
 
 #include "temple/constexpr/UpperTriangularMatrix.h"
 #include "temple/constexpr/TupleType.h"
-
-/*!@file
- *
- * @brief Pass pairs of types contained in a tuple to template functions
- */
 
 namespace temple {
 

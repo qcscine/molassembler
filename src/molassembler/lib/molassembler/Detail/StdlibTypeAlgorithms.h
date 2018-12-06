@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Useful functions for dealing with STL containers / types.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_STDLIB_TYPE_ALGORITHMS_H
 #define INCLUDE_MOLASSEMBLER_STDLIB_TYPE_ALGORITHMS_H
@@ -10,11 +13,6 @@
 #include <functional>
 #include <numeric>
 #include <map>
-
-/*! @file
- *
- * @brief Useful functions for dealing with STL containers / types.
- */
 
 namespace StdlibTypeAlgorithms {
 

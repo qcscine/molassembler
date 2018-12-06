@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Wrapper class to typify Angstrom scale positional information
+ *
+ * Provides a class that exists purely to strongly separate position collections
+ * in bohr units and angstrom units in library interfaces
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_ANGSTROM_POSITIONS_H
 #define INCLUDE_MOLASSEMBLER_ANGSTROM_POSITIONS_H
@@ -7,14 +13,6 @@
 #include "Delib/PositionCollection.h"
 
 #include "molassembler/Types.h"
-
-/*!@file
- *
- * @brief Wrapper class to typify Angstrom scale positional information
- *
- * Provides a class that exists purely to strongly separate position collections
- * in bohr units and angstrom units in library interfaces
- */
 
 namespace molassembler {
 

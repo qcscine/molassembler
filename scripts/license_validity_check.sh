@@ -1,12 +1,19 @@
 #!/bin/bash
 
 # Look for all source files, and then check if the copyright / license header is present
+let retvalue=0
 for i in $(find src -not \( -path src/extern -prune \) -name '*.cpp' -or -name '*.h' -or -name '*.hxx')
 do
-  if ! grep -q "Copyright ETH Zurich" $i
+  if ! grep -q -i "Copyright ETH Zurich" $i
   then
-    echo "ETH license is not present in all files!"
-    echo "Please run the scripts/add_license.sh script."
-    exit 1
+    echo "- $i"
+    let retvalue=1
   fi
 done
+
+if [ $retvalue -eq 1 ]; then
+  echo "ETH license is not present in all files!"
+  exit 1
+fi
+
+exit 0

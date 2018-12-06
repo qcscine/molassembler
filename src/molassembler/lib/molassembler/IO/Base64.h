@@ -1,14 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Base 64 encoding and decoding between strings and vectors of uint_8
+ */
 
 #include <string>
 #include <vector>
 #include <stdexcept>
-
-/*!@file
- *
- * @brief Base 64 encoding and decoding between strings and vectors of uint_8
- */
 
 namespace base64 {
 

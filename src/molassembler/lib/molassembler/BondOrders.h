@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Interpret bond orders from 3D coordinates only
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 #define INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
@@ -9,11 +12,6 @@ namespace Delib {
 class BondOrderCollection;
 class ElementTypeCollection;
 } // namespace Delib
-
-/*! @file
- *
- * @brief Interpret bond orders from 3D coordinates only
- */
 
 namespace molassembler {
 

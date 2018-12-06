@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Data struct to store chiral constraints for DG
+ *
+ * Contains some central data class declarations and type definitions for the
+ * entire Distance Geometry scheme.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_H
@@ -11,14 +17,6 @@
 #include <vector>
 #include <cassert>
 #include <array>
-
-/*! @file
- *
- * @brief Data struct to store chiral constraints for DG
- *
- * Contains some central data class declarations and type definitions for the
- * entire Distance Geometry scheme.
- */
 
 namespace molassembler {
 

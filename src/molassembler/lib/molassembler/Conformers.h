@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Interface for the generation of new conformations of Molecules
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 #define INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
@@ -13,11 +16,6 @@ namespace Delib {
 class PositionCollection;
 class Position;
 } // namespace Delib
-
-/*!@file
- *
- * @brief Interface for the generation of new conformations of Molecules
- */
 
 namespace molassembler {
 

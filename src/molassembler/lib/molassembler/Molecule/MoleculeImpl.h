@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Private implementation of Molecule
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_IMPL_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_IMPL_H
 
@@ -6,11 +12,6 @@
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/StereopermutatorList.h"
-
-/*! @file
- *
- * @brief Private implementation of Molecule
- */
 
 namespace molassembler {
 

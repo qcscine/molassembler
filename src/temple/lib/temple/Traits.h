@@ -1,15 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides a few basic function and container traits.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_TRAITS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_TRAITS_H
 
 #include <vector>
-
-/*! @file
- *
- * @brief Provides a few basic function and container traits.
- */
 
 namespace temple {
 

@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Traits definitions for use of ImplicitGraph with Boost Graph Library
+ *
+ * Includes graph trait, property map and property trait type definitions
+ * necessary for ImplicitGraph interoperability with boost::graph
+ * algorithms.
+ */
 
 #ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_BOOST_TRAITS_H
 #define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_BOOST_TRAITS_H
@@ -7,15 +14,6 @@
 // DO NOT CHANGE THIS INCLUDE ORDER
 #include "molassembler/DistanceGeometry/ImplicitGraphHelpers.h"
 #include "boost/graph/graph_traits.hpp"
-
-/*! @file
- *
- * @brief Traits definitions for use of ImplicitGraph with Boost Graph Library
- *
- * Includes graph trait, property map and property trait type definitions
- * necessary for ImplicitGraph interoperability with boost::graph
- * algorithms.
- */
 
 /* Boost graph inclusion additions */
 namespace boost {

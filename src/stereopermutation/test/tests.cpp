@@ -1,5 +1,9 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @todo
+ * - add more tests from different geometries
+ */
 
 #define BOOST_TEST_MODULE ConnectivityManagerTests
 #include <boost/test/unit_test.hpp>
@@ -22,12 +26,6 @@
 #include "temple/constexpr/LogicalOperatorTests.h"
 
 using namespace stereopermutation;
-
-/*! @file
- *
- * @todo
- * - add more tests from different geometries
- */
 
 template<typename T>
 std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {

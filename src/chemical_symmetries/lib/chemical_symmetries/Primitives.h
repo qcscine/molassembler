@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Central symmetry data class definitions
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_PRIMITIVES_H
 #define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_PRIMITIVES_H
@@ -14,11 +17,6 @@
 #endif
 
 #include <cmath>
-
-/*! @file
- *
- * @brief Central symmetry data class definitions
- */
 
 namespace Symmetry {
 

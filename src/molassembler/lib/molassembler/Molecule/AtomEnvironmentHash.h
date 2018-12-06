@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Hash an atom's environment in a Molecule for isomorphism calculations
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_ATOM_ENVIRONMENT_HASH_H
 #define INCLUDE_MOLASSEMBLER_ATOM_ENVIRONMENT_HASH_H
@@ -14,11 +17,6 @@
 #include "molassembler/Types.h"
 
 #include <vector>
-
-/*!@file
- *
- * @brief Hash an atom's environment in a Molecule for isomorphism calculations
- */
 
 namespace molassembler {
 

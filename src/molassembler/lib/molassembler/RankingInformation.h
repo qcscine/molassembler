@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Data struct storing results of ranking and local graph algorithms
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_RANKING_INFORMATION_H
 #define INCLUDE_MOLASSEMBLER_RANKING_INFORMATION_H
@@ -7,11 +10,6 @@
 #include "molassembler/Types.h"
 
 #include <vector>
-
-/*! @file
- *
- * @brief Data struct storing results of ranking and local graph algorithms
- */
 
 namespace molassembler {
 

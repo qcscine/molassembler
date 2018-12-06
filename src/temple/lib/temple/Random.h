@@ -1,5 +1,10 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Randomness helper functions
+ *
+ * Provides helpers for generating floating point, integer, boolean values.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_RANDOM_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_RANDOM_H
@@ -9,13 +14,6 @@
 #include <algorithm>
 #include <array>
 #include <random>
-
-/*! @file
- *
- * @brief Randomness helper functions
- *
- * Provides helpers for generating floating point, integer, boolean values.
- */
 
 namespace temple {
 

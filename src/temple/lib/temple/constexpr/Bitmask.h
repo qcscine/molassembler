@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief bitmask class
+ *
+ * Contains a bitmask implementation for strong enums with explicit underlying
+ * types and unmodified representational values.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BITMASK_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_BITMASK_H
@@ -7,14 +13,6 @@
 #include "temple/constexpr/Math.h"
 
 #include <stdexcept>
-
-/*!@file
- *
- * @brief bitmask class
- *
- * Contains a bitmask implementation for strong enums with explicit underlying
- * types and unmodified representational values.
- */
 
 namespace temple {
 

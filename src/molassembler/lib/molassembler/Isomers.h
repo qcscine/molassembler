@@ -1,9 +1,11 @@
-#ifndef INCLUDE_MOLASSEMBLER_ISOMERS_H
-#define INCLUDE_MOLASSEMBLER_ISOMERS_H
-
 /*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Predicates to determine what kinds of stereoisomers molecule pairs are
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_ISOMERS_H
+#define INCLUDE_MOLASSEMBLER_ISOMERS_H
 
 namespace molassembler {
 

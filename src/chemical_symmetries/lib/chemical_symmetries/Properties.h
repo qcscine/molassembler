@@ -1,16 +1,14 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Interface for property generation and access at runtime
+ */
 
 #ifndef INCLUDE_SYMMETRY_INFORMATION_PROPERTIES_H
 #define INCLUDE_SYMMETRY_INFORMATION_PROPERTIES_H
 
 #include "chemical_symmetries/ConstexprProperties.h"
 #include "chemical_symmetries/DynamicProperties.h"
-
-/*! @file
- *
- * @brief Interface for property generation and access at runtime
- */
 
 namespace Symmetry {
 

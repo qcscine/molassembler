@@ -1,18 +1,16 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_VERSION_H
-#define INCLUDE_MOLASSEMBLER_VERSION_H
-
-#include <string>
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Library versioning scheme information.
  *
  * This library adheres to semantic versioning
  * (http://semver.org/spec/v2.0.0.html).
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_VERSION_H
+#define INCLUDE_MOLASSEMBLER_VERSION_H
+
+#include <string>
 
 namespace molassembler {
 

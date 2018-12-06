@@ -1,16 +1,14 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Algorithms to help in the interpretation of the molecular graph
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_OUTER_GRAPH_ALGORITHMS_H
 #define INCLUDE_MOLASSEMBLER_OUTER_GRAPH_ALGORITHMS_H
 
 #include <vector>
 #include "Types.h"
-
-/*!@file
- *
- * @brief Algorithms to help in the interpretation of the molecular graph
- */
 
 namespace molassembler {
 

@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief 3D Vector class with some operations defined
+ *
+ * Provides a very basic \c constexpr three-dimensional vector class with some
+ * limited geometric functionality such as dot- and cross-product. Directly
+ * includes the calculation of angles between two vectors.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_VECTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_VECTOR_H
@@ -7,15 +14,6 @@
 #include "temple/constexpr/Math.h"
 
 #include <array>
-
-/*! @file
- *
- * @brief 3D Vector class with some operations defined
- *
- * Provides a very basic \c constexpr three-dimensional vector class with some
- * limited geometric functionality such as dot- and cross-product. Directly
- * includes the calculation of angles between two vectors.
- */
 
 namespace temple {
 

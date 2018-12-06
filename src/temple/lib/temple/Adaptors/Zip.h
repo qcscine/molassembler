@@ -1,15 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides zip iteration for two containers
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ZIP_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ZIP_ADAPTOR_H
 
 #include "temple/ContainerTraits.h"
-
-/*!@file
- *
- * @brief Provides zip iteration for two containers
- */
 
 namespace temple {
 

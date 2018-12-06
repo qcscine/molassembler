@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Bob Jenkins' small fast noncryptographic PRNG
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_JSF
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_JSF
@@ -7,11 +10,6 @@
 #include <cstdint>
 #include <random>
 #include <array>
-
-/*!@file
- *
- * @brief Bob Jenkins' small fast noncryptographic PRNG
- */
 
 namespace temple {
 

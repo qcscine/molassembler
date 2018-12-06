@@ -1,13 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides serialization / deserialization for Molecule instances
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 #define INCLUDE_MOLASSEMBLER_SERIALIZATION_H
-
-/*! @file
- *
- * @brief Provides serialization / deserialization for Molecule instances
- */
 
 #include <vector>
 #include <string>

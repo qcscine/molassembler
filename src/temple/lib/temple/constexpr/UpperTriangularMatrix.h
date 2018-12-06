@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Matrix-like class that stores only upper triangular part
+ *
+ * Provides a \c constexpr class that stores the data of an upper-triangular
+ * matrix via a std::array and provides two-index access.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
@@ -7,14 +13,6 @@
 #include "temple/constexpr/Vector.h"
 #include "temple/constexpr/Array.h"
 #include "temple/constexpr/FloatingPointComparison.h"
-
-/*! @file
- *
- * @brief Matrix-like class that stores only upper triangular part
- *
- * Provides a \c constexpr class that stores the data of an upper-triangular
- * matrix via a std::array and provides two-index access.
- */
 
 namespace temple {
 

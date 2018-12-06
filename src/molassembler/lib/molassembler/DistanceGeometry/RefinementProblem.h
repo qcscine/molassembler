@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Specifies the refinement minimization problem for the dlib library.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_REFINEMENT_PROBLEM_H
 #define INCLUDE_MOLASSEMBLER_DG_DLIB_REFINEMENT_PROBLEM_H
@@ -7,11 +10,6 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 
 #include <dlib/optimization.h>
-
-/*! @file
- *
- * @brief Specifies the refinement minimization problem for the dlib library.
- */
 
 namespace molassembler {
 

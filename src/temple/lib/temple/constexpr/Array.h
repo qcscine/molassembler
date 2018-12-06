@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief std::array-like class
+ *
+ * Constexpr fixed-size array to replace std::array in C++14. This class is
+ * largely unneeded in C++17 since many std::array members are then marked
+ * constexpr.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ARRAY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ARRAY_H
@@ -9,15 +16,6 @@
 #include <cstddef>
 #include <type_traits>
 #include <utility>
-
-/*! @file
- *
- * @brief std::array-like class
- *
- * Constexpr fixed-size array to replace std::array in C++14. This class is
- * largely unneeded in C++17 since many std::array members are then marked
- * constexpr.
- */
 
 namespace temple {
 

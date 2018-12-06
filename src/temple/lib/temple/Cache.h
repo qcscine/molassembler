@@ -1,5 +1,10 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Cache classes
+ *
+ * Contains a map-like MinimalCache and a full-blown boost::any-Cache.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CACHE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CACHE_H
@@ -12,13 +17,6 @@
 #include <functional>
 #include <cassert>
 #include <vector>
-
-/*! @file
- *
- * @brief Cache classes
- *
- * Contains a map-like MinimalCache and a full-blown boost::any-Cache.
- */
 
 namespace temple {
 

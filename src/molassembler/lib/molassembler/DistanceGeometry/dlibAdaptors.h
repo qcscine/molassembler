@@ -1,14 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_ADAPTORS_H
-#define INCLUDE_MOLASSEMBLER_DG_DLIB_ADAPTORS_H
-
-#include "molassembler/DistanceGeometry/RefinementProblem.h"
-#include "molassembler/DistanceGeometry/RefinementDebugData.h"
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Adaptors for type interconversions to/from dlib
  *
  * The numerical minimization of the error function is done with the dlib
@@ -20,6 +12,12 @@
  * in stereopermutator inversion. Afterwards, the absolute value of the fourth
  * spatial dimension is penalized and compressed out.
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_ADAPTORS_H
+#define INCLUDE_MOLASSEMBLER_DG_DLIB_ADAPTORS_H
+
+#include "molassembler/DistanceGeometry/RefinementProblem.h"
+#include "molassembler/DistanceGeometry/RefinementDebugData.h"
 
 namespace molassembler {
 

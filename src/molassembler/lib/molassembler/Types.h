@@ -1,15 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Defines basic types widely shared across the project.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_SHARED_TYPES_H
 #define INCLUDE_MOLASSEMBLER_SHARED_TYPES_H
 
 #include <cstddef>
-
-/*!@file
- *
- * @brief Defines basic types widely shared across the project.
- */
 
 namespace molassembler {
 

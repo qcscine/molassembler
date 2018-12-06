@@ -1,15 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides an integer range generator.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_IOTA_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_IOTA_ADAPTOR_H
 
 #include "temple/Traits.h"
-
-/*!@file
- *
- * @brief Provides an integer range generator.
- */
 
 namespace temple {
 

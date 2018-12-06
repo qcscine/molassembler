@@ -1,16 +1,14 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
-#define INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Write graphviz representations of Molecules for state visualization
  *
  * Implements a graphviz writing helper class for the visualization of a
  * molecular graph.
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
+#define INCLUDE_MOLASSEMBLER_MOL_GRAPH_WRITER_H
 
 #include "molassembler/Graph/InnerGraph.h"
 

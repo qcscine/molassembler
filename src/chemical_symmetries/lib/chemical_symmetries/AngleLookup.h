@@ -1,21 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_SYMMETRIES_CONSTEXPR_ANGLES_H
-#define INCLUDE_SYMMETRIES_CONSTEXPR_ANGLES_H
-
-#include "temple/constexpr/UpperTriangularMatrix.h"
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Generate lookup table for a symmetry's angles
  *
  * Facilitates the calculation of all possible angles between ligand positions
  * of symmetries with many binding sites in a constexpr manner from the
  * coordinates.
- */
-
-/*! @file
  *
  * Provides functionality for converting a set of 3D atom positions into an
  * array of all possible angles between the positions in a \c constexpr fashion.
@@ -23,6 +13,11 @@
  * Explicitly creates this array for a set of atoms arranged in a square
  * antiprismatic geometry.
  */
+
+#ifndef INCLUDE_SYMMETRIES_CONSTEXPR_ANGLES_H
+#define INCLUDE_SYMMETRIES_CONSTEXPR_ANGLES_H
+
+#include "temple/constexpr/UpperTriangularMatrix.h"
 
 namespace Symmetry {
 

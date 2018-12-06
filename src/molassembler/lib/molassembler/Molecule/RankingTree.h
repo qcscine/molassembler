@@ -1,5 +1,40 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief IUPAC-like ranking of substituents at atoms
+ *
+ * Centerpoint of library ranking algorithm. Implements the RankingTree class,
+ * which can be instantiated on any atomic index in a Molecule, which
+ * splits the Molecule into an acyclic tree. That tree can then be used to rank
+ * that atom's direct substituents according to IUPAC-like sequence rules.
+ *
+ * @todo
+ * - Maybe you can only add transferability edges when in down-only BFS?
+ * - Consider transition to more unordered containers
+ * - Pseudo-asymmetry considerations
+ *   - Is the propagation of pseudoasymmetry REALLY necessary? It makes sense
+ *     to permute a stereopermutator designated as pseudo-asymmetric. Dunno if
+ *     creating the exact diastereomer of a molecule will ever be needed as an
+ *     operation (if so, then yes, pseudoasymmetry pop is needed). Creating
+ *     ALL stereomers of a molecule can be done without pseudoasymmetry.
+ *     All other points below are only relevant in case pseudo-asymmetry needs
+ *     to be included.
+ *   - Stereopermutator interface change to support pseudo-asymmetry tag (?)
+ *   - Ranking function interface change to propagate pseudo-asymmetry result
+ * - Optimizations / Refactors
+ *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
+ * - OrderDiscoveryHelper function naming may be inconsistent. Does
+ *   addLessThanRelationship really semantically do what it says?
+ *   Loads of inverted comparisons here where it doesn't make sense to me
+ *   anymore, in particular at 4B in counting like pairs at every position
+ * - Get away from as many sets as possible -> unordered sets, tinysets or plain vectors
+ * - Try to figure out a datastructure in which the entire relative ranking can
+ *   be stored as indeterminate and determinate, so to wholly avoid
+ *   recomputation where unnecessary
+ * - When in _auxiliaryApplySequenceRules, and BFS is omnidirectional, isn't
+ *   the up-edge always top-ranked? It may not be necessary to include it in
+ *   the comparisonSets and as a result, also not complicate BFS handling.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_RANKING_HIERARCHICAL_TREE_H
 #define INCLUDE_MOLASSEMBLER_RANKING_HIERARCHICAL_TREE_H
@@ -39,43 +74,6 @@
 #define MOLASSEMBLER_ENABLE_PROPAGATE_CONST
 #include <experimental/propagate_const>
 #endif
-
-/*! @file
- *
- * @brief IUPAC-like ranking of substituents at atoms
- *
- * Centerpoint of library ranking algorithm. Implements the RankingTree class,
- * which can be instantiated on any atomic index in a Molecule, which
- * splits the Molecule into an acyclic tree. That tree can then be used to rank
- * that atom's direct substituents according to IUPAC-like sequence rules.
- *
- * @todo
- * - Maybe you can only add transferability edges when in down-only BFS?
- * - Consider transition to more unordered containers
- * - Pseudo-asymmetry considerations
- *   - Is the propagation of pseudoasymmetry REALLY necessary? It makes sense
- *     to permute a stereopermutator designated as pseudo-asymmetric. Dunno if
- *     creating the exact diastereomer of a molecule will ever be needed as an
- *     operation (if so, then yes, pseudoasymmetry pop is needed). Creating
- *     ALL stereomers of a molecule can be done without pseudoasymmetry.
- *     All other points below are only relevant in case pseudo-asymmetry needs
- *     to be included.
- *   - Stereopermutator interface change to support pseudo-asymmetry tag (?)
- *   - Ranking function interface change to propagate pseudo-asymmetry result
- * - Optimizations / Refactors
- *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
- * - OrderDiscoveryHelper function naming may be inconsistent. Does
- *   addLessThanRelationship really semantically do what it says?
- *   Loads of inverted comparisons here where it doesn't make sense to me
- *   anymore, in particular at 4B in counting like pairs at every position
- * - Get away from as many sets as possible -> unordered sets, tinysets or plain vectors
- * - Try to figure out a datastructure in which the entire relative ranking can
- *   be stored as indeterminate and determinate, so to wholly avoid
- *   recomputation where unnecessary
- * - When in _auxiliaryApplySequenceRules, and BFS is omnidirectional, isn't
- *   the up-edge always top-ranked? It may not be necessary to include it in
- *   the comparisonSets and as a result, also not complicate BFS handling.
- */
 
 namespace molassembler {
 

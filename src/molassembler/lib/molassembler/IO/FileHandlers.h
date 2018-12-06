@@ -1,5 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Input/output of various file formats
+ *
+ * Centralizes input and output of several file formats
+ * - MOL (V2000)
+ * - XYZ
+ * - MASM (Binary)
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_FILE_HANDLERS_H
 #define INCLUDE_MOLASSEMBLER_FILE_HANDLERS_H
@@ -12,16 +20,6 @@
 #include "molassembler/AngstromWrapper.h"
 #include "molassembler/IO.h"
 #include "molassembler/Interpret.h"
-
-/*!@file
- *
- * @brief Input/output of various file formats
- *
- * Centralizes input and output of several file formats
- * - MOL (V2000)
- * - XYZ
- * - MASM (Binary)
- */
 
 namespace molassembler {
 

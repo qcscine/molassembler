@@ -1,14 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#include <stack>
-#include <limits>
-
-#include "boost/graph/graph_traits.hpp"
-#include "boost/graph/graph_concepts.hpp"
-
 /*!@file
- *
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief GOR1 single-source shortest-paths algorithm with boost graph
  *
  * Implements a simplified GOR1 single-source shortest paths algorithm in the
@@ -20,6 +12,12 @@
  *   algorithms: Theory and experimental evaluation. Mathematical Programming,
  *   73(2), 129–174. https://doi.org/10.1007/BF02592101
  */
+
+#include <stack>
+#include <limits>
+
+#include "boost/graph/graph_traits.hpp"
+#include "boost/graph/graph_concepts.hpp"
 
 namespace boost {
 
