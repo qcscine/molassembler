@@ -144,12 +144,10 @@ void checkExpectations(const boost::filesystem::path& filePath) {
       BOOST_FAIL(positionsResult.error().message());
     }
 
-    auto positions = positionsResult.value();
-
     // Reinterpret the molecule from the existing graph and the generated positions
     Molecule reinterpreted {
       mol.graph(),
-      AngstromWrapper {positionsResult.value()}
+      AngstromWrapper {std::move(positionsResult.value())}
     };
 
     bool pass = reinterpreted == mol;

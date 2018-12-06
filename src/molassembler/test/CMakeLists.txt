@@ -65,7 +65,7 @@ target_link_libraries(DistanceGeometryTests
 )
 target_compile_options(DistanceGeometryTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 add_test(
-  NAME DistanceGeometryTests
+  NAME MASMDistanceGeometryTests
   COMMAND DistanceGeometryTests
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../data/"
 )

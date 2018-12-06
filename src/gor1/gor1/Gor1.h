@@ -70,7 +70,8 @@ struct DummyGor1Visitor {
   void mark_black(const VertexDescriptor& /* v */, const IncidenceGraph& /* g */) {}
 };
 
-/*! GOR1 helper function that performs the scanning of a vertex' edges
+/*!
+ * @brief GOR1 helper function that performs the scanning of a vertex' edges
  *
  * @tparam VertexDescriptor Type of the Graph's vertex descriptor
  * @tparam IncidenceGraph Type modeling Boost's IncidenceGraph concept
@@ -142,7 +143,8 @@ void gor1_simplified_scan(
 
 } // namespace detail
 
-/*! Simplified GOR1 single source shortest paths algorithm
+/*!
+ * @brief Simplified GOR1 single source shortest paths algorithm
  *
  * Implements the algorithm described in
  * - Cherkassky, B. V., Goldberg, A. V., & Radzik, T. (1996). Shortest paths
@@ -268,6 +270,7 @@ bool gor1_simplified_shortest_paths(
   return true;
 }
 
+//! @overload
 template<
   class IncidenceGraph,
   class DistanceMap,
