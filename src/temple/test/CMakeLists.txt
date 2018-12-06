@@ -1,5 +1,3 @@
-project(templeTestProject)
-
 if(NOT TARGET Boost::unit_test_framework)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 endif()
@@ -28,5 +26,5 @@ target_link_libraries(templeTests
 
 target_compile_options(templeTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
-add_test(NAME templeTests COMMAND templeTests)
+add_test(NAME MASMTempleTests COMMAND templeTests)
 set_property(TARGET templeTests PROPERTY FOLDER "Tests")

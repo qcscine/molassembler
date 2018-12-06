@@ -7,7 +7,7 @@ if(NOT TARGET Boost::unit_test_framework
   find_package(Boost REQUIRED COMPONENTS unit_test_framework regex filesystem)
 endif()
 
-set(testFiles
+set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/BondStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommonTrig.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Cycles.cpp
@@ -34,36 +34,23 @@ set(DGTestFiles
 )
 
 # Testing targets
-foreach(filename ${testFiles})
-  # get a target name from the filename
-  set(baseName "")
-  get_filename_component(baseName ${filename} NAME_WE)
-
-  set(targetName "test_${baseName}")
-
-  # add the executable and specify compilation and linking options
-  add_executable(${targetName} ${filename})
-
-  target_link_libraries(${targetName}
-    PRIVATE
-      Boost::boost
-      Boost::regex
-      gor1
-      molassembler
-      stereopermutation
-      Boost::unit_test_framework
-      Boost::filesystem
-  )
-
-  target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
-
-  # add target to tests
-  add_test(
-    NAME ${targetName}
-    COMMAND ${targetName}
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../data/"
-  )
-endforeach()
+add_executable(MolassemblerTests ${MainTestFiles})
+target_link_libraries(MolassemblerTests
+  PRIVATE
+    Boost::boost
+    Boost::regex
+    gor1
+    molassembler
+    stereopermutation
+    Boost::unit_test_framework
+    Boost::filesystem
+)
+target_compile_options(MolassemblerTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+add_test(
+  NAME MASMMainTests
+  COMMAND MolassemblerTests
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../data/"
+)
 
 add_executable(DistanceGeometryTests ${DGTestFiles})
 target_link_libraries(DistanceGeometryTests

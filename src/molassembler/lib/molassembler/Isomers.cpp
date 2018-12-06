@@ -53,7 +53,7 @@ bool enantiomeric(
    * We don't care about BondStereopermutators since these are unchanged by
    * mirroring operations.
    *
-   * TODO this isn't strictly true as soon as bond stereopermutators are
+   * TODO that isn't strictly true as soon as bond stereopermutators are
    * more complicated than 2x trigonal planar
    */
   if(a.stereopermutators().A() != b.stereopermutators().A()) {

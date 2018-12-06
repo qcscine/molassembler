@@ -35,7 +35,7 @@ target_link_libraries(cyclicPolygonTests
     temple
 )
 
-add_test(NAME CyclicPolygonTests COMMAND cyclicPolygonTests)
+add_test(NAME MASMCyclicPolygonTests COMMAND cyclicPolygonTests)
 
 install(
   TARGETS cyclic_polygons

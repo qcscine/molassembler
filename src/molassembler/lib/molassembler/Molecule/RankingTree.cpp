@@ -1638,6 +1638,11 @@ std::vector<
     return orderingHelper.getSets();
   }
 
+  // Return immediately if the set to rank is of size 1 or lower
+  if(adjacentsToRank.size() <= 1) {
+    return orderingHelper.getSets();
+  }
+
 #ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
   orderingHelper.addRelationshipsFromOther(_allOrdering);
   // Is the information from _allOrdering sufficient?
@@ -2937,6 +2942,11 @@ RankingTree::RankingTree(
 
   // Set the ordering helper's list of unordered values
   _branchOrderingHelper.setUnorderedValues(branchIndices);
+
+  // If there is only one index in the list, there is no need to do anything
+  if(branchIndices.size() <= 1) {
+    return;
+  }
 
   if /* C++17 constexpr */ (buildTypeIsDebug) {
     Log::log(Log::Particulars::RankingTreeDebugInfo)

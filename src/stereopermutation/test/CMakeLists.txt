@@ -15,6 +15,6 @@ target_link_libraries(permutationTests
 )
 
 # add test target
-add_test(NAME StereopermutationTests COMMAND permutationTests)
+add_test(NAME MASMStereopermutationTests COMMAND permutationTests)
 
 set_property(TARGET permutationTests PROPERTY FOLDER "Tests")
