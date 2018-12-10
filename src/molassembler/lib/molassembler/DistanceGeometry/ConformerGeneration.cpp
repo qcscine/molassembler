@@ -728,22 +728,30 @@ outcome::result<
         configuration.refinementStepLimit
       };
 
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        inversionStopStrategy,
-        errfValue<false>(
-          squaredBounds,
-          DGData.chiralityConstraints,
-          DGData.dihedralConstraints
-        ),
-        errfGradient<false>(
-          squaredBounds,
-          DGData.chiralityConstraints,
-          DGData.dihedralConstraints
-        ),
-        dlibPositions,
-        0
-      );
+      try {
+        dlib::find_min(
+          dlib::bfgs_search_strategy(),
+          inversionStopStrategy,
+          errfValue<false>(
+            squaredBounds,
+            DGData.chiralityConstraints,
+            DGData.dihedralConstraints
+          ),
+          errfGradient<false>(
+            squaredBounds,
+            DGData.chiralityConstraints,
+            DGData.dihedralConstraints
+          ),
+          dlibPositions,
+          0
+        );
+      } catch(std::out_of_range& e) {
+        failures += 1;
+        if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+          return DGError::TooManyFailures;
+        }
+        continue;
+      }
 
       if(
         inversionStopStrategy.iterations >= configuration.refinementStepLimit
@@ -767,22 +775,30 @@ outcome::result<
     };
 
     // Refinement with penalty on fourth dimension is always necessary
-    dlib::find_min(
-      dlib::bfgs_search_strategy(),
-      refinementStopStrategy,
-      errfValue<true>(
-        squaredBounds,
-        DGData.chiralityConstraints,
-        DGData.dihedralConstraints
-      ),
-      errfGradient<true>(
-        squaredBounds,
-        DGData.chiralityConstraints,
-        DGData.dihedralConstraints
-      ),
-      dlibPositions,
-      0
-    );
+    try {
+      dlib::find_min(
+        dlib::bfgs_search_strategy(),
+        refinementStopStrategy,
+        errfValue<true>(
+          squaredBounds,
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
+        ),
+        errfGradient<true>(
+          squaredBounds,
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
+        ),
+        dlibPositions,
+        0
+      );
+    } catch(std::out_of_range& e) {
+      failures += 1;
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+        return DGError::TooManyFailures;
+      }
+      continue;
+    }
 
     bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
     bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
