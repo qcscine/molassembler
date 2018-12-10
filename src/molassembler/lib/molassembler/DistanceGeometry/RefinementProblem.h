@@ -896,13 +896,14 @@ public:
 
       const dlib::vector<double, 3> lContribution = (h_phi / constraint.sites[3].size()) * gLength * b;
 
-      assert(
-        dlib::is_finite(iContribution)
-        && dlib::is_finite(jContribution)
-        && dlib::is_finite(kContribution)
-        && dlib::is_finite(lContribution)
-      );
-
+      if(
+        !dlib::is_finite(iContribution)
+        || !dlib::is_finite(jContribution)
+        || !dlib::is_finite(kContribution)
+        || !dlib::is_finite(lContribution)
+      ) {
+        throw std::out_of_range("Encountered non-finite dihedral contributions");
+      }
 
       for(const AtomIndex alphaConstitutingIndex : constraint.sites[0]) {
         dlib::set_rowm(

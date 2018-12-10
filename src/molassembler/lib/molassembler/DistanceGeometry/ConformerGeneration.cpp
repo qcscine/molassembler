@@ -171,7 +171,7 @@ inline double looseningFactor(
 inline bool exceededFailureRatio(
   const unsigned failures,
   const unsigned numConformers,
-  const unsigned failureRatio
+  const double failureRatio
 ) noexcept {
   return static_cast<double>(failures) / numConformers >= failureRatio;
 }
@@ -418,18 +418,29 @@ std::list<RefinementData> debugRefinement(
         valueFunctor
       };
 
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        inversionStopStrategy,
-        valueFunctor,
-        errfGradient<false>(
-          squaredBounds,
-          DGData.chiralityConstraints,
-          DGData.dihedralConstraints
-        ),
-        dlibPositions,
-        0
-      );
+      try {
+        dlib::find_min(
+          dlib::bfgs_search_strategy(),
+          inversionStopStrategy,
+          valueFunctor,
+          errfGradient<false>(
+            squaredBounds,
+            DGData.chiralityConstraints,
+            DGData.dihedralConstraints
+          ),
+          dlibPositions,
+          0
+        );
+      } catch(std::out_of_range& e) {
+        Log::log(Log::Level::Warning)
+          << "Non-finite contributions to dihedral error function gradient.\n";
+        failures += 1;
+        if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+          Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+          return refinementList;
+        }
+        continue;
+      }
 
       // Handle inversion failure (hit step limit)
       if(
@@ -471,18 +482,29 @@ std::list<RefinementData> debugRefinement(
       refinementValueFunctor
     };
 
-    dlib::find_min(
-      dlib::bfgs_search_strategy(),
-      refinementStopStrategy,
-      refinementValueFunctor,
-      errfGradient<true>(
-        squaredBounds,
-        DGData.chiralityConstraints,
-        DGData.dihedralConstraints
-      ),
-      dlibPositions,
-      0
-    );
+    try {
+      dlib::find_min(
+        dlib::bfgs_search_strategy(),
+        refinementStopStrategy,
+        refinementValueFunctor,
+        errfGradient<true>(
+          squaredBounds,
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
+        ),
+        dlibPositions,
+        0
+      );
+    } catch(std::out_of_range& e) {
+      Log::log(Log::Level::Warning)
+        << "Non-finite contributions to dihedral error function gradient.\n";
+      failures += 1;
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+        return refinementList;
+      }
+      continue;
+    }
 
     bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
     bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
