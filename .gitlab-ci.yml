@@ -66,7 +66,7 @@ test:gcc_release:
   script:
     - (cd build_gcc_release && make check)
   dependencies:
-    - build:gcc_debug
+    - build:gcc_release
   artifacts:
     expire_in: 1 day
 
@@ -89,8 +89,10 @@ build:clang_release:
     - make -j8
   artifacts:
     expire_in: 1 day
+    paths:
+      - build_clang
 
-test_clang:
+test:clang_release:
   stage: test
   tags:
     - default_docker
@@ -98,9 +100,7 @@ test_clang:
   only:
     - master
   script:
-    - mkdir -p build_clang
-    - cd build_clang
-    - make check
+    - (cd build_clang && make check)
   dependencies:
     - build:clang_release
   artifacts:
