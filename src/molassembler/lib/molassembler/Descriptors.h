@@ -1,13 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Calculates properties of molecules
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 #define INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 
-/*!@file
- *
- * @brief Calculates properties of molecules
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -38,5 +38,7 @@ class Molecule;
 unsigned numRotatableBonds(const Molecule& mol);
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -1,15 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides sequential pair generation from a single container
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_SEQUENTIAL_PAIRS_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_SEQUENTIAL_PAIRS_ADAPTOR_H
 
 #include "temple/ContainerTraits.h"
-
-/*!@file
- *
- * @brief Provides sequential pair generation from a single container
- */
 
 namespace temple {
 

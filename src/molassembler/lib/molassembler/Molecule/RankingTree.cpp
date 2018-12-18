@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Molecule/RankingTree.h"
 
@@ -22,6 +24,8 @@
 
 #include <fstream>
 #include <iostream>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -3447,5 +3451,6 @@ std::string RankingTree::_adaptMolGraph(std::string molGraph) {
   return molGraph;
 }
 
-
 } // namespace molassembler
+
+} // namespace Scine

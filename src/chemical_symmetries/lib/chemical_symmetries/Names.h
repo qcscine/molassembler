@@ -1,17 +1,20 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_NAMES_H
-#define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_NAMES_H
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Defines symmetry names and total count
  *
  * Contains only the symmetry names and count for minimal header inclusion
  * necessities in dependencies
  */
 
+#ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_NAMES_H
+#define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_NAMES_H
+
+namespace Scine {
+
+/**
+ * @brief Symmetry definitions and properties
+ */
 namespace Symmetry {
 
 //! Enumeration of all contained symmetry names
@@ -39,5 +42,7 @@ enum class Name : unsigned {
 constexpr unsigned nSymmetries = 17;
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

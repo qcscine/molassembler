@@ -1,19 +1,17 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Vector-adapting set-like objects for small collections
+ *
+ * Vector-based set-like objects for very small collections in order to reduce
+ * space overhead and avoid <set>'s trees for better performance.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_TINY_SETS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_TINY_SETS_H
 
 #include <vector>
 #include <algorithm>
-
-/*! @file
- *
- * @brief Vector-adapting set-like objects for small collections
- *
- * Vector-based set-like objects for very small collections in order to reduce
- * space overhead and avoid <set>'s trees for better performance.
- */
 
 namespace temple {
 

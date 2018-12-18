@@ -1,11 +1,15 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Types.h"
 
 #include "boost/functional/hash.hpp"
 
 #include <tuple>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -33,3 +37,5 @@ std::size_t hash_value(const BondIndex& bond) {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

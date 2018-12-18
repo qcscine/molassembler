@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief An ordered homogeneous pair-like class
+ *
+ * Contains a class imitating std::pair whose member types are homogeneous and
+ * ordered.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ORDERED_PAIR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ORDERED_PAIR_H
@@ -8,14 +14,6 @@
 
 #include <tuple>
 #include <utility>
-
-/*!@file
- *
- * @brief An ordered homogeneous pair-like class
- *
- * Contains a class imitating std::pair whose member types are homogeneous and
- * ordered.
- */
 
 namespace temple {
 

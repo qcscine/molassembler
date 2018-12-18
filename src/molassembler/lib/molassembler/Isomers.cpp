@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "Isomers.h"
 
 #include "molassembler/Molecule.h"
@@ -5,6 +10,8 @@
 #include "molassembler/OuterGraph.h"
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Stereopermutators/PermutationState.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -213,3 +220,5 @@ Molecule enantiomer(const Molecule& a) {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

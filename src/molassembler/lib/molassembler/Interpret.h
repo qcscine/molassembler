@@ -1,29 +1,29 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_INTERPRET_H
-#define INCLUDE_MOLASSEMBLER_INTERPRET_H
-
-#include "boost/optional.hpp"
-#include "Utils/ElementTypes.h"
-#include <vector>
-
 /*!@file
- *
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Interpret multiple molecules in positional information
  *
  * Contains functionality permitting the interpretation of several Molecules
  * from three-dimensional structures with or without accompanying bond orders.
  */
 
+#ifndef INCLUDE_MOLASSEMBLER_INTERPRET_H
+#define INCLUDE_MOLASSEMBLER_INTERPRET_H
+
+#include "boost/optional.hpp"
+#include <vector>
+
 // External forward-declarations
 namespace Scine {
 namespace Utils {
+enum class ElementType;
 class AtomCollection;
 class BondOrderCollection;
 using ElementTypeCollection = std::vector<ElementType>;
 } // namespace Utils
 } // namespace Scine
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -158,5 +158,7 @@ InterpretResult interpret(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

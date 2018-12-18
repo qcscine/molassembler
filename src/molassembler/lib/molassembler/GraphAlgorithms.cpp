@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/GraphAlgorithms.h"
 
@@ -10,6 +12,8 @@
  * OuterGraph. In Graph/GraphAlgorithms.h, those algorithms are implemented on
  * the InnerGraph, which is not accessible using the public API.
  */
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -22,3 +26,5 @@ std::vector<unsigned> distance(AtomIndex i, const OuterGraph& graph) {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

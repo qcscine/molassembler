@@ -1,11 +1,15 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/DistanceGeometry/RefinementProblem.h"
 
 #include "temple/Stringify.h"
 
 #include "molassembler/Log.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -250,3 +254,5 @@ void explainFinalContributions(
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

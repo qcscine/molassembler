@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_TEST_MODULE DGStrainedMolecules
 #include <boost/test/unit_test.hpp>
@@ -15,9 +17,10 @@
 
 #include <iostream>
 
-BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
-  using namespace molassembler;
+using namespace Scine;
+using namespace molassembler;
 
+BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   auto mol = IO::read("inorganics/multidentate/Co(ox)3.mol");
 
   const auto stereopermutatorOption = mol.stereopermutators().option(0);
@@ -36,7 +39,6 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
 }
 
 void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath) {
-  using namespace molassembler;
   using namespace std::string_literals;
 
   std::cout << "Processing " << filePath.stem().string() << std::endl;

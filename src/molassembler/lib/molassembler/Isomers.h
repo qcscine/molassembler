@@ -1,15 +1,23 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Predicates to determine what kinds of stereoisomers molecule pairs are
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_ISOMERS_H
 #define INCLUDE_MOLASSEMBLER_ISOMERS_H
 
-/*!@file
- * @brief Predicates to determine what kinds of stereoisomers molecule pairs are
- */
+namespace Scine {
 
 namespace molassembler {
 
 // Forward-declarations
 class Molecule;
 
+/**
+ * @brief Tag for function dispatch indicating that two molecules are enumerated
+ *   the same
+ */
 struct SameIndexingTag {};
 
 /*!
@@ -73,5 +81,7 @@ bool enantiomeric(
 Molecule enantiomer(const Molecule& a);
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Interface for the generation of new conformations of Molecules
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
 #define INCLUDE_MOLASSEMBLER_CONFORMER_GENERATION_H
@@ -9,10 +12,13 @@
 #include "boost_outcome/outcome.hpp"
 #include <vector>
 
-/*!@file
- *
- * @brief Interface for the generation of new conformations of Molecules
- */
+// Forward-declarations
+namespace Delib {
+class PositionCollection;
+class Position;
+} // namespace Delib
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -130,5 +136,7 @@ outcome::result<Scine::Utils::PositionCollection> generateConformation(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

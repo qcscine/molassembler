@@ -1,6 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 #include "molassembler/RankingInformation.h"
 
 #include "temple/Adaptors/Zip.h"
@@ -9,6 +10,8 @@
 
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
 #include "molassembler/Cycles.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -253,3 +256,5 @@ bool RankingInformation::operator != (const RankingInformation& other) const {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include <boost/test/unit_test.hpp>
 
@@ -11,6 +13,8 @@ template<typename T>
 using RaggedVector = std::vector<
   std::vector<T>
 >;
+
+using namespace Scine;
 
 BOOST_AUTO_TEST_CASE(PermutationStateTests) {
   using namespace molassembler;

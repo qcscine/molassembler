@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Create STL analogues of constexpr containers
+ *
+ * Offers quick functions to create STL analog data structures from the ones
+ * defined in this library.
+ */
 
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TO_STL_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TO_STL_H
@@ -10,14 +16,6 @@
 #include <vector>
 #include <map>
 #include <set>
-
-/*! @file
- *
- * @brief Create STL analogues of constexpr containers
- *
- * Offers quick functions to create STL analog data structures from the ones
- * defined in this library.
- */
 
 namespace temple {
 

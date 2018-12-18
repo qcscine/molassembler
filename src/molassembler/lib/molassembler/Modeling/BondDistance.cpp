@@ -1,9 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Modeling/BondDistance.h"
 
 #include <cmath>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -49,3 +53,5 @@ double calculateBondOrder(
 } // namespace Bond
 
 } // namespace molassembler
+
+} // namespace Scine

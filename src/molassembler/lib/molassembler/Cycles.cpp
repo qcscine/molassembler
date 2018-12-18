@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Cycles.h"
 
@@ -7,6 +9,8 @@
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Graph/InnerGraph.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -455,3 +459,5 @@ unsigned countPlanarityEnforcingBonds(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Base class to describe substituent arrangements in symmetries
+ *
+ * Contains the base class employed for describing the particular manner in
+ * which substituents are arranged in various symmetries.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_STEREOPERMUTATION_H
@@ -14,14 +20,12 @@
 #include <map>
 #include <functional>
 
-/*! @file
- *
- * @brief Base class to describe substituent arrangements in symmetries
- *
- * Contains the base class employed for describing the particular manner in
- * which substituents are arranged in various symmetries.
- */
+namespace Scine {
 
+/**
+ * @brief Permutations of possibly linked substituents around atom-centric
+ *   symmetries and combinations of two symmetries
+ */
 namespace stereopermutation {
 
 /*!
@@ -222,5 +226,7 @@ std::ostream& operator << (
 );
 
 } // namespace stereopermutation
+
+} // namespace Scine
 
 #endif

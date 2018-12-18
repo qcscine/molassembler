@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Modeling/LocalGeometryModel.h"
 
@@ -13,6 +15,8 @@
 
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/OuterGraph.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -293,3 +297,5 @@ Symmetry::Name determineLocalGeometry(
 } // namespace LocalGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

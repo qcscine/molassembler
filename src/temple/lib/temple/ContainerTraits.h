@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Compile-time container type traits
+ *
+ * Helper file that allows the use of container traits such as whether specific
+ * member functions exist in SFINAE enable_ifs.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONTAINER_TRAITS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONTAINER_TRAITS_H
@@ -7,14 +13,6 @@
 #include "temple/Traits.h"
 
 #include <utility>
-
-/*! @file
- *
- * @brief Compile-time container type traits
- *
- * Helper file that allows the use of container traits such as whether specific
- * member functions exist in SFINAE enable_ifs.
- */
 
 namespace temple {
 

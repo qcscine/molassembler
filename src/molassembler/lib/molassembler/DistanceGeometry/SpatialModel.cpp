@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 
@@ -34,6 +36,8 @@
 
 #include <fstream>
 #include <Eigen/Dense>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -1829,3 +1833,5 @@ void SpatialModel::checkFixedPositionsPreconditions(
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

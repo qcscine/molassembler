@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Element type information classes
+ *
+ * A set of electron-counting helper functions. We keep a dataset of s-p-d-f
+ * valence electron counts for all elements. These are required in e.g. VSEPR
+ * geometry determinations.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_ATOM_INFO_H
 #define INCLUDE_MOLASSEMBLER_ATOM_INFO_H
@@ -11,14 +18,7 @@
 #include <map>
 #include <vector>
 
-/*! @file
- *
- * @brief Element type information classes
- *
- * A set of electron-counting helper functions. We keep a dataset of s-p-d-f
- * valence electron counts for all elements. These are required in e.g. VSEPR
- * geometry determinations.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -100,5 +100,7 @@ double vdwRadius(Scine::Utils::ElementType elementType);
 } // namespace AtomInfo
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

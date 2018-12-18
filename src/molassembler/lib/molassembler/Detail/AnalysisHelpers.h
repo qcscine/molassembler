@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Helper functions to write DG step raytrace and analysis files.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_ANALYSIS_HELPERS_H
 #define INCLUDE_MOLASSEMBLER_ANALYSIS_HELPERS_H
@@ -11,10 +14,7 @@
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/RefinementProblem.h"
 
-/*! @file
- *
- * @brief Helper functions to write DG step raytrace and analysis files.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -237,5 +237,7 @@ void writeDGPOVandProgressFiles(
 } // namespace AnalysisHelpers
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

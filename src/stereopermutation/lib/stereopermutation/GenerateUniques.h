@@ -1,19 +1,19 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_GENERATE_UNIQUES_H
-#define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_GENERATE_UNIQUES_H
-
-#include "stereopermutation/Stereopermutation.h"
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Generate non-superposable atom-centered stereopermutations
  *
  * Main entry point into the library. From here, a set of rotationally unique
  * assignments for a specific assignment can be generated, with or without
  * counting the relative weights of unique assignments.
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_GENERATE_UNIQUES_H
+#define INCLUDE_MOLASSEMBLER_STEREOPERMUTATIONS_GENERATE_UNIQUES_H
+
+#include "stereopermutation/Stereopermutation.h"
+
+namespace Scine {
 
 namespace stereopermutation {
 
@@ -61,5 +61,7 @@ StereopermutationsWithWeights uniquesWithWeights(
 );
 
 } // namespace stereopermutation
+
+} // namespace Scine
 
 #endif

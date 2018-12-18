@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Bond distance modelling functions.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_BOND_DISTANCE_H
 #define INCLUDE_MOLASSEMBLER_BOND_DISTANCE_H
@@ -7,10 +10,7 @@
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Types.h"
 
-/*! @file
- *
- * @brief Bond distance modelling functions.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -41,5 +41,7 @@ double calculateBondOrder(
 } // namespace Bond
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

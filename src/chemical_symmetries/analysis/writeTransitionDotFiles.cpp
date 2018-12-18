@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/DynamicProperties.h"
@@ -17,6 +19,8 @@
 #include "temple/constexpr/Numeric.h"
 
 #include <Eigen/Geometry>
+
+using namespace Scine;
 
 class RGBGradient {
 public:

@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/StereopermutatorList.h"
@@ -8,6 +10,8 @@
 
 #include "temple/Stringify.h"
 #include "chemical_symmetries/Symmetries.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -198,3 +202,5 @@ const std::map<BondType, std::string> MolGraphWriter::bondTypeDisplayString {
 };
 
 } // namespace molassembler
+
+} // namespace Scine

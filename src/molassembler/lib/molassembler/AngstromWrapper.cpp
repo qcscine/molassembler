@@ -1,9 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/AngstromWrapper.h"
 
 #include "Utils/Constants.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -31,3 +35,5 @@ Scine::Utils::PositionCollection AngstromWrapper::getBohr() {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

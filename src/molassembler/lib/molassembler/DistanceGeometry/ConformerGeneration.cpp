@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
@@ -17,6 +19,8 @@
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "Utils/QuaternionFit.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -170,7 +174,7 @@ inline double looseningFactor(
 inline bool exceededFailureRatio(
   const unsigned failures,
   const unsigned numConformers,
-  const unsigned failureRatio
+  const double failureRatio
 ) noexcept {
   return static_cast<double>(failures) / numConformers >= failureRatio;
 }
@@ -417,18 +421,29 @@ std::list<RefinementData> debugRefinement(
         valueFunctor
       };
 
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        inversionStopStrategy,
-        valueFunctor,
-        errfGradient<false>(
-          squaredBounds,
-          DGData.chiralityConstraints,
-          DGData.dihedralConstraints
-        ),
-        dlibPositions,
-        0
-      );
+      try {
+        dlib::find_min(
+          dlib::bfgs_search_strategy(),
+          inversionStopStrategy,
+          valueFunctor,
+          errfGradient<false>(
+            squaredBounds,
+            DGData.chiralityConstraints,
+            DGData.dihedralConstraints
+          ),
+          dlibPositions,
+          0
+        );
+      } catch(std::out_of_range& e) {
+        Log::log(Log::Level::Warning)
+          << "Non-finite contributions to dihedral error function gradient.\n";
+        failures += 1;
+        if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+          Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+          return refinementList;
+        }
+        continue;
+      }
 
       // Handle inversion failure (hit step limit)
       if(
@@ -470,18 +485,29 @@ std::list<RefinementData> debugRefinement(
       refinementValueFunctor
     };
 
-    dlib::find_min(
-      dlib::bfgs_search_strategy(),
-      refinementStopStrategy,
-      refinementValueFunctor,
-      errfGradient<true>(
-        squaredBounds,
-        DGData.chiralityConstraints,
-        DGData.dihedralConstraints
-      ),
-      dlibPositions,
-      0
-    );
+    try {
+      dlib::find_min(
+        dlib::bfgs_search_strategy(),
+        refinementStopStrategy,
+        refinementValueFunctor,
+        errfGradient<true>(
+          squaredBounds,
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
+        ),
+        dlibPositions,
+        0
+      );
+    } catch(std::out_of_range& e) {
+      Log::log(Log::Level::Warning)
+        << "Non-finite contributions to dihedral error function gradient.\n";
+      failures += 1;
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+        Log::log(Log::Level::Warning) << "Exceeded failure ratio in debug DG.\n";
+        return refinementList;
+      }
+      continue;
+    }
 
     bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
     bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
@@ -705,22 +731,30 @@ outcome::result<
         configuration.refinementStepLimit
       };
 
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        inversionStopStrategy,
-        errfValue<false>(
-          squaredBounds,
-          DGData.chiralityConstraints,
-          DGData.dihedralConstraints
-        ),
-        errfGradient<false>(
-          squaredBounds,
-          DGData.chiralityConstraints,
-          DGData.dihedralConstraints
-        ),
-        dlibPositions,
-        0
-      );
+      try {
+        dlib::find_min(
+          dlib::bfgs_search_strategy(),
+          inversionStopStrategy,
+          errfValue<false>(
+            squaredBounds,
+            DGData.chiralityConstraints,
+            DGData.dihedralConstraints
+          ),
+          errfGradient<false>(
+            squaredBounds,
+            DGData.chiralityConstraints,
+            DGData.dihedralConstraints
+          ),
+          dlibPositions,
+          0
+        );
+      } catch(std::out_of_range& e) {
+        failures += 1;
+        if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+          return DGError::TooManyFailures;
+        }
+        continue;
+      }
 
       if(
         inversionStopStrategy.iterations >= configuration.refinementStepLimit
@@ -744,22 +778,30 @@ outcome::result<
     };
 
     // Refinement with penalty on fourth dimension is always necessary
-    dlib::find_min(
-      dlib::bfgs_search_strategy(),
-      refinementStopStrategy,
-      errfValue<true>(
-        squaredBounds,
-        DGData.chiralityConstraints,
-        DGData.dihedralConstraints
-      ),
-      errfGradient<true>(
-        squaredBounds,
-        DGData.chiralityConstraints,
-        DGData.dihedralConstraints
-      ),
-      dlibPositions,
-      0
-    );
+    try {
+      dlib::find_min(
+        dlib::bfgs_search_strategy(),
+        refinementStopStrategy,
+        errfValue<true>(
+          squaredBounds,
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
+        ),
+        errfGradient<true>(
+          squaredBounds,
+          DGData.chiralityConstraints,
+          DGData.dihedralConstraints
+        ),
+        dlibPositions,
+        0
+      );
+    } catch(std::out_of_range& e) {
+      failures += 1;
+      if(detail::exceededFailureRatio(failures, numConformers, configuration.failureRatio)) {
+        return DGError::TooManyFailures;
+      }
+      continue;
+    }
 
     bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
     bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
@@ -801,3 +843,5 @@ outcome::result<
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

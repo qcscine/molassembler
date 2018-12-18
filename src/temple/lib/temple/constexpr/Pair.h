@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief std::pair-like container
+ *
+ * Implements a constexpr container much like std::pair. Yes, this really is
+ * necessary since C++14's pair isn't constexpr everywhere!
+ */
 
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_PAIR_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_PAIR_H
@@ -7,14 +13,6 @@
 #include "temple/Preprocessor.h"
 
 #include <utility>
-
-/*! @file
- *
- * @brief std::pair-like container
- *
- * Implements a constexpr container much like std::pair. Yes, this really is
- * necessary since C++14's pair isn't constexpr everywhere!
- */
 
 namespace temple {
 

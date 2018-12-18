@@ -1,11 +1,15 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/OuterGraph.h"
 
 #include "boost/iterator/iterator_concepts.hpp"
 
 #include "molassembler/Graph/Bridge.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -238,3 +242,5 @@ template OuterGraph::InnerBasedIterator<BondIndex, true>::InnerBasedIterator(
 );
 
 } // namespace molassembler
+
+} // namespace Scine

@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 
@@ -28,6 +30,8 @@
  * But BGL does not allow this, so we would have to use Bellman-Ford, which is
  * O(VE), not O(V + E). Instead of accepting this, we use GOR1 instead.
  */
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -557,3 +561,5 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

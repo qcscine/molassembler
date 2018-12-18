@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "stereopermutation/GenerateUniques.h"
 
@@ -12,6 +14,8 @@
 #include <functional>
 #include <sstream>
 #include <unordered_map>
+
+namespace Scine {
 
 namespace stereopermutation {
 
@@ -210,3 +214,5 @@ StereopermutationsWithWeights uniquesWithWeights(
 }
 
 } // namespace stereopermutation
+
+} // namespace Scine

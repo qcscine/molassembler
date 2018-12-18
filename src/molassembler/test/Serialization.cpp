@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include <boost/test/unit_test.hpp>
 #define BOOST_FILESYSTEM_NO_DEPRECATED
@@ -14,6 +16,7 @@
 #include "molassembler/Options.h"
 #include "molassembler/Serialization.h"
 
+using namespace Scine;
 using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(base64Tests) {

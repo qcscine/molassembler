@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "boost/test/unit_test.hpp"
 
@@ -7,6 +9,7 @@
 
 #include "temple/Stringify.h"
 
+using namespace Scine;
 using namespace molassembler;
 using namespace std::string_literals;
 

@@ -1,18 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
-#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
-
-#include "molassembler/Conformers.h"
-#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/Molecule.h"
-#include "molassembler/StereopermutatorList.h"
-
-#include <cmath>
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Convert a Molecule to atom-pair distance bounds and chiral constraints
  *
  * The molecular graph with all its conformational specifications via
@@ -25,6 +13,18 @@
  * AtomStereopermutators basically must exist on any non-terminal atom, it
  * may be possible to remove the StereopermutatorList member of SpatialModel.
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_SPATIAL_MODEL_H
+
+#include "molassembler/Conformers.h"
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/Molecule.h"
+#include "molassembler/StereopermutatorList.h"
+
+#include <cmath>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -343,5 +343,7 @@ private:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

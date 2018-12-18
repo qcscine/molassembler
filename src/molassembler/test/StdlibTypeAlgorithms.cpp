@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include <boost/test/unit_test.hpp>
 
@@ -10,9 +12,11 @@
 
 #include <iostream>
 
-BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
-  using namespace StdlibTypeAlgorithms;
+using namespace Scine;
+using namespace molassembler;
+using namespace StdlibTypeAlgorithms;
 
+BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
   /* 1, 2 (2 just calls 1) */
   std::vector<
     std::set<unsigned>
@@ -23,7 +27,7 @@ BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
   };
 
   BOOST_CHECK(
-    StdlibTypeAlgorithms::vectorOfSetsEqual(
+    vectorOfSetsEqual(
       mergeOverlappingSets(
         testSetList
       ),
@@ -46,7 +50,7 @@ BOOST_AUTO_TEST_CASE( stdlibTypeAlgorithms ) {
   };
 
   BOOST_CHECK(
-    StdlibTypeAlgorithms::vectorOfSetsEqual(
+    vectorOfSetsEqual(
       makeIndividualSets(
         pairsSet
       ),
@@ -79,7 +83,7 @@ BOOST_AUTO_TEST_CASE( combinationPermutation ) {
   std::vector<unsigned> combination (testLimits.size(), 0);
 
   bool alwaysSmallerOrEqual = true;
-  while(StdlibTypeAlgorithms::nextCombinationPermutation(combination, testLimits)) {
+  while(nextCombinationPermutation(combination, testLimits)) {
     if(
       !temple::all_of(
         temple::adaptors::zip(

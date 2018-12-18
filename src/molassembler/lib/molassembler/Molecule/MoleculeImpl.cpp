@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "molassembler/Molecule/MoleculeImpl.h"
 
 #include "boost/graph/graphviz.hpp"
@@ -15,6 +20,8 @@
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/Options.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -837,14 +844,9 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     }
   }
 
-  const InnerGraph& inner = _adjacencies.inner();
-
-  auto tryInstantiateBondStereopermutator = [&](const InnerGraph::Edge& edgeIndex) -> void {
-    InnerGraph::Vertex source = inner.source(edgeIndex),
-                       target = inner.target(edgeIndex);
-
-    auto sourceAtomStereopermutatorOption = stereopermutators.option(source);
-    auto targetAtomStereopermutatorOption = stereopermutators.option(target);
+  auto tryInstantiateBondStereopermutator = [&](const BondIndex& bondIndex) -> void {
+    auto sourceAtomStereopermutatorOption = stereopermutators.option(bondIndex.first);
+    auto targetAtomStereopermutatorOption = stereopermutators.option(bondIndex.second);
 
     // There need to be assigned stereopermutators on both vertices
     if(
@@ -855,8 +857,6 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     ) {
       return;
     }
-
-    const BondIndex bondIndex {source, target};
 
     // Construct a Stereopermutator here
     auto newStereopermutator = BondStereopermutator {
@@ -882,21 +882,14 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   // Is there an explicit list of bonds on which to try BondStereopermutator instantiation?
   if(explicitBondStereopermutatorCandidatesOption) {
     for(const BondIndex& bondIndex : *explicitBondStereopermutatorCandidatesOption) {
-      // Test if the supplied edge exists first
-      auto edge = inner.edgeOption(bondIndex.first, bondIndex.second);
-      if(!edge) {
-        throw std::out_of_range("Explicit bond stereopermutator candidate edge does not exist!");
-      }
-
-      tryInstantiateBondStereopermutator(*edge);
+      tryInstantiateBondStereopermutator(bondIndex);
     }
   } else {
     // Every bond is a candidate
-    for(
-      const InnerGraph::Edge& edgeIndex :
-      boost::make_iterator_range(inner.edges())
-    ) {
-      tryInstantiateBondStereopermutator(edgeIndex);
+    for(const BondIndex& bondIndex : boost::make_iterator_range(graph().bonds())) {
+      if(_isGraphBasedBondStereopermutatorCandidate(graph().bondType(bondIndex))) {
+        tryInstantiateBondStereopermutator(bondIndex);
+      }
     }
   }
 
@@ -1026,3 +1019,5 @@ bool Molecule::Impl::operator != (const Impl& other) const {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

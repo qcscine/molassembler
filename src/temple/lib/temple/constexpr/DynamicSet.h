@@ -1,13 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_SET_H
-#define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_SET_H
-
-#include "temple/constexpr/BTree.h"
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief BTree-based std::set-like container (but max size is space allocated)
  *
  * A constexpr fixed-maximum-size managed set so that the type signature does
@@ -15,6 +8,11 @@
  * with the difference that here the maximum number of elements must be known at
  * compile time.
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_SET_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_SET_H
+
+#include "temple/constexpr/BTree.h"
 
 namespace temple {
 

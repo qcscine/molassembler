@@ -1,11 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_PREPROCESSOR_H
-#define INCLUDE_MOLASSEMBLER_TEMPLE_PREPROCESSOR_H
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Defines a set of useful preprocessor macros
  *
  * @note When applying the contained function attributes, remember that
@@ -17,6 +12,9 @@
  * @note MSVC does not implement any of these attributes, so we must replace
  * them with empty defines if compiling with it.
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_PREPROCESSOR_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_PREPROCESSOR_H
 
 /*! Applies a weak purity function attribute
  *

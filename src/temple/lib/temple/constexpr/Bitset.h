@@ -1,18 +1,16 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Fixed-size bitset class
+ *
+ * Contains a fixed-size bitset implementation.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BITSET_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_BITSET_H
 
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Array.h"
-
-/*!@file
- *
- * @brief Fixed-size bitset class
- *
- * Contains a fixed-size bitset implementation.
- */
 
 namespace temple {
 

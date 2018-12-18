@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Basic Logging functionality for debugging
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_LOG_H
 #define INCLUDE_MOLASSEMBLER_LOG_H
@@ -7,10 +10,9 @@
 #include <set>
 #include <iostream>
 
-/*! @file
- *
- * @brief Basic Logging functionality for debugging
- */
+namespace Scine {
+
+namespace molassembler {
 
 namespace Log {
 
@@ -80,4 +82,7 @@ bool isSet(Particulars particular);
 
 } // namespace Log
 
+} // namespace molassembler
+
+} // namespace Scine
 #endif

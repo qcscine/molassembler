@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Options.h"
 
@@ -9,6 +11,8 @@
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Cycles.h"
 #include "molassembler/OuterGraph.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -54,3 +58,5 @@ bool disregardStereopermutator(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

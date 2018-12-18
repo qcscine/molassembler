@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "stereopermutation/Composites.h"
 
@@ -14,6 +16,8 @@
 #include "temple/Stringify.h"
 
 #include <iostream>
+
+namespace Scine {
 
 namespace stereopermutation {
 
@@ -846,3 +850,5 @@ bool Composite::operator != (const Composite& other) const {
 }
 
 } // namespace stereopermutation
+
+} // namespace Scine

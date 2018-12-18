@@ -1,15 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Shortcuts to call STL set algorithms.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_SET_ALGORITHMS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_SET_ALGORITHMS_H
 
 #include <algorithm>
-
-/*! @file
- *
- * @brief Shortcuts to call STL set algorithms.
- */
 
 namespace temple {
 

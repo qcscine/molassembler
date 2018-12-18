@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Specifies the refinement minimization problem for the dlib library.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_REFINEMENT_PROBLEM_H
 #define INCLUDE_MOLASSEMBLER_DG_DLIB_REFINEMENT_PROBLEM_H
@@ -8,10 +11,7 @@
 
 #include <dlib/optimization.h>
 
-/*! @file
- *
- * @brief Specifies the refinement minimization problem for the dlib library.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -898,13 +898,14 @@ public:
 
       const dlib::vector<double, 3> lContribution = (h_phi / constraint.sites[3].size()) * gLength * b;
 
-      assert(
-        dlib::is_finite(iContribution)
-        && dlib::is_finite(jContribution)
-        && dlib::is_finite(kContribution)
-        && dlib::is_finite(lContribution)
-      );
-
+      if(
+        !dlib::is_finite(iContribution)
+        || !dlib::is_finite(jContribution)
+        || !dlib::is_finite(kContribution)
+        || !dlib::is_finite(lContribution)
+      ) {
+        throw std::out_of_range("Encountered non-finite dihedral contributions");
+      }
 
       for(const AtomIndex alphaConstitutingIndex : constraint.sites[0]) {
         dlib::set_rowm(
@@ -1018,5 +1019,7 @@ public:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

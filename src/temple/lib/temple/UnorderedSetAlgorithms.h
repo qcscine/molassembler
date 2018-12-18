@@ -1,13 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Set-level algorithms for unordered sets.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_UNORDERED_SETS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_UNORDERED_SETS_H
-
-/*! @file
- *
- * @brief Set-level algorithms for unordered sets.
- */
 
 namespace temple {
 

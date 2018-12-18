@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Serialization.h"
 
@@ -54,8 +56,8 @@ struct adl_serializer<Scine::Utils::ElementTypeCollection> {
 };
 
 template<>
-struct adl_serializer<molassembler::LinkInformation> {
-  using Type = molassembler::LinkInformation;
+struct adl_serializer<Scine::molassembler::LinkInformation> {
+  using Type = Scine::molassembler::LinkInformation;
 
   static void to_json(json& j, const Type& link) {
     j["p"] = json::array();
@@ -79,8 +81,8 @@ struct adl_serializer<molassembler::LinkInformation> {
 };
 
 template<>
-struct adl_serializer<molassembler::RankingInformation> {
-  using Type = molassembler::RankingInformation;
+struct adl_serializer<Scine::molassembler::RankingInformation> {
+  using Type = Scine::molassembler::RankingInformation;
 
   static void to_json(json& j, const Type& ranking) {
     j["s"] = ranking.sortedSubstituents;
@@ -96,7 +98,7 @@ struct adl_serializer<molassembler::RankingInformation> {
     ranking.sortedSubstituents.reserve(j["s"].size());
 
     for(const auto& listJSON : j["s"]) {
-      std::vector<molassembler::AtomIndex> subGroup;
+      std::vector<Scine::molassembler::AtomIndex> subGroup;
       for(const auto& listElementJSON : listJSON) {
         subGroup.push_back(listElementJSON);
       }
@@ -114,7 +116,7 @@ struct adl_serializer<molassembler::RankingInformation> {
 
     ranking.ligands.reserve(j["l"].size());
     for(const auto& listJSON : j["l"]) {
-      std::vector<molassembler::AtomIndex> ligandConstitutingAtoms;
+      std::vector<Scine::molassembler::AtomIndex> ligandConstitutingAtoms;
       for(const auto& listElementJSON : listJSON) {
         ligandConstitutingAtoms.push_back(listElementJSON);
       }
@@ -133,11 +135,11 @@ struct adl_serializer<molassembler::RankingInformation> {
 };
 
 template<>
-struct adl_serializer<molassembler::OuterGraph> {
-  using Type = molassembler::OuterGraph;
+struct adl_serializer<Scine::molassembler::OuterGraph> {
+  using Type = Scine::molassembler::OuterGraph;
 
   static void to_json(json& j, const Type& graph) {
-    const molassembler::InnerGraph& inner = graph.inner();
+    const Scine::molassembler::InnerGraph& inner = graph.inner();
 
     j["Z"] = json::array();
     auto& elements = j["Z"];
@@ -153,7 +155,7 @@ struct adl_serializer<molassembler::OuterGraph> {
     auto& edges = j["E"];
 
     for(
-      const molassembler::InnerGraph::Edge& edgeDescriptor :
+      const Scine::molassembler::InnerGraph::Edge& edgeDescriptor :
       boost::make_iterator_range(inner.edges())
     ) {
       json e = json::array();
@@ -180,7 +182,7 @@ struct adl_serializer<molassembler::OuterGraph> {
   static void from_json(const json& j, Type& graph) {
     const unsigned N = j["Z"].size();
 
-    molassembler::InnerGraph inner (N);
+    Scine::molassembler::InnerGraph inner (N);
 
     for(unsigned i = 0; i < N; ++i) {
       inner.elementType(i) = j["Z"].at(i);
@@ -190,7 +192,7 @@ struct adl_serializer<molassembler::OuterGraph> {
       inner.addEdge(
         edgeJSON.at(0),
         edgeJSON.at(1),
-        static_cast<molassembler::BondType>(
+        static_cast<Scine::molassembler::BondType>(
           edgeJSON.at(2)
         )
       );
@@ -201,6 +203,8 @@ struct adl_serializer<molassembler::OuterGraph> {
 };
 
 } // namespace nlohmann
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -362,3 +366,5 @@ Molecule fromBase64EncodedCBOR(const std::string& base64EncodedCBOR) {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

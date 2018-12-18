@@ -1,15 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_METRIC_MATRIX_H
-#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_METRIC_MATRIX_H
-
-#include <Eigen/Core>
-
-#include "molassembler/DistanceGeometry/DistanceGeometry.h"
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Metric matrix class for DG semantics
  *
  * In the Distance Geometry algorithm, a metric matrix is generated from the
@@ -29,6 +20,15 @@
  *   conformation (Vol. 74). Taunton: Research Studies Press.
  *   (PDF available as download!)
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_METRIC_MATRIX_H
+#define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_METRIC_MATRIX_H
+
+#include <Eigen/Core>
+
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -85,5 +85,7 @@ private:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

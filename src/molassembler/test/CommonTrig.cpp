@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "boost/test/unit_test.hpp"
 
@@ -18,7 +20,9 @@ bool isApproxAbs(
 
 
 BOOST_AUTO_TEST_CASE(randomExamples) {
-  using namespace molassembler::CommonTrig;
+  using namespace Scine;
+  using namespace molassembler;
+  using namespace CommonTrig;
 
   BOOST_CHECK(
     isApproxAbs(
@@ -79,8 +83,9 @@ BOOST_AUTO_TEST_CASE(randomExamples) {
 }
 
 BOOST_AUTO_TEST_CASE(dihedralZeroAlwaysSmallerDihedralPi) {
+  using namespace Scine;
   using namespace molassembler;
-  using namespace molassembler::CommonTrig;
+  using namespace CommonTrig;
 
   for(unsigned testNum = 0; testNum < 100; ++testNum) {
     const auto sideLengths = temple::random::getN<double>(1.4, 5.6, 3, randomnessEngine());

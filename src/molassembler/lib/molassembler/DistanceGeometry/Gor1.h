@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief GOR1 specializations for use with ImplicitGraph and ExplicitGraph
+ *
+ * Contains specializations of the Gor1 algorithm for use with ImplicitGraph
+ * and ExplicitGraph
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DG_GOR_SPECIALIZATION_H
 #define INCLUDE_MOLASSEMBLER_DG_GOR_SPECIALIZATION_H
@@ -10,21 +16,15 @@
 #include "boost/graph/graph_traits.hpp"
 #include "boost/graph/graph_concepts.hpp"
 
-/*!@file
- *
- * @brief GOR1 specializations for use with ImplicitGraph and ExplicitGraph
- *
- * Contains specializations of the Gor1 algorithm for use with ImplicitGraph
- * and ExplicitGraph
- */
-
 // Forward-declare ImplicitGraph
+namespace Scine {
 namespace molassembler {
 namespace DistanceGeometry {
 class ImplicitGraph;
 class ExplicitGraph;
-}
-}
+} // namespace DistanceGeometry
+} // namespace molassembler
+} // namespace Scine
 
 namespace boost {
 
@@ -70,7 +70,7 @@ template<
   class ColorMap
 >
 std::enable_if_t<
-  std::is_same<IncidenceGraph, molassembler::DistanceGeometry::ImplicitGraph>::value,
+  std::is_same<IncidenceGraph, Scine::molassembler::DistanceGeometry::ImplicitGraph>::value,
   void
 > gor1_ig_scan(
   const VertexDescriptor& vertex,
@@ -158,7 +158,7 @@ template<
   typename VertexDescriptor
 >
 std::enable_if_t<
-  std::is_same<IncidenceGraph, molassembler::DistanceGeometry::ImplicitGraph>::value,
+  std::is_same<IncidenceGraph, Scine::molassembler::DistanceGeometry::ImplicitGraph>::value,
   bool
 > gor1_ig_shortest_paths(
   const IncidenceGraph& graph,
@@ -355,7 +355,7 @@ template<
   typename VertexDescriptor
 >
 std::enable_if_t<
-  std::is_same<GraphClass, molassembler::DistanceGeometry::ExplicitGraph>::value,
+  std::is_same<GraphClass, Scine::molassembler::DistanceGeometry::ExplicitGraph>::value,
   bool
 > gor1_eg_shortest_paths(
   const GraphClass& graphWrapper,

@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Distance Geometry conformation generating procedures
+ *
+ * Declares the central conformation (and -ensemble) generating functions that
+ * start the DG procedure.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_CONFORMER_GENERATION_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_CONFORMER_GENERATION_H
@@ -11,13 +17,7 @@
 #include "molassembler/DistanceGeometry/RefinementDebugData.h"
 #include "molassembler/Log.h"
 
-/*! @file
- *
- * @brief Distance Geometry conformation generating procedures
- *
- * Declares the central conformation (and -ensemble) generating functions that
- * start the DG procedure.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -102,5 +102,7 @@ outcome::result<
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

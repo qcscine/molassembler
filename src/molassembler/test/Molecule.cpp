@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_TEST_MODULE MolassemblerMainTests
 #define BOOST_FILESYSTEM_NO_DEPRECATED
@@ -26,6 +28,7 @@
 
 #include <iostream>
 
+using namespace Scine;
 using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE( read_mol ) {

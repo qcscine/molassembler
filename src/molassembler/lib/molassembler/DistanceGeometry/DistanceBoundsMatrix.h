@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Class storing atom-pairwise distance bounds
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_DISTANCE_BOUNDS_MATRIX_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_DISTANCE_BOUNDS_MATRIX_H
@@ -11,11 +14,7 @@
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Modeling/AtomInfo.h"
 
-
-/*! @file
- *
- * @brief Class storing atom-pairwise distance bounds
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -178,5 +177,7 @@ private:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

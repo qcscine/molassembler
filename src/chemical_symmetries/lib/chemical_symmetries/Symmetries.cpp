@@ -1,7 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "chemical_symmetries/Symmetries.h"
+
+namespace Scine {
 
 namespace Symmetry {
 
@@ -59,3 +63,5 @@ unsigned nameIndex(const Name name) {
 }
 
 } // namespace Symmetry
+
+} // namespace Scine

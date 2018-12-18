@@ -1,15 +1,18 @@
-#ifndef INCLUDE_MOLASSEMBLER_ATOM_stereopermutator_IMPL_H
-#define INCLUDE_MOLASSEMBLER_ATOM_stereopermutator_IMPL_H
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Private implementation of AtomStereopermutator
+ */
+
+#ifndef INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_IMPL_H
+#define INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_IMPL_H
 
 #include "molassembler/AtomStereopermutator.h"
 
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Stereopermutators/PermutationState.h"
 
-/*! @file
- *
- * @brief Private implementation of AtomStereopermutator
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -197,5 +200,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

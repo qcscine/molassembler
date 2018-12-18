@@ -1,8 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "temple/Functional.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -45,3 +49,5 @@ outcome::result<Scine::Utils::PositionCollection> generateConformation(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

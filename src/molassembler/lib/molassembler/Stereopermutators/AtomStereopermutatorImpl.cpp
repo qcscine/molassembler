@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
 #include "chemical_symmetries/Properties.h"
@@ -23,6 +28,8 @@
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -1038,3 +1045,5 @@ bool AtomStereopermutator::Impl::operator < (const AtomStereopermutator::Impl& o
 }
 
 } // namespace molassembler
+
+} // namespace Scine

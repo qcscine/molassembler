@@ -1,15 +1,15 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Data struct for storing a numeric interval.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_VALUE_BOUNDS_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_VALUE_BOUNDS_H
 
 #include <stdexcept>
 
-/*! @file
- *
- * @brief Data struct for storing a numeric interval.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -60,5 +60,7 @@ struct ValueBounds {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

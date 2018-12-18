@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief A series of helpers to interface with the Delib library
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DELIB_HELPERS_H
 #define INCLUDE_MOLASSEMBLER_DELIB_HELPERS_H
@@ -7,10 +10,7 @@
 #include "Utils/Typenames.h"
 #include "molassembler/Types.h"
 
-/*! @file
- *
- * @brief A series of helpers to interface with the Delib library
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -117,8 +117,9 @@ double adjustedSignedVolume(
   const Eigen::Vector3d& l
 );
 
-}
+} // namespace DelibHelpers
 
-}
+} // namespace molassembler
 
+} // namespace Scine
 #endif

@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Permutational state of AtomStereopermutator member class
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DETAIL_PERMUTATION_STATE_H
 #define INCLUDE_MOLASSEMBLER_DETAIL_PERMUTATION_STATE_H
@@ -11,13 +14,13 @@
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Options.h"
 
-/*!@file
- *
- * @brief Permutational state of AtomStereopermutator member class
- */
+namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Contains all permutational state of an atom stereopermutator
+ */
 struct PermutationState {
 //!@name State
 //!@{
@@ -151,5 +154,7 @@ struct PermutationState {
 
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

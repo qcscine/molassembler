@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
@@ -20,8 +22,9 @@
 #include <iostream>
 #include <random>
 
+using namespace Scine;
 using namespace molassembler;
-using namespace molassembler::DistanceGeometry;
+using namespace DistanceGeometry;
 
 Eigen::MatrixXd reorder(
   const Eigen::MatrixXd& sourceMatrix,

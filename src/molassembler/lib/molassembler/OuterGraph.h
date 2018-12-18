@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Interface class for the molecular graph
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_OUTER_GRAPH_H
 #define INCLUDE_MOLASSEMBLER_OUTER_GRAPH_H
@@ -17,17 +20,14 @@
 #include <experimental/propagate_const>
 #endif
 
-/*!@file
- *
- * @brief Interface class for the molecular graph
- */
-
 // Forward-declarations
 namespace Scine {
 namespace Utils {
 using ElementTypeCollection = std::vector<ElementType>;
 } // namespace Utils
 } // namespace Scine
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -283,5 +283,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

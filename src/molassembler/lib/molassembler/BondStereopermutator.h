@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Handle rotational arrangements of adjacent atom-centered symmetries
+ *
+ * Contains the BondStereopermutator class declaration, which models E/Z double bond
+ * stereopermutators in molecules.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_BOND_stereopermutator_H
 #define INCLUDE_MOLASSEMBLER_BOND_stereopermutator_H
@@ -18,13 +24,7 @@
 #include <string>
 #include <memory>
 
-/*! @file
- *
- * @brief Handle rotational arrangements of adjacent atom-centered symmetries
- *
- * Contains the BondStereopermutator class declaration, which models E/Z double bond
- * stereopermutators in molecules.
- */
+namespace Scine {
 
 namespace stereopermutation {
 
@@ -205,5 +205,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

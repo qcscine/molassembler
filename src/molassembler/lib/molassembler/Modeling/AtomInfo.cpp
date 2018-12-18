@@ -1,9 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Modeling/AtomInfo.h"
 
 #include "boost/optional.hpp"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -390,3 +394,5 @@ double vdwRadius(const Scine::Utils::ElementType elementType) {
 } // namespace AtomInfo
 
 } // namespace molassembler
+
+} // namespace Scine

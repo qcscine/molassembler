@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Interpret.h"
 
@@ -12,6 +14,8 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/OuterGraph.h"
 #include "molassembler/Graph/InnerGraph.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -251,3 +255,5 @@ InterpretResult interpret(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

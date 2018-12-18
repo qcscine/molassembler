@@ -1,5 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Functional-style container-related algorithms
+ *
+ * Supplies a large number of functional-style algorithm definitions. Most are
+ * STL algorithm shortcuts but many are composable with the range adaptors
+ * provided in Adaptors/ using the function call template functions in
+ * Invoke.h.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_FUNCTIONAL_H
@@ -9,16 +17,6 @@
 
 #include <algorithm>
 #include <numeric>
-
-/*! @file
- *
- * @brief Functional-style container-related algorithms
- *
- * Supplies a large number of functional-style algorithm definitions. Most are
- * STL algorithm shortcuts but many are composable with the range adaptors
- * provided in Adaptors/ using the function call template functions in
- * Invoke.h.
- */
 
 namespace temple {
 

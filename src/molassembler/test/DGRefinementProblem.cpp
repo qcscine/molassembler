@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
@@ -25,8 +27,9 @@
 #include <iostream>
 
 using namespace std::string_literals;
+using namespace Scine;
 using namespace molassembler;
-using namespace molassembler::DistanceGeometry;
+using namespace DistanceGeometry;
 
 bool isApprox(
   const dlib::matrix<double, 0, 1>& a,

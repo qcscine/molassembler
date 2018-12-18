@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_TEST_MODULE SanityTests
 #include <boost/test/unit_test.hpp>
@@ -14,6 +16,7 @@
 #include "temple/Random.h"
 
 using namespace std::string_literals;
+using namespace Scine;
 using namespace molassembler;
 
 // Shows atom stereopermutator differences only

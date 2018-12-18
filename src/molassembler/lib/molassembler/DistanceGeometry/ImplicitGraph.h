@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Space-efficient shortest paths graph for triangle inequalities
+ *
+ * Declaration of a graph class that aids in the fast determination of triangle
+ * inequality limit distance bounds and the generation of a distance matrix from
+ * a list of atom-index pairwise distance bounds.
+ */
 
 #ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
 #define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
@@ -18,14 +25,7 @@
 #include <map>
 #include <tuple>
 
-/*! @file
- *
- * @brief Space-efficient shortest paths graph for triangle inequalities
- *
- * Declaration of a graph class that aids in the fast determination of triangle
- * inequality limit distance bounds and the generation of a distance matrix from
- * a list of atom-index pairwise distance bounds.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -519,5 +519,7 @@ public:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

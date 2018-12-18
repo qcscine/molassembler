@@ -1,5 +1,19 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Calculate internal angles of cyclic polygons from edge lengths
+ *
+ * Provides functionality to calculate the circumradii and internal angles of
+ * cyclic polygons of any size.  Contains shortcut calculations of the internal angles
+ * for triangles and quadrilaterals, which are easier to treat.
+ *
+ * The general implementation is split into two variants for when the
+ * circumcenter is inside the convex cyclic polygon, and when it is outside.
+ * The overall strategy is to try out first the variant if it is inside, and
+ * if finding a result fails, try if it is outside. One of both must work, but
+ * there is no obvious algorithm to determine the position of the circumcenter
+ * a priori.
+ */
 
 #ifndef INCLUDE_CYCLIC_POLYGONS_LIB_H
 #define INCLUDE_CYCLIC_POLYGONS_LIB_H
@@ -14,22 +28,6 @@
 #include <cmath>
 
 #include <array>
-
-/*! @file
- *
- * @brief Calculate internal angles of cyclic polygons from edge lengths
- *
- * Provides functionality to calculate the circumradii and internal angles of
- * cyclic polygons of any size.  Contains shortcut calculations of the internal angles
- * for triangles and quadrilaterals, which are easier to treat.
- *
- * The general implementation is split into two variants for when the
- * circumcenter is inside the convex cyclic polygon, and when it is outside.
- * The overall strategy is to try out first the variant if it is inside, and
- * if finding a result fails, try if it is outside. One of both must work, but
- * there is no obvious algorithm to determine the position of the circumcenter
- * a priori.
- */
 
 namespace CyclicPolygons {
 

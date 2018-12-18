@@ -1,7 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -172,3 +176,5 @@ bool AtomStereopermutator::operator < (const AtomStereopermutator& other) const 
 }
 
 } // namespace molassembler
+
+} // namespace Scine

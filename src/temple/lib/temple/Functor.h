@@ -1,15 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides an identity functor.
+ */
 
 #ifndef INCLUDE_TEMPLE_IDENTITY_H
 #define INCLUDE_TEMPLE_IDENTITY_H
 
 #include <utility>
-
-/*!@file
- *
- * @brief Provides an identity functor.
- */
 
 namespace temple {
 

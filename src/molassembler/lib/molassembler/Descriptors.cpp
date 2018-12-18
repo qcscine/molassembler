@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Descriptors.h"
 
@@ -9,6 +11,8 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -79,3 +83,5 @@ unsigned numRotatableBonds(const Molecule& mol) {
 }
 
 } // namespace molassmembler
+
+} // namespace Scine

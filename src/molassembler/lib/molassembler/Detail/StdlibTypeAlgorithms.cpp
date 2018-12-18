@@ -1,9 +1,15 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 
 #include <sstream>
+
+namespace Scine {
+
+namespace molassembler {
 
 namespace StdlibTypeAlgorithms {
 
@@ -23,3 +29,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 }
 
 } // namespace StdlibTypeAlgorithms
+
+} // namespace molassembler
+
+} // namespace Scine

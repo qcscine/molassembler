@@ -1,17 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_ORDER_DISCORVERY_HELPER
-#define INCLUDE_MOLASSEMBLER_ORDER_DISCORVERY_HELPER
-
-#include "boost/graph/adjacency_list.hpp"
-#include "boost/graph/graphviz.hpp"
-#include "temple/Adaptors/Transform.h"
-#include "temple/Functional.h"
-
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Graph class to help in gradual discovery of ordering relations
  *
  * Implements a class that aids in the gradual discovery of ordering relations
@@ -27,8 +16,22 @@
  * - addTransferabilityEdges needs a better algorithm
  */
 
+#ifndef INCLUDE_MOLASSEMBLER_ORDER_DISCORVERY_HELPER
+#define INCLUDE_MOLASSEMBLER_ORDER_DISCORVERY_HELPER
+
+#include "boost/graph/adjacency_list.hpp"
+#include "boost/graph/graphviz.hpp"
+#include "temple/Adaptors/Transform.h"
+#include "temple/Functional.h"
+
+namespace Scine {
+
 namespace molassembler {
 
+/**
+ * @brief Container aiding in gradual discovery of order
+ * @tparam T The type whose order is to be discovered
+ */
 template<typename T>
 class OrderDiscoveryHelper {
 public:
@@ -469,5 +472,7 @@ public:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Nonmodifying vector adaptor enabling filtering & sorting
+ *
+ * Without changing the underlying vector, this class permits filtering and/or
+ * sorting the data according to custom lambdas and then iterating through the
+ * resulting data set in a range-for compatible fashion.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_VECTOR_VIEW_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_VECTOR_VIEW_H
@@ -7,15 +14,6 @@
 #include "temple/constexpr/Numeric.h"
 
 #include <algorithm>
-
-/*! @file
- *
- * @brief Nonmodifying vector adaptor enabling filtering & sorting
- *
- * Without changing the underlying vector, this class permits filtering and/or
- * sorting the data according to custom lambdas and then iterating through the
- * resulting data set in a range-for compatible fashion.
- */
 
 namespace temple {
 

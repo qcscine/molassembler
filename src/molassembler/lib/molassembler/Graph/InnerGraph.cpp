@@ -1,11 +1,15 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Graph/InnerGraph.h"
 
 #include "boost/optional.hpp"
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/connected_components.hpp"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -239,3 +243,5 @@ InnerGraph::RemovalSafetyData InnerGraph::_removalSafetyData() const {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

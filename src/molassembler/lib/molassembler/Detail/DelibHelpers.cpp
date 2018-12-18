@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Detail/DelibHelpers.h"
 
@@ -7,6 +9,8 @@
 #include "temple/Functional.h"
 
 #include <array>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -228,3 +232,5 @@ double adjustedSignedVolume(
 } // namespace DelibHelpers
 
 } // namespace molassembler
+
+} // namespace Scine

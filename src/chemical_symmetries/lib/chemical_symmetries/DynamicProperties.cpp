@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "chemical_symmetries/DynamicProperties.h"
 #include "chemical_symmetries/Symmetries.h"
@@ -17,6 +19,8 @@
  * - Consider unordered_set for rotation contains, using the hash function from
  *   constexpr work
  */
+
+namespace Scine {
 
 namespace Symmetry {
 
@@ -774,3 +778,5 @@ bool hasMultipleUnlinkedAssignments(
 } // namespace properties
 
 } // namespace Symmetry
+
+} // namespace Scine

@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @brief Engine wrapper around temple's JSF PRNG for centralized re-seeding
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_PRNG_H
 #define INCLUDE_MOLASSEMBLER_PRNG_H
@@ -15,13 +18,13 @@
 #include <algorithm>
 #include <random>
 
-/*!@file
- *
- * @brief Engine wrapper around temple's JSF PRNG for centralized re-seeding
- */
+namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Randomness source for the library
+ */
 namespace random {
 
 //! Instances of this class can be used to drive PRNGs
@@ -71,5 +74,7 @@ private:
 } // namespace random
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

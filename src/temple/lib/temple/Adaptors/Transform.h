@@ -1,16 +1,14 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides functional-style transformation of container elements
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_TRANSFORM_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_TRANSFORM_ADAPTOR_H
 
 #include "temple/ContainerTraits.h"
 #include "temple/Invoke.h"
-
-/*!@file
- *
- * @brief Provides functional-style transformation of container elements
- */
 
 namespace temple {
 

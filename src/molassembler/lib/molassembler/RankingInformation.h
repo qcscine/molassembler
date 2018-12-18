@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Data struct storing results of ranking and local graph algorithms
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_RANKING_INFORMATION_H
 #define INCLUDE_MOLASSEMBLER_RANKING_INFORMATION_H
@@ -8,13 +11,13 @@
 
 #include <vector>
 
-/*! @file
- *
- * @brief Data struct storing results of ranking and local graph algorithms
- */
+namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Information on links between substituents of a central atom
+ */
 struct LinkInformation {
 //!@name Special member functions
 //!@{
@@ -181,5 +184,7 @@ struct RankingInformation {
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

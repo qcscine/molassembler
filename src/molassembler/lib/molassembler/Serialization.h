@@ -1,16 +1,16 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides serialization / deserialization for Molecule instances
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 #define INCLUDE_MOLASSEMBLER_SERIALIZATION_H
 
-/*! @file
- *
- * @brief Provides serialization / deserialization for Molecule instances
- */
-
 #include <vector>
 #include <string>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -70,5 +70,7 @@ Molecule fromCBOR(const std::vector<std::uint8_t>& cbor);
 Molecule fromBase64EncodedCBOR(const std::string& base64EncodedCBOR);
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

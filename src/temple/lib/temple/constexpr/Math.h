@@ -1,17 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_MATH_H
-#define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_MATH_H
-
-#include "temple/Preprocessor.h"
-
-#include <cmath>
-#include <limits>
-#include <type_traits>
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief constexpr math implementations
  *
  * Provides \c constexpr basic mathematical function implementations, some
@@ -22,6 +11,15 @@
  * better. In many cases, even though it is not required by the standard, the
  * supplied STL functions are constexpr.
  */
+
+#ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_MATH_H
+#define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_MATH_H
+
+#include "temple/Preprocessor.h"
+
+#include <cmath>
+#include <limits>
+#include <type_traits>
 
 namespace temple {
 

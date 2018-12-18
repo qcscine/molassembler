@@ -1,7 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Molecule/MoleculeImpl.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -191,9 +195,11 @@ bool Molecule::operator != (const Molecule& other) const {
 
 } // namespace molassembler
 
+} // namespace Scine
+
 std::ostream& operator << (
   std::ostream& os,
-  const molassembler::Molecule& molecule
+  const Scine::molassembler::Molecule& molecule
 ) {
   const auto& stereopermutators = molecule.stereopermutators();
 

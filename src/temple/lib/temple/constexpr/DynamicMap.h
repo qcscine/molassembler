@@ -1,19 +1,17 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief A std::map-like class based on BTree (but max size is space allocated)
+ *
+ * Implements a constexpr container much like std::map, except with fixed
+ * maximal size.
+ */
 
 #ifndef INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_MAP_H
 #define INLCUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_DYNAMIC_MAP_H
 
 #include "temple/constexpr/DynamicSet.h"
 #include "temple/constexpr/Pair.h"
-
-/*! @file
- *
- * @brief A std::map-like class based on BTree (but max size is space allocated)
- *
- * Implements a constexpr container much like std::map, except with fixed
- * maximal size.
- */
 
 namespace temple {
 

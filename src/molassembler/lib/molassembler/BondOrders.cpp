@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/BondOrders.h"
 
@@ -8,6 +10,8 @@
 
 #include "molassembler/AngstromWrapper.h"
 #include "molassembler/Modeling/BondDistance.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -45,3 +49,5 @@ Scine::Utils::BondOrderCollection uffBondOrders(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

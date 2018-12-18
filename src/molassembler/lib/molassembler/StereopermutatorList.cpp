@@ -1,9 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/StereopermutatorList.h"
 
 #include "temple/Functional.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -268,3 +272,5 @@ bool StereopermutatorList::operator != (const StereopermutatorList& other) const
 }
 
 } // namespace molassembler
+
+} // namespace Scine

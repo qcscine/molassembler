@@ -1,17 +1,15 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Defines DG result type error categories and strings for boost::outcome
+ *
+ * Contains the DG error_category definitions for use with boost::outcome
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_ERROR_H
 #define INCLUDE_MOLASSEMBLER_DISTANCE_GEOMETRY_ERROR_H
 
 #include <system_error>
-
-/*!@file
- *
- * @brief Defines DG result type error categories and strings for boost::outcome
- *
- * Contains the DG error_category definitions for use with boost::outcome
- */
 
 enum class DGError {
   ZeroAssignmentStereopermutators = 1,

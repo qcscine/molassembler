@@ -1,5 +1,16 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Handle arrangements of substituents around an atom-centered symmetry
+ *
+ * Coordinative stereopermutator class header file. Permits the storage of
+ * particular arrangements of bonded atoms around a central atom and their
+ * manipulation.
+ *
+ * Handles the stereopermutation issue, allowing users to cycle through
+ * non-mutually-superimposable arrangements of substituents, here called
+ * 'assignments'.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_ATOM_stereopermutator_H
 #define INCLUDE_MOLASSEMBLER_ATOM_stereopermutator_H
@@ -14,23 +25,10 @@
 
 using namespace std::string_literals;
 
-/*! @file
- *
- * @brief Handle arrangements of substituents around an atom-centered symmetry
- *
- * Coordinative stereopermutator class header file. Permits the storage of
- * particular arrangements of bonded atoms around a central atom and their
- * manipulation.
- *
- * Handles the stereopermutation issue, allowing users to cycle through
- * non-mutually-superimposable arrangements of substituents, here called
- * 'assignments'.
- */
-
-/* Forward declarations */
+namespace Scine {
 
 namespace molassembler {
-
+/* Forward declarations */
 struct RankingInformation;
 struct PermutationState;
 
@@ -40,11 +38,6 @@ class SpatialModel;
 struct ChiralityConstraint;
 
 } // namespace DistanceGeometry
-
-} // namespace molassembler
-
-
-namespace molassembler {
 
 /**
  * @brief Handles the steric permutation of substituents of a non-terminal
@@ -380,5 +373,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

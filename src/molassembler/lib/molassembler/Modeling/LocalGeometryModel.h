@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Algorithms to determine local symmetry from graph information
+ *
+ * Declarations for the general interface with which a number of classes can
+ * determine the local geometry that a specific arrangement of atoms should
+ * have.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_LOCAL_GEOMETRY_MODEL_H
 #define INCLUDE_MOLASSEMBLER_LOCAL_GEOMETRY_MODEL_H
@@ -13,20 +20,17 @@
 
 #include <map>
 
-/*! @file
- *
- * @brief Algorithms to determine local symmetry from graph information
- *
- * Declarations for the general interface with which a number of classes can
- * determine the local geometry that a specific arrangement of atoms should
- * have.
- */
+namespace Scine {
 
 namespace molassembler {
 
 // Forward-declarations
 class OuterGraph;
 
+/**
+ * @brief Methods to determine local geometries of atoms based on limited graph
+ *   information
+ */
 namespace LocalGeometry {
 
 /* Typedefs */
@@ -103,5 +107,7 @@ Symmetry::Name determineLocalGeometry(
 } // namespace LocalGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

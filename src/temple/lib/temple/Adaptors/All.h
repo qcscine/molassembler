@@ -1,13 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Includes all adaptors.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
-
-/*!@file
- *
- * @brief Includes all adaptors.
- */
 
 #include "temple/Adaptors/AllPairs.h"
 #include "temple/Adaptors/Enumerate.h"

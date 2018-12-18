@@ -1,3 +1,9 @@
+/*! @file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Private implementation of BondStereopermutator
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_IMPL_H
 #define INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_IMPL_H
 
@@ -8,10 +14,7 @@
 #include "stereopermutation/Composites.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
-/*! @file
- *
- * @brief Private implementation of BondStereopermutator
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -78,5 +81,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

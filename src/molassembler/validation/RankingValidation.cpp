@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_TEST_MODULE CIPValidationModule
 #define BOOST_FILESYSTEM_NO_DEPRECATED
@@ -15,6 +17,7 @@
 #include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/StereopermutatorList.h"
 
+using namespace Scine;
 using namespace molassembler;
 
 const std::unordered_map<unsigned, std::string> cipIdentifiers {

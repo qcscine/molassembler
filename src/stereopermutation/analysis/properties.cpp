@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include <algorithm>
 #include <vector>
@@ -18,6 +20,7 @@ std::ostream& nl(std::ostream& os) {
   return os;
 }
 
+using namespace Scine;
 using namespace stereopermutation;
 
 int main(int argc, char* argv[]) {

@@ -1,5 +1,10 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Run-time symmetry property calculations
+ *
+ * Contains a suite of property calculations on the dynamic symmetry data.
+ */
 
 #ifndef INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
 #define INCLUDE_SYMMETRY_DYNAMIC_PROPERTIES_CALCULATION_H
@@ -12,13 +17,7 @@
 #include <set>
 #include <vector>
 
-
-/*! @file
- *
- * @brief Run-time symmetry property calculations
- *
- * Contains a suite of property calculations on the dynamic symmetry data.
- */
+namespace Scine {
 
 namespace Symmetry {
 
@@ -228,5 +227,7 @@ bool hasMultipleUnlinkedAssignments(
 } // namespace properties
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

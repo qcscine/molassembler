@@ -1,5 +1,16 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Molecule class interface
+ *
+ * Contains the Molecule class declaration, which is the central class of the
+ * library.
+ *
+ * @todo
+ * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
+ *   may become or cease to be eta bond types, and this is not checked for
+ *   and appropriately altered in the graph.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
@@ -18,19 +29,6 @@
 
 #include <memory>
 
-/*! @file
- *
- * @brief Molecule class interface
- *
- * Contains the Molecule class declaration, which is the central class of the
- * library.
- *
- * @todo
- * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
- *   may become or cease to be eta bond types, and this is not checked for
- *   and appropriately altered in the graph.
- */
-
 // External forward declarations
 namespace Scine {
 namespace Utils {
@@ -38,6 +36,14 @@ using ElementTypeCollection = std::vector<ElementType>;
 } // namespace Utils
 } // namespace Scine
 
+/**
+ * @brief Master namespace to which the molassembler project belongs
+ */
+namespace Scine {
+
+/**
+ * @brief Molecular graph and stereocenter manipulation
+ */
 namespace molassembler {
 
 // Forward declarations
@@ -588,9 +594,11 @@ private:
 
 } // namespace molassembler
 
+} // namespace Scine
+
 std::ostream& operator << (
   std::ostream& os,
-  const molassembler::Molecule& molecule
+  const Scine::molassembler::Molecule& molecule
 );
 
 #endif

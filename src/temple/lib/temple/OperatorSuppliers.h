@@ -1,16 +1,14 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_OPERATOR_SUPPLIERS_H
-#define INCLUDE_MOLASSEMBLER_TEMPLE_OPERATOR_SUPPLIERS_H
-
 /*!@file
- *
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief Operator-supplying CRTP base classes
  *
  * Permits the provision of more operators from fewer initial operator
  * implementations.
  */
+
+#ifndef INCLUDE_MOLASSEMBLER_TEMPLE_OPERATOR_SUPPLIERS_H
+#define INCLUDE_MOLASSEMBLER_TEMPLE_OPERATOR_SUPPLIERS_H
 
 namespace temple {
 

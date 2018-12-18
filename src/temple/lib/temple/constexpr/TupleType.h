@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides type-level computations for types enumerated in a tuple.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TUPLE_TYPE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TUPLE_TYPE_H
@@ -7,11 +10,6 @@
 #include "temple/constexpr/Array.h"
 
 #include <tuple>
-
-/*! @file
- *
- * @brief Provides type-level computations for types enumerated in a tuple.
- */
 
 namespace temple {
 

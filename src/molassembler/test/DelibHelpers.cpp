@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include <boost/test/unit_test.hpp>
 
@@ -12,7 +14,7 @@
 #include <cmath>
 
 BOOST_AUTO_TEST_CASE(dihedralTests) {
-  using namespace molassembler::DelibHelpers;
+  using namespace Scine::molassembler::DelibHelpers;
 
   Scine::Utils::PositionCollection positions(4, 3);
   positions.row(0) = Scine::Utils::Position {1, 0, 0};
@@ -29,7 +31,7 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
       -M_PI + 0.01,
       M_PI - 0.01,
       100,
-      molassembler::randomnessEngine()
+      Scine::molassembler::randomnessEngine()
     )
   ) {
 

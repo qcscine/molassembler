@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Owning class storing all stereopermutators in a molecule
+ *
+ * Contains the declaration for a class that stores a list of all stereopermutators
+ * in a molecule.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATOR_LIST_H
@@ -14,13 +20,7 @@
 
 #include <unordered_map>
 
-/*! @file
- *
- * @brief Owning class storing all stereopermutators in a molecule
- *
- * Contains the declaration for a class that stores a list of all stereopermutators
- * in a molecule.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -127,6 +127,7 @@ private:
   BondMapType _bondStereopermutators;
 };
 
-}
+} // namespace molassembler
 
+} // namespace Scine
 #endif

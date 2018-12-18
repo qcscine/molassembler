@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Generate rotational orientations of two symmetries fused over a bond
+ *
+ * Enables the computation of relative orientations of arbitrary symmetries
+ * fused at arbitrary positions that yield indices of permutations that are
+ * meaningful for ranking computations.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
@@ -9,14 +16,7 @@
 #include "temple/TinySet.h"
 #include "temple/OrderedPair.h"
 
-/*!@file
- *
- * @brief Generate rotational orientations of two symmetries fused over a bond
- *
- * Enables the computation of relative orientations of arbitrary symmetries
- * fused at arbitrary positions that yield indices of permutations that are
- * meaningful for ranking computations.
- */
+namespace Scine {
 
 namespace stereopermutation {
 
@@ -238,5 +238,7 @@ private:
 };
 
 } // namespace stereopermutation
+
+} // namespace Scine
 
 #endif

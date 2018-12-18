@@ -1,7 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "chemical_symmetries/Primitives.h"
+
+namespace Scine {
 
 namespace Symmetry {
 
@@ -167,3 +171,5 @@ constexpr decltype(SquareAntiPrismatic::angleLookupTable) SquareAntiPrismatic::a
 } // namespace data
 
 } // namespace Symmetry
+
+} // namespace Scine

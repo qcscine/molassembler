@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/OuterGraph.h"
 
@@ -7,6 +9,8 @@
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph/Bridge.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -136,3 +140,5 @@ OuterGraph::Range<OuterGraph::IncidentEdgesIterator> OuterGraph::bonds(const Ato
 }
 
 } // namespace molassembler
+
+} // namespace Scine

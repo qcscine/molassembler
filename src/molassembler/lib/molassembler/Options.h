@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Centralizes the main customization points of the library's behavior.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_OPTIONS_H
 #define INCLUDE_MOLASSEMBLER_OPTIONS_H
@@ -10,10 +13,7 @@
 #include "Utils/ElementTypes.h"
 #include "molassembler/AngstromWrapper.h"
 
-/*!@file
- *
- * @brief Centralizes the main customization points of the library's behavior.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -168,6 +168,9 @@ enum class TauCriterion {
   Disable
 };
 
+/**
+ * @brief Contains all global settings for the library
+ */
 struct Options {
   /*!
    * @brief Sets the temperature regime to be used for all Molecules
@@ -211,5 +214,7 @@ bool disregardStereopermutator(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

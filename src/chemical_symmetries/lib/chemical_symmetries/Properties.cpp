@@ -1,11 +1,15 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "chemical_symmetries/Properties.h"
 
 #include "temple/constexpr/ToSTL.h"
 #include "temple/constexpr/TupleTypePairs.h"
 #include "temple/Functional.h"
+
+namespace Scine {
 
 namespace Symmetry {
 
@@ -199,3 +203,5 @@ bool hasMultipleUnlinkedAssignments(
 }
 
 } // namespace Symmetry
+
+} // namespace Scine

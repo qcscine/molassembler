@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/IO/FileHandlers.h"
 
@@ -24,6 +26,8 @@
 #include "molassembler/Version.h"
 
 #include "temple/Random.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -497,3 +501,5 @@ InterpretResult interpret(const FileHandler::RawData& data) {
 } // namespace IO
 
 } // namespace molassembler
+
+} // namespace Scine

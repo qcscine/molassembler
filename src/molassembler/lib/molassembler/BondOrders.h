@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Interpret bond orders from 3D coordinates only
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 #define INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
@@ -15,10 +18,7 @@ using ElementTypeCollection = std::vector<ElementType>;
 } // namespace Utils
 } // namespace Scine
 
-/*! @file
- *
- * @brief Interpret bond orders from 3D coordinates only
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -38,5 +38,7 @@ Scine::Utils::BondOrderCollection uffBondOrders(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

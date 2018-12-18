@@ -1,7 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Log.h"
+
+namespace Scine {
+
+namespace molassembler {
 
 namespace Log {
 
@@ -36,3 +42,7 @@ Level level = Level::Trace;
 std::set<Particulars> particulars {};
 
 } // namespace Log
+
+} // namespace molassembler
+
+} // namespace Scine

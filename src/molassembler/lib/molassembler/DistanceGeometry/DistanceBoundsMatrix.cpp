@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 
@@ -8,6 +10,8 @@
 
 #include <cassert>
 #include <algorithm>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -197,3 +201,5 @@ unsigned DistanceBoundsMatrix::N() const {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

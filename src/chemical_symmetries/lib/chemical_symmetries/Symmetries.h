@@ -1,5 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Centralizes basic symmetry data in name-accessible fashion
+ *
+ * Central inclusion point of the library. Defines the main symmetry data and
+ * all accessors. Symmetries are defined in a constexpr fashion and homogenized
+ * into a single container at compile-time to allow for compile-time computation
+ * without losing universal accessibility at run-time.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_SYMMETRIES_H
 #define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_SYMMETRIES_H
@@ -13,15 +21,7 @@
 #include <vector>
 #include <map>
 
-/*! @file
- *
- * @brief Centralizes basic symmetry data in name-accessible fashion
- *
- * Central inclusion point of the library. Defines the main symmetry data and
- * all accessors. Symmetries are defined in a constexpr fashion and homogenized
- * into a single container at compile-time to allow for compile-time computation
- * without losing universal accessibility at run-time.
- */
+namespace Scine {
 
 namespace Symmetry {
 
@@ -307,5 +307,7 @@ inline const TetrahedronList& tetrahedra(const Name name) {
 }
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

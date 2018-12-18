@@ -1,9 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Modeling/CommonTrig.h"
 
 #include "dlib/optimization.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -241,3 +245,5 @@ ValueBounds dihedralLengthBounds(
 } // namespace CommonTrig
 
 } // namespace molassembler
+
+} // namespace Scine

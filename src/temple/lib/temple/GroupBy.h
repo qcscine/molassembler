@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Group container elements together by various methods
+ *
+ * Provides functionality to group elements of a container together by various
+ * methods.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_GROUP_BY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_GROUP_BY_H
@@ -8,14 +14,6 @@
 
 #include <vector>
 #include <map>
-
-/*! @file
- *
- * @brief Group container elements together by various methods
- *
- * Provides functionality to group elements of a container together by various
- * methods.
- */
 
 namespace temple {
 

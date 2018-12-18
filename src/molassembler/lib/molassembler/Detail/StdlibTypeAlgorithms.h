@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Useful functions for dealing with STL containers / types.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_STDLIB_TYPE_ALGORITHMS_H
 #define INCLUDE_MOLASSEMBLER_STDLIB_TYPE_ALGORITHMS_H
@@ -11,10 +14,9 @@
 #include <numeric>
 #include <map>
 
-/*! @file
- *
- * @brief Useful functions for dealing with STL containers / types.
- */
+namespace Scine {
+
+namespace molassembler {
 
 namespace StdlibTypeAlgorithms {
 
@@ -270,5 +272,9 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems);
 std::vector<std::string> split(const std::string &s, char delim);
 
 } // namespace StdlibTypeAlgorithms
+
+} // namespace molassembler
+
+} // namespace Scine
 
 #endif

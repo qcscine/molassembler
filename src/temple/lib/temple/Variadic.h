@@ -1,5 +1,10 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Variadic functions
+ *
+ * Provides functions that can apply to as many Containers as needed.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_VARIADIC_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_VARIADIC_H
@@ -9,13 +14,6 @@
 #include "temple/ContainerTraits.h"
 
 #include <algorithm>
-
-/*!@file
- *
- * @brief Variadic functions
- *
- * Provides functions that can apply to as many Containers as needed.
- */
 
 namespace temple {
 

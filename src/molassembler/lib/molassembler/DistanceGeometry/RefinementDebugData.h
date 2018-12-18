@@ -1,5 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Data struct for DG refinement step data
+ *
+ * Contains the declarations of a number of debug data structures for the
+ * debugging of DG refinement.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_DG_REFINEMENT_DEBUG_DATA_H
 #define INCLUDE_MOLASSEMBLER_DG_REFINEMENT_DEBUG_DATA_H
@@ -11,14 +17,7 @@
 #include <list>
 #include <vector>
 
-
-/*! @file
- *
- * @brief Data struct for DG refinement step data
- *
- * Contains the declarations of a number of debug data structures for the
- * debugging of DG refinement.
- */
+namespace Scine {
 
 namespace molassembler {
 
@@ -65,5 +64,7 @@ struct RefinementData {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

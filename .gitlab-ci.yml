@@ -7,51 +7,74 @@ stages:
   - quality_checks
 
 #
-# Build with GCC on Linux (docker)
+# GCC Debug test and coverage
 #
-build_gcc:
+build:gcc_debug:
   stage: build
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - mkdir -p gcc_build
-    - cd gcc_build
+    - mkdir -p build_gcc_debug
+    - cd build_gcc_debug
     - pwd
-    - cmake -DCMAKE_BUILD_TYPE=Release -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON ..
+    - cmake -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON -DCMAKE_CXX_FLAGS="-g -O0 -coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage" ..
     - make -j8
-  cache:
-    key: gcc_build
-    paths:
-      - gcc_build/
   artifacts:
-    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
-    expire_in: 30 days
+    expire_in: 1 day
     paths:
-      - gcc_build/src/molassembler/lib/libmolassembler.so
+      - build_gcc_debug
 
-#
-# Test with GCC on Linux (docker)
-#
-test_gcc:
+test:gcc_debug:
   stage: test
   tags:
     - default_docker
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
-    - mkdir -p gcc_build
-    - cd gcc_build
-    - make check
-  cache:
-    key: gcc_build
-    paths:
-      - gcc_build/
-    policy: pull
+    - (cd build_gcc_debug && make check)
+    - python /usr/local/bin/gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build-gcc/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
+  dependencies:
+    - build:gcc_debug
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
+  artifacts:
+    expire_in: 1 day
 
 #
-# Build in with clang docker image
+# GCC Release test
 #
-build_clang:
+build:gcc_release:
+  stage: build
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - mkdir -p build_gcc_release
+    - cd build_gcc_release
+    - pwd
+    - cmake -DCMAKE_BUILD_TYPE=Release -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON ..
+    - make -j8
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - build_gcc_release
+
+test:gcc_release:
+  stage: test
+  tags:
+    - default_docker
+  image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
+  script:
+    - (cd build_gcc_release && make check)
+  dependencies:
+    - build:gcc_release
+  artifacts:
+    expire_in: 1 day
+
+
+#
+# Clang Release test
+#
+build:clang_release:
   stage: build
   tags:
     - default_docker
@@ -64,15 +87,12 @@ build_clang:
     - pwd
     - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DMOLASSEMBLER_DOWNLOAD_DEPENDENCIES=ON ..
     - make -j8
-  cache:
-    key: build_clang
+  artifacts:
+    expire_in: 1 day
     paths:
-      - build_clang/
+      - build_clang
 
-#
-# Test in with clang in docker image
-#
-test_clang:
+test:clang_release:
   stage: test
   tags:
     - default_docker
@@ -80,14 +100,11 @@ test_clang:
   only:
     - master
   script:
-    - mkdir -p build_clang
-    - cd build_clang
-    - make check
-  cache:
-    key: build_clang
-    paths:
-      - build_clang/
-    policy: pull
+    - (cd build_clang && make check)
+  dependencies:
+    - build:clang_release
+  artifacts:
+    expire_in: 1 day
 
 #
 # Verify that the ETH license is present in all source files

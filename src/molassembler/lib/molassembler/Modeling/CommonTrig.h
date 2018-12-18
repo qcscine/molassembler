@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Trigonometric stubs
+ *
+ * Contains some common trigonometric functionality. Does not contain custom
+ * implementations of the basic trigonometric functions, but rather common
+ * combinations of them in specific contexts.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_COMMON_TRIG_H
 #define INCLUDE_MOLASSEMBLER_COMMON_TRIG_H
@@ -9,20 +16,13 @@
 
 #include <cmath>
 
-/*! @file
- *
- * @brief Trigonometric stubs
- *
- * Contains some common trigonometric functionality. Does not contain custom
- * implementations of the basic trigonometric functions, but rather common
- * combinations of them in specific contexts.
- */
+namespace Scine {
 
 namespace molassembler {
 
 namespace CommonTrig {
 
-using ValueBounds = ::molassembler::DistanceGeometry::ValueBounds;
+using ValueBounds = DistanceGeometry::ValueBounds;
 
 /*!
  * Calculates the law of cosines, returning c:
@@ -117,5 +117,7 @@ ValueBounds dihedralLengthBounds(
 } // namespace CommonTrig
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

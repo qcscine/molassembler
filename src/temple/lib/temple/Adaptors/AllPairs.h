@@ -1,5 +1,8 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Provides pair-generation within a single container or two.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_ALL_PAIRS_ADAPTOR_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ALL_PAIRS_ADAPTOR_H
@@ -7,11 +10,6 @@
 #include "temple/ContainerTraits.h"
 
 #include <tuple>
-
-/*!@file
- *
- * @brief Provides pair-generation within a single container or two.
- */
 
 namespace temple {
 

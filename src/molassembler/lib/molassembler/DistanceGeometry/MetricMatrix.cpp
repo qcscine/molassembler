@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/Types.h"
@@ -7,6 +9,8 @@
 #include "Spectra/SymEigsSolver.h"
 
 #include <Eigen/Eigenvalues>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -209,3 +213,5 @@ bool MetricMatrix::operator == (const MetricMatrix& other) const {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

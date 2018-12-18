@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
@@ -21,6 +23,7 @@
 #include <random>
 #include <fstream>
 
+using namespace Scine;
 using namespace molassembler;
 
 bool isBondStereopermutator(

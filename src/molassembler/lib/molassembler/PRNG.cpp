@@ -1,10 +1,14 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "PRNG.h"
 
 #include "temple/constexpr/JSF.h"
 #include <random>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -72,3 +76,5 @@ Engine::result_type Engine::operator() () const {
 } // namespace random
 
 } // namespace molassembler
+
+} // namespace Scine

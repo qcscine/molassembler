@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Stereopermutators/PermutationState.h"
 
@@ -12,6 +14,8 @@
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Modeling/CommonTrig.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -568,3 +572,5 @@ bool PermutationState::isNotObviouslyImpossibleStereopermutation(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief std::vector-like class (but max size is size allocated)
+ *
+ * A constexpr fixed-maximum size managed array so that insertions and deletions
+ * do not change the type signature. Principally similar to std::vector except
+ * that the maximum size must be known at compile time and cannot change.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_DYNAMIC_ARRAY_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_DYNAMIC_ARRAY_H
@@ -9,15 +16,6 @@
 #include <cstddef>
 #include <type_traits>
 #include <utility>
-
-/*! @file
- *
- * @brief std::vector-like class (but max size is size allocated)
- *
- * A constexpr fixed-maximum size managed array so that insertions and deletions
- * do not change the type signature. Principally similar to std::vector except
- * that the maximum size must be known at compile time and cannot change.
- */
 
 namespace temple {
 

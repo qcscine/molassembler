@@ -1,9 +1,13 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 
 #include <limits>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -28,3 +32,5 @@ bool ValueBounds::operator != (const ValueBounds& other) const {
 } // namespace molassembler
 
 } // namespace DistanceGeometry
+
+} // namespace Scine

@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
@@ -67,6 +69,7 @@ std::map<std::string, ExpectationData> decompositionData {
 };
 
 void readAndDecompose(const boost::filesystem::path& filePath) {
+  using namespace Scine;
   using namespace molassembler;
 
   // Read the file

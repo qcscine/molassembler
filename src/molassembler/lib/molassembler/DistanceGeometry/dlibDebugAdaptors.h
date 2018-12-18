@@ -1,14 +1,6 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
-
-#ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_DEBUG_ADAPTORS_H
-#define INCLUDE_MOLASSEMBLER_DG_DLIB_DEBUG_ADAPTORS_H
-
-#include "molassembler/DistanceGeometry/RefinementDebugData.h"
-#include "molassembler/DistanceGeometry/RefinementProblem.h"
-
-/*! @file
- *
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
  * @brief dlib DG refinement minimization strategies for debugging
  *
  * The numerical minimization of the error function is done with the dlib
@@ -24,11 +16,19 @@
  * as a side effect, lits of refinement step data.
  */
 
+#ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_DEBUG_ADAPTORS_H
+#define INCLUDE_MOLASSEMBLER_DG_DLIB_DEBUG_ADAPTORS_H
+
+#include "molassembler/DistanceGeometry/RefinementDebugData.h"
+#include "molassembler/DistanceGeometry/RefinementProblem.h"
+
 /* NOTES
  * - Identical implementations as dlibAdaptors, except that they are initialized
  *   differently with references to the refinement value functor and the list of
  *   steps that they should write debug data to
  */
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -187,5 +187,7 @@ struct debugIterationOrGradientNormStopStrategy {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -1,14 +1,17 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Base 64 encoding and decoding between strings and vectors of uint_8
+ */
+
+#ifndef INCLUDE_BASE_64_ENCODING_H
+#define INCLUDE_BASE_64_ENCODING_H
 
 #include <string>
 #include <vector>
 #include <stdexcept>
 
-/*!@file
- *
- * @brief Base 64 encoding and decoding between strings and vectors of uint_8
- */
+namespace Scine {
 
 namespace base64 {
 
@@ -127,3 +130,7 @@ std::vector<std::uint8_t> decode(const std::string& input) {
 }
 
 } // namespace base64
+
+} // namespace Scine
+
+#endif

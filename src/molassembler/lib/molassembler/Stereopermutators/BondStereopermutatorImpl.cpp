@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
 
 #include "chemical_symmetries/Symmetries.h"
@@ -16,6 +21,8 @@
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -148,10 +155,12 @@ BondStereopermutator::Impl::Impl(
     _edge(edge),
     _assignment(boost::none)
 {
-  assert(
-    !stereopermutatorA.getRanking().hasHapticLigands()
-    && !stereopermutatorB.getRanking().hasHapticLigands()
-  );
+  if(
+    stereopermutatorA.getRanking().hasHapticLigands()
+    || stereopermutatorB.getRanking().hasHapticLigands()
+  ) {
+    throw std::logic_error("BondStereopermutators do not support haptic ligands yet.");
+  }
 }
 
 /* Public members */
@@ -617,3 +626,5 @@ bool BondStereopermutator::Impl::operator != (const Impl& other) const {
 
 
 } // namespace molassembler
+
+} // namespace Scine

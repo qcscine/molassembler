@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief constexpr BTree
+ *
+ * Implements a constexpr BTree which stores keys. Can be used for an ordered
+ * set-like container with good complexity guarantees. Can be turned into an
+ * associative container with some comparator tweaking.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_BTREE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_BTREE_H
@@ -10,15 +17,6 @@
 #include "temple/constexpr/Optional.h"
 
 #include <sstream>
-
-/*! @file
- *
- * @brief constexpr BTree
- *
- * Implements a constexpr BTree which stores keys. Can be used for an ordered
- * set-like container with good complexity guarantees. Can be turned into an
- * associative container with some comparator tweaking.
- */
 
 namespace temple {
 

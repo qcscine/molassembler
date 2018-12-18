@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #ifndef INCLUDE_LOGICAL_OPERATOR_TESTS_H
 #define INCLUDE_LOGICAL_OPERATOR_TESTS_H
@@ -40,7 +42,7 @@ template<typename T>
 bool testOperatorSmaller(const T& a, const T& b) {
   return XOR(
     a < b,
-    b < a, 
+    b < a,
     !(a < b) && !(b < a) // a != b expressed with < only
   );
 }

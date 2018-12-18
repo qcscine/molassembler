@@ -1,7 +1,11 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -110,3 +114,5 @@ bool BondStereopermutator::operator != (const BondStereopermutator& other) const
 }
 
 } // namespace molassembler
+
+} // namespace Scine

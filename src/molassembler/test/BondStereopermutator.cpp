@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
@@ -14,6 +16,7 @@
 
 #include <iostream>
 
+using namespace Scine;
 using BondIndex = molassembler::BondIndex;
 
 struct Expectation {
@@ -144,12 +147,10 @@ void checkExpectations(const boost::filesystem::path& filePath) {
       BOOST_FAIL(positionsResult.error().message());
     }
 
-    auto positions = positionsResult.value();
-
     // Reinterpret the molecule from the existing graph and the generated positions
     Molecule reinterpreted {
       mol.graph(),
-      AngstromWrapper {positionsResult.value()}
+      AngstromWrapper {std::move(positionsResult.value())}
     };
 
     bool pass = reinterpreted == mol;

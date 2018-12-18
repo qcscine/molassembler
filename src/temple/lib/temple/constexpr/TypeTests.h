@@ -1,5 +1,12 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Logical operator test helpers
+ *
+ * Contains a suite of constexpr logical operator consistency checks. These can
+ * aid in the diagnosis of custom operator weak ordering inconsistencies and
+ * serve as useful library tests.
+ */
 
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TYPE_TESTS_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TYPE_TESTS_H
@@ -7,15 +14,6 @@
 #include "temple/constexpr/Math.h"
 
 #include <iostream>
-
-/*! @file
- *
- * @brief Logical operator test helpers
- *
- * Contains a suite of constexpr logical operator consistency checks. These can
- * aid in the diagnosis of custom operator weak ordering inconsistencies and
- * serve as useful library tests.
- */
 
 namespace temple {
 

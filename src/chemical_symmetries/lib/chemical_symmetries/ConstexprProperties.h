@@ -1,5 +1,18 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Compile-time symmetry property calculations
+ *
+ * Constexpr parallel to Properties.h. Contains a slew of computations on the
+ * base symmetry data to compute derived properties. You can e.g. apply
+ * rotations, extract rotation multiplicities, calculate angular and chiral
+ * distortions between pairs of symmetries, etc.
+ *
+ * @todo
+ * - remove hashIndexList in favor of the bitset hashing algorithm for
+ *   constexpr speed
+ * - remove unused stuff
+ */
 
 #ifndef INCLUDE_SYMMETRY_INFORMATION_CONSTEXPR_PROPERTIES_H
 #define INCLUDE_SYMMETRY_INFORMATION_CONSTEXPR_PROPERTIES_H
@@ -13,21 +26,7 @@
 #include "temple/constexpr/Numeric.h"
 #include "temple/Cache.h"
 
-/*! @file
- *
- * @brief Compile-time symmetry property calculations
- *
- * Constexpr parallel to Properties.h. Contains a slew of computations on the
- * base symmetry data to compute derived properties. You can e.g. apply
- * rotations, extract rotation multiplicities, calculate angular and chiral
- * distortions between pairs of symmetries, etc.
- */
-
-/* TODO
- * - remove hashIndexList in favor of the bitset hashing algorithm for
- *   constexpr speed
- * - remove unused stuff
- */
+namespace Scine {
 
 namespace Symmetry {
 
@@ -918,5 +917,7 @@ constexpr bool hasMultipleUnlinkedAssignments(
 } // namespace constexprProperties
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

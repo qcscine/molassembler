@@ -1,5 +1,7 @@
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
@@ -33,6 +35,8 @@ std::ostream& nl(std::ostream& os) {
   os << '\n';
   return os;
 }
+
+using namespace Scine;
 
 template<class Graph>
 struct BFFunctor {
@@ -158,6 +162,7 @@ UnsignedType right(UnsignedType a) {
 }
 
 BOOST_AUTO_TEST_CASE(conceptTests) {
+  using namespace Scine;
   using namespace molassembler;
 
   for(
