@@ -27,6 +27,10 @@ namespace molassembler {
 // Forward-declarations
 class OuterGraph;
 
+/**
+ * @brief Methods to determine local geometries of atoms based on limited graph
+ *   information
+ */
 namespace LocalGeometry {
 
 /* Typedefs */

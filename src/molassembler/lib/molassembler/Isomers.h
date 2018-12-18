@@ -14,6 +14,10 @@ namespace molassembler {
 // Forward-declarations
 class Molecule;
 
+/**
+ * @brief Tag for function dispatch indicating that two molecules are enumerated
+ *   the same
+ */
 struct SameIndexingTag {};
 
 /*!

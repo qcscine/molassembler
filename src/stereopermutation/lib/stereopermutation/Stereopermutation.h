@@ -22,6 +22,10 @@
 
 namespace Scine {
 
+/**
+ * @brief Permutations of possibly linked substituents around atom-centric
+ *   symmetries and combinations of two symmetries
+ */
 namespace stereopermutation {
 
 /*!

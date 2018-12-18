@@ -26,11 +26,17 @@ namespace molassembler {
 class StereopermutatorList;
 class InnerGraph;
 
+/**
+ * @brief Classes and methods to compute hashes of atom environments
+ */
 namespace hashes {
 
 using WideHashType = boost::multiprecision::uint128_t;
 using HashType = std::uint64_t;
 
+/**
+ * @brief Information pertinent to a singular bond hash
+ */
 struct BondInformation {
   static constexpr unsigned hashWidth = 6;
 
@@ -76,6 +82,7 @@ std::tuple<
   const std::vector<WideHashType>& b
 );
 
+//! Generates hashes for two molecules' components
 std::pair<
   std::vector<HashType>,
   std::vector<HashType>
@@ -87,9 +94,10 @@ std::pair<
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask
 );
 
-/*! A functor for getting an atom's hash from a captured list of hashes
+/*!
+ * @brief A functor for getting an atom's hash from a captured list of hashes
  *
- * \note This explicit form is needed instead of a lambda for boost's concept
+ * @note This explicit form is needed instead of a lambda for boost's concept
  *   checks. It satisfies the AdaptableUnaryFunctionConcept.
  */
 struct LookupFunctor {

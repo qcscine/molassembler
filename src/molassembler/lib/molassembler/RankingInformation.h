@@ -15,6 +15,9 @@ namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Information on links between substituents of a central atom
+ */
 struct LinkInformation {
 //!@name Special member functions
 //!@{

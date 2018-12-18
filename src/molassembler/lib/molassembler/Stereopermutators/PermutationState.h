@@ -18,6 +18,9 @@ namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Contains all permutational state of an atom stereopermutator
+ */
 struct PermutationState {
 //!@name State
 //!@{

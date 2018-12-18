@@ -19,6 +19,9 @@ namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Library internal graph class wrapping BGL types
+ */
 class InnerGraph {
 public:
 //!@name Member types

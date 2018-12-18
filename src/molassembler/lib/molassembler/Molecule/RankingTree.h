@@ -80,8 +80,10 @@ namespace Scine {
 namespace molassembler {
 
 /*!
- * Central class for unified IUPAC-like ranking of organic and inorganic
- * structures. The general procedure is that any cycles are broken down in a BFS
+ * @brief Central class for unified IUPAC-like ranking of organic and inorganic
+ *   structures.
+ *
+ * The general procedure is that any cycles are broken down in a BFS
  * iteration through the molecular graph at the atom vertex of instantiation.
  * Afterwards, all branches are expanded in a DFS-like manner to ensure that
  * cycle closures are properly reported as duplicate atoms. In the rank() member

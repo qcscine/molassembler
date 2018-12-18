@@ -12,6 +12,9 @@
 
 namespace Scine {
 
+/**
+ * @brief Symmetry definitions and properties
+ */
 namespace Symmetry {
 
 //! Enumeration of all contained symmetry names

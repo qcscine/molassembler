@@ -22,6 +22,9 @@ namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Randomness source for the library
+ */
 namespace random {
 
 //! Instances of this class can be used to drive PRNGs

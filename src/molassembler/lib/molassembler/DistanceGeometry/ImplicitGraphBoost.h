@@ -15,7 +15,10 @@
 #include "molassembler/DistanceGeometry/ImplicitGraphHelpers.h"
 #include "boost/graph/graph_traits.hpp"
 
-/* Boost graph inclusion additions */
+/**
+ * @brief Additions to Boost namespace for BGL compatibility of custom graph
+ *   classes
+ */
 namespace boost {
 
 /*!

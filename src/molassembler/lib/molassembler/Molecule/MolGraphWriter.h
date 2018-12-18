@@ -20,7 +20,7 @@ class StereopermutatorList;
 class AtomStereopermutator;
 class BondStereopermutator;
 
-// Helper class to write the Graph as Graphviz output
+//! Helper class to write the Graph as Graphviz output
 struct MolGraphWriter {
 //!@name Static data
 //!@{

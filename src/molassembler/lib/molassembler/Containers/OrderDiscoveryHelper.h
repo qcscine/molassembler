@@ -28,6 +28,10 @@ namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Container aiding in gradual discovery of order
+ * @tparam T The type whose order is to be discovered
+ */
 template<typename T>
 class OrderDiscoveryHelper {
 public:

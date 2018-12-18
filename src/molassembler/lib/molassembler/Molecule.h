@@ -34,8 +34,14 @@ namespace Delib {
 class ElementTypeCollection;
 } // namespace Delib
 
+/**
+ * @brief Master namespace to which the molassembler project belongs
+ */
 namespace Scine {
 
+/**
+ * @brief Molecular graph and stereocenter manipulation
+ */
 namespace molassembler {
 
 // Forward declarations

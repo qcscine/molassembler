@@ -168,6 +168,9 @@ enum class TauCriterion {
   Disable
 };
 
+/**
+ * @brief Contains all global settings for the library
+ */
 struct Options {
   /*!
    * @brief Sets the temperature regime to be used for all Molecules

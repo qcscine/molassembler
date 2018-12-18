@@ -24,7 +24,8 @@ namespace Scine {
 
 namespace molassembler {
 
-/*! Wrapper class to make working with RDL in C++ more pleasant.
+/*!
+ * @brief Wrapper class to make working with RDL in C++ more pleasant.
  *
  * Calculated data from a graph is movable, copyable and assignable in all the
  * usual ways, and is therefore suited for caching. Equality comparison of
@@ -34,7 +35,8 @@ namespace molassembler {
  */
 class Cycles {
 public:
-  /*! Safe wrapper around RDL's graph and calculated data pointers
+  /*!
+   * @brief Safe wrapper around RDL's graph and calculated data pointers
    *
    * Limited operability type to avoid any accidental moves or copies. Manages
    * memory allocation and destruction in all situations.
@@ -100,7 +102,8 @@ public:
 
     using PredicateType = std::function<bool(const RDL_cycle* const)>;
 
-    /*! Safe wrapper around RDL's cycle iterator and cycle pointers
+    /*!
+     * @brief Safe wrapper around RDL's cycle iterator and cycle pointers
      *
      * Limited operability type to avoid any accidental moves or copies. Manages
      * memory allocation and destruction in all situations. Pointer correctness
@@ -179,7 +182,8 @@ public:
   constIterator begin() const;
   constIterator end() const;
 
-  /*! Provides two iterators that permit iteration through cycles satisfying a predicate.
+  /*!
+   * @brief Provides two iterators that permit iteration through cycles satisfying a predicate.
    *
    * PredicateType must be a unary predicate taking a const RDL_cycle* const.
    * Sample predicates are predicates::SizeLessThan and
@@ -206,15 +210,15 @@ private:
 };
 
 /*!
- * Creates a mapping from atom index to the size of the smallest cycle
- * containing that index. The map does not contain entries for indices not
- * enclosed by a cycle.
+ * @brief Creates a mapping from atom index to the size of the smallest cycle
+ *   containing that index.
+ * @note The map does not contain entries for indices not enclosed by a cycle.
  */
 std::map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
 
 /*!
- * From a set of graph edge descriptors, this function creates one of the two
- * possible vertex index sequences describing the cycle
+ * @brief From a set of graph edge descriptors, this function creates one of
+ *   the two possible vertex index sequences describing the cycle
  */
 std::vector<AtomIndex> makeRingIndexSequence(
   const Cycles::EdgeList& edgeSet
@@ -226,8 +230,8 @@ std::vector<AtomIndex> centralizeRingIndexSequence(
 );
 
 /*!
- * Counts the number of planarity enforcing bonds in a set of edge descriptors.
- * Double and aromatic bonds are considered planarity enforcing.
+ * @brief Counts the number of planarity enforcing bonds in a set of edge
+ *   descriptors.  Double and aromatic bonds are considered planarity enforcing.
  */
 unsigned countPlanarityEnforcingBonds(
   const temple::TinySet<BondIndex>& edgeSet,
