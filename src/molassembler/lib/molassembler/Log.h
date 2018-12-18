@@ -10,6 +10,10 @@
 #include <set>
 #include <iostream>
 
+namespace Scine {
+
+namespace molassembler {
+
 namespace Log {
 
 namespace detail {
@@ -78,4 +82,7 @@ bool isSet(Particulars particular);
 
 } // namespace Log
 
+} // namespace molassembler
+
+} // namespace Scine
 #endif

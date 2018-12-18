@@ -17,6 +17,8 @@
 #include <iomanip>
 #include <ctime>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace IO {
@@ -149,3 +151,5 @@ void write(
 } // namespace IO
 
 } // namespace molassembler
+
+} // namespace Scine

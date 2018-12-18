@@ -13,6 +13,8 @@ class BondOrderCollection;
 class ElementTypeCollection;
 } // namespace Delib
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -31,5 +33,7 @@ Delib::BondOrderCollection uffBondOrders(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

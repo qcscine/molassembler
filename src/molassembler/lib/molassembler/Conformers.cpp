@@ -6,6 +6,8 @@
 #include "temple/Functional.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 outcome::result<
@@ -47,3 +49,5 @@ outcome::result<Delib::PositionCollection> generateConformation(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

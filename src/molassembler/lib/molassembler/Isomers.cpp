@@ -11,6 +11,8 @@
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Stereopermutators/PermutationState.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 bool enantiomeric(const Molecule& /* a */, const Molecule& /* b */) {
@@ -218,3 +220,5 @@ Molecule enantiomer(const Molecule& a) {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

@@ -24,6 +24,8 @@
 #include <string>
 #include <memory>
 
+namespace Scine {
+
 namespace stereopermutation {
 
 class Composite;
@@ -203,5 +205,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -7,6 +7,8 @@
 
 #include "dlib/optimization.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace CommonTrig {
@@ -243,3 +245,5 @@ ValueBounds dihedralLengthBounds(
 } // namespace CommonTrig
 
 } // namespace molassembler
+
+} // namespace Scine

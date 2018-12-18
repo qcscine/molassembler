@@ -14,6 +14,8 @@
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Modeling/AtomInfo.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
@@ -175,5 +177,7 @@ private:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

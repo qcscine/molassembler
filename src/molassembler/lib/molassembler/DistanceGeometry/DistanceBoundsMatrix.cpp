@@ -11,6 +11,8 @@
 #include <cassert>
 #include <algorithm>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -199,3 +201,5 @@ unsigned DistanceBoundsMatrix::N() const {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

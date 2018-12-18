@@ -12,6 +12,8 @@
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Stereopermutators/PermutationState.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 /* forward-declarations */
@@ -198,5 +200,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

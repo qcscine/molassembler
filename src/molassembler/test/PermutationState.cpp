@@ -14,6 +14,8 @@ using RaggedVector = std::vector<
   std::vector<T>
 >;
 
+using namespace Scine;
+
 BOOST_AUTO_TEST_CASE(PermutationStateTests) {
   using namespace molassembler;
   using TestNamespace = molassembler::PermutationState;

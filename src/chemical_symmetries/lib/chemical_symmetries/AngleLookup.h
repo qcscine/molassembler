@@ -19,6 +19,8 @@
 
 #include "temple/constexpr/UpperTriangularMatrix.h"
 
+namespace Scine {
+
 namespace Symmetry {
 
 namespace detail {
@@ -80,5 +82,7 @@ constexpr std::array<double, size * (size - 1) / 2> makeArray(
 } // namespace detail
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

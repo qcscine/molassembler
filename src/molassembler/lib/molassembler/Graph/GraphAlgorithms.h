@@ -15,6 +15,8 @@
 #include <tuple>
 #include <vector>
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -97,5 +99,7 @@ std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph);
 } // namespace GraphAlgorithms
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

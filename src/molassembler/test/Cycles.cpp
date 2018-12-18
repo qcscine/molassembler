@@ -69,6 +69,7 @@ std::map<std::string, ExpectationData> decompositionData {
 };
 
 void readAndDecompose(const boost::filesystem::path& filePath) {
+  using namespace Scine;
   using namespace molassembler;
 
   // Read the file

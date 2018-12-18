@@ -24,6 +24,8 @@ namespace Delib {
   class ElementTypeCollection;
 } // namespace Delib
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declare InnerGraph
@@ -278,5 +280,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

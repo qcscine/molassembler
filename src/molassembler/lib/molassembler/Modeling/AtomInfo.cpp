@@ -7,6 +7,8 @@
 
 #include "boost/optional.hpp"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace AtomInfo {
@@ -392,3 +394,5 @@ double vdwRadius(const Delib::ElementType elementType) {
 } // namespace AtomInfo
 
 } // namespace molassembler
+
+} // namespace Scine

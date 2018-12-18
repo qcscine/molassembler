@@ -25,10 +25,10 @@
 
 using namespace std::string_literals;
 
-/* Forward declarations */
+namespace Scine {
 
 namespace molassembler {
-
+/* Forward declarations */
 struct RankingInformation;
 struct PermutationState;
 
@@ -38,11 +38,6 @@ class SpatialModel;
 struct ChiralityConstraint;
 
 } // namespace DistanceGeometry
-
-} // namespace molassembler
-
-
-namespace molassembler {
 
 /**
  * @brief Handles the steric permutation of substituents of a non-terminal
@@ -378,5 +373,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

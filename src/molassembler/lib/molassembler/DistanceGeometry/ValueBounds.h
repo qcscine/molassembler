@@ -9,6 +9,8 @@
 
 #include <stdexcept>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -58,5 +60,7 @@ struct ValueBounds {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

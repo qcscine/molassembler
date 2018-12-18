@@ -23,6 +23,7 @@ inline std::ostream& nl(std::ostream& os) {
 }
 
 BOOST_AUTO_TEST_CASE(graphConcepts) {
+  using namespace Scine;
   using namespace molassembler;
 
   using GraphType = molassembler::DistanceGeometry::ImplicitGraph;
@@ -59,6 +60,7 @@ UnsignedType right(UnsignedType a) {
 }
 
 BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
+  using namespace Scine;
   using namespace molassembler;
 
   for(

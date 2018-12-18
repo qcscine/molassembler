@@ -12,6 +12,8 @@
 
 #include <string>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace version {
@@ -40,5 +42,7 @@ inline std::string fullVersion() {
 } // namespace version
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

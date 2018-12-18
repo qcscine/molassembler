@@ -20,6 +20,8 @@
 
 #include <map>
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -101,5 +103,7 @@ Symmetry::Name determineLocalGeometry(
 } // namespace LocalGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

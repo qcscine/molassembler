@@ -20,6 +20,8 @@
  *   constexpr work
  */
 
+namespace Scine {
+
 namespace Symmetry {
 
 namespace detail {
@@ -776,3 +778,5 @@ bool hasMultipleUnlinkedAssignments(
 } // namespace properties
 
 } // namespace Symmetry
+
+} // namespace Scine

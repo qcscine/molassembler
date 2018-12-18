@@ -32,6 +32,7 @@ UnsignedType right(UnsignedType a) {
 }
 
 BOOST_AUTO_TEST_CASE(explicitNonVisualTests) {
+  using namespace Scine;
   using namespace molassembler;
 
   for(

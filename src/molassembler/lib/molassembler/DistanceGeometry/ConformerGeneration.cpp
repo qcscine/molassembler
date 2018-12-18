@@ -19,6 +19,8 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Utils/QuaternionFit.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -840,3 +842,5 @@ outcome::result<
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

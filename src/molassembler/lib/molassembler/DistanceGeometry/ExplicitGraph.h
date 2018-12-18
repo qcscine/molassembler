@@ -21,6 +21,8 @@
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
@@ -176,5 +178,7 @@ private:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

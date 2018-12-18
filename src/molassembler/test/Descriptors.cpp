@@ -14,6 +14,7 @@
 
 #include <iostream>
 
+using namespace Scine;
 using namespace molassembler;
 
 std::map<

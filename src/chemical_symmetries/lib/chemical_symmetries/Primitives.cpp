@@ -5,6 +5,8 @@
 
 #include "chemical_symmetries/Primitives.h"
 
+namespace Scine {
+
 namespace Symmetry {
 
 namespace data {
@@ -169,3 +171,5 @@ constexpr decltype(SquareAntiPrismatic::angleLookupTable) SquareAntiPrismatic::a
 } // namespace data
 
 } // namespace Symmetry
+
+} // namespace Scine

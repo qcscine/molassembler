@@ -7,6 +7,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 #define INCLUDE_MOLASSEMBLER_DESCRIPTORS_H
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declare molcule
@@ -36,5 +38,7 @@ class Molecule;
 unsigned numRotatableBonds(const Molecule& mol);
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

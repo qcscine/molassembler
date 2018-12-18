@@ -11,6 +11,8 @@
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
 #include "molassembler/Cycles.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 LinkInformation::LinkInformation() = default;
@@ -254,3 +256,5 @@ bool RankingInformation::operator != (const RankingInformation& other) const {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

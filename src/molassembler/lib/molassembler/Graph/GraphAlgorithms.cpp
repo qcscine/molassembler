@@ -21,6 +21,8 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/RankingInformation.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace GraphAlgorithms {
@@ -414,3 +416,5 @@ std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph) {
 } // namespace GraphAlgorithms
 
 } // namespace molassembler
+
+} // namespace Scine

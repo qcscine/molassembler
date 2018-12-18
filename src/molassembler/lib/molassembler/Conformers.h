@@ -17,6 +17,8 @@ class PositionCollection;
 class Position;
 } // namespace Delib
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
@@ -133,5 +135,7 @@ outcome::result<Delib::PositionCollection> generateConformation(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

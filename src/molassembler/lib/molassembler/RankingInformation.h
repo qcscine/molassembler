@@ -11,6 +11,8 @@
 
 #include <vector>
 
+namespace Scine {
+
 namespace molassembler {
 
 struct LinkInformation {
@@ -179,5 +181,7 @@ struct RankingInformation {
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

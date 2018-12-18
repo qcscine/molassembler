@@ -24,6 +24,8 @@ namespace Delib {
 class PositionCollection;
 } // namespace Delib
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward declarations
@@ -96,5 +98,7 @@ void write(
 } // namespace IO
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

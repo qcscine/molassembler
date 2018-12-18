@@ -9,6 +9,7 @@
 
 #include "temple/Stringify.h"
 
+using namespace Scine;
 using namespace molassembler;
 using namespace std::string_literals;
 

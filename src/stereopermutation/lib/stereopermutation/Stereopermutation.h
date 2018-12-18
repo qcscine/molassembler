@@ -20,6 +20,8 @@
 #include <map>
 #include <functional>
 
+namespace Scine {
+
 namespace stereopermutation {
 
 /*!
@@ -220,5 +222,7 @@ std::ostream& operator << (
 );
 
 } // namespace stereopermutation
+
+} // namespace Scine
 
 #endif

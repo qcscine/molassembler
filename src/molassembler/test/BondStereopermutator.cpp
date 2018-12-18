@@ -16,6 +16,7 @@
 
 #include <iostream>
 
+using namespace Scine;
 using BondIndex = molassembler::BondIndex;
 
 struct Expectation {

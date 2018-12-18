@@ -23,6 +23,7 @@
 #include <random>
 #include <fstream>
 
+using namespace Scine;
 using namespace molassembler;
 
 bool isBondStereopermutator(

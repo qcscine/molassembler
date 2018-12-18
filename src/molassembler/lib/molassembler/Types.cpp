@@ -9,6 +9,8 @@
 
 #include <tuple>
 
+namespace Scine {
+
 namespace molassembler {
 
 BondIndex::BondIndex() = default;
@@ -35,3 +37,5 @@ std::size_t hash_value(const BondIndex& bond) {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

@@ -22,6 +22,7 @@
 #include <iostream>
 #include <numeric>
 
+using namespace Scine;
 using namespace Symmetry;
 
 std::vector<unsigned> rotate(

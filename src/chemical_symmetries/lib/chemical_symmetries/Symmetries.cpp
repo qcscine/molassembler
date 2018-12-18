@@ -5,6 +5,8 @@
 
 #include "chemical_symmetries/Symmetries.h"
 
+namespace Scine {
+
 namespace Symmetry {
 
 namespace data {
@@ -61,3 +63,5 @@ unsigned nameIndex(const Name name) {
 }
 
 } // namespace Symmetry
+
+} // namespace Scine

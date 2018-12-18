@@ -9,6 +9,8 @@
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/connected_components.hpp"
 
+namespace Scine {
+
 namespace molassembler {
 
 /* Constructors */
@@ -241,3 +243,5 @@ InnerGraph::RemovalSafetyData InnerGraph::_removalSafetyData() const {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

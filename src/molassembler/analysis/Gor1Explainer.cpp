@@ -22,12 +22,15 @@
 
 #include <random>
 
+using namespace Scine;
 using namespace molassembler;
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';
   return os;
 }
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -325,6 +328,8 @@ public:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 int main(int argc, char* argv[]) {
   using namespace std::string_literals;

@@ -14,6 +14,8 @@
 
 #include "molassembler/Types.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 /**
@@ -45,5 +47,7 @@ private:
 };
 
 } // namespace molassmbler
+
+} // namespace Scine
 
 #endif

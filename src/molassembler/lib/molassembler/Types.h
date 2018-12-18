@@ -9,6 +9,8 @@
 
 #include <cstddef>
 
+namespace Scine {
+
 namespace molassembler {
 
 /*!
@@ -114,5 +116,7 @@ enum class Partiality {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

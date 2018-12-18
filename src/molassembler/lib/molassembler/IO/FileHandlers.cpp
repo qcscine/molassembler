@@ -27,6 +27,8 @@
 
 #include "temple/Random.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace IO {
@@ -499,3 +501,5 @@ InterpretResult interpret(const FileHandler::RawData& data) {
 } // namespace IO
 
 } // namespace molassembler
+
+} // namespace Scine

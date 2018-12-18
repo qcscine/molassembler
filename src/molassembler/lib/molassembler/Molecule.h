@@ -34,6 +34,8 @@ namespace Delib {
 class ElementTypeCollection;
 } // namespace Delib
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward declarations
@@ -584,9 +586,11 @@ private:
 
 } // namespace molassembler
 
+} // namespace Scine
+
 std::ostream& operator << (
   std::ostream& os,
-  const molassembler::Molecule& molecule
+  const Scine::molassembler::Molecule& molecule
 );
 
 #endif

@@ -25,6 +25,8 @@
 #include <fstream>
 #include <iostream>
 
+namespace Scine {
+
 namespace molassembler {
 
 // Must declare constexpr static member without definition!
@@ -3449,5 +3451,6 @@ std::string RankingTree::_adaptMolGraph(std::string molGraph) {
   return molGraph;
 }
 
-
 } // namespace molassembler
+
+} // namespace Scine

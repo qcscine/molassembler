@@ -28,6 +28,7 @@
 
 #include <iostream>
 
+using namespace Scine;
 using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE( read_mol ) {

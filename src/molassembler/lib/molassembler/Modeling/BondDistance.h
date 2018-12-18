@@ -10,6 +10,8 @@
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Types.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace Bond {
@@ -39,5 +41,7 @@ double calculateBondOrder(
 } // namespace Bond
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

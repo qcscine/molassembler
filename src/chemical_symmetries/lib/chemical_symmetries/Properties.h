@@ -10,6 +10,8 @@
 #include "chemical_symmetries/ConstexprProperties.h"
 #include "chemical_symmetries/DynamicProperties.h"
 
+namespace Scine {
+
 namespace Symmetry {
 
 /* Derived stored constexpr data */
@@ -63,5 +65,7 @@ bool hasMultipleUnlinkedAssignments(
 );
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

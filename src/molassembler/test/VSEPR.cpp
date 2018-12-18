@@ -10,8 +10,9 @@
 #include "molassembler/Modeling/LocalGeometryModel.h"
 #include "chemical_symmetries/Symmetries.h"
 
+using namespace Scine;
 using namespace molassembler;
-using namespace molassembler::LocalGeometry;
+using namespace LocalGeometry;
 
 using TestCaseType = std::tuple<
   std::string, // a Name for the current compound

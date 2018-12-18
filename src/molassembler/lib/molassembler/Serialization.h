@@ -10,6 +10,8 @@
 #include <vector>
 #include <string>
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -68,5 +70,7 @@ Molecule fromCBOR(const std::vector<std::uint8_t>& cbor);
 Molecule fromBase64EncodedCBOR(const std::string& base64EncodedCBOR);
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

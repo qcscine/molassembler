@@ -23,6 +23,8 @@ const std::array<unsigned, 4> distortionColumns {{8, 8, 8, 30}};
 const std::array<unsigned, 3> symmetryColumns {{5, 5, 25}};
 const std::array<unsigned, 4> ambiguityColumns {{10, 25, 25, 4}};
 
+using namespace Scine;
+
 std::ostream& nl(std::ostream& out) {
   out << '\n';
   return out;

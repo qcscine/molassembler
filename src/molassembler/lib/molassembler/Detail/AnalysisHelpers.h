@@ -14,6 +14,8 @@
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/RefinementProblem.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace AnalysisHelpers {
@@ -235,5 +237,7 @@ void writeDGPOVandProgressFiles(
 } // namespace AnalysisHelpers
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

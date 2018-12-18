@@ -16,6 +16,7 @@
 #include "molassembler/Options.h"
 #include "molassembler/Serialization.h"
 
+using namespace Scine;
 using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(base64Tests) {

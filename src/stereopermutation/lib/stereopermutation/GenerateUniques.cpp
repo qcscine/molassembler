@@ -15,6 +15,8 @@
 #include <sstream>
 #include <unordered_map>
 
+namespace Scine {
+
 namespace stereopermutation {
 
 bool hasTransArrangedPairs(
@@ -212,3 +214,5 @@ StereopermutationsWithWeights uniquesWithWeights(
 }
 
 } // namespace stereopermutation
+
+} // namespace Scine

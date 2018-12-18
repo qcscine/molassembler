@@ -21,6 +21,8 @@
 #include <vector>
 #include <map>
 
+namespace Scine {
+
 namespace Symmetry {
 
 /* Typedefs */
@@ -305,5 +307,7 @@ inline const TetrahedronList& tetrahedra(const Name name) {
 }
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

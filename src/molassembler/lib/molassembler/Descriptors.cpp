@@ -12,6 +12,8 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 unsigned numRotatableBonds(const Molecule& mol) {
@@ -81,3 +83,5 @@ unsigned numRotatableBonds(const Molecule& mol) {
 }
 
 } // namespace molassmembler
+
+} // namespace Scine

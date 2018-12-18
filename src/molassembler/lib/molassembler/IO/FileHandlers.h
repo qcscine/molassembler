@@ -21,6 +21,8 @@
 #include "molassembler/IO.h"
 #include "molassembler/Interpret.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -224,5 +226,7 @@ InterpretResult interpret(const FileHandler::RawData& data);
 } // namespace IO
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

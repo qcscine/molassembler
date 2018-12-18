@@ -18,6 +18,7 @@
 
 #include <random>
 
+using namespace Scine;
 using namespace molassembler;
 
 std::ostream& nl(std::ostream& os) {

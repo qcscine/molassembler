@@ -11,6 +11,8 @@
 #include "temple/Stringify.h"
 #include "chemical_symmetries/Symmetries.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 /* Constructor */
@@ -200,3 +202,5 @@ const std::map<BondType, std::string> MolGraphWriter::bondTypeDisplayString {
 };
 
 } // namespace molassembler
+
+} // namespace Scine

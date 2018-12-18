@@ -15,6 +15,8 @@
 #include "molassembler/OuterGraph.h"
 #include "molassembler/Graph/InnerGraph.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 InterpretResult interpret(
@@ -240,3 +242,5 @@ InterpretResult interpret(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

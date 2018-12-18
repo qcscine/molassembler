@@ -13,6 +13,8 @@
  * the InnerGraph, which is not accessible using the public API.
  */
 
+namespace Scine {
+
 namespace molassembler {
 
 std::vector<unsigned> distance(AtomIndex i, const OuterGraph& graph) {
@@ -24,3 +26,5 @@ std::vector<unsigned> distance(AtomIndex i, const OuterGraph& graph) {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

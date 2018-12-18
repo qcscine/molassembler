@@ -13,6 +13,8 @@
 #include "Delib/ElementTypes.h"
 #include "molassembler/AngstromWrapper.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -209,5 +211,7 @@ bool disregardStereopermutator(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

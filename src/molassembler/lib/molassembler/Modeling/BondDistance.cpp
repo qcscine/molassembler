@@ -7,6 +7,8 @@
 
 #include <cmath>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace Bond {
@@ -51,3 +53,5 @@ double calculateBondOrder(
 } // namespace Bond
 
 } // namespace molassembler
+
+} // namespace Scine

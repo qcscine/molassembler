@@ -17,6 +17,7 @@
 #include <set>
 #include <vector>
 
+namespace Scine {
 
 namespace Symmetry {
 
@@ -226,5 +227,7 @@ bool hasMultipleUnlinkedAssignments(
 } // namespace properties
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

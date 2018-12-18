@@ -9,6 +9,8 @@
 
 #include "molassembler/Graph/Bridge.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 /* Implementation for iterator facade */
@@ -240,3 +242,5 @@ template OuterGraph::InnerBasedIterator<BondIndex, true>::InnerBasedIterator(
 );
 
 } // namespace molassembler
+
+} // namespace Scine

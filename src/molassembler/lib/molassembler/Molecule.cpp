@@ -5,6 +5,8 @@
 
 #include "molassembler/Molecule/MoleculeImpl.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 /* Molecule interface to Impl call forwards */
@@ -193,9 +195,11 @@ bool Molecule::operator != (const Molecule& other) const {
 
 } // namespace molassembler
 
+} // namespace Scine
+
 std::ostream& operator << (
   std::ostream& os,
-  const molassembler::Molecule& molecule
+  const Scine::molassembler::Molecule& molecule
 ) {
   const auto& stereopermutators = molecule.stereopermutators();
 

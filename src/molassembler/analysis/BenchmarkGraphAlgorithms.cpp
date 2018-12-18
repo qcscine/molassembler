@@ -22,6 +22,7 @@
 #include <chrono>
 #include <iomanip>
 
+using namespace Scine;
 using namespace molassembler;
 
 constexpr size_t nExperiments = 10;

@@ -22,6 +22,8 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace detail {
@@ -624,3 +626,5 @@ bool BondStereopermutator::Impl::operator != (const Impl& other) const {
 
 
 } // namespace molassembler
+
+} // namespace Scine

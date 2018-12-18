@@ -18,6 +18,8 @@
 #include <map>
 #include <vector>
 
+namespace Scine {
+
 namespace molassembler {
 
 //! Information on particular element types
@@ -98,5 +100,7 @@ double vdwRadius(Delib::ElementType elementType);
 } // namespace AtomInfo
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

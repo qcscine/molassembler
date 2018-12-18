@@ -14,6 +14,8 @@
 
 #include "temple/Functional.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace hashes {
@@ -296,3 +298,5 @@ BOOST_CONCEPT_ASSERT((
 } // namespace hashes
 
 } // namespace molassembler
+
+} // namespace Scine

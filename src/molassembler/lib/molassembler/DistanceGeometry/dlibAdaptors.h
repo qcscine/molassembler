@@ -19,6 +19,8 @@
 #include "molassembler/DistanceGeometry/RefinementProblem.h"
 #include "molassembler/DistanceGeometry/RefinementDebugData.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -140,5 +142,7 @@ struct iterationOrGradientNormStopStrategy {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

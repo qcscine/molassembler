@@ -18,6 +18,8 @@
 
 #include <vector>
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -106,5 +108,7 @@ struct LookupFunctor {
 } // namespace hashes
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

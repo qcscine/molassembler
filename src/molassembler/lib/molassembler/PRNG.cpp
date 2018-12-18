@@ -8,6 +8,8 @@
 #include "temple/constexpr/JSF.h"
 #include <random>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace random {
@@ -74,3 +76,5 @@ Engine::result_type Engine::operator() () const {
 } // namespace random
 
 } // namespace molassembler
+
+} // namespace Scine

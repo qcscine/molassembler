@@ -10,6 +10,8 @@
 #include "molassembler/OuterGraph.h"
 #include "molassembler/Graph/InnerGraph.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 inline InnerGraph::Edge toInner(const BondIndex& bondIndex, const InnerGraph& graph) {
@@ -21,5 +23,7 @@ inline BondIndex toOuter(const InnerGraph::Edge& edge, const InnerGraph& graph) 
 }
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

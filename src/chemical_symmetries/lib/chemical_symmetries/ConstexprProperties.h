@@ -26,6 +26,8 @@
 #include "temple/constexpr/Numeric.h"
 #include "temple/Cache.h"
 
+namespace Scine {
+
 namespace Symmetry {
 
 namespace constexprProperties {
@@ -915,5 +917,7 @@ constexpr bool hasMultipleUnlinkedAssignments(
 } // namespace constexprProperties
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

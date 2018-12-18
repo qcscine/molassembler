@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <random>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace random {
@@ -69,5 +71,7 @@ private:
 } // namespace random
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

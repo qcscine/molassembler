@@ -20,6 +20,8 @@
 
 #include <unordered_map>
 
+namespace Scine {
+
 namespace molassembler {
 
 class StereopermutatorList {
@@ -125,6 +127,7 @@ private:
   BondMapType _bondStereopermutators;
 };
 
-}
+} // namespace molassembler
 
+} // namespace Scine
 #endif

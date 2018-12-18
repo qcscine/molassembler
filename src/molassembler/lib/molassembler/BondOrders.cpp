@@ -11,6 +11,8 @@
 #include "molassembler/AngstromWrapper.h"
 #include "molassembler/Modeling/BondDistance.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 Delib::BondOrderCollection uffBondOrders(
@@ -48,3 +50,5 @@ Delib::BondOrderCollection uffBondOrders(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

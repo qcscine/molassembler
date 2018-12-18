@@ -16,6 +16,7 @@
 #include "temple/Random.h"
 
 using namespace std::string_literals;
+using namespace Scine;
 using namespace molassembler;
 
 // Shows atom stereopermutator differences only

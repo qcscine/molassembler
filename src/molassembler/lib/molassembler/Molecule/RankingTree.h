@@ -75,6 +75,8 @@
 #include <experimental/propagate_const>
 #endif
 
+namespace Scine {
+
 namespace molassembler {
 
 /*!
@@ -1128,5 +1130,7 @@ public:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -22,6 +22,8 @@
 #endif
 
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -849,3 +851,5 @@ ImplicitGraph::in_group_edge_iterator::in_group_edge_iterator(
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

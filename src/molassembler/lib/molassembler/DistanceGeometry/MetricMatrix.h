@@ -28,6 +28,8 @@
 
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -83,5 +85,7 @@ private:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

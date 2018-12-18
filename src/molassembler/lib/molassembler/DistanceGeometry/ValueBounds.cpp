@@ -7,6 +7,8 @@
 
 #include <limits>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -30,3 +32,5 @@ bool ValueBounds::operator != (const ValueBounds& other) const {
 } // namespace molassembler
 
 } // namespace DistanceGeometry
+
+} // namespace Scine

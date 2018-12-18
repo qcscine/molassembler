@@ -15,6 +15,8 @@
 
 #include <limits>
 
+namespace Scine {
+
 namespace molassembler {
 
 class InnerGraph {
@@ -179,4 +181,5 @@ private:
 
 } // namespace molassembler
 
+} // namespace Scine
 #endif

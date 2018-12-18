@@ -16,6 +16,8 @@
 #include "temple/TinySet.h"
 #include "temple/OrderedPair.h"
 
+namespace Scine {
+
 namespace stereopermutation {
 
 class Composite {
@@ -236,5 +238,7 @@ private:
 };
 
 } // namespace stereopermutation
+
+} // namespace Scine
 
 #endif

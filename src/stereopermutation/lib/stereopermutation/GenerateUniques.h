@@ -13,6 +13,8 @@
 
 #include "stereopermutation/Stereopermutation.h"
 
+namespace Scine {
+
 namespace stereopermutation {
 
 //! Whether a stereopermutation has trans arranged linked substituents
@@ -59,5 +61,7 @@ StereopermutationsWithWeights uniquesWithWeights(
 );
 
 } // namespace stereopermutation
+
+} // namespace Scine
 
 #endif

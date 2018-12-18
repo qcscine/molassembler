@@ -20,6 +20,8 @@ class BondOrderCollection;
 class ElementTypeCollection;
 } // namespace Delib
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -153,5 +155,7 @@ InterpretResult interpret(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

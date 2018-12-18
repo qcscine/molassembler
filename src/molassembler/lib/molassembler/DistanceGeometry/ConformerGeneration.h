@@ -17,6 +17,8 @@
 #include "molassembler/DistanceGeometry/RefinementDebugData.h"
 #include "molassembler/Log.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
@@ -100,5 +102,7 @@ outcome::result<
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

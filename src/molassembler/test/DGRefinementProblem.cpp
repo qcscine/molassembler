@@ -27,8 +27,9 @@
 #include <iostream>
 
 using namespace std::string_literals;
+using namespace Scine;
 using namespace molassembler;
-using namespace molassembler::DistanceGeometry;
+using namespace DistanceGeometry;
 
 bool isApprox(
   const dlib::matrix<double, 0, 1>& a,

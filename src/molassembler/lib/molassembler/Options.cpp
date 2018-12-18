@@ -12,6 +12,8 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/OuterGraph.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 random::Engine& randomnessEngine() {
@@ -56,3 +58,5 @@ bool disregardStereopermutator(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

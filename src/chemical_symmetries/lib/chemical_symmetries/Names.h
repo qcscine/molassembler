@@ -10,6 +10,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_NAMES_H
 #define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_NAMES_H
 
+namespace Scine {
+
 namespace Symmetry {
 
 //! Enumeration of all contained symmetry names
@@ -37,5 +39,7 @@ enum class Name : unsigned {
 constexpr unsigned nSymmetries = 17;
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

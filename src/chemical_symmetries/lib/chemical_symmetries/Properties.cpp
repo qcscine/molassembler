@@ -9,6 +9,8 @@
 #include "temple/constexpr/TupleTypePairs.h"
 #include "temple/Functional.h"
 
+namespace Scine {
+
 namespace Symmetry {
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
@@ -201,3 +203,5 @@ bool hasMultipleUnlinkedAssignments(
 }
 
 } // namespace Symmetry
+
+} // namespace Scine

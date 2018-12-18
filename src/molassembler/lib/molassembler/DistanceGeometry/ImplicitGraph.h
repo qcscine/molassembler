@@ -25,6 +25,8 @@
 #include <map>
 #include <tuple>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
@@ -517,5 +519,7 @@ public:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -7,6 +7,8 @@
 #ifndef INCLUDE_MOLASSEMBLER_ISOMERS_H
 #define INCLUDE_MOLASSEMBLER_ISOMERS_H
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -75,5 +77,7 @@ bool enantiomeric(
 Molecule enantiomer(const Molecule& a);
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -21,6 +21,8 @@
 #include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/Options.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 void Molecule::Impl::_tryAddAtomStereopermutator(
@@ -1017,3 +1019,5 @@ bool Molecule::Impl::operator != (const Impl& other) const {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

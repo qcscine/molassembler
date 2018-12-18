@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+namespace Scine {
+
 namespace stereopermutation {
 
 namespace detail {
@@ -848,3 +850,5 @@ bool Composite::operator != (const Composite& other) const {
 }
 
 } // namespace stereopermutation
+
+} // namespace Scine

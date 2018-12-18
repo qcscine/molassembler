@@ -7,6 +7,8 @@
 
 #include "temple/Functional.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 void StereopermutatorList::add(
@@ -270,3 +272,5 @@ bool StereopermutatorList::operator != (const StereopermutatorList& other) const
 }
 
 } // namespace molassembler
+
+} // namespace Scine

@@ -9,6 +9,8 @@
 
 #include "molassembler/Log.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -252,3 +254,5 @@ void explainFinalContributions(
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

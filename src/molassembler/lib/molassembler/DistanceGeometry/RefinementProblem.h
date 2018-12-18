@@ -11,6 +11,8 @@
 
 #include <dlib/optimization.h>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -1017,5 +1019,7 @@ public:
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

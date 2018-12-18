@@ -5,6 +5,8 @@
 
 #include "molassembler/Stereopermutators/BondStereopermutatorImpl.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 constexpr double BondStereopermutator::assignmentAcceptanceDihedralThreshold;
@@ -112,3 +114,5 @@ bool BondStereopermutator::operator != (const BondStereopermutator& other) const
 }
 
 } // namespace molassembler
+
+} // namespace Scine

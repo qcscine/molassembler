@@ -18,6 +18,8 @@
 
 #include <cmath>
 
+namespace Scine {
+
 namespace Symmetry {
 
 //! A placeholder value for constexpr tetrahedra specification of origin
@@ -1155,5 +1157,7 @@ using allSymmetryDataTypes = std::tuple<
 } // namespace data
 
 } // namespace Symmetry
+
+} // namespace Scine
 
 #endif

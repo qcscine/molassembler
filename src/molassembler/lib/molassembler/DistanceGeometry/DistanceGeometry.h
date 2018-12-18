@@ -18,6 +18,8 @@
 #include <cassert>
 #include <array>
 
+namespace Scine {
+
 namespace molassembler {
 
 //! Distance geometry-related classes and functions
@@ -65,5 +67,7 @@ struct DihedralConstraint {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

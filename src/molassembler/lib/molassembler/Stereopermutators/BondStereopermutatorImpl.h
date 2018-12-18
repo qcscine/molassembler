@@ -14,6 +14,8 @@
 #include "stereopermutation/Composites.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 struct BondStereopermutator::Impl {
@@ -79,5 +81,7 @@ private:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

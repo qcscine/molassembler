@@ -17,6 +17,8 @@
 #include <list>
 #include <vector>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -62,5 +64,7 @@ struct RefinementData {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

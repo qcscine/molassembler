@@ -15,6 +15,8 @@
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Modeling/CommonTrig.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 PermutationState::PermutationState(
@@ -570,3 +572,5 @@ bool PermutationState::isNotObviouslyImpossibleStereopermutation(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

@@ -14,6 +14,8 @@
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Options.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 struct PermutationState {
@@ -149,5 +151,7 @@ struct PermutationState {
 
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

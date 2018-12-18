@@ -10,6 +10,8 @@
 #include <vector>
 #include "Types.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 // Forward-declarations
@@ -28,5 +30,7 @@ class OuterGraph;
 std::vector<unsigned> distance(AtomIndex i, const OuterGraph& graph);
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

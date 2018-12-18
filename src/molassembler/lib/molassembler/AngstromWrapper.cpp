@@ -7,6 +7,8 @@
 
 #include "Delib/Constants.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 AngstromWrapper::AngstromWrapper(const unsigned N) : positions(N) {}
@@ -36,3 +38,5 @@ Delib::PositionCollection AngstromWrapper::getBohr() {
 }
 
 } // namespace molassembler
+
+} // namespace Scine

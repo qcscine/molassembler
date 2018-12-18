@@ -12,6 +12,8 @@
 
 #include "molassembler/Graph/InnerGraph.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 class StereopermutatorList;
@@ -66,5 +68,7 @@ struct MolGraphWriter {
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

@@ -24,6 +24,8 @@
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 template<typename T>
@@ -466,5 +468,7 @@ public:
 };
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

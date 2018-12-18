@@ -36,6 +36,8 @@ std::ostream& nl(std::ostream& os) {
   return os;
 }
 
+using namespace Scine;
+
 template<class Graph>
 struct BFFunctor {
   const Graph& graph;
@@ -160,6 +162,7 @@ UnsignedType right(UnsignedType a) {
 }
 
 BOOST_AUTO_TEST_CASE(conceptTests) {
+  using namespace Scine;
   using namespace molassembler;
 
   for(

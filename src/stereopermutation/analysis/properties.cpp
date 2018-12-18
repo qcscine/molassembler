@@ -20,6 +20,7 @@ std::ostream& nl(std::ostream& os) {
   return os;
 }
 
+using namespace Scine;
 using namespace stereopermutation;
 
 int main(int argc, char* argv[]) {

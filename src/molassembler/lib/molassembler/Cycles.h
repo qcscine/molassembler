@@ -10,7 +10,6 @@
 #ifndef INCLUDE_MOLASSEMBLER_CYCLES_H
 #define INCLUDE_MOLASSEMBLER_CYCLES_H
 
-// RDL
 #include "RingDecomposerLib.h"
 
 #include "temple/TinySet.h"
@@ -20,6 +19,8 @@
 
 #include <functional>
 #include <map>
+
+namespace Scine {
 
 namespace molassembler {
 
@@ -234,5 +235,7 @@ unsigned countPlanarityEnforcingBonds(
 );
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

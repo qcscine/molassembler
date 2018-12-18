@@ -36,6 +36,8 @@
 #include <fstream>
 #include <Eigen/Dense>
 
+namespace Scine {
+
 namespace molassembler {
 
 template<typename ... Inds>
@@ -1830,3 +1832,5 @@ void SpatialModel::checkFixedPositionsPreconditions(
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

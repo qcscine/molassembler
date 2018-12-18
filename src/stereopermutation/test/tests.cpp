@@ -25,6 +25,7 @@
 #include "temple/Stringify.h"
 #include "temple/constexpr/LogicalOperatorTests.h"
 
+using namespace Scine;
 using namespace stereopermutation;
 
 template<typename T>

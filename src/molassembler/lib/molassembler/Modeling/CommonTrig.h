@@ -16,11 +16,13 @@
 
 #include <cmath>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace CommonTrig {
 
-using ValueBounds = ::molassembler::DistanceGeometry::ValueBounds;
+using ValueBounds = DistanceGeometry::ValueBounds;
 
 /*!
  * Calculates the law of cosines, returning c:
@@ -115,5 +117,7 @@ ValueBounds dihedralLengthBounds(
 } // namespace CommonTrig
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

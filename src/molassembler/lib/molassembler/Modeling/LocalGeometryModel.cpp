@@ -16,6 +16,8 @@
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/OuterGraph.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace LocalGeometry {
@@ -295,3 +297,5 @@ Symmetry::Name determineLocalGeometry(
 } // namespace LocalGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

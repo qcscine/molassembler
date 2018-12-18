@@ -17,6 +17,7 @@
 #include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/StereopermutatorList.h"
 
+using namespace Scine;
 using namespace molassembler;
 
 const std::unordered_map<unsigned, std::string> cipIdentifiers {

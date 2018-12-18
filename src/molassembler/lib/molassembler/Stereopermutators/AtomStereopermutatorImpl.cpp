@@ -29,6 +29,8 @@
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 /* Static functions */
@@ -1043,3 +1045,5 @@ bool AtomStereopermutator::Impl::operator < (const AtomStereopermutator::Impl& o
 }
 
 } // namespace molassembler
+
+} // namespace Scine

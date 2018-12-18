@@ -20,6 +20,8 @@
 
 #include <Eigen/Geometry>
 
+using namespace Scine;
+
 class RGBGradient {
 public:
   using RGBType = std::array<double, 3>;

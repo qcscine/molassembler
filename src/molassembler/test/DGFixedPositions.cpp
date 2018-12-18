@@ -19,6 +19,7 @@
 #include <iostream>
 
 using namespace std::string_literals;
+using namespace Scine;
 using namespace molassembler;
 
 BOOST_AUTO_TEST_CASE(FixedPositionsWork) {

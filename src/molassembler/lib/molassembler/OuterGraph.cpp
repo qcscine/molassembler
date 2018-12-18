@@ -10,6 +10,8 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph/Bridge.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 static_assert(
@@ -138,3 +140,5 @@ OuterGraph::Range<OuterGraph::IncidentEdgesIterator> OuterGraph::bonds(const Ato
 }
 
 } // namespace molassembler
+
+} // namespace Scine

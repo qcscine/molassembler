@@ -28,6 +28,8 @@
  *   steps that they should write debug data to
  */
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -185,5 +187,7 @@ struct debugIterationOrGradientNormStopStrategy {
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine
 
 #endif

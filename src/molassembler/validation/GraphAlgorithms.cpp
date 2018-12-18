@@ -22,6 +22,7 @@
 
 #include <iostream>
 
+using namespace Scine;
 using namespace molassembler;
 
 inline std::ostream& nl(std::ostream& os) {

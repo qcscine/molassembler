@@ -10,6 +10,8 @@
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Graph/InnerGraph.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 /* Cycles member Type declarations */
@@ -457,3 +459,5 @@ unsigned countPlanarityEnforcingBonds(
 }
 
 } // namespace molassembler
+
+} // namespace Scine

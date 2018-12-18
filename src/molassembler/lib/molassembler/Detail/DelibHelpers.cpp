@@ -10,6 +10,8 @@
 
 #include <array>
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DelibHelpers {
@@ -243,3 +245,5 @@ double adjustedSignedVolume(
 } // namespace DelibHelpers
 
 } // namespace molassembler
+
+} // namespace Scine

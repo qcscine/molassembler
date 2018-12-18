@@ -14,7 +14,7 @@
 #include <cmath>
 
 BOOST_AUTO_TEST_CASE(dihedralTests) {
-  using namespace molassembler::DelibHelpers;
+  using namespace Scine::molassembler::DelibHelpers;
 
   Delib::PositionCollection positions;
   positions.push_back(
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
       -M_PI + 0.01,
       M_PI - 0.01,
       100,
-      molassembler::randomnessEngine()
+      Scine::molassembler::randomnessEngine()
     )
   ) {
 

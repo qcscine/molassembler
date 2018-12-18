@@ -31,6 +31,8 @@
  * O(VE), not O(V + E). Instead of accepting this, we use GOR1 instead.
  */
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DistanceGeometry {
@@ -559,3 +561,5 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
 } // namespace DistanceGeometry
 
 } // namespace molassembler
+
+} // namespace Scine

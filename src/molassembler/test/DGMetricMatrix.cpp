@@ -22,8 +22,9 @@
 #include <iostream>
 #include <random>
 
+using namespace Scine;
 using namespace molassembler;
-using namespace molassembler::DistanceGeometry;
+using namespace DistanceGeometry;
 
 Eigen::MatrixXd reorder(
   const Eigen::MatrixXd& sourceMatrix,

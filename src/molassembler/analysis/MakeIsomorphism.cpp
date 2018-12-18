@@ -14,6 +14,7 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
+  using namespace Scine;
   using namespace molassembler;
 
   // Set up option parsing

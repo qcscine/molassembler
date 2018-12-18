@@ -10,6 +10,8 @@
 #include "Delib/PositionCollection.h"
 #include "molassembler/Types.h"
 
+namespace Scine {
+
 namespace molassembler {
 
 namespace DelibHelpers {
@@ -115,8 +117,9 @@ double adjustedSignedVolume(
   const Eigen::Vector3d& l
 );
 
-}
+} // namespace DelibHelpers
 
-}
+} // namespace molassembler
 
+} // namespace Scine
 #endif

@@ -14,6 +14,7 @@ using RaggedVector = std::vector<
 >;
 
 BOOST_AUTO_TEST_CASE(rankingCombinationTests) {
+  using namespace Scine;
   using namespace molassembler;
 
   using RaggedAtoms = RaggedVector<AtomIndex>;

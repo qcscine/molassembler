@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <cassert>
 
+namespace Scine {
+
 namespace stereopermutation {
 
 /* Public members */
@@ -545,3 +547,5 @@ std::ostream& operator << (
 }
 
 } // namespace stereopermutation
+
+} // namespace Scine
