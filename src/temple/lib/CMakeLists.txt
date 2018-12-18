@@ -38,6 +38,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optionals.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/OrderedPair.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Permutations.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Poset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Preprocessor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Random.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/SetAlgorithms.h
