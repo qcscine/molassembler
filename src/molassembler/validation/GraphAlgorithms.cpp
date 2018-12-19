@@ -14,11 +14,16 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/IO/FileHandlers.h"
+#include "molassembler/StereopermutatorList.h"
+#include "molassembler/IO.h"
 #include "temple/Stringify.h"
 
 #include "boost/graph/graphviz.hpp"
 #include "molassembler/Molecule/MolGraphWriter.h"
+
+#include "Utils/AtomCollection.h"
+#include "Utils/Bonds/BondOrderCollection.h"
+#include "Utils/IO/ChemicalFileHandler.h"
 
 #include <iostream>
 
@@ -538,16 +543,15 @@ const std::map<std::string, LigandsList> hapticLigandsData {
 };
 
 bool testHapticBonds(const boost::filesystem::path& filePath) {
-  IO::FileHandlers::MOLFileHandler molHandler;
-  auto rawData = molHandler.read(filePath.string());
+  auto rawData = Utils::ChemicalFileHandler::read(filePath.string());
 
-  const unsigned N = rawData.elements.size();
+  const unsigned N = rawData.first.size();
   InnerGraph graph (N);
 
   // Basically a UFF bond discretization scheme
   for(unsigned i = 0; i < N; ++i) {
     for(unsigned j = i + 1; j < N; ++j) {
-      double bondOrder = rawData.bondOrders.getOrder(i, j);
+      double bondOrder = rawData.second.getOrder(i, j);
 
       if(bondOrder > 0.5) {
         auto bond = static_cast<BondType>(
@@ -563,7 +567,7 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
     }
 
     // copy element type data too
-    graph.elementType(i) = rawData.elements.at(i);
+    graph.elementType(i) = rawData.first.getElement(i);
   }
 
   GraphAlgorithms::findAndSetEtaBonds(graph);
@@ -644,7 +648,8 @@ bool testHapticBonds(const boost::filesystem::path& filePath) {
   }
 
   if(!pass) {
-    MolGraphWriter propertyWriter(&graph);
+    StereopermutatorList emptyStereopermutatorList;
+    MolGraphWriter propertyWriter(&graph, &emptyStereopermutatorList);
 
     std::ofstream outFile(filePath.stem().string() + ".dot");
     boost::write_graphviz(

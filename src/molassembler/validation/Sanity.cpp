@@ -36,16 +36,16 @@ void explainDifference(
   std::cout << "\n";
 }
 
-const std::array<Delib::ElementType, 9> elements {
-  Delib::ElementType::F,
-  Delib::ElementType::Cl,
-  Delib::ElementType::Br,
-  Delib::ElementType::I,
-  Delib::ElementType::N,
-  Delib::ElementType::C,
-  Delib::ElementType::O,
-  Delib::ElementType::S,
-  Delib::ElementType::P
+const std::array<Utils::ElementType, 9> elements {
+  Utils::ElementType::F,
+  Utils::ElementType::Cl,
+  Utils::ElementType::Br,
+  Utils::ElementType::I,
+  Utils::ElementType::N,
+  Utils::ElementType::C,
+  Utils::ElementType::O,
+  Utils::ElementType::S,
+  Utils::ElementType::P
 };
 
 /* Test whether generating coordinates from a simple molecule and then
@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
   for(const auto& symmetryName: Symmetry::allNames) {
     // Build an abstract asymmetric molecule (all ligands different) for the current molecule
     Molecule molecule(
-      Delib::ElementType::Ru,
-      Delib::ElementType::H,
+      Utils::ElementType::Ru,
+      Utils::ElementType::H,
       BondType::Single
     );
 

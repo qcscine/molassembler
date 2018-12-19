@@ -9,7 +9,11 @@
 #include "boost/program_options.hpp"
 
 #include "molassembler/Molecule.h"
-#include "molassembler/IO/FileHandlers.h"
+#include "molassembler/IO.h"
+
+#include "Utils/AtomCollection.h"
+#include "Utils/Bonds/BondOrderCollection.h"
+#include "Utils/IO/ChemicalFileHandler.h"
 
 #include <iostream>
 
@@ -33,7 +37,6 @@ int main(int argc, char* argv[]) {
   boost::program_options::notify(options_variables_map);
 
   if(options_variables_map.count("f") > 0) {
-
     boost::filesystem::path filepath {
       options_variables_map["f"].as<std::string>()
     };
@@ -43,18 +46,15 @@ int main(int argc, char* argv[]) {
       return 0;
     }
 
-    Molecule a = IO::read(
-      filepath.string()
-    );
+    // This can throw in lots of cases
+    auto readData = Utils::ChemicalFileHandler::read(filepath.string());
 
-    // TODO this is not ideal, reads the file twice
-    IO::FileHandlers::MOLFileHandler molHandler;
+    readData = IO::shuffle(readData.first, readData.second);
 
-    molHandler.write(
+    Utils::ChemicalFileHandler::write(
       filepath.stem().string() + "_isomorphism.mol",
-      a,
-      molHandler.read(filepath.string()).angstromWrapper,
-      IO::IndexPermutation::Random
+      readData.first,
+      readData.second
     );
   } else {
     std::cout << options_description << std::endl;

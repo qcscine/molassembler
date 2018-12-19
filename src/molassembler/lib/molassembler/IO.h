@@ -22,6 +22,12 @@
 
 namespace Scine {
 
+// Forward declarations
+namespace Utils {
+class AtomCollection;
+class BondOrderCollection;
+} // namespace Utils
+
 namespace molassembler {
 
 // More forward declarations
@@ -31,15 +37,20 @@ class AngstromWrapper;
 //! Input and output
 namespace IO {
 
-//! Defines permutations of atom indices of the molecule
-enum class IndexPermutation {
-  //! Atom indices are unaltered
-  Identity,
-  //! Atom indices are sorted by element type
-  SortByElement,
-  //! Randomize atom indices
-  Random
-};
+std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
+  const Molecule& molecule,
+  AngstromWrapper angstromWrapper
+);
+
+std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
+  const Molecule& molecule,
+  const Utils::PositionCollection& positions
+);
+
+std::pair<Utils::AtomCollection, Utils::BondOrderCollection> shuffle(
+  const Utils::AtomCollection& ac,
+  const Utils::BondOrderCollection& bos
+);
 
 /*!
  * @brief Read a single molecule from a file.
@@ -50,41 +61,38 @@ enum class IndexPermutation {
  */
 Molecule read(const std::string& filename);
 
-/*! Read multiple molecules from a file.
+/*!
+ * @brief Read multiple molecules from a file.
  *
- * @note Interprets file type from extension. mol is a MOLFile, xyz an XYZ file
- *   and masm a CBOR serial representation of Molecule
+ * @note Interprets file format from its extension.
+ * @note masm and json serializations of Molecules cannot be split, they always
+ *   contain only a single molecule. Use @p read() instead.
  */
 std::vector<Molecule> split(const std::string& filename);
 
-/*! Writer function for MOL and XYZ formats
+/*!
+ * @brief Writer function for various chemical formats
  *
- * @throws std::logic_error If the file extension does not match either mol or
- *   xyz.
- * @throws std::runtime_error If the file extension is mol and the molecule
- *   contains any bonds of the orders quadruple, quintuple or sextuple (these
- *   are not supported in the MOLFile format)
+ * For exceptions this might throw, @see Utils::ChemicalFileHandler::write
  *
  * @note Interprets which file type is to be written from filename extension.
  */
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const AngstromWrapper& angstromWrapper,
-  IndexPermutation permutation = IndexPermutation::Identity
+  const AngstromWrapper& angstromWrapper
 );
 
 //! @overload
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const Utils::PositionCollection& positions,
-  IndexPermutation permutation = IndexPermutation::Identity
+  const Utils::PositionCollection& positions
 );
 
-/*! Writer function to make files containing binary Molecule representation.
- *
- * @throws If the file extension does not match .masm
+/*!
+ * @brief Writer function for Molecule serializations
+ * @throws If the file extension does not match .masm or .json
  */
 void write(
   const std::string& filename,

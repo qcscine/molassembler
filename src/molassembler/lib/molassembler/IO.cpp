@@ -8,10 +8,18 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include "boost/filesystem.hpp"
 
-#include "molassembler/OuterGraph.h"
-#include "molassembler/IO/FileHandlers.h"
+#include "molassembler/IO/BinaryHandler.h"
+#include "molassembler/Interpret.h"
 #include "molassembler/Molecule.h"
+#include "molassembler/Options.h"
+#include "molassembler/OuterGraph.h"
 #include "molassembler/Serialization.h"
+
+#include "Utils/AtomCollection.h"
+#include "Utils/Bonds/BondOrderCollection.h"
+#include "Utils/IO/ChemicalFileHandler.h"
+
+#include "temple/Random.h"
 
 #include <fstream>
 #include <iomanip>
@@ -23,15 +31,81 @@ namespace molassembler {
 
 namespace IO {
 
+std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
+  const Molecule& molecule,
+  AngstromWrapper angstromWrapper
+) {
+  return std::make_pair(
+    Utils::AtomCollection(
+      molecule.graph().elementCollection(),
+      angstromWrapper.getBohr()
+    ),
+    molecule.graph().bondOrders()
+  );
+}
+
+std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
+  const Molecule& molecule,
+  const Utils::PositionCollection& positions
+) {
+  return std::make_pair(
+    Utils::AtomCollection(
+      molecule.graph().elementCollection(),
+      positions
+    ),
+    molecule.graph().bondOrders()
+  );
+}
+
+std::pair<Utils::AtomCollection, Utils::BondOrderCollection> shuffle(
+  const Utils::AtomCollection& ac,
+  const Utils::BondOrderCollection& bos
+) {
+  const unsigned N = ac.size();
+
+  std::vector<unsigned> permutation;
+  permutation.resize(N);
+  std::iota(std::begin(permutation), std::end(permutation), 0);
+  temple::random::shuffle(permutation, randomnessEngine());
+
+  Utils::AtomCollection permutedAtoms(N);
+  for(unsigned i = 0; i < N; ++i) {
+    permutedAtoms.setPosition(permutation.at(i), ac.getPosition(i));
+    permutedAtoms.setElement(permutation.at(i), ac.getElement(i));
+  }
+
+  Utils::BondOrderCollection permutedBOs(N);
+  using SparseMatrixType = std::decay_t<
+    decltype(std::declval<Utils::BondOrderCollection>().getMatrix())
+  >;
+  const SparseMatrixType& BOMatrix = bos.getMatrix();
+  // Iterate through the sparse representation
+  for(int k = 0; k < BOMatrix.outerSize(); ++k) {
+    for(SparseMatrixType::InnerIterator it(BOMatrix, k); it; ++it) {
+      permutedBOs.setOrder(
+        permutation.at(it.row()),
+        permutation.at(it.col()),
+        it.value()
+      );
+    }
+  }
+
+  return std::make_pair(
+    std::move(permutedAtoms),
+    std::move(permutedBOs)
+  );
+}
+
 Molecule read(const std::string& filename) {
   boost::filesystem::path filepath {filename};
   if(!boost::filesystem::exists(filepath)) {
     throw std::logic_error("File selected to read does not exist.");
   }
 
+  // Direct serializations of molecules have their own filetypes
   if(filepath.extension() == ".masm") {
     return fromCBOR(
-      FileHandlers::BinaryHandler::read(filename)
+      BinaryHandler::read(filename)
     );
   }
 
@@ -44,18 +118,16 @@ Molecule read(const std::string& filename) {
     return mol;
   }
 
-  std::unique_ptr<FileHandlers::FileHandler> handler;
-  if(filepath.extension() == ".mol") {
-    handler = std::make_unique<FileHandlers::MOLFileHandler>();
-  } else if(filepath.extension() == ".xyz") {
-    handler = std::make_unique<FileHandlers::XYZHandler>();
-  } else {
-    throw std::logic_error("Can only read files with .mol or .xyz extensions!");
-  }
+  // This can throw in lots of cases
+  auto readData = Utils::ChemicalFileHandler::read(filename);
 
-  auto interpretation = FileHandlers::interpret(
-    handler->read(filename)
-  );
+  InterpretResult interpretation;
+  if(readData.second.empty()) {
+    // Unfortunately, the file type does not include bond order information
+    interpretation = interpret(readData.first, BondDiscretizationOption::RoundToNearest);
+  } else {
+    interpretation = interpret(readData.first, readData.second, BondDiscretizationOption::RoundToNearest);
+  }
 
   if(interpretation.molecules.size() > 1) {
     throw std::runtime_error(
@@ -74,18 +146,16 @@ std::vector<Molecule> split(const std::string& filename) {
     throw std::logic_error("File selected to read does not exist.");
   }
 
-  std::unique_ptr<FileHandlers::FileHandler> handler;
-  if(filepath.extension() == ".mol") {
-    handler = std::make_unique<FileHandlers::MOLFileHandler>();
-  } else if(filepath.extension() == ".xyz") {
-    handler = std::make_unique<FileHandlers::XYZHandler>();
-  } else {
-    throw std::logic_error("Can only read files with .mol or .xyz extensions!");
-  }
+  // This can throw in lots of cases
+  auto readData = Utils::ChemicalFileHandler::read(filename);
 
-  auto interpretation = FileHandlers::interpret(
-    handler->read(filename)
-  );
+  InterpretResult interpretation;
+  if(readData.second.empty()) {
+    // Unfortunately, the file type does not include bond order information
+    interpretation = interpret(readData.first);
+  } else {
+    interpretation = interpret(readData.first, readData.second);
+  }
 
   return interpretation.molecules;
 }
@@ -93,33 +163,20 @@ std::vector<Molecule> split(const std::string& filename) {
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const AngstromWrapper& angstromWrapper,
-  const IndexPermutation permutation
+  const AngstromWrapper& angstromWrapper
 ) {
   assert(molecule.graph().N() == static_cast<AtomIndex>(angstromWrapper.positions.size()));
-
-  boost::filesystem::path filepath {filename};
-
-  std::unique_ptr<FileHandlers::FileHandler> handler;
-  if(filepath.extension() == ".mol") {
-    handler = std::make_unique<FileHandlers::MOLFileHandler>();
-  } else if(filepath.extension() == ".xyz") {
-    handler = std::make_unique<FileHandlers::XYZHandler>();
-  } else {
-    throw std::logic_error("Can only read files with .mol or .xyz extensions!");
-  }
-
-  handler->write(filename, molecule, angstromWrapper, permutation);
+  auto data = exchangeFormat(molecule, angstromWrapper);
+  Utils::ChemicalFileHandler::write(filename, data.first, data.second);
 }
 
 void write(
   const std::string& filename,
   const Molecule& molecule,
-  const Scine::Utils::PositionCollection& positions,
-  const IndexPermutation permutation
+  const Scine::Utils::PositionCollection& positions
 ) {
-  AngstromWrapper wrapper {positions};
-  return write(filename, molecule, wrapper, permutation);
+  auto data = exchangeFormat(molecule, positions);
+  Utils::ChemicalFileHandler::write(filename, data.first, data.second);
 }
 
 void write(
@@ -129,7 +186,7 @@ void write(
   boost::filesystem::path filepath {filename};
 
   if(filepath.extension() == ".masm") {
-    FileHandlers::BinaryHandler::write(
+    BinaryHandler::write(
       filename,
       toCBOR(molecule)
     );

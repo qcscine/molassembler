@@ -72,7 +72,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Isomers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/Base64.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/FileHandlers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/BinaryHandler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Log.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/AtomInfo.h
@@ -122,7 +122,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Interpret.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Isomers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/FileHandlers.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/IO/BinaryHandler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Log.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/AtomInfo.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Modeling/BondDistance.cpp

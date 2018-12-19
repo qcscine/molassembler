@@ -46,7 +46,7 @@ void readFileGenConformationAndWriteFile(const boost::filesystem::path& filePath
   // Read the file
   auto mol = IO::read(filePath.string());
 
-  DistanceGeometry::SpatialModel spatialModel {mol};
+  DistanceGeometry::SpatialModel spatialModel {mol, DistanceGeometry::Configuration {}};
 
   spatialModel.writeGraphviz(filePath.stem().string() + ".dot"s);
 

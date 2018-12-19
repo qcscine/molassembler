@@ -5,10 +5,12 @@
 
 #include "molassembler/OuterGraph.h"
 
+#include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/Typenames.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Graph/Bridge.h"
+#include "molassembler/Modeling/BondDistance.h"
 
 namespace Scine {
 
@@ -77,6 +79,24 @@ boost::optional<BondIndex> OuterGraph::bond(const AtomIndex a, const AtomIndex b
   }
 
   return boost::none;
+}
+
+Utils::BondOrderCollection OuterGraph::bondOrders() const {
+  Utils::BondOrderCollection BOs(inner().N());
+
+  for(const auto edge : boost::make_iterator_range(inner().edges())) {
+    BOs.setOrder(
+      inner().source(edge),
+      inner().target(edge),
+      Bond::bondOrderMap.at(
+        static_cast<std::underlying_type_t<BondType>>(
+          inner().bondType(edge)
+        )
+      )
+    );
+  }
+
+  return BOs;
 }
 
 BondType OuterGraph::bondType(const BondIndex& edge) const {

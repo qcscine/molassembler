@@ -19,7 +19,7 @@
 #include "temple/Stringify.h"
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
-#include "molassembler/IO/FileHandlers.h"
+#include "molassembler/IO.h"
 #include "molassembler/Isomers.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
@@ -330,10 +330,6 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
 
 BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
   auto molSplat = IO::split("multiple_molecules/ethane_four_water.mol");
-
-  auto xyzHandler = IO::FileHandlers::XYZHandler {};
-  auto xyzData = xyzHandler.read("multiple_molecules/ethane_four_water.xyz");
-
   auto xyzSplat = IO::split("multiple_molecules/ethane_four_water.xyz");
 
   BOOST_CHECK(molSplat.size() == 5 && xyzSplat.size() == 5);

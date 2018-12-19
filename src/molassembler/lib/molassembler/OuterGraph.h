@@ -24,6 +24,7 @@
 namespace Scine {
 namespace Utils {
 using ElementTypeCollection = std::vector<ElementType>;
+class BondOrderCollection;
 } // namespace Utils
 } // namespace Scine
 
@@ -195,6 +196,8 @@ public:
   bool adjacent(AtomIndex a, AtomIndex b) const;
   //! Optionally fetch the bond index of a possibly non-existent bond
   boost::optional<BondIndex> bond(AtomIndex a, AtomIndex b) const;
+  //! Generate a BondOrderCollection from the graph
+  Utils::BondOrderCollection bondOrders() const;
   //! Fetch the bond type at a particular bond
   BondType bondType(const BondIndex& edge) const;
   //! Returns whether an atom can be removed without disconnecting the graph
@@ -206,9 +209,9 @@ public:
   //! Returns the number of bonds incident upon an atom
   unsigned degree(AtomIndex a) const;
   //! Fetch an element collection of all atoms
-  Scine::Utils::ElementTypeCollection elementCollection() const;
+  Utils::ElementTypeCollection elementCollection() const;
   //! Fetch the element type of an atom
-  Scine::Utils::ElementType elementType(AtomIndex a) const;
+  Utils::ElementType elementType(AtomIndex a) const;
 
   //! Number of atoms in the graph
   AtomIndex N() const;
