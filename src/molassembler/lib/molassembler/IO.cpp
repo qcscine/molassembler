@@ -18,6 +18,7 @@
 #include "Utils/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
 #include "Utils/IO/ChemicalFileHandler.h"
+#include "Utils/IO/OpenBabelStreamHandler.h"
 
 #include "temple/Random.h"
 
@@ -30,6 +31,48 @@ namespace Scine {
 namespace molassembler {
 
 namespace IO {
+
+const bool& LineNotation::enabled() {
+  static bool enable = Utils::OpenBabelStreamHandler::checkForBinary();
+  return enable;
+}
+
+Molecule LineNotation::fromFormat(const std::string& lineNotation, const std::string& format) {
+  if(!enabled()) {
+    throw std::logic_error(
+      "obabel was not found! Line notation Molecule sources are unavailable."
+    );
+  }
+
+  std::stringstream stream(lineNotation);
+  Utils::OpenBabelStreamHandler handler;
+  auto data = handler.read(stream, format);
+  InterpretResult interpretation = interpret(
+    data.first,
+    data.second,
+    BondDiscretizationOption::RoundToNearest
+  );
+
+  if(interpretation.molecules.size() > 1) {
+    throw std::logic_error(
+      "Interpreted multiple molecules into obabel output. Have you supplied multiple molecules in the line notation?"
+    );
+  }
+
+  return interpretation.molecules.front();
+}
+
+Molecule LineNotation::fromCanonicalSMILES(const std::string& can) {
+  return fromFormat(can, "can");
+}
+
+Molecule LineNotation::fromIsomericSMILES(const std::string& smi) {
+  return fromFormat(smi, "smi");
+}
+
+Molecule LineNotation::fromInChI(const std::string& inchi) {
+  return fromFormat(inchi, "inchi");
+}
 
 std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,

@@ -37,16 +37,41 @@ class AngstromWrapper;
 //! Input and output
 namespace IO {
 
+/**
+ * @brief Provides Molecule instances from line notations of molecules such
+ *   as SMILES and InChI
+ */
+class LineNotation {
+public:
+  //! Checks whether the `obabel` binary is found in your path.
+  static const bool& enabled();
+  //! Construct a single molecule from a canonical SMILES string
+  static Molecule fromCanonicalSMILES(const std::string& can);
+  //! Construct a single molecule from an isomeric SMILES string
+  static Molecule fromIsomericSMILES(const std::string& smi);
+  /*!
+   * @brief Construct a single molecule from an InChI string
+   * @note The passed string has to include the `InChI=` prefix
+   */
+  static Molecule fromInChI(const std::string& inchi);
+
+private:
+  static Molecule fromFormat(const std::string& lineNotation, const std::string& format);
+};
+
+//! Extract exchange format information from a molecule and positional data
 std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
   AngstromWrapper angstromWrapper
 );
 
+//! @overload
 std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
   const Utils::PositionCollection& positions
 );
 
+//! Applies a random atom index permutation to exchange data
 std::pair<Utils::AtomCollection, Utils::BondOrderCollection> shuffle(
   const Utils::AtomCollection& ac,
   const Utils::BondOrderCollection& bos
