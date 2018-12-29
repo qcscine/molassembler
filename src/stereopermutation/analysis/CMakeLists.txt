@@ -5,7 +5,7 @@ if(NOT TARGET Boost::program_options)
 endif()
 
 add_executable(stereopermutationProperties properties.cpp)
-target_compile_options(stereopermutationProperties PUBLIC ${MOLASSEMBLER_CXX_FLAGS})
+target_compile_options(stereopermutationProperties PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 target_link_libraries(stereopermutationProperties
   PRIVATE Boost::program_options stereopermutation
 )

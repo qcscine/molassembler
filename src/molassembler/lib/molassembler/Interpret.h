@@ -13,17 +13,16 @@
 #include "boost/optional.hpp"
 #include <vector>
 
-// External forward-declarations
+
 namespace Scine {
+
+// External forward-declarations
 namespace Utils {
 enum class ElementType;
 class AtomCollection;
 class BondOrderCollection;
 using ElementTypeCollection = std::vector<ElementType>;
 } // namespace Utils
-} // namespace Scine
-
-namespace Scine {
 
 namespace molassembler {
 
@@ -64,9 +63,9 @@ struct InterpretResult {
  * @returns A list of found molecules and an index mapping to each molecule
  */
 InterpretResult interpret(
-  const Scine::Utils::ElementTypeCollection& elements,
+  const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
-  const Scine::Utils::BondOrderCollection& bondOrders,
+  const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
@@ -92,7 +91,7 @@ InterpretResult interpret(
  * @returns A list of found molecules and an index mapping to each molecule
  */
 InterpretResult interpret(
-  const Scine::Utils::ElementTypeCollection& elements,
+  const Utils::ElementTypeCollection& elements,
   const AngstromWrapper& angstromWrapper,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
@@ -122,8 +121,8 @@ InterpretResult interpret(
  *   Bohr units.
  */
 InterpretResult interpret(
-  const Scine::Utils::AtomCollection& atomCollection,
-  const Scine::Utils::BondOrderCollection& bondOrders,
+  const Utils::AtomCollection& atomCollection,
+  const Utils::BondOrderCollection& bondOrders,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
@@ -152,7 +151,7 @@ InterpretResult interpret(
  *   a high risk of misinterpretation
  */
 InterpretResult interpret(
-  const Scine::Utils::AtomCollection& atomCollection,
+  const Utils::AtomCollection& atomCollection,
   BondDiscretizationOption discretization = BondDiscretizationOption::Binary,
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );

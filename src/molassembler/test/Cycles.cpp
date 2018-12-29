@@ -77,10 +77,12 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
 
   Cycles cycles {mol.graph()};
 
-  std::vector<unsigned> cycleSizes;
-  for(const auto cyclePtr : cycles) {
-    cycleSizes.emplace_back(Cycles::size(cyclePtr));
-  }
+  auto cycleSizes = temple::map(
+    cycles,
+    [](const auto& cycleEdges) -> unsigned {
+      return cycleEdges.size();
+    }
+  );
 
   BOOST_CHECK(!cycleSizes.empty());
 
@@ -99,7 +101,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
     unsigned cycleSizeThreshold = temple::Math::ceil(temple::average(cycleSizes));
 
     for(
-      const auto cyclePtr :
+      const auto cycleEdges :
       boost::make_iterator_range(
         cycles.iteratorPair(
           Cycles::predicates::SizeLessThan(cycleSizeThreshold)
@@ -107,10 +109,15 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
       )
     ) {
       BOOST_CHECK_MESSAGE(
-        Cycles::size(cyclePtr) < cycleSizeThreshold,
+        cycleEdges.size() < cycleSizeThreshold,
         "Expected edge set to have size less than " << cycleSizeThreshold
-          << ", but got one with size " << Cycles::size(cyclePtr) << ": "
-          << temple::stringify(Cycles::edgeVertices(cyclePtr))
+          << ", but got one with size " << cycleEdges.size() << ": "
+          << temple::stringifyContainer(
+            cycleEdges,
+            [](const BondIndex& bond) -> std::string {
+              return std::to_string(bond.first) + ", " + std::to_string(bond.second);
+            }
+          )
       );
     }
   }

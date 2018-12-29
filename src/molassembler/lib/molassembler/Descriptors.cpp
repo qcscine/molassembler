@@ -21,11 +21,10 @@ unsigned numRotatableBonds(const Molecule& mol) {
 
   std::map<BondIndex, unsigned> smallestCycle;
 
-  for(const auto cyclePtr : cycleData) {
-    const auto cycleEdges = Cycles::edges(cyclePtr);
+  for(const auto cycleEdges : cycleData) {
     const unsigned cycleSize = cycleEdges.size();
 
-    for(const auto& edge : cycleEdges) {
+    for(const BondIndex& edge : cycleEdges) {
       StdlibTypeAlgorithms::addOrUpdateMapIf(
         smallestCycle,
         edge,

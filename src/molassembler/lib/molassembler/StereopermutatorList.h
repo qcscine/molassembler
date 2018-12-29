@@ -24,6 +24,9 @@ namespace Scine {
 
 namespace molassembler {
 
+/**
+ * @brief Manages all stereopermutators that are part of a Molecule
+ */
 class StereopermutatorList {
 public:
 /* Typedefs */
@@ -88,7 +91,7 @@ public:
   //! Fetch a const ref-option to an AtomStereopermutator, if present
   boost::optional<const AtomStereopermutator&> option(AtomIndex index) const;
 
-  //! Fetch a const ref-option to an BondStereopermutator, if present
+  //! Fetch a const ref-option to a BondStereopermutator, if present
   boost::optional<const BondStereopermutator&> option(const BondIndex& edge) const;
 
   //! Returns the number of AtomStereopermutators

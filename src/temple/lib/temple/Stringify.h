@@ -150,6 +150,9 @@ std::enable_if_t<
 template<typename T>
 std::string stringifyContainer(const T& container);
 
+template<typename Container, class ElementStringifier>
+std::string stringifyContainer(const Container& container, ElementStringifier&& stringifier);
+
 template<typename TupleType, size_t ... Inds>
 std::string stringifyTuple(
   const TupleType& tuple,
@@ -261,6 +264,20 @@ std::string stringifyContainer(const T& container) {
 
   for(auto it = container.begin(); it != container.end(); /*-*/) {
     representation += stringify(*it);
+    if(++it != container.end()) {
+      representation += ", ";
+    }
+  }
+
+  return representation + "}"s;
+}
+
+template<typename Container, class ElementStringifier>
+std::string stringifyContainer(const Container& container, ElementStringifier&& stringifier) {
+  std::string representation = "{";
+
+  for(auto it = container.begin(); it != container.end(); /*-*/) {
+    representation += stringifier(*it);
     if(++it != container.end()) {
       representation += ", ";
     }

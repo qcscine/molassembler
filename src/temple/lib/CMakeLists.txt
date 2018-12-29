@@ -59,8 +59,6 @@ target_include_directories(
   temple SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 
-target_compile_options(temple INTERFACE ${MOLASSEMBLER_CXX_FLAGS})
-
 # Make the interface an export-name
 install(
   TARGETS temple

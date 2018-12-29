@@ -120,7 +120,7 @@ public:
 
     constIterator& operator ++ ();
     constIterator operator ++ (int);
-    RDL_cycle* operator * () const;
+    std::vector<BondIndex> operator * () const;
 
     //! Must be constructed from same Cycles base and at same RC to compare equal
     bool operator == (const constIterator& other) const;
@@ -145,18 +145,6 @@ public:
 //!@{
   Cycles() = default;
   Cycles(const OuterGraph& sourceGraph, bool ignoreEtaBonds = false);
-//!@}
-
-//!@name Static member functions
-//!@{
-  //! Returns the size of a cycle (the number of constuting atoms or edges)
-  static unsigned size(const RDL_cycle* const cyclePtr);
-  //! Returns a list of edges constituted by their edge vertices of a cycle
-  static EdgeList edgeVertices(const RDL_cycle* const cyclePtr);
-  //! Returns a list of edge descriptors from the original graph of a cycle
-  static temple::TinySet<BondIndex> edges(const RDL_cycle* const cyclePtr);
-  //! Returns a list of edge descriptors from an EdgeList
-  static temple::TinySet<BondIndex> edges(const EdgeList& edges);
 //!@}
 
 //!@name Information
@@ -221,7 +209,7 @@ std::map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
  *   the two possible vertex index sequences describing the cycle
  */
 std::vector<AtomIndex> makeRingIndexSequence(
-  const Cycles::EdgeList& edgeSet
+  std::vector<BondIndex> edgeDescriptors
 );
 
 std::vector<AtomIndex> centralizeRingIndexSequence(
@@ -234,7 +222,7 @@ std::vector<AtomIndex> centralizeRingIndexSequence(
  *   descriptors.  Double and aromatic bonds are considered planarity enforcing.
  */
 unsigned countPlanarityEnforcingBonds(
-  const temple::TinySet<BondIndex>& edgeSet,
+  const std::vector<BondIndex>& edgeSet,
   const OuterGraph& graph
 );
 

@@ -262,13 +262,12 @@ SpatialModel::SpatialModel(
    * exactly, add that information
    */
   for(
-    const auto cyclePtr :
+    auto cycleEdges :
     boost::make_iterator_range(
       cycleData.iteratorPair(Cycles::predicates::SizeLessThan {6})
     )
   ) {
-    const auto edgeDescriptors = Cycles::edges(cyclePtr);
-    const unsigned cycleSize = edgeDescriptors.size();
+    const unsigned cycleSize = cycleEdges.size();
 
     /* There are a variety of cases here which all need to be treated
      * differently:
@@ -293,7 +292,7 @@ SpatialModel::SpatialModel(
       || (
         cycleSize == 4
         && countPlanarityEnforcingBonds(
-          edgeDescriptors,
+          cycleEdges,
           molecule.graph()
         ) >= 1
       )
@@ -301,9 +300,7 @@ SpatialModel::SpatialModel(
       /* Gather sequence of atoms in cycle by progressively converting edge
        * descriptors into vertex indices
        */
-      const auto indexSequence = makeRingIndexSequence(
-        Cycles::edgeVertices(cyclePtr)
-      );
+      const auto indexSequence = makeRingIndexSequence(std::move(cycleEdges));
 
       // Skip any cycles that have fixed atoms
       if(
@@ -1610,7 +1607,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
    * constituents
    */
   for(
-    const auto cyclePtr :
+    auto cycleEdges :
     boost::make_iterator_range(
       etaLessCycles.iteratorPair(Cycles::predicates::ConsistsOf {baseConstituents})
     )
@@ -1619,7 +1616,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
      * polygon circumradius, which is how flat cycles are modelled here
      */
     auto ringIndexSequence = makeRingIndexSequence(
-      Cycles::edgeVertices(cyclePtr)
+      std::move(cycleEdges)
     );
 
     auto distances = temple::map(

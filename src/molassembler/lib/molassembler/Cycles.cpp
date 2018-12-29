@@ -62,58 +62,6 @@ Cycles::Cycles(
   _rdlPtr = std::make_shared<RDLDataPtrs>(sourceGraph.inner(), ignoreEtaBonds);
 }
 
-unsigned Cycles::size(const RDL_cycle* const cyclePtr) {
-  return cyclePtr -> weight;
-}
-
-Cycles::EdgeList Cycles::edgeVertices(const RDL_cycle* const cyclePtr) {
-  EdgeList cycleEdges;
-
-  // Collect the pair of atom indices for every edge of this cycle
-  for(unsigned i = 0; i < size(cyclePtr); i++) {
-    cycleEdges.emplace_back(
-      std::array<AtomIndex, 2> {
-        cyclePtr->edges[i][0],
-        cyclePtr->edges[i][1]
-      }
-    );
-  }
-
-  return cycleEdges;
-}
-
-temple::TinySet<BondIndex> Cycles::edges(const RDL_cycle* const cyclePtr) {
-  temple::TinySet<BondIndex> cycleEdges;
-  cycleEdges.reserve(size(cyclePtr));
-
-  // Collect the pair of atom indices for every edge of this cycle
-  for(unsigned i = 0; i < size(cyclePtr); ++i) {
-    cycleEdges.insert(
-      BondIndex {
-        cyclePtr->edges[i][0],
-        cyclePtr->edges[i][1]
-      }
-    );
-  }
-
-  return cycleEdges;
-}
-
-temple::TinySet<BondIndex> Cycles::edges(const EdgeList& edges) {
-  temple::TinySet<BondIndex> cycleEdges;
-
-  for(const auto& edge : edges) {
-    cycleEdges.insert(
-      BondIndex {
-        edge.front(),
-        edge.back()
-      }
-    );
-  }
-
-  return cycleEdges;
-}
-
 unsigned Cycles::numCycleFamilies() const {
   return RDL_getNofURF(_rdlPtr->dataPtr);
 }
@@ -290,12 +238,27 @@ Cycles::constIterator Cycles::constIterator::operator ++ (int) {
   return retval;
 }
 
-RDL_cycle* Cycles::constIterator::operator * () const {
+std::vector<BondIndex> Cycles::constIterator::operator * () const {
   if(_cyclePtr->cyclePtr == nullptr) {
     throw std::range_error("Dereferencing Cycles::constIterator end iterator");
   }
 
-  return _cyclePtr->cyclePtr;
+  const unsigned size = _cyclePtr->cyclePtr->weight;
+
+  temple::TinySet<BondIndex> cycleEdges;
+  cycleEdges.reserve(size);
+
+  // Collect the pair of atom indices for every edge of this cycle
+  for(unsigned i = 0; i < size; ++i) {
+    cycleEdges.insert(
+      BondIndex {
+        _cyclePtr->cyclePtr->edges[i][0],
+        _cyclePtr->cyclePtr->edges[i][1]
+      }
+    );
+  }
+
+  return cycleEdges.data;
 }
 
 //! Must be constructed from same Cycles base and at same RC
@@ -344,11 +307,11 @@ void Cycles::constIterator::RDLCyclePtrs::advance() {
 std::map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData) {
   std::map<AtomIndex, unsigned> smallestCycle;
 
-  for(const auto cyclePtr : cycleData) {
-    const unsigned cycleSize = Cycles::size(cyclePtr);
+  for(const auto cycleEdges : cycleData) {
+    const unsigned cycleSize = cycleEdges.size();
 
-    for(const auto& edgeIndices : Cycles::edgeVertices(cyclePtr)) {
-      for(const auto& index: edgeIndices) {
+    for(const BondIndex& bond : cycleEdges) {
+      for(const AtomIndex index: bond) {
         StdlibTypeAlgorithms::addOrUpdateMapIf(
           smallestCycle,
           index, // key_type to check
@@ -365,17 +328,17 @@ std::map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData) {
 }
 
 std::vector<AtomIndex> makeRingIndexSequence(
-  const Cycles::EdgeList& edgeSet
+  std::vector<BondIndex> edgeDescriptors
 ) {
-  // copy the edges so we can modify
-  auto edgeDescriptors = edgeSet;
 
   auto firstEdgeIter = edgeDescriptors.begin();
   // Initialize with first edge descriptor's indices
   std::vector<AtomIndex> indexSequence {
-    firstEdgeIter->front(),
-    firstEdgeIter->back()
+    firstEdgeIter->first,
+    firstEdgeIter->second
   };
+
+  indexSequence.reserve(edgeDescriptors.size());
 
   edgeDescriptors.erase(firstEdgeIter);
   // firstEdgeIter is now invalid!
@@ -386,17 +349,17 @@ std::vector<AtomIndex> makeRingIndexSequence(
       edgeIter != edgeDescriptors.end();
       ++edgeIter
     ) {
-      if(edgeIter->front() == indexSequence.back()) {
+      if(edgeIter->first == indexSequence.back()) {
         indexSequence.emplace_back(
-          edgeIter->back()
+          edgeIter->second
         );
         edgeDescriptors.erase(edgeIter);
         break;
       }
 
-      if(edgeIter->back() == indexSequence.back()) {
+      if(edgeIter->second == indexSequence.back()) {
         indexSequence.emplace_back(
-          edgeIter->front()
+          edgeIter->first
         );
         edgeDescriptors.erase(edgeIter);
         break;
@@ -441,14 +404,14 @@ std::vector<AtomIndex> centralizeRingIndexSequence(
 
 
 unsigned countPlanarityEnforcingBonds(
-  const temple::TinySet<BondIndex>& edgeSet,
+  const std::vector<BondIndex>& edgeSet,
   const OuterGraph& graph
 ) {
   return std::accumulate(
     std::begin(edgeSet),
     std::end(edgeSet),
     0u,
-    [&graph](const unsigned carry, const auto& edge) {
+    [&graph](const unsigned carry, const BondIndex& edge) {
       if(graph.bondType(edge) == BondType::Double) {
         return carry + 1;
       }

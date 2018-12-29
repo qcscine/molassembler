@@ -13,6 +13,7 @@
 
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Modeling/AtomInfo.h"
+#include "molassembler/Conformers.h"
 
 namespace Scine {
 

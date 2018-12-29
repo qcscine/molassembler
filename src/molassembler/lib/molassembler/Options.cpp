@@ -39,14 +39,14 @@ bool disregardStereopermutator(
   ) {
     // Figure out if the nitrogen is in a cycle of size 4 or smaller
     for(
-      const auto cyclePtr :
+      const auto cycleEdges :
       boost::make_iterator_range(
         cycleData.iteratorPair(
           Cycles::predicates::ContainsIndex {stereopermutator.centralIndex()}
         )
       )
     ) {
-      if(Cycles::size(cyclePtr) <= 4) {
+      if(cycleEdges.size() <= 4) {
         return false;
       }
     }

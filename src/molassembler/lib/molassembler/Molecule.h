@@ -52,8 +52,8 @@ class StereopermutatorList;
 struct RankingInformation;
 
 /*!
- * @brief Models a molecule as a molecular graph (connectivity of atoms) and a
- * list of stereopermutators.
+ * @brief Models a molecule as a graph (connectivity of atoms) and a list of
+ *   stereopermutators.
  *
  * This class models chemical molecules as a combination of a graph
  * and a list of stereopermutators.
@@ -90,8 +90,8 @@ public:
 
   //! Construct a minimal molecule from two element types and a mutual bond type
   Molecule(
-    Scine::Utils::ElementType a,
-    Scine::Utils::ElementType b,
+    Utils::ElementType a,
+    Utils::ElementType b,
     BondType bondType
   ) noexcept;
 
@@ -399,7 +399,7 @@ public:
    */
   void setElementType(
     AtomIndex a,
-    Scine::Utils::ElementType elementType
+    Utils::ElementType elementType
   );
 
   /*!

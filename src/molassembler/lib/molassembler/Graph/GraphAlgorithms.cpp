@@ -89,9 +89,9 @@ std::vector<LinkInformation> substituentLinks(
     unsigned // Index of LinkInformation in links
   > linksMap;
 
-  for(const auto cyclePtr : cycleData) {
-    auto cycleEdges = temple::map(
-      Cycles::edges(cyclePtr),
+  for(auto cycleOuterEdges : cycleData) {
+    auto cycleInnerEdges = temple::map(
+      cycleOuterEdges,
       [&graph](const BondIndex& bond) -> InnerGraph::Edge {
         return graph.edge(bond.first, bond.second);
       }
@@ -99,8 +99,8 @@ std::vector<LinkInformation> substituentLinks(
 
     // For set_intersection to work, cycle edges need to be sorted too
     std::sort(
-      std::begin(cycleEdges),
-      std::end(cycleEdges)
+      std::begin(cycleInnerEdges),
+      std::end(cycleInnerEdges)
     );
 
     std::vector<InnerGraph::Edge> intersection;
@@ -109,8 +109,8 @@ std::vector<LinkInformation> substituentLinks(
     std::set_intersection(
       std::begin(sourceAdjacentEdges),
       std::end(sourceAdjacentEdges),
-      std::begin(cycleEdges),
-      std::end(cycleEdges),
+      std::begin(cycleInnerEdges),
+      std::end(cycleInnerEdges),
       std::back_inserter(intersection)
     );
 
@@ -142,12 +142,12 @@ std::vector<LinkInformation> substituentLinks(
         linksMap.count(indexPair) == 0
         || (
           linksMap.count(indexPair) > 0
-          && cycleEdges.size() < links.at(linksMap.at(indexPair)).cycleSequence.size()
+          && cycleInnerEdges.size() < links.at(linksMap.at(indexPair)).cycleSequence.size()
         )
       ) {
         auto newLink = LinkInformation {
           indexPair,
-          makeRingIndexSequence(Cycles::edgeVertices(cyclePtr)),
+          makeRingIndexSequence(std::move(cycleOuterEdges)),
           source
         };
 

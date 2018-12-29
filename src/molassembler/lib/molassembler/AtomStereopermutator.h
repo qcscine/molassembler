@@ -240,7 +240,7 @@ public:
    */
   boost::optional<unsigned> assigned() const;
 
-  //! Returns a single-element vector containing the central atom
+  //! Returns the central atom this permutator is placed on
   AtomIndex centralIndex() const;
 
   /*!
