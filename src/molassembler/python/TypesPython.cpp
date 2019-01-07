@@ -9,7 +9,14 @@
 
 void init_types(pybind11::module& m) {
   using namespace Scine::molassembler;
-  pybind11::enum_<BondType> bondType(m, "BondType", "Bond type numeration.");
+  pybind11::enum_<BondType> bondType(
+    m,
+    "BondType",
+    "Bond type numeration. Besides the class organic single, double and triple "
+    "bonds, bond orders up to sextuple are explicitly included. Eta is a bond "
+    "order used internally by the library to represent haptic bonding. It "
+    "should not be set by users."
+  );
 
   bondType
   .value("Single", BondType::Single)
@@ -22,20 +29,9 @@ void init_types(pybind11::module& m) {
 
   // Leave out LengthUnit, it should not be necessary
 
-  pybind11::class_<BondIndex> bondIndex(m, "BondIndex", "Bond index");
+  pybind11::class_<BondIndex> bondIndex(m, "BondIndex", "Bond index with ordered atom indices");
   bondIndex.def_readwrite("first", &BondIndex::first);
   bondIndex.def_readwrite("second", &BondIndex::second);
   bondIndex.def(pybind11::self == pybind11::self);
   bondIndex.def(pybind11::self < pybind11::self);
-
-  pybind11::enum_<AtomEnvironmentComponents> atomEnvironmentComponents(
-    m,
-    "AtomEnvironmentComponents",
-    "For bitmasks grouping components of immediate atom enviroments"
-  );
-  atomEnvironmentComponents
-    .value("ElementTypes", AtomEnvironmentComponents::ElementTypes)
-    .value("BondOrders", AtomEnvironmentComponents::BondOrders)
-    .value("Symmetries", AtomEnvironmentComponents::Symmetries)
-    .value("Stereopermutations", AtomEnvironmentComponents::Stereopermutations);
 }

@@ -100,13 +100,20 @@ void init_conformers(pybind11::module& m) {
     &::generateEnsemble,
     pybind11::arg("molecule"),
     pybind11::arg("num_structures"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {}
+    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    "Generate an ensemble of conformations of a molecule of a particular size."
+    "The molecule you use to generate conformations may not contain "
+    "stereopermutators with zero assignments. Ensemble generation may fail, "
+    "which will raise an exception."
   );
 
   dg.def(
     "generate_conformation",
     &::generateConformation,
     pybind11::arg("molecule"),
-    pybind11::arg("configuration") = DistanceGeometry::Configuration {}
+    pybind11::arg("configuration") = DistanceGeometry::Configuration {},
+    "The molecule you use to generate a conformation may not contain "
+    "stereopermutators with zero assignments. Ensemble generation may fail, "
+    "which will raise an exception."
   );
 }
