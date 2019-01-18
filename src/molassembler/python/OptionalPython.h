@@ -1,3 +1,7 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 #ifndef INCLUDE_MOLASSEMBLER_PYTHON_OPTIONAL_H
 #define INCLUDE_MOLASSEMBLER_PYTHON_OPTIONAL_H
 
