@@ -326,8 +326,14 @@ BOOST_AUTO_TEST_CASE( explicitFromLecture ) {
                           -0.5,    0,  0.5,    0,
                              0, -0.5,    0,  0.5;
 
+  /* Copy out the metric matrix, zeroing out the upper strict triangle, since
+   * it is uninitialized and unused by embedding.
+   */
+  Eigen::MatrixXd compareMatrix = metric.access();
+  compareMatrix.triangularView<Eigen::StrictlyUpper>().setZero();
+
   BOOST_CHECK_MESSAGE(
-    metric.access().isApprox(
+    compareMatrix.isApprox(
       expectedMetricMatrix,
       1e-7
     ),
