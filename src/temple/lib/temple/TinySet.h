@@ -127,7 +127,7 @@ struct TinyUnorderedSet {
     return std::find(
       std::begin(set),
       std::end(set),
-      a
+      value
     ) != std::end(set);
   }
 //!@}
@@ -355,7 +355,7 @@ struct TinySet {
     iterator findIter = std::lower_bound(
       std::begin(set),
       lastElementIter,
-      a
+      set.back()
     );
 
     if(findIter != lastElementIter && !(set.back() < *findIter)) {
