@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2018-12-DD
+## [1.0.0] - 2019-01-DD
 ### Added
 - Explicit definition of which headers make up the public API in the
   tutorial-like documentation
@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Many parameters of Distance Geometry can now be altered by passing a
   non-defaulted `Configuration` object.
 - Isomer predicate and generator header `Isomers.h`
+- Initial Python bindings
 
 ### Changed
 - Symmetries are no longer excluded on principle, but using tau criteria (see
@@ -37,6 +38,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `CMAKE_CXX_FLAGS`, etc.)
 - Molassembler's validation and analysis are no longer built by default (see
   CMake options)
+- Library is no longer based on Delib exchange formats, but rather on scine
+  utils open source library (which are virtually identical).
 - Add ETH license to all files and a checker script
 
 ### Fixed

@@ -12,12 +12,6 @@
 #include "boost_outcome/outcome.hpp"
 #include <vector>
 
-// Forward-declarations
-namespace Delib {
-class PositionCollection;
-class Position;
-} // namespace Delib
-
 namespace Scine {
 
 namespace molassembler {

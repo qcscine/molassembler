@@ -142,7 +142,7 @@ for c, elementName in enumerate(elementNameList):
 	Z = c + 1
 	madel = madelung(Z)
 	valenceList = reduceToValenceElectrons(madel)
-	printstr = "  {Delib::ElementType::"+elementName
+	printstr = "  {Utils::ElementType::"+elementName
 	printstr += ", {" + str(vdwRadiiMap[elementName]) + ", "
 	printstr += ", ".join([str(x) for x in valenceList])+"}},"
 

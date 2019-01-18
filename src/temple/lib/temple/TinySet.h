@@ -71,6 +71,67 @@ struct TinyUnorderedSet {
   }
 //!@}
 
+//!@name Static functions
+//!@{
+  /**
+   * @brief Inserts an element only if the element is not already in the set
+   *
+   * @param set Set to insert the element into
+   * @param a Element to insert
+   *
+   * @return Whether the element was already in the set
+   */
+  static bool checked_insert(std::vector<T>& set, T a) {
+    if(!contains(set, a)) {
+      set.push_back(std::move(a));
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * @brief Checked emplace of an element into a set
+   *
+   * In-place constructs a T, then checks if it already exists in the set. If
+   * it does, it is removed again.
+   *
+   * @tparam Args Parameter pack to forward to T's constructor
+   * @param set Set to insert the element into
+   * @param args Arguments to forward to T's constructor
+   */
+  template<typename ... Args>
+  static void checked_emplace(std::vector<T>& set, Args&& ... args) {
+    set.emplace_back(std::forward<Args>(args)...);
+
+    if(
+      std::find(
+        std::begin(set),
+        std::end(set) - 1,
+        set.back()
+      ) != std::end(set) - 1
+    ) {
+      set.pop_back();
+    }
+  }
+
+  /**
+   * @brief Linear search for a value
+   *
+   * @param set Set to search
+   * @param value Value to look for
+   *
+   * @return Whether the value was found
+   */
+  static bool linear_search(std::vector<T>& set, const T& value) {
+    return std::find(
+      std::begin(set),
+      std::end(set),
+      a
+    ) != std::end(set);
+  }
+//!@}
+
 //!@name Modification
 //!@{
   //! Empties the set
@@ -233,6 +294,96 @@ struct TinySet {
     static_assert(
       std::is_same<T, typename std::decay<T>::type>::value,
       "Tiny sets can only contain non-cv qualified types"
+    );
+  }
+//!@}
+
+//!@name Static functions
+//!@{
+  static iterator find(std::vector<T>& set, const T& a) {
+    return std::lower_bound(
+      std::begin(set),
+      std::end(set),
+      a
+    );
+  }
+
+  static const_iterator find(const std::vector<T>& set, const T& a) {
+    return std::lower_bound(
+      std::begin(set),
+      std::end(set),
+      a
+    );
+  }
+
+  static void checked_insert(std::vector<T>& set, T a) {
+    iterator findIter = find(set, a);
+
+    /* Condition lifted directly from std::binary_search. If the element equals
+     * a, then the set already contains the element. In that case, do nothing.
+     */
+    if(findIter != std::end(set) && !(a < *findIter)) {
+      return;
+    }
+
+    set.insert(std::move(findIter), std::move(a));
+  }
+
+  /**
+   * @brief Emplaces an element in an ordered vector if the element is not
+   *   contained
+   *
+   * @note This does inplace-construct the element at the back of the vector,
+   *   then searches for an equal element in the ordered part of the vector. If
+   *   the element is found, the newly-constructed element is popped back off.
+   *   Otherwise, it is rotated to its position. This implies that this
+   *   function may trigger reallocation of the vector even though the element
+   *   is already part of the vector.
+   *
+   * @param set An ordered vector to add the element to
+   * @tparam Args parameter pack to forward to T's constructor
+   * @param args Arguments to forward to T's constructor
+   */
+  template<typename ... Args>
+  static void checked_emplace(std::vector<T>& set, Args&& ... args) {
+    // In-place construct the element at the back of the set
+    set.emplace_back(std::forward<Args>(args)...);
+
+    iterator lastElementIter = std::end(set) - 1;
+
+    // Search the range before it for an identical element
+    iterator findIter = std::lower_bound(
+      std::begin(set),
+      lastElementIter,
+      a
+    );
+
+    if(findIter != lastElementIter && !(set.back() < *findIter)) {
+      // Remove the element again
+      set.pop_back();
+    } else {
+      // Rotate in the new element
+      std::rotate(
+        findIter,
+        lastElementIter,
+        std::end(set)
+      );
+    }
+  }
+
+  /**
+   * @brief Binary search for a value in an ordered set
+   *
+   * @param set Set to search
+   * @param value Value to look for
+   *
+   * @return Whether the value was found
+   */
+  static bool binary_search(const std::vector<T>& set, const T& value) {
+    return std::binary_search(
+      std::begin(set),
+      std::end(set),
+      value
     );
   }
 //!@}
