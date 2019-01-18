@@ -326,11 +326,13 @@ BOOST_AUTO_TEST_CASE( explicitFromLecture ) {
                           -0.5,    0,  0.5,    0,
                              0, -0.5,    0,  0.5;
 
-  BOOST_CHECK(
+  BOOST_CHECK_MESSAGE(
     metric.access().isApprox(
       expectedMetricMatrix,
       1e-7
-    )
+    ),
+    "Do not get expected metric matrix from explicit example from lecture. Expect \n"
+    << expectedMetricMatrix << "\ngot " << metric.access() << " instead.\n"
   );
 }
 
