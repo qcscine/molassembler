@@ -32,7 +32,7 @@ test:gcc_debug:
   image: gitlab.chab.ethz.ch:4567/reiher/docker/scine-gcc:latest
   script:
     - (cd build_gcc_debug && make check)
-    - python /usr/local/bin/gcovr -r "$(pwd)/src/" -u --object-directory="$(pwd)/build-gcc/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
+    - python $(which gcovr) -r "$(pwd)/src/" -u --object-directory="$(pwd)/build-gcc/src/" --exclude-dir ".*test.*" --exclude-dir ".*extern.*" --exclude-dir ".*analysis.*" -e ".*extern.*" -e ".*test.*"
   dependencies:
     - build:gcc_debug
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
