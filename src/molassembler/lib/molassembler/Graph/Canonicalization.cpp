@@ -1,3 +1,8 @@
+/* @file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt for details.
+ */
+
 #include "molassembler/Graph/Canonicalization.h"
 
 #include "molassembler/Graph/InnerGraph.h"

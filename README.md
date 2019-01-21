@@ -65,6 +65,7 @@ Unowned libraries included this distribution:
 - Outcome (until released in boost): Improved error propagation
 - nlohmann/json: JSON serialization
 - spectra: ARPACK-like interface built on top of Eigen
+- nauty[^3]: Graph automorphism determination and canonical labeling
 
 This library uses CMake to model dependencies and make builds
 platform-independent.
@@ -110,3 +111,6 @@ This generates the Doxygen documentation in a `doc` subfolder.
 [^2]: Kolodzik, A.; Urbaczek, S.; Rarey, M. Unique Ring Families: A Chemically
   Meaningful Description of Molecular Ring Topologies. J. Chem. Inf. Model.,
   2012, 52 (8), pp 2013–2021
+
+[^3]: McKay, Brendan D.; Adolfo Piperno. Practical graph isomorphism, II.
+  J. Symb. Comput., 2014, 60, pp 94-112.

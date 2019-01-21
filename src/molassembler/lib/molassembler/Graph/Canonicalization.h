@@ -1,3 +1,8 @@
+/* @file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt for details.
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_GRAPH_CANONICALIZATION_H
 #define INCLUDE_MOLASSEMBLER_GRAPH_CANONICALIZATION_H
 
