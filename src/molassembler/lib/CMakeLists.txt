@@ -5,9 +5,6 @@ if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   find_package(Boost REQUIRED COMPONENTS filesystem system)
 endif()
 
-include(FindPkgConfig)
-pkg_search_module(NAUTY REQUIRED IMPORTED_TARGET libnauty2 libnauty nauty)
-
 include(ScineUtils)
 include(ImportUtilsOS)
 import_utils_os()
@@ -180,7 +177,7 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
       spectra
       Boost::filesystem
       Boost::system
-      PkgConfig::NAUTY
+      nautyStatic
   )
 else()
   target_include_directories(molassembler_obj
@@ -198,7 +195,7 @@ else()
       $<TARGET_PROPERTY:gor1,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:json,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:spectra,INTERFACE_INCLUDE_DIRECTORIES>
-      $<TARGET_PROPERTY:PkgConfig::NAUTY,INTERFACE_INCLUDE_DIRECTORIES>
+      $<TARGET_PROPERTY:nautyStatic,INTERFACE_INCLUDE_DIRECTORIES>
   )
 endif()
 target_compile_options(molassembler_obj PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
@@ -259,7 +256,7 @@ target_link_libraries(
     spectra
     Boost::filesystem
     Boost::system
-    PkgConfig::NAUTY
+    nautyStatic
 )
 
 # The linking for the static version of molassembler is more complicated.
@@ -319,7 +316,7 @@ target_link_libraries(
     dlib::dlib
     Boost::filesystem
     Boost::system
-    PkgConfig::NAUTY
+    nautyStatic
 )
 
 # Handle BLAS / LAPACK if found
