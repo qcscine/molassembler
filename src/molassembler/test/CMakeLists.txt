@@ -9,6 +9,7 @@ endif()
 
 set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/BondStereopermutator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Canonicalization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommonTrig.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DelibHelpers.cpp
