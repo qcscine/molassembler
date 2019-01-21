@@ -37,8 +37,8 @@ set(NAUTY_CPP
 
 add_library(nautyStatic STATIC ${NAUTY_HEADER} ${NAUTY_CPP})
 target_include_directories(nautyStatic PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nauty>
-  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include/nauty>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>
 )
 set_target_properties(nautyStatic PROPERTIES POSITION_INDEPENDENT_CODE ON)
 install(TARGETS nautyStatic EXPORT NautyTargets ARCHIVE DESTINATION lib)
