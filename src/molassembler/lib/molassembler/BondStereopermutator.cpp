@@ -48,6 +48,10 @@ void BondStereopermutator::assignRandom() {
   _pImpl -> assignRandom();
 }
 
+void BondStereopermutator::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  _pImpl -> applyPermutation(permutation);
+}
+
 void BondStereopermutator::fit(
   const AngstromWrapper& angstromWrapper,
   const AtomStereopermutator& stereopermutatorA,
@@ -101,6 +105,10 @@ std::string BondStereopermutator::rankInfo() const {
 
 BondIndex BondStereopermutator::edge() const {
   return _pImpl -> edge();
+}
+
+bool BondStereopermutator::operator < (const BondStereopermutator& other) const {
+  return *_pImpl < *other._pImpl;
 }
 
 bool BondStereopermutator::operator == (const BondStereopermutator& other) const {

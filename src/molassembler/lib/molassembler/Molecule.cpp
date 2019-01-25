@@ -80,6 +80,10 @@ void Molecule::addBond(
   _pImpl->addBond(a, b, bondType);
 }
 
+void Molecule::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  _pImpl->applyPermutation(permutation);
+}
+
 void Molecule::assignStereopermutator(
   const AtomIndex a,
   const boost::optional<unsigned>& assignment
@@ -100,6 +104,10 @@ void Molecule::assignStereopermutatorRandomly(const AtomIndex a) {
 
 void Molecule::assignStereopermutatorRandomly(const BondIndex& e) {
   _pImpl->assignStereopermutatorRandomly(e);
+}
+
+std::vector<AtomIndex> Molecule::canonicalize() {
+  return _pImpl->canonicalize();
 }
 
 void Molecule::removeAtom(const AtomIndex a) {
@@ -173,6 +181,13 @@ bool Molecule::modularCompare(
   const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
 ) const {
   return _pImpl->modularCompare(*other._pImpl, comparisonBitmask);
+}
+
+bool Molecule::trialModularCompare(
+  const Molecule& other,
+  const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+) const {
+  return _pImpl->trialModularCompare(*other._pImpl, comparisonBitmask);
 }
 
 RankingInformation Molecule::rankPriority(

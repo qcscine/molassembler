@@ -29,6 +29,8 @@ struct BondStereopermutator::Impl {
 
   void assignRandom();
 
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+
   void fit(
     const AngstromWrapper& angstromWrapper,
     const AtomStereopermutator& stereopermutatorA,
@@ -60,6 +62,7 @@ struct BondStereopermutator::Impl {
   BondIndex edge() const;
 
 /* Operators */
+  bool operator < (const Impl& other) const;
   bool operator == (const Impl& other) const;
   bool operator != (const Impl& other) const;
 

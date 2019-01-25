@@ -100,13 +100,13 @@ std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   );
 }
 
-std::pair<Utils::AtomCollection, Utils::BondOrderCollection> shuffle(
+std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIndex>> shuffle(
   const Utils::AtomCollection& ac,
   const Utils::BondOrderCollection& bos
 ) {
   const unsigned N = ac.size();
 
-  std::vector<unsigned> permutation;
+  std::vector<AtomIndex> permutation;
   permutation.resize(N);
   std::iota(std::begin(permutation), std::end(permutation), 0);
   temple::random::shuffle(permutation, randomnessEngine());
@@ -133,9 +133,10 @@ std::pair<Utils::AtomCollection, Utils::BondOrderCollection> shuffle(
     }
   }
 
-  return std::make_pair(
+  return std::make_tuple(
     std::move(permutedAtoms),
-    std::move(permutedBOs)
+    std::move(permutedBOs),
+    permutation
   );
 }
 
@@ -147,7 +148,7 @@ Molecule read(const std::string& filename) {
 
   // Direct serializations of molecules have their own filetypes
   if(filepath.extension() == ".masm") {
-    return fromCBOR(
+    fromCBOR(
       BinaryHandler::read(filename)
     );
   }

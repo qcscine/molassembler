@@ -89,8 +89,8 @@ WideHashType atomEnvironment(
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask,
   const Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  boost::optional<Symmetry::Name> symmetryNameOptional,
-  boost::optional<unsigned> assignedOptional
+  const boost::optional<Symmetry::Name>& symmetryNameOptional,
+  const boost::optional<unsigned>& assignedOptional
 ) {
   static_assert(
     // Sum of information in bits we want to pack in the 128 bit hash
@@ -101,7 +101,7 @@ WideHashType atomEnvironment(
       + Symmetry::constexprProperties::maxSymmetrySize * (
         BondInformation::hashWidth
       )
-      // The bits needed to store the symmetry name
+      // The bits needed to store the symmetry name (plus none)
       + temple::Math::ceil(
         temple::Math::log(Symmetry::nSymmetries + 1.0, 2.0)
       )
@@ -156,11 +156,10 @@ WideHashType atomEnvironment(
     value += (WideHashType(symmetryNameOptional.value()) + 1) << (7 + 48);
 
     if(bitmask & AtomEnvironmentComponents::Stereopermutations) {
-      /* The remaining space 64 - (7 + 32 + 5) = 20 bits is used for the current
-       * permutation. In that space, we can store up to 2^20 - 2 > 1e5
-       * permutations (one (0) for no stereopermutator, one (1) for unassigned),
-       * which ought to be plenty of bit space. Maximally asymmetric square
-       * antiprismatic has around 6k permutations, which fits into 13 bits.
+      /* The remaining space 128 - (7 + 48 + 5) = 68 bits is used for the current
+       * permutation. Maximally asymmetric square antiprismatic has around 6k
+       * permutations, which fits into 13 bits. We don't have to worry about
+       * that, then.
        */
       WideHashType permutationValue;
       if(assignedOptional) {
@@ -196,14 +195,14 @@ std::vector<WideHashType> generate(
         const InnerGraph::Edge& edge :
         boost::make_iterator_range(inner.edges(i))
       ) {
-        auto stereopermutatorOption = stereopermutators.option(
-          BondIndex {
-            inner.source(edge),
-            inner.target(edge)
-          }
-        );
-
-        if(stereopermutatorOption) {
+        if(
+          auto stereopermutatorOption = stereopermutators.option(
+            BondIndex {
+              inner.source(edge),
+              inner.target(edge)
+            }
+          )
+        ) {
           bonds.emplace_back(
             inner.bondType(edge),
             true,

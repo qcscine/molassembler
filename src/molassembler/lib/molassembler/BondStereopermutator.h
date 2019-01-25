@@ -93,6 +93,13 @@ public:
    */
   void assignRandom();
 
+  /**
+   * @brief Applies an atom index permutation
+   *
+   * @param permutation The permutation to apply
+   */
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+
   /*!
    * @brief Determines the assignment the permutator is in from positional
    *   information
@@ -183,6 +190,7 @@ public:
 
 //!@name Operators
 //!@{
+  bool operator < (const BondStereopermutator& other) const;
   /*!
    * @brief Compares whether the underlying composite and the assignment are
    *   equivalent to those of another bond stereopermutator

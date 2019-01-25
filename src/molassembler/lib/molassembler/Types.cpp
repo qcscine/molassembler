@@ -16,8 +16,8 @@ namespace molassembler {
 BondIndex::BondIndex() = default;
 
 BondIndex::BondIndex(AtomIndex a, AtomIndex b) noexcept : first(a), second(b) {
-  if(b < a) {
-    std::swap(a, b);
+  if(second < first) {
+    std::swap(first, second);
   }
 }
 

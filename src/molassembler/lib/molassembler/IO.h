@@ -72,7 +72,7 @@ std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
 );
 
 //! Applies a random atom index permutation to exchange data
-std::pair<Utils::AtomCollection, Utils::BondOrderCollection> shuffle(
+std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIndex>> shuffle(
   const Utils::AtomCollection& ac,
   const Utils::BondOrderCollection& bos
 );

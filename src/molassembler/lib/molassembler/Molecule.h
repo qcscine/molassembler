@@ -198,6 +198,13 @@ public:
     BondType bondType
   );
 
+  /**
+   * @brief Applies an index permutation to the Molecule state
+   *
+   * @param permutation A vertex permutation
+   */
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+
   /*!
    * @brief Sets the stereopermutator assignment at a particular atom
    *
@@ -298,6 +305,21 @@ public:
    *   members invalidated.
    */
   void assignStereopermutatorRandomly(const BondIndex& e);
+
+  /**
+   * @brief Canonicalizes the graph, invalidating all atom and bond indices.
+   *
+   * @warning This invalidates all atom indices and bond indices and any
+   *   references to constituting members of the molecule.
+   *
+   * @return Permutation mapping from old indices to new:
+   * @begincode{.cpp}
+   * auto indexMapping = mol.canonicalize();
+   * AtomIndex newIndex = indexMapping.at(oldIndex);
+   * @endcode
+   * You can use this to update invalidated indices.
+   */
+  std::vector<AtomIndex> canonicalize();
 
   /*!
    * @brief Removes an atom from the graph, including bonds to it.
@@ -534,8 +556,16 @@ public:
    * and hence can influence the number of stereopermutations and the currently
    * set stereopermutation index. This can lead to unexpected but logically
    * consistent comparison behavior.
+   *
+   * @note This function has an early exit for molecules stored in canonical
+   * form. In that case, this operation is only O(N).
    */
   bool modularCompare(
+    const Molecule& other,
+    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  ) const;
+
+  bool trialModularCompare(
     const Molecule& other,
     const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
   ) const;
@@ -573,7 +603,11 @@ public:
 
 //!@name Operators
 //!@{
-  //! Equality operator, performs most strict equality comparison
+  /*!
+   * @brief Equality operator, performs most strict equality comparison.
+   * @see modularCompare for more detailed information on how equality is
+   *   defined and more control over the operation
+   */
   bool operator == (const Molecule& other) const;
   //! Inverts @see operator ==
   bool operator != (const Molecule& other) const;

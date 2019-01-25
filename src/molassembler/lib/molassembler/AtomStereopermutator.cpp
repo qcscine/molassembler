@@ -61,6 +61,10 @@ void AtomStereopermutator::assignRandom() {
   _pImpl->assignRandom();
 }
 
+void AtomStereopermutator::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  _pImpl->applyPermutation(permutation);
+}
+
 void AtomStereopermutator::fit(
   const OuterGraph& graph,
   const AngstromWrapper& angstromWrapper

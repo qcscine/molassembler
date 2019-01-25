@@ -3,15 +3,17 @@
 
 # First create a temporary file from which to copy the header
 cat > temp_copyright_header.txt << EOF
-// Copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
-// See LICENSE.txt for details.
+/* @file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt for details.
+ */
 
 EOF
 
 # insert the header if it's not already here
-for i in $(find src -not \( -path src/extern -prune \) -name '*.cpp' -or -name '*.h' -or -name '*.hxx')
+for i in $(find src -not \( -path src/Externals -prune \) -name '*.cpp' -or -name '*.h' -or -name '*.hxx')
 do
-  if ! grep -q "Copyright ETH Zurich" $i
+  if ! grep -q -i "copyright eth zurich" $i
   then
     cat temp_copyright_header.txt $i >$i.new && mv $i.new $i
   fi

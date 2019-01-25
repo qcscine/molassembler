@@ -148,6 +148,13 @@ public:
    */
   void assignRandom();
 
+  /**
+   * @brief Applies an atom index permutation
+   *
+   * @param permutation The permutation to apply
+   */
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+
   /*!
    * @brief Determine the symmetry and assignment realized in positions
    *

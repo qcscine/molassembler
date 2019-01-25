@@ -114,6 +114,12 @@ void init_molecule(pybind11::module& m) {
   );
 
   molecule.def(
+    "canonicalize",
+    &Molecule::canonicalize,
+    "Canonicalizes the molecular graph"
+  );
+
+  molecule.def(
     "remove_atom",
     &Molecule::removeAtom,
     "Remove an atom from the graph, including bonds to it"

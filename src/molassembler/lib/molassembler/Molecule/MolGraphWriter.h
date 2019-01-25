@@ -29,7 +29,7 @@ struct MolGraphWriter {
   static const std::map<BondType, std::string> bondTypeDisplayString;
 //!@}
 
-//!@name Closures
+//!@name Members
 //!@{
   const InnerGraph* const graphPtr;
   const StereopermutatorList* const stereopermutatorListPtr;

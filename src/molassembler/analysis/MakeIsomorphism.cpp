@@ -49,12 +49,12 @@ int main(int argc, char* argv[]) {
     // This can throw in lots of cases
     auto readData = Utils::ChemicalFileHandler::read(filepath.string());
 
-    readData = IO::shuffle(readData.first, readData.second);
+    auto shuffledData = IO::shuffle(readData.first, readData.second);
 
     Utils::ChemicalFileHandler::write(
       filepath.stem().string() + "_isomorphism.mol",
-      readData.first,
-      readData.second
+      std::get<0>(shuffledData),
+      std::get<1>(shuffledData)
     );
   } else {
     std::cout << options_description << std::endl;

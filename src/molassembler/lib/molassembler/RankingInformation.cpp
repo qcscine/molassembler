@@ -51,6 +51,24 @@ LinkInformation::LinkInformation(
   }
 }
 
+void LinkInformation::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  // A link's ligand indices do not change, but the sequence does
+  for(AtomIndex& atomIndex : cycleSequence) {
+    atomIndex = permutation.at(atomIndex);
+  }
+
+  // Conditional reverse of the sequence now depends on the new vertex indices
+  if(
+    cycleSequence.size() >= 4
+    && cycleSequence.at(1) > cycleSequence.at(cycleSequence.size() -2)
+  ) {
+    std::reverse(
+      std::begin(cycleSequence) + 1,
+      std::end(cycleSequence) - 1
+    );
+  }
+}
+
 bool LinkInformation::operator == (const LinkInformation& other) const {
   return (
     indexPair == other.indexPair
@@ -139,6 +157,32 @@ RankingInformation::RankedLigandsType RankingInformation::rankLigands(
   );
 
   return finalSets;
+}
+
+void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  // .sortedSubstituents is mapped by applying the vertex permutation
+  for(auto& group : sortedSubstituents) {
+    for(AtomIndex& atomIndex : group) {
+      atomIndex = permutation.at(atomIndex);
+    }
+  }
+  // .ligands too
+  for(auto& group : ligands) {
+    for(AtomIndex& atomIndex : group) {
+      atomIndex = permutation.at(atomIndex);
+    }
+  }
+  // .ligandsRanking is unchanged as it is ligand index based into .ligands
+  // links does have to be mapped, though
+  for(LinkInformation& link : links) {
+    link.applyPermutation(permutation);
+  }
+
+  // Re-sort links to establish ordering
+  std::sort(
+    std::begin(links),
+    std::end(links)
+  );
 }
 
 unsigned RankingInformation::getLigandIndexOf(const AtomIndex i) const {

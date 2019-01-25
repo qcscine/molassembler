@@ -67,8 +67,8 @@ BOOST_AUTO_TEST_CASE(moleculeCanonicalizationTests) {
     auto aHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), comparisonBitmask);
     auto bHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), comparisonBitmask);
 
-    auto aAutomorphism = canonicalAutomorphism(a, aHashes);
-    auto bAutomorphism = canonicalAutomorphism(b, bHashes);
+    auto aAutomorphism = canonicalAutomorphism(a.graph().inner(), aHashes);
+    auto bAutomorphism = canonicalAutomorphism(b.graph().inner(), bHashes);
 
     bool allPass = true;
 

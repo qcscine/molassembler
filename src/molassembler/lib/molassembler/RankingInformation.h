@@ -54,6 +54,11 @@ struct LinkInformation {
   std::vector<AtomIndex> cycleSequence;
 //!@}
 
+//!@name Modification
+//!@{
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+//!@}
+
 //!@name Operators
 //!@{
   //! Performs a lexicographical comparison on both data members
@@ -146,6 +151,16 @@ struct RankingInformation {
    * @note This list is typically sorted, enabling use of the comparator
    */
   std::vector<LinkInformation> links;
+//!@}
+
+//!@name Modification
+//!@{
+  /**
+   * @brief Applies an atom index permutation
+   *
+   * @param permutation The permutation to apply
+   */
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
 //!@}
 
 //!@name Information

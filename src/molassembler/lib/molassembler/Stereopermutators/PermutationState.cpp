@@ -150,7 +150,7 @@ PermutationState::selfReferentialTransform(
   stereopermutation::Stereopermutation::LinksSetType links;
 
   for(const auto& link : rankingLinks) {
-    auto getRankedPosition = [&canonicalLigands](const AtomIndex ligandIndex) -> unsigned {
+    auto getRankedPosition = [&canonicalLigands](const unsigned ligandIndex) -> unsigned {
       unsigned position = 0;
       for(const auto& equalLigandsSet : canonicalLigands) {
         for(const auto& rankedLigandIndex : equalLigandsSet) {

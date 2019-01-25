@@ -95,6 +95,8 @@ public:
 
   Vertex addVertex(Scine::Utils::ElementType elementType);
 
+  void applyPermutation(const std::vector<Vertex>& permutation);
+
   BondType& bondType(const Edge& edge);
 
   BGLType& bgl();
@@ -134,6 +136,8 @@ public:
   Vertex degree(Vertex a) const;
   Vertex N() const;
   Vertex B() const;
+
+  bool plainComparison(const InnerGraph& other) const;
 //!@}
 
 //!@name Cache management

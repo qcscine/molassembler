@@ -31,6 +31,27 @@ void StereopermutatorList::add(
   );
 }
 
+
+//! Apply an index mapping to the list of stereopermutators
+void StereopermutatorList::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  // C++17 splice / merge maybe?
+  AtomMapType newAtomMap;
+  for(auto& mapPair : _atomStereopermutators) {
+    AtomStereopermutator& permutator = mapPair.second;
+    permutator.applyPermutation(permutation);
+    newAtomMap.emplace(permutator.centralIndex(), std::move(permutator));
+  }
+  std::swap(newAtomMap, _atomStereopermutators);
+
+  BondMapType newBondMap;
+  for(auto& mapPair : _bondStereopermutators) {
+    BondStereopermutator& permutator = mapPair.second;
+    permutator.applyPermutation(permutation);
+    newBondMap.emplace(permutator.edge(), std::move(permutator));
+  }
+  std::swap(newBondMap, _bondStereopermutators);
+}
+
 void StereopermutatorList::clear() {
   _atomStereopermutators.clear();
   _bondStereopermutators.clear();

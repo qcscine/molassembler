@@ -57,6 +57,13 @@ public:
   //! Assigns the Stereopermutator randomly using relative assignment weights
   void assignRandom();
 
+  /**
+   * @brief Applies an atom index permutation
+   *
+   * @param permutation The permutation to apply
+   */
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+
   /*!
    * The symmetry and assignment are determined based on three-dimensional
    * positions using angle and chiral distortions from the respective idealized

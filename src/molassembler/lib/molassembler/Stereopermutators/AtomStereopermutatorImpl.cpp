@@ -257,6 +257,20 @@ void AtomStereopermutator::Impl::assignRandom() {
   );
 }
 
+void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  // RankingInformation changes (lots of atom indices)
+  _ranking.applyPermutation(permutation);
+
+  // _centerAtom must change
+  _centerAtom = permutation.at(_centerAtom);
+
+  // Neither symmetry nor assignment change
+
+  /* Although ranking and central atom are implicated in its creation,
+   * PermutationState's state is completely independent of atom indices.
+   */
+}
+
 void AtomStereopermutator::Impl::propagateGraphChange(
   const OuterGraph& graph,
   RankingInformation newRanking
@@ -1010,6 +1024,10 @@ void AtomStereopermutator::Impl::setSymmetry(
   const Symmetry::Name symmetryName,
   const OuterGraph& graph
 ) {
+  if(_symmetry == symmetryName) {
+    return;
+  }
+
   _symmetry = symmetryName;
 
   _cache = PermutationState {
@@ -1033,14 +1051,14 @@ bool AtomStereopermutator::Impl::operator == (const AtomStereopermutator::Impl& 
 }
 
 bool AtomStereopermutator::Impl::operator < (const AtomStereopermutator::Impl& other) const {
-  unsigned thisAssignments = numAssignments(),
-           otherAssignments = other.numAssignments();
+  unsigned thisPermutations = numStereopermutations(),
+           otherPermutations = other.numStereopermutations();
   /* Sequentially compare individual components, comparing assignments last
    * if everything else matches
    */
   return (
-    std::tie( _centerAtom, _symmetry, thisAssignments, _assignmentOption)
-    < std::tie(other._centerAtom, other._symmetry, otherAssignments, other._assignmentOption)
+    std::tie( _centerAtom, _symmetry, thisPermutations, _assignmentOption)
+    < std::tie(other._centerAtom, other._symmetry, otherPermutations, other._assignmentOption)
   );
 }
 

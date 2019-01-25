@@ -18,6 +18,7 @@ endif()
 set(analysisFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkEigenvalues.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkGraphAlgorithms.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkIsomorphisms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Editor.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Gor1Explainer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/MakeIsomorphism.cpp

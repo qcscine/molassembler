@@ -15,8 +15,6 @@
 #include "temple/Permutations.h"
 #include "temple/Stringify.h"
 
-#include <iostream>
-
 namespace Scine {
 
 namespace stereopermutation {
@@ -811,6 +809,12 @@ Composite::Composite(OrientationState first, OrientationState second)
     std::begin(_stereopermutations),
     std::end(_stereopermutations)
   );
+}
+
+void Composite::applyIdentifierPermutation(const std::vector<std::size_t>& permutation) {
+  for(auto& orientationState : _orientations) {
+    orientationState.identifier = permutation.at(orientationState.identifier);
+  }
 }
 
 unsigned Composite::permutations() const {

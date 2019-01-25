@@ -40,6 +40,9 @@ public:
   //! Add a new BondStereopermutator to the list
   void add(const BondIndex& edge, BondStereopermutator stereopermutator);
 
+  //! Apply an index mapping to the list of stereopermutators
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+
   //! Remove all stereopermutators
   void clear();
 

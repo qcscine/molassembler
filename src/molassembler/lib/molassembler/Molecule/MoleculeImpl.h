@@ -95,6 +95,9 @@ struct Molecule::Impl {
     BondType bondType
   );
 
+  //! Applies an index permutation to all member state
+  void applyPermutation(const std::vector<AtomIndex>& permutation);
+
   /*! Sets the stereopermutator assignment at a particular atom
    *
    * This sets the stereopermutator assignment at a specific atom index. For this,
@@ -160,6 +163,20 @@ struct Molecule::Impl {
    * to the introduction of new stereopermutators or the removal of old ones.
    */
   void assignStereopermutatorRandomly(const BondIndex& e);
+
+  /**
+   * @brief Canonicalizes the graph, invalidating all atom and bond indices.
+   *
+   * @warning This invalidates all atom indices and bond indices and any
+   *   references to constituting members of the molecule.
+   *
+   * @return Permutation mapping from old indices to new:
+   * @begincode{.cpp}
+   * auto indexMapping = mol.canonicalize();
+   * AtomIndex newIndex = indexMapping.at(oldIndex);
+   * @endcode
+   */
+  std::vector<AtomIndex> canonicalize();
 
   /*! Removes an atom from the graph, including bonds to it.
    *
@@ -250,6 +267,11 @@ struct Molecule::Impl {
 
   //! Modular comparison of this Impl with another.
   bool modularCompare(
+    const Impl& other,
+    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  ) const;
+
+  bool trialModularCompare(
     const Impl& other,
     const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
   ) const;

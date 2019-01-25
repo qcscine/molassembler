@@ -13,6 +13,7 @@
 #include "Utils/Typenames.h"
 
 #include "molassembler/Cycles.h"
+#include "molassembler/Graph/Canonicalization.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Modeling/LocalGeometryModel.h"
@@ -405,6 +406,11 @@ void Molecule::Impl::addBond(
   _propagateGraphChange();
 }
 
+void Molecule::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  _adjacencies.inner().applyPermutation(permutation);
+  _stereopermutators.applyPermutation(permutation);
+}
+
 void Molecule::Impl::assignStereopermutator(
   const AtomIndex a,
   const boost::optional<unsigned>& assignmentOption
@@ -487,6 +493,44 @@ void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e) {
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
+}
+
+std::vector<AtomIndex> Molecule::Impl::canonicalize() {
+  // Generate strict hashes
+  auto vertexHashes = hashes::generate(
+    graph().inner(),
+    stereopermutators(),
+    temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
+      | AtomEnvironmentComponents::BondOrders
+      | AtomEnvironmentComponents::Symmetries
+      | AtomEnvironmentComponents::Stereopermutations
+  );
+
+  // Get a canonical labelling
+  auto labelMap = canonicalAutomorphism(graph().inner(), vertexHashes);
+
+  struct Inverse {
+    std::vector<AtomIndex> permutation;
+
+    inline explicit Inverse(const std::vector<int>& ante) {
+      unsigned size = ante.size();
+      permutation.resize(size);
+      for(AtomIndex i = 0; i < size; ++i) {
+        permutation.at(ante.at(i)) = i;
+      }
+    }
+
+    inline AtomIndex operator() (const AtomIndex i) const {
+      return permutation.at(i);
+    }
+  };
+
+  Inverse inverse(labelMap);
+
+  // Apply the labelling change to the graph and all stereopermutators
+  applyPermutation(inverse.permutation);
+
+  return inverse.permutation;
 }
 
 void Molecule::Impl::removeAtom(const AtomIndex a) {
@@ -911,18 +955,29 @@ bool Molecule::Impl::modularCompare(
     return false;
   }
 
+  auto thisWideHashes = hashes::generate(graph().inner(), stereopermutators(), comparisonBitmask);
+  auto otherWideHashes = hashes::generate(other.graph().inner(), other.stereopermutators(), comparisonBitmask);
+
+  // Shortcut for already-canonical graphs
+  if(
+    thisWideHashes == otherWideHashes
+    && graph().inner().plainComparison(other.graph().inner())
+  ) {
+    return true;
+  }
+
   /* boost isomorphism will allocate a vector of size maxHash, this is dangerous
    * as the maximum hash can be immense, another post-processing step is needed
-   * for the calculated hashes to decrease the spatial requirements
+   * for the calculated hashes to decrease the memory space requirements
    *
-   * This maps the hashes to an incremented number
+   * This maps the hashes to an incremented number:
    */
   std::vector<hashes::HashType> thisHashes, otherHashes;
   hashes::HashType maxHash;
 
   std::tie(thisHashes, otherHashes, maxHash) = hashes::narrow(
-    hashes::generate(graph().inner(), stereopermutators(), comparisonBitmask),
-    hashes::generate(other.graph().inner(), other.stereopermutators(), comparisonBitmask)
+    thisWideHashes,
+    otherWideHashes
   );
 
   // Where the corresponding index from the other graph is stored
@@ -947,6 +1002,38 @@ bool Molecule::Impl::modularCompare(
   );
 
   return isomorphic;
+}
+
+bool Molecule::Impl::trialModularCompare(
+  const Molecule::Impl& other,
+  const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+) const {
+  // Some easy early checks: Check number of atoms and number of bonds
+  if(graph().N() != other.graph().N() || graph().B() != other.graph().B()) {
+    return false;
+  }
+
+  /* Generate a set of hashes for both molecules encompassing the parts of
+   * the atom environments that were specified by the bitmask argument
+   */
+  auto thisHashes = hashes::generate(graph().inner(), stereopermutators(), comparisonBitmask);
+  auto otherHashes = hashes::generate(other.graph().inner(), other.stereopermutators(), comparisonBitmask);
+
+  // Shortcut for already-canonical graphs
+  if(
+    thisHashes == otherHashes
+    && graph().inner().plainComparison(other.graph().inner())
+  ) {
+    return true;
+  }
+
+  // Do full isomorphism
+  return isomorphic(
+    graph().inner(),
+    thisHashes,
+    other.graph().inner(),
+    otherHashes
+  );
 }
 
 RankingInformation Molecule::Impl::rankPriority(

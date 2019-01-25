@@ -162,6 +162,11 @@ public:
   );
 //!@}
 
+//!@name Modification
+//!@{
+  void applyIdentifierPermutation(const std::vector<std::size_t>& permutation);
+//!@}
+
 //!@name Information
 //!@{
   /*!

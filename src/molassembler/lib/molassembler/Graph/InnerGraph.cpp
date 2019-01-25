@@ -5,9 +5,11 @@
 
 #include "molassembler/Graph/InnerGraph.h"
 
-#include "boost/optional.hpp"
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/connected_components.hpp"
+#include "boost/optional.hpp"
+
+#include "temple/Functional.h"
 
 namespace Scine {
 
@@ -46,6 +48,40 @@ InnerGraph::Vertex InnerGraph::addVertex(const Scine::Utils::ElementType element
   InnerGraph::Vertex newVertex = boost::add_vertex(_graph);
   _graph[newVertex].elementType = elementType;
   return newVertex;
+}
+
+void InnerGraph::applyPermutation(const std::vector<Vertex>& permutation) {
+  BGLType transformedGraph(boost::num_vertices(_graph));
+
+  /*boost::copy_graph(
+    _graph,
+    transformedGraph,
+    boost::vertex_index_map(
+      boost::make_function_property_map<InnerGraph::Vertex, InnerGraph::Vertex>(
+        [&permutation](const InnerGraph::Vertex a) -> const InnerGraph::Vertex& {
+          return permutation.at(a);
+        }
+      )
+    )
+  );*/
+  /* I failed to get copy_graph to perform the permutation for me, so we copy
+   * manually:
+   */
+  for(Vertex i : boost::make_iterator_range(vertices())) {
+    transformedGraph[permutation.at(i)].elementType = _graph[i].elementType;
+  }
+
+  for(Edge e : boost::make_iterator_range(edges())) {
+    auto newBondPair = boost::add_edge(
+      permutation.at(boost::source(e, _graph)),
+      permutation.at(boost::target(e, _graph)),
+      transformedGraph
+    );
+
+    transformedGraph[newBondPair.first].bondType = _graph[e].bondType;
+  }
+
+  std::swap(_graph, transformedGraph);
 }
 
 BondType& InnerGraph::bondType(const InnerGraph::Edge& edge) {
@@ -168,6 +204,42 @@ InnerGraph::Vertex InnerGraph::N() const {
 
 InnerGraph::Vertex InnerGraph::B() const {
   return boost::num_edges(_graph);
+}
+
+bool InnerGraph::plainComparison(const InnerGraph& other) const {
+  assert(N() == other.N() && B() == other.B());
+
+  // Check all element types
+  if(
+    !temple::all_of(
+      boost::make_iterator_range(vertices()),
+      [&](const Vertex i) -> bool {
+        return _graph[i].elementType == other._graph[i].elementType;
+      }
+    )
+  ) {
+    return false;
+  }
+
+  // Make sure edge data matches
+  return temple::all_of(
+    boost::make_iterator_range(edges()),
+    [&](const Edge& edge) -> bool {
+      Edge correspondingEdge;
+      bool edgeExists;
+      std::tie(correspondingEdge, edgeExists) = boost::edge(
+        boost::source(edge, _graph),
+        boost::target(edge, _graph),
+        other._graph
+      );
+
+      if(!edgeExists) {
+        return false;
+      }
+
+      return _graph[edge].bondType == other._graph[correspondingEdge].bondType;
+    }
+  );
 }
 
 bool InnerGraph::unchangedSinceNotification() const {

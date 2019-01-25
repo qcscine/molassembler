@@ -193,6 +193,21 @@ void BondStereopermutator::Impl::assignRandom() {
   );
 }
 
+void BondStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
+  /* Composite's OrientationState identifiers change (these have no impact on
+   * assignment ordering however, so that should be safe)
+   */
+  _composite.applyIdentifierPermutation(permutation);
+
+  // Edge we sit on changes according to the permutation
+  _edge = BondIndex {
+    permutation.at(_edge.first),
+    permutation.at(_edge.second)
+  };
+
+  // Assignment does not change
+}
+
 void BondStereopermutator::Impl::fit(
   const AngstromWrapper& angstromWrapper,
   const AtomStereopermutator& stereopermutatorA,
@@ -613,10 +628,18 @@ BondIndex BondStereopermutator::Impl::edge() const {
 }
 
 /* Operators */
+bool BondStereopermutator::Impl::operator < (const Impl& other) const {
+  if(_composite < other._composite) {
+    return true;
+  }
+
+  return assigned() < other.assigned();
+}
+
 bool BondStereopermutator::Impl::operator == (const Impl& other) const {
   return (
     _composite == other._composite
-    && _assignment == other._assignment
+    && assigned() == other.assigned()
   );
 }
 

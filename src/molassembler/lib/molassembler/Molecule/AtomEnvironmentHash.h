@@ -38,6 +38,9 @@ using HashType = std::uint64_t;
  * @brief Information pertinent to a singular bond hash
  */
 struct BondInformation {
+  /* - 3 bits for bondtype + none
+   * - 3 bits for the assignment (none, unassigned, values)
+   */
   static constexpr unsigned hashWidth = 6;
 
   BondType bondType;
@@ -56,13 +59,21 @@ struct BondInformation {
   bool operator == (const BondInformation& other) const;
 };
 
-//! Convolutes the atom's element type and bonds into a characteristic number
+/*!
+ * @brief Convolutes the atom's element type and bonds into an unsigned integer
+ *
+ * At current, this is a bijective mapping and has zero probability of
+ * collisions.
+ *
+ * @todo Whether a stereopermutator is a stereocenter or not currently is
+ *   not distinguished in the hash (i.e. 0/1 is treated the same as 0/2).
+ */
 WideHashType atomEnvironment(
   const temple::Bitmask<AtomEnvironmentComponents>& bitmask,
   Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
-  boost::optional<Symmetry::Name> symmetryNameOptional,
-  boost::optional<unsigned> assignedOptional
+  const boost::optional<Symmetry::Name>& symmetryNameOptional,
+  const boost::optional<unsigned>& assignedOptional
 );
 
 //! Generates the hashes for every atom in a molecule's components
