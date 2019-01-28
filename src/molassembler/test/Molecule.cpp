@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(collideAtomEnvironmentHashes) {
     auto arguments = randomArguments();
 
     auto result = temple::detail::invokeHelper(
-      hashes::atomEnvironment,
+      hashes::hash,
       std::tuple_cat(bitmaskTuple, arguments),
       std::make_index_sequence<5> {}
     );
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(moleculePermutation) {
     );
 
     BOOST_CHECK_MESSAGE(
-      b.graph().inner().plainComparison(permuted.graph().inner(), AtomEnvironmentComponents::All),
+      b.graph().inner().identicalGraph(permuted.graph().inner()),
       "Graphs for " << currentFilePath.string() << " permuted in two fashions do not match"
     );
   }
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE(moleculeCanonicalization) {
     );
 
     BOOST_CHECK_MESSAGE(
-      a.graph().inner().plainComparison(b.graph().inner(), AtomEnvironmentComponents::All),
+      a.graph().inner().identicalGraph(b.graph().inner()),
       "After canonizing two isomorphic instances of " << currentFilePath.stem()
       << ", their graphs are not identical (1:1 the same, not an isomorphism test)"
     );

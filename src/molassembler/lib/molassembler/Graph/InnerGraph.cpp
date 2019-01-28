@@ -206,26 +206,10 @@ InnerGraph::Vertex InnerGraph::B() const {
   return boost::num_edges(_graph);
 }
 
-bool InnerGraph::plainComparison(
-  const InnerGraph& other,
-  AtomEnvironmentComponents components
-) const {
+bool InnerGraph::identicalGraph(const InnerGraph& other) const {
   assert(N() == other.N() && B() == other.B());
 
-  // Check all element types
-  if(
-    (components & AtomEnvironmentComponents::ElementTypes)
-    && !temple::all_of(
-      boost::make_iterator_range(vertices()),
-      [&](const Vertex i) -> bool {
-        return _graph[i].elementType == other._graph[i].elementType;
-      }
-    )
-  ) {
-    return false;
-  }
-
-  // Make sure edge data matches
+  // Make sure topology matches
   return temple::all_of(
     boost::make_iterator_range(edges()),
     [&](const Edge& edge) -> bool {
@@ -237,15 +221,7 @@ bool InnerGraph::plainComparison(
         other._graph
       );
 
-      if(!edgeExists) {
-        return false;
-      }
-
-      if(components & AtomEnvironmentComponents::BondOrders) {
-        return _graph[edge].bondType == other._graph[correspondingEdge].bondType;
-      }
-
-      return true;
+      return edgeExists;
     }
   );
 }

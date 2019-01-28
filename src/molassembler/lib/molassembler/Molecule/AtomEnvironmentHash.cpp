@@ -13,6 +13,7 @@
 #include "molassembler/Graph/InnerGraph.h"
 
 #include "temple/Functional.h"
+#include "temple/Adaptors/Iota.h"
 
 namespace Scine {
 
@@ -85,7 +86,7 @@ bool BondInformation::operator == (const BondInformation& other) const {
   );
 }
 
-WideHashType atomEnvironment(
+WideHashType hash(
   const AtomEnvironmentComponents bitmask,
   const Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
@@ -174,75 +175,133 @@ WideHashType atomEnvironment(
   return value;
 }
 
+std::vector<BondInformation> gatherBonds(
+  const InnerGraph& inner,
+  const StereopermutatorList& stereopermutators,
+  const AtomEnvironmentComponents componentsBitmask,
+  const AtomIndex i
+) {
+  std::vector<BondInformation> bonds;
+  bonds.reserve(Symmetry::constexprProperties::maxSymmetrySize);
+
+  if(componentsBitmask & AtomEnvironmentComponents::Stereopermutations) {
+    for(
+      const InnerGraph::Edge& edge :
+      boost::make_iterator_range(inner.edges(i))
+    ) {
+      if(
+        auto stereopermutatorOption = stereopermutators.option(
+          BondIndex {
+            inner.source(edge),
+            inner.target(edge)
+          }
+        )
+      ) {
+        bonds.emplace_back(
+          inner.bondType(edge),
+          true,
+          stereopermutatorOption->assigned()
+        );
+      } else {
+        bonds.emplace_back(
+          inner.bondType(edge),
+          false,
+          boost::none
+        );
+      }
+    }
+  } else {
+    for(
+      const InnerGraph::Edge& edge :
+      boost::make_iterator_range(inner.edges(i))
+    ) {
+      bonds.emplace_back(
+        inner.bondType(edge),
+        false,
+        boost::none
+      );
+    }
+  }
+
+  std::sort(
+    bonds.begin(),
+    bonds.end()
+  );
+
+  return bonds;
+}
+
+WideHashType atomEnvironment(
+  const InnerGraph& inner,
+  const StereopermutatorList& stereopermutators,
+  AtomEnvironmentComponents bitmask,
+  AtomIndex i
+) {
+  std::vector<BondInformation> bonds;
+  boost::optional<Symmetry::Name> symmetryNameOption;
+  boost::optional<unsigned> assignmentOption;
+
+  if(bitmask & AtomEnvironmentComponents::BondOrders) {
+    bonds = gatherBonds(inner, stereopermutators, bitmask, i);
+  }
+
+  if(auto refOption = stereopermutators.option(i)) {
+    symmetryNameOption = refOption->getSymmetry();
+    assignmentOption = refOption->assigned();
+  }
+
+  return hash(
+    bitmask,
+    inner.elementType(i),
+    bonds,
+    symmetryNameOption,
+    assignmentOption
+  );
+}
+
 std::vector<WideHashType> generate(
   const InnerGraph& inner,
   const StereopermutatorList& stereopermutators,
   const AtomEnvironmentComponents bitmask
 ) {
-  std::vector<WideHashType> hashes;
-
-  const AtomIndex N = inner.N();
-  hashes.reserve(N);
-
-  std::vector<BondInformation> bonds;
-  bonds.reserve(Symmetry::constexprProperties::maxSymmetrySize);
-
-  for(AtomIndex i = 0; i < N; ++i) {
-    if(bitmask & AtomEnvironmentComponents::BondOrders) {
-      bonds.clear();
-
-      for(
-        const InnerGraph::Edge& edge :
-        boost::make_iterator_range(inner.edges(i))
-      ) {
-        if(
-          auto stereopermutatorOption = stereopermutators.option(
-            BondIndex {
-              inner.source(edge),
-              inner.target(edge)
-            }
-          )
-        ) {
-          bonds.emplace_back(
-            inner.bondType(edge),
-            true,
-            stereopermutatorOption->assigned()
-          );
-        } else {
-          bonds.emplace_back(
-            inner.bondType(edge),
-            false,
-            boost::none
-          );
-        }
-      }
-
-      std::sort(
-        bonds.begin(),
-        bonds.end()
+  return temple::map(
+    temple::adaptors::range(inner.N()),
+    [&](const AtomIndex i) -> WideHashType {
+      return atomEnvironment(
+        inner,
+        stereopermutators,
+        bitmask,
+        i
       );
     }
+  );
+}
 
-    boost::optional<Symmetry::Name> symmetryNameOption;
-    boost::optional<unsigned> assignmentOption;
+bool identityCompare(
+  const InnerGraph& aGraph,
+  const StereopermutatorList& aStereopermutators,
+  const InnerGraph& bGraph,
+  const StereopermutatorList& bStereopermutators,
+  AtomEnvironmentComponents componentBitmask
+) {
+  assert(aGraph.N() == bGraph.N());
 
-    if(auto refOption = stereopermutators.option(i)) {
-      symmetryNameOption = refOption->getSymmetry();
-      assignmentOption = refOption->assigned();
+  return temple::all_of(
+    temple::adaptors::range(aGraph.N()),
+    [&](const AtomIndex i) -> WideHashType {
+      return atomEnvironment(
+        aGraph,
+        aStereopermutators,
+        componentBitmask,
+        i
+      ) == atomEnvironment(
+        bGraph,
+        bStereopermutators,
+        componentBitmask,
+        i
+      );
     }
-
-    hashes.emplace_back(
-      atomEnvironment(
-        bitmask,
-        inner.elementType(i),
-        bonds,
-        symmetryNameOption,
-        assignmentOption
-      )
-    );
-  }
-
-  return hashes;
+  );
 }
 
 std::tuple<

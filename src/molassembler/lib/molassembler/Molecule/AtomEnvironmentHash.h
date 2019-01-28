@@ -67,7 +67,7 @@ struct BondInformation {
  * @todo Whether a stereopermutator is a stereocenter or not currently is
  *   not distinguished in the hash (i.e. 0/1 is treated the same as 0/2).
  */
-WideHashType atomEnvironment(
+WideHashType hash(
   AtomEnvironmentComponents bitmask,
   Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
@@ -75,11 +75,33 @@ WideHashType atomEnvironment(
   const boost::optional<unsigned>& assignedOptional
 );
 
+std::vector<BondInformation> gatherBonds(
+  const InnerGraph& inner,
+  const StereopermutatorList& stereopermutators,
+  AtomEnvironmentComponents componentsBitmask,
+  AtomIndex i
+);
+
+WideHashType atomEnvironment(
+  const InnerGraph& inner,
+  const StereopermutatorList& stereopermutators,
+  AtomEnvironmentComponents bitmask,
+  AtomIndex i
+);
+
 //! Generates the hashes for every atom in a molecule's components
 std::vector<WideHashType> generate(
   const InnerGraph& inner,
   const StereopermutatorList& stereopermutators,
   AtomEnvironmentComponents bitmask
+);
+
+bool identityCompare(
+  const InnerGraph& aGraph,
+  const StereopermutatorList& aStereopermutators,
+  const InnerGraph& bGraph,
+  const StereopermutatorList& bStereopermutators,
+  AtomEnvironmentComponents componentBitmask
 );
 
 //! Re-enumerates the hashes in two generated hash lists

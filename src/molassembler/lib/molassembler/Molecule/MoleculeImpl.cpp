@@ -972,12 +972,13 @@ bool Molecule::Impl::canonicalCompare(
     throw std::logic_error("Fewer components were used in canonicalizing a Molecule than are being compared!");
   }
 
-  auto thisWideHashes = hashes::generate(graph().inner(), stereopermutators(), componentBitmask);
-  auto otherWideHashes = hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask);
+  if(graph().N() != other.graph().N() || graph().B() != other.graph().B()) {
+    return false;
+  }
 
   return (
-    thisWideHashes == otherWideHashes
-    && graph().inner().plainComparison(other.graph().inner(), componentBitmask)
+    hashes::identityCompare(graph().inner(), stereopermutators(), other.graph().inner(), other.stereopermutators(), componentBitmask)
+    && graph().inner().identicalGraph(other.graph().inner())
   );
 }
 

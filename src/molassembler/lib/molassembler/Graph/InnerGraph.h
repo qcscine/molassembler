@@ -137,10 +137,8 @@ public:
   Vertex N() const;
   Vertex B() const;
 
-  bool plainComparison(
-    const InnerGraph& other,
-    AtomEnvironmentComponents components
-  ) const;
+  //! Checks whether all edges present in *this are present in @p other
+  bool identicalGraph(const InnerGraph& other) const;
 //!@}
 
 //!@name Cache management
