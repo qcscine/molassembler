@@ -15,44 +15,35 @@ namespace Scine {
 
 namespace molassembler {
 
-bool enantiomeric(const Molecule& /* a */, const Molecule& /* b */) {
-  /* Two molecules are mirror images of one another if a graph isomorphism
-   * that matches
-   * - element type
-   * - bond type
-   * - symmetry
-   * - stereopermutations (of BondStereopermutators only!)
-   *
-   * yields a mapping where all pairs of atom stereopermutators have
-   * mirror assignments.
-   */
-
-  throw std::runtime_error("Not implemented!");
-}
-
-bool enantiomeric(
-  const Molecule& a,
-  const Molecule& b,
-  SameIndexingTag /* sameIndexingTag */
-) {
+bool enantiomeric(const Molecule& a, const Molecule& b) {
   // Check the precondition
-  if(a.graph().N() != b.graph().N()) {
+  if(a.graph().N() != b.graph().N() || a.graph().B() != b.graph().B()) {
     throw std::logic_error(
-      "Enantiomer check precondition violated: Molecules are not of same size."
+      "Enantiomer check precondition violated: Molecules do not have the same "
+      "number of vertices and bonds."
     );
   }
+
+  // Use weaker definition
   constexpr auto bitmask = AtomEnvironmentComponents::ElementTypes
     | AtomEnvironmentComponents::BondOrders
     | AtomEnvironmentComponents::Symmetries;
+
+  if(
+    a.canonicalComponents() != bitmask
+    || b.canonicalComponents() != bitmask
+  ) {
+    throw std::logic_error(
+      "One or more arguments are not partially canonical as required by "
+      "the precondition"
+    );
+  }
 
   const auto aHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), bitmask);
   const auto bHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), bitmask);
 
   if(aHashes != bHashes) {
-    throw std::logic_error(
-      "Enantiomer check precondition violated: Molecules are not "
-      "indexed identically."
-    );
+    throw std::logic_error("Both molecules are fully canonical but weaker hashes do not match.");
   }
 
   /* The number of AtomStereopermutators must match between both molecules.

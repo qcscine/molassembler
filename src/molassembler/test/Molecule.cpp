@@ -552,23 +552,26 @@ BOOST_AUTO_TEST_CASE(IsomerPredicateTests) {
   BOOST_REQUIRE_NO_THROW(a = molassembler::IO::read("isomers/enantiomers/Citalopram-R.mol"));
   BOOST_REQUIRE_NO_THROW(b = molassembler::IO::read("isomers/enantiomers/Citalopram-S.mol"));
 
-  /* For some reason, when read in here, a and b have different links on the
-   * stereocenters.  They don't if you use the analysis ranking binary. No clue
-   * what's going on.
-   *
-   * TODO is this still relevant?
-   */
+  constexpr auto bitmask = AtomEnvironmentComponents::ElementTypes
+    | AtomEnvironmentComponents::BondOrders
+    | AtomEnvironmentComponents::Symmetries;
+
+  a.canonicalize(bitmask);
+  b.canonicalize(bitmask);
 
   BOOST_CHECK_MESSAGE(
-    molassembler::enantiomeric(a, b, molassembler::SameIndexingTag {}),
+    molassembler::enantiomeric(a, b),
     "Citalopram-R and -S are falsely determined not to be enantiomers."
   );
 
   BOOST_REQUIRE_NO_THROW(a = molassembler::IO::read("isomers/enantiomers/Isoleucine-RS.mol"));
   BOOST_REQUIRE_NO_THROW(b = molassembler::IO::read("isomers/enantiomers/Isoleucine-SR.mol"));
 
+  a.canonicalize(bitmask);
+  b.canonicalize(bitmask);
+
   BOOST_CHECK_MESSAGE(
-    molassembler::enantiomeric(a, b, molassembler::SameIndexingTag {}),
+    molassembler::enantiomeric(a, b),
     "Isoleucine-RS and -SR are falsely determined not to be enantiomers."
   );
 }
