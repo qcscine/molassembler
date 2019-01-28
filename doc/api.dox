@@ -13,14 +13,6 @@ interface are currently:
 @verbatim
 - chemical symmetries/
   - Names
-
-- temple/
-  - Preprocessor
-  - TinySet
-  - Traits
-  - constexpr/
-    - Bitmask
-    - Math
 @endverbatim
 
 @warning It is inadvisable to include the listed files directly and make use of

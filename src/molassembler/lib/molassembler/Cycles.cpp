@@ -10,6 +10,8 @@
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Graph/InnerGraph.h"
 
+#include "temple/TinySet.h"
+
 namespace Scine {
 
 namespace molassembler {
@@ -180,14 +182,18 @@ bool Cycles::predicates::ConsistsOf::operator() (const RDL_cycle* const cyclePtr
 
   for(unsigned i = 0; i < cyclePtr->weight; ++i) {
     if(
-      indices.count(cyclePtr->edges[i][0]) == 0
-      || indices.count(cyclePtr->edges[i][1]) == 0
+      temple::TinySet<AtomIndex>::binary_search(indices, cyclePtr->edges[i][0])
+      || temple::TinySet<AtomIndex>::binary_search(indices, cyclePtr->edges[i][1])
     ) {
       return false;
     }
   }
 
   return true;
+}
+
+void Cycles::predicates::ConsistsOf::insert(const AtomIndex i) {
+  temple::TinySet<AtomIndex>::checked_insert(indices, i);
 }
 
 /* Cycles::constIterator */

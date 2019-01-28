@@ -324,9 +324,11 @@ Molecule::Impl::Impl(
 
 Molecule::Impl::Impl(
   OuterGraph graph,
-  StereopermutatorList stereopermutators
+  StereopermutatorList stereopermutators,
+  const AtomEnvironmentComponents canonicalComponents
 ) : _adjacencies(std::move(graph)),
-    _stereopermutators(std::move(stereopermutators))
+    _stereopermutators(std::move(stereopermutators)),
+    _canonicalComponents(canonicalComponents)
 {
   // Initialization
   _ensureModelInvariants();
@@ -347,6 +349,7 @@ AtomIndex Molecule::Impl::addAtom(
   // addBond handles the stereopermutator update on adjacentTo
 
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 
   return index;
 }
@@ -404,11 +407,13 @@ void Molecule::Impl::addBond(
   notifySubstituentAddition(b, a);
 
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 void Molecule::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
   _adjacencies.inner().applyPermutation(permutation);
   _stereopermutators.applyPermutation(permutation);
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 void Molecule::Impl::assignStereopermutator(
@@ -436,6 +441,7 @@ void Molecule::Impl::assignStereopermutator(
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 void Molecule::Impl::assignStereopermutator(
@@ -463,6 +469,7 @@ void Molecule::Impl::assignStereopermutator(
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a) {
@@ -480,6 +487,7 @@ void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a) {
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e) {
@@ -493,17 +501,17 @@ void Molecule::Impl::assignStereopermutatorRandomly(const BondIndex& e) {
 
   // A reassignment can change ranking! See the RankingTree tests
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
-std::vector<AtomIndex> Molecule::Impl::canonicalize() {
-  // Generate strict hashes
+std::vector<AtomIndex> Molecule::Impl::canonicalize(
+  const AtomEnvironmentComponents componentBitmask
+) {
+  // Generate hashes according to the passed bitmask
   auto vertexHashes = hashes::generate(
     graph().inner(),
     stereopermutators(),
-    temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
-      | AtomEnvironmentComponents::BondOrders
-      | AtomEnvironmentComponents::Symmetries
-      | AtomEnvironmentComponents::Stereopermutations
+    componentBitmask
   );
 
   // Get a canonical labelling
@@ -529,6 +537,9 @@ std::vector<AtomIndex> Molecule::Impl::canonicalize() {
 
   // Apply the labelling change to the graph and all stereopermutators
   applyPermutation(inverse.permutation);
+
+  // Set the underlying canonical components
+  _canonicalComponents = componentBitmask;
 
   return inverse.permutation;
 }
@@ -615,6 +626,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
   }
 
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 void Molecule::Impl::removeBond(
@@ -693,6 +705,7 @@ void Molecule::Impl::removeBond(
    */
 
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 bool Molecule::Impl::setBondType(
@@ -720,6 +733,7 @@ bool Molecule::Impl::setBondType(
 
   inner.bondType(edgeOption.value()) = bondType;
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
   return true;
 }
 
@@ -733,6 +747,7 @@ void Molecule::Impl::setElementType(
 
   _adjacencies.inner().elementType(a) = elementType;
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 void Molecule::Impl::setGeometryAtAtom(
@@ -775,6 +790,7 @@ void Molecule::Impl::setGeometryAtAtom(
     );
 
     _propagateGraphChange();
+    _canonicalComponents = AtomEnvironmentComponents::None;
     return;
   }
 
@@ -794,9 +810,14 @@ void Molecule::Impl::setGeometryAtAtom(
     return;
   }
   _propagateGraphChange();
+  _canonicalComponents = AtomEnvironmentComponents::None;
 }
 
 /* Information */
+AtomEnvironmentComponents Molecule::Impl::canonicalComponents() const {
+  return _canonicalComponents;
+}
+
 Symmetry::Name Molecule::Impl::determineLocalGeometry(
   const AtomIndex index,
   const RankingInformation& ranking
@@ -940,9 +961,29 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   return stereopermutators;
 }
 
+bool Molecule::Impl::canonicalCompare(
+  const Molecule::Impl& other,
+  const AtomEnvironmentComponents componentBitmask
+) const {
+  /* Make sure that the components used to canonicalize each molecule instance
+   * are enough to compare them canonically, too
+   */
+  if(_canonicalComponents < componentBitmask || other._canonicalComponents < componentBitmask) {
+    throw std::logic_error("Fewer components were used in canonicalizing a Molecule than are being compared!");
+  }
+
+  auto thisWideHashes = hashes::generate(graph().inner(), stereopermutators(), componentBitmask);
+  auto otherWideHashes = hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask);
+
+  return (
+    thisWideHashes == otherWideHashes
+    && graph().inner().plainComparison(other.graph().inner(), componentBitmask)
+  );
+}
+
 bool Molecule::Impl::modularCompare(
   const Molecule::Impl& other,
-  const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  const AtomEnvironmentComponents componentBitmask
 ) const {
   const unsigned thisNumAtoms = graph().N();
 
@@ -955,17 +996,6 @@ bool Molecule::Impl::modularCompare(
     return false;
   }
 
-  auto thisWideHashes = hashes::generate(graph().inner(), stereopermutators(), comparisonBitmask);
-  auto otherWideHashes = hashes::generate(other.graph().inner(), other.stereopermutators(), comparisonBitmask);
-
-  // Shortcut for already-canonical graphs
-  if(
-    thisWideHashes == otherWideHashes
-    && graph().inner().plainComparison(other.graph().inner())
-  ) {
-    return true;
-  }
-
   /* boost isomorphism will allocate a vector of size maxHash, this is dangerous
    * as the maximum hash can be immense, another post-processing step is needed
    * for the calculated hashes to decrease the memory space requirements
@@ -976,8 +1006,8 @@ bool Molecule::Impl::modularCompare(
   hashes::HashType maxHash;
 
   std::tie(thisHashes, otherHashes, maxHash) = hashes::narrow(
-    thisWideHashes,
-    otherWideHashes
+    hashes::generate(graph().inner(), stereopermutators(), componentBitmask),
+    hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask)
   );
 
   // Where the corresponding index from the other graph is stored
@@ -1006,7 +1036,7 @@ bool Molecule::Impl::modularCompare(
 
 bool Molecule::Impl::trialModularCompare(
   const Molecule::Impl& other,
-  const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  const AtomEnvironmentComponents componentBitmask
 ) const {
   // Some easy early checks: Check number of atoms and number of bonds
   if(graph().N() != other.graph().N() || graph().B() != other.graph().B()) {
@@ -1016,16 +1046,8 @@ bool Molecule::Impl::trialModularCompare(
   /* Generate a set of hashes for both molecules encompassing the parts of
    * the atom environments that were specified by the bitmask argument
    */
-  auto thisHashes = hashes::generate(graph().inner(), stereopermutators(), comparisonBitmask);
-  auto otherHashes = hashes::generate(other.graph().inner(), other.stereopermutators(), comparisonBitmask);
-
-  // Shortcut for already-canonical graphs
-  if(
-    thisHashes == otherHashes
-    && graph().inner().plainComparison(other.graph().inner())
-  ) {
-    return true;
-  }
+  auto thisHashes = hashes::generate(graph().inner(), stereopermutators(), componentBitmask);
+  auto otherHashes = hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask);
 
   // Do full isomorphism
   return isomorphic(
@@ -1091,14 +1113,14 @@ RankingInformation Molecule::Impl::rankPriority(
 }
 
 bool Molecule::Impl::operator == (const Impl& other) const {
-  // Operator == performs the most strict comparison possible
-  return modularCompare(
-    other,
-    temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
-      | AtomEnvironmentComponents::BondOrders
-      | AtomEnvironmentComponents::Symmetries
-      | AtomEnvironmentComponents::Stereopermutations
-  );
+  if(
+    _canonicalComponents == AtomEnvironmentComponents::All
+    && other._canonicalComponents == AtomEnvironmentComponents::All
+  ) {
+    return canonicalCompare(other, AtomEnvironmentComponents::All);
+  }
+
+  return modularCompare(other, AtomEnvironmentComponents::All);
 }
 
 bool Molecule::Impl::operator != (const Impl& other) const {

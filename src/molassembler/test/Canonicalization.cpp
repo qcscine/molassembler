@@ -59,13 +59,8 @@ BOOST_AUTO_TEST_CASE(moleculeCanonicalizationTests) {
 
     const AtomIndex N = a.graph().N();
 
-    const auto comparisonBitmask = temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
-      | AtomEnvironmentComponents::BondOrders
-      | AtomEnvironmentComponents::Symmetries
-      | AtomEnvironmentComponents::Stereopermutations;
-
-    auto aHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), comparisonBitmask);
-    auto bHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), comparisonBitmask);
+    auto aHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), AtomEnvironmentComponents::All);
+    auto bHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), AtomEnvironmentComponents::All);
 
     auto aAutomorphism = canonicalAutomorphism(a.graph().inner(), aHashes);
     auto bAutomorphism = canonicalAutomorphism(b.graph().inner(), bHashes);

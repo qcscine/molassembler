@@ -69,16 +69,46 @@ using dlibIndexType = long;
  *
  * Differing strictnesses of comparisons may be desirable for various
  * purposes, hence a modular comparison function is provided.
+ *
+ * @warning Setting Stereopermutations without setting Symmetries does nothing.
  */
 enum class AtomEnvironmentComponents : unsigned {
-  ElementTypes,
-  BondOrders,
-  Symmetries,
-  Stereopermutations // Symmetries must be set in conjunction with this
+  None = 0,
+  ElementTypes = (1 << 0),
+  BondOrders = (1 << 1),
+  Symmetries = (1 << 2),
+  Stereopermutations = (1 << 3),
+  All = ElementTypes | BondOrders | Symmetries | Stereopermutations
 };
 
 } // namespace molassembler
 
 } // namespace Scine
+
+/* Operators for bitmask-like manipulation of AtomEnvironmentComponents must be
+ * at global scope, otherwise they can interfere with name lookup.
+ */
+constexpr inline bool operator & (
+  Scine::molassembler::AtomEnvironmentComponents a,
+  Scine::molassembler::AtomEnvironmentComponents b
+) {
+  using T = Scine::molassembler::AtomEnvironmentComponents;
+  return (
+    static_cast<std::underlying_type_t<T>>(a)
+    & static_cast<std::underlying_type_t<T>>(b)
+  ) != 0;
+}
+
+constexpr inline Scine::molassembler::AtomEnvironmentComponents operator | (
+  Scine::molassembler::AtomEnvironmentComponents a,
+  Scine::molassembler::AtomEnvironmentComponents b
+) {
+  using T = Scine::molassembler::AtomEnvironmentComponents;
+
+  return static_cast<T>(
+    static_cast<std::underlying_type_t<T>>(a)
+    | static_cast<std::underlying_type_t<T>>(b)
+  );
+}
 
 #endif

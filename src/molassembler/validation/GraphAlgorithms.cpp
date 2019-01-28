@@ -17,6 +17,7 @@
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/IO.h"
 #include "temple/Stringify.h"
+#include "temple/TinySet.h"
 
 #include "boost/graph/graphviz.hpp"
 #include "molassembler/Molecule/MolGraphWriter.h"

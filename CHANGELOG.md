@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Explicit definition of which headers make up the public API in the
   tutorial-like documentation
+- Molecule canonicalization: After canonicalization, isomorphism checks reduce
+  to an identity comparison.
 - GraphAlgorithms.h for public graph algorithms. Currently contains only a
   graph distance BFS algorithm 
 - A `doc` target that builds the Doxygen documentation, which is now more
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Initial Python bindings
 
 ### Changed
+- temple::Bitmask no longer forms part of the public interface
 - Symmetries are no longer excluded on principle, but using tau criteria (see
   AtomStereopermutator fitting)
 - Rebased the library on Scine's UtilsOS instead of on the Delib (which is now

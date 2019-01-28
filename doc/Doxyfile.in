@@ -240,8 +240,8 @@ TAB_SIZE               = 4
 
 ALIASES                = diffminus{1}="\htmlonly<span style='color:red;text-decoration:line-through'>\1</span>\endhtmlonly"
 ALIASES               += diffplus{1}="\htmlonly<span style='color:green;'>\1</span>\endhtmlonly"
-ALIASES               += masm{1}="\link molassembler::\1 \1\endlink"
-ALIASES               += masm{2}="\link molassembler::\1 \2\endlink"
+ALIASES               += masm{1}="\link Scine::molassembler::\1 \1\endlink"
+ALIASES               += masm{2}="\link Scine::molassembler::\1 \2\endlink"
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding "class=itcl::class"

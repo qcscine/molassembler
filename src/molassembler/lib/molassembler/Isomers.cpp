@@ -41,7 +41,7 @@ bool enantiomeric(
       "Enantiomer check precondition violated: Molecules are not of same size."
     );
   }
-  constexpr auto bitmask = temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
+  constexpr auto bitmask = AtomEnvironmentComponents::ElementTypes
     | AtomEnvironmentComponents::BondOrders
     | AtomEnvironmentComponents::Symmetries;
 
@@ -215,7 +215,8 @@ Molecule enantiomer(const Molecule& a) {
    */
   return {
     a.graph(),
-    std::move(stereopermutators)
+    std::move(stereopermutators),
+    AtomEnvironmentComponents::None
   };
 }
 

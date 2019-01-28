@@ -12,7 +12,6 @@
 #include "Utils/ElementTypes.h"
 
 #include "chemical_symmetries/Names.h"
-#include "temple/constexpr/Bitmask.h"
 
 #include "molassembler/Types.h"
 
@@ -69,7 +68,7 @@ struct BondInformation {
  *   not distinguished in the hash (i.e. 0/1 is treated the same as 0/2).
  */
 WideHashType atomEnvironment(
-  const temple::Bitmask<AtomEnvironmentComponents>& bitmask,
+  AtomEnvironmentComponents bitmask,
   Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
   const boost::optional<Symmetry::Name>& symmetryNameOptional,
@@ -80,7 +79,7 @@ WideHashType atomEnvironment(
 std::vector<WideHashType> generate(
   const InnerGraph& inner,
   const StereopermutatorList& stereopermutators,
-  const temple::Bitmask<AtomEnvironmentComponents>& bitmask
+  AtomEnvironmentComponents bitmask
 );
 
 //! Re-enumerates the hashes in two generated hash lists
@@ -102,7 +101,7 @@ std::pair<
   const StereopermutatorList& aStereopermutators,
   const InnerGraph& bGraph,
   const StereopermutatorList& bStereopermutators,
-  const temple::Bitmask<AtomEnvironmentComponents>& bitmask
+  AtomEnvironmentComponents bitmask
 );
 
 /*!

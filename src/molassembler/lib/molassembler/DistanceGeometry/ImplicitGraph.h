@@ -17,7 +17,6 @@
 #include "boost/property_map/property_map.hpp"
 #include "Eigen/Core"
 #include "Utils/ElementTypes.h"
-#include "temple/Preprocessor.h"
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 
@@ -155,15 +154,15 @@ private:
   Eigen::MatrixXd _distances;
 
   /* To outer indexing */
-  PURITY_STRONG inline static VertexDescriptor left(const VertexDescriptor a) {
+  [[gnu::const]] inline static VertexDescriptor left(const VertexDescriptor a) noexcept {
     return 2 * a;
   }
 
-  PURITY_STRONG inline static VertexDescriptor right(const VertexDescriptor a) {
+  [[gnu::const]] inline static VertexDescriptor right(const VertexDescriptor a) noexcept {
     return 2 * a + 1;
   }
 
-  PURITY_STRONG inline static VertexDescriptor internal(const VertexDescriptor i) {
+  [[gnu::const]] inline static VertexDescriptor internal(const VertexDescriptor i) noexcept {
     // Integer division rounds down, which is perfect
     return i / 2;
   }
@@ -230,7 +229,7 @@ public:
   bool hasExplicit(const EdgeDescriptor& edge) const;
 
   /* To inner indexing */
-  PURITY_STRONG inline static bool isLeft(const VertexDescriptor i) {
+  [[gnu::const]] inline static bool isLeft(const VertexDescriptor i) noexcept {
     return i % 2 == 0;
   }
 

@@ -79,7 +79,7 @@ public:
   //! Modular comparison with another StereopermutatorList using a bitmask
   bool compare(
     const StereopermutatorList& other,
-    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+    AtomEnvironmentComponents componentBitmask
   ) const;
 
   //! Returns true if there are no stereopermutators

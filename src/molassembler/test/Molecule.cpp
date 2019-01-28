@@ -38,14 +38,15 @@
 using namespace Scine;
 using namespace molassembler;
 
-namespace detail {
-
-const auto strictComparisonBitmask = temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
-  | AtomEnvironmentComponents::BondOrders
-  | AtomEnvironmentComponents::Symmetries
-  | AtomEnvironmentComponents::Stereopermutations;
-
-} // namespace detail
+static_assert(
+  AtomEnvironmentComponents::All == (
+    AtomEnvironmentComponents::ElementTypes
+    | AtomEnvironmentComponents::BondOrders
+    | AtomEnvironmentComponents::Symmetries
+    | AtomEnvironmentComponents::Stereopermutations
+  ),
+  "All needs to include all components in its definition"
+);
 
 std::tuple<Molecule, Molecule, std::vector<AtomIndex>> readIsomorphism(const boost::filesystem::path& filePath) {
   auto readData = Utils::ChemicalFileHandler::read(filePath.string());
@@ -172,10 +173,7 @@ HashArgumentsType randomArguments() {
 // Atom environment wide hashes cannot be collided
 BOOST_AUTO_TEST_CASE(collideAtomEnvironmentHashes) {
   auto bitmaskTuple = std::make_tuple(
-    temple::make_bitmask(molassembler::AtomEnvironmentComponents::ElementTypes)
-      | molassembler::AtomEnvironmentComponents::BondOrders
-      | molassembler::AtomEnvironmentComponents::Symmetries
-      | molassembler::AtomEnvironmentComponents::Stereopermutations
+    AtomEnvironmentComponents::All
   );
 
   // Try to guess a disjoint combination that has the same value
@@ -226,8 +224,8 @@ BOOST_AUTO_TEST_CASE(moleculePermutation) {
     permuted.applyPermutation(permutation);
 
     // b and permuted must be 1:1 identical
-    auto bHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), detail::strictComparisonBitmask);
-    auto permutedHashes = hashes::generate(permuted.graph().inner(), permuted.stereopermutators(), detail::strictComparisonBitmask);
+    auto bHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), AtomEnvironmentComponents::All);
+    auto permutedHashes = hashes::generate(permuted.graph().inner(), permuted.stereopermutators(), AtomEnvironmentComponents::All);
 
     BOOST_CHECK_MESSAGE(
       bHashes == permutedHashes,
@@ -240,7 +238,7 @@ BOOST_AUTO_TEST_CASE(moleculePermutation) {
     );
 
     BOOST_CHECK_MESSAGE(
-      b.graph().inner().plainComparison(permuted.graph().inner()),
+      b.graph().inner().plainComparison(permuted.graph().inner(), AtomEnvironmentComponents::All),
       "Graphs for " << currentFilePath.string() << " permuted in two fashions do not match"
     );
   }
@@ -262,7 +260,7 @@ BOOST_AUTO_TEST_CASE(atomEnvironmentHashesRegularity) {
 
     Molecule a = IO::read(currentFilePath.string());
 
-    auto aWideHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), detail::strictComparisonBitmask);
+    auto aWideHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), AtomEnvironmentComponents::All);
 
     auto permutation = temple::iota<AtomIndex>(a.graph().N());
     temple::random::shuffle(permutation, randomnessEngine());
@@ -270,7 +268,7 @@ BOOST_AUTO_TEST_CASE(atomEnvironmentHashesRegularity) {
     Molecule b = a;
     b.applyPermutation(permutation);
 
-    auto bWideHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), detail::strictComparisonBitmask);
+    auto bWideHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), AtomEnvironmentComponents::All);
 
     for(AtomIndex i = 0; i < a.graph().N(); ++i) {
       BOOST_CHECK_MESSAGE(
@@ -304,8 +302,8 @@ BOOST_AUTO_TEST_CASE(moleculeCanonicalization) {
     b.canonicalize();
 
     // These must be IDENTICAL afterwards, not isomorphic
-    auto aWideHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), detail::strictComparisonBitmask);
-    auto bWideHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), detail::strictComparisonBitmask);
+    auto aWideHashes = hashes::generate(a.graph().inner(), a.stereopermutators(), AtomEnvironmentComponents::All);
+    auto bWideHashes = hashes::generate(b.graph().inner(), b.stereopermutators(), AtomEnvironmentComponents::All);
 
     BOOST_CHECK_MESSAGE(
       aWideHashes == bWideHashes,
@@ -314,7 +312,7 @@ BOOST_AUTO_TEST_CASE(moleculeCanonicalization) {
     );
 
     BOOST_CHECK_MESSAGE(
-      a.graph().inner().plainComparison(b.graph().inner()),
+      a.graph().inner().plainComparison(b.graph().inner(), AtomEnvironmentComponents::All),
       "After canonizing two isomorphic instances of " << currentFilePath.stem()
       << ", their graphs are not identical (1:1 the same, not an isomorphism test)"
     );
@@ -397,7 +395,7 @@ BOOST_AUTO_TEST_CASE(moleculeAlternateIsomorphism) {
     std::tie(a, b, std::ignore) = readIsomorphism(currentFilePath);
 
     BOOST_CHECK_MESSAGE(
-      a.trialModularCompare(b, detail::strictComparisonBitmask),
+      a.trialModularCompare(b, AtomEnvironmentComponents::All),
       "Molecule isomorphism fails for " << currentFilePath.string() << "!"
     );
 
@@ -413,7 +411,7 @@ BOOST_AUTO_TEST_CASE(moleculeAlternateIsomorphism) {
     temple::all_of(
       temple::adaptors::allPairs(originals),
       [&](const Molecule& a, const Molecule& b) -> bool {
-        return !a.trialModularCompare(b, detail::strictComparisonBitmask);
+        return !a.trialModularCompare(b, AtomEnvironmentComponents::All);
       }
     ),
     "Some originals in the isomorphism test folder match one another!"

@@ -106,31 +106,31 @@ permutation for stereocenters.
 
 IO            | Description
 ------------- | -----------
-<code>\link molassembler::IO::read(const std::string&) IO::read(...)\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
-<code>\link molassembler::IO::split(const std::string&) IO::split(...)\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
-<code>\link molassembler::IO::write(const std::string&, const Molecule&) IO::write(...)\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
-<code>\link molassembler::interpret(const Delib::ElementTypeCollection &, const AngstromWrapper &, const Delib::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
-<code>\link molassembler::toJSON(const Molecule&) toJSON(Molecule)\endlink</code> | Serialize a molecule to JSON
-<code>\link molassembler::fromJSON(const std::string&) fromJSON(std::string)\endlink</code> | Deserialize a molecule from JSON
+<code>\link Scine::molassembler::IO::read(const std::string&) IO::read(...)\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
+<code>\link Scine::molassembler::IO::split(const std::string&) IO::split(...)\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
+<code>\link Scine::molassembler::IO::write(const std::string&, const Molecule&) IO::write(...)\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
+<code>\link Scine::molassembler::interpret(const Delib::ElementTypeCollection &, const AngstromWrapper &, const Delib::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
+<code>\link Scine::molassembler::toJSON(const Molecule&) toJSON(Molecule)\endlink</code> | Serialize a molecule to JSON
+<code>\link Scine::molassembler::fromJSON(const std::string&) fromJSON(std::string)\endlink</code> | Deserialize a molecule from JSON
 
 
 Information           | Description
 --------------------- | -----------
-<code>\link molassembler::Molecule::graph() mol.graph()\endlink</code> | Yields the molecular \masm{OuterGraph, graph} (purely connectivity and element type data)
-<code>\link molassembler::Molecule::stereopermutators() mol.stereopermutators()\endlink</code> | Yields \masm{StereopermutatorList, list of stereopermutators}
-<code>\link molassembler::Molecule::dumpGraphviz() mol.dumpGraphviz()\endlink</code> | Yields a graphviz string of the molecule representation
-<code>\link molassembler::Molecule::modularCompare() mol.modularCompare(...)\endlink</code> | Compare two molecules, choosing which parts are to be compared
+<code>\link Scine::molassembler::Molecule::graph() mol.graph()\endlink</code> | Yields the molecular \masm{OuterGraph, graph} (purely connectivity and element type data)
+<code>\link Scine::molassembler::Molecule::stereopermutators() mol.stereopermutators()\endlink</code> | Yields \masm{StereopermutatorList, list of stereopermutators}
+<code>\link Scine::molassembler::Molecule::dumpGraphviz() mol.dumpGraphviz()\endlink</code> | Yields a graphviz string of the molecule representation
+<code>\link Scine::molassembler::Molecule::modularCompare() mol.modularCompare(...)\endlink</code> | Compare two molecules, choosing which parts are to be compared
 
 Molecule manipulation  | Description
 ---------------------- | -----------
-<code>\link molassembler::Molecule::addAtom() mol.addAtom(...)\endlink</code> | Adds an atom to the molecule, attaching it to an existing one
-<code>\link molassembler::Molecule::addBond() mol.addBond(...)\endlink</code> | Adds a bond between two existing atoms
-<code>\link molassembler::Molecule::assignStereopermutator() mol.assignStereopermutator(...)\endlink</code> | Changes the assignment of a sterepermutator
-<code>\link molassembler::Molecule::removeAtom() mol.removeAtom(...)\endlink</code> | Removes a removable (!) atom
-<code>\link molassembler::Molecule::removeBond() mol.removeBond(...)\endlink</code> | Removes a removable (!) bond
-<code>\link molassembler::Molecule::setBondType() mol.setBondType(...)\endlink</code> | Changes the bond type between two atoms
-<code>\link molassembler::Molecule::setElementType() mol.setElementType(...)\endlink</code> | Changes an atom element type
-<code>\link molassembler::Molecule::setGeometryAtAtom() mol.setGeometryAtAtom(...)\endlink</code> | Changes the local idealized symmetry at an atom
+<code>\link Scine::molassembler::Molecule::addAtom() mol.addAtom(...)\endlink</code> | Adds an atom to the molecule, attaching it to an existing one
+<code>\link Scine::molassembler::Molecule::addBond() mol.addBond(...)\endlink</code> | Adds a bond between two existing atoms
+<code>\link Scine::molassembler::Molecule::assignStereopermutator() mol.assignStereopermutator(...)\endlink</code> | Changes the assignment of a sterepermutator
+<code>\link Scine::molassembler::Molecule::removeAtom() mol.removeAtom(...)\endlink</code> | Removes a removable (!) atom
+<code>\link Scine::molassembler::Molecule::removeBond() mol.removeBond(...)\endlink</code> | Removes a removable (!) bond
+<code>\link Scine::molassembler::Molecule::setBondType() mol.setBondType(...)\endlink</code> | Changes the bond type between two atoms
+<code>\link Scine::molassembler::Molecule::setElementType() mol.setElementType(...)\endlink</code> | Changes an atom element type
+<code>\link Scine::molassembler::Molecule::setGeometryAtAtom() mol.setGeometryAtAtom(...)\endlink</code> | Changes the local idealized symmetry at an atom
 
 
 @section manual-sublibraries Sub-libraries
@@ -363,6 +363,73 @@ Conformer generation itself is based on four-dimensional Distance Geometry
 4. The refinement error function is modified to enable the placement of haptic
    ligand's bonding atoms' average position at symmetries' idealized ligand
    sites.
+
+@subsection manual-algorithms-canonicalization Canonicalization
+
+Molecule instances can be canonicalized. Graph canonicalization is an algorithm
+that reduces all isomorphic forms of an input graph into a canonical form. After
+canonicalization, isomorphism tests are reduced to mere identity tests.
+
+The canonicalization itself, however, is computationally at least as expensive
+as an isomorphism itself. Therefore, no expense is saved if an isomorphism test
+is to be computed only once for two molecules by canonizing both. Only if a
+molecule instance is to be a repeated candidate for isomorphism tests is there
+value in canonizing it.
+
+This library takes the approach of adding a tag to molecules that identifies
+which components of the graph and stereocenters have been used in the
+generation of the canonical form. This tag is voided with the use of any
+non-const member function. Pay close attention to the documentation of
+comparison member functions and operators to ensure that you are making good use
+of the provided shortcuts.
+
+The member functions provided are very modular. If you want the strictest
+definition of isomorphism, then the default arguments to canonicalize are
+correct, after which operator == defaults to an identity permutation check:
+
+@code{.cpp}
+Molecule a = ..., b = ...;
+// Assuming a and be are non-canonical, i.e.:
+// a.canonicalComponents() == AtomEnvironmentComponents::None
+
+bool isomorphic = (a == b); // Backtracking boost algorithm for isomorphism, slow
+
+a.canonicalize(); // Canonicalization, slow
+// Now: a.canonicalComponents() == AtomEnvironmentComponents::All
+
+isomorphic = (a == b); // Full isomorphism check (like before) since b is not canonical, slow
+
+b.canonicalize(); // Canonicalization, slow
+// Now: b.canonicalComponents() == AtomEnvironmentComponents::All
+
+isomorphic = (a == b); // Identitity permutation isomorphism check, fast
+@endcode
+
+If, instead, you want to use a limited definition of equality, then you can
+specify fewer components of molecules for use in canonicalization or comparison:
+
+@code{.cpp}
+Molecule a = ..., b = ...;
+// Assuming a and be are non-canonical, i.e.:
+// a.canonicalComponents() == AtomEnvironmentComponents::None
+
+// Isomorphism with just element types and bond orders
+AtomEnvironmentComponents componentsMask = AtomEnvironmentComponents::ElementTypes
+  | AtomEnvironmentComponents::BondOrders;
+
+bool myIsomorphism = a.modularCompare(b, componentsMask); // Full isomorphism, slow
+
+a.canonicalize(componentsMask); // Canonicalization, slow
+b.canonicalize(componentsMask); // Canonicalization, slow
+// Now: a.canonicalComponents() == b.canonicalComponents() == componentsMask
+
+myIsomorphism = a.canonicalCompare(b, componentsMask); // Identity permutation check, fast!
+
+// This, however, calls modularCompare with AtomEnvironmentComponents::All despite 
+// partial canonicalization. Different canonizations are not cross-comparable,
+// and operator == will always use the strictest definition of equality
+bool isomorphic = (a == b);
+@endcode
 
 @section manual-molecules Working with Molecules
 

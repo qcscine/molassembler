@@ -55,11 +55,13 @@ Molecule::Molecule(
 
 Molecule::Molecule(
   OuterGraph graph,
-  StereopermutatorList stereopermutators
+  StereopermutatorList stereopermutators,
+  const AtomEnvironmentComponents canonicalComponents
 ) : _pImpl(
   std::make_unique<Impl>(
     std::move(graph),
-    std::move(stereopermutators)
+    std::move(stereopermutators),
+    canonicalComponents
   )
 ) {}
 
@@ -106,8 +108,10 @@ void Molecule::assignStereopermutatorRandomly(const BondIndex& e) {
   _pImpl->assignStereopermutatorRandomly(e);
 }
 
-std::vector<AtomIndex> Molecule::canonicalize() {
-  return _pImpl->canonicalize();
+std::vector<AtomIndex> Molecule::canonicalize(
+  const AtomEnvironmentComponents componentBitmask
+) {
+  return _pImpl->canonicalize(componentBitmask);
 }
 
 void Molecule::removeAtom(const AtomIndex a) {
@@ -145,6 +149,10 @@ void Molecule::setGeometryAtAtom(
 
 
 /* Information */
+AtomEnvironmentComponents Molecule::canonicalComponents() const {
+  return _pImpl->canonicalComponents();
+}
+
 Symmetry::Name Molecule::determineLocalGeometry(
   const AtomIndex index,
   const RankingInformation& ranking
@@ -176,18 +184,25 @@ StereopermutatorList Molecule::inferStereopermutatorsFromPositions(
   );
 }
 
+bool Molecule::canonicalCompare(
+  const Molecule& other,
+  const AtomEnvironmentComponents componentBitmask
+) const {
+  return _pImpl->canonicalCompare(*other._pImpl, componentBitmask);
+}
+
 bool Molecule::modularCompare(
   const Molecule& other,
-  const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  const AtomEnvironmentComponents componentBitmask
 ) const {
-  return _pImpl->modularCompare(*other._pImpl, comparisonBitmask);
+  return _pImpl->modularCompare(*other._pImpl, componentBitmask);
 }
 
 bool Molecule::trialModularCompare(
   const Molecule& other,
-  const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  const AtomEnvironmentComponents componentBitmask
 ) const {
-  return _pImpl->trialModularCompare(*other._pImpl, comparisonBitmask);
+  return _pImpl->trialModularCompare(*other._pImpl, componentBitmask);
 }
 
 RankingInformation Molecule::rankPriority(

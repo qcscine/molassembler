@@ -6,6 +6,7 @@
 
 #include "temple/Adaptors/Zip.h"
 #include "temple/Functional.h"
+#include "temple/TinySet.h"
 
 #include "molassembler/Containers/OrderDiscoveryHelper.h"
 #include "molassembler/Cycles.h"

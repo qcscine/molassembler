@@ -17,7 +17,6 @@
 #include "boost_outcome/outcome.hpp"
 #include "Eigen/Core"
 #include "Utils/ElementInfo.h"
-#include "temple/Preprocessor.h"
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 
@@ -96,15 +95,15 @@ public:
     const std::vector<double>& distances
   );
 
-  PURITY_STRONG static inline bool isLeft(const VertexDescriptor i) {
+  [[gnu::const]] static inline bool isLeft(const VertexDescriptor i) noexcept {
     return i % 2 == 0;
   }
 
-  PURITY_STRONG static inline VertexDescriptor left(const VertexDescriptor a) {
+  [[gnu::const]] static inline VertexDescriptor left(const VertexDescriptor a) noexcept {
     return 2 * a;
   }
 
-  PURITY_STRONG static inline VertexDescriptor right(const VertexDescriptor a) {
+  [[gnu::const]] static inline VertexDescriptor right(const VertexDescriptor a) noexcept {
     return 2 * a + 1;
   }
 //!@}

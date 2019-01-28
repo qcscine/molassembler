@@ -221,9 +221,9 @@ bool StereopermutatorList::hasUnassignedStereopermutators() const {
 
 bool StereopermutatorList::compare(
   const StereopermutatorList& other,
-  const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+  const AtomEnvironmentComponents componentBitmask
 ) const {
-  if(comparisonBitmask & AtomEnvironmentComponents::Symmetries) {
+  if(componentBitmask & AtomEnvironmentComponents::Symmetries) {
     // Check sizes
     if(
       _atomStereopermutators.size() != other._atomStereopermutators.size()
@@ -246,7 +246,7 @@ bool StereopermutatorList::compare(
         return false;
       }
 
-      if(comparisonBitmask & AtomEnvironmentComponents::Stereopermutations) {
+      if(componentBitmask & AtomEnvironmentComponents::Stereopermutations) {
         // Ensure stereopermutations match
         if(stereopermutator.assigned() != otherStereopermutatorOption->assigned()) {
           return false;
@@ -268,7 +268,7 @@ bool StereopermutatorList::compare(
         return false;
       }
 
-      if(comparisonBitmask & AtomEnvironmentComponents::Stereopermutations) {
+      if(componentBitmask & AtomEnvironmentComponents::Stereopermutations) {
         // Ensure stereopermutations match
         if(stereopermutator.assigned() != otherStereopermutatorOption->assigned()) {
           return false;

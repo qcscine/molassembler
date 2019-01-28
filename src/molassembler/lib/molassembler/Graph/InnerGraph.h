@@ -137,7 +137,10 @@ public:
   Vertex N() const;
   Vertex B() const;
 
-  bool plainComparison(const InnerGraph& other) const;
+  bool plainComparison(
+    const InnerGraph& other,
+    AtomEnvironmentComponents components
+  ) const;
 //!@}
 
 //!@name Cache management

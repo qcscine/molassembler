@@ -18,7 +18,6 @@
 #include "Utils/ElementTypes.h"
 #include "boost/optional.hpp"
 #include "chemical_symmetries/Names.h"
-#include "temple/constexpr/Bitmask.h"
 
 #include "molassembler/AngstromWrapper.h"
 
@@ -136,11 +135,12 @@ public:
    *   components or there are less than 2 atoms
    *
    * @warning This function is not intended for library consumers. It is used
-   * internally in implementation details.
+   *   internally in implementation details.
    */
   Molecule(
     OuterGraph graph,
-    StereopermutatorList stereopermutators
+    StereopermutatorList stereopermutators,
+    AtomEnvironmentComponents canonicalComponents
   );
 //!@}
 
@@ -225,12 +225,12 @@ public:
    *   invalid.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
-   *   may disappear, change their assignment and number of assignments, or new
-   *   stereopermutators can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereopermutatorList members and
-   *   any stereopermutator state stored external to a Molecule instance and its
-   *   members invalidated.
+   *   atom, and can lead to changes in the list of stereopermutators.
+   *   Stereopermutators may disappear, change their assignment and number of
+   *   assignments, or new stereopermutators can appear as a consequence of the
+   *   most minor edit. For procedural safety, consider iterators to
+   *   StereopermutatorList members and any stereopermutator state stored
+   *   external to a Molecule instance and its members invalidated.
    */
   void assignStereopermutator(
     AtomIndex a,
@@ -240,28 +240,29 @@ public:
   /*!
    * @brief Sets the stereopermutator assignment on a bond
    *
-   * This sets the stereopermutator assignment at a specific bond index. For this,
-   * a stereopermutator must be instantiated and contained in the StereopermutatorList
-   * returned by stereopermutators(). The supplied assignment must be either
-   * boost::none or smaller than stereopermutatorPtr->numAssignments().
+   * This sets the stereopermutator assignment at a specific bond index. For
+   * this, a stereopermutator must be instantiated and contained in the
+   * StereopermutatorList returned by stereopermutators(). The supplied
+   * assignment must be either boost::none or smaller than
+   * stereopermutatorPtr->numAssignments().
    *
    * @param edge The edge at which a stereopermutator is to be assigned.
    * @param assignmentOption The new assignment. The special value boost::none
    *   makes the stereopermutator indeterminate. Any indeterminate bond
-   *   stereopermutators in a molecule at conformation-generation will be assigned
-   *   randomly.
+   *   stereopermutators in a molecule at conformation-generation will be
+   *   assigned randomly.
    *
    * @throws std::out_of_range If the BondIndex is invalid (i.e. either atom
    *   index >= N()), there is no bond stereopermutator at the supplied edge
-   *   or the assignment index is inalid.
+   *   or the assignment index is invalid.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
-   *   may disappear, change their assignment and number of assignments, or new
-   *   stereopermutators can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereopermutatorList members and
-   *   any stereopermutator state stored external to a Molecule instance and its
-   *   members invalidated.
+   *   atom, and can lead to changes in the list of stereopermutators.
+   *   Stereopermutators may disappear, change their assignment and number of
+   *   assignments, or new stereopermutators can appear as a consequence of the
+   *   most minor edit. For procedural safety, consider iterators to
+   *   StereopermutatorList members and any stereopermutator state stored
+   *   external to a Molecule instance and its members invalidated.
    */
   void assignStereopermutator(
     const BondIndex& edge,
@@ -281,12 +282,12 @@ public:
    *   there is no atom stereopermutator at this bond index.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
-   *   may disappear, change their assignment and number of assignments, or new
-   *   stereopermutators can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereopermutatorList members and
-   *   any stereopermutator state stored external to a Molecule instance and its
-   *   members invalidated.
+   *   atom, and can lead to changes in the list of stereopermutators.
+   *   Stereopermutators may disappear, change their assignment and number of
+   *   assignments, or new stereopermutators can appear as a consequence of the
+   *   most minor edit. For procedural safety, consider iterators to
+   *   StereopermutatorList members and any stereopermutator state stored
+   *   external to a Molecule instance and its members invalidated.
    */
   void assignStereopermutatorRandomly(AtomIndex a);
 
@@ -297,29 +298,46 @@ public:
    *   index is >= N()) or there is no bond stereopermutator at this bond index.
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
-   *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators
-   *   may disappear, change their assignment and number of assignments, or new
-   *   stereopermutators can appear as a consequence of the most minor edit. For
-   *   procedural safety, consider iterators to StereopermutatorList members and
-   *   any stereopermutator state stored external to a Molecule instance and its
-   *   members invalidated.
+   *   atom, and can lead to changes in the list of stereopermutators.
+   *   Stereopermutators may disappear, change their assignment and number of
+   *   assignments, or new stereopermutators can appear as a consequence of the
+   *   most minor edit. For procedural safety, consider iterators to
+   *   StereopermutatorList members and any stereopermutator state stored
+   *   external to a Molecule instance and its members invalidated.
    */
   void assignStereopermutatorRandomly(const BondIndex& e);
 
   /**
    * @brief Canonicalizes the graph, invalidating all atom and bond indices.
    *
+   * @param components The components of the molecular graph to include in the
+   *   canonicalization procedure. May not be None.
+   *
+   * @warning Any comparisons made on canonical graphs must be made with a less
+   *   or equally strict @p components bitmask. If you choose a stricter
+   *   bitmask than you have used in the canonicalization procedure, you risk
+   *   false positives and false negatives.
+   *
    * @warning This invalidates all atom indices and bond indices and any
    *   references to constituting members of the molecule.
    *
+   * @note Use Molecule::canonicalCompare to compare instances of canonicalized
+   *   molecules. If you are using the default value for @p componentBitmask,
+   *   Molecule::operator == has a shortcut for fully canonical molecules.
+   *
+   * @post A call to Molecule::canonicalComponents yields @p components
+   *   supplied here
+   *
    * @return Permutation mapping from old indices to new:
-   * @begincode{.cpp}
+   * @code{.cpp}
    * auto indexMapping = mol.canonicalize();
    * AtomIndex newIndex = indexMapping.at(oldIndex);
    * @endcode
    * You can use this to update invalidated indices.
    */
-  std::vector<AtomIndex> canonicalize();
+  std::vector<AtomIndex> canonicalize(
+    AtomEnvironmentComponents componentBitmask = AtomEnvironmentComponents::All
+  );
 
   /*!
    * @brief Removes an atom from the graph, including bonds to it.
@@ -457,6 +475,11 @@ public:
 //!@name Information
 //!@{
   /*!
+   * @brief Get which components of the graph have been used in canonicalization
+   */
+  AtomEnvironmentComponents canonicalComponents() const;
+
+  /*!
    * @brief Determines what the local geometry at a non-terminal atom ought to be
    *
    * Returns the expected symmetry name at a non-terminal atom by inference
@@ -531,46 +554,6 @@ public:
   ) const;
 
   /*!
-   * @brief Modular comparison of this Molecule with another.
-   *
-   * This permits detailed specification of which elements of the molecular
-   * information you want to use in the comparison.
-   *
-   * Equality comparison is performed in several stages: First, at each atom
-   * position, a hash is computed that encompasses all local information that
-   * is specified to be used in the comparisonBitmask. This hash is then used
-   * during graph isomorphism calculation to avoid finding an isomorphism that
-   * does not consider the specified factors.
-   *
-   * If an isomorphism is found, it is then validated. Bond orders and
-   * stereopermutators across both molecules are compared using the found
-   * isomorphism as an index map.
-   *
-   * @note The number of stereopermutations that a stereopermutator has is
-   * considered part of the Symmetry ComparisonOptions.
-   *
-   * @note If you choose to discard bond order checking, this merely
-   * deactivates bond order hashing and a post-isomorphism-search bond order
-   * re-check. Bond order information - if present in the molecule prior to
-   * calling this function - is also present in stereopermutator ranking information
-   * and hence can influence the number of stereopermutations and the currently
-   * set stereopermutation index. This can lead to unexpected but logically
-   * consistent comparison behavior.
-   *
-   * @note This function has an early exit for molecules stored in canonical
-   * form. In that case, this operation is only O(N).
-   */
-  bool modularCompare(
-    const Molecule& other,
-    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
-  ) const;
-
-  bool trialModularCompare(
-    const Molecule& other,
-    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
-  ) const;
-
-  /*!
    * @brief Rank substituents of an atom
    *
    * Performs a ranking algorithm that attempts to differentiate branches
@@ -601,15 +584,97 @@ public:
   ) const;
 //!@}
 
+//!@name Comparison
+//!@{
+  /*!
+   * @brief Modular comparison of this Molecule with another, assuming that
+   *   both are in a canonical form
+   *
+   * @param The other canonical molecule to compare against
+   * @param componentBitmask The components of an atom's environment to include
+   *   in the comparison. You should use the same componentBitmask as when
+   *   canonicalizing the molecules you are comparing here. It may be possible
+   *   to use a bitmask with fewer components, but certainly not one with more.
+   *   May not be None.
+   * @returns Whether the molecules are identical (i.e. a special case of
+   *   isomorphism in which the vertex mapping is an identity permutation)
+   *
+   * @throw std::logic_error If @p componentBitmask contains more components
+   *   than have been used to canonicalize this molecule instance or @p other.
+   */
+  bool canonicalCompare(
+    const Molecule& other,
+    AtomEnvironmentComponents componentBitmask = AtomEnvironmentComponents::All
+  ) const;
+
+  /*!
+   * @brief Modular comparison of this Molecule with another.
+   *
+   * This permits detailed specification of which elements of the molecular
+   * information you want to use in the comparison.
+   *
+   * Equality comparison is performed in several stages: First, at each atom
+   * position, a hash is computed that encompasses all local information that
+   * is specified to be used in @p componentsBitmask. This hash is then used
+   * during graph isomorphism calculation to avoid finding an isomorphism that
+   * does not consider the specified factors.
+   *
+   * If an isomorphism is found, it is then validated. Bond orders and
+   * stereopermutators across both molecules are compared using the found
+   * isomorphism as an index map.
+   *
+   * @param componentBitmask Components of an atom's environment to include
+   * in isomorphism tests. May not be None.
+   *
+   * @note The number of stereopermutations that a stereopermutator has is
+   * considered part of the Symmetry ComparisonOptions.
+   *
+   * @note If you choose to discard bond order checking, this merely
+   * deactivates bond order hashing and a post-isomorphism-search bond order
+   * re-check. Bond order information - if present in the molecule prior to
+   * calling this function - is also present in stereopermutator ranking information
+   * and hence can influence the number of stereopermutations and the currently
+   * set stereopermutation index. This can lead to unexpected but logically
+   * consistent comparison behavior.
+   *
+   * @note This function has no improved computational complexity for molecules
+   * stored in any canonical form. Use Molecule::canonicalCompare for molecules
+   * instances that have been canonicalized.
+   */
+  bool modularCompare(
+    const Molecule& other,
+    AtomEnvironmentComponents componentBitmask
+  ) const;
+
+  //! Trial implementation of isomorphism check using nauty
+  bool trialModularCompare(
+    const Molecule& other,
+    AtomEnvironmentComponents componentBitmask
+  ) const;
+//!@}
+
 //!@name Operators
 //!@{
   /*!
-   * @brief Equality operator, performs most strict equality comparison.
-   * @see modularCompare for more detailed information on how equality is
-   *   defined and more control over the operation
+   * @brief Equality operator, performs most strict equality comparison
+   *
+   * If both molecule instances are fully canonical, calls Molecule::canonicalCompare.
+   * Otherwise calls Molecule::modularCompare.
+   *
+   * Implemented as
+   * @code{.cpp}
+   * if(
+   *   canonicalComponents() == AtomEnvironmentComponents::All
+   *   && other.canonicalComponents() == AtomEnvironmentComponents::All
+   * ) {
+   *   return canonicalCompare(other, AtomEnvironmentComponents::All);
+   * }
+   *
+   * return modularCompare(other, AtomEnvironmentComponents::All);
+   * @endcode
    */
   bool operator == (const Molecule& other) const;
-  //! Inverts @see operator ==
+  //! Inverts Molecule::operator ==
   bool operator != (const Molecule& other) const;
 //!@}
 

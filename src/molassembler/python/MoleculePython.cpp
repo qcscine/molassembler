@@ -20,22 +20,22 @@ bool modularCompare(
   const bool compareStereopermutations
 ) {
   using Components = Scine::molassembler::AtomEnvironmentComponents;
-  temple::Bitmask<Components> bitmask;
+  Components bitmask;
 
   if(compareElementTypes) {
-    bitmask |= Components::ElementTypes;
+    bitmask = bitmask | Components::ElementTypes;
   }
 
   if(compareBondOrders) {
-    bitmask |= Components::BondOrders;
+    bitmask = bitmask | Components::BondOrders;
   }
 
   if(compareSymmetries) {
-    bitmask |= Components::Symmetries;
+    bitmask = bitmask | Components::Symmetries;
   }
 
   if(compareStereopermutations) {
-    bitmask |= Components::Stereopermutations;
+    bitmask = bitmask | Components::Stereopermutations;
   }
 
   return molecule.modularCompare(other, bitmask);

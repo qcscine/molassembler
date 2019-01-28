@@ -12,9 +12,6 @@
 
 #include "RingDecomposerLib.h"
 
-#include "temple/TinySet.h"
-#include "temple/Traits.h"
-
 #include "molassembler/OuterGraph.h"
 
 #include <functional>
@@ -69,22 +66,16 @@ public:
     };
 
     struct ConsistsOf {
-      temple::TinySet<AtomIndex> indices;
+      std::vector<AtomIndex> indices;
 
       template<typename Container>
       explicit ConsistsOf(const Container& container) {
-        static_assert(
-          std::is_same<
-            temple::traits::getValueType<Container>,
-            AtomIndex
-          >::value,
-          "ConsistsOf predicate ctor Container must contain AtomIndex"
-        );
-
         for(const auto index : container) {
-          indices.insert(index);
+          insert(index);
         }
       }
+
+      void insert(AtomIndex i);
 
       bool operator() (const RDL_cycle* const cyclePtr) const;
     };

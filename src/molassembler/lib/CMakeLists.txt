@@ -182,7 +182,6 @@ if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12.0")
 else()
   target_include_directories(molassembler_obj
     PUBLIC
-      $<TARGET_PROPERTY:temple,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:Scine::UtilsOS,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:boost_outcome,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:RingDecomposerLibStatic,INTERFACE_INCLUDE_DIRECTORIES>
@@ -190,6 +189,7 @@ else()
       $<TARGET_PROPERTY:Boost::boost,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:chemical_symmetries,INTERFACE_INCLUDE_DIRECTORIES>
     PRIVATE
+      $<TARGET_PROPERTY:temple,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:stereopermutation,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:cyclic_polygons,INTERFACE_INCLUDE_DIRECTORIES>
       $<TARGET_PROPERTY:gor1,INTERFACE_INCLUDE_DIRECTORIES>
@@ -241,7 +241,6 @@ add_library(molassembler::molassemblerStatic ALIAS molassemblerStatic)
 target_link_libraries(
   molassembler
   PUBLIC
-    temple
     Boost::boost
     Scine::UtilsOS
     boost_outcome
@@ -249,6 +248,7 @@ target_link_libraries(
     dlib::dlib
     chemical_symmetries
   PRIVATE
+    temple
     stereopermutation
     cyclic_polygons
     gor1

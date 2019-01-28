@@ -206,12 +206,16 @@ InnerGraph::Vertex InnerGraph::B() const {
   return boost::num_edges(_graph);
 }
 
-bool InnerGraph::plainComparison(const InnerGraph& other) const {
+bool InnerGraph::plainComparison(
+  const InnerGraph& other,
+  AtomEnvironmentComponents components
+) const {
   assert(N() == other.N() && B() == other.B());
 
   // Check all element types
   if(
-    !temple::all_of(
+    (components & AtomEnvironmentComponents::ElementTypes)
+    && !temple::all_of(
       boost::make_iterator_range(vertices()),
       [&](const Vertex i) -> bool {
         return _graph[i].elementType == other._graph[i].elementType;
@@ -237,7 +241,11 @@ bool InnerGraph::plainComparison(const InnerGraph& other) const {
         return false;
       }
 
-      return _graph[edge].bondType == other._graph[correspondingEdge].bondType;
+      if(components & AtomEnvironmentComponents::BondOrders) {
+        return _graph[edge].bondType == other._graph[correspondingEdge].bondType;
+      }
+
+      return true;
     }
   );
 }

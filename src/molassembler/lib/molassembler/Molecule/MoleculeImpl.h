@@ -20,6 +20,7 @@ namespace molassembler {
 struct Molecule::Impl {
   OuterGraph _adjacencies;
   StereopermutatorList _stereopermutators;
+  AtomEnvironmentComponents _canonicalComponents = AtomEnvironmentComponents::None;
 
 /* "Private" helpers */
   void _tryAddAtomStereopermutator(
@@ -75,7 +76,8 @@ struct Molecule::Impl {
   //! Graph and stereopermutators constructor
   Impl(
     OuterGraph graph,
-    StereopermutatorList stereopermutators
+    StereopermutatorList stereopermutators,
+    AtomEnvironmentComponents canonicalComponents
   );
 //!@}
 
@@ -167,16 +169,30 @@ struct Molecule::Impl {
   /**
    * @brief Canonicalizes the graph, invalidating all atom and bond indices.
    *
+   * @param components The components of the molecular graph to include in the
+   *   canonicalization procedure.
+   *
+   * @warning Any comparisons made on canonical graphs must be made with a less
+   *   or equally strict @p components bitmask. If you choose a stricter
+   *   bitmask than you have used in the canonicalization procedure, you risk
+   *   false positives and false negatives.
+   *
    * @warning This invalidates all atom indices and bond indices and any
    *   references to constituting members of the molecule.
+   *
+   * @note Use @see canonicalCompare to compare instances of canonicalized
+   *   molecules.
    *
    * @return Permutation mapping from old indices to new:
    * @begincode{.cpp}
    * auto indexMapping = mol.canonicalize();
    * AtomIndex newIndex = indexMapping.at(oldIndex);
    * @endcode
+   * You can use this to update invalidated indices.
    */
-  std::vector<AtomIndex> canonicalize();
+  std::vector<AtomIndex> canonicalize(
+    const AtomEnvironmentComponents componentBitmask
+  );
 
   /*! Removes an atom from the graph, including bonds to it.
    *
@@ -239,6 +255,8 @@ struct Molecule::Impl {
 
 //!@name Information
 //!@{
+  //! Yield which components were used in canonicalization
+  AtomEnvironmentComponents canonicalComponents() const;
   /*! Determines what the local geometry at a non-terminal atom ought to be
    *
    * Returns the expected symmetry name at a non-terminal atom.
@@ -265,15 +283,22 @@ struct Molecule::Impl {
     >& explicitBondStereopermutatorCandidatesOption = boost::none
   ) const;
 
+  //! Compares two canonical instances with one another
+  bool canonicalCompare(
+    const Impl& other,
+    AtomEnvironmentComponents componentBitmask
+  ) const;
+
   //! Modular comparison of this Impl with another.
   bool modularCompare(
     const Impl& other,
-    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+    AtomEnvironmentComponents componentBitmask
   ) const;
 
+  //! Competing trial implementation of isomorphism test with nauty
   bool trialModularCompare(
     const Impl& other,
-    const temple::Bitmask<AtomEnvironmentComponents>& comparisonBitmask
+    AtomEnvironmentComponents componentBitmask
   ) const;
 
   RankingInformation rankPriority(
@@ -287,6 +312,7 @@ struct Molecule::Impl {
 //!@{
   //! Equality operator, performs most strict equality comparison
   bool operator == (const Impl& other) const;
+  //! Negates @see operator ==
   bool operator != (const Impl& other) const;
 //!@}
 };

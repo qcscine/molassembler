@@ -86,7 +86,7 @@ bool BondInformation::operator == (const BondInformation& other) const {
 }
 
 WideHashType atomEnvironment(
-  const temple::Bitmask<AtomEnvironmentComponents>& bitmask,
+  const AtomEnvironmentComponents bitmask,
   const Scine::Utils::ElementType elementType,
   const std::vector<BondInformation>& sortedBonds,
   const boost::optional<Symmetry::Name>& symmetryNameOptional,
@@ -177,7 +177,7 @@ WideHashType atomEnvironment(
 std::vector<WideHashType> generate(
   const InnerGraph& inner,
   const StereopermutatorList& stereopermutators,
-  const temple::Bitmask<AtomEnvironmentComponents>& bitmask
+  const AtomEnvironmentComponents bitmask
 ) {
   std::vector<WideHashType> hashes;
 

@@ -3,6 +3,7 @@
  *   See LICENSE.txt
  */
 
+#include "temple/Optionals.h"
 #include "molassembler/Modeling/LocalGeometryModel.h"
 
 #include "boost/range/iterator_range_core.hpp"
@@ -11,7 +12,6 @@
 
 #include "chemical_symmetries/Symmetries.h"
 #include "temple/Functional.h"
-#include "temple/Optionals.h"
 
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/OuterGraph.h"

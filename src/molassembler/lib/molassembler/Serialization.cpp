@@ -20,6 +20,22 @@
 namespace nlohmann {
 
 template<>
+struct adl_serializer<Scine::molassembler::AtomEnvironmentComponents> {
+  using Type = Scine::molassembler::AtomEnvironmentComponents;
+  using Underlying = std::underlying_type_t<Type>;
+
+  static void to_json(json& j, const Type& value) {
+    j = static_cast<Underlying>(value);
+  }
+
+  static void from_json(const json& j, Type& value) {
+    value = static_cast<Type>(
+      j.get<Underlying>()
+    );
+  }
+};
+
+template<>
 struct adl_serializer<Scine::Utils::ElementType> {
   using Type = Scine::Utils::ElementType;
   using Underlying = std::underlying_type<Scine::Utils::ElementType>::type;
@@ -252,6 +268,8 @@ nlohmann::json serialize(const Molecule& molecule) {
     m["b"].push_back(std::move(s));
   }
 
+  m["c"] = molecule.canonicalComponents();
+
   return m;
 }
 
@@ -326,7 +344,9 @@ Molecule deserialize(const nlohmann::json& m) {
     stereopermutators.add(molEdge, std::move(stereopermutator));
   }
 
-  return Molecule {graph, stereopermutators};
+  AtomEnvironmentComponents canonicalComponents = m["c"];
+
+  return Molecule {graph, stereopermutators, canonicalComponents};
 }
 
 } // namespace detail
