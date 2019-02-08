@@ -14,6 +14,11 @@ BOOST_AUTO_TEST_CASE(cleaveEdit) {
   using namespace Scine;
   using namespace molassembler;
 
+  if(!IO::LineNotation::enabled()) {
+    BOOST_TEST_MESSAGE("obabel is not found. cleaveEdit is not run.");
+    return;
+  }
+
   Molecule caffeine = IO::LineNotation::fromCanonicalSMILES("CN1C=NC2=C1C(=O)N(C(=O)N2C)C");
   caffeine.canonicalize();
 
@@ -36,6 +41,11 @@ BOOST_AUTO_TEST_CASE(cleaveEdit) {
 BOOST_AUTO_TEST_CASE(insertEdit) {
   using namespace Scine;
   using namespace molassembler;
+
+  if(!IO::LineNotation::enabled()) {
+    BOOST_TEST_MESSAGE("obabel is not found. insertEdit is not run.");
+    return;
+  }
 
   // Set up the test and make sure the canonical indices still match expectations
   Molecule biphenyl = IO::LineNotation::fromCanonicalSMILES("C1=CC=C(C=C1)C2=CC=CC=C2");
@@ -81,6 +91,11 @@ BOOST_AUTO_TEST_CASE(superposeEdit) {
   using namespace Scine;
   using namespace molassembler;
 
+  if(!IO::LineNotation::enabled()) {
+    BOOST_TEST_MESSAGE("obabel is not found. superposeEdit is not run.");
+    return;
+  }
+
   Molecule pyridine = IO::LineNotation::fromCanonicalSMILES("C1=CC=NC=C1");
   pyridine.canonicalize();
   const AtomIndex pyridineNitrogen = 5;
@@ -104,6 +119,11 @@ BOOST_AUTO_TEST_CASE(superposeEdit) {
 BOOST_AUTO_TEST_CASE(substituteEdit) {
   using namespace Scine;
   using namespace molassembler;
+
+  if(!IO::LineNotation::enabled()) {
+    BOOST_TEST_MESSAGE("obabel is not found. substituteEdit is not run.");
+    return;
+  }
 
   Molecule chlorobenzene = IO::LineNotation::fromCanonicalSMILES("C1=CC=C(C=C1)Cl");
   chlorobenzene.canonicalize();
@@ -133,6 +153,11 @@ BOOST_AUTO_TEST_CASE(substituteEdit) {
 BOOST_AUTO_TEST_CASE(connectEdit) {
   using namespace Scine;
   using namespace molassembler;
+
+  if(!IO::LineNotation::enabled()) {
+    BOOST_TEST_MESSAGE("obabel is not found. connectEdit is not run.");
+    return;
+  }
 
   Molecule pyridine = IO::LineNotation::fromCanonicalSMILES("C1=CC=NC=C1");
   pyridine.canonicalize();
