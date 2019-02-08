@@ -200,11 +200,20 @@ public:
   Utils::BondOrderCollection bondOrders() const;
   //! Fetch the bond type at a particular bond
   BondType bondType(const BondIndex& edge) const;
-  //! Returns whether an atom can be removed without disconnecting the graph
+  /*!
+   * @brief Returns whether an atom can be removed without disconnecting the graph
+   * @note This function is not thread-safe.
+   */
   bool canRemove(AtomIndex a) const;
-  //! Returns whether a bond can be removed without disconnecting the graph
+  /*!
+   * @brief Returns whether a bond can be removed without disconnecting the graph
+   * @note This function is not thread-safe.
+   */
   bool canRemove(const BondIndex& edge) const;
-  //! Fetch a reference to Cycles
+  /*!
+   * @brief Fetch a reference to Cycles
+   * @note This function is not thread-safe.
+   */
   const Cycles& cycles() const;
   //! Returns the number of bonds incident upon an atom
   unsigned degree(AtomIndex a) const;
@@ -218,7 +227,10 @@ public:
   //! Number of bonds in the graph
   unsigned B() const;
 
-  //! Determine which vertices belong to which side of a bridge edge
+  /*!
+   * @brief Determine which vertices belong to which side of a bridge edge
+   * @note This function is not thread-safe.
+   */
   std::pair<
     std::vector<AtomIndex>,
     std::vector<AtomIndex>
@@ -266,7 +278,7 @@ public:
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.
    */
-  InnerGraph& inner() { return *_innerPtr; }
+  InnerGraph& inner();
 
   /*!
    * @brief Const-access to library-internal graph representation class
@@ -274,20 +286,15 @@ public:
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.
    */
-  const InnerGraph& inner() const { return *_innerPtr; }
+  const InnerGraph& inner() const;
 
 private:
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
   std::experimental::propagate_const<
     std::unique_ptr<InnerGraph>
   > _innerPtr;
-
-  mutable std::experimental::propagate_const<
-    std::unique_ptr<Cycles>
-  > _cachedCycles;
 #else
   std::unique_ptr<InnerGraph> _innerPtr;
-  mutable std::unique_ptr<Cycles> _cachedCycles;
 #endif
 };
 

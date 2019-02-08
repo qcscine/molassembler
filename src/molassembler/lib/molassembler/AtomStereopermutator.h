@@ -12,8 +12,8 @@
  * 'assignments'.
  */
 
-#ifndef INCLUDE_MOLASSEMBLER_ATOM_stereopermutator_H
-#define INCLUDE_MOLASSEMBLER_ATOM_stereopermutator_H
+#ifndef INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_H
+#define INCLUDE_MOLASSEMBLER_ATOM_STEREOPERMUTATOR_H
 
 #include "molassembler/Options.h"
 #include "molassembler/OuterGraph.h"

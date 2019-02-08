@@ -64,6 +64,13 @@ Cycles::Cycles(
   _rdlPtr = std::make_shared<RDLDataPtrs>(sourceGraph.inner(), ignoreEtaBonds);
 }
 
+Cycles::Cycles(
+  const InnerGraph& sourceGraph,
+  const bool ignoreEtaBonds
+) {
+  _rdlPtr = std::make_shared<RDLDataPtrs>(sourceGraph, ignoreEtaBonds);
+}
+
 unsigned Cycles::numCycleFamilies() const {
   return RDL_getNofURF(_rdlPtr->dataPtr);
 }

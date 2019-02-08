@@ -81,7 +81,7 @@ InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondT
   }
 
   // Invalidate the cache only after all throwing conditions
-  _unchangedSinceNotification = false;
+  _properties.invalidate();
 
   auto newBondPair = boost::add_edge(a, b, _graph);
 
@@ -94,7 +94,7 @@ InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondT
 
 InnerGraph::Vertex InnerGraph::addVertex(const Utils::ElementType elementType) {
   // Invalidate the cache values
-  _unchangedSinceNotification = false;
+  _properties.invalidate();
 
   InnerGraph::Vertex newVertex = boost::add_vertex(_graph);
   _graph[newVertex].elementType = elementType;
@@ -137,46 +137,42 @@ void InnerGraph::applyPermutation(const std::vector<Vertex>& permutation) {
 
 BondType& InnerGraph::bondType(const InnerGraph::Edge& edge) {
   // Invalidate the cache values
-  _unchangedSinceNotification = false;
+  _properties.invalidate();
 
   return _graph[edge].bondType;
 }
 
 void InnerGraph::clearVertex(Vertex a) {
   // Invalidate the cache values
-  _unchangedSinceNotification = false;
+  _properties.invalidate();
 
   boost::clear_vertex(a, _graph);
 }
 
-void InnerGraph::notifyPropertiesCached() const {
-  _unchangedSinceNotification = true;
-}
-
 void InnerGraph::removeEdge(const Edge& e) {
   // Invalidate the cache values
-  _unchangedSinceNotification = false;
+  _properties.invalidate();
 
   boost::remove_edge(e, _graph);
 }
 
 void InnerGraph::removeVertex(Vertex a) {
   // Invalidate the cache values
-  _unchangedSinceNotification = false;
+  _properties.invalidate();
 
   boost::remove_vertex(a, _graph);
 }
 
 Utils::ElementType& InnerGraph::elementType(const Vertex a) {
   // Invalidate the cache values
-  _unchangedSinceNotification = false;
+  _properties.invalidate();
 
   return _graph[a].elementType;
 }
 
 InnerGraph::BGLType& InnerGraph::bgl() {
   // Invalidate the cache values
-  _unchangedSinceNotification = false;
+  _properties.invalidate();
 
   return _graph;
 }
@@ -190,12 +186,12 @@ bool InnerGraph::canRemove(const Vertex a) const {
   }
 
   // Removable if the vertex is not an articulation vertex
-  return _removalSafetyData().articulationVertices.count(a) == 0;
+  return removalSafetyData().articulationVertices.count(a) == 0;
 }
 
 bool InnerGraph::canRemove(const Edge& edge) const {
   // Removable if the edge is not a bridge
-  return _removalSafetyData().bridges.count(edge) == 0;
+  return removalSafetyData().bridges.count(edge) == 0;
 }
 
 /* Information */
@@ -281,7 +277,7 @@ std::pair<
   std::vector<AtomIndex>,
   std::vector<AtomIndex>
 > InnerGraph::splitAlongBridge(Edge bridge) const {
-  if(_removalSafetyData().bridges.count(bridge) == 0) {
+  if(removalSafetyData().bridges.count(bridge) == 0) {
     throw std::invalid_argument("The supplied edge is not a bridge edge");
   }
 
@@ -318,10 +314,6 @@ std::pair<
   );
 }
 
-bool InnerGraph::unchangedSinceNotification() const {
-  return _unchangedSinceNotification;
-}
-
 InnerGraph::VertexRange InnerGraph::vertices() const {
   return boost::vertices(_graph);
 }
@@ -342,7 +334,11 @@ const InnerGraph::BGLType& InnerGraph::bgl() const {
   return _graph;
 }
 
-InnerGraph::RemovalSafetyData InnerGraph::_removalSafetyData() const {
+const InnerGraph::RemovalSafetyData& InnerGraph::removalSafetyData() const {
+  if(_properties.removalSafetyDataOption) {
+    return *_properties.removalSafetyDataOption;
+  }
+
   RemovalSafetyData safetyData;
 
   std::vector<InnerGraph::Vertex> articulationVertices;
@@ -387,7 +383,17 @@ InnerGraph::RemovalSafetyData InnerGraph::_removalSafetyData() const {
     }
   }
 
-  return safetyData;
+  _properties.removalSafetyDataOption = safetyData;
+  return *_properties.removalSafetyDataOption;
+}
+
+const Cycles& InnerGraph::cycles() const {
+  if(_properties.cyclesOption) {
+    return *_properties.cyclesOption;
+  }
+
+  _properties.cyclesOption = Cycles(*this);
+  return *_properties.cyclesOption;
 }
 
 } // namespace molassembler

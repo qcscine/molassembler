@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Many parameters of Distance Geometry can now be altered by passing a
   non-defaulted `Configuration` object.
 - Isomer predicate and generator header `Isomers.h`
-- Initial Python bindings
+- Higher-level editing functionality in `Editing.h`
+- Python bindings
+  - Molecule instances integrate nicely with notebooks using `_repr_svg_`
 
 ### Changed
 - temple::Bitmask no longer forms part of the public interface

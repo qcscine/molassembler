@@ -136,6 +136,7 @@ public:
 //!@{
   Cycles() = default;
   Cycles(const OuterGraph& sourceGraph, bool ignoreEtaBonds = false);
+  Cycles(const InnerGraph& innerGraph, bool ignoreEtaBonds = false);
 //!@}
 
 //!@name Information

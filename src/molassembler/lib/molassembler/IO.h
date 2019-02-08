@@ -101,6 +101,9 @@ std::vector<Molecule> split(const std::string& filename);
  * For exceptions this might throw, @see Utils::ChemicalFileHandler::write
  *
  * @note Interprets which file type is to be written from filename extension.
+ *
+ * @note Unless the file format is .json or .masm, canonicalization state of
+ * Molecule instances is lost.
  */
 void write(
   const std::string& filename,
@@ -117,6 +120,7 @@ void write(
 
 /*!
  * @brief Writer function for Molecule serializations
+ * @note Canonicalization state is retained using the molecule serializations.
  * @throws If the file extension does not match .masm or .json
  */
 void write(

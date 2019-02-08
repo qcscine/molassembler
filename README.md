@@ -24,10 +24,12 @@ generate non-superposable stereopermutations as output.
   Several classes of haptic ligands are supported.
 - Editing of molecules preservers chiral information by default, and is highly
   configurable.
+- Molecules can be canonicalized for fast isomorphism tests. Canonicalization
+  can be customized to use subsets of the available information for vertex
+  coloring if desired.
 - Ranking algorithms are nearly fully IUPAC Blue Book 2013 compliant, extended
   to larger symmetries.
-- Conformer generation uses Distance Geometry
-
+- Stochastic conformer generation with Distance Geometry
   - Unassigned stereocenters are randomly assigned from relative statistical
     occurrence weights.
   - Full metrization during distance matrix generation scales with approximately

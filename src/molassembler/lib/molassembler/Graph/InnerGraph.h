@@ -11,6 +11,7 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "Utils/ElementTypes.h"
 
+#include "molassembler/Cycles.h"
 #include "molassembler/Types.h"
 
 #include <limits>
@@ -76,6 +77,20 @@ public:
   using EdgeRange = Range<BGLType::edge_iterator>;
   using AdjacentVertexRange = Range<BGLType::adjacency_iterator>;
   using IncidentEdgeRange = Range<BGLType::out_edge_iterator>;
+
+  /*!
+   * @brief Data class to return removal safety information on the graph
+   *
+   * @note These are grouped because it is fairly easy to work out bridges from
+   * articulation vertices and hence their joint calculation makes a lot of
+   * sense. It might also be easier to cache this way without the dependence.
+   */
+  struct RemovalSafetyData {
+    //! Articulation vertices cannot be removed without disconnecting the graph
+    std::unordered_set<InnerGraph::Vertex> articulationVertices;
+    //! Bridges are edges that cannot be removed without disconnecting the graph
+    std::set<InnerGraph::Edge> bridges;
+  };
 //!@}
 
 //!@name Constructors
@@ -122,7 +137,17 @@ public:
   BondType bondType(const Edge& edge) const;
   const BGLType& bgl() const;
 
+  /*!
+   * @brief Determine whether a vertex can be safely removed
+   * A Vertex can be safely removed if it is not an articulation vertex
+   * @note This function is not thread-safe.
+   */
   bool canRemove(Vertex a) const;
+  /*!
+   * @brief Determine whether an edge can be safely removed
+   * An edge can be safely removed if it is not a bridge edge
+   * @note This function is not thread-safe.
+   */
   bool canRemove(const Edge& edge) const;
 
   unsigned connectedComponents() const;
@@ -140,7 +165,10 @@ public:
   //! Checks whether all edges present in *this are present in @p other
   bool identicalGraph(const InnerGraph& other) const;
 
-  //! Determine which vertices belong to which side of a bridge edge
+  /*!
+   * @brief Determine which vertices belong to which side of a bridge edge
+   * @note This function is not thread-safe.
+   */
   std::pair<
     std::vector<AtomIndex>,
     std::vector<AtomIndex>
@@ -148,13 +176,19 @@ public:
 
 //!@}
 
-//!@name Cache management
-//!@{
-  //! Notifies the class that properties have been cached elsewhere
-  void notifyPropertiesCached() const;
-
-  //! Returns whether the InnerGraph has changed since the last notification
-  bool unchangedSinceNotification() const;
+/*!
+ * @name Cached properties access
+ * Call complexity depends on whether the properties have been calculated
+ * before. After generation, properties are valid as long as no non-const
+ * method is called on this class that modifies state.
+ *
+ * None of these methods are thread-safe.
+ * @{
+ */
+  //! Access cycle information of the graph
+  const Cycles& cycles() const;
+  //! Access removal safety information of the graph
+  const RemovalSafetyData& removalSafetyData() const;
 //!@}
 
 //!@name Ranges
@@ -168,31 +202,27 @@ public:
 private:
 //!@name Private types
 //!@{
-  /*! Data class to return removal safety information on the graph
-   *
-   * @note These are grouped because it is fairly easy to work out bridges from
-   * articulation vertices and hence their joint calculation makes a lot of
-   * sense. It might also be easier to cache this way without the dependence.
-   */
-  struct RemovalSafetyData {
-    //! Articulation vertices cannot be removed without disconnecting the graph
-    std::unordered_set<InnerGraph::Vertex> articulationVertices;
-    //! Bridges are edges that cannot be removed without disconnecting the graph
-    std::set<InnerGraph::Edge> bridges;
+  struct Properties {
+    boost::optional<RemovalSafetyData> removalSafetyDataOption;
+    boost::optional<Cycles> cyclesOption;
+
+    inline void invalidate() {
+      removalSafetyDataOption = boost::none;
+      cyclesOption = boost::none;
+    }
   };
 //!@}
 
 //!@name Information
 //!@{
-  RemovalSafetyData _removalSafetyData() const;
 //!@}
 
 //!@name Private state
 //!@{
   //! A directly owned Boost Library Graph.
   BGLType _graph;
-  //! Stores whether the graph is unchanged since cached property extraction
-  mutable bool _unchangedSinceNotification = false;
+  //! Property caching
+  mutable Properties _properties;
 //!@}
 };
 

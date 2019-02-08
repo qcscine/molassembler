@@ -383,6 +383,9 @@ non-const member function. Pay close attention to the documentation of
 comparison member functions and operators to ensure that you are making good use
 of the provided shortcuts.
 
+It is important to note that canonicalization information is only retained
+across IO boundaries using JSON and the associated .masm or .json file suffixes.
+
 The member functions provided are very modular. If you want the strictest
 definition of isomorphism, then the default arguments to canonicalize are
 correct, after which operator == defaults to an identity permutation check:

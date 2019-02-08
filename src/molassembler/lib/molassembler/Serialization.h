@@ -36,6 +36,7 @@ class Molecule;
  * - b: List of BondStereopermutator Objects
  *   - a: Assignment index (key omitted if unassigned)
  *   - e: Edge on which it is placed
+ * - c: Canonicalization state
  * - g: Graph Object
  *   - Z: List of atomic numbers
  *   - E: List of edges, each a List
