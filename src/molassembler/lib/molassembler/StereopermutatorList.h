@@ -35,10 +35,10 @@ public:
 
 /* Modification */
   //! Add a new AtomStereopermutator to the list
-  void add(AtomIndex i, AtomStereopermutator stereopermutator);
+  AtomMapType::iterator add(AtomStereopermutator stereopermutator);
 
   //! Add a new BondStereopermutator to the list
-  void add(const BondIndex& edge, BondStereopermutator stereopermutator);
+  BondMapType::iterator add(BondStereopermutator stereopermutator);
 
   //! Apply an index mapping to the list of stereopermutators
   void applyPermutation(const std::vector<AtomIndex>& permutation);

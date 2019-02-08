@@ -20,3 +20,9 @@ if(SCINE_BUILD_TESTS)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 endif()
+
+# Add the setup file in order to enable distribution and installation using pip
+file(
+  COPY ${CMAKE_CURRENT_SOURCE_DIR}/setup.py
+  DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)

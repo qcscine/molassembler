@@ -14,6 +14,8 @@ set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DelibHelpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Descriptors.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Editing.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/InnerGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Molecule.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/OrderDiscoveryHelper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/PermutationState.cpp

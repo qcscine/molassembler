@@ -251,7 +251,7 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
     return false;
   }
 
-  // sortedSubstituents can be compare lexicographically
+  // sortedSubstituents can be compared lexicographically
   if(sortedSubstituents != other.sortedSubstituents) {
     return false;
   }

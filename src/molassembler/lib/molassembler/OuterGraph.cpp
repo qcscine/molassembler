@@ -67,6 +67,16 @@ unsigned OuterGraph::B() const {
   return inner().B();
 }
 
+//! Determine which vertices belong to which side of a bridge edge
+std::pair<
+  std::vector<AtomIndex>,
+  std::vector<AtomIndex>
+> OuterGraph::splitAlongBridge(BondIndex bridge) const {
+  return inner().splitAlongBridge(
+    toInner(bridge, inner())
+  );
+}
+
 bool OuterGraph::adjacent(const AtomIndex a, const AtomIndex b) const {
   return static_cast<bool>(
     inner().edgeOption(a, b)

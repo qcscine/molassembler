@@ -4,6 +4,7 @@
  */
 #include "OptionalPython.h"
 #include "pybind11/operators.h"
+#include "pybind11/stl.h"
 
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/RankingInformation.h"
@@ -83,4 +84,11 @@ void init_atom_stereopermutator(pybind11::module& m) {
   atomStereopermutator.def(pybind11::self == pybind11::self);
   atomStereopermutator.def(pybind11::self != pybind11::self);
   atomStereopermutator.def(pybind11::self < pybind11::self);
+
+  atomStereopermutator.def(
+    "__repr__",
+    [](const AtomStereopermutator& permutator) {
+      return permutator.info();
+    }
+  );
 }

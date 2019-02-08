@@ -28,7 +28,7 @@ public:
 //!@{
   //! Information stored at each graph vertex
   struct VertexData {
-    Scine::Utils::ElementType elementType;
+    Utils::ElementType elementType;
   };
 
   //! Information stored at each graph edge
@@ -93,7 +93,7 @@ public:
 //!@{
   Edge addEdge(Vertex a, Vertex b, BondType bondType);
 
-  Vertex addVertex(Scine::Utils::ElementType elementType);
+  Vertex addVertex(Utils::ElementType elementType);
 
   void applyPermutation(const std::vector<Vertex>& permutation);
 
@@ -104,7 +104,7 @@ public:
   //! Removes all bonds involving a vertex
   void clearVertex(Vertex a);
 
-  Scine::Utils::ElementType& elementType(Vertex a);
+  Utils::ElementType& elementType(Vertex a);
 
   //! Removes an edge from the graph.
   void removeEdge(const Edge& e);
@@ -118,7 +118,7 @@ public:
 
 //!@name Information
 //!@{
-  Scine::Utils::ElementType elementType(Vertex a) const;
+  Utils::ElementType elementType(Vertex a) const;
   BondType bondType(const Edge& edge) const;
   const BGLType& bgl() const;
 
@@ -139,6 +139,13 @@ public:
 
   //! Checks whether all edges present in *this are present in @p other
   bool identicalGraph(const InnerGraph& other) const;
+
+  //! Determine which vertices belong to which side of a bridge edge
+  std::pair<
+    std::vector<AtomIndex>,
+    std::vector<AtomIndex>
+  > splitAlongBridge(Edge bridge) const;
+
 //!@}
 
 //!@name Cache management
@@ -168,7 +175,9 @@ private:
    * sense. It might also be easier to cache this way without the dependence.
    */
   struct RemovalSafetyData {
+    //! Articulation vertices cannot be removed without disconnecting the graph
     std::unordered_set<InnerGraph::Vertex> articulationVertices;
+    //! Bridges are edges that cannot be removed without disconnecting the graph
     std::set<InnerGraph::Edge> bridges;
   };
 //!@}

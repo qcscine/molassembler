@@ -3,6 +3,7 @@
  *   See LICENSE.txt
  */
 #include "pybind11/pybind11.h"
+#include "pybind11/stl.h"
 #include "pybind11/operators.h"
 
 #include "molassembler/Molecule.h"
@@ -10,6 +11,53 @@
 #include "molassembler/StereopermutatorList.h"
 
 #include "Utils/ElementTypes.h"
+
+#include "boost/process/child.hpp"
+#include "boost/process/io.hpp"
+#include "boost/process/search_path.hpp"
+
+bool graphvizInPath() {
+  return !boost::process::search_path("dot").empty();
+}
+
+std::string pipeSVG(const Scine::molassembler::Molecule& molecule) {
+  std::string callString = "dot -Tsvg";
+  std::stringstream os;
+
+  // Construct pipe streams for redirection
+  boost::process::opstream ips;
+  boost::process::pstream ps;
+  boost::process::pstream err;
+
+  // Start the child process
+  boost::process::child childProcess(callString, boost::process::std_in<ips, boost::process::std_out> ps,
+                                     boost::process::std_err > err);
+
+  // Feed our graphviz into the process
+  ips << molecule.dumpGraphviz();
+  ips.flush();
+  ips.pipe().close();
+
+  // Wait for the child process to exit
+  childProcess.wait();
+
+  std::stringstream stderrStream;
+#if BOOST_VERSION >= 107000
+  /* NOTE: This implementation of buffer transfers in boost process has a bug
+   * that isn't fixed before Boost 1.70.
+   */
+  os << ps.rdbuf();
+  stderrStream << err.rdbuf();
+#else
+  // Workaround: cast to a parent class implementing rdbuf() correctly.
+  using BasicIOSReference = std::basic_ios<char, std::char_traits<char>>&;
+  // Feed the results into our ostream
+  os << static_cast<BasicIOSReference>(ps).rdbuf();
+  stderrStream << static_cast<BasicIOSReference>(err).rdbuf();
+#endif
+
+  return os.str();
+}
 
 bool modularCompare(
   const Scine::molassembler::Molecule& molecule,
@@ -39,6 +87,10 @@ bool modularCompare(
   }
 
   return molecule.modularCompare(other, bitmask);
+}
+
+void canonicalizeMolecule(Scine::molassembler::Molecule& molecule) {
+  molecule.canonicalize();
 }
 
 void init_molecule(pybind11::module& m) {
@@ -113,9 +165,11 @@ void init_molecule(pybind11::module& m) {
     "Assigns a bond stereopermutator at random"
   );
 
+  // TODO this is a temporary fix since being able to canonicalize some components will be necessary for the isomerism checks
+  // also, access to the parts of a molecule that are canonical is needed
   molecule.def(
     "canonicalize",
-    &Molecule::canonicalize,
+    &::canonicalizeMolecule,
     "Canonicalizes the molecular graph"
   );
 
@@ -180,4 +234,11 @@ void init_molecule(pybind11::module& m) {
 
   molecule.def(pybind11::self == pybind11::self);
   molecule.def(pybind11::self != pybind11::self);
+
+  /* Integration with IPython / Jupyter */
+  molecule.def(
+    "_repr_svg_",
+    &::pipeSVG,
+    "Generates an SVG representation of the molecule"
+  );
 }

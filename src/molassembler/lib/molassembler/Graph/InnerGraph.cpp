@@ -5,6 +5,7 @@
 
 #include "molassembler/Graph/InnerGraph.h"
 
+#include "boost/graph/breadth_first_search.hpp"
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/graph/connected_components.hpp"
 #include "boost/optional.hpp"
@@ -14,6 +15,56 @@
 namespace Scine {
 
 namespace molassembler {
+
+namespace detail {
+
+//! Visitor to help split a graph along a bridge edge
+struct BridgeSplittingBFSVisitor {
+  using Graph = InnerGraph::BGLType;
+  using Vertex = InnerGraph::Vertex;
+  using Edge = InnerGraph::Edge;
+
+  AtomIndex left, right;
+  using BitsetPtr = std::shared_ptr<
+    std::vector<bool>
+  >;
+
+  BitsetPtr bitsetPtr;
+
+  BridgeSplittingBFSVisitor() = default;
+  BridgeSplittingBFSVisitor(Edge b, const Graph& graph, BitsetPtr ptr)
+    : left(boost::source(b, graph)),
+      right(boost::target(b, graph)),
+      bitsetPtr(std::move(ptr))
+  {
+    *bitsetPtr = std::vector<bool>(boost::num_vertices(graph), false);
+    bitsetPtr->at(right) = true;
+  }
+
+  void initialize_vertex(Vertex /* v */, const Graph& /* g */) {}
+  void discover_vertex(Vertex /* v */, const Graph& /* g */) {}
+  void examine_vertex(Vertex /* v */, const Graph& /* g */) {}
+  void finish_vertex(Vertex /* v */, const Graph& /* g */) {}
+  void examine_edge(const Edge& /* e */, const Graph& /* g */) {}
+
+  void tree_edge(const Edge& e, const Graph& g) {
+    Vertex target = boost::target(e, g);
+    if(target != left) {
+      // Copy the source bitset value to the target
+      bitsetPtr->at(target) = bitsetPtr->at(
+        boost::source(e, g)
+      );
+    }
+  }
+
+  void non_tree_edge(const Edge& /* e */, const Graph& /* g */) {}
+  void gray_target(const Edge& /* e */, const Graph& /* g */) {}
+  void black_target(const Edge& /* e */, const Graph& /* g */) {}
+};
+
+} // namespace detail
+
+constexpr InnerGraph::Vertex InnerGraph::removalPlaceholder;
 
 /* Constructors */
 InnerGraph::InnerGraph() = default;
@@ -41,7 +92,7 @@ InnerGraph::Edge InnerGraph::addEdge(const Vertex a, const Vertex b, const BondT
   return newBondPair.first;
 }
 
-InnerGraph::Vertex InnerGraph::addVertex(const Scine::Utils::ElementType elementType) {
+InnerGraph::Vertex InnerGraph::addVertex(const Utils::ElementType elementType) {
   // Invalidate the cache values
   _unchangedSinceNotification = false;
 
@@ -116,7 +167,7 @@ void InnerGraph::removeVertex(Vertex a) {
   boost::remove_vertex(a, _graph);
 }
 
-Scine::Utils::ElementType& InnerGraph::elementType(const Vertex a) {
+Utils::ElementType& InnerGraph::elementType(const Vertex a) {
   // Invalidate the cache values
   _unchangedSinceNotification = false;
 
@@ -166,7 +217,7 @@ BondType InnerGraph::bondType(const InnerGraph::Edge& edge) const {
   return _graph[edge].bondType;
 }
 
-Scine::Utils::ElementType InnerGraph::elementType(const Vertex a) const {
+Utils::ElementType InnerGraph::elementType(const Vertex a) const {
   return _graph[a].elementType;
 }
 
@@ -223,6 +274,47 @@ bool InnerGraph::identicalGraph(const InnerGraph& other) const {
 
       return edgeExists;
     }
+  );
+}
+
+std::pair<
+  std::vector<AtomIndex>,
+  std::vector<AtomIndex>
+> InnerGraph::splitAlongBridge(Edge bridge) const {
+  if(_removalSafetyData().bridges.count(bridge) == 0) {
+    throw std::invalid_argument("The supplied edge is not a bridge edge");
+  }
+
+  auto bitsetPtr = std::make_shared<
+    std::vector<bool>
+  >();
+  detail::BridgeSplittingBFSVisitor visitor(bridge, _graph, bitsetPtr);
+
+  boost::breadth_first_search(
+    _graph,
+    target(bridge),
+    boost::visitor(visitor)
+  );
+
+  // Transform the bitset into a left and right
+  std::vector<AtomIndex> left, right;
+  left.reserve(N());
+  right.reserve(N());
+
+  for(AtomIndex i = 0; i < N(); ++i) {
+    if(bitsetPtr->at(i)) {
+      right.push_back(i);
+    } else {
+      left.push_back(i);
+    }
+  }
+
+  left.shrink_to_fit();
+  right.shrink_to_fit();
+
+  return std::make_pair(
+    std::move(left),
+    std::move(right)
   );
 }
 

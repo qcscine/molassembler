@@ -336,13 +336,13 @@ auto find_if(const Container& container, UnaryPredicate&& predicate) {
 }
 
 template<class Container>
-void reverse(Container container) {
+Container reverse(Container container) {
   inplace::reverse(container);
   return container;
 }
 
 template<class Container, typename T>
-void remove(
+Container remove(
   Container container,
   const T& value
 ) {
@@ -351,8 +351,8 @@ void remove(
 }
 
 template<class Container, class UnaryFunction>
-void remove_if(
-  Container& container,
+Container remove_if(
+  Container container,
   UnaryFunction&& predicate
 ) {
   inplace::remove_if(container, std::forward<UnaryFunction>(predicate));

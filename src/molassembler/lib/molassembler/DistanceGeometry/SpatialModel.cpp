@@ -252,10 +252,7 @@ SpatialModel::SpatialModel(
     newStereopermutator.assignRandom();
 
     // Add it to the list of stereopermutators
-    _stereopermutators.add(
-      i,
-      std::move(newStereopermutator)
-    );
+    _stereopermutators.add(std::move(newStereopermutator));
   }
 
   /* For all flat cycles for which the internal angles can be determined

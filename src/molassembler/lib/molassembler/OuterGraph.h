@@ -217,6 +217,12 @@ public:
   AtomIndex N() const;
   //! Number of bonds in the graph
   unsigned B() const;
+
+  //! Determine which vertices belong to which side of a bridge edge
+  std::pair<
+    std::vector<AtomIndex>,
+    std::vector<AtomIndex>
+  > splitAlongBridge(BondIndex bridge) const;
 //!@}
 
 //!@name Ranges

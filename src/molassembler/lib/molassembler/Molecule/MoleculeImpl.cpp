@@ -63,10 +63,7 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
       Options::temperatureRegime
     )
   ) {
-    stereopermutators.add(
-      candidateIndex,
-      std::move(newStereopermutator)
-    );
+    stereopermutators.add(std::move(newStereopermutator));
   }
 }
 
@@ -103,10 +100,7 @@ void Molecule::Impl::_tryAddBondStereopermutator(
   };
 
   if(newStereopermutator.numAssignments() > 1) {
-    stereopermutators.add(
-      bond,
-      std::move(newStereopermutator)
-    );
+    stereopermutators.add(std::move(newStereopermutator));
   }
 }
 
@@ -784,10 +778,7 @@ void Molecule::Impl::setGeometryAtAtom(
       newStereopermutator.assign(0u);
     }
 
-    _stereopermutators.add(
-      a,
-      std::move(newStereopermutator)
-    );
+    _stereopermutators.add(std::move(newStereopermutator));
 
     _propagateGraphChange();
     _canonicalComponents = AtomEnvironmentComponents::None;
@@ -902,10 +893,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
         Options::temperatureRegime
       )
     ) {
-      stereopermutators.add(
-        candidateIndex,
-        std::move(stereopermutator)
-      );
+      stereopermutators.add(std::move(stereopermutator));
     }
   }
 
@@ -937,10 +925,7 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     );
 
     if(newStereopermutator.assigned() != boost::none) {
-      stereopermutators.add(
-        bondIndex,
-        std::move(newStereopermutator)
-      );
+      stereopermutators.add(std::move(newStereopermutator));
     }
   };
 

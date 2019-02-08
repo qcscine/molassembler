@@ -275,10 +275,7 @@ void AtomStereopermutator::Impl::propagateGraphChange(
   const OuterGraph& graph,
   RankingInformation newRanking
 ) {
-  if(
-    newRanking.ligandsRanking == _ranking.ligandsRanking
-    && newRanking.links == _ranking.links
-  ) {
+  if(newRanking == _ranking) {
     return;
   }
 
@@ -438,29 +435,8 @@ void AtomStereopermutator::Impl::removeSubstituent(
   /* Find out in which ligand the atom is removed, and whether it is the sole
    * constituting index
    */
-  bool soleConstitutingIndex [[gnu::unused]];
-  unsigned ligandIndexRemovedFrom;
-
-  { // Temporary local scope to avoid pollution
-    bool found = false;
-    for(
-      unsigned ligandI = 0;
-      ligandI < _ranking.ligands.size() && !found;
-      ++ligandI
-    ) {
-      for(const AtomIndex constitutingIndex : _ranking.ligands.at(ligandI)) {
-        if(constitutingIndex == which) {
-          found = true;
-          soleConstitutingIndex = (_ranking.ligands.at(ligandI).size() == 1);
-          ligandIndexRemovedFrom = ligandI;
-        }
-      }
-    }
-
-    if(!found) {
-      throw std::logic_error("Ligand index being removed from not found!");
-    }
-  }
+  unsigned ligandIndexRemovedFrom = _ranking.getLigandIndexOf(which);
+  bool soleConstitutingIndex = (_ranking.ligands.at(ligandIndexRemovedFrom).size() == 1);
 
   // No need to find a new assignment if we currently do not carry chiral state
   if(_assignmentOption && numStereopermutations() > 1) {
@@ -587,6 +563,8 @@ void AtomStereopermutator::Impl::removeSubstituent(
   _cache = std::move(newPermutationState);
   assign(newStereopermutation);
 }
+
+
 
 const PermutationState& AtomStereopermutator::Impl::getPermutationState() const {
   return _cache;

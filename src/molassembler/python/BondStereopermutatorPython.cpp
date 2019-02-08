@@ -4,6 +4,7 @@
  */
 #include "OptionalPython.h"
 #include "pybind11/operators.h"
+#include "pybind11/stl.h"
 
 #include "molassembler/BondStereopermutator.h"
 
@@ -51,4 +52,11 @@ void init_bond_stereopermutator(pybind11::module& m) {
 
   bondStereopermutator.def(pybind11::self == pybind11::self);
   bondStereopermutator.def(pybind11::self != pybind11::self);
+
+  bondStereopermutator.def(
+    "__repr__",
+    [](const BondStereopermutator& permutator) {
+      return permutator.info();
+    }
+  );
 }

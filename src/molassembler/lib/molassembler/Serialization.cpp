@@ -313,7 +313,7 @@ Molecule deserialize(const nlohmann::json& m) {
       );
     }
 
-    stereopermutators.add(centralIndex, std::move(stereopermutator));
+    stereopermutators.add(std::move(stereopermutator));
   }
 
   // Bond stereopermutators
@@ -341,7 +341,7 @@ Molecule deserialize(const nlohmann::json& m) {
       );
     }
 
-    stereopermutators.add(molEdge, std::move(stereopermutator));
+    stereopermutators.add(std::move(stereopermutator));
   }
 
   AtomEnvironmentComponents canonicalComponents = m["c"];

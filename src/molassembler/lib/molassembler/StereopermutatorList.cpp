@@ -11,24 +11,38 @@ namespace Scine {
 
 namespace molassembler {
 
-void StereopermutatorList::add(
-  AtomIndex i,
+StereopermutatorList::AtomMapType::iterator StereopermutatorList::add(
   AtomStereopermutator stereopermutator
 ) {
-  _atomStereopermutators.emplace(
+  AtomIndex i = stereopermutator.centralIndex();
+
+  auto emplaceResult = _atomStereopermutators.emplace(
     i,
     std::move(stereopermutator)
   );
+
+  if(!emplaceResult.second) {
+    throw std::logic_error("Stereopermutator not added. Another is already at its place");
+  }
+
+  return emplaceResult.first;
 }
 
-void StereopermutatorList::add(
-  const BondIndex& edge,
+StereopermutatorList::BondMapType::iterator StereopermutatorList::add(
   BondStereopermutator stereopermutator
 ) {
-  _bondStereopermutators.emplace(
+  BondIndex edge = stereopermutator.edge();
+
+  auto emplaceResult = _bondStereopermutators.emplace(
     edge,
     std::move(stereopermutator)
   );
+
+  if(!emplaceResult.second) {
+    throw std::logic_error("Stereopermutator not added. Another is already at its place");
+  }
+
+  return emplaceResult.first;
 }
 
 

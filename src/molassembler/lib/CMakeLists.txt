@@ -65,6 +65,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementProblem.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Editing.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/Bridge.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/Canonicalization.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphAlgorithms.h
@@ -117,6 +118,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementProblem.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Editing.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/Canonicalization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/GraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/InnerGraph.cpp

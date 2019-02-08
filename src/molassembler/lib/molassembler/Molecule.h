@@ -682,6 +682,11 @@ private:
   //! Private implementation member
   struct Impl;
 
+  /* Allow access to implementation to editor class that enables more
+   * macro-oriented editing as opposed to the low-level editing provided here
+   */
+  friend class Editing;
+
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
   std::experimental::propagate_const<
     std::unique_ptr<Impl>

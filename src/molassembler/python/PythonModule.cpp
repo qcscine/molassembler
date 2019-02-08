@@ -8,6 +8,7 @@ void init_atom_stereopermutator(pybind11::module& m);
 void init_bond_stereopermutator(pybind11::module& m);
 void init_conformers(pybind11::module& m);
 void init_cycles(pybind11::module& m);
+void init_editing(pybind11::module& m);
 void init_interpret(pybind11::module& m);
 void init_io(pybind11::module& m);
 void init_molecule(pybind11::module& m);
@@ -35,6 +36,7 @@ PYBIND11_MODULE(molassembler, m) {
   init_bond_stereopermutator(m);
   init_stereopermutator_list(m);
   init_molecule(m);
+  init_editing(m);
   init_interpret(m);
   init_io(m);
   init_serialization(m);
