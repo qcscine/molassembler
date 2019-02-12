@@ -86,11 +86,33 @@ std::unordered_map<AtomIndex, AtomIndex> transferGraph(
   return copyVertexTargetIndices;
 }
 
+/**
+ * @brief Transfer stereopermutators between stereopermutator lists
+ *
+ * @param source Source stereopermutator list to copy out of
+ * @param target Target stereopermutator list to copy into
+ * @param vertexMapping Mapping of vertex indices from the source to the target
+ *   index.
+ * @param sourceN Number of vertices in the molecule of which @p source is part:
+ *   This is necessary to construct the index permutation that is applied to
+ *   each stereopermutator. All vertices that are not contained in vertexMapping
+ *   are mapped to InnerGraph::removalPlaceholder.
+ * @param doNotCopyVertices Vertex indices that are part of vertexMapping but
+ *   of which stereopermutators should not be copied.
+ *
+ * @note If there are stereopermutators on an edge between existing
+ * stereopermutators and new ones, you can propagate the internal state of the
+ * new stereopermutators by populating vertexMapping with mappings from
+ * non-copied atoms to atoms from existing vertices in the molecule modeled by
+ * @p target and specifying for which of these no stereopermutators should be
+ * copied in @p doNotCopyVertices.
+ */
 void transferStereopermutators(
   const StereopermutatorList& source,
   StereopermutatorList& target,
   const std::unordered_map<AtomIndex, AtomIndex>& vertexMapping,
-  const AtomIndex sourceN
+  const AtomIndex sourceN,
+  const std::unordered_set<AtomIndex>& doNotCopyVertices = {}
 ) {
   /* Copy over stereopermutators */
   /* How to deal with source stereopermutators on the edge? They have atom
@@ -110,7 +132,10 @@ void transferStereopermutators(
 
   // Copy over permutators, adjusting their internal state
   for(const auto& permutator : source.atomStereopermutators()) {
-    if(vertexMapping.count(permutator.centralIndex()) > 0) {
+    if(
+      vertexMapping.count(permutator.centralIndex()) > 0
+      && doNotCopyVertices.count(permutator.centralIndex()) == 0
+    ) {
       AtomStereopermutator copy = permutator;
       copy.applyPermutation(permutation);
       target.add(std::move(copy));
@@ -121,7 +146,9 @@ void transferStereopermutators(
     BondIndex edge = permutator.edge();
     if(
       vertexMapping.count(edge.first) > 0
+      && doNotCopyVertices.count(edge.first) == 0
       && vertexMapping.count(edge.second) > 0
+      && doNotCopyVertices.count(edge.second) == 0
     ) {
       BondStereopermutator copy = permutator;
       copy.applyPermutation(permutation);
@@ -408,39 +435,18 @@ Molecule Editing::superpose(
    * permutators on and adjacent to bottomAtom during the copy if we change
    * the vertex mapping to map bottomAtom to topAtom. Then we don't have to
    * manually adjust them later.
-   *
-   * But since transferStereopermutators will then try to transfer a permutator
-   * on bottomAtom to topAtom, we have to move it out of top's list and
-   * overwrite anything on topAtom after calling transferStereopermutators:
    */
 
-  // Copy out a stereopermutator on topAtom, if present
-  StereopermutatorList& topStereopermutators = top._pImpl->_stereopermutators;
-  boost::optional<AtomStereopermutator> topStereopermutatorPriorOption;
-  if(auto referenceOption = topStereopermutators.option(topAtom)) {
-    topStereopermutatorPriorOption = std::move(referenceOption);
-    topStereopermutators.remove(topAtom);
-  }
-
   // Copy in stereopermutators from bottom, including ones placed on bottomAtom
+  StereopermutatorList& topStereopermutators = top._pImpl->_stereopermutators;
   vertexMapping[bottomAtom] = topAtom;
   detail::transferStereopermutators(
     bottom.stereopermutators(),
     topStereopermutators,
     vertexMapping,
-    bottom.graph().N()
+    bottom.graph().N(),
+    {bottomAtom}
   );
-
-  /* Replace the atom stereopermutator on topAtom with the one we copied out
-   * earlier (if present)
-   */
-  if(topStereopermutatorPriorOption) {
-    if(auto referenceOption = topStereopermutators.option(topAtom)) {
-      *referenceOption = std::move(*topStereopermutatorPriorOption);
-    } else {
-      topStereopermutators.add(std::move(*topStereopermutatorPriorOption));
-    }
-  }
 
   /* Copy in adjacencies of bottomAtom manually and notify the stereopermutator
    * on top each time
@@ -539,50 +545,63 @@ Molecule Editing::substitute(
   const auto& leftHeavierSide = sideCompare(left, leftSides.first, leftSides.second) ? leftSides.second : leftSides.first;
   const auto& rightHeavierSide = sideCompare(right, rightSides.first, rightSides.second) ? rightSides.second : rightSides.first;
 
-  // Copy over left graph and stereopermutators
+  // Figure out which bond index of the bond is the one that belongs to the heavier side
+  AtomIndex leftHeavierBondSide, leftLighterBondSide, rightHeavierBondSide, rightLighterBondSide;
+
+  if(std::addressof(leftHeavierSide) == std::addressof(leftSides.first)) {
+    leftHeavierBondSide = leftBond.first;
+    leftLighterBondSide = leftBond.second;
+  } else {
+    leftHeavierBondSide = leftBond.second;
+    leftLighterBondSide = leftBond.first;
+  }
+
+  if(std::addressof(rightHeavierSide) == std::addressof(rightSides.first)) {
+    rightHeavierBondSide = rightBond.first;
+    rightLighterBondSide = rightBond.second;
+  } else {
+    rightHeavierBondSide = rightBond.second;
+    rightLighterBondSide = rightBond.first;
+  }
+
+  assert(
+    temple::makeContainsPredicate(leftHeavierSide)(leftHeavierBondSide)
+  );
+  assert(
+    temple::makeContainsPredicate(rightHeavierSide)(rightHeavierBondSide)
+  );
+
+  // Copy over graphs
   auto leftVertexMapping = detail::transferGraph(
     left.graph().inner(),
     innerGraph,
     leftHeavierSide
   );
 
-  detail::transferStereopermutators(
-    left.stereopermutators(),
-    stereopermutators,
-    leftVertexMapping,
-    left.graph().N()
-  );
-
-  // Copy over right graph and stereopermutators
   auto rightVertexMapping = detail::transferGraph(
     right.graph().inner(),
     innerGraph,
     rightHeavierSide
   );
 
+  // Copy over left stereopermutators
+  leftVertexMapping[leftLighterBondSide] = rightVertexMapping.at(rightHeavierBondSide);
+  detail::transferStereopermutators(
+    left.stereopermutators(),
+    stereopermutators,
+    leftVertexMapping,
+    left.graph().N(),
+    {leftLighterBondSide}
+  );
+
+  // Copy over right stereopermutators
+  rightVertexMapping[rightLighterBondSide] = leftVertexMapping.at(leftHeavierBondSide);
   detail::transferStereopermutators(
     right.stereopermutators(),
     stereopermutators,
     rightVertexMapping,
-    right.graph().N()
-  );
-
-  // Figure out which bond index of the bond is the one that belongs to the heavier side
-  AtomIndex leftHeavierBondSide =
-    (std::addressof(leftHeavierSide) == std::addressof(leftSides.first))
-    ? leftBond.first
-    : leftBond.second;
-
-  AtomIndex rightHeavierBondSide =
-    (std::addressof(rightHeavierSide) == std::addressof(rightSides.first))
-    ? rightBond.first
-    : rightBond.second;
-
-  assert(
-    temple::makeContainsPredicate(rightHeavierSide)(rightHeavierBondSide)
-  );
-  assert(
-    temple::makeContainsPredicate(rightHeavierSide)(rightHeavierBondSide)
+    right.graph().N(),
+    {rightLighterBondSide}
   );
 
   // Add the missing bond

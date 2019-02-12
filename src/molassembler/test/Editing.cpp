@@ -174,3 +174,30 @@ BOOST_AUTO_TEST_CASE(connectEdit) {
 
   BOOST_CHECK(connected.graph().N() == 2 * pyridine.graph().N());
 }
+
+BOOST_AUTO_TEST_CASE(mesitylSubstitutionBug) {
+  using namespace Scine;
+  using namespace molassembler;
+
+  if(!IO::LineNotation::enabled()) {
+    BOOST_TEST_MESSAGE("obabel is not found. connectEdit is not run.");
+    return;
+  }
+
+  Molecule mesitylen = IO::LineNotation::fromCanonicalSMILES("CC1=CC(=CC(=C1)C)C");
+  mesitylen.canonicalize();
+  const auto mesitylenSubstitutionEdge = BondIndex {0, 14};
+
+  Molecule nhc = IO::LineNotation::fromCanonicalSMILES("C1NC=CN1");
+  nhc.canonicalize();
+  const auto nhcSubstitutionEdge = BondIndex {0, 7};
+
+  Molecule substituted = Editing::substitute(
+    nhc,
+    mesitylen,
+    nhcSubstitutionEdge,
+    mesitylenSubstitutionEdge
+  );
+
+  BOOST_CHECK(substituted.graph().N() == mesitylen.graph().N() + nhc.graph().N() - 2);
+}
