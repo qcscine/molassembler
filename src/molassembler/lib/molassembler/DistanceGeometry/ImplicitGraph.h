@@ -28,6 +28,10 @@ namespace Scine {
 
 namespace molassembler {
 
+namespace random {
+class Engine;
+} // namespace random
+
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 // Forward-declare Molecule
@@ -258,8 +262,10 @@ public:
    * NOTE: This double definition may seem strange, but is necessary to use
    * the forward-declared enum class Partiality correctly.
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix() noexcept;
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality) noexcept;
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine) noexcept;
+
+  //!@overload
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept;
 
   //! Returns the source vertex from an edge descriptor
   inline VertexDescriptor source(const EdgeDescriptor& e) const {

@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
     );
 
     // get a distances matrix from the bounds
-    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();
+    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
     if(!distancesMatrixResult) {
       BOOST_FAIL(distancesMatrixResult.error().message());
     }

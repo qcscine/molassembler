@@ -1,5 +1,6 @@
 # Dependencies
 find_package(dlib REQUIRED)
+find_package(OpenMP)
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   find_package(Boost REQUIRED COMPONENTS filesystem system)
@@ -200,13 +201,19 @@ else()
       $<TARGET_PROPERTY:nautyStatic,INTERFACE_INCLUDE_DIRECTORIES>
   )
 endif()
-target_compile_options(molassembler_obj PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+target_compile_options(molassembler_obj PRIVATE
+  ${MOLASSEMBLER_CXX_FLAGS}
+  $<$<BOOL:${OpenMP_CXX_FOUND}>:${OpenMP_CXX_FLAGS}>
+)
+target_link_libraries(molassembler_obj PRIVATE
+)
 # Suppress warnings coming from various external libraries
 target_include_directories(molassembler_obj
   SYSTEM PRIVATE
     ${EIGEN3_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIR}
     $<TARGET_PROPERTY:spectra,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:nautyStatic,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 # Shared variant
@@ -259,6 +266,7 @@ target_link_libraries(
     Boost::filesystem
     Boost::system
     nautyStatic
+    $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
 )
 
 # The linking for the static version of molassembler is more complicated.
@@ -319,6 +327,7 @@ target_link_libraries(
     Boost::filesystem
     Boost::system
     nautyStatic
+    $<$<BOOL:${OpenMP_CXX_FOUND}>:OpenMP::OpenMP_CXX>
 )
 
 # Handle BLAS / LAPACK if found

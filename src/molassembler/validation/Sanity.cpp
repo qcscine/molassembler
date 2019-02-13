@@ -112,15 +112,11 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
         /* Create an ensemble of 3D positions using DG
          * and uniform distance setting
          */
-        auto ensembleResult = DistanceGeometry::run(
+        auto ensemble = DistanceGeometry::run(
           molecule,
           100,
           DGConfiguration
         );
-
-        if(!ensembleResult) {
-          BOOST_FAIL(ensembleResult.error().message());
-        }
 
         /* Check that for every PositionCollection, inferring the StereopermutatorList
          * from the generated coordinates yields the same StereopermutatorList you
@@ -128,9 +124,13 @@ BOOST_AUTO_TEST_CASE( createPositionsAndFitNewMoleculeEqual ) {
          */
         BOOST_CHECK_MESSAGE(
           temple::all_of(
-            ensembleResult.value(),
-            [&](const auto& positions) -> bool {
-              auto inferredStereopermutatorList = molecule.inferStereopermutatorsFromPositions(positions);
+            ensemble,
+            [&](const auto& positionResult) -> bool {
+              if(!positionResult) {
+                std::cout << "Failed to generate a conformer: " << positionResult.error().message() << "\n";
+              }
+
+              auto inferredStereopermutatorList = molecule.inferStereopermutatorsFromPositions(positionResult.value());
 
               bool pass = molecule.stereopermutators() == inferredStereopermutatorList;
 

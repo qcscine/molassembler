@@ -58,25 +58,13 @@ std::pair<double, double> timeFunctor(
 
 struct BoostFunctor {
   bool operator() (const Molecule& a, const Molecule& b) {
-    return a.modularCompare(
-      b,
-      temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
-        | AtomEnvironmentComponents::BondOrders
-        | AtomEnvironmentComponents::Symmetries
-        | AtomEnvironmentComponents::Stereopermutations
-    );
+    return a.modularCompare(b, AtomEnvironmentComponents::All);
   }
 };
 
 struct TracesFunctor {
   bool operator() (const Molecule& a, const Molecule& b) {
-    return a.trialModularCompare(
-      b,
-      temple::make_bitmask(AtomEnvironmentComponents::ElementTypes)
-        | AtomEnvironmentComponents::BondOrders
-        | AtomEnvironmentComponents::Symmetries
-        | AtomEnvironmentComponents::Stereopermutations
-    );
+    return a.trialModularCompare(b, AtomEnvironmentComponents::All);
   }
 };
 

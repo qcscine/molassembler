@@ -9,23 +9,27 @@
 #include "molassembler/Conformers.h"
 #include "molassembler/Molecule.h"
 
-std::vector<Scine::Utils::PositionCollection> generateEnsemble(
+pybind11::list generateEnsemble(
   const Scine::molassembler::Molecule& molecule,
   unsigned numStructures,
   const Scine::molassembler::DistanceGeometry::Configuration& config
 ) {
-  auto ensembleResult = Scine::molassembler::generateEnsemble(
+  auto ensemble = Scine::molassembler::generateEnsemble(
     molecule,
     numStructures,
     config
   );
 
-  if(ensembleResult) {
-    return ensembleResult.value();
-  } else {
-    std::cout << ensembleResult.error();
-    throw std::exception();
+  pybind11::list returnList;
+  for(auto& positionResult : ensemble) {
+    if(positionResult) {
+      returnList.append(positionResult.value());
+    } else {
+      returnList.append(positionResult.error());
+    }
   }
+
+  return returnList;
 }
 
 Scine::Utils::PositionCollection generateConformation(
@@ -39,10 +43,9 @@ Scine::Utils::PositionCollection generateConformation(
 
   if(conformerResult) {
     return conformerResult.value();
-  } else {
-    std::cout << conformerResult.error();
-    throw std::exception();
   }
+
+  throw std::runtime_error(conformerResult.error().message());
 }
 
 void init_conformers(pybind11::module& m) {
@@ -84,9 +87,9 @@ void init_conformers(pybind11::module& m) {
   );
 
   configuration.def_readwrite(
-    "failure_ratio",
-    &DistanceGeometry::Configuration::failureRatio,
-    "Set maximum allowed ratio of failures / (# desired conformers)"
+    "spatial_model_loosening",
+    &DistanceGeometry::Configuration::spatialModelLoosening,
+    "Set loosening factor for spatial model (1.0 is no loosening, 2.0 is strong loosening)"
   );
 
   configuration.def_readwrite(

@@ -103,7 +103,7 @@ const Eigen::MatrixXd& DistanceBoundsMatrix::access() const {
   return _matrix;
 }
 
-outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partiality partiality) const noexcept {
+outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random::Engine& engine, Partiality partiality) const noexcept {
   auto matrixCopy = _matrix;
 
   const unsigned N = _matrix.cols();
@@ -115,7 +115,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
     0
   );
 
-  temple::random::shuffle(indices, randomnessEngine());
+  temple::random::shuffle(indices, engine);
 
   std::vector<AtomIndex>::const_iterator separator;
 
@@ -145,7 +145,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
       double chosenDistance = temple::random::getSingle<double>(
         lowerBound(matrixCopy, i, j),
         upperBound(matrixCopy, i, j),
-        randomnessEngine()
+        engine
       );
 
       lowerBound(matrixCopy, i, j) = chosenDistance;
@@ -179,7 +179,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(Partia
           lowerBound(matrixCopy, i, j),
           upperBound(matrixCopy, i, j)
         ),
-        randomnessEngine()
+        engine
       );
 
       lowerBound(matrixCopy, i, j) = chosenDistance;

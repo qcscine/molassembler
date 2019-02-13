@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(explicitNonVisualTests) {
     }
 
     // Generated distances matrix must satisfy triangle inequalities
-    auto distancesMatrixResult = explicitGraph.makeDistanceMatrix();
+    auto distancesMatrixResult = explicitGraph.makeDistanceMatrix(randomnessEngine());
     if(!distancesMatrixResult) {
       BOOST_FAIL(distancesMatrixResult.error().message());
     }

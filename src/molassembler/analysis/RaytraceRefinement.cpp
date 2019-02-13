@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
     );
 
     if(failures > 0) {
-      std::cout << "WARNING: " << failures << " refinements failed." << std::endl;
+      std::cout << "WARNING: " << failures << " refinements failed.\n";
     }
 #else
     auto conformers = DistanceGeometry::run(
@@ -194,20 +194,24 @@ int main(int argc, char* argv[]) {
       DGConfiguration
     );
 
-    if(!conformers) {
-      std::cout << "All conformer generations failed." << std::endl;
-      return 1;
-    }
-
     unsigned i = 0;
-    for(const AngstromWrapper& generatedPositions : conformers.value()) {
-      IO::write(
-        filestem + "-"s + std::to_string(i) + "-last.mol"s,
-        mol,
-        generatedPositions
-      );
+    unsigned failures = 0;
+    for(const auto& conformerResult : conformers) {
+      if(conformerResult) {
+        IO::write(
+          filestem + "-"s + std::to_string(i) + "-last.mol"s,
+          mol,
+          conformerResult.value()
+        );
+      } else {
+        std::cout << "Conformer " << i << " failed: " << conformerResult.error().message() << "\n";
+        ++failures;
+      }
+
       ++i;
     }
+
+    std::cout << "WARNING: " << failures << " refinement(s) failed.\n";
 #endif
   }
 }

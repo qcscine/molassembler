@@ -80,21 +80,7 @@ void AtomStereopermutator::Impl::addSubstituent(
   /* Two possible situations: Either a full ligand is added, or an atom is
    * added to a ligand
    */
-  boost::optional<bool> soleConstitutingIndex;
-  unsigned ligandIndexAddedTo;
-  for(
-    unsigned ligandI = 0;
-    ligandI < newRanking.ligands.size() && !soleConstitutingIndex;
-    ++ligandI
-  ) {
-    for(const AtomIndex constitutingIndex : newRanking.ligands.at(ligandI)) {
-      if(constitutingIndex == newSubstituentIndex) {
-        ligandIndexAddedTo = ligandI;
-        soleConstitutingIndex = (newRanking.ligands.at(ligandI).size() == 1);
-        break;
-      }
-    }
-  }
+  const unsigned ligandIndexAddedTo = newRanking.getLigandIndexOf(newSubstituentIndex);
 
   // No need to find a new assignment if no chiral state is present
   if(_assignmentOption && numStereopermutations() > 1) {
@@ -105,7 +91,7 @@ void AtomStereopermutator::Impl::addSubstituent(
       /* If no symmetry transition happens, then all we have to figure out is a
        * ligand to ligand mapping (since ligands may have reordered completely)
        */
-      assert(!soleConstitutingIndex.value());
+      assert(newRanking.ligands.at(ligandIndexAddedTo).size() > 1);
 
       // Sort ligands in both rankings so we can use lexicographical comparison
       _ranking.ligands.at(ligandIndexAddedTo).push_back(newSubstituentIndex);
@@ -139,7 +125,8 @@ void AtomStereopermutator::Impl::addSubstituent(
         );
       }
     } else if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry) + 1) {
-      assert(soleConstitutingIndex.value());
+      // The new substituent has to constitute a new ligand all by itself
+      assert(newRanking.ligands.at(ligandIndexAddedTo).size() == 1);
 
       /* Try to get a mapping to the new symmetry
        * If that returns a Some, try to get a mapping by preservationOption policy
@@ -435,8 +422,7 @@ void AtomStereopermutator::Impl::removeSubstituent(
   /* Find out in which ligand the atom is removed, and whether it is the sole
    * constituting index
    */
-  unsigned ligandIndexRemovedFrom = _ranking.getLigandIndexOf(which);
-  bool soleConstitutingIndex = (_ranking.ligands.at(ligandIndexRemovedFrom).size() == 1);
+  const unsigned ligandIndexRemovedFrom = _ranking.getLigandIndexOf(which);
 
   // No need to find a new assignment if we currently do not carry chiral state
   if(_assignmentOption && numStereopermutations() > 1) {
@@ -444,9 +430,10 @@ void AtomStereopermutator::Impl::removeSubstituent(
 
     if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry)) {
       /* If no symmetry transition happens, then all we have to figure out is a
-       * ligand to ligand mapping.
+       * ligand to ligand mapping. This means that the removed substituent must
+       * have been part of a haptic ligand.
        */
-      assert(!soleConstitutingIndex);
+      assert(_ranking.ligands.at(ligandIndexRemovedFrom).size() > 1);
 
       /* Sort ligands in the old ranking and new so we can use lexicographical
        * comparison to figure out a mapping
@@ -484,7 +471,7 @@ void AtomStereopermutator::Impl::removeSubstituent(
         );
       }
     } else if(Symmetry::size(newSymmetry) == Symmetry::size(_symmetry) - 1) {
-      assert(soleConstitutingIndex);
+      assert(_ranking.ligands.at(ligandIndexRemovedFrom).size() == 1);
       /* Try to get a symmetry mapping to the new symmetry position
        * If there are mappings, try to select one according to preservationOption policy
        *

@@ -10,8 +10,8 @@ namespace Scine {
 
 namespace molassembler {
 
-outcome::result<
-  std::vector<Scine::Utils::PositionCollection>
+std::vector<
+  outcome::result<Utils::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   const unsigned numStructures,
@@ -19,33 +19,39 @@ outcome::result<
 ) {
   auto result = DistanceGeometry::run(molecule, numStructures, configuration);
 
-  if(result) {
-    return temple::map(
-      result.value(),
-      [](AngstromWrapper wrapper) -> Scine::Utils::PositionCollection {
-        return wrapper.getBohr();
-      }
-    );
+  /* Convert the AngstromWrappers into PositionCollections */
+  std::vector<
+    outcome::result<Utils::PositionCollection>
+  > converted;
+  converted.reserve(numStructures);
+
+  for(auto& positionResult : result) {
+    if(positionResult) {
+      converted.emplace_back(
+        positionResult.value().getBohr()
+      );
+    } else {
+      converted.emplace_back(positionResult.as_failure());
+    }
   }
 
-  return result.as_failure();
+  return converted;
 }
 
-outcome::result<Scine::Utils::PositionCollection> generateConformation(
+outcome::result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   const DistanceGeometry::Configuration& configuration
 ) {
   auto result = DistanceGeometry::run(molecule, 1, configuration);
 
-  if(result) {
-    auto& conformationList = result.value();
-    assert(conformationList.size() == 1);
-    auto& wrapper = conformationList.front();
+  assert(result.size() == 1);
+  auto& wrapperResult = result.front();
 
-    return wrapper.getBohr();
+  if(wrapperResult) {
+    return wrapperResult.value().getBohr();
   }
 
-  return result.as_failure();
+  return wrapperResult.as_failure();
 }
 
 } // namespace molassembler

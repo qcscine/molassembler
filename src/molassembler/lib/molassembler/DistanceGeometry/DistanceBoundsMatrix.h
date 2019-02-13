@@ -19,6 +19,10 @@ namespace Scine {
 
 namespace molassembler {
 
+namespace random {
+class Engine;
+} // namespace random
+
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 namespace DistanceGeometry {
@@ -164,7 +168,7 @@ public:
    * Allocates another N*N double matrix. When resource constrained, this is
    * not a good idea.
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality = Partiality::All) const noexcept;
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine, Partiality partiality = Partiality::All) const noexcept;
 
   Eigen::MatrixXd makeSquaredBoundsMatrix() const;
 

@@ -84,8 +84,7 @@ ValueBounds SpatialModel::defaultDihedralBounds = {std::nextafter(-M_PI, 0), M_P
 
 SpatialModel::SpatialModel(
   const Molecule& molecule,
-  const Configuration& configuration,
-  const double looseningMultiplier
+  const Configuration& configuration
 ) : _molecule(molecule),
     _stereopermutators(molecule.stereopermutators())
 {
@@ -203,7 +202,7 @@ SpatialModel::SpatialModel(
         bondType
       );
 
-      double absoluteVariance = bondDistance * bondRelativeVariance * looseningMultiplier;
+      double absoluteVariance = bondDistance * bondRelativeVariance * configuration.spatialModelLoosening;
 
       setBondBoundsIfEmpty(
         orderedSequence(i, j),
@@ -360,7 +359,7 @@ SpatialModel::SpatialModel(
           ),
           makeBoundsFromCentralValue(
             cycleInternalAngles.at(angleCentralIndex - 1),
-            angleAbsoluteVariance * looseningMultiplier
+            angleAbsoluteVariance * configuration.spatialModelLoosening
           )
         );
       }
@@ -374,7 +373,7 @@ SpatialModel::SpatialModel(
         ),
         makeBoundsFromCentralValue(
           cycleInternalAngles.back(),
-          angleAbsoluteVariance * looseningMultiplier
+          angleAbsoluteVariance * configuration.spatialModelLoosening
         )
       );
 
@@ -417,7 +416,7 @@ SpatialModel::SpatialModel(
     addAtomStereopermutatorInformation(
       stereopermutator,
       cycleMultiplierForIndex,
-      looseningMultiplier,
+      configuration.spatialModelLoosening,
       fixedAngstromPositions
     );
   }
@@ -432,7 +431,7 @@ SpatialModel::SpatialModel(
       _stereopermutators.option(
         bondStereopermutator.edge().second
       ).value(),
-      looseningMultiplier,
+      configuration.spatialModelLoosening,
       fixedAngstromPositions
     );
   }

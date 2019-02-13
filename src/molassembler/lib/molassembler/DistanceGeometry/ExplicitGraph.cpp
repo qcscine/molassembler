@@ -357,11 +357,11 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
   return bounds;
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix() noexcept {
-  return makeDistanceMatrix(Partiality::All);
+outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engine& engine) noexcept {
+  return makeDistanceMatrix(engine, Partiality::All);
 }
 
-outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality partiality) noexcept {
+outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
   const unsigned N = _molecule.graph().N();
 
   Eigen::MatrixXd distancesMatrix;
@@ -378,7 +378,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
     0
   );
 
-  temple::random::shuffle(indices, randomnessEngine());
+  temple::random::shuffle(indices, engine);
 
   const unsigned M = boost::num_vertices(_graph);
   std::vector<double> distances (M);
@@ -421,7 +421,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       }
     }
 
-    temple::random::shuffle(otherIndices, randomnessEngine());
+    temple::random::shuffle(otherIndices, engine);
 
     // Again through N - 1 indices: N²
     for(const auto& b : otherIndices) {
@@ -476,7 +476,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       double tightenedBound = temple::random::getSingle<double>(
         lower,
         upper,
-        randomnessEngine()
+        engine
       );
 
       upperTriangle(
@@ -542,7 +542,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(Partiality pa
       double tightenedBound = temple::random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper),
-        randomnessEngine()
+        engine
       );
 
       upperTriangle(

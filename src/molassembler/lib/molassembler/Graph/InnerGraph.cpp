@@ -334,6 +334,11 @@ const InnerGraph::BGLType& InnerGraph::bgl() const {
   return _graph;
 }
 
+void InnerGraph::populateProperties() const {
+  removalSafetyData();
+  cycles();
+}
+
 const InnerGraph::RemovalSafetyData& InnerGraph::removalSafetyData() const {
   if(_properties.removalSafetyDataOption) {
     return *_properties.removalSafetyDataOption;

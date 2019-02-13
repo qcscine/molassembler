@@ -31,9 +31,11 @@ BOOST_AUTO_TEST_CASE(transSpanningImpossibilitiesRemoved) {
   for(unsigned i = 0; i < N; ++i) {
     mol.assignStereopermutator(0, i);
 
-    auto ensembleResult = generateEnsemble(mol, 10);
-    if(!ensembleResult) {
-      BOOST_FAIL(ensembleResult.error().message());
+    auto ensemble = generateEnsemble(mol, 10);
+    for(auto& positionResult : ensemble) {
+      if(!positionResult) {
+        BOOST_FAIL(positionResult.error().message());
+      }
     }
   }
 }

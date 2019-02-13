@@ -60,15 +60,13 @@ struct MoleculeDGInformation {
 //! Collects intermediate conformational data about a Molecule using a spatial model
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
-  const Configuration& configuration,
-  double looseningFactor = 1.0
+  const Configuration& configuration
 );
 
 //! Debug function, also collects graphviz of the conformational model
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
   const Configuration& configuration,
-  double looseningFactor,
   std::string& spatialModelGraphvizString
 );
 
@@ -84,15 +82,14 @@ std::list<RefinementData> debugRefinement(
   const Configuration& configuration
 );
 
-/*!
- * The main implementation of Distance Geometry. Generates an ensemble of 3D
- * structures of a given Molecule.
+/**
+ * @brief Main and parallel implementation of Distance Geometry. Generates an
+ *   ensemble of 3D structures of a given Molecule
  *
- * @param configuration A configuration object controlling the Distance
- *   Geometry procedure
+ * @see generateEnsemble
  */
-outcome::result<
-  std::vector<AngstromWrapper>
+std::vector<
+  outcome::result<AngstromWrapper>
 > run(
   const Molecule& molecule,
   unsigned numConformers,

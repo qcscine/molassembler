@@ -249,11 +249,11 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceBounds() const noexc
   return bounds;
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix() noexcept {
-  return makeDistanceMatrix(Partiality::All);
+outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engine& engine) noexcept {
+  return makeDistanceMatrix(engine, Partiality::All);
 }
 
-outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality partiality) noexcept {
+outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
   unsigned N = _moleculePtr->graph().N();
 
   std::vector<AtomIndex> indices(N);
@@ -263,7 +263,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
     0
   );
 
-  temple::random::shuffle(indices, randomnessEngine());
+  temple::random::shuffle(indices, engine);
 
   unsigned M = num_vertices();
   std::vector<double> distances (M);
@@ -305,7 +305,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       }
     }
 
-    temple::random::shuffle(otherIndices, randomnessEngine());
+    temple::random::shuffle(otherIndices, engine);
 
     for(const AtomIndex b : otherIndices) {
       auto predecessor_map = boost::make_iterator_property_map(
@@ -341,7 +341,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double fixedDistance = temple::random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper),
-        randomnessEngine()
+        engine
       );
 #else
       boost::gor1_simplified_shortest_paths(
@@ -361,7 +361,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double fixedDistance = temple::random::getSingle<double>(
         -distances.at(right(b)),
         distances.at(left(b)),
-        randomnessEngine()
+        engine
       );
 
 #endif
@@ -430,7 +430,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(Partiality pa
       double fixedDistance = temple::random::getSingle<double>(
         std::min(presumedLower, presumedUpper),
         std::max(presumedLower, presumedUpper),
-        randomnessEngine()
+        engine
       );
 
       // Record in distances matrix

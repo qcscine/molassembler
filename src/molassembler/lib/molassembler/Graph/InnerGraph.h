@@ -185,6 +185,7 @@ public:
  * None of these methods are thread-safe.
  * @{
  */
+  void populateProperties() const;
   //! Access cycle information of the graph
   const Cycles& cycles() const;
   //! Access removal safety information of the graph

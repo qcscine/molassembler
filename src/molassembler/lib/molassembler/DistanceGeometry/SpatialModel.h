@@ -165,14 +165,12 @@ public:
    * @param molecule The molecule that is to be modeled. This may not contain
    *   stereopermutators with zero assignments or unassigned stereopermutators.
    * @param configuration The Distance Geometry configuration object. Relevant
-   *   for this stage of the process are fixed positions, if set.
-   * @param looseningMultiplier A multiplier that loosens all bounds set upon
-   *   internal coordinates. Affects the entire conformation.
+   *   for this stage of the process are the loosening multiplier and fixed
+   *   positions, if set.
    */
   SpatialModel(
     const Molecule& molecule,
-    const Configuration& configuration,
-    double looseningMultiplier = 1.0
+    const Configuration& configuration
   );
 //!@}
 

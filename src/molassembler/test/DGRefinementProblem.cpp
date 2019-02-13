@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE( numericDifferentiationApproximatesGradients ) {
       DGInfo.bounds
     };
 
-    auto distancesResult = distanceBounds.makeDistanceMatrix();
+    auto distancesResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
     if(!distancesResult) {
       BOOST_FAIL(distancesResult.error().message());
     }
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       DGData.bounds
     };
 
-    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();
+    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
     if(!distancesMatrixResult) {
       BOOST_FAIL(distancesMatrixResult.error().message());
     }
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       DGData.bounds
     };
 
-    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix();
+    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
     if(!distancesMatrixResult) {
       BOOST_FAIL(distancesMatrixResult.error().message());
     }

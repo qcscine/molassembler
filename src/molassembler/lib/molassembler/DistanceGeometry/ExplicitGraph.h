@@ -24,6 +24,10 @@ namespace Scine {
 
 namespace molassembler {
 
+namespace random {
+class Engine;
+} // namespace random
+
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
 // Forward-declare Molecule
@@ -139,9 +143,10 @@ public:
    * Generates a distances matrix conforming to the triangle inequality bounds
    * while modifying state information. Can only be called once!
    */
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix() noexcept;
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine) noexcept;
 
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(Partiality partiality) noexcept;
+  //!@overload
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept;
 //!@}
 
 //!@name Information

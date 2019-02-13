@@ -126,7 +126,7 @@ void benchmark(
     boundsList
   };
 
-  auto distancesMatrixResult = explicitGraph.makeDistanceMatrix();
+  auto distancesMatrixResult = explicitGraph.makeDistanceMatrix(randomnessEngine());
   if(!distancesMatrixResult) {
     std::cout << distancesMatrixResult.error().message() << "\n";
     return;

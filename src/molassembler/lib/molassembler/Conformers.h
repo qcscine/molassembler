@@ -95,13 +95,17 @@ struct Configuration {
   double refinementGradientTarget {1e-5};
 
   /**
-   * @brief Sets the maximum allowed ratio of failures / (# desired conformers)
+   * @brief Sets the loosening of the spatial model
    *
-   * The default value is loose, and allows many failures. It can be tightened
-   * (towards lower values) to progressively loosen attempted spatial modelling
-   * faster and admit defeat quicker.
+   * If a molecule's distortions are not well encompassed in the spatial model,
+   * spatial modeling may claim a molecular graph is impossible to represent
+   * in three dimensions. Custom loosening of all bounds (distances, angles and
+   * dihedrals) may enable molassembler to generate conformers.
+   *
+   * The default value does not add in any loosening. It is suggested to stay
+   * below 2.0.
    */
-  double failureRatio {2};
+  double spatialModelLoosening {1.0};
 
   /**
    * @brief Set fixed positions for a subset of atoms
@@ -137,27 +141,50 @@ struct Configuration {
  * @param configuration The configuration object to control Distance Geometry
  *   in detail. The defaults are usually fine.
  *
- * @pre @p molecule may not contain stereopermutators with zero assignments.
+ * @pre @p molecule may not contain stereopermutators with zero assignments as
+ *   this means that the molecule is not representable in three dimensions.
  * @pre @p configuration's preconditions must be met
  *
- * @throws std::runtime_error if any preconditions are unmet
+ * @note The Distance Geometry procedure can fail stochastically without there
+ *   being some fault in the input. See the documentation of DGError for
+ *   detailed description of error return codes and how to deal with them.
+ *
+ * @note This function is parallelized. Use the OMP_NUM_THREADS environment
+ *   variable to control the number of threads used.
  *
  * @returns A result type which may or may not contain a vector of
- *   PositionCollections (in Bohr length units). The result type is much like
- *   an optional, except that in the error case it carries data about the error
- *   in order to help diagnose possible mistakes made in the molecular graph
- *   specification.
+ * PositionCollections (in Bohr length units). The result type is much like an
+ * optional, except that in the error case it carries data about the error in
+ * order to help diagnose possible mistakes made in the molecular graph
+ * specification.
+ * @code{.cpp}
+ * auto ensemble = generateEnsemble(mol, 10);
+ * unsigned conformerIndex = 0;
+ * for(auto& conformerResult : ensemble) {
+ *   if(conformerResult) {
+ *     IO::write(
+ *       std::to_string(conformerIndex) + ".mol",
+ *       mol,
+ *       conformerResult.value()
+ *     );
+ *   } else {
+ *     std::cout << "Conformer " << conformerIndex << " failed: "
+ *       << conformerResult.error().message() << "\n";
+ *   }
+ *   ++conformerIndex;
+ * }
+ * @endcode{}
  */
-outcome::result<
-  std::vector<Scine::Utils::PositionCollection>
+std::vector<
+  outcome::result<Utils::PositionCollection>
 > generateEnsemble(
   const Molecule& molecule,
   unsigned numStructures,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );
 
-/*! Generate a 3D structure of a Molecule
- *
+/*!
+ * @brief Generate a 3D structure of a Molecule
  * @param molecule The molecule for which to generate three-dimensional
  *   positions. This molecule may not contain stereopermutators with zero
  *   assignments.
@@ -169,7 +196,7 @@ outcome::result<
  *   in the error case it carries data about the error in order to help
  *   diagnose possible mistakes made in the molecular graph specification.
  */
-outcome::result<Scine::Utils::PositionCollection> generateConformation(
+outcome::result<Utils::PositionCollection> generateConformation(
   const Molecule& molecule,
   const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
 );

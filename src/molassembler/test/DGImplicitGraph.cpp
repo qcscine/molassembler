@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
     }
 
     // Generated distances matrix must satisfy triangle inequalities
-    auto distancesMatrixResult = ig.makeDistanceMatrix();
+    auto distancesMatrixResult = ig.makeDistanceMatrix(randomnessEngine());
     if(!distancesMatrixResult) {
       BOOST_FAIL(distancesMatrixResult.error().message());
     }
