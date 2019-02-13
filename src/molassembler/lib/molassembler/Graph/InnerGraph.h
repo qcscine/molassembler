@@ -212,6 +212,9 @@ private:
       cyclesOption = boost::none;
     }
   };
+
+  RemovalSafetyData _generateRemovalSafetyData() const;
+  Cycles _generateCycles() const;
 //!@}
 
 //!@name Information

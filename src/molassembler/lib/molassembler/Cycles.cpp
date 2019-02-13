@@ -130,7 +130,9 @@ Cycles::RDLDataPtrs::RDLDataPtrs(
           sourceGraph.target(edge)
         );
 
-        assert(edgeAddResult != RDL_INVALID_RESULT || edgeAddResult != RDL_DUPLICATE_EDGE);
+        if(edgeAddResult == RDL_INVALID_RESULT || edgeAddResult == RDL_DUPLICATE_EDGE) {
+          throw std::runtime_error("RDL add edge failed!");
+        }
       }
     }
   } else {
@@ -141,7 +143,9 @@ Cycles::RDLDataPtrs::RDLDataPtrs(
         sourceGraph.target(edge)
       );
 
-      assert(edgeAddResult != RDL_INVALID_RESULT || edgeAddResult != RDL_DUPLICATE_EDGE);
+      if(edgeAddResult == RDL_INVALID_RESULT || edgeAddResult == RDL_DUPLICATE_EDGE) {
+        throw std::runtime_error("RDL add edge failed!");
+      }
     }
   }
 

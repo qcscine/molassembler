@@ -1,6 +1,9 @@
 # Dependencies
 find_package(dlib REQUIRED)
-find_package(OpenMP)
+
+if(MOLASSEMBLER_PARALLELIZE)
+  find_package(OpenMP)
+endif()
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   find_package(Boost REQUIRED COMPONENTS filesystem system)

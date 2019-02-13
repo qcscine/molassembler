@@ -102,6 +102,9 @@ InnerGraph::Vertex InnerGraph::addVertex(const Utils::ElementType elementType) {
 }
 
 void InnerGraph::applyPermutation(const std::vector<Vertex>& permutation) {
+  // Invalidate the cache
+  _properties.invalidate();
+
   BGLType transformedGraph(boost::num_vertices(_graph));
 
   /*boost::copy_graph(
@@ -335,15 +338,31 @@ const InnerGraph::BGLType& InnerGraph::bgl() const {
 }
 
 void InnerGraph::populateProperties() const {
-  removalSafetyData();
-  cycles();
+  if(!_properties.removalSafetyDataOption) {
+    _properties.removalSafetyDataOption = _generateRemovalSafetyData();
+  }
+  if(!_properties.cyclesOption) {
+    _properties.cyclesOption = _generateCycles();
+  }
 }
 
 const InnerGraph::RemovalSafetyData& InnerGraph::removalSafetyData() const {
-  if(_properties.removalSafetyDataOption) {
-    return *_properties.removalSafetyDataOption;
+  if(!_properties.removalSafetyDataOption) {
+    _properties.removalSafetyDataOption = _generateRemovalSafetyData();
   }
 
+  return *_properties.removalSafetyDataOption;
+}
+
+const Cycles& InnerGraph::cycles() const {
+  if(!_properties.cyclesOption) {
+    _properties.cyclesOption = _generateCycles();
+  }
+
+  return *_properties.cyclesOption;
+}
+
+InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
   RemovalSafetyData safetyData;
 
   std::vector<InnerGraph::Vertex> articulationVertices;
@@ -388,17 +407,11 @@ const InnerGraph::RemovalSafetyData& InnerGraph::removalSafetyData() const {
     }
   }
 
-  _properties.removalSafetyDataOption = safetyData;
-  return *_properties.removalSafetyDataOption;
+  return safetyData;
 }
 
-const Cycles& InnerGraph::cycles() const {
-  if(_properties.cyclesOption) {
-    return *_properties.cyclesOption;
-  }
-
-  _properties.cyclesOption = Cycles(*this);
-  return *_properties.cyclesOption;
+Cycles InnerGraph::_generateCycles() const {
+  return Cycles(*this);
 }
 
 } // namespace molassembler

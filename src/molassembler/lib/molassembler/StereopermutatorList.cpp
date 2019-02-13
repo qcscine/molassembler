@@ -50,13 +50,43 @@ StereopermutatorList::BondMapType::iterator StereopermutatorList::add(
 void StereopermutatorList::applyPermutation(const std::vector<AtomIndex>& permutation) {
   // C++17 splice / merge maybe?
   AtomMapType newAtomMap;
-  for(auto& mapPair : _atomStereopermutators) {
-    AtomStereopermutator& permutator = mapPair.second;
+
+  /* A note on the parallelism:
+   * This is safe because we are not actually mutating the unordered_map
+   * itself, merely the elements stored in it. The access path towards other
+   * elements does not change merely because we mutate the values. For that to
+   * happen, we would have to mutate keys, which we aren't doing.
+   *
+   * Inserting into the new atom map does have to be managed, though.
+   */
+
+  auto applyPermutationAndMoveAtomStereopermutator = [&](AtomStereopermutator& permutator) -> void {
     permutator.applyPermutation(permutation);
-    newAtomMap.emplace(permutator.centralIndex(), std::move(permutator));
+#pragma omp critical(applyPermutationAtomMapMutation)
+    {
+      newAtomMap.emplace(permutator.centralIndex(), std::move(permutator));
+    }
+  };
+
+#pragma omp parallel
+  {
+#pragma omp single
+    {
+      for(auto& mapPair : _atomStereopermutators) {
+        AtomStereopermutator& permutator = mapPair.second;
+#pragma omp task
+        {
+          applyPermutationAndMoveAtomStereopermutator(permutator);
+        }
+      }
+    }
   }
   std::swap(newAtomMap, _atomStereopermutators);
 
+  /* Create a new bond map (this is not worth parallelizing, applyPermutation
+   * on BondStereopermutators is really cheap so the threads just get in each
+   * others way mutating newBondMap)
+   */
   BondMapType newBondMap;
   for(auto& mapPair : _bondStereopermutators) {
     BondStereopermutator& permutator = mapPair.second;

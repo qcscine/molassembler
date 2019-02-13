@@ -13,6 +13,7 @@ set(molassembler_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 option(MOLASSEMBLER_ANALYSIS_BINARIES "Compile analysis binaries" OFF)
 option(MOLASSEMBLER_VALIDATION_TESTS "Compile validation tests" OFF)
 option(MOLASSEMBLER_DOWNLOAD_DEPENDENCIES "Enable downloading dependencies (for CI-Only!)" OFF)
+option(MOLASSEMBLER_PARALLELIZE "Enables OpenMP parallelization" ON)
 option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
 option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
 

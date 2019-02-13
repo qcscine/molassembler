@@ -29,11 +29,14 @@ namespace molassembler {
  */
 class StereopermutatorList {
 public:
-/* Typedefs */
+//!@name Public types
+//!@{
   using AtomMapType = std::unordered_map<AtomIndex, AtomStereopermutator>;
   using BondMapType = std::unordered_map<BondIndex, BondStereopermutator, boost::hash<BondIndex>>;
+//!@}
 
-/* Modification */
+//!@name Modification
+//!@{
   //! Add a new AtomStereopermutator to the list
   AtomMapType::iterator add(AtomStereopermutator stereopermutator);
 
@@ -74,8 +77,10 @@ public:
 
   //! Removes the BondStereopermutator on a specified edge, if present
   void try_remove(const BondIndex& edge);
+//!@}
 
-/* Information */
+//!@name Information
+//!@{
   //! Modular comparison with another StereopermutatorList using a bitmask
   bool compare(
     const StereopermutatorList& other,
@@ -105,8 +110,10 @@ public:
 
   //! Combined size of atom and bond-stereopermutator lists
   unsigned size() const;
+//!@}
 
-/* Iterators */
+//!@name Ranges (not thread-safe)
+//!@{
   //! Returns an iterable object with modifiable atom stereopermutator references
   boost::range_detail::select_second_mutable_range<AtomMapType> atomStereopermutators();
 
@@ -118,12 +125,15 @@ public:
 
   //! Returns an iterable object with unmodifiable bond stereopermutator references
   boost::range_detail::select_second_const_range<BondMapType> bondStereopermutators() const;
+//!@}
 
-/* Operators */
+//!@name Operators
+//!@{
   //! Strict equality comparison
   bool operator == (const StereopermutatorList& other) const;
   //! Inverts @p operator ==
   bool operator != (const StereopermutatorList& other) const;
+//!@}
 
 private:
   //! The underlying storage for atom stereopermutators

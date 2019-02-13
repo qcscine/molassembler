@@ -264,17 +264,20 @@ std::vector<WideHashType> generate(
   const StereopermutatorList& stereopermutators,
   const AtomEnvironmentComponents bitmask
 ) {
-  return temple::map(
-    temple::adaptors::range(inner.N()),
-    [&](const AtomIndex i) -> WideHashType {
-      return atomEnvironment(
-        inner,
-        stereopermutators,
-        bitmask,
-        i
-      );
-    }
-  );
+  const unsigned N = inner.N();
+  std::vector<WideHashType> hashes(N);
+
+#pragma omp parallel for
+  for(unsigned i = 0; i < N; ++i) {
+    hashes.at(i) = atomEnvironment(
+      inner,
+      stereopermutators,
+      bitmask,
+      i
+    );
+  }
+
+  return hashes;
 }
 
 bool identityCompare(
