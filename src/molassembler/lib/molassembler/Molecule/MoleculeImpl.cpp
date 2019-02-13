@@ -42,12 +42,14 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
     return;
   }
 
+  Symmetry::Name symmetry = determineLocalGeometry(candidateIndex, localRanking);
+
   // Construct a Stereopermutator here
   auto newStereopermutator = AtomStereopermutator {
     _adjacencies,
-    determineLocalGeometry(candidateIndex, localRanking),
+    symmetry,
     candidateIndex,
-    localRanking
+    std::move(localRanking)
   };
 
   // Default assign the stereocenter if there is only one possible assignment
@@ -107,7 +109,13 @@ void Molecule::Impl::_tryAddBondStereopermutator(
 StereopermutatorList Molecule::Impl::_detectStereopermutators() const {
   StereopermutatorList stereopermutatorList;
 
-  Cycles cycleData = graph().cycles();
+#ifdef _OPENMP
+  /* Ensure inner's properties are populated to avoid data races in its mutable
+   * members
+   */
+  _adjacencies.inner().populateProperties();
+#endif
+
   // Find AtomStereopermutators
   for(
     AtomIndex candidateIndex = 0;
@@ -168,9 +176,10 @@ void Molecule::Impl::_propagateGraphChange() {
    * set of assignments and assign the stereopermutator to that.
    */
 
-  InnerGraph& inner = _adjacencies.inner();
+  GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
 
-  GraphAlgorithms::findAndSetEtaBonds(inner);
+  // All graph access after this point must be const for thread safety
+  const InnerGraph& inner = _adjacencies.inner();
 
   /*! @todo
    * Need state propagation for BondStereopermutators, anything else is madness
@@ -385,11 +394,13 @@ void Molecule::Impl::addBond(
       // Re-rank around toIndex
       auto localRanking = rankPriority(toIndex);
 
+      Symmetry::Name newSymmetry = determineLocalGeometry(toIndex, localRanking);
+
       atomStereopermutatorOption->addSubstituent(
         _adjacencies,
         addedIndex,
-        localRanking,
-        determineLocalGeometry(toIndex, localRanking),
+        std::move(localRanking),
+        newSymmetry,
         Options::chiralStatePreservation
       );
 
@@ -596,11 +607,13 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
         continue;
       }
 
+      Symmetry::Name newSymmetry = determineLocalGeometry(indexToUpdate, localRanking);
+
       stereopermutatorOption->removeSubstituent(
         _adjacencies,
         InnerGraph::removalPlaceholder,
-        localRanking,
-        determineLocalGeometry(indexToUpdate, localRanking),
+        std::move(localRanking),
+        newSymmetry,
         Options::chiralStatePreservation
       );
     }
@@ -668,11 +681,13 @@ void Molecule::Impl::removeBond(
         return;
       }
 
+      Symmetry::Name newSymmetry = determineLocalGeometry(indexToUpdate, localRanking);
+
       stereopermutatorOption->removeSubstituent(
         _adjacencies,
         removedIndex,
-        localRanking,
-        determineLocalGeometry(indexToUpdate, localRanking),
+        std::move(localRanking),
+        newSymmetry,
         Options::chiralStatePreservation
       );
     }
@@ -770,7 +785,7 @@ void Molecule::Impl::setGeometryAtAtom(
       _adjacencies,
       symmetryName,
       a,
-      localRanking
+      std::move(localRanking)
     };
 
     // Default-assign stereopermutators with only one assignment
@@ -863,24 +878,23 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   const AtomIndex size = graph().N();
   StereopermutatorList stereopermutators;
 
-  Cycles cycleData = graph().cycles();
 
-  for(unsigned candidateIndex = 0; candidateIndex < size; candidateIndex++) {
-    RankingInformation localRanking = rankPriority(candidateIndex, {}, angstromWrapper);
+  for(AtomIndex vertex = 0; vertex < size; vertex++) {
+    RankingInformation localRanking = rankPriority(vertex, {}, angstromWrapper);
 
     // Skip terminal atoms
     if(localRanking.ligands.size() <= 1) {
       continue;
     }
 
-    const auto expectedGeometry = determineLocalGeometry(candidateIndex, localRanking);
+    const auto expectedGeometry = determineLocalGeometry(vertex, localRanking);
 
     // Construct it
     auto stereopermutator = AtomStereopermutator {
       _adjacencies,
       expectedGeometry,
-      candidateIndex,
-      localRanking
+      vertex,
+      std::move(localRanking)
     };
 
     stereopermutator.fit(_adjacencies, angstromWrapper);
@@ -888,8 +902,8 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     if(
       !disregardStereopermutator(
         stereopermutator,
-        _adjacencies.elementType(candidateIndex),
-        cycleData,
+        graph().elementType(vertex),
+        graph().cycles(),
         Options::temperatureRegime
       )
     ) {
