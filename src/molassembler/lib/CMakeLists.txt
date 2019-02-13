@@ -208,8 +208,6 @@ target_compile_options(molassembler_obj PRIVATE
   ${MOLASSEMBLER_CXX_FLAGS}
   $<$<BOOL:${OpenMP_CXX_FOUND}>:${OpenMP_CXX_FLAGS}>
 )
-target_link_libraries(molassembler_obj PRIVATE
-)
 # Suppress warnings coming from various external libraries
 target_include_directories(molassembler_obj
   SYSTEM PRIVATE
