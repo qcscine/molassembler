@@ -79,7 +79,7 @@ public:
    * substituents, it must be redetermined whether the new configuration is a
    * stereopermutator and if so, which assignment corresponds to the previous one.
    */
-  void propagateGraphChange(
+  boost::optional<PropagatedState> propagateGraphChange(
     const OuterGraph& graph,
     RankingInformation newRanking
   );

@@ -258,12 +258,12 @@ void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
    */
 }
 
-void AtomStereopermutator::Impl::propagateGraphChange(
+boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Impl::propagateGraphChange(
   const OuterGraph& graph,
   RankingInformation newRanking
 ) {
   if(newRanking == _ranking) {
-    return;
+    return boost::none;
   }
 
   PermutationState newPermutationState {
@@ -334,10 +334,14 @@ void AtomStereopermutator::Impl::propagateGraphChange(
     }
   }
 
+  auto oldStateTuple = std::make_tuple(std::move(_ranking), std::move(_cache), std::move(_assignmentOption));
+
   // Overwrite the class state
   _ranking = std::move(newRanking);
   _cache = std::move(newPermutationState);
   assign(newStereopermutation);
+
+  return {std::move(oldStateTuple)};
 }
 
 void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedIndex) {

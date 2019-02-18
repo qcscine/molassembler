@@ -38,7 +38,7 @@ struct BondStereopermutator::Impl {
   );
 
   void propagateGraphChange(
-    const AtomStereopermutator& oldPermutator,
+    const AtomStereopermutatorPropagatedState& oldPermutatorState,
     const AtomStereopermutator& newPermutator
   );
 

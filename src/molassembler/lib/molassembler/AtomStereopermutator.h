@@ -69,6 +69,8 @@ struct ChiralityConstraint;
  */
 class AtomStereopermutator {
 public:
+  using PropagatedState = std::tuple<RankingInformation, PermutationState, boost::optional<unsigned>>;
+
 //!@name Special member functions
 //!@{
   AtomStereopermutator(AtomStereopermutator&& other) noexcept;
@@ -183,7 +185,7 @@ public:
    * substituents, it must be redetermined whether the new configuration is a
    * stereopermutator and if so, which assignment corresponds to the previous one.
    */
-  void propagateGraphChange(
+  boost::optional<PropagatedState> propagateGraphChange(
     const OuterGraph& graph,
     RankingInformation newRanking
   );

@@ -65,7 +65,7 @@ void BondStereopermutator::fit(
 }
 
 void BondStereopermutator::propagateGraphChange(
-  const AtomStereopermutator& oldPermutator,
+  const AtomStereopermutatorPropagatedState& oldPermutator,
   const AtomStereopermutator& newPermutator
 ) {
   _pImpl -> propagateGraphChange(oldPermutator, newPermutator);

@@ -21,6 +21,7 @@
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/Options.h"
+#include "molassembler/Stereopermutators/PermutationState.h"
 
 namespace Scine {
 
@@ -213,18 +214,9 @@ void Molecule::Impl::_propagateGraphChange() {
           adjacentBondStereopermutators.push_back(std::move(bond));
         }
       }
-      boost::optional<AtomStereopermutator> oldCopyOptional;
-      if(!adjacentBondStereopermutators.empty()) {
-        oldCopyOptional = *stereopermutatorOption;
-      }
-
-      /* TODO AtomStereopermutator's propagateGraphChange could yield the old
-       * internal state necessary for bond stereopermutators via swap and
-       * return instead of copy beforehand and overwrite later
-       */
 
       // Propagate the stereopermutator state to the new ranking
-      stereopermutatorOption -> propagateGraphChange(_adjacencies, localRanking);
+      auto propagatedStateOption = stereopermutatorOption -> propagateGraphChange(_adjacencies, localRanking);
 
       /* If the modified stereopermutator has only one assignment and is
        * unassigned due to the graph change, default-assign it
@@ -247,27 +239,43 @@ void Molecule::Impl::_propagateGraphChange() {
         )
       ) {
         _stereopermutators.remove(vertex);
+
+        // And all the BondStereopermutators that are placed here too
+        for(BondIndex bond : adjacentBondStereopermutators) {
+          _stereopermutators.remove(bond);
+        }
+
+        continue;
       }
 
-      /* If the chiral state for this atom stereopermutator could be
-       * successfully propagated or the permutator could be default-assigned,
-       * we can also propagate adjacent BondStereopermutators. Otherwise, we
-       * must remove them.
+      /* If the chiral state for this atom stereopermutator was not successfully
+       * propagated or it is now unassigned, then bond stereopermutators sharing
+       * this atom stereopermutator must be removed (there are no indeterminate
+       * bond stereopermutators).
+       *
+       */
+      if(!stereopermutatorOption->assigned()) {
+        for(const BondIndex& bond : adjacentBondStereopermutators) {
+          _stereopermutators.remove(bond);
+        }
+
+        continue;
+      }
+
+      /* If the chiral state for this atom stereopermutator was successfully
+       * propagated and/or the permutator could be default-assigned, we can also
+       * propagate adjacent BondStereopermutators.
        *
        * TODO we may have to keep track if assignments change within the
        * propagated bondstereopermutators, or if any bond stereopermutators
        * are removed, since this may cause another re-rank!
        */
-      if(stereopermutatorOption -> assigned()) {
+      if(propagatedStateOption) {
         for(const BondIndex& bond : adjacentBondStereopermutators) {
           _stereopermutators.option(bond)->propagateGraphChange(
-            *oldCopyOptional,
+            *propagatedStateOption,
             *stereopermutatorOption
           );
-        }
-      } else {
-        for(const BondIndex& bond : adjacentBondStereopermutators) {
-          _stereopermutators.remove(bond);
         }
       }
     } else {

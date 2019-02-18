@@ -14,13 +14,14 @@
 #include "temple/OrderedPair.h"
 #include "temple/Random.h"
 
-#include "molassembler/AtomStereopermutator.h"
 #include "molassembler/AngstromWrapper.h"
+#include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Detail/DelibHelpers.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/Modeling/BondDistance.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
+#include "molassembler/Stereopermutators/PermutationState.h"
 
 namespace Scine {
 
@@ -320,24 +321,28 @@ void BondStereopermutator::Impl::fit(
 }
 
 void BondStereopermutator::Impl::propagateGraphChange(
-  const AtomStereopermutator& oldPermutator,
+  const AtomStereopermutatorPropagatedState& oldPermutatorState,
   const AtomStereopermutator& newPermutator
 ) {
+  const RankingInformation& oldRanking = std::get<0>(oldPermutatorState);
+  const PermutationState& oldPermutationState = std::get<1>(oldPermutatorState);
+  const boost::optional<unsigned>& oldAssignment = std::get<2>(oldPermutatorState);
+
   // We assume that the supplied permutators are assigned
-  assert(oldPermutator.assigned());
+  assert(oldAssignment);
   assert(newPermutator.assigned());
 
   /* We assume the old and new symmetry are of the same size (i.e. this is
    * a ranking change propagation, not a substituent addition / removal
    * propagation)
    */
-  assert(oldPermutator.getSymmetry() == newPermutator.getSymmetry());
+  assert(oldRanking.ligands.size() == newPermutator.getRanking().ligands.size());
 
   using OrientationState = stereopermutation::Composite::OrientationState;
 
   /* Construct a new Composite with the new information */
   bool changedIsFirstInOldOrientations = (
-    _composite.orientations().first.identifier == oldPermutator.centralIndex()
+    _composite.orientations().first.identifier == newPermutator.centralIndex()
   );
 
   const OrientationState& oldOrientation = detail::select(
@@ -430,10 +435,10 @@ void BondStereopermutator::Impl::propagateGraphChange(
   auto getNewSymmetryPosition = [&](unsigned oldSymmetryPosition) -> unsigned {
     const unsigned oldLigandIndex = SymmetryMapHelper::getLigandIndexAt(
       oldSymmetryPosition,
-      oldPermutator.getSymmetryPositionMap()
+      oldPermutationState.symmetryPositionMap
     );
 
-    const std::vector<AtomIndex>& oldLigand = oldPermutator.getRanking().ligands.at(oldLigandIndex);
+    const std::vector<AtomIndex>& oldLigand = oldRanking.ligands.at(oldLigandIndex);
 
     // We assume here that atom indices making up ligands are sorted
     assert(std::is_sorted(std::begin(oldLigand), std::end(oldLigand)));

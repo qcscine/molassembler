@@ -72,11 +72,11 @@ void AtomStereopermutator::fit(
   _pImpl->fit(graph, angstromWrapper);
 }
 
-void AtomStereopermutator::propagateGraphChange(
+boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagateGraphChange(
   const OuterGraph& graph,
   RankingInformation newRanking
 ) {
-  _pImpl->propagateGraphChange(
+  return _pImpl->propagateGraphChange(
     graph,
     std::move(newRanking)
   );

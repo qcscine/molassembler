@@ -34,12 +34,12 @@ class Composite;
 
 namespace molassembler {
 
+// Forward-declarations
 class AngstromWrapper;
 class OuterGraph;
 struct RankingInformation;
-
-// Forward-declarations
 class AtomStereopermutator;
+class PermutationState;
 
 namespace DistanceGeometry {
 class SpatialModel;
@@ -55,6 +55,8 @@ struct ChiralityConstraint;
  */
 class BondStereopermutator {
 public:
+  using AtomStereopermutatorPropagatedState = std::tuple<RankingInformation, PermutationState, boost::optional<unsigned>>;
+
   //! An Assignment is accepted if the fit for each dihedral is below this value
   static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 25.0; // ~7°
 
@@ -131,7 +133,7 @@ public:
    *   internal state has been propagated through a ranking change
    */
   void propagateGraphChange(
-    const AtomStereopermutator& oldPermutator,
+    const AtomStereopermutatorPropagatedState& oldPermutator,
     const AtomStereopermutator& newPermutator
   );
 //!@}
