@@ -34,24 +34,24 @@ std::vector<unsigned> applyRotation(
 //! Rotates a passed list of indices of a specific symmetry
 std::vector<unsigned> applyRotation(
   const std::vector<unsigned>& indices,
-  const Symmetry::Name symmetryName,
+  Name symmetryName,
   unsigned rotationFunctionIndex
 );
 
 //! Calculate the periodicty of a symmetry's rotation
 unsigned rotationPeriodicity(
-  const Symmetry::Name symmetryName,
+  Name symmetryName,
   const std::vector<unsigned>& rotation
 );
 
 //! Generate a character representation of a symmetry's position groups
-std::vector<char> positionGroups(const Symmetry::Name symmetryName);
+std::vector<char> positionGroups(Name symmetryName);
 
 //! Generate the inverse rotation to a symmetry's rotation
 std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation);
 
 //! Generate a symmetry's occupation sequence that causes all tetrahedra to invert
-std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName);
+std::vector<unsigned> invertedSequence(Name symmetryName);
 
 /*!
  * Gets the coordinates of an indexOptional for a specific symmetry.
@@ -59,7 +59,7 @@ std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName);
  * which is not explicitly held in memory as it is always placed at {0, 0, 0}.
  */
 Eigen::Vector3d getCoordinates(
-  const Symmetry::Name symmetryName,
+  Name symmetryName,
   const boost::optional<unsigned>& indexInSymmetryOption
 );
 
@@ -80,8 +80,8 @@ double getTetrahedronVolume(
  * the target symmetry
  */
 double calculateAngleDistortion(
-  const Symmetry::Name from,
-  const Symmetry::Name to,
+  Name from,
+  Name to,
   const std::vector<unsigned>& indexMapping
 );
 
@@ -102,8 +102,8 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
  * the target symmetry
  */
 double calculateChiralDistortion(
-  const Symmetry::Name from,
-  const Symmetry::Name to,
+  Name from,
+  Name to,
   const std::vector<unsigned>& indexMapping
 );
 
@@ -114,7 +114,7 @@ double calculateChiralDistortion(
 std::set<
   std::vector<unsigned>
 > generateAllRotations(
-  const Symmetry::Name symmetryName,
+  Name symmetryName,
   const std::vector<unsigned>& indices
 );
 
@@ -123,7 +123,7 @@ std::set<
  * symmetry's indexing scheme.
  */
 std::vector<unsigned> applyIndexMapping(
-  const Symmetry::Name to,
+  Name to,
   const std::vector<unsigned>& mapping
 );
 
@@ -146,8 +146,8 @@ struct DistortionInfo {
  * and ±1.
  */
 std::vector<DistortionInfo> symmetryTransitionMappings(
-  const Symmetry::Name symmetryFrom,
-  const Symmetry::Name symmetryTo
+  Name symmetryFrom,
+  Name symmetryTo
 );
 
 /*!
@@ -155,9 +155,9 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
  * loss, in which a ligand is removed from a particular position in the symmetry
  */
 std::vector<DistortionInfo> ligandLossTransitionMappings(
-  const Symmetry::Name symmetryFrom,
-  const Symmetry::Name symmetryTo,
-  const unsigned positionInSourceSymmetry
+  Name symmetryFrom,
+  Name symmetryTo,
+  unsigned positionInSourceSymmetry
 );
 
 //! A grouping of index mappings of equal angular and chiral distortion
@@ -175,26 +175,7 @@ struct SymmetryTransitionGroup {
     const double& passChiralDistortion
   );
 
-  SymmetryTransitionGroup() {}
-  SymmetryTransitionGroup(SymmetryTransitionGroup&& other)
-    : indexMappings(std::move(other.indexMappings)),
-      angularDistortion(other.angularDistortion),
-      chiralDistortion(other.chiralDistortion)
-  {}
-
-  SymmetryTransitionGroup(const SymmetryTransitionGroup& other)
-    : indexMappings(other.indexMappings),
-      angularDistortion(other.angularDistortion),
-      chiralDistortion(other.chiralDistortion)
-  {}
-
-  SymmetryTransitionGroup& operator = (const SymmetryTransitionGroup& other) {
-    indexMappings = other.indexMappings;
-    angularDistortion = other.angularDistortion;
-    chiralDistortion = other.chiralDistortion;
-
-    return *this;
-  }
+  SymmetryTransitionGroup() = default;
 };
 
 /*!
@@ -211,8 +192,8 @@ SymmetryTransitionGroup selectBestTransitionMappings(
  * identical ligands.
  */
 unsigned numUnlinkedAssignments(
-  const Symmetry::Name symmetry,
-  const unsigned nIdenticalLigands
+  Name symmetry,
+  unsigned nIdenticalLigands
 );
 
 /*!
@@ -220,8 +201,8 @@ unsigned numUnlinkedAssignments(
  * for a number of identical ligands.
  */
 bool hasMultipleUnlinkedAssignments(
-  const Symmetry::Name symmetry,
-  const unsigned nIdenticalLigands
+  Name symmetry,
+  unsigned nIdenticalLigands
 );
 
 } // namespace properties

@@ -17,7 +17,6 @@ using namespace LocalGeometry;
 using TestCaseType = std::tuple<
   std::string, // a Name for the current compound
   Scine::Utils::ElementType, // The central atom type
-  unsigned, // The number of bonding sites
   std::vector<BindingSiteInformation>, // a list of ligand types
   int // charge centered on the central atom
 >;
@@ -28,21 +27,19 @@ void testVSEPR(
   const std::vector<TestCaseType>& testCases
 ) {
   std::string complexName;
-  unsigned nSites;
   int charge;
   std::vector<BindingSiteInformation> ligands;
   Scine::Utils::ElementType centerAtomType;
 
   for(const auto& testCase : testCases) {
 
-    std::tie(complexName, centerAtomType, nSites, ligands, charge) = testCase;
+    std::tie(complexName, centerAtomType, ligands, charge) = testCase;
 
     boost::optional<Symmetry::Name> symmetryName;
 
     try {
       symmetryName = vsepr(
         centerAtomType,
-        nSites,
         ligands,
         charge
       );
@@ -116,7 +113,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "CO2",
         Element::C,
-        2,
         repeat(
           makeLigand(0, 2, Element::O, BondType::Double),
           2
@@ -126,7 +122,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "BeF2",
         Element::Be,
-        2,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           2
@@ -136,7 +131,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "C≡C-H",
         Element::C,
-        2,
         {
           makeLigand(0, 3, Element::C, BondType::Triple),
           makeLigand(0, 1, Element::H, BondType::Single)
@@ -152,7 +146,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "BCl3",
         Element::B,
-        3,
         repeat(
           makeLigand(0, 1, Element::Cl, BondType::Single),
           3
@@ -162,7 +155,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "H2C=O",
         Element::C,
-        3,
         {
           makeLigand(0, 1, Element::H, BondType::Single),
           makeLigand(0, 1, Element::H, BondType::Single),
@@ -173,7 +165,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "SO3",
         Element::S,
-        3,
         repeat(
           makeLigand(0, 2, Element::O, BondType::Double),
           3
@@ -189,7 +180,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "SO2",
         Element::S,
-        2,
         repeat(
           makeLigand(0, 2, Element::O, BondType::Double),
           2
@@ -199,7 +189,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "CH2··",
         Element::C,
-        2,
         repeat(
           makeLigand(0, 1, Element::H, BondType::Single),
           2
@@ -209,7 +198,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "NH2^+",
         Element::N,
-        2,
         repeat(
           makeLigand(0, 1, Element::H, BondType::Single),
           2
@@ -224,7 +212,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
          */
         "NO2·",
         Element::N,
-        2,
         {
           makeLigand(0, 1, Element::O, BondType::Single),
           makeLigand(0, 2, Element::O, BondType::Double),
@@ -240,7 +227,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "CH4",
         Element::C,
-        4,
         repeat(
           makeLigand(0, 1, Element::H, BondType::Single),
           4
@@ -250,7 +236,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "XeO4",
         Element::Xe,
-        4,
         repeat(
           makeLigand(0, 2, Element::O, BondType::Double),
           4
@@ -260,7 +245,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "ClO4-",
         Element::Cl,
-        4,
         {
           makeLigand(0, 2, Element::O, BondType::Double),
           makeLigand(0, 2, Element::O, BondType::Double),
@@ -272,7 +256,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "N≡SF3",
         Element::S,
-        4,
         {
           makeLigand(0, 1, Element::F, BondType::Single),
           makeLigand(0, 1, Element::F, BondType::Single),
@@ -290,7 +273,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "NH3",
         Element::N,
-        3,
         repeat(
           makeLigand(0, 1, Element::H, BondType::Single),
           3
@@ -300,7 +282,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "XeO3",
         Element::Xe,
-        3,
         repeat(
           makeLigand(0, 2, Element::O, BondType::Double),
           3
@@ -316,7 +297,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "OH2",
         Element::O,
-        2,
         repeat(
           makeLigand(0, 1, Element::H, BondType::Single),
           2
@@ -332,7 +312,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "PCl5",
         Element::P,
-        5,
         repeat(
           makeLigand(0, 1, Element::Cl, BondType::Single),
           5
@@ -348,7 +327,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "SF4",
         Element::S,
-        4,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           4
@@ -364,7 +342,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "ClF3",
         Element::Cl,
-        3,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           3
@@ -380,7 +357,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "I3-",
         Element::I,
-        2,
         {
           makeLigand(0, 1, Element::I, BondType::Single),
           makeLigand(1, 0, Element::I, BondType::Single)
@@ -390,7 +366,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "XeF2",
         Element::Xe,
-        2,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           2
@@ -406,7 +381,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "SF6",
         Element::S,
-        6,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           6
@@ -422,7 +396,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "BrF5",
         Element::Br,
-        5,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           5
@@ -438,7 +411,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "XeF4",
         Element::Xe,
-        4,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           4
@@ -454,7 +426,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "IF7",
         Element::I,
-        7,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           7
@@ -470,7 +441,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "XeOF5^-",
         Element::Xe,
-        6,
         merge(
           repeat(
             makeLigand(0, 1, Element::F, BondType::Single),
@@ -492,7 +462,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "XeF5-",
         Element::Xe,
-        5,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           5
@@ -508,7 +477,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "XeF8^2-",
         Element::Xe,
-        8,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           8
@@ -517,7 +485,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       }, TestCaseType {
         "IF8^-",
         Element::I,
-        8,
         repeat(
           makeLigand(0, 1, Element::F, BondType::Single),
           8
@@ -534,7 +501,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "H3N -> BF3, on N",
         Element::N,
-        4,
         {
           makeLigand(0, 1, Element::H, BondType::Single),
           makeLigand(0, 1, Element::H, BondType::Single),
@@ -546,7 +512,6 @@ BOOST_AUTO_TEST_CASE( VSEPRTests ) {
       TestCaseType {
         "H3N -> BF3, on B",
         Element::B,
-        4,
         {
           makeLigand(0, 1, Element::H, BondType::Single),
           makeLigand(0, 1, Element::H, BondType::Single),

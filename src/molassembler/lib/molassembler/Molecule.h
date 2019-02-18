@@ -480,7 +480,8 @@ public:
   AtomEnvironmentComponents canonicalComponents() const;
 
   /*!
-   * @brief Determines what the local geometry at a non-terminal atom ought to be
+   * @brief Determines what the local symmetry at a non-terminal atom ought to
+   *   be based on the underlying graph
    *
    * Returns the expected symmetry name at a non-terminal atom by inference
    * from graph information only.
@@ -505,7 +506,7 @@ public:
    *   not a transition metal, and returns the first symmetry of appropriate
    *   size otherwise.
    */
-  Symmetry::Name determineLocalGeometry(
+  boost::optional<Symmetry::Name> inferSymmetry(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;

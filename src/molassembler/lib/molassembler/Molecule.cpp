@@ -153,11 +153,11 @@ AtomEnvironmentComponents Molecule::canonicalComponents() const {
   return _pImpl->canonicalComponents();
 }
 
-Symmetry::Name Molecule::determineLocalGeometry(
+boost::optional<Symmetry::Name> Molecule::inferSymmetry(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
-  return _pImpl->determineLocalGeometry(index, ranking);
+  return _pImpl->inferSymmetry(index, ranking);
 }
 
 std::string Molecule::dumpGraphviz() const {

@@ -244,12 +244,17 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
         return;
       }
 
+      boost::optional<Symmetry::Name> symmetryOption;
+      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
+        symmetryOption = molecule.inferSymmetry(notifyIndex, localRanking);
+      }
+
       // Notify the stereopermutator to remove the placeholder
       stereopermutatorOption->removeSubstituent(
         molecule._pImpl->_adjacencies,
         InnerGraph::removalPlaceholder,
-        localRanking,
-        molecule.determineLocalGeometry(notifyIndex, localRanking),
+        std::move(localRanking),
+        symmetryOption,
         Options::chiralStatePreservation
       );
 
@@ -365,11 +370,16 @@ Molecule Editing::insert(
     if(auto permutatorOption = logStereopermutators.option(newWedgeIndex)) {
       auto localRanking = log.rankPriority(newWedgeIndex);
 
+      boost::optional<Symmetry::Name> symmetryOption;
+      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
+        symmetryOption = log.inferSymmetry(newWedgeIndex, localRanking);
+      }
+
       permutatorOption->addSubstituent(
         log._pImpl->_adjacencies,
         logSide,
-        localRanking,
-        log.determineLocalGeometry(newWedgeIndex, localRanking),
+        std::move(localRanking),
+        symmetryOption,
         Options::chiralStatePreservation
       );
 
@@ -472,11 +482,16 @@ Molecule Editing::superpose(
     if(topPermutatorOption) {
       auto localRanking = top.rankPriority(topAtom);
 
+      boost::optional<Symmetry::Name> symmetryOption;
+      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
+        symmetryOption = top.inferSymmetry(topAtom, localRanking);
+      }
+
       topPermutatorOption->addSubstituent(
         top._pImpl->_adjacencies,
         vertexMapping.at(bottomAtomAdjacent),
-        localRanking,
-        top.determineLocalGeometry(topAtom, localRanking),
+        std::move(localRanking),
+        symmetryOption,
         Options::chiralStatePreservation
       );
 

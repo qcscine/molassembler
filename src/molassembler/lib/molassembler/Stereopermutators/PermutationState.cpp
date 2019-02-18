@@ -377,23 +377,19 @@ boost::optional<std::vector<unsigned>> PermutationState::getIndexMapping(
     return boost::none;
   }
 
-  if(preservationOption == ChiralStatePreservation::EffortlessAndUnique) {
-    if(
-      mappingsGroup.indexMappings.size() == 1
-      && mappingsGroup.angularDistortion <= 0.2
-    ) {
-      return mappingsGroup.indexMappings.front();
-    }
-
-    return boost::none;
+  if(
+    preservationOption == ChiralStatePreservation::EffortlessAndUnique
+    && mappingsGroup.indexMappings.size() == 1
+    && mappingsGroup.angularDistortion <= 0.2
+  ) {
+    return mappingsGroup.indexMappings.front();
   }
 
-  if(preservationOption == ChiralStatePreservation::Unique) {
-    if(mappingsGroup.indexMappings.size() == 1) {
-      return mappingsGroup.indexMappings.front();
-    }
-
-    return boost::none;
+  if(
+    preservationOption == ChiralStatePreservation::Unique
+    && mappingsGroup.indexMappings.size() == 1
+  ) {
+    return mappingsGroup.indexMappings.front();
   }
 
   if(preservationOption == ChiralStatePreservation::RandomFromMultipleBest) {

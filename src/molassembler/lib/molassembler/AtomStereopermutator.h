@@ -103,6 +103,23 @@ public:
   );
 //!@}
 
+//!@name Static functions
+//!@{
+  /*!
+   * @brief Picks a symmetry retaining as much chiral state as possible on a
+   *   symmetry position increase
+   * @throws std::logic_error If there are no larger symmetries
+   */
+  static Symmetry::Name up(Symmetry::Name symmetryName);
+
+  /*!
+   * @brief Picks a symmetry retaining as much chiral state as possible on a
+   *   symmetry position decrease
+   * @throws std::logic_error If there are no smaller symmetries
+   */
+  static Symmetry::Name down(Symmetry::Name symmetryName, unsigned removedSymmetryPosition);
+//!@}
+
 //!@name Modifiers
 //!@{
   /*!
@@ -125,7 +142,7 @@ public:
     const OuterGraph& graph,
     AtomIndex newSubstituentIndex,
     RankingInformation newRanking,
-    Symmetry::Name newSymmetry,
+    boost::optional<Symmetry::Name> newSymmetryOption,
     ChiralStatePreservation preservationOption
   );
 
@@ -211,7 +228,7 @@ public:
     const OuterGraph& graph,
     AtomIndex which,
     RankingInformation newRanking,
-    Symmetry::Name newSymmetry,
+    boost::optional<Symmetry::Name> newSymmetryOption,
     ChiralStatePreservation preservationOption
   );
 

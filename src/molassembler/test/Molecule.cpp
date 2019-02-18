@@ -533,10 +533,14 @@ BOOST_AUTO_TEST_CASE(moleculeGeometryChoices) {
   testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
   testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
 
-  BOOST_CHECK(
-    testMol.stereopermutators().option(1u)
-    && testMol.stereopermutators().option(1u)->getSymmetry() == Symmetry::Name::CutTetrahedral
-  );
+
+  auto stereocenterOption = testMol.stereopermutators().option(1u);
+  BOOST_REQUIRE(stereocenterOption);
+
+  if(auto suggestedSymmetryOption = testMol.inferSymmetry(1u, stereocenterOption->getRanking())) {
+    BOOST_CHECK(suggestedSymmetryOption.value() == Symmetry::Name::CutTetrahedral);
+    testMol.setGeometryAtAtom(1u, suggestedSymmetryOption.value());
+  }
 
   testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
 

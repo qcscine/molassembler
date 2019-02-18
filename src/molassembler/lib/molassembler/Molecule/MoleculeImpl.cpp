@@ -43,7 +43,10 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
     return;
   }
 
-  Symmetry::Name symmetry = determineLocalGeometry(candidateIndex, localRanking);
+  Symmetry::Name symmetry = inferSymmetry(candidateIndex, localRanking).value_or_eval(
+    [&]() {return LocalGeometry::firstOfSize(localRanking.ligands.size());}
+  );
+
 
   // Construct a Stereopermutator here
   auto newStereopermutator = AtomStereopermutator {
@@ -402,13 +405,16 @@ void Molecule::Impl::addBond(
       // Re-rank around toIndex
       auto localRanking = rankPriority(toIndex);
 
-      Symmetry::Name newSymmetry = determineLocalGeometry(toIndex, localRanking);
+      boost::optional<Symmetry::Name> newSymmetryOption;
+      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
+        newSymmetryOption = inferSymmetry(toIndex, localRanking);
+      }
 
       atomStereopermutatorOption->addSubstituent(
         _adjacencies,
         addedIndex,
         std::move(localRanking),
-        newSymmetry,
+        newSymmetryOption,
         Options::chiralStatePreservation
       );
 
@@ -615,13 +621,16 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
         continue;
       }
 
-      Symmetry::Name newSymmetry = determineLocalGeometry(indexToUpdate, localRanking);
+      boost::optional<Symmetry::Name> newSymmetryOption;
+      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
+        newSymmetryOption = inferSymmetry(indexToUpdate, localRanking);
+      }
 
       stereopermutatorOption->removeSubstituent(
         _adjacencies,
         InnerGraph::removalPlaceholder,
         std::move(localRanking),
-        newSymmetry,
+        newSymmetryOption,
         Options::chiralStatePreservation
       );
     }
@@ -689,13 +698,16 @@ void Molecule::Impl::removeBond(
         return;
       }
 
-      Symmetry::Name newSymmetry = determineLocalGeometry(indexToUpdate, localRanking);
+      boost::optional<Symmetry::Name> newSymmetryOption;
+      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
+        newSymmetryOption = inferSymmetry(indexToUpdate, localRanking);
+      }
 
       stereopermutatorOption->removeSubstituent(
         _adjacencies,
         removedIndex,
         std::move(localRanking),
-        newSymmetry,
+        newSymmetryOption,
         Options::chiralStatePreservation
       );
     }
@@ -832,21 +844,21 @@ AtomEnvironmentComponents Molecule::Impl::canonicalComponents() const {
   return _canonicalComponents;
 }
 
-Symmetry::Name Molecule::Impl::determineLocalGeometry(
+boost::optional<Symmetry::Name> Molecule::Impl::inferSymmetry(
   const AtomIndex index,
   const RankingInformation& ranking
 ) const {
   if(!_isValidIndex(index)) {
-    throw std::out_of_range("Molecule::determineLocalGeometry: Supplied index is invalid!");
+    throw std::out_of_range("Molecule::inferSymmetry: Supplied index is invalid!");
   }
 
   if(graph().degree(index) <= 1) {
     throw std::logic_error(
-      "Molecule::determineLocalGeometry: No geometries exist for terminal atoms"
+      "Molecule::inferSymmetry: No geometries exist for terminal atoms"
     );
   }
 
-  return LocalGeometry::determineLocalGeometry(
+  return LocalGeometry::inferSymmetry(
     _adjacencies,
     index,
     ranking
@@ -895,12 +907,12 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
       continue;
     }
 
-    const auto expectedGeometry = determineLocalGeometry(vertex, localRanking);
+    Symmetry::Name dummySymmetry = LocalGeometry::firstOfSize(localRanking.ligands.size());
 
     // Construct it
     auto stereopermutator = AtomStereopermutator {
       _adjacencies,
-      expectedGeometry,
+      dummySymmetry,
       vertex,
       std::move(localRanking)
     };

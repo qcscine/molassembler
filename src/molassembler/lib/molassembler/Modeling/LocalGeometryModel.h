@@ -83,12 +83,11 @@ int formalCharge(
 /* Models */
 boost::optional<Symmetry::Name> vsepr(
   Scine::Utils::ElementType centerAtomType,
-  unsigned nSites,
   const std::vector<BindingSiteInformation>& sites,
   int formalCharge
 );
 
-boost::optional<Symmetry::Name> firstOfSize(unsigned size);
+Symmetry::Name firstOfSize(unsigned size);
 
 
 /* Tiered geometry determination function */
@@ -98,7 +97,7 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
   const RankingInformation& ranking
 );
 
-Symmetry::Name determineLocalGeometry(
+boost::optional<Symmetry::Name> inferSymmetry(
   const OuterGraph& graph,
   AtomIndex index,
   const RankingInformation& ranking

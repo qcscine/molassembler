@@ -828,10 +828,14 @@ void RankingTree::_applySequenceRules(
        */
       localSymmetry = existingStereopermutatorOption->getSymmetry();
     } else {
-      localSymmetry = LocalGeometry::determineLocalGeometry(
+      localSymmetry = LocalGeometry::inferSymmetry(
         _graphRef,
         molSourceIndex,
         centerRanking
+      ).value_or_eval(
+        [&]() {
+          return LocalGeometry::firstOfSize(centerRanking.ligands.size());
+        }
       );
     }
 

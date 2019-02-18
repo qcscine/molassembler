@@ -30,6 +30,7 @@
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
+#include "molassembler/Modeling/LocalGeometryModel.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/RankingInformation.h"
 #include "molassembler/Stereopermutators/PermutationState.h"
@@ -233,7 +234,11 @@ SpatialModel::SpatialModel(
       continue;
     }
 
-    Symmetry::Name localSymmetry = molecule.determineLocalGeometry(i, localRanking);
+    Symmetry::Name localSymmetry = molecule.inferSymmetry(i, localRanking).value_or_eval(
+      [&]() {
+        return LocalGeometry::firstOfSize(localRanking.ligands.size());
+      }
+    );
 
     auto newStereopermutator = AtomStereopermutator {
       molecule.graph(),

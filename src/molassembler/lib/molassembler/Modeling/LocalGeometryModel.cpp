@@ -34,10 +34,11 @@ const std::map<BondType, double> bondWeights {
 
 boost::optional<Symmetry::Name> vsepr(
   const Scine::Utils::ElementType centerAtomType,
-  const unsigned nSites,
   const std::vector<BindingSiteInformation>& sites,
   const int formalCharge
 ) {
+  unsigned nSites = sites.size();
+
   if(nSites <= 1) {
     throw std::logic_error(
       "Don't use a model on terminal atoms! Single bonds don't "
@@ -178,7 +179,7 @@ boost::optional<Symmetry::Name> vsepr(
   return boost::none;
 }
 
-boost::optional<Symmetry::Name> firstOfSize(const unsigned size) {
+Symmetry::Name firstOfSize(const unsigned size) {
   // Pick the first Symmetry of fitting size
   auto findIter = std::find_if(
     std::begin(Symmetry::allNames),
@@ -189,7 +190,7 @@ boost::optional<Symmetry::Name> firstOfSize(const unsigned size) {
   );
 
   if(findIter == std::end(Symmetry::allNames)) {
-    return boost::none;
+    throw std::logic_error("No symmetries of that size!");
   }
 
   return *findIter;
@@ -269,29 +270,17 @@ int formalCharge(
   return formalCharge;
 }
 
-Symmetry::Name determineLocalGeometry(
+boost::optional<Symmetry::Name> inferSymmetry(
   const OuterGraph& graph,
   const AtomIndex index,
   const RankingInformation& ranking
 ) {
-  auto ligandsVector = reduceToSiteInformation(graph, index, ranking);
-  unsigned nSites = ligandsVector.size();
-
-  auto symmetryOptional = LocalGeometry::vsepr(
+  // So long as only VSEPR is implemented, this function is very simple:
+  return LocalGeometry::vsepr(
     graph.elementType(index),
-    nSites,
-    ligandsVector,
+    reduceToSiteInformation(graph, index, ranking),
     formalCharge(graph, index)
-  ) | temple::callIfNone(LocalGeometry::firstOfSize, nSites);
-
-  if(!symmetryOptional) {
-    throw std::logic_error(
-      "Could not determine a geometry! Perhaps you have more substituents "
-      "than the largest symmety can handle?"
-    );
-  }
-
-  return symmetryOptional.value();
+  );
 }
 
 } // namespace LocalGeometry

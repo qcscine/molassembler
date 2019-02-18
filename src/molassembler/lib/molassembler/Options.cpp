@@ -25,6 +25,7 @@ random::Engine& randomnessEngine() {
 TemperatureRegime Options::temperatureRegime = TemperatureRegime::High;
 ChiralStatePreservation Options::chiralStatePreservation = ChiralStatePreservation::EffortlessAndUnique;
 TauCriterion Options::tauCriterion = TauCriterion::Enable;
+SymmetryTransition Options::symmetryTransition = SymmetryTransition::MaximizeChiralStatePreservation;
 
 bool disregardStereopermutator(
   const AtomStereopermutator& stereopermutator,

@@ -37,18 +37,26 @@ AtomStereopermutator& AtomStereopermutator::operator = (const AtomStereopermutat
 
 AtomStereopermutator::~AtomStereopermutator() = default;
 
+Symmetry::Name AtomStereopermutator::up(const Symmetry::Name symmetryName) {
+  return Impl::up(symmetryName);
+}
+
+Symmetry::Name AtomStereopermutator::down(const Symmetry::Name symmetryName, const unsigned removedSymmetryPosition) {
+  return Impl::down(symmetryName, removedSymmetryPosition);
+}
+
 void AtomStereopermutator::addSubstituent(
   const OuterGraph& graph,
   const AtomIndex newSubstituentIndex,
   RankingInformation newRanking,
-  const Symmetry::Name newSymmetry,
+  boost::optional<Symmetry::Name> newSymmetryOption,
   const ChiralStatePreservation preservationOption
 ) {
   _pImpl->addSubstituent(
     graph,
     newSubstituentIndex,
     std::move(newRanking),
-    newSymmetry,
+    std::move(newSymmetryOption),
     preservationOption
   );
 }
@@ -90,14 +98,14 @@ void AtomStereopermutator::removeSubstituent(
   const OuterGraph& graph,
   const AtomIndex which,
   RankingInformation newRanking,
-  const Symmetry::Name newSymmetry,
+  boost::optional<Symmetry::Name> newSymmetryOption,
   const ChiralStatePreservation preservationOption
 ) {
   _pImpl->removeSubstituent(
     graph,
     which,
     std::move(newRanking),
-    newSymmetry,
+    std::move(newSymmetryOption),
     preservationOption
   );
 }

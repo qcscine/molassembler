@@ -57,7 +57,8 @@ enum class TemperatureRegime {
  * symmetries in this graph because in nearly all cases, there are multiple
  * best mappings, and propagation in these cases are enabled only in
  * RandomFromMultipleBest, in which case the graph gets quite dense, so it's
- * not shown.
+ * not shown. The green edges here are the ligand gain situations propagated
+ * under EffortlessAndUnique.
  *
  * \dot
  *  digraph g {
@@ -85,7 +86,10 @@ enum class TemperatureRegime {
  * \enddot
  *
  * The second is for the situation of ligand loss. The edge label indicates
- * the group of symmetry ligands from which a ligand is being removed.
+ * the group of symmetry ligands from which a ligand is being removed. Green
+ * edges represent situtations propagated under EffortlessAndUnique, black
+ * edges those under Unique. RandomFromMultipleBest is not shown due to graph
+ * density.
  *
  * \dot
  *  digraph g {
@@ -110,7 +114,7 @@ enum class TemperatureRegime {
  *    tetrahedral -> cuttetrahedral [color="forestgreen", label="any"];
  *    squareplanar -> Tshaped [color="forestgreen", label="any"];
  *    seesaw -> cuttetrahedral [color="black", label="axial"];
- *    seesaw -> Tshaped [color="black", label="1 axial"];
+ *    seesaw -> Tshaped [color="black", label="axial"];
  *    seesaw -> Tshaped [color="forestgreen", label="equat."];
  *    squarepyramidal -> tetrahedral [color="black", label="equat."];
  *    squarepyramidal -> squareplanar [color="black", label="equat."];
@@ -169,6 +173,23 @@ enum class TauCriterion {
 };
 
 /**
+ * @brief Influences the choice of symmetry in substituent additions and
+ *   removals that lead to increases or decreases of ligand size
+ */
+enum class SymmetryTransition {
+  /*!
+   * Try to infer a symmetry from graph information first. Supplant with best
+   * symmetry for chiral state preservation.
+   */
+  PrioritizeInferenceFromGraph,
+  /*!
+   * Always choose the symmetry so that the maximum amount of chiral
+   * information can be preserved (as per ChiralStatePreservation setting).
+   */
+  MaximizeChiralStatePreservation
+};
+
+/**
  * @brief Contains all global settings for the library
  */
 struct Options {
@@ -192,6 +213,14 @@ struct Options {
    * Defaults to Enable
    */
   static TauCriterion tauCriterion;
+
+  /**
+   * @brief Specifies AtomStereopermutator symmetry choice behavior on ligand
+   *   additions or removals
+   *
+   * Defaults to MaximizeChiralStatePreservation
+   */
+  static SymmetryTransition symmetryTransition;
 };
 
 // Forward-declare Cycles and AtomStereopermutator

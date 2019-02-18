@@ -8,6 +8,7 @@ if(NOT TARGET Boost::unit_test_framework
 endif()
 
 set(MainTestFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/AtomStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BondStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Canonicalization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommonTrig.cpp

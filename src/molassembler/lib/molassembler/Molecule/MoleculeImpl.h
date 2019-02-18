@@ -262,7 +262,7 @@ struct Molecule::Impl {
    * Returns the expected symmetry name at a non-terminal atom.
    * \throws if the supplied atomic index is invalid
    */
-  Symmetry::Name determineLocalGeometry(
+  boost::optional<Symmetry::Name> inferSymmetry(
     AtomIndex index,
     const RankingInformation& ranking
   ) const;

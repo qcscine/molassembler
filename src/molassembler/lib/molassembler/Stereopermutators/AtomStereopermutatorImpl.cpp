@@ -34,6 +34,109 @@ namespace Scine {
 namespace molassembler {
 
 /* Static functions */
+
+namespace detail {
+
+Symmetry::Name pickTransition(
+  const Symmetry::Name symmetryName,
+  const unsigned T,
+  boost::optional<unsigned> removedSymmetryPositionOptional
+) {
+  boost::optional<Symmetry::properties::SymmetryTransitionGroup> bestTransition;
+  std::vector<Symmetry::Name> propositions;
+
+  auto replaceOrAdd = [&](
+    Symmetry::Name newName,
+    const Symmetry::properties::SymmetryTransitionGroup& transitionGroup
+  ) {
+    if(bestTransition){
+      if(transitionGroup.angularDistortion < bestTransition->angularDistortion) {
+        bestTransition = transitionGroup;
+        propositions = {newName};
+      } else if(transitionGroup.angularDistortion == bestTransition->angularDistortion) {
+        propositions.push_back(newName);
+      }
+    }
+
+    if(!bestTransition) {
+      bestTransition = transitionGroup;
+      propositions = {newName};
+    }
+  };
+
+  // Populate the list of symmetries with candidates
+  for(const Symmetry::Name propositionalName : Symmetry::allNames) {
+    if(Symmetry::size(propositionalName) != T) {
+      continue;
+    }
+
+    if(auto transitionOptional = Symmetry::getMapping(symmetryName, propositionalName, removedSymmetryPositionOptional)) {
+      if(transitionOptional->indexMappings.empty()) {
+        continue;
+      }
+
+      if(
+        Options::chiralStatePreservation == ChiralStatePreservation::EffortlessAndUnique
+        && transitionOptional->indexMappings.size() == 1
+        && transitionOptional->angularDistortion <= 0.2
+      ) {
+        replaceOrAdd(propositionalName, *transitionOptional);
+      }
+
+      if(
+        Options::chiralStatePreservation == ChiralStatePreservation::Unique
+        && transitionOptional->indexMappings.size() == 1
+      ) {
+        replaceOrAdd(propositionalName, *transitionOptional);
+      }
+
+      if(Options::chiralStatePreservation == ChiralStatePreservation::RandomFromMultipleBest) {
+        replaceOrAdd(propositionalName, *transitionOptional);
+      }
+    }
+  }
+
+  /* In case we have no propositions, add all of fitting size. We need to
+   * propose something, even if state will not be propagated due to the
+   * preservation criteria.
+   */
+  if(propositions.empty()) {
+    for(const Symmetry::Name propositionalName : Symmetry::allNames) {
+      if(Symmetry::size(propositionalName) == T) {
+        propositions.push_back(propositionalName);
+      }
+    }
+  }
+
+  // Figure out most "symmetric" symmetry from propositions
+  std::sort(
+    std::begin(propositions),
+    std::end(propositions),
+    [](const Symmetry::Name a, const Symmetry::Name b) -> bool {
+      return std::make_tuple(
+        Symmetry::rotations(a).size(),
+        Symmetry::nameIndex(a)
+      ) < std::make_tuple(
+        Symmetry::rotations(b).size(),
+        Symmetry::nameIndex(b)
+      );
+    }
+  );
+
+  // Return the most symmetric (last in sorted range)
+  return propositions.back();
+}
+
+} // namespace detail
+
+Symmetry::Name AtomStereopermutator::Impl::up(const Symmetry::Name symmetryName) {
+  return detail::pickTransition(symmetryName, Symmetry::size(symmetryName) + 1, boost::none);
+}
+
+Symmetry::Name AtomStereopermutator::Impl::down(const Symmetry::Name symmetryName, const unsigned removedSymmetryPosition) {
+  return detail::pickTransition(symmetryName, Symmetry::size(symmetryName) - 1, removedSymmetryPosition);
+}
+
 /* Constructors */
 AtomStereopermutator::Impl::Impl(
   const OuterGraph& graph,
@@ -61,9 +164,21 @@ void AtomStereopermutator::Impl::addSubstituent(
   const OuterGraph& graph,
   const AtomIndex newSubstituentIndex,
   RankingInformation newRanking,
-  const Symmetry::Name newSymmetry,
+  const boost::optional<Symmetry::Name> newSymmetryOption,
   const ChiralStatePreservation preservationOption
 ) {
+  // If there is no symmetry argument, we have to choose one
+  Symmetry::Name newSymmetry = newSymmetryOption.value_or_eval(
+    [&]() {
+      // If the number of ligands does not change, neither does the symmetry
+      if(_ranking.ligands.size() == newRanking.ligands.size()) {
+        return _symmetry;
+      }
+
+      return up(_symmetry);
+    }
+  );
+
   // Calculate set of new permutations from changed parameters
   PermutationState newPermutationState {
     newRanking,
@@ -401,9 +516,29 @@ void AtomStereopermutator::Impl::removeSubstituent(
   const OuterGraph& graph,
   const AtomIndex which,
   RankingInformation newRanking,
-  const Symmetry::Name newSymmetry,
+  const boost::optional<Symmetry::Name> newSymmetryOption,
   const ChiralStatePreservation preservationOption
 ) {
+  /* Find out in which ligand the atom is removed, and whether it is the sole
+   * constituting index
+   */
+  const unsigned ligandIndexRemovedFrom = _ranking.getLigandIndexOf(which);
+
+  // Pick the new symmetry if not supplied
+  Symmetry::Name newSymmetry = newSymmetryOption.value_or_eval(
+    [&]() {
+      // If the number of ligands does not change, the symmetry doesn't either
+      if(newRanking.ligands.size() == _ranking.ligands.size()) {
+        return _symmetry;
+      }
+
+      return down(
+        _symmetry,
+        _cache.symmetryPositionMap.at(ligandIndexRemovedFrom)
+      );
+    }
+  );
+
   /* This function tries to find a new assignment for the situation in which
    * the previously replaced atom index is actually removed.
    *
@@ -422,11 +557,6 @@ void AtomStereopermutator::Impl::removeSubstituent(
   };
 
   boost::optional<unsigned> newStereopermutation;
-
-  /* Find out in which ligand the atom is removed, and whether it is the sole
-   * constituting index
-   */
-  const unsigned ligandIndexRemovedFrom = _ranking.getLigandIndexOf(which);
 
   // No need to find a new assignment if we currently do not carry chiral state
   if(_assignmentOption && numStereopermutations() > 1) {
