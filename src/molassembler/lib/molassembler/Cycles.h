@@ -44,7 +44,7 @@ public:
   struct predicates {
     //! Permits all cycles
     struct All {
-      bool operator() (const RDL_cycle* const) const;
+      bool operator() (const RDL_cycle* ) const;
     };
 
     //! Limits iterator to cycles smaller than the threshold used in constructor
@@ -53,7 +53,7 @@ public:
 
       explicit SizeLessThan(unsigned passThreshold);
 
-      bool operator() (const RDL_cycle* const cyclePtr) const;
+      bool operator() (const RDL_cycle* cyclePtr) const;
     };
 
     //! Limits iterator to cycles containing a certain atom index
@@ -62,9 +62,10 @@ public:
 
       explicit ContainsIndex(AtomIndex passSoughtIndex);
 
-      bool operator() (const RDL_cycle* const cyclePtr) const;
+      bool operator() (const RDL_cycle* cyclePtr) const;
     };
 
+    //! Limits iterator to cycles that consist of multiple indices
     struct ConsistsOf {
       std::vector<AtomIndex> indices;
 
@@ -77,7 +78,7 @@ public:
 
       void insert(AtomIndex i);
 
-      bool operator() (const RDL_cycle* const cyclePtr) const;
+      bool operator() (const RDL_cycle* cyclePtr) const;
     };
   };
 

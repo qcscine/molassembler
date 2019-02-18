@@ -148,7 +148,7 @@ Molecule read(const std::string& filename) {
 
   // Direct serializations of molecules have their own filetypes
   if(filepath.extension() == ".masm") {
-    fromCBOR(
+    return fromCBOR(
       BinaryHandler::read(filename)
     );
   }

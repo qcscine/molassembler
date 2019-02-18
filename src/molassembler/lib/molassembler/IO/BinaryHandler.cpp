@@ -30,12 +30,10 @@ void BinaryHandler::write(
 ) {
   std::ofstream file(filename, std::ios::binary);
 
-  unsigned nElements = binary.size();
-  write(file, nElements);
+  std::size_t nElements = binary.size();
 
-  for(const auto& element: binary) {
-    write(file, element);
-  }
+  file.write(reinterpret_cast<const char*>(&nElements), sizeof(nElements));
+  file.write(reinterpret_cast<const char*>(&binary[0]), binary.size() * sizeof(std::uint8_t));
 
   file.close(); // Write EOF and close handle
 }
@@ -45,13 +43,12 @@ BinaryHandler::BinaryType BinaryHandler::read(const std::string& filename) {
 
   BinaryType data;
 
-  auto binarySize = read<unsigned>(file);
+  std::size_t binarySize;
+  file.read(reinterpret_cast<char*>(&binarySize), sizeof(binarySize));
 
   if(binarySize > 0) {
     data.resize(binarySize);
-    for(unsigned i = 0; i < binarySize; ++i) {
-      data.at(i) = read<std::uint8_t>(file);
-    }
+    file.read(reinterpret_cast<char*>(&data[0]), binarySize * sizeof(std::uint8_t));
   }
 
   file.close();

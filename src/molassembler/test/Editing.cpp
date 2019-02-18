@@ -10,16 +10,26 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/OuterGraph.h"
 
+/* SMILES for molecules imported here
+ * - caffeine: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+ * - biphenyl: "C1=CC=C(C=C1)C2=CC=CC=C2"
+ * - pyrimidine: "C1=CN=CN=C1"
+ * - pyridine:"C1=CC=NC=C1"
+ * - methane: "C"
+ * - chlorobenzene: "C1=CC=C(C=C1)Cl"
+ * - phenole: "C1=CC=C(C=C1)O"
+ * - mesitylene: "CC1=CC(=CC(=C1)C)C"
+ * - nhc: "C1NC=CN1"
+ *
+ * The .masm are just IO::LineNotation::fromCanonicalSMILES and directly
+ * exported using IO::write(str, mol).
+ */
+
 BOOST_AUTO_TEST_CASE(cleaveEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  if(!IO::LineNotation::enabled()) {
-    BOOST_TEST_MESSAGE("obabel is not found. cleaveEdit is not run.");
-    return;
-  }
-
-  Molecule caffeine = IO::LineNotation::fromCanonicalSMILES("CN1C=NC2=C1C(=O)N(C(=O)N2C)C");
+  Molecule caffeine = IO::read("masm/caffeine.masm");
   caffeine.canonicalize();
 
   const BondIndex bridge {15, 23};
@@ -42,13 +52,8 @@ BOOST_AUTO_TEST_CASE(insertEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  if(!IO::LineNotation::enabled()) {
-    BOOST_TEST_MESSAGE("obabel is not found. insertEdit is not run.");
-    return;
-  }
-
   // Set up the test and make sure the canonical indices still match expectations
-  Molecule biphenyl = IO::LineNotation::fromCanonicalSMILES("C1=CC=C(C=C1)C2=CC=CC=C2");
+  Molecule biphenyl = IO::read("masm/biphenyl.masm");
   biphenyl.canonicalize();
 
   const BondIndex bridge {12, 13};
@@ -60,7 +65,7 @@ BOOST_AUTO_TEST_CASE(insertEdit) {
     "Selected bridge edge does not split biphenyl equally in two"
   );
 
-  Molecule pyrimidine = IO::LineNotation::fromCanonicalSMILES("C1=CN=CN=C1");
+  Molecule pyrimidine = IO::read("masm/pyrimidine.masm");
   pyrimidine.canonicalize();
 
   const AtomIndex firstPyrimidineNitrogen = 4, secondPyrimidineNitrogen = 5;
@@ -91,17 +96,12 @@ BOOST_AUTO_TEST_CASE(superposeEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  if(!IO::LineNotation::enabled()) {
-    BOOST_TEST_MESSAGE("obabel is not found. superposeEdit is not run.");
-    return;
-  }
-
-  Molecule pyridine = IO::LineNotation::fromCanonicalSMILES("C1=CC=NC=C1");
+  Molecule pyridine = IO::read("masm/pyridine.masm");
   pyridine.canonicalize();
   const AtomIndex pyridineNitrogen = 5;
   BOOST_REQUIRE(pyridine.graph().elementType(pyridineNitrogen) == Utils::ElementType::N);
 
-  Molecule methane = IO::LineNotation::fromCanonicalSMILES("C");
+  Molecule methane = IO::read("masm/methane.masm");
   methane.canonicalize();
   const AtomIndex methaneHydrogen = 0;
   BOOST_REQUIRE(methane.graph().elementType(methaneHydrogen) == Utils::ElementType::H);
@@ -120,17 +120,12 @@ BOOST_AUTO_TEST_CASE(substituteEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  if(!IO::LineNotation::enabled()) {
-    BOOST_TEST_MESSAGE("obabel is not found. substituteEdit is not run.");
-    return;
-  }
-
-  Molecule chlorobenzene = IO::LineNotation::fromCanonicalSMILES("C1=CC=C(C=C1)Cl");
+  Molecule chlorobenzene = IO::read("masm/chlorobenzene.masm");
   chlorobenzene.canonicalize();
   const BondIndex chlorobenzeneBridge {5, 7};
   BOOST_REQUIRE_MESSAGE(!chlorobenzene.graph().canRemove(chlorobenzeneBridge), "Selected edge for test is not a bridge edge");
 
-  Molecule phenole = IO::LineNotation::fromCanonicalSMILES("C1=CC=C(C=C1)O");
+  Molecule phenole = IO::read("masm/phenole.masm");
   phenole.canonicalize();
   const BondIndex phenoleBridge {6, 8};
   BOOST_REQUIRE_MESSAGE(!phenole.graph().canRemove(phenoleBridge), "Selected edge for test is not a bridge edge");
@@ -142,7 +137,7 @@ BOOST_AUTO_TEST_CASE(substituteEdit) {
     phenoleBridge
   );
 
-  Molecule biphenyl = IO::LineNotation::fromCanonicalSMILES("C1=CC=C(C=C1)C2=CC=CC=C2");
+  Molecule biphenyl = IO::read("masm/biphenyl.masm");
   BOOST_CHECK(substituted == biphenyl);
 
   substituted.canonicalize();
@@ -154,12 +149,7 @@ BOOST_AUTO_TEST_CASE(connectEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  if(!IO::LineNotation::enabled()) {
-    BOOST_TEST_MESSAGE("obabel is not found. connectEdit is not run.");
-    return;
-  }
-
-  Molecule pyridine = IO::LineNotation::fromCanonicalSMILES("C1=CC=NC=C1");
+  Molecule pyridine = IO::read("masm/pyridine.masm");
   pyridine.canonicalize();
   const AtomIndex pyridineNitrogen = 5;
   BOOST_REQUIRE(pyridine.graph().elementType(pyridineNitrogen) == Utils::ElementType::N);
@@ -179,25 +169,20 @@ BOOST_AUTO_TEST_CASE(mesitylSubstitutionBug) {
   using namespace Scine;
   using namespace molassembler;
 
-  if(!IO::LineNotation::enabled()) {
-    BOOST_TEST_MESSAGE("obabel is not found. connectEdit is not run.");
-    return;
-  }
-
-  Molecule mesitylen = IO::LineNotation::fromCanonicalSMILES("CC1=CC(=CC(=C1)C)C");
-  mesitylen.canonicalize();
+  Molecule mesitylene = IO::read("masm/mesitylene.masm");
+  mesitylene.canonicalize();
   const auto mesitylenSubstitutionEdge = BondIndex {0, 14};
 
-  Molecule nhc = IO::LineNotation::fromCanonicalSMILES("C1NC=CN1");
+  Molecule nhc = IO::read("masm/nhc.masm");
   nhc.canonicalize();
   const auto nhcSubstitutionEdge = BondIndex {0, 7};
 
   Molecule substituted = Editing::substitute(
     nhc,
-    mesitylen,
+    mesitylene,
     nhcSubstitutionEdge,
     mesitylenSubstitutionEdge
   );
 
-  BOOST_CHECK(substituted.graph().N() == mesitylen.graph().N() + nhc.graph().N() - 2);
+  BOOST_CHECK(substituted.graph().N() == mesitylene.graph().N() + nhc.graph().N() - 2);
 }
