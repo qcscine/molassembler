@@ -49,7 +49,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Containers/OrderDiscoveryHelper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/AnalysisHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/BuildTypeSwitch.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/DelibHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/StdlibTypeAlgorithms.h

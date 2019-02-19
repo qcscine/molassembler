@@ -14,7 +14,6 @@
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
 
-#include "molassembler/Detail/AnalysisHelpers.h"
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
