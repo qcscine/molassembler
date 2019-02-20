@@ -166,7 +166,7 @@ public:
    *   members invalidated.
    */
   AtomIndex addAtom(
-    Scine::Utils::ElementType elementType,
+    Utils::ElementType elementType,
     AtomIndex adjacentTo,
     BondType bondType
   );
@@ -192,7 +192,7 @@ public:
    *   any stereopermutator state stored external to a Molecule instance and its
    *   members invalidated.
    */
-  void addBond(
+  BondIndex addBond(
     AtomIndex a,
     AtomIndex b,
     BondType bondType
@@ -387,6 +387,9 @@ public:
    *   members invalidated.
    */
   void removeBond(AtomIndex a, AtomIndex b);
+
+  //!@overload
+  void removeBond(const BondIndex& bond);
 
   /*!
    * @brief Changes a bond type. Returns whether the bond already existed

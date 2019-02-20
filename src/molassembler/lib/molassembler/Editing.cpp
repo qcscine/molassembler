@@ -5,9 +5,10 @@
 
 #include "molassembler/Editing.h"
 
-#include "molassembler/Molecule/MoleculeImpl.h"
-#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Graph/Bridge.h"
+#include "molassembler/Graph/InnerGraph.h"
+#include "molassembler/Molecule/MoleculeImpl.h"
+#include "molassembler/Stereopermutators/PermutationState.h"
 
 #include "Utils/ElementInfo.h"
 
@@ -250,12 +251,10 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
       }
 
       // Notify the stereopermutator to remove the placeholder
-      stereopermutatorOption->removeSubstituent(
+      stereopermutatorOption->propagate(
         molecule._pImpl->_adjacencies,
-        InnerGraph::removalPlaceholder,
         std::move(localRanking),
-        symmetryOption,
-        Options::chiralStatePreservation
+        symmetryOption
       );
 
       // Default-assign if possible
@@ -375,12 +374,10 @@ Molecule Editing::insert(
         symmetryOption = log.inferSymmetry(newWedgeIndex, localRanking);
       }
 
-      permutatorOption->addSubstituent(
+      permutatorOption->propagate(
         log._pImpl->_adjacencies,
-        logSide,
         std::move(localRanking),
-        symmetryOption,
-        Options::chiralStatePreservation
+        symmetryOption
       );
 
       // Default assign if possible
@@ -487,12 +484,10 @@ Molecule Editing::superpose(
         symmetryOption = top.inferSymmetry(topAtom, localRanking);
       }
 
-      topPermutatorOption->addSubstituent(
+      topPermutatorOption->propagate(
         top._pImpl->_adjacencies,
-        vertexMapping.at(bottomAtomAdjacent),
         std::move(localRanking),
-        symmetryOption,
-        Options::chiralStatePreservation
+        symmetryOption
       );
 
       // Default assign if possible

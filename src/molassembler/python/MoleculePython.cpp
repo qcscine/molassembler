@@ -181,7 +181,13 @@ void init_molecule(pybind11::module& m) {
 
   molecule.def(
     "remove_bond",
-    &Molecule::removeBond,
+    pybind11::overload_cast<AtomIndex, AtomIndex>(&Molecule::removeBond),
+    "Remove a bond from the graph"
+  );
+
+  molecule.def(
+    "remove_bond",
+    pybind11::overload_cast<const BondIndex&>(&Molecule::removeBond),
     "Remove a bond from the graph"
   );
 

@@ -45,22 +45,6 @@ Symmetry::Name AtomStereopermutator::down(const Symmetry::Name symmetryName, con
   return Impl::down(symmetryName, removedSymmetryPosition);
 }
 
-void AtomStereopermutator::addSubstituent(
-  const OuterGraph& graph,
-  const AtomIndex newSubstituentIndex,
-  RankingInformation newRanking,
-  boost::optional<Symmetry::Name> newSymmetryOption,
-  const ChiralStatePreservation preservationOption
-) {
-  _pImpl->addSubstituent(
-    graph,
-    newSubstituentIndex,
-    std::move(newRanking),
-    std::move(newSymmetryOption),
-    preservationOption
-  );
-}
-
 void AtomStereopermutator::assign(boost::optional<unsigned> assignment) {
   _pImpl->assign(std::move(assignment));
 }
@@ -80,34 +64,20 @@ void AtomStereopermutator::fit(
   _pImpl->fit(graph, angstromWrapper);
 }
 
-boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagateGraphChange(
+boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::propagate(
   const OuterGraph& graph,
-  RankingInformation newRanking
+  RankingInformation newRanking,
+  boost::optional<Symmetry::Name> symmetryOption
 ) {
-  return _pImpl->propagateGraphChange(
+  return _pImpl->propagate(
     graph,
-    std::move(newRanking)
+    std::move(newRanking),
+    std::move(symmetryOption)
   );
 }
 
 void AtomStereopermutator::propagateVertexRemoval(const AtomIndex removedIndex) {
   _pImpl->propagateVertexRemoval(removedIndex);
-}
-
-void AtomStereopermutator::removeSubstituent(
-  const OuterGraph& graph,
-  const AtomIndex which,
-  RankingInformation newRanking,
-  boost::optional<Symmetry::Name> newSymmetryOption,
-  const ChiralStatePreservation preservationOption
-) {
-  _pImpl->removeSubstituent(
-    graph,
-    which,
-    std::move(newRanking),
-    std::move(newSymmetryOption),
-    preservationOption
-  );
 }
 
 void AtomStereopermutator::setSymmetry(

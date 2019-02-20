@@ -121,31 +121,6 @@ public:
 //!@}
 
 //!@name Modifiers
-//!@{
-  /*!
-   * @brief Add a new substituent to the permutator, propagating chiral state
-   *
-   * Handles the addition of a new substituent to the stereopermutator. If the
-   * stereopermutator contains chiral state, it is attempted to transfer the state
-   * into the new assignment space according to the supplied chiral state
-   * preservation options
-   *
-   * @param graph The molecule's graph which this permutator helps model.
-   * @param newSubstituentIndex The atom index of the new substituent
-   * @param newRanking The updated ranking information (after graph addition of
-   *   the new substituent)
-   * @param newSymmetry The target symmetry of increased size
-   * @param preservationOption The behavioral option deciding how chiral state
-   *   is propagated.
-   */
-  void addSubstituent(
-    const OuterGraph& graph,
-    AtomIndex newSubstituentIndex,
-    RankingInformation newRanking,
-    boost::optional<Symmetry::Name> newSymmetryOption,
-    ChiralStatePreservation preservationOption
-  );
-
   /*!
    * @brief Changes the assignment of the stereopermutator
    *
@@ -202,9 +177,10 @@ public:
    * substituents, it must be redetermined whether the new configuration is a
    * stereopermutator and if so, which assignment corresponds to the previous one.
    */
-  boost::optional<PropagatedState> propagateGraphChange(
+  boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
-    RankingInformation newRanking
+    RankingInformation newRanking,
+    boost::optional<Symmetry::Name> symmetryOption
   );
 
   /*!
@@ -214,23 +190,6 @@ public:
    * index is changed to a placeholder value.
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
-
-  /*!
-   * @brief Removes a substituent, propagating state to the new smaller symmetry
-   *
-   * Handles the removal of a substituent from the stereopermutator. If the
-   * stereopermutator carries chiral information, a new assignment can be chosen
-   * according to the supplide chiral state preservation option.
-   *
-   * @warning This should be called after the removal of an atom on the graph level
-   */
-  void removeSubstituent(
-    const OuterGraph& graph,
-    AtomIndex which,
-    RankingInformation newRanking,
-    boost::optional<Symmetry::Name> newSymmetryOption,
-    ChiralStatePreservation preservationOption
-  );
 
   /*!
    * @brief Change the symmetry of the permutator

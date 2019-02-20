@@ -55,20 +55,6 @@ public:
   );
 
 /* Modification */
-  /*!
-   * Handles the addition of a new substituent to the stereopermutator. If the
-   * stereopermutator contains chiral state, it is attempted to transfer the state
-   * into the new assignment space according to the supplied chiral state
-   * preservation options
-   */
-  void addSubstituent(
-    const OuterGraph& graph,
-    AtomIndex newSubstituentIndex,
-    RankingInformation newRanking,
-    boost::optional<Symmetry::Name> newSymmetryOption,
-    ChiralStatePreservation preservationOption
-  );
-
   //! Changes the assignment of the stereopermutator
   void assign(boost::optional<unsigned> assignment);
 
@@ -97,9 +83,10 @@ public:
    * substituents, it must be redetermined whether the new configuration is a
    * stereopermutator and if so, which assignment corresponds to the previous one.
    */
-  boost::optional<PropagatedState> propagateGraphChange(
+  boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
-    RankingInformation newRanking
+    RankingInformation newRanking,
+    boost::optional<Symmetry::Name> symmetryOption
   );
 
   /*!
@@ -107,19 +94,6 @@ public:
    * the generation of new atom indices.
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
-
-  /*!
-   * Handles the removal of a substituent from the stereopermutator. If the
-   * stereopermutator carries chiral information, a new assignment can be chosen
-   * according to the supplide chiral state preservation option.
-   */
-  void removeSubstituent(
-    const OuterGraph& graph,
-    AtomIndex which,
-    RankingInformation newRanking,
-    boost::optional<Symmetry::Name> newSymmetryOption,
-    ChiralStatePreservation preservationOption
-  );
 
   //! If the central symmetry group is changed, we must adapt
   void setSymmetry(

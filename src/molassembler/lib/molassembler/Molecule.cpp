@@ -74,12 +74,12 @@ AtomIndex Molecule::addAtom(
   return _pImpl->addAtom(elementType, adjacentTo, bondType);
 }
 
-void Molecule::addBond(
+BondIndex Molecule::addBond(
   const AtomIndex a,
   const AtomIndex b,
   const BondType bondType
 ) {
-  _pImpl->addBond(a, b, bondType);
+  return _pImpl->addBond(a, b, bondType);
 }
 
 void Molecule::applyPermutation(const std::vector<AtomIndex>& permutation) {
@@ -123,6 +123,12 @@ void Molecule::removeBond(
   const AtomIndex b
 ) {
   _pImpl->removeBond(a, b);
+}
+
+void Molecule::removeBond(
+  const BondIndex& bond
+) {
+  _pImpl->removeBond(bond.first, bond.second);
 }
 
 bool Molecule::setBondType(

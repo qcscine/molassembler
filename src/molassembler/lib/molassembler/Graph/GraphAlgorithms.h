@@ -57,7 +57,9 @@ void findLigands(
 
 } // namespace detail
 
-/*! Differentiate adjacent vertices of a central index into ligand site groups
+/*!
+ * @brief Differentiate adjacent vertices of a central index into ligand site
+ *   groups
  *
  * A ligand site group is made up of all immediately group-internally-adjacent
  * substituents of a central index. The reverse subdivision starting from a
@@ -68,6 +70,8 @@ void findLigands(
  * connected components that are separated by non-bonding atoms, each of which
  * make up a possibly haptic group. These are called ligand site groups because
  * they each take up a site of the central index's coordination geometry.
+ *
+ * @post Each ligand site group's list of constituting atom indices is sorted.
  */
 std::vector<
   std::vector<AtomIndex>
@@ -83,7 +87,7 @@ std::vector<
  * Cycle through all atoms, determine the ligands and set the eta bond type for
  * atoms constituting haptic ligand sites.
  */
-void findAndSetEtaBonds(InnerGraph& graph);
+void updateEtaBonds(InnerGraph& graph);
 
 /*!
  * Returns the number of connected components of the graph. This is a central

@@ -91,7 +91,7 @@ struct Molecule::Impl {
   );
 
   //! Adds a bond between existing atoms.
-  void addBond(
+  BondIndex addBond(
     AtomIndex a,
     AtomIndex b,
     BondType bondType
@@ -191,7 +191,7 @@ struct Molecule::Impl {
    * You can use this to update invalidated indices.
    */
   std::vector<AtomIndex> canonicalize(
-    const AtomEnvironmentComponents componentBitmask
+    AtomEnvironmentComponents componentBitmask
   );
 
   /*! Removes an atom from the graph, including bonds to it.

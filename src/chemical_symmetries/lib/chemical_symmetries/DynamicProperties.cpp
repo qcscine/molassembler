@@ -775,6 +775,37 @@ bool hasMultipleUnlinkedAssignments(
   return false;
 }
 
+Name mostSymmetric(std::vector<Name> selection) {
+  std::sort(
+    std::begin(selection),
+    std::end(selection),
+    [](const Name a, const Name b) -> bool {
+      return std::make_tuple(
+        rotations(a).size(),
+        nameIndex(b)
+      ) < std::make_tuple(
+        rotations(b).size(),
+        nameIndex(a)
+      );
+    }
+  );
+
+  return selection.back();
+}
+
+Name mostSymmetric(const unsigned symmetrySize) {
+  std::vector<Name> propositions;
+  propositions.reserve(8);
+
+  for(const Name proposition : allNames) {
+    if(size(proposition) == symmetrySize) {
+      propositions.push_back(proposition);
+    }
+  }
+
+  return mostSymmetric(std::move(propositions));
+}
+
 } // namespace properties
 
 } // namespace Symmetry

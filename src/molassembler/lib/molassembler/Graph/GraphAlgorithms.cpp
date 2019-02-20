@@ -367,10 +367,14 @@ std::vector<
     }
   );
 
+  for(auto& ligand : groupedLigands) {
+    temple::inplace::sort(ligand);
+  }
+
   return groupedLigands;
 }
 
-void findAndSetEtaBonds(InnerGraph& graph) {
+void updateEtaBonds(InnerGraph& graph) {
   const AtomIndex N = graph.N();
   for(AtomIndex centralIndex = 0; centralIndex < N; ++centralIndex) {
     // Skip any main group element types, none of these should be eta bonded
@@ -387,6 +391,15 @@ void findAndSetEtaBonds(InnerGraph& graph) {
           for(const auto& hapticIndex : ligand) {
             auto edge = graph.edge(centralIndex, hapticIndex);
             graph.bondType(edge) = BondType::Eta;
+          }
+        } else {
+          // Mark all eta bonds to the central atom as single bonds
+          for(const auto& hapticIndex : ligand) {
+            auto edge = graph.edge(centralIndex, hapticIndex);
+            BondType& bondType = graph.bondType(edge);
+            if(bondType == BondType::Eta) {
+              bondType = BondType::Single;
+            }
           }
         }
       }

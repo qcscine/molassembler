@@ -180,7 +180,7 @@ void Molecule::Impl::_propagateGraphChange() {
    * set of assignments and assign the stereopermutator to that.
    */
 
-  GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
+  GraphAlgorithms::updateEtaBonds(_adjacencies.inner());
 
   // All graph access after this point must be const for thread safety
   const InnerGraph& inner = _adjacencies.inner();
@@ -219,7 +219,7 @@ void Molecule::Impl::_propagateGraphChange() {
       }
 
       // Propagate the stereopermutator state to the new ranking
-      auto propagatedStateOption = stereopermutatorOption -> propagateGraphChange(_adjacencies, localRanking);
+      auto propagatedStateOption = stereopermutatorOption -> propagate(_adjacencies, localRanking, boost::none);
 
       /* If the modified stereopermutator has only one assignment and is
        * unassigned due to the graph change, default-assign it
@@ -315,7 +315,7 @@ Molecule::Impl::Impl(OuterGraph graph)
   : _adjacencies(std::move(graph))
 {
   // Initialization
-  GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
+  GraphAlgorithms::updateEtaBonds(_adjacencies.inner());
   _stereopermutators = _detectStereopermutators();
   _ensureModelInvariants();
 }
@@ -328,7 +328,7 @@ Molecule::Impl::Impl(
   >& bondStereopermutatorCandidatesOptional
 ) : _adjacencies(std::move(graph))
 {
-  GraphAlgorithms::findAndSetEtaBonds(_adjacencies.inner());
+  GraphAlgorithms::updateEtaBonds(_adjacencies.inner());
   _stereopermutators = inferStereopermutatorsFromPositions(
     positions,
     bondStereopermutatorCandidatesOptional
@@ -360,15 +360,14 @@ AtomIndex Molecule::Impl::addAtom(
 
   const AtomIndex index = _adjacencies.inner().addVertex(elementType);
   addBond(index, adjacentTo, bondType);
-  // addBond handles the stereopermutator update on adjacentTo
-
-  _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+  /* addBond handles the stereopermutator update on adjacentTo and also
+   * performs a full-molecule rerank propagation.
+   */
 
   return index;
 }
 
-void Molecule::Impl::addBond(
+BondIndex Molecule::Impl::addBond(
   const AtomIndex a,
   const AtomIndex b,
   const BondType bondType
@@ -385,10 +384,7 @@ void Molecule::Impl::addBond(
 
   inner.addEdge(a, b, bondType);
 
-  auto notifySubstituentAddition = [this](
-    const AtomIndex toIndex,
-    const AtomIndex addedIndex
-  ) {
+  auto notifySubstituentAddition = [this](const AtomIndex toIndex) {
     /*! @todo Remove any BondStereopermutators on adjacent edges of toIndex (no
      * state propagation possible yet)
      */
@@ -410,23 +406,23 @@ void Molecule::Impl::addBond(
         newSymmetryOption = inferSymmetry(toIndex, localRanking);
       }
 
-      atomStereopermutatorOption->addSubstituent(
+      atomStereopermutatorOption->propagate(
         _adjacencies,
-        addedIndex,
         std::move(localRanking),
-        newSymmetryOption,
-        Options::chiralStatePreservation
+        newSymmetryOption
       );
 
       // TODO Notify adjacent bond stereopermutators
     }
   };
 
-  notifySubstituentAddition(a, b);
-  notifySubstituentAddition(b, a);
+  notifySubstituentAddition(a);
+  notifySubstituentAddition(b);
 
   _propagateGraphChange();
   _canonicalComponents = AtomEnvironmentComponents::None;
+
+  return BondIndex {a, b};
 }
 
 void Molecule::Impl::applyPermutation(const std::vector<AtomIndex>& permutation) {
@@ -626,12 +622,10 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
         newSymmetryOption = inferSymmetry(indexToUpdate, localRanking);
       }
 
-      stereopermutatorOption->removeSubstituent(
+      stereopermutatorOption->propagate(
         _adjacencies,
-        InnerGraph::removalPlaceholder,
         std::move(localRanking),
-        newSymmetryOption,
-        Options::chiralStatePreservation
+        newSymmetryOption
       );
     }
 
@@ -685,10 +679,7 @@ void Molecule::Impl::removeBond(
   inner.removeEdge(edgeToRemove);
 
   // Notify all immediately adjacent stereopermutators of the removal
-  auto notifyRemoval = [&](
-    const AtomIndex indexToUpdate,
-    const AtomIndex removedIndex
-  ) {
+  auto notifyRemoval = [&](const AtomIndex indexToUpdate) {
     if(auto stereopermutatorOption = _stereopermutators.option(indexToUpdate)) {
       auto localRanking = rankPriority(indexToUpdate);
 
@@ -703,12 +694,10 @@ void Molecule::Impl::removeBond(
         newSymmetryOption = inferSymmetry(indexToUpdate, localRanking);
       }
 
-      stereopermutatorOption->removeSubstituent(
+      stereopermutatorOption->propagate(
         _adjacencies,
-        removedIndex,
         std::move(localRanking),
-        newSymmetryOption,
-        Options::chiralStatePreservation
+        newSymmetryOption
       );
     }
 
@@ -726,8 +715,8 @@ void Molecule::Impl::removeBond(
     }*/
   };
 
-  notifyRemoval(a, b);
-  notifyRemoval(b, a);
+  notifyRemoval(a);
+  notifyRemoval(b);
 
   /* All other cases, where there may be BondStereopermutators or AtomStereopermutators
    * on a or b, should be handled correctly by _propagateGraphChange.

@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(moleculeRuleOfFive) {
 }
 
 using HashArgumentsType = std::tuple<
-  Scine::Utils::ElementType,
+  Utils::ElementType,
   std::vector<molassembler::hashes::BondInformation>,
   boost::optional<Symmetry::Name>,
   boost::optional<unsigned>
@@ -161,7 +161,7 @@ HashArgumentsType randomArguments() {
   std::sort(bonds.begin(), bonds.end());
 
   return {
-    static_cast<Scine::Utils::ElementType>(
+    static_cast<Utils::ElementType>(
       temple::random::getSingle<unsigned>(1, 112, randomnessEngine())
     ),
     bonds,
@@ -421,10 +421,10 @@ BOOST_AUTO_TEST_CASE(moleculeAlternateIsomorphism) {
 // Atom stereocenter assignments are part of strict equivalency
 BOOST_AUTO_TEST_CASE(moleculeBasicRSInequivalency) {
   // Build an asymmetric tetrahedral carbon
-  Molecule a {Scine::Utils::ElementType::C, Scine::Utils::ElementType::H, BondType::Single};
-  a.addAtom(Scine::Utils::ElementType::F, 0, BondType::Single);
-  a.addAtom(Scine::Utils::ElementType::Cl, 0, BondType::Single);
-  a.addAtom(Scine::Utils::ElementType::Br, 0, BondType::Single);
+  Molecule a {Utils::ElementType::C, Utils::ElementType::H, BondType::Single};
+  a.addAtom(Utils::ElementType::F, 0, BondType::Single);
+  a.addAtom(Utils::ElementType::Cl, 0, BondType::Single);
+  a.addAtom(Utils::ElementType::Br, 0, BondType::Single);
   a.setGeometryAtAtom(0, Symmetry::Name::Tetrahedral);
 
   // Make sure it's recognized as asymmetric
@@ -444,12 +444,12 @@ BOOST_AUTO_TEST_CASE(moleculeBasicRSInequivalency) {
 }
 
 // Bond stereocenter assignments are part of strict equivalency
-BOOST_AUTO_TEST_CASE(basicEZInequivalencyTests) {
-  Molecule a {Scine::Utils::ElementType::C, Scine::Utils::ElementType::C, BondType::Double};
-  a.addAtom(Scine::Utils::ElementType::H, 0, BondType::Single);
-  a.addAtom(Scine::Utils::ElementType::F, 0, BondType::Single);
-  a.addAtom(Scine::Utils::ElementType::H, 1, BondType::Single);
-  a.addAtom(Scine::Utils::ElementType::F, 1, BondType::Single);
+BOOST_AUTO_TEST_CASE(moleculeBasicEZInequivalency) {
+  Molecule a {Utils::ElementType::C, Utils::ElementType::C, BondType::Double};
+  a.addAtom(Utils::ElementType::H, 0, BondType::Single);
+  a.addAtom(Utils::ElementType::F, 0, BondType::Single);
+  a.addAtom(Utils::ElementType::H, 1, BondType::Single);
+  a.addAtom(Utils::ElementType::F, 1, BondType::Single);
 
   // Set the geometries
   a.setGeometryAtAtom(0, Symmetry::Name::TrigonalPlanar);
@@ -529,9 +529,9 @@ BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
 }
 
 BOOST_AUTO_TEST_CASE(moleculeGeometryChoices) {
-  molassembler::Molecule testMol(Scine::Utils::ElementType::Ru, Scine::Utils::ElementType::N, BondType::Single);
-  testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
-  testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
+  molassembler::Molecule testMol(Utils::ElementType::Ru, Utils::ElementType::N, BondType::Single);
+  testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
+  testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
 
 
   auto stereocenterOption = testMol.stereopermutators().option(1u);
@@ -542,7 +542,7 @@ BOOST_AUTO_TEST_CASE(moleculeGeometryChoices) {
     testMol.setGeometryAtAtom(1u, suggestedSymmetryOption.value());
   }
 
-  testMol.addAtom(Scine::Utils::ElementType::H, 1u, BondType::Single);
+  testMol.addAtom(Utils::ElementType::H, 1u, BondType::Single);
 
   BOOST_CHECK(
     testMol.stereopermutators().option(1u)
@@ -578,4 +578,24 @@ BOOST_AUTO_TEST_CASE(IsomerPredicateTests) {
     molassembler::enantiomeric(a, b),
     "Isoleucine-RS and -SR are falsely determined not to be enantiomers."
   );
+}
+
+BOOST_AUTO_TEST_CASE(etaBondDynamism) {
+  Molecule mol {Utils::ElementType::Fe, Utils::ElementType::C, BondType::Single};
+
+  const AtomIndex carbonSubstituent = 1u;
+  const AtomIndex secondCarbon = mol.addAtom(Utils::ElementType::C, carbonSubstituent, BondType::Double);
+  mol.addAtom(Utils::ElementType::H, carbonSubstituent, BondType::Single);
+  mol.addAtom(Utils::ElementType::H, carbonSubstituent, BondType::Single);
+  mol.addAtom(Utils::ElementType::H, secondCarbon, BondType::Single);
+  mol.addAtom(Utils::ElementType::H, secondCarbon, BondType::Single);
+
+  auto ironSecondCarbonBond = mol.addBond(0, secondCarbon, BondType::Single);
+
+  BOOST_CHECK(mol.graph().bondType(ironSecondCarbonBond) == BondType::Eta);
+  BOOST_CHECK(mol.graph().bondType(BondIndex {0, 1}) == BondType::Eta);
+
+  mol.removeBond(ironSecondCarbonBond);
+
+  BOOST_CHECK(mol.graph().bondType(BondIndex {0, 1}) == BondType::Single);
 }

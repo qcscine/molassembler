@@ -205,6 +205,12 @@ bool hasMultipleUnlinkedAssignments(
   unsigned nIdenticalLigands
 );
 
+//! Yields the symmetry with the most rotations from a selection
+Name mostSymmetric(std::vector<Name> selection);
+
+//! Yields the symmetry with the most rotations of a particular size
+Name mostSymmetric(unsigned symmetrySize);
+
 } // namespace properties
 
 } // namespace Symmetry
