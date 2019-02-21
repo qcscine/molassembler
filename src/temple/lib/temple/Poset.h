@@ -8,10 +8,11 @@
 #ifndef INCLUDE_TEMPLE_POSET_H
 #define INCLUDE_TEMPLE_POSET_H
 
-#include "boost/optional.hpp"
+#include "boost/logic/tribool.hpp"
 #include <vector>
-#include <tuple>
-#include <bitset>
+#include <string>
+#include <algorithm>
+#include <stdexcept>
 
 namespace temple {
 
@@ -41,11 +42,11 @@ public:
     Subset(Iter begin, Iter end) : values(begin, end) {}
 
     const_iterator begin() const {
-      return values.begin();
+      return std::begin(values);
     }
 
     const_iterator end() const {
-      return values.end();
+      return std::end(values);
     }
   };
 
@@ -178,6 +179,7 @@ public:
     return std::end(subsets);
   }
 
+  //! Convert the Poset to a string representation
   std::string toString() const {
     std::string str = "{";
     for(const Subset& subset : subsets) {
@@ -195,6 +197,77 @@ public:
     str += "}";
 
     return str;
+  }
+
+  /**
+   * @brief Find an element
+   *
+   * @param a element to search for
+   *
+   * @return An iterator pointing to the Subset the element is contained in. If
+   *   the element is in no Subset of the Poset, the iterator is the end
+   *   iterator.
+   */
+  const_iterator find(const T& a) const {
+    return std::find_if(
+      std::begin(subsets),
+      std::end(subsets),
+      [&a](const Subset& subset) -> bool {
+        return std::find(
+          std::begin(subset),
+          std::end(subset),
+          a
+        ) != std::end(subset);
+      }
+    );
+  }
+
+  /**
+   * @brief Less-than compare two elements
+   *
+   * @param a The first element
+   * @param b The second element
+   *
+   * @throws std::invalid_argument If either element is not in the poset.
+   *
+   * @return A tribool in the following state:
+   *   - true if the first element is less than the second
+   *   - false if the second element is equal to or greater than the second
+   *   - indeterminate if ordering is unknown
+   */
+  boost::tribool compare(const T& a, const T& b) const {
+    const auto subsetEnd = std::end(subsets);
+    auto aIter = find(a);
+
+    if(aIter == subsetEnd) {
+      throw std::invalid_argument("The first argument to compare is not in the poset");
+    }
+
+    auto bIter = find(b);
+
+    if(bIter == subsetEnd) {
+      throw std::invalid_argument("The second argument to compare is not in the poset");
+    }
+
+    /* If both elements are not in the same Subset, then they are ordered by
+     * their position in the list of Subsets.
+     */
+    if(aIter != bIter) {
+      return aIter < bIter;
+    }
+
+    /* So now we know both outer iterators point to the same subset and that
+     * neither of those outer iterators is the end iterator. So we can safely
+     * look at the Subset pointed to by the (matching) outer iterators.
+     *
+     * If the subset is ordered, then the elements are equal. Otherwise, the
+     * order is indeterminate.
+     */
+    if(aIter.first->ordered) {
+      return false;
+    }
+
+    return boost::indeterminate;
   }
 
 private:
