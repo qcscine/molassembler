@@ -326,10 +326,9 @@ void BondStereopermutator::Impl::propagateGraphChange(
 ) {
   const RankingInformation& oldRanking = std::get<0>(oldPermutatorState);
   const PermutationState& oldPermutationState = std::get<1>(oldPermutatorState);
-  const boost::optional<unsigned>& oldAssignment = std::get<2>(oldPermutatorState);
 
-  // We assume that the supplied permutators are assigned
-  assert(oldAssignment);
+  // We assume that the supplied permutators (or their state) were assigned
+  assert(std::get<2>(oldPermutatorState));
   assert(newPermutator.assigned());
 
   /* We assume the old and new symmetry are of the same size (i.e. this is

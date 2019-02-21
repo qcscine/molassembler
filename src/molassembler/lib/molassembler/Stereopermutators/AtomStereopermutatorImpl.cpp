@@ -393,6 +393,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    * ABCDEF.  There will be multiple ways to split A to F!
    */
   if(_assignmentOption && numStereopermutations() > 1) {
+    // A flat map of symmetry position to new ligand index in the new symmetry
     std::vector<unsigned> ligandsAtNewSymmetryPositions;
 
     /* Ligand-level changes */
@@ -417,17 +418,31 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
          */
         const auto& symmetryMapping = suitableMappingOption.value();
 
+        // Apply the mapping to get old symmetry positions at their places in the new symmetry
+        auto oldSymmetryPositionsInNewSymmetry = Symmetry::properties::applyIndexMapping(
+          newSymmetry,
+          symmetryMapping
+        );
 
-        // Copy over the current symmetry position map
-        std::vector<unsigned> ligandsAtOldSymmetryPositions = _cache.symmetryPositionMap;
-        ligandsAtOldSymmetryPositions.push_back(*alteredLigandIndex);
-        ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
-
-        for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
-          ligandsAtNewSymmetryPositions.at(
-            symmetryMapping.at(i)
-          ) = ligandsAtOldSymmetryPositions.at(i);
+        // Invert symmetryPositionMap to get: ligand = map.at(symmetryPosition)
+        std::vector<unsigned> oldSymmetryPositionToLigandMap(_cache.symmetryPositionMap.size());
+        for(unsigned i = 0 ; i < _cache.symmetryPositionMap.size(); ++i) {
+          oldSymmetryPositionToLigandMap.at(
+            _cache.symmetryPositionMap.at(i)
+          ) = i;
         }
+        /* We assume the new ligand is also merely added to the end! This may
+         * not always be true
+         */
+        oldSymmetryPositionToLigandMap.push_back(_cache.symmetryPositionMap.size());
+
+        // Replace old symmetry positions by their ligand indices
+        ligandsAtNewSymmetryPositions = temple::map(
+          oldSymmetryPositionsInNewSymmetry,
+          [&oldSymmetryPositionToLigandMap](const unsigned oldSymmetryPosition) -> unsigned {
+            return oldSymmetryPositionToLigandMap.at(oldSymmetryPosition);
+          }
+        );
       }
       /* If no mapping can be found that fits to the preservationOption,
        * newStereopermutation remains boost::none, and this stereopermutator loses
@@ -453,25 +468,34 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         Options::chiralStatePreservation
       );
 
+      /* It is weird that this block of code works although it is structurally
+       * so different from ligand addition propagation. Is it coincidence?
+       */
       if(suitableMappingOptional) {
+        /* symmetryMapping {0, 4, 3, 2} means
+         * - at symmetry position 0 in the new symmetry, we have what was
+         *   at symmetry position 0 in the old symmetry
+         * - at symmetry position 1 in the new symmetry, we have what was
+         *   at symmetry position 4 in the old symmetry
+         *
+         */
         const auto& symmetryMapping = suitableMappingOptional.value();
+
+        // Invert symmetryPositionMap to get: ligand = map.at(symmetryPosition)
+        std::vector<unsigned> oldSymmetryPositionToLigandMap(_cache.symmetryPositionMap.size());
+        for(unsigned i = 0 ; i < _cache.symmetryPositionMap.size(); ++i) {
+          oldSymmetryPositionToLigandMap.at(
+            _cache.symmetryPositionMap.at(i)
+          ) = i;
+        }
 
         // Transfer indices from current symmetry to new symmetry
         ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
         for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
-          ligandsAtNewSymmetryPositions.at(i) = _cache.symmetryPositionMap.at(
+          // i is a symmetry position
+          ligandsAtNewSymmetryPositions.at(i) = oldSymmetryPositionToLigandMap.at(
             symmetryMapping.at(i)
           );
-        }
-
-        /* Now we have the old ligand indices in the new symmetry positions.
-         * Since we know which ligand is deleted, we can decrement any indices
-         * larger than it and obtain the new ligand indices.
-         */
-        for(auto& ligandIndex : ligandsAtNewSymmetryPositions) {
-          if(ligandIndex > *alteredLigandIndex) {
-            --ligandIndex;
-          }
         }
       }
     }
@@ -586,7 +610,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
     if(!ligandsAtNewSymmetryPositions.empty()) {
       // Replace the ligand indices by their new ranking characters
-      std::vector<char> newStereopermutationCharacters = PermutationState::makeStereopermutationCharacters(
+      auto newStereopermutationCharacters = PermutationState::makeStereopermutationCharacters(
         newPermutationState.canonicalLigands,
         newPermutationState.symbolicCharacters,
         ligandsAtNewSymmetryPositions
@@ -612,7 +636,11 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     }
   }
 
-  auto oldStateTuple = std::make_tuple(std::move(_ranking), std::move(_cache), std::move(_assignmentOption));
+  auto oldStateTuple = std::make_tuple(
+    std::move(_ranking),
+    std::move(_cache),
+    std::move(_assignmentOption)
+  );
 
   // Overwrite the class state
   _ranking = std::move(newRanking);

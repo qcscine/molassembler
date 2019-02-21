@@ -174,10 +174,11 @@ void Molecule::Impl::_propagateGraphChange() {
     return;
   }
 
-  /* In the other case, we have to recheck absolutely everywhere. If ranking
-   * was affected and the stereopermutator has a set assignment, we need to find
-   * the assignment that the previous ranking represented spatially in the new
-   * set of assignments and assign the stereopermutator to that.
+  /* In the other case, we have to recheck absolutely everywhere because of the
+   * IUPAC sequence rules. If a stereopermutator's ranking was affected and the
+   * stereopermutator has a set assignment, we then need to find the assignment
+   * that the previous ranking represented spatially in the new set of
+   * assignments and assign the stereopermutator to that.
    */
 
   GraphAlgorithms::updateEtaBonds(_adjacencies.inner());

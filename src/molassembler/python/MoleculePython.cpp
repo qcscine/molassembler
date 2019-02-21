@@ -5,6 +5,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/operators.h"
+#include "OptionalPython.h"
 
 #include "molassembler/Molecule.h"
 #include "molassembler/OuterGraph.h"

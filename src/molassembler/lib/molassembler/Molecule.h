@@ -5,11 +5,6 @@
  *
  * Contains the Molecule class declaration, which is the central class of the
  * library.
- *
- * @todo
- * - Dynamism of Eta bond type is not implemented. Under molecule edits, bonds
- *   may become or cease to be eta bond types, and this is not checked for
- *   and appropriately altered in the graph.
  */
 
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H

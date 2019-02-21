@@ -220,6 +220,8 @@ void write(
   const Scine::Utils::PositionCollection& positions
 ) {
   auto data = exchangeFormat(molecule, positions);
+
+  // TODO Utils throws if bond information is supplied but the required format doesnt store it. Where to fix?
   Utils::ChemicalFileHandler::write(filename, data.first, data.second);
 }
 

@@ -67,24 +67,53 @@ struct PermutationState {
 
 //!@name Static member functions
 //!@{
-  /*! Stably re-sort ranked ligand indices in decreasing set size
+  /*!
+   * @brief Stably re-sort ranked ligand indices in decreasing set size
    *
    * Necessary to avoid treating e.g. AAB and ABB separately, although the
    * resulting assignments are identical.
    *
-   * Example: rankedLigands: {5, 8}, {3}, {1, 2, 4}
-   * Result: {1, 2, 4}, {5, 8}, {3}
+   * Example:
+   * @verbatim
+   * rankedLigands = {5, 8}, {3}, {1, 2, 4}
+   * canonicalize(rankedLigands) = {1, 2, 4}, {5, 8}, {3}
+   * @endverbatim
    */
   static RankingInformation::RankedLigandsType canonicalize(
     RankingInformation::RankedLigandsType rankedLigands
   );
 
-  //! Condense ligand ranking information into canonical characters for symbolic computation
+  /*!
+   * @brief Condense ligand ranking information into canonical characters for
+   *   symbolic computation
+   *
+   * Use the output of canonicalize here as input:
+   *
+   * Example:
+   * @verbatim
+   * rankedLigands = {5, 8}, {3}, {1, 2, 4}
+   * canonical = canonicalize(rankedLigands) = {1, 2, 4}, {5, 8}, {3}
+   * transferToSymbolicCharacetrs(canonical) = A, A, A, B, B, C
+   * @endverbatim
+   */
   static std::vector<char> transferToSymbolicCharacters(
     const RankingInformation::RankedLigandsType& canonicalLigands
   );
 
-  //! Make ligand-index based ligands self-referential within canonical ligands
+  /*!
+   * @brief Make ligand-index based links self-referential within canonical
+   *   ligands
+   *
+   * Example:
+   * @verbatim
+   * links = {indexPair = {5, 8}}
+   *
+   * self-refential idx: 0  1  2    3  4    5
+   * canonicalLigands = {1, 2, 4}, {5, 8}, {3} (this is output from canonicalize)
+   *
+   * selfReferentialTransform(links, canonicalLigands) = {3, 4}
+   * @endverbatim
+   */
   static stereopermutation::Stereopermutation::LinksSetType selfReferentialTransform(
     const std::vector<LinkInformation>& rankingLinks,
     const RankingInformation::RankedLigandsType& canonicalLigands
@@ -96,6 +125,11 @@ struct PermutationState {
    * Generates a mapping from ligand indices to symmetry positions according to
    * the ranking character distribution to symmetry positions of an assignment
    * (its characters member) and any defined links between symmetry positions.
+   *
+   * @code{.cpp}
+   * auto mapping = generateLigandToSymmetryPosition(...);
+   * unsigned symmetryPositionOfLigandFour = mapping.at(4u);
+   * @endcode
    */
   static std::vector<unsigned> generateLigandToSymmetryPositionMap(
     const stereopermutation::Stereopermutation& assignment,
@@ -106,6 +140,11 @@ struct PermutationState {
    * @brief Generates a flat mapping from symmetry positions to ligand indices
    *
    * Generates exactly the inverse map to generateLigandToSymmetryPositionMap
+   *
+   * @code{cpp}
+   * auto mapping = generateSymmetryPositionToLigandMap(...);
+   * unsigned ligandIndexAtSymmetryPositionFive = mapping.at(5u);
+   * @endcode
    */
   static std::vector<unsigned> generateSymmetryPositionToLigandMap(
     const stereopermutation::Stereopermutation& assignment,
