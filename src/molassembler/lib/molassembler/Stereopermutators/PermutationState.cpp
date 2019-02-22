@@ -61,7 +61,6 @@ PermutationState::PermutationState(
 
   permutations = stereopermutation::uniquesWithWeights(
     stereopermutation::Stereopermutation {
-      symmetry,
       symbolicCharacters,
       selfReferentialLinks
     },

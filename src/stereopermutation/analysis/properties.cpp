@@ -150,7 +150,6 @@ int main(int argc, char* argv[]) {
 
     // Generate the assignment
     Stereopermutation base {
-      symmetryName,
       charVec,
       links
     };

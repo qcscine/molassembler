@@ -793,7 +793,7 @@ struct NumUnlinkedTestFunctor {
 
       // Cross-check with constexpr hasMultiple
       bool constexprHasMultiple = constexprProperties::hasMultipleUnlinkedStereopermutations<SymmetryClass>(i);
-      if(constexprResult > 1 != constexprHasMultiple) {
+      if((constexprResult > 1) != constexprHasMultiple) {
         std::cout << "Mismatch between constexpr count and constexpr "
           << "hasMultiple unlinked ligands for "
           << Symmetry::name(SymmetryClass::name) << " and "
@@ -804,7 +804,7 @@ struct NumUnlinkedTestFunctor {
 
       // Cross-check with dynamic hasMultiple
       bool dynamicHasMultiple = properties::hasMultipleUnlinkedStereopermutations(SymmetryClass::name, i);
-      if(constexprResult > 1 != dynamicHasMultiple) {
+      if((constexprResult > 1) != dynamicHasMultiple) {
         std::cout << "Mismatch between constexpr count and dynamic "
           << "hasMultiple unlinked ligands for "
           << Symmetry::name(SymmetryClass::name) << " and "

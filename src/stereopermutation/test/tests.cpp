@@ -45,7 +45,6 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
 BOOST_AUTO_TEST_CASE( stereopermutationInstantiation ) {
   for(const auto& symmetryName: Symmetry::allNames) {
     Stereopermutation testStereopermutation(
-      symmetryName,
       std::vector<char>(
         Symmetry::size(symmetryName),
         'A'
@@ -57,7 +56,6 @@ BOOST_AUTO_TEST_CASE( stereopermutationInstantiation ) {
 BOOST_AUTO_TEST_CASE( stereopermutation_basics ) {
   // Constructors
   Stereopermutation instanceWithBondedLigands(
-    Symmetry::Name::Octahedral,
     {'A', 'B', 'C', 'D', 'E', 'F'},
     {
       std::make_pair(0,1),
@@ -116,7 +114,6 @@ BOOST_AUTO_TEST_CASE( stereopermutation_basics ) {
 
 BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
   Stereopermutation single {
-    Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'A', 'A', 'A'},
     {
       std::make_pair(0,1),
@@ -146,7 +143,6 @@ BOOST_AUTO_TEST_CASE( columnSmallerConsistency ) {
 
 BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
   Stereopermutation testCase {
-    Symmetry::Name::Octahedral,
     {'A', 'A', 'C', 'D', 'B', 'B'},
     {
       std::make_pair(0, 5),
@@ -196,7 +192,6 @@ BOOST_AUTO_TEST_CASE( rotationCorrectness ) {
 
 BOOST_AUTO_TEST_CASE( octahedralSymmetryCorrectness ) {
   Stereopermutation octahedralInstance(
-    Symmetry::Name::Octahedral,
     {'A', 'B', 'C', 'D', 'E', 'F'}
   );
 
@@ -230,8 +225,8 @@ void run_tests_with_counts(
 
     // instantiate
     Stereopermutation stereopermutation = pairs.empty()
-      ? Stereopermutation(symmetryName, characters)
-      : Stereopermutation(symmetryName, characters, pairs);
+      ? Stereopermutation(characters)
+      : Stereopermutation(characters, pairs);
 
     // The count of uniques in the tests are all without trans-arranged pairs!
     auto unique = uniquesWithWeights(
@@ -268,7 +263,6 @@ void run_tests_with_counts(
 
 BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
   Stereopermutation a {
-    Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
       std::make_pair(2, 3),
@@ -277,7 +271,6 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
     }
   };
   Stereopermutation b {
-    Symmetry::Name::Octahedral,
     {'A', 'A', 'B', 'A', 'B', 'B'},
     {
       std::make_pair(3, 5),
@@ -296,7 +289,6 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
    * reordered op pairs. Will evaluate == but also < w/ current impl.
    */
   Stereopermutation c {
-    Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
       std::make_pair(2, 3),
@@ -305,7 +297,6 @@ BOOST_AUTO_TEST_CASE( individual_bugfixes ) {
     }
   };
   Stereopermutation d {
-    Symmetry::Name::Octahedral,
     {'A', 'A', 'A', 'B', 'B', 'B'},
     {
       std::make_pair(1, 4),
@@ -833,10 +824,7 @@ BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
         ) == nIdentical
       );
 
-      const Stereopermutation initialStereopermutation {
-        symmetryName,
-        characters
-      };
+      const Stereopermutation initialStereopermutation {characters};
 
       const unsigned uniquesCount = uniques(initialStereopermutation, symmetryName).size();
 

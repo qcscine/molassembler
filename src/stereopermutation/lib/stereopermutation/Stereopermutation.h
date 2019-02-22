@@ -89,32 +89,21 @@ public:
   // Do not default instantiate
   Stereopermutation() = delete;
   /*!
-   * Constructs an Stereopermutation from a list of ligand characters.
+   * @brief Constructs an Stereopermutation from a list of ligand characters.
    *
-   * \param passSymmetryName The name of the employed symmetry.
    * \param passCharacters A vector of chars signifying abstract ligands.
-   *
-   * \throws If size of passSymmetryName does not match the number of
-   *   characters in debug builds
    */
-  Stereopermutation(
-    Symmetry::Name passSymmetryName [[gnu::unused]],
-    std::vector<char> passCharacters
-  );
+  Stereopermutation(std::vector<char> passCharacters);
   /*!
-   * Construct an Stereopermutation from a list of ligand characters and a list of
-   * bonded indices referencing the ligand characters.
+   * @brief Construct an Stereopermutation from a list of ligand characters and
+   *   a list of bonded indices referencing the ligand characters.
    *
    * \param passSymmetryName The name of the employed symmetry.
    * \param passCharacters A vector of chars signifying abstract ligands.
    * \param passLinks A vector of pairs. Describes which ligand characters
    *  are bonded to one another.
-   *
-   * \throws If size of passSymmetryName does not match the number of
-   *   characters in debug builds
    */
   Stereopermutation(
-    Symmetry::Name passSymmetryName [[gnu::unused]],
     std::vector<char> passCharacters,
     LinksSetType passLinks
   );

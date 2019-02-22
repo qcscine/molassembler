@@ -618,7 +618,6 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
       // Create a new assignment with those characters
       auto trialStereopermutation = stereopermutation::Stereopermutation(
-        newSymmetry,
         newStereopermutationCharacters,
         newPermutationState.selfReferentialLinks
       );

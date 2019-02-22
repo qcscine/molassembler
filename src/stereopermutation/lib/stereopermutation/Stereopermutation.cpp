@@ -20,24 +20,15 @@ namespace stereopermutation {
 
 /* Public members */
 /*  Constructors */
-Stereopermutation::Stereopermutation(
-  const Symmetry::Name passSymmetryName,
-  std::vector<char> passCharacters
-) : characters(std::move(passCharacters))
-{
-  assert(characters.size() == Symmetry::size(passSymmetryName));
-}
+Stereopermutation::Stereopermutation(std::vector<char> passCharacters)
+  : characters(std::move(passCharacters)) {}
 
 Stereopermutation::Stereopermutation(
-  const Symmetry::Name passSymmetryName,
   std::vector<char> passCharacters,
   LinksSetType passLinks
 ) : characters(std::move(passCharacters)),
     links(std::move(passLinks))
 {
-  // make sure the number of characters matches the current symmetry
-  assert(characters.size() == Symmetry::size(passSymmetryName));
-
   /* make sure all links are properly self-referential, i.e. only contain valid
    * indices to the characters
    */
@@ -192,6 +183,8 @@ typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
 std::set<Stereopermutation> Stereopermutation::generateAllRotations(
   const Symmetry::Name& symmetryName
 ) const {
+  assert(characters.size() == Symmetry::size(symmetryName));
+
   return _generateAllRotations(
     [](
       const Stereopermutation& /* a */,
@@ -208,6 +201,8 @@ boost::optional<bool> Stereopermutation::isEnantiomer(
   const Stereopermutation& other,
   const Symmetry::Name& symmetryName
 ) const {
+  assert(characters.size() == Symmetry::size(symmetryName));
+
   /* Generate the mirror image of *this and check whether it is rotationally
    * superimposable with other.
    *
