@@ -116,9 +116,7 @@ template<
 > constexpr ArrayType<T, size> iotaHelper(
   std::index_sequence<Inds...> /* inds */
 ) {
-  return ArrayType<T, size> {
-    Inds...
-  };
+  return ArrayType<T, size> { static_cast<T>(Inds)...  };
 }
 
 } // namespace detail

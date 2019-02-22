@@ -155,7 +155,7 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
    */
   if(_assignmentOption) {
     _cache.symmetryPositionMap = PermutationState::generateLigandToSymmetryPositionMap(
-      _cache.permutations.assignments.at(
+      _cache.permutations.stereopermutations.at(
         _cache.feasiblePermutations.at(
           _assignmentOption.value()
         )
@@ -591,11 +591,11 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     if(
       situation == PropagationSituation::RankingChange
       && (
-        newPermutationState.permutations.assignments.size()
-        <= _cache.permutations.assignments.size()
+        newPermutationState.permutations.stereopermutations.size()
+        <= _cache.permutations.stereopermutations.size()
       )
     ) {
-      const auto& currentStereopermutation = _cache.permutations.assignments.at(
+      const auto& currentStereopermutation = _cache.permutations.stereopermutations.at(
         _cache.feasiblePermutations.at(
           _assignmentOption.value()
         )
@@ -627,8 +627,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
 
       // Find out which of the new assignments has a rotational equivalent
-      for(unsigned i = 0; i < newPermutationState.permutations.assignments.size(); ++i) {
-        if(allTrialRotations.count(newPermutationState.permutations.assignments.at(i)) > 0) {
+      for(unsigned i = 0; i < newPermutationState.permutations.stereopermutations.size(); ++i) {
+        if(allTrialRotations.count(newPermutationState.permutations.stereopermutations.at(i)) > 0) {
           newStereopermutation = i;
           break;
         }
@@ -1041,7 +1041,7 @@ std::vector<
      *  (position in symmetry) -> atom index
      */
     auto symmetryPositionToLigandIndexMap = PermutationState::generateSymmetryPositionToLigandMap(
-      _cache.permutations.assignments.at(
+      _cache.permutations.stereopermutations.at(
         _cache.feasiblePermutations.at(
           _assignmentOption.value()
         )
@@ -1133,7 +1133,7 @@ unsigned AtomStereopermutator::Impl::numAssignments() const {
 }
 
 unsigned AtomStereopermutator::Impl::numStereopermutations() const {
-  return _cache.permutations.assignments.size();
+  return _cache.permutations.stereopermutations.size();
 }
 
 void AtomStereopermutator::Impl::setSymmetry(

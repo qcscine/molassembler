@@ -50,9 +50,6 @@ std::vector<char> positionGroups(Name symmetryName);
 //! Generate the inverse rotation to a symmetry's rotation
 std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation);
 
-//! Generate a symmetry's occupation sequence that causes all tetrahedra to invert
-std::vector<unsigned> invertedSequence(Name symmetryName);
-
 /*!
  * Gets the coordinates of an indexOptional for a specific symmetry.
  * As was defined previously, boost::none is a placeholder for the central atom,
@@ -193,19 +190,19 @@ SymmetryTransitionGroup selectBestTransitionMappings(
 );
 
 /*!
- * Calculates the number of assignments in a specific symmetry and a number of
- * identical ligands.
+ * @brief Calculates the number of stereopermutations in a specific symmetry
+ *   and a number of identical ligands.
  */
-unsigned numUnlinkedAssignments(
+unsigned numUnlinkedStereopermutations(
   Name symmetry,
   unsigned nIdenticalLigands
 );
 
 /*!
- * Calculates if there are multiple unlinked assignments in a specific symmetry
- * for a number of identical ligands.
+ * @brief Calculates if there are multiple unlinked stereopermutations in a
+ *   specific symmetry for a number of identical ligands.
  */
-bool hasMultipleUnlinkedAssignments(
+bool hasMultipleUnlinkedStereopermutations(
   Name symmetry,
   unsigned nIdenticalLigands
 );

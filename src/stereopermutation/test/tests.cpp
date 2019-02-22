@@ -16,6 +16,7 @@
 #include <numeric>
 
 #include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/DynamicProperties.h"
 
 #include "stereopermutation/GenerateUniques.h"
 #include "stereopermutation/Composites.h"
@@ -41,7 +42,7 @@ std::ostream& operator << (std::ostream& os, const std::vector<T>& vector) {
 }
 
 // create instances of all symmetries with monodentate ligands
-BOOST_AUTO_TEST_CASE( assignmentInstantiation ) {
+BOOST_AUTO_TEST_CASE( stereopermutationInstantiation ) {
   for(const auto& symmetryName: Symmetry::allNames) {
     Stereopermutation testStereopermutation(
       symmetryName,
@@ -53,7 +54,7 @@ BOOST_AUTO_TEST_CASE( assignmentInstantiation ) {
   }
 }
 
-BOOST_AUTO_TEST_CASE( assignment_basics ) {
+BOOST_AUTO_TEST_CASE( stereopermutation_basics ) {
   // Constructors
   Stereopermutation instanceWithBondedLigands(
     Symmetry::Name::Octahedral,
@@ -228,23 +229,23 @@ void run_tests_with_counts(
     std::tie(characters, pairs, expectedUnique) = tuple;
 
     // instantiate
-    Stereopermutation assignment = pairs.empty()
+    Stereopermutation stereopermutation = pairs.empty()
       ? Stereopermutation(symmetryName, characters)
       : Stereopermutation(symmetryName, characters, pairs);
 
     // The count of uniques in the tests are all without trans-arranged pairs!
     auto unique = uniquesWithWeights(
-      assignment,
+      stereopermutation,
       symmetryName,
       true // remove trans arranged pairs
     );
 
-    BOOST_CHECK(unique.assignments.size() == expectedUnique );
+    BOOST_CHECK(unique.stereopermutations.size() == expectedUnique );
 
-    if(unique.assignments.size() != expectedUnique) {
+    if(unique.stereopermutations.size() != expectedUnique) {
       std::cout << "Mismatch: Expected " << expectedUnique
-        << " assignments for: \n" << assignment << ", got "
-        << unique.assignments.size() << " assignments:" << std::endl;
+        << " stereopermutations for: \n" << stereopermutation << ", got "
+        << unique.stereopermutations.size() << " stereopermutations:" << std::endl;
     }
 
     std::cout << "{";
@@ -256,9 +257,9 @@ void run_tests_with_counts(
     }
     std::cout << "} " << Symmetry::name(symmetryName) << std::endl;
 
-    for(unsigned i = 0; i < unique.assignments.size(); i++) {
+    for(unsigned i = 0; i < unique.stereopermutations.size(); i++) {
       std::cout << "Weight " << unique.weights[i] << ": "
-        << unique.assignments[i] << std::endl;
+        << unique.stereopermutations[i] << std::endl;
     }
 
     std::cout << "----------------------------------------" << std::endl;
@@ -809,4 +810,49 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
     e.permutations() == 2,
     "Expected 2 permutations, got " << e.permutations()
   );
+}
+
+BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
+  // Crosscheck number of unlinked stereopermutations with chemical_symmetries
+  for(const Symmetry::Name symmetryName : Symmetry::allNames) {
+    std::vector<char> characters (Symmetry::size(symmetryName));
+    for(unsigned nIdentical = 1; nIdentical < Symmetry::size(symmetryName); ++nIdentical) {
+      // Populate characters for construction of a Stereopermutation
+      for(unsigned i = 0; i < characters.size(); ++i) {
+        characters.at(i) = 'A' + std::max(
+          0,
+          static_cast<int>(i) - static_cast<int>(nIdentical) + 1
+        );
+      }
+
+      assert(
+        std::count(
+          std::begin(characters),
+          std::end(characters),
+          'A'
+        ) == nIdentical
+      );
+
+      const Stereopermutation initialStereopermutation {
+        symmetryName,
+        characters
+      };
+
+      const unsigned uniquesCount = uniques(initialStereopermutation, symmetryName).size();
+
+      // chemical_symmetries prediction
+      const unsigned chemicalSymmetriesCount = Symmetry::properties::numUnlinkedStereopermutations(
+        symmetryName,
+        nIdentical
+      );
+
+      BOOST_CHECK_MESSAGE(
+        uniquesCount == chemicalSymmetriesCount,
+        "stereopermutation and chemical_symmetries differ in unique "
+        << "stereopermutation counts for " << Symmetry::name(symmetryName)
+        << " and " << nIdentical << " ligands: " << uniquesCount << " vs "
+        << chemicalSymmetriesCount
+      );
+    }
+  }
 }

@@ -107,10 +107,10 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
       return false;
     }
 
-    const auto& aPermutation = aPermutator.getPermutationState().permutations.assignments.at(
+    const auto& aPermutation = aPermutator.getPermutationState().permutations.stereopermutations.at(
       *aPermutator.indexOfPermutation()
     );
-    const auto& bPermutation = bPermutator.getPermutationState().permutations.assignments.at(
+    const auto& bPermutation = bPermutator.getPermutationState().permutations.stereopermutations.at(
       *bPermutator.indexOfPermutation()
     );
 
@@ -154,7 +154,7 @@ Molecule enantiomer(const Molecule& a) {
     }
 
     // Find the current permutation
-    auto currentStereopermutation = permutator.getPermutationState().permutations.assignments.at(
+    auto currentStereopermutation = permutator.getPermutationState().permutations.stereopermutations.at(
       *permutator.indexOfPermutation()
     );
 
@@ -162,7 +162,7 @@ Molecule enantiomer(const Molecule& a) {
     currentStereopermutation.applyRotation(mirrorPermutation);
 
     // Find an existing permutation that is superposable with the mirror permutation
-    const auto& permutationsList = permutator.getPermutationState().permutations.assignments;
+    const auto& permutationsList = permutator.getPermutationState().permutations.stereopermutations;
     auto matchingPermutationIter = std::find_if(
       std::begin(permutationsList),
       std::end(permutationsList),

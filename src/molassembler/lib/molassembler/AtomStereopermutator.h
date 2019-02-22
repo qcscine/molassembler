@@ -30,7 +30,7 @@ namespace Scine {
 namespace molassembler {
 /* Forward declarations */
 struct RankingInformation;
-struct PermutationState;
+class PermutationState;
 
 namespace DistanceGeometry {
 

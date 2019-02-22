@@ -42,6 +42,28 @@ std::vector<unsigned> rotate(
   return rotated;
 }
 
+template<typename SymmetryClass>
+struct LockstepTest {
+  static bool value() {
+    return Symmetry::nameIndex(SymmetryClass::name) == static_cast<
+      std::underlying_type_t<Symmetry::Name>
+    >(SymmetryClass::name);
+  }
+};
+
+BOOST_AUTO_TEST_CASE(symmetryTypeAndPositionInEnumLockstep) {
+  BOOST_CHECK_MESSAGE(
+    temple::all_of(
+      temple::TupleType::map<
+        Symmetry::data::allSymmetryDataTypes,
+        LockstepTest
+      >(),
+      temple::Identity {}
+    ),
+    "Not all symmetries have the same order in Name and allSymmetryDataTypes"
+  );
+}
+
 BOOST_AUTO_TEST_CASE(symmetryDataConstructedCorrectly) {
   BOOST_TEST_REQUIRE(Symmetry::symmetryData().size() == Symmetry::nSymmetries);
 
@@ -724,61 +746,6 @@ std::string getGraphvizNodeName(const Symmetry::Name& symmetryName) {
   return stringName;
 }
 
-#ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-template<typename SymmetryClassFrom, typename SymmetryClassTo>
-std::enable_if_t<
-  SymmetryClassFrom::size + 1 == SymmetryClassTo::size,
-  void
-> doWriteIfAdjacent() {
-  auto constexprMapping = allMappings.at(
-    static_cast<unsigned>(SymmetryClassFrom::name),
-    static_cast<unsigned>(SymmetryClassTo::name)
-  ).value();
-
-  unsigned multiplicity = constexprMapping.mappings.size();
-
-  std::cout << "  " << getGraphvizNodeName(SymmetryClassFrom::name)
-    << " -> " << getGraphvizNodeName(SymmetryClassTo::name)
-    << " [";
-
-  if(multiplicity <= 3) {
-    std::vector<std::string> repeatColor (
-      multiplicity,
-      "black"
-    );
-
-    std::cout << "color=\"" << temple::condense(repeatColor, ":invis:") << "\"";
-  } else {
-    std::cout << "color=\"" << "black" << "\"";
-    std::cout << ", style=\"dashed\"";
-  }
-
-  std::cout << ", label=\""
-    << temple::Math::round(constexprMapping.angularDistortion, 2);
-
-  if(multiplicity > 3) {
-    std::cout << " (" << multiplicity << ")";
-  }
-
-  std::cout << "\"];\n";
-}
-
-template<typename SymmetryClassFrom, typename SymmetryClassTo>
-std::enable_if_t<
-  SymmetryClassFrom::size + 1 != SymmetryClassTo::size,
-  void
-> doWriteIfAdjacent() {}
-
-template<typename SymmetryClassFrom, typename SymmetryClassTo>
-struct WriteLigandMapping {
-  static bool value() {
-    doWriteIfAdjacent<SymmetryClassFrom, SymmetryClassTo>();
-    return true;
-  }
-};
-#endif
-
-
 BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   // Full test of rotation algorithm equivalency for all symmetries
   BOOST_CHECK_MESSAGE(
@@ -793,12 +760,6 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
   );
 
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
-  // Write out all mappings
-  temple::TupleType::mapAllPairs<
-    Symmetry::data::allSymmetryDataTypes,
-    WriteLigandMapping
-  >();
-
   // Test transitions generation/evaluation algorithm equivalency for all
   BOOST_CHECK_MESSAGE(
     temple::all_of(
@@ -814,24 +775,41 @@ BOOST_AUTO_TEST_CASE(constexprPropertiesTests) {
 #endif
 }
 
-#ifdef USE_CONSTEXPR_NUM_UNLINKED_ASSIGNMENTS
-
 template<typename SymmetryClass>
 struct NumUnlinkedTestFunctor {
   static bool value() {
-    auto constexprResults = temple::toSTL(
-      Symmetry::allNumUnlinkedAssignments.at(
-        static_cast<unsigned>(SymmetryClass::name)
-      )
-    );
+    for(unsigned i = 1; i < SymmetryClass::size; ++i) {
+      unsigned constexprResult = constexprProperties::numUnlinkedStereopermutations<SymmetryClass>(i);
 
-    /* Value for 0 is equal to value for 1, so calculate one less.
-     */
-    for(unsigned i = 0; i < constexprResults.size() - 1; ++i) {
-      if(
-        constexprResults.at(i)
-        != Symmetry::properties::numUnlinkedAssignments(SymmetryClass::name, i + 1)
-      ) {
+      unsigned dynamicResult = properties::numUnlinkedStereopermutations(
+        SymmetryClass::name,
+        i
+      );
+
+      if(constexprResult != dynamicResult) {
+        std::cout << "Mismatch for " << Symmetry::name(SymmetryClass::name) << " and " << i << " identical ligands between constexpr and dynamic number of unlinked: " << constexprResult << " vs. " << dynamicResult << "\n";
+        return false;
+      }
+
+      // Cross-check with constexpr hasMultiple
+      bool constexprHasMultiple = constexprProperties::hasMultipleUnlinkedStereopermutations<SymmetryClass>(i);
+      if(constexprResult > 1 != constexprHasMultiple) {
+        std::cout << "Mismatch between constexpr count and constexpr "
+          << "hasMultiple unlinked ligands for "
+          << Symmetry::name(SymmetryClass::name) << " and "
+          << i << " identical ligands: " << constexprResult << " and "
+          << std::boolalpha << constexprHasMultiple << "\n";
+        return false;
+      }
+
+      // Cross-check with dynamic hasMultiple
+      bool dynamicHasMultiple = properties::hasMultipleUnlinkedStereopermutations(SymmetryClass::name, i);
+      if(constexprResult > 1 != dynamicHasMultiple) {
+        std::cout << "Mismatch between constexpr count and dynamic "
+          << "hasMultiple unlinked ligands for "
+          << Symmetry::name(SymmetryClass::name) << " and "
+          << i << " identical ligands: " << constexprResult << " and "
+          << std::boolalpha << dynamicHasMultiple << "\n";
         return false;
       }
     }
@@ -840,30 +818,25 @@ struct NumUnlinkedTestFunctor {
   }
 };
 
-BOOST_AUTO_TEST_CASE(numUnlinkedTests) {
+BOOST_AUTO_TEST_CASE(numUnlinkedAlgorithms) {
   BOOST_CHECK_MESSAGE(
     temple::all_of(
       temple::TupleType::map<
         Symmetry::data::allSymmetryDataTypes,
         NumUnlinkedTestFunctor
-      >()
+      >(),
+      temple::Identity {}
     ),
-    "There is a discrepancy between constexpr and dynamic num unlinked "
-    "assignments generation!"
+    "Not all numbers of unlinked stereopermutations match across constexpr and dynamic"
+    " algorithms"
   );
 
-  for(const auto& symmetryName : Symmetry::allNames) {
-    std::cout << Symmetry::name(symmetryName) << ": {";
-    for(unsigned i = 0; i < Symmetry::size(symmetryName); ++i) {
-      std::cout << Symmetry::properties::numUnlinkedAssignments(symmetryName, i);
-      if(i != Symmetry::size(symmetryName) - 1) {
-        std::cout << ", ";
-      }
-    }
-    std::cout << "}\n";
-  }
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::Linear, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::Bent, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::TrigonalPlanar, 0) == 1);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::Tetrahedral, 0) == 2);
+  BOOST_CHECK(properties::numUnlinkedStereopermutations(Symmetry::Name::Octahedral, 0) == 30);
 }
-#endif
 
 static_assert(
   nSymmetries == std::tuple_size<data::allSymmetryDataTypes>::value,

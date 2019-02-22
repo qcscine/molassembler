@@ -44,12 +44,12 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   const boost::optional<unsigned>& removedIndexOption = boost::none
 );
 
-#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
-//! All precomputed values for hasMultipleUnlinkedAssignments
+#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
+//! All precomputed values for hasMultipleUnlinkedStereopermutations
 extern const temple::Array<
   temple::DynamicArray<bool, constexprProperties::maxSymmetrySize>,
   nSymmetries
-> allHasMultipleUnlinkedAssignments;
+> allHasMultipleUnlinkedStereopermutations;
 #endif
 
 //! Run-time cache
@@ -59,7 +59,7 @@ extern temple::MinimalCache<
 > hasMultipleUnlinkedCache;
 
 //! Cached access to multiple unlinked values
-bool hasMultipleUnlinkedAssignments(
+bool hasMultipleUnlinkedStereopermutations(
   Symmetry::Name symmetryName,
   unsigned nIdenticalLigands
 );

@@ -8,10 +8,8 @@
  * rotations, extract rotation multiplicities, calculate angular and chiral
  * distortions between pairs of symmetries, etc.
  *
- * @todo
- * - remove hashIndexList in favor of the bitset hashing algorithm for
- *   constexpr speed
- * - remove unused stuff
+ * @todo I don't think the constexpr ligand loss mappings are instantiated or
+ * tested ANYWHERE
  */
 
 #ifndef INCLUDE_SYMMETRY_INFORMATION_CONSTEXPR_PROPERTIES_H
@@ -236,38 +234,7 @@ constexpr double getTetrahedronVolume(
 }
 
 /*!
- * Calculates the angular distortion between a pair of symmetries and a given
- * index mapping between them that specifies how symmetry positions are mapped
- * between the two.
- */
-template<typename SymmetryClassFrom, typename SymmetryClassTo>
-constexpr double calculateAngleDistortion(
-  const ArrayType<
-    unsigned,
-    temple::Math::max(
-      SymmetryClassFrom::size,
-      SymmetryClassTo::size
-    )
-  >& indexMapping
-) {
-  double angularDistortion = 0;
-
-  for(unsigned i = 0; i < SymmetryClassFrom::size; ++i) {
-    for(unsigned j = i + 1; j < SymmetryClassFrom::size; ++j) {
-      angularDistortion += temple::Math::abs(
-        SymmetryClassFrom::angleFunction(i, j)
-        - SymmetryClassTo::angleFunction(
-          indexMapping.at(i),
-          indexMapping.at(j)
-        )
-      );
-    }
-  }
-
-  return angularDistortion;
-}
-
-/*! Calculates distortion caused by a symmetry transition mapping
+ * @brief Calculates distortion caused by a symmetry transition mapping
  *
  * @param indexMapping An integer sequence specifying how indices from the
  *   source symmetry are mapped to the target symmetry
@@ -448,47 +415,8 @@ constexpr unsigned maxRotations() {
   return temple::reduce(
     symmetryRotationPeriodicities,
     1u,
-    std::multiplies<unsigned>()
+    std::multiplies<>()
   );
-}
-
-/*!
- * This is a perfect hash for small arrays containing numbers from 0-9. It
- * essentially interprets the array as a positive integer, e.g.:
- *
- *   {4, 8, 9, 0, 4} -> 48904
- *
- * Why? Because numeric comparisons in sets are probably faster than
- * lexicographical comparisons between vectors.
- */
-template<typename UnsignedType, size_t size>
-constexpr auto hashIndexList(const temple::Array<unsigned, size>& indexList) {
-  constexpr unsigned maxDigitsStoreable = temple::Math::floor(
-    temple::Math::log10(
-      static_cast<double>(
-        std::numeric_limits<UnsignedType>::max()
-      )
-    )
-  );
-
-  static_assert(
-    size <= maxDigitsStoreable,
-    "The unsigned type with which hashIndexList was instantiated cannot hold as"
-    " many digits as the array to hash holds:"
-  );
-
-  UnsignedType hash = 0;
-  unsigned tenPowers = 1;
-
-  for(unsigned i = 0; i < size; ++i) {
-    if(indexList.at(i) > 9) {
-      throw "hashIndexList: Index list contains numbers greater than 9!";
-    }
-    hash += tenPowers * indexList.at(i);
-    tenPowers *= 10;
-  }
-
-  return hash;
 }
 
 // Some helper types for use in generateAllRotations
@@ -506,13 +434,13 @@ using RotationsSetType = temple::DynamicSet<
 template<typename SymmetryClass>
 using ChainStructuresArrayType = temple::DynamicArray<
   IndicesList<SymmetryClass>,
-  maxRotations<SymmetryClass>() * 2 // TODO factor is entirely arbitrary
+  maxRotations<SymmetryClass>() * 2 // factor is entirely arbitrary
 >;
 
 template<typename SymmetryClass>
 using ChainArrayType = temple::DynamicArray<
   unsigned,
-  maxRotations<SymmetryClass>() * 2 // TODO factor is entirely arbitrary
+  maxRotations<SymmetryClass>() * 2 // factor is entirely arbitrary
 >;
 
 //! Generates all rotations of a sequence of indices within a symmetry group
@@ -730,25 +658,24 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 
   /* NOTE: From here the algorithm is identical to symmetryTransitionMappings
    * save that symmetryTo and symmetryFrom are swapped in all occasions
-   * and that inPlaceNextPermutation is only called on the subset excluding the
-   * last position (the one that is added / deleted).
    */
-
-  temple::DynamicSet<
-    IndexListStorageType,
-    temple::Math::factorial(SymmetryClassFrom::size)
-  > encounteredMappings;
+  temple::Bitset<temple::Math::factorial(SymmetryClassFrom::size)> encounteredMappings;
 
   temple::floating::ExpandedRelativeEqualityComparator<double> comparator {
     floatingPointEqualityTolerance
   };
 
   do {
-    if(!encounteredMappings.contains(hashIndexList<IndexListStorageType>(indexMapping))) {
-      double angularDistortion = calculateAngleDistortion<
-        SymmetryClassTo,
-        SymmetryClassFrom
-      >(indexMapping);
+    auto mapped = symPosMapping(indexMapping);
+    auto storageVersion = temple::permutationIndex(mapped);
+
+    if(!encounteredMappings.test(storageVersion)) {
+      double angularDistortion = calculateAngularDistortion(
+        indexMapping,
+        SymmetryClassTo::size,
+        SymmetryClassTo::angleFunction,
+        SymmetryClassFrom::angleFunction
+      );
 
       double chiralDistortion = calculateChiralDistortion<
         SymmetryClassTo,
@@ -785,16 +712,12 @@ constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
       auto allRotations = generateAllRotations<SymmetryClassTo>(indexMapping);
 
       for(const auto& rotation : allRotations) {
-        auto hashed = hashIndexList<IndexListStorageType>(rotation);
-
-        if(!encounteredMappings.contains(hashed)) {
-          encounteredMappings.insert(hashed);
-        }
+        encounteredMappings.set(
+          temple::permutationIndex(rotation)
+        );
       }
     }
-  } while(
-    temple::inPlaceNextPermutation(indexMapping)
-  );
+  } while(temple::inPlaceNextPermutation(indexMapping));
 
   return MappingsReturnType(
     std::move(bestMappings),
@@ -832,40 +755,38 @@ std::enable_if_t<
   return temple::Optional<MappingsReturnType> {};
 }
 
-/*! Calculate stereopermutations for an unlinked symmetry
+/*!
+ * @brief Calculate stereopermutations for an unlinked symmetry
  *
  * @tparam Symmetry The symmetry for which to calculate this property.
  * @param nIdenticalLigands The number of ligands whose ranking is identical.
  *   E.g. 0 generates ABCDEF, 3 generates AAABCD, etc. for octahedral.
  */
-template<typename Symmetry>
-constexpr unsigned numUnlinkedAssignments(
+template<typename SymmetryClass>
+constexpr unsigned numUnlinkedStereopermutations(
   const unsigned nIdenticalLigands
 ) {
   unsigned count = 1;
 
-  auto indices = startingIndexSequence<Symmetry>();
+  auto indices = startingIndexSequence<SymmetryClass>();
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
   }
 
-  temple::DynamicSet<
-    unsigned,
-    temple::Math::factorial(Symmetry::size)
-  > rotations;
+  temple::Bitset<temple::Math::factorial(SymmetryClass::size)> rotations;
 
-  auto initialRotations = generateAllRotations<Symmetry>(indices);
+  auto initialRotations = generateAllRotations<SymmetryClass>(indices);
 
   for(const auto& rotation : initialRotations) {
-    rotations.insert(hashIndexList<unsigned>(rotation));
+    rotations.set(temple::permutationIndex(rotation));
   }
 
   while(temple::inPlaceNextPermutation(indices)) {
-    if(!rotations.contains(hashIndexList<unsigned>(indices))) {
-      auto allRotations = generateAllRotations<Symmetry>(indices);
+    if(!rotations.test(temple::permutationIndex(indices))) {
+      auto allRotations = generateAllRotations<SymmetryClass>(indices);
       for(const auto& rotation : allRotations) {
-        rotations.insert(hashIndexList<unsigned>(rotation));
+        rotations.set(temple::permutationIndex(rotation));
       }
 
       ++count;
@@ -875,38 +796,35 @@ constexpr unsigned numUnlinkedAssignments(
   return count;
 }
 
-/*! Calculates whether a symmetry has multiple stereopermutations
+/*!
+ * @brief Calculates whether a symmetry has multiple stereopermutations
  *
  * @tparam Symmetry The symmetry for which to calculate this property.
  * @param nIdenticalLigands The number of ligands whose ranking is identical.
  *   E.g. 0 generates ABCDEF, 3 generates AAABCD, etc. for octahedral.
  */
-template<typename Symmetry>
-constexpr bool hasMultipleUnlinkedAssignments(
-  const unsigned nIdenticalLigands
-) {
-  auto indices = startingIndexSequence<Symmetry>();
+template<typename SymmetryClass>
+constexpr bool hasMultipleUnlinkedStereopermutations(const unsigned nIdenticalLigands) {
+  if(nIdenticalLigands == SymmetryClass::size) {
+    return false;
+  }
+
+  auto indices = startingIndexSequence<SymmetryClass>();
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
   }
 
-  temple::DynamicSet<
-    unsigned,
-    temple::Math::min(
-      100u,
-      temple::Math::factorial(Symmetry::size)
-    )
-  > rotations;
+  temple::Bitset<temple::Math::factorial(SymmetryClass::size)> rotations;
 
-  auto initialRotations = generateAllRotations<Symmetry>(indices);
+  auto initialRotations = generateAllRotations<SymmetryClass>(indices);
 
   for(const auto& rotation : initialRotations) {
-    rotations.insert(hashIndexList<unsigned>(rotation));
+    rotations.set(temple::permutationIndex(rotation));
   }
 
   while(temple::inPlaceNextPermutation(indices)) {
-    if(!rotations.contains(hashIndexList<unsigned>(indices))) {
+    if(!rotations.test(temple::permutationIndex(indices))) {
       return true;
     }
   }

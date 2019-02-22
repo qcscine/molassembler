@@ -77,10 +77,10 @@
 
 /*! If defined, all possible unlinked permutations are generated at compile-time
  *
- * If USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS is defined, a data
- * structure containing whether there are multiple assignments for a given
- * symmetry depending on the number of identical ligands is generated for all
- * symmetries at compile time.
+ * If USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS is defined, a data
+ * structure containing whether there are multiple stereopermutations for a
+ * given symmetry depending on the number of identical ligands is generated for
+ * all symmetries at compile time.
  *
  * E.g. for Tetrahedral:
  *
@@ -95,5 +95,5 @@
  * data at a cost of O(1), or from DynamicProperties at a cost of O(S * S!),
  * where S is the size of the symmetry.
  */
-#define USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
+#define USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
 #endif

@@ -118,18 +118,19 @@ const boost::optional<const properties::SymmetryTransitionGroup&> getMapping(
   return mappingsCache.getOption(cacheKey);
 }
 
-#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
+#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
 template<typename Symmetry>
-struct makeAllHasUnlinkedAssignmentsFunctor {
+struct makeAllHasUnlinkedStereopermutationsFunctor {
   static constexpr auto value() {
     temple::DynamicArray<bool, constexprProperties::maxSymmetrySize> nums;
 
     /* Value for 0 is equal to value for 1, so calculate one less. When all
-     * are equal, there is obviously only one assignment, no need to calculate
+     * are equal, there is obviously only one stereopermutation, so there is no
+     * need to calculate.
      */
     for(unsigned i = 0; i < Symmetry::size - 1; ++i) {
       nums.push_back(
-        constexprProperties::hasMultipleUnlinkedAssignments<Symmetry>(i + 1)
+        constexprProperties::hasMultipleUnlinkedStereopermutations<Symmetry>(i + 1)
       );
     }
 
@@ -140,9 +141,9 @@ struct makeAllHasUnlinkedAssignmentsFunctor {
 constexpr temple::Array<
   temple::DynamicArray<bool, constexprProperties::maxSymmetrySize>,
   nSymmetries
-> allHasMultipleUnlinkedAssignments = temple::TupleType::map<
+> allHasMultipleUnlinkedStereopermutations = temple::TupleType::map<
   data::allSymmetryDataTypes,
-  makeAllHasUnlinkedAssignmentsFunctor
+  makeAllHasUnlinkedStereopermutationsFunctor
 >();
 #endif
 
@@ -151,14 +152,15 @@ temple::MinimalCache<
   std::vector<bool>
 > hasMultipleUnlinkedCache;
 
-bool hasMultipleUnlinkedAssignments(
+bool hasMultipleUnlinkedStereopermutations(
   const Symmetry::Name symmetryName,
   unsigned nIdenticalLigands
 ) {
   if(nIdenticalLigands == Symmetry::size(symmetryName)) {
-    return true;
+    return false;
   }
 
+  // Alias a call with 0 to a call with 1 since that is the first calculated value
   if(nIdenticalLigands == 0) {
     ++nIdenticalLigands;
   }
@@ -167,9 +169,9 @@ bool hasMultipleUnlinkedAssignments(
     return hasMultipleUnlinkedCache.get(symmetryName).at(nIdenticalLigands - 1);
   }
 
-#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_ASSIGNMENTS
+#ifdef USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS
   // Generate the cache element from constexpr non-STL data
-  const auto& dynArrRef = allHasMultipleUnlinkedAssignments.at(
+  const auto& dynArrRef = allHasMultipleUnlinkedStereopermutations.at(
     static_cast<unsigned>(symmetryName)
   );
 
@@ -183,10 +185,10 @@ bool hasMultipleUnlinkedAssignments(
   return stlMapped.at(nIdenticalLigands - 1);
 #else
   // Generate the cache element using dynamic properties
-  std::vector<bool> unlinkedAssignments;
+  std::vector<bool> unlinkedStereopermutations;
   for(unsigned i = 0; i < Symmetry::size(symmetryName) - 1; ++i) {
-    unlinkedAssignments.push_back(
-      properties::hasMultipleUnlinkedAssignments(
+    unlinkedStereopermutations.push_back(
+      properties::hasMultipleUnlinkedStereopermutations(
         symmetryName,
         i + 1
       )
@@ -195,10 +197,10 @@ bool hasMultipleUnlinkedAssignments(
 
   hasMultipleUnlinkedCache.add(
     symmetryName,
-    unlinkedAssignments
+    unlinkedStereopermutations
   );
 
-  return unlinkedAssignments.at(nIdenticalLigands - 1);
+  return unlinkedStereopermutations.at(nIdenticalLigands - 1);
 #endif
 }
 

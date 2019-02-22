@@ -58,7 +58,7 @@ public:
   //! Changes the assignment of the stereopermutator
   void assign(boost::optional<unsigned> assignment);
 
-  //! Assigns the Stereopermutator randomly using relative assignment weights
+  //! Assigns the Stereopermutator randomly using relative stereopermutation weights
   void assignRandom();
 
   /**

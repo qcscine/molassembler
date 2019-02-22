@@ -20,11 +20,11 @@ namespace Scine {
 namespace stereopermutation {
 
 bool hasTransArrangedPairs(
-  const Stereopermutation& assignment,
+  const Stereopermutation& stereopermutation,
   const Symmetry::Name symmetryName
 ) {
   // for every pair in links
-  for(const auto& indexPair : assignment.links) {
+  for(const auto& indexPair : stereopermutation.links) {
     if(
       Symmetry::angleFunction(symmetryName)(
         indexPair.first,
@@ -46,7 +46,7 @@ std::vector<Stereopermutation> uniques(
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
    * could, insted of keeping a full set of all rotations of all unique
-   * assignments, just do pair-wise comparisons between a new assignment and
+   * stereopermutations, just do pair-wise comparisons between a new stereopermutation and
    * all existing unique ones. However, one would be doing a lot of repeated
    * work, since the pair-wise comparison (see isRotationallySuperimposable)
    * just generates rotations of one and compares those with the other. It is
@@ -56,17 +56,17 @@ std::vector<Stereopermutation> uniques(
    */
 
   // make a copy of initial so we can modify it by permutation
-  Stereopermutation assignment = initial;
+  Stereopermutation stereopermutation = initial;
 
   // ensure we start with the lowest permutation
-  assignment.lowestPermutation();
+  stereopermutation.lowestPermutation();
 
-  /* in case we want to skip trans pairs, the initial assignment must also not
+  /* in case we want to skip trans pairs, the initial stereopermutation must also not
    * have any trans spanning pairs
    */
   if(removeTransSpanningGroups) {
-    while(hasTransArrangedPairs(assignment, symmetryName)) {
-      bool hasAnotherPermutation = assignment.nextPermutation();
+    while(hasTransArrangedPairs(stereopermutation, symmetryName)) {
+      bool hasAnotherPermutation = stereopermutation.nextPermutation();
       if(!hasAnotherPermutation) {
         /* This can happen, e.g. in square-planar AAAB with
          * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
@@ -77,35 +77,35 @@ std::vector<Stereopermutation> uniques(
     }
   }
 
-  // Generate all rotations of the initial assignment
-  auto rotationsSet = assignment.generateAllRotations(symmetryName);
+  // Generate all rotations of the initial stereopermutation
+  auto rotationsSet = stereopermutation.generateAllRotations(symmetryName);
 
-  // The lowest rotation of the passed assignment is the first unique assignment
+  // The lowest rotation of the passed stereopermutation is the first unique stereopermutation
   std::vector<Stereopermutation> uniqueStereopermutations {*rotationsSet.begin()};
 
   // go through all possible permutations of columns
-  while(assignment.nextPermutation()) {
+  while(stereopermutation.nextPermutation()) {
     if( // skip permutations with trans pairs if desired
       removeTransSpanningGroups
-      && hasTransArrangedPairs(assignment, symmetryName)
+      && hasTransArrangedPairs(stereopermutation, symmetryName)
     ) {
       continue;
     }
 
-    // is the current assignment not contained within the set of rotations?
+    // is the current stereopermutation not contained within the set of rotations?
     if(
-      rotationsSet.count(assignment) == 0
+      rotationsSet.count(stereopermutation) == 0
     ) {
-      // if so, it is a unique assignment, generate all rotations
-      auto assignmentRotations = assignment.generateAllRotations(symmetryName);
+      // if so, it is a unique stereopermutation, generate all rotations
+      auto stereopermutationRotations = stereopermutation.generateAllRotations(symmetryName);
 
-      // add the smallest assignment from the generated set to the list of uniques
-      uniqueStereopermutations.push_back(*assignmentRotations.begin());
+      // add the smallest stereopermutation from the generated set to the list of uniques
+      uniqueStereopermutations.push_back(*stereopermutationRotations.begin());
 
       // and add its rotations to the set
       rotationsSet.insert(
-        assignmentRotations.begin(),
-        assignmentRotations.end()
+        stereopermutationRotations.begin(),
+        stereopermutationRotations.end()
       );
 
     }
@@ -121,7 +121,7 @@ StereopermutationsWithWeights uniquesWithWeights(
 ) {
   /* NOTE: This algorithm may seem wasteful in terms of memory (after all, one
    * could, insted of keeping a full set of all rotations of all unique
-   * assignments, just do pair-wise comparisons between a new assignment and
+   * stereopermutations, just do pair-wise comparisons between a new stereopermutation and
    * all existing unique ones. However, one would be doing a lot of repeated
    * work, since the pair-wise comparison (see isRotationallySuperimposable)
    * just generates rotations of one and compares those with the other. It is
@@ -141,17 +141,17 @@ StereopermutationsWithWeights uniquesWithWeights(
   };
 
   // make a copy of initial so we can modify it by permutation
-  Stereopermutation assignment = initial;
+  Stereopermutation stereopermutation = initial;
 
   // ensure we start with the lowest permutation
-  assignment.lowestPermutation();
+  stereopermutation.lowestPermutation();
 
-  /* in case we want to skip trans pairs, the initial assignment must also not
+  /* in case we want to skip trans pairs, the initial stereopermutation must also not
    * have any trans spanning pairs
    */
   if(removeTransSpanningGroups) {
-    while(hasTransArrangedPairs(assignment, symmetryName)) {
-      bool hasAnotherPermutation = assignment.nextPermutation();
+    while(hasTransArrangedPairs(stereopermutation, symmetryName)) {
+      bool hasAnotherPermutation = stereopermutation.nextPermutation();
       if(!hasAnotherPermutation) {
         /* This can happen, e.g. in square-planar AAAB with
          * links: {0, 3}, {1, 3}, {2, 3}, every possible permutation contains
@@ -162,15 +162,15 @@ StereopermutationsWithWeights uniquesWithWeights(
     }
   }
 
-  auto initialRotations = assignment.generateAllRotations(symmetryName);
+  auto initialRotations = stereopermutation.generateAllRotations(symmetryName);
   const Stereopermutation& lowestRotation = *initialRotations.begin();
 
   StereopermutationsWithWeights data;
 
   data.weights.reserve(40);
-  data.assignments.reserve(40);
+  data.stereopermutations.reserve(40);
 
-  data.assignments.push_back(lowestRotation);
+  data.stereopermutations.push_back(lowestRotation);
   data.weights.push_back(1);
 
   std::unordered_map<Stereopermutation, unsigned, boost::hash<Stereopermutation>> rotationCounterMap;
@@ -182,18 +182,18 @@ StereopermutationsWithWeights uniquesWithWeights(
     );
   }
 
-  while(assignment.nextPermutation()) {
+  while(stereopermutation.nextPermutation()) {
     if( // skip permutations with trans pairs if desired
       removeTransSpanningGroups
-      && hasTransArrangedPairs(assignment, symmetryName)
+      && hasTransArrangedPairs(stereopermutation, symmetryName)
     ) {
       continue;
     }
 
-    auto findIter = rotationCounterMap.find(assignment);
+    auto findIter = rotationCounterMap.find(stereopermutation);
     if(findIter == rotationCounterMap.end()) {
-      auto rotations = assignment.generateAllRotations(symmetryName);
-      data.assignments.push_back(*rotations.begin());
+      auto rotations = stereopermutation.generateAllRotations(symmetryName);
+      data.stereopermutations.push_back(*rotations.begin());
       data.weights.push_back(1);
 
       for(const auto& rotation : rotations) {
@@ -208,7 +208,7 @@ StereopermutationsWithWeights uniquesWithWeights(
   }
 
   data.weights.shrink_to_fit();
-  data.assignments.shrink_to_fit();
+  data.stereopermutations.shrink_to_fit();
 
   return data;
 }

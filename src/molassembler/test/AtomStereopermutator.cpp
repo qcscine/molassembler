@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
 
   auto trySymmetryPropagation = [](const Symmetry::Name source) -> bool {
     assert(Symmetry::size(source) != Symmetry::constexprProperties::maxSymmetrySize);
-    assert(Symmetry::hasMultipleUnlinkedAssignments(source, 0));
+    assert(Symmetry::hasMultipleUnlinkedStereopermutations(source, 0));
 
     Molecule priorMol {Utils::ElementType::Ru, Utils::ElementType::H, BondType::Single};
 
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
       stereopermutatorOption->numStereopermutations() > 1
       && stereopermutatorOption->numAssignments() > 1,
       "There are not more than one stereopermutations and assignments for a "
-      "symmetry that was expected to have them per hasMultipleUnlinkedAssignments"
+      "symmetry that was expected to have them per hasMultipleUnlinkedStereopermutations"
     );
 
     // Assign the stereopermutator at random
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(ligandAdditionPropagatedStateSuperposable) {
   for(const Symmetry::Name name : Symmetry::allNames) {
     if(
       Symmetry::size(name) != Symmetry::constexprProperties::maxSymmetrySize
-      && Symmetry::hasMultipleUnlinkedAssignments(name, 0u)
+      && Symmetry::hasMultipleUnlinkedStereopermutations(name, 0u)
     ) {
       if(trySymmetryPropagation(name)) {
         ++testedCount;

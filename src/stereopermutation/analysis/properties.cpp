@@ -165,12 +165,12 @@ int main(int argc, char* argv[]) {
       << "Characters: " << chars << nl
       << "Links: " << temple::stringify(links) << nl << nl;
 
-    for(unsigned i = 0; i < uniques.assignments.size(); ++i) {
+    for(unsigned i = 0; i < uniques.stereopermutations.size(); ++i) {
       std::cout << "Weight " << uniques.weights[i] << ": "
-        << uniques.assignments[i]
+        << uniques.stereopermutations[i]
         << ", link angles: ";
 
-      for(const auto& linkPair : uniques.assignments[i].links) {
+      for(const auto& linkPair : uniques.stereopermutations[i].links) {
         std::cout << (
           180 * Symmetry::angleFunction(symmetryName)(linkPair.first, linkPair.second) / M_PI
         ) << " ";
@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
       std::cout << nl;
     }
 
-    std::cout << uniques.assignments.size() << " assignments\n";
+    std::cout << uniques.stereopermutations.size() << " stereopermutations\n";
   }
 
   return 0;

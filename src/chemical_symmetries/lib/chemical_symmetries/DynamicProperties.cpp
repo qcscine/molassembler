@@ -4,21 +4,20 @@
  */
 
 #include "chemical_symmetries/DynamicProperties.h"
-#include "chemical_symmetries/Symmetries.h"
 
+#include "boost/functional/hash.hpp"
 #include <Eigen/Dense>
-
 #include "temple/Adaptors/Transform.h"
-#include "temple/constexpr/Numeric.h"
 #include "temple/Functional.h"
 #include "temple/GroupBy.h"
+#include "temple/Permutations.h"
 #include "temple/Variadic.h"
 #include "temple/VectorView.h"
+#include "temple/constexpr/Numeric.h"
 
-/* TODO
- * - Consider unordered_set for rotation contains, using the hash function from
- *   constexpr work
- */
+#include "chemical_symmetries/Symmetries.h"
+
+#include <unordered_set>
 
 namespace Scine {
 
@@ -165,62 +164,14 @@ std::vector<unsigned> inverseRotation(const std::vector<unsigned>& rotation) {
   return permutation;
 }
 
-std::vector<unsigned> invertedSequence(const Symmetry::Name symmetryName) {
-  auto occupation = temple::iota<unsigned>(Symmetry::size(symmetryName));
-
-  auto getCoordinates = [](
-    const Symmetry::Name symmetry,
-    const boost::optional<unsigned>& indexOption
-  ) -> Eigen::Vector3d {
-    if(indexOption) {
-      return symmetryData().at(symmetry).coordinates.at(indexOption.value());
-    }
-
-    return {0, 0, 0};
-  };
-
-  auto mapping = [&occupation](const boost::optional<unsigned>& indexOption) -> boost::optional<unsigned> {
-    if(indexOption) {
-      return occupation.at(indexOption.value());
-    }
-
-    return boost::none;
-  };
-
-  // Brute-force approach
-  while(
-    !temple::all_of(
-      Symmetry::tetrahedra(symmetryName),
-      [&](const auto& tetrahedronDefinition) -> bool {
-        return getTetrahedronVolume(
-          getCoordinates(symmetryName, mapping(tetrahedronDefinition[0])),
-          getCoordinates(symmetryName, mapping(tetrahedronDefinition[1])),
-          getCoordinates(symmetryName, mapping(tetrahedronDefinition[2])),
-          getCoordinates(symmetryName, mapping(tetrahedronDefinition[3]))
-        ) < 0;
-      }
-    ) && std::next_permutation(
-      std::begin(occupation),
-      std::end(occupation)
-    )
-  ) {}
-
-  return occupation;
-}
-
 Eigen::Vector3d getCoordinates(
   const Symmetry::Name symmetryName,
   const boost::optional<unsigned>& indexInSymmetryOption
 ) {
-  assert(
-    (
-      indexInSymmetryOption
-      && indexInSymmetryOption.value() < Symmetry::size(symmetryName)
-    ) || !indexInSymmetryOption
-  );
-
   if(indexInSymmetryOption) {
-    return Symmetry::symmetryData().at(symmetryName).coordinates.at(
+    assert(indexInSymmetryOption.value() < Symmetry::size(symmetryName));
+
+    return symmetryData().at(symmetryName).coordinates.at(
       indexInSymmetryOption.value()
     );
   }
@@ -271,33 +222,6 @@ double calculateAngleDistortion(
   }
 
   return angularDistortion;
-}
-
-unsigned long hashIndexList(const std::vector<unsigned>& indexList) {
-  constexpr unsigned maxDigitsStoreable = temple::Math::floor(
-    temple::Math::log10(
-      static_cast<double>(
-        std::numeric_limits<unsigned long>::max()
-      )
-    )
-  );
-
-  if(indexList.size() > maxDigitsStoreable) {
-    throw std::logic_error("hashIndexList cannot hash such a long index list");
-  }
-
-  long unsigned hash = 0;
-  unsigned tenPowers = 1;
-
-  for(const auto index: indexList) {
-    if(index > 9) {
-      throw std::logic_error("hashIndexList: Index list contains numbers greater than 9!");
-    }
-    hash += tenPowers * index;
-    tenPowers *= 10;
-  }
-
-  return hash;
 }
 
 boost::optional<unsigned> propagateIndexOptionalThroughMapping(
@@ -365,6 +289,10 @@ std::set<
   const Symmetry::Name symmetryName,
   const std::vector<unsigned>& indices
 ) {
+  /* Replacing set here with unordered_set does not yield any speed
+   * improvements. The hash function is comparatively too expensive for the
+   * small number of elements in the set to set it apart from the tree.
+   */
   assert(Symmetry::size(symmetryName) == indices.size());
 
   // Idea: Tree-like expansion of all possible combinations of rotations.
@@ -490,6 +418,10 @@ DistortionInfo::DistortionInfo(
     chiralDistortion(passChiralDistortion)
 {}
 
+std::size_t hash_value(const std::vector<unsigned>& permutation) {
+  return temple::permutationIndex(permutation);
+}
+
 std::vector<DistortionInfo> symmetryTransitionMappings(
   const Symmetry::Name symmetryFrom,
   const Symmetry::Name symmetryTo
@@ -535,8 +467,10 @@ std::vector<DistortionInfo> symmetryTransitionMappings(
   std::vector<DistortionInfo> distortions;
 
   // Need to keep track of rotations of mappings to avoid repetition
-  std::set<
-    std::vector<unsigned>
+  using PermutationType = std::vector<unsigned>;
+  std::unordered_set<
+    PermutationType,
+    boost::hash<PermutationType>
   > encounteredSymmetryMappings;
 
   /* Using std::next_permutation generates all possible mappings!
@@ -714,25 +648,24 @@ SymmetryTransitionGroup selectBestTransitionMappings(
   );
 }
 
-
-unsigned numUnlinkedAssignments(
+unsigned numUnlinkedStereopermutations(
   const Symmetry::Name symmetry,
   const unsigned nIdenticalLigands
 ) {
   unsigned count = 1;
+
   auto indices = detail::range(0u, Symmetry::size(symmetry));
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
   }
 
-  std::set<decltype(indices)> rotations;
-
   auto initialRotations = generateAllRotations(symmetry, indices);
 
-  for(const auto& rotation : initialRotations) {
-    rotations.insert(rotation);
-  }
+  std::set<decltype(indices)> rotations {
+    std::make_move_iterator(std::begin(initialRotations)),
+    std::make_move_iterator(std::end(initialRotations))
+  };
 
   while(std::next_permutation(indices.begin(), indices.end())) {
     if(rotations.count(indices) == 0) {
@@ -748,25 +681,28 @@ unsigned numUnlinkedAssignments(
   return count;
 }
 
-bool hasMultipleUnlinkedAssignments(
+bool hasMultipleUnlinkedStereopermutations(
   const Symmetry::Name symmetry,
   const unsigned nIdenticalLigands
 ) {
+  if(nIdenticalLigands == Symmetry::size(symmetry)) {
+    return false;
+  }
+
   auto indices = detail::range(0u, Symmetry::size(symmetry));
 
   for(unsigned i = 0; i < nIdenticalLigands; ++i) {
     indices.at(i) = 0;
   }
 
-  std::set<decltype(indices)> rotations;
-
   auto initialRotations = generateAllRotations(symmetry, indices);
 
-  for(const auto& rotation : initialRotations) {
-    rotations.insert(rotation);
-  }
+  std::set<decltype(indices)> rotations {
+    std::make_move_iterator(std::begin(initialRotations)),
+    std::make_move_iterator(std::end(initialRotations))
+  };
 
-  while(std::next_permutation(indices.begin(), indices.end())) {
+  while(temple::inplace::next_permutation(indices)) {
     if(rotations.count(indices) == 0) {
       return true;
     }

@@ -87,12 +87,12 @@ PermutationState::PermutationState(
       )
     ) > 0
   ) {
-    feasiblePermutations.reserve(permutations.assignments.size());
-    const unsigned P = permutations.assignments.size();
+    feasiblePermutations.reserve(permutations.stereopermutations.size());
+    const unsigned P = permutations.stereopermutations.size();
     for(unsigned i = 0; i < P; ++i) {
       if(
         isNotObviouslyImpossibleStereopermutation(
-          permutations.assignments.at(i),
+          permutations.stereopermutations.at(i),
           canonicalLigands,
           coneAngles,
           ranking,
@@ -105,7 +105,7 @@ PermutationState::PermutationState(
     }
     feasiblePermutations.shrink_to_fit();
   } else {
-    feasiblePermutations = temple::iota<unsigned>(permutations.assignments.size());
+    feasiblePermutations = temple::iota<unsigned>(permutations.stereopermutations.size());
   }
 }
 
