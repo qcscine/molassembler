@@ -47,7 +47,8 @@ constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
  */
 namespace data {
 
-/*! Linear symmetry
+/*!
+ * @brief Linear symmetry
  *
  * @verbatim
  *
@@ -83,7 +84,8 @@ struct Linear {
   static constexpr std::array<unsigned, 0> mirror {};
 };
 
-/*! Bent symmetry
+/*!
+ * @brief Bent symmetry
  *
  * @verbatim
  *
@@ -125,7 +127,8 @@ struct Bent {
   static constexpr std::array<unsigned, 0> mirror {};
 };
 
-/*! Trigonal planar symmetry
+/*!
+ * @brief Trigonal planar symmetry
  *
  * @verbatim
  *
@@ -171,7 +174,8 @@ struct TrigonalPlanar {
   static constexpr std::array<unsigned, 0> mirror {};
 };
 
-/*! A Tetrahedral symmetry missing a ligand
+/*!
+ * @brief A Tetrahedral symmetry missing a ligand
  *
  * This symmetry is widely called trigonal pyramidal, but this is clearly a
  * misnomer. Trigonal pyramidal should denote the symmetry that is trigonal
@@ -218,7 +222,8 @@ struct CutTetrahedral {
   static constexpr std::array<unsigned, 3> mirror {{0, 2, 1}};
 };
 
-/*! A T-shaped symmetry
+/*!
+ * @brief A T-shaped symmetry
  *
  * @verbatim
  *
@@ -261,7 +266,8 @@ struct TShaped {
   static constexpr std::array<unsigned, 0> mirror {};
 };
 
-/*! A tetrahedral symmetry
+/*!
+ * @brief A tetrahedral symmetry
  *
  * @verbatim
  *
@@ -310,7 +316,8 @@ struct Tetrahedral {
   static constexpr std::array<unsigned, 4> mirror {{0, 2, 1, 3}};
 };
 
-/*! A square planar symmetry
+/*!
+ * @brief A square planar symmetry
  *
  * @verbatim
  *
@@ -360,7 +367,8 @@ struct SquarePlanar {
   static constexpr std::array<unsigned, 0> mirror {};
 };
 
-/*! A seesaw symmetry
+/*!
+ * @brief A seesaw symmetry
  *
  * @verbatim
  *
@@ -424,7 +432,8 @@ struct Seesaw {
   static constexpr std::array<unsigned, 4> mirror {{0, 2, 1, 3}};
 };
 
-/*! A trigonal pyramidal symmetry = trig. pl. + an axial ligand
+/*!
+ * @brief A trigonal pyramidal symmetry = trig. pl. + an axial ligand
  *
  * A trigonal planar symmetry + an axial ligand.
  *
@@ -453,10 +462,10 @@ struct TrigonalPyramidal {
     if(std::max(a, b) != 3) {
       // -> smaller < 2, this means either 0,1 0,2 1,2 axial
       return temple::Math::toRadians<double>(120);
-    } else {
-      // -> smaller < 3, this means {1,2,3}, 3
-      return M_PI / 2;
     }
+
+    // -> smaller < 3, this means {1,2,3}, 3
+    return M_PI / 2;
   }
   static constexpr std::array<temple::Vector, 4> coordinates {{
     {1, 0, 0},
@@ -479,7 +488,8 @@ struct TrigonalPyramidal {
   static constexpr std::array<unsigned, 4> mirror {{0, 2, 1, 3}};
 };
 
-/*! A square pyramidal symmetry
+/*!
+ * @brief A square pyramidal symmetry
  *
  * @verbatim
  *
@@ -549,7 +559,8 @@ struct SquarePyramidal {
   static constexpr std::array<unsigned, 5> mirror {{1, 0, 3, 2, 4}};
 };
 
-/*! A trigonal bipyramidal symmetry
+/*!
+ * @brief A trigonal bipyramidal symmetry
  *
  * @verbatim
  *
@@ -579,16 +590,20 @@ struct TrigonalBiPyramidal {
     if(larger < 3) {
       // -> smaller < 2, this means either 0,1 0,2 1,2 axial
       return temple::Math::toRadians<double>(120);
-    } else if(larger == 3) {
+    }
+
+    if(larger == 3) {
       // -> smaller < 3, this means {1,2,3}, 3
       return M_PI / 2;
-    } else if(smaller < 3) {
+    }
+
+    if(smaller < 3) {
       // now, larger must be 4 (process of elimination), so if a is not 3:
       return M_PI / 2;
-    } else {
-      // only case left: 3,4
-      return M_PI;
     }
+
+    // only case left: 3,4
+    return M_PI;
   }
   static constexpr std::array<temple::Vector, 5> coordinates {{
     {1, 0, 0},
@@ -616,7 +631,8 @@ struct TrigonalBiPyramidal {
   static constexpr std::array<unsigned, 5> mirror {{0, 2, 1, 3, 4}};
 };
 
-/*! A pentagonal planar symmetry
+/*!
+ * @brief A pentagonal planar symmetry
  *
  * @verbatim
  *
@@ -662,7 +678,8 @@ struct PentagonalPlanar {
   static constexpr std::array<unsigned, 0> mirror {};
 };
 
-/*! An octahedral symmetry.
+/*!
+ * @brief An octahedral symmetry.
  *
  * @verbatim
  *
@@ -746,7 +763,8 @@ struct Octahedral {
   static constexpr std::array<unsigned, 6> mirror {{1, 0, 3, 2, 4, 5}};
 };
 
-/*! A trigonal prismatic symmetry
+/*!
+ * @brief A trigonal prismatic symmetry
  *
  * @verbatim
  *
@@ -819,7 +837,8 @@ struct TrigonalPrismatic {
   static constexpr std::array<unsigned, 6> mirror {{2, 1, 0, 5, 4, 3}};
 };
 
-/*! A pentagonal pyramidal symmetry
+/*!
+ * @brief A pentagonal pyramidal symmetry
  *
  * @verbatim
  *
@@ -894,7 +913,8 @@ struct PentagonalPyramidal {
   static constexpr std::array<unsigned, 6> mirror {{0, 4, 3, 2, 1, 5}};
 };
 
-/*! A pentagonal bipyramidal symmetry
+/*!
+ * @brief A pentagonal bipyramidal symmetry
  *
  * @verbatim
  *
@@ -983,7 +1003,8 @@ struct PentagonalBiPyramidal {
   static constexpr std::array<unsigned, 7> mirror {{0, 4, 3, 2, 1, 5, 6}};
 };
 
-/*! A square antiprismatic symmetry
+/*!
+ * @brief A square antiprismatic symmetry
  *
  * @verbatim
  *

@@ -39,7 +39,7 @@ class AngstromWrapper;
 class OuterGraph;
 struct RankingInformation;
 class AtomStereopermutator;
-class PermutationState;
+struct PermutationState;
 
 namespace DistanceGeometry {
 class SpatialModel;

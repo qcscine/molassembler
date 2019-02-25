@@ -6,8 +6,9 @@
 #include "molassembler/Stereopermutators/AtomStereopermutatorImpl.h"
 
 #include "boost/range/join.hpp"
-#include "chemical_symmetries/Properties.h"
 #include "chemical_symmetries/DynamicProperties.h"
+#include "chemical_symmetries/Properties.h"
+#include "chemical_symmetries/TauCriteria.h"
 #include "CyclicPolygons.h"
 #include <Eigen/Dense>
 #include "stereopermutation/GenerateUniques.h"
@@ -764,39 +765,28 @@ void AtomStereopermutator::Impl::fit(
 
     std::sort(std::begin(angles), std::end(angles));
 
-    // Largest angle is beta
-    const double beta = angles.back();
-    // Second-largest angle is alpha
-    const double alpha = angles.at(angles.size() - 2);
-    if(S == 4) {
-      constexpr double theta = temple::Math::toRadians(109.5);
-      const double tau_prime = (
-        (beta - alpha) / (2 * M_PI - theta)
-        + (M_PI - beta) / (M_PI - theta)
-      );
+    const double tau = Symmetry::tau(angles);
 
+    if(S == 4) {
       /* Significance
        * - τ₄' = 0 -> Symmetry is square planar
        * - τ₄' = 0.24 -> Symmetry is seesaw
        * - τ₄' = 1 -> Symmetry is tetrahedral
        */
-      if(tau_prime < 0.12) {
+      if(tau < 0.12) {
         // Symmetry is square planar
         excludeSymmetries.push_back(Symmetry::Name::Seesaw);
         excludeSymmetries.push_back(Symmetry::Name::Tetrahedral);
-      } else if(0.12 <= tau_prime && tau_prime < 0.62) {
+      } else if(0.12 <= tau && tau < 0.62) {
         excludeSymmetries.push_back(Symmetry::Name::SquarePlanar);
         // Symmetry is seesaw
         excludeSymmetries.push_back(Symmetry::Name::Tetrahedral);
-      } else if(0.62 <= tau_prime) {
+      } else if(0.62 <= tau) {
         excludeSymmetries.push_back(Symmetry::Name::SquarePlanar);
         excludeSymmetries.push_back(Symmetry::Name::Seesaw);
         // Symmetry is tetrahedral
       }
     } else if(S == 5) {
-      // Calculate tau as largest angle minus second-largest angle divided by 60°
-      const double tau = (angles.back() - angles.at(angles.size() - 2)) / temple::Math::toRadians(60.0);
-
       /* Significance:
        * - τ₅ = 0 -> Symmetry is square pyramidal
        * - τ₅ = 1 -> Symmetry is trigonal bipyramidal
@@ -835,11 +825,9 @@ void AtomStereopermutator::Impl::fit(
     // Change the symmetry of the AtomStereopermutator
     setSymmetry(symmetryName, graph);
 
-    for(
-      unsigned assignment = 0;
-      assignment < numAssignments();
-      ++assignment
-    ) {
+    const unsigned assignmentCount = numAssignments();
+
+    for(unsigned assignment = 0; assignment < assignmentCount; ++assignment) {
       // Assign the stereopermutator
       assign(assignment);
 
