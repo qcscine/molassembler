@@ -14,7 +14,6 @@ namespace Symmetry {
 namespace detail {
 
 double tauFourPrime(const std::vector<double>& angles) {
-  assert(angles.size() == 4);
   assert(std::is_sorted(std::begin(angles), std::end(angles)));
 
   const double beta = angles.back();
@@ -29,7 +28,6 @@ double tauFourPrime(const std::vector<double>& angles) {
 }
 
 double tauFive(const std::vector<double>& angles) {
-  assert(angles.size() == 5);
   assert(std::is_sorted(std::begin(angles), std::end(angles)));
 
   return (
@@ -48,11 +46,14 @@ double tauFive(const std::vector<double>& angles) {
  * @return τ₄' or τ₅
  */
 double tau(const std::vector<double>& angles) {
-  if(angles.size() == 4) {
+  constexpr unsigned anglesInSymmetryOfSizeFour = temple::Math::factorial(4 - 1);
+  constexpr unsigned anglesInSymmetryOfSizeFive = temple::Math::factorial(5 - 1);
+
+  if(angles.size() == anglesInSymmetryOfSizeFour) {
     return detail::tauFourPrime(angles);
   }
 
-  if(angles.size() == 5) {
+  if(angles.size() == anglesInSymmetryOfSizeFive) {
     return detail::tauFive(angles);
   }
 
