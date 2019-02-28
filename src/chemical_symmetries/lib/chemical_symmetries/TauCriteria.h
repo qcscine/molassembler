@@ -13,6 +13,12 @@ namespace Symmetry {
 
 namespace detail {
 
+constexpr unsigned binomial(const unsigned n, const unsigned k) {
+  return temple::Math::factorial(n) / (
+    temple::Math::factorial(k) * temple::Math::factorial(n - k)
+  );
+}
+
 double tauFourPrime(const std::vector<double>& angles) {
   assert(std::is_sorted(std::begin(angles), std::end(angles)));
 
@@ -46,8 +52,8 @@ double tauFive(const std::vector<double>& angles) {
  * @return τ₄' or τ₅
  */
 double tau(const std::vector<double>& angles) {
-  constexpr unsigned anglesInSymmetryOfSizeFour = temple::Math::factorial(4 - 1);
-  constexpr unsigned anglesInSymmetryOfSizeFive = temple::Math::factorial(5 - 1);
+  constexpr unsigned anglesInSymmetryOfSizeFour = detail::binomial(4, 2);
+  constexpr unsigned anglesInSymmetryOfSizeFive = detail::binomial(5, 2);
 
   if(angles.size() == anglesInSymmetryOfSizeFour) {
     return detail::tauFourPrime(angles);
