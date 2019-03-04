@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Prefix trie of bounded values that tracks sub-tree fullness.
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_BOUNDED_NODE_TRIE_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_BOUNDED_NODE_TRIE_H
 
