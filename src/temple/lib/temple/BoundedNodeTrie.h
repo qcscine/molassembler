@@ -33,10 +33,6 @@ namespace temple {
  * you have explored and which ones might lead to a conformer that is most
  * different from the ones you already have.
  *
- * This class does respect that rotations are periodic and that in a rotation of
- * periodicity four, rotations one and four (in natural indexing) have merely a
- * distance of one and not three.
- *
  * Dihedrals you can exclude from the chain:
  * - Assigned bond stereopermutators (they're fixed, so no point)
  * - Depending on number of rotatable bonds in cycles relative to cycle size

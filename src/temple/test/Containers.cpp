@@ -218,12 +218,8 @@ BOOST_AUTO_TEST_CASE(asdf) {
       BOOST_CHECK(trie.size() == i + 1);
     }
   }
-
-  /* TODO the problem here is that since we choose randomly at junctions with
-   * all children populated, we cannot guarantee that we are generating a new
-   * list when the trie is nearly full.
-   */
   {
+    // Generate new list every time test
     using TrieType = temple::BoundedNodeTrie<std::uint8_t>;
     TrieType::ChoiceList boundaries {6, 4, 2};
     TrieType trie {boundaries};
@@ -234,8 +230,6 @@ BOOST_AUTO_TEST_CASE(asdf) {
     TrieType::ChoiceList list;
     while(trie.size() != trie.capacity()) {
       list = trie.generateNewEntry(chooseFunctor);
-
-      std::cout << "Generated " << temple::stringify(list) << "\n";
 
       BOOST_REQUIRE(listsSet.count(list) == 0);
       listsSet.insert(list);
