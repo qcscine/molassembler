@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Directed conformer generation class and helper functions
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_DIRECTED_CONFORMER_GENERATOR_H
 #define INCLUDE_MOLASSEMBLER_DIRECTED_CONFORMER_GENERATOR_H
 
