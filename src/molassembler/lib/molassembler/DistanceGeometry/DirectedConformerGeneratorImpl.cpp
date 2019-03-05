@@ -1,3 +1,7 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 #include "molassembler/DistanceGeometry/DirectedConformerGeneratorImpl.h"
 
 #include "molassembler/Cycles.h"
@@ -288,6 +292,55 @@ DirectedConformerGenerator::DecisionList
 DirectedConformerGenerator::Impl::generateNewDecisionList() {
   detail::BoundedNodeTrieChooseFunctor<std::uint8_t> chooseFunctor {};
   return _decisionLists.generateNewEntry(chooseFunctor);
+}
+
+outcome::result<Utils::PositionCollection>
+DirectedConformerGenerator::Impl::generateConformation(
+  const DecisionList& decisionList,
+  const DistanceGeometry::Configuration& configuration
+) {
+  const unsigned U = decisionList.size();
+
+  if(U != _decisionLists.bounds().size() || U != _relevantBonds.size()) {
+    throw std::invalid_argument("Passed decision list has wrong length");
+  }
+
+  for(unsigned i = 0; i < U; ++i) {
+    const BondIndex& bondIndex = _relevantBonds.at(i);
+    auto stereoOption = _molecule._pImpl->_stereopermutators.option(bondIndex);
+    assert(stereoOption);
+    stereoOption->assign(decisionList[i]);
+  }
+
+  return Scine::molassembler::generateConformation(_molecule, configuration);
+}
+
+DirectedConformerGenerator::DecisionList
+DirectedConformerGenerator::Impl::getDecisionList(Utils::PositionCollection positions) const {
+  const unsigned U = _decisionLists.bounds().size();
+
+  AngstromWrapper angstromPositions {std::move(positions)};
+
+  assert(_relevantBonds.size() == U);
+
+  DecisionList list(U);
+
+  for(unsigned i = 0; i < U; ++i) {
+    const BondIndex& bondIndex = _relevantBonds.at(i);
+    auto firstAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.first);
+    auto secondAtom = _molecule._pImpl->_stereopermutators.option(bondIndex.first);
+    auto stereoOption = _molecule._pImpl->_stereopermutators.option(bondIndex);
+    assert(firstAtom && secondAtom && stereoOption);
+    stereoOption->fit(angstromPositions, *firstAtom, *secondAtom);
+
+    if(!stereoOption->assigned()) {
+      throw std::logic_error("Assignment of a bond stereopermutator could not be recovered");
+    }
+
+    list.at(i) = *stereoOption->assigned();
+  }
+
+  return list;
 }
 
 } // namespace molassembler

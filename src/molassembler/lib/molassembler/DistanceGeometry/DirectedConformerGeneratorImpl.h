@@ -53,13 +53,12 @@ public:
     return _decisionLists.capacity();
   }
 
-  outcome::result<Utils::PositionCollection> generateConformer(const DecisionList& decisionList) {
-    // TODO
-  }
+  outcome::result<Utils::PositionCollection> generateConformation(
+    const DecisionList& decisionList,
+    const DistanceGeometry::Configuration& configuration
+  );
 
-  DecisionList getDecisionList(Utils::PositionCollection positions) const {
-    // TODO
-  }
+  DecisionList getDecisionList(Utils::PositionCollection positions) const;
 
 private:
   Molecule _molecule;

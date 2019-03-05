@@ -69,8 +69,12 @@ unsigned DirectedConformerGenerator::idealEnsembleSize() const {
   return _pImpl->idealEnsembleSize();
 }
 
-outcome::result<Utils::PositionCollection> DirectedConformerGenerator::generateConformer(const DecisionList& decisionList) {
-  return _pImpl->generateConformer(decisionList);
+outcome::result<Utils::PositionCollection>
+DirectedConformerGenerator::generateConformation(
+  const DecisionList& decisionList,
+  const DistanceGeometry::Configuration& configuration
+) {
+  return _pImpl->generateConformation(decisionList, configuration);
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(Utils::PositionCollection positions) const {

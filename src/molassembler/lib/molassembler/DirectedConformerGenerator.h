@@ -8,6 +8,8 @@
 #define INCLUDE_MOLASSEMBLER_DIRECTED_CONFORMER_GENERATOR_H
 
 #include "molassembler/Types.h"
+#include "molassembler/Conformers.h"
+
 #include "Utils/Typenames.h"
 #include "boost/optional/optional_fwd.hpp"
 #include "boost_outcome/outcome.hpp"
@@ -141,10 +143,29 @@ public:
   //! Number of conformers needed for full ensemble, O(1)
   unsigned idealEnsembleSize() const;
 
-  //! Try to generate a conformer for a particular decision list
-  outcome::result<Utils::PositionCollection> generateConformer(const DecisionList& decisionList);
+  /*!
+   * @brief Try to generate a conformer for a particular decision list
+   *
+   * This is very similar to the free generateConformation function in terms
+   * of what @p configuration will accept.
+   */
+  outcome::result<Utils::PositionCollection> generateConformation(
+    const DecisionList& decisionList,
+    const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
+  );
 
-  //! Infer a decision list from positional information
+  /*!
+   * @brief Infer a decision list from positional information
+   *
+   * @warning This function assumes several things about your supplied positions
+   * - There have only been dihedral changes and no AtomStereopermutator
+   *   assignment changes
+   * - The molecule represented in @p positions has not constutitionally
+   *   rearranged
+   *
+   * @throws std::logic_error If an assignment could not be recovered from
+   *   positions
+   */
   DecisionList getDecisionList(Utils::PositionCollection positions) const;
 //!@}
 
