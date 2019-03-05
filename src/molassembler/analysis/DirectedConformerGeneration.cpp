@@ -99,20 +99,25 @@ int main(int argc, char* argv[]) {
 
   std::cout << "Ideally need " << generator.idealEnsembleSize() << " conformers.\n";
 
+  unsigned maxTries = 3;
+
   unsigned conformerCount = 0;
   while(generator.conformerCount() != generator.idealEnsembleSize()) {
     auto newDecisionList = generator.generateNewDecisionList();
 
+    for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
     auto positionResult = generator.generateConformation(newDecisionList, configuration);
 
-    if(positionResult) {
-      std::cout << "Generated conformer #" << (conformerCount + 1) << "\n";
-      IO::write(
-        filestem + "-"s + std::to_string(conformerCount + 1) + ".mol",
-        mol,
-        positionResult.value()
-      );
-    } else {
+      if(positionResult) {
+        std::cout << "Generated conformer #" << (conformerCount + 1) << ", decision list " << temple::stringify(newDecisionList) << "\n";
+        IO::write(
+          filestem + "-"s + std::to_string(conformerCount + 1) + ".mol",
+          mol,
+          positionResult.value()
+        );
+        break;
+      }
+
       std::cout << "Could not generate decision list " << temple::stringify(newDecisionList) << "\n";
     }
 

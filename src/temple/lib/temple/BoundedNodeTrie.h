@@ -31,13 +31,24 @@ struct BoundedNodeTrie {
 public:
 //!@name Public types
 //!@{
+  //! Type used to represent choices made at each level of the tree
   using ChoiceList = std::vector<ChoiceIndex>;
+  /*!
+   * @brief Function signature needed to choose which child to descend to at a
+   *   level in the tree
+   */
   using ChoosingFunction = std::function<ChoiceIndex(const std::vector<ChoiceIndex>&, const boost::dynamic_bitset<>&)>;
 //!@}
 
-//!@name Special member functions
+//!@name Constructors
 //!@{
   BoundedNodeTrie() = default;
+  /**
+   * @brief Construct an empty trie, setting the upper exclusive bound on
+   *   values at each level
+   *
+   * @param bounds The upper exclusive bound on values at each level.
+   */
   BoundedNodeTrie(ChoiceList bounds) {
     setBounds(std::move(bounds));
   }
@@ -53,10 +64,17 @@ public:
    * This has complexity linear in the size of the boundaries with which the
    * trie was constructed.
    *
+   * @throws std::logic_error If no bounds are set.
+   *
    * @returns Whether anything was inserted. I.e. returns true if @p values
    *   was not yet a member of the set.
    */
   bool insert(const ChoiceList& values) {
+    // Ensure the bounds are set
+    if(_bounds.empty()) {
+      throw std::logic_error("No bounds are set!");
+    }
+
     // Make sure we have a root to insert to
     if(!_root) {
       _establishRoot();
@@ -71,7 +89,23 @@ public:
     return result.insertedSomething;
   }
 
+  /**
+   * @brief Create a new entry by choosing branch at each level of the trie
+   *
+   * @param chooseFunction Function that chooses the branch to descend to at
+   *   each level. The function is supplied a list of viable choices at the
+   *   depth (indicating which parts of the tree are full) and a bitset
+   *   indicating which children exist.
+   *
+   * @throws std::logic_error If the trie is full, i.e. size() == capacity()
+   *
+   * @return The newly generated entry
+   */
   ChoiceList generateNewEntry(const ChoosingFunction& chooseFunction) {
+    if(_bounds.empty()) {
+      throw std::logic_error("No bounds are set!");
+    }
+
     if(!_root) {
       _establishRoot();
     }

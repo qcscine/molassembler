@@ -37,8 +37,10 @@ DirectedConformerGenerator::considerBond(
 }
 
 
-DirectedConformerGenerator::DirectedConformerGenerator(Molecule molecule)
-  : _pImpl(std::make_unique<Impl>(std::move(molecule))) {}
+DirectedConformerGenerator::DirectedConformerGenerator(
+  Molecule molecule,
+  const BondList& bondsToConsider
+) : _pImpl(std::make_unique<Impl>(std::move(molecule), bondsToConsider)) {}
 
 DirectedConformerGenerator::DirectedConformerGenerator(DirectedConformerGenerator&& other) noexcept = default;
 DirectedConformerGenerator& DirectedConformerGenerator::operator = (DirectedConformerGenerator&& other) noexcept = default;

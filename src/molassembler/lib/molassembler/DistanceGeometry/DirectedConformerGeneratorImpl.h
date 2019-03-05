@@ -29,7 +29,10 @@ public:
     const std::map<AtomIndex, unsigned>& smallestCycleMap
   );
 
-  Impl(Molecule molecule);
+  Impl(
+    Molecule molecule,
+    const BondList& bondsToConsider
+  );
 
   DecisionList generateNewDecisionList();
 

@@ -7,16 +7,12 @@
 #ifndef INCLUDE_MOLASSEMBLER_DIRECTED_CONFORMER_GENERATOR_H
 #define INCLUDE_MOLASSEMBLER_DIRECTED_CONFORMER_GENERATOR_H
 
-#include "molassembler/Types.h"
 #include "molassembler/Conformers.h"
 
-#include "Utils/Typenames.h"
 #include "boost/optional/optional_fwd.hpp"
-#include "boost_outcome/outcome.hpp"
 #include "boost/variant/variant_fwd.hpp"
 #include <map>
 #include <memory>
-#include <vector>
 
 namespace Scine {
 namespace molassembler {
@@ -27,7 +23,11 @@ class Molecule;
 class BondStereopermutator;
 
 /**
- * @brief
+ * @brief Helper type for directed conformer generation.
+ *
+ * Generates guaranteed new combinations of BondStereopermutator assignments
+ * and provides helper functions for the generation of conformers using these
+ * combinations and the reverse, finding the combinations from conformers.
  *
  * @note This type is not copyable.
  */
@@ -35,7 +35,14 @@ class DirectedConformerGenerator {
 public:
 //!@name Public types
 //!@{
+  //! Type used to represent the list of bonds relevant to directed conformer generation
   using BondList = std::vector<BondIndex>;
+  /*!
+   * @brief Type used to represent assignments at bonds
+   * @note You can serialize / deserialize this with Scine::base64::encode and
+   *   Scine::base64::decode. It's not the most efficient representation
+   *   but still better than each position having its own character.
+   */
   using DecisionList = std::vector<std::uint8_t>;
 
   /**
@@ -84,6 +91,24 @@ public:
    * @brief Calculates a distance metric between two decision lists for
    *   dihedral permutations
    *
+   * The distance metric is:
+   *
+   * \f$d = \sum_i \min\left(a_i - b_i \textrm{ mod } U_i, b_i - a_i \textrm{ mod } U_i\right)\f$
+   *
+   * where \f$a_i\f$ is the choice in @p a at position \f$i\f$ and likewise for
+   * @p b, and \f$U_i\f$ is the upper exclusive bound on the choice values at
+   * position \f$i\f$.
+   *
+   * This is akin to the shortest distance between the choices when arranged in
+   * a modular number circle.
+   *
+   * \code{cpp}
+   * auto a = std::vector<std::uint8_t> {{1, 5}};
+   * auto b = std::vector<std::uint8_t> {{3, 0}};
+   * auto bounds = std::vector<std::uint8_t> {{5, 6}};
+   * unsigned d = distance(a, b, bounds); // Yields 2 + 1 = 3
+   * \endcode
+   *
    * @param a The first distance metric
    * @param b The second distance metric
    * @param bounds Upper exclusive bound on values at each position
@@ -99,7 +124,22 @@ public:
 
 //!@name Constructors
 //!@{
-  explicit DirectedConformerGenerator(Molecule molecule);
+  /**
+   * @brief Constructor
+   *
+   * @param molecule Molecule for which to generate conformers
+   * @param bondsToConsider A list of suggestions of which bonds to consider.
+   *   Bonds for which considerBond yields an IgnoreReason will still be
+   *   ignored. If the list is empty, all bonds of a molecule will be
+   *   considered.
+   *
+   * Scales linearly with the number of bonds in @p molecule or
+   * @p bondsToConsider's size.
+   */
+  explicit DirectedConformerGenerator(
+    Molecule molecule,
+    const BondList& bondsToConsider = {}
+  );
 //!@}
 
 //!@name Special member functions
@@ -115,6 +155,10 @@ public:
 //!@{
   /*!
    * @brief Generate a new list of discrete dihedral arrangement choices
+   *
+   * Guarantees that the generated list is not yet part of the underlying set.
+   * Scales linearly with the number of considered dihedrals.
+   *
    * @throws std::logic_error If the underlying set is full, i.e. all decision
    *   lists for conformers have been generated.
    * @post The new DecisionList is part of the stored list of generated
@@ -124,11 +168,18 @@ public:
 
   /*!
    * @brief Adds a decision list to the underlying set-like data structure
+   *
+   * Scales linearly with the length of @p decisionList.
+   *
    * @returns @p true if @p decisionList wasn't already part of the set
    */
   bool insert(const DecisionList& decisionList);
 
-  //! Checks whether a DecisionList is part of the underlying set
+  /*!
+   * @brief Checks whether a DecisionList is part of the underlying set
+   *
+   * Scales linearly with the length of @p decisionList.
+   */
   bool contains(const DecisionList& decisionList);
 //!@}
 
@@ -137,7 +188,7 @@ public:
   //! Accessor for list of relevant bonds, O(1)
   const BondList& bondList() const;
 
-  //! Number of conformer decision lists stored in the underlying set-like data structure
+  //! Number of conformer decision lists stored in the underlying set-like data structure, O(1)
   unsigned conformerCount() const;
 
   //! Number of conformers needed for full ensemble, O(1)

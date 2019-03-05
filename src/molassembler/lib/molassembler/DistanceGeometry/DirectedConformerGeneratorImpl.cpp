@@ -220,8 +220,10 @@ DirectedConformerGenerator::Impl::considerBond(
   }
 }
 
-DirectedConformerGenerator::Impl::Impl(Molecule molecule)
-  : _molecule(std::move(molecule))
+DirectedConformerGenerator::Impl::Impl(
+  Molecule molecule,
+  const BondList& bondsToConsider
+) : _molecule(std::move(molecule))
 {
   // Precalculate the smallest cycle map
   auto smallestCycleMap = makeSmallestCycleMap(_molecule.graph().cycles());
@@ -247,12 +249,22 @@ DirectedConformerGenerator::Impl::Impl(Molecule molecule)
 
   ExtractStereopermutatorVisitor visitor {bondStereopermutators};
 
-  // Consider all bonds
-  for(BondIndex bondIndex : boost::make_iterator_range(_molecule.graph().bonds())) {
-    auto importanceVariant = considerBond(bondIndex, _molecule, smallestCycleMap);
+  if(bondsToConsider.empty()) {
+    // Consider all bonds
+    for(BondIndex bondIndex : boost::make_iterator_range(_molecule.graph().bonds())) {
+      auto importanceVariant = considerBond(bondIndex, _molecule, smallestCycleMap);
 
-    if(boost::apply_visitor(visitor, importanceVariant)) {
-      _relevantBonds.push_back(bondIndex);
+      if(boost::apply_visitor(visitor, importanceVariant)) {
+        _relevantBonds.push_back(bondIndex);
+      }
+    }
+  } else {
+    for(const BondIndex& bondIndex : bondsToConsider) {
+      auto importanceVariant = considerBond(bondIndex, _molecule, smallestCycleMap);
+
+      if(boost::apply_visitor(visitor, importanceVariant)) {
+        _relevantBonds.push_back(bondIndex);
+      }
     }
   }
 
