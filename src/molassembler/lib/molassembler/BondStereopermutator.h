@@ -55,10 +55,24 @@ struct ChiralityConstraint;
  */
 class BondStereopermutator {
 public:
+//!@name Public types
+//!@{
   using AtomStereopermutatorPropagatedState = std::tuple<RankingInformation, PermutationState, boost::optional<unsigned>>;
 
+  /**
+   * @brief How dihedrals are aligned in the generation of stereopermutations
+   */
+  enum class Alignment {
+    Eclipsed,
+    Staggered
+  };
+//!@}
+
+//!@name Static members
+//!@{
   //! An Assignment is accepted if the fit for each dihedral is below this value
   static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 25.0; // ~7°
+//!@}
 
 //!@name Special member functions
 //!@{
@@ -67,17 +81,21 @@ public:
   BondStereopermutator(const BondStereopermutator& other);
   BondStereopermutator& operator = (const BondStereopermutator& other);
   ~BondStereopermutator();
+//!@}
 
+//!@name Constructors
+//!@{
   BondStereopermutator() = delete;
   //! Constructs a bond stereopermutator on two atom stereopermutators
   BondStereopermutator(
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
-    const BondIndex& edge
+    const BondIndex& edge,
+    Alignment alignment = Alignment::Eclipsed
   );
 //!@}
 
-//!@name Modifiers
+//!@name Modification
 //!@{
   /*!
    * @brief Changes the assignment of the stereopermutator

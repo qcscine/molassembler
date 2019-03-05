@@ -95,7 +95,7 @@ struct ChooseFunctor {
         int choiceDistance = distance(choice, other, U);
         assert(choiceDistance >= 0);
         assert(choiceDistance < std::numeric_limits<ChoiceIndex>::max());
-        value += distance(choice, other, U);
+        value += choiceDistance;
       }
     }
 

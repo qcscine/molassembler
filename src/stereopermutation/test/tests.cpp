@@ -803,6 +803,73 @@ BOOST_AUTO_TEST_CASE(compositesTests) {
   );
 }
 
+BOOST_AUTO_TEST_CASE(compositesAlignment) {
+  constexpr unsigned leftIdentifier = 0;
+  constexpr unsigned rightIdentifier = 1;
+
+  Composite a {
+    Composite::OrientationState {
+      Symmetry::Name::Tetrahedral,
+      0,
+      {'A', 'B', 'C', 'D'},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Symmetry::Name::Tetrahedral,
+      0,
+      {'A', 'B', 'C', 'D'},
+      rightIdentifier
+    },
+    Composite::Alignment::Staggered
+  };
+
+  BOOST_CHECK_MESSAGE(
+    a.permutations() == 3,
+    "Expected three permutations, got " << a.permutations()
+  );
+
+  Composite b {
+    Composite::OrientationState {
+      Symmetry::Name::Bent,
+      0,
+      {'A', 'B'},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Symmetry::Name::SquarePyramidal,
+      0,
+      {'A', 'B', 'C', 'D', 'E'},
+      rightIdentifier
+    },
+    Composite::Alignment::Staggered
+  };
+
+  BOOST_CHECK_MESSAGE(
+    b.permutations() == 3,
+    "Expected three permutations, got " << b.permutations()
+  );
+
+  Composite c {
+    Composite::OrientationState {
+      Symmetry::Name::Octahedral,
+      4,
+      {'A', 'B', 'C', 'D', 'E', 'F'},
+      leftIdentifier
+    },
+    Composite::OrientationState {
+      Symmetry::Name::Octahedral,
+      2,
+      {'A', 'B', 'C', 'D', 'E', 'F'},
+      rightIdentifier
+    }
+  };
+
+  BOOST_CHECK_MESSAGE(
+    c.permutations() == 4,
+    "Expected four permutations, got " << c.permutations()
+  );
+}
+
 BOOST_AUTO_TEST_CASE(numUnlinkedStereopermutationsTest) {
   // Crosscheck number of unlinked stereopermutations with chemical_symmetries
   for(const Symmetry::Name symmetryName : Symmetry::allNames) {

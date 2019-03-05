@@ -148,14 +148,34 @@ BondStereopermutator::Impl::_makeOrientationState(
 BondStereopermutator::Impl::Impl(
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB,
-  const BondIndex edge
+  const BondIndex edge,
+  Alignment alignment
 ) : _composite {
       _makeOrientationState(stereopermutatorA, stereopermutatorB),
-      _makeOrientationState(stereopermutatorB, stereopermutatorA)
+      _makeOrientationState(stereopermutatorB, stereopermutatorA),
+      static_cast<stereopermutation::Composite::Alignment>(alignment)
     },
     _edge(edge),
     _assignment(boost::none)
 {
+  /* Make sure the static_cast above is safe */
+  static_assert(
+    std::is_same<
+      std::underlying_type_t<stereopermutation::Composite::Alignment>,
+      std::underlying_type_t<BondStereopermutator::Alignment>
+    >::value,
+    "Underlying type of stereopermutation's Alignment and BondStereopermutator's must match"
+  );
+  static_assert(
+    static_cast<stereopermutation::Composite::Alignment>(BondStereopermutator::Alignment::Staggered) == stereopermutation::Composite::Alignment::Staggered,
+    "Staggered Alignment values do not match across Alignment types"
+  );
+  static_assert(
+    static_cast<stereopermutation::Composite::Alignment>(BondStereopermutator::Alignment::Eclipsed) == stereopermutation::Composite::Alignment::Eclipsed,
+    "Eclipsed Alignment values do not match across Alignment types"
+  );
+
+  // TODO lift this, it's probably not relevant anymore, pending a test that SpatialModel can handle simple cases
   if(
     stereopermutatorA.getRanking().hasHapticLigands()
     || stereopermutatorB.getRanking().hasHapticLigands()

@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
 
     BOOST_CHECK_MESSAGE(
       std::fabs(dihedral - reverseDihedral) < 1e-10,
-      "Dihedarl of reverse sequence is not identical: " << dihedral <<", " << reverseDihedral
+      "Dihedral of reverse sequence is not identical: " << dihedral <<", " << reverseDihedral
     );
   }
 }

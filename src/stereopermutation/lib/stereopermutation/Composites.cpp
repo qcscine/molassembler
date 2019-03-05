@@ -537,8 +537,8 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
       );
 
       auto findIter = std::find_if(
-        groups.begin(),
-        groups.end(),
+        std::begin(groups),
+        std::end(groups),
         [&](const auto& record) -> bool {
           return temple::any_of(
             record.first,
@@ -552,10 +552,11 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
       if(findIter == groups.end()) {
         // No equal angles exist, add one yourself
         groups.emplace_back(
-          temple::TinyUnorderedSet<double> {perpendicularAngle},
+          std::vector<double> {perpendicularAngle},
           RecordVector {detail::makeOrderedPair(a, b)}
         );
       } else {
+        findIter->first.push_back(perpendicularAngle);
         findIter->second.emplace_back(
           detail::makeOrderedPair(a, b)
         );
@@ -566,8 +567,12 @@ Composite::PerpendicularAngleGroups Composite::inGroupAngles(
   return groups;
 }
 
-Composite::Composite(OrientationState first, OrientationState second)
-  : _orientations { std::move(first), std::move(second) }
+Composite::Composite(
+  OrientationState first,
+  OrientationState second,
+  const Alignment alignment
+) : _orientations { std::move(first), std::move(second) },
+    _alignment(alignment)
 {
   // Do not construct the ordered pair of OrientationStates with same identifier
   assert(_orientations.first.identifier != _orientations.second.identifier);
@@ -694,19 +699,56 @@ Composite::Composite(OrientationState first, OrientationState second)
       angleGroups.second.symmetryPositions
     ),
     [&](const unsigned f, const unsigned s) -> void {
-      // Calculate the dihedral angle from l.front() to r
-      double dihedralAngle = getDihedral(f, s);
+      double alignAngle = getDihedral(f, s);
 
-      // Twist the right coordinates around x so that l.front() is cis with r
+      // Twist the right coordinates around x so that f is cis with r
       for(auto& position: secondCoordinates) {
         position = Eigen::AngleAxisd(
-          -dihedralAngle,
+          -alignAngle,
           Eigen::Vector3d::UnitX()
         ) * position;
       }
 
-      // Make sure the rotation leads to cis arrangement
+      // Make sure the rotation leads to a zero dihedral
       assert(std::fabs(getDihedral(f, s)) < 1e-10);
+
+      // Offset if desired
+      double offsetAngle = 0;
+      if(alignment == Alignment::Staggered) {
+        /* The offset angle for a staggered arrangement is half of the angle
+         * to the next symmetry position in some direction. We'll go for most
+         * negative.
+         */
+
+        auto dihedrals = temple::map(
+          angleGroups.second.symmetryPositions,
+          [&](const unsigned secondSymmetryPosition) -> double {
+            double dihedral = getDihedral(f, secondSymmetryPosition);
+            if(dihedral >= -1e-10) {
+              dihedral -= 2 * M_PI;
+            }
+            return dihedral;
+          }
+        );
+
+        unsigned maximumIndex = std::max_element(
+          std::begin(dihedrals),
+          std::end(dihedrals)
+        ) - std::begin(dihedrals);
+
+        // std::cout << "Next symmetry position in rotor is " << angleGroups.second.symmetryPositions.at(maximumIndex) << " with dihedral of " << dihedrals.at(maximumIndex) << "\n";
+
+        offsetAngle = dihedrals.at(maximumIndex) / 2;
+      }
+
+      if(offsetAngle != 0.0) {
+        for(auto& position : secondCoordinates) {
+          position = Eigen::AngleAxisd(
+            offsetAngle,
+            Eigen::Vector3d::UnitX()
+          ) * position;
+        }
+      }
 
       auto dihedralList = temple::map(
         temple::adaptors::allPairs(
@@ -718,7 +760,7 @@ Composite::Composite(OrientationState first, OrientationState second)
         }
       );
 
-      // Ensure postcondition
+      // Ensure postcondition that list of dihedrals is sorted
       std::sort(
         std::begin(dihedralList),
         std::end(dihedralList)
@@ -819,6 +861,10 @@ void Composite::applyIdentifierPermutation(const std::vector<std::size_t>& permu
 
 unsigned Composite::permutations() const {
   return _stereopermutations.size();
+}
+
+Composite::Alignment Composite::alignment() const {
+  return _alignment;
 }
 
 const std::vector<Composite::DihedralTuple>& Composite::dihedrals(unsigned permutationIndex) const {

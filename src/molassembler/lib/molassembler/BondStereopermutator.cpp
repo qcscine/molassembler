@@ -31,12 +31,14 @@ BondStereopermutator::~BondStereopermutator() = default;
 BondStereopermutator::BondStereopermutator(
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB,
-  const BondIndex& edge
+  const BondIndex& edge,
+  const Alignment alignment
 ) {
   _pImpl = std::make_unique<Impl>(
     stereopermutatorA,
     stereopermutatorB,
-    edge
+    edge,
+    alignment
   );
 }
 

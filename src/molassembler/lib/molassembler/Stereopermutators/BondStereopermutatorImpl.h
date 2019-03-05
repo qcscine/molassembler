@@ -22,7 +22,8 @@ struct BondStereopermutator::Impl {
   Impl(
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
-    BondIndex edge
+    BondIndex edge,
+    Alignment alignment
   );
 
   void assign(boost::optional<unsigned> assignment);

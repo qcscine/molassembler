@@ -686,6 +686,12 @@ private:
    */
   friend struct Editing;
 
+  /* Allow access to implementation to DirectedConformerGenerator. This class
+   * needs to make additions to the StereopermutatorList that should not be
+   * part of the public interface.
+   */
+  friend class DirectedConformerGenerator;
+
 #ifdef MOLASSEMBLER_ENABLE_PROPAGATE_CONST
   std::experimental::propagate_const<
     std::unique_ptr<Impl>

@@ -17,40 +17,6 @@
 
 namespace temple {
 
-/* TODO move this documentation to the definition of the type and the relevant
- * functions for where this will be used
- *
- * This data structure is primarily designed for use as a set-like type that can
- * contain all choices of discrete enumerated dihedral positions for a dihedral
- * chain.
- *
- * Say you have three different dihedrals, each of which may have a distinct
- * number of possible rotations (although in organic molecules, the most common
- * one will naturally be three). Then the bounds for construction of this tree
- * are e.g. {3, 2, 4}.
- *
- * Possible ChoiceLists are then e.g.:
- * - {0, 0, 0}, (this is the minimal choice list if ordered lexicographically)
- * - {2, 1, 3}, (this is the maximal choice list if ordered lexicographically)
- * - {1, 1, 3},
- * - ...
- *
- * This data structure can help you keep track of which choices at each dihedral
- * you have explored and which ones might lead to a conformer that is most
- * different from the ones you already have.
- *
- * Dihedrals you can exclude from the chain:
- * - Assigned bond stereopermutators (they're fixed, so no point)
- * - Depending on number of rotatable bonds in cycles relative to cycle size
- *   - If too few rotatable bonds in cycle, exclude all (e.g. benzene should
- *     have zero)
- *   - If very few rotatable bonds in cycle, maybe allow gauche arrangements
- *   - If many rotatable bonds in cycle, allow all and let DG sort out the
- *     impossible
- * - If a constructed bond stereopermutator for choice enumeration is isotropic,
- *   cease to consider the dihedral
- */
-
 /*!
  * @brief Data structure to store chains of discrete choices with an finite range
  *   of choices at each position.

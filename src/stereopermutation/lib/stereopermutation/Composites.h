@@ -12,14 +12,19 @@
 #define INCLUDE_MOLASSEMBLER_STEREOPERMUTATION_COMPOSITES_H
 
 #include "chemical_symmetries/Names.h"
-#include "temple/constexpr/FloatingPointComparison.h"
-#include "temple/TinySet.h"
 #include "temple/OrderedPair.h"
+#include "temple/constexpr/FloatingPointComparison.h"
+
+#include <vector>
 
 namespace Scine {
 
 namespace stereopermutation {
 
+/**
+ * @brief Represents the composite of two symmetries joined by a bond at
+ *   arbitrary symmetry positions
+ */
 class Composite {
 public:
 //!@name Member types
@@ -109,22 +114,30 @@ public:
 
   using PerpendicularAngleGroups = std::vector<
     std::pair<
-      temple::TinyUnorderedSet<double>,
+      std::vector<double>,
       std::vector<
         std::pair<unsigned, unsigned>
       >
     >
   >;
+
+  enum class Alignment {
+    Eclipsed,
+    Staggered
+  };
 //!@}
 
-public:
 //!@name Constructors
 //!@{
   /*!
    * @brief Constructor
    * @post Each permutations' dihedrals are sorted (lexicographically)
    */
-  Composite(OrientationState first, OrientationState second);
+  Composite(
+    OrientationState first,
+    OrientationState second,
+    Alignment alignment = Alignment::Eclipsed
+  );
 //!@}
 //
 //!@name Static members
@@ -185,6 +198,9 @@ public:
 
   //! Returns the number of permutations for this Composite
   unsigned permutations() const;
+
+  //! returns the alignment with which the Composite was generated with
+  Alignment alignment() const;
 //!@}
 
 //!@name Iterators
@@ -220,6 +236,9 @@ private:
 
   //! Stores whether the Composite is isotropic
   bool _isotropic;
+
+  //! Stores with which Alignment the stereopermutations were generated
+  Alignment _alignment;
 //!@}
 
   /*!
