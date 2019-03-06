@@ -18,6 +18,8 @@ void init_outer_graph(pybind11::module& m) {
   outerGraph.def(
     "adjacent",
     &OuterGraph::adjacent,
+    pybind11::arg("first_atom"),
+    pybind11::arg("second_atom"),
     "Returns whether two atoms are bonded"
   );
 
@@ -30,18 +32,21 @@ void init_outer_graph(pybind11::module& m) {
   outerGraph.def(
     "bondType",
     &OuterGraph::bondType,
+    pybind11::arg("bond_index"),
     "Fetches the bond type at a particular bond"
   );
 
   outerGraph.def(
     "canRemove",
     pybind11::overload_cast<AtomIndex>(&OuterGraph::canRemove, pybind11::const_),
+    pybind11::arg("atom"),
     "Returns whether an atom can be removed without disconnecting the graph"
   );
 
   outerGraph.def(
     "canRemove",
     pybind11::overload_cast<const BondIndex&>(&OuterGraph::canRemove, pybind11::const_),
+    pybind11::arg("bond_index"),
     "Returns whether a bond can be removed without disconnecting the graph"
   );
 
@@ -54,6 +59,7 @@ void init_outer_graph(pybind11::module& m) {
   outerGraph.def(
     "degree",
     &OuterGraph::degree,
+    pybind11::arg("atom"),
     "Returns the number of bonds incident upon an atom"
   );
 
@@ -66,6 +72,7 @@ void init_outer_graph(pybind11::module& m) {
   outerGraph.def(
     "elementType",
     &OuterGraph::elementType,
+    pybind11::arg("atom"),
     "Fetch the element type of an atom"
   );
 
@@ -73,8 +80,9 @@ void init_outer_graph(pybind11::module& m) {
   outerGraph.def("B", &OuterGraph::B, "The number of bonds in the graph");
 
   outerGraph.def(
-    "splitAlongBridge",
+    "split_along_bridge",
     &OuterGraph::splitAlongBridge,
+    pybind11::arg("bridge_bond"),
     "Determine which atoms belong to either side of a bond"
   );
 

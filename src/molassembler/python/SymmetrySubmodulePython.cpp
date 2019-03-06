@@ -32,7 +32,17 @@ void init_symmetry_submodule(pybind11::module& m) {
 
   name.def("__str__", &Symmetry::name);
 
-  symmetrySubmodule.def("name_from_str", &Symmetry::nameFromString, "Fetch a symmetry name from its string representation");
+  symmetrySubmodule.def(
+    "name_from_str",
+    &Symmetry::nameFromString,
+    pybind11::arg("name_str"),
+    "Fetch a symmetry name from its string representation"
+  );
 
-  symmetrySubmodule.def("size", &Symmetry::size, "Number of substituent positions in a symmetry");
+  symmetrySubmodule.def(
+    "size",
+    &Symmetry::size,
+    pybind11::arg("symmetry"),
+    "Number of substituent positions in a symmetry"
+  );
 }

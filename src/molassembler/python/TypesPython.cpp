@@ -33,7 +33,12 @@ void init_types(pybind11::module& m) {
   // Leave out LengthUnit, it should not be necessary
 
   pybind11::class_<BondIndex> bondIndex(m, "BondIndex", "Ordered atom index pair");
-  bondIndex.def(pybind11::init<AtomIndex, AtomIndex>());
+  bondIndex.def(
+    pybind11::init<AtomIndex, AtomIndex>(),
+    pybind11::arg("a"),
+    pybind11::arg("b"),
+    "Initialize a bond index from two atom indices"
+  );
   bondIndex.def_readwrite("first", &BondIndex::first);
   bondIndex.def_readwrite("second", &BondIndex::second);
   bondIndex.def(

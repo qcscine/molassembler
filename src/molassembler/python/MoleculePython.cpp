@@ -112,11 +112,15 @@ void init_molecule(pybind11::module& m) {
 
   molecule.def(
     pybind11::init<ElementType, ElementType, BondType>(),
+    pybind11::arg("first_element"),
+    pybind11::arg("second_element"),
+    pybind11::arg("bond_type"),
     "Initialize a molecule from two element types and a mutual bond type"
   );
 
   molecule.def(
     pybind11::init<OuterGraph>(),
+    pybind11::arg("graph"),
     "Initialize a molecule from connectivity alone, inferring symmetries and "
     "stereopermutators from the graph"
   );
@@ -125,12 +129,18 @@ void init_molecule(pybind11::module& m) {
   molecule.def(
     "add_atom",
     &Molecule::addAtom,
+    pybind11::arg("element"),
+    pybind11::arg("adjacent_to"),
+    pybind11::arg("bond_type"),
     "Add an atom to the molecule."
   );
 
   molecule.def(
     "add_bond",
     &Molecule::addBond,
+    pybind11::arg("first_atom"),
+    pybind11::arg("second_atom"),
+    pybind11::arg("bond_type"),
     "Adds a bond to the molecule."
   );
 
@@ -139,6 +149,8 @@ void init_molecule(pybind11::module& m) {
     pybind11::overload_cast<AtomIndex, const boost::optional<unsigned>&>(
       &Molecule::assignStereopermutator
     ),
+    pybind11::arg("atom"),
+    pybind11::arg("assignment_option"),
     "Sets the stereopermutator at a particular atom"
   );
 
@@ -147,6 +159,8 @@ void init_molecule(pybind11::module& m) {
     pybind11::overload_cast<const BondIndex&, const boost::optional<unsigned>&>(
       &Molecule::assignStereopermutator
     ),
+    pybind11::arg("bond_index"),
+    pybind11::arg("assignment_option"),
     "Sets the stereopermutator at a particular bond"
   );
 
@@ -155,6 +169,7 @@ void init_molecule(pybind11::module& m) {
     pybind11::overload_cast<AtomIndex>(
       &Molecule::assignStereopermutatorRandomly
     ),
+    pybind11::arg("atom"),
     "Assigns an atom stereopermutator at random"
   );
 
@@ -163,6 +178,7 @@ void init_molecule(pybind11::module& m) {
     pybind11::overload_cast<const BondIndex&>(
       &Molecule::assignStereopermutatorRandomly
     ),
+    pybind11::arg("bond_index"),
     "Assigns a bond stereopermutator at random"
   );
 
@@ -177,36 +193,47 @@ void init_molecule(pybind11::module& m) {
   molecule.def(
     "remove_atom",
     &Molecule::removeAtom,
+    pybind11::arg("atom"),
     "Remove an atom from the graph, including bonds to it"
   );
 
   molecule.def(
     "remove_bond",
     pybind11::overload_cast<AtomIndex, AtomIndex>(&Molecule::removeBond),
+    pybind11::arg("first_atom"),
+    pybind11::arg("second_atom"),
     "Remove a bond from the graph"
   );
 
   molecule.def(
     "remove_bond",
     pybind11::overload_cast<const BondIndex&>(&Molecule::removeBond),
+    pybind11::arg("bond_index"),
     "Remove a bond from the graph"
   );
 
   molecule.def(
     "set_bond_type",
     &Molecule::setBondType,
+    pybind11::arg("first_atom"),
+    pybind11::arg("second_atom"),
+    pybind11::arg("bond_type"),
     "Change the bond type of two atoms."
   );
 
   molecule.def(
     "set_element_type",
     &Molecule::setElementType,
+    pybind11::arg("atom"),
+    pybind11::arg("element"),
     "Change the element type of an atom"
   );
 
   molecule.def(
     "set_geometry_at_atom",
     &Molecule::setGeometryAtAtom,
+    pybind11::arg("atom"),
+    pybind11::arg("symmetry"),
     "Change the local geometry at an atom"
   );
 

@@ -41,6 +41,7 @@ void init_stereopermutator_list(pybind11::module& m) {
       &StereopermutatorList::option,
       pybind11::const_
     ),
+    pybind11::arg("atom"),
     "Fetches a read-only option to an AtomStereopermutator, if present on this "
     "atom index"
   );
@@ -51,6 +52,7 @@ void init_stereopermutator_list(pybind11::module& m) {
       &StereopermutatorList::option,
       pybind11::const_
     ),
+    pybind11::arg("bond_index"),
     "Fetches a read-only option to a BondStereopermutator, if present on this "
     "atom index"
   );

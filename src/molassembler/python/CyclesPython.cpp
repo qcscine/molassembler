@@ -25,6 +25,7 @@ void init_cycles(pybind11::module& m) {
       &Cycles::numCycleFamilies,
       pybind11::const_
     ),
+    pybind11::arg("constituting_index"),
     "Returns the number of cycle families an atom index belongs to"
   );
   cycles.def(
@@ -41,6 +42,7 @@ void init_cycles(pybind11::module& m) {
       &Cycles::numRelevantCycles,
       pybind11::const_
     ),
+    pybind11::arg("constituting_index"),
     "Returns the number of relevant cycles an atom index belongs to"
   );
 

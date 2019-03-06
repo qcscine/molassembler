@@ -34,6 +34,8 @@ void init_atom_stereopermutator(pybind11::module& m) {
   atomStereopermutator.def(
     "angle",
     &AtomStereopermutator::angle,
+    pybind11::arg("ligand_index_i"),
+    pybind11::arg("ligand_index_j"),
     "Fetches angle between substituent ligand indices in radians"
   );
 
@@ -63,7 +65,7 @@ void init_atom_stereopermutator(pybind11::module& m) {
     "Get the underlying ranking state of substituents"
   );
 
-  atomStereopermutator.def(
+  atomStereopermutator.def_property_readonly(
     "symmetry",
     &AtomStereopermutator::getSymmetry,
     "Returns the underlying symmetry"

@@ -50,6 +50,10 @@ void init_interpret(pybind11::module& m) {
       BondDiscretizationOption,
       const boost::optional<double>&
     >(&interpret),
+    pybind11::arg("atom_collection"),
+    pybind11::arg("bond_orders"),
+    pybind11::arg("discretization"),
+    pybind11::arg("stereopermutator_bond_order_threshold") = 1.4,
     "Interpret molecules from element types, positional information and bond orders"
   );
 
@@ -60,6 +64,10 @@ void init_interpret(pybind11::module& m) {
       BondDiscretizationOption,
       const boost::optional<double>&
     >(&interpret),
-    "Interpret molecules from element types and positional information"
+    pybind11::arg("atom_collection"),
+    pybind11::arg("discretization"),
+    pybind11::arg("stereopermutator_bond_order_threshold") = 1.4,
+    "Interpret molecules from element types and positional information. Bond "
+    "orders are then interpreted using UFF parameters."
   );
 }
