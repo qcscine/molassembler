@@ -209,7 +209,7 @@ void write(
   const Molecule& molecule,
   const AngstromWrapper& angstromWrapper
 ) {
-  assert(molecule.graph().N() == static_cast<AtomIndex>(angstromWrapper.positions.size()));
+  assert(molecule.graph().N() == static_cast<AtomIndex>(angstromWrapper.positions.rows()));
   auto data = exchangeFormat(molecule, angstromWrapper);
   Utils::ChemicalFileHandler::write(filename, data.first, data.second);
 }

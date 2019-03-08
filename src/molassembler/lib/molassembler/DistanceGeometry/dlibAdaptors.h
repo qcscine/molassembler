@@ -31,7 +31,7 @@ namespace dlibAdaptors {
  * Dlib minimization strategy that proceeds without compression of the fourth
  * dimension until all chiral centers have inverted to the correct orientation
  */
-class iterationOrAllChiralitiesCorrectStrategy {
+class IterationOrAllChiralitiesCorrectStrategy {
 private:
   const std::vector<ChiralityConstraint>& _constraints;
 
@@ -42,12 +42,12 @@ public:
 
 /* Constructors */
   // Without max iteration limit
-  explicit iterationOrAllChiralitiesCorrectStrategy(
+  explicit IterationOrAllChiralitiesCorrectStrategy(
     const std::vector<ChiralityConstraint>& constraints
   ) : _constraints(constraints)
   {}
 
-  iterationOrAllChiralitiesCorrectStrategy(
+  IterationOrAllChiralitiesCorrectStrategy(
     const std::vector<ChiralityConstraint>& constraints,
     const unsigned maxIter
   ) : _constraints(constraints),
@@ -90,7 +90,7 @@ public:
  * dimension until all the overall gradient length is below a particular
  * threshold
  */
-struct iterationOrGradientNormStopStrategy {
+struct IterationOrGradientNormStopStrategy {
 /* Public access constants */
   const unsigned maxIterations;
   const double gradientNormThresholdSquared;
@@ -100,7 +100,7 @@ struct iterationOrGradientNormStopStrategy {
 
 /* Constructors */
 
-  iterationOrGradientNormStopStrategy(
+  IterationOrGradientNormStopStrategy(
     const unsigned passMaxIterations,
     const double gradientNormThreshold
   ) : maxIterations(passMaxIterations),

@@ -567,7 +567,7 @@ outcome::result<AngstromWrapper> refine(
       dlibPositions
     ) < 1
   ) {
-    dlibAdaptors::iterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
+    dlibAdaptors::IterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
       DGDataPtr->chiralityConstraints,
       configuration.refinementStepLimit
     };
@@ -607,7 +607,7 @@ outcome::result<AngstromWrapper> refine(
     }
   }
 
-  dlibAdaptors::iterationOrGradientNormStopStrategy refinementStopStrategy {
+  dlibAdaptors::IterationOrGradientNormStopStrategy refinementStopStrategy {
     configuration.refinementStepLimit,
     configuration.refinementGradientTarget
   };

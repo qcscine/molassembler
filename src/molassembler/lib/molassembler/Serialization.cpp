@@ -20,6 +20,22 @@
 namespace nlohmann {
 
 template<>
+struct adl_serializer<Scine::molassembler::BondStereopermutator::Alignment> {
+  using Type = Scine::molassembler::BondStereopermutator::Alignment;
+  using Underlying = std::underlying_type_t<Type>;
+
+  static void to_json(json& j, const Type& value) {
+    j = static_cast<Underlying>(value);
+  }
+
+  static void from_json(const json& j, Type& value) {
+    value = static_cast<Type>(
+      j.get<Underlying>()
+    );
+  }
+};
+
+template<>
 struct adl_serializer<Scine::molassembler::AtomEnvironmentComponents> {
   using Type = Scine::molassembler::AtomEnvironmentComponents;
   using Underlying = std::underlying_type_t<Type>;
@@ -265,6 +281,10 @@ nlohmann::json serialize(const Molecule& molecule) {
       s["a"] = stereopermutator.assigned().value();
     }
 
+    if(stereopermutator.alignment() == BondStereopermutator::Alignment::Staggered) {
+      s["al"] = stereopermutator.alignment();
+    }
+
     m["b"].push_back(std::move(s));
   }
 
@@ -328,10 +348,16 @@ Molecule deserialize(const nlohmann::json& m) {
 
     BondIndex molEdge {a, b};
 
+    auto alignment = BondStereopermutator::Alignment::Eclipsed;
+    if(j.count("al") > 0) {
+      alignment = j["al"].get<BondStereopermutator::Alignment>();
+    }
+
     auto stereopermutator = BondStereopermutator {
       aStereopermutatorOption.value(),
       bStereopermutatorOption.value(),
-      molEdge
+      molEdge,
+      alignment
     };
 
     // Assign if present

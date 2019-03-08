@@ -184,13 +184,13 @@ void explainAcceptanceFailure(
     }
 
     void chiralOverThreshold(const ChiralityConstraint& chiral, double volume) {
-      log << "Chiral constraint " << temple::stringify(chiral.sites) << " : ["
+      log << "Chiral constraint " << temple::stringifyContainer(chiral.sites) << " : ["
         << chiral.lower << ", " << chiral.upper
         << "] deviation over threshold, is : " << volume << "\n";
     }
 
     void dihedralOverThreshold(const DihedralConstraint& dihedral, double term) {
-      log << "Dihedral constraint " << temple::stringify(dihedral.sites)
+      log << "Dihedral constraint " << temple::stringifyContainer(dihedral.sites)
         << " : [" << dihedral.lower << ", " << dihedral.upper
         << "], term is : " << term << "\n";
     }

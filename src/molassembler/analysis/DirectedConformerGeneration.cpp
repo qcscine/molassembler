@@ -106,6 +106,7 @@ int main(int argc, char* argv[]) {
           mol,
           positionResult.value()
         );
+        break;
       } else {
         std::cout << "Could not generate conformer: "
           << positionResult.error().message() << "\n";
@@ -128,7 +129,8 @@ int main(int argc, char* argv[]) {
     auto newDecisionList = generator.generateNewDecisionList();
 
     for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
-      auto positionResult = generator.generateConformation(newDecisionList, configuration);
+      const auto& confMol = generator.conformationMolecule(newDecisionList);
+      auto positionResult = generateConformation(confMol, configuration);
 
       if(positionResult) {
         std::cout << "Generated conformer #" << (conformerCount + 1) << ", decision list " << temple::stringify(newDecisionList) << "\n";
@@ -141,6 +143,10 @@ int main(int argc, char* argv[]) {
       }
 
       std::cout << "Could not generate decision list " << temple::stringify(newDecisionList) << ": " << positionResult.error().message() << "\n";
+      IO::write(
+        filestem + "-"s + std::to_string(conformerCount + 1) + ".masm",
+        confMol
+      );
     }
 
     ++conformerCount;
