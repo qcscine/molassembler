@@ -137,7 +137,7 @@ boost::variant<DirectedConformerGenerator::IgnoreReason, BondStereopermutator>
 DirectedConformerGenerator::Impl::considerBond(
   const BondIndex& bondIndex,
   const Molecule& molecule,
-  const std::map<AtomIndex, unsigned>& smallestCycleMap
+  const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap
 ) {
   // Make sure the bond exists in the first place
   assert(molecule.graph().adjacent(bondIndex.first, bondIndex.second));
@@ -169,20 +169,12 @@ DirectedConformerGenerator::Impl::considerBond(
     }
   }
 
-  /* Check with cycles information next: If the dihedral is in a cycle of size 4
-   * or lower, we will not consider the dihedral at all
-   */
-  auto inCycleOfSizeThreeOrFour = [&smallestCycleMap](const AtomIndex i) -> bool {
-    auto findIter = smallestCycleMap.find(i);
-    if(findIter != std::end(smallestCycleMap)) {
-      return findIter->second <= 4;
-    }
-
-    return false;
-  };
-
-  if(inCycleOfSizeThreeOrFour(bondIndex.first) || inCycleOfSizeThreeOrFour(bondIndex.second)) {
-    return IgnoreReason::InSmallCycle;
+  // Check with cycles information next: If the dihedral is in a cycle, skip it
+  if(
+    smallestCycleMap.count(bondIndex.first) > 0
+    && smallestCycleMap.count(bondIndex.second) > 0
+  ) {
+    return IgnoreReason::InCycle;
   }
 
   /* Last, instantiate a BondStereopermutator on the bond and use that to
@@ -272,6 +264,13 @@ DirectedConformerGenerator::Impl::Impl(
   temple::inplace::sort(_relevantBonds);
   _relevantBonds.shrink_to_fit();
 
+  /* In case there are no bonds to consider, then we're done. No other work
+   * to be done.
+   */
+  if(_relevantBonds.empty()) {
+    return;
+  }
+
   // Add the BondStereopermutators to our underlying molecule's stereopermutator list
   for(auto& bondStereopermutator : bondStereopermutators) {
     _molecule._pImpl->_stereopermutators.add(
@@ -302,15 +301,15 @@ DirectedConformerGenerator::Impl::Impl(
 
 DirectedConformerGenerator::DecisionList
 DirectedConformerGenerator::Impl::generateNewDecisionList() {
+  if(_relevantBonds.empty()) {
+    return {};
+  }
+
   detail::BoundedNodeTrieChooseFunctor<std::uint8_t> chooseFunctor {};
   return _decisionLists.generateNewEntry(chooseFunctor);
 }
 
-outcome::result<Utils::PositionCollection>
-DirectedConformerGenerator::Impl::generateConformation(
-  const DecisionList& decisionList,
-  const DistanceGeometry::Configuration& configuration
-) {
+const Molecule& DirectedConformerGenerator::Impl::conformationMolecule(const DecisionList& decisionList) {
   const unsigned U = decisionList.size();
 
   if(U != _decisionLists.bounds().size() || U != _relevantBonds.size()) {
@@ -324,12 +323,23 @@ DirectedConformerGenerator::Impl::generateConformation(
     stereoOption->assign(decisionList[i]);
   }
 
-  return Scine::molassembler::generateConformation(_molecule, configuration);
+  return _molecule;
+}
+
+outcome::result<Utils::PositionCollection>
+DirectedConformerGenerator::Impl::generateConformation(
+  const DecisionList& decisionList,
+  const DistanceGeometry::Configuration& configuration
+) {
+  return Scine::molassembler::generateConformation(
+    conformationMolecule(decisionList),
+    configuration
+  );
 }
 
 DirectedConformerGenerator::DecisionList
 DirectedConformerGenerator::Impl::getDecisionList(Utils::PositionCollection positions) const {
-  const unsigned U = _decisionLists.bounds().size();
+  const unsigned U = _relevantBonds.size();
 
   AngstromWrapper angstromPositions {std::move(positions)};
 

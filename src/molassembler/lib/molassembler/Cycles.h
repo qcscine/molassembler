@@ -15,7 +15,7 @@
 #include "molassembler/OuterGraph.h"
 
 #include <functional>
-#include <map>
+#include <unordered_map>
 
 namespace Scine {
 
@@ -195,7 +195,7 @@ private:
  *   containing that index.
  * @note The map does not contain entries for indices not enclosed by a cycle.
  */
-std::map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
+std::unordered_map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
 
 /*!
  * @brief From a set of graph edge descriptors, this function creates one of

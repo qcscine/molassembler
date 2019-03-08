@@ -303,15 +303,11 @@ public:
   void assignStereopermutatorRandomly(const BondIndex& e);
 
   /**
-   * @brief Canonicalizes the graph, invalidating all atom and bond indices.
+   * @brief Transfer the molecule to a canonical form. Invalidates all atom and
+   *   bond indices.
    *
    * @param components The components of the molecular graph to include in the
-   *   canonicalization procedure. May not be None.
-   *
-   * @warning Any comparisons made on canonical graphs must be made with a less
-   *   or equally strict @p components bitmask. If you choose a stricter
-   *   bitmask than you have used in the canonicalization procedure, you risk
-   *   false positives and false negatives.
+   *   canonicalization procedure.
    *
    * @warning This invalidates all atom indices and bond indices and any
    *   references to constituting members of the molecule.
@@ -320,8 +316,7 @@ public:
    *   molecules. If you are using the default value for @p componentBitmask,
    *   Molecule::operator == has a shortcut for fully canonical molecules.
    *
-   * @post A call to Molecule::canonicalComponents yields @p components
-   *   supplied here
+   * @post A call to canonicalComponents() yields @p components supplied here.
    *
    * @return Permutation mapping from old indices to new:
    * @code{.cpp}
@@ -423,7 +418,7 @@ public:
    * Changes the element type of an existing atom.
    *
    * @param a The atom index of the atom whose element type is to be changed
-   * @param The new element type
+   * @param elementType The new element type
    *
    * @throws std::out_of_range If a is invalid >= N()
    *
@@ -451,10 +446,9 @@ public:
    * stereopermutators are default-assigned if there is only one possible
    * assignment.
    *
-   * @throws if
-   *   - the supplied atomic index is invalid
-   *   - the provided symmetry is a different size than that of an existing
-   *     AtomStereopermutator
+   * @throws std::out_of_range if the supplied atomic index is invalid
+   * @throws std::logic_error if the provided symmetry is a different size than
+   *   that of the existing AtomStereopermutator
    *
    * @note Any molecular edit causes a full re-rank at each non-terminal
    *   atom, and can lead to changes in the list of stereopermutators. Stereopermutators

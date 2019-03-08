@@ -286,7 +286,6 @@ const ExplicitGraph::GraphType& ExplicitGraph::graph() const {
   return _graph;
 }
 
-// This is O(N²)
 outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexcept {
   unsigned N = _molecule.graph().N();
 
@@ -343,11 +342,13 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
       // Get lower bound from distances
       bounds(b, a) = -distances.at(right(b));
 
+      // If the upper bound is less than the lower bound, we have a contradiction
       if(bounds(a, b) < bounds(b, a)) {
         _explainContradictionPaths(a, b, predecessors, distances);
         return DGError::GraphImpossible;
       }
 
+      // Negative values are not allowed
       if(bounds(a, b) <= 0 || bounds(b, a) <= 0) {
         return DGError::GraphImpossible;
       }

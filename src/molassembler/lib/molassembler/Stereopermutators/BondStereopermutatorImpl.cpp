@@ -566,6 +566,12 @@ void BondStereopermutator::Impl::propagateGraphChange(
 }
 
 /* Information */
+BondStereopermutator::Alignment BondStereopermutator::Impl::alignment() const {
+  return static_cast<BondStereopermutator::Alignment>(
+    _composite.alignment()
+  );
+}
+
 boost::optional<unsigned> BondStereopermutator::Impl::assigned() const {
   /* If the underlying composite is isotropic, it does not matter which of those
    * permutations by symmetry position is the factual spatial arrangement (since

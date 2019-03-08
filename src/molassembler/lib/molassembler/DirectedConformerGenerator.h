@@ -11,7 +11,9 @@
 
 #include "boost/optional/optional_fwd.hpp"
 #include "boost/variant/variant_fwd.hpp"
-#include <map>
+#include "boost/functional/hash.hpp"
+
+#include <unordered_map>
 #include <memory>
 
 namespace Scine {
@@ -28,6 +30,38 @@ class BondStereopermutator;
  * Generates guaranteed new combinations of BondStereopermutator assignments
  * and provides helper functions for the generation of conformers using these
  * combinations and the reverse, finding the combinations from conformers.
+ *
+ * Client code could look something like this. Make sure to differentiate
+ * cases in which the list of considered bonds by bondList() is empty, since
+ * many member functions behave differently in those circumstances.
+ *
+ * @code{cpp}
+ * auto mol = IO::read(...);
+ * std::vector<Utils::PositionCollection> conformers;
+ * DirectedConformerGenerator generator {mol};
+ * if(generator.bondList().empty()) {
+ *   // The generator has decided that there are no bonds that need to be
+ *   // systematically rotated for directed conformer generation. You might
+ *   // as well just use a conformation directly from generateConformation for
+ *   // the sole conformation needed for a full ensemble
+ *   auto conformerResult = generateConformation(mol);
+ *   if(conformerResult) {
+ *     conformers.push_back(std::move(conformerResult.value()));
+ *   } else {
+ *     std::cout << "Could not generate conformer: " << conformerResult.error().message() << "\n";
+ *   }
+ * } else {
+ *   while(generator.decisionListSetSize() != generator.idealEnsembleSetSize()) {
+ *     auto newDecisionList = generator.generateNewDecisionList();
+ *     auto conformerResult = generator.generateConformation(newDecisionList);
+ *     if(conformerResult) {
+ *       conformers.push_back(std::move(conformerResult.value()));
+ *     } else {
+ *       std::cout << "Could not generate conformer: " << conformerResult.error().message() << "\n";
+ *     }
+ *   }
+ * }
+ * @endcode
  *
  * @note This type is not copyable.
  */
@@ -55,11 +89,54 @@ public:
     HasAssignedBondStereopermutator,
     //! At least one constituting atom is terminal
     HasTerminalConstitutingAtom,
-    //! This bond is in a cycle of size three or four
-    InSmallCycle,
-    //! This bond is an eta bond (indicates bonding to haptic ligands, and therefore excluded)
+    /*!
+     * @brief This bond is in a cycle
+     *
+     * Despite the fact that cycle bonds may very well contribute to the
+     * conformational ensemble, it is difficult to reason about conformational
+     * flexibility of cycles:
+     * - Is a cycle aromatic or anti-aromatic?
+     * - Is there a partial conjugated system?
+     * - Are trans-arrangements of cycle atom sequences feasible in the cycle?
+     *
+     * We see four possible strategies of dealing with cycle bonds:
+     * 1. Consider all of them.
+     * 2. Add chemical intuitive reasoning to exclude some bonds in cycles from
+     *    consideration
+     * 3. Use Distance Geometry to reason about possible dihedrals
+     * 4. Consider none of them.
+     *
+     * The first strategy has several important drawbacks: Dihedrals are heavily
+     * restricted and/or correlated in the chemically common small cycles, and
+     * most, if not nearly all, combinations will not be representable in three
+     * dimensions. Bonds from cycles incur heavy cost in the decision list set
+     * representation and computational time needed to generate conformations
+     * because it is not possible with mere triangle inequality smoothing to
+     * determine representability of these conformers, and hence a full
+     * refinement is done for each.
+     *
+     * In contrast, the second strategy could yield properly limited assignment
+     * possibilities for common chemical patterns. The algorithms needed to
+     * answer the questions listed above are complex and could easily fail
+     * outside common organic chemical patterns.
+     *
+     * The last strategy is cleanest, but also likely considerably
+     * computationally expensive.
+     *
+     * For now, we take strategy number four - ignoring bonds in cycles for
+     * directed conformer generation - until we can dedicate some resources to
+     * approach three.
+     */
+    InCycle,
+    /*!
+     * @brief This bond is an eta bond (indicates bonding to haptic ligands,
+     *   and therefore excluded)
+     */
     IsEtaBond,
-    //! Rotation about this bond is isotropic (all ligands have same ranking on at least one side)
+    /*!
+     * @brief Rotation about this bond is isotropic (all ligands have same
+     *   ranking on at least one side)
+     */
     RotationIsIsotropic
   };
 //!@}
@@ -84,7 +161,26 @@ public:
   static boost::variant<IgnoreReason, BondStereopermutator> considerBond(
     const BondIndex& bondIndex,
     const Molecule& molecule,
-    const std::map<AtomIndex, unsigned>& smallestCycleMap
+    const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap
+  );
+
+  /**
+   * @brief Establishes limitations on rotational assignments of some bonds
+   *
+   * Eliminates trans-arrangements of cycle sequences in cycles that do not
+   * have the conformational flexibility for it.
+   *
+   * @param viableBonds List of bonds deemed reasonable by considerBond() for
+   *   directed conformer generation
+   * @param molecule Molecule
+   *
+   * @return A partial mapping of bond indices to lists of viable rotational
+   *   assignments. Bond indices upon which no limitations are placed do not
+   *   have entries in this map.
+   */
+  static std::unordered_map<BondIndex, std::vector<unsigned>, boost::hash<BondIndex>> arrangementLimits(
+    const BondList& viableBonds,
+    const Molecule& molecule
   );
 
   /**
@@ -129,9 +225,9 @@ public:
    *
    * @param molecule Molecule for which to generate conformers
    * @param bondsToConsider A list of suggestions of which bonds to consider.
-   *   Bonds for which considerBond yields an IgnoreReason will still be
+   *   Bonds for which considerBond() yields an IgnoreReason will still be
    *   ignored. If the list is empty, all bonds of a molecule will be
-   *   considered.
+   *   tested against considerBond().
    *
    * Scales linearly with the number of bonds in @p molecule or
    * @p bondsToConsider's size.
@@ -162,7 +258,12 @@ public:
    * @throws std::logic_error If the underlying set is full, i.e. all decision
    *   lists for conformers have been generated.
    * @post The new DecisionList is part of the stored list of generated
-   *   decision lists and will not be generated again.
+   *   decision lists and will not be generated again. The result of
+   *   decisionListSetSize() is incremented.
+   *
+   * @returns An empty DecisionList if the number of relevant bonds is zero.
+   *   Otherwise, returns a DecisionList of length matching the number of
+   *   relevant bonds.
    */
   DecisionList generateNewDecisionList();
 
@@ -171,12 +272,18 @@ public:
    *
    * Scales linearly with the length of @p decisionList.
    *
+   * @throws std::logic_error If the result of bondList() is empty, i.e. there
+   *   are no bonds to consider for directed conformer generation.
+   *
    * @returns @p true if @p decisionList wasn't already part of the set
    */
   bool insert(const DecisionList& decisionList);
 
   /*!
    * @brief Checks whether a DecisionList is part of the underlying set
+   *
+   * @throws std::logic_error If the result of bondList() is empty, i.e. there
+   *   are no bonds to consider for directed conformer generation.
    *
    * Scales linearly with the length of @p decisionList.
    */
@@ -185,13 +292,28 @@ public:
 
 //!@name Information
 //!@{
-  //! Accessor for list of relevant bonds, O(1)
+  /*!
+   * @brief Accessor for list of relevant bonds, O(1)
+   * @note This list may be empty. Many member functions may throw under these
+   *   conditions.
+   */
   const BondList& bondList() const;
 
-  //! Number of conformer decision lists stored in the underlying set-like data structure, O(1)
-  unsigned conformerCount() const;
+  /*!
+   * @brief Number of conformer decision lists stored in the underlying
+   *   set-like data structure, O(1)
+   * @returns The number of DecisionLists stored in the underlying set.
+   *
+   * @warning If bondList() returns an empty list, i.e. there are no bonds to
+   *   consider for directed conformer generation, this always returns zero.
+   */
+  unsigned decisionListSetSize() const;
 
-  //! Number of conformers needed for full ensemble, O(1)
+  /*!
+   * @brief Number of conformers needed for full ensemble, O(1)
+   * @warning If bondList() returns an empty list, i.e. there are no bonds to
+   *   consider for directed conformer generation, this always returns zero.
+   */
   unsigned idealEnsembleSize() const;
 
   /*!
@@ -199,14 +321,22 @@ public:
    *
    * This is very similar to the free generateConformation function in terms
    * of what @p configuration will accept.
+   *
+   * @throws std::invalid_argument If the passed decisionList does not match
+   *   the length of the result of bondList().
    */
   outcome::result<Utils::PositionCollection> generateConformation(
     const DecisionList& decisionList,
     const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
   );
 
+  const Molecule& conformationMolecule(const DecisionList& decisionList);
+
   /*!
-   * @brief Infer a decision list from positional information
+   * @brief Infer a decision list for relevant bonds from positional information
+   *
+   * For all bonds considered relevant (i.e. all bonds in bondList()), fits
+   * supplied positions to possible stereopermutations and returns the result.
    *
    * @warning This function assumes several things about your supplied positions
    * - There have only been dihedral changes and no AtomStereopermutator

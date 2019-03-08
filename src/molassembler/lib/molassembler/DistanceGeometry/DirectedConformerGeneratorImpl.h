@@ -26,7 +26,7 @@ public:
   static boost::variant<IgnoreReason, BondStereopermutator> considerBond(
     const BondIndex& bondIndex,
     const Molecule& molecule,
-    const std::map<AtomIndex, unsigned>& smallestCycleMap
+    const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap
   );
 
   Impl(
@@ -48,7 +48,7 @@ public:
     return _relevantBonds;
   }
 
-  unsigned conformerCount() const {
+  unsigned decisionListSetSize() const {
     return _decisionLists.size();
   }
 
@@ -62,6 +62,8 @@ public:
   );
 
   DecisionList getDecisionList(Utils::PositionCollection positions) const;
+
+  const Molecule& conformationMolecule(const DecisionList& decisionList);
 
 private:
   Molecule _molecule;

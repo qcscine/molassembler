@@ -321,22 +321,23 @@ void Cycles::constIterator::RDLCyclePtrs::advance() {
   }
 }
 
-std::map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData) {
-  std::map<AtomIndex, unsigned> smallestCycle;
+std::unordered_map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData) {
+  std::unordered_map<AtomIndex, unsigned> smallestCycle;
 
   for(const auto cycleEdges : cycleData) {
     const unsigned cycleSize = cycleEdges.size();
 
     for(const BondIndex& bond : cycleEdges) {
       for(const AtomIndex index: bond) {
-        StdlibTypeAlgorithms::addOrUpdateMapIf(
-          smallestCycle,
-          index, // key_type to check
-          cycleSize, // mapped_value to place if key does not exist or if ...
-          [&cycleSize](const unsigned currentMinCycleSize) -> bool {
-            return cycleSize < currentMinCycleSize;
+        auto findIter = smallestCycle.find(index);
+
+        if(findIter != std::end(smallestCycle)) {
+          if(cycleSize < findIter->second) {
+            findIter->second = cycleSize;
           }
-        );
+        } else {
+          smallestCycle.emplace(index, cycleSize);
+        }
       }
     }
   }

@@ -93,20 +93,42 @@ int main(int argc, char* argv[]) {
 
   DirectedConformerGenerator generator(mol);
 
+  if(generator.bondList().empty()) {
+    std::cout << "No bonds in this molecule are relevant to directed conformer generation.\n";
+
+    const unsigned maxTries = 3;
+    for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
+      auto positionResult = generateConformation(mol);
+      if(positionResult) {
+        std::cout << "Generated conformation.\n";
+        IO::write(
+          filestem + "-0.mol",
+          mol,
+          positionResult.value()
+        );
+      } else {
+        std::cout << "Could not generate conformer: "
+          << positionResult.error().message() << "\n";
+      }
+    }
+
+    return 0;
+  }
+
   for(const auto& bondIndex : generator.bondList()) {
     std::cout << "Considering bond " << bondIndex.first << "-" << bondIndex.second << "\n";
   }
 
   std::cout << "Ideally need " << generator.idealEnsembleSize() << " conformers.\n";
 
-  unsigned maxTries = 3;
+  const unsigned maxTries = 3;
 
   unsigned conformerCount = 0;
-  while(generator.conformerCount() != generator.idealEnsembleSize()) {
+  while(generator.decisionListSetSize() != generator.idealEnsembleSize()) {
     auto newDecisionList = generator.generateNewDecisionList();
 
     for(unsigned attempt = 0; attempt < maxTries; ++attempt) {
-    auto positionResult = generator.generateConformation(newDecisionList, configuration);
+      auto positionResult = generator.generateConformation(newDecisionList, configuration);
 
       if(positionResult) {
         std::cout << "Generated conformer #" << (conformerCount + 1) << ", decision list " << temple::stringify(newDecisionList) << "\n";
@@ -118,7 +140,7 @@ int main(int argc, char* argv[]) {
         break;
       }
 
-      std::cout << "Could not generate decision list " << temple::stringify(newDecisionList) << "\n";
+      std::cout << "Could not generate decision list " << temple::stringify(newDecisionList) << ": " << positionResult.error().message() << "\n";
     }
 
     ++conformerCount;

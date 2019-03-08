@@ -14,6 +14,10 @@
 #include <numeric>
 #include <map>
 
+/* TODO
+ * - Figure out if this is used somewhere and get rid of all of these algorithms
+ */
+
 namespace Scine {
 
 namespace molassembler {
@@ -94,8 +98,11 @@ std::vector<
       countOverlap.end(),
       0u,
       [](const unsigned carry, const unsigned current) {
-        if(current > 0) return carry + 1;
-        else return carry;
+        if(current > 0) {
+          return carry + 1;
+        }
+
+        return carry;
       }
     );
     if(numSetOverlaps == 0) {
@@ -205,55 +212,19 @@ bool nextCombinationPermutation(
 
   if(allFull) {
     return false;
-  } else {
-    // Make next permutation
-    for(int i = cols - 1; i >= 0; --i) {
-      if(toPermute[i] == limits[i]) {
-        toPermute[i] = 0;
-      } else {
-        ++toPermute[i];
-        return true;
-      }
-    }
-
-    return true;
   }
-}
 
-/*! Updates a map, placing the updateValue if the map does not yet have an entry
- * for the passed key. If there is an existing value for the passed key, a
- * predicate function is called to determine whether to update the value or not
- */
-template<typename T, typename U, class UpdatePredicate>
-std::enable_if_t<
-  std::is_same<
-    decltype( // get type of expression
-      std::declval<UpdatePredicate>()( // invoke predicate
-        std::declval<U>()
-      )
-    ),
-    bool
-  >::value,
-  void
-> addOrUpdateMapIf(
-  std::map<T, U>& map,
-  const T& key,
-  const U& updateValue,
-  UpdatePredicate&& updatePredicate
-) {
-  auto findIter = map.lower_bound(key);
-
-  if(findIter == map.end() || !(findIter->first == key)) {
-    map.emplace_hint(
-      findIter,
-      key,
-      updateValue
-    );
-  } else {
-    if(updatePredicate(findIter->second)) {
-      findIter->second = updateValue;
+  // Make next permutation
+  for(int i = cols - 1; i >= 0; --i) {
+    if(toPermute[i] == limits[i]) {
+      toPermute[i] = 0;
+    } else {
+      ++toPermute[i];
+      return true;
     }
   }
+
+  return true;
 }
 
 // From cppreference, possible C++17 clamp implementation

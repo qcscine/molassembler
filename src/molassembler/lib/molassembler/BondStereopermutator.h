@@ -158,6 +158,8 @@ public:
 
 //!@name Information
 //!@{
+  Alignment alignment() const;
+
   /*!
    * @brief Returns the permutation index within the set of possible permutations, if set
    * @returns whether the stereopermutator is assigned or not, and if so,

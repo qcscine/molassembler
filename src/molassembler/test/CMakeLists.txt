@@ -28,6 +28,7 @@ set(MainTestFiles
 )
 
 set(DGTestFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/DGDirectedConformerGenerator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGExplicitGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGFixedPositions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DGGraphShortestDistances.cpp

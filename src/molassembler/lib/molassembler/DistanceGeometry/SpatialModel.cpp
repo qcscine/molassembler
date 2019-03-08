@@ -1132,12 +1132,20 @@ void SpatialModel::addBondStereopermutatorInformation(
     const ValueBounds& coneAngleI = *coneAngleIOption;
     const ValueBounds& coneAngleL = *coneAngleLOption;
 
+    double dihedralVariance = coneAngleI.upper + coneAngleL.upper;
+    if(permutator.alignment() == BondStereopermutator::Alignment::Eclipsed) {
+      dihedralVariance += dihedralAbsoluteVariance * looseningMultiplier;
+    } else if(permutator.alignment() == BondStereopermutator::Alignment::Staggered) {
+      // Staggered dihedrals can be significantly looser
+      dihedralVariance += 5 * dihedralAbsoluteVariance * looseningMultiplier;
+    }
+
     /* Modify the dihedral angle by the upper cone angles of the i and l
      * ligands and the usual variances.
      */
     ValueBounds dihedralBounds = makeBoundsFromCentralValue(
       dihedralAngle,
-      coneAngleI.upper + coneAngleL.upper + dihedralAbsoluteVariance * looseningMultiplier
+      dihedralVariance
     );
 
     /* If the width of the dihedral angle is now larger than 2π, then we may

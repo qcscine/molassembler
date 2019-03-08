@@ -44,6 +44,8 @@ struct BondStereopermutator::Impl {
   );
 
 /* Information */
+  Alignment alignment() const;
+
   boost::optional<unsigned> assigned() const;
 
   const stereopermutation::Composite& composite() const;

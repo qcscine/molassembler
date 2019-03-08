@@ -19,20 +19,21 @@ namespace molassembler {
 unsigned numRotatableBonds(const Molecule& mol) {
   Cycles cycleData = mol.graph().cycles();
 
-  std::map<BondIndex, unsigned> smallestCycle;
+  std::unordered_map<BondIndex, unsigned, boost::hash<BondIndex>> smallestCycle;
 
   for(const auto cycleEdges : cycleData) {
     const unsigned cycleSize = cycleEdges.size();
 
     for(const BondIndex& edge : cycleEdges) {
-      StdlibTypeAlgorithms::addOrUpdateMapIf(
-        smallestCycle,
-        edge,
-        cycleSize,
-        [&cycleSize](const unsigned currentMinCycleSize) -> bool {
-          return cycleSize <= currentMinCycleSize;
+      auto findIter = smallestCycle.find(edge);
+
+      if(findIter != std::end(smallestCycle)) {
+        if(cycleSize < findIter->second) {
+          findIter->second = cycleSize;
         }
-      );
+      } else {
+        smallestCycle.emplace(edge, cycleSize);
+      }
     }
   }
 
@@ -78,7 +79,9 @@ unsigned numRotatableBonds(const Molecule& mol) {
     }
   }
 
-  return std::round(count);
+  return static_cast<unsigned>(
+    std::round(count)
+  );
 }
 
 } // namespace molassmembler

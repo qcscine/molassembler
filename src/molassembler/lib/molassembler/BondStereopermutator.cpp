@@ -73,6 +73,10 @@ void BondStereopermutator::propagateGraphChange(
   _pImpl -> propagateGraphChange(oldPermutator, newPermutator);
 }
 
+BondStereopermutator::Alignment BondStereopermutator::alignment() const {
+  return _pImpl->alignment();
+}
+
 boost::optional<unsigned> BondStereopermutator::assigned() const {
   return _pImpl -> assigned();
 }

@@ -27,7 +27,7 @@ boost::variant<DirectedConformerGenerator::IgnoreReason, BondStereopermutator>
 DirectedConformerGenerator::considerBond(
   const BondIndex& bondIndex,
   const Molecule& molecule,
-  const std::map<AtomIndex, unsigned>& smallestCycleMap
+  const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap
 ) {
   return Impl::considerBond(
     bondIndex,
@@ -35,7 +35,6 @@ DirectedConformerGenerator::considerBond(
     smallestCycleMap
   );
 }
-
 
 DirectedConformerGenerator::DirectedConformerGenerator(
   Molecule molecule,
@@ -63,8 +62,8 @@ const DirectedConformerGenerator::BondList& DirectedConformerGenerator::bondList
   return _pImpl->bondList();
 }
 
-unsigned DirectedConformerGenerator::conformerCount() const {
-  return _pImpl->conformerCount();
+unsigned DirectedConformerGenerator::decisionListSetSize() const {
+  return _pImpl->decisionListSetSize();
 }
 
 unsigned DirectedConformerGenerator::idealEnsembleSize() const {
@@ -77,6 +76,10 @@ DirectedConformerGenerator::generateConformation(
   const DistanceGeometry::Configuration& configuration
 ) {
   return _pImpl->generateConformation(decisionList, configuration);
+}
+
+const Molecule& DirectedConformerGenerator::conformationMolecule(const DecisionList& decisionList) {
+  return _pImpl->conformationMolecule(decisionList);
 }
 
 DirectedConformerGenerator::DecisionList DirectedConformerGenerator::getDecisionList(Utils::PositionCollection positions) const {

@@ -119,7 +119,9 @@ public:
 
     InsertResult result = _root->generate(chooseFunction, values, _bounds, 0);
 
-    assert(result.insertedSomething);
+    if(!result.insertedSomething) {
+      throw std::logic_error("Trie has failed to generate a new entry");
+    }
 
     ++_size;
 
@@ -440,7 +442,7 @@ private:
   ChoiceList _bounds;
   NodePtr _root;
   unsigned _size = 0;
-  unsigned _capacity;
+  unsigned _capacity = 0;
 //!@}
 };
 
