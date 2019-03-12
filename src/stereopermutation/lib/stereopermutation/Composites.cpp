@@ -699,7 +699,7 @@ Composite::Composite(
       angleGroups.second.symmetryPositions
     ),
     [&](const unsigned f, const unsigned s) -> void {
-      double alignAngle = getDihedral(f, s);
+      const double alignAngle = getDihedral(f, s);
 
       // Twist the right coordinates around x so that f is cis with r
       for(auto& position: secondCoordinates) {
@@ -720,7 +720,7 @@ Composite::Composite(
          * negative.
          */
 
-        auto dihedrals = temple::map(
+        const auto dihedrals = temple::map(
           angleGroups.second.symmetryPositions,
           [&](const unsigned secondSymmetryPosition) -> double {
             double dihedral = getDihedral(f, secondSymmetryPosition);
@@ -731,7 +731,7 @@ Composite::Composite(
           }
         );
 
-        unsigned maximumIndex = std::max_element(
+        const unsigned maximumIndex = std::max_element(
           std::begin(dihedrals),
           std::end(dihedrals)
         ) - std::begin(dihedrals);

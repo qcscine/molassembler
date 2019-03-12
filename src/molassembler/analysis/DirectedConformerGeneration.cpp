@@ -107,10 +107,10 @@ int main(int argc, char* argv[]) {
           positionResult.value()
         );
         break;
-      } else {
-        std::cout << "Could not generate conformer: "
-          << positionResult.error().message() << "\n";
       }
+
+      std::cout << "Could not generate conformer: "
+        << positionResult.error().message() << "\n";
     }
 
     return 0;
@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
 
       std::cout << "Could not generate decision list " << temple::stringify(newDecisionList) << ": " << positionResult.error().message() << "\n";
       IO::write(
-        filestem + "-"s + std::to_string(conformerCount + 1) + ".masm",
+        filestem + "-"s + std::to_string(conformerCount + 1) + ".json",
         confMol
       );
     }

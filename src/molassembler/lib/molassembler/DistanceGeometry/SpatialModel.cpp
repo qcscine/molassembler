@@ -1059,40 +1059,6 @@ void SpatialModel::addBondStereopermutatorInformation(
   const stereopermutation::Composite& composite = permutator.composite();
   const auto& assignment = permutator.assigned();
 
-  /* The signed volume of a tetrahedron spanned by a 1-4 sequence i-j-k-l is
-   *
-   *   V = 1/6 (i-l) dot [(j-l) x (k-l)]
-   *
-   * or, in internal coordinates (a, b, c are bond lengths, α and β angles,
-   * φ the dihedral)
-   *
-   *   V = 1/6 a b c sin α sin β sin φ
-   *
-   * We calculate the maximal volume spanned by the combination of all bounds
-   * on the internal coordinates and set the flat chirality constraint's
-   * tolerance as ± its magnitude.
-   *
-   * Just like in atomStereopermutatorChiralityConstraints, we adjust the volume
-   * by V' = 6 * V to avoid calculating the factor everywhere.
-   *
-   * As it currently stands, only dihedral approx 0° chirality constraints
-   * are emitted. For more complicated composites, in which no such chirality
-   * constraints exist, it would be considerably more helpful if all chirality
-   * constraints were emitted.
-   *
-   * To change this, remove the if-condition in the loop and reconsider the
-   * algorithm generating dihedral angle bounds and the maximum sine value.
-   * Additionally, it will be necesssary to compute the minimum sine values
-   * as well as using the lower bounds on the bounded distances to get
-   * the lower volume. It will not be reasonable to clamp the dihedral to 0,
-   * M_PI, but will instead be necessary to retain the +- orientation to get
-   * correct +- values for the volume bounds around 0° dihedrals.
-   *
-   * How exactly to combine the bounds with the angle bounds and their sines to
-   * get the correct bounds on the final volume will be challenging.
-   */
-
-  // Can the following selections be done with a single branch?
   const AtomStereopermutator& firstStereopermutator = (
     stereopermutatorA.centralIndex() == composite.orientations().first.identifier
     ? stereopermutatorA
@@ -1179,7 +1145,17 @@ void SpatialModel::addBondStereopermutatorInformation(
       }
     );
 
-    // Add a dihedral constraint
+    /* Depending on alignment, we do not want to overdo the number of dihedral
+     * constraints. If alignment is staggered, then we only do one-to-all
+     * dihedrals instead of all-to-all.
+     */
+    if(
+      composite.alignment() == stereopermutation::Composite::Alignment::Staggered
+      && std::get<0>(composite.dihedrals(assignment.value()).front()) != firstSymmetryPosition
+    ) {
+      continue;
+    }
+
     _dihedralConstraints.emplace_back(
       DihedralConstraint::LigandSequence {
         firstStereopermutator.getRanking().ligands.at(ligandIndexIAtFirst),
@@ -1462,10 +1438,10 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
   std::vector<std::string> atomStereopermutatorTooltips(
     const AtomStereopermutator& permutator
   ) const final {
-    std::vector<std::string> tooltips {
+    std::vector<std::string> tooltips {{
       Symmetry::name(permutator.getSymmetry()),
       permutator.info()
-    };
+    }};
 
     for(const auto& angleIterPair : spatialModel._angleBounds) {
       const auto& indexSequence = angleIterPair.first;
@@ -1499,6 +1475,12 @@ struct SpatialModel::ModelGraphWriter final : public MolGraphWriter {
     for(const auto& dihedralMapPair : spatialModel._dihedralBounds) {
       const auto& indexSequence = dihedralMapPair.first;
       const auto& dihedralBounds = dihedralMapPair.second;
+
+      // Skip default dihedrals, list only explicitly set dihedrals
+      if(dihedralBounds == defaultDihedralBounds) {
+        continue;
+      }
+
       if(
         (
           indexSequence.at(1) == permutator.edge().first

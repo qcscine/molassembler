@@ -64,7 +64,7 @@ void MolGraphWriter::writeBondStereopermutatorNodes(std::ostream& os) const {
     std::move(
       std::begin(additionalTooltips),
       std::end(additionalTooltips),
-      std::back_inserter(additionalTooltips)
+      std::back_inserter(tooltipStrings)
     );
 
     os << "  " << graphNodeName << R"( [label=")" << state

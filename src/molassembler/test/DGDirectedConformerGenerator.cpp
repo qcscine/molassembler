@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(directedConformerGenerator) {
     configuration.refinementStepLimit = 500;
 
     /* Ensure we can make generate all conformers we have hypothesized exist */
-    const unsigned maxTries = 10;
+    const unsigned maxTries = 3;
     while(generator.decisionListSetSize() != generator.idealEnsembleSize()) {
       auto newDecisionList = generator.generateNewDecisionList();
 
