@@ -24,8 +24,8 @@ namespace molassembler {
 struct PermutationState {
 //!@name State
 //!@{
-  //! Stably resorted (by set size) ligands ranking
-  RankingInformation::RankedLigandsType canonicalLigands;
+  //! Stably resorted (by set size) site ranking
+  RankingInformation::RankedSitesType canonicalSites;
 
   //! Character representation of bonding case
   std::vector<char> symbolicCharacters;
@@ -33,13 +33,13 @@ struct PermutationState {
   //! Self-referential representation of links
   stereopermutation::Stereopermutation::LinksSetType selfReferentialLinks;
 
-  //! Mapping from ligand index to modeled ligand plane distance
-  std::vector<DistanceGeometry::ValueBounds> ligandDistances;
+  //! Mapping from site index to modeled site plane distance
+  std::vector<DistanceGeometry::ValueBounds> siteDistances;
 
   using ConeAngleType = std::vector<
     boost::optional<DistanceGeometry::ValueBounds>
   >;
-  //! Mapping from ligand index to cone angle optional
+  //! Mapping from site index to cone angle optional
   ConeAngleType coneAngles;
 
   //! Vector of rotationally unique stereopermutations with associated weights
@@ -48,7 +48,7 @@ struct PermutationState {
   //! Vector of permutation indices that are feasible
   std::vector<unsigned> feasiblePermutations;
 
-  //! Mapping from ligand index to permutational symmetry position
+  //! Mapping from site index to permutational symmetry position
   std::vector<unsigned> symmetryPositionMap;
 //!@}
 
@@ -68,97 +68,96 @@ struct PermutationState {
 //!@name Static member functions
 //!@{
   /*!
-   * @brief Stably re-sort ranked ligand indices in decreasing set size
+   * @brief Stably re-sort ranked site indices in decreasing set size
    *
    * Necessary to avoid treating e.g. AAB and ABB separately, although the
    * resulting assignments are identical.
    *
    * Example:
    * @verbatim
-   * rankedLigands = {5, 8}, {3}, {1, 2, 4}
-   * canonicalize(rankedLigands) = {1, 2, 4}, {5, 8}, {3}
+   * rankedSites = {5, 8}, {3}, {1, 2, 4}
+   * canonicalize(rankedSites) = {1, 2, 4}, {5, 8}, {3}
    * @endverbatim
    */
-  static RankingInformation::RankedLigandsType canonicalize(
-    RankingInformation::RankedLigandsType rankedLigands
+  static RankingInformation::RankedSitesType canonicalize(
+    RankingInformation::RankedSitesType rankedSites
   );
 
   /*!
-   * @brief Condense ligand ranking information into canonical characters for
+   * @brief Condense site ranking information into canonical characters for
    *   symbolic computation
    *
    * Use the output of canonicalize here as input:
    *
    * Example:
    * @verbatim
-   * rankedLigands = {5, 8}, {3}, {1, 2, 4}
-   * canonical = canonicalize(rankedLigands) = {1, 2, 4}, {5, 8}, {3}
+   * rankedSites = {5, 8}, {3}, {1, 2, 4}
+   * canonical = canonicalize(rankedSites = {1, 2, 4}, {5, 8}, {3}
    * transferToSymbolicCharacetrs(canonical) = A, A, A, B, B, C
    * @endverbatim
    */
   static std::vector<char> transferToSymbolicCharacters(
-    const RankingInformation::RankedLigandsType& canonicalLigands
+    const RankingInformation::RankedSitesType& canonicalSites
   );
 
   /*!
-   * @brief Make ligand-index based links self-referential within canonical
-   *   ligands
+   * @brief Make site-index based links self-referential within canonical sites
    *
    * Example:
    * @verbatim
    * links = {indexPair = {5, 8}}
    *
    * self-refential idx: 0  1  2    3  4    5
-   * canonicalLigands = {1, 2, 4}, {5, 8}, {3} (this is output from canonicalize)
+   * canonicalSites = {1, 2, 4}, {5, 8}, {3} (this is output from canonicalize)
    *
-   * selfReferentialTransform(links, canonicalLigands) = {3, 4}
+   * selfReferentialTransform(links, canonicalSites) = {3, 4}
    * @endverbatim
    */
   static stereopermutation::Stereopermutation::LinksSetType selfReferentialTransform(
     const std::vector<LinkInformation>& rankingLinks,
-    const RankingInformation::RankedLigandsType& canonicalLigands
+    const RankingInformation::RankedSitesType& canonicalSites
   );
 
   /*!
-   * @brief Generates a flat mapping from ligand indices to symmetry positions
+   * @brief Generates a flat mapping from site indices to symmetry positions
    *
-   * Generates a mapping from ligand indices to symmetry positions according to
+   * Generates a mapping from site indices to symmetry positions according to
    * the ranking character distribution to symmetry positions of an assignment
    * (its characters member) and any defined links between symmetry positions.
    *
    * @code{.cpp}
-   * auto mapping = generateLigandToSymmetryPosition(...);
-   * unsigned symmetryPositionOfLigandFour = mapping.at(4u);
+   * auto mapping = generateSiteToSymmetryPosition(...);
+   * unsigned symmetryPositionOfSiteFour = mapping.at(4u);
    * @endcode
    */
-  static std::vector<unsigned> generateLigandToSymmetryPositionMap(
+  static std::vector<unsigned> generateSiteToSymmetryPositionMap(
     const stereopermutation::Stereopermutation& assignment,
-    const RankingInformation::RankedLigandsType& canonicalLigands
+    const RankingInformation::RankedSitesType& canonicalSites
   );
 
   /*!
-   * @brief Generates a flat mapping from symmetry positions to ligand indices
+   * @brief Generates a flat mapping from symmetry positions to site indices
    *
-   * Generates exactly the inverse map to generateLigandToSymmetryPositionMap
+   * Generates exactly the inverse map to generateSiteToSymmetryPositionMap
    *
    * @code{cpp}
-   * auto mapping = generateSymmetryPositionToLigandMap(...);
-   * unsigned ligandIndexAtSymmetryPositionFive = mapping.at(5u);
+   * auto mapping = generateSymmetryPositionToSiteMap(...);
+   * unsigned siteIndexAtSymmetryPositionFive = mapping.at(5u);
    * @endcode
    */
-  static std::vector<unsigned> generateSymmetryPositionToLigandMap(
+  static std::vector<unsigned> generateSymmetryPositionToSiteMap(
     const stereopermutation::Stereopermutation& assignment,
-    const RankingInformation::RankedLigandsType& canonicalLigands
+    const RankingInformation::RankedSitesType& canonicalSites
   );
 
   /*!
-   * @brief Generates the reduced character representation of ligands at their
+   * @brief Generates the reduced character representation of sites at their
    *   current symmetry positions
    */
   static std::vector<char> makeStereopermutationCharacters(
-    const RankingInformation::RankedLigandsType& canonicalLigands,
+    const RankingInformation::RankedSitesType& canonicalSites,
     const std::vector<char>& canonicalStereopermutationCharacters,
-    const std::vector<unsigned>& ligandsAtSymmetryPositions
+    const std::vector<unsigned>& sitesAtSymmetryPositions
   );
 
   /*!
@@ -182,7 +181,7 @@ struct PermutationState {
    */
   static bool isNotObviouslyImpossibleStereopermutation(
     const stereopermutation::Stereopermutation& assignment,
-    const RankingInformation::RankedLigandsType& canonicalLigands,
+    const RankingInformation::RankedSitesType& canonicalSites,
     const ConeAngleType& coneAngles,
     const RankingInformation& ranking,
     Symmetry::Name symmetry,

@@ -155,13 +155,13 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
    * assigning (AtomIndex -> unsigned).
    */
   if(_assignmentOption) {
-    _cache.symmetryPositionMap = PermutationState::generateLigandToSymmetryPositionMap(
+    _cache.symmetryPositionMap = PermutationState::generateSiteToSymmetryPositionMap(
       _cache.permutations.stereopermutations.at(
         _cache.feasiblePermutations.at(
           _assignmentOption.value()
         )
       ),
-      _cache.canonicalLigands
+      _cache.canonicalSites
     );
   } else { // Wipe the map
     _cache.symmetryPositionMap.clear();
@@ -211,11 +211,11 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   /* The following is a precondition. It is also rankPriority's postcondition,
    * but propagation may mess with it, so we need to be sure.
    */
-  for(const auto& ligand : boost::range::join(_ranking.ligands, newRanking.ligands)) {
+  for(const auto& siteAtomList : boost::range::join(_ranking.sites, newRanking.sites)) {
     assert(
       std::is_sorted(
-        std::begin(ligand),
-        std::end(ligand)
+        std::begin(siteAtomList),
+        std::end(siteAtomList)
       )
     );
   }
@@ -223,61 +223,61 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
   /* There are five possible situations that can occur here:
    * - A substituent is removed, and that substituent was sole constituent of a
-   *   ligand, leading to a symmetry size decrease.
-   * - A substituent is removed, but that substituent was part of a ligand with
+   *   site, leading to a symmetry size decrease.
+   * - A substituent is removed, but that substituent was part of a site with
    *   multiple constituents. The symmetry stays the same.
    * - No substituent is removed or added, but there is a ranking change. The
    *   symmetry stays the same.
-   * - A substituent is added, but to an existing ligand. The symmetry stays
+   * - A substituent is added, but to an existing site. The symmetry stays
    *   the same.
-   * - A substituent is added that solely constitutes a new ligand. The
+   * - A substituent is added that by itself constitutes a new site. The
    *   symmetry size increases.
    */
   enum class PropagationSituation {
     Unknown,
-    LigandRemoval,
+    SiteRemoval,
     SubstituentRemoval,
     RankingChange,
     SubstituentAddition,
-    LigandAddition
+    SiteAddition
   };
 
   /* Fully determine in which situation we are and all conditional information
    * needed to proceed with each.
    */
   auto situation = PropagationSituation::Unknown;
-  int ligandCountChange = static_cast<int>(newRanking.ligands.size() - _ranking.ligands.size());
-  boost::optional<unsigned> alteredLigandIndex;
+  int siteCountChange = static_cast<int>(newRanking.sites.size() - _ranking.sites.size());
+  boost::optional<unsigned> alteredSiteIndex;
   boost::optional<AtomIndex> alteredSubstituentIndex;
 
-  // Complain if more than one ligand is changed either way
-  if(std::abs(ligandCountChange) > 1) {
-    throw std::logic_error("propagateGraphChange should only ever handle a single ligand addition or removal at once");
+  // Complain if more than one site is changed either way
+  if(std::abs(siteCountChange) > 1) {
+    throw std::logic_error("propagateGraphChange should only ever handle a single site addition or removal at once");
   }
 
-  auto countSubstituents = [](const RankingInformation::LigandsType& ligands) -> unsigned {
+  auto countSubstituents = [](const RankingInformation::SiteListType& sites) -> unsigned {
     return temple::accumulate(
-      ligands,
+      sites,
       0u,
-      [](const unsigned carry, const auto& ligand) -> unsigned {
-        return carry + ligand.size();
+      [](const unsigned carry, const auto& site) -> unsigned {
+        return carry + site.size();
       }
     );
   };
 
-  int substituentCountChange = static_cast<int>(countSubstituents(newRanking.ligands)) - static_cast<int>(countSubstituents(_ranking.ligands));
-  // Complain if multiple ligands are changed either way
+  int substituentCountChange = static_cast<int>(countSubstituents(newRanking.sites)) - static_cast<int>(countSubstituents(_ranking.sites));
+  // Complain if multiple substituents are changed either way
   if(std::abs(substituentCountChange) > 1) {
     throw std::logic_error("propagateGraphChange should only ever handle a single subtituent addition or removal at once");
   }
 
   // Collect all substituents of a ranking and sort them
-  auto collectSubstituents = [](const RankingInformation::LigandsType& ligands) -> std::vector<AtomIndex> {
+  auto collectSubstituents = [](const RankingInformation::SiteListType& sites) -> std::vector<AtomIndex> {
     std::vector<AtomIndex> substituents;
-    substituents.reserve(2 * ligands.size());
+    substituents.reserve(2 * sites.size());
 
-    for(const auto& ligand : ligands) {
-      for(const AtomIndex& index : ligand) {
+    for(const auto& site : sites) {
+      for(const AtomIndex& index : site) {
         substituents.push_back(index);
       }
     }
@@ -289,13 +289,13 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     return substituents;
   };
 
-  auto determineChangedSubstituentAndLigand = [&](
+  auto determineChangedSubstituentAndSite = [&](
     const RankingInformation& rankingWithMoreSubstituents,
     const RankingInformation& rankingWithFewerSubstituents
   ) {
     // Figure out which substituent has changed, if any
-    auto largerSubstituentList = collectSubstituents(rankingWithMoreSubstituents.ligands);
-    auto smallerSubstituentList = collectSubstituents(rankingWithFewerSubstituents.ligands);
+    auto largerSubstituentList = collectSubstituents(rankingWithMoreSubstituents.sites);
+    auto smallerSubstituentList = collectSubstituents(rankingWithFewerSubstituents.sites);
 
     std::vector<AtomIndex> changedSubstituents;
 
@@ -317,25 +317,25 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     assert(!changedSubstituents.empty());
 
     alteredSubstituentIndex = changedSubstituents.front();
-    alteredLigandIndex = rankingWithMoreSubstituents.getLigandIndexOf(changedSubstituents.front());
+    alteredSiteIndex = rankingWithMoreSubstituents.getSiteIndexOf(changedSubstituents.front());
   };
 
   if(substituentCountChange == +1) {
-    determineChangedSubstituentAndLigand(newRanking, _ranking);
+    determineChangedSubstituentAndSite(newRanking, _ranking);
 
-    assert(!newRanking.ligands.at(*alteredLigandIndex).empty());
-    if(newRanking.ligands.at(*alteredLigandIndex).size() > 1) {
+    assert(!newRanking.sites.at(*alteredSiteIndex).empty());
+    if(newRanking.sites.at(*alteredSiteIndex).size() > 1) {
       situation = PropagationSituation::SubstituentAddition;
     } else {
-      situation = PropagationSituation::LigandAddition;
+      situation = PropagationSituation::SiteAddition;
     }
   } else if(substituentCountChange == -1) {
-    determineChangedSubstituentAndLigand(_ranking, newRanking);
-    assert(!_ranking.ligands.at(*alteredLigandIndex).empty());
-    if(_ranking.ligands.at(*alteredLigandIndex).size() > 1) {
+    determineChangedSubstituentAndSite(_ranking, newRanking);
+    assert(!_ranking.sites.at(*alteredSiteIndex).empty());
+    if(_ranking.sites.at(*alteredSiteIndex).size() > 1) {
       situation = PropagationSituation::SubstituentRemoval;
     } else {
-      situation = PropagationSituation::LigandRemoval;
+      situation = PropagationSituation::SiteRemoval;
     }
   } else {
     situation = PropagationSituation::RankingChange;
@@ -344,16 +344,16 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   /* Decide the new symmetry */
   Symmetry::Name newSymmetry = symmetryOption.value_or_eval(
     [&]() {
-      if(ligandCountChange == +1) {
+      if(siteCountChange == +1) {
         return up(_symmetry);
       }
 
-      if(ligandCountChange == 0) {
+      if(siteCountChange == 0) {
         return _symmetry;
       }
 
-      assert(ligandCountChange == -1);
-      assert(alteredLigandIndex);
+      assert(siteCountChange == -1);
+      assert(alteredSiteIndex);
 
       /* We can only figure out a mapping if the stereocenter is assigned
        * since otherwise _cache.symmetryPositionMap is empty and the symmetry
@@ -362,13 +362,13 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       if(_assignmentOption) {
         return down(
           _symmetry,
-          _cache.symmetryPositionMap.at(alteredLigandIndex.value())
+          _cache.symmetryPositionMap.at(alteredSiteIndex.value())
         );
       }
 
       // Just return the most symmetric symmetry of the target size
       return Symmetry::properties::mostSymmetric(
-        newRanking.ligands.size()
+        newRanking.sites.size()
       );
     }
   );
@@ -387,18 +387,18 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
    * assignments. This is only necessary in the case that the stereopermutator is currently
    * assigned.
    *
-   * In the case of an equal number of ligands, it is only possible to
+   * In the case of an equal number of sites, it is only possible to
    * propagate chiral state if the new number of assignments is smaller or
    * equal to the amount we have currently. This is because say we have AABCDE
    * in octahedral, we carry chiral state, and a ranking change leads to
    * ABCDEF.  There will be multiple ways to split A to F!
    */
   if(_assignmentOption && numStereopermutations() > 1) {
-    // A flat map of symmetry position to new ligand index in the new symmetry
-    std::vector<unsigned> ligandsAtNewSymmetryPositions;
+    // A flat map of symmetry position to new site index in the new symmetry
+    std::vector<unsigned> sitesAtNewSymmetryPositions;
 
-    /* Ligand-level changes */
-    if(situation == PropagationSituation::LigandAddition) {
+    /* Site-level changes */
+    if(situation == PropagationSituation::SiteAddition) {
       /* Try to get a mapping to the new symmetry. If that returns a Some, try
        * to get a mapping by preservationOption policy. If any of these steps
        * returns boost::none, the whole expression is boost::none.
@@ -425,23 +425,23 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
           symmetryMapping
         );
 
-        // Invert symmetryPositionMap to get: ligand = map.at(symmetryPosition)
-        std::vector<unsigned> oldSymmetryPositionToLigandMap(_cache.symmetryPositionMap.size());
+        // Invert symmetryPositionMap to get: site = map.at(symmetryPosition)
+        std::vector<unsigned> oldSymmetryPositionToSiteMap(_cache.symmetryPositionMap.size());
         for(unsigned i = 0 ; i < _cache.symmetryPositionMap.size(); ++i) {
-          oldSymmetryPositionToLigandMap.at(
+          oldSymmetryPositionToSiteMap.at(
             _cache.symmetryPositionMap.at(i)
           ) = i;
         }
-        /* We assume the new ligand is also merely added to the end! This may
+        /* We assume the new site is also merely added to the end! This may
          * not always be true
          */
-        oldSymmetryPositionToLigandMap.push_back(_cache.symmetryPositionMap.size());
+        oldSymmetryPositionToSiteMap.push_back(_cache.symmetryPositionMap.size());
 
-        // Replace old symmetry positions by their ligand indices
-        ligandsAtNewSymmetryPositions = temple::map(
+        // Replace old symmetry positions by their site indices
+        sitesAtNewSymmetryPositions = temple::map(
           oldSymmetryPositionsInNewSymmetry,
-          [&oldSymmetryPositionToLigandMap](const unsigned oldSymmetryPosition) -> unsigned {
-            return oldSymmetryPositionToLigandMap.at(oldSymmetryPosition);
+          [&oldSymmetryPositionToSiteMap](const unsigned oldSymmetryPosition) -> unsigned {
+            return oldSymmetryPositionToSiteMap.at(oldSymmetryPosition);
           }
         );
       }
@@ -451,7 +451,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        */
     }
 
-    if(situation == PropagationSituation::LigandRemoval) {
+    if(situation == PropagationSituation::SiteRemoval) {
       /* Try to get a mapping to the new symmetry. If that returns a Some, try
        * to get a mapping by preservationOption policy. If any of these steps
        * returns boost::none, the whole expression is boost::none.
@@ -460,9 +460,9 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         _symmetry,
         newSymmetry,
         /* Last parameter is the deleted symmetry position, which is the
-         * symmetry position at which the ligand being removed is currently at
+         * symmetry position at which the site being removed is currently at
          */
-        _cache.symmetryPositionMap.at(*alteredLigandIndex)
+        _cache.symmetryPositionMap.at(*alteredSiteIndex)
       ) | temple::callIfSome(
         PermutationState::getIndexMapping,
         temple::ANS,
@@ -470,7 +470,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       /* It is weird that this block of code works although it is structurally
-       * so different from ligand addition propagation. Is it coincidence?
+       * so different from site addition propagation. Is it coincidence?
        */
       if(suitableMappingOptional) {
         /* symmetryMapping {0, 4, 3, 2} means
@@ -482,19 +482,19 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
          */
         const auto& symmetryMapping = suitableMappingOptional.value();
 
-        // Invert symmetryPositionMap to get: ligand = map.at(symmetryPosition)
-        std::vector<unsigned> oldSymmetryPositionToLigandMap(_cache.symmetryPositionMap.size());
+        // Invert symmetryPositionMap to get: site = map.at(symmetryPosition)
+        std::vector<unsigned> oldSymmetryPositionToSiteMap(_cache.symmetryPositionMap.size());
         for(unsigned i = 0 ; i < _cache.symmetryPositionMap.size(); ++i) {
-          oldSymmetryPositionToLigandMap.at(
+          oldSymmetryPositionToSiteMap.at(
             _cache.symmetryPositionMap.at(i)
           ) = i;
         }
 
         // Transfer indices from current symmetry to new symmetry
-        ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
+        sitesAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
         for(unsigned i = 0; i < Symmetry::size(newSymmetry); ++i) {
           // i is a symmetry position
-          ligandsAtNewSymmetryPositions.at(i) = oldSymmetryPositionToLigandMap.at(
+          sitesAtNewSymmetryPositions.at(i) = oldSymmetryPositionToSiteMap.at(
             symmetryMapping.at(i)
           );
         }
@@ -503,36 +503,36 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 
     /* Substituent-level changes */
     if(situation == PropagationSituation::SubstituentAddition) {
-      /* Sort ligands' constituting atom indices in both rankings so we can use
+      /* Sort sites' constituting atom indices in both rankings so we can use
        * lexicographical comparison to create a mapping. Add the
-       * newSubstituentIndex to the old ranking's appropriate ligand so the
+       * newSubstituentIndex to the old ranking's appropriate site so the
        * mapping is 1:1.
        */
       temple::TinySet<AtomIndex>::checked_insert(
-        _ranking.ligands.at(*alteredLigandIndex),
+        _ranking.sites.at(*alteredSiteIndex),
         *alteredSubstituentIndex
       );
 
-      // Generate a flat map of old ligand indices to new ligand indices
-      auto ligandMapping = temple::map(
-        _ranking.ligands,
-        [&newRanking](const auto& ligand) -> unsigned {
+      // Generate a flat map of old site indices to new site indices
+      auto siteMapping = temple::map(
+        _ranking.sites,
+        [&newRanking](const auto& siteAtomList) -> unsigned {
           auto findIter = std::find(
-            newRanking.ligands.begin(),
-            newRanking.ligands.end(),
-            ligand
+            newRanking.sites.begin(),
+            newRanking.sites.end(),
+            siteAtomList
           );
 
-          assert(findIter != newRanking.ligands.end());
+          assert(findIter != newRanking.sites.end());
 
-          return findIter - newRanking.ligands.begin();
+          return findIter - newRanking.sites.begin();
         }
       );
 
-      // Write the found mapping into ligandsAtNewSymmetryPositions
-      ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
-      for(unsigned i = 0; i < ligandMapping.size(); ++i) {
-        ligandsAtNewSymmetryPositions.at(i) = ligandMapping.at(
+      // Write the found mapping into sitesAtNewSymmetryPositions
+      sitesAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
+      for(unsigned i = 0; i < siteMapping.size(); ++i) {
+        sitesAtNewSymmetryPositions.at(i) = siteMapping.at(
           _cache.symmetryPositionMap.at(i)
         );
       }
@@ -541,40 +541,40 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        * the returned prior state is unchanged.
        */
       temple::inplace::remove(
-        _ranking.ligands.at(*alteredLigandIndex),
+        _ranking.sites.at(*alteredSiteIndex),
         *alteredSubstituentIndex
       );
     }
 
     if(situation == PropagationSituation::SubstituentRemoval) {
-      /* Sort ligands in the old ranking and new so we can use lexicographical
+      /* Sort sites in the old ranking and new so we can use lexicographical
        * comparison to figure out a mapping
        */
       temple::inplace::remove(
-        _ranking.ligands.at(*alteredLigandIndex),
+        _ranking.sites.at(*alteredSiteIndex),
         *alteredSubstituentIndex
       );
 
-      // Calculate the mapping from old ligands to new ones
-      auto ligandMapping = temple::map(
-        _ranking.ligands,
-        [&newRanking](const auto& ligand) -> unsigned {
+      // Calculate the mapping from old sites to new ones
+      auto siteMapping = temple::map(
+        _ranking.sites,
+        [&newRanking](const auto& siteAtomList) -> unsigned {
           auto findIter = std::find(
-            newRanking.ligands.begin(),
-            newRanking.ligands.end(),
-            ligand
+            newRanking.sites.begin(),
+            newRanking.sites.end(),
+            siteAtomList
           );
 
-          assert(findIter != newRanking.ligands.end());
+          assert(findIter != newRanking.sites.end());
 
-          return findIter - newRanking.ligands.begin();
+          return findIter - newRanking.sites.begin();
         }
       );
 
-      ligandsAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
-      // Transfer ligands to new mapping
-      for(unsigned i = 0; i < ligandMapping.size(); ++i) {
-        ligandsAtNewSymmetryPositions.at(i) = ligandMapping.at(
+      sitesAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
+      // Transfer sites to new mapping
+      for(unsigned i = 0; i < siteMapping.size(); ++i) {
+        sitesAtNewSymmetryPositions.at(i) = siteMapping.at(
           _cache.symmetryPositionMap.at(i)
         );
       }
@@ -583,7 +583,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        * the returned prior state is unchanged.
        */
       temple::TinySet<AtomIndex>::checked_insert(
-        _ranking.ligands.at(*alteredLigandIndex),
+        _ranking.sites.at(*alteredSiteIndex),
         *alteredSubstituentIndex
       );
     }
@@ -603,18 +603,18 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       );
 
       // Replace the characters by their corresponding indices from the old ranking
-      ligandsAtNewSymmetryPositions = PermutationState::generateSymmetryPositionToLigandMap(
+      sitesAtNewSymmetryPositions = PermutationState::generateSymmetryPositionToSiteMap(
         currentStereopermutation,
-        _cache.canonicalLigands
+        _cache.canonicalSites
       );
     }
 
-    if(!ligandsAtNewSymmetryPositions.empty()) {
-      // Replace the ligand indices by their new ranking characters
+    if(!sitesAtNewSymmetryPositions.empty()) {
+      // Replace the site indices by their new ranking characters
       auto newStereopermutationCharacters = PermutationState::makeStereopermutationCharacters(
-        newPermutationState.canonicalLigands,
+        newPermutationState.canonicalSites,
         newPermutationState.symbolicCharacters,
-        ligandsAtNewSymmetryPositions
+        sitesAtNewSymmetryPositions
       );
 
       // Create a new assignment with those characters
@@ -684,14 +684,14 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
   };
 
   /* Update indices in RankingInformation */
-  for(auto& equalPrioritySet : _ranking.sortedSubstituents) {
+  for(auto& equalPrioritySet : _ranking.substituentRanking) {
     for(auto& index : equalPrioritySet) {
       updateIndexInplace(index);
     }
   }
 
-  for(auto& ligandIndicesList : _ranking.ligands) {
-    for(auto& atomIndex : ligandIndicesList) {
+  for(auto& siteAtomList : _ranking.sites) {
+    for(auto& atomIndex : siteAtomList) {
       updateIndexInplace(atomIndex);
     }
   }
@@ -719,7 +719,7 @@ Symmetry::Name AtomStereopermutator::Impl::getSymmetry() const {
 std::vector<unsigned> AtomStereopermutator::Impl::getSymmetryPositionMap() const {
   if(_assignmentOption == boost::none) {
     throw std::logic_error(
-      "The AtomStereopermutator is unassigned, ligands are not assigned to "
+      "The AtomStereopermutator is unassigned, sites are not assigned to "
       "symmetry positions"
     );
   }
@@ -733,11 +733,11 @@ void AtomStereopermutator::Impl::fit(
 ) {
   const unsigned S = Symmetry::size(_symmetry);
 
-  // For all atoms making up a ligand, decide on the spatial average position
-  const std::vector<Eigen::Vector3d> ligandPositions = temple::map(
-    _ranking.ligands,
-    [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
-      return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
+  // For all atoms making up a site, decide on the spatial average position
+  const std::vector<Eigen::Vector3d> sitePositions = temple::map(
+    _ranking.sites,
+    [&angstromWrapper](const std::vector<AtomIndex>& siteAtomList) -> Eigen::Vector3d {
+      return DelibHelpers::averagePosition(angstromWrapper.positions, siteAtomList);
     }
   );
 
@@ -755,9 +755,9 @@ void AtomStereopermutator::Impl::fit(
       for(unsigned j = i + 1; j < S; ++j) {
         angles.push_back(
           DelibHelpers::angle(
-            ligandPositions.at(i),
+            sitePositions.at(i),
             angstromWrapper.positions.row(_centerAtom),
-            ligandPositions.at(j)
+            sitePositions.at(j)
           )
         );
       }
@@ -836,13 +836,13 @@ void AtomStereopermutator::Impl::fit(
           temple::adaptors::allPairs(
             temple::adaptors::range(Symmetry::size(_symmetry))
           ),
-          [&](const unsigned ligandI, const unsigned ligandJ) -> double {
+          [&](const unsigned siteI, const unsigned siteJ) -> double {
             return std::fabs(
               DelibHelpers::angle(
-                ligandPositions.at(ligandI),
+                sitePositions.at(siteI),
                 angstromWrapper.positions.row(_centerAtom),
-                ligandPositions.at(ligandJ)
-              ) - angle(ligandI, ligandJ)
+                sitePositions.at(siteJ)
+              ) - angle(siteI, siteJ)
             );
           }
         )
@@ -861,27 +861,27 @@ void AtomStereopermutator::Impl::fit(
           temple::adaptors::allPairs(
             temple::adaptors::range(Symmetry::size(_symmetry))
           ),
-          [&](const unsigned ligandI, const unsigned ligandJ) -> double {
+          [&](const unsigned siteI, const unsigned siteJ) -> double {
             return std::fabs(
-              // ligandI - ligandJ 1-3 distance from positions
+              // siteI - siteJ 1-3 distance from positions
               DelibHelpers::distance(
-                ligandPositions.at(ligandI),
-                ligandPositions.at(ligandJ)
+                sitePositions.at(siteI),
+                sitePositions.at(siteJ)
               )
               // idealized 1-3 distance from
               - CommonTrig::lawOfCosines(
                 // i-j 1-2 distance from positions
                 DelibHelpers::distance(
-                  ligandPositions.at(ligandI),
+                  sitePositions.at(siteI),
                   angstromWrapper.positions.row(_centerAtom)
                 ),
                 // j-k 1-2 distance from positions
                 DelibHelpers::distance(
                   angstromWrapper.positions.row(_centerAtom),
-                  ligandPositions.at(ligandJ)
+                  sitePositions.at(siteJ)
                 ),
                 // idealized Stereopermutator angle
-                angle(ligandI, ligandJ)
+                angle(siteI, siteJ)
               )
             );
           }
@@ -897,9 +897,9 @@ void AtomStereopermutator::Impl::fit(
         temple::adaptors::transform(
           minimalChiralityConstraints(),
           [&](const auto& minimalPrototype) -> double {
-            auto fetchPosition = [&](const boost::optional<unsigned>& ligandIndexOptional) -> Eigen::Vector3d {
-              if(ligandIndexOptional) {
-                return ligandPositions.at(ligandIndexOptional.value());
+            auto fetchPosition = [&](const boost::optional<unsigned>& siteIndexOptional) -> Eigen::Vector3d {
+              if(siteIndexOptional) {
+                return sitePositions.at(siteIndexOptional.value());
               }
 
               return angstromWrapper.positions.row(_centerAtom);
@@ -1027,13 +1027,13 @@ std::vector<
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index
      */
-    auto symmetryPositionToLigandIndexMap = PermutationState::generateSymmetryPositionToLigandMap(
+    auto symmetryPositionToSiteIndexMap = PermutationState::generateSymmetryPositionToSiteMap(
       _cache.permutations.stereopermutations.at(
         _cache.feasiblePermutations.at(
           _assignmentOption.value()
         )
       ),
-      _cache.canonicalLigands
+      _cache.canonicalSites
     );
 
     // Get list of tetrahedra from symmetry
@@ -1042,7 +1042,7 @@ std::vector<
     precursors.reserve(tetrahedraList.size());
     for(const auto& tetrahedron : tetrahedraList) {
       /* Replace indices (represent positions within the symmetry) with the
-       * ligand index at that position from the inverted map
+       * site index at that position from the inverted map
        */
 
       // Make a minimal sequence from it
@@ -1051,7 +1051,7 @@ std::vector<
           tetrahedron,
           [&](const boost::optional<unsigned>& indexOptional) -> boost::optional<unsigned> {
             if(indexOptional) {
-              return symmetryPositionToLigandIndexMap.at(
+              return symmetryPositionToSiteIndexMap.at(
                 indexOptional.value()
               );
             }

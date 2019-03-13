@@ -735,20 +735,20 @@ void RankingTree::_applySequenceRules(
   bool foundBondStereopermutators = false;
   bool foundAtomStereopermutators = false;
 
-  auto auxiliaryLigands = [](
-    const RankingInformation::RankedType& rankedAtoms
-  ) -> RankingInformation::LigandsType {
-    RankingInformation::LigandsType ligands;
+  auto auxiliarySites = [](
+    const RankingInformation::RankedSubstituentsType& rankedAtoms
+  ) -> RankingInformation::SiteListType {
+    RankingInformation::SiteListType sites;
 
     for(const auto& equalAtomSet : rankedAtoms) {
       for(const AtomIndex individualAtom : equalAtomSet) {
-        ligands.push_back(
+        sites.push_back(
           std::vector<AtomIndex> {individualAtom}
         );
       }
     }
 
-    return ligands;
+    return sites;
   };
 
   auto instantiateAtomStereopermutator = [&](const TreeVertexIndex targetIndex) -> void {
@@ -795,23 +795,23 @@ void RankingTree::_applySequenceRules(
         << ")\n";
     }
 
-    centerRanking.sortedSubstituents = _mapToAtomIndices(
+    centerRanking.substituentRanking = _mapToAtomIndices(
       _auxiliaryApplySequenceRules(
         targetIndex,
         _auxiliaryAdjacentsToRank(targetIndex, etaAdjacents)
       )
     );
 
-    centerRanking.ligands = auxiliaryLigands(centerRanking.sortedSubstituents);
+    centerRanking.sites = auxiliarySites(centerRanking.substituentRanking);
 
     // Stop immediately if the stereopermutator is essentially terminal
-    if(centerRanking.ligands.size() <= 1) {
+    if(centerRanking.sites.size() <= 1) {
       return;
     }
 
-    centerRanking.ligandsRanking = RankingInformation::rankLigands(
-      centerRanking.ligands,
-      centerRanking.sortedSubstituents
+    centerRanking.siteRanking = RankingInformation::rankSites(
+      centerRanking.sites,
+      centerRanking.substituentRanking
     );
 
     // Again, no links since we're in an acyclic graph now
@@ -820,7 +820,7 @@ void RankingTree::_applySequenceRules(
       existingStereopermutatorOption
       && Symmetry::size(
         existingStereopermutatorOption->getSymmetry()
-      ) == centerRanking.ligands.size()
+      ) == centerRanking.sites.size()
     ) {
       /* NOTE: The symmetry size check is necessary since duplicate tree
        * vertices may crop up for cycle closures. Those are kept in
@@ -834,7 +834,7 @@ void RankingTree::_applySequenceRules(
         centerRanking
       ).value_or_eval(
         [&]() {
-          return LocalGeometry::firstOfSize(centerRanking.ligands.size());
+          return LocalGeometry::firstOfSize(centerRanking.sites.size());
         }
       );
     }

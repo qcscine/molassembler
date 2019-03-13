@@ -74,9 +74,9 @@ private:
   BondIndex _edge;
   boost::optional<unsigned> _assignment;
 
-  //! Yields abstract ligand characters at their symmetry positions
-  static std::vector<char> _charifyRankedLigands(
-    const std::vector<std::vector<unsigned>>& ligandsRanking,
+  //! Yields abstract site characters at their symmetry positions
+  static std::vector<char> _charifyRankedSites(
+    const std::vector<std::vector<unsigned>>& sitesRanking,
     const std::vector<unsigned>& symmetryPositionMap
   );
 

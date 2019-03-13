@@ -43,20 +43,20 @@ void init_ranking_information(pybind11::module& m) {
 
   rankingInformation.def_readonly(
     "ranked_substituents",
-    &RankingInformation::sortedSubstituents,
+    &RankingInformation::substituentRanking,
     "Sorted substituents grouped by ascending priority"
   );
 
   rankingInformation.def_readonly(
-    "ligands",
-    &RankingInformation::ligands,
-    "An unordered nested list of atom indices that constitute a ligand site"
+    "sites",
+    &RankingInformation::sites,
+    "An unordered nested list of atom indices that constitute a binding site"
   );
 
   rankingInformation.def_readonly(
-    "ranked_ligands",
-    &RankingInformation::ligandsRanking,
-    "An ordered nested list of indices into the ligands member"
+    "ranked_sites",
+    &RankingInformation::siteRanking,
+    "An ordered nested list of indices into the sites member"
   );
 
   rankingInformation.def_readonly(

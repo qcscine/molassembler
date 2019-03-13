@@ -82,11 +82,11 @@ const auto& select(
 } // namespace detail
 
 struct SymmetryMapHelper {
-  static unsigned getSymmetryPositionOf(unsigned ligandIndex, const std::vector<unsigned>& map) {
-    return map.at(ligandIndex);
+  static unsigned getSymmetryPositionOf(unsigned siteIndex, const std::vector<unsigned>& map) {
+    return map.at(siteIndex);
   }
 
-  static unsigned getLigandIndexAt(unsigned symmetryPosition, const std::vector<unsigned>& map) {
+  static unsigned getSiteIndexAt(unsigned symmetryPosition, const std::vector<unsigned>& map) {
     auto findIter = std::find(
       std::begin(map),
       std::end(map),
@@ -99,17 +99,17 @@ struct SymmetryMapHelper {
   }
 };
 
-std::vector<char> BondStereopermutator::Impl::_charifyRankedLigands(
-  const std::vector<std::vector<unsigned>>& ligandsRanking,
+std::vector<char> BondStereopermutator::Impl::_charifyRankedSites(
+  const RankingInformation::RankedSitesType& sitesRanking,
   const std::vector<unsigned>& symmetryPositionMap
 ) {
   std::vector<char> characters (symmetryPositionMap.size());
 
   char currentChar = 'A';
-  for(const auto& equalPrioritySet : ligandsRanking) {
-    for(const auto& ligandIndex : equalPrioritySet) {
+  for(const auto& equalPrioritySet : sitesRanking) {
+    for(const auto& siteIndex : equalPrioritySet) {
       characters.at(
-        symmetryPositionMap.at(ligandIndex)
+        symmetryPositionMap.at(siteIndex)
       ) = currentChar;
     }
 
@@ -131,13 +131,13 @@ BondStereopermutator::Impl::_makeOrientationState(
   return {
     focalStereopermutator.getSymmetry(),
     SymmetryMapHelper::getSymmetryPositionOf(
-      focalStereopermutator.getRanking().getLigandIndexOf(
+      focalStereopermutator.getRanking().getSiteIndexOf(
         attachedStereopermutator.centralIndex()
       ),
       focalStereopermutator.getSymmetryPositionMap()
     ),
-    _charifyRankedLigands(
-      focalStereopermutator.getRanking().ligandsRanking,
+    _charifyRankedSites(
+      focalStereopermutator.getRanking().siteRanking,
       focalStereopermutator.getSymmetryPositionMap()
     ),
     focalStereopermutator.centralIndex()
@@ -177,10 +177,10 @@ BondStereopermutator::Impl::Impl(
 
   // TODO lift this, it's probably not relevant anymore, pending a test that SpatialModel can handle simple cases
   if(
-    stereopermutatorA.getRanking().hasHapticLigands()
-    || stereopermutatorB.getRanking().hasHapticLigands()
+    stereopermutatorA.getRanking().hasHapticSites()
+    || stereopermutatorB.getRanking().hasHapticSites()
   ) {
-    throw std::logic_error("BondStereopermutators do not support haptic ligands yet.");
+    throw std::logic_error("BondStereopermutators do not support haptic sites yet.");
   }
 }
 
@@ -253,18 +253,18 @@ void BondStereopermutator::Impl::fit(
     : stereopermutatorA
   );
 
-  // For all atoms making up a ligand, decide on the spatial average position
-  const std::vector<Eigen::Vector3d> firstLigandPositions = temple::map(
-    firstStereopermutator.getRanking().ligands,
-    [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
-      return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
+  // For all atoms making up a site, decide on the spatial average position
+  const std::vector<Eigen::Vector3d> firstSitePositions = temple::map(
+    firstStereopermutator.getRanking().sites,
+    [&angstromWrapper](const std::vector<AtomIndex>& siteAtoms) -> Eigen::Vector3d {
+      return DelibHelpers::averagePosition(angstromWrapper.positions, siteAtoms);
     }
   );
 
-  const std::vector<Eigen::Vector3d> secondLigandPositions = temple::map(
-    secondStereopermutator.getRanking().ligands,
-    [&angstromWrapper](const std::vector<AtomIndex>& ligandAtoms) -> Eigen::Vector3d {
-      return DelibHelpers::averagePosition(angstromWrapper.positions, ligandAtoms);
+  const std::vector<Eigen::Vector3d> secondSitePositions = temple::map(
+    secondStereopermutator.getRanking().sites,
+    [&angstromWrapper](const std::vector<AtomIndex>& siteAtoms) -> Eigen::Vector3d {
+      return DelibHelpers::averagePosition(angstromWrapper.positions, siteAtoms);
     }
   );
 
@@ -279,12 +279,12 @@ void BondStereopermutator::Impl::fit(
     for(const auto& dihedralTuple : _composite.dihedrals(i)) {
       std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
 
-      // Get ligand index of leftSymmetryPosition in left
-      unsigned firstLigandIndex = SymmetryMapHelper::getLigandIndexAt(
+      // Get site index of leftSymmetryPosition in left
+      unsigned firstSiteIndex = SymmetryMapHelper::getSiteIndexAt(
         firstSymmetryPosition,
         firstStereopermutator.getSymmetryPositionMap()
       );
-      unsigned secondLigandIndex = SymmetryMapHelper::getLigandIndexAt(
+      unsigned secondSiteIndex = SymmetryMapHelper::getSiteIndexAt(
         secondSymmetryPosition,
         secondStereopermutator.getSymmetryPositionMap()
       );
@@ -303,10 +303,10 @@ void BondStereopermutator::Impl::fit(
        */
 
       double dihedralDifference = DelibHelpers::dihedral(
-        firstLigandPositions.at(firstLigandIndex),
+        firstSitePositions.at(firstSiteIndex),
         angstromWrapper.positions.row(firstStereopermutator.centralIndex()),
         angstromWrapper.positions.row(secondStereopermutator.centralIndex()),
-        secondLigandPositions.at(secondLigandIndex)
+        secondSitePositions.at(secondSiteIndex)
       ) - dihedralAngle;
 
       // + pi is part of the definition interval, so use greater than
@@ -355,7 +355,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
    * a ranking change propagation, not a substituent addition / removal
    * propagation)
    */
-  assert(oldRanking.ligands.size() == newPermutator.getRanking().ligands.size());
+  assert(oldRanking.sites.size() == newPermutator.getRanking().sites.size());
 
   using OrientationState = stereopermutation::Composite::OrientationState;
 
@@ -379,13 +379,13 @@ void BondStereopermutator::Impl::propagateGraphChange(
   stereopermutation::Composite::OrientationState possiblyModifiedOrientation {
     newPermutator.getSymmetry(),
     SymmetryMapHelper::getSymmetryPositionOf(
-      newPermutator.getRanking().getLigandIndexOf(
+      newPermutator.getRanking().getSiteIndexOf(
         unchangedOrientation.identifier
       ),
       newPermutator.getSymmetryPositionMap()
     ),
-    _charifyRankedLigands(
-      newPermutator.getRanking().ligandsRanking,
+    _charifyRankedSites(
+      newPermutator.getRanking().siteRanking,
       newPermutator.getSymmetryPositionMap()
     ),
     newPermutator.centralIndex()
@@ -423,13 +423,13 @@ void BondStereopermutator::Impl::propagateGraphChange(
 
   /* Find the old permutation in the set of new permutations
    * - Since composite only offers dihedral information in terms of symmetry
-   *   positions, we have to translate these back into ligand indices
+   *   positions, we have to translate these back into site indices
    * - Transform symmetry positions through the sequence
    *
    *   old symmetry position
-   *   -> ligand index (using old permutation state)
+   *   -> site index (using old permutation state)
    *   -> atom index (using old ranking)
-   *   -> ligand index (using new ranking)
+   *   -> site index (using new ranking)
    *   -> new symmetry position (using new permutation state)
    *
    *   and then compare dihedral values between the composites. This scheme
@@ -452,35 +452,35 @@ void BondStereopermutator::Impl::propagateGraphChange(
   );
 
   auto getNewSymmetryPosition = [&](unsigned oldSymmetryPosition) -> unsigned {
-    const unsigned oldLigandIndex = SymmetryMapHelper::getLigandIndexAt(
+    const unsigned oldSiteIndex = SymmetryMapHelper::getSiteIndexAt(
       oldSymmetryPosition,
       oldPermutationState.symmetryPositionMap
     );
 
-    const std::vector<AtomIndex>& oldLigand = oldRanking.ligands.at(oldLigandIndex);
+    const std::vector<AtomIndex>& oldSite = oldRanking.sites.at(oldSiteIndex);
 
-    // We assume here that atom indices making up ligands are sorted
-    assert(std::is_sorted(std::begin(oldLigand), std::end(oldLigand)));
+    // We assume here that atom indices making up sites are sorted
+    assert(std::is_sorted(std::begin(oldSite), std::end(oldSite)));
 
-    /* Find this ligand in the new ranking
+    /* Find this site in the new ranking
      * - In case there is truly only a ranking change (not a rearrangement in
-     *   terms of haptic ligands or so), then there should be a vector with
+     *   terms of haptic sites or so), then there should be a vector with
      *   exactly the same elements.
      */
-    const auto& newRankingLigands = newPermutator.getRanking().ligands;
-    const auto findLigandIter = std::find(
-      std::begin(newRankingLigands),
-      std::end(newRankingLigands),
-      oldLigand
+    const auto& newRankingSites = newPermutator.getRanking().sites;
+    const auto findSiteIter = std::find(
+      std::begin(newRankingSites),
+      std::end(newRankingSites),
+      oldSite
     );
 
     // TODO this might throw in some cases
-    assert(findLigandIter != std::end(newRankingLigands));
+    assert(findSiteIter != std::end(newRankingSites));
 
-    const unsigned newLigandIndex = findLigandIter - std::begin(newRankingLigands);
+    const unsigned newSiteIndex = findSiteIter - std::begin(newRankingSites);
 
     return SymmetryMapHelper::getSymmetryPositionOf(
-      newLigandIndex,
+      newSiteIndex,
       newPermutator.getSymmetryPositionMap()
     );
   };

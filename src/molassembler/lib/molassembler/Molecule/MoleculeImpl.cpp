@@ -39,12 +39,12 @@ void Molecule::Impl::_tryAddAtomStereopermutator(
   RankingInformation localRanking = rankPriority(candidateIndex);
 
   // Only non-terminal atoms may have permutators
-  if(localRanking.ligands.size() <= 1) {
+  if(localRanking.sites.size() <= 1) {
     return;
   }
 
   Symmetry::Name symmetry = inferSymmetry(candidateIndex, localRanking).value_or_eval(
-    [&]() {return LocalGeometry::firstOfSize(localRanking.ligands.size());}
+    [&]() {return LocalGeometry::firstOfSize(localRanking.sites.size());}
   );
 
 
@@ -201,7 +201,7 @@ void Molecule::Impl::_propagateGraphChange() {
 
     if(stereopermutatorOption) {
       // The atom has become terminal
-      if(localRanking.ligands.size() <= 1) {
+      if(localRanking.sites.size() <= 1) {
         _stereopermutators.remove(vertex);
         continue;
       }
@@ -613,7 +613,7 @@ void Molecule::Impl::removeAtom(const AtomIndex a) {
       auto localRanking = rankPriority(indexToUpdate);
 
       // If index becomes terminal, drop the stereopermutator
-      if(localRanking.ligands.size() <= 1) {
+      if(localRanking.sites.size() <= 1) {
         _stereopermutators.remove(indexToUpdate);
         continue;
       }
@@ -685,7 +685,7 @@ void Molecule::Impl::removeBond(
       auto localRanking = rankPriority(indexToUpdate);
 
       // In case the central atom becomes terminal, just drop the stereopermutator
-      if(localRanking.ligands.size() <= 1) {
+      if(localRanking.sites.size() <= 1) {
         _stereopermutators.remove(indexToUpdate);
         return;
       }
@@ -783,10 +783,10 @@ void Molecule::Impl::setGeometryAtAtom(
   if(!stereopermutatorOption) {
     RankingInformation localRanking = rankPriority(a);
 
-    if(localRanking.ligands.size() != Symmetry::size(symmetryName)) {
+    if(localRanking.sites.size() != Symmetry::size(symmetryName)) {
       throw std::logic_error(
         "Molecule::setGeometryAtAtom: The size of the supplied symmetry is not "
-        " the same as the number of determined ligands"
+        " the same as the number of determined sites"
       );
     }
 
@@ -893,11 +893,11 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     RankingInformation localRanking = rankPriority(vertex, {}, angstromWrapper);
 
     // Skip terminal atoms
-    if(localRanking.ligands.size() <= 1) {
+    if(localRanking.sites.size() <= 1) {
       continue;
     }
 
-    Symmetry::Name dummySymmetry = LocalGeometry::firstOfSize(localRanking.ligands.size());
+    Symmetry::Name dummySymmetry = LocalGeometry::firstOfSize(localRanking.sites.size());
 
     // Construct it
     auto stereopermutator = AtomStereopermutator {
@@ -1080,7 +1080,7 @@ RankingInformation Molecule::Impl::rankPriority(
   RankingInformation rankingResult;
 
   // Expects that bond types are set properly, complains otherwise
-  rankingResult.ligands = GraphAlgorithms::ligandSiteGroups(
+  rankingResult.sites = GraphAlgorithms::ligandSiteGroups(
     _adjacencies.inner(),
     a,
     excludeAdjacent
@@ -1103,19 +1103,20 @@ RankingInformation Molecule::Impl::rankPriority(
     positionsOption
   );
 
-  rankingResult.sortedSubstituents = expandedTree.getRanked();
+  rankingResult.substituentRanking = expandedTree.getRanked();
 
-  rankingResult.ligandsRanking = RankingInformation::rankLigands(
-    rankingResult.ligands,
-    rankingResult.sortedSubstituents
+  // Combine site information and substituent ranking into a site ranking
+  rankingResult.siteRanking = RankingInformation::rankSites(
+    rankingResult.sites,
+    rankingResult.substituentRanking
   );
 
-  // Find links between them
+  // Find links between sites
   rankingResult.links = GraphAlgorithms::substituentLinks(
     _adjacencies.inner(),
     graph().cycles(),
     a,
-    rankingResult.ligands,
+    rankingResult.sites,
     excludeAdjacent
   );
 

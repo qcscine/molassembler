@@ -25,20 +25,20 @@ PermutationState::PermutationState(
   const Symmetry::Name symmetry,
   const OuterGraph& graph
 ) {
-  canonicalLigands = canonicalize(ranking.ligandsRanking);
-  symbolicCharacters = transferToSymbolicCharacters(canonicalLigands);
+  canonicalSites = canonicalize(ranking.siteRanking);
+  symbolicCharacters = transferToSymbolicCharacters(canonicalSites);
   selfReferentialLinks = selfReferentialTransform(
     ranking.links,
-    canonicalLigands
+    canonicalSites
   );
 
   using ModelType = DistanceGeometry::SpatialModel;
 
-  ligandDistances = temple::map(
-    ranking.ligands,
-    [&](const auto& ligandIndices) -> DistanceGeometry::ValueBounds {
-      return ModelType::ligandDistanceFromCenter(
-        ligandIndices,
+  siteDistances = temple::map(
+    ranking.sites,
+    [&](const auto& siteAtomsList) -> DistanceGeometry::ValueBounds {
+      return ModelType::siteDistanceFromCenter(
+        siteAtomsList,
         centerAtom,
         graph
       );
@@ -46,13 +46,13 @@ PermutationState::PermutationState(
   );
 
   Cycles etaLessCycles {graph, true};
-  coneAngles.reserve(ranking.ligands.size());
+  coneAngles.reserve(ranking.sites.size());
 
-  for(unsigned i = 0; i < ranking.ligands.size(); ++i) {
+  for(unsigned i = 0; i < ranking.sites.size(); ++i) {
     coneAngles.push_back(
       ModelType::coneAngle(
-        ranking.ligands.at(i),
-        ligandDistances.at(i),
+        ranking.sites.at(i),
+        siteDistances.at(i),
         graph,
         etaLessCycles
       )
@@ -72,12 +72,12 @@ PermutationState::PermutationState(
   if(
     // Links are present
     !ranking.links.empty()
-    // OR there are haptic ligands
+    // OR there are haptic sites
     || temple::sum(
       temple::adaptors::transform(
-        ranking.ligands,
-        [](const auto& ligandIndices) -> unsigned {
-          if(ligandIndices.size() == 1) {
+        ranking.sites,
+        [](const auto& siteAtomsList) -> unsigned {
+          if(siteAtomsList.size() == 1) {
             return 0;
           }
 
@@ -92,7 +92,7 @@ PermutationState::PermutationState(
       if(
         isNotObviouslyImpossibleStereopermutation(
           permutations.stereopermutations.at(i),
-          canonicalLigands,
+          canonicalSites,
           coneAngles,
           ranking,
           symmetry,
@@ -108,29 +108,29 @@ PermutationState::PermutationState(
   }
 }
 
-RankingInformation::RankedLigandsType PermutationState::canonicalize(
-  RankingInformation::RankedLigandsType rankedLigands
+RankingInformation::RankedSitesType PermutationState::canonicalize(
+  RankingInformation::RankedSitesType rankedSites
 ) {
   std::stable_sort(
-    rankedLigands.begin(),
-    rankedLigands.end(),
+    rankedSites.begin(),
+    rankedSites.end(),
     [](const auto& setA, const auto& setB) -> bool {
       // Inverted comparison so that larger sets come first
       return setA.size() > setB.size();
     }
   );
 
-  return rankedLigands;
+  return rankedSites;
 }
 
-// Transform canonical ranked ligands to canonical characters
+// Transform canonical ranked sites to canonical characters
 std::vector<char> PermutationState::transferToSymbolicCharacters(
-  const RankingInformation::RankedLigandsType& canonicalLigands
+  const RankingInformation::RankedSitesType& canonicalSites
 ) {
   std::vector<char> characters;
 
   char currentChar = 'A';
-  for(const auto& equalPrioritySet : canonicalLigands) {
+  for(const auto& equalPrioritySet : canonicalSites) {
     for(unsigned i = 0; i < equalPrioritySet.size(); ++i) {
       characters.push_back(currentChar);
     }
@@ -144,16 +144,16 @@ std::vector<char> PermutationState::transferToSymbolicCharacters(
 stereopermutation::Stereopermutation::LinksSetType
 PermutationState::selfReferentialTransform(
   const std::vector<LinkInformation>& rankingLinks,
-  const RankingInformation::RankedLigandsType& canonicalLigands
+  const RankingInformation::RankedSitesType& canonicalSites
 ) {
   stereopermutation::Stereopermutation::LinksSetType links;
 
   for(const auto& link : rankingLinks) {
-    auto getRankedPosition = [&canonicalLigands](const unsigned ligandIndex) -> unsigned {
+    auto getRankedPosition = [&canonicalSites](const unsigned siteIndex) -> unsigned {
       unsigned position = 0;
-      for(const auto& equalLigandsSet : canonicalLigands) {
-        for(const auto& rankedLigandIndex : equalLigandsSet) {
-          if(rankedLigandIndex == ligandIndex) {
+      for(const auto& equalSitesSet : canonicalSites) {
+        for(const auto& rankedSiteIndex : equalSitesSet) {
+          if(rankedSiteIndex == siteIndex) {
             return position;
           }
 
@@ -161,7 +161,7 @@ PermutationState::selfReferentialTransform(
         }
       }
 
-      throw std::logic_error("Ligand index not found in ranked ligands");
+      throw std::logic_error("Site index not found in ranked sites");
     };
 
     auto a = getRankedPosition(link.indexPair.first),
@@ -177,17 +177,17 @@ PermutationState::selfReferentialTransform(
 }
 
 std::vector<unsigned>
-PermutationState::generateLigandToSymmetryPositionMap(
+PermutationState::generateSiteToSymmetryPositionMap(
   const stereopermutation::Stereopermutation& assignment,
-  const RankingInformation::RankedLigandsType& canonicalLigands
+  const RankingInformation::RankedSitesType& canonicalSites
 ) {
   /* We are given an assignment within some symmetry:
    *   Characters: ABADCB
    *   Links: (0, 1), (2, 5)
-   * and canonical ligands (ranked sets of ligand indices re-sorted by
+   * and canonical sites (ranked sets of site indices re-sorted by
    * decreasing set size): {{0, 4}, {2, 1}, {5}, {3}}
    *
-   * We need to distribute the ligand indices (from the canonical ligands) to
+   * We need to distribute the site indices (from the canonical sites) to
    * the symmetry positions (defined by the assignment) that they match (via
    * their ranking character).
    *
@@ -197,7 +197,7 @@ PermutationState::generateLigandToSymmetryPositionMap(
    * have different symmetry position maps.
    *
    * Link indices (from assignments) specify symmetry positions that are linked.
-   * Since symmetry positions are NOT exchangeable as two ligand indices are
+   * Since symmetry positions are NOT exchangeable as two site indices are
    * that rank equally, we need to distribute linked symmetry positions first,
    * and then distribute the remaining characters afterwards.
    */
@@ -209,11 +209,11 @@ PermutationState::generateLigandToSymmetryPositionMap(
 
   /* Process the links */
 
-  /* For every ligand index within the group of ligands of equal priority, we
+  /* For every site index within the group of sites of equal priority, we
    * have to keep information on which have been used and which haven't.
    */
   auto usedLists = temple::map(
-    canonicalLigands,
+    canonicalSites,
     [](const auto& equalPrioritySet) -> std::vector<bool> {
       return std::vector<bool>(equalPrioritySet.size(), false);
     }
@@ -244,7 +244,7 @@ PermutationState::generateLigandToSymmetryPositionMap(
     );
   }
 
-  // For linked ligands, we need to find a symmetry position to place them
+  // For linked sites, we need to find a symmetry position to place them
   auto placeAndMark = [&](const unsigned symmetryPosition) {
     char priority = assignment.characters.at(symmetryPosition);
 
@@ -254,12 +254,12 @@ PermutationState::generateLigandToSymmetryPositionMap(
       priority
     );
 
-    unsigned correspondingLigand = canonicalLigands.at(priority - 'A').at(countUpToPosition);
+    unsigned correspondingSite = canonicalSites.at(priority - 'A').at(countUpToPosition);
 
-    if(positionMap.at(correspondingLigand) == placeholder) {
+    if(positionMap.at(correspondingSite) == placeholder) {
       unsigned newSymmetryPosition = availableSymmetryPositions.at(priority - 'A').front();
 
-      positionMap.at(correspondingLigand) = newSymmetryPosition;
+      positionMap.at(correspondingSite) = newSymmetryPosition;
 
       availableSymmetryPositions.at(priority - 'A').erase(
         availableSymmetryPositions.at(priority - 'A').begin()
@@ -277,7 +277,7 @@ PermutationState::generateLigandToSymmetryPositionMap(
 
   // Next, process all characters
   for(const auto& priorityChar : assignment.characters) {
-    // Get an unused ligand index for that priority
+    // Get an unused site index for that priority
     const auto unusedIndexIter = std::find(
       std::begin(usedLists.at(priorityChar - 'A')),
       std::end(usedLists.at(priorityChar - 'A')),
@@ -285,11 +285,11 @@ PermutationState::generateLigandToSymmetryPositionMap(
     );
 
     if(unusedIndexIter != std::end(usedLists.at(priorityChar - 'A'))) {
-      const unsigned correspondingLigand = canonicalLigands.at(priorityChar - 'A').at(
+      const unsigned correspondingSite = canonicalSites.at(priorityChar - 'A').at(
         unusedIndexIter - std::begin(usedLists.at(priorityChar - 'A'))
       );
 
-      assert(positionMap.at(correspondingLigand) == placeholder);
+      assert(positionMap.at(correspondingSite) == placeholder);
 
       const unsigned symmetryPosition = availableSymmetryPositions.at(priorityChar - 'A').front();
 
@@ -297,7 +297,7 @@ PermutationState::generateLigandToSymmetryPositionMap(
         std::begin(availableSymmetryPositions.at(priorityChar - 'A'))
       );
 
-      positionMap.at(correspondingLigand) = symmetryPosition;
+      positionMap.at(correspondingSite) = symmetryPosition;
 
       *unusedIndexIter = true;
     }
@@ -316,11 +316,11 @@ PermutationState::generateLigandToSymmetryPositionMap(
   return positionMap;
 }
 
-std::vector<unsigned> PermutationState::generateSymmetryPositionToLigandMap(
+std::vector<unsigned> PermutationState::generateSymmetryPositionToSiteMap(
   const stereopermutation::Stereopermutation& assignment,
-  const RankingInformation::RankedLigandsType& canonicalLigands
+  const RankingInformation::RankedSitesType& canonicalSites
 ) {
-  auto base = generateLigandToSymmetryPositionMap(assignment, canonicalLigands);
+  auto base = generateSiteToSymmetryPositionMap(assignment, canonicalSites);
 
   std::vector<unsigned> inverseMap (base.size());
 
@@ -332,13 +332,13 @@ std::vector<unsigned> PermutationState::generateSymmetryPositionToLigandMap(
 }
 
 std::vector<char> PermutationState::makeStereopermutationCharacters(
-  const RankingInformation::RankedLigandsType& canonicalLigands,
+  const RankingInformation::RankedSitesType& canonicalSites,
   const std::vector<char>& canonicalStereopermutationCharacters,
-  const std::vector<unsigned>& ligandsAtSymmetryPositions
+  const std::vector<unsigned>& sitesAtSymmetryPositions
 ) {
-  // Replace the ligand indices by their new ranking characters
+  // Replace the site indices by their new ranking characters
   std::vector<unsigned> flattenedIndices;
-  for(const auto& equalPrioritySet : canonicalLigands) {
+  for(const auto& equalPrioritySet : canonicalSites) {
     for(const auto& index : equalPrioritySet) {
       flattenedIndices.push_back(index);
     }
@@ -346,7 +346,7 @@ std::vector<char> PermutationState::makeStereopermutationCharacters(
 
   std::vector<char> newStereopermutationCharacters;
 
-  for(const auto& index : ligandsAtSymmetryPositions) {
+  for(const auto& index : sitesAtSymmetryPositions) {
     const auto findIter = std::find(
       flattenedIndices.begin(),
       flattenedIndices.end(),
@@ -406,40 +406,40 @@ boost::optional<std::vector<unsigned>> PermutationState::getIndexMapping(
 
 bool PermutationState::isNotObviouslyImpossibleStereopermutation(
   const stereopermutation::Stereopermutation& assignment,
-  const RankingInformation::RankedLigandsType& canonicalLigands,
+  const RankingInformation::RankedSitesType& canonicalSites,
   const ConeAngleType& coneAngles,
   const RankingInformation& ranking,
   const Symmetry::Name symmetry,
   const OuterGraph& graph
 ) {
-  auto symmetryPositionMap = generateLigandToSymmetryPositionMap(
+  auto symmetryPositionMap = generateSiteToSymmetryPositionMap(
     assignment,
-    canonicalLigands
+    canonicalSites
   );
 
-  // Check if any haptic ligand cones intersect
-  const unsigned L = ranking.ligands.size();
-  for(unsigned ligandI = 0; ligandI < L - 1; ++ligandI) {
-    for(unsigned ligandJ = ligandI + 1; ligandJ < L; ++ligandJ) {
+  // Check if any haptic site cones intersect
+  const unsigned L = ranking.sites.size();
+  for(unsigned siteI = 0; siteI < L - 1; ++siteI) {
+    for(unsigned siteJ = siteI + 1; siteJ < L; ++siteJ) {
       // Do not test cone angles if no angle could be calculated
-      if(!coneAngles.at(ligandI) || !coneAngles.at(ligandJ)) {
+      if(!coneAngles.at(siteI) || !coneAngles.at(siteJ)) {
         continue;
       }
 
       double symmetryAngle = Symmetry::angleFunction(symmetry)(
-        symmetryPositionMap.at(ligandI),
-        symmetryPositionMap.at(ligandJ)
+        symmetryPositionMap.at(siteI),
+        symmetryPositionMap.at(siteJ)
       );
 
-      /* A haptic steropermutation of ligands is only obviously impossible if
-       * the haptic ligands have no spatial freedom to arrange in a fashion
+      /* A haptic steropermutation of sites is only obviously impossible if
+       * the haptic sites have no spatial freedom to arrange in a fashion
        * that does not overlap.
        */
       if(
         (
           symmetryAngle
-          - coneAngles.at(ligandI).value().lower
-          - coneAngles.at(ligandJ).value().lower
+          - coneAngles.at(siteI).value().lower
+          - coneAngles.at(siteJ).value().lower
         ) < 0
       ) {
         return false;
@@ -460,28 +460,28 @@ bool PermutationState::isNotObviouslyImpossibleStereopermutation(
       continue;
     }
 
-    // Perform no checks if, for either of the ligands, no cone angle could be calculated
+    // Perform no checks if, for either of the sites, no cone angle could be calculated
     if(!coneAngles.at(link.indexPair.first) || !coneAngles.at(link.indexPair.second)) {
       continue;
     }
 
-    const DistanceGeometry::ValueBounds ligandIConeAngle = coneAngles.at(link.indexPair.first).value();
-    const DistanceGeometry::ValueBounds ligandJConeAngle = coneAngles.at(link.indexPair.second).value();
+    const DistanceGeometry::ValueBounds siteIConeAngle = coneAngles.at(link.indexPair.first).value();
+    const DistanceGeometry::ValueBounds siteJConeAngle = coneAngles.at(link.indexPair.second).value();
 
     const double symmetryAngle = Symmetry::angleFunction(symmetry)(
       symmetryPositionMap.at(link.indexPair.first),
       symmetryPositionMap.at(link.indexPair.second)
     );
 
-    /* A link across haptic ligands is only obviously impossible if it is
+    /* A link across haptic sites is only obviously impossible if it is
      * impossible in the best case scenario. In this case, especially for alpha,
-     * ligand bridge links must be possible only in the best case spatial
-     * arrangement for the haptic ligand link to be possible. That means
+     * site bridge links must be possible only in the best case spatial
+     * arrangement for the haptic site link to be possible. That means
      * subtracting the upper bound of the respective cone angles.
      */
     const double alpha = std::max(
       0.0,
-      symmetryAngle - ligandIConeAngle.upper - ligandJConeAngle.upper
+      symmetryAngle - siteIConeAngle.upper - siteJConeAngle.upper
     );
 
     auto edgeLengths = temple::map(
@@ -522,7 +522,7 @@ bool PermutationState::isNotObviouslyImpossibleStereopermutation(
     if(
       d1 <= Bond::calculateBondDistance(
         graph.elementType(link.cycleSequence.at(0)),
-        // 0 is the central index, 1 is the first ligand, etc.
+        // 0 is the central index, 1 is the first site, etc.
         graph.elementType(link.cycleSequence.at(2)),
         BondType::Single
       )
@@ -553,7 +553,7 @@ bool PermutationState::isNotObviouslyImpossibleStereopermutation(
       if(
         distances.back() <= Bond::calculateBondDistance(
           graph.elementType(link.cycleSequence.at(0)),
-          // 0 is the central index, 1 is the first ligand, etc.
+          // 0 is the central index, 1 is the first site, etc.
           graph.elementType(link.cycleSequence.at(i + 2)),
           BondType::Single
         )

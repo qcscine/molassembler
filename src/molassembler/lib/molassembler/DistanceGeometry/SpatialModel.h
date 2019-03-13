@@ -98,14 +98,14 @@ public:
    * @brief Calculates bounds on the distance of a (possibly haptic) ligand
    *   site to a central index
    *
-   * @param ligandIndices Atom indices constituting the ligand site
+   * @param siteAtomList Atom indices constituting the ligand site
    * @param centralIndex The central index to which the ligand is bound
    * @param graph The molecular graph to model
    *
    * @return Bounds on the distance of the ligand site to the central index
    */
-  static ValueBounds ligandDistanceFromCenter(
-    const std::vector<AtomIndex>& ligandIndices,
+  static ValueBounds siteDistanceFromCenter(
+    const std::vector<AtomIndex>& siteAtomList,
     AtomIndex centralIndex,
     const OuterGraph& graph
   );

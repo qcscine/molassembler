@@ -86,19 +86,19 @@ bool LinkInformation::operator < (const LinkInformation& other) const {
 }
 
 
-std::vector<unsigned> RankingInformation::ligandConstitutingAtomsRankedPositions(
-  const std::vector<AtomIndex>& ligand,
-  const RankingInformation::RankedType& sortedSubstituents
+std::vector<unsigned> RankingInformation::siteConstitutingAtomsRankedPositions(
+  const std::vector<AtomIndex>& siteAtomList,
+  const RankingInformation::RankedSubstituentsType& substituentRanking
 ) {
   auto positionIndices = temple::map(
-    ligand,
-    [&sortedSubstituents](AtomIndex constitutingIndex) -> unsigned {
+    siteAtomList,
+    [&substituentRanking](AtomIndex constitutingIndex) -> unsigned {
       return temple::find_if(
-        sortedSubstituents,
+        substituentRanking,
         [&constitutingIndex](const auto& equalPrioritySet) -> bool {
           return temple::find(equalPrioritySet, constitutingIndex) != equalPrioritySet.end();
         }
-      ) - sortedSubstituents.begin();
+      ) - substituentRanking.begin();
     }
   );
 
@@ -111,37 +111,39 @@ std::vector<unsigned> RankingInformation::ligandConstitutingAtomsRankedPositions
   return positionIndices;
 }
 
-RankingInformation::RankedLigandsType RankingInformation::rankLigands(
-  const LigandsType& ligands,
-  const RankedType& sortedSubstituents
+RankingInformation::RankedSitesType RankingInformation::rankSites(
+  const SiteListType& sites,
+  const RankedSubstituentsType& substituentRanking
 ) {
   // Use partial ordering helper
-  OrderDiscoveryHelper<unsigned> ligandOrdering;
-  ligandOrdering.setUnorderedValues(
+  OrderDiscoveryHelper<unsigned> siteOrdering;
+  siteOrdering.setUnorderedValues(
     temple::iota<unsigned>(
-      ligands.size()
+      sites.size()
     )
   );
 
-  // Pairwise compare all ligands, adding relational discoveries to the ordering helper
-  for(unsigned i = 0; i < ligands.size(); ++i) {
-    for(unsigned j = i + 1; j < ligands.size(); ++j) {
-      const auto& a = ligands.at(i);
-      const auto& b = ligands.at(j);
+  const unsigned sitesSize = sites.size();
+
+  // Pairwise compare all sites, adding relational discoveries to the ordering helper
+  for(unsigned i = 0; i < sitesSize; ++i) {
+    for(unsigned j = i + 1; j < sitesSize; ++j) {
+      const auto& a = sites.at(i);
+      const auto& b = sites.at(j);
 
       if(a.size() < b.size()) {
-        ligandOrdering.addLessThanRelationship(i, j);
+        siteOrdering.addLessThanRelationship(i, j);
       } else if(a.size() > b.size()) {
-        ligandOrdering.addLessThanRelationship(j, i);
+        siteOrdering.addLessThanRelationship(j, i);
       } else {
-        auto aPositions = ligandConstitutingAtomsRankedPositions(a, sortedSubstituents);
-        auto bPositions = ligandConstitutingAtomsRankedPositions(b, sortedSubstituents);
+        auto aPositions = siteConstitutingAtomsRankedPositions(a, substituentRanking);
+        auto bPositions = siteConstitutingAtomsRankedPositions(b, substituentRanking);
 
         // lexicographical comparison
         if(aPositions < bPositions) {
-          ligandOrdering.addLessThanRelationship(i, j);
+          siteOrdering.addLessThanRelationship(i, j);
         } else if(aPositions > bPositions) {
-          ligandOrdering.addLessThanRelationship(j, i);
+          siteOrdering.addLessThanRelationship(j, i);
         }
 
         // No further differentiation.
@@ -150,7 +152,7 @@ RankingInformation::RankedLigandsType RankingInformation::rankLigands(
   }
 
   // OrderingDiscoveryHelper's getSets() returns DESC order, so we reverse it to ASC
-  auto finalSets = ligandOrdering.getSets();
+  auto finalSets = siteOrdering.getSets();
 
   std::reverse(
     finalSets.begin(),
@@ -161,19 +163,19 @@ RankingInformation::RankedLigandsType RankingInformation::rankLigands(
 }
 
 void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutation) {
-  // .sortedSubstituents is mapped by applying the vertex permutation
-  for(auto& group : sortedSubstituents) {
+  // .substituentRanking is mapped by applying the vertex permutation
+  for(auto& group : substituentRanking) {
     for(AtomIndex& atomIndex : group) {
       atomIndex = permutation.at(atomIndex);
     }
   }
-  // .ligands too
-  for(auto& group : ligands) {
+  // .sites too
+  for(auto& group : sites) {
     for(AtomIndex& atomIndex : group) {
       atomIndex = permutation.at(atomIndex);
     }
   }
-  // .ligandsRanking is unchanged as it is ligand index based into .ligands
+  // .ligandsRanking is unchanged as it is ligand index based into .sites
   // links does have to be mapped, though
   for(LinkInformation& link : links) {
     link.applyPermutation(permutation);
@@ -186,98 +188,98 @@ void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutat
   );
 }
 
-unsigned RankingInformation::getLigandIndexOf(const AtomIndex i) const {
+unsigned RankingInformation::getSiteIndexOf(const AtomIndex i) const {
   // Find the atom index i within the set of ligand definitions
   auto findIter = temple::find_if(
-    ligands,
-    [&](const auto& ligandIndexList) -> bool {
+    sites,
+    [&](const auto& siteAtomList) -> bool {
       return temple::any_of(
-        ligandIndexList,
-        [&](const AtomIndex ligandConstitutingIndex) -> bool {
-          return ligandConstitutingIndex == i;
+        siteAtomList,
+        [&](const AtomIndex siteConstitutingIndex) -> bool {
+          return siteConstitutingIndex == i;
         }
       );
     }
   );
 
-  if(findIter == std::end(ligands)) {
+  if(findIter == std::end(sites)) {
     throw std::out_of_range("Specified atom index is not part of any ligand");
   }
 
-  return findIter - std::begin(ligands);
+  return findIter - std::begin(sites);
 }
 
-unsigned RankingInformation::getRankedIndexOfLigand(const unsigned i) const {
+unsigned RankingInformation::getRankedIndexOfSite(const unsigned i) const {
   auto findIter = temple::find_if(
-    ligandsRanking,
-    [&](const auto& equallyRankedLigands) -> bool {
+    siteRanking,
+    [&](const auto& equallyRankedSiteIndices) -> bool {
       return temple::any_of(
-        equallyRankedLigands,
-        [&](const unsigned ligandIndex) -> bool {
-          return ligandIndex == i;
+        equallyRankedSiteIndices,
+        [&](const unsigned siteIndex) -> bool {
+          return siteIndex == i;
         }
       );
     }
   );
 
-  if(findIter == std::end(ligandsRanking)) {
+  if(findIter == std::end(siteRanking)) {
     throw std::out_of_range("Specified ligand index is not ranked.");
   }
 
-  return findIter - std::begin(ligandsRanking);
+  return findIter - std::begin(siteRanking);
 }
 
-bool RankingInformation::hasHapticLigands() const {
+bool RankingInformation::hasHapticSites() const {
   return temple::any_of(
-    ligands,
-    [](const auto& ligandIndices) -> bool {
-      return ligandIndices.size() > 1;
+    sites,
+    [](const auto& siteAtomList) -> bool {
+      return siteAtomList.size() > 1;
     }
   );
 }
 
 bool RankingInformation::operator == (const RankingInformation& other) const {
   /* This is a nontrivial operator since there is some degree of freedom in how
-   * ligands are chosen
+   * sites are chosen
    */
 
   // Check all sizes
   if(
-    sortedSubstituents.size() != other.sortedSubstituents.size()
-    || ligands.size() != other.ligands.size()
-    || ligandsRanking.size() != other.ligandsRanking.size()
+    substituentRanking.size() != other.substituentRanking.size()
+    || sites.size() != other.sites.size()
+    || siteRanking.size() != other.siteRanking.size()
     || links.size() != other.links.size()
   ) {
     return false;
   }
 
-  // sortedSubstituents can be compared lexicographically
-  if(sortedSubstituents != other.sortedSubstituents) {
+  // substituentRanking can be compared lexicographically
+  if(substituentRanking != other.substituentRanking) {
     return false;
   }
 
-  // Combined comparison of ligandsRanking with ligands
+  // Combined comparison of ligandsRanking with sites
   if(
     !temple::all_of(
       temple::adaptors::zip(
-        ligandsRanking,
-        other.ligandsRanking
+        siteRanking,
+        other.siteRanking
       ),
       [&](
-        const auto& thisEqualLigandsGroup,
-        const auto& otherEqualLigandsGroup
+        const auto& thisEqualSiteGroup,
+        const auto& otherEqualSiteGroup
       ) -> bool {
-        temple::TinyUnorderedSet<AtomIndex> thisLigandGroupVertices;
+        temple::TinyUnorderedSet<AtomIndex> thisSiteGroupVertices;
 
-        for(const auto ligandIndex : thisEqualLigandsGroup) {
-          for(const auto ligandConstitutingIndex : ligands.at(ligandIndex)) {
-            thisLigandGroupVertices.insert(ligandConstitutingIndex);
+        for(const auto siteIndex : thisEqualSiteGroup) {
+          for(const auto siteConstitutingIndex : sites.at(siteIndex)) {
+            thisSiteGroupVertices.insert(siteConstitutingIndex);
           }
         }
 
-        for(const auto ligandIndex : otherEqualLigandsGroup) {
-          for(const auto ligandConstitutingIndex : other.ligands.at(ligandIndex)) {
-            if(thisLigandGroupVertices.count(ligandConstitutingIndex) == 0) {
+        for(const auto siteIndex : otherEqualSiteGroup) {
+          for(const auto siteConstitutingIndex : other.sites.at(siteIndex)) {
+            if(thisSiteGroupVertices.count(siteConstitutingIndex) == 0) {
               return false;
             }
           }

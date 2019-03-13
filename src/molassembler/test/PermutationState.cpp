@@ -44,10 +44,10 @@ BOOST_AUTO_TEST_CASE(PermutationStateTests) {
   a.indexPair = {0, 1};
   b.indexPair = {1, 2};
 
-  symmetricHapticPincerLinks.push_back(std::move(a));
-  symmetricHapticPincerLinks.push_back(std::move(b));
+  symmetricHapticPincerLinks.push_back(a);
+  symmetricHapticPincerLinks.push_back(b);
 
-  auto symmetricHapticPincerRankedLigands = RankingInformation::rankLigands(
+  auto symmetricHapticPincerRankedLigands = RankingInformation::rankSites(
     symmetricHapticPincerLigands,
     symmetricHapticPincerRanking
   );
@@ -85,10 +85,10 @@ BOOST_AUTO_TEST_CASE(PermutationStateTests) {
   a.indexPair = {0, 1};
   b.indexPair = {1, 2};
 
-  asymmetricHapticPincerLinks.push_back(std::move(a));
-  asymmetricHapticPincerLinks.push_back(std::move(b));
+  asymmetricHapticPincerLinks.push_back(a);
+  asymmetricHapticPincerLinks.push_back(b);
 
-  auto asymmetricHapticPincerRankedLigands = RankingInformation::rankLigands(
+  auto asymmetricHapticPincerRankedLigands = RankingInformation::rankSites(
     asymmetricHapticPincerLigands,
     asymmetricHapticPincerRanking
   );

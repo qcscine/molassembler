@@ -212,16 +212,16 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
    */
 
   // Ensure this is only called on non-terminal atoms
-  assert(ranking.ligands.size() > 1);
+  assert(ranking.sites.size() > 1);
 
   // first basic stuff for VSEPR, later L and X for transition metals
   // geometry inference does not care if the substituents are somehow
   // connected (unless in later models the entire structure is considered)
-  std::vector<LocalGeometry::BindingSiteInformation> ligands;
-  ligands.reserve(ranking.ligands.size());
+  std::vector<LocalGeometry::BindingSiteInformation> sites;
+  sites.reserve(ranking.sites.size());
 
-  for(const auto& ligand : ranking.ligands) {
-    ligands.emplace_back(
+  for(const auto& ligand : ranking.sites) {
+    sites.emplace_back(
       LocalGeometry::BindingSiteInformation {
         0,
         0,
@@ -235,7 +235,7 @@ std::vector<LocalGeometry::BindingSiteInformation> reduceToSiteInformation(
     );
   }
 
-  return ligands;
+  return sites;
 }
 
 int formalCharge(

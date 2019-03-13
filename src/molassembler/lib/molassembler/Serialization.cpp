@@ -117,17 +117,17 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
   using Type = Scine::molassembler::RankingInformation;
 
   static void to_json(json& j, const Type& ranking) {
-    j["s"] = ranking.sortedSubstituents;
+    j["s"] = ranking.substituentRanking;
     // Omit links member if the list is empty (common)
     if(!ranking.links.empty()) {
       j["lnk"] = ranking.links;
     }
-    j["l"] = ranking.ligands;
-    j["lr"] = ranking.ligandsRanking;
+    j["l"] = ranking.sites;
+    j["lr"] = ranking.siteRanking;
   }
 
   static void from_json(const json& j, Type& ranking) {
-    ranking.sortedSubstituents.reserve(j["s"].size());
+    ranking.substituentRanking.reserve(j["s"].size());
 
     for(const auto& listJSON : j["s"]) {
       std::vector<Scine::molassembler::AtomIndex> subGroup;
@@ -135,7 +135,7 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
         subGroup.push_back(listElementJSON);
       }
 
-      ranking.sortedSubstituents.push_back(std::move(subGroup));
+      ranking.substituentRanking.push_back(std::move(subGroup));
     }
 
     if(j.count("lnk") > 0) {
@@ -146,22 +146,22 @@ struct adl_serializer<Scine::molassembler::RankingInformation> {
       }
     }
 
-    ranking.ligands.reserve(j["l"].size());
+    ranking.sites.reserve(j["l"].size());
     for(const auto& listJSON : j["l"]) {
-      std::vector<Scine::molassembler::AtomIndex> ligandConstitutingAtoms;
+      std::vector<Scine::molassembler::AtomIndex> siteConstitutingAtoms;
       for(const auto& listElementJSON : listJSON) {
-        ligandConstitutingAtoms.push_back(listElementJSON);
+        siteConstitutingAtoms.push_back(listElementJSON);
       }
-      ranking.ligands.push_back(ligandConstitutingAtoms);
+      ranking.sites.push_back(siteConstitutingAtoms);
     }
 
-    ranking.ligandsRanking.reserve(j["lr"].size());
+    ranking.siteRanking.reserve(j["lr"].size());
     for(const auto& listJSON : j["lr"]) {
-      std::vector<unsigned> equalLigandIndices;
+      std::vector<unsigned> equalSiteIndices;
       for(const auto& listElementJSON : listJSON) {
-        equalLigandIndices.push_back(listElementJSON);
+        equalSiteIndices.push_back(listElementJSON);
       }
-      ranking.ligandsRanking.push_back(equalLigandIndices);
+      ranking.siteRanking.push_back(equalSiteIndices);
     }
   }
 };

@@ -27,13 +27,13 @@ namespace DistanceGeometry {
 
 struct ChiralityConstraint {
   using AtomListType = std::vector<AtomIndex>;
-  using LigandSequence = std::array<AtomListType, 4>;
+  using SiteSequence = std::array<AtomListType, 4>;
 
-  LigandSequence sites;
+  SiteSequence sites;
   double lower, upper;
 
   ChiralityConstraint(
-    LigandSequence passSites,
+    SiteSequence passSites,
     const double passLower,
     const double passUpper
   ) : sites(std::move(passSites)),
@@ -47,13 +47,13 @@ struct ChiralityConstraint {
 
 struct DihedralConstraint {
   using AtomListType = std::vector<AtomIndex>;
-  using LigandSequence = std::array<AtomListType, 4>;
+  using SiteSequence = std::array<AtomListType, 4>;
 
-  LigandSequence sites;
+  SiteSequence sites;
   double lower, upper;
 
   DihedralConstraint(
-    LigandSequence passSites,
+    SiteSequence passSites,
     const double passLower,
     const double passUpper
   ) : sites(std::move(passSites)),

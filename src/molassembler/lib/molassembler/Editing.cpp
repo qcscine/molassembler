@@ -240,7 +240,7 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
       auto localRanking = molecule.rankPriority(notifyIndex);
 
       // In case the central atom becomes terminal, just drop the stereopermutator
-      if(localRanking.ligands.size() <= 1) {
+      if(localRanking.sites.size() <= 1) {
         molecule._pImpl->_stereopermutators.remove(notifyIndex);
         return;
       }

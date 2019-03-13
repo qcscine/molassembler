@@ -124,7 +124,7 @@ inline Vector getAveragePos(
  */
 inline double adjustedSignedVolume(
   const Vector& positions,
-  const ChiralityConstraint::LigandSequence& ligands
+  const ChiralityConstraint::SiteSequence& ligands
 ) {
   return (
     getAveragePos3D(positions, ligands[0])
@@ -150,7 +150,7 @@ inline double adjustedSignedVolume(
  */
 inline double dihedralAngle(
   const Vector& positions,
-  const DihedralConstraint::LigandSequence& ligands
+  const DihedralConstraint::SiteSequence& ligands
 ) {
   const dlib::vector<double, 3> alpha = getAveragePos3D(positions, ligands[0]);
   const dlib::vector<double, 3> beta = getAveragePos3D(positions, ligands[1]);
