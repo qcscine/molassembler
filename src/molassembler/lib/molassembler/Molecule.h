@@ -82,6 +82,8 @@ public:
   //! Default-constructor creates a hydrogen molecule.
   Molecule() noexcept;
 
+  Molecule(Utils::ElementType element) noexcept;
+
   //! Construct a minimal molecule from two element types and a mutual bond type
   Molecule(
     Utils::ElementType a,
@@ -337,7 +339,8 @@ public:
    * disconnect the graph.
    *
    * @throws std::out_of_range If the supplied index is invalid, i.e. >= N()
-   * @throws std::logic_error If removing the atom disconnects the graph.
+   * @throws std::logic_error If removing the atom disconnects the graph
+   *   or removes the final atom.
    *
    * @warning Invalidates **all** atom indices due to renumbering
    *

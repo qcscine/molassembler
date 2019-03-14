@@ -56,8 +56,9 @@ public:
 
 
 /* Information */
-  /*! This non-camel-case function name is necessary in order to work correctly
-   * with dlib's optimizations
+  /*!
+   * @note This non-camel-case function name is necessary in order to work
+   *   correctly with dlib's optimizations
    */
   template<typename T>
   bool should_continue_search(

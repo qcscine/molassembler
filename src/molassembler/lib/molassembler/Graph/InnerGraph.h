@@ -139,7 +139,9 @@ public:
 
   /*!
    * @brief Determine whether a vertex can be safely removed
-   * A Vertex can be safely removed if it is not an articulation vertex
+   * A Vertex can be safely removed if it is not an articulation vertex or if
+   * the number of vertices is more than one.
+   *
    * @note This function is not thread-safe.
    */
   bool canRemove(Vertex a) const;

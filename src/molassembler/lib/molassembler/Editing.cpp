@@ -175,13 +175,8 @@ std::pair<Molecule, Molecule> Editing::cleave(const Molecule& a, const BondIndex
     toInner(bridge, a.graph().inner())
   );
 
-  // Ensure both sides will fulfill preconditions to a molecule
-  if(sides.first.size() < 2 || sides.second.size() < 2) {
-    throw std::logic_error(
-      "After cleaving, one or both sides contain less than two atoms and hence "
-      "do not fulfill the logical preconditions of what constitutes a Molecule."
-    );
-  }
+  // Ensure both sides will fulfill preconditions to be a molecule (at least one atom)
+  assert(!sides.first.empty() && !sides.second.empty());
 
   // Construct separate OuterGraphs for each component of the disconnected graph
   std::pair<InnerGraph, InnerGraph> graphs;

@@ -54,10 +54,13 @@ struct Molecule::Impl {
   //! Default constructor
   Impl() noexcept;
 
+  //! Mono-atomic constructor
+  Impl(Utils::ElementType element) noexcept;
+
   //! Diatomic constructor
   Impl(
-    Scine::Utils::ElementType a,
-    Scine::Utils::ElementType b,
+    Utils::ElementType a,
+    Utils::ElementType b,
     BondType bondType
   ) noexcept;
 
@@ -85,7 +88,7 @@ struct Molecule::Impl {
 //!@{
   //! Adds an atom by attaching it to an existing atom.
   AtomIndex addAtom(
-    Scine::Utils::ElementType elementType,
+    Utils::ElementType elementType,
     AtomIndex adjacentTo,
     BondType bondType
   );
@@ -229,7 +232,7 @@ struct Molecule::Impl {
   //! Changes an existing atom's element type
   void setElementType(
     AtomIndex a,
-    Scine::Utils::ElementType elementType
+    Utils::ElementType elementType
   );
 
   /*! Sets the local geometry at an atom index

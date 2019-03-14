@@ -527,7 +527,57 @@ BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
   BOOST_REQUIRE_NO_THROW(molSplat = IO::split("multiple_molecules/multi_interpret.mol"));
   BOOST_REQUIRE_NO_THROW(xyzSplat = IO::split("multiple_molecules/multi_interpret.xyz"));
 
-  BOOST_CHECK(molSplat.size() == 5 && xyzSplat.size() == 5);
+  // Each file contains one ethane, four water, and a potassium
+
+  Molecule water {Utils::ElementType::O};
+  water.addAtom(Utils::ElementType::H, 0, BondType::Single);
+  water.addAtom(Utils::ElementType::H, 0, BondType::Single);
+  water.setGeometryAtAtom(0, Symmetry::Name::Bent);
+
+  Molecule ethane {Utils::ElementType::C};
+  ethane.addAtom(Utils::ElementType::H, 0, BondType::Single);
+  ethane.addAtom(Utils::ElementType::H, 0, BondType::Single);
+  ethane.addAtom(Utils::ElementType::H, 0, BondType::Single);
+  AtomIndex otherCarbon = ethane.addAtom(Utils::ElementType::C, 0, BondType::Single);
+  ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
+  ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
+  ethane.addAtom(Utils::ElementType::H, otherCarbon, BondType::Single);
+  ethane.setGeometryAtAtom(0, Symmetry::Name::Tetrahedral);
+  ethane.setGeometryAtAtom(otherCarbon, Symmetry::Name::Tetrahedral);
+
+  Molecule potassium {Utils::ElementType::K};
+
+  auto countMolecule = [&](const std::vector<Molecule>& molecules, const Molecule& countMol) -> unsigned {
+    return temple::accumulate(
+      molecules,
+      0u,
+      [&](const unsigned carry, const Molecule& testMol) -> unsigned {
+        if(testMol == countMol) {
+          return carry + 1;
+        }
+
+        return carry;
+      }
+    );
+  };
+
+  BOOST_CHECK_MESSAGE(molSplat.size() == 6, "Mol separation yielded not 6, but " << molSplat.size() << " molecules");
+  BOOST_CHECK_MESSAGE(xyzSplat.size() == 6, "XYZ separation yielded not 6, but " << xyzSplat.size() << " molecules");
+
+  auto checkSplat = [&](const std::vector<Molecule>& splat) -> bool {
+    unsigned waters = countMolecule(splat, water);
+    unsigned ethanes = countMolecule(splat, ethane);
+    unsigned potassiums = countMolecule(splat, potassium);
+
+    BOOST_CHECK_MESSAGE(waters == 4u, "Did not get expected number of waters");
+    BOOST_CHECK_MESSAGE(ethanes == 1u, "Did not get expected number of ethanes");
+    BOOST_CHECK_MESSAGE(potassiums == 1u, "Did not get expected number of potassiums");
+
+    return (waters == 4u && ethanes == 1u && potassiums == 1u);
+  };
+
+  BOOST_CHECK_MESSAGE(checkSplat(molSplat), "Molecule counts for interpret of multi_interpret.mol failed");
+  BOOST_CHECK_MESSAGE(checkSplat(xyzSplat), "Molecule counts for interpret of multi_interpret.xyz failed");
 }
 
 BOOST_AUTO_TEST_CASE(moleculeGeometryChoices) {

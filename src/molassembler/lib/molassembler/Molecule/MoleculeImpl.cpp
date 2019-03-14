@@ -144,8 +144,8 @@ void Molecule::Impl::_ensureModelInvariants() const {
     throw std::logic_error("Molecules must be a single connected component. The supplied graph has multiple");
   }
 
-  if(graph().N() < 2) {
-    throw std::logic_error("Molecules must consist of at least two atoms!");
+  if(graph().N() < 1) {
+    throw std::logic_error("Molecules must consist of at least one atom!");
   }
 }
 
@@ -299,6 +299,11 @@ void Molecule::Impl::_propagateGraphChange() {
 /* Constructors */
 Molecule::Impl::Impl() noexcept
   : Impl(Scine::Utils::ElementType::H, Scine::Utils::ElementType::H, BondType::Single) {}
+
+Molecule::Impl::Impl(const Scine::Utils::ElementType element) noexcept {
+  InnerGraph& inner = _adjacencies.inner();
+  inner.addVertex(element);
+}
 
 Molecule::Impl::Impl(
   const Scine::Utils::ElementType a,

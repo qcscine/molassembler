@@ -183,8 +183,10 @@ InnerGraph::BGLType& InnerGraph::bgl() {
 /* Information */
 
 bool InnerGraph::canRemove(const Vertex a) const {
-  // A molecule is by definition at least two atoms!
-  if(N() == 2) {
+  /* A molecule is at least one atom. Conceptually, a molecule should consist
+   * of at least two atoms, but this is done for usability.
+   */
+  if(N() == 1) {
     return false;
   }
 

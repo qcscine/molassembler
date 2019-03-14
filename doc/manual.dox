@@ -535,7 +535,7 @@ reproducible behavior.
 The maxim of the library is to permit the specification of any desired graph,
 however unreasonable, within the logical constraints of the molecular model.
 These constraints are that a Molecule class can only contain a single connected
-component and must consist of at least two atoms. Apart from that, you can
+component and must consist of at least one atom. Apart from that, you can
 create completely unreasonable graphs. Keep in mind, however, that these can be
 at odds with either the reduction of stereopermutations to assignments, where
 algorithms throw out obviously impossible permutations (yielding stereocenters
