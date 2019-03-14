@@ -522,8 +522,10 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
 }
 
 BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {
-  auto molSplat = IO::split("multiple_molecules/ethane_four_water.mol");
-  auto xyzSplat = IO::split("multiple_molecules/ethane_four_water.xyz");
+  std::vector<Molecule> molSplat, xyzSplat;
+
+  BOOST_REQUIRE_NO_THROW(molSplat = IO::split("multiple_molecules/multi_interpret.mol"));
+  BOOST_REQUIRE_NO_THROW(xyzSplat = IO::split("multiple_molecules/multi_interpret.xyz"));
 
   BOOST_CHECK(molSplat.size() == 5 && xyzSplat.size() == 5);
 }
