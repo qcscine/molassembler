@@ -85,6 +85,6 @@ void init_io(pybind11::module& m) {
     pybind11::overload_cast<const std::string&, const Molecule&>(&IO::write),
     pybind11::arg("filename"),
     pybind11::arg("molecule"),
-    "Write a Molecule serialization with the endings json or masm to a file."
+    "Write a Molecule serialization with the endings json/cbor/bson to a file."
   );
 }

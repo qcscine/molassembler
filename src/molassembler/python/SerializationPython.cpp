@@ -8,29 +8,19 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/Serialization.h"
 
-std::string toJSON(const Scine::molassembler::Molecule& mol) {
-  return Scine::molassembler::JSONSerialization(mol);
-}
+/* Note: if you ever want to, you can get python objects from nlohmann's json
+ * representation using the code from here:
+ * https://github.com/pybind/pybind11/issues/1627
+ *
+ * Would require forward-declaring it in Serialization, though, and including
+ * the interface library here (and linking it).
+ */
 
-Scine::molassembler::Molecule fromJSON(const std::string& jsonStr) {
-  return Scine::molassembler::JSONSerialization(jsonStr);
-}
-
-pybind11::bytes toCBORBytes(const Scine::molassembler::Molecule& mol) {
-  auto binary = Scine::molassembler::JSONSerialization(mol).toBinary(
-    Scine::molassembler::JSONSerialization::BinaryFormat::CBOR
-  );
-
-  return {
-    reinterpret_cast<const char*>(&binary[0]),
-    binary.size() * sizeof(std::uint8_t)
-  };
-}
-
-pybind11::bytes toBSONBytes(const Scine::molassembler::Molecule& mol) {
-  auto binary = Scine::molassembler::JSONSerialization(mol).toBinary(
-    Scine::molassembler::JSONSerialization::BinaryFormat::BSON
-  );
+pybind11::bytes JSONToBytes(
+  const Scine::molassembler::JSONSerialization& serialization,
+  const Scine::molassembler::JSONSerialization::BinaryFormat format
+) {
+  auto binary = serialization.toBinary(format);
 
   return {
     reinterpret_cast<const char*>(&binary[0]),
@@ -38,71 +28,85 @@ pybind11::bytes toBSONBytes(const Scine::molassembler::Molecule& mol) {
   };
 }
 
-std::vector<std::uint8_t> binaryFromPybind11Bytes(const pybind11::bytes& bytes) {
+Scine::molassembler::JSONSerialization JSONFromBytes(
+  const pybind11::bytes& bytes,
+  const Scine::molassembler::JSONSerialization::BinaryFormat format
+) {
   std::string binaryStr = bytes;
   const char* binaryStrC = binaryStr.c_str();
 
   std::vector<std::uint8_t> binary;
   unsigned size = binaryStr.size();
   binary.resize(size);
+
   for(unsigned i = 0; i < size; ++i) {
-    binary[i] = *reinterpret_cast<std::uint8_t*>(binaryStrC[i]);
+    // ooh, pointer arithmetic, don't we just love that, clang-tidy?
+    binary[i] = *(reinterpret_cast<const std::uint8_t*>(binaryStrC) + i);
   }
 
-  return binary;
-}
-
-Scine::molassembler::Molecule fromCBORBytes(const pybind11::bytes& bytes) {
-  return Scine::molassembler::JSONSerialization(
-    binaryFromPybind11Bytes(bytes),
-    Scine::molassembler::JSONSerialization::BinaryFormat::CBOR
-  );
-}
-
-Scine::molassembler::Molecule fromBSONBytes(const pybind11::bytes& bytes) {
-  return Scine::molassembler::JSONSerialization(
-    binaryFromPybind11Bytes(bytes),
-    Scine::molassembler::JSONSerialization::BinaryFormat::BSON
-  );
+  return Scine::molassembler::JSONSerialization(binary, format);
 }
 
 void init_serialization(pybind11::module& m) {
   using namespace Scine::molassembler;
 
-  m.def(
-    "to_json",
-    &toJSON,
+  pybind11::class_<JSONSerialization> serialization(
+    m,
+    "JSONSerialization",
+    "Class representing a compact JSON serialization of a molecule"
+  );
+
+  pybind11::enum_<JSONSerialization::BinaryFormat> binaryFormat(
+    serialization,
+    "BinaryFormat",
+    "Specifies the type of JSON binary format"
+  );
+  binaryFormat.value("CBOR", JSONSerialization::BinaryFormat::CBOR)
+   .value("BSON", JSONSerialization::BinaryFormat::BSON)
+   .value("MsgPack", JSONSerialization::BinaryFormat::MsgPack)
+   .value("UBJSON", JSONSerialization::BinaryFormat::UBJSON);
+
+  serialization.def(
+    pybind11::init<const std::string&>(),
+    pybind11::arg("json_string"),
+    "Parse a JSON molecule serialization"
+  );
+
+  serialization.def(
+    pybind11::init<const Molecule&>(),
     pybind11::arg("molecule"),
-    "Serialize a molecule into a JSON string"
+    "Serialize a molecule into JSON"
   );
-  m.def(
-    "to_cbor",
-    &toCBORBytes,
-    pybind11::arg("molecule"),
-    "Serialize a molecule into CBOR JSON"
+
+  serialization.def(
+    pybind11::init(&JSONFromBytes),
+    pybind11::arg("bytes"),
+    pybind11::arg("binary_format"),
+    "Parse a binary JSON molecule serialization"
   );
-  m.def(
-    "to_bson",
-    &toBSONBytes,
-    pybind11::arg("molecule"),
-    "Serialize a molecule into BSON JSON"
+
+  serialization.def(
+    "__str__",
+    &JSONSerialization::operator std::string,
+    "Dump the JSON serialization into a string"
   );
-  m.def(
-    "from_json",
-    &fromJSON,
-    pybind11::arg("json_str"),
-    "Deserialize a JSON string into a molecule instance"
+
+  serialization.def(
+    "standardize",
+    &JSONSerialization::standardize,
+    "Standardize the internal JSON serialization (only for canonical molecules)"
   );
-  m.def(
-    "from_cbor",
-    &fromCBORBytes,
-    pybind11::arg("cbor_bytes"),
-    "Deserialize CBOR bytes into a molecule instance"
+
+  serialization.def(
+    "to_molecule",
+    &JSONSerialization::operator Scine::molassembler::Molecule,
+    "Construct a molecule from the serialization"
   );
-  m.def(
-    "from_bson",
-    &fromBSONBytes,
-    pybind11::arg("bson_bytes"),
-    "Deserialize BSON bytes into a molecule instance"
+
+  serialization.def(
+    "to_binary",
+    &JSONToBytes,
+    pybind11::arg("binary_format"),
+    "Serialize a molecule into a binary format"
   );
 }
