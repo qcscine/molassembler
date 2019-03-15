@@ -294,9 +294,6 @@ BOOST_AUTO_TEST_CASE(moleculeCanonicalization) {
     Molecule a, b;
     std::tie(a, b, std::ignore) = readIsomorphism(currentFilePath);
 
-    std::string aGraphviz = a.dumpGraphviz();
-    std::string bGraphviz = b.dumpGraphviz();
-
     // Canonicalize both molecules
     a.canonicalize();
     b.canonicalize();

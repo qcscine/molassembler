@@ -179,7 +179,7 @@ struct RankingInformation {
    *
    * @param i The binding site index to find
    *
-   * @return The position within @p ligandsRanking of the supplied ligand index
+   * @return The position within @p siteRanking of the supplied ligand index
    */
   unsigned getRankedIndexOfSite(unsigned i) const;
 

@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 namespace Scine {
 
@@ -17,13 +18,14 @@ namespace molassembler {
 // Forward-declarations
 class Molecule;
 
-/*!
- * @brief Serializes a molecule into a compact JSON representation
+/**
+ * @brief Class representing a compact JSON serialization of a molecule
  *
  * The JSON representation, although principally human readable, is very
  * compact. Keys are heavily shortened. Each Molecule JSON Object has the
  * following structure:
  *
+ * @verbatim
  * - a: List of AtomStereopermutator Objects
  *   - a: Assignment index (key omitted if unassigned)
  *   - c: Central index
@@ -47,28 +49,109 @@ class Molecule;
  *   - 0: Major
  *   - 1: Minor
  *   - 2: Patch
+ * @endverbatim
  *
- * @returns An unprettified JSON string serialization
+ * For std::string - Molecule interconversions, you can implicitly call the
+ * converting operators:
+ * @code{cpp}
+ * Molecule mol;
+ * std::string jsonSerialization = JSONSerialization(mol);
+ * Molecule reverted = JSONSerialization(jsonSerialization);
+ * @endcode
+ *
+ * For BinaryType - Molecule interconversions, only the implicit Molecule
+ * conversion operator is available since the binary JSON format must be
+ * specified:
+ * @code{cpp}
+ * Molecule mol;
+ * JSONSerialization::BinaryType bson = JSONSerialization(mol).toBinary(JSONSerialization::BinaryFormat::BSON);
+ * Molecule reverted = JSONSerialization(bson, JSONSerialization::BinaryFormat::BSON);
+ * @endcode
+ *
+ * @warning Serializations of molecules have substantial notational freedom.
+ * Using lexicographical comparison on serializations does not have the same
+ * semantics as calling Molecule's relational operators.
  */
-std::string toJSON(const Molecule& molecule);
-/*!
- * @brief Serializes a molecule into compact binary object notation
- * @returns Variable-length binary
- */
-std::vector<std::uint8_t> toCBOR(const Molecule& molecule);
+class JSONSerialization {
+public:
+//!@name Public types
+//!@{
+  //! Type used to represent binary JSON formats
+  using BinaryType = std::vector<std::uint8_t>;
 
-/*!
- * @brief Serializes a molecule into base 64 encoded compact binary object
- *   representation
- */
-std::string toBase64EncodedCBOR(const Molecule& molecule);
+  //! Binary formats that JSON can be encoded into and decoded from
+  enum class BinaryFormat {
+    CBOR,
+    BSON,
+    MsgPack,
+    UBJSON
+  };
+//!@}
 
-//! Deserialize a JSON string representation of a Molecule
-Molecule fromJSON(const std::string& serializedMolecule);
-//! Deserialize a compact binary object notation serialization of a molecule
-Molecule fromCBOR(const std::vector<std::uint8_t>& cbor);
-//! Deserialize a base 64 encoded compact binary object representation of a molecule
-Molecule fromBase64EncodedCBOR(const std::string& base64EncodedCBOR);
+//!@name Static members
+//!@{
+  static std::string base64Encode(const BinaryType& binary);
+  static BinaryType base64Decode(const std::string& base64String);
+//!@}
+
+//!@name Special member functions
+//!@{
+  JSONSerialization(JSONSerialization&& other) noexcept;
+  JSONSerialization& operator = (JSONSerialization&& other) noexcept;
+  JSONSerialization(const JSONSerialization& other);
+  JSONSerialization& operator = (const JSONSerialization& other);
+  ~JSONSerialization();
+//!@}
+
+//!@name Constructors
+//!@{
+  JSONSerialization() = delete;
+  //! Construct a serialization from a JSON string
+  explicit JSONSerialization(const std::string& jsonString);
+  //! Construct a serialization from a Molecule
+  explicit JSONSerialization(const Molecule& molecule);
+  //! Construct a serialization from a binary JSON format
+  JSONSerialization(const BinaryType& binary, BinaryFormat format);
+//!@}
+
+//!@name Conversions
+//!@{
+  //! Dump the unprettified JSON notation as a string
+  operator std::string() const;
+  //! Deserialize the JSON serialization into a Molecule
+  operator Molecule() const;
+  //! Serialize the JSON serialization into a binary JSON format
+  BinaryType toBinary(BinaryFormat format) const;
+//!@}
+
+//!@name Modification
+//!@{
+  /*
+   * @brief Eliminate all notational freedom of the JSON serialization
+   *
+   * The Molecule's JSON representation notational freedoms are removed:
+   * - Edges have ordered indices
+   * - The graph edge list is sorted
+   * - The lists of atom and bond stereopermutators are sorted by their placement
+   *   atoms and bonds, respectively
+   * - Ranking information notational freedom is removed
+   *
+   * @throws std::logic_error If the underlying molecule is not fully canonical.
+   * It makes zero sense to standardize the JSON representation if the molecule
+   * itself is not canonicalized since then JSON representation comparison will
+   * still not yield the same behavior as Molecule comparison.
+   *
+   * @note This has at least O(V + E + A + B) complexity for large molecules.
+   *
+   * @returns *this for method chaining
+   */
+  JSONSerialization& standardize();
+//!@}
+
+private:
+  struct Impl;
+  std::unique_ptr<Impl> _pImpl;
+};
 
 } // namespace molassembler
 

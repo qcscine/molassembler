@@ -17,6 +17,8 @@
 #include "molassembler/StereopermutatorList.h"
 #include "molassembler/Version.h"
 
+#include "temple/Functional.h"
+
 namespace nlohmann {
 
 template<>
@@ -240,7 +242,148 @@ namespace Scine {
 
 namespace molassembler {
 
+// Top level keys into molecule json object, for easier reading
+constexpr const char* atomStereopermutatorKey = "a";
+constexpr const char* bondStereopermutatorKey = "b";
+constexpr const char* graphKey = "g";
+constexpr const char* versionKey = "v";
+constexpr const char* canonicalKey = "c";
+
 namespace detail {
+
+void standardizeJSON(nlohmann::json& m) {
+  using json = nlohmann::json;
+  /* Ensure that m["a"], which is the list of atom stereopermutator objects,
+   * is sorted by the central index
+   */
+  if(m.count(atomStereopermutatorKey) > 0) {
+    temple::inplace::sort(
+      m.at(atomStereopermutatorKey),
+      [&](const json& lhs, const json& rhs) -> bool {
+        assert(lhs.count("c") > 0 && rhs.count("c") > 0);
+        return (
+          lhs["c"].template get<unsigned>()
+          < rhs["c"].template get<unsigned>()
+        );
+      }
+    );
+
+    // Ranking objects of AtomStereopermutators have lots of notational freedom
+    for(json& permutator : m.at(atomStereopermutatorKey)) {
+      assert(permutator.count("r") > 0);
+      json& ranking = permutator.at("r");
+      assert(ranking.is_object());
+
+      // Sort sub-lists of sorted substituents
+      assert(ranking.count("s") > 0);
+      json& sortedSubstituents = ranking.at("s");
+      assert(sortedSubstituents.is_array());
+      for(json& subList : sortedSubstituents) {
+        assert(subList.is_array());
+        temple::inplace::sort(subList);
+      }
+
+      // Sort ligands' sub-lists
+      assert(ranking.count("l") > 0);
+      json& ligands = ranking.at("l");
+      assert(ligands.is_array());
+      for(json& subList : ligands) {
+        assert(subList.is_array());
+        temple::inplace::sort(subList);
+      }
+
+      /* Sort ligands lists lexicographically (and their ranking
+       * simultaneously), since they are index-connected
+       */
+      assert(ranking.count("lr") > 0);
+      json& ligandsRanking = ranking.at("lr");
+      assert(ligandsRanking.is_array());
+
+      json unsortedLigands = ligands;
+      temple::inplace::sort(ligands);
+
+      auto newLigandIndex = [&](unsigned oldLigandIndex) -> unsigned {
+        const auto& ligandIndices = unsortedLigands.at(oldLigandIndex);
+        auto findIter = temple::find(ligands, ligandIndices);
+        assert(findIter != std::end(ligands));
+        return findIter - std::begin(ligands);
+      };
+
+      // Changing ligands means ligandsRanking has to be adapted
+      for(json& equallyRankedLigandsList : ligandsRanking) {
+        for(json& oldLigandIndexJSON : equallyRankedLigandsList) {
+          oldLigandIndexJSON = newLigandIndex(oldLigandIndexJSON.get<unsigned>());
+        }
+
+        // Sort the sub list, too
+        temple::inplace::sort(equallyRankedLigandsList);
+      }
+
+      // Changing ligands also means that links' ligand indices have to be adapted
+      if(ranking.count("lnk") > 0) {
+        json& links = ranking.at("lnk");
+        assert(links.is_array() && !links.empty());
+        for(json& link : links) {
+          assert(link.count("p") > 0);
+          json& ligandIndexPair = link.at("p");
+          assert(ligandIndexPair.is_array() && ligandIndexPair.size() == 2);
+
+          ligandIndexPair[0] = newLigandIndex(ligandIndexPair[0].get<unsigned>());
+          ligandIndexPair[1] = newLigandIndex(ligandIndexPair[1].get<unsigned>());
+
+          // Reorder the pair
+          if(ligandIndexPair[0] > ligandIndexPair[1]) {
+            std::swap(ligandIndexPair[0], ligandIndexPair[1]);
+          }
+        }
+
+        // Sort links by their index pair
+        temple::inplace::sort(
+          links,
+          [](const json& lhs, const json& rhs) -> bool {
+            assert(lhs.is_object() && lhs.count("p") > 0);
+            assert(rhs.is_object() && rhs.count("p") > 0);
+
+            return lhs["p"] < rhs["p"];
+          }
+        );
+      }
+    }
+  }
+
+  /* Ensure that m["b"], which is the list of bond stereopermutator objects,
+   * is sorted by their placement edges
+   */
+  if(m.count(bondStereopermutatorKey) > 0) {
+    temple::inplace::sort(
+      m.at(bondStereopermutatorKey),
+      [&](const json& lhs, const json& rhs) -> bool {
+        assert(lhs.count("e") > 0 && rhs.count("e") > 0);
+        assert(lhs["e"].is_array() && rhs["e"].is_array());
+        assert(lhs["e"].size() == 2 && rhs["e"].size() == 2);
+        return (
+          std::tie(lhs["e"][0], lhs["e"][1])
+          < std::tie(rhs["e"][0], rhs["e"][1])
+        );
+      }
+    );
+  }
+
+  /* Ensure that each graph edge is ordered, i.e. the first vertex index is
+   * smaller than the second
+   */
+  for(json& edge : m.at(graphKey).at("E")) {
+    assert(edge.is_array() && edge.size() == 3);
+    if(edge[0] > edge[1]) {
+      std::swap(edge[0], edge[1]);
+    }
+  }
+
+  /* Ensure that the list of edges is ordered */
+  temple::inplace::sort(
+    m.at(graphKey).at("E")
+  );
+}
 
 nlohmann::json serialize(const Molecule& molecule) {
   using json = nlohmann::json;
@@ -248,47 +391,55 @@ nlohmann::json serialize(const Molecule& molecule) {
   json m;
 
   // Add a version tag. Always serialize to the newest version information
-  m["v"] = {version::major, version::minor, version::patch};
+  m[versionKey] = {version::major, version::minor, version::patch};
 
-  m["g"] = molecule.graph();
+  m[graphKey] = molecule.graph();
 
   const auto& stereopermutators = molecule.stereopermutators();
 
-  // Manual conversion of stereopermutators
-  // Atom stereopermutators first
-  m["a"] = json::array();
-  for(const auto& stereopermutator : stereopermutators.atomStereopermutators()) {
-    json s;
+  /* Manual conversion of stereopermutators because these need the graph to be
+   * constructed
+   */
+  if(stereopermutators.A() > 0) {
+    // Atom stereopermutators first
+    m["a"] = json::array();
+    for(const auto& stereopermutator : stereopermutators.atomStereopermutators()) {
+      json s;
 
-    s["c"] = stereopermutator.centralIndex();
-    s["s"] = Symmetry::nameIndex(stereopermutator.getSymmetry());
-    s["r"] = stereopermutator.getRanking();
+      s["c"] = stereopermutator.centralIndex();
+      s["s"] = Symmetry::nameIndex(stereopermutator.getSymmetry());
+      s["r"] = stereopermutator.getRanking();
 
-    if(stereopermutator.assigned()) {
-      s["a"] = stereopermutator.assigned().value();
+      if(stereopermutator.assigned()) {
+        s["a"] = stereopermutator.assigned().value();
+      }
+
+      m["a"].push_back(std::move(s));
     }
-
-    m["a"].push_back(std::move(s));
   }
 
-  m["b"] = json::array();
-  for(const auto& stereopermutator : stereopermutators.bondStereopermutators()) {
-    json s;
+  if(stereopermutators.B() > 0) {
+    m["b"] = json::array();
+    for(const auto& stereopermutator : stereopermutators.bondStereopermutators()) {
+      json s;
 
-    s["e"] = {stereopermutator.edge().first, stereopermutator.edge().second};
+      s["e"] = {stereopermutator.edge().first, stereopermutator.edge().second};
 
-    if(stereopermutator.assigned()) {
-      s["a"] = stereopermutator.assigned().value();
+      if(stereopermutator.assigned()) {
+        s["a"] = stereopermutator.assigned().value();
+      }
+
+      if(stereopermutator.alignment() == BondStereopermutator::Alignment::Staggered) {
+        s["al"] = stereopermutator.alignment();
+      }
+
+      m["b"].push_back(std::move(s));
     }
-
-    if(stereopermutator.alignment() == BondStereopermutator::Alignment::Staggered) {
-      s["al"] = stereopermutator.alignment();
-    }
-
-    m["b"].push_back(std::move(s));
   }
 
-  m["c"] = molecule.canonicalComponents();
+  if(molecule.canonicalComponents() != AtomEnvironmentComponents::None) {
+    m[canonicalKey] = molecule.canonicalComponents();
+  }
 
   return m;
 }
@@ -308,107 +459,191 @@ Molecule deserialize(const nlohmann::json& m) {
   /* Look at the version information to determine if there is a suitable
    * deserialization algorithm or not
    */
-  // std::vector<unsigned> version = m["v"];
+  // std::vector<unsigned> version = m[versionKey];
 
-  OuterGraph graph = m["g"];
+  OuterGraph graph = m.at(graphKey);
 
   StereopermutatorList stereopermutators;
 
   // Atom stereopermutators
-  for(const auto& j : m["a"]) {
-    Symmetry::Name symmetry = Symmetry::allNames.at(j["s"]);
-    AtomIndex centralIndex = j["c"];
+  if(m.count(atomStereopermutatorKey) > 0) {
+    for(const auto& j : m[atomStereopermutatorKey]) {
+      Symmetry::Name symmetry = Symmetry::allNames.at(j["s"]);
+      AtomIndex centralIndex = j["c"];
 
-    auto stereopermutator = AtomStereopermutator {
-      graph,
-      symmetry,
-      centralIndex,
-      j["r"].get<RankingInformation>()
-    };
+      auto stereopermutator = AtomStereopermutator {
+        graph,
+        symmetry,
+        centralIndex,
+        j["r"].get<RankingInformation>()
+      };
 
-    // Assign if present
-    if(j.count("a") > 0) {
-      stereopermutator.assign(
-        static_cast<unsigned>(j["a"])
-      );
+      // Assign if present
+      if(j.count("a") > 0) {
+        stereopermutator.assign(
+          static_cast<unsigned>(j["a"])
+        );
+      }
+
+      stereopermutators.add(std::move(stereopermutator));
     }
-
-    stereopermutators.add(std::move(stereopermutator));
   }
 
-  // Bond stereopermutators
-  for(const auto& j : m["b"]) {
-    AtomIndex a = j["e"].at(0);
-    AtomIndex b = j["e"].at(1);
+  if(m.count(bondStereopermutatorKey) > 0) {
+    // Bond stereopermutators
+    for(const auto& j : m[bondStereopermutatorKey]) {
+      AtomIndex a = j["e"].at(0);
+      AtomIndex b = j["e"].at(1);
 
-    auto aStereopermutatorOption = stereopermutators.option(a);
-    auto bStereopermutatorOption = stereopermutators.option(b);
+      auto aStereopermutatorOption = stereopermutators.option(a);
+      auto bStereopermutatorOption = stereopermutators.option(b);
 
-    assert(aStereopermutatorOption && bStereopermutatorOption);
+      assert(aStereopermutatorOption && bStereopermutatorOption);
 
-    BondIndex molEdge {a, b};
+      BondIndex molEdge {a, b};
 
-    auto alignment = BondStereopermutator::Alignment::Eclipsed;
-    if(j.count("al") > 0) {
-      alignment = j["al"].get<BondStereopermutator::Alignment>();
+      auto alignment = BondStereopermutator::Alignment::Eclipsed;
+      if(j.count("al") > 0) {
+        alignment = j["al"].get<BondStereopermutator::Alignment>();
+      }
+
+      auto stereopermutator = BondStereopermutator {
+        aStereopermutatorOption.value(),
+        bStereopermutatorOption.value(),
+        molEdge,
+        alignment
+      };
+
+      // Assign if present
+      if(j.count("a") > 0) {
+        stereopermutator.assign(
+          static_cast<unsigned>(j["a"])
+        );
+      }
+
+      stereopermutators.add(std::move(stereopermutator));
     }
-
-    auto stereopermutator = BondStereopermutator {
-      aStereopermutatorOption.value(),
-      bStereopermutatorOption.value(),
-      molEdge,
-      alignment
-    };
-
-    // Assign if present
-    if(j.count("a") > 0) {
-      stereopermutator.assign(
-        static_cast<unsigned>(j["a"])
-      );
-    }
-
-    stereopermutators.add(std::move(stereopermutator));
   }
 
-  AtomEnvironmentComponents canonicalComponents = m["c"];
+  auto canonicalComponents = AtomEnvironmentComponents::None;
+  if(m.count(canonicalKey) > 0) {
+    canonicalComponents = m[canonicalKey];
+  }
 
   return Molecule {graph, stereopermutators, canonicalComponents};
 }
 
 } // namespace detail
 
-std::string toJSON(const Molecule& molecule) {
-  return detail::serialize(molecule).dump();
+struct JSONSerialization::Impl {
+  explicit Impl(const std::string& jsonString) : serialization(nlohmann::json::parse(jsonString)) {}
+  explicit Impl(const Molecule& molecule) : serialization(detail::serialize(molecule)) {}
+  Impl(
+    const BinaryType& binary,
+    const BinaryFormat format
+  ) {
+    if(format == BinaryFormat::CBOR) {
+      serialization = nlohmann::json::from_cbor(binary);
+    } else if(format == BinaryFormat::BSON) {
+      serialization = nlohmann::json::from_bson(binary);
+    } else if(format == BinaryFormat::MsgPack) {
+      serialization = nlohmann::json::from_msgpack(binary);
+    } else if(format == BinaryFormat::UBJSON) {
+      serialization = nlohmann::json::from_ubjson(binary);
+    }
+  }
+
+  operator std::string() const {
+    return serialization.dump();
+  }
+
+  operator Molecule() const {
+    return detail::deserialize(serialization);
+  }
+
+  BinaryType toBinary(const BinaryFormat format) {
+    if(format == BinaryFormat::CBOR) {
+      return nlohmann::json::to_cbor(serialization);
+    }
+
+    if(format == BinaryFormat::BSON) {
+      return nlohmann::json::to_bson(serialization);
+    }
+
+    if(format == BinaryFormat::MsgPack) {
+      return nlohmann::json::to_msgpack(serialization);
+    }
+
+    if(format == BinaryFormat::UBJSON) {
+      return nlohmann::json::to_ubjson(serialization);
+    }
+
+    return {};
+  }
+
+  void standardize() {
+    if(serialization.count(canonicalKey) == 0) {
+      throw std::logic_error("Molecule is not canonical. Standardizing the JSON representation does not make sense.");
+    }
+
+    if(serialization.at(canonicalKey) != AtomEnvironmentComponents::All) {
+      throw std::logic_error("Molecule is not fully canonical. Standardizing the JSON representation does not make sense.");
+    }
+
+    detail::standardizeJSON(serialization);
+  }
+
+  nlohmann::json serialization;
+};
+
+/* JSONSerialization implementation */
+
+std::string JSONSerialization::base64Encode(const BinaryType& binary) {
+  return base64::encode(binary);
 }
 
-std::vector<std::uint8_t> toCBOR(const Molecule& molecule) {
-  return nlohmann::json::to_cbor(
-    detail::serialize(molecule)
-  );
+JSONSerialization::BinaryType JSONSerialization::base64Decode(const std::string& binary) {
+  return base64::decode(binary);
 }
 
-std::string toBase64EncodedCBOR(const Molecule& molecule) {
-  return base64::encode(
-    toCBOR(molecule)
-  );
+JSONSerialization::JSONSerialization(JSONSerialization&& other) noexcept = default;
+JSONSerialization& JSONSerialization::operator = (JSONSerialization&& other) noexcept = default;
+
+JSONSerialization::JSONSerialization(const JSONSerialization& other) : _pImpl(
+  std::make_unique<Impl>(*other._pImpl)
+) {}
+
+JSONSerialization& JSONSerialization::operator = (const JSONSerialization& other) {
+  *_pImpl = *other._pImpl;
+  return *this;
 }
 
-Molecule fromJSON(const std::string& serializedMolecule) {
-  return detail::deserialize(
-    nlohmann::json::parse(serializedMolecule)
-  );
+JSONSerialization::~JSONSerialization() = default;
+
+JSONSerialization::JSONSerialization(const std::string& jsonString)
+  : _pImpl(std::make_unique<Impl>(jsonString)) {}
+
+JSONSerialization::JSONSerialization(const Molecule& molecule)
+  : _pImpl(std::make_unique<Impl>(molecule)) {}
+
+JSONSerialization::JSONSerialization(const BinaryType& binary, const BinaryFormat format)
+  : _pImpl(std::make_unique<Impl>(binary, format)) {}
+
+JSONSerialization::operator std::string() const {
+  return _pImpl->operator std::string();
 }
 
-Molecule fromCBOR(const std::vector<std::uint8_t>& cbor) {
-  return detail::deserialize(
-    nlohmann::json::from_cbor(cbor)
-  );
+JSONSerialization::operator Molecule() const {
+  return _pImpl->operator Molecule();
 }
 
-Molecule fromBase64EncodedCBOR(const std::string& base64EncodedCBOR) {
-  return fromCBOR(
-    base64::decode(base64EncodedCBOR)
-  );
+JSONSerialization::BinaryType JSONSerialization::toBinary(const BinaryFormat format) const {
+  return _pImpl->toBinary(format);
+}
+
+JSONSerialization& JSONSerialization::standardize() {
+  _pImpl->standardize();
+  return *this;
 }
 
 } // namespace molassembler

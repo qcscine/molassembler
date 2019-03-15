@@ -21,7 +21,7 @@
  * - mesitylene: "CC1=CC(=CC(=C1)C)C"
  * - nhc: "C1NC=CN1"
  *
- * The .masm are just IO::LineNotation::fromCanonicalSMILES and directly
+ * The .cbor are just IO::LineNotation::fromCanonicalSMILES and directly
  * exported using IO::write(str, mol).
  */
 
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(cleaveEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  Molecule caffeine = IO::read("masm/caffeine.masm");
+  Molecule caffeine = IO::read("cbor/caffeine.cbor");
   caffeine.canonicalize();
 
   const BondIndex bridge {15, 23};
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(insertEdit) {
   using namespace molassembler;
 
   // Set up the test and make sure the canonical indices still match expectations
-  Molecule biphenyl = IO::read("masm/biphenyl.masm");
+  Molecule biphenyl = IO::read("cbor/biphenyl.cbor");
   biphenyl.canonicalize();
 
   const BondIndex bridge {12, 13};
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(insertEdit) {
     "Selected bridge edge does not split biphenyl equally in two"
   );
 
-  Molecule pyrimidine = IO::read("masm/pyrimidine.masm");
+  Molecule pyrimidine = IO::read("cbor/pyrimidine.cbor");
   pyrimidine.canonicalize();
 
   const AtomIndex firstPyrimidineNitrogen = 4, secondPyrimidineNitrogen = 5;
@@ -96,12 +96,12 @@ BOOST_AUTO_TEST_CASE(superposeEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  Molecule pyridine = IO::read("masm/pyridine.masm");
+  Molecule pyridine = IO::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
   const AtomIndex pyridineNitrogen = 5;
   BOOST_REQUIRE(pyridine.graph().elementType(pyridineNitrogen) == Utils::ElementType::N);
 
-  Molecule methane = IO::read("masm/methane.masm");
+  Molecule methane = IO::read("cbor/methane.cbor");
   methane.canonicalize();
   const AtomIndex methaneHydrogen = 0;
   BOOST_REQUIRE(methane.graph().elementType(methaneHydrogen) == Utils::ElementType::H);
@@ -120,12 +120,12 @@ BOOST_AUTO_TEST_CASE(substituteEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  Molecule chlorobenzene = IO::read("masm/chlorobenzene.masm");
+  Molecule chlorobenzene = IO::read("cbor/chlorobenzene.cbor");
   chlorobenzene.canonicalize();
   const BondIndex chlorobenzeneBridge {5, 7};
   BOOST_REQUIRE_MESSAGE(!chlorobenzene.graph().canRemove(chlorobenzeneBridge), "Selected edge for test is not a bridge edge");
 
-  Molecule phenole = IO::read("masm/phenole.masm");
+  Molecule phenole = IO::read("cbor/phenole.cbor");
   phenole.canonicalize();
   const BondIndex phenoleBridge {6, 8};
   BOOST_REQUIRE_MESSAGE(!phenole.graph().canRemove(phenoleBridge), "Selected edge for test is not a bridge edge");
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(substituteEdit) {
     phenoleBridge
   );
 
-  Molecule biphenyl = IO::read("masm/biphenyl.masm");
+  Molecule biphenyl = IO::read("cbor/biphenyl.cbor");
   BOOST_CHECK(substituted == biphenyl);
 
   substituted.canonicalize();
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(connectEdit) {
   using namespace Scine;
   using namespace molassembler;
 
-  Molecule pyridine = IO::read("masm/pyridine.masm");
+  Molecule pyridine = IO::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
   const AtomIndex pyridineNitrogen = 5;
   BOOST_REQUIRE(pyridine.graph().elementType(pyridineNitrogen) == Utils::ElementType::N);
@@ -169,11 +169,11 @@ BOOST_AUTO_TEST_CASE(mesitylSubstitutionBug) {
   using namespace Scine;
   using namespace molassembler;
 
-  Molecule mesitylene = IO::read("masm/mesitylene.masm");
+  Molecule mesitylene = IO::read("cbor/mesitylene.cbor");
   mesitylene.canonicalize();
   const auto mesitylenSubstitutionEdge = BondIndex {0, 14};
 
-  Molecule nhc = IO::read("masm/nhc.masm");
+  Molecule nhc = IO::read("cbor/nhc.cbor");
   nhc.canonicalize();
   const auto nhcSubstitutionEdge = BondIndex {0, 7};
 

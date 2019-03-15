@@ -110,8 +110,6 @@ IO            | Description
 <code>\link Scine::molassembler::IO::split(const std::string&) IO::split(...)\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
 <code>\link Scine::molassembler::IO::write(const std::string&, const Molecule&) IO::write(...)\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
 <code>\link Scine::molassembler::interpret(const Delib::ElementTypeCollection &, const AngstromWrapper &, const Delib::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
-<code>\link Scine::molassembler::toJSON(const Molecule&) toJSON(Molecule)\endlink</code> | Serialize a molecule to JSON
-<code>\link Scine::molassembler::fromJSON(const std::string&) fromJSON(std::string)\endlink</code> | Deserialize a molecule from JSON
 
 
 Information           | Description

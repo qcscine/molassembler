@@ -147,9 +147,17 @@ Molecule read(const std::string& filename) {
   }
 
   // Direct serializations of molecules have their own filetypes
-  if(filepath.extension() == ".masm") {
-    return fromCBOR(
-      BinaryHandler::read(filename)
+  if(filepath.extension() == ".cbor") {
+    return JSONSerialization(
+      BinaryHandler::read(filename),
+      JSONSerialization::BinaryFormat::CBOR
+    );
+  }
+
+  if(filepath.extension() == ".bson") {
+    return JSONSerialization(
+      BinaryHandler::read(filename),
+      JSONSerialization::BinaryFormat::BSON
     );
   }
 
@@ -157,7 +165,7 @@ Molecule read(const std::string& filename) {
     std::ifstream input(filename);
     std::stringstream buffer;
     buffer << input.rdbuf();
-    auto mol = fromJSON(buffer.str());
+    Molecule mol = JSONSerialization(buffer.str());
     input.close();
     return mol;
   }
@@ -231,17 +239,25 @@ void write(
 ) {
   boost::filesystem::path filepath {filename};
 
-  if(filepath.extension() == ".masm") {
+  if(filepath.extension() == ".cbor") {
     BinaryHandler::write(
       filename,
-      toCBOR(molecule)
+      JSONSerialization(molecule).toBinary(JSONSerialization::BinaryFormat::CBOR)
+    );
+    return;
+  }
+
+  if(filepath.extension() == ".bson") {
+    BinaryHandler::write(
+      filename,
+      JSONSerialization(molecule).toBinary(JSONSerialization::BinaryFormat::BSON)
     );
     return;
   }
 
   if(filepath.extension() == ".json") {
     std::ofstream outfile(filename);
-    outfile << toJSON(molecule);
+    outfile << JSONSerialization(molecule).operator std::string();
     outfile.close();
     return;
   }

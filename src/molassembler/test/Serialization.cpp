@@ -12,9 +12,14 @@
 
 #include "molassembler/IO.h"
 #include "molassembler/IO/Base64.h"
+#include "molassembler/Interpret.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
 #include "molassembler/Serialization.h"
+
+#include "Utils/AtomCollection.h"
+#include "Utils/Bonds/BondOrderCollection.h"
+#include "Utils/IO/ChemicalFileHandler.h"
 
 using namespace Scine;
 using namespace molassembler;
@@ -53,14 +58,70 @@ BOOST_AUTO_TEST_CASE(moleculeSerializationTests) {
   ) {
     auto molecule = IO::read(currentFilePath.string());
 
-    std::string json = toJSON(molecule);
-    Molecule decoded = fromJSON(json);
+    std::string json = JSONSerialization(molecule);
+    Molecule decoded = JSONSerialization(json);
 
     BOOST_CHECK_MESSAGE(
       decoded == molecule,
       "JSON serialization / deserialization failed!\n"
         << "JSON representation of original molecule: " << json << "\n"
-        << "JSON representation of decoded molecule: " << toJSON(decoded)
+        << "JSON representation of decoded molecule: "
+        << JSONSerialization(json).operator std::string()
+    );
+  }
+}
+
+// After canonicalization, serializations of identical molecules must be identical
+BOOST_AUTO_TEST_CASE(moleculeStandardSerialization) {
+  boost::filesystem::path directoryBase("isomorphisms");
+
+  for(
+    const boost::filesystem::path& currentFilePath :
+    boost::filesystem::recursive_directory_iterator(directoryBase)
+  ) {
+    if(currentFilePath.extension() != ".mol") {
+      continue;
+    }
+
+    auto readData = Utils::ChemicalFileHandler::read(currentFilePath.string());
+    auto permutedData = IO::shuffle(readData.first, readData.second);
+
+    auto interpretSingle = [](const Utils::AtomCollection& ac, const Utils::BondOrderCollection& boc) -> Molecule {
+      InterpretResult interpretation;
+      if(boc.empty()) {
+        // Unfortunately, the file type does not include bond order information
+        interpretation = interpret(ac, BondDiscretizationOption::RoundToNearest);
+      } else {
+        interpretation = interpret(ac, boc, BondDiscretizationOption::RoundToNearest);
+      }
+
+      if(interpretation.molecules.size() > 1) {
+        throw std::runtime_error(
+          std::string("File is not a single molecule, but contains ")
+            + std::to_string(interpretation.molecules.size())
+            + " components."
+        );
+      }
+
+      return interpretation.molecules.front();
+    };
+
+    Molecule a = interpretSingle(readData.first, readData.second);
+    Molecule b = interpretSingle(std::get<0>(permutedData), std::get<1>(permutedData));
+
+    // Canonicalize both molecules
+    a.canonicalize();
+    b.canonicalize();
+
+    // Get standardized JSON strings for both
+    std::string aSerialization = JSONSerialization(a).standardize();
+    std::string bSerialization = JSONSerialization(b).standardize();
+
+    // Ensure canonicalized JSON representations are lexicographically equal
+    BOOST_CHECK_MESSAGE(
+      aSerialization == bSerialization,
+      "After canonicalization, JSON representations of " << currentFilePath << " are not identical:\n\n"
+      << aSerialization << "\n\n" << bSerialization << "\n\n\n"
     );
   }
 }

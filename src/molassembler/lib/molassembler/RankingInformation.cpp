@@ -53,7 +53,7 @@ LinkInformation::LinkInformation(
 }
 
 void LinkInformation::applyPermutation(const std::vector<AtomIndex>& permutation) {
-  // A link's ligand indices do not change, but the sequence does
+  // A link's site indices do not change, but the sequence does
   for(AtomIndex& atomIndex : cycleSequence) {
     atomIndex = permutation.at(atomIndex);
   }
@@ -175,13 +175,13 @@ void RankingInformation::applyPermutation(const std::vector<AtomIndex>& permutat
       atomIndex = permutation.at(atomIndex);
     }
   }
-  // .ligandsRanking is unchanged as it is ligand index based into .sites
-  // links does have to be mapped, though
+  // .siteRanking is unchanged as it is index based into .sites
+  // .links do have to be mapped, though
   for(LinkInformation& link : links) {
     link.applyPermutation(permutation);
   }
 
-  // Re-sort links to establish ordering
+  // Sort links to re-establish ordering
   std::sort(
     std::begin(links),
     std::end(links)

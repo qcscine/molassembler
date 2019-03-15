@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_PERMUTATIONS_H
 
 #include <algorithm>
+#include <functional>
 
 namespace temple {
 
@@ -28,7 +29,7 @@ std::size_t permutationIndex(const Container& container) {
     std::size_t largerSuccessors = 0;
 
     for(std::size_t q = p + 1; q < size; ++q) {
-      if(container[p] > container[q]) {
+      if(container[q] < container[p]) {
         ++largerSuccessors;
       }
     }
