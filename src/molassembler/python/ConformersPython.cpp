@@ -2,14 +2,18 @@
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
  */
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include "VariantPython.h"
 #include "pybind11/eigen.h"
 
 #include "molassembler/Conformers.h"
 #include "molassembler/Molecule.h"
 
-pybind11::list generateEnsemble(
+using VariantType = boost::variant<
+  Scine::Utils::PositionCollection,
+  std::string
+>;
+
+std::vector<VariantType> generateEnsemble(
   const Scine::molassembler::Molecule& molecule,
   unsigned numStructures,
   const Scine::molassembler::DistanceGeometry::Configuration& config
@@ -20,19 +24,25 @@ pybind11::list generateEnsemble(
     config
   );
 
-  pybind11::list returnList;
+  std::vector<VariantType> returnList;
+  returnList.reserve(ensemble.size());
+
   for(auto& positionResult : ensemble) {
     if(positionResult) {
-      returnList.append(positionResult.value());
+      returnList.emplace_back(
+        std::move(positionResult.value())
+      );
     } else {
-      returnList.append(positionResult.error());
+      returnList.emplace_back(
+        std::move(positionResult.error().message())
+      );
     }
   }
 
   return returnList;
 }
 
-Scine::Utils::PositionCollection generateConformation(
+VariantType generateConformation(
   const Scine::molassembler::Molecule& molecule,
   const Scine::molassembler::DistanceGeometry::Configuration& config
 ) {
@@ -42,10 +52,10 @@ Scine::Utils::PositionCollection generateConformation(
   );
 
   if(conformerResult) {
-    return conformerResult.value();
+    return std::move(conformerResult.value());
   }
 
-  throw std::runtime_error(conformerResult.error().message());
+  return conformerResult.error().message();
 }
 
 void init_conformers(pybind11::module& m) {
