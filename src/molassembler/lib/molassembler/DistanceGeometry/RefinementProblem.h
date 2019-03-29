@@ -75,7 +75,7 @@ inline dlib::vector<double, 3> getAveragePos3D(
   dlib::vector<double, 3> sum {0.0, 0.0, 0.0};
 
   for(const auto& atomIndex : atomList) {
-    sum += getPos3D(positions, atomIndex);
+    sum += dlib::rowm(positions, dlib::range(4 * atomIndex, 4 * atomIndex + 2));
   }
 
   sum /= atomList.size();
@@ -102,7 +102,7 @@ inline Vector getAveragePos(
   Vector sum = dlib::zeros_matrix<double>(4, 1);
 
   for(const auto& atomIndex : atomList) {
-    sum += getPos(positions, atomIndex);
+    sum += dlib::rowm(positions, dlib::range(4 * atomIndex, 4 * atomIndex + 3));
   }
 
   sum /= atomList.size();
@@ -299,7 +299,8 @@ struct errfValue {
         assert(lowerBoundSquared <= upperBoundSquared);
 
         const double diffLength = dlib::length_squared(
-          errfDetail::getPos(positions, j) - errfDetail::getPos(positions, i)
+          dlib::rowm(positions, dlib::range(4 * j, 4 * j + 3))
+          - dlib::rowm(positions, dlib::range(4 * i, 4 * i + 3))
         );
 
         // Upper bound term
@@ -510,19 +511,15 @@ public:
 
         const Vector diff = errfDetail::getPos(positions, alpha) - errfDetail::getPos(positions, i);
 
-        const double upperTerm = dlib::length_squared(diff) / squaredBounds(
-          std::min(i, alpha),
-          std::max(i, alpha)
-        ) - 1;
+        const double upperBoundSquared = squaredBounds(std::min(i, alpha), std::max(i, alpha));
+
+        const double upperTerm = dlib::length_squared(diff) / upperBoundSquared - 1;
 
         if(upperTerm > 0) {
           dlib::set_rowm(
             gradient,
             dlib::range(4 * alpha, 4 * alpha + 3)
-          ) += 4 * diff * upperTerm / squaredBounds(
-            std::min(i, alpha),
-            std::max(i, alpha)
-          );
+          ) += 4 * diff * upperTerm / upperBoundSquared;
         }
       }
     }
@@ -759,8 +756,8 @@ public:
 
     // For both
     const Vector alphaMinusI = (
-      errfDetail::getPos(positions, alpha)
-      - errfDetail::getPos(positions, i)
+      dlib::rowm(positions, dlib::range(4 * alpha, 4 * alpha + 3))
+      - dlib::rowm(positions, dlib::range(4 * i, 4 * i + 3))
     );
 
     const double diffLength = dlib::length_squared(alphaMinusI);
@@ -778,10 +775,17 @@ public:
     ));
 
     if(upperTerm > 0) {
+      const Vector f = 4 * alphaMinusI * upperTerm / upperBoundSquared;
+
       dlib::set_rowm(
         gradient,
         dlib::range(4 * alpha, 4 * alpha + 3)
-      ) += 4 * alphaMinusI * upperTerm / upperBoundSquared;
+      ) += f;
+
+      dlib::set_rowm(
+        gradient,
+        dlib::range(4 * i, 4 * i + 3)
+      ) -= f;
 
       /* if the upper term is set, there is no way the lower term needs to be
        * applied -> early return
@@ -794,6 +798,10 @@ public:
     const double lowerTerm = 2 * lowerBoundSquared / quotient - 1;
 
     if(lowerTerm > 0) {
+      const Vector g = 8 * lowerBoundSquared * alphaMinusI * lowerTerm / (
+        quotient * quotient
+      );
+
       /* We use -= because the lower term needs the position vector
        * difference (i - alpha), so we reuse alphaMinusI and just subtract
        * from the gradient instead of adding to it
@@ -801,9 +809,12 @@ public:
       dlib::set_rowm(
         gradient,
         dlib::range(4 * alpha, 4 * alpha + 3)
-      ) -= 8 * lowerBoundSquared * alphaMinusI * lowerTerm / (
-        quotient * quotient
-      );
+      ) -= g;
+
+      dlib::set_rowm(
+        gradient,
+        dlib::range(4 * i, 4 * i + 3)
+      ) += g;
     }
   }
 
@@ -951,28 +962,15 @@ public:
     dlib::set_all_elements(gradient, 0);
 
     // Distance gradient contributions (A and B)
-    for(unsigned alpha = 0; alpha < N; ++alpha) {
-      for(unsigned i = 0; i < alpha; ++i) {
-        // Here, i < alpha, so lower bound is (alpha, i), upper bound is (i, alpha)
+    for(unsigned i = 0; i < N - 1; ++i) {
+      for(unsigned j = i + 1; j < N; ++j) {
         gradientDistanceContribution(
           positions,
           gradient,
-          squaredBounds(alpha, i),
-          squaredBounds(i, alpha),
-          alpha,
-          i
-        );
-      }
-
-      for(unsigned i = alpha + 1; i < N; ++i) {
-        // Here, i > alpha, so lower bound is (i, alpha), upper bound is (alpha, i)
-        gradientDistanceContribution(
-          positions,
-          gradient,
-          squaredBounds(i, alpha),
-          squaredBounds(alpha, i),
-          alpha,
-          i
+          squaredBounds(j, i), // lower bound
+          squaredBounds(i, j), // upper bound
+          i,
+          j
         );
       }
     }
