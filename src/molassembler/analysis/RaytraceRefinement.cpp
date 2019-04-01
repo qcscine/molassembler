@@ -14,7 +14,7 @@
 
 #include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
-#include "molassembler/DistanceGeometry/RefinementProblem.h"
+#include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/IO.h"
 #include "molassembler/Log.h"
 
@@ -106,7 +106,7 @@ void writePOVFile(
       const std::vector<AtomIndex>& indices
     ) -> std::ostream& {
       // Calculate the average position
-      auto averagePosition = DistanceGeometry::errfDetail::getAveragePos3D(
+      auto averagePosition = DistanceGeometry::ErrorFunctionValue::getAveragePos3D(
         stepData.positions,
         indices
       );

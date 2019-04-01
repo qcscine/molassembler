@@ -18,7 +18,7 @@
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
-#include "molassembler/DistanceGeometry/RefinementProblem.h"
+#include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/IO.h"
 
 #include <fstream>
@@ -93,13 +93,13 @@ BOOST_AUTO_TEST_CASE( numericDifferentiationApproximatesGradients ) {
       )
     );
 
-    errfValue<false> valueFunctor {
+    ErrorFunctionValue valueFunctor {
       squaredBounds,
       DGInfo.chiralityConstraints,
       DGInfo.dihedralConstraints
     };
 
-    errfGradient<false> gradientFunctor {
+    ErrorFunctionGradient gradientFunctor {
       squaredBounds,
       DGInfo.chiralityConstraints,
       DGInfo.dihedralConstraints
@@ -136,20 +136,11 @@ BOOST_AUTO_TEST_CASE( numericDifferentiationApproximatesGradients ) {
         << "\n  diff: " << dlib::trans(gradient - finiteDifferenceGradient)
     );
 
-    errfValue<true> compressingValueFunctor {
-      squaredBounds,
-      DGInfo.chiralityConstraints,
-      DGInfo.dihedralConstraints
-    };
+    valueFunctor.compressFourthDimension = true;
+    gradientFunctor.compressFourthDimension = true;
 
-    errfGradient<true> compressingGradientFunctor {
-      squaredBounds,
-      DGInfo.chiralityConstraints,
-      DGInfo.dihedralConstraints
-    };
-
-    Vector compressedFiniteDifferenceGradient = dlib::derivative(compressingValueFunctor)(dlibPositions);
-    Vector compressedGradient = compressingGradientFunctor(dlibPositions);
+    Vector compressedFiniteDifferenceGradient = dlib::derivative(valueFunctor)(dlibPositions);
+    Vector compressedGradient = gradientFunctor(dlibPositions);
 
     bool compressedPasses = temple::all_of(
       temple::adaptors::zip(
@@ -207,7 +198,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
     auto embeddedPositions = metric.embed();
 
     // Transfer to dlib and vectorize
-    errfValue<true>::Vector referencePositions = dlib::mat(
+    ErrorFunctionValue::Vector referencePositions = dlib::mat(
       static_cast<Eigen::VectorXd>(
           Eigen::Map<Eigen::VectorXd>(
           embeddedPositions.data(),
@@ -222,11 +213,12 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       )
     );
 
-    errfValue<true> valueFunctor {
+    ErrorFunctionValue valueFunctor {
       squaredBounds,
       DGData.chiralityConstraints,
       DGData.dihedralConstraints
     };
+    valueFunctor.compressFourthDimension = true;
 
     // get a value
     const double referenceDistanceError = valueFunctor.distanceError(referencePositions);
@@ -254,7 +246,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       }
 
       // Transfer to dlib and vectorize
-      errfValue<true>::Vector vectorizedPositions = dlib::mat(
+      ErrorFunctionValue::Vector vectorizedPositions = dlib::mat(
         static_cast<Eigen::VectorXd>(
           Eigen::Map<Eigen::VectorXd>(
             embeddedCopy.data(),
@@ -343,7 +335,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     auto embeddedPositions = metric.embed();
 
     // Vectorize the positions for use with dlib
-    errfValue<true>::Vector referencePositions = dlib::mat(
+    ErrorFunctionValue::Vector referencePositions = dlib::mat(
       static_cast<Eigen::VectorXd>(
           Eigen::Map<Eigen::VectorXd>(
           embeddedPositions.data(),
@@ -358,11 +350,13 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       )
     );
 
-    errfGradient<true> gradientFunctor {
+    ErrorFunctionGradient gradientFunctor {
       squaredBounds,
       DGData.chiralityConstraints,
       DGData.dihedralConstraints
     };
+
+    gradientFunctor.compressFourthDimension = true;
 
     const unsigned N = referencePositions.size() / 4;
     assert(N > 0);
@@ -423,7 +417,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       }
 
       // Vectorize the positions
-      errfValue<true>::Vector rotatedPositions = dlib::mat(
+      ErrorFunctionValue::Vector rotatedPositions = dlib::mat(
         static_cast<Eigen::VectorXd>(
           Eigen::Map<Eigen::VectorXd>(
             rotatedRectangularPositions.data(),
@@ -432,7 +426,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
         )
       );
 
-      errfValue<true>::Vector translatedPositions = dlib::mat(
+      ErrorFunctionValue::Vector translatedPositions = dlib::mat(
         static_cast<Eigen::VectorXd>(
           Eigen::Map<Eigen::VectorXd>(
             translatedRectangularPositions.data(),

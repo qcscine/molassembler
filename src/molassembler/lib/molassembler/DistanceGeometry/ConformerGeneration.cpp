@@ -10,11 +10,12 @@
 #include "Utils/Constants.h"
 #include "Utils/Typenames.h"
 
-#include "molassembler/DistanceGeometry/dlibAdaptors.h"
-#include "molassembler/DistanceGeometry/dlibDebugAdaptors.h"
+#include "molassembler/DistanceGeometry/DlibAdaptors.h"
+#include "molassembler/DistanceGeometry/DlibDebugAdaptors.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/DistanceGeometry/RefinementProblem.h"
+#include "molassembler/DistanceGeometry/RefinementMeta.h"
+#include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/DistanceGeometry/Error.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
@@ -310,7 +311,7 @@ std::list<RefinementData> debugRefinement(
     auto embeddedPositions = metric.embed();
 
     // Vectorize and transfer to dlib
-    errfValue<true>::Vector dlibPositions = dlib::mat(
+    ErrorFunctionValue::Vector dlibPositions = dlib::mat(
       static_cast<Eigen::VectorXd>(
         Eigen::Map<Eigen::VectorXd>(
           embeddedPositions.data(),
@@ -318,6 +319,24 @@ std::list<RefinementData> debugRefinement(
         )
       )
     );
+
+    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+      static_cast<Eigen::MatrixXd>(
+        distanceBounds.access().cwiseProduct(distanceBounds.access())
+      )
+    );
+
+    ErrorFunctionValue valueFunctor {
+      squaredBounds,
+      DGData.chiralityConstraints,
+      DGData.dihedralConstraints
+    };
+
+    ErrorFunctionGradient gradientFunctor {
+      squaredBounds,
+      DGData.chiralityConstraints,
+      DGData.dihedralConstraints
+    };
 
     /* If a count of chirality constraints reveals that more than half are
      * incorrect, we can invert the structure (by multiplying e.g. all y
@@ -327,25 +346,17 @@ std::list<RefinementData> debugRefinement(
      * chirality constraints should not have to pass an energetic maximum to
      * converge properly as opposed to tetrahedra with volume).
      */
-    if(
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        DGData.chiralityConstraints,
-        dlibPositions
-      ) < 0.5
-    ) {
+    double initiallyCorrectChiralConstraints = valueFunctor.calculateProportionChiralConstraintsCorrectSign(dlibPositions);
+    if(initiallyCorrectChiralConstraints < 0.5) {
       // Invert y coordinates
       for(unsigned i = 0; i < distanceBounds.N(); i++) {
         dlibPositions(
           static_cast<dlibIndexType>(i) * 4 + 1
         ) *= -1;
       }
-    }
 
-    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-      static_cast<Eigen::MatrixXd>(
-        distanceBounds.access().cwiseProduct(distanceBounds.access())
-      )
-    );
+      initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
+    }
 
     /* Our embedded coordinates are four dimensional. Now we want to make sure
      * that all chiral constraints are correct, allowing the structure to expand
@@ -354,19 +365,8 @@ std::list<RefinementData> debugRefinement(
      * This stage of refinement is only needed if not all chirality constraints
      * are already correct (or there are none).
      */
-    if(
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        DGData.chiralityConstraints,
-        dlibPositions
-      ) < 1
-    ) {
-      errfValue<false> valueFunctor {
-        squaredBounds,
-        DGData.chiralityConstraints,
-        DGData.dihedralConstraints
-      };
-
-      dlibAdaptors::debugIterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
+    if(initiallyCorrectChiralConstraints < 1.0) {
+      dlibAdaptors::DebugIterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
         configuration.refinementStepLimit,
         refinementSteps,
         valueFunctor
@@ -377,11 +377,7 @@ std::list<RefinementData> debugRefinement(
           dlib::bfgs_search_strategy(),
           inversionStopStrategy,
           valueFunctor,
-          errfGradient<false>(
-            squaredBounds,
-            DGData.chiralityConstraints,
-            DGData.dihedralConstraints
-          ),
+          gradientFunctor,
           dlibPositions,
           0
         );
@@ -395,10 +391,7 @@ std::list<RefinementData> debugRefinement(
       // Handle inversion failure (hit step limit)
       if(
         inversionStopStrategy.iterations >= configuration.refinementStepLimit
-        || errfDetail::proportionChiralityConstraintsCorrectSign(
-          DGData.chiralityConstraints,
-          dlibPositions
-        ) < 1.0
+        || valueFunctor.proportionChiralConstraintsCorrectSign < 1.0
       ) {
         Log::log(Log::Level::Warning)
           << "[" << currentStructureNumber << "]: "
@@ -413,30 +406,22 @@ std::list<RefinementData> debugRefinement(
     /* Set up the second stage of refinement where we compress out the fourth
      * dimension that we allowed expansion into to invert the chiralities.
      */
+    valueFunctor.compressFourthDimension = true;
+    gradientFunctor.compressFourthDimension = true;
 
-    errfValue<true> refinementValueFunctor {
-      squaredBounds,
-      DGData.chiralityConstraints,
-      DGData.dihedralConstraints
-    };
-
-    dlibAdaptors::debugIterationOrGradientNormStopStrategy refinementStopStrategy {
+    dlibAdaptors::DebugIterationOrGradientNormStopStrategy refinementStopStrategy {
       configuration.refinementStepLimit,
       configuration.refinementGradientTarget,
       refinementSteps,
-      refinementValueFunctor
+      valueFunctor
     };
 
     try {
       dlib::find_min(
         dlib::bfgs_search_strategy(),
         refinementStopStrategy,
-        refinementValueFunctor,
-        errfGradient<true>(
-          squaredBounds,
-          DGData.chiralityConstraints,
-          DGData.dihedralConstraints
-        ),
+        valueFunctor,
+        gradientFunctor,
         dlibPositions,
         0
       );
@@ -448,22 +433,17 @@ std::list<RefinementData> debugRefinement(
     }
 
     bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
-    bool notAllChiralitiesCorrect = errfDetail::proportionChiralityConstraintsCorrectSign(
-      DGData.chiralityConstraints,
-      dlibPositions
-    ) < 1;
-    bool structureAcceptable = errfDetail::finalStructureAcceptable(
+    bool notAllChiralitiesCorrect = valueFunctor.proportionChiralConstraintsCorrectSign < 1;
+    bool structureAcceptable = finalStructureAcceptable(
+      valueFunctor,
       distanceBounds,
-      DGData.chiralityConstraints,
-      DGData.dihedralConstraints,
       dlibPositions
     );
 
     if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions) > 0) {
-      errfDetail::explainFinalContributions(
+      explainFinalContributions(
+        valueFunctor,
         distanceBounds,
-        DGData.chiralityConstraints,
-        DGData.dihedralConstraints,
         dlibPositions
       );
     }
@@ -496,10 +476,9 @@ std::list<RefinementData> debugRefinement(
       if(!structureAcceptable) {
         Log::log(Log::Level::Warning) << "- The final structure is unacceptable.\n";
         if(Log::isSet(Log::Particulars::DGStructureAcceptanceFailures)) {
-          errfDetail::explainAcceptanceFailure(
+          explainAcceptanceFailure(
+            valueFunctor,
             distanceBounds,
-            DGData.chiralityConstraints,
-            DGData.dihedralConstraints,
             dlibPositions
           );
         }
@@ -519,7 +498,7 @@ outcome::result<AngstromWrapper> refine(
   const std::shared_ptr<MoleculeDGInformation>& DGDataPtr
 ) {
   // Vectorize and transfer to dlib
-  errfValue<true>::Vector dlibPositions = dlib::mat(
+  ErrorFunctionValue::Vector dlibPositions = dlib::mat(
     static_cast<Eigen::VectorXd>(
       Eigen::Map<Eigen::VectorXd>(
         embeddedPositions.data(),
@@ -527,6 +506,25 @@ outcome::result<AngstromWrapper> refine(
       )
     )
   );
+
+  // Create the squared bounds matrix for use in refinement
+  dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+    static_cast<Eigen::MatrixXd>(
+      distanceBounds.access().cwiseProduct(distanceBounds.access())
+    )
+  );
+
+  ErrorFunctionValue valueFunctor {
+    squaredBounds,
+    DGDataPtr->chiralityConstraints,
+    DGDataPtr->dihedralConstraints
+  };
+
+  ErrorFunctionGradient gradientFunctor {
+    squaredBounds,
+    DGDataPtr->chiralityConstraints,
+    DGDataPtr->dihedralConstraints
+  };
 
   /* If a count of chirality constraints reveals that more than half are
    * incorrect, we can invert the structure (by multiplying e.g. all y
@@ -536,39 +534,25 @@ outcome::result<AngstromWrapper> refine(
    * chirality constraints should not have to pass an energetic maximum to
    * converge properly as opposed to tetrahedra with volume).
    */
-  if(
-    errfDetail::proportionChiralityConstraintsCorrectSign(
-      DGDataPtr->chiralityConstraints,
-      dlibPositions
-    ) < 0.5
-  ) {
+  double initiallyCorrectChiralConstraints = valueFunctor.calculateProportionChiralConstraintsCorrectSign(dlibPositions);
+  if(initiallyCorrectChiralConstraints < 0.5) {
     // Invert y coordinates
     for(unsigned i = 0; i < distanceBounds.N(); ++i) {
       dlibPositions(
         static_cast<dlibIndexType>(i) * 4  + 1
       ) *= -1;
     }
-  }
 
-  // Create the squared bounds matrix for use in refinement
-  dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-    static_cast<Eigen::MatrixXd>(
-      distanceBounds.access().cwiseProduct(distanceBounds.access())
-    )
-  );
+    initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
+  }
 
   /* Refinement without penalty on fourth dimension only necessary if not all
    * chiral centers are correct. Of course, for molecules without chiral
    * centers at all, this stage is unnecessary
    */
-  if(
-    errfDetail::proportionChiralityConstraintsCorrectSign(
-      DGDataPtr->chiralityConstraints,
-      dlibPositions
-    ) < 1
-  ) {
+  if(initiallyCorrectChiralConstraints < 1) {
     dlibAdaptors::IterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
-      DGDataPtr->chiralityConstraints,
+      valueFunctor,
       configuration.refinementStepLimit
     };
 
@@ -576,16 +560,8 @@ outcome::result<AngstromWrapper> refine(
       dlib::find_min(
         dlib::bfgs_search_strategy(),
         inversionStopStrategy,
-        errfValue<false>(
-          squaredBounds,
-          DGDataPtr->chiralityConstraints,
-          DGDataPtr->dihedralConstraints
-        ),
-        errfGradient<false>(
-          squaredBounds,
-          DGDataPtr->chiralityConstraints,
-          DGDataPtr->dihedralConstraints
-        ),
+        valueFunctor,
+        gradientFunctor,
         dlibPositions,
         0
       );
@@ -597,12 +573,7 @@ outcome::result<AngstromWrapper> refine(
       return DGError::RefinementMaxIterationsReached;
     }
 
-    if(
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        DGDataPtr->chiralityConstraints,
-        dlibPositions
-      ) < 1.0
-    ) {
+    if(valueFunctor.proportionChiralConstraintsCorrectSign < 1.0) {
       return DGError::RefinedChiralsWrong;
     }
   }
@@ -613,20 +584,14 @@ outcome::result<AngstromWrapper> refine(
   };
 
   // Refinement with penalty on fourth dimension is always necessary
+  valueFunctor.compressFourthDimension = true;
+  gradientFunctor.compressFourthDimension = true;
   try {
     dlib::find_min(
       dlib::bfgs_search_strategy(),
       refinementStopStrategy,
-      errfValue<true>(
-        squaredBounds,
-        DGDataPtr->chiralityConstraints,
-        DGDataPtr->dihedralConstraints
-      ),
-      errfGradient<true>(
-        squaredBounds,
-        DGDataPtr->chiralityConstraints,
-        DGDataPtr->dihedralConstraints
-      ),
+      valueFunctor,
+      gradientFunctor,
       dlibPositions,
       0
     );
@@ -641,21 +606,15 @@ outcome::result<AngstromWrapper> refine(
   }
 
   // Not all chirality constraints have the right sign
-  if(
-    errfDetail::proportionChiralityConstraintsCorrectSign(
-      DGDataPtr->chiralityConstraints,
-      dlibPositions
-    ) < 1
-  ) {
+  if(valueFunctor.proportionChiralConstraintsCorrectSign < 1) {
     return DGError::RefinedChiralsWrong;
   }
 
   // Structure inacceptable
   if(
-    !errfDetail::finalStructureAcceptable(
+    !finalStructureAcceptable(
+      valueFunctor,
       distanceBounds,
-      DGDataPtr->chiralityConstraints,
-      DGDataPtr->dihedralConstraints,
       dlibPositions
     )
   ) {

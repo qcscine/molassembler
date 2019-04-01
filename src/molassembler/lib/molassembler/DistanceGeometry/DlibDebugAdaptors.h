@@ -20,7 +20,7 @@
 #define INCLUDE_MOLASSEMBLER_DG_DLIB_DEBUG_ADAPTORS_H
 
 #include "molassembler/DistanceGeometry/RefinementDebugData.h"
-#include "molassembler/DistanceGeometry/RefinementProblem.h"
+#include "molassembler/DistanceGeometry/DlibRefinement.h"
 
 /* NOTES
  * - Identical implementations as dlibAdaptors, except that they are initialized
@@ -42,21 +42,21 @@ namespace dlibAdaptors {
  *
  * Creates a list of refinement step data via side-effect.
  */
-struct debugIterationOrAllChiralitiesCorrectStrategy {
+struct DebugIterationOrAllChiralitiesCorrectStrategy {
 /* State */
   const unsigned maxIterations = 0;
   unsigned iterations = 0;
   // Side effects
   std::list<RefinementStepData>& refinementSteps;
   // Outside state
-  const errfValue<false>& valueFunctor;
+  const ErrorFunctionValue& valueFunctor;
 
 
 /* Constructors */
-  debugIterationOrAllChiralitiesCorrectStrategy(
+  DebugIterationOrAllChiralitiesCorrectStrategy(
     const unsigned maxIter,
     std::list<RefinementStepData>& passRefinementSteps,
-    errfValue<false>& passValueFunctor
+    const ErrorFunctionValue& passValueFunctor
   ) : maxIterations(maxIter),
       refinementSteps(passRefinementSteps),
       valueFunctor(passValueFunctor)
@@ -80,11 +80,8 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
       valueFunctor.dihedralError(positions),
       valueFunctor.extraDimensionError(positions),
       gradient,
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        valueFunctor.chiralityConstraints,
-        positions
-      ),
-      false
+      valueFunctor.proportionChiralConstraintsCorrectSign,
+      valueFunctor.compressFourthDimension
     );
 
     iterations += 1;
@@ -93,16 +90,7 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
       return false;
     }
 
-    if(
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        valueFunctor.chiralityConstraints,
-        positions
-      ) >= 1 // just in case >
-    ) {
-      return false;
-    }
-
-    return true;
+    return valueFunctor.proportionChiralConstraintsCorrectSign < 1;
   }
 };
 
@@ -113,7 +101,7 @@ struct debugIterationOrAllChiralitiesCorrectStrategy {
  *
  * Creates a list of refinement step data as side effect.
  */
-struct debugIterationOrGradientNormStopStrategy {
+struct DebugIterationOrGradientNormStopStrategy {
 /* Public access constants */
   const unsigned maxIterations;
   const double gradientNormThresholdSquared;
@@ -123,15 +111,15 @@ struct debugIterationOrGradientNormStopStrategy {
   // Side effects
   std::list<RefinementStepData>& refinementSteps;
   // Outside state
-  const errfValue<true>& valueFunctor;
+  const ErrorFunctionValue& valueFunctor;
 
 /* Constructors */
 
-  debugIterationOrGradientNormStopStrategy(
+  DebugIterationOrGradientNormStopStrategy(
     const unsigned passMaxIterations,
     const double gradientNormThreshold,
     std::list<RefinementStepData>& passRefinementSteps,
-    const errfValue<true>& passValueFunctor
+    const ErrorFunctionValue& passValueFunctor
   ) : maxIterations(passMaxIterations),
       gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold),
       refinementSteps(passRefinementSteps),
@@ -151,11 +139,8 @@ struct debugIterationOrGradientNormStopStrategy {
       valueFunctor.dihedralError(positions),
       valueFunctor.extraDimensionError(positions),
       gradient,
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        valueFunctor.chiralityConstraints,
-        positions
-      ),
-      true
+      valueFunctor.proportionChiralConstraintsCorrectSign,
+      valueFunctor.compressFourthDimension
     );
 
     iterations += 1;

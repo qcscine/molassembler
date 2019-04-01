@@ -16,8 +16,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_DG_DLIB_ADAPTORS_H
 #define INCLUDE_MOLASSEMBLER_DG_DLIB_ADAPTORS_H
 
-#include "molassembler/DistanceGeometry/RefinementProblem.h"
-#include "molassembler/DistanceGeometry/RefinementDebugData.h"
+#include "molassembler/DistanceGeometry/DlibRefinement.h"
 
 namespace Scine {
 
@@ -33,7 +32,7 @@ namespace dlibAdaptors {
  */
 class IterationOrAllChiralitiesCorrectStrategy {
 private:
-  const std::vector<ChiralityConstraint>& _constraints;
+  const ErrorFunctionValue& _valueFunctor;
 
 public:
 /* State */
@@ -43,14 +42,14 @@ public:
 /* Constructors */
   // Without max iteration limit
   explicit IterationOrAllChiralitiesCorrectStrategy(
-    const std::vector<ChiralityConstraint>& constraints
-  ) : _constraints(constraints)
+    const ErrorFunctionValue& valueFunctor
+  ) : _valueFunctor(valueFunctor)
   {}
 
   IterationOrAllChiralitiesCorrectStrategy(
-    const std::vector<ChiralityConstraint>& constraints,
+    const ErrorFunctionValue& valueFunctor,
     const unsigned maxIter
-  ) : _constraints(constraints),
+  ) : _valueFunctor(valueFunctor),
       maxIterations(maxIter)
   {}
 
@@ -62,7 +61,7 @@ public:
    */
   template<typename T>
   bool should_continue_search(
-    const T& positions,
+    const T& /* positions */,
     const double /* function_value */,
     const T& /* gradient */
   ) {
@@ -72,16 +71,7 @@ public:
       return false;
     }
 
-    if(
-      errfDetail::proportionChiralityConstraintsCorrectSign(
-        _constraints,
-        positions
-      ) >= 1 // just in case >
-    ) {
-      return false;
-    }
-
-    return true;
+    return _valueFunctor.proportionChiralConstraintsCorrectSign < 1;
   }
 
 };
