@@ -25,138 +25,18 @@ using namespace std::string_literals;
 using namespace Scine;
 using namespace molassembler;
 
-namespace detail {
-
-inline std::string mapIndexToChar(const unsigned index) {
-  std::string result {
-    static_cast<char>(
-      'A' + (
-        (index / 25) % 25
-      )
-    )
-  };
-
-  result += static_cast<char>(
-    'A' + (index % 25)
-  );
-
-  return result;
-}
-
-void writePOVFile(
+void writeProgressFile(
   const Molecule& mol,
   const std::string& baseFilename,
-  const unsigned structureIndex,
-  const DistanceGeometry::RefinementStepData& stepData,
-  const std::vector<DistanceGeometry::ChiralityConstraint>& constraints
+  const unsigned index,
+  const dlib::matrix<double, 0, 1>& positions
 ) {
-  const unsigned dimensionality = 4;
-  assert(stepData.positions.size() % dimensionality == 0);
-  const unsigned N = stepData.positions.size() / dimensionality;
-  assert(N == mol.graph().N());
-
-  /* Write the POV file for this step */
-  std::stringstream filename;
-  filename << baseFilename << "-"
-    << std::setfill('0') << std::setw(3) << structureIndex
-    << ".pov";
-
-  std::ofstream outStream(
-    filename.str()
-  );
-
-  outStream << "#version 3.7;\n"
-    << "#include \"scene.inc\"\n\n";
-
-  // Define atom names with positions
-  for(unsigned i = 0; i < N; ++i) {
-    outStream << "#declare " << detail::mapIndexToChar(i) <<  " = <";
-    outStream << std::fixed << std::setprecision(4);
-    outStream << stepData.positions(dimensionality * i) << ", ";
-    outStream << stepData.positions(dimensionality * i + 1) << ", ";
-    outStream << stepData.positions(dimensionality * i + 2) << ">;\n";
-  }
-  outStream << "\n";
-
-  // Atoms
-  for(unsigned i = 0; i < N; ++i) {
-    double fourthDimAbs = std::fabs(stepData.positions(dimensionality * i + 3));
-    if(fourthDimAbs < 1e-4) {
-      outStream << "Atom(" << detail::mapIndexToChar(i) << ")\n";
-    } else {
-      outStream << "Atom4D(" << detail::mapIndexToChar(i) << ", "
-        << fourthDimAbs << ")\n";
-    }
-  }
-  outStream << "\n";
-
-  // Bonds
-  for(const BondIndex& edge : boost::make_iterator_range(mol.graph().bonds())) {
-    outStream << "Bond("
-      << detail::mapIndexToChar(edge.first) << ","
-      << detail::mapIndexToChar(edge.second)
-      << ")\n";
-  }
-  outStream << "\n";
-
-  // Tetrahedra
-  if(!constraints.empty()) {
-    auto writePosition = [&stepData](
-      std::ostream& os,
-      const std::vector<AtomIndex>& indices
-    ) -> std::ostream& {
-      // Calculate the average position
-      auto averagePosition = DistanceGeometry::ErrorFunctionValue::getAveragePos3D(
-        stepData.positions,
-        indices
-      );
-
-      os << "<" << averagePosition.x() << ","
-        << averagePosition.y() << ","
-        << averagePosition.z() << ">";
-
-      return os;
-    };
-
-    for(const auto& chiralityConstraint : constraints) {
-      outStream << "TetrahedronHighlight(";
-      writePosition(outStream, chiralityConstraint.sites[0]);
-      outStream << ", ";
-      writePosition(outStream, chiralityConstraint.sites[1]);
-      outStream << ", ";
-      writePosition(outStream, chiralityConstraint.sites[2]);
-      outStream << ", ";
-      writePosition(outStream, chiralityConstraint.sites[3]);
-      outStream << ")\n";
-    }
-    outStream << "\n";
-  }
-
-  // Gradients
-  for(unsigned i = 0; i < N; i++) {
-    if(
-      dlib::length(
-        dlib::rowm(
-          stepData.gradient,
-          dlib::range(dimensionality * i, dimensionality * i + 2)
-        )
-      ) > 1e-5
-    ) {
-      outStream << "GradientVector(" << detail::mapIndexToChar(i) <<", <"
-        << std::fixed << std::setprecision(4)
-        << (-stepData.gradient(dimensionality * i)) << ", "
-        << (-stepData.gradient(dimensionality * i + 1)) << ", "
-        << (-stepData.gradient(dimensionality * i + 2)) << ", "
-        << ">)\n";
-    }
-  }
-
-  outStream.close();
+  const std::string filename = baseFilename + "-" + std::to_string(index) + ".mol";
+  AngstromWrapper angstromWrapper = DistanceGeometry::detail::convertToAngstromWrapper(positions);
+  IO::write(filename, mol, angstromWrapper);
 }
 
-} // namespace detail
-
-void writeDGPOVandProgressFiles(
+void writeProgressFiles(
   const Molecule& mol,
   const std::string& baseFilename,
   const DistanceGeometry::RefinementData& refinementData
@@ -180,35 +60,33 @@ void writeDGPOVandProgressFiles(
 
   progressFile.close();
 
-  const unsigned maxPOVFiles = 100;
+  const unsigned maxProgressFiles = 100;
 
-  if(refinementData.steps.size() > maxPOVFiles) {
+  if(refinementData.steps.size() > maxProgressFiles) {
     // Determine 100 roughly equispaced conformations to write to POV files
-    double stepLength = static_cast<double>(refinementData.steps.size()) / maxPOVFiles;
+    double stepLength = static_cast<double>(refinementData.steps.size()) / maxProgressFiles;
     auto listIter = refinementData.steps.begin();
     unsigned currentIndex = 0;
-    for(unsigned i = 0; i < maxPOVFiles; ++i) {
+    for(unsigned i = 0; i < maxProgressFiles; ++i) {
       unsigned targetIndex = std::floor(i * stepLength);
       assert(targetIndex >= currentIndex && targetIndex < refinementData.steps.size());
       std::advance(listIter, targetIndex - currentIndex);
       currentIndex = targetIndex;
 
-      detail::writePOVFile(
+      writeProgressFile(
         mol,
         baseFilename,
         i,
-        *listIter,
-        refinementData.constraints
+        listIter->positions
       );
     }
   } else {
     for(const auto enumPair : temple::adaptors::enumerate(refinementData.steps)) {
-      detail::writePOVFile(
+      writeProgressFile(
         mol,
         baseFilename,
         enumPair.index,
-        enumPair.value,
-        refinementData.constraints
+        enumPair.value.positions
       );
     }
   }
@@ -355,7 +233,7 @@ int main(int argc, char* argv[]) {
 
       std::string baseName = filestem + "-"s + std::to_string(structNum);
 
-      writeDGPOVandProgressFiles(
+      writeProgressFiles(
         mol,
         baseName,
         refinementData

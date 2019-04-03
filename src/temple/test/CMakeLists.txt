@@ -24,6 +24,7 @@ target_link_libraries(templeTests
     temple
 )
 
+target_compile_definitions(templeTests PRIVATE BOOST_ALL_DYN_LINK)
 target_compile_options(templeTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 
 add_test(NAME MASMTempleTests COMMAND templeTests)

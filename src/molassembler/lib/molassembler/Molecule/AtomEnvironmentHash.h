@@ -9,7 +9,7 @@
 
 #include "boost/multiprecision/cpp_int.hpp"
 #include "boost/optional.hpp"
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 
 #include "chemical_symmetries/Names.h"
 

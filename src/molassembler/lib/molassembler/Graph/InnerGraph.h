@@ -9,7 +9,7 @@
 
 #include "boost/optional/optional_fwd.hpp"
 #include "boost/graph/adjacency_list.hpp"
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Types.h"

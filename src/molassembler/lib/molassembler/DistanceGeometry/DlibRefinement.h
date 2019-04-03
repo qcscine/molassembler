@@ -271,18 +271,16 @@ struct ErrorFunctionValue {
     double error = 0, volume, upperTerm, lowerTerm;
 
     for(const auto& constraint : chiralityConstraints) {
-      bool nonZeroChiralityConstraint = std::fabs(constraint.lower + constraint.upper) > 1e-4;
-      if(nonZeroChiralityConstraint) {
-        ++nonZeroChiralityConstraints;
-      }
-
       volume = adjustedSignedVolume(positions, constraint.sites);
 
-      if( // can this be simplified? -> sign bit XOR?
-        ( volume < 0 && constraint.lower > 0)
-        || (volume > 0 && constraint.lower < 0)
-      ) {
-        incorrectNonZeroChiralityConstraints += 1;
+      if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
+        ++nonZeroChiralityConstraints;
+        if( // can this be simplified? -> sign bit XOR?
+          ( volume < 0 && constraint.lower > 0)
+          || (volume > 0 && constraint.lower < 0)
+        ) {
+          incorrectNonZeroChiralityConstraints += 1;
+        }
       }
 
       // Upper bound term

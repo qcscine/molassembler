@@ -13,7 +13,7 @@
 
 #include "boost/optional/optional_fwd.hpp"
 
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 #include "chemical_symmetries/Names.h"
 
 #include "molassembler/RankingInformation.h"

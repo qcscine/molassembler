@@ -6,7 +6,7 @@
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/StereopermutatorList.h"
 
-#include "Utils/ElementInfo.h"
+#include "Utils/Geometry/ElementInfo.h"
 
 #include "temple/Stringify.h"
 #include "chemical_symmetries/Symmetries.h"

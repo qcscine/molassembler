@@ -13,9 +13,9 @@
 #include "molassembler/OuterGraph.h"
 #include "molassembler/Molecule.h"
 
-#include "Utils/AtomCollection.h"
+#include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
-#include "Utils/IO/ChemicalFileHandler.h"
+#include "Utils/IO/ChemicalFileFormats/ChemicalFileHandler.h"
 
 #include <iostream>
 #include <fstream>

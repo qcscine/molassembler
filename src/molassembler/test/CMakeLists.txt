@@ -50,6 +50,7 @@ target_link_libraries(MolassemblerTests
     Boost::unit_test_framework
     Boost::filesystem
 )
+target_compile_definitions(MolassemblerTests PRIVATE BOOST_ALL_DYN_LINK)
 target_compile_options(MolassemblerTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 add_test(
   NAME MASMMainTests
@@ -69,6 +70,7 @@ target_link_libraries(DistanceGeometryTests
     Boost::filesystem
 )
 target_compile_options(DistanceGeometryTests PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+target_compile_definitions(DistanceGeometryTests PRIVATE BOOST_ALL_DYN_LINK)
 add_test(
   NAME MASMDistanceGeometryTests
   COMMAND DistanceGeometryTests

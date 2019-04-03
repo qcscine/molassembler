@@ -7,7 +7,7 @@
 
 #include "boost/range/iterator_range_core.hpp"
 
-#include "Utils/AtomCollection.h"
+#include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
 
 #include "molassembler/BondOrders.h"

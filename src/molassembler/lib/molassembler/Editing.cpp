@@ -10,7 +10,7 @@
 #include "molassembler/Molecule/MoleculeImpl.h"
 #include "molassembler/Stereopermutators/PermutationState.h"
 
-#include "Utils/ElementInfo.h"
+#include "Utils/Geometry/ElementInfo.h"
 
 #include "temple/Functional.h"
 

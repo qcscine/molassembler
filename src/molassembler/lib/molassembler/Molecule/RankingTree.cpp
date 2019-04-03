@@ -8,7 +8,7 @@
 #include "boost/algorithm/string/replace.hpp"
 #include "boost/graph/breadth_first_search.hpp"
 #include "boost/range/iterator_range_core.hpp"
-#include "Utils/ElementInfo.h"
+#include "Utils/Geometry/ElementInfo.h"
 
 #include "chemical_symmetries/Properties.h"
 #include "stereopermutation/Composites.h"

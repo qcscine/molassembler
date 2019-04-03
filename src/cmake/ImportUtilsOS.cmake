@@ -16,7 +16,7 @@ function(import_utils_os)
   download_project(
     PROJ scine-utils-os
     GIT_REPOSITORY git@gitlab.chab.ethz.ch:scine/utils-open-source.git
-    GIT_TAG        develop
+    GIT_TAG        nitpicks
     QUIET
   )
   # Note: Options defined in the project calling this function override default

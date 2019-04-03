@@ -33,7 +33,7 @@ foreach(filename ${analysisFiles})
   )
 
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
+  target_compile_definitions(${targetName} PRIVATE BOOST_ALL_DYN_LINK)
 
   set_target_properties(${targetName} PROPERTIES FOLDER "Analysis")
-  #set_property(${targetName} writeMappings PROPERTY FOLDER "Analysis")
 endforeach()

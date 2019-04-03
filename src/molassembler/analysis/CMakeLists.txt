@@ -19,12 +19,13 @@ set(analysisFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkEigenvalues.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkGraphAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkIsomorphisms.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkRefinement.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DirectedConformerGeneration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Gor1Explainer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Interpret.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/MakeIsomorphism.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingExplainer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/RaytraceRefinement.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/TraceRefinement.cpp
 )
 
 foreach(filename ${analysisFiles})
@@ -47,5 +48,6 @@ foreach(filename ${analysisFiles})
       gor1
   )
 
+  target_compile_definitions(${targetName} PRIVATE BOOST_ALL_DYN_LINK)
   target_compile_options(${targetName} PRIVATE ${MOLASSEMBLER_CXX_FLAGS})
 endforeach()

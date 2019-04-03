@@ -10,15 +10,20 @@
 #include "boost/test/unit_test.hpp"
 #include "temple/Adaptors/Zip.h"
 #include "temple/Functional.h"
+#include "temple/Functor.h"
 #include "temple/Random.h"
+#include "temple/Stringify.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
+#include "temple/constexpr/TupleType.h"
 
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/DlibRefinement.h"
+#include "molassembler/DistanceGeometry/EigenRefinement.h"
+#include "molassembler/DistanceGeometry/EigenSIMDRefinement.h"
 #include "molassembler/IO.h"
 
 #include <fstream>
@@ -29,6 +34,20 @@ using namespace std::string_literals;
 using namespace Scine;
 using namespace molassembler;
 using namespace DistanceGeometry;
+
+/* TODO
+ * - Prove EigenRefinementProblem is correct by verifying it against DlibRefinement
+ * - Then prove EigenSIMDRefinementProblem is correct by verifying it against
+ *   EigenRefinementProblem
+ * - Then remove DlibRefinement and optimize either variant for speed,
+ *   verifying them against each other
+ *
+ * - Planned tests:
+ *   - Rotational and translational invariance tests for all Eigen-based
+ *     refinement problems
+ *   - Check of optimized vs reference implementations (this will be a
+ *     cross-test between Eigen-based refinement problems)
+ */
 
 bool isApprox(
   const dlib::matrix<double, 0, 1>& a,
@@ -47,6 +66,52 @@ bool isApprox(
   );
 }
 
+struct RefinementBaseData {
+  DistanceBoundsMatrix distanceBounds;
+  Eigen::MatrixXd embeddedPositions;
+  std::vector<ChiralityConstraint> chiralConstraints;
+  std::vector<DihedralConstraint> dihedralConstraints;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+  Eigen::MatrixXd squaredBounds() const {
+    return distanceBounds.access().cwiseProduct(distanceBounds.access());
+  }
+
+  Eigen::VectorXd linearizeEmbeddedPositions() {
+    return Eigen::Map<Eigen::VectorXd>(
+      embeddedPositions.data(),
+      embeddedPositions.cols() * embeddedPositions.rows()
+    );
+  }
+
+  RefinementBaseData() = default;
+
+  RefinementBaseData(const std::string& filename) {
+    Molecule molecule = IO::read(filename);
+
+    auto DGInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
+
+    distanceBounds = DistanceBoundsMatrix {
+      molecule,
+      DGInfo.bounds
+    };
+
+    chiralConstraints = std::move(DGInfo.chiralityConstraints);
+    dihedralConstraints = std::move(DGInfo.dihedralConstraints);
+
+    auto distancesResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
+    if(!distancesResult) {
+      BOOST_FAIL(distancesResult.error().message());
+    }
+    auto distances = distancesResult.value();
+
+    MetricMatrix metric(distances);
+
+    embeddedPositions = metric.embed();
+  }
+};
+
 BOOST_AUTO_TEST_CASE( numericDifferentiationApproximatesGradients ) {
   using Vector = dlib::matrix<double, 0, 1>;
 
@@ -58,51 +123,27 @@ BOOST_AUTO_TEST_CASE( numericDifferentiationApproximatesGradients ) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
   ) {
-    auto molecule = IO::read(currentFilePath.string());
-
-    auto DGInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
-
-    DistanceBoundsMatrix distanceBounds {
-      molecule,
-      DGInfo.bounds
-    };
-
-    auto distancesResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
-    if(!distancesResult) {
-      BOOST_FAIL(distancesResult.error().message());
-    }
-    auto distances = distancesResult.value();
-
-    MetricMatrix metric(distances);
-
-    auto embedded = metric.embed();
+    RefinementBaseData baseData {currentFilePath.string()};
 
     // Transfer to dlib
     const Vector dlibPositions = dlib::mat(
-      Eigen::VectorXd (
-        Eigen::Map<Eigen::VectorXd>(
-          embedded.data(),
-          embedded.cols() * embedded.rows()
-        )
-      )
+      baseData.linearizeEmbeddedPositions()
     );
 
-    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-      static_cast<Eigen::MatrixXd>(
-        distanceBounds.access().cwiseProduct(distanceBounds.access())
-      )
+    const dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+      baseData.squaredBounds()
     );
 
     ErrorFunctionValue valueFunctor {
       squaredBounds,
-      DGInfo.chiralityConstraints,
-      DGInfo.dihedralConstraints
+      baseData.chiralConstraints,
+      baseData.dihedralConstraints
     };
 
     ErrorFunctionGradient gradientFunctor {
       squaredBounds,
-      DGInfo.chiralityConstraints,
-      DGInfo.dihedralConstraints
+      baseData.chiralConstraints,
+      baseData.dihedralConstraints
     };
 
     // Finite difference is calculated to 1e-7 precision
@@ -176,47 +217,21 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
   ) {
-    auto molecule = IO::read(currentFilePath.string());
-
-    const auto DGData = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
-
-    DistanceBoundsMatrix distanceBounds {
-      molecule,
-      DGData.bounds
-    };
-
-    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
-    if(!distancesMatrixResult) {
-      BOOST_FAIL(distancesMatrixResult.error().message());
-    }
-    auto distancesMatrix = distancesMatrixResult.value();
-
-    // Make a metric matrix from the distances matrix
-    MetricMatrix metric(distancesMatrix);
-
-    // Get a position matrix by embedding the metric matrix
-    auto embeddedPositions = metric.embed();
+    RefinementBaseData baseData {currentFilePath.string()};
 
     // Transfer to dlib and vectorize
     ErrorFunctionValue::Vector referencePositions = dlib::mat(
-      static_cast<Eigen::VectorXd>(
-          Eigen::Map<Eigen::VectorXd>(
-          embeddedPositions.data(),
-          embeddedPositions.cols() * embeddedPositions.rows()
-        )
-      )
+      baseData.linearizeEmbeddedPositions()
     );
 
     dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-      static_cast<Eigen::MatrixXd>(
-        distanceBounds.access().cwiseProduct(distanceBounds.access())
-      )
+      baseData.squaredBounds()
     );
 
     ErrorFunctionValue valueFunctor {
       squaredBounds,
-      DGData.chiralityConstraints,
-      DGData.dihedralConstraints
+      baseData.chiralConstraints,
+      baseData.dihedralConstraints
     };
     valueFunctor.compressFourthDimension = true;
 
@@ -235,7 +250,7 @@ BOOST_AUTO_TEST_CASE( valueComponentsAreRotTransInvariant ) {
       const Eigen::Matrix3d rotationMatrix = Eigen::Quaterniond::UnitRandom().toRotationMatrix();
 
       const Eigen::Vector3d translation = Eigen::Vector3d::Random();
-      auto embeddedCopy = embeddedPositions;
+      Eigen::MatrixXd embeddedCopy = baseData.embeddedPositions;
 
       // Transform the embedded coordinates by rotation and translation
       for(unsigned i = 0; i < embeddedCopy.cols(); i++) {
@@ -314,46 +329,21 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ez_stereocenters")
   ) {
-    auto molecule = IO::read(currentFilePath.string());
-
-    const auto DGData = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
-    DistanceBoundsMatrix distanceBounds {
-      molecule,
-      DGData.bounds
-    };
-
-    auto distancesMatrixResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
-    if(!distancesMatrixResult) {
-      BOOST_FAIL(distancesMatrixResult.error().message());
-    }
-    auto distancesMatrix = distancesMatrixResult.value();
-
-    // Make a metric matrix from the distances matrix
-    MetricMatrix metric(distancesMatrix);
-
-    // Get a position matrix by embedding the metric matrix
-    auto embeddedPositions = metric.embed();
+    RefinementBaseData baseData {currentFilePath.string()};
 
     // Vectorize the positions for use with dlib
     ErrorFunctionValue::Vector referencePositions = dlib::mat(
-      static_cast<Eigen::VectorXd>(
-          Eigen::Map<Eigen::VectorXd>(
-          embeddedPositions.data(),
-          embeddedPositions.cols() * embeddedPositions.rows()
-        )
-      )
+      baseData.linearizeEmbeddedPositions()
     );
 
     dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-      static_cast<Eigen::MatrixXd>(
-        distanceBounds.access().cwiseProduct(distanceBounds.access())
-      )
+      baseData.squaredBounds()
     );
 
     ErrorFunctionGradient gradientFunctor {
       squaredBounds,
-      DGData.chiralityConstraints,
-      DGData.dihedralConstraints
+      baseData.chiralConstraints,
+      baseData.dihedralConstraints
     };
 
     gradientFunctor.compressFourthDimension = true;
@@ -405,8 +395,8 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
       const Eigen::Matrix3d rotationMatrix = Eigen::Quaterniond::UnitRandom().toRotationMatrix();
 
       const Eigen::Vector3d translation = Eigen::Vector3d::Random();
-      Eigen::MatrixXd rotatedRectangularPositions = embeddedPositions;
-      Eigen::MatrixXd translatedRectangularPositions = embeddedPositions;
+      Eigen::MatrixXd rotatedRectangularPositions = baseData.embeddedPositions;
+      Eigen::MatrixXd translatedRectangularPositions = baseData.embeddedPositions;
 
       // Transform the embedded coordinates by rotation and translation
       for(unsigned i = 0; i < rotatedRectangularPositions.cols(); i++) {
@@ -492,5 +482,357 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
         );
       }
     }
+  }
+}
+
+namespace traits {
+
+template<typename FloatType>
+struct Floating {};
+
+template<>
+struct Floating<double> {
+  constexpr static double tolerance = 1e-10;
+  constexpr static const char* name = "double";
+};
+
+template<>
+struct Floating<float> {
+  constexpr static double tolerance = 1e-5;
+  constexpr static const char* name = "float";
+};
+
+constexpr double Floating<double>::tolerance;
+constexpr const char* Floating<double>::name;
+constexpr double Floating<float>::tolerance;
+constexpr const char* Floating<float>::name;
+
+} // namespace traits
+
+Eigen::MatrixXd rotateAndTranslate(
+  Eigen::MatrixXd positionMatrix,
+  const Eigen::Matrix3d& rotationMatrix,
+  const Eigen::Vector3d& translationVector
+) {
+  assert(positionMatrix.rows() == 4 || positionMatrix.rows() == 3);
+
+  /* Transform the copy of embedded coordinates by rotation and translation
+   * (only x,y,z coordinates, even if a fourth spatial coordinate is present)
+   */
+  for(unsigned i = 0; i < positionMatrix.cols(); ++i) {
+    positionMatrix.template block<3, 1>(0, i) = (
+      rotationMatrix * positionMatrix.template block<3, 1>(0, i)
+    );
+    positionMatrix.template block<3, 1>(0, i) += translationVector;
+  }
+
+  return positionMatrix;
+}
+
+template<typename EigenRefinementType>
+Eigen::VectorXd rotateAndTranslateLinear(
+  Eigen::VectorXd positionVector,
+  const Eigen::Matrix3d& rotationMatrix,
+  const Eigen::Vector3d& translationVector
+) {
+  constexpr unsigned dimensionality = EigenRefinementType::dimensions;
+
+  assert(positionVector.size() % dimensionality == 0);
+  const unsigned N = positionVector.size() / dimensionality;
+  for(unsigned i = 0; i < N; ++i) {
+    positionVector.segment<3>(dimensionality * i) = (
+      rotationMatrix * positionVector.segment<3>(dimensionality * i)
+      + translationVector
+    );
+  }
+
+  return positionVector;
+}
+
+Eigen::VectorXd flatten(Eigen::MatrixXd matr) {
+  return Eigen::Map<Eigen::VectorXd>(
+    matr.data(),
+    matr.cols() * matr.rows()
+  );
+}
+
+template<typename EigenRefinementType>
+struct RotationalTranslationalInvarianceTest {
+  using PositionType = typename EigenRefinementType::VectorType;
+
+  struct ErrorAndGradientComponent {
+    using FunctionType = std::function<void(const PositionType&, double&, Eigen::VectorXd&)>;
+
+    std::string name;
+    FunctionType function;
+
+    double referenceValue;
+    Eigen::VectorXd referenceGradient;
+    bool errorRotationalInvariance = true;
+    bool errorTranslationalInvariance = true;
+    bool gradientRotationalInvariance = true;
+    bool gradientTranslationalInvariance = true;
+
+    // Initialize name, function and reference value and gradient
+    void initialize(std::string passName, FunctionType passFunction, const PositionType& referencePositions) {
+      name = passName;
+      function = passFunction;
+
+      referenceValue = 0;
+      referenceGradient.resize(referencePositions.size());
+      referenceGradient.setZero();
+
+      function(referencePositions, referenceValue, referenceGradient);
+    }
+
+    /* Propagate errorInvariance and gradientInvariance with new rotationally
+     * and translationally transformed coordinates. The function is not called
+     * again if invariance has been disproved for both error value and gradient.
+     */
+    void propagate(
+      const Eigen::MatrixXd& positionMatrix,
+      const Eigen::Matrix3d& rotationMatrix,
+      const Eigen::Vector3d& translationVector
+    ) {
+      if(errorTranslationalInvariance || gradientTranslationalInvariance) {
+        double translatedValue = 0;
+        Eigen::VectorXd translatedGradient;
+        translatedGradient.resize(positionMatrix.cols() * positionMatrix.rows());
+        translatedGradient.setZero();
+
+        PositionType translatedPositions = EigenRefinementType::conditionalDowncast(
+          flatten(
+            rotateAndTranslate(
+              positionMatrix,
+              Eigen::Matrix3d::Identity(),
+              translationVector
+            )
+          )
+        );
+
+        function(translatedPositions, translatedValue, translatedGradient);
+
+        if(
+          errorTranslationalInvariance
+          && (
+            std::fabs(translatedValue - referenceValue)
+            > traits::Floating<typename EigenRefinementType::FloatingPointType>::tolerance
+          )
+        ) {
+          std::cout << "Error is not translationally invariant: translated = "
+            << translatedValue << ", reference = " << referenceValue
+            << ", difference: " << std::fabs(translatedValue - referenceValue)
+            << "\n";
+          errorTranslationalInvariance = false;
+        }
+
+        if(gradientTranslationalInvariance) {
+          if(
+            !translatedGradient.isApprox(
+              referenceGradient,
+              traits::Floating<typename EigenRefinementType::FloatingPointType>::tolerance
+            )
+          ) {
+            std::cout << "Translated gradient: " << translatedGradient.transpose() << "\n";
+            std::cout << "Reference gradient : " << referenceGradient.transpose() << "\n";
+            std::cout << "Trans. - reference : " << (translatedGradient - referenceGradient).transpose() << "\n";
+            gradientTranslationalInvariance = false;
+          }
+        }
+      }
+
+      if(errorRotationalInvariance || gradientRotationalInvariance) {
+        double rotatedValue = 0;
+        Eigen::VectorXd rotatedGradient;
+        rotatedGradient.resize(positionMatrix.cols() * positionMatrix.rows());
+        rotatedGradient.setZero();
+
+        PositionType rotatedPositions = EigenRefinementType::conditionalDowncast(
+          flatten(
+            rotateAndTranslate(
+              positionMatrix,
+              rotationMatrix,
+              Eigen::Vector3d::Zero()
+            )
+          )
+        );
+
+        function(rotatedPositions, rotatedValue, rotatedGradient);
+
+        if(
+          errorRotationalInvariance
+          && (
+            std::fabs(rotatedValue - referenceValue)
+            > traits::Floating<typename EigenRefinementType::FloatingPointType>::tolerance
+          )
+        ) {
+          std::cout << "Error is not rotationally invariant: rotated = "
+            << rotatedValue << ", reference = " << referenceValue
+            << ", difference: " << std::fabs(rotatedValue - referenceValue)
+            << "\n";
+          errorRotationalInvariance = false;
+        }
+
+        if(gradientRotationalInvariance) {
+          // Rotate reference accordingly
+          auto rotatedReferenceGradient = rotateAndTranslateLinear<EigenRefinementType>(
+            referenceGradient,
+            rotationMatrix,
+            Eigen::Vector3d::Zero()
+          );
+
+          if(
+            !rotatedGradient.isApprox(
+              rotatedReferenceGradient,
+              traits::Floating<typename EigenRefinementType::FloatingPointType>::tolerance
+            )
+          ) {
+            std::cout << "Rotated   gradient: " << rotatedGradient.transpose() << "\n";
+            std::cout << "Rot. ref. gradient: " << rotatedReferenceGradient.transpose() << "\n";
+            std::cout << "Rot. - reference  : " << (rotatedGradient - rotatedReferenceGradient).transpose() << "\n";
+            gradientRotationalInvariance = false;
+          }
+        }
+      }
+    }
+  };
+
+  static bool value() {
+    bool pass = true;
+
+    for(
+      const boost::filesystem::path& currentFilePath :
+      boost::filesystem::recursive_directory_iterator("ez_stereocenters")
+    ) {
+      RefinementBaseData baseData {currentFilePath.string()};
+
+      EigenRefinementType refinementFunctor {
+        baseData.squaredBounds(),
+        baseData.chiralConstraints,
+        baseData.dihedralConstraints
+      };
+
+      using PositionsType = typename EigenRefinementType::VectorType;
+      using FloatingPointType = typename EigenRefinementType::FloatingPointType;
+
+      const PositionsType referencePositions = baseData.linearizeEmbeddedPositions().template cast<FloatingPointType>();
+
+      std::array<ErrorAndGradientComponent, 4> components;
+
+      auto makeFunctor = [&refinementFunctor](auto memFn) {
+        return [&refinementFunctor, memFn](
+          const PositionsType& positions,
+          double& value,
+          Eigen::VectorXd& gradient
+        ) { memFn(refinementFunctor, positions, value, gradient); };
+      };
+
+      components[0].initialize(
+        "distance",
+        makeFunctor(std::mem_fn(&EigenRefinementType::distanceContributions)),
+        referencePositions
+      );
+
+      components[1].initialize(
+        "chiral",
+        makeFunctor(std::mem_fn(&EigenRefinementType::chiralContributions)),
+        referencePositions
+      );
+
+      components[2].initialize(
+        "dihedral",
+        makeFunctor(std::mem_fn(&EigenRefinementType::dihedralContributions)),
+        referencePositions
+      );
+
+      components[3].initialize(
+        "fourth dimension",
+        makeFunctor(std::mem_fn(&EigenRefinementType::fourthDimensionContributions)),
+        referencePositions
+      );
+
+      for(unsigned testNum = 0; testNum < 100; ++testNum) {
+        const Eigen::Matrix3d rotationMatrix = Eigen::Quaterniond::UnitRandom().toRotationMatrix();
+        const Eigen::Vector3d translationVector = Eigen::Vector3d::Random();
+
+        for(auto& component : components) {
+          component.propagate(baseData.embeddedPositions, rotationMatrix, translationVector);
+        }
+      }
+
+      bool filePasses = temple::all_of(
+        components,
+        [](const ErrorAndGradientComponent& component) -> bool {
+          return (
+            component.errorTranslationalInvariance
+            && component.errorRotationalInvariance
+            && component.gradientTranslationalInvariance
+            && component.gradientRotationalInvariance
+          );
+        }
+      );
+
+      if(!filePasses) {
+        std::cout << "For file " << currentFilePath.string() << ":\n";
+        for(const auto& component : components) {
+          std::string compound = "- " + component.name + ": error invariance (rot: ";
+
+          auto addBooleanStr = [&compound](bool value) {
+            if(value) {
+              compound += "yes";
+            } else {
+              compound += "NO";
+            }
+          };
+
+          addBooleanStr(component.errorRotationalInvariance);
+          compound +=", trans: ";
+          addBooleanStr(component.errorTranslationalInvariance);
+          compound += "), gradient invariance (rot: ";
+          addBooleanStr(component.gradientRotationalInvariance);
+          compound +=", trans: ";
+          addBooleanStr(component.gradientTranslationalInvariance);
+
+          compound += ")\n";
+
+          std::cout << compound;
+        }
+      }
+
+      pass &= filePasses;
+    }
+
+    if(!pass) {
+      std::cout << "\n\n";
+    }
+
+    return pass;
+  }
+};
+
+BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance) {
+  using EigenRefinementTypeVariations = std::tuple<
+    EigenRefinementProblem<4, double>,
+    EigenRefinementProblem<4, float>,
+    EigenSIMDRefinementProblem<4, double>,
+    EigenSIMDRefinementProblem<4, float>
+  >;
+
+  constexpr unsigned variations = std::tuple_size<EigenRefinementTypeVariations>::value;
+
+  std::array<std::string, variations> eigenRefinementNames {
+    "EigenRefinementProblem<4, double>",
+    "EigenRefinementProblem<4, float>",
+    "EigenSIMDRefinementProblem<4, double>",
+    "EigenSIMDRefinementProblem<4, float>"
+  };
+
+  auto passes = temple::TupleType::map<EigenRefinementTypeVariations, RotationalTranslationalInvarianceTest>();
+
+  for(unsigned i = 0; i < variations; ++i) {
+    BOOST_CHECK_MESSAGE(
+      passes.at(i),
+      "Rotational and translational invariance fail for " << eigenRefinementNames.at(i)
+    );
   }
 }

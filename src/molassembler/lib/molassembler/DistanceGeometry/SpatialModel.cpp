@@ -9,7 +9,7 @@
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "Utils/Typenames.h"
-#include "Utils/ElementInfo.h"
+#include "Utils/Geometry/ElementInfo.h"
 #include "Utils/Constants.h"
 #include "CyclicPolygons.h"
 

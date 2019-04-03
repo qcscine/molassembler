@@ -19,7 +19,7 @@
 #include "molassembler/DistanceGeometry/Error.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
-#include "Utils/QuaternionFit.h"
+#include "Utils/Math/QuaternionFit.h"
 
 namespace Scine {
 

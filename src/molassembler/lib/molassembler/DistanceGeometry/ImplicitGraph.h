@@ -16,7 +16,7 @@
 #include "boost_outcome/outcome.hpp"
 #include "boost/property_map/property_map.hpp"
 #include "Eigen/Core"
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 

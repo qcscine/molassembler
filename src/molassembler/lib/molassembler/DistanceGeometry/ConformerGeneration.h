@@ -31,6 +31,10 @@ AngstromWrapper convertToAngstromWrapper(
   const dlib::matrix<double, 0, 1>& vectorizedPositions
 );
 
+AngstromWrapper convertToAngstromWrapper(
+  const Eigen::MatrixXd& positionsMatrix
+);
+
 Eigen::MatrixXd fitAndSetFixedPositions(
   const dlib::matrix<double, 0, 1>& vectorizedPositions,
   const Configuration& configuration

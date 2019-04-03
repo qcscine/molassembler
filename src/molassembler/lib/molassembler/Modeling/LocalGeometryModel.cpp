@@ -8,7 +8,7 @@
 
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/optional.hpp"
-#include "Utils/ElementInfo.h"
+#include "Utils/Geometry/ElementInfo.h"
 
 #include "chemical_symmetries/Symmetries.h"
 #include "temple/Functional.h"

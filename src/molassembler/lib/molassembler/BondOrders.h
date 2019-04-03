@@ -7,7 +7,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 #define INCLUDE_MOLASSEMBLER_BOND_ORDERS_H
 
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 #include <vector>
 
 // Forward-declarations

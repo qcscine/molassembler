@@ -28,9 +28,9 @@
 #include "molassembler/Options.h"
 #include "molassembler/StereopermutatorList.h"
 
-#include "Utils/AtomCollection.h"
+#include "Utils/Geometry/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
-#include "Utils/IO/ChemicalFileHandler.h"
+#include "Utils/IO/ChemicalFileFormats/ChemicalFileHandler.h"
 
 #include "temple/UnorderedSetAlgorithms.h"
 #include <iostream>

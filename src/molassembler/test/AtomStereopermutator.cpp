@@ -11,7 +11,7 @@
 #include "molassembler/IO.h"
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/Properties.h"
-#include "Utils/QuaternionFit.h"
+#include "Utils/Math/QuaternionFit.h"
 
 using namespace Scine;
 using namespace molassembler;

@@ -21,6 +21,22 @@ if(MOLASSEMBLER_IPO)
   endif()
 endif()
 
+# Handle opportunity for architecture-specific instruction sets
+if(MOLASSEMBLER_TUNE_ISA AND CMAKE_BUILD_TYPE MATCHES Release|RelWithDebInfo)
+  include(CheckCXXCompilerFlag)
+  check_cxx_compiler_flag(-march=native MARCH_FLAG)
+  if(MARCH_FLAG)
+    list(APPEND MOLASSEMBLER_CXX_FLAGS -march=native)
+    message(STATUS "Adding -march=native compiler flag")
+  endif()
+
+  check_cxx_compiler_flag(-mtune=native MTUNE_FLAG)
+  if(MTUNE_FLAG)
+    list(APPEND MOLASSEMBLER_CXX_FLAGS -mtune=native)
+    message(STATUS "Adding -mtune=native compiler flag")
+  endif()
+endif()
+
 # Compilation flags
 if(MSVC)
   # Compilation on different cores (faster)
@@ -29,7 +45,7 @@ if(MSVC)
   # No idea if this is still relevant, but we're going to assume so
   list(APPEND MOLASSEMBLER_CXX_FLAGS /D _VARIADIC_MAX=200)
   # Allow more constexpr steps
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /constexpr:steps 100000000") # 100M
+  list(APPEND MOLASSEMBLER_CXX_FLAGS /constexpr:steps 100000000) # 100M
   # Enable use of math constants like M_PI, M_LN10 by compiling sources with
   add_definitions(/D_USE_MATH_DEFINES)
 else()

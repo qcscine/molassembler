@@ -16,7 +16,7 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "boost_outcome/outcome.hpp"
 #include "Eigen/Core"
-#include "Utils/ElementInfo.h"
+#include "Utils/Geometry/ElementInfo.h"
 
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 

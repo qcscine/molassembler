@@ -12,7 +12,7 @@
 #define INCLUDE_MOLASSEMBLER_ATOM_INFO_H
 
 #include "boost/optional/optional_fwd.hpp"
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 
 #include <array>
 #include <map>

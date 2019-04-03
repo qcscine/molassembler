@@ -10,7 +10,7 @@
 #ifndef INCLUDE_MOLASSEMBLER_MOLECULE_H
 #define INCLUDE_MOLASSEMBLER_MOLECULE_H
 
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 #include "boost/optional.hpp"
 #include "chemical_symmetries/Names.h"
 

@@ -10,7 +10,7 @@
 #include "chemical_symmetries/Names.h"
 #include "molassembler/PRNG.h"
 
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 #include "molassembler/AngstromWrapper.h"
 
 namespace Scine {

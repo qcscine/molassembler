@@ -8,7 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_OUTER_GRAPH_H
 
 #include "boost/optional/optional_fwd.hpp"
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 
 #include "molassembler/Types.h"
 
