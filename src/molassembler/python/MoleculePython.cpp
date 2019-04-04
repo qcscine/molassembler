@@ -11,7 +11,7 @@
 #include "molassembler/OuterGraph.h"
 #include "molassembler/StereopermutatorList.h"
 
-#include "Utils/ElementTypes.h"
+#include "Utils/Geometry/ElementTypes.h"
 
 #include "boost/process/child.hpp"
 #include "boost/process/io.hpp"
