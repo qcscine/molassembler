@@ -16,6 +16,7 @@
 #include "temple/constexpr/FloatingPointComparison.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/constexpr/TupleType.h"
+#include "temple/constexpr/TupleTypePairs.h"
 
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
@@ -507,6 +508,44 @@ constexpr const char* Floating<double>::name;
 constexpr double Floating<float>::tolerance;
 constexpr const char* Floating<float>::name;
 
+template<typename RefinementType>
+struct Refinement {
+  // Trick to make the compiler tell me the template arguments to RefinementType
+  template<
+    template<unsigned, typename> class BaseClass,
+    unsigned dimensionality,
+    typename FloatingPointType
+  > static auto dimensionalityHelper (BaseClass<dimensionality, FloatingPointType> /* a */) -> std::integral_constant<unsigned, dimensionality> {
+    return {};
+  }
+
+  template<
+    template<unsigned, typename> class BaseClass,
+    unsigned dimensionality,
+    typename FloatingPointType
+  > static auto floatingPointTypeHelper (BaseClass<dimensionality, FloatingPointType> /* a */) -> FloatingPointType {
+    return {};
+  }
+
+  using DimensionalityConstant = decltype(dimensionalityHelper(std::declval<RefinementType>()));
+  using FloatingPointType = decltype(floatingPointTypeHelper(std::declval<RefinementType>()));
+
+  // Get a name representation of the type for debug purposes
+  static std::string name() {
+    std::string name = "Eigen";
+    if(RefinementType::simd) {
+      name += "SIMD";
+    }
+    name += "RefinementProblem<";
+    name += std::to_string(DimensionalityConstant::value);
+    name += ", ";
+    name += traits::Floating<FloatingPointType>::name;
+    name += ">";
+
+    return name;
+  }
+};
+
 } // namespace traits
 
 Eigen::MatrixXd rotateAndTranslate(
@@ -835,4 +874,217 @@ BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance) {
       "Rotational and translational invariance fail for " << eigenRefinementNames.at(i)
     );
   }
+}
+
+template<typename RefinementT, typename RefinementU>
+struct CompareImplementations {
+  using TraitsT = traits::Refinement<RefinementT>;
+  using TraitsU = traits::Refinement<RefinementU>;
+
+  using PositionsT = typename RefinementT::VectorType;
+  using FloatingPointT = typename TraitsT::FloatingPointType;
+  using PositionsU = typename RefinementU::VectorType;
+  using FloatingPointU = typename TraitsU::FloatingPointType;
+
+  using SmallerFPType = std::conditional_t<
+    sizeof(FloatingPointT) < sizeof(FloatingPointU),
+    FloatingPointT,
+    FloatingPointU
+  >;
+
+  using LargerFPType = std::conditional_t<
+    sizeof(FloatingPointT) < sizeof(FloatingPointU),
+    FloatingPointU,
+    FloatingPointT
+  >;
+
+  static bool value() {
+    return temple::all_of(
+      boost::filesystem::recursive_directory_iterator("ez_stereocenters"),
+      [](const boost::filesystem::path& currentFilePath) -> bool {
+        RefinementBaseData baseData {currentFilePath.string()};
+
+        RefinementT tFunctor {
+          baseData.squaredBounds(),
+          baseData.chiralConstraints,
+          baseData.dihedralConstraints
+        };
+
+        RefinementU uFunctor {
+          baseData.squaredBounds(),
+          baseData.chiralConstraints,
+          baseData.dihedralConstraints
+        };
+
+        // BEGIN block to remove once both implementations conform to dlib
+
+        const dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
+          baseData.squaredBounds()
+        );
+
+        ErrorFunctionValue referenceValueFunctor {
+          squaredBounds,
+          baseData.chiralConstraints,
+          baseData.dihedralConstraints
+        };
+
+        ErrorFunctionGradient referenceGradientFunctor {
+          squaredBounds,
+          baseData.chiralConstraints,
+          baseData.dihedralConstraints
+        };
+
+        using DlibVector = dlib::matrix<double, 0, 1>;
+        DlibVector dlibPositions = dlib::mat(
+          baseData.linearizeEmbeddedPositions()
+        );
+
+        // END of block to remove once both implementations conform to dlib
+
+        PositionsT tPositions = baseData.linearizeEmbeddedPositions().template cast<FloatingPointT>();
+        PositionsU uPositions = baseData.linearizeEmbeddedPositions().template cast<FloatingPointU>();
+
+        using FunctionTypeT = std::function<void(const PositionsT&, double&, Eigen::VectorXd&)>;
+        using FunctionTypeU = std::function<void(const PositionsU&, double&, Eigen::VectorXd&)>;
+
+        // TODO temp
+        using RefValueFunc = std::function<double(const DlibVector&)>;
+        using RefGradientFunc = std::function<DlibVector(const DlibVector&)>;
+
+        std::vector<
+          std::tuple<std::string, FunctionTypeT, FunctionTypeU, RefValueFunc, RefGradientFunc>
+        > components {
+          {
+            "distance",
+            [&tFunctor](const PositionsT& positions, double& value, Eigen::VectorXd& gradients) {
+              tFunctor.distanceContributions(positions, value, gradients);
+            },
+            [&uFunctor](const PositionsU& positions, double& value, Eigen::VectorXd& gradients) {
+              uFunctor.distanceContributions(positions, value, gradients);
+            },
+            [&referenceValueFunctor](const DlibVector& positions) -> double {
+              return referenceValueFunctor.distanceError(positions);
+            },
+            [&referenceGradientFunctor](const DlibVector& positions) -> DlibVector {
+              return referenceGradientFunctor.referenceA(positions) + referenceGradientFunctor.referenceB(positions);
+            }
+          },
+          {
+            "chiral",
+            [&tFunctor](const PositionsT& positions, double& value, Eigen::VectorXd& gradients) {
+              tFunctor.chiralContributions(positions, value, gradients);
+            },
+            [&uFunctor](const PositionsU& positions, double& value, Eigen::VectorXd& gradients) {
+              uFunctor.chiralContributions(positions, value, gradients);
+            },
+            [&referenceValueFunctor](const DlibVector& positions) -> double {
+              return referenceValueFunctor.chiralError(positions);
+            },
+            [&referenceGradientFunctor](const DlibVector& positions) -> DlibVector {
+              return referenceGradientFunctor.referenceC(positions);
+            }
+          },
+          {
+            "dihedral",
+            [&tFunctor](const PositionsT& positions, double& value, Eigen::VectorXd& gradients) {
+              tFunctor.dihedralContributions(positions, value, gradients);
+            },
+            [&uFunctor](const PositionsU& positions, double& value, Eigen::VectorXd& gradients) {
+              uFunctor.dihedralContributions(positions, value, gradients);
+            },
+            [&referenceValueFunctor](const DlibVector& positions) -> double {
+              return referenceValueFunctor.dihedralError(positions);
+            },
+            [&referenceGradientFunctor](const DlibVector& positions) -> DlibVector {
+              return referenceGradientFunctor.referenceDihedral(positions);
+            }
+          },
+          {
+            "fourth dimension",
+            [&tFunctor](const PositionsT& positions, double& value, Eigen::VectorXd& gradients) {
+              tFunctor.fourthDimensionContributions(positions, value, gradients);
+            },
+            [&uFunctor](const PositionsU& positions, double& value, Eigen::VectorXd& gradients) {
+              uFunctor.fourthDimensionContributions(positions, value, gradients);
+            },
+            [&referenceValueFunctor](const DlibVector& positions) -> double {
+              return referenceValueFunctor.extraDimensionError(positions);
+            },
+            [&referenceGradientFunctor](const DlibVector& positions) -> DlibVector {
+              return referenceGradientFunctor.referenceD(positions);
+            }
+          },
+        };
+
+        auto passesComparisonMap = temple::map(
+          components,
+          [&](const auto& comparisonTuple) -> bool {
+            double tError = 0, uError = 0;
+            Eigen::VectorXd tGradients, uGradients;
+            tGradients.resize(tPositions.size());
+            tGradients.setZero();
+            uGradients.resize(uPositions.size());
+            uGradients.setZero();
+
+            std::get<1>(comparisonTuple)(tPositions, tError, tGradients);
+            std::get<2>(comparisonTuple)(uPositions, uError, uGradients);
+
+            bool pass = true;
+            if(std::fabs(tError - uError) > traits::Floating<SmallerFPType>::tolerance) {
+              std::cout << "Error values for component "
+                << std::get<0>(comparisonTuple) << " do not match between "
+                << TraitsT::name() << " and " << TraitsU::name() << " for "
+                << currentFilePath.string() << ": "
+                << tError << " != " << uError << ", difference = "
+                << std::fabs(tError - uError) << "\n";
+
+              // TODO temp
+              double referenceValue = std::get<3>(comparisonTuple)(dlibPositions);
+              std::cout << "Reference error value: " << referenceValue << "\n";
+              // end temp
+
+              pass = false;
+            }
+
+            if(!tGradients.isApprox(uGradients, traits::Floating<SmallerFPType>::tolerance)) {
+              std::cout << "Gradients for component "
+                << std::get<0>(comparisonTuple) << " do not match between "
+                << TraitsT::name() << " and " << TraitsU::name() << "  for "
+                << currentFilePath.string() << ":\n  "
+                << tGradients.transpose() << "\n  "
+                << uGradients.transpose() << "\ndelta: "
+                << (tGradients - uGradients).transpose() << "\n";
+
+              // TODO temp
+              dlib::matrix<double, 0, 1> referenceGradients = std::get<4>(comparisonTuple)(dlibPositions);
+              std::cout << "Reference gradients: " << dlib::trans(referenceGradients) << "\n";
+              // End temp
+
+              pass = false;
+            }
+
+            return pass;
+          }
+        );
+
+        return temple::all_of(passesComparisonMap, temple::Identity {});
+      }
+    );
+  }
+};
+
+BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
+  using EigenRefinementTypeVariations = std::tuple<
+    EigenRefinementProblem<4, double>,
+    EigenRefinementProblem<4, float>,
+    EigenSIMDRefinementProblem<4, double>,
+    EigenSIMDRefinementProblem<4, float>
+  >;
+
+  auto passes = temple::TupleType::mapAllPairs<EigenRefinementTypeVariations, CompareImplementations>();
+
+  BOOST_CHECK_MESSAGE(
+    temple::all_of(passes, temple::Identity {}),
+    "Not all refinement template argument variations match pair-wise!"
+  );
 }

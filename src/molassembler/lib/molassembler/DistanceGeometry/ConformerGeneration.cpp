@@ -366,7 +366,10 @@ std::list<RefinementData> debugRefinement(
      * are already correct (or there are none).
      */
     if(initiallyCorrectChiralConstraints < 1.0) {
+      unsigned firstStageIterations;
+
       dlibAdaptors::DebugIterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
+        firstStageIterations,
         configuration.refinementStepLimit,
         refinementSteps,
         valueFunctor
@@ -390,7 +393,7 @@ std::list<RefinementData> debugRefinement(
 
       // Handle inversion failure (hit step limit)
       if(
-        inversionStopStrategy.iterations >= configuration.refinementStepLimit
+        firstStageIterations >= configuration.refinementStepLimit
         || valueFunctor.proportionChiralConstraintsCorrectSign < 1.0
       ) {
         Log::log(Log::Level::Warning)
@@ -409,7 +412,9 @@ std::list<RefinementData> debugRefinement(
     valueFunctor.compressFourthDimension = true;
     gradientFunctor.compressFourthDimension = true;
 
+    unsigned secondStageIterations;
     dlibAdaptors::DebugIterationOrGradientNormStopStrategy refinementStopStrategy {
+      secondStageIterations,
       configuration.refinementStepLimit,
       configuration.refinementGradientTarget,
       refinementSteps,
@@ -432,7 +437,7 @@ std::list<RefinementData> debugRefinement(
       continue;
     }
 
-    bool reachedMaxIterations = refinementStopStrategy.iterations >= configuration.refinementStepLimit;
+    bool reachedMaxIterations = secondStageIterations >= configuration.refinementStepLimit;
     bool notAllChiralitiesCorrect = valueFunctor.proportionChiralConstraintsCorrectSign < 1;
     bool structureAcceptable = finalStructureAcceptable(
       valueFunctor,
@@ -551,7 +556,9 @@ outcome::result<AngstromWrapper> refine(
    * centers at all, this stage is unnecessary
    */
   if(initiallyCorrectChiralConstraints < 1) {
+    unsigned firstStageIterations;
     dlibAdaptors::IterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
+      firstStageIterations,
       valueFunctor,
       configuration.refinementStepLimit
     };
@@ -569,7 +576,7 @@ outcome::result<AngstromWrapper> refine(
       return DGError::RefinementException;
     }
 
-    if(inversionStopStrategy.iterations >= configuration.refinementStepLimit) {
+    if(firstStageIterations >= configuration.refinementStepLimit) {
       return DGError::RefinementMaxIterationsReached;
     }
 
@@ -578,7 +585,9 @@ outcome::result<AngstromWrapper> refine(
     }
   }
 
+  unsigned secondStageIterations;
   dlibAdaptors::IterationOrGradientNormStopStrategy refinementStopStrategy {
+    secondStageIterations,
     configuration.refinementStepLimit,
     configuration.refinementGradientTarget
   };
@@ -601,7 +610,7 @@ outcome::result<AngstromWrapper> refine(
 
   /* Error conditions */
   // Max iterations reached
-  if(refinementStopStrategy.iterations >= configuration.refinementStepLimit) {
+  if(secondStageIterations >= configuration.refinementStepLimit) {
     return DGError::RefinementMaxIterationsReached;
   }
 

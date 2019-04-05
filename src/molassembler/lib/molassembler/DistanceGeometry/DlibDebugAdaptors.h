@@ -45,7 +45,7 @@ namespace dlibAdaptors {
 struct DebugIterationOrAllChiralitiesCorrectStrategy {
 /* State */
   const unsigned maxIterations = 0;
-  unsigned iterations = 0;
+  std::reference_wrapper<unsigned> iterationsRef;
   // Side effects
   std::list<RefinementStepData>& refinementSteps;
   // Outside state
@@ -54,13 +54,15 @@ struct DebugIterationOrAllChiralitiesCorrectStrategy {
 
 /* Constructors */
   DebugIterationOrAllChiralitiesCorrectStrategy(
+    unsigned& iterationCounter,
     const unsigned maxIter,
     std::list<RefinementStepData>& passRefinementSteps,
     const ErrorFunctionValue& passValueFunctor
   ) : maxIterations(maxIter),
+      iterationsRef(iterationCounter),
       refinementSteps(passRefinementSteps),
       valueFunctor(passValueFunctor)
-  {}
+  {iterationCounter = 0;}
 
 
 /* Information */
@@ -84,9 +86,9 @@ struct DebugIterationOrAllChiralitiesCorrectStrategy {
       valueFunctor.compressFourthDimension
     );
 
-    iterations += 1;
+    iterationsRef.get() += 1;
 
-    if(maxIterations != 0 && iterations > maxIterations) {
+    if(maxIterations != 0 && iterationsRef.get() > maxIterations) {
       return false;
     }
 
@@ -104,10 +106,8 @@ struct DebugIterationOrAllChiralitiesCorrectStrategy {
 struct DebugIterationOrGradientNormStopStrategy {
 /* Public access constants */
   const unsigned maxIterations;
+  std::reference_wrapper<unsigned> iterationsRef;
   const double gradientNormThresholdSquared;
-
-/* State */
-  unsigned iterations = 0;
   // Side effects
   std::list<RefinementStepData>& refinementSteps;
   // Outside state
@@ -116,15 +116,17 @@ struct DebugIterationOrGradientNormStopStrategy {
 /* Constructors */
 
   DebugIterationOrGradientNormStopStrategy(
+    unsigned& iterationCounter,
     const unsigned passMaxIterations,
     const double gradientNormThreshold,
     std::list<RefinementStepData>& passRefinementSteps,
     const ErrorFunctionValue& passValueFunctor
   ) : maxIterations(passMaxIterations),
+      iterationsRef(iterationCounter),
       gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold),
       refinementSteps(passRefinementSteps),
       valueFunctor(passValueFunctor)
-  {}
+  {iterationCounter = 0;}
 
   template<typename T>
   bool should_continue_search(
@@ -143,9 +145,9 @@ struct DebugIterationOrGradientNormStopStrategy {
       valueFunctor.compressFourthDimension
     );
 
-    iterations += 1;
+    iterationsRef.get() += 1;
 
-    if(maxIterations != 0 && iterations > maxIterations) {
+    if(maxIterations != 0 && iterationsRef.get() > maxIterations) {
       return false;
     }
 

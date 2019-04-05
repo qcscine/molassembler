@@ -1,3 +1,4 @@
+
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
@@ -31,9 +32,7 @@
 using namespace Scine;
 using namespace molassembler;
 
-constexpr std::size_t nExperiments = 100;
-constexpr std::size_t refinementStepLimit = 10000;
-constexpr double refinementGradientTarget = 1e-5;
+constexpr std::size_t nExperiments = 1000;
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';
@@ -41,11 +40,13 @@ std::ostream& nl(std::ostream& os) {
 }
 
 struct TimingFunctor {
-  virtual boost::optional<unsigned> value(
+  virtual double value(
     const Eigen::MatrixXd& squaredBounds,
     const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
+    const Eigen::MatrixXd& positions,
+    std::chrono::time_point<std::chrono::steady_clock>& start,
+    std::chrono::time_point<std::chrono::steady_clock>& end
   ) = 0;
 
   virtual std::string name() = 0;
@@ -55,8 +56,6 @@ struct FunctorResults {
   unsigned count = 0;
   double timingAverage = 0;
   double timingStddev = 0;
-  double iterationsAverage = 0;
-  double iterationsStddev = 0;
 };
 
 template<size_t N>
@@ -72,7 +71,7 @@ std::vector<FunctorResults> timeFunctors(
 
   struct Counter {
     std::vector<double> timings;
-    std::vector<double> iterations;
+    std::vector<double> results;
   };
 
   std::vector<Counter> counters(functors.size());
@@ -115,19 +114,17 @@ std::vector<FunctorResults> timeFunctors(
 
     // Run all functors on the same
     for(unsigned functorIndex = 0; functorIndex < functors.size(); ++functorIndex) {
-      start = steady_clock::now();
-      auto resultOption = functors.at(functorIndex)->value(
+      double result = functors.at(functorIndex)->value(
         squaredBounds,
         chiralConstraints,
         dihedralConstraints,
-        embeddedPositions
+        embeddedPositions,
+        start,
+        end
       );
-      end = steady_clock::now();
 
-      if(resultOption) {
-        counters.at(functorIndex).timings.push_back(duration_cast<microseconds>(end - start).count());
-        counters.at(functorIndex).iterations.push_back(resultOption.value());
-      }
+      counters.at(functorIndex).timings.push_back(duration_cast<nanoseconds>(end - start).count());
+      counters.at(functorIndex).results.push_back(result);
     }
   }
 
@@ -140,8 +137,6 @@ std::vector<FunctorResults> timeFunctors(
       if(!counter.timings.empty()) {
         result.timingAverage = temple::average(counter.timings);
         result.timingStddev = temple::stddev(counter.timings, result.timingAverage);
-        result.iterationsAverage = temple::average(counter.iterations);
-        result.iterationsStddev = temple::stddev(counter.iterations, result.iterationsAverage);
       }
 
       return result;
@@ -150,18 +145,17 @@ std::vector<FunctorResults> timeFunctors(
 }
 
 struct DlibFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value (
+  double value (
     const Eigen::MatrixXd& squaredBounds,
     const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
+    const Eigen::MatrixXd& positions,
+    std::chrono::time_point<std::chrono::steady_clock>& start,
+    std::chrono::time_point<std::chrono::steady_clock>& end
   ) final {
     using namespace DistanceGeometry;
 
     Eigen::MatrixXd positionCopy = positions;
-
-    const unsigned N = positions.size() / 4;
-    unsigned iterationCount = 0;
 
     /* Transform positions to dlib space */
     ErrorFunctionValue::Vector dlibPositions = dlib::mat(
@@ -189,94 +183,17 @@ struct DlibFunctor final : public TimingFunctor {
       dihedralConstraints
     };
 
-    /* Perform inversion trick */
-    double initiallyCorrectChiralConstraints = valueFunctor
-      .calculateProportionChiralConstraintsCorrectSign(dlibPositions);
+    double error = 0;
 
-    if(initiallyCorrectChiralConstraints < 0.5) {
-      // Invert y coordinates
-      for(unsigned i = 0; i < N; i++) {
-        dlibPositions(
-          static_cast<dlibIndexType>(i) * 4 + 1
-        ) *= -1;
-      }
-
-      initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
+    start = std::chrono::steady_clock::now();
+    for(unsigned i = 0; i < 10; ++i) {
+      error += valueFunctor(dlibPositions);
+      auto gradient = gradientFunctor(dlibPositions);
+      error += gradient(0);
     }
+    end = std::chrono::steady_clock::now();
 
-    /* Stage one: Invert chirals */
-    if(initiallyCorrectChiralConstraints < 1) {
-      unsigned firstStageIterations;
-
-      dlibAdaptors::IterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
-        firstStageIterations,
-        valueFunctor,
-        refinementStepLimit
-      };
-
-      try {
-        dlib::find_min(
-          dlib::bfgs_search_strategy(),
-          inversionStopStrategy,
-          valueFunctor,
-          gradientFunctor,
-          dlibPositions,
-          0
-        );
-
-      } catch(...) {
-        return boost::none;
-      }
-
-      /* Handle errors */
-      if(firstStageIterations >= refinementStepLimit) {
-        return boost::none;
-      }
-
-      if(valueFunctor.proportionChiralConstraintsCorrectSign < 1.0) {
-        return boost::none;
-      }
-
-      iterationCount += firstStageIterations;
-    }
-
-    unsigned secondStageIterations;
-    dlibAdaptors::IterationOrGradientNormStopStrategy refinementStopStrategy {
-      secondStageIterations,
-      refinementStepLimit,
-      refinementGradientTarget
-    };
-
-    /* Stage two: refine, compressing the fourth dimension */
-    valueFunctor.compressFourthDimension = true;
-    gradientFunctor.compressFourthDimension = true;
-    try {
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        refinementStopStrategy,
-        valueFunctor,
-        gradientFunctor,
-        dlibPositions,
-        0
-      );
-    } catch(std::out_of_range& e) {
-      return boost::none;
-    }
-
-    /* Error conditions */
-    // Max iterations reached
-    if(secondStageIterations >= refinementStepLimit) {
-      return boost::none;
-    }
-
-    // Not all chirality constraints have the right sign
-    if(valueFunctor.proportionChiralConstraintsCorrectSign < 1) {
-      return boost::none;
-    }
-
-    iterationCount += secondStageIterations;
-
-    return iterationCount;
+    return error;
   }
 
   std::string name() final {
@@ -284,46 +201,23 @@ struct DlibFunctor final : public TimingFunctor {
   }
 };
 
-template<typename EigenRefinementType>
-struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
-  const EigenRefinementType& refinementFunctorReference;
-
-  InversionOrIterLimitStop(const EigenRefinementType& functor) : refinementFunctorReference(functor) {}
-
-  bool checkConvergence(
-    const Eigen::VectorXd& /* parameters */,
-    double /* value */,
-    const Eigen::VectorXd& /* gradients */
-  ) final {
-    return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
-  }
-
-  virtual bool checkMaxIterations(unsigned currentIteration) final {
-    return currentIteration >= refinementStepLimit;
-  }
-
-  void addSettingsDescriptors(Utils::UniversalSettings::DescriptorCollection& /* collection */) final {}
-  void applySettings(const Utils::Settings& /* s */) final {}
-};
-
 template<
   template<unsigned, typename> class EigenRefinementType,
   unsigned dimensionality,
   typename FloatType
 >
-boost::optional<unsigned> refine(
+double refine(
   const Eigen::MatrixXd& squaredBounds,
   const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
   const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-  const Eigen::MatrixXd& positions
+  const Eigen::MatrixXd& positions,
+  std::chrono::time_point<std::chrono::steady_clock>& start,
+  std::chrono::time_point<std::chrono::steady_clock>& end
 ) {
-  unsigned iterationCount = 0;
-
   using NTPRefinementType = EigenRefinementType<dimensionality, FloatType>;
 
   Eigen::MatrixXd positionCopy = positions;
 
-  const unsigned N = positions.size() / dimensionality;
   /* Transfer positions into vector form */
   Eigen::VectorXd transformedPositions = Eigen::Map<Eigen::VectorXd>(
     positionCopy.data(),
@@ -336,78 +230,27 @@ boost::optional<unsigned> refine(
     dihedralConstraints
   };
 
-  double initiallyCorrectChiralConstraints = refinementFunctor.calculateProportionChiralConstraintsCorrectSign(transformedPositions);
+  double error = 0;
+  Eigen::VectorXd gradient(transformedPositions.size());
+  gradient.setZero();
 
-  if(initiallyCorrectChiralConstraints < 0.5) {
-    for(unsigned i = 0; i < N; ++i) {
-      transformedPositions(dimensionality * i + 1) *= -1;
-    }
-    initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
+  start = std::chrono::steady_clock::now();
+  for(unsigned i = 0; i < 10; ++i) {
+    refinementFunctor(transformedPositions, error, gradient);
   }
+  end = std::chrono::steady_clock::now();
 
-  Utils::LBFGS optimizer;
-  optimizer.maxm = 100;
-  optimizer.c1 = 0.01;
-  optimizer.stepLength = 10;
-
-  /* First stage: Invert all chiral constraints */
-  if(initiallyCorrectChiralConstraints < 1) {
-    InversionOrIterLimitStop<NTPRefinementType> inversionChecker {refinementFunctor};
-    const unsigned iterations = optimizer.optimize(
-      transformedPositions,
-      refinementFunctor,
-      inversionChecker
-    );
-
-    if(iterations >= refinementStepLimit) {
-      return boost::none;
-    }
-
-    if(refinementFunctor.proportionChiralConstraintsCorrectSign < 1.0) {
-      return boost::none;
-    }
-
-    iterationCount += iterations;
-  }
-
-  /* Second stage: Refine */
-  refinementFunctor.compressFourthDimension = true;
-
-  Utils::GradientBasedCheck gradientChecker;
-  gradientChecker.maxIter = refinementStepLimit;
-  gradientChecker.gradNorm = 1e-5;
-  const unsigned iterations = optimizer.optimize(
-    transformedPositions,
-    refinementFunctor,
-    gradientChecker
-  );
-
-  if(iterations >= refinementStepLimit) {
-    return boost::none;
-  }
-
-  if(refinementFunctor.proportionChiralConstraintsCorrectSign < 1) {
-    return boost::none;
-  }
-
-  iterationCount += iterations;
-
-  return iterationCount;
-
-  /*Utils::PositionCollection finalPositions(N, 3);
-  for(unsigned i = 0; i < N; ++i) {
-    finalPositions.row(i) = transformedPositions.segment<3>(dimensionality * i);
-  }
-
-  return AngstromWrapper {std::move(finalPositions), LengthUnit::Angstrom};*/
+  return error + gradient(0);
 }
 
 struct EigenDoubleFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value(
+  double value(
     const Eigen::MatrixXd& squaredBounds,
     const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
+    const Eigen::MatrixXd& positions,
+    std::chrono::time_point<std::chrono::steady_clock>& start,
+    std::chrono::time_point<std::chrono::steady_clock>& end
   ) final {
     return refine<
       DistanceGeometry::EigenRefinementProblem,
@@ -417,7 +260,9 @@ struct EigenDoubleFunctor final : public TimingFunctor {
       squaredBounds,
       chiralConstraints,
       dihedralConstraints,
-      positions
+      positions,
+      start,
+      end
     );
   }
 
@@ -427,11 +272,13 @@ struct EigenDoubleFunctor final : public TimingFunctor {
 };
 
 struct EigenFloatFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value(
+  double value(
     const Eigen::MatrixXd& squaredBounds,
     const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
+    const Eigen::MatrixXd& positions,
+    std::chrono::time_point<std::chrono::steady_clock>& start,
+    std::chrono::time_point<std::chrono::steady_clock>& end
   ) final {
     return refine<
       DistanceGeometry::EigenRefinementProblem,
@@ -441,7 +288,9 @@ struct EigenFloatFunctor final : public TimingFunctor {
       squaredBounds,
       chiralConstraints,
       dihedralConstraints,
-      positions
+      positions,
+      start,
+      end
     );
   }
 
@@ -451,11 +300,13 @@ struct EigenFloatFunctor final : public TimingFunctor {
 };
 
 struct EigenSIMDDoubleFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value (
+  double value (
     const Eigen::MatrixXd& squaredBounds,
     const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
+    const Eigen::MatrixXd& positions,
+    std::chrono::time_point<std::chrono::steady_clock>& start,
+    std::chrono::time_point<std::chrono::steady_clock>& end
   ) final {
     return refine<
       DistanceGeometry::EigenSIMDRefinementProblem,
@@ -465,7 +316,9 @@ struct EigenSIMDDoubleFunctor final : public TimingFunctor {
       squaredBounds,
       chiralConstraints,
       dihedralConstraints,
-      positions
+      positions,
+      start,
+      end
     );
   }
 
@@ -475,11 +328,13 @@ struct EigenSIMDDoubleFunctor final : public TimingFunctor {
 };
 
 struct EigenSIMDFloatFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value (
+  double value (
     const Eigen::MatrixXd& squaredBounds,
     const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
+    const Eigen::MatrixXd& positions,
+    std::chrono::time_point<std::chrono::steady_clock>& start,
+    std::chrono::time_point<std::chrono::steady_clock>& end
   ) final {
     return refine<
       DistanceGeometry::EigenSIMDRefinementProblem,
@@ -489,7 +344,9 @@ struct EigenSIMDFloatFunctor final : public TimingFunctor {
       squaredBounds,
       chiralConstraints,
       dihedralConstraints,
-      positions
+      positions,
+      start,
+      end
     );
   }
 
@@ -565,9 +422,7 @@ void benchmark(
     << std::setw(6) << nCount
     << std::setw(10) << "Name"
     << std::setw(10) << "Rel. v"
-    << std::setw(14) << "Successes"
-    << std::setw(25) << "Time mu(sigma) / 1e-6s"
-    << std::setw(25) << "Iter mu(sigma) / 1"
+    << std::setw(25) << "Time mu(sigma) / 1e-9s"
     << nl;
 
   std::vector<
@@ -627,14 +482,10 @@ void benchmark(
 
     std::string timingStr = std::to_string(static_cast<int>(functorResult.timingAverage)) + "(" + std::to_string(static_cast<int>(functorResult.timingStddev)) + ")";
 
-    std::string iterationStr = std::to_string(static_cast<int>(functorResult.iterationsAverage)) + "(" + std::to_string(static_cast<int>(functorResult.iterationsStddev)) + ")";
-
     std::cout
       << std::setw(16) << functorPtr->name()
       << std::setw(10) << (functorResult.timingAverage / smallestAverage)
-      << std::setw(14) << successCount
       << std::setw(25) << timingStr
-      << std::setw(25) << iterationStr
       << nl;
 
     benchmarkFile << functorResult.timingAverage << ", " << functorResult.timingStddev;
@@ -652,8 +503,10 @@ using namespace std::string_literals;
 const std::string algorithmChoices =
   "  0 - All\n"
   "  1 - dlib\n"
-  "  2 - Eigen\n"
-  "  3 - Eigen with SIMD\n";
+  "  2 - Eigen<4, double>\n"
+  "  3 - Eigen<4, float>\n"
+  "  4 - EigenSIMD<4, double>\n"
+  "  5 - EigenSIMD<4, float>\n";
 
 int main(int argc, char* argv[]) {
   using namespace molassembler;

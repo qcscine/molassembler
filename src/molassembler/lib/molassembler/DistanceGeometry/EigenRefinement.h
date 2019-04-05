@@ -44,13 +44,14 @@ struct EigenRefinementProblem {
 //!@name Static members
 //!@{
   constexpr static unsigned dimensions = dimensionality;
+  constexpr static bool simd = false;
 //!@}
 
   template<
     typename EigenType,
     typename FPType = FloatType,
     typename std::enable_if_t<std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalDowncast(EigenType eigenTypeValue) {
+  > static auto conditionalDowncast(const EigenType& eigenTypeValue) {
     return eigenTypeValue;
   }
 
@@ -58,7 +59,7 @@ struct EigenRefinementProblem {
     typename EigenType,
     typename FPType = FloatType,
     typename std::enable_if_t<!std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalDowncast(EigenType eigenTypeValue) {
+  > static auto conditionalDowncast(const EigenType& eigenTypeValue) {
     return eigenTypeValue.template cast<FloatType>().eval();
   }
 
@@ -66,7 +67,7 @@ struct EigenRefinementProblem {
     typename EigenType,
     typename FPType = FloatType,
     typename std::enable_if_t<std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalUpcast(EigenType eigenTypeValue) {
+  > static auto conditionalUpcast(const EigenType& eigenTypeValue) {
     return eigenTypeValue;
   }
 
@@ -74,7 +75,7 @@ struct EigenRefinementProblem {
     typename EigenType,
     typename FPType = FloatType,
     typename std::enable_if_t<!std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalUpcast(EigenType eigenTypeValue) {
+  > static auto conditionalUpcast(const EigenType& eigenTypeValue) {
     return eigenTypeValue.template cast<double>().eval();
   }
 
@@ -142,6 +143,7 @@ struct EigenRefinementProblem {
 //!@name Signaling members
 //!@{
   mutable double proportionChiralConstraintsCorrectSign = 0.0;
+  mutable unsigned callCount = 0;
 //!@}
 
   explicit EigenRefinementProblem(
@@ -166,8 +168,8 @@ struct EigenRefinementProblem {
 
     for(unsigned i = 0; i < N - 1; ++i) {
       for(unsigned j = i + 1; j < N; ++j) {
-        const double lowerBoundSquared = squaredBounds(j, i);
-        const double upperBoundSquared = squaredBounds(i, j);
+        const FloatType lowerBoundSquared = squaredBounds(j, i);
+        const FloatType upperBoundSquared = squaredBounds(i, j);
         assert(lowerBoundSquared <= upperBoundSquared);
 
         // For both
@@ -176,22 +178,13 @@ struct EigenRefinementProblem {
           - positions.template segment<dimensionality>(dimensionality * j)
         );
 
-        const double diffLength = positionDifference.norm();
+        const FloatType squareDistance = positionDifference.squaredNorm();
 
         // Upper term
-        const double upperTerm = diffLength / upperBoundSquared - 1;
-
-        assert(!( // Ensure early return logic is correct
-          upperTerm > 0
-          && ( // lowerTerm
-            2 * lowerBoundSquared / (
-              lowerBoundSquared + diffLength
-            ) - 1
-          ) > 0
-        ));
+        const FloatType upperTerm = squareDistance / upperBoundSquared - 1;
 
         if(upperTerm > 0) {
-          error += upperTerm * upperTerm;
+          error += static_cast<double>(upperTerm * upperTerm);
 
           const auto f = conditionalUpcast(
             FullDimensionalVector {
@@ -201,34 +194,29 @@ struct EigenRefinementProblem {
 
           gradients.template segment<dimensionality>(dimensionality * i) += f;
           gradients.template segment<dimensionality>(dimensionality * j) -= f;
+        } else {
+          // Lower term is only possible if the upper term does not contribute
+          const FloatType quotient = lowerBoundSquared + squareDistance;
+          const FloatType lowerTerm = 2 * lowerBoundSquared / quotient - 1;
 
-          /* if the upper term is set, there is no way the lower term needs to be
-           * applied -> early return
-           */
-          return;
-        }
+          if(lowerTerm > 0) {
+            error += static_cast<double>(lowerTerm * lowerTerm);
 
-        // Lower term
-        const double quotient = lowerBoundSquared + diffLength;
-        const double lowerTerm = 2 * lowerBoundSquared / quotient - 1;
+            const auto g = conditionalUpcast(
+              FullDimensionalVector {
+                8 * lowerBoundSquared * positionDifference * lowerTerm / (
+                  quotient * quotient
+                )
+              }
+            );
 
-        if(lowerTerm > 0) {
-          error += lowerTerm * lowerTerm;
-
-          const auto g = conditionalUpcast(
-            FullDimensionalVector {
-              8 * lowerBoundSquared * positionDifference * lowerTerm / (
-                quotient * quotient
-              )
-            }
-          );
-
-          /* We use -= because the lower term needs the position vector
-           * difference (j - i), so we reuse positionDifference and just subtract
-           * from the gradient instead of adding to it
-           */
-          gradients.template segment<dimensionality>(dimensionality * i) -= g;
-          gradients.template segment<dimensionality>(dimensionality * j) += g;
+            /* We use -= because the lower term needs the position vector
+             * difference (j - i), so we reuse positionDifference and just subtract
+             * from the gradient instead of adding to it
+             */
+            gradients.template segment<dimensionality>(dimensionality * i) -= g;
+            gradients.template segment<dimensionality>(dimensionality * j) += g;
+          }
         }
       }
     }
@@ -373,7 +361,7 @@ struct EigenRefinementProblem {
       ThreeDimensionalVector a = f.cross(g);
       ThreeDimensionalVector b = h.cross(g);
 
-      // All of the permutations yield identical expressions within atan2 aside from -g
+      // Calculate the dihedral angle
       double phi = std::atan2(
         a.cross(b).dot(
           -g.normalized()
@@ -508,6 +496,8 @@ struct EigenRefinementProblem {
    * @post Error is stored in @p value and gradient in @p gradient
    */
   void operator() (const Eigen::VectorXd& parameters, double& value, Eigen::VectorXd& gradient) const {
+    ++callCount;
+
     assert(gradient.size() == parameters.size());
     assert(parameters.size() % dimensionality == 0);
 
@@ -521,7 +511,7 @@ struct EigenRefinementProblem {
       std::is_same<FloatType, float>::value,
       VectorType,
       const VectorType&
-    > possiblyDowncastedParameters = parameters;
+    > possiblyDowncastedParameters = conditionalDowncast(parameters);
 
     distanceContributions(possiblyDowncastedParameters, value, gradient);
     chiralContributions(possiblyDowncastedParameters, value, gradient);
@@ -533,6 +523,12 @@ struct EigenRefinementProblem {
     unsigned nonZeroChiralityConstraints = 0;
     unsigned incorrectNonZeroChiralityConstraints = 0;
 
+    std::conditional_t<
+      std::is_same<FloatType, float>::value,
+      VectorType,
+      const VectorType&
+    > possiblyDowncastedParameters = conditionalDowncast(positions);
+
     for(const auto& constraint : chiralConstraints) {
       /* Make sure that chirality constraints meant to cause coplanarity of
        * four indices aren't counted here - Their volume bounds are
@@ -543,15 +539,15 @@ struct EigenRefinementProblem {
       if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
         nonZeroChiralityConstraints += 1;
 
-        const ThreeDimensionalVector delta = getAveragePosition3D(positions, constraint.sites[3]);
+        const ThreeDimensionalVector delta = getAveragePosition3D(possiblyDowncastedParameters, constraint.sites[3]);
 
         const double volume = (
-          getAveragePosition3D(positions, constraint.sites[0]) - delta
+          getAveragePosition3D(possiblyDowncastedParameters, constraint.sites[0]) - delta
         ).dot(
           (
-            getAveragePosition3D(positions, constraint.sites[1]) - delta
+            getAveragePosition3D(possiblyDowncastedParameters, constraint.sites[1]) - delta
           ).cross(
-            getAveragePosition3D(positions, constraint.sites[2]) - delta
+            getAveragePosition3D(possiblyDowncastedParameters, constraint.sites[2]) - delta
           )
         );
 

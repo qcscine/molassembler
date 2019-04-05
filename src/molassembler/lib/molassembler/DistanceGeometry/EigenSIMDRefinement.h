@@ -4,8 +4,8 @@
  * @brief Eigen SIMD refinement implementation
  */
 
-#ifndef INCLUDE_MOLASSEMBLER_DG_REFINEMENT_H
-#define INCLUDE_MOLASSEMBLER_DG_REFINEMENT_H
+#ifndef INCLUDE_MOLASSEMBLER_DG_EIGEN_SIMD_REFINEMENT_PROBLEM_H
+#define INCLUDE_MOLASSEMBLER_DG_EIGEN_SIMD_REFINEMENT_PROBLEM_H
 
 #include <Eigen/Core>
 #include "molassembler/Types.h"
@@ -24,8 +24,6 @@ namespace DistanceGeometry {
  * - Document this really well
  * - Check that Eigen actually vectorizes the expressions I want vectorized
  *   using asm annotations
- * - Progressively validate the sub-expressions
- * - Transfer reference implementations from RefinementProblem for validation
  * - Dihedral contributions function does not pull any punches in NaN
  *   avoidance. It will be necessary to re-check when NaNs occur and put in a
  *   proper procedure to avoid them, e.g. run a single step using only distance
@@ -36,17 +34,11 @@ namespace DistanceGeometry {
  *   could be transferred into index-based scheme at construction time and
  *   precalculated each step
  * - Auxiliary functions checking constraints for the right sign could probably
- *   be abbreviated or simdized too
+ *   be abbreviated or SIMDized too
  * - Correctness of error summation over SIMD instructions could probably be
  *   improved by casting before summation, but unknown what effect this really
  *   has
- * - Start benchmarking
- *
- * Some linear arrays are reused in SIMD, and stored as member functions:
- * - Upper bounds squared, linearized in i < j fashion
- * - Lower bounds squared, linearized in i < j fashion
- * - Chiral constraint upper and lower bounds, linearized in sequence
- * - Dihedral contributions reuse
+ * - Start benchmarking and profiling
  */
 template<unsigned dimensionality, typename FloatType>
 class EigenSIMDRefinementProblem {
@@ -77,13 +69,14 @@ public:
 //!@name Static members
 //!@{
   constexpr static unsigned dimensions = dimensionality;
+  constexpr static bool simd = true;
 //!@}
 
   template<
     typename EigenType,
     typename FPType = FloatType,
     typename std::enable_if_t<std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalDowncast(EigenType eigenTypeValue) {
+  > static auto conditionalDowncast(const EigenType& eigenTypeValue) {
     return eigenTypeValue;
   }
 
@@ -91,7 +84,7 @@ public:
     typename EigenType,
     typename FPType = FloatType,
     typename std::enable_if_t<!std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalDowncast(EigenType eigenTypeValue) {
+  > static auto conditionalDowncast(const EigenType& eigenTypeValue) {
     return eigenTypeValue.template cast<FloatType>().eval();
   }
 
@@ -99,7 +92,7 @@ public:
     typename EigenType,
     typename FPType = FloatType,
     typename std::enable_if_t<std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalUpcast(EigenType eigenTypeValue) {
+  > static auto conditionalUpcast(const EigenType& eigenTypeValue) {
     return eigenTypeValue;
   }
 
@@ -107,7 +100,7 @@ public:
     typename EigenType,
     typename FPType = FloatType,
     typename std::enable_if_t<!std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalUpcast(EigenType eigenTypeValue) {
+  > static auto conditionalUpcast(const EigenType& eigenTypeValue) {
     return eigenTypeValue.template cast<double>().eval();
   }
 
@@ -189,6 +182,7 @@ public:
 //!@name Signaling members
 //!@{
   mutable double proportionChiralConstraintsCorrectSign = 0.0;
+  mutable unsigned callCount = 0;
 //!@}
 
 //!@name Constructors
@@ -280,20 +274,17 @@ public:
 
     FullDimensionalMatrixType positionDifferences(dimensionality, differencesCount);
     {
-      FullDimensionalMatrixType subtrahend(dimensionality, differencesCount);
-
       unsigned offset = 0;
       for(unsigned i = 0; i < N - 1; ++i) {
         auto iPosition = positions.template segment<dimensionality>(dimensionality * i);
         for(unsigned j = i + 1; j < N; ++j) {
-          positionDifferences.col(offset) = iPosition;
-          subtrahend.col(offset) = positions.template segment<dimensionality>(dimensionality * j);
+          positionDifferences.col(offset) = (
+            iPosition
+            - positions.template segment<dimensionality>(dimensionality * j)
+          );
           ++offset;
         }
       }
-
-      // SIMD
-      positionDifferences -= subtrahend;
     }
 
     // SIMD
@@ -301,15 +292,43 @@ public:
 
     // SIMD
     const VectorType upperTerms = squareDistances.array() / upperDistanceBoundsSquared.array() - 1;
-    // SIMD
-    error += static_cast<double>(upperTerms.array().max(0.0).square().sum());
+
+#ifndef NDEBUG
+    {
+      // Check correctness of results so far
+      unsigned offset = 0;
+      for(unsigned i = 0; i < N - 1; ++i) {
+        for(unsigned j = i + 1; j < N; ++j) {
+          const FullDimensionalVector positionDifference = (
+            positions.template segment<dimensionality>(dimensionality * i)
+            - positions.template segment<dimensionality>(dimensionality * j)
+          );
+
+          assert(positionDifferences.col(offset) == positionDifference);
+
+          const FloatType squareDistance = positionDifference.squaredNorm();
+
+          assert(squareDistance == squareDistances(offset));
+
+          // Upper term
+          const FloatType upperTerm = squareDistance / upperDistanceBoundsSquared(offset) - 1;
+
+          assert(upperTerm == upperTerms(offset));
+
+          ++offset;
+        }
+      }
+    }
+#endif
 
     // Traverse upper terms and calculate gradients
     for(unsigned iOffset = 0, i = 0; i < N - 1; ++i) {
       const unsigned crossTerms = N - i - 1;
       for(unsigned jOffset = 0, j = i + 1;  j < N; ++j, ++jOffset) {
         const FloatType upperTerm = upperTerms(iOffset + jOffset);
-        if(upperTerm > FloatType {0}) {
+        if(upperTerm > 0) {
+          error += static_cast<double>(upperTerm * upperTerm);
+
           /* This i-j combination has an upper value contribution
            *
            * calculate gradient and apply to i and j
@@ -327,18 +346,18 @@ public:
         } else {
           /* This i-j combination MAYBE has a lower value contribution
            */
-          const auto& lowerBound = lowerDistanceBoundsSquared(iOffset + jOffset);
-          const FloatType quotient = lowerBound + squareDistances(iOffset + jOffset);
-          FloatType lowerTerm = 2 * lowerBound / quotient - 1;
+          const auto& lowerBoundSquared = lowerDistanceBoundsSquared(iOffset + jOffset);
+          const FloatType quotient = lowerBoundSquared + squareDistances(iOffset + jOffset);
+          const FloatType lowerTerm = 2 * lowerBoundSquared / quotient - 1;
 
-          if(lowerTerm > FloatType {0}) {
+          if(lowerTerm > 0) {
             // Add it to the error
-            error += static_cast<double>(lowerTerm) * static_cast<double>(lowerTerm);
+            error += static_cast<double>(lowerTerm * lowerTerm);
 
             // Calculate gradient and apply
             const auto g = conditionalUpcast(
               FullDimensionalVector {
-                8 * positionDifferences.col(iOffset + jOffset) * lowerTerm / (
+                8 * lowerBoundSquared * positionDifferences.col(iOffset + jOffset) * lowerTerm / (
                   quotient * quotient
                 )
               }
@@ -521,7 +540,7 @@ public:
     VectorType siteSizes(4 * C);
     for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
       const FloatType factor = factors(constraintIndex);
-      if(factor != FloatType {0}) {
+      if(factor != 0) {
         // Collect sub-expressions for the various terms, does nothing yet
         auto a = positionDifferences.col(3 * constraintIndex + 0);
         auto b = positionDifferences.col(3 * constraintIndex + 1);
@@ -570,7 +589,7 @@ public:
 
     // Distribute ijkl contributions into gradient
     for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-      if(factors(constraintIndex) != FloatType {0}) {
+      if(factors(constraintIndex) != 0) {
         const ChiralityConstraint& constraint = chiralConstraints[constraintIndex];
         /* ijklContributions.col is a Eigen::ColExpr.
          * If FloatType == double, then iContribution is Eigen::ColExpr -> no copy
@@ -663,6 +682,9 @@ public:
       auto a = as.col(i);
       auto b = bs.col(i);
 
+      /* Each of these expressions assigns a column in one of the two-character
+       * matrices
+       */
       f = alpha - beta;
       g = beta - gamma;
       h = delta - gamma;
@@ -671,7 +693,7 @@ public:
       a = f.cross(g);
       b = h.cross(g);
 
-      // All of the permutations yield identical expressions within atan2 aside from -g
+      // Calculate the dihedral angle
       FloatType& phi = phis(i);
       phi = std::atan2(
         a.cross(b).dot(
@@ -693,7 +715,7 @@ public:
     const VectorType w_phis = phis - dihedralConstraintSumsHalved;
 
     // SIMD
-    VectorType h_phis = phis.cwiseAbs() - dihedralConstraintDiffsHalved;
+    VectorType h_phis = w_phis.cwiseAbs() - dihedralConstraintDiffsHalved;
 
     // SIMD
     error += static_cast<double>(h_phis.array().max(0.0).square().sum()) / 10;
@@ -703,7 +725,7 @@ public:
       FloatType& h_phi = h_phis(i);
 
       // Early exit conditions (max function yields zero)
-      if(h_phi <= FloatType {0}) {
+      if(h_phi <= 0) {
         continue;
       }
 
@@ -712,13 +734,13 @@ public:
        */
       const ThreeDimensionalVector& g = gs.col(i);
       const FloatType gLength = g.norm();
-      if(gLength == FloatType {0}) {
+      if(gLength == 0) {
         throw std::runtime_error("Encountered zero-length g vector in dihedral errors");
       }
 
       const FloatType& w_phi = w_phis(i);
       // Multiply with sgn (w)
-      h_phi *= static_cast<int>(FloatType {0} < w_phi) - static_cast<int>(w_phi < FloatType {0});
+      h_phi *= static_cast<int>(0 < w_phi) - static_cast<int>(w_phi < 0);
       // Multiply in reduction factor and multiplier
       h_phi *= 2 * reductionFactor;
 
@@ -729,13 +751,13 @@ public:
       auto b = bs.col(i);
 
       const FloatType aLengthSquared = a.squaredNorm();
-      if(aLengthSquared == FloatType {0}) {
+      if(aLengthSquared == 0) {
         throw std::runtime_error("Encountered zero-length a vector in dihedral gradient contributions");
       }
       a /= aLengthSquared;
 
       const FloatType bLengthSquared = b.squaredNorm();
-      if(bLengthSquared == FloatType {0}) {
+      if(bLengthSquared == 0) {
         throw std::runtime_error("Encountered zero-length b vector in dihedral gradient contributions");
       }
       b /= bLengthSquared;
@@ -819,18 +841,19 @@ public:
    * @post Error is stored in @p value and gradient in @p gradient
    */
   void operator() (const Eigen::VectorXd& parameters, double& value, Eigen::VectorXd& gradient) const {
+    ++callCount;
+
     assert(parameters.size() == gradient.size());
     assert(parameters.size() % dimensionality == 0);
 
     value = 0;
     gradient.setZero();
 
-    /* A copy per iteration just to have float inputs might be a pessimization,
-     * especially for the case when positions are really just doubles. Try this
-     * variant and one where you don't copy the position and just cast them
-     * every time they are needed.
-     */
-    VectorType positions = parameters.cast<FloatType>();
+    std::conditional_t<
+      std::is_same<FloatType, float>::value,
+      VectorType,
+      const VectorType&
+    > positions = conditionalDowncast(parameters);
 
     fourthDimensionContributions(positions, value, gradient);
     dihedralContributions(positions, value, gradient);
@@ -838,9 +861,15 @@ public:
     chiralContributions(positions, value, gradient);
   }
 
-  double calculateProportionChiralConstraintsCorrectSign(const Eigen::VectorXd& positions) const {
+  double calculateProportionChiralConstraintsCorrectSign(const Eigen::VectorXd& parameters) const {
     unsigned nonZeroChiralityConstraints = 0;
     unsigned incorrectNonZeroChiralityConstraints = 0;
+
+    std::conditional_t<
+      std::is_same<FloatType, float>::value,
+      VectorType,
+      const VectorType&
+    > positions = conditionalDowncast(parameters);
 
     for(const auto& constraint : chiralConstraints) {
       /* Make sure that chirality constraints meant to cause coplanarity of

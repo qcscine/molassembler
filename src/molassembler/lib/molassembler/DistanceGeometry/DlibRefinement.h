@@ -191,6 +191,7 @@ struct ErrorFunctionValue {
 
   // Mutable state
   mutable double proportionChiralConstraintsCorrectSign = 0.0;
+  mutable unsigned callCount = 0;
 
   // Constructor
   explicit ErrorFunctionValue(
@@ -369,6 +370,8 @@ struct ErrorFunctionValue {
    * Calculates all terms of the error function for a given set of positions
    */
   double operator() (const Vector& positions) const {
+    ++callCount;
+
     assert(positions.size() % 4 == 0);
     assert(positions.size() / 4 == N);
 
@@ -777,6 +780,7 @@ public:
       + referenceB(positions)
       + referenceC(positions)
       + referenceD(positions)
+      + referenceDihedral(positions)
     );
   }
 

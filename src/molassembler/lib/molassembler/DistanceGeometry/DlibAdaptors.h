@@ -36,22 +36,26 @@ private:
 
 public:
 /* State */
+  std::reference_wrapper<unsigned> iterationsRef;
   const unsigned maxIterations = 0;
-  unsigned iterations = 0;
 
 /* Constructors */
   // Without max iteration limit
   explicit IterationOrAllChiralitiesCorrectStrategy(
+    unsigned& iterationCounter,
     const ErrorFunctionValue& valueFunctor
-  ) : _valueFunctor(valueFunctor)
-  {}
+  ) : _valueFunctor(valueFunctor),
+      iterationsRef(iterationCounter)
+  {iterationCounter = 0;}
 
   IterationOrAllChiralitiesCorrectStrategy(
+    unsigned& iterationCounter,
     const ErrorFunctionValue& valueFunctor,
     const unsigned maxIter
   ) : _valueFunctor(valueFunctor),
+      iterationsRef(iterationCounter),
       maxIterations(maxIter)
-  {}
+  {iterationCounter = 0;}
 
 
 /* Information */
@@ -65,9 +69,9 @@ public:
     const double /* function_value */,
     const T& /* gradient */
   ) {
-    iterations += 1;
+    iterationsRef.get() += 1;
 
-    if(maxIterations != 0 && iterations > maxIterations) {
+    if(maxIterations != 0 && iterationsRef.get() > maxIterations) {
       return false;
     }
 
@@ -87,16 +91,18 @@ struct IterationOrGradientNormStopStrategy {
   const double gradientNormThresholdSquared;
 
 /* State */
-  unsigned iterations = 0;
+  std::reference_wrapper<unsigned> iterationsRef;
 
 /* Constructors */
 
   IterationOrGradientNormStopStrategy(
+    unsigned& iterationCounter,
     const unsigned passMaxIterations,
     const double gradientNormThreshold
   ) : maxIterations(passMaxIterations),
-      gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold)
-  {}
+      gradientNormThresholdSquared(gradientNormThreshold * gradientNormThreshold),
+      iterationsRef(iterationCounter)
+  {iterationCounter = 0;}
 
   template<typename T>
   bool should_continue_search(
@@ -104,9 +110,9 @@ struct IterationOrGradientNormStopStrategy {
     const double /* function_value */,
     const T& gradient
   ) {
-    iterations += 1;
+    iterationsRef.get() += 1;
 
-    if(maxIterations != 0 && iterations > maxIterations) {
+    if(maxIterations != 0 && iterationsRef.get() > maxIterations) {
       return false;
     }
 

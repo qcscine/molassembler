@@ -42,6 +42,7 @@ public:
    */
   Scine::Utils::PositionCollection getBohr();
 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 private:
   bool _invalidated = false;
 };
