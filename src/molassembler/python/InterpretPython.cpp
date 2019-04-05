@@ -7,8 +7,8 @@
 #include "molassembler/Interpret.h"
 #include "molassembler/Molecule.h"
 
-#include "Utils/AtomCollection.h"
 #include "Utils/Bonds/BondOrderCollection.h"
+#include "Utils/Geometry/AtomCollection.h"
 
 void init_interpret(pybind11::module& m) {
   using namespace Scine::molassembler;
