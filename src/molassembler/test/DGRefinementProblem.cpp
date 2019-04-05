@@ -24,7 +24,6 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
-#include "molassembler/DistanceGeometry/EigenSIMDRefinement.h"
 #include "molassembler/IO.h"
 
 #include <fstream>
@@ -38,8 +37,6 @@ using namespace DistanceGeometry;
 
 /* TODO
  * - Prove EigenRefinementProblem is correct by verifying it against DlibRefinement
- * - Then prove EigenSIMDRefinementProblem is correct by verifying it against
- *   EigenRefinementProblem
  * - Then remove DlibRefinement and optimize either variant for speed,
  *   verifying them against each other
  *
@@ -494,57 +491,15 @@ struct Floating {};
 template<>
 struct Floating<double> {
   constexpr static double tolerance = 1e-10;
-  constexpr static const char* name = "double";
 };
 
 template<>
 struct Floating<float> {
   constexpr static double tolerance = 1e-5;
-  constexpr static const char* name = "float";
 };
 
 constexpr double Floating<double>::tolerance;
-constexpr const char* Floating<double>::name;
 constexpr double Floating<float>::tolerance;
-constexpr const char* Floating<float>::name;
-
-template<typename RefinementType>
-struct Refinement {
-  // Trick to make the compiler tell me the template arguments to RefinementType
-  template<
-    template<unsigned, typename> class BaseClass,
-    unsigned dimensionality,
-    typename FloatingPointType
-  > static auto dimensionalityHelper (BaseClass<dimensionality, FloatingPointType> /* a */) -> std::integral_constant<unsigned, dimensionality> {
-    return {};
-  }
-
-  template<
-    template<unsigned, typename> class BaseClass,
-    unsigned dimensionality,
-    typename FloatingPointType
-  > static auto floatingPointTypeHelper (BaseClass<dimensionality, FloatingPointType> /* a */) -> FloatingPointType {
-    return {};
-  }
-
-  using DimensionalityConstant = decltype(dimensionalityHelper(std::declval<RefinementType>()));
-  using FloatingPointType = decltype(floatingPointTypeHelper(std::declval<RefinementType>()));
-
-  // Get a name representation of the type for debug purposes
-  static std::string name() {
-    std::string name = "Eigen";
-    if(RefinementType::simd) {
-      name += "SIMD";
-    }
-    name += "RefinementProblem<";
-    name += std::to_string(DimensionalityConstant::value);
-    name += ", ";
-    name += traits::Floating<FloatingPointType>::name;
-    name += ">";
-
-    return name;
-  }
-};
 
 } // namespace traits
 
@@ -568,24 +523,27 @@ Eigen::MatrixXd rotateAndTranslate(
   return positionMatrix;
 }
 
-template<typename EigenRefinementType>
-Eigen::VectorXd rotateAndTranslateLinear(
-  Eigen::VectorXd positionVector,
+template<typename EigenRefinementType, typename FloatType>
+auto rotateAndTranslateLinear(
+  const typename EigenRefinementType::VectorType& positionVector,
   const Eigen::Matrix3d& rotationMatrix,
   const Eigen::Vector3d& translationVector
-) {
-  constexpr unsigned dimensionality = EigenRefinementType::dimensions;
+) -> typename EigenRefinementType::VectorType {
+  using DimensionalityConstant = typename RefinementTraits<EigenRefinementType>::DimensionalityConstant;
+  constexpr unsigned dimensionality = DimensionalityConstant::value;
 
-  assert(positionVector.size() % dimensionality == 0);
-  const unsigned N = positionVector.size() / dimensionality;
+  typename EigenRefinementType::VectorType positionCopy = positionVector;
+
+  assert(positionCopy.size() % dimensionality == 0);
+  const unsigned N = positionCopy.size() / dimensionality;
   for(unsigned i = 0; i < N; ++i) {
-    positionVector.segment<3>(dimensionality * i) = (
-      rotationMatrix * positionVector.segment<3>(dimensionality * i)
-      + translationVector
+    positionCopy.template segment<3>(dimensionality * i) = (
+      rotationMatrix.cast<FloatType>() * positionCopy.template segment<3>(dimensionality * i)
+      + translationVector.cast<FloatType>()
     );
   }
 
-  return positionVector;
+  return positionCopy;
 }
 
 Eigen::VectorXd flatten(Eigen::MatrixXd matr) {
@@ -597,16 +555,17 @@ Eigen::VectorXd flatten(Eigen::MatrixXd matr) {
 
 template<typename EigenRefinementType>
 struct RotationalTranslationalInvarianceTest {
+  using FloatType = typename EigenRefinementType::FloatingPointType;
   using PositionType = typename EigenRefinementType::VectorType;
 
   struct ErrorAndGradientComponent {
-    using FunctionType = std::function<void(const PositionType&, double&, Eigen::VectorXd&)>;
+    using FunctionType = std::function<void(const PositionType&, FloatType&, PositionType&)>;
 
     std::string name;
     FunctionType function;
 
-    double referenceValue;
-    Eigen::VectorXd referenceGradient;
+    FloatType referenceValue;
+    PositionType referenceGradient;
     bool errorRotationalInvariance = true;
     bool errorTranslationalInvariance = true;
     bool gradientRotationalInvariance = true;
@@ -634,20 +593,18 @@ struct RotationalTranslationalInvarianceTest {
       const Eigen::Vector3d& translationVector
     ) {
       if(errorTranslationalInvariance || gradientTranslationalInvariance) {
-        double translatedValue = 0;
-        Eigen::VectorXd translatedGradient;
+        FloatType translatedValue = 0;
+        PositionType translatedGradient;
         translatedGradient.resize(positionMatrix.cols() * positionMatrix.rows());
         translatedGradient.setZero();
 
-        PositionType translatedPositions = EigenRefinementType::conditionalDowncast(
-          flatten(
-            rotateAndTranslate(
-              positionMatrix,
-              Eigen::Matrix3d::Identity(),
-              translationVector
-            )
+        PositionType translatedPositions = flatten(
+          rotateAndTranslate(
+            positionMatrix,
+            Eigen::Matrix3d::Identity(),
+            translationVector
           )
-        );
+        ).cast<FloatType>();
 
         function(translatedPositions, translatedValue, translatedGradient);
 
@@ -655,7 +612,7 @@ struct RotationalTranslationalInvarianceTest {
           errorTranslationalInvariance
           && (
             std::fabs(translatedValue - referenceValue)
-            > traits::Floating<typename EigenRefinementType::FloatingPointType>::tolerance
+            > traits::Floating<FloatType>::tolerance
           )
         ) {
           std::cout << "Error is not translationally invariant: translated = "
@@ -669,7 +626,7 @@ struct RotationalTranslationalInvarianceTest {
           if(
             !translatedGradient.isApprox(
               referenceGradient,
-              traits::Floating<typename EigenRefinementType::FloatingPointType>::tolerance
+              traits::Floating<FloatType>::tolerance
             )
           ) {
             std::cout << "Translated gradient: " << translatedGradient.transpose() << "\n";
@@ -681,20 +638,18 @@ struct RotationalTranslationalInvarianceTest {
       }
 
       if(errorRotationalInvariance || gradientRotationalInvariance) {
-        double rotatedValue = 0;
-        Eigen::VectorXd rotatedGradient;
+        FloatType rotatedValue = 0;
+        PositionType rotatedGradient;
         rotatedGradient.resize(positionMatrix.cols() * positionMatrix.rows());
         rotatedGradient.setZero();
 
-        PositionType rotatedPositions = EigenRefinementType::conditionalDowncast(
-          flatten(
-            rotateAndTranslate(
-              positionMatrix,
-              rotationMatrix,
-              Eigen::Vector3d::Zero()
-            )
+        PositionType rotatedPositions = flatten(
+          rotateAndTranslate(
+            positionMatrix,
+            rotationMatrix,
+            Eigen::Vector3d::Zero()
           )
-        );
+        ).cast<FloatType>();
 
         function(rotatedPositions, rotatedValue, rotatedGradient);
 
@@ -702,7 +657,7 @@ struct RotationalTranslationalInvarianceTest {
           errorRotationalInvariance
           && (
             std::fabs(rotatedValue - referenceValue)
-            > traits::Floating<typename EigenRefinementType::FloatingPointType>::tolerance
+            > traits::Floating<FloatType>::tolerance
           )
         ) {
           std::cout << "Error is not rotationally invariant: rotated = "
@@ -714,7 +669,7 @@ struct RotationalTranslationalInvarianceTest {
 
         if(gradientRotationalInvariance) {
           // Rotate reference accordingly
-          auto rotatedReferenceGradient = rotateAndTranslateLinear<EigenRefinementType>(
+          auto rotatedReferenceGradient = rotateAndTranslateLinear<EigenRefinementType, FloatType>(
             referenceGradient,
             rotationMatrix,
             Eigen::Vector3d::Zero()
@@ -723,7 +678,7 @@ struct RotationalTranslationalInvarianceTest {
           if(
             !rotatedGradient.isApprox(
               rotatedReferenceGradient,
-              traits::Floating<typename EigenRefinementType::FloatingPointType>::tolerance
+              traits::Floating<FloatType>::tolerance
             )
           ) {
             std::cout << "Rotated   gradient: " << rotatedGradient.transpose() << "\n";
@@ -761,8 +716,8 @@ struct RotationalTranslationalInvarianceTest {
       auto makeFunctor = [&refinementFunctor](auto memFn) {
         return [&refinementFunctor, memFn](
           const PositionsType& positions,
-          double& value,
-          Eigen::VectorXd& gradient
+          FloatingPointType& value,
+          PositionsType& gradient
         ) { memFn(refinementFunctor, positions, value, gradient); };
       };
 
@@ -851,19 +806,19 @@ struct RotationalTranslationalInvarianceTest {
 
 BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance) {
   using EigenRefinementTypeVariations = std::tuple<
-    EigenRefinementProblem<4, double>,
-    EigenRefinementProblem<4, float>,
-    EigenSIMDRefinementProblem<4, double>,
-    EigenSIMDRefinementProblem<4, float>
+    EigenRefinementProblem<4, double, false>,
+    EigenRefinementProblem<4, float, false>,
+    EigenRefinementProblem<4, double, true>,
+    EigenRefinementProblem<4, float, true>
   >;
 
   constexpr unsigned variations = std::tuple_size<EigenRefinementTypeVariations>::value;
 
   std::array<std::string, variations> eigenRefinementNames {
-    "EigenRefinementProblem<4, double>",
-    "EigenRefinementProblem<4, float>",
-    "EigenSIMDRefinementProblem<4, double>",
-    "EigenSIMDRefinementProblem<4, float>"
+    "EigenRefinementProblem<4, double, false>",
+    "EigenRefinementProblem<4, float, false>",
+    "EigenRefinementProblem<4, double, true>",
+    "EigenRefinementProblem<4, float, true>"
   };
 
   auto passes = temple::TupleType::map<EigenRefinementTypeVariations, RotationalTranslationalInvarianceTest>();
@@ -878,8 +833,8 @@ BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance) {
 
 template<typename RefinementT, typename RefinementU>
 struct CompareImplementations {
-  using TraitsT = traits::Refinement<RefinementT>;
-  using TraitsU = traits::Refinement<RefinementU>;
+  using TraitsT = RefinementTraits<RefinementT>;
+  using TraitsU = RefinementTraits<RefinementU>;
 
   using PositionsT = typename RefinementT::VectorType;
   using FloatingPointT = typename TraitsT::FloatingPointType;
@@ -944,8 +899,8 @@ struct CompareImplementations {
         PositionsT tPositions = baseData.linearizeEmbeddedPositions().template cast<FloatingPointT>();
         PositionsU uPositions = baseData.linearizeEmbeddedPositions().template cast<FloatingPointU>();
 
-        using FunctionTypeT = std::function<void(const PositionsT&, double&, Eigen::VectorXd&)>;
-        using FunctionTypeU = std::function<void(const PositionsU&, double&, Eigen::VectorXd&)>;
+        using FunctionTypeT = std::function<void(const PositionsT&, FloatingPointT&, PositionsT&)>;
+        using FunctionTypeU = std::function<void(const PositionsU&, FloatingPointU&, PositionsU&)>;
 
         // TODO temp
         using RefValueFunc = std::function<double(const DlibVector&)>;
@@ -956,10 +911,10 @@ struct CompareImplementations {
         > components {
           {
             "distance",
-            [&tFunctor](const PositionsT& positions, double& value, Eigen::VectorXd& gradients) {
+            [&tFunctor](const PositionsT& positions, FloatingPointT& value, PositionsT& gradients) {
               tFunctor.distanceContributions(positions, value, gradients);
             },
-            [&uFunctor](const PositionsU& positions, double& value, Eigen::VectorXd& gradients) {
+            [&uFunctor](const PositionsU& positions, FloatingPointU& value, PositionsU& gradients) {
               uFunctor.distanceContributions(positions, value, gradients);
             },
             [&referenceValueFunctor](const DlibVector& positions) -> double {
@@ -971,10 +926,10 @@ struct CompareImplementations {
           },
           {
             "chiral",
-            [&tFunctor](const PositionsT& positions, double& value, Eigen::VectorXd& gradients) {
+            [&tFunctor](const PositionsT& positions, FloatingPointT& value, PositionsT& gradients) {
               tFunctor.chiralContributions(positions, value, gradients);
             },
-            [&uFunctor](const PositionsU& positions, double& value, Eigen::VectorXd& gradients) {
+            [&uFunctor](const PositionsU& positions, FloatingPointU& value, PositionsU& gradients) {
               uFunctor.chiralContributions(positions, value, gradients);
             },
             [&referenceValueFunctor](const DlibVector& positions) -> double {
@@ -986,10 +941,10 @@ struct CompareImplementations {
           },
           {
             "dihedral",
-            [&tFunctor](const PositionsT& positions, double& value, Eigen::VectorXd& gradients) {
+            [&tFunctor](const PositionsT& positions, FloatingPointT& value, PositionsT& gradients) {
               tFunctor.dihedralContributions(positions, value, gradients);
             },
-            [&uFunctor](const PositionsU& positions, double& value, Eigen::VectorXd& gradients) {
+            [&uFunctor](const PositionsU& positions, FloatingPointU& value, PositionsU& gradients) {
               uFunctor.dihedralContributions(positions, value, gradients);
             },
             [&referenceValueFunctor](const DlibVector& positions) -> double {
@@ -1001,10 +956,10 @@ struct CompareImplementations {
           },
           {
             "fourth dimension",
-            [&tFunctor](const PositionsT& positions, double& value, Eigen::VectorXd& gradients) {
+            [&tFunctor](const PositionsT& positions, FloatingPointT& value, PositionsT& gradients) {
               tFunctor.fourthDimensionContributions(positions, value, gradients);
             },
-            [&uFunctor](const PositionsU& positions, double& value, Eigen::VectorXd& gradients) {
+            [&uFunctor](const PositionsU& positions, FloatingPointU& value, PositionsU& gradients) {
               uFunctor.fourthDimensionContributions(positions, value, gradients);
             },
             [&referenceValueFunctor](const DlibVector& positions) -> double {
@@ -1019,8 +974,10 @@ struct CompareImplementations {
         auto passesComparisonMap = temple::map(
           components,
           [&](const auto& comparisonTuple) -> bool {
-            double tError = 0, uError = 0;
-            Eigen::VectorXd tGradients, uGradients;
+            FloatingPointT tError = 0;
+            FloatingPointU uError = 0;
+            PositionsT tGradients;
+            PositionsU uGradients;
             tGradients.resize(tPositions.size());
             tGradients.setZero();
             uGradients.resize(uPositions.size());
@@ -1030,13 +987,19 @@ struct CompareImplementations {
             std::get<2>(comparisonTuple)(uPositions, uError, uGradients);
 
             bool pass = true;
-            if(std::fabs(tError - uError) > traits::Floating<SmallerFPType>::tolerance) {
+
+            const LargerFPType errorAbsDifference = std::fabs(
+              static_cast<LargerFPType>(tError)
+              - static_cast<LargerFPType>(uError)
+            );
+
+            if(errorAbsDifference > traits::Floating<SmallerFPType>::tolerance) {
               std::cout << "Error values for component "
                 << std::get<0>(comparisonTuple) << " do not match between "
-                << TraitsT::name() << " and " << TraitsU::name() << " for "
+                << RefinementT::name() << " and " << RefinementU::name() << " for "
                 << currentFilePath.string() << ": "
                 << tError << " != " << uError << ", difference = "
-                << std::fabs(tError - uError) << "\n";
+                << errorAbsDifference << "\n";
 
               // TODO temp
               double referenceValue = std::get<3>(comparisonTuple)(dlibPositions);
@@ -1046,14 +1009,18 @@ struct CompareImplementations {
               pass = false;
             }
 
-            if(!tGradients.isApprox(uGradients, traits::Floating<SmallerFPType>::tolerance)) {
+            if(
+              !tGradients.template cast<LargerFPType>().isApprox(
+                uGradients.template cast<LargerFPType>(),
+                traits::Floating<SmallerFPType>::tolerance
+              )
+            ) {
               std::cout << "Gradients for component "
                 << std::get<0>(comparisonTuple) << " do not match between "
-                << TraitsT::name() << " and " << TraitsU::name() << "  for "
+                << RefinementT::name() << " and " << RefinementU::name() << "  for "
                 << currentFilePath.string() << ":\n  "
                 << tGradients.transpose() << "\n  "
-                << uGradients.transpose() << "\ndelta: "
-                << (tGradients - uGradients).transpose() << "\n";
+                << uGradients.transpose() << "\n";
 
               // TODO temp
               dlib::matrix<double, 0, 1> referenceGradients = std::get<4>(comparisonTuple)(dlibPositions);
@@ -1075,10 +1042,10 @@ struct CompareImplementations {
 
 BOOST_AUTO_TEST_CASE(RefinementProblemEquivalence) {
   using EigenRefinementTypeVariations = std::tuple<
-    EigenRefinementProblem<4, double>,
-    EigenRefinementProblem<4, float>,
-    EigenSIMDRefinementProblem<4, double>,
-    EigenSIMDRefinementProblem<4, float>
+    EigenRefinementProblem<4, double, false>,
+    EigenRefinementProblem<4, float, false>,
+    EigenRefinementProblem<4, double, true>,
+    EigenRefinementProblem<4, float, true>
   >;
 
   auto passes = temple::TupleType::mapAllPairs<EigenRefinementTypeVariations, CompareImplementations>();

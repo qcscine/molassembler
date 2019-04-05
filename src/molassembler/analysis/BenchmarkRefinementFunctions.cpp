@@ -13,7 +13,6 @@
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
-#include "molassembler/DistanceGeometry/EigenSIMDRefinement.h"
 #include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/DistanceGeometry/DlibAdaptors.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
@@ -202,11 +201,12 @@ struct DlibFunctor final : public TimingFunctor {
 };
 
 template<
-  template<unsigned, typename> class EigenRefinementType,
+  template<unsigned, typename, bool> class EigenRefinementType,
   unsigned dimensionality,
-  typename FloatType
+  typename FloatType,
+  bool SIMD
 >
-double refine(
+double timeFunctionEvaluation(
   const Eigen::MatrixXd& squaredBounds,
   const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
   const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
@@ -214,15 +214,16 @@ double refine(
   std::chrono::time_point<std::chrono::steady_clock>& start,
   std::chrono::time_point<std::chrono::steady_clock>& end
 ) {
-  using NTPRefinementType = EigenRefinementType<dimensionality, FloatType>;
+  using NTPRefinementType = EigenRefinementType<dimensionality, FloatType, SIMD>;
+  using PositionsType = typename NTPRefinementType::VectorType;
 
   Eigen::MatrixXd positionCopy = positions;
 
   /* Transfer positions into vector form */
-  Eigen::VectorXd transformedPositions = Eigen::Map<Eigen::VectorXd>(
+  PositionsType transformedPositions = Eigen::Map<Eigen::VectorXd>(
     positionCopy.data(),
     positionCopy.cols() * positionCopy.rows()
-  );
+  ).template cast<FloatType>();
 
   NTPRefinementType refinementFunctor {
     squaredBounds,
@@ -230,8 +231,8 @@ double refine(
     dihedralConstraints
   };
 
-  double error = 0;
-  Eigen::VectorXd gradient(transformedPositions.size());
+  FloatType error = 0;
+  PositionsType gradient(transformedPositions.size());
   gradient.setZero();
 
   start = std::chrono::steady_clock::now();
@@ -243,7 +244,12 @@ double refine(
   return error + gradient(0);
 }
 
-struct EigenDoubleFunctor final : public TimingFunctor {
+template<
+  unsigned dimensionality,
+  typename FloatType,
+  bool SIMD
+>
+struct EigenFunctor final : public TimingFunctor {
   double value(
     const Eigen::MatrixXd& squaredBounds,
     const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
@@ -252,10 +258,11 @@ struct EigenDoubleFunctor final : public TimingFunctor {
     std::chrono::time_point<std::chrono::steady_clock>& start,
     std::chrono::time_point<std::chrono::steady_clock>& end
   ) final {
-    return refine<
+    return timeFunctionEvaluation<
       DistanceGeometry::EigenRefinementProblem,
-      4,
-      double
+      dimensionality,
+      FloatType,
+      SIMD
     >(
       squaredBounds,
       chiralConstraints,
@@ -267,91 +274,7 @@ struct EigenDoubleFunctor final : public TimingFunctor {
   }
 
   std::string name() final {
-    return "EigenDouble";
-  }
-};
-
-struct EigenFloatFunctor final : public TimingFunctor {
-  double value(
-    const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions,
-    std::chrono::time_point<std::chrono::steady_clock>& start,
-    std::chrono::time_point<std::chrono::steady_clock>& end
-  ) final {
-    return refine<
-      DistanceGeometry::EigenRefinementProblem,
-      4,
-      float
-    >(
-      squaredBounds,
-      chiralConstraints,
-      dihedralConstraints,
-      positions,
-      start,
-      end
-    );
-  }
-
-  std::string name() final {
-    return "EigenFloat";
-  }
-};
-
-struct EigenSIMDDoubleFunctor final : public TimingFunctor {
-  double value (
-    const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions,
-    std::chrono::time_point<std::chrono::steady_clock>& start,
-    std::chrono::time_point<std::chrono::steady_clock>& end
-  ) final {
-    return refine<
-      DistanceGeometry::EigenSIMDRefinementProblem,
-      4,
-      double
-    >(
-      squaredBounds,
-      chiralConstraints,
-      dihedralConstraints,
-      positions,
-      start,
-      end
-    );
-  }
-
-  std::string name() final {
-    return "EigenSIMDDouble";
-  }
-};
-
-struct EigenSIMDFloatFunctor final : public TimingFunctor {
-  double value (
-    const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions,
-    std::chrono::time_point<std::chrono::steady_clock>& start,
-    std::chrono::time_point<std::chrono::steady_clock>& end
-  ) final {
-    return refine<
-      DistanceGeometry::EigenSIMDRefinementProblem,
-      4,
-      float
-    >(
-      squaredBounds,
-      chiralConstraints,
-      dihedralConstraints,
-      positions,
-      start,
-      end
-    );
-  }
-
-  std::string name() final {
-    return "EigenSIMDFloat";
+    return DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
   }
 };
 
@@ -437,25 +360,33 @@ void benchmark(
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenDouble) {
     functors.emplace_back(
-      std::make_unique<EigenDoubleFunctor>()
+      std::make_unique<
+        EigenFunctor<4, double, false>
+      >()
     );
   }
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenFloat) {
     functors.emplace_back(
-      std::make_unique<EigenFloatFunctor>()
+      std::make_unique<
+        EigenFunctor<4, float, false>
+      >()
     );
   }
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenSIMDDouble) {
     functors.emplace_back(
-      std::make_unique<EigenSIMDDoubleFunctor>()
+      std::make_unique<
+        EigenFunctor<4, double, true>
+      >()
     );
   }
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenSIMDFloat) {
     functors.emplace_back(
-      std::make_unique<EigenSIMDFloatFunctor>()
+      std::make_unique<
+        EigenFunctor<4, float, true>
+      >()
     );
   }
 
@@ -503,10 +434,10 @@ using namespace std::string_literals;
 const std::string algorithmChoices =
   "  0 - All\n"
   "  1 - dlib\n"
-  "  2 - Eigen<4, double>\n"
-  "  3 - Eigen<4, float>\n"
-  "  4 - EigenSIMD<4, double>\n"
-  "  5 - EigenSIMD<4, float>\n";
+  "  2 - Eigen<dimensionality=4, double, SIMD=false>\n"
+  "  3 - Eigen<dimensionality=4, float, SIMD=false>\n"
+  "  4 - Eigen<dimensionality=4, double, SIMD=true>\n"
+  "  5 - Eigen<dimensionality4, float, SIMD=true>\n";
 
 int main(int argc, char* argv[]) {
   using namespace molassembler;

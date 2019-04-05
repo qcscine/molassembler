@@ -11,7 +11,6 @@
 #include "molassembler/Types.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
-#include "temple/Functional.h"
 
 namespace Scine {
 namespace molassembler {
@@ -72,38 +71,6 @@ public:
   constexpr static bool simd = true;
 //!@}
 
-  template<
-    typename EigenType,
-    typename FPType = FloatType,
-    typename std::enable_if_t<std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalDowncast(const EigenType& eigenTypeValue) {
-    return eigenTypeValue;
-  }
-
-  template<
-    typename EigenType,
-    typename FPType = FloatType,
-    typename std::enable_if_t<!std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalDowncast(const EigenType& eigenTypeValue) {
-    return eigenTypeValue.template cast<FloatType>().eval();
-  }
-
-  template<
-    typename EigenType,
-    typename FPType = FloatType,
-    typename std::enable_if_t<std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalUpcast(const EigenType& eigenTypeValue) {
-    return eigenTypeValue;
-  }
-
-  template<
-    typename EigenType,
-    typename FPType = FloatType,
-    typename std::enable_if_t<!std::is_same<FPType, double>::value, int> = 0
-  > static auto conditionalUpcast(const EigenType& eigenTypeValue) {
-    return eigenTypeValue.template cast<double>().eval();
-  }
-
 //!@name Static member functions
 //!@{
   //! Copy a full dimensional position of an atom
@@ -157,7 +124,7 @@ public:
   }
 //!@}
 
-//!@name Member variables
+//!@name Public members
 //!@{
   //! Upper distance bounds squared, linearized in i < j
   VectorType upperDistanceBoundsSquared;
@@ -233,7 +200,11 @@ public:
 //!@}
 
 //!@name Contribution functions
-  void distanceContributions(const VectorType& positions, double& error, Eigen::VectorXd& gradient) const {
+  void distanceContributions(
+    const VectorType& positions,
+    FloatType& error,
+    VectorType& gradient
+  ) const {
     assert(positions.size() == gradient.size());
     /* Using the squared distance bounds to avoid unneeded square-root calculations
      *
@@ -327,17 +298,15 @@ public:
       for(unsigned jOffset = 0, j = i + 1;  j < N; ++j, ++jOffset) {
         const FloatType upperTerm = upperTerms(iOffset + jOffset);
         if(upperTerm > 0) {
-          error += static_cast<double>(upperTerm * upperTerm);
+          error += upperTerm * upperTerm;
 
           /* This i-j combination has an upper value contribution
            *
            * calculate gradient and apply to i and j
            */
-          const auto f = conditionalUpcast(
-            FullDimensionalVector {
-              4 * positionDifferences.col(iOffset + jOffset) * upperTerm
-              / upperDistanceBoundsSquared(iOffset + jOffset)
-            }
+          const FullDimensionalVector f = (
+            4 * positionDifferences.col(iOffset + jOffset) * upperTerm
+            / upperDistanceBoundsSquared(iOffset + jOffset)
           );
 
           // position difference is i - j, not j - i (!)
@@ -352,15 +321,13 @@ public:
 
           if(lowerTerm > 0) {
             // Add it to the error
-            error += static_cast<double>(lowerTerm * lowerTerm);
+            error += lowerTerm * lowerTerm;
 
             // Calculate gradient and apply
-            const auto g = conditionalUpcast(
-              FullDimensionalVector {
-                8 * lowerBoundSquared * positionDifferences.col(iOffset + jOffset) * lowerTerm / (
-                  quotient * quotient
-                )
-              }
+            const FullDimensionalVector g = (
+              8 * lowerBoundSquared * positionDifferences.col(iOffset + jOffset) * lowerTerm / (
+                quotient * quotient
+              )
             );
 
             // position difference is i - j, not j - i (!)
@@ -374,7 +341,10 @@ public:
     }
   }
 
-  void chiralContributions(const VectorType& positions, double& error, Eigen::VectorXd& gradient) const {
+  /*!
+   * @brief Adds chiral error and gradient contributions
+   */
+  void chiralContributions(const VectorType& positions, FloatType& error, VectorType& gradient) const {
     assert(positions.size() == gradient.size());
     /* We have to calculate the adjusted signed volume for each chiral
      * constraint once for both value and gradient, so we could principally do
@@ -518,11 +488,11 @@ public:
 
     // SIMD
     const VectorType upperTerms = volumes - chiralUpperConstraints;
-    error += static_cast<double>(upperTerms.array().max(0.0).square().sum());
+    error += upperTerms.array().max(0.0).square().sum();
 
     // SIMD
     const VectorType lowerTerms = chiralLowerConstraints - volumes;
-    error += static_cast<double>(lowerTerms.array().max(0.0).square().sum());
+    error += lowerTerms.array().max(0.0).square().sum();
 
     // SIMD
     const VectorType factors = 2 * (
@@ -595,20 +565,23 @@ public:
          * If FloatType == double, then iContribution is Eigen::ColExpr -> no copy
          * If FloatType == float, then iContribution is Eigen::ColExpr.cast<double>().eval() == Vector3d -> copying cast
          */
-        auto iContribution = conditionalUpcast(ijklContributions.col(4 * constraintIndex + 0));
-        auto jContribution = conditionalUpcast(ijklContributions.col(4 * constraintIndex + 1));
-        auto kContribution = conditionalUpcast(ijklContributions.col(4 * constraintIndex + 2));
-        auto lContribution = conditionalUpcast(ijklContributions.col(4 * constraintIndex + 3));
+        auto iContribution = ijklContributions.col(4 * constraintIndex + 0);
+        auto jContribution = ijklContributions.col(4 * constraintIndex + 1);
+        auto kContribution = ijklContributions.col(4 * constraintIndex + 2);
+        auto lContribution = ijklContributions.col(4 * constraintIndex + 3);
 
         for(const AtomIndex alphaI : constraint.sites[0]) {
           gradient.template segment<3>(dimensionality * alphaI) += iContribution;
         }
+
         for(const AtomIndex betaI : constraint.sites[1]) {
           gradient.template segment<3>(dimensionality * betaI) += jContribution;
         }
+
         for(const AtomIndex gammaI : constraint.sites[2]) {
           gradient.template segment<3>(dimensionality * gammaI) += kContribution;
         }
+
         for(const AtomIndex deltaI : constraint.sites[3]) {
           gradient.template segment<3>(dimensionality * deltaI) += lContribution;
         }
@@ -616,7 +589,7 @@ public:
     }
   }
 
-  void dihedralContributions(const VectorType& positions, double& error, Eigen::VectorXd& gradient) const {
+  void dihedralContributions(const VectorType& positions, FloatType& error, VectorType& gradient) const {
     assert(positions.size() == gradient.size());
     /* NOTE: site is average position of constituting atoms in three dimensions
      *
@@ -718,7 +691,7 @@ public:
     VectorType h_phis = w_phis.cwiseAbs() - dihedralConstraintDiffsHalved;
 
     // SIMD
-    error += static_cast<double>(h_phis.array().max(0.0).square().sum()) / 10;
+    error += h_phis.array().max(0.0).square().sum() / 10;
 
     // Gradient contribution
     for(unsigned i = 0; i < D; ++i) {
@@ -741,7 +714,8 @@ public:
       const FloatType& w_phi = w_phis(i);
       // Multiply with sgn (w)
       h_phi *= static_cast<int>(0 < w_phi) - static_cast<int>(w_phi < 0);
-      // Multiply in reduction factor and multiplier
+
+      // Multiply in 2 and the reduction factor
       h_phi *= 2 * reductionFactor;
 
       const DihedralConstraint& constraint = dihedralConstraints[i];
@@ -765,31 +739,25 @@ public:
       const FloatType fDotG = f.dot(g);
       const FloatType gDotH = g.dot(h);
 
-      const auto iContribution = conditionalUpcast(
-        ThreeDimensionalVector {
-          -(h_phi / constraint.sites[0].size()) * gLength * a
-        }
+      const ThreeDimensionalVector iContribution = (
+        -(h_phi / constraint.sites[0].size()) * gLength * a
       );
 
-      const auto jContribution = conditionalUpcast(
-        ThreeDimensionalVector {
-          (h_phi / constraint.sites[1].size()) * (
-            (gLength + fDotG / gLength) * a
-            - (gDotH / gLength) * b
-          )
-        }
+      const ThreeDimensionalVector jContribution = (
+        (h_phi / constraint.sites[1].size()) * (
+          (gLength + fDotG / gLength) * a
+          - (gDotH / gLength) * b
+        )
       );
 
-      const auto kContribution = conditionalUpcast(
-        ThreeDimensionalVector {
-          (h_phi / constraint.sites[2].size()) * (
-            (gDotH / gLength - gLength) * b
-            - (fDotG / gLength) * a
-          )
-        }
+      const ThreeDimensionalVector kContribution = (
+        (h_phi / constraint.sites[2].size()) * (
+          (gDotH / gLength - gLength) * b
+          - (fDotG / gLength) * a
+        )
       );
 
-      const auto lContribution = conditionalUpcast(
+      const ThreeDimensionalVector lContribution = (
         (h_phi / constraint.sites[3].size()) * gLength * b
       );
 
@@ -821,13 +789,16 @@ public:
     }
   }
 
-  void fourthDimensionContributions(const VectorType& positions, double& error, Eigen::VectorXd& gradient) const {
+  /*!
+   * @brief Adds fourth dimension error and gradient contributions
+   */
+  void fourthDimensionContributions(const VectorType& positions, FloatType& error, VectorType& gradient) const {
     assert(positions.size() == gradient.size());
     // Collect all fourth dimension values, square and sum, add to error
     if(dimensionality == 4 && compressFourthDimension) {
       const unsigned N = positions.size() / dimensionality;
       for(unsigned i = 0; i < N; ++i) {
-        const auto fourthDimensionalValue = static_cast<double>(positions(4 * i + 3));
+        const FloatType fourthDimensionalValue = positions(4 * i + 3);
         error += fourthDimensionalValue * fourthDimensionalValue;
         gradient(4 * i + 3) += 2 * fourthDimensionalValue;
       }
@@ -840,7 +811,7 @@ public:
    * @pre @p parameters must be evenly divisible by the dimensionality
    * @post Error is stored in @p value and gradient in @p gradient
    */
-  void operator() (const Eigen::VectorXd& parameters, double& value, Eigen::VectorXd& gradient) const {
+  void operator() (const VectorType& parameters, FloatType& value, VectorType& gradient) const {
     ++callCount;
 
     assert(parameters.size() == gradient.size());
@@ -849,27 +820,15 @@ public:
     value = 0;
     gradient.setZero();
 
-    std::conditional_t<
-      std::is_same<FloatType, float>::value,
-      VectorType,
-      const VectorType&
-    > positions = conditionalDowncast(parameters);
-
-    fourthDimensionContributions(positions, value, gradient);
-    dihedralContributions(positions, value, gradient);
-    distanceContributions(positions, value, gradient);
-    chiralContributions(positions, value, gradient);
+    fourthDimensionContributions(parameters, value, gradient);
+    dihedralContributions(parameters, value, gradient);
+    distanceContributions(parameters, value, gradient);
+    chiralContributions(parameters, value, gradient);
   }
 
-  double calculateProportionChiralConstraintsCorrectSign(const Eigen::VectorXd& parameters) const {
+  double calculateProportionChiralConstraintsCorrectSign(const VectorType& positions) const {
     unsigned nonZeroChiralityConstraints = 0;
     unsigned incorrectNonZeroChiralityConstraints = 0;
-
-    std::conditional_t<
-      std::is_same<FloatType, float>::value,
-      VectorType,
-      const VectorType&
-    > positions = conditionalDowncast(parameters);
 
     for(const auto& constraint : chiralConstraints) {
       /* Make sure that chirality constraints meant to cause coplanarity of
@@ -916,7 +875,7 @@ public:
   template<typename Visitor>
   void visitUnfulfilledConstraints(
     const DistanceBoundsMatrix& bounds,
-    const Eigen::VectorXd& positions,
+    const VectorType& positions,
     Visitor&& visitor
   ) {
     const unsigned N = positions.size() / dimensionality;

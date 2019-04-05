@@ -12,7 +12,6 @@
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
-#include "molassembler/DistanceGeometry/EigenSIMDRefinement.h"
 #include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/DistanceGeometry/DlibAdaptors.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
@@ -287,13 +286,15 @@ struct DlibFunctor final : public TimingFunctor {
 template<typename EigenRefinementType>
 struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
   const EigenRefinementType& refinementFunctorReference;
+  using VectorType = typename EigenRefinementType::VectorType;
+  using FloatType = typename EigenRefinementType::FloatingPointType;
 
   InversionOrIterLimitStop(const EigenRefinementType& functor) : refinementFunctorReference(functor) {}
 
-  bool checkConvergence(
-    const Eigen::VectorXd& /* parameters */,
-    double /* value */,
-    const Eigen::VectorXd& /* gradients */
+  virtual bool checkConvergence(
+    const VectorType& /* parameters */,
+    FloatType /* value */,
+    const VectorType& /* gradients */
   ) final {
     return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
   }
@@ -306,31 +307,87 @@ struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
   void applySettings(const Utils::Settings& /* s */) final {}
 };
 
-template<
-  template<unsigned, typename> class EigenRefinementType,
-  unsigned dimensionality,
-  typename FloatType
->
-boost::optional<unsigned> refine(
+// template<typename EigenRefinementType>
+// struct InversionOrIterLimitStop {
+//   const EigenRefinementType& refinementFunctorReference;
+//
+//   InversionOrIterLimitStop(const EigenRefinementType& functor) : refinementFunctorReference(functor) {}
+//
+//   template<typename VectorType, typename FloatType>
+//   bool checkConvergence(
+//     const VectorType& /* parameters */,
+//     FloatType /* value */,
+//     const VectorType& /* gradients */
+//   ) {
+//     return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
+//   }
+//
+//   bool checkMaxIterations(unsigned currentIteration) {
+//     return currentIteration >= refinementStepLimit;
+//   }
+// };
+
+template<typename FloatType>
+struct GradientOrIterLimitStop {
+  using VectorType = Eigen::Matrix<FloatType, 1, Eigen::Dynamic>;
+
+  bool checkConvergence(
+    const VectorType& /* parameters */,
+    FloatType /* value */,
+    const VectorType& gradients
+  ) {
+    return gradients.template cast<double>().norm() <= gradNorm;
+  }
+
+  bool checkMaxIterations(unsigned currentIteration) {
+    return currentIteration >= refinementStepLimit;
+  }
+
+  double gradNorm = 1e-5;
+};
+
+struct OptimizerParameters {
+  // These are the default LBFGS parameters
+  unsigned maxm = 50;
+  double c1 = 1e-4;
+  double c2 = 0.9;
+  double stepLength = 1.0;
+};
+
+template<typename FloatType, typename Derived>
+auto flatten(const Eigen::MatrixBase<Derived>& positions) {
+  using MapVectorType = Eigen::Matrix<typename Derived::Scalar, 1, Eigen::Dynamic>;
+  /* TODO this incurs TWO copies, I think.
+   *
+   * But I don't know how to reconcile:
+   * 1. do not take eigen type instance by value
+   * 2. you can't call .data() on non-const instance
+   */
+  Eigen::MatrixBase<Derived> positionsCopy = positions;
+
+  return Eigen::Map<MapVectorType>(
+    positionsCopy.derived().data(),
+    positionsCopy.derived().cols() * positionsCopy.derived().rows()
+  ).template cast<FloatType>().eval();
+}
+
+template<unsigned dimensionality, typename FloatType, bool SIMD>
+boost::optional<unsigned> eigenRefine(
   const Eigen::MatrixXd& squaredBounds,
   const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
   const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-  const Eigen::MatrixXd& positions
+  const Eigen::MatrixXd& positions,
+  OptimizerParameters optimizerParameters = {}
 ) {
   unsigned iterationCount = 0;
 
-  using NTPRefinementType = EigenRefinementType<dimensionality, FloatType>;
-
-  Eigen::MatrixXd positionCopy = positions;
+  using FullRefinementType = DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>;
 
   const unsigned N = positions.size() / dimensionality;
   /* Transfer positions into vector form */
-  Eigen::VectorXd transformedPositions = Eigen::Map<Eigen::VectorXd>(
-    positionCopy.data(),
-    positionCopy.cols() * positionCopy.rows()
-  );
+  auto transformedPositions = flatten<FloatType>(positions);
 
-  NTPRefinementType refinementFunctor {
+  FullRefinementType refinementFunctor {
     squaredBounds,
     chiralConstraints,
     dihedralConstraints
@@ -346,13 +403,14 @@ boost::optional<unsigned> refine(
   }
 
   Utils::LBFGS optimizer;
-  optimizer.maxm = 100;
-  optimizer.c1 = 0.01;
-  optimizer.stepLength = 10;
+  optimizer.maxm = optimizerParameters.maxm;
+  optimizer.c1 = optimizerParameters.c1;
+  optimizer.c2 = optimizerParameters.c2;
+  optimizer.stepLength = optimizerParameters.stepLength;
 
   /* First stage: Invert all chiral constraints */
   if(initiallyCorrectChiralConstraints < 1) {
-    InversionOrIterLimitStop<NTPRefinementType> inversionChecker {refinementFunctor};
+    InversionOrIterLimitStop<FullRefinementType> inversionChecker {refinementFunctor};
     const unsigned iterations = optimizer.optimize(
       transformedPositions,
       refinementFunctor,
@@ -373,9 +431,11 @@ boost::optional<unsigned> refine(
   /* Second stage: Refine */
   refinementFunctor.compressFourthDimension = true;
 
+  // GradientOrIterLimitStop<FloatType> gradientChecker;
   Utils::GradientBasedCheck gradientChecker;
   gradientChecker.maxIter = refinementStepLimit;
   gradientChecker.gradNorm = 1e-5;
+
   const unsigned iterations = optimizer.optimize(
     transformedPositions,
     refinementFunctor,
@@ -402,18 +462,16 @@ boost::optional<unsigned> refine(
   return AngstromWrapper {std::move(finalPositions), LengthUnit::Angstrom};*/
 }
 
-struct EigenDoubleFunctor final : public TimingFunctor {
+
+template<unsigned dimensionality, typename FloatType, bool SIMD>
+struct EigenFunctor final : public TimingFunctor {
   boost::optional<unsigned> value(
     const Eigen::MatrixXd& squaredBounds,
     const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions
   ) final {
-    return refine<
-      DistanceGeometry::EigenRefinementProblem,
-      4,
-      double
-    >(
+    return eigenRefine<dimensionality, FloatType, SIMD>(
       squaredBounds,
       chiralConstraints,
       dihedralConstraints,
@@ -422,79 +480,7 @@ struct EigenDoubleFunctor final : public TimingFunctor {
   }
 
   std::string name() final {
-    return "EigenDouble";
-  }
-};
-
-struct EigenFloatFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value(
-    const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
-  ) final {
-    return refine<
-      DistanceGeometry::EigenRefinementProblem,
-      4,
-      float
-    >(
-      squaredBounds,
-      chiralConstraints,
-      dihedralConstraints,
-      positions
-    );
-  }
-
-  std::string name() final {
-    return "EigenFloat";
-  }
-};
-
-struct EigenSIMDDoubleFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value (
-    const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
-  ) final {
-    return refine<
-      DistanceGeometry::EigenSIMDRefinementProblem,
-      4,
-      double
-    >(
-      squaredBounds,
-      chiralConstraints,
-      dihedralConstraints,
-      positions
-    );
-  }
-
-  std::string name() final {
-    return "EigenSIMDDouble";
-  }
-};
-
-struct EigenSIMDFloatFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value (
-    const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
-  ) final {
-    return refine<
-      DistanceGeometry::EigenSIMDRefinementProblem,
-      4,
-      float
-    >(
-      squaredBounds,
-      chiralConstraints,
-      dihedralConstraints,
-      positions
-    );
-  }
-
-  std::string name() final {
-    return "EigenSIMDFloat";
+    DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
   }
 };
 
@@ -582,25 +568,33 @@ void benchmark(
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenDouble) {
     functors.emplace_back(
-      std::make_unique<EigenDoubleFunctor>()
+      std::make_unique<
+        EigenFunctor<4, double, false>
+      >()
     );
   }
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenFloat) {
     functors.emplace_back(
-      std::make_unique<EigenFloatFunctor>()
+      std::make_unique<
+        EigenFunctor<4, float, false>
+      >()
     );
   }
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenSIMDDouble) {
     functors.emplace_back(
-      std::make_unique<EigenSIMDDoubleFunctor>()
+      std::make_unique<
+        EigenFunctor<4, double, true>
+      >()
     );
   }
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenSIMDFloat) {
     functors.emplace_back(
-      std::make_unique<EigenSIMDFloatFunctor>()
+      std::make_unique<
+        EigenFunctor<4, float, true>
+      >()
     );
   }
 

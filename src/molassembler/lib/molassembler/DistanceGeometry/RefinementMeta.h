@@ -13,6 +13,16 @@ namespace Scine {
 namespace molassembler {
 namespace DistanceGeometry {
 
+/*template<typename FloatType, typename Derived>
+auto flatten(const Eigen::MatrixBase<Derived>& positions) {
+  using MapVectorType = Eigen::Matrix<typename Derived::Scalar, 1, Eigen::Dynamic>;
+  return Eigen::Map<MapVectorType>(
+    positions.derived().data(),
+    positions.derived().cols() * positions.derived().rows()
+  ).template cast<FloatType>().eval();
+}*/
+
+
 /**
  * @brief Decides whether the final structure from a refinement is acceptable
  *
