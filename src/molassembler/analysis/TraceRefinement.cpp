@@ -18,6 +18,8 @@
 #include "molassembler/IO.h"
 #include "molassembler/Log.h"
 
+#include "EigenDebugRefinement.h"
+
 #include <fstream>
 #include <iomanip>
 
@@ -221,7 +223,7 @@ int main(int argc, char* argv[]) {
     DGConfiguration.refinementStepLimit = nSteps;
 
 #ifndef NDEBUG
-    auto debugData = DistanceGeometry::debugRefinement(
+    auto debugData = DistanceGeometry::debugEigenRefinement<4, double, false>(
       mol,
       nStructures,
       DGConfiguration

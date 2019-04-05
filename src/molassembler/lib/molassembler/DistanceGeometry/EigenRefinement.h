@@ -302,11 +302,11 @@ public:
   }
 
   template<typename Visitor>
-  void visitUnfulfilledConstraints(
+  auto visitUnfulfilledConstraints(
     const DistanceBoundsMatrix& bounds,
     const VectorType& positions,
     Visitor&& visitor
-  ) {
+  ) const {
     const unsigned N = positions.size() / dimensionality;
 
     // Distance bounds deviations
