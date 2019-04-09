@@ -30,7 +30,7 @@ struct RefinementStepData {
   double dihedralError;
   double fourthDimError;
   dlib::matrix<double, 0, 1> gradient;
-  double proportionCorrectChiralityConstraints;
+  double proportionCorrectChiralConstraints;
   bool compress;
 
   RefinementStepData(
@@ -40,7 +40,7 @@ struct RefinementStepData {
     const double passDihedralError,
     const double passFourthDimError,
     dlib::matrix<double, 0, 1> passGradient,
-    const double passProportionCorrectChiralityConstraints,
+    const double passProportionCorrectChiralConstraints,
     const bool& passCompress
   ) : positions(std::move(passPositions)),
       distanceError(passDistanceError),
@@ -48,14 +48,14 @@ struct RefinementStepData {
       dihedralError(passDihedralError),
       fourthDimError(passFourthDimError),
       gradient(std::move(passGradient)),
-      proportionCorrectChiralityConstraints(passProportionCorrectChiralityConstraints),
+      proportionCorrectChiralConstraints(passProportionCorrectChiralConstraints),
       compress(passCompress)
   {}
 };
 
 struct RefinementData {
   std::list<RefinementStepData> steps;
-  std::vector<ChiralityConstraint> constraints;
+  std::vector<ChiralConstraint> constraints;
   double looseningFactor;
   bool isFailure;
   std::string spatialModelGraphviz;

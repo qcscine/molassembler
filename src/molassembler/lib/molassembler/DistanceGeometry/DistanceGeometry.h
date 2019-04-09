@@ -25,14 +25,14 @@ namespace molassembler {
 //! Distance geometry-related classes and functions
 namespace DistanceGeometry {
 
-struct ChiralityConstraint {
+struct ChiralConstraint {
   using AtomListType = std::vector<AtomIndex>;
   using SiteSequence = std::array<AtomListType, 4>;
 
   SiteSequence sites;
   double lower, upper;
 
-  ChiralityConstraint(
+  ChiralConstraint(
     SiteSequence passSites,
     const double passLower,
     const double passUpper

@@ -895,7 +895,7 @@ void AtomStereopermutator::Impl::fit(
 
       const double chiralityDeviations = temple::sum(
         temple::adaptors::transform(
-          minimalChiralityConstraints(),
+          minimalChiralConstraints(),
           [&](const auto& minimalPrototype) -> double {
             auto fetchPosition = [&](const boost::optional<unsigned>& siteIndexOptional) -> Eigen::Vector3d {
               if(siteIndexOptional) {
@@ -912,7 +912,7 @@ void AtomStereopermutator::Impl::fit(
               fetchPosition(minimalPrototype[3])
             );
 
-            // minimalChiralityConstraints() supplies only Positive targets
+            // minimalChiralConstraints() supplies only Positive targets
             if(volume < 0) {
               return 1;
             }
@@ -1016,13 +1016,36 @@ boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const
 
 std::vector<
   std::array<boost::optional<unsigned>, 4>
-> AtomStereopermutator::Impl::minimalChiralityConstraints() const {
+> AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
   std::vector<
     std::array<boost::optional<unsigned>, 4>
   > precursors;
 
-  // Only collect constraints if it's actually assigned
-  if(_assignmentOption) {
+  /* It only makes sense to emit these minimal representations of chiral
+   * constraints if the stereopermutator is assigned.
+   *
+   * As long as the permutator is achiral, there is little reason to burden
+   * refinement with error terms that achieve nothing for the final
+   * conformation. Yet, if any sort of BondStereopermutator is placed on even
+   * an achiral AtomStereopermutator, assumptions are made about the spatial
+   * placement of symmetry positions.
+   *
+   * Since refinement has many terms, it can be difficult to reliably minimize
+   * these assumptions on symmetry position spatial locations against partially
+   * relaxed distance constraints without the clear ordering priority of chiral
+   * constraints enforcing your spatial reasoning assumptions.
+   *
+   * So for now, until a better solution arises, emit chiral constraints if a
+   * bond stereopermutator relies upon symmetry position assumptions even if
+   * this stereopermutator might be achiral.
+   */
+  if(
+    _assignmentOption
+    && (
+      numStereopermutations() > 1
+      || enforce
+    )
+  ) {
 
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index

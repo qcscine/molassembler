@@ -31,7 +31,7 @@ auto flatten(const Eigen::MatrixBase<Derived>& positions) {
  * - All chiral constraints are within 0.5 of either the lower or upper boundary
  *
  * @param bounds The distance bounds
- * @param chiralityConstraints All chirality constraints
+ * @param chiralConstraints All chiral constraints
  * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  *
@@ -53,7 +53,7 @@ bool finalStructureAcceptable(
       value = false;
     }
 
-    void chiralOverThreshold(const ChiralityConstraint& /* chiral */, double /* volume */) {
+    void chiralOverThreshold(const ChiralConstraint& /* chiral */, double /* volume */) {
       earlyExit = true;
       value = false;
     }
@@ -81,7 +81,7 @@ bool finalStructureAcceptable(
  * - All chiral constraints are within 0.5 of either the lower or upper boundary
  *
  * @param bounds The distance bounds
- * @param chiralityConstraints All chirality constraints
+ * @param chiralConstraints All chiral constraints
  * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  */
@@ -107,7 +107,7 @@ void explainAcceptanceFailure(
         << "] deviation over threshold, is : " << distance << "\n";
     }
 
-    void chiralOverThreshold(const ChiralityConstraint& chiral, double volume) {
+    void chiralOverThreshold(const ChiralConstraint& chiral, double volume) {
       log << "Chiral constraint " << temple::stringifyContainer(chiral.sites) << " : ["
         << chiral.lower << ", " << chiral.upper
         << "] deviation over threshold, is : " << volume << "\n";
@@ -132,7 +132,7 @@ void explainAcceptanceFailure(
  *   the error function
  *
  * @param bounds The distance bounds
- * @param chiralityConstraints All chirality constraints
+ * @param chiralConstraints All chiral constraints
  * @param dihedralConstraints All dihedral constraints
  * @param positions The final positions from a refinement
  */
@@ -158,7 +158,7 @@ void explainFinalContributions(
         << "] is unsatisfied: " << distance << "\n";
     }
 
-    void chiralOverThreshold(const ChiralityConstraint& chiral, double volume) {
+    void chiralOverThreshold(const ChiralConstraint& chiral, double volume) {
       log << "Chiral constraint " << temple::stringify(chiral.sites) << " : ["
         << chiral.lower << ", " << chiral.upper
         << "] is unsatisfied: " << volume << "\n";

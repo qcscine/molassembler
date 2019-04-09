@@ -123,17 +123,21 @@ public:
    */
   boost::optional<unsigned> indexOfPermutation() const;
 
-  /*! Returns a minimal representation of chirality constraints
+  /*! Returns a minimal representation of chiral constraints
    *
    * Every minimal representation consists only of ligand indices.
    *
    * The minimal representation assumes that all Symmetry tetrahedron
    * definitions are defined to be Positive targets, which is checked in
    * the chemical_symmetries tests.
+   *
+   * @param enforce Emit minimal representations of chiral constraints even if
+   * the stereopermutator does not have any chiral state, i.e.
+   * numStereopermutators() <= 1, as long as it is assigned.
    */
   std::vector<
     std::array<boost::optional<unsigned>, 4>
-  > minimalChiralityConstraints() const;
+  > minimalChiralConstraints(bool enforce = false) const;
 
   //! Returns an information string for diagnostic purposes
   std::string info() const;

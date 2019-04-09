@@ -43,7 +43,7 @@ struct PermutationState;
 
 namespace DistanceGeometry {
 class SpatialModel;
-struct ChiralityConstraint;
+struct ChiralConstraint;
 } // namespace DistanceGeometry
 
 /**

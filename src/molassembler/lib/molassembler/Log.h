@@ -48,11 +48,11 @@ enum class Particulars {
   /*! AtomStereopermutator's addSubstituent, removeSubstituent and propagate* functions
    */
   AtomStereopermutatorStatePropagation,
-  /*! In generateConformation.cpp, when chirality constraint prototypes are
-   * fully determined into chirality constraints, emit some debug information
+  /*! In generateConformation.cpp, when chiral constraint prototypes are
+   * fully determined into chiral constraints, emit some debug information
    */
   PrototypePropagatorDebugInfo,
-  //! In DGRefinementProblem, chirality constraint numerical debug information
+  //! In DGRefinementProblem, chiral constraint numerical debug information
   DGRefinementChiralityNumericalDebugInfo,
   /*! In DGRefinementProblem, the callback function can reveal some information
    * on the current status of the optimization

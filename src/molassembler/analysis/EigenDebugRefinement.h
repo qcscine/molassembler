@@ -46,6 +46,26 @@ struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
   void applySettings(const Utils::Settings& /* s */) final {}
 };
 
+template<typename FloatType>
+struct GradientOrIterLimitStop {
+  using VectorType = Eigen::Matrix<FloatType, Eigen::Dynamic, 1>;
+
+  bool checkConvergence(
+    const VectorType& /* parameters */,
+    FloatType /* value */,
+    const VectorType& gradients
+  ) {
+    return gradients.template cast<double>().norm() <= gradNorm;
+  }
+
+  bool checkMaxIterations(unsigned currentIteration) {
+    return currentIteration >= iterLimit;
+  }
+
+  unsigned iterLimit = 10000;
+  double gradNorm = 1e-5;
+};
+
 struct LBFGSOptimizerParameters {
   // These are the default LBFGS parameters
   unsigned maxm = 50;
@@ -185,16 +205,16 @@ std::list<RefinementData> debugEigenRefinement(
 
     FullRefinementType refinementFunctor {
       squaredBounds,
-      DGData.chiralityConstraints,
+      DGData.chiralConstraints,
       DGData.dihedralConstraints
     };
 
-    /* If a count of chirality constraints reveals that more than half are
+    /* If a count of chiral constraints reveals that more than half are
      * incorrect, we can invert the structure (by multiplying e.g. all y
      * coordinates with -1) and then have more than half of chirality
-     * constraints correct! In the count, chirality constraints with a target
+     * constraints correct! In the count, chiral constraints with a target
      * value of zero are not considered (this would skew the count as those
-     * chirality constraints should not have to pass an energetic maximum to
+     * chiral constraints should not have to pass an energetic maximum to
      * converge properly as opposed to tetrahedra with volume).
      */
     double initiallyCorrectChiralConstraints = refinementFunctor.calculateProportionChiralConstraintsCorrectSign(transformedPositions);
@@ -249,7 +269,7 @@ std::list<RefinementData> debugEigenRefinement(
      * structure to expand into the fourth spatial dimension if necessary to
      * allow inversion.
      *
-     * This stage of refinement is only needed if not all chirality constraints
+     * This stage of refinement is only needed if not all chiral constraints
      * are already correct (or there are none).
      */
     unsigned firstStageIterations = 0;
@@ -293,9 +313,12 @@ std::list<RefinementData> debugEigenRefinement(
     refinementFunctor.compressFourthDimension = true;
 
     unsigned secondStageIterations = 0;
-    Utils::GradientBasedCheck gradientChecker;
-    gradientChecker.maxIter = configuration.refinementStepLimit;
+    GradientOrIterLimitStop<FloatType> gradientChecker;
     gradientChecker.gradNorm = 1e-3;
+    gradientChecker.iterLimit = configuration.refinementStepLimit;
+    /*Utils::GradientBasedCheck gradientChecker;
+    gradientChecker.maxIter = configuration.refinementStepLimit;
+    gradientChecker.gradNorm = 1e-3;*/
 
     try {
       secondStageIterations = optimizer.optimize(
@@ -328,7 +351,7 @@ std::list<RefinementData> debugEigenRefinement(
 
     RefinementData refinementData;
     refinementData.steps = std::move(refinementSteps);
-    refinementData.constraints = DGData.chiralityConstraints;
+    refinementData.constraints = DGData.chiralConstraints;
     refinementData.looseningFactor = configuration.spatialModelLoosening;
     refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
     refinementData.spatialModelGraphviz = spatialModelGraphviz;
@@ -348,7 +371,7 @@ std::list<RefinementData> debugEigenRefinement(
       }
 
       if(notAllChiralitiesCorrect) {
-        Log::log(Log::Level::Warning) << "- Not all chirality constraints have the correct sign.\n";
+        Log::log(Log::Level::Warning) << "- Not all chiral constraints have the correct sign.\n";
       }
 
       if(!structureAcceptable) {

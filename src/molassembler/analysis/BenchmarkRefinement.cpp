@@ -42,7 +42,7 @@ std::ostream& nl(std::ostream& os) {
 struct TimingFunctor {
   virtual boost::optional<unsigned> value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions
   ) = 0;
@@ -82,7 +82,7 @@ std::vector<FunctorResults> timeFunctors(
 
     const auto boundsList = spatialModel.makeBoundsList();
 
-    const auto chiralConstraints = spatialModel.getChiralityConstraints();
+    const auto chiralConstraints = spatialModel.getChiralConstraints();
     const auto dihedralConstraints = spatialModel.getDihedralConstraints();
 
     DistanceGeometry::ExplicitGraph explicitGraph {
@@ -151,7 +151,7 @@ std::vector<FunctorResults> timeFunctors(
 struct DlibFunctor final : public TimingFunctor {
   boost::optional<unsigned> value (
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions
   ) final {
@@ -268,7 +268,7 @@ struct DlibFunctor final : public TimingFunctor {
       return boost::none;
     }
 
-    // Not all chirality constraints have the right sign
+    // Not all chiral constraints have the right sign
     if(valueFunctor.proportionChiralConstraintsCorrectSign < 1) {
       return boost::none;
     }
@@ -329,7 +329,7 @@ struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
 
 template<typename FloatType>
 struct GradientOrIterLimitStop {
-  using VectorType = Eigen::Matrix<FloatType, 1, Eigen::Dynamic>;
+  using VectorType = Eigen::Matrix<FloatType, Eigen::Dynamic, 1>;
 
   bool checkConvergence(
     const VectorType& /* parameters */,
@@ -356,7 +356,7 @@ struct OptimizerParameters {
 
 template<typename FloatType, typename Derived>
 auto flatten(const Eigen::MatrixBase<Derived>& positions) {
-  using MapVectorType = Eigen::Matrix<typename Derived::Scalar, 1, Eigen::Dynamic>;
+  using MapVectorType = Eigen::Matrix<typename Derived::Scalar, Eigen::Dynamic, 1>;
   /* TODO this incurs TWO copies, I think.
    *
    * But I don't know how to reconcile:
@@ -374,7 +374,7 @@ auto flatten(const Eigen::MatrixBase<Derived>& positions) {
 template<unsigned dimensionality, typename FloatType, bool SIMD>
 boost::optional<unsigned> eigenRefine(
   const Eigen::MatrixXd& squaredBounds,
-  const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
+  const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
   const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
   const Eigen::MatrixXd& positions,
   OptimizerParameters optimizerParameters = {}
@@ -431,10 +431,10 @@ boost::optional<unsigned> eigenRefine(
   /* Second stage: Refine */
   refinementFunctor.compressFourthDimension = true;
 
-  // GradientOrIterLimitStop<FloatType> gradientChecker;
-  Utils::GradientBasedCheck gradientChecker;
+  GradientOrIterLimitStop<FloatType> gradientChecker;
+  /*Utils::GradientBasedCheck gradientChecker;
   gradientChecker.maxIter = refinementStepLimit;
-  gradientChecker.gradNorm = 1e-5;
+  gradientChecker.gradNorm = 1e-5;*/
 
   const unsigned iterations = optimizer.optimize(
     transformedPositions,
@@ -467,7 +467,7 @@ template<unsigned dimensionality, typename FloatType, bool SIMD>
 struct EigenFunctor final : public TimingFunctor {
   boost::optional<unsigned> value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions
   ) final {
@@ -480,7 +480,7 @@ struct EigenFunctor final : public TimingFunctor {
   }
 
   std::string name() final {
-    DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
+    return DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
   }
 };
 

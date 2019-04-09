@@ -109,8 +109,8 @@ boost::optional<unsigned> AtomStereopermutator::indexOfPermutation() const {
 
 std::vector<
   std::array<boost::optional<unsigned>, 4>
-> AtomStereopermutator::minimalChiralityConstraints() const {
-  return _pImpl->minimalChiralityConstraints();
+> AtomStereopermutator::minimalChiralConstraints(bool enforce) const {
+  return _pImpl->minimalChiralConstraints(enforce);
 }
 
 std::string AtomStereopermutator::info() const {

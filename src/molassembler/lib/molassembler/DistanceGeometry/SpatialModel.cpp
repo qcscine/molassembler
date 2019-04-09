@@ -416,13 +416,26 @@ SpatialModel::SpatialModel(
     return 1.0;
   };
 
+  /* Create a list of AtomStereopermutators who must emit chiral constraints
+   * even if they are achiral in order to satisfy refinement expectations of
+   * BondStereopermutators.
+   */
+  std::unordered_set<AtomIndex> forceConstraintEmissionSet;
+  for(const auto& bondStereopermutator : _stereopermutators.bondStereopermutators()) {
+    for(AtomIndex placedAtomIndex : bondStereopermutator.edge()) {
+      forceConstraintEmissionSet.insert(placedAtomIndex);
+    }
+  }
+
+
   // Get 1-3 information from AtomStereopermutators
   for(const auto& stereopermutator : _stereopermutators.atomStereopermutators()) {
     addAtomStereopermutatorInformation(
       stereopermutator,
       cycleMultiplierForIndex,
       configuration.spatialModelLoosening,
-      fixedAngstromPositions
+      fixedAngstromPositions,
+      forceConstraintEmissionSet.count(stereopermutator.centralIndex()) > 0
     );
   }
 
@@ -677,7 +690,8 @@ void SpatialModel::addAtomStereopermutatorInformation(
   const AtomStereopermutator& permutator,
   const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
   const double looseningMultiplier,
-  const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
+  const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions,
+  const bool forceChiralConstraintEmission
 ) {
   const auto& permutationState = permutator.getPermutationState();
   const auto& ranking = permutator.getRanking();
@@ -902,18 +916,21 @@ void SpatialModel::addAtomStereopermutatorInformation(
   }
 
   // Chiral constraints addition
-  for(const auto& minimalConstraint : permutator.minimalChiralityConstraints()) {
+  for(
+    const auto& minimalConstraint :
+    permutator.minimalChiralConstraints(forceChiralConstraintEmission)
+  ) {
     /* We need to calculate target upper and lower volumes for the chirality
      * constraints. _cache.siteDistances contains bounds for the distance to
      * each site site plane, and since the center of each cone should
      * constitute the average site position, we can calculate 1-3 distances
      * between the centerpoints of sites using the idealized angles.
      *
-     * The target volume of the chirality constraint created by the
+     * The target volume of the chiral constraint created by the
      * tetrahedron is calculated using internal coordinates (the
      * Cayley-Menger determinant), always leading to V > 0, so depending on
      * the current assignment, the sign of the result is switched. The
-     * formula used later in chirality constraint calculation for explicit
+     * formula used later in chiral constraint calculation for explicit
      * coordinates is adjusted by V' = 6 V to avoid an unnecessary factor, so
      * we do that here too:
      *
@@ -1403,7 +1420,7 @@ SpatialModel::BoundsList SpatialModel::makeBoundsList() const {
   return bounds;
 }
 
-std::vector<DistanceGeometry::ChiralityConstraint> SpatialModel::getChiralityConstraints() const {
+std::vector<DistanceGeometry::ChiralConstraint> SpatialModel::getChiralConstraints() const {
   return _chiralConstraints;
 }
 

@@ -232,7 +232,8 @@ public:
     const AtomStereopermutator& permutator,
     const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
     double looseningMultiplier,
-    const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
+    const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions,
+    bool forceChiralConstraintEmission
   );
 
   /**
@@ -269,7 +270,7 @@ public:
 //!@name Information
 //!@{
   //! Yields all collected chiral constraints
-  std::vector<ChiralityConstraint> getChiralityConstraints() const;
+  std::vector<ChiralConstraint> getChiralConstraints() const;
 
   //! Yields all collected dihedral constraints
   std::vector<DihedralConstraint> getDihedralConstraints() const;
@@ -334,7 +335,7 @@ private:
   //!@}
 
   //! Chiral constraints
-  std::vector<ChiralityConstraint> _chiralConstraints;
+  std::vector<ChiralConstraint> _chiralConstraints;
   std::vector<DihedralConstraint> _dihedralConstraints;
 };
 

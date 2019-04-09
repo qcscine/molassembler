@@ -41,7 +41,7 @@ std::ostream& nl(std::ostream& os) {
 struct TimingFunctor {
   virtual double value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions,
     std::chrono::time_point<std::chrono::steady_clock>& start,
@@ -81,7 +81,7 @@ std::vector<FunctorResults> timeFunctors(
 
     const auto boundsList = spatialModel.makeBoundsList();
 
-    const auto chiralConstraints = spatialModel.getChiralityConstraints();
+    const auto chiralConstraints = spatialModel.getChiralConstraints();
     const auto dihedralConstraints = spatialModel.getDihedralConstraints();
 
     DistanceGeometry::ExplicitGraph explicitGraph {
@@ -146,7 +146,7 @@ std::vector<FunctorResults> timeFunctors(
 struct DlibFunctor final : public TimingFunctor {
   double value (
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions,
     std::chrono::time_point<std::chrono::steady_clock>& start,
@@ -208,7 +208,7 @@ template<
 >
 double timeFunctionEvaluation(
   const Eigen::MatrixXd& squaredBounds,
-  const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
+  const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
   const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
   const Eigen::MatrixXd& positions,
   std::chrono::time_point<std::chrono::steady_clock>& start,
@@ -252,7 +252,7 @@ template<
 struct EigenFunctor final : public TimingFunctor {
   double value(
     const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralityConstraint>& chiralConstraints,
+    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
     const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
     const Eigen::MatrixXd& positions,
     std::chrono::time_point<std::chrono::steady_clock>& start,

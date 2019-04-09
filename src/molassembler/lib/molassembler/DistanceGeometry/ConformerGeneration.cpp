@@ -173,7 +173,7 @@ MoleculeDGInformation gatherDGInformation(
   // Extract gathered data
   MoleculeDGInformation data;
   data.bounds = spatialModel.makeBoundsList();
-  data.chiralityConstraints = spatialModel.getChiralityConstraints();
+  data.chiralConstraints = spatialModel.getChiralConstraints();
   data.dihedralConstraints = spatialModel.getDihedralConstraints();
 
   return data;
@@ -191,7 +191,7 @@ MoleculeDGInformation gatherDGInformation(
   // Extract gathered data
   MoleculeDGInformation data;
   data.bounds = spatialModel.makeBoundsList();
-  data.chiralityConstraints = spatialModel.getChiralityConstraints();
+  data.chiralConstraints = spatialModel.getChiralConstraints();
   data.dihedralConstraints = spatialModel.getDihedralConstraints();
 
   return data;
@@ -328,22 +328,22 @@ std::list<RefinementData> debugRefinement(
 
     ErrorFunctionValue valueFunctor {
       squaredBounds,
-      DGData.chiralityConstraints,
+      DGData.chiralConstraints,
       DGData.dihedralConstraints
     };
 
     ErrorFunctionGradient gradientFunctor {
       squaredBounds,
-      DGData.chiralityConstraints,
+      DGData.chiralConstraints,
       DGData.dihedralConstraints
     };
 
-    /* If a count of chirality constraints reveals that more than half are
+    /* If a count of chiral constraints reveals that more than half are
      * incorrect, we can invert the structure (by multiplying e.g. all y
      * coordinates with -1) and then have more than half of chirality
-     * constraints correct! In the count, chirality constraints with a target
+     * constraints correct! In the count, chiral constraints with a target
      * value of zero are not considered (this would skew the count as those
-     * chirality constraints should not have to pass an energetic maximum to
+     * chiral constraints should not have to pass an energetic maximum to
      * converge properly as opposed to tetrahedra with volume).
      */
     double initiallyCorrectChiralConstraints = valueFunctor.calculateProportionChiralConstraintsCorrectSign(dlibPositions);
@@ -362,7 +362,7 @@ std::list<RefinementData> debugRefinement(
      * that all chiral constraints are correct, allowing the structure to expand
      * into the fourth spatial dimension if necessary to allow inversion.
      *
-     * This stage of refinement is only needed if not all chirality constraints
+     * This stage of refinement is only needed if not all chiral constraints
      * are already correct (or there are none).
      */
     if(initiallyCorrectChiralConstraints < 1.0) {
@@ -384,7 +384,7 @@ std::list<RefinementData> debugRefinement(
           dlibPositions,
           0
         );
-      } catch(std::out_of_range& e) {
+      } catch(std::runtime_error& e) {
         Log::log(Log::Level::Warning)
           << "Non-finite contributions to dihedral error function gradient.\n";
         failures += 1;
@@ -430,7 +430,7 @@ std::list<RefinementData> debugRefinement(
         dlibPositions,
         0
       );
-    } catch(std::out_of_range& e) {
+    } catch(std::runtime_error& e) {
       Log::log(Log::Level::Warning)
         << "Non-finite contributions to dihedral error function gradient.\n";
       failures += 1;
@@ -455,7 +455,7 @@ std::list<RefinementData> debugRefinement(
 
     RefinementData refinementData;
     refinementData.steps = std::move(refinementSteps);
-    refinementData.constraints = DGData.chiralityConstraints;
+    refinementData.constraints = DGData.chiralConstraints;
     refinementData.looseningFactor = configuration.spatialModelLoosening;
     refinementData.isFailure = (reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable);
     refinementData.spatialModelGraphviz = spatialModelGraphviz;
@@ -475,7 +475,7 @@ std::list<RefinementData> debugRefinement(
       }
 
       if(notAllChiralitiesCorrect) {
-        Log::log(Log::Level::Warning) << "- Not all chirality constraints have the correct sign.\n";
+        Log::log(Log::Level::Warning) << "- Not all chiral constraints have the correct sign.\n";
       }
 
       if(!structureAcceptable) {
@@ -521,22 +521,22 @@ outcome::result<AngstromWrapper> refine(
 
   ErrorFunctionValue valueFunctor {
     squaredBounds,
-    DGDataPtr->chiralityConstraints,
+    DGDataPtr->chiralConstraints,
     DGDataPtr->dihedralConstraints
   };
 
   ErrorFunctionGradient gradientFunctor {
     squaredBounds,
-    DGDataPtr->chiralityConstraints,
+    DGDataPtr->chiralConstraints,
     DGDataPtr->dihedralConstraints
   };
 
-  /* If a count of chirality constraints reveals that more than half are
+  /* If a count of chiral constraints reveals that more than half are
    * incorrect, we can invert the structure (by multiplying e.g. all y
    * coordinates with -1) and then have more than half of chirality
-   * constraints correct! In the count, chirality constraints with a target
+   * constraints correct! In the count, chiral constraints with a target
    * value of zero are not considered (this would skew the count as those
-   * chirality constraints should not have to pass an energetic maximum to
+   * chiral constraints should not have to pass an energetic maximum to
    * converge properly as opposed to tetrahedra with volume).
    */
   double initiallyCorrectChiralConstraints = valueFunctor.calculateProportionChiralConstraintsCorrectSign(dlibPositions);
@@ -572,7 +572,7 @@ outcome::result<AngstromWrapper> refine(
         dlibPositions,
         0
       );
-    } catch(std::out_of_range& e) {
+    } catch(std::runtime_error& e) {
       return DGError::RefinementException;
     }
 
@@ -604,7 +604,7 @@ outcome::result<AngstromWrapper> refine(
       dlibPositions,
       0
     );
-  } catch(std::out_of_range& e) {
+  } catch(std::runtime_error& e) {
     return DGError::RefinementException;
   }
 
@@ -614,7 +614,7 @@ outcome::result<AngstromWrapper> refine(
     return DGError::RefinementMaxIterationsReached;
   }
 
-  // Not all chirality constraints have the right sign
+  // Not all chiral constraints have the right sign
   if(valueFunctor.proportionChiralConstraintsCorrectSign < 1) {
     return DGError::RefinedChiralsWrong;
   }

@@ -35,7 +35,7 @@ struct PermutationState;
 namespace DistanceGeometry {
 
 class SpatialModel;
-struct ChiralityConstraint;
+struct ChiralConstraint;
 
 } // namespace DistanceGeometry
 
@@ -238,17 +238,22 @@ public:
   boost::optional<unsigned> indexOfPermutation() const;
 
   /*!
-   * @brief Returns a minimal representation of chirality constraints
+   * @brief Returns a minimal representation of chiral constraints
    *
-   * Every minimal representation consists only of ligand indices.
+   * Every minimal representation consists only of site indices. If no site
+   * index is present, this position is the location of the central atom.
    *
-   * The minimal representation assumes that all Symmetry tetrahedron
-   * definitions are defined to be Positive targets, which is checked in
-   * the chemical_symmetries tests.
+   * The minimal representation assumes that all Symmetry tetrahedra are
+   * defined as Positive targets, which is checked in the
+   * chemical_symmetries tests.
+   *
+   * @param enforce Emit minimal representations of chiral constraints even if
+   * the stereopermutator does not have any chiral state, i.e.
+   * numStereopermutators() <= 1, as long as it is assigned.
    */
   std::vector<
     std::array<boost::optional<unsigned>, 4>
-  > minimalChiralityConstraints() const;
+  > minimalChiralConstraints(bool enforce = false) const;
 
   //! Returns an information string for diagnostic purposes
   std::string info() const;

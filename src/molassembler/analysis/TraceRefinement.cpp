@@ -57,7 +57,7 @@ void writeProgressFiles(
       << refinementStep.fourthDimError << ","
       << dlib::length(refinementStep.gradient) << ","
       << static_cast<unsigned>(refinementStep.compress) << ","
-      << refinementStep.proportionCorrectChiralityConstraints << "\n";
+      << refinementStep.proportionCorrectChiralConstraints << "\n";
   }
 
   progressFile.close();
@@ -223,6 +223,7 @@ int main(int argc, char* argv[]) {
     DGConfiguration.refinementStepLimit = nSteps;
 
 #ifndef NDEBUG
+    //auto debugData = DistanceGeometry::debugRefinement(
     auto debugData = DistanceGeometry::debugEigenRefinement<4, double, false>(
       mol,
       nStructures,

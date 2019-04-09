@@ -77,7 +77,7 @@ struct ErrorFunctionValue {
    */
   inline static dlib::vector<double, 3> getAveragePos3D(
     const Vector& positions,
-    const ChiralityConstraint::AtomListType& atomList
+    const ChiralConstraint::AtomListType& atomList
   ) {
     if(atomList.size() == 1) {
       return getPos3D(positions, atomList.front());
@@ -104,7 +104,7 @@ struct ErrorFunctionValue {
    */
   inline static Vector getAveragePos(
     const Vector& positions,
-    const ChiralityConstraint::AtomListType& atomList
+    const ChiralConstraint::AtomListType& atomList
   ) {
     if(atomList.size() == 1) {
       return getPos(positions, atomList.front());
@@ -135,7 +135,7 @@ struct ErrorFunctionValue {
    */
   inline static double adjustedSignedVolume(
     const Vector& positions,
-    const ChiralityConstraint::SiteSequence& ligands
+    const ChiralConstraint::SiteSequence& ligands
   ) {
     return (
       getAveragePos3D(positions, ligands[0])
@@ -185,7 +185,7 @@ struct ErrorFunctionValue {
   // State
   const unsigned N;
   const dlib::matrix<double, 0, 0>& squaredBounds;
-  const std::vector<ChiralityConstraint>& chiralityConstraints;
+  const std::vector<ChiralConstraint>& chiralConstraints;
   const std::vector<DihedralConstraint>& dihedralConstraints;
   bool compressFourthDimension = false;
 
@@ -196,11 +196,11 @@ struct ErrorFunctionValue {
   // Constructor
   explicit ErrorFunctionValue(
     const dlib::matrix<double, 0, 0>& passSquaredBounds,
-    const std::vector<ChiralityConstraint>& passChiralityConstraints,
+    const std::vector<ChiralConstraint>& passChiralConstraints,
     const std::vector<DihedralConstraint>& passDihedralConstraints
   ) : N(passSquaredBounds.nc()),
       squaredBounds(passSquaredBounds),
-      chiralityConstraints(passChiralityConstraints),
+      chiralConstraints(passChiralConstraints),
       dihedralConstraints(passDihedralConstraints)
   {}
 
@@ -266,21 +266,21 @@ struct ErrorFunctionValue {
    * @return The sum of error function terms caused by chiral errors
    */
   double chiralError(const Vector& positions) const {
-    unsigned nonZeroChiralityConstraints = 0;
-    unsigned incorrectNonZeroChiralityConstraints = 0;
+    unsigned nonZeroChiralConstraints = 0;
+    unsigned incorrectNonZeroChiralConstraints = 0;
 
     double error = 0, volume, upperTerm, lowerTerm;
 
-    for(const auto& constraint : chiralityConstraints) {
+    for(const auto& constraint : chiralConstraints) {
       volume = adjustedSignedVolume(positions, constraint.sites);
 
       if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
-        ++nonZeroChiralityConstraints;
+        ++nonZeroChiralConstraints;
         if( // can this be simplified? -> sign bit XOR?
           ( volume < 0 && constraint.lower > 0)
           || (volume > 0 && constraint.lower < 0)
         ) {
-          incorrectNonZeroChiralityConstraints += 1;
+          incorrectNonZeroChiralConstraints += 1;
         }
       }
 
@@ -307,12 +307,12 @@ struct ErrorFunctionValue {
     }
 
     // Set proportionChiralConstraintsCorrectSign member
-    if(nonZeroChiralityConstraints == 0) {
+    if(nonZeroChiralConstraints == 0) {
       proportionChiralConstraintsCorrectSign = 1;
     } else {
       proportionChiralConstraintsCorrectSign = static_cast<double>(
-        nonZeroChiralityConstraints - incorrectNonZeroChiralityConstraints
-      ) / nonZeroChiralityConstraints;
+        nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
+      ) / nonZeroChiralConstraints;
     }
 
     return error;
@@ -399,40 +399,40 @@ struct ErrorFunctionValue {
   }
 
   double calculateProportionChiralConstraintsCorrectSign(const Vector& positions) const {
-    unsigned nonZeroChiralityConstraints = 0;
-    unsigned incorrectNonZeroChiralityConstraints = 0;
+    unsigned nonZeroChiralConstraints = 0;
+    unsigned incorrectNonZeroChiralConstraints = 0;
 
-    for(const auto& chiralityConstraint : chiralityConstraints) {
-      /* Make sure that chirality constraints meant to cause coplanarity of
+    for(const auto& chiralConstraint : chiralConstraints) {
+      /* Make sure that chiral constraints meant to cause coplanarity of
        * four indices aren't counted here - Their volume bounds are
        * usually so tight that they might be slightly outside in any given
        * refinement step. If they are outside their target values by a large
        * amount, that is caught by finalStructureAcceptable anyway.
        */
-      if(std::fabs(chiralityConstraint.lower + chiralityConstraint.upper) > 1e-4) {
-        nonZeroChiralityConstraints += 1;
+      if(std::fabs(chiralConstraint.lower + chiralConstraint.upper) > 1e-4) {
+        nonZeroChiralConstraints += 1;
 
         const double currentVolume = adjustedSignedVolume(
           positions,
-          chiralityConstraint.sites
+          chiralConstraint.sites
         );
 
         if( // can this be simplified? -> sign bit XOR?
-          ( currentVolume < 0 && chiralityConstraint.lower > 0)
-          || (currentVolume > 0 && chiralityConstraint.lower < 0)
+          ( currentVolume < 0 && chiralConstraint.lower > 0)
+          || (currentVolume > 0 && chiralConstraint.lower < 0)
         ) {
-          incorrectNonZeroChiralityConstraints += 1;
+          incorrectNonZeroChiralConstraints += 1;
         }
       }
     }
 
-    if(nonZeroChiralityConstraints == 0) {
+    if(nonZeroChiralConstraints == 0) {
       proportionChiralConstraintsCorrectSign = 1.0;
     }
 
     proportionChiralConstraintsCorrectSign = static_cast<double>(
-      nonZeroChiralityConstraints - incorrectNonZeroChiralityConstraints
-    ) / nonZeroChiralityConstraints;
+      nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
+    ) / nonZeroChiralConstraints;
 
     return proportionChiralConstraintsCorrectSign;
   }
@@ -463,7 +463,7 @@ struct ErrorFunctionValue {
     }
 
     // Check chiral bound deviations
-    for(const auto& constraint : chiralityConstraints) {
+    for(const auto& constraint : chiralConstraints) {
       double volume = adjustedSignedVolume(positions, constraint.sites);
 
       if(
@@ -522,18 +522,18 @@ public:
   // State
   const unsigned N;
   const dlib::matrix<double, 0, 0>& squaredBounds;
-  const std::vector<ChiralityConstraint>& chiralityConstraints;
+  const std::vector<ChiralConstraint>& chiralConstraints;
   const std::vector<DihedralConstraint>& dihedralConstraints;
   bool compressFourthDimension = false;
 
   // Constructor
   explicit ErrorFunctionGradient(
     const dlib::matrix<double, 0, 0>& passSquaredBounds,
-    const std::vector<ChiralityConstraint>& passChiralityConstraints,
+    const std::vector<ChiralConstraint>& passChiralConstraints,
     const std::vector<DihedralConstraint>& passDihedralConstraints
   ) : N(passSquaredBounds.nc()),
       squaredBounds(passSquaredBounds),
-      chiralityConstraints(passChiralityConstraints),
+      chiralConstraints(passChiralConstraints),
       dihedralConstraints(passDihedralConstraints)
   {}
 
@@ -631,7 +631,7 @@ public:
   void referenceAddChiralContribution(
     Vector& gradient,
     const Vector& positions,
-    const ChiralityConstraint& constraint,
+    const ChiralConstraint& constraint,
     const double factor = 1
   ) const {
     // Precalculate repeated expressions
@@ -719,7 +719,7 @@ public:
     Vector gradient(positions.size());
     dlib::set_all_elements(gradient, 0);
 
-    for(const auto& constraint : chiralityConstraints) {
+    for(const auto& constraint : chiralConstraints) {
       const double volume = ErrorFunctionValue::adjustedSignedVolume(positions, constraint.sites);
       const double upperTerm = volume - constraint.upper;
       const double lowerTerm = constraint.lower - volume;
@@ -965,7 +965,7 @@ public:
         || !dlib::is_finite(kContribution)
         || !dlib::is_finite(lContribution)
       ) {
-        throw std::out_of_range("Encountered non-finite dihedral contributions");
+        throw std::runtime_error("Encountered non-finite dihedral contributions");
       }
 
       for(const AtomIndex alphaConstitutingIndex : constraint.sites[0]) {
@@ -1026,7 +1026,7 @@ public:
     }
 
     // Chirality gradient contributions (C)
-    for(const auto& constraint : chiralityConstraints) {
+    for(const auto& constraint : chiralConstraints) {
       const double volume = ErrorFunctionValue::adjustedSignedVolume(positions, constraint.sites);
 
       // It may not occur that both terms contribute!

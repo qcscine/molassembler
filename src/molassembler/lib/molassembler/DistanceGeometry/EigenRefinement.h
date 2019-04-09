@@ -28,7 +28,7 @@ public:
 //!@name Public types
 //!@{
   //! Vector layout of positions
-  using VectorType = Eigen::Matrix<FloatType, 1, Eigen::Dynamic>;
+  using VectorType = Eigen::Matrix<FloatType, Eigen::Dynamic, 1>;
 
   //! Three dimensional vector
   using ThreeDimensionalVector = Eigen::Matrix<FloatType, 3, 1>;
@@ -87,7 +87,7 @@ public:
   //! Calculate the average full-dimensional position of several atoms
   static FullDimensionalVector getAveragePosition(
     const VectorType& positions,
-    const ChiralityConstraint::AtomListType& atomList
+    const ChiralConstraint::AtomListType& atomList
   ) {
     if(atomList.size() == 1) {
       return getPosition(positions, atomList.front());
@@ -104,7 +104,7 @@ public:
   //! Calculate the average three-dimensional position of several atoms
   static ThreeDimensionalVector getAveragePosition3D(
     const VectorType& positions,
-    const ChiralityConstraint::AtomListType& atomList
+    const ChiralConstraint::AtomListType& atomList
   ) {
     if(atomList.size() == 1) {
       return getPosition3D(positions, atomList.front());
@@ -134,7 +134,7 @@ public:
   //! Dihedral bounds upper minus lower, halved, in sequence
   VectorType dihedralConstraintDiffsHalved;
   //! List of chiral constraints
-  std::vector<ChiralityConstraint> chiralConstraints;
+  std::vector<ChiralConstraint> chiralConstraints;
   //! List of dihedral constraints
   std::vector<DihedralConstraint> dihedralConstraints;
   //! Whether to compress the fourth dimension
@@ -151,7 +151,7 @@ public:
 //!@{
   EigenRefinementProblem(
     const Eigen::MatrixXd& squaredBounds,
-    std::vector<ChiralityConstraint> passChiralConstraints,
+    std::vector<ChiralConstraint> passChiralConstraints,
     std::vector<DihedralConstraint> passDihedralConstraints
   ) : chiralConstraints(std::move(passChiralConstraints)),
       dihedralConstraints(std::move(passDihedralConstraints))
@@ -174,7 +174,7 @@ public:
     chiralUpperConstraints.resize(C);
     chiralLowerConstraints.resize(C);
     for(unsigned i = 0; i < C; ++i) {
-      const ChiralityConstraint& constraint = chiralConstraints[i];
+      const ChiralConstraint& constraint = chiralConstraints[i];
       chiralUpperConstraints(i) = constraint.upper;
       chiralLowerConstraints(i) = constraint.lower;
     }
@@ -196,7 +196,7 @@ public:
   /*!
    * @brief Adds pairwise distance error and gradient contributions
    */
-  void distanceContributions(const VectorType& positions, FloatType& error, VectorType& gradient) const {
+  void distanceContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     // Delegate to SIMD or non-SIMD implementation
     distanceContributionsImpl(positions, error, gradient);
   }
@@ -204,7 +204,7 @@ public:
   /*!
    * @brief Adds chiral error and gradient contributions
    */
-  void chiralContributions(const VectorType& positions, FloatType& error, VectorType& gradient) const {
+  void chiralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     // Delegate to SIMD or non-SIMD implementation
     chiralContributionsImpl(positions, error, gradient);
   }
@@ -212,7 +212,7 @@ public:
   /*!
    * @brief Adds dihedral error and gradient contributions
    */
-  void dihedralContributions(const VectorType& positions, FloatType& error, VectorType& gradient) const {
+  void dihedralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     // Delegate to SIMD or non-SIMD implementation
     dihedralContributionsImpl(positions, error, gradient);
   }
@@ -220,7 +220,7 @@ public:
   /*!
    * @brief Adds fourth dimension error and gradient contributions
    */
-  void fourthDimensionContributions(const VectorType& positions, FloatType& error, VectorType& gradient) const {
+  void fourthDimensionContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     assert(positions.size() == gradient.size());
     // Collect all fourth dimension values, square and sum, add to error
     if(dimensionality == 4 && compressFourthDimension) {
@@ -240,7 +240,7 @@ public:
    * @pre @p parameters must be evenly divisible by the dimensionality
    * @post Error is stored in @p value and gradient in @p gradient
    */
-  void operator() (const VectorType& parameters, FloatType& value, VectorType& gradient) const {
+  void operator() (const VectorType& parameters, FloatType& value, Eigen::Ref<VectorType> gradient) const {
     ++callCount;
 
     assert(parameters.size() == gradient.size());
@@ -256,18 +256,18 @@ public:
   }
 
   double calculateProportionChiralConstraintsCorrectSign(const VectorType& positions) const {
-    unsigned nonZeroChiralityConstraints = 0;
-    unsigned incorrectNonZeroChiralityConstraints = 0;
+    unsigned nonZeroChiralConstraints = 0;
+    unsigned incorrectNonZeroChiralConstraints = 0;
 
     for(const auto& constraint : chiralConstraints) {
-      /* Make sure that chirality constraints meant to cause coplanarity of
+      /* Make sure that chiral constraints meant to cause coplanarity of
        * four indices aren't counted here - Their volume bounds are
        * usually so tight that they might be slightly outside in any given
        * refinement step. If they are outside their target values by a large
        * amount, that is caught by finalStructureAcceptable anyway.
        */
       if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
-        nonZeroChiralityConstraints += 1;
+        nonZeroChiralConstraints += 1;
 
         const ThreeDimensionalVector delta = getAveragePosition3D(positions, constraint.sites[3]);
 
@@ -285,18 +285,18 @@ public:
           ( volume < 0 && constraint.lower > 0)
           || (volume > 0 && constraint.lower < 0)
         ) {
-          incorrectNonZeroChiralityConstraints += 1;
+          incorrectNonZeroChiralConstraints += 1;
         }
       }
     }
 
-    if(nonZeroChiralityConstraints == 0) {
+    if(nonZeroChiralConstraints == 0) {
       proportionChiralConstraintsCorrectSign = 1.0;
     }
 
     proportionChiralConstraintsCorrectSign = static_cast<double>(
-      nonZeroChiralityConstraints - incorrectNonZeroChiralityConstraints
-    ) / nonZeroChiralityConstraints;
+      nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
+    ) / nonZeroChiralConstraints;
 
     return proportionChiralConstraintsCorrectSign;
   }
@@ -407,7 +407,7 @@ private:
   void distanceContributionsImpl(
     const VectorType& positions,
     FloatType& error,
-    VectorType& gradient
+    Eigen::Ref<VectorType> gradient
   ) const {
     assert(positions.size() == gradient.size());
     const unsigned N = positions.size() / dimensionality;
@@ -467,7 +467,7 @@ private:
   void distanceContributionsImpl(
     const VectorType& positions,
     FloatType& error,
-    VectorType& gradient
+    Eigen::Ref<VectorType> gradient
   ) const {
     assert(positions.size() == gradient.size());
     /* Using the squared distance bounds to avoid unneeded square-root calculations
@@ -609,9 +609,9 @@ private:
    * @brief Adds chiral error and gradient contributions
    */
   template<bool dependent = SIMD, std::enable_if_t<!dependent, int>...>
-  void chiralContributionsImpl(const VectorType& positions, FloatType& error, VectorType& gradient) const {
-    unsigned nonZeroChiralityConstraints = 0;
-    unsigned incorrectNonZeroChiralityConstraints = 0;
+  void chiralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
+    unsigned nonZeroChiralConstraints = 0;
+    unsigned incorrectNonZeroChiralConstraints = 0;
 
     for(const auto& constraint : chiralConstraints) {
       const ThreeDimensionalVector alpha = getAveragePosition3D(positions, constraint.sites[0]);
@@ -628,22 +628,17 @@ private:
       );
 
       if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
-        ++nonZeroChiralityConstraints;
+        ++nonZeroChiralConstraints;
         if(
           ( volume < 0 && constraint.lower > 0)
           || (volume > 0 && constraint.lower < 0)
         ) {
-          ++incorrectNonZeroChiralityConstraints;
+          ++incorrectNonZeroChiralConstraints;
         }
       }
 
       // Upper bound term
       const FloatType upperTerm = volume - static_cast<FloatType>(constraint.upper);
-
-      assert(!( // Ensure early continue logic is correct
-        upperTerm > 0
-        && constraint.lower - volume > 0
-      ));
 
       if(upperTerm > 0) {
         error += upperTerm * upperTerm;
@@ -708,12 +703,12 @@ private:
     }
 
     // Set signaling member
-    if(nonZeroChiralityConstraints == 0) {
+    if(nonZeroChiralConstraints == 0) {
       proportionChiralConstraintsCorrectSign = 1;
     } else {
       proportionChiralConstraintsCorrectSign = static_cast<double>(
-        nonZeroChiralityConstraints - incorrectNonZeroChiralityConstraints
-      ) / nonZeroChiralityConstraints;
+        nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
+      ) / nonZeroChiralConstraints;
     }
   }
 
@@ -721,7 +716,7 @@ private:
    * @brief SIMD implementation of chiral contributions
    */
   template<bool dependent = SIMD, std::enable_if_t<dependent, int>...>
-  void chiralContributionsImpl(const VectorType& positions, FloatType& error, VectorType& gradient) const {
+  void chiralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     assert(positions.size() == gradient.size());
     /* We have to calculate the adjusted signed volume for each chiral
      * constraint once for both value and gradient, so we could principally do
@@ -811,7 +806,7 @@ private:
 
       // Populate minuend and subtrahend
       for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-        const ChiralityConstraint& constraint = chiralConstraints[constraintIndex];
+        const ChiralConstraint& constraint = chiralConstraints[constraintIndex];
 
         auto lastSitePosition = getAveragePosition3D(positions, constraint.sites.back());
         for(unsigned siteIndex = 0; siteIndex < 3; ++siteIndex) {
@@ -840,27 +835,27 @@ private:
     }
 
     // Count constraints with correct signs and set signaling member
-    unsigned nonZeroChiralityConstraints = 0;
-    unsigned incorrectNonZeroChiralityConstraints = 0;
+    unsigned nonZeroChiralConstraints = 0;
+    unsigned incorrectNonZeroChiralConstraints = 0;
     for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
-      const ChiralityConstraint& constraint = chiralConstraints[constraintIndex];
+      const ChiralConstraint& constraint = chiralConstraints[constraintIndex];
       if(std::fabs(constraint.lower + constraint.upper) > 1e-4) {
-        ++nonZeroChiralityConstraints;
+        ++nonZeroChiralConstraints;
         const double volume = volumes(constraintIndex);
         if(
           ( volume < 0 && constraint.lower > 0)
           || (volume > 0 && constraint.lower < 0)
         ) {
-          ++incorrectNonZeroChiralityConstraints;
+          ++incorrectNonZeroChiralConstraints;
         }
       }
     }
-    if(nonZeroChiralityConstraints == 0) {
+    if(nonZeroChiralConstraints == 0) {
       proportionChiralConstraintsCorrectSign = 1;
     } else {
       proportionChiralConstraintsCorrectSign = static_cast<double>(
-        nonZeroChiralityConstraints - incorrectNonZeroChiralityConstraints
-      ) / nonZeroChiralityConstraints;
+        nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
+      ) / nonZeroChiralConstraints;
     }
 
     // SIMD
@@ -907,7 +902,7 @@ private:
         ijklContributions.col(4 * constraintIndex + 2) = a.cross(b);
         ijklContributions.col(4 * constraintIndex + 3) = e.cross(d);
 
-        const ChiralityConstraint& constraint = chiralConstraints[constraintIndex];
+        const ChiralConstraint& constraint = chiralConstraints[constraintIndex];
 
         // site sizes
         siteSizes(4 * constraintIndex + 0) = constraint.sites[0].size();
@@ -937,7 +932,7 @@ private:
     // Distribute ijkl contributions into gradient
     for(unsigned constraintIndex = 0; constraintIndex < C; ++constraintIndex) {
       if(factors(constraintIndex) != 0) {
-        const ChiralityConstraint& constraint = chiralConstraints[constraintIndex];
+        const ChiralConstraint& constraint = chiralConstraints[constraintIndex];
         /* ijklContributions.col is a Eigen::ColExpr.
          * If FloatType == double, then iContribution is Eigen::ColExpr -> no copy
          * If FloatType == float, then iContribution is Eigen::ColExpr.cast<double>().eval() == Vector3d -> copying cast
@@ -970,7 +965,7 @@ private:
    * @brief Adds dihedral error and gradient contributions
    */
   template<bool dependent = SIMD, std::enable_if_t<!dependent, int>...>
-  void dihedralContributionsImpl(const VectorType& positions, FloatType& error, VectorType& gradient) const {
+  void dihedralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     assert(positions.size() == gradient.size());
     constexpr FloatType reductionFactor = 1.0 / 10;
 
@@ -1072,7 +1067,7 @@ private:
         || !kContribution.array().isFinite().all()
         || !lContribution.array().isFinite().all()
       ) {
-        throw std::runtime_error("Encountered non-finite dihedral gradientcontributions");
+        throw std::runtime_error("Encountered non-finite dihedral gradient contributions");
       }
 
       /* Distribute contributions among constituting indices */
@@ -1098,7 +1093,7 @@ private:
    * @brief SIMD implementation of dihedral contributions
    */
   template<bool dependent = SIMD, std::enable_if_t<dependent, int>...>
-  void dihedralContributionsImpl(const VectorType& positions, FloatType& error, VectorType& gradient) const {
+  void dihedralContributionsImpl(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     assert(positions.size() == gradient.size());
     /* NOTE: site is average position of constituting atoms in three dimensions
      *

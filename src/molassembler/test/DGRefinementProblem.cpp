@@ -67,7 +67,7 @@ bool isApprox(
 struct RefinementBaseData {
   DistanceBoundsMatrix distanceBounds;
   Eigen::MatrixXd embeddedPositions;
-  std::vector<ChiralityConstraint> chiralConstraints;
+  std::vector<ChiralConstraint> chiralConstraints;
   std::vector<DihedralConstraint> dihedralConstraints;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -95,7 +95,7 @@ struct RefinementBaseData {
       DGInfo.bounds
     };
 
-    chiralConstraints = std::move(DGInfo.chiralityConstraints);
+    chiralConstraints = std::move(DGInfo.chiralConstraints);
     dihedralConstraints = std::move(DGInfo.dihedralConstraints);
 
     auto distancesResult = distanceBounds.makeDistanceMatrix(randomnessEngine());
@@ -523,27 +523,29 @@ Eigen::MatrixXd rotateAndTranslate(
   return positionMatrix;
 }
 
-template<typename EigenRefinementType, typename FloatType>
+template<typename EigenRefinementType>
 auto rotateAndTranslateLinear(
   const typename EigenRefinementType::VectorType& positionVector,
   const Eigen::Matrix3d& rotationMatrix,
   const Eigen::Vector3d& translationVector
 ) -> typename EigenRefinementType::VectorType {
+  using FloatType = typename RefinementTraits<EigenRefinementType>::FloatingPointType;
   using DimensionalityConstant = typename RefinementTraits<EigenRefinementType>::DimensionalityConstant;
   constexpr unsigned dimensionality = DimensionalityConstant::value;
 
-  typename EigenRefinementType::VectorType positionCopy = positionVector;
+  typename EigenRefinementType::VectorType transformedPositions = positionVector;
 
-  assert(positionCopy.size() % dimensionality == 0);
-  const unsigned N = positionCopy.size() / dimensionality;
+  assert(positionVector.size() % dimensionality == 0);
+  const unsigned N = positionVector.size() / dimensionality;
   for(unsigned i = 0; i < N; ++i) {
-    positionCopy.template segment<3>(dimensionality * i) = (
-      rotationMatrix.cast<FloatType>() * positionCopy.template segment<3>(dimensionality * i)
-      + translationVector.cast<FloatType>()
-    );
+    Eigen::Vector3d position = positionVector.template segment<3>(dimensionality * i).template cast<double>();
+
+    transformedPositions.template segment<3>(dimensionality * i) = (
+      rotationMatrix * position + translationVector
+    ).template cast<FloatType>();
   }
 
-  return positionCopy;
+  return transformedPositions;
 }
 
 Eigen::VectorXd flatten(Eigen::MatrixXd matr) {
@@ -608,12 +610,14 @@ struct RotationalTranslationalInvarianceTest {
 
         function(translatedPositions, translatedValue, translatedGradient);
 
+        const double translatedDifference = std::fabs(
+          static_cast<double>(translatedValue)
+          - static_cast<double>(referenceValue)
+        );
+
         if(
           errorTranslationalInvariance
-          && (
-            std::fabs(translatedValue - referenceValue)
-            > traits::Floating<FloatType>::tolerance
-          )
+          && translatedDifference > traits::Floating<FloatType>::tolerance
         ) {
           std::cout << "Error is not translationally invariant: translated = "
             << translatedValue << ", reference = " << referenceValue
@@ -653,23 +657,26 @@ struct RotationalTranslationalInvarianceTest {
 
         function(rotatedPositions, rotatedValue, rotatedGradient);
 
+        const double rotatedDifference = std::fabs(
+          static_cast<double>(rotatedValue)
+          - static_cast<double>(referenceValue)
+        );
+
         if(
           errorRotationalInvariance
-          && (
-            std::fabs(rotatedValue - referenceValue)
-            > traits::Floating<FloatType>::tolerance
-          )
+          && rotatedDifference > traits::Floating<FloatType>::tolerance
+
         ) {
           std::cout << "Error is not rotationally invariant: rotated = "
             << rotatedValue << ", reference = " << referenceValue
-            << ", difference: " << std::fabs(rotatedValue - referenceValue)
+            << ", difference: " << rotatedDifference
             << "\n";
           errorRotationalInvariance = false;
         }
 
         if(gradientRotationalInvariance) {
           // Rotate reference accordingly
-          auto rotatedReferenceGradient = rotateAndTranslateLinear<EigenRefinementType, FloatType>(
+          auto rotatedReferenceGradient = rotateAndTranslateLinear<EigenRefinementType>(
             referenceGradient,
             rotationMatrix,
             Eigen::Vector3d::Zero()
@@ -988,9 +995,9 @@ struct CompareImplementations {
 
             bool pass = true;
 
-            const LargerFPType errorAbsDifference = std::fabs(
-              static_cast<LargerFPType>(tError)
-              - static_cast<LargerFPType>(uError)
+            const double errorAbsDifference = std::fabs(
+              static_cast<double>(tError)
+              - static_cast<double>(uError)
             );
 
             if(errorAbsDifference > traits::Floating<SmallerFPType>::tolerance) {
