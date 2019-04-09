@@ -168,7 +168,7 @@ InterpretResult interpret(
     // If the edge's bond order exceeds the threshold optional
     if(
       stereopermutatorBondOrderThresholdOptional
-      && bondOrders.getOrder(source, target) > *stereopermutatorBondOrderThresholdOptional
+      && bondOrders.getOrder(source, target) >= *stereopermutatorBondOrderThresholdOptional
     ) {
       precursor.bondStereopermutatorCandidatesOptional->emplace_back(
         indexInComponentMap.at(source),
