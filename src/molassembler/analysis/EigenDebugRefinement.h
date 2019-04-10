@@ -8,14 +8,17 @@
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
-#include "Utils/Optimizer/GradientBased/LBFGS.h"
+#include "molassembler/IO.h"
+
+#include "temple/LBFGS.h"
+// #include "Utils/Optimizer/GradientBased/LBFGS.h"
 
 namespace Scine {
 namespace molassembler {
 namespace DistanceGeometry {
 
 template<typename EigenRefinementType>
-struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
+struct InversionOrIterLimitStop {
   const unsigned iterLimit;
   const EigenRefinementType& refinementFunctorReference;
 
@@ -30,21 +33,50 @@ struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
       refinementFunctorReference(functor)
   {}
 
-  virtual bool checkConvergence(
+  bool checkConvergence(
     const VectorType& /* parameters */,
     FloatType /* value */,
     const VectorType& /* gradients */
-  ) final {
+  ) {
     return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
   }
 
-  virtual bool checkMaxIterations(unsigned currentIteration) final {
+  bool checkMaxIterations(unsigned currentIteration) {
     return currentIteration >= iterLimit;
   }
-
-  void addSettingsDescriptors(Utils::UniversalSettings::DescriptorCollection& /* collection */) final {}
-  void applySettings(const Utils::Settings& /* s */) final {}
 };
+
+//template<typename EigenRefinementType>
+//struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
+//  const unsigned iterLimit;
+//  const EigenRefinementType& refinementFunctorReference;
+//
+//
+//  using VectorType = typename EigenRefinementType::VectorType;
+//  using FloatType = typename EigenRefinementType::FloatingPointType;
+//
+//  InversionOrIterLimitStop(
+//    const unsigned passIter,
+//    const EigenRefinementType& functor
+//  ) : iterLimit(passIter),
+//      refinementFunctorReference(functor)
+//  {}
+//
+//  virtual bool checkConvergence(
+//    const VectorType& /* parameters */,
+//    FloatType /* value */,
+//    const VectorType& /* gradients */
+//  ) final {
+//    return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
+//  }
+//
+//  virtual bool checkMaxIterations(unsigned currentIteration) final {
+//    return currentIteration >= iterLimit;
+//  }
+//
+//  void addSettingsDescriptors(Utils::UniversalSettings::DescriptorCollection& /* collection */) final {}
+//  void applySettings(const Utils::Settings& /* s */) final {}
+//};
 
 template<typename FloatType>
 struct GradientOrIterLimitStop {
@@ -68,7 +100,6 @@ struct GradientOrIterLimitStop {
 
 struct LBFGSOptimizerParameters {
   // These are the default LBFGS parameters
-  unsigned maxm = 50;
   double c1 = 1e-4;
   double c2 = 0.9;
   double stepLength = 1.0;
@@ -190,12 +221,13 @@ std::list<RefinementData> debugEigenRefinement(
 
 /* Here is where Eigen specific stuff starts ----------------------- */
     using FullRefinementType = EigenRefinementProblem<dimensionality, FloatType, SIMD>;
+    using VectorType = typename FullRefinementType::VectorType;
 
-    // Vectorize and transfer to dlib
-    typename FullRefinementType::VectorType transformedPositions = Eigen::Map<Eigen::VectorXd>(
+    // Vectorize positions
+    VectorType transformedPositions = Eigen::Map<Eigen::VectorXd>(
       embeddedPositions.data(),
       embeddedPositions.cols() * embeddedPositions.rows()
-    ).cast<FloatType>().eval();
+    ).template cast<FloatType>().eval();
 
     const unsigned N = transformedPositions.size() / dimensionality;
 
@@ -227,42 +259,49 @@ std::list<RefinementData> debugEigenRefinement(
       initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
     }
 
-    Utils::LBFGS optimizer;
-    optimizer.maxm = optimizerParameters.maxm;
+    temple::LBFGS<FloatType, 64> optimizer;
     optimizer.c1 = optimizerParameters.c1;
     optimizer.c2 = optimizerParameters.c2;
     optimizer.stepLength = optimizerParameters.stepLength;
 
-    // Add an observer to get the information needed for debugging
-    auto observerFunctor = [&](const int& /* cycle */, const Eigen::VectorXd& positions) -> void {
-      FloatType distanceError = 0, chiralError = 0,
-                dihedralError = 0, fourthDimensionError = 0;
+    struct Observer {
+      const Molecule& mol;
+      FullRefinementType& functor;
+      std::list<RefinementStepData>& steps;
 
-      typename FullRefinementType::VectorType gradient;
-      gradient.resize(positions.size());
-      gradient.setZero();
+      Observer(const Molecule& passMolecule, FullRefinementType& passFunctor, std::list<RefinementStepData>& passSteps)
+        : mol(passMolecule), functor(passFunctor), steps(passSteps) {}
 
-      typename FullRefinementType::VectorType castedPositions = positions.template cast<FloatType>();
+      using VectorType = typename FullRefinementType::VectorType;
 
-      // Call functions individually to get separate error values
-      refinementFunctor.distanceContributions(castedPositions, distanceError, gradient);
-      refinementFunctor.chiralContributions(castedPositions, chiralError, gradient);
-      refinementFunctor.dihedralContributions(castedPositions, dihedralError, gradient);
-      refinementFunctor.fourthDimensionContributions(castedPositions, fourthDimensionError, gradient);
+      void operator() (const VectorType& positions) {
+        FloatType distanceError = 0, chiralError = 0,
+                  dihedralError = 0, fourthDimensionError = 0;
 
-      refinementSteps.emplace_back(
-        dlib::mat(positions),
-        distanceError,
-        chiralError,
-        dihedralError,
-        fourthDimensionError,
-        dlib::mat(gradient),
-        refinementFunctor.proportionChiralConstraintsCorrectSign,
-        refinementFunctor.compressFourthDimension
-      );
+        VectorType gradient;
+        gradient.resize(positions.size());
+        gradient.setZero();
+
+        // Call functions individually to get separate error values
+        functor.distanceContributions(positions, distanceError, gradient);
+        functor.chiralContributions(positions, chiralError, gradient);
+        functor.dihedralContributions(positions, dihedralError, gradient);
+        functor.fourthDimensionContributions(positions, fourthDimensionError, gradient);
+
+        steps.emplace_back(
+          dlib::mat(positions.template cast<double>().eval()),
+          distanceError,
+          chiralError,
+          dihedralError,
+          fourthDimensionError,
+          dlib::mat(gradient.template cast<double>().eval()),
+          functor.proportionChiralConstraintsCorrectSign,
+          functor.compressFourthDimension
+        );
+      }
     };
 
-    optimizer.addObserver(observerFunctor);
+    Observer observer(molecule, refinementFunctor, refinementSteps);
 
     /* Our embedded coordinates are (dimensionality) dimensional. Now we want
      * to make sure that all chiral constraints are correct, allowing the
@@ -283,7 +322,8 @@ std::list<RefinementData> debugEigenRefinement(
         firstStageIterations = optimizer.optimize(
           transformedPositions,
           refinementFunctor,
-          inversionChecker
+          inversionChecker,
+          observer
         );
       } catch(std::runtime_error& e) {
         Log::log(Log::Level::Warning)
@@ -324,7 +364,8 @@ std::list<RefinementData> debugEigenRefinement(
       secondStageIterations = optimizer.optimize(
         transformedPositions,
         refinementFunctor,
-        gradientChecker
+        gradientChecker,
+        observer
       );
     } catch(std::out_of_range& e) {
       Log::log(Log::Level::Warning)

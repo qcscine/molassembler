@@ -878,43 +878,14 @@ struct CompareImplementations {
           baseData.dihedralConstraints
         };
 
-        // BEGIN block to remove once both implementations conform to dlib
-
-        const dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-          baseData.squaredBounds()
-        );
-
-        ErrorFunctionValue referenceValueFunctor {
-          squaredBounds,
-          baseData.chiralConstraints,
-          baseData.dihedralConstraints
-        };
-
-        ErrorFunctionGradient referenceGradientFunctor {
-          squaredBounds,
-          baseData.chiralConstraints,
-          baseData.dihedralConstraints
-        };
-
-        using DlibVector = dlib::matrix<double, 0, 1>;
-        DlibVector dlibPositions = dlib::mat(
-          baseData.linearizeEmbeddedPositions()
-        );
-
-        // END of block to remove once both implementations conform to dlib
-
         PositionsT tPositions = baseData.linearizeEmbeddedPositions().template cast<FloatingPointT>();
         PositionsU uPositions = baseData.linearizeEmbeddedPositions().template cast<FloatingPointU>();
 
         using FunctionTypeT = std::function<void(const PositionsT&, FloatingPointT&, PositionsT&)>;
         using FunctionTypeU = std::function<void(const PositionsU&, FloatingPointU&, PositionsU&)>;
 
-        // TODO temp
-        using RefValueFunc = std::function<double(const DlibVector&)>;
-        using RefGradientFunc = std::function<DlibVector(const DlibVector&)>;
-
         std::vector<
-          std::tuple<std::string, FunctionTypeT, FunctionTypeU, RefValueFunc, RefGradientFunc>
+          std::tuple<std::string, FunctionTypeT, FunctionTypeU>
         > components {
           {
             "distance",
@@ -923,12 +894,6 @@ struct CompareImplementations {
             },
             [&uFunctor](const PositionsU& positions, FloatingPointU& value, PositionsU& gradients) {
               uFunctor.distanceContributions(positions, value, gradients);
-            },
-            [&referenceValueFunctor](const DlibVector& positions) -> double {
-              return referenceValueFunctor.distanceError(positions);
-            },
-            [&referenceGradientFunctor](const DlibVector& positions) -> DlibVector {
-              return referenceGradientFunctor.referenceA(positions) + referenceGradientFunctor.referenceB(positions);
             }
           },
           {
@@ -938,12 +903,6 @@ struct CompareImplementations {
             },
             [&uFunctor](const PositionsU& positions, FloatingPointU& value, PositionsU& gradients) {
               uFunctor.chiralContributions(positions, value, gradients);
-            },
-            [&referenceValueFunctor](const DlibVector& positions) -> double {
-              return referenceValueFunctor.chiralError(positions);
-            },
-            [&referenceGradientFunctor](const DlibVector& positions) -> DlibVector {
-              return referenceGradientFunctor.referenceC(positions);
             }
           },
           {
@@ -953,12 +912,6 @@ struct CompareImplementations {
             },
             [&uFunctor](const PositionsU& positions, FloatingPointU& value, PositionsU& gradients) {
               uFunctor.dihedralContributions(positions, value, gradients);
-            },
-            [&referenceValueFunctor](const DlibVector& positions) -> double {
-              return referenceValueFunctor.dihedralError(positions);
-            },
-            [&referenceGradientFunctor](const DlibVector& positions) -> DlibVector {
-              return referenceGradientFunctor.referenceDihedral(positions);
             }
           },
           {
@@ -968,12 +921,6 @@ struct CompareImplementations {
             },
             [&uFunctor](const PositionsU& positions, FloatingPointU& value, PositionsU& gradients) {
               uFunctor.fourthDimensionContributions(positions, value, gradients);
-            },
-            [&referenceValueFunctor](const DlibVector& positions) -> double {
-              return referenceValueFunctor.extraDimensionError(positions);
-            },
-            [&referenceGradientFunctor](const DlibVector& positions) -> DlibVector {
-              return referenceGradientFunctor.referenceD(positions);
             }
           },
         };
@@ -1008,11 +955,6 @@ struct CompareImplementations {
                 << tError << " != " << uError << ", difference = "
                 << errorAbsDifference << "\n";
 
-              // TODO temp
-              double referenceValue = std::get<3>(comparisonTuple)(dlibPositions);
-              std::cout << "Reference error value: " << referenceValue << "\n";
-              // end temp
-
               pass = false;
             }
 
@@ -1028,11 +970,6 @@ struct CompareImplementations {
                 << currentFilePath.string() << ":\n  "
                 << tGradients.transpose() << "\n  "
                 << uGradients.transpose() << "\n";
-
-              // TODO temp
-              dlib::matrix<double, 0, 1> referenceGradients = std::get<4>(comparisonTuple)(dlibPositions);
-              std::cout << "Reference gradients: " << dlib::trans(referenceGradients) << "\n";
-              // End temp
 
               pass = false;
             }

@@ -7,7 +7,16 @@
 #ifndef INCLUDE_MOLASSEMBLER_DG_EIGEN_REFINEMENT_PROBLEM_H
 #define INCLUDE_MOLASSEMBLER_DG_EIGEN_REFINEMENT_PROBLEM_H
 
+// TMP
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include <cfenv>
+
 #include <Eigen/Core>
+#include <Eigen/Dense>
+
 #include "molassembler/Types.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
@@ -144,7 +153,6 @@ public:
 //!@name Signaling members
 //!@{
   mutable double proportionChiralConstraintsCorrectSign = 0.0;
-  mutable unsigned callCount = 0;
 //!@}
 
 //!@name Constructors
@@ -156,6 +164,11 @@ public:
   ) : chiralConstraints(std::move(passChiralConstraints)),
       dihedralConstraints(std::move(passDihedralConstraints))
   {
+    // Enable floating point exceptions
+#ifndef NDEBUG
+    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+#endif
+
     const unsigned N = squaredBounds.cols();
     const unsigned strictlyUpperTriangularElements = N * (N - 1) / 2;
 
@@ -241,8 +254,6 @@ public:
    * @post Error is stored in @p value and gradient in @p gradient
    */
   void operator() (const VectorType& parameters, FloatType& value, Eigen::Ref<VectorType> gradient) const {
-    ++callCount;
-
     assert(parameters.size() == gradient.size());
     assert(parameters.size() % dimensionality == 0);
 

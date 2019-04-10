@@ -8,6 +8,7 @@ add_executable(templeTests
   ${CMAKE_CURRENT_SOURCE_DIR}/Cache.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Containers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Functional.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/LBFGS.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Numeric.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Optionals.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Variadic.cpp
@@ -19,6 +20,7 @@ add_executable(templeTests
 
 target_link_libraries(templeTests
   PRIVATE
+    Eigen3::Eigen
     Boost::boost
     Boost::unit_test_framework
     temple

@@ -35,6 +35,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Functor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/GroupBy.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Invoke.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/LBFGS.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/OperatorSuppliers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optionals.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/OrderedPair.h

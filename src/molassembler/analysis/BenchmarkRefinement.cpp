@@ -16,7 +16,7 @@
 #include "molassembler/DistanceGeometry/DlibAdaptors.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
-#include "Utils/Optimizer/GradientBased/LBFGS.h"
+#include "temple/LBFGS.h"
 
 #include "molassembler/IO.h"
 #include "temple/Functional.h"
@@ -283,49 +283,49 @@ struct DlibFunctor final : public TimingFunctor {
   }
 };
 
-template<typename EigenRefinementType>
-struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
-  const EigenRefinementType& refinementFunctorReference;
-  using VectorType = typename EigenRefinementType::VectorType;
-  using FloatType = typename EigenRefinementType::FloatingPointType;
-
-  InversionOrIterLimitStop(const EigenRefinementType& functor) : refinementFunctorReference(functor) {}
-
-  virtual bool checkConvergence(
-    const VectorType& /* parameters */,
-    FloatType /* value */,
-    const VectorType& /* gradients */
-  ) final {
-    return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
-  }
-
-  virtual bool checkMaxIterations(unsigned currentIteration) final {
-    return currentIteration >= refinementStepLimit;
-  }
-
-  void addSettingsDescriptors(Utils::UniversalSettings::DescriptorCollection& /* collection */) final {}
-  void applySettings(const Utils::Settings& /* s */) final {}
-};
-
 // template<typename EigenRefinementType>
-// struct InversionOrIterLimitStop {
+// struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
 //   const EigenRefinementType& refinementFunctorReference;
+//   using VectorType = typename EigenRefinementType::VectorType;
+//   using FloatType = typename EigenRefinementType::FloatingPointType;
 //
 //   InversionOrIterLimitStop(const EigenRefinementType& functor) : refinementFunctorReference(functor) {}
 //
-//   template<typename VectorType, typename FloatType>
-//   bool checkConvergence(
+//   virtual bool checkConvergence(
 //     const VectorType& /* parameters */,
 //     FloatType /* value */,
 //     const VectorType& /* gradients */
-//   ) {
+//   ) final {
 //     return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
 //   }
 //
-//   bool checkMaxIterations(unsigned currentIteration) {
+//   virtual bool checkMaxIterations(unsigned currentIteration) final {
 //     return currentIteration >= refinementStepLimit;
 //   }
+//
+//   void addSettingsDescriptors(Utils::UniversalSettings::DescriptorCollection& /* collection */) final {}
+//   void applySettings(const Utils::Settings& /* s */) final {}
 // };
+
+template<typename EigenRefinementType>
+struct InversionOrIterLimitStop {
+  const EigenRefinementType& refinementFunctorReference;
+
+  InversionOrIterLimitStop(const EigenRefinementType& functor) : refinementFunctorReference(functor) {}
+
+  template<typename VectorType, typename FloatType>
+  bool checkConvergence(
+    const Eigen::Ref<VectorType>& /* parameters */,
+    FloatType /* value */,
+    const VectorType& /* gradients */
+  ) {
+    return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
+  }
+
+  bool checkMaxIterations(unsigned currentIteration) {
+    return currentIteration >= refinementStepLimit;
+  }
+};
 
 template<typename FloatType>
 struct GradientOrIterLimitStop {
@@ -354,23 +354,6 @@ struct OptimizerParameters {
   double stepLength = 1.0;
 };
 
-template<typename FloatType, typename Derived>
-auto flatten(const Eigen::MatrixBase<Derived>& positions) {
-  using MapVectorType = Eigen::Matrix<typename Derived::Scalar, Eigen::Dynamic, 1>;
-  /* TODO this incurs TWO copies, I think.
-   *
-   * But I don't know how to reconcile:
-   * 1. do not take eigen type instance by value
-   * 2. you can't call .data() on non-const instance
-   */
-  Eigen::MatrixBase<Derived> positionsCopy = positions;
-
-  return Eigen::Map<MapVectorType>(
-    positionsCopy.derived().data(),
-    positionsCopy.derived().cols() * positionsCopy.derived().rows()
-  ).template cast<FloatType>().eval();
-}
-
 template<unsigned dimensionality, typename FloatType, bool SIMD>
 boost::optional<unsigned> eigenRefine(
   const Eigen::MatrixXd& squaredBounds,
@@ -385,7 +368,12 @@ boost::optional<unsigned> eigenRefine(
 
   const unsigned N = positions.size() / dimensionality;
   /* Transfer positions into vector form */
-  auto transformedPositions = flatten<FloatType>(positions);
+
+  Eigen::MatrixXd copiedPositions = positions;
+  typename FullRefinementType::VectorType transformedPositions = Eigen::Map<Eigen::VectorXd>(
+    copiedPositions.data(),
+    copiedPositions.cols() * copiedPositions.rows()
+  ).template cast<FloatType>().eval();
 
   FullRefinementType refinementFunctor {
     squaredBounds,
@@ -402,8 +390,7 @@ boost::optional<unsigned> eigenRefine(
     initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
   }
 
-  Utils::LBFGS optimizer;
-  optimizer.maxm = optimizerParameters.maxm;
+  temple::LBFGS<FloatType, 64> optimizer;
   optimizer.c1 = optimizerParameters.c1;
   optimizer.c2 = optimizerParameters.c2;
   optimizer.stepLength = optimizerParameters.stepLength;
@@ -411,11 +398,17 @@ boost::optional<unsigned> eigenRefine(
   /* First stage: Invert all chiral constraints */
   if(initiallyCorrectChiralConstraints < 1) {
     InversionOrIterLimitStop<FullRefinementType> inversionChecker {refinementFunctor};
-    const unsigned iterations = optimizer.optimize(
-      transformedPositions,
-      refinementFunctor,
-      inversionChecker
-    );
+
+    unsigned iterations;
+    try {
+      iterations = optimizer.optimize(
+        transformedPositions,
+        refinementFunctor,
+        inversionChecker
+      );
+    } catch (...) {
+      return boost::none;
+    }
 
     if(iterations >= refinementStepLimit) {
       return boost::none;
@@ -436,11 +429,16 @@ boost::optional<unsigned> eigenRefine(
   gradientChecker.maxIter = refinementStepLimit;
   gradientChecker.gradNorm = 1e-5;*/
 
-  const unsigned iterations = optimizer.optimize(
-    transformedPositions,
-    refinementFunctor,
-    gradientChecker
-  );
+  unsigned iterations;
+  try {
+    iterations = optimizer.optimize(
+      transformedPositions,
+      refinementFunctor,
+      gradientChecker
+    );
+  } catch (...) {
+    return boost::none;
+  }
 
   if(iterations >= refinementStepLimit) {
     return boost::none;
@@ -480,7 +478,21 @@ struct EigenFunctor final : public TimingFunctor {
   }
 
   std::string name() final {
-    return DistanceGeometry::EigenRefinementProblem<dimensionality, FloatType, SIMD>::name();
+    std::string composite = "Eigen<" + std::to_string(dimensionality) +", ";
+
+    if(std::is_same<FloatType, double>::value) {
+      composite += "dbl, ";
+    } else {
+      composite += "flt, ";
+    }
+
+    if(SIMD) {
+      composite += "1>";
+    } else {
+      composite += "0>";
+    }
+
+    return composite;
   }
 };
 
