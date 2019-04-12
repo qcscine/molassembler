@@ -24,27 +24,27 @@ void init_outer_graph(pybind11::module& m) {
   );
 
   outerGraph.def(
-    "bondOrders",
+    "bond_orders",
     &OuterGraph::bondOrders,
     "Generates a BondOrderCollection representation of the molecule connectivity"
   );
 
   outerGraph.def(
-    "bondType",
+    "bond_type",
     &OuterGraph::bondType,
     pybind11::arg("bond_index"),
     "Fetches the bond type at a particular bond"
   );
 
   outerGraph.def(
-    "canRemove",
+    "can_remove",
     pybind11::overload_cast<AtomIndex>(&OuterGraph::canRemove, pybind11::const_),
     pybind11::arg("atom"),
     "Returns whether an atom can be removed without disconnecting the graph"
   );
 
   outerGraph.def(
-    "canRemove",
+    "can_remove",
     pybind11::overload_cast<const BondIndex&>(&OuterGraph::canRemove, pybind11::const_),
     pybind11::arg("bond_index"),
     "Returns whether a bond can be removed without disconnecting the graph"
@@ -64,13 +64,13 @@ void init_outer_graph(pybind11::module& m) {
   );
 
   outerGraph.def(
-    "elementCollection",
+    "element_collection",
     &OuterGraph::elementCollection,
     "Generates an ElementCollection representation of the molecule's atoms' element types"
   );
 
   outerGraph.def(
-    "elementType",
+    "element_type",
     &OuterGraph::elementType,
     pybind11::arg("atom"),
     "Fetch the element type of an atom"
