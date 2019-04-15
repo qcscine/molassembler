@@ -30,9 +30,7 @@ set(analysisFiles
 )
 
 foreach(filename ${analysisFiles})
-  set(targetName "")
   get_filename_component(targetName ${filename} NAME_WE)
-  set(targetName "analysis_${targetName}")
 
   # add the executable and specify compilation and linking options
   add_executable(${targetName} ${filename})

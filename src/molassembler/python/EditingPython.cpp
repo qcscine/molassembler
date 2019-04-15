@@ -68,4 +68,15 @@ void init_editing(pybind11::module& m) {
     "Connect two molecules by creating a new bond between two atoms from "
     "separate molecules"
   );
+
+  editing.def(
+    "add_ligand",
+    &Editing::addLigand,
+    pybind11::arg("a"),
+    pybind11::arg("ligand"),
+    pybind11::arg("complexating_atom"),
+    pybind11::arg("ligand_binding_atoms"),
+    "Connect two molecules by connecting multiple atoms from one to a single "
+    "atom of the other via single bonds"
+  );
 }

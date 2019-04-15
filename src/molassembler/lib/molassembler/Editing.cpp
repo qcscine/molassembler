@@ -659,5 +659,35 @@ Molecule Editing::connect(
   return a;
 }
 
+Molecule Editing::addLigand(
+  Molecule a,
+  const Molecule& ligand,
+  AtomIndex complexatingAtom,
+  const std::vector<AtomIndex>& ligandBindingAtoms
+) {
+  InnerGraph& aInnerGraph = a._pImpl->_adjacencies.inner();
+  StereopermutatorList& aStereopermutators = a._pImpl->_stereopermutators;
+
+  auto vertexMapping = detail::transferGraph(
+    ligand.graph().inner(),
+    aInnerGraph,
+    {}
+  );
+
+  // Copy b's stereopermutators into a
+  detail::transferStereopermutators(
+    ligand.stereopermutators(),
+    aStereopermutators,
+    vertexMapping,
+    ligand.graph().N()
+  );
+
+  for(const AtomIndex bindingAtom : ligandBindingAtoms) {
+    a.addBond(complexatingAtom, vertexMapping.at(bindingAtom), BondType::Single);
+  }
+
+  return a;
+}
+
 } // namespace molassembler
 } // namespace Scine

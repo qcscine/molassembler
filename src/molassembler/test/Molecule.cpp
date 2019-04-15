@@ -516,6 +516,26 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   pseudocenter.assignStereopermutator(outer.back(), 1);
 
   BOOST_CHECK(isStereogenic(pseudocenter, central));
+
+
+  /* Bug reported by Stephanie: Central stereopermutator does not propagate
+   * to original abstract site case after forcing cut-tetrahedral symmetries
+   * for each nitrogen.
+   */
+  auto complex = IO::read("various/propagation-test-case-1.json");
+
+  for(AtomIndex i = 0; i < complex.graph().N(); ++i) {
+    if(
+      complex.graph().elementType(i) == Utils::ElementType::N
+      && complex.stereopermutators().option(i)
+      && Symmetry::size(complex.stereopermutators().option(i)->getSymmetry()) == 3
+    ) {
+      complex.setGeometryAtAtom(i, Symmetry::Name::CutTetrahedral);
+    }
+  }
+
+  auto stereopermutatorOption = complex.stereopermutators().option(0);
+  BOOST_CHECK(stereopermutatorOption && stereopermutatorOption->numAssignments() == 8u);
 }
 
 BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {

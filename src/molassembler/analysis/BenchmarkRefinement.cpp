@@ -390,7 +390,7 @@ boost::optional<unsigned> eigenRefine(
     initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
   }
 
-  temple::LBFGS<FloatType, 64> optimizer;
+  temple::LBFGS<FloatType, 32> optimizer;
   optimizer.c1 = optimizerParameters.c1;
   optimizer.c2 = optimizerParameters.c2;
   optimizer.stepLength = optimizerParameters.stepLength;
@@ -657,9 +657,11 @@ void benchmark(
 using namespace std::string_literals;
 const std::string algorithmChoices =
   "  0 - All\n"
-  "  1 - dlib\n"
-  "  2 - Eigen\n"
-  "  3 - Eigen with SIMD\n";
+  "  1 - Dlib\n"
+  "  2 - Eigen<4, dbl, 0>\n"
+  "  3 - Eigen<4, flt, 0>\n"
+  "  4 - Eigen<4, dbl, 1>\n"
+  "  5 - Eigen<4, flt, 1>\n";
 
 int main(int argc, char* argv[]) {
   using namespace molassembler;

@@ -54,6 +54,7 @@ struct PermutationState {
 
 //!@name Special member functions
 //!@{
+  // Empty default constructor
   PermutationState() = default;
 
   // Establish full state

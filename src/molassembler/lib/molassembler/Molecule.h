@@ -82,13 +82,14 @@ public:
   //! Default-constructor creates a hydrogen molecule.
   Molecule() noexcept;
 
+  //! Single-element molecule constructor
   Molecule(Utils::ElementType element) noexcept;
 
   //! Construct a minimal molecule from two element types and a mutual bond type
   Molecule(
     Utils::ElementType a,
     Utils::ElementType b,
-    BondType bondType
+    BondType bondType = BondType::Single
   ) noexcept;
 
   /*!
@@ -165,7 +166,7 @@ public:
   AtomIndex addAtom(
     Utils::ElementType elementType,
     AtomIndex adjacentTo,
-    BondType bondType
+    BondType bondType = BondType::Single
   );
 
   /*!
@@ -192,7 +193,7 @@ public:
   BondIndex addBond(
     AtomIndex a,
     AtomIndex b,
-    BondType bondType
+    BondType bondType = BondType::Single
   );
 
   /**

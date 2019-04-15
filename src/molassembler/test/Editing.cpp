@@ -186,3 +186,52 @@ BOOST_AUTO_TEST_CASE(mesitylSubstitutionBug) {
 
   BOOST_CHECK(substituted.graph().N() == mesitylene.graph().N() + nhc.graph().N() - 2);
 }
+
+BOOST_AUTO_TEST_CASE(makingHapticLigandTest) {
+  using namespace Scine;
+  using namespace molassembler;
+
+  Molecule complex {
+    Utils::ElementType::Ru,
+    Utils::ElementType::H
+  };
+
+  { // Variant one: Extend a hydrogen atom to hydrogen molecule, then complexate
+    Molecule complexCopy = complex;
+    AtomIndex hydrogenOne = complexCopy.addAtom(Utils::ElementType::H, 0, BondType::Single);
+    AtomIndex hydrogenTwo = complexCopy.addAtom(Utils::ElementType::H, hydrogenOne, BondType::Single);
+    BOOST_CHECK_NO_THROW(complexCopy.addBond(0, hydrogenTwo, BondType::Single));
+  }
+
+  { // Variant two: Connect two individual bonding hydrogen atoms
+    /*Molecule complexCopy = complex;
+    AtomIndex hydrogenOne = complexCopy.addAtom(Utils::ElementType::H, 0, BondType::Single);
+    AtomIndex hydrogenTwo = complexCopy.addAtom(Utils::ElementType::H, 0, BondType::Single);
+    complexCopy.addBond(hydrogenOne, hydrogenTwo, BondType::Single);*/
+  }
+}
+
+BOOST_AUTO_TEST_CASE(addLigandTest) {
+  using namespace Scine;
+  using namespace molassembler;
+
+  Molecule ligand = IO::LineNotation::fromCanonicalSMILES("CC(C)(C)P(CC1=NC(=CC=C1)CP(C(C)(C)C)C(C)(C)C)C(C)(C)C");
+  ligand.canonicalize();
+  BOOST_CHECK(ligand.graph().elementType(43) == Utils::ElementType::N);
+  BOOST_CHECK(ligand.graph().elementType(49) == Utils::ElementType::P);
+  BOOST_CHECK(ligand.graph().elementType(50) == Utils::ElementType::P);
+
+  Molecule complex {
+    Utils::ElementType::Ru,
+    Utils::ElementType::H
+  };
+
+  BOOST_CHECK_NO_THROW(
+    complex = Editing::addLigand(
+      complex,
+      ligand,
+      0,
+      {43, 49, 50}
+    )
+  );
+}

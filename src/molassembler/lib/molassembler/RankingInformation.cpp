@@ -18,14 +18,14 @@ namespace molassembler {
 LinkInformation::LinkInformation() = default;
 
 LinkInformation::LinkInformation(
-  std::pair<unsigned, unsigned> ligandIndices,
+  std::pair<unsigned, unsigned> siteIndices,
   std::vector<AtomIndex> sequence,
   const AtomIndex source
 ) {
   /* Fix degrees of freedom of the underlying information so we can
    * efficiently implement operator <. indexPair can be an ordered pair:
    */
-  indexPair = std::move(ligandIndices);
+  indexPair = std::move(siteIndices);
   if(indexPair.first > indexPair.second) {
     std::swap(indexPair.first, indexPair.second);
   }
@@ -258,7 +258,7 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
     return false;
   }
 
-  // Combined comparison of ligandsRanking with sites
+  // Combined comparison of siteRanking with sites
   if(
     !temple::all_of(
       temple::adaptors::zip(
@@ -292,8 +292,9 @@ bool RankingInformation::operator == (const RankingInformation& other) const {
     return false;
   }
 
-
-  // Compare the links (these are sorted since substituentLinks yields them like that)
+  // Compare the links (these should be kept sorted throughout execution)
+  assert(std::is_sorted(std::begin(links), std::end(links)));
+  assert(std::is_sorted(std::begin(other.links), std::end(other.links)));
   return links == other.links;
 }
 

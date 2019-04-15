@@ -21,15 +21,15 @@ namespace molassembler {
 struct LinkInformation {
 //!@name Special member functions
 //!@{
-  /*! Default constructor
-   *
+  /*!
+   * @brief Default constructor
    * @warning Does not establish member invariants
    */
   LinkInformation();
 
   //! Constructor from data without established invariants
   LinkInformation(
-    std::pair<unsigned, unsigned> ligandIndices,
+    std::pair<unsigned, unsigned> siteIndices,
     std::vector<AtomIndex> sequence,
     AtomIndex source
   );
@@ -37,10 +37,11 @@ struct LinkInformation {
 
 //!@name Data members
 //!@{
-  //! An (asc) ordered pair of the ligand site indices that are linked
+  //! An (asc) ordered pair of the site indices that are linked
   std::pair<unsigned, unsigned> indexPair;
 
-  /*! The in-order atom sequence of the cycle atom indices
+  /*!
+   * @brief The in-order atom sequence of the cycle atom indices
    *
    * @note The cycle sequence is centralized on the source vertex, meaning the
    * front and back indices are the source vertex
@@ -56,6 +57,7 @@ struct LinkInformation {
 
 //!@name Modification
 //!@{
+  //! Apply an index permutation to this object. Re-establishes invariants.
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 //!@}
 
@@ -142,6 +144,10 @@ struct RankingInformation {
    *
    * This is a ranked (ascending) nested list of site indices (indices into
    * #sites).
+   *
+   * For any instance @p r, this member should merely be the cached result of a
+   * call to @p RankingInformation::rankSites with the arguments @p r.sites and
+   * @p r.substituentRanking.
    */
   RankedSitesType siteRanking;
 

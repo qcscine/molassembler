@@ -16,11 +16,13 @@
 #include "temple/GroupBy.h"
 #include "temple/Stringify.h"
 
+#include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Modeling/LocalGeometryModel.h"
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Options.h"
 #include "molassembler/StereopermutatorList.h"
+#include "molassembler/Stereopermutators/PermutationState.h"
 
 #include <fstream>
 #include <iostream>
@@ -735,22 +737,6 @@ void RankingTree::_applySequenceRules(
   bool foundBondStereopermutators = false;
   bool foundAtomStereopermutators = false;
 
-  auto auxiliarySites = [](
-    const RankingInformation::RankedSubstituentsType& rankedAtoms
-  ) -> RankingInformation::SiteListType {
-    RankingInformation::SiteListType sites;
-
-    for(const auto& equalAtomSet : rankedAtoms) {
-      for(const AtomIndex individualAtom : equalAtomSet) {
-        sites.push_back(
-          std::vector<AtomIndex> {individualAtom}
-        );
-      }
-    }
-
-    return sites;
-  };
-
   auto instantiateAtomStereopermutator = [&](const TreeVertexIndex targetIndex) -> void {
     // Do not instantiate an atomStereopermutator on the root vertex
     if(targetIndex == rootIndex) {
@@ -760,10 +746,19 @@ void RankingTree::_applySequenceRules(
     const AtomIndex molSourceIndex = _tree[targetIndex].molIndex;
     auto existingStereopermutatorOption = _stereopermutatorsRef.option(molSourceIndex);
 
+    /* Create a ranking for the stereopermutator in the atom index space of the
+     * molecule, since we might be fitting it against spatial positions in which
+     * molecule indexing may be important.
+     */
     RankingInformation centerRanking;
 
-    /* Do not consider an Eta bond when placed at the main-group haptic
+    /* It's important that when selecting the atoms we rank for the
+     * instantiation of this permutator from the current tree, we do not
+     * consider an Eta bond when it is placed at the main-group haptic
      * ligand-constituting atom.
+     *
+     * E.g. The modeling of the carbon atom stereopermutators in ethene is not
+     * affected by its eta bonds to a metal atom.
      */
     std::vector<TreeVertexIndex> etaAdjacents = temple::copy_if(
       _adjacents(targetIndex),
@@ -795,6 +790,9 @@ void RankingTree::_applySequenceRules(
         << ")\n";
     }
 
+    /* Calculate the substituent-level ranking for all bonded tree indices that
+     * are not haptically bonded and map them to molecule index space.
+     */
     centerRanking.substituentRanking = _mapToAtomIndices(
       _auxiliaryApplySequenceRules(
         targetIndex,
@@ -802,7 +800,14 @@ void RankingTree::_applySequenceRules(
       )
     );
 
-    centerRanking.sites = auxiliarySites(centerRanking.substituentRanking);
+    /* Group substituents into sites using the graph only, excluding the eta
+     * adjacents yet again.
+     */
+    centerRanking.sites = GraphAlgorithms::ligandSiteGroups(
+      _graphRef.inner(),
+      molSourceIndex,
+      temple::map(etaAdjacents, [&](const TreeVertexIndex i) { return _tree[i].molIndex; })
+    );
 
     // Stop immediately if the stereopermutator is essentially terminal
     if(centerRanking.sites.size() <= 1) {
@@ -814,7 +819,10 @@ void RankingTree::_applySequenceRules(
       centerRanking.substituentRanking
     );
 
-    // Again, no links since we're in an acyclic graph now
+    // The ranking does not have/get links since this tree is acyclic
+
+
+    /* Figure out the symmetry the stereopermutator should have */
     Symmetry::Name localSymmetry;
     if(
       existingStereopermutatorOption
@@ -847,26 +855,53 @@ void RankingTree::_applySequenceRules(
       centerRanking
     };
 
+    /* Find an assignment (and maybe a better symmetry) */
     if(positionsOption) {
+      /* Fit has the side effect that the chosen symmetry is not necessarily
+       * kept but rather the best combination of symmetry and assignment is
+       * chosen. It is therefore not wise to default-assign newStereopermutator
+       * if positions are available.
+       */
       newStereopermutator.fit(
         _graphRef,
         positionsOption.value()
       );
     } else if(
-      existingStereopermutatorOption
-      && existingStereopermutatorOption->getSymmetry() == localSymmetry
-      && (
-        existingStereopermutatorOption->numStereopermutations()
-        == newStereopermutator.numStereopermutations()
-      )
-    ) {
-      newStereopermutator.assign(existingStereopermutatorOption->assigned());
-    } else if(
       newStereopermutator.numStereopermutations() == 1
       && newStereopermutator.numAssignments() == 1
     ) {
-      // Default assign it
+      // Default assign the stereopermutator for particularly simple cases
       newStereopermutator.assign(0);
+    } else if(existingStereopermutatorOption) {
+      /* Try to transfer the assignment of an existing stereopermutator from
+       * the molecule to the tree's ranking space.
+       */
+      if(existingStereopermutatorOption->getRanking() == centerRanking) {
+        /* If the ranking is identical, i.e. splitting the molecule into an
+         * acyclic graph does not change the ranking, we can copy symmetry
+         * and assignment immediately.
+         */
+        newStereopermutator.setSymmetry(
+          existingStereopermutatorOption->getSymmetry(),
+          _graphRef
+        );
+        newStereopermutator.assign(existingStereopermutatorOption->assigned());
+      } else {
+        /* Try to propagate the molecule's stereopermutator to the new ranking
+         * case. If it's possible, take the resulting assignment.
+         */
+        AtomStereopermutator permutatorCopy = *existingStereopermutatorOption;
+        try {
+          permutatorCopy.propagate(_graphRef, centerRanking, localSymmetry);
+          if(permutatorCopy.assigned()) {
+            newStereopermutator.setSymmetry(
+              permutatorCopy.getSymmetry(),
+              _graphRef
+            );
+            newStereopermutator.assign(permutatorCopy.assigned());
+          }
+        } catch(...) {}
+      }
     }
 
     if(

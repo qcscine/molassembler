@@ -148,7 +148,7 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
     assert(assignment.value() < _cache.feasiblePermutations.size());
   }
 
-  // Store current assignment
+  // Store new assignment
   _assignmentOption = std::move(assignment);
 
   /* save a mapping of next neighbor indices to symmetry positions after
@@ -202,7 +202,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   RankingInformation newRanking,
   boost::optional<Symmetry::Name> symmetryOption
 ) {
-  // If nothing changes, nothing changes.
+  // If nothing changes, nothing changes, and you don't get any internal state
   if(newRanking == _ranking) {
     return boost::none;
   }
@@ -268,7 +268,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   int substituentCountChange = static_cast<int>(countSubstituents(newRanking.sites)) - static_cast<int>(countSubstituents(_ranking.sites));
   // Complain if multiple substituents are changed either way
   if(std::abs(substituentCountChange) > 1) {
-    throw std::logic_error("propagateGraphChange should only ever handle a single subtituent addition or removal at once");
+    throw std::logic_error("propagateGraphChange should only ever handle a single substituent addition or removal at once");
   }
 
   // Collect all substituents of a ranking and sort them
@@ -281,8 +281,6 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         substituents.push_back(index);
       }
     }
-
-    substituents.shrink_to_fit();
 
     temple::inplace::sort(substituents);
 
@@ -381,7 +379,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     graph
   };
 
-  boost::optional<unsigned> newStereopermutation = boost::none;
+  boost::optional<unsigned> newStereopermutationOption;
 
   /* Now we will attempt to propagate our assignment to the new set of
    * assignments. This is only necessary in the case that the stereopermutator is currently
@@ -407,10 +405,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         _symmetry,
         newSymmetry,
         boost::none
-      ) | temple::callIfSome(
-        PermutationState::getIndexMapping,
-        temple::ANS,
-        Options::chiralStatePreservation
+      ).flat_map(
+        [&](const auto& mappingOption) {
+          return PermutationState::getIndexMapping(mappingOption, Options::chiralStatePreservation);
+        }
       );
 
       if(suitableMappingOption) {
@@ -446,7 +444,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         );
       }
       /* If no mapping can be found that fits to the preservationOption,
-       * newStereopermutation remains boost::none, and this stereopermutator loses
+       * newStereopermutationOption remains boost::none, and this stereopermutator loses
        * any chiral information it may have had.
        */
     }
@@ -463,10 +461,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
          * symmetry position at which the site being removed is currently at
          */
         _cache.symmetryPositionMap.at(*alteredSiteIndex)
-      ) | temple::callIfSome(
-        PermutationState::getIndexMapping,
-        temple::ANS,
-        Options::chiralStatePreservation
+      ).flat_map(
+        [&](const auto& mappingOptional) {
+          return PermutationState::getIndexMapping(mappingOptional, Options::chiralStatePreservation);
+        }
       );
 
       /* It is weird that this block of code works although it is structurally
@@ -629,13 +627,34 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       // Find out which of the new assignments has a rotational equivalent
       for(unsigned i = 0; i < newPermutationState.permutations.stereopermutations.size(); ++i) {
         if(allTrialRotations.count(newPermutationState.permutations.stereopermutations.at(i)) > 0) {
-          newStereopermutation = i;
+          newStereopermutationOption = i;
           break;
         }
       }
     }
   }
 
+  /* If we have discovered a stereopermutation to map to, we must still figure
+   * out its assignment index (assuming it is feasible)
+   */
+  auto newAssignmentOption = newStereopermutationOption.flat_map(
+    [&](const unsigned stereopermutationIndex) -> boost::optional<unsigned> {
+      auto assignmentFindIter = std::find(
+        std::begin(newPermutationState.feasiblePermutations),
+        std::end(newPermutationState.feasiblePermutations),
+        stereopermutationIndex
+      );
+
+      if(assignmentFindIter == std::end(newPermutationState.feasiblePermutations)) {
+        // The stereopermutation is infeasible
+        return boost::none;
+      }
+
+      return assignmentFindIter - std::begin(newPermutationState.feasiblePermutations);
+    }
+  );
+
+  // Extract old state from the class
   auto oldStateTuple = std::make_tuple(
     std::move(_ranking),
     std::move(_cache),
@@ -646,7 +665,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   _ranking = std::move(newRanking);
   _symmetry = newSymmetry;
   _cache = std::move(newPermutationState);
-  assign(newStereopermutation);
+  assign(newAssignmentOption);
 
   return {std::move(oldStateTuple)};
 }

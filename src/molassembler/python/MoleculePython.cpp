@@ -111,10 +111,15 @@ void init_molecule(pybind11::module& m) {
   );
 
   molecule.def(
+    pybind11::init<ElementType>(),
+    "Initialize a single-atom molecule"
+  );
+
+  molecule.def(
     pybind11::init<ElementType, ElementType, BondType>(),
     pybind11::arg("first_element"),
     pybind11::arg("second_element"),
-    pybind11::arg("bond_type"),
+    pybind11::arg("bond_type") = BondType::Single,
     "Initialize a molecule from two element types and a mutual bond type"
   );
 
@@ -131,7 +136,7 @@ void init_molecule(pybind11::module& m) {
     &Molecule::addAtom,
     pybind11::arg("element"),
     pybind11::arg("adjacent_to"),
-    pybind11::arg("bond_type"),
+    pybind11::arg("bond_type") = BondType::Single,
     "Add an atom to the molecule."
   );
 
@@ -140,7 +145,7 @@ void init_molecule(pybind11::module& m) {
     &Molecule::addBond,
     pybind11::arg("first_atom"),
     pybind11::arg("second_atom"),
-    pybind11::arg("bond_type"),
+    pybind11::arg("bond_type") = BondType::Single,
     "Adds a bond to the molecule."
   );
 

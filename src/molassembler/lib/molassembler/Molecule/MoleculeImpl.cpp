@@ -211,7 +211,7 @@ void Molecule::Impl::_propagateGraphChange() {
         continue;
       }
 
-      // Are there adjacent bond stereopermutators? If so, copy the AtomStereopermutator
+      // Are there adjacent bond stereopermutators?
       std::vector<BondIndex> adjacentBondStereopermutators;
       for(BondIndex bond : boost::make_iterator_range(_adjacencies.bonds(vertex))) {
         if(_stereopermutators.option(bond)) {
@@ -219,8 +219,18 @@ void Molecule::Impl::_propagateGraphChange() {
         }
       }
 
-      // Propagate the stereopermutator state to the new ranking
-      auto propagatedStateOption = stereopermutatorOption -> propagate(_adjacencies, localRanking, boost::none);
+      // Suggest a symmetry if desired
+      boost::optional<Symmetry::Name> newSymmetryOption;
+      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
+        newSymmetryOption = inferSymmetry(vertex, localRanking);
+      }
+
+      // Propagate the state
+      auto oldAtomStereopermutatorStateOption = stereopermutatorOption -> propagate(
+        _adjacencies,
+        std::move(localRanking),
+        newSymmetryOption
+      );
 
       /* If the modified stereopermutator has only one assignment and is
        * unassigned due to the graph change, default-assign it
@@ -254,9 +264,9 @@ void Molecule::Impl::_propagateGraphChange() {
 
       /* If the chiral state for this atom stereopermutator was not successfully
        * propagated or it is now unassigned, then bond stereopermutators sharing
-       * this atom stereopermutator must be removed (there are no indeterminate
-       * bond stereopermutators).
-       *
+       * this atom stereopermutator must be removed. Bond stereopermutators can
+       * only be undetermined if its constituting atom stereopermutators are
+       * assigned.
        */
       if(!stereopermutatorOption->assigned()) {
         for(const BondIndex& bond : adjacentBondStereopermutators) {
@@ -274,15 +284,16 @@ void Molecule::Impl::_propagateGraphChange() {
        * propagated bondstereopermutators, or if any bond stereopermutators
        * are removed, since this may cause another re-rank!
        */
-      if(propagatedStateOption) {
+      if(oldAtomStereopermutatorStateOption) {
         for(const BondIndex& bond : adjacentBondStereopermutators) {
           _stereopermutators.option(bond)->propagateGraphChange(
-            *propagatedStateOption,
+            *oldAtomStereopermutatorStateOption,
             *stereopermutatorOption
           );
         }
       }
     } else {
+      // There is no atom stereopermutator on this vertex, so try to add one
       _tryAddAtomStereopermutator(vertex, _stereopermutators);
     }
   }
@@ -392,33 +403,13 @@ BondIndex Molecule::Impl::addBond(
 
   auto notifySubstituentAddition = [this](const AtomIndex toIndex) {
     /*! @todo Remove any BondStereopermutators on adjacent edges of toIndex (no
-     * state propagation possible yet)
+     * substituent addition/removal propagation possible yet)
      */
     for(
       const BondIndex& adjacentEdge :
-      boost::make_iterator_range(
-        _adjacencies.bonds(toIndex)
-      )
+      boost::make_iterator_range(_adjacencies.bonds(toIndex))
     ) {
       _stereopermutators.try_remove(adjacentEdge);
-    }
-
-    if(auto atomStereopermutatorOption = _stereopermutators.option(toIndex)) {
-      // Re-rank around toIndex
-      auto localRanking = rankPriority(toIndex);
-
-      boost::optional<Symmetry::Name> newSymmetryOption;
-      if(Options::symmetryTransition == SymmetryTransition::PrioritizeInferenceFromGraph) {
-        newSymmetryOption = inferSymmetry(toIndex, localRanking);
-      }
-
-      atomStereopermutatorOption->propagate(
-        _adjacencies,
-        std::move(localRanking),
-        newSymmetryOption
-      );
-
-      // TODO Notify adjacent bond stereopermutators
     }
   };
 
@@ -458,11 +449,14 @@ void Molecule::Impl::assignStereopermutator(
     throw std::out_of_range("assignStereopermutator: Invalid assignment index!");
   }
 
-  stereopermutatorOption -> assign(assignmentOption);
+  // No need to rerank and remove canonical components if nothing changes
+  if(assignmentOption != stereopermutatorOption->assigned()) {
+    stereopermutatorOption -> assign(assignmentOption);
 
-  // A reassignment can change ranking! See the RankingTree tests
-  _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+    // A reassignment can change ranking! See the RankingTree tests
+    _propagateGraphChange();
+    _canonicalComponents = AtomEnvironmentComponents::None;
+  }
 }
 
 void Molecule::Impl::assignStereopermutator(
@@ -486,11 +480,14 @@ void Molecule::Impl::assignStereopermutator(
     throw std::out_of_range("assignStereopermutator: Invalid assignment index!");
   }
 
-  stereopermutatorOption -> assign(assignmentOption);
+  // No need to rerank and remove canonical components if nothing changes
+  if(assignmentOption != stereopermutatorOption->assigned()) {
+    stereopermutatorOption -> assign(assignmentOption);
 
-  // A reassignment can change ranking! See the RankingTree tests
-  _propagateGraphChange();
-  _canonicalComponents = AtomEnvironmentComponents::None;
+    // A reassignment can change ranking! See the RankingTree tests
+    _propagateGraphChange();
+    _canonicalComponents = AtomEnvironmentComponents::None;
+  }
 }
 
 void Molecule::Impl::assignStereopermutatorRandomly(const AtomIndex a) {

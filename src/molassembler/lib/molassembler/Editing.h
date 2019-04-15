@@ -8,6 +8,7 @@
 
 #include "molassembler/Types.h"
 #include <tuple>
+#include <vector>
 
 namespace Scine {
 namespace molassembler {
@@ -121,6 +122,25 @@ struct Editing {
     AtomIndex aConnectAtom,
     AtomIndex bConnectAtom,
     BondType bondType
+  );
+
+  /**
+   * @brief Connects two molecules by connecting multiple atoms from one to a
+   *   single atom of the other via single bonds
+   *
+   * @param a The molecule the ligand is being connected to
+   * @param ligand The ligand molecule being bound to @p complexatingAtom
+   * @param complexatingAtom The atom in @p a that @p ligand is being bound to
+   * @param ligandBindingAtoms The atoms of @p ligand that should be connected
+   *   to @p a
+   *
+   * @return A joined molecule
+   */
+  static Molecule addLigand(
+    Molecule a,
+    const Molecule& ligand,
+    AtomIndex complexatingAtom,
+    const std::vector<AtomIndex>& ligandBindingAtoms
   );
 };
 
