@@ -47,7 +47,7 @@ Dependencies:
 - Boost >= 1.64
 - dlib >= 19.4
 - Eigen >= 3
-- Delib >= 0.2
+- SCINE Utils > 0.1.0
 - (BLAS library, added if detected during compilation)
 
 

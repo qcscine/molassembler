@@ -401,11 +401,12 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        * to get a mapping by preservationOption policy. If any of these steps
        * returns boost::none, the whole expression is boost::none.
        */
-      auto suitableMappingOption = Symmetry::getMapping(
-        _symmetry,
-        newSymmetry,
-        boost::none
-      ).flat_map(
+      auto suitableMappingOption = temple::optionals::flatMap(
+        Symmetry::getMapping(
+          _symmetry,
+          newSymmetry,
+          boost::none
+        ),
         [&](const auto& mappingOption) {
           return PermutationState::getIndexMapping(mappingOption, Options::chiralStatePreservation);
         }
@@ -454,14 +455,15 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
        * to get a mapping by preservationOption policy. If any of these steps
        * returns boost::none, the whole expression is boost::none.
        */
-      auto suitableMappingOptional = Symmetry::getMapping(
-        _symmetry,
-        newSymmetry,
-        /* Last parameter is the deleted symmetry position, which is the
-         * symmetry position at which the site being removed is currently at
-         */
-        _cache.symmetryPositionMap.at(*alteredSiteIndex)
-      ).flat_map(
+      auto suitableMappingOptional = temple::optionals::flatMap(
+        Symmetry::getMapping(
+          _symmetry,
+          newSymmetry,
+          /* Last parameter is the deleted symmetry position, which is the
+           * symmetry position at which the site being removed is currently at
+           */
+          _cache.symmetryPositionMap.at(*alteredSiteIndex)
+        ),
         [&](const auto& mappingOptional) {
           return PermutationState::getIndexMapping(mappingOptional, Options::chiralStatePreservation);
         }
@@ -637,7 +639,8 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   /* If we have discovered a stereopermutation to map to, we must still figure
    * out its assignment index (assuming it is feasible)
    */
-  auto newAssignmentOption = newStereopermutationOption.flat_map(
+  auto newAssignmentOption = temple::optionals::flatMap(
+    newStereopermutationOption,
     [&](const unsigned stereopermutationIndex) -> boost::optional<unsigned> {
       auto assignmentFindIter = std::find(
         std::begin(newPermutationState.feasiblePermutations),
