@@ -110,6 +110,24 @@ template<
   return returnContainer;
 }
 
+template<
+  template<typename, typename> class PairType,
+  typename T,
+  class UnaryFunction
+> auto map_stl(
+  const PairType<T, T>& pair,
+  UnaryFunction&& function
+) {
+  using U = decltype(
+    invoke(function, pair.first)
+  );
+
+  return PairType<U, U> {
+    function(pair.first),
+    function(pair.second)
+  };
+}
+
 template<class Container, class UnaryFunction>
 auto map(
   const Container& container,

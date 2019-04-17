@@ -85,6 +85,20 @@ const stereopermutation::Composite& BondStereopermutator::composite() const {
   return _pImpl -> composite();
 }
 
+double BondStereopermutator::dihedral(
+  const AtomStereopermutator& stereopermutatorA,
+  const unsigned siteIndexA,
+  const AtomStereopermutator& stereopermutatorB,
+  const unsigned siteIndexB
+) const {
+  return _pImpl -> dihedral(
+    stereopermutatorA,
+    siteIndexA,
+    stereopermutatorB,
+    siteIndexB
+  );
+}
+
 bool BondStereopermutator::hasSameCompositeOrientation(const BondStereopermutator& other) const {
   return _pImpl -> hasSameCompositeOrientation(*other._pImpl);
 }

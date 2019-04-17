@@ -123,6 +123,61 @@ const stereopermutation::Composite& BondStereopermutator::Impl::composite() cons
   return _composite;
 }
 
+double BondStereopermutator::Impl::dihedral(
+  const AtomStereopermutator& stereopermutatorA,
+  const unsigned siteIndexA,
+  const AtomStereopermutator& stereopermutatorB,
+  const unsigned siteIndexB
+) const {
+  if(!_assignment) {
+    throw std::logic_error("This stereopermutator is unassigned! Dihedrals between sites are unspecified.");
+  }
+
+  bool swapped = false;
+
+  // Use reference wrappers to be able to swap
+  using PermutatorReference = std::reference_wrapper<const AtomStereopermutator>;
+  using ReferencePair = std::pair<PermutatorReference, PermutatorReference>;
+
+  ReferencePair references {stereopermutatorA, stereopermutatorB};
+  std::pair<unsigned, unsigned> siteIndices {siteIndexA, siteIndexB};
+  if(stereopermutatorA.centralIndex() == _composite.orientations().second.identifier) {
+    std::swap(references.first, references.second);
+    std::swap(siteIndices.first, siteIndices.second);
+    swapped = true;
+  }
+
+  // Derived from possibly swapped references
+  auto symmetryPositionMaps = temple::map_stl(
+    references,
+    [](const PermutatorReference& ref) {
+      return ref.get().getSymmetryPositionMap();
+    }
+  );
+
+  std::pair<unsigned, unsigned> symmetryPositions;
+  double dihedralAngle;
+
+  for(const auto& dihedralTuple : _composite.dihedrals(*_assignment)) {
+    std::tie(symmetryPositions.first, symmetryPositions.second, dihedralAngle) = dihedralTuple;
+
+    if(
+      SymmetryMapHelper::getSiteIndexAt(
+        symmetryPositions.first,
+        symmetryPositionMaps.first
+      ) == siteIndices.first
+      && SymmetryMapHelper::getSiteIndexAt(
+        symmetryPositions.second,
+        symmetryPositionMaps.second
+      ) == siteIndices.second
+    ) {
+      return (swapped) ? -dihedralAngle : dihedralAngle;
+    }
+  }
+
+  throw std::logic_error("Could not find a dihedral angle for the specified sites");
+}
+
 stereopermutation::Composite::OrientationState
 BondStereopermutator::Impl::_makeOrientationState(
   const AtomStereopermutator& focalStereopermutator,

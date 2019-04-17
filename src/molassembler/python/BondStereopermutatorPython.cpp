@@ -6,6 +6,7 @@
 #include "pybind11/operators.h"
 #include "pybind11/stl.h"
 
+#include "molassembler/AtomStereopermutator.h"
 #include "molassembler/BondStereopermutator.h"
 
 void init_bond_stereopermutator(pybind11::module& m) {
@@ -48,6 +49,16 @@ void init_bond_stereopermutator(pybind11::module& m) {
     "edge",
     &BondStereopermutator::edge,
     "Returns the edge this stereopermutator is placed on"
+  );
+
+  bondStereopermutator.def(
+    "dihedral",
+    &BondStereopermutator::dihedral,
+    pybind11::arg("stereopermutator_a"),
+    pybind11::arg("site_index_a"),
+    pybind11::arg("stereopermutator_b"),
+    pybind11::arg("site_index_b"),
+    "Returns the dihedral angle between two sites of the constituting atom stereopermutators"
   );
 
   bondStereopermutator.def(pybind11::self == pybind11::self);

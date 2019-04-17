@@ -274,7 +274,7 @@ public:
   Symmetry::Name getSymmetry() const;
 
   /*!
-   * @brief Yields the mapping from ligand indices to symmetry positions
+   * @brief Yields the mapping from site indices to symmetry positions
    * @throws std::logic_error if the stereopermutator is unassigned.
    */
   std::vector<unsigned> getSymmetryPositionMap() const;

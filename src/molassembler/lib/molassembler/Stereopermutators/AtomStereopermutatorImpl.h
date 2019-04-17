@@ -102,7 +102,7 @@ public:
   );
 
 /* Information */
-  //! Returns the angle between substituent ligands in the idealized symmetry
+  //! Returns the angle between two site indices in the idealized symmetry
   double angle(unsigned i, unsigned j) const;
 
   /*! Returns the permutation index within the set of possible permutations, if set

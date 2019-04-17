@@ -50,6 +50,13 @@ struct BondStereopermutator::Impl {
 
   const stereopermutation::Composite& composite() const;
 
+  double dihedral(
+    const AtomStereopermutator& stereopermutatorA,
+    unsigned siteIndexA,
+    const AtomStereopermutator& stereopermutatorB,
+    unsigned siteIndexB
+  ) const;
+
   bool hasSameCompositeOrientation(const BondStereopermutator::Impl& other) const;
 
   boost::optional<unsigned> indexOfPermutation() const;

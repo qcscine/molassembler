@@ -65,6 +65,20 @@ void init_ranking_information(pybind11::module& m) {
     "An ordered list of information on all links between ligand sites"
   );
 
+  rankingInformation.def(
+    "site_index_of_atom",
+    &RankingInformation::getSiteIndexOf,
+    pybind11::arg("atom_index"),
+    "Fetch the site index of an atom index"
+  );
+
+  rankingInformation.def(
+    "rank_index_of_site",
+    &RankingInformation::getRankedIndexOfSite,
+    pybind11::arg("site_index"),
+    "Fetch the position of a site within the site ranking"
+  );
+
   rankingInformation.def(pybind11::self == pybind11::self);
   rankingInformation.def(pybind11::self != pybind11::self);
 }

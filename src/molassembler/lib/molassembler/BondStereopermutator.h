@@ -171,6 +171,25 @@ public:
   const stereopermutation::Composite& composite() const;
 
   /*!
+   * @brief Angle between sites at stereopermutators in the current assignment
+   *
+   * @param stereopermutatorA One constituting stereopermutator
+   * @param siteIndexA A site index of @p stereopermutatorA
+   * @param stereopermutatorA The other constituting stereopermutator
+   * @param siteIndexA A site index of @p stereopermutatorB
+   *
+   * @throws std::logic_error If the stereopermutator is unassigned or if no
+   *   dihedral is found for the passed sites
+   */
+  double dihedral(
+    const AtomStereopermutator& stereopermutatorA,
+    unsigned siteIndexA,
+    const AtomStereopermutator& stereopermutatorB,
+    unsigned siteIndexB
+  ) const;
+
+
+  /*!
    * @brief Returns whether this stereopermutator has the same relative
    *   orientation as another stereopermutator
    */
