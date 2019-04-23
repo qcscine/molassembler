@@ -77,6 +77,11 @@ void init_conformers(pybind11::module& m) {
     "A configuration object for distance geometry runs with sane defaults"
   );
 
+  configuration.def(
+    pybind11::init<>(),
+    "Default-initialize a Configuration"
+  );
+
   configuration.def_readwrite(
     "partiality",
     &DistanceGeometry::Configuration::partiality,
