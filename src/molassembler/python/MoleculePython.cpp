@@ -60,40 +60,6 @@ std::string pipeSVG(const Scine::molassembler::Molecule& molecule) {
   return os.str();
 }
 
-bool modularCompare(
-  const Scine::molassembler::Molecule& molecule,
-  const Scine::molassembler::Molecule& other,
-  const bool compareElementTypes,
-  const bool compareBondOrders,
-  const bool compareSymmetries,
-  const bool compareStereopermutations
-) {
-  using Components = Scine::molassembler::AtomEnvironmentComponents;
-  Components bitmask;
-
-  if(compareElementTypes) {
-    bitmask = bitmask | Components::ElementTypes;
-  }
-
-  if(compareBondOrders) {
-    bitmask = bitmask | Components::BondOrders;
-  }
-
-  if(compareSymmetries) {
-    bitmask = bitmask | Components::Symmetries;
-  }
-
-  if(compareStereopermutations) {
-    bitmask = bitmask | Components::Stereopermutations;
-  }
-
-  return molecule.modularCompare(other, bitmask);
-}
-
-void canonicalizeMolecule(Scine::molassembler::Molecule& molecule) {
-  molecule.canonicalize();
-}
-
 void init_molecule(pybind11::module& m) {
   using namespace Scine::molassembler;
   using namespace Scine::Utils;
@@ -187,11 +153,10 @@ void init_molecule(pybind11::module& m) {
     "Assigns a bond stereopermutator at random"
   );
 
-  // TODO this is a temporary fix since being able to canonicalize some components will be necessary for the isomerism checks
-  // also, access to the parts of a molecule that are canonical is needed
   molecule.def(
     "canonicalize",
-    &::canonicalizeMolecule,
+    &Molecule::canonicalize,
+    pybind11::arg("components_bitmask"),
     "Canonicalizes the molecular graph"
   );
 
@@ -261,14 +226,17 @@ void init_molecule(pybind11::module& m) {
     "Fetches read only access to the list of stereopermutators"
   );
 
+  molecule.def_property_readonly(
+    "canonical_components",
+    &Molecule::canonicalComponents,
+    "Yields the parts of the molecule that have been canonicalized"
+  );
+
   molecule.def(
     "partial_compare",
-    &::modularCompare,
+    &Molecule::modularCompare,
     pybind11::arg("other"),
-    pybind11::arg("compare_element_types") = true,
-    pybind11::arg("compare_bond_orders") = true,
-    pybind11::arg("compare_symmetries") = true,
-    pybind11::arg("compare_stereopermutations") = true
+    pybind11::arg("components_bitmask")
   );
 
   molecule.def(pybind11::self == pybind11::self);

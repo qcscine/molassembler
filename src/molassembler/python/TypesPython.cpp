@@ -76,11 +76,7 @@ void init_types(pybind11::module& m) {
   bondIndex.def(
     "__contains__",
     [](const BondIndex& bond, AtomIndex i) {
-      if(bond.first == i || bond.second == i) {
-        return true;
-      }
-
-      return false;
+      return (bond.first == i || bond.second == i);
     }
   );
   bondIndex.def(
@@ -100,4 +96,29 @@ void init_types(pybind11::module& m) {
   );
   bondIndex.def(pybind11::self == pybind11::self);
   bondIndex.def(pybind11::self < pybind11::self);
+
+  /* AtomEnvironmentComponents binding
+   * Cannot use None as an enum value since None is a reserved keyword in Python
+   */
+  pybind11::enum_<AtomEnvironmentComponents>(
+    m,
+    "AtomEnvironmentComponents",
+    pybind11::arithmetic()
+  ).value("NoComponents", AtomEnvironmentComponents::None)
+   .value("ElementTypes", AtomEnvironmentComponents::ElementTypes)
+   .value("BondOrders", AtomEnvironmentComponents::BondOrders)
+   .value("Symmetries", AtomEnvironmentComponents::Symmetries)
+   .value("Stereopermutations", AtomEnvironmentComponents::Stereopermutations)
+   .value(
+      "ElementsAndBonds",
+      AtomEnvironmentComponents::ElementTypes
+      | AtomEnvironmentComponents::BondOrders
+    )
+   .value(
+      "ElementsBondsAndSymmetries",
+      AtomEnvironmentComponents::ElementTypes
+      | AtomEnvironmentComponents::BondOrders
+      | AtomEnvironmentComponents::Symmetries
+   )
+   .value("All", AtomEnvironmentComponents::All);
 }
