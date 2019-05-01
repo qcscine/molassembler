@@ -7,8 +7,8 @@
  * stereopermutators in molecules.
  */
 
-#ifndef INCLUDE_MOLASSEMBLER_BOND_stereopermutator_H
-#define INCLUDE_MOLASSEMBLER_BOND_stereopermutator_H
+#ifndef INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_H
+#define INCLUDE_MOLASSEMBLER_BOND_STEREOPERMUTATOR_H
 
 #include "boost/optional/optional_fwd.hpp"
 
@@ -57,7 +57,11 @@ class BondStereopermutator {
 public:
 //!@name Public types
 //!@{
-  using AtomStereopermutatorPropagatedState = std::tuple<RankingInformation, PermutationState, boost::optional<unsigned>>;
+  using AtomStereopermutatorPropagatedState = std::tuple<
+    RankingInformation,
+    PermutationState,
+    boost::optional<unsigned>
+  >;
 
   /**
    * @brief How dihedrals are aligned in the generation of stereopermutations

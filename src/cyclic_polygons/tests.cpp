@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(centralAngleRootFinding) {
       }
 
       double circumradius = std::nan("");
-      bool circumcenterInside;
+      bool circumcenterInside = false;
 
       auto assignCircumradius = [&]() -> void {
         std::tie(circumradius, circumcenterInside) = CyclicPolygons::detail::convexCircumradius(

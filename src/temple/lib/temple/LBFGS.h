@@ -437,7 +437,7 @@ struct LBFGS {
            */
           /* Adjust step length */
           stepLength *= FloatType {0.5};
-        } else if(armijo && !curvature) {
+        } else if(!curvature) {
           /* Check need for backtracking */
           if(backtracking) {
             //std::cout << "Backtracking!\n";
@@ -533,12 +533,11 @@ struct LBFGS {
         gradients.dot(stepVector),
         c1,
         c2,
-        0.0,
-        100
+        FloatType {0.0},
+        100u
       );
-      cycle += additionalCycles;
-      std::cout << stepLength << " " << additionalCycles << "\n";
-      */
+      cycle += additionalCycles;*/
+      //std::cout << stepLength << " " << additionalCycles << "\n";
       //std::cout << stepLength << "\n";
     }
 

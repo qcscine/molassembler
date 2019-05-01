@@ -137,7 +137,7 @@ public:
     // For there to be a decision, there need to be at least two options
     assert(
       temple::all_of(
-        bounds,
+        _bounds,
         [](const ChoiceIndex value) -> bool {
           return value > 1;
         }
@@ -215,6 +215,8 @@ private:
 
   //! Abstract base class for nodes to allow differentiation
   struct AbstractNode {
+    virtual ~AbstractNode() = default;
+
     virtual bool contains(const ChoiceList& values, unsigned depth) const = 0;
 
     virtual InsertResult insert(

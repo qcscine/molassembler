@@ -384,7 +384,7 @@ public:
         _nodeStack(other._nodeStack),
         _indexStack(other._indexStack)
     {}
-    constexpr const_iterator(const_iterator&& other) = default;
+    constexpr const_iterator(const_iterator&& other) noexcept = default;
     constexpr const_iterator& operator = (const const_iterator& other) {
       if(this->_baseRef != other._baseRef) {
         throw "Assigning BTree const_iterator to another base instance!";
@@ -394,8 +394,10 @@ public:
       _rightMostNode = other._rightMostNode;
       _nodeStack = other._nodeStack;
       _indexStack = other._indexStack;
+
+      return *this;
     }
-    constexpr const_iterator& operator = (const_iterator&& other) = default;
+    constexpr const_iterator& operator = (const_iterator&& other) noexcept = default;
     ~const_iterator() = default;
   //!@}
 

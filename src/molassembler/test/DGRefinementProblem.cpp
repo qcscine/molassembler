@@ -418,7 +418,7 @@ BOOST_AUTO_TEST_CASE( gradientComponentsAreRotAndTransInvariant) {
         static_cast<Eigen::VectorXd>(
           Eigen::Map<Eigen::VectorXd>(
             translatedRectangularPositions.data(),
-            translatedRectangularPositions.cols() * rotatedRectangularPositions.rows()
+            translatedRectangularPositions.cols() * translatedRectangularPositions.rows()
           )
         )
       );

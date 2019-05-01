@@ -179,7 +179,6 @@ bool Cycles::predicates::ContainsIndex::operator() (const RDL_cycle* const cycle
         || cyclePtr -> edges[i][1] == soughtIndex
       ) {
       return true;
-      break;
     }
   }
 

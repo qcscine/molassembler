@@ -428,11 +428,11 @@ struct ErrorFunctionValue {
 
     if(nonZeroChiralConstraints == 0) {
       proportionChiralConstraintsCorrectSign = 1.0;
+    } else {
+      proportionChiralConstraintsCorrectSign = static_cast<double>(
+        nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
+      ) / nonZeroChiralConstraints;
     }
-
-    proportionChiralConstraintsCorrectSign = static_cast<double>(
-      nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
-    ) / nonZeroChiralConstraints;
 
     return proportionChiralConstraintsCorrectSign;
   }
