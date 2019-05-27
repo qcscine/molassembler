@@ -14,6 +14,12 @@ namespace Scine {
 
 namespace Symmetry {
 
+//! Precomputed min and max angle values in radians for all symmetries
+extern const temple::Array<std::pair<double, double>, nSymmetries> symmetryAngleBounds;
+
+double minimumAngle(Symmetry::Name symmetryName);
+double maximumAngle(Symmetry::Name symmetryName);
+
 /* Derived stored constexpr data */
 //! The smallest angle between ligands in any symmetry
 constexpr double smallestAngle [[gnu::unused]]

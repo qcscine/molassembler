@@ -873,3 +873,18 @@ BOOST_AUTO_TEST_CASE(mappingsAreAvailable) {
   );
 }
 #endif
+
+BOOST_AUTO_TEST_CASE(angleBoundsTests) {
+  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Name::TShaped) == M_PI / 2);
+  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Name::TShaped) == M_PI);
+
+  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Name::Octahedral) == M_PI / 2);
+  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Name::Octahedral) == M_PI);
+
+  BOOST_CHECK(Symmetry::minimumAngle(Symmetry::Name::TrigonalBiPyramidal) == M_PI / 2);
+  BOOST_CHECK(Symmetry::maximumAngle(Symmetry::Name::TrigonalBiPyramidal) == M_PI);
+
+  BOOST_CHECK(
+    Symmetry::minimumAngle(Symmetry::Name::Tetrahedral) == Symmetry::maximumAngle(Symmetry::Name::Tetrahedral)
+  );
+}

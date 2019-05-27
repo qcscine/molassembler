@@ -13,6 +13,27 @@ namespace Scine {
 
 namespace Symmetry {
 
+constexpr temple::Array<std::pair<double, double>, nSymmetries> symmetryAngleBounds = temple::TupleType::map<
+  data::allSymmetryDataTypes,
+  constexprProperties::AngleBoundsFunctor
+>();
+
+double minimumAngle(const Symmetry::Name symmetryName) {
+  return symmetryAngleBounds.at(
+    static_cast<
+      std::underlying_type_t<Symmetry::Name>
+    >(symmetryName)
+  ).first;
+}
+
+double maximumAngle(const Symmetry::Name symmetryName) {
+  return symmetryAngleBounds.at(
+    static_cast<
+      std::underlying_type_t<Symmetry::Name>
+    >(symmetryName)
+  ).second;
+}
+
 #ifdef USE_CONSTEXPR_TRANSITION_MAPPINGS
 template<typename SymmetrySource, typename SymmetryTarget>
 struct mappingCalculationFunctor {

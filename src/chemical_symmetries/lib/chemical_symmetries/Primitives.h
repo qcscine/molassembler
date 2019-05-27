@@ -26,7 +26,7 @@ namespace Symmetry {
 constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
 
 /*!
- * Namespace containing all symmetry data classes and some minor helper functions
+ * @brief All symmetry data classes and some minor helper functions
  *
  * Each symmetry data class must have the following members, all of which must
  * be static constexpr (or static const in the exception of stringName):
@@ -589,7 +589,7 @@ struct TrigonalBiPyramidal {
     unsigned smaller = std::min(a, b), larger = std::max(a, b);
     if(larger < 3) {
       // -> smaller < 2, this means either 0,1 0,2 1,2 axial
-      return temple::Math::toRadians<double>(120);
+      return 2 * M_PI / 3;
     }
 
     if(larger == 3) {

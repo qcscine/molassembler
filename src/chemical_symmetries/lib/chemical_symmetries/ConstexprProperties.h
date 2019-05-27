@@ -49,10 +49,34 @@ constexpr double calculateSmallestAngle() {
   return smallestAngle;
 }
 
-/*! Functor to find out the minimum angle among all the symmetry class types
- * passed as template arguments
+template<typename SymmetryClass>
+struct AngleBoundsFunctor {
+  static constexpr std::pair<double, double> value() {
+    double smallestAngle = M_PI;
+    double largestAngle = 0;
+
+    for(unsigned i = 0; i < SymmetryClass::size; ++i) {
+      for(unsigned j = i + 1; j < SymmetryClass::size; ++j) {
+        double returnedAngle = SymmetryClass::angleFunction(i, j);
+        if(returnedAngle < smallestAngle) {
+          smallestAngle = returnedAngle;
+        }
+
+        if(returnedAngle > largestAngle) {
+          largestAngle = returnedAngle;
+        }
+      }
+    }
+
+    return {smallestAngle, largestAngle};
+  }
+};
+
+/*!
+ * @brief Functor to find out the minimum angle among all the symmetry class
+ *   types passed as template arguments
  */
-template<typename ...SymmetryClasses>
+template<typename ... SymmetryClasses>
 struct minAngleFunctor {
   static constexpr double value() {
     const std::array<double, sizeof...(SymmetryClasses)> smallestAngles {{
