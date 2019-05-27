@@ -28,9 +28,11 @@ public:
 
 //!@name Constructors
 //!@{
-  /*!
-   * Delegate constructor using another DynamicArray and an index_sequence to
-   * directly form the array mem-initializer with a parameter pack expansion
+  //! Default constructor
+  constexpr DynamicArray() : _items {} {}
+
+  /* Delegate copy constructor directly forms the array mem-initializer with a
+   * parameter pack expansion
    */
   template<std::size_t ... Inds>
   constexpr DynamicArray(
@@ -40,14 +42,53 @@ public:
      _count(other._count)
   {}
 
-  /* Constructing from another dynamic array is tricky since we're technically
+  /*! @brief Copy constructor
+   *
+   * Constructing from another dynamic array is tricky since we're technically
    * not allowed to edit _items in-class, so we delegate to the previous
    * constructor and directly form the mem-initializer
    */
   constexpr DynamicArray(const DynamicArray& other)
-    : DynamicArray(other, std::make_index_sequence<nItems>{})
+    : DynamicArray(other, std::make_index_sequence<nItems>{}) {}
+
+  /* Delegate move constructor to directly form the array mem-initializer with
+   * a parameter pack expansion
+   */
+  template<std::size_t ... Inds>
+  constexpr DynamicArray(
+    DynamicArray&& other,
+    std::index_sequence<Inds...> /* inds */
+  ) :_items {std::move(other[Inds])...},
+     _count(other._count)
   {}
 
+  constexpr DynamicArray(DynamicArray&& other) noexcept
+    : DynamicArray(std::move(other), std::make_index_sequence<nItems>{}) {}
+
+  //! Copy assignment operator
+  constexpr DynamicArray& operator = (const DynamicArray& other) {
+    for(unsigned i = 0; i < other._count; ++i) {
+      _items[i] = other._items[i];
+    }
+    _count = other._count;
+    return *this;
+  }
+
+  //! Move assignment operator
+  constexpr DynamicArray& operator = (DynamicArray&& other) noexcept {
+    for(unsigned i = 0; i < other._count; ++i) {
+      _items[i] = std::move(other._items[i]);
+    }
+    _count = other._count;
+    return *this;
+  }
+
+  ~DynamicArray() = default;
+//!@}
+
+
+//!@name Converting constructors
+//!@{
   //! Construct from any-size array-like container using same trick as copy ctor
   template<
     template<typename, std::size_t> class ArrayType,
@@ -69,8 +110,6 @@ public:
     std::enable_if_t<(N <= nItems)>* /* f */ = 0 // Only possible for some sizes
   ) : DynamicArray(other, std::make_index_sequence<N>{})
   {}
-
-  constexpr DynamicArray() : _items {}, _count(0) {}
 
   //! Parameter pack constructor, will work as long as the arguments are castable
   template<typename ...Args>

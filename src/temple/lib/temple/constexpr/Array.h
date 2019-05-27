@@ -27,27 +27,64 @@ public:
   using value_type = T;
 //!@}
 
-//!@name Constructors
+//!@name Special member functions
 //!@{
-  /*! Delegate constructor using another Array and an index_sequence to directly
+  /* Helper constructor using another Array and an index_sequence to directly
    * form the array mem-initializer with a parameter pack expansion
    */
   template<size_t ... Inds>
   constexpr Array(
     const Array& other,
     std::index_sequence<Inds...> /* inds */
-  )
-    :_items {other[Inds]...}
-  {}
+  ) :_items {other[Inds]...} {}
 
-  /* Constructing from another array is tricky since we're technically not
-   * allowed to edit _items in-class, so we delegate to the previous constructor
+  /*!
+   * @brief Copy constructor
+   *
+   * Constructing from another array is tricky since we're technically not
+   * allowed to edit _items in-class, so we delegate to a helper constructor
    * and directly form the mem-initializer
    */
   constexpr Array(const Array& other)
-    : Array(other, std::make_index_sequence<nItems>{})
-  {}
+    : Array(other, std::make_index_sequence<nItems>{}) {}
 
+  /* Helper move constructor that directly forms the array mem-initializer with
+   * a parameter pack expansion
+   */
+  template<size_t ... Inds>
+  constexpr Array(
+    Array&& other,
+    std::index_sequence<Inds...> /* inds */
+  ) :_items {std::move(other[Inds])...} {}
+
+  //! Move constructor
+  constexpr Array(Array&& other) noexcept
+    : Array(std::move(other), std::make_index_sequence<nItems>{}) {}
+
+  //! Copy assignment operator
+  constexpr Array& operator = (const Array& other) {
+    for(std::size_t i = 0; i < nItems; ++i) {
+      _items[i] = other._items[i];
+    }
+
+    return *this;
+  }
+
+  //! Move assignment operator, moves from other's array
+  constexpr Array& operator = (Array&& other) noexcept {
+    for(std::size_t i = 0; i < nItems; ++i) {
+      _items[i] = std::move(other._items[i]);
+    }
+
+    return *this;
+  }
+
+  //! Default destructor
+  ~Array() = default;
+//!@}
+
+//!@name Converting constructors
+//!@{
   //! Delegate std::array ctor, using same trick as copy ctor
   template<size_t ... Inds>
   constexpr Array(

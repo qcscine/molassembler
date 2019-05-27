@@ -18,7 +18,8 @@ std::size_t iteratorDistance(const Container& container) {
 }
 
 BOOST_AUTO_TEST_CASE(pairAdaptorTests) {
-  const std::vector<unsigned> i {5, 3, 9, 11}, j {3, 4};
+  const std::vector<unsigned> i {5, 3, 9, 11};
+  const std::vector<unsigned> j {3, 4};
 
   auto adjacents = temple::adaptors::sequentialPairs(i);
 
@@ -59,17 +60,17 @@ BOOST_AUTO_TEST_CASE(pairAdaptorTests) {
 }
 
 BOOST_AUTO_TEST_CASE(iotaAdaptorTests) {
-  auto a = temple::adaptors::range(5u);
+  auto a = temple::adaptors::range(5U);
 
   BOOST_CHECK(a.size() == 5);
   BOOST_CHECK(iteratorDistance(a) == a.size());
-  BOOST_CHECK(temple::sum(a) == 10u);
+  BOOST_CHECK(temple::sum(a) == 10U);
 
-  auto b = temple::adaptors::range(4u, 7u);
+  auto b = temple::adaptors::range(4U, 7U);
 
   BOOST_CHECK(b.size() == 3);
   BOOST_CHECK(iteratorDistance(b) == b.size());
-  BOOST_CHECK(temple::sum(b) == 15u);
+  BOOST_CHECK(temple::sum(b) == 15U);
 }
 
 BOOST_AUTO_TEST_CASE(zipAdaptorTests) {
@@ -82,7 +83,7 @@ BOOST_AUTO_TEST_CASE(zipAdaptorTests) {
   BOOST_CHECK(
     temple::sum(
       temple::adaptors::transform(zipRange, std::plus<>())
-    ) == 15u
+    ) == 15U
   );
 }
 
@@ -129,30 +130,30 @@ BOOST_AUTO_TEST_CASE( enumerateTests) {
 
 BOOST_AUTO_TEST_CASE(compoundAdaptorOwnership) {
   auto pairsOfRange = temple::adaptors::allPairs(
-    temple::adaptors::range(4u)
+    temple::adaptors::range(4U)
   );
 
-  auto selfOwningRange = temple::adaptors::range(4u);
+  auto selfOwningRange = temple::adaptors::range(4U);
   auto referenceOwningPairs = temple::adaptors::allPairs(selfOwningRange);
 
   auto checkPairs = [](const auto& rangeObject) -> void {
     BOOST_CHECK(rangeObject.size() == 6);
     BOOST_CHECK(iteratorDistance(rangeObject) == rangeObject.size());
     BOOST_CHECK(
-      temple::invoke(std::plus<>(), *std::begin(rangeObject)) == 1u
+      temple::invoke(std::plus<>(), *std::begin(rangeObject)) == 1U
     );
 
     BOOST_CHECK(
       temple::sum(
         temple::adaptors::transform(
           temple::adaptors::allPairs(
-            temple::adaptors::range(4u)
+            temple::adaptors::range(4U)
           ),
           [](const unsigned i, const unsigned j) -> unsigned {
             return i * j;
           }
         )
-      ) == 11u
+      ) == 11U
     );
   };
 
@@ -262,4 +263,97 @@ BOOST_AUTO_TEST_CASE(adaptorShortRanges) {
     0,
     "no-element sequential pairs"
   );
+}
+
+template<typename Range>
+void checkRangeLengthTempl(
+  const Range& rangeObject,
+  const unsigned expectedSize,
+  const std::string& description
+) {
+  BOOST_CHECK_MESSAGE(
+    rangeObject.size() == expectedSize,
+    description << " size is " << rangeObject.size() << ", expected "
+      << expectedSize
+  );
+  BOOST_CHECK_MESSAGE(
+    iteratorDistance(rangeObject) == rangeObject.size(),
+    description << " iterator distance is " << iteratorDistance(rangeObject)
+      << ", expected equal to size (" << rangeObject.size() << ")"
+  );
+}
+
+BOOST_AUTO_TEST_CASE(frameAdaptorTest) {
+  checkRangeLengthTempl(
+    temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {}),
+    0,
+    "no-element cyclic frame of size 1"
+  );
+
+  checkRangeLengthTempl(
+    temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {1}),
+    1,
+    "single-element cyclic frame of size 1"
+  );
+
+  checkRangeLengthTempl(
+    temple::adaptors::cyclicFrame<1>(std::vector<unsigned> {1, 2}),
+    2,
+    "two-element cyclic frame of size 1"
+  );
+
+  checkRangeLengthTempl(
+    temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2}),
+    2,
+    "two-element cyclic frame of size 2"
+  );
+
+  checkRangeLengthTempl(
+    temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2, 3}),
+    3,
+    "three-element cyclic frame of size 2"
+  );
+
+  checkRangeLengthTempl(
+    temple::adaptors::cyclicFrame<4>(std::vector<unsigned> {1, 2, 3}),
+    0,
+    "three-element cyclic frame of size 4"
+  );
+
+  BOOST_CHECK(
+    temple::sum(
+      temple::map(
+        temple::adaptors::cyclicFrame<2>(std::vector<unsigned> {1, 2, 3}),
+        [](unsigned i, unsigned j) -> unsigned {
+          return i * j;
+        }
+      )
+    ) == 2U + 6U + 3U
+  );
+}
+
+BOOST_AUTO_TEST_CASE(filterAdaptorTests) {
+  const auto filterDistance = iteratorDistance(
+    temple::adaptors::filter(
+      std::vector<unsigned> {1, 2, 3},
+      [](const unsigned x) -> bool {return x % 2 == 0;}
+    )
+  );
+
+  BOOST_CHECK_MESSAGE(
+    filterDistance == 1,
+    "Filter of 1,2,3 applying is_even isn't length one, but " << filterDistance
+  );
+
+  // BOOST_CHECK_MESSAGE(
+  //   temple::sum(
+  //     temple::map(
+  //       temple::adaptors::allPairs(
+  //         temple::adaptors::filter(std::vector<unsigned> {1, 2, 3, 4, 5}, [](const unsigned x) -> bool {return x < 4;})
+  //       ),
+  //       std::plus<>{}
+  //     )
+  //   ) == 3U + 4U + 5U,
+  //   "AllPairs and filter do not work together!"
+  // );
 }

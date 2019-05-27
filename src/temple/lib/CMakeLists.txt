@@ -1,7 +1,9 @@
 set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/All.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/AllPairs.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/CyclicFrame.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Enumerate.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Filter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Iota.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/SequentialPairs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Adaptors/Transform.h

@@ -49,7 +49,7 @@ void init_cycles(pybind11::module& m) {
   cycles.def(
     "__iter__",
     [](const Cycles& cyc) {return pybind11::make_iterator(cyc.begin(), cyc.end());},
-    "Iterate through relevant cycles."
+    "Iterate through all relevant cycles."
   );
 
   cycles.def(

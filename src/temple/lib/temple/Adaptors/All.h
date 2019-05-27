@@ -8,7 +8,9 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_ADAPTORS_H
 
 #include "temple/Adaptors/AllPairs.h"
+#include "temple/Adaptors/CyclicFrame.h"
 #include "temple/Adaptors/Enumerate.h"
+#include "temple/Adaptors/Filter.h"
 #include "temple/Adaptors/Iota.h"
 #include "temple/Adaptors/SequentialPairs.h"
 #include "temple/Adaptors/Transform.h"

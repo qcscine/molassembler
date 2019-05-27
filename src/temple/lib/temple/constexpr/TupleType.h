@@ -86,7 +86,7 @@ template<
 template<
   typename TupleType,
   typename T,
-  size_t ... Inds
+  std::size_t ... Inds
 > constexpr unsigned countTypeHelper(
   std::index_sequence<Inds...> /* inds */
 ) {
@@ -101,12 +101,21 @@ template<
 
   unsigned sum = 0;
 
-  for(unsigned i = 0; i < sizeof...(Inds); ++i) {
+  for(unsigned long i = 0; i < sizeof...(Inds); ++i) {
     sum += trues.at(i);
   }
 
   return sum;
 }
+
+template<typename T>
+struct RepeatTypeHelper {
+  using BaseType = std::tuple<T>;
+
+  template<std::size_t ... Inds>
+  static constexpr auto value(std::index_sequence<Inds...> /* inds */)
+  -> std::tuple<std::tuple_element_t<Inds * 0, BaseType>...> {}
+};
 
 } // namespace detail
 
@@ -172,6 +181,15 @@ template<
 
   return true;
 }
+
+template<typename T, unsigned repeats>
+struct RepeatType {
+  using type = decltype(
+    detail::RepeatTypeHelper<T>::value(
+      std::make_index_sequence<repeats>()
+    )
+  );
+};
 
 } // namespace TupleType
 

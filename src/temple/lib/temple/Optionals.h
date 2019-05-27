@@ -17,6 +17,7 @@ namespace temple {
 
 namespace optionals {
 
+// UnaryFunction: T -> U
 template<
   template<typename> class OptionalType,
   typename T,
@@ -32,6 +33,7 @@ auto map(const OptionalType<T>& optional, UnaryFunction&& function) {
   return OptionalType<U> {};
 }
 
+// UnaryFunction: T -> Optional<U>
 template<
   template<typename> class OptionalType,
   typename T,

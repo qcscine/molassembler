@@ -17,8 +17,33 @@ namespace adaptors {
 
 namespace detail {
 
+template<class Base>
+struct EmptySizeSupplier {};
+
+template<class Base>
+struct SingleContainerPairsSizeSupplier {
+  std::size_t size() const {
+    const std::size_t N = static_cast<const Base&>(*this).container.size();
+    return N * (N - 1) / 2;
+  }
+};
+
+template<class Base>
+struct TwoContainersPairsSizeSupplier {
+  std::size_t size() const {
+    const auto& base = static_cast<const Base&>(*this);
+    return base.containerT.size() * base.containerU.size();
+  }
+};
+
 template<class Container>
-struct SingleContainerPairsGenerator {
+struct SingleContainerPairsGenerator
+  : public std::conditional_t<
+    traits::hasSize<Container>::value,
+    SingleContainerPairsSizeSupplier<SingleContainerPairsGenerator<Container>>,
+    EmptySizeSupplier<SingleContainerPairsGenerator<Container>>
+  >
+{
 //!@name Types
 //!@{
   // See tricks documentation
@@ -53,17 +78,6 @@ struct SingleContainerPairsGenerator {
 //!@{
   explicit SingleContainerPairsGenerator(Container&& passContainer)
     : container(std::forward<Container>(passContainer)) {}
-//!@}
-
-//!@name Information
-//!@{
-  std::enable_if_t<
-    traits::hasSize<Container>::value,
-    std::size_t
-  > size() const {
-    const std::size_t N  = container.size();
-    return N * (N - 1) / 2;
-  }
 //!@}
 
 //!@name Iterators
@@ -133,6 +147,9 @@ struct SingleContainerPairsGenerator {
   }
 
   iterator<ContainerIteratorType> end() const {
+    // TODO dependent on iterator type, do not use --(iter) but write an appropriate
+    // algorithm that gets you end and iterator prior to end (lots of iterator copies, but those are probably cheap)
+
     auto maybePriorToEnd = std::end(container);
     if(maybePriorToEnd != std::begin(container)) {
       --maybePriorToEnd;
@@ -147,9 +164,14 @@ struct SingleContainerPairsGenerator {
 //!@}
 };
 
-
 template<class ContainerT, class ContainerU>
-struct TwoContainersAllPairsGenerator {
+struct TwoContainersAllPairsGenerator
+  : public std::conditional_t<
+    traits::hasSize<ContainerT>::value && traits::hasSize<ContainerU>::value,
+    TwoContainersPairsSizeSupplier<TwoContainersAllPairsGenerator<ContainerT, ContainerU>>,
+    SingleContainerPairsSizeSupplier<TwoContainersAllPairsGenerator<ContainerT, ContainerU>>
+  >
+{
 //!@name Types
 //!@{
   using BoundContainerT = std::conditional_t<
@@ -200,19 +222,6 @@ struct TwoContainersAllPairsGenerator {
   ) : containerT(std::forward<ContainerT>(t)),
       containerU(std::forward<ContainerU>(u))
   {}
-//!@}
-
-//!@name Information
-//!@{
-  std::enable_if_t<
-    (
-      traits::hasSize<ContainerT>::value
-      && traits::hasSize<ContainerU>::value
-    ),
-    std::size_t
-  > size() const {
-    return containerT.size() * containerU.size();
-  }
 //!@}
 
 //!@name Iterators
