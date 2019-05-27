@@ -11,11 +11,6 @@
 # * cppcoreguidelines-pro-type-vararg: remove because of Boost test
 Checks:          '-*,
                   bugprone-*,
-                  #clang-analyzer-*,
-                  #-clang-analyzer-cplusplus.NewDelete,
-                  #-clang-analyzer-cplusplus.NewDeleteLeaks,
-                  #-clang-analyzer-optin.cplusplus.VirtualCall,
-                  #-clang-analyzer-core.NullDereference,
                   cppcoreguidelines-*,
                   -cppcoreguidelines-owning-memory,
                   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
@@ -27,9 +22,8 @@ Checks:          '-*,
                   modernize-*,
                   performance-*,
                   portability-*,
-                  readability-*'
-                  #, -readability-braces-around-statements'
-                  #, -readability-else-after-return'
+                  readability-*',
+                  -readability-magic-numbers
 #HeaderFilterRegex: './src/*'
 AnalyzeTemporaryDtors: false
 FormatStyle:     none
@@ -54,8 +48,6 @@ CheckOptions:
     value:           llvm
   - key:             modernize-use-nullptr.NullMacros
     value:           'NULL'
-  #- key:             readability-implicit-bool-conversion.AllowPointerConditions # Do not complain for "if (x)" when x is a pointer
-  #  value:           0
   - key:             performance-move-const-arg.CheckTriviallyCopyableMove # Do not complain on "std::move(x)" if x is trivially copyable
     value:           0
 ...
