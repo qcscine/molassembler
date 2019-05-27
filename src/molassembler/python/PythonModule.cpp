@@ -20,11 +20,13 @@ void init_serialization(pybind11::module& m);
 void init_stereopermutator_list(pybind11::module& m);
 void init_symmetry_submodule(pybind11::module& m);
 void init_types(pybind11::module& m);
+void init_version(pybind11::module& m);
 
 PYBIND11_MODULE(molassembler, m) {
   m.doc() = "Pybind11 Bindings for molassembler";
 
   // Order is important here, do not reorder
+  init_version(m);
   init_types(m);
   init_random_engine(m);
   init_options(m);
