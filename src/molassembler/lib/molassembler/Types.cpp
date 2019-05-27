@@ -21,6 +21,10 @@ BondIndex::BondIndex(AtomIndex a, AtomIndex b) noexcept : first(a), second(b) {
   }
 }
 
+bool BondIndex::contains(const AtomIndex a) const {
+  return a == first || a == second;
+}
+
 bool BondIndex::operator < (const BondIndex& other) const {
   return std::tie(first, second) < std::tie(other.first, other.second);
 }

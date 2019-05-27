@@ -33,21 +33,21 @@ LinkInformation::LinkInformation(
   // The cycle sequence should be centralized on the source vertex
   cycleSequence = centralizeRingIndexSequence(std::move(sequence), source);
 
-  /* After centralization, the source vertex is first and last. We need to
-   * fix the remaining degree of freedom, which is if that the cycle sequence
-   * in between can be reversed. We choose to fix it by making it ascending
-   * if there are at least four vertices in the sequence between the second
-   * and second-to-last vertices
+  /* After centralization, the source vertex is first. We need to fix the
+   * remaining degree of freedom, which is if that the cycle sequence in
+   * between can be reversed. We choose to fix it by making it ascending if
+   * there are at least four vertices in the sequence between the second and
+   * second-to-last vertices
    */
 
   if(
-    cycleSequence.size() >= 4
-    && cycleSequence.at(1) > cycleSequence.at(cycleSequence.size() - 2)
+    cycleSequence.size() >= 3
+    && cycleSequence.at(1) > cycleSequence.back()
   ) {
     // Reverse is [first, last), and cycleSequence is a vector, so:
     std::reverse(
       std::begin(cycleSequence) + 1,
-      std::end(cycleSequence) - 1
+      std::end(cycleSequence)
     );
   }
 }
@@ -60,12 +60,13 @@ void LinkInformation::applyPermutation(const std::vector<AtomIndex>& permutation
 
   // Conditional reverse of the sequence now depends on the new vertex indices
   if(
-    cycleSequence.size() >= 4
-    && cycleSequence.at(1) > cycleSequence.at(cycleSequence.size() -2)
+    cycleSequence.size() >= 3
+    && cycleSequence.at(1) > cycleSequence.back()
   ) {
+    // Reverse is [first, last), and cycleSequence is a vector, so:
     std::reverse(
       std::begin(cycleSequence) + 1,
-      std::end(cycleSequence) - 1
+      std::end(cycleSequence)
     );
   }
 }

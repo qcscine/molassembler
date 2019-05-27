@@ -18,10 +18,65 @@ namespace Scine {
 
 namespace molassembler {
 
+class StereopermutatorList;
+struct LinkInformation;
+
 struct BondStereopermutator::Impl {
+  /* Make sure static_cast-ing our Alignment enum to Composite's Alignment is
+   * safe and correct:
+   */
+  static_assert(
+    std::is_same<
+      std::underlying_type_t<stereopermutation::Composite::Alignment>,
+      std::underlying_type_t<BondStereopermutator::Alignment>
+    >::value,
+    "Underlying type of stereopermutation's Alignment and BondStereopermutator's must match"
+  );
+  static_assert(
+    static_cast<stereopermutation::Composite::Alignment>(BondStereopermutator::Alignment::Staggered) == stereopermutation::Composite::Alignment::Staggered,
+    "Staggered Alignment values do not match across Alignment types"
+  );
+  static_assert(
+    static_cast<stereopermutation::Composite::Alignment>(BondStereopermutator::Alignment::Eclipsed) == stereopermutation::Composite::Alignment::Eclipsed,
+    "Eclipsed Alignment values do not match across Alignment types"
+  );
+
+//!@name Static methods
+//!@{
+  static bool cycleObviouslyInfeasible(
+    const InnerGraph& graph,
+    const StereopermutatorList& stereopermutators,
+    const AtomStereopermutator& firstStereopermutator,
+    const AtomStereopermutator& secondStereopermutator,
+    std::tuple<AtomIndex, AtomIndex, double> dihedral,
+    const LinkInformation& link
+  );
+
+  static std::vector<unsigned> notObviouslyInfeasibleStereopermutations(
+    const InnerGraph& graph,
+    const StereopermutatorList& stereopermutators,
+    const stereopermutation::Composite& composite
+  );
+//!@}
+
+  /*!
+   * @brief Constructor for use of BondStereopermutator in isolation
+   */
   Impl(
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
+    BondIndex edge,
+    Alignment alignment
+  );
+
+  /*!
+   * @brief Constructor for use of BondStereopermutator in a Molecule
+   *
+   * This constructor checks whether its stereopermutations are feasible!
+   */
+  Impl(
+    const InnerGraph& graph,
+    const StereopermutatorList& stereopermutators,
     BondIndex edge,
     Alignment alignment
   );
@@ -40,7 +95,9 @@ struct BondStereopermutator::Impl {
 
   void propagateGraphChange(
     const AtomStereopermutatorPropagatedState& oldPermutatorState,
-    const AtomStereopermutator& newPermutator
+    const AtomStereopermutator& newPermutator,
+    const InnerGraph& graph,
+    const StereopermutatorList& permutators
   );
 
 /* Information */
@@ -77,14 +134,28 @@ struct BondStereopermutator::Impl {
   bool operator != (const Impl& other) const;
 
 private:
+  /*!
+   * Object representing union of both atom stereopermutators, yields abstract
+   * spatial arrangements
+   */
   stereopermutation::Composite _composite;
+  //! Edge this stereopermutator is placed on
   BondIndex _edge;
+  //! List of stereopermutations of _composite that are not obviously infeasible
+  std::vector<unsigned> _feasiblePermutations;
+  //! Index optional into _feasiblePermutations of the current assignment
   boost::optional<unsigned> _assignment;
 
   //! Yields abstract site characters at their symmetry positions
   static std::vector<char> _charifyRankedSites(
     const std::vector<std::vector<unsigned>>& sitesRanking,
     const std::vector<unsigned>& symmetryPositionMap
+  );
+
+  static stereopermutation::Composite _constructComposite(
+    const StereopermutatorList& stereopermutators,
+    BondIndex edge,
+    Alignment alignment
   );
 
   static stereopermutation::Composite::OrientationState _makeOrientationState(

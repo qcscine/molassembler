@@ -14,7 +14,7 @@
 #include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
-#include "molassembler/OuterGraph.h"
+#include "molassembler/Graph/InnerGraph.h"
 
 #ifdef MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 #include "molassembler/DistanceGeometry/Gor1.h"
@@ -28,7 +28,8 @@
  * which would be the death of the algorithm.
  *
  * But BGL does not allow this, so we would have to use Bellman-Ford, which is
- * O(VE), not O(V + E). Instead of accepting this, we use GOR1 instead.
+ * O(VE), not O(V + E). Instead of accepting this, we use GOR1 instead, which
+ * is faster on graphs with many negative weights.
  */
 
 namespace Scine {
@@ -38,27 +39,52 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 ExplicitGraph::ExplicitGraph(
-  const Molecule& molecule,
-  const BoundsList& bounds
-) : _graph {2 * molecule.graph().N()},
-    _molecule {molecule}
+  const InnerGraph& inner,
+  const BoundsMatrix& bounds
+) : _graph {2 * inner.N()},
+    _inner {inner}
 {
-  const AtomIndex N = molecule.graph().N();
+  const AtomIndex N = inner.N();
 
-  for(const auto& mapPair : bounds) {
-    addBound(
-      mapPair.first.front(),
-      mapPair.first.back(),
-      mapPair.second
-    );
+  for(AtomIndex a = 0; a < N; ++a) {
+    for(AtomIndex b = a + 1; b < N; ++b) {
+      // a < b in all iterations
+      const double lowerBound = bounds(b, a);
+      const double upperBound = bounds(a, b);
+      assert(lowerBound <= upperBound);
+
+      if(lowerBound == 0.0 && upperBound == 0.0) {
+        /* Add implicit edges for this a-b pair. "Implicit" edge (minimum
+         * distance is sum of vdw radii) is explicit in this graph variant.
+        */
+        double vdwLowerBound = (
+          AtomInfo::vdwRadius(inner.elementType(a))
+          + AtomInfo::vdwRadius(inner.elementType(b))
+        );
+
+        boost::add_edge(left(a), right(b), -vdwLowerBound, _graph);
+        boost::add_edge(left(b), right(a), -vdwLowerBound, _graph);
+      } else {
+        /* Add explicit edges for this a-b pair */
+        // Bidirectional edge in left graph with upper weight
+        boost::add_edge(left(a), left(b), upperBound, _graph);
+        boost::add_edge(left(b), left(a), upperBound, _graph);
+
+        // Bidirectional edge in right graph with upper weight
+        boost::add_edge(right(a), right(b), upperBound, _graph);
+        boost::add_edge(right(b), right(a), upperBound, _graph);
+
+        // Forward edge from left to right graph with negative lower bound weight
+        boost::add_edge(left(a), right(b), -lowerBound, _graph);
+        boost::add_edge(left(b), right(a), -lowerBound, _graph);
+      }
+    }
   }
-
-  addImplicitEdges();
 
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Scine::Utils::ElementType::H, Scine::Utils::ElementType::H}};
   for(AtomIndex i = 0; i < N; ++i) {
-    auto elementType = molecule.graph().elementType(i);
+    auto elementType = inner.elementType(i);
     if(
       static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
@@ -76,21 +102,30 @@ ExplicitGraph::ExplicitGraph(
 }
 
 ExplicitGraph::ExplicitGraph(
-  const Molecule& molecule,
+  const InnerGraph& inner,
   const DistanceBoundsMatrix& bounds
-) : _graph {2 * molecule.graph().N()},
-    _molecule {molecule}
+) : _graph {2 * inner.N()},
+    _inner {inner}
 {
-  const VertexDescriptor N = molecule.graph().N();
+  const VertexDescriptor N = inner.N();
   for(VertexDescriptor a = 0; a < N; ++a) {
     for(VertexDescriptor b = a + 1; b < N; ++b) {
-      double lower = bounds.lowerBound(a, b);
-      double upper = bounds.upperBound(a, b);
+      const double lower = bounds.lowerBound(a, b);
+      const double upper = bounds.upperBound(a, b);
 
       if(lower != DistanceBoundsMatrix::defaultLower) {
         // Forward edge from left to right graph with negative lower bound weight
         boost::add_edge(left(a), right(b), -lower, _graph);
         boost::add_edge(left(b), right(a), -lower, _graph);
+      } else {
+        const double vdwLowerBound = (
+          AtomInfo::vdwRadius(_inner.elementType(a))
+          + AtomInfo::vdwRadius(_inner.elementType(b))
+        );
+
+        // Implicit lower bound on distance between the vertices
+        boost::add_edge(left(a), right(b), -vdwLowerBound, _graph);
+        boost::add_edge(left(b), right(a), -vdwLowerBound, _graph);
       }
 
       if(upper != DistanceBoundsMatrix::defaultUpper) {
@@ -105,12 +140,10 @@ ExplicitGraph::ExplicitGraph(
     }
   }
 
-  addImplicitEdges();
-
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Scine::Utils::ElementType::H, Scine::Utils::ElementType::H}};
   for(AtomIndex i = 0; i < N; ++i) {
-    auto elementType = molecule.graph().elementType(i);
+    auto elementType = inner.elementType(i);
     if(
       static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
@@ -209,32 +242,6 @@ void ExplicitGraph::_updateGraphWithFixedDistance(
   _updateOrAddEdge(left(b), right(a), -fixedDistance);
 }
 
-void ExplicitGraph::addImplicitEdges() {
-  AtomIndex N = boost::num_vertices(_graph) / 2;
-
-  for(AtomIndex a = 0; a < N; ++a) {
-    for(AtomIndex b = a + 1; b < N; ++b) {
-      double vdwLowerBound = -1 * (
-        AtomInfo::vdwRadius(
-          _molecule.graph().elementType(a)
-        ) + AtomInfo::vdwRadius(
-          _molecule.graph().elementType(b)
-        )
-      );
-
-      auto edgeSearchPair = boost::edge(left(a), right(b), _graph);
-      if(!edgeSearchPair.second) {
-        boost::add_edge(left(a), right(b), vdwLowerBound, _graph);
-      }
-
-      edgeSearchPair = boost::edge(left(b), right(a), _graph);
-      if(!edgeSearchPair.second) {
-        boost::add_edge(left(b), right(a), vdwLowerBound, _graph);
-      }
-    }
-  }
-}
-
 double ExplicitGraph::lowerBound(
   const VertexDescriptor a,
   const VertexDescriptor b
@@ -269,7 +276,7 @@ double ExplicitGraph::upperBound(
 double ExplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   AtomIndex a = i / 2;
-  Scine::Utils::ElementType elementType = _molecule.graph().elementType(a);
+  Scine::Utils::ElementType elementType = _inner.elementType(a);
 
   if(elementType == _heaviestAtoms.front()) {
     return AtomInfo::vdwRadius(
@@ -287,7 +294,7 @@ const ExplicitGraph::GraphType& ExplicitGraph::graph() const {
 }
 
 outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexcept {
-  unsigned N = _molecule.graph().N();
+  unsigned N = _inner.N();
 
   Eigen::MatrixXd bounds;
   bounds.resize(N, N);
@@ -363,7 +370,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engin
 }
 
 outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
-  const unsigned N = _molecule.graph().N();
+  const unsigned N = _inner.N();
 
   Eigen::MatrixXd distancesMatrix;
   distancesMatrix.resize(N, N);
@@ -390,7 +397,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engin
   std::vector<AtomIndex>::const_iterator separator;
 
   if(partiality == Partiality::FourAtom) {
-    separator = indices.cbegin() + std::min(N, 4u);
+    separator = indices.cbegin() + std::min(N, 4U);
   } else if(partiality == Partiality::TenPercent) {
     /* Advance the separator at most by N positions (guards against advancing
      * past-the-end), and at least by four atoms (guards against situations
@@ -398,7 +405,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engin
      *
      * Not equivalent to std::clamp(4u, cast<u>(0.1 * N), N) if N < 4!
      */
-    separator = indices.cbegin() + std::min(N, std::max(4u, static_cast<unsigned>(0.1 * N)));
+    separator = indices.cbegin() + std::min(N, std::max(4U, static_cast<unsigned>(0.1 * N)));
   } else { // All
     separator = indices.cend();
   }

@@ -119,10 +119,10 @@ void benchmark(
 
   DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
-  const auto boundsList = spatialModel.makeBoundsList();
+  const auto boundsList = spatialModel.makePairwiseBounds();
 
   DistanceGeometry::ExplicitGraph explicitGraph {
-    molecule,
+    molecule.graph().inner(),
     boundsList
   };
 

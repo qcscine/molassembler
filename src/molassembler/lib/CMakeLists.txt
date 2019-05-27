@@ -99,9 +99,12 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereopermutatorList.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/AbstractPermutations.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/AtomStereopermutatorImpl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/BondStereopermutatorImpl.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/PermutationState.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/CycleFeasibility.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/FeasiblePermutations.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/SymmetryPositionMaps.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
@@ -153,9 +156,12 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/RankingInformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Serialization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/StereopermutatorList.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/AbstractPermutations.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/AtomStereopermutatorImpl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/BondStereopermutatorImpl.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/PermutationState.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/CycleFeasibility.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/FeasiblePermutations.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/SymmetryPositionMaps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
 )
 

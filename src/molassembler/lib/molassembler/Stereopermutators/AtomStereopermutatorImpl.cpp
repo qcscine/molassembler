@@ -31,6 +31,7 @@
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/CommonTrig.h"
+#include "molassembler/Stereopermutators/SymmetryPositionMaps.h"
 
 namespace Scine {
 
@@ -120,6 +121,42 @@ Symmetry::Name AtomStereopermutator::Impl::down(const Symmetry::Name symmetryNam
   return detail::pickTransition(symmetryName, Symmetry::size(symmetryName) - 1, removedSymmetryPosition);
 }
 
+boost::optional<std::vector<unsigned>> AtomStereopermutator::Impl::getIndexMapping(
+  const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
+  const ChiralStatePreservation& preservationOption
+) {
+  if(mappingsGroup.indexMappings.empty()) {
+    return boost::none;
+  }
+
+  if(
+    preservationOption == ChiralStatePreservation::EffortlessAndUnique
+    && mappingsGroup.indexMappings.size() == 1
+    && mappingsGroup.angularDistortion <= 0.2
+  ) {
+    return mappingsGroup.indexMappings.front();
+  }
+
+  if(
+    preservationOption == ChiralStatePreservation::Unique
+    && mappingsGroup.indexMappings.size() == 1
+  ) {
+    return mappingsGroup.indexMappings.front();
+  }
+
+  if(preservationOption == ChiralStatePreservation::RandomFromMultipleBest) {
+    return mappingsGroup.indexMappings.at(
+      temple::random::getSingle<unsigned>(
+        0,
+        mappingsGroup.indexMappings.size() - 1,
+        randomnessEngine()
+      )
+    );
+  }
+
+  return boost::none;
+}
+
 /* Constructors */
 AtomStereopermutator::Impl::Impl(
   const OuterGraph& graph,
@@ -129,23 +166,19 @@ AtomStereopermutator::Impl::Impl(
   const AtomIndex centerAtom,
   // Ranking information of substituents
   RankingInformation ranking
-) : _ranking {std::move(ranking)},
-    _centerAtom {centerAtom},
+) : _centerAtom {centerAtom},
     _symmetry {symmetry},
-    _assignmentOption {boost::none}
-{
-  _cache = PermutationState {
-    _ranking,
-    _centerAtom,
-    _symmetry,
-    graph
-  };
-}
+    _ranking {std::move(ranking)},
+    _abstract {_ranking, _symmetry},
+    _feasible {_abstract, _symmetry, _centerAtom, _ranking, graph},
+    _assignmentOption {boost::none},
+    _symmetryPositionMap {}
+{}
 
 /* Modification */
 void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
   if(assignment) {
-    assert(assignment.value() < _cache.feasiblePermutations.size());
+    assert(assignment.value() < _feasible.indices.size());
   }
 
   // Store new assignment
@@ -155,16 +188,16 @@ void AtomStereopermutator::Impl::assign(boost::optional<unsigned> assignment) {
    * assigning (AtomIndex -> unsigned).
    */
   if(_assignmentOption) {
-    _cache.symmetryPositionMap = PermutationState::generateSiteToSymmetryPositionMap(
-      _cache.permutations.stereopermutations.at(
-        _cache.feasiblePermutations.at(
+    _symmetryPositionMap = siteToSymmetryPositionMap(
+      _abstract.permutations.stereopermutations.at(
+        _feasible.indices.at(
           _assignmentOption.value()
         )
       ),
-      _cache.canonicalSites
+      _abstract.canonicalSites
     );
   } else { // Wipe the map
-    _cache.symmetryPositionMap.clear();
+    _symmetryPositionMap.clear();
   }
 }
 
@@ -173,9 +206,9 @@ void AtomStereopermutator::Impl::assignRandom() {
     temple::random::pickDiscrete(
       // Map the feasible permutations onto their weights
       temple::map(
-        _cache.feasiblePermutations,
+        _feasible.indices,
         [&](const unsigned permutationIndex) -> unsigned {
-          return _cache.permutations.weights.at(permutationIndex);
+          return _abstract.permutations.weights.at(permutationIndex);
         }
       ),
       randomnessEngine()
@@ -193,7 +226,7 @@ void AtomStereopermutator::Impl::applyPermutation(const std::vector<AtomIndex>& 
   // Neither symmetry nor assignment change
 
   /* Although ranking and central atom are implicated in its creation,
-   * PermutationState's state is completely independent of atom indices.
+   * abstract and feasible's states are independent of atom indices.
    */
 }
 
@@ -204,6 +237,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
 ) {
   // If nothing changes, nothing changes, and you don't get any internal state
   if(newRanking == _ranking) {
+    // TODO no, this isn't right! If the symmetry has changed, then the internal state must change
     return boost::none;
   }
 
@@ -360,7 +394,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       if(_assignmentOption) {
         return down(
           _symmetry,
-          _cache.symmetryPositionMap.at(alteredSiteIndex.value())
+          _symmetryPositionMap.at(alteredSiteIndex.value())
         );
       }
 
@@ -372,18 +406,24 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
   );
 
   /* Generate new assignments */
-  PermutationState newPermutationState {
+  AbstractStereopermutations newAbstract {
     newRanking,
-    _centerAtom,
+    newSymmetry
+  };
+
+  FeasibleStereopermutations newFeasible {
+    newAbstract,
     newSymmetry,
+    _centerAtom,
+    newRanking,
     graph
   };
 
   boost::optional<unsigned> newStereopermutationOption;
 
   /* Now we will attempt to propagate our assignment to the new set of
-   * assignments. This is only necessary in the case that the stereopermutator is currently
-   * assigned.
+   * assignments. This is only necessary in the case that the stereopermutator
+   * is currently assigned.
    *
    * In the case of an equal number of sites, it is only possible to
    * propagate chiral state if the new number of assignments is smaller or
@@ -408,7 +448,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
           boost::none
         ),
         [&](const auto& mappingOption) {
-          return PermutationState::getIndexMapping(mappingOption, Options::chiralStatePreservation);
+          return getIndexMapping(
+            mappingOption,
+            Options::chiralStatePreservation
+          );
         }
       );
 
@@ -425,16 +468,16 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         );
 
         // Invert symmetryPositionMap to get: site = map.at(symmetryPosition)
-        std::vector<unsigned> oldSymmetryPositionToSiteMap(_cache.symmetryPositionMap.size());
-        for(unsigned i = 0 ; i < _cache.symmetryPositionMap.size(); ++i) {
+        std::vector<unsigned> oldSymmetryPositionToSiteMap(_symmetryPositionMap.size());
+        for(unsigned i = 0 ; i < _symmetryPositionMap.size(); ++i) {
           oldSymmetryPositionToSiteMap.at(
-            _cache.symmetryPositionMap.at(i)
+            _symmetryPositionMap.at(i)
           ) = i;
         }
         /* We assume the new site is also merely added to the end! This may
          * not always be true
          */
-        oldSymmetryPositionToSiteMap.push_back(_cache.symmetryPositionMap.size());
+        oldSymmetryPositionToSiteMap.push_back(_symmetryPositionMap.size());
 
         // Replace old symmetry positions by their site indices
         sitesAtNewSymmetryPositions = temple::map(
@@ -462,10 +505,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
           /* Last parameter is the deleted symmetry position, which is the
            * symmetry position at which the site being removed is currently at
            */
-          _cache.symmetryPositionMap.at(*alteredSiteIndex)
+          _symmetryPositionMap.at(*alteredSiteIndex)
         ),
         [&](const auto& mappingOptional) {
-          return PermutationState::getIndexMapping(mappingOptional, Options::chiralStatePreservation);
+          return getIndexMapping(mappingOptional, Options::chiralStatePreservation);
         }
       );
 
@@ -483,10 +526,10 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
         const auto& symmetryMapping = suitableMappingOptional.value();
 
         // Invert symmetryPositionMap to get: site = map.at(symmetryPosition)
-        std::vector<unsigned> oldSymmetryPositionToSiteMap(_cache.symmetryPositionMap.size());
-        for(unsigned i = 0 ; i < _cache.symmetryPositionMap.size(); ++i) {
+        std::vector<unsigned> oldSymmetryPositionToSiteMap(_symmetryPositionMap.size());
+        for(unsigned i = 0 ; i < _symmetryPositionMap.size(); ++i) {
           oldSymmetryPositionToSiteMap.at(
-            _cache.symmetryPositionMap.at(i)
+            _symmetryPositionMap.at(i)
           ) = i;
         }
 
@@ -533,7 +576,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       sitesAtNewSymmetryPositions.resize(Symmetry::size(newSymmetry));
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
         sitesAtNewSymmetryPositions.at(i) = siteMapping.at(
-          _cache.symmetryPositionMap.at(i)
+          _symmetryPositionMap.at(i)
         );
       }
 
@@ -575,7 +618,7 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
       // Transfer sites to new mapping
       for(unsigned i = 0; i < siteMapping.size(); ++i) {
         sitesAtNewSymmetryPositions.at(i) = siteMapping.at(
-          _cache.symmetryPositionMap.at(i)
+          _symmetryPositionMap.at(i)
         );
       }
 
@@ -592,43 +635,43 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     if(
       situation == PropagationSituation::RankingChange
       && (
-        newPermutationState.permutations.stereopermutations.size()
-        <= _cache.permutations.stereopermutations.size()
+        newAbstract.permutations.stereopermutations.size()
+        <= _abstract.permutations.stereopermutations.size()
       )
     ) {
-      const auto& currentStereopermutation = _cache.permutations.stereopermutations.at(
-        _cache.feasiblePermutations.at(
+      const auto& currentStereopermutation = _abstract.permutations.stereopermutations.at(
+        _feasible.indices.at(
           _assignmentOption.value()
         )
       );
 
       // Replace the characters by their corresponding indices from the old ranking
-      sitesAtNewSymmetryPositions = PermutationState::generateSymmetryPositionToSiteMap(
+      sitesAtNewSymmetryPositions = symmetryPositionToSiteMap(
         currentStereopermutation,
-        _cache.canonicalSites
+        _abstract.canonicalSites
       );
     }
 
     if(!sitesAtNewSymmetryPositions.empty()) {
       // Replace the site indices by their new ranking characters
-      auto newStereopermutationCharacters = PermutationState::makeStereopermutationCharacters(
-        newPermutationState.canonicalSites,
-        newPermutationState.symbolicCharacters,
+      auto newStereopermutationCharacters = AbstractStereopermutations::makeStereopermutationCharacters(
+        newAbstract.canonicalSites,
+        newAbstract.symbolicCharacters,
         sitesAtNewSymmetryPositions
       );
 
       // Create a new assignment with those characters
       auto trialStereopermutation = stereopermutation::Stereopermutation(
         newStereopermutationCharacters,
-        newPermutationState.selfReferentialLinks
+        newAbstract.selfReferentialLinks
       );
 
       // Generate all rotations of this trial assignment
       auto allTrialRotations = trialStereopermutation.generateAllRotations(newSymmetry);
 
       // Find out which of the new assignments has a rotational equivalent
-      for(unsigned i = 0; i < newPermutationState.permutations.stereopermutations.size(); ++i) {
-        if(allTrialRotations.count(newPermutationState.permutations.stereopermutations.at(i)) > 0) {
+      for(unsigned i = 0; i < newAbstract.permutations.stereopermutations.size(); ++i) {
+        if(allTrialRotations.count(newAbstract.permutations.stereopermutations.at(i)) > 0) {
           newStereopermutationOption = i;
           break;
         }
@@ -643,31 +686,33 @@ boost::optional<AtomStereopermutator::PropagatedState> AtomStereopermutator::Imp
     newStereopermutationOption,
     [&](const unsigned stereopermutationIndex) -> boost::optional<unsigned> {
       auto assignmentFindIter = std::find(
-        std::begin(newPermutationState.feasiblePermutations),
-        std::end(newPermutationState.feasiblePermutations),
+        std::begin(newFeasible.indices),
+        std::end(newFeasible.indices),
         stereopermutationIndex
       );
 
-      if(assignmentFindIter == std::end(newPermutationState.feasiblePermutations)) {
+      if(assignmentFindIter == std::end(newFeasible.indices)) {
         // The stereopermutation is infeasible
         return boost::none;
       }
 
-      return assignmentFindIter - std::begin(newPermutationState.feasiblePermutations);
+      return assignmentFindIter - std::begin(newFeasible.indices);
     }
   );
 
   // Extract old state from the class
   auto oldStateTuple = std::make_tuple(
     std::move(_ranking),
-    std::move(_cache),
+    std::move(_abstract),
+    std::move(_feasible),
     std::move(_assignmentOption)
   );
 
   // Overwrite the class state
-  _ranking = std::move(newRanking);
   _symmetry = newSymmetry;
-  _cache = std::move(newPermutationState);
+  _ranking = std::move(newRanking);
+  _abstract = std::move(newAbstract);
+  _feasible = std::move(newFeasible);
   assign(newAssignmentOption);
 
   return {std::move(oldStateTuple)};
@@ -726,8 +771,12 @@ void AtomStereopermutator::Impl::propagateVertexRemoval(const AtomIndex removedI
   }
 }
 
-const PermutationState& AtomStereopermutator::Impl::getPermutationState() const {
-  return _cache;
+const AbstractStereopermutations& AtomStereopermutator::Impl::getAbstract() const {
+  return _abstract;
+}
+
+const FeasibleStereopermutations& AtomStereopermutator::Impl::getFeasible() const {
+  return _feasible;
 }
 
 const RankingInformation& AtomStereopermutator::Impl::getRanking() const {
@@ -746,7 +795,7 @@ std::vector<unsigned> AtomStereopermutator::Impl::getSymmetryPositionMap() const
     );
   }
 
-  return _cache.symmetryPositionMap;
+  return _symmetryPositionMap;
 }
 
 void AtomStereopermutator::Impl::fit(
@@ -1012,11 +1061,11 @@ double AtomStereopermutator::Impl::angle(
   const unsigned j
 ) const {
   assert(i != j);
-  assert(!_cache.symmetryPositionMap.empty());
+  assert(!_symmetryPositionMap.empty());
 
   return Symmetry::angleFunction(_symmetry)(
-    _cache.symmetryPositionMap.at(i),
-    _cache.symmetryPositionMap.at(j)
+    _symmetryPositionMap.at(i),
+    _symmetryPositionMap.at(j)
   );
 }
 
@@ -1030,15 +1079,14 @@ AtomIndex AtomStereopermutator::Impl::centralIndex() const {
 
 boost::optional<unsigned> AtomStereopermutator::Impl::indexOfPermutation() const {
   if(_assignmentOption) {
-    return _cache.feasiblePermutations.at(_assignmentOption.value());
+    return _feasible.indices.at(_assignmentOption.value());
   }
 
   return boost::none;
 }
 
-std::vector<
-  std::array<boost::optional<unsigned>, 4>
-> AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
+std::vector<AtomStereopermutator::MinimalChiralConstraint>
+AtomStereopermutator::Impl::minimalChiralConstraints(bool enforce) const {
   std::vector<
     std::array<boost::optional<unsigned>, 4>
   > precursors;
@@ -1072,13 +1120,13 @@ std::vector<
     /* Invert _neighborSymmetryPositionMap, we need a mapping of
      *  (position in symmetry) -> atom index
      */
-    auto symmetryPositionToSiteIndexMap = PermutationState::generateSymmetryPositionToSiteMap(
-      _cache.permutations.stereopermutations.at(
-        _cache.feasiblePermutations.at(
+    auto symmetryPositionToSiteIndexMap = symmetryPositionToSiteMap(
+      _abstract.permutations.stereopermutations.at(
+        _feasible.indices.at(
           _assignmentOption.value()
         )
       ),
-      _cache.canonicalSites
+      _abstract.canonicalSites
     );
 
     // Get list of tetrahedra from symmetry
@@ -1115,14 +1163,14 @@ std::string AtomStereopermutator::Impl::info() const {
   std::string returnString = "A on "s
     + std::to_string(_centerAtom) + " ("s + Symmetry::name(_symmetry) +", "s;
 
-  const auto& characters = _cache.symbolicCharacters;
+  const auto& characters = _abstract.symbolicCharacters;
   std::copy(
     characters.begin(),
     characters.end(),
     std::back_inserter(returnString)
   );
 
-  for(const auto& link : _cache.selfReferentialLinks) {
+  for(const auto& link : _abstract.selfReferentialLinks) {
     returnString += ", "s + characters.at(link.first) + "-"s + characters.at(link.second);
   }
 
@@ -1161,11 +1209,11 @@ std::string AtomStereopermutator::Impl::rankInfo() const {
 }
 
 unsigned AtomStereopermutator::Impl::numAssignments() const {
-  return _cache.feasiblePermutations.size();
+  return _feasible.indices.size();
 }
 
 unsigned AtomStereopermutator::Impl::numStereopermutations() const {
-  return _cache.permutations.stereopermutations.size();
+  return _abstract.permutations.stereopermutations.size();
 }
 
 void AtomStereopermutator::Impl::setSymmetry(
@@ -1173,15 +1221,22 @@ void AtomStereopermutator::Impl::setSymmetry(
   const OuterGraph& graph
 ) {
   if(_symmetry == symmetryName) {
+    // If the symmetry doesn't actually change, then nothing does
     return;
   }
 
   _symmetry = symmetryName;
 
-  _cache = PermutationState {
+  _abstract = AbstractStereopermutations {
     _ranking,
-    _centerAtom,
+    _symmetry
+  };
+
+  _feasible = FeasibleStereopermutations {
+    _abstract,
     _symmetry,
+    _centerAtom,
+    _ranking,
     graph
   };
 

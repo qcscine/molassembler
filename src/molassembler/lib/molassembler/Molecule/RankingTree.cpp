@@ -22,7 +22,8 @@
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Options.h"
 #include "molassembler/StereopermutatorList.h"
-#include "molassembler/Stereopermutators/PermutationState.h"
+#include "molassembler/Stereopermutators/AbstractPermutations.h"
+#include "molassembler/Stereopermutators/FeasiblePermutations.h"
 
 #include <fstream>
 #include <iostream>

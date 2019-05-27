@@ -16,6 +16,9 @@
 
 #include <iostream>
 
+// TODO temp
+#include <cfenv>
+
 using namespace Scine;
 using BondIndex = molassembler::BondIndex;
 
@@ -222,4 +225,57 @@ BOOST_AUTO_TEST_CASE(BondStatePropagationTests) {
 
   // In this particular case, we know that the final assignment has to be different
   BOOST_CHECK(postPermutator.assigned().value() != priorAssignment);
+}
+
+BOOST_AUTO_TEST_CASE(StereocentersInSmallCycles) {
+#ifndef NDEBUG
+  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
+#endif
+
+  // Flat map from cycle size to number of assignments
+  const std::vector<unsigned> expectedAssignmentsMap {
+  //0, 1, 2, 3, 4, 5, 6, 7, 8
+    0, 0, 0, 1, 1, 1, 1, 2, 2
+  };
+
+  using namespace molassembler;
+  /* In small cycles, double bond stereopermutators should exclude the E
+   * stereopermutation and have only a single assignment
+   */
+  for(unsigned cycleSize = 3; cycleSize <= 8; ++cycleSize) {
+    Molecule mol {
+      Utils::ElementType::C,
+      Utils::ElementType::C,
+      BondType::Double
+    };
+
+    // Add cycle atoms
+    AtomIndex last = 0;
+    for(unsigned i = 0; i < cycleSize - 2; ++i) {
+      last = mol.addAtom(Utils::ElementType::C, last);
+    }
+
+    // Close the cycle
+    mol.addBond(last, 1);
+
+    // Set geometries
+    for(unsigned i = 0; i < cycleSize; ++i) {
+      mol.setGeometryAtAtom(i, Symmetry::Name::Bent);
+    }
+
+    auto bondStereopermutatorOption = mol.stereopermutators().option(BondIndex {0, 1});
+
+    BOOST_REQUIRE_MESSAGE(
+      bondStereopermutatorOption,
+      "Expected a BondStereopermutator on {0, 1}, got None"
+    );
+
+    BOOST_CHECK_MESSAGE(
+      bondStereopermutatorOption->numAssignments() == expectedAssignmentsMap.at(cycleSize),
+      "Expected " << expectedAssignmentsMap.at(cycleSize)
+        << " assignments for cycle of size " << cycleSize
+        << ", got " << bondStereopermutatorOption->numAssignments()
+        << "instead."
+    );
+  }
 }

@@ -223,8 +223,8 @@ int main(int argc, char* argv[]) {
     DGConfiguration.refinementStepLimit = nSteps;
 
 #ifndef NDEBUG
-    //auto debugData = DistanceGeometry::debugRefinement(
-    auto debugData = DistanceGeometry::debugEigenRefinement<4, double, false>(
+    auto debugData = DistanceGeometry::debugRefinement(
+    //auto debugData = DistanceGeometry::debugEigenRefinement<4, double, false>(
       mol,
       nStructures,
       DGConfiguration

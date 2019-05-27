@@ -36,10 +36,12 @@ namespace molassembler {
 
 // Forward-declarations
 class AngstromWrapper;
-class OuterGraph;
+class InnerGraph;
 struct RankingInformation;
 class AtomStereopermutator;
-struct PermutationState;
+class StereopermutatorList;
+struct AbstractStereopermutations;
+struct FeasibleStereopermutations;
 
 namespace DistanceGeometry {
 class SpatialModel;
@@ -59,7 +61,8 @@ public:
 //!@{
   using AtomStereopermutatorPropagatedState = std::tuple<
     RankingInformation,
-    PermutationState,
+    AbstractStereopermutations,
+    FeasibleStereopermutations,
     boost::optional<unsigned>
   >;
 
@@ -78,6 +81,19 @@ public:
   static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 25.0; // ~7°
 //!@}
 
+//!@name Static functions
+//!@{
+  /*!
+   * @brief Determine which stereopermutations aren't obviously infeasible
+   */
+  static std::vector<unsigned> notObviouslyInfeasibleStereopermutations(
+    const InnerGraph& graph,
+    const AtomStereopermutator& stereopermutatorA,
+    const AtomStereopermutator& stereopermutatorB,
+    const stereopermutation::Composite& composite
+  );
+//!@}
+
 //!@name Special member functions
 //!@{
   BondStereopermutator(BondStereopermutator&& other) noexcept;
@@ -90,10 +106,24 @@ public:
 //!@name Constructors
 //!@{
   BondStereopermutator() = delete;
-  //! Constructs a bond stereopermutator on two atom stereopermutators
+  /*!
+   * @brief Constructs a bond stereopermutator on two atom stereopermutators
+   *   without checking whether stereopermutations are feasible or not
+   */
   BondStereopermutator(
     const AtomStereopermutator& stereopermutatorA,
     const AtomStereopermutator& stereopermutatorB,
+    const BondIndex& edge,
+    Alignment alignment = Alignment::Eclipsed
+  );
+
+  /*!
+   * @brief Constructs a bond stereopermutator on two atom stereopermutators,
+   *   removing obviously infeasible stereopermutations
+   */
+  BondStereopermutator(
+    const InnerGraph& graph,
+    const StereopermutatorList& stereopermutators,
     const BondIndex& edge,
     Alignment alignment = Alignment::Eclipsed
   );
@@ -156,7 +186,9 @@ public:
    */
   void propagateGraphChange(
     const AtomStereopermutatorPropagatedState& oldPermutator,
-    const AtomStereopermutator& newPermutator
+    const AtomStereopermutator& newPermutator,
+    const InnerGraph& inner,
+    const StereopermutatorList& permutators
   );
 //!@}
 

@@ -10,6 +10,7 @@
 #ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_BOOST_CONCEPTS_H
 #define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_BOOST_CONCEPTS_H
 
+// DO NOT CHANGE THIS INCLUDE ORDER
 #include "molassembler/DistanceGeometry/ImplicitGraph.h"
 #include "boost/graph/properties.hpp"
 

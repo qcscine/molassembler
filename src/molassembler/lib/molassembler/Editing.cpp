@@ -8,7 +8,8 @@
 #include "molassembler/Graph/Bridge.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Molecule/MoleculeImpl.h"
-#include "molassembler/Stereopermutators/PermutationState.h"
+#include "molassembler/Stereopermutators/AbstractPermutations.h"
+#include "molassembler/Stereopermutators/FeasiblePermutations.h"
 
 #include "Utils/Geometry/ElementInfo.h"
 

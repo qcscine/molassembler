@@ -22,34 +22,41 @@ namespace molassembler {
 // Forward-declarations
 class Cycles;
 struct LinkInformation;
+class AtomStereopermutator;
 
 //! Core graph-level algorithms (not requiring stereopermutator information)
 namespace GraphAlgorithms {
 
-//! Find links between substituent atoms
-std::vector<LinkInformation> substituentLinks(
+//! Find links between two adjacent stereopermutators, returns unordered
+std::vector<LinkInformation> siteLinks(
   const InnerGraph& graph,
-  const Cycles& cycleData,
+  const AtomStereopermutator& stereopermutatorA,
+  const AtomStereopermutator& stereopermutatorB
+);
+
+//! Find links between substituent atoms, returns ordered links
+std::vector<LinkInformation> siteLinks(
+  const InnerGraph& graph,
   AtomIndex source,
   const std::vector<
     std::vector<AtomIndex>
-  >& ligands,
+  >& sites,
   const std::vector<AtomIndex>& excludeAdjacents
 );
 
 namespace detail {
 
 /*!
- * @brief Predicate to determine if a ligand is haptic
- * @note This is not as simple as ligand.size() > 1.
+ * @brief Predicate to determine if a site is haptic
+ * @note This is not as simple as siteAtoms.size() > 1.
  */
-bool isHapticLigand(
-  const std::vector<AtomIndex>& ligand,
+bool isHapticSite(
+  const std::vector<AtomIndex>& siteAtoms,
   const InnerGraph& graph
 );
 
 //! Implementation of ligand site grouping algorithm
-void findLigands(
+void findSites(
   const InnerGraph& graph,
   AtomIndex centralIndex,
   const std::function<void(const std::vector<AtomIndex>&)>& callback
@@ -58,20 +65,19 @@ void findLigands(
 } // namespace detail
 
 /*!
- * @brief Differentiate adjacent vertices of a central index into ligand site
- *   groups
+ * @brief Differentiate adjacent vertices of a central index into sites
  *
- * A ligand site group is made up of all immediately group-internally-adjacent
+ * A site is made up of all immediately group-internally-adjacent
  * substituents of a central index. The reverse subdivision starting from a
  * ligand may be more intuitive: A ligand may be multidentate and have varying
- * hapticity at any denticity point. It consists of bonding atoms (those
+ * hapticity at any symmetry position. It consists of bonding atoms (those
  * connecting to the central metal) and non-bonding atoms (which may make up a
  * linker or other extraneous groups). Bonding atoms can be subdivided into
  * connected components that are separated by non-bonding atoms, each of which
- * make up a possibly haptic group. These are called ligand site groups because
- * they each take up a site of the central index's coordination geometry.
+ * make up a possibly haptic group. These are called sites because
+ * they each take up a site of the central index's coordination symmetry.
  *
- * @post Each ligand site group's list of constituting atom indices is sorted.
+ * @post Each site's list of constituting atom indices is sorted.
  */
 std::vector<
   std::vector<AtomIndex>
@@ -82,22 +88,22 @@ std::vector<
 );
 
 /*!
- * @brief For each atom, determine ligands and set eta bond for haptic ligands
+ * @brief For each atom, determine sites and set eta bond for haptic sites
  *
- * Cycle through all atoms, determine the ligands and set the eta bond type for
+ * Cycle through all atoms, determine the sites and set the eta bond type for
  * atoms constituting haptic ligand sites.
  */
 void updateEtaBonds(InnerGraph& graph);
 
-/*!
- * Returns the number of connected components of the graph. This is a central
- * property as the library enforces this number to be always one for any given
- * Molecule. The data representation of a Molecule should not contain two
- * disconnected graphs!
+/**
+ * @brief Calculates the graph distance from an atom to all other atoms of the
+ *   molecule
+ *
+ * @param a The atom from which to calculate distances
+ * @param graph The graph
+ *
+ * @return A list of graph distances for each atom of the graph
  */
-[[deprecated]]
-unsigned numConnectedComponents(const InnerGraph& graph);
-
 std::vector<unsigned> distance(AtomIndex a, const InnerGraph& graph);
 
 } // namespace GraphAlgorithms

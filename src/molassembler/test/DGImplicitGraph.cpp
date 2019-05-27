@@ -76,8 +76,8 @@ BOOST_AUTO_TEST_CASE(implicitNonVisualTests) {
     DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     IG ig {
-      molecule,
-      spatialModel.makeBoundsList()
+      molecule.graph().inner(),
+      spatialModel.makePairwiseBounds()
     };
 
     IG::VertexDescriptor N = boost::num_vertices(ig);

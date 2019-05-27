@@ -47,6 +47,8 @@ struct BondIndex {
   BondIndex();
   BondIndex(AtomIndex a, AtomIndex b) noexcept;
 
+  bool contains(AtomIndex a) const;
+
   bool operator < (const BondIndex& other) const;
   bool operator == (const BondIndex& other) const;
 

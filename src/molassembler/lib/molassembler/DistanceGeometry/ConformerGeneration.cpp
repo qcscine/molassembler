@@ -172,7 +172,7 @@ MoleculeDGInformation gatherDGInformation(
 
   // Extract gathered data
   MoleculeDGInformation data;
-  data.bounds = spatialModel.makeBoundsList();
+  data.bounds = spatialModel.makePairwiseBounds();
   data.chiralConstraints = spatialModel.getChiralConstraints();
   data.dihedralConstraints = spatialModel.getDihedralConstraints();
 
@@ -190,7 +190,7 @@ MoleculeDGInformation gatherDGInformation(
 
   // Extract gathered data
   MoleculeDGInformation data;
-  data.bounds = spatialModel.makeBoundsList();
+  data.bounds = spatialModel.makePairwiseBounds();
   data.chiralConstraints = spatialModel.getChiralConstraints();
   data.dihedralConstraints = spatialModel.getDihedralConstraints();
 
@@ -262,7 +262,7 @@ std::list<RefinementData> debugRefinement(
     std::list<RefinementStepData> refinementSteps;
 
     ExplicitGraph explicitGraph {
-      molecule,
+      molecule.graph().inner(),
       DGData.bounds
     };
 
@@ -659,7 +659,7 @@ outcome::result<AngstromWrapper> generateConformer(
   }
 
   ExplicitGraph explicitGraph {
-    molecule,
+    molecule.graph().inner(),
     DGDataPtr->bounds
   };
 

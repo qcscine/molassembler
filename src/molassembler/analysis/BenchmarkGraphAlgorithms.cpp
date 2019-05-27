@@ -15,6 +15,7 @@
 #include "molassembler/DistanceGeometry/Gor1.h"
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/IO.h"
 #include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
@@ -35,18 +36,21 @@ std::ostream& nl(std::ostream& os) {
 template<typename TimingCallable, size_t N>
 std::pair<double, double> timeFunctor(
   const Molecule& molecule,
-  const DistanceGeometry::SpatialModel::BoundsList& bounds,
+  const DistanceGeometry::SpatialModel::BoundsMatrix& bounds,
   DistanceGeometry::Partiality partiality
 ) {
   using namespace std::chrono;
 
   TimingCallable functor;
 
-  time_point<steady_clock> start, end;
+  time_point<steady_clock> start;
+  time_point<steady_clock> end;
   std::array<double, N> timings;
-  for(unsigned n = 0; n < N; ++n) {
+
+  for(std::size_t n = 0; n < N; ++n) {
+    Eigen::MatrixXd boundsCopy = bounds;
     start = steady_clock::now();
-    functor(molecule, bounds, partiality);
+    functor(molecule, std::move(boundsCopy), partiality);
     end = steady_clock::now();
 
     timings.at(n) = duration_cast<nanoseconds>(end - start).count();
@@ -64,11 +68,11 @@ template<class Graph>
 struct Gor1Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    const DistanceGeometry::SpatialModel::BoundsList& boundsList,
+    DistanceGeometry::SpatialModel::BoundsMatrix boundsMatrix,
     DistanceGeometry::Partiality partiality
   ) {
 
-    Graph graph {molecule, boundsList};
+    Graph graph {molecule.graph().inner(), std::move(boundsMatrix)};
     if(auto distanceMatrixResult = graph.makeDistanceMatrix(randomnessEngine(), partiality)) {
       return distanceMatrixResult.value();
     }
@@ -81,10 +85,10 @@ struct Gor1Functor {
 struct DBM_FW_Functor {
   Eigen::MatrixXd operator() (
     const Molecule& molecule,
-    const DistanceGeometry::SpatialModel::BoundsList& boundsList,
+    DistanceGeometry::SpatialModel::BoundsMatrix boundsMatrix,
     DistanceGeometry::Partiality partiality
   ) {
-    DistanceGeometry::DistanceBoundsMatrix bounds {molecule, boundsList};
+    DistanceGeometry::DistanceBoundsMatrix bounds {molecule.graph().inner(), std::move(boundsMatrix)};
 
     bounds.smooth();
 
@@ -146,7 +150,7 @@ void benchmark(
 
   DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
 
-  const auto boundsList = spatialModel.makeBoundsList();
+  const auto boundsMatrix = spatialModel.makePairwiseBounds();
 
   /*
    * Can calculate shortest paths with either:
@@ -182,7 +186,7 @@ void benchmark(
     auto timings = timeFunctor<
       DBM_FW_Functor,
       nExperiments
-    >(sampleMol, boundsList, partiality);
+    >(sampleMol, boundsMatrix, partiality);
 
     names.emplace_back("DBM FW");
     times.push_back(timings.first);
@@ -193,7 +197,7 @@ void benchmark(
     auto timings = timeFunctor<
       Gor1Functor<DistanceGeometry::ExplicitGraph>,
       nExperiments
-    >(sampleMol, boundsList, partiality);
+    >(sampleMol, boundsMatrix, partiality);
 
     names.emplace_back("Explicit Gor");
     times.push_back(timings.first);
@@ -204,7 +208,7 @@ void benchmark(
     auto timings = timeFunctor<
       Gor1Functor<DistanceGeometry::ImplicitGraph>,
       nExperiments
-    >(sampleMol, boundsList, partiality);
+    >(sampleMol, boundsMatrix, partiality);
 
     names.emplace_back("Implicit Gor");
     times.push_back(timings.first);

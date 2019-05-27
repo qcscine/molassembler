@@ -189,20 +189,27 @@ std::vector<BondInformation> gatherBonds(
       const InnerGraph::Edge& edge :
       boost::make_iterator_range(inner.edges(i))
     ) {
-      if(
-        auto stereopermutatorOption = stereopermutators.option(
-          BondIndex {
-            inner.source(edge),
-            inner.target(edge)
-          }
-        )
-      ) {
+      const BondIndex bond {
+        inner.source(edge),
+        inner.target(edge)
+      };
+
+      auto stereopermutatorOption = stereopermutators.option(bond);
+
+      if(stereopermutatorOption && stereopermutatorOption->numAssignments() > 1) {
         bonds.emplace_back(
           inner.bondType(edge),
           true,
           stereopermutatorOption->assigned()
         );
       } else {
+        /* Even if a stereopermutator is present, if it has only a single
+         * viable assignment, it is best that it cannot contribute to
+         * differentiating between molecules. This avoids e.g. that spuriously
+         * different interpretations of aromatic cycles due to
+         * close-to-threshold bond ordes lead to false distinctions between
+         * molecules.
+         */
         bonds.emplace_back(
           inner.bondType(edge),
           false,

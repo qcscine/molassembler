@@ -19,7 +19,6 @@ set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/InnerGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Molecule.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/OrderDiscoveryHelper.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/PermutationState.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingInformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingSpotCheck.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Serialization.cpp

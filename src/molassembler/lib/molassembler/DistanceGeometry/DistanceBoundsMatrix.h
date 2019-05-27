@@ -82,10 +82,7 @@ public:
 
 //!@name Member types
 //!@{
-  using BoundsList = std::map<
-    std::array<AtomIndex, 2>,
-    ValueBounds
-  >;
+  using BoundsMatrix = Eigen::MatrixXd;
 //!@}
 
 //!@name Special member functions
@@ -96,36 +93,26 @@ public:
 
   explicit DistanceBoundsMatrix(Eigen::MatrixXd matrix);
 
-  template<typename Molecule>
+  template<typename InnerGraph>
   DistanceBoundsMatrix(
-    const Molecule& molecule,
-    const BoundsList& bounds
-  ) : DistanceBoundsMatrix {molecule.graph().N()}
-  {
-    // Populate the matrix with explicit bounds
-    for(const auto& mapPair : bounds) {
-      setLowerBound(mapPair.first.front(), mapPair.first.back(), mapPair.second.lower);
-      setUpperBound(mapPair.first.front(), mapPair.first.back(), mapPair.second.upper);
-    }
-
+    const InnerGraph& inner,
+    BoundsMatrix bounds
+  ) : _matrix(std::move(bounds)) {
     // Populate the lower bounds if no explicit information is present
-    const AtomIndex N = molecule.graph().N();
+    const AtomIndex N = inner.N();
     for(AtomIndex i = 0; i < N - 1; ++i) {
       for(AtomIndex j = i + 1; j < N; ++j) {
-        /* setting the bounds will fail for bonded pairs as those have strict
-         * bounds already and the fairly high sum of vdw would lead to
-         * inconsistencies
-         */
-        if(lowerBound(i, j) == 0) {
-          setLowerBound(
-            i,
-            j,
-            AtomInfo::vdwRadius(
-              molecule.graph().elementType(i)
-            ) + AtomInfo::vdwRadius(
-              molecule.graph().elementType(j)
-            )
+        // i < j in all cases -> lower bound is (j, i), upper bound is (i, j)
+        if(_matrix(j, i) == 0) {
+          _matrix(j, i) = (
+            AtomInfo::vdwRadius(inner.elementType(i))
+            + AtomInfo::vdwRadius(inner.elementType(j))
           );
+        }
+
+        // Ensure upper bound has a default value for Floyd's algorithm
+        if(_matrix(i, j) == 0.0) {
+          _matrix(i, j) = defaultUpper;
         }
       }
     }

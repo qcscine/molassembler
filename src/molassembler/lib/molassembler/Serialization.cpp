@@ -111,6 +111,13 @@ struct adl_serializer<Scine::molassembler::LinkInformation> {
     for(const auto& sequenceElementJSON : j["seq"]) {
       link.cycleSequence.push_back(sequenceElementJSON);
     }
+
+    /* Compatibility fix: old formats repeated the central index in the cycle
+     * sequence at the back.
+     */
+    if(link.cycleSequence.front() == link.cycleSequence.back()) {
+      link.cycleSequence.pop_back();
+    }
   }
 };
 

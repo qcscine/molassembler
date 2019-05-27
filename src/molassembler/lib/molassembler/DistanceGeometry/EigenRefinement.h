@@ -148,6 +148,8 @@ public:
   std::vector<DihedralConstraint> dihedralConstraints;
   //! Whether to compress the fourth dimension
   bool compressFourthDimension = false;
+  //! Whether to enable dihedral terms
+  bool dihedralTerms = false;
 //!@}
 
 //!@name Signaling members
@@ -226,8 +228,10 @@ public:
    * @brief Adds dihedral error and gradient contributions
    */
   void dihedralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
-    // Delegate to SIMD or non-SIMD implementation
-    dihedralContributionsImpl(positions, error, gradient);
+    if(dihedralTerms) {
+      // Delegate to SIMD or non-SIMD implementation
+      dihedralContributionsImpl(positions, error, gradient);
+    }
   }
 
   /*!
@@ -303,11 +307,11 @@ public:
 
     if(nonZeroChiralConstraints == 0) {
       proportionChiralConstraintsCorrectSign = 1.0;
+    } else {
+      proportionChiralConstraintsCorrectSign = static_cast<double>(
+        nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
+      ) / nonZeroChiralConstraints;
     }
-
-    proportionChiralConstraintsCorrectSign = static_cast<double>(
-      nonZeroChiralConstraints - incorrectNonZeroChiralConstraints
-    ) / nonZeroChiralConstraints;
 
     return proportionChiralConstraintsCorrectSign;
   }
@@ -377,25 +381,29 @@ public:
       const ThreeDimensionalVector g = beta - gamma;
       const ThreeDimensionalVector h = delta - gamma;
 
-      ThreeDimensionalVector a = f.cross(g);
-      ThreeDimensionalVector b = h.cross(g);
+      const ThreeDimensionalVector a = f.cross(g);
+      const ThreeDimensionalVector b = h.cross(g);
 
-      double phi = std::atan2(
+      const double dihedral = std::atan2(
         a.cross(b).dot(
           -g.normalized()
         ),
         a.dot(b)
       );
 
-      double constraintSumHalved = (constraint.lower + constraint.upper) / 2;
+      const double constraintSumHalved = (constraint.lower + constraint.upper) / 2;
 
-      if(phi < constraintSumHalved - M_PI) {
-        phi += 2 * M_PI;
-      } else if(phi > constraintSumHalved + M_PI) {
-        phi -= 2 * M_PI;
+      double phi;
+      if(dihedral < constraintSumHalved - M_PI) {
+        phi = dihedral + 2 * M_PI;
+      } else if(dihedral > constraintSumHalved + M_PI) {
+        phi = dihedral - 2 * M_PI;
+      } else {
+        phi = dihedral;
       }
 
-      double term = std::fabs(phi - constraintSumHalved) - (constraint.upper - constraint.lower) / 2;
+      const double term = std::fabs(phi - constraintSumHalved) - (constraint.upper - constraint.lower) / 2;
+
 
       if(term > visitor.deviationThreshold) {
         visitor.dihedralOverThreshold(constraint, term);

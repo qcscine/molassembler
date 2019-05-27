@@ -80,13 +80,13 @@ std::vector<FunctorResults> timeFunctors(
     // Prepare new data for the functors in every experiment
     DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
-    const auto boundsList = spatialModel.makeBoundsList();
+    const auto boundsList = spatialModel.makePairwiseBounds();
 
     const auto chiralConstraints = spatialModel.getChiralConstraints();
     const auto dihedralConstraints = spatialModel.getDihedralConstraints();
 
     DistanceGeometry::ExplicitGraph explicitGraph {
-      molecule,
+      molecule.graph().inner(),
       boundsList
     };
 

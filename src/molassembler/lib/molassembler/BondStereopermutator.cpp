@@ -42,6 +42,20 @@ BondStereopermutator::BondStereopermutator(
   );
 }
 
+BondStereopermutator::BondStereopermutator(
+  const InnerGraph& graph,
+  const StereopermutatorList& stereopermutators,
+  const BondIndex& edge,
+  const Alignment alignment
+) {
+  _pImpl = std::make_unique<Impl>(
+    graph,
+    stereopermutators,
+    edge,
+    alignment
+  );
+}
+
 void BondStereopermutator::assign(boost::optional<unsigned> assignment) {
   _pImpl -> assign(std::move(assignment));
 }
@@ -68,9 +82,16 @@ void BondStereopermutator::fit(
 
 void BondStereopermutator::propagateGraphChange(
   const AtomStereopermutatorPropagatedState& oldPermutator,
-  const AtomStereopermutator& newPermutator
+  const AtomStereopermutator& newPermutator,
+  const InnerGraph& inner,
+  const StereopermutatorList& permutators
 ) {
-  _pImpl -> propagateGraphChange(oldPermutator, newPermutator);
+  _pImpl -> propagateGraphChange(
+    oldPermutator,
+    newPermutator,
+    inner,
+    permutators
+  );
 }
 
 BondStereopermutator::Alignment BondStereopermutator::alignment() const {

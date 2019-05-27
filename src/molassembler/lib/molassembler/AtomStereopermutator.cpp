@@ -107,9 +107,8 @@ boost::optional<unsigned> AtomStereopermutator::indexOfPermutation() const {
   return _pImpl->indexOfPermutation();
 }
 
-std::vector<
-  std::array<boost::optional<unsigned>, 4>
-> AtomStereopermutator::minimalChiralConstraints(bool enforce) const {
+std::vector<AtomStereopermutator::MinimalChiralConstraint>
+AtomStereopermutator::minimalChiralConstraints(bool enforce) const {
   return _pImpl->minimalChiralConstraints(enforce);
 }
 
@@ -121,8 +120,12 @@ std::string AtomStereopermutator::rankInfo() const {
   return _pImpl->rankInfo();
 }
 
-const PermutationState& AtomStereopermutator::getPermutationState() const {
-  return _pImpl->getPermutationState();
+const AbstractStereopermutations& AtomStereopermutator::getAbstract() const {
+  return _pImpl->getAbstract();
+}
+
+const FeasibleStereopermutations& AtomStereopermutator::getFeasible() const {
+  return _pImpl->getFeasible();
 }
 
 const RankingInformation& AtomStereopermutator::getRanking() const {

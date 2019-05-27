@@ -18,6 +18,7 @@
 #include "molassembler/Molecule.h"
 #include <iostream>
 #include <array>
+#include <iterator>
 
 /* TODO add further tests for free functions
  */
@@ -75,7 +76,7 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
   // Read the file
   auto mol = IO::read(filePath.string());
 
-  Cycles cycles {mol.graph()};
+  const Cycles& cycles = mol.graph().cycles();
 
   auto cycleSizes = temple::map(
     cycles,
@@ -97,29 +98,6 @@ void readAndDecompose(const boost::filesystem::path& filePath) {
         << ", but got " << temple::condense(cycleSizes) << " for "
         << filePath.stem().string()
     );
-
-    unsigned cycleSizeThreshold = temple::Math::ceil(temple::average(cycleSizes));
-
-    for(
-      const auto cycleEdges :
-      boost::make_iterator_range(
-        cycles.iteratorPair(
-          Cycles::predicates::SizeLessThan(cycleSizeThreshold)
-        )
-      )
-    ) {
-      BOOST_CHECK_MESSAGE(
-        cycleEdges.size() < cycleSizeThreshold,
-        "Expected edge set to have size less than " << cycleSizeThreshold
-          << ", but got one with size " << cycleEdges.size() << ": "
-          << temple::stringifyContainer(
-            cycleEdges,
-            [](const BondIndex& bond) -> std::string {
-              return std::to_string(bond.first) + ", " + std::to_string(bond.second);
-            }
-          )
-      );
-    }
   }
 
   std::cout << "'" << filePath.stem().string() << "' -> "
@@ -134,6 +112,41 @@ BOOST_AUTO_TEST_CASE(ringDecomposition) {
   ) {
     BOOST_CHECK_NO_THROW(
       readAndDecompose(currentFilePath)
+    );
+  }
+}
+
+BOOST_AUTO_TEST_CASE(cycleIterators) {
+  using namespace Scine;
+  using namespace molassembler;
+
+  std::vector<
+    std::tuple<std::string, AtomIndex, unsigned>
+  > tests {
+    {"strained_organic_molecules/fenestrane-4.mol", 0ul, 4u}
+  };
+
+  std::string file;
+  AtomIndex i;
+  unsigned relevantCycleCount;
+  for(const auto& testTuple : tests) {
+    std::tie(file, i, relevantCycleCount) = testTuple;
+
+    Molecule mol;
+
+    BOOST_REQUIRE_NO_THROW(mol = IO::read(file));
+
+    const Cycles& cycles = mol.graph().cycles();
+
+    auto iteratorPair = cycles.containing(i);
+
+    BOOST_REQUIRE(iteratorPair.first != iteratorPair.second);
+
+    const unsigned iteratorDistance = std::distance(iteratorPair.first, iteratorPair.second);
+
+    BOOST_CHECK_MESSAGE(
+      iteratorDistance == relevantCycleCount,
+      "Iterator distance for " << file << " is " << iteratorDistance << ", not " << relevantCycleCount
     );
   }
 }

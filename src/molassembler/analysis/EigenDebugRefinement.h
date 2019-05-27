@@ -102,7 +102,7 @@ struct LBFGSOptimizerParameters {
   // These are the default LBFGS parameters
   double c1 = 1e-4;
   double c2 = 0.9;
-  double stepLength = 1.0;
+  double stepLength = 0.1;
 };
 
 template<unsigned dimensionality, typename FloatType, bool SIMD>
@@ -171,7 +171,7 @@ std::list<RefinementData> debugEigenRefinement(
     std::list<RefinementStepData> refinementSteps;
 
     ExplicitGraph explicitGraph {
-      molecule,
+      molecule.graph().inner(),
       DGData.bounds
     };
 
@@ -259,11 +259,6 @@ std::list<RefinementData> debugEigenRefinement(
       initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
     }
 
-    temple::LBFGS<FloatType, 64> optimizer;
-    optimizer.c1 = optimizerParameters.c1;
-    optimizer.c2 = optimizerParameters.c2;
-    optimizer.stepLength = optimizerParameters.stepLength;
-
     struct Observer {
       const Molecule& mol;
       FullRefinementType& functor;
@@ -318,6 +313,11 @@ std::list<RefinementData> debugEigenRefinement(
         refinementFunctor
       };
 
+      temple::LBFGS<FloatType, 64> optimizer;
+      optimizer.c1 = optimizerParameters.c1;
+      optimizer.c2 = optimizerParameters.c2;
+      optimizer.stepLength = optimizerParameters.stepLength;
+
       try {
         firstStageIterations = optimizer.optimize(
           transformedPositions,
@@ -352,15 +352,18 @@ std::list<RefinementData> debugEigenRefinement(
      */
     refinementFunctor.compressFourthDimension = true;
 
+
     unsigned secondStageIterations = 0;
     GradientOrIterLimitStop<FloatType> gradientChecker;
     gradientChecker.gradNorm = 1e-3;
-    gradientChecker.iterLimit = configuration.refinementStepLimit;
-    /*Utils::GradientBasedCheck gradientChecker;
-    gradientChecker.maxIter = configuration.refinementStepLimit;
-    gradientChecker.gradNorm = 1e-3;*/
+    gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
 
     try {
+      temple::LBFGS<FloatType, 64> optimizer;
+      optimizer.c1 = optimizerParameters.c1;
+      optimizer.c2 = optimizerParameters.c2;
+      optimizer.stepLength = optimizerParameters.stepLength;
+
       secondStageIterations = optimizer.optimize(
         transformedPositions,
         refinementFunctor,
@@ -374,7 +377,67 @@ std::list<RefinementData> debugEigenRefinement(
       continue;
     }
 
-    bool reachedMaxIterations = secondStageIterations >= configuration.refinementStepLimit;
+    if(secondStageIterations >= gradientChecker.iterLimit) {
+        Log::log(Log::Level::Warning)
+          << "[" << currentStructureNumber << "]: "
+          << "Second stage of refinement fails!\n";
+        failures += 1;
+
+        // Collect refinement data
+        RefinementData refinementData;
+        refinementData.steps = std::move(refinementSteps);
+        refinementData.constraints = DGData.chiralConstraints;
+        refinementData.looseningFactor = configuration.spatialModelLoosening;
+        refinementData.isFailure = true;
+        refinementData.spatialModelGraphviz = spatialModelGraphviz;
+
+        refinementList.push_back(
+          std::move(refinementData)
+        );
+
+        if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions) > 0) {
+          explainFinalContributions(
+            refinementFunctor,
+            distanceBounds,
+            transformedPositions
+          );
+        }
+
+        continue; // this triggers a new structure to be generated
+    }
+
+    /* Add dihedral terms and refine again */
+    unsigned thirdStageIterations = 0;
+    gradientChecker = GradientOrIterLimitStop<FloatType> {};
+    gradientChecker.gradNorm = 1e-3;
+    gradientChecker.iterLimit = (
+      configuration.refinementStepLimit
+      - firstStageIterations
+      - secondStageIterations
+    );
+
+    refinementFunctor.dihedralTerms = true;
+
+    try {
+      temple::LBFGS<FloatType, 64> optimizer;
+      optimizer.c1 = optimizerParameters.c1;
+      optimizer.c2 = optimizerParameters.c2;
+      optimizer.stepLength = optimizerParameters.stepLength;
+
+      thirdStageIterations = optimizer.optimize(
+        transformedPositions,
+        refinementFunctor,
+        gradientChecker,
+        observer
+      );
+    } catch(std::out_of_range& e) {
+      Log::log(Log::Level::Warning)
+        << "Non-finite contributions to dihedral error function gradient.\n";
+      failures += 1;
+      continue;
+    }
+
+    bool reachedMaxIterations = thirdStageIterations >= gradientChecker.iterLimit;
     bool notAllChiralitiesCorrect = refinementFunctor.proportionChiralConstraintsCorrectSign < 1;
     bool structureAcceptable = finalStructureAcceptable(
       refinementFunctor,
@@ -404,7 +467,7 @@ std::list<RefinementData> debugEigenRefinement(
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       Log::log(Log::Level::Warning)
         << "[" << currentStructureNumber << "]: "
-        << "Second stage of refinement fails. Loosening factor was "
+        << "Third stage of refinement fails. Loosening factor was "
         << configuration.spatialModelLoosening
         <<  "\n";
       if(reachedMaxIterations) {

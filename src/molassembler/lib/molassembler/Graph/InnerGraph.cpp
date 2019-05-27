@@ -107,17 +107,6 @@ void InnerGraph::applyPermutation(const std::vector<Vertex>& permutation) {
 
   BGLType transformedGraph(boost::num_vertices(_graph));
 
-  /*boost::copy_graph(
-    _graph,
-    transformedGraph,
-    boost::vertex_index_map(
-      boost::make_function_property_map<InnerGraph::Vertex, InnerGraph::Vertex>(
-        [&permutation](const InnerGraph::Vertex a) -> const InnerGraph::Vertex& {
-          return permutation.at(a);
-        }
-      )
-    )
-  );*/
   /* I failed to get copy_graph to perform the permutation for me, so we copy
    * manually:
    */
@@ -364,6 +353,14 @@ const Cycles& InnerGraph::cycles() const {
   return *_properties.cyclesOption;
 }
 
+const Cycles& InnerGraph::etaPreservedCycles() const {
+  if(!_properties.etaPreservedCyclesOption) {
+    _properties.etaPreservedCyclesOption = _generateEtaPreservedCycles();
+  }
+
+  return *_properties.etaPreservedCyclesOption;
+}
+
 InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
   RemovalSafetyData safetyData;
 
@@ -414,6 +411,10 @@ InnerGraph::RemovalSafetyData InnerGraph::_generateRemovalSafetyData() const {
 
 Cycles InnerGraph::_generateCycles() const {
   return Cycles(*this);
+}
+
+Cycles InnerGraph::_generateEtaPreservedCycles() const {
+  return Cycles(*this, true);
 }
 
 } // namespace molassembler

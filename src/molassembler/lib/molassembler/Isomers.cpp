@@ -9,7 +9,9 @@
 #include "molassembler/Molecule/AtomEnvironmentHash.h"
 #include "molassembler/OuterGraph.h"
 #include "molassembler/StereopermutatorList.h"
-#include "molassembler/Stereopermutators/PermutationState.h"
+#include "molassembler/Stereopermutators/AbstractPermutations.h"
+#include "molassembler/Stereopermutators/FeasiblePermutations.h"
+#include "chemical_symmetries/Symmetries.h"
 
 namespace Scine {
 
@@ -107,10 +109,10 @@ bool enantiomeric(const Molecule& a, const Molecule& b) {
       return false;
     }
 
-    const auto& aPermutation = aPermutator.getPermutationState().permutations.stereopermutations.at(
+    const auto& aPermutation = aPermutator.getAbstract().permutations.stereopermutations.at(
       *aPermutator.indexOfPermutation()
     );
-    const auto& bPermutation = bPermutator.getPermutationState().permutations.stereopermutations.at(
+    const auto& bPermutation = bPermutator.getAbstract().permutations.stereopermutations.at(
       *bPermutator.indexOfPermutation()
     );
 
@@ -154,7 +156,7 @@ Molecule enantiomer(const Molecule& a) {
     }
 
     // Find the current permutation
-    auto currentStereopermutation = permutator.getPermutationState().permutations.stereopermutations.at(
+    auto currentStereopermutation = permutator.getAbstract().permutations.stereopermutations.at(
       *permutator.indexOfPermutation()
     );
 
@@ -162,7 +164,7 @@ Molecule enantiomer(const Molecule& a) {
     currentStereopermutation.applyRotation(mirrorPermutation);
 
     // Find an existing permutation that is superposable with the mirror permutation
-    const auto& permutationsList = permutator.getPermutationState().permutations.stereopermutations;
+    const auto& permutationsList = permutator.getAbstract().permutations.stereopermutations;
     auto matchingPermutationIter = std::find_if(
       std::begin(permutationsList),
       std::end(permutationsList),
@@ -183,7 +185,7 @@ Molecule enantiomer(const Molecule& a) {
     // Now we have a stereopermutation index, but we need an assignment index
     unsigned stereopermutationIndex = matchingPermutationIter - std::begin(permutationsList);
 
-    const auto& feasiblePermutations = permutator.getPermutationState().feasiblePermutations;
+    const auto& feasiblePermutations = permutator.getFeasible().indices;
 
     auto assignmentIter = std::find(
       std::begin(feasiblePermutations),

@@ -22,6 +22,8 @@
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
 
+#include "boost/functional/hash.hpp"
+
 #include <cmath>
 
 namespace Scine {
@@ -41,10 +43,27 @@ public:
 //!@{
   struct ModelGraphWriter;
 
-  using BoundsList = std::map<
-    std::array<AtomIndex, 2>,
-    ValueBounds
+  //! ValueBounds container for various internal coordinates
+  template<unsigned size>
+  using BoundsMapType = std::unordered_map<
+    std::array<AtomIndex, size>,
+    ValueBounds,
+    boost::hash<
+      std::array<AtomIndex, size>
+    >
   >;
+
+  //! Type used to store fixed positions in angstrom
+  using FixedPositionsMapType = std::unordered_map<AtomIndex, Scine::Utils::Position>;
+
+  /*!
+   * @brief Type used to represent atom-pairwise distance bounds constructed
+   *   from bounds on internal coordinates
+   *
+   * Diagonal entries are undefined. Strict lower triangle contains lower
+   * bounds, strict upper triangle contains upper bounds.
+   */
+  using BoundsMatrix = Eigen::MatrixXd;
 //!@}
 
 //!@name Static members
@@ -65,6 +84,25 @@ public:
   static ValueBounds defaultDihedralBounds;
 
 /* Static functions */
+  static double modelDistance(
+    AtomIndex i,
+    AtomIndex j,
+    const InnerGraph& graph
+  );
+
+  /*!
+   * @brief Tries to find a cycle that consists of a particular set of atoms
+   *
+   * @param atoms The exact set of atoms that constitute the cycle.
+   *
+   * @returns A vector of bond indices of exactly the matching cycle if found.
+   * An empty vector is returned otherwise.
+   */
+  static std::vector<BondIndex> cycleConsistingOfExactly(
+    const std::vector<AtomIndex>& atoms,
+    const InnerGraph& graph
+  );
+
   /**
    * @brief Tries to calculate the cone angle for a possibly haptic ligand site
    *
@@ -72,16 +110,13 @@ public:
    * @param coneHeightBounds Bounds on the distance of the ligand site to
    *   the central atom
    * @param graph The molecular graph to model
-   * @param etaLessCycles Reference to a cycle interpretation object that
-   *   ignored eta bonds
    *
    * @return If calculable, bounds on the cone angle spanned by the ligand site
    */
   static boost::optional<ValueBounds> coneAngle(
     const std::vector<AtomIndex>& baseConstituents,
     const ValueBounds& coneHeightBounds,
-    const OuterGraph& graph,
-    const Cycles& etaLessCycles
+    const OuterGraph& graph
   );
 
   /**
@@ -121,6 +156,99 @@ public:
   static ValueBounds makeBoundsFromCentralValue(
     double centralValue,
     double absoluteVariance
+  );
+
+  /*!
+   * @brief Idealization strictness loosening multiplier due to small cycles
+   *
+   * @returns A multiplier intended for the absolute angle variance for a
+   *   particular atom. If that atom is part of a cycle of size < 6, the
+   *   multiplier is > 1.
+   */
+  static double smallestCycleDistortionMultiplier(
+    const AtomIndex i,
+    const Cycles& cycles
+  );
+
+  /*
+   * @brief Generates a matrix of atom-pairwise distance bounds
+   *
+   * @param N size of the system
+   * @param fixedPositionbounds Distances to enforce due to fixed positions
+   * @param bondBounds Distances to enforce for bonds
+   * @param angleBounds Angle bounds to enforce on atom index triples
+   * @param dihedralBounds Dihedral bounds to enforce on atom index quadruplet
+   *
+   * @return A matrix of atom-pairwise distance bounds. Lower bounds are in the
+   * strict lower triangle of the matrix, upper bounds in the strict upper
+   * triangle.
+   */
+  static BoundsMatrix makePairwiseBounds(
+    unsigned N,
+    const BoundsMapType<2>& fixedPositionBounds,
+    const BoundsMapType<2>& bondBounds,
+    const BoundsMapType<3>& angleBounds,
+    const BoundsMapType<4>& dihedralBounds
+  );
+
+  /**
+   * @brief Determines the central value of the angle between
+   *   AtomStereopermutator sites
+   *
+   * @param permutator The permutator to model
+   * @param sites The two sites between which the angle is to be determined
+   * @param inner Graph instance being modeled
+   *
+   * @return The central value of the angle between the sites
+   */
+  static double siteCentralAngle(
+    AtomIndex centralIndex,
+    const Symmetry::Name& symmetryName,
+    const RankingInformation& ranking,
+    const std::vector<unsigned>& symmetryPositionMap,
+    const std::pair<unsigned, unsigned>& sites,
+    const InnerGraph& inner
+  );
+
+  static double siteCentralAngle(
+    const AtomStereopermutator& permutator,
+    const std::pair<unsigned, unsigned>& sites,
+    const InnerGraph& inner
+  );
+
+  /**
+   * @brief Models the angle between AtomStereopermutator sites
+   *
+   * @param permutator The permutator being modeled
+   * @param sites The two sites between which the angle is to be determined
+   * @param looseningMultiplier Loosening of that particular atom
+   * @param inner Graph instance being modeled
+   *
+   * @return Bounds on the angle between two AtomStereopermutator sites
+   */
+  static ValueBounds modelSiteAngle(
+    const AtomStereopermutator& permutator,
+    const std::pair<unsigned, unsigned>& sites,
+    const double looseningMultiplier,
+    const InnerGraph& inner
+  );
+
+  /**
+   * @brief Creates a volume-specific chiral constraint from a list of
+   *
+   * @param minimalConstraint Site index sequence defining a chiral constraint
+   * @param permutator The AtomStereopermutator from which the minimalConstraint
+   *   has been generated
+   * @param looseningMultiplier Describes the spatial modeling loosening of
+   *   bounds
+   *
+   * @return A volume constraint on the site index sequence in a final
+   *   conformation
+   */
+  static ChiralConstraint makeChiralConstraint(
+    const AtomStereopermutator::MinimalChiralConstraint& minimalConstraint,
+    const AtomStereopermutator& permutator,
+    const double looseningMultiplier
   );
 
   /**
@@ -230,7 +358,7 @@ public:
    */
   void addAtomStereopermutatorInformation(
     const AtomStereopermutator& permutator,
-    const std::function<double(const AtomIndex)>& cycleMultiplierForIndex,
+    const InnerGraph& graph,
     double looseningMultiplier,
     const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions,
     bool forceChiralConstraintEmission
@@ -254,17 +382,6 @@ public:
     double looseningMultiplier,
     const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
   );
-
-  //! Adds [0, π] default angle bounds for all bonded atom triples
-  void addDefaultAngles();
-
-  /*!
-   * @brief Adds [0, π] default dihedrals to the model (of connected sequences)
-   *
-   * Adds [0, π] default dihedrals to the model. Avoids treating 1-4 pairs as
-   * nonbonded.
-   */
-  void addDefaultDihedrals();
 //!@}
 
 //!@name Information
@@ -276,12 +393,15 @@ public:
   std::vector<DihedralConstraint> getDihedralConstraints() const;
 
   /**
-   * @brief Generates a list of atom-pairwise distance bounds from the internal
-   *   coordinate bounds and fixed positions
+   * @brief Generates a matrix of atom-pairwise distance bounds from the
+   * internal coordinate bounds and fixed positions from which this
+   * was constructed.
    *
-   * @return A list of atom-pairwise distance bounds
+   * @return A matrix of atom-pairwise distance bounds. Lower bounds are in the
+   * strict lower triangle of the matrix, upper bounds in the strict upper
+   * triangle.
    */
-  BoundsList makeBoundsList() const;
+  BoundsMatrix makePairwiseBounds() const;
 
   /**
    * @brief Generates a string graphviz representation of the modeled molecule
@@ -313,30 +433,55 @@ private:
   StereopermutatorList _stereopermutators;
 
   //! Constraints by fixed positions
-  std::map<
-    std::array<AtomIndex, 2>,
-    ValueBounds
-  > _constraints;
-
-  //!@name Bounds on internal angles
-  //!@{
-  std::map<
-    std::array<AtomIndex, 2>,
-    ValueBounds
-  > _bondBounds;
-  std::map<
-    std::array<AtomIndex, 3>,
-    ValueBounds
-  > _angleBounds;
-  std::map<
-    std::array<AtomIndex, 4>,
-    ValueBounds
-  > _dihedralBounds;
-  //!@}
+  BoundsMapType<2> _constraints;
+  //! Bond distance value bounds on index pairs
+  BoundsMapType<2> _bondBounds;
+  //! Angle value bounds on index triples
+  BoundsMapType<3> _angleBounds;
+  //! Dihedral value bounds on index quadruplets
+  BoundsMapType<4> _dihedralBounds;
 
   //! Chiral constraints
   std::vector<ChiralConstraint> _chiralConstraints;
   std::vector<DihedralConstraint> _dihedralConstraints;
+
+//!@name Private methods
+//!@{
+  //! Adds [0, π] default angle bounds for all bonded atom triples
+  void _addDefaultAngles();
+
+  /*!
+   * @brief Adds [0, π] default dihedrals to the model (of connected sequences)
+   *
+   * Adds [0, π] default dihedrals to the model. Avoids treating 1-4 pairs as
+   * nonbonded.
+   */
+  void _addDefaultDihedrals();
+
+  /*!
+   * It is permissible in some circumstances not to have AtomStereopermutators
+   * even on non-terminal atoms. These have to be re-added in order for us
+   * to be able to model everywhere.
+   */
+  void _instantiateMissingAtomStereopermutators();
+
+  //! Add bond distances to the underlying model
+  void _modelBondDistances(
+    const FixedPositionsMapType& fixedAngstromPositions,
+    double looseningFactor
+  );
+
+  //! Add precise information to the model for cycles that are flat
+  void _modelFlatCycles(
+    const FixedPositionsMapType& fixedAngstromPositions,
+    double looseningFactor
+  );
+
+  //! Adds spirocenter modelling to the data set
+  void _modelSpirocenters(
+    const FixedPositionsMapType& fixedAngstromPositions
+  );
+//!@}
 };
 
 } // namespace DistanceGeometry

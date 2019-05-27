@@ -235,3 +235,24 @@ BOOST_AUTO_TEST_CASE(addLigandTest) {
     )
   );
 }
+
+BOOST_AUTO_TEST_CASE(hapticLigandAddition) {
+  using namespace Scine;
+  using namespace molassembler;
+
+  auto ligand = IO::LineNotation::fromCanonicalSMILES("CC(C)(C)N[Si](C)(C)C1=C[C+]C=C1");
+  Molecule mol {Utils::ElementType::Ti};
+  for(unsigned i = 0; i < 2; ++i) {
+    mol.addAtom(Utils::ElementType::Cl, 0);
+  }
+
+  Molecule complex;
+  BOOST_CHECK_NO_THROW(
+    complex = Editing::addLigand(
+      mol,
+      ligand,
+      0,
+      {4, 8, 9, 10, 11, 12}
+    )
+  );
+}

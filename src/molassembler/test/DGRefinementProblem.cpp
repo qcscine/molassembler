@@ -24,6 +24,7 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
+#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/IO.h"
 
 #include <fstream>
@@ -91,7 +92,7 @@ struct RefinementBaseData {
     auto DGInfo = gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     distanceBounds = DistanceBoundsMatrix {
-      molecule,
+      molecule.graph().inner(),
       DGInfo.bounds
     };
 

@@ -383,9 +383,8 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
     relevantData.source
   );
 
-  auto links = GraphAlgorithms::substituentLinks(
+  auto links = GraphAlgorithms::siteLinks(
     mol.graph().inner(),
-    mol.graph().cycles(),
     relevantData.source,
     ligands,
     {}
@@ -439,7 +438,7 @@ bool testSubstituentLinks(const boost::filesystem::path& filePath) {
   return true;
 }
 
-BOOST_AUTO_TEST_CASE(substituentLinksTests) {
+BOOST_AUTO_TEST_CASE(siteLinksTests) {
   boost::filesystem::path filesPath("inorganics/multidentate");
   boost::filesystem::recursive_directory_iterator end;
 

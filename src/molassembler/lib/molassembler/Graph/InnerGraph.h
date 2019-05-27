@@ -192,6 +192,8 @@ public:
   const Cycles& cycles() const;
   //! Access removal safety information of the graph
   const RemovalSafetyData& removalSafetyData() const;
+  //! Access cycle information of the graph with eta bonds preserved
+  const Cycles& etaPreservedCycles() const;
 //!@}
 
 //!@name Ranges
@@ -208,15 +210,18 @@ private:
   struct Properties {
     boost::optional<RemovalSafetyData> removalSafetyDataOption;
     boost::optional<Cycles> cyclesOption;
+    boost::optional<Cycles> etaPreservedCyclesOption;
 
     inline void invalidate() {
       removalSafetyDataOption = boost::none;
       cyclesOption = boost::none;
+      etaPreservedCyclesOption = boost::none;
     }
   };
 
   RemovalSafetyData _generateRemovalSafetyData() const;
   Cycles _generateCycles() const;
+  Cycles _generateEtaPreservedCycles() const;
 //!@}
 
 //!@name Information

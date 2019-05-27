@@ -21,7 +21,8 @@
 #include "molassembler/Molecule/MolGraphWriter.h"
 #include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/Options.h"
-#include "molassembler/Stereopermutators/PermutationState.h"
+#include "molassembler/Stereopermutators/AbstractPermutations.h"
+#include "molassembler/Stereopermutators/FeasiblePermutations.h"
 
 namespace Scine {
 
@@ -82,8 +83,8 @@ void Molecule::Impl::_tryAddBondStereopermutator(
     return;
   }
 
-  AtomIndex source = bond.first,
-            target = bond.second;
+  AtomIndex source = bond.first;
+  AtomIndex target = bond.second;
 
   auto sourceAtomStereopermutatorOption = stereopermutators.option(source);
   auto targetAtomStereopermutatorOption = stereopermutators.option(target);
@@ -99,13 +100,13 @@ void Molecule::Impl::_tryAddBondStereopermutator(
   }
 
   // Construct a Stereopermutator here
-  auto newStereopermutator = BondStereopermutator {
-    *sourceAtomStereopermutatorOption,
-    *targetAtomStereopermutatorOption,
+  BondStereopermutator newStereopermutator {
+    _adjacencies.inner(),
+    stereopermutators,
     bond
   };
 
-  if(newStereopermutator.numAssignments() > 1) {
+  if(newStereopermutator.numStereopermutations() > 1) {
     stereopermutators.add(std::move(newStereopermutator));
   }
 }
@@ -190,7 +191,7 @@ void Molecule::Impl::_propagateGraphChange() {
    * Need state propagation for BondStereopermutators, anything else is madness
    */
 
-  Cycles cycleData = graph().cycles();
+  const Cycles& cycleData = graph().cycles();
 
   for(
     const InnerGraph::Vertex vertex :
@@ -236,8 +237,7 @@ void Molecule::Impl::_propagateGraphChange() {
        * unassigned due to the graph change, default-assign it
        */
       if(
-        stereopermutatorOption -> numStereopermutations() == 1
-        && stereopermutatorOption -> numAssignments() == 1
+        stereopermutatorOption -> numAssignments() == 1
         && stereopermutatorOption -> assigned() == boost::none
       ) {
         stereopermutatorOption -> assign(0);
@@ -288,7 +288,9 @@ void Molecule::Impl::_propagateGraphChange() {
         for(const BondIndex& bond : adjacentBondStereopermutators) {
           _stereopermutators.option(bond)->propagateGraphChange(
             *oldAtomStereopermutatorStateOption,
-            *stereopermutatorOption
+            *stereopermutatorOption,
+            inner,
+            _stereopermutators
           );
         }
       }
@@ -822,11 +824,21 @@ void Molecule::Impl::setGeometryAtAtom(
     );
   }
 
-  stereopermutatorOption->setSymmetry(symmetryName, _adjacencies);
-  if(stereopermutatorOption->numStereopermutations() == 1) {
-    assignStereopermutator(a, 0);
+  if(stereopermutatorOption->getSymmetry() == symmetryName) {
+    // Do nothing
     return;
   }
+
+  stereopermutatorOption->setSymmetry(symmetryName, _adjacencies);
+  if(stereopermutatorOption->numAssignments() == 1) {
+    stereopermutatorOption->assign(0);
+  }
+
+  // Remove any adjacent bond stereopermutators since there is no propagation
+  for(BondIndex bond : boost::make_iterator_range(_adjacencies.bonds(a))) {
+    _stereopermutators.try_remove(bond);
+  }
+
   _propagateGraphChange();
   _canonicalComponents = AtomEnvironmentComponents::None;
 }
@@ -924,6 +936,8 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
   }
 
   auto tryInstantiateBondStereopermutator = [&](const BondIndex& bondIndex) -> void {
+    // TODO this is suspiciously close to _tryAddBondStereopermutator
+
     auto sourceAtomStereopermutatorOption = stereopermutators.option(bondIndex.first);
     auto targetAtomStereopermutatorOption = stereopermutators.option(bondIndex.second);
 
@@ -938,9 +952,9 @@ StereopermutatorList Molecule::Impl::inferStereopermutatorsFromPositions(
     }
 
     // Construct a Stereopermutator here
-    auto newStereopermutator = BondStereopermutator {
-      *sourceAtomStereopermutatorOption,
-      *targetAtomStereopermutatorOption,
+    BondStereopermutator newStereopermutator {
+      _adjacencies.inner(),
+      stereopermutators,
       bondIndex
     };
 
@@ -998,6 +1012,10 @@ bool Molecule::Impl::modularCompare(
   const AtomEnvironmentComponents componentBitmask
 ) const {
   const unsigned thisNumAtoms = graph().N();
+
+  /* TODO use shortcut (same graph test) if
+   * componentBitmask is components used to canonicalize both *this and other
+   */
 
   if(thisNumAtoms != other.graph().N()) {
     return false;
@@ -1114,9 +1132,8 @@ RankingInformation Molecule::Impl::rankPriority(
   );
 
   // Find links between sites
-  rankingResult.links = GraphAlgorithms::substituentLinks(
+  rankingResult.links = GraphAlgorithms::siteLinks(
     _adjacencies.inner(),
-    graph().cycles(),
     a,
     rankingResult.sites,
     excludeAdjacent

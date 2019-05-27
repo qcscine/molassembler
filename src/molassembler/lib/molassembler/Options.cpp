@@ -42,8 +42,8 @@ bool disregardStereopermutator(
     for(
       const auto cycleEdges :
       boost::make_iterator_range(
-        cycleData.iteratorPair(
-          Cycles::predicates::ContainsIndex {stereopermutator.centralIndex()}
+        cycleData.containing(
+          stereopermutator.centralIndex()
         )
       )
     ) {

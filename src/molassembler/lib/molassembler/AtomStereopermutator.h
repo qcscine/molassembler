@@ -30,7 +30,8 @@ namespace Scine {
 namespace molassembler {
 /* Forward declarations */
 struct RankingInformation;
-struct PermutationState;
+struct AbstractStereopermutations;
+struct FeasibleStereopermutations;
 
 namespace DistanceGeometry {
 
@@ -69,7 +70,18 @@ struct ChiralConstraint;
  */
 class AtomStereopermutator {
 public:
-  using PropagatedState = std::tuple<RankingInformation, PermutationState, boost::optional<unsigned>>;
+  using PropagatedState = std::tuple<
+    RankingInformation,
+    AbstractStereopermutations,
+    FeasibleStereopermutations,
+    boost::optional<unsigned>
+  >;
+
+  /*!
+   * @brief Site index sequence defining a chiral constraint. If a site index
+   *   is None, then it denotes the position of the central index
+   */
+  using MinimalChiralConstraint = std::array<boost::optional<unsigned>, 4>;
 
 //!@name Special member functions
 //!@{
@@ -251,9 +263,7 @@ public:
    * the stereopermutator does not have any chiral state, i.e.
    * numStereopermutators() <= 1, as long as it is assigned.
    */
-  std::vector<
-    std::array<boost::optional<unsigned>, 4>
-  > minimalChiralConstraints(bool enforce = false) const;
+  std::vector<MinimalChiralConstraint> minimalChiralConstraints(bool enforce = false) const;
 
   //! Returns an information string for diagnostic purposes
   std::string info() const;
@@ -262,10 +272,16 @@ public:
   std::string rankInfo() const;
 
   /*!
-   * @brief Returns the underlying PermutationState
+   * @brief Returns the underlying feasible stereopermutations object
    * @note This is library-internal and not part of the public API
    */
-  const PermutationState& getPermutationState() const;
+  const AbstractStereopermutations& getAbstract() const;
+
+  /*!
+   * @brief Returns the underlying feasible stereopermutations object
+   * @note This is library-internal and not part of the public API
+   */
+  const FeasibleStereopermutations& getFeasible() const;
 
   //! Returns the underlying ranking
   const RankingInformation& getRanking() const;

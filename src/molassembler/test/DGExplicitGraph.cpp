@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(explicitNonVisualTests) {
     DistanceGeometry::SpatialModel spatialModel {molecule, DistanceGeometry::Configuration {}};
 
     EG explicitGraph {
-      molecule,
-      spatialModel.makeBoundsList()
+      molecule.graph().inner(),
+      spatialModel.makePairwiseBounds()
     };
 
     auto spg = explicitGraph.graph();

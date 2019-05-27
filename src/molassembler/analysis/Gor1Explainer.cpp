@@ -381,8 +381,8 @@ int main(int argc, char* argv[]) {
     DistanceGeometry::SpatialModel spatialModel {mol, DistanceGeometry::Configuration {}};
 
     DistanceGeometry::ImplicitGraph shortestPathsGraph {
-      mol,
-      spatialModel.makeBoundsList()
+      mol.graph().inner(),
+      spatialModel.makePairwiseBounds()
     };
 
     /* Prep */

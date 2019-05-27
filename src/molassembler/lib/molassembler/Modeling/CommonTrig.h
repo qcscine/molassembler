@@ -51,15 +51,22 @@ T lawOfCosinesAngle(
   const T b,
   const T c
 ) {
-  return std::acos(
-    (
-      a * a
-      + b * b
-      - c * c
-    ) / (
-      2 * a * b
-    )
+  double ratio = (
+    a * a
+    + b * b
+    - c * c
+  ) / (
+    2 * a * b
   );
+
+  /* Accept ratios a little above one for the sake of numerical inaccuracies
+   * when the triangle almost doesn't exist
+   */
+  if(ratio > 1 && std::fabs(ratio - 1) <= 1e-10) {
+    return 0.0;
+  }
+
+  return std::acos(ratio);
 }
 
 /*!

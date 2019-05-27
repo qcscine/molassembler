@@ -58,6 +58,8 @@ void DistanceBoundsMatrix::smooth(Eigen::MatrixXd& matrix) {
   /* Floyd's algorithm: O(N³)
    * Could be refactored slightly that when something is changed, these loops
    * exit and identical loops without the bool setter are run (minimal speed gains)
+   *
+   * TODO get rid of min/max access branches (see their impl)
    */
   const unsigned N = matrix.cols();
 
@@ -169,6 +171,8 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random
        * thrown caution to the wind by no longer smoothing the matrix.
        * Nevertheless, to avoid UB, it is still necessary to properly order
        * the parameters
+       *
+       * TODO this is an atrocious access pattern (see impl of lowerBound)
        */
       double chosenDistance = temple::random::getSingle<double>(
         std::min(

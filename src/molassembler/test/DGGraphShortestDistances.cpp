@@ -16,10 +16,13 @@
 #include "temple/constexpr/Numeric.h"
 #include "temple/Stringify.h"
 
+// DO NOT CHANGE THIS INCLUDE ORDER (implicit graph needs to go first)
 #include "molassembler/DistanceGeometry/ImplicitGraphBoost.h"
-#include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
 
@@ -179,8 +182,8 @@ BOOST_AUTO_TEST_CASE(conceptTests) {
     using Vertex = EG::GraphType::vertex_descriptor;
 
     EG eg {
-      molecule,
-      spatialModel.makeBoundsList()
+      molecule.graph().inner(),
+      spatialModel.makePairwiseBounds()
     };
 
     auto egGraph = eg.graph();
@@ -297,10 +300,10 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
 
     DistanceGeometry::SpatialModel spatialModel {sampleMol, DistanceGeometry::Configuration {}};
 
-    const auto boundsList = spatialModel.makeBoundsList();
+    const auto boundsList = spatialModel.makePairwiseBounds();
 
-    DistanceGeometry::ExplicitGraph limits {sampleMol, boundsList};
-    DistanceGeometry::DistanceBoundsMatrix spatialModelBounds {sampleMol, boundsList};
+    DistanceGeometry::ExplicitGraph limits {sampleMol.graph().inner(), boundsList};
+    DistanceGeometry::DistanceBoundsMatrix spatialModelBounds {sampleMol.graph().inner(), boundsList};
 
     // This conforms to the triangle inequality bounds
     auto boundsMatrix = DBM_FW_Functor {spatialModelBounds} ();
@@ -394,7 +397,7 @@ BOOST_AUTO_TEST_CASE(correctnessTests) {
      * perhaps direct access to the emerging distance matrix is necessary to
      * ensure O(1) bounds access!
      */
-    DistanceGeometry::ImplicitGraph shortestPathsGraph {sampleMol, boundsList};
+    DistanceGeometry::ImplicitGraph shortestPathsGraph {sampleMol.graph().inner(), boundsList};
 
     using IGVertex = DistanceGeometry::ImplicitGraph::VertexDescriptor;
     IGVertex N = boost::num_vertices(shortestPathsGraph);

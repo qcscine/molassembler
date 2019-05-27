@@ -8,8 +8,8 @@
  * from a list of atom-index pairwise distance bounds.
  */
 
-#ifndef INCLUDE_MOLASSEMBLER_DG_EXPLICIT_GRAPH_H
-#define INCLUDE_MOLASSEMBLER_DG_EXPLICIT_GRAPH_H
+#ifndef INCLUDE_MOLASSEMBLER_DG_EXPLICIT_BOUNDS_GRAPH_H
+#define INCLUDE_MOLASSEMBLER_DG_EXPLICIT_BOUNDS_GRAPH_H
 
 // #define MOLASSEMBLER_EXPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 
@@ -30,8 +30,8 @@ class Engine;
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
-// Forward-declare Molecule
-class Molecule;
+// Forward-declare InnerGraph
+class InnerGraph;
 
 namespace DistanceGeometry {
 
@@ -71,22 +71,19 @@ public:
   using VertexDescriptor = GraphType::vertex_descriptor;
   using EdgeDescriptor = GraphType::edge_descriptor;
 
-  using BoundsList = std::map<
-    std::array<VertexDescriptor, 2>,
-    ValueBounds
-  >;
+  using BoundsMatrix = Eigen::MatrixXd;
 //!@}
 
 //!@name Special member functions
 //!@{
   ExplicitGraph(
-    const Molecule& molecule,
+    const InnerGraph& inner,
     const DistanceBoundsMatrix& bounds
   );
 
   ExplicitGraph(
-    const Molecule& molecule,
-    const BoundsList& bounds
+    const InnerGraph& inner,
+    const BoundsMatrix& bounds
   );
 //!@}
 
@@ -119,9 +116,6 @@ public:
     VertexDescriptor b,
     const ValueBounds& bound
   );
-
-  //! Adds edges to the underlying graph representing implicit lower bounds
-  void addImplicitEdges();
 
   void setDistance(
     VertexDescriptor a,
@@ -161,7 +155,7 @@ public:
 
 private:
   GraphType _graph;
-  const Molecule& _molecule;
+  const InnerGraph& _inner;
   //! Stores the two heaviest element types
   std::array<Scine::Utils::ElementType, 2> _heaviestAtoms;
 

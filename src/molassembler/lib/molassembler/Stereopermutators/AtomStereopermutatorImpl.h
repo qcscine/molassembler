@@ -10,13 +10,20 @@
 #include "molassembler/AtomStereopermutator.h"
 
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
-#include "molassembler/Stereopermutators/PermutationState.h"
+#include "molassembler/Stereopermutators/AbstractPermutations.h"
+#include "molassembler/Stereopermutators/FeasiblePermutations.h"
+
+#include "boost/optional.hpp"
 
 namespace Scine {
 
-namespace molassembler {
+namespace Symmetry {
+namespace properties {
+struct SymmetryTransitionGroup;
+} // namespace properties
+} // namespace Symmetry
 
-/* forward-declarations */
+namespace molassembler {
 
 class AtomStereopermutator::Impl {
 public:
@@ -40,6 +47,15 @@ public:
    * @note Behavior is dependent on ChiralStatePreservation option
    */
   static Symmetry::Name down(Symmetry::Name symmetryName, unsigned removedSymmetryPosition);
+
+  /*!
+   * @brief Generates an symmetry position index mapping from a symmetry
+   *   transition group
+   */
+  boost::optional<std::vector<unsigned>> getIndexMapping(
+    const Symmetry::properties::SymmetryTransitionGroup& mappingsGroup,
+    const ChiralStatePreservation& preservationOption
+  );
 //!@}
 
 /* Constructors */
@@ -105,7 +121,9 @@ public:
   //! Returns the angle between two site indices in the idealized symmetry
   double angle(unsigned i, unsigned j) const;
 
-  /*! Returns the permutation index within the set of possible permutations, if set
+  /*!
+   * @brief Returns the permutation index within the set of possible
+   *   permutations, if set
    *
    * Returns the (public) information of whether the stereopermutator is assigned
    * or not, and if so, which assignment it is.
@@ -115,7 +133,8 @@ public:
   //! Returns a single-element vector containing the central atom
   AtomIndex centralIndex() const;
 
-  /*! Returns IOP within the set of symbolic ligand permutations
+  /*!
+   * @brief Returns IOP within the set of symbolic ligand permutations
    *
    * This is different to the assignment. The assignment denotes the index
    * within the set of possible (more specifically, not obviously infeasible)
@@ -123,7 +142,8 @@ public:
    */
   boost::optional<unsigned> indexOfPermutation() const;
 
-  /*! Returns a minimal representation of chiral constraints
+  /*!
+   * @brief Returns a minimal representation of chiral constraints
    *
    * Every minimal representation consists only of ligand indices.
    *
@@ -135,9 +155,7 @@ public:
    * the stereopermutator does not have any chiral state, i.e.
    * numStereopermutators() <= 1, as long as it is assigned.
    */
-  std::vector<
-    std::array<boost::optional<unsigned>, 4>
-  > minimalChiralConstraints(bool enforce = false) const;
+  std::vector<MinimalChiralConstraint> minimalChiralConstraints(bool enforce = false) const;
 
   //! Returns an information string for diagnostic purposes
   std::string info() const;
@@ -145,11 +163,17 @@ public:
   //! Returns an information string for ranking equality checking purposes
   std::string rankInfo() const;
 
-  /*! Returns the underlying PermutationState
-   *
+  /*!
+   * @brief Returns the underlying AbstractStereopermutation
    * @note This is library-internal and not part of the public API
    */
-  const PermutationState& getPermutationState() const;
+  const AbstractStereopermutations& getAbstract() const;
+
+  /*!
+   * @brief Returns the underlying FeasibleStereopermutation
+   * @note This is library-internal and not part of the public API
+   */
+  const FeasibleStereopermutations& getFeasible() const;
 
   //! Returns the underlying ranking
   const RankingInformation& getRanking() const;
@@ -157,13 +181,14 @@ public:
   //! Returns the underlying symmetry
   Symmetry::Name getSymmetry() const;
 
-  /*! Yields the mapping from ligand indices to symmetry positions
-   *
-   * \throws std::logic_error if the stereopermutator is unassigned.
+  /*!
+   * @brief Yields the mapping from ligand indices to symmetry positions
+   * @throws std::logic_error if the stereopermutator is unassigned.
    */
   std::vector<unsigned> getSymmetryPositionMap() const;
 
-  /*! Returns the number of possible permutations
+  /*!
+   * @brief Returns the number of possible permutations
    *
    * Fetches the number of different assignments possible with the current
    * substituent ranking and connectivity information. This is also the upper
@@ -172,7 +197,8 @@ public:
    */
   unsigned numAssignments() const;
 
-  /*! Returns the number of symbolic ligand permutations
+  /*!
+   * @brief Returns the number of symbolic ligand permutations
    *
    * Fetches the number of permutations determined by symbolic ligand
    * calculation, not considering linking or haptic ligand cones.
@@ -186,20 +212,26 @@ public:
 
 private:
 /* State */
-  //! Ranking information of substituents
-  RankingInformation _ranking;
-
   //! Central atom of the Stereopermutator
   AtomIndex _centerAtom;
 
   //! The symmetry the stereopermutator represents
   Symmetry::Name _symmetry;
 
+  //! Ranking information of substituents
+  RankingInformation _ranking;
+
+  //! Abstract stereopermutations and intermediate state
+  AbstractStereopermutations _abstract;
+
+  //! Models abstract stereopermutations and decides three-dimensional feasibility
+  FeasibleStereopermutations _feasible;
+
   //! The current state of assignment (if or not, and if so, which)
   boost::optional<unsigned> _assignmentOption;
 
-  /* Derivative state (cache) */
-  PermutationState _cache;
+  //! Derived property of @p _assignmentOption
+  std::vector<unsigned> _symmetryPositionMap;
 };
 
 } // namespace molassembler

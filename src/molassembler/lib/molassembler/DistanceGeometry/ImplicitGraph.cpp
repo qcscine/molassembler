@@ -9,11 +9,10 @@
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/DistanceGeometry/Error.h"
+#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
 #include "molassembler/Modeling/AtomInfo.h"
-#include "molassembler/Molecule.h"
 #include "molassembler/Options.h"
-#include "molassembler/OuterGraph.h"
 
 #ifdef MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 #include "molassembler/DistanceGeometry/Gor1.h"
@@ -67,25 +66,14 @@ void ImplicitGraph::_explainContradictionPaths(
 }
 
 ImplicitGraph::ImplicitGraph(
-  const Molecule& molecule,
-  const BoundsList& bounds
-) : _moleculePtr(&molecule) {
-  const VertexDescriptor N = molecule.graph().N();
-  _distances.resize(N, N);
-  _distances.setZero();
-
-  for(const auto& mapPair : bounds) {
-    addBound(
-      mapPair.first.front(),
-      mapPair.first.back(),
-      mapPair.second
-    );
-  }
-
+  const InnerGraph& inner,
+  BoundsMatrix bounds
+) : _innerGraphPtr(&inner), _distances(std::move(bounds)) {
   // Determine the two heaviest element types in the molecule, O(N)
   _heaviestAtoms = {{Scine::Utils::ElementType::H, Scine::Utils::ElementType::H}};
+  const VertexDescriptor N = inner.N();
   for(AtomIndex i = 0; i < N; ++i) {
-    auto elementType = molecule.graph().elementType(i);
+    auto elementType = inner.elementType(i);
     if(
       static_cast<unsigned>(elementType)
       > static_cast<unsigned>(_heaviestAtoms.back())
@@ -99,20 +87,6 @@ ImplicitGraph::ImplicitGraph(
         std::swap(_heaviestAtoms.front(), _heaviestAtoms.back());
       }
     }
-  }
-}
-
-void ImplicitGraph::addBound(
-  const VertexDescriptor a,
-  const VertexDescriptor b,
-  const ValueBounds& bound
-) {
-  if(a < b) {
-    _distances(a, b) = bound.upper;
-    _distances(b, a) = bound.lower;
-  } else {
-    _distances(a, b) = bound.lower;
-    _distances(b, a) = bound.upper;
   }
 }
 
@@ -254,7 +228,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engin
 }
 
 outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept {
-  unsigned N = _moleculePtr->graph().N();
+  const unsigned N = _innerGraphPtr->N();
 
   std::vector<AtomIndex> indices(N);
   std::iota(
@@ -265,7 +239,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engin
 
   temple::random::shuffle(indices, engine);
 
-  unsigned M = num_vertices();
+  const unsigned M = num_vertices();
   std::vector<double> distances (M);
   std::vector<VertexDescriptor> predecessors (M);
 
@@ -276,7 +250,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engin
   std::vector<AtomIndex>::const_iterator separator;
 
   if(partiality == Partiality::FourAtom) {
-    separator = indices.cbegin() + std::min(N, 4u);
+    separator = indices.cbegin() + std::min(N, 4U);
   } else if(partiality == Partiality::TenPercent) {
     /* Advance the separator at most by N positions (guards against advancing
      * past-the-end), and at least by four atoms (guards against situations
@@ -284,7 +258,7 @@ outcome::result<Eigen::MatrixXd> ImplicitGraph::makeDistanceMatrix(random::Engin
      *
      * Not equivalent to std::clamp(4u, cast<u>(0.1 * N), N) if N < 4!
      */
-    separator = indices.cbegin() + std::min(N, std::max(4u, static_cast<unsigned>(0.1 * N)));
+    separator = indices.cbegin() + std::min(N, std::max(4U, static_cast<unsigned>(0.1 * N)));
   } else { // All
     separator = indices.cend();
   }
@@ -490,7 +464,7 @@ double ImplicitGraph::upperBound(const VertexDescriptor a, const VertexDescripto
 double ImplicitGraph::maximalImplicitLowerBound(const VertexDescriptor i) const {
   assert(isLeft(i));
   auto a = internal(i);
-  auto elementType = _moleculePtr->graph().elementType(a);
+  auto elementType = _innerGraphPtr->elementType(a);
 
   if(elementType == _heaviestAtoms.front()) {
     return AtomInfo::vdwRadius(
@@ -522,9 +496,9 @@ double ImplicitGraph::EdgeWeightMap::operator [] (const EdgeDescriptor& e) const
 
     return -(
       AtomInfo::vdwRadius(
-        _basePtr->_moleculePtr->graph().elementType(a)
+        _basePtr->_innerGraphPtr->elementType(a)
       ) + AtomInfo::vdwRadius(
-        _basePtr->_moleculePtr->graph().elementType(b)
+        _basePtr->_innerGraphPtr->elementType(b)
       )
     );
   }
@@ -669,9 +643,9 @@ double ImplicitGraph::edge_iterator::weight() const {
 
     return -(
       AtomInfo::vdwRadius(
-        _basePtr->_moleculePtr->graph().elementType(a)
+        _basePtr->_innerGraphPtr->elementType(a)
       ) + AtomInfo::vdwRadius(
-        _basePtr->_moleculePtr->graph().elementType(_b)
+        _basePtr->_innerGraphPtr->elementType(_b)
       )
     );
   }

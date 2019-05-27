@@ -11,6 +11,7 @@
 #include "Eigen/Eigenvalues"
 #include "temple/Stringify.h"
 
+#include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
@@ -257,7 +258,7 @@ BOOST_AUTO_TEST_CASE( constructionIsInvariantUnderOrderingSwap ) {
     auto DGData = DistanceGeometry::gatherDGInformation(molecule, DistanceGeometry::Configuration {});
 
     DistanceBoundsMatrix distanceBounds {
-      molecule,
+      molecule.graph().inner(),
       DGData.bounds
     };
 

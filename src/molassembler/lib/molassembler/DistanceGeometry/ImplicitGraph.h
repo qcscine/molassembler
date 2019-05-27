@@ -8,8 +8,8 @@
  * a list of atom-index pairwise distance bounds.
  */
 
-#ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
-#define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_GRAPH_H
+#ifndef INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_BOUNDS_GRAPH_H
+#define INCLUDE_DISTANCE_GEOMETRY_IMPLICIT_BOUNDS_GRAPH_H
 
 // #define MOLASSEMBLER_IMPLICIT_GRAPH_USE_SPECIALIZED_GOR1_ALGORITHM
 
@@ -34,8 +34,8 @@ class Engine;
 
 namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 
-// Forward-declare Molecule
-class Molecule;
+// Forward-declare InnerGraph
+class InnerGraph;
 
 namespace DistanceGeometry {
 
@@ -149,7 +149,7 @@ public:
 
 private:
   //! Pointer to molecule from which the bounds come from
-  const Molecule* _moleculePtr;
+  const InnerGraph* _innerGraphPtr;
 
   //! Stores the two heaviest element types
   std::array<Scine::Utils::ElementType, 2> _heaviestAtoms;
@@ -179,26 +179,11 @@ private:
   );
 
 public:
-  using BoundsList = std::map<
-    std::array<VertexDescriptor, 2>,
-    ValueBounds
-  >;
+  using BoundsMatrix = Eigen::MatrixXd;
 
   ImplicitGraph(
-    const Molecule& molecule,
-    const BoundsList& bounds
-  );
-
-  /* Modification */
-  /*! Incorporates a ValueBound into its internal representation.
-   *
-   * Assumes that there is no internal bounding information on the indices a
-   * and b yet. If there is, it gets overwritten.
-   */
-  void addBound(
-    VertexDescriptor a,
-    VertexDescriptor b,
-    const ValueBounds& bound
+    const InnerGraph& inner,
+    BoundsMatrix bounds
   );
 
   /* Information */

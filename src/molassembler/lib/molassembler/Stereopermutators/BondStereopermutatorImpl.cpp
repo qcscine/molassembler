@@ -8,6 +8,7 @@
 #include "chemical_symmetries/Symmetries.h"
 
 #include "temple/Adaptors/AllPairs.h"
+#include "temple/Adaptors/CyclicFrame.h"
 #include "temple/constexpr/Math.h"
 #include "temple/constexpr/Numeric.h"
 #include "temple/Functional.h"
@@ -18,16 +19,42 @@
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Detail/DelibHelpers.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
+#include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/Modeling/BondDistance.h"
+#include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/Stereopermutators/PermutationState.h"
+#include "molassembler/Detail/StdlibTypeAlgorithms.h"
+#include "molassembler/Stereopermutators/AbstractPermutations.h"
+#include "molassembler/Stereopermutators/CycleFeasibility.h"
+#include "molassembler/Stereopermutators/FeasiblePermutations.h"
+#include "molassembler/Stereopermutators/SymmetryPositionMaps.h"
+
+#include <Eigen/Geometry>
+#include <algorithm>
 
 namespace Scine {
-
 namespace molassembler {
-
 namespace detail {
+
+template<typename ... Inds>
+inline auto orderMappedSequence(
+  const std::unordered_map<AtomIndex, AtomIndex>& indexMap,
+  Inds ... inds
+) {
+  std::array<AtomIndex, sizeof...(inds)> indices {{
+    indexMap.at(
+      static_cast<AtomIndex>(inds)
+    )...
+  }};
+
+  if(indices.front() > indices.back()) {
+    std::reverse(indices.begin(), indices.end());
+  }
+
+  return indices;
+}
 
 bool piPeriodicFPCompare(const double a, const double b) {
   /* Reduces everything to [-pi, pi) bounds and then compares
@@ -178,6 +205,23 @@ double BondStereopermutator::Impl::dihedral(
   throw std::logic_error("Could not find a dihedral angle for the specified sites");
 }
 
+stereopermutation::Composite BondStereopermutator::Impl::_constructComposite(
+  const StereopermutatorList& stereopermutators,
+  const BondIndex edge,
+  const Alignment alignment
+) {
+  assert(stereopermutators.option(edge.first) && stereopermutators.option(edge.second));
+
+  const auto& stereopermutatorA = stereopermutators.option(edge.first).value();
+  const auto& stereopermutatorB = stereopermutators.option(edge.second).value();
+
+  return {
+    _makeOrientationState(stereopermutatorA, stereopermutatorB),
+    _makeOrientationState(stereopermutatorB, stereopermutatorA),
+    static_cast<stereopermutation::Composite::Alignment>(alignment)
+  };
+}
+
 stereopermutation::Composite::OrientationState
 BondStereopermutator::Impl::_makeOrientationState(
   const AtomStereopermutator& focalStereopermutator,
@@ -199,6 +243,531 @@ BondStereopermutator::Impl::_makeOrientationState(
   };
 }
 
+bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
+  const InnerGraph& graph,
+  const StereopermutatorList& stereopermutators,
+  const AtomStereopermutator& firstStereopermutator,
+  const AtomStereopermutator& secondStereopermutator,
+  std::tuple<AtomIndex, AtomIndex, double> dihedral,
+  const LinkInformation& link
+) {
+  /* To decide if a stereopermutation is possible or not:
+   * - Determine the plane into which the cycle would expand for the given
+   *   dihedral angle and project the atoms of the constituting atom stereopermutators
+   *   onto that plane
+   * - Figure out whether the distance of the cycle atoms on a cyclic polygon
+   *   to the projected atoms plus the out-of-plane distance is less than a
+   *   single bond
+   */
+  const AtomIndex i = std::get<0>(dihedral);
+  const AtomIndex j = firstStereopermutator.centralIndex();
+  const AtomIndex k = secondStereopermutator.centralIndex();
+  const AtomIndex l = std::get<1>(dihedral);
+  const double phi = std::get<2>(dihedral);
+
+  if(link.cycleSequence.size() == 3) {
+    /* For triangles, modeling the cycle makes zero sense. As long as the
+     * dihedral is approximately zero, the cycle must be feasible since the
+     * graph is ground truth.
+     */
+    return std::fabs(phi) < temple::Math::toRadians(5.0);
+  }
+
+  if(link.cycleSequence.size() == 4) {
+    /* It doesn't make much more sense to model the cycle for quadrangles, since
+     * AD is actually bonded and extending that distance too much is essentially
+     * breaking the bond. Make a little more allowance for the quadrangle
+     * than the triangle, though.
+     */
+    return std::fabs(phi) < temple::Math::toRadians(20.0);
+  }
+
+  auto modelDistance = [&graph](const AtomIndex a, const AtomIndex b) -> double {
+    return Bond::calculateBondDistance(
+      graph.elementType(a),
+      graph.elementType(b),
+      graph.bondType(
+        graph.edge(a, b)
+      )
+    );
+  };
+
+  const double a = modelDistance(i, j);
+  const double b = modelDistance(j, k);
+  const double c = modelDistance(k, l);
+
+  const double alpha = DistanceGeometry::SpatialModel::siteCentralAngle(
+    firstStereopermutator,
+    {
+      firstStereopermutator.getRanking().getSiteIndexOf(i),
+      firstStereopermutator.getRanking().getSiteIndexOf(k)
+    },
+    graph
+  );
+
+  const double beta = DistanceGeometry::SpatialModel::siteCentralAngle(
+    secondStereopermutator,
+    {
+      secondStereopermutator.getRanking().getSiteIndexOf(j),
+      secondStereopermutator.getRanking().getSiteIndexOf(l)
+    },
+    graph
+  );
+
+  // Model everything in three dimensions
+  const Eigen::Vector3d A = Eigen::AngleAxisd(
+    alpha,
+    Eigen::Vector3d::UnitZ()
+  ) * Eigen::Vector3d {a, 0.0, 0.0};
+
+  const Eigen::Vector3d B = Eigen::Vector3d::Zero();
+
+  const Eigen::Vector3d C {b, 0.0, 0.0};
+
+  const Eigen::Vector3d D = Eigen::AngleAxisd(
+    phi,
+    Eigen::Vector3d::UnitX()
+  ) * (
+    C + Eigen::AngleAxisd(
+      M_PI - beta,
+      Eigen::Vector3d::UnitZ()
+    ) * Eigen::Vector3d {c, 0.0, 0.0}
+  );
+
+  const Eigen::Vector3d DMinusA = D - A;
+
+  // C++17 structured bindings
+  // P is on BC, Q on AD
+  Eigen::Vector3d P, Q;
+  std::tie(P, Q) = [&]() -> std::pair<Eigen::Vector3d, Eigen::Vector3d> {
+    /* If DMinusA and C are approximately parallel, getting the shortest path
+     * between them is numerically dangerous
+     */
+    if(DMinusA.cross(C).norm() <= 1e-10) {
+      // Yield P and Q
+      return {
+        0.5 * C,
+        A + 0.5 * DMinusA
+      };
+    }
+
+    const double mu = -(
+      A.y() * DMinusA.y() + A.z() * DMinusA.z()
+    ) / (
+      DMinusA.y() * DMinusA.y() + DMinusA.z() * DMinusA.z()
+    );
+
+    const double lambda = (A.x() + mu * DMinusA.x()) / b;
+
+    // Limit mu and lambda onto their line segments
+    const double mu_m = [&]() -> double {
+      if(mu <= 0) {
+        return - A.x() / DMinusA.x();
+      }
+
+      if(mu >= 1) {
+        return (b - A.x()) / DMinusA.x();
+      }
+
+      return mu;
+    }();
+
+    const double lambda_m = StdlibTypeAlgorithms::clamp(lambda, 0.0, 1.0);
+
+    return {
+      lambda_m * C,
+      A + mu_m * DMinusA
+    };
+  }();
+
+
+  /* The plane the cycle expands into is now f = Plane(A, D, P). So, it's time
+   * to project B and C onto the plane and then determine in-plane distances to
+   * A and D.
+   *
+   * Plane defining vectors:
+   *  m_1 = D - A = DMinusA
+   *  m_2 = Q - P
+   */
+  const Eigen::Vector3d planeNormal = [&](){
+    /* If the dihedral is an odd multiple of pi, then A, D and P become
+     * collinear. The auxiliary vector used to define the plane normal is then
+     * the unit z vector
+     */
+    if(std::fabs(std::fabs(phi) - M_PI) <= 1e-10) {
+      return DMinusA.cross(Eigen::Vector3d::UnitZ()).normalized();
+    }
+
+    return DMinusA.cross(Q - P).normalized();
+  }();
+
+  // NOTE: These are signed distances!
+  const double d_Bf = planeNormal.dot(A-B);
+  const double d_Cf = planeNormal.dot(A-C);
+
+  const Eigen::Vector3d projectedB = d_Bf * planeNormal + B;
+  const Eigen::Vector3d projectedC = d_Cf * planeNormal + C;
+
+  /* Create input types for cycle feasibility test */
+  std::vector<Stereopermutators::BaseAtom> bases {
+    // Base of B
+    Stereopermutators::BaseAtom {
+      graph.elementType(j),
+      (A - projectedB).norm(),
+      (D - projectedB).norm(),
+      std::fabs(d_Bf)
+    },
+    // Base of C
+    Stereopermutators::BaseAtom {
+      graph.elementType(k),
+      (A - projectedC).norm(),
+      (D - projectedC).norm(),
+      std::fabs(d_Cf)
+    }
+  };
+
+  /* Mangle cycle sequence to get {i ... l} */
+  auto cycleIndices = link.cycleSequence;
+  temple::inplace::remove_if(
+    cycleIndices,
+    [&](const AtomIndex x) -> bool {
+      return x == j || x == k;
+    }
+  );
+  const auto iIter = std::find(
+    std::begin(cycleIndices),
+    std::end(cycleIndices),
+    i
+  );
+  assert(iIter != std::end(cycleIndices));
+  std::rotate(
+    std::begin(cycleIndices),
+    iIter,
+    std::end(cycleIndices)
+  );
+  if(cycleIndices.back() != l) {
+    assert(cycleIndices.at(1) == l);
+    std::reverse(
+      std::begin(cycleIndices) + 1,
+      std::end(cycleIndices)
+    );
+  }
+  assert(cycleIndices.back() == l);
+
+  const auto elementTypes = temple::map(
+    cycleIndices,
+    [&](const AtomIndex x) -> Utils::ElementType {
+      return graph.elementType(x);
+    }
+  );
+
+  auto cycleEdgeLengths = temple::map(
+    temple::adaptors::sequentialPairs(cycleIndices),
+    modelDistance
+  );
+  cycleEdgeLengths.push_back((D-A).norm());
+
+  // std::cout << "Cycle " << temple::stringify(link.cycleSequence)
+  //   << "(a, b, c) = (" << a << ", " << b << ", " << c << "), "
+  //   << "(alpha, beta, phi) = (" << temple::Math::toDegrees(alpha) << ", " << temple::Math::toDegrees(beta) << ", " << temple::Math::toDegrees(phi) << ") contradicts graph: " << fail << "\n";
+
+  return Stereopermutators::cycleModelContradictsGraph(
+    elementTypes,
+    cycleEdgeLengths,
+    bases
+  );
+}
+
+// bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
+//   const InnerGraph& graph,
+//   const StereopermutatorList& stereopermutators,
+//   const AtomStereopermutator& firstStereopermutator,
+//   const AtomStereopermutator& secondStereopermutator,
+//   std::tuple<AtomIndex, AtomIndex, double> dihedral,
+//   const LinkInformation& link
+// ) {
+//   /* Now to decide if a stereopermutation is possible or not:
+//    * - Build a spatial model of each cycle including bond distances and angles
+//    *   using SpatialModel's methods
+//    * - Extract a BoundsList from it
+//    * - Populate an ExplicitGraph
+//    * - Smooth it and check for triangle inequality violations
+//    */
+//
+//   const unsigned C = link.cycleSequence.size();
+//
+//   // Build a map reducing all cycle-involved atom indices to 1..C
+//   std::unordered_map<AtomIndex, AtomIndex> indexReductionMap;
+//   for(unsigned i = 0; i < C; ++i) {
+//     indexReductionMap.emplace(
+//       link.cycleSequence.at(i),
+//       i
+//     );
+//   }
+//
+//   /* Build an inner graph representing only the cycle */
+//   InnerGraph minimalInner(C);
+//   // Copy element types
+//   for(const AtomIndex i : link.cycleSequence) {
+//     minimalInner.elementType(
+//       indexReductionMap.at(i)
+//     ) = graph.elementType(i);
+//   }
+//
+//   // Copy bonds
+//   temple::forEach(
+//     temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+//     [&](const AtomIndex i, const AtomIndex j) {
+//       minimalInner.addEdge(
+//         indexReductionMap.at(i),
+//         indexReductionMap.at(j),
+//         graph.bondType(
+//           graph.edge(i, j)
+//         )
+//       );
+//     }
+//   );
+//
+//   /* Build a spatial model */
+//   // Model all bond distances
+//   DistanceGeometry::SpatialModel::BoundsMapType<2> bondBounds;
+//   temple::forEach(
+//     temple::adaptors::cyclicFrame<2>(link.cycleSequence),
+//     [&](const AtomIndex i, const AtomIndex j) {
+//       const BondType bondType = graph.bondType(
+//         graph.edge(i, j)
+//       );
+//
+//       double bondDistance = Bond::calculateBondDistance(
+//         graph.elementType(i),
+//         graph.elementType(j),
+//         bondType
+//       );
+//
+//       double absoluteVariance = bondDistance * DistanceGeometry::SpatialModel::bondRelativeVariance;
+//       bondBounds.emplace(
+//         detail::orderMappedSequence(indexReductionMap, i, j),
+//         DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
+//           bondDistance,
+//           absoluteVariance
+//         )
+//       );
+//     }
+//   );
+//
+//   // Model all angles
+//   DistanceGeometry::SpatialModel::BoundsMapType<3> angleBounds;
+//   temple::forEach(
+//     temple::adaptors::cyclicFrame<3>(link.cycleSequence),
+//     [&](const AtomIndex i, const AtomIndex j, const AtomIndex k) {
+//       // Is there an AtomStereopermutator here?
+//       DistanceGeometry::ValueBounds angleValueBounds {
+//         Symmetry::smallestAngle,
+//         M_PI
+//       };
+//
+//       if(auto permutatorOption = stereopermutators.option(j)) {
+//         const RankingInformation& ranking = permutatorOption->getRanking();
+//         // Make sure this is as simple a case as possible to model
+//         unsigned siteOfI = ranking.getSiteIndexOf(i);
+//         unsigned siteOfK = ranking.getSiteIndexOf(k);
+//
+//         // Both sites are single-index, not haptic
+//         if(
+//           ranking.sites.at(siteOfI).size() == 1
+//           && ranking.sites.at(siteOfK).size() == 1
+//         ) {
+//           if(permutatorOption->assigned()) {
+//             angleValueBounds = DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
+//               permutatorOption->angle(siteOfI, siteOfK),
+//               DistanceGeometry::SpatialModel::angleAbsoluteVariance
+//             );
+//           } else {
+//             angleValueBounds = {
+//               Symmetry::minimumAngle(permutatorOption->getSymmetry()),
+//               Symmetry::maximumAngle(permutatorOption->getSymmetry())
+//             };
+//           }
+//         }
+//       }
+//
+//       angleBounds.emplace(
+//         detail::orderMappedSequence(indexReductionMap, i, j, k),
+//         angleValueBounds
+//       );
+//     }
+//   );
+//
+//   // Model dihedrals
+//   DistanceGeometry::SpatialModel::BoundsMapType<4> dihedralBounds;
+//   const double dihedralAngle = std::get<2>(dihedral);
+//   auto dihedralValueBounds = DistanceGeometry::SpatialModel::makeBoundsFromCentralValue(
+//     dihedralAngle,
+//     DistanceGeometry::SpatialModel::dihedralAbsoluteVariance
+//   );
+//
+//   const AtomIndex i = std::get<0>(dihedral);
+//   const AtomIndex j = firstStereopermutator.centralIndex();
+//   const AtomIndex k = secondStereopermutator.centralIndex();
+//   const AtomIndex l = std::get<1>(dihedral);
+//
+//   assert(temple::makeContainsPredicate(link.cycleSequence)(i));
+//   assert(temple::makeContainsPredicate(link.cycleSequence)(l));
+//
+//   dihedralBounds.emplace(
+//     detail::orderMappedSequence(indexReductionMap, i, j, k, l),
+//     dihedralValueBounds
+//   );
+//
+//   // Create pairwise bounds from internal coordinates
+//   auto pairwiseBounds = DistanceGeometry::SpatialModel::makePairwiseBounds(
+//     C,
+//     DistanceGeometry::SpatialModel::BoundsMapType<2> {},
+//     bondBounds,
+//     angleBounds,
+//     dihedralBounds
+//   );
+//
+//   // Model in a bounds matrix
+//   DistanceGeometry::ExplicitGraph boundsGraph {
+//     minimalInner,
+//     pairwiseBounds
+//   };
+//
+//   // Try to smooth the distance bounds with triangle inequalities
+//   auto distanceBoundsResult = boundsGraph.makeDistanceBounds();
+//
+//   /*if(distanceBoundsResult) {
+//     std::cout << "Link " << temple::stringify(link.cycleSequence) << " is viable on " << j << ", " << k << " with dihedral " << dihedralAngle << "\n";
+//     std::cout << pairwiseBounds << "\n";
+//     std::cout << distanceBoundsResult.value() << "\n";
+//
+//     auto distanceMatrix = boundsGraph.makeDistanceMatrix(randomnessEngine());
+//     if(distanceMatrix) {
+//       std::cout << distanceMatrix.value() << "\n";
+//     }
+//
+//     std::cout << "\n";
+//   }*/
+//
+//   return !(distanceBoundsResult.operator bool());
+// }
+
+std::vector<unsigned> BondStereopermutator::Impl::notObviouslyInfeasibleStereopermutations(
+  const InnerGraph& graph,
+  const StereopermutatorList& stereopermutators,
+  const stereopermutation::Composite& composite
+) {
+  const unsigned compositePermutations = composite.permutations();
+
+  auto permutatorReferences = composite.orientations().map(
+    [&](const auto& orientationState) -> const AtomStereopermutator& {
+      auto permutatorOption = stereopermutators.option(orientationState.identifier);
+      if(!permutatorOption) {
+        throw std::logic_error("Atom stereopermutators are not present for this composite!");
+      }
+      return *permutatorOption;
+    }
+  );
+
+  /* Before iterating through all possible stereopermutations, figure out
+   * if substituents of both stereopermutators are fused somehow, i.e. if there
+   * are cycles involving the bond between A and B.
+   */
+  auto links = GraphAlgorithms::siteLinks(
+    graph,
+    permutatorReferences.first,
+    permutatorReferences.second
+  );
+
+  /* If there are no links between the substituents of the stereopermutators,
+   * all permutations are presumably feasible.
+   */
+  if(links.empty()) {
+    return temple::iota<unsigned>(compositePermutations);
+  }
+
+  auto getDihedralInformation = [&](
+    const std::vector<stereopermutation::Composite::DihedralTuple>& dihedrals,
+    const LinkInformation& link
+  ) -> boost::optional<std::tuple<AtomIndex, AtomIndex, double>> {
+    unsigned firstSymmetryPosition;
+    unsigned secondSymmetryPosition;
+    double dihedralAngle;
+
+    for(const auto& dihedralTuple : dihedrals) {
+      std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
+
+      const unsigned siteIndexIAtFirst = SymmetryMapHelper::getSiteIndexAt(
+        firstSymmetryPosition,
+        permutatorReferences.first.getSymmetryPositionMap()
+      );
+      if(siteIndexIAtFirst != link.indexPair.first) {
+        continue;
+      }
+
+      const unsigned siteIndexLAtSecond = SymmetryMapHelper::getSiteIndexAt(
+        secondSymmetryPosition,
+        permutatorReferences.second.getSymmetryPositionMap()
+      );
+      if(siteIndexLAtSecond != link.indexPair.second) {
+        continue;
+      }
+
+      const auto& iSite = permutatorReferences.first.getRanking().sites.at(siteIndexIAtFirst);
+      const auto& lSite = permutatorReferences.second.getRanking().sites.at(siteIndexLAtSecond);
+      if(iSite.size() > 1 || lSite.size() > 1) {
+        return boost::none;
+      }
+
+      return std::make_tuple(
+        iSite.front(),
+        lSite.front(),
+        dihedralAngle
+      );
+    }
+
+    return boost::none;
+  };
+
+  std::vector<unsigned> viableStereopermutations;
+  for(
+    unsigned stereopermutationIndex = 0;
+    stereopermutationIndex < compositePermutations;
+    ++stereopermutationIndex
+  ) {
+    if(
+      !temple::any_of(
+        links,
+        [&](const LinkInformation& link) -> bool {
+          auto dihedralInformationOption = getDihedralInformation(
+            composite.dihedrals(stereopermutationIndex),
+            link
+          );
+
+          if(!dihedralInformationOption) {
+            std::cout << "Could not match dihedral information\n";
+            return false;
+          }
+
+          return cycleObviouslyInfeasible(
+            graph,
+            stereopermutators,
+            permutatorReferences.first,
+            permutatorReferences.second,
+            *dihedralInformationOption,
+            link
+          );
+        }
+      )
+    ) {
+      viableStereopermutations.push_back(stereopermutationIndex);
+    }
+  }
+
+  return viableStereopermutations;
+}
+
 /* Constructors */
 BondStereopermutator::Impl::Impl(
   const AtomStereopermutator& stereopermutatorA,
@@ -211,33 +780,28 @@ BondStereopermutator::Impl::Impl(
       static_cast<stereopermutation::Composite::Alignment>(alignment)
     },
     _edge(edge),
+    _feasiblePermutations(
+      temple::iota<unsigned>(_composite.permutations())
+    ),
     _assignment(boost::none)
-{
-  /* Make sure the static_cast above is safe */
-  static_assert(
-    std::is_same<
-      std::underlying_type_t<stereopermutation::Composite::Alignment>,
-      std::underlying_type_t<BondStereopermutator::Alignment>
-    >::value,
-    "Underlying type of stereopermutation's Alignment and BondStereopermutator's must match"
-  );
-  static_assert(
-    static_cast<stereopermutation::Composite::Alignment>(BondStereopermutator::Alignment::Staggered) == stereopermutation::Composite::Alignment::Staggered,
-    "Staggered Alignment values do not match across Alignment types"
-  );
-  static_assert(
-    static_cast<stereopermutation::Composite::Alignment>(BondStereopermutator::Alignment::Eclipsed) == stereopermutation::Composite::Alignment::Eclipsed,
-    "Eclipsed Alignment values do not match across Alignment types"
-  );
+{}
 
-  // TODO lift this, it's probably not relevant anymore, pending a test that SpatialModel can handle simple cases
-  if(
-    stereopermutatorA.getRanking().hasHapticSites()
-    || stereopermutatorB.getRanking().hasHapticSites()
-  ) {
-    throw std::logic_error("BondStereopermutators do not support haptic sites yet.");
-  }
-}
+BondStereopermutator::Impl::Impl(
+  const InnerGraph& graph,
+  const StereopermutatorList& stereopermutators,
+  const BondIndex edge,
+  Alignment alignment
+) : _composite(
+      _constructComposite(stereopermutators, edge, alignment)
+    ),
+    _edge(edge),
+    _feasiblePermutations(
+      notObviouslyInfeasibleStereopermutations(
+        graph, stereopermutators, _composite
+      )
+    ),
+    _assignment(boost::none)
+{}
 
 /* Public members */
 /* Modification */
@@ -323,7 +887,8 @@ void BondStereopermutator::Impl::fit(
     }
   );
 
-  unsigned firstSymmetryPosition, secondSymmetryPosition;
+  unsigned firstSymmetryPosition;
+  unsigned secondSymmetryPosition;
   double dihedralAngle;
 
   double bestPenalty = std::numeric_limits<double>::max();
@@ -397,13 +962,17 @@ void BondStereopermutator::Impl::fit(
 
 void BondStereopermutator::Impl::propagateGraphChange(
   const AtomStereopermutatorPropagatedState& oldPermutatorState,
-  const AtomStereopermutator& newPermutator
+  const AtomStereopermutator& newPermutator,
+  const InnerGraph& graph,
+  const StereopermutatorList& permutators
 ) {
   const RankingInformation& oldRanking = std::get<0>(oldPermutatorState);
-  const PermutationState& oldPermutationState = std::get<1>(oldPermutatorState);
+  const AbstractStereopermutations& oldAbstract = std::get<1>(oldPermutatorState);
+  const FeasibleStereopermutations& oldFeasible = std::get<2>(oldPermutatorState);
+  const boost::optional<unsigned>& oldAssignment = std::get<3>(oldPermutatorState);
 
   // We assume that the supplied permutators (or their state) were assigned
-  assert(std::get<2>(oldPermutatorState));
+  assert(oldAssignment);
   assert(newPermutator.assigned());
 
   /* We assume the old and new symmetry are of the same size (i.e. this is
@@ -459,20 +1028,34 @@ void BondStereopermutator::Impl::propagateGraphChange(
     unchangedOrientation
   };
 
+  // TODO feasibility has to be rechecked
+  std::vector<unsigned> newFeasiblePermutations;
+  newFeasiblePermutations = notObviouslyInfeasibleStereopermutations(
+    graph,
+    permutators,
+    newComposite
+  );
+
   /* If the new composite is isotropic, there is no reason to try to find
    * an assignment, we can choose any.
    */
   if(newComposite.isIsotropic()) {
     _composite = std::move(newComposite);
-    _assignment = 0;
+    _feasiblePermutations = std::move(newFeasiblePermutations);
+    if(!_feasiblePermutations.empty()) {
+      _assignment = 0;
+    }
     return;
   }
+
+  // TODO finding a new assignment does not respect newFeasiblePermutations yet!
 
   /* If this BondStereopermutator is unassigned, and the permutator is not
    * isotropic after the ranking change, then this permutator stays unassigned.
    */
   if(_assignment == boost::none) {
     _composite = std::move(newComposite);
+    _feasiblePermutations = std::move(newFeasiblePermutations);
     return;
   }
 
@@ -506,11 +1089,17 @@ void BondStereopermutator::Impl::propagateGraphChange(
     _assignment.value()
   );
 
+  auto oldSymmetryPositionToSiteMap = symmetryPositionToSiteMap(
+    oldAbstract.permutations.stereopermutations.at(
+      oldFeasible.indices.at(
+        oldAssignment.value()
+      )
+    ),
+    oldAbstract.canonicalSites
+  );
+
   auto getNewSymmetryPosition = [&](unsigned oldSymmetryPosition) -> unsigned {
-    const unsigned oldSiteIndex = SymmetryMapHelper::getSiteIndexAt(
-      oldSymmetryPosition,
-      oldPermutationState.symmetryPositionMap
-    );
+    const unsigned oldSiteIndex = oldSymmetryPositionToSiteMap.at(oldSymmetryPosition);
 
     const std::vector<AtomIndex>& oldSite = oldRanking.sites.at(oldSiteIndex);
 
@@ -618,6 +1207,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
   // Overwrite class state
   _assignment = matchIter - std::begin(newComposite);
   _composite = std::move(newComposite);
+  _feasiblePermutations = std::move(newFeasiblePermutations);
 }
 
 /* Information */
@@ -635,7 +1225,7 @@ boost::optional<unsigned> BondStereopermutator::Impl::assigned() const {
    * fitting).
    */
   if(_assignment && _composite.isIsotropic()) {
-    return 0u;
+    return 0U;
   }
 
   return _assignment;
@@ -647,18 +1237,22 @@ bool BondStereopermutator::Impl::hasSameCompositeOrientation(const BondStereoper
 
 boost::optional<unsigned> BondStereopermutator::Impl::indexOfPermutation() const {
   if(_assignment && _composite.isIsotropic()) {
-    return 0u;
+    return 0U;
   }
 
-  return _assignment;
+  if(!_assignment) {
+    return boost::none;
+  }
+
+  return _feasiblePermutations.at(*_assignment);
 }
 
 unsigned BondStereopermutator::Impl::numAssignments() const {
-  if(_composite.isIsotropic()) {
+  if(_composite.isIsotropic() && !_feasiblePermutations.empty()) {
     return 1;
   }
 
-  return _composite.permutations();
+  return _feasiblePermutations.size();
 }
 
 unsigned BondStereopermutator::Impl::numStereopermutations() const {
@@ -672,23 +1266,30 @@ unsigned BondStereopermutator::Impl::numStereopermutations() const {
 std::string BondStereopermutator::Impl::info() const {
   using namespace std::string_literals;
 
-  std::string returnString =  "B on "s;
+  std::string returnString =  "B on ";
 
   returnString += std::to_string(_composite.orientations().first.identifier);
   returnString += "-";
   returnString += std::to_string(_composite.orientations().second.identifier);
 
-  if(numStereopermutations() == 1) {
+  const unsigned A = numAssignments();
+
+  if(A == 1) {
     returnString += ". Is non-stereogenic.";
   } else {
-    returnString += ". Is "s;
+    returnString += ". Is ";
     if(_assignment) {
       returnString += std::to_string(_assignment.value());
     } else {
       returnString += "u";
     }
 
-    returnString += "/"s + std::to_string(numStereopermutations());
+    returnString += "/"s + std::to_string(A);
+
+    const unsigned P = numStereopermutations();
+    if(P != A) {
+      returnString += " ("s + std::to_string(P) + ")"s;
+    }
   }
 
   return returnString;

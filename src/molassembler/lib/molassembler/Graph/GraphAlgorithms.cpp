@@ -12,12 +12,14 @@
 #include "boost/graph/biconnected_components.hpp"
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/range/combine.hpp"
+#include "temple/Adaptors/AllPairs.h"
 #include "temple/Functional.h"
 #include "temple/UnorderedSetAlgorithms.h"
 #include "temple/TinySet.h"
 
-#include "molassembler/Modeling/AtomInfo.h"
+#include "molassembler/AtomStereopermutator.h"
 #include "molassembler/Cycles.h"
+#include "molassembler/Modeling/AtomInfo.h"
 #include "molassembler/RankingInformation.h"
 
 namespace Scine {
@@ -26,146 +28,226 @@ namespace molassembler {
 
 namespace GraphAlgorithms {
 
-unsigned numConnectedComponents(const InnerGraph& graph) {
-  std::vector<AtomIndex> component(graph.N());
+std::vector<LinkInformation> siteLinks(
+  const InnerGraph& graph,
+  const AtomStereopermutator& stereopermutatorA,
+  const AtomStereopermutator& stereopermutatorB
+) {
+  // Make sure the stereopermutators called with are bonded in the first place
+  assert(
+    graph.edgeOption(
+      stereopermutatorA.centralIndex(),
+      stereopermutatorB.centralIndex()
+    )
+  );
 
-  return boost::connected_components(graph.bgl(), &component[0]);
+  // If either permutator is terminal, there can be no links
+  if(
+    stereopermutatorA.getRanking().sites.size() == 1
+    || stereopermutatorB.getRanking().sites.size() == 1
+  ) {
+    return {};
+  }
+
+  auto findNeighboringAtoms = [](
+    const AtomIndex a,
+    const AtomIndex b,
+    const std::vector<BondIndex>& cycleBonds
+  ) -> std::pair<AtomIndex, AtomIndex> {
+    auto findNeighbor = [](
+      const AtomIndex focalAtom,
+      const AtomIndex avoidAtom,
+      const std::vector<BondIndex>& cycle
+    ) -> AtomIndex {
+      auto findEdgeIter = temple::find_if(
+        cycle,
+        [&](const BondIndex& edge) -> bool {
+          return (
+            edge.contains(focalAtom)
+            && !edge.contains(avoidAtom)
+          );
+        }
+      );
+
+      assert(findEdgeIter != std::end(cycle));
+
+      return (
+        findEdgeIter->first == focalAtom
+        ? findEdgeIter->second
+        : findEdgeIter->first
+      );
+    };
+
+    return {
+      findNeighbor(a, b, cycleBonds),
+      findNeighbor(b, a, cycleBonds)
+    };
+  };
+
+  std::vector<LinkInformation> links;
+  std::map<
+    std::pair<unsigned, unsigned>,
+    unsigned
+  > siteIndicesToLinksPositionMap;
+
+  for(
+    auto cycleOuterEdges : boost::make_iterator_range(
+      graph.etaPreservedCycles().containing(
+        BondIndex {
+          stereopermutatorA.centralIndex(),
+          stereopermutatorB.centralIndex()
+        }
+      )
+    )
+  ) {
+    // Figure out which substituent of A and B is part of the cycle
+    AtomIndex aAdjacent, bAdjacent;
+    std::tie(aAdjacent, bAdjacent) = findNeighboringAtoms(
+      stereopermutatorA.centralIndex(),
+      stereopermutatorB.centralIndex(),
+      cycleOuterEdges
+    );
+
+    std::pair<unsigned, unsigned> siteIndices {
+      stereopermutatorA.getRanking().getSiteIndexOf(aAdjacent),
+      stereopermutatorB.getRanking().getSiteIndexOf(bAdjacent)
+    };
+
+    const auto mapFindIter = siteIndicesToLinksPositionMap.find(siteIndices);
+    if(
+      // No entry for site indices
+      mapFindIter == std::end(siteIndicesToLinksPositionMap)
+      // Or new cycle is smaller than one already found
+      || cycleOuterEdges.size() < links.at(mapFindIter->second).cycleSequence.size()
+    ) {
+      // No invariant establishing for these LinkInformations
+      LinkInformation newLink;
+      newLink.indexPair = siteIndices;
+      newLink.cycleSequence = makeRingIndexSequence(std::move(cycleOuterEdges));
+
+      // Add or update existing
+      if(mapFindIter == std::end(siteIndicesToLinksPositionMap)) {
+        links.push_back(std::move(newLink));
+        siteIndicesToLinksPositionMap.emplace(
+          siteIndices,
+          links.size() - 1
+        );
+      } else {
+        links.at(mapFindIter->second) = std::move(newLink);
+      }
+    }
+  }
+
+  temple::inplace::sort(links);
+  return links;
 }
 
-std::vector<LinkInformation> substituentLinks(
+std::vector<LinkInformation> siteLinks(
   const InnerGraph& graph,
-  const Cycles& cycleData,
   const AtomIndex source,
   const std::vector<
     std::vector<AtomIndex>
-  >& ligands,
+  >& sites,
   const std::vector<AtomIndex>& excludeAdjacents
 ) {
   // Early return: If the atom is terminal, there can be no links
-  if(ligands.size() == 1) {
+  if(sites.size() == 1) {
     return {};
   }
 
   /* General idea:
    *
-   * In order to avoid a full O(N) BFS on every AtomStereopermutator candidate to
-   * determine links, use cached Cycles instead to determine links.
+   * In order to avoid a full O(N) BFS on every AtomStereopermutator candidate
+   * to determine links, use Cycles instead.
    *
-   * Iterate through every cycle and look for cycles containing exactly two of
-   * the edge_descriptors corresponding to the edges from the source to an
-   * active substituent.
+   * Iterate through every cycle and look for cycles containing two of source's
+   * immediate adjacents.
    *
    * The two atoms adjacent to the central atom represented by those edges must
-   * be from different ligands.
+   * be from different sites.
    */
+  std::unordered_map<AtomIndex, unsigned> indexToSiteMap;
+  for(unsigned i = 0; i < sites.size(); ++i) {
+    for(const AtomIndex siteAtomIndex : sites.at(i)) {
+      indexToSiteMap.emplace(siteAtomIndex, i);
+    }
+  }
+
+  std::vector<AtomIndex> sourceAdjacents;
+  sourceAdjacents.reserve(graph.degree(source));
+  for(
+    const AtomIndex adjacent :
+    boost::make_iterator_range(graph.adjacents(source))
+  ) {
+    if(!temple::makeContainsPredicate(excludeAdjacents)(adjacent)) {
+      sourceAdjacents.push_back(adjacent);
+    }
+  }
+
   std::vector<LinkInformation> links;
-
-  std::map<AtomIndex, unsigned> indexToLigandMap;
-  for(unsigned i = 0; i < ligands.size(); ++i) {
-    for(const auto& ligandIndex : ligands.at(i)) {
-      indexToLigandMap.emplace(ligandIndex, i);
-    }
-  }
-
-  temple::TinySet<InnerGraph::Edge> sourceAdjacentEdges;
-  for(const auto& ligand : ligands) {
-    for(const AtomIndex ligandConstitutingIndex : ligand) {
-      if(
-        std::find(
-          std::begin(excludeAdjacents),
-          std::end(excludeAdjacents),
-          ligandConstitutingIndex
-        ) == std::end(excludeAdjacents)
-      ) {
-        sourceAdjacentEdges.insert(
-          graph.edge(source, ligandConstitutingIndex)
-        );
-      }
-    }
-  }
-
   std::map<
     std::pair<unsigned, unsigned>,
     unsigned // Index of LinkInformation in links
-  > linksMap;
+  > siteIndicesToLinksPositionMap;
 
-  for(auto cycleOuterEdges : cycleData) {
-    auto cycleInnerEdges = temple::map(
-      cycleOuterEdges,
-      [&graph](const BondIndex& bond) -> InnerGraph::Edge {
-        return graph.edge(bond.first, bond.second);
-      }
-    );
-
-    // For set_intersection to work, cycle edges need to be sorted too
-    std::sort(
-      std::begin(cycleInnerEdges),
-      std::end(cycleInnerEdges)
-    );
-
-    std::vector<InnerGraph::Edge> intersection;
-
-    // Set intersection copies intersected elements from the first range
-    std::set_intersection(
-      std::begin(sourceAdjacentEdges),
-      std::end(sourceAdjacentEdges),
-      std::begin(cycleInnerEdges),
-      std::end(cycleInnerEdges),
-      std::back_inserter(intersection)
-    );
-
-    // Must match exactly two edges
-    if(intersection.size() == 2) {
-      /* Intersected edges come from sourceAdjacentEdges, which are from an
-       * out_edges call, where it is guaranteed that source is the vertex
-       * out_edges was called with. The atom indices of interest are therefore
-       * the targets of these edges.
-       */
-      const AtomIndex a = graph.target(intersection.front());
-      const AtomIndex b = graph.target(intersection.back());
-
-      const unsigned ligandOfA = indexToLigandMap.at(a);
-      const unsigned ligandOfB = indexToLigandMap.at(b);
-
-      if(ligandOfA == ligandOfB) {
-        // If the cycle adjacents are from the same ligand, ignore this cycle
-        continue;
-      }
-
-      auto indexPair = std::pair<unsigned, unsigned> {
-        std::min(ligandOfA, ligandOfB),
-        std::max(ligandOfA, ligandOfB),
-      };
-
-      // Find which adjacents are overlapping
-      if(
-        linksMap.count(indexPair) == 0
-        || (
-          linksMap.count(indexPair) > 0
-          && cycleInnerEdges.size() < links.at(linksMap.at(indexPair)).cycleSequence.size()
+  temple::forEach(
+    temple::adaptors::allPairs(sourceAdjacents),
+    [&](const AtomIndex a, const AtomIndex b) {
+      for(
+        auto cycleOuterEdges :
+        boost::make_iterator_range(
+          graph.etaPreservedCycles().containing(
+            std::vector<BondIndex> {
+              BondIndex {source, a},
+              BondIndex {source, b}
+            }
+          )
         )
       ) {
-        auto newLink = LinkInformation {
-          indexPair,
-          makeRingIndexSequence(std::move(cycleOuterEdges)),
-          source
-        };
+        assert(
+          [&]() {
+            auto containsPredicate = temple::makeContainsPredicate(cycleOuterEdges);
+            return containsPredicate(BondIndex {source, a}) && containsPredicate(BondIndex {source, b});
+          }()
+        );
 
-        /* Track the current best link for a given ligand index pair and
-         * improve it if a better one turns up
-         */
-        if(linksMap.count(indexPair) == 0) {
-          links.push_back(std::move(newLink));
-          linksMap.emplace(
-            indexPair,
-            links.size() - 1
-          );
-        } else {
-          links.at(linksMap.at(indexPair)) = std::move(newLink);
+        const unsigned siteOfA = indexToSiteMap.at(a);
+        const unsigned siteOfB = indexToSiteMap.at(b);
+
+        if(siteOfA == siteOfB) {
+          // If the cycle adjacents are from the same ligand, ignore this cycle
+          continue;
+        }
+
+        const std::pair<unsigned, unsigned> siteIndices = std::minmax(siteOfA, siteOfB);
+
+        const auto mapFindIter = siteIndicesToLinksPositionMap.find(siteIndices);
+        if(
+          mapFindIter == std::end(siteIndicesToLinksPositionMap)
+          || cycleOuterEdges.size() < links.at(mapFindIter->second).cycleSequence.size()
+        ) {
+          auto newLink = LinkInformation {
+            siteIndices,
+            makeRingIndexSequence(std::move(cycleOuterEdges)),
+            source
+          };
+
+          /* Track the current best link for a given ligand index pair and
+           * improve it if a better one turns up
+           */
+          if(mapFindIter == std::end(siteIndicesToLinksPositionMap)) {
+            links.push_back(std::move(newLink));
+            siteIndicesToLinksPositionMap.emplace(
+              siteIndices,
+              links.size() - 1
+            );
+          } else {
+            links.at(mapFindIter->second) = std::move(newLink);
+          }
         }
       }
     }
-  }
+  );
 
   // Sort the links before passing them out in order to ease comparisons
   temple::inplace::sort(links);
@@ -175,25 +257,25 @@ std::vector<LinkInformation> substituentLinks(
 
 namespace detail {
 
-bool isHapticLigand(
-  const std::vector<AtomIndex>& ligand,
+bool isHapticSite(
+  const std::vector<AtomIndex>& siteAtoms,
   const InnerGraph& graph
 ) {
-  /* A ligand is a haptic ligand if:
+  /* A site is haptic if:
    * - The number of co-bonded atoms constituting direct bonds is more than one
-   * - It is not a same-type triangle, i.e. we have detected
+   * - And it is not a same-type triangle, i.e. we have detected
    *
    *     M — B
    *      \ /   where M, A and B are all non-main-group elements
    *       A
    */
   return (
-    ligand.size() > 1
+    siteAtoms.size() > 1
     && !( // Exclude the same-type triangle
-      ligand.size() == 2
+      siteAtoms.size() == 2
       // The number of non-main-group elements is more than 1
       && temple::accumulate(
-        ligand,
+        siteAtoms,
         0u,
         [&](const unsigned carry, const AtomIndex adjacent) -> unsigned {
           if(!AtomInfo::isMainGroupElement(graph.elementType(adjacent))) {
@@ -207,7 +289,7 @@ bool isHapticLigand(
   );
 }
 
-void findLigands(
+void findSites(
   const InnerGraph& graph,
   const AtomIndex centralIndex,
   const std::function<void(const std::vector<AtomIndex>&)>& callback
@@ -225,7 +307,7 @@ void findLigands(
 
   std::vector<bool> skipList (A, false);
 
-  temple::TinySet<AtomIndex> ligand;
+  temple::TinySet<AtomIndex> site;
 
   std::function<void(const InnerGraph::Vertex)> recursiveDiscover
   = [&](const InnerGraph::Vertex seed) {
@@ -233,9 +315,9 @@ void findLigands(
       const InnerGraph::Vertex adjacent :
       boost::make_iterator_range(graph.adjacents(seed))
     ) {
-      if(centralAdjacents.count(adjacent) > 0 && ligand.count(adjacent) == 0) {
+      if(centralAdjacents.count(adjacent) > 0 && site.count(adjacent) == 0) {
         // *iter is shared adjacent of center and seed and not yet discovered
-        ligand.insert(adjacent);
+        site.insert(adjacent);
         recursiveDiscover(adjacent);
       }
     }
@@ -253,10 +335,10 @@ void findLigands(
     }
 
     const AtomIndex& adjacent = centralAdjacents.at(i);
-    ligand = {adjacent};
+    site = {adjacent};
     recursiveDiscover(adjacent);
 
-    callback(ligand.data);
+    callback(site.data);
   }
 }
 
@@ -323,12 +405,12 @@ std::vector<
     std::vector<AtomIndex>
   > groupedLigands;
 
-  detail::findLigands(
+  detail::findSites(
     graph,
     centralIndex,
     [&](const std::vector<AtomIndex>& ligand) -> void {
       // Make sure all bonds are marked properly
-      if(detail::isHapticLigand(ligand, graph)) {
+      if(detail::isHapticSite(ligand, graph)) {
         for(const auto& hapticIndex : ligand) {
           auto edge = graph.edge(centralIndex, hapticIndex);
           if(graph.bondType(edge) != BondType::Eta) {
@@ -382,11 +464,11 @@ void updateEtaBonds(InnerGraph& graph) {
       continue;
     }
 
-    detail::findLigands(
+    detail::findSites(
       graph,
       centralIndex,
       [&](const std::vector<AtomIndex>& ligand) -> void {
-        if(detail::isHapticLigand(ligand, graph)) {
+        if(detail::isHapticSite(ligand, graph)) {
           // Mark all bonds to the central atom as haptic bonds
           for(const auto& hapticIndex : ligand) {
             auto edge = graph.edge(centralIndex, hapticIndex);
