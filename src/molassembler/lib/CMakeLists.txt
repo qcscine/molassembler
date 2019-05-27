@@ -70,6 +70,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementDebugData.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementMeta.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/TetrangleSmoothing.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Editing.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/Bridge.h
@@ -124,6 +125,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ImplicitGraph.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/MetricMatrix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/TetrangleSmoothing.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ValueBounds.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Editing.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Graph/Canonicalization.cpp
