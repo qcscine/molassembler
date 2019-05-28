@@ -83,47 +83,39 @@ public:
     const unsigned nParams = initialParameters.size();
 
     detail::EigenUpdateBuffer<VectorType> parameters;
-    parameters.current = std::move(initialParameters);
+    parameters.old = std::move(initialParameters);
     detail::FloatUpdateBuffer<FloatType> values;
     detail::EigenUpdateBuffer<VectorType> gradients;
+    gradients.old.resize(nParams);
     gradients.current.resize(nParams);
     CollectiveRingBuffer ringBuffer {nParams};
 
+    /* Steepest descent step: */
     // Calculate initial function value and gradients
+    function(parameters.old, values.old, gradients.old);
+    observer(parameters.old);
+    // Generate direction
+    VectorType stepVector = FloatType {-0.1} * stepLength * gradients.old;
+    // Create new parameters
+    parameters.current.noalias() = parameters.old + stepLength * stepVector;
+    // Re-evaluate the function, assigning current value and gradient
     function(parameters.current, values.current, gradients.current);
-
-    /* Start with a steepest descent step */
-    VectorType stepVector = FloatType {-0.1} * stepLength * gradients.current;
+    observer(parameters.current);
 
     unsigned iteration;
-    for(iteration = 0; !check.checkMaxIterations(iteration); ++iteration) {
-      parameters.propagate();
-      values.propagate();
-      gradients.propagate();
-
-      /* Create new parameters from the old ones and the current step vector */
-      parameters.current.noalias() = parameters.old + stepLength * stepVector;
-
-      /* Update gradients and value */
-      function(
-        parameters.current,
-        values.current,
-        gradients.current
+    for(
+      iteration = 1;
+      (
+        !check.checkMaxIterations(iteration)
+        && !check.checkConvergence(parameters.current, values.current, gradients.current)
       );
-
-      // Call the observer function
-      observer(parameters.current);
-
-      // Check convergence
-      if(check.checkConvergence(
-        parameters.current,
-        values.current,
-        gradients.current
-      )) {
-        break;
-      }
-
-      // Conditionally make sure the chosen step length is appropriate
+      ++iteration
+    ) {
+      /* The chosen direction and step length may overshoot or undershoot,
+       * and the function value might increase. We try to adapt the
+       * step length in order to ensure the function value decreases and
+       * step length is more or less optimal.
+       */
       if(linesearch) {
         /* Armijo condition (Wolfe condition I) */
         bool armijoCondition = (
@@ -158,8 +150,11 @@ public:
          * still value-improving, step
          */
         if(backtrack && (!armijoCondition || !curvatureCondition)) {
-          parameters.revert();
-          gradients.revert();
+          // Retry shortened/lengthened step (no propagation needed)
+          parameters.current.noalias() = parameters.old + stepLength * stepVector;
+          /* Update gradients and value */
+          function(parameters.current, values.current, gradients.current);
+          observer(parameters.current);
           continue;
         }
       }
@@ -170,6 +165,14 @@ public:
       // L-BFGS update: Use old parameters and gradients to improve direction
       stepVector = -gradients.current;
       ringBuffer.updateStepVector(stepVector);
+
+      /* Generate new parameters and get new value and gradient */
+      parameters.propagate();
+      values.propagate();
+      gradients.propagate();
+      parameters.current.noalias() = parameters.old + stepLength * stepVector;
+      function(parameters.current, values.current, gradients.current);
+      observer(parameters.current);
     }
 
     // Copy the optimal parameters back into the in/out argument
