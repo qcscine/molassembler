@@ -15,7 +15,7 @@ option(MOLASSEMBLER_VALIDATION_TESTS "Compile validation tests" OFF)
 option(MOLASSEMBLER_DOWNLOAD_DEPENDENCIES "Enable downloading dependencies (for CI-Only!)" OFF)
 option(MOLASSEMBLER_PARALLELIZE "Enables OpenMP parallelization" ON)
 option(MOLASSEMBLER_IPO "Try to enable interprocedural optimization" OFF)
-option(MOLASSEMBLER_TUNE_ISA "Try to tune optimization towards the local instruction set architecture (only relevant for build types Release and RelWithDebInfo)" ON)
+option(MOLASSEMBLER_TUNE_ISA "Try to tune optimization towards the local instruction set architecture (only relevant for build types Release and RelWithDebInfo)" OFF)
 option(MOLASSEMBLER_NO_GNU_UNIQUE "Set --no-gnu-unique GCC flag" OFF)
 option(MOLASSEMBLER_ADDRESS_SANITIZE "Add address sanitizer" OFF)
 
