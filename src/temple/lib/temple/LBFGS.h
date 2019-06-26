@@ -10,15 +10,7 @@
 #include <iostream>
 
 /* TODO
- * - Boxed minimization and maximization are off. Ideas:
- *   - zero out gradient components that are bounded and point out of the box
- *     immediately after a function call instead of adjusting them only in the
- *     LBFGS update.
- *     - Consequence: no true gradients will ever be passed to checkers. Is
- *     that a problem?
- *     - Also, now the boxed minimizations are single-step (?) Convergence
- *     checking might be faulty now?
- * - Boxed maximization minimizes even though the function is negated?
+ * - Detect ill-conditioning of LBFGS? Doesn't do well at all near maxima
  */
 
 namespace temple {
@@ -171,7 +163,7 @@ void adjustDirection(
 
 } // namespace detail
 
-template<typename FloatType, unsigned ringBufferSize>
+template<typename FloatType = double, unsigned ringBufferSize = 16>
 class LBFGS {
 public:
   constexpr static bool isPowerOfTwo(unsigned x) {
@@ -417,7 +409,6 @@ public:
     const unsigned P = parameters.size();
     StepValues step;
     VectorType direction = step.generateInitialDirection(function, parameters, stepLength, box);
-    std::cout << "Propose step to " << step.parameters.current.transpose() << ", value " << step.values.current << "\n";
 
     CollectiveRingBuffer ringBuffer {P};
     observer(step.parameters.current);
@@ -437,9 +428,7 @@ public:
       /* Accept the current step and create a new prospective step using the new
        * direction vector
        */
-      std::cout << "Accepting step to " << step.parameters.current.transpose() << "\n";
       step.propagate(function, stepLength, direction, box);
-      std::cout << "Propose step to " << step.parameters.current.transpose() << ", value " << step.values.current << "\n";
       observer(step.parameters.current);
     }
 
@@ -545,16 +534,22 @@ private:
       // Initialize new with a small steepest descent step
       VectorType direction = FloatType {-0.1} * gradients.old;
 
-      // Create new parameters
-      parameters.current.noalias() = parameters.old + multiplier * direction;
-
-      detail::boxes::clampToBounds<VectorType>(parameters.current, boxes ...);
-
-      // Re-evaluate the function, assigning current value and gradient
-      function(parameters.current, values.current, gradients.current);
-      detail::boxes::adjustGradient<VectorType>(gradients.current, parameters.current, boxes ...);
+      prepare(function, multiplier, direction, boxes ...);
 
       return direction;
+    }
+
+    template<typename UpdateFunction, typename ... Boxes>
+    void prepare(
+      UpdateFunction&& function,
+      const FloatType multiplier,
+      const VectorType& direction,
+      Boxes ... boxes
+    ) {
+      parameters.current.noalias() = parameters.old + multiplier * direction;
+      detail::boxes::clampToBounds<VectorType>(parameters.current, boxes ...);
+      function(parameters.current, values.current, gradients.current);
+      detail::boxes::adjustGradient<VectorType>(gradients.current, parameters.current, boxes ...);
     }
 
     /**
@@ -576,10 +571,7 @@ private:
       values.propagate();
       gradients.propagate();
 
-      parameters.current.noalias() = parameters.old + multiplier * direction;
-      detail::boxes::clampToBounds<VectorType>(parameters.current, boxes ...);
-      function(parameters.current, values.current, gradients.current);
-      detail::boxes::adjustGradient<VectorType>(gradients.current, parameters.current, boxes ...);
+      prepare(function, multiplier, direction, boxes ...);
     }
   };
 
@@ -587,97 +579,132 @@ private:
    * @brief Class containing hessian information for LBFGS update
    */
   struct CollectiveRingBuffer {
-    // Ring buffered differences of parameters and gradients between updates
-    Eigen::Matrix<FloatType, Eigen::Dynamic, ringBufferSize> dg;
-    Eigen::Matrix<FloatType, Eigen::Dynamic, ringBufferSize> dx;
-    Eigen::Matrix<FloatType, ringBufferSize, 1> dxDotDg;
+    //! Ring buffer containing gradient differences: y_k = g_{k+1} - g_k
+    Eigen::Matrix<FloatType, Eigen::Dynamic, ringBufferSize> y;
+    //! Ring buffer containing parameter differnces: s_k = x_{k+1} - x_k
+    Eigen::Matrix<FloatType, Eigen::Dynamic, ringBufferSize> s;
+    //! Ring buffered result of s_k.dot(y_k)
+    Eigen::Matrix<FloatType, ringBufferSize, 1> sDotY;
     unsigned count = 0, offset = 0;
 
     CollectiveRingBuffer(const unsigned nParams)
-      : dg(nParams, ringBufferSize),
-        dx(nParams, ringBufferSize)
+      : y(nParams, ringBufferSize),
+        s(nParams, ringBufferSize)
     {}
+
+    unsigned newestOffset() const {
+      return (count + offset - 1) % ringBufferSize;
+    }
+
+    unsigned oldestOffset() const {
+      return (count + offset) % ringBufferSize;
+    }
+
+    /**
+     * @brief Calls a unary function with the indices of the ring buffer in
+     *   sequence from newest to oldest entries
+     *
+     * @tparam UnaryFn A unary callable with argument convertible from int
+     * @param fn The function to call
+     */
+    template<typename UnaryFn>
+    void newestToOldest(UnaryFn&& fn) const {
+      assert(count > 0);
+      const int newest = newestOffset();
+      for(int i = newest; i > - 1; --i) {
+        fn(i);
+      }
+
+      const int countOrSizeLimit = std::min(count - 1, ringBufferSize - 1);
+      for(int i = countOrSizeLimit; i > newest; --i) {
+        fn(i);
+      }
+    }
+
+    /**
+     * @brief Calls a unary function with the indices of the ring buffer in
+     *   sequence from oldest to newest entries
+     *
+     * @tparam UnaryFn A unary callable with argument convertible from int
+     * @param fn The function to call
+     */
+    template<typename UnaryFn>
+    void oldestToNewest(UnaryFn&& fn) const {
+      assert(count > 0);
+      const unsigned oldest = oldestOffset();
+      for(unsigned i = oldest; i < count; ++i) {
+        fn(i);
+      }
+
+      for(unsigned i = 0; i < oldest; ++i) {
+        fn(i);
+      }
+    }
 
     void addInformation(
       const detail::EigenUpdateBuffer<VectorType>& parameterBuffer,
       const detail::EigenUpdateBuffer<VectorType>& gradientBuffer
     ) {
       if(count < ringBufferSize) {
-        dg.col(count) = gradientBuffer.current - gradientBuffer.old;
-        dx.col(count) = parameterBuffer.current - parameterBuffer.old;
-        dxDotDg(count) = dx.col(count).dot(dg.col(count));
+        y.col(count).noalias() = gradientBuffer.current - gradientBuffer.old;
+        s.col(count).noalias() = parameterBuffer.current - parameterBuffer.old;
+        sDotY(count) = s.col(count).dot(y.col(count));
         ++count;
       } else {
         // Rotate columns without copying (introduce modulo offset)
         const unsigned columnOffset = (count + offset) % ringBufferSize;
-        dg.col(columnOffset) = gradientBuffer.current - gradientBuffer.old;
-        dx.col(columnOffset) = parameterBuffer.current - parameterBuffer.old;
-        dxDotDg(columnOffset) = dx.col(columnOffset).dot(dg.col(columnOffset));
+        y.col(columnOffset).noalias() = gradientBuffer.current - gradientBuffer.old;
+        s.col(columnOffset).noalias() = parameterBuffer.current - parameterBuffer.old;
+        sDotY(columnOffset) = s.col(columnOffset).dot(y.col(columnOffset));
         offset = (offset + 1) % ringBufferSize;
       }
     }
 
     /**
-     * @brief Add stored hessian information to improve a conjugate gradient
+     * @brief Use stored gradient and parameter differences to generate a new
      *   direction
      *
-     * @param direction The direction to improve
+     * @param q The vector in which to store the direction
+     * @param currentGradient The current gradient
      */
-    void improveDirection(Eigen::Ref<VectorType> direction) {
+    void generateNewDirection(
+      Eigen::Ref<VectorType> q,
+      const VectorType& currentGradient
+    ) const {
+      /* Note: Naming follows Numerical Optimization (2006)'s naming scheme,
+       * p.178.
+       */
+      const unsigned kMinusOne = newestOffset();
+
+      q = -currentGradient;
       VectorType alpha(count);
-      auto newestToOldest = [&](unsigned i) {
-        FloatType dxDotdg = dxDotDg(i);
-        if(std::fabs(dxDotdg) < FloatType {1.0e-6}) {
-          alpha[i] = dx.col(i).dot(direction) / FloatType {1.0e-6};
-          if(dxDotdg < 0) {
-            alpha[i] *= -1;
-          }
-        } else {
-          alpha[i] = dx.col(i).dot(direction) / dxDotdg;
+
+      newestToOldest(
+        [&](const unsigned i) {
+          alpha[i] = s.col(i).dot(q) / sDotY(i);
+          q.noalias() -= alpha[i] * y.col(i);
         }
+      );
 
-        direction.noalias() -= alpha[i] * dg.col(i);
-      };
+      /* gamma_k = s_{k-1}^T y_{k-1} / (y_{k-1}^T y_{k-1})
+       *         = s_{k-1}.dot(y_{k-1}) / y_{k-1}.squaredNorm()
+       *
+       * H_k^0 = y_k * I (where I is the identity matrix for n dimensions)
+       * r = H_k^0 * q (where q is the current direction)
+       *
+       * q is not needed again later in the algorithm, so instead of defining
+       * a new vector r we just reuse q.
+       *
+       * -> q *= gamma_k;
+       */
+      q *= sDotY(kMinusOne) / y.col(kMinusOne).squaredNorm();
 
-      // Newest to oldest
-      const int newestOffset = (count + offset - 1) % ringBufferSize;
-      for(int i = newestOffset; i > - 1; --i) {
-        newestToOldest(i);
-      }
-      for(
-        int i = std::min(count - 1, ringBufferSize - 1);
-        i > newestOffset;
-        --i
-      ) {
-        newestToOldest(i);
-      }
-
-      direction *= dxDotDg(newestOffset) / dg.col(newestOffset).squaredNorm();
-
-      auto oldestToNewest = [&](unsigned i) {
-        FloatType dxDotdg = dxDotDg(i);
-        FloatType beta = dg.col(i).dot(direction);
-
-        if(std::fabs(dxDotdg) < FloatType {1.0e-6}) {
-          beta /= FloatType {1.0e-6};
-          if(dxDotdg < 0) {
-            beta *= -1;
-          }
-        } else {
-          beta /= dxDotdg;
+      oldestToNewest(
+        [&](const unsigned i) {
+          const FloatType beta = y.col(i).dot(q) / sDotY(i);
+          q.noalias() += (alpha[i] - beta) * s.col(i);
         }
-
-        direction.noalias() += (alpha[i] - beta) * dx.col(i);
-      };
-
-      // Oldest to newest
-      const unsigned oldestOffset = (count + offset) % ringBufferSize;
-      for(unsigned i = oldestOffset; i < count; ++i) {
-        oldestToNewest(i);
-      }
-      for(unsigned i = 0; i < oldestOffset; ++i) {
-        oldestToNewest(i);
-      }
+      );
     }
 
     template<typename ... Boxes>
@@ -690,8 +717,7 @@ private:
        * descent direction
        */
       addInformation(step.parameters, step.gradients);
-      direction = -step.gradients.current;
-      improveDirection(direction);
+      generateNewDirection(direction, step.gradients.current);
       detail::boxes::adjustDirection(
         direction,
         step.parameters.current,
@@ -730,17 +756,19 @@ private:
   ) {
     unsigned iterations = 0;
 
-    for(iterations = 0; stepLength > 0; ++iterations) {
-      /* Armijo condition (Wolfe condition I) */
-      bool armijoCondition = (
+    for(iterations = 0; stepLength > 1e-4; ++iterations) {
+      const double oldGradDotDirection = step.gradients.old.dot(direction);
+
+      /* Armijo rule (Wolfe condition I) */
+      bool armijoRule = (
         step.values.current
-        <= step.values.old + c1 * stepLength * step.gradients.old.dot(direction)
+        <= step.values.old + c1 * stepLength * oldGradDotDirection
       );
 
       /* Curvature condition (Wolfe condition II) */
       bool curvatureCondition = (
         step.gradients.current.dot(direction)
-        >= c2 * step.gradients.old.dot(direction)
+        >= c2 * oldGradDotDirection
       );
 
       /* Backtracking condition */
@@ -755,7 +783,7 @@ private:
         "approximately one, this can cause oscillation"
       );
 
-      if(!armijoCondition) {
+      if(!armijoRule) {
         stepLength *= shortenFactor;
       } else if(!curvatureCondition) {
         stepLength *= lengthenFactor;
@@ -767,14 +795,9 @@ private:
        * and possibly adjusted the step length using the Wolfe conditions,
        * that's enough.
        */
-      if(backtrack && (!armijoCondition || !curvatureCondition)) {
+      if(backtrack && (!armijoRule || !curvatureCondition)) {
         // Retry shortened/lengthened step (no propagation needed)
-        step.parameters.current.noalias() = step.parameters.old + stepLength * direction;
-        detail::boxes::clampToBounds<VectorType>(step.parameters.current, boxes ...);
-
-        /* Update gradients and value */
-        function(step.parameters.current, step.values.current, step.gradients.current);
-        detail::boxes::adjustGradient<VectorType>(step.gradients.current, step.parameters.current, boxes ...);
+        step.prepare(function, stepLength, direction, boxes ...);
         observer(step.parameters.current);
 
         // Handle encountered parameter boundaries
@@ -787,6 +810,10 @@ private:
       } else {
         break;
       }
+    }
+
+    if(stepLength <= 1e-4) {
+      throw std::logic_error("stepLength no longer in reasonable bounds");
     }
 
     return iterations;

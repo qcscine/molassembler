@@ -97,7 +97,6 @@ BOOST_AUTO_TEST_CASE(LBFGSSimpleMaximization) {
 BOOST_AUTO_TEST_CASE(LBFGSCosineMinimization) {
   /* f(x, y) = - cos x - 0.5 cos y
    * Minima at (2n pi, 2n pi)
-   * In box min [0.1, 0], max [pi, pi] minimum should be [0.1, 0]
    */
   const auto gradientTestFunction = [](const Eigen::VectorXd& parameters, double& value, Eigen::Ref<Eigen::VectorXd> gradients) {
     const double& x = parameters[0];
@@ -120,7 +119,7 @@ BOOST_AUTO_TEST_CASE(LBFGSCosineMinimization) {
   Eigen::VectorXd expectedMinimum(2);
   expectedMinimum << 0, 0;
 
-  const unsigned cycles = optimizer.maximize(
+  const unsigned cycles = optimizer.minimize(
     positions,
     gradientTestFunction,
     gradientChecker
@@ -139,7 +138,7 @@ BOOST_AUTO_TEST_CASE(LBFGSCosineMinimization) {
   for(unsigned i = 0; i < 2; ++i) {
     BOOST_CHECK_MESSAGE(
       std::fabs(positions[i] - expectedMinimum[i]) < 1e-3,
-      "Position parameter " << i << " is not at the expected maximum."
+      "Position parameter " << i << " is not at the expected minimium."
       << " Expected " << expectedMinimum[i] << ", got " << positions[i]
     );
   }
