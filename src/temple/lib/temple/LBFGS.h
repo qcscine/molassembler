@@ -756,8 +756,10 @@ private:
   ) {
     unsigned iterations = 0;
 
-    for(iterations = 0; stepLength > 1e-4; ++iterations) {
-      const double oldGradDotDirection = step.gradients.old.dot(direction);
+    constexpr FloatType lowerStepLengthLimit = 1e-4;
+
+    for(iterations = 0; stepLength > lowerStepLengthLimit; ++iterations) {
+      const FloatType oldGradDotDirection = step.gradients.old.dot(direction);
 
       /* Armijo rule (Wolfe condition I) */
       bool armijoRule = (
@@ -803,7 +805,7 @@ private:
         // Handle encountered parameter boundaries
         if(
           sizeof...(boxes) > 0
-          && (step.parameters.current - step.parameters.old).squaredNorm() < 1e-8
+          && (step.parameters.current - step.parameters.old).squaredNorm() < FloatType {1e-8}
         ) {
           break;
         }
@@ -812,7 +814,7 @@ private:
       }
     }
 
-    if(stepLength <= 1e-4) {
+    if(stepLength <= lowerStepLengthLimit) {
       throw std::logic_error("stepLength no longer in reasonable bounds");
     }
 
