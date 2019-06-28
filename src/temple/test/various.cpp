@@ -15,7 +15,6 @@
 
 #include <chrono>
 #include <cmath>
-#include <iostream>
 #include <vector>
 #include <array>
 
@@ -125,7 +124,7 @@ BOOST_AUTO_TEST_CASE(stringifyTests) {
     }
   };
 
-  std::cout << temple::stringify(complicatedStructure) << std::endl;
+  std::string stringified = temple::stringify(complicatedStructure);
 
   enum class SampleEnum {
     SomeValue,
@@ -146,7 +145,9 @@ BOOST_AUTO_TEST_CASE(stringifyTests) {
     SampleEnum::SomeValue
   };
 
-  std::cout << temple::stringify(someTuple) << std::endl;
+  stringified = temple::stringify(someTuple);
+
+  BOOST_CHECK(!stringified.empty());
 }
 
 struct TupleLike : temple::crtp::AllOperatorsFromTupleMethod<TupleLike> {
