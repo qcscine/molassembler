@@ -5,21 +5,20 @@
 
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
-#include <dlib/optimization.h>
 #include <Eigen/Dense>
 #include "Utils/Constants.h"
 #include "Utils/Typenames.h"
 
-#include "molassembler/DistanceGeometry/DlibAdaptors.h"
-#include "molassembler/DistanceGeometry/DlibDebugAdaptors.h"
-#include "molassembler/DistanceGeometry/MetricMatrix.h"
-#include "molassembler/DistanceGeometry/SpatialModel.h"
-#include "molassembler/DistanceGeometry/RefinementMeta.h"
-#include "molassembler/DistanceGeometry/DlibRefinement.h"
+#include "molassembler/DistanceGeometry/EigenRefinement.h"
 #include "molassembler/DistanceGeometry/Error.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
+#include "molassembler/DistanceGeometry/MetricMatrix.h"
+#include "molassembler/DistanceGeometry/RefinementMeta.h"
+#include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "Utils/Math/QuaternionFit.h"
+
+#include "temple/LBFGS.h"
 
 namespace Scine {
 
@@ -28,25 +27,6 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 namespace detail {
-
-AngstromWrapper convertToAngstromWrapper(
-  const dlib::matrix<double, 0, 1>& vectorizedPositions
-) {
-  const Eigen::Index dimensionality = 4;
-  assert(vectorizedPositions.size() % dimensionality == 0);
-
-  const unsigned N = vectorizedPositions.size() / dimensionality;
-  AngstromWrapper angstromWrapper {N};
-  for(unsigned i = 0; i < N; i++) {
-    angstromWrapper.positions.row(i) = Scine::Utils::Position {
-      vectorizedPositions(dimensionality * i),
-      vectorizedPositions(dimensionality * i + 1),
-      vectorizedPositions(dimensionality * i + 2)
-    };
-  }
-
-  return angstromWrapper;
-}
 
 AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positionsMatrix) {
   assert(positionsMatrix.cols() == 3);
@@ -61,7 +41,7 @@ AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positionsMatrix)
 }
 
 Eigen::MatrixXd fitAndSetFixedPositions(
-  const dlib::matrix<double, 0, 1>& vectorizedPositions,
+  const Eigen::VectorXd& vectorizedPositions,
   const Configuration& configuration
 ) {
   /* Fixed positions postprocessing:
@@ -70,16 +50,12 @@ Eigen::MatrixXd fitAndSetFixedPositions(
    * - Assuming the fit isn't absolutely exact, overwrite the existing
    *   positions with the fixed ones
    */
-  // Convert the vectorized dlib positions into a positions matrix
+  // Convert the vectorized positions into a positions matrix
   const unsigned dimensionality = 4;
   const unsigned N = vectorizedPositions.size() / dimensionality;
   Eigen::MatrixXd positionMatrix(N, 3);
   for(unsigned i = 0; i < N; ++i) {
-    positionMatrix.row(i) = Eigen::RowVector3d(
-      vectorizedPositions(dimensionality * i),
-      vectorizedPositions(dimensionality * i + 1),
-      vectorizedPositions(dimensionality * i + 2)
-    );
+    positionMatrix.row(i) = vectorizedPositions.template segment<3>(dimensionality * i);
   }
 
   /* Construct a reference matrix from the fixed positions (these are still in
@@ -160,6 +136,47 @@ Molecule narrow(Molecule molecule) {
 
   return molecule;
 }
+
+template<typename EigenRefinementType>
+struct InversionOrIterLimitStop {
+  const unsigned iterLimit;
+  const EigenRefinementType& refinementFunctorReference;
+
+
+  using VectorType = typename EigenRefinementType::VectorType;
+  using FloatType = typename EigenRefinementType::FloatingPointType;
+
+  InversionOrIterLimitStop(
+    const unsigned passIter,
+    const EigenRefinementType& functor
+  ) : iterLimit(passIter),
+      refinementFunctorReference(functor)
+  {}
+
+  template<typename StepValues>
+  bool shouldContinue(unsigned iteration, const StepValues& /* step */) {
+    return (
+      iteration < iterLimit
+      && refinementFunctorReference.proportionChiralConstraintsCorrectSign < 1.0
+    );
+  }
+};
+
+template<typename FloatType>
+struct GradientOrIterLimitStop {
+  using VectorType = Eigen::Matrix<FloatType, Eigen::Dynamic, 1>;
+
+  template<typename StepValues>
+  bool shouldContinue(unsigned iteration, const StepValues& step) {
+    return (
+      iteration < iterLimit
+      && step.gradients.current.template cast<double>().norm() > gradNorm
+    );
+  }
+
+  unsigned iterLimit = 10000;
+  double gradNorm = 1e-5;
+};
 
 } // namespace detail
 
@@ -310,29 +327,34 @@ std::list<RefinementData> debugRefinement(
     // Get a position matrix by embedding the metric matrix
     auto embeddedPositions = metric.embed();
 
-    // Vectorize and transfer to dlib
-    ErrorFunctionValue::Vector dlibPositions = dlib::mat(
-      static_cast<Eigen::VectorXd>(
-        Eigen::Map<Eigen::VectorXd>(
-          embeddedPositions.data(),
-          embeddedPositions.cols() * embeddedPositions.rows()
-        )
-      )
+    /* Refinement problem compile-time settings
+     * - Dimensionality four is needed to ensure chiral constraints invert
+     *   nicely
+     * - FloatType double is helpful for refinement stability, and float
+     *   doesn't affect speed
+     * - Using the alternative SIMD implementations of the refinement problems
+     *   hardly affects speed at all, in fact, it commonly worsens it.
+     */
+    constexpr unsigned dimensionality = 4;
+    using FloatType = double;
+    constexpr bool SIMD = false;
+
+    using FullRefinementType = EigenRefinementProblem<dimensionality, FloatType, SIMD>;
+    using VectorType = typename FullRefinementType::VectorType;
+
+    // Vectorize positions
+    VectorType transformedPositions = Eigen::Map<Eigen::VectorXd>(
+      embeddedPositions.data(),
+      embeddedPositions.cols() * embeddedPositions.rows()
+    ).template cast<FloatType>().eval();
+
+    const unsigned N = transformedPositions.size() / dimensionality;
+
+    const auto squaredBounds = static_cast<Eigen::MatrixXd>(
+      distanceBounds.access().cwiseProduct(distanceBounds.access())
     );
 
-    dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-      static_cast<Eigen::MatrixXd>(
-        distanceBounds.access().cwiseProduct(distanceBounds.access())
-      )
-    );
-
-    ErrorFunctionValue valueFunctor {
-      squaredBounds,
-      DGData.chiralConstraints,
-      DGData.dihedralConstraints
-    };
-
-    ErrorFunctionGradient gradientFunctor {
+    FullRefinementType refinementFunctor {
       squaredBounds,
       DGData.chiralConstraints,
       DGData.dihedralConstraints
@@ -346,44 +368,80 @@ std::list<RefinementData> debugRefinement(
      * chiral constraints should not have to pass an energetic maximum to
      * converge properly as opposed to tetrahedra with volume).
      */
-    double initiallyCorrectChiralConstraints = valueFunctor.calculateProportionChiralConstraintsCorrectSign(dlibPositions);
+    double initiallyCorrectChiralConstraints = refinementFunctor.calculateProportionChiralConstraintsCorrectSign(transformedPositions);
     if(initiallyCorrectChiralConstraints < 0.5) {
       // Invert y coordinates
-      for(unsigned i = 0; i < distanceBounds.N(); i++) {
-        dlibPositions(
-          static_cast<dlibIndexType>(i) * 4 + 1
-        ) *= -1;
+      for(unsigned i = 0; i < N; ++i) {
+        transformedPositions(dimensionality * i + 1) *= -1;
       }
 
       initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
     }
 
-    /* Our embedded coordinates are four dimensional. Now we want to make sure
-     * that all chiral constraints are correct, allowing the structure to expand
-     * into the fourth spatial dimension if necessary to allow inversion.
+    struct Observer {
+      const Molecule& mol;
+      FullRefinementType& functor;
+      std::list<RefinementStepData>& steps;
+
+      Observer(const Molecule& passMolecule, FullRefinementType& passFunctor, std::list<RefinementStepData>& passSteps)
+        : mol(passMolecule), functor(passFunctor), steps(passSteps) {}
+
+      using VectorType = typename FullRefinementType::VectorType;
+
+      void operator() (const VectorType& positions) {
+        FloatType distanceError = 0, chiralError = 0,
+                  dihedralError = 0, fourthDimensionError = 0;
+
+        VectorType gradient;
+        gradient.resize(positions.size());
+        gradient.setZero();
+
+        // Call functions individually to get separate error values
+        functor.distanceContributions(positions, distanceError, gradient);
+        functor.chiralContributions(positions, chiralError, gradient);
+        functor.dihedralContributions(positions, dihedralError, gradient);
+        functor.fourthDimensionContributions(positions, fourthDimensionError, gradient);
+
+        steps.emplace_back(
+          positions.template cast<double>().eval(),
+          distanceError,
+          chiralError,
+          dihedralError,
+          fourthDimensionError,
+          gradient.template cast<double>().eval(),
+          functor.proportionChiralConstraintsCorrectSign,
+          functor.compressFourthDimension
+        );
+      }
+    };
+
+    Observer observer(molecule, refinementFunctor, refinementSteps);
+
+    /* Our embedded coordinates are (dimensionality) dimensional. Now we want
+     * to make sure that all chiral constraints are correct, allowing the
+     * structure to expand into the fourth spatial dimension if necessary to
+     * allow inversion.
      *
      * This stage of refinement is only needed if not all chiral constraints
      * are already correct (or there are none).
      */
+    unsigned firstStageIterations = 0;
     if(initiallyCorrectChiralConstraints < 1.0) {
-      unsigned firstStageIterations;
-
-      dlibAdaptors::DebugIterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
-        firstStageIterations,
+      detail::InversionOrIterLimitStop<FullRefinementType> inversionChecker {
         configuration.refinementStepLimit,
-        refinementSteps,
-        valueFunctor
+        refinementFunctor
       };
 
+      temple::LBFGS<FloatType, 32> optimizer;
+
       try {
-        dlib::find_min(
-          dlib::bfgs_search_strategy(),
-          inversionStopStrategy,
-          valueFunctor,
-          gradientFunctor,
-          dlibPositions,
-          0
+        auto result = optimizer.minimize(
+          transformedPositions,
+          refinementFunctor,
+          inversionChecker,
+          observer
         );
+        firstStageIterations = result.iterations;
       } catch(std::runtime_error& e) {
         Log::log(Log::Level::Warning)
           << "Non-finite contributions to dihedral error function gradient.\n";
@@ -394,7 +452,7 @@ std::list<RefinementData> debugRefinement(
       // Handle inversion failure (hit step limit)
       if(
         firstStageIterations >= configuration.refinementStepLimit
-        || valueFunctor.proportionChiralConstraintsCorrectSign < 1.0
+        || refinementFunctor.proportionChiralConstraintsCorrectSign < 1.0
       ) {
         Log::log(Log::Level::Warning)
           << "[" << currentStructureNumber << "]: "
@@ -409,47 +467,102 @@ std::list<RefinementData> debugRefinement(
     /* Set up the second stage of refinement where we compress out the fourth
      * dimension that we allowed expansion into to invert the chiralities.
      */
-    valueFunctor.compressFourthDimension = true;
-    gradientFunctor.compressFourthDimension = true;
+    refinementFunctor.compressFourthDimension = true;
 
-    unsigned secondStageIterations;
-    dlibAdaptors::DebugIterationOrGradientNormStopStrategy refinementStopStrategy {
-      secondStageIterations,
-      configuration.refinementStepLimit,
-      configuration.refinementGradientTarget,
-      refinementSteps,
-      valueFunctor
-    };
+
+    unsigned secondStageIterations = 0;
+    detail::GradientOrIterLimitStop<FloatType> gradientChecker;
+    gradientChecker.gradNorm = 1e-3;
+    gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
 
     try {
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        refinementStopStrategy,
-        valueFunctor,
-        gradientFunctor,
-        dlibPositions,
-        0
+      temple::LBFGS<FloatType, 32> optimizer;
+
+      auto result = optimizer.minimize(
+        transformedPositions,
+        refinementFunctor,
+        gradientChecker,
+        observer
       );
-    } catch(std::runtime_error& e) {
+      secondStageIterations = result.iterations;
+    } catch(std::out_of_range& e) {
       Log::log(Log::Level::Warning)
         << "Non-finite contributions to dihedral error function gradient.\n";
       failures += 1;
       continue;
     }
 
-    bool reachedMaxIterations = secondStageIterations >= configuration.refinementStepLimit;
-    bool notAllChiralitiesCorrect = valueFunctor.proportionChiralConstraintsCorrectSign < 1;
+    if(secondStageIterations >= gradientChecker.iterLimit) {
+        Log::log(Log::Level::Warning)
+          << "[" << currentStructureNumber << "]: "
+          << "Second stage of refinement fails!\n";
+        failures += 1;
+
+        // Collect refinement data
+        RefinementData refinementData;
+        refinementData.steps = std::move(refinementSteps);
+        refinementData.constraints = DGData.chiralConstraints;
+        refinementData.looseningFactor = configuration.spatialModelLoosening;
+        refinementData.isFailure = true;
+        refinementData.spatialModelGraphviz = spatialModelGraphviz;
+
+        refinementList.push_back(
+          std::move(refinementData)
+        );
+
+        if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions) > 0) {
+          explainFinalContributions(
+            refinementFunctor,
+            distanceBounds,
+            transformedPositions
+          );
+        }
+
+        continue; // this triggers a new structure to be generated
+    }
+
+    /* Add dihedral terms and refine again */
+    unsigned thirdStageIterations = 0;
+    gradientChecker = detail::GradientOrIterLimitStop<FloatType> {};
+    gradientChecker.gradNorm = 1e-3;
+    gradientChecker.iterLimit = (
+      configuration.refinementStepLimit
+      - firstStageIterations
+      - secondStageIterations
+    );
+
+    refinementFunctor.dihedralTerms = true;
+
+    try {
+      temple::LBFGS<FloatType, 32> optimizer;
+
+      auto result = optimizer.minimize(
+        transformedPositions,
+        refinementFunctor,
+        gradientChecker,
+        observer
+      );
+      thirdStageIterations = result.iterations;
+    } catch(std::out_of_range& e) {
+      Log::log(Log::Level::Warning)
+        << "Non-finite contributions to dihedral error function gradient.\n";
+      failures += 1;
+      continue;
+    }
+
+    bool reachedMaxIterations = thirdStageIterations >= gradientChecker.iterLimit;
+    bool notAllChiralitiesCorrect = refinementFunctor.proportionChiralConstraintsCorrectSign < 1;
     bool structureAcceptable = finalStructureAcceptable(
-      valueFunctor,
+      refinementFunctor,
       distanceBounds,
-      dlibPositions
+      transformedPositions
     );
 
     if(Log::particulars.count(Log::Particulars::DGFinalErrorContributions) > 0) {
       explainFinalContributions(
-        valueFunctor,
+        refinementFunctor,
         distanceBounds,
-        dlibPositions
+        transformedPositions
       );
     }
 
@@ -467,7 +580,7 @@ std::list<RefinementData> debugRefinement(
     if(reachedMaxIterations || notAllChiralitiesCorrect || !structureAcceptable) {
       Log::log(Log::Level::Warning)
         << "[" << currentStructureNumber << "]: "
-        << "Second stage of refinement fails. Loosening factor was "
+        << "Third stage of refinement fails. Loosening factor was "
         << configuration.spatialModelLoosening
         <<  "\n";
       if(reachedMaxIterations) {
@@ -482,9 +595,9 @@ std::list<RefinementData> debugRefinement(
         Log::log(Log::Level::Warning) << "- The final structure is unacceptable.\n";
         if(Log::isSet(Log::Particulars::DGStructureAcceptanceFailures)) {
           explainAcceptanceFailure(
-            valueFunctor,
+            refinementFunctor,
             distanceBounds,
-            dlibPositions
+            transformedPositions
           );
         }
       }
@@ -502,30 +615,34 @@ outcome::result<AngstromWrapper> refine(
   const Configuration& configuration,
   const std::shared_ptr<MoleculeDGInformation>& DGDataPtr
 ) {
-  // Vectorize and transfer to dlib
-  ErrorFunctionValue::Vector dlibPositions = dlib::mat(
-    static_cast<Eigen::VectorXd>(
-      Eigen::Map<Eigen::VectorXd>(
-        embeddedPositions.data(),
-        embeddedPositions.cols() * embeddedPositions.rows()
-      )
-    )
+  /* Refinement problem compile-time settings
+   * - Dimensionality four is needed to ensure chiral constraints invert
+   *   nicely
+   * - FloatType double is helpful for refinement stability, and float
+   *   doesn't affect speed
+   * - Using the alternative SIMD implementations of the refinement problems
+   *   hardly affects speed at all, in fact, it commonly worsens it.
+   */
+  constexpr unsigned dimensionality = 4;
+  using FloatType = double;
+  constexpr bool SIMD = false;
+
+  using FullRefinementType = EigenRefinementProblem<dimensionality, FloatType, SIMD>;
+  using VectorType = typename FullRefinementType::VectorType;
+
+  // Vectorize positions
+  VectorType transformedPositions = Eigen::Map<Eigen::VectorXd>(
+    embeddedPositions.data(),
+    embeddedPositions.cols() * embeddedPositions.rows()
+  ).template cast<FloatType>().eval();
+
+  const unsigned N = transformedPositions.size() / dimensionality;
+
+  const auto squaredBounds = static_cast<Eigen::MatrixXd>(
+    distanceBounds.access().cwiseProduct(distanceBounds.access())
   );
 
-  // Create the squared bounds matrix for use in refinement
-  dlib::matrix<double, 0, 0> squaredBounds = dlib::mat(
-    static_cast<Eigen::MatrixXd>(
-      distanceBounds.access().cwiseProduct(distanceBounds.access())
-    )
-  );
-
-  ErrorFunctionValue valueFunctor {
-    squaredBounds,
-    DGDataPtr->chiralConstraints,
-    DGDataPtr->dihedralConstraints
-  };
-
-  ErrorFunctionGradient gradientFunctor {
+  FullRefinementType refinementFunctor {
     squaredBounds,
     DGDataPtr->chiralConstraints,
     DGDataPtr->dihedralConstraints
@@ -539,13 +656,11 @@ outcome::result<AngstromWrapper> refine(
    * chiral constraints should not have to pass an energetic maximum to
    * converge properly as opposed to tetrahedra with volume).
    */
-  double initiallyCorrectChiralConstraints = valueFunctor.calculateProportionChiralConstraintsCorrectSign(dlibPositions);
+  double initiallyCorrectChiralConstraints = refinementFunctor.calculateProportionChiralConstraintsCorrectSign(transformedPositions);
   if(initiallyCorrectChiralConstraints < 0.5) {
     // Invert y coordinates
-    for(unsigned i = 0; i < distanceBounds.N(); ++i) {
-      dlibPositions(
-        static_cast<dlibIndexType>(i) * 4  + 1
-      ) *= -1;
+    for(unsigned i = 0; i < N; ++i) {
+      transformedPositions(dimensionality * i + 1) *= -1;
     }
 
     initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
@@ -555,23 +670,22 @@ outcome::result<AngstromWrapper> refine(
    * chiral centers are correct. Of course, for molecules without chiral
    * centers at all, this stage is unnecessary
    */
+  unsigned firstStageIterations = 0;
   if(initiallyCorrectChiralConstraints < 1) {
-    unsigned firstStageIterations;
-    dlibAdaptors::IterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
-      firstStageIterations,
-      valueFunctor,
-      configuration.refinementStepLimit
+    detail::InversionOrIterLimitStop<FullRefinementType> inversionChecker {
+      configuration.refinementStepLimit,
+      refinementFunctor
     };
 
+    temple::LBFGS<FloatType, 32> optimizer;
+
     try {
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        inversionStopStrategy,
-        valueFunctor,
-        gradientFunctor,
-        dlibPositions,
-        0
+      auto result = optimizer.minimize(
+        transformedPositions,
+        refinementFunctor,
+        inversionChecker
       );
+      firstStageIterations = result.iterations;
     } catch(std::runtime_error& e) {
       return DGError::RefinementException;
     }
@@ -580,63 +694,90 @@ outcome::result<AngstromWrapper> refine(
       return DGError::RefinementMaxIterationsReached;
     }
 
-    if(valueFunctor.proportionChiralConstraintsCorrectSign < 1.0) {
+    if(refinementFunctor.proportionChiralConstraintsCorrectSign < 1.0) {
       return DGError::RefinedChiralsWrong;
     }
   }
 
-  unsigned secondStageIterations;
-  dlibAdaptors::IterationOrGradientNormStopStrategy refinementStopStrategy {
-    secondStageIterations,
-    configuration.refinementStepLimit,
-    configuration.refinementGradientTarget
-  };
+  /* Set up the second stage of refinement where we compress out the fourth
+   * dimension that we allowed expansion into to invert the chiralities.
+   */
+  refinementFunctor.compressFourthDimension = true;
 
-  // Refinement with penalty on fourth dimension is always necessary
-  valueFunctor.compressFourthDimension = true;
-  gradientFunctor.compressFourthDimension = true;
+  unsigned secondStageIterations = 0;
+  detail::GradientOrIterLimitStop<FloatType> gradientChecker;
+  gradientChecker.gradNorm = 1e-3;
+  gradientChecker.iterLimit = configuration.refinementStepLimit - firstStageIterations;
+
   try {
-    dlib::find_min(
-      dlib::bfgs_search_strategy(),
-      refinementStopStrategy,
-      valueFunctor,
-      gradientFunctor,
-      dlibPositions,
-      0
+    temple::LBFGS<FloatType, 32> optimizer;
+
+    auto result = optimizer.minimize(
+      transformedPositions,
+      refinementFunctor,
+      gradientChecker
     );
-  } catch(std::runtime_error& e) {
+    secondStageIterations = result.iterations;
+  } catch(std::out_of_range& e) {
     return DGError::RefinementException;
   }
 
-  /* Error conditions */
   // Max iterations reached
-  if(secondStageIterations >= configuration.refinementStepLimit) {
+  if(secondStageIterations >= gradientChecker.iterLimit) {
     return DGError::RefinementMaxIterationsReached;
   }
 
   // Not all chiral constraints have the right sign
-  if(valueFunctor.proportionChiralConstraintsCorrectSign < 1) {
+  if(refinementFunctor.proportionChiralConstraintsCorrectSign < 1) {
     return DGError::RefinedChiralsWrong;
+  }
+
+  /* Add dihedral terms and refine again */
+  unsigned thirdStageIterations = 0;
+  gradientChecker = detail::GradientOrIterLimitStop<FloatType> {};
+  gradientChecker.gradNorm = 1e-3;
+  gradientChecker.iterLimit = (
+    configuration.refinementStepLimit
+    - firstStageIterations
+    - secondStageIterations
+  );
+
+  refinementFunctor.dihedralTerms = true;
+
+  try {
+    temple::LBFGS<FloatType, 32> optimizer;
+
+    auto result = optimizer.minimize(
+      transformedPositions,
+      refinementFunctor,
+      gradientChecker
+    );
+    thirdStageIterations = result.iterations;
+  } catch(std::out_of_range& e) {
+    return DGError::RefinementException;
+  }
+
+  if(thirdStageIterations >= gradientChecker.iterLimit) {
+    return DGError::RefinementMaxIterationsReached;
   }
 
   // Structure inacceptable
   if(
     !finalStructureAcceptable(
-      valueFunctor,
+      refinementFunctor,
       distanceBounds,
-      dlibPositions
+      transformedPositions
     )
   ) {
     return DGError::RefinedStructureInacceptable;
   }
 
   if(!configuration.fixedPositions.empty()) {
-    auto positionMatrix = detail::fitAndSetFixedPositions(dlibPositions, configuration);
-
+    auto positionMatrix = detail::fitAndSetFixedPositions(transformedPositions, configuration);
     return detail::convertToAngstromWrapper(positionMatrix);
   }
 
-  return detail::convertToAngstromWrapper(dlibPositions);
+  return detail::convertToAngstromWrapper(transformedPositions);
 }
 
 outcome::result<AngstromWrapper> generateConformer(

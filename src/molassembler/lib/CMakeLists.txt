@@ -1,6 +1,4 @@
 # Dependencies
-find_package(dlib REQUIRED)
-
 if(MOLASSEMBLER_PARALLELIZE)
   find_package(OpenMP)
 endif()
@@ -14,18 +12,11 @@ include(ImportUtilsOS)
 import_utils_os()
 
 # Some notes on BLAS / LAPACK:
-# Both dlib and Eigen can use BLAS / LAPACK routines.
+# Eigen can use BLAS / LAPACK routines.
 # - Eigen, as a header-only library, merely requires use to add the definitions
 #   and link against the library.
-# - dlib sets DLIB_USE_BLAS and DLIB_USE_LAPACK for itself at compile-time if
-#   it can find either type of library in two fashions:
-#   - cblas bindings are undefined in the static library, but the dlib::dlib
-#     target has the found libraries in its INTERFACE_LINK_LIBRARIES
-#   - it configures config.h.in to reflect the use of DLIB_USE_BLAS and
-#     DLIB_USE_LAPACK so that all dependent uses have the same definitions
-#
 # Although we enable the use of both types of libraries, currently only BLAS is
-# used by either. We keep LAPACK use enabled in order to quickly add it as a
+# used by Eigen. We keep LAPACK use enabled in order to quickly add it as a
 # dependency if either library can make use of it in any way.
 #
 # Try to find suitable BLAS and LAPACK libraries
@@ -56,8 +47,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DirectedConformerGeneratorImpl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceBoundsMatrix.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DistanceGeometry.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DlibAdaptors.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DlibDebugAdaptors.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/Error.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ExplicitGraph.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/Gor1.h
@@ -65,7 +54,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ImplicitGraph.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ImplicitGraphHelpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/MetricMatrix.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DlibRefinement.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementDebugData.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/RefinementMeta.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/SpatialModel.h
@@ -189,7 +177,6 @@ target_link_libraries(
     Scine::UtilsOS
     boost_outcome
     RingDecomposerLibStatic
-    dlib::dlib
     chemical_symmetries
   PRIVATE
     temple
@@ -223,7 +210,9 @@ if(BLAS_FOUND)
     EIGEN_USE_BLAS
     EIGEN_USE_LAPACK
   )
-  target_link_libraries(molassembler PUBLIC ${BLAS_LIBARIES})
+  add_library(blas SHARED IMPORTED)
+  set_target_properties(blas PROPERTIES IMPORTED_LOCATION ${BLAS_LIBRARIES})
+  target_link_libraries(molassembler PUBLIC blas)
 endif()
 
 # -- END Linking

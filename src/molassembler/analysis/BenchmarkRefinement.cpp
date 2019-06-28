@@ -12,8 +12,6 @@
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
-#include "molassembler/DistanceGeometry/DlibRefinement.h"
-#include "molassembler/DistanceGeometry/DlibAdaptors.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
 #include "temple/LBFGS.h"
@@ -32,7 +30,6 @@ using namespace molassembler;
 
 constexpr std::size_t nExperiments = 100;
 constexpr std::size_t refinementStepLimit = 10000;
-constexpr double refinementGradientTarget = 1e-5;
 
 std::ostream& nl(std::ostream& os) {
   os << '\n';
@@ -150,141 +147,6 @@ std::vector<FunctorResults> timeFunctors(
   );
 }
 
-struct DlibFunctor final : public TimingFunctor {
-  boost::optional<unsigned> value (
-    const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions
-  ) final {
-    using namespace DistanceGeometry;
-
-    Eigen::MatrixXd positionCopy = positions;
-
-    const unsigned N = positions.size() / 4;
-    unsigned iterationCount = 0;
-
-    /* Transform positions to dlib space */
-    ErrorFunctionValue::Vector dlibPositions = dlib::mat(
-      static_cast<Eigen::VectorXd>(
-        Eigen::Map<Eigen::VectorXd>(
-          positionCopy.data(),
-          positionCopy.cols() * positionCopy.rows()
-        )
-      )
-    );
-
-    // Transform squared bounds to dlib type
-    const dlib::matrix<double, 0, 0> dlibSquaredBounds = dlib::mat(squaredBounds);
-
-    /* Instantiate functors */
-    ErrorFunctionValue valueFunctor {
-      dlibSquaredBounds,
-      chiralConstraints,
-      dihedralConstraints
-    };
-
-    ErrorFunctionGradient gradientFunctor {
-      dlibSquaredBounds,
-      chiralConstraints,
-      dihedralConstraints
-    };
-
-    /* Perform inversion trick */
-    double initiallyCorrectChiralConstraints = valueFunctor
-      .calculateProportionChiralConstraintsCorrectSign(dlibPositions);
-
-    if(initiallyCorrectChiralConstraints < 0.5) {
-      // Invert y coordinates
-      for(unsigned i = 0; i < N; i++) {
-        dlibPositions(
-          static_cast<dlibIndexType>(i) * 4 + 1
-        ) *= -1;
-      }
-
-      initiallyCorrectChiralConstraints = 1 - initiallyCorrectChiralConstraints;
-    }
-
-    /* Stage one: Invert chirals */
-    if(initiallyCorrectChiralConstraints < 1) {
-      unsigned firstStageIterations;
-
-      dlibAdaptors::IterationOrAllChiralitiesCorrectStrategy inversionStopStrategy {
-        firstStageIterations,
-        valueFunctor,
-        refinementStepLimit
-      };
-
-      try {
-        dlib::find_min(
-          dlib::bfgs_search_strategy(),
-          inversionStopStrategy,
-          valueFunctor,
-          gradientFunctor,
-          dlibPositions,
-          0
-        );
-
-      } catch(...) {
-        return boost::none;
-      }
-
-      /* Handle errors */
-      if(firstStageIterations >= refinementStepLimit) {
-        return boost::none;
-      }
-
-      if(valueFunctor.proportionChiralConstraintsCorrectSign < 1.0) {
-        return boost::none;
-      }
-
-      iterationCount += firstStageIterations;
-    }
-
-    unsigned secondStageIterations;
-    dlibAdaptors::IterationOrGradientNormStopStrategy refinementStopStrategy {
-      secondStageIterations,
-      refinementStepLimit,
-      refinementGradientTarget
-    };
-
-    /* Stage two: refine, compressing the fourth dimension */
-    valueFunctor.compressFourthDimension = true;
-    gradientFunctor.compressFourthDimension = true;
-    try {
-      dlib::find_min(
-        dlib::bfgs_search_strategy(),
-        refinementStopStrategy,
-        valueFunctor,
-        gradientFunctor,
-        dlibPositions,
-        0
-      );
-    } catch(std::out_of_range& e) {
-      return boost::none;
-    }
-
-    /* Error conditions */
-    // Max iterations reached
-    if(secondStageIterations >= refinementStepLimit) {
-      return boost::none;
-    }
-
-    // Not all chiral constraints have the right sign
-    if(valueFunctor.proportionChiralConstraintsCorrectSign < 1) {
-      return boost::none;
-    }
-
-    iterationCount += secondStageIterations;
-
-    return iterationCount;
-  }
-
-  std::string name() final {
-    return "Dlib";
-  }
-};
-
 template<typename EigenRefinementType>
 struct InversionOrIterLimitStop {
   const EigenRefinementType& refinementFunctorReference;
@@ -316,8 +178,6 @@ struct GradientOrIterLimitStop {
 };
 
 struct OptimizerParameters {
-  // These are the default LBFGS parameters
-  unsigned maxm = 50;
   double c1 = 1e-4;
   double c2 = 0.9;
   double stepLength = 1.0;
@@ -464,7 +324,6 @@ void writeHeaders(
   std::vector<std::string> headers {
     "N",
     "E",
-    "Dlib",
     "Eigen",
     "EigenSIMD"
   };
@@ -487,7 +346,6 @@ void writeHeaders(
 
 enum class Algorithm {
   All,
-  Dlib,
   EigenDouble,
   EigenFloat,
   EigenSIMDDouble,
@@ -532,12 +390,6 @@ void benchmark(
   std::vector<
     std::unique_ptr<TimingFunctor>
   > functors;
-
-  if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::Dlib) {
-    functors.emplace_back(
-      std::make_unique<DlibFunctor>()
-    );
-  }
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenDouble) {
     functors.emplace_back(
@@ -618,11 +470,10 @@ void benchmark(
 using namespace std::string_literals;
 const std::string algorithmChoices =
   "  0 - All\n"
-  "  1 - Dlib\n"
-  "  2 - Eigen<dimensionality=4, double, SIMD=false>\n"
-  "  3 - Eigen<dimensionality=4, float, SIMD=false>\n"
-  "  4 - Eigen<dimensionality=4, double, SIMD=true>\n"
-  "  5 - Eigen<dimensionality=4, float, SIMD=true>\n";
+  "  1 - Eigen<dimensionality=4, double, SIMD=false>\n"
+  "  2 - Eigen<dimensionality=4, float, SIMD=false>\n"
+  "  3 - Eigen<dimensionality=4, double, SIMD=true>\n"
+  "  4 - Eigen<dimensionality=4, float, SIMD=true>\n";
 
 constexpr const char* description =
   "Benchmarks various refinement error functions and optimizer combinations\n"
@@ -670,7 +521,7 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("c") > 0) {
     unsigned combination = options_variables_map["c"].as<unsigned>();
 
-    if(combination > 5) {
+    if(combination > 4) {
       std::cout << "Specified algorithm is out of bounds. Valid choices are:" << nl
         << algorithmChoices;
       return 0;

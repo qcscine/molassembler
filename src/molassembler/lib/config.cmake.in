@@ -2,7 +2,6 @@ include(CMakeFindDependencyMacro)
 
 find_dependency(molassembler COMPONENTS RingDecomposerLib boost_outcome temple chemical_symmetries stereopermutation REQUIRED)
 find_dependency(Scine COMPONENTS UtilsOS REQUIRED)
-find_dependency(dlib REQUIRED)
 
 if(NOT TARGET Boost::filesystem OR NOT TARGET Boost::system)
   unset(Boost_FOUND)

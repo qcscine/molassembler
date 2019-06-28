@@ -1,4 +1,3 @@
-
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
@@ -13,8 +12,6 @@
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
-#include "molassembler/DistanceGeometry/DlibRefinement.h"
-#include "molassembler/DistanceGeometry/DlibAdaptors.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
 #include "molassembler/IO.h"
@@ -143,63 +140,6 @@ std::vector<FunctorResults> timeFunctors(
   );
 }
 
-struct DlibFunctor final : public TimingFunctor {
-  double value (
-    const Eigen::MatrixXd& squaredBounds,
-    const std::vector<DistanceGeometry::ChiralConstraint>& chiralConstraints,
-    const std::vector<DistanceGeometry::DihedralConstraint>& dihedralConstraints,
-    const Eigen::MatrixXd& positions,
-    std::chrono::time_point<std::chrono::steady_clock>& start,
-    std::chrono::time_point<std::chrono::steady_clock>& end
-  ) final {
-    using namespace DistanceGeometry;
-
-    Eigen::MatrixXd positionCopy = positions;
-
-    /* Transform positions to dlib space */
-    ErrorFunctionValue::Vector dlibPositions = dlib::mat(
-      static_cast<Eigen::VectorXd>(
-        Eigen::Map<Eigen::VectorXd>(
-          positionCopy.data(),
-          positionCopy.cols() * positionCopy.rows()
-        )
-      )
-    );
-
-    // Transform squared bounds to dlib type
-    const dlib::matrix<double, 0, 0> dlibSquaredBounds = dlib::mat(squaredBounds);
-
-    /* Instantiate functors */
-    ErrorFunctionValue valueFunctor {
-      dlibSquaredBounds,
-      chiralConstraints,
-      dihedralConstraints
-    };
-
-    ErrorFunctionGradient gradientFunctor {
-      dlibSquaredBounds,
-      chiralConstraints,
-      dihedralConstraints
-    };
-
-    double error = 0;
-
-    start = std::chrono::steady_clock::now();
-    for(unsigned i = 0; i < 10; ++i) {
-      error += valueFunctor(dlibPositions);
-      auto gradient = gradientFunctor(dlibPositions);
-      error += gradient(0);
-    }
-    end = std::chrono::steady_clock::now();
-
-    return error;
-  }
-
-  std::string name() final {
-    return "Dlib";
-  }
-};
-
 template<
   template<unsigned, typename, bool> class EigenRefinementType,
   unsigned dimensionality,
@@ -285,7 +225,6 @@ void writeHeaders(
   std::vector<std::string> headers {
     "N",
     "E",
-    "Dlib",
     "Eigen",
     "EigenSIMD"
   };
@@ -308,7 +247,6 @@ void writeHeaders(
 
 enum class Algorithm {
   All,
-  Dlib,
   EigenDouble,
   EigenFloat,
   EigenSIMDDouble,
@@ -351,12 +289,6 @@ void benchmark(
   std::vector<
     std::unique_ptr<TimingFunctor>
   > functors;
-
-  if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::Dlib) {
-    functors.emplace_back(
-      std::make_unique<DlibFunctor>()
-    );
-  }
 
   if(algorithmChoice == Algorithm::All || algorithmChoice == Algorithm::EigenDouble) {
     functors.emplace_back(
@@ -433,11 +365,10 @@ void benchmark(
 using namespace std::string_literals;
 const std::string algorithmChoices =
   "  0 - All\n"
-  "  1 - dlib\n"
-  "  2 - Eigen<dimensionality=4, double, SIMD=false>\n"
-  "  3 - Eigen<dimensionality=4, float, SIMD=false>\n"
-  "  4 - Eigen<dimensionality=4, double, SIMD=true>\n"
-  "  5 - Eigen<dimensionality=4, float, SIMD=true>\n";
+  "  1 - Eigen<dimensionality=4, double, SIMD=false>\n"
+  "  2 - Eigen<dimensionality=4, float, SIMD=false>\n"
+  "  3 - Eigen<dimensionality=4, double, SIMD=true>\n"
+  "  4 - Eigen<dimensionality=4, float, SIMD=true>\n";
 
 constexpr const char* description =
   "This program exists to benchmark various refinement functions' evaluation\n"
@@ -485,7 +416,7 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("c") > 0) {
     unsigned combination = options_variables_map["c"].as<unsigned>();
 
-    if(combination > 5) {
+    if(combination > 4) {
       std::cout << "Specified algorithm is out of bounds. Valid choices are:" << nl
         << algorithmChoices;
       return 0;

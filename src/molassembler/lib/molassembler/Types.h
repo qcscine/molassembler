@@ -63,9 +63,6 @@ struct BondIndex {
 
 std::size_t hash_value(const BondIndex& bond);
 
-//! Descriptive name for dlib indices
-using dlibIndexType = long;
-
 /*!
  * @brief For bitmasks grouping components of immediate atom environments
  *

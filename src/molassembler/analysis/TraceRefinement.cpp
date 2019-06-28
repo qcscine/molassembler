@@ -13,11 +13,8 @@
 #include "temple/constexpr/Numeric.h"
 
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
-#include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/IO.h"
 #include "molassembler/Log.h"
-
-#include "EigenDebugRefinement.h"
 
 #include <fstream>
 #include <iomanip>
@@ -30,7 +27,7 @@ void writeProgressFile(
   const Molecule& mol,
   const std::string& baseFilename,
   const unsigned index,
-  const dlib::matrix<double, 0, 1>& positions
+  const Eigen::VectorXd& positions
 ) {
   const std::string filename = baseFilename + "-" + std::to_string(index) + ".mol";
   AngstromWrapper angstromWrapper = DistanceGeometry::detail::convertToAngstromWrapper(positions);
@@ -54,7 +51,7 @@ void writeProgressFiles(
       << refinementStep.chiralError << ","
       << refinementStep.dihedralError << ","
       << refinementStep.fourthDimError << ","
-      << dlib::length(refinementStep.gradient) << ","
+      << refinementStep.gradient.norm() << ","
       << static_cast<unsigned>(refinementStep.compress) << ","
       << refinementStep.proportionCorrectChiralConstraints << "\n";
   }
@@ -223,7 +220,6 @@ int main(int argc, char* argv[]) {
 
 #ifndef NDEBUG
     auto debugData = DistanceGeometry::debugRefinement(
-    //auto debugData = DistanceGeometry::debugEigenRefinement<4, double, false>(
       mol,
       nStructures,
       DGConfiguration

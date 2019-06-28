@@ -45,7 +45,6 @@ This library requires the C++14 standard.
 Dependencies:
 
 - Boost >= 1.64
-- dlib >= 19.4
 - Eigen >= 3
 - SCINE Utils > 0.1.0
 - (BLAS library, added if detected during compilation)
@@ -55,7 +54,7 @@ Can currently be compiled with:
 
 - [x] GCC >= 7
 - [x] Clang >= 4
-- [ ] MSVC (compatibility issues with `constexpr` code)
+- [ ] MSVC (compiler compliance issues with C++14 `constexpr` code)
 
 Windows compatibility is in progress. In the meantime, consider options like
 MinGW (compiles with GCC) or Visual Studio Codegen with Clang to create Windows

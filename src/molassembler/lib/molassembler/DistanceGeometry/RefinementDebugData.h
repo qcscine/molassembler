@@ -10,9 +10,9 @@
 #ifndef INCLUDE_MOLASSEMBLER_DG_REFINEMENT_DEBUG_DATA_H
 #define INCLUDE_MOLASSEMBLER_DG_REFINEMENT_DEBUG_DATA_H
 
-#include "dlib/matrix.h"
-
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
+
+#include <Eigen/Core>
 
 #include <list>
 #include <vector>
@@ -24,30 +24,30 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 struct RefinementStepData {
-  dlib::matrix<double, 0, 1> positions;
+  Eigen::VectorXd positions;
   double distanceError;
   double chiralError;
   double dihedralError;
   double fourthDimError;
-  dlib::matrix<double, 0, 1> gradient;
+  Eigen::VectorXd gradient;
   double proportionCorrectChiralConstraints;
   bool compress;
 
   RefinementStepData(
-    dlib::matrix<double, 0, 1> passPositions,
+    const Eigen::VectorXd& passPositions,
     const double passDistanceError,
     const double passChiralError,
     const double passDihedralError,
     const double passFourthDimError,
-    dlib::matrix<double, 0, 1> passGradient,
+    const Eigen::VectorXd& passGradient,
     const double passProportionCorrectChiralConstraints,
-    const bool& passCompress
-  ) : positions(std::move(passPositions)),
+    const bool passCompress
+  ) : positions(passPositions),
       distanceError(passDistanceError),
       chiralError(passChiralError),
       dihedralError(passDihedralError),
       fourthDimError(passFourthDimError),
-      gradient(std::move(passGradient)),
+      gradient(passGradient),
       proportionCorrectChiralConstraints(passProportionCorrectChiralConstraints),
       compress(passCompress)
   {}
