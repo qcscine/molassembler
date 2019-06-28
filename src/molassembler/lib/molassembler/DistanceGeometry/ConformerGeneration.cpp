@@ -28,20 +28,30 @@ namespace DistanceGeometry {
 
 namespace detail {
 
-AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positionsMatrix) {
-  assert(positionsMatrix.cols() == 3);
-  const unsigned N = positionsMatrix.rows();
+Eigen::MatrixXd gather(const Eigen::VectorXd& vectorizedPositions) {
+  constexpr unsigned dimensionality = 4;
+  const unsigned N = vectorizedPositions.size() / dimensionality;
+  Eigen::MatrixXd positionMatrix(N, 3);
+  for(unsigned i = 0; i < N; ++i) {
+    positionMatrix.row(i) = vectorizedPositions.template segment<3>(dimensionality * i);
+  }
+  return positionMatrix;
+}
+
+AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positions) {
+  assert(positions.cols() == 3);
+  const unsigned N = positions.rows();
   AngstromWrapper angstromWrapper {N};
   for(unsigned i = 0; i < N; ++i) {
     angstromWrapper.positions.row(i) = Scine::Utils::Position {
-      positionsMatrix.row(i).transpose()
+      positions.row(i).transpose()
     };
   }
   return angstromWrapper;
 }
 
 Eigen::MatrixXd fitAndSetFixedPositions(
-  const Eigen::VectorXd& vectorizedPositions,
+  const Eigen::MatrixXd& positions,
   const Configuration& configuration
 ) {
   /* Fixed positions postprocessing:
@@ -50,17 +60,11 @@ Eigen::MatrixXd fitAndSetFixedPositions(
    * - Assuming the fit isn't absolutely exact, overwrite the existing
    *   positions with the fixed ones
    */
-  // Convert the vectorized positions into a positions matrix
-  const unsigned dimensionality = 4;
-  const unsigned N = vectorizedPositions.size() / dimensionality;
-  Eigen::MatrixXd positionMatrix(N, 3);
-  for(unsigned i = 0; i < N; ++i) {
-    positionMatrix.row(i) = vectorizedPositions.template segment<3>(dimensionality * i);
-  }
-
   /* Construct a reference matrix from the fixed positions (these are still in
    * bohr!) and a weights vector
    */
+  assert(positions.cols() == 3);
+  const unsigned N = positions.rows();
   Eigen::MatrixXd referenceMatrix = Eigen::MatrixXd::Zero(N, 3);
   Eigen::VectorXd weights = Eigen::VectorXd::Zero(N);
   for(const auto& indexPositionPair : configuration.fixedPositions) {
@@ -71,7 +75,7 @@ Eigen::MatrixXd fitAndSetFixedPositions(
   referenceMatrix *= Scine::Utils::Constants::angstrom_per_bohr;
 
   // Perform the QuaternionFit
-  Scine::Utils::QuaternionFit fit(referenceMatrix, positionMatrix, weights);
+  Scine::Utils::QuaternionFit fit(referenceMatrix, positions, weights);
 
   return fit.getFittedData();
 }
@@ -772,12 +776,15 @@ outcome::result<AngstromWrapper> refine(
     return DGError::RefinedStructureInacceptable;
   }
 
+  auto gatheredPositions = detail::gather(transformedPositions);
+
   if(!configuration.fixedPositions.empty()) {
-    auto positionMatrix = detail::fitAndSetFixedPositions(transformedPositions, configuration);
-    return detail::convertToAngstromWrapper(positionMatrix);
+    return detail::convertToAngstromWrapper(
+      detail::fitAndSetFixedPositions(gatheredPositions, configuration)
+    );
   }
 
-  return detail::convertToAngstromWrapper(transformedPositions);
+  return detail::convertToAngstromWrapper(gatheredPositions);
 }
 
 outcome::result<AngstromWrapper> generateConformer(

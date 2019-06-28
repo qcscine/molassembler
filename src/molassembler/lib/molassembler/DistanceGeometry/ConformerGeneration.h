@@ -27,12 +27,12 @@ namespace DistanceGeometry {
 
 namespace detail {
 
-AngstromWrapper convertToAngstromWrapper(
-  const Eigen::MatrixXd& positionsMatrix
-);
+Eigen::MatrixXd gather(const Eigen::VectorXd& vectorizedPositions);
+
+AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positions);
 
 Eigen::MatrixXd fitAndSetFixedPositions(
-  const Eigen::VectorXd& vectorizedPositions,
+  const Eigen::MatrixXd& positions,
   const Configuration& configuration
 );
 

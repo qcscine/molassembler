@@ -32,14 +32,14 @@ BOOST_AUTO_TEST_CASE(FixedPositionsWork) {
       if(
         !positions.row(fixedPositionPair.first).isApprox(
           fixedPositionPair.second,
-          1e-4
+          1e-3
         )
       ) {
         pass = false;
         std::cout << "Fixed position atom " << fixedPositionPair.first
-          << " is at " << positions.row(fixedPositionPair.first).transpose()
+          << " is at " << positions.row(fixedPositionPair.first)
           << ", but was supposed to be fixed at "
-          << fixedPositionPair.second.transpose()
+          << fixedPositionPair.second
           << "\n";
       }
     }
