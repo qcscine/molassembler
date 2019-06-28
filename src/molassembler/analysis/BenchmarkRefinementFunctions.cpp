@@ -47,6 +47,8 @@ struct TimingFunctor {
   ) = 0;
 
   virtual std::string name() = 0;
+
+  virtual ~TimingFunctor() = default;
 };
 
 struct FunctorResults {
@@ -335,7 +337,7 @@ void benchmark(
    */
 
   /* Timings */
-  std::cout << std::fixed << std::setprecision(0);
+  std::cout << std::fixed << std::setprecision(1);
 
   std::string nCount = "N = " + std::to_string(molecule.graph().N());
 
@@ -435,7 +437,17 @@ const std::string algorithmChoices =
   "  2 - Eigen<dimensionality=4, double, SIMD=false>\n"
   "  3 - Eigen<dimensionality=4, float, SIMD=false>\n"
   "  4 - Eigen<dimensionality=4, double, SIMD=true>\n"
-  "  5 - Eigen<dimensionality4, float, SIMD=true>\n";
+  "  5 - Eigen<dimensionality=4, float, SIMD=true>\n";
+
+constexpr const char* description =
+  "This program exists to benchmark various refinement functions' evaluation\n"
+  "speeds against one another in order to figure out whether there is a\n"
+  "significant advantage to SIMD on/off or float/double variants.\n\n"
+  "It is necessary to provide a path containing MOLFiles that can be\n"
+  "interpreted as single molecules and then used to benchmark the refinement\n"
+  "functions. It may be interesting to have molecules of a wide range of sizes\n"
+  "and differing structural features to test various error function components\n";
+
 
 int main(int argc, char* argv[]) {
   using namespace molassembler;
@@ -458,7 +470,7 @@ int main(int argc, char* argv[]) {
 
   // Program options
   if(options_variables_map.count("help") > 0) {
-    std::cout << options_description << std::endl;
+    std::cout << description << "\n" << options_description << "\n";
     return 0;
   }
 
@@ -473,7 +485,7 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("c") > 0) {
     unsigned combination = options_variables_map["c"].as<unsigned>();
 
-    if(combination > 2) {
+    if(combination > 5) {
       std::cout << "Specified algorithm is out of bounds. Valid choices are:" << nl
         << algorithmChoices;
       return 0;

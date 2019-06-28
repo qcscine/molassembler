@@ -8,6 +8,7 @@
 
 #include <Eigen/Core>
 #include <iostream>
+#include "temple/STL17.h"
 
 /* TODO
  * - Detect ill-conditioning of LBFGS? Doesn't do well at all near maxima
@@ -36,8 +37,12 @@ struct FloatUpdateBuffer {
   FloatType old;
   FloatType current;
 
+  //! Returns signed difference: current - old
+  FloatType absDelta() const {
+    return std::fabs(current - old);
+  }
+
   void propagate() { old = current; }
-  void revert() { current = old; }
 };
 
 template<typename EigenType>
@@ -45,14 +50,19 @@ struct EigenUpdateBuffer {
   EigenType old;
   EigenType current;
 
-  /* Swapping instead of moving current into old is three moves instead of
-   * one, but avoids allocation of new memory (after moving from current, we
-   * need to resize current to have the same size). Assuming moves are
-   * cheap (trade ownership of allocated memory) and allocation could be
-   * costly, this might be cheaper.
-   */
-  void propagate() { std::swap(old, current); }
-  void revert() { current = old; }
+  typename EigenType::Scalar deltaNorm() const {
+    return (current - old).norm();
+  }
+
+  void propagate() {
+    /* Swapping instead of moving current into old is three moves instead of
+     * one, but avoids allocation of new memory (after moving from current, we
+     * need to resize current to have the same size). Assuming moves are
+     * cheap (trade ownership of allocated memory) and allocation could be
+     * costly, this might be cheaper.
+     */
+    std::swap(old, current);
+  }
 };
 
 template<typename FloatType, typename VectorType, typename UpdateFunction>
@@ -127,6 +137,17 @@ void clampToBounds(Eigen::Ref<VectorType> parameters, const BoxType& box) {
   box.clamp(parameters);
 }
 
+
+template<typename VectorType>
+bool validate(const VectorType& /* parameters */) {
+  return true;
+}
+
+template<typename VectorType, typename BoxType>
+bool validate(const VectorType& parameters, const BoxType& box) {
+  return box.validate(parameters);
+}
+
 template<typename VectorType>
 void adjustGradient(
   Eigen::Ref<VectorType> /* gradient */,
@@ -178,6 +199,16 @@ public:
   using MatrixType = Eigen::Matrix<FloatType, Eigen::Dynamic, Eigen::Dynamic>;
   using VectorType = Eigen::Matrix<FloatType, Eigen::Dynamic, 1>;
 
+  //! Type returned from an optimization
+  struct OptimizationReturnType {
+    //! Number of iterations
+    unsigned iterations;
+    //! Final function value
+    FloatType value;
+    //! Final gradient
+    VectorType gradient;
+  };
+
   /**
    * @brief Type storing boundaries for parameter values
    */
@@ -186,6 +217,14 @@ public:
     VectorType minima;
     //! Upper bounds for parameters
     VectorType maxima;
+
+    Box() = default;
+    Box(const VectorType& passMinima, const VectorType& passMaxima)
+      : minima(passMinima),
+        maxima(passMaxima)
+    {
+      assert((minima.array() <= maxima.array()).all());
+    }
 
     //! Clamp parameter values to the bounds
     void clamp(Eigen::Ref<VectorType> x) const {
@@ -223,6 +262,7 @@ public:
       }
     }
 
+    //! Adjust a direction vector to avoid exceeding the box
     void adjustDirection(
       Eigen::Ref<VectorType> direction,
       const VectorType& parameters,
@@ -247,257 +287,6 @@ public:
     }
   };
 
-  template<
-    typename UpdateFunction,
-    typename Checker,
-    typename Observer = detail::DoNothingObserver
-  > [[deprecated("use minimize instead")]] unsigned optimize(
-    Eigen::Ref<VectorType> initialParameters,
-    UpdateFunction&& function,
-    Checker&& check,
-    Observer&& observer = Observer {}
-  ) {
-    return minimize(
-      initialParameters,
-      std::forward<UpdateFunction>(function),
-      std::forward<Checker>(check),
-      std::forward<Observer>(observer)
-    );
-  }
-
-  /**
-   * @brief Find parameters to minimize an objective function
-   *
-   * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
-   *   double&, Ref<VectorType>). Any return values are ignored.
-   * @tparam Checker An object implementing two methods:
-   *   - checkMaxIterations: unsigned -> bool
-   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
-   *     The arguments passed are, in order: parameters, value and gradient
-   *   These functions should return true if optimization should cease
-   * @tparam Observer An observer callable object taking parameters. Return
-   *   values are ignored.
-   * @param parameters The initial parameters to optimize. Resulting
-   *   optimization parameters are written to this argument.
-   * @param function The objective function to optimize.
-   * @param check The Checker instance
-   * @param observer The Observer instance
-   *
-   * @return The number of calls to @p function made during optimization
-   */
-  template<
-    typename UpdateFunction,
-    typename Checker,
-    typename Observer = detail::DoNothingObserver
-  > unsigned minimize(
-    Eigen::Ref<VectorType> parameters,
-    UpdateFunction&& function,
-    Checker&& check,
-    Observer&& observer = Observer {}
-  ) {
-    /* number of parameters treated */
-    // Note: Do not reorder, StepValues moves from parameters
-    const unsigned P = parameters.size();
-    StepValues step;
-    VectorType direction = step.generateInitialDirection(function, parameters, stepLength);
-    CollectiveRingBuffer ringBuffer {P};
-    observer(step.parameters.current);
-
-    unsigned iteration;
-    for(
-      iteration = 1;
-      (
-        !check.checkMaxIterations(iteration)
-        && !check.checkConvergence(step.parameters.current, step.values.current, step.gradients.current)
-      );
-      ++iteration
-    ) {
-      iteration += adjustStepAlongDirection(function, observer, step, direction);
-
-      ringBuffer.updateAndGenerateNewDirection(direction, step);
-
-      /* Accept the current step and create a new prospective step using the new
-       * direction vector
-       */
-      step.propagate(function, stepLength, direction);
-      observer(step.parameters.current);
-    }
-
-    // Copy the optimal parameters back into the in/out argument
-    parameters = std::move(step.parameters.current);
-    return iteration;
-  }
-
-  /**
-   * @brief Find parameters to maximize an objective function
-   *
-   * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
-   *   double&, Ref<VectorType>). Any return values are ignored.
-   * @tparam Checker An object implementing two methods:
-   *   - checkMaxIterations: unsigned -> bool
-   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
-   *     The arguments passed are, in order: parameters, value and gradient
-   *   These functions should return true if optimization should cease
-   * @tparam Observer An observer callable object taking parameters. Return
-   *   values are ignored.
-   * @param parameters The initial parameters to optimize. Resulting
-   *   optimization parameters are written to this argument.
-   * @param function The objective function to optimize.
-   * @param check The Checker instance
-   * @param observer The Observer instance
-   *
-   * @return The number of calls to @p function made during optimization
-   */
-  template<
-    typename UpdateFunction,
-    typename Checker,
-    typename Observer = detail::DoNothingObserver
-  > unsigned maximize(
-    Eigen::Ref<VectorType> parameters,
-    UpdateFunction&& function,
-    Checker&& check,
-    Observer&& observer = Observer {}
-  ) {
-    return minimize(
-      parameters,
-      detail::negateFunction<VectorType>(
-        std::forward<UpdateFunction>(function)
-      ),
-      std::forward<Checker>(check),
-      std::forward<Observer>(observer)
-    );
-  }
-
-  /**
-   * @brief Find parameters to minimize an objective function within bounds
-   *
-   * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
-   *   double&, Ref<VectorType>). Any return values are ignored.
-   * @tparam Checker An object implementing two methods:
-   *   - checkMaxIterations: unsigned -> bool
-   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
-   *     The arguments passed are, in order: parameters, value and gradient
-   *   These functions should return true if optimization should cease
-   * @tparam Observer An observer callable object taking parameters. Return
-   *   values are ignored.
-   * @param parameters The initial parameters to optimize. Resulting
-   *   optimization parameters are written to this argument.
-   * @param box Bounds on the parameters
-   * @param function The objective function to optimize.
-   * @param check The Checker instance
-   * @param observer The Observer instance
-   *
-   * @note Gradients passed to @p check do not contain bounded components
-   *
-   * @return The number of calls to @p function made during optimization
-   */
-  template<
-    typename UpdateFunction,
-    typename Checker,
-    typename Observer = detail::DoNothingObserver
-  > unsigned minimize(
-    Eigen::Ref<VectorType> parameters,
-    const Box& box,
-    UpdateFunction&& function,
-    Checker&& check,
-    Observer&& observer = Observer {}
-  ) {
-    assert(box.validate(parameters));
-
-    /* number of parameters treated */
-    // Note: Do not reorder, StepValues moves from parameters
-    const unsigned P = parameters.size();
-    StepValues step;
-    VectorType direction = step.generateInitialDirection(function, parameters, stepLength, box);
-
-    CollectiveRingBuffer ringBuffer {P};
-    observer(step.parameters.current);
-
-    unsigned iteration;
-    for(
-      iteration = 1;
-      (
-        !check.checkMaxIterations(iteration)
-        && !check.checkConvergence(step.parameters.current, step.values.current, step.gradients.current)
-      );
-      ++iteration
-    ) {
-      iteration += adjustStepAlongDirection(function, observer, step, direction, box);
-      ringBuffer.updateAndGenerateNewDirection(direction, step, box);
-
-      /* Accept the current step and create a new prospective step using the new
-       * direction vector
-       */
-      step.propagate(function, stepLength, direction, box);
-      observer(step.parameters.current);
-    }
-
-    // Copy the optimal parameters back into the in/out argument
-    parameters = std::move(step.parameters.current);
-    return iteration;
-  }
-
-  /**
-   * @brief Find parameters to maximize an objective function within bounds
-   *
-   * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
-   *   double&, Ref<VectorType>). Any return values are ignored.
-   * @tparam Checker An object implementing two methods:
-   *   - checkMaxIterations: unsigned -> bool
-   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
-   *     The arguments passed are, in order: parameters, value and gradient
-   *   These functions should return true if optimization should cease
-   * @tparam Observer An observer callable object taking parameters. Return
-   *   values are ignored.
-   * @param parameters The initial parameters to optimize. Resulting
-   *   optimization parameters are written to this argument.
-   * @param box Bounds on the parameters
-   * @param function The objective function to optimize.
-   * @param check The Checker instance
-   * @param observer The Observer instance
-   *
-   * @return The number of calls to @p function made during optimization
-   */
-  template<
-    typename UpdateFunction,
-    typename Checker,
-    typename Observer = detail::DoNothingObserver
-  > unsigned maximize(
-    Eigen::Ref<VectorType> parameters,
-    const Box& box,
-    UpdateFunction&& function,
-    Checker&& check,
-    Observer&& observer = Observer {}
-  ) {
-    return minimize(
-      parameters,
-      box,
-      detail::negateFunction<VectorType>(
-        std::forward<UpdateFunction>(function)
-      ),
-      std::forward<Checker>(check),
-      std::forward<Observer>(observer)
-    );
-  }
-
-  /**
-   * @brief 1st parameter for the Wolfe conditions.
-   */
-  FloatType c1 = 0.0001;
-  /**
-   * @brief 2nd parameter for the Wolfe conditions.
-   *
-   * A value as low as 0.1 can be used.
-   */
-  FloatType c2 = 0.9;
-  /**
-   * @brief The initial step length used in the L-BFGS.
-   *
-   * Note: the first step is a gradient descent with 0.1 times the steplength.
-   */
-  FloatType stepLength = 1.0;
-
-private:
   /**
    * @brief Class carrying proposed parameter updates in an optimization
    */
@@ -519,7 +308,7 @@ private:
     VectorType generateInitialDirection(
       UpdateFunction&& function,
       Eigen::Ref<VectorType> initialParameters,
-      FloatType multiplier,
+      const FloatType multiplier,
       const Boxes& ... boxes
     ) {
       const unsigned P = initialParameters.size();
@@ -532,7 +321,13 @@ private:
       detail::boxes::adjustGradient<VectorType>(gradients.old, parameters.old, boxes ...);
 
       // Initialize new with a small steepest descent step
-      VectorType direction = FloatType {-0.1} * gradients.old;
+      VectorType direction;
+      const FloatType gradientNorm = gradients.old.norm();
+      if(gradientNorm > FloatType {1e-4}) {
+        direction = -gradients.old / gradientNorm;
+      } else {
+        direction = FloatType {-1.0} * gradients.old;
+      }
 
       prepare(function, multiplier, direction, boxes ...);
 
@@ -544,7 +339,7 @@ private:
       UpdateFunction&& function,
       const FloatType multiplier,
       const VectorType& direction,
-      Boxes ... boxes
+      const Boxes& ... boxes
     ) {
       parameters.current.noalias() = parameters.old + multiplier * direction;
       detail::boxes::clampToBounds<VectorType>(parameters.current, boxes ...);
@@ -575,6 +370,201 @@ private:
     }
   };
 
+
+  /**
+   * @brief Find parameters to minimize an objective function
+   *
+   * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
+   *   double&, Ref<VectorType>). Any return values are ignored.
+   * @tparam Checker An object implementing two methods:
+   *   - checkMaxIterations: unsigned -> bool
+   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
+   *     The arguments passed are, in order: parameters, value and gradient
+   *   These functions should return true if optimization should cease
+   * @tparam Observer An observer callable object taking parameters. Return
+   *   values are ignored.
+   * @param parameters The initial parameters to optimize. Resulting
+   *   optimization parameters are written to this argument.
+   * @param function The objective function to optimize.
+   * @param check The Checker instance
+   * @param observer The Observer instance
+   *
+   * @return A @p OptimizationReturnType instance
+   */
+  template<
+    typename UpdateFunction,
+    typename Checker,
+    typename Observer = detail::DoNothingObserver
+  > OptimizationReturnType minimize(
+    Eigen::Ref<VectorType> parameters,
+    UpdateFunction&& function,
+    Checker&& check,
+    Observer&& observer = Observer {}
+  ) {
+    return minimizeBase(
+      parameters,
+      std::forward<UpdateFunction>(function),
+      std::forward<Checker>(check),
+      std::forward<Observer>(observer)
+    );
+  }
+
+  /**
+   * @brief Find parameters to maximize an objective function
+   *
+   * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
+   *   double&, Ref<VectorType>). Any return values are ignored.
+   * @tparam Checker An object implementing two methods:
+   *   - checkMaxIterations: unsigned -> bool
+   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
+   *     The arguments passed are, in order: parameters, value and gradient
+   *   These functions should return true if optimization should cease
+   * @tparam Observer An observer callable object taking parameters. Return
+   *   values are ignored.
+   * @param parameters The initial parameters to optimize. Resulting
+   *   optimization parameters are written to this argument.
+   * @param function The objective function to optimize.
+   * @param check The Checker instance
+   * @param observer The Observer instance
+   *
+   * @return The number of calls to @p function made during optimization
+   */
+  template<
+    typename UpdateFunction,
+    typename Checker,
+    typename Observer = detail::DoNothingObserver
+  > OptimizationReturnType maximize(
+    Eigen::Ref<VectorType> parameters,
+    UpdateFunction&& function,
+    Checker&& check,
+    Observer&& observer = Observer {}
+  ) {
+    OptimizationReturnType results = minimize(
+      parameters,
+      detail::negateFunction<VectorType>(
+        std::forward<UpdateFunction>(function)
+      ),
+      std::forward<Checker>(check),
+      std::forward<Observer>(observer)
+    );
+
+    // Revert sign of negated function minimization
+    results.value *= -1;
+    results.gradient *= -1;
+
+    return results;
+  }
+
+  /**
+   * @brief Find parameters to minimize an objective function within bounds
+   *
+   * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
+   *   double&, Ref<VectorType>). Any return values are ignored.
+   * @tparam Checker An object implementing two methods:
+   *   - checkMaxIterations: unsigned -> bool
+   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
+   *     The arguments passed are, in order: parameters, value and gradient
+   *   These functions should return true if optimization should cease
+   * @tparam Observer An observer callable object taking parameters. Return
+   *   values are ignored.
+   * @param parameters The initial parameters to optimize. Resulting
+   *   optimization parameters are written to this argument.
+   * @param box Bounds on the parameters
+   * @param function The objective function to optimize.
+   * @param check The Checker instance
+   * @param observer The Observer instance
+   *
+   * @note Gradients passed to @p check do not contain bounded components
+   *
+   * @return The number of calls to @p function made during optimization
+   */
+  template<
+    typename UpdateFunction,
+    typename Checker,
+    typename Observer = detail::DoNothingObserver
+  > OptimizationReturnType minimize(
+    Eigen::Ref<VectorType> parameters,
+    const Box& box,
+    UpdateFunction&& function,
+    Checker&& check,
+    Observer&& observer = Observer {}
+  ) {
+    return minimizeBase(
+      parameters,
+      std::forward<UpdateFunction>(function),
+      std::forward<Checker>(check),
+      std::forward<Observer>(observer),
+      box
+    );
+  }
+
+  /**
+   * @brief Find parameters to maximize an objective function within bounds
+   *
+   * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
+   *   double&, Ref<VectorType>). Any return values are ignored.
+   * @tparam Checker An object implementing two methods:
+   *   - checkMaxIterations: unsigned -> bool
+   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
+   *     The arguments passed are, in order: parameters, value and gradient
+   *   These functions should return true if optimization should cease
+   * @tparam Observer An observer callable object taking parameters. Return
+   *   values are ignored.
+   * @param parameters The initial parameters to optimize. Resulting
+   *   optimization parameters are written to this argument.
+   * @param box Bounds on the parameters
+   * @param function The objective function to optimize.
+   * @param check The Checker instance
+   * @param observer The Observer instance
+   *
+   * @return The number of calls to @p function made during optimization
+   */
+  template<
+    typename UpdateFunction,
+    typename Checker,
+    typename Observer = detail::DoNothingObserver
+  > OptimizationReturnType maximize(
+    Eigen::Ref<VectorType> parameters,
+    const Box& box,
+    UpdateFunction&& function,
+    Checker&& check,
+    Observer&& observer = Observer {}
+  ) {
+    OptimizationReturnType results = minimize(
+      parameters,
+      box,
+      detail::negateFunction<VectorType>(
+        std::forward<UpdateFunction>(function)
+      ),
+      std::forward<Checker>(check),
+      std::forward<Observer>(observer)
+    );
+
+    // Revert sign of negated function minimization
+    results.value *= -1;
+    results.gradient *= -1;
+
+    return results;
+  }
+
+  /**
+   * @brief 1st parameter for the Wolfe conditions.
+   */
+  FloatType c1 = 0.0001;
+  /**
+   * @brief 2nd parameter for the Wolfe conditions.
+   *
+   * A value as low as 0.1 can be used.
+   */
+  FloatType c2 = 0.9;
+  /**
+   * @brief The initial step length used in the L-BFGS.
+   *
+   * Note: the first step is a gradient descent with 0.1 times the steplength.
+   */
+  FloatType stepLength = 1.0;
+
+private:
   /**
    * @brief Class containing hessian information for LBFGS update
    */
@@ -641,14 +631,16 @@ private:
       }
     }
 
-    void addInformation(
+    bool addInformation(
       const detail::EigenUpdateBuffer<VectorType>& parameterBuffer,
       const detail::EigenUpdateBuffer<VectorType>& gradientBuffer
     ) {
+      bool dotProductNotZero;
       if(count < ringBufferSize) {
         y.col(count).noalias() = gradientBuffer.current - gradientBuffer.old;
         s.col(count).noalias() = parameterBuffer.current - parameterBuffer.old;
         sDotY(count) = s.col(count).dot(y.col(count));
+        dotProductNotZero = (sDotY(count) != 0);
         ++count;
       } else {
         // Rotate columns without copying (introduce modulo offset)
@@ -656,8 +648,11 @@ private:
         y.col(columnOffset).noalias() = gradientBuffer.current - gradientBuffer.old;
         s.col(columnOffset).noalias() = parameterBuffer.current - parameterBuffer.old;
         sDotY(columnOffset) = s.col(columnOffset).dot(y.col(columnOffset));
+        dotProductNotZero = (sDotY(columnOffset) != 0);
         offset = (offset + 1) % ringBufferSize;
       }
+
+      return dotProductNotZero;
     }
 
     /**
@@ -708,7 +703,7 @@ private:
     }
 
     template<typename ... Boxes>
-    void updateAndGenerateNewDirection(
+    bool updateAndGenerateNewDirection(
       Eigen::Ref<VectorType> direction,
       const StepValues& step,
       const Boxes& ... boxes
@@ -716,7 +711,10 @@ private:
       /* L-BFGS update: Use old parameters and gradients to improve steepest
        * descent direction
        */
-      addInformation(step.parameters, step.gradients);
+      if(!addInformation(step.parameters, step.gradients)) {
+        return false;
+      }
+
       generateNewDirection(direction, step.gradients.current);
       detail::boxes::adjustDirection(
         direction,
@@ -724,6 +722,8 @@ private:
         step.gradients.current,
         boxes ...
       );
+
+      return true;
     }
   };
 
@@ -756,9 +756,18 @@ private:
   ) {
     unsigned iterations = 0;
 
-    constexpr FloatType lowerStepLengthLimit = 1e-4;
+    /* Numerical optimization p. 178, paraphrased: Generated search direction
+     * is typically well scaled, so that step length = 1 should be accepted in
+     * most iterations.
+     *
+     * Therefore, we only allow buildup of lengthening of the step length, but
+     * not shortening.
+     */
+    if(stepLength < 1) {
+      stepLength = 1;
+    }
 
-    for(iterations = 0; stepLength > lowerStepLengthLimit; ++iterations) {
+    for(iterations = 0; stepLength > 0; ++iterations) {
       const FloatType oldGradDotDirection = step.gradients.old.dot(direction);
 
       /* Armijo rule (Wolfe condition I) */
@@ -814,11 +823,72 @@ private:
       }
     }
 
-    if(stepLength <= lowerStepLengthLimit) {
-      throw std::logic_error("stepLength no longer in reasonable bounds");
+    if(stepLength == 0) {
+      throw std::logic_error("Could not find a step length that reduces objective function value.");
     }
 
     return iterations;
+  }
+
+  template<
+    typename UpdateFunction,
+    typename Checker,
+    typename Observer,
+    typename ... Boxes
+  > OptimizationReturnType minimizeBase(
+    Eigen::Ref<VectorType> parameters,
+    UpdateFunction&& function,
+    Checker&& check,
+    Observer&& observer,
+    Boxes&& ... boxes
+  ) {
+    // If there is a box, make sure the parameters are valid
+    assert(detail::boxes::validate(parameters, boxes ...));
+
+    // Set up a first small conjugate gradient step
+    StepValues step;
+    VectorType direction = step.generateInitialDirection(function, parameters, stepLength, boxes ...);
+    observer(step.parameters.current);
+    //std::cout << "Propose step to " << step.parameters.current.transpose() << ", value " << step.values.current << "\n";
+
+    /* Set up ring buffer to keep changes in gradient and parameters to
+     * approximate the inverse Hessian with
+     */
+    CollectiveRingBuffer ringBuffer {static_cast<unsigned>(parameters.size())};
+
+    // Begin optimization loop
+    unsigned iteration;
+    for(
+      iteration = 1;
+      check.shouldContinue(iteration, stl17::as_const(step));
+      ++iteration
+    ) {
+      // Line search the chosen direction
+      iteration += adjustStepAlongDirection(function, observer, step, direction, boxes ...);
+
+      /* Add more information to approximate the inverse Hessian and use it to
+       * generate a new direction.
+       */
+      if(!ringBuffer.updateAndGenerateNewDirection(direction, step, boxes ...)) {
+        break;
+      }
+
+      /* Accept the current step and prepare a new prospective step using the
+       * updated direction vector
+       */
+      //std::cout << "Accepting step to " << step.parameters.current.transpose() << "\n";
+      step.propagate(function, stepLength, direction, boxes ...);
+      //std::cout << "Propose step to " << step.parameters.current.transpose() << ", value " << step.values.current << "\n";
+      observer(step.parameters.current);
+    }
+
+    // Copy the optimal parameters back into the in/out argument
+    parameters = std::move(step.parameters.current);
+    return {
+      iteration,
+      step.values.current,
+      std::move(step.gradients.current)
+    };
   }
 };
 

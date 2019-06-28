@@ -33,65 +33,25 @@ struct InversionOrIterLimitStop {
       refinementFunctorReference(functor)
   {}
 
-  bool checkConvergence(
-    const VectorType& /* parameters */,
-    FloatType /* value */,
-    const VectorType& /* gradients */
-  ) {
-    return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
-  }
-
-  bool checkMaxIterations(unsigned currentIteration) {
-    return currentIteration >= iterLimit;
+  template<typename StepValues>
+  bool shouldContinue(unsigned iteration, const StepValues& /* step */) {
+    return (
+      iteration < iterLimit
+      && refinementFunctorReference.proportionChiralConstraintsCorrectSign < 1.0
+    );
   }
 };
-
-//template<typename EigenRefinementType>
-//struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
-//  const unsigned iterLimit;
-//  const EigenRefinementType& refinementFunctorReference;
-//
-//
-//  using VectorType = typename EigenRefinementType::VectorType;
-//  using FloatType = typename EigenRefinementType::FloatingPointType;
-//
-//  InversionOrIterLimitStop(
-//    const unsigned passIter,
-//    const EigenRefinementType& functor
-//  ) : iterLimit(passIter),
-//      refinementFunctorReference(functor)
-//  {}
-//
-//  virtual bool checkConvergence(
-//    const VectorType& /* parameters */,
-//    FloatType /* value */,
-//    const VectorType& /* gradients */
-//  ) final {
-//    return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
-//  }
-//
-//  virtual bool checkMaxIterations(unsigned currentIteration) final {
-//    return currentIteration >= iterLimit;
-//  }
-//
-//  void addSettingsDescriptors(Utils::UniversalSettings::DescriptorCollection& /* collection */) final {}
-//  void applySettings(const Utils::Settings& /* s */) final {}
-//};
 
 template<typename FloatType>
 struct GradientOrIterLimitStop {
   using VectorType = Eigen::Matrix<FloatType, Eigen::Dynamic, 1>;
 
-  bool checkConvergence(
-    const VectorType& /* parameters */,
-    FloatType /* value */,
-    const VectorType& gradients
-  ) {
-    return gradients.template cast<double>().norm() <= gradNorm;
-  }
-
-  bool checkMaxIterations(unsigned currentIteration) {
-    return currentIteration >= iterLimit;
+  template<typename StepValues>
+  bool shouldContinue(unsigned iteration, const StepValues& step) {
+    return (
+      iteration < iterLimit
+      && step.gradients.current.template cast<double>().norm() > gradNorm
+    );
   }
 
   unsigned iterLimit = 10000;
@@ -319,7 +279,7 @@ std::list<RefinementData> debugEigenRefinement(
       optimizer.stepLength = optimizerParameters.stepLength;
 
       try {
-        firstStageIterations = optimizer.optimize(
+        firstStageIterations = optimizer.minimize(
           transformedPositions,
           refinementFunctor,
           inversionChecker,
@@ -364,7 +324,7 @@ std::list<RefinementData> debugEigenRefinement(
       optimizer.c2 = optimizerParameters.c2;
       optimizer.stepLength = optimizerParameters.stepLength;
 
-      secondStageIterations = optimizer.optimize(
+      secondStageIterations = optimizer.minimize(
         transformedPositions,
         refinementFunctor,
         gradientChecker,
@@ -424,7 +384,7 @@ std::list<RefinementData> debugEigenRefinement(
       optimizer.c2 = optimizerParameters.c2;
       optimizer.stepLength = optimizerParameters.stepLength;
 
-      thirdStageIterations = optimizer.optimize(
+      thirdStageIterations = optimizer.minimize(
         transformedPositions,
         refinementFunctor,
         gradientChecker,

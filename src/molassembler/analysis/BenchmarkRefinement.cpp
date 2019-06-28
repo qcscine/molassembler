@@ -48,6 +48,8 @@ struct TimingFunctor {
   ) = 0;
 
   virtual std::string name() = 0;
+
+  virtual ~TimingFunctor() = default;
 };
 
 struct FunctorResults {
@@ -283,47 +285,18 @@ struct DlibFunctor final : public TimingFunctor {
   }
 };
 
-// template<typename EigenRefinementType>
-// struct InversionOrIterLimitStop final : public Utils::GradientBasedCheck {
-//   const EigenRefinementType& refinementFunctorReference;
-//   using VectorType = typename EigenRefinementType::VectorType;
-//   using FloatType = typename EigenRefinementType::FloatingPointType;
-//
-//   InversionOrIterLimitStop(const EigenRefinementType& functor) : refinementFunctorReference(functor) {}
-//
-//   virtual bool checkConvergence(
-//     const VectorType& /* parameters */,
-//     FloatType /* value */,
-//     const VectorType& /* gradients */
-//   ) final {
-//     return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
-//   }
-//
-//   virtual bool checkMaxIterations(unsigned currentIteration) final {
-//     return currentIteration >= refinementStepLimit;
-//   }
-//
-//   void addSettingsDescriptors(Utils::UniversalSettings::DescriptorCollection& /* collection */) final {}
-//   void applySettings(const Utils::Settings& /* s */) final {}
-// };
-
 template<typename EigenRefinementType>
 struct InversionOrIterLimitStop {
   const EigenRefinementType& refinementFunctorReference;
 
   InversionOrIterLimitStop(const EigenRefinementType& functor) : refinementFunctorReference(functor) {}
 
-  template<typename VectorType, typename FloatType>
-  bool checkConvergence(
-    const Eigen::Ref<VectorType>& /* parameters */,
-    FloatType /* value */,
-    const VectorType& /* gradients */
-  ) {
-    return refinementFunctorReference.proportionChiralConstraintsCorrectSign >= 1.0;
-  }
-
-  bool checkMaxIterations(unsigned currentIteration) {
-    return currentIteration >= refinementStepLimit;
+  template<typename StepValues>
+  bool shouldContinue(unsigned iteration, const StepValues& /* step */) {
+    return (
+      iteration < refinementStepLimit
+      && refinementFunctorReference.proportionChiralConstraintsCorrectSign < 1.0
+    );
   }
 };
 
@@ -331,16 +304,12 @@ template<typename FloatType>
 struct GradientOrIterLimitStop {
   using VectorType = Eigen::Matrix<FloatType, Eigen::Dynamic, 1>;
 
-  bool checkConvergence(
-    const VectorType& /* parameters */,
-    FloatType /* value */,
-    const VectorType& gradients
-  ) {
-    return gradients.template cast<double>().norm() <= gradNorm;
-  }
-
-  bool checkMaxIterations(unsigned currentIteration) {
-    return currentIteration >= refinementStepLimit;
+  template<typename StepValues>
+  bool shouldContinue(unsigned iteration, const StepValues& step) {
+    return (
+      iteration < refinementStepLimit
+      && step.gradients.current.template cast<double>().norm() > gradNorm
+    );
   }
 
   double gradNorm = 1e-5;
@@ -401,11 +370,12 @@ boost::optional<unsigned> eigenRefine(
 
     unsigned iterations;
     try {
-      iterations = optimizer.optimize(
+      auto result = optimizer.minimize(
         transformedPositions,
         refinementFunctor,
         inversionChecker
       );
+      iterations = result.iterations;
     } catch (...) {
       return boost::none;
     }
@@ -425,17 +395,15 @@ boost::optional<unsigned> eigenRefine(
   refinementFunctor.compressFourthDimension = true;
 
   GradientOrIterLimitStop<FloatType> gradientChecker;
-  /*Utils::GradientBasedCheck gradientChecker;
-  gradientChecker.maxIter = refinementStepLimit;
-  gradientChecker.gradNorm = 1e-5;*/
 
   unsigned iterations;
   try {
-    iterations = optimizer.optimize(
+    auto result = optimizer.minimize(
       transformedPositions,
       refinementFunctor,
       gradientChecker
     );
+    iterations = result.iterations;
   } catch (...) {
     return boost::none;
   }
@@ -451,13 +419,6 @@ boost::optional<unsigned> eigenRefine(
   iterationCount += iterations;
 
   return iterationCount;
-
-  /*Utils::PositionCollection finalPositions(N, 3);
-  for(unsigned i = 0; i < N; ++i) {
-    finalPositions.row(i) = transformedPositions.segment<3>(dimensionality * i);
-  }
-
-  return AngstromWrapper {std::move(finalPositions), LengthUnit::Angstrom};*/
 }
 
 
@@ -637,7 +598,7 @@ void benchmark(
 
     std::cout
       << std::setw(16) << functorPtr->name()
-      << std::setw(10) << (functorResult.timingAverage / smallestAverage)
+      << std::setw(10) << (smallestAverage != 0 ? functorResult.timingAverage / smallestAverage : 0)
       << std::setw(14) << successCount
       << std::setw(25) << timingStr
       << std::setw(25) << iterationStr
@@ -658,10 +619,20 @@ using namespace std::string_literals;
 const std::string algorithmChoices =
   "  0 - All\n"
   "  1 - Dlib\n"
-  "  2 - Eigen<4, dbl, 0>\n"
-  "  3 - Eigen<4, flt, 0>\n"
-  "  4 - Eigen<4, dbl, 1>\n"
-  "  5 - Eigen<4, flt, 1>\n";
+  "  2 - Eigen<dimensionality=4, double, SIMD=false>\n"
+  "  3 - Eigen<dimensionality=4, float, SIMD=false>\n"
+  "  4 - Eigen<dimensionality=4, double, SIMD=true>\n"
+  "  5 - Eigen<dimensionality=4, float, SIMD=true>\n";
+
+constexpr const char* description =
+  "Benchmarks various refinement error functions and optimizer combinations\n"
+  "against one another in order to figure out if there are stability issues\n"
+  "with particular combinations.\n\n"
+  "It is necessary to provide a path containing MOLFiles that can be\n"
+  "interpreted as single molecules and then used to benchmark the refinement\n"
+  "functions. It may be interesting to have molecules of a wide range of sizes\n"
+  "and differing structural features to test various error function components\n";
+
 
 int main(int argc, char* argv[]) {
   using namespace molassembler;
@@ -684,7 +655,7 @@ int main(int argc, char* argv[]) {
 
   // Program options
   if(options_variables_map.count("help") > 0) {
-    std::cout << options_description << std::endl;
+    std::cout << description << "\n" << options_description << std::endl;
     return 0;
   }
 
@@ -699,7 +670,7 @@ int main(int argc, char* argv[]) {
   if(options_variables_map.count("c") > 0) {
     unsigned combination = options_variables_map["c"].as<unsigned>();
 
-    if(combination > 2) {
+    if(combination > 5) {
       std::cout << "Specified algorithm is out of bounds. Valid choices are:" << nl
         << algorithmChoices;
       return 0;

@@ -12,12 +12,12 @@ struct GradientBasedChecker {
   unsigned iterLimit = 100;
   FloatType gradientLimit = 1e-5;
 
-  bool checkMaxIterations(unsigned iteration) {
-    return iteration >= iterLimit;
-  }
-
-  bool checkConvergence(const Eigen::VectorXd& /* parameters */, const double /* value */, const Eigen::VectorXd& gradients) {
-    return gradients.norm() <= gradientLimit;
+  template<typename StepValues>
+  bool shouldContinue(unsigned iteration, const StepValues& step) {
+    return (
+      iteration < iterLimit
+      && step.gradients.current.norm() > gradientLimit
+    );
   }
 };
 
@@ -46,11 +46,11 @@ BOOST_AUTO_TEST_CASE(LBFGSSimpleMinimization) {
   positions[0] = 0.25 * M_PI;
   positions[1] = 0.75 * M_PI;
 
-  const unsigned cycles = optimizer.minimize(positions, gradientTestFunction, gradientChecker);
+  const auto result = optimizer.minimize(positions, gradientTestFunction, gradientChecker);
 
   BOOST_CHECK_MESSAGE(
-    cycles < 100,
-    "Expected convergence in less than 100 cycles, got " << cycles
+    result.iterations < 100,
+    "Expected convergence in less than 100 cycles, got " << result.iterations
   );
   BOOST_CHECK(std::fabs(positions[0] - 1.0) < 1e-3);
   BOOST_CHECK(std::fabs(positions[1] - 3.0) < 1e-3);
@@ -78,11 +78,11 @@ BOOST_AUTO_TEST_CASE(LBFGSSimpleMaximization) {
   Eigen::VectorXd expectedMaximum(2);
   expectedMaximum << 4.0, 2.0;
 
-  const unsigned cycles = optimizer.maximize(positions, gradientTestFunction, gradientChecker);
+  const auto result = optimizer.maximize(positions, gradientTestFunction, gradientChecker);
 
   BOOST_CHECK_MESSAGE(
-    cycles < 100,
-    "Expected convergence in less than 100 cycles, got " << cycles
+    result.iterations < 100,
+    "Expected convergence in less than 100 cycles, got " << result.iterations
   );
 
   for(unsigned i = 0; i < 2; ++i) {
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(LBFGSCosineMinimization) {
   Eigen::VectorXd expectedMinimum(2);
   expectedMinimum << 0, 0;
 
-  const unsigned cycles = optimizer.minimize(
+  const auto result = optimizer.minimize(
     positions,
     gradientTestFunction,
     gradientChecker
@@ -128,11 +128,11 @@ BOOST_AUTO_TEST_CASE(LBFGSCosineMinimization) {
   Eigen::VectorXd tmpGrad(2);
   double value;
   gradientTestFunction(positions, value, tmpGrad);
-  std::cout << "Minimized to " << positions.transpose() << " in " << cycles << " cycles. Value is " << value << "\n";
+  std::cout << "Minimized to " << positions.transpose() << " in " << result.iterations << " cycles. Value is " << value << "\n";
 
   BOOST_CHECK_MESSAGE(
-    cycles < 100,
-    "Expected convergence in less than 100 cycles, got " << cycles
+    result.iterations < 100,
+    "Expected convergence in less than 100 cycles, got " << result.iterations
   );
 
   for(unsigned i = 0; i < 2; ++i) {
@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(LBFGSBoxedMinimization) {
     boxMaxima
   };
 
-  const unsigned cycles = optimizer.minimize(
+  const auto result = optimizer.minimize(
     positions,
     box,
     gradientTestFunction,
@@ -185,11 +185,11 @@ BOOST_AUTO_TEST_CASE(LBFGSBoxedMinimization) {
   Eigen::VectorXd tmpGrad(2);
   double value;
   gradientTestFunction(positions, value, tmpGrad);
-  std::cout << "Box-minimized to " << positions.transpose() << " in " << cycles << " cycles. Value is " << value << "\n";
+  std::cout << "Box-minimized to " << positions.transpose() << " in " << result.iterations << " cycles. Value is " << value << "\n";
 
   BOOST_CHECK_MESSAGE(
-    cycles < 100,
-    "Expected convergence in less than 100 cycles, got " << cycles
+    result.iterations < 100,
+    "Expected convergence in less than 100 cycles, got " << result.iterations
   );
   BOOST_CHECK_MESSAGE(
     std::fabs(positions[0] - boxMinima[0]) < 1e-3,
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(LBFGSBoxedNonConstrainedMaximization) {
     boxMaxima
   };
 
-  const unsigned cycles = optimizer.maximize(
+  const auto result = optimizer.maximize(
     positions,
     box,
     gradientTestFunction,
@@ -240,11 +240,11 @@ BOOST_AUTO_TEST_CASE(LBFGSBoxedNonConstrainedMaximization) {
   Eigen::VectorXd tmpGrad(2);
   double value;
   gradientTestFunction(positions, value, tmpGrad);
-  std::cout << "Box-maximized to " << positions.transpose() << " in " << cycles << " cycles. Value is " << value << "\n";
+  std::cout << "Box-maximized to " << positions.transpose() << " in " << result.iterations << " cycles. Value is " << value << "\n";
 
   BOOST_CHECK_MESSAGE(
-    cycles < 100,
-    "Expected convergence in less than 100 cycles, got " << cycles
+    result.iterations < 100,
+    "Expected convergence in less than 100 cycles, got " << result.iterations
   );
 
   for(unsigned i = 0; i < 2; ++i) {
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(LBFGSBoxedConstrainingMaximization) {
     boxMaxima
   };
 
-  const unsigned cycles = optimizer.maximize(
+  const auto result = optimizer.maximize(
     positions,
     box,
     gradientTestFunction,
@@ -296,11 +296,11 @@ BOOST_AUTO_TEST_CASE(LBFGSBoxedConstrainingMaximization) {
   Eigen::VectorXd tmpGrad(2);
   double value;
   gradientTestFunction(positions, value, tmpGrad);
-  std::cout << "Box-maximized to " << positions.transpose() << " in " << cycles << " cycles. Value is " << value << "\n";
+  std::cout << "Box-maximized to " << positions.transpose() << " in " << result.iterations << " cycles. Value is " << value << "\n";
 
   BOOST_CHECK_MESSAGE(
-    cycles < 100,
-    "Expected convergence in less than 100 cycles, got " << cycles
+    result.iterations < 100,
+    "Expected convergence in less than 100 cycles, got " << result.iterations
   );
   BOOST_CHECK_MESSAGE(
     std::fabs(positions[0] - M_PI) < 1e-3,
