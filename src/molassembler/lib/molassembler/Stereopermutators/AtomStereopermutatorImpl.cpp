@@ -25,7 +25,6 @@
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/BuildTypeSwitch.h"
 #include "molassembler/Detail/DelibHelpers.h"
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "molassembler/Graph/InnerGraph.h"

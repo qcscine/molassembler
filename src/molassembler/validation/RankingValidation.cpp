@@ -10,9 +10,9 @@
 #include "boost/test/unit_test.hpp"
 
 #include "temple/constexpr/Bitmask.h"
+#include "temple/StringAlgorithms.h"
 #include "temple/Stringify.h"
 
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule/RankingTree.h"
 #include "molassembler/StereopermutatorList.h"
@@ -444,7 +444,7 @@ BOOST_AUTO_TEST_CASE(CIPValidationSuiteTests) {
     if(findIter != std::end(cipIdentifiers)) {
       for(
         const auto& stereodescriptorString :
-        StdlibTypeAlgorithms::split(findIter->second, ' ')
+        temple::split(findIter->second, ' ')
       ) {
         auto mapInfoIter = descriptorToPermutationMap.find(stereodescriptorString.back());
         if(mapInfoIter == std::end(descriptorToPermutationMap)) {

@@ -10,11 +10,12 @@
 #include "boost/regex.hpp"
 
 #include "molassembler/Cycles.h"
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Log.h"
 #include "molassembler/Molecule/RankingTree.h"
+
+#include "temple/StringAlgorithms.h"
 
 #include <random>
 
@@ -138,7 +139,7 @@ int main(int argc, char* argv[]) {
       boost::filesystem::path newPath(folderName);
       newPath /= iter->path().filename();
 
-      auto splat = StdlibTypeAlgorithms::split(iter->path().filename().string(), '-');
+      auto splat = temple::split(iter->path().filename().string(), '-');
       auto step = std::stoul(splat.at(2));
       auto graphIndex = std::stoul(splat.at(3));
 

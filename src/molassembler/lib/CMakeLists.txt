@@ -51,7 +51,6 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/BuildTypeSwitch.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/DelibHelpers.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/StdlibTypeAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DirectedConformerGenerator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ConformerGeneration.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DirectedConformerGeneratorImpl.h
@@ -119,7 +118,6 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Cycles.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Descriptors.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/DelibHelpers.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Detail/StdlibTypeAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DirectedConformerGenerator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/ConformerGeneration.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/DistanceGeometry/DirectedConformerGeneratorImpl.cpp

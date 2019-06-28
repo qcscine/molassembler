@@ -18,7 +18,6 @@
 #include "temple/Invoke.h"
 #include "temple/Stringify.h"
 
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/IO.h"
 #include "molassembler/Interpret.h"

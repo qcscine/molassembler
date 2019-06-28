@@ -24,10 +24,10 @@
 #include "temple/Random.h"
 #include "temple/SetAlgorithms.h"
 #include "temple/Stringify.h"
+#include "temple/STL17.h"
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/DelibHelpers.h"
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
@@ -1563,13 +1563,13 @@ ValueBounds SpatialModel::clamp(
   ValueBounds bounds,
   const ValueBounds& clampBounds
 ) {
-  bounds.lower = StdlibTypeAlgorithms::clamp(
+  bounds.lower = temple::stl17::clamp(
     bounds.lower,
     clampBounds.lower,
     clampBounds.upper
   );
 
-  bounds.upper = StdlibTypeAlgorithms::clamp(
+  bounds.upper = temple::stl17::clamp(
     bounds.upper,
     clampBounds.lower,
     clampBounds.upper
@@ -2031,7 +2031,7 @@ void SpatialModel::_modelSpirocenters(
             ValueBounds secondAngleBounds = _angleBounds.at(secondSequence);
 
             // Increases in cycle angles yield decrease in the cross angle
-            double crossAngleLower = StdlibTypeAlgorithms::clamp(
+            double crossAngleLower = temple::stl17::clamp(
               spiroCrossAngle(
                 firstAngleBounds.upper,
                 secondAngleBounds.upper
@@ -2040,7 +2040,7 @@ void SpatialModel::_modelSpirocenters(
               M_PI
             );
 
-            double crossAngleUpper = StdlibTypeAlgorithms::clamp(
+            double crossAngleUpper = temple::stl17::clamp(
               spiroCrossAngle(
                 firstAngleBounds.lower,
                 secondAngleBounds.lower

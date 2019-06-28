@@ -14,7 +14,6 @@
 #include "temple/Stringify.h"
 
 #include "molassembler/Cycles.h"
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule/RankingTree.h"

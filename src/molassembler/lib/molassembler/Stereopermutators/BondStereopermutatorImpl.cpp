@@ -14,6 +14,7 @@
 #include "temple/Functional.h"
 #include "temple/OrderedPair.h"
 #include "temple/Random.h"
+#include "temple/STL17.h"
 
 #include "molassembler/AngstromWrapper.h"
 #include "molassembler/AtomStereopermutator.h"
@@ -25,7 +26,6 @@
 #include "molassembler/Modeling/CommonTrig.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/RankingInformation.h"
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/CycleFeasibility.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
@@ -372,7 +372,7 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
       return mu;
     }();
 
-    const double lambda_m = StdlibTypeAlgorithms::clamp(lambda, 0.0, 1.0);
+    const double lambda_m = temple::stl17::clamp(lambda, 0.0, 1.0);
 
     return {
       lambda_m * C,

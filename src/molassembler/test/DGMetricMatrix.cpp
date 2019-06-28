@@ -16,7 +16,6 @@
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/DistanceGeometry/MetricMatrix.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/IO.h"
 #include "molassembler/Options.h"
 

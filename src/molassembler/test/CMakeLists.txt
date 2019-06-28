@@ -22,7 +22,6 @@ set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingInformation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/RankingSpotCheck.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Serialization.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/StdlibTypeAlgorithms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/VSEPR.cpp
 )
 

@@ -45,7 +45,9 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Poset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Preprocessor.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Random.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/STL17.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/SetAlgorithms.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/StringAlgorithms.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Stringify.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/TinySet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Traits.h

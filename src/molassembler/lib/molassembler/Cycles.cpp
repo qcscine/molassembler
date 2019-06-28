@@ -5,7 +5,6 @@
 
 #include "molassembler/Cycles.h"
 
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Graph/InnerGraph.h"
 
 #include "temple/TinySet.h"

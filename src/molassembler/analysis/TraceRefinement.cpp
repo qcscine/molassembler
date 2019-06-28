@@ -12,7 +12,6 @@
 #include "temple/Functional.h"
 #include "temple/constexpr/Numeric.h"
 
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 #include "molassembler/DistanceGeometry/DlibRefinement.h"
 #include "molassembler/IO.h"

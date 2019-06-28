@@ -7,7 +7,6 @@
 
 #include "boost/range/iterator_range_core.hpp"
 
-#include "molassembler/Detail/StdlibTypeAlgorithms.h"
 #include "molassembler/Cycles.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/StereopermutatorList.h"
