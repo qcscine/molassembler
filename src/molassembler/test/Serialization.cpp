@@ -24,7 +24,7 @@
 using namespace Scine;
 using namespace molassembler;
 
-BOOST_AUTO_TEST_CASE(base64Tests) {
+BOOST_AUTO_TEST_CASE(Base64Reversibility) {
   // Fuzz the encode/decode pair
 
   const unsigned N = 100;
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(base64Tests) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(moleculeSerializationTests) {
+BOOST_AUTO_TEST_CASE(MoleculeSerializationReversibility) {
   for(
     const boost::filesystem::path& currentFilePath :
     boost::filesystem::recursive_directory_iterator("ranking_tree_molecules")
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(moleculeSerializationTests) {
 
     BOOST_CHECK_MESSAGE(
       decoded == molecule,
-      "JSON serialization / deserialization failed!\n"
+      "JSON serialization / deserialization failed! The molecule " << currentFilePath.string() << "before and after a serialization/deserialization pair is no longer the same!\n"
         << "JSON representation of original molecule: " << json << "\n"
         << "JSON representation of decoded molecule: "
         << JSONSerialization(json).operator std::string()
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(moleculeSerializationTests) {
 }
 
 // After canonicalization, serializations of identical molecules must be identical
-BOOST_AUTO_TEST_CASE(moleculeStandardSerialization) {
+BOOST_AUTO_TEST_CASE(MoleculeCanonicalSerialization) {
   boost::filesystem::path directoryBase("isomorphisms");
 
   for(

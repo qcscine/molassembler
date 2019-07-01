@@ -515,8 +515,8 @@ Molecule deserialize(const nlohmann::json& m) {
       }
 
       auto stereopermutator = BondStereopermutator {
-        aStereopermutatorOption.value(),
-        bStereopermutatorOption.value(),
+        graph.inner(),
+        stereopermutators,
         molEdge,
         alignment
       };

@@ -892,11 +892,11 @@ void BondStereopermutator::Impl::fit(
   double dihedralAngle;
 
   double bestPenalty = std::numeric_limits<double>::max();
-  std::vector<unsigned> bestAssignment;
+  std::vector<unsigned> bestStereopermutation;
 
-  for(unsigned i = 0; i < _composite.permutations(); ++i) {
+  for(unsigned feasiblePermutationIndex : _feasiblePermutations) {
     double penalty = 0.0;
-    for(const auto& dihedralTuple : _composite.dihedrals(i)) {
+    for(const auto& dihedralTuple : _composite.dihedrals(feasiblePermutationIndex)) {
       std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
 
       // Get site index of leftSymmetryPosition in left
@@ -943,20 +943,30 @@ void BondStereopermutator::Impl::fit(
     }
 
     // Check if this penalty is within acceptance threshold
-    if(penalty > assignmentAcceptanceDihedralThreshold * _composite.dihedrals(i).size()) {
+    if(penalty > assignmentAcceptanceDihedralThreshold * _composite.dihedrals(feasiblePermutationIndex).size()) {
       continue;
     }
 
     if(penalty < bestPenalty) {
       bestPenalty = penalty;
-      bestAssignment = {i};
+      bestStereopermutation = {feasiblePermutationIndex};
     } else if(penalty == bestPenalty) {
-      bestAssignment.push_back(i);
+      bestStereopermutation.push_back(feasiblePermutationIndex);
     }
   }
 
-  if(bestAssignment.size() == 1) {
-    _assignment = bestAssignment.front();
+  /* The best stereopermutation must be singular, no other may match it in
+   * fit value, otherwise assignment is ambiguous
+   */
+  if(bestStereopermutation.size() == 1) {
+    /* Retrieve the index of the best stereopermutation from among the feasible
+     * permutations
+     */
+    const unsigned stereopermutation = bestStereopermutation.front();
+    _assignment = (
+      temple::find(_feasiblePermutations, stereopermutation)
+      - std::begin(_feasiblePermutations)
+    );
   }
 }
 
@@ -1224,7 +1234,7 @@ boost::optional<unsigned> BondStereopermutator::Impl::assigned() const {
    * one arrangement in this case (although we need all of them for spatial
    * fitting).
    */
-  if(_assignment && _composite.isIsotropic()) {
+  if(_assignment && (_composite.isIsotropic() && !_feasiblePermutations.empty())) {
     return 0U;
   }
 
