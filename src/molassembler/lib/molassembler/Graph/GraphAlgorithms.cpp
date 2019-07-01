@@ -175,12 +175,11 @@ std::vector<LinkInformation> siteLinks(
 
   std::vector<AtomIndex> sourceAdjacents;
   sourceAdjacents.reserve(graph.degree(source));
-  for(
-    const AtomIndex adjacent :
-    boost::make_iterator_range(graph.adjacents(source))
-  ) {
-    if(!temple::makeContainsPredicate(excludeAdjacents)(adjacent)) {
-      sourceAdjacents.push_back(adjacent);
+  for(const auto& siteAtomIndices : sites) {
+    for(const AtomIndex adjacent : siteAtomIndices) {
+      if(!temple::makeContainsPredicate(excludeAdjacents)(adjacent)) {
+        sourceAdjacents.push_back(adjacent);
+      }
     }
   }
 
@@ -351,7 +350,6 @@ std::vector<
   AtomIndex centralIndex,
   const std::vector<AtomIndex>& excludeAdjacents
 ) {
-  // A non-metal central index cannot have any eta bonds
   if(AtomInfo::isMainGroupElement(graph.elementType(centralIndex))) {
     std::vector<
       std::vector<AtomIndex>
@@ -366,9 +364,13 @@ std::vector<
       auto edge = graph.edge(centralAdjacent, centralIndex);
 
       if(graph.bondType(edge) == BondType::Eta) {
-        // Determine if the edge is mislabeled
-        // is the other vertex a non-main-group element?
-
+        /* A non-metal central index can have eta bonds, but they are not
+         * considered in that atom's modeling, i.e. they do not form part of
+         * their coordinate sphere.
+         *
+         * We determine whether the edge is mislabeled: Is the other vertex a
+         * non-main-group element?
+         */
         if(AtomInfo::isMainGroupElement(graph.elementType(centralAdjacent))) {
           std::string error = "Two main group elements are connected by an eta bond! ";
           error += std::to_string(centralAdjacent);
@@ -384,6 +386,7 @@ std::vector<
          * contributions.
          */
       } else {
+        // This is a regular edge
         if(
           std::find(
             std::begin(excludeAdjacents),
