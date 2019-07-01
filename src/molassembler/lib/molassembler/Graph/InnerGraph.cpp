@@ -414,7 +414,7 @@ Cycles InnerGraph::_generateCycles() const {
 }
 
 Cycles InnerGraph::_generateEtaPreservedCycles() const {
-  return Cycles(*this, true);
+  return Cycles(*this, false);
 }
 
 } // namespace molassembler

@@ -13,10 +13,6 @@
 #include "boost/range/iterator_range_core.hpp"
 #include "boost/variant.hpp"
 
-// TODO temp
-#include "temple/Stringify.h"
-#include <iostream>
-
 namespace Scine {
 
 namespace molassembler {
@@ -37,6 +33,8 @@ struct Cycles::RDLDataPtrs {
   RDLDataPtrs& operator = (const RDLDataPtrs& other) = delete;
   RDLDataPtrs& operator = (RDLDataPtrs&& other) = delete;
   ~RDLDataPtrs();
+
+  bool bondExists(const BondIndex& bond) const;
 };
 
 Cycles::Cycles(const OuterGraph& sourceGraph, const bool ignoreEtaBonds)
@@ -281,6 +279,11 @@ Cycles::RDLDataPtrs::~RDLDataPtrs() {
   RDL_deleteData(dataPtr);
 }
 
+bool Cycles::RDLDataPtrs::bondExists(const BondIndex& bond) const {
+  const unsigned bondID = RDL_getEdgeId(dataPtr, bond.first, bond.second);
+  return bondID != RDL_INVALID_RESULT;
+}
+
 Cycles::AllCyclesIterator::AllCyclesIterator(const AllCyclesIterator& other)
   : _rdlPtr(other._rdlPtr),
     _cyclePtr(std::make_unique<RDLCyclePtrs>(*_rdlPtr))
@@ -412,6 +415,8 @@ struct Cycles::URFIDsCycleIterator::URFHelper {
     const BondIndex& bond,
     const RDLDataPtrs& dataPtrs
   ) {
+    assert(dataPtrs.bondExists(bond));
+
     return getURFsHelper(
       dataPtrs,
       &RDL_getURFsContainingEdge,
