@@ -534,7 +534,14 @@ BOOST_AUTO_TEST_CASE(propagateGraphChangeTests) {
   }
 
   auto stereopermutatorOption = complex.stereopermutators().option(0);
-  BOOST_CHECK(stereopermutatorOption && stereopermutatorOption->numAssignments() == 8u);
+  BOOST_REQUIRE_MESSAGE(
+    stereopermutatorOption,
+    "The stereopermutator is no longer present!"
+  );
+  BOOST_CHECK_MESSAGE(
+    stereopermutatorOption->numAssignments() > 2,
+    "The stereopermutator does not have more than two feasible assignments, it has only " << stereopermutatorOption->numAssignments()
+  );
 }
 
 BOOST_AUTO_TEST_CASE(moleculeSplitRecognition) {

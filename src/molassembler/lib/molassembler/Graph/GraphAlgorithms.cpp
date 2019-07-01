@@ -92,7 +92,7 @@ std::vector<LinkInformation> siteLinks(
 
   for(
     auto cycleOuterEdges : boost::make_iterator_range(
-      graph.etaPreservedCycles().containing(
+      graph.cycles().containing(
         BondIndex {
           stereopermutatorA.centralIndex(),
           stereopermutatorB.centralIndex()
