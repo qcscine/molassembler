@@ -3,8 +3,6 @@ if(NOT MOLASSEMBLER_VALIDATION_TESTS)
   return()
 endif()
 
-project(molassemblerValidationTests)
-
 if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::regex)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework regex)
 endif()

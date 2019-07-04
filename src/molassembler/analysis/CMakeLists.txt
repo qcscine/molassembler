@@ -3,8 +3,6 @@ if(NOT MOLASSEMBLER_ANALYSIS_BINARIES)
   return()
 endif()
 
-project(molassemblerAnalyses)
-
 if(NOT TARGET Boost::regex
   OR NOT TARGET Boost::program_options
   OR NOT TARGET Boost::system

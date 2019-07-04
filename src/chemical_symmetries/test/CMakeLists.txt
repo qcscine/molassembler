@@ -1,5 +1,3 @@
-project(SymmetryTestsProject)
-
 if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::program_options)
   find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options)
 endif()

@@ -1,5 +1,3 @@
-project(analysis)
-
 if(NOT TARGET Boost::program_options)
   find_package(Boost REQUIRED COMPONENTS program_options)
 endif()

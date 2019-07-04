@@ -2,8 +2,6 @@ if(NOT MOLASSEMBLER_ANALYSIS_BINARIES)
   return()
 endif()
 
-project(ChemicalSymmetriesAnalysisBinaries)
-
 if(NOT TARGET Boost::unit_test_framework OR NOT TARGET Boost::program_options OR NOT TARGET Boost::system)
   find_package(Boost REQUIRED
     COMPONENTS unit_test_framework program_options system
