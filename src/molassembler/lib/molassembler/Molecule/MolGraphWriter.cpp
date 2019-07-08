@@ -52,7 +52,7 @@ void MolGraphWriter::writeBondStereopermutatorNodes(std::ostream& os) const {
       state = "u";
     }
 
-    state += "/"s + std::to_string(bondStereopermutator.numStereopermutations());
+    state += "/"s + std::to_string(bondStereopermutator.numAssignments());
 
     std::string graphNodeName = "BS"
       + std::to_string(bondStereopermutator.edge().first)

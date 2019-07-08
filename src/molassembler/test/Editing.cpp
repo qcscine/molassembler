@@ -4,11 +4,15 @@
  */
 
 #include <boost/test/unit_test.hpp>
+#include "boost/range/iterator_range_core.hpp"
 
+#include "molassembler/Cycles.h"
 #include "molassembler/Editing.h"
 #include "molassembler/IO.h"
 #include "molassembler/Molecule.h"
 #include "molassembler/OuterGraph.h"
+#include "molassembler/Patterns.h"
+#include "molassembler/Subgraphs.h"
 
 /* SMILES for molecules imported here
  * - caffeine: "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
@@ -20,22 +24,127 @@
  * - phenole: "C1=CC=C(C=C1)O"
  * - mesitylene: "CC1=CC(=CC(=C1)C)C"
  * - nhc: "C1NC=CN1"
+ * - multidentate_ligand: "CC(C)(C)P(CC1=NC(=CC=C1)CP(C(C)(C)C)C(C)(C)C)C(C)(C)C"
+ * - haptic_ligand: "CC(C)(C)N[Si](C)(C)C1=C[C+]C=C1"
  *
  * The .cbor are just IO::LineNotation::fromCanonicalSMILES and directly
  * exported using IO::write(str, mol).
  */
 
-BOOST_AUTO_TEST_CASE(cleaveEdit) {
-  using namespace Scine;
-  using namespace molassembler;
+using namespace Scine;
+using namespace molassembler;
+
+namespace detail {
+
+auto makeIsBridgePredicate(const Molecule& mol) {
+  return [&mol](const BondIndex& bond) -> bool {
+    return !mol.graph().canRemove(bond);
+  };
+}
+
+auto makeBondElementsPredicate(const Molecule& mol, const Utils::ElementType e1, const Utils::ElementType e2) {
+  return [&mol, e1, e2](const BondIndex& bond) -> bool {
+    const OuterGraph& g = mol.graph();
+    return (
+      (g.elementType(bond.first) == e1 && g.elementType(bond.second) == e2)
+      || (g.elementType(bond.first) == e2 && g.elementType(bond.second) == e1)
+    );
+  };
+}
+
+template<typename T, typename P1, typename P2>
+auto combineUnaryPredicates(P1&& p1, P2&& p2) {
+  return [&p1, &p2](const T& t) -> bool {
+    return p1(t) && p2(t);
+  };
+}
+
+boost::optional<AtomIndex> findSingle(const Molecule& mol, const Utils::ElementType element) {
+  for(const AtomIndex i : boost::make_iterator_range(mol.graph().atoms())) {
+    if(mol.graph().elementType(i) == element) {
+      return {i};
+    }
+  }
+
+  return boost::none;
+}
+
+std::vector<AtomIndex> findMultiple(const Molecule& mol, const Utils::ElementType element) {
+  std::vector<AtomIndex> matches;
+
+  for(const AtomIndex i : boost::make_iterator_range(mol.graph().atoms())) {
+    if(mol.graph().elementType(i) == element) {
+      matches.push_back(i);
+    }
+  }
+
+  return matches;
+}
+
+template<typename UnaryPredicate>
+boost::optional<BondIndex> findEdge(const Molecule& mol, UnaryPredicate&& predicate) {
+  for(const BondIndex bond : boost::make_iterator_range(mol.graph().bonds())) {
+    if(predicate(bond)) {
+      return bond;
+    }
+  }
+
+  return boost::none;
+}
+
+} // namespace detail
+
+BOOST_AUTO_TEST_CASE(EditingCleave) {
+  auto makeNMe = []() -> std::pair<Molecule, BondIndex> {
+    Molecule methyl;
+    std::vector<AtomIndex> methylPlugAtoms;
+
+    std::tie(methyl, methylPlugAtoms) = patterns::methyl();
+    const AtomIndex CIndex = methylPlugAtoms.front();
+    const AtomIndex NIndex = methyl.addAtom(Utils::ElementType::N, CIndex);
+    return {
+      methyl,
+      BondIndex {CIndex, NIndex}
+    };
+  };
 
   Molecule caffeine = IO::read("cbor/caffeine.cbor");
   caffeine.canonicalize();
 
-  const BondIndex bridge {15, 23};
-  BOOST_REQUIRE_MESSAGE(!caffeine.graph().canRemove(bridge), "Selected edge for test is not a bridge edge");
+  // Find a N-Me bridge bond to cleave
+  const auto pattern = makeNMe();
+  const auto matches = subgraphs::maximum(
+    pattern.first,
+    caffeine
+  );
+  BOOST_REQUIRE_MESSAGE(
+    matches.size() > 0,
+    "No matches found for N-Me pattern in caffeine!"
+  );
 
-  auto cleaved = Editing::cleave(caffeine, bridge);
+  // One of the relevant matched N-C edges must be a bridge edge
+  bool foundBridgeEdge = false;
+  BondIndex bridgeEdge;
+  for(const auto& match : matches) {
+    bridgeEdge = {
+      match.left.at(pattern.second.first),
+      match.left.at(pattern.second.second)
+    };
+
+    if(!caffeine.graph().canRemove(bridgeEdge)) {
+      foundBridgeEdge = true;
+      break;
+    }
+  }
+
+  BOOST_REQUIRE_MESSAGE(
+    foundBridgeEdge,
+    "Could not find a bridge edge from among matches for N-Me pattern in caffeine!"
+  );
+
+  // Perform the cleave test
+  std::pair<Molecule, Molecule> cleaved;
+  BOOST_REQUIRE_NO_THROW(cleaved = Editing::cleave(caffeine, bridgeEdge));
 
   BOOST_CHECK_MESSAGE(
     cleaved.first.graph().N() + cleaved.second.graph().N() == caffeine.graph().N(),
@@ -48,17 +157,22 @@ BOOST_AUTO_TEST_CASE(cleaveEdit) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(insertEdit) {
-  using namespace Scine;
-  using namespace molassembler;
-
+BOOST_AUTO_TEST_CASE(EditingInsert) {
   // Set up the test and make sure the canonical indices still match expectations
   Molecule biphenyl = IO::read("cbor/biphenyl.cbor");
   biphenyl.canonicalize();
 
-  const BondIndex bridge {12, 13};
-  BOOST_REQUIRE_MESSAGE(!biphenyl.graph().canRemove(bridge), "Selected edge for test is not a bridge edge");
-  auto sides = biphenyl.graph().splitAlongBridge(bridge);
+  // Find the C-C bridge edge
+  auto bridgeOption = detail::findEdge(
+    biphenyl,
+    detail::combineUnaryPredicates<BondIndex>(
+      detail::makeIsBridgePredicate(biphenyl),
+      detail::makeBondElementsPredicate(biphenyl, Utils::ElementType::C, Utils::ElementType::C)
+    )
+  );
+  BOOST_REQUIRE_MESSAGE(bridgeOption, "Could not find bridge edge in biphenyl");
+
+  auto sides = biphenyl.graph().splitAlongBridge(*bridgeOption);
 
   BOOST_REQUIRE_MESSAGE(
     sides.first.size() == sides.second.size(),
@@ -68,17 +182,20 @@ BOOST_AUTO_TEST_CASE(insertEdit) {
   Molecule pyrimidine = IO::read("cbor/pyrimidine.cbor");
   pyrimidine.canonicalize();
 
-  const AtomIndex firstPyrimidineNitrogen = 4, secondPyrimidineNitrogen = 5;
-  BOOST_REQUIRE(pyrimidine.graph().elementType(firstPyrimidineNitrogen) == Utils::ElementType::N);
-  BOOST_REQUIRE(pyrimidine.graph().elementType(secondPyrimidineNitrogen) == Utils::ElementType::N);
+  auto pyrimidineNitrogens = detail::findMultiple(pyrimidine, Utils::ElementType::N);
+
+  BOOST_REQUIRE_MESSAGE(
+    pyrimidineNitrogens.size() >= 2,
+    "Could not find two nitrogens in pyrimidine"
+  );
 
   // Insert pyrimidine into the bridge bond of biphenyl
   Molecule inserted = Editing::insert(
     biphenyl,
     pyrimidine,
-    bridge,
-    firstPyrimidineNitrogen,
-    secondPyrimidineNitrogen
+    *bridgeOption,
+    pyrimidineNitrogens.front(),
+    pyrimidineNitrogens.at(1)
   );
 
   BOOST_CHECK_MESSAGE(
@@ -92,105 +209,150 @@ BOOST_AUTO_TEST_CASE(insertEdit) {
   );
 }
 
-BOOST_AUTO_TEST_CASE(superposeEdit) {
-  using namespace Scine;
-  using namespace molassembler;
-
+BOOST_AUTO_TEST_CASE(EditingSuperpose) {
   Molecule pyridine = IO::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
-  const AtomIndex pyridineNitrogen = 5;
-  BOOST_REQUIRE(pyridine.graph().elementType(pyridineNitrogen) == Utils::ElementType::N);
+
+  auto pyridineNitrogenOption = detail::findSingle(pyridine, Utils::ElementType::N);
+  BOOST_REQUIRE_MESSAGE(pyridineNitrogenOption, "Could not find N in pyridine");
 
   Molecule methane = IO::read("cbor/methane.cbor");
   methane.canonicalize();
-  const AtomIndex methaneHydrogen = 0;
-  BOOST_REQUIRE(methane.graph().elementType(methaneHydrogen) == Utils::ElementType::H);
+
+  auto methaneHydrogenOption = detail::findSingle(methane, Utils::ElementType::H);
+  BOOST_REQUIRE_MESSAGE(methaneHydrogenOption, "Could not find H in methane");
 
   Molecule superposition = Editing::superpose(
     pyridine,
     methane,
-    pyridineNitrogen,
-    methaneHydrogen
+    *pyridineNitrogenOption,
+    *methaneHydrogenOption
   );
 
   BOOST_CHECK(superposition.graph().N() == pyridine.graph().N() + methane.graph().N() - 1);
 }
 
-BOOST_AUTO_TEST_CASE(substituteEdit) {
-  using namespace Scine;
-  using namespace molassembler;
-
+BOOST_AUTO_TEST_CASE(EditingSubstitute) {
   Molecule chlorobenzene = IO::read("cbor/chlorobenzene.cbor");
   chlorobenzene.canonicalize();
-  const BondIndex chlorobenzeneBridge {5, 7};
-  BOOST_REQUIRE_MESSAGE(!chlorobenzene.graph().canRemove(chlorobenzeneBridge), "Selected edge for test is not a bridge edge");
+
+  auto chlorobenzeneBridgeOption = detail::findEdge(
+    chlorobenzene,
+    detail::combineUnaryPredicates<BondIndex>(
+      detail::makeIsBridgePredicate(chlorobenzene),
+      detail::makeBondElementsPredicate(
+        chlorobenzene,
+        Utils::ElementType::C,
+        Utils::ElementType::Cl
+      )
+    )
+  );
+  BOOST_REQUIRE_MESSAGE(chlorobenzeneBridgeOption, "Could not find C-Cl bridge edge in chlorobenzene");
 
   Molecule phenole = IO::read("cbor/phenole.cbor");
   phenole.canonicalize();
-  const BondIndex phenoleBridge {6, 8};
-  BOOST_REQUIRE_MESSAGE(!phenole.graph().canRemove(phenoleBridge), "Selected edge for test is not a bridge edge");
+  auto phenoleBridgeOption = detail::findEdge(
+    phenole,
+    detail::combineUnaryPredicates<BondIndex>(
+      detail::makeIsBridgePredicate(phenole),
+      detail::makeBondElementsPredicate(
+        phenole,
+        Utils::ElementType::C,
+        Utils::ElementType::O
+      )
+    )
+  );
+  BOOST_REQUIRE_MESSAGE(phenoleBridgeOption, "Could not find C-O bridge edge in phenole");
 
   Molecule substituted = Editing::substitute(
     chlorobenzene,
     phenole,
-    chlorobenzeneBridge,
-    phenoleBridge
+    *chlorobenzeneBridgeOption,
+    *phenoleBridgeOption
   );
 
   Molecule biphenyl = IO::read("cbor/biphenyl.cbor");
-  BOOST_CHECK(substituted == biphenyl);
+  BOOST_CHECK_MESSAGE(
+    substituted == biphenyl,
+    "Result of substitution not recognized as biphenyl prior to canonicalization"
+  );
 
   substituted.canonicalize();
   biphenyl.canonicalize();
-  BOOST_CHECK(substituted == biphenyl);
+  BOOST_CHECK_MESSAGE(
+    substituted == biphenyl,
+    "Result of substitution not recognized as biphenyl after canonicalization"
+  );
 }
 
-BOOST_AUTO_TEST_CASE(connectEdit) {
-  using namespace Scine;
-  using namespace molassembler;
-
+BOOST_AUTO_TEST_CASE(EditingConnect) {
   Molecule pyridine = IO::read("cbor/pyridine.cbor");
   pyridine.canonicalize();
-  const AtomIndex pyridineNitrogen = 5;
-  BOOST_REQUIRE(pyridine.graph().elementType(pyridineNitrogen) == Utils::ElementType::N);
+  auto pyridineNitrogenOption = detail::findSingle(pyridine, Utils::ElementType::N);
+  BOOST_REQUIRE_MESSAGE(pyridineNitrogenOption, "Could not find N in pyridine");
 
   Molecule connected = Editing::connect(
     pyridine,
     pyridine,
-    pyridineNitrogen,
-    pyridineNitrogen,
+    *pyridineNitrogenOption,
+    *pyridineNitrogenOption,
     BondType::Single
   );
 
   BOOST_CHECK(connected.graph().N() == 2 * pyridine.graph().N());
 }
 
-BOOST_AUTO_TEST_CASE(mesitylSubstitutionBug) {
-  using namespace Scine;
-  using namespace molassembler;
-
+BOOST_AUTO_TEST_CASE(EditingBugfixMesityleneSubstitution) {
   Molecule mesitylene = IO::read("cbor/mesitylene.cbor");
   mesitylene.canonicalize();
-  const auto mesitylenSubstitutionEdge = BondIndex {0, 14};
+
+  const auto mesityleneSubstitutionEdgeOption = detail::findEdge(
+    mesitylene,
+    detail::combineUnaryPredicates<BondIndex>(
+      detail::makeIsBridgePredicate(mesitylene),
+      detail::makeBondElementsPredicate(
+        mesitylene,
+        Utils::ElementType::C,
+        Utils::ElementType::H
+      )
+    )
+  );
+  BOOST_REQUIRE_MESSAGE(
+    mesityleneSubstitutionEdgeOption,
+    "Could not find C-C bridge edge in mesitylene"
+  );
 
   Molecule nhc = IO::read("cbor/nhc.cbor");
   nhc.canonicalize();
-  const auto nhcSubstitutionEdge = BondIndex {0, 7};
+
+  Molecule pattern {
+    Utils::ElementType::C,
+    Utils::ElementType::H
+  };
+  for(unsigned i = 0; i < 2; ++i) {
+    pattern.addAtom(Utils::ElementType::N, 0);
+  }
+
+  auto matches = subgraphs::maximum(pattern, nhc);
+  BOOST_REQUIRE_MESSAGE(!matches.empty(), "Could not find C(HNN) pattern in NHC");
+
+  // Map C-H bond indices from pattern to nhc
+  const BondIndex nhcSubstitutionEdge {
+    matches.front().left.at(0),
+    matches.front().left.at(1)
+  };
 
   Molecule substituted = Editing::substitute(
     nhc,
     mesitylene,
     nhcSubstitutionEdge,
-    mesitylenSubstitutionEdge
+    *mesityleneSubstitutionEdgeOption
   );
 
   BOOST_CHECK(substituted.graph().N() == mesitylene.graph().N() + nhc.graph().N() - 2);
 }
 
-BOOST_AUTO_TEST_CASE(makingHapticLigandTest) {
-  using namespace Scine;
-  using namespace molassembler;
-
+BOOST_AUTO_TEST_CASE(EditingBugfixHapticLigands) {
   Molecule complex {
     Utils::ElementType::Ru,
     Utils::ElementType::H
@@ -211,15 +373,17 @@ BOOST_AUTO_TEST_CASE(makingHapticLigandTest) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(addLigandTest) {
-  using namespace Scine;
-  using namespace molassembler;
-
-  Molecule ligand = IO::LineNotation::fromCanonicalSMILES("CC(C)(C)P(CC1=NC(=CC=C1)CP(C(C)(C)C)C(C)(C)C)C(C)(C)C");
+BOOST_AUTO_TEST_CASE(EditingAddMultidentateLigand) {
+  Molecule ligand = IO::read("cbor/multidentate_ligand.cbor");
   ligand.canonicalize();
-  BOOST_CHECK(ligand.graph().elementType(43) == Utils::ElementType::N);
-  BOOST_CHECK(ligand.graph().elementType(49) == Utils::ElementType::P);
-  BOOST_CHECK(ligand.graph().elementType(50) == Utils::ElementType::P);
+
+  auto NOption = detail::findSingle(ligand, Utils::ElementType::N);
+  auto Ps = detail::findMultiple(ligand, Utils::ElementType::P);
+
+  BOOST_REQUIRE(NOption && Ps.size() == 2);
+
+  std::vector<AtomIndex> ligandBindingAtoms = Ps;
+  ligandBindingAtoms.push_back(*NOption);
 
   Molecule complex {
     Utils::ElementType::Ru,
@@ -227,20 +391,26 @@ BOOST_AUTO_TEST_CASE(addLigandTest) {
   };
 
   BOOST_CHECK_NO_THROW(
-    complex = Editing::addLigand(
-      complex,
-      ligand,
-      0,
-      {43, 49, 50}
-    )
+    complex = Editing::addLigand(complex, ligand, 0, ligandBindingAtoms)
   );
 }
 
-BOOST_AUTO_TEST_CASE(hapticLigandAddition) {
-  using namespace Scine;
-  using namespace molassembler;
+BOOST_AUTO_TEST_CASE(EditingAddHapticLigand) {
+  auto ligand = IO::read("cbor/haptic_ligand.cbor");
 
-  auto ligand = IO::LineNotation::fromCanonicalSMILES("CC(C)(C)N[Si](C)(C)C1=C[C+]C=C1");
+  std::vector<AtomIndex> ligandCycle;
+  for(const auto& cycle : ligand.graph().cycles()) {
+    ligandCycle = makeRingIndexSequence(cycle);
+  }
+
+  BOOST_REQUIRE_MESSAGE(ligandCycle.size() == 5, "Could not find cycle in haptic_ligand.cbor");
+
+  auto NOption = detail::findSingle(ligand, Utils::ElementType::N);
+  BOOST_REQUIRE_MESSAGE(NOption, "Could not find nitrogen in haptic_ligand.cbor");
+
+  auto ligandBindingAtoms = ligandCycle;
+  ligandBindingAtoms.push_back(*NOption);
+
   Molecule mol {Utils::ElementType::Ti};
   for(unsigned i = 0; i < 2; ++i) {
     mol.addAtom(Utils::ElementType::Cl, 0);
@@ -248,11 +418,6 @@ BOOST_AUTO_TEST_CASE(hapticLigandAddition) {
 
   Molecule complex;
   BOOST_CHECK_NO_THROW(
-    complex = Editing::addLigand(
-      mol,
-      ligand,
-      0,
-      {4, 8, 9, 10, 11, 12}
-    )
+    complex = Editing::addLigand(mol, ligand, 0, ligandBindingAtoms)
   );
 }

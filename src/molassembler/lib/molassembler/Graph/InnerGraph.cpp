@@ -172,6 +172,8 @@ InnerGraph::BGLType& InnerGraph::bgl() {
 /* Information */
 
 bool InnerGraph::canRemove(const Vertex a) const {
+  assert(a < N());
+
   /* A molecule is at least one atom. Conceptually, a molecule should consist
    * of at least two atoms, but this is done for usability.
    */
@@ -184,6 +186,15 @@ bool InnerGraph::canRemove(const Vertex a) const {
 }
 
 bool InnerGraph::canRemove(const Edge& edge) const {
+  // Make sure the edge exists in the first place
+  assert(
+    boost::edge(
+      boost::source(edge, _graph),
+      boost::target(edge, _graph),
+      _graph
+    ).second
+  );
+
   // Removable if the edge is not a bridge
   return removalSafetyData().bridges.count(edge) == 0;
 }
