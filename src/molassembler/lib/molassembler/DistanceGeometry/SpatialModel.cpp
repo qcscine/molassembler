@@ -500,9 +500,10 @@ void SpatialModel::addBondStereopermutatorInformation(
   const std::unordered_map<AtomIndex, Scine::Utils::Position>& fixedAngstromPositions
 ) {
   // Check preconditions and get access to commonly needed things
-  assert(permutator.assigned());
+  assert(permutator.indexOfPermutation());
+  const unsigned permutation = permutator.indexOfPermutation().value();
+
   const stereopermutation::Composite& composite = permutator.composite();
-  const auto& assignment = permutator.assigned();
 
   const AtomStereopermutator& firstStereopermutator = (
     stereopermutatorA.centralIndex() == composite.orientations().first.identifier
@@ -521,7 +522,7 @@ void SpatialModel::addBondStereopermutatorInformation(
   unsigned secondSymmetryPosition;
   double dihedralAngle;
 
-  for(const auto& dihedralTuple : composite.dihedrals(assignment.value())) {
+  for(const auto& dihedralTuple : composite.dihedrals(permutation)) {
     std::tie(firstSymmetryPosition, secondSymmetryPosition, dihedralAngle) = dihedralTuple;
 
     unsigned siteIndexIAtFirst = SymmetryMapHelper::getSiteIndexAt(
@@ -597,7 +598,7 @@ void SpatialModel::addBondStereopermutatorInformation(
      */
     if(
       composite.alignment() == stereopermutation::Composite::Alignment::Staggered
-      && std::get<0>(composite.dihedrals(assignment.value()).front()) != firstSymmetryPosition
+      && std::get<0>(composite.dihedrals(permutation).front()) != firstSymmetryPosition
     ) {
       continue;
     }

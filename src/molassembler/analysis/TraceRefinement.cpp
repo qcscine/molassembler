@@ -30,7 +30,9 @@ void writeProgressFile(
   const Eigen::VectorXd& positions
 ) {
   const std::string filename = baseFilename + "-" + std::to_string(index) + ".mol";
-  AngstromWrapper angstromWrapper = DistanceGeometry::detail::convertToAngstromWrapper(positions);
+  AngstromWrapper angstromWrapper = DistanceGeometry::detail::convertToAngstromWrapper(
+    DistanceGeometry::detail::gather(positions)
+  );
   IO::write(filename, mol, angstromWrapper);
 }
 
@@ -241,7 +243,7 @@ int main(int argc, char* argv[]) {
         filestem + "-"s + std::to_string(structNum) + "-last.mol"s,
         mol,
         DistanceGeometry::detail::convertToAngstromWrapper(
-          refinementData.steps.back().positions
+          DistanceGeometry::detail::gather(refinementData.steps.back().positions)
         )
       );
     }

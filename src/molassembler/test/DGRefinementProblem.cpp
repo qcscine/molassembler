@@ -412,18 +412,18 @@ struct RotationalTranslationalInvarianceTest {
 BOOST_AUTO_TEST_CASE(RefinementProblemRotationalTranslationalInvariance) {
   using EigenRefinementTypeVariations = std::tuple<
     EigenRefinementProblem<4, double, false>,
-    EigenRefinementProblem<4, float, false>,
-    EigenRefinementProblem<4, double, true>,
-    EigenRefinementProblem<4, float, true>
+    //EigenRefinementProblem<4, float, false>,
+    EigenRefinementProblem<4, double, true>
+    //EigenRefinementProblem<4, float, true>
   >;
 
   constexpr unsigned variations = std::tuple_size<EigenRefinementTypeVariations>::value;
 
   std::array<std::string, variations> eigenRefinementNames {
     "EigenRefinementProblem<4, double, false>",
-    "EigenRefinementProblem<4, float, false>",
-    "EigenRefinementProblem<4, double, true>",
-    "EigenRefinementProblem<4, float, true>"
+    //"EigenRefinementProblem<4, float, false>",
+    "EigenRefinementProblem<4, double, true>"
+    // "EigenRefinementProblem<4, float, true>"
   };
 
   auto passes = temple::TupleType::map<EigenRefinementTypeVariations, RotationalTranslationalInvarianceTest>();

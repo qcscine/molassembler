@@ -233,25 +233,16 @@ public:
 
   /*!
    * @brief Returns the index of permutation
-   * @note For BondStereopermutators, the index of permutation and the
-   *   assignment index are the same as there are no stereopermutation exclusion
-   *   criteria yet.
    */
   boost::optional<unsigned> indexOfPermutation() const;
 
   /*!
    * @brief Returns the number of possible assignments
-   * @note For BondStereopermutators, the number of stereopermutations and the
-   *   number of assignments are the same as there are no stereopermutation
-   *   exclusion criteria yet.
    */
   unsigned numAssignments() const;
 
   /*!
    * @brief Returns the number of possible stereopermutations
-   * @note For BondStereopermutators, the number of stereopermutations and the
-   *   number of assignments are the same as there are no stereopermutation
-   *   exclusion criteria yet.
    */
   unsigned numStereopermutations() const;
 

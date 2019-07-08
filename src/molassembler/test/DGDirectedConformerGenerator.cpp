@@ -25,7 +25,7 @@ using namespace std::string_literals;
 using namespace Scine;
 using namespace molassembler;
 
-BOOST_AUTO_TEST_CASE(directedConformerGenerator) {
+BOOST_AUTO_TEST_CASE(DirectedConformerGeneration) {
   std::vector<
     std::tuple<std::string, unsigned, unsigned>
   > testCases {
@@ -62,9 +62,9 @@ BOOST_AUTO_TEST_CASE(directedConformerGenerator) {
       return;
     }
 
-    // Make a strict configuration. 500 Steps really needs to be enough for these
+    // Make a strict configuration. 2000 steps should be enough, even for testosterone
     DistanceGeometry::Configuration configuration {};
-    configuration.refinementStepLimit = 500;
+    configuration.refinementStepLimit = 2000;
 
     /* Ensure we can make generate all conformers we have hypothesized exist */
     const unsigned maxTries = 5;
