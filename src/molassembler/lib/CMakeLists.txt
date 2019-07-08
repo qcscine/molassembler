@@ -92,6 +92,7 @@ set(HEADERS_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/CycleFeasibility.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/FeasiblePermutations.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/SymmetryPositionMaps.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Version.h
 )
@@ -148,6 +149,7 @@ set(SOURCES_all
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/CycleFeasibility.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/FeasiblePermutations.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Stereopermutators/SymmetryPositionMaps.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Subgraphs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/molassembler/Types.cpp
 )
 

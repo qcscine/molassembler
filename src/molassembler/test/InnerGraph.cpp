@@ -13,7 +13,7 @@
 using namespace Scine;
 using namespace molassembler;
 
-BOOST_AUTO_TEST_CASE(splitGraph) {
+BOOST_AUTO_TEST_CASE(SplitGraph) {
   InnerGraph methane(4);
   methane.elementType(0) = Utils::ElementType::C;
   methane.elementType(1) = Utils::ElementType::H;
