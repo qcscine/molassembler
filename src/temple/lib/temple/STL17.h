@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Algorithms available in the C++17 STL
+ */
+
 #ifndef INCLUDE_TEMPLE_STL_17
 #define INCLUDE_TEMPLE_STL_17
 

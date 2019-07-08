@@ -1,3 +1,7 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
 #include "molassembler/Stereopermutators/SymmetryPositionMaps.h"
 
 #include "stereopermutation/Stereopermutation.h"

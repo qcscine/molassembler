@@ -1,3 +1,9 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ * @brief Maximum common subgraph matching algorithms for molecules
+ */
+
 #ifndef INCLUDE_MOLASSEMBLER_SUBGRAPHS_H
 #define INCLUDE_MOLASSEMBLER_SUBGRAPHS_H
 

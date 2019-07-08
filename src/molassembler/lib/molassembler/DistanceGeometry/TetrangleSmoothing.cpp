@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "molassembler/DistanceGeometry/TetrangleSmoothing.h"
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "temple/constexpr/Array.h"

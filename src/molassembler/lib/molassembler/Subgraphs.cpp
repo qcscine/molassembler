@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "molassembler/Subgraphs.h"
 
 #include "boost/graph/mcgregor_common_subgraphs.hpp"
