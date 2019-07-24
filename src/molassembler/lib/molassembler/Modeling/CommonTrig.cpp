@@ -5,7 +5,7 @@
 
 #include "molassembler/Modeling/CommonTrig.h"
 
-#include "temple/LBFGS.h"
+#include "temple/Optimization/LBFGS.h"
 
 namespace Scine {
 

@@ -14,7 +14,7 @@
 #include "molassembler/DistanceGeometry/EigenRefinement.h"
 #include "molassembler/DistanceGeometry/ConformerGeneration.h"
 
-#include "temple/LBFGS.h"
+#include "temple/Optimization/LBFGS.h"
 
 #include "molassembler/IO.h"
 #include "temple/Functional.h"

@@ -18,7 +18,7 @@
 #include "molassembler/Graph/GraphAlgorithms.h"
 #include "Utils/Math/QuaternionFit.h"
 
-#include "temple/LBFGS.h"
+#include "temple/Optimization/LBFGS.h"
 
 namespace Scine {
 

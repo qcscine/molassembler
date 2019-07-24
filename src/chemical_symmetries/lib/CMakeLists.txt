@@ -14,6 +14,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Names.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Primitives.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Properties.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Recognition.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Symmetries.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/TauCriteria.h
 )
@@ -22,6 +23,7 @@ set(SOURCES_All
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/DynamicProperties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Primitives.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Properties.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Recognition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Symmetries.cpp
 )
 

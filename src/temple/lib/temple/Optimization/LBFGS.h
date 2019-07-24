@@ -3,12 +3,11 @@
  *   See LICENSE.txt
  */
 
-#ifndef INCLUDE_TEMPLE_LBFGS_H
-#define INCLUDE_TEMPLE_LBFGS_H
+#ifndef INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
+#define INCLUDE_TEMPLE_OPTIMIZATION_LBFGS_H
 
-#include <Eigen/Core>
-#include <iostream>
 #include "temple/STL17.h"
+#include "temple/Optimization/Common.h"
 
 /* TODO
  * - Detect ill-conditioning of LBFGS? Doesn't do well at all near maxima
@@ -26,67 +25,6 @@ struct DoNothingObserver {
   template<typename T>
   void operator() (T&& /* x */) {}
 };
-
-template<typename FloatType>
-struct FloatUpdateBuffer {
-  static_assert(
-    std::is_floating_point<FloatType>::value,
-    "This struct is not intended for anything else but floats"
-  );
-
-  FloatType old;
-  FloatType current;
-
-  //! Returns signed difference: current - old
-  FloatType absDelta() const {
-    return std::fabs(current - old);
-  }
-
-  void propagate() { old = current; }
-};
-
-template<typename EigenType>
-struct EigenUpdateBuffer {
-  EigenType old;
-  EigenType current;
-
-  typename EigenType::Scalar deltaNorm() const {
-    return (current - old).norm();
-  }
-
-  void propagate() {
-    /* Swapping instead of moving current into old is three moves instead of
-     * one, but avoids allocation of new memory (after moving from current, we
-     * need to resize current to have the same size). Assuming moves are
-     * cheap (trade ownership of allocated memory) and allocation could be
-     * costly, this might be cheaper.
-     */
-    std::swap(old, current);
-  }
-};
-
-template<typename FloatType, typename VectorType, typename UpdateFunction>
-struct NegateFunction {
-  UpdateFunction function;
-
-  NegateFunction(UpdateFunction&& fn) : function(fn) {}
-
-  void operator() (
-    const VectorType& parameters,
-    FloatType& value,
-    Eigen::Ref<VectorType> gradient
-  ) {
-    function(parameters, value, gradient);
-    value *= -1;
-    gradient *= -1;
-  }
-};
-
-template<typename VectorType, typename UpdateFunction>
-auto negateFunction(UpdateFunction&& fn) {
-  using FloatType = typename VectorType::Scalar;
-  return NegateFunction<FloatType, VectorType, UpdateFunction>(std::forward<UpdateFunction>(fn));
-}
 
 template<typename FloatType, typename VectorType, typename UpdateFunction>
 struct ClampFunction {
@@ -291,9 +229,9 @@ public:
    * @brief Class carrying proposed parameter updates in an optimization
    */
   struct StepValues {
-    detail::EigenUpdateBuffer<VectorType> parameters;
-    detail::FloatUpdateBuffer<FloatType> values;
-    detail::EigenUpdateBuffer<VectorType> gradients;
+    optimization::EigenUpdateBuffer<VectorType> parameters;
+    optimization::FloatUpdateBuffer<FloatType> values;
+    optimization::EigenUpdateBuffer<VectorType> gradients;
 
     /**
      * @brief Initialize class state and generate first direction vector
@@ -312,21 +250,21 @@ public:
       const Boxes& ... boxes
     ) {
       const unsigned P = initialParameters.size();
-      parameters.old = std::move(initialParameters);
-      gradients.old.resize(P);
+      parameters.current = std::move(initialParameters);
       gradients.current.resize(P);
+      gradients.proposed.resize(P);
 
-      // Initialize old values and gradients
-      function(parameters.old, values.old, gradients.old);
-      detail::boxes::adjustGradient<VectorType>(gradients.old, parameters.old, boxes ...);
+      // Initialize current values and gradients
+      function(parameters.current, values.current, gradients.current);
+      detail::boxes::adjustGradient<VectorType>(gradients.current, parameters.current, boxes ...);
 
       // Initialize new with a small steepest descent step
       VectorType direction;
-      const FloatType gradientNorm = gradients.old.norm();
+      const FloatType gradientNorm = gradients.current.norm();
       if(gradientNorm > FloatType {1e-4}) {
-        direction = -gradients.old / gradientNorm;
+        direction = -gradients.current / gradientNorm;
       } else {
-        direction = FloatType {-1.0} * gradients.old;
+        direction = FloatType {-1.0} * gradients.current;
       }
 
       prepare(function, multiplier, direction, boxes ...);
@@ -341,10 +279,10 @@ public:
       const VectorType& direction,
       const Boxes& ... boxes
     ) {
-      parameters.current.noalias() = parameters.old + multiplier * direction;
-      detail::boxes::clampToBounds<VectorType>(parameters.current, boxes ...);
-      function(parameters.current, values.current, gradients.current);
-      detail::boxes::adjustGradient<VectorType>(gradients.current, parameters.current, boxes ...);
+      parameters.proposed.noalias() = parameters.current + multiplier * direction;
+      detail::boxes::clampToBounds<VectorType>(parameters.proposed, boxes ...);
+      function(parameters.proposed, values.proposed, gradients.proposed);
+      detail::boxes::adjustGradient<VectorType>(gradients.proposed, parameters.proposed, boxes ...);
     }
 
     /**
@@ -376,11 +314,8 @@ public:
    *
    * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
    *   double&, Ref<VectorType>). Any return values are ignored.
-   * @tparam Checker An object implementing two methods:
-   *   - checkMaxIterations: unsigned -> bool
-   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
-   *     The arguments passed are, in order: parameters, value and gradient
-   *   These functions should return true if optimization should cease
+   * @tparam Checker An object implementing one methods:
+   *   - shouldContinue: (const unsigned iterations, const StepValues& step) -> bool
    * @tparam Observer An observer callable object taking parameters. Return
    *   values are ignored.
    * @param parameters The initial parameters to optimize. Resulting
@@ -414,11 +349,8 @@ public:
    *
    * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
    *   double&, Ref<VectorType>). Any return values are ignored.
-   * @tparam Checker An object implementing two methods:
-   *   - checkMaxIterations: unsigned -> bool
-   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
-   *     The arguments passed are, in order: parameters, value and gradient
-   *   These functions should return true if optimization should cease
+   * @tparam Checker An object implementing one methods:
+   *   - shouldContinue: (const unsigned iterations, const StepValues& step) -> bool
    * @tparam Observer An observer callable object taking parameters. Return
    *   values are ignored.
    * @param parameters The initial parameters to optimize. Resulting
@@ -441,7 +373,7 @@ public:
   ) {
     OptimizationReturnType results = minimize(
       parameters,
-      detail::negateFunction<VectorType>(
+      optimization::negateFunction<VectorType>(
         std::forward<UpdateFunction>(function)
       ),
       std::forward<Checker>(check),
@@ -460,11 +392,8 @@ public:
    *
    * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
    *   double&, Ref<VectorType>). Any return values are ignored.
-   * @tparam Checker An object implementing two methods:
-   *   - checkMaxIterations: unsigned -> bool
-   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
-   *     The arguments passed are, in order: parameters, value and gradient
-   *   These functions should return true if optimization should cease
+   * @tparam Checker An object implementing one methods:
+   *   - shouldContinue: (const unsigned iterations, const StepValues& step) -> bool
    * @tparam Observer An observer callable object taking parameters. Return
    *   values are ignored.
    * @param parameters The initial parameters to optimize. Resulting
@@ -503,11 +432,8 @@ public:
    *
    * @tparam UpdateFunction A callable object taking arguments (const VectorType&,
    *   double&, Ref<VectorType>). Any return values are ignored.
-   * @tparam Checker An object implementing two methods:
-   *   - checkMaxIterations: unsigned -> bool
-   *   - checkConvergence: (const VectorType&, double, const VectorType&) -> bool
-   *     The arguments passed are, in order: parameters, value and gradient
-   *   These functions should return true if optimization should cease
+   * @tparam Checker An object implementing one methods:
+   *   - shouldContinue: (const unsigned iterations, const StepValues& step) -> bool
    * @tparam Observer An observer callable object taking parameters. Return
    *   values are ignored.
    * @param parameters The initial parameters to optimize. Resulting
@@ -533,7 +459,7 @@ public:
     OptimizationReturnType results = minimize(
       parameters,
       box,
-      detail::negateFunction<VectorType>(
+      optimization::negateFunction<VectorType>(
         std::forward<UpdateFunction>(function)
       ),
       std::forward<Checker>(check),
@@ -632,21 +558,21 @@ private:
     }
 
     bool addInformation(
-      const detail::EigenUpdateBuffer<VectorType>& parameterBuffer,
-      const detail::EigenUpdateBuffer<VectorType>& gradientBuffer
+      const optimization::EigenUpdateBuffer<VectorType>& parameterBuffer,
+      const optimization::EigenUpdateBuffer<VectorType>& gradientBuffer
     ) {
       bool dotProductNotZero;
       if(count < ringBufferSize) {
-        y.col(count).noalias() = gradientBuffer.current - gradientBuffer.old;
-        s.col(count).noalias() = parameterBuffer.current - parameterBuffer.old;
+        y.col(count).noalias() = gradientBuffer.proposed - gradientBuffer.current;
+        s.col(count).noalias() = parameterBuffer.proposed - parameterBuffer.current;
         sDotY(count) = s.col(count).dot(y.col(count));
         dotProductNotZero = (sDotY(count) != 0);
         ++count;
       } else {
         // Rotate columns without copying (introduce modulo offset)
         const unsigned columnOffset = (count + offset) % ringBufferSize;
-        y.col(columnOffset).noalias() = gradientBuffer.current - gradientBuffer.old;
-        s.col(columnOffset).noalias() = parameterBuffer.current - parameterBuffer.old;
+        y.col(columnOffset).noalias() = gradientBuffer.proposed - gradientBuffer.current;
+        s.col(columnOffset).noalias() = parameterBuffer.proposed - parameterBuffer.current;
         sDotY(columnOffset) = s.col(columnOffset).dot(y.col(columnOffset));
         dotProductNotZero = (sDotY(columnOffset) != 0);
         offset = (offset + 1) % ringBufferSize;
@@ -660,18 +586,18 @@ private:
      *   direction
      *
      * @param q The vector in which to store the direction
-     * @param currentGradient The current gradient
+     * @param proposedGradient The proposed gradient
      */
     void generateNewDirection(
       Eigen::Ref<VectorType> q,
-      const VectorType& currentGradient
+      const VectorType& proposedGradient
     ) const {
       /* Note: Naming follows Numerical Optimization (2006)'s naming scheme,
        * p.178.
        */
       const unsigned kMinusOne = newestOffset();
 
-      q = -currentGradient;
+      q = -proposedGradient;
       VectorType alpha(count);
 
       newestToOldest(
@@ -685,7 +611,7 @@ private:
        *         = s_{k-1}.dot(y_{k-1}) / y_{k-1}.squaredNorm()
        *
        * H_k^0 = y_k * I (where I is the identity matrix for n dimensions)
-       * r = H_k^0 * q (where q is the current direction)
+       * r = H_k^0 * q (where q is the proposed direction)
        *
        * q is not needed again later in the algorithm, so instead of defining
        * a new vector r we just reuse q.
@@ -708,18 +634,18 @@ private:
       const StepValues& step,
       const Boxes& ... boxes
     ) {
-      /* L-BFGS update: Use old parameters and gradients to improve steepest
+      /* L-BFGS update: Use current parameters and gradients to improve steepest
        * descent direction
        */
       if(!addInformation(step.parameters, step.gradients)) {
         return false;
       }
 
-      generateNewDirection(direction, step.gradients.current);
+      generateNewDirection(direction, step.gradients.proposed);
       detail::boxes::adjustDirection(
         direction,
-        step.parameters.current,
-        step.gradients.current,
+        step.parameters.proposed,
+        step.gradients.proposed,
         boxes ...
       );
 
@@ -728,7 +654,7 @@ private:
   };
 
   /**
-   * @brief Adjusts @p stepLength member and ensures the current parameter
+   * @brief Adjusts @p stepLength member and ensures the proposed parameter
    *   adjustment lowers the function value.
    *
    * The chosen direction and step length may overshoot or undershoot, and the
@@ -768,22 +694,22 @@ private:
     }
 
     for(iterations = 0; stepLength > 0; ++iterations) {
-      const FloatType oldGradDotDirection = step.gradients.old.dot(direction);
+      const FloatType currentGradDotDirection = step.gradients.current.dot(direction);
 
       /* Armijo rule (Wolfe condition I) */
       bool armijoRule = (
-        step.values.current
-        <= step.values.old + c1 * stepLength * oldGradDotDirection
+        step.values.proposed
+        <= step.values.current + c1 * stepLength * currentGradDotDirection
       );
 
       /* Curvature condition (Wolfe condition II) */
       bool curvatureCondition = (
-        step.gradients.current.dot(direction)
-        >= c2 * oldGradDotDirection
+        step.gradients.proposed.dot(direction)
+        >= c2 * currentGradDotDirection
       );
 
       /* Backtracking condition */
-      bool backtrack = (step.values.current > step.values.old);
+      bool backtrack = (step.values.proposed > step.values.current);
 
       // Decide whether to shorten or extend the step length
       constexpr FloatType shortenFactor = 0.5;
@@ -809,12 +735,12 @@ private:
       if(backtrack && (!armijoRule || !curvatureCondition)) {
         // Retry shortened/lengthened step (no propagation needed)
         step.prepare(function, stepLength, direction, boxes ...);
-        observer(step.parameters.current);
+        observer(step.parameters.proposed);
 
         // Handle encountered parameter boundaries
         if(
           sizeof...(boxes) > 0
-          && (step.parameters.current - step.parameters.old).squaredNorm() < FloatType {1e-8}
+          && (step.parameters.proposed - step.parameters.current).squaredNorm() < FloatType {1e-8}
         ) {
           break;
         }
@@ -848,8 +774,8 @@ private:
     // Set up a first small conjugate gradient step
     StepValues step;
     VectorType direction = step.generateInitialDirection(function, parameters, stepLength, boxes ...);
-    observer(step.parameters.current);
-    //std::cout << "Propose step to " << step.parameters.current.transpose() << ", value " << step.values.current << "\n";
+    observer(step.parameters.proposed);
+    //std::cout << "Propose step to " << step.parameters.proposed.transpose() << ", value " << step.values.proposed << "\n";
 
     /* Set up ring buffer to keep changes in gradient and parameters to
      * approximate the inverse Hessian with
@@ -873,13 +799,13 @@ private:
         break;
       }
 
-      /* Accept the current step and prepare a new prospective step using the
+      /* Accept the proposed step and prepare a new prospective step using the
        * updated direction vector
        */
-      //std::cout << "Accepting step to " << step.parameters.current.transpose() << "\n";
+      //std::cout << "Accepting step to " << step.parameters.proposed.transpose() << "\n";
       step.propagate(function, stepLength, direction, boxes ...);
-      //std::cout << "Propose step to " << step.parameters.current.transpose() << ", value " << step.values.current << "\n";
-      observer(step.parameters.current);
+      //std::cout << "Propose step to " << step.parameters.proposed.transpose() << ", value " << step.values.proposed << "\n";
+      observer(step.parameters.proposed);
     }
 
     // Copy the optimal parameters back into the in/out argument
