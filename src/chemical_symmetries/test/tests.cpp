@@ -973,7 +973,8 @@ BOOST_AUTO_TEST_CASE(PointGroupElements) {
    * transformations to each point
    */
   auto writePointGroup = [&](const PointGroup group) {
-    auto groupings = minimization::npGroupings(group);
+    const auto elements = minimization::symmetryElements(group);
+    const auto groupings = minimization::npGroupings(elements);
     std::cout << pointGroupStrings.at(underlying(group)) << "\n";
     for(const auto& iterPair : groupings) {
       std::cout << "  np = " << iterPair.first << " along " << iterPair.second.probePoint.transpose() << " -> " << temple::stringify(iterPair.second.groups) << "\n";
@@ -985,4 +986,31 @@ BOOST_AUTO_TEST_CASE(PointGroupElements) {
     writePointGroup(static_cast<PointGroup>(g));
   }
   writePointGroup(PointGroup::Oh);
+}
+
+BOOST_AUTO_TEST_CASE(Diophantine) {
+  std::vector<unsigned> x;
+  const std::vector<unsigned> a {4, 3, 2};
+  const int b = 12;
+
+  const std::vector<
+    std::vector<unsigned>
+  > expectedX {
+    {0, 0, 6},
+    {0, 2, 3},
+    {0, 4, 0},
+    {1, 0, 4},
+    {1, 2, 1},
+    {2, 0, 2},
+    {3, 0, 0}
+  };
+
+  BOOST_REQUIRE(diophantine::first_solution(x, a, b));
+  unsigned i = 0;
+  do {
+    BOOST_CHECK(x == expectedX.at(i));
+    ++i;
+  } while(diophantine::next_solution(x, a, b));
+  BOOST_REQUIRE(i == expectedX.size());
+  BOOST_REQUIRE(x == std::vector<unsigned> (3, 0));
 }

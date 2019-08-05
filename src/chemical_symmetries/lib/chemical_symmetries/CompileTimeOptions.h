@@ -4,7 +4,8 @@
  * @brief Preprocessor definitions to alter library compilation behavior
  */
 
-/*! If defined, a reduced set of tetrahedra is used in defining symmetries
+/*!
+ * @brief If defined, a reduced set of tetrahedra is used in defining symmetries
  *
  * If USE_ALTERNATE_TETRAHEDRA is defined, a reduced set of tetrahedra
  * is used to subdivide higher symmetries. This may provide less information
@@ -17,8 +18,12 @@
 /* Depending on the compiler, constexpr bugs or restrictions may prevent the
  * use of constexpr precomputations entirely.
  *
- * At the moment, only Clang >= 4.0.0 is known to be able to compile the
- * constexpr algorithms.
+ * The following compilers are known to be able to handle the constexpr
+ * precomputations:
+ *
+ * - Clang >= 4.0.0 (fast and with low memory use)
+ * - Apple Clang (version unknown, fast and with low memory use)
+ * - GCC 8.3.0 (fast but with roughly 26 GB RAM use)
  */
 #if defined(__clang__) || defined(CHEMICAL_SYMMETRIES_TRY_CONSTEXPR)
 
@@ -30,7 +35,8 @@
  */
 #define USE_CONSTEXPR_SQUARE_ANTIPRISMATIC_LOOKUP_TABLE
 
-/*! If defined, symmetry transition mappings are generated at compile time
+/*!
+ * @brief If defined, symmetry transition mappings are generated at compile time
  *
  * If USE_CONSTEXPR_TRANSITION_MAPPINGS is defined, a data structure containing
  * the best index mappings between symmetries is generated at compile-time.
@@ -75,7 +81,8 @@
  */
 #define USE_CONSTEXPR_TRANSITION_MAPPINGS
 
-/*! If defined, all possible unlinked permutations are generated at compile-time
+/*!
+ * @brief If defined, all possible unlinked permutations are generated at compile-time
  *
  * If USE_CONSTEXPR_HAS_MULTIPLE_UNLINKED_STEREOPERMUTATIONS is defined, a data
  * structure containing whether there are multiple stereopermutations for a
