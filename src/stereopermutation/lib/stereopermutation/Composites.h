@@ -121,8 +121,11 @@ public:
     >
   >;
 
+  //! Relative orientation of substituent groups along the dihedral
   enum class Alignment {
+    //! At least two substituents eclipse one another along the axis
     Eclipsed,
+    //! At least one pair of substituents are staggered along the axis
     Staggered
   };
 //!@}

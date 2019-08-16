@@ -156,8 +156,8 @@ RankingInformation::RankedSitesType RankingInformation::rankSites(
   auto finalSets = siteOrdering.getSets();
 
   std::reverse(
-    finalSets.begin(),
-    finalSets.end()
+    std::begin(finalSets),
+    std::end(finalSets)
   );
 
   return finalSets;

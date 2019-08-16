@@ -339,7 +339,7 @@ public:
        *   (So A < B is false, meaning stereogenic < non-stereogenic, leading
        *   to the desired ordering)
        *
-       * This is valid for both A and B types of stereopermutators
+       * This is valid for both atom and bond stereopermutators
        */
       return (
         (StereopermutatorA.numStereopermutations() > 1)

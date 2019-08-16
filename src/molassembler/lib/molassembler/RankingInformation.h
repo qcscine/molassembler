@@ -113,6 +113,10 @@ struct RankingInformation {
    * @brief Combines the ranking of substituents with the binding site
    *   constitutions into a site-level ranking
    *
+   * Site ordering is predicated on the following rules:
+   * 1. Larger sites precede smaller sites
+   * 2. Lexicographical comparison of the constituting atoms' ranking positions
+   *
    * @param sites List of atom index lists that each constitute a binding site
    * @param substituentRanking The substituent-level ranking result
    *
