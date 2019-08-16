@@ -59,14 +59,32 @@ struct RankingInformation;
  * Stereopermutators represent the absolute configuration at an atom or bond in an
  * abstract fashion and do not store coordinate information.
  *
- * @note You may be surprised to see that all basic editing of Molecules, even
- * if it seems to concern the graph only, happens in this class interface. That
- * is because a graph edit may affect rankings at any stereopermutators in the
- * molecule due to the algorithm by which substituents are ranked. This means
- * that for every tiny edit, all stereopermutator substituents are re-ranked and
- * chiral state, if present, is propagated through a possible ranking change.
- * For that, the list of stereopermutators is required, which is accessible only
- * in this class.
+ * @parblock@note
+ *   You may be surprised to see that all basic editing of Molecules, even
+ *   if it seems to concern the graph only, happens in this class interface. That
+ *   is because a graph edit may affect rankings at any stereopermutators in the
+ *   molecule due to the algorithm by which substituents are ranked. This means
+ *   that for every tiny edit, all stereopermutator substituents are re-ranked and
+ *   chiral state, if present, is propagated through a possible ranking change.
+ *   For that, the list of stereopermutators is required, which is accessible only
+ *   in this class.
+ * @endparblock
+ *
+ * @parblock@note
+ *   Some explanation is required to qualify the complexity guarantees. It
+ *   is assumed that graphs are sparse, i.e. the average number of substituents
+ *   at any atom does not grow with the number of atoms in the graph. Any
+ *   function linear in the number of an atom's substituents is therefore of
+ *   constant complexity. The variables used in the complexity notations are:
+ *   - V = #atoms/vertices
+ *   - E = #bonds/edges
+ *   - A = #atom stereopermutators
+ *   - B = #bond stereopermutators
+ * @note The notations used are the Bachmann-Landau notations:
+ *   - \f$O\f$ implies that the function grows asymptotically no faster than
+ *   - \f$\Theta\f$ implies that the function grow asymptotically as fast as
+ *   - \f$\Omega\f$ implies that the function grows asympotically at least as fast as (Knuth definition)
+ * @endparblock
  */
 class Molecule {
 public:
@@ -79,13 +97,25 @@ public:
   Molecule& operator = (const Molecule& rhs);
   ~Molecule();
 
-  //! Default-constructor creates a hydrogen molecule.
+  /*!
+   * @brief Default-constructor creates a hydrogen molecule (H2).
+   *
+   * @complexity{\math{\Theta(1)}}
+   */
   Molecule() noexcept;
 
-  //! Single-element molecule constructor
+  /*!
+   * @brief Single-element molecule constructor
+   *
+   * @complexity{\f$\Theta(1)\f$}
+   */
   Molecule(Utils::ElementType element) noexcept;
 
-  //! Construct a minimal molecule from two element types and a mutual bond type
+  /*!
+   * @brief Construct a minimal molecule from two element types and a mutual bond type
+   *
+   * @complexity{\f$\Theta(1)\f$}
+   */
   Molecule(
     Utils::ElementType a,
     Utils::ElementType b,
@@ -98,6 +128,7 @@ public:
    * Constructs a molecule from connectivity alone. Local symmetries and
    * stereopermutators are inferred from the graph alone.
    *
+   * @complexity{\math{O(V + E)}}
    * @throws std::logic_error If the supplied graph has multiple connected
    *   components or there are less than 2 atoms
    */
@@ -634,9 +665,9 @@ public:
    * set stereopermutation index. This can lead to unexpected but logically
    * consistent comparison behavior.
    *
-   * @note This function has no improved computational complexity for molecules
-   * stored in any canonical form. Use Molecule::canonicalCompare for molecules
-   * instances that have been canonicalized.
+   * @note This function is not faster for molecules stored in any canonical
+   * form. Use Molecule::canonicalCompare for molecules instances that have
+   * been canonicalized.
    */
   bool modularCompare(
     const Molecule& other,
