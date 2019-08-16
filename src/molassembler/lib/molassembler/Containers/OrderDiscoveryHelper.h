@@ -66,7 +66,11 @@ private:
   std::map<T, VertexIndexType> _sourceMap;
   DependencyGraphType _graph;
 
-  //! Get a grouped list of the ordered data sorted by out_degree ascending
+  /*!
+   * @brief Get a grouped list of the ordered data sorted by out_degree ascending
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   std::vector<
     std::vector<T>
   > _getSetsByDegree() const {
@@ -153,6 +157,13 @@ private:
 public:
   OrderDiscoveryHelper() = default;
 
+  /** @brief Arbitrary container constructor
+   *
+   * @tparam Container Container type
+   * @param container Container instance
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   template<typename Container>
   explicit OrderDiscoveryHelper(const Container& container) {
     setUnorderedValues(
@@ -161,11 +172,14 @@ public:
     );
   }
 
-  /*!
+  /*! @brief Transfer relationships from another OrderDiscoveryHelper
+   *
    * Adds any relationships from another OrderDiscoveryHelper that are not
-   * yet present in this one. No new vertices are added. Missing transferability
-   * edges are added (if a < b && b < c, then a < c) If any contradictory
-   * information is present, this function throws.
+   * yet present in this instance. No new vertices are added. Missing
+   * transferability edges are added (if a < b && b < c, then a < c) If any
+   * contradictory information is present, this function throws.
+   *
+   * @complexity{@math{\Theta(N^2)}}
    */
   void addRelationshipsFromOther(const OrderDiscoveryHelper& other) {
     // Build a mapping of vertices
@@ -230,12 +244,15 @@ public:
     addTransferabilityEdges();
   }
 
-  /*!
+  /*! @brief Adds vertices and edges from another instance, then adds transferability edges
+   *
    * Adds all information present in another OrderDiscoveryHelper that are not
    * yet present in this one. Any vertices not present in this graph are added,
    * plus any missing relationship edges. If any contradictory information is
    * present, this function throws. Missing transferability edges are added too
    * (if a < b && b < c, then a < c).
+   *
+   * @complexity{@math{O(N^2)}}
    */
   void addAllFromOther(const OrderDiscoveryHelper& other) {
     // Left is the other graph, right is this graph
@@ -301,8 +318,12 @@ public:
     addTransferabilityEdges();
   }
 
-  /*!
+  /*! @brief Adds missing transferability edges
+   *
    * Adds any missing transferability edges (if a < b && b < c, then a < c).
+   *
+   * @complexity{@math{O(N^2)}}
+   *
    * This function is awful in terms of complexity, it's worst case of O(N²).
    * There must be better ways of doing this.
    */
@@ -344,19 +365,11 @@ public:
     }
   }
 
-  //! Sets which as-yet unordered values are to be investigated
-  void setUnorderedValues(const std::set<T>& unorderedValues) {
-    if(boost::num_vertices(_graph) > 0) {
-      _graph.clear();
-    }
-
-    _sourceMap.clear();
-
-    for(const auto& value: unorderedValues) {
-      _addItem(value);
-    }
-  }
-
+  /** @brief Range-abstracted @see setUnorderedValues
+   *
+   * @complexity{\math{\Theta(N)}}
+   * @todo no checks against duplicate values
+   */
   template<typename It>
   void setUnorderedValues(It iter, const It end) {
     if(boost::num_vertices(_graph) > 0) {
@@ -370,7 +383,10 @@ public:
     }
   }
 
-  //! @todo no checks against duplicate values
+  /*!  @brief Container-abstracted @see setUnorderedValues
+   *
+   * @complexity{\math{\Theta(N)}}
+   */
   template<typename Container>
   void setUnorderedValues(Container&& container) {
     static_assert(
@@ -387,7 +403,10 @@ public:
     );
   }
 
-  //! Get a list of sets (in descending order) as currently discovered
+  /*! @brief Get a list of sets (in descending order) as currently discovered
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   std::vector<
     std::vector<T>
   > getSets() const {
@@ -395,7 +414,10 @@ public:
     return _getSetsByDegree();
   }
 
-  //! Returns grouped data (in descending order) whose internal order is undecided
+  /*! @brief Returns grouped data (in descending order) whose internal order is undecided
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   std::vector<
     std::vector<T>
   > getUndecidedSets() const {
@@ -408,14 +430,20 @@ public:
     );
   }
 
-  //! Returns whether the total order has been discovered or not
+  /*! @brief Returns whether the total order has been discovered or not
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   bool isTotallyOrdered() const {
     auto N = boost::num_vertices(_graph);
 
     return(boost::num_edges(_graph) == N * (N - 1) / 2);
   }
 
-  //! Add a less-than relationship to the graph
+  /*! @brief Add a less-than relationship to the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void addLessThanRelationship(
     const T& a,
     const T& b
@@ -432,9 +460,9 @@ public:
     );
   }
 
-  /*!
-   * Dumps a graphviz string that allows the visualization of the internal
-   * graph structure.
+  /*! @brief Dumps a graphviz string for visualization of relationships
+   *
+   * @complexity{@math{\Theta(N)}}
    */
   std::string dumpGraphviz() const {
     GraphvizWriter propertyWriter(*this);
@@ -452,13 +480,16 @@ public:
     return ss.str();
   }
 
-  /*!
+  /*! @brief Check if a value is smaller than another
+   *
    * This returns true if and only if both values are part of the graph and
    * if the less-than relationship is present in the order given, i.e. a < b.
    *
    * In all other cases (either of the values isn't in the graph, there is no
    * ordering relationship or the ordering relationship is the other way
    * around), this function returns false.
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   bool isSmaller(const T& a, const T& b) const {
     if(_sourceMap.count(a) == 0 || _sourceMap.count(b) == 0) {

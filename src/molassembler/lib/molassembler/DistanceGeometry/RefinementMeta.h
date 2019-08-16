@@ -7,21 +7,16 @@
 #ifndef INCLUDE_MOLASSEMBLER_REFINEMENT_META_H
 #define INCLUDE_MOLASSEMBLER_REFINEMENT_META_H
 
+#include "molassembler/DistanceGeometry/DistanceBoundsMatrix.h"
+#include "molassembler/DistanceGeometry/DistanceGeometry.h"
+#include "molassembler/Log.h"
+#include "molassembler/Types.h"
+
 #include "temple/Stringify.h"
 
 namespace Scine {
 namespace molassembler {
 namespace DistanceGeometry {
-
-/*template<typename FloatType, typename Derived>
-auto flatten(const Eigen::MatrixBase<Derived>& positions) {
-  using MapVectorType = Eigen::Matrix<typename Derived::Scalar, 1, Eigen::Dynamic>;
-  return Eigen::Map<MapVectorType>(
-    positions.derived().data(),
-    positions.derived().cols() * positions.derived().rows()
-  ).template cast<FloatType>().eval();
-}*/
-
 
 /**
  * @brief Decides whether the final structure from a refinement is acceptable
@@ -29,6 +24,8 @@ auto flatten(const Eigen::MatrixBase<Derived>& positions) {
  * A final structure is acceptable if
  * - All distance bounds are within 0.5 of either the lower or upper boundary
  * - All chiral constraints are within 0.5 of either the lower or upper boundary
+ *
+ * @complexity{@math{\Theta(N)}}
  *
  * @param bounds The distance bounds
  * @param chiralConstraints All chiral constraints
@@ -80,6 +77,8 @@ bool finalStructureAcceptable(
  * - All distance bounds are within 0.5 of either the lower or upper boundary
  * - All chiral constraints are within 0.5 of either the lower or upper boundary
  *
+ * @complexity{@math{\Theta(N)}}
+ *
  * @param bounds The distance bounds
  * @param chiralConstraints All chiral constraints
  * @param dihedralConstraints All dihedral constraints
@@ -130,6 +129,8 @@ void explainAcceptanceFailure(
 /**
  * @brief Writes messages to the log explaining the final contributions to
  *   the error function
+ *
+ * @complexity{@math{\Theta(N)}}
  *
  * @param bounds The distance bounds
  * @param chiralConstraints All chiral constraints

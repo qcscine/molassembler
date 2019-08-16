@@ -16,11 +16,16 @@ namespace molassembler {
 namespace DistanceGeometry {
 
 /* Exchanged types */
+/**
+ * @brief Data class for bounded values
+ */
 struct ValueBounds {
   double lower, upper;
 
   /**
    * @brief Main constructor
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param passLower Lower end of the value boundaries
    * @param passUpper Upper end of the value boundaries
@@ -38,15 +43,16 @@ struct ValueBounds {
     }
   }
 
-  /**
-   * @brief Default constructor yields double lowest/max pair
+  /** @brief Default constructor yields double lowest/max pair
    *
+   * @complexity{@math{\Theta(1)}}
    * @return lowest/max bounds from numeric_limits
    */
   ValueBounds();
 
-  /**
-   * @brief Returns whether the bounds exactly equal another set of bounds
+  /** @brief Returns whether the bounds exactly equal another set of bounds
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param other The other bounds to compare against
    *

@@ -16,25 +16,9 @@ namespace molassembler {
 
 namespace DelibHelpers {
 
-//! Fetches the cartesian distance between two indices in a PositionCollection
-double getDistance(
-  const Scine::Utils::PositionCollection& positions,
-  AtomIndex i,
-  AtomIndex j
-);
-
-//! Fetches the angle in radians between three indices in a PostionCollection
-double getAngle(
-  const Scine::Utils::PositionCollection& positions,
-  AtomIndex i,
-  AtomIndex j,
-  AtomIndex k
-);
-
-/*!
- * Fetches the dihedral angle in radians defined by four indices in a
- * PositionCollection.
+/*! @brief Calculates the dihedral angle in radians defined by four positions
  *
+ * @complexity{@math{\Theta(1)}}
  * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
  */
 double getDihedral(
@@ -45,10 +29,9 @@ double getDihedral(
   AtomIndex l
 );
 
-/*!
- * Fetches the dihedral angle in radians defined by four indices in a
- * PositionCollection, but passed as an array
+/*! @brief Calculates the dihedral angle in radians defined by four positions
  *
+ * @complexity{@math{\Theta(1)}}
  * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
  */
 double getDihedral(
@@ -56,9 +39,9 @@ double getDihedral(
   const std::array<AtomIndex, 4>& indices
 );
 
-/*!
- * Returns the signed tetrahedron volume spanned by four indices in a
- * PositionCollection
+/*! @brief Calculates signed tetrahedron volume spanned by four positions
+ *
+ * @complexity{@math{\Theta(1)}}
  */
 double getSignedVolume(
   const Scine::Utils::PositionCollection& positions,
@@ -68,9 +51,9 @@ double getSignedVolume(
   AtomIndex l
 );
 
-/*!
- * Returns the signed tetrahedron volume spanned by four indices in a
- * PositionCollection, but passed as an array
+/*! @brief Calculates signed tetrahedron volume spanned by four positions
+ *
+ * @complexity{@math{\Theta(1)}}
  */
 double getSignedVolume(
   const Scine::Utils::PositionCollection& positions,
@@ -78,25 +61,37 @@ double getSignedVolume(
 );
 
 /* Reimplementation on vector basis alone */
-
+/*! @brief Averages multiple positions
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 Eigen::Vector3d averagePosition(
   const Scine::Utils::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 );
 
+/*! @brief Calculates cartesian distance between two positions
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 double distance(
   const Eigen::Vector3d& i,
   const Eigen::Vector3d& j
 );
 
+/*! @brief Calculates the angle in radians between three positions
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 double angle(
   const Eigen::Vector3d& i,
   const Eigen::Vector3d& j,
   const Eigen::Vector3d& k
 );
 
-/*! Calculates the dihedral between four positions
+/*! @brief Calculates the dihedral angle between four positions
  *
+ * @complexity{@math{\Theta(1)}}
  * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
  */
 double dihedral(
@@ -106,9 +101,10 @@ double dihedral(
   const Eigen::Vector3d& l
 );
 
-/*!
- * Returns the signed tetrahedron volume spanned by four spatial positions
- * adjusted by V' = 6 * V
+/*! @brief Calculates the adjusted signed tetrahedron volume spanned by four positions
+ *
+ * The adjusted signed tetrahedron volume @math{V'} is defined from the signed
+ * tetrahedron volume @math{V} by @math{V' = 6 V}.
  */
 double adjustedSignedVolume(
   const Eigen::Vector3d& i,

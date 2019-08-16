@@ -29,40 +29,6 @@ bool validPositionIndices(
   );
 }
 
-double getDistance(
-  const Scine::Utils::PositionCollection& positions,
-  AtomIndex i,
-  AtomIndex j
-) {
-  assert(
-    validPositionIndices(positions, {i, j})
-  );
-
-  return (
-    positions.row(i) - positions.row(j)
-  ).norm();
-}
-
-double getAngle(
-  const Scine::Utils::PositionCollection& positions,
-  const AtomIndex i,
-  const AtomIndex j,
-  const AtomIndex k
-) {
-  assert(
-    validPositionIndices(positions, {i, j, k})
-  );
-
-  auto a = positions.row(i) - positions.row(j),
-       b = positions.row(k) - positions.row(j);
-
-  return std::acos(
-    a.dot(b) / (
-      a.norm() * b.norm()
-    )
-  );
-}
-
 double getDihedral(
   const Scine::Utils::PositionCollection& positions,
   const AtomIndex i,
@@ -150,6 +116,7 @@ Eigen::Vector3d averagePosition(
   const Scine::Utils::PositionCollection& positions,
   const std::vector<AtomIndex>& indices
 ) {
+  assert(!indices.empty());
   assert(
     validPositionIndices(positions, indices)
   );
