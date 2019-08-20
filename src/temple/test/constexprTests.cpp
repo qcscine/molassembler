@@ -60,31 +60,6 @@ static_assert(
   "Swap doesn't work as expected"
 );
 
-static_assert(
-  temple::arrayPop(testArr) == temple::Array<unsigned, 2> {4, 3},
-  "Pop doesn't work"
-);
-
-static_assert(
-  temple::arrayPush(testArr, 9u) == temple::Array<unsigned, 4> {4, 3, 5, 9},
-  "Push doesn't work"
-);
-
-static_assert(
-  temple::arrayPush(testArr, 9u) == temple::Array<unsigned, 4> {4, 3, 5, 9},
-  "arrayPush doesn't work on temple::Array"
-);
-
-constexpr auto stdTestArr = std::array<unsigned, 3> {{4, 3, 5}};
-
-static_assert(
-  temple::arraysEqual(
-    temple::arrayPush(stdTestArr, 9u),
-    std::array<unsigned, 4> {{4, 3, 5, 9}}
-  ),
-  "arrayPush doesn't work on std::array"
-);
-
 template<size_t size>
 constexpr void testIteration(const temple::Array<unsigned, size>& array) {
   for(const auto& element : array) {
@@ -92,28 +67,8 @@ constexpr void testIteration(const temple::Array<unsigned, size>& array) {
   }
 }
 
-constexpr auto sortedArr = temple::Array<unsigned, 4> {4, 6, 9, 11};
-constexpr auto oneMore = temple::insertIntoSorted(sortedArr, 5u);
-
-static_assert(
-  oneMore == temple::Array<unsigned, 5> {4, 5, 6, 9, 11},
-  "InsertIntoSorted does not work as expected."
-);
-
 static_assert(temple::Math::factorial(5) == 120, "Factorial is incorrect");
 static_assert(temple::Math::factorial(0) == 1, "Factorial is incorrect");
-
-// C++17 with std::array
-/*
-constexpr auto stdSortedArr = std::array<unsigned, 4> {{4, 6, 9, 11}};
-constexpr auto stdOneMore = temple::insertIntoSorted(stdSortedArr, 5u);
-
-static_assert(
-  temple::arraysEqual(stdOneMore, std::array<unsigned, 5> {4, 5, 6, 9, 11}),
-  "InsertIntoSorted does not work as expected with std::array"
-);
-// std::array::operator == (const std::array& other) isn't constexpr in C++17
-*/
 
 static_assert(
   std::is_same<
