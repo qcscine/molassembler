@@ -469,6 +469,8 @@ std::vector<FloatType> generalizedInternalAngles(
  * @brief Check whether a cyclic polygon exists for a specified sequence of edge
  *   lengths.
  *
+ * @complexity{@math{\Theta(N)}}
+ *
  * @param edgeLengths The lengths of the edges that will compose the polygon.
  *   Positionally adjacent edge lengths will be adjacent in the polygon.
  *
@@ -493,6 +495,9 @@ bool exists(const std::vector<FloatType>& edgeLengths) {
 
 /*!
  * @brief Calculates the internal angles of a convex cyclic polygon
+ *
+ * @complexity{@math{\Theta(1)} if edgeLengths is three or four, otherwise
+ * @math{\Theta(N)}}
  *
  * @param edgeLengths The lengths of the edges that will compose the polygon.
  *   Positionally adjacent edge lengths will be adjacent in the polygon.

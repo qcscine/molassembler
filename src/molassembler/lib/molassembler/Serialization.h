@@ -136,12 +136,12 @@ public:
    *   atoms and bonds, respectively
    * - Ranking information notational freedom is removed
    *
+   * @complexity{@math{\Theta(V + E + A + B)}}
+   *
    * @throws std::logic_error If the underlying molecule is not fully canonical.
    * It makes zero sense to standardize the JSON representation if the molecule
    * itself is not canonicalized since then JSON representation comparison will
    * still not yield the same behavior as Molecule comparison.
-   *
-   * @note This has at least O(V + E + A + B) complexity for large molecules.
    *
    * @returns *this for method chaining
    */

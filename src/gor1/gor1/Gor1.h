@@ -152,6 +152,8 @@ void gor1_simplified_scan(
  * Reference C implementation in
  * - https://github.com/skvadrik/cherkassky_goldberg_radzik
  *
+ * @complexity{@math{\Theta(V E)}}
+ *
  * @tparam IncidenceGraph Type modeling Boost's IncidenceGraph concept
  * @tparam DistanceMap Type mapping vertex descriptors to distance
  * @tparam PredecessorMap Type mapping vertex descriptors to their predecessor
