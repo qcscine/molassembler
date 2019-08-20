@@ -109,7 +109,7 @@ IO            | Description
 <code>\link Scine::molassembler::IO::read(const std::string&) IO::read(...)\endlink</code> | Extract a single \masm{Molecule} from an XYZ, MOL or MASM file
 <code>\link Scine::molassembler::IO::split(const std::string&) IO::split(...)\endlink</code> | Extract multiple \masm{Molecule, Molecules} from an XYZ, MOL or MASM file
 <code>\link Scine::molassembler::IO::write(const std::string&, const Molecule&) IO::write(...)\endlink</code> | Write a single \masm{Molecule} to XYZ, MOL or MASM
-<code>\link Scine::molassembler::interpret(const Delib::ElementTypeCollection &, const AngstromWrapper &, const Delib::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
+<code>\link Scine::molassembler::interpret(const Utils::AtomCollection &, const Utils::BondOrderCollection &, BondDiscretizationOption discretization, const boost::optional< double > &) interpret(...)\endlink</code> | Find (possibly multiple) \masm{Molecule, Molecules} in various input data types
 
 
 Information           | Description

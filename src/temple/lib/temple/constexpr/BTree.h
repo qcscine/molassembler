@@ -134,16 +134,10 @@ public:
 //!@name Static properties
 //!@{
   //! The height needed to be able to hold at least numElements elements
-  static constexpr size_t maxHeight = BTreeProperties::maxHeightBound(
-    numElements,
-    minDegree
-  );
+  static constexpr size_t maxHeight = BTreeProperties::maxHeightBound(numElements, minDegree);
 
   //! The maximum number of nodes that the tree can hold
-  static constexpr size_t maxNodes = BTreeProperties::maxNodesInTree(
-    maxHeight,
-    minDegree
-  );
+  static constexpr size_t maxNodes = BTreeProperties::maxNodesInTree(maxHeight, minDegree);
 
   //! The maximum number of values that the tree can hold
   static constexpr size_t maxElements = maxNodes * (2 * minDegree - 1);
@@ -179,8 +173,8 @@ public:
    * Inserts a new value into the tree. This value must not already be in the
    * tree.
    *
-   * @pre The tree does not contain @p value
    * @complexity{@math{\Theta(t log_t N)}}
+   * @pre The tree does not contain @p value
    */
   constexpr void insert(const T& value) {
     unsigned r = _rootPtr;
@@ -204,8 +198,8 @@ public:
    *
    * Deletes a value from the tree.
    *
-   * @pre The value must exist in the tree.
    * @complexity{@math{\Theta(t log_t N)}}
+   * @pre The value must exist in the tree.
    */
   constexpr void remove(const T& value) {
     _delete(_rootPtr, value);
@@ -238,8 +232,15 @@ public:
     return nodeIndexOptional.hasValue();
   }
 
-  //! ???
-  PURITY_WEAK constexpr Optional<T> getOption(const T& value) const {
+  /*! @brief Checks if the tree contains T. If so, returns a const-ref to it
+   *
+   * @note This function may seem nonsensical, but it is an important building
+   * block for maps in which what not all that is stored is compared against in
+   * the search.
+   *
+   * @complexity{@math{\Theta(t log_t N)}}
+   */
+  PURITY_WEAK constexpr Optional<const T&> getOption(const T& value) const {
     auto nodeIndexOptional = _search(_rootPtr, value);
 
     if(!nodeIndexOptional.hasValue()) {
@@ -253,7 +254,7 @@ public:
       _lt
     );
 
-    return Optional<T> {*valueLowerBound};
+    return Optional<const T&> {*valueLowerBound};
   }
 
   //! Dumps a graphViz representation of the B-Tree.
@@ -332,7 +333,7 @@ public:
 
   /*! @brief Returns the number of elements in the tree
    *
-   * @complexity{@math{Theta(1)}}
+   * @complexity{@math{\Theta(1)}}
    */
   PURITY_WEAK constexpr unsigned size() const {
     return _count;

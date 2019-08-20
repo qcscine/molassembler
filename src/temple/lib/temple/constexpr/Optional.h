@@ -191,6 +191,154 @@ private:
 //!@}
 };
 
+template<typename T>
+class Optional<T&> {
+public:
+//!@name Constructors
+//!@{
+  /*! @brief Default constructor
+   *
+   * None value. Default constructs a contained type.
+   */
+  constexpr Optional() : _ref(_dummy) {}
+
+  //! Value constructor
+  constexpr explicit Optional(T& value) : _ref(value), _hasValue(true) {}
+//!@}
+
+//!@name Information
+//!@{
+  /*! @brief Returns whether the optional contains a value
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  PURITY_WEAK constexpr bool hasValue() const {
+    return _hasValue;
+  }
+
+  /*! @brief Returns the contained value unchecked
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @warning If @p hasValue is false, this is UB.
+   */
+  PURITY_WEAK constexpr T& value() const {
+    return _ref;
+  }
+
+  /*! @brief Monadic bind with function of signature T -> U
+   *
+   * @tparam UnaryFunction: Function of signature T -> U
+   *
+   * @returns Optional<U>
+   */
+  template<class UnaryFunction>
+  constexpr auto map(UnaryFunction&& function) const {
+    // Function has signature T -> U
+    using U = decltype(function(_ref));
+
+    if(_hasValue) {
+      return Optional<U> {
+        function(_ref)
+      };
+    }
+
+    return Optional<U> {};
+  }
+
+  /*! @brief Monadic bind with function of signature T -> Optional<U>
+   *
+   * @tparam UnaryFunction: Function of signature T -> Optional<U>
+   *
+   * @returns Optional<U>
+   */
+  template<class UnaryFunction>
+  constexpr auto flatMap(UnaryFunction&& function) const {
+    // Function has signature T -> Optional<U>
+    using OptionalU = decltype(function(_ref));
+
+    if(_hasValue) {
+      return OptionalU {function(_ref)};
+    }
+
+    return OptionalU {};
+  }
+
+  /*! @brief Returns a value if initialized, and another if not
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  PURITY_WEAK constexpr T valueOr(const T& alternative) const {
+    if(_hasValue) {
+      return _ref;
+    }
+
+    return alternative;
+  }
+//!@}
+
+//!@name Operators
+//!@{
+  //! Convert-to-bool operator
+  PURITY_WEAK constexpr operator bool () const {
+    return _hasValue;
+  }
+
+  //! Compares on basis of contained value. Nones do compare equal
+  PURITY_WEAK constexpr bool operator == (const Optional& other) const {
+    if(!_hasValue && !other._hasValue) {
+      return true;
+    }
+
+    if(_hasValue && other._hasValue) {
+      return _ref == other._ref;
+    }
+
+    return false;
+  }
+
+  //! Compares on basis of contained value. Nones do compare equal
+  PURITY_WEAK constexpr bool operator != (const Optional& other) const {
+    return !(*this == other);
+  }
+
+  //! Lexicographical-like comparison
+  PURITY_WEAK constexpr bool operator < (const Optional& other) const {
+    // If neither has a value, they are equal
+    if(!_hasValue && !other._hasValue) {
+      return false;
+    }
+
+    // If we do not have a value, but the other does, we are smaller
+    if(!_hasValue && other._hasValue) {
+      return true;
+    }
+
+    // If we have a value, but the other doesn't, we are bigger
+    if(_hasValue && !other._hasValue) {
+      return false;
+    }
+
+    // Remaining case: both have values
+    return (
+      _ref < other._ref
+    );
+  }
+
+  //! Lexicographical-like comparison
+  PURITY_WEAK constexpr bool operator > (const Optional& other) const {
+    return (other < *this);
+  }
+//!@}
+
+private:
+//!@name State
+//!@{
+  T _dummy = T{};
+  T& _ref;
+  bool _hasValue = false;
+//!@}
+};
+
 } // namespace temple
 
 #endif

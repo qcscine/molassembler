@@ -142,12 +142,11 @@ public:
 
 //!@name Information
 //!@{
-  /*! Value lookup. By copy!
+  /*! @brief Value lookup.
    *
    * @complexity{@math{\Theta(N log N)}}
-   * @todo Why is this by copy again?
    */
-  constexpr MappedType at(const KeyType& key) const {
+  constexpr const MappedType& at(const KeyType& key) const {
     PairType pair {key, MappedType {}};
     auto keyOptional = _items.getOption(pair);
 

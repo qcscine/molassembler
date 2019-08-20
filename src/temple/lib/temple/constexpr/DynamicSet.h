@@ -67,7 +67,7 @@ public:
     _tree.insert(item);
   }
 
-  PURITY_WEAK constexpr Optional<T> getOption(const T& item) const {
+  PURITY_WEAK constexpr Optional<const T&> getOption(const T& item) const {
     return _tree.getOption(item);
   }
 

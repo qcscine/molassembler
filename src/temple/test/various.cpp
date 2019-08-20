@@ -12,6 +12,7 @@
 #include "temple/OperatorSuppliers.h"
 #include "temple/Stringify.h"
 #include "temple/constexpr/Numeric.h"
+#include "temple/constexpr/Optional.h"
 
 #include <chrono>
 #include <cmath>
@@ -168,4 +169,16 @@ BOOST_AUTO_TEST_CASE(crtpTests) {
   BOOST_CHECK(b > a);
   BOOST_CHECK(b <= c);
   BOOST_CHECK(b >= c);
+}
+
+BOOST_AUTO_TEST_CASE(ReferenceOptional) {
+  int x = 0;
+  temple::Optional<int&> f {x};
+  if(f) {
+    f.value() = 4;
+  }
+  BOOST_CHECK(x == 4);
+
+  temple::Optional<int&> g;
+  BOOST_CHECK(!g.hasValue());
 }
