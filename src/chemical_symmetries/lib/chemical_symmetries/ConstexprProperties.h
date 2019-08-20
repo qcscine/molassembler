@@ -17,7 +17,6 @@
 
 #include "chemical_symmetries/Symmetries.h"
 
-#include "temple/constexpr/Array.h"
 #include "temple/constexpr/Bitset.h"
 #include "temple/constexpr/DynamicSet.h"
 #include "temple/constexpr/FloatingPointComparison.h"
@@ -28,11 +27,32 @@ namespace Scine {
 
 namespace Symmetry {
 
+/**
+ * @brief Compile-time amenable calculation of symmetry classes' properties
+ *
+ * Here we calculate various properties of symmetry classes (i.e. classes that
+ * fulfill the concepts::SymmetryClass concept). Also, transition mappings can
+ * be calculated at compile time using functions in this namespace.
+ *
+ * Data from Primitives.h takes two paths through this library: Symmetry classes,
+ * whose equivalent data members may have different type signatures, can be
+ * processed directly here and transformed. The data available in the symmetry
+ * classes is made available to runtime functions by smoothing over the type
+ * signatures, which are merely differences in array lengths, into static
+ * runtime datatypes such as vectors. Then, runtime functions can calculate
+ * the same properties as these available here, but by referring to symmetries
+ * by their Name, not by the symmetry class type itself.
+ */
 namespace constexprProperties {
 
 constexpr double floatingPointEqualityTolerance = 1e-4;
 
-//! Stub to find out the minimum angle returned in a specific symmetry class type
+/*! @brief Calculates the minimum angle returned in a symmetry class
+ *
+ * @tparam SymmetryClass A Symmetry class
+ *
+ * @complexity{@math{\Theta(S^2)}}
+ */
 template<typename SymmetryClass>
 constexpr double calculateSmallestAngle() {
   double smallestAngle = M_PI;
@@ -49,8 +69,18 @@ constexpr double calculateSmallestAngle() {
   return smallestAngle;
 }
 
+/**
+ * @brief Metafunction calculating the smallest and largest angle that exist in
+ *   a symmetry
+ *
+ * @tparam SymmetryClass A class fulfilling concepts::SymmetryClass
+ */
 template<typename SymmetryClass>
 struct AngleBoundsFunctor {
+  /*! @brief Smallest and largest angles of the @p SymmetryClass
+   *
+   * @complexity{@math{\Theta(S^2)}}
+   */
   static constexpr std::pair<double, double> value() {
     double smallestAngle = M_PI;
     double largestAngle = 0;
@@ -73,11 +103,17 @@ struct AngleBoundsFunctor {
 };
 
 /*!
- * @brief Functor to find out the minimum angle among all the symmetry class
+ * @brief Functor to find out the minimum angle among all symmetry class
  *   types passed as template arguments
+ *
+ * @tparam SymmetryClasses pack of classes fulfilling concepts::SymmetryClass
  */
 template<typename ... SymmetryClasses>
 struct minAngleFunctor {
+  /*! @brief Minimum angle among all symmetry classes
+   *
+   * @complexity{@math{\Theta(N S^2)}} where @math{N} is the number of symmetry classes and @math{S} the largest symmetry size
+   */
   static constexpr double value() {
     const std::array<double, sizeof...(SymmetryClasses)> smallestAngles {{
       calculateSmallestAngle<SymmetryClasses>()...
@@ -107,11 +143,7 @@ using ArrayType = temple::Array<T, size>;
 //! Generate an integer sequence to use with stereopermutations
 template<typename SymmetryClass>
 constexpr auto startingIndexSequence() {
-  return temple::iota<
-    ArrayType,
-    unsigned,
-    SymmetryClass::size
-  >();
+  return temple::iota<ArrayType, unsigned, SymmetryClass::size>();
 }
 
 //! Helper to perform applyRotation in constexpr fashion
@@ -128,7 +160,10 @@ constexpr ArrayType<unsigned, SymmetryClass::size> applyRotationImpl(
   };
 }
 
-//! Applies a symmetry group rotation to an array of indices
+/*! @brief Applies a symmetry group rotation to an array of indices
+ *
+ * @complexity{@math{\Theta(S)}}
+ */
 template<typename SymmetryClass>
 constexpr ArrayType<unsigned, SymmetryClass::size> applyRotation(
   const ArrayType<unsigned, SymmetryClass::size>& indices,
@@ -165,9 +200,15 @@ constexpr unsigned rotationPeriodicityImpl(
   );
 }
 
-/*!
+/*! @brief Determines the multiplicity of a symmetry group rotation
+ *
  * Calculates the multiplicity of a symmetry group's rotation specified via an
  * index in that symmetry's list of rotations
+ *
+ * @complexity{@math{\Theta(M S)} where @math{M} is the multiplicity of the
+ * rotation and @math{S} is the symmetry size}
+ *
+ * @tparam SymmetryClass a model of concepts::SymmetryClass
  */
 template<typename SymmetryClass, unsigned rotationFunctionIndex>
 constexpr unsigned rotationPeriodicity() {
@@ -184,9 +225,7 @@ constexpr unsigned rotationPeriodicity() {
 template<typename SymmetryClass, size_t ...Inds>
 constexpr ArrayType<unsigned, SymmetryClass::rotations.size()>
 rotationPeriodicitiesImpl(std::index_sequence<Inds...> /* inds */) {
-  return {
-    rotationPeriodicity<SymmetryClass, Inds>()...
-  };
+  return { rotationPeriodicity<SymmetryClass, Inds>()... };
 }
 
 //! Calculates all multiplicities of a symmetry group's rotations.
@@ -197,9 +236,16 @@ constexpr ArrayType<unsigned, SymmetryClass::rotations.size()> rotationPeriodici
   );
 }
 
-/*!
- * Template function generating all rotation multiplicities for a specified
+/*! @brief Calculate the multiplicities of all rotations of a symmetry
+ *
+ * Template metafunction generating all rotation multiplicities for a specified
  * symmetry group type
+ *
+ * @complexity{@math{\Theta(R M S)} where @math{R} is the number of rotations
+ * of the symmetry, @math{M} is the largest multiplicity of those rotations and
+ * @math{S} is the size of the symmetry}
+ *
+ * @tparam SymmetryClass a model of concepts::SymmetryClass
  */
 template<typename SymmetryClass>
 struct allRotationPeriodicities {
@@ -229,9 +275,12 @@ constexpr unsigned maxSymmetrySize = temple::TupleType::unpackToFunction<
   maxSymmetrySizeFunctor
 >();
 
-/*!
+/*! @brief Fetches the coordinates of an index in a Symmetry
+ *
  * Fetches the coordinates of an index in a Symmetry, properly handling the
  * boost::none -> origin mapping.
+ *
+ * @complexity{@math{\Theta(1)}}
  */
 template<typename SymmetryClass>
 constexpr temple::Vector getCoordinates(const unsigned indexInSymmetry) {
@@ -242,9 +291,10 @@ constexpr temple::Vector getCoordinates(const unsigned indexInSymmetry) {
   return {0, 0, 0};
 }
 
-/*!
- * Calculates the volume of a tetrahedron spanned by four positions in
- * three-dimensional space.
+/*! @brief Calculates the volume of a tetrahedron spanned by four positions
+ *
+ * @complexity{@math{\Theta(1)}}
+ *
  */
 constexpr double getTetrahedronVolume(
   const temple::Vector& i,
@@ -257,8 +307,9 @@ constexpr double getTetrahedronVolume(
   );
 }
 
-/*!
- * @brief Calculates distortion caused by a symmetry transition mapping
+/*! @brief Calculates angular distortion caused by a symmetry transition mapping
+ *
+ * @complexity{@math{\Theta(S^2)}}
  *
  * @param indexMapping An integer sequence specifying how indices from the
  *   source symmetry are mapped to the target symmetry
@@ -290,9 +341,12 @@ constexpr double calculateAngularDistortion(
   return distortionSum;
 }
 
-/*!
+/*! @brief Propagates symmetry positions trhough an index mapping
+ *
  * Propagates a source symmetry position through an index mapping, properly
  * handling the origin placeholder special unsigned value.
+ *
+ * @complexity{@math{\Theta(S)}}
  *
  * @param symmetryPosition The symmetry position to be mapped
  * @param indexMapping The index mapping that specifies how indices are mapped
@@ -310,9 +364,13 @@ constexpr unsigned propagateSymmetryPosition(
   return ORIGIN_PLACEHOLDER;
 }
 
-/*!
+/*! @brief Calculates the chiral distortion caused by a symmetry transition
+ *
  * Calculate the chiral distortion between the source symmetry and the target
  * symmetry specified by an index mapping.
+ *
+ * @complexity{@math{\Theta(T)} where @math{T} is the number of tetrahedra for
+ * the symmetry, typically small}
  *
  * @param indexMapping The index mapping that specifies how indices are mapped
  *   from a source symmetry to a target symmetry
@@ -360,9 +418,12 @@ constexpr double calculateChiralDistortion(
   return chiralDistortion;
 }
 
-/*!
+/*! @brief Transform symmetry positions through a mapping
+ *
  * Writes the indices of the original symmetry in the mapping into the target
  * symmetry's indexing scheme.
+ *
+ * @complexity{@math{\Theta(S)}}
  *
  * @param mapping An index mapping that specifies how indices are mapped
  *   from a source symmetry to a target symmetry
@@ -424,8 +485,12 @@ constexpr ArrayType<unsigned, size> symPosMapping(
 }
 
 /*!
- * Calculate the maximum number of non-superimposable rotations a symmetry
+ * Calculate an upper bound on non-superimposable rotations a symmetry
  * class can produce for entirely unequal indices
+ *
+ * @complexity{@math{\Theta(R M S)} where @math{R} is the number of rotations
+ * of the symmetry, @math{M} is the largest multiplicity of those rotations and
+ * @math{S} is the size of the symmetry}
  *
  * @tparam SymmetryClass A Symmetry class as defined in Primitives.h
  */
@@ -467,7 +532,12 @@ using ChainArrayType = temple::DynamicArray<
   maxRotations<SymmetryClass>() * 2 // factor is entirely arbitrary
 >;
 
-//! Generates all rotations of a sequence of indices within a symmetry group
+/*! @brief Generates all rotations of a sequence of indices within a symmetry group
+ *
+ * @tparam SymmetryClass a model of concepts::SymmetryClass
+ *
+ * @complexity{At most maxRotation iterations}
+ */
 template<typename SymmetryClass>
 constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
   RotationsSetType<SymmetryClass> rotations;
@@ -512,8 +582,8 @@ constexpr auto generateAllRotations(const IndicesList<SymmetryClass>& indices) {
 }
 
 /*!
- * Data struct to collect the results of calculating the ideal index mappings
- * between pairs of indices
+ * @brief Data struct to collect the results of calculating the ideal index
+ *   mappings between pairs of indices
  */
 struct MappingsReturnType {
   static constexpr size_t maxMappingsSize = 50;
@@ -540,6 +610,7 @@ struct MappingsReturnType {
       chiralDistortion(passChiralDistortion)
   {}
 
+  //! Lexicographical equivalence
   constexpr bool operator == (const MappingsReturnType& other) const {
     return (
       mappings == other.mappings
@@ -548,6 +619,7 @@ struct MappingsReturnType {
     );
   }
 
+  //! Lexicographical ordering
   constexpr bool operator < (const MappingsReturnType& other) const {
     return (
       std::tie(mappings, angularDistortion, chiralDistortion)
@@ -556,9 +628,15 @@ struct MappingsReturnType {
   }
 };
 
-/*!
- * Calculates the ideal index mappings when adding a ligand to a particular
- * symmetry or between symmetries of equal size.
+/*! @brief Calculates ideal index mappings for +1, 0 size transitions
+ *
+ * Calculates the ideal index mappings for transitions in which a ligand is
+ * added or the symmetry size stays the same.
+ *
+ * @complexity{@math{\Theta(S!)}}
+ *
+ * @tparam SymmetryClassFrom A model of concepts::SymmetryClass
+ * @tparam SymmetryClassTo A model of concepts::SymmetryClass
  */
 template<class SymmetryClassFrom, class SymmetryClassTo>
 constexpr auto symmetryTransitionMappings() {
@@ -654,7 +732,13 @@ constexpr auto symmetryTransitionMappings() {
   );
 }
 
-//! Find index mappings for ligand loss situations
+/*! @brief Find index mappings for ligand loss situations
+ *
+ * @complexity{@math{\Theta(S!)}}
+ *
+ * @tparam SymmetryClassFrom A model of concepts::SymmetryClass
+ * @tparam SymmetryClassTo A model of concepts::SymmetryClass
+ */
 template<class SymmetryClassFrom, class SymmetryClassTo>
 constexpr auto ligandLossMappings(const unsigned deletedSymmetryPosition) {
 
@@ -782,7 +866,9 @@ std::enable_if_t<
 /*!
  * @brief Calculate stereopermutations for an unlinked symmetry
  *
- * @tparam Symmetry The symmetry for which to calculate this property.
+ * @complexity{@math{\Theta(S!)}}
+ *
+ * @tparam SymmetryClass A model of concepts::SymmetryClass
  * @param nIdenticalLigands The number of ligands whose ranking is identical.
  *   E.g. 0 generates ABCDEF, 3 generates AAABCD, etc. for octahedral.
  */
@@ -820,8 +906,9 @@ constexpr unsigned numUnlinkedStereopermutations(
   return count;
 }
 
-/*!
- * @brief Calculates whether a symmetry has multiple stereopermutations
+/*! @brief Calculates whether a symmetry has multiple stereopermutations
+ *
+ * @complexity{@math{\Theta(S!)}}
  *
  * @tparam Symmetry The symmetry for which to calculate this property.
  * @param nIdenticalLigands The number of ligands whose ranking is identical.

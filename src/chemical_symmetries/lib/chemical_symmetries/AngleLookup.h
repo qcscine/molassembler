@@ -25,7 +25,9 @@ namespace Symmetry {
 
 namespace detail {
 
-/*! Calculate the i-th element of the angle upper triangular matrix
+/*! @brief Calculate the i-th element of the angle upper triangular matrix
+ *
+ * @complexity{@math{\Theta(1)}}
  *
  * @param positions The positions array of the symmetry of interest
  * @param i Single-index index into the linear storage of the upper triangular
@@ -46,7 +48,9 @@ constexpr double makeElement(
   );
 }
 
-/*! Generate the linear storage of the angle upper triangular matrix
+/*! @brief Generate the linear storage of the angle upper triangular matrix
+ *
+ * @complexity{@math{\Theta(N^2)}}
  *
  * @param positions The positions array of the symmetry of interest
  * @param inds An integer sequence of appropriate length for the desired
@@ -61,7 +65,9 @@ constexpr std::array<double, size * (size - 1) / 2> makeArrayImpl(
   return {{ makeElement(positions, Inds)... }};
 }
 
-/*! Generate the linear storage of the angle upper triangular matrix
+/*! @brief Generate the linear storage of the angle upper triangular matrix
+ *
+ * @complexity{@math{\Theta(N^2)}}
  *
  * Entry point for array creation, calculates the required dimension of the
  * linear array underlying the upper triangular matrix required to store all

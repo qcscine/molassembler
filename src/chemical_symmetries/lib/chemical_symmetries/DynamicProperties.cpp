@@ -10,6 +10,7 @@
 #include "temple/Adaptors/Transform.h"
 #include "temple/Functional.h"
 #include "temple/GroupBy.h"
+#include "temple/Optionals.h"
 #include "temple/Permutations.h"
 #include "temple/Variadic.h"
 #include "temple/VectorView.h"
@@ -228,11 +229,12 @@ boost::optional<unsigned> propagateIndexOptionalThroughMapping(
   const boost::optional<unsigned>& indexOptional,
   const std::vector<unsigned>& indexMapping
 ) {
-  if(indexOptional) {
-    return indexMapping.at(indexOptional.value());
-  }
-
-  return boost::none;
+  return temple::optionals::map(
+    indexOptional,
+    [&](const unsigned v) -> unsigned {
+      return indexMapping.at(v);
+    }
+  );
 }
 
 

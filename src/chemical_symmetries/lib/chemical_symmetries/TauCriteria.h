@@ -7,6 +7,12 @@
 #ifndef INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_TAU_CRITERIA_H
 #define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_TAU_CRITERIA_H
 
+#include "temple/constexpr/Math.h"
+#include <algorithm>
+#include <cassert>
+#include <stdexcept>
+#include <vector>
+
 namespace Scine {
 
 namespace Symmetry {
@@ -45,6 +51,8 @@ double tauFive(const std::vector<double>& angles) {
 
 /**
  * @brief Calculates the tau value for four and five angle symmetries
+ *
+ * @complexity{@math{\Theta(1)}}
  *
  * @param angles A sorted vector of the angles in your central symmetry. This
  *   must be of size four or five.

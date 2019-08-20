@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_CHEMICAL_SYMMETRIES_PRIMITIVES_H
 
 #include "temple/constexpr/Vector.h"
+#include "temple/constexpr/TupleType.h"
 
 #include "chemical_symmetries/Names.h"
 #include "chemical_symmetries/CompileTimeOptions.h"
@@ -16,11 +17,62 @@
 #include "chemical_symmetries/AngleLookup.h"
 #endif
 
-#include <cmath>
-
 namespace Scine {
 
 namespace Symmetry {
+
+namespace concepts {
+
+/**
+ * @brief Concept checking class for symmetry classes
+ *
+ * @tparam T Class to check the concept for
+ *
+ * All members must be `static constexpr` (`const` is then implicit)
+ *
+ * @par Member requirements (Type and name)
+ * - `Symmetry::Name name`: Enum member specifying the symmetry name
+ * - `unsigned size`: Number of symmetry positions in the symmetry
+ * - `char* stringName`: Human readable string of the name
+ * - `double(const unsigned, const unsigned) angleFunction`: Angle in radians
+ *   between symmetry position indices
+ * - `std::array<temple::Vector, size> coordinate`: Origin-centered normalized
+ *   position vectors of the symmetry positions
+ * - `std::array< std::array<unsigned, size>, ?> rotations`: Spatial rotations
+ *   represented as index permutations between symmetry positions. A minimal
+ *   set that combined can generate all rotations.
+ * - `std::array< std::array<unsigned, 4>, ?> tetrahedra`: A list of tetrahedra
+ *   definitions whose signed volumes can uniquely identify a maximally
+ *   asymmetric set of ligands
+ * - `std::array<unsigned, 0 or size> mirror`: A mirroring symmetry element or
+ *   an empty array if the symmetry cannot be chiral.
+ */
+template<typename T>
+struct SymmetryClass : std::integral_constant<bool,
+  (
+    std::is_same<Name, std::decay_t<decltype(T::name)>>::value
+    && std::is_same<unsigned, std::decay_t<decltype(T::size)>>::value
+    && std::is_same<const char*, std::decay_t<decltype(T::stringName)>>::value
+    && std::is_same<double, decltype(T::angleFunction(0u, 1u))>::value
+    && std::is_same<
+      temple::Vector,
+      temple::getValueType<decltype(T::coordinates)>
+    >::value
+    && T::coordinates.size() == T::size
+    && std::is_same<
+      std::array<unsigned, T::size>,
+      temple::getValueType<decltype(T::rotations)>
+    >::value
+    && std::is_same<
+      std::array<unsigned, 4>,
+      temple::getValueType<decltype(T::tetrahedra)>
+    >::value
+    && std::is_same<unsigned, temple::getValueType<decltype(T::mirror)>>::value
+    && (T::mirror.size() == 0 || T::mirror.size() == T::size)
+  )
+> {};
+
+} // namespace concepts
 
 //! A placeholder value for constexpr tetrahedra specification of origin
 constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
@@ -28,22 +80,7 @@ constexpr unsigned ORIGIN_PLACEHOLDER = std::numeric_limits<unsigned>::max();
 /*!
  * @brief All symmetry data classes and some minor helper functions
  *
- * Each symmetry data class must have the following members, all of which must
- * be static constexpr (or static const in the exception of stringName):
- * - name (Symmetry::Name)
- * - size (unsigned)
- * - stringName (string)
- * - angleFunction ( double(const unsigned, const unsigned) )
- * - coordinates ( array<temple::Vector, N> ): N is size of symmetry,
- *   see above
- * - rotations ( array< array<unsigned, size>, R> ): R is however many
- *   rotations are needed to produce all superimposable rotations
- * - tetrahedra ( array< array<unsigned, 4>, T> ): T is however many tetrahedra
- *   are required to completely define the chirality
- * - mirror (array<unsigned, N>): plane may not slice molecule in any way, it
- *   is auxiliary to finding enantiomeric pairs. If a mirror were to yield a
- *   superposable stereopermutation, represent it by an empty array.
- *
+ * Each symmetry data class must fulfill concepts::SymmetryClass
  */
 namespace data {
 
@@ -1153,7 +1190,6 @@ struct SquareAntiPrismatic {
   static constexpr std::array<unsigned, 8> mirror {{2, 1, 0, 3, 5, 4, 7, 6}};
 };
 
-
 //! Type collecting all types of the Symmetry classes.
 using allSymmetryDataTypes = std::tuple<
   Linear, // 2
@@ -1174,6 +1210,11 @@ using allSymmetryDataTypes = std::tuple<
   PentagonalBiPyramidal, // 7
   SquareAntiPrismatic // 8
 >;
+
+static_assert(
+  temple::TupleType::allOf<allSymmetryDataTypes, concepts::SymmetryClass>(),
+  "Not all symmetry data types fulfill the SymmetryClass concept"
+);
 
 } // namespace data
 

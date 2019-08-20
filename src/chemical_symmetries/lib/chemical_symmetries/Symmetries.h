@@ -206,8 +206,9 @@ MirrorMap makeMirror(
   return mirror;
 }
 
-/*! This constructs the SymmetryInformation instance from a specific symmetry
- * class type.
+/*! @brief Constructs SymmetryInformation instance for a symmetry class
+ *
+ * @tparam SymmetryClass model of concepts::SymmetryClass
  */
 template<typename SymmetryClass>
 SymmetryInformation makeSymmetryInformation() {
@@ -221,8 +222,11 @@ SymmetryInformation makeSymmetryInformation() {
   };
 }
 
-/*! This creates a map initialization pair for a specific symmetry class type.
+/*! @brief Creates a map initialization pair for a specific symmetry class
+ *
  * The key is the name, the mapped_type a SymmetryInformation instance
+ *
+ * @tparam SymmetryClass model of concepts::SymmetryClass
  */
 template<typename SymmetryClass>
 std::pair<Name, SymmetryInformation> makeMapInitPair() {
@@ -232,7 +236,7 @@ std::pair<Name, SymmetryInformation> makeMapInitPair() {
   };
 }
 
-/*! Creates the mapping between a symmetry class's name and it's dynamic
+/*! Creates the mapping between a symmetry class's name and its dynamic
  * information in order to have runtime lookup based on symmetry names.
  */
 template<typename ...SymmetryClasses>
@@ -259,11 +263,19 @@ constexpr auto angleFunctions = temple::TupleType::unpackToFunction<
 const std::map<Name, SymmetryInformation>& symmetryData();
 
 /* Interface */
-//! Fetch the string name of a symmetry
+/*! @brief Fetch the string name of a symmetry
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 inline const std::string& name(const Name name) {
   return symmetryData().at(name).stringName;
 }
 
+/*! @brief Fetch the symmetry name from its string
+ *
+ * @complexity{@math{\Theta(S)}}
+ * @throws std::logic_error if no matching symmetry can be found
+ */
 inline Name nameFromString(const std::string& nameString) {
   for(const Name symmetryName : allNames) {
     if(symmetryData().at(symmetryName).stringName == nameString) {
@@ -274,34 +286,55 @@ inline Name nameFromString(const std::string& nameString) {
   throw std::logic_error("No symmetry exists under that name!");
 }
 
-//! Fetch a space-free name for file naming
+/*! @brief Fetch a space-free name for file naming
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 std::string spaceFreeName(Name name);
 
-//! Fetch the number of symmetry positions of a symmetry
+/*! @brief Fetch the number of symmetry positions of a symmetry
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 inline unsigned size(const Name name) {
   return symmetryData().at(name).size;
 }
 
-//! Fetches a symmetry's list of rotations
+/*! @brief Fetches a symmetry's list of rotations
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 inline const RotationsList& rotations(const Name name) {
   return symmetryData().at(name).rotations;
 }
 
-//! Fetches the mirror index mapping for a particular symmetry
+/*! @brief Fetches the mirror index mapping for a particular symmetry
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 inline const MirrorMap& mirror(const Name name) {
   return symmetryData().at(name).mirror;
 }
 
-//! Gets a symmetry's angle function
+/*! @brief Gets a symmetry's angle function
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 inline data::AngleFunctionPtr angleFunction(const Name name) {
   auto symmetryIndex = static_cast<unsigned>(name);
   return data::angleFunctions.at(symmetryIndex);
 }
 
-//! Returns the index of a symmetry name within allNames
+/*! @brief Returns the index of a symmetry name within allNames
+ *
+ * @complexity{@math{\Theta(S)}}
+ */
 PURITY_STRONG unsigned nameIndex(Name name);
 
-//! Fetches the list of tetrahedra defined in a symmetry
+/*! @brief Fetches the list of tetrahedra defined in a symmetry
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 inline const TetrahedronList& tetrahedra(const Name name) {
   return symmetryData().at(name).tetrahedra;
 }
