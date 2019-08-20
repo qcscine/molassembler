@@ -16,6 +16,12 @@
 
 namespace temple {
 
+/**
+ * @brief
+ *
+ * @tparam EnumType Enum on which the bitmask should act. Requires the enum to
+ * have strictly incrementing unsigned representation.
+ */
 template<typename EnumType>
 struct Bitmask {
 //!@name Types
@@ -54,6 +60,10 @@ struct Bitmask {
 
 //!@name Information
 //!@{
+  /*! @brief Checks whether an enum value is set in the bitmask
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr bool isSet(const EnumType& a) const {
     return (
       value & (
@@ -65,6 +75,10 @@ struct Bitmask {
 
 //!@name Operators
 //!@{
+  /*! @brief Create a new bitmask that also sets a particular enum value
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr Bitmask operator | (const EnumType& a) const {
     auto v = static_cast<Underlying>(a);
 
@@ -80,6 +94,10 @@ struct Bitmask {
     };
   }
 
+  /*! @brief Set a particular enum value in this bitmask
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr void operator |= (const EnumType& a) {
     auto v = static_cast<Underlying>(a);
 
@@ -93,10 +111,12 @@ struct Bitmask {
     value = value | (static_cast<Underlying>(1) << v);
   }
 
+  //! Check whether a particular enum value is set
   constexpr bool operator & (const EnumType& a) const {
     return isSet(a);
   }
 
+  //! Check whether a particular enum value is set
   constexpr bool operator [] (const EnumType& a) const {
     return isSet(a);
   }

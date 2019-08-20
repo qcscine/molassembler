@@ -24,10 +24,13 @@
 
 namespace temple {
 
-/*!
+/*! @brief Summation with zero-initialization
+ *
  * Composable sum function. Returns the type the container contains, assuming
  * monadic behavior on operator + (value_type + value_type = value_type).
  * Container must implement begin and end members.
+ *
+ * @complexity{@math{\Theta(N)}}
  */
 template<class ContainerType>
 constexpr traits::getValueType<ContainerType> sum(const ContainerType& container) {
@@ -48,6 +51,8 @@ constexpr traits::getValueType<ContainerType> sum(const ContainerType& container
  *
  * Container must implement begin, end and size members, the contained type
  * must have operator+ and be convertible to double.
+ *
+ * @complexity{@math{\Theta(N)}}
  */
 template<class ContainerType>
 constexpr std::enable_if_t<
@@ -61,6 +66,7 @@ constexpr std::enable_if_t<
   return sum(container) / container.size();
 }
 
+//! @overload
 template<class ContainerType>
 constexpr std::enable_if_t<
   !std::is_floating_point<traits::getValueType<ContainerType>>::value,
@@ -75,6 +81,13 @@ constexpr std::enable_if_t<
   ) / container.size();
 }
 
+/**
+ * @brief Geometric average of all values in a container
+ *
+ * @param container
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 template<class ContainerType>
 constexpr std::enable_if_t<
   std::is_floating_point<traits::getValueType<ContainerType>>::value,
@@ -96,7 +109,10 @@ constexpr std::enable_if_t<
   );
 }
 
-//! Calculate the standard deviation of a container with a known average
+/*! @brief Calculate the standard deviation of a container with a known average
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 template<class ContainerType, typename FloatingType>
 constexpr std::enable_if_t<
   std::is_floating_point<FloatingType>::value,
@@ -118,9 +134,12 @@ constexpr std::enable_if_t<
 }
 
 
-/*!
+/*! Calculates standard deviation without an existing average value
+ *
  * Container must implement begin, end and size members, the contained type
  * must have operator+.
+ *
+ * @complexity{@math{\Theta(2N)}}
  */
 template<class ContainerType>
 constexpr auto stddev(const ContainerType& container) {
@@ -129,10 +148,14 @@ constexpr auto stddev(const ContainerType& container) {
   return stddev(container, average(container));
 }
 
-/*! Composable min function. Returns the smallest value of any container.
+/*! @brief Composable min_element function. Returns the smallest value of any
+ *   container.
  *
  * Container must implement begin, end iterators. The iterators must be
  * copy-assignable. The contained type must implement operator <.
+ *
+ * @complexity{@math{\Theta(N)}}
+ * @todo rename min_element
  */
 template<class ContainerType>
 constexpr auto min(const ContainerType& container) {
@@ -150,10 +173,13 @@ constexpr auto min(const ContainerType& container) {
   return *smallestIter;
 }
 
-/*! Composable max function. Returns the smallest value of any container.
+/*! @brief Composable max function. Returns the smallest value of any container.
  *
  * Container must implement begin, end iterators. The iterators must be
  * copy-assignable. The contained type must implement operator <.
+ *
+ * @complexity{@math{\Theta(N)}}
+ * @todo rename max_element
  */
 template<class ContainerType>
 constexpr auto max(const ContainerType& container) {

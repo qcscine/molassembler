@@ -15,10 +15,13 @@
 
 namespace temple {
 
-/*!
- * A constexpr associative container with reasonably fast key-based lookup.
+/*! @brief A constexpr associative container with reasonably fast key-based lookup.
  *
  * Requires that MappedType is default-constructible
+ *
+ * @tparam KeyType Type of the key in the map
+ * @tparam MappedType Value type of the map
+ * @tparam N Maximum number of elements in the map
  */
 template<typename KeyType, typename MappedType, size_t N>
 class DynamicMap {
@@ -28,6 +31,11 @@ private:
    */
   using PairType = Pair<KeyType, MappedType>;
 
+  /* A map is just a tree set where each node stores both a key and a value.
+   * Comparisons and equality merely reference the keys. Value type lookup by
+   * key is just searching for a node by key and returning the stored value
+   * type there.
+   */
   struct OnlyFirstComparator {
     constexpr static auto _keyComparator = std::less<KeyType>();
 
@@ -84,6 +92,10 @@ public:
 
 //!@name Modification
 //!@{
+  /*! @brief Inserts an element into the map
+   *
+   * @complexity{@math{\Theta(N log N)}}
+   */
   constexpr void insert(
     KeyType key,
     MappedType item
@@ -97,6 +109,11 @@ public:
     _items.insert(pair);
   }
 
+  /*! @brief Inserts a key-value pair into the map or updates the mapped value
+   *   if the key exists
+   *
+   * @complexity{@math{\Theta(N log N)}}
+   */
   constexpr void insertOrUpdate(
     KeyType key,
     MappedType item
@@ -125,6 +142,11 @@ public:
 
 //!@name Information
 //!@{
+  /*! Value lookup. By copy!
+   *
+   * @complexity{@math{\Theta(N log N)}}
+   * @todo Why is this by copy again?
+   */
   constexpr MappedType at(const KeyType& key) const {
     PairType pair {key, MappedType {}};
     auto keyOptional = _items.getOption(pair);
@@ -137,6 +159,10 @@ public:
   }
 
 
+  /*! @brief Number of items in the map
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr unsigned size() const {
     return _items.size();
   }
@@ -161,9 +187,7 @@ public:
   }
 
   constexpr bool operator != (const DynamicMap& other) const {
-    return !(
-      *this == other
-    );
+    return !(*this == other);
   }
 
   constexpr bool operator < (const DynamicMap& other) const {

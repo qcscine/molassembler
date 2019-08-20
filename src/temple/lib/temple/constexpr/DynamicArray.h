@@ -31,7 +31,9 @@ public:
   //! Default constructor
   constexpr DynamicArray() : _items {} {}
 
-  /* Delegate copy constructor directly forms the array mem-initializer with a
+  /*! @brief Helper to the copy constructor
+   *
+   * Delegate copy constructor directly forms the array mem-initializer with a
    * parameter pack expansion
    */
   template<std::size_t ... Inds>
@@ -47,11 +49,15 @@ public:
    * Constructing from another dynamic array is tricky since we're technically
    * not allowed to edit _items in-class, so we delegate to the previous
    * constructor and directly form the mem-initializer
+   *
+   * @complexity{@math{\Theta(N)}}
    */
   constexpr DynamicArray(const DynamicArray& other)
     : DynamicArray(other, std::make_index_sequence<nItems>{}) {}
 
-  /* Delegate move constructor to directly form the array mem-initializer with
+  /* @brief Helper to the move constructor
+   *
+   * Delegate move constructor to directly form the array mem-initializer with
    * a parameter pack expansion
    */
   template<std::size_t ... Inds>
@@ -62,10 +68,20 @@ public:
      _count(other._count)
   {}
 
+  /*! @brief Move constructor
+   *
+   * Constructed using the same technique as the copy constructor using a
+   * delegate.
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr DynamicArray(DynamicArray&& other) noexcept
     : DynamicArray(std::move(other), std::make_index_sequence<nItems>{}) {}
 
-  //! Copy assignment operator
+  /*! @brief Copy assignment operator
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr DynamicArray& operator = (const DynamicArray& other) {
     for(unsigned i = 0; i < other._count; ++i) {
       _items[i] = other._items[i];
@@ -74,7 +90,14 @@ public:
     return *this;
   }
 
-  //! Move assignment operator
+  /*! @brief Move assignment operator
+   *
+   * Moves unfortunately aren't possible for the underlying array as in a
+   * pointer swap, but instead must be performed with N moves of the stored
+   * types.
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr DynamicArray& operator = (DynamicArray&& other) noexcept {
     for(unsigned i = 0; i < other._count; ++i) {
       _items[i] = std::move(other._items[i]);
@@ -121,6 +144,13 @@ public:
 
 //!@name Modification
 //!@{
+  /*! @brief Adds an element to the dynamic array
+   *
+   * @complexity{@math{\Theta(1)}}
+   *
+   * @note This does not behave like std::vector's push_back since the maximum
+   * number of elements cannot be exceeded and there is never any reallocation.
+   */
   constexpr void push_back(const T& item) {
     if(_count < nItems) {
       _items[_count] = item;
@@ -130,6 +160,7 @@ public:
     }
   }
 
+  //! @overload
   constexpr void push_back(T&& item) {
     if(_count < nItems) {
       _items[_count] = std::move(item);
@@ -137,18 +168,33 @@ public:
     }
   }
 
+  /*! @brief Removes the last element
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr void pop_back() {
     if(_count > 0) {
       _count -= 1;
     }
   }
 
+  /*! @brief Removes N elements from the back
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr void pop_back(const unsigned numberToPop) {
     if(_count > numberToPop) {
       _count -= numberToPop;
     }
   }
 
+  /*! @brief Moves elements to a new dynamic array
+   *
+   * Moves items starting at a particular index to a new dynamic array.
+   * This dynamic array then has fewer elements.
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr DynamicArray<T, nItems> splice(const unsigned fromIndex) {
     DynamicArray<T, nItems> spliced;
 
@@ -164,10 +210,18 @@ public:
 
 //!@name Information
 //!@{
+  /*! @brief Checks whether an index is a valid accessor to underlying data
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr bool validIndex(const unsigned index) const noexcept {
     return (index < _count);
   }
 
+  /*! @brief Returns the number of contained elements
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr std::size_t size() const noexcept {
     return _count;
   }
@@ -175,6 +229,13 @@ public:
 
 //!@name Element access
 //!@{
+  /*! @brief Safe access to underlying data
+   *
+   * Possibility for UB is not "allowed" in constexpr functions, so bounds
+   * checking is performed.
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr T& operator[] (const unsigned index) noexcept {
     // Defined behavior instead of UB
     if(!validIndex(index)) {
@@ -184,6 +245,7 @@ public:
     return _items[index];
   }
 
+  //! @overload
   PURITY_WEAK constexpr const T& operator[] (const unsigned index) const noexcept {
     if(!validIndex(index)) {
       return back();
@@ -192,26 +254,41 @@ public:
     return _items[index];
   }
 
+  //! @see operator[](const unsigned)
   PURITY_WEAK constexpr T& at(const unsigned index) noexcept {
     // Not strong purity because _items is just a pointer!
     return this->operator[](index);
   }
 
+  //! @overload
   PURITY_WEAK constexpr const T& at(const unsigned index) const noexcept {
     // Not strong purity because _items is just a pointer!
     return this->operator[](index);
   }
 
+  /*! @brief Accessor for the front element
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr T& front() noexcept {
     return _items[0];
   }
 
+  /*! @brief Const accessor for the front element
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr const T& front() const noexcept {
     return _items[0];
   }
 
+  /*! @brief Accessor for the back element
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @note If this is empty, returns front()
+   */
   constexpr T& back() noexcept {
-    /* NO UB in constexpr functions allowed, so we must return something within
+    /* No UB in constexpr functions allowed, so we must return something within
      * the array, which is always an initialized value
      */
     if(_count == 0) {
@@ -221,6 +298,11 @@ public:
     return _items[_count - 1];
   }
 
+  /*! @brief Const-accessor for the back element
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @note If this is empty, returns front()
+   */
   PURITY_WEAK constexpr const T& back() const noexcept {
     /* NO UB in constexpr functions allowed, so we must return something within
      * the array, which is always an initialized value
@@ -235,10 +317,18 @@ public:
 
 //!@name Modifiers
 //!@{
+  /*! @brief Sets the count of contained elements to zero
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr void clear() {
     _count = 0;
   }
 
+  /*! @brief Copy in elements from another dynamic array
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr void copyIn(const DynamicArray<T, nItems>& other) {
     if(other.size() + size() > nItems) {
       throw "DynamicArray to be copied in has too many elements to fit!";
@@ -249,6 +339,11 @@ public:
     }
   }
 
+  /*! @brief Insert an element at a particular position
+   *
+   * @complexity{linear in the number of elements between the inserted position
+   * and the end}
+   */
   constexpr void insertAt(
     iterator insertPositionIter,
     const T& item
@@ -264,7 +359,11 @@ public:
     }
   }
 
-  //! Inserts an element at a specified position O(N)
+  /*! @brief Move inserts an element at a specified position
+   *
+   * @complexity{linear in the number of positions between the insert position
+   * and the end}
+   */
   constexpr void insertAt(
     iterator insertPositionIter,
     T&& item
@@ -280,6 +379,11 @@ public:
     }
   }
 
+  /*! @brief Removes an item at a particular iterator position
+   *
+   * @complexity{linear in the number of positions right of the deleted
+   * position}
+   */
   constexpr void removeAt(iterator insertPositionIter) {
     if(insertPositionIter == end()) {
       throw "Cannot remove item at end iterator!";
@@ -302,6 +406,10 @@ public:
 
 //!@name Operators
 //!@{
+  /*! @brief Lexicographical equality comparison
+   *
+   * @complexity{@math{O(N)}}
+   */
   PURITY_WEAK constexpr bool operator == (const DynamicArray& other) const noexcept {
     if(_count != other._count) {
       return false;
@@ -316,18 +424,15 @@ public:
     return true;
   }
 
+  //! Inverts equality comparison
   PURITY_WEAK constexpr bool operator != (const DynamicArray& other) const noexcept {
-    if(_count == other._count) {
-      for(unsigned i = 0; i < _count; ++i) {
-        if(_items[i] != other._items[i]) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return !(*this == other);
   }
 
+  /*! @brief Lexicographical less than comparison
+   *
+   * @complexity{@math{O(N)}}
+   */
   PURITY_WEAK constexpr bool operator < (const DynamicArray& other) const noexcept {
     if(_count < other._count) {
       return true;
@@ -346,13 +451,17 @@ public:
     return false;
   }
 
+  //! Inverts less-than comparison
   PURITY_WEAK constexpr bool operator > (const DynamicArray& other) const noexcept {
-    return other < *this;
+    return (other < *this);
   }
 //!@}
 
 //!@name Iterators
 //!@{
+  /**
+   * @brief Modifiable data iterator
+   */
   class iterator {
   public:
     using iterator_category = std::random_access_iterator_tag;
@@ -461,6 +570,9 @@ public:
     return iterator(*this, _count);
   }
 
+  /**
+   * @brief Nonmodifiable data iterator
+   */
   class const_iterator {
   private:
     const DynamicArray& _baseRef;
@@ -575,6 +687,7 @@ public:
 
 //!@name Converting operators
 //!@{
+  //! Convert the dynamic array to an array
   PURITY_WEAK constexpr operator std::array<T, nItems> () const noexcept {
     return makeArray(std::make_index_sequence<nItems>{});
   }

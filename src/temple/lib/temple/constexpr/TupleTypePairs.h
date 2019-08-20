@@ -1,7 +1,7 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
- * @brief Pass pairs of types contained in a tuple to template functions
+ * @brief Pass pairs of types contained in a tuple type to template functions
  */
 
 #ifndef INCLUDE_TEMPLE_TUPLE_TYPE_PAIRS_H
@@ -51,7 +51,8 @@ template<
 
 } // namespace detail
 
-/*!
+/*! @brief Map all pairs of types in a tuple typedefs into a template function
+ *
  * Takes a tuple type and a template function that accepts pairs of the tuple's
  * contained types. Returns an array containing the result of the mapping for
  * all distinct possible type pairs.
@@ -60,6 +61,13 @@ template<
  * type is explicitly repeated in the tuple type: Say the tuple contains Apple,
  * Banana and Orange, then the generated pairs are: Apple & Banana,
  * Apple & Orange and Banana & Orange.
+ *
+ * @complexity{@math{\Theta(N^2)}}
+ *
+ * @tparam TupleType tuple typedef containing the types whose pairs should be
+ *   mapped
+ * @tparam TemplateFunction template metafunction with a static constexpr value
+ *   member or member function
  */
 template<
   typename TupleType,

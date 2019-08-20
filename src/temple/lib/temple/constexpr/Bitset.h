@@ -14,64 +14,62 @@
 
 namespace temple {
 
+/**
+ * @brief Constexpr bitset class
+ *
+ * @tparam N Number of bits to store.
+ */
 template<std::size_t N>
-struct Bitset {
-//!@name Types
-//!@{
-  using Block = long long unsigned;
-//!@}
-
-//!@name Static const values
-//!@{
-  static constexpr std::size_t bitsPerBlock = Math::floor(
-    Math::log(
-      static_cast<double>(std::numeric_limits<Block>::max()),
-      2.0
-    )
-  );
-
-  static constexpr std::size_t B = Math::ceil(
-    static_cast<double>(N) / static_cast<double>(bitsPerBlock)
-  );
-//!@}
-
-//!@name State
-//!@{
-  Array<Block, B> storage;
-//!@}
-
+class Bitset {
+public:
 //!@name Constructor
 //!@{
+  /*! @brief Zeroing constructor
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   explicit constexpr Bitset() { zero(); }
 //!@}
 
 //!@name Modification
 //!@{
-  //! Zero out all bits
+  /*! @brief Zero out all bits
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr void zero() {
     for(auto& block : storage) {
       block = 0;
     }
   }
 
-  //! Sets a specific bit
-  constexpr void set(std::size_t i) {
+  /*! @brief Sets a specific bit
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  constexpr void set(const std::size_t i) {
     std::size_t blockIndex = Math::floor(static_cast<double>(i) / bitsPerBlock);
     std::size_t bitIndex = i - bitsPerBlock * blockIndex;
 
     storage.at(blockIndex) |= (1ull << bitIndex);
   }
 
-  //! Unsets a specific bit
-  constexpr void unset(std::size_t i) {
+  /*! @brief Unsets a specific bit
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  constexpr void unset(const std::size_t i) {
     std::size_t blockIndex = Math::floor(static_cast<double>(i) / bitsPerBlock);
     std::size_t bitIndex = i - bitsPerBlock * blockIndex;
 
     storage.at(blockIndex) ^= (1ull << bitIndex);
   }
 
-  //! Sets a specific bit to a specified value
-  constexpr void set(std::size_t i, bool value) {
+  /*! @brief Sets a specific bit to a specified value
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  constexpr void set(const std::size_t i, const bool value) {
     if(value) {
       set(i);
     } else {
@@ -82,7 +80,11 @@ struct Bitset {
 
 //!@name Information
 //!@{
-  PURITY_STRONG constexpr bool test(std::size_t i) const {
+  /*! @brief Test the value at a particular bit
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  PURITY_STRONG constexpr bool test(const std::size_t i) const {
     std::size_t blockIndex = Math::floor(static_cast<double>(i) / bitsPerBlock);
     std::size_t bitIndex = i - bitsPerBlock * blockIndex;
 
@@ -91,6 +93,34 @@ struct Bitset {
     ) != 0;
   }
 //!@}
+
+private:
+//!@name Types
+//!@{
+  using Block = long long unsigned;
+//!@}
+
+//!@name Static const values
+//!@{
+  //! Number of bits per block
+  static constexpr std::size_t bitsPerBlock = Math::floor(
+    Math::log(
+      static_cast<double>(std::numeric_limits<Block>::max()),
+      2.0
+    )
+  );
+
+  //! Number of Block types stored
+  static constexpr std::size_t B = Math::ceil(
+    static_cast<double>(N) / static_cast<double>(bitsPerBlock)
+  );
+//!@}
+
+//!@name State
+//!@{
+  Array<Block, B> storage;
+//!@}
+
 };
 
 } // namespace temple

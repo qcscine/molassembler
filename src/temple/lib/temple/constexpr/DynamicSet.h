@@ -16,6 +16,13 @@
 
 namespace temple {
 
+/**
+ * @brief Tree-based set
+ *
+ * @tparam T Value type of the set
+ * @tparam nItems Maximum number of items to store in the set
+ * @tparam LessThanPredicate
+ */
 template<
   typename T,
   size_t nItems,
@@ -28,9 +35,13 @@ private:
   TreeType _tree;
 
 public:
+  //! Dynamic set
   constexpr DynamicSet() = default;
 
-  //! Warning: These constructors expect ordered arrays!
+  /*! @brief Constructor from existing ordered data
+   *
+   * Warning: These constructors expect ordered arrays!
+   */
   template<
     template<typename, size_t> class ArrayType,
     size_t size
@@ -40,12 +51,18 @@ public:
     }
   }
 
-  //! Checks if an element exists. O(log N)
+  /*! @brief Check if the set contains an element.
+   *
+   * @complexity{@math{\Theta(N log N)}}
+   */
   PURITY_WEAK constexpr bool contains(const T& item) const {
     return _tree.contains(item);
   }
 
-  //! Insertion an element into the set. O(N)
+  /*! @brief Insertion an element into the set.
+   *
+   * @complexity{@math{\Theta(N log N)}}
+   */
   constexpr void insert(const T& item) {
     _tree.insert(item);
   }
@@ -54,6 +71,7 @@ public:
     return _tree.getOption(item);
   }
 
+  //! @brief Remove all elements of the set
   constexpr void clear() {
     _tree.clear();
   }

@@ -10,7 +10,6 @@
 #ifndef INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 #define INCLUDE_MOLASSEMBLER_TEMPLE_CONSTEXPR_TRIANGULAR_MATRIX_H
 
-#include "temple/constexpr/Vector.h"
 #include "temple/constexpr/Array.h"
 #include "temple/constexpr/FloatingPointComparison.h"
 
@@ -18,7 +17,10 @@ namespace temple {
 
 namespace UpperTriangularMatrixImpl {
 
-// Can be changed to std::array and dependency on Array removed with C++17
+/*! @brief Underlying type of the upper triangular matrix.
+ *
+ * Can be changed to std::array and dependency on Array removed with C++17
+ */
 template<typename T, size_t size>
 using ArrayType = Array<T, size>;
 
@@ -62,6 +64,7 @@ namespace index_conversion {
   }
 } // namespace index_conversion
 
+//! Checks if an array size is a valid size for an upper triangular matrix
 PURITY_STRONG constexpr bool isValidMatrixSize(const size_t dataSize) {
   auto root = Math::sqrt(1.0 + 8 * dataSize);
 
@@ -74,6 +77,7 @@ PURITY_STRONG constexpr bool isValidMatrixSize(const size_t dataSize) {
   );
 }
 
+//! Calculates the square matrix dimension for a particular array size
 PURITY_STRONG constexpr size_t getMatrixSize(const size_t dataSize) {
   return (
     1 + Math::sqrt(1.0 + 8 * dataSize)
@@ -82,7 +86,8 @@ PURITY_STRONG constexpr size_t getMatrixSize(const size_t dataSize) {
 
 } // namespace UpperTriangularMatrixImpl
 
-/*!
+/*! @brief Strictly upper triangular matrix
+ *
  * Stores the data of an upper-triangular matrix in a linear array in an
  * all-constexpr fashion.
  */
@@ -98,8 +103,10 @@ public:
 
 //!@name Constructors
 //!@{
+  //! Default constructor
   constexpr UpperTriangularMatrix() : _data {} {}
 
+  //! Constructor from existing data
   template<
     template<typename, size_t> class ArrayType
   > constexpr explicit UpperTriangularMatrix(
@@ -115,10 +122,12 @@ public:
 
 //!@name Element access
 //!@{
-  constexpr ValueType& at(
-    const unsigned i,
-    const unsigned j
-  ) {
+  /*! @brief Modifiable matrix accessor
+   *
+   * @pre i < j
+   * @complexity{@math{\Theta(1)}}
+   */
+  constexpr ValueType& at(const unsigned i, const unsigned j) {
     if(i >= j || i >= N || j >= N) {
       throw "Index out of bounds!";
     }
@@ -128,6 +137,11 @@ public:
     );
   }
 
+  /*! Nonmodifiable matrix accessor
+   *
+   * @pre i < j
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr const ValueType& at(
     const unsigned i,
     const unsigned j

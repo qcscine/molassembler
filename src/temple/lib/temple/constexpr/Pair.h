@@ -16,8 +16,7 @@
 
 namespace temple {
 
-/*!
- * Heterogeneous pair type.
+/*! @brief Heterogeneous pair type.
  *
  * Requires that both types T and U are default-constructible.
  */
@@ -33,27 +32,32 @@ struct Pair {
 //!@{
   constexpr Pair() : first(T {}), second (U {}) {}
 
-  /* Value initialization */
+  //! Value constructor by copy
   constexpr Pair(const T& passFirst, const U& passSecond)
     : first(passFirst), second(passSecond)
   {}
 
+  //! Value constructor by move
   constexpr Pair(T&& passFirst, U&& passSecond)
     : first(passFirst), second(passSecond)
   {}
 //!@}
 
 //!@name Special member functions
+  //! Copy constructor
   constexpr Pair(const Pair& other)
     : first(other.first), second(other.second) {}
+  //! Move constructor
   constexpr Pair(Pair&& other) noexcept
-    : first(other.first), second(other.second) {}
+    : first(std::move(other.first)), second(std::move(other.second)) {}
+  //! Copy assignment
   constexpr Pair& operator = (const Pair& other) {
     first = other.first;
     second = other.second;
 
     return *this;
   }
+  //! Move assignment
   constexpr Pair& operator = (Pair&& other) noexcept {
     first = std::move(other.first);
     second = std::move(other.second);

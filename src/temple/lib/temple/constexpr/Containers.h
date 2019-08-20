@@ -18,6 +18,7 @@ namespace temple {
 
 namespace traits {
 
+//! Figure out the return type of calling a function
 template<class Function, typename ...Args>
 using functionReturnType = std::result_of_t<Function(Args...)>;
 
@@ -47,7 +48,10 @@ template<
 
 } // namespace detail
 
-//! Maps all elements of any array-like container with a unary function
+/*! @brief Maps all elements of any array-like container with a unary function
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -64,11 +68,15 @@ template<
   );
 }
 
-/*!
+/*! @brief Reduce an array-like container with a binary function
+ *
  * Reduction of any array-like container with a binary function. This function
  * is somewhat restricted, in that the type of the reduction must be identical
  * to the value type of the array-like container. The binary function must
  * have the signature T(const T& reduction, const T& element).
+ *
+ * @complexity{@math{\Theta(N)}}
+ * @todo rename to accumulate
  */
 template<
   template<typename, size_t> class ArrayType,
@@ -87,9 +95,12 @@ template<
   return init;
 }
 
-/*!
+/*! @brief Sum up all elements of an array-like class
+ *
  * Summation of all elements of an array-like class. Requires operator + and
  * zero-initialization of the contained type
+ *
+ * @complexity{@math{\Theta(N)}}
  */
 template<
   template<typename, size_t> class ArrayType,
@@ -122,7 +133,6 @@ template<
 } // namespace detail
 
 //! Iota for any array type
-
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -191,6 +201,7 @@ constexpr ArrayType<T, N1+N2> arrayConcatenateImpl(
 
 } // namespace detail
 
+//! Concatenation of two instances of an array-like class
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -243,6 +254,7 @@ template<
 
 } // namespace detail
 
+//! Variadic concatenation of multiple array-like class instances
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -275,6 +287,10 @@ template<
 
 } // namespace detail
 
+/*! @brief Push an element onto an array
+ *
+ * @todo Look for usage, otherwise remove
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -289,25 +305,6 @@ template<
     std::make_index_sequence<size>{}
   );
 }
-
-// C++17
-/*template<
-  template<typename, size_t> class ArrayType,
-  typename T,
-  size_t size
-> constexpr ArrayType<T, (size + 1)> arrayPush(
-  const ArrayType<T, size>& array,
-  const T& element
-) {
-  ArrayType<T, (size + 1)> newArray {};
-
-  for(size_t i = 0; i < size; ++i) {
-    newArray.at(i) = array.at(i);
-  }
-
-  newArray.at(size) = element;
-  return newArray;
-}*/
 
 namespace detail {
 
@@ -330,6 +327,8 @@ template<
 /*!
  * Removes the last element from an array. Only compiles if size of array-like
  * container is greater than zero
+ *
+ * @todo Check for usage and remove
  */
 template<
   template<typename, size_t> class ArrayType,
@@ -347,7 +346,10 @@ template<
   );
 }
 
-//! Array-like container equality comparaotr
+/*! @brief Array-like container lexicographic equality comparaotr
+ *
+ * @complexity{@math{O(N)}}
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -365,9 +367,12 @@ template<
   return true;
 }
 
-/*!
+/*! @brief Lexicographical comparison for two instances of an array-like class
+ *
  * Array-like container ordering comparator specialization for containers of
- * equal size
+ * equal size.
+ *
+ * @complexity{@math{O(N)}}
  */
 template<
   template<typename, size_t> class ArrayType,
@@ -390,7 +395,8 @@ template<
   return true;
 }
 
-/*!
+/*! @brief Less than comparison of array-like classes for mismatched sizes
+ *
  * Array-like container ordering comparator specialization for containers of
  * unequal size, case a < b
  */
@@ -409,7 +415,8 @@ template<
   return true;
 }
 
-/*!
+/*! @brief Less than comparison of array-like classes for mismatched sizes
+ *
  * Array-like container ordering comparator specialization for containers of
  * unequal size, case a > b
  */
@@ -456,10 +463,13 @@ template<
   }
 }*/
 
-/*!
+/*! @brief Constexpr lower bound algorithm from STL
+ *
  * Returns an index within the passed array-like container whose element at that
  * index is not less than the passed vaue. Proceeds via binary search. 1:1
  * constexpr variant of std::lower_bound.
+ *
+ * @complexity{@math{\Theta(N log N)}}
  */
 template<
   typename T,
@@ -497,9 +507,12 @@ template<
   return bound;
 }
 
-/*!
+/*! @brief Binary search an order container
+ *
  * Binary searches within an ordered container. Returns an iterator to the
  * sought element if found, otherwise returns the end iterator.
+ *
+ * @complexity{@math{\Theta(N log N)}}
  */
 template<
   class Container,
@@ -548,7 +561,8 @@ template<
   return {item};
 }
 
-/*!
+/*! @brief Inserts an element into an ordered container
+ *
  * Sorted array-like container insertion specialization for an array containing
  * elements. Requires move compatibility of the contained type.
  */
@@ -607,9 +621,12 @@ template<
   return {item};
 }
 
-/*!
+/*! @brief Inserts an element into an ordered container with a custom comparator
+ *
  * Sorted array-like container insertion specialization for an array containing
  * elements with a custom comparator.
+ *
+ * @complexity{@math{O(N)}}
  */
 template<
   typename T,
@@ -648,7 +665,10 @@ template<
   return newArray;
 }
 
-//! Index-based in-place swapping of elements in an array-like container
+/*! @brief Index-based in-place swapping of elements in an array-like container
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -663,7 +683,10 @@ template<
   data.at(a) = std::move(intermediate);
 }
 
-//! Index-based in-place reversal of elements in an array-like container
+/*! @brief Index-based in-place reversal of elements in an array-like container
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -679,10 +702,13 @@ template<
   }
 }
 
-/*!
+/*! @brief In-place next permutation
+ *
  * In-place next permutation of elements in an array-like type. 1:1 index-based
  * variant of std::next_permutation
- * NOTE: works with std::array only in C++17
+ * NOTE: works with std::array only in C++17 (missing constexpr markers)
+ *
+ * @complexity{@math{O(N/2)}}
  */
 template<
   template<typename, size_t> class ArrayType,
@@ -736,7 +762,7 @@ template<
   }
 }
 
-//! Shorthand for next permutation over entire array
+//! @overload
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -748,10 +774,13 @@ template<
   return inPlaceNextPermutation(data, 0, size);
 }
 
-/*!
+/*! @brief In-place previous permutation
+ *
  * In-place previous permutation of elements in an array-like type. 1:1
  * index-based variant of std::prev_permutation
  * NOTE: works with std::array only in C++17
+ *
+ * @complexity{@math{O(N/2)}}
  */
 template<
   template<typename, size_t> class ArrayType,
@@ -805,7 +834,7 @@ template<
   }
 }
 
-//! Shorthand for previous permutation over entire array
+//! @overload
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -817,7 +846,10 @@ template<
   return inPlacePreviousPermutation(data, 0, size);
 }
 
-//! Calculates the index of permutation of a container
+/*! @brief Calculates the index of permutation of a container
+ *
+ * @complexity{@math{\Theta(N^2)}}
+ */
 template<
   template<typename, size_t> class ArrayType,
   typename T,
@@ -859,16 +891,20 @@ namespace detail {
   };
 } // namespace detail
 
+//! Figures out the value type of a container via its iterators
 template<class ContainerType>
 using getValueType = typename detail::getValueTypeImpl<ContainerType>::type;
 
-/*!
+/*! @brief Checks if a container is partially ordered
+ *
  * Checks if a container holds strictly non-decreasing sequential values, i.e.
  * its values are partially ordered.
  *
  * Partially ordered: 1, 1, 2, 3
  * Totally ordered: 1, 2, 3 (no duplicates)
  * Neither: 2, 1, 3
+ *
+ * @complexity{@math{O(N)}}
  */
 template<
   class ContainerType,
@@ -899,13 +935,16 @@ template<
   return true;
 }
 
-/*!
+/*! @brief Checks if the container hold strictly increasing values
+ *
  * Checks if a container holds strictly increasing values, i.e. its values are
  * totally ordered.
  *
  * Partially ordered: 1, 1, 2, 3
  * Totally ordered: 1, 2, 3 (no duplicates)
  * Neither: 2, 1, 3
+ *
+ * @complexity{@math{O(N)}}
  */
 template<
   class ContainerType,

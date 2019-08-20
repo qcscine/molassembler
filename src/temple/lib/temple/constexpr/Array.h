@@ -29,8 +29,12 @@ public:
 
 //!@name Special member functions
 //!@{
-  /* Helper constructor using another Array and an index_sequence to directly
-   * form the array mem-initializer with a parameter pack expansion
+  /*! @brief Helper copy constructor
+   *
+   * Constructs using another Array and an index_sequence to directly form the
+   * array mem-initializer with a parameter pack expansion
+   *
+   * @complexity{@math{\Theta(N)}}
    */
   template<size_t ... Inds>
   constexpr Array(
@@ -38,18 +42,23 @@ public:
     std::index_sequence<Inds...> /* inds */
   ) :_items {other[Inds]...} {}
 
-  /*!
-   * @brief Copy constructor
+  /*!  @brief Copy constructor
    *
    * Constructing from another array is tricky since we're technically not
    * allowed to edit _items in-class, so we delegate to a helper constructor
    * and directly form the mem-initializer
+   *
+   * @complexity{@math{\Theta(N)}}
    */
   constexpr Array(const Array& other)
     : Array(other, std::make_index_sequence<nItems>{}) {}
 
-  /* Helper move constructor that directly forms the array mem-initializer with
+  /*! @brief Helper move constructor
+   *
+   * Helper move constructor that directly forms the array mem-initializer with
    * a parameter pack expansion
+   *
+   * @complexity{@math{\Theta(N)}}
    */
   template<size_t ... Inds>
   constexpr Array(
@@ -57,11 +66,21 @@ public:
     std::index_sequence<Inds...> /* inds */
   ) :_items {std::move(other[Inds])...} {}
 
-  //! Move constructor
+  /*! @brief Move constructor
+   *
+   * Moves unfortunately aren't possible for the underlying array as in a
+   * pointer swap, but instead must be performed with N moves of the stored
+   * types.
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr Array(Array&& other) noexcept
     : Array(std::move(other), std::make_index_sequence<nItems>{}) {}
 
-  //! Copy assignment operator
+  /*! @brief Copy assignment operator
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr Array& operator = (const Array& other) {
     for(std::size_t i = 0; i < nItems; ++i) {
       _items[i] = other._items[i];
@@ -70,7 +89,10 @@ public:
     return *this;
   }
 
-  //! Move assignment operator, moves from other's array
+  /*! @brief Move assignment operator, moves from other's array
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr Array& operator = (Array&& other) noexcept {
     for(std::size_t i = 0; i < nItems; ++i) {
       _items[i] = std::move(other._items[i]);
@@ -92,46 +114,77 @@ public:
     std::index_sequence<Inds...> /* inds */
   ) :_items {other[Inds]...} {}
 
-  //! Construct from std::array using same trick as copy ctor
+  /*! @brief Construct from std::array using same trick as copy ctor
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   constexpr Array(const std::array<T, nItems>& other)
     : Array(other, std::make_index_sequence<nItems>{})
   {}
 
-  //! Parameter pack constructor, will work as long as the arguments are castable
+  /*! @brief Pack constructor for castable arguments
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   template<typename ...Args>
   constexpr Array(Args... args)
     : _items {static_cast<T>(args)...}
   {}
 //!@}
 
+//!@name Element acces
+//!@{
+  /*! @brief Safe access to underlying data
+   *
+   * Possibility for UB is not "allowed" in constexpr functions, so bounds
+   * checking is performed.
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr T& operator[] (const std::size_t index) noexcept {
     return _items[index];
   }
 
+  //! @see operator[](const std::size_t)
   constexpr T& at(const std::size_t index) noexcept {
     return _items[index];
   }
 
+  //! @overload
   constexpr const T& operator[] (const std::size_t index) const noexcept {
     return _items[index];
   }
 
+  //! @overload
   constexpr const T& at(const std::size_t index) const noexcept {
     return _items[index];
   }
 
+  /*! @brief Const accessor for the front element
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr const T& front() const noexcept {
     return _items[0];
   }
 
+  /*! @brief Const Accessor for the back element
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr const T& back() const noexcept {
     return _items[nItems - 1];
   }
+//!@}
 
   constexpr size_t size() const noexcept {
     return nItems;
   }
 
+  /*! @brief Lexicographical equality comparison
+   *
+   * @complexity{@math{O(N)}}
+   */
   constexpr bool operator == (const Array& other) const noexcept {
     for(std::size_t i = 0; i < nItems; ++i) {
       if(_items[i] != other._items[i]) {
@@ -142,6 +195,7 @@ public:
     return true;
   }
 
+  //! Inverts equality comparison
   constexpr bool operator != (const Array& other) const noexcept {
     for(std::size_t i = 0; i < nItems; ++i) {
       if(_items[i] != other._items[i]) {
@@ -152,6 +206,10 @@ public:
     return false;
   }
 
+  /*! @brief Lexicographical less than comparison
+   *
+   * @complexity{@math{O(N)}}
+   */
   constexpr bool operator < (const Array& other) const noexcept {
     for(std::size_t i = 0; i < nItems; ++i) {
       if(_items[i] < other._items[i]) {
@@ -166,11 +224,14 @@ public:
     return false;
   }
 
+  //! Inverts less than comparison
   constexpr bool operator > (const Array& other) const noexcept {
     return (other < *this);
   }
 
-  // Begin and end iterators
+  /**
+   * @brief Modifiable data iterator
+   */
   class iterator {
   public:
     using iterator_category = std::random_access_iterator_tag;
@@ -283,6 +344,9 @@ public:
     return iterator(*this, nItems);
   }
 
+  /**
+   * @brief Nonmodifiable data iterator
+   */
   class const_iterator {
   public:
     using iterator_category = std::random_access_iterator_tag;
@@ -403,7 +467,7 @@ public:
     return _makeArray(std::make_index_sequence<nItems>{});
   }
 
-  // Explicit conversion to a std::array
+  //! Explicit conversion to a std::array
   constexpr std::array<T, nItems> getArray() const {
     return _makeArray(std::make_index_sequence<nItems>{});
   }
@@ -419,9 +483,9 @@ private:
   }
 };
 
-// This way, makeArray must be called with at least one argument
 template<typename T, typename... Tail>
 constexpr auto makeArray(T head, Tail... tail) -> Array<T, 1 + sizeof...(Tail)> {
+  // This way, makeArray must be called with at least one argument
   return { head, tail ... };
 }
 

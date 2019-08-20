@@ -19,7 +19,10 @@ namespace temple {
 
 namespace TypeTests {
 
-//! For any two types, check consistency of their logical operators
+/*! @brief For any two types, check consistency of their logical operators
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 template<typename T>
 constexpr bool testLogicalOperators(const T& a, const T& b) {
   return (

@@ -13,19 +13,28 @@
 
 namespace temple {
 
-/*!
- * A constexpr option type much like std::optional with the limitation that T
- * must be default-constructible and equality and less-than comparison operators
- * must be defined for the underlying type.
+/*! @brief An Option monadic type
  *
- * @warning T must not be reference or const-qualified type
+ * A constexpr option type much like std::optional with the limitation that T
+ * must be:
+ * - DefaultConstructible
+ * - LessThanComparable
+ * - EqualityComparable
+ *
+ * (see the C++ standard definitions)
+ *
+ * @warning T may not be a reference or const-qualified type. Those are
+ * impossible to implement constexpr in C++14 as far as I can tell.
  */
 template<typename T>
 class Optional {
 public:
 //!@name Constructors
 //!@{
-  //! Default constructor
+  /*! @brief Default constructor
+   *
+   * None value. Default constructs a contained type.
+   */
   constexpr Optional() {
     static_assert(
       std::is_same<T, std::decay_t<T>>::value,
@@ -44,16 +53,29 @@ public:
 
 //!@name Information
 //!@{
-  //! Returns whether the optional contains a value
+  /*! @brief Returns whether the optional contains a value
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr bool hasValue() const {
     return _hasValue;
   }
 
-  //! Returns a value unchecked
+  /*! @brief Returns the contained value unchecked
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @warning If @p hasValue is false, this is UB.
+   */
   PURITY_WEAK constexpr T value() const {
     return _value;
   }
 
+  /*! @brief Monadic bind with function of signature T -> U
+   *
+   * @tparam UnaryFunction: Function of signature T -> U
+   *
+   * @returns Optional<U>
+   */
   template<class UnaryFunction>
   constexpr auto map(UnaryFunction&& function) const {
     // Function has signature T -> U
@@ -68,6 +90,12 @@ public:
     return Optional<U> {};
   }
 
+  /*! @brief Monadic bind with function of signature T -> Optional<U>
+   *
+   * @tparam UnaryFunction: Function of signature T -> Optional<U>
+   *
+   * @returns Optional<U>
+   */
   template<class UnaryFunction>
   constexpr auto flatMap(UnaryFunction&& function) const {
     // Function has signature T -> Optional<U>
@@ -80,7 +108,10 @@ public:
     return OptionalU {};
   }
 
-  //! Returns a value if initialized, and another if not
+  /*! @brief Returns a value if initialized, and another if not
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr T valueOr(const T& alternative) const {
     if(_hasValue) {
       return _value;

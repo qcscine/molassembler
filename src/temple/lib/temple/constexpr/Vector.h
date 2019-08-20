@@ -33,7 +33,10 @@ struct Vector {
 
 //!@name Common vector operations
 //!@{
-  //! Computes the dot product with another vector
+  /*! @brief Computes the dot product with another vector
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr double dot(const Vector& other) const noexcept {
     return (
       this->data[0] * other.data[0]
@@ -42,7 +45,10 @@ struct Vector {
     );
   }
 
-  //! Computes the cross product with another vector
+  /*! @brief Computes the cross product with another vector
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr Vector cross(const Vector& other) const noexcept {
     return Vector {
       {{
@@ -53,7 +59,10 @@ struct Vector {
     };
   }
 
-  //! Calculates the L2 norm of the vector (cartesian length)
+  /*! @brief Calculates the L2 norm of the vector (cartesian length)
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   PURITY_WEAK constexpr double norm() const {
     return Math::sqrt(
       this -> data[0] * this -> data[0]
@@ -92,7 +101,10 @@ struct Vector {
     };
   }
 
-  //! Division by double operator, throws on division by zero
+  /*! @brief Division by scalar operator
+   *
+   * @throws std::exception on division by zero
+   */
   PURITY_WEAK constexpr Vector operator / (const double constant) const {
     if(constant == 0) {
       throw "Constexpr::Vector divided by zero!";
@@ -120,7 +132,10 @@ struct Vector {
 //!@}
 };
 
-//! Free-standing binary angle in radians calculation
+/*! @brief Constexpr binary angle in radians calculation
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 PURITY_WEAK constexpr double angle(const Vector& a, const Vector& b) {
   return Math::acos(
     a.dot(b) / (

@@ -47,7 +47,7 @@ namespace jsf {
  *   Bob Jenkins
  *
  * @tparam UnsignedType An unsigned integer type that contains the main state of
- *   the PRNG. Choosen between 32 and 64-bit state here!
+ *   the PRNG. Choose between 32 and 64-bit state here!
  * @tparam p A parameter that influences the state advance operations.
  * @tparam q A parameter that influences the state advance operations.
  * @tparam r A parameter that influences the state advance operations.
@@ -123,14 +123,20 @@ public:
 
 //!@name Operators
 //!@{
-  //! Advance the state and return the current value
+  /*! @brief Advance the state and return the current value
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr UnsignedType operator() () {
     _advance();
 
     return _d;
   }
 
-  //! Compares the underlying state of two instances
+  /*! @brief Compares the underlying state of two instances
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   constexpr bool operator == (const JSF& other) const {
     return (
       _a == other._a

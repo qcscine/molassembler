@@ -163,9 +163,12 @@ template<
   );
 }
 
-/*!
+/*! @brief all_of with tuple types and template metafunctions
+ *
  * Tests whether all types in the tuple return true when evaluated against a
  * predicate
+ *
+ * @complexity{@math{O(N)}}
  */
 template<
   typename TupleType,

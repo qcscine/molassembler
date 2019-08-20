@@ -62,62 +62,71 @@ template<typename ... Bools>
 constexpr bool XOR(Bools ... bools);
 
 /* Some very basic math functions for arithmetic types */
+//! Absolute value
 template<typename T>
 inline constexpr traits::enableIfArithmeticWithReturn<T, T> abs(T x) noexcept;
 
+//! Maximum of two values
 template<typename T>
 constexpr traits::enableIfArithmeticWithReturn<T, T> max(T a, T b) noexcept;
 
+//! Minimum of two values
 template<typename T>
 constexpr traits::enableIfArithmeticWithReturn<T, T> min(T a, T b) noexcept;
 
 /* Floating-point math functions */
 
-// Angle conversions
+//! Convert angular degrees to radians
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> toRadians(T inDegrees) noexcept;
 
+//! Convert angular radians to degrees
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> toDegrees(T inRadians) noexcept;
 
-// Rounding
+//! Ceiling function
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, int> ceil(T value) noexcept;
 
+//! Floor function
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, int> floor(T value) noexcept;
 
+//! Round a number
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, int> round(T value) noexcept;
 
+//! Round a number to a specific number of digits
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> round(
   T value,
   unsigned nDigits
 );
 
-// Powers
+//! Power of a number
 template<typename T>
 constexpr traits::enableIfArithmeticWithReturn<T, T> pow(T base, unsigned exponent) noexcept;
 
 template<typename T>
 constexpr traits::enableIfArithmeticWithReturn<T, double> pow(T base, int exponent) noexcept;
 
-// Sqrt
+//! Square root
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> sqrt(T x);
 
-// Factorial
+//! Factorial
 template<typename T>
 constexpr traits::enableIfIntegralWithReturn<T, T> factorial(T x);
 
-// Logarithms
+//! Natural logarithm
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> ln(T x);
 
+//! Base-10 logarithm
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> log10(T x);
 
+//! Arbitrary base logarithm
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> log(T x, T base);
 
@@ -129,9 +138,11 @@ constexpr traits::enableIfFloatingWithReturn<T, T> log(T x, T base);
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> asin(T x);
 
+//! Inverse cosine
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> acos(T x);
 
+//! Inverse tangens
 template<typename T>
 constexpr traits::enableIfFloatingWithReturn<T, T> atan(T x);
 
