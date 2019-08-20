@@ -19,10 +19,30 @@ namespace temple {
 /*!
  * @brief Data structure for partially ordered sets with support for gradual
  *   ordering discovery
+ *
+ * If ordering of values is a complicated, emergent matter, this class can help
+ * you manage the mess and minimize the number of comparisons needed to
+ * establish ordering between values.
+ *
+ * @code{cpp}
+ * std::vector<int> values {4, 5, 6, 10, 11, 12};
+ * Poset<int> poset {values};
+ * // Split value by evenness
+ * poset.orderUnordered([](int x, int y) { return (x % 2 == 0) > (y % 2 == 0); });
+ * // poset is now: {4, 6, 10, 12}, {5, 11}
+ * // Split values by greater-than
+ * poset.orderUnordered(std::greater<>());
+ * // poset is now totally ordered: {12}, {10}, {6}, {4}, {11}, {5}
+ * @endcode
+ *
+ * @note This class would probably benefit immensely from a pool allocator.
  */
 template<typename T>
 class Poset {
 public:
+  /**
+   * @brief Subset of T values
+   */
   struct Subset {
     using const_iterator = typename std::vector<T>::const_iterator;
 
@@ -52,7 +72,10 @@ public:
 
   using const_iterator = typename std::vector<Subset>::const_iterator;
 
-  //! Container constructor
+  /*! @brief Container constructor
+   *
+   * Copies all values from the container
+   */
   template<typename Container>
   Poset(const Container& container) {
     setUnorderedValues(
@@ -61,7 +84,10 @@ public:
     );
   }
 
-  //! Range constructor
+  /*! @brief Range constructor
+   *
+   * Copies all values from the passed range
+   */
   template<typename Iter>
   Poset(Iter&& begin, Iter&& end) {
     setUnorderedValues(
@@ -70,8 +96,10 @@ public:
     );
   }
 
-  /*!
-   * @brief Sets the values in the specified range as the only unordered Subset
+  /*! @brief Sets the values in the specified range as the only unordered Subset
+   *
+   * @complexity{@math{\Theta(N)}}
+   *
    * @tparam Iter The type of the iterator specifying the range
    * @param begin The begin iterator of the range of values
    * @param end The end iterator of the range of values
@@ -82,8 +110,7 @@ public:
     subsets.emplace_back(std::forward<Iter>(begin), std::forward<Iter>(end));
   }
 
-  /*!
-   * @brief Adds order to unordered Subsets
+  /*! @brief Adds order to unordered Subsets
    *
    * @tparam Comparator A callable object with the signature (const T&, const
    *   T&) -> bool
@@ -91,6 +118,8 @@ public:
    *   first argument is ordered less than the second argument. If two elements
    *   cannot be distinguished with the ordering imposed by @p comparator, then
    *   they should be equal, i.e. !(a < b) && !(b < a).
+   *
+   * @complexity{@math{O(N^2)}}
    */
   template<typename Comparator>
   void orderUnordered(Comparator&& comparator) {
@@ -164,6 +193,8 @@ public:
    * Once all comparators are exhausted to find order in yet unordered Subsets,
    * then those values that are still indistinguishable should be considered
    * equal.
+   *
+   * @complexity{@math{\Theta(S)}}
    */
   void finalize() {
     for(Subset& subset : subsets) {
@@ -179,7 +210,10 @@ public:
     return std::end(subsets);
   }
 
-  //! Convert the Poset to a string representation
+  /*! @brief Convert the Poset to a string representation for debug purposes
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   std::string toString() const {
     std::string str = "{";
     for(const Subset& subset : subsets) {
@@ -201,6 +235,8 @@ public:
 
   /**
    * @brief Find an element
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @param a element to search for
    *
@@ -229,6 +265,8 @@ public:
    * @param b The second element
    *
    * @throws std::invalid_argument If either element is not in the poset.
+   *
+   * @complexity{@math{O(N)}}
    *
    * @return A tribool in the following state:
    *   - true if the first element is less than the second

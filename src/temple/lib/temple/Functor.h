@@ -11,6 +11,9 @@
 
 namespace temple {
 
+/**
+ * @brief Metafunction required for default arguments
+ */
 struct Identity {
   template<typename U>
   constexpr auto operator()(U&& v) const noexcept {

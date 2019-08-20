@@ -20,7 +20,7 @@
 
 namespace temple {
 
-//! A minimal wrapper around a map-like class with cache semantics
+//! A minimal wrapper around a map class with cache semantics
 template<typename KeyType, typename ValueType>
 class MinimalCache {
 public:

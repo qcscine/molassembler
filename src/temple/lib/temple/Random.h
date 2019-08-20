@@ -123,7 +123,10 @@ unsigned pickDiscrete(
   return distribution(engine);
 }
 
-//! Use underlying PRNG to shuffle a Container in-place
+/*! @brief Use underlying PRNG to shuffle a Container in-place
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 template<class Container, typename Engine>
 void shuffle(
   Container& container,

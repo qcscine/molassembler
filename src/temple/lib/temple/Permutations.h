@@ -12,8 +12,9 @@
 
 namespace temple {
 
-/*! Calculate the index of permutation of elements in a container
+/*! @brief Calculate the index of permutation of elements in a container
  *
+ * @complexity{@math{\Theta(N^2)}}
  * @note Requires that Container implements operator[](U), where U is implicitly
  *   convertible from std::size_t.
  */
@@ -74,6 +75,8 @@ bool prev_permutation(Container& container) {
  *
  * @note Requires that Container implements operator[](U), where U is implicitly
  *   convertible from unsigned.
+ *
+ * @complexity{@math{\Theta(N)}}
  */
 template<class Container>
 bool nextCombinationPermutation(

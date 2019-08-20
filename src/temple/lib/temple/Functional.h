@@ -61,6 +61,7 @@ template<
  * Notably absent: array, map, multimap, unordered_multimap (some are covered by
  * specializations below!)
  *
+ * @complexity{@math{\Theta(N)}}
  */
 template<
   class UnaryFunction,
@@ -88,6 +89,7 @@ template<
   return returnContainer;
 }
 
+//! @overload
 template<
   template<typename, std::size_t> class ArrayType,
   typename T,
@@ -110,6 +112,7 @@ template<
   return returnContainer;
 }
 
+//! @overload
 template<
   template<typename, typename> class PairType,
   typename T,
@@ -128,6 +131,10 @@ template<
   };
 }
 
+/*! @brief Maps all values of a container using a unary function. Returns a vector
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 template<class Container, class UnaryFunction>
 auto map(
   const Container& container,
@@ -149,6 +156,7 @@ auto map(
   return returnContainer;
 }
 
+//! Apply a callable for all values of a container
 template<class Container, class Callable>
 void forEach(
   const Container& container,
@@ -159,6 +167,19 @@ void forEach(
   }
 }
 
+/**
+ * @brief Select a value from a container
+ *
+ * @tparam Container Container type
+ * @tparam ComparisonFunction Comparison between members of the value
+ * @tparam MappingFunction Map function from ValueType to ComparableType
+ * @param container container with values
+ * @param comparator Comparator instance
+ * @param mapFunction Map function
+ *
+ * @returns An iterator to the value whose mapped value is smallest value
+ * according to the comparator
+ */
 template<
   class Container,
   typename ComparisonFunction,
@@ -189,6 +210,11 @@ typename Container::const_iterator select(
   return selection;
 }
 
+/**
+ * @brief Accumulate shorthand
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 template<
   class Container,
   typename T,
@@ -207,6 +233,10 @@ template<
   return init;
 }
 
+/*! @brief all_of shorthand
+ *
+ * @complexity{@math{O(N)}}
+ */
 template<class Container, class UnaryPredicate>
 bool all_of(const Container& container, UnaryPredicate&& predicate) {
   for(const auto& element : container) {
@@ -218,6 +248,10 @@ bool all_of(const Container& container, UnaryPredicate&& predicate) {
   return true;
 }
 
+/*! @brief any_of shorthand
+ *
+ * @complexity{@math{O(N)}}
+ */
 template<class Container, class UnaryPredicate>
 bool any_of(const Container& container, UnaryPredicate&& predicate) {
   for(const auto& element : container) {
@@ -231,7 +265,7 @@ bool any_of(const Container& container, UnaryPredicate&& predicate) {
 
 namespace inplace {
 
-//! Call std::sort on a container
+//! Calls std::sort on a container
 template<class Container>
 void sort(Container& container) {
   std::sort(
@@ -240,7 +274,7 @@ void sort(Container& container) {
   );
 }
 
-//! Call std::sort with a custom comparator on a container
+//! Calls std::sort with a custom comparator on a container
 template<class Container, typename Comparator>
 void sort(Container& container, Comparator&& comparator) {
   std::sort(
@@ -250,6 +284,7 @@ void sort(Container& container, Comparator&& comparator) {
   );
 }
 
+//! In-place transform of a container with a unary function
 template<class Container, class UnaryFunction>
 void transform(Container& container, UnaryFunction&& function) {
   for(auto& value : container) {
@@ -257,7 +292,7 @@ void transform(Container& container, UnaryFunction&& function) {
   }
 }
 
-//! Call std::reverse
+//! Calls std::reverse
 template<class Container>
 void reverse(Container& container) {
   std::reverse(
@@ -266,7 +301,7 @@ void reverse(Container& container) {
   );
 }
 
-//! Apply erase-remove idiom to container
+//! Applies erase-remove idiom to container
 template<class Container, typename T>
 void remove(
   Container& container,
@@ -282,7 +317,7 @@ void remove(
   );
 }
 
-//! Apply erase-remove idiom to container with a predicate function
+//! Applies erase-remove idiom to container with a predicate function
 template<class Container, class UnaryFunction>
 void remove_if(
   Container& container,
@@ -335,6 +370,7 @@ Container transform(Container container, UnaryFunction&& function) {
   return container;
 }
 
+//! @brief std::find shorthand
 template<class Container, typename T>
 auto find(const Container& container, const T& needle) {
   return std::find(
@@ -344,6 +380,7 @@ auto find(const Container& container, const T& needle) {
   );
 }
 
+//! @brief std::find_if shorthand
 template<class Container, typename UnaryPredicate>
 auto find_if(const Container& container, UnaryPredicate&& predicate) {
   return std::find_if(
@@ -353,12 +390,14 @@ auto find_if(const Container& container, UnaryPredicate&& predicate) {
   );
 }
 
+//! @brief Copying std::reverse shorthand
 template<class Container>
 Container reverse(Container container) {
   inplace::reverse(container);
   return container;
 }
 
+//! @brief Copying erase-remove applier
 template<class Container, typename T>
 Container remove(
   Container container,
@@ -368,6 +407,7 @@ Container remove(
   return container;
 }
 
+//! @brief Copying remove_if applier
 template<class Container, class UnaryFunction>
 Container remove_if(
   Container container,
@@ -377,6 +417,7 @@ Container remove_if(
   return container;
 }
 
+//! @brief vector iota shorthand
 template<typename UnsignedType>
 std::vector<UnsignedType> iota(UnsignedType upperBound) {
   std::vector<UnsignedType> values (upperBound);
@@ -390,6 +431,7 @@ std::vector<UnsignedType> iota(UnsignedType upperBound) {
   return values;
 }
 
+//! @brief Creates a predicate that uses std::find for the container's value type
 template<class Container>
 auto makeContainsPredicate(const Container& container) {
   using T = traits::getValueType<Container>;

@@ -23,6 +23,8 @@ namespace temple {
  *
  * @tparam ChoiceIndex Value type in which the count of possible choices is
  *   representable. This needs to be an integer type.
+ *
+ * @note Complexiy annotations use @math{N} for the length of the set ChoiceList
  */
 template<typename ChoiceIndex>
 struct BoundedNodeTrie {
@@ -59,10 +61,9 @@ public:
   /**
    * @brief Inserts a value list into the prefix trie if not already present
    *
-   * @param values The value list to insert into the prefix trie
+   * @complexity{@math{\Theta(N)}}
    *
-   * This has complexity linear in the size of the boundaries with which the
-   * trie was constructed.
+   * @param values The value list to insert into the prefix trie
    *
    * @throws std::logic_error If no bounds are set.
    *
@@ -91,6 +92,8 @@ public:
 
   /**
    * @brief Create a new entry by choosing branch at each level of the trie
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @param chooseFunction Function that chooses the branch to descend to at
    *   each level. The function is supplied a list of viable choices at the
@@ -128,7 +131,10 @@ public:
     return values;
   }
 
-  //! Changes the bounds of the trie. Clears the trie.
+  /*! @brief Changes the bounds of the trie. Clears the trie.
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   void setBounds(ChoiceList bounds) {
     _bounds = std::move(bounds);
 
@@ -148,7 +154,10 @@ public:
     clear();
   }
 
-  //! Removes all inserted lists from the trie
+  /*! @brief Removes all inserted lists from the trie
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   void clear() {
     if(_root) {
       _root.reset();
@@ -163,8 +172,7 @@ public:
   /**
    * @brief Checks whether a value list is present in the trie
    *
-   * This has complexity at worst linear in the length of the boundaries with
-   * which the trie was constructed.
+   * @complexity{@math{O(N)}}
    *
    * @note If you are planning to insert @p values if @p contains returns false,
    *   just use insert. That way you have only one trie traversal in all cases,
@@ -187,9 +195,9 @@ public:
     return _bounds;
   }
 
-  /*!
-   * @brief Returns the number of value lists this trie contains
-   * @note This function traverses the entire trie to calculate the count.
+  /*! @brief Returns the number of value lists this trie contains
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   unsigned size() const {
     if(_root) {
@@ -199,7 +207,10 @@ public:
     return _size;
   }
 
-  //! Returns the total number of value lists this trie might contain
+  /*! @brief Returns the total number of value lists this trie might contain
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned capacity() const {
     return _capacity;
   }
