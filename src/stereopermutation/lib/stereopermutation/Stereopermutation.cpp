@@ -42,8 +42,7 @@ Stereopermutation::Stereopermutation(
 #endif
 }
 
-/* Public members */
-/* Modifiers ––––––––––––––––––––––– */
+/* Modifiers */
 void Stereopermutation::columnSwap(
   const unsigned a,
   const unsigned b
@@ -468,6 +467,7 @@ std::map<
 
   for(unsigned i = 0; i < characters.size(); i++) {
     const char& columnChar = characters[i];
+    // C++17 insert_or_update
     if(returnMap.count(columnChar) == 0) {
       returnMap[columnChar] = {i};
     } else {

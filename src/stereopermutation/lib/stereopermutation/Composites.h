@@ -67,13 +67,24 @@ public:
       std::size_t passIdentifier
     );
 
-    //! Applies a rotation to the fused position and ranking characters
+    /*! @brief Applies a rotation to the fused position and ranking characters
+     *
+     * @complexity{@math{\Theta(N)}}
+     */
     void applyCharacterRotation(const std::vector<unsigned>& rotation);
 
-    //! Smallest symmetry position from the same group as the fused position
+    /*! @brief Smallest symmetry position from the same group as the fused position
+     *
+     * @complexity{@math{\Theta(S^2)}}
+     */
     unsigned lowestEqualPositionInSymmetry() const;
 
-    //! Calculates the required reduction mapping to the canonical form
+    /*! @brief Calculates the required reduction mapping to the canonical form
+     *
+     * @complexity{Same as Stereopermutation::generateAllRotations}
+     * @todo Check what this code shares with generateAllRotations and consider
+     *   refactoring
+     */
     std::vector<unsigned> findReductionMapping(unsigned reducedFusedPosition) const;
 
     /* c++17 nodiscard */

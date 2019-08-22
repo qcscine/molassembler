@@ -94,7 +94,7 @@ public:
 //!@{
   /*! @brief Inserts an element into the map
    *
-   * @complexity{@math{\Theta(N log N)}}
+   * @complexity{@math{\Theta(N \log N)}}
    */
   constexpr void insert(
     KeyType key,
@@ -112,7 +112,7 @@ public:
   /*! @brief Inserts a key-value pair into the map or updates the mapped value
    *   if the key exists
    *
-   * @complexity{@math{\Theta(N log N)}}
+   * @complexity{@math{\Theta(N \log N)}}
    */
   constexpr void insertOrUpdate(
     KeyType key,
@@ -144,7 +144,7 @@ public:
 //!@{
   /*! @brief Value lookup.
    *
-   * @complexity{@math{\Theta(N log N)}}
+   * @complexity{@math{\Theta(N \log N)}}
    */
   constexpr const MappedType& at(const KeyType& key) const {
     PairType pair {key, MappedType {}};

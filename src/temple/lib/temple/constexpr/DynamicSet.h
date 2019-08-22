@@ -53,7 +53,7 @@ public:
 
   /*! @brief Check if the set contains an element.
    *
-   * @complexity{@math{\Theta(N log N)}}
+   * @complexity{@math{\Theta(N \log N)}}
    */
   PURITY_WEAK constexpr bool contains(const T& item) const {
     return _tree.contains(item);
@@ -61,7 +61,7 @@ public:
 
   /*! @brief Insertion an element into the set.
    *
-   * @complexity{@math{\Theta(N log N)}}
+   * @complexity{@math{\Theta(N \log N)}}
    */
   constexpr void insert(const T& item) {
     _tree.insert(item);

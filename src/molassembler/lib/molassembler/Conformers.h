@@ -112,7 +112,7 @@ struct Configuration {
    *
    * By default does not set any fixed positions.
    *
-   * @pre Any fixed atom must have zero, one or all ligand sites fully
+   * @pre Any fixed atom must have zero, one or all binding sites fully
    *   fixed. No individual ligand sites may be partially fixed (i.e. the atoms
    *   constituting a haptic ligand binding site must be either completely
    *   unfixed or fixed and may not be mixed).

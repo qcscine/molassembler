@@ -283,7 +283,7 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
 }
 
 unsigned Composite::OrientationState::lowestEqualPositionInSymmetry() const {
-  auto positionGroupCharacters = Symmetry::properties::positionGroups(symmetry);
+  const auto positionGroupCharacters = Symmetry::properties::positionGroups(symmetry);
 
   /* Return the position of the first character that matches that of the fused
    * position

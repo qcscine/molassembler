@@ -173,7 +173,7 @@ public:
    * Inserts a new value into the tree. This value must not already be in the
    * tree.
    *
-   * @complexity{@math{\Theta(t log_t N)}}
+   * @complexity{@math{\Theta(t \log_t N)}}
    * @pre The tree does not contain @p value
    */
   constexpr void insert(const T& value) {
@@ -198,7 +198,7 @@ public:
    *
    * Deletes a value from the tree.
    *
-   * @complexity{@math{\Theta(t log_t N)}}
+   * @complexity{@math{\Theta(t \log_t N)}}
    * @pre The value must exist in the tree.
    */
   constexpr void remove(const T& value) {
@@ -224,7 +224,7 @@ public:
    *
    * Check whether a value is stored in the tree.
    *
-   * @complexity{@math{\Theta(t log_t N)}}
+   * @complexity{@math{\Theta(t \log_t N)}}
    */
   PURITY_WEAK constexpr bool contains(const T& value) const {
     auto nodeIndexOptional = _search(_rootPtr, value);
@@ -238,7 +238,7 @@ public:
    * block for maps in which what not all that is stored is compared against in
    * the search.
    *
-   * @complexity{@math{\Theta(t log_t N)}}
+   * @complexity{@math{\Theta(t \log_t N)}}
    */
   PURITY_WEAK constexpr Optional<const T&> getOption(const T& value) const {
     auto nodeIndexOptional = _search(_rootPtr, value);

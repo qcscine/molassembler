@@ -111,40 +111,64 @@ public:
 
 //!@name Modifiers
 //!@{
-  //! Swap two "columns"
+  /*! @brief Applies a Symmetry rotation.
+   *
+   * @complexity{@math{O(L^2)}}
+   */
+  void applyRotation(const std::vector<unsigned>& rotationIndices);
+  /*! @brief Swap two "columns"
+   *
+   * @complexity{@math{\Theta(L)}}
+   */
   void columnSwap(unsigned a, unsigned b);
 
-  //! Transform this Stereopermutation into its lowest permutation.
+  /*! @brief Transform this Stereopermutation into its lowest permutation.
+   *
+   * @complexity{@math{\Theta(1)} if already the lowest permutation,
+   * @math{O(N!)} otherwise}
+   */
   void lowestPermutation();
 
-  //! Modify the "columns" to the previous permutation
+  /*! @brief Modify the "columns" to the previous permutation
+   *
+   * @complexity{@math{O(N / 2)}}
+   */
   bool nextPermutation();
 
-  //! Modify the "columns" to the previous permutation
+  /*! @brief Modify the "columns" to the previous permutation
+   *
+   * @complexity{@math{O(N / 2)}}
+   */
   bool previousPermutation();
 
-  //! Reverse a span of "columns"
+  /*! @brief Reverse a span of "columns"
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   void reverseColumns(unsigned from, unsigned to);
 //!@}
 
 //!@name Information
 //!@{
-  //! Applies a Symmetry rotation.
-  void applyRotation(const std::vector<unsigned>& rotationIndices);
-
-  /* Information –––––––––––––––––––––––– */
-  /*!
+  /*! @brief Compare two "columns"
+   *
    * Compares two "columns". An important note about how this works:
    * E.g. if we have: chars {A, A}, links {[0, 1]}, then columnSmaller(0, 1) is
    * false. These columns are considered equal size in order to avoid confusion
    * in the permutation code where the instruction columnSwap(0, 1) would have
    * no net effect.
+   *
+   * @complexity{@math{O(L \log L)}}
    */
   PURITY_WEAK bool columnSmaller(unsigned a, unsigned b) const;
 
-  /*!
+  /*! @brief Generate all superimposable rotations of a stereopermutation
+   *
    * Generates a set of all rotational equivalents of this Stereopermutation as
    * defined by its symmetry template parameter.
+   *
+   * @complexity{@math{O(\prod_i^Rm_i)} where @math{R} is the set of rotations and
+   * @math{m_i} is the multiplicity of rotation @math{i}}
    */
   std::set<Stereopermutation> generateAllRotations(const Symmetry::Name& symmetryName) const;
 
@@ -157,12 +181,17 @@ public:
     std::vector<unsigned>
   > getCharMap() const;
 
-  //! Returns whether the "columns" are sorted in ascending order
+  /*! @brief Returns whether the "columns" are sorted in ascending order
+   *
+   * @complexity{@math{O(N L \log L)}}
+   */
   PURITY_WEAK bool isSortedAsc() const;
 
   /*!
    * @brief Checks whether a stereopermutation is a mirror image of another
    *   within a particular symmetry
+   *
+   * @complexity{As generateAllRotations}
    *
    * @returns boost::none If the symmetry does not generate enantiomers
    * @returns true If the symmetry has enantiomers, and this is the enantiomeric
@@ -178,6 +207,8 @@ public:
   /*!
    * Checks whether this Stereopermutation is rotationally superimposable with
    * another.
+   *
+   * @complexity{As generateAllRotations}
    */
   bool isRotationallySuperimposable(
     const Stereopermutation& other,
@@ -188,6 +219,8 @@ public:
    * Makes a set of a "column"'s connected indices.
    * If e.g. chars {A, A, A, A, A, A}, links {[0, 1], [1, 2]}, then
    * makeConnectedIndicesSet(1) = set {0, 2}.
+   *
+   * @complexity{@math{\Theta(L)}}
    */
   std::set<unsigned> makeConnectedIndicesSet(unsigned index) const;
 
