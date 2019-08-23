@@ -24,7 +24,7 @@
 
 #include "molassembler/Cycles.h"
 #include "molassembler/Detail/BuildTypeSwitch.h"
-#include "molassembler/Detail/DelibHelpers.h"
+#include "molassembler/Detail/Cartesian.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/DistanceGeometry/ValueBounds.h"
 #include "molassembler/Graph/InnerGraph.h"
@@ -807,7 +807,7 @@ void AtomStereopermutator::Impl::fit(
   const std::vector<Eigen::Vector3d> sitePositions = temple::map(
     _ranking.sites,
     [&angstromWrapper](const std::vector<AtomIndex>& siteAtomList) -> Eigen::Vector3d {
-      return DelibHelpers::averagePosition(angstromWrapper.positions, siteAtomList);
+      return cartesian::averagePosition(angstromWrapper.positions, siteAtomList);
     }
   );
 
@@ -824,7 +824,7 @@ void AtomStereopermutator::Impl::fit(
     for(unsigned i = 0; i < S; ++i) {
       for(unsigned j = i + 1; j < S; ++j) {
         angles.push_back(
-          DelibHelpers::angle(
+          cartesian::angle(
             sitePositions.at(i),
             angstromWrapper.positions.row(_centerAtom),
             sitePositions.at(j)
@@ -908,7 +908,7 @@ void AtomStereopermutator::Impl::fit(
           ),
           [&](const unsigned siteI, const unsigned siteJ) -> double {
             return std::fabs(
-              DelibHelpers::angle(
+              cartesian::angle(
                 sitePositions.at(siteI),
                 angstromWrapper.positions.row(_centerAtom),
                 sitePositions.at(siteJ)
@@ -934,19 +934,19 @@ void AtomStereopermutator::Impl::fit(
           [&](const unsigned siteI, const unsigned siteJ) -> double {
             return std::fabs(
               // siteI - siteJ 1-3 distance from positions
-              DelibHelpers::distance(
+              cartesian::distance(
                 sitePositions.at(siteI),
                 sitePositions.at(siteJ)
               )
               // idealized 1-3 distance from
               - CommonTrig::lawOfCosines(
                 // i-j 1-2 distance from positions
-                DelibHelpers::distance(
+                cartesian::distance(
                   sitePositions.at(siteI),
                   angstromWrapper.positions.row(_centerAtom)
                 ),
                 // j-k 1-2 distance from positions
-                DelibHelpers::distance(
+                cartesian::distance(
                   angstromWrapper.positions.row(_centerAtom),
                   sitePositions.at(siteJ)
                 ),
@@ -975,7 +975,7 @@ void AtomStereopermutator::Impl::fit(
               return angstromWrapper.positions.row(_centerAtom);
             };
 
-            double volume = DelibHelpers::adjustedSignedVolume(
+            double volume = cartesian::adjustedSignedVolume(
               fetchPosition(minimalPrototype[0]),
               fetchPosition(minimalPrototype[1]),
               fetchPosition(minimalPrototype[2]),

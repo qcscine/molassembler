@@ -5,7 +5,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "molassembler/Detail/DelibHelpers.h"
+#include "molassembler/Detail/Cartesian.h"
 #include "temple/Random.h"
 #include "molassembler/Options.h"
 
@@ -14,7 +14,7 @@
 #include <cmath>
 
 BOOST_AUTO_TEST_CASE(dihedralTests) {
-  using namespace Scine::molassembler::DelibHelpers;
+  using namespace Scine::molassembler;
 
   Scine::Utils::PositionCollection positions(4, 3);
   positions.row(0) = Scine::Utils::Position {1, 0, 0};
@@ -40,18 +40,29 @@ BOOST_AUTO_TEST_CASE(dihedralTests) {
       Eigen::Vector3d::UnitY()
     ) * lastPosition;
 
-    const double dihedral = getDihedral(positions, 0, 1, 2, 3);
-
-    BOOST_CHECK_MESSAGE(
-       std::fabs(dihedral - randomAngle) < 1e-10,
-      "Twist angle: " << randomAngle << ", reported angle: " << dihedral
+    const double forwardDihedral = cartesian::dihedral(
+      positions.row(0),
+      positions.row(1),
+      positions.row(2),
+      positions.row(3)
     );
 
-    const double reverseDihedral = getDihedral(positions, 3, 2, 1, 0);
+    BOOST_CHECK_MESSAGE(
+       std::fabs(forwardDihedral - randomAngle) < 1e-10,
+      "Twist angle: " << randomAngle << ", reported angle: " << forwardDihedral
+    );
+
+    const double reverseDihedral = cartesian::dihedral(
+      positions.row(3),
+      positions.row(2),
+      positions.row(1),
+      positions.row(0)
+    );
 
     BOOST_CHECK_MESSAGE(
-      std::fabs(dihedral - reverseDihedral) < 1e-10,
-      "Dihedral of reverse sequence is not identical: " << dihedral <<", " << reverseDihedral
+      std::fabs(forwardDihedral - reverseDihedral) < 1e-10,
+      "Dihedral of reverse sequence is not identical: " << forwardDihedral
+        << ", " << reverseDihedral
     );
   }
 }

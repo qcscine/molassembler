@@ -9,9 +9,9 @@ set(MainTestFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/AtomStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BondStereopermutator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Canonicalization.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Cartesian.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/CommonTrig.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Cycles.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DelibHelpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Descriptors.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Editing.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/InnerGraph.cpp
@@ -25,14 +25,14 @@ set(MainTestFiles
 )
 
 set(DGTestFiles
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGDirectedConformerGenerator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGExplicitGraph.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGFixedPositions.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGGraphShortestDistances.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGImplicitGraph.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGMetricMatrix.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGRefinementProblem.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DGmain.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/DirectedConformerGenerator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/ExplicitGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/FixedPositions.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/GraphShortestDistances.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/ImplicitGraph.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/MetricMatrix.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/RefinementProblem.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DistanceGeometry/main.cpp
 )
 
 # Testing targets

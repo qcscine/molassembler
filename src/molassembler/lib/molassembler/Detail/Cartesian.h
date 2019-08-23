@@ -14,51 +14,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace DelibHelpers {
-
-/*! @brief Calculates the dihedral angle in radians defined by four positions
- *
- * @complexity{@math{\Theta(1)}}
- * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
- */
-double getDihedral(
-  const Scine::Utils::PositionCollection& positions,
-  AtomIndex i,
-  AtomIndex j,
-  AtomIndex k,
-  AtomIndex l
-);
-
-/*! @brief Calculates the dihedral angle in radians defined by four positions
- *
- * @complexity{@math{\Theta(1)}}
- * \note Resulting dihedrals are distributed on (-M_PI, M_PI].
- */
-double getDihedral(
-  const Scine::Utils::PositionCollection& positions,
-  const std::array<AtomIndex, 4>& indices
-);
-
-/*! @brief Calculates signed tetrahedron volume spanned by four positions
- *
- * @complexity{@math{\Theta(1)}}
- */
-double getSignedVolume(
-  const Scine::Utils::PositionCollection& positions,
-  AtomIndex i,
-  AtomIndex j,
-  AtomIndex k,
-  AtomIndex l
-);
-
-/*! @brief Calculates signed tetrahedron volume spanned by four positions
- *
- * @complexity{@math{\Theta(1)}}
- */
-double getSignedVolume(
-  const Scine::Utils::PositionCollection& positions,
-  const std::array<AtomIndex, 4>& indices
-);
+namespace cartesian {
 
 /* Reimplementation on vector basis alone */
 /*! @brief Averages multiple positions
@@ -113,7 +69,7 @@ double adjustedSignedVolume(
   const Eigen::Vector3d& l
 );
 
-} // namespace DelibHelpers
+} // namespace cartesian
 
 } // namespace molassembler
 

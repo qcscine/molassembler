@@ -27,7 +27,7 @@
 #include "temple/STL17.h"
 
 #include "molassembler/Cycles.h"
-#include "molassembler/Detail/DelibHelpers.h"
+#include "molassembler/Detail/Cartesian.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 #include "molassembler/Graph/InnerGraph.h"
 #include "molassembler/Log.h"
@@ -151,7 +151,7 @@ SpatialModel::SpatialModel(
   temple::forEach(
     temple::adaptors::allPairs(configuration.fixedPositions),
     [&](const auto& indexPositionPairA, const auto& indexPositionPairB) {
-      double spatialDistance = DelibHelpers::distance(
+      double spatialDistance = cartesian::distance(
         indexPositionPairA.second,
         indexPositionPairB.second
       ) * Scine::Utils::Constants::angstrom_per_bohr ;
@@ -348,7 +348,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
     if(centerFixed && siteFixed.at(siteI)) {
       // All center to site constituting atom distances are fixed *exactly*
       for(const AtomIndex i : ranking.sites.at(siteI)) {
-        double bondDistance = DelibHelpers::distance(
+        double bondDistance = cartesian::distance(
           fixedAngstromPositions.at(i),
           fixedAngstromPositions.at(centerAtom)
         );
@@ -363,7 +363,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
       temple::forEach(
         temple::adaptors::allPairs(ranking.sites.at(siteI)),
         [&](const AtomIndex i, const AtomIndex j) {
-          const double angle = DelibHelpers::angle(
+          const double angle = cartesian::angle(
             fixedAngstromPositions.at(i),
             fixedAngstromPositions.at(centerAtom),
             fixedAngstromPositions.at(j)
@@ -444,7 +444,7 @@ void SpatialModel::addAtomStereopermutatorInformation(
             ranking.sites.at(j)
           ),
           [&](const AtomIndex x, const AtomIndex y) -> void {
-            const double angle = DelibHelpers::angle(
+            const double angle = cartesian::angle(
               fixedAngstromPositions.at(x),
               fixedAngstromPositions.at(centerAtom),
               fixedAngstromPositions.at(y)
@@ -1763,7 +1763,7 @@ void SpatialModel::_modelBondDistances(
 
     if(fixedAngstromPositions.count(i) > 0 && fixedAngstromPositions.count(j) > 0) {
       // If both atoms are fixed, their mutual bond distance is known exactly
-      double bondDistance = DelibHelpers::distance(
+      double bondDistance = cartesian::distance(
         fixedAngstromPositions.at(i),
         fixedAngstromPositions.at(j)
       );

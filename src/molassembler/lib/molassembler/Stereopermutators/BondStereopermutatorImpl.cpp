@@ -18,7 +18,7 @@
 
 #include "molassembler/AngstromWrapper.h"
 #include "molassembler/AtomStereopermutator.h"
-#include "molassembler/Detail/DelibHelpers.h"
+#include "molassembler/Detail/Cartesian.h"
 #include "molassembler/DistanceGeometry/SpatialModel.h"
 #include "molassembler/DistanceGeometry/ExplicitGraph.h"
 #include "molassembler/Graph/GraphAlgorithms.h"
@@ -876,14 +876,14 @@ void BondStereopermutator::Impl::fit(
   const std::vector<Eigen::Vector3d> firstSitePositions = temple::map(
     firstStereopermutator.getRanking().sites,
     [&angstromWrapper](const std::vector<AtomIndex>& siteAtoms) -> Eigen::Vector3d {
-      return DelibHelpers::averagePosition(angstromWrapper.positions, siteAtoms);
+      return cartesian::averagePosition(angstromWrapper.positions, siteAtoms);
     }
   );
 
   const std::vector<Eigen::Vector3d> secondSitePositions = temple::map(
     secondStereopermutator.getRanking().sites,
     [&angstromWrapper](const std::vector<AtomIndex>& siteAtoms) -> Eigen::Vector3d {
-      return DelibHelpers::averagePosition(angstromWrapper.positions, siteAtoms);
+      return cartesian::averagePosition(angstromWrapper.positions, siteAtoms);
     }
   );
 
@@ -922,7 +922,7 @@ void BondStereopermutator::Impl::fit(
        * zero.
        */
 
-      double dihedralDifference = DelibHelpers::dihedral(
+      double dihedralDifference = cartesian::dihedral(
         firstSitePositions.at(firstSiteIndex),
         angstromWrapper.positions.row(firstStereopermutator.centralIndex()),
         angstromWrapper.positions.row(secondStereopermutator.centralIndex()),

@@ -3,7 +3,7 @@
  *   See LICENSE.txt
  */
 
-#include "molassembler/Detail/DelibHelpers.h"
+#include "molassembler/Detail/Cartesian.h"
 
 #include <Eigen/Geometry>
 #include "temple/Functional.h"
@@ -14,7 +14,7 @@ namespace Scine {
 
 namespace molassembler {
 
-namespace DelibHelpers {
+namespace cartesian {
 
 bool validPositionIndices(
   const Scine::Utils::PositionCollection& positions,
@@ -26,89 +26,6 @@ bool validPositionIndices(
     [&](const AtomIndex i) -> bool {
       return i < nRows;
     }
-  );
-}
-
-double getDihedral(
-  const Scine::Utils::PositionCollection& positions,
-  const AtomIndex i,
-  const AtomIndex j,
-  const AtomIndex k,
-  const AtomIndex l
-) {
-  assert(
-    validPositionIndices(positions, {i, j, k, l})
-  );
-
-  Eigen::Vector3d a = positions.row(j) - positions.row(i);
-  Eigen::Vector3d b = positions.row(k) - positions.row(j);
-  Eigen::Vector3d c = positions.row(l) - positions.row(k);
-
-  return std::atan2(
-    (
-      a.cross(b)
-    ).cross(
-      b.cross(c)
-    ).dot(
-      b.normalized()
-    ),
-    (
-      a.cross(b)
-    ).dot(
-      b.cross(c)
-    )
-  );
-}
-
-double getDihedral(
-  const Scine::Utils::PositionCollection& positions,
-  const std::array<AtomIndex, 4>& indices
-) {
-  return getDihedral(
-    positions,
-    indices[0],
-    indices[1],
-    indices[2],
-    indices[3]
-  );
-}
-
-
-double getSignedVolume(
-  const Scine::Utils::PositionCollection& positions,
-  const AtomIndex i,
-  const AtomIndex j,
-  const AtomIndex k,
-  const AtomIndex l
-) {
-  assert(
-    validPositionIndices(positions, {i, j, k, l})
-  );
-
-  return (
-    positions.row(i)
-    - positions.row(l)
-  ).dot(
-    (
-      positions.row(j)
-      - positions.row(l)
-    ).cross(
-      positions.row(k)
-      - positions.row(l)
-    )
-  ) / 6.0;
-}
-
-double getSignedVolume(
-  const Scine::Utils::PositionCollection& positions,
-  const std::array<AtomIndex, 4>& indices
-) {
-  return getSignedVolume(
-    positions,
-    indices[0],
-    indices[1],
-    indices[2],
-    indices[3]
   );
 }
 
@@ -196,7 +113,7 @@ double adjustedSignedVolume(
   );
 }
 
-} // namespace DelibHelpers
+} // namespace cartesian
 
 } // namespace molassembler
 
