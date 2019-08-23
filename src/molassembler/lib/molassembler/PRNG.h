@@ -14,9 +14,6 @@
 
 #include <memory>
 #include <vector>
-#include <array>
-#include <algorithm>
-#include <random>
 
 namespace Scine {
 

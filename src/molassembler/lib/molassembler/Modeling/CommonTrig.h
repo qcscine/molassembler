@@ -27,7 +27,7 @@ using ValueBounds = DistanceGeometry::ValueBounds;
 /*! @brief Calculates the law of cosines
  *
  * Calculates the law of cosines, returning @math{c} from
- * @math{c^2 = a^2 + b^2 - 2ab \cos \curlyphi}
+ * @math{c^2 = a^2 + b^2 - 2ab \cos \varphi}
  *
  * @complexity{@math{\Theta(1)}}
  */

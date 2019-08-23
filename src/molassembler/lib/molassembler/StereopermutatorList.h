@@ -13,8 +13,6 @@
 #include "boost/range/adaptor/map.hpp"
 #include "boost/functional/hash.hpp"
 
-#include "temple/constexpr/Bitmask.h"
-
 #include "molassembler/AtomStereopermutator.h"
 #include "molassembler/BondStereopermutator.h"
 
