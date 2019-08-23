@@ -24,16 +24,15 @@ namespace CommonTrig {
 
 using ValueBounds = DistanceGeometry::ValueBounds;
 
-/*!
- * Calculates the law of cosines, returning c:
- * c² = a² + b² - 2ab cos φ
+/*! @brief Calculates the law of cosines
+ *
+ * Calculates the law of cosines, returning @math{c} from
+ * @math{c^2 = a^2 + b^2 - 2ab \cos \curlyphi}
+ *
+ * @complexity{@math{\Theta(1)}}
  */
 template<typename T>
-T lawOfCosines(
-  const T a,
-  const T b,
-  const T phiRadians
-) {
+T lawOfCosines(const T a, const T b, const T phiRadians) {
   return std::sqrt(
     a * a
     + b * b
@@ -41,9 +40,9 @@ T lawOfCosines(
   );
 }
 
-/*!
- * Calculates the angle between a and b in a triangle of three side lengths a,
- * b and c.
+/*! @brief Calculates angle between a and b in a triangle of three side lengths
+ *
+ * @complexity{@math{\Theta(1)}}
  */
 template<typename T>
 T lawOfCosinesAngle(
@@ -69,10 +68,13 @@ T lawOfCosinesAngle(
   return std::acos(ratio);
 }
 
-/*!
- * Calculates the law of sines, returning the angle β.
- * From: (sin α) / a = (sin β) / b
- * -> β = arcsin( (b sin α) / a )
+/*! @brief Calculate the angle beta using the law of sines
+ *
+ * Calculates the law of sines, returning the angle @math{\beta}.
+ * From: @math{\frac{\sin \alpha}{a} = \frac{\sin \beta}{b}}
+ * To: @math{\beta = \mathrm{arcsin}(b \frac{\sin \alpha}{a})}
+ *
+ * @complexity{@math{\Theta(1)}}
  */
 template<typename T>
 T lawOfSinesAngle(
@@ -85,10 +87,14 @@ T lawOfSinesAngle(
   );
 }
 
-/*!
+/*! @brief Calculates the distance between the 1st and 4th position in a
+ *   dihedral
+ *
  * Calculates the 1-4 length in a dihedral, which is defined by the three
  * distances a, b, c, the two angles at ab and at bc and the dihedral around the
  * intermediate bond b.
+ *
+ * @complexity{@math{\Theta(1)}}
  */
 double dihedralLength(
   double a,
@@ -99,9 +105,10 @@ double dihedralLength(
   double dihedral
 );
 
-/**
- * @brief Calculates the bounds on the dihedral length given bounds for all
+/** @brief Calculates the bounds on the dihedral length given bounds for all
  *   constituting variables
+ *
+ * @complexity{Unclear as this is minimized, not calculated directly.}
  *
  * @param aBounds The bond length bounds between atoms i and j
  * @param bBounds The bond length bounds between atoms j and k

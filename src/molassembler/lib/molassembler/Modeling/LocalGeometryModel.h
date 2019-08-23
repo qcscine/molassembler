@@ -34,6 +34,9 @@ class OuterGraph;
 namespace LocalGeometry {
 
 /* Typedefs */
+/**
+ * @brief Type used to represent minimal binding site information
+ */
 struct BindingSiteInformation {
   unsigned L, X;
 
@@ -50,30 +53,35 @@ struct BindingSiteInformation {
     const unsigned passX,
     std::vector<Scine::Utils::ElementType> passElements,
     const BondType passBondType
-  ) : L(passL), X(passX), elements {std::move(passElements)}, bondType {passBondType} {}
+  ) : L(passL), X(passX), elements(std::move(passElements)), bondType(passBondType) {}
 };
 
-/*!
- * @brief Mapping of bond type to a floating-point weight
+/*! @brief Mapping of bond type to a floating-point weight
+ *
  * @todo Eta bonds have weight 0, is this a good idea?
  */
 extern const std::map<BondType, double> bondWeights;
 
-/**
- * @brief Calculates the formal charge on a main group-element atom.
+/** @brief Calculates the formal charge on a main group-element atom.
+ *
+ * @complexity{@math{\Theta(1)}}
  *
  * @param graph The graph to which the atom index belongs
  * @param index The atom index for which to calculate the formal charge
  *
- * @warning This is an awful function and should be avoided in any sort of
- *   important calculation.
+ * @parblock@warning This is an awful function and should be avoided in any
+ * sort of important calculation.
+ * @endparblock
  *
- * @warning This will yield nonsense if the bond orders in your graph are unset.
+ * @parblock@warning This will yield nonsense if the bond orders in your graph
+ * are unset.
+ * @endparblock
  *
- * @warning This function may work sometimes for organic surroundings. That's
- *   how confident we are in this function.
+ * @parblock@warning This function may work sometimes for organic surroundings.
+ * That's how confident we are in this function.
+ * @endparblock
  *
- * @return 0 for non-main group elements, the formal charge otherwise
+ * @return 0 for non-main group elements, possibly the formal charge otherwise
  */
 int formalCharge(
   const OuterGraph& graph,
@@ -81,12 +89,22 @@ int formalCharge(
 );
 
 /* Models */
+/*! @brief Applies very basic VSEPR theory to derive a symmetry based on graph
+ *   information
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 boost::optional<Symmetry::Name> vsepr(
   Scine::Utils::ElementType centerAtomType,
   const std::vector<BindingSiteInformation>& sites,
   int formalCharge
 );
 
+/*! @brief Yields the first symmetry of required size.
+ *
+ * @complexity{@math{\Theta(1)}}
+ * @throws std::logic_error If no symmetries of @p size exist
+ */
 Symmetry::Name firstOfSize(unsigned size);
 
 

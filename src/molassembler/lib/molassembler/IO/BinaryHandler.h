@@ -25,13 +25,22 @@ namespace IO {
 struct BinaryHandler {
   using BinaryType = std::vector<std::uint8_t>;
 
+  //! Checks whether the file extension is readable
   static bool canRead(const std::string& filename);
 
+  /*! @brief Writes binary to a file
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   static void write(
     const std::string& filename,
     const BinaryType& binary
   );
 
+  /*! @brief Reads binary from a file
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   static BinaryType read(const std::string& filename);
 };
 

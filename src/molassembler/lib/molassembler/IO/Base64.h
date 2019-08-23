@@ -24,6 +24,12 @@ namespace base64 {
 constexpr char encodeLookup[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 constexpr char padCharacter = '=';
 
+/** @brief Encode binary data as a string
+ *
+ * @complexity{@math{\Theta(N)}}
+ *
+ * @param inputBuffer binary data
+ */
 std::string encode(const std::vector<std::uint8_t>& inputBuffer) {
 	std::string encodedString;
 	encodedString.reserve(
@@ -65,9 +71,15 @@ std::string encode(const std::vector<std::uint8_t>& inputBuffer) {
 	return encodedString;
 }
 
+/** @brief Decode base 64 string data to binary
+ *
+ * @complexity{@math{\Theta(N)}}
+ *
+ * @param input base 64 string
+ */
 std::vector<std::uint8_t> decode(const std::string& input) {
 	if(input.length() % 4) {
-		throw std::runtime_error("Non-Valid base64!");
+		throw std::runtime_error("Invalid base64 encoding!");
   }
 
 	size_t padding = 0;

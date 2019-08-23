@@ -25,9 +25,8 @@ namespace molassembler {
 //! Information on particular element types
 namespace AtomInfo {
 
-/*! @file
- *
- * Stores information about an element.
+/*!
+ * @brief Stores information about an element.
  */
 class ElementInfo {
 public:

@@ -24,14 +24,20 @@ static constexpr std::array<double, 7> bondOrderMap {{
 //! UFF bond distance correction constant lambda
 constexpr double bondOrderCorrectionLambda = 0.1332;
 
-//! Calculates bond distance as modelled by UFF
+/*! @brief Calculates bond distance as modelled by UFF
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 double calculateBondDistance(
   Scine::Utils::ElementType a,
   Scine::Utils::ElementType b,
   BondType bondType
 );
 
-//! Calculates bond distances as modelled by UFF
+/*! @brief Calculates bond distances as modelled by UFF
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 double calculateBondOrder(
   Scine::Utils::ElementType a,
   Scine::Utils::ElementType b,

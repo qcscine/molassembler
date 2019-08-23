@@ -14,10 +14,12 @@ namespace Scine {
 
 namespace molassembler {
 
+//! Transform BondIndex to InnerGraph::Edge
 inline InnerGraph::Edge toInner(const BondIndex& bondIndex, const InnerGraph& graph) {
   return graph.edge(bondIndex.first, bondIndex.second);
 }
 
+//! Transform InnerGraph::Edge to BondIndex
 inline BondIndex toOuter(const InnerGraph::Edge& edge, const InnerGraph& graph) {
   return { graph.source(edge), graph.target(edge) };
 }
