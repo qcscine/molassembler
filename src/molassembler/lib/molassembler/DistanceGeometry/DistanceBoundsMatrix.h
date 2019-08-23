@@ -28,56 +28,33 @@ namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 namespace DistanceGeometry {
 
 class DistanceBoundsMatrix {
-private:
-  inline double& _lowerBound(const AtomIndex i, const AtomIndex j) {
-    return _matrix(
-      std::max(i, j),
-      std::min(i, j)
-    );
-  }
-
-  inline double& _upperBound(const AtomIndex i, const AtomIndex j) {
-    return _matrix(
-      std::min(i, j),
-      std::max(i, j)
-    );
-  }
-
 public:
   static constexpr double defaultLower = 0.0;
   static constexpr double defaultUpper = 100.0;
 
 //!@name Static member functions
 //!@{
-  static inline double& lowerBound(Eigen::MatrixXd& matrix, const AtomIndex i, const AtomIndex j) {
-    return matrix(
-      std::max(i, j),
-      std::min(i, j)
-    );
+  static inline double& lowerBound(Eigen::Ref<Eigen::MatrixXd> matrix, const AtomIndex i, const AtomIndex j) {
+    if(i < j) {
+      return matrix(j, i);
+    }
+
+    return matrix(i, j);
   }
 
-  static inline double& upperBound(Eigen::MatrixXd& matrix, const AtomIndex i, const AtomIndex j) {
-    return matrix(
-      std::min(i, j),
-      std::max(i, j)
-    );
+  static inline double& upperBound(Eigen::Ref<Eigen::MatrixXd> matrix, const AtomIndex i, const AtomIndex j) {
+    if(i < j) {
+      return matrix(i, j);
+    }
+
+    return matrix(j, i);
   }
 
-  static inline double lowerBound(const Eigen::MatrixXd& matrix, const AtomIndex i, const AtomIndex j) {
-    return matrix(
-      std::max(i, j),
-      std::min(i, j)
-    );
-  }
-
-  static inline double upperBound(const Eigen::MatrixXd& matrix, const AtomIndex i, const AtomIndex j) {
-    return matrix(
-      std::min(i, j),
-      std::max(i, j)
-    );
-  }
-
-  static void smooth(Eigen::MatrixXd& matrix);
+  /*! @brief Uses Floyd's algorithm to smooth the matrix
+   *
+   * @complexity{@math{\Theta(N^3)}}
+   */
+  static void smooth(Eigen::Ref<Eigen::MatrixXd> matrix);
 //!@}
 
 //!@name Member types
@@ -87,12 +64,20 @@ public:
 
 //!@name Special member functions
 //!@{
+  //! Initializes nothing
   DistanceBoundsMatrix();
 
+  //! Initializes the matrix with defaultLower and defaultUpper
   explicit DistanceBoundsMatrix(long unsigned N);
 
+  //! Sets the underlying matrix as the argument
   explicit DistanceBoundsMatrix(Eigen::MatrixXd matrix);
 
+  /**
+   * @brief Constructs a bounds matrix from a graph and a bounds matrix
+   *
+   * Replaces default lower bounds with the sum of the elements' vdw radii.
+   */
   template<typename InnerGraph>
   DistanceBoundsMatrix(
     const InnerGraph& inner,
@@ -126,44 +111,90 @@ public:
   bool setUpperBound(AtomIndex i, AtomIndex j, double newUpperBound);
   bool setLowerBound(AtomIndex i, AtomIndex j, double newLowerBound);
 
+  //! Smoothes the underlying matrix using smooth(Eigen::Ref<Eigen::MatrixXd>)
   void smooth();
 //!@}
 
 //!@name Information
 //!@{
+  /*! @brief Access to upper bound of unordered indices
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   inline double upperBound(AtomIndex i, AtomIndex j) const {
-    return _matrix(
-      std::min(i, j),
-      std::max(i, j)
-    );
+    if(i < j) {
+      return _matrix(i, j);
+    }
+
+    return _matrix(j, i);
   }
 
+  /*! @brief Access to lower bound of unordered indices
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   inline double lowerBound(AtomIndex i, AtomIndex j) const {
+    if(i < j) {
+      return _matrix(j, i);
+    }
+
+    return _matrix(i, j);
+  }
+
+  /*! @brief Checks for cases in which the lower bound is greater than the upper bound
+   *
+   * @complexity{@math{\Theta(N^2)}}
+   */
+  unsigned boundInconsistencies() const;
+
+  /** @brief Nonmodifiable access to bounds matrix
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  const Eigen::MatrixXd& access() const;
+
+  /*! @brief Generate a distance matrix
+   *
+   * Generates a distance matrix from the contained bounds without altering
+   * underlying state.
+   *
+   * @complexity{@math{O(N^5)}}
+   */
+  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(
+    random::Engine& engine,
+    Partiality partiality = Partiality::All
+  ) const noexcept;
+
+  /*! @brief Squares all bounds and returns a new matrix
+   *
+   * @complexity{@math{\Theta(N^2)}}
+   */
+  Eigen::MatrixXd makeSquaredBoundsMatrix() const;
+
+  /*! @brief Yields the number of particles
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  unsigned N() const;
+//!@}
+
+private:
+  Eigen::MatrixXd _matrix;
+
+  inline double& _lowerBound(const AtomIndex i, const AtomIndex j) {
     return _matrix(
       std::max(i, j),
       std::min(i, j)
     );
   }
 
-  unsigned boundInconsistencies() const;
+  inline double& _upperBound(const AtomIndex i, const AtomIndex j) {
+    return _matrix(
+      std::min(i, j),
+      std::max(i, j)
+    );
+  }
 
-  const Eigen::MatrixXd& access() const;
-
-  /* Generates a distance matrix from the contained bounds without destroying
-   * the inherent state.
-   *
-   * Allocates another N*N double matrix. When resource constrained, this is
-   * not a good idea.
-   */
-  outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine, Partiality partiality = Partiality::All) const noexcept;
-
-  Eigen::MatrixXd makeSquaredBoundsMatrix() const;
-
-  unsigned N() const;
-//!@}
-
-private:
-  Eigen::MatrixXd _matrix;
 };
 
 } // namespace DistanceGeometry

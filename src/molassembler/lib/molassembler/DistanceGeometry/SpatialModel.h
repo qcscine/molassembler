@@ -32,7 +32,8 @@ namespace molassembler {
 
 namespace DistanceGeometry {
 
-/*!
+/*! @brief Class performing spatial modeling of molecules
+ *
  * Keeps a record of the internal coordinate bounds that a molecular graph is
  * interpreted as and generates a list of atom-pairwise bounds from which
  * classes performing smoothing can be constructed.
@@ -41,6 +42,7 @@ class SpatialModel {
 public:
 //!@name Member types
 //!@{
+  //! Type that can be used to write a graphviz representation of the model
   struct ModelGraphWriter;
 
   //! ValueBounds container for various internal coordinates
@@ -84,14 +86,19 @@ public:
   static ValueBounds defaultDihedralBounds;
 
 /* Static functions */
-  static double modelDistance(
-    AtomIndex i,
-    AtomIndex j,
-    const InnerGraph& graph
-  );
+  /*! @brief Models the equilibrium distance between two bonded atoms
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @pre @p i and @p j are bonded
+   */
+  static double modelDistance(AtomIndex i, AtomIndex j, const InnerGraph& graph);
+  //! @overload
+  static double modelDistance(const BondIndex& bond, const InnerGraph& graph);
 
-  /*!
-   * @brief Tries to find a cycle that consists of a particular set of atoms
+  /*! @brief Tries to find a cycle that consists of a particular set of atoms
+   *
+   * @complexity{@math{\Theta(C)} where @math{C} is the number of cycles in the
+   * molecule}
    *
    * @param atoms The exact set of atoms that constitute the cycle.
    *
@@ -103,8 +110,10 @@ public:
     const InnerGraph& graph
   );
 
-  /**
-   * @brief Tries to calculate the cone angle for a possibly haptic ligand site
+  /** @brief Tries to calculate the cone angle for a possibly haptic ligand site
+   *
+   * @complexity{@math{O(C)} where @math{C} is the number of cycles in the
+   * molecule}
    *
    * @param baseConstituents Atom indices constituting the ligand site
    * @param coneHeightBounds Bounds on the distance of the ligand site to
@@ -119,8 +128,9 @@ public:
     const OuterGraph& graph
   );
 
-  /**
-   * @brief Calculates the cross angle between opposite cycle atoms in a spirocenter
+  /** @brief Calculates the cross angle between opposite cycle atoms in a spirocenter
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param alpha The left cycle-internal angle
    * @param beta The right cycle-internal angle
@@ -129,9 +139,11 @@ public:
    */
   static double spiroCrossAngle(double alpha, double beta);
 
-  /**
-   * @brief Calculates bounds on the distance of a (possibly haptic) ligand
+  /** @brief Calculates bounds on the distance of a (possibly haptic) ligand
    *   site to a central index
+   *
+   * @complexity{@math{\Theta(A)} where @math{A} is the number of atoms comprising
+   * the site}
    *
    * @param siteAtomList Atom indices constituting the ligand site
    * @param centralIndex The central index to which the ligand is bound
@@ -145,8 +157,9 @@ public:
     const OuterGraph& graph
   );
 
-  /**
-   * @brief Yields central value plus/minus some absolute variance bounds
+  /** @brief Yields central value plus/minus some absolute variance bounds
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param centralValue The central value
    * @param absoluteVariance The value to subtract and add to yield new bounds
@@ -158,8 +171,9 @@ public:
     double absoluteVariance
   );
 
-  /*!
-   * @brief Idealization strictness loosening multiplier due to small cycles
+  /*! @brief Idealization strictness loosening multiplier due to small cycles
+   *
+   * @todo complexity
    *
    * @returns A multiplier intended for the absolute angle variance for a
    *   particular atom. If that atom is part of a cycle of size < 6, the
@@ -172,6 +186,10 @@ public:
 
   /*
    * @brief Generates a matrix of atom-pairwise distance bounds
+   *
+   * @complexity{@math{O(P_2 + P_3 + P_4)} where @math{P_i} is the number of
+   * distinct paths of length @math{i} in the graph. That should scale at least
+   * linearly in the number of vertices.}
    *
    * @param N size of the system
    * @param fixedPositionbounds Distances to enforce due to fixed positions
@@ -191,9 +209,10 @@ public:
     const BoundsMapType<4>& dihedralBounds
   );
 
-  /**
-   * @brief Determines the central value of the angle between
+  /** @brief Determines the central value of the angle between
    *   AtomStereopermutator sites
+   *
+   * @complexity{Varies. For most cases, @math{\Omega(1)}}
    *
    * @param permutator The permutator to model
    * @param sites The two sites between which the angle is to be determined
@@ -210,14 +229,16 @@ public:
     const InnerGraph& inner
   );
 
+  //! @overload
   static double siteCentralAngle(
     const AtomStereopermutator& permutator,
     const std::pair<unsigned, unsigned>& sites,
     const InnerGraph& inner
   );
 
-  /**
-   * @brief Models the angle between AtomStereopermutator sites
+  /** @brief Models the angle between AtomStereopermutator sites
+   *
+   * @complexity{Varies. For most cases, @math{\Omega(1)}}
    *
    * @param permutator The permutator being modeled
    * @param sites The two sites between which the angle is to be determined
@@ -233,8 +254,9 @@ public:
     const InnerGraph& inner
   );
 
-  /**
-   * @brief Creates a volume-specific chiral constraint from a list of
+  /** @brief Creates a volume-specific chiral constraint from a list of
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param minimalConstraint Site index sequence defining a chiral constraint
    * @param permutator The AtomStereopermutator from which the minimalConstraint
@@ -251,9 +273,10 @@ public:
     const double looseningMultiplier
   );
 
-  /**
-   * @brief Analogous to C++17's clamp, reduces ValueBounds to the maximal
+  /** @brief Analogous to C++17's clamp, reduces ValueBounds to the maximal
    *   extent specified by some clamping bounds
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param bounds The bounds to be clamped
    * @param clampBounds The range in which bounds may exist
@@ -290,6 +313,10 @@ public:
    * on 1-2 (bonds), 1-3 (angles) and 1-4 (dihedral) internal coordinates. This
    * determines which conformations are accessible.
    *
+   * @complexity{At least @math{O(P_2 + P_3 + P_4)} where @math{P_i} is the
+   * number of distinct paths of length @math{i} in the graph. That should
+   * scale at least linearly in the number of vertices.}
+   *
    * @param molecule The molecule that is to be modeled. This may not contain
    *   stereopermutators with zero assignments or unassigned stereopermutators.
    * @param configuration The Distance Geometry configuration object. Relevant
@@ -304,8 +331,9 @@ public:
 
 //!@name Modifiers
 //!@{
-  /*!
-   * @brief Sets bond bounds to exact value bounds if unset
+  /*! @brief Sets bond bounds to exact value bounds if unset
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param bondIndices The atom pair on which to place bond distance bounds
    * @param bounds The distance bounds to enforce
@@ -316,9 +344,9 @@ public:
     ValueBounds bounds
   );
 
-  /*!
-   * @brief Adds the angle bounds to the model, but only if the information for that
-   *   set of indices does not exist yet.
+  /*! @brief Adds angle bounds to the model if unset
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param angleIndices The atom index sequence specifying an angle
    * @param bounds The angle bounds to enforce
@@ -332,8 +360,9 @@ public:
   );
 
   /*!
-   * @brief Adds the dihedral bounds to the model, but only if the information for that
-   *   set of indices does not exist yet.
+   * @brief Adds the dihedral bounds to the model if unset
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param dihedralIndices The atom index sequence specifying a dihedral
    * @param bounds The dihedral bounds to enforce
@@ -344,9 +373,11 @@ public:
     ValueBounds bounds
   );
 
-  /**
-   * @brief Adds angle information to the internal coordinate bounds and
+  /** @brief Adds angle information to the internal coordinate bounds and
    *   collects chiral constraints
+   *
+   * @complexity{@math{O(S^2)} where @math{S} is the size of the modeled
+   * symmetry}
    *
    * @param permutator The AtomStereopermutator to collect information from
    * @param cycleMultiplierForIndex A function yielding factors with which to
@@ -364,9 +395,11 @@ public:
     bool forceChiralConstraintEmission
   );
 
-  /**
-   * @brief Adds dihedral information to the internal coordinate bounds and
+  /** @brief Adds dihedral information to the internal coordinate bounds and
    *   collects dihedral constraints
+   *
+   * @complexity{@math{O(S^2)} where @math{S} is the size of the larger modeled
+   * symmetry}
    *
    * @param permutator The BondStereopermutator to collect information from
    * @param stereopermutatorA One AtomStereopermutator constituting the BondStereopermutator
@@ -386,16 +419,27 @@ public:
 
 //!@name Information
 //!@{
-  //! Yields all collected chiral constraints
+  /*! @brief Yields all collected chiral constraints
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   std::vector<ChiralConstraint> getChiralConstraints() const;
 
-  //! Yields all collected dihedral constraints
+  /*! @brief Yields all collected dihedral constraints
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   std::vector<DihedralConstraint> getDihedralConstraints() const;
 
-  /**
-   * @brief Generates a matrix of atom-pairwise distance bounds from the
+  /** @brief Generate unsmoothed atom-pairwise distance bounds matrix
+   *
+   * Generates a matrix of atom-pairwise distance bounds from the
    * internal coordinate bounds and fixed positions from which this
    * was constructed.
+   *
+   * @complexity{@math{O(P_2 + P_3 + P_4)} where @math{P_i} is the number of
+   * distinct paths of length @math{i} in the graph. That should scale at least
+   * linearly in the number of vertices.}
    *
    * @return A matrix of atom-pairwise distance bounds. Lower bounds are in the
    * strict lower triangle of the matrix, upper bounds in the strict upper
@@ -403,22 +447,24 @@ public:
    */
   BoundsMatrix makePairwiseBounds() const;
 
-  /**
-   * @brief Generates a string graphviz representation of the modeled molecule
+  /** @brief Generates a string graphviz representation of the modeled molecule
    *
    * The graph contains basic connectivity, stereopermutator information
    * and internal coordinate bounds.
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @return A string that can be converted into an image using graphviz of
    *   the molecule being modeled.
    */
   std::string dumpGraphviz() const;
 
-  /**
-   * @brief Writes a graphviz representation of a modeled molecule to a file
+  /** @brief Writes a graphviz representation of a modeled molecule to a file
    *
    * The graph contains basic connectivity, stereopermutator information
    * and internal coordinate bounds.
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @param filename The filename to which to write the graphviz representation
    */

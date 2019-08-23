@@ -61,6 +61,8 @@ double dihedral(
  *
  * The adjusted signed tetrahedron volume @math{V'} is defined from the signed
  * tetrahedron volume @math{V} by @math{V' = 6 V}.
+ *
+ * @complexity{@math{\Theta(1)}}
  */
 double adjustedSignedVolume(
   const Eigen::Vector3d& i,

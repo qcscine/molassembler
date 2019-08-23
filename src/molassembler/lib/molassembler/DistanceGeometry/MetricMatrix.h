@@ -41,10 +41,14 @@ public:
   explicit MetricMatrix(Eigen::MatrixXd distanceMatrix);
 
 /* Information */
-  //! Allow const ref access to underlying matrix
+  /*! @brief Nonmodifiable access to underlying matrix
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   const Eigen::MatrixXd& access() const;
 
-  /*!
+  /*! @brief Embeds metric matrix into four dimensional space
+   *
    * Embeds itself into 4D space, returning a dynamically sized Matrix where
    * every column vector is the coordinates of a particle.
    *
@@ -54,19 +58,26 @@ public:
    */
   Eigen::MatrixXd embed() const;
 
-  /*! Implements embedding employing full diagonalization
+  /*! @brief Implements embedding employing full diagonalization
    *
    * Uses Eigen's SelfAdjointEigenSolver to fully diagonalize the matrix,
    * calculating all eigenpairs. Then selects the necessary from the full set.
+   *
+   * @complexity{@math{\Theta(9 N^3)} for the eigenvalue decomposition per
+   * Eigen's documentation}
    *
    * @note Faster for roughly N < 20
    */
   Eigen::MatrixXd embedWithFullDiagonalization() const;
 
-  /*! Implements embedding calculating only the needed eigenpairs
+  /*! @brief Implements embedding calculating only the needed eigenpairs
    *
    * Uses Spectra's SymEigsSolver that uses Arnoldi iterations under the hood
    * to calculate only the required eigenpairs for embedding.
+   *
+   * @complexity{As far as I can tell, Arnoldi iteration scales as \math{N^2},
+   * and since we need only four eigenpairs, the prefactor is negligible, so
+   * this scales as \math{N^2}}
    *
    * @note Faster from roughly N >= 20 on
    */

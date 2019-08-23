@@ -188,51 +188,59 @@ public:
   );
 
   /* Information */
-  /*! Returns the number of vertices simulated by the graph, which is 2 * N
+  /*! @brief Returns the number of vertices simulated by the graph, which is 2N
    *
    * Returns the number of vertices simulated by the graph, which is 2 * N
    *
-   * Complexity: O(1)
+   * @complexity{@math{\Theta(1)}}
    */
   VertexDescriptor num_vertices() const;
 
-  /*! Returns the number of edges currently simulated by the graph
+  /*! @brief Returns the number of edges currently simulated by the graph
    *
    * Returns the number of edges currently simulated by the graph.
    *
-   * Complexity: O(N²)
+   * @complexity{@math{\Theta(N^2)}}
    */
   VertexDescriptor num_edges() const;
 
-  /*! Fetches an edge descriptor for a speculative edge from i to j
+  /*! @brief Fetches an edge descriptor for a speculative edge from i to j
    *
    * Fetches an edge descriptor for the edge from i to j, and whether there is
    * such an edge. If there is no such edge (i.e. the pair's second boolean is
    * false), then using the EdgeDescriptor in other functions results in
    * undefined behavior.
    *
-   * Complexity: O(1)
+   * @complexity{@math{\Theta(1)}}
    */
   std::pair<EdgeDescriptor, bool> edge(VertexDescriptor i, VertexDescriptor j) const;
 
-  //! Checks if there is explicit information present for a left-to-right edge
+  /*! @brief Checks if there is explicit information present for a left-to-right edge
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   bool hasExplicit(const EdgeDescriptor& edge) const;
 
   /* To inner indexing */
+  /*! @brief Check if a vertex descriptor is part of the left subgraph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   [[gnu::const]] inline static bool isLeft(const VertexDescriptor i) noexcept {
     return i % 2 == 0;
   }
 
-  /*! Generates a bare distance bounds matrix by repeated shortest-paths calculations
+  /*! @brief Generates a bare distance bounds matrix by repeated shortest-paths calculations
    *
    * This function generates a matrix representing distance bounds, NOT a
    * DistanceBoundsMatrix.
    *
    * Complexity: O(N * O(shortest paths algorithm))
+   * @complexity{@math{\Theta(V^2 \cdot E)}}
    */
   outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
 
-  /*! Generates a distance matrix by randomly fixing distances within triangle inequality bounds
+  /*! @brief Generates a distance matrix by randomly fixing distances within triangle inequality bounds
    *
    * This function generates a distance matrix. For every pair of atomic indices
    * a, b (traversed at random), a shortest-paths calculation is carried out
@@ -242,8 +250,7 @@ public:
    * The generation procedure is destructive, i.e. the same ImplicitGraph
    * cannot be reused to generate multiple distance matrices.
    *
-   * Complexity: O(N² * O(shortest paths algorithm)). For experimental data,
-   * run analysis_BenchmarkGraphAlgorithms.
+   * @complexity{@math{\Theta(V^3 \cdot E)}. Benchmarked by analysis/BenchmarkGraphAlgorithms}
    *
    * NOTE: This double definition may seem strange, but is necessary to use
    * the forward-declared enum class Partiality correctly.
@@ -253,31 +260,47 @@ public:
   //!@overload
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine, Partiality partiality) noexcept;
 
-  //! Returns the source vertex from an edge descriptor
+  /*! @brief Returns the source vertex from an edge descriptor
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   inline VertexDescriptor source(const EdgeDescriptor& e) const {
     return e.first;
   }
 
-  //! Returns the target vertex from an edge descriptor
+  /*! @brief Returns the target vertex from an edge descriptor
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   inline VertexDescriptor target(const EdgeDescriptor& e) const {
     return e.second;
   }
 
-  //! Allows const-ref access to the underlying matrix for debug purposes
+  /*! @brief Allows const-ref access to the underlying matrix for debug purposes
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   inline const Eigen::MatrixXd& getMatrix() const {
     return _distances;
   }
 
-  //! Returns the number of out-edges for a particular vertex
+  /*! @brief Returns the number of out-edges for a particular vertex
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   VertexDescriptor out_degree(VertexDescriptor i) const;
 
+  /* These are all O(1) */
   double& lowerBound(VertexDescriptor a, VertexDescriptor b);
   double& upperBound(VertexDescriptor a, VertexDescriptor b);
 
   double lowerBound(VertexDescriptor a, VertexDescriptor b) const;
   double upperBound(VertexDescriptor a, VertexDescriptor b) const;
 
-  //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
+  /*! @brief Returns the length of the maximal implicit lower bound outgoing from a left vertex
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   double maximalImplicitLowerBound(VertexDescriptor i) const;
 
   //! A helper struct permitting read-access to an edge weight via an edge descriptor
@@ -306,7 +329,7 @@ public:
     inline VertexDescriptor operator () (const VertexDescriptor v) const { return v; }
   };
 
-  //! An random access iterator through all vertex descriptors of the graph
+  //! A random access iterator through all vertex descriptors of the graph
   class vertex_iterator {
     VertexDescriptor index = 0;
 
@@ -422,10 +445,7 @@ public:
     // Default constructor
     in_group_edge_iterator();
     // Constructor for the begin iterator
-    in_group_edge_iterator(
-      const ImplicitGraph& base,
-      VertexDescriptor i
-    );
+    in_group_edge_iterator(const ImplicitGraph& base, VertexDescriptor i);
     // Constructor for the end iterator
     in_group_edge_iterator(
       const ImplicitGraph& base,
@@ -472,10 +492,7 @@ public:
     }
 
     inline EdgeDescriptor operator *() const {
-      return {
-        _i,
-        target()
-      };
+      return {_i, target()};
     }
 
     inline VertexDescriptor target() const {
@@ -492,18 +509,11 @@ public:
   };
 
   inline in_group_edge_iterator in_group_edges_begin(const VertexDescriptor i) const {
-    return {
-      *this,
-      i
-    };
+    return {*this, i};
   }
 
   inline in_group_edge_iterator in_group_edges_end(const VertexDescriptor i) const {
-    return {
-      *this,
-      i,
-      true
-    };
+    return {*this, i, true};
   }
 };
 

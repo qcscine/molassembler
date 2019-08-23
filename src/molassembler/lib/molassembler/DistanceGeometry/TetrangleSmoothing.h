@@ -22,6 +22,8 @@ namespace DistanceGeometry {
  *   B(j, i) <= B(i, j) for all i < j (lower bounds on strictly lower triangle,
  *   upper bounds on strictly upper triangle)
  *
+ * @complexity{@math{\Theta(N^4)}}
+ *
  * @return Tetrangle smoothed bounds matrix
  */
 Eigen::MatrixXd tetrangleSmooth(Eigen::MatrixXd bounds);

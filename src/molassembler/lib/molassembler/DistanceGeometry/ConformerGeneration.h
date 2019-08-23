@@ -27,10 +27,29 @@ namespace DistanceGeometry {
 
 namespace detail {
 
+/*! @brief Collects four-dimensional linear positions into three-dimensional matrix
+ *
+ * Vectorized positions are x0, y0, z0, w0, x1, y1, z1, w1, ...
+ * Result of gather is Nx3 matrix
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 Eigen::MatrixXd gather(const Eigen::VectorXd& vectorizedPositions);
 
+/**
+ * @brief Converts Nx3 matrix into AngstromWrapper type
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 AngstromWrapper convertToAngstromWrapper(const Eigen::MatrixXd& positions);
 
+/**
+ * @brief Rotates and translates the generated coordinates against the fixed
+ *   positions
+ *
+ * @complexity{A single quaternion fit, possibly linear in the number of fixed
+ * positions or linear in the number of atoms}
+ */
 Eigen::MatrixXd fitAndSetFixedPositions(
   const Eigen::MatrixXd& positions,
   const Configuration& configuration
@@ -45,6 +64,9 @@ Eigen::MatrixXd fitAndSetFixedPositions(
  * stereopermutations in permutators are handled gracefully) before attempting
  * to model the Molecule (which requires that all stereopermutators are
  * assigned).
+ *
+ * @complexity{At least linear in the number of unassigned stereopermutators
+ * multiplied by the number of atoms.}
  */
 Molecule narrow(Molecule molecule);
 
@@ -57,20 +79,26 @@ struct MoleculeDGInformation {
   std::vector<DihedralConstraint> dihedralConstraints;
 };
 
-//! Collects intermediate conformational data about a Molecule using a spatial model
+/*! @brief Collects intermediate conformational data about a Molecule using a spatial model
+ *
+ * @complexity{At least @math{O(P_2 + P_3 + P_4)} where @math{P_i} is the
+ * number of distinct paths of length @math{i} in the graph. That should
+ * scale at least linearly in the number of vertices.}
+ */
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
   const Configuration& configuration
 );
 
-//! Debug function, also collects graphviz of the conformational model
+//! @overload
 MoleculeDGInformation gatherDGInformation(
   const Molecule& molecule,
   const Configuration& configuration,
   std::string& spatialModelGraphvizString
 );
 
-/*!
+/*! @brief Logging, not throwing mostly identical implementation to run()
+ *
  * A logging, not throwing, mostly identical implementation of
  * runDistanceGeometry that returns detailed intermediate data from
  * refinements, while run returns only the final conformers, which may
@@ -82,9 +110,11 @@ std::list<RefinementData> debugRefinement(
   const Configuration& configuration
 );
 
-/**
- * @brief Main and parallel implementation of Distance Geometry. Generates an
+/** @brief Main and parallel implementation of Distance Geometry. Generates an
  *   ensemble of 3D structures of a given Molecule
+ *
+ * @complexity{Roughly @math{O(C \cdot N^3) where @math{C} is the number of
+ * conformers and @math{N} is the number of atoms in @p molecule}
  *
  * @see generateEnsemble
  */

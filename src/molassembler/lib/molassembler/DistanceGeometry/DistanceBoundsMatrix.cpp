@@ -54,28 +54,48 @@ bool DistanceBoundsMatrix::setLowerBound(const AtomIndex i, const AtomIndex j, c
   return false;
 }
 
-void DistanceBoundsMatrix::smooth(Eigen::MatrixXd& matrix) {
-  /* Floyd's algorithm: O(N³)
-   * Could be refactored slightly that when something is changed, these loops
-   * exit and identical loops without the bool setter are run (minimal speed gains)
-   *
-   * TODO get rid of min/max access branches (see their impl)
-   */
+void DistanceBoundsMatrix::smooth(Eigen::Ref<Eigen::MatrixXd> matrix) {
+  /* Floyd's algorithm: O(N³) */
   const unsigned N = matrix.cols();
 
   for(AtomIndex k = 0; k < N; ++k) {
     for(AtomIndex i = 0; i < N - 1; ++i) {
+      /* Single-branch references to lower and upper ik parts */
+      auto upperLowerIK = (i < k
+        ? std::pair<double&, double&>(matrix(i, k), matrix(k, i))
+        : std::pair<double&, double&>(matrix(k, i), matrix(i, k))
+      );
+      double& upperIK = upperLowerIK.first;
+      double& lowerIK = upperLowerIK.second;
+
       for(AtomIndex j = i + 1; j < N; ++j) {
-        if(upperBound(matrix, i, j) > upperBound(matrix, i, k) + upperBound(matrix, k, j)) {
-          upperBound(matrix, i, j) = upperBound(matrix, i, k) + upperBound(matrix, k, j);
+        /* i < j is known, so lower(matrix, i, j) is always matrix(j, i),
+         * and upper(matrix, i, j) always matrix(i, j)
+         */
+        double& upperIJ = matrix(i, j);
+        double& lowerIJ = matrix(j, i);
+
+        /* Single-branch references to lower and upper jk parts */
+        auto upperLowerJK = (j < k
+          ? std::pair<double&, double&>(matrix(j, k), matrix(k, j))
+          : std::pair<double&, double&>(matrix(k, j), matrix(j, k))
+        );
+        double& upperJK = upperLowerJK.first;
+        double& lowerJK = upperLowerJK.second;
+
+
+        /* Actual algorithm */
+        if(upperIJ > upperIK + upperJK) {
+          upperIJ = upperIK + upperJK;
         }
 
-        if(lowerBound(matrix, i, j) < lowerBound(matrix, i, k) - upperBound(matrix, k, j)) {
-          lowerBound(matrix, i, j) = lowerBound(matrix, i, k) - upperBound(matrix, k, j);
-        } else if(lowerBound(matrix, i, j) < lowerBound(matrix, j, k) - upperBound(matrix, k, i)) {
-          lowerBound(matrix, i, j) = lowerBound(matrix, j, k) - upperBound(matrix, k, i);
+        if(lowerIJ < lowerIK - upperJK) {
+          lowerIJ = lowerIK - upperJK;
+        } else if(lowerIJ < lowerJK - upperIK) {
+          lowerIJ = lowerJK - upperIK;
         }
 
+        // Safety
         assert(lowerBound(matrix, i, j) <= upperBound(matrix, i, j));
       }
     }
@@ -195,7 +215,7 @@ outcome::result<Eigen::MatrixXd> DistanceBoundsMatrix::makeDistanceMatrix(random
 }
 
 Eigen::MatrixXd DistanceBoundsMatrix::makeSquaredBoundsMatrix() const {
-  return _matrix.cwiseProduct(_matrix);
+  return _matrix.array().square();
 }
 
 unsigned DistanceBoundsMatrix::N() const {

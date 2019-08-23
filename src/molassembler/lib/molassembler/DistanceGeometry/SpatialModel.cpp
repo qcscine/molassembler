@@ -890,19 +890,6 @@ double SpatialModel::siteCentralAngle(
     return idealAngle;
   }
 
-  auto modelDistance = [&](const BondIndex& bond) -> double {
-    return Bond::calculateBondDistance(
-      inner.elementType(bond.first),
-      inner.elementType(bond.second),
-      inner.bondType(
-        inner.edge(
-          bond.first,
-          bond.second
-        )
-      )
-    );
-  };
-
   /* Now it's time to model how the angle distorts for the given cycle.
    *
    * For cycles of size three, the angle is known exactly, since the triangle
@@ -915,9 +902,9 @@ double SpatialModel::siteCentralAngle(
     };
 
     return CommonTrig::lawOfCosinesAngle(
-      modelDistance(prospectiveCycleEdges.front()),
-      modelDistance(prospectiveCycleEdges.back()),
-      modelDistance(lastEdge)
+      modelDistance(prospectiveCycleEdges.front(), inner),
+      modelDistance(prospectiveCycleEdges.back(), inner),
+      modelDistance(lastEdge, inner)
     );
   }
 
@@ -944,7 +931,7 @@ double SpatialModel::siteCentralAngle(
     temple::map(
       minimalCycle,
       [&](const BondIndex& bond) -> double {
-        return modelDistance(bond);
+        return modelDistance(bond, inner);
       }
     )
   );
@@ -1328,6 +1315,13 @@ double SpatialModel::modelDistance(
   );
 }
 
+double SpatialModel::modelDistance(
+  const BondIndex& bond,
+  const InnerGraph& graph
+) {
+  return modelDistance(bond.first, bond.second, graph);
+}
+
 std::vector<BondIndex> SpatialModel::cycleConsistingOfExactly(
   const std::vector<AtomIndex>& atoms,
   const InnerGraph& graph
@@ -1384,7 +1378,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
   }
 
   if(baseConstituents.size() == 2) {
-    double radius = DistanceGeometry::SpatialModel::modelDistance(
+    double radius = modelDistance(
       baseConstituents.front(),
       baseConstituents.back(),
       graph.inner()
@@ -1422,7 +1416,7 @@ boost::optional<ValueBounds> SpatialModel::coneAngle(
     auto distances = temple::map(
       temple::adaptors::cyclicFrame<2>(ringIndexSequence),
       [&](const AtomIndex i, const AtomIndex j) -> double {
-        return DistanceGeometry::SpatialModel::modelDistance(i, j, graph.inner());
+        return modelDistance(i, j, graph.inner());
       }
     );
 
@@ -1499,7 +1493,7 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
     // Single-atom binding site
     AtomIndex atomIndex = siteAtomList.front();
 
-    distance = DistanceGeometry::SpatialModel::modelDistance(
+    distance = modelDistance(
       atomIndex,
       centralIndex,
       graph.inner()
@@ -1510,7 +1504,7 @@ ValueBounds SpatialModel::siteDistanceFromCenter(
       temple::adaptors::transform(
         siteAtomList,
         [&](AtomIndex atomIndex) -> double {
-          return DistanceGeometry::SpatialModel::modelDistance(
+          return modelDistance(
             atomIndex,
             centralIndex,
             graph.inner()

@@ -25,7 +25,7 @@ namespace DistanceGeometry {
  * - All distance bounds are within 0.5 of either the lower or upper boundary
  * - All chiral constraints are within 0.5 of either the lower or upper boundary
  *
- * @complexity{@math{\Theta(N)}}
+ * @complexity{@math{\Theta(N^2)} due to atom-pairwise distance bounds}
  *
  * @param bounds The distance bounds
  * @param chiralConstraints All chiral constraints

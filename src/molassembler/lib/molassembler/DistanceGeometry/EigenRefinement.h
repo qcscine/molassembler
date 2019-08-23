@@ -25,7 +25,14 @@ namespace Scine {
 namespace molassembler {
 namespace DistanceGeometry {
 
-
+/**
+ * @brief Eigen-based refinement error function
+ *
+ * @tparam dimensionality 3 or 4 spatial dimensions to refine in
+ * @tparam FloatType float or double
+ * @tparam SIMD Whether to use rewritten implementations that try to take
+ *   advantage of Eigen's SIMD capabilities
+ */
 template<unsigned dimensionality, typename FloatType, bool SIMD>
 class EigenRefinementProblem {
   static_assert(
@@ -54,7 +61,10 @@ public:
 
 //!@name Static member functions
 //!@{
-  //! Get a string representation of the type name
+  /*! @brief Get a string representation of the type name
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   static std::string name() {
     std::string name = "Eigen";
 
@@ -77,7 +87,10 @@ public:
     return name;
   }
 
-  //! Copy a full dimensional position of an atom
+  /*! @brief Copy a full dimensional position of an atom
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   inline static FullDimensionalVector getPosition(
     const VectorType& positions,
     const AtomIndex index
@@ -85,7 +98,10 @@ public:
     return positions.template segment<dimensionality>(dimensionality * index);
   }
 
-  //! Copy a three-dimensional position of an atom
+  /*! @brief Copy a three-dimensional position of an atom
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   inline static ThreeDimensionalVector getPosition3D(
     const VectorType& positions,
     const AtomIndex index
@@ -93,7 +109,11 @@ public:
     return positions.template segment<3>(dimensionality * index);
   }
 
-  //! Calculate the average full-dimensional position of several atoms
+  /*! @brief Calculate the average full-dimensional position of several atoms
+   *
+   * @complexity{@math{\Theta(A)} where A is the number of atoms whose
+   * positions to average}
+   */
   static FullDimensionalVector getAveragePosition(
     const VectorType& positions,
     const ChiralConstraint::AtomListType& atomList
@@ -110,7 +130,11 @@ public:
     return sum / atomList.size();
   }
 
-  //! Calculate the average three-dimensional position of several atoms
+  /*! @brief Calculate the average three-dimensional position of several atoms
+   *
+   * @complexity{@math{\Theta(A)} where A is the number of atoms whose
+   * positions to average}
+   */
   static ThreeDimensionalVector getAveragePosition3D(
     const VectorType& positions,
     const ChiralConstraint::AtomListType& atomList
@@ -208,24 +232,27 @@ public:
 
 //!@name Contribution functions
 //!@{
-  /*!
-   * @brief Adds pairwise distance error and gradient contributions
+  /*! @brief Adds pairwise distance error and gradient contributions
+   *
+   * @complexity{@math{\Omega(N^2)}}
    */
   void distanceContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     // Delegate to SIMD or non-SIMD implementation
     distanceContributionsImpl(positions, error, gradient);
   }
 
-  /*!
-   * @brief Adds chiral error and gradient contributions
+  /*! @brief Adds chiral error and gradient contributions
+   *
+   * @complexity{@math{\Omega(C)}}
    */
   void chiralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     // Delegate to SIMD or non-SIMD implementation
     chiralContributionsImpl(positions, error, gradient);
   }
 
-  /*!
-   * @brief Adds dihedral error and gradient contributions
+  /*! @brief Adds dihedral error and gradient contributions
+   *
+   * @complexity{@math{\Omega(D)}}
    */
   void dihedralContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     if(dihedralTerms) {
@@ -234,8 +261,9 @@ public:
     }
   }
 
-  /*!
-   * @brief Adds fourth dimension error and gradient contributions
+  /*! @brief Adds fourth dimension error and gradient contributions
+   *
+   * @complexity{@math{\Theta(N)}}
    */
   void fourthDimensionContributions(const VectorType& positions, FloatType& error, Eigen::Ref<VectorType> gradient) const {
     assert(positions.size() == gradient.size());
@@ -270,6 +298,11 @@ public:
     chiralContributions(parameters, value, gradient);
   }
 
+  /*! @brief Calculates the number of chiral constraints with correct sign
+   *
+   * @complexity{@math{\Theta(C)} where @math{C} is the number of chiral
+   * constraints}
+   */
   double calculateProportionChiralConstraintsCorrectSign(const VectorType& positions) const {
     unsigned nonZeroChiralConstraints = 0;
     unsigned incorrectNonZeroChiralConstraints = 0;
@@ -316,6 +349,24 @@ public:
     return proportionChiralConstraintsCorrectSign;
   }
 
+  /**
+   * @brief Visit all unfulfilled constraints
+   *
+   * @tparam Visitor Type containing a `deviationThreshold` and `result` member
+   * variable and implementing the following methods:
+   * - distanceOverThreshold: (unsigned, unsigned, double) -> void
+   * - chiralOverThreshold: (ChiralConstraint, double) -> void
+   * - dihedralOverThreshold: (DihedralConstraint, double) -> void
+   * @param bounds distance bounds instance
+   * @param positions parameter positions to the error function
+   * @param visitor Instance of VisitorType
+   *
+   * This function is very helpful in implementing multiple behaviors, like
+   * debug or error information on unsatisfied bonds or checking whether all
+   * constraints are within their bounds.
+   *
+   * @returns `visitor.result`
+   */
   template<typename Visitor>
   auto visitUnfulfilledConstraints(
     const DistanceBoundsMatrix& bounds,
@@ -403,7 +454,6 @@ public:
       }
 
       const double term = std::fabs(phi - constraintSumHalved) - (constraint.upper - constraint.lower) / 2;
-
 
       if(term > visitor.deviationThreshold) {
         visitor.dihedralOverThreshold(constraint, term);

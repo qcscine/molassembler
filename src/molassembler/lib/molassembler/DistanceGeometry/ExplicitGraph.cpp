@@ -178,7 +178,7 @@ void ExplicitGraph::addBound(
   boost::add_edge(left(b), right(a), -bound.lower, _graph);
 }
 
-void ExplicitGraph::_explainContradictionPaths(
+void ExplicitGraph::explainContradictionPaths(
   const VertexDescriptor a,
   const VertexDescriptor b,
   const std::vector<VertexDescriptor>& predecessors,
@@ -246,11 +246,7 @@ double ExplicitGraph::lowerBound(
   const VertexDescriptor a,
   const VertexDescriptor b
 ) const {
-  auto edgeSearchPair = boost::edge(
-    left(a),
-    right(b),
-    _graph
-  );
+  auto edgeSearchPair = boost::edge(left(a), right(b), _graph);
 
   assert(edgeSearchPair.second);
 
@@ -262,11 +258,7 @@ double ExplicitGraph::upperBound(
   const VertexDescriptor a,
   const VertexDescriptor b
 ) const {
-  auto edgeSearchPair = boost::edge(
-    left(a),
-    left(b),
-    _graph
-  );
+  auto edgeSearchPair = boost::edge(left(a), left(b), _graph);
 
   assert(edgeSearchPair.second);
 
@@ -351,7 +343,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceBounds() const noexc
 
       // If the upper bound is less than the lower bound, we have a contradiction
       if(bounds(a, b) < bounds(b, a)) {
-        _explainContradictionPaths(a, b, predecessors, distances);
+        explainContradictionPaths(a, b, predecessors, distances);
         return DGError::GraphImpossible;
       }
 
@@ -380,11 +372,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engin
 
   std::vector<AtomIndex> indices (N);
 
-  std::iota(
-    indices.begin(),
-    indices.end(),
-    0
-  );
+  std::iota(std::begin(indices), std::end(indices), 0);
 
   temple::random::shuffle(indices, engine);
 
@@ -474,7 +462,7 @@ outcome::result<Eigen::MatrixXd> ExplicitGraph::makeDistanceMatrix(random::Engin
       double upper = distances.at(left(b));
 
       if(upper < lower) {
-        _explainContradictionPaths(a, b, predecessors, distances);
+        explainContradictionPaths(a, b, predecessors, distances);
         return DGError::GraphImpossible;
       }
 

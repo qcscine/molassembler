@@ -25,12 +25,22 @@ namespace molassembler {
 //! Distance geometry-related classes and functions
 namespace DistanceGeometry {
 
+/**
+ * @brief Data struct representing a chiral constraint
+ *
+ * Contains four atom sets and lower and upper bounds on the signed volume
+ * spanned by their average spatial positions.
+ */
 struct ChiralConstraint {
   using AtomListType = std::vector<AtomIndex>;
   using SiteSequence = std::array<AtomListType, 4>;
 
+  //! Site definition sequence (odd permutations invert sign)
   SiteSequence sites;
-  double lower, upper;
+  //! Lower bound on signed volume
+  double lower;
+  //! Upper bound on signed volume
+  double upper;
 
   ChiralConstraint(
     SiteSequence passSites,
@@ -45,12 +55,22 @@ struct ChiralConstraint {
   }
 };
 
+/**
+ * @brief Data struct representing a dihedral constraint
+ *
+ * Contains four atom sets and lower and upper bounds on the dihedral spanned
+ * by their average spatial positions.
+ */
 struct DihedralConstraint {
   using AtomListType = std::vector<AtomIndex>;
   using SiteSequence = std::array<AtomListType, 4>;
 
+  //! Site definition sequence (odd permutations invert sign)
   SiteSequence sites;
-  double lower, upper;
+  //! Lower bound on signed volume
+  double lower;
+  //! Upper bound on signed volume
+  double upper;
 
   DihedralConstraint(
     SiteSequence passSites,

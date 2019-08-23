@@ -40,7 +40,8 @@ enum class Partiality;
 class DistanceBoundsMatrix;
 
 
-/*!
+/*! @brief BGL wrapper to help with distance bounds smoothing
+ *
  * A class that helps with lower complexity determination of distance bounds
  * compatible with the triangle inequality limits via reinterpretation as a
  * graph shortest paths calculation.
@@ -76,11 +77,19 @@ public:
 
 //!@name Special member functions
 //!@{
+  /*! @brief Construct from distance bounds matrix
+   *
+   * @complexity{@math{\Theta(N^2)}}
+   */
   ExplicitGraph(
     const InnerGraph& inner,
     const DistanceBoundsMatrix& bounds
   );
 
+  /*! @brief Construct from bounds matrix
+   *
+   * @complexity{@math{\Theta(N^2)}}
+   */
   ExplicitGraph(
     const InnerGraph& inner,
     const BoundsMatrix& bounds
@@ -89,21 +98,37 @@ public:
 
 //!@name Static member functions
 //!@{
-  static void _explainContradictionPaths(
+  /*! @brief Explain contradictions between distance bounds on a path
+   *
+   * @complexity{linear in the length of the path between @p a and @p b}
+   */
+  static void explainContradictionPaths(
     VertexDescriptor a,
     VertexDescriptor b,
     const std::vector<VertexDescriptor>& predecessors,
     const std::vector<double>& distances
   );
 
+  /*! @brief Check whether a vertex is part of the left subgraph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   [[gnu::const]] static inline bool isLeft(const VertexDescriptor i) noexcept {
     return i % 2 == 0;
   }
 
+  /*! @brief Get the left subgraph vertex descriptor corresponding to an outer index
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   [[gnu::const]] static inline VertexDescriptor left(const VertexDescriptor a) noexcept {
     return 2 * a;
   }
 
+  /*! @brief Get the right subgraph vertex descriptor corresponding to an outer index
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   [[gnu::const]] static inline VertexDescriptor right(const VertexDescriptor a) noexcept {
     return 2 * a + 1;
   }
@@ -111,31 +136,42 @@ public:
 
 //!@name Modifiers
 //!@{
+  /*! @brief Adds a bound between outer vertex indices to the graph
+   *
+   * This is represented by six edges:
+   * - Bidirectional within the left subgraph between a and b weighted with the
+   *   upper bound
+   * - Bidirectional within the right subgraph between a and b weighted with
+   *   the upper bound
+   * - Edges from the left vertices of a and b to the right opposite one with
+   *   the negative lower bound
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void addBound(
     VertexDescriptor a,
     VertexDescriptor b,
     const ValueBounds& bound
   );
 
-  void setDistance(
-    VertexDescriptor a,
-    VertexDescriptor b,
-    double distance
-  );
+  /*! @brief Fetches the lower bound between outer vertex indices from the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  double lowerBound(VertexDescriptor a, VertexDescriptor b) const;
 
-  double lowerBound(
-    VertexDescriptor a,
-    VertexDescriptor b
-  ) const;
+  /*! @brief Fetches the upper bound between outer vertex indices from the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
+  double upperBound(VertexDescriptor a, VertexDescriptor b) const;
 
-  double upperBound(
-    VertexDescriptor a,
-    VertexDescriptor b
-  ) const;
-
-  /*!
+  /*! @brief Generate a distance matrix
+   *
    * Generates a distances matrix conforming to the triangle inequality bounds
    * while modifying state information. Can only be called once!
+   *
+   * @complexity{@math{O(V^2 \cdot E)}}
    */
   outcome::result<Eigen::MatrixXd> makeDistanceMatrix(random::Engine& engine) noexcept;
 
@@ -145,11 +181,22 @@ public:
 
 //!@name Information
 //!@{
-  //! Returns the length of the maximal implicit lower bound outgoing from a left vertex
+  /*! @brief Returns the length of the maximal implicit lower bound outgoing from a left vertex
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   double maximalImplicitLowerBound(VertexDescriptor i) const;
 
+  /*! Nonmodifiable access to underlying graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   const GraphType& graph() const;
 
+  /*! @brief Make smooth distance bounds
+   *
+   * @complexity{@math{\Theta(V \cdot E)}}
+   */
   outcome::result<Eigen::MatrixXd> makeDistanceBounds() const noexcept;
 //!@}
 

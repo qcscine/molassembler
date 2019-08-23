@@ -57,6 +57,8 @@ Eigen::MatrixXd fitAndSetFixedPositions(
   /* Fixed positions postprocessing:
    * - Rotate and translate the generated coordinates towards the fixed
    *   positions indicated for each.
+   *
+   * Maybe?
    * - Assuming the fit isn't absolutely exact, overwrite the existing
    *   positions with the fixed ones
    */

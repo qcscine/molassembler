@@ -23,6 +23,9 @@ namespace molassembler {
 
 namespace DistanceGeometry {
 
+/**
+ * @brief Debug class containing a step from refinement
+ */
 struct RefinementStepData {
   Eigen::VectorXd positions;
   double distanceError;
@@ -53,6 +56,9 @@ struct RefinementStepData {
   {}
 };
 
+/**
+ * @brief Debug data class containing data on a refinement
+ */
 struct RefinementData {
   std::list<RefinementStepData> steps;
   std::vector<ChiralConstraint> constraints;
