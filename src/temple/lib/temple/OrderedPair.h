@@ -29,7 +29,7 @@ namespace temple {
  *   various operations.
  */
 template<typename T>
-struct OrderedPair : crtp::AllOperatorsFromTupleMethod<OrderedPair<T>> {
+struct OrderedPair : crtp::LexicographicComparable<OrderedPair<T>> {
 //!@name Types
 //!@{
   //! Type of stored elements
@@ -110,7 +110,7 @@ struct OrderedPair : crtp::AllOperatorsFromTupleMethod<OrderedPair<T>> {
 //!@name Operators
 //!@{
   //! Yields the result of std::tie(first, second)
-  constexpr auto tuple() const {
+  constexpr auto tie() const {
     return std::tie(first, second);
   }
 //!@}

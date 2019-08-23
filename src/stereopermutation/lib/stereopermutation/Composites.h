@@ -14,6 +14,7 @@
 #include "chemical_symmetries/Names.h"
 #include "temple/OrderedPair.h"
 #include "temple/constexpr/FloatingPointComparison.h"
+#include "temple/OperatorSuppliers.h"
 
 #include <vector>
 
@@ -24,6 +25,12 @@ namespace stereopermutation {
 /**
  * @brief Represents the composite of two symmetries joined by a bond at
  *   arbitrary symmetry positions
+ *
+ * Acts as a container-like type for the generated stereopermutations after
+ * construction.
+ *
+ * @todo There's some dead code here I think (see the static functions) and
+ * PerpendicularAngleGroups really isn't a telling type
  */
 class Composite {
 public:
@@ -42,8 +49,12 @@ public:
     bool isotropic;
   };
 
-  //! Encompasses the orientation of a symmetry along a fused bond
-  struct OrientationState {
+  /*! @brief Encompasses the orientation of a symmetry along a fused bond
+   *
+   * Comparison is based upon lexicographic comparison of its struct members in
+   * order of declaration.
+   */
+  struct OrientationState : public temple::crtp::LexicographicComparable<OrientationState> {
     //! The symmetry of either positional symmetry
     Symmetry::Name symmetry;
     //! The symmetry position of the local symmetry that the other is fused at
@@ -81,7 +92,11 @@ public:
 
     /*! @brief Calculates the required reduction mapping to the canonical form
      *
-     * @complexity{Same as Stereopermutation::generateAllRotations}
+     * @complexity{@math{O(S!)} where @math{S} is the size of the symmetry.
+     * More precisely, this function scales linearly with the number of
+     * unlinked stereopermutations if all substituents are different, but that
+     * itself probably scales factorially in the size of the symmetry.}
+     *
      * @todo Check what this code shares with generateAllRotations and consider
      *   refactoring
      */
@@ -95,24 +110,36 @@ public:
      * smallest symmetry position from the same group as the fused position.
      * Returns the mapping needed to revert the OrientationState back to its
      * original data values.
+     *
+     * @note To transform back to the original state, keep the result of this
+     * function and call revert() with it.
+     *
+     * @complexity{@math{O(S!)} where @math{S} is the size of the symmetry (see
+     * findReductionMapping)}
      */
     std::vector<unsigned> transformToCanonical();
 
-    //! Reverts the OrientationState to non-canonical form
+    /*! @brief Reverts the OrientationState to a non-canonical form
+     *
+     * Call this with the result of transformToCanonical()!
+     *
+     * @complexity{@math{\Theta(S)}}
+     */
     void revert(const std::vector<unsigned>& reversionMapping);
 
     /*!
      * @brief Collects all coplanar indices that are closest to the fused
      *   symmetry position
      *
+     * @complexity{@math{\Theta(S)}}
      * @post AngleGroup's symmetry positions are sorted
      */
     AngleGroup smallestAngleGroup() const;
 
-    //! Full member lexicographical comparison in order of declaration
-    bool operator < (const OrientationState& other) const;
-    //! Full member lexicographical comparison in order of declaration
-    bool operator == (const OrientationState& other) const;
+    //! Full tuple-like lexicographical comparison of members in order of declaration
+    inline auto tie() const {
+      return std::tie(symmetry, fusedPosition, characters);
+    }
   };
 
   //! First symmetry position, second symmetry position, dihedral angle tuple
@@ -143,8 +170,11 @@ public:
 
 //!@name Constructors
 //!@{
-  /*!
-   * @brief Constructor
+  /*! @brief Constructor calculating all permutations
+   *
+   * @complexity{@math{O(S!)} where S is the size of the larger symmetry of the
+   * two OrientationState instances}
+   *
    * @post Each permutations' dihedrals are sorted (lexicographically)
    */
   Composite(
@@ -198,22 +228,36 @@ public:
 //!@{
   /*!
    * @brief Returns a set of dihedrals for a particular permutation
+   *
+   * @complexity{@math{\Theta(1)}}
    * @note The first two elements of each tuple specify the symmetry position
    * within that side's symmetry. The first element is for the left symmetry,
    * the second for the right symmetry.
    */
   const std::vector<DihedralTuple>& dihedrals(unsigned permutationIndex) const;
 
-  //! Returns whether the Composite is isotropic overall
+  /*! @brief Returns whether the Composite is isotropic overall
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   bool isIsotropic() const;
 
-  //! Returns the orientation state of the composite
+  /*! @brief Returns the orientation state of the composite
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   const temple::OrderedPair<OrientationState>& orientations() const;
 
-  //! Returns the number of permutations for this Composite
+  /*! @brief Returns the number of permutations for this Composite
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned permutations() const;
 
-  //! returns the alignment with which the Composite was generated with
+  /*! @brief Returns the alignment with which the Composite was generated with
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   Alignment alignment() const;
 //!@}
 
@@ -226,16 +270,11 @@ public:
 
 //!@name Operators
 //!@{
-  /**
-   * @brief Compares the orientations of two Composite objects
-   *
-   * @param other The other Composite to compare against
-   *
-   * @return Whether the orientation of one Composite object is less than the
-   *   other, as defined by that operator
-   */
+  //! @brief Less-than comparison by orientations()
   bool operator < (const Composite& other) const;
+  //! @brief Equality comparison by orientations()
   bool operator == (const Composite& other) const;
+  //! @brief Inequality comparison by orientations()
   bool operator != (const Composite& other) const;
 //!@}
 

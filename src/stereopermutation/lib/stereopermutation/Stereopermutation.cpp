@@ -153,27 +153,22 @@ bool Stereopermutation::previousPermutation() {
 
 typename Stereopermutation::LinksSetType Stereopermutation::rotateLinks(
   const LinksSetType& links,
-  const std::vector<unsigned>& rotationIndices
+  const std::vector<unsigned>& rotation
 ) {
-  auto rotateIndex = [&rotationIndices](const unsigned from) -> unsigned {
+  auto rotateIndex = [&rotation](const unsigned from) -> unsigned {
     return std::find(
-      rotationIndices.begin(),
-      rotationIndices.end(),
+      rotation.begin(),
+      rotation.end(),
       from
-    ) - rotationIndices.begin();
+    ) - rotation.begin();
   };
 
   LinksSetType rotatedSet;
 
   for(const auto& pair : links) {
-    unsigned a = rotateIndex(pair.first);
-    unsigned b = rotateIndex(pair.second);
-
-    if(b < a) {
-      rotatedSet.emplace(b, a);
-    } else {
-      rotatedSet.emplace(a, b);
-    }
+    rotatedSet.emplace(
+      std::minmax({rotateIndex(pair.first), rotateIndex(pair.second)})
+    );
   }
 
   return rotatedSet;
@@ -266,34 +261,6 @@ std::string Stereopermutation::toString() const {
   return out.str();
 }
 
-/* Operators */
-bool Stereopermutation::operator < (
-  const Stereopermutation& other
-) const {
-  return std::tie(characters, links) < std::tie(other.characters, other.links);
-}
-
-bool Stereopermutation::operator > (
-  const Stereopermutation& other
-) const {
-  return other < *this;
-}
-
-bool Stereopermutation::operator == (
-  const Stereopermutation& other
-) const {
-  return (
-    this -> characters == other.characters
-    && this -> links == other.links
-  );
-}
-
-bool Stereopermutation::operator != (
-  const Stereopermutation& other
-) const {
-  return !(*this == other);
-}
-
 /* Private members */
 std::pair<
   std::set<Stereopermutation>,
@@ -302,7 +269,7 @@ std::pair<
   const std::function<
     bool(const Stereopermutation&, const Stereopermutation&)
   >& interruptCallbackOnNewStereopermutation,
-  const Symmetry::Name& symmetryName
+  const Symmetry::Name symmetryName
 ) const {
 
   // add the initial structure to a set of Stereopermutations
@@ -413,12 +380,12 @@ void Stereopermutation::reverseColumns(
 
 std::vector<char> Stereopermutation::rotateCharacters(
   const std::vector<char>& characters,
-  const std::vector<unsigned>& rotationIndices
+  const std::vector<unsigned>& rotation
 ) {
   std::vector<char> retv;
   retv.reserve(characters.size());
 
-  for(const auto& index : rotationIndices) {
+  for(const auto& index : rotation) {
     retv.push_back(
       characters.at(index)
     );
@@ -427,9 +394,9 @@ std::vector<char> Stereopermutation::rotateCharacters(
   return retv;
 }
 
-void Stereopermutation::applyRotation(const std::vector<unsigned>& rotationIndices) {
-  characters = rotateCharacters(characters, rotationIndices);
-  links = rotateLinks(links, rotationIndices);
+void Stereopermutation::applyRotation(const std::vector<unsigned>& rotation) {
+  characters = rotateCharacters(characters, rotation);
+  links = rotateLinks(links, rotation);
 }
 
 bool Stereopermutation::columnSmaller(

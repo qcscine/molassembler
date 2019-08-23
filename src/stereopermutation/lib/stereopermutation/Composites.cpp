@@ -188,6 +188,15 @@ void Composite::OrientationState::revert(const std::vector<unsigned>& reversionM
 std::vector<unsigned> Composite::OrientationState::findReductionMapping(
   unsigned reducedFusedPosition
 ) const {
+  /* NOTE: The implementation below is VERY similar to
+   * Stereopermutation::_generateAllRotation's generation work.
+   * BUT! This algorithm doesn't store the rotations, merely their index of
+   * permutation to be able to terminate the backtracking algorithm, and tracks
+   * the best structure.
+   *
+   * Refactoring both to a common denominator could be challenging.
+   */
+
   /* Trivial abbreviation: The identity sequence is viable if the fused
    * position is unchanged. It is the lowest permutation possible, and is hence
    * the solution to this search case.
@@ -209,6 +218,7 @@ std::vector<unsigned> Composite::OrientationState::findReductionMapping(
 
   const unsigned linkLimit = Symmetry::rotations(symmetry).size();
   std::vector<unsigned> chain = {0};
+  chain.reserve(32);
   std::vector<
     std::vector<unsigned>
   > chainRotations = {identitySequence};
@@ -356,20 +366,6 @@ Composite::AngleGroup Composite::OrientationState::smallestAngleGroup() const {
   return angleGroup;
 }
 
-bool Composite::OrientationState::operator < (const Composite::OrientationState& other) const {
-  return (
-    std::tie(symmetry, fusedPosition, characters)
-    < std::tie(other.symmetry, other.fusedPosition, other.characters)
-  );
-}
-
-bool Composite::OrientationState::operator == (const Composite::OrientationState& other) const {
-  return (
-    std::tie(symmetry, fusedPosition, characters)
-    == std::tie(other.symmetry, other.fusedPosition, other.characters)
-  );
-}
-
 double Composite::perpendicularSubstituentAngle(
   const double angleFromBoundSymmetryPosition,
   const double angleBetweenSubstituents
@@ -472,8 +468,7 @@ std::vector<unsigned> Composite::rotation(
   const unsigned fixedSymmetryPosition,
   const std::vector<unsigned>& perpendicularPlanePositions
 ) {
-  /* Three possibilities:
-   */
+  // Three possibilities:
 
   if(perpendicularPlanePositions.size() > 1) {
     /* There are multiple elements in perpendicularPlanePositions. We have to

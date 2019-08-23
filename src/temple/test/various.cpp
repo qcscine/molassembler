@@ -151,13 +151,13 @@ BOOST_AUTO_TEST_CASE(stringifyTests) {
   BOOST_CHECK(!stringified.empty());
 }
 
-struct TupleLike : temple::crtp::AllOperatorsFromTupleMethod<TupleLike> {
+struct TupleLike : temple::crtp::LexicographicComparable<TupleLike> {
   unsigned x;
   int f;
 
   TupleLike(unsigned x_, int f_) : x(x_), f(f_) {}
 
-  auto tuple() const {
+  auto tie() const {
     return std::tie(x, f);
   }
 };

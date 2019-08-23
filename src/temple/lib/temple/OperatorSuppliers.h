@@ -63,13 +63,13 @@ struct AllOperatorsFromLessThan {
   }
 };
 
-/*! Generates all operators using a method returning a tuple
+/*! @brief Generates all operators using a method returning a tuple
  *
  * The tuple-generating function should exploit tuples returning references
  * using a form like:
  *
  * @code
- *   auto tuple() const {
+ *   auto tie() const {
  *     // In order of desired lexicographical comparison
  *     return std::tie(member1, member2, ...);
  *   }
@@ -77,45 +77,45 @@ struct AllOperatorsFromLessThan {
  *
  */
 template<typename T>
-struct AllOperatorsFromTupleMethod {
-  static constexpr const T& getDerived(const AllOperatorsFromTupleMethod& base) {
+struct LexicographicComparable {
+  static constexpr const T& getDerived(const LexicographicComparable& base) {
     return static_cast<const T&>(base);
   }
 
-  constexpr bool operator == (const AllOperatorsFromTupleMethod& other) const {
+  constexpr bool operator == (const LexicographicComparable& other) const {
     auto lhs = getDerived(*this), rhs = getDerived(other);
 
-    return lhs.tuple() == rhs.tuple();
+    return lhs.tie() == rhs.tie();
   }
 
-  constexpr bool operator != (const AllOperatorsFromTupleMethod& other) const {
+  constexpr bool operator != (const LexicographicComparable& other) const {
     auto lhs = getDerived(*this), rhs = getDerived(other);
 
-    return lhs.tuple() != rhs.tuple();
+    return lhs.tie() != rhs.tie();
   }
 
-  constexpr bool operator < (const AllOperatorsFromTupleMethod& other) const {
+  constexpr bool operator < (const LexicographicComparable& other) const {
     auto lhs = getDerived(*this), rhs = getDerived(other);
 
-    return lhs.tuple() < rhs.tuple();
+    return lhs.tie() < rhs.tie();
   }
 
-  constexpr bool operator <= (const AllOperatorsFromTupleMethod& other) const {
+  constexpr bool operator <= (const LexicographicComparable& other) const {
     auto lhs = getDerived(*this), rhs = getDerived(other);
 
-    return lhs.tuple() <= rhs.tuple();
+    return lhs.tie() <= rhs.tie();
   }
 
-  constexpr bool operator > (const AllOperatorsFromTupleMethod& other) const {
+  constexpr bool operator > (const LexicographicComparable& other) const {
     auto lhs = getDerived(*this), rhs = getDerived(other);
 
-    return lhs.tuple() > rhs.tuple();
+    return lhs.tie() > rhs.tie();
   }
 
-  constexpr bool operator >= (const AllOperatorsFromTupleMethod& other) const {
+  constexpr bool operator >= (const LexicographicComparable& other) const {
     auto lhs = getDerived(*this), rhs = getDerived(other);
 
-    return lhs.tuple() >= rhs.tuple();
+    return lhs.tie() >= rhs.tie();
   }
 };
 

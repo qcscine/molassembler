@@ -17,7 +17,10 @@ namespace Scine {
 
 namespace stereopermutation {
 
-//! Whether a stereopermutation has trans arranged linked substituents
+/*! @brief Whether a stereopermutation has trans arranged linked substituents
+ *
+ * @complexity{@math{O(L)}}
+ */
 bool hasTransArrangedPairs(
   const Stereopermutation& stereopermutation,
   Symmetry::Name symmetryName
@@ -41,6 +44,8 @@ bool hasTransArrangedPairs(
  * ligands with bridge length 4 (chelating atoms included), maybe even up to 6
  * to cis arrangements. Xantphos (with bridge length 7) is the smallest
  * trans-spanning ligand mentioned in Wikipedia.
+ *
+ * @complexity{@math{O(S!)} where @math{S} is the size of the involved symmetry}
  */
 std::vector<Stereopermutation> uniques(
   const Stereopermutation& initial,
@@ -50,13 +55,17 @@ std::vector<Stereopermutation> uniques(
 
 //! Data class for uniqueStereopermutations including weights
 struct StereopermutationsWithWeights {
+  //! Stereopermutations found
   std::vector<Stereopermutation> stereopermutations;
+  //! Relative statistical occurence of the stereopermutations
   std::vector<unsigned> weights;
 };
 
 /*!
  * Returns the set of rotationally unique stereopermutations including absolute
  * occurrence counts.
+ *
+ * See uniques()
  */
 StereopermutationsWithWeights uniquesWithWeights(
   const Stereopermutation& initial,

@@ -12,6 +12,7 @@
 
 #include "chemical_symmetries/Names.h"
 #include "temple/Preprocessor.h"
+#include "temple/OperatorSuppliers.h"
 
 #include "boost/optional/optional_fwd.hpp"
 
@@ -28,36 +29,19 @@ namespace Scine {
  */
 namespace stereopermutation {
 
-/*!
+/*! @brief Represent abstract stereopermutation around atom center
+ *
  * This class represents a simplified model of a sterically unique assignment
  * of a set of ligands to a stereocenter. It exists to uniquely identify the
  * steric configuration at this stereocenter, and provides methods to assist
  * a systematic generation of all possible configurations. It is generalized
  * over a number of symmetries which are encoded in a separate library.
  */
-struct Stereopermutation {
-private:
-/* Private member functions */
-  /*!
-   * Implementation of the generation of a set of all rotational equivalents of
-   * this Stereopermutation as defined by its symmetry template parameter. Takes an
-   * interrupt callback as an argument to which it passes *this and a new
-   * rotational structure every time one is found. If the callback returns
-   * true, the generation of assignments is terminated and a pair containing
-   * the set of generated assignments and a boolean with the value true is
-   * returned. If the generation is allowed to finish, the full set and the
-   * boolean false are returned.
-   */
-  std::pair<std::set<Stereopermutation>, bool> _generateAllRotations(
-    const std::function<
-      bool(const Stereopermutation&, const Stereopermutation&)
-    >& interruptCallbackOnNewStereopermutation,
-    const Symmetry::Name& symmetryName
-  ) const;
-
+class Stereopermutation : public temple::crtp::LexicographicComparable<Stereopermutation> {
 public:
 //!@name Member types
 //!@{
+  //! Type used to represent links between symmetry positions
   using LinksSetType = std::set<
     std::pair<unsigned, unsigned>
   >;
@@ -65,22 +49,30 @@ public:
 
 //!@name Static functions
 //!@{
-  //! Rotate charactes according to template symmetry
+  /*! @brief Rotate characters
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   static std::vector<char> rotateCharacters(
     const std::vector<char>& characters,
-    const std::vector<unsigned>& rotationIndices
+    const std::vector<unsigned>& rotation
   );
 
-  //! Rotate links according to template symmetry
+  /*! @brief Rotate links
+   *
+   * @complexity{@math{\Theta(L)}, not linear in symmetry size since it is small and constant}
+   */
   static LinksSetType rotateLinks(
     const LinksSetType& links,
-    const std::vector<unsigned>& rotationIndices
+    const std::vector<unsigned>& rotation
   );
 //!@}
 
 //!@name Member data
 //!@{
+  //! Abstract representation of ranked substituents
   std::vector<char> characters;
+  //! Links between characters
   LinksSetType links;
 //!@}
 
@@ -113,9 +105,9 @@ public:
 //!@{
   /*! @brief Applies a Symmetry rotation.
    *
-   * @complexity{@math{O(L^2)}}
+   * @complexity{@math{O(N + L)}}
    */
-  void applyRotation(const std::vector<unsigned>& rotationIndices);
+  void applyRotation(const std::vector<unsigned>& rotation);
   /*! @brief Swap two "columns"
    *
    * @complexity{@math{\Theta(L)}}
@@ -230,11 +222,30 @@ public:
 
 //!@name Operators
 //!@{
-  PURITY_WEAK bool operator < (const Stereopermutation& other) const;
-  PURITY_WEAK bool operator > (const Stereopermutation& other) const;
-  PURITY_WEAK bool operator == (const Stereopermutation& other) const;
-  PURITY_WEAK bool operator != (const Stereopermutation& other) const;
+  //! Yields members tied to tuple for crtp operator suppliers
+  inline auto tie() const {
+    return std::tie(characters, links);
+  }
 //!@}
+
+private:
+/* Private member functions */
+  /*!
+   * Implementation of the generation of a set of all rotational equivalents of
+   * this Stereopermutation as defined by its symmetry template parameter. Takes an
+   * interrupt callback as an argument to which it passes *this and a new
+   * rotational structure every time one is found. If the callback returns
+   * true, the generation of assignments is terminated and a pair containing
+   * the set of generated assignments and a boolean with the value true is
+   * returned. If the generation is allowed to finish, the full set and the
+   * boolean false are returned.
+   */
+  std::pair<std::set<Stereopermutation>, bool> _generateAllRotations(
+    const std::function<
+      bool(const Stereopermutation&, const Stereopermutation&)
+    >& interruptCallbackOnNewStereopermutation,
+    const Symmetry::Name symmetryName
+  ) const;
 };
 
 PURITY_WEAK std::size_t hash_value(const Stereopermutation& assignment);
