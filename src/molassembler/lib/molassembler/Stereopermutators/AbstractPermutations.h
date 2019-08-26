@@ -27,6 +27,8 @@ struct AbstractStereopermutations {
    * Necessary to avoid treating e.g. AAB and ABB separately, although the
    * resulting assignments are identical.
    *
+   * @complexity{@math{N \log N}}
+   *
    * Example:
    * @verbatim
    * rankedSites = {5, 8}, {3}, {1, 2, 4}
@@ -43,6 +45,8 @@ struct AbstractStereopermutations {
    *
    * Use the output of canonicalize here as input:
    *
+   * @complexity{@math{\Theta(N)}}
+   *
    * Example:
    * @verbatim
    * rankedSites = {5, 8}, {3}, {1, 2, 4}
@@ -56,6 +60,8 @@ struct AbstractStereopermutations {
 
   /*!
    * @brief Make site-index based links self-referential within canonical sites
+   *
+   * @complexity{@math{\Theta(L)}}
    *
    * Example:
    * @verbatim
@@ -75,6 +81,8 @@ struct AbstractStereopermutations {
   /*!
    * @brief Generates the reduced character representation of sites at their
    *   current symmetry positions
+   *
+   * @complexity{@math{O(S^2)} worst case}
    */
   static std::vector<char> makeStereopermutationCharacters(
     const RankingInformation::RankedSitesType& canonicalSites,
@@ -91,6 +99,8 @@ struct AbstractStereopermutations {
   /**
    * @brief Generates the set of abstract stereopermutations and intermediate
    *   data
+   *
+   * @complexity{The generation of permutations dominates: @math{\Theta(S!)}}
    *
    * @param ranking Ranking object indicating chemical differences between
    *    substituents and sites

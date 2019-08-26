@@ -23,7 +23,8 @@ class Molecule;
  * of one another and there is at least one enantiomeric pair.
  *
  * @pre The two molecules are both canonicalized with all components except
- * Stereopermutations, i.e. \code{.cpp}
+ * `Stereopermutations`, i.e.:
+ * \code{.cpp}
  * constexpr auto componentsBitmask = AtomEnvironmentComponents::ElementTypes
  *   | AtomEnvironmentComponents::BondOrders
  *   | AtomEnvironmentComponents::Symmetries;
@@ -43,7 +44,8 @@ class Molecule;
  *   conformer generation time). In these cases, this function returns false.
  *
  * @throws std::logic_error If the molecules are too different to be
- *   enantiomers (E.g. different number of atoms, bonds).
+ *   enantiomers (E.g. different number of atoms, bonds). Those checks should
+ *   be done before calling this function.
  *
  * @param a The first molecule to compare
  * @param b The second molecule to compare
@@ -55,8 +57,7 @@ bool enantiomeric(
   const Molecule& b
 );
 
-/**
- * @brief Generates a molecule's enantiomer
+/** @brief Generates a molecule's enantiomer
  *
  * @param a The molecule whose enantiomer to generate
  *

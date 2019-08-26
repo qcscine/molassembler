@@ -192,43 +192,81 @@ public:
 
 //!@name Information
 //!@{
-  //! Returns whether two atoms are bonded
+  /*! @brief Returns whether two atoms are bonded
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   bool adjacent(AtomIndex a, AtomIndex b) const;
-  //! Optionally fetch the bond index of a possibly non-existent bond
+  /*! @brief Optionally fetch the bond index of a possibly non-existent bond
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::optional<BondIndex> bond(AtomIndex a, AtomIndex b) const;
-  //! Generate a BondOrderCollection from the graph
+  /*! @brief Generate a BondOrderCollection from the graph
+   *
+   * @complexity{@math{\Theta(B)}}
+   */
   Utils::BondOrderCollection bondOrders() const;
-  //! Fetch the bond type at a particular bond
+  /*! @brief Fetch the bond type at a particular bond
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   BondType bondType(const BondIndex& edge) const;
-  /*!
-   * @brief Returns whether an atom can be removed without disconnecting the graph
+  /*! @brief Returns whether an atom can be removed without disconnecting the graph
+   *
+   * @complexity{@math{O(N)} worst case, if removal data is cached
+   * @math{\Theta(1)}}
+   *
    * @note This function is not thread-safe.
    */
   bool canRemove(AtomIndex a) const;
-  /*!
-   * @brief Returns whether a bond can be removed without disconnecting the graph
+  /*! @brief Returns whether a bond can be removed without disconnecting the graph
+   *
+   * @complexity{@math{O(N)} worst case, if removal data is cached
+   * @math{\Theta(1)}}
+   *
    * @note This function is not thread-safe.
    */
   bool canRemove(const BondIndex& edge) const;
-  /*!
-   * @brief Fetch a reference to Cycles
+  /*! @brief Fetch a reference to Cycles
+   *
+   * @complexity{@math{O(B)} worst case where @math{B} is the number of bonds
+   * in cycles, if cycles are cached @math{\Theta(1)}}
+   *
    * @note This function is not thread-safe.
    */
   const Cycles& cycles() const;
-  //! Returns the number of bonds incident upon an atom
+  /*! @brief Returns the number of bonds incident upon an atom
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned degree(AtomIndex a) const;
-  //! Fetch an element collection of all atoms
+  /*! @brief Fetch an element collection of all atoms
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   Utils::ElementTypeCollection elementCollection() const;
-  //! Fetch the element type of an atom
+  /*! @brief Fetch the element type of an atom
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   Utils::ElementType elementType(AtomIndex a) const;
 
-  //! Number of atoms in the graph
+  /*! @brief Number of atoms in the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   AtomIndex N() const;
-  //! Number of bonds in the graph
+  /*! @brief Number of bonds in the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned B() const;
 
-  /*!
-   * @brief Determine which vertices belong to which side of a bridge edge
+  /*! @brief Determine which vertices belong to which side of a bridge edge
+   *
+   * @complexity{@math{\Theta(N)}}
+   *
    * @note This function is not thread-safe.
    */
   std::pair<
@@ -239,32 +277,38 @@ public:
 
 //!@name Ranges
 //!@{
-  /*!
-   * @brief A begin-end pair of iterators that yield the range of valid atom
+  /*! @brief A begin-end pair of iterators that yield the range of valid atom
    *   indices.
-   * @note Use e.g. boost::make_iterator_range to yield an object with begin
+   *
+   * @complexity{@math{\Theta(N)}}
+   * @note Use e.g. `boost::make_iterator_range` to yield an object with begin
    *   and end members for range-for usage
    */
   Range<AtomIterator> atoms() const;
-  /*!
-   * @brief A begin-end pair of iterators that yield the range of valid bond
+  /*! @brief A begin-end pair of iterators that yield the range of valid bond
    *   indices
-   * @note Use e.g. boost::make_iterator_range to yield an object with begin
+   *
+   * @complexity{@math{\Theta(N)}}
+   * @note Use e.g. `boost::make_iterator_range` to yield an object with begin
    *   and end members for range-for usage
    */
   Range<BondIterator> bonds() const;
-  /*!
-   * @brief Fetch iterator pair yielding adjacents of an atom
+  /*! @brief Fetch iterator pair yielding adjacents of an atom
+   *
    * @param a The atom whose adjacents are desired
-   * @note Use e.g. boost::make_iterator_range to yield an object with begin
+   *
+   * @complexity{@math{\Theta(N)}}
+   * @note Use e.g. `boost::make_iterator_range` to yield an object with begin
    *   and end members for range-for usage
    * @returns A begin-end pair of iterators that yield adjacent atoms of an atom
    */
   Range<AdjacencyIterator> adjacents(AtomIndex a) const;
-  /*!
-   * @brief Fetch iterator pair yielding bonds indices indicent to an atom
+  /*! @brief Fetch iterator pair yielding bonds indices indicent to an atom
+   *
    * @param a The atom whose incident atoms are desired
-   * @note Use e.g. boost::make_iterator_range to yield an object with begin
+   *
+   * @complexity{@math{\Theta(N)}}
+   * @note Use e.g. `boost::make_iterator_range` to yield an object with begin
    *   and end members for range-for usage
    * @returns A begin-end pair of iterators that yield incident bond indices of
    *   an atom
@@ -272,16 +316,18 @@ public:
   Range<IncidentEdgesIterator> bonds(AtomIndex a) const;
 //!@}
 
-  /*!
-   * @brief Access to library-internal graph representation class
+  /*! @brief Access to library-internal graph representation class
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.
    */
   InnerGraph& inner();
 
-  /*!
-   * @brief Const-access to library-internal graph representation class
+  /*! @brief Const-access to library-internal graph representation class
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @warning This function is not intended for library consumers, merely used
    * for implementation purposes.

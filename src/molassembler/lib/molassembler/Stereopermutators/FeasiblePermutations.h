@@ -31,6 +31,8 @@ struct FeasibleStereopermutations {
 //!@{
   /*!
    * @brief Determine whether a stereopermutation is not obviously impossible
+   *
+   * @complexity{@math{\Theta(L)}}
    * @todo Move this to SpatialModel
    */
   static bool isNotObviouslyImpossibleStereopermutation(
@@ -57,6 +59,9 @@ struct FeasibleStereopermutations {
    * @param ranking Ranking object indicating chemical differences between
    *   sites and substituents
    * @param graph The graph being modeled
+   *
+   * @complexity{@math{\Theta(P\cdot L)} where @math{P} is the number of
+   * abstract stereopermutations and @math{L} is the number of links}
    */
   FeasibleStereopermutations(
     const AbstractStereopermutations& abstractPermutations,

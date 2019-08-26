@@ -27,14 +27,22 @@ class AtomStereopermutator;
 //! Core graph-level algorithms (not requiring stereopermutator information)
 namespace GraphAlgorithms {
 
-//! Find links between two adjacent stereopermutators, returns unordered
+/*! @brief Find links between two adjacent stereopermutators, returns unordered links
+ *
+ * @complexity{@math{\Theta(R)} where @math{R} is the number of relevant cycles
+ * containing both stereopermutators' central indices}
+ */
 std::vector<LinkInformation> siteLinks(
   const InnerGraph& graph,
   const AtomStereopermutator& stereopermutatorA,
   const AtomStereopermutator& stereopermutatorB
 );
 
-//! Find links between substituent atoms, returns ordered links
+/*! @brief Find links between substituent atoms, returns ordered links
+ *
+ * @complexity{@math{S^2} where @math{S} is the number of substituents of the
+ * central vertex}
+ */
 std::vector<LinkInformation> siteLinks(
   const InnerGraph& graph,
   AtomIndex source,
@@ -46,8 +54,9 @@ std::vector<LinkInformation> siteLinks(
 
 namespace detail {
 
-/*!
- * @brief Predicate to determine if a site is haptic
+/*! @brief Predicate to determine if a site is haptic
+ *
+ * @complexity{@math{\Theta(1)}}
  * @note This is not as simple as siteAtoms.size() > 1.
  */
 bool isHapticSite(
@@ -98,6 +107,8 @@ void updateEtaBonds(InnerGraph& graph);
 /**
  * @brief Calculates the graph distance from an atom to all other atoms of the
  *   molecule
+ *
+ * @complexity{@math{\Theta(N)}}
  *
  * @param a The atom from which to calculate distances
  * @param graph The graph

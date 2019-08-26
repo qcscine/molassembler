@@ -17,8 +17,7 @@ struct Stereopermutation;
 
 namespace molassembler {
 
-/*!
- * @brief Generates a flat mapping from site indices to symmetry positions
+/*! @brief Generates a flat mapping from site indices to symmetry positions
  *
  * Generates a mapping from site indices to symmetry positions according to
  * the ranking character distribution to symmetry positions of a
@@ -29,14 +28,15 @@ namespace molassembler {
  * auto mapping = generateSiteToSymmetryPosition(...);
  * unsigned symmetryPositionOfSiteFour = mapping.at(4u);
  * @endcode
+ *
+ * @complexity{@math{\Theta(N)}}
  */
 std::vector<unsigned> siteToSymmetryPositionMap(
   const stereopermutation::Stereopermutation& stereopermutation,
   const RankingInformation::RankedSitesType& canonicalSites
 );
 
-/*!
- * @brief Generates a flat mapping from symmetry positions to site indices
+/*! @brief Generates a flat mapping from symmetry positions to site indices
  *
  * Generates exactly the inverse map to generateSiteToSymmetryPositionMap
  *
@@ -44,6 +44,8 @@ std::vector<unsigned> siteToSymmetryPositionMap(
  * auto mapping = generateSymmetryPositionToSiteMap(...);
  * unsigned siteIndexAtSymmetryPositionFive = mapping.at(5u);
  * @endcode
+ *
+ * @complexity{@math{\Theta(N)}}
  */
 std::vector<unsigned> symmetryPositionToSiteMap(
   const stereopermutation::Stereopermutation& stereopermutation,

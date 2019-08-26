@@ -15,6 +15,7 @@ namespace Scine {
 namespace molassembler {
 namespace Stereopermutators {
 
+//! Data class for cycleModelContradictsGraph() input
 struct BaseAtom {
   Utils::ElementType elementType;
   double distanceToLeft = 0;
@@ -22,8 +23,7 @@ struct BaseAtom {
   double outOfPlaneDistance = 0;
 };
 
-/**
- * @brief Checks whether spatially modeling a cycle contradicts the graph
+/** @brief Checks whether spatially modeling a cycle contradicts the graph
  *
  * @param elementTypes Element types of the cycle, laid out as A, I, J, ..., X, B
  * @param cycleEdgeLengths Edge lengths forming a cyclic polygon, laid out as
@@ -31,6 +31,8 @@ struct BaseAtom {
  * @param bases Base atoms to check distances to atoms of the cyclic polygon
  *   against. Each base is distanceToLeft away from A and distanceToRight away
  *   from B
+ *
+ * @complexity{@math{\Theta(N)}}
  *
  * @return If any distances to atoms of the cyclic polygon are shorter
  *   than a single bond
@@ -41,14 +43,15 @@ bool cycleModelContradictsGraph(
   const std::vector<BaseAtom>& bases
 );
 
-/**
- * @brief Checks whether the far bond in a triangle is too close to the
+/** @brief Checks whether the far bond in a triangle is too close to the
  *   originating atom
  *
  * @param a Bond length to first atom of triangle
  * @param b Bond length to second atom of triangle
  * @param angle Angle between bonds @p a and @p b
  * @param bondRadius Bond radius of the originating atom
+ *
+ * @complexity{@math{\Theta(1)}}
  *
  * @returns Whether the altitude of the originating atom in the resulting
  *   triangle is shorter or equal to the bond radius

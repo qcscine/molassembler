@@ -20,20 +20,23 @@ namespace molassembler {
 // Forward-declarations
 class OuterGraph;
 
-/*! Randomness source for the entire library
+/*! @brief Randomness source for the entire library
  *
  * This instance supplies the library with randomness. The default seeding
  * behavior is build-type dependent. In debug builds, the seed is fixed. In
  * release builds, the generator is seeded from std::random_device.
  *
- * If you wish to get deterministic behavior in release builds, re-seed the
- * generator.
+ * @note If you wish to get deterministic behavior in release builds, re-seed
+ * the generator.
+ *
+ * @complexity{@math{\Theta(1)}}
  *
  * @warning Do not use this instance in any static object's destructor!
  */
 random::Engine& randomnessEngine();
 
-/*!
+/*! @brief Modeling temperature regime enumerator
+ *
  * Specifies for which temperature regime the Molecule is being modeled.
  * This currently affects only whether nitrogen atoms with a trigonal
  * pyramidal geometry are considered stereopermutators.
@@ -45,10 +48,11 @@ enum class TemperatureRegime {
   High
 };
 
-/*!
- * Specifies the effects of graph modifications. In case a substituent is
- * added or removed at a stereopermutator, an attempt is made to transfer chiral
- * information into the new geometry. How this attempt is made can be altered.
+/*! @brief Specifies the effects of graph modifications on chiral centers
+ *
+ * In case a substituent is added or removed at a stereopermutator, an attempt
+ * is made to transfer chiral information into the new geometry. How this
+ * attempt is made can be altered.
  *
  * The following graphs are to illustrate which chiral information transfers
  * are possible under which setting.
@@ -227,13 +231,20 @@ struct Options {
 class Cycles;
 class AtomStereopermutator;
 
-/*! Decides whether to keep a stereopermutator or not within a temperature regime
+/*! @brief Decides whether to keep a stereopermutator within a temperature regime
  *
  * Criteria applied are:
  * - Minimum of three adjacent indices
  * - If the high-temperature approximation is invoked, trivalent nitrogen
  *   inverts too rapidly to carry stereoinformation (unless part of a cycle
  *   of size 4 or smaller, where strain hinders inversion)
+ *
+ * @complexity{@math{\Theta(U)} where @math{U} is the number of unique ring
+ * families in the molecule}
+ *
+ * @todo This has to change! Disregarding stereopermutators is not the way to
+ * solve stereopermutation interconversion, it should be handled at the
+ * stereopermutator itself!
  */
 bool disregardStereopermutator(
   const AtomStereopermutator& stereopermutator,

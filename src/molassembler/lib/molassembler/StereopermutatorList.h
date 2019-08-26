@@ -35,99 +35,183 @@ public:
 
 //!@name Modification
 //!@{
-  //! Add a new AtomStereopermutator to the list
+  /*! @brief Add a new AtomStereopermutator to the list
+   *
+   * @complexity{@math{\Theta(1)} amortized}
+   *
+   * @returns An iterator pointing to the added stereopermutator
+   */
   AtomMapType::iterator add(AtomStereopermutator stereopermutator);
 
-  //! Add a new BondStereopermutator to the list
+  /*! @brief Add a new BondStereopermutator to the list
+   *
+   * @complexity{@math{\Theta(1)} amortized}
+   *
+   * @returns An iterator pointing to the added stereopermutator
+   */
   BondMapType::iterator add(BondStereopermutator stereopermutator);
 
-  //! Apply an index mapping to the list of stereopermutators
+  /*! @brief Apply an index mapping to the list of stereopermutators
+   *
+   * Applies the permutation to its maps, transforming the keys (atom and bond
+   * indices) and all stereopermutators.
+   *
+   * @complexity{@math{\Theta(A + B)}}
+   */
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
-  //! Remove all stereopermutators
+  /*! @brief Remove all stereopermutators
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void clear();
 
-  //! Remove all stereopermutators on bonds
+  /*! @brief Remove all stereopermutators on bonds
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void clearBonds();
 
-  //! Fetch a reference-option to an AtomStereopermutator, if present
+  /*! @brief Fetch a reference-option to an AtomStereopermutator
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::optional<AtomStereopermutator&> option(AtomIndex index);
 
-  //! Fetch a reference-option to a BondStereopermutator, if present
+  /*! @brief Fetch a reference-option to a BondStereopermutator
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::optional<BondStereopermutator&> option(const BondIndex& edge);
 
-  /*! Communicates the removal of a vertex index to all stereopermutators in the list
+  /*! @brief Communicates the removal of a vertex index to all stereopermutators in the list
    *
    * Removing a vertex invalidates some vertex descriptors, which are used
    * liberally in the stereopermutator classes. This function ensures that
    * vertex descriptors are valid throughout.
+   *
+   * @complexity{@math{\Theta(A + B)}}
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
 
-  //! Removes the AtomStereopermutator on a specified index
+  /*! @brief Removes the AtomStereopermutator on a specified index
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void remove(AtomIndex index);
 
-  //! Removes the BondStereopermutator on a specified edge
+  /*! @brief Removes the BondStereopermutator on a specified edge
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void remove(const BondIndex& edge);
 
-  //! Removes the AtomStereopermutator on a specified index, if present
+  /*! @brief Removes the AtomStereopermutator on a specified index, if present
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void try_remove(AtomIndex index);
 
-  //! Removes the BondStereopermutator on a specified edge, if present
+  /*! @brief Removes the BondStereopermutator on a specified edge, if present
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void try_remove(const BondIndex& edge);
 //!@}
 
 //!@name Information
 //!@{
-  //! Modular comparison with another StereopermutatorList using a bitmask
+  /*! @brief Modular comparison with another StereopermutatorList using a bitmask
+   *
+   * @complexity{@math{O(A + B)}}
+   */
   bool compare(
     const StereopermutatorList& other,
     AtomEnvironmentComponents componentBitmask
   ) const;
 
-  //! Returns true if there are no stereopermutators
+  /*! @brief Returns true if there are no stereopermutators
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   bool empty() const;
 
-  //! Returns true if there are any stereopermutators with zero possible assignments
+  /*! @brief Returns true if there are any stereopermutators with zero possible assignments
+   *
+   * @complexity{@math{O(A + B)}}
+   */
   bool hasZeroAssignmentStereopermutators() const;
 
-  //! Returns true if there are unassigned stereopermutators
+  /*! @brief Returns true if there are unassigned stereopermutators
+   *
+   * @complexity{@math{O(A + B)}}
+   */
   bool hasUnassignedStereopermutators() const;
 
-  //! Fetch a const ref-option to an AtomStereopermutator, if present
+  /*! @brief Fetch a const ref-option to an AtomStereopermutator, if present
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::optional<const AtomStereopermutator&> option(AtomIndex index) const;
 
-  //! Fetch a const ref-option to a BondStereopermutator, if present
+  /*! @brief Fetch a const ref-option to a BondStereopermutator, if present
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::optional<const BondStereopermutator&> option(const BondIndex& edge) const;
 
-  //! Returns the number of AtomStereopermutators
+  /*! @brief Returns the number of AtomStereopermutators
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned A() const;
 
-  //! Returns the number of BondStereopermutators
+  /*! @brief Returns the number of BondStereopermutators
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned B() const;
 
-  //! Combined size of atom and bond-stereopermutator lists
+  /*! @brief Combined size of atom and bond-stereopermutator lists
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned size() const;
 //!@}
 
 //!@name Ranges (not thread-safe)
 //!@{
-  //! Returns an iterable object with modifiable atom stereopermutator references
+  /*! @brief Returns an iterable object with modifiable atom stereopermutator references
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::range_detail::select_second_mutable_range<AtomMapType> atomStereopermutators();
 
-  //! Returns an iterable object with unmodifiable atom stereopermutator references
+  /*! @brief Returns an iterable object with unmodifiable atom stereopermutator references
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::range_detail::select_second_const_range<AtomMapType> atomStereopermutators() const;
 
-  //! Returns an iterable object with modifiable bond stereopermutator references
+  /*! @brief Returns an iterable object with modifiable bond stereopermutator references
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::range_detail::select_second_mutable_range<BondMapType> bondStereopermutators();
 
-  //! Returns an iterable object with unmodifiable bond stereopermutator references
+  /*! @brief Returns an iterable object with unmodifiable bond stereopermutator references
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::range_detail::select_second_const_range<BondMapType> bondStereopermutators() const;
 //!@}
 
 //!@name Operators
 //!@{
-  //! Strict equality comparison
+  /*! @brief Strict equality comparison
+   *
+   * @complexity{@math{O(A + B)}}
+   */
   bool operator == (const StereopermutatorList& other) const;
   //! Inverts @p operator ==
   bool operator != (const StereopermutatorList& other) const;

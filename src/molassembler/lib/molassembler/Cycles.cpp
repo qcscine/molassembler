@@ -17,6 +17,32 @@ namespace Scine {
 
 namespace molassembler {
 
+namespace detail {
+
+inline std::vector<unsigned> intersect(
+  const std::vector<unsigned>& a,
+  const std::vector<unsigned>& b
+) {
+  assert(std::is_sorted(std::begin(a), std::end(a)));
+  assert(std::is_sorted(std::begin(b), std::end(b)));
+  std::vector<unsigned> intersection;
+  intersection.reserve(
+    std::min(a.size(), b.size())
+  );
+
+  std::set_intersection(
+    std::begin(a),
+    std::end(a),
+    std::begin(b),
+    std::end(b),
+    std::back_inserter(intersection)
+  );
+
+  return intersection;
+}
+
+} // namespace detail
+
 /* Cycles member Type declarations */
 struct Cycles::RDLDataPtrs {
   //! Raw pointers to RDL_graph object
@@ -43,7 +69,29 @@ Cycles::Cycles(const OuterGraph& sourceGraph, const bool ignoreEtaBonds)
 
 Cycles::Cycles(const InnerGraph& sourceGraph, const bool ignoreEtaBonds)
   : _rdlPtr(std::make_shared<RDLDataPtrs>(sourceGraph, ignoreEtaBonds))
-{}
+{
+  unsigned U = RDL_getNofURF(_rdlPtr->dataPtr);
+  for(unsigned i = 0; i < U; ++i) {
+    RDL_edge* edgeArray;
+    unsigned nEdges = RDL_getEdgesForURF(_rdlPtr->dataPtr, i, &edgeArray);
+    if(nEdges == RDL_INVALID_RESULT) {
+      throw std::logic_error("RDL failure");
+    }
+
+    for(unsigned j = 0; j < nEdges; ++j) {
+      const BondIndex bond { edgeArray[j][0], edgeArray[j][1] };
+      _urfMap[bond].push_back(i);
+    }
+  }
+
+  // Sort the URFs for set intersections
+  for(auto& entry : _urfMap) {
+    std::sort(
+      std::begin(entry.second),
+      std::end(entry.second)
+    );
+  }
+}
 
 unsigned Cycles::numCycleFamilies() const {
   return RDL_getNofURF(_rdlPtr->dataPtr);
@@ -212,12 +260,33 @@ Cycles::containing(const AtomIndex atom) const {
 
 std::pair<Cycles::URFIDsCycleIterator, Cycles::URFIDsCycleIterator>
 Cycles::containing(const BondIndex& bond) const {
-  return detail::makeURFIDsCycleIterator(_rdlPtr, std::vector<BondIndex> {bond});
+  return containing(std::vector<BondIndex> {bond});
 }
 
 std::pair<Cycles::URFIDsCycleIterator, Cycles::URFIDsCycleIterator>
 Cycles::containing(const std::vector<BondIndex>& bonds) const {
-  return detail::makeURFIDsCycleIterator(_rdlPtr, bonds);
+  auto fetch = [&](const BondIndex& bond) -> std::vector<unsigned> {
+    auto findIter = _urfMap.find(bond);
+    if(findIter == std::end(_urfMap)) {
+      return {};
+    }
+
+    return findIter->second;
+  };
+
+  std::vector<unsigned> urfs = fetch(bonds.front());
+  for(unsigned i = 1; i < bonds.size() && !urfs.empty(); ++i) {
+    urfs = detail::intersect(urfs, fetch(bonds.at(i)));
+  }
+
+  Cycles::URFIDsCycleIterator begin {bonds, std::move(urfs), _rdlPtr};
+  Cycles::URFIDsCycleIterator end = begin;
+  end.advanceToEnd();
+
+  return {
+    std::move(begin),
+    std::move(end)
+  };
 }
 
 RDL_data* Cycles::dataPtr() const {
@@ -425,28 +494,6 @@ struct Cycles::URFIDsCycleIterator::URFHelper {
     );
   }
 
-  static std::vector<unsigned> intersect(
-    const std::vector<unsigned>& a,
-    const std::vector<unsigned>& b
-  ) {
-    assert(std::is_sorted(std::begin(a), std::end(a)));
-    assert(std::is_sorted(std::begin(b), std::end(b)));
-    std::vector<unsigned> intersection;
-    intersection.reserve(
-      std::min(a.size(), b.size())
-    );
-
-    std::set_intersection(
-      std::begin(a),
-      std::end(a),
-      std::begin(b),
-      std::end(b),
-      std::back_inserter(intersection)
-    );
-
-    return intersection;
-  }
-
   static std::vector<unsigned> getURFs(
     const std::vector<BondIndex>& bonds,
     const RDLDataPtrs& dataPtrs
@@ -465,7 +512,7 @@ struct Cycles::URFIDsCycleIterator::URFHelper {
       auto newIDs = getURFs(bonds[i], dataPtrs);
       temple::inplace::sort(newIDs);
 
-      idsIntersection = intersect(idsIntersection, newIDs);
+      idsIntersection = detail::intersect(idsIntersection, newIDs);
 
       if(idsIntersection.empty()) {
         break;
@@ -511,6 +558,13 @@ struct Cycles::URFIDsCycleIterator::URFHelper {
       idsIdx(0)
   {}
 
+  template<typename Arg>
+  URFHelper(Arg&& arg, std::vector<unsigned> urfs)
+    : _soughtVariant(arg),
+      ids(std::move(urfs)),
+      idsIdx(0)
+  {}
+
   VariantType _soughtVariant;
   std::vector<unsigned> ids;
   unsigned idsIdx;
@@ -528,12 +582,13 @@ Cycles::URFIDsCycleIterator::URFIDsCycleIterator(
 
 Cycles::URFIDsCycleIterator::URFIDsCycleIterator(
   const BondIndex& soughtBond,
+  std::vector<unsigned> urfs,
   const std::shared_ptr<RDLDataPtrs>& dataPtr
 ) : _rdlPtr(dataPtr),
     _urfsPtr(
       std::make_unique<URFHelper>(
         std::vector<BondIndex> {soughtBond},
-        *dataPtr
+        std::move(urfs)
       )
     ),
     _cyclePtr()
@@ -543,9 +598,12 @@ Cycles::URFIDsCycleIterator::URFIDsCycleIterator(
 
 Cycles::URFIDsCycleIterator::URFIDsCycleIterator(
   const std::vector<BondIndex>& soughtBonds,
+  std::vector<unsigned> urfs,
   const std::shared_ptr<RDLDataPtrs>& dataPtr
 ) : _rdlPtr(dataPtr),
-    _urfsPtr(std::make_unique<URFHelper>(soughtBonds, *dataPtr)),
+    _urfsPtr(
+      std::make_unique<URFHelper>(soughtBonds, std::move(urfs))
+    ),
     _cyclePtr()
 {
   _initializeCyclesFromURFID();

@@ -24,8 +24,7 @@ namespace outcome = BOOST_OUTCOME_V2_NAMESPACE;
 class Molecule;
 class BondStereopermutator;
 
-/**
- * @brief Helper type for directed conformer generation.
+/** @brief Helper type for directed conformer generation.
  *
  * Generates guaranteed new combinations of BondStereopermutator assignments
  * and provides helper functions for the generation of conformers using these
@@ -71,17 +70,15 @@ public:
 //!@{
   //! Type used to represent the list of bonds relevant to directed conformer generation
   using BondList = std::vector<BondIndex>;
-  /*!
-   * @brief Type used to represent assignments at bonds
+  /*! @brief Type used to represent assignments at bonds
+   *
    * @note You can serialize / deserialize this with Scine::base64::encode and
    *   Scine::base64::decode. It's not the most efficient representation
    *   but still better than each position having its own character.
    */
   using DecisionList = std::vector<std::uint8_t>;
 
-  /**
-   * @brief Reason why a bond is ignored
-   */
+  //* @brief Reason why a bond is ignored
   enum class IgnoreReason {
     //! There is not an assigned stereopermutator on both ends of the bond
     AtomStereopermutatorPreconditionsUnmet,
@@ -89,8 +86,7 @@ public:
     HasAssignedBondStereopermutator,
     //! At least one constituting atom is terminal
     HasTerminalConstitutingAtom,
-    /*!
-     * @brief This bond is in a cycle
+    /*! @brief This bond is in a cycle
      *
      * Despite the fact that cycle bonds may very well contribute to the
      * conformational ensemble, it is difficult to reason about conformational
@@ -128,14 +124,12 @@ public:
      * approach three.
      */
     InCycle,
-    /*!
-     * @brief This bond is an eta bond (indicates bonding to haptic ligands,
-     *   and therefore excluded)
+    /*! @brief This bond is an eta bond (indicates bonding to haptic ligands,
+     *  and therefore excluded)
      */
     IsEtaBond,
-    /*!
-     * @brief Rotation about this bond is isotropic (all ligands have same
-     *   ranking on at least one side)
+    /*! @brief Rotation about this bond is isotropic (all ligands have same
+     *  ranking on at least one side)
      */
     RotationIsIsotropic
   };
@@ -143,14 +137,16 @@ public:
 
 //!@name Static functions
 //!@{
-  /**
-   * @brief Decide whether to consider a bond's dihedral values for directed
+  /** @brief Decide whether to consider a bond's dihedral values for directed
    *   conformer generation or not
    *
    * @param bondIndex The bond to consider
    * @param molecule The molecule in which @p bond exists
    * @param smallestCycleMap A map of atom indices to the smallest cycle
    *   they are in
+   *
+   * @complexity{@math{O(S!)} where @math{S} is the size of the larger symmetry
+   * constituting @p bondIndex}
    *
    * @see makeSmallestCycleMap
    *
@@ -164,27 +160,7 @@ public:
     const std::unordered_map<AtomIndex, unsigned>& smallestCycleMap
   );
 
-  /**
-   * @brief Establishes limitations on rotational assignments of some bonds
-   *
-   * Eliminates trans-arrangements of cycle sequences in cycles that do not
-   * have the conformational flexibility for it.
-   *
-   * @param viableBonds List of bonds deemed reasonable by considerBond() for
-   *   directed conformer generation
-   * @param molecule Molecule
-   *
-   * @return A partial mapping of bond indices to lists of viable rotational
-   *   assignments. Bond indices upon which no limitations are placed do not
-   *   have entries in this map.
-   */
-  static std::unordered_map<BondIndex, std::vector<unsigned>, boost::hash<BondIndex>> arrangementLimits(
-    const BondList& viableBonds,
-    const Molecule& molecule
-  );
-
-  /**
-   * @brief Calculates a distance metric between two decision lists for
+  /** @brief Calculates a distance metric between two decision lists for
    *   dihedral permutations
    *
    * The distance metric is:
@@ -209,6 +185,8 @@ public:
    * @param b The second distance metric
    * @param bounds Upper exclusive bound on values at each position
    *
+   * @complexity{@math{\Theta(N)}}
+   *
    * @return A distance metric between @p a and @p b.
    */
   static unsigned distance(
@@ -220,14 +198,17 @@ public:
 
 //!@name Constructors
 //!@{
-  /**
-   * @brief Constructor
+  /** @brief Constructor
    *
    * @param molecule Molecule for which to generate conformers
    * @param bondsToConsider A list of suggestions of which bonds to consider.
    *   Bonds for which considerBond() yields an IgnoreReason will still be
    *   ignored. If the list is empty, all bonds of a molecule will be
    *   tested against considerBond().
+   *
+   * @complexity{@math{\Theta(B)} where @math{B} is the number of bonds in the
+   * molecule. If there is a particularly large symmetry in the molecule, this
+   * can dominate with @math{\Theta(S!)}.}
    *
    * Scales linearly with the number of bonds in @p molecule or
    * @p bondsToConsider's size.
@@ -249,11 +230,11 @@ public:
 
 //!@name Modification
 //!@{
-  /*!
-   * @brief Generate a new list of discrete dihedral arrangement choices
+  /*! @brief Generate a new list of discrete dihedral arrangement choices
    *
    * Guarantees that the generated list is not yet part of the underlying set.
-   * Scales linearly with the number of considered dihedrals.
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @throws std::logic_error If the underlying set is full, i.e. all decision
    *   lists for conformers have been generated.
@@ -270,7 +251,7 @@ public:
   /*!
    * @brief Adds a decision list to the underlying set-like data structure
    *
-   * Scales linearly with the length of @p decisionList.
+   * @complexity{@math{\Theta(N)}}
    *
    * @throws std::logic_error If the result of bondList() is empty, i.e. there
    *   are no bonds to consider for directed conformer generation.
@@ -285,7 +266,7 @@ public:
    * @throws std::logic_error If the result of bondList() is empty, i.e. there
    *   are no bonds to consider for directed conformer generation.
    *
-   * Scales linearly with the length of @p decisionList.
+   * @complexity{@math{\Theta(N)}}
    */
   bool contains(const DecisionList& decisionList);
 //!@}
@@ -293,7 +274,9 @@ public:
 //!@name Information
 //!@{
   /*!
-   * @brief Accessor for list of relevant bonds, O(1)
+   * @brief Accessor for list of relevant bonds
+   *
+   * @complexity{@math{\Theta(1)}}
    * @note This list may be empty. Many member functions may throw under these
    *   conditions.
    */
@@ -301,26 +284,31 @@ public:
 
   /*!
    * @brief Number of conformer decision lists stored in the underlying
-   *   set-like data structure, O(1)
+   *   set-like data structure
    * @returns The number of DecisionLists stored in the underlying set.
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @warning If bondList() returns an empty list, i.e. there are no bonds to
    *   consider for directed conformer generation, this always returns zero.
    */
   unsigned decisionListSetSize() const;
 
-  /*!
-   * @brief Number of conformers needed for full ensemble, O(1)
+  /*! @brief Number of conformers needed for full ensemble
+   *
+   * @complexity{@math{\Theta(1)}}
+   *
    * @warning If bondList() returns an empty list, i.e. there are no bonds to
    *   consider for directed conformer generation, this always returns zero.
    */
   unsigned idealEnsembleSize() const;
 
-  /*!
-   * @brief Try to generate a conformer for a particular decision list
+  /*! @brief Try to generate a conformer for a particular decision list
    *
    * This is very similar to the free generateConformation function in terms
    * of what @p configuration will accept.
+   *
+   * @see Scine::molassembler::generateConformation()
    *
    * @throws std::invalid_argument If the passed decisionList does not match
    *   the length of the result of bondList().
@@ -330,10 +318,13 @@ public:
     const DistanceGeometry::Configuration& configuration = DistanceGeometry::Configuration {}
   );
 
+  /*! @brief Yields a molecule reference for a particular decision list
+   *
+   * @complexity{@math{\Theta(N)} bond stereopermutator assignments}
+   */
   const Molecule& conformationMolecule(const DecisionList& decisionList);
 
-  /*!
-   * @brief Infer a decision list for relevant bonds from positional information
+  /*! @brief Infer a decision list for relevant bonds from positional information
    *
    * For all bonds considered relevant (i.e. all bonds in bondList()), fits
    * supplied positions to possible stereopermutations and returns the result.
@@ -343,6 +334,8 @@ public:
    *   assignment changes
    * - The molecule represented in @p positions has not constutitionally
    *   rearranged
+   *
+   * @complexity{@math{\Theta(N)} bond stereopermutator fits}
    *
    * @throws std::logic_error If an assignment could not be recovered from
    *   positions

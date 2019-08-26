@@ -24,7 +24,7 @@ namespace molassembler {
  */
 namespace random {
 
-//! Instances of this class can be used to drive PRNGs
+//! @brief Drives a PRNG
 class Engine {
 public:
   //! The type this engine generates
@@ -53,7 +53,10 @@ public:
   //! Seed the underlying state with multiple integer values
   void seed(const std::vector<int>& signedSeeds);
 
-  //! Advances the state and returns a value
+  /*! @brief Advances the state and returns a value
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   result_type operator() () const;
 
 private:

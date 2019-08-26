@@ -11,6 +11,7 @@
 #define INCLUDE_MOLASSEMBLER_CYCLES_H
 
 #include "RingDecomposerLib.h"
+#include "boost/functional/hash.hpp"
 
 #include "molassembler/OuterGraph.h"
 
@@ -116,11 +117,13 @@ public:
 
     URFIDsCycleIterator(
       const BondIndex& soughtBond,
+      const std::vector<unsigned> urfs,
       const std::shared_ptr<RDLDataPtrs>& dataPtr
     );
 
     URFIDsCycleIterator(
       const std::vector<BondIndex>& soughtBonds,
+      const std::vector<unsigned> urfs,
       const std::shared_ptr<RDLDataPtrs>& dataPtr
     );
 
@@ -148,23 +151,41 @@ public:
 
 //!@name Special member functions
 //!@{
-  Cycles() = default;
+  /*! @brief Constructor from outer graph
+   *
+   * @complexity{Approximately linear in the number of bonds in cycles}
+   */
   Cycles(const OuterGraph& sourceGraph, bool ignoreEtaBonds = true);
+  //! @overload
   Cycles(const InnerGraph& innerGraph, bool ignoreEtaBonds = true);
 //!@}
 
 //!@name Information
 //!@{
-  //! Returns the number of unique ring families (URFs)
+  /*! @brief Returns the number of unique ring families (URFs)
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned numCycleFamilies() const;
 
-  //! Returns the number of unique ring families (URFs) an index is involved in
+  /*! @brief Returns the number of unique ring families (URFs) an index is involved in
+   *
+   * @complexity{@math{\Theta(U)} where @math{U} is the number of unique ring
+   * families in the molecule}
+   */
   unsigned numCycleFamilies(AtomIndex index) const;
 
-  //! Returns the number of relevant cycles (RCs)
+  /*! @brief Returns the number of relevant cycles (RCs)
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   unsigned numRelevantCycles() const;
 
-  //! Returns the number of relevant cycles (RCs)
+  /*! @brief Returns the number of relevant cycles (RCs)
+   *
+   * @complexity{@math{\Theta(U)} where @math{U} is the number of unique ring
+   * families in the molecule}
+   */
   unsigned numRelevantCycles(AtomIndex index) const;
 
   //! Provide access to calculated data
@@ -179,8 +200,22 @@ public:
 
 //!@name Ranges
 //!@{
+  /*! @brief Range of relevant cycles containing an atom
+   *
+   * @complexity{@math{O(U)} where @math{U} is the number of unique ring
+   * families of the molecule}
+   */
   std::pair<URFIDsCycleIterator, URFIDsCycleIterator> containing(AtomIndex atom) const;
+  /*! @brief Range of relevant cycles containing a bond
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   std::pair<URFIDsCycleIterator, URFIDsCycleIterator> containing(const BondIndex& bond) const;
+  /*! @brief Range of relevant cycles containing several bonds
+   *
+   * @complexity{@math{\Theta(B)} where @math{B} is the number of bonds in the
+   * parameters}
+   */
   std::pair<URFIDsCycleIterator, URFIDsCycleIterator> containing(const std::vector<BondIndex>& bonds) const;
 //!@}
 
@@ -193,33 +228,57 @@ public:
 
 private:
   std::shared_ptr<RDLDataPtrs> _rdlPtr;
+  // Map form BondIndex to ordered list of its URF IDs
+  std::unordered_map<BondIndex, std::vector<unsigned>, boost::hash<BondIndex>> _urfMap;
 };
 
+/*! @brief Yields the size of the smallest cycle containing an atom
+ *
+ * @complexity{@math{O(U + C)} where @math{U} is the number of unique ring
+ * families of the molecule and @math{C} is the number of cycles containing
+ * @p atom}
+ *
+ * @warning Do not use this a lot. Consider makeSmallestCycleMap() instead.
+ */
 boost::optional<unsigned> smallestCycleContaining(AtomIndex atom, const Cycles& cycles);
 
 /*!
  * @brief Creates a mapping from atom index to the size of the smallest cycle
  *   containing that index.
+ *
+ * @complexity{@math{\Theta(R)} where @math{R} is the number of relevant cycles
+ * in the molecule}
+ *
  * @note The map does not contain entries for indices not enclosed by a cycle.
  */
 std::unordered_map<AtomIndex, unsigned> makeSmallestCycleMap(const Cycles& cycleData);
 
-/*!
- * @brief From a set of graph edge descriptors, this function creates one of
- *   the two possible vertex index sequences describing the cycle
+/*! @brief Create cycle vertex sequence from unordered edges
+ *
+ * From a set of unordered graph edge descriptors, this function creates one of
+ * the two possible vertex index sequences describing the cycle.
+ *
+ * @complexity{@math{O(E^2)} worst case}
  */
 std::vector<AtomIndex> makeRingIndexSequence(
   std::vector<BondIndex> edgeDescriptors
 );
 
+/*! @brief Centralize a cycle vertex sequence at a particular vertex
+ *
+ * @complexity{@math{O(N)}}
+ */
 std::vector<AtomIndex> centralizeRingIndexSequence(
   std::vector<AtomIndex> ringIndexSequence,
   AtomIndex center
 );
 
-/*!
- * @brief Counts the number of planarity enforcing bonds in a set of edge
- *   descriptors.  Double and aromatic bonds are considered planarity enforcing.
+/*! @brief Count the number of planarity enforcing bonds
+ *
+ * Counts the number of planarity enforcing bonds in a set of edge descriptors.
+ * Double bonds are considered planarity enforcing.
+ *
+ * @complexity{@math{O(N)}}
  */
 unsigned countPlanarityEnforcingBonds(
   const std::vector<BondIndex>& edgeSet,

@@ -126,8 +126,7 @@ public:
 
 //!@name Modification
 //!@{
-  /*
-   * @brief Eliminate all notational freedom of the JSON serialization
+  /** @brief Eliminate all notational freedom of the JSON serialization
    *
    * The Molecule's JSON representation notational freedoms are removed:
    * - Edges have ordered indices

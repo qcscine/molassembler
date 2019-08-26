@@ -58,11 +58,12 @@ struct BondInformation {
   bool operator == (const BondInformation& other) const;
 };
 
-/*!
- * @brief Convolutes the atom's element type and bonds into an unsigned integer
+/*! @brief Convolutes the atom's element type and bonds into an unsigned integer
  *
  * At current, this is a bijective mapping and has zero probability of
  * collisions.
+ *
+ * @complexity{@math{\Theta(1)}}
  *
  * @todo Whether a stereopermutator is a stereocenter or not currently is
  *   not distinguished in the hash (i.e. 0/1 is treated the same as 0/2).
@@ -75,6 +76,11 @@ WideHashType hash(
   const boost::optional<unsigned>& assignedOptional
 );
 
+/*! @brief Collects bond information for hash() input
+ *
+ * @complexity{@math{\Theta(1)} since the out-degree of atoms is considered a
+ * fixed small number because molecules are sparse.}
+ */
 std::vector<BondInformation> gatherBonds(
   const InnerGraph& inner,
   const StereopermutatorList& stereopermutators,
@@ -82,6 +88,10 @@ std::vector<BondInformation> gatherBonds(
   AtomIndex i
 );
 
+/*! @brief Calculate the hash for a particular atom index
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 WideHashType atomEnvironment(
   const InnerGraph& inner,
   const StereopermutatorList& stereopermutators,
@@ -89,13 +99,20 @@ WideHashType atomEnvironment(
   AtomIndex i
 );
 
-//! Generates the hashes for every atom in a molecule's components
+/*! @brief Generates the hashes for every atom in a molecule's components
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 std::vector<WideHashType> generate(
   const InnerGraph& inner,
   const StereopermutatorList& stereopermutators,
   AtomEnvironmentComponents bitmask
 );
 
+/*! @brief Compare two molecules with an identity index mapping
+ *
+ * @complexity{@math{O(N)}}
+ */
 bool identityCompare(
   const InnerGraph& aGraph,
   const StereopermutatorList& aStereopermutators,
@@ -104,7 +121,14 @@ bool identityCompare(
   AtomEnvironmentComponents componentBitmask
 );
 
-//! Re-enumerates the hashes in two generated hash lists
+/*! @brief Re-enumerates the hashes in two generated hash lists
+ *
+ * Although the hash space requires a wide integer type, the number of different
+ * atom environments in molecules will not require a wide integer type. We can
+ * therefore remap the wide hashes to an enumerated smaller integer type.
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 std::tuple<
   std::vector<HashType>,
   std::vector<HashType>,
@@ -114,7 +138,13 @@ std::tuple<
   const std::vector<WideHashType>& b
 );
 
-//! Generates hashes for two molecules' components
+/*! @brief Generates hashes for two molecules' components
+ *
+ * Generate hashes for two molecules. Basis for comparing vertices in an
+ * isomorphism algorithm.
+ *
+ * @complexity{@math{\Theta(N)}}
+ */
 std::pair<
   std::vector<HashType>,
   std::vector<HashType>
@@ -126,11 +156,10 @@ std::pair<
   AtomEnvironmentComponents bitmask
 );
 
-/*!
- * @brief A functor for getting an atom's hash from a captured list of hashes
+/*! @brief A functor for getting an atom's hash from a captured list of hashes
  *
  * @note This explicit form is needed instead of a lambda for boost's concept
- *   checks. It satisfies the AdaptableUnaryFunctionConcept.
+ *   checks. It must satisfy AdaptableUnaryFunctionConcept.
  */
 struct LookupFunctor {
   const std::vector<HashType>* const hashesPtr;

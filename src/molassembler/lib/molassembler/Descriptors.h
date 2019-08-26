@@ -14,7 +14,7 @@ namespace molassembler {
 // Forward-declare molcule
 class Molecule;
 
-/*! Calculates a number of freely rotatable bonds in a molecule
+/*! @brief Calculates a number of freely rotatable bonds in a molecule
  *
  * The number of rotatable bonds is calculated as a bond-wise sum of
  * contributions that is rounded at the end:
@@ -29,7 +29,9 @@ class Molecule;
  * - If part of a cycle, contributes (S - 3) / S to the sum (where S is
  *   the cycle size).
  *
- * \warning The number of rotatable bonds is an unphysical descriptor and
+ * @complexity{@math{\Theta(B)} where @math{B} is the number of bonds}
+ *
+ * @warning The number of rotatable bonds is an unphysical descriptor and
  *   definitions differ across libraries. Take the time to read the algorithm
  *   description implemented here and do some testing. If need be, all
  *   information used by this algorithm is accessible from the Molecule

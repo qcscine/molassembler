@@ -43,14 +43,24 @@ namespace IO {
  */
 class LineNotation {
 public:
-  //! Checks whether the `obabel` binary is found in your path.
+  /*! @brief Checks whether the `obabel` binary is found in your path.
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   static const bool& enabled();
-  //! Construct a single molecule from a canonical SMILES string
+  /*! @brief Construct a single molecule from a canonical SMILES string
+   *
+   * @complexity{@math{\Theta(N)} presumably, depends on OpenBabel}
+   */
   static Molecule fromCanonicalSMILES(const std::string& can);
-  //! Construct a single molecule from an isomeric SMILES string
+  /*! @brief Construct a single molecule from an isomeric SMILES string
+   *
+   * @complexity{@math{\Theta(N)} presumably, depends on OpenBabel}
+   */
   static Molecule fromIsomericSMILES(const std::string& smi);
-  /*!
-   * @brief Construct a single molecule from an InChI string
+  /*! @brief Construct a single molecule from an InChI string
+   *
+   * @complexity{@math{\Theta(N)} presumably, depends on OpenBabel}
    * @note The passed string has to include the `InChI=` prefix
    */
   static Molecule fromInChI(const std::string& inchi);
@@ -59,7 +69,10 @@ private:
   static Molecule fromFormat(const std::string& lineNotation, const std::string& format);
 };
 
-//! Extract exchange format information from a molecule and positional data
+/*! @brief Extract exchange format information from a molecule and positional data
+ *
+ * @complexity{@math{\Theta(N + B)}}
+ */
 std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Molecule& molecule,
   AngstromWrapper angstromWrapper
@@ -71,14 +84,18 @@ std::pair<Utils::AtomCollection, Utils::BondOrderCollection> exchangeFormat(
   const Utils::PositionCollection& positions
 );
 
-//! Applies a random atom index permutation to exchange data
+/*! @brief Applies a random atom index permutation to exchange data
+ *
+ * @complexity{@math{\Theta(N + B)}}
+ */
 std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIndex>> shuffle(
   const Utils::AtomCollection& ac,
   const Utils::BondOrderCollection& bos
 );
 
-/*!
- * @brief Read a single molecule from a file.
+/*! @brief Read a single molecule from a file.
+ *
+ * @complexity{@math{\Theta(N)} typically}
  * @throws If interpretation of coordinates and connectivity yields multiple
  *   molecules.
  * @note Interprets file type from extension. mol is a MOLFile, xyz an XYZ file
@@ -86,20 +103,20 @@ std::tuple<Utils::AtomCollection, Utils::BondOrderCollection, std::vector<AtomIn
  */
 Molecule read(const std::string& filename);
 
-/*!
- * @brief Read multiple molecules from a file.
+/*! @brief Read multiple molecules from a file.
  *
- * @note Interprets file format from its extension.
+ * @complexity{@math{\Theta(N)} typically}
+ * @note Interprets file format from its extension. See read()
  * @note masm and json serializations of Molecules cannot be split, they always
  *   contain only a single molecule. Use @p read() instead.
  */
 std::vector<Molecule> split(const std::string& filename);
 
-/*!
- * @brief Writer function for various chemical formats
+/*! @brief Writer function for various chemical formats
  *
  * For exceptions this might throw, @see Utils::ChemicalFileHandler::write
  *
+ * @complexity{@math{\Theta(N)}}
  * @note Interprets which file type is to be written from filename extension.
  *
  * @note Unless the file format is .json or .masm, canonicalization state of
@@ -118,8 +135,9 @@ void write(
   const Utils::PositionCollection& positions
 );
 
-/*!
- * @brief Writer function for Molecule serializations
+/*! @brief Writer function for Molecule serializations
+ *
+ * @complexity{@math{\Theta(V + E + A + B)}}
  * @note Canonicalization state is retained using the molecule serializations.
  * @throws If the file extension does not match .masm or .json
  */

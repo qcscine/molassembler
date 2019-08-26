@@ -85,6 +85,9 @@ enum class EdgeStrictness : unsigned {
  * Finds an index mapping from a to b representing all found maximum common
  * subgraphs (if present).
  *
+ * @complexity{@math{O(N_1 \cdot N_2)} where @math{N_i} is the number of
+ * vertices in graph @math{i}}
+ *
  * @warning For subgraph comparison, only element and bond types are considered.
  * Stereocenters and Stereopermutations are not graph-local properties suitable
  * to a common substructure matching.

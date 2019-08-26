@@ -27,6 +27,11 @@ enum class BondType : unsigned {
   Quadruple,
   Quintuple,
   Sextuple,
+  /*! @brief Internal bond order to mark haptic binding sites
+   *
+   * Bond order used internally only that relabels bonds in haptic binding
+   * sites. Name from the standard eta notation for haptic ligands.
+   */
   Eta
 };
 
@@ -40,6 +45,13 @@ using AtomIndex = std::size_t;
 
 //! Type used to refer to particular bonds. Orders first < second.
 struct BondIndex {
+  /*! Iterator type is just a pointer to member
+   *
+   * Since the standard guarantees that struct members are laid out
+   * successively in memory, we can implement an iterator using just pointers.
+   * It doesn't have the necessary typedefs for STL algorithms, but could
+   * be useful just the same.
+   */
   using const_iterator = const AtomIndex*;
 
   AtomIndex first, second;
@@ -47,9 +59,12 @@ struct BondIndex {
   BondIndex();
   BondIndex(AtomIndex a, AtomIndex b) noexcept;
 
+  //! Whether first or second is @p a
   bool contains(AtomIndex a) const;
 
+  //! Lexicographic comparison
   bool operator < (const BondIndex& other) const;
+  //! Lexicographic comparison
   bool operator == (const BondIndex& other) const;
 
   const_iterator begin() const {
@@ -61,6 +76,10 @@ struct BondIndex {
   }
 };
 
+/*! @brief Hash for BondIndex so it can be used as a key type in unordered containers
+ *
+ * @complexity{@math{\Theta(1)}}
+ */
 std::size_t hash_value(const BondIndex& bond);
 
 /*!

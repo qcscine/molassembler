@@ -62,10 +62,7 @@ std::vector<LinkInformation> siteLinks(
       auto findEdgeIter = temple::find_if(
         cycle,
         [&](const BondIndex& edge) -> bool {
-          return (
-            edge.contains(focalAtom)
-            && !edge.contains(avoidAtom)
-          );
+          return (edge.contains(focalAtom) && !edge.contains(avoidAtom));
         }
       );
 

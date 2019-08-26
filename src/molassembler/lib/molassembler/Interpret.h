@@ -46,8 +46,7 @@ struct InterpretResult {
   std::vector<unsigned> componentMap;
 };
 
-/*!
- * @brief The function that actually does all the work with the library-internal wrapper
+/*! @brief The function that actually does all the work with the library-internal wrapper
  *
  * @param elements Element type collection
  * @param angstromWrapper Positional information in Angstrom units
@@ -70,8 +69,7 @@ InterpretResult interpret(
   const boost::optional<double>& stereopermutatorBondOrderThresholdOptional = 1.4
 );
 
-/*!
- * @brief Interpret a molecule from positional information only. Calculates
+/*! @brief Interpret a molecule from positional information only. Calculates
  *   bond orders using uffBondOrders.
  *
  * @param elements Element type collection
