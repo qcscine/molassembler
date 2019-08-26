@@ -72,10 +72,7 @@ void LinkInformation::applyPermutation(const std::vector<AtomIndex>& permutation
 }
 
 bool LinkInformation::operator == (const LinkInformation& other) const {
-  return (
-    indexPair == other.indexPair
-    && cycleSequence == other.cycleSequence
-  );
+  return std::tie(indexPair, cycleSequence) == std::tie(other.indexPair, other.cycleSequence);
 }
 
 bool LinkInformation::operator != (const LinkInformation& other) const {
@@ -97,15 +94,15 @@ std::vector<unsigned> RankingInformation::siteConstitutingAtomsRankedPositions(
       return temple::find_if(
         substituentRanking,
         [&constitutingIndex](const auto& equalPrioritySet) -> bool {
-          return temple::find(equalPrioritySet, constitutingIndex) != equalPrioritySet.end();
+          return temple::find(equalPrioritySet, constitutingIndex) != std::end(equalPrioritySet);
         }
-      ) - substituentRanking.begin();
+      ) - std::begin(substituentRanking);
     }
   );
 
   std::sort(
-    positionIndices.begin(),
-    positionIndices.end(),
+    std::begin(positionIndices),
+    std::end(positionIndices),
     std::greater<> {}
   );
 
@@ -116,20 +113,19 @@ RankingInformation::RankedSitesType RankingInformation::rankSites(
   const SiteListType& sites,
   const RankedSubstituentsType& substituentRanking
 ) {
+  const unsigned sitesSize = sites.size();
+
   // Use partial ordering helper
   OrderDiscoveryHelper<unsigned> siteOrdering;
   siteOrdering.setUnorderedValues(
-    temple::iota<unsigned>(
-      sites.size()
-    )
+    temple::iota<unsigned>(sitesSize)
   );
-
-  const unsigned sitesSize = sites.size();
 
   // Pairwise compare all sites, adding relational discoveries to the ordering helper
   for(unsigned i = 0; i < sitesSize; ++i) {
+    const auto& a = sites.at(i);
+
     for(unsigned j = i + 1; j < sitesSize; ++j) {
-      const auto& a = sites.at(i);
       const auto& b = sites.at(j);
 
       if(a.size() < b.size()) {

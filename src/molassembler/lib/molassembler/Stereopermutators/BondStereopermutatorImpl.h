@@ -11,6 +11,8 @@
 
 #include "boost/optional.hpp"
 
+#include "temple/OperatorSuppliers.h"
+
 #include "stereopermutation/Composites.h"
 #include "molassembler/DistanceGeometry/DistanceGeometry.h"
 
@@ -21,7 +23,7 @@ namespace molassembler {
 class StereopermutatorList;
 struct LinkInformation;
 
-struct BondStereopermutator::Impl {
+struct BondStereopermutator::Impl : public temple::crtp::LexicographicComparable<Impl> {
   /* Make sure static_cast-ing our Alignment enum to Composite's Alignment is
    * safe and correct:
    */
@@ -43,6 +45,10 @@ struct BondStereopermutator::Impl {
 
 //!@name Static methods
 //!@{
+  /*! @brief Check whether a cycle is obviously infeasible
+   *
+   * @complexity{@math{\Theta(1)}, but not instant, either}
+   */
   static bool cycleObviouslyInfeasible(
     const InnerGraph& graph,
     const StereopermutatorList& stereopermutators,
@@ -129,9 +135,9 @@ struct BondStereopermutator::Impl {
   BondIndex edge() const;
 
 /* Operators */
-  bool operator < (const Impl& other) const;
-  bool operator == (const Impl& other) const;
-  bool operator != (const Impl& other) const;
+  inline auto tie() const {
+    return std::make_tuple(std::ref(_composite), assigned());
+  }
 
 private:
   /*!

@@ -70,6 +70,7 @@ struct ChiralConstraint;
  */
 class AtomStereopermutator {
 public:
+  //! Old state dumped upon propagation
   using PropagatedState = std::tuple<
     RankingInformation,
     AbstractStereopermutations,
@@ -91,8 +92,7 @@ public:
   AtomStereopermutator& operator = (const AtomStereopermutator& other);
   ~AtomStereopermutator();
 
-  /*!
-   * @brief Construct an AtomStereopermutator
+  /*! @brief Construct an AtomStereopermutator
    *
    * @param graph The molecule's graph. This information is needed to model
    *   haptic ligands.
@@ -102,24 +102,24 @@ public:
    *   the local idealized symmetry
    * @param ranking The ranking of the central atom's substituents and ligand
    *   sites. Typically the result of Molecule's rankPriority.
+   *
+   * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
+   * @math{S} is the size of @p symmetry}
    */
   AtomStereopermutator(
-    // The base graph
     const OuterGraph& graph,
-    // The symmetry of this Stereopermutator
     Symmetry::Name symmetry,
-    // The atom this Stereopermutator is centered on
     AtomIndex centerAtom,
-    // Ranking information of substituents
     RankingInformation ranking
   );
 //!@}
 
 //!@name Static functions
 //!@{
-  /*!
-   * @brief Picks a symmetry retaining as much chiral state as possible on a
+  /*! @brief Picks a symmetry retaining as much chiral state as possible on a
    *   symmetry position increase
+   *
+   * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no larger symmetries
    */
   static Symmetry::Name up(Symmetry::Name symmetryName);
@@ -127,42 +127,48 @@ public:
   /*!
    * @brief Picks a symmetry retaining as much chiral state as possible on a
    *   symmetry position decrease
+   *
+   * @complexity{@math{O(S!)} if uncached, @math{\Theta(1)} otherwise}
    * @throws std::logic_error If there are no smaller symmetries
    */
   static Symmetry::Name down(Symmetry::Name symmetryName, unsigned removedSymmetryPosition);
 //!@}
 
 //!@name Modifiers
-  /*!
-   * @brief Changes the assignment of the stereopermutator
+  /*! @brief Changes the assignment of the stereopermutator
    *
    * @param assignment The new assignment of the stereopermutator. May be
    *   @p boost::none, which sets the chiral state as indeterminate. Must be
    *   less than the number of assignments if not None.
+   *
+   * @complexity{@math{\Theta(1)} if @p assignment is @c boost::none.
+   * @math{\Theta(S)} otherwise}
    */
   void assign(boost::optional<unsigned> assignment);
 
-  /*!
-   * @brief Assign the Stereopermutator randomly using relative statistical weights
+  /*! @brief Assign the Stereopermutator randomly using relative statistical weights
    *
    * Stereopermutations are generated with relative statistical occurrence
    * weights. The assignment is then chosen from the possible stereopermutations
    * with a discrete distribution whose weights are the corresponding relative
    * statistical occurrences.
    *
+   * @complexity{@math{\Theta(1)} if @p assignment is @c boost::none.
+   * @math{\Theta(S)} otherwise}
+   *
    * @note If the stereocenter is already assigned, it is reassigned.
    */
   void assignRandom();
 
-  /**
-   * @brief Applies an atom index permutation
+  /** @brief Applies an atom index permutation
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param permutation The permutation to apply
    */
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
-  /*!
-   * @brief Determine the symmetry and assignment realized in positions
+  /*! @brief Determine the symmetry and assignment realized in positions
    *
    * The symmetry and assignment are determined based on three-dimensional
    * positions using angle and chiral distortions from the respective idealized
@@ -173,6 +179,8 @@ public:
    * @param excludeSymmetries Any symmetries that should be excluded from
    *   the fitting procedure
    *
+   * @complexity{@math{\Theta(S!)}}
+   *
    * @note If Options::tauCriterion is set to @p Enable, this function may
    *   exclude some symmetries from the fitting procedure based on geometric
    *   criteria.
@@ -182,12 +190,14 @@ public:
     const AngstromWrapper& angstromWrapper
   );
 
-  /*!
-   * @brief Propagate the stereocenter state through a possible ranking change
+  /*! @brief Propagate the stereocenter state through a possible ranking change
    *
    * In case a graph modification changes the ranking of this stereopermutator's
    * substituents, it must be redetermined whether the new configuration is a
    * stereopermutator and if so, which assignment corresponds to the previous one.
+   *
+   * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
+   * @math{S} is the size of @p symmetry}
    */
   boost::optional<PropagatedState> propagate(
     const OuterGraph& graph,
@@ -195,17 +205,21 @@ public:
     boost::optional<Symmetry::Name> symmetryOption
   );
 
-  /*!
-   * @brief Adapts atom indices in the internal state to the removal of an atom
+  /*! @brief Adapts atom indices in the internal state to the removal of an atom
    *
    * Atom indices are adapted to a graph-level removal of an atom. The removed
    * index is changed to a placeholder value.
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   void propagateVertexRemoval(AtomIndex removedIndex);
 
-  /*!
-   * @brief Change the symmetry of the permutator
+  /*! @brief Change the symmetry of the permutator
    *
+   * @complexity{@math{L\cdot S!} where @math{L} is the number of links and
+   * @math{S} is the size of @p symmetry}
+   *
+   * @todo Consider trying to propagate within same symmetry size
    * @post The permutator is unassigned (chiral state is discarded)
    */
   void setSymmetry(
@@ -216,11 +230,12 @@ public:
 
 //!@name Information
 //!@{
-  /*!
-   * @brief Fetches angle between substituent ligands in the idealized symmetry
+  /*! @brief Fetches angle between binding sites in the idealized symmetry
    *
-   * @param i Ligand index one
-   * @param j Ligand index two
+   * @param i Site index one
+   * @param j Site index two
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @pre @p i and @p j are valid ligand indices into the underlying
    * RankingInformation's RankingInformation#ligands member.
@@ -229,28 +244,32 @@ public:
    */
   double angle(unsigned i, unsigned j) const;
 
-  /*!
-   * @brief Returns the permutation index within the set of possible permutations, if set
+  /*! @brief Returns the permutation index within the set of feasible permutations, if set
    *
    * Returns the information of whether the stereopermutator is assigned
    * or not, and if so, which assignment it is.
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   boost::optional<unsigned> assigned() const;
 
-  //! Returns the central atom this permutator is placed on
+  /*! @brief Returns the central atom this permutator is placed on
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   AtomIndex centralIndex() const;
 
-  /*!
-   * @brief Returns IOP within the set of symbolic ligand permutations
+  /*! @brief Returns IOP within the set of symbolic ligand permutations
    *
    * This is different to the assignment. The assignment denotes the index
    * within the set of possible (more specifically, not obviously infeasible)
    * stereopermutations.
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   boost::optional<unsigned> indexOfPermutation() const;
 
-  /*!
-   * @brief Returns a minimal representation of chiral constraints
+  /*! @brief Returns a minimal representation of chiral constraints
    *
    * Every minimal representation consists only of site indices. If no site
    * index is present, this position is the location of the central atom.
@@ -259,44 +278,61 @@ public:
    * defined as Positive targets, which is checked in the
    * chemical_symmetries tests.
    *
+   * @complexity{@math{\Theta(T)} where @math{T} is the number of tetrahedra
+   * defined for the modeled symmetry}
+   *
    * @param enforce Emit minimal representations of chiral constraints even if
    * the stereopermutator does not have any chiral state, i.e.
    * numStereopermutators() <= 1, as long as it is assigned.
    */
   std::vector<MinimalChiralConstraint> minimalChiralConstraints(bool enforce = false) const;
 
-  //! Returns an information string for diagnostic purposes
+  /*! @brief Returns an information string for diagnostic purposes
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   std::string info() const;
 
-  //! Returns an information string for ranking equality checking purposes
+  /*! @brief Returns an information string for ranking equality checking purposes
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   std::string rankInfo() const;
 
-  /*!
-   * @brief Returns the underlying feasible stereopermutations object
+  /*! @brief Returns the underlying feasible stereopermutations object
+   *
+   * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
   const AbstractStereopermutations& getAbstract() const;
 
-  /*!
-   * @brief Returns the underlying feasible stereopermutations object
+  /*!  @brief Returns the underlying feasible stereopermutations object
+   *
+   * @complexity{@math{\Theta(1)}}
    * @note This is library-internal and not part of the public API
    */
   const FeasibleStereopermutations& getFeasible() const;
 
-  //! Returns the underlying ranking
+  /*! @brief Returns the underlying ranking
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   const RankingInformation& getRanking() const;
 
-  //! Returns the underlying symmetry
+  /*! @brief Returns the underlying symmetry
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   Symmetry::Name getSymmetry() const;
 
-  /*!
-   * @brief Yields the mapping from site indices to symmetry positions
+  /*! @brief Yields the mapping from site indices to symmetry positions
+   *
+   * @complexity{@math{\Theta(1)}}
    * @throws std::logic_error if the stereopermutator is unassigned.
    */
-  std::vector<unsigned> getSymmetryPositionMap() const;
+  const std::vector<unsigned>& getSymmetryPositionMap() const;
 
-  /*!
-   * @brief Returns the number of possible assignments
+  /*! @brief Returns the number of possible assignments
    *
    * The number of possible assignments is the number of non-superposable
    * arrangements of the abstract ligand case reduced by trans-arranged
@@ -314,6 +350,8 @@ public:
    * remain. The number of assignments is then only two.
    *
    * This is the upper exclusive bound on Some-type arguments to assign().
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   unsigned numAssignments() const;
 
@@ -335,6 +373,8 @@ public:
    *
    * Fetches the number of permutations determined by symbolic ligand
    * calculation, not considering linking or haptic ligand cones.
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   unsigned numStereopermutations() const;
 //!@}
@@ -342,8 +382,7 @@ public:
 
 //!@name Operators
 //!@{
-  /**
-   * @brief Checks whether the underlying symmetry, central atom index, number
+  /** @brief Checks whether the underlying symmetry, central atom index, number
    *   of stereopermutations and current assignment match
    *
    * @param other The other atom stereopermutator to compare against
@@ -357,7 +396,7 @@ public:
 
   /**
    * @brief Lexicographically compares the central atom index, the symmetry,
-   *   the number of assignments, and the current assignment
+   *   the number of stereopermutations, and the current assignment
    *
    * @param other The other atom stereopermutator to compare against
    *

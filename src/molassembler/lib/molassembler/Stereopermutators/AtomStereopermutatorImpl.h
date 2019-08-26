@@ -13,6 +13,8 @@
 #include "molassembler/Stereopermutators/AbstractPermutations.h"
 #include "molassembler/Stereopermutators/FeasiblePermutations.h"
 
+#include "temple/OperatorSuppliers.h"
+
 #include "boost/optional.hpp"
 
 namespace Scine {
@@ -25,7 +27,7 @@ struct SymmetryTransitionGroup;
 
 namespace molassembler {
 
-class AtomStereopermutator::Impl {
+class AtomStereopermutator::Impl : public temple::crtp::LexicographicComparable<Impl> {
 public:
 /* Typedefs */
   using StereopermutationType = stereopermutation::Stereopermutation;
@@ -185,7 +187,7 @@ public:
    * @brief Yields the mapping from ligand indices to symmetry positions
    * @throws std::logic_error if the stereopermutator is unassigned.
    */
-  std::vector<unsigned> getSymmetryPositionMap() const;
+  const std::vector<unsigned>& getSymmetryPositionMap() const;
 
   /*!
    * @brief Returns the number of possible permutations
@@ -205,10 +207,10 @@ public:
    */
   unsigned numStereopermutations() const;
 
-
 /* Operators */
-  bool operator == (const Impl& other) const;
-  bool operator < (const Impl& other) const;
+  inline auto tie() const {
+    return std::make_tuple(_symmetry, _centerAtom, numStereopermutations(), _assignmentOption);
+  }
 
 private:
 /* State */

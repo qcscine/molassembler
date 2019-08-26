@@ -1038,7 +1038,7 @@ void BondStereopermutator::Impl::propagateGraphChange(
     unchangedOrientation
   };
 
-  // TODO feasibility has to be rechecked
+  // feasibility has to be rechecked
   std::vector<unsigned> newFeasiblePermutations;
   newFeasiblePermutations = notObviouslyInfeasibleStereopermutations(
     graph,
@@ -1057,8 +1057,6 @@ void BondStereopermutator::Impl::propagateGraphChange(
     }
     return;
   }
-
-  // TODO finding a new assignment does not respect newFeasiblePermutations yet!
 
   /* If this BondStereopermutator is unassigned, and the permutator is not
    * isotropic after the ranking change, then this permutator stays unassigned.
@@ -1322,27 +1320,6 @@ BondIndex BondStereopermutator::Impl::edge() const {
   // Return a standard form of smaller first
   return _edge;
 }
-
-/* Operators */
-bool BondStereopermutator::Impl::operator < (const Impl& other) const {
-  if(_composite < other._composite) {
-    return true;
-  }
-
-  return assigned() < other.assigned();
-}
-
-bool BondStereopermutator::Impl::operator == (const Impl& other) const {
-  return (
-    _composite == other._composite
-    && assigned() == other.assigned()
-  );
-}
-
-bool BondStereopermutator::Impl::operator != (const Impl& other) const {
-  return !(*this == other);
-}
-
 
 } // namespace molassembler
 

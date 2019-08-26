@@ -95,37 +95,71 @@ public:
 
 //!@name Constructors
 //!@{
+  //! Empty constructor
   InnerGraph();
+  //! Preallocating constructor
   InnerGraph(Vertex N);
 //!@}
 
 //!@name Static members
 //!@{
+  //! Placeholder vertex index used to indicate that a vertex has been removed
   static constexpr Vertex removalPlaceholder = std::numeric_limits<Vertex>::max();
 //!@}
 
 //!@name Modification
 //!@{
+  /*! @brief Add an edge to the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @throws std::logic_error if the edge already exists
+   */
   Edge addEdge(Vertex a, Vertex b, BondType bondType);
 
+  /*! @brief Add a (disconnected) vertex to the graph
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   Vertex addVertex(Utils::ElementType elementType);
 
+  /*! @brief Apply a permutation to the graph
+   *
+   * @complexity{@math{\Theta(V)}}
+   */
   void applyPermutation(const std::vector<Vertex>& permutation);
 
+  /** @brief Fetch the bond type of an edge
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @pre The edge exists
+   */
   BondType& bondType(const Edge& edge);
 
+  //! @brief Referential access to the underlying BGL graph
   BGLType& bgl();
 
-  //! Removes all bonds involving a vertex
+  /*! @brief Removes all bonds involving a vertex
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void clearVertex(Vertex a);
 
+  /*! @brief Fetches the element type of a vertex
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @pre The vertex exists
+   */
   Utils::ElementType& elementType(Vertex a);
 
-  //! Removes an edge from the graph.
+  /*! @brief Removes an edge from the graph.
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   void removeEdge(const Edge& e);
 
-  /*! Removes a vertex from the graph.
+  /*! @brief Removes a vertex from the graph.
    *
+   * @complexity{@math{\Theta(1)}}
    * @warning This invalidates ALL vertex and edge descriptors!
    */
   void removeVertex(Vertex a);
@@ -133,42 +167,90 @@ public:
 
 //!@name Information
 //!@{
+  /*! @brief Fetches the element type of a vertex
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @pre The vertex exists
+   */
   Utils::ElementType elementType(Vertex a) const;
+  /** @brief Fetch the bond type of an edge
+   *
+   * @complexity{@math{\Theta(1)}}
+   * @pre The edge exists
+   */
   BondType bondType(const Edge& edge) const;
+  //! @brief Nonmodifiable access to the underlying BGL graph
   const BGLType& bgl() const;
 
-  /*!
-   * @brief Determine whether a vertex can be safely removed
+  /*! @brief Determine whether a vertex can be safely removed
+   *
    * A Vertex can be safely removed if it is not an articulation vertex or if
    * the number of vertices is more than one.
+   *
+   * @complexity{@math{O(V)} worst case, if removal data is cached
+   * @math{\Theta(1)}}
    *
    * @note This function is not thread-safe.
    */
   bool canRemove(Vertex a) const;
-  /*!
-   * @brief Determine whether an edge can be safely removed
+  /*! @brief Determine whether an edge can be safely removed
    * An edge can be safely removed if it is not a bridge edge
+   *
+   * @complexity{@math{O(V)} worst case, if removal data is cached
+   * @math{\Theta(1)}}
+   *
    * @note This function is not thread-safe.
    */
   bool canRemove(const Edge& edge) const;
 
+  /*! @brief Number of connected components
+   *
+   * @complexity{@math{\Theta(V)}}
+   */
   unsigned connectedComponents() const;
+
+  /*! @brief Connected components, yielding a map from vertices to component index
+   *
+   * @complexity{@math{\Theta(V)}}
+   */
   unsigned connectedComponents(std::vector<unsigned>& componentMap) const;
 
-  //! Precondition: Edge exists!
+  /*! @brief Make an edge descriptor from two vertex descriptors
+   *
+   * @pre The edge exists
+   * @complexity{@math{\Theta(1)}}
+   */
   Edge edge(Vertex a, Vertex b) const;
+
+  /*! @brief Get an edge descriptor from two vertex descriptors, get None if the edge doesn't exist
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   boost::optional<Edge> edgeOption(Vertex a, Vertex b) const;
+
   Vertex source(const Edge& edge) const;
   Vertex target(const Edge& edge) const;
+
+  /*! @brief Number of substituents of a vertex
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   Vertex degree(Vertex a) const;
+
+  //! Number of vertices in the graph
   Vertex N() const;
+  //! Number of edges in the graph
   Vertex B() const;
 
-  //! Checks whether all edges present in *this are present in @p other
+  /*! @brief Checks whether all edges present in *this are present in @p other
+   *
+   * @complexity{@math{O(B)}}
+   */
   bool identicalGraph(const InnerGraph& other) const;
 
-  /*!
-   * @brief Determine which vertices belong to which side of a bridge edge
+  /*! @brief Determine which vertices belong to which side of a bridge edge
+   *
+   * @complexity{@math{\Theta(N)}}
    * @note This function is not thread-safe.
    */
   std::pair<

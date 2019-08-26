@@ -208,13 +208,6 @@ bool Molecule::modularCompare(
   return _pImpl->modularCompare(*other._pImpl, componentBitmask);
 }
 
-bool Molecule::trialModularCompare(
-  const Molecule& other,
-  const AtomEnvironmentComponents componentBitmask
-) const {
-  return _pImpl->trialModularCompare(*other._pImpl, componentBitmask);
-}
-
 RankingInformation Molecule::rankPriority(
   const AtomIndex a,
   const std::vector<AtomIndex>& excludeAdjacent,

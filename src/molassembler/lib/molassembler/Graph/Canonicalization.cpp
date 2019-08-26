@@ -1,6 +1,12 @@
 /* @file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt for details.
+ *
+ * Canonicalization through nauty implementation.
+ *
+ * Note that it was attempted to use nauty to do graph isomorphisms by
+ * canonicalizing both and then identity comparing, but the incurred graph
+ * copies are just too expensive to compete with boost::isomorphism.
  */
 
 #include "molassembler/Graph/Canonicalization.h"
@@ -18,6 +24,9 @@ extern "C" {
 
 /*!
  * @brief Establish canonical labeling for a sparse graph representation
+ *
+ * @complexity{Generally sub-exponential in the number of vertices: @math{c^N}
+ * with @math{c} some fixed constant.}
  *
  * @post lab contains an (inverse) index permutation yielding canonical graph
  *   labeling according to the coloring provided.
@@ -54,81 +63,6 @@ void molassembler_nauty_canonicalize(int nv, size_t nde, size_t* v, int* d, int*
    */
   SG_FREE(canong);
   DYNFREE(orbits, orbits_sz);
-}
-
-/*!
- * @brief Check whether the two groups of components of sparsegraphs could
- *   possibly be isomorphic and establish canonical labeling for both
- *
- * @post Establishes canonical labeling for each graph in @p flab and @p slab.
- *   The proposed isomorphism is, for each i in [0, N), flab[i] <-> slab[i].
- *
- * @returns The result of a basic graph comparison (not isomorphism) of
- *   canonical graphs without considering each graph's labeling or color cell
- *   values (which information is not present in a sparsegraph).
- *
- * @warning Heed the function name's warning and do not consider graphs that
- *   yield true here as isomorphic without comparing back to hash values.
- */
-bool molassembler_nauty_possibly_isomorphic(
-  int fnv,
-  size_t fnde,
-  size_t* fv,
-  int* fd,
-  int* fe,
-  size_t fvlen,
-  size_t fdlen,
-  size_t felen,
-  int* flab,
-  int* fptn,
-
-  int snv,
-  size_t snde,
-  size_t* sv,
-  int* sd,
-  int* se,
-  size_t svlen,
-  size_t sdlen,
-  size_t selen,
-  int* slab,
-  int* sptn
-) {
-  DEFAULTOPTIONS_SPARSEGRAPH(options);
-  // We want to specify non-uniform vertex colors
-  options.defaultptn = false;
-  // We want canonical graphs to be generated
-  options.getcanon = true;
-  // We want to use distance vertex invariants
-  options.invarproc = distances_sg;
-
-  statsblk stats;
-
-  DYNALLSTAT(int, orbits, orbits_sz);
-  DYNALLOC1(int, orbits, orbits_sz, fnv, "malloc");
-  sparsegraph first_graph {fnde, fv, fnv, fd, fe, nullptr, fvlen, fdlen, felen, 0};
-  sparsegraph second_graph {snde, sv, snv, sd, se, nullptr, svlen, sdlen, selen, 0};
-
-  int m = SETWORDSNEEDED(fnv);
-  nauty_check(WORDSIZE, m, fnv, NAUTYVERSIONID);
-
-  SG_DECL(first_canon);
-  SG_DECL(second_canon);
-
-  sparsenauty(&first_graph, flab, fptn, orbits, &options, &stats, &first_canon);
-  sparsenauty(&second_graph, slab, sptn, orbits, &options, &stats, &second_canon);
-
-  /* lab, ptn is not taken into account here for direct graph comparison!
-   * also, information of cell color values is lost already beforehand: methane
-   * and silane are identically colored graphs!
-   */
-  bool possibly_isomorphic = aresame_sg(&first_canon, &second_canon);
-
-  // Clean up
-  SG_FREE(first_canon);
-  SG_FREE(second_canon);
-  DYNFREE(orbits, orbits_sz);
-
-  return possibly_isomorphic;
 }
 
 } // end extern "C"
@@ -287,65 +221,6 @@ std::vector<int> canonicalAutomorphism(
 
   // lab is now the (inverse) permutation we need to apply for a canonical graph
   return nautyGraph.lab;
-}
-
-bool isomorphic(
-  const InnerGraph& firstGraph,
-  const std::vector<hashes::WideHashType>& firstHashes,
-  const InnerGraph& secondGraph,
-  const std::vector<hashes::WideHashType>& secondHashes
-) {
-  assert(firstGraph.N() == secondGraph.N());
-  detail::NautySparseGraph first(firstGraph, firstHashes), second(secondGraph, secondHashes);
-
-  /* Generates a canonical labeling for both graphs and makes a very basic
-   * direct graph comparison that does not include coloring or color cell
-   * values. E.g. Silane and Methane are yielded as possibly isomorphic here.
-   *
-   * However, if this returns false, then we can early-exit, since if the direct
-   * graph comparison post canonical labeling fails, then the graphs truly
-   * cannot be isomorphic anymore, even when checking coloring.
-   */
-  if(
-    !molassembler_nauty_possibly_isomorphic(
-      first.nv,
-      first.nde,
-      &first.v[0],
-      &first.d[0],
-      &first.e[0],
-      first.v.size(),
-      first.d.size(),
-      first.e.size(),
-      &first.lab[0],
-      &first.ptn[0],
-      second.nv,
-      second.nde,
-      &second.v[0],
-      &second.d[0],
-      &second.e[0],
-      second.v.size(),
-      second.d.size(),
-      second.e.size(),
-      &second.lab[0],
-      &second.ptn[0]
-    )
-  ) {
-    return false;
-  }
-
-  /* Use the proposed isomorphism in first.lab and second.lab to compare vertex
-   * hash values to figure out definitively whether the graphs are isomorphic.
-   */
-  return temple::all_of(
-    temple::adaptors::range(firstGraph.N()),
-    [&](const AtomIndex i) -> bool {
-      return firstHashes.at(
-        first.lab.at(i)
-      ) == secondHashes.at(
-        second.lab.at(i)
-      );
-    }
-  );
 }
 
 } // namespace molassembler

@@ -81,9 +81,9 @@ struct RankingInformation;
  *   - A = #atom stereopermutators
  *   - B = #bond stereopermutators
  * @note The notations used are the Bachmann-Landau notations:
- *   - \f$O\f$ implies that the function grows asymptotically no faster than
- *   - \f$\Theta\f$ implies that the function grow asymptotically as fast as
- *   - \f$\Omega\f$ implies that the function grows asympotically at least as fast as (Knuth definition)
+ *   - @math{O} implies that the function grows asymptotically no faster than
+ *   - @math{\Theta} implies that the function grow asymptotically as fast as
+ *   - @math{\Omega} implies that the function grows asympotically at least as fast as (Knuth definition)
  * @endparblock
  */
 class Molecule {
@@ -107,14 +107,14 @@ public:
   /*!
    * @brief Single-element molecule constructor
    *
-   * @complexity{\f$\Theta(1)\f$}
+   * @complexity{@math{\Theta(1)}}
    */
   Molecule(Utils::ElementType element) noexcept;
 
   /*!
    * @brief Construct a minimal molecule from two element types and a mutual bond type
    *
-   * @complexity{\f$\Theta(1)\f$}
+   * @complexity{@math{\Theta(1)}}
    */
   Molecule(
     Utils::ElementType a,
@@ -128,19 +128,22 @@ public:
    * Constructs a molecule from connectivity alone. Local symmetries and
    * stereopermutators are inferred from the graph alone.
    *
-   * @complexity{\math{O(V + E)}}
+   * @complexity{\math{O(V + E)} in rankings and stereopermutator
+   * instantiations}
    * @throws std::logic_error If the supplied graph has multiple connected
    *   components or there are less than 2 atoms
    */
   explicit Molecule(OuterGraph graph);
 
-  /*!
-   * @brief Construct from connectivity and positions
+  /*! @brief Construct from connectivity and positions
    *
    * Construct an instance from a constituting graph and positional information.
    * Local symmetries are deduced from positional information. Stereopermutators
    * are inferred from the graph and assigned using the supplied positional
    * information.
+   *
+   * @complexity{@math{O(V + B)} where @math{B} is the number of candidate
+   * bonds for bond stereopermutators}
    *
    * @param bondStereopermutatorCandidatesOptional If boost::none, all bonds are
    *   candidates for BondStereopermutator. Otherwise, only the specified bonds are
@@ -157,8 +160,9 @@ public:
     >& bondStereopermutatorCandidatesOptional = boost::none
   );
 
-  /*!
-   * @brief Construct a molecule from the underlying data fragments
+  /*! @brief Construct a molecule from underlying data fragments
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @throws std::logic_error If the supplied graph has multiple connected
    *   components or there are less than 2 atoms
@@ -175,10 +179,12 @@ public:
 
 //!@name Modifiers
 //!@{
-  /*!
-   * @brief Adds an atom by attaching it to an existing atom.
+  /*! @brief Adds an atom by attaching it to an existing atom.
    *
    * Adds a new atom, attaching it to an existing atom by a specified bond type.
+   *
+   * @complexity{Factorial in size of the new symmetry at @p adjacentTo and
+   * linear in re-rankings and propagations of non-terminal positions}
    *
    * @param elementType The element type of the new atom
    * @param adjacentTo The atom to which the new atom is to be attached
@@ -205,6 +211,10 @@ public:
    *
    * Adds a bond between two already-existing atoms.
    *
+   * @complexity{Factorial in size of the larger new symmetry at either end of
+   * the bond and linear in re-rankings and propagations of non-terminal
+   * positions}
+   *
    * @param a The first atom index
    * @param b The second atom index
    * @param bondType The bond type with which to connect a and b.
@@ -227,20 +237,22 @@ public:
     BondType bondType = BondType::Single
   );
 
-  /**
-   * @brief Applies an index permutation to the Molecule state
+  /** @brief Applies an index permutation to the Molecule state
+   *
+   * @complexity{@math{\Theta(V + A + B)}}
    *
    * @param permutation A vertex permutation
    */
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
-  /*!
-   * @brief Sets the stereopermutator assignment at a particular atom
+  /*! @brief Sets the stereopermutator assignment at a particular atom
    *
    * This sets the stereopermutator assignment at a specific atom index. For this,
    * a stereopermutator must be instantiated and contained in the StereopermutatorList
    * returned by stereopermutators(). The supplied assignment must be either
    * boost::none or smaller than stereopermutatorPtr->numAssignments().
+   *
+   * @complexity{@math{O(N)} re-rankings and state propagations}
    *
    * @param a The atom index at which a stereopermutator is to be assigned.
    * @param assignmentOption The new assignment. The special value boost::none
@@ -266,14 +278,15 @@ public:
     const boost::optional<unsigned>& assignmentOption
   );
 
-  /*!
-   * @brief Sets the stereopermutator assignment on a bond
+  /*! @brief Sets the stereopermutator assignment on a bond
    *
    * This sets the stereopermutator assignment at a specific bond index. For
    * this, a stereopermutator must be instantiated and contained in the
    * StereopermutatorList returned by stereopermutators(). The supplied
    * assignment must be either boost::none or smaller than
    * stereopermutatorPtr->numAssignments().
+   *
+   * @complexity{@math{O(N)} re-rankings and state propagations}
    *
    * @param edge The edge at which a stereopermutator is to be assigned.
    * @param assignmentOption The new assignment. The special value boost::none
@@ -304,6 +317,8 @@ public:
    * This sets the stereopermutator assignment at a specific index, taking relative
    * statistical occurence weights of each stereopermutation into account.
    *
+   * @complexity{@math{O(N)} re-rankings and state propagations}
+   *
    * @param a The atom index at which the atom stereopermutator is to be assigned
    *   randomly
    *
@@ -323,6 +338,8 @@ public:
   /*!
    * @brief Assigns a bond stereopermutator to a random assignment
    *
+   * @complexity{@math{O(N)} re-rankings and state propagations}
+   *
    * @throws std::out_of_range If the bond index is invalid (i.e. either atom
    *   index is >= N()) or there is no bond stereopermutator at this bond index.
    *
@@ -336,9 +353,11 @@ public:
    */
   void assignStereopermutatorRandomly(const BondIndex& e);
 
-  /**
-   * @brief Transfer the molecule to a canonical form. Invalidates all atom and
-   *   bond indices.
+  /** @brief Transform the molecule to a canonical form. Invalidates all atom
+   *   and bond indices.
+   *
+   * @complexity{Theoretically the algorithm falls into the exponential class,
+   * but for typical molecules much faster.}
    *
    * @param components The components of the molecular graph to include in the
    *   canonicalization procedure.
@@ -363,12 +382,14 @@ public:
     AtomEnvironmentComponents componentBitmask = AtomEnvironmentComponents::All
   );
 
-  /*!
-   * @brief Removes an atom from the graph, including bonds to it.
+  /*! @brief Removes an atom from the graph, including bonds to it.
    *
    * Removes an atom from the molecular graph, including bonds to the atom,
    * after checking that removing it is safe, i.e. the removal does not
    * disconnect the graph.
+   *
+   * @complexity{@math{O(N + A + B)} stereopermutator updates, re-rankings and
+   * propagations}
    *
    * @throws std::out_of_range If the supplied index is invalid, i.e. >= N()
    * @throws std::logic_error If removing the atom disconnects the graph
@@ -386,12 +407,14 @@ public:
    */
   void removeAtom(AtomIndex a);
 
-  /*!
-   * @brief Removes a bond from the graph
+  /*! @brief Removes a bond from the graph
    *
    * Removes an atom after checking if removing that bond is safe, i.e. does not
    * disconnect the graph. An example of bonds that can always be removed are
    * ring-closing bonds, since they never disconnect the molecular graph.
+   *
+   * @complexity{@math{O(N + A + B)} stereopermutator updates, re-rankings and
+   * propagations}
    *
    * @throws std::out_of_range If the supplied bond index is invalid, i.e. either
    *   atom index >= N() or the specified bond does not exist.
@@ -416,11 +439,12 @@ public:
   //!@overload
   void removeBond(const BondIndex& bond);
 
-  /*!
-   * @brief Changes a bond type. Returns whether the bond already existed
+  /*! @brief Changes a bond type. Returns whether the bond already existed
    *
    * Changes the bond type between two atom indices. If the bond does not exist
    * yet, adds the bond.
+   *
+   * @complexity{@math{\Theta(N)} re-rankings and propagations}
    *
    * @param a The first index of the bond whose type should be changed
    * @param b The second index of the bond whose type should be changed
@@ -447,10 +471,11 @@ public:
     BondType bondType
   );
 
-  /*!
-   * @brief Changes an existing atom's element type
+  /*! @brief Changes an existing atom's element type
    *
    * Changes the element type of an existing atom.
+   *
+   * @complexity{@math{\Theta(N)} re-rankings and propagations}
    *
    * @param a The atom index of the atom whose element type is to be changed
    * @param elementType The new element type
@@ -470,8 +495,7 @@ public:
     Utils::ElementType elementType
   );
 
-  /*!
-   * @brief Sets the local geometry at an atom index
+  /*! @brief Sets the local geometry at an atom index
    *
    * This sets the local geometry at a specific atom index. There are a number
    * of cases that this function treats differently, besides faulty arguments:
@@ -480,6 +504,8 @@ public:
    * this index, one is instantiated. In all cases, new or modified
    * stereopermutators are default-assigned if there is only one possible
    * assignment.
+   *
+   * @complexity{@math{\Theta(N)} re-rankings and propagations}
    *
    * @throws std::out_of_range if the supplied atomic index is invalid
    * @throws std::logic_error if the provided symmetry is a different size than
@@ -501,14 +527,16 @@ public:
 
 //!@name Information
 //!@{
-  /*!
-   * @brief Get which components of the graph have been used in canonicalization
+  /*! @brief Get which components of the graph have been used in canonicalization
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   AtomEnvironmentComponents canonicalComponents() const;
 
-  /*!
-   * @brief Determines what the local symmetry at a non-terminal atom ought to
+  /*! @brief Determines what the local symmetry at a non-terminal atom ought to
    *   be based on the underlying graph
+   *
+   * @complexity{@math{\Theta(1)} currently since only basic VSEPR is implemented}
    *
    * Returns the expected symmetry name at a non-terminal atom by inference
    * from graph information only.
@@ -538,8 +566,9 @@ public:
     const RankingInformation& ranking
   ) const;
 
-  /*!
-   * @brief Returns a graphivz string representation of the molecule
+  /*! @brief Returns a graphivz string representation of the molecule
+   *
+   * @complexity{@math{\Theta(V + E + A + B)}}
    *
    * Creates a graphviz representation of a molecule that can be written into a
    * dotfile and processed with graphviz's `dot` binary to create an image of
@@ -550,18 +579,26 @@ public:
    */
   std::string dumpGraphviz() const;
 
-  //! Provides read-only access to the graph representation
+  /*! @brief Provides read-only access to the graph representation
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   const OuterGraph& graph() const;
 
-  //! Provides read-only access to the list of stereopermutators
+  /*! @brief Provides read-only access to the list of stereopermutators
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   const StereopermutatorList& stereopermutators() const;
 
-  /*!
-   * @brief Generates stereopermutators from connectivity and positional information
+  /*! @brief Generates stereopermutators from connectivity and positional information
    *
    * Positions are an important source of information for stereopermutators as they
    * will alleviate graph-based symmetry-determination errors and allow for the
    * determination of stereopermutator assignments through spatial fitting.
+   *
+   * @complexity{@math{\Theta(S!)} where @math{S} is the largest symmetry size
+   * fitted}
    *
    * @param angstromWrapper Wrapped positions in angstrom length units
    * @param explicitBondStereopermutatorCandidatesOption Permits the specification
@@ -581,8 +618,7 @@ public:
     >& explicitBondStereopermutatorCandidatesOption = boost::none
   ) const;
 
-  /*!
-   * @brief Rank substituents of an atom
+  /*! @brief Rank substituents of an atom
    *
    * Performs a ranking algorithm that attempts to differentiate branches
    * extending at each substituent atom (haptic ligands are not considered a
@@ -590,6 +626,8 @@ public:
    *
    * Groups substituents into ligands (these are not the same since haptic
    * ligands exist) and ranks those too.
+   *
+   * @complexity{Theoretically unclear, but for typical cases constant time}.
    *
    * @param a The atom whose substituents are to be ranked
    * @param excludeAdjacent A list of substituent atom indices that should be
@@ -614,9 +652,10 @@ public:
 
 //!@name Comparison
 //!@{
-  /*!
-   * @brief Modular comparison of this Molecule with another, assuming that
+  /*! @brief Modular comparison of this Molecule with another, assuming that
    *   both are in a canonical form
+   *
+   * @complexity{@math{O(N)}}
    *
    * @param The other canonical molecule to compare against
    * @param componentBitmask The components of an atom's environment to include
@@ -635,8 +674,7 @@ public:
     AtomEnvironmentComponents componentBitmask = AtomEnvironmentComponents::All
   ) const;
 
-  /*!
-   * @brief Modular comparison of this Molecule with another.
+  /*! @brief Modular comparison of this Molecule with another.
    *
    * This permits detailed specification of which elements of the molecular
    * information you want to use in the comparison.
@@ -650,6 +688,8 @@ public:
    * If an isomorphism is found, it is then validated. Bond orders and
    * stereopermutators across both molecules are compared using the found
    * isomorphism as an index map.
+   *
+   * @complexity{@math{O(V_1 \cdot V_2)}}
    *
    * @param componentBitmask Components of an atom's environment to include
    * in isomorphism tests. May not be None.
@@ -673,21 +713,14 @@ public:
     const Molecule& other,
     AtomEnvironmentComponents componentBitmask
   ) const;
-
-  //! Trial implementation of isomorphism check using nauty
-  bool trialModularCompare(
-    const Molecule& other,
-    AtomEnvironmentComponents componentBitmask
-  ) const;
 //!@}
 
 //!@name Operators
 //!@{
-  /*!
-   * @brief Equality operator, performs most strict equality comparison
+  /*! @brief Equality operator, performs most strict equality comparison
    *
-   * If both molecule instances are fully canonical, calls Molecule::canonicalCompare.
-   * Otherwise calls Molecule::modularCompare.
+   * If both molecule instances are fully canonical, calls canonicalCompare().
+   * Otherwise calls modularCompare().
    *
    * Implemented as
    * @code{.cpp}

@@ -19,8 +19,9 @@ class Molecule;
  * @brief Class with static functions providing higher-level molecule operations
  */
 struct Editing {
-  /*!
-   * @brief Splits a molecule along a bridge edge
+  /*! @brief Splits a molecule along a bridge edge
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @throws std::logic_error If @bridge a is not a bridge edge, i.e. the graph
    *   is not disconnected by cleaving the indicated bonds. This can be tested
@@ -32,8 +33,9 @@ struct Editing {
    */
   static std::pair<Molecule, Molecule> cleave(const Molecule& a, BondIndex bridge);
 
-  /**
-   * @brief Inserts a molecule into a bond of another molecule
+  /** @brief Inserts a molecule into a bond of another molecule
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @param log The molecule being inserted into
    * @param wedge The molecule being inserted
@@ -54,13 +56,14 @@ struct Editing {
     AtomIndex secondWedgeAtom
   );
 
-  /**
-   * @brief Fuses two molecules, adding all adjacencies and continuations of one
+  /** @brief Fuses two molecules, adding all adjacencies and continuations of one
    * Molecule's atoms to another.
    *
    * Adds all adjacent atoms and continuations of @p bStackAtom in @p bottom to
    * @p aStackAtom in @p top. @p aStackAtom's element type is unchanged as it
    * is the 'top' of the superimposition / overlay.
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @param top The molecule that is at the top of the superposition.
    * @param bottom The molecule that is set at the bottom of the superposition.
@@ -82,6 +85,8 @@ struct Editing {
    * @brief Connect two molecules by substituting away the lighter side of a
    *   pair of bonds of separate molecules
    *
+   * @complexity{@math{\Theta(N)}}
+   *
    * @param left The first molecule
    * @param right The second molecule
    * @param leftBond @p left's bond from which to substitute the lighter part away
@@ -101,6 +106,8 @@ struct Editing {
   /**
    * @brief Connect molecules by creating a new bond between two atoms from
    *   separate molecules
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @param a The first molecule to connect
    * @param b The second molecule to connect
@@ -127,6 +134,8 @@ struct Editing {
   /**
    * @brief Connects two molecules by connecting multiple atoms from one to a
    *   single atom of the other via single bonds
+   *
+   * @complexity{@math{\Theta(N)}}
    *
    * @param a The molecule the ligand is being connected to
    * @param ligand The ligand molecule being bound to @p complexatingAtom

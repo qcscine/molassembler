@@ -298,12 +298,6 @@ struct Molecule::Impl {
     AtomEnvironmentComponents componentBitmask
   ) const;
 
-  //! Competing trial implementation of isomorphism test with nauty
-  bool trialModularCompare(
-    const Impl& other,
-    AtomEnvironmentComponents componentBitmask
-  ) const;
-
   RankingInformation rankPriority(
     AtomIndex a,
     const std::vector<AtomIndex>& excludeAdjacent = {},

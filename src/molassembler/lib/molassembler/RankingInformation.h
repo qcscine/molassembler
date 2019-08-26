@@ -21,13 +21,15 @@ namespace molassembler {
 struct LinkInformation {
 //!@name Special member functions
 //!@{
-  /*!
-   * @brief Default constructor
+  /*! @brief Default constructor
    * @warning Does not establish member invariants
    */
   LinkInformation();
 
-  //! Constructor from data without established invariants
+  /*! @brief Constructor from data without established invariants
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   LinkInformation(
     std::pair<unsigned, unsigned> siteIndices,
     std::vector<AtomIndex> sequence,
@@ -57,7 +59,10 @@ struct LinkInformation {
 
 //!@name Modification
 //!@{
-  //! Apply an index permutation to this object. Re-establishes invariants.
+  /*! @brief Apply an index permutation to this object. Re-establishes invariants.
+   *
+   * @complexity{@math{\Theta(N)}}
+   */
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 //!@}
 
@@ -93,34 +98,38 @@ struct RankingInformation {
 
 //!@name Static member functions
 //!@{
-  /*!
-   * @brief Gets ranking positions of a binding site's constituting atoms in
+  /*! @brief Gets ranking positions of a binding site's constituting atoms in
    *   descending order
    *
    * @verbatim
-   *                               0     1       2      3
+   *         Ranking position:     0     1       2      3
    * Input:  substituentRanking: {{0}, {4, 3}, {1, 9}, {5}}
    *         binding site indices: {5, 3, 0}
    * Output: {3, 1, 0}
    * @endverbatim
+   *
+   * @complexity{@math{\Theta(S)} where @math{S} is the number of substituents}
    */
   static std::vector<unsigned> siteConstitutingAtomsRankedPositions(
     const std::vector<AtomIndex>& siteAtomList,
     const RankingInformation::RankedSubstituentsType& substituentRanking
   );
 
-  /**
-   * @brief Combines the ranking of substituents with the binding site
+  /** @brief Combines the ranking of substituents with the binding site
    *   constitutions into a site-level ranking
    *
    * Site ordering is predicated on the following rules:
    * 1. Larger sites precede smaller sites
    * 2. Lexicographical comparison of the constituting atoms' ranking positions
    *
+   * @complexity{@math{\Theta(S^2)} where @math{S} is the number of sites}
+   *
    * @param sites List of atom index lists that each constitute a binding site
    * @param substituentRanking The substituent-level ranking result
    *
    * @return A ranked (ascending) nested list of ligand indices
+   *
+   * @todo Rewrite with Poset
    */
   static RankedSitesType rankSites(
     const SiteListType& sites,
@@ -166,8 +175,9 @@ struct RankingInformation {
 
 //!@name Modification
 //!@{
-  /**
-   * @brief Applies an atom index permutation
+  /** @brief Applies an atom index permutation
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param permutation The permutation to apply
    */
@@ -179,13 +189,16 @@ struct RankingInformation {
   /*!
    * @brief Fetches the binding site index of a substituent
    *
+   * @complexity{@math{\Theta(1)}}
+   *
    * @throws std::out_of_range If the specified atom index is not part of any
    *   binding site
    */
   unsigned getSiteIndexOf(AtomIndex i) const;
 
-  /**
-   * @brief Fetches the position of a binding site index within the site ranking
+  /** @brief Fetches the position of a binding site index within the site ranking
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param i The binding site index to find
    *
@@ -193,8 +206,9 @@ struct RankingInformation {
    */
   unsigned getRankedIndexOfSite(unsigned i) const;
 
-  /*!
-   * @brief Checks whether there are haptic binding sites
+  /*! @brief Checks whether there are haptic binding sites
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @note These are identified by the #sites member having sets of
    *   substituents with more than one element

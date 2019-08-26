@@ -34,9 +34,12 @@ namespace hashes {
 using WideHashType = boost::multiprecision::uint128_t;
 } // namespace hashes
 
-/**
- * @brief Calculate the canonical labeling of a molecule from a coloring
+/** @brief Calculate the canonical labeling of a molecule from a coloring
  *   specified by a set of hashes
+ *
+ * @complexity{Underlying algorithm is exponential-time, but we use graph
+ * invariants in addition, which should give us sub-exponential complexity for
+ * common cases.}
  *
  * @param inner The inner graph representation of a Molecule
  * @param hashes A flat map of hashes for each vertex
@@ -56,25 +59,6 @@ using WideHashType = boost::multiprecision::uint128_t;
 std::vector<int> canonicalAutomorphism(
   const InnerGraph& inner,
   const std::vector<hashes::WideHashType>& hashes
-);
-
-/**
- * @brief Compares two graphs for isomorphism.
- *
- * @param firstGraph The graph of the first molecule to compare
- * @param firstHashes Vertex coloring hashes for the first molecule
- * @param secondGraph The graph of the second molecule to compare
- * @param secondHashes Vertex coloring hashes for the second molecule
- *
- * @note A word on complexity: Incurs four graph copies, two each.
- *
- * @return Whether the two graphs are isomorphic
- */
-bool isomorphic(
-  const InnerGraph& firstGraph,
-  const std::vector<hashes::WideHashType>& firstHashes,
-  const InnerGraph& secondGraph,
-  const std::vector<hashes::WideHashType>& secondHashes
 );
 
 } // namespace molassembler

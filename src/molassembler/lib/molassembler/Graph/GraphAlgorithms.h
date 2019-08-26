@@ -40,7 +40,7 @@ std::vector<LinkInformation> siteLinks(
 
 /*! @brief Find links between substituent atoms, returns ordered links
  *
- * @complexity{@math{S^2} where @math{S} is the number of substituents of the
+ * @complexity{@math{O(S^2)} where @math{S} is the number of substituents of the
  * central vertex}
  */
 std::vector<LinkInformation> siteLinks(
@@ -64,7 +64,11 @@ bool isHapticSite(
   const InnerGraph& graph
 );
 
-//! Implementation of ligand site grouping algorithm
+/*! @brief Implementation of ligand site grouping algorithm
+ *
+ * @complexity{@math{\Theta(S)} where @math{S} is the number of substituents of
+ * the central vertex}
+ */
 void findSites(
   const InnerGraph& graph,
   AtomIndex centralIndex,
@@ -86,6 +90,9 @@ void findSites(
  * make up a possibly haptic group. These are called sites because
  * they each take up a site of the central index's coordination symmetry.
  *
+ * @complexity{@math{\Theta(S)} where @math{S} is the number of substituents of
+ * the central vertex}
+ *
  * @post Each site's list of constituting atom indices is sorted.
  */
 std::vector<
@@ -101,6 +108,8 @@ std::vector<
  *
  * Cycle through all atoms, determine the sites and set the eta bond type for
  * atoms constituting haptic ligand sites.
+ *
+ * @complexity{@math{\Theta(N)}}
  */
 void updateEtaBonds(InnerGraph& graph);
 

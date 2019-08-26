@@ -290,7 +290,7 @@ void findSites(
   const AtomIndex centralIndex,
   const std::function<void(const std::vector<AtomIndex>&)>& callback
 ) {
-  unsigned A = graph.degree(centralIndex);
+  const unsigned A = graph.degree(centralIndex);
   temple::TinySet<InnerGraph::Vertex> centralAdjacents;
   centralAdjacents.reserve(A);
 

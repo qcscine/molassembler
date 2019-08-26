@@ -22,6 +22,9 @@ class Molecule;
  * checks whether each pair of assigned AtomStereopermutators are mirror images
  * of one another and there is at least one enantiomeric pair.
  *
+ * @complexity{@math{O(A)} where @math{A} is the number of chiral atom
+ * stereopermutators of one molecule}
+ *
  * @pre The two molecules are both canonicalized with all components except
  * `Stereopermutations`, i.e.:
  * \code{.cpp}
@@ -59,12 +62,15 @@ bool enantiomeric(
 
 /** @brief Generates a molecule's enantiomer
  *
+ * @complexity{@math{O(A)} where @math{A} is the number of chiral atom
+ * stereopermutators of one molecule}
+ *
  * @param a The molecule whose enantiomer to generate
  *
  * @note If there are no atom stereopermutators in this molecule with more than
  *   one stereopermutations, yields a Molecule identical to @p a
  *
- * @warning This is essentially untested
+ * @warning This has been tested very little
  *
  * @return The enantiomer to a molecule
  */

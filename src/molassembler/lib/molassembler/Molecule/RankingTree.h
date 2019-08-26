@@ -9,28 +9,19 @@
  * that atom's direct substituents according to IUPAC-like sequence rules.
  *
  * @todo
- * - Maybe you can only add transferability edges when in down-only BFS?
+ * - Rewrite the shebang with Posets at nodes for transferability and
+ *   persistence of ranking
  * - Consider transition to more unordered containers
  * - Pseudo-asymmetry considerations
  *   - Is the propagation of pseudoasymmetry REALLY necessary? It makes sense
- *     to permute a stereopermutator designated as pseudo-asymmetric. Dunno if
- *     creating the exact diastereomer of a molecule will ever be needed as an
- *     operation (if so, then yes, pseudoasymmetry pop is needed). Creating
- *     ALL stereomers of a molecule can be done without pseudoasymmetry.
- *     All other points below are only relevant in case pseudo-asymmetry needs
- *     to be included.
+ *     to permute a stereopermutator designated as pseudo-asymmetric. I don't
+ *     know if creating the exact diastereomer of a molecule will ever be
+ *     needed as an operation (if so, then yes, pseudoasymmetry pop is needed).
+ *     Creating ALL stereomers of a molecule can be done without
+ *     pseudoasymmetry.  All other points below are only relevant in case
+ *     pseudo-asymmetry needs to be included.
  *   - Stereopermutator interface change to support pseudo-asymmetry tag (?)
  *   - Ranking function interface change to propagate pseudo-asymmetry result
- * - Optimizations / Refactors
- *   - Storing ranking at junctions only might be better than REUSE_AUX._RESULTS
- * - OrderDiscoveryHelper function naming may be inconsistent. Does
- *   addLessThanRelationship really semantically do what it says?
- *   Loads of inverted comparisons here where it doesn't make sense to me
- *   anymore, in particular at 4B in counting like pairs at every position
- * - Get away from as many sets as possible -> unordered sets, tinysets or plain vectors
- * - Try to figure out a datastructure in which the entire relative ranking can
- *   be stored as indeterminate and determinate, so to wholly avoid
- *   recomputation where unnecessary
  * - When in _auxiliaryApplySequenceRules, and BFS is omnidirectional, isn't
  *   the up-edge always top-ranked? It may not be necessary to include it in
  *   the comparisonSets and as a result, also not complicate BFS handling.
@@ -38,25 +29,6 @@
 
 #ifndef INCLUDE_MOLASSEMBLER_RANKING_HIERARCHICAL_TREE_H
 #define INCLUDE_MOLASSEMBLER_RANKING_HIERARCHICAL_TREE_H
-
-/* Compile-time optimization options */
-/* If RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS is defined, RankingTree
- * gains another OrderDiscoveryHelper that stores all results from
- * _auxiliaryApplySequenceRules. That state is then used to initialize any
- * new calls to _auxiliaryApplySequenceRules, potentially avoiding some
- * re-rankings. Unfortunately, it currently cannot store equality results, only
- * less-than relationships. This may have to be emulated some other way.
- *
- * In the current test set (see RankingTree tests), this optimization of
- * storing the results of previous auxiliary ranking actually slightly
- * pessimizes the overall program. This is because auxiliary rankings rarely
- * need to be reused in the first place. A more specific optimization of storing
- * rankings at junctions might be better.
- *
- * For particularly complex trees, it is, however, absolutely essential so that
- * ranking completes in a reasonable timeframe.
- */
-//#define RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
 
 #include "boost/variant.hpp"
 
@@ -221,11 +193,6 @@ private:
 
   //! The helper instance for discovering the ordering of the to-rank branches
   OrderDiscoveryHelper<TreeVertexIndex> _branchOrderingHelper;
-
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-  //! Overall order discoveries from _auxiliary calls
-  mutable OrderDiscoveryHelper<TreeVertexIndex> _allOrdering;
-#endif
 
   // Closures
   const OuterGraph& _graphRef;
@@ -1092,7 +1059,14 @@ private:
 public:
 //!@name Special member functions
 //!@{
-  //! Performs ranking of a central atom's substituents
+  /*! @brief Performs ranking of a central atom's substituents
+   *
+   * @complexity{Theoretical complexity is unclear to me. No idea if the IUPAC
+   * sequence rules imply an upper bound on theoretical complexity. Given a
+   * sufficiently complicated molecule, a single ranking can be immensely
+   * complicated and time intensive. For practical cases however, ranking is
+   * constant-time.}
+   */
   RankingTree(
     const OuterGraph& graph,
     const Cycles& cycles,

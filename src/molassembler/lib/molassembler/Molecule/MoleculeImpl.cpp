@@ -1064,30 +1064,6 @@ bool Molecule::Impl::modularCompare(
   return isomorphic;
 }
 
-bool Molecule::Impl::trialModularCompare(
-  const Molecule::Impl& other,
-  const AtomEnvironmentComponents componentBitmask
-) const {
-  // Some easy early checks: Check number of atoms and number of bonds
-  if(graph().N() != other.graph().N() || graph().B() != other.graph().B()) {
-    return false;
-  }
-
-  /* Generate a set of hashes for both molecules encompassing the parts of
-   * the atom environments that were specified by the bitmask argument
-   */
-  auto thisHashes = hashes::generate(graph().inner(), stereopermutators(), componentBitmask);
-  auto otherHashes = hashes::generate(other.graph().inner(), other.stereopermutators(), componentBitmask);
-
-  // Do full isomorphism
-  return isomorphic(
-    graph().inner(),
-    thisHashes,
-    other.graph().inner(),
-    otherHashes
-  );
-}
-
 RankingInformation Molecule::Impl::rankPriority(
   const AtomIndex a,
   const std::vector<AtomIndex>& excludeAdjacent,

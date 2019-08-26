@@ -1687,14 +1687,6 @@ std::vector<
     return orderingHelper.getSets();
   }
 
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-  orderingHelper.addRelationshipsFromOther(_allOrdering);
-  // Is the information from _allOrdering sufficient?
-  if(orderingHelper.isTotallyOrdered()) {
-    return orderingHelper.getSets();
-  }
-#endif
-
 #ifndef NEDEBUG
   Log::log(Log::Particulars::RankingTreeDebugInfo)
     << "  Auxiliary ranking substituents of tree index "
@@ -1741,11 +1733,6 @@ std::vector<
 
   // Is Sequence Rule 1 enough?
   if(orderingHelper.isTotallyOrdered()) {
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-    if(!depthLimitOptional) {
-      _allOrdering.addAllFromOther(orderingHelper);
-    }
-#endif
     // No conversion of indices in _auxiliaryApplySequenceRules()!
     return orderingHelper.getSets();
   }
@@ -1796,11 +1783,6 @@ std::vector<
 
   // Is sequence rule 3 enough?
   if(orderingHelper.isTotallyOrdered()) {
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-    if(!depthLimitOptional) {
-      _allOrdering.addAllFromOther(orderingHelper);
-    }
-#endif
     // No conversion of indices in _auxiliaryApplySequenceRules()!
     return orderingHelper.getSets();
   }
@@ -2033,11 +2015,6 @@ std::vector<
 
     // Is Sequence Rule 4, part A enough?
     if(orderingHelper.isTotallyOrdered()) {
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-      if(!depthLimitOptional) {
-        _allOrdering.addAllFromOther(orderingHelper);
-      }
-#endif
       // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
     }
@@ -2325,11 +2302,6 @@ std::vector<
 
     // Is Sequence Rule 4, part B enough?
     if(orderingHelper.isTotallyOrdered()) {
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-      if(!depthLimitOptional) {
-        _allOrdering.addAllFromOther(orderingHelper);
-      }
-#endif
       // No conversion of indices in _auxiliaryApplySequenceRules()!
       return orderingHelper.getSets();
     }
@@ -2369,11 +2341,6 @@ std::vector<
       ) << "}\n";
   }
 
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-  if(!depthLimitOptional) {
-    _allOrdering.addAllFromOther(orderingHelper);
-  }
-#endif
   // Exhausted sequence rules, return the sets
   return orderingHelper.getSets();
 }
@@ -3212,19 +3179,6 @@ RankingTree::RankingTree(
 
   // Perform ranking
   _applySequenceRules(positionsOption);
-
-#ifdef RANKING_TREE_OPTIMIZATION_REUSE_AUXILIARY_RESULTS
-  if /* C++17 constexpr */ (buildTypeIsDebug) {
-    if(Log::particulars.count(Log::Particulars::RankingTreeDebugInfo) > 0) {
-      _writeGraphvizFiles({
-        _adaptMolGraph(_moleculeRef.dumpGraphviz()),
-        dumpGraphviz("Final"s, {rootIndex}),
-        _branchOrderingHelper.dumpGraphviz(),
-        _allOrdering.dumpGraphviz()
-      });
-    }
-  }
-#endif
 }
 
 

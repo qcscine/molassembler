@@ -786,7 +786,7 @@ Symmetry::Name AtomStereopermutator::Impl::getSymmetry() const {
   return _symmetry;
 }
 
-std::vector<unsigned> AtomStereopermutator::Impl::getSymmetryPositionMap() const {
+const std::vector<unsigned>& AtomStereopermutator::Impl::getSymmetryPositionMap() const {
   if(_assignmentOption == boost::none) {
     throw std::logic_error(
       "The AtomStereopermutator is unassigned, sites are not assigned to "
@@ -1241,27 +1241,6 @@ void AtomStereopermutator::Impl::setSymmetry(
 
   // Dis-assign the stereopermutator
   assign(boost::none);
-}
-
-bool AtomStereopermutator::Impl::operator == (const AtomStereopermutator::Impl& other) const {
-  return (
-    _symmetry == other._symmetry
-    && _centerAtom == other._centerAtom
-    && numStereopermutations() == other.numStereopermutations()
-    && _assignmentOption == other._assignmentOption
-  );
-}
-
-bool AtomStereopermutator::Impl::operator < (const AtomStereopermutator::Impl& other) const {
-  unsigned thisPermutations = numStereopermutations(),
-           otherPermutations = other.numStereopermutations();
-  /* Sequentially compare individual components, comparing assignments last
-   * if everything else matches
-   */
-  return (
-    std::tie( _centerAtom, _symmetry, thisPermutations, _assignmentOption)
-    < std::tie(other._centerAtom, other._symmetry, otherPermutations, other._assignmentOption)
-  );
 }
 
 } // namespace molassembler

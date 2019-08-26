@@ -59,6 +59,7 @@ class BondStereopermutator {
 public:
 //!@name Public types
 //!@{
+  //! Type yielded by atom stereopermutator on propagation
   using AtomStereopermutatorPropagatedState = std::tuple<
     RankingInformation,
     AbstractStereopermutations,
@@ -77,14 +78,16 @@ public:
 
 //!@name Static members
 //!@{
-  //! An Assignment is accepted if the fit for each dihedral is below this value
+  //! An assignment is accepted if the fit for each dihedral is below this value
   static constexpr double assignmentAcceptanceDihedralThreshold = M_PI / 25.0; // ~7°
 //!@}
 
 //!@name Static functions
 //!@{
-  /*!
-   * @brief Determine which stereopermutations aren't obviously infeasible
+  /*! @brief Determine which stereopermutations aren't obviously infeasible
+   *
+   * @complexity{@math{\Theta(P)}, where @math{P} is the number of permutations
+   * in the underlying composite}
    */
   static std::vector<unsigned> notObviouslyInfeasibleStereopermutations(
     const InnerGraph& graph,
@@ -109,6 +112,9 @@ public:
   /*!
    * @brief Constructs a bond stereopermutator on two atom stereopermutators
    *   without checking whether stereopermutations are feasible or not
+   *
+   * @complexity{@math{O(S!)} where @math{S} is the size of the larger involved
+   * symmetry}
    */
   BondStereopermutator(
     const AtomStereopermutator& stereopermutatorA,
@@ -117,9 +123,11 @@ public:
     Alignment alignment = Alignment::Eclipsed
   );
 
-  /*!
-   * @brief Constructs a bond stereopermutator on two atom stereopermutators,
+  /*! @brief Constructs a bond stereopermutator on two atom stereopermutators,
    *   removing obviously infeasible stereopermutations
+   *
+   * @complexity{@math{O(S!)} where @math{S} is the size of the larger involved
+   * symmetry}
    */
   BondStereopermutator(
     const InnerGraph& graph,
@@ -137,31 +145,35 @@ public:
    * @param assignment The new assignment of the stereopermutator. May be
    *   @p boost::none, which sets the chiral state as indeterminate. Must be
    *   less than the number of assignments if not None.
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   void assign(boost::optional<unsigned> assignment);
 
   /*!
    * @brief Assign the Stereopermutator at random
    *
+   * @complexity{@math{\Theta(1)}}
    * @note If the stereocenter is already assigned, it is reassigned.
    */
   void assignRandom();
 
-  /**
-   * @brief Applies an atom index permutation
+  /** @brief Applies an atom index permutation
    *
+   * @complexity{@math{\Theta(1)}}
    * @param permutation The permutation to apply
    */
   void applyPermutation(const std::vector<AtomIndex>& permutation);
 
-  /*!
-   * @brief Determines the assignment the permutator is in from positional
+  /*! @brief Determines the assignment the permutator is in from positional
    *   information
    *
    * The assignment of this permutator is determined from three-dimensional
    * positions using penalties to modeled dihedral angles. An assignment is
    * considered matched if each dihedral that is part of the permutation is
    * within @p assignmentAcceptanceDihedralThreshold.
+   *
+   * @complexity{@math{\Theta(P)} where @math{P} is the number of permutations}
    *
    * @param angstromWrapper The positional information to extract the assignment
    *   from
@@ -183,6 +195,9 @@ public:
    *   substituent ranking
    * @param newPermutator The AtomStereopermutator that is changing after its
    *   internal state has been propagated through a ranking change
+   *
+   * @complexity{@math{O(S!)} where @math{S} is the size of the larger involved
+   * symmetry}
    */
   void propagateGraphChange(
     const AtomStereopermutatorPropagatedState& oldPermutator,
@@ -194,20 +209,29 @@ public:
 
 //!@name Information
 //!@{
+  /*! @brief Returns alignment parameter this was constructed with
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   Alignment alignment() const;
 
-  /*!
-   * @brief Returns the permutation index within the set of possible permutations, if set
+  /*! @brief Returns the permutation index within the set of possible permutations, if set
+   *
+   * @complexity{@math{\Theta(1)}}
    * @returns whether the stereopermutator is assigned or not, and if so,
    * which assignment it is.
    */
   boost::optional<unsigned> assigned() const;
 
-  //! Gives read-only access to the underlying Composite object
+  /*! @brief Gives read-only access to the underlying Composite object
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   const stereopermutation::Composite& composite() const;
 
-  /*!
-   * @brief Angle between sites at stereopermutators in the current assignment
+  /*! @brief Angle between sites at stereopermutators in the current assignment
+   *
+   * @complexity{@math{\Theta(1)}}
    *
    * @param stereopermutatorA One constituting stereopermutator
    * @param siteIndexA A site index of @p stereopermutatorA
@@ -225,34 +249,47 @@ public:
   ) const;
 
 
-  /*!
-   * @brief Returns whether this stereopermutator has the same relative
+  /*! @brief Returns whether this stereopermutator has the same relative
    *   orientation as another stereopermutator
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   bool hasSameCompositeOrientation(const BondStereopermutator& other) const;
 
-  /*!
-   * @brief Returns the index of permutation
+  /*! @brief Returns the index of permutation
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   boost::optional<unsigned> indexOfPermutation() const;
 
-  /*!
-   * @brief Returns the number of possible assignments
+  /*! @brief Returns the number of possible assignments
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   unsigned numAssignments() const;
 
-  /*!
-   * @brief Returns the number of possible stereopermutations
+  /*! @brief Returns the number of possible stereopermutations
+   *
+   * @complexity{@math{\Theta(1)}}
    */
   unsigned numStereopermutations() const;
 
-  //! Returns an information string for diagnostic purposes
+  /*! @brief Returns an information string for diagnostic purposes
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   std::string info() const;
 
-  //! Returns an information for ranking equality checking purposes
+  /*! @brief Returns an information for ranking equality checking purposes
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   std::string rankInfo() const;
 
-  //! Returns which bond this stereopermutator is placed on in the molecule
+  /*! @brief Returns which bond this stereopermutator is placed on in the molecule
+   *
+   * @complexity{@math{\Theta(1)}}
+   */
   BondIndex edge() const;
 //!@}
 

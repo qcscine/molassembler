@@ -48,6 +48,9 @@ struct InterpretResult {
 
 /*! @brief The function that actually does all the work with the library-internal wrapper
  *
+ * @complexity{@math{\Theta(M)} molecule instantiations for each connected
+ * component found of at least linear complexity each}
+ *
  * @param elements Element type collection
  * @param angstromWrapper Positional information in Angstrom units
  * @param bondOrders Bond orders

@@ -136,7 +136,7 @@ Symmetry::Name AtomStereopermutator::getSymmetry() const {
   return _pImpl->getSymmetry();
 }
 
-std::vector<unsigned> AtomStereopermutator::getSymmetryPositionMap() const {
+const std::vector<unsigned>& AtomStereopermutator::getSymmetryPositionMap() const {
   return _pImpl->getSymmetryPositionMap();
 }
 
