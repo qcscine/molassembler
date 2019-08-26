@@ -371,49 +371,6 @@ BOOST_AUTO_TEST_CASE(moleculeIsomorphism) {
   );
 }
 
-// Isomorphic molecules are recognized as such by an alternate implementation
-BOOST_AUTO_TEST_CASE(moleculeAlternateIsomorphism) {
-  using namespace std::string_literals;
-
-  boost::filesystem::path directoryBase("isomorphisms");
-
-  std::vector<Molecule> originals;
-
-  for(
-    const boost::filesystem::path& currentFilePath :
-    boost::filesystem::recursive_directory_iterator(directoryBase)
-  ) {
-    if(currentFilePath.extension() != ".mol") {
-      continue;
-    }
-
-    Molecule a, b;
-    std::tie(a, b, std::ignore) = readIsomorphism(currentFilePath);
-
-    BOOST_CHECK_MESSAGE(
-      a.trialModularCompare(b, AtomEnvironmentComponents::All),
-      "Molecule isomorphism fails for " << currentFilePath.string() << "!"
-    );
-
-    originals.push_back(std::move(a));
-  }
-
-  BOOST_REQUIRE_MESSAGE(
-    !originals.empty(),
-    "No molecules found for isomorphism checks"
-  );
-
-  BOOST_CHECK_MESSAGE(
-    temple::all_of(
-      temple::adaptors::allPairs(originals),
-      [&](const Molecule& a, const Molecule& b) -> bool {
-        return !a.trialModularCompare(b, AtomEnvironmentComponents::All);
-      }
-    ),
-    "Some originals in the isomorphism test folder match one another!"
-  );
-}
-
 // Atom stereocenter assignments are part of strict equivalency
 BOOST_AUTO_TEST_CASE(moleculeBasicRSInequivalency) {
   // Build an asymmetric tetrahedral carbon

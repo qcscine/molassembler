@@ -16,7 +16,6 @@ endif()
 set(analysisFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkEigenvalues.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkGraphAlgorithms.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkIsomorphisms.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkRefinement.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkRefinementFunctions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DirectedConformerGeneration.cpp
