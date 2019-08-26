@@ -214,7 +214,7 @@ if(BLAS_FOUND)
     EIGEN_USE_BLAS
     EIGEN_USE_LAPACK
   )
-  target_link_libraries(molassembler PRIVATE ${BLAS_LIBRARIES})
+  target_link_libraries(molassembler PUBLIC ${BLAS_LIBRARIES})
 endif()
 
 # -- END Linking
