@@ -18,9 +18,10 @@
 #include "temple/Stringify.h"
 #include "temple/Functor.h"
 
-#include "chemical_symmetries/Symmetries.h"
+#include "chemical_symmetries/Partitioner.h"
 #include "chemical_symmetries/Properties.h"
 #include "chemical_symmetries/Recognition.h"
+#include "chemical_symmetries/Symmetries.h"
 
 #include <set>
 #include <iostream>
@@ -1011,6 +1012,31 @@ BOOST_AUTO_TEST_CASE(Diophantine) {
     BOOST_CHECK(x == expectedX.at(i));
     ++i;
   } while(diophantine::next_solution(x, a, b));
-  BOOST_REQUIRE(i == expectedX.size());
+  BOOST_REQUIRE_EQUAL(i, expectedX.size());
   BOOST_REQUIRE(x == std::vector<unsigned> (3, 0));
+}
+
+BOOST_AUTO_TEST_CASE(Partitions) {
+  for(unsigned i = 1; i < 4; ++i) {
+    for(unsigned j = 2; j < 4; ++j) {
+      Partitioner partitioner {i, j};
+      do {
+        BOOST_CHECK(Partitioner::isOrderedMapping(partitioner.map()));
+      } while(partitioner.next_partition());
+    }
+  }
+
+  // Test a few specific counts
+  auto countPartitions = [](const unsigned S, const unsigned E) -> unsigned {
+    Partitioner partitioner {S, E};
+    unsigned partitions = 0;
+    do {
+      ++partitions;
+    } while(partitioner.next_partition());
+    return partitions;
+  };
+
+  BOOST_CHECK_EQUAL(countPartitions(1, 2), 1);
+  BOOST_CHECK_EQUAL(countPartitions(2, 2), 3);
+  BOOST_CHECK_EQUAL(countPartitions(2, 3), 10);
 }

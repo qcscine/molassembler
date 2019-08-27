@@ -1686,29 +1686,38 @@ double csm(const PositionCollection& normalizedPositions, const PointGroup point
          * subdivisionGroupSizes {4, 3, 2}
          * one solution: subdivisionMultipliers {1, 2, 1}
          *
-         * Next we make every possible partition of our points by populating
-         * a vector with each group size repeated as often as its multiplier
-         * and going through its permutations, interpreting it as a sequence
-         * of groupings of the vertices, e.g. the first few permutations:
+         * Next we make every possible partition of our points into those
+         * respective group sizes. We populate a flat map of point index to
+         * group size index according to the group sizes and multipliers:
          *
-         * groupPermut     vertex partition
-         * {2, 3, 3, 4} -> {0, 1}, {2, 3, 4}, {5, 6, 7}, {8, 9, 10, 11}
-         * {2, 3, 4, 3} -> {0, 1}, {2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11}
+         * p0 = 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2
          *
-         * NOPE that doesn't work! Only adjacent vertices are grouped, this
-         * isn't truly permutational at all, besides that it keeps groups of
-         *
+         * Of this, there are 12! / (4! 6! 2!) = 13860 permutations.
          */
-
-        std::vector<unsigned> groupPermutation;
+        std::vector<unsigned> flatGroupMap;
+        flatGroupMap.reserve(P);
         for(unsigned i = 0; i < subdivisionMultipliers.size(); ++i) {
-          for(unsigned j = 0; j < subdivisionMultipliers.at(i); ++j) {
-            groupPermutation.push_back(subdivisionGroupSizes.at(i));
-          }
-        }
-        // Go to lowest permutation
-        temple::inplace::sort(groupPermutation);
+          const unsigned groupMultiplier = subdivisionMultipliers.at(i);
 
+          if(groupMultiplier == 0) {
+            continue;
+          }
+
+          const unsigned groupSize = subdivisionGroupSizes.at(i);
+          flatGroupMap.resize(flatGroupMap.size() + groupSize * groupMultiplier, i);
+        }
+
+        do {
+          /* For each of these permutations, we sub-partition the group using
+           * Partitioner. This is necessary to treat multipliers > 1 correctly.
+           *
+           * In the previous case, where we have a two groups of size three, we
+           * have 10 sub-partitions to consider. All other groups with
+           * multiplier == 1 have only a single sub-partition.
+           */
+
+          /* Collect the groups */
+        } while(std::next_permutation(std::begin(flatGroupMap), std::end(flatGroupMap)));
       } while(diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
     }
   }
