@@ -1,7 +1,9 @@
 #include "chemical_symmetries/Recognition.h"
 
+#include "chemical_symmetries/Diophantine.h"
+#include "chemical_symmetries/Partitioner.h"
+
 #include "boost/optional.hpp"
-#include "boost/integer/common_factor.hpp"
 
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
@@ -18,7 +20,7 @@
 namespace Scine {
 namespace Symmetry {
 
-namespace minimization {
+namespace elements {
 
 template<typename EnumType>
 constexpr auto underlying(const EnumType e) {
@@ -600,7 +602,7 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(const PointGroup 
 std::map<unsigned, ElementGrouping> npGroupings(
   const std::vector<std::unique_ptr<SymmetryElement>>& elements
 ) {
-  assert(elements.front()->matrix() == minimization::Identity().matrix());
+  assert(elements.front()->matrix() == elements::Identity().matrix());
   const unsigned E = elements.size();
 
   /* There can be multiple groupings of symmetry elements of equal l for
@@ -661,12 +663,280 @@ std::map<unsigned, ElementGrouping> npGroupings(
           np,
           std::move(grouping)
         );
+      } else {
+        throw std::logic_error("Multiple l mappings found!");
       }
     }
   }
 
   return npGroupings;
 }
+
+} // namespace elements
+
+namespace detail {
+
+Eigen::MatrixXd dropColumn(const Eigen::MatrixXd& matrix, unsigned colToRemove) {
+  const unsigned c = matrix.cols();
+  const unsigned leftColCount = colToRemove - 1;
+  const unsigned rightColCount = c - colToRemove;
+
+  Eigen::MatrixXd copy(matrix.rows(), c - 1);
+  copy.leftCols(leftColCount) = matrix.leftCols(leftColCount);
+  copy.rightCols(rightColCount) = matrix.rightCols(rightColCount);
+
+  return copy;
+}
+
+/*! @brief Normalize positions for continuous symmetry measure analysis
+ *
+ * Reframes to center of mass frame (although no masses exist) and rescales
+ * vectors so that the maximum distance is 1)
+ */
+PositionCollection normalize(const PositionCollection& positions) {
+  const unsigned N = positions.cols();
+
+  // Translate the origin to the average position
+  const Eigen::Vector3d center = positions.rowwise().sum() / positions.cols();
+  PositionCollection transformed = positions.colwise() - center;
+
+  // Rescale all distances so that the longest is a unit vector
+  const double longestDistance = std::sqrt(positions.colwise().squaredNorm().maxCoeff());
+  for(unsigned i = 0; i < N; ++i) {
+    transformed.col(i) /= longestDistance;
+  }
+
+  // Drop any vectors that are very close to the center of mass
+  for(int i = 0; i < transformed.cols(); ++i) {
+    if(transformed.col(i).norm() < 1e-3) {
+      const int r = transformed.rows();
+      const int c = transformed.cols() - 1;
+      if(i < c) {
+        transformed.block(0, i, r, c - i) = transformed.rightCols(c - i);
+      }
+      transformed.conservativeResize(r, c);
+      --i;
+    }
+  }
+
+  assert(transformed.cols() >= 2);
+
+  return transformed;
+}
+
+//! Determine degeneracy of intertial moments
+unsigned degeneracy(const Eigen::Vector3d& inertialMoments) {
+  constexpr double degeneracyEpsilon = 0.1;
+  unsigned mdeg = 0;
+  if(
+    std::fabs(
+      (inertialMoments(2) - inertialMoments(1)) / inertialMoments(2)
+    ) <= degeneracyEpsilon
+  ) {
+    mdeg += 1;
+  }
+  if(
+    std::fabs(
+      (inertialMoments(1) - inertialMoments(0)) / inertialMoments(2)
+    ) <= degeneracyEpsilon
+  ) {
+    mdeg += 2;
+  }
+
+  return 1 + (mdeg + 1) / 2;
+}
+
+//! Determine point group of an approximately linear system
+PointGroup linear(const PositionCollection& normalizedPositions) {
+  const unsigned P = normalizedPositions.cols();
+  for(unsigned i = 0; i < P / 2; ++i) {
+    const unsigned opposite = P - i - 1;
+    if(!normalizedPositions.col(i).isApprox(-normalizedPositions.col(opposite), 1e-4)) {
+      /* Positions do not have inversion symmetry */
+      return PointGroup::Cinfv;
+    }
+  }
+
+  return PointGroup::Dinfh;
+}
+
+} // namespace detail
+
+namespace csm {
+
+double all_symmetry_elements(
+  const PositionCollection& normalizedPositions,
+  const PointGroup pointGroup,
+  std::vector<unsigned> particleIndices
+) {
+}
+
+double grouped_symmetry_elements(
+  const PositionCollection& normalizedPositions,
+  const PointGroup pointGroup,
+  std::vector<unsigned> particleIndices,
+  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const elements::ElementGrouping& elementGrouping
+) {
+  double value = 100;
+}
+
+double point_group(
+  const PositionCollection& normalizedPositions,
+  const PointGroup pointGroup
+) {
+  const auto elements = elements::symmetryElements(pointGroup);
+  const auto npGroups = npGroupings(elements);
+
+  const unsigned G = elements.size();
+  const unsigned P = normalizedPositions.cols();
+
+  /* Rough algorithm:
+   * - Select an orientation of the point group
+   * - For each possible subdivision of points:
+   *   - Minimize CSM for each set according to either G = P or G = l * P
+   *     over all permutations
+   * - Simplex minimize over point group orientation
+   */
+
+  // Eigen::Vector3d pointGroupOrientation = Eigen::Vector3d::UnitZ();
+
+  /* Subdivide P */
+  // The sizes of groups that we can subdivide into must contain the whole set
+  std::vector<unsigned> subdivisionGroupSizes {G};
+  // Add npGroupings' group sizes to subdivisionGroupSizes
+  for(const auto& groupMapPair : npGroups) {
+    subdivisionGroupSizes.push_back(groupMapPair.first);
+  }
+
+  /* If there is one more point than ony of the possible groupings, then one
+   * point can reasonably be symmetrized to the origin.
+   */
+  if(
+    temple::any_of(
+      subdivisionGroupSizes,
+      [P](const unsigned size) { return size == P + 1; }
+    )
+  ) {
+    subdivisionGroupSizes.push_back(1);
+  }
+
+  std::sort(
+    std::begin(subdivisionGroupSizes),
+    std::end(subdivisionGroupSizes),
+    std::greater<>()
+  );
+
+  /* First check if we can solve the diophantine at all, for that the greatest
+   * common divisor has to divide P
+   */
+  if(!diophantine::has_solution(subdivisionGroupSizes, P)) {
+    std::cout << "Diophantine specified by " << temple::stringify(subdivisionGroupSizes) << " = " << P << " has no solutions\n";
+    return 100.0;
+  }
+
+  /* A number of different cases can arise here, and we have to consider them
+   * VERY CAREFULLY before proceeding.
+   *
+   * - If there are two or more elements in subdivisionGroupSizes, we can
+   *   enumerate all solutions of the diophantine
+   *   BUT skip those where the coefficient of group size 1 (if present) is greater than 1
+   *   (i.e. it is NOT reasonable to symmetrize more than one point to the
+   *   origin)
+   * - If there is only one element in subdivisionGroupSizes, then P is G and
+   *   we do not have to subdivide at all -> directly match points to symmetry
+   *   elements
+   */
+
+  if(subdivisionGroupSizes.size() == 1) {
+    // call p = g minimization
+  } else {
+    std::vector<unsigned> subdivisionMultipliers;
+    std::cout << temple::stringify(subdivisionGroupSizes) << " subdivisions\n";
+
+    if(diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
+      do {
+        std::cout << temple::stringify(subdivisionMultipliers) << "\n";
+
+        /* We have a composition of groups to subdivide our points:
+         *
+         * E.g.: P = 12
+         * subdivisionGroupSizes {4, 3, 2}
+         * one solution: subdivisionMultipliers {1, 2, 1}
+         *
+         * Next we make every possible partition of our points into those
+         * respective group sizes. We populate a flat map of point index to
+         * group size index according to the group sizes and multipliers:
+         *
+         * p0 = 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2
+         *
+         * Of this, there are 12! / (4! 6! 2!) = 13860 permutations.
+         */
+        std::vector<unsigned> flatGroupMap;
+        flatGroupMap.reserve(P);
+        for(unsigned i = 0; i < subdivisionMultipliers.size(); ++i) {
+          const unsigned groupMultiplier = subdivisionMultipliers.at(i);
+
+          if(groupMultiplier == 0) {
+            continue;
+          }
+
+          const unsigned groupSize = subdivisionGroupSizes.at(i);
+          flatGroupMap.resize(flatGroupMap.size() + groupSize * groupMultiplier, i);
+        }
+        assert(flatGroupMap.size() == P);
+
+        do {
+          /* For each of these permutations, we sub-partition each group using
+           * Partitioner. This is necessary to treat multipliers > 1 correctly.
+           *
+           * In the previous case, where we have a two groups of size three, we
+           * have 10 sub-partitions to consider. All other groups with
+           * multiplier == 1 have only a single sub-partition.
+           */
+
+          /* Collect the indices mapped to groups of equal size */
+          const unsigned numSizeGroups = subdivisionGroupSizes.size();
+          std::vector<
+            std::vector<unsigned>
+          > sameSizeIndexGroups(numSizeGroups);
+          for(unsigned i = 0; i < P; ++i) {
+            sameSizeIndexGroups.at(flatGroupMap.at(i)).push_back(i);
+          }
+
+          for(unsigned i = 0; i < numSizeGroups; ++i) {
+            const unsigned groupSize = subdivisionGroupSizes.at(i);
+            const unsigned multiplier = subdivisionMultipliers.at(i);
+            const auto& sameSizeParticleIndices = sameSizeIndexGroups.at(i);
+
+            Partitioner partitioner {multiplier, groupSize};
+
+            do {
+              // Group the particle indices
+              auto particleGroups = temple::map(
+                partitioner.partitions(),
+                [&](const auto& group) -> std::vector<unsigned> {
+                  return temple::map(
+                    group,
+                    [&](const unsigned indexOfParticle) -> unsigned {
+                      return sameSizeParticleIndices.at(indexOfParticle);
+                    }
+                  );
+                }
+              );
+
+
+            } while(partitioner.next_partition());
+          }
+        } while(std::next_permutation(std::begin(flatGroupMap), std::end(flatGroupMap)));
+      } while(diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
+    }
+  }
+
+  return 100.0;
+}
+
+namespace cn {
 
 PositionCollection symmetrize(
   const PositionCollection& normalizedPositions,
@@ -698,7 +968,7 @@ PositionCollection symmetrize(
   return symmetrizedPositions;
 }
 
-double partial_cn_csm_evaluation(
+double evaluatePermutation(
   const PositionCollection& normalizedPositions,
   const Eigen::Vector3d& axis,
   const unsigned n,
@@ -732,6 +1002,9 @@ double partial_cn_csm_evaluation(
   return csm;
 }
 
+/**
+ * @brief Functor for minimizing csm as a function of cn axis
+ */
 struct AxisMinimizationFunctor {
   using GroupsType = std::vector<
     std::vector<unsigned>
@@ -764,7 +1037,7 @@ struct AxisMinimizationFunctor {
 
     double csm = 0;
     for(const auto& group : groupsRef.get()) {
-      csm += partial_cn_csm_evaluation(
+      csm += evaluatePermutation(
         normalizedPositionsRef.get(),
         axis,
         axis_n,
@@ -934,6 +1207,9 @@ struct AxisMinimizationFunctor {
   }
 };
 
+/**
+ * @brief Checker for LBFGS minimization
+ */
 struct AxisMinimizationChecker {
   using FloatType = double;
   using VectorType = Eigen::VectorXd;
@@ -950,12 +1226,13 @@ struct AxisMinimizationChecker {
   }
 };
 
+//! Data struct for axis minimization
 struct axis_optimization_t {
   Eigen::Vector3d axis;
   double csm;
 };
 
-axis_optimization_t optimize_cn_axis_two_parameters(
+axis_optimization_t optimize_axis_two_parameters(
   const PositionCollection& normalizedPositions,
   const unsigned n,
   const std::vector<
@@ -1008,7 +1285,8 @@ struct cn_csm_t {
   > groups;
 };
 
-cn_csm_t cn_csm_greedy(
+//! @brief Greedy csm minimization at fixed axis. Not fully permutational.
+cn_csm_t fixedAxisGreedy(
   const PositionCollection& normalizedPositions,
   const unsigned n,
   const Eigen::Vector3d& axis
@@ -1148,7 +1426,8 @@ cn_csm_t cn_csm_greedy(
   return result;
 }
 
-double cn_csm(
+//! Minimizes CSM at fixed axis. Fully permutational
+double fixedAxis(
   const PositionCollection& normalizedPositions,
   const unsigned n,
   const Eigen::Vector3d& axis
@@ -1259,471 +1538,9 @@ double cn_csm(
   return 100 * overallLowestCSM / (groups * n);
 }
 
-} // namespace minimization
+} // namespace cn
 
-namespace elements {
-
-/**
- * @brief Figure out if the positions have a Cn axis, and if so, which order
- *
- * @param normalizedPositions
- *
- * @return n of the highest order Cn axis if found, boost::none if no Cn axis
- * with n >= 2 is found.
- */
-boost::optional<unsigned> find_cn(const PositionCollection& normalizedPositions) {
-
-}
-
-bool has_sn(
-  const PositionCollection& normalizedPositions,
-  const unsigned n,
-  const Eigen::Vector3d& axis
-) {
-
-}
-
-bool has_i(const PositionCollection& normalizedPositions) {
-  return has_sn(normalizedPositions, 2, Eigen::Vector3d::UnitZ());
-}
-
-} // namespace elements
-
-namespace detail {
-
-Eigen::MatrixXd dropColumn(const Eigen::MatrixXd& matrix, unsigned colToRemove) {
-  const unsigned c = matrix.cols();
-  const unsigned leftColCount = colToRemove - 1;
-  const unsigned rightColCount = c - colToRemove;
-
-  Eigen::MatrixXd copy(matrix.rows(), c - 1);
-  copy.leftCols(leftColCount) = matrix.leftCols(leftColCount);
-  copy.rightCols(rightColCount) = matrix.rightCols(rightColCount);
-
-  return copy;
-}
-
-/*!
- * Reframes to center of mass frame (although no masses exist) and rescales
- * vectors so that the maximum distance is 1)
- */
-PositionCollection normalize(const PositionCollection& positions) {
-  const unsigned N = positions.cols();
-
-  // Translate the origin to the average position
-  const Eigen::Vector3d center = positions.rowwise().sum() / positions.cols();
-  PositionCollection transformed = positions.colwise() - center;
-
-  // Rescale all distances so that the longest is a unit vector
-  const double longestDistance = std::sqrt(positions.colwise().squaredNorm().maxCoeff());
-  for(unsigned i = 0; i < N; ++i) {
-    transformed.col(i) /= longestDistance;
-  }
-
-  // Drop any vectors that are very close to the center of mass
-  for(int i = 0; i < transformed.cols(); ++i) {
-    if(transformed.col(i).norm() < 1e-3) {
-      const int r = transformed.rows();
-      const int c = transformed.cols() - 1;
-      if(i < c) {
-        transformed.block(0, i, r, c - i) = transformed.rightCols(c - i);
-      }
-      transformed.conservativeResize(r, c);
-      --i;
-    }
-  }
-
-  assert(transformed.cols() >= 2);
-
-  return transformed;
-}
-
-unsigned degeneracy(const Eigen::Vector3d& inertialMoments) {
-  constexpr double degeneracyEpsilon = 0.1;
-  unsigned mdeg = 0;
-  if(
-    std::fabs(
-      (inertialMoments(2) - inertialMoments(1)) / inertialMoments(2)
-    ) <= degeneracyEpsilon
-  ) {
-    mdeg += 1;
-  }
-  if(
-    std::fabs(
-      (inertialMoments(1) - inertialMoments(0)) / inertialMoments(2)
-    ) <= degeneracyEpsilon
-  ) {
-    mdeg += 2;
-  }
-
-  return 1 + (mdeg + 1) / 2;
-}
-
-PointGroup linear(const PositionCollection& normalizedPositions) {
-  const unsigned P = normalizedPositions.cols();
-  for(unsigned i = 0; i < P / 2; ++i) {
-    const unsigned opposite = P - i - 1;
-    if(!normalizedPositions.col(i).isApprox(-normalizedPositions.col(opposite), 1e-4)) {
-      /* Positions do not have inversion symmetry */
-      return PointGroup::Cinfv;
-    }
-  }
-
-  return PointGroup::Dinfh;
-}
-
-// PointGroup lowSymmetry(const PositionCollection& normalizedPositions) {
-//   // precondition: No Cn axis
-//   if(elements::has_sigma(normalizedPositions)) {
-//     return PointGroup::Cs;
-//   }
-//
-//   if(elements::has_i(normalizedPositions)) {
-//     return PointGroup::Ci;
-//   }
-//
-//   return PointGroup::C1;
-// }
-//
-// template<typename EnumType>
-// constexpr auto underlying(const EnumType e) {
-//   return static_cast<std::underlying_type_t<EnumType>>(e);
-// }
-//
-// PointGroup selectFromRange(
-//   const PointGroup min,
-//   const PointGroup max,
-//   const unsigned i
-// ) {
-//   assert(underlying(min) < underlying(max));
-//   const auto rangeWidth = underlying(max) - underlying(min);
-//   if(i > rangeWidth) {
-//     throw std::logic_error("Point group range is not wide enough!");
-//   }
-//   return static_cast<PointGroup>(underlying(min) + i);
-// }
-//
-// /**
-//  * @brief Resolve medium symmetries
-//  *
-//  * @param normalizedPositions
-//  * @param n Highest found order of proper rotation axis Cn
-//  *
-//  * @pre High symmetries have been resolved
-//  * @pre normalizedPositions does not contain a Cinf axis but contains a Cn
-//  *
-//  * @return
-//  */
-// PointGroup mediumSymmetry(
-//   const PositionCollection& normalizedPositions,
-//   const unsigned n
-// ) {
-//   // preconditions: No Cinf, has Cn, no 6 C5, no 3 C4, no 4 C3
-//   if(elements::has_n_c2_perpendicular_cn(normalizedPositions, n)) {
-//     if(elements::has_sigma_h(normalizedPositions)) {
-//       // Dnh point groups
-//       return selectFromRange(PointGroup::D2h, PointGroup::D8h, n - 2);
-//     }
-//
-//     if(elements::has_n_sigma_v(normalizedPositions, n)) {
-//       // Dnd point groups
-//       return selectFromRange(PointGroup::D2d, PointGroup::D8d, n - 2);
-//     }
-//
-//     // Dn point groups
-//     return selectFromRange(PointGroup::D2, PointGroup::D8, n - 2);
-//   }
-//
-//   if(elements::has_sn(normalizedPositions, 2 * n, Eigen::Vector3d::UnitZ())) {
-//     // S2n point groups (S4, S6, S8)
-//     return selectFromRange(PointGroup::S4, PointGroup::S8, n - 2);
-//   }
-//
-//   if(elements::has_sigma_h(normalizedPositions)) {
-//     // Cnh point groups
-//     return selectFromRange(PointGroup::C2h, PointGroup::C8h, n - 2);
-//   }
-//
-//   if(elements::has_n_sigma_v(normalizedPositions, n)) {
-//     // Cnv point groups
-//     return selectFromRange(PointGroup::C2v, PointGroup::C8v, n - 2);
-//   }
-//
-//   // Cn point groups
-//   return selectFromRange(PointGroup::C2, PointGroup::C8, n - 2);
-// }
-//
-// /**
-//  * @brief Resolve medium and high symmetry point groups
-//  *
-//  * @param normalizedPositions
-//  * @param n Highest found order of proper rotation axis Cn
-//  *
-//  * @pre normalizedPositions does not contain a Cinf axis
-//  *
-//  * @return resolved point group
-//  */
-// PointGroup mediumAndHighSymmetry(
-//   const PositionCollection& normalizedPositions,
-//   const unsigned n
-// ) {
-//   // precondition: No Cinf, has Cn
-//   if(elements::has_six_c5(normalizedPositions)) {
-//     if(elements::has_i(normalizedPositions)) {
-//       return PointGroup::Ih;
-//     }
-//
-//     return PointGroup::I;
-//   }
-//
-//   if(elements::has_three_c4(normalizedPositions)) {
-//     if(elements::has_i(normalizedPositions)) {
-//       return PointGroup::Oh;
-//     }
-//
-//     return PointGroup::O;
-//   }
-//
-//   if(elements::has_four_c3(normalizedPositions)) {
-//     if(elements::has_i(normalizedPositions)) {
-//       return PointGroup::Th;
-//     }
-//
-//     if(elements::has_six_sigma(normalizedPositions)) {
-//       return PointGroup::Td;
-//     }
-//
-//     return PointGroup::T;
-//   }
-//
-//   return mediumSymmetry(normalizedPositions, n);
-// }
-
-} // namespace detail
-
-namespace diophantine {
-
-bool has_solution(
-  const std::vector<unsigned>& a,
-  const int b
-) {
-  // Calculate gcd for all elements in a
-  assert(!a.empty());
-  unsigned collectiveGCD = a.front();
-  for(auto it = ++std::begin(a); it != std::end(a); ++it) {
-    collectiveGCD = boost::integer::gcd(collectiveGCD, *it);
-  }
-
-  /* For the diophantine to have a solution, the collective GCD has to evenly
-   * divide b
-   */
-  return b % collectiveGCD == 0;
-}
-
-bool next_solution(
-  std::vector<unsigned>& x,
-  const std::vector<unsigned>& a,
-  const int b
-) {
-  // a must be ordered descending
-  assert(
-    std::is_sorted(
-      std::begin(a),
-      std::end(a),
-      std::greater<>()
-    )
-  );
-  // a and x sizes must match
-  assert(x.size() >= 2);
-  assert(a.size() == x.size());
-  assert(b > 0);
-
-  auto q = [&]() -> int {
-    return std::inner_product(
-      std::begin(a),
-      --std::end(a),
-      std::begin(x),
-      0
-    );
-  };
-
-  /* To find the next solution, we increment the left n - 1 columns of a
-   * through all combinations giving inner products <= b until the difference
-   * is divisible by the last a.
-   */
-  const auto reverseStart = ++std::rbegin(x);
-  const auto reverseEnd = std::rend(x);
-  assert(reverseStart != reverseEnd);
-  int Q = 0;
-  do {
-    // Increment the left n - 1 columns of x once!
-    auto it = reverseStart;
-    assert(it != reverseEnd);
-    for(; it != reverseEnd; ++it) {
-      ++(*it);
-
-      Q = q();
-      if(Q <= b) {
-        break;
-      }
-
-      *it = 0;
-    }
-
-    // Check to make sure we are not at the last solution
-    if(it == reverseEnd) {
-      // Past last solution!
-      x.back() = 0;
-      return false;
-    }
-
-  } while(Q > b || (b - Q) % a.back() != 0);
-
-  x.back() = (b - Q) / a.back();
-  return true;
-}
-
-bool first_solution(
-  std::vector<unsigned>& x,
-  const std::vector<unsigned>& a,
-  const int b
-) {
-  assert(a.size() >= 2);
-  x.resize(a.size());
-  std::fill(
-    std::begin(x),
-    std::end(x),
-    0
-  );
-
-  if(b % a.back() == 0) {
-    x.back() = b / a.back();
-    return true;
-  }
-
-  return next_solution(x, a, b);
-}
-
-} // namespace diophantine
-
-double csm(const PositionCollection& normalizedPositions, const PointGroup pointGroup) {
-  const auto elements = minimization::symmetryElements(pointGroup);
-  const auto npGroups = npGroupings(elements);
-
-  const unsigned G = elements.size();
-  const unsigned P = normalizedPositions.cols();
-
-  /* Rough algorithm:
-   * - Select an orientation of the point group
-   * - For each possible subdivision of points:
-   *   - Minimize CSM for each set according to either G = P or G = l * P
-   *     over all permutations
-   * - Simplex minimize over point group orientation
-   */
-
-  // Eigen::Vector3d pointGroupOrientation = Eigen::Vector3d::UnitZ();
-
-  /* Subdivide P */
-  // The sizes of groups that we can subdivide into must contain the whole set
-  std::vector<unsigned> subdivisionGroupSizes {G};
-  // Add npGroupings' group sizes to subdivisionGroupSizes
-  for(const auto& groupMapPair : npGroups) {
-    subdivisionGroupSizes.push_back(groupMapPair.first);
-  }
-
-  /* If there is one more point than ony of the possible groupings, then one
-   * point can reasonably be symmetrized to the origin.
-   */
-  if(
-    temple::any_of(
-      subdivisionGroupSizes,
-      [P](const unsigned size) { return size == P + 1; }
-    )
-  ) {
-    subdivisionGroupSizes.push_back(1);
-  }
-
-  std::sort(
-    std::begin(subdivisionGroupSizes),
-    std::end(subdivisionGroupSizes),
-    std::greater<>()
-  );
-
-  /* First check if we can solve the diophantine at all, for that the greatest
-   * common divisor has to divide P
-   */
-  if(!diophantine::has_solution(subdivisionGroupSizes, P)) {
-    std::cout << "Diophantine specified by " << temple::stringify(subdivisionGroupSizes) << " = " << P << " has no solutions\n";
-    return 100.0;
-  }
-
-  /* A number of different cases can arise here, and we have to consider them
-   * VERY CAREFULLY before proceeding.
-   *
-   * - If there are two or more elements in subdivisionGroupSizes, we can
-   *   enumerate all solutions of the diophantine
-   *   BUT skip those where the coefficient of group size 1 (if present) is greater than 1
-   *   (i.e. it is NOT reasonable to symmetrize more than one point to the
-   *   origin)
-   * - If there is only one element in subdivisionGroupSizes, then P is G and
-   *   we do not have to subdivide at all -> directly match points to symmetry
-   *   elements
-   */
-
-  if(subdivisionGroupSizes.size() == 1) {
-    // call p = g minimization
-  } else {
-    std::vector<unsigned> subdivisionMultipliers;
-    std::cout << temple::stringify(subdivisionGroupSizes) << " subdivisions\n";
-
-    if(diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
-      do {
-        std::cout << temple::stringify(subdivisionMultipliers) << "\n";
-
-        /* We have a composition of groups to subdivide our points:
-         *
-         * E.g.: P = 12
-         * subdivisionGroupSizes {4, 3, 2}
-         * one solution: subdivisionMultipliers {1, 2, 1}
-         *
-         * Next we make every possible partition of our points into those
-         * respective group sizes. We populate a flat map of point index to
-         * group size index according to the group sizes and multipliers:
-         *
-         * p0 = 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2
-         *
-         * Of this, there are 12! / (4! 6! 2!) = 13860 permutations.
-         */
-        std::vector<unsigned> flatGroupMap;
-        flatGroupMap.reserve(P);
-        for(unsigned i = 0; i < subdivisionMultipliers.size(); ++i) {
-          const unsigned groupMultiplier = subdivisionMultipliers.at(i);
-
-          if(groupMultiplier == 0) {
-            continue;
-          }
-
-          const unsigned groupSize = subdivisionGroupSizes.at(i);
-          flatGroupMap.resize(flatGroupMap.size() + groupSize * groupMultiplier, i);
-        }
-
-        do {
-          /* For each of these permutations, we sub-partition the group using
-           * Partitioner. This is necessary to treat multipliers > 1 correctly.
-           *
-           * In the previous case, where we have a two groups of size three, we
-           * have 10 sub-partitions to consider. All other groups with
-           * multiplier == 1 have only a single sub-partition.
-           */
-
-          /* Collect the groups */
-        } while(std::next_permutation(std::begin(flatGroupMap), std::end(flatGroupMap)));
-      } while(diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
-    }
-  }
-
-  return 100.0;
-}
+} // namespace csm
 
 PointGroup analyze(const PositionCollection& positions) {
   auto transformed = detail::normalize(positions);
@@ -1817,13 +1634,13 @@ PointGroup analyze(const PositionCollection& positions) {
   for(unsigned axisIndex = 0; axisIndex < 3; ++axisIndex) {
     std::cout << "At axis " << axisIndex << " along " << decomposition.eigenvectors().col(axisIndex).transpose() << "\n";
     for(unsigned n = 2; n <= N; ++n) {
-      const double axis_csm = minimization::cn_csm(
+      const double axis_csm = csm::cn::fixedAxis(
         transformed,
         n,
         decomposition.eigenvectors().col(axisIndex)
       );
 
-      const auto csm_greedy = minimization::cn_csm_greedy(
+      const auto csm_greedy = csm::cn::fixedAxisGreedy(
         transformed,
         n,
         decomposition.eigenvectors().col(axisIndex)
@@ -1838,9 +1655,9 @@ PointGroup analyze(const PositionCollection& positions) {
       if(axis_csm < 0.1) {
         // Cn symmetry csm
         const PointGroup cn_point_group = static_cast<PointGroup>(
-          minimization::underlying(PointGroup::C2) + n - 2
+          elements::underlying(PointGroup::C2) + n - 2
         );
-        double symm_csm = csm(
+        double symm_csm = csm::point_group(
           transformed,
           cn_point_group
         );

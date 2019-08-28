@@ -38,7 +38,7 @@ using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 PointGroup analyze(const PositionCollection& positions);
 
 // TODO TMP for testing
-namespace minimization {
+namespace elements {
 
 struct SymmetryElement {
   using Vector = Eigen::Vector3d;
@@ -59,7 +59,7 @@ struct Inversion final : public SymmetryElement {
   boost::optional<Vector> vector() const final;
 };
 
-struct Rotation : public SymmetryElement {
+struct Rotation final : public SymmetryElement {
   Rotation(
     const Eigen::Vector3d& passAxis,
     const unsigned passN,
@@ -81,7 +81,7 @@ struct Rotation : public SymmetryElement {
   bool reflect;
 };
 
-struct Reflection : public SymmetryElement {
+struct Reflection final : public SymmetryElement {
   Reflection(const Eigen::Vector3d& passNormal);
 
   Matrix matrix() const final;
@@ -112,105 +112,49 @@ std::map<unsigned, ElementGrouping> npGroupings(
   const std::vector<std::unique_ptr<SymmetryElement>>& elements
 );
 
-} // namespace minimization
+} // namespace elements
 
-/*! @brief Functions to help treat a particular linear diophantine equation
- *
- * Here we want to treat a special case of the linear diophantine equation:
- *
- * sum_i a_i * x_i = b
- *
- * with a_i > 0 and x_i >= 0.
- */
-namespace diophantine {
+namespace csm {
 
-/*! @brief Checks whether a diophantine has a solution
+/*! @brief Minimizes CSM for a point group, case: G = P
  *
- * @param a The constant coefficients, in no particular order and without
- *   value constraints. The list may not be empty, though.
- * @param b The sought inner product result.
- *
- * @returns whether gcd(a_1, ..., a_n) is a divisor of b. If so, the diophantine
- *   has a solution.
+ * This minimizes the continuous symmetry measure for the case that the number
+ * of group symmetry elements matches the number of particles.
  */
-bool has_solution(
-  const std::vector<unsigned>& a,
-  const int b
+double all_symmetry_elements(
+  const PositionCollection& normalizedPositions,
+  const PointGroup pointGroup,
+  std::vector<unsigned> particleIndices
 );
 
-/*! @brief Finds the next solution of the diophantine equation, if it exists
+/*! @brief Minimizes CSM for a point group, case G = l * P
  *
- * Finds the next solution of the linear diophantine \$\sum_i a_ix_i = b\$ with
- * positive \$a_i\$, non-negative \$x_i\$ and positive \$b\$.
- *
- * Use the following pattern:
- * @code{cpp}
- * std::vector<unsigned> x;
- * const std::vector<unsigned> a {4, 3, 2};
- * const int b = 12;
- *
- * if(first_solution(x, a, b)) {
- *   do {
- *     // Do something with x
- *   } while(next_solution(x, a, b));
- * }
- * @endcode
- *
- * @warning Solutions to diophantines, even particularly easy ones like this
- * constrained, linear diophantine, are generally complex. The approach taken
- * here is more or less brute-force enumeration and does not scale well for
- * many coefficients @p a! See https://arxiv.org/pdf/math/0010134.pdf for a
- * sketch on how this would be properly solved.
- *
- * @param x Filled coefficient vector of equal size as a, whose values
- *   represent a solution to the diophantine (i.e. inner_product(a, x) == b)
- * @param a The constant coefficients, strictly descending (no duplicate
- *   values) and non-zero.
- * @param b The sought inner product result
+ * This minimizes the continuous symmetry measure for the case that the number
+ * of group symmetry elements is a multiple l of the number of particles.
  */
-bool next_solution(
-  std::vector<unsigned>& x,
-  const std::vector<unsigned>& a,
-  const int b
+double grouped_symmetry_elements(
+  const PositionCollection& normalizedPositions,
+  const PointGroup pointGroup,
+  std::vector<unsigned> particleIndices,
+  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const elements::ElementGrouping& elementGrouping
 );
 
-/*! @brief Finds the first solution of the diophantine equation, if it exists
+/**
+ * @brief Calculates the continuous symmetry measure for a set of particles
+ *   and a particular point group
  *
- * Finds the first solution of the linear diophantine \$\sum_i a_ix_i = b\$ with
- * positive \$a_i\$, non-negative \$x_i\$ and positive \$b\$.
+ * @param normalizedPositions
+ * @param pointGroup
  *
- * Use the following pattern:
- * @code{cpp}
- * std::vector<unsigned> x;
- * const std::vector<unsigned> a {4, 3, 2};
- * const int b = 12;
- *
- * if(first_solution(x, a, b)) {
- *   do {
- *     // Do something with x
- *   } while(next_solution(x, a, b));
- * }
- * @endcode
- *
- * @warning Solutions to diophantines, even particularly easy ones like this
- * constrained, linear diophantine, are generally complex. The approach taken
- * here is more or less brute-force enumeration and does not scale well for
- * many coefficients @p a! See https://arxiv.org/pdf/math/0010134.pdf for a
- * sketch on how this would be properly solved.
- *
- * @param x Vector to store the first solution into (resize and fill is handled
- *   by this function)
- * @param a The constant coefficients, strictly descending (no duplicate
- *   values) and non-zero.
- * @param b The sought inner product result
+ * @return The continuous symmetry measure
  */
-bool first_solution(
-  std::vector<unsigned>& x,
-  const std::vector<unsigned>& a,
-  const int b
+double point_group(
+  const PositionCollection& normalizedPositions,
+  const PointGroup pointGroup
 );
 
-} // namespace diophantine
+} // namespace csm
 
 } // namespace Symmetry
 } // namespace Scine

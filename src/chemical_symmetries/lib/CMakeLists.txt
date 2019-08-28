@@ -10,6 +10,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/AngleLookup.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/CompileTimeOptions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/ConstexprProperties.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Diophantine.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/DynamicProperties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Names.h
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Partitioner.h
@@ -21,6 +22,7 @@ set(HEADERS_All
 )
 
 set(SOURCES_All
+  ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Diophantine.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/DynamicProperties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Partitioner.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/chemical_symmetries/Primitives.cpp

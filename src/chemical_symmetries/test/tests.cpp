@@ -18,6 +18,7 @@
 #include "temple/Stringify.h"
 #include "temple/Functor.h"
 
+#include "chemical_symmetries/Diophantine.h"
 #include "chemical_symmetries/Partitioner.h"
 #include "chemical_symmetries/Properties.h"
 #include "chemical_symmetries/Recognition.h"
@@ -974,8 +975,8 @@ BOOST_AUTO_TEST_CASE(PointGroupElements) {
    * transformations to each point
    */
   auto writePointGroup = [&](const PointGroup group) {
-    const auto elements = minimization::symmetryElements(group);
-    const auto groupings = minimization::npGroupings(elements);
+    const auto elements = elements::symmetryElements(group);
+    const auto groupings = elements::npGroupings(elements);
     std::cout << pointGroupStrings.at(underlying(group)) << "\n";
     for(const auto& iterPair : groupings) {
       std::cout << "  np = " << iterPair.first << " along " << iterPair.second.probePoint.transpose() << " -> " << temple::stringify(iterPair.second.groups) << "\n";
