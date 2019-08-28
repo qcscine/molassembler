@@ -7,7 +7,6 @@
 
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
-#include <vector>
 #include "temple/Functional.h"
 #include "temple/Optimization/TrustRegion.h"
 #include "temple/Optimization/Common.h"
@@ -663,8 +662,6 @@ std::map<unsigned, ElementGrouping> npGroupings(
           np,
           std::move(grouping)
         );
-      } else {
-        throw std::logic_error("Multiple l mappings found!");
       }
     }
   }
@@ -766,14 +763,64 @@ namespace csm {
 
 double all_symmetry_elements(
   const PositionCollection& normalizedPositions,
-  const PointGroup pointGroup,
+  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
   std::vector<unsigned> particleIndices
 ) {
+  const unsigned P = particleIndices.size();
+  const unsigned G = elements.size();
+  assert(P == G);
+
+  const std::vector<Eigen::Matrix3d> unfoldMatrices = temple::map(
+    elements,
+    [](const auto& elementPtr) -> Eigen::Matrix3d {
+      return elementPtr->matrix();
+    }
+  );
+  const std::vector<Eigen::Matrix3d> foldMatrices = temple::map(
+    unfoldMatrices,
+    [](const auto& unfoldMatrix) -> Eigen::Matrix3d {
+      return unfoldMatrix.inverse();
+    }
+  );
+
+  double value = 1000;
+
+  do {
+    double permutationCSM = 0;
+
+    /* Fold points and average */
+    Eigen::Vector3d averagePoint;
+    averagePoint.setZero();
+    for(unsigned i = 0; i < P; ++i) {
+      averagePoint += foldMatrices.at(i) * normalizedPositions.col(particleIndices.at(i));
+    }
+    averagePoint /= P;
+
+    /* Unfold points */
+    for(unsigned i = 0; i < P; ++i) {
+      permutationCSM += (
+        unfoldMatrices.at(i) * averagePoint
+        - normalizedPositions.col(particleIndices.at(i))
+      ).squaredNorm();
+    }
+
+    permutationCSM *= 100;
+
+    std::cout << "Permutation: " << temple::stringify(particleIndices) << " has CSM " << permutationCSM << "\n";
+
+    value = std::min(value, permutationCSM);
+  } while(
+    std::next_permutation(
+      std::begin(particleIndices),
+      std::end(particleIndices)
+    )
+  );
+
+  return value;
 }
 
 double grouped_symmetry_elements(
   const PositionCollection& normalizedPositions,
-  const PointGroup pointGroup,
   std::vector<unsigned> particleIndices,
   const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
   const elements::ElementGrouping& elementGrouping
@@ -797,6 +844,9 @@ double point_group(
    *   - Minimize CSM for each set according to either G = P or G = l * P
    *     over all permutations
    * - Simplex minimize over point group orientation
+   *
+   * TODO need to avoid multipliers > 1 of group size 1 entirely. It only
+   * ever makes sense to symmetrize a single point to the origin.
    */
 
   // Eigen::Vector3d pointGroupOrientation = Eigen::Vector3d::UnitZ();
@@ -809,7 +859,7 @@ double point_group(
     subdivisionGroupSizes.push_back(groupMapPair.first);
   }
 
-  /* If there is one more point than ony of the possible groupings, then one
+  /* If there is one point more than any of the possible groupings, then one
    * point can reasonably be symmetrized to the origin.
    */
   if(
@@ -850,87 +900,97 @@ double point_group(
 
   if(subdivisionGroupSizes.size() == 1) {
     // call p = g minimization
-  } else {
-    std::vector<unsigned> subdivisionMultipliers;
-    std::cout << temple::stringify(subdivisionGroupSizes) << " subdivisions\n";
+    return all_symmetry_elements(
+      normalizedPositions,
+      elements,
+      temple::iota<unsigned>(P)
+    );
+  }
 
-    if(diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
+  std::vector<unsigned> subdivisionMultipliers;
+  std::cout << "group sizes: " << temple::stringify(subdivisionGroupSizes) << "\n";
+
+  if(diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
+    do {
+      std::cout << "multipliers: " << temple::stringify(subdivisionMultipliers) << "\n";
+
+      /* We have a composition of groups to subdivide our points:
+       *
+       * E.g.: P = 12
+       * subdivisionGroupSizes {4, 3, 2}
+       * one solution: subdivisionMultipliers {1, 2, 1}
+       *
+       * Next we make every possible partition of our points into those
+       * respective group sizes. We populate a flat map of point index to
+       * group size index according to the group sizes and multipliers:
+       *
+       * p0 = 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2
+       *
+       * Of this, there are 12! / (4! 6! 2!) = 13860 permutations.
+       */
+      std::vector<unsigned> flatGroupMap;
+      flatGroupMap.reserve(P);
+      for(unsigned i = 0; i < subdivisionMultipliers.size(); ++i) {
+        const unsigned groupMultiplier = subdivisionMultipliers.at(i);
+
+        if(groupMultiplier == 0) {
+          continue;
+        }
+
+        const unsigned groupSize = subdivisionGroupSizes.at(i);
+        flatGroupMap.resize(flatGroupMap.size() + groupSize * groupMultiplier, i);
+      }
+      assert(flatGroupMap.size() == P);
+
       do {
-        std::cout << temple::stringify(subdivisionMultipliers) << "\n";
-
-        /* We have a composition of groups to subdivide our points:
+        /* For each of these permutations, we sub-partition each group using
+         * Partitioner. This is necessary to treat multipliers > 1 correctly.
          *
-         * E.g.: P = 12
-         * subdivisionGroupSizes {4, 3, 2}
-         * one solution: subdivisionMultipliers {1, 2, 1}
-         *
-         * Next we make every possible partition of our points into those
-         * respective group sizes. We populate a flat map of point index to
-         * group size index according to the group sizes and multipliers:
-         *
-         * p0 = 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2
-         *
-         * Of this, there are 12! / (4! 6! 2!) = 13860 permutations.
+         * In the previous case, where we have a two groups of size three, we
+         * have 10 sub-partitions to consider. All other groups with
+         * multiplier == 1 have only a single sub-partition.
          */
-        std::vector<unsigned> flatGroupMap;
-        flatGroupMap.reserve(P);
-        for(unsigned i = 0; i < subdivisionMultipliers.size(); ++i) {
-          const unsigned groupMultiplier = subdivisionMultipliers.at(i);
 
-          if(groupMultiplier == 0) {
+        /* Collect the indices mapped to groups of equal size */
+        const unsigned numSizeGroups = subdivisionGroupSizes.size();
+        std::vector<
+          std::vector<unsigned>
+        > sameSizeIndexGroups(numSizeGroups);
+        for(unsigned i = 0; i < P; ++i) {
+          sameSizeIndexGroups.at(flatGroupMap.at(i)).push_back(i);
+        }
+
+        for(unsigned i = 0; i < numSizeGroups; ++i) {
+          const unsigned groupSize = subdivisionGroupSizes.at(i);
+          const unsigned multiplier = subdivisionMultipliers.at(i);
+          const auto& sameSizeParticleIndices = sameSizeIndexGroups.at(i);
+
+          // Skip groups with multiplier zero
+          if(multiplier == 0) {
             continue;
           }
 
-          const unsigned groupSize = subdivisionGroupSizes.at(i);
-          flatGroupMap.resize(flatGroupMap.size() + groupSize * groupMultiplier, i);
+          Partitioner partitioner {multiplier, groupSize};
+
+          do {
+            // Group the particle indices
+            auto particleGroups = temple::map(
+              partitioner.partitions(),
+              [&](const auto& group) -> std::vector<unsigned> {
+                return temple::map(
+                  group,
+                  [&](const unsigned indexOfParticle) -> unsigned {
+                    return sameSizeParticleIndices.at(indexOfParticle);
+                  }
+                );
+              }
+            );
+
+
+          } while(partitioner.next_partition());
         }
-        assert(flatGroupMap.size() == P);
-
-        do {
-          /* For each of these permutations, we sub-partition each group using
-           * Partitioner. This is necessary to treat multipliers > 1 correctly.
-           *
-           * In the previous case, where we have a two groups of size three, we
-           * have 10 sub-partitions to consider. All other groups with
-           * multiplier == 1 have only a single sub-partition.
-           */
-
-          /* Collect the indices mapped to groups of equal size */
-          const unsigned numSizeGroups = subdivisionGroupSizes.size();
-          std::vector<
-            std::vector<unsigned>
-          > sameSizeIndexGroups(numSizeGroups);
-          for(unsigned i = 0; i < P; ++i) {
-            sameSizeIndexGroups.at(flatGroupMap.at(i)).push_back(i);
-          }
-
-          for(unsigned i = 0; i < numSizeGroups; ++i) {
-            const unsigned groupSize = subdivisionGroupSizes.at(i);
-            const unsigned multiplier = subdivisionMultipliers.at(i);
-            const auto& sameSizeParticleIndices = sameSizeIndexGroups.at(i);
-
-            Partitioner partitioner {multiplier, groupSize};
-
-            do {
-              // Group the particle indices
-              auto particleGroups = temple::map(
-                partitioner.partitions(),
-                [&](const auto& group) -> std::vector<unsigned> {
-                  return temple::map(
-                    group,
-                    [&](const unsigned indexOfParticle) -> unsigned {
-                      return sameSizeParticleIndices.at(indexOfParticle);
-                    }
-                  );
-                }
-              );
-
-
-            } while(partitioner.next_partition());
-          }
-        } while(std::next_permutation(std::begin(flatGroupMap), std::end(flatGroupMap)));
-      } while(diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
-    }
+      } while(std::next_permutation(std::begin(flatGroupMap), std::end(flatGroupMap)));
+    } while(diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
   }
 
   return 100.0;

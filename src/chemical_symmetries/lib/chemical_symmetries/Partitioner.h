@@ -35,6 +35,8 @@ public:
    * @param s Number of groups
    * @param e Number of elements per group
    *
+   * @pre @p s is not zero and @p e is not zero
+   *
    * @complexity{@math{\Theta(S\cdot E)}}
    */
   Partitioner(const unsigned s, const unsigned e);

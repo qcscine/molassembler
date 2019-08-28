@@ -4,12 +4,17 @@ endif()
 find_package(Eigen3 3.1.1 REQUIRED)
 find_package(temple 0.1.0 REQUIRED)
 
-add_executable(symmetryTests tests.cpp)
-target_compile_options(symmetryTests PUBLIC -g -O2)
-
-target_include_directories(
-  symmetryTests PRIVATE ${EIGEN3_INCLUDE_DIRS}
+set(TestFiles
+  ${CMAKE_CURRENT_SOURCE_DIR}/CoordinateSystemTransformation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Diophantine.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Partitioner.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Recognition.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests.cpp
 )
+
+add_executable(symmetryTests ${TestFiles})
+
+target_include_directories(symmetryTests PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(symmetryTests
   PUBLIC
     Boost::boost

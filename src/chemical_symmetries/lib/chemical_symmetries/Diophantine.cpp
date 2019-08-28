@@ -1,6 +1,7 @@
 #include "Diophantine.h"
 
 #include "boost/integer/common_factor.hpp"
+#include <functional>
 #include <algorithm>
 #include <numeric>
 #include <cassert>

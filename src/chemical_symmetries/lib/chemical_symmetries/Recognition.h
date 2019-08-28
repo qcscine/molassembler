@@ -123,7 +123,7 @@ namespace csm {
  */
 double all_symmetry_elements(
   const PositionCollection& normalizedPositions,
-  const PointGroup pointGroup,
+  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
   std::vector<unsigned> particleIndices
 );
 
@@ -134,14 +134,12 @@ double all_symmetry_elements(
  */
 double grouped_symmetry_elements(
   const PositionCollection& normalizedPositions,
-  const PointGroup pointGroup,
   std::vector<unsigned> particleIndices,
   const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
   const elements::ElementGrouping& elementGrouping
 );
 
-/**
- * @brief Calculates the continuous symmetry measure for a set of particles
+/** @brief Calculates the continuous symmetry measure for a set of particles
  *   and a particular point group
  *
  * @param normalizedPositions
@@ -155,6 +153,17 @@ double point_group(
 );
 
 } // namespace csm
+
+namespace detail {
+
+/*! @brief Normalize positions for continuous symmetry measure analysis
+ *
+ * Reframes to center of mass frame (although no masses exist) and rescales
+ * vectors so that the maximum distance is 1)
+ */
+PositionCollection normalize(const PositionCollection& positions);
+
+} // namespace detail
 
 } // namespace Symmetry
 } // namespace Scine

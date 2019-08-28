@@ -8,6 +8,7 @@ namespace Scine {
 namespace Symmetry {
 
 Partitioner::Partitioner(const unsigned s, const unsigned e) : S(s), E(e), mapping(S * E) {
+  assert(s != 0 && e != 0);
   const unsigned numElements = S * E;
   for(unsigned i = 0; i < numElements; ++i) {
     mapping[i] = i / E;
