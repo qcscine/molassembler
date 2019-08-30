@@ -1611,12 +1611,12 @@ InertialMoments principalInertialMoments(
 
   for(unsigned i = 0; i < N; ++i) {
     const auto& vec = normalizedPositions.col(i);
-    inertialMatrix(0, 0) += vec(1) * vec(1) + vec(2) * vec(2); // xx
-    inertialMatrix(1, 1) += vec(0) * vec(0) + vec(2) * vec(2); // yy
-    inertialMatrix(2, 2) += vec(0) * vec(0) + vec(1) * vec(1); // zz
-    inertialMatrix(1, 0) += vec(0) * vec(1); // xy
-    inertialMatrix(2, 0) += vec(0) * vec(2); // xz
-    inertialMatrix(2, 1) += vec(1) * vec(2); // yz
+    inertialMatrix(0, 0) += vec.y() * vec.y() + vec.z() * vec.z();
+    inertialMatrix(1, 1) += vec.x() * vec.x() + vec.z() * vec.z();
+    inertialMatrix(2, 2) += vec.x() * vec.x() + vec.y() * vec.y();
+    inertialMatrix(1, 0) -= vec.x() * vec.y(); // xy
+    inertialMatrix(2, 0) -= vec.x() * vec.z(); // xz
+    inertialMatrix(2, 1) -= vec.y() * vec.z(); // yz
   }
 
   // Decompose the inertial matrix to get principal axes and inertial moments
