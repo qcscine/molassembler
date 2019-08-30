@@ -60,7 +60,7 @@ using TetrahedronList = std::vector<
   >
 >;
 
-using CoordinateList = std::vector<Eigen::Vector3d>;
+using CoordinateList = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 using MirrorMap = std::vector<unsigned>;
 
 //! Dynamic symmetry information data struct
@@ -78,15 +78,17 @@ struct SymmetryInformation {
     unsigned passSize,
     RotationsList passRotations,
     TetrahedronList passTetrahedra,
-    CoordinateList passCoordinates,
+    const CoordinateList& passCoordinates,
     MirrorMap passMirror
   ) : stringName(std::move(passStringName)),
       size(passSize),
       rotations(std::move(passRotations)),
       tetrahedra(std::move(passTetrahedra)),
-      coordinates(std::move(passCoordinates)),
+      coordinates(passCoordinates),
       mirror(std::move(passMirror))
   {}
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 // Helper function to create all names vector
@@ -103,6 +105,14 @@ constexpr std::array<Name, nSymmetries> makeAllNames(
 constexpr std::array<Name, nSymmetries> allNames = makeAllNames(
   std::make_index_sequence<nSymmetries>()
 );
+
+//! Map type used to store symmetry information structs
+using SymmetryDataMapType = std::map<
+  Name,
+  SymmetryInformation,
+  std::less<>,
+  Eigen::aligned_allocator<std::pair<const Name, SymmetryInformation>>
+>;
 
 namespace data {
 
@@ -184,10 +194,10 @@ template<size_t symmetrySize>
 CoordinateList makeCoordinates(
   const std::array<temple::Vector, symmetrySize>& constexprCoordinates
 ) {
-  CoordinateList coordinates (symmetrySize);
+  CoordinateList coordinates(3, symmetrySize);
 
   for(unsigned i = 0; i < symmetrySize; ++i) {
-    coordinates.at(i) = toEigen(constexprCoordinates.at(i));
+    coordinates.col(i) = toEigen(constexprCoordinates.at(i));
   }
 
   return coordinates;
@@ -241,7 +251,7 @@ std::pair<Name, SymmetryInformation> makeMapInitPair() {
  */
 template<typename ...SymmetryClasses>
 struct symmetryInformationFunctor {
-  static const std::map<Name, SymmetryInformation> value() {
+  static const SymmetryDataMapType value() {
     return {{
       makeMapInitPair<SymmetryClasses>()...
     }};
@@ -260,7 +270,7 @@ constexpr auto angleFunctions = temple::TupleType::unpackToFunction<
  * .cpp file from the tuple containing all symmetry data types and the
  * symmetryInformationFunctor
  */
-const std::map<Name, SymmetryInformation>& symmetryData();
+const SymmetryDataMapType& symmetryData();
 
 /* Interface */
 /*! @brief Fetch the string name of a symmetry

@@ -1,5 +1,6 @@
 #include "chemical_symmetries/Recognition.h"
 
+#include "chemical_symmetries/CoordinateSystemTransformation.h"
 #include "chemical_symmetries/Diophantine.h"
 #include "chemical_symmetries/Partitioner.h"
 
@@ -1602,16 +1603,14 @@ double fixedAxis(
 
 } // namespace csm
 
-PointGroup analyze(const PositionCollection& positions) {
-  auto transformed = detail::normalize(positions);
-
-  const unsigned N = transformed.cols();
-  assert(N > 1);
-
-  // Construct the lower triangle of the inertial matrix in the new frame
+InertialMoments principalInertialMoments(
+  const PositionCollection& normalizedPositions
+) {
   Eigen::Matrix3d inertialMatrix = Eigen::Matrix3d::Zero(3, 3);
+  const unsigned N = normalizedPositions.cols();
+
   for(unsigned i = 0; i < N; ++i) {
-    const auto& vec = transformed.col(i);
+    const auto& vec = normalizedPositions.col(i);
     inertialMatrix(0, 0) += vec(1) * vec(1) + vec(2) * vec(2); // xx
     inertialMatrix(1, 1) += vec(0) * vec(0) + vec(2) * vec(2); // yy
     inertialMatrix(2, 2) += vec(0) * vec(0) + vec(1) * vec(1); // zz
@@ -1623,24 +1622,184 @@ PointGroup analyze(const PositionCollection& positions) {
   // Decompose the inertial matrix to get principal axes and inertial moments
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> decomposition(inertialMatrix);
 
+  InertialMoments result;
+  result.moments = decomposition.eigenvalues();
+  result.axes = decomposition.eigenvectors();
+  return result;
+}
+
+PointGroup analyze(const PositionCollection& positions) {
+  auto transformed = detail::normalize(positions);
+
+  const unsigned N = transformed.cols();
+  assert(N > 1);
+
+  auto moments = principalInertialMoments(transformed);
+
   for(unsigned i = 0; i < 3; ++i) {
     std::cout << "Eigenvalue " << i
-      << " has value " << decomposition.eigenvalues()(i)
-      << " and principal axis " << decomposition.eigenvectors().col(i).transpose() << "\n";
+      << " has value " << moments.moments(i)
+      << " and principal axis " << moments.axes.col(i).transpose() << "\n";
   }
 
-  const unsigned degeneracy = detail::degeneracy(decomposition.eigenvalues());
+  const unsigned degeneracy = detail::degeneracy(moments.moments);
 
   std::cout << "Degeneracy degree: " << degeneracy << "\n";
 
-  /* If degeneracy == 2, rotate unique axis to coincide with z, and one of the
-   * degenerate axes to coincide with x. There could be a C2 on x (?)
+  /* We can immediately separate out linear cases: If IA << IB = IC and IA ~ 0,
+   * then we very likely have a linear molecule on our hands.
    *
-   * If degeneracy == 3, look for C3 axes parallel to vectors, then rotate
-   * the coordinates so that they coincide with x, ±x, ±x. (???)
+   * The principal moments and the corresponding axes are ordered ascending.
+   */
+  if(moments.moments(0) < 0.1 && degeneracy == 2) {
+    /* Do an extra test for collinearity: The rank of the positions matrix is
+     * one for linear molecules.
+     */
+    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> rankDecomposition(transformed);
+    rankDecomposition.setThreshold(1e-3);
+    if(rankDecomposition.rank() <= 1) {
+      return detail::linear(transformed);
+    }
+  }
+
+  auto rotateEverything = [&](const CoordinateSystem& sourceSystem) {
+    const CoordinateSystem defaultCoordinateSystem {};
+    assert(sourceSystem.isRightHanded());
+    auto R = rotationMatrix(sourceSystem, defaultCoordinateSystem);
+
+    // Rotate coordinates
+    for(unsigned i = 0; i < transformed.cols(); ++i) {
+      transformed.col(i) = R * transformed.col(i);
+    }
+
+    // Rotate inertial moment axes
+    for(unsigned i = 0; i < 3; ++i) {
+      moments.axes.col(i) = R * moments.axes.col(i);
+    }
+  };
+
+  auto writeXYZ = [](
+    const std::string& filename,
+    const PositionCollection& coll,
+    const InertialMoments& inertialMoments
+  ) {
+    std::ofstream outfile(filename);
+    const unsigned numPositions = coll.cols();
+    outfile << (numPositions + 6) << "\n\n";
+    outfile << std::fixed << std::setprecision(10);
+    for(unsigned i = 0; i < numPositions; ++i) {
+      outfile << std::left << std::setw(3) << "H";
+      outfile << std::right
+        << std::setw(16) << coll.col(i).x()
+        << std::setw(16) << coll.col(i).y()
+        << std::setw(16) << coll.col(i).z()
+        << "\n";
+    }
+
+    const std::vector<std::string> elements {"F", "Cl", "Br"};
+    for(unsigned i = 0; i < 3; ++i) {
+      outfile << std::left << std::setw(3) << elements[i];
+      outfile << std::right
+        << std::setw(16) << 2 * inertialMoments.axes.col(i).x()
+        << std::setw(16) << 2 * inertialMoments.axes.col(i).y()
+        << std::setw(16) << 2 * inertialMoments.axes.col(i).z()
+        << "\n";
+      outfile << std::left << std::setw(3) << elements[i];
+      outfile << std::right
+        << std::setw(16) << -2 * inertialMoments.axes.col(i).x()
+        << std::setw(16) << -2 * inertialMoments.axes.col(i).y()
+        << std::setw(16) << -2 * inertialMoments.axes.col(i).z()
+        << "\n";
+    }
+    outfile.close();
+  };
+
+  /* TODO
+   * - It's probably not possible to reason about the axes as though they
+   *   already were a coordinate system, much less a right-handed one. These
+   *   asserts will probably trip for multiple reasons, but the end result is
+   *   most likely just that the coordinate system is exactly inverted (* -1).
+   * - Test that random rotations of typical tops are correctly standardized by
+   *   this procedure, e.g. for
+   *   - bent (asymmetric)
+   *   - pentagonal (symmetry, oblate)
+   *   - trigonal bipyramidal (symmetric, prolate (?))
    */
 
-  /* Key insights:
+  if(degeneracy == 1) {
+    std::cout << "Top is asymmetric. Rotating highest moment of inertia to z, second most to x\n";
+    /* The top is asymmetric. Rotate the axis with the
+     * highest moment of inertia to coincide with z, and the one with second most
+     * to coincide with x.
+     */
+    CoordinateSystem inertialMomentSystem {
+      moments.axes.col(1), // second highest becomes x
+      moments.axes.col(2).cross(moments.axes.col(1)) // y = z.cross(x)
+    };
+    assert(inertialMomentSystem.z.isApprox(moments.axes.col(2), 1e-10));
+    writeXYZ("asymmetric_pre.xyz", transformed, moments);
+    rotateEverything(inertialMomentSystem);
+    writeXYZ("asymmetric.xyz", transformed, moments);
+    // Make sure rotation went as intended
+    assert(moments.axes.col(2).isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
+    assert(moments.axes.col(1).isApprox(Eigen::Vector3d::UnitX(), 1e-10));
+  } else if(degeneracy == 2) {
+    /* The top is symmetric. The subsets are:
+     * - Oblate (disc): IA = IB < IC
+     * - Prolate (rugby football): IA < IB = IC
+     *
+     * We rotate the unique axis to coincide with z (it's probably the site of
+     * the highest-order Cn or Sn, and one of the degenerate axes to coincide
+     * with x. There could be a C2 on x.
+     */
+    if(std::fabs((moments.moments(2) - moments.moments(1)) / moments.moments(2)) <= 0.1) {
+      std::cout << "Top is prolate. Rotating unique moment of inertia to z, another to x\n";
+      // Prolate top. IA is unique
+      CoordinateSystem inertialMomentSystem {
+        moments.axes.col(1),
+        moments.axes.col(2)
+      };
+      writeXYZ("prolate_pre.xyz", transformed, moments);
+      rotateEverything(inertialMomentSystem);
+      writeXYZ("prolate.xyz", transformed, moments);
+      assert(moments.axes.col(0).isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
+    } else {
+      std::cout << "Top is oblate. Rotating unique moment of inertia to z, another to x\n";
+      // Oblate top. IC is unique
+      CoordinateSystem inertialMomentSystem {
+        moments.axes.col(0),
+        moments.axes.col(1)
+      };
+      writeXYZ("oblate_pre.xyz", transformed, moments);
+      rotateEverything(inertialMomentSystem);
+      writeXYZ("oblate.xyz", transformed, moments);
+      assert(moments.axes.col(2).isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
+    }
+  } else if(degeneracy == 3) {
+    std::cout << "Top is spherical. No rotations performed.\n";
+    writeXYZ("spherical.xyz", transformed, moments);
+    /* The top is spherical (IA = IB = IC). Not a lot of
+     * point groups are spherically symmetric:
+     *
+     * - Td
+     * - Oh
+     * - Ih
+     *
+     * If the positions are already symmetrical enough to be recognized as a
+     * spherical top, then we might as well restrict the tested point groups:
+     *
+     * OLD COMMENT I DO NOT UNDERSTAND ANYMORE: Look for C3 axes parallel to
+     * positions, then rotate the coordinates so that these axes coincide with
+     * x, ±y, ±z.
+     */
+    //  const double tetrahedral_csm = csm::point_group(transformed, PointGroup::Td);
+    //  const double octahedral_csm = csm::point_group(transformed, PointGroup::Oh);
+    //  // TODO icosahedral is also a spherical top!
+    //  return tetrahedral_csm < octahedral_csm ? PointGroup::Td : PointGroup::Oh;
+  }
+
+  /* Key insights for flowcharting, if you choose to go that way.
+   *
    * An element of symmetry must be parallel or perpendicular to the
    * combination of an adequate number of vectors.
    *
@@ -1654,56 +1813,24 @@ PointGroup analyze(const PositionCollection& positions) {
    *   i + j + k (i != j != k) if n > 4
    */
 
-  /* Linearity can be checked really easily by looking at the principal moments
-   * of inertia. They're sorted in ascending order by the solver.
-   *
-   * - Linear molecules: IA << IB == IC (typically IA ≃ 0)
-   * - Spherical tops: IA = IB = IC => only Td, Oh
-   * - Symmetric tops: IA = IB or IB = IC. Must have a threefold or higher
-   *   rotation axis by definition.
-   *   - Oblate (disc): IA = IB < IC
-   *   - Prolate (rugby football): IA < IB = IC
-   * - Asymmetric tops
-   */
-
-
-  /* Linear cases are best tested separately since we cannot represent infinite
-   * symmetry elements
-   */
-  if(decomposition.eigenvalues()(0) < 0.1 && degeneracy == 2) {
-    /* Do an extra test for collinearity */
-    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> rankDecomposition(transformed);
-    rankDecomposition.setThreshold(1e-3);
-    if(rankDecomposition.rank() <= 1) {
-      return detail::linear(transformed);
-    }
-  }
-
-  /* If the positions are already symmetrical enough to be recognized as a
-   * spherical top, then we might as well make use of the knowledge
-   */
-  //if(degeneracy == 3) {
-  //  const double tetrahedral_csm = csm(transformed, PointGroup::Td);
-  //  const double octahedral_csm = csm(transformed, PointGroup::Oh);
-  //  // TODO icosahedral is also a spherical top!
-  //  return tetrahedral_csm < octahedral_csm ? PointGroup::Td : PointGroup::Oh;
-  //}
-
   /* Find a main axis and rotate it to z */
   /* Rotate secondary axis to x */
   for(unsigned axisIndex = 0; axisIndex < 3; ++axisIndex) {
-    std::cout << "At axis " << axisIndex << " along " << decomposition.eigenvectors().col(axisIndex).transpose() << "\n";
+    std::cout << "At axis " << axisIndex
+      << " along " << moments.axes.col(axisIndex).transpose()
+      << ", inertial moment: " << moments.moments(axisIndex)
+      << "\n";
     for(unsigned n = 2; n <= N; ++n) {
       const double axis_csm = csm::cn::fixedAxis(
         transformed,
         n,
-        decomposition.eigenvectors().col(axisIndex)
+        moments.axes.col(axisIndex)
       );
 
       const auto csm_greedy = csm::cn::fixedAxisGreedy(
         transformed,
         n,
-        decomposition.eigenvectors().col(axisIndex)
+        moments.axes.col(axisIndex)
       );
 
       if(std::fabs(axis_csm - csm_greedy.csm) > 0.1) {

@@ -32,7 +32,7 @@ Eigen::Vector3d toEigen(const temple::Vector& cVector) {
  *   destructors use this variable, because once again, the order of static
  *   deinitialization is random.
  */
-const std::map<Name, SymmetryInformation>& symmetryData() {
+const SymmetryDataMapType& symmetryData() {
   static const auto dataMap = temple::TupleType::unpackToFunction<
     data::allSymmetryDataTypes,
     data::symmetryInformationFunctor

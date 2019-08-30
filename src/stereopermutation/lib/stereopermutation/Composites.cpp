@@ -36,7 +36,7 @@ std::pair<T, T> makeOrderedPair(T a, T b) {
 }
 
 void rotateCoordinates(
-  std::vector<Eigen::Vector3d>& positions,
+  Eigen::Ref<Symmetry::CoordinateList> positions,
   const Eigen::Vector3d& unitSource,
   const Eigen::Vector3d& unitTarget
 ) {
@@ -49,10 +49,7 @@ void rotateCoordinates(
    * defined, so we just invert all positions instead.
    */
   if(unitSource == -unitTarget) {
-    for(auto& position : positions) {
-      position *= -1;
-    }
-
+    positions *= -1;
     return;
   }
 
@@ -73,17 +70,17 @@ void rotateCoordinates(
   Eigen::Matrix3d rotation;
   rotation = Eigen::Matrix3d::Identity() + v_x + v_x * v_x * (1.0 / (1 + c));
 
-  for(auto& position : positions) {
-    position = rotation * position;
+  for(unsigned i = 0; i < positions.cols(); ++i) {
+    positions.col(i) = rotation * positions.col(i);
   }
 }
 
 void translateCoordinates(
-  std::vector<Eigen::Vector3d>& positions,
+  Eigen::Ref<Symmetry::CoordinateList> positions,
   const Eigen::Vector3d& translation
 ) {
-  for(auto& position : positions) {
-    position += translation;
+  for(unsigned i = 0; i < positions.cols(); ++i) {
+    positions.col(i) += translation;
   }
 }
 
@@ -645,13 +642,13 @@ Composite::Composite(
    * NOTE: The central atom of both symmetries is always placed at the origin
    * in the coordinate definitions.
    */
-  auto firstCoordinates = Symmetry::symmetryData().at(
+  Symmetry::CoordinateList firstCoordinates = Symmetry::symmetryData().at(
     _orientations.first.symmetry
   ).coordinates;
   // Rotate left fused position onto <1, 0, 0>
   detail::rotateCoordinates(
     firstCoordinates,
-    firstCoordinates.at(_orientations.first.fusedPosition).normalized(),
+    firstCoordinates.col(_orientations.first.fusedPosition).normalized(),
     Eigen::Vector3d::UnitX()
   );
 
@@ -661,7 +658,7 @@ Composite::Composite(
   // Rotate right fused position onto <-1, 0, 0>
   detail::rotateCoordinates(
     secondCoordinates,
-    secondCoordinates.at(_orientations.second.fusedPosition).normalized(),
+    secondCoordinates.col(_orientations.second.fusedPosition).normalized(),
     -Eigen::Vector3d::UnitX()
   );
 
@@ -673,10 +670,10 @@ Composite::Composite(
 
   auto getDihedral = [&](const unsigned f, const unsigned s) -> double {
     return detail::dihedral(
-      firstCoordinates.at(f),
+      firstCoordinates.col(f),
       Eigen::Vector3d::Zero(),
       Eigen::Vector3d::UnitX(),
-      secondCoordinates.at(s)
+      secondCoordinates.col(s)
     );
   };
 
@@ -697,11 +694,11 @@ Composite::Composite(
       const double alignAngle = getDihedral(f, s);
 
       // Twist the right coordinates around x so that f is cis with r
-      for(auto& position: secondCoordinates) {
-        position = Eigen::AngleAxisd(
+      for(unsigned i = 0; i < secondCoordinates.cols(); ++i) {
+        secondCoordinates.col(i) = Eigen::AngleAxisd(
           -alignAngle,
           Eigen::Vector3d::UnitX()
-        ) * position;
+        ) * secondCoordinates.col(i);
       }
 
       // Make sure the rotation leads to a zero dihedral
@@ -737,11 +734,11 @@ Composite::Composite(
       }
 
       if(offsetAngle != 0.0) {
-        for(auto& position : secondCoordinates) {
-          position = Eigen::AngleAxisd(
+        for(unsigned i = 0; i < secondCoordinates.cols(); ++i) {
+          secondCoordinates.col(i) = Eigen::AngleAxisd(
             offsetAngle,
             Eigen::Vector3d::UnitX()
-          ) * position;
+          ) * secondCoordinates.col(i);
         }
       }
 

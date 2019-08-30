@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE( rightAmountOfCoordinates) {
   // every information must have the right amount of coordinates
   for(const auto& symmetryName: allNames) {
     BOOST_CHECK(
-      symmetryData().at(symmetryName).coordinates.size() ==
+      symmetryData().at(symmetryName).coordinates.cols() ==
       symmetryData().at(symmetryName).size
     );
   }
@@ -274,8 +274,11 @@ BOOST_AUTO_TEST_CASE( allCoordinateVectorsLengthOne) {
   for(const auto& symmetryName: allNames) {
     bool all_pass = true;
 
-    for(const auto& coordinate: symmetryData().at(symmetryName).coordinates) {
-      if(coordinate.norm() - 1 > 1e10) {
+    const Eigen::Matrix<double, 3, Eigen::Dynamic>& positions = symmetryData().at(symmetryName).coordinates;
+
+    unsigned cols = positions.cols();
+    for(unsigned i = 0; i < cols; ++i) {
+      if(positions.col(i).norm() - 1 > 1e10) {
         all_pass = false;
         break;
       }
@@ -293,7 +296,7 @@ BOOST_AUTO_TEST_CASE( anglesMatchCoordinates) {
 
   for(const auto& symmetryName: allNames) {
     auto getCoordinates =  [&](const unsigned index) -> Eigen::Vector3d {
-      return symmetryData().at(symmetryName).coordinates.at(index);
+      return symmetryData().at(symmetryName).coordinates.col(index);
     };
 
     bool all_pass = true;
@@ -337,7 +340,7 @@ BOOST_AUTO_TEST_CASE( allTetrahedraPositive) {
   for(const auto& symmetryName: allNames) {
     auto getCoordinates = [&](const boost::optional<unsigned>& indexOption) -> Eigen::Vector3d {
       if(indexOption) {
-        return symmetryData().at(symmetryName).coordinates.at(indexOption.value());
+        return symmetryData().at(symmetryName).coordinates.col(indexOption.value());
       }
 
       return {0, 0, 0};

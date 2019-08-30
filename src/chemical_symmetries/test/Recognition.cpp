@@ -5,6 +5,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include "chemical_symmetries/CoordinateSystemTransformation.h"
 #include "chemical_symmetries/Names.h"
 #include "chemical_symmetries/Symmetries.h"
 #include "chemical_symmetries/Recognition.h"
@@ -22,6 +23,18 @@ using namespace Symmetry;
 template<typename EnumType>
 constexpr inline auto underlying(const EnumType e) {
   return static_cast<std::underlying_type_t<EnumType>>(e);
+}
+
+PositionCollection addOrigin(const PositionCollection& vs) {
+  const unsigned N = vs.cols();
+  PositionCollection positions(3, N + 1);
+  for(unsigned i = 0; i < N; ++i) {
+    positions.col(i) = vs.col(i);
+  }
+
+  // Add origin point explicitly to consideration
+  positions.col(N) = Eigen::Vector3d::Zero(3);
+  return positions;
 }
 
 BOOST_AUTO_TEST_CASE(Recognition) {
@@ -45,23 +58,11 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     {Name::SquareAntiPrismatic, PointGroup::D4d}
   };
 
-  auto toCollection = [](const std::vector<Eigen::Vector3d>& vs) -> PositionCollection {
-    const unsigned N = vs.size();
-    PositionCollection positions(3, N + 1);
-    for(unsigned i = 0; i < N; ++i) {
-      positions.col(i) = vs.at(i);
-    }
-
-    // Add origin point explicitly to consideration
-    positions.col(N) = Eigen::Vector3d::Zero(3);
-    return positions;
-  };
-
-  analyze(toCollection(symmetryData().at(Name::PentagonalPyramidal).coordinates));
+  analyze(addOrigin(symmetryData().at(Name::PentagonalPyramidal).coordinates));
 
   //for(const Symmetry::Name symmetry : allNames) {
   //  std::cout << "Analyzing " << name(symmetry) << ":\n";
-  //  analyze(toCollection(symmetryData().at(symmetry).coordinates));
+  //  analyze(addOrigin(symmetryData().at(symmetry).coordinates));
   //}
 }
 
@@ -180,4 +181,27 @@ BOOST_AUTO_TEST_CASE(C2hTrial) {
     temple::iota<unsigned>(4)
   );
   std::cout << "Calculated C2h CSM: " << calculated << "\n";
+}
+
+BOOST_AUTO_TEST_CASE(InertialStandardization) {
+  const std::vector<Name> symmetryNames {
+    Name::Bent, // Asymmetric top
+    Name::TrigonalBiPyramidal, // prolate symmetric top
+    Name::PentagonalBiPyramidal // oblate symmetric top
+  };
+
+  for(const Name name : symmetryNames) {
+    auto positions = addOrigin(symmetryData().at(name).coordinates);
+
+    // Apply a random rotation
+    Eigen::Vector3d x = Eigen::Vector3d::Random().normalized();
+    Eigen::Vector3d y = Eigen::Vector3d::Random().cross(x).normalized();
+    auto R = rotationMatrix(CoordinateSystem {}, CoordinateSystem {x, y});
+    for(unsigned i = 0; i < positions.cols(); ++i) {
+      positions.col(i) = R * positions.col(i);
+    }
+
+    // Analyze it
+    analyze(positions);
+  }
 }

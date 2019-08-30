@@ -34,7 +34,21 @@ enum class PointGroup : unsigned {
   Cinfv, Dinfh
 };
 
+
 using PositionCollection = Eigen::Matrix<double, 3, Eigen::Dynamic>;
+
+struct InertialMoments {
+  Eigen::Vector3d moments;
+  Eigen::Matrix3d axes;
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+};
+
+//! @pre Assumes this is an inertial frame (COM is origin)
+InertialMoments principalInertialMoments(
+  const PositionCollection& normalizedPositions
+);
+
 PointGroup analyze(const PositionCollection& positions);
 
 // TODO TMP for testing

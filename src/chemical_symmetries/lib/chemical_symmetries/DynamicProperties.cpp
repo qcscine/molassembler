@@ -172,7 +172,7 @@ Eigen::Vector3d getCoordinates(
   if(indexInSymmetryOption) {
     assert(indexInSymmetryOption.value() < Symmetry::size(symmetryName));
 
-    return symmetryData().at(symmetryName).coordinates.at(
+    return symmetryData().at(symmetryName).coordinates.col(
       indexInSymmetryOption.value()
     );
   }
