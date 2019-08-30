@@ -771,18 +771,12 @@ double all_symmetry_elements(
   const unsigned G = elements.size();
   assert(P == G);
 
-  const std::vector<Eigen::Matrix3d> unfoldMatrices = temple::map(
-    elements,
-    [](const auto& elementPtr) -> Eigen::Matrix3d {
-      return elementPtr->matrix();
-    }
-  );
-  const std::vector<Eigen::Matrix3d> foldMatrices = temple::map(
-    unfoldMatrices,
-    [](const auto& unfoldMatrix) -> Eigen::Matrix3d {
-      return unfoldMatrix.inverse();
-    }
-  );
+  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * G);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * G);
+  for(unsigned i = 0; i < G; ++i) {
+    unfoldMatrices.block<3, 3>(0, 3 * i) = elements.at(i)->matrix();
+    foldMatrices.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
+  }
 
   double value = 1000;
 
@@ -793,14 +787,14 @@ double all_symmetry_elements(
     Eigen::Vector3d averagePoint;
     averagePoint.setZero();
     for(unsigned i = 0; i < P; ++i) {
-      averagePoint += foldMatrices.at(i) * normalizedPositions.col(particleIndices.at(i));
+      averagePoint += foldMatrices.block<3, 3>(0, 3 * i) * normalizedPositions.col(particleIndices.at(i));
     }
     averagePoint /= P;
 
     /* Unfold points */
     for(unsigned i = 0; i < P; ++i) {
       permutationCSM += (
-        unfoldMatrices.at(i) * averagePoint
+        unfoldMatrices.block<3, 3>(0, 3 * i) * averagePoint
         - normalizedPositions.col(particleIndices.at(i))
       ).squaredNorm();
     }
@@ -1389,14 +1383,11 @@ cn_csm_t fixedAxisGreedy(
 
   /* Precalculate the required rotation matrices */
   const double angleRadians = 2 * M_PI / n;
-  std::vector<Eigen::Matrix3d> foldMatrices(n - 1);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * (n - 1));
+  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * (n - 1));
   for(unsigned i = 0; i < n - 1; ++i) {
-    foldMatrices.at(i) = Eigen::AngleAxisd((i + 1) * angleRadians, axis).toRotationMatrix();
-  }
-
-  std::vector<Eigen::Matrix3d> unfoldMatrices(n - 1);
-  for(unsigned i = 0; i < n - 1; ++i) {
-    unfoldMatrices.at(i) = Eigen::AngleAxisd((i + 1) * angleRadians, -axis).toRotationMatrix();
+    foldMatrices.block<3, 3>(0, 3 * i) = Eigen::AngleAxisd((i + 1) * angleRadians, axis).toRotationMatrix();
+    unfoldMatrices.block<3, 3>(0, 3 * i) = foldMatrices.block<3, 3>(0, 3 *i).inverse();
   }
 
   /* Divide off-axis particle indices into groups of size n each */
@@ -1433,7 +1424,7 @@ cn_csm_t fixedAxisGreedy(
         /* Fold and average in-place */
         averagePoint.noalias() = normalizedPositions.col(permutation.front());
         for(unsigned i = 1; i < n; ++i) {
-          averagePoint.noalias() += foldMatrices.at(i - 1) * normalizedPositions.col(permutation.at(i));
+          averagePoint.noalias() += foldMatrices.block<3, 3>(0, 3 * (i - 1)) * normalizedPositions.col(permutation.at(i));
         }
         averagePoint /= n;
 
@@ -1446,7 +1437,7 @@ cn_csm_t fixedAxisGreedy(
         for(unsigned i = 1; i < n; ++i) {
           csm += (
             normalizedPositions.col(permutation.at(i))
-            - unfoldMatrices.at(i - 1) * averagePoint
+            - unfoldMatrices.block<3, 3>(0, 3 * (i - 1)) * averagePoint
           ).squaredNorm();
         }
 
@@ -1529,14 +1520,11 @@ double fixedAxis(
 
   /* Precalculate the required rotation matrices */
   const double angleRadians = 2 * M_PI / n;
-  std::vector<Eigen::Matrix3d> foldMatrices(n - 1);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * (n - 1));
+  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * (n - 1));
   for(unsigned i = 0; i < n - 1; ++i) {
-    foldMatrices.at(i) = Eigen::AngleAxisd((i + 1) * angleRadians, axis).toRotationMatrix();
-  }
-
-  std::vector<Eigen::Matrix3d> unfoldMatrices(n - 1);
-  for(unsigned i = 0; i < n - 1; ++i) {
-    unfoldMatrices.at(i) = Eigen::AngleAxisd((i + 1) * angleRadians, -axis).toRotationMatrix();
+    foldMatrices.block<3, 3>(0, 3 * i) = Eigen::AngleAxisd((i + 1) * angleRadians, axis).toRotationMatrix();
+    unfoldMatrices.block<3, 3>(0, 3 * i) = Eigen::AngleAxisd((i + 1) * angleRadians, -axis).toRotationMatrix();
   }
 
   /* Divide off-axis particle indices into groups of size n each */
@@ -1564,13 +1552,14 @@ double fixedAxis(
        */
       double lowestCSM = 100;
       do {
+        // TODO this can be optimized to avoid foldedPositions and unfoldedPositions completely
         /* Fold */
         Eigen::MatrixXd foldedPositions(3, n);
         foldedPositions.col(0) = normalizedPositions.col(group.front());
 
         // The first position is unchanged, hence we start with i = 1
         for(unsigned i = 1; i < n; ++i) {
-          foldedPositions.col(i) = foldMatrices.at(i - 1) * normalizedPositions.col(group.at(i));
+          foldedPositions.col(i) = foldMatrices.block<3, 3>(0, 3 * (i - 1)) * normalizedPositions.col(group.at(i));
         }
 
         /* Average */
@@ -1579,7 +1568,7 @@ double fixedAxis(
 
         /* Unfold */
         for(unsigned i = 1; i < n; ++i) {
-          unfoldedPositions.col(i) = unfoldMatrices.at(i - 1) * unfoldedPositions.col(0);
+          unfoldedPositions.col(i) = unfoldMatrices.block<3, 3>(0, 3 * (i - 1)) * unfoldedPositions.col(0);
         }
 
         /* Calculate CSM */

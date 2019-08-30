@@ -336,21 +336,18 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
 
   const Eigen::Vector3d DMinusA = D - A;
 
-  // C++17 structured bindings
   // P is on BC, Q on AD
   Eigen::Vector3d P, Q;
-  std::tie(P, Q) = [&]() -> std::pair<Eigen::Vector3d, Eigen::Vector3d> {
-    /* If DMinusA and C are approximately parallel, getting the shortest path
-     * between them is numerically dangerous
-     */
-    if(DMinusA.cross(C).norm() <= 1e-10) {
-      // Yield P and Q
-      return {
-        0.5 * C,
-        A + 0.5 * DMinusA
-      };
-    }
 
+  /* If DMinusA and C are approximately parallel, getting the shortest path
+   * between them is numerically dangerous
+   */
+  if(DMinusA.cross(C).norm() <= 1e-10) {
+    // Yield P and Q from midpoints
+    P = 0.5 * C;
+    Q = A + 0.5 * DMinusA;
+  } else {
+    // Find shortest path between BC and AD
     const double mu = -(
       A.y() * DMinusA.y() + A.z() * DMinusA.z()
     ) / (
@@ -360,26 +357,18 @@ bool BondStereopermutator::Impl::cycleObviouslyInfeasible(
     const double lambda = (A.x() + mu * DMinusA.x()) / b;
 
     // Limit mu and lambda onto their line segments
-    const double mu_m = [&]() -> double {
-      if(mu <= 0) {
-        return - A.x() / DMinusA.x();
-      }
-
-      if(mu >= 1) {
-        return (b - A.x()) / DMinusA.x();
-      }
-
-      return mu;
-    }();
+    double mu_m = mu;
+    if(mu <= 0) {
+      mu_m = - A.x() / DMinusA.x();
+    } else if(mu >= 1) {
+      mu_m = (b - A.x()) / DMinusA.x();
+    }
 
     const double lambda_m = temple::stl17::clamp(lambda, 0.0, 1.0);
 
-    return {
-      lambda_m * C,
-      A + mu_m * DMinusA
-    };
-  }();
-
+    P = lambda_m * C;
+    Q = A + mu_m * DMinusA;
+  }
 
   /* The plane the cycle expands into is now f = Plane(A, D, P). So, it's time
    * to project B and C onto the plane and then determine in-plane distances to
@@ -872,20 +861,22 @@ void BondStereopermutator::Impl::fit(
     : stereopermutatorA
   );
 
-  // For all atoms making up a site, decide on the spatial average position
-  const std::vector<Eigen::Vector3d> firstSitePositions = temple::map(
-    firstStereopermutator.getRanking().sites,
-    [&angstromWrapper](const std::vector<AtomIndex>& siteAtoms) -> Eigen::Vector3d {
-      return cartesian::averagePosition(angstromWrapper.positions, siteAtoms);
+  auto makeSitePositions = [&angstromWrapper](const AtomStereopermutator& permutator) -> Eigen::Matrix<double, 3, Eigen::Dynamic> {
+    const unsigned S = permutator.getRanking().sites.size();
+    assert(S == Symmetry::size(permutator.getSymmetry()));
+    Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
+    for(unsigned i = 0; i < S; ++i) {
+      sitePositions.col(i) = cartesian::averagePosition(
+        angstromWrapper.positions,
+        permutator.getRanking().sites.at(i)
+      );
     }
-  );
+    return sitePositions;
+  };
 
-  const std::vector<Eigen::Vector3d> secondSitePositions = temple::map(
-    secondStereopermutator.getRanking().sites,
-    [&angstromWrapper](const std::vector<AtomIndex>& siteAtoms) -> Eigen::Vector3d {
-      return cartesian::averagePosition(angstromWrapper.positions, siteAtoms);
-    }
-  );
+  // For all atoms making up a site, decide on the spatial average position
+  auto firstSitePositions = makeSitePositions(firstStereopermutator);
+  auto secondSitePositions = makeSitePositions(secondStereopermutator);
 
   unsigned firstSymmetryPosition;
   unsigned secondSymmetryPosition;
@@ -923,10 +914,10 @@ void BondStereopermutator::Impl::fit(
        */
 
       double dihedralDifference = cartesian::dihedral(
-        firstSitePositions.at(firstSiteIndex),
+        firstSitePositions.col(firstSiteIndex),
         angstromWrapper.positions.row(firstStereopermutator.centralIndex()),
         angstromWrapper.positions.row(secondStereopermutator.centralIndex()),
-        secondSitePositions.at(secondSiteIndex)
+        secondSitePositions.col(secondSiteIndex)
       ) - dihedralAngle;
 
       // + pi is part of the definition interval, so use greater than

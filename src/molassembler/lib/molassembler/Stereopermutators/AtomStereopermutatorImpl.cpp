@@ -802,14 +802,13 @@ void AtomStereopermutator::Impl::fit(
   const AngstromWrapper& angstromWrapper
 ) {
   const unsigned S = Symmetry::size(_symmetry);
+  assert(S == _ranking.sites.size());
 
   // For all atoms making up a site, decide on the spatial average position
-  const std::vector<Eigen::Vector3d> sitePositions = temple::map(
-    _ranking.sites,
-    [&angstromWrapper](const std::vector<AtomIndex>& siteAtomList) -> Eigen::Vector3d {
-      return cartesian::averagePosition(angstromWrapper.positions, siteAtomList);
-    }
-  );
+  Eigen::Matrix<double, 3, Eigen::Dynamic> sitePositions(3, S);
+  for(unsigned i = 0; i < S; ++i) {
+    sitePositions.col(i) = cartesian::averagePosition(angstromWrapper.positions, _ranking.sites.at(i));
+  }
 
   std::vector<Symmetry::Name> excludeSymmetries;
 
@@ -825,9 +824,9 @@ void AtomStereopermutator::Impl::fit(
       for(unsigned j = i + 1; j < S; ++j) {
         angles.push_back(
           cartesian::angle(
-            sitePositions.at(i),
+            sitePositions.col(i),
             angstromWrapper.positions.row(_centerAtom),
-            sitePositions.at(j)
+            sitePositions.col(j)
           )
         );
       }
@@ -909,9 +908,9 @@ void AtomStereopermutator::Impl::fit(
           [&](const unsigned siteI, const unsigned siteJ) -> double {
             return std::fabs(
               cartesian::angle(
-                sitePositions.at(siteI),
+                sitePositions.col(siteI),
                 angstromWrapper.positions.row(_centerAtom),
-                sitePositions.at(siteJ)
+                sitePositions.col(siteJ)
               ) - angle(siteI, siteJ)
             );
           }
@@ -935,20 +934,20 @@ void AtomStereopermutator::Impl::fit(
             return std::fabs(
               // siteI - siteJ 1-3 distance from positions
               cartesian::distance(
-                sitePositions.at(siteI),
-                sitePositions.at(siteJ)
+                sitePositions.col(siteI),
+                sitePositions.col(siteJ)
               )
               // idealized 1-3 distance from
               - CommonTrig::lawOfCosines(
                 // i-j 1-2 distance from positions
                 cartesian::distance(
-                  sitePositions.at(siteI),
+                  sitePositions.col(siteI),
                   angstromWrapper.positions.row(_centerAtom)
                 ),
                 // j-k 1-2 distance from positions
                 cartesian::distance(
                   angstromWrapper.positions.row(_centerAtom),
-                  sitePositions.at(siteJ)
+                  sitePositions.col(siteJ)
                 ),
                 // idealized Stereopermutator angle
                 angle(siteI, siteJ)
@@ -969,7 +968,7 @@ void AtomStereopermutator::Impl::fit(
           [&](const auto& minimalPrototype) -> double {
             auto fetchPosition = [&](const boost::optional<unsigned>& siteIndexOptional) -> Eigen::Vector3d {
               if(siteIndexOptional) {
-                return sitePositions.at(siteIndexOptional.value());
+                return sitePositions.col(siteIndexOptional.value());
               }
 
               return angstromWrapper.positions.row(_centerAtom);
