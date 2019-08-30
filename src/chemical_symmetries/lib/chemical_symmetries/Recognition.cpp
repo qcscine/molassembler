@@ -724,7 +724,7 @@ PositionCollection normalize(const PositionCollection& positions) {
 
 //! Determine degeneracy of intertial moments
 unsigned degeneracy(const Eigen::Vector3d& inertialMoments) {
-  constexpr double degeneracyEpsilon = 0.1;
+  constexpr double degeneracyEpsilon = 0.05;
   unsigned mdeg = 0;
   if(
     std::fabs(
@@ -1705,14 +1705,9 @@ PointGroup analyze(const PositionCollection& positions) {
 
   /* TODO
    * - It's probably not possible to reason about the axes as though they
-   *   already were a coordinate system, much less a right-handed one. These
-   *   asserts will probably trip for multiple reasons, but the end result is
-   *   most likely just that the coordinate system is exactly inverted (* -1).
-   * - Test that random rotations of typical tops are correctly standardized by
-   *   this procedure, e.g. for
-   *   - bent (asymmetric)
-   *   - pentagonal (symmetry, oblate)
-   *   - trigonal bipyramidal (symmetric, prolate (?))
+   *   already were a right-handed coordinate system. These asserts will
+   *   probably trip for multiple reasons, but the end result is most likely
+   *   just that the coordinate system is exactly inverted (* -1).
    */
 
   if(degeneracy == 1) {
@@ -1740,8 +1735,11 @@ PointGroup analyze(const PositionCollection& positions) {
      * We rotate the unique axis to coincide with z (it's probably the site of
      * the highest-order Cn or Sn, and one of the degenerate axes to coincide
      * with x. There could be a C2 on x.
+     *
+     * This is most likely rare and should occur only for largely undistorted
+     * structures. Perhaps we can flowchart point groups here?
      */
-    if(std::fabs((moments.moments(2) - moments.moments(1)) / moments.moments(2)) <= 0.1) {
+    if(std::fabs((moments.moments(2) - moments.moments(1)) / moments.moments(2)) <= 0.05) {
       std::cout << "Top is prolate. Rotating unique moment of inertia to z, another to x\n";
       // Prolate top. IA is unique
       CoordinateSystem inertialMomentSystem {
@@ -1765,22 +1763,28 @@ PointGroup analyze(const PositionCollection& positions) {
       assert(moments.axes.col(2).isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
     }
   } else if(degeneracy == 3) {
-    std::cout << "Top is spherical. No rotations performed.\n";
-    writeXYZ("spherical.xyz", transformed, moments);
-    /* The top is spherical (IA = IB = IC). Not a lot of
-     * point groups are spherically symmetric:
+    std::cout << "Top is spherical.\n";
+    /* The top is spherical (IA = IB = IC). This is most likely rare and will
+     * only occur for undistorted structures. As a consequence, we can
+     * flowchart here, because only three point groups have spherical symmetry:
+     * Td, Oh, Ih.
      *
-     * - Td
-     * - Oh
-     * - Ih
+     * Note that there is no reason to rotate anything on the basis of the axes
+     * from the inertial moment analysis since any choice of axes gives the
+     * spherical symmetry. We can't use those to rotate the system.
      *
-     * If the positions are already symmetrical enough to be recognized as a
-     * spherical top, then we might as well restrict the tested point groups:
+     * TODO flowchart between Td, Oh, Ih on the basis of axis searches along
+     * particle positions.
+     *
+     * I think there is something to be gained by looking for C3 axes to
+     * distinguish Td and Oh.
      *
      * OLD COMMENT I DO NOT UNDERSTAND ANYMORE: Look for C3 axes parallel to
      * positions, then rotate the coordinates so that these axes coincide with
      * x, ±y, ±z.
      */
+    writeXYZ("spherical.xyz", transformed, moments);
+
     //  const double tetrahedral_csm = csm::point_group(transformed, PointGroup::Td);
     //  const double octahedral_csm = csm::point_group(transformed, PointGroup::Oh);
     //  // TODO icosahedral is also a spherical top!

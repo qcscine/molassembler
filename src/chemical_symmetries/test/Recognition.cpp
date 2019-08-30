@@ -159,35 +159,24 @@ BOOST_AUTO_TEST_CASE(PaperCSMExamples) {
   BOOST_CHECK_CLOSE(expectedC3vCSM, calculatedC3v, 1);
 }
 
-BOOST_AUTO_TEST_CASE(C2hTrial) {
-  /*
-    2.1437    0.1015   -0.0002 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-   -2.1439   -0.1011   -0.0002 Cl  0  0  0  0  0  0  0  0  0  0  0  0
-    0.5135   -0.4232    0.0002 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.5132    0.4227    0.0002 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.4242   -1.5014    0.0001 H   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.4237    1.5009    0.0001 H   0  0  0  0  0  0  0  0  0  0  0  0
-  */
-
-  PositionCollection positions(3, 4);
-  positions.col(0) = Eigen::Vector3d {2.1437, 0.1015, 0.0}; // Cl1
-  positions.col(1) = Eigen::Vector3d {-2.1439, -0.1011, 0.0}; // Cl2
-  positions.col(2) = Eigen::Vector3d {0.4242, -1.5014, 0.0}; // H1
-  positions.col(3) = Eigen::Vector3d {-0.4237, 1.5009, 0.0}; // H2
-
-  const double calculated = csm::all_symmetry_elements(
-    detail::normalize(positions),
-    elements::symmetryElements(PointGroup::C2h),
+BOOST_AUTO_TEST_CASE(C4PointGroupTrial) {
+  const double pointGroupCSM = csm::all_symmetry_elements(
+    detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
+    elements::symmetryElements(PointGroup::C4),
     temple::iota<unsigned>(4)
   );
-  std::cout << "Calculated C2h CSM: " << calculated << "\n";
+  BOOST_CHECK_MESSAGE(
+    std::fabs(pointGroupCSM) < 1e-10,
+    "C4 point group CSM on square planar coordinates is not zero, but " << pointGroupCSM
+  );
 }
 
 BOOST_AUTO_TEST_CASE(InertialStandardization) {
   const std::vector<Name> symmetryNames {
     Name::Bent, // Asymmetric top
     Name::TrigonalBiPyramidal, // prolate symmetric top
-    Name::PentagonalBiPyramidal // oblate symmetric top
+    Name::PentagonalBiPyramidal, // oblate symmetric top
+    Name::Octahedral
   };
 
   for(const Name name : symmetryNames) {
