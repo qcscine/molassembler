@@ -1715,6 +1715,10 @@ PointGroup analyze(const PositionCollection& positions) {
     /* The top is asymmetric. Rotate the axis with the
      * highest moment of inertia to coincide with z, and the one with second most
      * to coincide with x.
+     *
+     * TODO try to find Cn axes along the inertial moments and then orienting
+     * the one with highest order to +z. Fall back to inertial moment ordering
+     * if no axes are found.
      */
     CoordinateSystem inertialMomentSystem {
       moments.axes.col(1), // second highest becomes x
@@ -1782,6 +1786,10 @@ PointGroup analyze(const PositionCollection& positions) {
      * OLD COMMENT I DO NOT UNDERSTAND ANYMORE: Look for C3 axes parallel to
      * positions, then rotate the coordinates so that these axes coincide with
      * x, ±y, ±z.
+     *
+     * TODO consider rotating an arbitrary position to +z instead (good for Td
+     * and Oh octahedral, less so for Oh cubic and Ih, which should be less
+     * common)
      */
     writeXYZ("spherical.xyz", transformed, moments);
 

@@ -169,6 +169,30 @@ BOOST_AUTO_TEST_CASE(C4PointGroupTrial) {
     std::fabs(pointGroupCSM) < 1e-10,
     "C4 point group CSM on square planar coordinates is not zero, but " << pointGroupCSM
   );
+
+  /* Rotate the coordinates slightly around z */
+  auto positions = symmetryData().at(Name::SquarePlanar).coordinates;
+  auto rotation = Eigen::AngleAxisd(3 * M_PI / 16, Eigen::Vector3d::UnitZ());
+  for(unsigned i = 0; i < positions.cols(); ++i) {
+    positions.col(i) = rotation * positions.col(i);
+  }
+  const double rotatedCSM = csm::all_symmetry_elements(
+    detail::normalize(positions),
+    elements::symmetryElements(PointGroup::C4),
+    temple::iota<unsigned>(4)
+  );
+  BOOST_CHECK_MESSAGE(
+    std::fabs(rotatedCSM) < 1e-10,
+    "C4 point group CSM on z-rotated square planar coordinates is not zero, but " << rotatedCSM
+  );
+
+  /* For purely axial groups, the particular position of x and y coordinates
+   * does not matter! Will need to retest this for D4 once those become viable
+   * to test, because I think this doesn't yet conclusively prove only the
+   * orientation of the z matrix needs to be optimized for point group CSMs.
+   *
+   * Instead, it might be necessary to optimize over three euler angles.
+   */
 }
 
 BOOST_AUTO_TEST_CASE(InertialStandardization) {
@@ -182,7 +206,7 @@ BOOST_AUTO_TEST_CASE(InertialStandardization) {
   for(const Name name : symmetryNames) {
     auto positions = addOrigin(symmetryData().at(name).coordinates);
 
-    // Apply a random rotation
+    // Apply a random coordinate transformation
     Eigen::Vector3d x = Eigen::Vector3d::Random().normalized();
     Eigen::Vector3d y = Eigen::Vector3d::Random().cross(x).normalized();
     auto R = rotationMatrix(CoordinateSystem {}, CoordinateSystem {x, y});
