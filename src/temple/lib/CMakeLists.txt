@@ -40,6 +40,7 @@ set(HEADERS_All
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/OperatorSuppliers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/Common.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/LBFGS.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/NelderMead.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/NewtonRaphson.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/SylvestersCriterion.h
   ${CMAKE_CURRENT_SOURCE_DIR}/temple/Optimization/TrustRegion.h
