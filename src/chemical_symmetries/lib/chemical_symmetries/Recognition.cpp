@@ -14,8 +14,9 @@
 #include <Eigen/Eigenvalues>
 #include <Eigen/Geometry>
 #include "temple/Functional.h"
-#include "temple/Optimization/TrustRegion.h"
 #include "temple/Optimization/Common.h"
+#include "temple/Optimization/NelderMead.h"
+#include "temple/Optimization/TrustRegion.h"
 
 #include "temple/Stringify.h"
 #include <iostream>
@@ -23,6 +24,8 @@
 #include <random>
 
 /* TODO
+ * - standardizeTop needs to orient asymmetric tops along z with the highest
+ *   order cn axis found
  * - Perf change if i-j loop break in greedy variants to permutational
  *   calculations is a continue instead (both break and continue are viable as
  *   long as the swap-back is skipped)
@@ -121,29 +124,35 @@ PointGroup linear(const PositionCollection& normalizedPositions) {
 
 namespace csm {
 
+struct IdentityMap {
+  PURITY_STRONG inline unsigned at(const unsigned i) const noexcept {
+    return i;
+  }
+};
+
+template<typename MapType = IdentityMap>
 double calculateCSM(
   const PositionCollection& normalizedPositions,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
-  const std::vector<unsigned>& particles
+  const std::vector<unsigned>& particles,
+  MapType&& elementMap = MapType {}
 ) {
   const unsigned p = particles.size();
-  assert(p == unfoldMatrices.cols() / 3);
-  assert(p == foldMatrices.cols() / 3);
 
   double value = 0;
 
   /* Fold points and average */
   Eigen::Vector3d averagePoint = Eigen::Vector3d::Zero();
   for(unsigned i = 0; i < p; ++i) {
-    averagePoint += foldMatrices.block<3, 3>(0, 3 * i) * normalizedPositions.col(particles.at(i));
+    averagePoint += foldMatrices.block<3, 3>(0, 3 * elementMap.at(i)) * normalizedPositions.col(particles.at(i));
   }
   averagePoint /= p;
 
   /* Unfold points */
   for(unsigned i = 0; i < p; ++i) {
     value += (
-      unfoldMatrices.block<3, 3>(0, 3 * i) * averagePoint
+      unfoldMatrices.block<3, 3>(0, 3 * elementMap.at(i)) * averagePoint
       - normalizedPositions.col(particles.at(i))
     ).squaredNorm();
   }
@@ -154,19 +163,13 @@ double calculateCSM(
 
 double allSymmetryElements(
   const PositionCollection& normalizedPositions,
-  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
   std::vector<unsigned> particleIndices
 ) {
   const unsigned P = particleIndices.size();
-  const unsigned G = elements.size();
+  const unsigned G = unfoldMatrices.cols() / 3;
   assert(P == G);
-
-  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * G);
-  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * G);
-  for(unsigned i = 0; i < G; ++i) {
-    unfoldMatrices.block<3, 3>(0, 3 * i) = elements.at(i)->matrix();
-    foldMatrices.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
-  }
 
   double value = 1000;
 
@@ -191,19 +194,13 @@ double allSymmetryElements(
 
 double greedyAllSymmetryElements(
   const PositionCollection& normalizedPositions,
-  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
   std::vector<unsigned> particleIndices
 ) {
   const unsigned P = particleIndices.size();
-  const unsigned G = elements.size();
+  const unsigned G = unfoldMatrices.cols() / 3;
   assert(P == G);
-
-  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * G);
-  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * G);
-  for(unsigned i = 0; i < G; ++i) {
-    unfoldMatrices.block<3, 3>(0, 3 * i) = elements.at(i)->matrix();
-    foldMatrices.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
-  }
 
   /* Each search for a better adjacent permutation is O(N^2) worst case
    * The number of searches for a better adjacent permutation is at least on
@@ -245,7 +242,8 @@ double greedyAllSymmetryElements(
 double groupedSymmetryElements(
   const PositionCollection& normalizedPositions,
   std::vector<unsigned> particleIndices,
-  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
   const elements::ElementGrouping& elementGrouping
 ) {
   /* The number of groups in element grouping must match the number of particles
@@ -256,13 +254,12 @@ double groupedSymmetryElements(
 
   const unsigned groupSize = particleIndices.size();
 
-  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * groupSize);
-  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * groupSize);
+  /* Create an element index mapping from index of particle in particle indices
+   * matching the elementGrouping parameter
+   */
+  std::unordered_map<unsigned, unsigned> elementMap;
   for(unsigned i = 0; i < groupSize; ++i) {
-    unfoldMatrices.block<3, 3>(0, 3 * i) = elements.at(
-      elementGrouping.groups.at(i).front()
-    )->matrix();
-    foldMatrices.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
+    elementMap.emplace(i, elementGrouping.groups.at(i).front());
   }
 
   double value = 1000;
@@ -272,7 +269,8 @@ double groupedSymmetryElements(
       normalizedPositions,
       unfoldMatrices,
       foldMatrices,
-      particleIndices
+      particleIndices,
+      elementMap
     );
     value = std::min(value, permutationCSM);
   } while(
@@ -288,7 +286,8 @@ double groupedSymmetryElements(
 double greedyGroupedSymmetryElements(
   const PositionCollection& normalizedPositions,
   std::vector<unsigned> particleIndices,
-  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
   const elements::ElementGrouping& elementGrouping
 ) {
   /* The number of groups in element grouping must match the number of particles
@@ -299,13 +298,12 @@ double greedyGroupedSymmetryElements(
 
   const unsigned groupSize = particleIndices.size();
 
-  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * groupSize);
-  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * groupSize);
+  /* Create an element index mapping from index of particle in particle indices
+   * matching the elementGrouping parameter
+   */
+  std::unordered_map<unsigned, unsigned> elementMap;
   for(unsigned i = 0; i < groupSize; ++i) {
-    unfoldMatrices.block<3, 3>(0, 3 * i) = elements.at(
-      elementGrouping.groups.at(i).front()
-    )->matrix();
-    foldMatrices.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
+    elementMap.emplace(i, elementGrouping.groups.at(i).front());
   }
 
   bool foundBetterAdjacentPermutation = false;
@@ -313,7 +311,8 @@ double greedyGroupedSymmetryElements(
     normalizedPositions,
     unfoldMatrices,
     foldMatrices,
-    particleIndices
+    particleIndices,
+    elementMap
   );
   do {
     foundBetterAdjacentPermutation = false;
@@ -325,7 +324,8 @@ double greedyGroupedSymmetryElements(
           normalizedPositions,
           unfoldMatrices,
           foldMatrices,
-          particleIndices
+          particleIndices,
+          elementMap
         );
         if(adjacentCSM < currentCSM) {
           currentCSM = adjacentCSM;
@@ -341,100 +341,107 @@ double greedyGroupedSymmetryElements(
   return currentCSM;
 }
 
-double point_group(
-  const PositionCollection& normalizedPositions,
-  const PointGroup pointGroup
-) {
-  const auto elements = elements::symmetryElements(pointGroup);
-  const auto npGroups = npGroupings(elements);
+struct OrientationCSMFunctor {
+  using MatrixType = Eigen::Matrix<double, 3, Eigen::Dynamic>;
 
-  const unsigned G = elements.size();
-  const unsigned P = normalizedPositions.cols();
+  const PositionCollection& coordinates;
+  const MatrixType unfoldMatrices;
+  const MatrixType foldMatrices;
+  const std::unordered_map<unsigned, elements::ElementGrouping> npGroups;
 
-  /* Rough algorithm:
-   * - Select an orientation of the point group
-   * - For each possible subdivision of points:
-   *   - Minimize CSM for each set according to either G = P or G = l * P
-   *     over all permutations
-   * - Simplex minimize over point group orientation
-   */
+  OrientationCSMFunctor(
+    const PositionCollection& normalizedPositions,
+    const PointGroup group
+  ) : coordinates(normalizedPositions),
+      unfoldMatrices(makeUnfoldMatrices(elements::symmetryElements(group))),
+      foldMatrices(makeFoldMatrices(unfoldMatrices)),
+      npGroups(elements::npGroupings(elements::symmetryElements(group)))
+  {}
 
-  // Eigen::Vector3d pointGroupOrientation = Eigen::Vector3d::UnitZ();
-
-  /* Subdivide P */
-  // The sizes of groups that we can subdivide into must contain the whole set
-  std::vector<unsigned> subdivisionGroupSizes {G};
-  // Add npGroupings' group sizes to subdivisionGroupSizes
-  for(const auto& groupMapPair : npGroups) {
-    subdivisionGroupSizes.push_back(groupMapPair.first);
-  }
-
-  std::sort(
-    std::begin(subdivisionGroupSizes),
-    std::end(subdivisionGroupSizes),
-    std::greater<>()
-  );
-
-  /* First check if we can solve the diophantine at all, for that the greatest
-   * common divisor has to divide P
-   */
-  if(!diophantine::has_solution(subdivisionGroupSizes, P)) {
-    std::cout << "Diophantine specified by " << temple::stringify(subdivisionGroupSizes) << " = " << P << " has no solutions\n";
-
-    if(P > 2 && diophantine::has_solution(subdivisionGroupSizes, P - 1)) {
-      std::cout << "But the diophantine specified by " << temple::stringify(subdivisionGroupSizes) << " = " << (P - 1) << " does! Yet unhandled!\n";
-
-      /* TODO Custom code for P - 1 that isn't just adding 1 to
-       * subdivisionGroupSizes (this is really inefficient compared to solving
-       * the diophantine to (P - 1) and permutating the removed vertex
-       * beforehand)
-       */
+  static MatrixType makeUnfoldMatrices(const elements::ElementsList& elements) {
+    MatrixType unfold(3, elements.size() * 3);
+    const unsigned G = elements.size();
+    for(unsigned i = 0; i < G; ++i) {
+      unfold.block<3, 3>(0, 3 * i) = elements.at(i)->matrix();
     }
-    return 100.0;
+    return unfold;
   }
 
-  /* A number of different cases can arise here, and we have to consider them
-   * VERY CAREFULLY before proceeding.
-   *
-   * - If there are two or more elements in subdivisionGroupSizes, we can
-   *   enumerate all solutions of the diophantine
-   * - If there is only one element in subdivisionGroupSizes, then P is G and
-   *   we do not have to subdivide at all -> directly match points to symmetry
-   *   elements
-   */
+  static MatrixType makeFoldMatrices(const MatrixType& unfoldMatrices) {
+    MatrixType fold(3, unfoldMatrices.cols());
+    const unsigned G = unfoldMatrices.cols() / 3;
+    for(unsigned i = 0; i < G; ++i) {
+      fold.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
+    }
+    return fold;
+  }
 
-  if(subdivisionGroupSizes.size() == 1) {
-    assert(P == G);
+  static Eigen::Matrix3d eulerRotation(const Eigen::VectorXd& parameters) {
+    // Three euler angles in radians
+    assert(parameters.size() == 3);
+    const double alpha = parameters(0);
+    const double beta = parameters(1);
+    const double gamma = parameters(2);
 
+    // Figure out N and z'
+    const Eigen::Vector3d N = Eigen::AngleAxisd(
+      alpha,
+      Eigen::Vector3d::UnitZ()
+    ) * Eigen::Vector3d::UnitX();
+
+    const Eigen::Vector3d zPrime = Eigen::AngleAxisd(
+      beta,
+      N
+    ) * Eigen::Vector3d::UnitZ();
+
+    // Compose the euler rotation matrix
+    return (
+      Eigen::AngleAxisd(gamma, zPrime.normalized())
+      * Eigen::AngleAxisd(beta, N.normalized())
+      * Eigen::AngleAxisd(alpha, Eigen::Vector3d::UnitZ())
+    ).toRotationMatrix();
+  }
+
+  double direct_csm(
+    const PositionCollection& positions,
+    const std::vector<unsigned>& particleIndices
+  ) const {
+    assert(particleIndices.size() == static_cast<decltype(particleIndices.size())>(foldMatrices.cols()) / 3);
     const double greedyResult = greedyAllSymmetryElements(
-      normalizedPositions,
-      elements,
-      temple::iota<unsigned>(P)
+      positions,
+      unfoldMatrices,
+      foldMatrices,
+      particleIndices
     );
 
-    // call p = g minimization
+#ifndef NDEBUG
     const double permutationalResult = allSymmetryElements(
-      normalizedPositions,
-      elements,
-      temple::iota<unsigned>(P)
+      positions,
+      unfoldMatrices,
+      foldMatrices,
+      particleIndices
     );
-
     if(std::fabs(greedyResult - permutationalResult) > 1e-10) {
-      std::cout << "Greedy and permutational results differ! greedy: " << greedyResult << ", permutational: " << permutationalResult << "\n";
+      std::cout << "Greedy and permutational results differ! greedy: "
+        << greedyResult << ", permutational: " << permutationalResult << "\n";
     }
-
-    return permutationalResult;
+#endif
+    return greedyResult;
   }
 
-  std::vector<unsigned> subdivisionMultipliers;
-  std::cout << "group sizes: " << temple::stringify(subdivisionGroupSizes) << "\n";
+  double diophantine_csm(
+    const PositionCollection& positions,
+    const std::vector<unsigned>& subdivisionGroupSizes,
+    const std::vector<unsigned>& particleIndices
+  ) const {
+    const unsigned P = particleIndices.size();
+    std::vector<unsigned> subdivisionMultipliers;
+    if(!diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
+      throw std::logic_error("Diophantine failure! Couldn't find first solution");
+    }
 
-  if(diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
     double value = 1000;
-
     do {
-      std::cout << "diophantine multipliers: " << temple::stringify(subdivisionMultipliers) << "\n";
-
       /* We have a composition of groups to subdivide our points:
        *
        * E.g.: P = 12
@@ -486,52 +493,64 @@ double point_group(
           const unsigned groupSize = subdivisionGroupSizes.at(i);
           const unsigned multiplier = subdivisionMultipliers.at(i);
           const auto& sameSizeParticleIndices = sameSizeIndexGroups.at(i);
+          const auto& npGroup = npGroups.at(groupSize);
 
           // Skip groups with multiplier zero
           if(multiplier == 0) {
             continue;
           }
 
-          Partitioner partitioner {multiplier, groupSize};
-
           /* Subpartition csm is minimized over the sub-partitions of
            * groups of equal size
            */
-          double subpartitionCSM = 1000;
+          Partitioner partitioner {multiplier, groupSize};
+          double bestSubpartitionCSM = 1000;
           do {
-            /* TODO can combine the map and loop into a single loop (less
-             * memory usage).
-             */
-
-            // Group the particle indices
-            auto particleGroups = temple::map(
-              partitioner.partitions(),
-              [&](const auto& group) -> std::vector<unsigned> {
-                return temple::map(
-                  group,
-                  [&](const unsigned indexOfParticle) -> unsigned {
-                    return sameSizeParticleIndices.at(indexOfParticle);
-                  }
-                );
-              }
-            );
-
-            double groupCSM = 0;
-            for(auto& particleGroup : particleGroups) {
-              const unsigned particleGroupSize = particleGroup.size();
-              groupCSM += groupedSymmetryElements(
-                normalizedPositions,
-                std::move(particleGroup),
-                elements,
-                npGroups.at(particleGroupSize)
+            double subpartitionCSM = 0;
+            for(auto&& partitionIndices : partitioner.partitions()) {
+              /* Map all the way back to actual particle indices:
+               * partition -> same size particles -> particle
+               */
+              auto partitionParticles = temple::map(
+                partitionIndices,
+                [&](const unsigned indexOfParticle) -> unsigned {
+                  return particleIndices.at(
+                    sameSizeParticleIndices.at(indexOfParticle)
+                  );
+                }
               );
-            }
 
-            std::cout << "Partition group CSM = " << partitionCSM << "\n";
-            subpartitionCSM = std::min(subpartitionCSM, groupCSM);
+#ifndef NDEBUG
+              const double permutationalGroupCSM = groupedSymmetryElements(
+                positions,
+                partitionParticles,
+                unfoldMatrices,
+                foldMatrices,
+                npGroup
+              );
+#endif
+
+              const double groupCSM = greedyGroupedSymmetryElements(
+                positions,
+                std::move(partitionParticles),
+                unfoldMatrices,
+                foldMatrices,
+                npGroup
+              );
+
+#ifndef NDEBUG
+              if(std::fabs(permutationalGroupCSM - groupCSM) > 1e-10) {
+                std::cout << "Greedy and permutational results differ! greedy: "
+                  << groupCSM << ", permutational: " << permutationalGroupCSM << "\n";
+              }
+#endif
+
+              subpartitionCSM += groupCSM;
+            }
+            bestSubpartitionCSM = std::min(bestSubpartitionCSM, subpartitionCSM);
           } while(partitioner.next_partition());
 
-          partitionCSM += subpartitionCSM;
+          partitionCSM += bestSubpartitionCSM;
         }
 
         value = std::min(value, partitionCSM);
@@ -541,7 +560,166 @@ double point_group(
     return value;
   }
 
-  return 100.0;
+  double csm(const PositionCollection& positions) const {
+    const unsigned P = positions.cols();
+    const unsigned G = foldMatrices.cols() / 3;
+
+    if(P == G) {
+      return direct_csm(
+        positions,
+        temple::iota<unsigned>(P)
+      );
+    }
+
+    if(P == G + 1) {
+      double minimalCSM = 1000;
+
+      for(unsigned i = 0; i < P; ++i) {
+        std::vector<unsigned> particleIndices;
+        particleIndices.reserve(G);
+        for(unsigned j = 0; j < i; ++j) {
+          particleIndices.push_back(j);
+        }
+        for(unsigned j = i + 1; j < P; ++j) {
+          particleIndices.push_back(j);
+        }
+
+        const double oneSymmetrizedToOriginCSM = (
+          direct_csm(positions, particleIndices)
+          + positions.col(i).squaredNorm() * 100
+        );
+
+        minimalCSM = std::min(minimalCSM, oneSymmetrizedToOriginCSM);
+      }
+
+      return minimalCSM;
+    }
+
+    /* Set up list of subdivisionGroupSizes */
+    std::vector<unsigned> subdivisionGroupSizes {};
+    /* The sizes of groups that we can subdivide contains the full set only
+     * if there are more particles than symmetry elements:
+     */
+    if(P > G) {
+      subdivisionGroupSizes.push_back(G);
+    }
+    for(const auto& groupMapPair : npGroups) {
+      subdivisionGroupSizes.push_back(groupMapPair.first);
+    }
+    std::sort(
+      std::begin(subdivisionGroupSizes),
+      std::end(subdivisionGroupSizes),
+      std::greater<>()
+    );
+    if(diophantine::has_solution(subdivisionGroupSizes, P)) {
+      return diophantine_csm(
+        positions,
+        subdivisionGroupSizes,
+        temple::iota<unsigned>(P)
+      );
+    }
+
+    if(P > 2 && diophantine::has_solution(subdivisionGroupSizes, P - 1)) {
+      double minimalCSM = 1000;
+
+      for(unsigned i = 0; i < P; ++i) {
+        std::vector<unsigned> particleIndices;
+        particleIndices.reserve(G);
+        for(unsigned j = 0; j < i; ++j) {
+          particleIndices.push_back(j);
+        }
+        for(unsigned j = i + 1; j < P; ++j) {
+          particleIndices.push_back(j);
+        }
+
+        const double oneSymmetrizedToOriginCSM = (
+          diophantine_csm(positions, subdivisionGroupSizes, particleIndices)
+          + positions.col(i).squaredNorm() * 100
+        );
+
+        minimalCSM = std::min(minimalCSM, oneSymmetrizedToOriginCSM);
+      }
+
+      return minimalCSM;
+    }
+
+    throw std::logic_error("You shouldn't even instantiate this type if you know that you cannot calculate a CSM");
+  }
+
+  double operator() (const Eigen::VectorXd& parameters) const {
+    const PositionCollection rotatedCoordinates = eulerRotation(parameters) * coordinates;
+    return csm(rotatedCoordinates);
+  }
+};
+
+boost::optional<double> pointGroup(
+  const PositionCollection& normalizedPositions,
+  const PointGroup group
+) {
+  const auto elements = elements::symmetryElements(group);
+  const auto npGroups = npGroupings(elements);
+
+  const unsigned G = elements.size();
+  const unsigned P = normalizedPositions.cols();
+
+  /* There are conditions on when we can calculate a CSM for this number of
+   * particles P and the particular point group with G symmetry elements.
+   */
+
+  /* Set up a list of group sizes we can subdivide particles into */
+  std::vector<unsigned> subdivisionGroupSizes {};
+  /* The sizes of groups that we can subdivide contains the full set only
+   * if there are more particles than symmetry elements:
+   */
+  if(P > G) {
+    subdivisionGroupSizes.push_back(G);
+  }
+  for(const auto& groupMapPair : npGroups) {
+    subdivisionGroupSizes.push_back(groupMapPair.first);
+  }
+  std::sort(
+    std::begin(subdivisionGroupSizes),
+    std::end(subdivisionGroupSizes),
+    std::greater<>()
+  );
+
+  if(
+    !(P == G)
+    && !(P == G + 1)
+    && !diophantine::has_solution(subdivisionGroupSizes, P)
+    && !(
+      P > 2
+      && diophantine::has_solution(subdivisionGroupSizes, P - 1)
+    )
+  ) {
+    /* If none of these possibilities are true, then we cannot calculate a CSM
+     * for this number of particles and this particular point group.
+     */
+    return boost::none;
+  }
+
+  OrientationCSMFunctor functor {normalizedPositions, group};
+
+  // Set up the initial simplex
+  Eigen::MatrixXd simplex(3, 4);
+  simplex.col(0) = Eigen::Vector3d::Zero();
+  simplex.block<3, 3>(0, 1) = Eigen::Matrix3d::Identity();
+
+  struct NelderMeadChecker {
+    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) const {
+      return iteration < 1000 && lowestValue > 1e-3 && stddev > 1e-2;
+    }
+  };
+
+  auto minimizationResult = temple::NelderMead<>::minimize(
+    simplex,
+    functor,
+    NelderMeadChecker {}
+  );
+
+  std::cout << "Minimized to " << minimizationResult.value << " in " << minimizationResult.iterations << " iterations. Final simplex:\n " << simplex << "\n";
+
+  return minimizationResult.value;
 }
 
 namespace cn {
@@ -1345,8 +1523,8 @@ PointGroup flowchart(
      * TODO Maybe a faster way to flowchart is to search for axes along
      * particle positions?
      */
-    const double tetrahedralCSM = csm::point_group(normalizedPositions, PointGroup::Td);
-    const double octahedralCSM = csm::point_group(normalizedPositions, PointGroup::Oh);
+    const double tetrahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Td).value_or(1000);
+    const double octahedralCSM = csm::pointGroup(normalizedPositions, PointGroup::Oh).value_or(10000);
     // TODO icosahedral is also a spherical top!
     return tetrahedralCSM < octahedralCSM ? PointGroup::Td : PointGroup::Oh;
   }
@@ -1386,7 +1564,7 @@ PointGroup flowchart(
   //       const PointGroup cn_point_group = static_cast<PointGroup>(
   //         elements::underlying(PointGroup::C2) + n - 2
   //       );
-  //       double symm_csm = csm::point_group(
+  //       double symm_csm = csm::pointGroup(
   //         transformed,
   //         cn_point_group
   //       );

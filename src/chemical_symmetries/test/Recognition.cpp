@@ -37,6 +37,25 @@ PositionCollection addOrigin(const PositionCollection& vs) {
   return positions;
 }
 
+const std::vector<std::string>& pointGroupStrings() {
+  static const std::vector<std::string> strings {
+    "C1", "Ci", "Cs",
+    "C2", "C3", "C4", "C5", "C6", "C7", "C8",
+    "C2h", "C3h", "C4h", "C5h", "C6h", "C7h", "C8h",
+    "C2v", "C3v", "C4v", "C5v", "C6v", "C7v", "C8v",
+    "S4", "S6", "S8",
+    "D2", "D3", "D4", "D5", "D6", "D7", "D8",
+    "D2h", "D3h", "D4h", "D5h", "D6h", "D7h", "D8h",
+    "D2d", "D3d", "D4d", "D5d", "D6d", "D7d", "D8d",
+    "T", "Td", "Th",
+    "O", "Oh",
+    "I", "Ih",
+    "Cinfv", "Dinfh"
+  };
+
+  return strings;
+}
+
 BOOST_AUTO_TEST_CASE(Recognition) {
   const std::map<Name, PointGroup> expected {
     {Name::Linear, PointGroup::Dinfh},
@@ -58,30 +77,54 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     {Name::SquareAntiPrismatic, PointGroup::D4d}
   };
 
-  // analyze(addOrigin(symmetryData().at(Name::PentagonalPyramidal).coordinates));
+  const std::vector<std::string> topNames {
+    "Linear",
+    "Asymmetric",
+    "Prolate",
+    "Oblate",
+    "Spherical"
+  };
 
-  //for(const Symmetry::Name symmetry : allNames) {
-  //  std::cout << "Analyzing " << name(symmetry) << ":\n";
-  //  analyze(addOrigin(symmetryData().at(symmetry).coordinates));
-  //}
+  for(const auto& nameGroupPair : expected) {
+    auto normalized = detail::normalize(
+      addOrigin(symmetryData().at(nameGroupPair.first).coordinates)
+    );
+
+    // Add a random coordinate transformation
+    const Eigen::Matrix3d rot = rotationMatrix(CoordinateSystem {}, CoordinateSystem::random());
+    for(unsigned i = 0; i < normalized.cols(); ++i) {
+      normalized.col(i) = rot * normalized.col(i);
+    }
+
+    // Standardize the top
+    Top top = standardizeTop(normalized);
+
+    // Linear tops get special treatment
+    if(top == Top::Linear) {
+      std::cout << Symmetry::name(nameGroupPair.first)
+        << " top is linear, no CSM calculation available.\n";
+
+      PointGroup result = detail::linear(normalized);
+      BOOST_CHECK_MESSAGE(
+        result == nameGroupPair.second,
+        "Expected " << pointGroupStrings().at(underlying(nameGroupPair.second))
+        << " for " << Symmetry::name(nameGroupPair.first) << ", got "
+        << pointGroupStrings().at(underlying(result)) << " instead."
+      );
+    } else {
+      const double pgCSM = csm::pointGroup(
+        normalized,
+        nameGroupPair.second
+      ).value_or(1000);
+      std::cout << Symmetry::name(nameGroupPair.first)
+        << " top is " << topNames.at(underlying(top)) << ", "
+        << pointGroupStrings().at(underlying(nameGroupPair.second))
+        << " csm is " << pgCSM << "\n";
+    }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(PointGroupElements) {
-  const std::vector<std::string> pointGroupStrings {
-    "C1", "Ci", "Cs",
-    "C2", "C3", "C4", "C5", "C6", "C7", "C8",
-    "C2h", "C3h", "C4h", "C5h", "C6h", "C7h", "C8h",
-    "C2v", "C3v", "C4v", "C5v", "C6v", "C7v", "C8v",
-    "S4", "S6", "S8",
-    "D2", "D3", "D4", "D5", "D6", "D7", "D8",
-    "D2h", "D3h", "D4h", "D5h", "D6h", "D7h", "D8h",
-    "D2d", "D3d", "D4d", "D5d", "D6d", "D7d", "D8d",
-    "T", "Td", "Th",
-    "O", "Oh",
-    "I", "Ih",
-    "Cinfv", "Dinfh"
-  };
-
   auto writeXYZ = [](const std::string& filename, const PositionCollection& positions) {
     std::ofstream outfile(filename);
     const unsigned N = positions.cols();
@@ -104,7 +147,7 @@ BOOST_AUTO_TEST_CASE(PointGroupElements) {
   auto writePointGroup = [&](const PointGroup group) {
     const auto elements = elements::symmetryElements(group);
     const auto groupings = elements::npGroupings(elements);
-    std::cout << pointGroupStrings.at(underlying(group)) << "\n";
+    std::cout << pointGroupStrings().at(underlying(group)) << "\n";
     for(const auto& iterPair : groupings) {
       std::cout << "  np = " << iterPair.first << " along " << iterPair.second.probePoint.transpose() << " -> " << temple::stringify(iterPair.second.groups) << "\n";
     }
@@ -130,10 +173,10 @@ BOOST_AUTO_TEST_CASE(PaperCSMExamples) {
   tetrahedralPositions.col(3) = Eigen::Vector3d {1.179085, -0.755461, -0.372341};
 
   const double expectedTdCSM = 0.17;
-  const double calculatedTd = csm::point_group(
+  const double calculatedTd = csm::pointGroup(
     detail::normalize(tetrahedralPositions),
     PointGroup::Td
-  );
+  ).value_or(1000);
 
   std::cout << "Calculated Td CSM: " << calculatedTd << " (expect " << expectedTdCSM << ")\n";
   BOOST_CHECK_CLOSE(expectedTdCSM, calculatedTd, 1);
@@ -150,77 +193,34 @@ BOOST_AUTO_TEST_CASE(PaperCSMExamples) {
   c3vPositions.col(3) = Eigen::Vector3d {-0.75128605, -0.39338892, -0.52991926};
 
   const double expectedC3vCSM = 1.16;
-  const double calculatedC3v = csm::point_group(
+  const double calculatedC3v = csm::pointGroup(
     detail::normalize(c3vPositions),
     PointGroup::C3v
-  );
+  ).value_or(1000);
 
   std::cout << "Calculated C3v CSM: " << calculatedC3v << " (expect " << expectedC3vCSM << ")\n";
   BOOST_CHECK_CLOSE(expectedC3vCSM, calculatedC3v, 1);
 }
 
-BOOST_AUTO_TEST_CASE(C4PointGroupTrial) {
-  const double pointGroupCSM = csm::allSymmetryElements(
+BOOST_AUTO_TEST_CASE(SquarePlanarC4D4PointGroups) {
+  const double pointGroupCSM = csm::pointGroup(
     detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
-    elements::symmetryElements(PointGroup::C4),
-    temple::iota<unsigned>(4)
-  );
+    PointGroup::C4
+  ).value_or(1000);
   BOOST_CHECK_MESSAGE(
     std::fabs(pointGroupCSM) < 1e-10,
     "C4 point group CSM on square planar coordinates is not zero, but " << pointGroupCSM
   );
 
-  /* Rotate the coordinates slightly around z */
-  auto positions = symmetryData().at(Name::SquarePlanar).coordinates;
-  auto rotation = Eigen::AngleAxisd(3 * M_PI / 16, Eigen::Vector3d::UnitZ());
-  for(unsigned i = 0; i < positions.cols(); ++i) {
-    positions.col(i) = rotation * positions.col(i);
-  }
-  const double rotatedCSM = csm::allSymmetryElements(
-    detail::normalize(positions),
-    elements::symmetryElements(PointGroup::C4),
-    temple::iota<unsigned>(4)
-  );
-  BOOST_CHECK_MESSAGE(
-    std::fabs(rotatedCSM) < 1e-10,
-    "C4 point group CSM on z-rotated square planar coordinates is not zero, but " << rotatedCSM
-  );
-
-  /* For purely axial groups, the particular position of x and y coordinates
-   * does not matter! Will need to retest this for D4 once those become viable
-   * to test, because I think this doesn't yet conclusively prove only the
-   * orientation of the z matrix needs to be optimized for point group CSMs. In
-   * D4, it might be necessary to get the right orientation for the orthogonal C2
-   * axes...
-   *
-   * In consequence, it would be necessary to optimize over the three euler angles.
-   */
-
-  const double D4CSM = csm::point_group(
+  const double D4CSM = csm::pointGroup(
     detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
     PointGroup::D4
-  );
+  ).value_or(1000);
 
   BOOST_CHECK_MESSAGE(
     0 < D4CSM && D4CSM < 1e-10,
     "D4 CSM on square planar coordinates is not zero, but " << D4CSM
   );
-
-  const double rotatedD4CSM = csm::point_group(
-    detail::normalize(positions),
-    PointGroup::D4
-  );
-
-  BOOST_CHECK_MESSAGE(
-    0 < rotatedD4CSM && rotatedD4CSM < 1e-10,
-    "D4 CSM on z-rotated square planar coordinates is not zero, but " << rotatedD4CSM
-  );
-
-  /* I'm still not convinced. The symmetry element grouping puts rotations
-   * first in the groups, and those elements are selected for folding and
-   * unfolding, so this doesn't prove anything regarding relative orientation
-   * just yet.
-   */
 }
 
 BOOST_AUTO_TEST_CASE(InertialStandardization) {

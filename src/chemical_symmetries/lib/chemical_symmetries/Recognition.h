@@ -61,7 +61,8 @@ namespace csm {
  */
 double allSymmetryElements(
   const PositionCollection& normalizedPositions,
-  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
   std::vector<unsigned> particleIndices
 );
 
@@ -75,7 +76,8 @@ double allSymmetryElements(
 double groupedSymmetryElements(
   const PositionCollection& normalizedPositions,
   std::vector<unsigned> particleIndices,
-  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
   const elements::ElementGrouping& elementGrouping
 );
 
@@ -87,7 +89,7 @@ double groupedSymmetryElements(
  *
  * @return The continuous symmetry measure
  */
-double point_group(
+boost::optional<double> pointGroup(
   const PositionCollection& normalizedPositions,
   const PointGroup pointGroup
 );
@@ -102,6 +104,8 @@ namespace detail {
  * vectors so that the maximum distance is 1)
  */
 PositionCollection normalize(const PositionCollection& positions);
+
+PointGroup linear(const PositionCollection& normalizedPositions);
 
 } // namespace detail
 
