@@ -40,10 +40,15 @@ bool next_solution(
     )
   );
   // a and x sizes must match
-  assert(x.size() >= 2);
   assert(a.size() == x.size());
+  assert(!x.empty());
   assert(b > 0);
 
+  if(x.size() == 1) {
+    return false;
+  }
+
+  assert(x.size() >= 2);
   auto q = [&]() -> int {
     return std::inner_product(
       std::begin(a),
@@ -94,6 +99,13 @@ bool first_solution(
   const std::vector<unsigned>& a,
   const int b
 ) {
+  assert(!a.empty());
+
+  if(a.size() == 1) {
+    x = {b / a.front()};
+    return true;
+  }
+
   assert(a.size() >= 2);
   x.resize(a.size());
   std::fill(
