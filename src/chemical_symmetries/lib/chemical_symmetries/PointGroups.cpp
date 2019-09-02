@@ -207,8 +207,8 @@ Eigen::Matrix3d reflectionMatrix(const Eigen::Vector3d& planeNormal) {
 }
 
 //! Returns all symmetry elements of a point group
-std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(const PointGroup group) {
-  using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
+std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(const PointGroup group) noexcept {
+  assert(group != PointGroup::Cinfv && group != PointGroup::Dinfh);
 
   auto make = [](auto element) {
     using Type = decltype(element);
@@ -580,12 +580,8 @@ std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(const PointGroup 
         return elements;
       }
 
-    case(PointGroup::Cinfv):
-    case(PointGroup::Dinfh):
-      throw std::logic_error("Do not use symmetry elements to analyze linear point groups!");
-
     default:
-      throw std::logic_error("Used invalid PointGroup value");
+      return {};
   }
 }
 

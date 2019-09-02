@@ -13,6 +13,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include "temple/Preprocessor.h"
+
 namespace Scine {
 namespace Symmetry {
 
@@ -86,7 +88,23 @@ struct Reflection final : public SymmetryElement {
   Eigen::Vector3d normal;
 };
 
-std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(const PointGroup group);
+using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
+
+/** @brief Lists all symmetry elements for a point group
+ *
+ * @param group Point group for which to enumerate symmetry elements
+ *
+ * @pre @p group is not Cinfv or Dinfh as infinite symmetry elements cannot
+ * be represented!
+ *
+ * @note Yields an empty list of elements for invalid @p group values.
+ *
+ * @warning Ih and I are not implemented yet. Will assert in Debug and yield a
+ * single-element list in Release.
+ *
+ * @return a list of symmetry elements
+ */
+PURITY_WEAK ElementsList symmetryElements(const PointGroup group) noexcept;
 
 
 /* There can be multiple groupings of symmetry elements of equal l for
@@ -111,7 +129,7 @@ struct ElementGrouping {
  * groups.
  */
 std::unordered_map<unsigned, ElementGrouping> npGroupings(
-  const std::vector<std::unique_ptr<SymmetryElement>>& elements
+  const ElementsList& elements
 );
 
 } // namespace elements
