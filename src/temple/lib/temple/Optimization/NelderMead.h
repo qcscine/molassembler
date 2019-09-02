@@ -144,7 +144,7 @@ struct NelderMead {
       }
       standardDeviation = std::sqrt(standardDeviation / (N + 1));
       ++iteration;
-    } while(check.shouldContinue(iteration, standardDeviation));
+    } while(check.shouldContinue(iteration, values.front().value, standardDeviation));
 
     return {
       iteration,

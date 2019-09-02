@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE(NelderMead) {
                      -1.5,  0.0, -3.0;
 
   struct NelderMeadChecker {
-    bool shouldContinue(unsigned iteration, double stddev) {
+    bool shouldContinue(unsigned iteration, double /* lowestValue */, double stddev) {
       return iteration < 1000 && stddev > 0.01;
     }
   };
