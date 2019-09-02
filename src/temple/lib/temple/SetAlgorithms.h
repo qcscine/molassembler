@@ -8,6 +8,7 @@
 #define INCLUDE_MOLASSEMBLER_TEMPLE_SET_ALGORITHMS_H
 
 #include <algorithm>
+#include <set>
 
 namespace temple {
 

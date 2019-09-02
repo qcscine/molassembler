@@ -25,6 +25,9 @@ struct CoordinateSystem {
    */
   CoordinateSystem(const Eigen::Vector3d& a, const Eigen::Vector3d& b);
 
+  //! Yields a randomly oriented right-handed coordinate system
+  static CoordinateSystem random();
+
   //! Yields whether the coordinate system is right handed
   bool isRightHanded() const;
 };

@@ -1,3 +1,8 @@
+/*!@file
+ * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
+ *   See LICENSE.txt
+ */
+
 #include "chemical_symmetries/Recognition.h"
 
 #include "chemical_symmetries/CoordinateSystemTransformation.h"
@@ -17,660 +22,14 @@
 #include <fstream>
 #include <random>
 
+/* TODO
+ * - Perf change if i-j loop break in greedy variants to permutational
+ *   calculations is a continue instead (both break and continue are viable as
+ *   long as the swap-back is skipped)
+ */
+
 namespace Scine {
 namespace Symmetry {
-
-namespace elements {
-
-template<typename EnumType>
-constexpr auto underlying(const EnumType e) {
-  return static_cast<std::underlying_type_t<EnumType>>(e);
-}
-
-inline bool collinear(const Eigen::Vector3d& a, const Eigen::Vector3d& b) {
-  return std::fabs(std::fabs(a.dot(b) / (a.norm() * b.norm())) - 1) <= 1e-8;
-}
-
-inline bool orthogonal(const Eigen::Vector3d& a, const Eigen::Vector3d& b) {
-  return std::fabs(a.dot(b) / (a.norm() * b.norm())) <= 1e-8;
-}
-
-SymmetryElement::Matrix Identity::matrix() const {
-  return Matrix::Identity();
-}
-
-boost::optional<SymmetryElement::Vector> Identity::vector() const {
-  return boost::none;
-}
-
-SymmetryElement::Matrix Inversion::matrix() const {
-  return -Matrix::Identity();
-}
-
-boost::optional<SymmetryElement::Vector> Inversion::vector() const {
-  return boost::none;
-}
-
-Rotation::Rotation(
-  const Eigen::Vector3d& passAxis,
-  const unsigned passN,
-  const unsigned passPower,
-  const bool passReflect
-) : axis(passAxis.normalized()),
-    n(passN),
-    power(passPower),
-    reflect(passReflect)
-{}
-
-Rotation Rotation::Cn(const Eigen::Vector3d& axis, const unsigned n, const unsigned power) {
-  return Rotation(axis, n, power, false);
-}
-
-Rotation Rotation::Sn(const Eigen::Vector3d& axis, const unsigned n, const unsigned power) {
-  return Rotation(axis, n, power, true);
-}
-
-Rotation Rotation::operator * (const Rotation& rhs) const {
-  if(collinear(axis, rhs.axis)) {
-    if(n == rhs.n) {
-      return Rotation(axis, n, power + rhs.power, reflect xor rhs.reflect);
-    } else {
-      throw std::logic_error("Rotation data model cannot handle collinear multiplication of axes of different order n");
-    }
-  } else if(orthogonal(axis, rhs.axis)) {
-    // Rotate rhs' axis by *this, but keep everything else
-    return Rotation(matrix() * rhs.axis, rhs.n, rhs.power, rhs.reflect);
-  } else {
-    throw std::logic_error("Rotation data model cannot handle non-orthogonal multiplication of rotations");
-  }
-}
-
-SymmetryElement::Matrix Rotation::matrix() const {
-  if(!reflect) {
-    return Eigen::AngleAxisd(2 * M_PI * power / n, axis).toRotationMatrix();
-  }
-
-  const double angle = 2 * M_PI * power / n;
-  const double sine = std::sin(angle);
-  const double cosine = std::cos(angle);
-  const double onePlusCosine = 1 + cosine;
-
-  const double xx = cosine - axis(0) * axis(0) * onePlusCosine;
-  const double yy = cosine - axis(1) * axis(1) * onePlusCosine;
-  const double zz = cosine - axis(2) * axis(2) * onePlusCosine;
-
-  const double xy = - axis(0) * axis(1) * onePlusCosine;
-  const double xz = - axis(0) * axis(2) * onePlusCosine;
-  const double yz = - axis(1) * axis(2) * onePlusCosine;
-
-  const double x = axis(0) * sine;
-  const double y = axis(1) * sine;
-  const double z = axis(2) * sine;
-
-  Eigen::Matrix3d rotationMatrix;
-
-  rotationMatrix <<
-        xx, xy - z, xz + y,
-    xy + z,     yy, yz - x,
-    xz - y, yz + x,     zz;
-
-  return rotationMatrix;
-}
-
-boost::optional<SymmetryElement::Vector> Rotation::vector() const {
-  return axis;
-}
-
-Reflection::Reflection(const Eigen::Vector3d& passNormal) : normal(passNormal.normalized()) {}
-
-SymmetryElement::Matrix Reflection::matrix() const {
-  Eigen::Matrix3d reflection;
-
-  const double normalSquareNorm = normal.squaredNorm();
-
-  for(unsigned i = 0; i < 3; ++i) {
-    for(unsigned j = 0; j < 3; ++j) {
-      reflection(i, j) = (i == j ? 1 : 0) - 2 * normal(i) * normal(j) / normalSquareNorm;
-    }
-  }
-
-  return reflection;
-}
-
-boost::optional<SymmetryElement::Vector> Reflection::vector() const {
-  if(orthogonal(normal, Eigen::Vector3d::UnitZ())) {
-    return normal.cross(Eigen::Vector3d::UnitZ());
-  }
-
-  if(orthogonal(normal, Eigen::Vector3d::UnitX())) {
-    return normal.cross(Eigen::Vector3d::UnitX());
-  }
-
-  if(orthogonal(normal, Eigen::Vector3d::UnitY())) {
-    return normal.cross(Eigen::Vector3d::UnitY());
-  }
-
-  return boost::none;
-}
-
-Rotation operator * (const Rotation& rot, const Reflection& reflection) {
-  if(!collinear(rot.axis, reflection.normal)) {
-    throw std::logic_error("Cannot handle off-axis Rotation / Reflection combination");
-  }
-
-  return Rotation(rot.axis, rot.n, rot.power, !rot.reflect);
-}
-
-Rotation operator * (const Reflection& reflection, const Rotation& rot) {
-  return rot * reflection;
-}
-
-Eigen::Matrix3d improperRotationMatrix(
-  const Eigen::Vector3d& axis,
-  const double angle
-) {
-  const double sine = std::sin(angle);
-  const double cosine = std::cos(angle);
-  const double onePlusCosine = 1 + cosine;
-
-  const double xx = cosine - axis(0) * axis(0) * onePlusCosine;
-  const double yy = cosine - axis(1) * axis(1) * onePlusCosine;
-  const double zz = cosine - axis(2) * axis(2) * onePlusCosine;
-
-  const double xy = - axis(0) * axis(1) * onePlusCosine;
-  const double xz = - axis(0) * axis(2) * onePlusCosine;
-  const double yz = - axis(1) * axis(2) * onePlusCosine;
-
-  const double x = axis(0) * sine;
-  const double y = axis(1) * sine;
-  const double z = axis(2) * sine;
-
-  Eigen::Matrix3d rotationMatrix;
-
-  rotationMatrix <<
-        xx, xy - z, xz + y,
-    xy + z,     yy, yz - x,
-    xz - y, yz + x,     zz;
-
-  return rotationMatrix;
-}
-
-Eigen::Matrix3d properRotationMatrix(
-  const Eigen::Vector3d& axis,
-  const double angle
-) {
-  return Eigen::AngleAxisd(angle, axis).toRotationMatrix();
-}
-
-Eigen::Matrix3d reflectionMatrix(const Eigen::Vector3d& planeNormal) {
-  Eigen::Matrix3d reflection;
-
-  const double normalSquareNorm = planeNormal.squaredNorm();
-
-  for(unsigned i = 0; i < 3; ++i) {
-    for(unsigned j = 0; j < 3; ++j) {
-      reflection(i, j) = (i == j ? 1 : 0) - 2 * planeNormal(i) * planeNormal(j) / normalSquareNorm;
-    }
-  }
-
-  return reflection;
-}
-
-//! Returns all symmetry elements of a point group
-std::vector<std::unique_ptr<SymmetryElement>> symmetryElements(const PointGroup group) {
-  using ElementsList = std::vector<std::unique_ptr<SymmetryElement>>;
-
-  auto make = [](auto element) {
-    using Type = decltype(element);
-    return std::make_unique<Type>(element);
-  };
-
-  Identity E {};
-  Inversion inversion {};
-
-  const auto e_x = Eigen::Vector3d::UnitX();
-  const auto e_y = Eigen::Vector3d::UnitY();
-  const auto e_z = Eigen::Vector3d::UnitZ();
-
-  Reflection sigma_xy {e_z};
-  Reflection sigma_xz {e_y};
-  Reflection sigma_yz {e_x};
-
-  const double tetrahedronAngle = 2 * std::atan(std::sqrt(2));
-
-  auto addProperAxisElements = [&](ElementsList& list, const Eigen::Vector3d& axis, const unsigned n) {
-    // C2 gives only a C2, but C3 should also give a C3², etc.
-    const Rotation element = Rotation::Cn(axis, n);
-    Rotation composite = element;
-    for(unsigned i = n; i > 1; --i) {
-      list.push_back(make(composite));
-      composite = element * composite;
-    }
-  };
-
-  auto addImproperAxisElements = [&](ElementsList& list, const Eigen::Vector3d& axis, const unsigned n) {
-    const Rotation element = Rotation::Sn(axis, n);
-    Rotation composite = element;
-    for(unsigned i = n; i > 1; --i) {
-      list.push_back(make(composite));
-      composite = element * composite;
-    }
-  };
-
-  ElementsList elements;
-  elements.push_back(make(E));
-
-  switch(group) {
-    case(PointGroup::C1):
-      return elements;
-
-    case(PointGroup::Ci):
-      {
-        elements.push_back(make(inversion));
-        return elements;
-      }
-
-    case(PointGroup::Cs):
-      {
-        elements.push_back(make(sigma_xy));
-        return elements;
-      }
-
-    case(PointGroup::C2):
-    case(PointGroup::C3):
-    case(PointGroup::C4):
-    case(PointGroup::C5):
-    case(PointGroup::C6):
-    case(PointGroup::C7):
-    case(PointGroup::C8):
-      {
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::C2);
-        addProperAxisElements(elements, e_z, n);
-        assert(elements.size() == n);
-        return elements;
-      }
-
-    case(PointGroup::C2h):
-    case(PointGroup::C3h):
-    case(PointGroup::C4h):
-    case(PointGroup::C5h):
-    case(PointGroup::C6h):
-    case(PointGroup::C7h):
-    case(PointGroup::C8h):
-      {
-        elements.push_back(make(sigma_xy));
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::C2h);
-        std::vector<Rotation> rotations;
-        const Rotation element = Rotation::Cn(e_z, n);
-        Rotation composite = element;
-        for(unsigned i = n; i > 1; --i) {
-          rotations.push_back(composite);
-          composite = element * composite;
-        }
-        const unsigned S = rotations.size();
-        // Add sigma_xy modified Cn axes
-        for(unsigned i = 0; i < S; ++i) {
-          rotations.push_back(sigma_xy * rotations.at(i));
-        }
-        for(auto& rotation : rotations) {
-          elements.emplace_back(
-            make(std::move(rotation))
-          );
-        }
-        assert(elements.size() == 2 * n);
-        return elements;
-      }
-
-    case(PointGroup::C2v):
-    case(PointGroup::C3v):
-    case(PointGroup::C4v):
-    case(PointGroup::C5v):
-    case(PointGroup::C6v):
-    case(PointGroup::C7v):
-    case(PointGroup::C8v):
-      {
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::C2v);
-        addProperAxisElements(elements, e_z, n);
-        // Reflection planes include z and increment by pi/n along z
-        const auto rotation = Rotation::Cn(e_z, 2 * n);
-        Eigen::Vector3d planeNormal = e_y;
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(
-            make(Reflection(planeNormal))
-          );
-          planeNormal = rotation.matrix() * planeNormal;
-        }
-        assert(elements.size() == 2 * n);
-        return elements;
-      }
-
-    case(PointGroup::S4):
-    case(PointGroup::S6):
-    case(PointGroup::S8):
-      {
-        const unsigned n = 4 + 2 * (underlying(group) - underlying(PointGroup::S4));
-        addImproperAxisElements(elements, e_z, n);
-        assert(elements.size() == n);
-        return elements;
-      }
-
-    case(PointGroup::D2):
-    case(PointGroup::D3):
-    case(PointGroup::D4):
-    case(PointGroup::D5):
-    case(PointGroup::D6):
-    case(PointGroup::D7):
-    case(PointGroup::D8):
-      {
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::D2);
-        addProperAxisElements(elements, e_z, n);
-        // Dn groups have C2 axes along pi/n increments in the xy plane
-        const auto rotation = Rotation::Cn(e_z, 2 * n);
-        Eigen::Vector3d c2axis = e_x;
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(make(Rotation::Cn(c2axis, 2)));
-          c2axis = rotation.matrix() * c2axis;
-        }
-        assert(elements.size() == 2 * n);
-        return elements;
-      }
-
-    case(PointGroup::D2h):
-    case(PointGroup::D3h):
-    case(PointGroup::D4h):
-    case(PointGroup::D5h):
-    case(PointGroup::D6h):
-    case(PointGroup::D7h):
-    case(PointGroup::D8h):
-      {
-        elements.push_back(make(sigma_xy));
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::D2h);
-        elements.reserve(4 * n);
-        std::vector<Rotation> rotations;
-        const Rotation element = Rotation::Cn(e_z, n);
-        Rotation composite = element;
-        for(unsigned i = n; i > 1; --i) {
-          rotations.push_back(composite);
-          composite = element * composite;
-        }
-        const unsigned S = rotations.size();
-        // Generate the S_n axes from the sigma_xy * C_n
-        for(unsigned i = 0; i < S; ++i) {
-          rotations.push_back(sigma_xy * rotations.at(i));
-        }
-        for(auto& rotation : rotations) {
-          elements.emplace_back(
-            make(std::move(rotation))
-          );
-        }
-
-        /* Dnh groups have C2 axes along pi/n increments in the xy plane
-         * and sigma_v planes perpendicular to those C2 axes
-         */
-        const auto rotation = Rotation::Cn(e_z, 2 * n);
-        Eigen::Vector3d c2axis = e_x;
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(make(Rotation::Cn(c2axis, 2)));
-          elements.push_back(
-            make(Reflection(
-              e_z.cross(c2axis)
-            ))
-          );
-          c2axis = rotation.matrix() * c2axis;
-        }
-
-        assert(elements.size() == 4 * n);
-        return elements;
-      }
-
-    case(PointGroup::D2d):
-    case(PointGroup::D3d):
-    case(PointGroup::D4d):
-    case(PointGroup::D5d):
-    case(PointGroup::D6d):
-    case(PointGroup::D7d):
-    case(PointGroup::D8d):
-      {
-        const unsigned n = 2 + underlying(group) - underlying(PointGroup::D2d);
-        addImproperAxisElements(elements, e_z, 2 * n);
-        /* C2 axes */
-        const auto rotationMatrix = Rotation::Cn(e_z, 2 * n).matrix();
-        Eigen::Vector3d c2axis = e_x;
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(make(Rotation::Cn(c2axis, 2)));
-          c2axis = rotationMatrix * c2axis;
-        }
-        /* sigma_ds */
-        Eigen::Vector3d planeNormal = (e_x + rotationMatrix * e_x).normalized().cross(e_z);
-        for(unsigned i = 0; i < n; ++i) {
-          elements.push_back(make(Reflection(planeNormal)));
-          planeNormal = rotationMatrix * planeNormal;
-        }
-        assert(elements.size() == 4 * n);
-        return elements;
-      }
-
-    /* Cubic groups */
-    case(PointGroup::T):
-      {
-        elements.reserve(12);
-        const Eigen::Vector3d axis_2 = properRotationMatrix(e_y, tetrahedronAngle) * e_z;
-        const Eigen::Vector3d axis_3 = Rotation::Cn(e_z, 3).matrix() * axis_2;
-        const Eigen::Vector3d axis_4 = Rotation::Cn(e_z, 3).matrix() * axis_3;
-        addProperAxisElements(elements, e_z, 3);
-        addProperAxisElements(elements, axis_2, 3);
-        addProperAxisElements(elements, axis_3, 3);
-        addProperAxisElements(elements, axis_4, 3);
-        elements.push_back(make(Rotation::Cn((e_z + axis_2).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_z + axis_3).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_z + axis_4).normalized(), 2)));
-        assert(elements.size() == 12);
-        return elements;
-      }
-
-    case(PointGroup::Td):
-      {
-        elements.reserve(24);
-        Eigen::Matrix<double, 3, Eigen::Dynamic> positions(3, 4);
-        positions.col(0) = e_z;
-        positions.col(1) = properRotationMatrix(e_y, tetrahedronAngle) * e_z;
-        positions.col(2) = Rotation::Cn(e_z, 3).matrix() * positions.col(1);
-        positions.col(3) = Rotation::Cn(e_z, 3).matrix() * positions.col(2);
-        // C3 axes
-        addProperAxisElements(elements, e_z, 3);
-        addProperAxisElements(elements, positions.col(1), 3);
-        addProperAxisElements(elements, positions.col(2), 3);
-        addProperAxisElements(elements, positions.col(3), 3);
-        const Eigen::Vector3d axis_12 = (e_z + positions.col(1)).normalized();
-        const Eigen::Vector3d axis_13 = (e_z + positions.col(2)).normalized();
-        const Eigen::Vector3d axis_14 = (e_z + positions.col(3)).normalized();
-        // S4, C2, S4^3
-        addImproperAxisElements(elements, axis_12, 4);
-        addImproperAxisElements(elements, axis_13, 4);
-        addImproperAxisElements(elements, axis_14, 4);
-        // Sigma d
-        for(unsigned i = 0; i < 3; ++i) {
-          for(unsigned j = i + 1; j < 4; ++j) {
-            elements.push_back(
-              make(Reflection(
-                positions.col(i).cross(positions.col(j))
-              ))
-            );
-          }
-        }
-        assert(elements.size() == 24);
-        return elements;
-      }
-    case(PointGroup::Th):
-      {
-        // TODO
-        assert(elements.size() == 24);
-        return elements;
-      }
-
-    case(PointGroup::O):
-      {
-        // TODO
-        assert(elements.size() == 24);
-        return elements;
-      }
-    case(PointGroup::Oh):
-      {
-        elements.push_back(make(inversion));
-        elements.reserve(48);
-        /* 8 C3 and 8 S6 share the linear combinations of three axes */
-        { // +++ <-> ---
-          const Eigen::Vector3d axis_ppp = (  e_x + e_y + e_z).normalized();
-          addProperAxisElements(elements, axis_ppp, 3);
-          elements.push_back(make(Rotation::Sn(axis_ppp, 6)));
-          elements.push_back(make(Rotation::Sn(-axis_ppp, 6)));
-        }
-        { // ++- <-> --+
-          const Eigen::Vector3d axis_ppm = (  e_x + e_y - e_z).normalized();
-          addProperAxisElements(elements, axis_ppm, 3);
-          elements.push_back(make(Rotation::Sn(axis_ppm, 6)));
-          elements.push_back(make(Rotation::Sn(-axis_ppm, 6)));
-        }
-        { // +-+ <-> -+-
-          const Eigen::Vector3d axis_pmp = (  e_x - e_y + e_z).normalized();
-          addProperAxisElements(elements, axis_pmp, 3);
-          elements.push_back(make(Rotation::Sn(axis_pmp, 6)));
-          elements.push_back(make(Rotation::Sn(-axis_pmp, 6)));
-        }
-        { // -++ <-> +--
-          const Eigen::Vector3d axis_mpp = (- e_x + e_y + e_z).normalized();
-          addProperAxisElements(elements, axis_mpp, 3);
-          elements.push_back(make(Rotation::Sn(axis_mpp, 6)));
-          elements.push_back(make(Rotation::Sn(-axis_mpp, 6)));
-        }
-        /* 6 C2 along linear combinations of two axes */
-        elements.push_back(make(Rotation::Cn((e_x + e_y).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x - e_y).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x + e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_x - e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_y + e_z).normalized(), 2)));
-        elements.push_back(make(Rotation::Cn((e_y - e_z).normalized(), 2)));
-        /* 6 C4 and 3 C2 (C4^2) along axes */
-        addProperAxisElements(elements, e_x, 4);
-        addProperAxisElements(elements, e_y, 4);
-        addProperAxisElements(elements, e_z, 4);
-        /* 6 S4 along axes */
-        elements.push_back(make(Rotation::Sn(  e_x, 4)));
-        elements.push_back(make(Rotation::Sn(- e_x, 4)));
-        elements.push_back(make(Rotation::Sn(  e_y, 4)));
-        elements.push_back(make(Rotation::Sn(- e_y, 4)));
-        elements.push_back(make(Rotation::Sn(  e_z, 4)));
-        elements.push_back(make(Rotation::Sn(- e_z, 4)));
-        /* 3 sigma h along combinations of two axes */
-        elements.push_back(make(sigma_xy));
-        elements.push_back(make(sigma_xz));
-        elements.push_back(make(sigma_yz));
-        /* 6 sigma d along linear combinations of three axes */
-        elements.push_back(make(Reflection((e_x + e_y).cross(e_z))));
-        elements.push_back(make(Reflection((e_x - e_y).cross(e_z))));
-        elements.push_back(make(Reflection((e_x + e_z).cross(e_y))));
-        elements.push_back(make(Reflection((e_x - e_z).cross(e_y))));
-        elements.push_back(make(Reflection((e_y + e_z).cross(e_x))));
-        elements.push_back(make(Reflection((e_y - e_z).cross(e_x))));
-        assert(elements.size() == 48);
-        return elements;
-      }
-
-    /* Icosahedral groups */
-    case(PointGroup::I):
-      {
-        // TODO
-        assert(elements.size() == 60);
-        return elements;
-      }
-    case(PointGroup::Ih):
-      {
-        // TODO
-        assert(elements.size() == 120);
-        return elements;
-      }
-
-    case(PointGroup::Cinfv):
-    case(PointGroup::Dinfh):
-      throw std::logic_error("Do not use symmetry elements to analyze linear point groups!");
-
-    default:
-      throw std::logic_error("Used invalid PointGroup value");
-  }
-}
-
-std::map<unsigned, ElementGrouping> npGroupings(
-  const std::vector<std::unique_ptr<SymmetryElement>>& elements
-) {
-  assert(elements.front()->matrix() == elements::Identity().matrix());
-  const unsigned E = elements.size();
-
-  /* There can be multiple groupings of symmetry elements of equal l for
-   * different points in space. For now, we are ASSUMING that a particular
-   * grouping of symmetry elements leads the folded point to lie along the
-   * axis defined by the probe point used here to determine the grouping.
-   *
-   * So we store the point suggested by the element along with its grouping
-   * so we can test this theory.
-   *
-   * TODO mark this resolved after it's been confirmed
-   */
-
-  std::map<unsigned, ElementGrouping> npGroupings;
-
-  for(const auto& elementPtr : elements) {
-    if(auto axisOption = elementPtr->vector()) {
-      PositionCollection mappedPoints(3, E);
-      mappedPoints.col(0) = *axisOption;
-      unsigned np = 1;
-      std::vector<
-        std::vector<unsigned>
-      > groups {
-        {0}
-      };
-
-      for(unsigned i = 1; i < E; ++i) {
-        Eigen::Vector3d mapped = elements.at(i)->matrix() * mappedPoints.col(0);
-        bool found = false;
-        for(unsigned j = 0; j < np; ++j) {
-          if(mappedPoints.col(j).isApprox(mapped, 1e-8)) {
-            found = true;
-            groups.at(j).push_back(i);
-            break;
-          }
-        }
-
-        if(!found) {
-          mappedPoints.col(np) = mapped;
-          ++np;
-          groups.push_back(std::vector<unsigned> {i});
-        }
-      }
-
-      /* If all symmetry operations leave the point in place, this grouping
-       * is very uninteresting because we cannot unfold the point at all.
-       */
-      if(np == 1) {
-        continue;
-      }
-
-      if(npGroupings.count(np) == 0) {
-        ElementGrouping grouping;
-        grouping.probePoint = mappedPoints.col(0);
-        grouping.groups = std::move(groups);
-
-        npGroupings.emplace(
-          np,
-          std::move(grouping)
-        );
-      }
-    }
-  }
-
-  return npGroupings;
-}
-
-} // namespace elements
 
 namespace detail {
 
@@ -762,7 +121,38 @@ PointGroup linear(const PositionCollection& normalizedPositions) {
 
 namespace csm {
 
-double all_symmetry_elements(
+double calculateCSM(
+  const PositionCollection& normalizedPositions,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
+  const std::vector<unsigned>& particles
+) {
+  const unsigned p = particles.size();
+  assert(p == unfoldMatrices.cols() / 3);
+  assert(p == foldMatrices.cols() / 3);
+
+  double value = 0;
+
+  /* Fold points and average */
+  Eigen::Vector3d averagePoint = Eigen::Vector3d::Zero();
+  for(unsigned i = 0; i < p; ++i) {
+    averagePoint += foldMatrices.block<3, 3>(0, 3 * i) * normalizedPositions.col(particles.at(i));
+  }
+  averagePoint /= p;
+
+  /* Unfold points */
+  for(unsigned i = 0; i < p; ++i) {
+    value += (
+      unfoldMatrices.block<3, 3>(0, 3 * i) * averagePoint
+      - normalizedPositions.col(particles.at(i))
+    ).squaredNorm();
+  }
+
+  value *= 100;
+  return value;
+}
+
+double allSymmetryElements(
   const PositionCollection& normalizedPositions,
   const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
   std::vector<unsigned> particleIndices
@@ -781,27 +171,12 @@ double all_symmetry_elements(
   double value = 1000;
 
   do {
-    double permutationCSM = 0;
-
-    /* Fold points and average */
-    Eigen::Vector3d averagePoint;
-    averagePoint.setZero();
-    for(unsigned i = 0; i < P; ++i) {
-      averagePoint += foldMatrices.block<3, 3>(0, 3 * i) * normalizedPositions.col(particleIndices.at(i));
-    }
-    averagePoint /= P;
-
-    /* Unfold points */
-    for(unsigned i = 0; i < P; ++i) {
-      permutationCSM += (
-        unfoldMatrices.block<3, 3>(0, 3 * i) * averagePoint
-        - normalizedPositions.col(particleIndices.at(i))
-      ).squaredNorm();
-    }
-
-    permutationCSM *= 100;
-
-    std::cout << "Permutation: " << temple::stringify(particleIndices) << " has CSM " << permutationCSM << "\n";
+    double permutationCSM = calculateCSM(
+      normalizedPositions,
+      unfoldMatrices,
+      foldMatrices,
+      particleIndices
+    );
 
     value = std::min(value, permutationCSM);
   } while(
@@ -814,13 +189,156 @@ double all_symmetry_elements(
   return value;
 }
 
-double grouped_symmetry_elements(
+double greedyAllSymmetryElements(
+  const PositionCollection& normalizedPositions,
+  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  std::vector<unsigned> particleIndices
+) {
+  const unsigned P = particleIndices.size();
+  const unsigned G = elements.size();
+  assert(P == G);
+
+  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * G);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * G);
+  for(unsigned i = 0; i < G; ++i) {
+    unfoldMatrices.block<3, 3>(0, 3 * i) = elements.at(i)->matrix();
+    foldMatrices.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
+  }
+
+  /* Each search for a better adjacent permutation is O(N^2) worst case
+   * The number of searches for a better adjacent permutation is at least on
+   * the order of O(N), so let's roughly estimate this as O(N^3)
+   */
+  bool foundBetterAdjacentPermutation = false;
+  double currentCSM = calculateCSM(
+    normalizedPositions,
+    unfoldMatrices,
+    foldMatrices,
+    particleIndices
+  );
+  do {
+    foundBetterAdjacentPermutation = false;
+    for(unsigned i = 0; i < G && !foundBetterAdjacentPermutation; ++i) {
+      for(unsigned j = i + 1; j < G; ++j) {
+        std::swap(particleIndices.at(i), particleIndices.at(j));
+
+        double adjacentCSM = calculateCSM(
+          normalizedPositions,
+          unfoldMatrices,
+          foldMatrices,
+          particleIndices
+        );
+        if(adjacentCSM < currentCSM) {
+          currentCSM = adjacentCSM;
+          foundBetterAdjacentPermutation = true;
+          break;
+        }
+
+        std::swap(particleIndices.at(i), particleIndices.at(j));
+      }
+    }
+  } while(foundBetterAdjacentPermutation);
+
+  return currentCSM;
+}
+
+double groupedSymmetryElements(
   const PositionCollection& normalizedPositions,
   std::vector<unsigned> particleIndices,
   const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
   const elements::ElementGrouping& elementGrouping
 ) {
-  double value = 100;
+  /* The number of groups in element grouping must match the number of particles
+   * permutated here
+   */
+  assert(elementGrouping.groups.size() == particleIndices.size());
+  assert(std::is_sorted(std::begin(particleIndices), std::end(particleIndices)));
+
+  const unsigned groupSize = particleIndices.size();
+
+  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * groupSize);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * groupSize);
+  for(unsigned i = 0; i < groupSize; ++i) {
+    unfoldMatrices.block<3, 3>(0, 3 * i) = elements.at(
+      elementGrouping.groups.at(i).front()
+    )->matrix();
+    foldMatrices.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
+  }
+
+  double value = 1000;
+
+  do {
+    double permutationCSM = calculateCSM(
+      normalizedPositions,
+      unfoldMatrices,
+      foldMatrices,
+      particleIndices
+    );
+    value = std::min(value, permutationCSM);
+  } while(
+    std::next_permutation(
+      std::begin(particleIndices),
+      std::end(particleIndices)
+    )
+  );
+
+  return value;
+}
+
+double greedyGroupedSymmetryElements(
+  const PositionCollection& normalizedPositions,
+  std::vector<unsigned> particleIndices,
+  const std::vector<std::unique_ptr<elements::SymmetryElement>>& elements,
+  const elements::ElementGrouping& elementGrouping
+) {
+  /* The number of groups in element grouping must match the number of particles
+   * permutated here
+   */
+  assert(elementGrouping.groups.size() == particleIndices.size());
+  assert(std::is_sorted(std::begin(particleIndices), std::end(particleIndices)));
+
+  const unsigned groupSize = particleIndices.size();
+
+  Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * groupSize);
+  Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * groupSize);
+  for(unsigned i = 0; i < groupSize; ++i) {
+    unfoldMatrices.block<3, 3>(0, 3 * i) = elements.at(
+      elementGrouping.groups.at(i).front()
+    )->matrix();
+    foldMatrices.block<3, 3>(0, 3 * i) = unfoldMatrices.block<3, 3>(0, 3 * i).inverse();
+  }
+
+  bool foundBetterAdjacentPermutation = false;
+  double currentCSM = calculateCSM(
+    normalizedPositions,
+    unfoldMatrices,
+    foldMatrices,
+    particleIndices
+  );
+  do {
+    foundBetterAdjacentPermutation = false;
+    for(unsigned i = 0; i < groupSize && !foundBetterAdjacentPermutation; ++i) {
+      for(unsigned j = i + 1; j < groupSize; ++j) {
+        std::swap(particleIndices.at(i), particleIndices.at(j));
+
+        double adjacentCSM = calculateCSM(
+          normalizedPositions,
+          unfoldMatrices,
+          foldMatrices,
+          particleIndices
+        );
+        if(adjacentCSM < currentCSM) {
+          currentCSM = adjacentCSM;
+          foundBetterAdjacentPermutation = true;
+          break;
+        }
+
+        std::swap(particleIndices.at(i), particleIndices.at(j));
+      }
+    }
+  } while(foundBetterAdjacentPermutation);
+
+  return currentCSM;
 }
 
 double point_group(
@@ -839,9 +357,6 @@ double point_group(
    *   - Minimize CSM for each set according to either G = P or G = l * P
    *     over all permutations
    * - Simplex minimize over point group orientation
-   *
-   * TODO need to avoid multipliers > 1 of group size 1 entirely. It only
-   * ever makes sense to symmetrize a single point to the origin.
    */
 
   // Eigen::Vector3d pointGroupOrientation = Eigen::Vector3d::UnitZ();
@@ -852,18 +367,6 @@ double point_group(
   // Add npGroupings' group sizes to subdivisionGroupSizes
   for(const auto& groupMapPair : npGroups) {
     subdivisionGroupSizes.push_back(groupMapPair.first);
-  }
-
-  /* If there is one point more than any of the possible groupings, then one
-   * point can reasonably be symmetrized to the origin.
-   */
-  if(
-    temple::any_of(
-      subdivisionGroupSizes,
-      [P](const unsigned size) { return size == P + 1; }
-    )
-  ) {
-    subdivisionGroupSizes.push_back(1);
   }
 
   std::sort(
@@ -877,6 +380,16 @@ double point_group(
    */
   if(!diophantine::has_solution(subdivisionGroupSizes, P)) {
     std::cout << "Diophantine specified by " << temple::stringify(subdivisionGroupSizes) << " = " << P << " has no solutions\n";
+
+    if(P > 2 && diophantine::has_solution(subdivisionGroupSizes, P - 1)) {
+      std::cout << "But the diophantine specified by " << temple::stringify(subdivisionGroupSizes) << " = " << (P - 1) << " does! Yet unhandled!\n";
+
+      /* TODO Custom code for P - 1 that isn't just adding 1 to
+       * subdivisionGroupSizes (this is really inefficient compared to solving
+       * the diophantine to (P - 1) and permutating the removed vertex
+       * beforehand)
+       */
+    }
     return 100.0;
   }
 
@@ -885,29 +398,42 @@ double point_group(
    *
    * - If there are two or more elements in subdivisionGroupSizes, we can
    *   enumerate all solutions of the diophantine
-   *   BUT skip those where the coefficient of group size 1 (if present) is greater than 1
-   *   (i.e. it is NOT reasonable to symmetrize more than one point to the
-   *   origin)
    * - If there is only one element in subdivisionGroupSizes, then P is G and
    *   we do not have to subdivide at all -> directly match points to symmetry
    *   elements
    */
 
   if(subdivisionGroupSizes.size() == 1) {
-    // call p = g minimization
-    return all_symmetry_elements(
+    assert(P == G);
+
+    const double greedyResult = greedyAllSymmetryElements(
       normalizedPositions,
       elements,
       temple::iota<unsigned>(P)
     );
+
+    // call p = g minimization
+    const double permutationalResult = allSymmetryElements(
+      normalizedPositions,
+      elements,
+      temple::iota<unsigned>(P)
+    );
+
+    if(std::fabs(greedyResult - permutationalResult) > 1e-10) {
+      std::cout << "Greedy and permutational results differ! greedy: " << greedyResult << ", permutational: " << permutationalResult << "\n";
+    }
+
+    return permutationalResult;
   }
 
   std::vector<unsigned> subdivisionMultipliers;
   std::cout << "group sizes: " << temple::stringify(subdivisionGroupSizes) << "\n";
 
   if(diophantine::first_solution(subdivisionMultipliers, subdivisionGroupSizes, P)) {
+    double value = 1000;
+
     do {
-      std::cout << "multipliers: " << temple::stringify(subdivisionMultipliers) << "\n";
+      std::cout << "diophantine multipliers: " << temple::stringify(subdivisionMultipliers) << "\n";
 
       /* We have a composition of groups to subdivide our points:
        *
@@ -955,6 +481,7 @@ double point_group(
           sameSizeIndexGroups.at(flatGroupMap.at(i)).push_back(i);
         }
 
+        double partitionCSM = 0;
         for(unsigned i = 0; i < numSizeGroups; ++i) {
           const unsigned groupSize = subdivisionGroupSizes.at(i);
           const unsigned multiplier = subdivisionMultipliers.at(i);
@@ -967,7 +494,15 @@ double point_group(
 
           Partitioner partitioner {multiplier, groupSize};
 
+          /* Subpartition csm is minimized over the sub-partitions of
+           * groups of equal size
+           */
+          double subpartitionCSM = 1000;
           do {
+            /* TODO can combine the map and loop into a single loop (less
+             * memory usage).
+             */
+
             // Group the particle indices
             auto particleGroups = temple::map(
               partitioner.partitions(),
@@ -981,11 +516,29 @@ double point_group(
               }
             );
 
+            double groupCSM = 0;
+            for(auto& particleGroup : particleGroups) {
+              const unsigned particleGroupSize = particleGroup.size();
+              groupCSM += groupedSymmetryElements(
+                normalizedPositions,
+                std::move(particleGroup),
+                elements,
+                npGroups.at(particleGroupSize)
+              );
+            }
 
+            std::cout << "Partition group CSM = " << partitionCSM << "\n";
+            subpartitionCSM = std::min(subpartitionCSM, groupCSM);
           } while(partitioner.next_partition());
+
+          partitionCSM += subpartitionCSM;
         }
+
+        value = std::min(value, partitionCSM);
       } while(std::next_permutation(std::begin(flatGroupMap), std::end(flatGroupMap)));
     } while(diophantine::next_solution(subdivisionMultipliers, subdivisionGroupSizes, P));
+
+    return value;
   }
 
   return 100.0;
@@ -1617,23 +1170,13 @@ InertialMoments principalInertialMoments(
   return result;
 }
 
-PointGroup analyze(const PositionCollection& positions) {
-  auto transformed = detail::normalize(positions);
-
-  const unsigned N = transformed.cols();
+Top standardizeTop(Eigen::Ref<PositionCollection> normalizedPositions) {
+  const unsigned N = normalizedPositions.cols();
   assert(N > 1);
 
-  auto moments = principalInertialMoments(transformed);
-
-  for(unsigned i = 0; i < 3; ++i) {
-    std::cout << "Eigenvalue " << i
-      << " has value " << moments.moments(i)
-      << " and principal axis " << moments.axes.col(i).transpose() << "\n";
-  }
+  InertialMoments moments = principalInertialMoments(normalizedPositions);
 
   const unsigned degeneracy = detail::degeneracy(moments.moments);
-
-  std::cout << "Degeneracy degree: " << degeneracy << "\n";
 
   /* We can immediately separate out linear cases: If IA << IB = IC and IA ~ 0,
    * then we very likely have a linear molecule on our hands.
@@ -1641,14 +1184,7 @@ PointGroup analyze(const PositionCollection& positions) {
    * The principal moments and the corresponding axes are ordered ascending.
    */
   if(moments.moments(0) < 0.1 && degeneracy == 2) {
-    /* Do an extra test for collinearity: The rank of the positions matrix is
-     * one for linear molecules.
-     */
-    Eigen::ColPivHouseholderQR<Eigen::MatrixXd> rankDecomposition(transformed);
-    rankDecomposition.setThreshold(1e-3);
-    if(rankDecomposition.rank() <= 1) {
-      return detail::linear(transformed);
-    }
+    return Top::Linear;
   }
 
   auto rotateEverything = [&](const CoordinateSystem& sourceSystem) {
@@ -1657,8 +1193,8 @@ PointGroup analyze(const PositionCollection& positions) {
     auto R = rotationMatrix(sourceSystem, defaultCoordinateSystem);
 
     // Rotate coordinates
-    for(unsigned i = 0; i < transformed.cols(); ++i) {
-      transformed.col(i) = R * transformed.col(i);
+    for(unsigned i = 0; i < normalizedPositions.cols(); ++i) {
+      normalizedPositions.col(i) = R * normalizedPositions.col(i);
     }
 
     // Rotate inertial moment axes
@@ -1667,51 +1203,11 @@ PointGroup analyze(const PositionCollection& positions) {
     }
   };
 
-  auto writeXYZ = [](
-    const std::string& filename,
-    const PositionCollection& coll,
-    const InertialMoments& inertialMoments
-  ) {
-    std::ofstream outfile(filename);
-    const unsigned numPositions = coll.cols();
-    outfile << (numPositions + 6) << "\n\n";
-    outfile << std::fixed << std::setprecision(10);
-    for(unsigned i = 0; i < numPositions; ++i) {
-      outfile << std::left << std::setw(3) << "H";
-      outfile << std::right
-        << std::setw(16) << coll.col(i).x()
-        << std::setw(16) << coll.col(i).y()
-        << std::setw(16) << coll.col(i).z()
-        << "\n";
-    }
-
-    const std::vector<std::string> elements {"F", "Cl", "Br"};
-    for(unsigned i = 0; i < 3; ++i) {
-      outfile << std::left << std::setw(3) << elements[i];
-      outfile << std::right
-        << std::setw(16) << 2 * inertialMoments.axes.col(i).x()
-        << std::setw(16) << 2 * inertialMoments.axes.col(i).y()
-        << std::setw(16) << 2 * inertialMoments.axes.col(i).z()
-        << "\n";
-      outfile << std::left << std::setw(3) << elements[i];
-      outfile << std::right
-        << std::setw(16) << -2 * inertialMoments.axes.col(i).x()
-        << std::setw(16) << -2 * inertialMoments.axes.col(i).y()
-        << std::setw(16) << -2 * inertialMoments.axes.col(i).z()
-        << "\n";
-    }
-    outfile.close();
-  };
-
-  /* TODO
-   * - It's probably not possible to reason about the axes as though they
-   *   already were a right-handed coordinate system. These asserts will
-   *   probably trip for multiple reasons, but the end result is most likely
-   *   just that the coordinate system is exactly inverted (* -1).
-   */
+  if(moments.moments(0) < 0.1 && degeneracy == 2) {
+    return Top::Linear;
+  }
 
   if(degeneracy == 1) {
-    std::cout << "Top is asymmetric. Rotating highest moment of inertia to z, second most to x\n";
     /* The top is asymmetric. Rotate the axis with the
      * highest moment of inertia to coincide with z, and the one with second most
      * to coincide with x.
@@ -1725,13 +1221,15 @@ PointGroup analyze(const PositionCollection& positions) {
       moments.axes.col(2).cross(moments.axes.col(1)) // y = z.cross(x)
     };
     assert(inertialMomentSystem.z.isApprox(moments.axes.col(2), 1e-10));
-    writeXYZ("asymmetric_pre.xyz", transformed, moments);
     rotateEverything(inertialMomentSystem);
-    writeXYZ("asymmetric.xyz", transformed, moments);
     // Make sure rotation went as intended
-    assert(moments.axes.col(2).isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
-    assert(moments.axes.col(1).isApprox(Eigen::Vector3d::UnitX(), 1e-10));
-  } else if(degeneracy == 2) {
+    assert(moments.axes.col(2).cwiseAbs().isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
+    assert(moments.axes.col(1).cwiseAbs().isApprox(Eigen::Vector3d::UnitX(), 1e-10));
+
+    return Top::Asymmetric;
+  }
+
+  if(degeneracy == 2) {
     /* The top is symmetric. The subsets are:
      * - Oblate (disc): IA = IB < IC
      * - Prolate (rugby football): IA < IB = IC
@@ -1744,62 +1242,76 @@ PointGroup analyze(const PositionCollection& positions) {
      * structures. Perhaps we can flowchart point groups here?
      */
     if(std::fabs((moments.moments(2) - moments.moments(1)) / moments.moments(2)) <= 0.05) {
-      std::cout << "Top is prolate. Rotating unique moment of inertia to z, another to x\n";
       // Prolate top. IA is unique
       CoordinateSystem inertialMomentSystem {
         moments.axes.col(1),
         moments.axes.col(2)
       };
-      writeXYZ("prolate_pre.xyz", transformed, moments);
       rotateEverything(inertialMomentSystem);
-      writeXYZ("prolate.xyz", transformed, moments);
-      assert(moments.axes.col(0).isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
-    } else {
-      std::cout << "Top is oblate. Rotating unique moment of inertia to z, another to x\n";
-      // Oblate top. IC is unique
-      CoordinateSystem inertialMomentSystem {
-        moments.axes.col(0),
-        moments.axes.col(1)
-      };
-      writeXYZ("oblate_pre.xyz", transformed, moments);
-      rotateEverything(inertialMomentSystem);
-      writeXYZ("oblate.xyz", transformed, moments);
-      assert(moments.axes.col(2).isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
+      assert(moments.axes.col(0).cwiseAbs().isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
+      return Top::Prolate;
     }
-  } else if(degeneracy == 3) {
-    std::cout << "Top is spherical.\n";
-    /* The top is spherical (IA = IB = IC). This is most likely rare and will
-     * only occur for undistorted structures. As a consequence, we can
-     * flowchart here, because only three point groups have spherical symmetry:
-     * Td, Oh, Ih.
-     *
-     * Note that there is no reason to rotate anything on the basis of the axes
-     * from the inertial moment analysis since any choice of axes gives the
-     * spherical symmetry. We can't use those to rotate the system.
-     *
-     * TODO flowchart between Td, Oh, Ih on the basis of axis searches along
-     * particle positions.
-     *
-     * I think there is something to be gained by looking for C3 axes to
-     * distinguish Td and Oh.
-     *
-     * OLD COMMENT I DO NOT UNDERSTAND ANYMORE: Look for C3 axes parallel to
-     * positions, then rotate the coordinates so that these axes coincide with
-     * x, ±y, ±z.
-     *
-     * TODO consider rotating an arbitrary position to +z instead (good for Td
-     * and Oh octahedral, less so for Oh cubic and Ih, which should be less
-     * common)
-     */
-    writeXYZ("spherical.xyz", transformed, moments);
 
-    //  const double tetrahedral_csm = csm::point_group(transformed, PointGroup::Td);
-    //  const double octahedral_csm = csm::point_group(transformed, PointGroup::Oh);
-    //  // TODO icosahedral is also a spherical top!
-    //  return tetrahedral_csm < octahedral_csm ? PointGroup::Td : PointGroup::Oh;
+    // Oblate top. IC is unique
+    CoordinateSystem inertialMomentSystem {
+      moments.axes.col(0),
+      moments.axes.col(1)
+    };
+    rotateEverything(inertialMomentSystem);
+    assert(moments.axes.col(2).cwiseAbs().isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
+    return Top::Oblate;
   }
 
-  /* Key insights for flowcharting, if you choose to go that way.
+  assert(degeneracy == 3);
+  /* The top is spherical (IA = IB = IC).
+   *
+   * Note that there is no reason to rotate anything on the basis of the axes
+   * from the inertial moment analysis since any choice of axes gives the
+   * spherical symmetry. We can't use those to rotate the system.
+   *
+   * Rotate an arbitrary position to +z instead (good for Td
+   * and Oh octahedral, less so for Oh cubic and Ih, which should be less
+   * common)
+   */
+  unsigned selectedIndex = 0;
+  for(; selectedIndex < N; ++selectedIndex) {
+    /* As long as the position isn't close to the centroid and it's not exactly
+     * the -z vector, we can rotate it
+     */
+    if(
+      normalizedPositions.col(selectedIndex).norm() > 0.2
+      && !normalizedPositions.col(selectedIndex).normalized().isApprox(
+        -Eigen::Vector3d::UnitZ(),
+        1e-10
+      )
+    ) {
+      break;
+    }
+  }
+  assert(selectedIndex != N);
+
+  // Determine axis of rotation as sum of z and position coordinate
+  const Eigen::Vector3d rotationAxis = (
+    normalizedPositions.col(selectedIndex).normalized()
+    + Eigen::Vector3d::UnitZ()
+  ).normalized();
+  const Eigen::Matrix3d rotationMatrix = Eigen::AngleAxisd(M_PI, rotationAxis).toRotationMatrix();
+
+  // Rotate all coordinates
+  for(unsigned i = 0; i < N; ++i) {
+    normalizedPositions.col(i) = rotationMatrix * normalizedPositions.col(i);
+  }
+  // Check that everything went as planned
+  assert(normalizedPositions.col(selectedIndex).normalized().cwiseAbs().isApprox(Eigen::Vector3d::UnitZ(), 1e-10));
+
+  return Top::Spherical;
+}
+
+PointGroup flowchart(
+  const PositionCollection& normalizedPositions,
+  const Top top
+) {
+  /* Key insights for axis-based flowcharting, if you choose to go that way.
    *
    * An element of symmetry must be parallel or perpendicular to the
    * combination of an adequate number of vectors.
@@ -1814,48 +1326,74 @@ PointGroup analyze(const PositionCollection& positions) {
    *   i + j + k (i != j != k) if n > 4
    */
 
-  /* Find a main axis and rotate it to z */
-  /* Rotate secondary axis to x */
-  for(unsigned axisIndex = 0; axisIndex < 3; ++axisIndex) {
-    std::cout << "At axis " << axisIndex
-      << " along " << moments.axes.col(axisIndex).transpose()
-      << ", inertial moment: " << moments.moments(axisIndex)
-      << "\n";
-    for(unsigned n = 2; n <= N; ++n) {
-      const double axis_csm = csm::cn::fixedAxis(
-        transformed,
-        n,
-        moments.axes.col(axisIndex)
-      );
+  if(top == Top::Linear) {
+    return detail::linear(normalizedPositions);
 
-      const auto csm_greedy = csm::cn::fixedAxisGreedy(
-        transformed,
-        n,
-        moments.axes.col(axisIndex)
-      );
-
-      if(std::fabs(axis_csm - csm_greedy.csm) > 0.1) {
-        std::cout << "C" << n << " reg and greedy differ strongly: " << axis_csm  << " and " << csm_greedy.csm << "\n";
-      }
-
-      std::cout << "S(C" << n << ") = " << csm_greedy.csm << "\n";
-
-      if(axis_csm < 0.1) {
-        // Cn symmetry csm
-        const PointGroup cn_point_group = static_cast<PointGroup>(
-          elements::underlying(PointGroup::C2) + n - 2
-        );
-        double symm_csm = csm::point_group(
-          transformed,
-          cn_point_group
-        );
-        std::cout << "C" << n << " point group symmetry csm: " << symm_csm << "\n";
-      }
-    }
+    /* Do an extra test for collinearity: The rank of the positions matrix is
+     * one for linear molecules.
+     */
+    // Eigen::ColPivHouseholderQR<Eigen::MatrixXd> rankDecomposition(normalizedPositions);
+    // rankDecomposition.setThreshold(1e-3);
+    // if(rankDecomposition.rank() <= 1) {
+    //   // Confirmed linear
+    // }
+  } else if(top == Top::Spherical) {
+    /* Getting a spherical top is rare and will only occur for nearly
+     * undistorted structures.  As a consequence, we can flowchart here. Only
+     * three point groups have spherical symmetry: Td, Oh, Ih.
+     *
+     * TODO Maybe a faster way to flowchart is to search for axes along
+     * particle positions?
+     */
+    const double tetrahedralCSM = csm::point_group(normalizedPositions, PointGroup::Td);
+    const double octahedralCSM = csm::point_group(normalizedPositions, PointGroup::Oh);
+    // TODO icosahedral is also a spherical top!
+    return tetrahedralCSM < octahedralCSM ? PointGroup::Td : PointGroup::Oh;
   }
 
+  std::cout << "WARNING: Unimplemented flowchart result\n";
   return PointGroup::C1;
 }
+
+  /* Find a main axis and rotate it to z */
+  /* Rotate secondary axis to x */
+  // for(unsigned axisIndex = 0; axisIndex < 3; ++axisIndex) {
+  //   std::cout << "At axis " << axisIndex
+  //     << " along " << moments.axes.col(axisIndex).transpose()
+  //     << ", inertial moment: " << moments.moments(axisIndex)
+  //     << "\n";
+  //   for(unsigned n = 2; n <= N; ++n) {
+  //     const double axis_csm = csm::cn::fixedAxis(
+  //       transformed,
+  //       n,
+  //       moments.axes.col(axisIndex)
+  //     );
+
+  //     const auto csm_greedy = csm::cn::fixedAxisGreedy(
+  //       transformed,
+  //       n,
+  //       moments.axes.col(axisIndex)
+  //     );
+
+  //     if(std::fabs(axis_csm - csm_greedy.csm) > 0.1) {
+  //       std::cout << "C" << n << " reg and greedy differ strongly: " << axis_csm  << " and " << csm_greedy.csm << "\n";
+  //     }
+
+  //     std::cout << "S(C" << n << ") = " << csm_greedy.csm << "\n";
+
+  //     if(axis_csm < 0.1) {
+  //       // Cn symmetry csm
+  //       const PointGroup cn_point_group = static_cast<PointGroup>(
+  //         elements::underlying(PointGroup::C2) + n - 2
+  //       );
+  //       double symm_csm = csm::point_group(
+  //         transformed,
+  //         cn_point_group
+  //       );
+  //       std::cout << "C" << n << " point group symmetry csm: " << symm_csm << "\n";
+  //     }
+  //   }
+  // }
 
 } // namespace Symmetry
 } // namespace Scine

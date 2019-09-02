@@ -28,6 +28,14 @@ CoordinateSystem::CoordinateSystem(const Eigen::Vector3d& a, const Eigen::Vector
   assert(std::fabs(detail::angle(a, b) - M_PI / 2) < 1e-4);
 }
 
+CoordinateSystem CoordinateSystem::random() {
+  const Eigen::Vector3d a = Eigen::Vector3d::Random().normalized();
+  return {
+    a,
+    Eigen::Vector3d::Random().cross(a).normalized()
+  };
+}
+
 bool CoordinateSystem::isRightHanded() const {
   return x.normalized().cross(y.normalized()).isApprox(z.normalized(), 1e-10);
 }

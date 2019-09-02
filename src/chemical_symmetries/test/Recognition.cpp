@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(Recognition) {
     {Name::SquareAntiPrismatic, PointGroup::D4d}
   };
 
-  analyze(addOrigin(symmetryData().at(Name::PentagonalPyramidal).coordinates));
+  // analyze(addOrigin(symmetryData().at(Name::PentagonalPyramidal).coordinates));
 
   //for(const Symmetry::Name symmetry : allNames) {
   //  std::cout << "Analyzing " << name(symmetry) << ":\n";
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(PaperCSMExamples) {
 }
 
 BOOST_AUTO_TEST_CASE(C4PointGroupTrial) {
-  const double pointGroupCSM = csm::all_symmetry_elements(
+  const double pointGroupCSM = csm::allSymmetryElements(
     detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
     elements::symmetryElements(PointGroup::C4),
     temple::iota<unsigned>(4)
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(C4PointGroupTrial) {
   for(unsigned i = 0; i < positions.cols(); ++i) {
     positions.col(i) = rotation * positions.col(i);
   }
-  const double rotatedCSM = csm::all_symmetry_elements(
+  const double rotatedCSM = csm::allSymmetryElements(
     detail::normalize(positions),
     elements::symmetryElements(PointGroup::C4),
     temple::iota<unsigned>(4)
@@ -189,32 +189,80 @@ BOOST_AUTO_TEST_CASE(C4PointGroupTrial) {
   /* For purely axial groups, the particular position of x and y coordinates
    * does not matter! Will need to retest this for D4 once those become viable
    * to test, because I think this doesn't yet conclusively prove only the
-   * orientation of the z matrix needs to be optimized for point group CSMs.
+   * orientation of the z matrix needs to be optimized for point group CSMs. In
+   * D4, it might be necessary to get the right orientation for the orthogonal C2
+   * axes...
    *
-   * Instead, it might be necessary to optimize over three euler angles.
+   * In consequence, it would be necessary to optimize over the three euler angles.
+   */
+
+  const double D4CSM = csm::point_group(
+    detail::normalize(symmetryData().at(Name::SquarePlanar).coordinates),
+    PointGroup::D4
+  );
+
+  BOOST_CHECK_MESSAGE(
+    0 < D4CSM && D4CSM < 1e-10,
+    "D4 CSM on square planar coordinates is not zero, but " << D4CSM
+  );
+
+  const double rotatedD4CSM = csm::point_group(
+    detail::normalize(positions),
+    PointGroup::D4
+  );
+
+  BOOST_CHECK_MESSAGE(
+    0 < rotatedD4CSM && rotatedD4CSM < 1e-10,
+    "D4 CSM on z-rotated square planar coordinates is not zero, but " << rotatedD4CSM
+  );
+
+  /* I'm still not convinced. The symmetry element grouping puts rotations
+   * first in the groups, and those elements are selected for folding and
+   * unfolding, so this doesn't prove anything regarding relative orientation
+   * just yet.
    */
 }
 
 BOOST_AUTO_TEST_CASE(InertialStandardization) {
-  const std::vector<Name> symmetryNames {
-    Name::Bent, // Asymmetric top
-    Name::TrigonalBiPyramidal, // prolate symmetric top
-    Name::PentagonalBiPyramidal, // oblate symmetric top
-    Name::Octahedral
+  const std::vector<
+    std::pair<Name, Top>
+  > tops {
+    {Name::Linear, Top::Linear},
+    {Name::Bent, Top::Asymmetric},
+    {Name::Seesaw, Top::Asymmetric},
+    {Name::TrigonalBiPyramidal, Top::Prolate},
+    {Name::PentagonalBiPyramidal, Top::Oblate},
+    {Name::SquarePlanar, Top::Oblate},
+    {Name::Octahedral, Top::Spherical},
+    {Name::Tetrahedral, Top::Spherical}
   };
 
-  for(const Name name : symmetryNames) {
-    auto positions = addOrigin(symmetryData().at(name).coordinates);
+  const std::vector<std::string> topNames {
+    "Linear",
+    "Asymmetric",
+    "Prolate",
+    "Oblate",
+    "Spherical"
+  };
+
+  for(const auto nameTopPair : tops) {
+    auto positions = addOrigin(symmetryData().at(nameTopPair.first).coordinates);
 
     // Apply a random coordinate transformation
-    Eigen::Vector3d x = Eigen::Vector3d::Random().normalized();
-    Eigen::Vector3d y = Eigen::Vector3d::Random().cross(x).normalized();
-    auto R = rotationMatrix(CoordinateSystem {}, CoordinateSystem {x, y});
+    const Eigen::Matrix3d R = rotationMatrix(CoordinateSystem {}, CoordinateSystem::random());
     for(unsigned i = 0; i < positions.cols(); ++i) {
       positions.col(i) = R * positions.col(i);
     }
 
     // Analyze it
-    analyze(positions);
+    auto normalizedPositions = detail::normalize(positions);
+    Top top = standardizeTop(normalizedPositions);
+    BOOST_CHECK_MESSAGE(
+      top == nameTopPair.second,
+      "Top standardization failed. Expected "
+      << topNames.at(static_cast<unsigned>(nameTopPair.second))
+      << " for symmetry " << Symmetry::name(nameTopPair.first)
+      << ", got " << topNames.at(static_cast<unsigned>(top)) << " instead."
+    );
   }
 }
