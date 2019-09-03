@@ -18,6 +18,10 @@ Partitioner::Partitioner(const unsigned s, const unsigned e) : S(s), E(e), mappi
 }
 
 bool Partitioner::next_partition() {
+  if(mapping.size() == 1) {
+    return false;
+  }
+
   assert(mapping.size() > 1);
   assert(mapping.front() == 0);
   const unsigned N = S * E;
@@ -36,7 +40,7 @@ bool Partitioner::next_partition() {
    * second position. The first position is not free to choose, it must be 0.
    */
   bool incremented = false;
-  for(const auto first = std::begin(mapping) - 1; it != first; --it) {
+  for(const auto first = std::begin(mapping); it != first; --it) {
     // Decrement the count at this position
     assert(*it < S);
     --counts[*it];

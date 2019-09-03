@@ -12,7 +12,7 @@ using namespace Symmetry;
 
 BOOST_AUTO_TEST_CASE(Partitions) {
   for(unsigned i = 1; i < 4; ++i) {
-    for(unsigned j = 2; j < 4; ++j) {
+    for(unsigned j = 1; j < 4; ++j) {
       Partitioner partitioner {i, j};
       do {
         BOOST_CHECK(Partitioner::isOrderedMapping(partitioner.map()));
@@ -30,7 +30,9 @@ BOOST_AUTO_TEST_CASE(Partitions) {
     return partitions;
   };
 
+  BOOST_CHECK_EQUAL(countPartitions(1, 1), 1);
   BOOST_CHECK_EQUAL(countPartitions(1, 2), 1);
+  BOOST_CHECK_EQUAL(countPartitions(2, 1), 1);
   BOOST_CHECK_EQUAL(countPartitions(2, 2), 3);
   BOOST_CHECK_EQUAL(countPartitions(2, 3), 10);
 }
