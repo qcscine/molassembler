@@ -633,13 +633,6 @@ std::unordered_map<unsigned, ElementGrouping> npGroupings(
         }
       }
 
-      /* If all symmetry operations leave the point in place, this grouping
-       * is very uninteresting because we cannot unfold the point at all.
-       */
-      if(np == 1) {
-        continue;
-      }
-
       if(npGroupings.count(np) == 0) {
         ElementGrouping grouping;
         grouping.probePoint = mappedPoints.col(0);

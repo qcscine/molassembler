@@ -29,6 +29,12 @@
  * - Perf change if i-j loop break in greedy variants to permutational
  *   calculations is a continue instead (both break and continue are viable as
  *   long as the swap-back is skipped)
+ * - Greedy variants are close but not quite there. Perhaps 2x or start from
+ *   random permutation works better? Maybe it's also not worth it in the
+ *   diophantine functions, only in the all elements permutation. Time to
+ *   benchmark, I think.
+ * - Allowing npGroupings for l = G / np = 1 has tanked performance heavily
+ *   Maybe need to be smarter...
  */
 
 namespace Scine {
@@ -130,13 +136,11 @@ struct IdentityMap {
   }
 };
 
-template<typename MapType = IdentityMap>
 double calculateCSM(
   const PositionCollection& normalizedPositions,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
   const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
-  const std::vector<unsigned>& particles,
-  MapType&& elementMap = MapType {}
+  const std::vector<unsigned>& particles
 ) {
   const unsigned p = particles.size();
 
@@ -145,21 +149,60 @@ double calculateCSM(
   /* Fold points and average */
   Eigen::Vector3d averagePoint = Eigen::Vector3d::Zero();
   for(unsigned i = 0; i < p; ++i) {
-    averagePoint += foldMatrices.block<3, 3>(0, 3 * elementMap.at(i)) * normalizedPositions.col(particles.at(i));
+    averagePoint += foldMatrices.block<3, 3>(0, 3 * i) * normalizedPositions.col(particles.at(i));
   }
   averagePoint /= p;
 
   /* Unfold points */
   for(unsigned i = 0; i < p; ++i) {
     value += (
-      unfoldMatrices.block<3, 3>(0, 3 * elementMap.at(i)) * averagePoint
+      unfoldMatrices.block<3, 3>(0, 3 * i) * averagePoint
       - normalizedPositions.col(particles.at(i))
     ).squaredNorm();
   }
 
-  value *= 100;
+  value *= 100.0 / p;
   return value;
 }
+
+double calculateCSM(
+  const PositionCollection& normalizedPositions,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& unfoldMatrices,
+  const Eigen::Matrix<double, 3, Eigen::Dynamic>& foldMatrices,
+  const std::vector<unsigned>& particles,
+  const elements::ElementGrouping& elementGrouping
+) {
+  const unsigned p = particles.size();
+  const unsigned l = elementGrouping.groups.front().size();
+  assert(p * l == unfoldMatrices.cols() / 3);
+
+  double value = 0;
+
+  /* Fold points and average */
+  Eigen::Vector3d averagePoint = Eigen::Vector3d::Zero();
+  for(unsigned i = 0; i < p; ++i) {
+    const auto& elements = elementGrouping.groups.at(i);
+    for(unsigned j = 0; j < l; ++j) {
+      averagePoint += foldMatrices.block<3, 3>(0, 3 * elements.at(j)) * normalizedPositions.col(particles.at(i));
+    }
+  }
+  averagePoint /= (p * l);
+
+  /* Unfold points */
+  for(unsigned i = 0; i < p; ++i) {
+    const auto& elements = elementGrouping.groups.at(i);
+    for(unsigned j = 0; j < l; ++j) {
+      value += (
+        unfoldMatrices.block<3, 3>(0, 3 * elements.at(j)) * averagePoint
+        - normalizedPositions.col(particles.at(i))
+      ).squaredNorm();
+    }
+  }
+
+  value *= 100.0 / (p * l);
+  return value;
+}
+
 
 double allSymmetryElements(
   const PositionCollection& normalizedPositions,
@@ -228,7 +271,7 @@ double greedyAllSymmetryElements(
         if(adjacentCSM < currentCSM) {
           currentCSM = adjacentCSM;
           foundBetterAdjacentPermutation = true;
-          break;
+          continue;
         }
 
         std::swap(particleIndices.at(i), particleIndices.at(j));
@@ -252,16 +295,6 @@ double groupedSymmetryElements(
   assert(elementGrouping.groups.size() == particleIndices.size());
   assert(std::is_sorted(std::begin(particleIndices), std::end(particleIndices)));
 
-  const unsigned groupSize = particleIndices.size();
-
-  /* Create an element index mapping from index of particle in particle indices
-   * matching the elementGrouping parameter
-   */
-  std::unordered_map<unsigned, unsigned> elementMap;
-  for(unsigned i = 0; i < groupSize; ++i) {
-    elementMap.emplace(i, elementGrouping.groups.at(i).front());
-  }
-
   double value = 1000;
 
   do {
@@ -270,7 +303,7 @@ double groupedSymmetryElements(
       unfoldMatrices,
       foldMatrices,
       particleIndices,
-      elementMap
+      elementGrouping
     );
     value = std::min(value, permutationCSM);
   } while(
@@ -298,21 +331,13 @@ double greedyGroupedSymmetryElements(
 
   const unsigned groupSize = particleIndices.size();
 
-  /* Create an element index mapping from index of particle in particle indices
-   * matching the elementGrouping parameter
-   */
-  std::unordered_map<unsigned, unsigned> elementMap;
-  for(unsigned i = 0; i < groupSize; ++i) {
-    elementMap.emplace(i, elementGrouping.groups.at(i).front());
-  }
-
   bool foundBetterAdjacentPermutation = false;
   double currentCSM = calculateCSM(
     normalizedPositions,
     unfoldMatrices,
     foldMatrices,
     particleIndices,
-    elementMap
+    elementGrouping
   );
   do {
     foundBetterAdjacentPermutation = false;
@@ -325,12 +350,12 @@ double greedyGroupedSymmetryElements(
           unfoldMatrices,
           foldMatrices,
           particleIndices,
-          elementMap
+          elementGrouping
         );
         if(adjacentCSM < currentCSM) {
           currentCSM = adjacentCSM;
           foundBetterAdjacentPermutation = true;
-          break;
+          continue;
         }
 
         std::swap(particleIndices.at(i), particleIndices.at(j));
@@ -407,26 +432,12 @@ struct OrientationCSMFunctor {
     const std::vector<unsigned>& particleIndices
   ) const {
     assert(particleIndices.size() == static_cast<decltype(particleIndices.size())>(foldMatrices.cols()) / 3);
-    const double greedyResult = greedyAllSymmetryElements(
+    return allSymmetryElements(
       positions,
       unfoldMatrices,
       foldMatrices,
       particleIndices
     );
-
-#ifndef NDEBUG
-    const double permutationalResult = allSymmetryElements(
-      positions,
-      unfoldMatrices,
-      foldMatrices,
-      particleIndices
-    );
-    if(std::fabs(greedyResult - permutationalResult) > 1e-10) {
-      std::cout << "Greedy and permutational results differ! greedy: "
-        << greedyResult << ", permutational: " << permutationalResult << "\n";
-    }
-#endif
-    return greedyResult;
   }
 
   double diophantine_csm(
@@ -520,32 +531,13 @@ struct OrientationCSMFunctor {
                 }
               );
 
-#ifndef NDEBUG
-              const double permutationalGroupCSM = groupedSymmetryElements(
+              subpartitionCSM += groupedSymmetryElements(
                 positions,
                 partitionParticles,
                 unfoldMatrices,
                 foldMatrices,
                 npGroup
               );
-#endif
-
-              const double groupCSM = greedyGroupedSymmetryElements(
-                positions,
-                std::move(partitionParticles),
-                unfoldMatrices,
-                foldMatrices,
-                npGroup
-              );
-
-#ifndef NDEBUG
-              if(std::fabs(permutationalGroupCSM - groupCSM) > 1e-10) {
-                std::cout << "Greedy and permutational results differ! greedy: "
-                  << groupCSM << ", permutational: " << permutationalGroupCSM << "\n";
-              }
-#endif
-
-              subpartitionCSM += groupCSM;
             }
             bestSubpartitionCSM = std::min(bestSubpartitionCSM, subpartitionCSM);
           } while(partitioner.next_partition());

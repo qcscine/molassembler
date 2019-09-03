@@ -37,6 +37,13 @@ PositionCollection addOrigin(const PositionCollection& vs) {
   return positions;
 }
 
+void distort(Eigen::Ref<PositionCollection> positions, const double distortionNorm = 0.01) {
+  const unsigned N = positions.cols();
+  for(unsigned i = 0; i < N; ++i) {
+    positions.col(i) += distortionNorm * Eigen::Vector3d::Random().normalized();
+  }
+}
+
 const std::vector<std::string>& pointGroupStrings() {
   static const std::vector<std::string> strings {
     "C1", "Ci", "Cs",
@@ -86,9 +93,9 @@ BOOST_AUTO_TEST_CASE(Recognition) {
   };
 
   for(const auto& nameGroupPair : expected) {
-    auto normalized = detail::normalize(
-      addOrigin(symmetryData().at(nameGroupPair.first).coordinates)
-    );
+    auto positions = addOrigin(symmetryData().at(nameGroupPair.first).coordinates);
+    distort(positions);
+    auto normalized = detail::normalize(positions);
 
     // Add a random coordinate transformation
     const Eigen::Matrix3d rot = rotationMatrix(CoordinateSystem {}, CoordinateSystem::random());
@@ -116,6 +123,13 @@ BOOST_AUTO_TEST_CASE(Recognition) {
         normalized,
         nameGroupPair.second
       ).value_or(1000);
+      BOOST_CHECK_MESSAGE(
+        pgCSM != 1000,
+        "Could not calculate "
+        << pointGroupStrings().at(underlying(nameGroupPair.second))
+        << " CSM for " << Symmetry::name(nameGroupPair.first)
+      );
+
       std::cout << Symmetry::name(nameGroupPair.first)
         << " top is " << topNames.at(underlying(top)) << ", "
         << pointGroupStrings().at(underlying(nameGroupPair.second))
