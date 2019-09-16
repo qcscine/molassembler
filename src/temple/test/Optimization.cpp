@@ -7,6 +7,7 @@
 
 #include "temple/Optimization/LBFGS.h"
 #include "temple/Optimization/NelderMead.h"
+#include "temple/Optimization/SO3NelderMead.h"
 #include "temple/Optimization/TrustRegion.h"
 
 template<typename FloatType>
@@ -289,5 +290,60 @@ BOOST_AUTO_TEST_CASE(NelderMead) {
     "Nelder-Mead does not find minimization of Himmelblau function, value is "
     << optimizationResult.value << " after " << optimizationResult.iterations
     << " iterations. Simplex vertices are: " << simplexVertices
+  );
+}
+
+BOOST_AUTO_TEST_CASE(SO3NelderMead) {
+  struct EigenValueDecomposition {
+    static inline double square(double x) noexcept {
+      return x * x;
+    }
+
+    double operator() (const Eigen::Matrix3d& rotation) const {
+      Eigen::Matrix3d X;
+      X <<  5,  2,  1,
+            2,  7,  3,
+            1,  3, 10;
+      Eigen::Matrix3d partiallyDiagonal = rotation * X * rotation.transpose();
+      double offDiagonalSquares = 0;
+      for(unsigned i = 0; i < 2; ++i) {
+        for(unsigned j = i + 1; j < 3; ++j) {
+          offDiagonalSquares += square(partiallyDiagonal(i, j)) + square(partiallyDiagonal(j, i));
+        }
+      }
+      return offDiagonalSquares;
+    }
+  };
+
+  struct NelderMeadChecker {
+    bool shouldContinue(unsigned iteration, double lowestValue, double stddev) {
+      //std::cout << "Iteration " << iteration << ": " << lowestValue << " +- " << stddev << "\n";
+      return iteration < 1000 && lowestValue >= 1e-5 && stddev > 1e-7;
+    }
+  };
+
+  const unsigned maxAttempts = 3;
+  using OptimizerType = temple::SO3NelderMead<>;
+
+  bool pass = false;
+  OptimizerType::OptimizationReturnType result;
+  for(unsigned i = 0; i < maxAttempts; ++i) {
+    auto simplexVertices = OptimizerType::randomParameters();
+    result = temple::SO3NelderMead<>::minimize(
+      simplexVertices,
+      EigenValueDecomposition {},
+      NelderMeadChecker {}
+    );
+    if(std::fabs(result.value) < 1e-2) {
+      pass = true;
+      break;
+    }
+  }
+
+  BOOST_CHECK_MESSAGE(
+    pass,
+    "SO(3) Nelder-Mead does not find minimization of EigenValueDecomposition problem in three attempts, value is "
+    << result.value << " after " << result.iterations
+    << " iterations."
   );
 }

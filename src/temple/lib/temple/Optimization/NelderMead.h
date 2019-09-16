@@ -1,6 +1,7 @@
 /*!@file
  * @copyright ETH Zurich, Laboratory for Physical Chemistry, Reiher Group.
  *   See LICENSE.txt
+ * @brief Nelder-Mead in Euclidean space
  */
 
 #ifndef INCLUDE_TEMPLE_OPTIMIZATION_NELDER_MEAD_H
@@ -122,27 +123,36 @@ struct NelderMead {
           /* Shrink */
           const unsigned bestColumn = values.front().column;
           const auto& bestVertex = vertices.col(bestColumn);
-          for(unsigned i = 0; i < bestColumn; ++i) {
-            vertices.col(i) = bestVertex + sigma * (vertices.col(i) - bestVertex);
+
+          // Shrink all points besides the best one and recalculate function values
+          for(unsigned i = 1; i < N + 1; ++i) {
+            auto& value = values.at(i);
+            auto vertex = vertices.col(value.column);
+            vertex = bestVertex + sigma * (vertex - bestVertex);
+            value.value = function(vertex);
           }
-          for(unsigned i = bestColumn + 1; i <= N; ++i) {
-            vertices.col(i) = bestVertex + sigma * (vertices.col(i) - bestVertex);
-          }
+          temple::inplace::sort(values);
         }
       }
 
       // Calculate standard deviation of values
-      FloatType sum = 0;
-      for(const auto& p : values) {
-        sum += p.value;
-      }
-      const FloatType average = sum / (N + 1);
-      standardDeviation = 0;
-      for(const auto& p : values) {
-        const FloatType diff = p.value - average;
-        standardDeviation += diff * diff;
-      }
-      standardDeviation = std::sqrt(standardDeviation / (N + 1));
+      const FloatType average = temple::accumulate(
+        values,
+        FloatType {0},
+        [](const FloatType carry, const IndexValuePair& pair) -> FloatType {
+          return carry + pair.value;
+        }
+      ) / (N + 1);
+      standardDeviation = std::sqrt(
+        temple::accumulate(
+          values,
+          FloatType {0},
+          [average](const FloatType carry, const IndexValuePair& pair) -> FloatType {
+            const FloatType diff = pair.value - average;
+            return carry + diff * diff;
+          }
+        ) / (N + 1)
+      );
       ++iteration;
     } while(check.shouldContinue(iteration, values.front().value, standardDeviation));
 
