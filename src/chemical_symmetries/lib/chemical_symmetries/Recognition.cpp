@@ -24,17 +24,7 @@
 #include <random>
 
 /* TODO
- * - standardizeTop needs to orient asymmetric tops along z with the highest
- *   order cn axis found
- * - Perf change if i-j loop break in greedy variants to permutational
- *   calculations is a continue instead (both break and continue are viable as
- *   long as the swap-back is skipped)
- * - Greedy variants are close but not quite there. Perhaps 2x or start from
- *   random permutation works better? Maybe it's also not worth it in the
- *   diophantine functions, only in the all elements permutation. Time to
- *   benchmark, I think.
- * - Allowing npGroupings for l = G / np = 1 has tanked performance heavily
- *   Maybe need to be smarter...
+ * - Correctness
  */
 
 namespace Scine {
@@ -906,8 +896,9 @@ boost::optional<double> pointGroup(
 
 double element(
   const PositionCollection& normalizedPositions,
-  elements::Rotation rotation
+  const elements::Rotation& rotation
 ) {
+  assert(rotation.power == 1);
   assert(std::fabs(rotation.axis.norm() - 1) < 1e-10);
   assert(rotation.n >= 2);
   const unsigned P = normalizedPositions.cols();
@@ -934,10 +925,13 @@ double element(
   /* Precalculate fold and unfold matrices */
   Eigen::Matrix<double, 3, Eigen::Dynamic> foldMatrices(3, 3 * (rotation.n - 1));
   Eigen::Matrix<double, 3, Eigen::Dynamic> unfoldMatrices(3, 3 * (rotation.n - 1));
+  auto cumulativeRotation = rotation;
   for(unsigned i = 0; i < rotation.n - 1; ++i) {
-    rotation.power = (i + 1);
-    foldMatrices.block<3, 3>(0, 3 * i) = rotation.matrix();
+    foldMatrices.block<3, 3>(0, 3 * i) = cumulativeRotation.matrix();
     unfoldMatrices.block<3, 3>(0, 3 * i) = foldMatrices.block<3, 3>(0, 3 * i).inverse();
+
+    ++cumulativeRotation.power;
+    cumulativeRotation.reflect xor_eq rotation.reflect;
   }
 
   auto calculateBestPermutationCSM = [&](std::vector<unsigned> particlePermutation) -> double {

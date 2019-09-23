@@ -354,6 +354,32 @@ BOOST_AUTO_TEST_CASE(FixedCnAxis) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(AlleneS4FixedAxis) {
+  PositionCollection allenePositions(3, 7);
+  allenePositions << 0.0, 0.0, 0.0, 0.0, 0.0, 0.928334, -0.928334,
+                     0.0, 0.0, 0.0, 0.928334, -0.928334, 0.0, 0.0,
+                     0.0, 1.3102, -1.3102, 1.866201, 1.866201, -1.866201, -1.866201;
+
+  auto normalizedPositions = detail::normalize(allenePositions);
+  const Top top = standardizeTop(normalizedPositions);
+  BOOST_CHECK_MESSAGE(
+    top == Top::Prolate,
+    "Top isn't prolate, but " << topNames().at(underlying(top))
+  );
+
+  const double S4CSM = csm::element(normalizedPositions, elements::Rotation::Sn(Eigen::Vector3d::UnitZ(), 4));
+  BOOST_CHECK_MESSAGE(
+    S4CSM < 0.1,
+    "CSM(S4) = " << S4CSM << " of allene is over recognition threshold (0.1)"
+  );
+
+  const double D4dCSM = csm::pointGroup(normalizedPositions, PointGroup::D4d).value_or(100);
+  BOOST_CHECK_MESSAGE(
+    D4dCSM < 0.1,
+    "CSM(D4d) = " << D4dCSM << " of allene is over recognition threshold (0.1)"
+  );
+}
+
 BOOST_AUTO_TEST_CASE(AsymmetricTopStandardization) {
   auto coordinates = addOrigin(symmetryData().at(Symmetry::Name::Bent).coordinates);
   auto normalizedPositions = detail::normalize(coordinates);

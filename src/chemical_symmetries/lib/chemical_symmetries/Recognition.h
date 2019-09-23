@@ -134,11 +134,14 @@ boost::optional<double> pointGroup(
  * @param normalizedPositions Particle positions
  * @param rotation Symmetry element of rotation Cn/Sn
  *
+ * @pre @p rotation power is one, and its axis is normalized (latter is
+ *   guaranteed by its constructor)
+ *
  * @return The CSM along the fixed axis of rotation
  */
 double element(
   const PositionCollection& normalizedPositions,
-  elements::Rotation rotation
+  const elements::Rotation& rotation
 );
 
 // TODO more elements, optimize elements?
